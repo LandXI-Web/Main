@@ -398,6 +398,16 @@ You call only the platform tools, with the user's own permissions. Rules:
 10) "Summarize / show / tell me the results" reads existing results: use summary_lookup or survey_stats and never start an analysis (analysis_run · jobs_submit · survey_build). Start one only when the user says run / start / execute."""
 
 
+LX_RULE = ("\n\nLX 계정 규칙: '현장 확인 필요' 숫자 · 층 · 말을 쓰지 않는다. 지역의 대표 숫자는 AI 분석 결과다"
+           "(summary_lookup 의 AI 분석 결과 봉투). 의심 필지는 물었을 때만 그 이름으로 쓴다.")
+
+
+def sys_prompt(ctx) -> str:
+    """지시문 — LX 계정(한국어)은 원칙 135 한 줄을 더한다(기관 계정 지시문은 그대로)."""
+    base = system_prompt(ctx.lang)
+    return base + LX_RULE if ctx.lang == "ko" and talk.lx_ai(ctx) else base
+
+
 def system_prompt(lang: str = "ko") -> str:
     """시스템 프롬프트 = 언어별 기본 규칙 + 확장 모듈 HINT(plan 3.1)."""
     base = SYSTEM_EN if lang == "en" else SYSTEM
@@ -906,7 +916,7 @@ async def execute(ctx: Ctx, message: str):
         return
     small = route["intent"] == "smalltalk" and backends.rule_classify(msg) == "smalltalk" and not (ctx.lang == "en" and MAPWORD_EN.search(msg))
     tools = registry.tools_for(p) if not small else None
-    messages = [{"role": "system", "content": system_prompt(ctx.lang)},
+    messages = [{"role": "system", "content": sys_prompt(ctx)},
                 {"role": "user", "content": context_line(ctx.context, route["intent"]) + "\n\n" + msg}]
     first_ms, last_res, plan_sent, i = None, None, False, 0
     fallbacks: list[dict] = []
@@ -1202,7 +1212,7 @@ async def answer_ledger(ctx: Ctx, msg: str, args: dict, started: float, scr: dic
     if r1["ok"] and (r1.get("raw") or {}).get("features"):
         r2 = await run_tool(ctx, 2, "map_arrive", {}, by="runtime")
         blocks.append(r2["block"])
-    messages = [{"role": "system", "content": system_prompt(ctx.lang)},
+    messages = [{"role": "system", "content": sys_prompt(ctx)},
                 {"role": "user", "content": context_line(ctx.context, "map") + "\n\n" + msg},
                 {"role": "user", "content": "[런타임] 대장 × AI 대조 도구 결과:\n" + "\n".join(blocks)
                  + "\n이 결과만으로 2문장 답한다(도구 더 부르지 말 것). 지역·대장 이름은 데이터 그대로, 숫자는 봉투 자리표로만."}]
@@ -1436,7 +1446,20 @@ async def talk_direct(ctx: Ctx, msg: str, hit: dict, started: float, route: dict
                 has = reg["sgg_cd"] in (dv.get("parcels") or {})
             except Exception:  # noqa: BLE001
                 has = False
-            if has:
+            if talk.lx_ai(ctx):
+                # 원칙 135 — LX 계정은 AI 분석 결과 한 줄(화면 XI맵 큰 숫자와 같은 출처 · 같은 값). 늦으면 숫자 없이 답한다
+                try:
+                    ar = await asyncio.wait_for(talk.ai_result(ctx, reg["sgg_cd"]), 6)
+                    if ar:
+                        o = Out(source="요약(AI 분석 결과)")
+                        o.env("ai_result", f"{reg['name']} {talk.AI_LABEL}", ar["env"])
+                        register(ctx, 1, o)
+                        eid = ctx.env_id("ai_result", 1)
+                        svc = talk.ai_services(ar)
+                        text += f" {reg['name']} {talk.AI_LABEL}는 {{{{env:{eid}}}}}입니다" + (f"({svc})." if svc else ".")
+                except Exception as e:  # noqa: BLE001
+                    ctx.state.setdefault("route_errors", []).append(f"headline {type(e).__name__}")
+            elif has:
                 # 그 지역 대표 숫자 한 줄(덤) — 늦으면 숫자 없이 답한다(답이 기다리지 않게 · 계획 줄에 단계를 만들지 않는다)
                 try:
                     st = await asyncio.wait_for(registry.HANDLERS["survey_stats"]({"region": reg["sgg_cd"], "by": "rule"}, ctx), 6)
@@ -1544,7 +1567,7 @@ async def answer_direct(ctx: Ctx, msg: str, hit: dict, started: float, scr: dict
         ctx.state["rounds"] = 0
         await finish(ctx, text, None, started, route, {}, lint_on=False)
         return
-    messages = [{"role": "system", "content": system_prompt(ctx.lang)},
+    messages = [{"role": "system", "content": sys_prompt(ctx)},
                 {"role": "user", "content": context_line(ctx.context, "map") + "\n\n" + msg},
                 {"role": "user", "content": "[런타임] 도구 결과:\n" + "\n".join(blocks)
                  + ("\nAnswer in English in 2 sentences from this result only (no more tools). Numbers only as envelope placeholders."
@@ -1622,14 +1645,15 @@ async def answer_summary(ctx: Ctx, msg: str, sr: dict, started: float, scr: dict
         for key in order + [x for x in mets if x not in order]:
             eid = ctx.env_id(f"i{k}_{key}", 1)
             if eid:
-                nums.append(((mets.get(key) or {}).get("label") or key, eid))
+                lab = (mets.get(key) or {}).get("label") or key
+                nums.append((talk.AI_LABEL if key == "detected" and talk.lx_ai(ctx) else lab, eid))
         ids.append({"nums": nums})
     answer = summary_lookup.say(items[:8], ids, bool(sr.get("region")))
     if sr.get("region") and ctx.lang == "ko":                # 확인 16차 — 다음에 할 수 있는 것(그 지역 숫자 · 보고서 · 지도)
         nm = str(sr.get("region_name") or items[0].get("region_name") or "").split(" ")[-1]
         if nm:
             href = talk.xi_href(ctx, str(sr["region"])) if talk.has_map(ctx) is False else None
-            talk.set_next(ctx, [talk.btn(f"{nm} 현장 확인 필요 필지 몇 건", q=f"{nm} 현장 확인 필요 필지 몇 건이야?"),
+            talk.set_next(ctx, [talk.ai_btn(nm) if talk.lx_ai(ctx) else talk.btn(f"{nm} 현장 확인 필요 필지 몇 건", q=f"{nm} 현장 확인 필요 필지 몇 건이야?"),
                                 talk.btn(f"{nm} 보고서 초안", q=f"{nm} 보고서 초안 만들어 줘")] + ([talk.btn("XI맵에서 보기", href=href)] if href else []))
             await talk.remember(ctx, str(sr["region"]))
     ctx.state["rounds"] = 0

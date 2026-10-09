@@ -21,6 +21,23 @@ from .runner import KST, Ctx, emit, finish, persist_start, persist_state, persis
 from .tools import Out
 
 FIXED = "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
+FIXED_LX = "AI 추론 · 검수 전 · 위법 판정 아님"          # 원칙 135 — LX 계정 보고서는 '현장 확인' 없이(기관 계정은 그대로)
+
+
+def _lx(ctx) -> bool:
+    return getattr(getattr(ctx, "principal", None), "realm", None) == "lx"
+
+
+def fixed_of(ctx) -> str:
+    return FIXED_LX if _lx(ctx) else FIXED
+
+
+def writer_of(ctx) -> str:
+    """서술 지시문 — LX 계정은 고정 문구에서 '현장 확인 전'을 빼고 '현장 확인' 말을 쓰지 않게 한다."""
+    if not _lx(ctx):
+        return WRITER
+    return WRITER.replace(FIXED, FIXED_LX).replace("'현장조사 대상 후보'로 쓴다", "'검토 대상 후보'로 쓴다") + \
+        "\n- '현장 확인' · '현장조사' 라는 말을 쓰지 않는다."
 BASIS_KO = {"measured": "실측", "estimate": "추정", "demo": "시연", "history": "이력", "inferred": "AI 추론 · 검수 전", "recorded": "기록"}
 UNIT_KO = {"count": "건", "필지": "필지", "m2": "㎡", "ratio": "", "ha": "ha", "tokens": "토큰", "krw_m2": "원/㎡"}
 
@@ -261,7 +278,7 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
     rn = RULE_NM.get(rule or "") if rule else None
     h(f"{emd} 실태조사 초안" + (f" — {rn}" if rn else ""), 0)
     meta = doc.add_paragraph()
-    meta.add_run(f"초안 · 검토 필요 · {FIXED}\n").bold = True
+    meta.add_run(f"초안 · 검토 필요 · {fixed_of(ctx)}\n").bold = True
     meta.add_run(f"대상 {emd} · 연속지적도 × AI 영상 분석 · 판단 기준값 [추정 초기값] · AI 가 작성한 초안(사람 확인 필요) · {dt.datetime.now(KST):%Y-%m-%d %H:%M}")
     h("① 개요 · ② 소견 · ⑥ 조치 제안", 1)
     for para in _rule_words(narrative_plain).split("\n"):
@@ -285,7 +302,7 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
         row[0].text = ctx.env_meta[eid]
         row[1].text = fmt_env(e)
         row[2].text = BASIS_KO.get(e.get("basis"), "")
-    h("③ 의심 상위 필지(현장조사 대상 후보)", 1)
+    h("③ 의심 상위 필지(" + ("검토 대상 후보" if _lx(ctx) else "현장조사 대상 후보") + ")", 1)
     cits = [c for c in ctx.citations if c.get("kind") == "parcel"]
     tb2 = doc.add_table(rows=1, cols=6)
     tb2.style = "Table Grid"
@@ -314,7 +331,7 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
         doc.add_paragraph(_rule_words(f"[{c['n']}] {c.get('label') or c.get('addr') or ''}") + (f" · PNU {c['pnu']}" if c.get("pnu") else ""))
     foot = doc.add_paragraph()
     foot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    foot.add_run(f"{FIXED} · 소유자 성명 없음(연속지적도에 없음)").italic = True
+    foot.add_run(f"{fixed_of(ctx)} · 소유자 성명 없음(연속지적도에 없음)").italic = True
     bio = io.BytesIO()
     doc.save(bio)
     return bio.getvalue()
@@ -417,7 +434,7 @@ def narrative_for_f2s(md: str, lr, ctx: Ctx, flags: list[dict], f2s: dict) -> tu
             if len(s) < 4:
                 continue
             body = lint.CITE.sub("", s).strip()
-            if "위법 판정 아님" in body and len(re.sub(r"AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님", "", body)) < 30:
+            if "위법 판정 아님" in body and len(re.sub(r"AI 추론 · 검수 전 ·( 현장 확인 전 ·)? 위법 판정 아님", "", body)) < 30:
                 stat["dropped_fixed"] += 1
                 continue
             if not ns:
@@ -717,7 +734,7 @@ async def draft(ctx: Ctx, body: dict):
         await persist_state(ctx, state="failed", error="tool_failed")
         return
     await emit(ctx, "agent.tool.call", {"i": 3, "tool": "llm_write", "args": {"paragraphs": 3}, "by": "template"})
-    messages = [{"role": "system", "content": WRITER},
+    messages = [{"role": "system", "content": writer_of(ctx)},
                 {"role": "user", "content": f"대상: {tgt['place']} · 규칙 {rule or '전체(R1–R6)'}.\n인용 번호 표(이 번호만 쓴다 · 봉투 eN 번호와 다르다):\n"
                                              + "\n".join(f"[{c['n']}] {c.get('addr') or c.get('label')}" for c in ctx.citations) + "\n\n"
                                              + writer_tables(ctx, rule) + "\n\n" + r1["block"] + "\n\n" + r2["block"]
@@ -777,7 +794,7 @@ async def draft(ctx: Ctx, body: dict):
     await persist_tool(ctx, step4)
     size = {"value": len(data), "unit": "bytes", "basis": "measured", "as_of": dt.datetime.now(KST).isoformat(timespec="seconds"), "source": src}
     artifact = {"docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "href": file_href(ctx.run_id, fname), "filename": fname, "place": tgt["place"], "bytes": size, "source": src,
-                "template": "survey-emd", "fixed": FIXED, "law": "법령 조문 인용", "docx": docx_info}
+                "template": "survey-emd", "fixed": fixed_of(ctx), "law": "법령 조문 인용", "docx": docx_info}
     await emit(ctx, "agent.tool.result", {"i": 5, "tool": "survey_reports_draft", "ok": True, "ms": ms4, "source": src, "summary": {},
                                           "ui_actions": [], "artifact": artifact})
     await finish(ctx, md, res, started, route, {"first_token_ms": res.first_token_ms}, artifact=artifact, lint_result=lr,

@@ -198,7 +198,9 @@ async def _pick_parcels(out: Out, ctx, lang: str):
     if not picks:
         return
     short = [_short(c["addr"]) for c in picks]
-    out.answer = "어느 필지인지 정해지지 않아 영상 설명을 하지 않았습니다. 현장 확인이 먼저 필요한 필지 셋을 아래에 두었습니다."
+    out.answer = ("어느 필지인지 정해지지 않아 영상 설명을 하지 않았습니다. "
+                  + ("의심 필지 가운데 점수가 높은 셋을 아래에 두었습니다." if talk.lx_ai(ctx)        # 원칙 135 — LX 답은 '현장 확인' 없이
+                     else "현장 확인이 먼저 필요한 필지 셋을 아래에 두었습니다."))
     talk.set_next(ctx, [talk.btn(f"{a} 영상 설명", q=f"{a} 영상 설명해 줘") for a in short])
     if isinstance(getattr(ctx, "state", None), dict):
         ctx.state["cannot"] = {"kind": "parcel"}

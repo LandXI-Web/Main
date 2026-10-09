@@ -357,7 +357,8 @@ async def emd_chart(args: dict, ctx) -> Out:
                           + (" — 막대를 누르면 그 읍면동으로 갑니다." if pick else "."))
             if not pick and talk.xi_href(ctx, r["sgg_cd"]):
                 talk.set_next(ctx, [talk.btn("XI맵에서 크게 보기" if talk.can_xi(ctx) else "지도에서 크게 보기", href=talk.xi_href(ctx, r["sgg_cd"])),
-                                    talk.btn("현장 확인 필요 필지 몇 건", q=f"{r['name']} 현장 확인 필요 필지 몇 건이야?")])
+                                    talk.ai_btn(r["name"]) if talk.lx_ai(ctx)
+                                    else talk.btn("현장 확인 필요 필지 몇 건", q=f"{r['name']} 현장 확인 필요 필지 몇 건이야?")])
         return out
     rows, job = await (ck["emd_counts"](codes) if "emd_counts" in ck else emd_counts(codes))
     if not rows:

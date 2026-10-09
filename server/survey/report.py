@@ -173,7 +173,7 @@ def collect(code: str, rule: str | None = None, top: int = 20, realm: str = "lx"
     return {"level": level, "emd": dict(e), "rule": rule, "top": top, "agg": [dict(x) for x in agg], "rows": [dict(x) for x in rows],
             "suspect_parcels": sp, "counts": counts,
             "cut": (cut or {}).get("value") if region["canon"] else ((sg or {}).get("priority_cut") or (cut or {}).get("value")),
-            "region": region, "at": dt.datetime.now(KST)}
+            "region": region, "at": dt.datetime.now(KST), "realm": realm}
 
 
 def _region(sgg_cd: str, sg: dict | None) -> dict:
@@ -344,6 +344,17 @@ def check_narrative(narrative, n_cites: int, cites: list[dict] | None = None) ->
     return out, dropped
 
 
+FIXED_LX = "AI 추론 · 검수 전 · 위법 판정 아님"   # 원칙 135 — LX 계정 보고서는 '현장 확인' 없이(기관 realm 은 FIXED_PHRASE 그대로)
+
+
+def _lx(d: dict) -> bool:
+    return d.get("realm") == "lx"
+
+
+def _fixed(d: dict) -> str:
+    return FIXED_LX if _lx(d) else FIXED_PHRASE
+
+
 def _default_narrative(d: dict, cites: list[dict]) -> dict:
     v = {c["n"]: (c["value"] or {}).get("value") for c in cites}
     by_kind = {c["kind"]: c["n"] for c in cites}
@@ -356,10 +367,12 @@ def _default_narrative(d: dict, cites: list[dict]) -> dict:
         "overview": [f"{place}의 연속지적 {v[1]:,}필지를 {img} AI 분석 결과와 대조했습니다 [1].",
                      f"실태조사 대상 후보(의심)는 {v[2]:,}건이며 후보 필지는 {v[4]:,}필지입니다 [2][4]."],
         "findings": ([f"규칙별로는 {rules_txt}입니다."] if rules else [])
-                    + [f"점수 상위 5%인 A등급은 {v[3]:,}건으로 현장 확인 우선 대상입니다 [3].",
+                    + [f"점수 상위 5%인 A등급은 {v[3]:,}건으로 " + ("우선 검토 대상입니다 [3]." if _lx(d) else "현장 확인 우선 대상입니다 [3]."),
                        f"필지별 근거면적과 신뢰도는 ③ 의심 상위 목록에 실었습니다 [{by_kind['list']}]."],
-        "actions": [f"확인 전 {v[5]:,}건 가운데 A등급부터 현장 확인 대상으로 검토합니다 [5][3].",
-                    "현장 확인 전에 건축물대장과 허가 대장을 먼저 대조해 오탐을 줄입니다 [2]."],
+        "actions": ([f"확인 전 {v[5]:,}건 가운데 A등급부터 검토합니다 [5][3].",
+                     "건축물대장과 허가 대장을 먼저 대조해 오탐을 줄입니다 [2]."] if _lx(d) else
+                    [f"확인 전 {v[5]:,}건 가운데 A등급부터 현장 확인 대상으로 검토합니다 [5][3].",
+                     "현장 확인 전에 건축물대장과 허가 대장을 먼저 대조해 오탐을 줄입니다 [2]."]),
     }
     if law_n:
         out["actions"].append(f"관련 조문은 ⑤ 법적 근거에 원문 그대로 실었습니다 [{law_n}].")
@@ -383,12 +396,13 @@ def as_json(d: dict, narrative=None) -> dict:
     return {
         "template": "survey-emd", "level": d.get("level", "emd"), "emd_cd": e["emd_cd"], "emd": e["name"], "rule": d["rule"], "limit": d["top"],
         "org": rg.get("org"), "sgg_cd": rg["sgg_cd"], "sgg": rg["name"], "sido": rg.get("sido"), "region_full": rg.get("full"), "place": place,
-        "title": f"{place} 실태조사 대상 후보 보고서(초안)", "fixed": FIXED_PHRASE,
+        "title": f"{place} 실태조사 대상 후보 보고서(초안)", "fixed": _fixed(d),
         "overview": {"org": rg.get("org"), "sgg": rg["name"], "emd": e["name"], "parcels": env(e["parcels"], "필지", "measured", rg["ledger"]),
                      "area_ha": env(e["area_ha"], "ha", "measured", rg["ledger"]),
                      "imagery": rg["imagery"], "ledger": rg["ledger"],
                      "rules": [{"id": r, "name": R.definitions()[r]["name"], "condition": R.condition_text(r, th)} for r in ([d["rule"]] if d["rule"] else RULE_IDS)],
-                     "thresholds_note": "판단 기준값은 모두 [추정 초기값]입니다 — 법령 기준이 아니며 현장조사 결과로 보정합니다"},
+                     "thresholds_note": "판단 기준값은 모두 [추정 초기값]입니다 — 법령 기준이 아니며 "
+                                        + ("결과 확인으로 보정합니다" if _lx(d) else "현장조사 결과로 보정합니다")},
         "table": [{"rule": r, "name": R.definitions()[r]["name"],
                    **{k: env(v[k], "count", "inferred", REPORT_SRC, "검수 전") for k in ("A", "B", "C", "total")},
                    "by_state": {s: env(v[s], "count", "recorded", STATE_SRC) for s in STATES}} for r, v in t.items()],
@@ -409,9 +423,10 @@ def as_json(d: dict, narrative=None) -> dict:
                  "law_ref": {"법령": x["law"], "조": x["article"], "항": x["para"], "시행일": x["effective"]} if x["article"] else None}
                 for x in d["_law"]],
         "actions": {"field_targets": env(sum(v["A"] for v in t.values()), "count", "inferred", REPORT_SRC, "A등급 우선 · 검수 전"),
-                    "checklist": ["건축물대장 대조(대조 전)", "농지·산지전용 허가 대장 대조(기관 대장 올리기 후)",
-                                  "현장 사진·측량 확인", "결과 입력: 판정(위반 · 대장과 같음 · 불명확) 또는 오탐(사유 기록)"],
-                    "fixed": FIXED_PHRASE},
+                    "checklist": ["건축물대장 대조(대조 전)", "농지·산지전용 허가 대장 대조(기관 대장 올리기 후)"]
+                                 + ([] if _lx(d) else ["현장 사진·측량 확인"])
+                                 + ["결과 입력: 판정(위반 · 대장과 같음 · 불명확) 또는 오탐(사유 기록)"],
+                    "fixed": _fixed(d)},
         "citations": cites,
         "narrative": narr or _default_narrative(d, cites),
         "narrative_by": "llm" if narr else "rule",
@@ -531,9 +546,9 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     c = box.rows[0].cells[0]
     _shade(c, "FFF4E5")
     c.text = ""
-    _font(c.paragraphs[0].add_run(FIXED_PHRASE), 11, True, "9A3412")
+    _font(c.paragraphs[0].add_run(j["fixed"]), 11, True, "9A3412")
     c.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _font(c.add_paragraph().add_run("현장조사 대상 후보 목록입니다. 판단 기준값은 [추정 초기값]이며 법령 기준이 아닙니다. "
+    _font(c.add_paragraph().add_run(("검토 대상 후보 목록입니다. " if _lx(d) else "현장조사 대상 후보 목록입니다. ") + "판단 기준값은 [추정 초기값]이며 법령 기준이 아닙니다. "
                                     "수치 꼬리표: AI 추론 · 검수 전 / 기록 / 실측 / 추정."), 8.5, False, "7C2D12")
     # ① 개요
     _p(doc, "", space_after=2)
@@ -596,12 +611,13 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     _tbl(doc, ["규칙", "조문", "시행일", "원문"],
          [[" · ".join(x["rule_names"]), x["label"].split(" · 시행")[0], x["effective"] or "—", x["text"] if x["text"] else x["status"]] for x in j["law"]],
          widths=[2.8, 3.8, 1.8, 9.0], size=7.5)
-    _p(doc, "조문은 국가법령정보센터 공개 원문 그대로입니다. 위반 여부는 현장 확인 후 담당자가 판단합니다.", 8, False, "56626B")
+    _p(doc, "조문은 국가법령정보센터 공개 원문 그대로입니다. " + ("위반 여부는 담당자가 판단합니다." if _lx(d) else "위반 여부는 현장 확인 후 담당자가 판단합니다."),
+       8, False, "56626B")
     # ⑥ 조치 제안
     _p(doc, "", space_after=2)
     _p(doc, "⑥ 조치 제안", 12.5, True, "14202A")
     a = j["actions"]
-    _p(doc, f"현장조사 우선 대상: A등급 {a['field_targets']['value']:,}건 (AI 추론 · 검수 전)", 10, True)
+    _p(doc, ("우선 검토 대상" if _lx(d) else "현장조사 우선 대상") + f": A등급 {a['field_targets']['value']:,}건 (AI 추론 · 검수 전)", 10, True)
     for s in a["checklist"]:
         _p(doc, "□ " + s, 9.5, space_after=1)
     for s in j["narrative"].get("actions", []):

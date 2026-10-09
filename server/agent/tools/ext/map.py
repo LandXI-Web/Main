@@ -381,7 +381,8 @@ async def route_map(msg: str, ctx) -> dict | None:
         return {"tool": "map_snapshot", "args": {}}
     # '현장 확인 필요 필지만 보여 줘' — 층 켜기(숫자 질문은 다른 직행)
     if FIND_ONLY.search(t) and not re.search(r"몇|건수|얼마|목록|상위|차트|보고서", t):
-        cand = [{"tool": "map_layer", "args": {"layer": "findings", "on": True, "only": True}}]
+        # LX 화면에는 '현장 확인 필요' 층이 없다(원칙 135) — LX 계정은 AI 분석 결과 층으로
+        cand = [{"tool": "map_layer", "args": {"layer": "results" if talk.lx_ai(ctx) else "findings", "on": True, "only": True}}]
         return _with_place(t, groups, cand, ctx)
     # '○○읍으로 이동해서 비닐하우스 결과만 보여 줘' — 이동 먼저 + 그 서비스 결과 층만(expand 1)
     svc = SERVICE_WORDS.search(t)
@@ -568,7 +569,7 @@ async def map_compare(args: dict, ctx) -> Out:
         o = others[-1]
         x, y = sorted([o, b], key=lambda e: (e["year"], e.get("month") or 0))
         talk.set_alt(ctx, f"{_ko_epoch(x)} · {_ko_epoch(y)} 비교", q=f"{nm} {x['year']}년과 {y['year']}년 영상을 나란히 비교해 줘")
-    talk.set_next(ctx, [talk.btn(f"{nm} 현장 확인 필요 필지 몇 건", q=f"{nm} 현장 확인 필요 필지 몇 건이야?"),
+    talk.set_next(ctx, [talk.ai_btn(nm) if talk.lx_ai(ctx) else talk.btn(f"{nm} 현장 확인 필요 필지 몇 건", q=f"{nm} 현장 확인 필요 필지 몇 건이야?"),
                         talk.btn("지도 화면을 이미지로 저장해 줘")])
     return out
 

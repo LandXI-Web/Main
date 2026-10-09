@@ -19,6 +19,8 @@ SPECS = {
     "survey_compare": {"description": "두 시군구의 같은 이름 숫자 비교(의심 필지 · 현장 확인 필요) — 막대 둘.",
                        "properties": {"regions": {"type": "array", "items": {"type": "string"}}, "name": {"type": "string", "enum": ["field_check", "suspects"]}},
                        "required": ["regions"]},
+    "ai_count": {"description": "AI 분석 결과 수(LX 계정 · 화면 XI맵 큰 숫자와 같은 값) — '○○ AI 분석 결과 몇 건'.",
+                 "properties": {"region": {"type": "string", "description": "시군구 이름 또는 코드"}}, "route_only": True},
     "region_brief": {"description": "지역을 고르지 않은 화면의 '이 지역 결과 요약' — 전국 요약 두 문장 + 의심 필지가 많은 시군구 막대.", "properties": {}},
     "rule_gap": {"description": "실태조사 조건에 없는 조합(대장 논 · 밭 위 비닐하우스 등) — 이유 한 줄 + 가까운 조건 버튼.", "properties": {"kind": {"type": "string"}},
                  "route_only": True},
@@ -27,8 +29,8 @@ HANDLERS: dict = {}
 WRITE: set[str] = set()
 CONFIRM: set[str] = set()
 CLIENT: set[str] = set()
-WHY = {"survey_count": "건수 확인(물은 이름 그대로)", "survey_compare": "두 지역 같은 이름 숫자 비교", "region_brief": "전국 요약", "rule_gap": "없는 조건 안내"}
-SAY = {"survey_count": "건수 확인", "survey_compare": "두 지역 비교", "region_brief": "전국 결과 요약", "rule_gap": "조건 확인"}
+WHY = {"ai_count": "AI 분석 결과 수(화면과 같은 값)", "survey_count": "건수 확인(물은 이름 그대로)", "survey_compare": "두 지역 같은 이름 숫자 비교", "region_brief": "전국 요약", "rule_gap": "없는 조건 안내"}
+SAY = {"ai_count": "AI 분석 결과 확인", "survey_count": "건수 확인", "survey_compare": "두 지역 비교", "region_brief": "전국 결과 요약", "rule_gap": "조건 확인"}
 NAME_KO = {"field_check": "현장 확인 필요 필지", "suspects": "의심 필지"}
 
 
@@ -39,6 +41,7 @@ def allowed(name: str, p) -> bool:
 COUNT_RX = re.compile(r"몇\s*(건|필지|개|곳)?|건수|얼마나|개수|숫자|총\s*몇")
 FIELD_RX = re.compile(r"현장\s*확인\s*(필요)?")
 SUS_RX = re.compile(r"의심\s*(필지)?")
+AI_RX = re.compile(r"AI\s*(분석\s*)?(결과|탐지)|분석\s*결과")
 COUNT_NOT = re.compile(r"차트|그래프|막대|목록|상위|지번|보고서|공문|대장|규칙|유형|등급|읍\s*면\s*동|동별|비교|견줘|법|조문|영상")
 CMP_RX = re.compile(r"비교|견줘|대비|어디가\s*(더|많)|차이")
 HERE_RX = re.compile(r"(이|우리|여기|이곳)\s*(지역|곳|시|군|구)?.{0,8}(결과|요약|현황|정리)|^결과\s*요약")
@@ -74,11 +77,13 @@ async def survey_count(args: dict, ctx) -> Out:
     busy = any((keys.get(k, (None, {}))[1] or {}).get("value") is None for k in ("field_check", "suspects") if k in keys)
     if name not in keys or busy:
         out.answer = f"{place} 실태조사 결과를 지금 집계하고 있습니다. 끝나면 같은 질문에 숫자로 답합니다."
-        talk.set_next(ctx, [talk.btn("다시 물어보기", q=(ctx.state or {}).get("msg") or f"{place} 현장 확인 필요 필지 몇 건이야?")])
+        talk.set_next(ctx, [talk.btn("다시 물어보기", q=(ctx.state or {}).get("msg") or f"{place} {'의심' if talk.lx_ai(ctx) else '현장 확인 필요'} 필지 몇 건이야?")])
         return out
     other = "suspects" if name == "field_check" else "field_check"
     s1 = f"{place} {NAME_KO[name]}는 {{{{{name}}}}}입니다."
-    if other in keys:
+    if talk.lx_ai(ctx):                                   # 원칙 135 — LX 답은 '현장 확인' 문장 · 버튼 없이
+        s2 = ""
+    elif other in keys:
         s2 = (f"의심 필지 {{{{suspects}}}} 가운데 먼저 현장에서 확인할 필지입니다." if name == "field_check"
               else f"그 가운데 먼저 현장에서 확인할 필지(현장 확인 필요)는 {{{{field_check}}}}입니다.")
     else:
@@ -88,9 +93,42 @@ async def survey_count(args: dict, ctx) -> Out:
     if r:
         await talk.remember(ctx, r["sgg_cd"])
         nm = r["name"]
-        see = (talk.btn("현장 확인 필요 필지만 보여 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
+        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 층만 켜 줘") if talk.lx_ai(ctx) and talk.on_xi(ctx) and talk.has_map(ctx) is not False
+               else talk.btn("현장 확인 필요 필지만 보여 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
                else talk.btn("지도에서 보기", href=talk.xi_href(ctx, r["sgg_cd"])) if talk.xi_href(ctx, r["sgg_cd"]) else None)
         talk.set_next(ctx, [see, talk.btn("읍면동별 차트", q=f"{nm} 의심 필지 읍면동별 차트로 보여 줘"),
+                            talk.btn("보고서 초안", q=f"{nm} 보고서 초안 만들어 줘")])
+    return out
+
+
+async def ai_count(args: dict, ctx) -> Out:
+    """LX 계정의 숫자 질문(원칙 135) — AI 분석 결과(요약 한 출처 · 화면 XI맵 큰 숫자와 같은 계산 talk.ai_result).
+    LX 직원이 '현장 확인 필요 필지 몇 건'이라고 물어도 이 답(LX 화면에는 그 숫자가 없다)."""
+    from ... import talk
+    from .map import resolve_region
+    if args.get("region"):
+        r = resolve_region({"name": args["region"]}, ctx)
+    else:
+        r, _src, _alts = await talk.resolve(ctx, (ctx.state or {}).get("msg") or "")
+    place = _place(ctx, r)
+    ar = await talk.ai_result(ctx, r["sgg_cd"] if r else None)
+    out = Out(source="요약(AI 분석 결과)")
+    out.whitelist |= {r["sgg_cd"]} if r else set()
+    nm = r["name"] if r else None
+    if not ar:
+        out.answer = f"{place}에는 아직 숫자로 셀 수 있는 AI 분석 결과가 없습니다."
+        talk.set_next(ctx, [talk.btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘")] if nm else [])
+        return out
+    out.env("ai_result", f"{place} {talk.AI_LABEL}", ar["env"])
+    svc = talk.ai_services(ar)
+    out.whitelist |= set(re.findall(r"\d[\d,.]*", svc))
+    out.answer = f"{place} {talk.AI_LABEL}는 {{{{ai_result}}}}입니다" + (f"({svc})." if svc else ".")
+    out.data = {"지역": place, "숫자": talk.AI_LABEL, "서비스": svc}
+    if r:
+        await talk.remember(ctx, r["sgg_cd"])
+        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 층만 켜 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
+               else talk.btn("지도에서 보기", href=talk.xi_href(ctx, r["sgg_cd"])) if talk.xi_href(ctx, r["sgg_cd"]) else None)
+        talk.set_next(ctx, [see, talk.btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘"),
                             talk.btn("보고서 초안", q=f"{nm} 보고서 초안 만들어 줘")])
     return out
 
@@ -189,7 +227,7 @@ async def rule_gap(args: dict, ctx) -> Out:
     return out
 
 
-HANDLERS.update({"survey_count": survey_count, "survey_compare": survey_compare, "region_brief": region_brief, "rule_gap": rule_gap})
+HANDLERS.update({"ai_count": ai_count, "survey_count": survey_count, "survey_compare": survey_compare, "region_brief": region_brief, "rule_gap": rule_gap})
 GAP_RX = re.compile(r"(대장|지목).{0,14}(논|밭|답|전|과수원|농지).{0,24}비닐\s*하우스|비닐\s*하우스.{0,14}(대장|지목).{0,10}(논|밭|농지)")
 
 
@@ -207,6 +245,9 @@ async def ROUTE(msg: str, ctx):
     # 두 지역 비교(같은 이름의 숫자끼리)
     if len(named) == 2 and CMP_RX.search(t) and (has_field or has_sus or re.search(r"필지|건수|몇", t)) and not re.search(r"영상|시점|대장", t):
         return {"tool": "survey_compare", "args": {"regions": [r["sgg_cd"] for r in named], "name": "field_check" if has_field and not has_sus else "suspects"}}
+    # LX 계정 — AI 분석 결과 수 · '현장 확인 필요 몇 건'도 AI 분석 결과로(원칙 135 · 화면과 같은 값)
+    if talk.lx_ai(ctx) and (has_field or (AI_RX.search(t) and not has_sus)) and COUNT_RX.search(t) and not COUNT_NOT.search(t) and not CMP_RX.search(t) and len(named) <= 1:
+        return {"tool": "ai_count", "args": {**({"region": named[0]["sgg_cd"]} if named else {})}}
     # 건수 질문(물은 이름 그대로)
     if (has_field or has_sus) and COUNT_RX.search(t) and not COUNT_NOT.search(t) and len(named) <= 1:
         return {"tool": "survey_count", "args": {"name": "field_check" if has_field else "suspects", **({"region": named[0]["sgg_cd"]} if named else {})}}

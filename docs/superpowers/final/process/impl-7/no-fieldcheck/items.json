@@ -47,6 +47,32 @@
           "완료",
           "다시"
         ]
+      },
+      {
+        "id": "현장확인-빼기-ChatGEO",
+        "t": "[AI][Land-XI] XI ChatGEO 답도 AI 분석 결과로 — LX 계정",
+        "what": "LX 계정에서 XI ChatGEO 가 '현장 확인 필요' 숫자 · 질문 · 버튼을 내지 않습니다. 지역으로 옮긴 답 끝, 다음 버튼, 숫자 질문, 결과 요약이 모두 AI 분석 결과로 답합니다. 남원시는 'AI 분석 결과 2,098필지(영농관리 행정서비스 외 1개 서비스)'로 XI맵 큰 숫자와 같은 값입니다. LX 계정이 만드는 보고서 초안의 고정 문구도 'AI 추론 · 검수 전 · 위법 판정 아님'으로 바꿨습니다. 기관 계정 답과 보고서는 답을 주실 때까지 그대로입니다.",
+        "shots": [
+          "chat-nomap-1440.png",
+          "chat-count-1440.png",
+          "chat-summary-1440.png"
+        ],
+        "where": [
+          [
+            "https://app.land-xi.dev/landxi/v3/lx-console/",
+            "LX 직원",
+            "XI ChatGEO 에 '남원시로 가 줘' — 끝에 'AI 분석 결과 2,098필지'"
+          ],
+          [
+            "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+            "LX 직원",
+            "추천 질문 '이 지역 결과 요약해 줘' → 버튼 '남원시 AI 분석 결과 몇 건'"
+          ]
+        ],
+        "opts": [
+          "완료",
+          "다시"
+        ]
       }
     ]
   }

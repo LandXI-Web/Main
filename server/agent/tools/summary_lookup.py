@@ -17,6 +17,7 @@ from . import Out, ToolError
 
 LX_ALL = "lx"                                          # summary.build 규약: None = 게스트(공개분) · 'lx' = LX 세션(전 기관) · 그 밖 = 그 기관
 STAGE = {"ga": "운영", "canary": "시범"}               # 그 밖(draft · shadow · retired)은 요약에 싣지 않는다
+AI_LABEL = "AI 분석 결과"                             # 원칙 135 — LX 계정 답의 대표 숫자 이름(화면 XI맵 큰 숫자와 같은 이름)
 STAGE_SAY = {"운영": "운영 중", "시범": "시범 운영 중", "첫 결과 전": "아직 첫 결과 전"}
 _SET_SGG: dict[str, tuple[float, str | None]] = {}     # 결과 세트 → 주 시군구(결과 범위 중심이 들어간 시군구) · 10분 캐시
 _CARD_CACHE: dict = {"t": 0.0, "rows": []}
@@ -230,13 +231,21 @@ async def summary_lookup(args: dict, ctx) -> Out:
     items = [it for it in (res.get("items") or [])]
     out = Out(source="요약(서비스 · 지역 · 상태)")
     rows = []
+    lx = getattr(p, "realm", None) == "lx"              # 원칙 135 — LX 계정 답은 '현장 확인 필요' 없이 AI 분석 결과(화면과 같은 값)
     for k, it in enumerate(items[:8]):
         mk = {}
         for key, e in (it.get("metrics") or {}).items():
             if isinstance(e, dict) and e.get("value") is not None:
+                lab = e.get("label") or key
+                if lx and key == "field_check":
+                    continue
+                if lx and key == "detected":
+                    if not it.get("detected_counted"):  # 분석 칸 도형 조각 수는 숫자 자리에 쓰지 않는다(화면과 같음)
+                        continue
+                    lab = AI_LABEL
                 env = {x: e[x] for x in ("value", "unit", "basis", "as_of", "source", "note") if x in e}
-                mk[key] = out.env(f"i{k}_{key}", f"{it.get('region_name') or ''} {it.get('card_name') or ''} · {e.get('label') or key}".strip(), env)
-                mk[key + "_label"] = e.get("label") or key
+                mk[key] = out.env(f"i{k}_{key}", f"{it.get('region_name') or ''} {it.get('card_name') or ''} · {lab}".strip(), env)
+                mk[key + "_label"] = lab
         rows.append({"서비스": it.get("card_name"), "지역": it.get("region_name"), "상태": it.get("stage"),
                      "영상": (it.get("imagery") or {}).get("label") if (it.get("imagery") or {}).get("has") else "없음", "수치": mk})
         for w in (it.get("region_name") or "", it.get("card_name") or ""):
@@ -274,7 +283,7 @@ def say(items: list[dict], ids_by_item: list[dict], asked_region: bool) -> str:
     lead = (pairs[0][0].get("region_name") or "").split(" ")[-1] if one else ""
     for it, ids in pairs[:6]:
         lab = (it.get("card_name") or "") if one else f"{it.get('region_name') or ''} {it.get('card_name') or ''}".strip()
-        det = next((eid for l, eid in ids.get("nums", []) if l == "AI 탐지"), None)
-        parts.append(f"{lab}({STAGE_SAY.get(it.get('stage'), it.get('stage') or '')}" + (f" · AI 탐지 {{{{env:{det}}}}})" if det else ")"))
+        det = next(((l, eid) for l, eid in ids.get("nums", []) if l in ("AI 탐지", AI_LABEL)), None)
+        parts.append(f"{lab}({STAGE_SAY.get(it.get('stage'), it.get('stage') or '')}" + (f" · {det[0]} {{{{env:{det[1]}}}}})" if det else ")"))
     more = " 등" if len(pairs) > 6 else ""
     return (f"{lead}에서 " if lead else "") + "결과가 있는 서비스는 " + ", ".join(parts) + more + "입니다."

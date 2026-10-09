@@ -61,6 +61,67 @@ def role(ctx) -> str:
     return getattr(ctx.principal, "role", None) or ""
 
 
+def lx_ai(ctx) -> bool:
+    """원칙 135(10-09) — LX 계정(직원 · 관리자 · 영업) 답은 '현장 확인 필요' 대신 AI 분석 결과로. 기관 계정은 그대로(사용자 답 전).
+    현장 확인 계산(survey_counts.field_check · 이력)은 서버에 그대로 있고, LX 답에서만 쓰지 않는다."""
+    return realm(ctx) == "lx"
+
+
+AI_LABEL = "AI 분석 결과"
+
+
+async def ai_result(ctx, sgg: str | None = None) -> dict | None:
+    """AI 분석 결과 한 묶음 — 화면 XI맵 큰 숫자와 같은 출처 · 같은 계산(landxi/v3/lx-console/summary.js aiResult).
+    요약(summary.build) 항목 중 detected_counted(필지 · 물체 단위로 다듬은 결과)만 · 셈 단위가 다르면 더하지 않고
+    운영 단계가 앞선 쪽 → 수가 큰 쪽 한 묶음. → {env, unit, names, others} · 결과 없음 None. 숫자를 지어내지 않는다."""
+    from landxi_api.deps import db
+    from .tools.summary_lookup import build, tenant_arg
+    async with db(ctx.principal) as conn:
+        j = await build(conn, tenant_arg(ctx.principal), region=sgg)
+    its = []
+    for i in (j or {}).get("items") or []:
+        v = ((i.get("metrics") or {}).get("detected") or {}).get("value")
+        if i.get("detected_counted") and isinstance(v, (int, float)) and v > 0:
+            its.append(i)
+    if not its:
+        return None
+    rank = ["운영", "시범", "첫 결과 전"]
+    by: dict = {}
+    for i in its:
+        by.setdefault(str(i["metrics"]["detected"].get("unit") or "건"), []).append(i)
+
+    def rk(g):
+        return min((rank.index(i.get("stage")) + 9) % 9 if i.get("stage") in rank else 8 for i in g)
+
+    def total(g):
+        return sum(i["metrics"]["detected"]["value"] for i in g)
+    groups = sorted(by.items(), key=lambda kv: (rk(kv[1]), -total(kv[1])))
+    unit, g = groups[0]
+    m0 = g[0]["metrics"]["detected"]
+    weak = ["demo", "history", "estimate", "inferred", "recorded", "measured"]
+    bases = sorted([i["metrics"]["detected"].get("basis") for i in g if i["metrics"]["detected"].get("basis")],
+                   key=lambda b: weak.index(b) if b in weak else 9)
+    as_of = sorted([str(i["metrics"]["detected"].get("as_of")) for i in g if i["metrics"]["detected"].get("as_of")] or [str(j.get("as_of") or "")])[-1]
+    names = list(dict.fromkeys(i.get("card_name") for i in g if i.get("card_name")))
+    others = len({i.get("card") or i.get("card_name") for _u, x in groups[1:] for i in x})
+    env = {"value": total(g), "unit": unit, "basis": bases[0] if bases else "measured", "as_of": as_of,
+           "source": str(m0.get("source") or AI_LABEL)}
+    return {"env": env, "unit": unit, "names": names, "others": others}
+
+
+def ai_services(r: dict) -> str:
+    """'영농관리 행정서비스 외 1개 서비스' — XI맵 큰 숫자 아랫줄과 같은 글."""
+    n = len(r.get("names") or []) + int(r.get("others") or 0)
+    nm = (r.get("names") or [None])[0]
+    return (nm + (f" 외 {n - 1}개 서비스" if n > 1 else "")) if nm else ""
+
+
+def ai_btn(nm: str | None) -> dict:
+    """LX 계정의 다음 버튼 — '{지역} AI 분석 결과 몇 건'(원칙 135)."""
+    nm = (nm or "").strip()
+    return btn(f"{nm} AI 분석 결과 몇 건".strip(), q=f"{nm} AI 분석 결과 몇 건이야?".strip())
+
+
 def can_xi(ctx) -> bool:
     """XI맵(xi-clean)을 열 수 있는 계정 — auth-gate 의 xi-clean 과 같다(LX 직원 · 관리자 · 영업 · 기관 지역 담당)."""
     return realm(ctx) == "lx" or (realm(ctx) == "tenant" and role(ctx) in ("demo", "local"))
@@ -337,7 +398,8 @@ async def guard_next(ctx, category: str, region_name: str | None = None) -> list
     if category in ("cross_tenant", "cross_tenant_region"):
         h = await home(ctx)
         nm = short(h)
-        return [btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘"), btn(f"{nm} 현장 확인 필요 필지 몇 건", q="우리 시 현장 확인 필요 필지 몇 건이야?")] if nm else []
+        return [btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘"),
+                ai_btn(nm) if lx_ai(ctx) else btn(f"{nm} 현장 확인 필요 필지 몇 건", q="우리 시 현장 확인 필요 필지 몇 건이야?")] if nm else []
     if category == "raw_imagery":
         return [btn("지금 지도를 그림 파일로", q="지도 화면을 이미지로 저장해 줘")] if has_map(ctx) is not False else []
     if category == "deploys_forbidden":
