@@ -1,4 +1,4 @@
-// 구현 5차 · 계정 · 프로젝트 셋 — 부서를 LX 조직도에서 고르기(S-21) · 메모 지우기(S-20) · 저장 용량 늘리기 요청 → 관리자 승인(S-19) · 가입 신청 부서 칸.
+// 구현 5차 · 계정 · 프로젝트 셋 — 부서를 LX 조직도에서 고르기(S-21) · 메모 지우기(S-20) · 저장 용량 증량 신청 → 관리자 승인(S-19 · 용량-1) · 가입 신청 부서 칸.
 // 로그인 폼 입력만(세션 주입 0) · 비밀번호는 server/.env DEV_PASSWORD(출력 0) · 게이트웨이 :8700 이 떠 있어야 한다.
 // 시험 프로젝트 · 메모 · 할당 · 요청 · 알림 · 부서는 이 시험이 만들고 끝에서 원래대로 돌린다(가입 신청은 보내지 않는다).
 import { test, expect } from '@playwright/test';
@@ -22,7 +22,7 @@ const login = async (page, baseURL, who, site) => {
   await page.waitForURL((u) => !/\/login\/?$/.test(u.pathname), { timeout: 20000 });
 };
 
-test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 · 메모 지우기 · 저장 용량 요청', () => {
+test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 · 메모 지우기 · 저장 용량 증량 신청', () => {
   test.beforeEach(async ({ request }) => {
     test.skip(!PW, 'server/.env DEV_PASSWORD 없음');
     test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐');
@@ -79,7 +79,7 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
     }
   });
 
-  test('저장 용량 — 직원 늘리기 요청(내 정보) → 관리자 계정 관리 \'저장 용량 요청\'에서 승인 → 할당 늘어남', async ({ browser, baseURL }) => {
+  test('저장 용량 — 직원 증량 신청(내 정보) → 관리자 계정 관리 \'저장 용량\' 탭에서 승인 → 할당 늘어남', async ({ browser, baseURL }) => {
     const sc = await browser.newContext(); const s = await sc.newPage();
     const ac = await browser.newContext(); const a = await ac.newPage();
     const keep = py('print(c.execute("SELECT coalesce(storage_quota_gb::text, \'\') FROM lx_users WHERE id=\'u_mail_test\'").fetchone()[0])').trim();
@@ -88,19 +88,19 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
       expect((await call(a, '/accounts/users/lx/u_mail_test/quota', 'POST', { quota_gb: 0.03 })).status).toBe(200);
       await login(s, baseURL, 'test@lx.or.kr', 'app');
       await s.locator('.k-mast .k-me-b').click();
-      await expect(s.locator('.k-me-sv')).toContainText('할당 0.03 GB 중');
+      await expect(s.locator('.k-me-gauge')).toContainText('할당 0.03 GB 대비');
       await expect(s.locator('.k-me-warn')).toContainText('%를 썼습니다');                          // 90% 넘음 — 막지 않고 한 줄
-      await s.locator('.k-me-ask').click();
+      await s.locator('.k-me-r .k-me-ask').click();                                          // 같은 자리에서 폼이 펼쳐짐(직원-7)
       await s.locator('.k-md input[name=want_gb]').fill('0.05');
       await s.locator('.k-md input[name=why]').fill('e2e 2차 학습데이터');
-      await s.getByRole('button', { name: '요청 보내기' }).click();
-      await expect(s.locator('.k-me-req')).toContainText('늘리기 요청 중 0.05 GB');
+      await s.locator('.k-me-askf .t-btn', { hasText: '신청' }).click();
+      await expect(s.locator('.k-me-pend')).toContainText('증량 신청 중 0.05 GB');
       await a.goto('v3/ops-accounts/#storage');
-      const row = a.locator('.acc-card[data-tab=storage] tbody tr', { hasText: 'test@lx.or.kr' });
-      await expect(row).toContainText('0.03 GB → 0.05 GB');
-      await row.click();
-      await expect(a.locator('.k-drawer')).toContainText('e2e 2차 학습데이터');
-      await a.locator('.k-drawer .acc-acts .t-btn', { hasText: '승인' }).click();
+      const row = a.locator('.acs-tbl tbody tr', { hasText: 'test@lx.or.kr' });               // 계정별 할당 표 · 증량 신청 서랍(용량-1)
+      await expect(row).toContainText('증량 신청 0.05 GB');
+      await row.locator('.acs-ask').click();
+      await expect(a.locator('.acs-dr')).toContainText('e2e 2차 학습데이터');
+      await a.locator('.acs-dr .acc-acts .t-btn', { hasText: '승인' }).click();
       await expect(a.locator('.k-toast')).toContainText('할당을 늘렸습니다');
       const me = (await call(s, '/me/profile')).json;
       expect(me.storage.quota_gb.value).toBe(0.05);
@@ -108,7 +108,7 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
       const n = (await call(s, '/projects/notices')).json.items.filter((x) => x.kind === 'account.storage');
       expect(n[0].text).toContain('0.05 GB로 늘었습니다');
     } finally {
-      py(`c.execute("UPDATE lx_users SET storage_quota_gb=%s WHERE id='u_mail_test'", (${JSON.stringify(keep)} or None,))\nc.execute("DELETE FROM storage_requests WHERE user_id='u_mail_test'")\nc.execute("DELETE FROM lx_notices WHERE user_id='u_mail_test' AND kind='account.storage'")\nc.execute("DELETE FROM audit_log WHERE action IN ('account.quota','account.storage.request','account.storage.approve') AND subject='test@lx.or.kr' AND at > now() - interval '10 minutes'")`);
+      py(`c.execute("UPDATE lx_users SET storage_quota_gb=%s WHERE id='u_mail_test'", (${JSON.stringify(keep)} or None,))\nc.execute("DELETE FROM storage_requests WHERE user_id='u_mail_test' AND why LIKE 'e2e%%'")\nc.execute("DELETE FROM lx_notices WHERE user_id='u_mail_test' AND kind='account.storage'")\nc.execute("DELETE FROM audit_log WHERE action IN ('account.quota','account.storage.request','account.storage.approve') AND subject='test@lx.or.kr' AND at > now() - interval '10 minutes'")`);
       await sc.close(); await ac.close();
     }
   });

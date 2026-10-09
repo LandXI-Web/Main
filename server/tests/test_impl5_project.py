@@ -145,7 +145,8 @@ def test_profile_self_edit_and_storage(live, tok):
     try:
         assert me["login"] == "test@lx.or.kr" and me["role_ko"] == "LX 직원"
         st = me["storage"]
-        assert st["quota_gb"]["value"] is None                                  # 할당 화면은 확인 전 — 지어내지 않는다
+        dflt = httpx.get(B + "/accounts/storage-default", headers=H(tok["admin"]), timeout=30).json()["quota_gb"]["value"]
+        assert st["quota_gb"]["value"] == dflt and st["quota_own"] is False      # 따로 정하지 않았으면 기본 할당(처음 값 50 GB · 용량-1)
         c = pg()
         want = c.execute("SELECT coalesce(sum((SELECT coalesce(sum(bytes),0) FROM project_links l WHERE l.project_id=p.id) + "
                          "(SELECT coalesce(sum(bytes),0) FROM project_notes n WHERE n.project_id=p.id AND n.removed_at IS NULL)),0), count(*) "
