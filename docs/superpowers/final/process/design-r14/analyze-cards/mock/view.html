@@ -98,6 +98,59 @@ function mapView(c) {
   </div>`;
 }
 
+
+/* ───── 3차(원칙 148): 상세 = 모델 알기 → 영상 고르기(내 영상 올리기 · 공유 데이터셋) → 분석 → 지도 층 ───── */
+function flowView(c, step) {
+  const on = (n) => (n === step ? 'on' : n < step ? 'done' : '');
+  const s1 = `<dl class="kv">
+      <div><dt>찾는 것</dt><dd>경작지 · 비경작지 (필지 단위로 정리)</dd></div>
+      <div><dt>검증 정확도</dt><dd><b>95%</b> · 학습 끝 검증 · 모델 갱신 2026.01</dd></div>
+      <div><dt>학습한 영상</dt><dd>드론 정사영상 2cm · 남원시</dd></div>
+      <div><dt>잘 되는 조건</dt><dd>학습과 같은 드론 정사영상(2cm 안팎) · 영농기 촬영 — 남원시 운영 결과 2,098필지</dd></div>
+      <div><dt>약한 조건</dt><dd>25cm 항공영상 — 학습 영상보다 거칠어 시범 4곳(강진 · 구례 · 여수 · 목포)은 결과 확인 중</dd></div>
+    </dl>
+    <div class="thumbs2"><figure><img src="${IMG}v3/service-detail/data/img/namwon-cycle4/2@2x.jpg" alt=""><figcaption>남원시 2025.06 결과</figcaption></figure><figure><img src="${IMG}v3/service-detail/data/img/namwon-cycle4/4@2x.jpg" alt=""><figcaption>남원시 2025.10 결과</figcaption></figure></div>`;
+  const s2 = `<h4>내 정사영상 올리기</h4>
+    <div class="drop"><b>정사영상 파일을 여기에 끌어다 놓거나 고르세요</b><small>tif · jpg · jp2 · ecw 파일 · 한 번에 20GB까지 · 올라오면 서버가 표준 형식으로 바꿔 보관합니다</small></div>
+    <div class="up"><span class="fn">원주시_2025_정사영상.tif</span><span class="sz">3.2GB</span><span class="bar"><i style="width:62%"></i></span><span class="st2">올리는 중 62% · 예시</span></div>
+    <div class="fld"><span>지역</span><span class="in">원주시</span><span>촬영 시기</span><span class="in">2025.05</span></div>
+    <h4 class="mt">공유 데이터셋에서 불러오기 <small>LX 관리자가 관리 · 내 관할 먼저</small></h4>
+    <ul class="ds">
+      <li class="pick"><span class="nm2">남원시 2025.08 드론 정사영상</span><span class="g">1.5cm</span><span class="fit ok">모델에 맞음</span></li>
+      <li><span class="nm2">남원시 2025.04 드론 정사영상</span><span class="g">1.5cm</span><span class="fit ok">모델에 맞음</span></li>
+      <li><span class="nm2">익산시 황등면 드론 정사영상</span><span class="g">1.4cm</span><span class="fit ok">모델에 맞음</span></li>
+      <li><span class="nm2">김제시 2023 항공영상</span><span class="g">25cm</span><span class="fit so">거칠어 결과 확인 필요</span></li>
+      <li><span class="nm2">V-World 위성영상 · 연결된 영상</span><span class="g">25cm</span><span class="fit so">거칠어 결과 확인 필요</span></li>
+      <li><span class="nm2">Sentinel-2 위성영상 · 연결된 영상</span><span class="g">10m</span><span class="fit no">이 모델에 맞지 않음</span></li>
+    </ul>`;
+  const s3 = `<div class="sel"><span class="k">고른 영상</span><b>남원시 2025.08 드론 정사영상 · 1.5cm</b><span class="k">예상 시간</span><b>남원 전역 약 2시간 9분 <small>최근 같은 영상 분석 기록</small></b></div>
+    <div class="prog"><div class="pb"><i style="width:17%"></i></div><p><b>분석 중</b> · 23개 읍면동 가운데 4곳 끝 <small>예시</small></p><p class="note">작업 대기열에서 순서대로 돌고, 끝난 읍면동부터 지도에 층으로 올라옵니다. 이 화면을 닫아도 계속 돌고, 끝나면 알림이 옵니다.</p></div>
+    <span class="go2 ghost">분석 멈추기</span>`;
+  const s4 = `<h4>층</h4><ul class="ly">
+      <li class="on"><i></i><span>내 분석 결과 2026.10.09 — 경작지</span></li>
+      <li class="on"><i></i><span>내 분석 결과 2026.10.09 — 비경작지</span></li>
+      <li><i></i><span>지난 결과 2026.06.08 · 2,098필지</span></li>
+      <li class="on"><i></i><span>필지 경계 · 연속지적</span></li>
+      <li class="on"><i></i><span>정사영상 2025.08</span></li></ul>
+    <h4 class="mt">범례</h4><ul class="lg"><li><i class="a"></i>경작지</li><li><i class="b"></i>비경작지</li><li><i class="c"></i>필지 경계</li></ul>
+    <h4 class="mt">내 분석 결과</h4><ul class="mine">
+      <li class="pick"><span>2026.10.09 · 남원시 · 2025.08 드론</span><b>분석 중</b></li>
+      <li><span>2026.06.08 · 남원시 · 2025 드론 4시점</span><b>2,098필지</b></li></ul>`;
+  const steps = [['모델 알기', '무엇을 얼마나 잘 찾나', s1], ['영상 고르기', '내 정사영상 올리기 · 공유 데이터셋', s2], ['분석', '대기열 → 읍면동 순으로', s3], ['지도 층', '결과를 켜고 끄며 보기', s4]];
+  const next = ['영상 고르기로', '이 영상으로 분석 시작', '지도에서 보기', '새로 분석하기'][step - 1];
+  const left = steps.map(([t, sub, body], i) => `<section class="stp ${on(i + 1)}"><header><i>${i + 1}</i><b>${t}</b><small>${sub}</small></header>${i + 1 === step ? `<div class="stb">${body}</div>` : ''}</section>`).join('');
+  const chips = { 1: '남원시 · 2025.08 드론 정사영상 · 운영 결과', 2: '남원시 · 2025.08 드론 정사영상 (고른 영상 미리 보기)', 3: '남원시 · 분석 중 — 끝난 읍면동부터 층이 올라옵니다', 4: '남원시 · 내 분석 결과 2026.10.09' };
+  return `<nav class="crumb"><span>분석하기</span><span>›</span><b>${esc(c.name)}</b></nav>
+  <div class="fl">
+    <aside class="fl-l">
+      <div class="fl-h"><h1 class="nm">${esc(c.name)}</h1><p class="ln">${esc(c.line)}</p><p class="mini"><b>95%</b> 검증 정확도 · 모델 갱신 2026.01 · 대상 지역 7곳</p></div>
+      ${left}
+      <div class="fl-f"><span class="go wide">${next}</span></div>
+    </aside>
+    <div class="mp-m"><img src="${IMG + c.img}" alt=""><span class="mcap">${chips[step]}</span><span class="zoom"><b>+</b><b>−</b></span></div>
+  </div>`;
+}
+
 const q = new URLSearchParams(location.search);
 const v = q.get('v') || 'list';
 document.body.dataset.v = v;
@@ -105,6 +158,7 @@ const page = document.getElementById('page');
 const stamp = document.getElementById('stampT');
 if (v === 'list') { page.innerHTML = head + tools + `<div class="g3">${C.map(cardA).join('')}</div>`; stamp.textContent = 'ⓐ 정식 서비스 5장 — 그림 위 · 정확도 · 모델 갱신 · 대상 지역'; }
 else if (v === 'listb') { page.innerHTML = head + tools + `<div class="g4">${C.map(cardB).join('')}</div>`; stamp.textContent = 'ⓑ 그림 없이 — 정확도 · 모델 갱신 · 대상 지역만 · 4열'; }
+else if (v === 'flow') { const st = Number(q.get('s') || 1); page.classList.add('map'); page.innerHTML = flowView(C[0], st); stamp.textContent = `상세 흐름 ${st}/4 — 모델 알기 → 영상 고르기 → 분석 → 지도 층(지도 칸은 결과 장면 조각)`; }
 else { page.classList.add('map'); page.innerHTML = mapView(C[0]); stamp.textContent = '상세 = 정식 지도 서비스 — 지역 · 층 · 범례 · 지역별 결과(지도 칸은 결과 장면 조각)'; }
 </script>
 </body>
