@@ -7,7 +7,7 @@
 GET    /projects?scope=mine|led|joined|archived|all
                                          mine = 내가 만든(프로젝트장) + 참여한(구성원) 진행 중 · led · joined 는 그 한쪽 · archived = 내 보관(끝난) 프로젝트
                                          (관리자는 전체 보관) · all = LX 전체 진행 중. 줄마다 지금 단계 · 다음 할 일 하나 · 마지막 활동
-                                         · steps(단계 6의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
+                                         · steps(단계 6 — 데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
 POST   /projects                         {name, task, task_id?, regions:[code..]} → 바로 만들어진다 · 프로젝트장 = 만든 직원
 GET    /projects/places                  대상 지역 고르기의 해외 항목(국내 시군구는 GET /regions)
 GET    /projects/people                  구성원 고르기(LX 직원 · 관리자)
@@ -59,8 +59,11 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
-STAGES = [("ingest", "데이터 올리기"), ("label", "학습데이터 구축"), ("train", "학습"), ("review", "결과 확인"),
-          ("publish", "배포 신청"), ("ops", "서비스 관리")]
+# 단계 6(10-09 배포-1 · 원칙 151 · 158): 학습 다음 '추론'(프로젝트 모델로 배포 신청 없이 분석) · 마지막 '배포 신청'.
+# 예전 6단계 '서비스 관리'는 직원 쪽에서 뺐다 — 공개된 서비스의 관리(기관 공유 · 사용 현황)는 LX 관리자 '배포' 메뉴(release.py).
+STAGES = [("ingest", "데이터 올리기"), ("label", "학습데이터 구축"), ("train", "학습"), ("infer", "추론"), ("review", "결과 확인"),
+          ("publish", "배포 신청")]
+OPTIONAL = {"infer"}              # 해 보면 좋은 단계 — 끝나지 않아도 '앞 단계 남음'(막힌 곳)으로 올리지 않는다
 SCOPES = ("mine", "led", "joined", "archived", "all")
 SCOPE_WORD = {"mine": "진행 중 · 내가 만든 · 참여한 프로젝트", "led": "진행 중 · 내가 만든 프로젝트", "joined": "진행 중 · 참여한 프로젝트",
               "archived": "보관한 프로젝트", "all": "진행 중 · LX 전체 프로젝트"}
@@ -316,12 +319,15 @@ async def _facts(conn, r) -> dict:
         judged += await conn.fetchval(
             "SELECT count(*) FROM survey_findings s JOIN lx_users u ON u.id = s.updated_by WHERE s.verdict IS NOT NULL "
             "AND s.sgg_cd = ANY($1::text[]) AND s.updated_at >= $2", codes, rnd_at) or 0
-    last = [r["updated_at"], *(s["created_at"] for s in samples[:1]), *(j["created_at"] for j in jobs[:1])]
+    # 추론(배포-1) — 이 프로젝트 모델로 돌린 분석(추론 탭 · 분석 작업 대기열 · options.project_id) · 이번 회차 것
+    infers = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
+                              "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
+    last = [r["updated_at"], *(s["created_at"] for s in samples[:1]), *(j["created_at"] for j in jobs[:1]), *(j["created_at"] for j in infers[:1])]
     ap_last = await conn.fetchval("SELECT max(coalesce(a.decided_at, a.at)) FROM approvals a JOIN project_links l ON l.ref=a.subject_id "
                                   "AND l.kind='card_version' AND a.subject_type='card' WHERE l.project_id=$1", pid)
     last_at = max([x for x in [*last, ap_last] if x], default=None)
     return {"have": have, "samples": samples, "jobs": jobs, "model": model, "last_at": last_at, "reg": reg, "model_ap": model_ap, "card": card, "cv_now": cv_now,
-            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged)}
+            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers}
 
 
 def _judge(r, f) -> dict:
@@ -367,7 +373,19 @@ def _judge(r, f) -> dict:
         t["next"] = "학습 다시 시작"
     else:
         t["next"] = "학습 시작" if smp else "라벨 묶음 올린 뒤 학습"
-    # ④ 결과 확인 — 대상 지역 표본 판정 한 묶음
+    # ④ 추론 — 학습한 모델로 배포 신청 없이 분석(배포-1). 끝난 분석이 하나 있으면 끝 · 해 보면 좋은 단계(막힌 곳에 올리지 않음)
+    inf = st["infer"]
+    done_inf = [j for j in f["infers"] if j["state"] == "done"]
+    run_inf = [j for j in f["infers"] if j["state"] in ("queued", "running")]
+    inf["done"] = bool(done_inf)
+    if f["model"]:
+        inf["target"] = {"model": (f["reg"] or f["model"])["id"]}
+    if run_inf:
+        inf["next"] = "추론 대기 중" if all(j["state"] == "queued" for j in run_inf) else "추론 중"
+    elif not done_inf:
+        inf["next"] = "학습한 모델로 영상 분석" if f["model"] else "학습 뒤 영상 분석"
+    inf["progress"] = None
+    # ⑤ 결과 확인 — 대상 지역 표본 판정 한 묶음
     rv = st["review"]
     rv["done"] = f["judged"] >= REVIEW_BATCH
     rv["progress"] = {"n": min(f["judged"], REVIEW_BATCH), "total": REVIEW_BATCH}
@@ -379,40 +397,29 @@ def _judge(r, f) -> dict:
     elif regions:
         rv["next"] = None                   # 해외 지역만 — 결과 확인(필지 표본) 대상이 아니다
         rv["skip"] = True
-    # ⑤ 발행 요청 — 이번 회차 카드(또는 새 판) 공개 결재
+    # ⑥ 배포 신청 — 이번 회차 카드(또는 새 판) 승인 요청 · 승인 뒤 기관 공유 · 사용 현황은 LX 관리자 '배포' 메뉴(원칙 151 · 152)
     pb = st["publish"]
     pb["target"] = {k: v for k, v in (("model", f["reg"]["id"] if f["reg"] else None), ("card", f["card"])) if v}
     if f["cv_now"] and f["cv_now"]["approved_by"]:
         pb["done"] = True
+        pb["next"] = "배포 승인됨"
+        pb["status_only"] = True
     elif f["cv_ap"] and f["cv_ap"]["state"] == "pending":
-        pb["next"] = "공개 승인 대기"
+        pb["next"] = "배포 신청 검토 중"
         holds["publish"] = "wait"
     elif f["cv_ap"] and f["cv_ap"]["decision"] == "reject":
-        pb["next"] = "공개 거절 · 사유 확인"
+        pb["next"] = "배포 신청 거절 · 사유 확인"
         pb["reason"] = f["cv_ap"]["reason"]
         holds["publish"] = "reject"
     else:
-        pb["next"] = "서비스 카드 배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
-    # ⑥ 서비스 관리 — 공개 뒤(끝이 없는 단계)
-    op = st["ops"]
-    if f["card"]:
-        op["target"] = {"card": f["card"]}
-    ga = sum(1 for d in f["deploys"] if d["stage"] == "ga")
-    pilot = sum(1 for d in f["deploys"] if d["stage"] in ("canary", "shadow"))
-    if f["port_wait"]:
-        op["next"] = "기관에 공유 승인 대기"
-        holds["ops"] = "wait"
-    elif not f["deploys"]:
-        op["next"] = "기관에 공유 요청"
-    else:                                   # 지도 범례와 같은 말(운영 = 전면 · 시범 = 시범 운영)
-        op["next"] = " · ".join(x for x in (f"운영 {ga}곳" if ga else "", f"시범 {pilot}곳" if pilot else "") if x) or "적용 진행 중"
-        op["status_only"] = True
-    # 지금 단계 — 공개됐고 이번 회차 판도 공개됐으면 서비스 관리 · 아니면 앞에서부터 끝나지 않은 첫 단계(건너뛸 단계는 넘어감)
+        pb["next"] = "배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
+    # 지금 단계 — 이번 회차 판이 승인됐으면 배포 신청(끝) · 아니면 앞에서부터 끝나지 않은 첫 단계(건너뛸 단계는 넘어감)
     order = [k for k, _ in STAGES]
+    last_i = len(order) - 1
     if f["published"] and st["publish"]["done"]:
-        cur = 5
+        cur = last_i
     else:
-        cur = next((i for i, k in enumerate(order[:5]) if not st[k]["done"] and not st[k].get("skip")), 4)
+        cur = next((i for i, k in enumerate(order) if not st[k]["done"] and not st[k].get("skip")), last_i)
         if r["round"] > 1 and cur < 2:        # 보완 회차는 학습 단계로 돌아간다(데이터 · 라벨은 앞 회차 것을 이어 쓴다)
             cur = 2 if not st["train"]["done"] else cur
     stages = []
@@ -421,7 +428,7 @@ def _judge(r, f) -> dict:
         state = "now" if i == cur else ("done" if s["done"] else "wait")
         stages.append({"index": i, **{x: y for x, y in s.items() if x != "done"}, "state": state, "done": bool(s["done"])})
     now = stages[cur]
-    nxt = {"text": now["next"] or ("운영 중" if now["key"] == "ops" else now["label"]), "stage": now["key"], "target": now["target"],
+    nxt = {"text": now["next"] or now["label"], "stage": now["key"], "target": now["target"],
            "status_only": bool(now.get("status_only"))}
     return {"stages": stages, "stage": {"index": cur, "key": now["key"], "label": now["label"]}, "next": nxt, "published": f["published"],
             "steps": [("skip" if s.get("skip") and s["state"] != "now" else s["state"]) for s in stages], "blocked": _blocked(stages, cur, holds)}
@@ -438,7 +445,7 @@ def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
         k = s["key"]
         if holds.get(k):
             out.append({"kind": holds[k], "stage": k, "label": s["label"], "text": s["next"]})
-        elif i < cur and not s["done"] and not s.get("skip"):
+        elif i < cur and not s["done"] and not s.get("skip") and k not in OPTIONAL:
             prog = s.get("progress")
             out.append({"kind": "before", "stage": k, "label": s["label"],
                         "text": f"{s['label']} {prog['n']}/{prog['total']}" if prog else f"{s['label']} 남음"})
@@ -451,7 +458,7 @@ def _can(p: Principal, r, members: list[str], published: bool) -> dict:
     lead = p.user_id == r["lead_id"]
     # 공개된 서비스의 재학습(학습 시작 · 다음 회차) = 프로젝트장만(역할-3 ⓑ · J-2) — 관리자도 아니다(관리자는 프로젝트장을 바꾸고 배포를 승인한다)
     # 프로젝트장 넘기기 = 프로젝트장 본인 · LX 관리자(확인 17차 P-5 ⓐ) · 기록 · 메모 · 파일 = 구성원 · 프로젝트장 · LX 관리자(P-4 ⓐ — 기관은 안 봄)
-    return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": lead or p.is_admin, "work": mem, "publish": lead,
+    return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": lead or p.is_admin, "work": mem, "publish": lead, "infer": mem,
             "train": lead if published else mem, "retrain": lead and published, "archive": lead or p.is_admin,
             "log": mem or p.is_admin}
 

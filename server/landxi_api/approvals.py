@@ -32,7 +32,7 @@ from .jobs import ops_event
 router = APIRouter()
 QUOTA_DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day", "llm_tokens_month"]
 KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "사용량 설정 변경", "model": "모델 등록",
-              "card": "서비스 공개", "request": "분석 요청"}
+              "card": "배포 신청", "request": "분석 요청"}          # card = 프로젝트 마지막 단계의 배포 신청(서비스 공개 승인 · 10-09 배포-7)
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
 

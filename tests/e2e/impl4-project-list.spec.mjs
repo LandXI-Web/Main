@@ -23,10 +23,10 @@ async function openList(page, baseURL) {
   return j;
 }
 
-const KEYS = ['ingest', 'label', 'train', 'review', 'publish', 'ops'];
-const GROUPS = [['ingest'], ['label', 'train'], ['review'], ['publish', 'ops']];
+const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
+const GROUPS = [['ingest'], ['label', 'train', 'infer'], ['review'], ['publish']];   // 추론은 해 보면 좋은 단계 — 묶음 완료 판정에서 뺀다(board.js)
 const seg4 = (p) => { const gi = Math.max(0, GROUPS.findIndex((g) => g.includes(p.stage.key)));
-  return GROUPS.map((g, i) => (i === gi ? 'now' : g.every((k) => ['done', 'skip'].includes(p.steps[KEYS.indexOf(k)])) ? 'done' : 'wait')); };
+  return GROUPS.map((g, i) => (i === gi ? 'now' : g.filter((k) => k !== 'infer').every((k) => ['done', 'skip'].includes(p.steps[KEYS.indexOf(k)])) ? 'done' : 'wait')); };
 
 test.describe('프로젝트 목록 — 진행 현황(흐름도 · 네 단계 표)', () => {
   test.beforeEach(async ({ request }) => {

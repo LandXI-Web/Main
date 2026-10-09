@@ -58,6 +58,13 @@ body:not([data-view="approvals"]) .oc-inbox{display:none}
 .oc-todo i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--rule)}
 .oc-todo i[data-dot="lock"]{background:var(--lock)}
 .oc-todo a[data-lv="warn"] i{background:var(--warn)}
+.oc-use{display:flex;flex-direction:column;gap:2px;margin:0 -8px;padding:12px 8px 4px;border-top:1px solid var(--rule);border-radius:0 0 var(--r-8) var(--r-8);text-decoration:none;color:var(--ink)}
+.oc-use[hidden]{display:none}
+.oc-use:hover{background:var(--bg-0)}
+.oc-use b{font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.oc-use-n{font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+.oc-use-n span{display:inline-block}
+.oc-use small{font:400 13px/18px var(--font-body);color:var(--sub)}
 .oc-todo svg{flex:none;width:16px;height:16px;stroke:var(--mute);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 
 /* 레일 배지(결재 수) */

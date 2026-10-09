@@ -123,10 +123,17 @@ def _year_now() -> int:
 
 
 async def _services(tenant: str, order: list[str] | None, items_intro: dict, en: bool = False) -> list[dict]:
-    """그 기관에 켜진 서비스 — 배포 기록이 있는 카드만(시험 배포 제외). 순서 = 브랜드 services(LX 관리자) → 없으면 해 · 카드 순."""
+    """그 기관에 켜진 서비스 — 배포 기록이 있는 카드만(시험 배포 제외). 순서 = 브랜드 services(LX 관리자) → 없으면 해 · 카드 순.
+    기관 공유(확인 대장 배포-5 · 원칙 152): LX 관리자가 '배포 → 기관 공유'에서 켠 서비스는 더하고(목록 끝) 끈 서비스는 뺀다.
+    공유 기록이 없는 서비스는 지금까지처럼 배포 기록으로 판정한다(운영 중인 공유 상태를 바꾸지 않는다)."""
     async with db(realm="lx") as c:
         dps = await c.fetch("SELECT card_id, stage, year FROM deploys WHERE tenant_id = $1 AND NOT coalesce(test, false)", tenant)
-        ids = sorted({d["card_id"] for d in dps if d["card_id"]})
+        try:
+            from .release import latest_shares
+            sh = await latest_shares(c, tenant=tenant)
+        except Exception:  # noqa: BLE001 — 공유 기록 표가 없으면(되돌린 뒤) 배포 기록만
+            sh = {}
+        ids = sorted({d["card_id"] for d in dps if d["card_id"]} | set(sh))
         cards = {r["id"]: r for r in await c.fetch("SELECT id, name, intro FROM cards WHERE id = ANY($1::text[])", ids)} if ids else {}
     by: dict[str, dict] = {}
     for d in dps:
@@ -137,6 +144,8 @@ async def _services(tenant: str, order: list[str] | None, items_intro: dict, en:
     else:   # 기본: LX 가 뒤에서 돌린 적용(shadow) · 되돌린 것만 있는 카드는 기관 서비스로 보이지 않는다
         want = sorted((c for c, b in by.items() if b["draft"] or any(x["stage"] in ("ga", "canary") for x in b["live"])),
                       key=lambda c: (min([x["year"] or 9999 for x in by[c]["live"] + by[c]["draft"]]), c))
+    shared_on = {cid for cid, r in sh.items() if r["shared"] and cid in cards}
+    want = [c for c in want if not (c in sh and not sh[c]["shared"])] + sorted((c for c in shared_on if c not in want), key=lambda c: (sh[c]["at"], c))
     all_items, _ = await summary.cached_all()
     stage_of: dict[str, str] = {}
     for it in all_items:
@@ -147,12 +156,12 @@ async def _services(tenant: str, order: list[str] | None, items_intro: dict, en:
     now_y = _year_now()
     out = []
     for cid in want:
-        b = by[cid]
+        b = by.get(cid) or {"live": [], "draft": []}
         live_years = [x["year"] for x in b["live"] if x["year"]]
         draft_years = [x["year"] for x in b["draft"] if x["year"]]
-        if b["live"]:
+        if b["live"] or cid in shared_on:
             status = stage_of.get(cid, summary.STAGE_FIRST)
-            since = min(live_years) if live_years else (min(draft_years) if draft_years else None)
+            since = min(live_years) if live_years else (min(draft_years) if draft_years else sh[cid]["at"].astimezone(KST).year if cid in sh else None)
         else:
             y = min(draft_years) if draft_years else None
             status = "내년" if y == now_y + 1 else f"{y}년 예정" if y and y > now_y + 1 else summary.STAGE_FIRST
@@ -163,7 +172,7 @@ async def _services(tenant: str, order: list[str] | None, items_intro: dict, en:
         nm_s = ((nm.get("en") if en else None) or nm.get("ko") or nm.get("en")) if isinstance(nm, dict) else nm
         out.append({"card": cid, "name": nm_s or cid,
                     "line": items_intro.get(cid) or intro.get("headline") or "",
-                    "year": since, "status": status, "open": bool(b["live"])})
+                    "year": since, "status": status, "open": bool(b["live"]) or cid in shared_on})
     return out
 
 

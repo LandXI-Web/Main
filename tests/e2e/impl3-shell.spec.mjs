@@ -77,7 +77,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     const pid = await row.getAttribute('data-id');
     await page.goto('v3/lx-project/?project=' + pid);
     const bar = page.locator('.k-sub .lxp-bar');
-    await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /결과 확인/, /배포 신청/, /서비스 관리/], { timeout: 20000 });
+    await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /추론/, /결과 확인/, /배포 신청/], { timeout: 20000 });   // 10-09 배포-1 · 원칙 151
     await expect(bar.locator('.lxp-st[data-st="now"]')).toHaveCount(1);
     await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-ingest/'), { timeout: 20000 }), bar.locator('.lxp-st').first().click()]);
     expect(new URL(page.url()).searchParams.get('project')).toBe(pid);
@@ -90,30 +90,25 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     expect(Math.abs(mainH - mapH)).toBeLessThan(4);
   });
 
-  test('프로젝트 안 단계 화면은 그 프로젝트의 것만 — 서비스 관리 표 · 큰 숫자 · 학습 판 · 결과 확인 규칙(프로젝트 밖은 전체)', async ({ page, baseURL }) => {
+  test('프로젝트 안 단계 화면은 그 프로젝트의 것만 — 추론 · 배포 신청 · 학습 판(프로젝트 밖은 전체)', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
-    /* 프로젝트 밖(메뉴 '서비스 카드' 자리) — 전체 배포본 */
-    await page.goto('v3/lx-deploy/?tab=ops');
-    await page.locator('.dp-ops .k-table tbody tr').first().waitFor({ timeout: 30000 });
-    const all = await page.locator('.dp-ops .k-table tbody tr').count();
-    /* 공개된 프로젝트 하나 — 서비스 관리 단계 */
-    /* 공개된 프로젝트 = 프로젝트 목록(배포 신청 단계) 가운데 지금 단계가 서비스 관리인 것 — 서버 판정 */
+    /* 승인된 프로젝트 = 지금 단계가 배포 신청(승인됨)인 것 — 서버 판정. 예전 6단계 '서비스 관리'는 직원 쪽에서 뺐다(원칙 151 · 관리자 '배포' 메뉴) */
     const got = page.waitForResponse((r) => /\/projects\?scope=mine/.test(r.url()) && r.ok(), { timeout: 30000 });
     await page.goto('v3/lx-project/?scope=mine&stage=deploy');
-    const pid = ((await (await got).json()).items || []).find((p) => p.stage?.key === 'ops')?.id;
-    test.skip(!pid, '공개된 프로젝트 없음');
+    const pr = ((await (await got).json()).items || []).find((p) => p.stage?.key === 'publish');
+    const pid = pr?.id;
+    test.skip(!pid, '배포 신청 단계 프로젝트 없음');
     await page.goto('v3/lx-project/?project=' + pid);
     await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });   // 프로젝트를 읽은 뒤(단계마다 그 대상이 붙은 주소)
+    /* 추론(4) · 배포 신청(6) — 그 프로젝트 맥락의 lx-release */
+    await page.locator('.k-sub .lxp-st').nth(3).click();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-release/') && u.searchParams.get('stage') === 'infer', { timeout: 20000 });
+    expect(new URL(page.url()).searchParams.get('project')).toBe(pid);
+    await expect(page.locator('.rl-card h2').first()).toHaveText('추론', { timeout: 20000 });
     await page.locator('.k-sub .lxp-st').nth(5).click();
-    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-deploy/'), { timeout: 20000 });
-    const card = new URL(page.url()).searchParams.get('card');
-    await page.locator('.dp-ops .k-table tbody tr').first().waitFor({ timeout: 30000 });
-    const names = await page.locator('.dp-ops .dp-wk').evaluateAll((els) => els.map((e) => e.firstChild.textContent.trim()));
-    expect(new Set(names).size, names.join(',')).toBe(1);                    // 그 프로젝트 서비스 하나의 배포본만
-    expect(names.length).toBeLessThan(all);
-    for (const k of await page.locator('.dp-pin').evaluateAll((els) => els.map((e) => e.dataset.key))) expect(k).toBeTruthy();
-    expect(card).toBeTruthy();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-release/') && u.searchParams.get('stage') === 'publish', { timeout: 20000 });
+    await expect(page.locator('.rl-card h2').first()).toHaveText('배포 신청', { timeout: 20000 });
     /* 학습 판 — 업무 10 이 아니라 그 프로젝트 한 장 */
     await page.goto('v3/lx-project/?project=' + pid);
     await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });

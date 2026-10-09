@@ -44,7 +44,9 @@ const legend = h('div.oc-legend', { 'aria-hidden': 'true', html: '<span data-sta
 const big = h('div.oc-big');
 const openBtn = h('a.t-btn.oc-open', { href: '#/approvals', text: '승인 요청함 열기' });
 const todoEl = h('ul.oc-todo');
-const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '승인 대기' }, big, openBtn, todoEl);
+/* 서비스 사용 현황 요약(10-09 배포-5 — 대시보드는 요약 · 전체는 배포 메뉴 '사용 현황' 탭) — GET /release/usage 한 출처 */
+const useEl = h('a.oc-use', { href: INFRA + '#/deploys/usage', 'aria-label': '서비스 사용 현황 — 배포 메뉴에서 전체 보기' });
+const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '승인 대기' }, big, openBtn, todoEl, useEl);
 over.append(stageEl, seg, legend, card);
 
 const M = mountMap(stageEl);
@@ -82,6 +84,21 @@ function drawOverview() {
   M.sync();
 }
 
+async function drawUse() {
+  let u;
+  try { u = await api('/release/usage'); } catch { useEl.hidden = true; return; }
+  const v = (e) => (e && typeof e === 'object' ? e.value : e);
+  const sm = u.summary || {};
+  const md = (x) => { const d = new Date(x || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
+  const top = (u.items || []).filter((r) => r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)))[0];
+  useEl.hidden = false;
+  useEl.replaceChildren(h('b', { text: '서비스 사용 현황' }),
+    h('span.oc-use-n', {}, h('span', { text: `기관 ${v(sm.orgs) ?? '—'}곳 · 공유 ${v(sm.shared) ?? '—'}건` }), ' · ', h('span', { text: `이번 달 분석 ${v(sm.month) ?? '—'}회` })),
+    h('small', { text: top ? `마지막 사용 ${md(top.last)} · ${top.org.name} ${top.service.name}` : '아직 기관 사용 기록이 없습니다' }));
+}
+drawUse();
+setInterval(drawUse, 60000);
+
 /* 공지 — 할 일 목록의 '공지 · 쓰기' 줄(주소는 바꾸지 않고 창만) · 올린 수는 서버 GET /announcements 한 출처 */
 let annN = null;
 const annLoad = () => noticeCount().then((n) => { annN = n; drawOverview(); });
@@ -104,7 +121,7 @@ function drawInbox() {
   const list = pending();
   if (!D.ok) { none.hidden = false; tbl.hidden = true; if (none.dataset.kind !== 'loading') empty(none, { kind: 'loading' }); return; }
   if (none.dataset.kind === 'loading') none.innerHTML = '';
-  const rows = list.map((x) => ({ ...x, kindKo: x.kindKo, target: x.target, requester: x.requester, day: ymd(x.at) || '—' }));
+  const rows = list.map((x) => ({ ...x, kindKo: x.kind === 'card' ? '배포 신청' : x.kindKo, target: x.target, requester: x.requester, day: ymd(x.at) || '—' }));
   none.hidden = !!rows.length; tbl.hidden = !rows.length;
   if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '승인할 것이 없습니다', char: 'satellite' }); }
   const cols = [
@@ -160,7 +177,12 @@ async function openSheet(item) {
       if (x.state === 'pending') why.append(h('p.oc-rq-n', { text: '승인하면 대기열 순서대로 분석하고, 결과는 그 서비스의 새 시점으로 기관에 갑니다.' }));
     }).catch((e) => { why.removeAttribute('aria-busy'); devlog('request', e.code || e.message); });
   }
-  sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
+  sheet = drawer({ title: `${item.kind === 'card' ? '배포 신청' : item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
+  /* 배포 신청(서비스 공개)은 배포 메뉴에서 신청서(서버 값 + 메모)를 보고 승인 · 거절한다(10-09 배포-3 ⓐ) */
+  if (item.kind === 'card') {
+    body.append(h('p.oc-mine', { text: '배포 신청은 배포 메뉴에서 신청서를 보고 승인 · 거절합니다.' }), h('a.t-btn', { href: INFRA + '#/deploys', text: '배포 메뉴에서 신청서 보기' }));
+    return;
+  }
   if (item.mine && !item.canDecide) {                // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
     body.append(h('p.oc-mine', { text: '내가 올린 승인 요청입니다. 다른 관리자가 승인합니다.' }));
     return;

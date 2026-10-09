@@ -32,6 +32,8 @@ const REGION = q0.get('region') || '';
    이 화면이 맡는 프로젝트 단계 = 학습데이터 구축(라벨 묶음 올리기 · 라벨 확인) · 학습 · 발행 요청(서비스 카드 발행 요청) — ?stage= 로 받는다.
    화면은 그대로이고 원스톱 서랍이 프로젝트 맥락으로 열린다. 프로젝트 밖에서는 메뉴 '프로젝트'(업무별 모델은 프로젝트의 일). */
 const STAGE = ['label', 'train', 'publish'].includes(q0.get('stage')) ? q0.get('stage') : 'train';
+/* 배포 신청은 프로젝트 마지막 단계 화면(lx-release · 10-09 배포-2) — 옛 주소(?stage=publish)는 그리로 */
+if (STAGE === 'publish' && PID) { location.replace(`${new URL('../lx-release/', import.meta.url).pathname}?project=${encodeURIComponent(PID)}&stage=publish`); await new Promise(() => {}); }
 const PR = projectRail(STAGE);
 const S = shell({ who, home: 'lx-train', rail: PR || staffMenu('projects') });
 const PROJ = PR ? attachProject(S, PR, STAGE) : Promise.resolve(null);

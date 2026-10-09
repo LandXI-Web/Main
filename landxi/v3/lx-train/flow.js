@@ -99,7 +99,7 @@ export function openFlow({ host, who, project = null, step = null }) {
   const s2 = sec(2, '라벨 확인');
   const s3 = sec(3, '학습');
   const s4 = sec(4, '결과 확인 · 등록');
-  const s5 = sec(5, project ? '서비스 카드 배포 신청' : '서비스 만들기');
+  const s5 = sec(5, project ? '추론 · 배포 신청' : '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
   if (project && step > 1) setTimeout(() => { if (!closed) body.querySelector(`.tf-s[data-step="${step}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 1600);
@@ -449,6 +449,13 @@ export function openFlow({ host, who, project = null, step = null }) {
   async function buildService() {
     lock(s5, false);
     if (s5.childElementCount) return;
+    /* 프로젝트 안(10-09 배포-1 · 배포-2): 등록된 모델은 다음 단계 '추론'(배포 신청 없이 분석)과 마지막 단계 '배포 신청' 화면에서 쓴다 — 서랍에서 신청하지 않는다 */
+    if (project) {
+      const at = (k) => `${V3}lx-release/?project=${encodeURIComponent(project.id)}&stage=${k}`;
+      s5.append(h('p.t-label', { text: '이 모델로 영상을 분석해 보고, 배포는 프로젝트 마지막 단계에서 신청합니다' }),
+        h('div.tf-act', {}, h('a.t-btn', { href: at('infer'), text: '추론으로' }), h('a.t-btn.t-btn--2', { href: at('publish'), text: '배포 신청으로' })));
+      return;
+    }
     const name = h('input.t-input', { type: 'text', maxlength: '60', value: `${sample?.task_name || model?.name?.split(' · ')[0] || ''}`.trim(), 'aria-label': '서비스 이름' });
     const rulesEl = h('div.tf-rules');
     const ledger = h('select.t-input', { 'aria-label': '대장 형식' });

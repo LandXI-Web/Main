@@ -1,7 +1,8 @@
 /* context.js — 프로젝트 맥락 한 곳(구현 2차 T1 · 확인 대장 R-D3 · 흐름-1 · 10차 메뉴-1 ⓐ · 구현 확인 2차 J-1 다시 · 원칙 81 · 99).
    왼쪽 메뉴는 어디서나 LX 직원 메뉴(홈 · 프로젝트 · 분석하기 · 서비스 카드 · 데이터 · 요청함 — kit/lx-menu.js)이고,
-   생산 6단계는 메뉴가 아니라 **프로젝트 안**에 있다. 단계 화면(데이터 올리기 · 학습 · 결과 확인 · 서비스 관리)은 새로 그리지 않고 `?project=` 로 맥락만 받는다:
-     · 왼쪽 메뉴 = '프로젝트'에 불 · 마스트 아래 한 줄 = 프로젝트 이름 + 그 프로젝트의 단계 6(데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 배포 신청 → 서비스 관리) + 다음 할 일
+   생산 6단계는 메뉴가 아니라 **프로젝트 안**에 있다. 단계 화면(데이터 올리기 · 학습 · 추론 · 결과 확인 · 배포 신청)은 `?project=` 로 맥락만 받는다:
+     · 왼쪽 메뉴 = '프로젝트'에 불 · 마스트 아래 한 줄 = 프로젝트 이름 + 그 프로젝트의 단계 6(데이터 올리기 → 학습데이터 구축 → 학습 → 추론 → 결과 확인 → 배포 신청) + 다음 할 일
+     · 10-09 배포-1 · 원칙 151 · 158: 학습 다음 '추론'(배포 신청 없이 이 프로젝트 모델로 분석) · 마지막 '배포 신청'(lx-release). 예전 '서비스 관리'는 직원 쪽에서 뺐다(LX 관리자 '배포' 메뉴)
      · 단계 표시(완료 · 지금 · 대기) = 서버 판정(GET /projects/{id}) — 화면이 지어내지 않는다. 이 화면이 보이는 단계는 밑줄
      · 단계 → 화면 주소 = stageHref() 한 곳(대시보드 '내 프로젝트' · 프로젝트 화면 · 단계 막대가 모두 이것을 쓴다)
    · 6칸 진행 막대(stepSegHtml · stepSeg) · 막힌 곳 한 줄(stuckHtml) = 프로젝트 목록과 대시보드 '내 프로젝트'가 함께 쓰는 한 부품 — 서버가 목록에 주는 칸 상태(steps) · 막힌 곳(blocked)을 그대로 보인다
@@ -13,7 +14,7 @@ import { TASKS } from '../lx-console/matrix.js';   // 업무 → 대조 규칙(�
 export const PID = new URLSearchParams(location.search).get('project') || null;
 export const STAGES = [
   { key: 'ingest', label: '데이터 올리기' }, { key: 'label', label: '학습데이터 구축' }, { key: 'train', label: '학습' },
-  { key: 'review', label: '결과 확인' }, { key: 'publish', label: '배포 신청' }, { key: 'ops', label: '서비스 관리' },
+  { key: 'infer', label: '추론' }, { key: 'review', label: '결과 확인' }, { key: 'publish', label: '배포 신청' },
 ];
 const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 상대 주소(GitHub Pages /Main/ 아래에서도)
 export const HOME = at('./');
@@ -35,8 +36,8 @@ export function stageHref(pr, key, target = {}) {
     case 'label': return at('../lx-train/') + qs({ project: id, stage: 'label', flow: 1 });
     case 'train': return at('../lx-train/') + qs({ project: id, stage: 'train', flow: 1, sample: t.sample, model: t.model });
     case 'review': return at('../lx-review/') + qs({ project: id, region: t.region || dom, rule: ruleOf(pr) });
-    case 'publish': return at('../lx-train/') + qs({ project: id, stage: 'publish', flow: 1, model: t.model, card: t.card });
-    case 'ops': return at('../lx-deploy/') + qs({ project: id, card: t.card, tab: 'ops' }) + '#ops';
+    case 'infer': return at('../lx-release/') + qs({ project: id, stage: 'infer' });
+    case 'publish': return at('../lx-release/') + qs({ project: id, stage: 'publish' });
     default: return projectHref(id);
   }
 }

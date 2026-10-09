@@ -411,9 +411,16 @@ async def _deck_tenant(p) -> dict:
             mine_cards = {r["card_id"] for r in await c2.fetch("SELECT card_id FROM space_assign WHERE tenant_id=$1 AND user_id=$2", p.tenant_id, p.user_id)}
         svcs = [s for s in svcs if s["card"] in mine_cards]
     listed = {s["card"] for s in svcs}
+    # 기관 공유를 끈 서비스(배포-5 · release.card_shares)는 덱에서도 뺀다
+    try:
+        from .release import latest_shares
+        async with db(realm="lx") as c3:
+            off = {cid for cid, r in (await latest_shares(c3, tenant=p.tenant_id)).items() if not r["shared"]}
+    except Exception:  # noqa: BLE001
+        off = set()
     # 서비스 선택에 보이는 서비스(listed) + 그 기관에 적용된 다른 서비스(분석 의뢰에서 고를 수 있는 것 — /requests/services 와 같은 배포 기록)
     extra = [{"card": d["card_id"], "name": None, "line": None, "year": d["year"], "status": None, "open": True, "_extra": True}
-             for d in dps if d["card_id"] not in listed and (not dept_only or d["card_id"] in mine_cards)]
+             for d in dps if d["card_id"] not in listed and d["card_id"] not in off and (not dept_only or d["card_id"] in mine_cards)]
     # LX 담당 = 기관이 보낸 검토 요청 · 분석 요청을 실제로 받는 사람(messages._owner — 프로젝트장 → 카드 담당 → 공개 요청한 직원) ·
     # 기관 화면의 'LX 담당'과 받는 사람이 같은 한 출처(구현 5차 기관-4 ⓐ 'LX와 주고받은 검토 요청' · 담당)
     from .messages import _owner as _rv_owner

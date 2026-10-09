@@ -14,7 +14,7 @@ const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, '
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
 const SHOTS = process.env.LX_SHOTS ? path.resolve('docs/superpowers/final/process/impl-8/staff-dashboard/shots') : null;
 const shot = async (page, name) => { if (!SHOTS) return; fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, name) }); };
-const G = { ingest: 0, label: 1, train: 1, review: 2, publish: 3, ops: 3 };
+const G = { ingest: 0, label: 1, train: 1, infer: 1, review: 2, publish: 3 };
 
 /** 넘침 · 한 단어 줄(두 줄 이상인 글 상자의 마지막 줄이 한 어절) · 금지어 */
 const measure = (page) => page.evaluate(() => {

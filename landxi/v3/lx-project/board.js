@@ -1,5 +1,5 @@
 /* board.js — 프로젝트 진행 현황 흐름도 한 부품(직원-6 4차 · 직원-7 · 10-09 "한 번에 정리").
-   데이터 올리기 → AI 분석 → 결과 확인 → 배포 신청 — 네 단계(서버 단계 6을 묶음: ingest · label+train · review · publish+ops).
+   데이터 올리기 → AI 분석 → 결과 확인 → 배포 신청 — 네 단계(서버 단계 6을 묶음: ingest · label+train+infer · review · publish).
    대시보드 맨 위 칸(칩 둘 + '외 n개')과 메뉴 '프로젝트' 목록(?stage= 단계 고르기)이 같은 부품을 쓴다(원칙 99 — 메뉴와 한 줄기).
    값은 모두 서버(GET /projects — stage · steps · blocked · last_at · next). 단계에 들어온 날짜는 서버에 없어 '마지막 활동'으로 보인다(지어내지 않는다). */
 import { h } from '../kit/util.js';
@@ -7,11 +7,11 @@ import { HOME, ensureCss } from './context.js';
 
 export const GROUPS = [
   { key: 'ingest', label: '데이터 올리기', keys: ['ingest'] },
-  { key: 'ai', label: 'AI 분석', keys: ['label', 'train'] },
+  { key: 'ai', label: 'AI 분석', keys: ['label', 'train', 'infer'] },
   { key: 'review', label: '결과 확인', keys: ['review'] },
-  { key: 'deploy', label: '배포 신청', keys: ['publish', 'ops'] },
+  { key: 'deploy', label: '배포 신청', keys: ['publish'] },
 ];
-const KEYS = ['ingest', 'label', 'train', 'review', 'publish', 'ops'];
+const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
 
 let cssOn = false;
 function sheet() {
@@ -29,7 +29,7 @@ export function seg4(p) {
   const gi = groupOf(p);
   return GROUPS.map((g, i) => {
     if (i === gi) return 'now';
-    const st = g.keys.map((k) => p?.steps?.[KEYS.indexOf(k)]);
+    const st = g.keys.filter((k) => k !== 'infer').map((k) => p?.steps?.[KEYS.indexOf(k)]);   // 추론은 해 보면 좋은 단계 — 묶음 완료 판정에서 뺀다(서버 OPTIONAL)
     return st.every((s) => s === 'done' || s === 'skip') ? 'done' : 'wait';
   });
 }

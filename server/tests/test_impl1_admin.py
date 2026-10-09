@@ -146,7 +146,7 @@ def test_service_publish_needs_admin_and_reject_reason_returns(live, tok, admin2
         p = httpx.post(B + "/deploys", headers=st, json={"card_id": cid, "region": "52190", "test": True}, timeout=60)
         assert p.status_code == 409 and p.json()["error"]["code"] == "approval_required" and "공개" in p.json()["error"]["message"]
         ap = [x for x in httpx.get(B + "/approvals?state=pending", headers=ad, timeout=30).json()["items"] if x["id"] == aid][0]
-        assert ap["kind"] == "card" and ap["kind_label"] == "서비스 공개" and ap["payload"]["name"] == "pytest 공개 결재" and ap["requested_by_name"]
+        assert ap["kind"] == "card" and ap["kind_label"] == "배포 신청" and ap["payload"]["name"] == "pytest 공개 결재" and ap["requested_by_name"]
         d = httpx.post(B + f"/approvals/{aid}/decide", headers=H(admin2), json={"decision": "reject", "reason": "규칙 근거를 더 적어 주세요"}, timeout=30)
         assert d.status_code == 200
         # 요청한 직원의 목록에 반려 · 사유가 돌아온다

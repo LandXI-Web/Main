@@ -348,7 +348,12 @@ async def create_card(body: dict, request: Request):
     project_id(구현 2차 T1 · 4차 P1): 발행 요청은 그 프로젝트의 프로젝트장이 한다. 공개 결재 요청에 프로젝트가 붙고(payload project_id · project_name ·
     owner) 카드는 그 프로젝트에 이어진다(공개된 카드의 담당 = 프로젝트장). 그 프로젝트에 이미 카드가 있으면(보완 회차 · 재학습) 새 카드가 아니라
     같은 카드의 새 판을 만들고 그 판의 공개를 결재에 올린다(재학습 결과의 배포는 관리자 승인 · 역할-3 ⓑ)."""
-    p = require(principal(request), lx=True)
+    return await create_card_as(require(principal(request), lx=True), body)
+
+
+async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
+    """서비스 만들기 · 배포 신청 한 곳(라우트 POST /registry/cards 와 배포 신청 POST /release/projects/{id}/apply 가 함께 쓴다).
+    extra = 승인 요청 payload 에 더할 신청서 값(메모 · 결과 장면 · 정확도 · 학습 데이터 — release.py · 확인 대장 배포-2)."""
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원·관리자만 서비스를 만듭니다")
     name = str(body.get("name") or "").strip()[:60]
@@ -442,7 +447,8 @@ async def create_card(body: dict, request: Request):
                            "VALUES ($1,'card',$2,$3,'pending',$4,$5,'lx',now())", aid, cv, p.user_id,
                            {"action": "publish", "card_id": cid, "name": name, "model_name": mname, "rules": rnames,
                             "ledger_kind": schema.get("kind"), **({"classes": want} if want else {}),
-                            **({"project_id": pid, "project_name": prj["name"], "owner": p.name, "version": cv.split("@")[-1]} if prj else {})},
+                            **({"project_id": pid, "project_name": prj["name"], "owner": p.name, "version": cv.split("@")[-1]} if prj else {}),
+                            **(extra or {})},
                            str(body.get("reason") or "").strip()[:200] or (note if prev_card else "서비스 공개"))
         # 규칙을 고른 서비스 = 필지 대조(실태조사까지 · 고른 규칙만). 규칙이 없으면 AI 분석까지만(탐지 서비스)
         await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "classes": want, "ledger_kind": schema.get("kind"),

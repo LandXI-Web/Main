@@ -6,7 +6,7 @@ import { mountInfra } from './infra.js';
 import { mountTenants } from './tenants.js';
 import { mountDeploys } from './deploys.js';
 import { mountSpaces } from './spaces.js';   // 기관 → '기관 공간' 탭(구현 3차 · 13차 분기-3 ⓒ 1단 · 보기 · 지원만)
-import { mountImprove } from './improve.js'; // 배포 → '개선 후보' 탭(구현 4차 · 16차 개선-1 — XI ChatGEO 가 못 한 요청 모음)
+import { mountRelease } from './release.js'; // 배포 → 세 탭(배포 신청 · 기관 공유 · 사용 현황 — 10-09 배포-3 ⓐ · 배포-5) + 개선 후보(16차 개선-1)
 // 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
 import { loadPending as loadApprovals, pending } from '../../ops-core/js/data.js';     // 배지만 — 사용량 집계를 다시 부르지 않는다
 
@@ -53,9 +53,11 @@ main.append(...Object.values(panes));
 const boot = document.createElement('div'); boot.className = 'oi-boot'; main.append(boot);
 empty(boot, { kind: 'loading' });
 
-const V = { infra: mountInfra(panes.infra), tenants: mountTenants(panes.tenants), deploys: mountDeploys(panes.deploys) };
+/* 배포 메뉴 = 세 탭(release.js). 옛 배포본 표(다른 지역에 적용 · 단계)는 탭에서 뺐다 — 깊은 주소(?deploy=)의 배포본 시트만 그대로 연다 */
+const oldDeploys = Object.assign(document.createElement('div'), { hidden: true });
+const V = { infra: mountInfra(panes.infra), tenants: mountTenants(panes.tenants), deploys: mountDeploys(oldDeploys) };
 mountSpaces(panes.tenants);
-mountImprove(panes.deploys);
+const REL = mountRelease(panes.deploys);
 
 let cur = null;
 function show() {
@@ -68,6 +70,7 @@ function show() {
   document.body.dataset.view = v;
   document.title = { infra: 'Land-XI · LX 관리자 화면 · 인프라', tenants: 'Land-XI · LX 관리자 화면 · 기관', deploys: 'Land-XI · LX 관리자 화면 · 배포' }[v];
   paint(v);
+  if (v === 'deploys') REL.paint();     // 배포 탭은 들어올 때 · 서버 알림 때만 다시 읽는다(30초 갱신으로 적던 사유가 지워지지 않게)
 }
 function paint(v = cur) {
   if (v === 'infra') { V.infra.paintGpus(); V.infra.paintRest(); }
@@ -100,7 +103,7 @@ if (S.gpus?.power_budget) {
       events: ['gpu.sample', 'deploy.changed', 'usage.delta'],
       on: async (ev, data) => {
         if (ev === 'gpu.sample' && data?.gpus?.length) { live = true; await loadGpus(); if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
-        else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') V.deploys.paint(); }
+        else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') { V.deploys.paint(); if (!panes.deploys.contains(document.activeElement) || document.activeElement === document.body) REL.paint(); } }
         else if (ev === 'usage.delta') { await loadOrg(); if (cur === 'tenants') V.tenants.paint(); }
       },
       onState: (s) => { devlog('실시간 스트림', s); if (s !== 'open') live = false; },
