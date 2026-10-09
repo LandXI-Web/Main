@@ -18,7 +18,7 @@ const who = await gate('lx-deploy');
 /* 메뉴 — 왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js · 10차 메뉴-1 ⓐ · J-1) — 프로젝트 맥락(?project=)이면 '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js).
    이 화면 = 프로젝트 단계 '서비스 관리'(화면은 그대로 · 배포 탭 = 다른 지역에 적용). 프로젝트 밖에서는 메뉴 '서비스 카드'(우리가 만든 서비스 · 적용 지역). */
 const PR = projectRail('ops');
-const S = shell({ who, home: 'lx-deploy', rail: PR || staffMenu('cards') });
+const S = shell({ who, home: 'lx-deploy', rail: PR || staffMenu('projects') });   // 서비스 공개 = 프로젝트 마지막 단계(서비스카드-1 ⓐ)
 const PROJ = PR ? attachProject(S, PR, 'ops') : null;
 
 /* ── 판: 지도 무대 + 윗줄(탭 · 심기) + 범례 + 운영 판 ─────────── */

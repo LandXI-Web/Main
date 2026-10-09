@@ -12,7 +12,7 @@ import { staffRail } from '../lx-analyze/menu.js';
 const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
 const CARD = Q.get('card');
-const S = K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('cards') });
+const S = K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });   // 서비스 카드는 메뉴 칸이 없다 — 들어오는 길 '분석하기'(서비스카드-1 ⓐ)
 K.devDrawer({ who });
 document.body.classList.remove('la-boot');
 const page = h('div.la-page.lc-page');

@@ -1,0 +1,107 @@
+{
+ "dashboard-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "menu": [
+   "대시보드",
+   "프로젝트",
+   "분석하기",
+   "XIXI맵",
+   "|",
+   "데이터",
+   "요청함"
+  ],
+  "current": "대시보드",
+  "mastXi": false,
+  "ximapHref": "/landxi/v3/xi-clean/",
+  "cards": 0,
+  "per": null,
+  "pager": null
+ },
+ "analyze-4-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "menu": [
+   "대시보드",
+   "프로젝트",
+   "분석하기",
+   "XIXI맵",
+   "|",
+   "데이터",
+   "요청함"
+  ],
+  "current": "분석하기",
+  "mastXi": false,
+  "ximapHref": "/landxi/v3/xi-clean/",
+  "cards": 4,
+  "per": "4",
+  "pager": "‹12›5장 가운데 1–4"
+ },
+ "analyze-2-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "menu": [
+   "대시보드",
+   "프로젝트",
+   "분석하기",
+   "XIXI맵",
+   "|",
+   "데이터",
+   "요청함"
+  ],
+  "current": "분석하기",
+  "mastXi": false,
+  "ximapHref": "/landxi/v3/xi-clean/",
+  "cards": 2,
+  "per": "2",
+  "pager": "‹123›5장 가운데 1–2"
+ },
+ "page2": [
+  "건축물 분석서비스",
+  "곤포사일리지 분석서비스"
+ ],
+ "analyze-8-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "menu": [
+   "대시보드",
+   "프로젝트",
+   "분석하기",
+   "XIXI맵",
+   "|",
+   "데이터",
+   "요청함"
+  ],
+  "current": "분석하기",
+  "mastXi": false,
+  "ximapHref": "/landxi/v3/xi-clean/",
+  "cards": 5,
+  "per": "8",
+  "pager": "5장 모두 한 페이지에"
+ },
+ "remembered": "8",
+ "lx-cards": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "menu": [
+   "대시보드",
+   "프로젝트",
+   "분석하기",
+   "XIXI맵",
+   "|",
+   "데이터",
+   "요청함"
+  ],
+  "current": "분석하기",
+  "mastXi": false,
+  "ximapHref": "/landxi/v3/xi-clean/",
+  "cards": 0,
+  "per": null,
+  "pager": null
+ }
+}

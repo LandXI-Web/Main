@@ -1,25 +1,29 @@
-/* lx-menu.js — LX 직원 왼쪽 메뉴 한 곳(확인 대장 10차 메뉴-1 ⓐ 1안 · 구현 확인 2차 J-1 다시 · 원칙 81 · 99).
-   홈 · 프로젝트 · 분석하기 · 서비스 카드 · 데이터 · 요청함 — XI맵은 위 머리. 생산 6단계는 메뉴가 아니라 프로젝트 안(lx-project/context.js).
-   휴대폰(≤ 960) 아래 탭 = 홈 · 프로젝트 · 분석하기 · 요청함 · 메뉴(펼치면 서비스 카드 · 데이터 · XI맵 · 도움말 · 나가기 — 셸이 그린다).
+/* lx-menu.js — LX 직원 왼쪽 메뉴 한 곳(확인 대장 10차 메뉴-1 ⓐ · 지도-1 ⓐ · 서비스카드-1 ⓐ · 원칙 81 · 99 · 149 · 151).
+   대시보드 · 프로젝트 · 분석하기 · XI맵 | 데이터 · 요청함 — '서비스 카드'는 메뉴에 없다(화면 lx-cards 는 그대로 · 분석하기에서 들어간다).
+   XI맵 = 글자 'XI' 표기(glyph · 새 아이콘 없음) · 위 머리의 XI맵 단추는 이 메뉴가 있는 화면에서 뺀다(셸).
+   '지도 서비스'(내가 돌린 분석 결과)는 화면 설계 확인(지도-3) 뒤에 칸을 넣는다 — 지금 그 일을 하는 화면이 없어 빈 칸을 두지 않는다.
+   sep = 그 칸 위에 구분선. 생산 6단계는 메뉴가 아니라 프로젝트 안(lx-project/context.js).
+   휴대폰(≤ 960) 아래 탭 = 대시보드 · 프로젝트 · 분석하기 · 요청함 · 메뉴(펼치면 XI맵 · 데이터 · 도움말 · 나가기 — 셸이 그린다).
    요청함 숫자 = 검토 요청(답할 것) + 분석 의뢰(확인 대기 · 내 담당) + 내 결재(대기) — 대시보드 '요청함' 칸과 같은 한 곳(requestCounts).
-   const S = shell({ who, home, rail: staffMenu('home') });   // 'home' | 'projects' | 'analyze' | 'cards' | 'data' | 'inbox' */
+   const S = shell({ who, home, rail: staffMenu('home') });   // 'home' | 'projects' | 'analyze' | 'ximap' | 'data' | 'inbox' */
 import { api } from './util.js';
 
 const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 상대 주소(GitHub Pages /Main/ 아래에서도)
 export const STAFF_HREF = {
   home: at('../lx-console/'), projects: at('../lx-project/'), analyze: at('../lx-analyze/'),
-  cards: at('../lx-cards/'), data: at('../lx-ingest/'), inbox: at('../lx-inbox/'),
+  ximap: at('../xi-clean/'), cards: at('../lx-cards/'), data: at('../lx-ingest/'), inbox: at('../lx-inbox/'),
 };
 export const STAFF_MENU = [
   { id: 'home', label: '대시보드', icon: 'home' },
   { id: 'projects', label: '프로젝트', icon: 'folder' },
   { id: 'analyze', label: '분석하기', icon: 'scan' },
-  { id: 'cards', label: '서비스 카드', icon: 'card', more: true },
-  { id: 'data', label: '데이터', icon: 'data', more: true },
+  { id: 'ximap', label: 'XI맵', glyph: 'XI', more: true },
+  { id: 'data', label: '데이터', icon: 'data', more: true, sep: true },
   { id: 'inbox', label: '요청함', icon: 'inbox' },
 ];
-/* 화면(셸 home) → 메뉴 칸. 프로젝트 맥락(?project=)이 있으면 단계 화면도 '프로젝트'(context.js 가 정한다) */
-export const STAFF_OF = { 'lx-console': 'home', 'lx-project': 'projects', 'lx-analyze': 'analyze', 'lx-cards': 'cards', 'lx-ingest': 'data', 'lx-inbox': 'inbox' };
+/* 화면(셸 home) → 메뉴 칸. 프로젝트 맥락(?project=)이 있으면 단계 화면도 '프로젝트'(context.js 가 정한다).
+   lx-cards(서비스 카드 화면)는 메뉴 칸이 없다 — 들어오는 길인 '분석하기'에 불(서비스카드-1 ⓐ) */
+export const STAFF_OF = { 'lx-console': 'home', 'lx-project': 'projects', 'lx-analyze': 'analyze', 'lx-cards': 'analyze', 'lx-ingest': 'data', 'lx-inbox': 'inbox' };
 
 /** 셸 rail 정의 — 같은 메뉴 · 같은 이름 · 같은 주소(어느 LX 직원 화면이든). counts = 칸 숫자(셸이 부르고 그린다 · 요청함만) */
 export function staffMenu(current = 'home') {

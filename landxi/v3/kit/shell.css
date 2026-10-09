@@ -67,6 +67,9 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 .k-rail-i{position:relative}
 .k-rail-b{position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--warn);color:#fff;font:500 11px/18px var(--font-num);font-style:normal;text-align:center}
 .k-app .k-rail-more{display:none}
+/* 구분선 · 글자 표기(지도-1 ⓐ — XI맵 = 'XI' · 새 아이콘 없음) */
+.k-rail-sep{display:block;flex:none;width:36px;height:1px;margin:6px 0 2px;background:var(--rule)}
+.k-rail-g{width:20px;height:20px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:800 11px/1 var(--font-display);font-style:normal;letter-spacing:-.02em;color:currentColor;border:1.5px solid currentColor;border-radius:5px}
 .k-rail-i:not(.k-rail-i--end) + .k-rail-i--end{margin-top:auto}   /* 아래쪽 묶음(기관 정보 · 계정) — PC 레일 아래로 */
 .k-app.has-sub{grid-template-rows:var(--mast) auto minmax(0,1fr)}
 .k-app.has-sub .k-rail{grid-row:2/4}
@@ -80,6 +83,7 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 @media (max-width:960px){
   .k-app.has-more .k-rail-i--more{display:none}
   .k-app.has-more .k-rail-more{display:flex}
+  .k-rail-sep{display:none}
   .k-app .k-rail-more[data-on]{color:var(--ink);box-shadow:inset 0 2px 0 var(--accent)}
   .k-sub{min-height:0}
   .k-app.has-more .k-mast .k-xi,.k-app.has-more .k-mast .k-exit{display:none}

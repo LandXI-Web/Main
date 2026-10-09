@@ -83,7 +83,9 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   const exit = h('button.k-mast-b.k-exit', { type: 'button', text: t('shell.exit') });
   const slot = h('span.k-mast-slot');
   /* XI맵 — 들어갈 수 있는 모든 화면의 마스트에 한 칸(원스톱 · 주소 입력 없이 C1 에 닿는다). 이 화면의 시군구(?region 또는 화면이 준 xiRegion)를 이어 준다 */
-  const xi = who && home !== 'xi-clean' && allowed('xi-clean', who.key) ? h('a.k-mast-b.k-xi', { href: '/landxi/v3/xi-clean/', text: 'XI맵' }) : null;
+  /* LX 직원 메뉴에 XI맵 칸이 있으면 위 머리 단추는 뺀다(지도-1 ⓐ — 같은 길을 두 번 두지 않는다) */
+  const railXi = !!rail?.items?.some((it) => it.id === 'ximap');
+  const xi = who && !railXi && home !== 'xi-clean' && allowed('xi-clean', who.key) ? h('a.k-mast-b.k-xi', { href: '/landxi/v3/xi-clean/', text: 'XI맵' }) : null;
   const xiHref = () => {
     let r = null; try { r = (xiRegion && xiRegion()) || new URLSearchParams(location.search).get('region'); } catch { /* */ }
     return '/landxi/v3/xi-clean/' + (r ? '?' + new URLSearchParams({ region: String(r) }) : '');
@@ -117,22 +119,27 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
 
   let cur = rail?.current ?? 0, done = rail?.done;
   const badges = {};                                     // 칸 숫자(요청함) — id → n
+  /* 칸 그림 — 아이콘 또는 글자 표기(XI맵 = 'XI' · ChatGEO 'LX' 와 같은 방식 · 새 아이콘 없음) */
+  const glyphHtml = (it) => it.glyph ? `<i class="k-rail-g" aria-hidden="true">${esc(it.glyph)}</i>` : icon(it.icon);
   const badgeHtml = (it) => { const n = badges[it.id]; return n ? `<i class="k-rail-b num" aria-hidden="true">${n > 99 ? '99+' : n}</i>` : ''; };
   const drawRail = () => {
     if (!rail) return;
+    for (const it of rail.items) if (it.id === 'ximap' && it.href) it.href = xiHref();   // XI맵 칸 = 이 화면의 시군구를 이어 준다(머리 단추와 같은 길)
     const steps = rail.kind === 'steps';
     railEl.classList.toggle('k-rail--steps', steps);
     railEl.innerHTML = rail.items.map((it, i) => {
       const st = done ? (done.includes(i) ? 'done' : i === cur ? 'now' : 'wait') : i < cur ? 'done' : i === cur ? 'now' : 'wait';
       const inner = steps
         ? `<span class="n" data-st="${st}">${st === 'done' ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>' : i + 1}</span><span>${esc(it.label)}</span>`
-        : `${icon(it.icon)}${badgeHtml(it)}<span>${esc(it.label)}</span>`;
+        : `${glyphHtml(it)}${badgeHtml(it)}<span>${esc(it.label)}</span>`;
       const n = badges[it.id];
       const attrs = `data-i="${i}"${it.id ? ` data-id="${esc(it.id)}"` : ''}${i === cur ? ' aria-current="true"' : ''}${steps ? ` data-st="${st}"` : ''}${n ? ` aria-label="${esc(it.label)} ${n}건"` : ''}`;
       const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '') + (it.end ? ' k-rail-i--end' : '');   // end = 레일 아래쪽 묶음(기관 정보 · 계정 — 기관 메뉴)
-      return it.href ? `<a class="${cls}" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="${cls}" ${attrs}>${inner}</button>`;
+      const sep = it.sep && !steps ? '<span class="k-rail-sep" aria-hidden="true"></span>' : '';   // 구분선(지도-1 ⓐ — 분석 흐름 | 데이터 · 요청함)
+      return sep + (it.href ? `<a class="${cls}" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="${cls}" ${attrs}>${inner}</button>`);
     }).join('') + (more ? `<button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"${rail.items[cur]?.more ? ' data-on="1"' : ''}>${icon('menu')}<span>${esc(t('shell.menu'))}</span></button>` : '');
   };
+  railEl.addEventListener('pointerdown', (e) => { const x = e.target.closest('a.k-rail-i[data-id="ximap"]'); if (x) x.href = xiHref(); });
   railEl.addEventListener('click', (e) => {
     const b = e.target.closest('.k-rail-i'); if (!b) return;
     if (b.classList.contains('k-rail-more')) { e.preventDefault(); openMore(); return; }
@@ -153,12 +160,12 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   function openMore() {
     const list = h('nav.k-more', { 'aria-label': t('shell.menu') });
     let d = null;
-    const row = (label, ic, href, on) => {
-      const a = h(href ? 'a.k-more-i' : 'button.k-more-i', href ? { href } : { type: 'button' }, h('span.k-more-ic', { html: icon(ic) }), h('span', { text: label }));
+    const row = (label, ic, href, on, glyph) => {
+      const a = h(href ? 'a.k-more-i' : 'button.k-more-i', href ? { href } : { type: 'button' }, h('span.k-more-ic', { html: glyph ? `<i class="k-rail-g" aria-hidden="true">${esc(glyph)}</i>` : icon(ic) }), h('span', { text: label }));
       if (on) a.addEventListener('click', on);
       list.append(a);
     };
-    rail.items.forEach((it, i) => { if (it.more) row(it.label, it.icon, it.href, it.href ? null : () => { d?.close(); cur = i; drawRail(); rail.onPick?.(i, it); }); });
+    rail.items.forEach((it, i) => { if (it.more) row(it.label, it.icon, it.id === 'ximap' ? xiHref() : it.href, it.href ? null : () => { d?.close(); cur = i; drawRail(); rail.onPick?.(i, it); }, it.glyph); });
     if (xi) row('XI맵', 'map', xiHref());
     row(t('shell.help'), 'help', null, () => { d?.close(); help.click(); });
     if (who) row(t('shell.exit'), 'exit', null, () => logout());

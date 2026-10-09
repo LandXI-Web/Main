@@ -33,9 +33,10 @@ document.body.dataset.ready = '1';
 /* ═════════════ 갤러리 — 정식 분석 서비스만(카드틀-5 ⓐ · 6 ⓐ · 원칙 145 · 146) ═════════════
    정식 = 서버가 정한 official(등록된 모델 + 돌고 있는 배포본). 다른 카드는 지우지 않고 여기서만 숨긴다(서비스 카드 관리에는 그대로).
    카드 한 틀: 그림(결과 장면 > 학습 표본 > 빈 틀) → 이름 → 한 줄 → 검증 정확도 · 모델 갱신 → 대상 지역 n곳 → 분석하기 · 자세히.
-   숫자 · 날짜 = 서버 모델 기록(카드 덱의 model) 한 출처. 보기 개수 = 작게(4열 · 기본) · 크게(3열) — 이 브라우저에 기억. */
-function readView() { try { return localStorage.getItem('lx-analyze.view') === 'big' ? 'big' : 'small'; } catch { return 'small'; } }
-function saveView(v) { try { localStorage.setItem('lx-analyze.view', v); } catch { /* 저장 못 해도 화면은 그대로 */ } }
+   숫자 · 날짜 = 서버 모델 기록(카드 덱의 model) 한 출처. 보기 개수 = 한 페이지 2 · 4 · 6 · 8장(기본 4장 · 지도-4 ⓐ · 원칙 150) + 페이지 넘김 — 이 브라우저에 기억. */
+function perList() { return [2, 4, 6, 8]; }   // 함수 — 맨 위 await(gallery) 가 이 줄보다 먼저 돈다
+function readPer() { try { const n = +localStorage.getItem('lx-analyze.per'); return perList().includes(n) ? n : 4; } catch { return 4; } }
+function savePer(n) { try { localStorage.setItem('lx-analyze.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
 
 async function authBlob(path) {
   const s = session.get();
@@ -75,7 +76,8 @@ async function gallery() {
   const tools = h('div.la-tools');
   const grid = h('div.la-grid.la-acg');
   const box = h('div');
-  page.append(tools, box, grid);
+  const pager = h('nav.la-pager', { 'aria-label': '페이지' });
+  page.append(tools, box, grid, pager);
   if (REGION) {                                            // 홈에서 들고 온 지역 — 카드를 고르면 그 지역이 '어디'에 담겨 있다
     const regs = await K.loadRegions().catch(() => []);
     const r = regs.find((x) => x.sgg_cd === REGION);
@@ -87,7 +89,7 @@ async function gallery() {
   box.remove();
   if (!deck) { const e = h('div'); page.append(e); K.empty(e, { kind: 'error', title: '분석 서비스를 불러오지 못했습니다', onRetry: () => location.reload() }); return; }
   const all = (deck.items || []).filter((c) => c.official);
-  const F = { grp: Q.get('grp') || '', q: '', view: readView() };
+  const F = { grp: Q.get('grp') || '', q: '', per: readPer(), page: 1 };
   const groups = (deck.groups || []).filter((g) => all.some((c) => c.group === g));
   const chipsEl = h('div.la-chips', { role: 'group', 'aria-label': '거르기' });
   const viewEl = h('div.la-view', { role: 'group', 'aria-label': '보기 개수' });
@@ -95,26 +97,38 @@ async function gallery() {
   const more = (c) => withRegion(`?card=${encodeURIComponent(c.id)}`);
   const draw = () => {
     chipsEl.replaceChildren(
-      h('button.la-chip', { type: 'button', 'aria-pressed': String(!F.grp), onclick: () => { F.grp = ''; draw(); } }, '전체', h('small.num', { text: String(all.length) })),
-      ...groups.map((g) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.grp === g), onclick: () => { F.grp = F.grp === g ? '' : g; draw(); } },
+      h('button.la-chip', { type: 'button', 'aria-pressed': String(!F.grp), onclick: () => { F.grp = ''; F.page = 1; draw(); } }, '전체', h('small.num', { text: String(all.length) })),
+      ...groups.map((g) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.grp === g), onclick: () => { F.grp = F.grp === g ? '' : g; F.page = 1; draw(); } },
         g, h('small.num', { text: String(all.filter((c) => c.group === g).length) }))));
-    viewEl.replaceChildren(h('span.la-view-k', { text: '보기' }),
-      ...[['big', '크게 3열'], ['small', '작게 4열']].map(([k, w]) => h('button.la-view-b', { type: 'button', 'aria-pressed': String(F.view === k),
-        onclick: () => { F.view = k; saveView(k); draw(); } }, w)));
-    grid.dataset.view = F.view;
+    viewEl.replaceChildren(h('span.la-view-k', { text: '한 페이지' }),
+      ...perList().map((k) => h('button.la-view-b.num', { type: 'button', 'aria-pressed': String(F.per === k), 'aria-label': `한 페이지 ${k}장`,
+        onclick: () => { F.per = k; F.page = 1; savePer(k); draw(); } }, String(k))),
+      h('span.la-view-u', { text: '장' }));
+    grid.dataset.n = String(F.per);
     const q = F.q.replace(/\s+/g, '');
     const list = all.filter((c) => (!F.grp || c.group === F.grp)
       && (!q || [c.name, c.line, c.finds, ...(c.targets || [])].some((s) => String(s || '').replace(/\s+/g, '').includes(q))));
     if (!list.length) {
+      pager.replaceChildren();
       grid.replaceChildren(); const e = h('div.la-none'); grid.append(e);
       K.empty(e, all.length ? { kind: 'first', title: '맞는 분석 서비스가 없습니다', text: '거르기를 풀어 보세요', compact: true }
         : { kind: 'first', title: '아직 정식 분석 서비스가 없습니다', text: '분석 모델이 등록되고 지역에 적용되면 여기에 보입니다', compact: true });
       return;
     }
-    grid.replaceChildren(...list.map((c) => acCard(c, href, more)));
+    const pages = Math.max(1, Math.ceil(list.length / F.per));
+    F.page = Math.min(Math.max(1, F.page), pages);
+    const from = (F.page - 1) * F.per;
+    grid.replaceChildren(...list.slice(from, from + F.per).map((c) => acCard(c, href, more)));
+    const go = (p) => { F.page = p; draw(); grid.scrollIntoView?.({ block: 'nearest' }); };
+    const pb = (label, p, cls = '', aria) => h(`button.la-pg${cls}`, { type: 'button', disabled: p < 1 || p > pages || undefined,
+      'aria-current': p === F.page && !cls ? 'page' : undefined, 'aria-label': aria, onclick: () => go(p) }, label);
+    pager.replaceChildren(...(pages > 1 ? [pb('‹', F.page - 1, '.ar', '앞 페이지'),
+      ...Array.from({ length: pages }, (_, i) => pb(String(i + 1), i + 1, '', `${i + 1}페이지`)),
+      pb('›', F.page + 1, '.ar', '다음 페이지')] : []),
+      h('small', { text: pages > 1 ? `${list.length}장 가운데 ${from + 1}–${Math.min(from + F.per, list.length)}` : `${list.length}장 모두 한 페이지에` }));
   };
   const search = h('input.t-input.la-search', { type: 'search', placeholder: '서비스 이름 · 찾는 것 · 지역', 'aria-label': '분석 서비스 찾기', autocomplete: 'off' });
-  search.addEventListener('input', () => { F.q = search.value.trim(); draw(); });
+  search.addEventListener('input', () => { F.q = search.value.trim(); F.page = 1; draw(); });
   tools.append(chipsEl, h('div.la-tools-r', {}, viewEl, search));
   draw();
   S.fresh(deck.computed_at || deck.as_of);
