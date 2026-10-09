@@ -132,7 +132,7 @@ main{position:relative;z-index:3}
 a.k-svc:hover .m-more::after{transform:translateX(4px)}
 
 /* 히어로 첫 그림(지도 첫 타일 전 · 저사양) — 순백 지구 스틸, 지도가 차면 걷힌다 */
-.m-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;border-radius:var(--r-24);background:#fff;z-index:2;transition:opacity var(--d-750) var(--e-cam)}
+.m-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;border-radius:var(--r-24);background:transparent;mix-blend-mode:multiply;z-index:2;transition:opacity var(--d-750) var(--e-cam)}
 .m-poster.is-off{opacity:0;visibility:hidden;transition:opacity var(--d-750) var(--e-cam),visibility 0s linear var(--d-750)}
 /* 이동 중 막(위성 타일 미적재 구간) */
 .m-veil{position:absolute;inset:0;z-index:4;background:var(--bg-0);opacity:0;pointer-events:none}
@@ -229,3 +229,5 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 @media (prefers-reduced-motion:reduce){.m-mouse::after,.m-chev{animation:none}.m-mouse,.m-touch{display:none}.m-hint{transition:none}}
 /* 휴대폰 첫 화면 문장 — 글자 중간에서 끊기지 않게(§2-1) */
 .m-lead span{word-break:keep-all}
+/* 첫 화면 글을 지구 쪽으로(넓은 화면에서 왼쪽 끝에 붙어 지구와 멀어지지 않게 · 10-09) */
+@media (min-width:1101px){.m-hero{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}

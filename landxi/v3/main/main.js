@@ -233,7 +233,7 @@ function frame(now) {
       win = lerpRect(LY.hero, LY.full, t);
       const g = globe(LY.hero, now);
       cam = lerpCam(g, C.nat1, t);
-      bg = '#fff';
+      bg = 'var(--bg-0)';   // 지구 뒤를 화면 바탕과 같은 색으로(흰 칸 없음 · 10-09)
       poster(s0 < 0.42 && !S.live, win);
     } else if (x < a2) {
       S.t2 = 0;
