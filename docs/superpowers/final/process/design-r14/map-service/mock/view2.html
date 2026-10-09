@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 2차 · 지도 서비스 · 영상 고르기 · 분석하기 목록</title>
+<link rel="stylesheet" href="ms2.css">
+<script defer src="../../../../../../../landxi/proto/vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../../../../landxi/xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m" data-v="map2">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home" id="homeName">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>14:40</span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="LX 직원 메뉴" id="rail"></nav>
+  <main class="main"><div class="page" id="page"></div></main>
+</div>
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+
+<script type="module">
+/* 값은 모두 이 PC 서버 2026-10-09 기록 그대로. 지도는 실제 지도(게이트웨이 타일 · 내 분석 결과 세트 · 연속지적 · V-World LX맵) — 그림 조각이 아니다.
+   학습 데이터 = 모델 학습 폴더 · 학습 자료 기록(장 수 · 영상 · 지역) — 없으면 '기록 없음'. */
+import { createStage } from '../../../../../../../landxi/v3/kit/stage.js';
+import { api, API } from '../../../../../../../landxi/shared/api-v1.js';
+import { sourceSpec } from '../../../../../../../landxi/xi/engine/sources.js';
+import { addResultLayers, setVis } from '../../../../../../../landxi/xi/fx/arrive.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'map2';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const IMG = '../../../../../../../landxi/';
+const page = document.getElementById('page');
+const stamp = document.getElementById('stampT');
+
+/* ── 메뉴 ⓐ(지도-1 확인) ── */
+const ICON = {
+  home: '<path d="M3 9.5L10 4l7 5.5V16H3z"/>', folder: '<path d="M3 5h5l2 2h7v9H3z"/>',
+  scan: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  map: '<path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/>',
+  data: '<ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/>',
+  inbox: '<path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/>',
+};
+const svg = (k) => `<svg viewBox="0 0 20 20" aria-hidden="true">${ICON[k]}</svg>`;
+function rail(current) {
+  const items = [['home', '대시보드', svg('home')], ['projects', '프로젝트', svg('folder')], ['analyze', '분석하기', svg('scan')], ['mapsvc', '지도 서비스', svg('map')], ['ximap', 'XI맵', '<span class="xi">XI</span>'], 'div', ['data', '데이터', svg('data')], ['inbox', '요청함', svg('inbox')]];
+  document.getElementById('rail').innerHTML = items.map((it) => it === 'div' ? '<span class="div"></span>' : `<span class="ri ${it[0] === current ? 'on' : ''}">${it[2]}<span>${it[1]}</span></span>`).join('');
+}
+
+/* ── 정식 서비스 5장 · 학습 데이터(모델 학습 폴더 · 학습 자료 기록) ── */
+const C = [
+  { id: 'farm', name: '경작·휴경 분석서비스', grp: '농지·시설', imgs: ['drone', 'aerial'], img: 'v3/service-detail/data/img/namwon-cycle4/3@2x.jpg', acc: 95, upd: '2026.01',
+    desc: '필지별 경작 · 휴경 유무와 면적을 분석할 수 있는 서비스입니다', short: '필지별 경작 · 휴경 유무와 면적 분석', out: ['필지별 경작 여부', '면적', '지난 시점과 비교'],
+    td: { img: '드론 정사영상 2cm', region: '남원시', n: '1,418장', val: '검증 404장', set: '남원 경작·휴경 드론 2cm' } },
+  { id: 'gh', name: '비닐하우스 분석서비스', grp: '농지·시설', imgs: ['aerial', 'drone'], img: 'assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg', acc: 89, upd: '2026.05.16',
+    desc: '비닐하우스의 위치 · 동 수 · 면적을 필지별로 분석할 수 있는 서비스입니다', short: '비닐하우스 위치 · 동 수 · 면적 분석', out: ['동 수', '면적', '필지별'],
+    td: { img: '항공 정사영상 25cm', region: null, n: '105,036장', val: '검증 22,506장', set: '항공 25cm 4분류' } },
+  { id: 'bld', name: '건축물 분석서비스', grp: '건축·변화', imgs: ['aerial'], img: null, acc: 89, upd: '2026.05.16',
+    desc: '건물의 위치와 면적을 찾아 건축물대장과 다른 필지를 분석할 수 있는 서비스입니다', short: '건물 위치 · 면적 · 대장과 다른 필지 분석', out: ['건물 위치', '면적', '대장 대조'],
+    td: { img: '항공 정사영상 25cm', region: null, n: '105,036장', val: '검증 22,506장', set: '항공 25cm 4분류' } },
+  { id: 'park', name: '주차장 분석서비스', grp: '건축·변화', imgs: ['aerial'], img: null, acc: 89, upd: '2026.05.16',
+    desc: '주차장으로 쓰이는 땅의 위치와 면적을 찾아 지목과 다른 필지를 분석할 수 있는 서비스입니다', short: '주차장 위치 · 면적 · 지목과 다른 필지 분석', out: ['주차장 위치', '면적', '지목 대조'],
+    td: { img: '항공 정사영상 25cm', region: null, n: '105,036장', val: '검증 22,506장', set: '항공 25cm 4분류' } },
+  { id: 'silage', name: '곤포사일리지 분석서비스', grp: '농지·시설', imgs: ['drone', 'aerial'], img: null, acc: 96, upd: '2026.09.30',
+    desc: '들에 쌓아 둔 곤포사일리지의 위치와 개수를 필지별로 분석할 수 있는 서비스입니다', short: '곤포사일리지 위치 · 개수 분석', out: ['개수', '위치', '필지별'],
+    td: { img: '드론 정사영상 2cm', region: '남원시', n: '1,608장 + 추가 60장', val: '검증 402장', set: '남원 곤포사일리지 드론 2cm' } },
+];
+const IMGK = { drone: '드론', aerial: '항공', sat: '위성' };
+const pic = (c) => c.img ? `<div class="pic"><img src="${IMG + c.img}" alt=""></div>` : `<div class="pic blank"><span>결과 장면이 아직 없습니다</span></div>`;
+const hero = (c) => `<div class="hero2"><div><b>${c.acc}<i>%</i></b><small>검증 정확도</small></div><div><b class="d">${c.upd}</b><small>모델 갱신</small></div></div>`;
+const tdA = (c) => `<p class="td"><span class="k">학습 데이터</span>${esc(c.td.img)} · ${c.td.region ? esc(c.td.region) : '<span class="none">지역 기록 없음</span>'} · ${esc(c.td.n)}</p>`;
+const tdB = (c) => `<div class="td3"><div><span class="k">학습 영상</span>${esc(c.td.img)}</div><div><span class="k">학습 지역</span>${c.td.region ? esc(c.td.region) : '<span class="none">기록 없음</span>'}</div><div><span class="k">학습 수량</span>${esc(c.td.n)}</div></div>`;
+const tdC = (c) => `<p class="tdl"><span class="k">학습 데이터셋</span>${esc(c.td.set)} (${esc(c.td.n)}${c.td.region ? '' : ' · <span class="none">지역 기록 없음</span>'})</p>`;
+const TD = { a: tdA, b: tdB, c: tdC };
+const descA = (c) => `<p class="ds2">${esc(c.desc)}</p>`;
+const descB = (c) => `<p class="ds2" style="-webkit-line-clamp:1;min-height:0">${esc(c.short)}</p><div class="out">${c.out.map((o) => `<b>${esc(o)}</b>`).join('')}</div>`;
+const card = (c, w, d) => `<article class="ca">${pic(c)}<div class="bd"><h3 class="nm">${esc(c.name)}</h3>${(d === 'b' ? descB : descA)(c)}${hero(c)}${TD[w](c)}<div class="acts"><span class="go">분석하기</span><span class="more">자세히</span></div></div></article>`;
+
+/* ── 분석하기 목록 2차: 영상별 거르기 + 서비스 설명 + 학습 데이터 ── */
+function listView() {
+  const n = Number(q.get('n') || 4), w = q.get('w') || 'a', d = q.get('d') || 'a', f = q.get('f') || '';
+  const list = C.filter((c) => !f || c.imgs.includes(f));
+  const cnt = (k) => C.filter((c) => c.imgs.includes(k)).length;
+  const pages = Math.max(1, Math.ceil(list.length / n));
+  const per = `<div class="per"><span>한 페이지</span>${[2, 4, 6, 8].map((k) => `<b class="${k === n ? 'on' : ''}">${k}</b>`).join('')}<span style="margin-left:4px">장</span></div>`;
+  const pager = pages > 1 ? `<nav class="pager"><b class="ar off">‹</b>${Array.from({ length: pages }, (_, i) => `<b class="${i === 0 ? 'on' : ''}">${i + 1}</b>`).join('')}<b class="ar">›</b><small>${list.length}장 가운데 1–${Math.min(n, list.length)}</small></nav>` : `<nav class="pager"><small>${list.length}장 모두 한 페이지에</small></nav>`;
+  return `<header class="head"><h1>분석하기</h1><p class="sub">정식 분석 서비스를 골라 내 영상으로 분석합니다 — 결과는 지도 서비스에서 봅니다</p></header>
+  <div class="tools2"><div class="row">
+    <div class="chips"><span class="chip ${!f ? 'on' : ''}">전체 <small>5</small></span><span class="chip">농지·시설 <small>3</small></span><span class="chip">건축·변화 <small>2</small></span>
+      <span class="sep"></span><span class="k">영상</span>${['drone', 'aerial', 'sat'].map((k) => `<span class="chip ${f === k ? 'on' : ''}">${IMGK[k]} <small>${cnt(k)}</small></span>`).join('')}</div>
+    <div class="right">${per}<span class="search">서비스 이름 · 찾는 것</span></div></div></div>
+  <div class="gl" data-n="${n}">${list.slice(0, n).map((c) => card(c, w, d)).join('')}</div>${pager}`;
+}
+
+/* ── 영상 고르기 2차: 미리보기(서버 썸네일) · 해상도 · 촬영 시기 · 범위(지도 위 테두리) ── */
+const SHARED = [ // imagery 표 · 썸네일 = /catalog/imagery/{id}/thumb · 범위 = footprint
+  { id: 'ap25-namwon-2023', nm: '남원시 2023 항공영상', gsd: '25cm', when: '2023', range: '남원시 전역', fit: 'ok', bb: [127.174383, 35.299451, 127.675733, 35.575571], pick: true },
+  { id: 'img-52190-2023-aerial', nm: '남원시 2023 항공영상 (내가 올린 조각)', gsd: '25cm', when: '2023', range: '일부 · 약 7㎢', fit: 'ok', bb: [127.324349, 35.549473, 127.350666, 35.57553] },
+  { id: 'img-48870-2023-aerial', nm: '함양군 2023 항공영상', gsd: '25cm', when: '2023', range: '군 전체의 66%', fit: 'ok', bb: [127.5855, 35.3158, 127.750807, 35.7688] },
+  { id: 'img-43745-2023-aerial', nm: '증평군 2023 항공영상', gsd: '25cm', when: '2023', range: '군 전체의 9%', fit: 'ok', bb: [127.5374, 36.724422, 127.6645, 36.8601] },
+  { id: 'namwon-aoi-2508', nm: '남원시 2025.08 드론 정사영상', gsd: '1.5cm', when: '2025.08', range: '국산리 일대 · 약 1.5㎢', fit: 'so', bb: [127.348022, 35.523285, 127.359009, 35.536696] },
+  { id: 'img-52190-2020-aerial', nm: '남원시 2020 항공영상 (시험 조각)', gsd: '25cm', when: '2020', range: '일부 · 약 0.02㎢', fit: 'ok', bb: [127.325104, 35.323301, 127.326516, 35.324459] },
+];
+const FIT = { ok: '모델에 맞음', so: '해상도 차이 커 결과 확인 필요', no: '이 모델에 맞지 않음' };
+function flowView() {
+  const cards = SHARED.map((s) => `<article class="ic ${s.pick ? 'pick' : ''}"><div class="th"><img src="thumbs/${s.id}.jpg" alt=""></div><div><p class="nm3">${esc(s.nm)}</p>
+    <dl><dt>해상도</dt><dd>${esc(s.gsd)}</dd><dt>촬영 시기</dt><dd>${esc(s.when)}</dd><dt>범위</dt><dd>${esc(s.range)}</dd></dl><span class="fit ${s.fit}">${FIT[s.fit]}</span></div></article>`).join('');
+  const left = `<section class="stp done"><header><i>1</i><b>모델 알기</b><small>무엇을 얼마나 잘 찾나</small></header></section>
+    <section class="stp on"><header><i>2</i><b>영상 고르기</b><small>내 정사영상 올리기 · 공유 데이터셋</small></header><div class="stb">
+      <h4>내 정사영상 올리기</h4><div class="drop sm"><b>정사영상 파일을 여기에 끌어다 놓거나 고르세요</b><small>tif · jpg · jp2 · ecw · 한 번에 20GB까지 · 올라오면 미리보기 · 범위가 아래 목록에 같이 보입니다</small></div>
+      <h4 class="mt">공유 데이터셋에서 불러오기 <small>LX 관리자가 관리 · 내 관할 먼저 · 미리보기는 실제 영상에서 만든 것</small></h4>
+      <div class="imgs">${cards}</div></div></section>
+    <section class="stp"><header><i>3</i><b>분석</b><small>대기열 → 끝나면 지도 서비스로</small></header></section>`;
+  return `<nav class="crumb"><span>분석하기</span><span>›</span><b>비닐하우스 분석서비스</b></nav>
+  <div class="fw2">
+    <aside class="fw-l"><div class="fl-h"><h1 class="nm">비닐하우스 분석서비스</h1><p class="ln">비닐하우스의 위치 · 동 수 · 면적을 필지별로 분석할 수 있는 서비스입니다</p></div>${left}
+      <div class="fl-f"><span class="go wide">이 영상으로 분석 시작</span><span class="note">남원시 2023 항공영상 · 예상 시간 약 21분 · 최근 같은 영상 기록</span></div></aside>
+    <div class="fw-r"><section class="box"><h2>고른 영상의 범위</h2><div class="rmap" id="rmap"><span class="mcap">남원시 2023 항공영상 · 전역</span><div class="lg2"><span><i class="a"></i>고른 영상</span><span><i class="b"></i>다른 공유 영상</span></div></div>
+      <p class="note" style="margin-top:10px">테두리는 영상이 실제로 덮는 범위입니다. 고른 영상 범위 안에서만 분석하고, 범위 밖 필지는 결과에 나오지 않습니다.</p></section></div>
+  </div>`;
+}
+const rect = (b) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]]] } });
+async function mountRangeMap() {
+  const st = createStage(document.getElementById('rmap'), { bounds: [127.1, 35.25, 127.8, 36.9], interactive: true, scale: false });
+  await st.ready;
+  st.geo('others', { type: 'FeatureCollection', features: SHARED.filter((s) => !s.pick).map((s) => rect(s.bb)) }, 'focus');
+  st.geo('pick', { type: 'FeatureCollection', features: SHARED.filter((s) => s.pick).map((s) => rect(s.bb)) }, 'ai');
+  st.map.fitBounds([127.15, 35.28, 127.78, 36.88], { padding: 24, duration: 0 });
+  await new Promise((r) => setTimeout(r, 1500));
+  document.documentElement.dataset.mapReady = '1';
+}
+
+/* ── 지도 서비스 2차: 실제 지도 + 왼쪽 분석서비스별 층 묶음 + 바탕 ── */
+const MINE = [
+  { svc: '비닐하우스 분석서비스', card: 'gh', sgg: '52190', job: 'job_01M4AT60R3DZ1Q0VKGC1R71CPF', r: '남원시', img: '2023 항공영상 25cm · 전역', d: '2026.10.07', v: '703동', on: true },
+  { svc: '비닐하우스 분석서비스', card: 'gh', sgg: '48870', job: 'job_01M4ASGEKFA2M21AMVYFB6FPN7', r: '함양군', img: '2023 항공영상 25cm · 영상 있는 66%', d: '2026.10.07', v: '235동' },
+  { svc: '비닐하우스 분석서비스', card: 'gh', sgg: '43745', job: 'job_01M4ASF5KJMRFX3SHNQT8SWXEQ', r: '증평군', img: '2023 항공영상 25cm · 영상 있는 9%', d: '2026.10.07', v: '84동' },
+  { svc: '건축물 분석서비스', card: 'bld', sgg: '51130', job: 'job_01M4ARMQDXBZKXVQKBVBYSKV59', r: '원주시', img: '2023 항공영상 25cm · 영상 있는 13%', d: '2026.10.07', v: '5,011건' },
+  { svc: '건축물 분석서비스', card: 'bld', sgg: '44133', job: 'job_01M3TPFBAA9CTQSZTDDS2CGYMD', r: '천안시 서북구', img: '2023 항공영상 25cm · 영상 있는 7% · 이전 모델', d: '2026.10.01', v: '1,158건' },
+  { svc: '주차장 분석서비스', card: 'park', sgg: '44133', job: 'job_01M4ARGYES7RGXQXVQCXG5WP9W', r: '천안시 서북구', img: '2023 항공영상 25cm · 영상 있는 7%', d: '2026.10.07', v: '93건' },
+  { svc: '주차장 분석서비스', card: 'park', sgg: '41670', job: 'job_01M4ARJ76ARDGB04EAF8QP591P', r: '여주시', img: '2023 항공영상 25cm · 영상 있는 6%', d: '2026.10.07', v: '71건' },
+];
+const NAMWON = [127.18411, 35.30246, 127.67407, 35.56051];
+function mapView(base, z) {
+  const groups = ['gh', 'bld', 'park'].map((k) => {
+    const rows = MINE.filter((m) => m.card === k);
+    const open = k === 'gh';
+    const li = rows.map((m) => `<li class="${m.on ? 'on' : ''}"><i></i><div class="tx"><b>${esc(m.r)} · ${esc(m.d)}</b><span>${esc(m.img)}</span></div><span class="v">${esc(m.v)}</span></li>`).join('');
+    return `<section class="grp ${open ? '' : 'closed'}"><header><span>${esc(rows[0].svc)}</span><small>${rows.length}건</small><i>${open ? '−' : '+'}</i></header><ul class="ly">${li}</ul></section>`;
+  }).join('');
+  const r = (k, t, sub) => `<li class="${base === k ? 'on' : ''}"><i></i><span>${t}</span>${sub ? `<small>${sub}</small>` : ''}</li>`;
+  return `<aside class="lp">
+    <h1>지도 서비스</h1><p class="sub">내가 돌린 분석 결과를 서비스별로 켜고 끕니다</p>
+    <div class="sum2"><div><b>703<i>동</i></b><small>켜진 결과 · 남원시 비닐하우스</small></div><div><b>7<i>건</i></b><small>내가 돌린 분석 · 3개 서비스</small></div></div>
+    ${groups}
+    <h2>바탕</h2><ul class="base">
+      ${r('img', '영상', '분석에 쓴 영상 먼저')}<li class="ep">${['2023 항공', '2025.04 드론', '2025.06 드론', '2025.08 드론', '2025.10 드론'].map((t, i) => `<b class="${i === 0 && base === 'img' ? 'on' : ''}">${t}</b>`).join('')}</li>
+      ${r('lx', 'LX맵 (편집지적도)', 'V-World 연결 확인 중')}
+      ${r('cad', '연속지적 (필지 경계)', '지번 · 지목 속성')}
+    </ul>
+    <h2>범례</h2><ul class="lg"><li><i class="g"></i>비닐하우스 (AI 분석 결과)</li><li><i class="c"></i>필지 경계</li></ul>
+    <p class="foot">다른 직원이나 LX 관리자가 돌린 분석은 여기에 나오지 않습니다. 실시간 · 전국 분석은 XI맵에서.</p>
+  </aside>
+  <div class="mapwrap"><div class="k-stage" id="stage"></div><span class="mcap" id="mcap">비닐하우스 분석서비스 · 남원시 · 2026.10.07 · 703동</span></div>`;
+}
+async function mountMap(base, z) {
+  const st = createStage(document.getElementById('stage'), { bounds: NAMWON, interactive: true });
+  await st.ready;
+  const map = st.map;
+  const cat = await api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' }));
+  const items = cat.items || [];
+  const byId = (id) => items.find((i) => i.id === id);
+  // 바탕 — 영상(남원 2023 항공 PMTiles) / LX맵(V-World WMS lt_c_landinfobasemap · 게이트웨이 프록시) / 연속지적(필지 선 · 남원 필지 PMTiles)
+  if (base === 'img') { const it = byId('ap25-namwon-2023'); map.addSource('b-img', await sourceSpec(it)); map.addLayer({ id: 'b-img', type: 'raster', source: 'b-img' }, 'slot-imagery'); }
+  if (base === 'lx') {
+    const wms = `${API.prefix}/proxy/vworld/wms?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=lt_c_landinfobasemap&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=false`;
+    map.addSource('b-lx', { type: 'raster', tiles: [wms], tileSize: 256 }); map.addLayer({ id: 'b-lx', type: 'raster', source: 'b-lx' }, 'slot-imagery');
+  }
+  if (base === 'cad' || base === 'img') {
+    const p = byId('parcels-namwon');
+    if (p) {
+      map.addSource('b-cad', await sourceSpec(p));
+      if (base === 'cad') map.addLayer({ id: 'b-white', type: 'background', paint: { 'background-color': '#F4F6F8' } }, 'slot-imagery');
+      map.addLayer({ id: 'b-cad', type: 'line', source: 'b-cad', 'source-layer': p.layer, minzoom: 12, paint: { 'line-color': base === 'cad' ? '#6B7280' : '#FFFFFF', 'line-width': base === 'cad' ? 0.8 : 0.7, 'line-opacity': base === 'cad' ? 0.9 : 0.7 } }, 'slot-reference');
+    }
+  }
+  // 내 분석 결과 — 켜진 것(남원 비닐하우스 703동)만 지도에. 같은 세트는 /regions/{sgg}/results 가 준다.
+  const on = MINE.filter((m) => m.on);
+  for (const m of on) {
+    const res = await api(`/regions/${m.sgg}/results`).catch(() => null);
+    const it = (res?.items || []).find((i) => i.id === `results-lx-${m.job}`);
+    if (!it) continue;
+    const sid = 'my-' + m.job;
+    map.addSource(sid, await sourceSpec(it));
+    addResultLayers(map, sid, sid, { kind: 'result', sourceLayer: it.layer, visible: true });
+  }
+  if (z === 'unbong') map.jumpTo({ center: [127.5186, 35.4322], zoom: 14.6 });
+  else if (z === 'close') map.jumpTo({ center: [127.5186, 35.4322], zoom: 16.4 });
+  else map.fitBounds(NAMWON, { padding: 24, duration: 0 });
+  await new Promise((r) => setTimeout(r, 3500));
+  document.documentElement.dataset.mapReady = '1';
+}
+
+/* ── 그리기 ── */
+const boot = () => new Promise((r) => { const t = () => (window.maplibregl && window.pmtiles ? r() : setTimeout(t, 30)); t(); });
+if (v === 'list2') {
+  rail('analyze'); page.innerHTML = listView();
+  stamp.textContent = `분석하기 목록 2차 — 영상 거르기 ${q.get('f') ? IMGK[q.get('f')] : '전체'} · 설명 ${q.get('d') === 'b' ? 'ⓑ 짧게 + 결과 항목' : 'ⓐ 문장'} · 학습 데이터 ${({ a: 'ⓐ 한 줄', b: 'ⓑ 세 칸', c: 'ⓒ 데이터셋 이름' })[q.get('w') || 'a']}`;
+  document.documentElement.dataset.mapReady = '1';
+} else if (v === 'flow2') {
+  rail('analyze'); page.classList.add('flow'); page.innerHTML = flowView();
+  stamp.textContent = '영상 고르기 2차 — 실제 미리보기 · 해상도 · 촬영 시기 · 범위(실제 지도 위 테두리)';
+  await boot(); await mountRangeMap();
+} else {
+  const base = q.get('base') || 'img', z = q.get('z') || 'all';
+  rail('mapsvc'); document.getElementById('homeName').textContent = '지도 서비스'; page.classList.add('map2'); page.innerHTML = mapView(base, z);
+  stamp.textContent = `지도 서비스 2차 — 실제 지도 · 바탕 ${({ img: '영상(2023 항공)', lx: 'LX맵(편집지적도)', cad: '연속지적(필지 경계)' })[base]} · 켜진 결과 = 남원 비닐하우스 703동`;
+  await boot(); await mountMap(base, z);
+}
+</script>
+</body>
+</html>

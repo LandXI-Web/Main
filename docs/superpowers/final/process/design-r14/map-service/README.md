@@ -38,3 +38,11 @@ LX 관리자(lxadmin@lx.or.kr)가 돌린 분석(경작·휴경 강진 · 구례 
 | 분석하기 상세 | 모델 기록 · 영상 목록 · 올리기(데이터 올리기와 같은 길) · 작업 대기열 · 걸린 시간 | 카드 상세에서 여는 올리기 칸 · 작업에 '어느 영상으로' · 학습한 지역(모델 ↔ 학습 자료 연결) |
 | 지도 서비스 | 결과 도형 · 연속지적 · 영상 타일 · V-World WMS 프록시(LX맵) | 내 작업 목록(계정 단위 · 카드 · 영상 · 결과 수) · 층 켜고 끄기 틀(XI맵이 아닌 새 화면) |
 | 목록 | 카드 덱 official · 보기 기억 | 한 페이지 n장 · 페이지 넘김 · 학습한 지역 값 · 소개 글 5장 바꿈(서비스 카드 관리 저장 값) |
+
+## 5. 2차(10-09 12:24 답 · 원칙 153–156) — 실제 지도 · 영상 미리보기 · 학습 데이터 · 서비스 설명
+지도-1 ⓐ · 지도-4 ⓐ 확인(오퍼스 구현). 지도-2 · 3 · 5 · 6 다시 그림 — `mock/view2.html` · `mock/ms2.css` · `shoot2.py` → `shots/new2-*-1440.png`(10장 · 이상 0).
+- 지도 서비스(`?v=map2&base=img|cad&z=all|unbong|close`): **실제 지도** — kit/stage.js(createStage) + 게이트웨이 타일. 바탕 영상 = 카탈로그 `ap25-namwon-2023`(PMTiles), 연속지적 = `parcels-namwon`(PMTiles 선), 내 결과 = `GET /regions/52190/results` 의 `results-lx-job_01M4AT60…`(703동 · xi/fx/arrive.js addResultLayers). 왼쪽 = 분석서비스별 묶음(비닐하우스 3 · 건축물 2 · 주차장 2) → 바탕 → 범례. **LX맵(편집지적도)**: `/proxy/vworld/wms` lt_c_landinfobasemap 이 1.3.0 · 3857/4326 모두 흰 그림(1,313B · 1색)을 돌려줘 시안에 '연결 확인 중'으로 두었다 — 구현 전에 V-World WMS 인자(STYLES · CRS · 키 도메인) 확인 필요. 1.1.1 은 OWS_EXCEPTION.
+- 영상 고르기(`?v=flow2`): 공유 영상 6건 카드 — 미리보기 = `GET /catalog/imagery/{id}/thumb`(관리자 권한 · `mock/thumbs/`에 저장), 해상도 · 촬영 시기 · 범위(imagery footprint · 작업 coverage), 오른쪽 실제 지도에 footprint 테두리(고른 것 청록 · 나머지 흰 선).
+- 목록(`?v=list2&f=drone|aerial|sat&w=a|b|c&d=a|b&n=8`): 영상 거르기(드론 3 · 항공 5 · 위성 0 — 모델 학습 영상 + 적용 영상 기록) · 서비스 설명 5장(사용자 예문 말투) · 학습 데이터 표현 ⓐⓑⓒ.
+- 학습 데이터 값: `02. 데이터/models/namwon/cultivate_uncultivate`(E:/namwon 학습 1,418 · 검증 404 · imgsz 1024 · 드론 2cm) · `aerial25/card.json`(E:/aerial_dataset 학습 105,036 · 검증 22,506 · 25cm · 지역 기록 없음) · `namwon/Silage`(1,608 · 402) + 학습 자료 smp_5333ad8072(남원시 60장 · 2026.09.30).
+- 촬영: 개발 서버 :4173 로 열고 로그인 API(test@lx.or.kr)로 받은 세션을 저장소에 넣어 같은 로그인 길로 탔다(세션 주입 아님 · GPU 0).
