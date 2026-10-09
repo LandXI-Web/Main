@@ -1,0 +1,86 @@
+{
+  "_note": "10-09 13:41 서버 응답에서 옮긴 값(로그인 test@lx.or.kr · lxadmin@lx.or.kr · 프로젝트 · 모델 기록 · 작업 기록 · 기관 사용량 · 영상 목록). 정확도는 모델 기록의 학습 끝 검증 값(마스크 mAP50 · 분석하기 카드와 같은 출처)이라 1차 시안의 92%(상자 기준)는 90%로 맞췄다. 서버에 없는 값은 build.mjs 가 화면에 '예시' 표를 붙인다.",
+  "as_of": "13:41",
+  "project": {
+    "name": "비닐하우스 2026", "task": "비닐하우스", "regions": ["증평군", "함양군", "남원시"], "lead": "LX 직원", "members": 0,
+    "review": "0/20", "applied": ["증평군", "함양군", "남원시"], "sample": { "n": 200, "when": "9.30" },
+    "trainings": [
+      { "n": "2번째 학습", "when": "9.30 15:33", "label": "학습 2026.09.30", "classes": "건물 · 주차장 · 경작지 · 비닐하우스", "acc": 70, "state": "모델 승인 9.30", "input": "항공 25cm", "mine": true, "deployed": false },
+      { "n": "1번째 학습", "when": "9.30 14:29", "label": "학습 2026.09.30 (첫 번째)", "classes": "건물 · 주차장 · 경작지 · 비닐하우스", "acc": 66, "state": "모델 승인 9.30", "input": "항공 25cm", "mine": true, "deployed": false }
+    ],
+    "candidate": { "label": "비닐하우스 25cm 학습 2026.10.08", "classes": "비닐하우스", "acc": 90, "as_of": "10.8", "input": "항공 25cm", "epochs": 20, "state": "후보 · 프로젝트 표본과 연결 기록 없음" }
+  },
+  "card": {
+    "name": "비닐하우스 분석서비스", "line": "단동·다동 비닐하우스를 찾습니다", "finds": "비닐하우스", "version": "2.0", "next_version": "2.1", "approved_at": "10.7",
+    "scene": "proto/crops/namwon-greenhouse-2025/2@2x.jpg", "scene_caption": "남원시 · 2025 정사영상 · 비닐하우스",
+    "scene2": "proto/crops/namwon-greenhouse-2025/1@2x.jpg",
+    "history": [
+      { "v": "2.0", "when": "10.7", "what": "승인 · LX 관리자", "why": "원판 모델로 되돌림 · 같은 검증 묶음 측정 근거" },
+      { "v": "1.0", "when": "9.30", "what": "첫 공개", "why": "모델 '비닐하우스 학습 2026.09.30' 등록 승인 뒤" }
+    ],
+    "shared": [{ "org": "남원시", "when": "9.30", "state": "결과 있음" }],
+    "runs": [
+      { "where": "남원시 전역", "when": "10.7", "n": "703동", "area": "750km²", "took": "약 1시간 15분" },
+      { "where": "함양군", "when": "10.7", "n": "235동", "area": "478km²", "took": "약 57분" },
+      { "where": "증평군", "when": "10.7", "n": "84동", "area": "8km²", "took": "약 5분" }
+    ]
+  },
+  "model_new": { "label": "비닐하우스 25cm 학습 2026.10.08", "acc": 90, "as_of": "10.8", "input": "항공 25cm", "classes": "비닐하우스", "recall": 84, "precision": 87 },
+  "model_now": { "label": "학습 2026.05.16", "acc": 89, "as_of": "5.16", "input": "항공 25cm", "classes": "건물 · 주차장 · 경작지 · 비닐하우스" },
+  "first": {
+    "project": "곤포사일리지 2026", "task": "곤포사일리지", "region": "보령시", "card": "곤포사일리지 분석서비스", "line": "곤포사일리지를 찾습니다",
+    "model": { "label": "학습 2026.09.30", "acc": 96, "as_of": "9.30", "input": "항공 25cm", "classes": "곤포사일리지" },
+    "sample": { "n": 60, "when": "9.30", "region": "남원시" }, "review": "0/20", "applied": ["보령시"]
+  },
+  "imagery": [
+    { "name": "남원시 2023 항공영상", "gsd": "25cm 항공", "where": "남원시 전역", "fit": true },
+    { "name": "남원시 2020 항공영상", "gsd": "25cm 항공", "where": "남원시 전역", "fit": true },
+    { "name": "함양군 2023 항공영상", "gsd": "25cm 항공", "where": "함양군 전역", "fit": true },
+    { "name": "증평군 2023 항공영상", "gsd": "25cm 항공", "where": "증평군 전역", "fit": true },
+    { "name": "2025-08 드론 · 남원", "gsd": "1.5cm 드론", "where": "남원시 덕과면 일대", "fit": false }
+  ],
+  "upload": "tif · jpg · jp2 · ecw · 한 번에 20GB",
+  "official": [
+    { "name": "경작·휴경 분석서비스", "acc": 95, "line": "경작·휴경 필지를 찾습니다", "scene": "proto/crops/namwon-farmland-2025/1@2x.jpg" },
+    { "name": "비닐하우스 분석서비스", "acc": 89, "line": "단동·다동 비닐하우스를 찾습니다", "scene": "proto/crops/namwon-greenhouse-2025/2@2x.jpg" },
+    { "name": "건축물 분석서비스", "acc": 89, "line": "건물을 찾습니다" },
+    { "name": "주차장 분석서비스", "acc": 89, "line": "주차장을 찾습니다" },
+    { "name": "곤포사일리지 분석서비스", "acc": 96, "line": "곤포사일리지를 찾습니다" }
+  ],
+  "requests": [
+    { "name": "비닐하우스 분석서비스", "v": "2.1", "who": "LX 직원", "at": "10.9", "state": "검토 중", "lv": "now", "ex": true },
+    { "name": "비닐하우스 분석서비스", "v": "2.0", "who": "LX 직원", "at": "10.7", "state": "승인" },
+    { "name": "건축물 분석서비스", "v": "2.0", "who": "LX 직원", "at": "10.7", "state": "승인" },
+    { "name": "주차장 분석서비스", "v": "2.0", "who": "LX 직원", "at": "10.7", "state": "승인" }
+  ],
+  "pending_other": 3,
+  "services": [
+    { "name": "경작·휴경 분석서비스", "v": "2.1", "state": "운영", "on": ["남원시", "광주전남특별시"], "sub": "목포시 · 여수시 · 구례군 · 강진군" },
+    { "name": "해양쓰레기 실태조사 서비스", "v": "1.2", "state": "운영", "on": ["광주전남특별시"] },
+    { "name": "국토 변화 탐지 서비스", "v": "1.0", "state": "시범", "on": ["남원시"] },
+    { "name": "비닐하우스 분석서비스", "v": "2.0", "state": "시범", "on": ["남원시"] },
+    { "name": "건축물 분석서비스", "v": "2.0", "state": "시범", "on": [] },
+    { "name": "곤포사일리지 분석서비스", "v": "1.0", "state": "시범", "on": [] },
+    { "name": "주차장 분석서비스", "v": "2.0", "state": "시범", "on": [] }
+  ],
+  "orgs": [
+    { "name": "남원시", "kind": "시군구" },
+    { "name": "광주전남특별시", "kind": "광역 · 소속 시군구 27", "wide": true },
+    { "name": "키르기스 농업부", "kind": "해외" },
+    { "name": "키르기스 토지자원청", "kind": "해외" }
+  ],
+  "usage": [
+    { "org": "남원시", "svc": "비닐하우스 분석서비스", "since": "9.30", "lx_runs": 2, "lx_last": "10.7", "area": "750km²", "org_runs": 0, "org_last": "", "req": "", "chat": "" },
+    { "org": "남원시", "svc": "경작·휴경 분석서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 1, "org_last": "10.9", "req": "올린 영상으로 1회", "chat": "" },
+    { "org": "남원시", "svc": "국토 변화 탐지 서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 0, "org_last": "", "req": "", "chat": "" },
+    { "org": "광주전남특별시", "svc": "경작·휴경 분석서비스", "since": "9.29", "lx_runs": 4, "lx_last": "9.29", "area": "1,031km²", "org_runs": 0, "org_last": "", "req": "분석 요청 1건 · 10.1 · 승인 대기", "chat": "" },
+    { "org": "광주전남특별시", "svc": "해양쓰레기 실태조사 서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 0, "org_last": "", "req": "", "chat": "" }
+  ],
+  "org_totals": [
+    { "org": "남원시", "svcs": 3, "runs": 3, "last": "10.9", "chat": 121, "storage": "2.3GB" },
+    { "org": "광주전남특별시", "svcs": 2, "runs": 4, "last": "10.1", "chat": 0, "storage": "6.9GB" },
+    { "org": "키르기스 농업부", "svcs": 0, "runs": 0, "last": "", "chat": 0, "storage": "0GB" },
+    { "org": "키르기스 토지자원청", "svcs": 0, "runs": 0, "last": "", "chat": 0, "storage": "0GB" }
+  ],
+  "admin_home": { "pending": 3, "alerts": 0, "deploys": 23, "orgs": 4 }
+}

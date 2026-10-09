@@ -1,0 +1,109 @@
+/* df2.css — 설계 14차 · 분석 서비스 배포 2차 시안. df.css(1차) 위에 새 칸만 더한다(새 색 0 · 아이콘 0 · 라운드 16/12/8).
+   시안 전용 — 구현 때는 lx-analyze · lx-project · ops-infra · ops-core 로 옮긴다. */
+
+/* ── 분석하기 위 정식 서비스 줄(작게) ── */
+.df-ocs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.df-oc{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border-radius:12px;background:var(--bg-1);box-shadow:0 1px 2px rgba(28,31,37,.06)}
+.df-oc-img{aspect-ratio:3/1.4;overflow:hidden;border-radius:var(--r-8);background:var(--bg-0);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.df-oc-img img{width:100%;height:100%;object-fit:cover;display:block}
+.df-oc-img span{font:400 12px/16px var(--font-body);color:var(--mute);text-align:center;padding:0 10px}
+.df-oc h3{margin:0;font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.df-oc p{margin:0;font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.df-oc small{font:400 12px/16px var(--font-body);color:var(--sub)}
+
+/* ── 내 프로젝트 모델 목록 ── */
+.df-mm{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.df-mm li{display:grid;grid-template-columns:minmax(0,1fr) 140px 64px auto;gap:14px;align-items:center;padding:12px;margin:0 -12px;border-radius:12px;border-top:1px solid var(--rule)}
+.df-mm li:first-child{border-top:0}
+.df-mm li.is-on{background:var(--bg-0);border-top-color:transparent}
+.df-mm li.is-on+li{border-top-color:transparent}
+.df-mm-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.df-mm-l b{font:500 15px/20px var(--font-body);color:var(--ink)}
+.df-mm-l span{font:400 13px/18px var(--font-body);color:var(--ink-2)}
+.df-mm-l small{font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-mm-acc{display:grid;grid-template-columns:auto auto;align-items:baseline;column-gap:8px}
+.df-mm-acc em{font:400 12px/16px var(--font-body);color:var(--sub);font-style:normal}
+.df-mm-acc b{font:800 22px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.df-mm-acc .df-bar{grid-column:1/-1;margin-top:4px}
+.df-mm .t-btn{height:36px;padding:0 14px;white-space:nowrap}
+.df-cand{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 14px;border-radius:12px;border:1px dashed var(--mute);margin-top:4px}
+.df-cand b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.df-cand span{font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-cand .t-btn{height:32px;padding:0 8px}
+
+/* ── 이 모델로 분석(오른쪽) ── */
+.df-run{gap:10px}
+.df-imgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.df-imgs li label{display:grid;grid-template-columns:18px minmax(0,1fr);gap:2px 10px;align-items:center;padding:8px 12px;border-radius:var(--r-8);background:var(--bg-0);cursor:pointer}
+.df-imgs li label input{margin:0;width:16px;height:16px;grid-row:1/3;accent-color:var(--ink)}
+.df-imgs li label b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.df-imgs li label span{grid-column:2;font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-imgs li label em{grid-column:2;font:400 12px/16px var(--font-body);color:var(--warn);font-style:normal}
+.df-imgs-up{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;align-items:center;padding:8px 12px;border-radius:var(--r-8);border:1px dashed var(--mute)}
+.df-imgs-up b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.df-imgs-up span{grid-column:1;font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-imgs-up .t-btn{grid-column:2;grid-row:1/3;height:34px;padding:0 12px}
+.df-imgs--row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.df-imgs--row .df-imgs-up{grid-column:1/-1}
+.df-runs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px}
+.df-runs li{display:flex;flex-direction:column}
+.df-runs b{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.df-runs span{font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-empty{margin:0;padding:12px 14px;border-radius:12px;background:var(--bg-0);font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+
+/* ── 관리자 검증 ── */
+.df-grid--verify{grid-template-columns:minmax(0,4fr) minmax(0,8fr)}
+.df-apply-note{display:flex;flex-direction:column;gap:6px;padding:12px 14px 6px;border-radius:12px;background:var(--bg-0)}
+.df-apply-note .t-label{margin:0}
+.df-apply-note .df-dl{background:transparent;padding:0}
+.df-apply-note dt .df-ex{margin-left:4px}
+.df-trial{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:16px;align-items:start}
+.df-trial .t-label{margin:0 0 6px}
+.df-trial-go{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:12px;background:var(--bg-0)}
+.df-trial-go .t-btn{align-self:flex-start}
+.df-trial-go select.t-input{width:100%;box-sizing:border-box}
+.df-panes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.df-pane{margin:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--bg-0)}
+.df-pane.is-cur{outline:1px solid var(--rule);outline-offset:-1px}
+.df-pane figcaption{display:flex;flex-direction:column;gap:1px}
+.df-pane figcaption b{font:500 15px/20px var(--font-body);color:var(--ink)}
+.df-pane figcaption span{font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-pane-img{position:relative;height:220px;border-radius:var(--r-8);overflow:hidden;background:var(--bg-1)}
+.df-pane-img img{width:100%;height:100%;object-fit:cover;display:block}
+.df-pane-img .df-ex{position:absolute;right:8px;top:8px;margin:0;background:var(--bg-1)}
+.df-pane dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.df-pane dl>div{display:flex;flex-direction:column;gap:1px}
+.df-pane dt{font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-pane dd{margin:0;font:600 16px/22px var(--font-body);color:var(--ink)}
+
+/* ── 기관 공유 체크 표 ── */
+.df-tbl--matrix th{vertical-align:bottom}
+.df-tbl--matrix th b{display:block;font:500 14px/20px var(--font-body);color:var(--ink)}
+.df-tbl--matrix th small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-tbl--matrix td small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-tbl--matrix td:first-child{width:260px}
+.df-ck label{display:flex;flex-direction:column;gap:2px;align-items:flex-start;cursor:pointer}
+.df-ck input{width:18px;height:18px;margin:0;accent-color:var(--ink)}
+.df-ck-use{text-align:right;white-space:nowrap}
+.df-ck-use a{font:500 13px/18px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* ── 사용 현황 ── */
+.df-tbl--usage td small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.df-tbl--usage td b.num{font:600 16px/22px var(--font-body);color:var(--ink)}
+.df-org-tot{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg-0)}
+.df-org-tot .t-label{margin:0}
+.df-org-tot .df-hist li{grid-template-columns:140px minmax(0,1fr)}
+.df-filter{display:inline-flex;align-items:center;gap:8px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.df-filter .t-input{height:36px;width:200px}
+.ld-h .t-btn--text{margin-left:auto;height:32px;padding:0 6px}
+
+/* ── 관리자 대시보드 틀(ⓐ) ── */
+.df-home{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:16px;align-items:stretch}
+.df-home-map{min-height:0}
+.df-map-blank{flex:1;min-height:180px;border-radius:12px;background:var(--bg-0);display:flex;align-items:center;justify-content:center;font:400 var(--fs-label)/20px var(--font-body);color:var(--mute)}
+.df-big{margin:0;display:flex;align-items:baseline;gap:10px}
+.df-big b{font:800 40px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.df-big span{font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.df-col .t-btn{align-self:flex-start;height:36px;padding:0 14px}
+.t-card.is-new{outline:2px solid var(--accent);outline-offset:-2px}
+.df-scene-blank{height:112px;border-radius:var(--r-8);background:var(--bg-0);display:flex;align-items:center;justify-content:center;font:400 13px/18px var(--font-body);color:var(--mute)}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>[시안] LX 관리자 · 배포 신청 검증 · Land-XI</title>
+<meta name="description" content="설계 14차 2차 시안 — 배포-4 관리자가 신청된 모델을 직접 돌려 보기 — 시험 영상 한 곳에 새 판 · 지금 판 나란히 · 결과 두 장 비교 · 승인 / 거절">
+<link rel="icon" href="../../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../v3/kit/kit.css">
+<link rel="stylesheet" href="../../../v3/lx-console/console.css">
+<link rel="stylesheet" href="df.css">
+<link rel="stylesheet" href="df2.css">
+</head>
+<body class="t k-shelled">
+<div class="k-app has-rail has-more is-staff">
+<header class="t-mast k-mast"><a class="k-word" href="../../../v3/ops-core/"><span class="word">LAND-XI</span><span class="home">LX 관리자 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" tabindex="0" data-live="1" aria-label="마지막 갱신 13:41" data-why="마지막 갱신 13:41"><i></i><span class="num">13:41</span></span><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">LX 관리자</button><a class="k-mast-b k-xi" href="../../../v3/xi-clean/">XI맵</a><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+<nav class="t-rail k-rail" aria-label="메뉴"><a class="k-rail-i" href="../../../v3/ops-core/" data-i="0"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/></svg><span>현황</span></a><a class="k-rail-i" href="../../../v3/ops-infra/" data-i="1"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2"/></svg><span>인프라</span></a><a class="k-rail-i" href="../../../v3/ops-infra/?view=tenants" data-i="2"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"/></svg><span>기관</span></a><a class="k-rail-i" href="../../../v3/ops-infra/?view=deploys" data-i="3" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10 M6 7l4-4 4 4 M4 13v4h12v-4"/></svg><span>배포</span></a><a class="k-rail-i" href="../../../v3/ops-core/#approvals" data-i="4"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>승인 요청</span></a><a class="k-rail-i" href="../../../v3/lx-inbox/" data-i="5"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/></svg><span>검토 요청</span></a><a class="k-rail-i" href="../../../v3/ops-accounts/" data-i="6"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>계정 관리</span></a><button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></button></nav>
+<main class="k-main" id="main">
+<div class="df"><div class="df-in">
+<p class="df-stamp">2차 시안 · 사용자 확인 전 · 숫자는 10월 9일 13:41 서버 값 · <span class="df-ex">예시</span> 표시만 서버에 없는 값</p>
+
+<header class="df-head"><div><p class="t-label">LX 관리자</p><h1 class="df-title">배포</h1></div><nav class="df-tabs" aria-label="배포"><a href="admin-verify.html" aria-current="page">배포 신청<b class="num">1</b></a><a href="admin-share2.html">기관 공유</a><a href="#">적용 현황<b class="num">23</b></a></nav></header>
+<div class="df-grid df-grid--verify">
+<section class="t-card ld-card df-list" aria-label="배포 신청 목록">
+<div class="ld-h"><h2>배포 신청<small class="ld-sub">검토 중 1 · 처리함 3</small></h2></div>
+<table class="df-tbl"><thead><tr><th>서비스</th><th>판</th><th>신청일</th><th>상태</th></tr></thead><tbody><tr class="is-on" aria-current="true"><td><b>비닐하우스 분석서비스</b></td><td class="num">2.1</td><td class="num">10.9</td><td><span class="t-chip" data-lv="now">검토 중</span><span class="df-ex">예시</span></td></tr><tr><td><b>비닐하우스 분석서비스</b></td><td class="num">2.0</td><td class="num">10.7</td><td><span class="t-chip">승인</span></td></tr><tr><td><b>건축물 분석서비스</b></td><td class="num">2.0</td><td class="num">10.7</td><td><span class="t-chip">승인</span></td></tr><tr><td><b>주차장 분석서비스</b></td><td class="num">2.0</td><td class="num">10.7</td><td><span class="t-chip">승인</span></td></tr></tbody></table>
+<p class="df-note">다른 승인 요청 3건은 '승인 요청' 메뉴에서.</p>
+<div class="df-apply-note"><p class="t-label">신청서</p><dl class="df-dl df-dl--basis"><div><dt>신청</dt><dd><b>LX 직원 · 비닐하우스 2026</b><span class="df-sub">10.9 11:20 <span class="df-ex">예시</span></span></dd></div><div><dt>학습 데이터</dt><dd><b>표본 200장 · 9.30</b><span class="df-sub df-warn">10월 8일 학습과 연결 기록 없음</span></dd></div><div><dt>결과 확인</dt><dd><b class="df-warn">0/20</b></dd></div><div><dt>메모 <span class="df-ex">예시</span></dt><dd><b>10월 8일 다시 학습한 모델로 바꿨습니다 · 비닐하우스만 찾습니다</b></dd></div></dl></div>
+</section>
+<section class="t-card ld-card df-sheet" aria-label="직접 돌려 보기">
+<div class="ld-h"><h2>직접 돌려 보기<small class="ld-sub">비닐하우스 분석서비스 2.1판 신청 · 새 판과 지금 판을 같은 영상으로</small></h2></div>
+<div class="df-trial"><div><p class="t-label">시험 영상</p><ul class="df-imgs df-imgs--row"><li><label><input type="radio" name="timg" checked aria-label="남원시 2023 항공영상"><b>남원시 2023 항공영상</b><span>25cm 항공 · 남원시 전역</span></label></li><li><label><input type="radio" name="timg" aria-label="남원시 2020 항공영상"><b>남원시 2020 항공영상</b><span>25cm 항공 · 남원시 전역</span></label></li><li><label><input type="radio" name="timg" aria-label="함양군 2023 항공영상"><b>함양군 2023 항공영상</b><span>25cm 항공 · 함양군 전역</span></label></li><li><label><input type="radio" name="timg" aria-label="증평군 2023 항공영상"><b>증평군 2023 항공영상</b><span>25cm 항공 · 증평군 전역</span></label></li><li class="df-imgs-up"><b>영상 올리기</b><span>tif · jpg · jp2 · ecw · 한 번에 20GB</span><button class="t-btn t-btn--2" type="button">파일 고르기</button></li></ul></div><div class="df-trial-go"><p class="df-note"><span>두 판이 분석 대기열에 한 장씩 차례로 돕니다.</span> <span>남원시 전역은 판마다 약 1시간 15분 — 읍면동 하나만 골라 먼저 볼 수 있습니다.</span></p><label class="df-f"><span>범위</span><select class="t-input" aria-label="범위"><option>남원시 전역</option><option>덕과면만</option><option>읍면동 고르기</option></select></label><button class="t-btn" type="button">두 판 돌리기</button></div></div>
+<div class="df-panes"><figure class="df-pane"><figcaption><b>새 판 2.1</b><span>비닐하우스 25cm 학습 2026.10.08 · 비닐하우스</span></figcaption><div class="df-pane-img"><img src="../../../assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg" alt=""><span class="df-ex">예시</span></div><dl><div><dt>찾은 것</dt><dd class="num">돌리기 전</dd></div><div><dt>정확도</dt><dd class="num">90%</dd></div><div><dt>걸린 시간</dt><dd>—</dd></div></dl></figure><figure class="df-pane is-cur"><figcaption><b>지금 판 2.0</b><span>학습 2026.05.16 · 건물 · 주차장 · 경작지 · 비닐하우스</span></figcaption><div class="df-pane-img"><img src="../../../assets/proto/crops/namwon-greenhouse-2025/1@2x.jpg" alt=""></div><dl><div><dt>찾은 것</dt><dd class="num">703동</dd></div><div><dt>정확도</dt><dd class="num">89%</dd></div><div><dt>걸린 시간</dt><dd>약 1시간 15분</dd></div></dl></figure></div>
+<p class="df-note"><span>지금 판은 10.7 남원시 전역 결과를 그대로 보이고, 새 판은 돌린 뒤 찾은 것 · 걸린 시간이 채워집니다(새 판 장면은 자리 보기 <span class="df-ex">예시</span>).</span> <span>결과 두 장은 지도 서비스에서 층으로 겹쳐 볼 수 있습니다.</span></p>
+<div class="df-decide"><input class="t-input" type="text" placeholder="사유 — 거절할 때는 꼭 적습니다. 신청한 사람에게 그대로 보입니다" aria-label="사유"><button class="t-btn t-btn--2" type="button">거절</button><button class="t-btn" type="button">승인</button></div>
+<p class="df-note"><span>승인하면 2.1판이 정식 서비스가 되고 '기관 공유' 탭에서 기관에 공유할 수 있습니다.</span> <span>이미 공유된 남원시는 새 판으로 바뀝니다.</span></p>
+</section>
+</div>
+</div></div>
+</main>
+</div>
+</body>
+</html>

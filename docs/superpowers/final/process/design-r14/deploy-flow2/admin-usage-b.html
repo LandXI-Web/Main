@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>[시안] LX 관리자 · 배포 — 사용 현황 · Land-XI</title>
+<meta name="description" content="설계 14차 2차 시안 — 배포-5 ⓑ 사용 현황을 배포 메뉴 세 번째 탭으로 — 배포 신청 · 기관 공유 · 사용 현황이 한 자리">
+<link rel="icon" href="../../../../../../landxi/assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../../../../landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="../../../../../../landxi/v3/lx-console/console.css">
+<link rel="stylesheet" href="df.css">
+<link rel="stylesheet" href="df2.css">
+</head>
+<body class="t k-shelled">
+<div class="k-app has-rail has-more is-staff">
+<header class="t-mast k-mast"><a class="k-word" href="../../../../../../landxi/v3/ops-core/"><span class="word">LAND-XI</span><span class="home">LX 관리자 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" tabindex="0" data-live="1" aria-label="마지막 갱신 13:41" data-why="마지막 갱신 13:41"><i></i><span class="num">13:41</span></span><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">LX 관리자</button><a class="k-mast-b k-xi" href="../../../../../../landxi/v3/xi-clean/">XI맵</a><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+<nav class="t-rail k-rail" aria-label="메뉴"><a class="k-rail-i" href="../../../../../../landxi/v3/ops-core/" data-i="0"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/></svg><span>현황</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/" data-i="1"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2"/></svg><span>인프라</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/?view=tenants" data-i="2"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"/></svg><span>기관</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/?view=deploys" data-i="3" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10 M6 7l4-4 4 4 M4 13v4h12v-4"/></svg><span>배포</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-core/#approvals" data-i="4"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>승인 요청</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/lx-inbox/" data-i="5"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/></svg><span>검토 요청</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-accounts/" data-i="6"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>계정 관리</span></a><button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></button></nav>
+<main class="k-main" id="main">
+<div class="df"><div class="df-in">
+<p class="df-stamp">2차 시안 · 사용자 확인 전 · 숫자는 10월 9일 13:41 서버 값 · <span class="df-ex">예시</span> 표시만 서버에 없는 값</p>
+
+<header class="df-head"><div><p class="t-label">LX 관리자</p><h1 class="df-title">배포</h1></div><nav class="df-tabs" aria-label="배포"><a href="admin-verify.html">배포 신청<b class="num">1</b></a><a href="admin-share2.html">기관 공유</a><a href="admin-usage-b.html" aria-current="page">사용 현황</a></nav></header>
+<section class="t-card ld-card" aria-label="사용 현황">
+<div class="ld-h"><h2>사용 현황<small class="ld-sub">기관에 공유한 서비스 5건 · 기관 2</small></h2><label class="df-filter"><span>기관</span><select class="t-input" aria-label="기관"><option>모든 기관</option><option>남원시</option><option>광주전남특별시</option><option>키르기스 농업부</option><option>키르기스 토지자원청</option></select></label></div>
+<table class="df-tbl df-tbl--usage"><thead><tr><th>기관</th><th>서비스</th><th>LX가 돌린 분석</th><th>기관이 요청한 분석</th><th>마지막 사용</th></tr></thead><tbody><tr><td><b>남원시</b></td><td>비닐하우스 분석서비스<small>9.30 공유</small></td><td><b class="num">2회</b><small>750km² · 마지막 10.7</small></td><td><span class="df-sub">0회</span></td><td class="num">10.7</td></tr><tr><td><b>남원시</b></td><td>경작·휴경 분석서비스<small>2025 공유</small></td><td><span class="df-sub">—</span></td><td><b class="num">1회</b><small>올린 영상으로 1회 · 10.9</small></td><td class="num">10.9</td></tr><tr><td><b>남원시</b></td><td>국토 변화 탐지 서비스<small>2025 공유</small></td><td><span class="df-sub">—</span></td><td><span class="df-sub">0회</span></td><td class="num">—</td></tr><tr><td><b>광주전남특별시</b></td><td>경작·휴경 분석서비스<small>9.29 공유</small></td><td><b class="num">4회</b><small>1,031km² · 마지막 9.29</small></td><td><b class="num">0회</b><small>분석 요청 1건 · 10.1 · 승인 대기</small></td><td class="num">9.29</td></tr><tr><td><b>광주전남특별시</b></td><td>해양쓰레기 실태조사 서비스<small>2025 공유</small></td><td><span class="df-sub">—</span></td><td><span class="df-sub">0회</span></td><td class="num">—</td></tr></tbody></table>
+<div class="df-org-tot"><p class="t-label">기관별 합계 · 이번 달</p><ul class="df-hist df-hist--org"><li><b>남원시</b><div><span>서비스 3 · 분석 3회 · 마지막 10.9</span><small>XI ChatGEO 요청 이번 달 121건 · 저장 공간 2.3GB</small></div></li><li><b>광주전남특별시</b><div><span>서비스 2 · 분석 4회 · 마지막 10.1</span><small>XI ChatGEO 요청 이번 달 0건 · 저장 공간 6.9GB</small></div></li><li><b>키르기스 농업부</b><div><span>서비스 0 · 분석 0회</span><small>XI ChatGEO 요청 이번 달 0건 · 저장 공간 0GB</small></div></li><li><b>키르기스 토지자원청</b><div><span>서비스 0 · 분석 0회</span><small>XI ChatGEO 요청 이번 달 0건 · 저장 공간 0GB</small></div></li></ul></div>
+<p class="df-note"><span>분석 횟수 · 면적 · 마지막 사용은 작업 기록과 사용량 기록에서 셉니다.</span> <span>기관 담당자가 서비스를 열어 본 횟수는 아직 기록하지 않습니다 — 넣으려면 새로 필요(README).</span></p>
+</section>
+</div></div>
+</main>
+</div>
+</body>
+</html>
