@@ -1,0 +1,121 @@
+/* 메인 장면 시안(설계 13차) — v3 main.css 를 그대로 읽고, 스크롤 트랙 대신 장면 하나를 고정해 보인다. 여기에는 시안 고유 규칙만. */
+.p-main{position:relative;height:100svh;min-height:560px;overflow:hidden}
+.m-bd{z-index:0}
+/* 창 — 둘째 장면은 마스트 아래 전체 · 셋째·넷째는 오른쪽 둥근 창(v3 LY.full · LY.right 와 같은 수) */
+.p-win{position:absolute;left:0;top:var(--mast);right:0;bottom:0;z-index:1;overflow:hidden;background:var(--bg-0)}
+.p-win[data-shape="right"]{left:46vw;top:calc(var(--mast) + 32px);right:48px;bottom:48px;border-radius:24px}
+.p-stage{position:absolute;inset:0}
+.p-stage .k-stage{background:transparent}
+.p-labels{position:absolute;inset:0;z-index:2}
+.p-onwin{position:absolute;inset:0;z-index:3;pointer-events:none}
+.p-onwin > *{pointer-events:auto}
+/* 둘째 장면 카드 · 셋째·넷째 글 — main.css 의 자리 그대로(판 대신 main 기준) */
+.m-ch{z-index:4}
+.p-ch1 .m-card{padding:32px}
+/* 옆 장면 글을 그림 쪽으로(v3 10-09 규칙과 같은 수 · 원칙 127) */
+@media (min-width:1101px){.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
+
+/* 실태조사 목록(둘째 장면) — 하나만 진하게 · 누르면 그 실태조사 */
+.p-list{list-style:none;margin:24px 0 0;padding:20px 0 0;border-top:1px solid var(--rule);display:grid;gap:2px}
+.p-list li{display:flex;align-items:baseline;gap:12px;padding:8px 0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink);opacity:.38;cursor:pointer;transition:opacity var(--d-380) var(--e-ui)}
+.p-list li.is-on{opacity:1}
+.p-list li b{font:700 var(--fs-body)/var(--lh-body) var(--font-display);letter-spacing:-0.01em}
+.p-list li span{margin-left:auto;font:500 var(--fs-label)/var(--lh-label) var(--font-num);color:var(--sub);white-space:nowrap}
+.p-list li small{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.p-list li.is-on span{color:var(--ink)}
+/* ⓐ 차례로 — 남은 시간 띠(움직임 줄이기면 없음) */
+.p-list li i{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--ink)}
+.p-list li{position:relative}
+.p-list li.is-on i{animation:p-run var(--p-cycle,5.5s) linear forwards}
+@keyframes p-run{to{width:100%}}
+@media (prefers-reduced-motion:reduce){.p-list li i{display:none}}
+
+/* 둘째 장면 아래 캡션은 실제 결과 장면 캡션이 대신한다 */
+.p-ch1 .m-cap{display:none}
+/* ⓑ 겹쳐서 — 큰 숫자 없이 목록 4줄이 곧 숫자 */
+.p-ch1[data-v="b"] .p-list{margin-top:20px;gap:6px}
+.p-ch1[data-v="b"] .p-list li{padding:12px 0;opacity:.55}
+.p-ch1[data-v="b"] .p-list li.is-on{opacity:1}
+.p-ch1[data-v="b"] .p-list li b{font-size:18px;line-height:24px}
+.p-ch1[data-v="b"] .p-list li span{font:800 22px/24px var(--font-display);letter-spacing:-0.01em;color:var(--ink)}
+.p-ch1[data-v="b"] .p-list li i{display:none}
+
+/* 실제 결과 장면(작게) — 창 오른쪽 아래 */
+.p-inset{position:absolute;right:24px;bottom:24px;z-index:3;width:min(420px,calc(100% - 48px));margin:0;border-radius:var(--r-16);overflow:hidden;background:var(--bg-1);box-shadow:var(--elev-map)}
+.p-inset-map{position:relative;height:240px}
+.p-inset-cap{display:flex;align-items:baseline;gap:8px;padding:12px 16px 14px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.p-inset-cap b{font:700 15px/20px var(--font-display);color:var(--ink)}
+.p-inset-cap small{margin-left:auto;font:500 12px/1 var(--font-body);color:var(--sub-2)}
+.p-inset[data-fade="1"] .p-inset-map{transition:opacity var(--d-500) var(--e-ui)}
+
+/* ⓑ 겹쳐서 — 지역 라벨 */
+.m-lbl{transform:none}
+.m-lbl.is-dim{opacity:.6}
+.m-lbl span{font-weight:600}
+
+/* 계획 줄(키트 모양 그대로) — 카드 안 여백만 */
+.p-a .k-ck-plan{padding:0;border-top:0}
+
+/* 셋째 장면 — v3 .m-pc 카드 그대로 · 판단 줄만 더함 */
+.m-pc{z-index:2}
+.m-pc-foot{opacity:.25}
+.m-pc-foot.is-on{opacity:1}
+.m-pc-foot .t-label{color:var(--ink)}
+.m-pc-foot .t-label small{display:block;margin-top:2px;color:var(--sub);font-weight:500}
+.m-pc .t-chip[data-lv="warn"]{color:#B42318;background:#FEF3F2}
+.m-pc[data-step="0"] .m-pc-col.is-ai{opacity:1}
+.m-pc[data-step="0"] .m-pc-cols{opacity:1}
+.m-pc[data-step="0"] .m-pc-col:first-child{opacity:.25}
+.m-pc[data-step="1"] .m-pc-cols,.m-pc[data-step="2"] .m-pc-cols{opacity:1}
+.m-pc-col{transition:opacity var(--d-380) var(--e-ui)}
+
+/* 넷째 장면 — 질문 카드가 자라면서 차트 · 보고서 줄이 붙는다 */
+.m-ask{left:24px;right:auto;width:min(460px,calc(100% - 48px));max-width:none;height:calc(100% - 48px);display:flex;align-items:flex-start}
+.m-ask .k-ck{display:flex;flex-direction:column;max-height:100%;width:100%}
+.p-chat{overflow:auto;min-height:0;flex:1 1 auto;padding:0 20px 16px;display:grid;gap:12px;align-content:start}
+.p-q{margin:0;padding-top:8px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.p-q b{display:block;font:500 var(--fs-sub)/1.3 var(--font-body);color:var(--ink)}
+.p-a{display:grid;gap:10px}
+.p-a .k-ck-plan{margin:0}
+.p-a .k-ck-a{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.p-a .k-ck-a .t-label{color:var(--sub)}
+.p-a .k-ck-a b{font:800 28px/1 var(--font-display);letter-spacing:-0.01em}
+.p-a .k-ck-a small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.p-a .k-bars{margin-top:4px}
+.p-a .k-bar-t{background:var(--bg-0)}
+.p-a .k-bar-t i{background:var(--ai)}
+.p-file{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r-12)}
+.p-file b{font:700 15px/20px var(--font-display);color:var(--ink)}
+.p-file span{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.p-file .t-chip{margin-left:auto}
+.p-ex{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;border:1px dashed var(--mute);font:500 12px/1 var(--font-body);color:var(--mute)}
+.p-steps li{cursor:pointer}
+.m-inv .p-steps li{color:#fff}
+
+/* 시안 고르기 띠(미리보기에만) */
+.p-pick{position:fixed;left:50%;top:calc(var(--mast) + 8px);z-index:30;transform:translateX(-50%);display:flex;align-items:center;gap:4px;height:34px;padding:0 6px 0 12px;border-radius:17px;background:rgba(255,255,255,.94);box-shadow:0 2px 10px rgba(16,24,40,.12);font:500 13px/1 var(--font-body);color:var(--sub)}
+.p-pick a{padding:6px 9px;border-radius:12px;color:var(--ink-2);white-space:nowrap}
+.p-pick a.is-on{background:var(--ink);color:#fff}
+.p-pick-l{margin-right:4px}
+.p-pick-w{margin-left:8px}
+.p-ch1 + .m-cap{z-index:5}
+
+/* 모바일(≤ 640) — v3 와 같은 자리(글 위 · 창 아래) */
+@media (max-width:640px){
+  .p-win[data-shape="right"]{left:20px;right:20px;top:50%;bottom:20px;border-radius:24px}
+  .p-ch1 .m-card{padding:20px}
+  .p-list{margin-top:14px;padding-top:12px}
+  .p-list li{padding:5px 0;font-size:15px}
+  .p-inset{right:12px;bottom:12px;width:calc(100% - 24px)}
+  .p-inset-map{height:150px}
+  .m-ask{width:auto;top:12px;left:12px;right:12px;height:calc(100% - 24px)}
+  .p-chat{padding:0 14px 12px}
+  .p-a .k-ck-a b{font-size:24px}
+  .p-pick{top:calc(var(--mast) + 6px);height:30px;font-size:12px;gap:0}
+  .p-pick a{padding:5px 6px}
+  .p-pick-l{display:none}
+  .m-side{bottom:52%}
+  /* 제목 2줄 이내(§2-1) — 넷째 장면 긴 제목은 글자만 조금 줄인다 */
+  #ch3 .m-h{font-size:26px;line-height:34px}
+  #ch3 .m-h span{white-space:nowrap}
+}

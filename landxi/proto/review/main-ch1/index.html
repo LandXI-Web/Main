@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAND-XI PLATFORM — 메인 장면 시안</title>
+<meta name="description" content="메인 둘째·셋째·넷째 장면 시안(설계 13차 · 사용자 확인 전). v3 메인의 실제 장면을 복사해 움직인다.">
+<link rel="preload" href="../../../assets/fonts/Paperlogy-7Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../../assets/fonts/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../../../v3/kit/kit.css">
+<link rel="stylesheet" href="../../../v3/main/main.css">
+<link rel="stylesheet" href="./ch.css">
+<script src="../../vendor/maplibre/maplibre-gl.js" defer></script>
+<script src="../../../xi/vendor/pmtiles/pmtiles.js" defer></script>
+</head>
+<body class="t m">
+
+<header class="m-mast" id="top">
+  <a class="m-word" href="../../../v3/main/">LAND-XI PLATFORM</a>
+  <nav class="m-nav">
+    <a href="../../../v3/main/#ch4">서비스</a>
+    <a href="../../../v3/main/#ch5">활용 사례</a>
+    <a href="../../../v3/login/">로그인</a>
+  </nav>
+</header>
+
+<!-- 시안 고르기(미리보기에만 있는 띠 · 실제 메인에는 없음) -->
+<nav class="p-pick" aria-label="시안 고르기">
+  <span class="p-pick-l">시안</span>
+  <a href="?v=a" data-v="a">둘째 ⓐ 차례로</a>
+  <a href="?v=b" data-v="b">둘째 ⓑ 겹쳐서</a>
+  <a href="?v=c2" data-v="c2">셋째</a>
+  <a href="?v=c3" data-v="c3">넷째</a>
+  <span class="p-pick-l p-pick-w">문구</span>
+  <a href="#" data-w="1">1</a><a href="#" data-w="2">2</a><a href="#" data-w="3">3</a>
+</nav>
+
+<div class="m-bd" id="bd" aria-hidden="true"></div>
+
+<main class="p-main" id="main">
+  <!-- 지도 무대(창 하나) · 둘째 장면은 전체 · 셋째·넷째는 오른쪽 창 -->
+  <div class="p-win" id="win">
+    <div class="p-stage" id="stage" aria-hidden="true"></div>
+    <div class="m-labels p-labels is-on" id="labels" aria-hidden="true"></div>
+    <!-- 실제 결과 장면(작게) — 둘째 장면에서만 -->
+    <figure class="p-inset" id="inset" hidden>
+      <div class="p-inset-map" id="inset-map" aria-hidden="true"></div>
+      <figcaption class="p-inset-cap" id="inset-cap"></figcaption>
+    </figure>
+    <!-- 셋째 장면 필지 카드 · 넷째 장면 질문 카드 — 창 위 -->
+    <div class="p-onwin" id="onwin"></div>
+  </div>
+
+  <!-- 둘째 장면(ⓐ · ⓑ) — 지도 위 흰 카드 -->
+  <section class="m-ch m-over is-on is-in p-ch1" id="ch1" hidden>
+    <div class="t-card t-card--map m-card">
+      <p class="m-bridge">전국 단위로</p>
+      <h2 class="t-h2 m-h" id="ch1-h"><span>어떤 실태조사든</span><span>전국 같은 기준으로</span></h2>
+      <p class="t-body m-p" id="ch1-p"></p>
+      <div class="m-big" id="ch1-big"></div>
+      <ol class="p-list" id="ch1-list" aria-label="실태조사 고르기"></ol>
+    </div>
+    <p class="m-cap" id="ch1-cap"></p>
+  </section>
+
+  <!-- 셋째 장면 — 왼쪽 글 · 오른쪽 창 -->
+  <section class="m-ch m-side is-on is-in" id="ch2" hidden>
+    <p class="m-bridge" id="ch2-b">필지 단위로</p>
+    <h2 class="t-h2 m-h" id="ch2-h"></h2>
+    <p class="t-body m-p" id="ch2-p"></p>
+    <ol class="m-items" id="ch2-items"></ol>
+  </section>
+
+  <!-- 넷째 장면(반전) — 왼쪽 글 · 오른쪽 창 -->
+  <section class="m-ch m-side m-inv is-on is-in" id="ch3" hidden>
+    <p class="m-bridge" id="ch3-b">말 한마디로</p>
+    <h2 class="t-h2 m-h" id="ch3-h"></h2>
+    <p class="t-body m-p" id="ch3-p"></p>
+    <ol class="m-items p-steps" id="ch3-steps"></ol>
+  </section>
+</main>
+
+<script type="module" src="./ch.js"></script>
+</body>
+</html>
