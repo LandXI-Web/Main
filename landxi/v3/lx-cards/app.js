@@ -40,7 +40,7 @@ async function list() {
   const F = { st: 'all' };
   const n = (f) => all.filter(f).length;
   const CH = [['all', '전체', () => true], ['ga', '운영', (c) => c.state === 'ga'], ['pilot', '시범', (c) => c.state === 'pilot'], ['none', '첫 결과 전', (c) => c.state === 'none'],
-    ['pending', '공개 결재 중', (c) => c.publish?.pending], ['reports', '기관 신고 있음', (c) => (c.reports?.value || 0) > 0]].filter(([k, , f]) => k === 'all' || n(f));
+    ['pending', '공개 승인 요청 중', (c) => c.publish?.pending], ['reports', '기관 신고 있음', (c) => (c.reports?.value || 0) > 0]].filter(([k, , f]) => k === 'all' || n(f));
   const chips = h('div.la-chips', { role: 'group', 'aria-label': '거르기' });
   const draw = () => {
     chips.replaceChildren(...CH.map(([k, w, f]) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.st === k), onclick: () => { F.st = k; draw(); } }, w, h('small.num', { text: String(n(f)) }))));

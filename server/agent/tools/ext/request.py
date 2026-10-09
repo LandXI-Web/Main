@@ -126,9 +126,9 @@ async def request_send(args: dict, ctx) -> Out:
     from ... import talk
     body = {"service_id": args["service_id"], "source": "shared", "imagery_id": args["imagery_id"], "memo": "XI ChatGEO에서 보낸 분석 요청"}
     j = await _j(ctx, "POST", "/requests", json=body)
-    out = Out(source="분석 요청(결재 대기)")
+    out = Out(source="분석 요청(승인 대기)")
     rid = (j.get("request") or j).get("id") if isinstance(j, dict) else None
-    out.data = {"분석 요청": "보냄 — LX 관리자 결재 대기", "번호": "개발자 서랍에만"}
+    out.data = {"분석 요청": "보냄 — LX 관리자 승인 대기", "번호": "개발자 서랍에만"}
     out.raw = {"request_id": rid}
     out.answer = "분석 요청을 보냈습니다. LX 관리자가 확인하면 분석되고, 결과는 이 서비스에 새 시점으로 쌓입니다."
     talk.set_next(ctx, [talk.btn("내 분석 요청 보기", href=GOV_REQ)])

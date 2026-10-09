@@ -35,7 +35,7 @@ export async function loadAll(onRest) {
   D.mode = ap ? 'server' : 'adapter';
   if (d || ap) D.ok = true;          // 결재 대기의 출처(배포 기록 또는 결재 표)가 한 번이라도 왔는가
   D.at = Date.now();
-  devlog('결재 출처', D.mode === 'server' ? 'GET /approvals?state=pending' : '어댑터: /deploys 파생(S-9 전)');
+  devlog('승인 요청 출처', D.mode === 'server' ? 'GET /approvals?state=pending' : '어댑터: /deploys 파생(S-9 전)');
   D.rest = rest;
   return D;
 }

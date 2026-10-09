@@ -23,7 +23,7 @@ export async function loadSent() {
   for (const x of sh?.items || []) if (x.mine) rows.push({ kind: 'shoot', kind_ko: '촬영 요청', id: x.id, at: x.updated_at || x.created_at, x,
     t: `${x.place || '그린 범위'} ${Number(x.area_km2?.value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}㎢`,
     sub: x.answer && ['answered', 'accepted'].includes(x.state) ? `LX 답 — ${x.answer.timing || ''} · 확정 ${nf(x.answer.amount?.value)}원${x.state === 'answered' ? ' · 진행 여부를 정해 주세요' : ''}`
-      : x.state === 'rejected' ? `반려 · ${x.reason || ''}` : `${md(x.created_at)} 보냄 · 대략 ${nf(x.approx?.value)}원`,
+      : x.state === 'rejected' ? `거절 · ${x.reason || ''}` : `${md(x.created_at)} 보냄 · 대략 ${nf(x.approx?.value)}원`,
     word: x.state_word, lv: LV[x.state] });
   for (const x of rv?.items || []) rows.push({ kind: 'review', kind_ko: '검토 요청', id: x.id, at: x.updated_at || x.at,
     t: `${x.where}${x.note ? ` "${x.note}"` : ''}`, sub: x.last && x.last.side === 'lx' ? `답 "${x.last.body}"` : `${md(x.at)} 보냄`,
@@ -61,7 +61,7 @@ function shootDetail(x) {
     body.append(h('section.sq-ans', {}, h('p.t-label', { text: 'LX 답' }), h('dl.gd-kv', {},
       kv('촬영 시기', x.answer.timing), kv('확정 금액', `${nf(x.answer.amount?.value)}원`), kv('한 줄', x.answer.line), kv('답한 사람', x.answer.by))));
   }
-  if (x.state === 'rejected') body.append(h('p.sq-warn', { text: `반려 · 사유: ${x.reason || ''}` }));
+  if (x.state === 'rejected') body.append(h('p.sq-warn', { text: `거절 · 사유: ${x.reason || ''}` }));
   const acts = h('div.sq-acts');
   const act = async (path, msg) => {
     try { await api(`/shoots/${encodeURIComponent(x.id)}/${path}`, { method: 'POST', body: {} }); K.toast(msg); d.close(); document.dispatchEvent(new CustomEvent('gq:sent')); }

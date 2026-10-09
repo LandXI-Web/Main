@@ -15,7 +15,7 @@ const RAIL = [
   { id: 'infra', label: '인프라', icon: 'gear', href: INFRA },
   { id: 'tenants', label: '기관', icon: 'org', href: INFRA + '?view=tenants' },
   { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
-  { id: 'approvals', label: '결재', icon: 'inbox', href: OPS + '#/approvals' },
+  { id: 'approvals', label: '승인 요청', icon: 'inbox', href: OPS + '#/approvals' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },
   { id: 'accounts', label: '계정 관리', icon: 'check' },
 ];

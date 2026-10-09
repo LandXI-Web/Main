@@ -58,14 +58,14 @@ async def people(conn) -> dict:
     return out
 
 
-def _pub(o, src: str = "결재 요청 값"):
+def _pub(o, src: str = "승인 요청 값"):
     """결재 payload·effect 안의 숫자(임계 등)를 봉투로 — 화면이 숫자를 지어내지 않게."""
     if isinstance(o, dict):
         return {k: (v if k in ("soft", "hard") else _pub(v, src)) for k, v in o.items()}
     if isinstance(o, list):
         return [_pub(v, src) for v in o]
     if isinstance(o, (int, float)) and not isinstance(o, bool):
-        return env(o, "ratio" if o < 1 else "count", "estimate", src, "[추정 초기값] · 결재 요청 값")
+        return env(o, "ratio" if o < 1 else "count", "estimate", src, "[추정 초기값] · 승인 요청 값")
     return o
 
 
@@ -155,7 +155,7 @@ async def list_approvals(request: Request, state: str = "pending"):
     if state not in ("pending", "decided", "all"):
         raise ApiError("bad_request", "state 는 pending|decided|all")
     if p.role == "sales":
-        raise ApiError("forbidden", "LX 영업 계정은 결재함이 없습니다")
+        raise ApiError("forbidden", "LX 영업 계정은 승인 요청함이 없습니다")
     mine = None if p.is_admin else p.user_id
     async with db(realm="lx") as conn:
         rows = await _rows(conn, state, mine)
@@ -247,7 +247,7 @@ async def request_approval(body: dict, request: Request):
     p = require(principal(request))
     st = body.get("subject_type")
     if st != "quota":
-        raise ApiError("bad_request", "여기서는 한도 변경(quota)만 요청합니다 — 다른 지역에 적용 = POST /deploys · 규칙 = POST /survey/rules/{id}/activate")
+        raise ApiError("bad_request", "여기서는 한도 변경(quota)만 요청합니다 — 기관에 공유 = POST /deploys · 규칙 = POST /survey/rules/{id}/activate")
     aid = await request_quota(p, body.get("subject_id"), body.get("payload") or {}, body.get("reason"))
     return {"approval_id": aid, "state": "pending", "as_of": now_iso()}
 
@@ -268,9 +268,9 @@ def check_decider(p, requested_by: str | None, decision: str, reason: str | None
     """결정 규칙 한 곳(결재함 · 모델 등록 결정이 같이 쓴다): 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람.
     solo = 요청한 계정이 결재할 수 있는 유일한 관리자 계정(solo_admin) — 그때만 스스로 결재(처리 기록에 SOLO_NOTE)."""
     if decision == "reject" and not str(reason or "").strip():
-        raise ApiError("reason_required", "반려 사유를 적어 주세요", status=400)
+        raise ApiError("reason_required", "거절 사유를 적어 주세요", status=400)
     if requested_by and requested_by == p.user_id and not solo:
-        raise ApiError("self_approval", "요청한 사람은 스스로 결재할 수 없습니다 — 다른 관리자가 결재합니다", status=409)
+        raise ApiError("self_approval", "요청한 사람은 스스로 승인할 수 없습니다 — 다른 관리자가 승인합니다", status=409)
 
 
 async def _apply_quota(conn, sid: str, pl: dict, aid: str) -> dict:
@@ -308,9 +308,9 @@ async def decide(aid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM approvals WHERE id=$1 FOR UPDATE", aid)
         if not r:
-            raise ApiError("not_found", f"결재 {aid} 없음")
+            raise ApiError("not_found", f"승인 요청 {aid} 없음")
         if (r["state"] or "decided") != "pending":
-            raise ApiError("conflict", "이미 결정된 결재입니다", {"decision": r["decision"]}, 409)
+            raise ApiError("conflict", "이미 결정된 승인 요청입니다", {"decision": r["decision"]}, 409)
         solo = bool(r["requested_by"]) and r["requested_by"] == p.user_id and await solo_admin(conn, p)
         check_decider(p, r["requested_by"], dec, reason, solo=solo)
         st, sid, pl = r["subject_type"], r["subject_id"], dict(r["payload"] or {})

@@ -58,7 +58,7 @@ async def ledger_rule_exec(args: dict, ctx) -> Out:
     out = Out(source=f"POST /api/v1/t/{tenant}/survey/rules/evaluate")
     for k, v in (j.get("findings") or {}).items():
         out.env(f"finding_{k}", f"{_rule_name(k)} 필지(기관 기준으로 다시 계산)", v)
-    out.data = {"규칙": _rule_name(j.get("rule") or ""), "조건": j.get("condition"), "적용": "이 기관 결과만(전 기관 적용은 결재)"}
+    out.data = {"규칙": _rule_name(j.get("rule") or ""), "조건": j.get("condition"), "적용": "이 기관 결과만(전 기관 적용은 승인 요청)"}
     out.ui_actions.append({"op": "map_on", "set": "survey/findings", "filter": {"rule": j.get("rule"), "ledger": "latest"}, "label": j.get("condition")})
     return out
 

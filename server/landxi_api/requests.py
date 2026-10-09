@@ -57,7 +57,7 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
-STATE_WORD = {"pending": "확인 대기", "approved": "분석 준비", "analyzing": "분석 중", "done": "결과 도착", "rejected": "반려",
+STATE_WORD = {"pending": "확인 대기", "approved": "분석 준비", "analyzing": "분석 중", "done": "결과 도착", "rejected": "거절",
               "failed": "분석하지 못함"}
 ON_STAGES = ("shadow", "canary", "ga")          # 그 기관에 켜진 서비스(초안 · 되돌림 · 시험 제외)
 KIND_WORD = {"drone": "드론", "aerial": "항공", "satellite": "위성"}

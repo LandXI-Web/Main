@@ -111,7 +111,7 @@ export function openRetrain(pr, { onStart } = {}) {
   const now = [`검토 요청 ${reviewsWord(b)}`, `새 영상 ${imageryWord(b)}`, b.before].filter(Boolean).join(' · ');
   const cancel = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '취소' });
   const body = h('div.lxp-sh', {}, chips, own,
-    h('p.lxp-say', {}, '회차 기록과 LX 관리자 결재에 같은 근거가 남습니다.', h('br'), nb(`지금 근거: ${now}`)),
+    h('p.lxp-say', {}, '회차 기록과 LX 관리자 승인에 같은 근거가 남습니다.', h('br'), nb(`지금 근거: ${now}`)),
     h('div.lxp-act', {}, go, cancel));
   const m = modal({ title: `${n}차 재학습 — 왜 다시 학습하나`, body });
   m.el.classList.add('lxp-md');

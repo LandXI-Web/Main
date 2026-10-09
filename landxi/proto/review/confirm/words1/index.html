@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI 화면 말 바꾸기 — 배포 신청 · 승인 · 거절 · 기관에 공유</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>화면 말 바꾸기 — 배포 신청 · 승인 · 거절 · 기관에 공유</h1>
+<p class="lead">페블의 레퍼런스 가이드와 전 기능 재검수에서 나온 제안, 그리고 이미 만든 것의 구현 확인입니다. 확인하신 것만 만듭니다.</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>만든 것 — 화면 말 바꾸기</h2><p class="sub">확인하신 대로 화면의 말을 바꿨습니다. 코드 · 기록 값은 그대로이고 보이는 글만 바뀝니다. &#x27;적용 요청&#x27; 칩 하나는 아직 옛 말입니다(캡처 설명에 적음).</p><article class="c" data-id="배포-7" data-t="[화면][Land-XI] 배포 신청 · 승인 요청 · 거절 · 기관에 공유"><header><span class="n">배포-7</span><h3>[화면][Land-XI] 배포 신청 · 승인 요청 · 거절 · 기관에 공유</h3></header><div class="g"><div class="tx"><p class="k">만든 것</p><p>직원 프로젝트 단계의 &#x27;발행 요청&#x27;은 &#x27;배포 신청&#x27;, 관리자 메뉴 &#x27;결재&#x27;는 &#x27;승인 요청&#x27;(단추는 승인 · 거절), &#x27;반려&#x27;는 &#x27;거절&#x27;, &#x27;다른 지역에 적용&#x27;은 &#x27;기관에 공유&#x27;로 바뀌었습니다. 서버가 보내는 안내 · 알림 · XI ChatGEO 답도 같은 말입니다. 아직 옛 말: 배포 화면의 &#x27;적용 요청&#x27; 칩(바꾸라는 말이 없어 두었습니다).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/" target="_blank" rel="noopener">app.land-xi.dev/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>프로젝트 → 비닐하우스 → 위 단계 막대의 &#x27;배포 신청&#x27;</em></li><li><a href="https://app.land-xi.dev/" target="_blank" rel="noopener">app.land-xi.dev/</a><span>아이디 lxadmin@lx.or.kr · 임시 비밀번호</span><em>왼쪽 메뉴 &#x27;승인 요청&#x27; · 배포 → &#x27;기관에 공유&#x27;</em></li></ul></div><div class="im"><figure><a href="img/after-staff-publish-1440.png" target="_blank"><img src="img/after-staff-publish-1440.png" alt="" loading="lazy"></a><figcaption>바뀐 뒤</figcaption></figure><figure><a href="img/after-admin-approvals-1440.png" target="_blank"><img src="img/after-admin-approvals-1440.png" alt="" loading="lazy"></a><figcaption>바뀐 뒤</figcaption></figure><figure><a href="img/after-admin-deploy-1440.png" target="_blank"><img src="img/after-admin-deploy-1440.png" alt="" loading="lazy"></a><figcaption>바뀐 뒤</figcaption></figure><figure><a href="img/after-staff-inbox-1440.png" target="_blank"><img src="img/after-staff-inbox-1440.png" alt="" loading="lazy"></a><figcaption>바뀐 뒤</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="완료">완료</button><button type="button" data-v="다시">다시</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 1 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rwords1';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[화면 말 바꾸기 — 배포 신청 · 승인 · 거절 · 기관에 공유 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>

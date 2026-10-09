@@ -17,7 +17,7 @@ const RAIL = [
   { id: 'infra', label: '인프라', icon: 'gear', href: '#/infra' },
   { id: 'tenants', label: '기관', icon: 'org', href: '#/tenants' },
   { id: 'deploys', label: '배포', icon: 'deploy', href: '#/deploys' },
-  { id: 'approvals', label: '결재', icon: 'inbox', href: OPS + '#/approvals' },
+  { id: 'approvals', label: '승인 요청', icon: 'inbox', href: OPS + '#/approvals' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // LX 관리자 대시보드와 같은 메뉴(원칙 43)
   { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
 ];

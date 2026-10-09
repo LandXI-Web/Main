@@ -65,5 +65,5 @@ export function scaleOf(item) { return metric(item, 'detected'); }
 
 /* ── 화면 이름 · 사용자 말(용어표 E:/Land-XI 플랫폼/CLAUDE.md §2) ──
    카드 이름 · 모듈 이름은 서버 등록부/카드 원천에서 온다 — 원천이 고쳐지기 전까지 화면에 보일 때만 용어표 말로 바꾼다. */
-const TERMS = [[/판독/g, 'AI 분석'], [/반입/g, '데이터 올리기'], [/검수/g, '결과 확인'], [/조립/g, '서비스 만들기'], [/이식/g, '다른 지역에 적용'], [/발행/g, '서비스 공개']];
+const TERMS = [[/판독/g, 'AI 분석'], [/반입/g, '데이터 올리기'], [/검수/g, '결과 확인'], [/조립/g, '서비스 만들기'], [/이식/g, '기관에 공유'], [/발행/g, '서비스 공개']];
 export const userWords = (s) => TERMS.reduce((a, [re, to]) => a.replace(re, to), String(s ?? ''));

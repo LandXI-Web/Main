@@ -311,7 +311,7 @@ async def create_card(body: dict, request: Request):
             if not prj:
                 raise ApiError("not_found", "프로젝트가 없습니다")
             if prj["lead_id"] != p.user_id:
-                raise ApiError("forbidden", "서비스 카드 발행 요청은 프로젝트장이 합니다")
+                raise ApiError("forbidden", "서비스 카드 배포 신청은 프로젝트장이 합니다")
         await sync_model_approvals(conn)
         m = await conn.fetchrow("SELECT id, status, name, task, classes FROM models WHERE id=$1", mid) if mid else None
         if not m:
@@ -351,7 +351,7 @@ async def create_card(body: dict, request: Request):
             wait_cv = await conn.fetchval("SELECT a.subject_id FROM approvals a JOIN project_links l ON l.kind='card_version' AND l.ref=a.subject_id "
                                           "AND l.project_id=$1 WHERE a.subject_type='card' AND a.state='pending' LIMIT 1", pid)
             if wait_cv:
-                raise ApiError("conflict", "공개 결재를 기다리는 판이 있습니다", {"card_version_id": wait_cv}, 409)
+                raise ApiError("conflict", "공개 승인을 기다리는 판이 있습니다", {"card_version_id": wait_cv}, 409)
             cid = prev_card
             nums = [float(v) for v in [x["version"] for x in await conn.fetch("SELECT version FROM card_versions WHERE card_id=$1", cid)]
                     if re.fullmatch(r"\d+(\.\d+)?", str(v or ""))]

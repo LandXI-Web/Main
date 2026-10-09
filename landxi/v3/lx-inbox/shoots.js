@@ -61,14 +61,14 @@ async function openOne(id) {
     kv('대략 비용', `${nf(x.approx?.value)}원 — 넓이로 계산한 대략의 값`), kv('보낸 날', ymd(x.created_at))));
   if (x.answer) body.append(h('section.ib-sh-ans', {}, h('p.t-label', { text: '보낸 답' }), h('dl.ib-facts', {},
     kv('촬영 시기', x.answer.timing), kv('확정 금액', `${nf(x.answer.amount?.value)}원`), kv('한 줄', x.answer.line), kv('답한 사람', x.answer.by))));
-  if (x.state === 'rejected' && x.reason) body.append(h('p.ib-sh-warn', { text: `반려 · 사유: ${x.reason}` }));
+  if (x.state === 'rejected' && x.reason) body.append(h('p.ib-sh-warn', { text: `거절 · 사유: ${x.reason}` }));
   if (x.state === 'sent' || x.state === 'answered') {
     const timing = h('input.t-input', { type: 'text', maxlength: '40', value: x.answer?.timing || x.timing || '', 'aria-label': '촬영 시기' });
     const amount = h('input.t-input.num', { type: 'text', inputmode: 'numeric', value: nf(x.answer?.amount?.value ?? x.approx?.value ?? 0), 'aria-label': '확정 금액(원)' });
     const line = h('input.t-input', { type: 'text', maxlength: '200', value: x.answer?.line || '', placeholder: '예: 10월 하순 맑은 날 촬영 · 분석 대가 포함', 'aria-label': '한 줄' });
     const send = h('button.t-btn', { type: 'button', text: x.answer ? '답 고쳐 보내기' : '답 보내기' });
-    const reason = h('input.t-input', { type: 'text', maxlength: '200', placeholder: '반려 사유 한 줄', 'aria-label': '반려 사유' });
-    const rej = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });
+    const reason = h('input.t-input', { type: 'text', maxlength: '200', placeholder: '거절 사유 한 줄', 'aria-label': '거절 사유' });
+    const rej = h('button.t-btn.t-btn--2', { type: 'button', text: '거절' });
     const row = (label, el, sub) => h('label.ib-sh-f', {}, h('span', {}, h('b', { text: label }), sub ? h('small', { text: sub }) : null), el);
     body.append(h('section.ib-sh-form', { 'aria-label': '답하기' }, h('p.t-label', { text: '답하기' }),
       row('촬영 시기', timing), row('확정 금액(원)', amount, '대략 값에서 조정 — 끝수 · 최소 · 부가세 · 분석 대가 등'), row('한 줄', line, '선택'),
@@ -78,7 +78,7 @@ async function openOne(id) {
       catch (e) { toast(e.message || '보내지 못했습니다'); }
     };
     send.addEventListener('click', () => post({ timing: timing.value, amount: amount.value, line: line.value }, '답을 보냈습니다 · 기관이 진행 여부를 정합니다'));
-    rej.addEventListener('click', () => { if (!reason.value.trim()) { reason.focus(); toast('반려 사유를 적어 주세요'); return; } post({ reject: true, reason: reason.value }, '반려했습니다'); });
+    rej.addEventListener('click', () => { if (!reason.value.trim()) { reason.focus(); toast('거절 사유를 적어 주세요'); return; } post({ reject: true, reason: reason.value }, '거절했습니다'); });
   }
   if (x.aoi) {
     try {

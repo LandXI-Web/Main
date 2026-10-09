@@ -153,7 +153,7 @@ def test_service_publish_needs_admin_and_reject_reason_returns(live, tok, admin2
         mine = [x for x in httpx.get(B + "/approvals?state=all", headers=st, timeout=30).json()["items"] if x["id"] == aid][0]
         assert mine["decision"] == "reject" and mine["reason"] == "규칙 근거를 더 적어 주세요" and mine["payload"]["card_id"] == cid
         p = httpx.post(B + "/deploys", headers=st, json={"card_id": cid, "region": "52190", "test": True}, timeout=60)
-        assert p.status_code == 409 and "반려" in p.json()["error"]["message"] and "규칙 근거를 더 적어 주세요" in p.json()["error"]["message"]
+        assert p.status_code == 409 and "거절" in p.json()["error"]["message"] and "규칙 근거를 더 적어 주세요" in p.json()["error"]["message"]
         assert c.execute("SELECT approved_by FROM card_versions WHERE id=%s", (cv,)).fetchone()[0] is None
     finally:
         _drop_card(c, cid)

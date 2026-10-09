@@ -95,8 +95,8 @@ TEMP_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 TEMP_TTL = dt.timedelta(hours=24)
 KEEP_REJECTED = dt.timedelta(days=30)
 ACTION_KO = {
-    "account.signup.request": "가입 신청", "account.signup.approve": "가입 승인", "account.signup.reject": "가입 반려",
-    "account.reset.request": "비밀번호 재설정 요청", "account.reset.issue": "임시 비밀번호 발급", "account.reset.reject": "재설정 반려",
+    "account.signup.request": "가입 신청", "account.signup.approve": "가입 승인", "account.signup.reject": "가입 거절",
+    "account.reset.request": "비밀번호 재설정 요청", "account.reset.issue": "임시 비밀번호 발급", "account.reset.reject": "재설정 거절",
     "account.temp.issue": "임시 비밀번호 발급", "account.lock": "잠금", "account.unlock": "잠금 풀기", "account.role": "역할 변경",
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
     "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 늘리기 요청",
@@ -446,7 +446,7 @@ def _decision(body: dict, ok: tuple[str, ...]) -> tuple[str, str]:
         raise ApiError("bad_request", "decision 은 " + " | ".join(ok))
     reason = " ".join(str(body.get("reason") or "").split())[:200]
     if d == "reject" and not reason:
-        raise ApiError("reason_required", "반려 사유를 적어 주세요", status=400)
+        raise ApiError("reason_required", "거절 사유를 적어 주세요", status=400)
     return d, reason
 
 
@@ -928,7 +928,7 @@ async def decide_storage(rid: str, body: dict, request: Request):
         want = float(r["want_gb"])
         if d == "approve":
             if st["quota_gb"] is not None and st["quota_gb"] >= want:
-                raise ApiError("conflict", f"지금 할당({gb_word(st['quota_gb'])})이 이미 원하는 양 이상입니다. 반려하거나 그대로 두세요", status=409)
+                raise ApiError("conflict", f"지금 할당({gb_word(st['quota_gb'])})이 이미 원하는 양 이상입니다. 거절하거나 그대로 두세요", status=409)
             await conn.execute("UPDATE lx_users SET storage_quota_gb=$2 WHERE id=$1", u["id"], Decimal(str(want)))
         await conn.execute("UPDATE storage_requests SET state=$2, reason=$3, decided_by=$4, decided_name=$5, decided_at=now() WHERE id=$1",
                            rid, "approved" if d == "approve" else "rejected", reason or None, p.user_id, p.name)

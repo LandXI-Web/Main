@@ -16,7 +16,7 @@ const COLS = [
 ];
 
 /* ── 한 흐름(서버 GET /deploys/{id}/flow) — 같은 작업의 배포 단계 · AI 분석(GPU) · 실태조사 · 기관 사용량. 작업 번호·GPU 이름은 그리지 않는다 ── */
-const FLOW_STEPS = [['approval', '적용 요청'], ['decided', '결재'], ['analyzing', 'AI 분석'], ['surveying', '실태조사'], ['done', '기관 결과']];
+const FLOW_STEPS = [['approval', '승인 요청'], ['decided', '승인'], ['analyzing', 'AI 분석'], ['surveying', '실태조사'], ['done', '기관 결과']];
 const JOB_KO = { queued: '대기', running: '진행 중', done: '끝', failed: '멈춤', cancelled: '취소' };
 const mins = (s) => (s == null ? '—' : s < 60 ? `${Math.max(1, Math.round(s))}초` : s < 3600 ? `${Math.round(s / 60)}분` : `${(s / 3600).toFixed(1)}시간`);
 function flowAt(f) {
@@ -62,7 +62,7 @@ function sheet(d0, repaint) {
       d = r.deploy || r; toast(done);
       await loadDeploys(); d = S.deploys.find((x) => x.id === d.id) || d; draw(); repaint();
     } catch (e) {
-      if (e.code === 'approval_required') toast('결재 후 올릴 수 있습니다', { action: { label: '결재', href: '/landxi/v3/ops-core/#/approvals' } });
+      if (e.code === 'approval_required') toast('승인 후 올릴 수 있습니다', { action: { label: '승인 요청', href: '/landxi/v3/ops-core/#/approvals' } });
       else toast('지금은 요청할 수 없습니다');
     }
   };

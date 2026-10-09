@@ -43,7 +43,7 @@ INPUT_WORD = {"ortho": "정사영상", "satellite": "위성 영상", "video": "�
 # ── 작은 도구 ────────────────────────────────────────────────────────────────
 # 화면 용어표(E:/Land-XI 플랫폼/CLAUDE.md §2) — 카드 원천 이름에 남은 옛 말을 보일 때만 바꾼다(서비스 소개 화면 userWords 와 같은 표)
 TERMS = [(re.compile("판독"), "AI 분석"), (re.compile("반입"), "데이터 올리기"), (re.compile("검수"), "결과 확인"), (re.compile("조립"), "서비스 만들기"),
-         (re.compile("이식"), "다른 지역에 적용"), (re.compile("발행"), "서비스 공개")]
+         (re.compile("이식"), "기관에 공유"), (re.compile("발행"), "서비스 공개")]
 
 
 def _words(s: str | None) -> str | None:
@@ -307,7 +307,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     pending = any(a["state"] == "pending" for a in mine_ap)
     any_ok = any(v["approved_at"] is not None for v in vs)
     publish = {"pending": pending,
-               "label": "공개 결재 중" if pending else "공개 반려" if (last and last["state"] == "rejected" and not any_ok)
+               "label": "공개 승인 요청 중" if pending else "공개 거절" if (last and last["state"] == "rejected" and not any_ok)
                else "공개됨" if any_ok else "공개 전"}
     # 기관 신고 = 그 서비스가 돌고 있는 지역(운영 · 시범 · 뒤에서 돌림 배포본)의 합 — LX 직원 대시보드 '우리 서비스'와 같은 이름 · 같은 값 ·
     # 지역이 여럿이면 'n곳 합'을 붙인다(카드의 '어디'는 결과 예시 한 지역이라 합계와 섞이지 않게)
@@ -365,7 +365,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
                          "by": inf.get("updated_by") if not str(inf.get("updated_by") or "").startswith("system:") else None}
         # 다음 할 일(서비스 카드 관리 ⑦) — 결재 기다림 · 기관 신고 · 첫 분석 · 분석 모델 등록 · 다른 지역에 적용
         if publish["pending"]:
-            out["next"] = {"text": "공개 결재 기다리는 중", "href": "/landxi/v3/lx-inbox/"}
+            out["next"] = {"text": "공개 승인 기다리는 중", "href": "/landxi/v3/lx-inbox/"}
         elif reports:
             out["next"] = {"text": f"기관 신고 {reports:,}건 확인" + (f"({reports_sum})" if reports_sum else ""), "href": "/landxi/v3/lx-inbox/"}
         elif not can_analyze:
@@ -373,7 +373,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         elif state == "none":
             out["next"] = {"text": "첫 분석", "href": f"/landxi/v3/lx-analyze/?card={cid}#analyze"}
         else:
-            out["next"] = {"text": "다른 지역에 적용", "href": "/landxi/v3/lx-deploy/"}
+            out["next"] = {"text": "기관에 공유", "href": "/landxi/v3/lx-deploy/"}
     return out
 
 

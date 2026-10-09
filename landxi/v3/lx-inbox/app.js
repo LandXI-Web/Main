@@ -49,7 +49,7 @@ const RAIL = admin
     { id: 'infra', label: '인프라', icon: 'gear', href: '/landxi/v3/ops-infra/' },
     { id: 'tenants', label: '기관', icon: 'org', href: '/landxi/v3/ops-infra/?view=tenants' },
     { id: 'deploys', label: '배포', icon: 'deploy', href: '/landxi/v3/ops-infra/?view=deploys' },
-    { id: 'approvals', label: '결재', icon: 'inbox', href: '/landxi/v3/ops-core/#/approvals' },
+    { id: 'approvals', label: '승인 요청', icon: 'inbox', href: '/landxi/v3/ops-core/#/approvals' },
     { id: 'reviews', label: '검토 요청', icon: 'list' },
     { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' }]   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
   : null;
@@ -71,7 +71,7 @@ const page = h('div.ib',
   {},
   h('header.ib-head', {},
     h('h1.ib-t', { text: admin ? '기관에서 온 요청' : '요청함' }),
-    h('p.ib-s', { text: admin ? '모든 기관의 검토 요청과 답을 봅니다. 담당 직원이 없는 요청은 LX 관리자가 답합니다.' : '내가 담당하는 서비스로 온 요청과 내가 올린 결재입니다.' }),
+    h('p.ib-s', { text: admin ? '모든 기관의 검토 요청과 답을 봅니다. 담당 직원이 없는 요청은 LX 관리자가 답합니다.' : '내가 담당하는 서비스로 온 요청과 내가 올린 승인 요청입니다.' }),
     cells, admin ? shootStrip() : null),   // 촬영 요청(18차 촬영-1 ⓑ — 받는 쪽 = LX 관리자 · lx-inbox/shoots.js)
   h('div.ib-grid', {}, h('section.ib-side.t-card', { 'aria-label': '검토 요청 목록' }, tabs, listEl), convEl));
 S.main.append(page);
@@ -88,7 +88,7 @@ async function drawCells(force = false) {
   cells.replaceChildren(
     cell('review', c?.review, '검토 요청'),
     cell('request', c?.request, '분석 요청', () => openList('requests', c)),
-    cell('approval', c?.approval, '내 결재', () => openList('approvals', c)),
+    cell('approval', c?.approval, '내 승인 요청', () => openList('approvals', c)),
     cell('improve', imp, '개선 후보', () => openImproveDrawer({ onCount: (n) => { const x = cells.querySelector('[data-k="improve"]'); if (x) { x.querySelector('b').textContent = String(n); x.classList.toggle('is-zero', !n); } } })));
   const want = location.hash.replace('#', '');
   if (!force && (want === 'requests' || want === 'approvals')) openList(want, c);
@@ -97,13 +97,13 @@ async function drawCells(force = false) {
 /** 분석 의뢰(확인 대기 · 내 담당 서비스 — 관리자 승인) · 내 결재(내가 올린 결재 중 대기) 목록 서랍 */
 function openList(kind, c) {
   const items = kind === 'requests' ? (c?.requests || []) : (c?.approvals || []);
-  const title = kind === 'requests' ? '분석 요청' : '내 결재';
+  const title = kind === 'requests' ? '분석 요청' : '내 승인 요청';
   const body = h('div.ib-xl');
   if (!items.length) {
     const x = h('div'); body.append(x);
-    empty(x, { kind: 'first', compact: true, title: kind === 'requests' ? '확인을 기다리는 분석 요청이 없습니다' : '결재를 기다리는 요청이 없습니다' });
+    empty(x, { kind: 'first', compact: true, title: kind === 'requests' ? '확인을 기다리는 분석 요청이 없습니다' : '승인을 기다리는 요청이 없습니다' });
   } else {
-    body.append(h('p.ib-xl-s', { text: kind === 'requests' ? '내가 담당하는 서비스로 온 분석 요청입니다. 승인은 LX 관리자가 합니다.' : '내가 올린 결재 가운데 LX 관리자 결정을 기다리는 것입니다.' }),
+    body.append(h('p.ib-xl-s', { text: kind === 'requests' ? '내가 담당하는 서비스로 온 분석 요청입니다. 승인은 LX 관리자가 합니다.' : '내가 올린 승인 요청 가운데 LX 관리자 결정을 기다리는 것입니다.' }),
       h('ul.ib-xl-l', {}, ...items.map((it) => h('li', {},
         h('b', { text: it.title || it.kind_label || title }),
         h('span', { text: [kind === 'approvals' ? it.kind_label : null, when(it.at)].filter(Boolean).join(' · ') }),

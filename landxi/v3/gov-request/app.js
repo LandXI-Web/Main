@@ -350,7 +350,7 @@ async function openReq(id, { keepMap = false } = {}) {
   const lines = [];
   if (x.state === 'pending') lines.push(['', 'LX 담당자가 확인하고 있습니다. 확인하면 순서대로 분석합니다.']);
   if (x.state === 'approved' || x.state === 'analyzing') lines.push(['', '분석 중입니다. 끝나면 이 서비스의 새 시점으로 쌓입니다.']);
-  if (x.state === 'rejected') lines.push(['warn', `반려 · 사유: ${x.reason || ''}`]);
+  if (x.state === 'rejected') lines.push(['warn', `거절 · 사유: ${x.reason || ''}`]);
   if (x.state === 'failed') lines.push(['warn', x.reason || '분석하지 못했습니다']);
   if (x.state === 'done') {
     const by = Object.entries(x.result?.counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} ${Number(v).toLocaleString('ko-KR')}`).join(' · ');

@@ -27,7 +27,7 @@ const stageEl = h('div.dp-stage');
 const tabs = h('div.dp-tabs', { role: 'tablist', 'aria-label': '배포·서비스 관리' },
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-deploy', 'aria-selected': 'true', text: '배포' }),
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-ops', 'aria-selected': 'false', text: '서비스 관리' }));
-const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '다른 지역에 적용', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>다른 지역에 적용</span>' });
+const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '기관에 공유', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>기관에 공유</span>' });
 const top = h('div.dp-top', {}, tabs, h('span.sp'), plantBtn);
 const legend = h('div.dp-legend', { 'aria-hidden': 'true' }, h('span', {}, h('i'), '운영'), h('span', {}, h('i', { dataset: { s: 'pilot' } }), '시범'), h('span', {}, h('i', { dataset: { s: 'draft' } }), '적용 요청'));
 const opsEl = h('section.dp-ops', { hidden: true, role: 'tabpanel', 'aria-labelledby': 'tab-ops' });
@@ -161,7 +161,7 @@ async function checks(d) {
     : { t: '학습', href: V3 + 'lx-train/' + q, s: model ? 'ok' : 'todo',
       line: model ? (model.name || (model.classes || []).slice(0, 3).join(' · ')) : '연결된 모델 없음',
       act: model ? null : pair && isAdmin && canModel ? { label: '모델 연결', run: () => connectModel(d, pair.model) }
-        : { note: pair ? '모델 연결은 관리자 결재로 합니다' : '영상이 들어오면 연결합니다' } },
+        : { note: pair ? '모델 연결은 관리자 승인으로 합니다' : '영상이 들어오면 연결합니다' } },
     { t: '서비스 만들기', href: V3 + 'lx-console/' + q, s: d.card_version_id ? 'ok' : 'todo',
       line: d.card_version_id ? `서비스 카드 ${d.version || ''} · 기능 ${mods}개` : '카드 버전 없음', act: null },
     bad ? { t: '결과 확인', href: V3 + 'lx-review/' + q, s: 'todo', line: '서비스 모델로 낸 결과 없음', act: null }
@@ -171,10 +171,10 @@ async function checks(d) {
             : F.state === 'need_imagery' ? { note: '영상이 등록되면 AI 분석이 이어집니다' } : null }
       : { t: '결과 확인', href: V3 + 'lx-review/' + q, s: found || jobsDone || hasRes ? 'ok' : 'todo',
       line: jobsDone ? `분석 ${jobsDone}회 완료` : found ? `의심 ${numHtml(total, { unit: '건' })}` : hasRes ? '결과 반영' : '첫 분석 전', html: !jobsDone && !!found,
-      act: surveyAct || (found || jobsDone || hasRes ? null : F ? { note: '결재가 끝나면 AI 분석이 이어집니다' } : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' }) },
+      act: surveyAct || (found || jobsDone || hasRes ? null : F ? { note: '승인이 끝나면 AI 분석이 이어집니다' } : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' }) },
     { t: '배포', href: null, s: draft ? 'wait' : 'ok',
-      line: draft ? (pending ? '결재 대기' : rejected ? `반려 · 사유: ${rej.reason || '—'}` : F?.state === 'need_imagery' ? '결재 완료 · 영상 등록 필요' : '관리자 결재 전') : STAGE_CHIP[d.stage],
-      act: draft && !pending && !rejected && !(F && F.state !== 'approval') ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
+      line: draft ? (pending ? '승인 대기' : rejected ? `거절 · 사유: ${rej.reason || '—'}` : F?.state === 'need_imagery' ? '승인 완료 · 영상 등록 필요' : '관리자 승인 요청 전') : STAGE_CHIP[d.stage],
+      act: draft && !pending && !rejected && !(F && F.state !== 'approval') ? canApprove ? { label: '승인 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 승인 요청함에서 승인합니다' } : null },
     { t: '서비스 관리', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
       line: draft ? '배포 뒤 시작' : rpt !== undefined ? (rpt?.value ? `기관 신고 ${rpt.value}건${due ? ' · 재학습' : ''}` : due ? '재학습' : '신고 없음')
         : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
@@ -237,7 +237,7 @@ async function connectModel(d, model) {
   catch (e) { devlog('model', `${e.code || ''} ${e.message}`); toast('요청을 보내지 못했습니다'); }
 }
 async function askApproval(d) {
-  try { await api('/approvals', { method: 'POST', body: { subject_type: 'deploy', subject_id: d.id } }); toast('결재를 요청했습니다'); await reloadDeploys(); select(d.id); }
+  try { await api('/approvals', { method: 'POST', body: { subject_type: 'deploy', subject_id: d.id } }); toast('승인을 요청했습니다'); await reloadDeploys(); select(d.id); }
   catch (e) { devlog('approval', `${e.code || ''} ${e.message}`); toast('요청을 보내지 못했습니다'); }
 }
 /** 첫 분석 — 게이트웨이 작업 큐로만(표본 1칸 · 전력 규칙은 서버가 판정) */
@@ -298,7 +298,7 @@ function colorField(k) {
 async function openPlant() {
   const src = selected && isDomestic(selected) && selected.stage !== 'draft' ? selected : D.deploys.find((d) => d.stage === 'ga' && isDomestic(d));
   const cards = D.cards.filter((c) => c.scope !== 'global' && (c.versions || []).length && (!scoped() || c.id === Q.get('card')));   // 프로젝트 안 = 그 서비스만
-  const pd = drawer({ title: '다른 지역에 적용', slot: 'right', onClose: () => { if (selected) select(selected.id); } }); pd.kind = 'plant';
+  const pd = drawer({ title: '기관에 공유', slot: 'right', onClose: () => { if (selected) select(selected.id); } }); pd.kind = 'plant';
   drw = pd;
   const cardSel = h('select.t-input', { 'aria-label': '카드' }, ...cards.map((c) => h('option', { value: c.id, text: workName(c.id), selected: c.id === (Q.get('card') && cards.some((x) => x.id === Q.get('card')) ? Q.get('card') : src?.card_id) })));
   const regEl = h('div');
@@ -307,7 +307,7 @@ async function openPlant() {
     type === 'select' ? h('select.t-input', { name: k }, ...opt.map((o) => h('option', { value: o, text: CRS_WORD[o] || o })))
       : type === 'file' ? fileField(k) : type === 'color' ? colorField(k)
         : h('input.t-input', { name: k, type, autocomplete: 'off' }))));
-  const go = h('button.t-btn.dp-go', { type: 'submit', text: '적용(결재 요청)', disabled: true });
+  const go = h('button.t-btn.dp-go', { type: 'submit', text: '공유(승인 요청)', disabled: true });
   /* 적용 전 점검 — 서비스 모델과 그 지역 영상의 해상도(서버 GET /deploy-fit · 결재 요청과 같은 판정). 맞지 않으면 요청하지 않는다 */
   const fitEl = h('p.dp-fit', { role: 'status', 'aria-live': 'polite', hidden: true });
   let fit = null, fitSeq = 0;
@@ -315,7 +315,7 @@ async function openPlant() {
   const canPlant = isAdmin || D.health === 'server';
   if (!canPlant) go.hidden = true;
   const form = h('form.dp-form', {},
-    canPlant ? null : h('p.dp-note', { text: '관리자 결재 권한으로 다른 지역에 적용할 수 있습니다' }),
+    canPlant ? null : h('p.dp-note', { text: '관리자 승인 권한으로 기관에 공유할 수 있습니다' }),
     h('div.dp-f', {}, h('span.t-label', { text: '카드' }), cardSel),
     h('div.dp-f', {}, h('span.t-label', { text: '지역' }), regEl, fitEl),
     h('div.dp-f', {}, h('span.t-label', { text: '가져갈 것' }), bring),
@@ -354,7 +354,7 @@ async function openPlant() {
     if (my !== fitSeq) return;
     fitEl.dataset.busy = '';
     fit = r;
-    if (!r) { fitEl.textContent = '지금은 확인할 수 없습니다 — 결재 요청 때 다시 확인합니다'; fitEl.dataset.lv = ''; draw(); return; }
+    if (!r) { fitEl.textContent = '지금은 확인할 수 없습니다 — 승인 요청 때 다시 확인합니다'; fitEl.dataset.lv = ''; draw(); return; }
     const m = r.model || r.service_model;
     const mw = m ? (m.name || (m.classes || []).slice(0, 3).join(' · ')) : '';
     fitEl.dataset.lv = r.fits === false ? 'warn' : '';
@@ -398,14 +398,14 @@ async function openPlant() {
       devlog('plant', out.id);
       await reloadDeploys();
       drawPins({ fresh: out.id });
-      toast('결재를 요청했습니다');
+      toast('승인을 요청했습니다');
       pd.close(true);
       drw = null;
       select(out.id, { fromPlant: true });
     } catch (err) {
       devlog('plant', `${err.status || ''} ${err.code || ''} ${err.message}`);
       if (err.code === 'model_input_mismatch') { fitEl.hidden = false; fitEl.dataset.lv = 'warn'; fitEl.textContent = err.message; toast('모델과 영상 해상도가 맞지 않아 요청하지 않았습니다'); }
-      else if (err.code === 'approval_required') { fitEl.hidden = false; fitEl.dataset.lv = 'warn'; fitEl.textContent = err.message; toast('서비스 공개 결재 뒤에 적용할 수 있습니다'); }
+      else if (err.code === 'approval_required') { fitEl.hidden = false; fitEl.dataset.lv = 'warn'; fitEl.textContent = err.message; toast('서비스 공개 승인 뒤에 적용할 수 있습니다'); }
       else toast('요청을 보내지 못했습니다');
       go.disabled = false;
     }
@@ -488,7 +488,7 @@ const card = Q.get('card');
 if (Q.get('tab') === 'ops') tab('ops');
 else if (card && !D.deploys.some((d) => d.card_id === card)) {
   const e = drawer({ title: workName(card) || '배포', slot: 'right' });
-  const box = h('div'); e.set(box); empty(box, { kind: 'first', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '다른 지역에 적용', onClick: openPlant } });
+  const box = h('div'); e.set(box); empty(box, { kind: 'first', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '기관에 공유', onClick: openPlant } });
 } else {
   const want = Q.get('deploy') && deployOf(Q.get('deploy'))
     || (Q.get('region') && regions().find((r) => r.key === Q.get('region'))?.list[0])

@@ -61,7 +61,7 @@ const first = K.recent()[0] ? regions.find((r) => r.sgg_cd === K.recent()[0]) : 
 if (first) setTimeout(() => picker.pick(first.sgg_cd), 1200);
 
 /* ── 관제 메뉴 변형 + 무대 ops ─────────────────────────────── */
-const MENU = [['현황', 'chart'], ['인프라', 'gear'], ['기관', 'org'], ['배포', 'deploy'], ['결재', 'inbox']].map(([label, icon], i) => ({ id: 'm' + i, label, icon }));
+const MENU = [['현황', 'chart'], ['인프라', 'gear'], ['기관', 'org'], ['배포', 'deploy'], ['승인 요청', 'inbox']].map(([label, icon], i) => ({ id: 'm' + i, label, icon }));
 const S2 = K.shell({ who, home: 'ops-core', mount: $('frame2'), contained: true, rail: { kind: 'menu', items: MENU, current: 3 } });
 S2.fresh(lastAt);
 const st2El = document.createElement('div'); S2.main.append(st2El);
@@ -94,7 +94,7 @@ K.empty($('e2'), { kind: 'ingest', text: '이 지역 영상을 먼저 올려 주
 const ld = K.empty($('e3'), { kind: 'loading', text: '결과를 지도에 올리고 있습니다', progress: 0 });
 let p = 0; setInterval(() => { p = p >= 1 ? 0 : p + 0.1; ld.set({ progress: p }); }, 600);
 K.empty($('e4'), { kind: '404' });
-K.empty($('e5'), { kind: 'error', title: '결재함을 불러오지 못했습니다', onRetry: () => K.toast('다시 불러옵니다') });
+K.empty($('e5'), { kind: 'error', title: '승인 요청함을 불러오지 못했습니다', onRetry: () => K.toast('다시 불러옵니다') });
 
 /* ── 업로드(브라우저 안에서 행 수만 센다 · 서버 반입은 대장 API 가 맡는다) ── */
 K.dropzone($('drop'), {

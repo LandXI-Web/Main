@@ -414,8 +414,8 @@ addEventListener('keydown', (e) => {
 /* ── 떼기 · 임계 ───────────────────────────────────── */
 async function doUnTag() {
   const st = ruleStat(rule);
-  try { await unTag(rule, st); K.toast('결재를 요청했습니다'); board(); if (cur) openCard(cur); }
-  catch (e) { K.devlog('떼기 오류', e.code || e.message); K.toast(e.code === 'conflict' ? '이미 결재 대기 중입니다' : '저장하지 못했습니다'); }
+  try { await unTag(rule, st); K.toast('승인을 요청했습니다'); board(); if (cur) openCard(cur); }
+  catch (e) { K.devlog('떼기 오류', e.code || e.message); K.toast(e.code === 'conflict' ? '이미 승인 대기 중입니다' : '저장하지 못했습니다'); }
 }
 async function thresholdSheet() {
   closeCard();
@@ -437,11 +437,11 @@ async function thresholdSheet() {
   const go = h('button.t-btn.rv-wide', { type: 'button', text: '적용 요청' });
   const pend = ruleStat(rule).pending;
   if (!next || pend) go.disabled = true;
-  if (pend) box.append(h('p.t-label', { text: '결재 대기 중' }));
+  if (pend) box.append(h('p.t-label', { text: '승인 대기 중' }));
   go.addEventListener('click', async () => {
     go.disabled = true;
-    try { await requestThreshold(rule, th, next); K.toast('결재를 요청했습니다'); d.close(); }
-    catch (e) { K.devlog('임계 오류', e.code || e.message); K.toast(e.code === 'conflict' ? '이미 결재 대기 중입니다' : '저장하지 못했습니다'); go.disabled = e.code === 'conflict'; }
+    try { await requestThreshold(rule, th, next); K.toast('승인을 요청했습니다'); d.close(); }
+    catch (e) { K.devlog('임계 오류', e.code || e.message); K.toast(e.code === 'conflict' ? '이미 승인 대기 중입니다' : '저장하지 못했습니다'); go.disabled = e.code === 'conflict'; }
   });
   box.append(go);
 }
@@ -516,7 +516,7 @@ if (fFirst && fFirst.rule !== rule) { rule = fFirst.rule; setHud(); drawQueue();
 
 K.devlog('검수 경로', D.s2 ? '판정 POST /survey/findings/{fid}/state · 정밀도 GET /survey/rules/{id}/stats(lx)'
   : `판정·정밀도 = /feedback · tenant lx · 세트 ${D.set}{규칙}`);
-K.devlog('결재 경로', D.stage ? `/feedback 세트 ${D.set}{규칙}(시험 규칙 · 결재함 밖)` : 'POST /survey/rules/{id}/activate → approvals');
+K.devlog('승인 요청 경로', D.stage ? `/feedback 세트 ${D.set}{규칙}(시험 규칙 · 승인 요청함 밖)` : 'POST /survey/rules/{id}/activate → approvals');
 K.devlog('지역', region ? `${region.full || region.name} · ${region.sgg_cd || '—'}${region.approx ? ' · 근사' : ''}` : '없음');
 K.devlog('큐', `${queue.length}건 · ${D.log.map((l) => l.p + ' ' + l.e).join(' / ') || '오류 0'}`);
 if (fFirst) setTimeout(() => openCard(fFirst, { from: 'url' }), 900);

@@ -130,7 +130,7 @@ def test_publish_request_carries_project_and_owner(live, tok, made, other):
     ap = next(a for a in aps if a["id"] == card["approval_id"])
     assert ap["payload"]["project_id"] == p["id"] and ap["payload"]["project_name"] == p["name"]
     p2 = httpx.get(B + f"/projects/{p['id']}", headers=s, timeout=60).json()
-    assert stage(p2, "publish")["next"] == "공개 결재 대기"
+    assert stage(p2, "publish")["next"] == "공개 승인 대기"
     cards = httpx.get(B + "/registry/cards", headers=s, timeout=60).json()["items"]
     mine = next(c for c in cards if c["id"] == card["id"])
     assert mine["project"]["id"] == p["id"] and mine["owner"] == p["lead"]["name"]
@@ -169,12 +169,12 @@ def test_list_steps_and_blocked(live, tok, made):
             "ledger_kind": next(k["kind"] for k in kinds if k["ready"]), "project_id": p["id"]}
     card = httpx.post(B + "/registry/cards", headers=s, json=body, timeout=60).json()
     row = _row(tok, p["id"])
-    assert [b["kind"] for b in row["blocked"]] == ["wait"] and row["blocked"][0]["text"] == "공개 결재 대기" and row["blocked"][0]["stage"] == "publish"
+    assert [b["kind"] for b in row["blocked"]] == ["wait"] and row["blocked"][0]["text"] == "공개 승인 대기" and row["blocked"][0]["stage"] == "publish"
     # 관리자가 반려 — 반려(내가 손댈 것) 한 줄 · 사유 확인
     r = httpx.post(B + f"/approvals/{card['approval_id']}/decide", headers=H(tok["admin"]), json={"decision": "reject", "reason": "pytest"}, timeout=60)
     assert r.status_code == 200, r.text
     row = _row(tok, p["id"])
-    assert [b["kind"] for b in row["blocked"]] == ["reject"] and row["blocked"][0]["text"] == "공개 반려 · 사유 확인"
+    assert [b["kind"] for b in row["blocked"]] == ["reject"] and row["blocked"][0]["text"] == "공개 거절 · 사유 확인"
 
 
 def test_list_blocked_before_stage_after_publish(live, tok, made):

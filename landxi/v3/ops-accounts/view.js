@@ -135,18 +135,18 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
   /* ── 서랍 — 한 건 ── */
   const dl = (pairs) => { const d = h('dl.acc-dl'); for (const [k, v] of pairs) if (v) d.append(h('dt', { text: k }), h('dd', { text: v })); return d; };
   function acts(onReject, okLabel, onOk) {
-    const reason = h('input.t-input.acc-reason', { type: 'text', placeholder: '사유(반려할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '200' });
-    const no = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });
+    const reason = h('input.t-input.acc-reason', { type: 'text', placeholder: '사유(거절할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '200' });
+    const no = h('button.t-btn.t-btn--2', { type: 'button', text: '거절' });
     const ok = h('button.t-btn', { type: 'button', text: okLabel });
     const note = h('p.acc-need', { role: 'status' });
     const need = (text) => { note.textContent = text; reason.focus(); reason.classList.remove('is-need'); void reason.offsetWidth; reason.classList.add('is-need'); };
     reason.addEventListener('input', () => { if (reason.value.trim()) { note.textContent = ''; reason.classList.remove('is-need'); } });
     const run = async (fn, isReject) => {
-      if (isReject && !reason.value.trim()) { need('반려 사유를 적어 주세요'); return; }
+      if (isReject && !reason.value.trim()) { need('거절 사유를 적어 주세요'); return; }
       note.textContent = ''; ok.disabled = no.disabled = true;
       try { await fn(reason.value.trim()); }
       catch (e) {
-        if (e.code === 'reason_required') need('반려 사유를 적어 주세요');
+        if (e.code === 'reason_required') need('거절 사유를 적어 주세요');
         else toast(e.status && e.message ? e.message : '지금은 처리할 수 없습니다');
         ok.disabled = no.disabled = false;
       }
@@ -176,14 +176,14 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     } else if (cur === 'signup') {
       body.append(dl([['메일 주소', item.login], ['소속', item.org], ['부서', item.dept], ['신청일', when(item.created_at)], ['개인정보 동의', when(item.consent_at)]]),
         h('p.acc-help', { text: `승인하면 ${NEW_ROLE[item.realm]} 계정이 열립니다.` }),
-        acts(async (reason) => { await api(`/accounts/signup/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('반려했습니다'); },
+        acts(async (reason) => { await api(`/accounts/signup/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('거절했습니다'); },
           '승인', async (reason) => { await api(`/accounts/signup/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'approve', reason } }); await done('승인했습니다'); }));
     } else if (cur === 'reset') {
       body.append(dl([['메일 주소', item.login], ['소속', item.org], ['역할', item.role_ko], ['최근 로그인', item.last_login ? when(item.last_login) : '없음'], ['요청일', when(item.created_at)]]));
       if (item.mine) body.append(h('p.acc-mine', { text: '내 계정의 요청은 다른 관리자가 처리합니다.' }));
       else {
         body.append(h('p.acc-help', { html: '본인인지 확인한 뒤 임시 비밀번호를 만듭니다.<br>사용자에게 직접 전해 주세요.' }),
-          acts(async (reason) => { await api(`/accounts/reset/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('반려했습니다'); },
+          acts(async (reason) => { await api(`/accounts/reset/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('거절했습니다'); },
             '임시 비밀번호 만들기', async () => {
               const j = await api(`/accounts/reset/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'issue' } });
               body.replaceChildren(dl([['메일 주소', item.login], ['소속', item.org]]), tempBox(j.temp_password, j.locked));
@@ -198,7 +198,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       if (!item.can_decide) body.append(h('p.acc-mine', { text: '내 계정의 요청은 다른 관리자가 처리합니다.' }));
       else {
         body.append(h('p.acc-help', {}, h('span', { text: `승인하면 할당이 ${gb(ev(item.want_gb))}가 되고,` }), ' ', h('span', { text: '요청한 사람에게 알림이 갑니다.' })),
-          acts(async (reason) => { await api(`/accounts/storage/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('반려했습니다'); },
+          acts(async (reason) => { await api(`/accounts/storage/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('거절했습니다'); },
             '승인', async (reason) => { await api(`/accounts/storage/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'approve', reason } }); await done('할당을 늘렸습니다'); }));
       }
     } else if (cur === 'users') {

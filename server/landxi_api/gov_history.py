@@ -145,13 +145,13 @@ async def history(request: Request, card: str, limit: int = 200):
         for q in await c.fetch("SELECT q.id, q.created_at, q.state, q.requested_by, q.meta FROM analysis_requests q JOIN deploys d ON d.id=q.deploy_id "
                                "WHERE q.tenant_id=$1 AND d.card_id=$2 ORDER BY q.created_at DESC LIMIT $3", p.tenant_id, card, limit):
             m = q["meta"] or {}
-            word = {"pending": "LX 확인 중", "approved": "분석 준비", "analyzing": "분석 중", "done": "결과 도착", "rejected": "반려", "failed": "분석하지 못함"}.get(q["state"], q["state"])
+            word = {"pending": "LX 확인 중", "approved": "분석 준비", "analyzing": "분석 중", "done": "결과 도착", "rejected": "거절", "failed": "분석하지 못함"}.get(q["state"], q["state"])
             items.append({"kind": "request", "at": _iso(q["created_at"]), "title": f"{m.get('label') or '영상'} 분석 요청", "sub": word, "who": who(q["requested_by"]), "id": q["id"]})
         # 촬영 요청(찍은 뒤 이 서비스로 분석하려는 것)
         try:
             for s in await c.fetch("SELECT id, created_at, state, requested_by, place, area_km2 FROM shoot_requests WHERE tenant_id=$1 AND card_id=$2 ORDER BY created_at DESC LIMIT $3",
                                    p.tenant_id, card, limit):
-                word = {"sent": "LX 확인 중", "answered": "답 도착", "accepted": "진행", "cancelled": "취소", "rejected": "반려"}.get(s["state"], s["state"])
+                word = {"sent": "LX 확인 중", "answered": "답 도착", "accepted": "진행", "cancelled": "취소", "rejected": "거절"}.get(s["state"], s["state"])
                 items.append({"kind": "shoot", "at": _iso(s["created_at"]), "title": f"{s['place'] or '범위'} {float(s['area_km2']):.1f}㎢ 촬영 요청", "sub": word,
                               "who": who(s["requested_by"]), "id": s["id"]})
         except Exception:  # noqa: BLE001 — 촬영 요청 표가 아직 없는 서버

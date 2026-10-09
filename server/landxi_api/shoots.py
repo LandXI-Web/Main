@@ -25,7 +25,7 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 ID_RE = re.compile(r"^sh_[0-9a-f]{12}$")
-STATE_WORD = {"sent": "LX 확인 중", "answered": "답 도착", "accepted": "진행", "cancelled": "취소", "rejected": "반려"}
+STATE_WORD = {"sent": "LX 확인 중", "answered": "답 도착", "accepted": "진행", "cancelled": "취소", "rejected": "거절"}
 TYPE_WORD = {"gun": "군 지역", "si": "시 지역", "gu": "구 지역"}
 LIMIT = {"timing": 40, "memo": 200, "line": 200, "reason": 200}
 
@@ -235,11 +235,11 @@ async def answer(sid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         r = await _row(conn, sid, p)
         if r["state"] not in ("sent", "answered"):
-            raise ApiError("conflict", "이미 진행 · 취소 · 반려된 요청입니다", {"state": r["state"]}, 409)
+            raise ApiError("conflict", "이미 진행 · 취소 · 거절된 요청입니다", {"state": r["state"]}, 409)
         if body.get("reject"):
             reason = _txt(body.get("reason"), "reason")
             if not reason:
-                raise ApiError("reason_required", "반려 사유를 적어 주세요", None, 400)
+                raise ApiError("reason_required", "거절 사유를 적어 주세요", None, 400)
             r = await conn.fetchrow(f"UPDATE shoot_requests SET state='rejected', reason=$2, updated_at=now() WHERE id=$1 RETURNING {COLS.replace('s.*', '*').replace('s.aoi', 'aoi')}", sid, reason)
             await audit(conn, p, "shoot.reject", sid, None, {"reason": reason})
             return _view(r, p)

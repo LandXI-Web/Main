@@ -60,7 +60,7 @@ from .envelope import KST, env, now_iso
 router = APIRouter()
 
 STAGES = [("ingest", "데이터 올리기"), ("label", "학습데이터 구축"), ("train", "학습"), ("review", "결과 확인"),
-          ("publish", "발행 요청"), ("ops", "서비스 관리")]
+          ("publish", "배포 신청"), ("ops", "서비스 관리")]
 SCOPES = ("mine", "led", "joined", "archived", "all")
 SCOPE_WORD = {"mine": "진행 중 · 내가 만든 · 참여한 프로젝트", "led": "진행 중 · 내가 만든 프로젝트", "joined": "진행 중 · 참여한 프로젝트",
               "archived": "보관한 프로젝트", "all": "진행 중 · LX 전체 프로젝트"}
@@ -353,7 +353,7 @@ def _judge(r, f) -> dict:
             t["next"] = "모델 등록 승인 대기"
             holds["train"] = "wait"
         elif ap and ap["decision"] == "reject":
-            t["next"] = "모델 등록 반려 · 사유 확인"
+            t["next"] = "모델 등록 거절 · 사유 확인"
             t["reason"] = ap["reason"]
             holds["train"] = "reject"
         else:
@@ -380,14 +380,14 @@ def _judge(r, f) -> dict:
     if f["cv_now"] and f["cv_now"]["approved_by"]:
         pb["done"] = True
     elif f["cv_ap"] and f["cv_ap"]["state"] == "pending":
-        pb["next"] = "공개 결재 대기"
+        pb["next"] = "공개 승인 대기"
         holds["publish"] = "wait"
     elif f["cv_ap"] and f["cv_ap"]["decision"] == "reject":
-        pb["next"] = "공개 반려 · 사유 확인"
+        pb["next"] = "공개 거절 · 사유 확인"
         pb["reason"] = f["cv_ap"]["reason"]
         holds["publish"] = "reject"
     else:
-        pb["next"] = "서비스 카드 발행 요청" if r["round"] == 1 or not f["card"] else "새 판 발행 요청"
+        pb["next"] = "서비스 카드 배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
     # ⑥ 서비스 관리 — 공개 뒤(끝이 없는 단계)
     op = st["ops"]
     if f["card"]:
@@ -395,10 +395,10 @@ def _judge(r, f) -> dict:
     ga = sum(1 for d in f["deploys"] if d["stage"] == "ga")
     pilot = sum(1 for d in f["deploys"] if d["stage"] in ("canary", "shadow"))
     if f["port_wait"]:
-        op["next"] = "다른 지역 적용 결재 대기"
+        op["next"] = "기관에 공유 승인 대기"
         holds["ops"] = "wait"
     elif not f["deploys"]:
-        op["next"] = "다른 지역에 적용 요청"
+        op["next"] = "기관에 공유 요청"
     else:                                   # 지도 범례와 같은 말(운영 = 전면 · 시범 = 시범 운영)
         op["next"] = " · ".join(x for x in (f"운영 {ga}곳" if ga else "", f"시범 {pilot}곳" if pilot else "") if x) or "적용 진행 중"
         op["status_only"] = True
@@ -905,13 +905,13 @@ async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[
             place = place or _ko(d.get("region_name")).split(" ")[-1] or "다른 지역"
             what = f"{place} 적용" if pl.get("action") == "port" else f"{place} 운영 전환"
         if a["decision"] in ("approve", "reject"):
-            word = "승인" if a["decision"] == "approve" else "반려"
+            word = "승인" if a["decision"] == "approve" else "거절"
             sub = "시범" if st == "deploy" and pl.get("action") == "port" and a["decision"] == "approve" else None
             if a["decision"] == "reject" and a["reason"]:
                 sub = f"사유 {a['reason']}"
             add(a["decided_at"] or a["at"], "auto", f"{what} {word}", _name(people, a["decided_by"]), sub=sub, group="approval")
         elif (a["state"] or "pending") == "pending":
-            add(a["at"], "auto", f"{what} 요청", _name(people, a["requested_by"]), sub="결재 대기", group="approval")
+            add(a["at"], "auto", f"{what} 요청", _name(people, a["requested_by"]), sub="승인 대기", group="approval")
     for vid, v in cvs.items():                       # 결재 행 없이 공개된 판(이관 · 옛 기록)도 한 줄
         if vid not in carded and v["approved_by"] and v["approved_at"]:
             add(v["approved_at"], "auto", "서비스 공개" + (f" · {v['version']}판" if v["version"] else ""), _name(people, v["approved_by"]), group="approval")
@@ -938,7 +938,7 @@ async def project_log(pid: str, request: Request, kind: str = "all", limit: int 
         st = _storage_line(await lead_storage(conn, r["lead_id"]), p.user_id == r["lead_id"])
     counts = {k: sum(1 for x in items if k == "all" or x["kind"] == k) for k in LOG_KINDS}
     pick = [x for x in items if kind == "all" or x["kind"] == kind][:max(1, min(int(limit or 200), 200))]
-    return {"items": pick, "counts": {k: env(v, "count", "recorded", "프로젝트 기록(감사 기록 · 학습 · 결재 · 메모 · 파일)") for k, v in counts.items()},
+    return {"items": pick, "counts": {k: env(v, "count", "recorded", "프로젝트 기록(감사 기록 · 학습 · 승인 요청 · 메모 · 파일)") for k, v in counts.items()},
             "file_max_mb": env(FILE_MAX_MB, "MB", "recorded", "한 파일 크기 한도(설정 한 곳 · projects.FILE_MAX_MB)"), "file_types": sorted(FILE_TYPES),
             "lead_storage": st, "as_of": now_iso()}
 

@@ -209,7 +209,7 @@ async def port(body: dict, request: Request):
     LX 직원(staff)이 요청하고 관리자가 결재한다. 국내는 sgg_cd 필수(AOI = 시군구 경계). 결재가 통과하면 flow_start 가 AI 분석까지 잇는다."""
     p = require(principal(request), lx=True)
     if p.role not in ("admin", "staff"):
-        raise ApiError("forbidden", "LX 직원·관리자만 다른 지역에 적용할 수 있습니다")
+        raise ApiError("forbidden", "LX 직원·관리자만 기관에 공유할 수 있습니다")
     src_id = body.get("from_deploy_id")
     sgg = str(body.get("region") or body.get("sgg_cd") or "").strip() or None
     aoi = body.get("aoi")
@@ -263,9 +263,9 @@ async def port(body: dict, request: Request):
         pub = await conn.fetchrow("SELECT state, decision, reason FROM approvals WHERE subject_type='card' AND subject_id=$1 ORDER BY at DESC LIMIT 1",
                                   cv) if cv else None
         if pub and pub["state"] == "pending":
-            raise ApiError("approval_required", "서비스 공개 결재가 끝나야 다른 지역에 적용할 수 있습니다", {"card_version_id": cv})
+            raise ApiError("approval_required", "서비스 공개 승인이 끝나야 기관에 공유할 수 있습니다", {"card_version_id": cv})
         if pub and pub["decision"] == "reject":
-            raise ApiError("approval_required", "서비스 공개가 반려됐습니다" + (f" — 사유: {pub['reason']}" if pub["reason"] else ""), {"card_version_id": cv})
+            raise ApiError("approval_required", "서비스 공개가 거절됐습니다" + (f" — 사유: {pub['reason']}" if pub["reason"] else ""), {"card_version_id": cv})
         tenant = body.get("tenant_id")
         if not tenant and sgg:
             for t in [x["id"] for x in await conn.fetch("SELECT id FROM tenants WHERE status='active' AND kind='user' ORDER BY id")]:
@@ -304,7 +304,7 @@ async def port(body: dict, request: Request):
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
                            "VALUES ($1,'deploy',$2,$3,'pending',$4,$5,$6,now())", aid, did, p.user_id,
                            {"action": "port", "card_id": card_id, "card_version_id": cv, "sgg_cd": sgg, "from_deploy_id": src_id},
-                           body.get("reason") or "다른 지역에 적용", tenant)
+                           body.get("reason") or "기관에 공유", tenant)
         row = await _get(conn, did)
         await audit(conn, p, "deploy.port", did, {"from": src_id}, {"tenant_id": tenant, "card_version_id": cv, "stage": "draft", "sgg_cd": sgg,
                                                                    "approval_id": aid, "deploy_id": did,
@@ -351,7 +351,7 @@ async def rollout(did: str, body: dict, request: Request):
             pend = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='deploy' AND subject_id=$1 AND state='pending' "
                                        "AND payload->>'action'='port'", did)
             if pend:
-                raise ApiError("approval_required", "적용 결재가 끝나야 시범을 시작할 수 있습니다", {"approval_id": pend})
+                raise ApiError("approval_required", "공유 승인이 끝나야 시범을 시작할 수 있습니다", {"approval_id": pend})
         if to == "ga":
             n = await _approvals_since_reset(conn, did)
             if n < config.APPROVALS_REQUIRED:
@@ -494,8 +494,8 @@ async def gpu(did: str, body: dict, request: Request):
 
 # ══ 한 흐름(core-flow · 코어 ④) ═══════════════════════════════════════════════════════════════════════
 # 배포본 flow(jsonb) 한 곳이 상태다. 화면은 flow_view 로 읽고(작업 id·경로는 화면에 내지 않는다), LX 관리자 화면은 /ops/flows.
-FLOW_LABEL = {"approval": "결재 대기", "need_imagery": "영상 등록 필요", "starting": "AI 분석 준비", "analyzing": "AI 분석 중",
-              "surveying": "실태조사 중", "done": "결과 반영", "failed": "다시 실행 필요", "rejected": "반려"}
+FLOW_LABEL = {"approval": "승인 대기", "need_imagery": "영상 등록 필요", "starting": "AI 분석 준비", "analyzing": "AI 분석 중",
+              "surveying": "실태조사 중", "done": "결과 반영", "failed": "다시 실행 필요", "rejected": "거절"}
 FLOW_TICK_S = 5
 IMAGERY_RECHECK_S = 60
 _flow_tasks: set = set()
@@ -1260,7 +1260,7 @@ async def flow_retry(did: str, request: Request, body: dict | None = None):
         pend = await conn.fetchval("SELECT 1 FROM approvals WHERE subject_type='deploy' AND subject_id=$1 AND state='pending' "
                                    "AND payload->>'action'='port'", did)
         if pend:
-            raise ApiError("approval_required", "적용 결재가 끝나야 실행할 수 있습니다")
+            raise ApiError("approval_required", "공유 승인이 끝나야 실행할 수 있습니다")
         if (d["flow"] or {}).get("state") in ("analyzing", "surveying", "starting"):
             raise ApiError("conflict", "이미 진행 중입니다", status=409)
         await audit(conn, p, "flow.retry", did, {"flow": (d["flow"] or {}).get("state")}, {"deploy_id": did, "job_id": (d["flow"] or {}).get("job_id")})

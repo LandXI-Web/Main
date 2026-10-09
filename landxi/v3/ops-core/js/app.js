@@ -15,7 +15,7 @@ const RAIL = [
   { id: 'infra', label: '인프라', icon: 'gear', href: INFRA },
   { id: 'tenants', label: '기관', icon: 'org', href: INFRA + '?view=tenants' },
   { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
-  { id: 'approvals', label: '결재', icon: 'inbox' },
+  { id: 'approvals', label: '승인 요청', icon: 'inbox' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // 기관에서 온 모든 요청 · 대화(알림-1 — 관리자도 함께 본다)
   { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
 ];
@@ -26,13 +26,13 @@ const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rai
 document.body.classList.remove('oc-boot');
 /* Ctrl K — LX 관리자 운영 질문(GPU · 대기열 · 경보 · 기관 사용량 · 언어 모델) · 관리자 계정만(관문이 관리자만 들인다) */
 const ck = who.key === 'lx/admin'
-  ? mountCmdk({ context: () => ({ screen: 'ops', screen_name: document.body.dataset.view === 'approvals' ? 'LX 관리자 대시보드 · 결재' : 'LX 관리자 대시보드 · 현황' }) }) : null;
+  ? mountCmdk({ context: () => ({ screen: 'ops', screen_name: document.body.dataset.view === 'approvals' ? 'LX 관리자 대시보드 · 승인 요청' : 'LX 관리자 대시보드 · 현황' }) }) : null;
 if (ck) { const b = ck.button(); b.querySelector('span').textContent = '물어보기'; S.mast(b);
   const i = ck.el.querySelector('.k-ck-i'); if (i) i.placeholder = 'GPU 상태 · 대기열 요약 · 경보 있어?'; }
 
 /* ── 판 두 장: 현황 · 결재 ─────────────────── */
 const over = h('section.oc-over', { 'aria-label': '현황' });
-const inbox = h('section.oc-inbox', { 'aria-label': '결재' });
+const inbox = h('section.oc-inbox', { 'aria-label': '승인 요청' });
 S.main.append(over, inbox);
 
 // 현황: 지도 + 토글 + 범례 + 카드
@@ -42,13 +42,13 @@ const seg = h('div.oc-seg', { role: 'tablist', 'aria-label': '지도 범위' },
   h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { s: 'abroad' }, text: '해외' }));
 const legend = h('div.oc-legend', { 'aria-hidden': 'true', html: '<span data-stage="ga"><i></i>운영</span><span data-stage="pilot"><i></i>시범</span><span data-stage="verify"><i></i>검증</span><span data-stage="port"><i></i>적용 요청</span>' });
 const big = h('div.oc-big');
-const openBtn = h('a.t-btn.oc-open', { href: '#/approvals', text: '결재함 열기' });
+const openBtn = h('a.t-btn.oc-open', { href: '#/approvals', text: '승인 요청함 열기' });
 const todoEl = h('ul.oc-todo');
-const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '결재 대기' }, big, openBtn, todoEl);
+const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '승인 대기' }, big, openBtn, todoEl);
 over.append(stageEl, seg, legend, card);
 
 const M = mountMap(stageEl);
-const B = bignum(big, null, { label: '결재 대기', unit: '건' });
+const B = bignum(big, null, { label: '승인 대기', unit: '건' });
 /* 로딩 중에는 '불러오는 중'(K9 기본 문구) — 응답이 오기 전 빈 상태('아직 결과가 없습니다')가 비치지 않게.
    결재 대기는 응답이 실제로 오면 0 이어도 숫자로 보인다(빈 상태 문구는 결재함 표 쪽 '결재할 것이 없습니다'). */
 const bigNone = big.querySelector('.k-big-none');
@@ -107,7 +107,7 @@ function drawInbox() {
   if (none.dataset.kind === 'loading') none.innerHTML = '';
   const rows = list.map((x) => ({ ...x, kindKo: x.kindKo, target: x.target, requester: x.requester, day: ymd(x.at) || '—' }));
   none.hidden = !!rows.length; tbl.hidden = !rows.length;
-  if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '결재할 것이 없습니다', char: 'satellite' }); }
+  if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '승인할 것이 없습니다', char: 'satellite' }); }
   const cols = [
     { key: 'kindKo', label: '종류', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
     { key: 'target', label: '대상', fmt: (v) => `<b class="oc-target">${esc(v)}</b>` },
@@ -163,30 +163,30 @@ async function openSheet(item) {
   }
   sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
   if (item.mine && !item.canDecide) {                // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
-    body.append(h('p.oc-mine', { text: '내가 요청한 결재입니다. 다른 관리자가 결재합니다.' }));
+    body.append(h('p.oc-mine', { text: '내가 올린 승인 요청입니다. 다른 관리자가 승인합니다.' }));
     return;
   }
   /* 관리자 계정이 하나뿐이면(10-01 사용자 결정 — 관리자 계정 하나를 함께 씀) 내가 올린 요청도 내가 결재하고 처리 기록에 남긴다 */
-  if (item.mine) body.append(h('p.oc-mine', { text: '관리자 계정이 하나라 이 계정이 결재합니다. 처리 기록에 ‘관리자 계정 승인(단일 계정)’으로 남습니다.' }));
-  const reason = h('input.t-input.oc-reason', { type: 'text', placeholder: '사유(반려할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '120' });
+  if (item.mine) body.append(h('p.oc-mine', { text: '관리자 계정이 하나라 이 계정이 승인합니다. 처리 기록에 ‘관리자 계정 승인(단일 계정)’으로 남습니다.' }));
+  const reason = h('input.t-input.oc-reason', { type: 'text', placeholder: '사유(거절할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '120' });
   const ok = h('button.t-btn', { type: 'button', text: '승인' });
-  const no = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });
+  const no = h('button.t-btn.t-btn--2', { type: 'button', text: '거절' });
   const note = h('p.oc-need', { role: 'status' });
   body.append(reason, note, h('div.oc-acts', {}, no, ok));
   const need = (text) => { note.textContent = text; reason.focus(); reason.classList.remove('is-need'); void reason.offsetWidth; reason.classList.add('is-need'); };
   reason.addEventListener('input', () => { if (reason.value.trim()) { note.textContent = ''; reason.classList.remove('is-need'); } });
   const run = async (dec) => {
-    if (dec === 'reject' && !reason.value.trim()) { need('반려 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.'); return; }
+    if (dec === 'reject' && !reason.value.trim()) { need('거절 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.'); return; }
     note.textContent = '';
     ok.disabled = no.disabled = true;
     try {
       await decide(item, dec, reason.value.trim());
-      toast(dec === 'approve' ? '승인했습니다' : '반려했습니다');
+      toast(dec === 'approve' ? '승인했습니다' : '거절했습니다');
       sheet.close(true); openKey = null;
       await refresh();
     } catch (e) {
       devlog('decide', `${item.key} · ${e.code || e.message}`);
-      if (e.code === 'reason_required') need('반려 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.');
+      if (e.code === 'reason_required') need('거절 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.');
       else toast(e.code === 'self_approval' || e.code === 'conflict' ? e.message : '지금은 처리할 수 없습니다');
       ok.disabled = no.disabled = false;
     }
@@ -199,7 +199,7 @@ async function openSheet(item) {
 function route() {
   const v = /^#\/approvals/.test(location.hash) ? 'approvals' : 'overview';
   document.body.dataset.view = v;
-  document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 결재' : 'Land-XI · LX 관리자 대시보드';
+  document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 승인 요청' : 'Land-XI · LX 관리자 대시보드';
   S.go(v === 'approvals' ? 4 : 0); badge();
   if (v === 'approvals') drawInbox();
   else { closeAll(); openKey = null; drawOverview(); M.map.resize(); }

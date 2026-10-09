@@ -1007,7 +1007,7 @@ async def rule_activate(rid: str, request: Request, body: dict | None = None):
     async with db(realm="lx") as conn:
         dup = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='rule' AND subject_id=$1 AND state='pending'", rid)
         if dup:
-            raise ApiError("conflict", "이미 결재 대기 중입니다", {"approval_id": dup}, 409)
+            raise ApiError("conflict", "이미 승인 대기 중입니다", {"approval_id": dup}, 409)
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, at) "
                            "VALUES ($1,'rule',$2,$3,'pending',$4,$5,now())", aid, rid, p.user_id,
                            {"thresholds": th or d["thresholds"], "name": d["name"], "note": (body or {}).get("note"), "review": review},

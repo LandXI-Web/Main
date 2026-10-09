@@ -81,7 +81,7 @@ export function openFlow({ host, who, project = null, step = null }) {
   const isAdmin = who?.me?.role === 'admin';
   const body = h('div.tf');
   /* 프로젝트 안(J-1) — 서랍 제목 = 그 단계 이름(프로젝트 이름은 위 단계 막대에), 열면 그 단계 칸으로(학습데이터 구축 = ① · 학습 = ③ · 발행 요청 = ⑤) */
-  const STEP_T = { 1: '학습데이터 구축', 3: '학습', 5: '발행 요청' };
+  const STEP_T = { 1: '학습데이터 구축', 3: '학습', 5: '배포 신청' };
   const title = project ? STEP_T[step] || '학습' : '새 모델 만들기';
   const d = drawer({ title, body, host, slot: 'right', label: title,
     onClose: () => { closed = true; stream?.close(); setQ({ flow: null, sample: null, job: null, model: null, card: null }); } });
@@ -98,7 +98,7 @@ export function openFlow({ host, who, project = null, step = null }) {
   const s2 = sec(2, '라벨 확인');
   const s3 = sec(3, '학습');
   const s4 = sec(4, '결과 확인 · 등록');
-  const s5 = sec(5, project ? '서비스 카드 발행 요청' : '서비스 만들기');
+  const s5 = sec(5, project ? '서비스 카드 배포 신청' : '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
   if (project && step > 1) setTimeout(() => { if (!closed) body.querySelector(`.tf-s[data-step="${step}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 1600);
@@ -422,7 +422,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     s4.append(act, h('p.t-label.tf-msg', { role: 'status' }));
     if (model.status === 'candidate') {
       const last = await myDecision('model', (a) => a.subject?.id === mid);
-      if (last?.decision === 'reject') act.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `등록 반려 · 사유: ${last.reason || '—'}` }));
+      if (last?.decision === 'reject') act.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `등록 거절 · 사유: ${last.reason || '—'}` }));
       const reg = h('button.t-btn', { type: 'button', text: last?.decision === 'reject' ? '다시 등록 요청' : '등록 요청' });
       reg.addEventListener('click', async () => {
         reg.disabled = true;
@@ -432,7 +432,7 @@ export function openFlow({ host, who, project = null, step = null }) {
       act.append(reg);
     } else if (model.status === 'pending') {
       if (isAdmin) {        // 결정은 결재함 한 곳에서(반려 사유 · 요청한 사람 ≠ 결재하는 사람 — impl-1)
-        act.append(h('a.t-btn', { href: `${V3}ops-core/#/approvals`, text: '결재함에서 결재' }));
+        act.append(h('a.t-btn', { href: `${V3}ops-core/#/approvals`, text: '승인 요청함에서 승인' }));
       } else {
         act.append(h('p.t-label', { text: 'LX 관리자 승인을 기다립니다' }));
         const again = h('button.t-btn.t-btn--text', { type: 'button', text: '다시 보기' });
@@ -453,7 +453,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     const ledger = h('select.t-input', { 'aria-label': '대장 형식' });
     /* 프로젝트 안: 이름이 '서비스 카드 발행 요청'(흐름-1 7단계) · 다음 회차(이미 카드가 있으면) = 같은 카드의 새 판 · 발행 요청은 프로젝트장 */
     const pub = project?.stages?.find((x) => x.key === 'publish') || null;
-    const mk = h('button.t-btn', { type: 'button', text: project ? (project.card ? '새 판 발행 요청' : '서비스 카드 발행 요청') : '서비스 만들기' });
+    const mk = h('button.t-btn', { type: 'button', text: project ? (project.card ? '새 판 배포 신청' : '서비스 카드 배포 신청') : '서비스 만들기' });
     const out = h('div.tf-out');
     s5.append(h('label.t-label', { text: '서비스 이름' }), name, h('p.t-label', { text: '모델' }), h('p.tf-m', { text: model?.name || '' }),
       h('p.t-label', { text: '규칙' }), rulesEl, h('label.t-label', { text: '대장 형식' }), ledger, h('div.tf-act', {}, mk), out);
@@ -477,13 +477,13 @@ export function openFlow({ host, who, project = null, step = null }) {
         card = await api('/registry/cards', { method: 'POST', body: { name: name.value.trim(), model_id: model.id, rules, ledger_kind: ledger.value, domain: sample?.task_name,
           ...(project ? { project_id: project.id } : {}) } });
         setQ({ card: card.id });
-        toast(project ? '서비스 카드 발행을 요청했습니다 — LX 관리자 결재 뒤 공개됩니다' : '서비스를 만들고 공개 결재를 요청했습니다');
+        toast(project ? '서비스 카드 배포를 신청했습니다 — LX 관리자 승인 뒤 공개됩니다' : '서비스를 만들고 공개 승인을 요청했습니다');
         showCard(out);
       } catch (e) { devlog('card', e.code || e.message); toast(e.message || '서비스를 만들지 못했습니다'); mk.disabled = false; }
     });
-    if (project && !project.can?.publish) { mk.remove(); out.before(h('p.t-label.tf-note', { text: '발행 요청은 프로젝트장이 합니다' })); }
+    if (project && !project.can?.publish) { mk.remove(); out.before(h('p.t-label.tf-note', { text: '배포 신청은 프로젝트장이 합니다' })); }
     /* 주소의 카드 — 프로젝트 안에서는 이번 회차 발행 요청이 끝났거나(공개) 결재 대기일 때만 잠근다(다음 회차는 새 판을 요청할 수 있어야) */
-    const lockMk = project ? !!(pub && (pub.done || pub.next === '공개 결재 대기')) : true;
+    const lockMk = project ? !!(pub && (pub.done || pub.next === '공개 승인 대기')) : true;
     if (Q().get('card') && lockMk) { card = { id: Q().get('card') }; mk.disabled = true; showCard(out); }
   }
   async function showCard(out) {
@@ -497,16 +497,16 @@ export function openFlow({ host, who, project = null, step = null }) {
     if (ap && ap.state === 'pending') {
       const again = h('button.t-btn.t-btn--text', { type: 'button', text: '다시 보기' });
       again.addEventListener('click', () => showCard(out));
-      out.append(h('p.tf-sum', { html: `공개 결재 대기 · <b>${nm}</b>` }), h('p.t-label', { text: 'LX 관리자가 승인하면 다른 지역에 적용할 수 있습니다' }), again);
+      out.append(h('p.tf-sum', { html: `공개 승인 대기 · <b>${nm}</b>` }), h('p.t-label', { text: 'LX 관리자가 승인하면 기관에 공유할 수 있습니다' }), again);
       return;
     }
     if (ap && ap.decision === 'reject') {
-      out.append(h('p.tf-sum', { html: `공개 반려 · <b>${nm}</b>` }), h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `사유: ${ap.reason || '—'}` }));
+      out.append(h('p.tf-sum', { html: `공개 거절 · <b>${nm}</b>` }), h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `사유: ${ap.reason || '—'}` }));
       return;
     }
     s5.closest('.tf-s').classList.add('is-done');
     out.append(h('p.tf-sum', { html: `서비스 목록에 추가됨 · <b>${nm}</b>` }),
-      h('a.t-btn', { href: `${V3}lx-deploy/?card=${encodeURIComponent(c.id)}${project ? '&project=' + encodeURIComponent(project.id) : ''}`, text: '다른 지역에 적용' }));
+      h('a.t-btn', { href: `${V3}lx-deploy/?card=${encodeURIComponent(c.id)}${project ? '&project=' + encodeURIComponent(project.id) : ''}`, text: '기관에 공유' }));
   }
 
   /* ── 새로고침 뒤 이어 보기(URL 상태) ─────────────────── */

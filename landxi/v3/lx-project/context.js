@@ -13,7 +13,7 @@ import { TASKS } from '../lx-console/matrix.js';   // 업무 → 대조 규칙(�
 export const PID = new URLSearchParams(location.search).get('project') || null;
 export const STAGES = [
   { key: 'ingest', label: '데이터 올리기' }, { key: 'label', label: '학습데이터 구축' }, { key: 'train', label: '학습' },
-  { key: 'review', label: '결과 확인' }, { key: 'publish', label: '발행 요청' }, { key: 'ops', label: '서비스 관리' },
+  { key: 'review', label: '결과 확인' }, { key: 'publish', label: '배포 신청' }, { key: 'ops', label: '서비스 관리' },
 ];
 const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 상대 주소(GitHub Pages /Main/ 아래에서도)
 export const HOME = at('./');
