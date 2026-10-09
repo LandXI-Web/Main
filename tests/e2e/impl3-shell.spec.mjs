@@ -8,7 +8,7 @@ import { frontDoor } from '../../landxi/v3/kit/lint/forbidden.mjs';
 const ENV = path.resolve('server/.env');
 const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, 'utf8')) || [])[1]?.trim() : null;
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
-const MENU = ['홈', '프로젝트', '분석하기', '서비스 카드', '데이터', '요청함'];
+const MENU = ['대시보드', '프로젝트', '분석하기', 'XI맵', '데이터', '요청함'];   // lx-menu.js 기준(서비스 카드 · 지도 서비스 칸 없음)
 
 test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 안 단계', () => {
   test.beforeEach(async ({ request }) => {
@@ -23,16 +23,16 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     const hrefs = async () => page.locator('.k-rail a.k-rail-i').evaluateAll((as) => as.map((a) => new URL(a.href).pathname));
     await page.locator('.k-rail a.k-rail-i').first().waitFor({ timeout: 20000 });
     const base = await hrefs();
-    expect(base).toEqual(['/landxi/v3/lx-console/', '/landxi/v3/lx-project/', '/landxi/v3/lx-analyze/', '/landxi/v3/lx-cards/', '/landxi/v3/lx-ingest/', '/landxi/v3/lx-inbox/']);
-    for (const [url, on] of [['v3/lx-console/', '홈'], ['v3/lx-project/', '프로젝트'], ['v3/lx-ingest/', '데이터'], ['v3/lx-train/', '프로젝트'],
-      ['v3/lx-review/', '프로젝트'], ['v3/lx-deploy/', '서비스 카드'], ['v3/lx-inbox/', '요청함']]) {
+    expect(base).toEqual(['/landxi/v3/lx-console/', '/landxi/v3/lx-project/', '/landxi/v3/lx-analyze/', '/landxi/v3/xi-clean/', '/landxi/v3/lx-ingest/', '/landxi/v3/lx-inbox/']);
+    for (const [url, on] of [['v3/lx-console/', '대시보드'], ['v3/lx-project/', '프로젝트'], ['v3/lx-ingest/', '데이터'], ['v3/lx-train/', '프로젝트'],
+      ['v3/lx-review/', '프로젝트'], ['v3/lx-deploy/', '프로젝트'], ['v3/lx-inbox/', '요청함']]) {
       await page.goto(url);
       await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(MENU, { timeout: 20000 });   // 이름(요청함 숫자 배지 제외)
       expect(await hrefs(), url).toEqual(base);
       await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child'), url).toHaveText(on);
       for (const old of ['서비스 만들기', '배포', '결과 확인']) await expect(page.locator('.k-rail .k-rail-i', { hasText: old }), url).toHaveCount(0);
       await expect(page.locator('.k-mast .k-bell'), url).toHaveCount(0);           // 알림은 '요청함'(위 머리는 역할 · XI맵 · ? · 나가기)
-      await expect(page.locator('.k-mast .k-xi'), url).toBeVisible();
+      await expect(page.locator('.k-mast .k-xi'), url).toHaveCount(0);             // XI맵은 왼쪽 메뉴 칸 — 머리 단추는 뺐다
     }
     expect(errs).toEqual([]);
   });
@@ -139,15 +139,16 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     expect(r.shown).toBeGreaterThan(0);
   });
 
-  test('휴대폰(390) — 아래 탭 다섯(홈 · 프로젝트 · 분석하기 · 요청함 · 메뉴) · 메뉴에 나머지', async ({ browser, baseURL }) => {
+  // 원칙 139: 모바일은 지금 고려하지 않는다 — 휴대폰 시험은 건너뛴다(메뉴 이름은 위 데스크톱 시험이 지킨다).
+  test.skip('휴대폰(390) — 아래 탭 다섯(대시보드 · 프로젝트 · 분석하기 · 요청함 · 메뉴) · 메뉴에 나머지', async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     const tabs = await page.locator('.k-rail .k-rail-i').evaluateAll((els) => els.filter((e) => getComputedStyle(e).display !== 'none').map((e) => e.querySelector('span:last-child').textContent.trim()));
-    expect(tabs).toEqual(['홈', '프로젝트', '분석하기', '요청함', '메뉴']);
+    expect(tabs).toEqual(['대시보드', '프로젝트', '분석하기', '요청함', '메뉴']);
     await page.locator('.k-rail-more').click();
-    await expect(page.locator('.k-more .k-more-i')).toHaveText(['서비스 카드', '데이터', 'XI맵', '도움말', '나가기']);
+    await expect(page.locator('.k-more .k-more-i')).toHaveText(['XI맵', '데이터', '도움말', '나가기']);
     await ctx.close();
   });
 

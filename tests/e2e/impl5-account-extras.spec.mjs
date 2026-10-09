@@ -23,6 +23,7 @@ const login = async (page, baseURL, who, site) => {
 };
 
 test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 · 메모 지우기 · 저장 용량 증량 신청', () => {
+  test.describe.configure({ mode: 'serial' });   // 같은 계정(test@lx.or.kr)의 저장 용량 할당을 바꾸고 읽는 시험들 — 한 줄로
   test.beforeEach(async ({ request }) => {
     test.skip(!PW, 'server/.env DEV_PASSWORD 없음');
     test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐');
@@ -122,5 +123,28 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
     await expect(page.locator('.k-dp li', { hasText: '전남광주지역본부' })).toBeVisible();
     await page.locator('.k-dp li', { hasText: '전남광주지역본부' }).click();
     await expect(dept).toHaveValue('전남광주지역본부');
+  });
+
+  test("내 정보 — 머리의 내 이름 → 창 · 아이디 고정 · 부서를 고치면 바로 · 저장 용량(할당 · 쓴 양 = 서버 값)", async ({ page, baseURL }) => {
+    await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
+    const me = (await call(page, '/me/profile')).json;
+    try {
+      await page.locator('.k-mast .k-me-b').click();
+      const md = page.locator('.k-md');
+      await expect(md.locator('.k-md-t')).toHaveText('내 정보');
+      await expect(md.locator('.k-me-ro')).toHaveText('test@lx.or.kr');
+      await expect(md.locator('input[name=login]')).toHaveCount(0);
+      const q = me.storage.quota_gb.value;
+      await expect(q == null ? md.locator('.k-me-tag') : md.locator('.k-me-gauge')).toContainText(q == null ? '할당 없음' : `할당 ${q} GB 대비`);   // S-19 · 직원-7 — 도넛 + '할당 n GB 대비'
+      await expect(md.locator('.k-me-sub').first()).toContainText(`${me.storage.projects.value}개`);
+      await md.locator('input[name=dept]').fill('e2e 공간정보처');
+      await md.getByRole('button', { name: '저장' }).click();
+      await expect(page.locator('.k-toast')).toContainText('내 정보를 바꿨습니다');
+      expect((await call(page, '/me/profile')).json.dept).toBe('e2e 공간정보처');
+    } finally {
+      await call(page, '/me/profile', 'PATCH', { name: me.name, dept: me.dept, contact: me.contact });
+      py(`c.execute("DELETE FROM audit_log WHERE action='account.profile' AND (after->>'dept' LIKE 'e2e%%' OR before->>'dept' LIKE 'e2e%%')")`);
+    }
   });
 });

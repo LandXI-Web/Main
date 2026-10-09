@@ -1,4 +1,4 @@
-// impl-1 LX 관리자 — 결재함이 '불러오는 중'에서 멈추지 않는다(확인 FR-3) · 결재 한 건 = 누가 · 무엇을 · 왜 + 반려 사유 필수 ·
+// impl-1 LX 관리자 — 결재함이 '불러오는 중'에서 멈추지 않는다(확인 FR-3) · 결재 한 건 = 누가 · 무엇을 · 왜 + 거절 사유 필수 ·
 // 인프라 GPU 행 = 실측 판정(쥐고만 있는 GPU 에 고부하 표시 0). 로그인 폼 입력만(세션 주입 0) · 결재는 누르지 않는다(데이터 변경 0).
 // 비밀번호는 server/.env DEV_PASSWORD(출력 0). 게이트웨이 :8700 이 떠 있어야 한다.
 import { test, expect } from '@playwright/test';
@@ -35,7 +35,7 @@ test.describe('impl-1 LX 관리자 — 결재함 · GPU 판정', () => {
     expect(errs).toEqual([]);
   });
 
-  test('결재 한 건 — 바뀌는 것 · 반려는 사유 없이 보내지 않는다', async ({ page }) => {
+  test('결재 한 건 — 바뀌는 것 · 거절는 사유 없이 보내지 않는다', async ({ page }) => {
     await admin(page);
     await page.locator('a.oc-open').click();
     const rows = page.locator('.oc-tbl tbody tr');
@@ -47,12 +47,12 @@ test.describe('impl-1 LX 관리자 — 결재함 · GPU 판정', () => {
     await expect(sheet).toBeVisible();
     await expect(sheet.locator('.oc-ch').last()).toBeVisible();                 // 바뀌는 것
     const mine = await sheet.locator('.oc-mine').count();
-    if (mine) { await expect(sheet.locator('.oc-acts')).toHaveCount(0); return; }   // 내가 요청한 결재 = 승인 · 반려 없음
+    if (mine) { await expect(sheet.locator('.oc-acts')).toHaveCount(0); return; }   // 내가 요청한 결재 = 승인 · 거절 없음
     const reqs = [];
     page.on('request', (r) => { if (/\/approvals\/.+\/decide/.test(r.url())) reqs.push(r.url()); });
-    await sheet.locator('.oc-acts button', { hasText: '반려' }).click();
-    await expect(sheet.locator('.oc-need')).toHaveText(/반려 사유를 적어 주세요/);
-    expect(reqs).toEqual([]);                                                   // 사유 없는 반려는 서버로 가지 않는다
+    await sheet.locator('.oc-acts button', { hasText: '거절' }).click();
+    await expect(sheet.locator('.oc-need')).toHaveText(/거절 사유를 적어 주세요/);
+    expect(reqs).toEqual([]);                                                   // 사유 없는 거절는 서버로 가지 않는다
   });
 
   test('인프라 — GPU 행 고부하 표시는 판정 표(서버 per)와 같다(쥐고만 있는 GPU 에 고부하 0)', async ({ page }) => {

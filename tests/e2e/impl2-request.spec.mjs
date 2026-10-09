@@ -2,7 +2,7 @@
 // 기관 입구 lxadmin@namwon → 서비스(?service=) → ① 영상 넣기(작은 TIF 한 장) → ② 분석 카드 고르기(카드 한 벌) → ③ 요청하기(구현 확인 2차 J-9 쉬운 판) →
 // 구현 5차 기관-5 ⓐ — 이름 '분석 요청' · 시안 모양(왼쪽 세 단계 · 오른쪽 '어디를 분석하나' · 내가 보낸 요청 — 탭 없음).
 // 관리자 입구 lxadmin → 결재함 '분석 요청' 한 건(판단 근거 · 미리 보기) → 승인 → 기존 분석 대기열(GPU 한 장 · 작은 영상 한 건) → 결과 도착 · 새 시점.
-// 반려 → 사유가 기관 '내 의뢰'에. 공유 영상 불러오기 · 관리자 기관 서랍 '공유 영상' 칸.
+// 거절 → 사유가 기관 '내 의뢰'에. 공유 영상 불러오기 · 관리자 기관 서랍 '공유 영상' 칸.
 // LX_EVIDENCE=1 이면 증거 캡처(docs/superpowers/final/process/impl-2/request/img/after-*.png · 1440×900).
 // 끝에서 이 시험이 만든 의뢰 · 결재 · 작업 · 올린 파일을 지운다(scratch 정리 스크립트와 같은 규칙 — server 쪽 pytest 픽스처 참고).
 import { test, expect } from '@playwright/test';
@@ -175,24 +175,24 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await shot(g, 'after-result.png');
   });
 
-  test('반려 — 사유가 기관 내가 보낸 요청에 보인다', async ({ browser }) => {
+  test('거절 — 사유가 기관 내가 보낸 요청에 보인다', async ({ browser }) => {
     const tif = makeTif('남원_덕과면_항공_2023_b.tif', 512, 0.004);
     const g = await gov(browser);
-    await send(g, tif, 'e2e 반려 확인');
+    await send(g, tif, 'e2e 거절 확인');
     await g.click('#go');
     await expect(g.locator('#det')).toContainText('확인 대기', { timeout: 20000 });
     const a = await admin(browser);
-    await openInbox(a, 'e2e 반려 확인');
+    await openInbox(a, 'e2e 거절 확인');
     const sheet = a.locator('.oc-sheet');
-    await sheet.locator('.oc-acts button', { hasText: '반려' }).click();
-    await expect(sheet.locator('.oc-need')).toContainText('반려 사유를 적어 주세요');      // 사유 없이는 보내지 않는다
+    await sheet.locator('.oc-acts button', { hasText: '거절' }).click();
+    await expect(sheet.locator('.oc-need')).toContainText('거절 사유를 적어 주세요');      // 사유 없이는 보내지 않는다
     await sheet.locator('.oc-reason').fill('영상 범위가 서비스 대상과 맞지 않습니다');
-    await sheet.locator('.oc-acts button', { hasText: '반려' }).click();
-    await expect(a.locator('.k-toast')).toContainText('반려했습니다');
+    await sheet.locator('.oc-acts button', { hasText: '거절' }).click();
+    await expect(a.locator('.k-toast')).toContainText('거절했습니다');
     await g.reload();
     await g.waitForSelector('.gq-grid');
-    await g.locator('.gq-row', { hasText: '반려' }).first().click();
-    await expect(g.locator('#det')).toContainText('반려 · 사유: 영상 범위가 서비스 대상과 맞지 않습니다');
+    await g.locator('.gq-row', { hasText: '거절' }).first().click();
+    await expect(g.locator('#det')).toContainText('거절 · 사유: 영상 범위가 서비스 대상과 맞지 않습니다');
     await g.waitForTimeout(3200);
     await shot(g, 'after-reject-reason.png');
   });

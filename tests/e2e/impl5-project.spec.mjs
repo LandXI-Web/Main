@@ -115,27 +115,5 @@ test.describe('구현 5차 · 프로젝트 한 장 — 재학습 근거 · 기�
     await expect(page.locator('.lxp-log .lxp-lg li').first()).toContainText('프로젝트장 넘김');
     expect(errs).toEqual([]);
   }
-
-  test("내 정보 — 머리의 내 이름 → 창 · 아이디 고정 · 부서를 고치면 바로 · 저장 용량(할당 · 쓴 양 = 서버 값)", async ({ page, baseURL }) => {
-    await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
-    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
-    const me = (await call(page, '/me/profile')).json;
-    try {
-      await page.locator('.k-mast .k-me-b').click();
-      const md = page.locator('.k-md');
-      await expect(md.locator('.k-md-t')).toHaveText('내 정보');
-      await expect(md.locator('.k-me-ro')).toHaveText('test@lx.or.kr');
-      await expect(md.locator('input[name=login]')).toHaveCount(0);
-      const q = me.storage.quota_gb.value;
-      await expect(q == null ? md.locator('.k-me-tag') : md.locator('.k-me-gauge')).toContainText(q == null ? '할당 없음' : `할당 ${q} GB 대비`);   // S-19 · 직원-7 — 도넛 + '할당 n GB 대비'
-      await expect(md.locator('.k-me-sub').first()).toContainText(`${me.storage.projects.value}개`);
-      await md.locator('input[name=dept]').fill('e2e 공간정보처');
-      await md.getByRole('button', { name: '저장' }).click();
-      await expect(page.locator('.k-toast')).toContainText('내 정보를 바꿨습니다');
-      expect((await call(page, '/me/profile')).json.dept).toBe('e2e 공간정보처');
-    } finally {
-      await call(page, '/me/profile', 'PATCH', { name: me.name, dept: me.dept, contact: me.contact });
-      py(`c.execute("DELETE FROM audit_log WHERE action='account.profile' AND (after->>'dept' LIKE 'e2e%%' OR before->>'dept' LIKE 'e2e%%')")`);
-    }
-  });
+  // '내 정보'(저장 용량 읽기) 시험은 같은 계정의 할당을 바꾸는 시험과 겹쳐 걸려 impl5-account-extras.spec.mjs 로 옮겼다(한 파일 · 직렬).
 });

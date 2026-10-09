@@ -49,21 +49,18 @@ test.describe('구현 2차 정리 — 화면 잇기 · 계정 · 한도 표시',
     await expect(page.locator('.org .adj').first()).toHaveText('공유 영상');
   });
 
-  test('기관 관리자 — 메뉴 분석 의뢰 · 내가 보낸 요청 · 계정 · 서비스 대시보드의 분석 의뢰 · 결과 시점', async ({ page }) => {
+  test('기관 관리자 — 메뉴 요청하기 · 계정 · 서비스 화면 → 요청하기', async ({ page }) => {
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr#namwon');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-select/'), { timeout: 30000 });
     await page.goto(BASE + '/landxi/v3/gov-select/?list=1');
-    for (const t of ['내 서비스', '분석 의뢰', '내가 보낸 요청', '기관 정보', '계정']) await expect(page.locator('.k-rail .k-rail-i', { hasText: t })).toBeVisible();
+    for (const t of ['내 서비스', '요청하기', '기관 정보', '계정']) await expect(page.locator('.k-rail .k-rail-i', { hasText: t })).toBeVisible();
     const card = (await page.locator('.gs-card .k-sc-go').first().getAttribute('href'));
     await page.goto(BASE + '/landxi/v3/gov-select/' + card);
-    const tab = page.locator('.gs-tabs a.gs-tab', { hasText: '분석 의뢰' });
-    await expect(tab).toBeVisible({ timeout: 20000 });
-    expect(await tab.getAttribute('href')).toMatch(/gov-request\/\?service=/);
-    await expect(page.locator('section[aria-label="결과 시점"]')).toBeVisible();
-    expect(await page.locator('.k-rail a.k-rail-i', { hasText: '분석 의뢰' }).getAttribute('href')).toMatch(/gov-request\/\?service=/);
-    await tab.click();
+    await expect(page.locator('.gs-tabs a.gs-tab', { hasText: '현황' })).toBeVisible({ timeout: 20000 });   // 서비스 화면 위 탭에는 요청 탭이 없다 — 요청은 메뉴 '요청하기'
+    expect(await page.locator('.k-rail a.k-rail-i', { hasText: '요청하기' }).getAttribute('href')).toMatch(/gov-request\/\?service=/);
+    await page.locator('.k-rail a.k-rail-i', { hasText: '요청하기' }).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-request/'), { timeout: 20000 });
-    await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/분석 의뢰/);
+    await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/요청하기/);
     await page.goto(BASE + '/landxi/v3/gov-accounts/');
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/계정/);
   });
