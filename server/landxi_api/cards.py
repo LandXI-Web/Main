@@ -162,7 +162,7 @@ async def _load(conn) -> dict:
             d[k] = _obj(d.get(k))
         info[r["card_id"]] = d
     vers = await conn.fetch("SELECT id, card_id, version, model_ids, modules, approved_at FROM card_versions ORDER BY card_id, id")
-    models = {r["id"]: r for r in await conn.fetch("SELECT id, task, classes, gsd_trained_m, weights_uri, status, input FROM models")}
+    models = {r["id"]: r for r in await conn.fetch("SELECT id, task, classes, gsd_trained_m, weights_uri, status, input, metrics, sample_id FROM models")}
     appr = await conn.fetch("SELECT payload->>'card_id' AS cid, state, at FROM approvals WHERE subject_type='card' ORDER BY at")
     jobs = await conn.fetch(
         "SELECT card_id, options->>'sgg_cd' AS sgg, options->>'coverage' AS cov, perf->>'elapsed_s' AS el, finished_at FROM jobs "
@@ -316,6 +316,33 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     reports_sum = f"{len(lk)}곳 합" if len(lk) > 1 else None
     own = _owner(m, cid, card)
     can_analyze = bool(learned) and (card["scope"] or "local") != "global"
+    # 분석하기 카드(카드틀-5 · 6 ⓐ · 원칙 145 · 146) — 모델 = 지금 판의 학습된 모델(없으면 앞 판) · 검증 정확도 = 그 모델 기록의 학습 끝 검증 값
+    #   (분할 모델은 마스크 mAP50 먼저) · 모델 갱신 = 그 검증 기록의 날 · 대상 지역 = 이 카드의 요약 항목 시군구 전부(운영 → 시범 → 첫 결과 전).
+    #   정식 서비스 = 등록된 모델 + 돌고 있는 배포본(운영 · 시범 · 뒤에서 돌림)이 있는 카드만 — 나머지 카드는 지우지 않고 화면이 숨긴다.
+    cur_learned = [m["models"][x] for x in ((cur["model_ids"] or []) if cur else []) if x in m["models"] and m["learned"](m["models"][x])] or learned
+    model_card = None
+    for md in cur_learned:
+        mt = _obj(md["metrics"]) or {}
+        e = next((mt[k] for k in ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50") if isinstance(mt.get(k), dict) and _vnum(mt[k].get("value")) is not None), None)
+        if e:
+            ad = str(e.get("as_of") or "")
+            model_card = {"acc": env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
+                          "updated": ad.replace("-", ".")[:10] or None}
+            break
+    registered = any((md["status"] or "") == "registered" for md in cur_learned)
+    official = can_analyze and registered and any(d["card_id"] == cid for d in m["live"])
+    targets = []
+    for it in sorted(items, key=lambda it: (RANK[STAGE_KEY.get(it["stage"], "none")], _short(it.get("region_name"), it.get("sgg_cd")) or "")):
+        nm = _short(it.get("region_name"), it.get("sgg_cd"))
+        if nm and nm not in targets:
+            targets.append(nm)
+    sample_src = None
+    if p.realm == "lx" and not scene:
+        for x in mids:
+            sid = str((m["models"].get(x) or {}).get("sample_id") or "") if x in m["models"] else ""
+            if re.fullmatch(r"smp_[0-9a-f]{6,20}", sid):
+                sample_src = f"/training/samples/{sid}/preview/0?size=800"      # API 아래 경로 — 화면이 로그인 토큰으로 받아 그린다(직원 전용)
+                break
     out = {
         "id": cid, "name": _name(card["name"]), "scope": card["scope"] or "local", "group": inf.get("grp") or ("해외" if card["scope"] == "global" else None),
         "state": state, "state_label": STAGE_WORD[state],
@@ -327,6 +354,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "version": cur["version"] if cur else None, "owner": own["name"],
+        "official": official, "model": model_card, "targets": targets, "sample": sample_src,
         "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global" else "분석 모델 등록 전"),
         "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "reports_sum": reports_sum, "publish": publish,
     }

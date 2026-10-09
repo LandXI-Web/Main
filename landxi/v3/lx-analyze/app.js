@@ -1,13 +1,13 @@
 /* lx-analyze — 분석하기(구현 3차 · 확인 대장 14차 길-1 ⓑ 카드 먼저 · 카드-1 ⓐ · 원칙 90 · 93).
    길 하나: 갤러리(카드 한 벌 ①) → 카드 상세 → 어디(시군구 · 여러 곳) → 분석 시작 → 결과는 XI맵.
-     ./            갤러리 — 상태 · 분류 거르기 · 찾기 · 카드 4열(휴대폰 1열)
+     ./            갤러리 — 정식 분석 서비스만 · 분류 거르기 · 찾기 · 보기 개수(작게 4열 · 크게 3열)
      ./?card=…     카드 상세 — 결과 장면 · 결과 예시(지역별) · 영상 ↔ 결과 · 쓰이는 곳 · 이 카드의 조건 + 오른쪽 '이 카드로 분석'
    지역은 화면이 대신 고르지 않는다(원칙 33) — 직원이 검색해 고른다. 분석은 게이트웨이 작업 대기열(POST /cards/{카드}/analyze = POST /jobs 와 같은 길).
    숫자는 서버(GET /cards/deck · /cards/{카드} — 대표 수치 요약 한 출처). 카드 · 작업 · 배포본 id 는 화면 글자에 없다. */
 import * as K from '../kit/index.js';
-import { h, api } from '../kit/util.js';
+import { h, api, API, session } from '../kit/util.js';
 import { sig } from '../kit/sig.js';
-import { loadDeck, svcGrid } from '../kit/service-card.js';
+import { loadDeck } from '../kit/service-card.js';
 import { staffRail } from './menu.js';
 
 const who = await K.gate('lx-console');
@@ -30,46 +30,92 @@ const XI = (sgg) => '../xi-clean/' + (sgg ? '?' + new URLSearchParams({ region: 
 if (CARD) await detail(CARD); else await gallery();
 document.body.dataset.ready = '1';
 
-/* ═════════════ 갤러리 ═════════════ */
+/* ═════════════ 갤러리 — 정식 분석 서비스만(카드틀-5 ⓐ · 6 ⓐ · 원칙 145 · 146) ═════════════
+   정식 = 서버가 정한 official(등록된 모델 + 돌고 있는 배포본). 다른 카드는 지우지 않고 여기서만 숨긴다(서비스 카드 관리에는 그대로).
+   카드 한 틀: 그림(결과 장면 > 학습 표본 > 빈 틀) → 이름 → 한 줄 → 검증 정확도 · 모델 갱신 → 대상 지역 n곳 → 분석하기 · 자세히.
+   숫자 · 날짜 = 서버 모델 기록(카드 덱의 model) 한 출처. 보기 개수 = 작게(4열 · 기본) · 크게(3열) — 이 브라우저에 기억. */
+function readView() { try { return localStorage.getItem('lx-analyze.view') === 'big' ? 'big' : 'small'; } catch { return 'small'; } }
+function saveView(v) { try { localStorage.setItem('lx-analyze.view', v); } catch { /* 저장 못 해도 화면은 그대로 */ } }
+
+async function authBlob(path) {
+  const s = session.get();
+  const r = await fetch(API.prefix + path, { headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+  if (!r.ok) throw new Error('sample');
+  return URL.createObjectURL(await r.blob());
+}
+
+function acCard(c, href, more) {
+  const blank = (p) => { p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '결과 장면이 아직 없습니다' })); };
+  const pic = h('div.k-sc-crop.la-ac-pic');
+  const img = (src) => h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) });
+  if (c.scene?.src) pic.append(img(c.scene.src));
+  else if (c.sample) {                                     // 결과 장면이 없으면 학습 표본(직원 전용 — 로그인 토큰으로 받는다)
+    pic.classList.add('is-sample');
+    authBlob(c.sample).then((u) => pic.append(img(u))).catch(() => blank(pic));
+  } else blank(pic);
+  const md = c.model || {};
+  const acc = md.acc && md.acc.value !== null && md.acc.value !== undefined ? md.acc.value : null;
+  const tg = c.targets || [];
+  const tgText = tg.length > 3 ? `${tg.slice(0, 3).join(' · ')} 외 ${tg.length - 3}곳` : tg.join(' · ');
+  return h('article.k-sc.la-ac', { dataset: { kind: 'analyze', state: c.state || 'none' } }, pic,
+    h('div.k-sc-b.la-ac-b', {},
+      h('h3.k-sc-t', { text: c.name || '' }),
+      h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
+      h('div.la-ac-hero', {},
+        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: '검증 정확도' })),
+        h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
+      h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '—', title: tg.join(' · ') })),
+      h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: href(c), text: '분석하기' }), h('a.k-sc-more', { href: more(c), text: '자세히 →' }))));
+}
+
 async function gallery() {
   document.title = '분석하기 · Land-XI';
   page.append(h('header.la-head', {}, h('h1.t-h3', { text: '분석하기' }),
-    h('p.la-sub', { text: '서비스 카드를 골라 지역을 정하면 AI가 분석합니다 — 결과는 XI맵에서 봅니다' })));
+    h('p.la-sub', { text: '정식 분석 서비스를 골라 지역을 정하면 AI가 분석합니다' })));
   const tools = h('div.la-tools');
-  const grid = h('div.la-grid');
+  const grid = h('div.la-grid.la-acg');
   const box = h('div');
   page.append(tools, box, grid);
   if (REGION) {                                            // 홈에서 들고 온 지역 — 카드를 고르면 그 지역이 '어디'에 담겨 있다
     const regs = await K.loadRegions().catch(() => []);
     const r = regs.find((x) => x.sgg_cd === REGION);
-    if (r) page.insertBefore(h('p.la-region', {}, h('b', { text: r.name }), '에서 분석할 카드를 고르세요',
+    if (r) page.insertBefore(h('p.la-region', {}, h('b', { text: r.name }), '에서 분석할 서비스를 고르세요',
       h('a', { href: './', 'aria-label': '지역 빼기', text: '지역 빼기' })), tools);
   }
   K.empty(box, { kind: 'loading' });
   const deck = await loadDeck();
   box.remove();
-  if (!deck) { const e = h('div'); page.append(e); K.empty(e, { kind: 'error', title: '카드를 불러오지 못했습니다', onRetry: () => location.reload() }); return; }
-  const all = deck.items || [];
-  const F = { st: Q.get('st') || 'all', grp: Q.get('grp') || '', q: '' };
-  const count = (k) => all.filter((c) => c.state === k).length;
-  const stChips = [['all', '전체', all.length], ['ga', '운영', count('ga')], ['pilot', '시범', count('pilot')], ['none', '첫 결과 전', count('none')]];
+  if (!deck) { const e = h('div'); page.append(e); K.empty(e, { kind: 'error', title: '분석 서비스를 불러오지 못했습니다', onRetry: () => location.reload() }); return; }
+  const all = (deck.items || []).filter((c) => c.official);
+  const F = { grp: Q.get('grp') || '', q: '', view: readView() };
   const groups = (deck.groups || []).filter((g) => all.some((c) => c.group === g));
   const chipsEl = h('div.la-chips', { role: 'group', 'aria-label': '거르기' });
+  const viewEl = h('div.la-view', { role: 'group', 'aria-label': '보기 개수' });
+  const href = (c) => withRegion(`?card=${encodeURIComponent(c.id)}`) + '#analyze';
+  const more = (c) => withRegion(`?card=${encodeURIComponent(c.id)}`);
   const draw = () => {
     chipsEl.replaceChildren(
-      ...stChips.map(([k, w, n]) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.st === k), onclick: () => { F.st = k; draw(); } }, w, h('small.num', { text: String(n) }))),
-      groups.length ? h('span.la-sep', { 'aria-hidden': 'true' }) : null,
-      ...groups.map((g) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.grp === g), onclick: () => { F.grp = F.grp === g ? '' : g; draw(); } }, g)));
+      h('button.la-chip', { type: 'button', 'aria-pressed': String(!F.grp), onclick: () => { F.grp = ''; draw(); } }, '전체', h('small.num', { text: String(all.length) })),
+      ...groups.map((g) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.grp === g), onclick: () => { F.grp = F.grp === g ? '' : g; draw(); } },
+        g, h('small.num', { text: String(all.filter((c) => c.group === g).length) }))));
+    viewEl.replaceChildren(h('span.la-view-k', { text: '보기' }),
+      ...[['big', '크게 3열'], ['small', '작게 4열']].map(([k, w]) => h('button.la-view-b', { type: 'button', 'aria-pressed': String(F.view === k),
+        onclick: () => { F.view = k; saveView(k); draw(); } }, w)));
+    grid.dataset.view = F.view;
     const q = F.q.replace(/\s+/g, '');
-    const list = all.filter((c) => (F.st === 'all' || c.state === F.st) && (!F.grp || c.group === F.grp)
-      && (!q || [c.name, c.line, c.finds].some((s) => String(s || '').replace(/\s+/g, '').includes(q))));
-    if (!list.length) { grid.replaceChildren(); const e = h('div.la-none'); grid.append(e); K.empty(e, { kind: 'first', title: '맞는 카드가 없습니다', text: '거르기를 풀어 보세요', compact: true }); return; }
-    grid.classList.remove('la-grid--none');
-    svcGrid(grid, list, { kind: 'analyze', href: (c) => withRegion(`?card=${encodeURIComponent(c.id)}`) + '#analyze', more: (c) => withRegion(`?card=${encodeURIComponent(c.id)}`) });
+    const list = all.filter((c) => (!F.grp || c.group === F.grp)
+      && (!q || [c.name, c.line, c.finds, ...(c.targets || [])].some((s) => String(s || '').replace(/\s+/g, '').includes(q))));
+    if (!list.length) {
+      grid.replaceChildren(); const e = h('div.la-none'); grid.append(e);
+      K.empty(e, all.length ? { kind: 'first', title: '맞는 분석 서비스가 없습니다', text: '거르기를 풀어 보세요', compact: true }
+        : { kind: 'first', title: '아직 정식 분석 서비스가 없습니다', text: '분석 모델이 등록되고 지역에 적용되면 여기에 보입니다', compact: true });
+      return;
+    }
+    grid.replaceChildren(...list.map((c) => acCard(c, href, more)));
   };
-  const search = h('input.t-input.la-search', { type: 'search', placeholder: '카드 이름 · 찾는 것', 'aria-label': '카드 찾기', autocomplete: 'off' });
+  const search = h('input.t-input.la-search', { type: 'search', placeholder: '서비스 이름 · 찾는 것 · 지역', 'aria-label': '분석 서비스 찾기', autocomplete: 'off' });
   search.addEventListener('input', () => { F.q = search.value.trim(); draw(); });
-  tools.append(chipsEl, search);
+  tools.append(chipsEl, h('div.la-tools-r', {}, viewEl, search));
   draw();
   S.fresh(deck.computed_at || deck.as_of);
 }
