@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>[시안] LX 관리자 · 기관 공유 · Land-XI</title>
+<meta name="description" content="설계 14차 시안 — LX 관리자 — 승인된 분석 서비스를 기관에 공유(시군구 · 광역과 소속 시군구) · 공유 상태 목록 · 거두기">
+<link rel="icon" href="../../../../../../landxi/assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../../../../landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="../../../../../../landxi/v3/lx-console/console.css">
+
+<link rel="stylesheet" href="df.css">
+</head>
+<body class="t k-shelled">
+<div class="k-app has-rail has-more is-staff">
+<header class="t-mast k-mast"><a class="k-word" href="../../../../../../landxi/v3/ops-core/"><span class="word">LAND-XI</span><span class="home">LX 관리자 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" tabindex="0" data-live="1" aria-label="마지막 갱신 12:03" data-why="마지막 갱신 12:03"><i></i><span class="num">12:03</span></span><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">LX 관리자</button><a class="k-mast-b k-xi" href="../../../../../../landxi/v3/xi-clean/">XI맵</a><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+<nav class="t-rail k-rail" aria-label="메뉴"><a class="k-rail-i" href="../../../../../../landxi/v3/ops-core/" data-i="0"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/></svg><span>현황</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/" data-i="1"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2"/></svg><span>인프라</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/?view=tenants" data-i="2"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"/></svg><span>기관</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-infra/?view=deploys" data-i="3" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10 M6 7l4-4 4 4 M4 13v4h12v-4"/></svg><span>배포</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-core/#approvals" data-i="4"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>승인 요청</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/lx-inbox/" data-i="5"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/></svg><span>검토 요청</span></a><a class="k-rail-i" href="../../../../../../landxi/v3/ops-accounts/" data-i="6"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>계정 관리</span></a><button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></button></nav>
+<main class="k-main" id="main">
+<div class="df"><div class="df-in">
+<p class="df-stamp">시안 · 사용자 확인 전 · 숫자는 10월 9일 12:03 기준 · <span class="df-ex">예시</span> 표시만 서버에 없는 값</p>
+
+<header class="df-head"><div><p class="t-label">LX 관리자</p><h1 class="df-title">배포</h1></div><nav class="df-tabs" aria-label="배포"><a href="admin-requests.html">배포 신청<b class="num">1</b></a><a href="admin-share.html" aria-current="page">기관 공유</a><a href="#">적용 현황<b class="num">23</b></a></nav></header>
+<div class="df-grid df-grid--share">
+<section class="t-card ld-card" aria-label="승인된 분석 서비스">
+<div class="ld-h"><h2>승인된 분석 서비스<small class="ld-sub">7개</small></h2></div>
+<ul class="df-svc"><li><b>경작·휴경 분석서비스</b><span class="num">2.1</span><span class="t-chip" data-lv="ok">운영</span><small>공유 2곳</small></li><li><b>해양쓰레기 실태조사 서비스</b><span class="num">1.2</span><span class="t-chip" data-lv="ok">운영</span><small>공유 1곳</small></li><li><b>국토 변화 탐지 서비스</b><span class="num">1.0</span><span class="t-chip" data-lv="wait">시범</span><small>공유 1곳</small></li><li class="is-on" aria-current="true"><b>비닐하우스 분석서비스</b><span class="num">2.0</span><span class="t-chip" data-lv="wait">시범</span><small>공유 1곳</small></li><li><b>건축물 분석서비스</b><span class="num">2.0</span><span class="t-chip" data-lv="wait">시범</span><small>공유 없음</small></li><li><b>곤포사일리지 분석서비스</b><span class="num">1.0</span><span class="t-chip" data-lv="wait">시범</span><small>공유 없음</small></li><li><b>주차장 분석서비스</b><span class="num">2.0</span><span class="t-chip" data-lv="wait">시범</span><small>공유 없음</small></li></ul>
+<p class="df-note">첫 결과 전 · 승인 전 서비스는 공유할 수 없어 여기 없습니다.</p>
+</section>
+<section class="t-card ld-card df-sheet" aria-label="기관에 공유">
+<div class="ld-h"><h2>비닐하우스 분석서비스<small class="ld-sub">2.0판 · 기관에 공유</small></h2><span class="df-ver">단동·다동 비닐하우스를 찾습니다</span></div>
+<p class="t-label">기관 고르기</p>
+<ul class="df-orgs"><li class="df-org is-on"><label><input type="checkbox" checked disabled aria-label="남원시"><b>남원시</b><span>시군구 · 전북특별자치도</span><em>9.30 공유 · 결과 있음</em></label></li><li class="df-org is-wide"><label><input type="checkbox" aria-label="광주전남특별시"><b>광주전남특별시</b><span>광역</span></label><div class="df-wide"><label><input type="radio" name="w" checked> 광역 기관만</label><label><input type="radio" name="w"> 소속 시군구 27곳도 함께</label><small>시군구에 기관 계정이 없는 곳은 계정이 생기면 자동으로 공유됩니다</small></div></li><li class="df-org"><label><input type="checkbox" aria-label="키르기스 농업부(으슥아타)"><b>키르기스 농업부(으슥아타)</b><span>해외 · 영어 화면</span></label></li><li class="df-org"><label><input type="checkbox" aria-label="키르기스 토지자원청(소쿨룩·비슈케크)"><b>키르기스 토지자원청(소쿨룩·비슈케크)</b><span>해외 · 영어 화면</span></label></li></ul>
+<div class="df-decide"><p class="df-note"><span>공유하면 그 기관 '서비스 선택'에 바로 나타납니다(첫 결과 전).</span> <span>분석은 기관이 요청하거나 LX가 돌립니다.</span></p><button class="t-btn" type="button">공유</button></div>
+</section>
+</div>
+<section class="t-card ld-card" aria-label="공유 상태">
+<div class="ld-h"><h2>공유 상태<small class="ld-sub">어느 서비스가 어느 기관에 · 9건</small></h2></div>
+<table class="df-tbl df-tbl--shared"><thead><tr><th>서비스</th><th>기관</th><th>공유한 날</th><th>지금</th><th></th></tr></thead><tbody><tr><td><b>경작·휴경 분석서비스</b></td><td>남원시</td><td class="num">2025</td><td><span class="t-chip">운영</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>경작·휴경 분석서비스</b></td><td>광주전남특별시 — 목포시 · 여수시 · 구례군 · 강진군</td><td class="num">9.29</td><td><span class="t-chip" data-lv="warn">결과 있음 · 기관 화면에는 아직 안 보임</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>해양쓰레기 실태조사 서비스</b></td><td>광주전남특별시</td><td class="num">2025</td><td><span class="t-chip">운영 · 2027년 분도 예정</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>국토 변화 탐지 서비스</b></td><td>남원시</td><td class="num">2025</td><td><span class="t-chip" data-lv="warn">결과 있음 · 기관 화면에는 아직 안 보임</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>비닐하우스 분석서비스</b></td><td>남원시</td><td class="num">9.30</td><td><span class="t-chip" data-lv="warn">결과 있음 · 기관 화면에는 아직 안 보임</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>생활환경 위험요소 탐지 서비스</b></td><td>남원시</td><td class="num">2023</td><td><span class="t-chip" data-lv="gap">첫 결과 전</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>도로 안전관리 서비스</b></td><td>남원시</td><td class="num">2026</td><td><span class="t-chip" data-lv="gap">첫 결과 전</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>인파관리 서비스</b></td><td>남원시</td><td class="num">2027</td><td><span class="t-chip" data-lv="gap">2027년 시작</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr><tr><td><b>농지 이용 실태 분석 (해외)</b></td><td>키르기스 농업부(으슥아타)</td><td class="num">2026</td><td><span class="t-chip" data-lv="wait">시범</span></td><td><button class="t-btn t-btn--text" type="button">거두기</button></td></tr></tbody></table>
+<p class="df-note"><span>거두면 그 기관 화면에서 서비스가 사라지고, 결과와 이력은 LX가 보관합니다.</span> <span>기관 계정이 없는 지역의 결과(증평군 · 함양군 · 여주시 · 천안시 서북구 · 원주시 · 보령시 · 시흥시 · 익산시 황등면 · 비슈케크 · 메이크틸라)는 LX 보관 — 기관 계정이 생기면 여기서 공유합니다.</span></p>
+</section>
+</div></div>
+</main>
+</div>
+</body>
+</html>
