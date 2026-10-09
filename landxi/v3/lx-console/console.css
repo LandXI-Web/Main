@@ -1,143 +1,67 @@
-/* console.css — LX 직원 대시보드(14차 대시보드-1 ⓐ 1안 · 지도 없음). 회백 바탕 위 흰 카드 16 · 그림자 0 · 토큰·부품은 키트(kit.css) · 법전 system-v2.2-toss.
-   PC: 왼쪽(내 프로젝트 · 우리 서비스) + 오른쪽 440(요청함 · 바로 분석하기 · 최근 활동). ≤ 1100 한 줄 · 휴대폰은 같은 칸을 세로로. */
+/* console.css — LX 직원 대시보드(직원-6 4차 · 직원-7 · 10-09 한 번에 정리 · 시안 design-r14/lx-staff-board/dashboard.html). PC 만(원칙 139).
+   맨 위 넓은 칸 = 프로젝트 진행 현황 흐름도(lx-project/board.css) · 아래 줄 넷 = 저장 용량 · 내가 돌린 작업 · 요청함 · 공지.
+   회백 바탕 위 흰 카드 16 · 그림자 0 · 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css) · 법전 system-v2.2-toss. */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:24px 24px 40px}
-.ld-grid{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;max-width:1344px;margin:0 auto;align-items:start}
-.ld-col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.ld-card{display:flex;flex-direction:column;gap:14px;min-width:0;box-sizing:border-box}
+.ld-in{display:flex;flex-direction:column;gap:16px;margin:0 auto}
+.ld-in > .lxp-ntcs:empty{display:none}
+.ld-card{display:flex;flex-direction:column;gap:12px;min-width:0;box-sizing:border-box}
 .ld-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.ld-h h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.ld-h h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
 .ld-sub{margin-left:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);letter-spacing:0}
 .ld-more{flex:none;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;transition:background-size var(--d-380) var(--e-ui)}
 .ld-more::after{content:" →"}
 .ld-more:hover{background-size:100% 1px}
-
-/* ① 내 프로젝트 — 줄(이름 · 지역 | 6칸 막대 | 지금 단계) + 다음 할 일 */
-.ld-prs{display:flex;flex-direction:column}
-.lc-pr{display:grid;grid-template-columns:minmax(0,1fr) 180px 150px;gap:6px 16px;align-items:center;padding:14px 8px;margin:0 -8px;border-top:1px solid var(--rule);border-radius:var(--r-8);text-decoration:none;color:inherit;transition:background var(--d-180) var(--e-ui)}
-.lc-pr:first-child{border-top:0}
-.lc-pr:hover{background:var(--bg-0)}
-.lc-pr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.ld-pr-nm{display:flex;align-items:baseline;gap:8px;min-width:0}
-.ld-pr-nm b{font:500 16px/24px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ld-pr-nm small{flex:none;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub);white-space:nowrap}
-.ld-pr-st{display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);white-space:nowrap}
-.ld-pr-st i{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:500 12px/1 var(--font-num);font-style:normal}
-.ld-pr-ln{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 20px;min-width:0}
-.ld-pr-nx{font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
-.ld-pr-sk .lxp-stuck{min-width:0}
-.ld-pr-nx::before{content:"→ ";color:var(--sub)}
-.ld-pr-nx b{font-weight:500;color:var(--ink)}
-.ld-foot{display:flex;border-top:1px solid var(--rule);padding-top:14px}
-.ld-foot[hidden]{display:none}
-.ld-new{border:0;background:none;padding:0;cursor:pointer;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink)}
-.ld-new::before{content:"+ "}
-.ld-new:hover{text-decoration:underline;text-underline-offset:3px}
-
-/* ② 요청함 — 숫자 셋(카드 숫자 32 · 0 은 회색) */
-.ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.ld-cell{display:flex;flex-direction:column;gap:4px;min-width:0;padding:6px 8px;margin:-6px -8px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
-.ld-cell:hover{background:var(--bg-0)}
-.ld-cell b{font:800 32px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
-.ld-cell span{font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
-.ld-cell.is-zero b{color:var(--mute)}
-
-/* ④ 바로 분석하기 — 어디 한 칸 + 분석하기 */
-.ld-go-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
-.ld-pick{min-width:0}
-.ld-pick.k-region{width:100%}
-.ld-go{padding:0 22px}
-
-/* ④ 최근 활동 */
-.ld-acts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ld-acts li{border-top:1px solid var(--rule)}
-.ld-acts li:first-child{border-top:0}
-.ld-acts a{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:9px 8px;margin:0 -8px;border-radius:var(--r-8);text-decoration:none;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
-.ld-acts a:hover{background:var(--bg-0)}
-.ld-acts b{font-weight:500;color:var(--ink)}
-.ld-when{font-size:13px;color:var(--sub);white-space:nowrap}
-
-/* ③ 우리 서비스 — 실제 결과 장면 넷(3:2) · 상태 · 이름 · 어디 · 문제 신호 */
-.ld-svc{overflow:hidden}
-.ld-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.ld-th{display:flex;flex-direction:column;gap:6px;min-width:0;text-decoration:none;color:inherit}
-.ld-th-img{position:relative;display:block;aspect-ratio:3/2;border-radius:var(--r-8);overflow:hidden;background:var(--bg-0)}
-.ld-th-img img{display:block;width:100%;height:100%;object-fit:cover;transition:transform var(--d-750) var(--e-cam)}
-.ld-th:hover .ld-th-img img{transform:scale(1.03)}
-.ld-th-img.is-blank{display:flex;align-items:center;justify-content:center}
-.ld-th-img.is-blank > span:first-child{font:500 13px/18px var(--font-body);color:var(--sub)}
-.ld-th-chip{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-8);background:rgba(255,255,255,.94);color:var(--ink);font:500 12px/1 var(--font-body)}
-.ld-th[data-state="ga"] .ld-th-chip{background:var(--ink);color:#fff}
-.ld-th-nm{font:500 15px/20px var(--font-body);color:var(--ink);word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}   /* 이름은 어절로 두 줄까지(글자 중간에서 자르지 않는다) */
-.ld-th:hover .ld-th-nm{text-decoration:underline;text-underline-offset:3px}
-.ld-th-wh,.ld-th-sig{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ld-th-sig{font-weight:500;color:var(--warn);white-space:normal;overflow:visible;word-break:keep-all}   /* 신호는 잘리지 않게(좁은 휴대폰 장면에서는 어절로 줄바꿈) */
-.ld-issues{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ld-issues:empty{display:none}
-.ld-issues-k{margin-right:2px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
-.ld-chip{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);color:var(--ink);font:500 13px/1 var(--font-body);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
-.ld-chip:hover{background:var(--rule)}
-.ld-chip.is-warn{color:var(--warn)}
-
-@media (max-width:1280px){.ld-grid{grid-template-columns:minmax(0,1fr) 380px}.lc-pr{grid-template-columns:minmax(0,1fr) 140px 132px}}
-@media (max-width:1100px){
-  .ld-grid{display:flex;flex-direction:column;align-items:stretch}
-  .ld-col{display:contents}
-  .lc-mine{order:1}.ld-inbox{order:2}.ld-svc{order:3}.ld-quick{order:4}.ld-act{order:5}
-}
-@media (max-width:960px){
-  .ld{padding:16px 16px 24px}
-  .ld-grid{gap:12px}
-  .ld-card{gap:12px;padding:18px}
-  .ld-h h2{font-size:19px;line-height:26px}
-  .lc-pr{grid-template-columns:minmax(0,1fr) 112px;padding:12px 6px;margin:0 -6px}
-  .ld-pr-st{display:none}
-  .ld-cell b{font-size:26px}
-  .ld-strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px;padding:0 18px 4px;gap:10px;scrollbar-width:none}
-  .ld-strip::-webkit-scrollbar{display:none}
-  .ld-th{flex:0 0 150px;scroll-snap-align:start}
-  .ld-sub{display:block;margin:2px 0 0}
-}
-@media (max-width:640px){.ld-pr-nm small{display:none}}
-
-/* ⑤ 저장 용량 · ⑥ 내가 돌린 작업 · ⑦ 공지(직원-4 ⓐ · 10-09 · 시안 design-r13/lx-staff-v3plus) — 큰 숫자 · 막대 줄은 내 정보 창과 같은 부품(kit/me.css .k-me-big · .k-me-bars) */
 button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
-.ld-store-b{display:flex;flex-direction:column;gap:12px}
-/* 저장 용량 칸 — 도넛 · 범례 · 할당 대비 막대(kit/me.css .k-me-dnr · .k-me-gauge · 직원-7) */
+
+/* ① 프로젝트 진행 현황 — 흐름도(board.css) */
+.ld-board{gap:16px}
+
+/* ② 아래 줄 — 네 칸 같은 높이 */
+.ld-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
+.ld-foot-s{margin:auto 0 0;padding-top:10px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
+
+/* 숫자 칸(요청함 · 내가 돌린 작업) */
+.ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ld-cell{display:flex;flex-direction:column;gap:4px;min-width:0;padding:4px 6px;margin:-4px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
+.ld-cell:hover{background:var(--bg-0)}
+.ld-cell b{font:800 28px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.ld-cell span{font:500 var(--fs-label)/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.ld-cell.is-zero b{color:var(--mute)}
+.ld-cell.is-warn b{color:var(--warn)}
+.ld-cell--ro:hover{background:none}
+.ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
+.ld-jobs-b{display:flex;flex-direction:column;gap:12px;flex:1}
+.ld-kinds{margin:auto 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;border-top:1px solid var(--rule);padding-top:10px;font:400 13px/18px var(--font-body);color:var(--sub-2)}
+.ld-kinds > span{display:inline-block;white-space:nowrap}
+.ld-kinds b{font:500 13px/18px var(--font-num);color:var(--ink)}
+.ld-k{color:var(--sub)}
+
+/* 저장 용량 — 도넛 · 범례(위아래) · 할당 대비 막대 · 증량 신청(내 정보 창 한 길 · kit/me.js) */
+.ld-store-b{display:flex;flex-direction:column;gap:10px;flex:1}
+.ld-store .k-me-dnr{flex-direction:column;align-items:stretch;gap:12px;padding:0}
+.ld-store .k-me-dn{margin:0 auto;--k-me-dn-bg:var(--bg-0)}
+.ld-store .k-me-lg{gap:6px}
+.ld-store .k-me-lg li{font-size:13px;line-height:18px}
 .ld-store .k-me-gauge .k-me-bar{background:var(--bg-0)}
 .ld-store-s{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
 .ld-store-s span,.ld-store-p span{display:inline-block}
-.ld-store-a{display:flex;gap:16px;padding-top:10px;border-top:1px solid var(--rule)}
+.ld-store-a{display:flex;gap:16px;margin-top:auto;padding-top:10px;border-top:1px solid var(--rule)}
 .ld-store-p{margin:0;font:500 13px/19px var(--font-body);color:var(--ink-2)}
-.ld-store .k-me-dn{--k-me-dn-bg:var(--bg-0)}
 .ld-warn{margin:0;font:500 13px/19px var(--font-body);color:var(--warn)}
-.ld-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:20px 32px;align-items:start}
-.ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}
-.ld-cell--ro:hover{background:none}
-.ld-cell.is-warn b{color:var(--warn)}
-.ld-recent{display:flex;flex-direction:column;gap:6px;min-width:0}
-.ld-kinds{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;border-top:1px solid var(--rule);padding-top:14px;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
-.ld-kinds > span{display:inline-block;white-space:nowrap}
-.ld-kinds b{font:500 var(--fs-label)/20px var(--font-num);color:var(--ink)}
-.ld-kinds .ld-k{margin-right:4px}
-.ld-k{margin:0;font:500 13px/18px var(--font-body);color:var(--sub)}
-.ld-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ld-rows li{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
-.ld-rows li:first-child{border-top:0;padding-top:2px}
-.ld-rows li > span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ld-st{font:500 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
-.ld-st.is-no{color:var(--warn)}
+
+/* 공지 */
 .ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .ld-ntc li{border-top:1px solid var(--rule)}
 .ld-ntc li:first-child{border-top:0}
-.ld-ntc button{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;width:calc(100% + 16px);padding:9px 8px;margin:0 -8px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.ld-ntc button{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;width:calc(100% + 16px);padding:8px;margin:0 -8px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
 .ld-ntc button:hover{background:var(--bg-0)}
 .ld-ntc button b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ld-ntc li.ld-ntc-none{border:0;padding:14px 16px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ld-ntc li.ld-ntc-none{border:0;padding:18px 0;border-radius:var(--r-8);background:var(--bg-0);text-align:center;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ld-when{font-size:13px;color:var(--sub);white-space:nowrap}
 .ld-ntc-md{display:flex;flex-direction:column;gap:12px;padding-bottom:8px}
 .ld-ntc-by{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
 .ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
-/* 넓은 화면(1920)에서 가운데 1344 로 묶지 않는다(원칙 127 · 시안과 같다) — 오른쪽 단도 함께 넓어진다 */
-@media (min-width:1281px){.ld-grid{max-width:none;grid-template-columns:minmax(0,1fr) minmax(440px,.5fr)}}
-/* 한 줄(≤ 1100) · 휴대폰 순서 — 내 프로젝트 · 요청함 · 우리 서비스 · 저장 용량 · 바로 분석하기 · 내가 돌린 작업 · 공지 · 최근 활동 */
-@media (max-width:1100px){.ld-store{order:4}.ld-quick{order:5}.ld-jobs{order:6}.ld-notice{order:7}.ld-act{order:8}}
-@media (max-width:960px){.ld-two{grid-template-columns:1fr}.ld-rows li{grid-template-columns:60px minmax(0,1fr) auto}.ld-ntc button{grid-template-columns:60px minmax(0,1fr)}}
+
+/* 좁은 PC — 아래 줄 둘씩 */
+@media (max-width:1180px){.ld-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ld-foot-s span{display:inline-block}

@@ -37,44 +37,29 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     expect(errs).toEqual([]);
   });
 
-  test('대시보드 1안 — 지도 없음 · 네 질문 칸 · 요청함 숫자 = 메뉴 숫자 · 바로 분석하기 → 분석하기', async ({ page, baseURL }) => {
+  test('대시보드 — 지도 없음 · 진행 현황 + 아래 칸 넷 · 요청함 숫자 = 메뉴 숫자(직원-6 4차 · 10-09 한 번에 정리)', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
-    await expect(page.locator('.ld-card h2')).toHaveText(['내 프로젝트', /우리 서비스/, '요청함', '바로 분석하기', '최근 활동']);
+    await expect(page.locator('.ld-card h2')).toHaveText([/^프로젝트 진행 현황/, /^저장 용량/, /^내가 돌린 작업/, /^요청함/, /^공지/]);
     await expect(page.locator('.k-mast')).not.toContainText('AI 기반 국토정보');   // 머리에서 잘려 보이던 부제는 없앴다
     /* 요청함 숫자 셋 — 왼쪽 메뉴 숫자(있으면)는 그 합 */
-    const cells = page.locator('.ld-cells .ld-cell b');
+    const cells = page.locator('.ld-inbox .ld-cell b');
     await expect(cells).toHaveCount(3, { timeout: 20000 });
     const sum = (await cells.allTextContents()).reduce((s, x) => s + (Number(x) || 0), 0);
     const badge = page.locator('.k-rail-i[data-id="inbox"] .k-rail-b');
     if (sum) await expect(badge).toHaveText(String(sum)); else await expect(badge).toHaveCount(0);
-    /* 우리 서비스 — 장면 넷(실제 결과 장면 또는 회백 판) · 서비스 소개로 · 여러 지역 합은 이름으로 밝힌다(숫자 한 출처) */
-    await expect(page.locator('.ld-th')).toHaveCount(4, { timeout: 20000 });
-    await expect(page.locator('.ld-sub')).toContainText('적용 지역');
-    for (const t of await page.locator('.ld-th-sig').allTextContents()) if (/기관 신고/.test(t)) {
-      const th = page.locator('.ld-th', { has: page.locator('.ld-th-sig', { hasText: t }) });
-      const where = await th.locator('.ld-th-wh').textContent();
-      if (/외 \d+곳/.test(where)) expect(t).toMatch(/\(\d+곳 합\)/);
-    }
-    for (const a of await page.locator('.ld-th').all()) expect(await a.getAttribute('href')).toMatch(/service-detail\/\?card=/);
-    /* 1차 버튼은 하나(분석하기) — 지역을 고르면 그 지역을 들고 분석하기로 */
-    await expect(page.locator('.ld .t-btn:not(.t-btn--2):not(.t-btn--text)')).toHaveCount(1);
-    await page.locator('.ld-pick input').fill('남원');
-    await page.locator('.ld-pick [role=option]').first().waitFor();
-    await page.locator('.ld-pick input').press('Enter');
-    await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-analyze/'), { timeout: 15000 }), page.locator('.ld-go').click()]);
-    expect(new URL(page.url()).searchParams.get('region')).toBe('52190');
   });
 
-  test("'새 프로젝트'는 대시보드와 메뉴 '프로젝트'에서 같은 창 · 같은 이름(원칙 99)", async ({ page, baseURL }) => {
+  test("'새 프로젝트'는 대시보드(빈 화면)와 메뉴 '프로젝트'에서 같은 창 · 같은 이름(원칙 99)", async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     const fields = async () => page.locator('.lxp-new').evaluate((b) => [b.querySelector('h2').textContent, ...[...b.querySelectorAll('input, button')].map((x) => x.getAttribute('aria-label') || x.textContent.trim())].filter(Boolean));
-    await page.locator('.lc-mine').getByRole('button', { name: '새 프로젝트' }).click();
+    await page.goto('v3/lx-project/?new=1');                                  // 대시보드 빈 화면의 '새 프로젝트'가 여는 주소
     await expect(page.locator('.lxp-new h2')).toHaveText('새 프로젝트');
     const a = await fields();
     await page.locator('.lxp-new .lxp-cancel').click();
+    await page.goto('v3/lx-console/');
     await page.locator('.k-rail a.k-rail-i[data-id="projects"]').click();
     await page.waitForURL(/\/lx-project\//);
     await page.getByRole('button', { name: '새 프로젝트' }).first().click();
@@ -85,13 +70,14 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
   test('프로젝트 안 — 마스트 아래 이름 · 단계 6 · 다음 할 일, 단계를 누르면 그 단계 화면이 그 프로젝트 맥락으로', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
-    const row = page.locator('a.lc-pr').first();
+    await page.goto('v3/lx-project/?scope=mine');
+    const row = page.locator('.lxp-list .sb-tb tbody tr').first();
     const has = await row.waitFor({ timeout: 20000 }).then(() => true).catch(() => false);
     test.skip(!has, '진행 중인 프로젝트 없음');
-    const pid = new URL(await row.getAttribute('href'), baseURL).searchParams.get('project');
+    const pid = await row.getAttribute('data-id');
     await page.goto('v3/lx-project/?project=' + pid);
     const bar = page.locator('.k-sub .lxp-bar');
-    await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /결과 확인/, /발행 요청/, /서비스 관리/], { timeout: 20000 });
+    await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /결과 확인/, /배포 신청/, /서비스 관리/], { timeout: 20000 });
     await expect(bar.locator('.lxp-st[data-st="now"]')).toHaveCount(1);
     await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-ingest/'), { timeout: 20000 }), bar.locator('.lxp-st').first().click()]);
     expect(new URL(page.url()).searchParams.get('project')).toBe(pid);
@@ -112,12 +98,11 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await page.locator('.dp-ops .k-table tbody tr').first().waitFor({ timeout: 30000 });
     const all = await page.locator('.dp-ops .k-table tbody tr').count();
     /* 공개된 프로젝트 하나 — 서비스 관리 단계 */
-    /* 공개된 프로젝트 = 대시보드 '내 프로젝트' 줄 가운데 다음 할 일이 서비스 관리인 것 */
-    await page.goto('v3/lx-console/');
-    await page.locator('a.lc-pr').first().waitFor({ timeout: 20000 }).catch(() => {});
-    const href = (await page.locator('a.lc-pr').evaluateAll((as) => as.map((a) => a.href))).find((u) => /lx-deploy\/.*tab=ops/.test(u));
-    test.skip(!href, '공개된 프로젝트 없음');
-    const pid = new URL(href).searchParams.get('project');
+    /* 공개된 프로젝트 = 프로젝트 목록(배포 신청 단계) 가운데 지금 단계가 서비스 관리인 것 — 서버 판정 */
+    const got = page.waitForResponse((r) => /\/projects\?scope=mine/.test(r.url()) && r.ok(), { timeout: 30000 });
+    await page.goto('v3/lx-project/?scope=mine&stage=deploy');
+    const pid = ((await (await got).json()).items || []).find((p) => p.stage?.key === 'ops')?.id;
+    test.skip(!pid, '공개된 프로젝트 없음');
     await page.goto('v3/lx-project/?project=' + pid);
     await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });   // 프로젝트를 읽은 뒤(단계마다 그 대상이 붙은 주소)
     await page.locator('.k-sub .lxp-st').nth(5).click();

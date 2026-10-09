@@ -79,6 +79,9 @@ def test_staff_makes_project_directly(live, tok, made):
     assert p["id"] in [x["id"] for x in mine["items"]]
     led = httpx.get(B + "/projects?scope=led", headers=H(tok["staff"]), timeout=60).json()
     assert p["id"] in [x["id"] for x in led["items"]] and led["counts"]["led"]["value"] >= 1
+    # 내 프로젝트(진행 중 · 내가 만든 + 참여한) 수 = 목록 수 — 대시보드 흐름도 · 프로젝트 목록 '내 프로젝트' 묶음(10-09 직원-6)
+    assert mine["counts"]["mine"]["value"] == len(mine["items"]) == led["counts"]["led"]["value"] + led["counts"]["joined"]["value"]
+    assert p["next"]["text"].endswith("영상 등록") or p["stage"]["key"] != "ingest"   # 데이터 올리기 단계의 말 = 영상 등록
 
 
 def test_make_rejects_bad_input_and_other_roles(live, tok):

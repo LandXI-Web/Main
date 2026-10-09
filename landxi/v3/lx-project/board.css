@@ -1,0 +1,67 @@
+/* board.css — 프로젝트 진행 현황 흐름도(직원-6 4차 시안 design-r14/lx-staff-board · board.js). 대시보드 맨 위 칸과 메뉴 '프로젝트' 목록이 같은 모양.
+   회백 칸 12 · 그림자 0 · 아이콘 0 · 색 = 키트 토큰(잉크 · 액센트 · 경고 · 대기). 움직임 1(연결선 위 점 · 1250). */
+.sb-fl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 24px;position:relative}
+.sb-st{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sb-st-b{position:relative;box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;gap:0;width:100%;padding:12px 16px;border:0;border-radius:12px;background:var(--bg-0);text-align:left;text-decoration:none;font:inherit;color:inherit;cursor:pointer;transition:background var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
+.sb-st-b:hover{box-shadow:inset 0 0 0 1px var(--rule)}
+.sb-st-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sb-st[data-open] .sb-st-b{background:var(--bg-1);box-shadow:inset 0 0 0 1.5px var(--ink),inset 0 -3px 0 var(--accent)}
+.sb-st-k{position:absolute;right:12px;top:10px;font:500 12px/1 var(--font-num);color:var(--mute)}
+.sb-st-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;width:100%}
+.sb-st-row > b{font:800 36px/1 var(--font-display);letter-spacing:-.03em;color:var(--ink)}
+.sb-st[data-n="0"] .sb-st-row > b{color:var(--mute)}
+.sb-st-l{margin-top:4px;font:500 15px/20px var(--font-body);color:var(--ink)}
+.sb-st[data-n="0"] .sb-st-l{color:var(--sub)}
+.sb-st-s{font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
+.sb-st-s em{font-style:normal;font-weight:500;color:var(--warn)}
+/* 작은 진행 그래프 — 프로젝트마다 세로 막대 = 네 단계 가운데 끝낸 비율(남은 일 빨강 · 승인 대기 노랑) */
+.sb-st-g{display:flex;align-items:flex-end;gap:3px;height:18px;margin:0 22px 3px 0}
+.sb-st-g i{display:block;width:10px;height:100%;border-radius:2px;background:var(--rule);position:relative;overflow:hidden}
+.sb-st-g i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--w);background:var(--ink)}
+.sb-st-g i[data-kind="warn"]::after{background:var(--warn)}
+.sb-st-g i[data-kind="wait"]::after{background:var(--lock)}
+.sb-st[data-n="0"] .sb-st-g{visibility:hidden}
+/* 연결선 — 흐름을 따라 점이 움직인다 */
+.sb-st + .sb-st .sb-st-b::before{content:"";position:absolute;left:-24px;top:30px;width:24px;height:2px;background:var(--rule)}
+.sb-st + .sb-st::before{content:"";position:absolute;left:-24px;top:26px;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:sb-flow 1250ms var(--e-cam) infinite;z-index:1}
+@keyframes sb-flow{from{transform:translateX(-4px);opacity:0}30%{opacity:1}to{transform:translateX(20px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sb-st + .sb-st::before{animation:none;transform:translateX(8px);opacity:1}}
+/* 이름 칩 — 이름 + 네 칸 막대 · 남은 일은 빨간 점 · 승인 대기는 노란 점 */
+.sb-chips{display:flex;flex-direction:column;gap:5px}
+.sb-chips:empty{display:none}
+.sb-chip{display:grid;grid-template-columns:minmax(0,1fr) 54px;align-items:center;gap:10px;height:28px;padding:0 10px 0 12px;border-radius:var(--r-8);background:var(--bg-0);text-decoration:none;color:var(--ink);font:500 13px/1 var(--font-body);position:relative;transition:background var(--d-180) var(--e-ui)}
+a.sb-chip:hover{background:var(--rule)}
+.sb-chip > span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-chip .lxp-seg{height:5px;gap:2px}
+.sb-chip[data-kind="warn"],.sb-chip[data-kind="wait"]{padding-left:18px}
+.sb-chip[data-kind="warn"]::before,.sb-chip[data-kind="wait"]::before{content:"";position:absolute;left:6px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--warn)}
+.sb-chip[data-kind="wait"]::before{background:var(--lock)}
+.sb-chip--more{display:inline-flex;align-items:center;justify-self:start;align-self:flex-start;height:22px;padding-left:4px;background:none;color:var(--sub);font-weight:400}
+a.sb-chip--more:hover{background:none;text-decoration:underline;text-underline-offset:3px}
+.sb-seg4{grid-template-columns:repeat(4,1fr)}
+/* 표(메뉴 '프로젝트' 목록) — 진행 = 네 칸 막대 + n/4 · 남은 일 = 점 + 말 */
+.sb-tb th:first-child,.sb-tb td:first-child{padding-left:0}
+.sb-tb th:last-child,.sb-tb td:last-child{padding-right:0;text-align:right}
+.sb-tb td{vertical-align:middle;padding-top:10px;padding-bottom:10px;word-break:keep-all}
+.sb-tb tbody tr:last-child td{border-bottom:0}
+.sb-tb tbody tr[tabindex]:hover{background:var(--bg-0)}
+.sb-tb tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sb-tb .acc-b{font-weight:500;color:var(--ink)}
+.sb-tb td.nw{white-space:nowrap}
+.sb-prog{display:inline-grid;grid-template-columns:72px auto;align-items:center;gap:8px}
+.sb-prog .lxp-seg{height:6px}
+.sb-prog small{font:500 12px/1 var(--font-num);color:var(--sub)}
+.sb-kick{display:inline-flex;align-items:center;gap:6px;font:500 13px/18px var(--font-body);color:var(--warn)}
+.sb-kick::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:currentColor}
+.sb-kick[data-kind="wait"]{color:var(--ink)}
+.sb-kick[data-kind="wait"]::before{background:var(--lock)}
+.sb-none{color:var(--mute)}
+.sb-open-l{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap}
+.sb-open-l::after{content:" →"}
+.sb-open-l:hover{text-decoration:underline;text-underline-offset:3px}
+.sb-sort{display:flex;align-items:center;gap:6px}
+.sb-sort > span{margin-right:4px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.sb-sort .t-chip{border:0;cursor:pointer;height:30px;color:var(--sub)}
+.sb-sort .t-chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.sb-pg-n{margin:8px 0 0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sb-pg-n span{display:inline-block;margin-right:10px}

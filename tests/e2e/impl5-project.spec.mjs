@@ -127,8 +127,8 @@ test.describe('구현 5차 · 프로젝트 한 장 — 재학습 근거 · 기�
       await expect(md.locator('.k-me-ro')).toHaveText('test@lx.or.kr');
       await expect(md.locator('input[name=login]')).toHaveCount(0);
       const q = me.storage.quota_gb.value;
-      await expect(md.locator('.k-me-sv')).toContainText(q == null ? '할당 없음' : `할당 ${q} GB 중`);   // S-19 — '할당 n GB 중 m 사용'
-      await expect(md.locator('.k-me-sub')).toContainText(`${me.storage.projects.value}개`);
+      await expect(q == null ? md.locator('.k-me-tag') : md.locator('.k-me-gauge')).toContainText(q == null ? '할당 없음' : `할당 ${q} GB 대비`);   // S-19 · 직원-7 — 도넛 + '할당 n GB 대비'
+      await expect(md.locator('.k-me-sub').first()).toContainText(`${me.storage.projects.value}개`);
       await md.locator('input[name=dept]').fill('e2e 공간정보처');
       await md.getByRole('button', { name: '저장' }).click();
       await expect(page.locator('.k-toast')).toContainText('내 정보를 바꿨습니다');

@@ -333,7 +333,7 @@ def _judge(r, f) -> dict:
     miss = [g for g in regions if not f["have"].get(g["code"])]
     st["ingest"]["done"] = bool(regions) and not miss
     if miss:
-        st["ingest"]["next"] = f"{miss[0]['name']} 영상 올리기" + (f" 외 {len(miss) - 1}곳" if len(miss) > 1 else "")
+        st["ingest"]["next"] = f"{miss[0]['name']} 영상 등록" + (f" 외 {len(miss) - 1}곳" if len(miss) > 1 else "")
         st["ingest"]["target"] = {"region": miss[0]["code"]}
     # ② 학습데이터 구축
     smp = f["samples"]
@@ -572,7 +572,7 @@ async def list_projects(request: Request, scope: str = "mine"):
         rows = await conn.fetch(f"SELECT p.* FROM projects p WHERE {where} AND ($1::text IS NOT NULL) ORDER BY p.updated_at DESC LIMIT 200", p.user_id)
         items = [await view(conn, p, r, people, full=False) for r in rows]
         counts = {k: int(await conn.fetchval(f"SELECT count(*) FROM projects p WHERE {w} AND ($1::text IS NOT NULL)", p.user_id))
-                  for k, w in (("led", "p.state='active' AND p.lead_id=$1"),
+                  for k, w in (("mine", f"p.state='active' AND {mine}"), ("led", "p.state='active' AND p.lead_id=$1"),
                                ("joined", "p.state='active' AND p.lead_id<>$1 AND EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)"),
                                ("archived", "p.state='archived'" + ("" if p.is_admin else f" AND {mine}")), ("all", "p.state='active'"))}
     items.sort(key=lambda x: x.get("last_at") or "", reverse=True)          # 마지막 활동이 최근인 것부터

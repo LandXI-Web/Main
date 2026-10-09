@@ -88,8 +88,8 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
       expect((await call(a, '/accounts/users/lx/u_mail_test/quota', 'POST', { quota_gb: 0.03 })).status).toBe(200);
       await login(s, baseURL, 'test@lx.or.kr', 'app');
       await s.locator('.k-mast .k-me-b').click();
-      await expect(s.locator('.k-me-gauge')).toContainText('할당 0.03 GB 대비');
-      await expect(s.locator('.k-me-warn')).toContainText('%를 썼습니다');                          // 90% 넘음 — 막지 않고 한 줄
+      await expect(s.locator('.k-md .k-me-gauge')).toContainText('할당 0.03 GB 대비');
+      await expect(s.locator('.k-md .k-me-warn')).toContainText('%를 썼습니다');                          // 90% 넘음 — 막지 않고 한 줄
       await s.locator('.k-me-r .k-me-ask').click();                                          // 같은 자리에서 폼이 펼쳐짐(직원-7)
       await s.locator('.k-md input[name=want_gb]').fill('0.05');
       await s.locator('.k-md input[name=why]').fill('e2e 2차 학습데이터');

@@ -33,18 +33,18 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     const origin = new URL(baseURL).origin;
     await frontDoor(page, origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
-    /* 대시보드 1안 — 내 프로젝트 · 요청함 · 우리 서비스 · 바로 분석하기 · 최근 활동(지도 없음) · 왼쪽 메뉴 '프로젝트'(머리 줄 글자 링크 없음) */
-    const mine = page.locator('.lc-mine');
-    await expect(mine.locator('h2')).toHaveText('내 프로젝트');
+    /* 대시보드(직원-6 4차) — 프로젝트 진행 현황 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지(지도 없음) · 왼쪽 메뉴 '프로젝트'(머리 줄 글자 링크 없음) */
+    await expect(page.locator('.ld-board h2')).toContainText('프로젝트 진행 현황');
     await expect(page.locator('.ld-inbox h2')).toHaveText('요청함');
-    await expect(page.locator('.ld-svc h2')).toContainText('우리 서비스');
-    await expect(page.locator('.ld-quick h2')).toHaveText('바로 분석하기');
+    await expect(page.locator('.lc-mine, .ld-svc, .ld-quick')).toHaveCount(0);
     await expect(page.locator('.k-rail a.k-rail-i[data-id="projects"]')).toHaveAttribute('href', /lx-project\/$/);
     await expect(page.locator('.k-mast .lxp-mast')).toHaveCount(0);
     await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
     await expect(page.getByText('오늘', { exact: true })).toHaveCount(0);
     /* 새 프로젝트 — 세 칸 */
-    await mine.getByRole('button', { name: '새 프로젝트' }).first().click();
+    await page.locator('.k-rail a.k-rail-i[data-id="projects"]').click();
+    await page.waitForURL(/\/lx-project\//);
+    await page.getByRole('button', { name: '새 프로젝트' }).first().click();
     const box = page.locator('.lxp-new');
     await expect(box).toBeVisible();
     await box.locator('.lxp-chip', { hasText: '비닐하우스' }).click();
@@ -62,15 +62,23 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/프로젝트/);
     await expect(page.locator('.lxp-now .lxp-next')).not.toBeEmpty();
     await expect(page.locator('.k-sub .lxp-st')).toHaveCount(6);
-    /* 첫 화면 '내 프로젝트' 줄 → 그 단계 화면(프로젝트 맥락) */
+    /* 대시보드 '자세히 보기' → 프로젝트 목록(내 프로젝트) → 그 줄의 단계 칸을 고르면 그 단계에도 있다 → 프로젝트 한 장 → 다음 할 일(그 단계 화면 · 프로젝트 맥락) */
     await page.goto('v3/lx-console/');
-    const row = page.locator('.lc-pr', { hasText: NAME });
+    await page.locator('.ld-board .ld-more').click();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/') && u.searchParams.get('scope') === 'mine', { timeout: 20000 });
+    const row = page.locator('.lxp-list .sb-tb tbody tr', { hasText: NAME });
     await expect(row).toBeVisible({ timeout: 20000 });
-    await expect(row.locator('.lc-pr-s')).toHaveText(/^\d\s?\S/);
-    await row.click();
+    await expect(row.locator('.sb-prog small')).toHaveText(/^[01]\/4$/);
+    const stage = await row.getAttribute('data-stage');
+    await page.locator(`.lxp-flow .sb-st[data-key="${stage}"] .sb-st-b`).click();
+    await expect(page.locator(`.lxp-flow .sb-st[data-key="${stage}"][data-open]`)).toHaveCount(1);
+    await expect(row).toBeVisible();
+    await row.locator('.sb-open-l').click();
+    await page.waitForURL(/\/lx-project\/\?project=prj_/, { timeout: 20000 });
+    await page.locator('.lxp-now .lxp-go').click();
     await page.waitForURL((u) => /\/landxi\/v3\/lx-(train|ingest|review|deploy)\//.test(u.pathname) && u.searchParams.get('project')?.startsWith('prj_'), { timeout: 20000 });
     await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });
-    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['홈', '프로젝트', '분석하기', '서비스 카드', '데이터', '요청함']);
+    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['대시보드', '프로젝트', '분석하기', 'XI맵', '데이터', '요청함']);
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/프로젝트/);
     await expect(page.locator('.k-sub .lxp-st')).toHaveCount(6);
     await expect(page.locator('.k-sub .lxp-st').nth(1)).toContainText('학습데이터');
@@ -78,10 +86,10 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     expect(errs).toEqual([]);
   });
 
-  test('프로젝트 목록 · 관리 — 내가 만든 · 참여한 · 보관 · 전체', async ({ page, baseURL }) => {
+  test('프로젝트 목록 · 관리 — 내 프로젝트 · 내가 만든 · 참여한 · 보관 · 전체', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.goto('v3/lx-project/');
-    await expect(page.locator('.lxp-tab')).toHaveText([/내가 만든/, /참여한/, /보관/, /전체/]);
+    await expect(page.locator('.lxp-tab')).toHaveText([/내 프로젝트/, /내가 만든/, /참여한/, /보관/, /전체/]);
     await expect(page.getByRole('button', { name: '새 프로젝트' }).first()).toBeVisible();
   });
 });
