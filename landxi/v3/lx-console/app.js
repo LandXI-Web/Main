@@ -44,7 +44,7 @@ const jobsSub = h('small.ld-sub');
 const jobs = h('section.t-card.ld-card.ld-jobs', { 'aria-label': '내가 돌린 작업' }, head('내가 돌린 작업', null, jobsSub), h('div.ld-jobs-b'));
 const noticeSub = h('small.ld-sub');
 const notice = h('section.t-card.ld-card.ld-notice', { 'aria-label': '공지' }, head('공지', null, noticeSub), h('ul.ld-ntc'));
-const page = h('div.ld', {}, h('div.ld-grid', {}, h('div.ld-col.ld-col--l', {}, mine, svc, jobs), h('div.ld-col.ld-col--r', {}, inbox, quick, store, act, notice)));
+const page = h('div.ld', {}, h('div.ld-grid', {}, h('div.ld-col.ld-col--l', {}, mine, jobs), h('div.ld-col.ld-col--r', {}, inbox, quick, store, act, notice)));
 S.main.append(page);
 const wait = (el) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }).set({ progress: null }); };
 const fail = (el, retry) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'error', compact: true, onRetry: retry }); };
@@ -117,14 +117,14 @@ async function drawMine() {
   box.replaceChildren(...rows);
 }
 
-/* ── ② 요청함 — 검토 요청 · 분석 의뢰 · 내 결재(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */
+/* ── ② 요청함 — 검토 요청 · 분석 요청 · 보낸 요청(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */
 async function drawInbox() {
   const box = inbox.querySelector('.ld-cells');
   const c = await requestCounts().catch(() => null);
   if (!c || c.total === null) { fail(box, () => { wait(box); requestCounts({ force: true }); drawInbox(); }); return; }
   const cell = (v, label, hash) => h('a.ld-cell', { href: STAFF_HREF.inbox + hash, class: v ? '' : 'is-zero', 'aria-label': `${label} ${v ?? '—'}건` },
     h('b.num', { text: v === null ? '—' : String(v) }), h('span', { text: label }));
-  box.replaceChildren(cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '내 결재', '#approvals'));
+  box.replaceChildren(cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
 }
 
 /* ── ④ 바로 분석하기 — 어디 한 칸 + '분석하기'(이 화면의 1차 버튼 하나) → 분석하기(그 지역에 쓸 수 있는 카드) ── */
