@@ -4,6 +4,8 @@
   stage     운영 | 시범 | 첫 결과 전 — 실제 보유 결과(배포본 스냅샷의 AI 결과 행 · 실태조사 정본)가 있을 때만 운영/시범.
   imagery   카탈로그 imagery 표(footprint ∩ 시군구 · 또는 imagery.sgg_cd) 기준.
   metrics   네 지표 · 같은 key = 같은 label = 같은 계산식(아래 METRICS). 값이 없으면 value null + note(0 을 지어내지 않는다).
+  detected_counted  AI 탐지 수가 업무 결과(필지 · 물체 단위로 다듬은 결과 세트)인가 — 화면 숫자 자리는 이것이 True 일 때만 AI 탐지를 쓴다.
+                    (원칙 135 · 10-09: 화면은 '현장 확인 필요' 대신 AI 분석 결과를 보인다. field_check 계산은 그대로 두고 화면이 쓰지 않는다)
 
 계산식(정본):
   detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases · 작업 결과 세트 results/{기관}/{작업} → 작업)의 detections 행 수
@@ -263,7 +265,11 @@ async def _items(conn, tenant: str | None) -> list[dict]:
             "field_check": _metric("field_check", sv_here["field_check"] if sv_here else None, as_of=now, note=sv_note),
             "review_pending": _metric("review_pending", sv_here["review_pending"] if sv_here else None, as_of=now, note=sv_note),
         }
-        items.append({"card": cid, "card_name": facts["cards"].get(cid), "sgg_cd": sgg,
+        # AI 분석 결과 수를 화면 숫자 자리에 써도 되는가 — 다듬은 결과 세트(필지 · 물체 단위)만. 분석 칸 도형 조각(작업 결과 세트 ·
+        # count_unit polygons)이면 False(사용자 규칙 2 · 원칙 135: 화면 큰 숫자 = AI 분석 결과 · 도형 조각 수 금지). 계산식(detected)은 그대로
+        from .spaces import biz_sets
+        counted = bool(n_det) and biz_sets(res_sets)
+        items.append({"card": cid, "card_name": facts["cards"].get(cid), "sgg_cd": sgg, "detected_counted": counted,
                       "region_name": (reg or {}).get("full") or _name(lead["region_name"]), "tenant": t, "stage": stage,
                       **({"survey_state": sv_here["state"]} if sv_here else {}),
                       "imagery": _imagery_of(facts["img"], sgg), "metrics": m,

@@ -4,7 +4,7 @@
    지역은 변수: `?region=`(배포본 region_profile) · `?deploy=` → 기관 = 자기 관할 배포본만 · LX = 결과가 있는 첫 배포본. 코드에 지역 이름·좌표 0.
    숫자는 한 출처: 히어로·결과 지도 = 같은 배포본 봉투(실시간). 숫자가 박힌 정적 화면 캡처 0.
    4차: 지금 지역 밖 결과 = 지역 이름 + '예시' · 블록 항상 3 이상 · 결과 지도 로드 전 = K9 진행 막대.
-   5차: 큰 숫자 = `현장 확인 필요 {n}필지`(XI맵과 같은 출처 · adapter.surveyOf) · 그 숫자가 없으면 `{지역} · {기준일} 기준`만(탐지 총수는 숫자 자리에 0)
+   5차 → 원칙 135(10-09): 큰 숫자 = `AI 분석 결과 {n}{필지·동·건}`(요약 한 출처 · aiOf — 업무 결과로 센 것만) · 그 숫자가 없으면 `{지역} · {기준일} 기준`만(도형 조각 수는 숫자 자리에 0)
         · 블록 K9 = 스틸 없는 문장 카드(스틸은 히어로 한 장만). */
 import {
   shell, whoami, empty, serviceGrid, joinCards, stateOf, numHtml, drawer, table, devDrawer, createStage,
@@ -12,7 +12,7 @@ import {
 } from '../kit/index.js';
 import { isEnvelope, isDev, RM, session, esc } from '../kit/util.js';
 import { loadCards, loadDetail, loadDeploys, cropUrl, deployOfSet, buildBlocks, liveLayer, landingOf, focusOf, regionOfSet } from './adapter.js';
-import { loadSummary, itemFor, stageKey, metric, scaleOf, userWords } from './summary.js';
+import { loadSummary, itemFor, stageKey, scaleOf, userWords, aiOf, AI_LABEL } from './summary.js';
 
 const Q = new URLSearchParams(location.search);
 const V3 = '/landxi/v3/';
@@ -37,12 +37,12 @@ const exSig = (name) => `<span class="t-sig k-sig" data-sig="ex" tabindex="0" ro
 /* 기관 세션 = 자기 관할 밖 결과는 싣지 않는다(지역 이름 0 · 예시 표기도 없이 뺀다). LX·게스트는 그 카드 실결과 지역을 그대로 보인다 */
 const dropSet = (set, deps) => isTenant() && exOf(set, deps);
 const markEx = (el, name) => { el.insertAdjacentHTML('beforeend', exSig(name)); el.dataset.ex = '1'; return el; };
-/* 큰 숫자 = 실태조사 '현장 확인 필요'(허용 라벨 · XI맵과 같은 출처) — 배포본 id → 봉투(없으면 null) */
+/* 큰 숫자 = AI 분석 결과(원칙 135 · XI맵과 같은 출처 = 요약) — 배포본 id → 봉투(없으면 null) */
 const NEED = new Map();
-const NEED_L = '현장 확인 필요';
+const NEED_L = AI_LABEL;
 const needOf = (d) => (d ? NEED.get(d.id) || null : null);
 const needAsof = (env) => (env?.as_of ? t('card.asof', { date: df(env.as_of) }) : '');
-/** 라벨 + 숫자(K6) 한 줄 — `현장 확인 필요 1,079필지 ✓` */
+/** 라벨 + 숫자(K6) 한 줄 — `AI 분석 결과 2,098필지 ~` */
 const needHtml = (env) => `<span class="sd-nl">${esc(NEED_L)}</span>${numHtml(env)}`;
 
 let who = null, S = null, D = null, deploys = [], mine = [], own = [], cur = null, SUM = null;
@@ -103,13 +103,13 @@ async function boot() {
   document.title = `${D.card.name} · Land-XI`;
   S.fresh(null);   // 기준일만 있고 갱신 시각은 없다 — 시각을 지어내지 않는다
 
-  /* 착지 주소(시군구 코드 · 해외 나라/지역) · 결과 지도 층 · 현장 확인 필요(배포본마다) — 한 번에 */
+  /* 착지 주소(시군구 코드 · 해외 나라/지역) · 결과 지도 층 — 한 번에 */
   const [live] = await Promise.all([
     who ? liveLayer(cur && isEnvelope(cur.scale) ? [cur, ...own] : own, who, D.card.scope) : null,
     Promise.all(own.map(async (d) => { try { const L = await landingOf(d, D.vis); LAND.set(d.id, `${V3}${homeFor(L.home)}/?${L.qs}`); } catch { /* 기본 주소 */ } })),
   ]);
-  /* 현장 확인 필요(큰 숫자) = 요약의 field_check — 배포본마다 · 값이 없으면 숫자 없이 */
-  for (const d of deploys) { const e = metric(itemOfDeploy(d), 'field_check'); if (e) NEED.set(d.id, e); }
+  /* AI 분석 결과(큰 숫자) = 요약의 detected 중 업무 결과로 센 것(aiOf) — 배포본마다 · 값이 없으면 숫자 없이 */
+  for (const d of deploys) { const e = aiOf(itemOfDeploy(d)); if (e) NEED.set(d.id, e); }
 
   const row = rows.find((r) => r.card.id === id);
   const state = stateFor(id, cur, who ? (row?.state || stateOf(D.card, cur)) : guestState(D.card));
@@ -192,11 +192,11 @@ function hero(state) {
     /* 결과 전 — 그림 없이 회백 카드 + 문장 하나(검정 잔재 0) */
     const e = h('div.sd-hero__empty'); fig.append(e); fig.classList.add('is-empty');
     /* 영상 조각은 없어도 이 지역 결과 수는 있다(summary) — 다듬은 결과 세트(배포본 봉투가 있는 것)의 수만. 분석 작업 결과의 칸 도형 수는 쓰지 않는다(사용자 규칙 2) */
-    const det = isEnvelope(cur?.scale) ? metric(itemOfDeploy(cur), 'detected') : null;
+    const det = isEnvelope(cur?.scale) ? aiOf(itemOfDeploy(cur)) : null;
     empty(e, { kind: 'first', text: det ? `${where(cur)} · ${det.label} ${Number(det.value).toLocaleString("ko-KR")}${det.unit || ''}` : '첫 결과가 생기면 여기에 결과가 보입니다' });
     e.querySelector('h6')?.remove();   // 상태는 위 칩 한 곳(시범 칩 옆에 '첫 결과 전' 제목이 겹치지 않게)
   }
-  /* 우하단 흰 카드 — 윗줄 `{지역} · {기준일} 기준` / 아랫줄 `현장 확인 필요 {n}필지 ✓`(그 배포본 지역 합계 · XI맵과 같은 출처).
+  /* 우하단 흰 카드 — 윗줄 `{지역} · {기준일} 기준` / 아랫줄 `AI 분석 결과 {n}필지 ~`(그 배포본 지역 · 요약 한 출처).
      그 숫자가 없으면 윗줄만. 지금 지역 밖 결과 = `{지역} · {연도 영상}` + 예시(숫자 없음) */
   if (set && hv.img) {
     const ex = exOf(set), R = regionOfSet(vis, set), meta = vis.sets[set];

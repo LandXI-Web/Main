@@ -4,7 +4,7 @@ import * as K from '../kit/index.js';
 import { nf } from '../kit/i18n.js';
 import { h, esc, isDev, session, bboxOf } from '../kit/util.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
-import { summary, total, labelOf, pick } from '../lx-console/summary.js';
+import { summary, pick, aiResult, AI_LABEL } from '../lx-console/summary.js';
 import { projectRail, attachProject, projectRules } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
 import { D, SAMPLE, CLS, probeS2, loadRules, loadQueue, parcel, aiLayersAt, loadFeedback, loadRuleStats, verdictMap, ruleStat, judge, unTag, suggest, requestThreshold, drawSample, forgetSample, regionFor, bboxOfPoints, inRegion } from './data.js';
@@ -34,10 +34,10 @@ const PAD_REGION = () => (wide() ? { top: 96, right: 392 + 16 + 24, bottom: 72, 
 const MIN_Z = 11;                 // 지역 도착 = 이 줌 이상(바탕 사진이 필지 결로 읽히는 단계)
 let stage = null;                 // 지역을 안 뒤에 만든다(초기 카메라 = 지역 bbox · 전국 뷰를 거치지 않음)
 
-/* HUD — 사진 위 흰 124 · 업무 결과(현장 확인 필요) */
+/* HUD — 사진 위 흰 124 · AI 분석 결과(원칙 135 · 요약 한 출처) */
 /* 자료·지도가 준비되기 전에는 HUD 를 띄우지 않는다(회백 바탕 위 흰 글자 · '아직 결과가 없습니다' 깜빡임 0) — hud.set 뒤 사진 타일이 깔리면 연다 */
 const hudEl = h('div.rv-hud', { hidden: true }); stageEl.append(hudEl);
-const hud = K.bignum(hudEl, null, { label: '현장 확인 필요', unit: '필지', hud: true });
+const hud = K.bignum(hudEl, null, { label: AI_LABEL, hud: true });
 const hudLabel = hudEl.querySelector('.k-big-l');
 /* HUD 가 열리기 전에는 진행 막대 1개(K9 막대 · '불러오는 중')만 */
 const loadEl = h('div.rv-load', { role: 'status' }, h('span', { text: K.t('empty.loading') }), h('div.t-progress.k-empty-p.is-indet', {}, h('i')));
@@ -70,8 +70,8 @@ function skeleton() {
   T.skeleton = T.skeleton || Math.round(performance.now());
 }
 
-/** HUD — 현장 확인 필요(이 지역) = 대표 수치 한 출처(summary field_check · XI맵 · 서비스 상세와 같은 값).
-    규칙별 수는 서랍 막대에만(다른 이름). summary 를 못 받으면 '—' + 불러오지 못함(규칙 하나의 수를 이 이름으로 쓰지 않는다) */
+/** HUD — AI 분석 결과(이 지역 · 프로젝트면 그 서비스) = 대표 수치 한 출처(summary aiResult · XI맵 · 서비스 상세와 같은 값 · 원칙 135).
+    규칙별 수는 서랍 막대에만(다른 이름). summary 를 못 받으면 '—' + 불러오지 못함 · 업무 결과로 센 AI 분석 결과가 없으면 빈 값 */
 let hudAt = 0, hudEnv;
 function setHud() {
   if (hudEnv === undefined) hud.loading();
@@ -433,7 +433,7 @@ async function thresholdSheet() {
   box.append(
     h('p.rv-th-k', { text: th.label || '' }),
     h('div.rv-th-row', {}, h('span.t-label', { text: '현재' }), h('div', { html: val(th.value) })),
-    h('div.rv-th-row', {}, h('span.t-label', { text: '제안(현장 확인 기준)' }), h('div', { html: next ? val(next) : `${val(null)}<p class="t-label">${esc(K.t('big.none'))}</p>` })));
+    h('div.rv-th-row', {}, h('span.t-label', { text: '제안' }), h('div', { html: next ? val(next) : `${val(null)}<p class="t-label">${esc(K.t('big.none'))}</p>` })));
   const go = h('button.t-btn.rv-wide', { type: 'button', text: '적용 요청' });
   const pend = ruleStat(rule).pending;
   if (!next || pend) go.disabled = true;
@@ -459,7 +459,7 @@ document.addEventListener('mouseout', (e) => { if (e.target.closest?.('.rv-tipw'
 
 /* ── 시작 · 자료 ─────────────────────────────────────── */
 const [regions, , , firstQ, PRJ] = await Promise.all([E.regions, E.rules, E.fb, E.first, PROJ]);
-/* 프로젝트 안(J-1) — 그 프로젝트의 대조 규칙만(막대 · 큰 숫자 · 점 · 표본) · 큰 숫자는 그 서비스(카드)의 현장 확인 필요. 프로젝트 밖은 전체 */
+/* 프로젝트 안(J-1) — 그 프로젝트의 대조 규칙만(막대 · 점 · 표본) · 큰 숫자는 그 서비스(카드)의 AI 분석 결과. 프로젝트 밖은 전체 */
 const PRULES = PRJ ? await projectRules(PRJ) : null;
 if (PRULES) { const keep = D.rules.filter((r) => PRULES.includes(r.id)); if (keep.length) D.rules.splice(0, D.rules.length, ...keep); }
 skeleton();
@@ -486,9 +486,10 @@ rule = Q.get('rule') && D.byId[Q.get('rule')] ? Q.get('rule') : [...D.rules].sor
 const aggAny = Object.values(byRule).some((e) => (e?.value || 0) > 0);
 /* 이 규칙의 정밀도 봉투(stats · lx) 한 건만 먼저 — 나머지 5건은 첫 보드 뒤(지연) */
 const [sum] = await Promise.all([summary({ region: region?.sgg_cd || null }), rule ? loadRuleStats([rule]) : null]);
-hudEnv = sum ? total(sum, 'field_check', region?.sgg_cd || PRJ?.card ? pick({ sgg: region?.sgg_cd || null, card: PRJ?.card || null }) : null) ?? null : null;
-K.devlog('현장 확인 필요', sum ? `summary ${hudEnv?.value ?? '—'}` : 'summary 없음');
-hudLabel.textContent = `${labelOf(sum, 'field_check')} · ${region?.name || ''}`.replace(/ · $/, '');
+const aiR = sum ? aiResult(sum, region?.sgg_cd || PRJ?.card ? pick({ sgg: region?.sgg_cd || null, card: PRJ?.card || null }) : null) : null;
+hudEnv = aiR ? aiR.env : sum ? { value: null, unit: '', basis: 'measured', as_of: sum.as_of || '', source: 'AI 분석 결과' } : null;
+K.devlog('AI 분석 결과', sum ? `summary ${aiR?.env?.value ?? '—'}` : 'summary 없음');
+hudLabel.textContent = `${AI_LABEL} · ${region?.name || ''}`.replace(/ · $/, '');
 setHud();
 title(); board(); T.board = Math.round(performance.now());
 S.fresh(new Date());

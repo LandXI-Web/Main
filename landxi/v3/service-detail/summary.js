@@ -1,7 +1,7 @@
 /* summary.js — 대표 수치 한 출처(`GET /api/v1/summary` · 계약 docs/superpowers/final/fix/fix-server-summary.md §계약).
    게스트 메인 · 영업 카탈로그 · 서비스 상세가 같은 모듈을 읽는다 → 같은 카드 · 같은 지역 = 같은 상태 · 같은 수.
    - 상태 칩 = 요약의 `stage`(운영 · 시범 · 첫 결과 전) 그대로(→ 키트 상태 키 ga · pilot · none).
-   - 카드 숫자 = `metrics.detected`(AI 탐지) · 큰 숫자 = `metrics.field_check`(현장 확인 필요). value 가 null 이면 숫자를 싣지 않는다(0 을 지어내지 않음).
+   - 카드 숫자 = `metrics.detected`(AI 탐지) · 큰 숫자 = AI 분석 결과(aiOf — `metrics.detected` 중 업무 결과로 센 것만 · 원칙 135). value 가 null 이면 숫자를 싣지 않는다(0 을 지어내지 않음).
    - 요약 경로가 아직 없거나 실패하면 null — 화면은 숫자 없이 상태만(배포 기록 값 · 정적 사본 값을 숫자로 대신 쓰지 않는다).
    (공용 위치는 키트가 맞다 — 보고서 '요청': kit 로 옮기기) */
 import { api, hasRoute, isEnvelope, session } from '../kit/util.js';
@@ -48,6 +48,16 @@ export function metric(item, key) {
   if (isEnvelope(env)) return env;
   /* 모양이 모자라면 채운다 — 기준(basis)을 모르면 추정치로(확인됨으로 올려 적지 않는다) */
   return { ...env, unit: String(m.unit ?? ''), basis: ['measured', 'estimate', 'inferred', 'recorded', 'history'].includes(m.basis) ? m.basis : 'estimate', as_of: String(m.as_of || item.as_of || ''), source: String(m.source || '') };
+}
+
+/** 큰 숫자 이름(원칙 135 · 10-09) — 화면의 대표 숫자는 AI 분석 결과(실태조사 우선순위 수를 쓰지 않는다) */
+export const AI_LABEL = 'AI 분석 결과';
+/** AI 분석 결과 봉투 — 요약 항목의 AI 탐지 수가 업무 결과(필지 · 물체 단위로 다듬은 결과 · 서버 detected_counted)일 때만.
+    분석 칸 도형 조각 수는 숫자 자리에 쓰지 않는다(사용자 규칙 2) → null. 셈 단위는 서버가 준 그대로(필지 · 동 · 건) */
+export function aiOf(item) {
+  if (!item?.detected_counted) return null;
+  const e = metric(item, 'detected');
+  return e && e.value > 0 ? { ...e, label: AI_LABEL } : null;
 }
 
 /** 카드 한 장에 싣는 배포본 모양 — 상태·수는 요약에서만(배포 기록의 scale 은 숫자 자리에 쓰지 않는다) */

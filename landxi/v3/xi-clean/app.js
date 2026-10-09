@@ -1,7 +1,8 @@
 /* xi-clean app.js — XI맵(직원 · 영업 · 기관 공용). 명세 LANDXI-FINAL-SPEC §2.8.
    같은 엔진(xi/engine · xi/fx)과 공용 키트(K1 셸 · K2 관문 · K3 무대 · K4 지역 · K5 서랍 · K6 큰 숫자 · K9 빈 상태 · K10 에이전트 · K12 · K13 · K14)를
    조합만 한다. 지역은 변수(URL ?region= · 기관 세션 · 검색 · 전국 지도에서 고르기) — 지역 문자열 하드코딩 0.
-   큰 숫자 = 현장 확인 필요 n필지(/survey/findings · 우선순위 A · 판정 전 · 서로 다른 필지) — 영업 성과 띠와 같은 조회.
+   큰 숫자(LX 직원 · 영업) = AI 분석 결과(GET /summary · 업무 결과로 센 것만 · 셈 단위 = 필지 · 동 · 건) — 원칙 135(10-09).
+   기관 계정(S.fc)은 사용자 답 전까지 예전 실태조사 흐름(우선순위 필지 · 규칙 · 목록 · 대조)을 그대로 쓴다.
    기관 계정 = 관할 시군구만(원칙 39): 지역 목록 · 검색 제안 · 경계는 서버가 준 관할 목록(GET /regions?geom=1)에서만 — 전국 시군구 파일을 받지 않는다.
    광역 기관은 관할 전체로 도착하고 시군구는 사용자가 고른다(화면이 대신 고르지 않는다).
    읍면동 경계 = GET /regions/{sgg}/emd(전국 · 그 시군구 것만) · 결과 층 = GET /regions/{sgg}/results(그 시군구에 결과가 있는 모든 세트 + 전역 분석 결과). */
@@ -12,6 +13,7 @@ import { sourceSpec } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
 import { analyzer } from './analyze.js';
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
+import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 결과(원칙 135 · 요약 한 출처)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -26,7 +28,7 @@ const mark = (k) => { X.boot[k] = Math.round(performance.now() - X.t0); document
 
 /* ═══ 첫 도착 — 관문(/me)을 기다리지 않고 모듈이 뜨자마자 데이터를 함께 부른다 ═══
    카탈로그 · 읍면동/규칙 집계는 탭 저장소에 10분 캐시(다시 오면 캐시로 바로 그리고 뒤에서 새로 받는다).
-   현장 확인 필요 조회(findings)는 첫 지역이 정해지면 바로 미리 부르고, refresh 가 그 응답을 한 번 이어받는다(20초 안 · 한 번만). */
+   기관 화면의 실태조사 조회(findings)는 첫 지역이 정해지면 바로 미리 부르고, refresh 가 그 응답을 한 번 이어받는다(20초 안 · 한 번만). */
 const SESS = session.get();
 const SWR_MS = 10 * 60e3;
 function swr(path) {
@@ -138,9 +140,13 @@ async function boot() {
   S.who = who; S.key = who.key; S.lx = who.me.realm === 'lx'; S.tenant = who.me.realm === 'tenant';
   S.sales = S.key === 'lx/sales' || S.key === 'tenant/demo';
   S.canAnalyze = S.lx || S.key === 'tenant/demo';
+  // 원칙 135(10-09): LX 직원 · 영업 = AI 분석 결과가 주인공(실태조사 우선순위 필지 · 규칙 · 목록 · 대조 없음). 기관 = 사용자 답 전까지 그대로
+  S.fc = S.tenant && !S.sales;
+  if (!S.fc) { S.layers.sus = false; S.layers.ai = true; }
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
-  const tools = [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['tilt', '입체'], ['sweep', '대조'], ['report', '보고서']];
+  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['tilt', '입체'], ['sweep', '대조'], ['report', '보고서']]
+    : [['layers', '층'], ['swipe', '가르기'], ['tilt', '입체'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
   SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: 'grid' })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
@@ -198,8 +204,8 @@ async function boot() {
   if (S.tenant) S.home = await homeRegion();
   const want = Q.get('region');
   const r0 = (want && (findRegion(want) || await regionByCode(want))) || S.home || null;
-  if (Q.get('rule') && (ALL_RULES.includes(Q.get('rule')) || S.ruleDefs[Q.get('rule')])) S.cond.rule = Q.get('rule');
-  { const q = hudQuery(r0, { emd: null, rule: S.cond.rule }); if (q.p && !(S.tenant && r0 && !inScope(r0))) prefetchFindings(q.p.toString()); }
+  if (S.fc && Q.get('rule') && (ALL_RULES.includes(Q.get('rule')) || S.ruleDefs[Q.get('rule')])) S.cond.rule = Q.get('rule');
+  if (S.fc) { const q = hudQuery(r0, { emd: null, rule: S.cond.rule }); if (q.p && !(S.tenant && r0 && !inScope(r0))) prefetchFindings(q.p.toString()); }
 
   const [cat] = await Promise.all([catP, stage.ready]);
   S.cat = cat;
@@ -242,7 +248,7 @@ async function boot() {
   if (Q.get('job') && AN) { S.tool = 'analyze'; patchRail(); AN.replayJob(Q.get('job'), { label: S.region?.name, bbox: S.region?.bbox }); }
   // 기준일이 30일을 넘으면 도착 때 한 번 대조(세션당 1회)
   const stale = S.asOf && (Date.now() - Date.parse(S.asOf)) / 864e5 > STALE_DAYS;
-  if (stale && regionEmds().length && !sessionStorage.getItem('xc_swept')) reconcile();
+  if (S.fc && stale && regionEmds().length && !sessionStorage.getItem('xc_swept')) reconcile();   // 대조 = 기관 화면만(원칙 135)
 }
 
 /* ═══ 레일(도구) — 셸 메뉴 레일에 헤어라인 아이콘 · 눌림 상태 ═══ */
@@ -297,7 +303,7 @@ async function buildLayers(cat) {
   S.emdLayers = ['xc-emd'];
   // AI 분석 결과 층 — 지금 지역에 결과가 있는 세트(GET /regions/{sgg}/results · setRegion 이 채운다)
   S.aiIds = [];
-  // 필지(카탈로그 'parcels-*' 참조 층) — 지적선 · 현장 확인 필요 필지 면
+  // 필지(카탈로그 'parcels-*' 참조 층) — 지적선 · 실태조사 우선순위 필지 면(기관 화면만 켠다)
   S.parcelLayers = []; S.susLayers = [];
   for (const it of items.filter((i) => i.role === 'reference' && /^parcels-/.test(i.id))) {
     const sid = 'xc-pc-' + it.id;
@@ -310,7 +316,7 @@ async function buildLayers(cat) {
       paint: { 'line-color': AMBER, 'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 17, 2.2], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13.5, 1] } }, 'slot-overlay');
     S.parcelLayers.push(sid + '-l'); S.susLayers.push(sid + '-s', sid + '-sl');
   }
-  // 현장 확인 필요 필지 점(먼 축척 · 필지 면이 차오르면 물러난다)
+  // 실태조사 우선순위 필지 점(기관 화면만 · 먼 축척 · 필지 면이 차오르면 물러난다)
   map.addSource('xc-pts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({ id: 'xc-pts-glow', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-blur': 1, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 3, 9, 6, 12, 12, 14, 14], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 0.3, 14, 0] } }, 'slot-overlay');
   map.addLayer({ id: 'xc-pts', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 1.4, 9, 2, 12, 3.2, 14, 4.5],
@@ -484,8 +490,8 @@ async function addResultList(items, my) {
     if (!(it.id in S.resOn)) S.resOn[it.id] = true;
   }
   S.res = out;
-  // 현장 확인 필요(실태조사)가 없는 지역은 AI 분석 결과를 기본으로 켠다 — 지도 위가 비지 않게
-  if (out.length && !regionEmds().length && !S.layers.ai) { S.layers.ai = true; S.aiByRegion = true; }
+  // 기관 화면: 실태조사가 없는 지역은 AI 분석 결과를 기본으로 켠다 — 지도 위가 비지 않게(LX 화면은 늘 켜져 있다)
+  if (S.fc && out.length && !regionEmds().length && !S.layers.ai) { S.layers.ai = true; S.aiByRegion = true; }
   X.results = out.map((x) => x.name?.ko || x.id);
   applyLayers();
   if (S.tool === 'layers') renderLayers();
@@ -556,14 +562,14 @@ function followSurvey(r) {
   followT = setTimeout(tick, 4000);
 }
 
-/* ═══ HUD · 점 · 필지 면 — 한 조회(현장 확인 필요) ═══ */
+/* ═══ HUD — LX 화면 = AI 분석 결과(요약 한 출처) · 기관 화면 = 실태조사 한 조회(점 · 필지 면 · 막대) ═══ */
 /** HUD 한 조회의 질의 — 지역 · 조건에서(프리페치와 refresh 가 같은 문자열을 쓴다) */
 function hudQuery(region, cond) {
   const p = new URLSearchParams({ priority: 'A', state: 'open,assigned', limit: '2000', sort: 'score' });
   const emds = cond.emd ? [cond.emd] : region ? S.emds.filter((e) => inRegion(e.cd, region)) : null;
   if (emds && !emds.length) return { p: null, emds };
   if (emds) p.set('emd_cd', emds.map((e) => e.cd).join(','));
-  p.set('rule', cond.rule || 'R1,R2,R3,R4,R5,R6');   // 현장 확인 필요 = 실태조사 규칙 R1–R6(서버 field_check 와 같은 범위 · 대장 규칙은 첫 화면 대장 대조에서)
+  p.set('rule', cond.rule || 'R1,R2,R3,R4,R5,R6');   // 기관 화면 큰 숫자 = 실태조사 규칙 R1–R6(서버 field_check 와 같은 범위 · 대장 규칙은 첫 화면 대장 대조에서)
   return { p, emds };
 }
 let seq = 0;
@@ -594,6 +600,7 @@ async function refresh() {
   if (S.outside) return;
   const my = ++seq;
   failToast?.close(); failToast = null;
+  if (!S.fc) return refreshAI(my);
   const where = S.cond.emd ? S.cond.emd.nm : S.region ? S.region.name : S.tenant ? String(S.who.tenant?.name?.ko || S.who.org || '').trim().split(/\s+/).pop() || '관할 전체' : '전국';
   const label = `현장 확인 필요 · ${where}`;
   const scope = (S.cond.emd?.cd || S.region?.code || 'KR') + (S.cond.rule ? ':' + S.cond.rule : '');
@@ -676,7 +683,51 @@ async function refresh() {
   renderChips();
   if (S.list) openList();
 }
-/** 지역 대표 수치 — GET /summary?region= (fix-server-summary 계약). 현장 확인 필요(field_check)가 있으면 그것, 없으면 AI 탐지(detected).
+/** LX 화면 HUD — AI 분석 결과(원칙 135 · 10-09). 지역 대표 수치 = GET /summary?region= 의 AI 탐지 중 업무 결과로 센 것(aiResult · 서비스 상세 ·
+    결과 확인 · 분석하기 카드와 같은 출처). 셈 단위는 서버 값 그대로(필지 · 동 · 건) · 다른 단위끼리 더하지 않는다. 아래 한 줄 = 그 숫자의 서비스 이름 */
+async function refreshAI(my) {
+  const where = S.region ? S.region.name : '전국';
+  const scope = S.region?.code || 'KR';
+  S.els.hud.dataset.scope = scope;
+  const big = hudBig.__big || (hudBig.__big = K.bignum(hudBig, null, { label: AI_LABEL, hud: true }));
+  const setLab = () => { const lab = hudBig.querySelector('.k-big-l'); if (lab) { lab.textContent = AI_LABEL; lab.append(h('span.xc-where', { text: ` · ${where}` })); } };
+  if (hudBig.dataset.shown !== scope) setLab();
+  if (hudBig.dataset.shown !== scope || hudBig.dataset.st !== 'ok') hudState(big, 'wait');
+  S.last = null; S.need = null; S.suspect = null; drawBars([]); setPoints([]);
+  hudBig.hidden = false;
+  S.hudFail = false;
+  let j = null;
+  for (let t = 0; ; t++) {
+    try { j = await api('/summary' + (S.region ? '?' + new URLSearchParams({ region: S.region.code }) : '')); break; }
+    catch (e) {
+      K.devlog('summary', `${e.code || e.name || ''} ${e.status ?? 0} (시도 ${t + 1})`);
+      if (my !== seq) return;
+      if (t >= RETRY || !transient(e)) { hudFailed(my); return; }
+      await pause(RETRY_MS);
+      if (my !== seq) return;
+    }
+  }
+  if (my !== seq) return;
+  const r = aiResult(j);
+  setLab();
+  hudSus.replaceChildren(); delete hudSus.dataset.v; delete hudSus.dataset.metric;
+  if (r) {
+    hudState(big, 'ok', r.env, r.unit);
+    const n = r.names.length + r.others;
+    const svc = r.names[0] ? r.names[0] + (n > 1 ? ` 외 ${n - 1}개 서비스` : '') : '';
+    if (svc) hudSus.append(h('span', { text: svc }));
+    hudSus.hidden = !svc;
+    X.hud = { label: `${AI_LABEL} · ${where}`, n: r.env.value, unit: r.unit, total: r.env.value, from: 'summary' };
+    K.devlog('hud', `${scope} → ${AI_LABEL} ${r.env.value}${r.unit} (${r.names.join(', ')})`);
+  } else {
+    hudState(big, 'empty'); hudSus.hidden = true;
+    X.hud = { label: `${AI_LABEL} · ${where}`, n: 0, total: 0, from: 'summary' };
+  }
+  hudBig.dataset.shown = scope;
+  SH.fresh(j ? new Date() : null);
+  renderChips();
+}
+/** 기관 화면 지역 대표 수치 — GET /summary?region= (fix-server-summary 계약). 실태조사 우선순위 수(field_check)가 있으면 그것, 없으면 AI 탐지(detected).
     → { env, label, unit } · null(요약에 결과 없음) · undefined(요약을 못 읽음 — 호출한 쪽이 목록 값으로) */
 async function summaryBig(r) {
   let j;
@@ -914,7 +965,7 @@ async function agentOp(a) {
   if (a.op === 'map_on' && a.filter) {
     const f = a.filter, e = f.emd_cd ? S.emds.find((x) => x.cd === String(f.emd_cd)) : null;
     const r = e ? byCode(e.cd) : null;
-    const apply = () => { setCond({ emd: e || null, rule: f.rule && ALL_RULES.includes(f.rule) ? f.rule : null }); S.list = true; patchRail(); };
+    const apply = () => { setCond({ emd: e || null, rule: S.fc && f.rule && ALL_RULES.includes(f.rule) ? f.rule : null }); if (S.fc) S.list = true; patchRail(); };
     if (r && S.region?.code !== r.code) await setRegion(r).then(apply); else apply();
     return true;
   }
@@ -957,7 +1008,7 @@ async function agentOp(a) {
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
     if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
-    const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: (S.susLayers || []).length, parcel: (S.parcelLayers || []).length }[k];
+    const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
     if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
     const want = a.on !== false;
     if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
@@ -970,7 +1021,7 @@ async function agentOp(a) {
       return { ok: true, same: before === JSON.stringify([true, (S.res || []).map((it) => !!S.resOn[it.id])]) };
     }
     if (k === 'sus' && want && a.only === true) {
-      // '현장 확인 필요 필지만' — 현장 확인 필요 층만 남기고 AI 분석 결과는 내린다
+      // 기관 화면 '실태조사 필지만' — 그 층만 남기고 AI 분석 결과는 내린다
       const same0 = S.layers.sus && !S.layers.ai;
       S.layers.sus = true; S.layers.ai = false; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
       return { ok: true, same: same0 };
@@ -980,7 +1031,7 @@ async function agentOp(a) {
     if (k === 'ai') { S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
     applyLayers();
     if (S.tool === 'layers') renderLayers();
-    // 결과 층을 껐는데 지도에 주황 점(현장 확인 필요)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
+    // 기관 화면: 결과 층을 껐는데 지도에 주황 점(실태조사 필지)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
     const susOn = k === 'ai' && !want && S.layers.sus && (S.last?.items || []).length > 0;
     return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 층도 끄기', q: '현장 확인 필요 층 꺼 줘' } : null };
   }
@@ -1197,7 +1248,7 @@ function showPop(title, ...kids) {
   else pop.style.top = '';
 }
 function renderLayers() {
-  const L = [['img', '영상'], ['sus', '현장 확인 필요'], ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];
+  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135)
   const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.layers[k]), onclick: (e) => { S.layers[k] = !S.layers[k]; if (k === 'ai') S.aiByRegion = false; e.currentTarget.setAttribute('aria-pressed', String(S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   // AI 분석 아래: 이 지역에 결과가 있는 세트(이름 = 카탈로그 · 전역 분석 결과)
   const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(S.layers.ai && S.resOn[it.id])), 'data-res': it.id,
@@ -1226,7 +1277,7 @@ function renderSweep() {
 }
 function renderReport() {
   if (!S.region) { showPop('보고서', h('p.t-label.xc-pop-l', { text: '지역을 고르세요' })); return; }
-  // 대상 = 지금 지역의 읍면동(기본 = 조건 · 열린 필지 · 이 지역에서 현장 확인이 가장 많은 곳) — 다른 지역 읍면동은 고를 수 없다
+  // 대상 = 지금 지역의 읍면동(기본 = 조건 · 열린 필지 · 기관 화면이면 이 지역 실태조사 목록에서 가장 많은 곳) — 다른 지역 읍면동은 고를 수 없다
   const list = regionEmds();
   if (!list.length) { showPop('보고서', h('p.t-label.xc-pop-l', { text: `${S.region.name} · 실태조사 결과가 없습니다` })); return; }
   let e = reportEmd() || list[0];
@@ -1236,7 +1287,7 @@ function renderReport() {
   showPop('보고서', h('p.t-label.xc-pop-l', { text: S.region.name }), sel, h('div.xc-act', {}, btn));
   X.reportDefault = { region: S.region.name, emd: e.nm };
 }
-/** 보고서 대상 읍면동(지금 지역 안에서만): 조건 → 열린 필지 → 이 지역 현장 확인 목록에서 가장 많은 곳. 지역이 없으면 null(지역 고정값 0) */
+/** 보고서 대상 읍면동(지금 지역 안에서만): 조건 → 열린 필지 → (기관 화면) 이 지역 실태조사 목록에서 가장 많은 곳. 지역이 없으면 null(지역 고정값 0) */
 function reportEmd() {
   if (!S.region) return null;
   const mine = (e) => e && inRegion(e.cd, S.region) ? e : null;

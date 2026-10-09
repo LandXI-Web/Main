@@ -31,12 +31,12 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     const farm = page.locator('.k-sc[data-card="card-farm"] .k-sc-res');
     const v = Number(await farm.getAttribute('data-v'));
     const sum = await call(page, '/summary?card=card-farm');
-    const vals = sum.body.items.flatMap((i) => [i.metrics.field_check?.value, i.metrics.detected?.value]).filter((x) => x != null);
+    const vals = sum.body.items.filter((i) => i.detected_counted).map((i) => i.metrics.detected?.value).filter((x) => x != null);   // AI 분석 결과(업무 결과로 센 것)만
     expect(vals).toContain(v);
     /* 큰 숫자 자리 = 업무 결과만 — 분석 칸 도형 수(남원 · 증평 비닐하우스 AI 탐지 = 모든 분류 도형 조각)는 쓰지 않는다(사용자 규칙 2) */
     await expect(page.locator('.k-sc[data-card="card-5e85a9"] .k-sc-res')).toHaveClass(/is-none/);
     const deckL = (await call(page, '/cards/deck')).body;
-    for (const c of deckL.items) if (c.example) expect(['현장 확인 필요', 'AI 탐지']).toContain(c.example.label);
+    for (const c of deckL.items) if (c.example) { expect(c.example.label).toBe('AI 탐지'); expect(c.example.word).not.toContain('현장 확인'); }   // 원칙 135 — LX 카드 결과 예시 = AI 분석 결과
     expect(deckL.items.find((c) => c.id === 'card-5e85a9').example).toBeNull();
     /* 장면 없는 카드 = 회백 판(그림 0) */
     await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText(/결과 장면 없음|결과가 나오면/);

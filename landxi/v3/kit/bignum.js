@@ -6,14 +6,14 @@
      · 값        set(봉투)
    만든 뒤 PENDING_MS 안에 set 이 한 번도 오지 않으면 빈 값으로 넘긴다(불러오는 중에 멈춰 있지 않게).
    봉투가 아니면: ?dev=1 에서 throw · 평소엔 빈 값.
-   const b = bignum(el, null, { label: '현장 확인 필요', unit: '필지' }); … b.set(env2);
+   const b = bignum(el, null, { label: 'AI 분석 결과', unit: '필지' }); … b.set(env2);
    K16 number-lint 가 읽도록 data-metric(라벨) · data-v(값)를 남긴다. */
 import { h, esc, isEnvelope, isDev, RM, E_CAM } from './util.js';
 import { sig } from './sig.js';
 import { t, nf } from './i18n.js';
 
-/** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목) */
-export const ALLOWED = ['현장 확인 필요', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '결재 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area'];
+/** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목). 'AI 분석 결과' = 원칙 135(10-09) · 맨 뒤 하나는 기관 화면(사용자 답 전까지) */
+export const ALLOWED = ['AI 분석 결과', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '결재 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area', '현장 확인 필요'];
 /** 도착 전 표시를 빈 값으로 넘기는 한도(ms) */
 export const PENDING_MS = 20000;
 const UNIT = { count: '건', parcels: '필지', m2: '㎡', ha: 'ha', km2: '㎢', ratio: '%' };

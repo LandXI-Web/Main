@@ -98,9 +98,10 @@ def _raw_ai(it: dict) -> bool:
     return any(str(x).startswith("job_") for x in sets)
 
 
-def _biz(it: dict, inf: dict) -> tuple | None:
-    """그 항목의 업무 결과 한 가지 — (봉투, 말, 키). 현장 확인 필요(필지 대조) → 다듬은 결과 세트의 AI 탐지 수 → 없음."""
-    fc = _metric(it, "field_check")
+def _biz(it: dict, inf: dict, fc_first: bool = True) -> tuple | None:
+    """그 항목의 업무 결과 한 가지 — (봉투, 말, 키). 현장 확인 필요(필지 대조) → 다듬은 결과 세트의 AI 탐지 수 → 없음.
+    fc_first=False(LX 화면 · 원칙 135): 현장 확인 필요는 건너뛰고 AI 분석 결과(다듬은 결과 세트의 AI 탐지 수)만. 기관 화면은 사용자 답 전까지 그대로."""
+    fc = _metric(it, "field_check") if fc_first else None
     if fc and (_vnum(fc["value"]) or 0) > 0:
         return fc, "현장 확인 필요 필지", "field_check"
     det = _metric(it, "detected")
@@ -108,7 +109,7 @@ def _biz(it: dict, inf: dict) -> tuple | None:
         unit = det.get("unit") or "건"
         # 결과 말(예: 비닐하우스 동)은 셈 단위가 필지 · 동으로 확인된 결과 세트(sets.yaml count_unit)에만 — 그 밖은 'AI 탐지 n건'(다른 화면과 같은 이름)
         rw = inf.get("result_word") if unit in ("필지", "동") and (not inf.get("result_sgg") or str(it.get("sgg_cd") or "") == inf["result_sgg"]) else None
-        return det, rw or f"AI 탐지 {unit}", "detected"
+        return det, rw or (f"AI 탐지 {unit}" if fc_first else "AI 분석 결과"), "detected"     # LX 화면 말 = 'AI 분석 결과'(원칙 135)
     return None
 
 
@@ -204,8 +205,9 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     parts = [f"운영 {n['ga']}" if n["ga"] else "", f"시범 {n['pilot']}" if n["pilot"] else ""]
     uses_text = " · ".join(x for x in parts if x) or (f"첫 결과 전 {n['none']}" if n["none"] else "아직 없음")
 
-    # ⑥ 결과 예시 = 업무 결과만(현장 확인 필요 · 다듬은 결과 세트의 AI 탐지 수) — LX 가 고른 지역 → 운영 먼저 · 현장 확인 필요 먼저
-    cands = [(it, b) for it, b in ((it, _biz(it, inf)) for it in items) if b]
+    # ⑥ 결과 예시 = AI 분석 결과(다듬은 결과 세트의 AI 탐지 수 · 셈 단위 = 그 세트의 필지 · 동 · 건) — LX 가 고른 지역 → 운영 먼저.
+    #   원칙 135(10-09): LX 화면에는 '현장 확인 필요'를 쓰지 않는다. 기관 덱(tenant 인자 · _deck_tenant)은 사용자 답 전까지 그대로(현장 확인 필요 먼저)
+    cands = [(it, b) for it, b in ((it, _biz(it, inf, fc_first=tenant is not None)) for it in items) if b]
     pick = next(((it, b) for it, b in cands if inf.get("result_sgg") and str(it.get("sgg_cd") or "") == inf["result_sgg"]), None)
     if not pick and cands:
         pick = sorted(cands, key=lambda x: (RANK[STAGE_KEY.get(x[0]["stage"], "none")], 0 if x[1][2] == "field_check" else 1))[0]
@@ -319,7 +321,9 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "state": state, "state_label": STAGE_WORD[state],
         "line": _words(inf.get("line")), "scene": scene, **({"scenes": scenes} if p.realm == "tenant" else {}),
         "where": example["region"] if example else where_any, "as_of": example["as_of"] if example else None, "example": example,
-        "example_note": None if example else ("첫 결과 뒤 표시" if state == "none" else "필지 대조 뒤 표시" if parcel else "업무 결과 집계 전"),
+        "example_note": None if example else ("첫 결과 뒤 표시" if state == "none"
+                                              else ("필지 대조 뒤 표시" if parcel else "업무 결과 집계 전") if tenant      # 기관 덱 — 사용자 답 전까지 그대로
+                                              else "AI 분석 결과 있음" if result_sggs else "업무 결과 집계 전"),
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "version": cur["version"] if cur else None, "owner": own["name"],
@@ -463,7 +467,7 @@ async def one(cid: str, request: Request):
     core, m, mine = await _one(p, cid)
     inf = m["info"].get(cid) or {}
     regions = []
-    for it in sorted(mine, key=lambda it: (RANK[STAGE_KEY.get(it["stage"], "none")], -(_vnum((_metric(it, "field_check") or {}).get("value")) or 0),
+    for it in sorted(mine, key=lambda it: (RANK[STAGE_KEY.get(it["stage"], "none")], _raw_ai(it),          # AI 분석 결과(다듬은 결과) 많은 곳 먼저(원칙 135)
                                            -(_vnum((_metric(it, "detected") or {}).get("value")) or 0))):
         k = STAGE_KEY.get(it["stage"], "none")
         regions.append({"sgg": it.get("sgg_cd"), "name": _short(it.get("region_name"), it.get("sgg_cd")), "full": it.get("region_name"),

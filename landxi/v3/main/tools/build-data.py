@@ -109,7 +109,7 @@ def build_parcel():
                    'yongdo': row.yongdo or None},
         'ai': {'cls': '건물', 'area': {'value': evid, 'unit': '㎡', 'basis': 'inferred', 'source': '2023년 25cm 항공영상 AI 분석', 'as_of': '2026-09-24'},
                'n': int(len(A_in)), 'year': 2023},
-        'verdict': '현장 확인 필요',
+        'verdict': '대장과 다름',                      # 원칙 135 — AI 분석 결과와 대장이 다른 필지(숫자 · 목록 개념 없음)
         'bbox': [round(x, 6) for x in (minx, miny, maxx, maxy)],
         'parcel': {'type': 'Feature', 'properties': {}, 'geometry': json.loads(json.dumps(mapping(par.geometry)))},
         'ai_fc': {'type': 'FeatureCollection', 'features': [{'type': 'Feature', 'properties': {'in': True}, 'geometry': json.loads(json.dumps(mapping(g)))} for g in A_in.geometry]

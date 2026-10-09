@@ -7,9 +7,9 @@
    3차: 정적 화면 캡처(숫자가 박힌 XI맵·할 일·보고서 사진) 0 — '결과 지도' 블록은 그 배포본의 결과 층을 실시간으로 그린다.
    4차: 결과 세트마다 지역(visuals.sets[].region/where) — LX 는 지금 지역 밖이면 예시, 기관은 관할 밖 세트를 뺀다(6차).
    6차: 블록 = 실결과·결과 지도만, 3개가 안 되면 K9 1개.
-   5차: 큰 숫자 = 실태조사 '현장 확인 필요'(XI맵과 같은 출처 · surveyOf) — 탐지 총수(봉투 scale)는 숫자 자리에 싣지 않는다 · 모듈 문장은 사용자 말로(plain).
+   5차 → 원칙 135: 큰 숫자 = AI 분석 결과(요약 한 출처 · summary.js aiOf) — 도형 조각 수(봉투 scale)는 숫자 자리에 싣지 않는다 · 모듈 문장은 사용자 말로(plain).
    지역 착지: 배포본 sgg_cd → 지역 이름(시군구 경계 파일에서) → 결과 위치(크롭 좌표) → 배포 범위 중심 순. 해외 = 나라 · 지역 id. */
-import { API, api, hasRoute, isEnvelope, bboxOf } from '../kit/util.js';
+import { api, hasRoute, isEnvelope, bboxOf } from '../kit/util.js';
 
 const here = (p) => new URL(p, import.meta.url).href;
 const json = (p) => fetch(here(p)).then((r) => r.json());
@@ -204,42 +204,7 @@ async function sggOf(d) {
   return r;
 }
 
-/* ── 큰 숫자 = 실태조사 '현장 확인 필요'(명세 §2.14 `GET /survey/stats?by=deploy&card=` · §4-7 허용 라벨) ──
-   서버에 by=deploy 가 생기면(게이트웨이 openapi 에 `card` 인자) 그 봉투를 쓰고, 아직이면 XI맵 HUD 와 **같은 조회**로 만든다:
-   그 배포본 시군구의 읍면동(/survey/stats?by=emd) → /survey/findings?priority=A&state=open,assigned&emd_cd=… → 서로 다른 필지 수.
-   필지 대조 모듈이 켜진 배포본만(영업 성과 띠와 같은 조건). 없으면 null = 숫자 없이 `{지역} · {기준일} 기준`만. */
-const hasParcel = (d) => Object.entries(d?.modules?.ext || {}).some(([k, v]) => v && /-parcel$/.test(k));
-const byDeploy = once(() => fetch(API.prefix + '/openapi.json', { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : null))
-  .then((j) => (j?.paths?.['/api/v1/survey/stats']?.get?.parameters || []).some((p) => p.name === 'card')).catch(() => false));
-const surveyEmds = once(() => api('/survey/stats?by=emd').then((j) => (j.items || []).filter((i) => i.cd)).catch(() => null));
-const byRegion = new Map();
-const byCard = new Map();
-export async function surveyOf(d) {
-  if (!d || !hasParcel(d)) return null;
-  if (await byDeploy()) {
-    const c = d.card_id || '';
-    if (!byCard.has(c)) byCard.set(c, api('/survey/stats?' + new URLSearchParams({ by: 'deploy', card: c })).catch(() => null));
-    const j = await byCard.get(c);
-    const it = (j?.items || []).find((x) => (x.deploy_id || x.key || x.id) === d.id);
-    const env = it && [it.need, it.field_check, it.n].find(isEnvelope);
-    if (env) return +env.value > 0 ? env : null;
-  }
-  const r = await sggOf(d);
-  if (!r) return null;
-  if (!byRegion.has(r.code)) byRegion.set(r.code, (async () => {
-    const emds = (await surveyEmds() || []).filter((e) => String(e.cd).startsWith(r.code));
-    if (!emds.length) return null;
-    const p = new URLSearchParams({ priority: 'A', state: 'open,assigned', limit: '2000', sort: 'score', emd_cd: emds.map((e) => e.cd).join(',') });
-    const j = await api('/survey/findings?' + p).catch(() => null);
-    if (!j?.items?.length) return null;
-    const pnus = new Set(j.items.map((f) => f.pnu));
-    const total = j.total?.value ?? j.items.length, exact = j.items.length >= total;
-    const need = exact ? pnus.size : Math.round(pnus.size * (total / Math.max(1, j.items.length)));
-    return { value: need, unit: '필지', basis: exact ? (j.total?.basis || 'inferred') : 'estimate', as_of: j.as_of || '', source: 'AI 실태조사 결과', note: '현장 확인 전' };
-  })());
-  return byRegion.get(r.code);
-}
-
+/* 큰 숫자 = AI 분석 결과(원칙 135 · 10-09) — 요약 한 출처(summary.js aiOf). 예전 실태조사 우선순위 필지 조회(surveyOf)는 화면에서 쓰지 않아 뺐다 */
 /** 배포본 → 착지 { home:'xi-clean'|'global', qs } */
 export async function landingOf(d, vis) {
   const b = bboxOf(d.aoi);

@@ -115,15 +115,17 @@ async function detail(cid) {
 function resultCard(c) {
   const sec = h('section.t-card.la-box', { 'aria-label': '결과 예시' }, h('h2.la-h', { text: '결과 예시' }));
   const ex = c.example;
-  if (!ex) {                                   // 업무 결과(현장 확인 필요 · 다듬은 결과 수)가 없으면 숫자 없이 — 분석 칸 도형 수는 쓰지 않는다
-    sec.append(h('p.la-none-t', { text: c.state === 'none' ? '첫 분석 결과가 나오면 여기에 보입니다' : c.example_note === '필지 대조 뒤 표시' ? '필지 대조가 끝나면 현장 확인 필요 필지가 보입니다' : '업무 결과를 아직 세지 않았습니다' }));
+  if (!ex) {                                   // AI 분석 결과(다듬은 결과 수)가 없으면 숫자 없이 — 분석 칸 도형 수는 쓰지 않는다(사용자 규칙 2)
+    sec.append(h('p.la-none-t', { text: c.state === 'none' ? '첫 분석 결과가 나오면 여기에 보입니다' : c.example_note === 'AI 분석 결과 있음' ? 'AI 분석 결과는 지역별 지도에서 볼 수 있습니다' : '업무 결과를 아직 세지 않았습니다' }));
     return sec;
   }
+  /* 큰 숫자 = AI 분석 결과(원칙 135) — 셈 단위는 서버가 준 그대로(필지 · 동 · 건) */
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis, as_of: ex.as_of, source: ex.source };
-  sec.append(h('p.t-label.la-ex-l', { text: [ex.label === '현장 확인 필요' ? '현장 확인 필요' : ex.word, ex.region, ex.as_of ? `${ymd(ex.as_of)} 기준` : ''].filter(Boolean).join(' · ') }),
+  const unitW = ex.unit === 'count' ? '건' : ex.unit || '';
+  sec.append(h('p.t-label.la-ex-l', { text: [ex.word || 'AI 분석 결과', ex.region, ex.as_of ? `${ymd(ex.as_of)} 기준` : ''].filter(Boolean).join(' · ') }),
     h('div.la-big', { dataset: { metric: ex.label || '', v: String(ex.value) } }, h('b', { text: nf(ex.value) }),
-      h('span.u', { text: ex.label === '현장 확인 필요' ? '필지' : (ex.word || '').split(' ').pop() }), h('span', { html: sig(env) })));
-  const key = ex.label === '현장 확인 필요' ? 'field_check' : 'detected';
+      h('span.u', { text: unitW }), h('span', { html: sig(env) })));
+  const key = 'detected';
   const rows = (c.regions || []).filter((r) => r[key] && r[key].value !== null && r.sgg !== ex.sgg);
   if (rows.length) {
     const ul = h('ul.la-rl');

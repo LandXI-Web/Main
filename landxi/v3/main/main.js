@@ -485,7 +485,7 @@ function sweep(s1, keep = 1) {
   }
 }
 function nationOutline(o) { want('k-sgg-l', 'line-opacity', 0.42 * o); }
-/** ch2 — 필지 결합 → 대장 대조 → 현장 확인 목록(하나만 활성) */
+/** ch2 — 필지 결합 → 대장과 겹쳐 보기 → 필지별 AI 분석 결과(하나만 활성 · 원칙 135) */
 function parcelScene(s2, keep = 1) {
   const a = seg(s2, 0.24, 0.34) * keep;
   want('k-parcel-l', 'line-opacity', 0.95 * a); want('k-parcel-f', 'fill-opacity', 0.08 * a);
@@ -552,15 +552,16 @@ function fillStats(d) {
   if (ch1.classList.contains('is-in')) mk(); else ch1.addEventListener('ch:in', mk, { once: true });
 }
 function fillParcel(p) {
+  /* 꼬리표는 화면 말로 고정 — 서버 예시의 판정 이름(verdict)은 쓰지 않는다(원칙 135) */
   const host = $('#ch2-card');
   const place = esc(p.place);
   host.innerHTML = `<div class="t-card m-pc" data-step="0">
-    <div class="m-pc-top"><span class="t-label">${place} · 예시</span><span class="t-chip" data-lv="warn">${esc(p.verdict)}</span></div>
+    <div class="m-pc-top"><span class="t-label">${place} · 예시</span><span class="t-chip" data-lv="warn">대장과 다름</span></div>
     <div class="m-pc-cols">
       <div class="m-pc-col"><span class="t-label">대장</span><b class="t-h4">${esc(p.ledger.jimok)}</b><span>${numHtml(p.ledger.area)}</span><span class="t-label">${esc(p.ledger.yongdo || '')}</span></div>
       <div class="m-pc-col is-ai"><span class="t-label">AI 분석</span><b class="t-h4">${esc(p.ai.cls)}</b><span>${numHtml(p.ai.area)}</span><span class="t-label">${p.ai.year}년 항공영상</span></div>
     </div>
-    <div class="m-pc-foot"><span class="m-ok" aria-hidden="true">✓</span><span class="t-label">현장 확인 목록에 올렸습니다</span></div>
+    <div class="m-pc-foot"><span class="m-ok" aria-hidden="true">✓</span><span class="t-label">필지별 AI 분석 결과에 담았습니다</span></div>
   </div>`;
   S.item = -1;
 }

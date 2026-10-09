@@ -1,10 +1,11 @@
-/* 부품 갤러리 — 16 부품을 실데이터(/regions · /survey/stats · /registry/cards · /deploys · /survey/findings · /jobs)로 한 페이지에.
+/* 부품 갤러리 — 16 부품을 실데이터(/regions · /survey/stats · /summary · /registry/cards · /deploys · /survey/findings · /jobs)로 한 페이지에.
    정문 로그인 세션만 쓴다(관문 K2 · 세션 주입 0). 숫자는 전부 서버 봉투. */
 import * as K from './index.js';
 import { api, isEnvelope, bboxOf } from './util.js';
 import { env } from '../../shared/api-v1.js';
 import { scan } from './lint/forbidden.mjs';
 import { collect } from './lint/number-lint.mjs';
+import { aiResult, AI_LABEL } from '../lx-console/summary.js';
 
 const $ = (id) => document.getElementById(id);
 const who = await K.gate('kit');
@@ -12,12 +13,12 @@ K.devDrawer({ who });
 
 
 const get = (p) => api(p).catch(() => null);
-const [emd, prio, cards, deploys, jobs, finds] = await Promise.all([
-  get('/survey/stats?by=emd'), get('/survey/stats?by=priority'), get('/registry/cards'), get('/deploys'), get('/jobs?limit=200'),
+const [emd, sum, cards, deploys, jobs, finds] = await Promise.all([
+  get('/survey/stats?by=emd'), get('/summary'), get('/registry/cards'), get('/deploys'), get('/jobs?limit=200'),
   get('/survey/findings?limit=300&sort=score&priority=A'),
 ]);
 const regions = await K.loadRegions();
-const fieldCheck = prio?.items?.find((i) => i.key === 'A')?.n || null;          // 현장 확인 필요(A 등급)
+const aiEnv = (sum && aiResult(sum)?.env) || null;          // AI 분석 결과(원칙 135 · 요약 한 출처 · 업무 결과로 센 것만)
 const lastAt = [emd?.as_of, cards?.as_of, deploys?.as_of].filter(Boolean).sort().at(-1);
 
 /* ── 셸 + 무대 + 지역 + 서랍 + 에이전트 바 ───────────────────── */
@@ -32,7 +33,7 @@ const slot = document.createElement('span'); slot.style.display = 'contents'; sl
 S.mast(slot);
 
 const hud = document.createElement('div'); hud.className = 'g-hud'; stageEl.append(hud);
-K.bignum(hud, null, { label: '현장 확인 필요', hud: true }).set(fieldCheck);   // 이미 불러온 뒤 — 없으면 빈 값
+K.bignum(hud, null, { label: AI_LABEL, hud: true }).set(aiEnv);   // 이미 불러온 뒤 — 없으면 빈 값
 const onCard = K.card({ map: true, cls: 'g-card-on', body: '<div class="t-label">선택 지역</div><div class="t-sub" id="rgName">전국</div><div class="g-acts"><button class="t-btn" type="button" id="openList">읍면동 목록</button></div>' });
 stageEl.append(onCard);
 
@@ -74,7 +75,7 @@ st2.ready.then(() => {
 const joined = K.joinCards((cards?.items || []).filter((c) => c.scope === 'local'), deploys?.items || []);
 const canMake = joined.filter((j) => j.state !== 'none').length;
 K.bignum($('big'), null, { label: '만들 수 있는 업무', unit: '개' }).set(cards ? env(canMake, '개', 'recorded', 'registry/cards · deploys', '실배포 · 실결과가 있는 카드') : null);
-const sigRow = [[emd?.parcels, '필지'], [fieldCheck, '현장 확인 필요']];
+const sigRow = [[emd?.parcels, '필지'], [aiEnv, AI_LABEL]];
 const demoEnv = (jobs?.items || []).map((j) => j.counts_env).find((e) => isEnvelope(e) && (e.basis === 'demo' || e.basis === 'history'));
 if (demoEnv) sigRow.push([demoEnv, '분석 결과']);
 $('sigs').innerHTML = sigRow.filter(([e]) => isEnvelope(e)).map(([e, l]) => `<span><span class="g-n">${K.numHtml(e)}</span><i class="t-label">${K.esc(l)}</i></span>`).join('');

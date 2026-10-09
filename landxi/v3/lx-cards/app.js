@@ -133,14 +133,11 @@ async function edit(cid) {
   const grp = h('select.t-input', { name: 'group', disabled: ro || undefined }, h('option', { value: '', text: '분류 없음' }),
     ...(c.groups || []).map((g) => h('option', { value: g, text: g, selected: (I.grp || c.group) === g || undefined })));
 
-  /* ③ 결과 예시 — 어느 지역 값을 보일지 · 말(AI 탐지 수일 때) */
-  const withVal = (c.regions || []).filter((r) => (r.field_check && r.field_check.value) || (r.detected && r.detected.value));
-  const exSel = h('select.t-input', { name: 'result_sgg', disabled: ro || undefined }, h('option', { value: '', text: '자동 — 운영 지역 · 현장 확인 필요가 있는 곳 먼저' }),
-    ...withVal.map((r) => {
-      const e = r.field_check && r.field_check.value ? r.field_check : r.detected;
-      return h('option', { value: r.sgg, text: `${r.name} · ${e.label} ${nf(e.value)}`, selected: c.result_sgg === r.sgg || undefined });
-    }));
-  const word = inp('result_word', c.result_word, 'AI 탐지 건', 20);
+  /* ③ 결과 예시 — 어느 지역 값을 보일지 · 말(AI 분석 결과 · 원칙 135: 다듬은 결과의 AI 탐지 수만 · 서버가 도형 조각 수는 비워 준다) */
+  const withVal = (c.regions || []).filter((r) => r.detected && r.detected.value);
+  const exSel = h('select.t-input', { name: 'result_sgg', disabled: ro || undefined }, h('option', { value: '', text: '자동 — 운영 지역 먼저' }),
+    ...withVal.map((r) => h('option', { value: r.sgg, text: `${r.name} · AI 분석 결과 ${nf(r.detected.value)}${r.detected.unit === 'count' ? '건' : r.detected.unit || ''}`, selected: c.result_sgg === r.sgg || undefined })));
+  const word = inp('result_word', c.result_word, 'AI 분석 결과', 20);
 
   /* ④ 조건 */
   const imagery = inp('imagery', I.imagery, c.imagery || '', 40);

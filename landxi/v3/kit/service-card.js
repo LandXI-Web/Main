@@ -52,11 +52,11 @@ export function loadDeck({ fresh = false } = {}) {
   return DECK;
 }
 
-/** ⑥ 결과 예시 — 큰 숫자 + 신뢰 기호 + 말(현장 확인 필요 필지 · 남원시). 값이 없으면 '첫 분석 뒤 표시' */
+/** ⑥ 결과 예시 — 큰 숫자 + 신뢰 기호 + 말(AI 분석 결과 · 남원시 — 원칙 135 · 셈 단위는 서버 값 그대로). 값이 없으면 '첫 분석 뒤 표시' */
 function resultEl(c, kind) {
   const ex = c.example;
   if (!ex || ex.value === null || ex.value === undefined) {
-    /* 업무 결과(현장 확인 필요 · 다듬은 결과 수)가 없으면 비워 둔다 — 분석 칸 도형 수는 숫자 자리에 쓰지 않는다(사용자 규칙 2) */
+    /* AI 분석 결과(다듬은 결과 수)가 없으면 비워 둔다 — 분석 칸 도형 수는 숫자 자리에 쓰지 않는다(사용자 규칙 2) */
     return h('div.k-sc-res.is-none', {}, h('span', { text: kind === 'mine' ? '첫 계산 뒤 표시' : c.example_note || (c.state === 'none' ? '첫 결과 뒤 표시' : '업무 결과 집계 전') }));
   }
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis || 'estimate', as_of: ex.as_of || '', source: ex.source || '' };

@@ -1,12 +1,11 @@
 /* lx-train — ② 학습 · 업무별 모델 (LANDXI-FINAL-SPEC §2.5)
    "이 업무의 모델은 쓸 만한가?" — 업무 10 카드(K7 변형: 크롭 = 표본 칩) → 선택 모델 서랍(K5) → 사본 미세조정 시트.
-   숫자 출처: /registry/models · /registry/models/{mid} 카드(학습 기록) · /survey/rules/{id}/stats(현장 확인 기준 · S-2) · /feedback(오탐 신고)
+   숫자 출처: /registry/models · /registry/models/{mid} 카드(학습 기록) · /feedback(오탐 신고)
    학습: POST /jobs/quote → POST /jobs {kind:'train', base_model, region, samples}(S-8 · 게이트웨이 작업 큐 · 전력 예산은 서버가 판정).
    지역은 변수(지역 문자열 하드코딩 0 · 크롭 경로는 tasks.json 예시 데이터 파일). 개발 정보는 ?dev=1 서랍만. */
 import { shell } from '../kit/shell.js';
 import { gate, FRONT } from '../kit/auth-gate.js';
 import { drawer } from '../kit/panel.js';
-import { bignum } from '../kit/bignum.js';
 import { sig } from '../kit/sig.js';
 import { line } from '../kit/chart.js';
 import { empty } from '../kit/empty.js';
@@ -14,7 +13,7 @@ import { regionPicker, loadRegions } from '../kit/region.js';
 import { toast } from '../kit/toast.js';
 import { devDrawer, devlog } from '../kit/dev-drawer.js';
 import { nf, df } from '../kit/i18n.js';
-import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js';
+import { h, esc, api, API, session, isEnvelope } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
@@ -155,13 +154,13 @@ function bestOf(m) {
 }
 /** 이 업무 전용 모델인가 — 모델 클래스가 모두 이 업무 클래스(여러 업무를 함께 보는 모델의 전체 정밀도는 업무 값이 아니다) */
 const dedicated = (m, t) => (m?.classes || []).length > 0 && m.classes.every((c) => t.cls.includes(c));
-/** 정밀도(학습 검증 영상 기준 · 현장 확인 전 = 추정치 ~) — 이 업무 전용 모델의 기록만. 없으면 null('—') */
+/** 정밀도(학습 검증 영상 기준 = 추정치 ~) — 이 업무 전용 모델의 기록만. 없으면 null('—') */
 function precEnv(m, t) {
   if (!dedicated(m, t)) return null;
   const b = bestOf(m);
   if (!b) return null;
   const c = CARD.get(m.id);
-  return { value: b.value, unit: 'ratio', basis: 'estimate', as_of: String(c.ckpt_date || '').slice(0, 10), source: '학습 검증 영상(현장 확인 전)' };
+  return { value: b.value, unit: 'ratio', basis: 'estimate', as_of: String(c.ckpt_date || '').slice(0, 10), source: '학습 검증 영상' };
 }
 
 /** 해상도 말(서랍 제목 = 카드와 같은 업무명 · 해상도) */
@@ -250,18 +249,7 @@ function openDrawer(r) {
     labelSlot(e.querySelector('.k-empty-b'), 'k-empty-a');
     return;
   }
-  /* 큰 숫자 — 현장 확인 기준(S-2 /survey/rules/{id}/stats). 없으면 결손 표기(지어내지 않는다) */
-  /* S-2 전(라우트 없음 · 값 없음)에는 블록을 접는다 — 정밀도가 두 번 다르게 보이지 않게. 들어오면 자동으로 열린다 */
-  const big = h('div.tr-big', { hidden: true }); body.append(big);
-  const B = bignum(big, null, { label: '정밀도(현장 확인 기준)', digits: 2 });
-  /* 현장 확인 n건 = 큰 숫자의 분모(같은 응답의 judged) — 큰 숫자 바로 아래 한 줄. 큰 숫자가 접히면 이 줄도 없다 */
-  const fc = h('p.t-label.tr-fc', { hidden: true }); big.after(fc);
-  fieldPrecision(r.t).then((f) => {
-    if (!f) return;
-    big.hidden = false; B.set(f.env, { digits: 2, unit: '' });
-    if (f.n !== null) { fc.textContent = `현장 확인 ${nf(f.n)}건`; fc.hidden = false; }
-  });
-
+  /* 원칙 135(10-09): 현장 판정 기준 정밀도 큰 숫자와 그 건수 줄은 뺐다 — 정밀도는 아래 학습 검증 영상 기준 한 줄(추정치 ~) */
   const c = CARD.get(r.m.id);
   const dl = h('dl.tr-dl');
   const row = (k, v) => dl.append(h('dt.t-label', { text: k }), h('dd', { html: v }));
@@ -288,26 +276,6 @@ function openDrawer(r) {
   body.append(run);
   copy.addEventListener('click', () => openSheet(r));
   again.addEventListener('click', () => start({ kind: 'train', base_model: r.m.id }, { btn: again, run, chart }));
-}
-
-/** 큰 숫자(현장 확인 기준 정밀도)와 그 건수 — 한 응답(/survey/rules/{id}/stats)에서 함께 읽는다.
-    건수 = judged(정밀도 분모). judged 가 없을 때만 by_state(inspected + closed)로 대체 */
-async function fieldPrecision(t) {
-  for (const rid of t.rules) {
-    const p = `/survey/rules/${rid}/stats`;
-    if (!(await hasRoute(p))) return null;
-    const j = await get(p);
-    const e = j?.precision;
-    if (!isEnvelope(e) || e.value === null) continue;
-    const bs = j.by_state || {};
-    const jd = isEnvelope(j.judged) ? j.judged.value : null;
-    const n = Number.isFinite(+jd) && jd !== null ? +jd
-      : (bs.inspected || bs.closed) ? (+bs.inspected?.value || 0) + (+bs.closed?.value || 0) : null;
-    /* 서랍의 다른 정밀도(0–1 두 자리)와 같은 척도로 — 서버가 % 로 주면 비율로 옮긴다(값은 그대로) */
-    const ratio = e.unit === '%' ? +e.value / 100 : +e.value;
-    return { env: { ...e, value: ratio, unit: 'ratio', basis: (n ?? 0) >= 100 ? 'measured' : 'estimate' }, n };
-  }
-  return null;
 }
 
 /** K12 선 — 값 범위에 맞춰 세로를 채운다(0–1 고정이면 곡선이 위에 붙어 축 라벨과 멀어짐).

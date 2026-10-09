@@ -177,7 +177,7 @@ body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
   .sd-block__vis.is-empty .k-empty--sm .k-empty-b{max-width:none;flex:1}
 }
 .sd-block[data-kind="empty"] + .sd-block[data-kind="empty"]{margin-top:calc(var(--section) * -0.5)}
-/* 5차: 큰 숫자 라벨(현장 확인 필요) · 스틸 없는 블록 K9 문장 카드 */
+/* 5차: 큰 숫자 라벨(AI 분석 결과 · 원칙 135) · 스틸 없는 블록 K9 문장 카드 */
 .sd-nl{display:block;font:500 var(--fs-label)/1.4 var(--font-body);color:var(--sub);margin-bottom:2px}
 .sd-row__n .sd-nl,.k-svc-n .sd-nl{display:inline;margin:0 6px 0 0;font-size:12px}
 .sd-live__n .sd-nl{margin-bottom:0}

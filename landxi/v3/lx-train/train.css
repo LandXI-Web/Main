@@ -71,11 +71,11 @@
 }
 @media (prefers-reduced-motion:reduce){.tr-pane{transition:none}}
 
-/* 결손(현장 확인 전) — 큰 숫자 자리의 줄표를 가볍게 */
+/* 결손 — 큰 숫자 자리의 줄표를 가볍게 */
 .tr-big.k-big[data-v=""] .t-big{color:var(--mute);font-weight:700}
 .tr-big.k-big[data-v=""] .t-big{font-size:48px;line-height:56px}
 
-/* 판정 1차 반영 — 결손 접기 · 현장 확인 한 줄 · 곡선 높이 · 라벨 도구 연결 전 */
+/* 판정 1차 반영 — 결손 접기 · 곡선 높이 · 라벨 도구 연결 전 */
 .tr-dr [hidden]{display:none!important}
 .tr-fc{display:block;margin:-18px 0 0;font-family:var(--font-ui, inherit);color:var(--sub)}
 .tr-hint{margin:0;padding:12px 0;color:var(--sub)}

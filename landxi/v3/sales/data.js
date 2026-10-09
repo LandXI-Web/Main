@@ -1,11 +1,11 @@
 /* data.js — 영업 카탈로그의 숫자·지역 한 곳(쓰기 호출 0).
-   출처(명세 §2.13): /registry/cards · /deploys · /survey/stats · /survey/findings · /regions(S-3 · 없으면 K4 가 배포 기록으로 대신).
+   출처(명세 §2.13): /registry/cards · /deploys · /summary · /survey/stats · /regions(S-3 · 없으면 K4 가 배포 기록으로 대신).
    계약 준수 어댑터: `/deploys?with=results` · `/survey/stats?by=deploy` 가 서버에 생기면 그대로 쓰고, 아직이면 같은 봉투를 기존 조회에서 만든다.
    내성: 조회마다 503·타임아웃이면 지수 백오프로 재시도하고, 늦게 온 지역·성과 띠·XI맵 착지 코드는 뒤늦게 채운다(onLate).
    지역은 변수 — 지역 이름·좌표 하드코딩 0(결과 크롭의 예시 데이터 파일 이름만 예외). */
 import { api, isEnvelope, bboxOf } from '../kit/util.js';
 import { joinCards, loadRegions } from '../kit/index.js';
-import { loadSummary, itemFor, stageKey, scaleOf, metric, userWords } from '../service-detail/summary.js';
+import { loadSummary, itemFor, stageKey, scaleOf, userWords, aiOf, AI_LABEL } from '../service-detail/summary.js';
 
 const KR = [124.0, 32.5, 132.5, 39.5];
 const inKR = (b) => b && b[0] >= KR[0] && b[2] <= KR[2] && b[1] >= KR[1] && b[3] <= KR[3];
@@ -80,35 +80,16 @@ async function regionsLoad() {
   }
 }
 
-/** 성과 띠 — /survey/stats?by=deploy(계약) 가 있으면 그 봉투, 없으면 같은 지표를 기존 조회에서(xi-clean 과 같은 조회 · 숫자 한 출처).
-    by=deploy 는 아직 서버에 없다 → by=emd(대장과 다른 필지 합) · by=state(판정 완료) · findings(현장 확인 필요 = XI맵 HUD 와 같은 조회).
-    실패는 던진다(뒤늦게 다시 부를 수 있게) · 기록이 비었으면 null */
+/** 성과 띠 — 원칙 135(10-09): 첫 칸 = AI 분석 결과(요약 한 출처 · apply 에서 사례마다) · 그 밖은 '대장과 다른 필지'(by=emd 합) 한 칸.
+    실태조사 우선순위 수 · 판정 기록 수는 싣지 않는다. 실패는 던진다(뒤늦게 다시 부를 수 있게) · 기록이 비었으면 null */
 async function surveyBand() {
-  const [emd, st, fd] = await Promise.all([
-    retry('survey-emd', () => api('/survey/stats?by=emd')),
-    retry('survey-state', () => api('/survey/stats?by=state')),
-    retry('survey-findings', () => api('/survey/findings?' + new URLSearchParams({ priority: 'A', state: 'open,assigned', limit: '2000', sort: 'score' }))),
-  ]);
+  const emd = await retry('survey-emd', () => api('/survey/stats?by=emd'));
   const items = emd.items || [];
   if (!items.length) return null;
-  const asOf = emd.as_of || st.as_of;
   const cover = union(items.map((i) => i.bbox).filter((b) => b?.length === 4));
   const sumSus = items.reduce((a, i) => a + (+i.suspect_parcels?.value || 0), 0);
   const sus = items.find((i) => isEnvelope(i.suspect_parcels))?.suspect_parcels;
-  const byState = Object.fromEntries((st.items || []).map((i) => [i.key, i.n]));
-  const judged = ['closed', 'dismissed'].reduce((a, k) => a + (+byState[k]?.value || 0), 0);
-  const judgedEnv = byState.closed || byState.dismissed;
-  const pnus = new Set((fd.items || []).map((f) => f.pnu));
-  const total = fd.total?.value ?? pnus.size, exact = (fd.items || []).length >= total;
-  const need = exact ? pnus.size : Math.round(pnus.size * (total / Math.max(1, (fd.items || []).length)));
-  return {
-    cover,
-    stats: [
-      { key: 'field_check', label: '현장 확인 필요 필지', env: { value: need, unit: '필지', basis: exact ? 'inferred' : 'estimate', as_of: fd.as_of || asOf, source: 'AI 실태조사 결과', note: '현장 확인 전' } },
-      { label: '대장과 다른 필지', env: sus ? { ...sus, value: sumSus } : null },
-      { label: '판정 완료', env: judgedEnv ? { ...judgedEnv, value: judged, unit: '필지' } : null },
-    ],
-  };
+  return { cover, stats: [{ label: '대장과 다른 필지', env: sus ? { ...sus, value: sumSus } : null }] };
 }
 
 /* 배포본 → 표기 지역 한 곳. /regions(S-3)는 배포 구역과 겹치는 시군구마다 배포본을 달아 주므로 '처음 찾은 곳'은 이웃 군이 될 수 있다.
@@ -215,10 +196,9 @@ export async function load({ onLate } = {}) {
       if (sumName) { c.region = sumName; c.short = sumName; }
       else if (rg?.name) { c.region = rg.name; c.short = rg.name; }
       const covered = D.band && inBox(c.center, D.band.cover) && c.parcel;
-      // 업무 결과(실태조사 기록)가 없는 사례는 띠 없이 — AI 결과 수는 카드(K7)에만.
-      // '현장 확인 필요'는 요약(summary)의 그 사례 항목 값(모든 화면 같은 값) · 요약에 값이 없으면 그 칸을 뺀다
-      const need = metric(c.item, 'field_check');
-      c.stats = covered ? D.band.stats.map((x) => (x.key === 'field_check' ? (sum ? (need ? { ...x, env: need } : null) : x) : x)).filter((x) => x && x.env) : [];
+      // 첫 칸 = AI 분석 결과(요약의 그 사례 항목 · 업무 결과로 센 것만 — 모든 화면 같은 값) · 필지 대조 사례만 '대장과 다른 필지'를 더한다
+      const ai = aiOf(c.item);
+      c.stats = [ai ? { key: 'ai', label: AI_LABEL, env: ai } : null, ...(covered ? D.band.stats : [])].filter((x) => x && x.env);
     }
     D.pins = [];
     for (const c of cases) if (!D.pins.some((p) => p.profile === c.profile)) D.pins.push({ profile: c.profile, short: c.short });

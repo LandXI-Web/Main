@@ -1,0 +1,34 @@
+[
+ {
+  "section": "'현장 확인 필요 필지' 개념 빼기 — LX 화면",
+  "desc": "분석하기 · 서비스 카드 · 대시보드 · XI맵 · 서비스 상세 · 영업 · 메인 둘째 장면에서 '현장 확인 필요' 숫자 · 칩 · 제목 · 설명 · 정렬 기준을 뺐습니다. 큰 숫자 자리에는 AI 분석 결과를 보입니다. 기관 화면은 답을 주실 때까지 그대로 두었습니다. 열어 보시고 완료 또는 다시를 골라 주세요.",
+  "items": [
+   {
+    "id": "현장확인-빼기",
+    "t": "[화면][Land-XI] '현장 확인 필요 필지' 대신 AI 분석 결과",
+    "what": "큰 숫자는 AI 분석 결과입니다. 셈 단위는 서비스마다 필지 · 동 · 건이고, 숫자는 모든 화면에서 같은 값입니다. XI맵 남원시는 '현장 확인 필요 1,037필지'에서 'AI 분석 결과 2,098필지 · 영농관리 행정서비스 외 1개 서비스'로 바뀌었습니다. XI맵 도구에서 규칙 · 목록 · 대조를 뺐고, AI 분석 층이 기본으로 켜집니다. 결과 확인 · 학습 화면의 '현장 확인 기준' 숫자와 문구, 영업 화면의 '판정 완료' 칸, XI ChatGEO 추천 질문의 현장 확인 질문도 뺐습니다. 비닐하우스 · 건축물 · 곤포사일리지 · 주차장 카드는 결과가 분석 칸 조각이라 숫자 없이 'AI 분석 결과 있음'으로 보입니다. 기관 대시보드 · 기관 계정 XI맵은 답을 주실 때까지 그대로입니다. XI ChatGEO 답에 현장 확인 숫자가 붙는 곳 11개 파일은 목록으로만 정리했습니다.",
+    "shots": [
+     "shots/before-xi-1440.png",
+     "shots/xi-1440.png",
+     "shots/xi-390.png",
+     "shots/analyze-1440.png",
+     "shots/analyze-390.png",
+     "shots/card-1440.png",
+     "shots/card-390.png",
+     "shots/dash-1440.png",
+     "shots/dash-390.png",
+     "shots/before-detail-1440.png",
+     "shots/detail-1440.png"
+    ],
+    "where": [
+     ["https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190", "LX 직원", "큰 숫자 'AI 분석 결과 · 남원시 2,098필지' · 도구 층 · 가르기 · 입체 · 보고서 · 분석"],
+     ["https://app.land-xi.dev/landxi/v3/lx-analyze/", "LX 직원", "카드 결과 예시 'AI 분석 결과 · 남원시' · 숫자 없는 네 카드는 'AI 분석 결과 있음'"],
+     ["https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-farm", "LX 직원", "결과 예시 'AI 분석 결과 · 남원시 · 2026.06.08 기준' 2,098필지"],
+     ["https://app.land-xi.dev/landxi/v3/lx-console/", "LX 직원", "LX 직원 대시보드 — 현장 확인 문구 없음"],
+     ["https://app.land-xi.dev/landxi/v3/service-detail/?card=card-farm", "LX 직원", "사진 카드 'AI 분석 결과 2,098필지' · 소개 '필지마다 결과를 보여 줍니다'"]
+    ],
+    "opts": ["완료", "다시"]
+   }
+  ]
+ }
+]
