@@ -1,0 +1,117 @@
+{
+ "as_of": "2026-10-09T09:06:01+09:00",
+ "login": "로그인 폼(test@lx.or.kr)",
+ "profile": {
+  "name": "LX 직원",
+  "used": 29813134,
+  "quota": null,
+  "projects": 4,
+  "pending": null,
+  "last": null,
+  "dept": "",
+  "contact": ""
+ },
+ "projects": [
+  {
+   "name": "주차장 2026",
+   "storage": 9003774,
+   "samples": 170,
+   "regions": [
+    "여주시",
+    "천안시 서북구"
+   ],
+   "card": "card-389c45"
+  },
+  {
+   "name": "건축물 2026",
+   "storage": 8693572,
+   "samples": 139,
+   "regions": [
+    "원주시"
+   ],
+   "card": "card-45424f"
+  },
+  {
+   "name": "비닐하우스 2026",
+   "storage": 10205570,
+   "samples": 200,
+   "regions": [
+    "증평군",
+    "함양군",
+    "남원시"
+   ],
+   "card": "card-5e85a9"
+  },
+  {
+   "name": "곤포사일리지 2026",
+   "storage": 1910218,
+   "samples": 60,
+   "regions": [
+    "보령시"
+   ],
+   "card": "card-d8fc01"
+  }
+ ],
+ "jobsMine": {
+  "done": 401,
+  "failed": 3,
+  "cancelled": 36,
+  "running": 0,
+  "first": "2026-09-26T20:51:12+09:00",
+  "last": "2026-10-08T19:14:13+09:00",
+  "kinds": [
+   {
+    "kind": "AI 분석",
+    "n": 259
+   },
+   {
+    "kind": "필지 대조",
+    "n": 104
+   },
+   {
+    "kind": "위성 지수",
+    "n": 18
+   },
+   {
+    "kind": "학습",
+    "n": 18
+   },
+   {
+    "kind": "영상 준비",
+    "n": 2
+   }
+  ]
+ },
+ "sample": {
+  "images": 200,
+  "train": 160,
+  "val": 40,
+  "excluded": 0,
+  "classes": [
+   {
+    "name": "건물",
+    "images": 144,
+    "objects": 1183
+   },
+   {
+    "name": "주차장",
+    "images": 40,
+    "objects": 176
+   },
+   {
+    "name": "경작지",
+    "images": 181,
+    "objects": 1425
+   },
+   {
+    "name": "비닐하우스",
+    "images": 130,
+    "objects": 669
+   }
+  ]
+ },
+ "notices": {
+  "assist": 0,
+  "project": 0
+ }
+}

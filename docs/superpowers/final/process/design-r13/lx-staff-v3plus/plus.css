@@ -1,0 +1,83 @@
+/* plus.css — 설계 13차 'v3 + 내용' 시안. v3 화면의 kit.css · console.css · project.css · me.css 를 그대로 쓰고, 그 위에 더한 칸의 짜임만 적는다.
+   새 색 0 · 새 칸 모양 0 · 그라데이션 0 · 그림자 0 — 토큰(--ink · --sub · --rule · --bg-0 · --warn)과 v3 부품(.t-card · .ld-h · .ld-cell · .k-me-bar)만.
+   통일 규칙 셋(세 화면 같음):
+     ① 칸 머리 = 대시보드 .ld-h (제목 22px 700 · 옆에 회색 한 줄 · 오른쪽 '→' 글자 링크)
+     ② 큰 숫자 = 요청함 .ld-cell b (800 · 32px · 0 은 회색)
+     ③ 막대 = 내 정보 창 저장 용량 막대 .k-me-bar (높이 6 · 회색 길 · 검정 채움) 한 모양 — 줄마다 '이름 | 막대 | 값' */
+
+/* ── 막대 줄(이름 | 막대 | 값) ── */
+.lp-bars{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.lp-bars li{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) auto;align-items:center;gap:12px}
+.lp-bars .k-me-bar{display:block}
+.lp-bars .lp-n{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-bars .lp-v{font:500 var(--fs-label)/20px var(--font-num);color:var(--ink);white-space:nowrap;text-align:right;min-width:5.5em}
+.lp-bars .lp-v small{margin-left:6px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lp-bars--wide li{grid-template-columns:minmax(0,7em) minmax(0,1fr) 5.5em 7.5em}
+.lp-bars--wide .lp-x{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;text-align:right}
+
+/* ── 큰 숫자 한 줄(숫자 · 단위 · 회색 설명) — 숫자 모양은 .ld-cell b 와 같다 ── */
+.lp-big{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+.lp-big b{font:800 32px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.lp-big .lp-u{font:700 18px/1 var(--font-display);color:var(--ink)}
+.lp-big small{margin-left:4px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ld-cell.is-warn b{color:var(--warn)}
+.ld-cells--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+/* ── 칸 안 두 단(왼쪽 큰 숫자 · 오른쪽 막대) ── */
+.lp-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:20px 32px;align-items:start}
+.lp-sep{border-top:1px solid var(--rule);padding-top:14px}
+.lp-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lp-foot span{display:inline-block}
+
+/* ── '예시' · '서버에 더할 것' 표 — v3 회백 칩(.ld-chip 와 같은 모양 · 글자만) ── */
+.lp-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-8);background:var(--bg-0);color:var(--sub-2);font:500 12px/22px var(--font-body);white-space:nowrap;vertical-align:middle}
+.ld-h .lp-tag{margin-left:8px;transform:translateY(-3px)}
+
+/* ── 목록 줄(시각 | 무엇 | 끝·실패) — 최근 활동(.ld-acts)과 같은 줄 ── */
+.lp-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lp-rows li{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.lp-rows li:first-child{border-top:0;padding-top:0}
+.lp-rows b{font-weight:500;color:var(--ink)}
+.lp-rows i{font-style:normal;color:var(--sub)}
+.lp-rows .lp-w{font:400 13px/20px var(--font-num);color:var(--sub);white-space:nowrap}
+.lp-st{font:500 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.lp-st.is-no{color:var(--warn)}
+.lp-rows.is-ex li{color:var(--sub)}
+.lp-rows.is-ex b{color:var(--sub-2)}
+
+/* ── ① 대시보드 — 더한 칸의 자리 · 휴대폰 순서 ── */
+.lp-notice .lp-rows li{grid-template-columns:44px minmax(0,1fr)}
+@media (max-width:1100px){.lp-store{order:4}.lp-jobs{order:6}.lp-notice{order:7}.ld-quick{order:5}.ld-act{order:8}}
+@media (max-width:960px){.lp-two{grid-template-columns:1fr}.ld-cells--4{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}.lp-big b{font-size:26px}}
+/* 선택지 보기 — ?v=1(저장 용량만) · ?notice=0(공지 없음) */
+html[data-v="1"] .lp-jobs,html[data-v="1"] .lp-notice,html[data-notice="0"] .lp-notice{display:none}
+
+/* ── ② 프로젝트 한 장 — 넓이 전체(원칙 127) · 칸 머리를 대시보드와 같게 ── */
+.lxp-page{max-width:none;padding:32px 40px 64px}
+.lxp-grid{grid-template-columns:minmax(0,1fr) 400px}
+.lxp-h{font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.lxp-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.lxp-pair > .t-card{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lp-data{display:flex;flex-direction:column;gap:18px}
+@media (max-width:1180px){.lxp-pair{grid-template-columns:1fr}}
+@media (max-width:960px){.lxp-page{padding:20px 16px 40px}.lxp-grid{grid-template-columns:1fr}.lp-bars--wide li{grid-template-columns:minmax(0,6em) minmax(0,1fr) auto}.lp-bars--wide .lp-x{display:none}}
+
+/* ── ③ 내 정보 — v3 창을 두 단으로(왼쪽 = v3 창 그대로 · 오른쪽 = 저장 용량 · 늘리기 요청 이력) ── */
+.k-md.lp-wide{width:min(960px,calc(100vw - 48px));max-width:none}
+.lp-me{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.lp-me > .k-me{min-width:0}
+.lp-me-r{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lp-me-r .k-me-st{gap:12px}
+@media (max-width:960px){.lp-me{grid-template-columns:1fr}}
+
+/* ── 넓은 화면(1920)에서 가운데 1344 로 묶지 않는다(원칙 127) — 오른쪽 단도 함께 넓어진다 ── */
+@media (min-width:1101px){.ld-grid{max-width:none;grid-template-columns:minmax(0,1fr) minmax(440px,.5fr)}}
+@media (min-width:1101px) and (max-width:1280px){.ld-grid{grid-template-columns:minmax(0,1fr) 380px}}
+
+/* ── 흐린 경계 보강(법전 안) — 회백 칸(.k-me-st) 안의 막대 길 · 표는 흰색으로(회백 위 회색 길은 거의 안 보인다) ── */
+.k-me-st .k-me-bar,.k-me-st .lp-tag{background:var(--bg-1)}
+
+/* ── 작업 이력 두 단(아래로 다섯 줄씩) ── */
+.lp-rows--2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,auto);grid-auto-flow:column;column-gap:40px}
+.lp-rows--2 li:nth-child(6){border-top:0;padding-top:0}
+@media (max-width:960px){.lp-rows--2{display:flex}.lp-rows--2 li:nth-child(6){border-top:1px solid var(--rule);padding-top:9px}}
