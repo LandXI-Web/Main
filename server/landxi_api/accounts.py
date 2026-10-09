@@ -99,8 +99,8 @@ ACTION_KO = {
     "account.reset.request": "비밀번호 재설정 요청", "account.reset.issue": "임시 비밀번호 발급", "account.reset.reject": "재설정 거절",
     "account.temp.issue": "임시 비밀번호 발급", "account.lock": "잠금", "account.unlock": "잠금 풀기", "account.role": "역할 변경",
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
-    "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 늘리기 요청",
-    "account.storage.approve": "저장 용량 늘리기 승인", "account.storage.reject": "저장 용량 늘리기 반려", "account.depts": "부서 목록 바꿈",
+    "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 증량 신청",
+    "account.storage.approve": "저장 용량 증량 승인", "account.storage.reject": "저장 용량 증량 거절", "account.depts": "부서 목록 바꿈",
 }
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
@@ -516,9 +516,9 @@ async def decide_reset(rid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM reset_requests WHERE id=$1 FOR UPDATE", rid)
         if not r or not _in_scope(p, r["realm"], r["tenant_id"]):
-            raise ApiError("not_found", "요청이 없습니다")
+            raise ApiError("not_found", "신청이 없습니다")
         if r["state"] != "pending":
-            raise ApiError("conflict", "이미 처리한 요청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
+            raise ApiError("conflict", "이미 처리한 신청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
         if _mine(p, r["realm"], r["user_id"]):
             raise ApiError("self_account", "내 계정의 요청은 다른 관리자가 처리합니다", status=409)
         if d == "reject":
@@ -877,7 +877,7 @@ async def storage_request(body: dict, request: Request):
     """저장 용량 늘리기 요청 — 원하는 할당(GB) · 이유 한 줄. 할당이 없으면(제한 없음) 요청할 것이 없다(409). 대기 중 요청은 하나."""
     p = _me_lx(request)
     want = _gb(body.get("want_gb"), field="want_gb")
-    why = _text(body.get("why"), WHY_MAX, "이유", "why")
+    why = _text(body.get("why"), WHY_MAX, "사유", "why")
     from .projects import lead_storage
     async with db(realm="lx") as conn:
         u = await conn.fetchrow("SELECT login, name FROM lx_users WHERE id=$1", p.user_id)
@@ -885,11 +885,11 @@ async def storage_request(body: dict, request: Request):
             raise ApiError("not_found", "계정이 없습니다")
         st = await lead_storage(conn, p.user_id)
         if st["quota_gb"] is None:
-            raise ApiError("conflict", "할당이 없어 늘리기 요청이 필요 없습니다", {"why": "no_quota"}, 409)
+            raise ApiError("conflict", "할당이 없어 증량 신청이 필요 없습니다", {"why": "no_quota"}, 409)
         if want <= st["quota_gb"]:
             raise ApiError("bad_request", f"지금 할당 {gb_word(st['quota_gb'])}보다 큰 값을 적어 주세요", {"field": "want_gb"})
         if await conn.fetchval("SELECT 1 FROM storage_requests WHERE user_id=$1 AND state='pending'", p.user_id):
-            raise ApiError("conflict", "이미 보낸 요청이 있습니다. LX 관리자 확인을 기다려 주세요", {"why": "pending"}, 409)
+            raise ApiError("conflict", "이미 신청한 것이 있습니다. LX 관리자 확인을 기다려 주세요", {"why": "pending"}, 409)
         rid = "sq_" + secrets.token_hex(8)
         await conn.execute("INSERT INTO storage_requests(id, user_id, login, from_gb, want_gb, why) VALUES ($1,$2,$3,$4,$5,$6)",
                            rid, p.user_id, u["login"], Decimal(str(st["quota_gb"])), Decimal(str(want)), why)
@@ -904,16 +904,16 @@ async def decide_storage(rid: str, body: dict, request: Request):
     """늘리기 요청 승인(할당 = 원하는 값) · 반려(사유 필수) → 요청한 사람에게 알림 한 줄(대시보드 · 프로젝트 목록 · 내 정보)."""
     p = _who(request)
     if not p.is_admin:
-        raise ApiError("forbidden", "저장 용량 요청은 LX 관리자가 처리합니다")
+        raise ApiError("forbidden", "저장 용량 증량 신청은 LX 관리자가 처리합니다")
     d, reason = _decision(body, ("approve", "reject"))
     from .approvals import SOLO_NOTE, solo_admin
     from .projects import lead_storage
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM storage_requests WHERE id=$1 FOR UPDATE", rid)
         if not r:
-            raise ApiError("not_found", "요청이 없습니다")
+            raise ApiError("not_found", "신청이 없습니다")
         if r["state"] != "pending":
-            raise ApiError("conflict", "이미 처리한 요청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
+            raise ApiError("conflict", "이미 처리한 신청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
         solo = False
         if _mine(p, "lx", r["user_id"]):
             solo = await solo_admin(conn, p)
@@ -933,7 +933,7 @@ async def decide_storage(rid: str, body: dict, request: Request):
         await conn.execute("UPDATE storage_requests SET state=$2, reason=$3, decided_by=$4, decided_name=$5, decided_at=now() WHERE id=$1",
                            rid, "approved" if d == "approve" else "rejected", reason or None, p.user_id, p.name)
         if u["id"] != p.user_id:                       # 요청한 사람에게 알림(스스로 처리했으면 필요 없다)
-            text = f"저장 용량 할당이 {gb_word(want)}로 늘었습니다" if d == "approve" else f"저장 용량 늘리기 요청({gb_word(want)})이 반려되었습니다"
+            text = f"저장 용량 할당이 {gb_word(want)}로 늘었습니다" if d == "approve" else f"저장 용량 증량 신청({gb_word(want)})이 거절되었습니다"
             await conn.execute("INSERT INTO lx_notices(id, user_id, kind, project_id, text, note, by) VALUES ($1,$2,'account.storage',NULL,$3,$4,$5)",
                                "nt_" + secrets.token_hex(6), u["id"], text, reason or None, p.user_id)
         await _log(conn, p.user_id, "lx", f"account.storage.{d}", u["login"],
@@ -1007,6 +1007,36 @@ async def put_storage_default(body: dict, request: Request):
             await _log(conn, p.user_id, "lx", "account.quota.default", "",
                        {"realm": "lx", "tenant_id": None, "name": "기본 할당", "from": before, "to": q, "reason": f"{gb_word(before)} → {gb_word(q)}"})
     return {"quota_gb": env(q, "GB", "recorded", "기본 할당"), "at": now_iso()}
+
+
+@router.get("/accounts/storage-overview")
+async def storage_overview(request: Request):
+    """저장 공간 전체 현황(용량-1 · 원칙 144 '관리자는 전체부터') — 자료 보관 드라이브(서버 자료 루트) OS 실측 전체 · 사용 중 · 여유
+    + 계정 할당 합계(사용 중인 LX 계정 — 따로 정한 값 → 없으면 기본 할당) + 계정이 실제 쓴 양 합(projects.storage_all 한 출처).
+    증량 신청 서랍의 '승인하면 할당 합계 n — 여유의 n%' 한 줄이 이 값을 쓴다."""
+    _admin(request)
+    import shutil
+    from .projects import storage_all, storage_default
+    root = config.DATA_ROOT if config.DATA_ROOT.exists() else config.DATA_ROOT.anchor
+    du = await run_in_threadpool(shutil.disk_usage, str(root))
+    async with db(realm="lx") as conn:
+        stor = await storage_all(conn)
+        d = await storage_default(conn)
+        rows = await conn.fetch("SELECT id, status FROM lx_users")
+        pend = await conn.fetchval("SELECT count(*) FROM storage_requests WHERE state='pending'")
+    active = [r["id"] for r in rows if r["status"] != "disabled"]
+    alloc = sum(float(stor[i]["quota_gb"] or 0) for i in active if i in stor)
+    no_quota = sum(1 for i in active if i in stor and stor[i]["quota_gb"] is None)
+    used = sum(int(v["bytes"]) for v in stor.values())
+    at = now_iso()
+    return {"disk": {"total": env(du.total, "bytes", "measured", "자료 보관 드라이브 전체(OS 실측)", as_of=at),
+                     "used": env(du.used, "bytes", "measured", "자료 보관 드라이브 사용 중(영상 · 결과 · 학습데이터 모두)", as_of=at),
+                     "free": env(du.free, "bytes", "measured", "자료 보관 드라이브 여유(OS 실측)", as_of=at)},
+            "alloc_gb": env(round(alloc, 2), "GB", "recorded", "사용 중인 LX 계정의 할당 합(따로 정한 값 → 없으면 기본 할당)"),
+            "accounts": env(len(active), "count", "recorded", "사용 중인 LX 계정"),
+            "no_quota": env(no_quota, "count", "recorded", "할당이 없는 사용 중 LX 계정"),
+            "used": env(used, "bytes", "measured", "LX 계정이 실제 쓴 양 합(프로젝트장인 프로젝트의 저장 공간)"),
+            "default_gb": env(d, "GB", "recorded", "기본 할당"), "pending": env(int(pend or 0), "count", "recorded", "대기 중 증량 신청"), "at": at}
 
 
 # ── LX 부서 목록(제안 S-21 확인 · 10-01 사용자 "부서는 일단 여기(LX 누리집 조직도)에 보자. 나중엔 사내 시스템에서 불러오는 작업을 할 예정") ─────────

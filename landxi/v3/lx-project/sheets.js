@@ -235,7 +235,7 @@ function storageLine(st) {
   const el = h('p.lxp-quota', { role: 'status' }, h('span', { text: `${who} 할당의 ${pct}%를 썼습니다.` }), ' ',
     h('span', { text: '올리기는 그대로 됩니다' }));
   if (st.lead_is_me) {
-    const ask = h('button.lxp-quota-ask', { type: 'button', text: '늘리기 요청' });
+    const ask = h('button.lxp-quota-ask', { type: 'button', text: '증량 신청' });
     ask.addEventListener('click', () => askMore());
     el.append(' ', ask);
   }
@@ -243,19 +243,18 @@ function storageLine(st) {
 }
 async function askMore() {
   const { openStorageRequest } = await import('../kit/me.js');
-  try { const p = await api('/me/profile'); openStorageRequest({ storage: p.storage }); }
-  catch { problem('지금은 요청할 수 없습니다', '잠시 뒤 내 정보에서 다시 해 주세요.'); }
+  openStorageRequest();                              // 내 정보 창 — 저장 용량 칸에서 증량 신청 폼이 펼쳐진다(직원-7 · 같은 자리)
 }
 /** 파일을 올린 뒤 90% 를 넘었으면 창으로 한 번 권한다(이 창을 연 동안 한 번 — 계속 띄우지 않는다) */
 let warned = false;
 function storageWindow(st) {
   if (!st?.warn || !st.lead_is_me || warned) return;
   warned = true;
-  const ask = h('button.t-btn', { type: 'button', text: '늘리기 요청' });
+  const ask = h('button.t-btn', { type: 'button', text: '증량 신청' });
   const ok = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '닫기' });
   const m = modal({ title: '저장 용량이 거의 찼습니다', body: h('div.lxp-sh', {},
     h('p.lxp-say', {}, u(`할당 ${gbw(v(st.quota_gb))} 중`), ' ', u(`${size(v(st.used))}(${v(st.pct)}%)를 썼습니다.`), h('br'),
-      u('올리기는 막지 않고 그대로 됩니다.'), ' ', u('더 필요하면 늘리기 요청을 보내 주세요.')),
+      u('올리기는 막지 않고 그대로 됩니다.'), ' ', u('더 필요하면 증량 신청을 해 주세요.')),
     h('div.lxp-act', {}, ask, ok)) });
   m.el.classList.add('lxp-md');
   ok.addEventListener('click', () => m.close());

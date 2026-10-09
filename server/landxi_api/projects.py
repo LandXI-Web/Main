@@ -208,12 +208,17 @@ async def project_bytes(conn, pid: str) -> int:
     return int(await conn.fetchval("SELECT " + _PROJECT_BYTES.format(p="$1"), pid) or 0)
 
 
-STORAGE_DEFAULT_KEY = "storage.default_quota_gb"   # lx_settings — 따로 정하지 않은 계정의 할당(LX 관리자가 계정 관리에서 정한다 · 없으면 할당 없음)
+STORAGE_DEFAULT_KEY = "storage.default_quota_gb"   # lx_settings — 따로 정하지 않은 계정의 할당(LX 관리자가 계정 관리 '저장 용량' 탭에서 정한다)
+STORAGE_DEFAULT_START_GB = 50.0                     # 처음 값(용량-1 · 10-09 사용자 확인) — 관리자가 한 번도 정하지 않았을 때만 · 정하면 설정 값이 이긴다
 STORAGE_WARN_PCT = 90                               # 할당의 이만큼을 넘으면 내 정보 · 파일 올리는 자리에 한 줄 + 창(막지는 않는다 — S-19 · 원칙 91 · 109)
 
 
 async def storage_default(conn) -> float | None:
-    v = await conn.fetchval("SELECT value FROM lx_settings WHERE key=$1", STORAGE_DEFAULT_KEY)
+    """기본 할당 — 설정 줄이 없으면 처음 값(50 GB) · 관리자가 비워 둔 줄(null)이면 할당 없음."""
+    row = await conn.fetchrow("SELECT value FROM lx_settings WHERE key=$1", STORAGE_DEFAULT_KEY)
+    if row is None:
+        return STORAGE_DEFAULT_START_GB
+    v = row["value"]
     try:
         return float(v) if v is not None else None
     except (TypeError, ValueError):

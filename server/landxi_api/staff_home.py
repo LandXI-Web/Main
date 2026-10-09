@@ -52,7 +52,8 @@ async def my_storage(request: Request):
     f = lambda x: float(x) if x is not None else None  # noqa: E731
     return {"storage": st,
             "projects": [{"name": r["name"], "archived": r["state"] == "archived", "bytes": int(r["b"] or 0)} for r in rows],
-            "requests": [{"from_gb": f(r["from_gb"]), "want_gb": f(r["want_gb"]), "why": r["why"], "state": r["state"], "reason": r["reason"],
+            "requests": [{"from_gb": env(f(r["from_gb"]), "GB", "recorded", "신청할 때의 할당"),
+                          "want_gb": env(f(r["want_gb"]), "GB", "recorded", "필요한 용량(신청한 할당)"), "why": r["why"], "state": r["state"], "reason": r["reason"],
                           "at": _iso(r["created_at"]), "decided_at": _iso(r["decided_at"])} for r in reqs],
             "as_of": now_iso()}
 

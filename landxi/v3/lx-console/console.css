@@ -101,7 +101,14 @@
 
 /* ⑤ 저장 용량 · ⑥ 내가 돌린 작업 · ⑦ 공지(직원-4 ⓐ · 10-09 · 시안 design-r13/lx-staff-v3plus) — 큰 숫자 · 막대 줄은 내 정보 창과 같은 부품(kit/me.css .k-me-big · .k-me-bars) */
 button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
-.ld-store-b{display:flex;flex-direction:column;gap:16px}
+.ld-store-b{display:flex;flex-direction:column;gap:12px}
+/* 저장 용량 칸 — 도넛 · 범례 · 할당 대비 막대(kit/me.css .k-me-dnr · .k-me-gauge · 직원-7) */
+.ld-store .k-me-gauge .k-me-bar{background:var(--bg-0)}
+.ld-store-s{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.ld-store-s span,.ld-store-p span{display:inline-block}
+.ld-store-a{display:flex;gap:16px;padding-top:10px;border-top:1px solid var(--rule)}
+.ld-store-p{margin:0;font:500 13px/19px var(--font-body);color:var(--ink-2)}
+.ld-store .k-me-dn{--k-me-dn-bg:var(--bg-0)}
 .ld-warn{margin:0;font:500 13px/19px var(--font-body);color:var(--warn)}
 .ld-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:20px 32px;align-items:start}
 .ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}

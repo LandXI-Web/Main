@@ -1,0 +1,57 @@
+{
+ "dash-store-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "words": []
+ },
+ "my-ask-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "words": []
+ },
+ "my-sent-1440.png": {
+  "overflowX": false,
+  "orphans": [
+   "10.950 GB → 100 GB사유 시험 — 2차 학습데이터 추가대기"
+  ],
+  "cut": [],
+  "words": []
+ },
+ "admin-storage-1440.png": {
+  "overflowX": false,
+  "orphans": [],
+  "cut": [],
+  "words": []
+ },
+ "tabs": [
+  "가입 신청0",
+  "비밀번호 재설정0",
+  "저장 용량1",
+  "계정",
+  "부서",
+  "로그인 실패",
+  "처리 기록"
+ ],
+ "drawer": "증량 신청\n누가\nLX 직원 · test@lx.or.kr\n언제\n10.9 13:02\n사유\n시험 — 2차 학습데이터 추가\n사용량\n29.8 MB · 할당의 0.1%\n\n50\nGB\n→\n100\nGB\n\n승인하면 이 사람만 100 GB 개별 할당. 할당 합계 200 GB — 여유 1.9 TB의 11%. 신청한 사람에게 알림이 갑니다\n\n거절\n승인",
+ "admin-after": [
+  "LX 직원 test@lx.or.kr LX 직원 4 29.8 MB 100 GB 0.1% 개별 할당 GB 기본으로",
+  "LX 관리자 lxadmin@lx.or.kr LX 관리자 0 0 MB 50 GB 0% 기본 할당 GB",
+  "LX 영업 sales@lx.or.kr LX 영업 0 0 MB 50 GB 0% 기본 할당 GB",
+  "박서연 lx-admin LX 관리자 0 0 MB — 사용 중지 바꿀 수 없음",
+  "LX 관리자 lxadmin LX 관리자 0 0 MB — 사용 중지 바꿀 수 없음",
+  "김도윤 lx-staff LX 직원 0 0 MB — 사용 중지 바꿀 수 없음"
+ ],
+ "dash-after": "저장 용량할당 100 GB\n내 정보\n29.8\nMB\n할당의 0.1%\n비닐하우스 2026\n34%\n10.2 MB\n주차장 2026\n30%\n9.0 MB\n건축물 2026\n29%\n8.7 MB\n곤포사일리지 2026\n6%\n1.9 MB\n\n할당 100 GB 대비\n0.1%\n\n프로젝트 4개의 학습데이터 · 올린 파일. 개별 할당 100 GB — LX 관리자가 정함\n\n용량 증량 신청",
+ "my-approved-1440.png": {
+  "overflowX": false,
+  "orphans": [
+   "10.950 GB → 100 GB사유 시험 — 2차 학습데이터 추가승인"
+  ],
+  "cut": [],
+  "words": []
+ },
+ "my-after": "저장 용량\n\n개별 할당 100 GB\n29.8\nMB\n할당의 0.1%\n비닐하우스 2026\n34%\n10.2 MB\n주차장 2026\n30%\n9.0 MB\n건축물 2026\n29%\n8.7 MB\n곤포사일리지 2026\n6%\n1.9 MB\n\n할당 100 GB 대비\n0.1%\n\n내가 프로젝트장인 프로젝트 4개의 학습데이터 · 올린 파일\n\n증량 신청\n\n증량 신청 이력\n\n1\n신청 · 대기 0\n\n10.9\n50 GB → 100 GB\n사유 시험 — 2차 학습데이터 추가\n승인\n\n신청의 승인 · 거절이 여기 남습니다",
+ "reverted": "LX 직원\ttest@lx.or.kr\tLX 직원\t4\t29.8 MB\t 50 GB 0.1% \t기본 할당\t GB"
+}

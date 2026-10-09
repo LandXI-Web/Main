@@ -47,6 +47,8 @@ def quota_back():
 # ── S-19 저장 용량 할당 · 늘리기 요청 · 승인 ───────────────────────────────────────────
 def test_storage_quota_request_approve_reject(live, tok, quota_back):
     s, a = H(tok["staff"]), H(tok["admin"])
+    assert V(httpx.get(B + "/accounts/storage-default", headers=a, timeout=30).json()["quota_gb"]) is not None   # 처음 값 50 GB(또는 관리자가 정한 값)
+    httpx.put(B + "/accounts/storage-default", headers=a, json={"quota_gb": None}, timeout=30)       # 할당 없음 경우부터(끝나면 quota_back 이 되돌림)
     me = httpx.get(B + "/me/profile", headers=s, timeout=30).json()
     used = V(me["storage"]["used"])
     assert V(me["storage"]["quota_gb"]) is None and me["storage"]["warn"] is False
@@ -72,6 +74,8 @@ def test_storage_quota_request_approve_reject(live, tok, quota_back):
     r = httpx.post(B + "/me/storage-request", headers=s, json={"want_gb": q + 1, "why": "pytest 2차 학습데이터 추가"}, timeout=30)
     assert r.status_code == 201, r.text
     assert V(r.json()["storage"]["pending"]["want_gb"]) == q + 1
+    sr = httpx.get(B + "/me/storage", headers=s, timeout=30)                                  # 신청 이력이 있어도 열린다(숫자 봉투)
+    assert sr.status_code == 200 and V(sr.json()["requests"][0]["want_gb"]) == q + 1
     assert httpx.post(B + "/me/storage-request", headers=s, json={"want_gb": q + 2, "why": "pytest"}, timeout=30).status_code == 409
     # 관리자 계정 관리 — 요청 목록(가입 신청 · 재설정과 같은 자리) · 대기 수
     assert httpx.get(B + "/accounts/summary", headers=a, timeout=30).json()["counts"]["storage"] >= 1
@@ -86,7 +90,7 @@ def test_storage_quota_request_approve_reject(live, tok, quota_back):
     assert r.status_code == 200 and r.json()["state"] == "rejected"
     assert httpx.post(B + f"/accounts/storage/{it['id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 409
     n = [x for x in httpx.get(B + "/projects/notices", headers=s, timeout=30).json()["items"] if x["kind"] == "account.storage"]
-    assert n and "반려" in n[0]["text"] and n[0]["note"] == "pytest 서버 증설 뒤 다시" and n[0]["by_word"] == "처리한 사람" and n[0]["project"] is None
+    assert n and "거절" in n[0]["text"] and n[0]["note"] == "pytest 서버 증설 뒤 다시" and n[0]["by_word"] == "처리한 사람" and n[0]["project"] is None
     me = httpx.get(B + "/me/profile", headers=s, timeout=30).json()
     assert me["storage"]["pending"] is None and me["storage"]["last"]["state"] == "rejected" and V(me["storage"]["quota_gb"]) == q
     # 다시 요청 → 승인 = 할당이 원하는 값 · 알림
@@ -99,7 +103,7 @@ def test_storage_quota_request_approve_reject(live, tok, quota_back):
     n = [x for x in httpx.get(B + "/projects/notices", headers=s, timeout=30).json()["items"] if x["kind"] == "account.storage"]
     assert any("늘었습니다" in x["text"] for x in n)
     log = httpx.get(B + "/accounts/log", headers=a, timeout=30).json()["items"]
-    assert {"저장 용량 늘리기 승인", "저장 용량 늘리기 반려", "저장 용량 늘리기 요청", "저장 용량 할당"} <= {x["action_ko"] for x in log[:12]}
+    assert {"저장 용량 증량 승인", "저장 용량 증량 거절", "저장 용량 증량 신청", "저장 용량 할당"} <= {x["action_ko"] for x in log[:12]}
     # 기본 할당 — 따로 정하지 않은 계정에 쓴다(사람마다 값을 비우면 기본으로)
     assert httpx.put(B + "/accounts/storage-default", headers=s, json={"quota_gb": 5}, timeout=30).status_code == 403
     r = httpx.put(B + "/accounts/storage-default", headers=a, json={"quota_gb": 5}, timeout=30)
@@ -109,6 +113,9 @@ def test_storage_quota_request_approve_reject(live, tok, quota_back):
     r = httpx.put(B + "/accounts/storage-default", headers=a, json={"quota_gb": None}, timeout=30)
     assert V(r.json()["quota_gb"]) is None
     assert V(httpx.get(B + "/me/profile", headers=s, timeout=30).json()["storage"]["quota_gb"]) is None
+    ov = httpx.get(B + "/accounts/storage-overview", headers=a, timeout=30)                       # 저장 공간 전체 현황(용량-1) — 관리자만
+    assert ov.status_code == 200 and V(ov.json()["disk"]["total"]) >= V(ov.json()["disk"]["free"]) > 0
+    assert httpx.get(B + "/accounts/storage-overview", headers=s, timeout=30).status_code == 403
     # 기관 관리자 화면에는 이 일이 없다
     assert httpx.get(B + "/accounts/requests?kind=storage", headers=H(tok["namwon"]), timeout=30).json()["items"] == []
     assert httpx.get(B + "/accounts/storage-default", headers=H(tok["namwon"]), timeout=30).status_code == 403

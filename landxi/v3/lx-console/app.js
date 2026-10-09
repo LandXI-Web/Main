@@ -13,7 +13,7 @@ import { openNewProject } from '../lx-project/new.js';
 import { summary } from './summary.js';
 import { say } from './words.js';
 import { dueSets } from '../lx-deploy/retrain.js';
-import { openMe, projectBars, bigSize, gb } from '../kit/me.js';
+import { openMe, storageDonut, quotaGauge, quotaTag, gb } from '../kit/me.js';
 import { modal } from '../kit/modal.js';
 
 ensureCss();                                         // 6칸 막대 · 막힌 곳 부품(프로젝트 목록과 같은 것)의 스타일
@@ -39,7 +39,7 @@ const quick = h('section.t-card.ld-card.ld-quick', { 'aria-label': '바로 분�
 const act = h('section.t-card.ld-card.ld-act', { 'aria-label': '최근 활동' }, head('최근 활동'), h('ul.ld-acts'));
 const storeSub = h('small.ld-sub');
 const store = h('section.t-card.ld-card.ld-store', { 'aria-label': '저장 용량' },
-  head('저장 용량', h('button.ld-more', { type: 'button', text: '내 정보', onclick: () => openMe({ onSaved: () => drawStore() }) }), storeSub), h('div.ld-store-b'));
+  head('저장 용량', h('button.ld-more', { type: 'button', text: '내 정보', onclick: () => openMe({ onSaved: () => drawStore(), onStorage: () => drawStore() }) }), storeSub), h('div.ld-store-b'));
 const jobsSub = h('small.ld-sub');
 const jobs = h('section.t-card.ld-card.ld-jobs', { 'aria-label': '내가 돌린 작업' }, head('내가 돌린 작업', null, jobsSub), h('div.ld-jobs-b'));
 const noticeSub = h('small.ld-sub');
@@ -244,25 +244,33 @@ async function drawActs() {
   box.replaceChildren(...lines);
 }
 
-/* ── ⑤ 저장 용량 — 큰 숫자(내가 쓴 양) · 할당 · 프로젝트별 막대(내 정보 창과 같은 부품 · GET /me/storage 한 출처) ── */
+/* ── ⑤ 저장 용량 — 도넛(가운데 사용량 · 프로젝트별 비중) · 할당 대비 막대 · 증량 신청(직원-7 · 내 정보 창과 같은 부품 · GET /me/storage 한 출처) ── */
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 async function drawStore() {
   const box = store.querySelector('.ld-store-b');
   let j;
   try { j = await api('/me/storage'); } catch { fail(box, () => { wait(box); drawStore(); }); return; }
   const st = j.storage || {};
-  const used = Number(ev(st.used)) || 0, q = ev(st.quota_gb), pct = ev(st.pct);
+  const used = Number(ev(st.used)) || 0, q = ev(st.quota_gb);
   const has = q !== null && q !== undefined;
-  storeSub.textContent = has ? `할당 ${gb(q)}${pct !== null && pct !== undefined ? ` · ${pct}%` : ''}` : '할당 없음';
+  storeSub.textContent = has ? `할당 ${gb(q)}` : '할당 없음';
   const ps = j.projects || [];
-  const kids = [bigSize(used, ps.length ? `프로젝트 ${ps.length}개` : '내가 프로젝트장인 프로젝트 없음')];
-  if (ps.length) kids.push(projectBars(ps, used, { max: 4 }));
-  if (st.warn) kids.push(h('p.ld-warn', { text: `할당의 ${pct}%를 썼습니다 · 내 정보에서 늘리기 요청` }));
+  const pend = (j.requests || []).find((r) => r.state === 'pending');
+  const kids = [storageDonut({ projects: ps, used, quota: q, dia: 132 })];
+  const g = quotaGauge(used, q, st.warn);
+  if (g) kids.push(g);
+  kids.push(h('p.ld-store-s', {}, h('span', { text: ps.length ? `프로젝트 ${ps.length}개의 학습데이터 · 올린 파일.` : '내가 프로젝트장인 프로젝트가 없습니다.' }), ' ',
+    h('span', { text: has ? `${quotaTag(st)} — LX 관리자가 정함` : '할당은 LX 관리자가 정합니다' })));
+  if (st.warn) kids.push(h('p.ld-warn', { text: `할당의 ${ev(st.pct)}%를 썼습니다` }));
+  const foot = h('div.ld-store-a');
+  if (pend) foot.append(h('p.ld-store-p', {}, h('span', { text: `증량 신청 중 ${gb(ev(pend.want_gb))} ·` }), ' ', h('span', { text: 'LX 관리자 확인 전' })));
+  else if (has) foot.append(h('button.k-me-ask', { type: 'button', text: '용량 증량 신청', onclick: () => openMe({ ask: true, onStorage: () => drawStore(), onSaved: () => drawStore() }) }));
+  if (foot.childNodes.length) kids.push(foot);
   box.replaceChildren(...kids);
 }
 
 /* ── ⑥ 내가 돌린 작업 — 끝남 · 실패 · 취소 · 지금 도는 것(큰 숫자) · 종류별 막대 · 최근 몇 건(시각 | 무엇 | 상태) ── */
-const STATE = { done: '끝', failed: '실패', cancelled: '취소', queued: '대기', running: '도는 중' };
+const STATE = { done: '완료', failed: '실패', cancelled: '취소', queued: '대기', running: '진행 중' };
 const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
 async function drawJobs() {
   const box = jobs.querySelector('.ld-jobs-b');
@@ -274,8 +282,8 @@ async function drawJobs() {
   if (!total) { const x = h('div'); box.replaceChildren(x); K.empty(x, { kind: 'first', title: '돌린 작업이 없습니다', compact: true }); return; }
   const cell = (v, label, cls) => h('div.ld-cell.ld-cell--ro', { class: cls }, h('b.num', { text: v.toLocaleString('ko-KR') }), h('span', { text: label }));
   const cells = h('div.ld-cells.ld-cells--2', {},
-    cell(n('done'), '끝남', n('done') ? '' : 'is-zero'), cell(n('failed'), '실패', n('failed') ? 'is-warn' : 'is-zero'),
-    cell(n('cancelled'), '취소', n('cancelled') ? '' : 'is-zero'), cell(n('running'), '지금 도는 것', n('running') ? '' : 'is-zero'));
+    cell(n('done'), '완료', n('done') ? '' : 'is-zero'), cell(n('failed'), '실패', n('failed') ? 'is-warn' : 'is-zero'),
+    cell(n('cancelled'), '취소', n('cancelled') ? '' : 'is-zero'), cell(n('running'), '진행 중', n('running') ? '' : 'is-zero'));
   const [cj, regs] = await Promise.all([cardsP(), regionsP()]);
   const cards = cj?.items || [];
   const rname = (code) => (code ? regs.find?.((r) => r.sgg_cd === code)?.name || null : null);

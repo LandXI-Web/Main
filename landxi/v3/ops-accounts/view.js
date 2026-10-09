@@ -3,8 +3,8 @@
    서버가 정본(server/landxi_api/accounts.py): 관할(기관 관리자 = 자기 기관) · 내 계정 스스로 바꾸기 0 · 누가 처리했는지 기록.
    LX 관리자는 기관 가입 신청을 보기만 한다(원칙 72 — 승인 · 반려는 그 기관 관리자 · 서버가 can_decide 로 알린다). 옛 아이디는 '사용 중지'(바꾸기 0).
    LX 관리자에게만 탭 둘이 더 있다(기관 관리자 화면에는 없음):
-   · 저장 용량 요청(제안 S-19) — 직원이 내 정보에서 보낸 '용량 늘리기 요청'을 가입 신청 · 재설정과 같은 모양으로 승인(할당 늘어남) · 반려(사유) → 요청한 사람에게 알림.
-     위에 기본 할당(따로 정하지 않은 계정 · 처음은 할당 없음) 한 줄. 사람마다 할당은 계정 탭 → 그 사람 서랍. 할당을 넘어도 막지 않는다(알리기만).
+   · 저장 용량(제안 S-19 · 용량-1 · 10-09) — 탭 하나에 전체 현황 · 기본 할당(처음 50 GB) · 계정별 할당 표 · 증량 신청 서랍(승인 · 거절)을 모았다(storage.js).
+     예전 '저장 용량 요청' 탭과 계정 서랍의 할당 칸은 이 탭으로 옮김(기능 그대로). 할당을 넘어도 막지 않는다(알리기만).
    · 부서 목록(제안 S-21) — 처음 목록은 LX 누리집 조직도(출처 표시) · 엑셀 · CSV 올리기(미리 보기 → 바꾸기) · 출처에서 다시 불러오기 · 하나 더하기 · 빼기.
      가입 신청 · 내 정보의 부서 칸이 이 목록에서 고른다(목록에 없는 지사 등은 직접 적기).
    mountAccounts(host, { who, scope: 'lx' | 'tenant' }) — host = 셸 판(S.main). 주소 끝 #signup · #reset · #storage · #users · #depts · #fails · #log 로 탭을 바로 연다. */
@@ -14,21 +14,21 @@ import { empty } from '../kit/empty.js';
 import { toast } from '../kit/toast.js';
 import { modal } from '../kit/modal.js';
 import { h, esc, ymd, api, API, session } from '../kit/util.js';
-import { size, gb, storageText } from '../kit/me.js';
+import { size, gb } from '../kit/me.js';
+import { mountStorage } from './storage.js';
 
 const TABS = [
   { id: 'signup', label: '가입 신청', count: 'signup' },
   { id: 'reset', label: '비밀번호 재설정', count: 'reset' },
-  { id: 'storage', label: '저장 용량 요청', count: 'storage', lx: true },
+  { id: 'storage', label: '저장 용량', count: 'storage', lx: true },
   { id: 'users', label: '계정' },
-  { id: 'depts', label: '부서 목록', lx: true },
+  { id: 'depts', label: '부서', lx: true },
   { id: 'fails', label: '로그인 실패' },
   { id: 'log', label: '처리 기록' },
 ];
-const NONE = { signup: '새 가입 신청이 없습니다', reset: '비밀번호 재설정 요청이 없습니다', storage: '저장 용량 늘리기 요청이 없습니다', users: '계정이 없습니다',
+const NONE = { signup: '새 가입 신청이 없습니다', reset: '비밀번호 재설정 요청이 없습니다', users: '계정이 없습니다',
   fails: '실패한 로그인이 없습니다', log: '처리 기록이 없습니다' };
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
-const quotaOf = (st) => { const q = ev(st?.quota_gb); return q === null || q === undefined ? null : q; };
 const NEW_ROLE = { lx: 'LX 직원', tenant: '부서 사용자' };
 const hm = (s) => { const d = s ? new Date(s) : null; return d && !Number.isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : ''; };
 const when = (s) => (s ? `${ymd(s)} ${hm(s)}` : '—');
@@ -44,9 +44,8 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
   host.append(root);
   const bar = h('div.acc-tabs', { role: 'tablist', 'aria-label': '계정' });
   const filter = h('div.acc-filter', { hidden: true });
-  const setting = h('div.acc-set', { hidden: true });       // 저장 용량 요청 탭 위 — 기본 할당 한 줄
   const card = h('div.acc-card', { role: 'tabpanel' });
-  wrap.append(h('h1.acc-h', { text: '계정' }), bar, filter, setting, card);
+  wrap.append(h('h1.acc-h', { text: '계정' }), bar, filter, card);
   const btn = {};
   for (const t of tabs) {
     const b = h('button.acc-tab', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { tab: t.id } }, h('span', { text: t.label }), t.count ? h('b.acc-n', { hidden: true }) : null);
@@ -76,10 +75,6 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       { key: 'orgd', label: '소속' }, { key: 'created_at', label: '신청일', fmt: (v) => `<span class="num">${esc(ymd(v))}</span>` }],
     reset: [{ key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v || '—')}</b>` }, { key: 'login', label: '메일 주소', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
       { key: 'orgd', label: '소속' }, { key: 'created_at', label: '요청일', fmt: (v) => `<span class="num">${esc(ymd(v))}</span>` }],
-    storage: [{ key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v || '—')}</b>` }, { key: 'login', label: '메일 주소', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
-      { key: 'ask', label: '할당', fmt: (v, r) => `<span class="acc-q">${esc(quotaOf(r.storage) !== null ? gb(quotaOf(r.storage)) : '할당 없음')} → <b>${esc(gb(ev(r.want_gb)))}</b></span>` },
-      { key: 'usedv', label: '쓴 양', fmt: (v, r) => `<span class="acc-q">${esc(size(ev(r.storage?.used)))}${ev(r.storage?.pct) !== null && ev(r.storage?.pct) !== undefined ? ` · ${esc(ev(r.storage.pct))}%` : ''}</span>` },
-      { key: 'created_at', label: '요청일', fmt: (v) => `<span class="num">${esc(ymd(v))}</span>` }],
     users: [{ key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v || '—')}</b>` }, { key: 'login', label: '아이디', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
       { key: 'orgd', label: '소속' }, { key: 'role_ko', label: '역할', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
       { key: 'st', label: '상태', fmt: (v, r) => `<span class="t-chip" data-lv="${r.stLv}">${esc(v)}</span>` },
@@ -90,9 +85,9 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       { key: 'target', label: '대상', fmt: (v, r) => `<b class="acc-b">${esc(r.name || '')}</b> <span class="acc-m">${esc(r.subject || '')}</span>` }, { key: 'who', label: '처리한 사람' },
       { key: 'reason', label: '사유', fmt: (v) => esc(v || '') }],
   };
-  const SORT = { signup: 'created_at', reset: 'created_at', storage: 'created_at', users: 'orgd', fails: 'at', log: 'at' };
-  /* 목록 칸의 저장 용량 — '29.8 MB / 50 GB' · 할당 없으면 '29.8 MB · 할당 없음' */
-  const shortStorage = (st) => { const q = quotaOf(st); return q !== null ? `${size(ev(st.used))} / ${gb(q)}` : `${size(ev(st.used))} · 할당 없음`; };
+  const SORT = { signup: 'created_at', reset: 'created_at', users: 'orgd', fails: 'at', log: 'at' };
+  /* 목록 칸의 저장 용량 — '29.8 MB / 50 GB' · 할당 없으면 '29.8 MB · 할당 없음'(바꾸기는 '저장 용량' 탭) */
+  const shortStorage = (st) => { const q = ev(st?.quota_gb); return q !== null && q !== undefined ? `${size(ev(st.used))} / ${gb(q)}` : `${size(ev(st.used))} · 할당 없음`; };
 
   async function load(tab) {
     const mine = tab;
@@ -100,10 +95,10 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     delete card.dataset.tab;
     const wait = h('div'); card.append(wait); empty(wait, { kind: 'loading' });
     if (tab === 'depts') { await loadDepts(mine); return; }
-    if (tab === 'storage') drawSetting();
+    if (tab === 'storage') { await mountStorage(card, { mine: () => cur === mine, onChange: counts }); return; }
     let rows = [];
     try {
-      if (tab === 'signup' || tab === 'reset' || tab === 'storage') rows = (await api(`/accounts/requests?kind=${tab}`)).items || [];
+      if (tab === 'signup' || tab === 'reset') rows = (await api(`/accounts/requests?kind=${tab}`)).items || [];
       else if (tab === 'users') {
         const v = orgSel?.value || '';
         const q = v === 'lx' ? '?realm=lx' : v.startsWith('tenant:') ? '?realm=tenant&tenant_id=' + encodeURIComponent(v.slice(7)) : '';
@@ -125,7 +120,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     card.innerHTML = '';
     if (!data.length) { const e = h('div'); card.append(e); empty(e, { kind: 'first', title: NONE[tab] }); return; }
     const tw = h('div.acc-tbl'); card.append(tw);
-    const click = tab === 'signup' || tab === 'reset' || tab === 'users' || tab === 'storage';
+    const click = tab === 'signup' || tab === 'reset' || tab === 'users';
     T = table(tw, { cols: COLS[tab], rows: data, sort: SORT[tab], dir: tab === 'users' ? 'asc' : 'desc', onRow: click ? openRow : null });
     card.dataset.tab = tab;
     mark();
@@ -190,17 +185,6 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
               toast('임시 비밀번호를 만들었습니다'); counts(); load(cur);
             }));
       }
-    } else if (cur === 'storage') {                              // 저장 용량 늘리기 요청(S-19) — 가입 신청 · 재설정과 같은 모양
-      const q = quotaOf(item.storage);
-      body.append(dl([['메일 주소', item.login], ['부서', item.dept], ['지금 할당', q !== null ? gb(q) : '할당 없음'], ['원하는 할당', gb(ev(item.want_gb))],
-        ['쓴 양', item.storage ? `${size(ev(item.storage.used))}${ev(item.storage.pct) !== null && ev(item.storage.pct) !== undefined ? ` · 할당의 ${ev(item.storage.pct)}%` : ''}` : ''],
-        ['이유', item.why], ['요청일', when(item.created_at)]]));
-      if (!item.can_decide) body.append(h('p.acc-mine', { text: '내 계정의 요청은 다른 관리자가 처리합니다.' }));
-      else {
-        body.append(h('p.acc-help', {}, h('span', { text: `승인하면 할당이 ${gb(ev(item.want_gb))}가 되고,` }), ' ', h('span', { text: '요청한 사람에게 알림이 갑니다.' })),
-          acts(async (reason) => { await api(`/accounts/storage/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('거절했습니다'); },
-            '승인', async (reason) => { await api(`/accounts/storage/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'approve', reason } }); await done('할당을 늘렸습니다'); }));
-      }
     } else if (cur === 'users') {
       const [st] = stateOf(item);
       body.append(dl([['아이디', item.login], ['소속', item.org], ['부서', item.dept], ['역할', item.role_ko], ['상태', st],
@@ -209,7 +193,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       if (item.status === 'disabled') body.append(h('p.acc-mine', { text: '사용 중지된 계정입니다. 메일 아이디 계정으로 옮겼습니다.' }));
       else if (item.mine) {
         body.append(h('p.acc-mine', { text: '내 계정은 다른 관리자가 바꿉니다.' }));
-        if (LX && item.realm === 'lx' && solo) body.append(h('div.acc-user', {}, quotaRow(item)));     // 관리자 계정이 하나뿐이면 내 할당은 스스로(결재함과 같은 규칙)
+        if (LX && item.realm === 'lx' && solo) body.append(h('div.acc-user', {}, quotaLink(item)));     // 관리자 계정이 하나뿐이면 내 할당은 스스로 — '저장 용량' 탭에서
       } else body.append(userActs(item, body));
     }
     sheet = drawer({ title, body, host, slot: 'account', onClose: () => { openKey = null; mark(); } });
@@ -268,57 +252,16 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       ...(see ? [see] : []),
       h('div.acc-row', {}, h('p.t-label', { text: '잠금' }), h('p.acc-help', { text: u.temp_locked && u.status !== 'locked' ? '비밀번호를 여러 번 틀려 10분 동안 잠겼습니다.' : held ? '잠긴 동안은 들어올 수 없습니다.' : '잠그면 바로 로그아웃되고 들어올 수 없습니다.' }), lock),
       h('div.acc-row', {}, h('p.t-label', { text: '비밀번호' }), h('p.acc-help', { text: '사용자는 임시 비밀번호로 들어와 새 비밀번호를 정합니다.' }), temp),
-      ...(LX && u.realm === 'lx' && u.storage ? [quotaRow(u)] : []));       // 저장 용량 할당(S-19 · LX 계정만)
+      ...(LX && u.realm === 'lx' && u.storage ? [quotaLink(u)] : []));       // 저장 용량 할당(S-19 · LX 계정만) — '저장 용량' 탭 하나에서 정한다(용량-1)
     return out;
   }
 
-  /* 저장 용량 할당(S-19) — 사람마다 GB · 비우면 기본 할당을 따른다. 넘어도 막지 않는다(알리기만 — 원칙 91) */
-  function quotaRow(u) {
-    const st = u.storage || {};
-    const own = st.quota_own;
-    const input = h('input.t-input.acc-gb__i', { type: 'number', min: '0', step: '1', inputmode: 'decimal', 'aria-label': '할당(GB)', value: own ? String(quotaOf(st)) : '', placeholder: '기본 할당' });
-    const set = h('button.t-btn.t-btn--2', { type: 'button', text: '할당 정하기' });
-    const back = own ? h('button.t-btn.t-btn--2', { type: 'button', text: '기본 할당으로' }) : null;
-    const save = async (q, b) => {
-      b.disabled = true;
-      try {
-        await api(`/accounts/users/lx/${encodeURIComponent(u.id)}/quota`, { method: 'POST', body: { quota_gb: q } });
-        await done(q === null ? '기본 할당으로 바꿨습니다' : '할당을 정했습니다');
-      } catch (e) { toast(e.message || '지금은 처리할 수 없습니다'); b.disabled = false; }
-    };
-    set.addEventListener('click', () => { const n = Number(input.value); if (!(n > 0)) { toast('할당을 GB 로 적어 주세요'); input.focus(); return; } save(n, set); });
-    back?.addEventListener('click', () => save(null, back));
+  /* 저장 용량 할당 — 지금 값 한 줄 + '저장 용량' 탭으로(바꾸기 · 증량 신청 승인은 그 탭 하나 — 용량-1) */
+  function quotaLink(u) {
+    const go = h('button.t-btn.t-btn--2', { type: 'button', text: '저장 용량 탭에서 바꾸기' });
+    go.addEventListener('click', () => { closeAll(); location.hash = '#storage'; });
     return h('div.acc-row', {}, h('p.t-label', { text: '저장 용량' }),
-      h('p.acc-help', {}, h('span', { text: storageText(st) }), ' ', h('span', { text: own ? '· 따로 정함' : '· 기본 할당' })),
-      h('div.acc-inline', {}, h('span.acc-gb', {}, input, h('i', { text: 'GB' })), set, back));
-  }
-
-  /* 기본 할당(S-19) — 따로 정하지 않은 LX 계정에 쓰는 값 한 곳. 처음은 할당 없음(지어내지 않는다) */
-  async function drawSetting() {
-    setting.hidden = false;
-    let q = null;
-    try { q = ev((await api('/accounts/storage-default')).quota_gb); } catch { setting.hidden = true; return; }
-    const show = () => {
-      const edit = h('button.acc-set__b', { type: 'button', text: '바꾸기' });
-      edit.addEventListener('click', () => {
-        const input = h('input.t-input.acc-gb__i', { type: 'number', min: '0', step: '1', inputmode: 'decimal', 'aria-label': '기본 할당(GB)', value: q !== null && q !== undefined ? String(q) : '', placeholder: '비우면 할당 없음' });
-        const ok = h('button.t-btn', { type: 'button', text: '저장' });
-        const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
-        ok.addEventListener('click', async () => {
-          ok.disabled = true;
-          try {
-            const j = await api('/accounts/storage-default', { method: 'PUT', body: { quota_gb: input.value.trim() === '' ? null : Number(input.value) } });
-            q = ev(j.quota_gb); toast('기본 할당을 바꿨습니다'); show();
-          } catch (e) { toast(e.message || '지금은 처리할 수 없습니다'); ok.disabled = false; }
-        });
-        no.addEventListener('click', show);
-        setting.replaceChildren(h('p.acc-set__l', { text: '기본 할당' }), h('span.acc-gb', {}, input, h('i', { text: 'GB' })), ok, no);
-        input.focus();
-      });
-      setting.replaceChildren(h('p.acc-set__l', { text: '기본 할당' }),
-        h('p.acc-set__v', {}, h('b', { text: q !== null && q !== undefined ? gb(q) : '할당 없음' }), ' ', h('span', { text: '따로 정하지 않은 LX 계정에 씁니다' })), edit);
-    };
-    show();
+      u?.storage ? h('p.acc-help', { text: shortStorage(u.storage) + (u.storage.quota_own ? ' · 개별 할당' : ' · 기본 할당') }) : null, go);
   }
 
   /* ── 부서 목록(S-21) — 출처 · 올리기(미리 보기 → 바꾸기) · 다시 불러오기 · 더하기 · 빼기 · 목록에 없는 부서를 쓰는 계정 ── */
@@ -433,7 +376,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     closeAll(); openKey = null;
     for (const t of tabs) btn[t.id].setAttribute('aria-selected', String(t.id === tab));
     filter.hidden = !(LX && tab === 'users');
-    setting.hidden = true;
+    wrap.classList.toggle('acc-w--wide', tab === 'storage');      // 저장 용량 탭 — 표 + 서랍 두 단(1440 넓이 고르게 · 원칙 127)
     document.title = `Land-XI · 계정 · ${tabs.find((t) => t.id === tab).label}`;
     load(tab);
   }
