@@ -133,7 +133,7 @@ export function openRetrain(pr, { onStart } = {}) {
 /* ── 프로젝트장 넘기기(P-5 ⓐ) ─────────────────────────────────── */
 const whoText = (u) => (!u ? '—' : u.name && u.name !== u.role_label ? `${u.name} · ${u.role_label}` : u.role_label || u.name);
 export function openHandover(pr, { onDone } = {}) {
-  const sel = h('select.t-input', { 'aria-label': '받을 사람', disabled: true }, h('option', { value: '', text: '불러오는 중' }));
+  const sel = h('select.t-input', { 'aria-label': '받을 사람', disabled: true }, h('option', { value: '', text: '—' }));
   const note = h('input.t-input', { type: 'text', maxlength: '300', autocomplete: 'off', 'aria-label': '메모', placeholder: '예: 10월 전출로 넘깁니다' });
   const go = h('button.t-btn', { type: 'button', text: '넘기기', disabled: true });
   const cancel = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '취소' });

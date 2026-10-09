@@ -1,7 +1,7 @@
 /* K6 bignum.js — 큰 숫자(업무 결과만 · 화면당 1).
    라벨 14 위 · 숫자 80 Paperlogy 800(hud:true = 지도 사진 위 흰 124) · 단위 · 신뢰 기호 · 호버 근거.
    상태 3가지(화면 코드는 그대로 — 하위 호환):
-     · 도착 전   bignum(el, null|undefined) 로 만든 직후 · set(undefined) · b.loading() → — + '불러오는 중'
+     · 도착 전   bignum(el, null|undefined) 로 만든 직후 · set(undefined) · b.loading() → 값 자리만 옅은 — (글 없음 · 표시는 화면 가운데 하나 — loader.js · 원칙 161)
      · 빈 값     set(null) · 봉투 value null · b.empty()                         → — + '아직 결과가 없습니다'
      · 값        set(봉투)
    만든 뒤 PENDING_MS 안에 set 이 한 번도 오지 않으면 빈 값으로 넘긴다(불러오는 중에 멈춰 있지 않게).
@@ -11,6 +11,7 @@
 import { h, esc, isEnvelope, isDev, RM, E_CAM } from './util.js';
 import { sig } from './sig.js';
 import { t, nf } from './i18n.js';
+import { watch, unwatch } from './loader.js';
 
 /** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목). 'AI 분석 결과' = 원칙 135(10-09) · 맨 뒤 하나는 기관 화면(사용자 답 전까지) */
 export const ALLOWED = ['AI 분석 결과', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '승인 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area', '현장 확인 필요'];
@@ -36,7 +37,8 @@ export function bignum(el, env, { label = '', unit, digits, hud = false, animate
   const blank = (st) => {
     clearTimeout(wait); wait = 0;
     num.textContent = '—'; uni.textContent = ''; mark.innerHTML = '';
-    none.textContent = t(st === 'loading' ? 'empty.loading' : 'big.none'); none.hidden = false;
+    none.textContent = st === 'loading' ? '' : t('big.none'); none.hidden = st === 'loading';
+    if (st === 'loading') watch(el); else unwatch(el);
     el.dataset.state = st; el.classList.toggle('k-big--wait', st === 'loading'); el.setAttribute('aria-busy', st === 'loading' ? 'true' : 'false');
     el.dataset.v = ''; el.dataset.metric = label;
   };
@@ -49,7 +51,7 @@ export function bignum(el, env, { label = '', unit, digits, hud = false, animate
       if (isDev()) throw new Error(`[kit/bignum] 봉투 없는 숫자: ${label} = ${JSON.stringify(e).slice(0, 80)}`);
       return set(null);
     }
-    clearTimeout(wait); wait = 0;
+    clearTimeout(wait); wait = 0; unwatch(el);
     none.hidden = true; el.dataset.state = 'ok'; el.classList.remove('k-big--wait'); el.setAttribute('aria-busy', 'false');
     const u = opt.unit ?? unit ?? unitKo(e.unit);
     uni.textContent = u; mark.innerHTML = sig(e);

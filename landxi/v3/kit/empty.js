@@ -1,6 +1,7 @@
 /* K9 empty.js — 기다림 · 빈 화면 · 문제 표시. 세 모양뿐이고 그림(드론·위성·항공기 등)은 넣지 않는다(4차 S1 ⓐ · 원칙 42).
-   · 기다리는 중  kind 'loading' = 회백 판 + 가는 막대 1 + '불러오는 중' 한 줄. 6초 넘게 응답이 없으면 '서버 응답이 늦습니다' + '다시 시도'
-                  (제목·문장을 따로 준 '~하는 중' 작업 줄은 오래 걸리는 것이 정상이라 늦음 표시를 하지 않는다 · slow: true 로 켤 수 있다).
+   · 기다리는 중  kind 'loading'(제목 · 문장 없이) = 그 칸은 옅은 빈 틀만 · 표시는 화면 가운데 하나(loader.js · 원칙 161 로딩-1).
+                  여러 칸이 기다리면 가운데 하나로 합치고, 6초 넘으면 그 아래 '서버 응답이 늦습니다 · 다시 시도'. progress 1 이 오면 도착으로 센다.
+                  제목·문장을 따로 준 '~하는 중' 작업 줄은 그 자리 막대 + 한 줄 그대로(오래 걸리는 것이 정상이라 늦음 표시 없음 · slow: true 로 켤 수 있다).
    · 비었을 때    kind 'first' | 'ingest' | 'outside' | '404' = 회백 카드 + 제목 + 문장 1(선택 · ≤ 40자) + 행동 버튼 1(선택).
    · 문제         kind 'error' = 그 자리 한 줄(경고색) + '다시 시도'(기본 = 화면 다시 열기 · onRetry 로 바꾼다).
    empty(el, { kind, title, text, action: { label, href|onClick }, onRetry, progress: 0..1, compact, slow })
@@ -11,6 +12,7 @@
      빈 값(null · 빈 배열 · 봉투 value null)이면 원래 kind 로, 값이 있으면 빈 상태를 지우고 false 를 돌려준다. */
 import { h, isEnvelope } from './util.js';
 import { t } from './i18n.js';
+import { watch, unwatch } from './loader.js';
 
 export const SLOW_MS = 6000;   // 기다리는 중이 이만큼 길어지면 '서버 응답이 늦습니다' + '다시 시도'
 const KIND = {
@@ -39,11 +41,11 @@ export function empty(el, opts = {}) {
   const r = draw(el, opts);
   return { ...r, resolve: (d) => (isBlank(d) ? true : (clear(el), false)) };
 }
-function stopSlow(el) { const id = SLOW.get(el); if (id) { clearTimeout(id); SLOW.delete(el); } }
+function stopSlow(el) { const id = SLOW.get(el); if (id) { clearTimeout(id); SLOW.delete(el); } unwatch(el); }
 function clear(el) {
   stopSlow(el);
   el.innerHTML = '';
-  el.classList.remove('t-empty', 'k-empty', 'k-empty--sm', 'k-empty--err');
+  el.classList.remove('t-empty', 'k-empty', 'k-empty--sm', 'k-empty--err', 'k-empty--hold');
   el.removeAttribute('role'); el.removeAttribute('aria-busy');
   delete el.dataset.kind; delete el.dataset.slow;
 }
@@ -53,6 +55,17 @@ function draw(el, { kind = 'first', title, text, action, progress, compact = fal
   const k = KIND[kind] || KIND.first;
   const wait = !!k.wait, err = !!k.err;
   const slowable = wait && (slow ?? (!title && !text));   // 기본 '불러오는 중' 줄만 늦음 표시
+  el.classList.remove('k-empty--hold');
+  if (wait && !title && !text) {
+    /* 기본 기다림 — 칸에는 옅은 빈 틀만, 표시는 화면 가운데 하나(늦음 · 다시 시도도 가운데) */
+    el.classList.add('k-empty', 't-empty', 'k-empty--hold'); el.classList.remove('k-empty--err'); el.classList.toggle('k-empty--sm', compact);
+    el.innerHTML = ''; el.dataset.kind = kind; delete el.dataset.slow;
+    el.setAttribute('aria-busy', 'true'); el.removeAttribute('role');
+    watch(el, { onRetry });
+    const set = ({ progress: p } = {}) => { if (typeof p === 'number' && p >= 1) unwatch(el); };
+    set({ progress });
+    return { el, set };
+  }
   el.classList.add('k-empty'); el.classList.toggle('t-empty', !err); el.classList.toggle('k-empty--err', err); el.classList.toggle('k-empty--sm', compact);
   el.innerHTML = '';
   el.dataset.kind = kind; delete el.dataset.slow;

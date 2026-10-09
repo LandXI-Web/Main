@@ -39,8 +39,9 @@ let stage = null;                 // 지역을 안 뒤에 만든다(초기 카�
 const hudEl = h('div.rv-hud', { hidden: true }); stageEl.append(hudEl);
 const hud = K.bignum(hudEl, null, { label: AI_LABEL, hud: true });
 const hudLabel = hudEl.querySelector('.k-big-l');
-/* HUD 가 열리기 전에는 진행 막대 1개(K9 막대 · '불러오는 중')만 */
-const loadEl = h('div.rv-load', { role: 'status' }, h('span', { text: K.t('empty.loading') }), h('div.t-progress.k-empty-p.is-indet', {}, h('i')));
+/* HUD 가 열리기 전에는 화면 가운데 로딩 하나(kit loader · 원칙 161) — 구석 판 없음. loadEl 은 층 순서 자리만 */
+const loadEl = h('div.rv-load', { 'aria-hidden': 'true' });
+const loadDone = K.hold();
 stageEl.append(loadEl);
 /* 사진 타일 — 바탕(k-eox · k-vw) 타일이 몇 장 깔렸는가(줌 10 이상 · 회백 판 위에 HUD 를 올리지 않기 위한 기준). 카드는 V-World 줌 16 이상 */
 let painted = 0, paintedHi = 0, flying = 0;
@@ -83,7 +84,7 @@ function setHud() {
   const tick = () => {
     const m = stage?.map;
     const arrived = m && !flying && !m.isMoving() && m.getZoom() >= MIN_Z - 0.01;
-    if (arrived && painted >= 4 && m.areTilesLoaded()) { hudEl.hidden = false; loadEl.classList.add('is-out'); requestAnimationFrame(() => hudEl.classList.add('is-in')); T.hud = Math.round(performance.now()); T.hudZ = +m.getZoom().toFixed(2); return; }
+    if (arrived && painted >= 4 && m.areTilesLoaded()) { hudEl.hidden = false; loadEl.classList.add('is-out'); loadDone(); requestAnimationFrame(() => hudEl.classList.add('is-in')); T.hud = Math.round(performance.now()); T.hudZ = +m.getZoom().toFixed(2); return; }
     setTimeout(tick, 100);
   };
   tick();
@@ -271,7 +272,7 @@ async function openCard(f, { from } = {}) {
       <div><span class="t-label">대장</span><b>${esc(f.jimok || '')} ${pm?.value != null ? nf(Math.round(pm.value)) + UNIT : '—'}${K.sig(pm)}</b></div>
       <div class="is-ai"><span class="t-label">AI 분석</span><b>${aiLine}</b></div>
     </div>
-    <div class="rv-photo" role="status"><span>사진 불러오는 중</span><div class="t-progress k-empty-p is-indet"><i></i></div></div>
+    <div class="rv-photo" aria-busy="true"></div>
     <div class="rv-verdict" role="group" aria-label="판정">
       <button class="t-btn" type="button" data-v="tp" disabled>맞음</button>
       <button class="t-btn t-btn--2" type="button" data-v="fp" disabled>오탐</button>
@@ -424,7 +425,7 @@ async function thresholdSheet() {
   sheet = d;
   d.el.classList.add('rv-sheet');
   document.body.classList.add('rv-has-sheet');
-  box.append(h('p.t-label', { text: '불러오는 중' }));
+  K.empty(box.appendChild(h('div')), { kind: 'loading', compact: true });   // 도착 전 = 빈 틀 · 표시는 화면 가운데 하나
   const { th, next } = await suggest(rule, queue);
   box.innerHTML = '';
   if (!th) { const e = h('div'); box.append(e); K.empty(e, { kind: 'first', compact: true }); return; }

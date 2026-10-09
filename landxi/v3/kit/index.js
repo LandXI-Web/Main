@@ -11,6 +11,7 @@ export { sig, sigEl, sigOf, humanize, why } from './sig.js';                    
 export { serviceCard, serviceGrid, joinCards, stateOf } from './service-card.js'; // K7
 export { stepper } from './stepper.js';                                           // K8
 export { empty, isBlank } from './empty.js';                                       // K9
+export { hold, watch, unwatch, loaderState } from './loader.js';                   // K9-1 가운데 로딩 하나(원칙 161)
 export { mountCmdk } from './cmdk.js';                                            // K10
 export { dropzone, ALLOW as DROP_ALLOW } from './dropzone.js';                    // K11
 export { table } from './table.js';                                               // K12

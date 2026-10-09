@@ -87,6 +87,29 @@ button.t-step{cursor:pointer}
 .k-empty-retry:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (max-width:640px){.k-empty{padding:24px}.k-empty--sm{padding:16px 20px}.k-empty[data-kind="loading"]{padding:16px}.k-empty--err{padding:12px 0}.k-empty-b{max-width:100%}}
 @media (prefers-reduced-motion:reduce){.k-empty-p.is-indet i{animation:none}}
+/* 기다리는 칸 = 옅은 빈 틀만(글 · 막대 없음) — 표시는 화면 가운데 하나(loader.js · 원칙 161) */
+.k-empty--hold[data-kind="loading"]{padding:0;min-height:64px;background:var(--bg-0);border-radius:var(--r-12,12px);opacity:.7}
+.k-empty--hold.k-empty--sm[data-kind="loading"]{min-height:44px}
+.k-big--wait .t-big,.k-big--wait .t-hud{opacity:.28}
+/* K9-1 가운데 로딩 — 내용 영역 정가운데 하나 · 점 셋(LX 청록) + 작은 한 줄 */
+.k-ld{position:fixed;z-index:90;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 200ms var(--e-ui)}
+.k-ld[hidden]{display:none}
+.k-ld.is-on{opacity:1}
+.k-ld-in{display:flex;flex-direction:column;align-items:center;gap:12px}
+.k-ld-c{display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 30px 18px;border-radius:var(--r-16,16px);background:var(--bg-1);box-shadow:0 1px 2px rgba(28,31,37,.06),0 8px 28px rgba(28,31,37,.08)}
+.k-ld-dots{display:flex;gap:9px;height:12px;align-items:center}
+.k-ld-dots i{display:block;width:10px;height:10px;border-radius:50%;background:var(--ai,#0FA9A0);animation:k-ld 1.2s cubic-bezier(.45,0,.55,1) infinite both}
+.k-ld-dots i:nth-child(2){animation-delay:.16s}
+.k-ld-dots i:nth-child(3){animation-delay:.32s}
+@keyframes k-ld{0%,80%,100%{transform:translateY(0) scale(.72);opacity:.35}40%{transform:translateY(-4px) scale(1);opacity:1}}
+.k-ld-t{font:500 13px/18px var(--font-body);color:var(--sub);letter-spacing:0}
+.k-ld-slow{margin:0;padding:8px 14px;border-radius:var(--r-8,8px);background:var(--bg-1);box-shadow:0 1px 2px rgba(28,31,37,.06);font:500 14px/20px var(--font-body);color:var(--sub-2);pointer-events:auto}
+.k-ld-slow[hidden]{display:none}
+.k-ld-r{appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:4px}
+.k-ld-r:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.k-ld.is-rm .k-ld-dots i{animation:k-ld-rm 2.4s ease-in-out infinite both}
+@keyframes k-ld-rm{0%,100%{opacity:.35}50%{opacity:.9}}
+@media (prefers-reduced-motion:reduce){.k-ld-dots i{animation:k-ld-rm 2.4s ease-in-out infinite both;transform:none}}
 
 /* ── K11 드롭존 ─────────────────────────── */
 .k-drop{min-height:200px;align-items:center;justify-content:center;text-align:center;cursor:pointer;outline-offset:4px;border:1.5px dashed transparent;transition:border-color var(--d-180) var(--e-ui),background var(--d-180) var(--e-ui)}

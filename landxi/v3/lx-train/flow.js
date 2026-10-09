@@ -4,6 +4,7 @@
    서버: /training/samples(올리기·미리보기·빼기) · /jobs/quote → /jobs {kind:'train'} · /events/jobs/{id} · /registry/models ·
          /registry/model-register · /registry/model-decide(관리자) · /survey/rules · /registry/ledger_kinds · /registry/cards */
 import { drawer } from '../kit/panel.js';
+import { empty } from '../kit/empty.js';
 import { toast } from '../kit/toast.js';
 import { devlog } from '../kit/dev-drawer.js';
 import { regionPicker } from '../kit/region.js';
@@ -385,7 +386,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     try { ms = await loadModels(); } catch { /* 아래 안내 */ }
     const m = ms?.find((x) => x.train_job === jobId);
     if (m) return showModel(m.id);
-    if (tries < 4) { s4.textContent = '결과를 불러오는 중'; setTimeout(() => showModelOfJob(jobId, tries + 1), 3000); return; }
+    if (tries < 4) { s4.replaceChildren(); empty(s4.appendChild(h('div')), { kind: 'loading', compact: true }); setTimeout(() => showModelOfJob(jobId, tries + 1), 3000); return; }
     s4.innerHTML = '';
     s4.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: '학습 결과를 불러오지 못했습니다' }), retryBtn(() => showModelOfJob(jobId)));
   }

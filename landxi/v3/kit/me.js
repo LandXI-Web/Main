@@ -9,6 +9,7 @@
    openMe({ onSaved, ask }) · openStorageRequest({ onDone }) — 파일 올리는 자리 · 대시보드도 내 정보 창을 열어 같은 자리에서 폼을 펼친다 */
 import { h, api } from './util.js';
 import { modal } from './modal.js';
+import { empty } from './empty.js';
 import { toast } from './toast.js';
 
 const CSS = new URL('./me.css', import.meta.url).href;
@@ -230,7 +231,8 @@ let cur = null;
 export function openMe({ onSaved, ask = false, onStorage } = {}) {
   if (cur) return cur;
   sheet();
-  const body = h('div.k-me', {}, h('p.k-me-wait', { text: '불러오는 중' }));
+  const body = h('div.k-me');
+  const ld = h('div'); body.append(ld); empty(ld, { kind: 'loading', compact: true });   // 도착 전 = 빈 틀 · 표시는 화면 가운데 하나(원칙 161)
   const m = modal({ title: '내 정보', body, onClose: () => { cur = null; } });
   m.el.classList.add('k-me-md', 'k-me-wide');          // 두 단(직원-5 ⓐ · 직원-7) — 왼쪽 내 정보 · 오른쪽 저장 용량 · 증량 신청 이력
   cur = m;

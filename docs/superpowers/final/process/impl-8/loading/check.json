@@ -1,0 +1,178 @@
+{
+ "project-1440": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "analyze-1440": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "admin-1440": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "admin-slow-1440": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    -24
+   ],
+   "slow": true,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "project-1920": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "analyze-1920": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "ximap-1920": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ },
+ "admin-1920": {
+  "loading": {
+   "center": 1,
+   "words": 1,
+   "bars": 0,
+   "off": [
+    -0.0,
+    0
+   ],
+   "slow": false,
+   "holds": 1
+  },
+  "after": {
+   "center": 0,
+   "words": 0,
+   "bars": 0,
+   "off": null,
+   "slow": false,
+   "holds": 0
+  },
+  "errors": []
+ }
+}

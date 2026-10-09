@@ -51,8 +51,7 @@ const M = mountMap(stageEl);
 const B = bignum(big, null, { label: '승인 대기', unit: '건' });
 /* 로딩 중에는 '불러오는 중'(K9 기본 문구) — 응답이 오기 전 빈 상태('아직 결과가 없습니다')가 비치지 않게.
    결재 대기는 응답이 실제로 오면 0 이어도 숫자로 보인다(빈 상태 문구는 결재함 표 쪽 '결재할 것이 없습니다'). */
-const bigNone = big.querySelector('.k-big-none');
-if (bigNone) bigNone.textContent = t('empty.loading');
+/* 도착 전 = 값 자리 옅은 — · 표시는 화면 가운데 하나(kit loader · 원칙 161) */
 card.dataset.loading = '1';
 seg.addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;

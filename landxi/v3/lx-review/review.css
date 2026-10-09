@@ -13,8 +13,8 @@
 .rv-hud[data-v=""] .k-big-row{display:none}
 .rv-hud[data-v=""] .k-big-none{margin-top:6px;font:500 20px/28px var(--font-body)}
 
-/* HUD 전 — 진행 막대 1개('불러오는 중') · HUD 자리 */
-.rv-load{position:absolute;left:40px;top:36px;z-index:5;display:flex;flex-direction:column;gap:10px;width:220px;padding:14px 16px;border-radius:var(--r-12,12px);background:var(--glass,rgba(255,255,255,.86));box-shadow:var(--elev-map);font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);pointer-events:none;transition:opacity var(--d-380) var(--e-ui)}
+/* HUD 전 — 표시는 화면 가운데 하나(kit loader · 원칙 161) · 이 자리는 비움 */
+.rv-load{display:none}
 .rv-load .k-empty-p{margin:0;max-width:none}
 .rv-load.is-out{opacity:0;visibility:hidden;transition:opacity var(--d-380) var(--e-ui),visibility 0s var(--d-380)}
 
@@ -73,8 +73,7 @@
 .rv-verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .rv-verdict .t-btn:disabled{opacity:.4;cursor:default}
 /* 사진이 필지 위에 깔리기 전 — 얇은 진행 막대(판정 버튼은 비활성) */
-.rv-photo{display:flex;align-items:center;gap:12px;margin:-4px 0 -6px;font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);transition:opacity var(--d-180) var(--e-ui)}
-.rv-photo .k-empty-p{flex:1;margin:0;max-width:none;height:3px}
+.rv-photo{height:3px;margin:-4px 0 -6px;border-radius:2px;background:var(--rule);transition:opacity var(--d-180) var(--e-ui)}
 .rv-photo.is-out{display:none}
 .rv-verdict .is-was{outline:2px solid var(--accent);outline-offset:1px}
 

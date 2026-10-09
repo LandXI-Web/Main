@@ -139,9 +139,10 @@ async function drawBand(band) {
     o.chip ? h('span.t-chip', { text: o.chip[0], dataset: o.chip[1] ? { lv: o.chip[1] } : {} }) : null,
     o.go ? h('span.gs-tile-go', { text: o.go }) : null);
   const reqTile = tile({ k: 'request', icon: 'deploy', title: '요청하기', line: '분석 요청 · 촬영 요청', href: '../gov-request/', go: '요청하기' });
-  band.replaceChildren(tile({ k: 'notice', icon: 'inbox', title: '새 알림', line: '불러오는 중' }), tile({ k: 'sent', icon: 'list', title: '보낸 요청', line: '불러오는 중' }), reqTile);
+  band.replaceChildren(tile({ k: 'notice', icon: 'inbox', title: '새 알림', line: '' }), tile({ k: 'sent', icon: 'list', title: '보낸 요청', line: '' }), reqTile);
+  const done = K.hold();   // 도착 전 = 칸 글 없이 · 화면 가운데 하나(원칙 161)
   const [nt, rv, rq, sh] = await Promise.all([api('/reviews/notify').catch(() => null), api('/reviews?box=all&limit=50').catch(() => null), api('/requests').catch(() => null),
-    api('/shoots').catch(() => null)]);
+    api('/shoots').catch(() => null)]).finally(done);
   /* 새 알림 — 알림 칸(머리의 종)과 같은 수 · 같은 목록 */
   const unread = (nt?.items || []).find((x) => x.unread);
   const ex = (nt?.extra || [])[0];

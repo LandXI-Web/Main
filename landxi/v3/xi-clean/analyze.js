@@ -544,7 +544,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     if (!ui || !d || !t) return;
     ui.live(); const p = Math.min(100, Math.floor((d / t) * 100));
     ui.pct.textContent = String(p); ui.bar.style.width = p + '%'; ui.bar.parentElement.setAttribute('aria-valuenow', p);
-    ui.got.hidden = false; ui.got.textContent = '탐지 불러오는 중';
+    ui.got.hidden = true; ui.got.textContent = '';   // 탐지 도착 전 = 글 없음(원칙 161)
   }
   /** 이 지역에 진행 중인 전역 분석이 있으면 이어 보기 — 지금까지 결과(detections) + 남은 칸(SSE) */
   async function resume(r) {
