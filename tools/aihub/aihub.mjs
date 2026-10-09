@@ -194,16 +194,19 @@ async function status(key) {
   if (!t.files.length) { console.log('파일 목록이 비었습니다(번호 확인).'); return; }
   const smallest = [...t.files].sort((a, b) => a.size - b.size)[0];
   await new Promise((res) => {
-    const req = https.get(downloadUrl(key, smallest.filekey), { headers: { apikey: k, 'User-Agent': 'Land-XI aihub tool' } }, (r) => {
+    const go = (u, hop = 0) => { const req = https.get(u, { headers: { apikey: k, 'User-Agent': 'Land-XI aihub tool' } }, (r) => {
+      // 승인되면 서버가 실제 파일 주소로 넘긴다(302) — 따라가서 본다(주소는 출력하지 않음)
+      if (r.statusCode >= 300 && r.statusCode < 400 && r.headers.location && hop < 5) { r.resume(); return go(new URL(r.headers.location, u).href, hop + 1); }
       const ct = r.headers['content-type'] || '';
       if (r.statusCode === 200 && !/json|html|text/.test(ct)) {
         console.log(`승인됨 — 받기 가능(응답 ${r.statusCode}). 확인만 하고 끊었습니다.`);
         r.destroy(); req.destroy(); return res();
       }
       let b = ''; r.on('data', (d) => { b += d; if (b.length > 4000) r.destroy(); });
-      r.on('close', () => { console.log(`받을 수 없음 — 응답 ${r.statusCode}: ${b.replace(/\s+/g, ' ').slice(0, 300)}`); res(); });
+      r.on('close', () => { console.log(`받을 수 없음 — 응답 ${r.statusCode}${hop ? ' (넘겨받은 뒤)' : ''}: ${b.replace(/\s+/g, ' ').slice(0, 300)}`); res(); });
     });
-    req.on('error', (e) => { console.log('연결 오류', e.message); res(); });
+    req.on('error', (e) => { console.log('연결 오류', e.message); res(); }); };
+    go(downloadUrl(key, smallest.filekey));
   });
 }
 function downloadResume(url, k, out) {
