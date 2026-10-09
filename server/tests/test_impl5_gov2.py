@@ -95,7 +95,7 @@ def test_shoot_flow_admin_answers_tenant_accepts_and_bell(T):
     x = r.json(); T["shoots"].append(x["id"])
     assert x["state"] == "sent" and x["mine"] is True and x["approx"]["value"] > 0
     mine = get("/shoots", T["nw"]).json()["items"]
-    assert any(i["id"] == x["id"] and i["card_name"] == "영농관리 행정서비스" for i in mine)
+    assert any(i["id"] == x["id"] and i["card_name"] == "경작·휴경 분석서비스" for i in mine)
     # 받는 쪽 = LX 관리자(기관 · 보낸 사람 이름이 보인다) · LX 직원은 아직 받지 않는다
     adm = get("/shoots", T["admin"]).json()
     one = next(i for i in adm["items"] if i["id"] == x["id"])

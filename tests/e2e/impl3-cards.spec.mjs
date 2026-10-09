@@ -25,7 +25,7 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     await frontDoor(page, BASE, 'test@lx.or.kr');
     await page.goto(BASE + '/landxi/v3/lx-analyze/', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.k-sc[data-kind="analyze"]', { timeout: 30000 });
-    expect(await page.locator('.k-sc').count()).toBeGreaterThanOrEqual(5);
+    expect(await page.locator('.k-sc').count()).toBe(4);   // 지도-4 ⓐ 한 페이지 기본 4장(정식 서비스 5장 — 카드틀-5)
     expect(await words(page, '.la-page')).toEqual([]);
     /* 결과 예시 숫자 = 대표 수치 요약(/summary) 그 지역 값 */
     const farm = page.locator('.k-sc[data-card="card-farm"] .k-sc-res');
