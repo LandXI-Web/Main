@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 분석하기 카드 — 한 틀로</title>
+<link rel="stylesheet" href="ci.css">
+</head>
+<body class="m" data-v="a">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>10:50</span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="LX 직원 메뉴">
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9.5L10 4l7 5.5V16H3z"/></svg><span>홈</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 5h5l2 2h7v9H3z"/></svg><span>프로젝트</span></span>
+    <span class="ri on"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/></svg><span>분석하기</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3z M3 8h14"/></svg><span>서비스 카드</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg><span>데이터</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>요청함</span></span>
+  </nav>
+  <main class="main"><div class="page" id="page"></div></main>
+</div>
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+
+<script>
+/* 값은 모두 이 PC 서버 2026-10-09 10:50 응답(카드 묶음 · 카드 한 장) 그대로. 한 줄 소개만 같은 말투로 고쳐 적었다(소개 원문은 README 진단 표). */
+const IMG = '../../../../../../../landxi/';
+const S = { ga: '운영', pilot: '시범', none: '첫 결과 전' };
+const C = [
+  { id: 'farm', name: '영농관리 행정서비스', s: 'ga', grp: '농지·시설', img: 'v3/service-detail/data/img/namwon-cycle4/3@2x.jpg', cap: '남원시 · 2025.08 드론 정사영상',
+    line: '경작·휴경·시설·전용 필지를 찾습니다', finds: '경작지 · 비경작지 · 비닐하우스', imagery: '드론·항공 50cm 이하', tp: '영농기·수확기 2시점 이상', cmp: '지목 · 농지 대장 양식',
+    ex: { v: 2098, u: '필지', region: '남원시', asof: '2026.06.08' }, uses: '운영 1 · 시범 4', time: '구례 전역 약 18분', can: true,
+    regions: [['남원시', 'ga', 2098, '2025년 드론영상'], ['강진군', 'pilot', null, '2023년 항공영상'], ['구례군', 'pilot', null, '2023년 항공영상'], ['여수시', 'pilot', null, '2023년 항공영상'], ['목포시', 'pilot', null, '2023년 항공영상'], ['익산시', 'none', null, '2025년 드론영상'], ['시흥시', 'none', null, null]],
+    swipe: ['assets/proto/crops/namwon-farmland-2025/3-clean.jpg', 'assets/proto/crops/namwon-farmland-2025/3@2x.jpg', '남원시 · 2025 정사영상'],
+    scenes: [['v3/service-detail/data/img/namwon-cycle4/1@2x.jpg', '2025.04'], ['v3/service-detail/data/img/namwon-cycle4/2@2x.jpg', '2025.06'], ['v3/service-detail/data/img/namwon-cycle4/3@2x.jpg', '2025.08'], ['v3/service-detail/data/img/namwon-cycle4/4@2x.jpg', '2025.10']] },
+  { id: 'marine', name: '해양쓰레기 실태조사 서비스', s: 'ga', grp: '환경', img: 'v3/service-detail/data/img/marine-aerial/1@2x.jpg',
+    line: '해안의 쓰레기 군집을 찾습니다', finds: '해안 쓰레기 군집', imagery: '항공·드론 · 간조 때', tp: '1시점', cmp: '없음',
+    ex: { v: 1857, u: '건', region: '여수시', asof: '2026.06.08' }, uses: '운영 1', time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'change', name: '국토 변화 탐지 서비스', s: 'pilot', grp: '건축·변화', img: 'v3/service-detail/data/img/namwon-change/1@2x.jpg',
+    line: '두 시점 사이 신축·소실·식생 변화를 찾습니다', finds: '신축 · 소실 · 식생 변화', imagery: '드론 정사영상', tp: '같은 지역 2시점', cmp: '없음',
+    ex: { v: 456, u: '건', region: '남원시', asof: '2026.06.08' }, uses: '시범 1', time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'gh', name: '비닐하우스 서비스', s: 'pilot', grp: '농지·시설', img: 'assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg',
+    line: '단동·다동 비닐하우스를 찾습니다', finds: '비닐하우스', imagery: '드론·항공 50cm 이하', tp: '1시점', cmp: '필지 대조 · 용도 불일치',
+    ex: null, note: '결과 수 집계 전', where: '증평군 외 2곳', uses: '시범 3', time: '남원 전역 약 21분', can: true },
+  { id: 'bld', name: '건축물', s: 'pilot', grp: '건축·변화', img: null,
+    line: '건물과 대장이 다른 필지를 찾습니다', finds: '건물', imagery: '25cm 항공', tp: '1시점', cmp: '필지 대조 · 무허가 건축 의심',
+    ex: null, note: '결과 수 집계 전', where: '원주시', uses: '시범 1', time: '원주 전역 약 3분', can: true },
+  { id: 'silage', name: '곤포사일리지', s: 'pilot', grp: '농지·시설', img: null,
+    line: '들에 쌓인 곤포사일리지를 찾습니다', finds: '곤포사일리지', imagery: '2cm 드론', tp: '1시점', cmp: '필지 대조 · 휴경·전용 의심',
+    ex: null, note: '결과 수 집계 전', where: '보령시', uses: '시범 1', time: '보령 전역 약 33분', can: true },
+  { id: 'park', name: '주차장', s: 'pilot', grp: '건축·변화', img: null,
+    line: '지목과 다른 주차장 필지를 찾습니다', finds: '주차장', imagery: '25cm 항공', tp: '1시점', cmp: '필지 대조 · 농지 전용 의심',
+    ex: null, note: '결과 수 집계 전', where: '여주시 외 1곳', uses: '시범 2', time: '여주 전역 약 1분', can: true },
+  { id: 'road', name: '도로 안전관리 서비스', s: 'none', grp: '안전', img: null,
+    line: '포장이 파손된 도로 구간을 찾습니다', finds: '포트홀 · 균열 · 보수 흔적', imagery: '차량 카메라 · 정사영상', tp: '1시점', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: '첫 결과 전 1', time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'forest', name: '산림·탄소 관리 서비스', s: 'none', grp: '환경', img: null,
+    line: '산림 훼손지와 식생 밀도를 찾습니다', finds: '산림 훼손지 · 식생 밀도', imagery: '위성 · 항공 영상', tp: '1시점', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: null, time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'living', name: '생활환경 위험요소 탐지 서비스', s: 'none', grp: '환경', img: null,
+    line: '방치 폐기물과 불법 소각 흔적을 찾습니다', finds: '방치 폐기물 · 불법 소각 흔적', imagery: '항공·드론 정사영상', tp: '1시점', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: '첫 결과 전 1', time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'crowd', name: '인파관리 서비스', s: 'none', grp: '안전', img: null,
+    line: '행사장의 인파와 차량을 찾습니다', finds: '사람 · 차량', imagery: '드론 영상(동영상)', tp: '행사 시간대', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: '첫 결과 전 1', time: null, can: false, cant: '분석 모델 등록 전' },
+  { id: 'gfarm', name: '농지 이용 실태 분석 (해외)', s: 'none', grp: '해외', img: null,
+    line: '위성 영상에서 경작·휴경 농지를 찾습니다', finds: '경작 · 휴경', imagery: '위성 영상', tp: '생육기 여러 시점', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: '첫 결과 전 2', time: null, can: false, cant: '해외 화면에서 분석' },
+  { id: 'gdis', name: '재해 피해 AI 분석 (해외)', s: 'none', grp: '해외', img: null,
+    line: '재해 전후 피해 건물과 지형 변화를 찾습니다', finds: '피해 건물 · 지형 변화', imagery: '위성 영상', tp: '재해 전 · 후 2시점', cmp: '없음',
+    ex: null, note: '첫 결과 뒤 표시', uses: '첫 결과 전 1', time: null, can: false, cant: '해외 화면에서 분석' },
+];
+const nf = (v) => Number(v).toLocaleString('ko-KR');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ───── 한 틀의 부품(ⓐ · ⓑ · 상세가 같은 함수를 쓴다) ───── */
+const pic = (c, cls) => c.img
+  ? `<div class="pic ${cls}"><img src="${IMG + c.img}" alt=""><span class="badge" data-s="${c.s}">${S[c.s]}</span></div>`
+  : `<div class="pic blank ${cls}"><span>결과 장면이 아직 없습니다</span><span class="badge" data-s="${c.s}">${S[c.s]}</span></div>`;
+const topRow = (c) => `<p class="top"><span>${esc(c.grp)}</span><span class="r">${esc(c.imagery)}</span></p>`;
+const num = (c) => c.ex
+  ? `<div class="num"><b>${nf(c.ex.v)}</b><span class="u">${c.ex.u}</span><span class="sg">✓</span><small>AI 분석 결과 · ${esc(c.ex.region)} · ${c.ex.asof} 기준</small></div>`
+  : `<div class="num is-none"><b class="none">—</b><small>${esc(c.note)}${c.where ? ' · ' + esc(c.where) : ''}</small></div>`;
+const cell = (k, v) => `<div><dt>${k}</dt><dd class="${v ? '' : 'none'}">${esc(v || '아직 없음')}</dd></div>`;
+const acts = (c) => `<div class="acts">${c.can ? '<span class="go">이 카드로 분석</span>' : `<span class="go cant">${esc(c.cant)}</span>`}<span class="more">자세히</span></div>`;
+
+/* ⓐ 세로 · 그림 위 — 아래 칸 둘(쓰이는 곳 · 걸리는 시간) */
+const cardA = (c) => `<article class="ca">${pic(c, '')}<div class="bd">${topRow(c)}<h3 class="nm">${esc(c.name)}</h3><p class="ln">${esc(c.line)}</p>${num(c)}
+  <dl class="cells">${cell('쓰이는 곳', c.uses)}${cell('걸리는 시간', c.time || '첫 분석 뒤 표시')}</dl>${acts(c)}</div></article>`;
+/* ⓑ 가로 · 그림 옆 — 아래 칸 넷(쓰이는 곳 · 걸리는 시간 · 찾는 것 · 시점) */
+const cardB = (c) => `<article class="cb">${pic(c, '')}<div class="bd">${topRow(c)}<h3 class="nm">${esc(c.name)}</h3><p class="ln">${esc(c.line)}</p>${num(c)}
+  <dl class="cells">${cell('쓰이는 곳', c.uses)}${cell('걸리는 시간', c.time || '첫 분석 뒤 표시')}${cell('찾는 것', c.finds)}</dl>${acts(c)}</div></article>`;
+
+const tools = `<div class="tools"><div class="chips">
+  <span class="chip on">전체 <small>13</small></span><span class="chip">운영 <small>2</small></span><span class="chip">시범 <small>5</small></span><span class="chip">첫 결과 전 <small>6</small></span>
+  <span class="sep"></span><span class="chip">농지·시설</span><span class="chip">환경</span><span class="chip">건축·변화</span><span class="chip">안전</span><span class="chip">해외</span></div>
+  <span class="search">카드 이름 · 찾는 것</span></div>`;
+const head = `<header class="head"><h1>분석하기</h1><p class="sub">서비스 카드를 골라 지역을 정하면 AI가 분석합니다 — 결과는 XI맵에서 봅니다</p></header>`;
+
+/* 상세 — 목록 카드와 같은 순서 */
+function detail(c) {
+  const rows = c.regions.map(([n, s, v, im]) => `<li><span class="st" data-s="${s}">${S[s]}</span><span>${esc(n)}${im ? ` <small style="color:var(--sub)">· ${esc(im)}</small>` : ''}</span><span class="n ${v ? '' : 'none'}">${v ? nf(v) + ' ' + c.ex.u : '—'}</span></li>`).join('');
+  const [b, a, scap] = c.swipe;
+  return `<nav class="crumb"><span>분석하기</span><span>›</span><b>${esc(c.name)}</b></nav>
+  <div class="dt">
+    <div class="dt-l">
+      <div class="hero"><img src="${IMG + c.img}" alt=""><span class="badge" data-s="${c.s}">${S[c.s]}</span><span class="cap">${esc(c.cap)}</span></div>
+      <div class="dt-head">${topRow(c)}<h1 class="nm">${esc(c.name)}</h1><p class="ln">${esc(c.line)}</p></div>
+      <div class="dt-2">
+        <section class="box"><h2>AI 분석 결과</h2>${num(c)}<ul class="rl">${rows}</ul></section>
+        <section class="box"><h2>이 카드의 조건</h2><dl class="cells">${cell('쓰이는 곳', c.uses)}${cell('걸리는 시간', c.time)}${cell('입력 영상', c.imagery)}${cell('시점', c.tp)}${cell('찾는 것', c.finds)}${cell('대조', c.cmp)}</dl></section>
+      </div>
+      <section class="box"><h2>영상과 결과<small>같은 자리</small></h2>
+        <div class="dt-2"><div class="sw"><img src="${IMG + b}" alt=""><img class="after" src="${IMG + a}" alt=""><span class="bar"><i>‹ ›</i></span><span class="tag l">영상</span><span class="tag r">AI 분석</span></div>
+        <div><p class="note" style="margin-bottom:8px">${esc(scap)} · 시점별 장면</p><div class="thumbs" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0">${c.scenes.map(([s, w]) => `<figure><img src="${IMG + s}" alt=""><figcaption>${w}</figcaption></figure>`).join('')}</div></div></div>
+      </section>
+    </div>
+    <aside class="side"><h2>이 카드로 분석</h2>
+      <div class="step"><i>1</i>어디<small>여러 곳 가능</small></div><div class="inp">시군구 이름으로 찾기</div>
+      <div class="step"><i>2</i>결과까지</div><div class="eta"><b>—</b><span>지역을 고르면 최근 분석 기록으로 보여 드립니다</span></div>
+      <div class="start">분석 시작</div>
+      <p class="note">작업 대기열에 들어가고,<br>결과는 XI맵에서 읍면동 순으로 차오릅니다.</p>
+      <span class="alt">서비스 카드에서 관리하기</span>
+    </aside>
+  </div>`;
+}
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'a';
+document.body.dataset.v = v;
+const page = document.getElementById('page');
+const stamp = document.getElementById('stampT');
+if (v === 'a') { page.innerHTML = head + tools + `<div class="ga">${C.map(cardA).join('')}</div>`; stamp.textContent = 'ⓐ 세로 한 틀 — 그림 위 · 4열'; }
+else if (v === 'b') { page.innerHTML = head + tools + `<div class="gb">${C.map(cardB).join('')}</div>`; stamp.textContent = 'ⓑ 가로 한 틀 — 그림 옆 · 2열 · 아래 칸 셋'; }
+else { page.innerHTML = detail(C[0]); stamp.textContent = '카드 상세 — 목록 카드와 같은 순서'; }
+if (q.get('f') === 'nostamp') document.querySelector('.stamp').remove();
+</script>
+</body>
+</html>

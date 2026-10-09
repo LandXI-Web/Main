@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI 분석하기 카드 — 한 틀로</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>분석하기 카드 — 한 틀로</h1>
+<p class="lead">페블의 레퍼런스 가이드와 전 기능 재검수에서 나온 제안, 그리고 이미 만든 것의 구현 확인입니다. 확인하신 것만 만듭니다.</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>분석하기 카드 — 한 틀로 (10-09 &quot;통일성 없이 주먹구구식&quot; 의 다시 설계)</h2><p class="sub">지금 카드 13장을 서버 값으로 하나씩 대조했습니다. 그림 틀 4가지 · 윗줄 3가지 · 큰 숫자 자리 3가지 · 아래 칸 2가지 · 버튼 자리 3가지 · 소개 끝말 8가지가 섞여 있었습니다. 모든 카드가 같은 자리 · 같은 항목을 쓰는 한 틀을 두 방향으로 그렸습니다. 숫자는 모두 서버 값(2026-10-09)이고 지어낸 것은 없습니다. 네 가지를 하나씩 골라 주세요.</p><article class="c" data-id="카드틀-1" data-t="[화면][Land-XI] 카드 한 틀의 모양 — 세로(그림 위)인가 가로(그림 옆)인가"><header><span class="n">카드틀-1</span><h3>[화면][Land-XI] 카드 한 틀의 모양 — 세로(그림 위)인가 가로(그림 옆)인가</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>카드마다 그림 틀이 다르고(넷 칸 합성 · 한 장 · 둘로 나눔 · 회색), 윗줄은 &#x27;지역 · 기준일&#x27; 또는 &#x27;증평군 외 2곳&#x27; 또는 &#x27;아직 결과 없음&#x27;, 아래 둘째 칸은 걸리는 시간이거나 영상이고, 버튼 자리는 검정 버튼이거나 회색 글입니다. 상태(운영 · 시범)와 판 번호(v2.1)가 한 줄에 섞여 있습니다.</p><p class="k">제안</p><p>모든 카드가 같은 순서: 그림 한 장(3:2 · 합성 없음) + 상태 배지(그림 왼쪽 위) → 윗줄 &#x27;분야 · 입력 영상&#x27; → 이름 → 한 줄 소개 → 큰 숫자 → 아래 칸 → 버튼 자리. 판 번호 · 담당은 서비스 카드 관리에만 두고 분석하기에서는 뺍니다. ⓐ 세로: 그림 위 · 4열 · 아래 칸 둘(쓰이는 곳 · 걸리는 시간) — 한 화면에 8장, 그림이 크고 서비스 고르는 갤러리 느낌. ⓑ 가로: 그림 옆 · 2열 · 아래 칸 셋(쓰이는 곳 · 걸리는 시간 · 찾는 것) — 한 화면에 6장, 글이 한 줄씩 다 보이고 그림 없는 카드의 빈 틀이 작아 눈에 덜 띄며, 같은 가로 모양이 XI맵 &#x27;이 영상에 이 분석&#x27; 작은 카드로 그대로 줄어듭니다. 추천은 ⓐ(그림이 서비스를 말해 주는 갤러리, 원칙 90).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/v3/lx-analyze/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-analyze/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>왼쪽 메뉴 &#x27;분석하기&#x27; — 지금 카드</em></li></ul></div><div class="im"><figure><a href="img/before-list-1440.png" target="_blank"><img src="img/before-list-1440.png" alt="" loading="lazy"></a><figcaption>지금</figcaption></figure><figure><a href="img/new-a-list-1440.png" target="_blank"><img src="img/new-a-list-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-b-list-1440.png" target="_blank"><img src="img/new-b-list-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 세로 — 그림 위 · 4열">ⓐ 세로 — 그림 위 · 4열</button><button type="button" data-v="ⓑ 가로 — 그림 옆 · 2열 · 찾는 것 칸">ⓑ 가로 — 그림 옆 · 2열 · 찾는 것 칸</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="카드틀-2" data-t="[규칙][Land-XI] 값이 없을 때와 셈 단위 — 같은 칸에 같은 방식으로"><header><span class="n">카드틀-2</span><h3>[규칙][Land-XI] 값이 없을 때와 셈 단위 — 같은 칸에 같은 방식으로</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>결과 수가 있는 카드는 큰 숫자, 없는 카드는 그 자리에 &#x27;AI 분석 결과 있음&#x27; 또는 &#x27;첫 결과 뒤 표시&#x27; 글자가 들어가 자리 높이와 모양이 달라집니다. 그림이 없으면 회색 판 글귀가 두 가지(&#x27;결과 장면 없음&#x27; · &#x27;결과가 나오면 장면이 보입니다&#x27;), 걸리는 시간이 없으면 칸 자체가 &#x27;영상&#x27;으로 바뀝니다. 셈 단위는 필지 · 건이 카드마다 다른 기준 없이 붙어 있습니다.</p><p class="k">제안</p><p>없는 값은 칸을 바꾸지 않고 같은 칸에 같은 방식으로: 큰 숫자 자리 &#x27;—&#x27; + 한 줄(결과는 있으나 세지 않았으면 &#x27;결과 수 집계 전 · 지역&#x27;, 첫 결과 전이면 &#x27;첫 결과 뒤 표시&#x27;) · 그림 자리 같은 3:2 빈 틀 + &#x27;결과 장면이 아직 없습니다&#x27; · 걸리는 시간 &#x27;첫 분석 뒤 표시&#x27; · 쓰이는 곳 &#x27;아직 없음&#x27; · 버튼 자리는 같은 크기 회색 칸에 까닭 한 줄(&#x27;분석 모델 등록 전&#x27; · &#x27;해외 화면에서 분석&#x27;). 셈 단위는 한 규칙: ⓐ 필지 대조가 있는 카드(영농관리 · 비닐하우스 · 건축물 · 곤포사일리지 · 주차장)는 &#x27;필지&#x27;, 없는 카드(해양쓰레기 · 국토 변화 등)는 &#x27;건&#x27; — 지금 서버 값(2,098 필지 · 1,857 건 · 456 건)과 맞습니다. ⓑ 모두 &#x27;건&#x27;으로 통일 — 단순하지만 영농관리의 2,098 필지를 &#x27;건&#x27;으로 부르게 됩니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/v3/lx-analyze/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-analyze/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>둘째 줄 카드(건축물 · 곤포사일리지 · 주차장) — 지금은 큰 숫자 자리에 글자</em></li></ul></div><div class="im"><figure><a href="img/new-a-list-1440.png" target="_blank"><img src="img/new-a-list-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 대조 있으면 필지 · 없으면 건">ⓐ 대조 있으면 필지 · 없으면 건</button><button type="button" data-v="ⓑ 모두 &#x27;건&#x27;">ⓑ 모두 &#x27;건&#x27;</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="카드틀-3" data-t="[글][Land-XI] 한 줄 소개 — 같은 길이 · 같은 말투"><header><span class="n">카드틀-3</span><h3>[글][Land-XI] 한 줄 소개 — 같은 길이 · 같은 말투</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>소개가 17~31자, 끝말이 8가지(남깁니다 · 알려 줍니다 · 골라냅니다 · 셉니다 · 보여 줍니다 · 만듭니다 · 좁힙니다 · 추립니다)입니다. 영농관리와 해외 농지 카드는 &#x27;확인할 필지(농지)만 남깁니다&#x27;라서 분석하기에서 빼기로 한 현장 확인 개념이 남아 있습니다.</p><p class="k">제안</p><p>열세 장 모두 &#x27;무엇을 찾나&#x27; 한 가지만 24자 이내로. ⓐ &#x27;~을 찾습니다&#x27; 한 줄 — 예: 영농관리 &#x27;경작·휴경·시설·전용 필지를 찾습니다&#x27; · 해양쓰레기 &#x27;해안의 쓰레기 군집을 찾습니다&#x27; · 건축물 &#x27;건물과 대장이 다른 필지를 찾습니다&#x27; · 해외 농지 &#x27;위성 영상에서 경작·휴경 농지를 찾습니다&#x27;. ⓑ &#x27;~을 찾아 ~합니다&#x27; 두 줄 — 찾는 것 + 해 주는 일(예: &#x27;경작·휴경·시설·전용 필지를 찾아 / 대장과 다른 곳을 골라냅니다&#x27;) — 말이 더 풍부하지만 카드가 한 줄 높아지고 끝말이 다시 흩어질 수 있습니다. 소개 글은 서비스 카드 관리에서 적는 글이라, 정해지면 그 화면의 글 길이 제한(24자 · &#x27;찾습니다&#x27;로 끝남)도 같이 둡니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/v3/lx-analyze/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-analyze/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>첫 카드 소개 &#x27;경작·휴경·시설·전용을 판정해 확인할 필지만 남깁니다&#x27;</em></li></ul></div><div class="im"><figure><a href="img/new-a-list-1440.png" target="_blank"><img src="img/new-a-list-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ &#x27;~을 찾습니다&#x27; 한 줄">ⓐ &#x27;~을 찾습니다&#x27; 한 줄</button><button type="button" data-v="ⓑ &#x27;~을 찾아 ~합니다&#x27; 두 줄">ⓑ &#x27;~을 찾아 ~합니다&#x27; 두 줄</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="카드틀-4" data-t="[화면][Land-XI] 카드 상세 — 목록 카드와 같은 순서로"><header><span class="n">카드틀-4</span><h3>[화면][Land-XI] 카드 상세 — 목록 카드와 같은 순서로</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>상세 화면 머리에 &#x27;운영 · v2.1 · 담당 미지정&#x27;이 한 줄로 섞여 있고, 큰 숫자 칸 이름은 &#x27;결과 예시&#x27;, 아래에 &#x27;쓰이는 곳&#x27; · &#x27;이 카드의 조건&#x27;(입력 영상 · 시점 · 걸리는 시간 · 찾는 것 · 대조 · 버전 · 담당) 칸이 따로 있어 목록 카드와 항목 순서 · 이름이 다릅니다. 대표 그림은 넷 칸 합성입니다.</p><p class="k">제안</p><p>ⓐ 목록 카드와 같은 순서: 그림 한 장(상태 배지 · 장면 설명) → 윗줄 &#x27;분야 · 입력 영상&#x27; → 이름 → 소개 → &#x27;AI 분석 결과&#x27;(큰 숫자 + 지역별 표: 운영 · 시범 · 첫 결과 전 순서, 없는 곳은 &#x27;—&#x27;) → &#x27;이 카드의 조건&#x27;(쓰이는 곳 · 걸리는 시간 · 입력 영상 · 시점 · 찾는 것 · 대조, 한 줄씩) → &#x27;영상과 결과&#x27;(같은 자리 비교 + 시점별 장면). 판 번호 · 담당 줄은 뺍니다. 오른쪽 &#x27;이 카드로 분석&#x27;은 그대로. ⓑ 지금 상세 순서를 두고 머리줄(판 번호 · 담당)만 빼고 &#x27;결과 예시&#x27;를 &#x27;AI 분석 결과&#x27;로 이름만 맞춤 — 일이 작지만 목록과 상세의 순서가 계속 다릅니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-farm" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-analyze/?card=card-farm</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>영농관리 카드 &#x27;자세히&#x27;</em></li></ul></div><div class="im"><figure><a href="img/before-detail-1440.png" target="_blank"><img src="img/before-detail-1440.png" alt="" loading="lazy"></a><figcaption>지금</figcaption></figure><figure><a href="img/new-detail-1440.png" target="_blank"><img src="img/new-detail-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 목록과 같은 순서로 다시 짬">ⓐ 목록과 같은 순서로 다시 짬</button><button type="button" data-v="ⓑ 머리줄 · 이름만 고침">ⓑ 머리줄 · 이름만 고침</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 4 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rcards1';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[분석하기 카드 — 한 틀로 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
