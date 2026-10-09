@@ -1,6 +1,6 @@
 /* 설계 14차 · LX 직원 대시보드(단계별 진행 현황) · 내 정보 저장 용량 · LX 관리자 계정별 할당 — 정적 시안 만들기.
    v3 셸 마크업(마스트 · 왼쪽 메뉴)은 10-09 로그인 폼으로 연 화면의 것을 그대로 두고, 판만 새로 짠다. v3 kit.css · console.css · me.css · accounts.css 를 그대로 읽는다.
-   숫자 = 10-09 10:37 서버 응답(values-projects.json · README §5). 서버에 없는 것(기본 할당 50 GB · 늘리기 요청 1건 · 예시 배치)은 '예시' 표.
+   숫자 = 10-09 10:37 서버 응답(values-projects.json · README §5). 서버에 없는 것(기본 할당 50 GB · 증량 신청 1건 · 예시 배치)은 '예시' 표.
    사용: node build.mjs → 이 폴더(docs) 와 landxi/proto/review/lx-staff-board/ 두 곳에 같은 화면(경로만 다름). */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,8 +26,13 @@ const USERS = [
   ['LX 관리자', 'lxadmin', 'LX 관리자', 0, 0],
   ['LX 영업', 'sales@lx.or.kr', 'LX 영업', 0, 0],
 ];
-/* 예시 — 늘리기 요청 한 건(서버 0건 · 승인 흐름을 보이기 위한 자리) */
+/* 예시 — 증량 신청 한 건(서버 0건 · 승인 흐름을 보이기 위한 자리) */
 const REQ = { who: 'LX 직원', login: 'test@lx.or.kr', from: 50, want: 100, why: '2차 학습데이터 추가', at: '10.9 09:40', used: 29813134 };
+/* 저장 서버 실측(10-09 10:57 · 자료 보관 드라이브 E · OS 값) · 할당 합계 = 기본 50 GB × LX 계정 6(예시) */
+const DISK = { total: 8002e9, used: 6028e9, free: 1973e9 };
+/* 프로젝트 그림 — 비닐하우스는 서버 결과 장면(카드 한 벌의 장면 그대로) · 나머지는 그 프로젝트의 학습 표본(라벨 그린 그림 · 서버 미리보기) */
+const PIC = { '비닐하우스 2026': ['greenhouse-scene.jpg', '결과 장면 · 남원시'], '주차장 2026': ['smp_969c41cca0-0.jpg', '학습 표본 · 주차장 170장'],
+  '건축물 2026': ['smp_ce7719e384-0.jpg', '학습 표본 · 건축물 139장'], '곤포사일리지 2026': ['smp_5333ad8072-0.jpg', '학습 표본 · 곤포 60장'] };
 
 /* ── 공통 ── */
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -38,6 +43,14 @@ const bar = (w, warn = false) => `<div class="k-me-bar${warn ? ' is-warn' : ''}"
 const head = (title, sub, more, extra = '') => `<div class="ld-h"><h2>${title}${sub ? `<small class="ld-sub">${sub}</small>` : ''}${extra}</h2>${more || ''}</div>`;
 const cell = (v, label, cls = '') => `<div class="ld-cell ${cls}"><b class="num">${fmt(v)}</b><span>${label}</span></div>`;
 const EX = '<span class="sb-ex">예시</span>';
+/* 도넛 — 프로젝트별 비중(잉크 농도 4단 · 색 0) · 가운데 큰 숫자. r=44 */
+const SHADE = ['#1C1F25', '#4E535C', '#727780', '#B0B8C1'];
+function donut(parts, total, center, sub, { size = 150 } = {}) {
+  const C = 2 * Math.PI * 44; let off = 0;
+  const segs = parts.map(([, v], i) => { const L = (v / total) * C; const o = off; off += L; return `<circle r="44" cx="50" cy="50" fill="none" stroke="${SHADE[i % 4]}" stroke-width="12" stroke-dasharray="${L.toFixed(1)} ${(C - L).toFixed(1)}" stroke-dashoffset="${(-o).toFixed(1)}"/>`; }).join('');
+  return `<div class="sb-dn" style="--dn:${size}px"><svg viewBox="0 0 100 100" role="img" aria-label="${esc(sub)}"><circle r="44" cx="50" cy="50" fill="none" stroke="var(--bg-1)" stroke-width="12"/>${segs}</svg><div class="sb-dn-c"><b class="num">${center[0]}</b><span>${center[1]}</span><small>${sub}</small></div></div>`;
+}
+const legend = (parts, total) => `<ul class="sb-lg">${parts.map(([n, v], i) => `<li><i style="background:${SHADE[i % 4]}"></i><span>${esc(n)}</span><b class="num">${Math.round((v / total) * 100)}%</b><small class="num">${size(v)}</small></li>`).join('')}</ul>`;
 
 /* ── 셸(마스트 · 왼쪽 메뉴) — v3 셸 마크업 그대로 · 직원 메뉴 첫 칸 '홈' → '대시보드'(이 시안의 ①) ── */
 const I = {
@@ -90,7 +103,9 @@ const regionOf = (p) => (p.regions.length ? p.regions[0].name + (p.regions.lengt
 /* 카드 — 이름 · 지금(단계 안 상태) · 지역 · 서비스 · 담당 · 마감 · 남은 것 한 줄 */
 function pcard(p, { now, kick, kind = 'warn', due = null }) {
   const m = [['지역', regionOf(p)], ['서비스', p.task || '—'], ['담당', p.lead?.name || '—'], ['마감', due]];
+  const pic = PIC[p.name];
   return `<a class="sb-pc" href="#" aria-label="${esc(p.name)} · ${esc(regionOf(p))} · ${esc(now)}${kick ? ` · ${esc(kick)}` : ''}">
+<span class="sb-pc-img${pic ? '' : ' is-blank'}">${pic ? `<img src="img/${pic[0]}" alt="" loading="lazy" decoding="async"><span class="sb-pc-cap">${pic[1]}</span>` : '<span>그림 없음 · 첫 결과 뒤</span>'}</span>
 <span class="sb-pc-t"><b>${esc(p.name)}</b><span class="sb-pc-now">${esc(now)}</span></span>
 <dl class="sb-pc-m">${m.map(([k, v]) => `<dt>${k}</dt><dd${v ? '' : ' class="is-none"'}>${esc(v || '미정')}</dd>`).join('')}</dl>
 ${kick ? `<p class="sb-pc-k" data-kind="${kind}">${esc(kick)}</p>` : ''}</a>`;
@@ -109,12 +124,12 @@ function board(list, ex = false) {
   const cols = COLS.map(([key, label]) => {
     const here = list.filter((x) => x.col === key);
     return `<div class="sb-col" data-n="${here.length}"><div class="sb-col-h"><b class="num">${here.length}</b><span>${label}</span></div>
-${here.length ? here.slice(0, 2).map((x) => pcard(x.p, x)).join('\n') + (here.length > 2 ? `<a class="sb-more" href="#">외 ${here.length - 2}개</a>` : '') : '<p class="sb-none">머무는 프로젝트 없음</p>'}</div>`;   // 칸마다 카드 둘까지 · 나머지는 '외 n개'(프로젝트 목록으로)
+${here.length ? pcard(here[0].p, here[0]) + (here.length > 1 ? `<ul class="sb-rest">${here.slice(1).map((x) => `<li><a href="#"><b>${esc(x.p.name)}</b><span>${esc(regionOf(x.p))}</span>${x.kick ? `<i data-kind="${x.kind}"></i>` : ''}</a></li>`).join('')}</ul>` : '') : '<p class="sb-none">해당 프로젝트 없음</p>'}</div>`;   // 칸마다 그림 카드 하나 · 나머지는 이름 줄(점 = 남은 것 있음)
   }).join('\n');
   return `<section class="t-card ld-card sb-board" aria-label="프로젝트 진행 현황">
 ${head('프로젝트 진행 현황', `진행 중 ${P.length} · 내가 맡은 ${P.filter((p) => p.lead_is_me).length}`, '<a class="ld-more" href="#">전체 보기</a>', ex ? ' <span class="sb-ex">예시 배치 — 모양을 보기 위한 자리</span>' : '')}
 <div class="sb-cols">${cols}</div>
-<div class="sb-foot"><p><span>칸 = 프로젝트가 지금 머무는 단계.</span> <span>카드를 누르면 그 단계 화면으로 갑니다.</span></p><button class="ld-new" type="button">새 프로젝트</button></div>
+<div class="sb-foot"><p><span>칸 = 프로젝트가 지금 있는 단계.</span> <span>카드를 누르면 그 단계 화면으로 갑니다.</span></p><button class="ld-new" type="button">새 프로젝트</button></div>
 </section>`;
 }
 function storeCard(ex = false) {
@@ -122,18 +137,18 @@ function storeCard(ex = false) {
   const p = ex ? '92' : pct(used, q);
   const warn = ex;
   return `<section class="t-card ld-card sb-store" aria-label="저장 용량">${head('저장 용량', `할당 ${q} GB`, '<a class="ld-more" href="my.html">내 정보</a>')}
-<div class="sb-store-b${warn ? ' is-warn' : ''}"><p class="k-me-big"><b class="num">${size(used).split(' ')[0]}</b><span>${size(used).split(' ')[1]}</span><small>할당의 ${p}%</small></p>
-${bar(Number(p), warn)}
+<div class="sb-store-b${warn ? ' is-warn' : ''}"><div class="sb-store-row">${donut(STORAGE.projects.map(([n, b]) => [n, ex ? b * 1549 : b]), used, size(used).split(' '), `할당의 ${p}%`, { size: 118 })}${legend(STORAGE.projects.map(([n, b]) => [n, ex ? b * 1549 : b]), used)}</div>
+<p class="sb-store-k"><span>할당 ${q} GB 대비</span><b class="num">${p}%</b></p>${bar(Number(p), warn)}
 <p class="sb-store-s"><span>프로젝트 ${STORAGE.projects.length}개의 학습데이터 · 올린 파일.</span> <span>기본 할당 ${q} GB${ex ? '' : ' — LX 관리자가 정함'}</span></p>
-${warn ? `<p class="sb-store-w"><span>할당의 ${p}%를 썼습니다.</span> <span>꽉 차기 전에 늘리기 요청을 보내 주세요</span></p>` : ''}
-<div class="sb-store-a"><button class="k-me-ask" type="button">용량 늘리기 요청</button></div></div></section>`;
+${warn ? `<p class="sb-store-w"><span>할당의 ${p}%를 썼습니다.</span> <span>꽉 차기 전에 증량을 신청해 주세요</span></p>` : ''}
+<div class="sb-store-a"><button class="k-me-ask" type="button">용량 증량 신청</button></div></div></section>`;
 }
 const jobsCard = () => `<section class="t-card ld-card sb-jobs" aria-label="내가 돌린 작업">${head('내가 돌린 작업', `${JOBS.first} – ${JOBS.last}`)}
-<div class="sb-cells2">${cell(JOBS.done, '끝남')}${cell(JOBS.failed, '실패', JOBS.failed ? 'is-warn' : 'is-zero')}${cell(JOBS.cancelled, '취소')}${cell(JOBS.running, '지금 도는 것', JOBS.running ? '' : 'is-zero')}</div>
+<div class="sb-cells2">${cell(JOBS.done, '완료')}${cell(JOBS.failed, '실패', JOBS.failed ? 'is-warn' : 'is-zero')}${cell(JOBS.cancelled, '취소')}${cell(JOBS.running, '진행 중', JOBS.running ? '' : 'is-zero')}</div>
 <p class="sb-kinds"><span class="sb-k">종류별</span>${JOBS.kinds.slice(0, 4).map(([k, n]) => `<span>${k} <b class="num">${fmt(n)}</b></span>`).join('')}</p></section>`;
 const inboxCard = () => `<section class="t-card ld-card sb-inbox" aria-label="요청함">${head('요청함', '', '<a class="ld-more" href="#">전체</a>')}
-<div class="ld-cells">${cell(INBOX.review, '검토 요청', INBOX.review ? '' : 'is-zero')}${cell(INBOX.request, '분석 요청', INBOX.request ? '' : 'is-zero')}${cell(INBOX.approval, '내 결재', INBOX.approval ? '' : 'is-zero')}</div>
-<p class="sb-inbox-s">기관이 나를 기다리는 것 · 왼쪽 메뉴 숫자와 같습니다</p></section>`;
+<div class="ld-cells">${cell(INBOX.review, '검토 요청', INBOX.review ? '' : 'is-zero')}${cell(INBOX.request, '분석 요청', INBOX.request ? '' : 'is-zero')}${cell(INBOX.approval, '보낸 요청', INBOX.approval ? '' : 'is-zero')}</div>
+<p class="sb-inbox-s">기관의 요청과 내가 보낸 요청 · 왼쪽 메뉴 숫자와 같습니다</p></section>`;
 const noticeCard = () => `<section class="t-card ld-card sb-notice" aria-label="공지">${head('공지')}
 <p class="sb-ntc-none">새 공지가 없습니다</p>
 <p class="sb-ntc-s">LX 관리자가 올린 공지가 최근 순으로 보입니다</p></section>`;
@@ -147,7 +162,7 @@ ${board(ex ? EXAMPLE : REAL, ex)}
     css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: `LX 직원 대시보드 — 프로젝트 진행 현황 네 칸 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지${ex ? ' (예시 배치)' : ''}` });
 }
 
-/* ── ② 내 정보 창 — 왼쪽 내 정보 · 오른쪽 저장 용량(할당 50 GB · 막대 · 프로젝트별) · 늘리기 요청(펼친 상태) · 요청 이력 ── */
+/* ── ② 내 정보 창 — 왼쪽 내 정보 · 오른쪽 저장 용량(할당 50 GB · 막대 · 프로젝트별) · 증량 신청(펼친 상태) · 요청 이력 ── */
 function my(o) {
   const used = STORAGE.used, q = STORAGE.quota, p = pct(used, q);
   const bars = STORAGE.projects.map(([n, b]) => `<li><span class="k-me-pn">${n}</span><span class="k-me-bar" role="img" aria-label="전체의 ${Math.round((b / used) * 100)}%"><i style="width:${Math.max(1, Math.round((b / used) * 100))}%"></i></span><span class="k-me-pv num">${size(b)}</span></li>`).join('');
@@ -164,27 +179,35 @@ function my(o) {
 </div>
 <div class="k-me-r">
 <div class="k-me-st"><div class="k-me-sth"><p class="k-me-l">저장 용량</p><span class="k-me-tag">기본 할당 ${q} GB</span></div>
-<p class="k-me-big"><b class="num">${size(used).split(' ')[0]}</b><span>${size(used).split(' ')[1]}</span><small>할당 ${q} GB 중 · ${p}%</small></p>
-${bar(Number(p))}
-<ul class="k-me-bars">${bars}</ul>
+<div class="sb-store-row sb-store-row--lg">${donut(STORAGE.projects, used, size(used).split(' '), `할당의 ${p}%`, { size: 160 })}${legend(STORAGE.projects, used)}</div>
+<p class="sb-store-k"><span>할당 ${q} GB 대비</span><b class="num">${p}%</b></p>${bar(Number(p))}
 <p class="k-me-sub">내가 프로젝트장인 프로젝트 ${STORAGE.projects.length}개의 학습데이터 · 올린 파일</p>
-<div class="sb-req"><p class="k-me-l">저장 용량 늘리기 요청</p>
-<div class="sb-req-two"><label class="k-me-f"><span class="k-me-l">원하는 할당</span><span class="k-me-gb"><input class="t-input" type="number" value="100" min="${q}" step="1" aria-label="원하는 할당(GB)"><i>GB</i></span></label>
-<label class="k-me-f"><span class="k-me-l">이유 한 줄</span><input class="t-input" type="text" value="2차 학습데이터 추가" maxlength="120"></label></div>
-<p class="k-me-say"><span>LX 관리자가 승인하면 할당이 늘고,</span> <span>승인 · 반려를 알림으로 받습니다</span></p>
-<div class="k-me-act"><button class="t-btn" type="button">요청 보내기</button><button class="t-btn t-btn--text k-me-x" type="button">취소</button></div></div>
+<div class="sb-req"><p class="k-me-l">용량 증량 신청</p>
+<div class="sb-req-two"><label class="k-me-f"><span class="k-me-l">필요한 용량</span><span class="k-me-gb"><input class="t-input" type="number" value="100" min="${q}" step="1" aria-label="원하는 할당(GB)"><i>GB</i></span></label>
+<label class="k-me-f"><span class="k-me-l">사유</span><input class="t-input" type="text" value="2차 학습데이터 추가" maxlength="120"></label></div>
+<p class="k-me-say"><span>LX 관리자가 승인하면 할당이 늘어나고,</span> <span>결과는 알림으로 받습니다</span></p>
+<div class="k-me-act"><button class="t-btn" type="button">신청</button><button class="t-btn t-btn--text k-me-x" type="button">취소</button></div></div>
 </div>
-<div class="k-me-st"><div class="k-me-sth"><p class="k-me-l">늘리기 요청 이력</p></div>
-<p class="k-me-big is-zero"><b class="num">0</b><small>보낸 요청 · 대기 0</small></p>
-<p class="sb-me-none">보낸 요청이 없습니다</p>
-<p class="k-me-sub">보낸 요청의 승인 · 반려가 여기 쌓입니다</p></div>
+<div class="k-me-st"><div class="k-me-sth"><p class="k-me-l">증량 신청 이력</p></div>
+<p class="k-me-big is-zero"><b class="num">0</b><small>신청 · 대기 0</small></p>
+<p class="sb-me-none">신청한 적이 없습니다</p>
+<p class="k-me-sub">신청의 승인 · 반려가 여기 남습니다</p></div>
 </div></div></div></div></div>`;
   const body = `<div class="sb"><div class="sb-in">${board(REAL)}<div class="sb-row">${storeCard()}${jobsCard()}${inboxCard()}${noticeCard()}</div></div></div>${modal}`;
   return shell({ title: '내 정보 — 저장 용량', home: 'LX 직원 대시보드', role: 'LX 직원', items: STAFF, cur: 0, v3: o.v3, assets: o.assets, cls: 'k-md-open',
-    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/kit/modal.css`], body, desc: '내 정보 창 — 저장 용량(할당 50 GB · 프로젝트별) · 늘리기 요청 · 요청 이력' });
+    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/kit/modal.css`], body, desc: '내 정보 창 — 저장 용량(할당 50 GB · 프로젝트별) · 증량 신청 · 요청 이력' });
 }
 
-/* ── ③ LX 관리자 · 계정 화면 '저장 용량' 탭 — 기본 할당 · 늘리기 요청(승인 · 반려) · 계정별 할당 ── */
+/* ── ③ LX 관리자 · 계정 화면 '저장 용량' 탭 — 기본 할당 · 증량 신청(승인 · 반려) · 계정별 할당 ── */
+function overview() {
+  const alloc = STORAGE.quota * USERS.length * 1e9, acc = USERS.reduce((a, u) => a + u[3], 0);
+  const tb = (b) => `${(b / 1e12).toFixed(1)} TB`;
+  const w = (b) => ((b / DISK.total) * 100).toFixed(1);
+  return `<section class="t-card sb-ov" aria-label="저장 공간 전체 현황">${head('저장 공간 전체 현황', '저장 서버 실측 · 10-09 10:57')}
+<div class="sb-ov-n"><div class="ld-cell"><b class="num">${tb(DISK.total)}</b><span>전체 저장 공간</span></div><div class="ld-cell"><b class="num">${tb(DISK.used)}</b><span>사용 중 · 영상 · 결과 포함</span></div><div class="ld-cell"><b class="num">${tb(DISK.free)}</b><span>여유</span></div><div class="ld-cell"><b class="num">${(alloc / 1e9).toFixed(0)} GB</b><span>계정 할당 합계 ${EX}</span></div><div class="ld-cell"><b class="num">${size(acc)}</b><span>계정이 실제 쓴 양</span></div></div>
+<div class="sb-ov-bar" role="img" aria-label="사용 중 ${w(DISK.used)}% · 할당 합계 ${w(alloc)}% · 여유 ${w(DISK.free)}%"><i style="width:${w(DISK.used)}%"></i><i class="is-alloc" style="width:${Math.max(1, w(alloc))}%"></i></div>
+<p class="sb-ov-s"><span>여유 ${tb(DISK.free)} 가운데 계정 할당 합계는 ${Math.round((alloc / DISK.free) * 100)}%.</span> <span>증량을 승인해도 실제로 쓰기 전까지 여유는 줄지 않습니다.</span></p></section>`;
+}
 function admin(o) {
   const q = STORAGE.quota;
   const tabs = [['가입 신청', 0], ['비밀번호 재설정', 0], ['저장 용량', 1, true], ['계정', 0], ['부서', 0], ['로그인 실패', 0], ['처리 기록', 0]];
@@ -196,28 +219,29 @@ function admin(o) {
 <td class="num nw">${nproj}</td><td class="num nw">${size(used)}</td>
 <td><div class="sb-q"><div class="sb-q-t"><span>${q} GB</span><small>${p}%</small></div>${bar(Number(p))}</div></td>
 <td><span class="sb-own">기본 할당</span></td>
-<td>${pending ? `<span class="sb-ask">늘리기 요청 ${REQ.want} GB</span>` : `<span class="sb-gb"><input class="t-input" type="number" placeholder="${q}" aria-label="${name} 할당(GB)"><i>GB</i></span>`}</td></tr>`;
+<td>${pending ? `<span class="sb-ask">증량 신청 ${REQ.want} GB</span>` : `<span class="sb-gb"><input class="t-input" type="number" placeholder="${q}" aria-label="${name} 할당(GB)"><i>GB</i></span>`}</td></tr>`;
   }).join('');
   const body = `<div class="acc"><div class="acc-w sb-acc">
 <h1 class="acc-h">계정</h1>
 <div class="acc-tabs" role="tablist">${tabHtml}</div>
 <div class="sb-adm">
 <div class="sb-adm-l">
+${overview()}
 <div class="sb-set"><p class="sb-set-l">기본 할당</p><p class="sb-set-v"><b class="num">${q}</b><span>GB</span></p><p class="sb-set-s"><span>따로 정하지 않은 LX 계정 ${USERS.length}명에게 적용됩니다.</span> <span>사람마다 다른 값은 아래 표에서 정합니다</span></p><button class="t-btn t-btn--2" type="button">기본 할당 바꾸기</button></div>
-<div class="sb-tbl">${head('계정별 할당', `LX 계정 ${USERS.length} · 늘리기 요청 1`)}
-<div class="k-table-w"><table class="k-table"><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th class="num">프로젝트</th><th class="num">쓴 양</th><th>할당 · 사용</th><th>정한 값</th><th>할당 바꾸기</th></tr></thead><tbody>${rows}</tbody></table></div>
-<p class="k-me-sub" style="margin-top:12px">빈 칸이면 기본 할당을 따르고, 값을 적으면 그 사람만 따로 정합니다. 넘어도 막지 않고 알립니다.</p></div>
+<div class="sb-tbl">${head('계정별 할당', `LX 계정 ${USERS.length} · 증량 신청 1`)}
+<div class="k-table-w"><table class="k-table"><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th class="num">프로젝트</th><th class="num">사용량</th><th>할당 · 사용</th><th>구분</th><th>개별 할당</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="k-me-sub" style="margin-top:12px">빈 칸이면 기본 할당, 값을 적으면 그 사람만 개별 할당입니다. 할당을 넘어도 막지 않고 알립니다.</p></div>
 </div>
-<aside class="sb-dr" aria-label="늘리기 요청 한 건">
-<h3>늘리기 요청 ${EX}</h3>
-<dl class="acc-dl"><dt>누가</dt><dd>${REQ.who} · ${REQ.login}</dd><dt>언제</dt><dd>${REQ.at}</dd><dt>이유</dt><dd>${REQ.why}</dd><dt>쓴 양</dt><dd>${size(REQ.used)} · 할당의 ${pct(REQ.used, REQ.from)}%</dd></dl>
+<aside class="sb-dr" aria-label="증량 신청 한 건">
+<h3>증량 신청 ${EX}</h3>
+<dl class="acc-dl"><dt>누가</dt><dd>${REQ.who} · ${REQ.login}</dd><dt>언제</dt><dd>${REQ.at}</dd><dt>이유</dt><dd>${REQ.why}</dd><dt>사용량</dt><dd>${size(REQ.used)} · 할당의 ${pct(REQ.used, REQ.from)}%</dd></dl>
 <p class="sb-dr-big"><b class="num">${REQ.from}</b><span>GB</span><i>→</i><b class="num">${REQ.want}</b><span>GB</span></p>
-<p class="sb-dr-after"><span>승인하면 이 사람만 ${REQ.want} GB 로 정해지고,</span> <span>요청한 사람에게 알림이 갑니다</span></p>
-<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="반려 사유(반려할 때만)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">반려</button><button class="t-btn" type="button">승인</button></div></div>
+<p class="sb-dr-after"><span>승인하면 이 사람만 ${REQ.want} GB 개별 할당.</span> <span>할당 합계 ${STORAGE.quota * USERS.length + REQ.want - REQ.from} GB — 여유 2.0 TB의 ${Math.round(((STORAGE.quota * USERS.length + REQ.want - REQ.from) * 1e9 / DISK.free) * 100)}%.</span> <span>신청한 사람에게 알림이 갑니다</span></p>
+<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="반려 사유(반려할 때)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">반려</button><button class="t-btn" type="button">승인</button></div></div>
 </aside>
 </div></div></div>`;
   return shell({ title: 'LX 관리자 — 계정별 저장 용량', home: 'LX 관리자 대시보드', role: 'LX 관리자', items: ADMIN, cur: 6, v3: o.v3, assets: o.assets,
-    css: [`${o.v3}/ops-accounts/accounts.css`, `${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: 'LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 늘리기 요청 승인 · 반려' });
+    css: [`${o.v3}/ops-accounts/accounts.css`, `${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: 'LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 증량 신청 승인 · 반려' });
 }
 
 for (const o of OUTS) {
@@ -226,6 +250,6 @@ for (const o of OUTS) {
   fs.writeFileSync(path.join(o.dir, 'dashboard-ex.html'), dashboard(o, true));
   fs.writeFileSync(path.join(o.dir, 'my.html'), my(o));
   fs.writeFileSync(path.join(o.dir, 'admin.html'), admin(o));
-  if (o.dir !== HERE) fs.copyFileSync(path.join(HERE, 'board.css'), path.join(o.dir, 'board.css'));
+  if (o.dir !== HERE) { fs.copyFileSync(path.join(HERE, 'board.css'), path.join(o.dir, 'board.css')); fs.mkdirSync(path.join(o.dir, 'img'), { recursive: true }); for (const f of fs.readdirSync(path.join(HERE, 'img'))) fs.copyFileSync(path.join(HERE, 'img', f), path.join(o.dir, 'img', f)); }
   console.log('wrote', o.dir);
 }

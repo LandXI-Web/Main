@@ -136,3 +136,57 @@
 .sb-tbl .sb-q{min-width:124px}
 .sb-tbl .sb-gb .t-input{width:68px}
 .sb-tbl .k-table td:last-child{white-space:nowrap}
+
+/* ── 다시(10-09 직원-6 · 7 · 용량-1 · 원칙 142 · 143 · 144) ── */
+.sb-pc{padding:0 0 10px;overflow:hidden}
+.sb-pc > *:not(.sb-pc-img){margin-left:14px;margin-right:14px}
+.sb-pc-img{position:relative;display:block;aspect-ratio:3/2;background:var(--bg-0);overflow:hidden;margin-bottom:4px}
+.sb-pc-img img{display:block;width:100%;height:100%;object-fit:cover;transition:transform var(--d-750) var(--e-cam)}
+.sb-pc:hover .sb-pc-img img{transform:scale(1.03)}
+.sb-pc-img.is-blank{display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-body);color:var(--sub)}
+.sb-pc-cap{position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-8);background:rgba(255,255,255,.94);color:var(--ink);font:500 12px/1 var(--font-body);white-space:nowrap}
+.sb-col{min-height:200px}
+.sb-dn{position:relative;flex:none;width:var(--dn);height:var(--dn)}
+.sb-dn svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sb-dn-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.sb-dn-c b{font:800 22px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.sb-dn-c span{font:700 12px/1.3 var(--font-display);color:var(--ink)}
+.sb-dn-c small{margin-top:2px;font:500 11px/14px var(--font-body);color:var(--sub)}
+.sb-store-row--lg .sb-dn-c b{font-size:28px}
+.sb-store-row--lg .sb-dn-c span{font-size:14px}
+.sb-store-row{display:flex;align-items:center;gap:14px}
+.sb-lg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.sb-lg li{display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;align-items:center;gap:8px;font:400 13px/18px var(--font-body);color:var(--ink-2)}
+.sb-lg li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-lg i{width:8px;height:8px;border-radius:2px}
+.sb-lg b{font:500 13px/18px var(--font-num);color:var(--ink)}
+.sb-lg small{font:400 12px/18px var(--font-num);color:var(--sub);min-width:4.5em;text-align:right}
+.sb-store-row--lg .sb-lg li{font-size:14px;line-height:20px}
+.sb-store-k{margin:2px 0 0;display:flex;justify-content:space-between;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sb-store-k b{font:500 13px/18px var(--font-num);color:var(--ink)}
+.k-me-r .sb-store-row{padding:4px 0}
+.sb-ov{display:flex;flex-direction:column;gap:14px}
+.sb-ov-n{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.sb-ov-n .ld-cell{margin:0;padding:0}
+.sb-ov-n .ld-cell b{font-size:30px}
+.sb-ov-n .ld-cell span{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sb-ov-bar{display:flex;height:10px;border-radius:5px;background:var(--bg-0);overflow:hidden}
+.sb-ov-bar i{display:block;height:100%;background:var(--ink)}
+.sb-ov-bar i.is-alloc{background:var(--accent)}
+.sb-ov-s{margin:0;font:400 13px/18px var(--font-body);color:var(--sub-2)}
+.sb-ov-s span{display:inline-block}
+.sb-pc-img{aspect-ratio:16/10}
+.sb-rest{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column}
+.sb-rest li{border-top:1px solid var(--rule)}
+.sb-rest li:first-child{border-top:0}
+.sb-rest a{display:flex;align-items:center;gap:8px;padding:8px 4px;text-decoration:none;color:inherit;border-radius:var(--r-8)}
+.sb-rest a:hover{background:var(--bg-1)}
+.sb-rest b{font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-rest span{font:400 13px/20px var(--font-body);color:var(--sub);white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.sb-rest i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--warn)}
+.sb-rest i[data-kind="wait"]{background:var(--lock)}
+.sb-rest i[data-kind="ok"]{background:var(--ai)}
+.sb-store .sb-store-row{flex-direction:column;align-items:stretch;gap:10px}
+.sb-store .sb-dn{margin:0 auto}
+.sb-store-row--lg .sb-dn{--dn:140px!important}
+.k-me-r .k-me-st{gap:8px}

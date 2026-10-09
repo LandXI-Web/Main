@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>[시안] LX 관리자 — 계정별 저장 용량 · Land-XI</title>
-<meta name="description" content="설계 14차 시안 — LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 늘리기 요청 승인 · 반려">
+<meta name="description" content="설계 14차 시안 — LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 증량 신청 승인 · 반려">
 <link rel="icon" href="../../../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../../../v3/kit/kit.css">
 <link rel="stylesheet" href="../../../v3/ops-accounts/accounts.css">
@@ -23,13 +23,17 @@
 <div class="acc-tabs" role="tablist"><button class="acc-tab" type="button" role="tab" aria-selected="false">가입 신청<span class="acc-n" hidden>0</span></button><button class="acc-tab" type="button" role="tab" aria-selected="false">비밀번호 재설정<span class="acc-n" hidden>0</span></button><button class="acc-tab" type="button" role="tab" aria-selected="true">저장 용량<span class="acc-n">1</span></button><button class="acc-tab" type="button" role="tab" aria-selected="false">계정<span class="acc-n" hidden>0</span></button><button class="acc-tab" type="button" role="tab" aria-selected="false">부서<span class="acc-n" hidden>0</span></button><button class="acc-tab" type="button" role="tab" aria-selected="false">로그인 실패<span class="acc-n" hidden>0</span></button><button class="acc-tab" type="button" role="tab" aria-selected="false">처리 기록<span class="acc-n" hidden>0</span></button></div>
 <div class="sb-adm">
 <div class="sb-adm-l">
+<section class="t-card sb-ov" aria-label="저장 공간 전체 현황"><div class="ld-h"><h2>저장 공간 전체 현황<small class="ld-sub">저장 서버 실측 · 10-09 10:57</small></h2></div>
+<div class="sb-ov-n"><div class="ld-cell"><b class="num">8.0 TB</b><span>전체 저장 공간</span></div><div class="ld-cell"><b class="num">6.0 TB</b><span>사용 중 · 영상 · 결과 포함</span></div><div class="ld-cell"><b class="num">2.0 TB</b><span>여유</span></div><div class="ld-cell"><b class="num">300 GB</b><span>계정 할당 합계 <span class="sb-ex">예시</span></span></div><div class="ld-cell"><b class="num">29.8 MB</b><span>계정이 실제 쓴 양</span></div></div>
+<div class="sb-ov-bar" role="img" aria-label="사용 중 75.3% · 할당 합계 3.7% · 여유 24.7%"><i style="width:75.3%"></i><i class="is-alloc" style="width:3.7%"></i></div>
+<p class="sb-ov-s"><span>여유 2.0 TB 가운데 계정 할당 합계는 15%.</span> <span>증량을 승인해도 실제로 쓰기 전까지 여유는 줄지 않습니다.</span></p></section>
 <div class="sb-set"><p class="sb-set-l">기본 할당</p><p class="sb-set-v"><b class="num">50</b><span>GB</span></p><p class="sb-set-s"><span>따로 정하지 않은 LX 계정 6명에게 적용됩니다.</span> <span>사람마다 다른 값은 아래 표에서 정합니다</span></p><button class="t-btn t-btn--2" type="button">기본 할당 바꾸기</button></div>
-<div class="sb-tbl"><div class="ld-h"><h2>계정별 할당<small class="ld-sub">LX 계정 6 · 늘리기 요청 1</small></h2></div>
-<div class="k-table-w"><table class="k-table"><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th class="num">프로젝트</th><th class="num">쓴 양</th><th>할당 · 사용</th><th>정한 값</th><th>할당 바꾸기</th></tr></thead><tbody><tr class="is-on"><td class="nw"><b class="acc-b">LX 직원</b></td><td><span class="acc-m">test@lx.or.kr</span></td><td class="nw">LX 직원</td>
+<div class="sb-tbl"><div class="ld-h"><h2>계정별 할당<small class="ld-sub">LX 계정 6 · 증량 신청 1</small></h2></div>
+<div class="k-table-w"><table class="k-table"><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th class="num">프로젝트</th><th class="num">사용량</th><th>할당 · 사용</th><th>구분</th><th>개별 할당</th></tr></thead><tbody><tr class="is-on"><td class="nw"><b class="acc-b">LX 직원</b></td><td><span class="acc-m">test@lx.or.kr</span></td><td class="nw">LX 직원</td>
 <td class="num nw">4</td><td class="num nw">29.8 MB</td>
 <td><div class="sb-q"><div class="sb-q-t"><span>50 GB</span><small>0.1%</small></div><div class="k-me-bar" role="img" aria-label="할당의 0.1% 사용"><i style="width:1%"></i></div></div></td>
 <td><span class="sb-own">기본 할당</span></td>
-<td><span class="sb-ask">늘리기 요청 100 GB</span></td></tr><tr><td class="nw"><b class="acc-b">김도윤</b></td><td><span class="acc-m">lx-staff</span></td><td class="nw">LX 직원</td>
+<td><span class="sb-ask">증량 신청 100 GB</span></td></tr><tr><td class="nw"><b class="acc-b">김도윤</b></td><td><span class="acc-m">lx-staff</span></td><td class="nw">LX 직원</td>
 <td class="num nw">0</td><td class="num nw">0 MB</td>
 <td><div class="sb-q"><div class="sb-q-t"><span>50 GB</span><small>0%</small></div><div class="k-me-bar" role="img" aria-label="할당의 0% 사용"><i style="width:0%"></i></div></div></td>
 <td><span class="sb-own">기본 할당</span></td>
@@ -50,14 +54,14 @@
 <td><div class="sb-q"><div class="sb-q-t"><span>50 GB</span><small>0%</small></div><div class="k-me-bar" role="img" aria-label="할당의 0% 사용"><i style="width:0%"></i></div></div></td>
 <td><span class="sb-own">기본 할당</span></td>
 <td><span class="sb-gb"><input class="t-input" type="number" placeholder="50" aria-label="LX 영업 할당(GB)"><i>GB</i></span></td></tr></tbody></table></div>
-<p class="k-me-sub" style="margin-top:12px">빈 칸이면 기본 할당을 따르고, 값을 적으면 그 사람만 따로 정합니다. 넘어도 막지 않고 알립니다.</p></div>
+<p class="k-me-sub" style="margin-top:12px">빈 칸이면 기본 할당, 값을 적으면 그 사람만 개별 할당입니다. 할당을 넘어도 막지 않고 알립니다.</p></div>
 </div>
-<aside class="sb-dr" aria-label="늘리기 요청 한 건">
-<h3>늘리기 요청 <span class="sb-ex">예시</span></h3>
-<dl class="acc-dl"><dt>누가</dt><dd>LX 직원 · test@lx.or.kr</dd><dt>언제</dt><dd>10.9 09:40</dd><dt>이유</dt><dd>2차 학습데이터 추가</dd><dt>쓴 양</dt><dd>29.8 MB · 할당의 0.1%</dd></dl>
+<aside class="sb-dr" aria-label="증량 신청 한 건">
+<h3>증량 신청 <span class="sb-ex">예시</span></h3>
+<dl class="acc-dl"><dt>누가</dt><dd>LX 직원 · test@lx.or.kr</dd><dt>언제</dt><dd>10.9 09:40</dd><dt>이유</dt><dd>2차 학습데이터 추가</dd><dt>사용량</dt><dd>29.8 MB · 할당의 0.1%</dd></dl>
 <p class="sb-dr-big"><b class="num">50</b><span>GB</span><i>→</i><b class="num">100</b><span>GB</span></p>
-<p class="sb-dr-after"><span>승인하면 이 사람만 100 GB 로 정해지고,</span> <span>요청한 사람에게 알림이 갑니다</span></p>
-<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="반려 사유(반려할 때만)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">반려</button><button class="t-btn" type="button">승인</button></div></div>
+<p class="sb-dr-after"><span>승인하면 이 사람만 100 GB 개별 할당.</span> <span>할당 합계 350 GB — 여유 2.0 TB의 18%.</span> <span>신청한 사람에게 알림이 갑니다</span></p>
+<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="반려 사유(반려할 때)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">반려</button><button class="t-btn" type="button">승인</button></div></div>
 </aside>
 </div></div></div>
 </main>
