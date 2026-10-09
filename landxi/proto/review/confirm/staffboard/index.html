@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI LX 직원 대시보드 — 단계별 진행 현황</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>LX 직원 대시보드 — 단계별 진행 현황</h1>
+<p class="lead">페블의 레퍼런스 가이드와 전 기능 재검수에서 나온 제안, 그리고 이미 만든 것의 구현 확인입니다. 확인하신 것만 만듭니다.</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>LX 직원 대시보드 — 단계별 진행 현황(10-09 방향 답 ①~④ · 원칙 137 · 138 · 139 · 모두 Land-XI)</h2><p class="sub">10월 9일 답대로 그렸습니다. 홈과 대시보드는 하나(메뉴 이름 &#x27;대시보드&#x27;), &#x27;우리 서비스&#x27; 칸은 뺐고, 주인공은 프로젝트가 지금 어느 단계에 몇 개 머무는지 한눈에 보이는 네 칸(데이터 올리기 · AI 분석 · 결과 확인 · 서비스 공개)입니다. 저장 용량은 보는 것이 아니라 관리하는 것으로 — LX 관리자가 기본 할당(50 GB 가정)을 정하고 계정마다 따로 정할 수 있으며, 직원은 꽉 차기 전에 늘리기 요청을 보내고 관리자가 승인합니다. PC 1440 만 그렸습니다. 숫자는 10월 9일 10:37 서버 값이고, 서버에 없는 것(기본 할당 50 GB · 늘리기 요청 1건 · 네 칸에 하나씩 놓은 배치)은 &#x27;예시&#x27;로 표시했습니다.</p><article class="c" data-id="직원-6" data-t="[화면][Land-XI] 대시보드 — 프로젝트 진행 현황 네 칸"><header><span class="n">직원-6</span><h3>[화면][Land-XI] 대시보드 — 프로젝트 진행 현황 네 칸</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 v3 대시보드는 &#x27;내 프로젝트&#x27; 줄마다 6칸 막대와 단계 번호가 있어 어느 단계에 몇 개가 머무는지 한눈에 안 들어옵니다(심플하나 불명확). 메뉴는 &#x27;홈&#x27;인데 화면 이름은 &#x27;LX 직원 대시보드&#x27;라 혼동되고, &#x27;우리 서비스&#x27; 칸이 무엇인지도 불명확했습니다.</p><p class="k">제안</p><p>메뉴 이름을 &#x27;대시보드&#x27;로 바꾸고 &#x27;우리 서비스&#x27;와 &#x27;바로 분석하기&#x27; 칸을 뺐습니다(분석은 메뉴 &#x27;분석하기&#x27;가 한 번 클릭 거리이고, 지역 검색 칸 하나가 주인공 자리를 나누기 때문). 맨 위 넓은 칸이 &#x27;프로젝트 진행 현황&#x27; — 네 칸 머리에 큰 숫자(몇 개가 머무는지), 칸 안에 프로젝트 카드(이름 · 지금 상태 · 지역 · 서비스 · 담당 · 마감 · 남은 것 한 줄). 칸마다 카드 둘까지 보이고 나머지는 &#x27;외 n개&#x27;. 지금 서버 값은 넷 모두 &#x27;서비스 공개&#x27;(시범)에 머물고 &#x27;결과 확인 0/20&#x27;이 남아 있어 그대로 보였고, 네 칸에 하나씩 놓인 모양은 &#x27;예시 배치&#x27;로 따로 두었습니다. 아래 줄은 같은 네 줄기로 저장 용량 · 내가 돌린 작업 · 요청함 · 공지. 마감일은 서버에 없어 &#x27;미정&#x27;으로 보이며, 구현 때 프로젝트 만들기에 마감 칸을 더합니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-board/dashboard.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-board/dashboard.html</a><span>로그인 없이</span><em>서버 값 그대로 — 넷 모두 서비스 공개 칸</em></li><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-board/dashboard-ex.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-board/dashboard-ex.html</a><span>로그인 없이</span><em>예시 배치 — 네 칸에 하나씩 · 저장 용량 92% 경고 모양</em></li><li><a href="https://app.land-xi.dev/" target="_blank" rel="noopener">app.land-xi.dev/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>지금 v3 대시보드 — 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/new-dash-1440.png" target="_blank"><img src="img/new-dash-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-dash-ex-1440.png" target="_blank"><img src="img/new-dash-ex-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="이대로 구현">이대로 구현</button><button type="button" data-v="다시">다시</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="직원-7" data-t="[화면][Land-XI] 내 정보 — 저장 용량과 늘리기 요청"><header><span class="n">직원-7</span><h3>[화면][Land-XI] 내 정보 — 저장 용량과 늘리기 요청</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 내 정보 창 오른쪽 단에 저장 용량과 요청 이력이 있지만 할당이 없어(&#x27;할당 없음&#x27;) 비율도 안 보이고, 늘리기 요청은 따로 뜨는 작은 창입니다.</p><p class="k">제안</p><p>오른쪽 단 맨 위에 &#x27;기본 할당 50 GB&#x27; 표와 큰 숫자(29.8 MB · 할당의 0.1%) · 막대 · 프로젝트별 막대 4. &#x27;용량 늘리기 요청&#x27;을 누르면 같은 자리 안에 펼쳐져(원하는 할당 GB · 이유 한 줄 · 요청 보내기) 창이 겹치지 않습니다. 아래는 늘리기 요청 이력(보낸 요청 · 대기 · 승인 · 반려 · 사유). 대시보드 &#x27;저장 용량&#x27; 칸은 같은 숫자 · 같은 막대이고, 할당의 90%를 넘으면 빨간 글 한 줄로 늘리기 요청을 권합니다(막지 않음).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-board/my.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-board/my.html</a><span>로그인 없이</span><em>내 정보 창 — 오른쪽 단 저장 용량 · 늘리기 요청 펼친 상태</em></li><li><a href="https://app.land-xi.dev/" target="_blank" rel="noopener">app.land-xi.dev/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>지금 v3 — 머리의 &#x27;LX 직원&#x27;을 눌러 창 견주기</em></li></ul></div><div class="im"><figure><a href="img/new-my-1440.png" target="_blank"><img src="img/new-my-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="이대로 구현">이대로 구현</button><button type="button" data-v="다시">다시</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="용량-1" data-t="[화면][Land-XI] LX 관리자 — 계정별 저장 용량 할당과 늘리기 요청 승인"><header><span class="n">용량-1</span><h3>[화면][Land-XI] LX 관리자 — 계정별 저장 용량 할당과 늘리기 요청 승인</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 LX 관리자 계정 화면은 &#x27;저장 용량 요청&#x27; 탭에 요청 목록만 있고, 사람마다 할당을 정하는 칸은 &#x27;계정&#x27; 탭의 서랍 안 깊숙이 있어 누가 얼마를 쓰고 얼마를 할당받았는지 한 표로 볼 수 없습니다.</p><p class="k">제안</p><p>계정 화면에 &#x27;저장 용량&#x27; 탭 하나로 모읍니다. 맨 위 기본 할당(50 GB · 따로 정하지 않은 계정에 적용 · 바꾸기), 그 아래 계정별 할당 표(이름 · 아이디 · 역할 · 프로젝트 · 쓴 양 · 할당과 사용 막대 · 정한 값 · 할당 바꾸기 GB 칸 — 빈 칸이면 기본 할당). 늘리기 요청이 온 사람은 표에 노란 점으로 표시되고 오른쪽 서랍에 한 건(누가 · 언제 · 이유 · 쓴 양 · 50 GB → 100 GB)과 반려 사유 · 반려 · 승인. 승인하면 그 사람만 100 GB 로 정해지고 요청한 사람에게 알림이 갑니다. 지금 서버에 요청이 0건이라 서랍의 한 건은 예시입니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-board/admin.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-board/admin.html</a><span>로그인 없이</span><em>계정 화면 &#x27;저장 용량&#x27; 탭 — 기본 할당 · 계정별 표 · 승인 서랍</em></li><li><a href="https://admin.land-xi.dev/landxi/v3/ops-accounts/#storage" target="_blank" rel="noopener">admin.land-xi.dev/landxi/v3/ops-accounts/#storage</a><span>아이디 lxadmin@lx.or.kr · 임시 비밀번호</span><em>지금 v3 — &#x27;저장 용량 요청&#x27; 탭 견주기</em></li></ul></div><div class="im"><figure><a href="img/new-admin-1440.png" target="_blank"><img src="img/new-admin-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="이대로 구현">이대로 구현</button><button type="button" data-v="다시">다시</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 3 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rstaffboard';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[LX 직원 대시보드 — 단계별 진행 현황 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
