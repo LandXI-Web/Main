@@ -84,7 +84,7 @@ ${css.map((c) => `<link rel="stylesheet" href="${c}">`).join('\n')}
 </head>
 <body class="t k-shelled">
 <div class="k-app has-rail has-more is-staff">
-<header class="t-mast k-mast"><a class="k-word" href="${v3}/${items[0][2]}"><span class="word">LAND-XI</span><span class="home">${home}</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" tabindex="0" data-live="1" aria-label="마지막 갱신 10:37" data-why="마지막 갱신 10:37"><i></i><span class="num">10:37</span></span><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">${role}</button><a class="k-mast-b k-xi" href="${v3}/xi-clean/">XI맵</a><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+<header class="t-mast k-mast"><a class="k-word" href="${v3}/${items[0][2]}"><span class="word">LAND-XI</span><span class="home">${home}</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" tabindex="0" data-live="1" aria-label="마지막 갱신 10:37" data-why="마지막 갱신 10:37"><i></i><span class="num">10:37</span></span><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">${role}</button>${items === STAFF ? '' : `<a class="k-mast-b k-xi" href="${v3}/xi-clean/">XI맵</a>`}<button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
 <nav class="t-rail k-rail" aria-label="메뉴">${rail(items, cur, v3)}</nav>
 <main class="k-main" id="main">
 ${body}
@@ -124,33 +124,48 @@ const EXAMPLE = [
   mk('재해 피해(해외) 2026', '지역 미정', 'review', 3, 9, '결과 확인 0/20 남음', 'warn', '결과 확인'),
 ];
 /* 6칸 진행 막대(프로젝트 목록과 같은 부품 .lxp-seg) */
-const seg = (steps) => `<span class="lxp-seg" role="img" aria-label="${steps.filter((x) => x === 'done').length}칸 끝남"><i data-st="${steps[0]}"></i><i data-st="${steps[1]}"></i><i data-st="${steps[2]}"></i><i data-st="${steps[3]}"></i><i data-st="${steps[4]}"></i><i data-st="${steps[5]}"></i></span>`;
+const four = (st) => { const g = [[st[0]], [st[1], st[2]], [st[3]], [st[4], st[5]]]; return g.map((x) => (x.includes('now') ? 'now' : x.every((y) => y === 'done') ? 'done' : x.some((y) => y === 'done') ? 'now' : x.includes('skip') ? 'skip' : 'wait')); };
+const seg6 = (steps) => `<span class="lxp-seg" role="img" aria-label="${steps.filter((x) => x === 'done').length}칸 끝남"><i data-st="${steps[0]}"></i><i data-st="${steps[1]}"></i><i data-st="${steps[2]}"></i><i data-st="${steps[3]}"></i><i data-st="${steps[4]}"></i><i data-st="${steps[5]}"></i></span>`;
+const seg = (steps) => { const f = four(steps); return `<span class="lxp-seg sb-seg4" role="img" aria-label="${f.filter((x) => x === 'done').length}단계 끝남">${f.map((x) => `<i data-st="${x}"></i>`).join('')}</span>`; };
+const done4 = (steps) => four(steps).filter((x) => x === 'done').length;
 const ago = (d) => (d === 0 ? '오늘' : d === 1 ? '어제' : `${d}일 전`);
 /* 흐름도 + 단계별 숫자 — 단계 넷을 선으로 잇고(점이 흐름을 따라 움직임) · 단계마다 큰 숫자 · 작은 진행 그래프(프로젝트별 6칸 막대) · 이름 칩 · 누른 단계는 아래로 표 */
-function board(list, ex = false, open = 'publish') {
-  const nodes = COLS.map(([key, label], i) => {
+function flow(list, { open = null, compact = true, ex = false } = {}) {
+  return COLS.map(([key, label], i) => {
     const here = list.filter((x) => x.col === key);
     const warn = here.filter((x) => x.kind === 'warn').length, wait = here.filter((x) => x.kind === 'wait').length;
-    const sub = !here.length ? '머문 프로젝트 없음' : [warn ? `<em>남은 일 ${warn}</em>` : '', wait ? `기다림 ${wait}` : '', `마지막 활동 ${ago(Math.min(...here.map((x) => x.days)))}`].filter(Boolean).join(' · ');
-    const MAXC = 3;
-    const chips = here.slice(0, MAXC).map((x) => `<a class="sb-chip" href="#" data-kind="${x.kind}" title="${esc(x.name)} · ${esc(x.now)}"><span>${esc(x.name)}</span>${seg(x.steps)}</a>`).join('')
-      + (here.length > MAXC ? `<span class="sb-chip sb-chip--more">외 ${here.length - MAXC}개</span>` : '');
+    const sub = !here.length ? '없음' : [warn ? `<em>남은 일 ${warn}</em>` : '', wait ? `기다림 ${wait}` : '', `마지막 활동 ${ago(Math.min(...here.map((x) => x.days)))}`].filter(Boolean).join(' · ');
+    const MAXC = 2;
+    const chips = compact ? here.slice(0, MAXC).map((x) => `<a class="sb-chip" href="progress.html" data-kind="${x.kind}" title="${esc(x.name)} · ${esc(x.now)}"><span>${esc(x.name)}</span>${seg(x.steps)}</a>`).join('')
+      + (here.length > MAXC ? `<a class="sb-chip sb-chip--more" href="progress.html">외 ${here.length - MAXC}개</a>` : '') : '';
     return `<li class="sb-st" data-n="${here.length}"${key === open ? ' data-open="1"' : ''}${warn ? ' data-warn="1"' : ''}>
-<button class="sb-st-b" type="button" aria-expanded="${key === open}"><span class="sb-st-k num">${i + 1}</span><b class="num">${here.length}</b><span class="sb-st-l">${label}</span><small class="sb-st-s">${sub}</small>
-<span class="sb-st-g" aria-hidden="true">${here.slice(0, 6).map((x) => `<i style="--w:${Math.round((x.done / 6) * 100)}%" data-kind="${x.kind}"></i>`).join('')}</span></button>
-<div class="sb-chips">${chips}</div></li>`;
+<a class="sb-st-b" href="progress.html"${key === open ? ' aria-current="true"' : ''}><span class="sb-st-k num">${i + 1}</span><span class="sb-st-row"><b class="num">${here.length}</b><span class="sb-st-g" aria-hidden="true">${here.slice(0, 6).map((x) => `<i style="--w:${Math.round((done4(x.steps) / 4) * 100)}%" data-kind="${x.kind}"></i>`).join('')}</span></span><span class="sb-st-l">${label}</span><small class="sb-st-s">${sub}</small></a>
+${compact ? `<div class="sb-chips">${chips}</div>` : ''}</li>`;
   }).join('\n');
-  const cur = list.filter((x) => x.col === open);
-  const title = COLS.find(([k]) => k === open)[1];
-  const rows = cur.map((x) => `<tr><td><b class="acc-b">${esc(x.name)}</b>${x.ex ? ' <span class="sb-ex">예시</span>' : ''}</td><td>${esc(x.region)}</td><td>${esc(x.lead)}</td><td>${esc(x.now)}</td>
-<td><span class="sb-prog">${seg(x.steps)}<small class="num">${x.done}/6</small></span></td><td class="num">${ago(x.days)}</td><td>${x.kick ? `<span class="sb-kick" data-kind="${x.kind}">${esc(x.kick)}</span>` : '<span class="sb-kick" data-kind="ok">없음</span>'}</td><td><a class="ld-more" href="#">열기</a></td></tr>`).join('');
-  return `<section class="t-card ld-card sb-board" aria-label="프로젝트 진행 현황">
-${head('프로젝트 진행 현황', `진행 중 ${list.length} · 내가 맡은 ${list.filter((x) => x.lead === 'LX 직원').length} · 남은 일 있는 프로젝트 ${list.filter((x) => x.kind === 'warn').length}`, '<a class="ld-more" href="#">전체 보기</a>', ex ? ' <span class="sb-ex">예시 배치 — 프로젝트가 열 개를 넘을 때</span>' : '')}
-<ol class="sb-fl">${nodes}</ol>
-<div class="sb-open"><div class="sb-open-h"><h3>${title} <b class="num">${cur.length}</b></h3><p>단계를 누르면 그 단계의 프로젝트가 여기에 펼쳐집니다</p></div>
-<div class="k-table-w"><table class="k-table sb-tb"><thead><tr><th>프로젝트</th><th>지역</th><th>담당</th><th>지금</th><th>진행</th><th class="num">마지막 활동</th><th>남은 일</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="8" class="sb-tb-none">이 단계에 머문 프로젝트가 없습니다</td></tr>'}</tbody></table></div></div>
-<div class="sb-foot"><p><span>숫자 = 그 단계에 있는 프로젝트 수.</span> <span>막대 = 여섯 단계 가운데 끝낸 칸.</span> <span>빨간 점 = 앞 단계에 남은 일.</span></p><button class="ld-new" type="button">새 프로젝트</button></div>
+}
+/* 대시보드 — 흐름도 + 단계별 숫자(낮게) · 단계 · 칩을 누르면 자세히 화면(progress.html) */
+function board(list, ex = false) {
+  return `<section class="t-card ld-card sb-board sb-board--c" aria-label="프로젝트 진행 현황">
+${head('프로젝트 진행 현황', `진행 중 ${list.length} · 남은 일 있는 프로젝트 ${list.filter((x) => x.kind === 'warn').length}`, '<a class="ld-more" href="progress.html">자세히 보기</a>', ex ? ' <span class="sb-ex">예시 배치 — 프로젝트가 열 개를 넘을 때</span>' : '')}
+<ol class="sb-fl">${flow(list, { ex })}</ol>
 </section>`;
+}
+/* 자세히 화면 — 위 흐름도(단계 고르기) · 아래 그 단계 표(남은 일 먼저 정렬) */
+function progress(o, list = REAL, open = 'publish') {
+  const cur = list.filter((x) => x.col === open).sort((a, b) => ({ warn: 0, wait: 1, ok: 2 }[a.kind] - { warn: 0, wait: 1, ok: 2 }[b.kind]) || b.days - a.days);
+  const title = COLS.find(([k]) => k === open)[1];
+  const rows = cur.map((x) => `<tr tabindex="0"><td><b class="acc-b">${esc(x.name)}</b>${x.ex ? ' <span class="sb-ex">예시</span>' : ''}</td><td>${esc(x.region)}</td><td>${esc(x.lead)}</td><td>${esc(x.now)}</td>
+<td><span class="sb-prog">${seg(x.steps)}<small class="num">${done4(x.steps)}/4</small></span></td><td class="num">${ago(x.days)}</td><td>${x.kick ? `<span class="sb-kick" data-kind="${x.kind}">${esc(x.kick)}</span>` : '<span class="sb-kick" data-kind="ok">없음</span>'}</td><td><a class="ld-more" href="#">열기</a></td></tr>`).join('');
+  const body = `<div class="sb"><div class="sb-in sb-in--pg">
+<div class="sb-pg-h"><a class="sb-back" href="dashboard.html">대시보드</a><h1>프로젝트 진행 현황</h1><p class="sb-pg-s">진행 중 ${list.length} · 내가 맡은 ${list.filter((x) => x.lead === 'LX 직원').length} · 남은 일 있는 프로젝트 ${list.filter((x) => x.kind === 'warn').length}</p></div>
+<section class="t-card ld-card sb-board sb-board--pg" aria-label="단계 고르기"><ol class="sb-fl">${flow(list, { open, compact: false })}</ol></section>
+<section class="t-card ld-card sb-pg-t" aria-label="${esc(title)} 프로젝트">
+<div class="ld-h"><h2>${title}<small class="ld-sub">${cur.length}개 · 남은 일 먼저</small></h2><div class="sb-sort"><span>정렬</span><button type="button" class="t-chip" aria-pressed="true">남은 일 먼저</button><button type="button" class="t-chip">마지막 활동</button><button type="button" class="t-chip">이름</button></div></div>
+<div class="k-table-w"><table class="k-table sb-tb"><thead><tr><th>프로젝트</th><th>지역</th><th>담당</th><th>지금</th><th>진행</th><th class="num">마지막 활동</th><th>남은 일</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="8" class="sb-tb-none">이 단계에 있는 프로젝트가 없습니다</td></tr>'}</tbody></table></div>
+<p class="sb-pg-n"><span>위 단계를 누르면 그 단계의 프로젝트만 보입니다.</span> <span>막대 = 네 단계 가운데 끝낸 단계.</span> <span>빨간 점 = 앞 단계에 남은 일.</span></p>
+</section></div></div>`;
+  return shell({ title: '프로젝트 진행 현황', home: 'LX 직원 대시보드', role: 'LX 직원', items: STAFF, cur: 0, v3: o.v3, assets: o.assets,
+    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/lx-project/context.css`, `${o.v3}/ops-accounts/accounts.css`], body, desc: '프로젝트 진행 현황 자세히 — 단계 고르기 · 그 단계 표(남은 일 먼저)' });
 }
 function storeCard(ex = false) {
   const used = ex ? 46.2e9 : STORAGE.used, q = STORAGE.quota;
@@ -175,7 +190,7 @@ const noticeCard = () => `<section class="t-card ld-card sb-notice" aria-label="
 
 function dashboard(o, ex = false) {
   const body = `<div class="sb"><div class="sb-in">
-${board(ex ? EXAMPLE : REAL, ex, ex ? 'ai' : 'publish')}
+${board(ex ? EXAMPLE : REAL, ex)}
 <div class="sb-row">${storeCard(ex)}${jobsCard()}${inboxCard()}${noticeCard()}</div>
 </div></div>`;
   return shell({ title: 'LX 직원 대시보드', home: 'LX 직원 대시보드', role: 'LX 직원', items: STAFF, cur: 0, v3: o.v3, assets: o.assets,
@@ -269,6 +284,7 @@ for (const o of OUTS) {
   fs.writeFileSync(path.join(o.dir, 'dashboard.html'), dashboard(o));
   fs.writeFileSync(path.join(o.dir, 'dashboard-ex.html'), dashboard(o, true));
   fs.writeFileSync(path.join(o.dir, 'my.html'), my(o));
+  fs.writeFileSync(path.join(o.dir, 'progress.html'), progress(o));
   fs.writeFileSync(path.join(o.dir, 'admin.html'), admin(o));
   if (o.dir !== HERE) { fs.copyFileSync(path.join(HERE, 'board.css'), path.join(o.dir, 'board.css')); fs.mkdirSync(path.join(o.dir, 'img'), { recursive: true }); for (const f of fs.readdirSync(path.join(HERE, 'img'))) fs.copyFileSync(path.join(HERE, 'img', f), path.join(o.dir, 'img', f)); }
   console.log('wrote', o.dir);

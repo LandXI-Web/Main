@@ -20,6 +20,7 @@ const scanSrc = `(() => { const RULES = [${RULES.map(([k, re]) => `[${JSON.strin
 const LIST = [
   ['dashboard.html', 'new-dash-1440.png'],
   ['dashboard-ex.html', 'new-dash-ex-1440.png'],
+  ['progress.html', 'new-progress-1440.png'],
   ['my.html', 'new-my-1440.png'],
   ['admin.html', 'new-admin-1440.png'],
 ];
