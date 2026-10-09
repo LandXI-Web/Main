@@ -1,0 +1,110 @@
+/* 설계 14차 · 지도 서비스 · 메뉴 · 분석하기 다듬기(원칙 149 · 150) — analyze-cards 시안 CSS 위에 덧씀. PC 1440 만(원칙 139). */
+@import url("../../analyze-cards/mock/ci.css");
+@import url("../../analyze-cards/mock/ci2.css");
+
+/* 왼쪽 메뉴 — 구분선 · 글자 표기(새 아이콘 없음) */
+.rail .div{width:36px;height:1px;background:var(--rule);margin:6px 0 2px}
+.ri .xi{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font:800 11px/1 var(--font-display);letter-spacing:-.02em;color:currentColor;border:1.5px solid currentColor;border-radius:5px}
+.mast .mb.xi-off{display:none}
+
+/* 목록 — 한 페이지 n장 · 페이지 넘김 */
+.gl{display:grid;gap:20px;align-items:stretch}
+.gl[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gl[data-n="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gl[data-n="6"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.gl[data-n="8"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gl[data-n="2"] .ca .pic{aspect-ratio:21/9}
+.gl[data-n="2"] .nm{font-size:22px;line-height:28px}
+.gl[data-n="2"] .ln{font-size:15px;line-height:22px}
+.gl[data-n="2"] .hero2 b{font-size:40px;line-height:44px}
+.gl[data-n="2"] .hero2 b.d{font-size:28px;line-height:44px}
+.gl[data-n="2"] .bd{padding:18px 22px 22px}
+.gl[data-n="8"] .hero2 b,.gl[data-n="4"] .hero2 b{font-size:28px;line-height:32px}
+.gl[data-n="8"] .hero2 b.d,.gl[data-n="4"] .hero2 b.d{font-size:20px;line-height:32px}
+.gl[data-n="8"] .hero2,.gl[data-n="4"] .hero2{padding:12px 14px 10px}
+.gl[data-n="8"] .nm,.gl[data-n="4"] .nm{font-size:17px}
+.ca.empty{background:transparent;box-shadow:inset 0 0 0 1px var(--rule);border-radius:var(--r-16)}
+.where .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.where .v.none{color:var(--mute)}
+.per{display:flex;align-items:center;gap:6px;font:500 13px/1 var(--font-body);color:var(--sub)}
+.per span{margin-right:4px}
+.per b{min-width:34px;height:32px;padding:0 10px;border-radius:var(--r-8);border:1px solid var(--rule);background:var(--bg-1);font:500 13px/30px var(--font-num);color:var(--sub);text-align:center}
+.per b.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tools .right{display:flex;align-items:center;gap:16px}
+.pager{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;font:500 14px/1 var(--font-num);color:var(--sub)}
+.pager b{min-width:36px;height:36px;padding:0 10px;border-radius:var(--r-8);font:500 14px/36px var(--font-num);text-align:center;color:var(--sub);background:var(--bg-1);border:1px solid var(--rule)}
+.pager b.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.pager b.ar{font-family:var(--font-body)}
+.pager b.off{color:var(--mute)}
+.pager small{margin-left:10px;font:400 13px/1 var(--font-body);color:var(--sub)}
+
+/* 분석하기 상세 — 세 단계(지도 없음) + 오른콽 모델 요약 · 내 지난 분석 */
+.page.flow{padding:24px 48px 48px;max-width:1368px;gap:16px}
+.fw{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start}
+.fw-l{background:var(--bg-1);border-radius:var(--r-16);padding:24px 28px 24px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.fw-r{display:flex;flex-direction:column;gap:16px;min-width:0}
+.fw .box{padding:20px 22px}
+.fw .box h2{font-size:17px;line-height:24px;margin-bottom:10px}
+.fw .stp{padding:12px 0 0}
+.fw .stp:first-of-type{border-top:0;padding-top:0}
+.fw .stb{padding:12px 0 8px 36px;gap:12px}
+.fw .kv div{grid-template-columns:96px minmax(0,1fr);font-size:14px;line-height:21px}
+.fw .kv dd b{font-size:16px;line-height:21px}
+.fw .kv dd.none{color:var(--mute)}
+.fw .thumbs2{grid-template-columns:repeat(3,1fr)}
+.fw .drop{padding:22px 16px}
+.fw .ds li{height:36px;font-size:14px;grid-template-columns:minmax(0,1fr) 56px auto}
+.fw .fit{font-size:13px}
+.fw .go.wide{margin-top:4px;align-self:flex-start;padding:0 22px}
+.fw .fl-f{position:static;margin:4px 0 0;padding:0;background:transparent;display:flex;gap:10px;align-items:center}
+.fw .fl-f .go.wide{margin:0}
+.fw .fl-f .alt{text-align:left}
+.fw .stp header{grid-template-columns:26px auto 1fr}
+.fin{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center;padding:16px 18px;border-radius:var(--r-8);background:var(--bg-0)}
+.fin i{grid-row:1/3;width:40px;height:40px;border-radius:50%;background:var(--ai);color:#fff;display:flex;align-items:center;justify-content:center;font:700 18px/1 var(--font-num);font-style:normal}
+.fin b{font:700 17px/24px var(--font-display);color:var(--ink)}
+.fin span{font:400 14px/20px var(--font-body);color:var(--sub)}
+.mine2{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.mine2 li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub)}
+.mine2 li:last-child{border-bottom:0}
+.mine2 li b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.mine2 li .v{grid-row:1/3;align-self:center;font:500 14px/20px var(--font-num);color:var(--ink);white-space:nowrap}
+.mdl{display:flex;flex-direction:column;gap:10px}
+.mdl .hero2{margin:0}
+.mdl .kv div{grid-template-columns:84px minmax(0,1fr);font-size:13px;line-height:19px}
+
+/* 지도 서비스 */
+.ms{display:grid;grid-template-columns:400px minmax(0,1fr) 300px;gap:16px;flex:1;min-height:0}
+.ms-l{background:var(--bg-1);border-radius:var(--r-16);padding:20px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden}
+.ms-l h1{margin:0;font:700 24px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.ms-l .sub{font-size:14px;line-height:20px}
+.ms-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ms-f .chip{height:32px;padding:0 12px;font-size:13px}
+.rs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;overflow:auto;min-height:0}
+.rs li{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:2px 10px;padding:10px 12px;border-radius:var(--r-8);font:400 13px/18px var(--font-body);color:var(--sub);background:var(--bg-0)}
+.rs li.on{background:var(--bg-1);box-shadow:inset 0 0 0 2px var(--ink)}
+.rs li .t{grid-column:1;grid-row:1;min-width:0;font:500 15px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs li .v{grid-column:2;grid-row:1/3;align-self:center;text-align:right;font:500 15px/20px var(--font-num);color:var(--ink);white-space:nowrap}
+.rs li .v small{display:block;font:500 12px/16px var(--font-body);color:var(--ai)}
+.rs li .m{grid-column:1;grid-row:2;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-foot{font:400 13px/18px var(--font-body);color:var(--sub);padding-top:8px;border-top:1px solid var(--rule)}
+.ms-m{position:relative;border-radius:var(--r-16);overflow:hidden;background:var(--bg-0);min-height:0}
+.ms-m img{width:100%;height:100%;object-fit:cover;display:block}
+.ms-r{background:var(--bg-1);border-radius:var(--r-16);padding:20px;display:flex;flex-direction:column;gap:16px;min-height:0;overflow:hidden}
+.ms h2{margin:0 0 8px;font:700 15px/20px var(--font-display);color:var(--ink)}
+.ms .ly li{height:34px}
+.ms .ly li small{margin-left:auto;font:500 12px/16px var(--font-num);color:var(--sub);white-space:nowrap}
+.base{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.base li{display:flex;align-items:center;gap:10px;height:30px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.base li i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--mute);flex:none}
+.base li.on{color:var(--ink)}
+.base li.on i{box-shadow:inset 0 0 0 5px var(--ink)}
+.base li small{margin-left:auto;font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+.base .k{font:400 12px/18px var(--font-body);color:var(--sub);margin:6px 0 2px;height:auto}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;padding:14px 16px;border-radius:var(--r-8);background:var(--bg-0)}
+.sum b{display:block;font:800 24px/28px var(--font-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.sum b i{font:700 14px/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
+.sum small{display:block;font:500 12px/16px var(--font-body);color:var(--sub)}
+.ms-r .alt{margin-top:4px;text-align:left}
+.lg i.g{background:rgba(15,169,160,.45);box-shadow:inset 0 0 0 2px var(--ai)}
+.mcap2{position:absolute;left:16px;bottom:16px;padding:8px 12px;border-radius:var(--r-8);background:rgba(255,255,255,.94);font:500 13px/18px var(--font-body);color:var(--sub)}
