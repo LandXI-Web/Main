@@ -59,10 +59,10 @@ const imageryWord = (b) => (v(b.imagery) ? `${v(b.imagery)}개` : '없음');
 export function retrainCard(pr, { onStart } = {}) {
   const b = pr.basis || {};
   const round = v(pr.round) || 1;
-  const sec = h('section.t-card.lxp-retrain', { 'aria-label': '재학습' });
-  sec.append(h('div.lxp-kh', {}, h('h2.lxp-h', { text: '재학습' }), b.trained_at ? h('span.lxp-ksub', { text: since(b.trained_at) }) : null));
+  const sec = h('section.t-card.lxp-retrain', { 'aria-label': '다시 학습' });
+  sec.append(h('div.lxp-kh', {}, h('h2.lxp-h', { text: '다시 학습' }), b.trained_at ? h('span.lxp-ksub', { text: since(b.trained_at) }) : null));
   const pts = [...(b.points || []), { kind: 'now', label: '지금', at: b.now }];
-  const band = h('ol.lxp-band', { 'aria-label': '재학습 근거 — 시간 순서', style: `--n:${pts.length}` });
+  const band = h('ol.lxp-band', { 'aria-label': '다시 학습 근거 — 시간 순서', style: `--n:${pts.length}` });
   for (const p of pts) {
     band.append(h('li.lxp-pt', { dataset: { kind: p.kind }, class: p.kind === 'now' ? 'is-now' : p.signal ? 'is-sig' : '' },
       h('i', { 'aria-hidden': 'true' }), h('b', { text: p.label }), h('span.num', { text: short(p.at) })));
@@ -76,11 +76,11 @@ export function retrainCard(pr, { onStart } = {}) {
   const foot = h('div.lxp-rt-f');
   if (pr.can?.retrain) {
     foot.append(h('p', { text: b.thin ? '지금은 다시 학습할 근거가 적습니다' : '배포는 LX 관리자 승인 뒤 바뀝니다' }));
-    const btn = h('button.t-btn.t-btn--2.lxp-rt', { type: 'button', text: `${round + 1}차 재학습 시작` });
+    const btn = h('button.t-btn.t-btn--2.lxp-rt', { type: 'button', text: `다시 학습(${round + 1}번째)` });
     btn.addEventListener('click', () => openRetrain(pr, { onStart }));
     foot.append(btn);
   } else {
-    foot.append(h('p', { text: '재학습은 프로젝트장이 시작합니다' }));
+    foot.append(h('p', { text: '다시 학습은 프로젝트장이 시작합니다' }));
   }
   sec.append(foot);
   return sec;
@@ -94,7 +94,7 @@ export function openRetrain(pr, { onStart } = {}) {
   let pick = null;
   const chips = h('div.lxp-chips', { role: 'radiogroup', 'aria-label': '왜 다시 학습하나' });
   const own = h('input.t-input.lxp-own', { type: 'text', maxlength: '200', autocomplete: 'off', 'aria-label': '사유 직접 입력', placeholder: '사유 한 줄', hidden: true });
-  const go = h('button.t-btn', { type: 'button', text: `${n}차 재학습 시작`, disabled: true });
+  const go = h('button.t-btn', { type: 'button', text: `다시 학습(${n}번째) 시작`, disabled: true });
   const ready = () => { go.disabled = !pick || (pick === '직접 입력' && !own.value.trim()); };
   for (const r of REASONS) {
     const c = h('button.t-chip.lxp-chip', { type: 'button', role: 'radio', 'aria-checked': 'false', 'aria-pressed': 'false', text: r });
@@ -113,7 +113,7 @@ export function openRetrain(pr, { onStart } = {}) {
   const body = h('div.lxp-sh', {}, chips, own,
     h('p.lxp-say', {}, '회차 기록과 LX 관리자 승인에 같은 근거가 남습니다.', h('br'), nb(`지금 근거: ${now}`)),
     h('div.lxp-act', {}, go, cancel));
-  const m = modal({ title: `${n}차 재학습 — 왜 다시 학습하나`, body });
+  const m = modal({ title: `다시 학습(${n}번째) — 왜 다시 학습하나`, body });
   m.el.classList.add('lxp-md');
   cancel.addEventListener('click', () => m.close());
   go.addEventListener('click', async () => {
@@ -125,7 +125,7 @@ export function openRetrain(pr, { onStart } = {}) {
       m.close(true);
       toast(`${n}차 학습 단계로 돌아갔습니다`);
       onStart?.(p2);
-    } catch (e) { m.close(true); problem('재학습을 시작하지 못했습니다', e.message || '잠시 뒤 다시 해 주세요'); }
+    } catch (e) { m.close(true); problem('다시 학습을 시작하지 못했습니다', e.message || '잠시 뒤 다시 해 주세요'); }
   });
   return m;
 }

@@ -1,6 +1,6 @@
 /* board.css — 프로젝트 진행 현황 흐름도(직원-6 4차 시안 design-r14/lx-staff-board · board.js). 대시보드 맨 위 칸과 메뉴 '프로젝트' 목록이 같은 모양.
    회백 칸 12 · 그림자 0 · 아이콘 0 · 색 = 키트 토큰(잉크 · 액센트 · 경고 · 대기). 움직임 1(연결선 위 점 · 1250). */
-.sb-fl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 24px;position:relative}
+.sb-fl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0 20px;position:relative}
 .sb-st{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0}
 .sb-st-b{position:relative;box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;gap:0;width:100%;padding:12px 16px;border:0;border-radius:12px;background:var(--bg-0);text-align:left;text-decoration:none;font:inherit;color:inherit;cursor:pointer;transition:background var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
 .sb-st-b:hover{box-shadow:inset 0 0 0 1px var(--rule)}
@@ -22,9 +22,9 @@
 .sb-st-g i[data-kind="wait"]::after{background:var(--lock)}
 .sb-st[data-n="0"] .sb-st-g{visibility:hidden}
 /* 연결선 — 흐름을 따라 점이 움직인다 */
-.sb-st + .sb-st .sb-st-b::before{content:"";position:absolute;left:-24px;top:30px;width:24px;height:2px;background:var(--rule)}
-.sb-st + .sb-st::before{content:"";position:absolute;left:-24px;top:26px;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:sb-flow 1250ms var(--e-cam) infinite;z-index:1}
-@keyframes sb-flow{from{transform:translateX(-4px);opacity:0}30%{opacity:1}to{transform:translateX(20px);opacity:0}}
+.sb-st + .sb-st .sb-st-b::before{content:"";position:absolute;left:-20px;top:30px;width:20px;height:2px;background:var(--rule)}
+.sb-st + .sb-st::before{content:"";position:absolute;left:-20px;top:26px;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:sb-flow 1250ms var(--e-cam) infinite;z-index:1}
+@keyframes sb-flow{from{transform:translateX(-4px);opacity:0}30%{opacity:1}to{transform:translateX(16px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.sb-st + .sb-st::before{animation:none;transform:translateX(8px);opacity:1}}
 /* 이름 칩 — 이름 + 네 칸 막대 · 남은 일은 빨간 점 · 승인 대기는 노란 점 */
 .sb-chips{display:flex;flex-direction:column;gap:5px}
@@ -38,7 +38,7 @@ a.sb-chip:hover{background:var(--rule)}
 .sb-chip[data-kind="wait"]::before{background:var(--lock)}
 .sb-chip--more{display:inline-flex;align-items:center;justify-self:start;align-self:flex-start;height:22px;padding-left:4px;background:none;color:var(--sub);font-weight:400}
 a.sb-chip--more:hover{background:none;text-decoration:underline;text-underline-offset:3px}
-.sb-seg4{grid-template-columns:repeat(4,1fr)}
+.sb-seg4{grid-template-columns:repeat(6,1fr)}
 /* 표(메뉴 '프로젝트' 목록) — 진행 = 네 칸 막대 + n/4 · 남은 일 = 점 + 말 */
 .sb-tb th:first-child,.sb-tb td:first-child{padding-left:0}
 .sb-tb th:last-child,.sb-tb td:last-child{padding-right:0;text-align:right}

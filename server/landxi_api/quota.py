@@ -165,6 +165,15 @@ async def used(tenant: str, dim: str) -> float:
 
 _ms_cache: tuple[float, str, dict] | None = None
 
+# 기관마다 이번 달 분석한 땅의 합집합 넓이(㎢) — 작업 범위(aoi) ∩ 영상 footprint, 범위 없는 작업은 적힌 amount
+AREA_UNION_SQL = (
+    "WITH ev AS (SELECT tenant_id AS t, job_id, sum(amount) AS amt FROM usage_events WHERE at >= $1 AND dim = 'area_km2' GROUP BY 1, 2), "
+    "g AS (SELECT ev.t, ev.amt, CASE WHEN j.aoi IS NULL THEN NULL WHEN i.footprint IS NULL THEN ST_MakeValid(j.aoi) "
+    "ELSE ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) END AS geom "
+    "FROM ev LEFT JOIN jobs j ON j.id = ev.job_id LEFT JOIN imagery i ON i.id = j.imagery_id) "
+    "SELECT t, coalesce(ST_Area(ST_Union(geom) FILTER (WHERE geom IS NOT NULL)::geography) / 1e6, 0) "
+    "+ coalesce(sum(amt) FILTER (WHERE geom IS NULL), 0) AS v FROM g GROUP BY t")
+
 
 async def _month_sums() -> dict:
     """이번 달 usage_events 합(기관 × dim) — 기록된 기관 그대로 센다(10s 캐시).
@@ -179,6 +188,14 @@ async def _month_sums() -> dict:
             "SELECT u.tenant_id AS t, u.dim, sum(u.amount) AS v FROM usage_events u "
             "WHERE u.at >= $1 AND u.dim = ANY($2::text[]) GROUP BY 1, 2", ms, list(MONTH_DIM.values()))
     out = {(r["t"], r["dim"]): float(r["v"] or 0) for r in rows}
+    # 분석한 면적(나중 1 ⓑ) = 겹치지 않는 실제 면적 — 같은 곳을 여러 번 분석해도 한 번. 작업 범위 ∩ 영상 자리(ST_Union) ·
+    # 범위 기록이 없는 작업만 적힌 값을 더한다(지어내지 않는다). 기관 귀속은 적힌 기관 그대로.
+    async with db(realm="lx") as conn:
+        uni = await conn.fetch(AREA_UNION_SQL, ms)
+    for k in [k for k in out if k[1] == "area_km2"]:
+        out[k] = 0.0
+    for r in uni:
+        out[(r["t"], "area_km2")] = float(r["v"] or 0)
     _ms_cache = (time.time(), ms.isoformat(), out)
     return out
 
@@ -195,7 +212,7 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
         "vworld_calls_day": "count", "llm_tokens_month": "tokens"}
-SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 요청으로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 분석을 요청한 기관 · 학습 포함)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 분석을 요청한 기관 · 실제 분석한 땅)",
+SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 요청으로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 분석을 요청한 기관 · 학습 포함)", "area_km2_month": "분석한 면적 — usage_events(area_km2 · 이번 달 · 분석을 요청한 기관)의 작업 범위 ∩ 영상 합집합(겹친 곳은 한 번)",
        "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)",
        "llm_tokens_month": "usage_events(llm_tokens · 이번 달 · AI 도우미를 부른 기관)"}
 

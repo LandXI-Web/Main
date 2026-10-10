@@ -30,7 +30,7 @@ STRUCT_KEYS = {
     "max_km2", "batch", "status", "http_status", "elapsed_s", "gpus", "bytes", "size", "zoom", "util_pct", "mem_used_mib",
     "position_in_queue", "age_s", "ttl_s", "iou", "min_conf", "lanes_total", "seq", "attempt", "gsd_m", "gsd_trained_m",
     "expires_in_s", "cpu", "raw_routes", "gpu_index", "imgsz", "seconds", "chips",
-    "reqs_active", "util_raw", "samples", "slot", "hot_now", "max_hot_gpus", "parcels_raw", "month_n", "resume_seq",
+    "reqs_active", "util_raw", "samples", "slot", "hot_now", "max_hot_gpus", "parcels_raw", "month_n", "resume_seq", "min_area_m2",
 }
 # 이 키 아래 서브트리는 통째로 데이터(좌표·속성·요청 본문 되돌림)
 STRUCT_SUBTREES = {"coordinates", "bbox", "bounds", "geometry", "aoi", "footprint", "counts", "params", "options", "detail",

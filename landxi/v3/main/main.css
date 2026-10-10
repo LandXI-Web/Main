@@ -89,6 +89,8 @@ main{position:relative;z-index:3}
 .m-pc-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:10px;opacity:.25;transition:opacity var(--d-380) var(--e-ui)}
 .m-pc-foot.is-on{opacity:1}
 .m-pc-foot .m-ok{width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-num)}
+.m-pc-foot .t-label{color:var(--ink)}
+.m-pc-foot .t-label small{display:block;margin-top:2px;color:var(--sub);font-weight:500}
 .m-pc[data-step="0"] .m-pc-cols{opacity:.25}
 .m-pc-cols{transition:opacity var(--d-380) var(--e-ui)}
 

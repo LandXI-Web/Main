@@ -14,7 +14,7 @@ const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, '
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
 const SHOTS = process.env.LX_SHOTS ? path.resolve('docs/superpowers/final/process/impl-8/staff-dashboard/shots') : null;
 const shot = async (page, name) => { if (!SHOTS) return; fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, name) }); };
-const G = { ingest: 0, label: 1, train: 1, infer: 1, review: 2, publish: 3 };
+const G = { ingest: 0, label: 1, train: 2, infer: 3, review: 4, publish: 5 };   // 여섯 단계(10-10 질문 10 확인)
 
 /** 넘침 · 한 단어 줄(두 줄 이상인 글 상자의 마지막 줄이 한 어절) · 금지어 */
 const measure = (page) => page.evaluate(() => {
@@ -60,13 +60,13 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
     for (const old of ['.lc-mine', '.lc-pr', '.ld-svc', '.ld-quick', '.ld-act', '.ld-th', '.ld-go', '.ld-recent']) await expect(page.locator(old)).toHaveCount(0);
 
     /* ② 흐름도 숫자 = 서버 목록을 네 단계로 묶은 수 */
-    const want = [0, 0, 0, 0];
+    const want = [0, 0, 0, 0, 0, 0];
     for (const p of j.items) want[G[p.stage.key] ?? 0] += 1;
     if (j.items.length) {
-      await expect(page.locator('.ld-board .sb-st')).toHaveCount(4);
-      await expect(page.locator('.ld-board .sb-st-l')).toHaveText(['데이터 올리기', 'AI 분석', '결과 확인', '배포 신청']);
+      await expect(page.locator('.ld-board .sb-st')).toHaveCount(6);
+      await expect(page.locator('.ld-board .sb-st-l')).toHaveText(['데이터 올리기', '학습데이터 구축', '학습', '추론', '결과 확인', '배포 신청']);
       expect((await page.locator('.ld-board .sb-st-row > b').allTextContents()).map(Number)).toEqual(want);
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         const st = page.locator('.ld-board .sb-st').nth(i);
         await expect(st.locator('.sb-chip:not(.sb-chip--more)')).toHaveCount(Math.min(2, want[i]));
         if (want[i] > 2) await expect(st.locator('.sb-chip--more')).toHaveText(`외 ${want[i] - 2}개`);
@@ -95,7 +95,7 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
         const p = byId.get(await tr.getAttribute('data-id'));
         expect(p, '목록 줄 = 서버 프로젝트').toBeTruthy();
         await expect(tr.locator('td').nth(3)).toHaveText((p.next?.text || '—').replace(/ · /g, ' · '));
-        await expect(tr.locator('.sb-prog small')).toHaveText(/^[0-4]\/4$/);
+        await expect(tr.locator('.sb-prog small')).toHaveText(/^[0-6]\/6$/);
       }
       await page.waitForTimeout(400);
       const m2 = await measure(page);

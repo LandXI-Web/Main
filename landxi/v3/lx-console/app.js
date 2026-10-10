@@ -55,7 +55,7 @@ drawNotice();
 window.__lxConsole = { ready: true };                 // e2e 관측(읽기 전용)
 document.documentElement.dataset.consoleReady = '1';
 
-/* ── ① 프로젝트 진행 현황 — 흐름도(네 단계) · 칩 둘 + 외 n개 · 누르면 메뉴 '프로젝트' 목록(그 단계) ── */
+/* ── ① 프로젝트 진행 현황 — 흐름도(여섯 단계) · 칩 둘 + 외 n개 · 누르면 메뉴 '프로젝트' 목록(그 단계) ── */
 async function drawBoard() {
   const box = board.querySelector('.ld-flow');
   let j;

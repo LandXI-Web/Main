@@ -96,7 +96,7 @@ def test_month_sums_read_recorded_tenant(live, tok):
     그 기관 값에 그대로 더해진다."""
     c = _pg()
     t = c.execute("SELECT id FROM tenants WHERE kind='user' ORDER BY id LIMIT 1").fetchone()
-    j = c.execute("SELECT id FROM jobs WHERE tenant_id='lx' AND NOT demo LIMIT 1").fetchone()
+    j = c.execute("SELECT id FROM jobs WHERE tenant_id='lx' AND NOT demo AND aoi IS NULL LIMIT 1").fetchone()   # 범위 없는 작업 = 적힌 값 그대로(합집합 밖)
     if not (t and j):
         pytest.skip("기관 · LX 작업 없음")
     tid, jid = t[0], j[0]
@@ -254,3 +254,39 @@ def test_tenant_reads_only_own_usage(live, tok):
     other = c.execute("SELECT id FROM tenants WHERE kind='user' AND id <> %s LIMIT 1", (me,)).fetchone()[0]
     r2 = httpx.get(live + f"/t/{other}/usage", headers=H(tok["namwon"]), timeout=60)
     assert r2.status_code == 403
+
+
+def test_area_month_union_counts_overlap_once(live, tok):
+    """나중 1 ⓑ — 분석한 면적 = 겹치지 않는 실제 면적. 같은 작업(같은 땅)을 두 번 적어도 한 번만 센다."""
+    c = _pg()
+    t = c.execute("SELECT id FROM tenants WHERE kind='user' ORDER BY id LIMIT 1").fetchone()
+    j = c.execute("SELECT id FROM jobs WHERE tenant_id='lx' AND NOT demo AND aoi IS NOT NULL AND kind='infer' LIMIT 1").fetchone()
+    if not (t and j):
+        pytest.skip("기관 · 범위 있는 작업 없음")
+    tid, jid = t[0], j[0]
+
+    def read():
+        r = httpx.get(live + f"/t/{tid}/usage", headers=H(tok["admin"]), timeout=60)
+        assert r.status_code == 200, r.text[:200]
+        return float(r.json()["dims"]["area_km2_month"]["used"]["value"] or 0)
+    time.sleep(10.5)
+    rows = []
+    try:
+        before = read()
+        rows.append(c.execute("INSERT INTO usage_events(tenant_id, dim, amount, job_id, basis) VALUES (%s,'area_km2',50,%s,'measured') RETURNING id",
+                              (tid, jid)).fetchone()[0])
+        c.commit()
+        time.sleep(10.5)
+        once = read()
+        rows.append(c.execute("INSERT INTO usage_events(tenant_id, dim, amount, job_id, basis) VALUES (%s,'area_km2',50,%s,'measured') RETURNING id",
+                              (tid, jid)).fetchone()[0])
+        c.commit()
+        time.sleep(10.5)
+        twice = read()
+        assert once >= before
+        assert abs(twice - once) < 0.01, (before, once, twice)          # 같은 땅 두 번 = 한 번
+    finally:
+        for r in rows:
+            c.execute("DELETE FROM usage_events WHERE id=%s", (r,))
+        c.commit()
+        time.sleep(10.5)

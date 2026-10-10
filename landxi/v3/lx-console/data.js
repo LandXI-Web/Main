@@ -123,7 +123,7 @@ function today({ fA, fb30, drafts, reports, sum }) {
   }
   const due = [...bySet.values()].filter((l) => l.length >= REPORT_MIN).sort((a, b) => b.length - a.length);
   const rTrain = due[0] && (regionAt(lnglatOf(due[0].find(lnglatOf))) || regionByKey(due[0][0].tenant_id));
-  const retrain = { k: 'retrain', label: '재학습', env: fb30 ? counted(due.length, fb30.as_of, '기관 확인 기록') : null, region: rTrain,
+  const retrain = { k: 'retrain', label: '다시 학습할 서비스', env: fb30 ? counted(due.length, fb30.as_of, '기관 확인 기록') : null, region: rTrain,
     href: V3 + 'lx-train/' + q({ region: rTrain?.sgg_cd }) };
   /* 이식 요청 — 초안 배포본(최근 요청 먼저 · 같은 시각이면 id 순 — 서버 순서에 따라 대상이 바뀌지 않게) */
   const dl = (drafts?.items || []).filter((d) => d.stage === 'draft' && !isTest(d.id))
@@ -136,7 +136,7 @@ function today({ fA, fb30, drafts, reports, sum }) {
   const rRep = open[0] && (regionAt(lnglatOf(open[0])) || regionByKey(open[0].tenant_id));
   /* 기관 신고 — 수는 summary reports(전국 합 · lx-deploy 서비스 관리 표 합계와 같은 계산) · 이동할 곳만 최근 열린 신고 */
   const rp = total(sum, 'reports');
-  const report = { k: 'report', label: rp?.label || '기관 신고', env: isEnvelope(rp) ? rp : null, region: rRep,
+  const report = { k: 'report', label: '기관 검토 요청', env: isEnvelope(rp) ? rp : null, region: rRep,
     href: V3 + 'lx-deploy/' + q({ region: rRep?.sgg_cd, tab: 'ops' }) + '#ops' };
   devlog('today', `summary ${sum ? 'ok' : '없음'} · 결과 확인 대기 ${review.env?.value ?? '—'} · 재학습 ${due.map((l) => l[0].set_id + ' ' + l.length).join(', ') || 0} · 적용 요청 ${dl.map((d) => d.id).join(', ') || 0} · 기관 신고 ${report.env?.value ?? '—'}`);
   return { error: false, cells: [review, retrain, port, report] };

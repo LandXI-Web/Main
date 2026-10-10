@@ -115,7 +115,12 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await page.locator('.k-sub .lxp-st').nth(2).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/'), { timeout: 20000 });
     await expect(page.locator('.tr-card')).toHaveCount(1, { timeout: 20000 });
-    await expect(page.locator('.tr-title')).toHaveText('학습 · 이 프로젝트 모델');
+    await expect(page.locator('.tr-title')).toHaveText('학습');
+    /* 학습데이터 구축 — 그 단계 내용만(이 프로젝트 학습데이터 · 모델 판 0 · 10-10 질문 10) */
+    await page.locator('.k-sub .lxp-st').nth(1).click();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/') && u.searchParams.get('stage') === 'label', { timeout: 20000 });
+    await expect(page.locator('.tr-title')).toHaveText('학습데이터 구축');
+    await expect(page.locator('.tr-card')).toHaveCount(0);
   });
 
   test('서비스 관리 지도 — 이름표가 서로 겹치지 않는다(겹치면 하나만 · 점은 그대로)', async ({ page, baseURL }) => {

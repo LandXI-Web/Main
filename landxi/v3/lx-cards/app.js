@@ -39,8 +39,8 @@ async function list() {
   const all = deck.items || [];
   const F = { st: 'all' };
   const n = (f) => all.filter(f).length;
-  const CH = [['all', '전체', () => true], ['ga', '운영', (c) => c.state === 'ga'], ['pilot', '시범', (c) => c.state === 'pilot'], ['none', '첫 결과 전', (c) => c.state === 'none'],
-    ['pending', '공개 승인 요청 중', (c) => c.publish?.pending], ['reports', '기관 신고 있음', (c) => (c.reports?.value || 0) > 0]].filter(([k, , f]) => k === 'all' || n(f));
+  const CH = [['all', '전체', () => true], ['ga', '운영 중', (c) => c.state === 'ga'], ['pilot', '시범 적용', (c) => c.state === 'pilot'], ['none', '첫 결과 전', (c) => c.state === 'none'],
+    ['pending', '공개 승인 요청 중', (c) => c.publish?.pending], ['reports', '기관 검토 요청 있음', (c) => (c.reports?.value || 0) > 0]].filter(([k, , f]) => k === 'all' || n(f));
   const chips = h('div.la-chips', { role: 'group', 'aria-label': '거르기' });
   const draw = () => {
     chips.replaceChildren(...CH.map(([k, w, f]) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.st === k), onclick: () => { F.st = k; draw(); } }, w, h('small.num', { text: String(n(f)) }))));
@@ -78,7 +78,7 @@ async function edit(cid) {
       h('dl.la-dl.lc-dl', {}, ...[
         ['상태', cur.state_label], ['서비스 공개', cur.publish?.label || '—'],
         ['쓰이는 곳', cur.uses?.text || '—'], ['판 · 담당', `${cur.version ? 'v' + cur.version : '판 없음'} · ${cur.owner || '담당 미지정'}`],
-        ['걸리는 시간', cur.time?.text || '첫 분석 뒤 표시'], ['기관 신고', cur.reports?.value ? `${nf(cur.reports.value)}건${cur.reports_sum ? ` · ${cur.reports_sum}` : ''}` : '없음'],
+        ['걸리는 시간', cur.time?.text || '첫 분석 뒤 표시'], ['기관 검토 요청', cur.reports?.value ? `${nf(cur.reports.value)}건${cur.reports_sum ? ` · ${cur.reports_sum}` : ''}` : '없음'],
       ].map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v })))),
       cur.edited?.at ? h('p.la-note', { text: `마지막으로 고친 때 ${ymd(cur.edited.at)}` }) : null);
   };

@@ -225,7 +225,7 @@ function compareCard(c) {
   return sec;
 }
 
-/* 쓰이는 곳 — 상태별로 지역을 묶어(운영 · 시범 · 첫 결과 전) + 기관 신고 */
+/* 쓰이는 곳 — 상태별로 지역을 묶어(운영 · 시범 · 첫 결과 전) + 기관 검토 요청 */
 function usesCard(c) {
   const sec = h('section.t-card.la-box.la-wide', { 'aria-label': '쓰이는 곳' }, h('h2.la-h', {}, '쓰이는 곳', h('small', { text: c.uses?.text || '' })));
   const groups = new Map();
@@ -241,19 +241,28 @@ function usesCard(c) {
       h('span.rg', {}, ...g.list.flatMap((r, i) => [i ? ' · ' : '', g.state === 'none' ? r.name : h('a', { href: XI(r.sgg), text: r.name })])),
       h('span.im', { text: g.imagery || (g.state === 'none' ? '영상 등록 필요' : '') })));
   }
-  const rp = c.reports?.value;
-  if (rp) ul.append(h('li', {}, h('span.t-chip', { dataset: { lv: 'wait' }, text: '기관 신고' }), h('span.rg', { text: `${nf(rp)}건${c.reports_sum ? ` · ${c.reports_sum}` : ''}` }), h('a.im', { href: '../lx-inbox/', text: '요청함' })));
+  const rp = c.reports?.value;   // 기관이 보낸 검토 요청(쉬운 말 — 나중 6 ⓐ · 질문 2 ⓐ · 예전 '기관 신고')
+  if (rp) ul.append(h('li', {}, h('span.t-chip', { dataset: { lv: 'wait' }, text: '기관 검토 요청' }), h('span.rg', { text: `${nf(rp)}건${c.reports_sum ? ` · ${c.reports_sum}` : ''}` }), h('a.im', { href: '../lx-inbox/', text: '요청함' })));
   sec.append(ul);
   return sec;
 }
 
-/* 이 카드의 조건 */
+/* 이 카드의 조건 — '대조'(지목 · 대장 양식) 줄은 지도 서비스(질문 1)가 정해질 때까지 숨긴다(질문 2 ⓐ) ·
+   학습 정보(무엇으로 배웠나 · 원칙 166)는 이 자세히 화면에만 — 서버 c.learn(모델 기록 · 학습 표본 · 기반 모델) 그대로 */
 function condCard(c) {
   const t = c.time;
+  const L = c.learn;
+  const acc = L?.acc && L.acc.value !== null && L.acc.value !== undefined ? `검증 정확도 ${L.acc.value}%` : '';
+  const smp = L?.sample;
+  const learnRows = L ? [
+    ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', '모델 기록 · 학습 끝 검증 값'],
+    ...(smp ? [['학습 자료', [smp.region, smp.task, `표본 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
+    ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `검증 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
+  ] : [];
   const rows = [
     ['입력 영상', c.imagery || '—'], ['시점', c.timepoints || '—'],
     ['걸리는 시간', t ? t.text : '첫 분석 뒤 표시', t ? '최근 분석 기록' : ''],
-    ['찾는 것', c.finds || '—'], ['대조', c.compare || '—'],
+    ['찾는 것', c.finds || '—'], ...learnRows,
     ['버전 · 담당', `${c.version ? 'v' + c.version : '판 없음'} · ${c.owner || '담당 미지정'}`],
   ];
   return h('section.t-card.la-box.la-wide', { 'aria-label': '이 카드의 조건' }, h('h2.la-h', { text: '이 카드의 조건' }),
@@ -276,7 +285,7 @@ function analyzePanel(side, c) {
   const list = h('ul.la-picks');
   const eta = h('div.la-eta');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
-  const msg = h('p.la-note', {}, '작업 대기열에 들어가고,', h('br'), '결과는 XI맵에서 읍면동 순으로 차오릅니다.');
+  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 XI맵에서 결과를 봅니다.');   // 지도 서비스(질문 1)가 생기기 전까지 사실대로
   const done = h('div.la-done', { hidden: true });
   side.append(step(1, '어디', '여러 곳 가능'), where, list, step(2, '결과까지'), eta, go, msg, done);
 
@@ -332,7 +341,7 @@ function analyzePanel(side, c) {
     done.hidden = false;
     done.replaceChildren(h('p.la-done-h', { text: res.some((r) => r.ok) ? '분석을 시작했습니다' : '시작하지 못했습니다' }),
       h('ul', {}, ...res.map((r) => h('li', {}, h('b', { text: r.name }), r.ok ? h('a.t-btn.t-btn--text', { href: XI(r.sgg), text: r.running ? '분석 중 · XI맵에서 보기' : 'XI맵에서 보기' }) : h('span.warn', { text: r.why })))));
-    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · XI맵에서 결과가 차오릅니다', { action: { label: 'XI맵', href: XI(res.find((r) => r.ok).sgg) } });
+    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · 끝나면 XI맵에서 봅니다', { action: { label: 'XI맵', href: XI(res.find((r) => r.ok).sgg) } });
   });
   draw();
 }

@@ -90,19 +90,27 @@ export function openFlow({ host, who, project = null, step = null }) {
   let closed = false, stream = null;
   setQ({ flow: '1' });
 
+  /* 프로젝트 안(10-10 질문 10 확인): 단계마다 그 단계 내용만 — 학습데이터 구축 = 올리기 · 라벨 확인 / 학습 = 학습 실행 · 학습 결과.
+     추론 · 배포 신청은 프로젝트의 다음 단계 화면(lx-release)이라 서랍에 두지 않는다. 숨긴 칸도 상태(표본 · 모델)는 그대로 이어진다.
+     프로젝트 밖(새 모델 만들기)은 지금까지처럼 다섯 칸 전부. */
+  const MODE = !project ? 'all' : step === 3 ? 'train' : 'label';
+  const SHOW = { all: [1, 2, 3, 4, 5], label: [1, 2], train: [3, 4] }[MODE];
   const sec = (n, title) => {
-    const s = h('section.tf-s', { dataset: { step: n } }, h('h3.tf-h', {}, h('b', { text: String(n) }), h('span', { text: title })), h('div.tf-b'));
+    const at = SHOW.indexOf(n);
+    const s = h('section.tf-s', { dataset: { step: n }, hidden: at < 0 }, h('h3.tf-h', {}, h('b', { text: String(at + 1) }), h('span', { text: title })), h('div.tf-b'));
     body.append(s);
     return s.querySelector('.tf-b');
   };
-  const s1 = sec(1, '데이터 올리기');
+  const dataLine = h('p.tf-sum.tf-data', { hidden: MODE !== 'train' });   // 학습 단계 — 어떤 학습데이터로 배우는지 한 줄(올리기 · 라벨 확인은 앞 단계 화면)
+  body.append(dataLine);
+  const s1 = sec(1, project ? '올리기' : '데이터 올리기');
   const s2 = sec(2, '라벨 확인');
-  const s3 = sec(3, '학습');
-  const s4 = sec(4, '결과 확인 · 등록');
-  const s5 = sec(5, project ? '추론 · 배포 신청' : '서비스 만들기');
+  const s3 = sec(3, project ? '학습 실행' : '학습');
+  const s4 = sec(4, project ? '학습 결과' : '결과 확인 · 등록');
+  const s5 = sec(5, '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
-  if (project && step > 1) setTimeout(() => { if (!closed) body.querySelector(`.tf-s[data-step="${step}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 1600);
+  if (MODE === 'train') dataLine.textContent = '학습데이터를 불러오는 중';
 
   let sample = null, model = null, card = null;
 
@@ -222,6 +230,19 @@ export function openFlow({ host, who, project = null, step = null }) {
     if (project && mine.size && !Q().get('sample') && !sample) api('/training/samples/' + pj.items[0].id).then(showSample).catch(() => {});
   }).catch(() => {});
   if (project && !project.can?.work) { up.remove(); file.disabled = true; say1('표본 올리기는 프로젝트장과 구성원이 합니다'); }
+  /* 학습데이터 구축 — 표본이 준비되면 다음 단계(학습)로 가는 길 한 줄 */
+  let nextEl = null;
+  function labelNext() {
+    if (nextEl) return;
+    nextEl = h('div.tf-act', {}, h('a.t-btn', { href: `${V3}lx-train/?project=${encodeURIComponent(project.id)}&stage=train&flow=1&sample=${encodeURIComponent(sample.id)}`, text: '학습으로' }));
+    s2.closest('.tf-s').after(nextEl);
+  }
+  /* 학습 — 이 프로젝트에 학습데이터가 없으면 앞 단계로 */
+  if (MODE === 'train') setTimeout(() => {
+    if (closed || sample) return;
+    dataLine.replaceChildren(h('span', { text: '이 프로젝트에 학습데이터가 아직 없습니다 — ' }),
+      h('a', { href: `${V3}lx-train/?project=${encodeURIComponent(project.id)}&stage=label&flow=1`, text: '학습데이터 구축에서 먼저 올려 주세요' }));
+  }, 4000);
 
   /* ── ② 라벨 확인 ─────────────────────────────── */
   const PAGE = 9;
@@ -247,6 +268,8 @@ export function openFlow({ host, who, project = null, step = null }) {
       shown = to; more.hidden = shown >= total;
     };
     s2.append(head, tbl, grid, more);
+    if (MODE === 'train') dataLine.innerHTML = `학습데이터 · <b>${esc(j.task_name)}</b>${j.region_name ? ' · ' + esc(j.region_name) : ''} · 그림 ${num(j.images)}장`;
+    if (MODE === 'label') labelNext();
     more.addEventListener('click', page);
     page();
     buildTrain();
@@ -296,7 +319,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     if (s3.childElementCount) { pickBase(); return; }
     s3.append(h('label.t-label', { text: '기반 모델' }), baseSel, h('p.t-label.tf-note', { text: '작은 표본 · 3회차 · 한 번에 한 건(대기열)' }), h('div.tf-act', {}, go), bar, trMsg, epochs);
     /* 프로젝트 안: 학습 시작 = 프로젝트장 · 구성원(공개된 서비스의 재학습은 서버도 거절 — 역할-3 ⓑ) */
-    if (project && !project.can?.train) { go.remove(); trMsg.textContent = project.published ? '재학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장과 구성원이 시작합니다'; }
+    if (project && !project.can?.train) { go.remove(); trMsg.textContent = project.published ? '다시 학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장과 구성원이 시작합니다'; }
     let all = [];
     try { all = await loadModels(); } catch { trMsg.textContent = '모델 목록을 불러오지 못했습니다'; trMsg.dataset.lv = 'warn'; trMsg.after(retryBtn(() => { s3.innerHTML = ''; buildTrain(); })); return; }
     const ms = all.filter((m) => ['seg', 'det', 'obb'].includes(m.task) && m.status === 'registered' && m.weights_uri !== null);
@@ -423,11 +446,11 @@ export function openFlow({ host, who, project = null, step = null }) {
     s4.append(act, h('p.t-label.tf-msg', { role: 'status' }));
     if (model.status === 'candidate') {
       const last = await myDecision('model', (a) => a.subject?.id === mid);
-      if (last?.decision === 'reject') act.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `등록 거절 · 사유: ${last.reason || '—'}` }));
-      const reg = h('button.t-btn', { type: 'button', text: last?.decision === 'reject' ? '다시 등록 요청' : '등록 요청' });
+      if (last?.decision === 'reject') act.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `모델 승인 거절 · 사유: ${last.reason || '—'}` }));
+      const reg = h('button.t-btn', { type: 'button', text: last?.decision === 'reject' ? '모델 승인 다시 요청' : '모델 승인 요청' });
       reg.addEventListener('click', async () => {
         reg.disabled = true;
-        try { await api('/registry/model-register', { method: 'POST', body: { model_id: mid } }); toast('관리자 승인을 요청했습니다'); await showModel(mid); }
+        try { await api('/registry/model-register', { method: 'POST', body: { model_id: mid } }); toast('모델 승인을 요청했습니다'); await showModel(mid); }
         catch (e) { devlog('register', e.code || e.message); toast('요청을 보내지 못했습니다'); reg.disabled = false; }
       });
       act.append(reg);
@@ -435,13 +458,16 @@ export function openFlow({ host, who, project = null, step = null }) {
       if (isAdmin) {        // 결정은 결재함 한 곳에서(반려 사유 · 요청한 사람 ≠ 결재하는 사람 — impl-1)
         act.append(h('a.t-btn', { href: `${V3}ops-core/#/approvals`, text: '승인 요청함에서 승인' }));
       } else {
-        act.append(h('p.t-label', { text: 'LX 관리자 승인을 기다립니다' }));
+        act.append(h('p.t-label', { text: 'LX 관리자의 모델 승인을 기다립니다' }));
         const again = h('button.t-btn.t-btn--text', { type: 'button', text: '다시 보기' });
         again.addEventListener('click', () => showModel(mid)); act.append(again);
       }
     } else if (model.status === 'registered') {
       s4.closest('.tf-s').classList.add('is-done');
-      buildService();
+      if (project) {        // 등록된 모델은 다음 단계 '추론'(배포 신청 없이 분석)과 마지막 단계 '배포 신청'에서 쓴다(10-09 배포-1 · 2)
+        const at = (k) => `${V3}lx-release/?project=${encodeURIComponent(project.id)}&stage=${k}`;
+        act.append(h('a.t-btn', { href: at('infer'), text: '추론으로' }));
+      } else buildService();
     }
   }
 

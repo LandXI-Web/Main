@@ -18,6 +18,8 @@ powershell -File server/start-landxi.ps1
 ```
 켜진 뒤 http://localhost:4173/landxi/ 로 들어갑니다.
 
+배포(커밋 · 게이트웨이 재시작) 뒤 같은 이름 숫자 대조: `node tools/check/numbers.mjs` — 바깥 주소를 로그인 폼으로 열어 정확도 · AI 분석 결과 · 분석한 면적 · 결과 확인 n 이 화면마다 같은지와 이 PC 주소 호출 0을 표로 보여 주고, 어긋나면 실패 코드(1)로 끝납니다.
+
 ## 폴더
 - `landxi/v3/` — 지금 쓰는 화면(게스트 메인 · 로그인 · 역할별 첫 화면 17개)
 - `landxi/proto/` — 예전 화면과 검토 허브 · 자산 대장 · 구현 현황판(`review/`)

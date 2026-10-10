@@ -1,5 +1,5 @@
 /* board.js — 프로젝트 진행 현황 흐름도 한 부품(직원-6 4차 · 직원-7 · 10-09 "한 번에 정리").
-   데이터 올리기 → AI 분석 → 결과 확인 → 배포 신청 — 네 단계(서버 단계 6을 묶음: ingest · label+train+infer · review · publish).
+   데이터 올리기 → 학습데이터 구축 → 학습 → 추론 → 결과 확인 → 배포 신청 — 여섯 단계(서버 단계 6 그대로 · 프로젝트 안 단계 막대와 같은 이름 · 10-10 질문 10 확인).
    대시보드 맨 위 칸(칩 둘 + '외 n개')과 메뉴 '프로젝트' 목록(?stage= 단계 고르기)이 같은 부품을 쓴다(원칙 99 — 메뉴와 한 줄기).
    값은 모두 서버(GET /projects — stage · steps · blocked · last_at · next). 단계에 들어온 날짜는 서버에 없어 '마지막 활동'으로 보인다(지어내지 않는다). */
 import { h } from '../kit/util.js';
@@ -7,11 +7,14 @@ import { HOME, ensureCss } from './context.js';
 
 export const GROUPS = [
   { key: 'ingest', label: '데이터 올리기', keys: ['ingest'] },
-  { key: 'ai', label: 'AI 분석', keys: ['label', 'train', 'infer'] },
+  { key: 'label', label: '학습데이터 구축', keys: ['label'] },
+  { key: 'train', label: '학습', keys: ['train'] },
+  { key: 'infer', label: '추론', keys: ['infer'] },
   { key: 'review', label: '결과 확인', keys: ['review'] },
   { key: 'deploy', label: '배포 신청', keys: ['publish'] },
 ];
 const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
+export const N = GROUPS.length;
 
 let cssOn = false;
 function sheet() {
@@ -22,22 +25,22 @@ function sheet() {
 }
 sheet();
 
-/** 프로젝트의 단계(네 단계 가운데 몇 번째) — 서버 stage.key 로 */
+/** 프로젝트의 단계(여섯 단계 가운데 몇 번째) — 서버 stage.key 로 */
 export const groupOf = (p) => Math.max(0, GROUPS.findIndex((g) => g.keys.includes(p?.stage?.key)));
-/** 네 칸 진행(done · now · wait) — 서버 steps(6칸)를 묶는다. 건너뛴 칸은 끝난 것으로 */
+/** 여섯 칸 진행(done · now · wait) — 서버 steps(6칸) 그대로. 건너뛴 칸은 끝난 것으로 */
 export function seg4(p) {
   const gi = groupOf(p);
   return GROUPS.map((g, i) => {
     if (i === gi) return 'now';
-    const st = g.keys.filter((k) => k !== 'infer').map((k) => p?.steps?.[KEYS.indexOf(k)]);   // 추론은 해 보면 좋은 단계 — 묶음 완료 판정에서 뺀다(서버 OPTIONAL)
+    const st = g.keys.map((k) => p?.steps?.[KEYS.indexOf(k)]);
     return st.every((s) => s === 'done' || s === 'skip') ? 'done' : 'wait';
   });
 }
 export const doneN = (p) => seg4(p).filter((x) => x === 'done').length;
-/** 네 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양(네 칸) */
+/** 여섯 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양 */
 export function seg4El(p) {
   const s = seg4(p);
-  return h('span.lxp-seg.sb-seg4', { role: 'img', 'aria-label': `네 단계 가운데 ${doneN(p)}단계 끝남` },
+  return h('span.lxp-seg.sb-seg4', { role: 'img', 'aria-label': `여섯 단계 가운데 ${doneN(p)}단계 끝남` },
     ...s.map((x, i) => h('i', { dataset: { st: x }, title: `${GROUPS[i].label} · ${{ done: '완료', now: '지금 단계', wait: '대기' }[x]}` })));
 }
 /** 남은 일 — 서버 blocked 첫 줄. kind: warn(내가 손댈 것) · wait(승인 대기) · null */
@@ -94,7 +97,7 @@ export function flow(items, { picked = null, link = null, onPick = null, chips =
     const subEl = h('small.sb-st-s');
     sub.forEach((x, k) => { if (k) subEl.append(' · '); subEl.append(x); });
     const graph = h('span.sb-st-g', { 'aria-hidden': 'true' }, ...ps.slice(0, 12).map((p) =>
-      h('i', { style: `--w:${Math.round((doneN(p) / 4) * 100)}%`, dataset: { kind: kick(p)?.kind || '' } })));
+      h('i', { style: `--w:${Math.round((doneN(p) / N) * 100)}%`, dataset: { kind: kick(p)?.kind || '' } })));
     const on = picked === g.key;
     const label = `${i + 1} ${g.label} · ${ps.length}개${warn ? ` · 남은 일 ${warn}` : ''}`;
     const inner = [h('span.sb-st-k.num', { text: String(i + 1) }),

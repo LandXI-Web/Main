@@ -52,9 +52,32 @@ const TASKS = !PRJ ? CFG.tasks : (() => {
 const STEP = { label: 1, train: 3, publish: 5 }[STAGE];
 
 const grid = h('div.tr-grid', { role: 'list' });
-const newBtn = h('button.t-btn.tr-new', { type: 'button', text: '새 모델 만들기' });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: PRJ ? '학습 · 이 프로젝트 모델' : '학습 · 업무별 모델' }), newBtn), grid);
+/* 프로젝트 안(10-10 질문 10 확인) — 단계마다 그 단계 내용만: 학습데이터 구축 = 이 프로젝트 학습데이터(올리기 · 라벨 확인) · 학습 = 이 프로젝트 모델 */
+const IS_LABEL = !!PRJ && STAGE === 'label';
+const newBtn = h('button.t-btn.tr-new', { type: 'button', text: !PRJ ? '새 모델 만들기' : IS_LABEL ? '학습데이터 올리기' : '학습 실행' });
+const samplesBox = h('div.tr-grid.tr-samples', { role: 'list', hidden: !IS_LABEL });
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : IS_LABEL ? '학습데이터 구축' : '학습' }), newBtn), IS_LABEL ? samplesBox : grid);
 S.main.append(pane);
+if (IS_LABEL) drawSamples();
+async function drawSamples() {
+  let j = null;
+  try { j = await api('/training/samples?project=' + encodeURIComponent(PRJ.id)); } catch { /* 아래 빈 안내 */ }
+  const items = j?.items || [];
+  if (!items.length) {
+    const e = h('div'); samplesBox.replaceChildren(e);
+    empty(e, { kind: 'first', title: j ? '아직 올린 학습데이터가 없습니다' : '학습데이터를 불러오지 못했습니다', text: j ? '라벨 표본 묶음(zip)을 올리면 여기에 보입니다' : '', compact: true });
+    return;
+  }
+  const day = (s) => String(s || '').slice(0, 10).replace(/-/g, '.');
+  samplesBox.replaceChildren(...items.map((x) => {
+    const a = h('a.t-card.tr-smp', { role: 'listitem', href: `?project=${encodeURIComponent(PRJ.id)}&stage=label&flow=1&sample=${encodeURIComponent(x.id)}` },
+      h('b.t-h4', { text: x.task_name }),
+      h('span.t-label', { text: [x.region_name, day(x.created_at) ? `${day(x.created_at)} 올림` : ''].filter(Boolean).join(' · ') }),
+      h('span.tr-smp-n', {}, h('b.num', { text: nf(isEnvelope(x.images) ? x.images.value : x.images) }), h('small', { text: '장' })));
+    a.addEventListener('click', async (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); history.replaceState(null, '', a.href); openFlow({ host: S.main, who, project: PRJ, step: STEP }); });
+    return a;
+  }));
+}
 /* 원스톱(r3-train): 데이터 올리기 → 라벨 확인 → 학습 → 결과 확인·등록 → 서비스 만들기 → 다른 지역에 적용 */
 newBtn.addEventListener('click', async () => openFlow({ host: S.main, who, project: await PROJ, step: STEP }));
 if (q0.get('flow')) setTimeout(async () => openFlow({ host: S.main, who, project: await PROJ, step: STEP }), 0);
@@ -190,7 +213,7 @@ for (const t of TASKS) {
 devlog('summary', SUM ? TASKS.filter((t) => t.card).map((t) => `${t.card} ${stageOf(SUM, t.card) || '—'}`).join(' · ') || '업무 전용 카드 없음' : '없음 · 카드 기록 단계로 대체');
 
 /* ── 카드 채우기 ────────────────────────────────────────────── */
-const CHIP = { ok: ['쓸 수 있음', ''], retrain: ['재학습 필요', 'warn'], first: ['첫 학습 전', 'gap'], nomodel: ['학습 기록 없음', 'gap'] };
+const CHIP = { ok: ['쓸 수 있음', ''], retrain: ['다시 학습 필요', 'warn'], first: ['첫 학습 전', 'gap'], nomodel: ['학습 기록 없음', 'gap'] };
 for (const [id, r] of ROWS) {
   const el = cardEls.get(id);
   el.dataset.state = r.state;

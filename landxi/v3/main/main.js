@@ -497,12 +497,13 @@ function sweep(s1, keep = 1) {
   }
 }
 function nationOutline(o) { want('k-sgg-l', 'line-opacity', 0.42 * o); }
-/** ch2 — 필지 결합 → 대장과 겹쳐 보기 → 필지별 AI 분석 결과(하나만 활성 · 원칙 135) */
+/** ch2 — AI 영상 분석 → 행정 정보와 맞추기 → 바로 판단(나중 9 후보 1 · 하나만 활성 · 원칙 135)
+    0 AI가 본 것(청록 면만) → 1 필지 선이 겹치고 밖 조각은 흐려짐 → 2 카드 아래 판단 줄 */
 function parcelScene(s2, keep = 1) {
-  const a = seg(s2, 0.24, 0.34) * keep;
-  want('k-parcel-l', 'line-opacity', 0.95 * a); want('k-parcel-f', 'fill-opacity', 0.08 * a);
-  want('k-aiin-f', 'fill-opacity', 0.4 * seg(s2, 0.3, 0.4) * keep); want('k-aiin-l', 'line-opacity', seg(s2, 0.3, 0.4) * keep); want('k-aiin-h', 'line-opacity', 0.3 * seg(s2, 0.3, 0.4) * keep);
-  want('k-ainear-f', 'fill-opacity', 0.1 * seg(s2, 0.3, 0.4) * keep); want('k-ainear-l', 'line-opacity', 0.35 * seg(s2, 0.3, 0.4) * keep); want('k-ainear-h', 'line-opacity', 0);
+  const ai = seg(s2, 0.24, 0.34) * keep, pl = seg(s2, 0.46, 0.56) * keep;
+  want('k-parcel-l', 'line-opacity', 0.95 * pl); want('k-parcel-f', 'fill-opacity', 0.08 * pl);
+  want('k-aiin-f', 'fill-opacity', 0.4 * ai); want('k-aiin-l', 'line-opacity', ai); want('k-aiin-h', 'line-opacity', 0.3 * ai);
+  want('k-ainear-f', 'fill-opacity', (0.4 - 0.3 * pl / Math.max(keep, 1e-6)) * ai); want('k-ainear-l', 'line-opacity', (1 - 0.65 * pl / Math.max(keep, 1e-6)) * ai); want('k-ainear-h', 'line-opacity', 0);
   const i = s2 < 0.46 ? 0 : s2 < 0.7 ? 1 : 2;
   if (i !== S.item) {
     S.item = i;
@@ -594,7 +595,7 @@ function fillParcel(p) {
       <div class="m-pc-col"><span class="t-label">대장</span><b class="t-h4">${esc(p.ledger.jimok)}</b><span>${numHtml(p.ledger.area)}</span><span class="t-label">${esc(p.ledger.yongdo || '')}</span></div>
       <div class="m-pc-col is-ai"><span class="t-label">AI 분석</span><b class="t-h4">${esc(p.ai.cls)}</b><span>${numHtml(p.ai.area)}</span><span class="t-label">${p.ai.year}년 항공영상</span></div>
     </div>
-    <div class="m-pc-foot"><span class="m-ok" aria-hidden="true">✓</span><span class="t-label">필지별 AI 분석 결과에 담았습니다</span></div>
+    <div class="m-pc-foot"><span class="m-ok" aria-hidden="true">✓</span><span class="t-label">대장은 ${esc(p.ledger.jimok)}, AI 분석은 ${esc(p.ai.cls)}<small>AI 분석 결과를 대장과 맞춰 이 필지를 바로 판단합니다</small></span></div>
   </div>`;
   S.item = -1;
 }

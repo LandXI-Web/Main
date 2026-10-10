@@ -68,7 +68,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/') && u.searchParams.get('scope') === 'mine', { timeout: 20000 });
     const row = page.locator('.lxp-list .sb-tb tbody tr', { hasText: NAME });
     await expect(row).toBeVisible({ timeout: 20000 });
-    await expect(row.locator('.sb-prog small')).toHaveText(/^[01]\/4$/);
+    await expect(row.locator('.sb-prog small')).toHaveText(/^[01]\/6$/);
     const stage = await row.getAttribute('data-stage');
     await page.locator(`.lxp-flow .sb-st[data-key="${stage}"] .sb-st-b`).click();
     await expect(page.locator(`.lxp-flow .sb-st[data-key="${stage}"][data-open]`)).toHaveCount(1);

@@ -82,6 +82,7 @@ export function mountRelease(root) {
     row('정확도', h('div.rv-cmp', {},
       h('span', {}, h('em', { text: '이번 판' }), h('b', { text: pct(f.acc) }), bar(f.acc)),
       h('span', {}, h('em', { text: f.prev ? `지난 판 ${f.prev.version}` : '지난 판' }), h('b', { text: f.prev ? pct(f.prev.acc) : '—' }), bar(f.prev?.acc, true))),
+    f.low ? h('p.rv-low', { role: 'note', text: `${f.low} — 막지 않습니다 · 보고 판단해 주세요` }) : null,   // 질문 9 ⓑ(직원 신청서와 같은 줄)
     h('small', { text: f.prev ? '학습 끝 검증 값' : '첫 판입니다 — 비교할 지난 판이 없습니다' }));
     row('학습 데이터', f.sample ? units('b', join(`표본 ${nf(val(f.sample.images))}장`, `${md(f.sample.at)} 올림`)) : h('b.rv-warn', { text: f.model ? '프로젝트 학습 데이터와 연결 기록 없음' : '—' }));
     const rv = f.review;

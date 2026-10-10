@@ -174,7 +174,7 @@ export function deploys() {
 export const DIM = {
   storage_gb: { ko: '저장', unit: 'GB', k: 1, d: 0 },
   gpu_s_month: { ko: 'GPU 시간', unit: 'h', k: 1 / 3600, d: 1 },
-  area_km2_month: { ko: '분석 면적', unit: '㎢', k: 1, d: 0 },
+  area_km2_month: { ko: '분석한 면적', unit: '㎢', k: 1, d: 0 },
   // AI 도우미 사용량(토큰 · 이번 달) — usage_events llm_tokens 합(서버 /ops/tenants 한 출처) · 고리 대신 기관 사용량 표 한 줄(ring:false)
   llm_tokens_month: { ko: 'XI ChatGEO 사용량', unit: '토큰', k: 1, d: 0, ring: false },
 };

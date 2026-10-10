@@ -118,6 +118,30 @@ async function drawInfer() {
   }
   rangeSel.addEventListener('change', () => { st.emd = rangeSel.value; });
 
+  /* 설정(질문 6 ⓐ) — 접어 두고 두 가지만. 기본값 = 서버 값(d.settings.default) · 바꾸면 이번 작업에만 */
+  const DEF = d.settings?.default || { conf: 0.25, min_area_m2: 4 };
+  const LIM = d.settings?.limit || { conf: [0.05, 0.95], min_area_m2: [0, 500] };
+  const confIn = h('input.t-input.rl-num', { type: 'number', step: '0.05', min: String(LIM.conf[0]), max: String(LIM.conf[1]), value: String(DEF.conf), 'aria-label': '신뢰도 기준' });
+  const minIn = h('input.t-input.rl-num', { type: 'number', step: '1', min: String(LIM.min_area_m2[0]), max: String(LIM.min_area_m2[1]), value: String(DEF.min_area_m2), 'aria-label': '최소 크기' });
+  const setNote = h('small.rl-note');
+  const reset = h('button.t-btn.t-btn--text.rl-reset', { type: 'button', text: '기본값으로', onclick: () => { confIn.value = String(DEF.conf); minIn.value = String(DEF.min_area_m2); sync(); } });
+  const sumEl = h('span.rl-set-v');
+  function sync() {
+    const c = +confIn.value, a = +minIn.value;
+    const same = c === +DEF.conf && a === +DEF.min_area_m2;
+    sumEl.textContent = same ? '기본값' : '바꿈 · 이번 분석에만';
+    setNote.textContent = same ? '' : '바꾼 값은 이번 분석에만 쓰입니다';
+    reset.hidden = same;
+  }
+  confIn.addEventListener('input', sync); minIn.addEventListener('input', sync);
+  const setBox = h('details.rl-set', {},
+    h('summary', {}, h('span', { text: '설정' }), sumEl),
+    h('div.rl-set-b', {},
+      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '신뢰도 기준' }), h('small', { text: 'AI가 이만큼 확실할 때만 결과로 남깁니다(0~1)' })), confIn),
+      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '최소 크기' }), h('small', { text: '이보다 작은 것은 결과에서 뺍니다' })), h('span.rl-set-u', {}, minIn, h('em', { text: '㎡' }))),
+      h('div.rl-set-f', {}, setNote, reset)));
+  sync();
+
   const go = h('button.t-btn', { type: 'button', text: '분석 시작' });
   const msg = h('p.rl-msg', { role: 'status' });
   go.addEventListener('click', async () => {
@@ -125,7 +149,8 @@ async function drawInfer() {
     if (!st.img) { msg.textContent = '영상을 고르세요'; return; }
     go.disabled = true; msg.textContent = '';
     try {
-      await api(base + '/infer', { method: 'POST', body: { model_id: st.model, imagery_id: st.img, ...(st.emd ? { emd_cd: st.emd } : {}) } });
+      await api(base + '/infer', { method: 'POST', body: { model_id: st.model, imagery_id: st.img, ...(st.emd ? { emd_cd: st.emd } : {}),
+        conf: +confIn.value, min_area_m2: +minIn.value } });
       toast('분석을 대기열에 넣었습니다');
       await drawJobs(true);
     } catch (e) {
@@ -143,6 +168,7 @@ async function drawInfer() {
       h('p.rl-grp', { text: '프로젝트 영상' }), iProj,
       h('p.rl-grp', { text: '공유 데이터셋' }), find, iShared),
     h('div.rl-step', {}, h('h3', { text: '범위' }), rangeSel, rangeNote),
+    setBox,
     h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '분석은 작업 대기열 순서대로 · GPU 한 장씩 돕니다')), can ? go : h('p.rl-note', { text: '추론은 프로젝트장 · 구성원이 합니다' })), msg);
 
   /* 오른쪽 — 결과 목록 */
@@ -157,7 +183,8 @@ async function drawInfer() {
     let jobs = d.jobs || [];
     if (fresh) { try { d = { ...d, ...(await api(base + '/infer')) }; jobs = d.jobs || []; } catch { /* 지난 목록 그대로 */ } }
     jl.replaceChildren(...(jobs.length ? jobs.map((j) => h('li', { dataset: { st: j.state } },
-      h('div.rl-j-l', {}, h('b', { text: join(j.imagery?.name, j.range) }), unitsEl('span', join(j.model?.name, km2(j.area))),
+      h('div.rl-j-l', {}, h('b', { text: join(j.imagery?.name, j.range) }), unitsEl('span', join(j.model?.name, km2(j.area),
+        j.settings?.conf != null ? `신뢰도 기준 ${j.settings.conf}` : '', j.settings?.min_area_m2 != null ? `최소 ${nf(j.settings.min_area_m2)}㎡` : '')),
         unitsEl('small', join(mdhm(j.at), j.by))),
       h('div.rl-j-r', {},
         j.state === 'done' ? h('b.rl-found', { text: val(j.found) == null ? '—' : `${nf(val(j.found))}건` }) : h('span.t-chip', { dataset: { lv: j.state === 'failed' ? 'warn' : 'wait' },
@@ -188,13 +215,16 @@ async function drawPublish() {
   const mSel = h('select.t-input', { 'aria-label': '모델' }, ...(d.models || []).map((x) => h('option', { value: x.id, disabled: !x.can_apply,
     text: join(`${x.n}번째 학습`, x.name, pct(x.acc), x.can_apply ? '' : '모델 등록 승인 뒤 신청할 수 있습니다') })));
   if (st.model) mSel.value = st.model;
-  const accEl = h('div.rl-cmp'), dataEl = h('div'), sceneEl = h('div.rl-scenes', { role: 'radiogroup', 'aria-label': '결과 장면' });
+  const accEl = h('div.rl-cmp'), lowEl = h('p.rl-low', { role: 'note' }), dataEl = h('div'), sceneEl = h('div.rl-scenes', { role: 'radiogroup', 'aria-label': '결과 장면' });
   const ledger = h('select.t-input', { 'aria-label': '대장 형식' }, ...(d.ledger_kinds || []).map((k) => h('option', { value: k.kind, text: k.label })));
   function drawModelBits() {
     const x = m();
     accEl.replaceChildren(
       h('span', {}, h('em', { text: '이번 판' }), h('b', { text: pct(x?.acc) }), bar(x?.acc)),
       h('span', {}, h('em', { text: prev ? `지난 판 ${prev.version}` : '지난 판' }), h('b', { text: prev ? pct(prev.model?.acc) : '—' }), bar(prev?.model?.acc, true)));
+    /* 기반 · 지난 판보다 낮으면 빨간 경고 한 줄(질문 9 ⓑ) — 막지 않는다 · 관리자 신청서에도 같은 줄 */
+    lowEl.textContent = x?.low ? `${x.low} — 신청은 할 수 있고, 관리자가 보고 판단합니다` : '';
+    lowEl.hidden = !x?.low;
     dataEl.replaceChildren(x?.sample
       ? unitsEl('b', join(`표본 ${nf(val(x.sample.images))}장`, `${md(x.sample.at)} 올림`))
       : h('b.rl-warn', { text: '이 모델은 프로젝트 학습 데이터와 연결 기록이 없습니다' }));
@@ -211,7 +241,7 @@ async function drawPublish() {
   if (d.first) row('서비스', svcName, h('small', { text: '첫 판입니다 — 승인되면 새 분석 서비스가 됩니다' }));
   else row('서비스', h('b', { text: d.service?.name || '' }), d.service?.line ? h('small', { text: d.service.line }) : null);
   row('모델', mSel);
-  row('정확도', accEl, h('small', { text: '학습 끝 검증 값' }));
+  row('정확도', accEl, lowEl, h('small', { text: '학습 끝 검증 값' }));
   row('학습 데이터', dataEl);
   const rv = d.review;
   row('결과 확인', d.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: d.review_done ? '' : 'rl-warn', text: rv ? `${nf(rv.n)}/${nf(rv.total)}` : '—' }),

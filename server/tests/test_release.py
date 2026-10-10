@@ -122,3 +122,32 @@ def test_share_check_reaches_org_and_usage(live, tok, made):
     assert r.status_code == 200 and r.json()["shared"] is False
     br = httpx.get(B + "/brand/namwon", headers=H(tok["namwon"]), timeout=60).json()
     assert card not in [x["card"] for x in br["services"]]
+
+
+def test_infer_settings_defaults_and_guard(live, tok, made):
+    """질문 6 ⓐ — 추론 설정 두 가지(신뢰도 기준 · 최소 크기). 기본값 = 서버 값(0.25 · 4㎡) · 범위 밖은 사람 말로 거절(대기열에 넣지 않음)."""
+    p = made()
+    s = H(tok["staff"])
+    d = httpx.get(B + f"/release/projects/{p['id']}/infer", headers=s, timeout=60).json()
+    assert d["settings"]["default"] == {"conf": 0.25, "min_area_m2": 4.0}
+    img, mid = d["imagery"]["project"][0]["id"], d["models"][0]["id"]
+    for bad in ({"conf": 2}, {"conf": "x"}, {"min_area_m2": -1}, {"min_area_m2": 9999}):
+        r = httpx.post(B + f"/release/projects/{p['id']}/infer", headers=s, json={"model_id": mid, "imagery_id": img, **bad}, timeout=60)
+        assert r.status_code == 400, (bad, r.text)
+
+
+def test_apply_low_accuracy_warns_not_blocks(live, tok, made):
+    """질문 9 ⓑ — 기반 모델 · 지난 판보다 정확도가 낮으면 신청서 · 관리자 신청서에 경고 한 줄(막지 않는다)."""
+    p = made()
+    s, a = H(tok["staff"]), H(tok["admin"])
+    d = httpx.get(B + f"/release/projects/{p['id']}/apply", headers=s, timeout=60).json()
+    low = [m for m in d["models"] if m["can_apply"] and m.get("low")]
+    if not low:
+        pytest.skip("기반보다 낮은 모델 없음")
+    m = low[0]
+    assert m["base"] and m["acc"]["value"] < m["base"]["acc"]["value"] and "기반 모델" in m["low"]
+    r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s,
+                   json={"model_id": m["id"], "name": "pytest 낮은 정확도", "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60)
+    assert r.status_code == 201, r.text                                  # 막지 않는다
+    it = next(x for x in httpx.get(B + "/release/requests", headers=a, timeout=60).json()["items"] if x["id"] == r.json()["approval_id"])
+    assert it["form"]["low"] == m["low"]

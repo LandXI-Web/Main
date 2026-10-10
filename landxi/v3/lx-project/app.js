@@ -10,7 +10,7 @@ import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
 import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, nb, projectNotices } from './context.js';
 import { staffMenu, STAFF_HREF } from '../kit/lx-menu.js';
-import { GROUPS, groupOf, flow, seg4El, doneN, kick, ago, sortBy } from './board.js';
+import { GROUPS, N, groupOf, flow, seg4El, doneN, kick, ago, sortBy } from './board.js';
 import { openNewProject } from './new.js';
 import { retrainCard, logCard, openHandover } from './sheets.js';
 
@@ -94,7 +94,7 @@ async function list() {
         h('td', { title: (p.regions || []).map((g) => g.full || g.name).join(' · '), text: regionWord(p.regions) }),
         h('td.nw', { text: p.lead?.name || '—' }),
         h('td', { text: archived() ? '보관' : nb(p.next?.text || '—') }),
-        h('td.nw', {}, archived() ? h('span.sb-none', { text: '—' }) : h('span.sb-prog', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/4` }))),
+        h('td.nw', {}, archived() ? h('span.sb-none', { text: '—' }) : h('span.sb-prog', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/${N}` }))),
         h('td.num.nw', { text: ago(p.last_at || p.updated_at) }),
         h('td', {}, k && !archived() ? h('span.sb-kick', { dataset: { kind: k.kind }, text: k.text }) : h('span.sb-none', { text: '—' })),
         h('td.nw', {}, h('a.sb-open-l', { href: projectHref(p.id), text: '열기' })));
@@ -102,7 +102,7 @@ async function list() {
     const table = h('div.k-table-w', {}, h('table.k-table.sb-tb', {},
       h('thead', {}, h('tr', {}, ...['프로젝트', '지역', '담당', '지금', '진행', '마지막 활동', '남은 일', ''].map((t, i) => h('th', { class: i === 5 ? 'num' : '', text: t })))),
       h('tbody', {}, ...tr)));
-    const foot = h('p.sb-pg-n', {}, h('span', { text: '위 단계를 누르면 그 단계의 프로젝트만 보입니다.' }), h('span', { text: '막대 = 네 단계 가운데 끝낸 단계.' }),
+    const foot = h('p.sb-pg-n', {}, h('span', { text: '위 단계를 누르면 그 단계의 프로젝트만 보입니다.' }), h('span', { text: '막대 = 여섯 단계 가운데 끝낸 단계.' }),
       h('span', { text: '빨간 점 = 앞 단계에 남은 일.' }));
     body.replaceChildren(hd, table, ...(archived() ? [] : [foot]));
   }

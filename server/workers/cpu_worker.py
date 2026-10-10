@@ -75,7 +75,11 @@ def finalize(job_id: str):
     sdir = bus.shard_dir(tenant, job_id, demo)
     raw = _feats_from_shards(sdir) if sdir.exists() else []
     region = None      # 영상 id 로 지역을 추정하지 않는다(읍면동 붙이기는 postprocess 가 결과 좌표로 판단 · core-imagery)
-    feats, st = postprocess.run(raw, task=task, region=region)
+    try:                # 추론 설정 '최소 크기'(질문 6 ⓐ · 그 작업에만) — 없으면 지금까지의 4㎡
+        min_area = max(0.0, float(opts.get("min_area_m2", 4.0)))
+    except (TypeError, ValueError):
+        min_area = 4.0
+    feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")
     counts: dict[str, int] = {}

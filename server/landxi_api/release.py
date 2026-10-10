@@ -31,6 +31,27 @@ router = APIRouter()
 ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50")
 XI = "/landxi/v3/xi-clean/"
 MEMO_MAX = 300
+# 추론 설정(질문 6 ⓐ — 추론 탭 '설정'을 펼치면 두 가지만 · 바꾸면 그 작업에만). 기본값 = 지금까지 서버에 고정이던 값(conf 0.25 · 후처리 최소 넓이 4㎡)
+INFER_DEFAULT = {"conf": 0.25, "min_area_m2": 4.0}
+INFER_LIMIT = {"conf": (0.05, 0.95), "min_area_m2": (0.0, 500.0)}
+
+
+def infer_settings(body: dict) -> dict:
+    """화면이 보낸 신뢰도 기준 · 최소 크기 → 작업 옵션. 안 보내면 기본값 · 범위 밖이면 사람 말로 거절."""
+    out = {}
+    for k, (lo, hi) in INFER_LIMIT.items():
+        v = body.get(k)
+        if v is None or v == "":
+            out[k] = INFER_DEFAULT[k]
+            continue
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            f = None
+        if f is None or not (lo <= f <= hi):
+            raise ApiError("bad_request", "신뢰도 기준은 0.05~0.95 사이로 적어 주세요" if k == "conf" else "최소 크기는 0~500㎡ 사이로 적어 주세요", {"field": k})
+        out[k] = round(f, 3)
+    return out
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
 
@@ -68,6 +89,36 @@ def _acc_at(metrics) -> str | None:
 def acc_env(metrics, source: str = "학습 끝 검증(마스크 기준 · 분석하기 카드와 같은 출처)") -> dict:
     at = _acc_at(metrics)
     return env(acc_of(metrics), "%", "measured", source, as_of=at or None)
+
+
+def low_acc(acc: dict | None, base: dict | None, prev: dict | None) -> list[dict]:
+    """질문 9 ⓑ — 이번 판 정확도가 기반 모델 · 지난 판보다 낮으면 경고 거리(막지 않는다 · 관리자가 보고 판단). 값이 없으면 비교하지 않는다."""
+    v = (acc or {}).get("value")
+    out = []
+    if v is None:
+        return out
+    for who, e in (("기반 모델", (base or {}).get("acc")), ("지난 판", prev)):
+        w = (e or {}).get("value") if isinstance(e, dict) else None
+        if w is not None and v < w:
+            out.append({"who": who, "acc": e})
+    return out
+
+
+def low_line(low: list[dict]) -> str | None:
+    if not low:
+        return None
+    parts = " · ".join(f"{x['who']} {x['acc']['value']}%" for x in low)
+    return f"이번 판 정확도가 {parts}보다 낮습니다"
+
+
+async def _union_km2(job_ids: list[str]) -> float:
+    """분석한 면적(나중 1 ⓑ) — 같은 곳을 여러 번 분석해도 한 번: 작업 범위 ∩ 영상 자리의 합집합 넓이(㎢). 범위 없는 작업은 빼지 않고 0."""
+    async with db(realm="lx") as conn:
+        v = await conn.fetchval(
+            "SELECT ST_Area(ST_Union(CASE WHEN i.footprint IS NULL THEN ST_MakeValid(j.aoi) "
+            "ELSE ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) END)::geography) / 1e6 "
+            "FROM jobs j LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id = ANY($1::text[]) AND j.aoi IS NOT NULL", job_ids)
+    return float(v or 0)
 
 
 def model_label(name, metrics) -> str:
@@ -147,13 +198,20 @@ async def project_models(conn, pid: str) -> list[dict]:
                             "ORDER BY created_at NULLS FIRST", sids or ["-"])
     dep = await _deployed_models(conn, pid)
     from .registry import STATUS_MODEL
+    # 기반 모델(학습 작업 options.base_model = models.id) — 배포 신청서의 '기반보다 낮음' 경고(질문 9 ⓑ)
+    tj = [r["train_job"] for r in rows if r["train_job"]]
+    bmap = {x["id"]: x["base"] for x in await conn.fetch("SELECT id, options->>'base_model' AS base FROM jobs WHERE id = ANY($1::text[])", tj or ["-"])}
+    bids = [b for b in bmap.values() if b]
+    bases = {x["id"]: x for x in await conn.fetch("SELECT id, name, metrics FROM models WHERE id = ANY($1::text[])", bids or ["-"])}
     out = []
     for i, r in enumerate(rows):
+        b = bases.get(bmap.get(r["train_job"]) or "")
         out.append({"id": r["id"], "name": model_label(r["name"], r["metrics"]), "n": i + 1, "status": r["status"],
                     "status_label": STATUS_MODEL.get(r["status"] or "", r["status"]),
                     "acc": acc_env(r["metrics"]),
                     "classes": [str(c) for c in (r["classes"] or [])], "gsd_m": float(r["gsd_trained_m"]) if r["gsd_trained_m"] is not None else None,
                     "gsd_word": _gsd(r["gsd_trained_m"]), "at": _iso(r["created_at"]), "sample_id": r["sample_id"],
+                    "base": {"id": b["id"], "name": model_label(b["name"], b["metrics"]), "acc": acc_env(b["metrics"])} if b else None,
                     "deployed": dep.get(r["id"])})
     out.reverse()
     return out
@@ -212,6 +270,7 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
                     "model": {"id": x["model_id"], "name": model_label(x["mname"], x["mmetrics"])},
                     "imagery": {"id": x["imagery_id"], "name": _ko(x["iname"]) or ""},
                     "range": o.get("range_name") or "영상 전체",
+                    "settings": {k: o[k] for k in INFER_DEFAULT if o.get(k) is not None and float(o[k]) != INFER_DEFAULT[k]} or None,
                     "area": env(round(float(x["km2"]), 2) if x["km2"] is not None else None, "km2", "measured", "분석 범위 면적"),
                     "found": env(sum(int(v or 0) for v in cnt.values()) if state == "done" else None, "count", "inferred", "AI 분석 결과(검수 전)"),
                     "by": people.get(x["submitted_by"]) if x["submitted_by"] else None,
@@ -231,7 +290,7 @@ async def infer_view(pid: str, request: Request):
         jobs = await _infer_jobs(conn, pid, people)
     return {"project": {"id": r["id"], "name": r["name"]}, "models": models, "imagery": {"project": proj, "shared": shared},
             "jobs": jobs, "viewers": env(1 + len([m for m in members if m != r["lead_id"]]), "count", "recorded", "프로젝트장 + 구성원"),
-            "can": {"run": PJ._is_member(p, r, members)}, "as_of": now_iso()}
+            "can": {"run": PJ._is_member(p, r, members)}, "settings": {"default": INFER_DEFAULT, "limit": INFER_LIMIT}, "as_of": now_iso()}
 
 
 @router.get("/release/projects/{pid}/infer/ranges")
@@ -294,6 +353,7 @@ async def infer_run(pid: str, body: dict, request: Request):
     """이 프로젝트 모델로 분석(배포 신청 없이) — 지금 있는 분석 작업 길(POST /jobs)로만: 대기열 · 전력 예산(GPU 한 장씩) · 범위 천장 그대로."""
     p = _lx(request)
     mid, iid, emd = str(body.get("model_id") or ""), str(body.get("imagery_id") or ""), str(body.get("emd_cd") or "") or None
+    st = infer_settings(body)
     async with db(realm="lx") as conn:
         r, members = await _member_project(conn, p, pid)
         if not PJ._is_member(p, r, members):
@@ -313,12 +373,13 @@ async def infer_run(pid: str, body: dict, request: Request):
     from .jobs import INFER_MAX_KM2, submit
     job_body = {"kind": "infer", "model_id": mid, "imagery_id": iid, "aoi": aoi,
                 "label": f"추론 · {r['name']}"[:60],
-                "options": {"project_id": pid, "project_infer": True, "chip": 1024, "overlap": 0.125, "conf": 0.25, "max_km2": INFER_MAX_KM2,
+                "options": {"project_id": pid, "project_infer": True, "chip": 1024, "overlap": 0.125, "conf": st["conf"], "min_area_m2": st["min_area_m2"],
+                            "max_km2": INFER_MAX_KM2,
                             "range_name": rname, **({"emd_cd": emd} if emd else {}), **({"sgg_cd": img["sgg_cd"]} if img["sgg_cd"] else {})}}
     res = await submit(job_body, request)
     async with db(realm="lx") as conn:
-        await audit(conn, p, "project.infer", pid, None, {"job_id": res["job"]["id"], "model_id": mid, "imagery_id": iid, "emd_cd": emd})
-    return {"job": res["job"]["id"], "state": res["job"]["state"], "range": rname, "as_of": now_iso()}
+        await audit(conn, p, "project.infer", pid, None, {"job_id": res["job"]["id"], "model_id": mid, "imagery_id": iid, "emd_cd": emd, **st})
+    return {"job": res["job"]["id"], "state": res["job"]["state"], "range": rname, "settings": st, "as_of": now_iso()}
 
 
 @router.get("/release/imagery/{iid}/thumb")
@@ -450,7 +511,8 @@ async def apply_view(pid: str, request: Request):
             "service": {"id": card, "name": _ko(cinfo["name"]) if cinfo else None, "line": ((cinfo["intro"] or {}).get("headline") if cinfo else None),
                         "default_name": (f"{r['task']} 분석서비스" if r["task"] else r["name"])[:60]},
             "first": prev is None, "prev": prev, "next_version": open_v["version"] if open_v and open_v["state"] == "rejected" else _next_ver(versions),
-            "models": [{**m, "sample": samples.get(m["id"]), "can_apply": m["status"] == "registered"} for m in models],
+            "models": [{**m, "sample": samples.get(m["id"]), "can_apply": m["status"] == "registered",
+                        "low": low_line(low_acc(m["acc"], m.get("base"), (prev or {}).get("model", {}).get("acc")))} for m in models],
             "pick": pick, "scenes": jobs[:12],
             "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": bool(rv.get("skip")),
             "status": status, "versions": versions, "shared": shared, "ledger_kinds": kinds,
@@ -512,6 +574,7 @@ async def apply(pid: str, body: dict, request: Request):
             "acc": m["acc"], "prev": ({"version": prev["version"], "acc": prev["model"]["acc"], "model": prev["model"]["name"],
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
+            "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
             "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene}
     extra = {"memo": memo, "form": form, "kind_word": "배포 신청", **({"test": True} if test else {})}
     if rej:                                          # 거절된 판을 고쳐서 다시 신청 — 같은 판 번호 · 새 승인 요청 한 줄
@@ -587,6 +650,9 @@ async def requests_list(request: Request):
     items = []
     for x in rows:
         pl = x["payload"] or {}
+        fm = pl.get("form")
+        if isinstance(fm, dict) and "low" not in fm:      # 경고 줄이 생기기 전(10-10 전) 신청서 — 신청서에 적힌 값으로 같은 판정
+            fm = {**fm, "low": low_line(low_acc(fm.get("acc"), fm.get("base"), (fm.get("prev") or {}).get("acc")))}
         st = x["state"] or ("decided" if x["decision"] else "pending")
         state = "pending" if st == "pending" else ("approved" if x["decision"] == "approve" else "rejected")
         items.append({"id": x["id"], "state": state, "state_label": {"pending": "검토 중", "approved": "승인", "rejected": "거절"}[state],
@@ -594,7 +660,7 @@ async def requests_list(request: Request):
                       "version": x["version"], "project": {"id": pl.get("project_id"), "name": pl.get("project_name")},
                       "by": people.get(x["requested_by"]) if x["requested_by"] else None, "at": _iso(x["at"]),
                       "decided_by": people.get(x["decided_by"]) if x["decided_by"] else None, "decided_at": _iso(x["decided_at"]),
-                      "reason": plain(x["reason"]) if st != "pending" else None, "memo": pl.get("memo"), "form": pl.get("form"),
+                      "reason": plain(x["reason"]) if st != "pending" else None, "memo": pl.get("memo"), "form": fm,
                       "model_name": pl.get("model_name"), "again": bool(pl.get("again")), "test": bool(pl.get("test")),
                       "can_decide": st == "pending" and (x["requested_by"] != p.user_id or solo)})
     items.sort(key=lambda i: (i["state"] != "pending", -(dt.datetime.fromisoformat(i["at"]).timestamp() if i["at"] else 0)))
@@ -753,7 +819,7 @@ async def usage(request: Request):
         for cid, s in mine.items():
             js = by.get((o["id"], cid), [])
             rs = rq.get((o["id"], cid), [])
-            area = sum(float(j["km2"] or 0) for j in js)
+            area = await _union_km2(job_ids=[j["id"] for j in js]) if js else 0.0
             last_lx = max((j["finished_at"] for j in js if j["finished_at"]), default=None)
             last_rq = max((x["created_at"] for x in rs), default=None)
             last = max([x for x in (last_lx, last_rq) if x], default=None)
@@ -764,7 +830,7 @@ async def usage(request: Request):
                          "year": s.get("year"),
                          "lx_runs": env(len(js), "count", "recorded", "그 서비스로 돌린 분석 작업(끝남 · 시험 제외 · 그 기관 관할)"),
                          "lx_month": env(sum(1 for j in js if j["finished_at"] and j["finished_at"] >= ms), "count", "recorded", "이번 달"),
-                         "area": env(round(area, 1) if js else None, "km2", "measured", "분석 범위 면적 합"),
+                         "area": env(round(area, 1) if js else None, "km2", "measured", "분석한 면적 — 작업 범위 ∩ 영상 합집합(겹친 곳은 한 번)"),
                          "lx_last": _iso(last_lx),
                          "org_runs": env(len(rs), "count", "recorded", "기관이 요청한 분석(분석 요청)"),
                          "org_wait": env(wait, "count", "recorded", "기관 분석 요청 중 처리 전"), "org_last": _iso(last_rq), "last": _iso(last)})

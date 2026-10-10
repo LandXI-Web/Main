@@ -16,6 +16,7 @@
 .rv-need:empty{display:none}
 .rv-empty{margin:0;padding:12px 14px;border-radius:12px;background:var(--bg-0);font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
 .rv-warn{color:var(--warn)}
+.rv-low{margin:6px 0 0;font:600 var(--fs-label,15px)/20px var(--font-body);color:var(--warn)}
 .rv-dim{color:var(--sub)}
 .rv-link{font:500 13px/18px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .rv-test{display:inline-flex;align-items:center;height:20px;padding:0 7px;margin-left:6px;border-radius:var(--r-8);border:1px dashed var(--mute);color:var(--sub);font:500 11px/1 var(--font-body);vertical-align:middle}

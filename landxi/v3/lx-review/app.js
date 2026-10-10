@@ -59,7 +59,7 @@ function openDrawer() {
 }
 const reopen = h('button.t-btn.t-btn--2.rv-reopen', { type: 'button', text: '결과 확인', hidden: true, onclick: () => openDrawer() });
 stageEl.append(reopen);
-const title = () => dr?.title(rule ? `④ 결과 확인 · ${D.byId[rule]?.name || ''}` : MODEL_CLS ? `④ 결과 확인 · ${MODEL_CLS}` : '④ 결과 확인');
+const title = () => dr?.title(rule ? `⑤ 결과 확인 · ${D.byId[rule]?.name || ''}` : MODEL_CLS ? `⑤ 결과 확인 · ${MODEL_CLS}` : '⑤ 결과 확인');
 let resolveQ; const queueReady = new Promise((r) => { resolveQ = r; });
 const any = () => Object.values(byRule || {}).some((e) => (e?.value || 0) > 0);
 

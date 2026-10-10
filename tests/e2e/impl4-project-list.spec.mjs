@@ -24,11 +24,11 @@ async function openList(page, baseURL) {
 }
 
 const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
-const GROUPS = [['ingest'], ['label', 'train', 'infer'], ['review'], ['publish']];   // 추론은 해 보면 좋은 단계 — 묶음 완료 판정에서 뺀다(board.js)
+const GROUPS = [['ingest'], ['label'], ['train'], ['infer'], ['review'], ['publish']];   // 여섯 단계 — 프로젝트 안 단계 막대와 같은 이름(10-10 질문 10 확인 · board.js)
 const seg4 = (p) => { const gi = Math.max(0, GROUPS.findIndex((g) => g.includes(p.stage.key)));
-  return GROUPS.map((g, i) => (i === gi ? 'now' : g.filter((k) => k !== 'infer').every((k) => ['done', 'skip'].includes(p.steps[KEYS.indexOf(k)])) ? 'done' : 'wait')); };
+  return GROUPS.map((g, i) => (i === gi ? 'now' : g.every((k) => ['done', 'skip'].includes(p.steps[KEYS.indexOf(k)])) ? 'done' : 'wait')); };
 
-test.describe('프로젝트 목록 — 진행 현황(흐름도 · 네 단계 표)', () => {
+test.describe('프로젝트 목록 — 진행 현황(흐름도 · 여섯 단계 표)', () => {
   test.beforeEach(async ({ request }) => {
     test.skip(!PW, 'server/.env DEV_PASSWORD 없음');
     test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐');
@@ -48,7 +48,7 @@ test.describe('프로젝트 목록 — 진행 현황(흐름도 · 네 단계 표
       const p = byId.get(await row.getAttribute('data-id'));
       const want = seg4(p);
       expect(await row.locator('.lxp-seg i').evaluateAll((is) => is.map((x) => x.dataset.st)), p.name).toEqual(want);
-      await expect(row.locator('.sb-prog small')).toHaveText(`${want.filter((x) => x === 'done').length}/4`);
+      await expect(row.locator('.sb-prog small')).toHaveText(`${want.filter((x) => x === 'done').length}/6`);
       expect(nb(await row.locator('td').nth(3).innerText())).toBe(nb(p.next?.text || '—'));
       const k = row.locator('.sb-kick');
       if (p.blocked.length) {
@@ -64,7 +64,7 @@ test.describe('프로젝트 목록 — 진행 현황(흐름도 · 네 단계 표
   test('흐름도 단계 고르기 — 그 단계만 · 다시 누르면 전체', async ({ page, baseURL }) => {
     const j = await openList(page, baseURL);
     test.skip(!j.items.length, '진행 중인 내 프로젝트 없음');
-    const n = [0, 0, 0, 0];
+    const n = [0, 0, 0, 0, 0, 0];
     for (const p of j.items) n[Math.max(0, GROUPS.findIndex((g) => g.includes(p.stage.key)))] += 1;
     expect((await page.locator('.lxp-flow .sb-st-row > b').allTextContents()).map(Number)).toEqual(n);
     const gi = n.findIndex((x) => x > 0);
@@ -72,7 +72,7 @@ test.describe('프로젝트 목록 — 진행 현황(흐름도 · 네 단계 표
     await btn.click();
     await expect(page.locator('.lxp-flow .sb-st[data-open]')).toHaveCount(1);
     await expect(page.locator('.lxp-list .sb-tb tbody tr')).toHaveCount(n[gi]);
-    expect(new URL(page.url()).searchParams.get('stage')).toBe(['ingest', 'ai', 'review', 'deploy'][gi]);
+    expect(new URL(page.url()).searchParams.get('stage')).toBe(['ingest', 'label', 'train', 'infer', 'review', 'deploy'][gi]);
     await page.locator('.lxp-flow .sb-st-b').nth(gi).click();
     await expect(page.locator('.lxp-flow .sb-st[data-open]')).toHaveCount(0);
     await expect(page.locator('.lxp-list .sb-tb tbody tr')).toHaveCount(j.items.length);

@@ -10,7 +10,7 @@ import { devlog } from '../kit/dev-drawer.js';
 
 export const KEYS = ['detected', 'review_pending', 'reports'];
 /* 계약의 이름(서버 label 이 오면 그것이 우선) */
-const LABEL = { detected: 'AI 탐지', review_pending: '결과 확인 대기', reports: '기관 신고' };
+const LABEL = { detected: 'AI 탐지', review_pending: '결과 확인 대기', reports: '기관 검토 요청' };
 /* 신뢰가 가장 약한 쪽으로 합친다(하나라도 추정이면 추정) */
 const WEAK = ['demo', 'history', 'estimate', 'inferred', 'recorded', 'measured'];
 

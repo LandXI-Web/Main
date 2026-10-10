@@ -511,7 +511,23 @@ async def one(cid: str, request: Request):
                         "reports": env(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0), "count", "recorded", "기관이 보낸 신고")})
     scenes = [s for s in (inf.get("scenes") or []) if s.get("src")]
     vers = sorted([v for v in m["vers"] if v["card_id"] == cid], key=lambda v: _ver_key(v["version"]), reverse=True)
-    return {**core, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"),
+    # 학습 정보(원칙 166 — 무엇으로 배웠나는 자세히 화면에) — 카드의 검증 정확도 모델(core.model)의 학습 표본 · 기반 모델. 기록 없으면 비움(지어내지 않는다)
+    learn = None
+    if core.get("model"):
+        async with db(realm="lx") as conn:
+            r = await conn.fetchrow("SELECT m.sample_id, j.options->>'base_model' AS base, s.task_name, s.region_name, s.n_images, s.names "
+                                    "FROM models m LEFT JOIN jobs j ON j.id = m.train_job LEFT JOIN train_samples s ON s.id = m.sample_id "
+                                    "WHERE m.id=$1", core["model"]["id"])
+            base = await conn.fetchrow("SELECT id, name, metrics FROM models WHERE id=$1", r["base"]) if r and r["base"] else None
+        smp = None
+        if r and r["n_images"]:
+            names = r["names"] if isinstance(r["names"], list) else []
+            smp = {"task": r["task_name"], "region": r["region_name"], "images": env(int(r["n_images"]), "count", "measured", "올린 학습 표본 그림"),
+                   "classes": [_clean_cls(str(c)).split()[0] for c in names if c]}
+        from .release import acc_env, model_label
+        learn = {"acc": core["model"].get("acc"), "updated": core["model"].get("updated"), "sample": smp,
+                 "base": ({"name": model_label(base["name"], base["metrics"]), "acc": acc_env(base["metrics"])} if base else None)}
+    return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"),
             "scene_pick": inf.get("scene") or None, "result_sgg": inf.get("result_sgg"), "result_word": inf.get("result_word"),
             "info": {k: inf.get(k) for k in ("line", "grp", "imagery", "timepoints", "finds", "compare")}, "groups": GROUPS,
             "versions": [{"version": v["version"], "approved_at": v["approved_at"].isoformat(timespec="seconds") if v["approved_at"] else None} for v in vers],

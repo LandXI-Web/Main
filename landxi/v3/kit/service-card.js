@@ -127,7 +127,7 @@ function cropEl(c, kind, o = {}) {
   fig.append(h('span.k-sc-badge.t-chip', { dataset: lv ? { lv } : {}, text: word || '' }));
   if (kind === 'manage') {
     const rp = isEnvelope(c.reports) ? c.reports.value : c.reports;
-    const sigs = [c.publish?.pending ? '공개 승인 요청 중' : '', rp ? `기관 신고 ${nf(rp)}${c.reports_sum ? `(${c.reports_sum})` : ''}` : ''].filter(Boolean);   // 대시보드와 같은 이름 · 같은 값(여러 곳이면 'n곳 합')
+    const sigs = [c.publish?.pending ? '공개 승인 요청 중' : '', rp ? `기관 검토 요청 ${nf(rp)}${c.reports_sum ? `(${c.reports_sum})` : ''}` : ''].filter(Boolean);   // 대시보드와 같은 이름 · 같은 값(여러 곳이면 'n곳 합')
     if (sigs.length) fig.append(h('span.k-sc-flag', { text: sigs.join(' · ') }));
   }
   if (sc && sc.ex) fig.append(h('span.k-sc-ex', { text: '다른 지역 결과 · 예시' }));

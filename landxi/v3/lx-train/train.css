@@ -140,3 +140,12 @@
 .tf-s .tf-bar + .tf-msg{margin-top:6px}
 /* 검증 정확도 % — 숫자에 붙인다(분석하기 카드와 같은 모양 · fix9) */
 .tr-pct{font-size:.5em;font-style:normal;margin-left:2px;color:var(--ink-2)}
+/* 학습데이터 구축(프로젝트 안 · 10-10 질문 10) — 이 프로젝트 학습데이터 한 장씩: 업무 · 지역 · 올린 날 · 그림 수 */
+.tr-samples{align-content:start}
+.tr-smp{display:flex;flex-direction:column;gap:6px;padding:20px;text-decoration:none;color:var(--ink);min-height:132px;box-sizing:border-box}
+.tr-smp:hover{box-shadow:inset 0 0 0 1px var(--rule)}
+.tr-smp .t-label{color:var(--sub);word-break:keep-all}
+.tr-smp-n{margin-top:auto;display:flex;align-items:baseline;gap:2px}
+.tr-smp-n b{font:800 32px/1 var(--font-display);letter-spacing:-.03em}
+.tr-smp-n small{font:500 14px/1 var(--font-body);color:var(--sub)}
+.tf-data{margin:0 0 4px}

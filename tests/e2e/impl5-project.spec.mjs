@@ -48,9 +48,9 @@ test.describe('구현 5차 · 프로젝트 한 장 — 재학습 근거 · 기�
     await page.route('**/api/v1/projects/*/rounds', (route) => { sent = route.request().postDataJSON(); route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'conflict', message: '시험 — 보내지 않음' } }) }); });
     await rt.locator('.lxp-rt').click();
     const md = page.locator('.k-md');
-    await expect(md.locator('.k-md-t')).toHaveText(`${one.round.value + 1}차 재학습 — 왜 다시 학습하나`);
+    await expect(md.locator('.k-md-t')).toHaveText(`다시 학습(${one.round.value + 1}번째) — 왜 다시 학습하나`);
     await expect(md.locator('.lxp-chip')).toHaveText([/검토 요청 반영/, /새 영상 시점/, /성능 보완/, /직접 입력/]);
-    const go = md.getByRole('button', { name: `${one.round.value + 1}차 재학습 시작` });
+    const go = md.getByRole('button', { name: `다시 학습(${one.round.value + 1}번째) 시작` });
     await expect(go).toBeDisabled();
     await md.locator('.lxp-chip', { hasText: '직접 입력' }).click();
     await expect(go).toBeDisabled();
@@ -59,7 +59,7 @@ test.describe('구현 5차 · 프로젝트 한 장 — 재학습 근거 · 기�
     await md.locator('.lxp-chip', { hasText: '성능 보완' }).click();
     await go.click();
     await expect.poll(() => sent).toEqual({ reason: '성능 보완' });
-    await expect(page.locator('.k-md-bg:not(.is-closing) .k-md-t')).toHaveText('재학습을 시작하지 못했습니다');   // 문제는 창으로(원칙 109)
+    await expect(page.locator('.k-md-bg:not(.is-closing) .k-md-t')).toHaveText('다시 학습을 시작하지 못했습니다');   // 문제는 창으로(원칙 109)
     expect((await call(page, `/projects/${pid}`)).json.round.value).toBe(one.round.value);   // 회차 그대로
     expect(errs).toEqual([]);
   });

@@ -119,3 +119,21 @@
 .rl-hist small{font:400 12px/16px var(--font-body);color:var(--sub)}
 .rl-hist--org li{grid-template-columns:96px minmax(0,1fr)}
 .rl-hist--org li>b{font:500 15px/20px var(--font-body)}
+/* 추론 설정(질문 6 ⓐ) — 접어 둔 두 가지 */
+.rl-set{border:1px solid var(--rule);border-radius:12px;padding:0 14px}
+.rl-set summary{display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;font:500 15px/20px var(--font-body);color:var(--ink);list-style:none}
+.rl-set summary::-webkit-details-marker{display:none}
+.rl-set summary::after{content:'펼치기';margin-left:auto;font:400 13px/18px var(--font-body);color:var(--sub)}
+.rl-set[open] summary::after{content:'접기'}
+.rl-set-v{font:400 13px/18px var(--font-body);color:var(--sub)}
+.rl-set-b{display:flex;flex-direction:column;gap:12px;padding:0 0 14px}
+.rl-set-r{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.rl-set-k{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rl-set-k b{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.rl-set-k small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.rl-num{width:96px;flex:none;text-align:right}
+.rl-set-u{display:inline-flex;align-items:center;gap:6px;flex:none}
+.rl-set-u em{font:400 13px/18px var(--font-body);color:var(--sub);font-style:normal}
+.rl-set-f{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:20px}
+/* 배포 신청서 — 기반 · 지난 판보다 낮은 정확도 경고 한 줄(질문 9 ⓑ · 막지 않음) */
+.rl-low{margin:6px 0 0;font:600 var(--fs-label)/20px var(--font-body);color:var(--warn)}
