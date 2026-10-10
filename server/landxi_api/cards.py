@@ -5,8 +5,10 @@
   PUT  /api/v1/cards/{cid}                 카드 정보 고치기 — 이름 · 무엇을 찾나 · 대표 이미지 · 결과 예시(지역 · 말) · 분류 · 영상 · 시점 · 찾는 것 · 대조
   POST /api/v1/cards/{cid}/scene           결과 장면 올리기(PNG · JPG · WebP · 8MB 이하) → 긴 변 1600 JPG 로 다시 저장 · 고를 수 있는 장면에 더한다
   GET  /api/v1/cards/files/{cid}/{name}    올린 결과 장면(이름에 내용 해시)
-  GET  /api/v1/cards/{cid}/fit?region=     이 카드로 그 시군구를 분석할 수 있나 · 결과까지 걸릴 시간(분석하기 오른쪽 칸)
-  POST /api/v1/cards/{cid}/analyze         분석 시작 {region} — 게이트웨이 작업 대기열(POST /jobs 와 같은 길 · 서버가 카드 모델과 맞는 영상을 고른다) · 결과는 XI맵
+  GET  /api/v1/cards/{cid}/imagery?region= 그 시군구를 덮는 공유 영상 후보(영상 고르기 — 질문 3 ⓐ · 원칙 153) — 이름 · 해상도 · 촬영 시기 · 범위 · 덮는 모양 ·
+                                           이 서비스에 맞나(맞음 · 결과가 거칠 수 있음 · 쓸 수 없음 — 분석 판정 plan_analysis 와 한 출처) · 서버가 고를 영상 표시
+  GET  /api/v1/cards/{cid}/fit?region=&imagery=  이 카드로 그 시군구를 분석할 수 있나 · 결과까지 걸릴 시간(분석하기 오른쪽 칸) · imagery = 직원이 고른 영상(없으면 서버가 고름)
+  POST /api/v1/cards/{cid}/analyze         분석 시작 {region, imagery?} — 게이트웨이 작업 대기열(POST /jobs 와 같은 길) · 결과는 지도 서비스(원칙 149 · 163)
 
 숫자(상태 · 결과 예시 · 쓰이는 곳 · 기관 신고)는 대표 수치 요약(summary.cached_all — GET /summary 와 같은 값) 한 출처 · 지어내지 않는다.
 걸리는 시간 = 이 카드로 끝낸 최근 시군구 전역 분석의 실제 시간(작업 기록). 서비스 공개 상태 = 결재 기록 그대로(새 승인 규칙 없음).
@@ -657,23 +659,84 @@ async def scene_file(cid: str, name: str):
 
 
 # ── 이 카드로 분석(분석하기 오른쪽 칸 · 길-1 ⓑ 카드 먼저) ─────────────────────────────
-async def _plan(p, cid: str, region: str) -> dict:
-    """이 카드 모델로 그 시군구를 분석할 수 있나 — 적용 전 점검과 같은 판정(deploys.plan_analysis · 한 출처)."""
+# ── 영상 고르기(질문 3 ⓐ · 원칙 153) — 그 시군구를 덮는 공유 영상 후보 ─────────────────────────────
+# 후보 = 영상 표(core-imagery SQL_ROWS · 파일이 있는 것)에서 그 시군구와 조금이라도 겹치는 것(서버 자동 고르기는 2% 이상). 판정은 분석과 같은 plan_analysis(한 출처):
+#   맞음 = 그 영상 그대로 이 서비스 모델로 분석 · 해상도가 모델 학습 해상도의 절반~두 배 안 / 결과가 거칠 수 있음 = 분석은 되지만 해상도 차이가 큼 /
+#   쓸 수 없음 = 서버가 이 영상으로는 이 모델을 돌리지 않는다(해상도 불일치).
+# 영상 원천(브이월드 · 국토지리정보원 연도별)은 분석 작업이 원천 타일을 부르는 길이 아직 없어 후보에 넣지 않는다(실증 값은 카드 상세 '영상 원천으로 분석하면').
+def _km2(g) -> float:
+    import math
+    c = g.centroid
+    return g.area * (111.32 ** 2) * math.cos(math.radians(c.y))
+
+
+def _when(r: dict) -> str:
+    e = str(r.get("epoch") or "")
+    m = re.match(r"^(\d{4})-(\d{2})", e)
+    return f"{m.group(1)}.{m.group(2)}" if m else (str(r.get("year") or "") or e[:4])
+
+
+async def _img_candidates(sgg: str) -> tuple[object, list[dict], dict | None]:
+    """(시군구 경계, 후보 [{…, coverage, inter}], 서버가 고를 영상) — 후보는 서버 순위(choose)대로."""
+    from workers import imagery_src as isrc
+    t = await run_in_threadpool(isrc.target_geom, sgg, None)
+    if t is None or t.is_empty:
+        return t, [], None
+    async with db(realm="lx") as conn:
+        recs = await conn.fetch(isrc.SQL_ROWS)
+    rows = await run_in_threadpool(isrc.rows_from, recs)
+    ta = max(t.area, 1e-12)
+    out = []
+    for r in rows:
+        if not r.get("readable") or r.get("fp") is None:
+            continue
+        try:
+            inter = r["fp"].intersection(t)
+            cov = inter.area / ta
+        except Exception:  # noqa: BLE001
+            continue
+        if inter.is_empty or cov < 1e-6:                  # 조금이라도 덮으면 후보(직원이 고른다 — 서버 자동 고르기는 2% 이상만)
+            continue
+        out.append({**r, "coverage": round(min(cov, 1.0), 6), "inter": inter})
+    best = isrc.choose(rows, t)
+    g = lambda r: float(r["gsd_m"]) if r.get("gsd_m") is not None else 99.0  # noqa: E731
+    out.sort(key=lambda r: (0 if best and r["id"] == best["id"] else 1, 0 if r["coverage"] >= 0.5 else 1,
+                            0 if g(r) <= 0.1 else 1 if g(r) <= 0.5 else 2 if g(r) <= 2 else 3, -isrc._year(r), -r["coverage"]))
+    return t, out, best
+
+
+def _img_dict(r: dict) -> dict:
+    from workers import imagery_src as isrc
+    return isrc.result(r, True)
+
+
+async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
+    """이 카드 모델로 그 시군구를 분석할 수 있나 — 적용 전 점검과 같은 판정(deploys.plan_analysis · 한 출처).
+    imagery = 직원이 고른 영상(영상 고르기) — 그 영상이 이 시군구 후보가 아니거나, 서버가 그 영상으로는 이 모델을 돌리지 않으면 fits False."""
     from shapely.geometry import mapping
-    from .deploys import gsd_word, plan_analysis
+    from .deploys import gsd_word, mismatch_text, plan_analysis
     from .regions import regions_base
     regs, geoms, _ = regions_base()
     rg = next((x for x in regs if x["sgg_cd"] == region or x.get("prev_cd") == region), None)
     if not rg:
         raise ApiError("not_found", "해당 지역이 없습니다", {"region": region})
     sgg = rg["sgg_cd"]
+    want = None
+    if imagery:
+        _, cands, _ = await _img_candidates(sgg)
+        hit = next((r for r in cands if r["id"] == imagery), None)
+        if not hit:
+            raise ApiError("bad_request", "이 지역에서 고를 수 있는 영상이 아닙니다", {"imagery": imagery})
+        want = _img_dict(hit)
     async with db(realm="lx") as conn:
         if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
             raise ApiError("not_found", "카드가 없습니다")
         cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
         if not cv:
             raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
-        pl = await plan_analysis(conn, None, cid, cv, sgg, mapping(geoms[sgg]) if sgg in geoms else None)
+        pl = await plan_analysis(conn, None, cid, cv, sgg, mapping(geoms[sgg]) if sgg in geoms else None, img=want)
+    if want and (pl["img"] or {}).get("imagery_id") != want["imagery_id"]:     # 고른 영상 대신 다른 영상으로 바꾸지 않는다 — 고른 영상으로는 안 된다고 말한다
+        pl = {**pl, "img": want, "fits": False, "note": mismatch_text((pl.get("pick") or {}).get("own"), want) if pl.get("pick") else "이 영상에 맞는 분석 모델이 없습니다"}
     img = pl["img"] or {}
     pk = pl["pick"] or {}
     cov = img.get("coverage")
@@ -704,12 +767,61 @@ def _job_body(cid: str, name: str, pl: dict) -> dict:
             "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": 0.25}}
 
 
-@router.get("/cards/{cid}/fit")
-async def fit(cid: str, region: str, request: Request):
+@router.get("/cards/{cid}/imagery")
+async def imagery_options(cid: str, region: str, request: Request):
+    """영상 고르기 — 그 시군구를 덮는 공유 영상 후보 + 이 서비스에 맞나(분석 판정과 한 출처) + 서버가 고를 영상(pick)."""
+    import math
+    from shapely.geometry import mapping
+    from .deploys import plan_analysis
+    from .regions import regions_base
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만")
-    pl = await _plan(p, cid, region)
+    regs, geoms, _ = regions_base()
+    rg = next((x for x in regs if x["sgg_cd"] == region or x.get("prev_cd") == region), None)
+    if not rg:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"region": region})
+    sgg = rg["sgg_cd"]
+    t, cands, best = await _img_candidates(sgg)
+    items = []
+    async with db(realm="lx") as conn:
+        cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
+        if not cv:
+            raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+        aoi = mapping(geoms[sgg]) if sgg in geoms else None
+        for r in cands[:24]:
+            want = _img_dict(r)
+            pl = await plan_analysis(conn, None, cid, cv, sgg, aoi, img=want)
+            own = (pl.get("pick") or {}).get("own") or {}
+            ok = bool(pl["fits"]) and (pl["img"] or {}).get("imagery_id") == want["imagery_id"]
+            mg = own.get("gsd_m") or None
+            ratio = abs(math.log(float(r["gsd_m"]) / float(mg))) if ok and mg and r.get("gsd_m") else 0.0
+            fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
+            km2 = _km2(r["inter"])
+            pct = round(r["coverage"] * 100)
+            rng = (f"{rg['name']} 전역" if r["coverage"] >= 0.95 else f"약 {km2:,.0f}㎢ · {rg['name']}의 {pct}%" if pct >= 1
+                   else f"일부 · 약 {km2:,.2f}㎢" if km2 < 1 else f"일부 · 약 {km2:,.1f}㎢")
+            try:
+                fp = mapping(r["fp"].simplify(0.0005, preserve_topology=True))
+            except Exception:  # noqa: BLE001
+                fp = None
+            items.append({"id": r["id"], "name": r.get("name") or "", "gsd": env(float(r["gsd_m"]) if r.get("gsd_m") is not None else None, "m", "recorded", "영상 해상도"),
+                          "gsd_word": f"{float(r['gsd_m']) * 100:g}cm" if r.get("gsd_m") is not None and float(r["gsd_m"]) < 1 else (f"{float(r['gsd_m']):g}m" if r.get("gsd_m") is not None else ""),
+                          "when": _when(r), "range": rng, "coverage": env(pct, "%", "measured", "영상 범위 ∩ 시군구 면적"),
+                          "bounds": [round(v, 6) for v in r["fp"].bounds], "footprint": fp,
+                          "fit": fit, "fit_text": {"ok": "이 서비스에 맞음", "rough": "해상도 차이가 커 결과가 거칠 수 있음"}.get(fit)
+                          or "이 서비스 모델과 해상도가 맞지 않음",
+                          "pick": bool(best and r["id"] == best["id"])})
+    rb = [round(v, 6) for v in t.bounds] if t is not None and not t.is_empty else None
+    return {"region": sgg, "name": rg["name"], "bounds": rb, "items": items, "as_of": now_iso()}
+
+
+@router.get("/cards/{cid}/fit")
+async def fit(cid: str, region: str, request: Request, imagery: str | None = None):
+    p = require(principal(request), lx=True)
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 직원 · 관리자만")
+    pl = await _plan(p, cid, region, imagery)
     note = "이 지역에 등록된 영상이 없습니다" if pl["fits"] is None else pl["note"]
     out = {"region": pl["sgg"], "name": pl["name"], "full": pl["full"], "fits": pl["fits"], "note": note, "imagery": pl["imagery"],
            "eta": None, "scope_text": None, "running": False, "as_of": now_iso()}
@@ -745,7 +857,7 @@ async def analyze(cid: str, body: dict, request: Request):
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만 분석을 시작합니다")
     region = str(body.get("region") or "")
-    pl = await _plan(p, cid, region)
+    pl = await _plan(p, cid, region, str(body.get("imagery") or "") or None)
     if not pl["fits"]:
         raise ApiError("conflict", pl["note"] or "이 카드로 이 지역을 분석할 수 없습니다", {"region": pl["sgg"]}, 409)
     async with db(realm="lx") as conn:
@@ -753,8 +865,9 @@ async def analyze(cid: str, body: dict, request: Request):
         busy = await conn.fetchval("SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' "
                                    "AND options->>'sgg_cd'=$2 LIMIT 1", cid, pl["sgg"])
     xi = f"/landxi/v3/xi-clean/?region={pl['sgg']}"
+    mapsvc = "/landxi/v3/lx-map/"                                                 # 결과는 지도 서비스(원칙 149 · 163) — XI맵은 전국 · 해외 실시간 분석
     if busy:
-        return {"started": False, "running": True, "region": pl["sgg"], "name": pl["name"], "xi": xi, "as_of": now_iso()}
+        return {"started": False, "running": True, "region": pl["sgg"], "name": pl["name"], "xi": xi, "map": mapsvc, "as_of": now_iso()}
     from .jobs import submit
     res = await submit(_job_body(cid, name, pl), request)                       # 같은 길(POST /jobs) — 대기열 · 전력 규칙 · 작업 기록 그대로
     pos = None
@@ -762,4 +875,6 @@ async def analyze(cid: str, body: dict, request: Request):
         pos = res["job"]["state"]
     except Exception:  # noqa: BLE001
         pos = None
-    return {"started": True, "running": False, "region": pl["sgg"], "name": pl["name"], "xi": xi, "state": pos, "as_of": now_iso()}
+    jid = (res.get("job") or {}).get("id") if isinstance(res, dict) else None
+    return {"started": True, "running": False, "region": pl["sgg"], "name": pl["name"], "xi": xi, "state": pos,
+            "map": mapsvc + (f"?job={jid}" if jid else ""), "as_of": now_iso()}

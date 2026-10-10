@@ -29,7 +29,8 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50")
-XI = "/landxi/v3/xi-clean/"
+XI = "/landxi/v3/xi-clean/"   # XI맵(전국 · 해외 실시간 분석) — 추론 결과 보기는 지도 서비스로 옮겼다(MAPSVC)
+MAPSVC = "/landxi/v3/lx-map/"   # 지도 서비스(원칙 149 · 163) — 추론 '결과 보기'는 XI맵이 아니라 여기로
 MEMO_MAX = 300
 # 추론 설정(질문 6 ⓐ — 추론 탭 '설정'을 펼치면 두 가지만 · 바꾸면 그 작업에만). 기본값 = 지금까지 서버에 고정이던 값(conf 0.25 · 후처리 최소 넓이 4㎡)
 INFER_DEFAULT = {"conf": 0.25, "min_area_m2": 4.0}
@@ -279,7 +280,6 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
         total = int(live.get("shards_total") or x["shards_total"] or 0)
         cnt = x["counts"] or {}
         o = x["options"] or {}
-        sgg = o.get("sgg_cd") or x["sgg_cd"]
         out.append({"job": x["id"], "state": state, "state_label": {"queued": "대기 중", "running": "분석 중", "done": "끝", "failed": "멈춤",
                                                                      "cancelled": "취소"}.get(state, state),
                     "progress": {"shards_done": done, "shards_total": total} if state in ("queued", "running") else None,
@@ -291,7 +291,7 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
                     "found": env(sum(int(v or 0) for v in cnt.values()) if state == "done" else None, "count", "inferred", "AI 분석 결과(검수 전)"),
                     "by": people.get(x["submitted_by"]) if x["submitted_by"] else None,
                     "at": _iso(x["created_at"]), "finished_at": _iso(x["finished_at"]),
-                    "href": f"{XI}?region={sgg}&job={x['id']}" if state == "done" and sgg else (f"{XI}?job={x['id']}" if state == "done" else None)})
+                    "href": f"{MAPSVC}?job={x['id']}" if state == "done" else None})
     return out
 
 

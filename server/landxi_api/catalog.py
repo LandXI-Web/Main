@@ -949,13 +949,13 @@ _thumb_gate = None
 
 @router.get("/catalog/imagery/{iid}/thumb")
 async def imagery_thumb(iid: str, request: Request):
-    """공유 영상 썸네일(LX 관리자만) — 처음 한 번 만들어 cache/thumbs 에 두고 다시 쓴다(원천 파일이 바뀌면 새로). 그림이 없으면 204."""
+    """공유 영상 썸네일(LX 계정 — 관리자 공유 영상 화면 · 직원 분석하기 영상 고르기 · 원칙 153) — 처음 한 번 만들어 cache/thumbs 에 두고 다시 쓴다(원천 파일이 바뀌면 새로). 그림이 없으면 204."""
     import asyncio
     import hashlib
     from fastapi import Response
     from .deps import require
     global _thumb_gate
-    require(principal(request), admin=True)
+    require(principal(request), lx=True)
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT id, name, kind, gsd_m, year, epoch, path_internal, pmtiles_set, layer, ST_AsGeoJSON(footprint)::json AS fp "
                                 "FROM imagery WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'", iid)

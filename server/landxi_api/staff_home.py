@@ -5,6 +5,8 @@
                                     + 늘리기 요청 이력(보낸 것 전부 · 최근 순 — 대기 · 승인 · 반려 · 사유)
   GET  /me/jobs                     (LX 계정) 내가 돌린 작업 — 상태별 수(끝남 · 실패 · 취소 · 지금 도는 것) · 종류별 수 · 기간 · 최근 몇 건
                                     (작업 표 jobs.submitted_by = 나 · 시험 작업 제외 · 목록 상한과 무관하게 서버에서 센다)
+  GET  /me/analyses                 (LX 계정) 내 분석 목록(지도 서비스) — 분석하기로 내가 돌린 것 + 내가 돌렸거나 참여한 프로젝트의 추론 결과를
+                                    분석서비스(카드) · 프로젝트 묶음별로(이름 · 지역 · 영상 · 범위 · 결과 수 · bounds · 결과 세트) — XI맵 실시간 · 말로 분석은 빼고
   GET  /announcements?limit=        (LX 계정) LX 전체 공지 — 최근 순 · 내린 것은 빼고. 비어 있으면 빈 목록(지어내지 않는다)
   POST /announcements               (LX 관리자) {title, body?} 공지 쓰기 → 감사 기록 announce.post
   POST /announcements/{id}/remove   (LX 관리자) 공지 내리기(지우지 않고 removed_at) → 감사 기록 announce.remove
@@ -95,6 +97,106 @@ async def my_jobs(request: Request, recent: int = 4):
             "kinds": [{"label": k, "n": n} for k, n in sorted(kinds.items(), key=lambda x: -x[1])],
             "first": _iso(span["a"]) if span else None, "last": _iso(span["b"]) if span else None,
             "recent": items, "as_of": now_iso()}
+
+
+# ── 내 분석 목록(지도 서비스 · 원칙 149 · 154 · 163) ─────────────────────────────
+# 내가 돌린 분석 = ① 분석하기(서비스 카드)로 내가 돌린 것 ② 프로젝트 추론(배포 전 모델) — 내가 돌렸거나 내가 참여한 프로젝트의 것(보는 사람 = 나 · 프로젝트 참여자).
+# XI맵 실시간 · 말로 분석(XI ChatGEO)은 여기 넣지 않는다(XI맵 = 전국 · 해외 실시간 분석 — 원칙 147).
+# 결과 도형 · 속성은 지금 있는 결과 타일(/tiles/pmtiles/{set}.pmtiles)과 필지 API(/parcels)를 그대로 쓴다 — 이 목록은 묶음 · 이름 · 범위 · 수만 준다.
+MY_ANALYSES_SQL = (
+    "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, "
+    "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
+    "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname "
+    "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
+    "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
+    "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready AND j.result_set IS NOT NULL "
+    "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
+    "  OR (j.options->>'project_infer'='true' AND (j.submitted_by=$1 OR pr.lead_id=$1 "
+    "      OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pr.id AND m.user_id=$1))) "
+    "  OR ($3 AND j.id=$2)) "
+    "ORDER BY j.finished_at DESC LIMIT 200")
+
+
+# 아직 도는 내 분석(대기 · 분석 중) — 끝나면 위 목록에 층으로 쌓인다(지도 서비스 왼쪽 위 한 줄)
+MY_RUNNING_SQL = (
+    "SELECT j.id, j.state, j.card_id, j.options, c.name->>'ko' AS cname, pr.name AS pname FROM jobs j "
+    "LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
+    "WHERE j.kind='infer' AND j.state IN ('queued','running') AND NOT j.demo AND NOT coalesce(j.test,false) AND j.submitted_by=$1 "
+    "AND (j.card_id IS NOT NULL OR j.options->>'project_infer'='true') ORDER BY j.created_at DESC LIMIT 20")
+
+
+def _jload(v):
+    if isinstance(v, str):
+        import json
+        try:
+            return json.loads(v)
+        except ValueError:
+            return {}
+    return v or {}
+
+
+def _name_ko(v) -> str:
+    v = _jload(v) if isinstance(v, str) and v.startswith("{") else v
+    if isinstance(v, dict):
+        return str(v.get("ko") or v.get("en") or "")
+    return str(v or "")
+
+
+@router.get("/me/analyses")
+async def my_analyses(request: Request, job: str | None = None):
+    """job = 이 결과를 열어 달라(추론 '결과 보기' · 배포 신청 결과 장면) — LX 관리자는 남의 결과도 그 한 건을 연다(배포 신청 검토)."""
+    p = _lx(request)
+    from shapely.geometry import shape
+    from .deploys import gsd_word
+    from .regions import region_of
+    from .spaces import CLASS_KO
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(MY_ANALYSES_SQL, p.user_id, job or "", bool(job and p.is_admin))
+        run = await conn.fetch(MY_RUNNING_SQL, p.user_id)
+    groups: dict[str, dict] = {}
+    for r in rows:
+        o = _jload(r["options"])
+        cnt = _jload(r["counts"])
+        proj = bool(o.get("project_infer"))
+        key = f"project:{r['pid']}" if proj else f"card:{r['card_id']}"
+        gname = f"프로젝트 추론 — {r['pname']}" if proj else (r["cname"] or "분석 서비스")
+        g = groups.setdefault(key, {"key": key, "name": gname, "kind": "project" if proj else "card", "items": []})
+        sgg = o.get("sgg_cd")
+        rg = region_of(sgg) if sgg else None
+        region = " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "" if proj else "") if x)
+        if proj:
+            scope = "배포 전 모델"
+        elif o.get("scope_full"):
+            scope = f"전역 · 읍면동 {o.get('emd_total')}곳" if o.get("emd_total") else "전역"
+        elif o.get("coverage") is not None:
+            scope = f"영상 있는 {round(float(o['coverage']) * 100)}%"
+        else:
+            scope = ""
+        yr = str(r["year"] or (str(r["epoch"])[:4] if r["epoch"] else ""))
+        try:
+            b = [round(v, 6) for v in shape(r["env"]).bounds] if r["env"] else None
+        except Exception:  # noqa: BLE001
+            b = None
+        total = sum(int(v or 0) for v in cnt.values()) if cnt else None
+        fin = _iso(r["finished_at"])
+        g["items"].append({
+            "job": r["id"], "set": r["result_set"], "region": region or "—", "sgg_cd": (rg or {}).get("sgg_cd") or sgg,
+            "scope": scope,
+            "imagery": {"id": r["imagery_id"], "name": _name_ko(r["iname"]), "year": yr or None, "word": " ".join(x for x in (yr, gsd_word(r["gsd_m"])) if x)},
+            "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
+            "by_class": [{"cls": CLASS_KO.get(k, k), "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0))],
+            "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id})
+    running = []
+    for r in run:
+        o = _jload(r["options"])
+        rg = region_of(o.get("sgg_cd")) if o.get("sgg_cd") else None
+        running.append({"job": r["id"], "state": r["state"], "name": f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else (r["cname"] or "분석 서비스"),
+                        "region": " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "") if x) or "—"})
+    out = list(groups.values())
+    for g in out:
+        g["n"] = len(g["items"])
+        g["last"] = g["items"][0]["finished_at"] if g["items"] else None
+    return {"groups": out, "total": sum(g["n"] for g in out), "running": running, "as_of": now_iso()}
 
 
 # ── 공지 ───────────────────────────────────────────────────────────────────────

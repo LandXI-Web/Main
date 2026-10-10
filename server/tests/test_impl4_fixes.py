@@ -278,7 +278,8 @@ def test_shares_with_pictures(tok):
         import numpy as np
         im = cv2.imdecode(np.frombuffer(r.content, np.uint8), 1)
         assert im.shape[:2] == (240, 320)
-    assert httpx.get(B + items[0]["thumb"], headers=st, timeout=30).status_code == 403   # LX 관리자만
+    assert httpx.get(B + items[0]["thumb"], headers=st, timeout=120).status_code in (200, 204)   # LX 직원도(분석하기 영상 고르기 · 원칙 153 · 10-10)
+    assert httpx.get(B + items[0]["thumb"], headers=H(tok["namwon"]), timeout=30).status_code == 403   # 기관 계정은 아님
     assert httpx.get(B + items[0]["thumb"], timeout=30).status_code == 401
 
 

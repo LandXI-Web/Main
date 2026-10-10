@@ -1,7 +1,7 @@
 /* lx-release — 프로젝트 안 '추론' · '배포 신청'(확인 대장 배포-1 · 배포-2 · 원칙 151 · 152 · 158).
    ?project=<id>&stage=infer   추론 — 이 프로젝트에서 학습한 모델(판 고르기)로 배포 신청 없이 영상 분석 → 결과 목록(보는 사람 = 나 · 프로젝트 참여자)
-                               분석은 지금 있는 분석 작업 대기열로만(POST /release/projects/{id}/infer → POST /jobs) · 결과 보기 = XI맵 기록 보기
-                               (결과를 지도 서비스에서 보는 화면은 설계 확인 전 — 지금은 XI맵으로 잇는다)
+                               분석은 지금 있는 분석 작업 대기열로만(POST /release/projects/{id}/infer → POST /jobs) · 결과 보기 = 지도 서비스에서 그 결과를 켠다
+                               (원칙 149 · 163 — 서버가 준 주소 /landxi/v3/lx-map/?job= · XI맵은 전국 · 해외 실시간 분석)
    ?project=<id>&stage=publish 배포 신청 — 신청서 = 서버 값(모델 · 검증 정확도 · 학습 데이터 · 결과 확인 · 결과 장면) + 메모 한 칸 · 지난 판 없으면 '첫 판입니다'
                                상태 줄(검토 중 · 승인 · 거절 사유 → 고쳐서 다시 신청). 승인 · 기관 공유는 LX 관리자 '배포' 메뉴.
    숫자는 모두 서버 값(봉투). 아이콘 0 · PC 1440 기준. */
@@ -174,7 +174,7 @@ async function drawInfer() {
   /* 오른쪽 — 결과 목록 */
   const jl = h('ol.rl-jobs');
   const right = card('추론 결과', join(`보는 사람 ${nf(val(d.viewers))}명`, '나 · 프로젝트 참여자'), jl,
-    h('p.rl-note', { text: '결과 보기는 XI맵에서 그 분석 기록을 엽니다.' }));
+    h('p.rl-note', { text: '결과 보기는 지도 서비스에서 그 결과를 켭니다.' }));
   page.replaceChildren(h('div.rl-grid', {}, h('div.rl-col', {}, left), h('div.rl-col', {}, right)));
   drawImgs(); loadRanges();
 

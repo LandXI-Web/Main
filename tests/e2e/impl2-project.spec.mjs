@@ -78,7 +78,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await page.locator('.lxp-now .lxp-go').click();
     await page.waitForURL((u) => /\/landxi\/v3\/lx-(train|ingest|review|deploy)\//.test(u.pathname) && u.searchParams.get('project')?.startsWith('prj_'), { timeout: 20000 });
     await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });
-    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['대시보드', '프로젝트', '분석하기', 'XI맵', '데이터', '요청함']);
+    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['대시보드', '프로젝트', '분석하기', '지도 서비스', 'XI맵', '데이터', '요청함']);
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/프로젝트/);
     await expect(page.locator('.k-sub .lxp-st')).toHaveCount(6);
     await expect(page.locator('.k-sub .lxp-st').nth(1)).toContainText('학습데이터');

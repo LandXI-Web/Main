@@ -34,6 +34,7 @@ export const ALLOW = {
   'lx-release': ['lx/staff', 'lx/admin'],   // 프로젝트 안 추론 · 배포 신청(10-09 배포-1 · 2)
   'lx-project': ['lx/staff', 'lx/admin'],   // 프로젝트 목록 · 한 장(구현 2차 T1)
   'lx-inbox': ['lx/staff', 'lx/admin'],     // 기관에서 온 요청(구현 2차 검토 요청)
+  'lx-map': ['lx/staff', 'lx/admin'],       // 지도 서비스 — 내가 돌린 분석 결과 층(원칙 149 · 154 · 163)
   'ops-core': ['lx/admin'],
   'ops-infra': ['lx/admin'],
   'ops-accounts': ['lx/admin'],             // 계정 관리(구현 2차 T5 — 가입 신청 · 재설정 · 계정 · 로그인 실패 · 처리 기록)

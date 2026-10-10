@@ -24,7 +24,7 @@ import { staffMenu, STAFF_OF } from './lx-menu.js'; // LX 직원 메뉴 한 곳(
 
 const HOME = {
   'lx-console': 'LX 직원 대시보드', 'lx-ingest': 'LX 직원 대시보드', 'lx-train': 'LX 직원 대시보드', 'lx-review': 'LX 직원 대시보드', 'lx-deploy': 'LX 직원 대시보드', 'lx-release': 'LX 직원 대시보드',
-  'lx-project': 'LX 직원 대시보드', 'lx-inbox': 'LX 직원 대시보드', 'lx-analyze': 'LX 직원 대시보드', 'lx-cards': 'LX 직원 대시보드',
+  'lx-project': 'LX 직원 대시보드', 'lx-inbox': 'LX 직원 대시보드', 'lx-analyze': 'LX 직원 대시보드', 'lx-cards': 'LX 직원 대시보드', 'lx-map': 'LX 직원 대시보드',
   'ops-core': 'LX 관리자 대시보드', 'ops-infra': 'LX 관리자 대시보드', sales: '서비스 카탈로그', 'xi-clean': 'XI맵', 'help-my': '지원',
 };
 const ICON = {

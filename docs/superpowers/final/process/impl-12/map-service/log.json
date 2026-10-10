@@ -1,0 +1,20 @@
+{
+ "base": "https://app.land-xi.dev",
+ "login": "로그인 폼 · test@lx.or.kr(1회)",
+ "viewport": "1440x900",
+ "at": "2026-10-10T22:35~22:38 KST",
+ "console_errors": 0,
+ "this_pc_calls": 0,
+ "http_4xx_5xx": 0,
+ "menu": "대시보드 | 프로젝트 | 분석하기 | 지도 서비스 | XI맵 | 데이터 | 요청함",
+ "shots": {
+  "a-mapsvc-two-groups-1440-2236.png": "2026-10-10T13:36:00Z",
+  "b-mapsvc-props-1440-2236.png": "2026-10-10T13:36:03Z",
+  "c-infer-result-link-1440-2237.png": "2026-10-10T13:37:07Z",
+  "d-from-infer-to-mapsvc-1440-2238.png": "2026-10-10T13:38:14Z",
+  "e-imagery-pick-1440-2238.png": "2026-10-10T13:38:28Z",
+  "f-imagery-other-1440-2238.png": "2026-10-10T13:38:33Z"
+ },
+ "props_read": "비닐하우스 · 프로젝트 추론 — 비닐하우스 2026 · 남원시 덕과면 · AI가 그린 면적 99㎡ · 신뢰도 69% · 영상 시점 2023 25cm 항공 · 분석한 날 2026.10.09 · 지번 덕과면 용산리 1187답 · 지목 답 · 필지 면적 1,492㎡ · 공시지가 12,100원/㎡(2025.01)",
+ "after_click_url": "/landxi/v3/lx-map/?job=(추론 결과)"
+}

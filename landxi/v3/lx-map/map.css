@@ -1,0 +1,101 @@
+/* lx-map — 지도 서비스(원칙 163 · 시안 design-r15/map-service-3). 화면 가득 지도 · 왼쪽 결과 층(흰 칸) · 오른쪽 속성 칸. 토큰 · 부품 = 키트 · 법전 v2.2 · PC 1440 기준(원칙 139). */
+body.lm-boot .k-app{visibility:hidden}
+.lm-page{position:absolute;inset:0;display:grid;grid-template-columns:372px minmax(0,1fr)}
+.lm-page :where(button){font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+
+/* 왼쪽 */
+.lm-left{background:var(--bg-1);border-right:1px solid var(--rule);overflow:auto;overscroll-behavior:contain;padding:20px 20px 16px;display:flex;flex-direction:column;gap:14px;min-height:0;box-sizing:border-box}
+.lm-left>*{flex:none}
+.lm-top{display:flex;flex-direction:column;gap:10px}
+.lm-h1{margin:0;font:700 24px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.lm-sub{margin:0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.lm-sum{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lm-sum div{padding:10px 12px;border-radius:var(--r-8);background:var(--bg-0)}
+.lm-sum b{display:block;font:800 22px/26px var(--font-display);color:var(--ink)}
+.lm-sum b i{font:700 13px/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
+.lm-sum small{display:block;font:500 12px/16px var(--font-body);color:var(--sub)}
+.lm-run{margin:0;display:flex;align-items:center;gap:8px;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.lm-run i{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:lm-pulse 1.4s ease-in-out infinite}
+@keyframes lm-pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.lm-run i{animation:none}}
+
+.lm-groups{display:flex;flex-direction:column;gap:10px}
+.lm-grp{border:1px solid var(--rule);border-radius:var(--r-8);overflow:hidden;background:var(--bg-1)}
+.lm-grp.is-solo{border-color:var(--ink)}
+.lm-gh{display:flex;flex-direction:column;background:var(--bg-0)}
+.lm-gt{display:grid;grid-template-columns:minmax(0,1fr) auto 20px;gap:8px;align-items:center;padding:10px 12px 6px}
+.lm-gn{font:700 15px/20px var(--font-display);color:var(--ink)}
+.lm-grp.is-proj .lm-gn{font-weight:600}
+.lm-gt small{font:500 13px/18px var(--font-num);color:var(--sub);white-space:nowrap}
+.lm-gt small b{color:var(--ai);font-weight:600}
+.lm-gt i{font:500 16px/20px var(--font-num);color:var(--sub);font-style:normal;text-align:center}
+.lm-solo{align-self:flex-start;margin:0 12px 8px;font:500 12px/18px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.lm-solo:hover,.lm-solo[aria-pressed="true"]{color:var(--ink)}
+.lm-gt:focus-visible,.lm-solo:focus-visible,.lm-sw:focus-visible,.lm-li:focus-visible,.lm-base button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lm-ly{list-style:none;margin:0;padding:2px 12px 4px}
+.lm-ly li{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 0;border-top:1px solid var(--rule)}
+.lm-ly li:first-child{border-top:0}
+.lm-sw{flex:none;width:34px;height:20px;border-radius:10px;background:var(--mute);position:relative}
+.lm-sw i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left var(--d-180) var(--e-ui)}
+.lm-sw[aria-checked="true"]{background:var(--ink)}
+.lm-sw[aria-checked="true"] i{left:16px}
+.lm-li{display:flex;flex-direction:column;min-width:0;flex:1}
+.lm-li b{font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-li span{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-li .lm-cls{color:var(--ink-2)}
+.lm-v{font:500 14px/20px var(--font-num);color:var(--ink);white-space:nowrap;text-align:right}
+.lm-v small{display:block;font:400 11px/14px var(--font-body);color:var(--sub)}
+.lm-ly li:not(.is-on) .lm-v{color:var(--mute)}
+.lm-ly li.is-muted{opacity:.55}
+.lm-ly li.is-pick .lm-li b{color:var(--ai)}
+
+.lm-bot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:4px}
+.lm-bot h2{margin:6px 0 0;font:700 15px/20px var(--font-display);color:var(--ink)}
+.lm-base{display:flex;flex-direction:column;gap:2px}
+.lm-base button{display:flex;align-items:center;gap:10px;height:32px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.lm-base button i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--mute);flex:none}
+.lm-base button[aria-checked="true"]{color:var(--ink)}
+.lm-base button[aria-checked="true"] i{box-shadow:inset 0 0 0 5px var(--ink)}
+.lm-base small{margin-left:auto;font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+.lm-lg{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.lm-lg li{display:flex;align-items:center;gap:8px}
+.lm-lg i{width:18px;height:14px;border-radius:3px;flex:none;background:color-mix(in srgb,var(--c) 35%,transparent);box-shadow:inset 0 0 0 2px var(--c)}
+.lm-lg i.cad{background:none;box-shadow:inset 0 0 0 2px #F2E05A}
+.lm-foot{margin:6px 0 0;padding-top:10px;border-top:1px solid var(--rule);font:400 12px/17px var(--font-body);color:var(--sub)}
+
+/* 지도 · 위 왼쪽 켜진 층 · 아래 안내 */
+.lm-map{position:relative;min-width:0;min-height:0}
+.lm-stage{position:absolute;inset:0}
+.lm-cap{position:absolute;left:16px;top:16px;z-index:5;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-radius:var(--r-8);background:rgba(255,255,255,.94);font:500 13px/18px var(--font-body);color:var(--ink);max-width:min(560px,calc(100% - 440px))}
+.lm-cap[hidden]{display:none}
+.lm-cap small{font:400 12px/16px var(--font-body);color:var(--sub)}
+.lm-hint{position:absolute;left:16px;bottom:44px;z-index:5;margin:0;padding:6px 10px;border-radius:var(--r-8);background:rgba(255,255,255,.94);font:400 12px/16px var(--font-body);color:var(--sub)}
+
+/* 오른쪽 속성 칸 */
+.lm-props{position:absolute;right:16px;top:16px;bottom:96px;width:352px;z-index:6;background:var(--bg-1);border-radius:var(--r-16);box-shadow:0 2px 12px rgba(0,0,0,.12);padding:18px 20px;display:flex;flex-direction:column;gap:12px;overflow:auto;box-sizing:border-box}
+.lm-props[hidden]{display:none}
+.lm-ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.lm-ph h2{margin:0;font:700 20px/26px var(--font-display);color:var(--ink)}
+.lm-ph small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lm-x{width:32px;height:32px;border-radius:var(--r-8);font:400 20px/32px var(--font-num)!important;color:var(--sub)!important;text-align:center!important;flex:none}
+.lm-x:hover{background:var(--bg-0);color:var(--ink)!important}
+.lm-big{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lm-big div{padding:12px;border-radius:var(--r-8);background:var(--bg-0)}
+.lm-big b{display:block;font:800 24px/28px var(--font-display);color:var(--ink)}
+.lm-big b i{font:700 13px/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
+.lm-big small{display:block;font:500 12px/16px var(--font-body);color:var(--sub)}
+.lm-props h3{margin:4px 0 0;font:700 15px/20px var(--font-display);color:var(--ink);display:flex;align-items:baseline;gap:8px}
+.lm-props h3 small{font:400 12px/16px var(--font-body);color:var(--sub)}
+.lm-kv{margin:0;display:flex;flex-direction:column}
+.lm-kv div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--rule)}
+.lm-kv div:first-child{border-top:0}
+.lm-kv dt{font:400 13px/20px var(--font-body);color:var(--sub)}
+.lm-kv dd{margin:0;font:400 14px/20px var(--font-body);color:var(--ink);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
+.lm-kv dd b{font-weight:600}
+.lm-kv dd small{flex-basis:100%;font:400 12px/16px var(--font-body);color:var(--sub)}
+.lm-conf{display:inline-block;width:96px;height:6px;border-radius:3px;background:var(--bg-0);position:relative;overflow:hidden}
+.lm-conf i{position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--ai)}
+.lm-none{color:var(--mute)}
+.lm-acts{display:flex;gap:8px}
+.lm-acts .t-btn{height:36px;padding:0 14px;font-size:13px}
+.lm-src{margin:auto 0 0;font:400 12px/17px var(--font-body);color:var(--sub)}
