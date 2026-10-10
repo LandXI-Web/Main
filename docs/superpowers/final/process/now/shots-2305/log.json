@@ -1,0 +1,204 @@
+{
+ "menu-2305.png": {
+  "at": "2026-10-10T23:05:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 메뉴 — 지금 메뉴(지도 서비스 포함)"
+ },
+ "q10-console-2305.png": {
+  "at": "2026-10-10T23:05:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드"
+ },
+ "q10-projects-2305.png": {
+  "at": "2026-10-10T23:05:57",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "프로젝트 목록"
+ },
+ "q2-detail-top-2306.png": {
+  "at": "2026-10-10T23:06:02",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-farm",
+  "note": "분석하기 자세히 — 위"
+ },
+ "q2-detail-low-2306.png": {
+  "at": "2026-10-10T23:06:03",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-farm",
+  "note": "분석하기 자세히 — 아래(이 카드의 조건)"
+ },
+ "q6-infer-closed-2306.png": {
+  "at": "2026-10-10T23:06:09",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=infer",
+  "note": "추론 — 설정 접힘"
+ },
+ "q6-infer-open-2306.png": {
+  "at": "2026-10-10T23:06:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=infer",
+  "note": "추론 — 설정 펼침(신뢰도 기준 · 최소 크기)"
+ },
+ "q6-infer-result-2306.png": {
+  "at": "2026-10-10T23:06:11",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=infer",
+  "note": "추론 — 결과 목록(바꾼 값 표시) · 결과 칸만"
+ },
+ "q9-apply-staff-2306.png": {
+  "at": "2026-10-10T23:06:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "배포 신청서 — 정확도 경고 자리"
+ },
+ "later6-project-2306.png": {
+  "at": "2026-10-10T23:06:21",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?project=prj_b2fa593a12",
+  "note": "프로젝트 한 건 — 쉬운 말"
+ },
+ "q10-label-open-2306.png": {
+  "at": "2026-10-10T23:06:29",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_b2fa593a12&stage=label&flow=1&sample=smp_969c41cca0",
+  "note": "학습데이터 구축 — 올리기 · 라벨 확인 서랍"
+ },
+ "q10-train-open-2306.png": {
+  "at": "2026-10-10T23:06:36",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_b2fa593a12&stage=train&flow=1&sample=smp_969c41cca0",
+  "note": "학습 — 학습 실행 · 결과 서랍(열기만)"
+ },
+ "a-mapsvc-two-groups-2306.png": {
+  "at": "2026-10-10T23:06:48",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — 묶음 둘 동시에"
+ },
+ "b-mapsvc-props-2306.png": {
+  "at": "2026-10-10T23:06:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — 도형 누르면 오른쪽 속성"
+ },
+ "c-infer-result-link-2306.png": {
+  "at": "2026-10-10T23:06:56",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_3fdba452d5&stage=infer",
+  "note": "추론 — '결과 보기'"
+ },
+ "d-from-infer-to-mapsvc-2307.png": {
+  "at": "2026-10-10T23:07:04",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "'결과 보기' 눌러 지도 서비스에서 그 결과"
+ },
+ "e-imagery-pick-2307.png": {
+  "at": "2026-10-10T23:07:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 상세 — 영상 고르기"
+ },
+ "f-imagery-other-2307.png": {
+  "at": "2026-10-10T23:07:19",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "다른 영상을 고른 모습"
+ },
+ "q9-apply-admin-2308.png": {
+  "at": "2026-10-10T23:08:43",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys",
+  "note": "배포 신청 탭 — 신청 한 건 열기(승인 · 거절은 누르지 않음)"
+ },
+ "later1-tenants-2308.png": {
+  "at": "2026-10-10T23:08:45",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants",
+  "note": "기관 목록 — 분석한 면적"
+ },
+ "q16-requests-2308.png": {
+  "at": "2026-10-10T23:08:54",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/#/approvals",
+  "note": "요청 관리 · 분석 요청 — 한 건 서랍(바꾸지 않음)"
+ },
+ "q17-tenant-overview-2309.png": {
+  "at": "2026-10-10T23:09:01",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants/o/namwon",
+  "note": "기관 한 곳 — 개요"
+ },
+ "q17-tenant-services-2309.png": {
+  "at": "2026-10-10T23:09:02",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants/o/namwon/svc",
+  "note": "기관 한 곳 — 서비스와 담당"
+ },
+ "q17-tenant-use-2309.png": {
+  "at": "2026-10-10T23:09:05",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants/o/namwon/use",
+  "note": "기관 한 곳 — 사용과 계정"
+ },
+ "n13-share-sgg-2309.png": {
+  "at": "2026-10-10T23:09:08",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/share",
+  "note": "기관 공유 — 광역 칸 시군구 고르기(저장 · 거두기는 누르지 않음)"
+ },
+ "p17-logins-2309.png": {
+  "at": "2026-10-10T23:09:15",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#logins",
+  "note": "계정 관리 — 로그인 기록(들어온 입구)"
+ },
+ "p17-user-drawer-2309.png": {
+  "at": "2026-10-10T23:09:19",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#users",
+  "note": "계정 서랍 — 최근 로그인 · 입구"
+ },
+ "p170-ops-2309.png": {
+  "at": "2026-10-10T23:09:25",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#ops",
+  "note": "계정 관리 — 운영 정보(문의 연락처 · 저장은 누르지 않음)"
+ },
+ "p8-card-lxmap-off-2309.png": {
+  "at": "2026-10-10T23:09:47",
+  "url": "https://namwon.land-xi.dev/landxi/v3/xi-clean/?region=52190&pnu=5219025030108240009",
+  "note": "기관 결과 지도 — 필지 카드 · LX맵 끔"
+ },
+ "p8-card-lxmap-on-2309.png": {
+  "at": "2026-10-10T23:09:51",
+  "url": "https://namwon.land-xi.dev/landxi/v3/xi-clean/?region=52190&pnu=5219025030108240009",
+  "note": "기관 결과 지도 — 필지 카드 · LX맵 켬(보기만)"
+ },
+ "n19-version-bell-2310.png": {
+  "at": "2026-10-10T23:10:00",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "note": "남원시 기관 — 종 알림"
+ },
+ "mock-c-apply-category-2312.png": {
+  "at": "2026-10-10T23:12:59",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/map-service-3/index.html?v=apply",
+  "note": "시안 — 분야 관리"
+ },
+ "mock-c-admin-category-2313.png": {
+  "at": "2026-10-10T23:13:03",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/map-service-3/index.html?v=admin",
+  "note": "시안 — 분야 관리"
+ },
+ "mock-c-analyze-list-2313.png": {
+  "at": "2026-10-10T23:13:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/map-service-3/index.html?v=list",
+  "note": "시안 — 분야 관리"
+ },
+ "mock-c-analyze-list-filtered-2313.png": {
+  "at": "2026-10-10T23:13:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/map-service-3/index.html?v=list&cat=%EA%B1%B4%EC%B6%95%C2%B7%EB%B3%80%ED%99%94&img=%ED%95%AD%EA%B3%B5",
+  "note": "시안 — 분야 관리"
+ },
+ "mock-api-key-map-2313.png": {
+  "at": "2026-10-10T23:13:47",
+  "url": "http://127.0.0.1:4173/docs/superpowers/final/process/design-r15/open-api-2/fig/key-map.html",
+  "note": "시안 — 외부 연동 API 키 그림(개발 서버 파일 · 바깥 주소에는 올라가 있지 않음)"
+ },
+ "_summary": {
+  "start": "2026-10-10T23:05:30",
+  "end": "2026-10-10T23:15:20",
+  "failed": [],
+  "viewport": "1440x900",
+  "base": "https://app.land-xi.dev"
+ },
+ "n16-dept-scope-2314.png": {
+  "at": "2026-10-10T23:14:16",
+  "url": "https://gwangju-jeonnam.land-xi.dev/landxi/v3/gov-accounts/#accounts",
+  "note": "광역 기관 계정 — 부서별 관할(바꾸지 않음)"
+ },
+ "later9-main3-2315.png": {
+  "at": "2026-10-10T23:15:08",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 — 셋째 장면"
+ },
+ "p170-main-end-2315.png": {
+  "at": "2026-10-10T23:15:12",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 — 맨 아래 문의하기"
+ }
+}
