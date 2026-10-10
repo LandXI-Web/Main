@@ -2,10 +2,10 @@
    명세 LANDXI-FINAL-SPEC §2.6 · 부품 K1 K2 K3 K5 K6(HUD 124) K12 K14 · 지역 = URL ?region= 또는 첫 순위 의심이 있는 지역(하드코딩 0). */
 import * as K from '../kit/index.js';
 import { nf } from '../kit/i18n.js';
-import { h, esc, isDev, session, bboxOf } from '../kit/util.js';
+import { h, esc, isDev, session, bboxOf, api } from '../kit/util.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { summary, pick, aiResult, AI_LABEL } from '../lx-console/summary.js';
-import { projectRail, attachProject, projectRules } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { projectRail, attachProject, projectRules, projectModel } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
 import { D, SAMPLE, CLS, probeS2, loadRules, loadQueue, parcel, aiLayersAt, loadFeedback, loadRuleStats, verdictMap, ruleStat, judge, unTag, suggest, requestThreshold, drawSample, forgetSample, regionFor, bboxOfPoints, inRegion } from './data.js';
 
@@ -50,6 +50,7 @@ const fly = (b, o) => { if (!stage) return Promise.resolve(false); flying++; ret
 /* ── 서랍 골격 — /me 직후 바로(규칙 이름 6줄 · 숫자는 집계가 오면) ── */
 let dr = null, sample = null, cardEl = null, cur = null;
 let byRule = null, queue = [], rule = null, region = null, all = null;
+let NOFIT = false, MODEL_CLS = '';   // 프로젝트 모델에 맞는 대조 규칙이 없을 때 · 모델의 분류 이름(아래 시작에서 채운다)
 const body = h('div.rv-board');
 function openDrawer() {
   dr = K.drawer({ title: '', body, host: stageEl, slot: 'right', label: '결과 확인', onClose: () => { dr = null; reopen.hidden = false; } });
@@ -58,7 +59,7 @@ function openDrawer() {
 }
 const reopen = h('button.t-btn.t-btn--2.rv-reopen', { type: 'button', text: '결과 확인', hidden: true, onclick: () => openDrawer() });
 stageEl.append(reopen);
-const title = () => dr?.title(rule ? `④ 결과 확인 · ${D.byId[rule]?.name || ''}` : '④ 결과 확인');
+const title = () => dr?.title(rule ? `④ 결과 확인 · ${D.byId[rule]?.name || ''}` : MODEL_CLS ? `④ 결과 확인 · ${MODEL_CLS}` : '④ 결과 확인');
 let resolveQ; const queueReady = new Promise((r) => { resolveQ = r; });
 const any = () => Object.values(byRule || {}).some((e) => (e?.value || 0) > 0);
 
@@ -81,10 +82,14 @@ function setHud() {
   if (hudAt) return;
   hudAt = performance.now();
   /* 사진이 깔린 뒤에만 연다(상한 없음): 바탕 사진 타일 ≥ 4장 + 카메라가 지역에 도착(비행 끝 · 멈춤 · 줌 ≥ 11) + 보이는 타일 다 옴. 그 전에는 진행 막대 1개 */
+  /* 도착 + 사진 4장 뒤에도 남은 타일(응답 없는 외부 원천 등)만 기다리면 8초에서 연다 — 지도가 떴는데 가운데 '늦음' 표시가 남지 않게(10-10 고장) */
+  let seenAt = 0;
   const tick = () => {
     const m = stage?.map;
     const arrived = m && !flying && !m.isMoving() && m.getZoom() >= MIN_Z - 0.01;
-    if (arrived && painted >= 4 && m.areTilesLoaded()) { hudEl.hidden = false; loadEl.classList.add('is-out'); loadDone(); requestAnimationFrame(() => hudEl.classList.add('is-in')); T.hud = Math.round(performance.now()); T.hudZ = +m.getZoom().toFixed(2); return; }
+    if (arrived && painted >= 4 && !seenAt) seenAt = performance.now();
+    if (!(arrived && painted >= 4)) seenAt = 0;
+    if (arrived && painted >= 4 && (m.areTilesLoaded() || performance.now() - seenAt > 8000)) { hudEl.hidden = false; loadEl.classList.add('is-out'); loadDone(); requestAnimationFrame(() => hudEl.classList.add('is-in')); T.hud = Math.round(performance.now()); T.hudZ = +m.getZoom().toFixed(2); return; }
     setTimeout(tick, 100);
   };
   tick();
@@ -131,7 +136,7 @@ function board() {
   body.innerHTML = '';
   if (!any()) {
     const e = h('div'); body.append(e);
-    K.empty(e, { kind: 'first', text: '이 지역의 첫 분석이 끝나면 의심 필지가 여기에 모입니다', compact: true });
+    K.empty(e, { kind: 'first', text: NOFIT ? `이 지역의 ${MODEL_CLS} AI 분석이 끝나면 결과가 여기에 모입니다` : '이 지역의 첫 분석이 끝나면 의심 필지가 여기에 모입니다', compact: true });
     return;
   }
   /* 막대는 규칙·집계가 바뀔 때만 새로 그린다(판정마다 0에서 다시 자라지 않게) */
@@ -462,7 +467,10 @@ document.addEventListener('mouseout', (e) => { if (e.target.closest?.('.rv-tipw'
 const [regions, , , firstQ, PRJ] = await Promise.all([E.regions, E.rules, E.fb, E.first, PROJ]);
 /* 프로젝트 안(J-1) — 그 프로젝트의 대조 규칙만(막대 · 점 · 표본) · 큰 숫자는 그 서비스(카드)의 AI 분석 결과. 프로젝트 밖은 전체 */
 const PRULES = PRJ ? await projectRules(PRJ) : null;
-if (PRULES) { const keep = D.rules.filter((r) => PRULES.includes(r.id)); if (keep.length) D.rules.splice(0, D.rules.length, ...keep); }
+if (PRULES) { const keep = D.rules.filter((r) => PRULES.includes(r.id)); if (keep.length || !PRULES.length) D.rules.splice(0, D.rules.length, ...keep); }
+/* 프로젝트 모델에 맞는 대조 규칙이 없으면(곤포사일리지 등) 규칙 이름 대신 모델의 실제 분류 이름으로 · 규칙 막대 없음(10-10 고장) */
+NOFIT = !!PRULES && !PRULES.length;
+MODEL_CLS = NOFIT ? await api('/registry/models/' + projectModel(PRJ)).then((m) => (m.classes || []).join(' · '), () => '') : '';
 skeleton();
 const first = firstQ?.items?.[0] || null;
 /* 주소의 지역이 없거나 모르는 값이면 첫 순위 의심 필지의 시군구로(데이터가 정한다) */
@@ -481,7 +489,7 @@ K.devDrawer({ stage, who });
 T.stage = Math.round(performance.now()); T.z0 = +stage.map.getZoom().toFixed(2);
 /* 지역 집계 먼저(by_rule · limit 1) — 막대 · HUD 를 큐 전체(최대 2000건)보다 먼저 그린다 */
 const agg = await loadQueue({ bbox: region?.bbox || null, sgg: region?.sgg_cd || null, limit: 1 });
-byRule = agg?.by_rule || {};
+byRule = NOFIT ? {} : agg?.by_rule || {};
 const count = (id) => byRule[id]?.value || 0;
 rule = Q.get('rule') && D.byId[Q.get('rule')] ? Q.get('rule') : [...D.rules].sort((a, b) => count(b.id) - count(a.id))[0]?.id;
 const aggAny = Object.values(byRule).some((e) => (e?.value || 0) > 0);

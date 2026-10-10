@@ -268,7 +268,7 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 .gy-leg dd{margin:0;font:400 14px/22px var(--font-body);color:var(--ink-2);word-break:keep-all}
 /* 통계 · 보고서 */
 .gs-stats-top{display:flex;justify-content:flex-end}
-.gs-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.gs-nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .gs-nums:empty{display:none}
 .gs-num{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border-radius:var(--r-16,16px);background:var(--bg-1,#fff);min-width:0}
 .gs-num b{font:800 28px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}

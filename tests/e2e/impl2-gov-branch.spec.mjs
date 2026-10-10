@@ -127,11 +127,12 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     await expect(page.locator('.gd-todo')).toHaveCount(0);                               // '내가 확인할 필지' 뺌
     await expect(page.locator('.gd-about .gd-dl3 button')).toHaveCount(0);               // 내려받기는 통계·보고서 탭 한 곳(18차 N-1 ⓐ)
     await expect(page.locator('.gd-epochs .gd-ep-i')).toHaveCount(4);
-    /* 통계·보고서 — 숫자 셋(AI 분석 결과 = 큰 숫자 · 의심 필지 · 오탐) · 보고서 만들기 + 내려받기 셋 */
+    /* 통계·보고서 — 숫자 둘(AI 분석 결과 = 큰 숫자 · 오탐 — '의심 필지'는 큰 숫자에서 뺌 · 10-10 고장) · 보고서 만들기 + 내려받기 셋 */
     await page.locator('.gs-tabs a', { hasText: '통계·보고서' }).click();
     await page.waitForURL((u) => u.searchParams.get('tab') === 'stats');
     await page.waitForSelector('.gs-num');
-    await expect(page.locator('.gs-num')).toHaveCount(3);
+    await expect(page.locator('.gs-num')).toHaveCount(2);
+    await expect(page.locator('.gs-num[data-k="suspect"]')).toHaveCount(0);
     expect(Number(await page.locator('.gs-num[data-k="ai"] .k-num').getAttribute('data-v'))).toBe(Number(v));
     await expect(page.locator('body')).not.toContainText(/현장\s*확인/);
     await expect(page.locator('.gs-files .gs-file')).toHaveCount(4);

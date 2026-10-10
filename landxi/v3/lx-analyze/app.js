@@ -264,10 +264,10 @@ function condCard(c) {
 function analyzePanel(side, c) {
   side.classList.add('t-card');
   side.append(h('h2.la-side-h', { text: '이 카드로 분석' }));
-  const manage = h('a.la-alt', { href: `../lx-cards/?card=${encodeURIComponent(c.id)}`, text: '서비스 카드에서 관리하기' });
+  /* '서비스 카드에서 관리하기' 링크는 뺀다 — 직원 메뉴에 서비스 카드 없음 · 공개된 서비스 관리는 LX 관리자 화면(원칙 151) */
   if (!c.can_analyze) {
     side.append(h('p.la-cant', { text: c.cant || '아직 이 카드로 분석할 수 없습니다' }),
-      h('p.la-note', { text: '분석 모델이 등록되면 여기에서 바로 분석합니다.' }), manage);
+      h('p.la-note', { text: '분석 모델이 등록되면 여기에서 바로 분석합니다.' }));
     return;
   }
   const picks = new Map();            // sgg → { name, fit }
@@ -278,7 +278,7 @@ function analyzePanel(side, c) {
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
   const msg = h('p.la-note', {}, '작업 대기열에 들어가고,', h('br'), '결과는 XI맵에서 읍면동 순으로 차오릅니다.');
   const done = h('div.la-done', { hidden: true });
-  side.append(step(1, '어디', '여러 곳 가능'), where, list, step(2, '결과까지'), eta, go, msg, done, manage);
+  side.append(step(1, '어디', '여러 곳 가능'), where, list, step(2, '결과까지'), eta, go, msg, done);
 
   K.regionPicker(where, { onPick: (r) => add(r) }).then((rp) => {
     rp.input.placeholder = '시군구 이름으로 찾기'; rp.input.value = '';

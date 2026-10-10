@@ -9,7 +9,7 @@
 import * as K from '../kit/index.js';
 import { api, session } from '../kit/util.js';
 import { sse, API } from '../../shared/api-v1.js';
-import { sourceSpec } from '../../xi/engine/sources.js';
+import { sourceSpec, EXT_OK } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
 import { analyzer } from './analyze.js';
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
@@ -178,6 +178,8 @@ async function boot() {
 
   stage = K.createStage(stageEl);
   map = stage.map; X.map = map; X.stage = stage;
+  // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
+  map.on('idle', () => { hud.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
   K.devDrawer({ stage, who });
   hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
 

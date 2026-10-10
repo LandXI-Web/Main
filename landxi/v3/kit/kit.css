@@ -28,8 +28,8 @@
 .k-big-s .t-sig{margin-left:2px;font-size:16px}
 .k-big-none{margin-top:2px}
 .k-big-none[hidden]{display:none}
-.k-big--hud .k-big-l,.k-big--hud .k-big-u,.k-big--hud .k-big-none{color:#fff;text-shadow:var(--hud-shadow)}
-.k-big--hud .t-sig{color:#fff}
+.k-big--hud .k-big-l,.k-big--hud .k-big-u,.k-big--hud .k-big-none{color:var(--hud-ink);text-shadow:var(--hud-shadow)}
+.k-big--hud .t-sig{color:var(--hud-ink)}
 .k-num{font:800 32px/1 var(--font-display);letter-spacing:-0.02em;color:var(--ink);font-variant-numeric:tabular-nums}
 .k-num small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
 td .k-num{font:500 15px/1 var(--font-num);letter-spacing:0}

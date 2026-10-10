@@ -190,7 +190,8 @@ export async function tileUrl(item, params = {}) {
     const t = String(item.tiles).replace(/\{(date|year|searchid|item)\}/g, (_, k) => p[k] ?? `{${k}}`);
     return item.kind === 'vector' && t.startsWith('pmtiles://') ? { url: t } : { tiles: [t] };
   }
-  if (API.mode === 'on') {
+  // 로그인한 화면(토큰 있음)은 프로브 전('auto')이어도 서버 길로 — 저장소 폴더 길(/landxi/data)은 바깥 주소 관문이 내주지 않는다(10-10 결과 층 404)
+  if (API.mode === 'on' || (API.mode === 'auto' && session.get())) {
     if (item.source === 'xyz') return { tiles: [`${API.base}/tiles/xyz/${item.set.split('/').pop()}/{z}/{x}/{y}.webp`] };
     // 등록 원본 영상(COG 동적 타일 · LX 전용) — PMTiles 가 아직 없으므로 서버가 준 타일 주소를 그대로 쓴다
     if (item.source === 'cog') return { tiles: [await signSet(item.set)] };

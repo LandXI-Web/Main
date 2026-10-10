@@ -7,7 +7,7 @@
    const st = createStage(el); await st.ready; st.go(region); st.geo('ai', featureCollection, 'ai'); st.pad({ right: 416 }) */
 import { createMap, loaded } from '../../xi/engine/lx-map.js';
 import { flyLadder, stopFlight } from '../../xi/engine/camera.js';
-import { registerPmtiles, setExtMode } from '../../xi/engine/sources.js';
+import { registerPmtiles, setExtMode, onExtDown } from '../../xi/engine/sources.js';
 import { gpuInfo } from '../../xi/engine/tier.js';
 import { bboxOf, RM } from './util.js';
 
@@ -52,6 +52,15 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
     map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9] });
     map.addLayer({ id: 'k-eox', type: 'raster', source: 'k-eox', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
     map.addLayer({ id: 'k-vw', type: 'raster', source: 'k-vw', minzoom: 6.5, paint: { 'raster-fade-duration': 500, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6.5, 0, 7.4, 1] } }, 'slot-imagery');
+    // 전국 바탕(EOX)이 멈추면 국내 바탕(V-World)을 전국 축척부터 바로 — 빈 바탕 지도 대신(10-10 고장 · EOX 무응답 실측)
+    //   V-World 위성은 낮은 축척에서 세계 전체를 그려 준다(z0–7 실측) — 범위 없이 다시 올린다(층 순서는 그대로 · 자체 영상 아래 · 지구본 장면 포함)
+    onExtDown((host) => {
+      if (host !== 'tiles.maps.eox.at' || !map.getLayer('k-vw')) return;
+      const ls = map.getStyle().layers, next = ls[ls.findIndex((l) => l.id === 'k-vw') + 1]?.id;
+      map.removeLayer('k-vw'); map.removeSource('k-vw');
+      map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 0, maxzoom: 19 });
+      map.addLayer({ id: 'k-vw', type: 'raster', source: 'k-vw', paint: { 'raster-fade-duration': 300, 'raster-saturation': mode === 'ops' ? -0.4 : 0 } }, next);
+    });
     setMode(mode);
     el.classList.add('is-ready');
     return map;

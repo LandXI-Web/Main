@@ -15,27 +15,49 @@ const blank = async () => (BLANK ||= await createImageBitmap(new ImageData(1, 1)
 const EXT_HOSTS = /^https:\/\/(gibs\.earthdata\.nasa\.gov|xdworld\.vworld\.kr|tiles\.maps\.eox\.at)\//;
 let EXT_MODE = 'sw', EW = null, ESEQ = 0; const EPEND = new Map();
 export const EXT_MISS = { n: 0, last: null, onMiss: null };
+export const EXT_OK = { n: 0 };   // 그려진 외부 바탕 타일 수(화면이 '바탕 영상 있음'을 판단 · 10-10)
 export function setExtMode(m) { EXT_MODE = m === 'worker' ? 'worker' : 'sw'; return EXT_MODE; }
 export const extMode = () => EXT_MODE;
 function extWorker() {
   if (EW) return EW;
-  const src = `onmessage = async (e) => { const { id, url } = e.data; try { const r = await fetch(url, { mode: 'cors' }); const b = r.ok ? await r.arrayBuffer() : null; postMessage({ id, ok: r.ok, status: r.status, b, ct: r.headers.get('content-type') || '' }, b ? [b] : []); } catch (x) { postMessage({ id, ok: false, status: 0 }); } };`;
+  // 응답 없는 원천(외부 호스트가 멈춤 — 10-10 EOX 실측: 연결만 열고 답이 없음)은 EXT_WAIT 뒤 끊는다 — 지도 이미지 요청 칸(16)을 영원히 쥐지 않게
+  const src = `onmessage = async (e) => { const { id, url, wait } = e.data; const ac = new AbortController(); const t = setTimeout(() => ac.abort(), wait); try { const r = await fetch(url, { mode: 'cors', signal: ac.signal }); const b = r.ok ? await r.arrayBuffer() : null; clearTimeout(t); postMessage({ id, ok: r.ok, status: r.status, b, ct: r.headers.get('content-type') || '' }, b ? [b] : []); } catch (x) { clearTimeout(t); postMessage({ id, ok: false, status: 0, late: ac.signal.aborted }); } };`;
   EW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
   EW.onmessage = (e) => { const f = EPEND.get(e.data.id); if (f) { EPEND.delete(e.data.id); f(e.data); } };
   return EW;
 }
 const missed = (url, status) => { EXT_MISS.n++; EXT_MISS.last = { host: (/^https:\/\/([^/]+)/.exec(url) || [])[1], status }; EXT_MISS.onMiss?.(EXT_MISS); };
 /** 외부 요청(fetch 와 같은 모양의 응답) — SW 모드면 그냥 fetch(방패가 받는다) · worker 모드면 Worker 가 받는다 */
+/* 멈춘 원천 — 한 번 시간이 지나 끊긴 호스트는 EXT_REST 동안 부르지 않고 바로 '없음'(투명)으로 돌려준다.
+   그 사이 다른 바탕(V-World · 자체 영상)이 칸을 받아 그려진다(바깥 주소 빈 바탕 지도 고장 · 10-10). */
+const EXT_WAIT = 6000, EXT_REST = 120000, EXT_DOWN = new Map(), DOWN_FNS = new Set();
+/** 외부 원천이 멈췄을 때 부를 함수(호스트 이름을 받는다) — 무대가 다른 바탕으로 넘길 때 쓴다 */
+export const onExtDown = (fn) => { DOWN_FNS.add(fn); for (const h of EXT_DOWN.keys()) fn(h); return () => DOWN_FNS.delete(fn); };
+const markDown = (url) => { const h = extHost(url), was = EXT_DOWN.has(h); EXT_DOWN.set(h, Date.now()); if (!was) DOWN_FNS.forEach((f) => { try { f(h); } catch { /* */ } }); };
+const extHost = (url) => (/^https:\/\/([^/]+)/.exec(url) || [])[1] || '';
+const extDown = (url) => { const t = EXT_DOWN.get(extHost(url)); return !!t && Date.now() - t < EXT_REST; };
+const NONE = (status = 0) => { const b = new ArrayBuffer(0); return { ok: false, status, arrayBuffer: async () => b, blob: async () => new Blob([b]), text: async () => '' }; };
 export function extFetch(url, { signal } = {}) {
-  if (EXT_MODE !== 'worker' || !EXT_HOSTS.test(url)) return fetch(url, { mode: 'cors', signal });
+  if (EXT_HOSTS.test(url) && extDown(url)) { missed(url, 0); return Promise.resolve(NONE()); }
+  if (EXT_MODE !== 'worker' || !EXT_HOSTS.test(url)) {
+    if (!EXT_HOSTS.test(url)) return fetch(url, { mode: 'cors', signal });
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), EXT_WAIT);
+    signal?.addEventListener('abort', () => ac.abort(), { once: true });
+    return fetch(url, { mode: 'cors', signal: ac.signal }).finally(() => clearTimeout(t)).catch((e) => {
+      if (signal?.aborted) throw e;
+      markDown(url); missed(url, 0); return NONE();
+    });
+  }
   return new Promise((res, rej) => {
     const id = ++ESEQ;
     EPEND.set(id, (d) => {
+      if (d.late) markDown(url);
+      else if (d.ok) EXT_DOWN.delete(extHost(url));
       if (!d.ok) missed(url, d.status);
       const b = d.b || new ArrayBuffer(0);
       res({ ok: d.ok, status: d.status, arrayBuffer: async () => b, blob: async () => new Blob([b], { type: d.ct }), text: async () => new TextDecoder().decode(b) });
     });
-    extWorker().postMessage({ id, url });
+    extWorker().postMessage({ id, url, wait: EXT_WAIT });
     signal?.addEventListener('abort', () => { if (EPEND.delete(id)) rej(new DOMException('aborted', 'AbortError')); }, { once: true });
   });
 }
@@ -70,7 +92,7 @@ export function registerPmtiles() {
     let r;
     try { r = await extFetch(url, { signal: ac.signal }); } catch { return { data: await blank() }; }
     if (!r.ok) return { data: await blank() };
-    try { return { data: await createImageBitmap(await r.blob()) }; } catch { return { data: await blank() }; }
+    try { const data = await createImageBitmap(await r.blob()); EXT_OK.n++; return { data }; } catch { return { data: await blank() }; }
   });
   return protocol;
 }

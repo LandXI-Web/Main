@@ -43,10 +43,12 @@
 /* HUD — 사진 위 흰 글자 · 큰 숫자 하나 · 규칙 막대 3 */
 .xc-hud{position:absolute;z-index:6;left:28px;top:24px;pointer-events:none;max-width:min(460px,calc(100% - 56px))}
 .xc-hud[hidden]{display:none}
+/* 바탕 영상이 그려지지 않은 지도(밝은 빈 바탕)에서는 큰 숫자를 다른 큰 숫자와 같은 진한 글자로 — 흰 글자가 흐려지지 않게(10-10 고장) */
+.xc-hud[data-base="plain"]{--hud-ink:var(--ink);--hud-shadow:none}
 .xc-big .k-big-l{font-size:var(--fs-sub)}
 .xc-big .t-hud{white-space:nowrap}
 .xc-bars{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:4px;width:300px}
-.xc-bar{display:grid;grid-template-columns:minmax(0,1fr) 92px 52px;align-items:center;gap:10px;width:100%;padding:5px 8px;margin-left:-8px;border:0;border-radius:var(--r-8);background:none;color:#fff;text-shadow:var(--hud-shadow);text-align:left}
+.xc-bar{display:grid;grid-template-columns:minmax(0,1fr) 92px 52px;align-items:center;gap:10px;width:100%;padding:5px 8px;margin-left:-8px;border:0;border-radius:var(--r-8);background:none;color:var(--hud-ink);text-shadow:var(--hud-shadow);text-align:left}
 .xc-bar[data-on="1"]{background:rgba(255,255,255,.2)}
 .xc-bar-l{font:500 var(--fs-label)/1.2 var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xc-bar-t{height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
@@ -202,7 +204,7 @@
 .k-ck .k-bar{cursor:pointer}.k-ck .k-bar:hover .k-bar-l{text-decoration:underline}
 
 /* 의심 필지 한 줄(숫자 한 출처) — HUD 큰 숫자 아래 · 오른쪽 판 머리 */
-.xc-sus{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;color:#fff;text-shadow:var(--hud-shadow);font:500 var(--fs-label)/1.2 var(--font-body)}
+.xc-sus{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;color:var(--hud-ink);text-shadow:var(--hud-shadow);font:500 var(--fs-label)/1.2 var(--font-body)}
 .xc-sus[hidden]{display:none}
 .xc-sus b{font:600 17px/1 var(--font-num)}
 .xc-sus small{font-size:12px;opacity:.85}

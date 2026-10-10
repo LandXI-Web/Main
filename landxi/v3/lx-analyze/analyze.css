@@ -163,7 +163,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-pager{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:24px}
 .la-pager:empty{display:none}
 .la-pg{min-width:36px;height:36px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 14px/1 var(--font-num);color:var(--sub);cursor:pointer}
-.la-pg:hover:not(:disabled){color:var(--ink)}
+.la-pg:hover:not(:disabled):not([aria-current="page"]){color:var(--ink)}
 .la-pg[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .la-pg.ar{font-family:var(--font-body)}
 .la-pg:disabled{color:var(--mute);cursor:default}

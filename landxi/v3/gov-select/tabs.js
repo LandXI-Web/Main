@@ -1,6 +1,6 @@
 /* 서비스 대시보드의 '이력' · '통계·보고서' 탭(구현 5차 2묶음 · 확인 대장 18차 N-1 ⓐ 묶음 · 기관-9 ⓑ · 시안 design-r9/gov-2 dash.html?tab=history|stats).
    이력 = 그 서비스에서 일어난 일 한 줄기(결과 공개 · AI 분석 · 확인 기록 · 검토 요청 · 분석 요청 · 촬영 요청 · 내려받기) — 서버 GET /history · 거르기 칩 · 날짜별 · 엑셀(CSV).
-   통계·보고서 = 숫자 셋(AI 분석 결과 · 의심 필지 · 오탐) · 읍면별 표 · 보고서 만들기 · 자료 내려받기(내려받기는 이 탭 한 곳).
+   통계·보고서 = 숫자 둘(AI 분석 결과 · 오탐) · 읍면별 표 · 보고서 만들기 · 자료 내려받기(내려받기는 이 탭 한 곳).
    원칙 135 기관까지(10-10 확인 8 ⓐ): 현장 확인 필요 · 확인 끝 · 확인 예정 · 월별 확인 기록 · 이력의 확인 기록은 화면에서 쓰지 않는다(서버 기록은 그대로).
    숫자는 서버 값 그대로(GET /history/stats · 결과 설명서) · 지어내지 않는다 · 필지 대조가 없는 서비스는 '필지 대조가 없는 서비스' 한 줄과 내려받기만. */
 import * as K from '../kit/index.js';
@@ -92,7 +92,8 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     /* AI 분석 결과 = 요약 한 출처(대시보드 큰 숫자 · LX 화면과 같은 값) — 없으면 그 칸을 접는다 */
     const ai = aiResult(await summary().catch(() => null), (i) => i.card === s.card);
     if (ai) n.ai = ai.env;
-    nums.replaceChildren(...[['ai', 'AI 분석 결과'], ['suspect', '의심 필지'], ['fp', '오탐 · AI가 잘못 봄']].filter(([k]) => n[k])
+    /* '의심 필지'(필지 대조 후보 · 규칙별로 센 수)는 큰 숫자에서 뺀다 — AI 분석 결과보다 큰 다른 뜻의 수가 나란히 서서 헷갈림(원칙 135 · 10-10 고장) */
+    nums.replaceChildren(...[['ai', 'AI 분석 결과'], ['fp', '오탐 · AI가 잘못 봄']].filter(([k]) => n[k])
       .map(([k, l]) => h('div.gs-num', { dataset: { k } }, h('b', { html: K.numHtml(n[k]) }), h('span', { text: l }))));
     /* 읍면별 표 — 우선순위 A 많은 곳부터 열두 줄 + 그 밖 + 전체 · '모두 펼치기' */
     const rows = j.emd || [];
