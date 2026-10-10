@@ -1,0 +1,79 @@
+[
+ {
+  "file": "a-mapsvc-two-groups-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:03",
+  "query": "?v=map&base=img&z=both",
+  "flags": [],
+  "height": 900
+ },
+ {
+  "file": "a-mapsvc-props-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:11",
+  "query": "?v=map&base=img&z=unbong&pick=1",
+  "flags": [],
+  "height": 900
+ },
+ {
+  "file": "a-mapsvc-project-props-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:20",
+  "query": "?v=map&base=img&z=deokgwa&pick=1",
+  "flags": [],
+  "height": 900
+ },
+ {
+  "file": "a-mapsvc-cadastre-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:29",
+  "query": "?v=map&base=cad&z=unbong",
+  "flags": [],
+  "height": 900
+ },
+ {
+  "file": "b-imagery-shared-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:32",
+  "query": "?v=imagery&pick=ap25-namwon-2023",
+  "flags": [],
+  "height": 1216
+ },
+ {
+  "file": "b-imagery-vworld-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:36",
+  "query": "?v=imagery&pick=vworld",
+  "flags": [],
+  "height": 1216
+ },
+ {
+  "file": "b-imagery-ngii-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:39",
+  "query": "?v=imagery&pick=ngii",
+  "flags": [],
+  "height": 1216
+ },
+ {
+  "file": "c-apply-category-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:40",
+  "query": "?v=apply",
+  "flags": [],
+  "height": 959
+ },
+ {
+  "file": "c-admin-category-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:42",
+  "query": "?v=admin",
+  "flags": [],
+  "height": 900
+ },
+ {
+  "file": "c-analyze-list-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:43",
+  "query": "?v=list",
+  "flags": [],
+  "height": 1293
+ },
+ {
+  "file": "c-analyze-list-filtered-1440-2134.png",
+  "shot_at": "2026-10-10T21:34:44",
+  "query": "?v=list&cat=%EA%B1%B4%EC%B6%95%C2%B7%EB%B3%80%ED%99%94&img=%ED%95%AD%EA%B3%B5",
+  "flags": [],
+  "height": 900
+ }
+]
