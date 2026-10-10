@@ -1,9 +1,9 @@
 /* 게스트 메인 — 토스식 7장 + 마감. 지도는 하나(K3)만 만들고, 챕터마다 '창'의 자리와 카메라만 스크롤에 묶는다.
-   트랙 A(sticky 판 하나): ch0 히어로(지구) → ch1 전국 차오름 → ch2 필지 카드 → ch3 융합 질문(반전)
+   트랙 A(sticky 판 하나): ch0 히어로(지구) → ch1 전국 차오름 → ch2 필지 카드 → ch3 XI ChatGEO 세 물음(지도 → 읍면동 통계 → 보고서 초안 · 반전)
    ch4 서비스 카드(흐름 구간 · 지도 없음)
    트랙 B(sticky 판 하나): ch5 전국 배포 점 → ch6 키르기스스탄 → 마감(지구 귀환)
    규칙: 한 화면에 움직이는 것 1개 · 헤드라인 750 --e-cam 스태거 120 · 숫자는 봉투만 · 지역 이름은 데이터에서(하드코딩 0). */
-import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk, enter } from '../kit/index.js';
+import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk, enter, bars } from '../kit/index.js';
 import { E_CAM, RM, h, esc } from '../kit/util.js';
 import { devlog } from '../kit/dev-drawer.js';
 import * as D from './data.js';
@@ -142,10 +142,14 @@ async function addLayers() {
     st.map.setPaintProperty('k-aiin-f', 'fill-opacity', 0.38);
   }
   if (d.agent && !st.map.getSource('k-emd')) {
-    await st.geo('emd', d.agent.geojson, 'ai');
+    await st.geo('emd', d.agent.emd, 'ai');
     st.map.setPaintProperty('k-emd-h', 'line-opacity', 0);
     st.map.setPaintProperty('k-emd-l', 'line-color', '#FFFFFF');
     st.map.setPaintProperty('k-emd-l', 'line-width', 0.8);
+    // 비닐하우스는 동 면(원판 모델 결과)만 — 점 없음(10-09 사용자 "동그라미가 혼란") · 흰 테두리(확대할수록 굵게) · 번지는 테두리 없음
+    await st.geo('ghp', d.agent.gh, 'ai');
+    st.map.setPaintProperty('k-ghp-l', 'line-color', '#FFFFFF');
+    st.map.setPaintProperty('k-ghp-l', 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.5, 16, 1.2]);
   }
   if (d.kgz && !st.map.getSource('k-kgz')) {
     await st.geo('kgz', d.kgz, 'focus');
@@ -157,7 +161,8 @@ async function addLayers() {
 const LAYERS = [['k-river-f', 'fill-opacity'], ['k-river-l', 'line-opacity'], ['k-river-h', 'line-opacity'], ['k-sweep-l', 'line-opacity'], ['k-sweep-f', 'fill-opacity'],
   ['k-sgg-l', 'line-opacity'], ['k-sgg-f', 'fill-opacity'], ['k-parcel-l', 'line-opacity'], ['k-parcel-f', 'fill-opacity'],
   ['k-aiin-f', 'fill-opacity'], ['k-aiin-l', 'line-opacity'], ['k-aiin-h', 'line-opacity'], ['k-ainear-f', 'fill-opacity'], ['k-ainear-l', 'line-opacity'], ['k-ainear-h', 'line-opacity'],
-  ['k-emd-f', 'fill-opacity'], ['k-emd-l', 'line-opacity'], ['k-emd-h', 'line-opacity'], ['k-kgz-l', 'line-opacity'], ['k-kgz-f', 'fill-opacity']];
+  ['k-emd-f', 'fill-opacity'], ['k-emd-l', 'line-opacity'], ['k-emd-h', 'line-opacity'], ['k-ghp-f', 'fill-opacity'], ['k-ghp-l', 'line-opacity'], ['k-ghp-h', 'line-opacity'],
+  ['k-kgz-l', 'line-opacity'], ['k-kgz-f', 'fill-opacity']];
 const want = (id, prop, v) => { S.want[id + '|' + prop] = v; };
 function flushLayers() { for (const [id, prop] of LAYERS) op(id, prop, S.want[id + '|' + prop] ?? 0); }
 /* 불투명도 — 같은 값이면 건드리지 않는다 */
@@ -178,9 +183,13 @@ function cams() {
   C.nat2 = nat(ly.card);
   const pb = d.parcel ? pad2(d.parcel.bbox, 0.9) : [127.215, 35.341, 127.217, 35.343];
   C.parcel = { c: bcenter(pb), z: fitZoom(pb, ly.right, ly.m ? { top: 24, left: 24, right: 24, bottom: 200 } : { top: 60, left: 60, right: 60, bottom: 230 }, 19), pad: ly.m ? { top: 24, left: 24, right: 24, bottom: 200 } : { top: 60, left: 60, right: 60, bottom: 230 } };
-  const rb = d.agent ? bboxFC(d.agent.geojson) : pb;
-  const rpad = ly.m ? { top: 150, left: 16, right: 16, bottom: 16 } : { top: 200, left: 48, right: 48, bottom: 40 };
+  // 넷째 장면 — 질문 카드(창 왼쪽 460)를 비켜 오른쪽에 · 모바일은 카드 아래
+  const rb = d.agent ? bboxFC(d.agent.emd) : pb;
+  const rpad = ly.m ? { top: Math.round(ly.right.h * 0.62), left: 16, right: 16, bottom: 16 } : { top: 60, left: 500, right: 48, bottom: 40 };
   C.region = { c: bcenter(rb), z: fitZoom(rb, ly.right, rpad, 12), pad: rpad };
+  // 비닐하우스가 가장 모인 곳(약 1.5 × 1 km) — 면이 면으로 보이는 크기
+  const gb = d.agent?.dense || rb;
+  C.gh = { c: bcenter(gb), z: fitZoom(gb, ly.right, rpad, 17), pad: rpad };
   const kb = d.kgz ? bboxFC(d.kgz) : [69.2, 39.2, 80.3, 43.3];
   // 도착 줌은 타일 줌 경계(.5) 바로 아래로 — 도착 순간 타일 한 단계를 통째로 새로 받지 않게(0.2 줌 이내 차이)
   const kz = fitZoom(kb, ly.full, ly.card, 7);
@@ -254,10 +263,13 @@ function frame(now) {
       S.t2 = 1;
       win = LY.right;
       const pr = { ...C.parcel, p: 38, b: 14 };
-      cam = zoomCam(pr, C.region, ease(seg(s3, 0.02, 0.34)));
+      // ① 필지 → 남원시 → 비닐하우스가 가장 모인 곳 · ② 다시 남원시(읍면동 통계)
+      cam = s3 < 0.24 ? zoomCam(pr, C.region, ease(seg(s3, 0.02, 0.2)))
+        : s3 < 0.44 ? zoomCam(C.region, C.gh, ease(seg(s3, 0.26, 0.4)))
+          : zoomCam(C.gh, C.region, ease(seg(s3, 0.46, 0.58)));
       bg = 'var(--bg-0)'; poster(false);
       sweep(1, 0);
-      parcelScene(1, 1 - seg(s3, 0.2, 0.34));
+      parcelScene(1, 1 - seg(s3, 0.02, 0.12));
       askScene(s3);
     }
     placeOnWin('#ch2-card', win, T.A.top);
@@ -498,22 +510,43 @@ function parcelScene(s2, keep = 1) {
     const pc = $('.m-pc'); if (pc) { pc.dataset.step = String(i); pc.querySelector('.m-pc-foot')?.classList.toggle('is-on', i === 2); }
   }
 }
-/** ch3 — 질문이 타이핑되고, 계획 3줄이 끝나면 답과 함께 지도가 칠해진다 */
+/** ch3 — XI ChatGEO 세 물음: ① 지도에 그리기(비닐하우스 동 면) → ② 읍면동 통계(막대 · 읍면동 색칠) → ③ 보고서 초안.
+    물음마다 타자 → 계획 줄 → 답. 스크롤로 되감으면 그대로 거꾸로(움직임 줄이기는 타자 없이 바로). */
+const ASK = [
+  { q: '남원시 비닐하우스 보여 줘', at: [0.1, 0.2] },
+  { q: '읍면동별로 통계 내 줘', at: [0.46, 0.54] },
+  { q: '보고서 초안 만들어 줘', at: [0.72, 0.8] },
+];
 function askScene(s3) {
   const d = S.data.agent; if (!d) return;
   const box = $('#ch3-ask .k-ck'); if (!box) return;
-  const q = d.ask, n = Math.round(q.length * seg(s3, 0.16, 0.44));
-  if (n !== S.typed) { S.typed = n; box.querySelector('.k-ck-t').firstChild.nodeValue = q.slice(0, n); }
-  const steps = box.querySelectorAll('.k-ck-plan li');
-  const planOn = s3 > 0.46;
-  box.querySelector('.k-ck-plan').hidden = !planOn;
-  steps.forEach((li, i) => li.classList.toggle('is-done', s3 > 0.5 + i * 0.06));
-  const ans = s3 > 0.68;
-  box.querySelector('.k-ck-a').hidden = !ans;
-  const o = seg(s3, 0.68, 0.8);
+  // 지금 묻는 물음 · 타자
+  let k = 0; ASK.forEach((a, i) => { if (s3 >= a.at[0]) k = i; });
+  const a = ASK[k], n = s3 < a.at[0] ? 0 : RM() ? a.q.length : Math.round(a.q.length * seg(s3, a.at[0], a.at[1]));
+  const key = k + ':' + n;
+  if (key !== S.typed) { S.typed = key; box.querySelector('.m-typed').textContent = a.q.slice(0, n); }
+  // 물음 · 계획 · 답 — 보이는 단계가 바뀔 때만 건드린다
+  const vis = ASK.map((x) => (s3 < x.at[1] ? 0 : 1 + Math.min(4, Math.floor((s3 - x.at[1]) / 0.02)))).join();
+  if (vis !== S.askVis) {
+    S.askVis = vis;
+    box.querySelectorAll('.m-a').forEach((el) => {
+      const t0 = ASK[+el.dataset.i].at[1], on = s3 >= t0;
+      el.hidden = !on; el.previousElementSibling.hidden = !on;
+      el.querySelectorAll('.k-ck-plan li').forEach((li, j) => li.classList.toggle('is-done', s3 >= t0 + 0.02 * (j + 1)));
+      el.querySelector('.m-res').hidden = s3 < t0 + 0.07;
+    });
+    const chat = box.querySelector('.m-chat'); chat.scrollTop = chat.scrollHeight;
+  }
+  // 왼쪽 단계
+  const i = s3 < 0.44 ? 0 : s3 < 0.7 ? 1 : 2;
+  if (i !== S.askItem) { S.askItem = i; document.querySelectorAll('#ch3-items li').forEach((li) => li.classList.toggle('is-on', +li.dataset.i === i)); }
+  // 지도 — ① 비닐하우스 면(② 로 넘어가며 걷힘) · ② 읍면동 색칠(동 수만큼 진하게)
+  const g = seg(s3, 0.3, 0.38) * (1 - seg(s3, 0.5, 0.58));
+  want('k-ghp-f', 'fill-opacity', 0.6 * g); want('k-ghp-l', 'line-opacity', 0.9 * g); want('k-ghp-h', 'line-opacity', 0);
+  const o = seg(s3, 0.6, 0.68);
   const val = ['interpolate', ['linear'], ['get', 'v'], 0, 0.04, Math.max(1, d.max * 0.15), 0.3, d.max, 0.72];
   want('k-emd-f', 'fill-opacity', o <= 0 ? 0 : ['*', o, val]);
-  want('k-emd-l', 'line-opacity', 0.6 * seg(s3, 0.3, 0.45));
+  want('k-emd-l', 'line-opacity', 0.6 * seg(s3, 0.04, 0.16));
 }
 function kgzScene(o) { want('k-kgz-l', 'line-opacity', 0.95 * o); want('k-kgz-f', 'fill-opacity', 0.12 * o); }
 
@@ -567,13 +600,38 @@ function fillParcel(p) {
 }
 function fillAgent(a) {
   const host = $('#ch3-ask');
-  host.innerHTML = `<div class="m-ask"><div class="k-ck" role="img" aria-label="질문 바">
-    <div class="k-ck-f"><span class="k-ck-ico" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 2.5l1.8 4.7 4.7 1.8-4.7 1.8L10 15.5l-1.8-4.7L3.5 9l4.7-1.8z"/></svg></span><span class="k-ck-t" data-ph="이 지역에 대해 물어보기"> <i class="m-caret"></i></span><kbd class="k-ck-k">Ctrl K</kbd></div>
-    <ol class="k-ck-plan" hidden><li>대장 읽기</li><li>대장과 AI 결과 맞추기</li><li>어긋난 필지 찾기</li></ol>
-    <div class="k-ck-a" hidden><span class="t-label">${esc(a.region)} · 예시</span><b>${numHtml(a.answer)}</b></div>
+  const nf = (v) => new Intl.NumberFormat('ko-KR').format(v);
+  const at = short(a.region);
+  host.innerHTML = `<div class="m-ask"><div class="k-ck" role="img" aria-label="XI ChatGEO 질문 카드">
+    <div class="k-ck-f"><span class="k-ck-ico" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 2.5l1.8 4.7 4.7 1.8-4.7 1.8L10 15.5l-1.8-4.7L3.5 9l4.7-1.8z"/></svg></span><span class="k-ck-t"><span class="m-typed" data-ph="이 지역에 대해 물어보기"></span><i class="m-caret"></i></span><kbd class="k-ck-k">Ctrl K</kbd></div>
+    <div class="m-chat"></div>
   </div></div>`;
-  host.querySelector('.k-ck-t').firstChild.nodeValue = '';
-  S.typed = -1;
+  const chat = host.querySelector('.m-chat');
+  const block = (i, plan, res) => {
+    chat.append(h('p.m-q', { hidden: true }, '물음', h('b', { text: ASK[i].q })));
+    chat.append(h('div.m-a', { hidden: true, dataset: { i: String(i) } }, h('ol.k-ck-plan', {}, ...plan.map((t) => h('li', { text: t }))), h('div.m-res', { hidden: true }, ...res)));
+  };
+  // ① 지도에 그리기 — 숫자는 결과 파일(원판 모델 · 동 면) 값
+  block(0, ['비닐하우스 결과 찾기', `${at} 범위로 자르기`, '지도에 그리기'], [
+    h('div.k-ck-a', {}, h('span.t-label', { text: `${at} · 비닐하우스` }), h('b.num', { text: nf(a.total) }), h('small', { text: `동 · 단동 ${nf(a.single)} · 다동 ${nf(a.multi)}` })),
+    h('p.m-q', { text: `${a.as_of}년 항공영상 AI 분석 결과 · 읍면동 ${a.rows.length}곳` })]);
+  // ② 읍면동 통계 — 막대 6줄 · 나머지는 표
+  const bx = h('div');
+  bars(bx, { items: a.rows.slice(0, 6).map((r) => ({ label: r.emd, value: r.n })), unit: '동', ai: true });
+  block(1, ['읍면동 경계와 겹치기', '읍면동마다 세기'], [bx, h('p.m-q', { text: `위 6곳 · 나머지 ${a.rows.length - 6}곳은 표로 · 합계 ${nf(a.total)}동` })]);
+  // ③ 보고서 초안 — 모양만(예시) · 실제 파일은 로그인 뒤
+  block(2, ['표 · 지도 묶기', '보고서 초안 쓰기'], [
+    h('div.m-file', {}, h('div', {}, h('b', { text: `비닐하우스 현황(${at}) — 보고서 초안` }), h('span', { text: `읍면동 ${a.rows.length}곳 표 1 · 지도 1 · 합계 ${nf(a.total)}동` })), h('span.m-ex', { text: '예시' })),
+    h('p.m-q', { text: '보고서 초안은 로그인 뒤 XI ChatGEO 에서 실제 파일로 받습니다.' })]);
+  S.typed = ''; S.askVis = ''; S.askItem = -1;
+}
+/** 비닐하우스 동이 가장 모인 곳(약 1.5 × 1 km) — 미리보기 장면과 같은 식 */
+function denseWin(fc) {
+  const cs = fc.features.map((f) => { const b = bboxFC({ features: [f] }); return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; });
+  if (!cs.length) return null;
+  let best = cs[0], bn = -1;
+  for (const c of cs) { const n = cs.reduce((k, x) => k + (Math.hypot((x[0] - c[0]) * 0.9, x[1] - c[1]) < 0.0045 ? 1 : 0), 0); if (n > bn) { bn = n; best = c; } }
+  return [best[0] - 0.0075, best[1] - 0.0032, best[0] + 0.0075, best[1] + 0.0058];
 }
 function fillDeploys(dd, sum) {
   // ch4 — 실결과 있는 배포본의 카드 3 · 상태·수 = 요약(summary) 한 출처. 요약이 없으면 숫자 없이(배포 기록·사본의 수를 싣지 않는다)
@@ -614,7 +672,7 @@ async function load() {
   if (stats.status === 'fulfilled') { S.data.stats = stats.value; fillStats(stats.value); }
   else { empty($('#ch1-big'), { kind: 'first', compact: true }); }
   if (parcel.status === 'fulfilled') { S.data.parcel = parcel.value; fillParcel(parcel.value); }
-  if (agent.status === 'fulfilled') { S.data.agent = agent.value; fillAgent(agent.value); }
+  if (agent.status === 'fulfilled') { S.data.agent = agent.value; S.data.agent.dense = denseWin(agent.value.gh); fillAgent(agent.value); }
   if (dd.status === 'fulfilled') fillDeploys(dd.value, sum.status === 'fulfilled' ? sum.value : null); else empty($('#cards'), { kind: 'first' });
   if (kgz.status === 'fulfilled') { S.data.kgz = kgz.value; $('#ch6-tag').textContent = `키르기스스탄 · ${kgz.value.features.length}개 지역`; }
   cams(); addLayers();

@@ -237,7 +237,7 @@ async def summary_lookup(args: dict, ctx) -> Out:
     items = [it for it in (res.get("items") or [])]
     out = Out(source="요약(서비스 · 지역 · 상태)")
     rows = []
-    lx = getattr(p, "realm", None) == "lx"              # 원칙 135 — LX 계정 답은 '현장 확인 필요' 없이 AI 분석 결과(화면과 같은 값)
+    lx = True                                           # 원칙 135 — 답은 '현장 확인 필요' 없이 AI 분석 결과(화면과 같은 값 · LX 10-09 · 기관 10-10)
     for k, it in enumerate(items[:8]):
         mk = {}
         for key, e in (it.get("metrics") or {}).items():

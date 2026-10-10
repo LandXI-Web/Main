@@ -111,27 +111,29 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     await page.waitForURL((u) => u.searchParams.get('service') === 'card-farm');
     await page.waitForFunction(() => window.__govSelect?.ready && window.__govSelect.view === 'svc', null, { timeout: 30000 });
     const big = page.locator('.gd-scene');                                               // 구현 5차 기관-4 ⓐ — 결과 장면 위 큰 숫자 하나
-    await expect(big).toHaveAttribute('data-metric', '현장 확인 필요');
+    await expect(big).toHaveAttribute('data-metric', 'AI 분석 결과');                   // 원칙 135 기관까지(10-10 확인 8 ⓐ) — LX 화면과 같은 이름 · 같은 출처
     const v = await big.getAttribute('data-v');
     const sum = await page.evaluate(async () => { const s = JSON.parse(localStorage.getItem('lx_api_session')); const r = await fetch('/api/v1/summary?card=card-farm', { headers: { authorization: 'Bearer ' + s.token } }); return r.json(); });
-    expect(Number(v)).toBe(sum.items.reduce((a, i) => a + (i.metrics.field_check.value || 0), 0));   // 숫자 한 출처(/summary)
+    expect(Number(v)).toBe(sum.items.filter((i) => i.detected_counted).reduce((a, i) => a + (i.metrics.detected.value || 0), 0));   // 숫자 한 출처(/summary AI 분석 결과)
+    await expect(page.locator('body')).not.toContainText(/현장\s*확인/);
     await expect(page.locator('.gs-tab[aria-current]')).toHaveText('현황');
     expect(await page.locator('.gs-tabs a').allInnerTexts()).toEqual(['현황', '결과 지도', '필지 목록', '이력', '통계·보고서']);   // 18차 N-1 ⓐ 탭 다섯
     const mapU = new URL(await page.locator('.gs-tabs a', { hasText: '결과 지도' }).getAttribute('href'), page.url());
     expect(mapU.pathname).toBe('/landxi/v3/xi-clean/');
     expect(mapU.searchParams.get('service')).toBe('card-farm');                         // 지도 위 '보고 있는 결과' 카드가 그 서비스로
-    /* 읍면별 막대의 합 = 큰 숫자(같은 식 · 서버 값) · 이 결과는(결과 설명서) · 내려받기 셋 */
-    await page.waitForSelector('.gd-bars .gd-bar');
-    const bars = await page.locator('.gd-bars .gd-bar-n').allInnerTexts();
-    expect(bars.reduce((a, t) => a + Number(t.replace(/,/g, '')), 0)).toBe(Number(v));
+    /* 시·군·구 하나 — 읍면별 막대는 현장 확인 필요 값이라 뺐다(원칙 135) · 이 결과는(결과 설명서) · 내려받기 셋 */
+    await page.waitForSelector('.gd-about .gd-links');
+    await expect(page.locator('.gd-bars .gd-bar')).toHaveCount(0);
+    await expect(page.locator('.gd-todo')).toHaveCount(0);                               // '내가 확인할 필지' 뺌
     await expect(page.locator('.gd-about .gd-dl3 button')).toHaveCount(0);               // 내려받기는 통계·보고서 탭 한 곳(18차 N-1 ⓐ)
     await expect(page.locator('.gd-epochs .gd-ep-i')).toHaveCount(4);
-    /* 통계·보고서 — 다섯 숫자(현장 확인 필요 = 큰 숫자) · 보고서 만들기 + 내려받기 셋 */
+    /* 통계·보고서 — 숫자 셋(AI 분석 결과 = 큰 숫자 · 의심 필지 · 오탐) · 보고서 만들기 + 내려받기 셋 */
     await page.locator('.gs-tabs a', { hasText: '통계·보고서' }).click();
     await page.waitForURL((u) => u.searchParams.get('tab') === 'stats');
     await page.waitForSelector('.gs-num');
-    await expect(page.locator('.gs-num')).toHaveCount(5);
-    expect(Number(await page.locator('.gs-num[data-k="field_check"] .k-num').getAttribute('data-v'))).toBe(Number(v));
+    await expect(page.locator('.gs-num')).toHaveCount(3);
+    expect(Number(await page.locator('.gs-num[data-k="ai"] .k-num').getAttribute('data-v'))).toBe(Number(v));
+    await expect(page.locator('body')).not.toContainText(/현장\s*확인/);
     await expect(page.locator('.gs-files .gs-file')).toHaveCount(4);
     /* 이력 — 날짜별 한 줄기 */
     await page.locator('.gs-tabs a', { hasText: '이력' }).click();
@@ -153,7 +155,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     await expect(page.locator('.k-mast .gs-plat')).toHaveText('전남광주 AI 플랫폼');
     await expect(page.locator('.gs-reg select')).toBeVisible();                          // 광역만 한 칸 더
     await expect(page.locator('.gs-reg select option').first()).toHaveText('광역 전체');
-    await expect(page.locator('.gd-scene')).toHaveAttribute('data-metric', 'AI 탐지');
+    await expect(page.locator('.gd-scene')).toHaveAttribute('data-metric', 'AI 분석 결과');   // LX 화면과 같은 이름(원칙 135 기관까지)
     await page.selectOption('.gs-reg select', '12130');
     await page.waitForURL((u) => u.searchParams.get('region') === '12130');
     await page.waitForFunction(() => window.__govSelect?.ready, null, { timeout: 30000 });

@@ -43,10 +43,11 @@ test.describe('구현 2차 — 검토 요청 · 주고받기 · 알림', () => {
     // 1) 기관 — XI맵 필지 카드에서 검토 요청(메모 한 줄)
     const tc = await ctx(); const tp = await tc.newPage();
     await frontDoor(tp, BASE, 'lxadmin@namwon', 'gov');
-    await tp.goto(BASE + '/landxi/v3/xi-clean/?rule=R2', { waitUntil: 'domcontentloaded' });
+    /* 기관 XI맵도 AI 분석 결과 흐름(원칙 135 기관까지 · 10-10 확인 8 ⓐ) — 규칙 · 목록 도구 없음. 필지 카드는 지도에서 필지를 누르거나 주소(?pnu=)로 연다 */
+    const pnu = await tp.evaluate(async () => { const s = JSON.parse(localStorage.getItem('lx_api_session')); const r = await fetch('http://localhost:8700/api/v1/survey/findings?state=open&rule=R2&limit=1', { headers: { authorization: 'Bearer ' + s.token } }); return (await r.json()).items[0].pnu; });
+    await tp.goto(BASE + '/landxi/v3/xi-clean/?pnu=' + encodeURIComponent(pnu), { waitUntil: 'domcontentloaded' });
     tp.on('pageerror', (e) => errs.push('tenant ' + e));             // 기관 첫 화면(다른 갈래가 만드는 중)이 아니라 이 흐름의 화면만 본다
-    await tp.locator('[data-tool="list"]').first().click({ timeout: 30000 });
-    await tp.locator('.xc-rows button').first().click({ timeout: 30000 });
+    await expect(tp.locator('[data-tool="list"]')).toHaveCount(0);
     const ask = tp.locator('.k-rv-b');
     await expect(ask).toHaveText('검토 요청', { timeout: 20000 });
     await expect(tp.locator('body')).not.toContainText(/오탐 신고|AI가 잘못 봤어요/);

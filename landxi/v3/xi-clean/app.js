@@ -1,8 +1,8 @@
 /* xi-clean app.js — XI맵(직원 · 영업 · 기관 공용). 명세 LANDXI-FINAL-SPEC §2.8.
    같은 엔진(xi/engine · xi/fx)과 공용 키트(K1 셸 · K2 관문 · K3 무대 · K4 지역 · K5 서랍 · K6 큰 숫자 · K9 빈 상태 · K10 에이전트 · K12 · K13 · K14)를
    조합만 한다. 지역은 변수(URL ?region= · 기관 세션 · 검색 · 전국 지도에서 고르기) — 지역 문자열 하드코딩 0.
-   큰 숫자(LX 직원 · 영업) = AI 분석 결과(GET /summary · 업무 결과로 센 것만 · 셈 단위 = 필지 · 동 · 건) — 원칙 135(10-09).
-   기관 계정(S.fc)은 사용자 답 전까지 예전 실태조사 흐름(우선순위 필지 · 규칙 · 목록 · 대조)을 그대로 쓴다.
+   큰 숫자(LX 직원 · 영업 · 기관) = AI 분석 결과(GET /summary · 업무 결과로 센 것만 · 셈 단위 = 필지 · 동 · 건) — 원칙 135(LX 10-09 · 기관 10-10 확인 8 ⓐ).
+   예전 실태조사 흐름(S.fc — 우선순위 필지 · 규칙 · 목록 · 대조)은 코드만 남기고 어느 계정도 켜지 않는다. 기관 계정은 지도에서 필지를 눌러 필지 카드 → 검토 요청.
    기관 계정 = 관할 시군구만(원칙 39): 지역 목록 · 검색 제안 · 경계는 서버가 준 관할 목록(GET /regions?geom=1)에서만 — 전국 시군구 파일을 받지 않는다.
    광역 기관은 관할 전체로 도착하고 시군구는 사용자가 고른다(화면이 대신 고르지 않는다).
    읍면동 경계 = GET /regions/{sgg}/emd(전국 · 그 시군구 것만) · 결과 층 = GET /regions/{sgg}/results(그 시군구에 결과가 있는 모든 세트 + 전역 분석 결과). */
@@ -140,8 +140,8 @@ async function boot() {
   S.who = who; S.key = who.key; S.lx = who.me.realm === 'lx'; S.tenant = who.me.realm === 'tenant';
   S.sales = S.key === 'lx/sales' || S.key === 'tenant/demo';
   S.canAnalyze = S.lx || S.key === 'tenant/demo';
-  // 원칙 135(10-09): LX 직원 · 영업 = AI 분석 결과가 주인공(실태조사 우선순위 필지 · 규칙 · 목록 · 대조 없음). 기관 = 사용자 답 전까지 그대로
-  S.fc = S.tenant && !S.sales;
+  // 원칙 135: AI 분석 결과가 주인공(실태조사 우선순위 필지 · 규칙 · 목록 · 대조 없음) — LX(10-09) · 기관까지(10-10 확인 8 ⓐ). 옛 흐름 코드는 남겨 둠
+  S.fc = false;
   if (!S.fc) { S.layers.sus = false; S.layers.ai = true; }
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
@@ -314,6 +314,8 @@ async function buildLayers(cat) {
       paint: { 'fill-color': AMBER, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13.5, 0.5, 17, 0.28] } }, 'slot-overlay');
     map.addLayer({ id: sid + '-sl', type: 'line', source: sid, 'source-layer': it.layer, minzoom: 12.5, filter: ['in', ['to-string', ['get', 'pnu']], ['literal', []]],
       paint: { 'line-color': AMBER, 'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 17, 2.2], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13.5, 1] } }, 'slot-overlay');
+    /* 필지 누르기(기관 · 검토 요청) — 보이지 않는 면 한 겹(지적선과 같은 원본 · 필지 번호만 읽는다) */
+    if (canRequest(S.who)) { map.addLayer({ id: sid + '-hit', type: 'fill', source: sid, 'source-layer': it.layer, minzoom: 14, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, 'slot-overlay'); S.hitLayers = [...(S.hitLayers || []), sid + '-hit']; }
     S.parcelLayers.push(sid + '-l'); S.susLayers.push(sid + '-s', sid + '-sl');
   }
   // 실태조사 우선순위 필지 점(기관 화면만 · 먼 축척 · 필지 면이 차오르면 물러난다)
@@ -356,6 +358,10 @@ function wireMap() {
     const lyr = ['xc-pts', ...S.susLayers.filter((l) => l.endsWith('-s'))].filter((l) => map.getLayer(l));
     const hit = map.queryRenderedFeatures(pad, { layers: lyr })[0];
     if (hit?.properties?.pnu) { const t = String(hit.properties.pnu).slice(2); const f = (S.last?.items || []).find((x) => String(x.pnu).slice(2) === t); openParcel(f?.pnu || String(hit.properties.pnu), { fly: hit.layer.id === 'xc-pts' }); return; }
+    /* 기관 — 지도에서 필지를 누르면 필지 카드(대장 · AI 분석 · 검토 요청) */
+    const hl = (S.hitLayers || []).filter((l) => map.getLayer(l));
+    const ph = hl.length ? map.queryRenderedFeatures(e.point, { layers: hl })[0] : null;
+    if (ph?.properties?.pnu) { openParcel(String(ph.properties.pnu)); return; }
     // 먼 축척: 시군구를 누르면 그 지역으로
     if (map.getZoom() < 9.5 && map.getLayer('sgg-hit')) {
       const f = map.queryRenderedFeatures(e.point, { layers: ['sgg-hit'] })[0];
@@ -1198,7 +1204,8 @@ async function openParcel(pnu, { fly = false } = {}) {
   const where = String(d.addr || '').trim().split(/\s+/).slice(-3).join(' ');
   const rv = canRequest(S.who);   // 기관 계정: 이 필지를 LX 담당자에게 검토 요청(메모 한 줄 · 선택)
   if (where && !rv) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '영상 설명', onclick: () => ask(`${where} 영상 설명해 줘`) }));
-  if (rv && f) { const slot = h('div'); body.append(slot); import('../gov-select/map-extras.js').then((m) => m.parcelNote(slot, { finding: f })).catch((e) => K.devlog('note', String(e?.message || e))); }
+  // 메모 · 다음 확인 날짜(확인 이력)는 화면에서 쓰지 않는다(원칙 135 기관까지 · 10-10 확인 8 ⓐ) — 옛 흐름(S.fc)에서만
+  if (rv && f && S.fc) { const slot = h('div'); body.append(slot); import('../gov-select/map-extras.js').then((m) => m.parcelNote(slot, { finding: f })).catch((e) => K.devlog('note', String(e?.message || e))); }
   if (act.childElementCount || rv) body.append(act);
   if (rv) reviewAction(act, { who: S.who, pnu, rule: f?.rule, fid: f?.id, lnglat: f?.lnglat, from: 'xi-clean' });
   dr.set(body);

@@ -52,8 +52,8 @@ export async function sampleParcel() {
   return local('sample-parcel.json');
 }
 
-/** ch3 · 융합 질문 장면(읍면동 집계) */
-export const agentScene = () => local('agent-scene.json');
+/** ch3 · XI ChatGEO 장면(남원시 비닐하우스 — 원판 모델 결과 파일 값 · 동 면 · 읍면동 집계) */
+export const agentScene = () => local('greenhouse-scene.json');
 
 /** ch4 · ch5 · 실결과 있는 배포본과 카드 */
 export async function deploys() {

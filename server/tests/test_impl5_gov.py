@@ -72,8 +72,8 @@ def test_main_pictures_low_res_own_tenant_and_facts_match_summary(T):
     assert set(j["scenes"]) <= {"card-farm"}                                   # 그 기관 · 열린 서비스 것만
     f = j["facts"]
     summ = get("/summary", T["nw"], params={"card": f["result"]["card"]}).json()["items"]
-    assert f["result"]["label"] == "현장 확인 필요"
-    assert f["result"]["env"]["value"] == sum(i["metrics"]["field_check"]["value"] or 0 for i in summ)   # 숫자 한 출처
+    assert f["result"]["label"] == "AI 분석 결과"                             # 원칙 135 기관까지(10-10 확인 8 ⓐ)
+    assert f["result"]["env"]["value"] == sum(i["metrics"]["detected"]["value"] or 0 for i in summ if i.get("detected_counted"))   # 숫자 한 출처(요약 AI 분석 결과)
     brand = get("/brand/namwon").json()
     assert f["services"]["value"] == len(brand["services"])
     gj = get("/brand/gwangju-jeonnam/main").json()

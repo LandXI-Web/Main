@@ -116,6 +116,6 @@
   "cmdk.why.nolayer": "이 화면에는 그 층이 없습니다",
   "cmdk.layer.imagery": "영상",
   "cmdk.layer.results": "AI 분석 결과",
-  "cmdk.layer.findings": "현장 확인 필요",
+  "cmdk.layer.findings": "의심 필지",
   "cmdk.layer.parcels": "지적선"
 }

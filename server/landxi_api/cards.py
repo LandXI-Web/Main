@@ -98,9 +98,10 @@ def _raw_ai(it: dict) -> bool:
     return any(str(x).startswith("job_") for x in sets)
 
 
-def _biz(it: dict, inf: dict, fc_first: bool = True) -> tuple | None:
+def _biz(it: dict, inf: dict, fc_first: bool = False) -> tuple | None:
     """그 항목의 업무 결과 한 가지 — (봉투, 말, 키). 현장 확인 필요(필지 대조) → 다듬은 결과 세트의 AI 탐지 수 → 없음.
-    fc_first=False(LX 화면 · 원칙 135): 현장 확인 필요는 건너뛰고 AI 분석 결과(다듬은 결과 세트의 AI 탐지 수)만. 기관 화면은 사용자 답 전까지 그대로."""
+    fc_first=False(기본 · 원칙 135 — LX 화면 10-09 · 기관 화면까지 10-10 확인 8 ⓐ): 현장 확인 필요는 건너뛰고 AI 분석 결과(다듬은 결과 세트의 AI 탐지 수)만.
+    fc_first=True 는 계산 확인용으로만 남긴다(화면 · 답은 쓰지 않음)."""
     fc = _metric(it, "field_check") if fc_first else None
     if fc and (_vnum(fc["value"]) or 0) > 0:
         return fc, "현장 확인 필요 필지", "field_check"
@@ -206,8 +207,8 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     uses_text = " · ".join(x for x in parts if x) or (f"첫 결과 전 {n['none']}" if n["none"] else "아직 없음")
 
     # ⑥ 결과 예시 = AI 분석 결과(다듬은 결과 세트의 AI 탐지 수 · 셈 단위 = 그 세트의 필지 · 동 · 건) — LX 가 고른 지역 → 운영 먼저.
-    #   원칙 135(10-09): LX 화면에는 '현장 확인 필요'를 쓰지 않는다. 기관 덱(tenant 인자 · _deck_tenant)은 사용자 답 전까지 그대로(현장 확인 필요 먼저)
-    cands = [(it, b) for it, b in ((it, _biz(it, inf, fc_first=tenant is not None)) for it in items) if b]
+    #   원칙 135: 화면에는 '현장 확인 필요'를 쓰지 않는다 — LX(10-09) · 기관 덱(10-10 확인 8 ⓐ) 같은 규칙
+    cands = [(it, b) for it, b in ((it, _biz(it, inf)) for it in items) if b]
     pick = next(((it, b) for it, b in cands if inf.get("result_sgg") and str(it.get("sgg_cd") or "") == inf["result_sgg"]), None)
     if not pick and cands:
         pick = sorted(cands, key=lambda x: (RANK[STAGE_KEY.get(x[0]["stage"], "none")], 0 if x[1][2] == "field_check" else 1))[0]
@@ -326,7 +327,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         e = next((mt[k] for k in ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50") if isinstance(mt.get(k), dict) and _vnum(mt[k].get("value")) is not None), None)
         if e:
             ad = str(e.get("as_of") or "")
-            model_card = {"acc": env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
+            model_card = {"id": md["id"], "acc": env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
                           "updated": ad.replace("-", ".")[:10] or None}
             break
     registered = any((md["status"] or "") == "registered" for md in cur_learned)
@@ -349,8 +350,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "line": _words(inf.get("line")), "scene": scene, **({"scenes": scenes} if p.realm == "tenant" else {}),
         "where": example["region"] if example else where_any, "as_of": example["as_of"] if example else None, "example": example,
         "example_note": None if example else ("첫 결과 뒤 표시" if state == "none"
-                                              else ("필지 대조 뒤 표시" if parcel else "업무 결과 집계 전") if tenant      # 기관 덱 — 사용자 답 전까지 그대로
-                                              else "AI 분석 결과 있음" if result_sggs else "업무 결과 집계 전"),
+                                              else "AI 분석 결과 있음" if result_sggs else "업무 결과 집계 전"),      # 기관 덱도 같은 말(10-10 확인 8 ⓐ)
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "version": cur["version"] if cur else None, "owner": own["name"],
@@ -441,13 +441,13 @@ async def _deck_tenant(p) -> dict:
                 return None
             return {**es[0], "value": sum(_vnum(e["value"]) or 0 for e in es), "as_of": max(str(e.get("as_of") or "") for e in es)}
         rp = total("review_pending")
-        # 결과 예시 = 우리 기관의 업무 결과 합(현장 확인 필요 → 다듬은 결과 세트의 AI 탐지 수) — 칸 도형 수는 쓰지 않는다(사용자 규칙 2)
+        # 결과 예시 = 우리 기관의 AI 분석 결과 합(다듬은 결과 세트의 AI 탐지 수 · LX 덱과 같은 출처 · 10-10 확인 8 ⓐ) — 칸 도형 수는 쓰지 않는다(사용자 규칙 2)
         inf2 = m["info"].get(c["id"]) or {}
         bs = [b for b in (_biz(it, inf2) for it in mine) if b]
         use_l = [b for b in bs if b[2] == "field_check"] or [b for b in bs if b[2] == "detected"]
         if use_l:
             e0 = use_l[0][0]
-            word = use_l[0][1] if len(use_l) == 1 else ("현장 확인 필요 필지" if use_l[0][2] == "field_check" else f"AI 탐지 {e0.get('unit') or '건'}")
+            word = use_l[0][1] if len(use_l) == 1 else "AI 분석 결과"
             core["example"] = {"value": sum(_vnum(b[0]["value"]) or 0 for b in use_l), "unit": e0.get("unit") or "", "basis": e0.get("basis") or "estimate",
                                "as_of": max(str(b[0].get("as_of") or "") for b in use_l)[:10], "source": e0.get("source") or "", "label": e0.get("label") or "",
                                "word": word, "place": short}

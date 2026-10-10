@@ -21,11 +21,12 @@ from .runner import KST, Ctx, emit, finish, persist_start, persist_state, persis
 from .tools import Out
 
 FIXED = "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
-FIXED_LX = "AI 추론 · 검수 전 · 위법 판정 아님"          # 원칙 135 — LX 계정 보고서는 '현장 확인' 없이(기관 계정은 그대로)
+FIXED_LX = "AI 추론 · 검수 전 · 위법 판정 아님"          # 원칙 135 — 보고서는 '현장 확인' 없이(LX 10-09 · 기관 10-10)
 
 
 def _lx(ctx) -> bool:
-    return getattr(getattr(ctx, "principal", None), "realm", None) == "lx"
+    """원칙 135 — 보고서에 '현장 확인'을 쓰지 않는다. LX 계정(10-09) · 기관 계정까지(10-10 확인 8 ⓐ) — 모든 계정. 옛 문구(FIXED)는 계산 확인용으로만 남김."""
+    return True
 
 
 def fixed_of(ctx) -> str:

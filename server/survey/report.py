@@ -348,7 +348,8 @@ FIXED_LX = "AI 추론 · 검수 전 · 위법 판정 아님"   # 원칙 135 — 
 
 
 def _lx(d: dict) -> bool:
-    return d.get("realm") == "lx"
+    """원칙 135 — 보고서에 '현장 확인'을 쓰지 않는다. LX(10-09) · 기관 realm 까지(10-10 확인 8 ⓐ) — 모든 계정."""
+    return True
 
 
 def _fixed(d: dict) -> str:

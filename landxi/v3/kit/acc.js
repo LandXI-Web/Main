@@ -19,3 +19,12 @@ export function accOf(metrics) {
 
 /** 학습 로그(results.csv) 열 — 그 기록과 같은 지표의 회차별 값(곡선용) */
 export const accColumn = (key, task) => (/mask|\(M\)/.test(key || '') || (!key && task === 'seg') ? 'metrics/mAP50(M)' : 'metrics/mAP50(B)');
+
+/** 업무의 '검증 정확도' = 그 업무를 맡은 공개 서비스가 쓰는 모델의 값(10-10 확인 9 ⓐ · 숫자 한 출처).
+    deck = 서비스 카드 덱(/cards/deck items · 서버가 고른 그 카드의 모델 · 같은 규칙의 값). 업무에 이어진 서비스 카드 먼저,
+    없으면 업무 후보 모델을 쓰는 공개 서비스. 공개 서비스가 없으면 null — 그때 학습 모델 값은 '최근 학습 n%'처럼 다른 이름으로만 쓴다. */
+export function serviceAcc(deck, { card = null, models = [] } = {}) {
+  const live = (deck || []).filter((c) => c.official && c.model?.acc && Number.isFinite(Number(c.model.acc.value)));
+  const hit = (card && live.find((c) => c.id === card)) || live.find((c) => c.model.id && models.includes(c.model.id));
+  return hit ? { ...hit.model.acc, value: Math.round(Number(hit.model.acc.value)), model: hit.model.id || null, card: hit.id } : null;
+}

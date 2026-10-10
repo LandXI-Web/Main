@@ -1,7 +1,7 @@
 /* 서비스 대시보드 — 장면 먼저(구현 5차 · 확인 대장 '기관 화면 확인' 기관-4 ⓐ · 시안 design-r8/gov-design/mock/rehome-dash.html ·
    2묶음 18차 N-1 ⓐ — 탭 다섯 '현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서'(시안 design-r9/gov-2 dash.html) · 내려받기는 통계·보고서 탭 한 곳).
    왼쪽: 결과 장면 위 큰 숫자 하나(업무 결과 · 서버 값) · 읍면별(광역 전체면 시·군·구별) 막대 — 누르면 그 곳 결과 지도 · 시점별 영상과 결과.
-   오른쪽: '이 결과는'(결과 설명서 세 줄 + '자세히' 서랍 — 분기 공간 1단 서버 그대로 · 행정정보와 비교) · 내가 확인할 필지 · LX와 주고받은 검토 요청 + LX 담당.
+   오른쪽: '이 결과는'(결과 설명서 세 줄 + '자세히' 서랍 — 분기 공간 1단 서버 그대로 · 행정정보와 비교) · LX와 주고받은 검토 요청 + LX 담당(확인할 필지 목록은 원칙 135 로 뺌).
    탭: 현황 · 결과 지도(XI맵 — 지도 위 '보고 있는 결과' 카드 · '이 영상으로 분석 요청') · 필지 목록(필지 대조가 있는 서비스만) · 이력 · 통계·보고서(tabs.js).
    숫자는 모두 서버 값 한 출처(대표 수치 요약 · 실태조사 집계 · 결과 설명서) — 지어내지 않는다. 장면은 그 기관 관할 것만(서버가 거른다).
    지역 고정값 0 — 관할 · 서비스 · 장면 · 담당 모두 로그인 기관에서. */
@@ -13,6 +13,7 @@ import { shortAddr, joinLine } from './brand.js';
 import { setRequestService } from './menu.js';
 import { sixCells, val, segs, nf } from '../gov-space/guide.js';
 import { renderHistory, renderStats } from './tabs.js';
+import { aiResult } from '../lx-console/summary.js';   // AI 분석 결과 — LX 화면과 같은 계산(원칙 135 기관까지 · 10-10 확인 8 ⓐ)
 
 /* 우리 공간의 설명서 칸 스타일(여섯 칸 · 동의 창)을 같이 쓴다 — 한 번만 붙인다 */
 {
@@ -32,15 +33,11 @@ export function total(items, key) {
   if (es.length === 1) return es[0];
   return { ...es[0], value: es.reduce((a, e) => a + e.value, 0), as_of: es.map((e) => e.as_of).sort().pop() };
 }
-/** 큰 숫자 하나 = 업무 결과 — 현장 확인 필요(필지 대조) → 없으면 AI 탐지(덱이 업무 결과로 판정한 것만) → 없으면 없음(첫 결과 전) */
-export function primary(items, card) {
-  const fc = total(items, 'field_check');
-  if (fc && fc.value) return { key: 'field_check', env: fc, label: '현장 확인 필요' };
-  if (card?.example && card.example.label === 'AI 탐지') {   // 덱 = 다듬은 결과의 AI 탐지만(분석 칸 도형 수 0 · 사용자 규칙 2)
-    const d = total(items, 'detected');
-    if (d && d.value) return { key: 'detected', env: d, label: 'AI 탐지' };
-  }
-  return null;
+/** 큰 숫자 하나 = AI 분석 결과 — LX 화면(XI맵 · 서비스 상세)과 같은 출처 · 같은 계산(요약의 AI 탐지 중 업무 결과로 센 것 · aiResult).
+    원칙 135 기관까지(10-10 확인 8 ⓐ): '현장 확인 필요'는 서버 계산에만 남고 화면은 쓰지 않는다. 결과가 없으면 없음(첫 결과 전) */
+export function primary(items) {
+  const r = aiResult({ items });
+  return r ? { key: 'detected', env: r.env, label: 'AI 분석 결과', unit: r.unit } : null;
 }
 
 /* ═════════════ 그리기 ═════════════ */
@@ -58,7 +55,7 @@ export async function renderDash(ctx) {
   const all = itemsOf(s.card);
   const cur = reg ? all.filter((i) => i.sgg_cd === reg.sgg_cd) : all;
   const survey = cur.some((i) => i.survey_state || (i.metrics?.field_check && i.metrics.field_check.value !== null));
-  const p = s.open ? primary(cur, card) : null;
+  const p = s.open ? primary(cur) : null;
   const sggOne = reg?.sgg_cd || (!wide ? (cur.find((i) => i.sgg_cd)?.sgg_cd || regs[0]?.sgg_cd) : null);
   const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...extra });
   const mapHref = XI(sggOne, { service: s.card });                // 결과 지도 — 그 서비스의 '보고 있는 결과' 카드가 붙는다(map-extras.js)
@@ -130,17 +127,16 @@ export async function renderDash(ctx) {
     main.append(h('section.t-card.gd-box.gd-epochs', { 'aria-label': '시점별 영상과 결과' },
       h('div.gd-box-h', {}, h('h2', { text: `영상과 결과 — ${years.length === 1 ? years[0] + '년 ' : ''}${show.length} 시점` }), h('span.gd-small', { text: months })),
       h('div.gd-ep', {}, ...show.map((x) => h('a.gd-ep-i', { href: mapHref, 'aria-label': `${x.when} 결과 지도` }, h('img', { src: x.src, alt: '', loading: 'lazy', decoding: 'async' }), h('span', { text: x.when })))),
-      h('p.gd-note', { text: '시점마다 찍은 영상 위 AI 결과입니다. 판정은 담당자가 현장에서 확정합니다.' })));
+      h('p.gd-note', { text: '시점마다 찍은 영상 위 AI 결과입니다. 판정은 담당자가 정합니다.' })));
   }
 
   /* ── 오른쪽 ── */
   const about = h('section.t-card.gd-box.gd-about', { 'aria-label': '이 결과는' });
-  const todo = h('section.t-card.gd-box.gd-todo', { 'aria-label': '내가 확인할 필지' });
   const talk = h('section.t-card.gd-box.gd-talk', { 'aria-label': 'LX와 주고받은 검토 요청' });
-  side.append(...[about, survey && s.open ? todo : null, talk].filter(Boolean));
+  /* '내가 확인할 필지'(현장 확인 목록)는 화면에서 쓰지 않는다(원칙 135 기관까지 · 10-10 확인 8 ⓐ) — drawTodo 는 남겨 둠 */
+  side.append(...[about, talk].filter(Boolean));
   await Promise.all([
     drawAbout(about, newLine, { s, B, q, fusion }).catch((e) => { K.devlog('about', e.message); about.hidden = true; }),
-    survey && s.open ? drawTodo(todo, { cur, reg, rep, sggOne, card: s.card }).catch((e) => { K.devlog('todo', e.message); }) : null,
     drawTalk(talk, { s, card, deps, mapHref }).catch((e) => { K.devlog('talk', e.message); }),
   ]);
 }
@@ -149,11 +145,11 @@ async function drawBars(el, { s, p, wide, reg, all, sggOne, survey }) {
   if (!s.open || !p) return;
   let rows = [], title = '', note = '';
   if (wide && !reg) {                                              // 광역 전체 — 시·군·구별(대표 수치 요약 한 출처)
-    rows = all.filter((i) => i.sgg_cd).map((i) => ({ name: lastWord(i.region_name), n: total([i], p.key)?.value || 0, href: '?' + new URLSearchParams({ service: s.card, region: i.sgg_cd }) }))
+    rows = all.filter((i) => i.sgg_cd).map((i) => ({ name: lastWord(i.region_name), n: (primary([i])?.unit === p.unit ? primary([i]).env.value : 0) || 0, href: '?' + new URLSearchParams({ service: s.card, region: i.sgg_cd }) }))
       .filter((r) => r.n > 0);
     title = `시·군·구별 ${p.label}`; note = '시·군·구를 누르면 그 곳의 현황으로 갑니다.';
     if (rows.length < 2) return;                                    // 한 곳뿐이면 막대 대신 큰 숫자로 충분하다
-  } else if (survey && p.key === 'field_check' && sggOne) {         // 시·군·구 하나 — 읍면별(실태조사 집계 · 큰 숫자와 같은 식)
+  } else if (survey && p.key === 'field_check' && sggOne) {         // (화면에서 쓰지 않음 — 큰 숫자가 AI 분석 결과라 읍면별 같은 값이 없다 · 원칙 135)
     const j = await api('/survey/stats?by=emd&sgg=' + encodeURIComponent(sggOne) + '&card=' + encodeURIComponent(s.card));   // 이 서비스의 필지 대조만(큰 숫자와 같은 범위)
     if (j.state === 'building') return;
     rows = (j.items || []).map((e) => ({ name: e.key, n: e.field_check?.value || 0, href: XI(sggOne, { service: s.card, ...(e.top5?.[0]?.pnu ? { pnu: e.top5[0].pnu } : {}) }) })).filter((r) => r.n > 0);
@@ -188,7 +184,7 @@ async function drawAbout(el, newLine, { s, B, q, fusion }) {
   el.append(h('dl.gd-kv', {},
     h('div', {}, h('dt', { text: '무엇이' }), h('dd', {}, h('span', { text: whatTxt }), sub ? h('small', {}, segs(sub)) : null)),
     r0 ? h('div', {}, h('dt', { text: '언제' }), h('dd', {}, segs([r0.shot, r0.analyzed ? `${ymd(r0.analyzed)} 분석` : ''].filter(Boolean).join(' · ')))) : null,
-    t.level ? h('div', {}, h('dt', { text: '믿을 만한 정도' }), h('dd', {}, h('span.gd-lv', { dataset: { lv: t.level }, text: t.level }), t1 ? h('small', { text: t1 }) : null, h('small', { text: '현장 확인 전 참고용' }))) : null));
+    t.level ? h('div', {}, h('dt', { text: '믿을 만한 정도' }), h('dd', {}, h('span.gd-lv', { dataset: { lv: t.level }, text: t.level }), t1 ? h('small', { text: t1 }) : null)) : null));
   const more = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '이 결과 설명 자세히' });
   /* 내려받기는 통계·보고서 탭 한 곳(18차 N-1 ⓐ) — 이 카드는 설명 세 줄 · 자세히 · 행정정보와 비교 */
   el.append(h('div.gd-links', {}, more, s.open ? h('a.t-btn.t-btn--text.gd-more', { href: fusion, text: '행정정보와 비교' }) : null));
@@ -212,7 +208,7 @@ async function drawAbout(el, newLine, { s, B, q, fusion }) {
   }
 }
 
-async function drawTodo(el, { cur, reg, rep, sggOne, card }) {
+export async function drawTodo(el, { cur, reg, rep, sggOne, card }) {
   const rp = total(cur, 'review_pending');
   el.append(h('div.gd-box-h', {}, h('h2', { text: '내가 확인할 필지' }), rp ? h('span.gd-small', { html: `결과 확인 대기 ${K.numHtml(rp)}` }) : null));
   const list = h('ul.gd-rows'); el.append(list);

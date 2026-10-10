@@ -1189,7 +1189,7 @@ def explain_ledger(row: dict, parcel: dict | None = None) -> dict:
             "three": ev,
             "thresholds": [{"key": k, "value": env(v, "ratio" if v < 1 else "m2", "estimate", "대장 대조 기준 초기값",
                                                   "[추정 초기값] · 법령 기준 아님")} for k, v in th.items()],
-            "note": d.get("note"), "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"}
+            "note": d.get("note"), "fixed": "AI 추론 · 검수 전 · 위법 판정 아님"}   # 원칙 135
 
 
 async def ledger_rows(p: Principal, pnu: str) -> list[dict]:

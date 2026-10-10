@@ -135,6 +135,6 @@
   "cmdk.why.nolayer": "this screen has no such layer",
   "cmdk.layer.imagery": "imagery",
   "cmdk.layer.results": "AI results",
-  "cmdk.layer.findings": "field-check",
+  "cmdk.layer.findings": "flagged parcels",
   "cmdk.layer.parcels": "parcel line"
 }

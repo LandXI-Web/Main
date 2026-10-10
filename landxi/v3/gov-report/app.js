@@ -578,7 +578,7 @@ function armDocx({ emd_cd, rule }) {
         { h: '부속 표 1 · 등급 × 상태', note: '등급 = AI 분석 점수 순 · 상태 = 기관이 남긴 기록',
           head: ['규칙', 'A', 'B', 'C', '계', '판정 전', '확인됨', '종결'],
           rows: [[ruleNm, ...g.map(n0), n0(sum), n0((c.open || 0) + (c.assigned || 0)), n0(c.inspected), n0((c.closed || 0) + (c.dismissed || 0))]] },
-        { h: '부속 표 2 · 의심 상위 10건(점수 순)', note: 'AI 분석 면적 · 비율 = 추정치(현장 확인 전)',
+        { h: '부속 표 2 · 의심 상위 10건(점수 순)', note: 'AI 분석 면적 · 비율 = 추정치',
           head: ['순위', '소재지', '지목', '등급', 'AI 분석 면적(㎡)', '필지 대비', '상태', '판정'],
           rows: ((top && top.items) || []).map((f, i) => {
             const v = verdictOf(f);
@@ -600,7 +600,7 @@ function armDocx({ emd_cd, rule }) {
       const blob = buildDocx({
         title, author: org,
         meta: [org, `작성 ${ymd(now)}`, ruleNm && `규칙 ${ruleNm}`].filter(Boolean).join(' · '),
-        sections, tables, notes: notesTxt, foot: 'AI 분석 결과는 참고자료이며, 위법 여부는 현장 확인으로 정합니다.',
+        sections, tables, notes: notesTxt, foot: 'AI 분석 결과는 참고자료이며, 위법 여부는 담당자가 정합니다.',
       });
       const u = URL.createObjectURL(blob);
       const t = document.createElement('a'); t.href = u; t.download = `실태조사_초안_${emd}_${ymd(now).replace(/\./g, '')}.docx`;
@@ -752,7 +752,7 @@ async function loadSus() {
   $('#sus-table').hidden = !has; box.hidden = has;
   if (!has) {
     const rg = regionOf(S.region);
-    empty(box, { kind: 'first', text: rg && rg.state === 'no_ai' ? 'AI 분석 전입니다' : '현장 확인이 필요한 필지가 없습니다' });
+    empty(box, { kind: 'first', text: rg && rg.state === 'no_ai' ? 'AI 분석 전입니다' : '의심 필지가 없습니다' });
   }
   susTbl.set(S.sus);
   susPoints();

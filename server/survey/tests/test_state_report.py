@@ -127,7 +127,7 @@ def test_report_docx_rows_and_phrase():
     top_tbl = [t for t in d.tables if t.rows[0].cells[0].text == "No"][0]
     assert len(top_tbl.rows) == 1 + 20
     txt = report.docx_text(blob)
-    assert S.FIXED_PHRASE in txt and "[추정 초기값]" in txt and "⑤ 법적 근거" in txt
+    assert report.FIXED_LX in txt and "현장 확인" not in txt and "[추정 초기값]" in txt and "⑤ 법적 근거" in txt   # 원칙 135 — 모든 계정 보고서
     assert "[법령 확인 · 2차 RAG]" not in txt and report.dev_words(txt) == [], report.dev_words(txt)
     heads = [c.text for t in d.tables for c in t.rows[0].cells]
     assert not [h for h in heads if "성명" in h or "소유자" in h]

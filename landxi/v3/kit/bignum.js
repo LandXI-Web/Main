@@ -13,8 +13,8 @@ import { sig } from './sig.js';
 import { t, nf } from './i18n.js';
 import { watch, unwatch } from './loader.js';
 
-/** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목). 'AI 분석 결과' = 원칙 135(10-09) · 맨 뒤 하나는 기관 화면(사용자 답 전까지) */
-export const ALLOWED = ['AI 분석 결과', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '승인 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area', '현장 확인 필요'];
+/** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목). 'AI 분석 결과' = 원칙 135(LX 10-09 · 기관 10-10 — '현장 확인 필요'는 뺌) */
+export const ALLOWED = ['AI 분석 결과', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '승인 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area'];
 /** 도착 전 표시를 빈 값으로 넘기는 한도(ms) */
 export const PENDING_MS = 20000;
 const UNIT = { count: '건', parcels: '필지', m2: '㎡', ha: 'ha', km2: '㎢', ratio: '%' };

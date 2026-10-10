@@ -1,11 +1,13 @@
 /* 서비스 대시보드의 '이력' · '통계·보고서' 탭(구현 5차 2묶음 · 확인 대장 18차 N-1 ⓐ 묶음 · 기관-9 ⓑ · 시안 design-r9/gov-2 dash.html?tab=history|stats).
    이력 = 그 서비스에서 일어난 일 한 줄기(결과 공개 · AI 분석 · 확인 기록 · 검토 요청 · 분석 요청 · 촬영 요청 · 내려받기) — 서버 GET /history · 거르기 칩 · 날짜별 · 엑셀(CSV).
-   통계·보고서 = 다섯 숫자(의심 필지 · 현장 확인 필요 · 확인 끝 · 오탐 · 현장 확인 예정) · 읍면별 표 · 월별 확인 기록 · 보고서 만들기 · 자료 내려받기(내려받기는 이 탭 한 곳).
+   통계·보고서 = 숫자 셋(AI 분석 결과 · 의심 필지 · 오탐) · 읍면별 표 · 보고서 만들기 · 자료 내려받기(내려받기는 이 탭 한 곳).
+   원칙 135 기관까지(10-10 확인 8 ⓐ): 현장 확인 필요 · 확인 끝 · 확인 예정 · 월별 확인 기록 · 이력의 확인 기록은 화면에서 쓰지 않는다(서버 기록은 그대로).
    숫자는 서버 값 그대로(GET /history/stats · 결과 설명서) · 지어내지 않는다 · 필지 대조가 없는 서비스는 '필지 대조가 없는 서비스' 한 줄과 내려받기만. */
 import * as K from '../kit/index.js';
 import { api } from '../../shared/api-v1.js';
 import { h } from '../kit/util.js';
 import { download as fetchFile, val } from '../gov-space/guide.js';
+import { summary, aiResult } from '../lx-console/summary.js';   // AI 분석 결과 — LX 화면과 같은 출처 · 같은 계산
 
 const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
 const md = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
@@ -16,20 +18,20 @@ export async function renderHistory(main, side, { s, B }) {
   const box = h('section.t-card.gd-box.gy-hist', { 'aria-label': '이력' });
   main.append(box);
   side.append(h('section.t-card.gd-box.gy-legend', { 'aria-label': '이력에 남는 것' }, h('div.gd-box-h', {}, h('h2', { text: '이력에 남는 것' })),
-    h('dl.gy-leg', {}, ...[['결과 공개', 'LX가 새 판 · 회차를 열 때'], ['확인 기록', '담당자가 필지 카드에 적은 메모 · 다음 확인 날짜'], ['검토 요청', '보낸 메모와 LX 답'],
+    h('dl.gy-leg', {}, ...[['결과 공개', 'LX가 새 판 · 회차를 열 때'], ['검토 요청', '보낸 메모와 LX 답'],
       ['분석 요청', '보냄 → LX 확인 → 분석 끝'], ['촬영 요청', '보냄 → LX 답(시기 · 금액)'], ['내려받기', '누가 무엇을 받았나']]
       .map(([k, d]) => h('div', {}, h('dt', {}, h('span.t-chip', { text: k })), h('dd', { text: d })))),
     h('p.gd-note', { text: '모두 서버에 이미 쌓이는 기록을 한 줄기로 보이는 것입니다.' })));
   let j;
   try { j = await api('/history?' + new URLSearchParams({ card: s.card })); }
   catch { const x = h('div'); box.append(x); K.empty(x, { kind: 'error', title: '이력을 불러오지 못했습니다' }); return; }
-  const items = j.items || [];
+  const items = (j.items || []).filter((x) => x.kind !== 'check');   // 확인 기록(현장 확인 이력)은 화면에서 쓰지 않는다(원칙 135)
   let on = 'all';
   const chips = h('div.gy-chips', { role: 'tablist', 'aria-label': '거르기' });
   const list = h('div.gy-days');
   const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '엑셀로 내려받기' });
   box.append(h('div.gd-box-h', {}, h('h2', { text: '이력' }), h('span.gd-small', { text: '이 서비스에서 일어난 일 · 시간순' })), chips, csv, list);
-  const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
+  const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).filter(([k]) => k !== 'check').map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
   const draw = () => {
     chips.replaceChildren(...kinds.map(([k, t, n]) => h('button.gy-chip', { type: 'button', role: 'tab', 'aria-selected': String(on === k), onclick: () => { on = k; draw(); } },
       t, h('b.num', { text: ` ${nf(n)}` }))));
@@ -86,8 +88,11 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
       top.hidden = true;
       return;
     }
-    const n = j.numbers || {};
-    nums.replaceChildren(...[['suspect', '의심 필지 · 확인 전'], ['field_check', '현장 확인 필요'], ['closed', '확인 끝'], ['fp', '오탐 · AI가 잘못 봄'], ['planned', '현장 확인 예정']]
+    const n = { ...(j.numbers || {}) };
+    /* AI 분석 결과 = 요약 한 출처(대시보드 큰 숫자 · LX 화면과 같은 값) — 없으면 그 칸을 접는다 */
+    const ai = aiResult(await summary().catch(() => null), (i) => i.card === s.card);
+    if (ai) n.ai = ai.env;
+    nums.replaceChildren(...[['ai', 'AI 분석 결과'], ['suspect', '의심 필지'], ['fp', '오탐 · AI가 잘못 봄']].filter(([k]) => n[k])
       .map(([k, l]) => h('div.gs-num', { dataset: { k } }, h('b', { html: K.numHtml(n[k]) }), h('span', { text: l }))));
     /* 읍면별 표 — 우선순위 A 많은 곳부터 열두 줄 + 그 밖 + 전체 · '모두 펼치기' */
     const rows = j.emd || [];
@@ -98,7 +103,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
       const show = all ? rows : rows.slice(0, 12), rest = all ? [] : rows.slice(12);
       const tr = (r, cls) => h('tr', { class: cls || '' }, h('td', { text: r.name }), h('td.num', { text: nf(val(r.suspect)) }),
         h('td.gs-bar-c', {}, h('i', { style: `--w:${Math.max(2, Math.round(((val(r.prio_a) || 0) / (cls === 'is-rest' ? (val(r.prio_a) || 1) : max)) * 100))}%` })),
-        h('td.num', { text: nf(val(r.prio_a)) }), h('td.num', { text: nf(val(r.closed)) }), h('td.num', { text: nf(val(r.fp)) }));
+        h('td.num', { text: nf(val(r.prio_a)) }), h('td.num', { text: nf(val(r.fp)) }));
       const sum = (k, xs) => xs.reduce((a, r) => a + (val(r[k]) || 0), 0);
       const restRow = rest.length ? tr({ name: `그 밖 ${rest.length}곳`, suspect: sum('suspect', rest), prio_a: sum('prio_a', rest), closed: sum('closed', rest), fp: sum('fp', rest) }, 'is-rest') : null;
       tb.replaceChildren(...show.map((r) => tr(r)), ...(restRow ? [restRow] : []),
@@ -106,11 +111,12 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     };
     fill();
     const more = rows.length > 12 ? h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button', text: `${rows.length}곳 모두 펼치기`, onclick: () => { all = !all; more.textContent = all ? '줄이기' : `${rows.length}곳 모두 펼치기`; fill(); } }) : null;
-    table.replaceChildren(h('div.gd-box-h', {}, h('h2', { text: '읍면별' }), h('span.gd-small', { text: `우선순위 A ${nf(val(n.prio_a))} 중 판정 전 ${nf(val(n.field_check))}` })),
+    table.replaceChildren(h('div.gd-box-h', {}, h('h2', { text: '읍면별' }), h('span.gd-small', { text: '우선순위 A 많은 곳부터' })),
       h('div.gs-tbl-w', {}, h('table.gs-tbl', {}, h('thead', {}, h('tr', {}, h('th', { text: '읍면동' }), h('th.num', { text: '의심 필지' }), h('th', { text: '' }),
-        h('th.num', { text: '우선순위 A' }), h('th.num', { text: '확인 끝' }), h('th.num', { text: '오탐' }))), tb)), more);
-    /* 월별 확인 기록 — 담당자가 적은 것(상태 기록) */
-    month.hidden = false;
+        h('th.num', { text: '우선순위 A' }), h('th.num', { text: '오탐' }))), tb)), more);
+    /* 월별 확인 기록(현장 확인 이력)은 화면에서 쓰지 않는다(원칙 135 · 10-10 확인 8 ⓐ) — 아래 그리기는 남겨 둠 */
+    month.hidden = true;
+    if (month.hidden) return;
     const ms = j.monthly || [];
     const mmax = Math.max(1, ...ms.map((m) => val(m.n) || 0));
     const chips = h('div.gs-period', { role: 'group', 'aria-label': '기간' }, ...[['all', '전체'], ['year', '올해'], ['month', '이번 달']].map(([k, t]) =>
@@ -123,7 +129,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   await draw();
   /* 보고서 · 자료 내려받기 — 내려받기는 이 탭 한 곳(N-1 ⓐ) · 분기 공간 1단 서버 그대로(관할 안만 · 처음 한 번 이용 약속 · 기록) */
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
-  if (survey) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: '실태조사 보고서' }), h('small', { text: '읍면별 표 · 확인 결과 · 지도 그림' })),
+  if (survey) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: '실태조사 보고서' }), h('small', { text: '읍면별 표 · AI 분석 결과 · 지도 그림' })),
     h('a.t-btn.gd-ci', { href: rep('report'), text: '만들기' })));
   let me = null, g = null;
   try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); } catch { /* 결과 설명서가 없는 서비스 */ }

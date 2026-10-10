@@ -145,7 +145,7 @@ async def sample_parcel():
                       "area": env(round(float(f["parcel_m2"])), "m2", "recorded", "V-World 연속지적도", as_of=as_of)},
            "ai": {"cls": "건물", "n": env(len(ai_in), "동", "inferred", "2023년 25cm 항공영상 AI 판독", as_of=as_of),
                   "area": env(round(float(f["evid_m2"]), 1), "m2", "inferred", "2023년 25cm 항공영상 AI 판독", as_of=as_of), "year": 2023},
-           "verdict": "현장 확인 필요",
+           "verdict": "대장과 다름",            # 원칙 135 — 화면 말에 현장 확인 없음
            "bbox": [round(bb["a"], 6), round(bb["b"], 6), round(bb["c"], 6), round(bb["d"], 6)],
            "parcel": {"type": "Feature", "properties": {}, "geometry": json.loads(pg)},
            "ai_fc": {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"in": True}, "geometry": json.loads(x["g"])} for x in ai_in]

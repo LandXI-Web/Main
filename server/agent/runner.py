@@ -398,12 +398,12 @@ You call only the platform tools, with the user's own permissions. Rules:
 10) "Summarize / show / tell me the results" reads existing results: use summary_lookup or survey_stats and never start an analysis (analysis_run · jobs_submit · survey_build). Start one only when the user says run / start / execute."""
 
 
-LX_RULE = ("\n\nLX 계정 규칙: '현장 확인 필요' 숫자 · 층 · 말을 쓰지 않는다. 지역의 대표 숫자는 AI 분석 결과다"
+LX_RULE = ("\n\n추가 규칙(원칙 135 · LX · 기관 계정 모두): '현장 확인 필요' 숫자 · 층 · 말을 쓰지 않는다. 지역의 대표 숫자는 AI 분석 결과다"
            "(summary_lookup 의 AI 분석 결과 봉투). 의심 필지는 물었을 때만 그 이름으로 쓴다.")
 
 
 def sys_prompt(ctx) -> str:
-    """지시문 — LX 계정(한국어)은 원칙 135 한 줄을 더한다(기관 계정 지시문은 그대로)."""
+    """지시문 — 한국어 답은 원칙 135 한 줄을 더한다(LX 10-09 · 기관 계정까지 10-10 확인 8 ⓐ)."""
     base = system_prompt(ctx.lang)
     return base + LX_RULE if ctx.lang == "ko" and talk.lx_ai(ctx) else base
 

@@ -19,7 +19,7 @@ import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
 import { PID, projectRail, attachProject, projectModel } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
-import { accOf, accColumn } from '../kit/acc.js';   // 검증 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
+import { accOf, accColumn, serviceAcc } from '../kit/acc.js';   // 검증 정확도 = 공개 서비스 모델 값(분석하기 카드와 같은 값 · 10-10 확인 9 ⓐ)
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -44,8 +44,10 @@ const PRJ = PID ? await PROJ : null;
 const TASKS = !PRJ ? CFG.tasks : (() => {
   const base = PRJ.task_id ? CFG.tasks.find((t) => t.id === PRJ.task_id) : null;
   const model = projectModel(PRJ);
-  if (base) return [{ ...base, model: model || null, card: PRJ.card || base.card }];
-  return [{ id: 'project', name: PRJ.task || PRJ.name, noun: PRJ.task || PRJ.name, cls: [], sets: '^$', rules: [], model, card: PRJ.card || null, noReports: true }];
+  /* 이 프로젝트가 배포한 서비스 카드(배포 신청 단계 대상) — 업무 카드 검증 정확도 = 그 서비스 모델 값(10-10 확인 9 ⓐ) */
+  const svcCard = PRJ.card || PRJ.next?.target?.card || (PRJ.stages || []).map((x) => x.target?.card).find(Boolean) || null;
+  if (base) return [{ ...base, model: model || null, card: svcCard || base.card }];
+  return [{ id: 'project', name: PRJ.task || PRJ.name, noun: PRJ.task || PRJ.name, cls: [], sets: '^$', rules: [], model, card: svcCard, noReports: true }];
 })();
 const STEP = { label: 1, train: 3, publish: 5 }[STAGE];
 
@@ -84,7 +86,8 @@ async function file(url, as = 'json') {
 /* 모델 목록·오탐 신고 — 실패(401/403/5xx/네트워크)를 '첫 학습 전'으로 그리지 않는다.
    401/403 → 정문(?next=) · 그 밖 실패 → 카드 목록 대신 그 자리 한 줄(K9 문제 · '다시 시도') */
 const getS = (p) => api(p).then((j) => ({ j, s: 200 }), (e) => ({ j: null, s: e?.status || 0 }));
-const [mR, fR, SUM, cardsJ] = await Promise.all([getS('/registry/models'), getS('/feedback'), summary(), get('/registry/cards')]);
+const [mR, fR, SUM, cardsJ, deckJ] = await Promise.all([getS('/registry/models'), getS('/feedback'), summary(), get('/registry/cards'), get('/cards/deck')]);
+const DECK = deckJ?.items || [];   // 서비스 카드 덱 — 공개 서비스가 쓰는 모델의 검증 정확도(분석하기 카드와 같은 값)
 if ([mR.s, fR.s].some((s) => s === 401 || s === 403)) {
   session.clear();
   location.replace(FRONT + '?next=' + encodeURIComponent(location.pathname + location.search));
@@ -177,7 +180,12 @@ for (const t of TASKS) {
   const reports = reportsFor(t);
   /* 모델 기록이 없어도 이 업무 결과가 있으면(summary 운영·시범) '첫 학습 전'이라 하지 않는다 — '학습 기록 없음' */
   const state = !m ? (hasResults(t) ? 'nomodel' : 'first') : reports.length >= CFG.reportMin ? 'retrain' : 'ok';
-  ROWS.set(t.id, { t, m, ms, reports, state, prec: m ? precEnv(m) : null });
+  /* 검증 정확도(같은 이름 = 같은 숫자 · 10-10 확인 9 ⓐ) = 이 업무를 맡은 공개 서비스 모델의 값 — 분석하기 카드와 같음.
+     이 업무의 최근 학습 모델 값은 그 모델이 서비스 모델과 다를 때만 '최근 학습 n%'로 따로 보인다 */
+  const svc = serviceAcc(DECK, { card: t.card || null, models: ms.map((x) => x.id) });
+  const own = m ? precEnv(m) : null;
+  const recent = own && (!svc || svc.model !== m.id) ? own : null;
+  ROWS.set(t.id, { t, m, ms, reports, state, prec: svc, recent, own });
 }
 devlog('summary', SUM ? TASKS.filter((t) => t.card).map((t) => `${t.card} ${stageOf(SUM, t.card) || '—'}`).join(' · ') || '업무 전용 카드 없음' : '없음 · 카드 기록 단계로 대체');
 
@@ -204,6 +212,7 @@ for (const [id, r] of ROWS) {
   const chip = el.querySelector('.tr-chip'); chip.textContent = txt; if (lv) chip.dataset.lv = lv;
   /* 검증 정확도 — 분석하기 카드와 같은 값(모델 기록 · fix9) · 모델은 있는데 기록이 없으면 '—' · 모델이 없으면 칸 없음 */
   el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value)}<i class="tr-pct">%</i></span>${sig(r.prec)}`
+    : r.recent ? `<span class="t-label">최근 학습</span><span class="k-num tr-p" data-recent="${r.recent.value}">${nf(r.recent.value)}<i class="tr-pct">%</i></span>${sig(r.recent)}`
     : r.m ? '<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="">—</span>' : '';
 }
 document.documentElement.dataset.trainReady = '1';
@@ -249,7 +258,9 @@ function openDrawer(r) {
   const c = CARD.get(r.m.id);
   const dl = h('dl.tr-dl');
   const row = (k, v) => dl.append(h('dt.t-label', { text: k }), h('dd', { html: v }));
-  row('검증 정확도', r.prec ? accHtml(r.prec) : '—');
+  if (r.prec) row('검증 정확도', accHtml(r.prec));        // 공개 서비스 모델(분석하기 카드와 같은 값)
+  if (r.recent) row('최근 학습', accHtml(r.recent));      // 이 업무의 최근 학습 모델 — 서비스 모델과 다를 때만
+  if (!r.prec && !r.recent) row('검증 정확도', '—');
   row('마지막 학습', `<span class="num">${esc(dayText(dateOf(r.m)) || '—')}</span>`);
   /* 표본 — 서버가 값을 줄 때만 행을 연다(값 없으면 접음 · 큰 숫자 블록과 같은 규칙) */
   const sv = isEnvelope(r.m.samples) ? (r.m.samples.value ?? null) : Number.isFinite(r.m.samples) ? r.m.samples : null;
@@ -258,9 +269,9 @@ function openDrawer(r) {
   body.append(dl);
 
   /* 학습 곡선 — 학습 로그가 없으면 섹션째 접는다(제목 아래 줄표만 남기지 않는다). 표시점 = 서랍 정밀도와 같은 회차·같은 값 */
-  const chartBox = h('section.tr-curve', { hidden: true }, h('p.t-label', { text: '학습 곡선' }));
+  const chartBox = h('section.tr-curve', { hidden: true }, h('p.t-label', { text: r.recent ? '학습 곡선 · 최근 학습' : '학습 곡선' }));
   const chart = h('div'); chartBox.append(chart); body.append(chartBox);
-  if (r.prec) curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.prec ? r.prec.value / 100 : undefined); } });
+  if (r.own) curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.own.value / 100); } });   // 곡선 = 이 서랍 모델(r.m)의 학습 기록
 
   const run = h('div.tr-run', { hidden: true }, h('div.t-progress', {}, h('i')), h('p.t-label.tr-q', { role: 'status', 'aria-live': 'polite' }));
   const copy = h('button.t-btn', { type: 'button', text: '사본 만들기' });

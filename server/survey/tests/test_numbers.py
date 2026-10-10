@@ -109,7 +109,7 @@ def test_agent_survey_stats_same_value_and_chart(api, pg, sgg, who):
     outs = asyncio.run(go())
     for o in outs:
         e = {k: v for k, _, v in o.envelopes}
-        assert e["suspects"]["value"] == ref["suspect"] and e["field_check"]["value"] == ref["field_check"]
+        assert e["suspects"]["value"] == ref["suspect"] and "field_check" not in e         # 원칙 135 — 답에 '현장 확인 필요' 0(LX 10-09 · 기관 10-10)
         assert "suspect_parcels" not in e                                                  # '의심 필지' 는 한 봉투(두 값 0)
         ch = [b for b in o.blocks if b.get("type") == "chart"]
         assert len(ch) == 1 and ch[0]["kind"] == "bar" and ch[0]["rows"]

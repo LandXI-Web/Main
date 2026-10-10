@@ -56,9 +56,9 @@ def _check_word(e) -> str:
     if to == "closed":
         return "확인 끝"
     if to == "inspected":
-        return "현장 확인함"
+        return "확인함"                                            # 원칙 135 — 화면 말에 현장 확인 없음(10-10 확인 8 ⓐ)
     if to in ("assigned", "hold") or e["planned_for"]:
-        return "현장 확인 예정" + (f" {e['planned_for'].month}.{e['planned_for'].day:02d}" if e["planned_for"] else "")
+        return "확인 예정" + (f" {e['planned_for'].month}.{e['planned_for'].day:02d}" if e["planned_for"] else "")
     if to == "open":
         return "다시 확인 전으로"
     return "기록"

@@ -400,8 +400,8 @@ async def survey_stats(args: dict, ctx) -> Out:
                 out.env(f"rule_{k}", f"{scope} {k} {rule_nm(k)} 건수", L.env(v, "count", src, note=note))
             for k, v in sorted(s["by_priority"].items()):
                 out.env(f"pri_{k}", f"{scope} 등급 {k} 건수", L.env(v, "count", src, note=note))
-    lx = getattr(ctx.principal, "realm", None) == "lx"
-    if lx:                                                # 원칙 135 — LX 계정 답에는 '현장 확인 필요' 숫자를 싣지 않는다(계산은 그대로)
+    lx = True                                             # 원칙 135 — 기관 계정까지(10-10 확인 8 ⓐ)
+    if lx:                                                # 원칙 135 — 답에는 '현장 확인 필요' 숫자를 싣지 않는다(계산은 그대로)
         out.envelopes = [x for x in out.envelopes if x[0] != "field_check"]
     out.data = {"범위": scope, "읍면동코드": emd_cd, "시군구": reg.get("sgg"), "규칙": dict(RULE_NM),
                 "비고": "'의심 필지' 는 suspects 봉투 하나로만 말한다(규칙 R1–R6 의심 건 · 다른 화면과 같은 값)"

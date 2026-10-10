@@ -224,8 +224,8 @@ async def get_brand(tenant: str, request: Request):
 
 # ── 기관 메인(로그인 전) — 결과 장면 작게 · 업무 결과 셋(확인 대장 '기관 화면 확인' 기관-2 ⓐ · 원칙 116) ───────────
 # 그림은 설정 한 곳(config/gov-main.yaml — LX 관리자가 고르는 화면은 다음 설계) · 로그인 전이므로 저해상 크롭만 · 제한 영상 0 · 그 기관 것만.
-# 숫자는 대표 수치 요약(summary.cached_all — 로그인 뒤 서비스 카드 · 대시보드와 같은 값) 가운데 그 기관의 업무 결과 하나(현장 확인 필요 →
-# 다듬은 결과의 AI 탐지) · 서비스 수 · 처음 사업 연도 · 최근 분석한 날만 — 필지 · 좌표 · 목록은 없다.
+# 숫자는 대표 수치 요약(summary.cached_all — 로그인 뒤 서비스 카드 · 대시보드와 같은 값) 가운데 그 기관의 AI 분석 결과 하나
+# (다듬은 결과의 AI 탐지 · 원칙 135 기관까지 10-10 확인 8 ⓐ — 현장 확인 필요 계산은 요약에 그대로, 여기서는 쓰지 않음) · 서비스 수 · 처음 사업 연도 · 최근 분석한 날만 — 필지 · 좌표 · 목록은 없다.
 _MAIN_PIC_RE = re.compile(r"/landxi/[\w./-]+\.(?:jpg|jpeg|png|webp)", re.I)
 _MAIN_PICS: dict[str, tuple[float, int]] = {}
 
@@ -262,7 +262,7 @@ async def _main_facts(tenant: str, svcs: list[dict]) -> dict:
     items, _at = await summary.cached_all()
     mine = [it for it in items if it["tenant"] == tenant]
     head = None
-    for key in ("field_check", "detected"):                  # 현장 확인 필요(필지 대조) → 없으면 다듬은 결과의 AI 탐지(분석 칸 도형 수 0 · 사용자 규칙 2)
+    for key in ("detected",):                                # AI 분석 결과 = 다듬은 결과의 AI 탐지(분석 칸 도형 수 0 · 사용자 규칙 2 · 원칙 135)
         for s in svcs:
             if not s.get("open"):
                 continue
@@ -275,7 +275,7 @@ async def _main_facts(tenant: str, svcs: list[dict]) -> dict:
                 head = {"env": env(total, "필지", "inferred", es[0].get("source") or "실태조사", "현장 확인 전"), "label": "현장 확인 필요"}
             else:
                 head = {"env": env(total, es[0].get("unit") or "건", es[0].get("basis") or "inferred", es[0].get("source") or "AI 분석", "결과 확인 전"),
-                        "label": "AI 탐지"}
+                        "label": "AI 분석 결과"}
             head["service"], head["card"] = _svc_short(s.get("name")), s["card"]
             break
         if head:

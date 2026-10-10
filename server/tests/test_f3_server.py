@@ -73,7 +73,7 @@ def test_s4_public_stats_sample_tiles(live):
     assert httpx.get(B + "/public/stats?set=nope", timeout=10).status_code == 404
     p = httpx.get(B + "/public/sample-parcel", timeout=30).json()
     envok(p)
-    assert p["pnu_masked"].endswith("-****-****") and "pnu" not in p and p["verdict"] == "현장 확인 필요"
+    assert p["pnu_masked"].endswith("-****-****") and "pnu" not in p and p["verdict"] == "대장과 다름"
     assert not any(ch.isdigit() for ch in p["place"].split()[-1])                    # 주소는 리까지(지번 0)
     assert p["ai"]["n"]["value"] >= 1 and p["parcel"]["geometry"]["type"] in ("Polygon", "MultiPolygon")
     h = httpx.head(BASE + "/tiles/pmtiles/public/river-occupy.pmtiles", timeout=10)

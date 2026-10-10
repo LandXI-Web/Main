@@ -62,9 +62,9 @@ def role(ctx) -> str:
 
 
 def lx_ai(ctx) -> bool:
-    """원칙 135(10-09) — LX 계정(직원 · 관리자 · 영업) 답은 '현장 확인 필요' 대신 AI 분석 결과로. 기관 계정은 그대로(사용자 답 전).
-    현장 확인 계산(survey_counts.field_check · 이력)은 서버에 그대로 있고, LX 답에서만 쓰지 않는다."""
-    return realm(ctx) == "lx"
+    """원칙 135 — 답은 '현장 확인 필요' 대신 AI 분석 결과로. LX 계정(10-09) · 기관 계정까지(10-10 확인 8 ⓐ) — 모든 계정 같은 답.
+    현장 확인 계산(survey_counts.field_check · 이력)은 서버에 그대로 있고, 답에서만 쓰지 않는다(이름은 옛 호출 그대로 둠)."""
+    return True
 
 
 AI_LABEL = "AI 분석 결과"
