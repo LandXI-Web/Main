@@ -58,7 +58,7 @@ from .envelope import KST, env, now_iso
 router = APIRouter()
 
 STATE_WORD = {"pending": "확인 대기", "approved": "분석 준비", "analyzing": "분석 중", "done": "결과 도착", "rejected": "거절",
-              "failed": "분석하지 못함"}
+              "failed": "분석하지 못함", "held": "보류"}
 ON_STAGES = ("shadow", "canary", "ga")          # 그 기관에 켜진 서비스(초안 · 되돌림 · 시험 제외)
 KIND_WORD = {"drone": "드론", "aerial": "항공", "satellite": "위성"}
 CRS_WORD = {5186: "GRS80 중부원점", 5185: "GRS80 서부원점", 5187: "GRS80 동부원점", 5188: "GRS80 동해원점", 5179: "UTM-K(GRS80)",
@@ -1233,7 +1233,8 @@ async def create(body: dict, request: Request):
         eta = _eta(area, meta["gsd_m"], dict(model) if model else None, up)
         meta.update({"area_km2": round(area, 4), "eta_s": (eta or {}).get("value"), "model": _svc_name(model["name"]) if model and model["name"] else None,
                      "model_gsd_word": gsd_word(model["gsd_trained_m"]) if model and model["gsd_trained_m"] else None})
-        lead = await _card_lead(conn, d["card_id"], d["card_version_id"])
+        from .spaces import helpdesk_of
+        lead = await helpdesk_of(conn, p.tenant_id, d["card_id"]) or await _card_lead(conn, d["card_id"], d["card_version_id"])   # 기관 × 서비스 헬프데스크 담당 먼저(질문 17 ⓑ)
         rid, aid = "rq_" + secrets.token_hex(6), "ap_" + secrets.token_hex(6)
         await conn.execute(
             "INSERT INTO analysis_requests(id, tenant_id, requested_by, deploy_id, source, imagery_id, draft_id, meta, aoi, memo, state, approval_id, lead_user) "
@@ -1263,7 +1264,7 @@ def _view(r, p: Principal | None = None, org: str | None = None) -> dict:
          "source": r["source"], "label": m.get("label"), "place": m.get("place"), "date": m.get("date"), "date_word": _date_word(m.get("date")),
          "gsd_word": m.get("gsd_word"), "kind_word": KIND_WORD.get(m.get("kind") or "", ""),
          "area_km2": env(m.get("area_km2"), "km2", "measured", "분석 범위(영상 범위 ∩ 관할)") if m.get("area_km2") is not None else None,
-         "memo": r["memo"], "reason": r["reason"] if r["state"] in ("rejected", "failed") else None,
+         "memo": r["memo"], "reason": r["reason"] if r["state"] in ("rejected", "failed") else (r.get("held_reason") if r["state"] == "held" else None),
          "created_at": _iso(r["created_at"]), "decided_at": _iso(r["decided_at"]),
          "mine": bool(p and r["requested_by"] == p.user_id)}
     if r["state"] == "done":
@@ -1445,6 +1446,206 @@ async def basis(conn, r, lx: bool = False) -> list:
     return rows
 
 
+# ═══ 요청 관리(LX 관리자 · now 페이지 질문 16 ⓐ · 원칙 122) — 순번 · 급함 · 담당 · 보류 · 승인 · 거절 ═══════════════════
+# 분석은 한 번에 한 건(전력 규칙) — 순번은 그 한 줄에 선 차례. 급함 = 맨 앞(분석 작업 우선순위 0) · 보류 = 승인 전에 잠시 멈춤(사유가 기관 '내 요청'에).
+# 담당 = 요청의 담당 LX 직원(lead_user · 비면 'LX 관리자가 봄'). 조정은 모두 처리 기록(audit_log request.*)에 누가 언제.
+MANAGE_STATES = ("pending", "held", "approved", "analyzing")
+MANAGE_ACT = {"up": "순번 올림", "down": "순번 내림", "urgent": "급함", "calm": "급함 풂", "assign": "담당 바꿈", "hold": "보류", "resume": "보류 풂"}
+LOG_WORD = {"request.order": "순번", "request.urgent": "급함", "request.assign": "담당", "request.hold": "보류", "request.resume": "보류 풂",
+            "approval.approve": "승인", "approval.reject": "거절"}
+
+
+def _manage_sort(rows: list, running: set) -> list:
+    """순번 순서 — 지금 분석 중 → 급함 → 관리자가 정한 순번 → 들어온 순."""
+    def key(r):
+        run = r["state"] == "analyzing" and r["job_id"] in running
+        qo = r["queue_order"] if r["queue_order"] is not None else 10 ** 6
+        return (0 if run else 1, 0 if r["urgent"] else 1, qo, r["created_at"])
+    return sorted(rows, key=key)
+
+
+async def _manage_rows(conn) -> tuple[list, set]:
+    rows = await conn.fetch(f"SELECT {REQ_COLS} FROM analysis_requests q JOIN deploys d ON d.id=q.deploy_id LEFT JOIN cards c ON c.id=d.card_id "
+                            "WHERE q.state = ANY($1::text[]) ORDER BY q.created_at LIMIT 200", list(MANAGE_STATES))
+    jobs = [r["job_id"] for r in rows if r["job_id"]]
+    running = {x["id"] for x in await conn.fetch("SELECT id FROM jobs WHERE id = ANY($1::text[]) AND state='running'", jobs)} if jobs else set()
+    return _manage_sort(rows, running), running
+
+
+async def _staff(conn) -> list[dict]:
+    from .approvals import ROLE_WORD
+    return [{"id": u["id"], "name": u["name"] or ROLE_WORD.get(u["role"], "LX"), "role": ROLE_WORD.get(u["role"], "LX"), "dept": u["dept"]}
+            for u in await conn.fetch("SELECT id, name, role, dept FROM lx_users WHERE status='active' AND role IN ('staff','admin') "
+                                      "ORDER BY role DESC, name NULLS LAST, id")]
+
+
+async def _sync_job_priority(conn, r) -> None:
+    """요청의 분석 작업이 아직 시작 전이면 급함을 작업 우선순위에 바로 반영(작업기가 매번 다시 읽는다)."""
+    if not r or not r["job_id"]:
+        return
+    from .deps import redis
+    j = await conn.fetchrow("SELECT state, options FROM jobs WHERE id=$1", r["job_id"])
+    if not j or j["state"] != "queued":
+        return
+    opts = j["options"] if isinstance(j["options"], dict) else {}
+    prio = 0 if r["urgent"] else (2 if opts.get("scope") == "sgg" else 1)
+    await conn.execute("UPDATE jobs SET priority=$2 WHERE id=$1", r["job_id"], prio)
+    try:
+        await (await redis()).hset(f"job:{r['job_id']}", "priority", prio)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _name_ko(v) -> str | None:
+    return (v.get("ko") if isinstance(v, dict) else v) or None
+
+
+@router.get("/requests/manage")
+async def manage_list(request: Request):
+    """요청 관리 — 분석 요청(순번 순서) + 맨 위 띠(지금 분석 중 · 기다리는 분석 · 동시에 도는 분석 · 최근 기다린 시간) + 처리 기록."""
+    require(principal(request), admin=True)
+    from .approvals import people
+    from .jobs import power_budget
+    async with db(realm="lx") as conn:
+        rows, running = await _manage_rows(conn)
+    rows = [r for r in await _sync(rows) if r["state"] in MANAGE_STATES]
+    async with db(realm="lx") as conn:
+        who = await people(conn)
+        staff = await _staff(conn)
+        q = await conn.fetchrow("SELECT count(*) FILTER (WHERE state='running') ru, count(*) FILTER (WHERE state='queued') qu FROM jobs "
+                                "WHERE state IN ('queued','running') AND NOT demo AND pool <> 'cpu'")
+        p95 = await conn.fetchval("SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY greatest(0, extract(epoch FROM started_at-created_at))) FROM jobs "
+                                  "WHERE started_at IS NOT NULL AND created_at > now() - interval '24 hours' AND pool <> 'cpu' AND NOT demo")
+        tn = {t["id"]: _name_ko(t["name"]) for t in await conn.fetch("SELECT id, name FROM tenants")}
+        logs = await conn.fetch(
+            "SELECT a.actor, a.action, a.subject, a.after, a.at FROM audit_log a WHERE a.action = ANY($1::text[]) AND "
+            "(a.action LIKE 'request.%' OR a.subject IN (SELECT id FROM approvals WHERE subject_type='request')) ORDER BY a.at DESC LIMIT 30",
+            list(LOG_WORD))
+        rq_of = {x["id"]: x["subject_id"] for x in await conn.fetch(
+            "SELECT id, subject_id FROM approvals WHERE subject_type='request' AND id = ANY($1::text[])", [lg["subject"] for lg in logs])} if logs else {}
+        names = {x["id"]: x for x in await conn.fetch(
+            "SELECT q.id, q.meta->>'org' org, q.meta->>'service' svc FROM analysis_requests q WHERE q.id = ANY($1::text[])",
+            [rq_of.get(lg["subject"], lg["subject"]) for lg in logs])} if logs else {}
+    try:
+        pb = await power_budget()
+        conc = {"hot_now": int(pb.get("hot_now") or 0), "max_hot_gpus": int(pb.get("max_hot_gpus") or 1)}
+    except Exception:  # noqa: BLE001
+        conc = None
+    staff_name = {s["id"]: s["name"] for s in staff}
+    busy = int(q["ru"] or 0) > 0
+    items, prev_n, n = [], None, 0
+    for r in rows:
+        m = dict(r["meta"] or {})
+        run = r["state"] == "analyzing" and r["job_id"] in running
+        n += 1
+        if run:
+            eta = "분석 중"
+        elif r["state"] == "held":
+            eta = "보류 — 풀면 순서대로"
+        elif prev_n is None:
+            eta = "지금 분석이 끝난 뒤" if busy else ("곧 시작" if r["state"] in ("approved", "analyzing") else "승인하면 바로")
+        else:
+            eta = f"{prev_n}번 끝난 뒤"
+        if r["state"] != "held":
+            prev_n = n
+        a = m.get("area_km2")
+        ov = m.get("overlay")
+        items.append({"id": r["id"], "n": n, "state": r["state"], "state_word": "분석 중" if run else STATE_WORD.get(r["state"], r["state"]),
+                      "org": m.get("org") or tn.get(r["tenant_id"]), "tenant_id": r["tenant_id"],
+                      "service": m.get("service") or _svc_name(r["cname"]), "created_at": _iso(r["created_at"]),
+                      "place": m.get("place"), "area_word": (f"약 {float(a):,.2f}㎢" if float(a) < 10 else f"약 {float(a):,.0f}㎢") if a is not None else None,
+                      "image_word": " · ".join(x for x in [m.get("gsd_word"), KIND_WORD.get(m.get("kind") or "", "")] if x) or None,
+                      "source": r["source"], "imagery_id": r["imagery_id"] if r["source"] == "shared" else None,
+                      "overlay": ov.get("url") if isinstance(ov, dict) else None,
+                      "urgent": bool(r["urgent"]), "held_reason": r["held_reason"] if r["state"] == "held" else None,
+                      "assignee": {"id": r["lead_user"], "name": staff_name.get(r["lead_user"]) or who.get(r["lead_user"])} if r["lead_user"] else None,
+                      "eta": eta, "approval_id": r["approval_id"], "requested_by_name": who.get(r["requested_by"]),
+                      "memo": r["memo"], "running": run, "can_decide": r["state"] in ("pending", "held")})
+    log = []
+    for lg in logs:
+        rid = rq_of.get(lg["subject"], lg["subject"])
+        nm = names.get(rid)
+        if not nm:                                      # 지워진 요청(시험 정리 등)의 기록은 화면에 내지 않는다
+            continue
+        after = lg["after"] if isinstance(lg["after"], dict) else {}
+        what = LOG_WORD.get(lg["action"], lg["action"])
+        if lg["action"] == "request.order":
+            what = "순번 올림" if after.get("dir") == "up" else "순번 내림"
+        elif lg["action"] == "request.urgent":
+            what = "급함" if after.get("urgent") else "급함 풂"
+        elif lg["action"] == "request.assign":
+            what = f"담당 — {staff_name.get(after.get('user_id')) or 'LX 관리자가 봄'}"
+        log.append({"at": _iso(lg["at"]), "who": who.get(lg["actor"]) or "LX 관리자", "what": what,
+                    "target": " · ".join(x for x in [(nm or {}).get("org"), (nm or {}).get("svc")] if x) or "분석 요청",
+                    "reason": after.get("reason")})
+    return {"items": items, "staff": staff,
+            "strip": {"running": env(int(q["ru"] or 0), "count", "measured", "jobs(state running · GPU 대기열)"),
+                      "waiting": env(int(q["qu"] or 0), "count", "measured", "jobs(state queued · GPU 대기열)"),
+                      "concurrent": conc,
+                      "wait_s": env(round(float(p95), 1) if p95 is not None else None, "s", "measured", "jobs(started_at − created_at · 24h 상위 5%)",
+                                    None if p95 is not None else "시작된 분석 없음")},
+            "log": log, "as_of": now_iso()}
+
+
+@router.post("/requests/{rid}/manage")
+async def manage(rid: str, body: dict, request: Request):
+    """{action: up|down|urgent|calm|assign|hold|resume, reason?, user_id?} — 급함 · 보류는 사유 필수(보류 사유는 기관 '내 요청'에 보인다)."""
+    from .jobs import ops_event, tenant_event
+    p = require(principal(request), admin=True)
+    act = str(body.get("action") or "")
+    if act not in MANAGE_ACT:
+        raise ApiError("bad_request", "action 은 up|down|urgent|calm|assign|hold|resume")
+    reason = str(body.get("reason") or "").strip()[:200] or None
+    if act in ("urgent", "hold") and not reason:
+        raise ApiError("reason_required", "사유를 적어 주세요 — 처리 기록에 남고, 보류 사유는 기관에도 보입니다", None, 400)
+    async with db(realm="lx") as conn:
+        async with conn.transaction():
+            r = await conn.fetchrow("SELECT id, tenant_id, state, urgent, approval_id, job_id FROM analysis_requests WHERE id=$1 FOR UPDATE", rid)
+            if not r or r["state"] not in MANAGE_STATES:
+                raise ApiError("not_found", "관리할 분석 요청이 없습니다")
+            after: dict = {"tenant_id": r["tenant_id"]}
+            if act in ("up", "down"):
+                rows, _ = await _manage_rows(conn)
+                ids = [x["id"] for x in rows]
+                i = ids.index(rid)
+                j = i - 1 if act == "up" else i + 1
+                if not (0 <= j < len(ids)):
+                    raise ApiError("conflict", "더 옮길 수 없습니다", None, 409)
+                if rows[j]["urgent"] != r["urgent"]:
+                    raise ApiError("conflict", "급함 요청과는 순서를 바꿀 수 없습니다 — 급함을 켜거나 풀어 주세요", None, 409)
+                ids[i], ids[j] = ids[j], ids[i]
+                for k, x in enumerate(ids):
+                    await conn.execute("UPDATE analysis_requests SET queue_order=$2 WHERE id=$1", x, k + 1)
+                action, after["dir"] = "request.order", act
+            elif act in ("urgent", "calm"):
+                await conn.execute("UPDATE analysis_requests SET urgent=$2, updated_at=now() WHERE id=$1", rid, act == "urgent")
+                action, after["urgent"] = "request.urgent", act == "urgent"
+            elif act == "assign":
+                uid = body.get("user_id") or None
+                if uid and not await conn.fetchval("SELECT 1 FROM lx_users WHERE id=$1 AND status='active' AND role IN ('staff','admin')", uid):
+                    raise ApiError("not_found", "없는 LX 직원입니다")
+                await conn.execute("UPDATE analysis_requests SET lead_user=$2, updated_at=now() WHERE id=$1", rid, uid)
+                action, after["user_id"] = "request.assign", uid
+            elif act == "hold":
+                if r["state"] != "pending":
+                    raise ApiError("conflict", "확인 대기인 요청만 보류할 수 있습니다", None, 409)
+                await conn.execute("UPDATE analysis_requests SET state='held', held_reason=$2, updated_at=now() WHERE id=$1", rid, reason)
+                action = "request.hold"
+            else:
+                if r["state"] != "held":
+                    raise ApiError("conflict", "보류 중인 요청이 아닙니다", None, 409)
+                await conn.execute("UPDATE analysis_requests SET state='pending', held_reason=NULL, updated_at=now() WHERE id=$1", rid)
+                action = "request.resume"
+            if reason:
+                after["reason"] = reason
+            await audit(conn, p, action, rid, None, after)
+            await _sync_job_priority(conn, await conn.fetchrow("SELECT job_id, urgent FROM analysis_requests WHERE id=$1", rid))
+    if act in ("hold", "resume"):
+        await tenant_event(r["tenant_id"], "request.changed", {"request_id": rid, "state": "held" if act == "hold" else "pending"})
+    await ops_event("approval.requested", {"approval_id": r["approval_id"], "subject_type": "request", "subject_id": rid, "action": act, "at": now_iso()})
+    return {"id": rid, "action": act, "done": MANAGE_ACT[act], "as_of": now_iso()}
+
+
 @router.get("/requests/{rid}")
 async def get_request(rid: str, request: Request):
     p = require(principal(request))
@@ -1472,7 +1673,7 @@ async def on_decided(conn, rid: str, decision: str, reason: str | None, user: st
     """결재 트랜잭션 안 — 승인 = 분석 준비(바로 뒤에 after_decided 가 대기열에 넣는다) · 반려 = 사유가 기관 '내 의뢰'에."""
     new = "approved" if decision == "approve" else "rejected"
     n = await conn.execute("UPDATE analysis_requests SET state=$2, reason=$3, decided_by=$4, decided_at=now(), updated_at=now() "
-                           "WHERE id=$1 AND state='pending'", rid, new, reason if new == "rejected" else None, user)
+                           "WHERE id=$1 AND state IN ('pending','held')", rid, new, reason if new == "rejected" else None, user)
     if n.endswith(" 0"):
         raise ApiError("conflict", "이미 결정된 분석 요청입니다", None, 409)
     return {"request": rid, "state": new}
@@ -1527,6 +1728,10 @@ async def _enqueue(q: dict, body: dict, tenant: str, user: str | None) -> dict:
     if q.get("_opts"):
         opts.update(q["_opts"])
     prio = 1 if opts.get("scope") == "sgg" else 0
+    if opts.get("request_id"):                       # 분석 요청 — 급함 = 0(맨 앞) · 그 밖 = 1 · 시군구 전역 = 2(요청 관리 · 질문 16 ⓐ)
+        async with db(realm="lx") as conn:
+            urgent = await conn.fetchval("SELECT urgent FROM analysis_requests WHERE id=$1", opts["request_id"])
+        prio = 0 if urgent else (2 if opts.get("scope") == "sgg" else 1)
     model_id = (q.get("_model") or {}).get("id") or body.get("model_id")
     imagery_id = body.get("imagery_id") or (img or {}).get("id")
     async with db(realm="lx") as conn:

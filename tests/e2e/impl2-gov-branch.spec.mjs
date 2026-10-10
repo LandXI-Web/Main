@@ -187,13 +187,14 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     } finally { await restore(request, 'namwon', orig); }
   });
 
-  test('LX 관리자 — 기관 서랍에서 같은 칸을 고친다 → 그 기관 메인에 반영', async ({ page, request }) => {
+  test('LX 관리자 — 기관 한 곳 화면에서 같은 칸을 고친다 → 그 기관 메인에 반영', async ({ page, request }) => {
     test.setTimeout(150000);
     const orig = await (await request.get(`${API}/brand/gwangju-jeonnam`)).json();
     try {
       await frontDoor(page, ADMIN, 'lxadmin@lx.or.kr', 'admin');
       await page.goto(ADMIN + '/landxi/v3/ops-infra/#/tenants');
-      await page.locator('.org[data-id="gwangju-jeonnam"] .brand-b').click();
+      await page.locator('.org[data-id="gwangju-jeonnam"]').click();               // 기관 한 곳 새 화면(now 질문 17 ⓑ) → 머리의 '기관 정보'
+      await page.locator('.tp-acts button', { hasText: '기관 정보' }).click();
       await page.waitForSelector('.brand-dr form.bf');
       await page.fill('.brand-dr input[name=contact]', '062-613-0000');
       await page.fill('.brand-dr input[name=line1]', '해안 쓰레기 결과를 시·군·구별로 확인합니다.');

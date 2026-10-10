@@ -12,7 +12,7 @@ import { drawer } from '../kit/panel.js';
 const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
 const md = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
 const short = (s) => String(s || '').replace(/\s*(행정서비스|서비스)$/, '');
-const LV = { pending: 'wait', approved: 'wait', analyzing: 'wait', done: 'ci', rejected: 'warn', failed: 'warn', sent: 'wait', answered: 'ci', accepted: 'ci', cancelled: 'gap',
+const LV = { pending: 'wait', held: 'wait', approved: 'wait', analyzing: 'wait', done: 'ci', rejected: 'warn', failed: 'warn', sent: 'wait', answered: 'ci', accepted: 'ci', cancelled: 'gap',
   seen: 'wait', answered_review: 'ci' };
 
 export async function loadSent() {

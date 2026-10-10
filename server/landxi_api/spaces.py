@@ -155,18 +155,40 @@ def _scope_principal(tenant: str) -> Principal:
     return Principal(realm="tenant", role="manager", tenant_id=tenant)
 
 
-def _scope_codes(tenant: str) -> list[str] | None:
-    """기관 관할 시군구 코드(지금 · 옛) — None = 전국(그런 기관은 없다 · LX 전용). [] = 국내 관할 없음(해외 기관)."""
+def _scope_codes(tenant: str, only: list[str] | None = None) -> list[str] | None:
+    """기관 관할 시군구 코드(지금 · 옛) — None = 전국(그런 기관은 없다 · LX 전용). [] = 국내 관할 없음(해외 기관).
+    only = 그 안에서 더 좁힐 시군구(광역 부서별 관할 · 광역 공유 때 고른 시군구 — 나중 16 · 13 ⓐ)."""
     from . import regions as R
     p = _scope_principal(tenant)
     if R.scope_of(p) is None:
         return None
     out: set[str] = set()
     for r in R.scope_regions(p):
+        if only is not None and r["sgg_cd"] not in only and (r.get("prev_cd") or "") not in only:
+            continue
         out.add(r["sgg_cd"])
         if r.get("prev_cd"):
             out.add(r["prev_cd"])
     return sorted(out)
+
+
+async def _only(p: Principal, card: str | None) -> list[str] | None:
+    """이 사람 · 이 서비스에 허락된 시군구 — 부서별 관할(p.sgg) ∩ 광역 공유 때 고른 시군구. None = 기관 관할 전체."""
+    sets = []
+    if getattr(p, "sgg", None):
+        sets.append(set(p.sgg))
+    if card:
+        try:
+            from .release import share_sgg
+            async with db(realm="lx") as c:
+                sh = await share_sgg(c, p.tenant_id, card)
+            if sh:
+                sets.append(set(sh))
+        except Exception:  # noqa: BLE001
+            pass
+    if not sets:
+        return None
+    return sorted(set.intersection(*sets))
 
 
 def _keep_points(tenant: str, pts: list) -> list[int]:
@@ -714,7 +736,7 @@ async def space_me(request: Request):
                              "updated": _iso(g["published_at"] or g["created_at"]) if g else None,
                              "new": bool(last and not last["backfill"] and (seen is None or last["created_at"] > seen))})
         notes = await c.fetch("SELECT l.id, l.card_id, l.line, l.at, l.backfill, g.edition, g.change FROM space_log l LEFT JOIN space_guides g ON g.id = l.guide_id "
-                              "WHERE l.tenant_id=$1 AND l.kind='guide' AND l.card_id = ANY($2::text[]) ORDER BY l.at DESC, l.id DESC LIMIT 20",
+                              "WHERE l.tenant_id=$1 AND l.kind IN ('guide','version') AND l.card_id = ANY($2::text[]) ORDER BY l.at DESC, l.id DESC LIMIT 20",
                               p.tenant_id, cards) if cards else []
         org = await _tenant_name(c, p.tenant_id)
     unread = [n for n in notes if not n["backfill"] and (seen is None or n["at"] > seen)]
@@ -801,10 +823,11 @@ async def _log_download(p: Principal, card: str, g: dict, fmt: str, rows: int, s
         await audit(c, p, "space.download", f"{p.tenant_id}/{card}", None, {"fmt": fmt, "rows": rows, "edition": g["edition"]})
 
 
-async def _feature_rows(t: str, sets: list[str]):
-    """관할 안 결과(지운 것 제외) — 한 번에 2,000줄씩 꺼낸다(시군구 전역 결과도 메모리에 다 올리지 않는다)."""
-    codes = _scope_codes(t)
-    keep = await _keep_ids(t, sets) if codes is not None else []
+async def _feature_rows(t: str, sets: list[str], only: list[str] | None = None):
+    """관할 안 결과(지운 것 제외) — 한 번에 2,000줄씩 꺼낸다(시군구 전역 결과도 메모리에 다 올리지 않는다).
+    only(부서 · 광역 공유 시군구)가 있으면 읍면동 · 필지 번호가 있는 결과만 그 시군구로(모양 판정 결과는 넣지 않는다)."""
+    codes = _scope_codes(t, only)
+    keep = (await _keep_ids(t, sets) if only is None else []) if codes is not None else []
     cond, args = _scope_sql(codes, 2)
     a = [sets] + args + ([keep] if codes is not None else [])
     async with db(realm="lx") as c:
@@ -826,7 +849,7 @@ async def _geojson(p: Principal, org: str, svc: dict, g: dict):
                      "round": "회차", "version": "서비스 버전", "edition": "결과 설명서 판"}}
     yield b'{"type":"FeatureCollection","lx":' + json.dumps(meta, ensure_ascii=False).encode() + b',"features":['
     first = True
-    async for r in _feature_rows(p.tenant_id, sets):
+    async for r in _feature_rows(p.tenant_id, sets, await _only(p, svc.get("card"))):
         props = {"id": r["fid"] or str(r["id"]), "kind": class_ko(r["cls"], r["cls_en"]), "code": r["cls_en"] or r["cls"],
                  "score": round(float(r["conf"]), 3) if r["conf"] is not None else None,
                  "area": round(float(r["area_m2"]), 1) if r["area_m2"] is not None else None,
@@ -838,8 +861,8 @@ async def _geojson(p: Principal, org: str, svc: dict, g: dict):
     yield b"]}"
 
 
-async def _parcel_rows(t: str, sets: list[str], src: str | None) -> tuple[list[dict], str]:
-    codes = _scope_codes(t)
+async def _parcel_rows(t: str, sets: list[str], src: str | None, only: list[str] | None = None) -> tuple[list[dict], str]:
+    codes = _scope_codes(t, only)
     if codes is not None and not codes:
         return [], "none"
     pc = " AND left(x.pnu, 5) = ANY($2::text[])" if codes is not None else ""
@@ -965,7 +988,7 @@ async def space_download(card: str, request: Request, fmt: str = "geojson"):
         await _log_download(p, card, g, fmt, int(total), svc["name"])
         return StreamingResponse(_geojson(p, org, svc, g), media_type=mime, headers={"content-disposition": _disposition(name), "cache-control": "no-store"})
     if fmt == "parcels":
-        rows, how = await _parcel_rows(p.tenant_id, body.get("sets") or [], await _parcel_src(p.tenant_id, body.get("sets") or []))
+        rows, how = await _parcel_rows(p.tenant_id, body.get("sets") or [], await _parcel_src(p.tenant_id, body.get("sets") or []), await _only(p, card))
         if not rows:
             raise ApiError("not_found", "이 서비스 결과는 필지와 잇지 않습니다")
         data = await run_in_threadpool(_xlsx, org, svc, g, rows, how)
@@ -1105,6 +1128,225 @@ async def space_detail(tenant: str, request: Request):
     return {"tenant": tenant, "name": nm, "mode": (sp or {}).get("mode", "light"), "mode_word": MODE_WORD.get((sp or {}).get("mode", "light")),
             "since": _iso((sp or {}).get("created_at")), "services": items,
             "log": [{"kind": r["kind"], "line": r["line"], "at": _iso(r["at"])} for r in logs], "as_of": now_iso()}
+
+
+# ═══ LX 관리자 '기관 한 곳' 화면(now 질문 17 ⓑ — 탭 넷: 개요 · 서비스와 담당 · 영상과 배경 · 사용과 계정) ════════════════════
+#   GET  /api/v1/tenants/{tid}/page        머리(이름 · 마크 · 플랫폼 · 주소 · 기관 관리자 · 공간) · 개요 숫자 · 최근 기록 · 받는 서비스와 담당 · 촬영 요청 담당 · 계정별 볼 서비스
+#   PUT  /api/v1/tenants/{tid}/helpdesk    {card_id, user_id|null} 서비스의 LX 헬프데스크 담당 · {shoot: true, user_id|null} 촬영 요청 담당(null = 관리자 직접)
+# 담당이 비면 지금처럼(검토 요청 = 서비스 담당 → LX 관리자 · 분석 요청 = 서비스 담당 → LX 관리자 · 촬영 요청 = LX 관리자). 바꾸면 처리 기록(audit) · 기관 공간 기록 0.
+async def helpdesk_of(conn, tenant: str | None, card: str | None) -> str | None:
+    """기관 × 서비스의 LX 헬프데스크 담당(lx_users.id · 사용 중인 직원 · 관리자만) — 없으면 None(부르는 쪽이 지금 규칙으로)."""
+    if not tenant or not card:
+        return None
+    try:
+        return await conn.fetchval("SELECT s.user_id FROM tenant_service_staff s JOIN lx_users u ON u.id = s.user_id "
+                                   "WHERE s.tenant_id=$1 AND s.card_id=$2 AND u.status='active' AND u.role IN ('staff','admin')", tenant, card)
+    except Exception:  # noqa: BLE001 — 표가 없는 DB(되돌린 뒤)
+        return None
+
+
+async def shoot_staff_of(conn, tenant: str | None) -> str | None:
+    if not tenant:
+        return None
+    try:
+        return await conn.fetchval("SELECT s.user_id FROM tenant_shoot_staff s JOIN lx_users u ON u.id = s.user_id "
+                                   "WHERE s.tenant_id=$1 AND u.status='active'", tenant)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _org_host(tenant: str) -> str | None:
+    """기관 주소 — 바깥 주소 규칙('*.land-xi.dev' → {기관}.land-xi.dev) 한 곳에서."""
+    rule = next((h for h in config.PUBLIC_HOSTS if h.startswith("*.")), None)
+    return f"{tenant}.{rule[2:]}" if rule else None
+
+
+@router.get("/tenants/{tid}/page")
+async def tenant_page(tid: str, request: Request):
+    require(principal(request), admin=True)
+    if not TENANT_RE.match(tid or ""):
+        raise ApiError("not_found", "없는 기관입니다")
+    from . import brand
+    from .approvals import ROLE_WORD
+    from .release import _org_kind
+    try:
+        row = await brand._tenant(tid)
+    except ApiError:
+        raise ApiError("not_found", "없는 기관입니다") from None
+    b = await brand._payload(row)
+    await sync(tid)
+    svcs = await received(tid)
+    async with db(realm="lx") as c:
+        sp = await c.fetchrow("SELECT mode, state, created_at FROM spaces WHERE tenant_id=$1", tid)
+        full = await c.fetchval("SELECT name FROM tenants WHERE id=$1", tid)
+        users = await c.fetch("SELECT id, name, role, status, dept FROM tenant_users WHERE tenant_id=$1 ORDER BY (status='disabled'), role, name", tid)
+        asg = await c.fetch("SELECT user_id, card_id FROM space_assign WHERE tenant_id=$1", tid)
+        staff = [{"id": u["id"], "name": u["name"] or ROLE_WORD.get(u["role"], "LX"), "role": ROLE_WORD.get(u["role"], "LX"), "dept": u["dept"]}
+                 for u in await c.fetch("SELECT id, name, role, dept FROM lx_users WHERE status='active' AND role IN ('staff','admin') "
+                                        "ORDER BY role DESC, name NULLS LAST, id")]
+        hd = {r["card_id"]: r["user_id"] for r in await c.fetch("SELECT card_id, user_id FROM tenant_service_staff WHERE tenant_id=$1", tid)}
+        shoot = await c.fetchval("SELECT user_id FROM tenant_shoot_staff WHERE tenant_id=$1", tid)
+        n_req = await c.fetchval("SELECT count(*) FROM analysis_requests WHERE tenant_id=$1 AND created_at >= date_trunc('month', now())", tid)
+        try:
+            n_shoot = await c.fetchval("SELECT count(*) FROM shoot_requests WHERE tenant_id=$1 AND created_at >= date_trunc('month', now())", tid)
+        except Exception:  # noqa: BLE001
+            n_shoot = None
+        logs = await c.fetch("SELECT kind, line, at FROM space_log WHERE tenant_id=$1 AND kind IN ('guide','download','assign','space','version') "
+                             "ORDER BY at DESC, id DESC LIMIT 8", tid)
+        out_svcs = []
+        from .messages import _owner
+        for s in svcs:
+            g = await _current(c, tid, s["card"])
+            own = await _owner(c, s["card"])
+            out_svcs.append({"card": s["card"], "name": s["name"], "status": s.get("status"), "year": s.get("year"),
+                             "edition": _ed(g["edition"]) if g else None, "edition_at": _iso((g or {}).get("published_at") or (g or {}).get("created_at")),
+                             "round": _round_label(g["body"]) if g else None,
+                             "staff": {"id": hd[s["card"]]} if hd.get(s["card"]) else None,
+                             "default": {"name": own.get("name"), "via": own.get("via")} if own else None})
+    sname = {x["id"]: x["name"] for x in staff}
+    for s in out_svcs:
+        if s["staff"]:
+            s["staff"]["name"] = sname.get(s["staff"]["id"]) or "LX 직원"
+    by: dict[str, list[str]] = {}
+    for a in asg:
+        by.setdefault(a["user_id"], []).append(a["card_id"])
+    names = {s["card"]: s["name"] for s in svcs}
+    act = [u for u in users if u["status"] != "disabled"]
+    mgr = [u for u in act if u["role"] == "manager"]
+    status_n: dict[str, int] = {}
+    for s in svcs:
+        status_n[s.get("status") or "첫 결과 전"] = status_n.get(s.get("status") or "첫 결과 전", 0) + 1
+    full_ko = (full.get("ko") if isinstance(full, dict) else full) or tid
+    return {"tenant": tid, "name": b["short"], "full": full_ko, "platform": b["platform"], "mark": b["mark"], "color": b["color"],
+            "host": _org_host(tid), "kind": _org_kind(tid), "managers": [u["name"] or "담당자" for u in mgr],
+            "space": {"mode_word": MODE_WORD.get((sp or {}).get("mode", "light")), "on": (sp or {}).get("state", "on") == "on", "since": _iso((sp or {}).get("created_at"))},
+            "counts": {"services": _cnt(len(svcs), "기관에 켜진 1차 서비스(기관 서비스 선택과 같은 판정)", "개"),
+                       "services_by": [{"word": k, "n": v} for k, v in status_n.items()],
+                       "accounts": _cnt(len(act), "기관 계정(사용 중지 뺌)", "명"),
+                       "managers": _cnt(len(mgr), "기관 관리자", "명"), "viewers": _cnt(len(act) - len(mgr), "부서 사용자", "명"),
+                       "disabled": _cnt(len(users) - len(act), "사용 중지(옛 아이디)", "명"),
+                       "requests_month": _cnt(int(n_req or 0), "이번 달 보낸 분석 요청"),
+                       "shoots_month": _cnt(int(n_shoot or 0), "이번 달 보낸 촬영 요청") if n_shoot is not None else None},
+            "log": [{"kind": r["kind"], "line": r["line"], "at": _iso(r["at"])} for r in logs],
+            "services": out_svcs,
+            "shoot": {"id": shoot, "name": sname.get(shoot) or "LX 직원"} if shoot else None,
+            "staff": staff,
+            "views": {u["id"]: ("모든 서비스" if u["role"] == "manager" else (", ".join(names.get(x, x) for x in sorted(by.get(u["id"], []))) or "없음")) for u in users},
+            "as_of": now_iso()}
+
+
+@router.put("/tenants/{tid}/helpdesk")
+async def tenant_helpdesk(tid: str, request: Request, body: dict | None = None):
+    p = require(principal(request), admin=True)
+    body = body or {}
+    uid = body.get("user_id") or None
+    async with db(realm="lx") as c:
+        if not await c.fetchval("SELECT 1 FROM tenants WHERE id=$1 AND kind='user'", tid):
+            raise ApiError("not_found", "없는 기관입니다")
+        if uid and not await c.fetchval("SELECT 1 FROM lx_users WHERE id=$1 AND status='active' AND role IN ('staff','admin')", uid):
+            raise ApiError("not_found", "없는 LX 직원입니다")
+        if body.get("shoot"):
+            before = await c.fetchval("SELECT user_id FROM tenant_shoot_staff WHERE tenant_id=$1", tid)
+            await c.execute("INSERT INTO tenant_shoot_staff(tenant_id, user_id, by, at) VALUES ($1,$2,$3,now()) "
+                            "ON CONFLICT (tenant_id) DO UPDATE SET user_id=EXCLUDED.user_id, by=EXCLUDED.by, at=now()", tid, uid, p.user_id)
+            await audit(c, p, "tenant.shoot_staff", tid, {"user_id": before}, {"user_id": uid})
+            return {"tenant": tid, "shoot": uid, "as_of": now_iso()}
+        card = str(body.get("card_id") or "")
+        if card not in {s["card"] for s in await received(tid)}:
+            raise ApiError("bad_request", "이 기관이 받는 서비스가 아닙니다")
+        before = await c.fetchval("SELECT user_id FROM tenant_service_staff WHERE tenant_id=$1 AND card_id=$2", tid, card)
+        await c.execute("INSERT INTO tenant_service_staff(tenant_id, card_id, user_id, by, at) VALUES ($1,$2,$3,$4,now()) "
+                        "ON CONFLICT (tenant_id, card_id) DO UPDATE SET user_id=EXCLUDED.user_id, by=EXCLUDED.by, at=now()", tid, card, uid, p.user_id)
+        await audit(c, p, "tenant.helpdesk", f"{tid}/{card}", {"user_id": before}, {"user_id": uid})
+    return {"tenant": tid, "card": card, "user_id": uid, "as_of": now_iso()}
+
+
+# ═══ 광역 기관 부서별 관할(나중 16 채택) — 도 부서는 관할 전체 · 시군 부서는 그 시군만(기관 관리자가 정함 · 부서 사용자 계정에 적용) ═══════
+#   GET /api/v1/spaces/me/dept-scope   (기관 관리자) {wide, regions[{code, name}], depts[{dept, users, sgg[]|null}]}
+#   PUT /api/v1/spaces/me/dept-scope   (기관 관리자) {dept, sgg: [시군구 코드] | null(관할 전체)} — 다음 요청부터 그 부서 사용자의 지역 · 결과 · 필지 · 요청이 그 시군만
+def _wide_regions(tenant: str) -> list[dict]:
+    from . import regions as R
+    sc = R.tenant_scope(tenant)
+    if not sc or (len(sc) == 1 and len(sc[0]) == 5):
+        return []
+    regs, _, _ = R.regions_base()
+    return sorted(({"code": x["sgg_cd"], "name": x["name"], "sido": x.get("sido_short") or x.get("sido")} for x in regs if R.in_scope(x["sgg_cd"], sc)),
+                  key=lambda x: (x["sido"] or "", x["name"]))
+
+
+@router.get("/spaces/me/dept-scope")
+async def dept_scope_list(request: Request):
+    p = _mgr(request)
+    regs = _wide_regions(p.tenant_id)
+    async with db(realm="lx") as c:
+        us = await c.fetch("SELECT coalesce(nullif(trim(dept), ''), '') dept, count(*) n FROM tenant_users WHERE tenant_id=$1 AND role <> 'manager' "
+                           "AND coalesce(status,'active') <> 'disabled' GROUP BY 1", p.tenant_id)
+        sc = {r["dept"]: r["sgg"] for r in await c.fetch("SELECT dept, sgg FROM tenant_dept_scope WHERE tenant_id=$1", p.tenant_id)}
+    depts = sorted({r["dept"] for r in us if r["dept"]} | set(sc))
+    n = {r["dept"]: int(r["n"]) for r in us}
+    nm = {x["code"]: x["name"] for x in regs}
+    return {"wide": bool(regs), "regions": regs,
+            "depts": [{"dept": d, "users": _cnt(n.get(d, 0), "그 부서 사용자(사용 중)", "명"), "sgg": list(sc[d]) if sc.get(d) else None,
+                       "words": ", ".join(nm.get(x, x) for x in sc[d]) if sc.get(d) else "관할 전체"} for d in depts],
+            "no_dept": _cnt(n.get("", 0), "부서를 적지 않은 사용자 — 관할 전체", "명"), "as_of": now_iso()}
+
+
+@router.put("/spaces/me/dept-scope")
+async def dept_scope_put(request: Request, body: dict | None = None):
+    p = _mgr(request)
+    body = body or {}
+    dept = str(body.get("dept") or "").strip()[:60]
+    if not dept:
+        raise ApiError("bad_request", "부서를 골라 주세요")
+    codes = {x["code"] for x in _wide_regions(p.tenant_id)}
+    if not codes:
+        raise ApiError("conflict", "광역 기관만 부서별 관할을 정합니다", None, 409)
+    want = body.get("sgg")
+    sgg = None if want in (None, [], "all") else sorted({str(x) for x in want})
+    if sgg and any(x not in codes for x in sgg):
+        raise ApiError("bad_request", "우리 기관 관할 안의 시군구만 고를 수 있습니다")
+    async with db(realm="lx") as c:
+        before = await c.fetchval("SELECT sgg FROM tenant_dept_scope WHERE tenant_id=$1 AND dept=$2", p.tenant_id, dept)
+        if sgg is None:
+            await c.execute("DELETE FROM tenant_dept_scope WHERE tenant_id=$1 AND dept=$2", p.tenant_id, dept)
+        else:
+            await c.execute("INSERT INTO tenant_dept_scope(tenant_id, dept, sgg, by, at) VALUES ($1,$2,$3,$4,now()) "
+                            "ON CONFLICT (tenant_id, dept) DO UPDATE SET sgg=EXCLUDED.sgg, by=EXCLUDED.by, at=now()", p.tenant_id, dept, sgg, p.user_id)
+        await audit(c, p, "tenant.dept_scope", f"{p.tenant_id}/{dept}", {"sgg": list(before) if before else None}, {"sgg": sgg})
+    return {"dept": dept, "sgg": sgg, "as_of": now_iso()}
+
+
+# ═══ 서비스 새 판 알림(나중 19 채택) — 배포 신청이 승인되면 그 서비스를 지금 공유받은 기관마다 공간 기록 한 줄(종 알림 · 우리 공간 알림)
+#   '서비스 새 판 n — 달라진 점 한 줄'(배포 신청 메모의 첫 줄 · 없으면 '새 판'만). 같은 판 알림은 두 번 쓰지 않는다.
+def _first_line(memo: str | None) -> str | None:
+    s = str(memo or "").strip().splitlines()[0].strip() if str(memo or "").strip() else ""
+    s = re.sub(r"\s+", " ", s)
+    return (s[:80] + "…" if len(s) > 80 else s) or None
+
+
+async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
+    async with db(realm="lx") as c:
+        v = await c.fetchrow("SELECT v.card_id, v.version, v.changelog, c.name FROM card_versions v JOIN cards c ON c.id = v.card_id WHERE v.id=$1",
+                             card_version_id)
+        if not v:
+            return []
+        memo = await c.fetchval("SELECT payload->>'memo' FROM approvals WHERE subject_type='card' AND subject_id=$1 ORDER BY at DESC LIMIT 1",
+                                card_version_id)
+        tns = [r["id"] for r in await c.fetch("SELECT id FROM tenants WHERE kind='user' AND coalesce(status,'active')='active' AND id <> 'lx-demo'")]
+    nm = v["name"].get("ko") if isinstance(v["name"], dict) else v["name"]
+    one = _first_line(memo)                          # 배포 신청 메모만(판 기록의 옛 개발 메모는 쓰지 않는다 — 사용자 규칙 2)
+    line = f"{nm or '서비스'} 새 판 {v['version']}" + (f" — {one}" if one else "")
+    sent = []
+    for t in tns:
+        if v["card_id"] not in {s["card"] for s in await received(t)}:
+            continue
+        async with db(realm="lx") as c:
+            if await c.fetchval("SELECT 1 FROM space_log WHERE tenant_id=$1 AND kind='version' AND detail->>'card_version'=$2", t, card_version_id):
+                continue
+            await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'version',$2,$3,NULL,'lx',$4)",
+                            t, v["card_id"], line, {"card_version": card_version_id, "version": v["version"], "test": bool(test)})
+        sent.append(t)
+    return sent
 
 
 # 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·

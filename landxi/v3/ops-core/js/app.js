@@ -7,6 +7,7 @@ import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
 import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(직원-4 ⓐ — LX 직원 대시보드 '공지' 칸에 보인다)
+import { mountRequests } from './requests.js';                   // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 · 급함 · 담당 · 보류)
 
 const who = await gate('ops-core');
 const INFRA = '/landxi/v3/ops-infra/';
@@ -15,7 +16,7 @@ const RAIL = [
   { id: 'infra', label: '인프라', icon: 'gear', href: INFRA },
   { id: 'tenants', label: '기관', icon: 'org', href: INFRA + '?view=tenants' },
   { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
-  { id: 'approvals', label: '승인 요청', icon: 'inbox' },
+  { id: 'approvals', label: '요청 관리', icon: 'inbox' },   // 분석 요청(관리) · 승인 요청(승인 · 거절) 두 탭(now 질문 16 ⓐ · 원칙 122)
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // 기관에서 온 모든 요청 · 대화(알림-1 — 관리자도 함께 본다)
   { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
 ];
@@ -26,13 +27,13 @@ const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rai
 document.body.classList.remove('oc-boot');
 /* Ctrl K — LX 관리자 운영 질문(GPU · 대기열 · 경보 · 기관 사용량 · 언어 모델) · 관리자 계정만(관문이 관리자만 들인다) */
 const ck = who.key === 'lx/admin'
-  ? mountCmdk({ context: () => ({ screen: 'ops', screen_name: document.body.dataset.view === 'approvals' ? 'LX 관리자 대시보드 · 승인 요청' : 'LX 관리자 대시보드 · 현황' }) }) : null;
+  ? mountCmdk({ context: () => ({ screen: 'ops', screen_name: document.body.dataset.view === 'approvals' ? 'LX 관리자 대시보드 · 요청 관리' : 'LX 관리자 대시보드 · 현황' }) }) : null;
 if (ck) { const b = ck.button(); b.querySelector('span').textContent = '물어보기'; S.mast(b);
   const i = ck.el.querySelector('.k-ck-i'); if (i) i.placeholder = 'GPU 상태 · 대기열 요약 · 경보 있어?'; }
 
 /* ── 판 두 장: 현황 · 결재 ─────────────────── */
 const over = h('section.oc-over', { 'aria-label': '현황' });
-const inbox = h('section.oc-inbox', { 'aria-label': '승인 요청' });
+const inbox = h('section.oc-inbox', { 'aria-label': '요청 관리' });
 S.main.append(over, inbox);
 
 // 현황: 지도 + 토글 + 범례 + 카드
@@ -110,20 +111,36 @@ todoEl.addEventListener('click', (e) => {
 });
 
 /* ── 결재함 ────────────────────────────── */
+/* 요청 관리(now 질문 16 ⓐ) — 머리 + 탭 둘: 분석 요청(순번 · 급함 · 담당 · 보류 · 승인 · 거절) · 승인 요청(배포 신청 · 모델 등록 · 운영 전환 · 기관에 공유 — 승인 · 거절) */
 const inboxWrap = h('div.oc-inbox-w');
+const tabA = h('button', { type: 'button', role: 'tab', dataset: { t: 'analyze' } }, '분석 요청 ', h('b.num'));
+const tabB = h('button', { type: 'button', role: 'tab', dataset: { t: 'approve' } }, '승인 요청 ', h('b.num'));
+const tabs = h('div.oc-tabs', { role: 'tablist', 'aria-label': '요청 종류' }, tabA, tabB);
+const head = h('header.oc-ih', {}, h('div', {}, h('h1', { text: '요청 관리' }), h('p', { text: '분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 거절합니다' })), tabs);
+const paneA = h('div.oc-pa');
+const paneB = h('div.oc-pb');
 const tbl = h('div.oc-tbl');
 const none = h('div.oc-none');
-inboxWrap.append(tbl, none);
+paneB.append(tbl, none);
+inboxWrap.append(head, paneA, paneB);
 inbox.append(inboxWrap);
+const RQ = mountRequests(paneA, { host: S.main, onChanged: () => refresh(true).then(tabCounts) });
+tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) location.hash = b.dataset.t === 'approve' ? '#/approvals/approve' : '#/approvals'; });
+const approveList = () => pending().filter((x) => x.kind !== 'request');
+function tabCounts() {
+  tabA.querySelector('b').textContent = String(RQ.count());
+  tabB.querySelector('b').textContent = String(approveList().length);
+}
 let T = null, openKey = null, sheet = null;
 
 function drawInbox() {
-  const list = pending();
+  const list = approveList();
+  tabCounts();
   if (!D.ok) { none.hidden = false; tbl.hidden = true; if (none.dataset.kind !== 'loading') empty(none, { kind: 'loading' }); return; }
   if (none.dataset.kind === 'loading') none.innerHTML = '';
   const rows = list.map((x) => ({ ...x, kindKo: x.kind === 'card' ? '배포 신청' : x.kindKo, target: x.target, requester: x.requester, day: ymd(x.at) || '—' }));
   none.hidden = !!rows.length; tbl.hidden = !rows.length;
-  if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '승인할 것이 없습니다', char: 'satellite' }); }
+  if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '승인할 요청이 없습니다', char: 'satellite' }); }
   const cols = [
     { key: 'kindKo', label: '종류', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
     { key: 'target', label: '대상', fmt: (v) => `<b class="oc-target">${esc(v)}</b>` },
@@ -219,10 +236,19 @@ async function openSheet(item) {
 /* ── 라우터(해시 2개) ─────────────────────── */
 function route() {
   const v = /^#\/approvals/.test(location.hash) ? 'approvals' : 'overview';
+  const tab = /^#\/approvals\/approve/.test(location.hash) ? 'approve' : 'analyze';
+  const was = document.body.dataset.tab;
   document.body.dataset.view = v;
-  document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 승인 요청' : 'Land-XI · LX 관리자 대시보드';
+  document.body.dataset.tab = tab;
+  document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 요청 관리' : 'Land-XI · LX 관리자 대시보드';
   S.go(v === 'approvals' ? 4 : 0); badge();
-  if (v === 'approvals') drawInbox();
+  if (v === 'approvals') {
+    if (was && was !== tab) { closeAll(); openKey = null; RQ.close(); }
+    tabA.setAttribute('aria-selected', String(tab === 'analyze')); tabB.setAttribute('aria-selected', String(tab === 'approve'));
+    paneA.hidden = tab !== 'analyze'; paneB.hidden = tab !== 'approve';
+    drawInbox();
+    if (tab === 'analyze') RQ.load().then(tabCounts);
+  }
   else { closeAll(); openKey = null; drawOverview(); M.map.resize(); }
 }
 addEventListener('hashchange', route);
@@ -239,7 +265,9 @@ async function refresh(fast = false) {
   S.fresh(D.at);
   badge();
   if (document.body.dataset.view === 'approvals') drawInbox(); else drawOverview();
+  if (!fast && document.body.dataset.view === 'approvals' && document.body.dataset.tab !== 'approve') RQ.load().then(tabCounts);   // 분석 요청 목록은 30초 · 알림 때만
 }
+RQ.load().then(tabCounts);
 await refresh();
 route();
 devDrawer({ stage: M.st, who });

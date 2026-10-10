@@ -342,6 +342,9 @@ def scope_of(p) -> list[str] | None:
         sc = tenant_scope(getattr(p, "tenant_id", None))
         if sc is None:
             return []
+        dept = getattr(p, "sgg", None)                 # 광역 기관 부서별 관할(나중 16) — 부서 사용자는 그 부서의 시군구만(기관 관할 안의 것만)
+        if dept:
+            return [c for c in dept if sc == [] or in_scope(c, sc)] or []
         return None if sc == [] else sc
     return []
 
@@ -935,6 +938,15 @@ async def region_results(sgg_cd: str, request: Request):
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
     ensure_region(p, r["sgg_cd"])                         # 기관 계정: 관할 밖 결과 층 0
+    if p.realm == "tenant":                               # 광역 기관 — 공유 때 고른 소속 시군구 밖은 결과 층 0(LX 보관 · 나중 13 ⓐ)
+        try:
+            from .release import share_sgg
+            async with db(realm="lx") as conn:
+                allow = await share_sgg(conn, p.tenant_id)
+        except Exception:  # noqa: BLE001
+            allow = None
+        if allow is not None and not any(c in allow for c in (sgg_codes(r["sgg_cd"]) or [r["sgg_cd"]])):
+            return {"sgg_cd": r["sgg_cd"], "name": r["name"], "items": [], "as_of": now_iso()}
     _, geoms, _ = regions_base()
     g = geoms.get(r["sgg_cd"]) or (geoms.get(r.get("prev_cd")) if r.get("prev_cd") else None)
     ix = await run_in_threadpool(emd_index, r["sgg_cd"])

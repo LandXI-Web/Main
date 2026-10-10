@@ -61,7 +61,7 @@ const first = K.recent()[0] ? regions.find((r) => r.sgg_cd === K.recent()[0]) : 
 if (first) setTimeout(() => picker.pick(first.sgg_cd), 1200);
 
 /* ── 관제 메뉴 변형 + 무대 ops ─────────────────────────────── */
-const MENU = [['현황', 'chart'], ['인프라', 'gear'], ['기관', 'org'], ['배포', 'deploy'], ['승인 요청', 'inbox']].map(([label, icon], i) => ({ id: 'm' + i, label, icon }));
+const MENU = [['현황', 'chart'], ['인프라', 'gear'], ['기관', 'org'], ['배포', 'deploy'], ['요청 관리', 'inbox']].map(([label, icon], i) => ({ id: 'm' + i, label, icon }));
 const S2 = K.shell({ who, home: 'ops-core', mount: $('frame2'), contained: true, rail: { kind: 'menu', items: MENU, current: 3 } });
 S2.fresh(lastAt);
 const st2El = document.createElement('div'); S2.main.append(st2El);

@@ -20,7 +20,7 @@ import { mountShoot } from './shoot.js';
 import { loadSent, drawSent } from './sent.js';
 
 const $ = (s, r = document) => r.querySelector(s);
-const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
+const STATE_LV = { pending: 'wait', held: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
 const RASTER = ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'ecw', 'img'];
 const SIDECAR = ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'prj', 'aux.xml', 'ovr'];
 const ymd = (s) => (/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')) || []).slice(1).join('.');
@@ -318,7 +318,7 @@ async function loadMine() {
     const j = await api('/requests');
     S.mine = j.items || [];
   } catch (e) { devlog('mine', e.code || e.message); return; }
-  const n = S.mine.filter((x) => ['pending', 'approved', 'analyzing'].includes(x.state)).length;
+  const n = S.mine.filter((x) => ['pending', 'held', 'approved', 'analyzing'].includes(x.state)).length;
   $('#mine-n').textContent = S.mine.length ? `${S.mine.length}건` : '';
   $('#mine-n').dataset.live = n ? '1' : '';
   drawMine();
@@ -351,6 +351,7 @@ async function openReq(id, { keepMap = false } = {}) {
   if (x.state === 'pending') lines.push(['', 'LX 담당자가 확인하고 있습니다. 확인하면 순서대로 분석합니다.']);
   if (x.state === 'approved' || x.state === 'analyzing') lines.push(['', '분석 중입니다. 끝나면 이 서비스의 새 시점으로 쌓입니다.']);
   if (x.state === 'rejected') lines.push(['warn', `거절 · 사유: ${x.reason || ''}`]);
+  if (x.state === 'held') lines.push(['', `보류 · 사유: ${x.reason || ''} — LX 담당자가 보류를 풀면 순서대로 분석합니다.`]);   // 요청 관리 보류(질문 16 ⓐ)
   if (x.state === 'failed') lines.push(['warn', x.reason || '분석하지 못했습니다']);
   if (x.state === 'done') {
     const by = Object.entries(x.result?.counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} ${Number(v).toLocaleString('ko-KR')}`).join(' · ');

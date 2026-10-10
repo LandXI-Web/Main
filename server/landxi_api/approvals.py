@@ -367,6 +367,13 @@ async def decide(aid: str, body: dict, request: Request):
         await ops_event("deploy.changed", {"deploy_id": sid, "action": "approval", "decision": dec, "tenant_id": tenant, "by": p.user_id, "at": now_iso()})
     if st == "card":
         await ops_event("deploy.changed", {"card_version_id": sid, "action": "card.publish", "decision": dec, "by": p.user_id, "at": now_iso()})
+        if dec == "approve":                      # 서비스 새 판 알림(나중 19) — 지금 공유받은 기관마다 '새 판 n — 달라진 점 한 줄'(배포 신청 메모)
+            try:
+                from .spaces import version_notice
+                effect = {**(effect or {}), "notified": len(await version_notice(sid, test=bool(pl.get("test"))))}
+            except Exception as e:  # noqa: BLE001 — 알림이 실패해도 승인은 그대로
+                import logging
+                logging.getLogger("landxi").warning("version_notice %s: %r", sid, e)
     if st == "request":                           # 승인 = 기존 분석 작업 대기열(게이트웨이 대기열로만) · 기관 화면에 상태 알림
         from .requests import after_decided
         after_decided(sid, dec, p.user_id)

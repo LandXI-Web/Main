@@ -163,11 +163,27 @@ async def _people(conn) -> dict:
 # ── 공유 기록(brand._services · cards._deck_tenant 가 함께 읽는다) ─────────────────────────────
 async def latest_shares(conn, tenant: str | None = None) -> dict:
     """서비스 × 기관의 마지막 공유 줄. tenant 를 주면 {card_id: 줄} · 안 주면 {(card_id, tenant_id): 줄}."""
-    rows = await conn.fetch("SELECT DISTINCT ON (card_id, tenant_id) card_id, tenant_id, shared, at, by, test FROM card_shares "
+    rows = await conn.fetch("SELECT DISTINCT ON (card_id, tenant_id) card_id, tenant_id, shared, at, by, test, sgg FROM card_shares "
                             "WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY card_id, tenant_id, at DESC, id DESC", tenant)
     if tenant:
         return {r["card_id"]: dict(r) for r in rows}
     return {(r["card_id"], r["tenant_id"]): dict(r) for r in rows}
+
+
+async def share_sgg(conn, tenant: str, card: str | None = None):
+    """광역 기관에 공유할 때 고른 소속 시군구(나중 13 ⓐ). card 를 주면 그 서비스의 목록(None = 관할 전체) ·
+    안 주면 그 기관에 켜진 공유 줄 전체의 합(하나라도 '관할 전체'면 None) — 결과 지도 · 내려받기가 이 목록 밖 시군구 결과를 내주지 않는다."""
+    try:
+        last = await latest_shares(conn, tenant=tenant)
+    except Exception:  # noqa: BLE001 — 공유 기록 표가 없거나 칸이 없는 DB
+        return None
+    if card is not None:
+        x = last.get(card)
+        return list(x["sgg"]) if x and x["shared"] and x.get("sgg") else None
+    on = [x for x in last.values() if x["shared"]]
+    if not on or any(not x.get("sgg") for x in on):
+        return None
+    return sorted({c for x in on for c in x["sgg"]})
 
 
 # ── 프로젝트 · 모델 · 영상 ────────────────────────────────────────────────
@@ -672,6 +688,11 @@ async def requests_list(request: Request):
             "as_of": now_iso()}
 
 
+def _wide_regions(tid: str) -> list[dict]:
+    from .spaces import _wide_regions as W
+    return W(tid)
+
+
 def _org_kind(tid: str) -> dict:
     from . import regions as R
     sc = R.tenant_scope(tid)
@@ -739,10 +760,13 @@ async def shares(request: Request):
             on = s["id"] in eff[o["id"]]
             x = last.get((s["id"], o["id"]))
             cells[o["id"]] = {"shared": on, "at": _iso(x["at"]) if x and x["shared"] == on else None,
-                              "year": (eff[o["id"]].get(s["id"]) or {}).get("year"), "test": bool(x and x["test"] and x["shared"] == on)}
+                              "year": (eff[o["id"]].get(s["id"]) or {}).get("year"), "test": bool(x and x["test"] and x["shared"] == on),
+                              "sgg": list(x["sgg"]) if on and x and x["shared"] and x.get("sgg") else None}   # 광역 — 고른 소속 시군구(None = 전체 · 나중 13 ⓐ)
         rows.append({**s, "cells": cells, "n": sum(1 for c in cells.values() if c["shared"])})
     rows.sort(key=lambda r: (-r["n"], r["state"] != "ops", r["name"]))
-    return {"orgs": [{k: o[k] for k in ("id", "name", "full", "word", "wide", "n")} for o in orgs], "items": rows,
+    for o in orgs:                                       # 광역 기관 — 소속 시군구 목록(공유할 때 고른다 · 나중 13 ⓐ)
+        o["regions"] = _wide_regions(o["id"]) if o.get("wide") else None
+    return {"orgs": [{k: o[k] for k in ("id", "name", "full", "word", "wide", "n", "regions")} for o in orgs], "items": rows,
             "services": env(len(rows), "count", "recorded", "승인된 판 · 배포 기록이 있는 서비스"), "as_of": now_iso()}
 
 
@@ -760,13 +784,24 @@ async def share_set(body: dict, request: Request):
             raise ApiError("not_found", "없는 서비스입니다")
         if on and not await conn.fetchval("SELECT 1 FROM card_versions WHERE card_id=$1 AND approved_by IS NOT NULL", cid):
             raise ApiError("conflict", "승인된 판이 없는 서비스는 공유할 수 없습니다", None, 409)
-        await conn.execute("INSERT INTO card_shares(card_id, tenant_id, shared, by, test, note) VALUES ($1,$2,$3,$4,$5,$6)",
-                           cid, tid, on, p.user_id, bool(body.get("test")), str(body.get("note") or "")[:120] or None)
-        await audit(conn, p, "card.share" if on else "card.unshare", cid, None, {"tenant_id": tid, "test": bool(body.get("test"))})
+        sgg = None                                       # 광역 기관 — 소속 시군구까지(나중 13 ⓐ) · 없거나 전부면 관할 전체
+        if on and body.get("sgg") is not None:
+            codes = {x["code"] for x in _wide_regions(tid)}
+            if not codes:
+                raise ApiError("bad_request", "시군구는 광역 기관에 공유할 때만 고릅니다")
+            want = sorted({str(x) for x in (body.get("sgg") or [])})
+            if not want:
+                raise ApiError("bad_request", "시군구를 하나 이상 고르거나 공유를 거두어 주세요")
+            if any(x not in codes for x in want):
+                raise ApiError("bad_request", "그 기관 관할 안의 시군구만 고를 수 있습니다")
+            sgg = None if set(want) == codes else want
+        await conn.execute("INSERT INTO card_shares(card_id, tenant_id, shared, by, test, note, sgg) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+                           cid, tid, on, p.user_id, bool(body.get("test")), str(body.get("note") or "")[:120] or None, sgg)
+        await audit(conn, p, "card.share" if on else "card.unshare", cid, None, {"tenant_id": tid, "test": bool(body.get("test")), "sgg": sgg})
     from .jobs import ops_event
     await ops_event("deploy.changed", {"card_id": cid, "tenant_id": tid, "action": "share" if on else "unshare", "by": p.user_id, "at": now_iso()})
     eff = await _effective([orgs[tid]])
-    return {"card_id": cid, "tenant_id": tid, "shared": cid in eff[tid], "as_of": now_iso()}
+    return {"card_id": cid, "tenant_id": tid, "shared": cid in eff[tid], "sgg": sgg, "as_of": now_iso()}
 
 
 def _month_start():

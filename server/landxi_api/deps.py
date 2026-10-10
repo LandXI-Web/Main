@@ -102,6 +102,7 @@ class Principal:
     name: str | None = None
     token_hash: str | None = None
     caps: list[str] = field(default_factory=list)
+    sgg: list[str] | None = None      # 광역 기관 부서 사용자의 관할(부서별 관할 · 나중 16 — None = 기관 관할 전체)
 
     @property
     def is_lx(self) -> bool:

@@ -3,9 +3,8 @@
    사용 현황 화면(기관 비교 · 추이)은 11차 확인 대기라 새로 만들지 않았다 — 지금 있던 기관 카드에서 한도 표시만 걷었다.
    기관 서랍 '공유 영상' 칸(확인 대장 5차 역할-4 ⓑ — LX 관리자가 기관마다 고름): 관할 안 LX 영상 목록에서 켜고 끈다. 켠 영상만 그 기관이
    지도에서 보고(원본만 있는 영상도 서명 지도 조각으로 — 10-01 사용자 결정) 분석 의뢰에 불러온다(서버가 거른다 · 공유 = 권한 한 줄 · 복사 0). */
-import { drawer, toast, esc, nf, api, h, empty } from './kit.js';
+import { toast, esc, nf, api, h, empty } from './kit.js';
 import { DIM, orgs, llmUsage } from './data.js';
-import { openBrand } from './brand.js';   // 기관 서랍 · 기관 정보(구현 2차 T3)
 import { API, session } from '../../../shared/api-v1.js';
 
 /** 사용량 글자 — 저장은 1 GB 아래면 MB 로(0.007 GB → 7 MB) · 나머지는 항목 단위 */
@@ -24,14 +23,11 @@ function stat(dim, v) {
     <b class="stat-n num">${u.n}<small> ${esc(u.unit)}</small></b><figcaption>${esc(D.ko)}</figcaption></figure>`;
 }
 
-/** 서랍 — 공유 영상(관리자가 기관마다 켜고 끈다) · 그림이 들어가므로 PC 600(확인 18차 M-4 ⓐ) · 휴대폰은 전체 폭 */
-function sheet(o) {
-  return drawer({ title: o.name, body: h('div.qs-w', {}, mainPhoto(o), shares(o)), slot: 'right', width: 600 });
-}
+/* 공유 영상 · 메인 배경 사진은 '기관 한 곳' 화면의 '영상과 배경' 탭이 쓴다(tenant-page.js · now 질문 17 ⓑ) */
 
 /* 기관 메인 배경 사진(확인 18차 기관-12 ⓐ · 원칙 116) — 그 기관 결과 장면 · 공유한 영상에서 고르거나 사진을 올린다 → 미리 보기 → 저장.
    서버가 가로 1,600 이하 한 장으로 만들어 두고 로그인 전 기관 메인이 그 그림을 쓴다(고르지 않으면 지금 그림). 원본 · 제한 영상 0. */
-function mainPhoto(o) {
+export function mainPhoto(o) {
   const tid = encodeURIComponent(o.id);
   const sec = h('section.sh.mp', { 'aria-label': '기관 메인 배경 사진' });
   const grid = h('div.mp-g');
@@ -110,7 +106,7 @@ const ym = (w) => { const m = /^(\d{4})년(?: (\d{1,2})월)?/.exec(w || ''); ret
 
 /** 공유 영상 칸 — 관할 안 LX 영상 · 켜고 끄기(지도에서 보기 · 분석 의뢰에 쓰기). 값은 서버(GET/PUT /tenants/{id}/imagery-shares) 한 곳 */
 const CAP = (x) => (x.view && x.analyze ? '지도 · 분석 요청' : x.analyze ? '분석 요청' : x.view ? '지도' : '');
-function shares(o) {
+export function shares(o) {
   const sec = h('section.sh', { 'aria-label': '공유 영상' });
   const chips = h('div.sh-f', { role: 'group', 'aria-label': '종류 거르기' });   // 전체 · 드론 · 항공 · 위성(있는 종류만)
   let only = '';
@@ -176,15 +172,14 @@ export function mountTenants(root) {
       <section class="t-card org" data-id="${esc(o.id)}">
         <header><h2>${esc(o.name)}</h2><span class="t-chip">이번 달</span></header>
         <div class="rings stats">${['storage_gb', 'gpu_s_month', 'area_km2_month'].map((k) => stat(k, o.dims[k])).join('')}</div>
-        <div class="org-acts"><button class="t-btn t-btn--2 adj" type="button">공유 영상</button><button class="t-btn t-btn--2 brand-b" type="button">기관 정보</button></div>
+        <div class="org-acts"><button class="t-btn t-btn--2 go" type="button">기관 화면 열기</button></div>
       </section>`).join('');
     paintLlm();
   }
+  /* 기관을 누르면 서랍이 아니라 '기관 한 곳' 새 화면(now 질문 17 ⓑ — 탭 넷 · tenant-page.js) · 카드 어디를 눌러도 열린다 */
   grid.addEventListener('click', (e) => {
     const card = e.target.closest('.org'); if (!card) return;
-    const o = orgs().find((x) => x.id === card.dataset.id); if (!o) return;
-    if (e.target.closest('.brand-b')) return openBrand(o);   // 마크 · 이름 · 색 · 소개 글(기관 관리자와 같은 칸)
-    sheet(o);
+    location.hash = '#/tenants/o/' + encodeURIComponent(card.dataset.id);
   });
-  return { paint, open(id) { const o = orgs().find((x) => x.id === id); if (o) sheet(o); } };
+  return { paint, open(id) { location.hash = '#/tenants/o/' + encodeURIComponent(id); } };
 }

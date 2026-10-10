@@ -6,6 +6,7 @@ import { mountInfra } from './infra.js';
 import { mountTenants } from './tenants.js';
 import { mountDeploys } from './deploys.js';
 import { mountSpaces } from './spaces.js';   // 기관 → '기관 공간' 탭(구현 3차 · 13차 분기-3 ⓒ 1단 · 보기 · 지원만)
+import { mountTenantPage } from './tenant-page.js';   // 기관 → '기관 한 곳' 새 화면(now 질문 17 ⓑ — 탭 넷)
 import { mountRelease } from './release.js'; // 배포 → 세 탭(배포 신청 · 기관 공유 · 사용 현황 — 10-09 배포-3 ⓐ · 배포-5) + 개선 후보(16차 개선-1)
 // 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
 import { loadPending as loadApprovals, pending } from '../../ops-core/js/data.js';     // 배지만 — 사용량 집계를 다시 부르지 않는다
@@ -17,7 +18,7 @@ const RAIL = [
   { id: 'infra', label: '인프라', icon: 'gear', href: '#/infra' },
   { id: 'tenants', label: '기관', icon: 'org', href: '#/tenants' },
   { id: 'deploys', label: '배포', icon: 'deploy', href: '#/deploys' },
-  { id: 'approvals', label: '승인 요청', icon: 'inbox', href: OPS + '#/approvals' },
+  { id: 'approvals', label: '요청 관리', icon: 'inbox', href: OPS + '#/approvals' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // LX 관리자 대시보드와 같은 메뉴(원칙 43)
   { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
 ];
@@ -57,6 +58,7 @@ empty(boot, { kind: 'loading' });
 const oldDeploys = Object.assign(document.createElement('div'), { hidden: true });
 const V = { infra: mountInfra(panes.infra), tenants: mountTenants(panes.tenants), deploys: mountDeploys(oldDeploys) };
 mountSpaces(panes.tenants);
+mountTenantPage(panes.tenants);
 const REL = mountRelease(panes.deploys);
 
 let cur = null;

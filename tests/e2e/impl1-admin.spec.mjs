@@ -41,8 +41,9 @@ test.describe('impl-1 LX 관리자 — 결재함 · GPU 판정', () => {
     const rows = page.locator('.oc-tbl tbody tr');
     await page.waitForFunction(() => document.body.dataset.view === 'approvals' && (document.querySelectorAll('.oc-tbl tbody tr').length > 0
       || /결재할 것이 없습니다/.test(document.querySelector('.oc-none')?.innerText || '')), null, { timeout: 10000 });
-    test.skip(!(await rows.count()), '결재 대기 없음');
-    await rows.first().click();
+    await page.locator('.oc-tabs button[data-t="approve"]').click();          // 요청 관리 · 승인 요청 탭(now 질문 16 ⓐ)
+    test.skip(!(await page.locator('.oc-pb .oc-tbl tbody tr').count()), '결재 대기 없음');
+    await page.locator('.oc-pb .oc-tbl tbody tr').first().click();
     const sheet = page.locator('.oc-sheet');
     await expect(sheet).toBeVisible();
     await expect(sheet.locator('.oc-ch').last()).toBeVisible();                 // 바뀌는 것

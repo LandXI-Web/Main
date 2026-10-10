@@ -1,0 +1,73 @@
+/* '기관 한 곳' 화면(now 질문 17 ⓑ — 탭 넷) · 밝은 톤 · 시안 design-r10/gov-3 admin-tenant-page 문법 */
+.oi .pane.tp-on > :not(.tp){display:none}
+.tp{max-width:1200px;padding:28px 40px 56px}
+.tp[hidden]{display:none}
+.tp-hold{min-height:200px}
+.tp-crumb{display:flex;gap:8px;align-items:center;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.tp-crumb a{color:var(--sub);text-decoration:none}
+.tp-crumb a:hover{color:var(--ink)}
+.tp-crumb b{font-weight:500;color:var(--ink)}
+.tp-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:20px;margin:20px 0 24px}
+.tp-mk{width:64px;height:64px;border-radius:16px;background:var(--bg-1);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--rule);overflow:hidden}
+.tp-mk span{font:800 15px/1.05 var(--font-display);color:var(--mk)}
+.tp-mk img{max-width:52px;max-height:52px;object-fit:contain}
+.tp-t h1{margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:700 var(--fs-h2)/var(--lh-h2) var(--font-display);letter-spacing:var(--ls-h2);color:var(--ink)}
+.tp-t h1 .t-chip{height:26px;font-size:13px}
+.tp-sub{margin:6px 0 0;display:flex;flex-wrap:wrap;gap:4px 18px;font:400 var(--fs-label)/22px var(--font-body);color:var(--sub-2)}
+.tp-sub b{font-weight:600;color:var(--ink)}
+.tp-acts{display:flex;gap:8px}
+.tp-acts .t-btn{text-decoration:none}
+.tp-tabs{display:flex;gap:8px;margin:0 0 24px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.tp-tabs button{height:40px;padding:0 16px;border:1px solid var(--rule);border-radius:20px;background:var(--bg-1);font:500 var(--fs-label)/1 var(--font-body);color:var(--ink-2);cursor:pointer}
+.tp-tabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tp-tabs small{margin-left:6px;font:600 12px/1 var(--font-num);opacity:.7}
+.tp-ov{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:20px;align-items:start}
+.tp-cells{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tp-cell{display:flex;flex-direction:column;gap:4px;padding:20px 22px;border-radius:var(--r-16);background:var(--bg-1)}
+.tp-cell b{font:700 30px/1.1 var(--font-num);color:var(--ink)}
+.tp-cell b small{margin-left:3px;font:500 14px/1 var(--font-body);color:var(--sub)}
+.tp-cell > span{font:500 var(--fs-body)/22px var(--font-body);color:var(--ink-2)}
+.tp-cs{font:400 13px/18px var(--font-body);color:var(--sub)}
+.tp-rec h2,.tp-h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);color:var(--ink)}
+.tp-rec h2 small,.tp-h2 small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.tp-h2{margin:28px 0 12px}
+.tp-b > div > .tp-h2:first-child{margin-top:0}
+.tp-rec ul{margin:0;padding:0;list-style:none}
+.tp-rec li{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.tp-rec li:last-child{border-bottom:0}
+.tp-rec li .num{color:var(--sub)}
+.tp-none{margin:8px 0;color:var(--sub)}
+.tp-card{padding:8px 24px 16px}
+.tp-t{width:100%;border-collapse:collapse}
+.tp-t th{padding:12px 8px;text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
+.tp-t td{padding:14px 8px;vertical-align:middle;border-bottom:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.tp-t tr:last-child td{border-bottom:0}
+.tp-t td b{display:block;font-weight:600}
+.tp-t td small{display:block;margin-top:2px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.tp-t td .t-chip{height:24px;font-size:12px}
+.tp-sel{height:40px;max-width:320px}
+.tp-foot{margin:12px 0 4px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.tp-foot a{color:var(--accent)}
+.tp-shoot{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 24px}
+.tp-shoot b{font:600 var(--fs-body)/22px var(--font-body)}
+.tp-shoot p{margin:4px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.tp-img{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.tp-img .tp-card{padding:20px 24px}
+.tp-us{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 0}
+.tp-u{display:flex;flex-direction:column;gap:4px}
+.tp-u b{font:700 28px/1.1 var(--font-num);color:var(--ink)}
+.tp-u b small{margin-left:3px;font:500 14px/1 var(--font-body);color:var(--sub)}
+.tp-u > span{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.tp-u > small{font:400 12px/18px var(--font-body);color:var(--sub)}
+.tp-fold{margin:8px 0;font:400 13px/20px var(--font-body);color:var(--sub-2)}
+.tp-fold summary{cursor:pointer;padding:6px 0}
+/* 기관 카드 — 카드 어디를 눌러도 '기관 한 곳' 화면 */
+.org-acts .go{width:100%}
+@media (max-width:960px){
+  .tp{padding:20px 16px 40px}
+  .tp-top{grid-template-columns:auto 1fr}
+  .tp-acts{grid-column:1/-1}
+  .tp-ov,.tp-img{grid-template-columns:minmax(0,1fr)}
+  .tp-us{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tp-card{overflow-x:auto}
+}

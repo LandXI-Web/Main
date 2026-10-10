@@ -13,6 +13,7 @@ import { h, esc, api, session } from '../kit/util.js';
 import { drawer } from '../kit/panel.js';
 import { table } from '../kit/table.js';
 import { whoami, FRONT } from '../kit/auth-gate.js';
+import { contact as liveContact, telHref } from '../kit/contact.js';
 
 const BASE = new URL('./', import.meta.url);
 export const TABS = [
@@ -21,7 +22,7 @@ export const TABS = [
   { id: 'contact', label: '문의' },
   { id: 'me', label: '내 계정' },
 ];
-export const CONTACT = { tel: '063-713-1218', mail: 'landxi@lx.or.kr' };   // ※ 사용자 확인 전 자리표(명세 §4-12)
+export const CONTACT = { tel: '063-713-1218', mail: 'landxi@lx.or.kr' };   // 처음 값 — 실제 값은 LX 관리자 '운영 정보'(원칙 170 · kit/contact.js)
 const MAX = 10;
 
 const ICON = {
@@ -84,9 +85,13 @@ async function faq(el) {
 
 /* ── 탭 3 · 문의 (전화 · 메일 두 줄) ── */
 function contact(el) {
-  el.append(h('div.hm-contact', {},
-    h('a.hm-ct', { href: 'tel:' + CONTACT.tel.replace(/-/g, ''), html: `${svg('tel')}<span class="hm-v">${esc(CONTACT.tel)}</span>` }),
-    h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `${svg('mail')}<span class="hm-v">${esc(CONTACT.mail)}</span>` })));
+  const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `${svg('tel')}<span class="hm-v">${esc(CONTACT.tel)}</span>` });
+  const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `${svg('mail')}<span class="hm-v">${esc(CONTACT.mail)}</span>` });
+  el.append(h('div.hm-contact', {}, tel, mail));
+  liveContact().then((c) => {          // LX 관리자 '운영 정보' 값(원칙 170) — 못 읽으면 처음 값 그대로
+    tel.href = telHref(c.tel); tel.querySelector('.hm-v').textContent = c.tel;
+    mail.href = 'mailto:' + c.mail; mail.querySelector('.hm-v').textContent = c.mail;
+  });
 }
 
 /* ── 탭 4 · 내 계정 (이름 · 역할 · 기관 · 세션 만료 + 로그아웃) ── */

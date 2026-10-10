@@ -101,6 +101,7 @@ ACTION_KO = {
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
     "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 증량 신청",
     "account.storage.approve": "저장 용량 증량 승인", "account.storage.reject": "저장 용량 증량 거절", "account.depts": "부서 목록 바꿈",
+    "account.contact": "문의 연락처 바꿈",
 }
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
@@ -345,7 +346,7 @@ async def password_change(body: dict, request: Request):
     await r.delete(key)
     async with db(realm="lx") as conn:
         await _log(conn, u["id"], c["realm"], "account.password.change", c.get("login") or "", {"realm": c["realm"], "tenant_id": c.get("tenant_id"), "name": u["name"]})
-    return await auth.open_session(c["realm"], u, c.get("tenant_id"), c.get("site"), c.get("login") or "")
+    return await auth.open_session(c["realm"], u, c.get("tenant_id"), c.get("site"), c.get("login") or "", ip=client_ip(request), host=auth.entry_host(request))
 
 
 # ── 관리자 — 관할 ───────────────────────────────────────────────────────────────────────
@@ -372,6 +373,29 @@ def _can_decide_signup(p: Principal, realm: str) -> bool:
 
 async def _tenant_names(conn) -> dict:
     return {r["id"]: _tname(r["name"]) for r in await conn.fetch("SELECT id, name FROM tenants")}
+
+
+def _entry_ko(after: dict | None, tn: dict) -> str:
+    """들어온 입구(나중 17) — Land-XI · LX 관리자 · 기관(이름). 이 PC 안 로그인은 '이 PC' · 입구를 적기 전 옛 기록은 '—'."""
+    a = after or {}
+    if "site" not in a:
+        return "—"
+    if not a.get("host"):
+        return "이 PC"
+    site = a.get("site") or ""
+    if site == "gov":
+        t = re.sub(r"^.*?(특별자치도|특별자치시|광역시|[가-힣]+도)\s+", "", re.sub(r"\s*\(.*\)$", "", tn.get(a.get("tenant_id") or "", "")))   # '전북특별자치도 남원시' → '남원시'
+        return f"기관 · {t}" if t else "기관"
+    return SITE_KO.get(site, "—")
+
+
+async def _last_entry(conn, ids: list[str]) -> dict:
+    """계정마다 마지막 로그인의 입구 기록(after) — 계정 서랍 '최근 로그인' 줄에 함께."""
+    if not ids:
+        return {}
+    rows = await conn.fetch("SELECT DISTINCT ON (actor) actor, after FROM audit_log WHERE action='login' AND actor = ANY($1::text[]) "
+                            "ORDER BY actor, id DESC", ids)
+    return {r["actor"]: r["after"] for r in rows}
 
 
 async def _last_login(conn, ids: list[str]) -> dict:
@@ -564,8 +588,10 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
                     continue
                 out.append({"realm": "tenant", "tenant_id": u["tenant_id"], "org": tn.get(u["tenant_id"], ""), **_user(u, "tenant")})
         last = await _last_login(conn, [x["id"] for x in out])
+        ent = await _last_entry(conn, [x["id"] for x in out])
     for x in out:
         x["last_login"] = _iso(last.get(x["id"]))
+        x["last_login_where"] = _entry_ko(ent.get(x["id"]), tn) if x["id"] in ent else None
         x["mine"] = _mine(p, x["realm"], x["id"])
     orgs = [{"id": k, "name": v} for k, v in tn.items() if k not in ("lx", "lx-demo")] if p.is_admin else [{"id": p.tenant_id, "name": tn.get(p.tenant_id, "")}]
     return {"items": out, "orgs": orgs, "roles": {k: [{"id": r, "label": ROLE_KO[(k, r)]} for r in v] for k, v in ROLES.items()}, **extra, "at": now_iso()}
@@ -683,6 +709,92 @@ async def login_failures(request: Request):
               "site_ko": SITE_KO.get(r["site"] or "", "이 PC"), "ip": "이 PC" if (r["ip"] or "") in ("127.0.0.1", "::1", "") else r["ip"],
               "reason": r["reason"], "reason_ko": FAIL_KO.get(r["reason"], r["reason"])} for r in rows]
     return {"items": items, "at": now_iso()}
+
+
+@router.get("/accounts/logins")
+async def login_records(request: Request):
+    """로그인 기록(나중 17 · 보안 점검) — 시각 · 아이디 · 소속 · 들어온 입구(Land-XI · LX 관리자 · 기관 주소) · 주소 이름 · 접속 주소.
+    LX 관리자 = 전부 · 기관 관리자 = 자기 기관 계정의 로그인만. 이 PC 안 요청은 접속 주소 대신 '이 PC'."""
+    p = _who(request)
+    pl = await pool()
+    if p.is_admin:
+        rows = await pl.fetch("SELECT id, actor, realm, subject, after, at FROM audit_log WHERE action='login' ORDER BY id DESC LIMIT 200")
+    else:
+        rows = await pl.fetch("SELECT id, actor, realm, subject, after, at FROM audit_log WHERE action='login' AND realm='tenant' "
+                              "AND actor IN (SELECT id FROM tenant_users WHERE tenant_id=$1) ORDER BY id DESC LIMIT 200", p.tenant_id)
+    async with db(realm="lx") as conn:
+        tn = await _tenant_names(conn)
+        names = {r["id"]: (r["name"], None) for r in await conn.fetch("SELECT id, name FROM lx_users")}
+        names.update({r["id"]: (r["name"], r["tenant_id"]) for r in await conn.fetch("SELECT id, name, tenant_id FROM tenant_users")})
+    items = []
+    for r in rows:
+        a = r["after"] or {}
+        nm, tid = names.get(r["actor"], (a.get("name"), a.get("tenant_id")))
+        ip = a.get("ip") or ""
+        items.append({"id": f"lg_{r['id']}", "at": _iso(r["at"]), "login": r["subject"], "name": nm,
+                      "org": "LX" if r["realm"] == "lx" else tn.get(tid or a.get("tenant_id") or "", ""),
+                      "site": a.get("site"), "site_ko": _entry_ko(a, tn), "host": a.get("host") or "",
+                      "ip": "이 PC" if ip in ("127.0.0.1", "::1", "") else ip})
+    return {"items": items, "at": now_iso()}
+
+
+# ── 운영 정보 — 문의 연락처(원칙 170 · 나중 10) ──────────────────────────────────────────────
+# 메인 '문의하기' · 맨 아래 · 도움말 '문의' · 로그인 창 문의가 이 값 하나를 읽는다. LX 관리자가 계정 관리 → '운영 정보'에서 바꾼다.
+# 처음 값 = 지금 화면에 있던 임시 값(사용자가 바꿀 때까지 그대로).
+CONTACT_KEY = "ops.contact"
+CONTACT_DEFAULT = {"tel": "063-713-1218", "mail": "landxi@lx.or.kr"}
+_TEL = re.compile(r"^[0-9+][0-9\- ]{6,19}$")
+_MAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
+
+
+async def contact_value(conn) -> dict:
+    row = await conn.fetchrow("SELECT value, updated_by, updated_at FROM lx_settings WHERE key=$1", CONTACT_KEY)
+    v = dict(CONTACT_DEFAULT)
+    if row and isinstance(row["value"], dict):
+        v.update({k: str(row["value"][k]) for k in ("tel", "mail") if row["value"].get(k)})
+    return {**v, "updated_by": row["updated_by"] if row else None, "updated_at": _iso(row["updated_at"]) if row else None}
+
+
+@router.get("/public/contact")
+async def public_contact():
+    """문의 연락처(로그인 없이) — 메인 · 도움말 · 로그인 창이 읽는다. 전화 · 메일만."""
+    try:
+        async with db(realm="lx") as conn:
+            v = await contact_value(conn)
+    except Exception:  # noqa: BLE001 — 읽지 못하면 처음 값
+        v = dict(CONTACT_DEFAULT)
+    return {"tel": v["tel"], "mail": v["mail"], "at": now_iso()}
+
+
+@router.get("/accounts/contact")
+async def get_contact(request: Request):
+    _admin(request)
+    async with db(realm="lx") as conn:
+        v = await contact_value(conn)
+        who = await conn.fetchval("SELECT name FROM lx_users WHERE id=$1", v["updated_by"]) if v["updated_by"] else None
+    return {"tel": v["tel"], "mail": v["mail"], "updated_at": v["updated_at"], "updated_name": who, "default": CONTACT_DEFAULT, "at": now_iso()}
+
+
+@router.put("/accounts/contact")
+async def put_contact(body: dict, request: Request):
+    """문의 연락처 바꾸기 — LX 관리자만 · 처리 기록에 누가 언제 무엇을 → 무엇으로."""
+    p = _admin(request)
+    tel = str(body.get("tel") or "").strip()
+    mail = str(body.get("mail") or "").strip()
+    if not _TEL.match(tel):
+        raise ApiError("bad_request", "전화번호를 확인해 주세요(숫자 · - 만)", {"field": "tel"})
+    if not _MAIL.match(mail) or len(mail) > 120:
+        raise ApiError("bad_request", "메일 주소를 확인해 주세요", {"field": "mail"})
+    async with db(realm="lx") as conn:
+        before = await contact_value(conn)
+        if (before["tel"], before["mail"]) != (tel, mail):
+            await conn.execute("INSERT INTO lx_settings(key, value, updated_by, updated_at) VALUES ($1,$2,$3,now()) "
+                               "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()",
+                               CONTACT_KEY, {"tel": tel, "mail": mail}, p.user_id)
+            ch = [f"{a} → {b}" for a, b in ((before["tel"], tel), (before["mail"], mail)) if a != b]
+            await _log(conn, p.user_id, "lx", "account.contact", "", {"realm": "lx", "tenant_id": None, "name": "문의 연락처",
+                       "from": {"tel": before["tel"], "mail": before["mail"]}, "to": {"tel": tel, "mail": mail}, "reason": " · ".join(ch)})
+    return {"tel": tel, "mail": mail, "at": now_iso()}
 
 
 # ── LX 요청함 — 기관 요청을 보낸 사람(기관-8 ⓐ · 원칙 102 · 63 · 72) ───────────────────────────────────

@@ -23,11 +23,13 @@ const TABS = [
   { id: 'storage', label: '저장 용량', count: 'storage', lx: true },
   { id: 'users', label: '계정' },
   { id: 'depts', label: '부서', lx: true },
+  { id: 'logins', label: '로그인 기록' },
   { id: 'fails', label: '로그인 실패' },
   { id: 'log', label: '처리 기록' },
+  { id: 'ops', label: '운영 정보', lx: true },   // 문의 연락처(원칙 170) — 메인 · 도움말 · 로그인 창이 이 값을 읽는다
 ];
 const NONE = { signup: '새 가입 신청이 없습니다', reset: '비밀번호 재설정 요청이 없습니다', users: '계정이 없습니다',
-  fails: '실패한 로그인이 없습니다', log: '처리 기록이 없습니다' };
+  logins: '로그인 기록이 없습니다', fails: '실패한 로그인이 없습니다', log: '처리 기록이 없습니다' };
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const NEW_ROLE = { lx: 'LX 직원', tenant: '부서 사용자' };
 const hm = (s) => { const d = s ? new Date(s) : null; return d && !Number.isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : ''; };
@@ -79,13 +81,18 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       { key: 'orgd', label: '소속' }, { key: 'role_ko', label: '역할', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
       { key: 'st', label: '상태', fmt: (v, r) => `<span class="t-chip" data-lv="${r.stLv}">${esc(v)}</span>` },
       ...(LX ? [{ key: 'stor', label: '저장 용량', fmt: (v, r) => (r.storage ? `<span class="acc-q${r.storage.warn ? ' is-warn' : ''}">${esc(shortStorage(r.storage))}</span>` : '<span class="acc-q">—</span>') }] : [])],
+    /* 로그인 기록(나중 17) — 들어온 입구(Land-XI · LX 관리자 · 기관) + 주소 이름 작게 */
+    logins: [{ key: 'at', label: '시각', fmt: (v) => `<span class="num">${esc(when(v))}</span>` },
+      { key: 'login', label: '아이디', fmt: (v, r) => `<b class="acc-b">${esc(r.name || '')}</b> <span class="acc-m">${esc(v || '—')}</span>` },
+      { key: 'org', label: '소속' }, { key: 'where', label: '입구', fmt: (v, r) => `${esc(v || '—')}${r.host ? ` <span class="acc-m">${esc(r.host)}</span>` : ''}` },
+      { key: 'ip', label: '접속 주소', fmt: (v) => `<span class="num">${esc(v)}</span>` }],
     fails: [{ key: 'at', label: '시각', fmt: (v) => `<span class="num">${esc(when(v))}</span>` }, { key: 'login', label: '아이디', fmt: (v) => `<span class="acc-m">${esc(v || '—')}</span>` },
       { key: 'where', label: '입구' }, { key: 'ip', label: '접속 주소', fmt: (v) => `<span class="num">${esc(v)}</span>` }, { key: 'reason_ko', label: '까닭' }],
     log: [{ key: 'at', label: '시각', fmt: (v) => `<span class="num">${esc(when(v))}</span>` }, { key: 'action_ko', label: '한 일', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
       { key: 'target', label: '대상', fmt: (v, r) => `<b class="acc-b">${esc(r.name || '')}</b> <span class="acc-m">${esc(r.subject || '')}</span>` }, { key: 'who', label: '처리한 사람' },
       { key: 'reason', label: '사유', fmt: (v) => esc(v || '') }],
   };
-  const SORT = { signup: 'created_at', reset: 'created_at', users: 'orgd', fails: 'at', log: 'at' };
+  const SORT = { signup: 'created_at', reset: 'created_at', users: 'orgd', logins: 'at', fails: 'at', log: 'at' };
   /* 목록 칸의 저장 용량 — '29.8 MB / 50 GB' · 할당 없으면 '29.8 MB · 할당 없음'(바꾸기는 '저장 용량' 탭) */
   const shortStorage = (st) => { const q = ev(st?.quota_gb); return q !== null && q !== undefined ? `${size(ev(st.used))} / ${gb(q)}` : `${size(ev(st.used))} · 할당 없음`; };
 
@@ -96,6 +103,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     const wait = h('div'); card.append(wait); empty(wait, { kind: 'loading' });
     if (tab === 'depts') { await loadDepts(mine); return; }
     if (tab === 'storage') { await mountStorage(card, { mine: () => cur === mine, onChange: counts }); return; }
+    if (tab === 'ops') { await loadOps(mine); return; }
     let rows = [];
     try {
       if (tab === 'signup' || tab === 'reset') rows = (await api(`/accounts/requests?kind=${tab}`)).items || [];
@@ -107,6 +115,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
         solo = !!j.solo;
         rows = j.items || [];
       } else if (tab === 'fails') rows = (await api('/accounts/failures')).items || [];
+      else if (tab === 'logins') rows = (await api('/accounts/logins')).items || [];
       else rows = (await api('/accounts/log')).items || [];
     } catch (e) {
       if (cur !== mine) return;
@@ -188,7 +197,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     } else if (cur === 'users') {
       const [st] = stateOf(item);
       body.append(dl([['아이디', item.login], ['소속', item.org], ['부서', item.dept], ['역할', item.role_ko], ['상태', st],
-        ['최근 로그인', item.last_login ? when(item.last_login) : '없음'], ['만든 날', item.created_at ? ymd(item.created_at) : '']]));
+        ['최근 로그인', item.last_login ? when(item.last_login) + (item.last_login_where && item.last_login_where !== '—' ? ` · ${item.last_login_where}` : '') : '없음'], ['만든 날', item.created_at ? ymd(item.created_at) : '']]));
       if (item.dept_listed === false) body.append(h('p.acc-help', {}, h('span', { text: '부서 이름이 부서 목록에 없습니다(지사 등).' }), ' ', h('span', { text: '본인이 내 정보에서 고릅니다.' })));
       if (item.status === 'disabled') body.append(h('p.acc-mine', { text: '사용 중지된 계정입니다. 메일 아이디 계정으로 옮겼습니다.' }));
       else if (item.mine) {
@@ -262,6 +271,35 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     go.addEventListener('click', () => { closeAll(); location.hash = '#storage'; });
     return h('div.acc-row', {}, h('p.t-label', { text: '저장 용량' }),
       u?.storage ? h('p.acc-help', { text: shortStorage(u.storage) + (u.storage.quota_own ? ' · 개별 할당' : ' · 기본 할당') }) : null, go);
+  }
+
+  /* ── 운영 정보(원칙 170) — 문의 연락처 전화 · 메일. 메인 '문의하기' · 맨 아래 · 도움말 '문의' · 로그인 창이 이 값을 읽는다 ── */
+  async function loadOps(mine) {
+    let j;
+    try { j = await api('/accounts/contact'); } catch {
+      if (cur !== mine) return;
+      card.innerHTML = ''; const er = h('div'); card.append(er); empty(er, { kind: 'error', onRetry: () => load('ops') }); return;
+    }
+    if (cur !== mine) return;
+    card.innerHTML = '';
+    card.dataset.tab = 'ops';
+    const tel = h('input.t-input', { type: 'tel', name: 'tel', value: j.tel, maxlength: '20', 'aria-label': '문의 전화', autocomplete: 'off' });
+    const mail = h('input.t-input', { type: 'email', name: 'mail', value: j.mail, maxlength: '120', 'aria-label': '문의 메일', autocomplete: 'off' });
+    const save = h('button.t-btn', { type: 'button', text: '저장', disabled: true });
+    const note = h('p.acc-need', { role: 'status' });
+    const dirty = () => { save.disabled = tel.value.trim() === j.tel && mail.value.trim() === j.mail; };
+    tel.addEventListener('input', dirty); mail.addEventListener('input', dirty);
+    save.addEventListener('click', async () => {
+      save.disabled = true; note.textContent = '';
+      try { await api('/accounts/contact', { method: 'PUT', body: { tel: tel.value.trim(), mail: mail.value.trim() } }); toast('문의 연락처를 바꿨습니다'); load('ops'); }
+      catch (e) { note.textContent = e.message || '지금은 저장할 수 없습니다'; save.disabled = false; }
+    });
+    const last = j.updated_at ? `마지막 바꿈 ${when(j.updated_at)}${j.updated_name ? ` · ${j.updated_name}` : ''}` : '처음 값 그대로입니다';
+    card.append(h('div.acc-tbl.acc-ops', {},
+      h('div.acc-dp-h', {}, h('div', {}, h('p.acc-dp-t', { text: '문의 연락처' }), h('p.acc-dp-s', {}, h('span', { text: last })))),
+      h('p.acc-help', {}, h('span', { text: '메인 문의하기 · 맨 아래 · 도움말 문의 · 로그인 창에 보입니다.' }), ' ', h('span', { text: '바꾸면 바로 보이고 처리 기록에 남습니다.' })),
+      h('div.acc-ops-f', {}, h('label.acc-ops-r', {}, h('span.t-label', { text: '전화' }), tel), h('label.acc-ops-r', {}, h('span.t-label', { text: '메일' }), mail)),
+      note, h('div.acc-acts', {}, save)));
   }
 
   /* ── 부서 목록(S-21) — 출처 · 올리기(미리 보기 → 바꾸기) · 다시 불러오기 · 더하기 · 빼기 · 목록에 없는 부서를 쓰는 계정 ── */

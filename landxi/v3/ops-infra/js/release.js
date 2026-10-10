@@ -5,7 +5,7 @@
    #/deploys/usage    사용 현황 — 기관 × 공유된 서비스: LX가 돌린 분석 · 기관이 요청한 분석 · 마지막 사용 + 기관별 합계(GET /release/usage).
    #/deploys/improve  개선 후보(16차 개선-1 · 그대로 둔다).
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
-import { toast, h, api, nf } from './kit.js';
+import { toast, h, api, nf, drawer } from './kit.js';
 import { improveBoard } from './improve.js';
 
 { const href = new URL('../release.css', import.meta.url).href;
@@ -138,6 +138,9 @@ export function mountRelease(root) {
         const inp = h('input', { type: 'checkbox', checked: !!c.shared, disabled: !s.version && !c.shared, title: !s.version && !c.shared ? '승인된 판이 없는 서비스는 공유할 수 없습니다' : null,
           'aria-label': `${s.name} · ${o.name} 공유` });
         const lab = h('small', { text: c.shared ? (c.at ? `${md(c.at)} 공유` : c.year ? `${c.year}년부터` : '공유 중') : '' });
+        /* 광역 기관 — 소속 시군구까지 고르기 · 거두기(나중 13 ⓐ). 고르지 않은 시군구 결과는 LX 보관 */
+        const sgg = o.wide && o.regions?.length && c.shared
+          ? h('button.rv-sgg', { type: 'button', text: `시군구 ${c.sgg ? c.sgg.length : o.regions.length} / ${o.regions.length}`, onclick: () => pickSgg(s, o, c) }) : null;
         inp.addEventListener('change', async () => {
           inp.disabled = true;
           try {
@@ -145,17 +148,49 @@ export function mountRelease(root) {
             inp.checked = !!r.shared;
             lab.textContent = r.shared ? `${md(new Date().toISOString())} 공유` : '';
             toast(r.shared ? `${o.name}에 공유했습니다 — 그 기관 '서비스 선택'에 나타납니다` : `${o.name} 공유를 거뒀습니다`);
+            if (o.wide) paintShare();                     // 광역 — 시군구 고르기 단추가 나타나거나 사라지게
           } catch (e) { inp.checked = !inp.checked; toast(e.message || '바꾸지 못했습니다'); }
           finally { inp.disabled = false; }
         });
-        return h('td.rv-ck', {}, h('label', {}, inp, lab));
+        return h('td.rv-ck', {}, h('label', {}, inp, lab), sgg);
       }),
       h('td.rv-ck-use', {}, s.n ? h('a', { href: '#/deploys/usage', text: '사용 현황' }) : h('span.rv-dim', { text: '—' }))));
     panes.share.replaceChildren(h('div.rv-grid', {}, h('section.t-card.rv-card', {},
       h('header.rv-h.rv-h--row', {}, h('div', {}, h('h2', { text: '기관 공유' }), units('span.rv-sub', join(`서비스 ${nf(val(d.services))}`, `기관 ${nf(orgs.length)}`))),
         h('p.rv-note', { text: "체크를 바꾸면 바로 그 기관 '서비스 선택'에 나타나거나 사라집니다" })),
       h('table.rv-tbl.rv-tbl--matrix', {}, h('thead', {}, head), h('tbody', {}, ...rows)),
-      h('p.rv-note', { text: '광역 기관은 기관 단위로 공유합니다. 공유를 거두면 기관 화면에서 사라지고 결과와 기록은 LX가 보관합니다.' }))));
+      h('p.rv-note', { text: '광역 기관은 소속 시군구까지 고릅니다. 고르지 않은 시군구 결과와 거둔 공유의 결과 · 기록은 LX가 보관합니다.' }))));
+  }
+
+  /* 광역 기관 시군구 고르기 · 거두기(나중 13 ⓐ) — 시도별 묶음 체크 · 전체 · 저장 · 공유 거두기(PUT /release/shares {sgg}) */
+  function pickSgg(s, o, c) {
+    const on = new Set(c.sgg || o.regions.map((r) => r.code));
+    const groups = {};
+    for (const r of o.regions) (groups[r.sido || ''] ||= []).push(r);
+    const n = h('b.num');
+    const save = h('button.t-btn', { type: 'button', text: '저장' });
+    const off = h('button.t-btn.t-btn--2', { type: 'button', text: '공유 거두기' });
+    const count = () => { n.textContent = `${on.size} / ${o.regions.length}`; save.disabled = !on.size; };
+    const boxes = [];
+    const body = h('div.rv-sg', {},
+      h('p.rv-note', { text: `${o.name}에 '${s.name}'을 어느 시군구까지 보일지 고릅니다. 고르지 않은 시군구 결과는 LX가 보관합니다.` }),
+      h('div.rv-sg-top', {}, h('span', {}, '고른 시군구 ', n),
+        h('button.rv-link', { type: 'button', text: '모두', onclick: () => { o.regions.forEach((r) => on.add(r.code)); boxes.forEach((b) => { b.checked = true; }); count(); } }),
+        h('button.rv-link', { type: 'button', text: '모두 끄기', onclick: () => { on.clear(); boxes.forEach((b) => { b.checked = false; }); count(); } })),
+      ...Object.entries(groups).map(([sido, rs]) => h('fieldset.rv-sg-g', {}, h('legend', { text: sido || '시군구' }),
+        ...rs.map((r) => { const b = h('input', { type: 'checkbox', checked: on.has(r.code), 'aria-label': r.name });
+          b.onchange = () => { b.checked ? on.add(r.code) : on.delete(r.code); count(); }; boxes.push(b);
+          return h('label', {}, b, h('span', { text: r.name })); }))),
+      h('div.rv-sg-acts', {}, off, save));
+    const d = drawer({ title: `${o.name} · ${s.name}`, body, slot: 'right', width: 520 });
+    count();
+    const put = async (b, msg) => {
+      save.disabled = off.disabled = true;
+      try { await api('/release/shares', { method: 'PUT', body: { card_id: s.id, tenant_id: o.id, ...b } }); toast(msg); d.close(true); paintShare(); }
+      catch (e) { toast(e.message || '바꾸지 못했습니다'); save.disabled = off.disabled = false; count(); }
+    };
+    save.onclick = () => put({ shared: true, sgg: [...on] }, on.size === o.regions.length ? `${o.name} 관할 전체에 공유합니다` : `${o.name} 시군구 ${on.size}곳까지 공유합니다`);
+    off.onclick = () => put({ shared: false }, `${o.name} 공유를 거뒀습니다 — 결과와 기록은 LX가 보관합니다`);
   }
 
   /* ── 사용 현황 ─────────────────────────── */

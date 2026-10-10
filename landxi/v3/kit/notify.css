@@ -92,3 +92,5 @@ div.k-bell-i--x{cursor:default}
 
 /* 메일 알림 상태 한 줄(기관 · 18차 N-1 ⓐ 알림 ⓑ — 설정이 없으면 종만) */
 .k-bell-mail{margin:6px 4px 2px;padding:0;font:400 12px/17px var(--font-body);color:var(--sub);word-break:keep-all}
+/* 새 결과 · 새 판 알림 — 달라진 점 한 줄이 잘리지 않게 두 줄까지(나중 19) */
+.k-bell-i--x[data-kind="result"] .k-bell-l{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:keep-all}

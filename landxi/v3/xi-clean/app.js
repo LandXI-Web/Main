@@ -127,7 +127,7 @@ const ICO = {
 const S = {
   who: null, key: '', lx: false, sales: false, tenant: false, canAnalyze: false,
   region: null, home: null, outside: false, regions: [], emds: [], ruleDefs: {}, asOf: null,
-  cond: { emd: null, rule: null }, last: null, need: null, layers: { img: true, sus: true, ai: false, parcel: true, emd: true },
+  cond: { emd: null, rule: null }, last: null, need: null, layers: { img: true, sus: true, ai: false, parcel: true, emd: true, lxmap: false },
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
 };
@@ -320,11 +320,44 @@ async function buildLayers(cat) {
     if (canRequest(S.who)) { map.addLayer({ id: sid + '-hit', type: 'fill', source: sid, 'source-layer': it.layer, minzoom: 14, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, 'slot-overlay'); S.hitLayers = [...(S.hitLayers || []), sid + '-hit']; }
     S.parcelLayers.push(sid + '-l'); S.susLayers.push(sid + '-s', sid + '-sl');
   }
+  if (S.tenant) lxmapLayer();
   // 실태조사 우선순위 필지 점(기관 화면만 · 먼 축척 · 필지 면이 차오르면 물러난다)
   map.addSource('xc-pts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({ id: 'xc-pts-glow', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-blur': 1, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 3, 9, 6, 12, 12, 14, 14], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 0.3, 14, 0] } }, 'slot-overlay');
   map.addLayer({ id: 'xc-pts', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 1.4, 9, 2, 12, 3.2, 14, 4.5],
     'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 8, 0.4, 12, 1], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 1, 14.5, 0], 'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 0.9, 14.5, 0] } }, 'slot-overlay');
+}
+/* LX맵(편집지적도 · V-World WMS 층 lt_c_landinfobasemap) — 연속지적(필지 속성)과 다른 '지도 그림'(원칙 123). 게이트웨이 중계(/proxy/vworld/wms · 키는 서버).
+   V-World 는 이 층을 약 0.6m/화소보다 가까운 축척에서만 그린다(그보다 멀면 투명 한 장) → 512 화소 타일로 받아 지도 z18 부터 켠다. 지역 고정값 없음. */
+const LXMAP_Z = 18;
+const R3857 = 20037508.342789244;
+async function blankTile() { const c = new OffscreenCanvas(1, 1); return createImageBitmap(c); }
+function lxmapLayer() {
+  if (!window.__lxmapProto) {
+    window.__lxmapProto = 1;
+    window.maplibregl.addProtocol('lxmap', async (params, ac) => {
+      const m = /^lxmap:\/\/(\d+)\/(\d+)\/(\d+)/.exec(params.url);
+      if (!m) return { data: await blankTile() };
+      const [z, x, y] = [+m[1], +m[2], +m[3]], s = (2 * R3857) / 2 ** z, x0 = -R3857 + x * s, y1 = R3857 - y * s;
+      const q = new URLSearchParams({ SERVICE: 'WMS', REQUEST: 'GetMap', VERSION: '1.3.0', LAYERS: 'lt_c_landinfobasemap', STYLES: '', CRS: 'EPSG:3857',
+        BBOX: [x0, y1 - s, x0 + s, y1].map((v) => v.toFixed(2)).join(','), WIDTH: '512', HEIGHT: '512', FORMAT: 'image/png', TRANSPARENT: 'true' });
+      const tok = session.get()?.token;
+      try {
+        const r = await fetch(API.prefix + '/proxy/vworld/wms?' + q, { headers: tok ? { authorization: 'Bearer ' + tok } : {}, signal: ac.signal });
+        if (!r.ok || !/^image\//.test(r.headers.get('content-type') || '')) return { data: await blankTile() };
+        return { data: await createImageBitmap(await r.blob()) };
+      } catch { return { data: await blankTile() }; }
+    });
+  }
+  map.addSource('xc-lxmap', { type: 'raster', tiles: ['lxmap://{z}/{x}/{y}'], tileSize: 512, minzoom: LXMAP_Z - 1, maxzoom: 19 });
+  map.addLayer({ id: 'xc-lxmap', type: 'raster', source: 'xc-lxmap', minzoom: LXMAP_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-overlay');
+}
+/** LX맵 켜고 끄기(층 창 · 필지 카드 '이 자리 LX맵 겹쳐 보기' 같은 값) — 멀리 있으면 '가까이 확대하면 보입니다' */
+function setLxmap(on, { near = null } = {}) {
+  S.layers.lxmap = !!on; applyLayers();
+  if (!on) return;
+  if (near) map.easeTo({ center: near, zoom: Math.max(map.getZoom(), LXMAP_Z + 0.5), duration: 900 });
+  else if (map.getZoom() < LXMAP_Z) K.toast('LX맵은 지도를 가까이 확대하면 보입니다');
 }
 const susSet = () => [...S.susLayers, 'xc-pts', 'xc-pts-glow'];
 
@@ -353,6 +386,8 @@ async function cogLayers(items, own) {
   X.cog = S.imgLayers.length;
 }
 
+/* 필지 타일의 PNU 는 옛 시도 코드일 수 있다(예: 전북 45→52) — 지금 지역과 시군구 세 자리가 같으면 지금 시도 코드로(서버 필지 · 관할 판정이 지금 코드) */
+const nowPnu = (p) => { const c = String(S.region?.code || ''); return /^\d{19}$/.test(p) && c.length === 5 && p.slice(2, 5) === c.slice(2) ? c.slice(0, 2) + p.slice(2) : p; };
 function wireMap() {
   map.on('click', (e) => {
     if (AN?.active || S.swipe) return;
@@ -363,7 +398,7 @@ function wireMap() {
     /* 기관 — 지도에서 필지를 누르면 필지 카드(대장 · AI 분석 · 검토 요청) */
     const hl = (S.hitLayers || []).filter((l) => map.getLayer(l));
     const ph = hl.length ? map.queryRenderedFeatures(e.point, { layers: hl })[0] : null;
-    if (ph?.properties?.pnu) { openParcel(String(ph.properties.pnu)); return; }
+    if (ph?.properties?.pnu) { openParcel(nowPnu(String(ph.properties.pnu))); return; }
     // 먼 축척: 시군구를 누르면 그 지역으로
     if (map.getZoom() < 9.5 && map.getLayer('sgg-hit')) {
       const f = map.queryRenderedFeatures(e.point, { layers: ['sgg-hit'] })[0];
@@ -1196,7 +1231,7 @@ async function openParcel(pnu, { fly = false } = {}) {
   const body = h('div.xc-parcel', {},
     h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전', 'data-lv': reviewed ? undefined : 'wait' }), f && (ruleName(f.rule) || f.rule_nm) ? h('span.t-chip', { text: ruleName(f.rule) || f.rule_nm }) : null),
     h('dl.xc-pair', {},
-      h('div', {}, h('dt', { text: '대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
+      h('div', {}, h('dt', { text: '연속지적 대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
       h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
   );
   const act = h('div.xc-act');
@@ -1208,9 +1243,36 @@ async function openParcel(pnu, { fly = false } = {}) {
   if (where && !rv) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '영상 설명', onclick: () => ask(`${where} 영상 설명해 줘`) }));
   // 메모 · 다음 확인 날짜(확인 이력)는 화면에서 쓰지 않는다(원칙 135 기관까지 · 10-10 확인 8 ⓐ) — 옛 흐름(S.fc)에서만
   if (rv && f && S.fc) { const slot = h('div'); body.append(slot); import('../gov-select/map-extras.js').then((m) => m.parcelNote(slot, { finding: f })).catch((e) => K.devlog('note', String(e?.message || e))); }
+  if (S.tenant) body.append(parcelInfo(d, L));     // 필지 정보(연속지적 속성) + 이 자리 LX맵 겹쳐 보기(나중 8 ⓐ)
   if (act.childElementCount || rv) body.append(act);
   if (rv) reviewAction(act, { who: S.who, pnu, rule: f?.rule, fid: f?.id, lnglat: f?.lnglat, from: 'xi-clean' });
   dr.set(body);
+}
+/** 필지 정보 — 연속지적 속성(주소 · 지목 · 면적 · 공시지가 · 용도지역 · 읍면 리 · 필지 번호). 값은 서버(GET /survey/parcels/{pnu} facts.ledger) 그대로 · 없으면 '—' */
+function parcelInfo(d, L) {
+  const ym = (v) => { const m = /^(\d{4})-?(\d{1,2})/.exec(String(v || '')); return m ? [m[1], String(+m[2])] : null; };
+  const gosi = ym(L.jiga?.as_of);
+  const row = (k, v, sub) => h('div', {}, h('dt', { text: k }), h('dd', {}, h('span', { text: v || '—' }), sub ? h('small', { text: sub }) : null));
+  const area = L.area_m2?.value, jiga = L.jiga?.value;
+  const dl = h('dl.xc-pi-l', {},
+    row('주소', String(d.addr || '').trim()),
+    row('지목', L.jimok_nm || L.jimok),
+    row('면적', area != null ? `${nf(Math.round(area * 10) / 10)} m²` : ''),
+    row('공시지가', jiga != null ? `${nf(jiga)}원/m²` : '', jiga != null && gosi ? `${gosi[0]}년 ${gosi[1]}월 고시` : ''),
+    row('용도지역', L.yongdo, L.yongdo && L.yongdo_year ? `${L.yongdo_year}년 고시` : ''),
+    row('읍면 · 리', [d.emd, d.ri].filter(Boolean).join(' · ')),
+    h('div.xc-pi-no', {}, h('dt', { text: '필지 번호' }), h('dd', { text: d.pnu || '—' })));
+  const sw = h('button.xc-pi-sw', { type: 'button', role: 'switch', 'aria-checked': String(!!S.layers.lxmap), 'aria-label': '이 자리 LX맵 겹쳐 보기' }, h('i'));
+  sw.addEventListener('click', () => {
+    const on = !S.layers.lxmap;
+    let near = null;
+    if (on && d.geometry) { const b = K.bboxOf(d.geometry); if (b) near = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; }
+    setLxmap(on, { near });
+    sw.setAttribute('aria-checked', String(S.layers.lxmap));
+  });
+  return h('section.xc-pi', { 'aria-label': '필지 정보' },
+    h('header.xc-pi-h', {}, h('h3', { text: '필지 정보' }), h('small', { text: gosi ? `연속지적도 · 공시 ${gosi[0]}.${gosi[1].padStart(2, '0')}` : '연속지적도' })),
+    dl, h('label.xc-pi-t', {}, h('span', { text: '이 자리 LX맵 겹쳐 보기' }), sw));
 }
 async function setState(f, to, btn) {
   btn.disabled = true;
@@ -1257,8 +1319,8 @@ function showPop(title, ...kids) {
   else pop.style.top = '';
 }
 function renderLayers() {
-  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135)
-  const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.layers[k]), onclick: (e) => { S.layers[k] = !S.layers[k]; if (k === 'ai') S.aiByRegion = false; e.currentTarget.setAttribute('aria-pressed', String(S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
+  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ...(map.getLayer('xc-lxmap') ? [['lxmap', 'LX맵']] : []), ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · LX맵 = 기관 화면(나중 8 ⓐ)
+  const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.layers[k]), onclick: (e) => { if (k === 'lxmap') { setLxmap(!S.layers.lxmap); e.currentTarget.setAttribute('aria-pressed', String(S.layers.lxmap)); return; } S.layers[k] = !S.layers[k]; if (k === 'ai') S.aiByRegion = false; e.currentTarget.setAttribute('aria-pressed', String(S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   // AI 분석 아래: 이 지역에 결과가 있는 세트(이름 = 카탈로그 · 전역 분석 결과)
   const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(S.layers.ai && S.resOn[it.id])), 'data-res': it.id,
     onclick: (e) => { if (!S.layers.ai) { S.layers.ai = true; S.resOn[it.id] = true; } else S.resOn[it.id] = !S.resOn[it.id]; applyLayers(); renderLayers(); } },
@@ -1273,6 +1335,7 @@ function applyLayers() {
   for (const it of S.res || []) setVis(map, it.ids, !!(S.layers.ai && S.resOn[it.id]));
   setVis(map, S.parcelLayers, S.layers.parcel);
   setVis(map, S.emdLayers, S.layers.emd);
+  if (map.getLayer('xc-lxmap')) setVis(map, ['xc-lxmap'], S.layers.lxmap);
 }
 function renderRules() {
   const by = S.last?.by_rule || {};

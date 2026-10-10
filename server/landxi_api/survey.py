@@ -383,6 +383,24 @@ async def finding(fid: str, request: Request):
     return out
 
 
+ZONING_LAYERS = ("LT_C_UQ111", "LT_C_UQ112", "LT_C_UQ113", "LT_C_UQ114")   # 용도지역 — 도시 · 관리 · 농림 · 자연환경보전(전국 공통)
+
+
+def _zoning(lng: float, lat: float) -> dict | None:
+    """한 점의 용도지역 이름 · 고시 연도(V-World 데이터 API · 지역 고정값 없음). 실패 · 없음 = None(카드는 '—')."""
+    for layer in ZONING_LAYERS:
+        try:
+            r = NT._vw(layer, point=(lng, lat), size=1, geometry=False, ttl_days=30)
+        except Exception:
+            return None
+        fs = ((r.get("result") or {}).get("featureCollection") or {}).get("features") or [] if r.get("status") == "OK" else []
+        if fs:
+            p = fs[0].get("properties") or {}
+            if p.get("uname"):
+                return {"name": p["uname"], "year": p.get("dyear") or None}
+    return None
+
+
 @router.get("/survey/parcels/{pnu}")
 async def parcel(pnu: str, request: Request, with_: str | None = None):
     p = _read(principal(request))
@@ -405,6 +423,13 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
                    "source": f"PostGIS survey_parcels(src {pr.get('src') or 'canon'})", "fixed": FIXED_PHRASE}
             if "facts" in want:
                 out["facts"] = X.parcel_facts(pr, img=pr.get("_img"))
+                led = out["facts"].get("ledger") or {}
+                if not led.get("yongdo"):          # 적재에 용도지역이 없는 필지(전국 연속지적) — V-World 용도지역 층 한 점 조회(서버 키 · 디스크 30일)
+                    pt = await conn.fetchrow("SELECT ST_X(c) x, ST_Y(c) y FROM (SELECT ST_PointOnSurface(geom) c FROM survey_parcels WHERE pnu=$1) q", pnu)
+                    if pt and pt["x"] is not None:
+                        z = await run_in_threadpool(_zoning, float(pt["x"]), float(pt["y"]))
+                        if z:
+                            led.update(yongdo=z["name"], yongdo_year=z.get("year"), yongdo_source="V-World 용도지역")
             if "findings" in want:
                 rows = await conn.fetch(f"SELECT {FCOLS} FROM survey_findings WHERE pnu=$1 ORDER BY score DESC", pnu)
                 cut = await _cut(conn, pr.get("sgg_cd"))

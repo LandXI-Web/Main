@@ -77,11 +77,18 @@ async def resolve(request: Request) -> Principal:
     if row["realm"] == "lx":
         u = await pl.fetchrow("SELECT name, status FROM lx_users WHERE id=$1", row["user_id"])
     else:
-        u = await pl.fetchrow("SELECT name, status FROM tenant_users WHERE id=$1", row["user_id"])
+        u = await pl.fetchrow("SELECT name, status, dept FROM tenant_users WHERE id=$1", row["user_id"])
     if u and u["status"] == "disabled":            # 사용 중지된 계정(옛 아이디 정리 · 원칙 77) — 남은 세션도 받지 않는다
         return Principal()
+    sgg = None
+    if row["realm"] == "tenant" and row["role"] != "manager" and u and (u["dept"] or "").strip():
+        try:                                       # 광역 기관 부서별 관할(나중 16) — 부서 사용자는 그 부서의 시군구만(regions.scope_of 가 읽는다)
+            v = await pl.fetchval("SELECT sgg FROM tenant_dept_scope WHERE tenant_id=$1 AND dept=$2", row["tenant_id"], u["dept"].strip())
+            sgg = list(v) if v else None
+        except Exception:  # noqa: BLE001 — 표가 없는 DB
+            sgg = None
     return Principal(realm=row["realm"], role=row["role"], tenant_id=row["tenant_id"], user_id=row["user_id"],
-                     name=u["name"] if u else None, token_hash=th, caps=CAPS.get((row["realm"], row["role"]), []))
+                     name=u["name"] if u else None, token_hash=th, caps=CAPS.get((row["realm"], row["role"]), []), sgg=sgg)
 
 
 @router.post("/auth/login")
@@ -156,7 +163,14 @@ async def login(body: dict, request: Request):
         await r.set(CHANGE_KEY + token_hash(ct), json.dumps({"realm": realm, "user_id": u["id"], "tenant_id": tenant_id, "site": site, "login": login_}), ex=900)
         return {"must_change": True, "change_token": ct, "realm": realm, "role": u["role"], "tenant_id": tenant_id, "site": site,
                 "user": {"name": u["name"]}}
-    return await open_session(realm, u, tenant_id, site, login_)
+    return await open_session(realm, u, tenant_id, site, login_, ip=ip, host=entry_host(request))
+
+
+def entry_host(request: Request) -> str:
+    """들어온 주소 이름 — 바깥은 공개 관문이 x-forwarded-host 로 알린다(app · admin · 기관 주소). 이 PC 안이면 빈 값."""
+    if not request.headers.get("x-forwarded-for"):
+        return ""
+    return (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().lower()[:120]
 
 
 async def _fail(key: str, clear: bool = False) -> int:
@@ -184,8 +198,9 @@ async def _record_fail(realm, tenant_id, login_: str, user_id, site, ip: str, re
         pass
 
 
-async def open_session(realm: str, u, tenant_id: str | None, site: str | None, login_: str) -> dict:
-    """세션을 열고 로그인 답을 만든다 — 로그인 · 새 비밀번호 정하기(accounts.py)가 같이 쓴다."""
+async def open_session(realm: str, u, tenant_id: str | None, site: str | None, login_: str, ip: str | None = None, host: str | None = None) -> dict:
+    """세션을 열고 로그인 답을 만든다 — 로그인 · 새 비밀번호 정하기(accounts.py)가 같이 쓴다.
+    로그인 기록(audit_log action 'login')에 들어온 입구(app · admin · gov) · 주소 이름 · 접속 주소를 함께 남긴다(나중 17 · 보안 점검)."""
     pl = await pool()
     tok = ("lxs_" if realm == "lx" else "lxt_") + secrets.token_urlsafe(32)
     exp = dt.datetime.now(KST) + TTL
@@ -193,7 +208,8 @@ async def open_session(realm: str, u, tenant_id: str | None, site: str | None, l
                      token_hash(tok), realm, u["id"], tenant_id, u["role"], exp)
     await pl.execute("DELETE FROM sessions WHERE expires_at < now()")
     async with db(realm="lx") as conn:
-        await conn.execute("INSERT INTO audit_log(actor, realm, action, subject) VALUES ($1,$2,'login',$3)", u["id"], realm, login_)
+        await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, after) VALUES ($1,$2,'login',$3,$4)", u["id"], realm, login_,
+                           {"site": site, "host": host or "", "ip": (ip or "")[:64], "tenant_id": tenant_id, "name": u["name"]})
     return {"token": tok, "realm": realm, "role": u["role"], "tenant_id": tenant_id, "site": site,
             "user": {"id": u["id"], "name": u["name"]}, "expires_at": exp.isoformat(timespec="seconds")}
 

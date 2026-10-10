@@ -1,0 +1,83 @@
+[
+ {
+  "login": "app test@lx.or.kr",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "login": "namwon lxadmin",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "login": "admin lxadmin",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "logins_top": [
+   "2026.10.10 21:24 LX 관리자 lxadmin@lx.or.kr LX LX 관리자 admin.land-xi.dev 59.2.80.58",
+   "2026.10.10 21:24 담당자 lxadmin@lx.or.kr 전북특별자치도 남원시 기관 · 남원시 namwon.land-xi.dev 59.2.80.58",
+   "2026.10.10 21:24 LX 직원 test@lx.or.kr LX Land-XI app.land-xi.dev 59.2.80.58",
+   "2026.10.10 21:24 담당자 lxadmin@lx.or.kr 전북특별자치도 남원시 기관 · 남원시 namwon.land-xi.dev 59.2.80.58",
+   "2026.10.10 21:23 담당자 lxadmin@lx.or.kr 광주전남특별시 이 PC 이 PC",
+   "2026.10.10 21:23 담당자 lxadmin@lx.or.kr 전북특별자치도 남원시 이 PC 이 PC",
+   "2026.10.10 21:23 LX 영업 sales@lx.or.kr LX 이 PC 이 PC",
+   "2026.10.10 21:23 LX 직원 test@lx.or.kr LX 이 PC 이 PC"
+  ]
+ },
+ {
+  "shot": "p17-logins-1440.png",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "drawer": "아이디\ntest@lx.or.kr\n소속\nLX\n역할\nLX 직원\n상태\n사용 중\n최근 로그인\n2026.10.10 21:24 · Land-XI\n만든 날\n2026.10.01"
+ },
+ {
+  "shot": "p17-user-drawer-1440.png",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "ops_orig": {
+   "tel": "063-713-1218",
+   "mail": "landxi@lx.or.kr"
+  }
+ },
+ {
+  "shot": "p170-ops-1440.png",
+  "at": "2026-10-10 21:24"
+ },
+ {
+  "main_during_test": [
+   "tel:0637139999 문의 063-713-9999",
+   "063-713-9999"
+  ]
+ },
+ {
+  "ops_after_restore": {
+   "tel": "063-713-1218",
+   "mail": "landxi@lx.or.kr"
+  }
+ },
+ {
+  "shot": "p170-ops-after-1440.png",
+  "at": "2026-10-10 21:25"
+ },
+ {
+  "log_top": [
+   "2026.10.10 21:25 문의 연락처 바꿈 문의 연락처 LX 관리자 063-713-9999 → 063-713-1218",
+   "2026.10.10 21:24 문의 연락처 바꿈 문의 연락처 LX 관리자 063-713-1218 → 063-713-9999",
+   "2026.10.10 21:22 가입 승인 시험 신청자 pytest-impl5-sign@namwon.go.kr 담당자 "
+  ]
+ },
+ {
+  "main_after": [
+   "tel:0637131218",
+   "063-713-1218"
+  ]
+ },
+ {
+  "shot": "p170-main-end-1440.png",
+  "at": "2026-10-10 21:25"
+ }
+]

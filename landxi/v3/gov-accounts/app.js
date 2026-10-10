@@ -5,6 +5,7 @@ import { gate, FRONT } from '../kit/auth-gate.js';
 import { shell } from '../kit/shell.js';
 import { mountAccounts } from '../ops-accounts/view.js';
 import { govRail } from '../gov-select/menu.js';
+import { mountDeptScope } from './dept-scope.js';   // 광역 기관 부서별 관할(나중 16)
 
 const who = await gate('gov-accounts');
 if (who.me?.realm !== 'tenant' || who.me?.role !== 'manager' || who.key === 'tenant/demo') {
@@ -13,3 +14,4 @@ if (who.me?.realm !== 'tenant' || who.me?.role !== 'manager' || who.key === 'ten
 const S = shell({ who, home: 'gov-accounts', rail: who.key === 'tenant/local' ? govRail({ who, current: 'accounts' }) : null });   // 기관 메뉴(gov-select/menu.js)
 document.body.classList.remove('acc-boot');
 window.__accounts = mountAccounts(S.main, { who, scope: 'tenant' });
+mountDeptScope(S.main.querySelector('.acc-w') || S.main);   // 광역 기관만 칸이 생긴다

@@ -126,12 +126,12 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
     await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 }), page.click('.k-md .ac-go')]);
   });
 
-  test('LX 관리자 계정 화면 — 탭 다섯이 열리고, 관리자 아닌 계정은 못 들어간다', async ({ page, browser }) => {
+  test('LX 관리자 계정 화면 — 탭이 열리고(로그인 기록 · 운영 정보 포함), 관리자 아닌 계정은 못 들어간다', async ({ page, browser }) => {
     test.skip(!process.env.DEV_PASSWORD, 'server/.env DEV_PASSWORD 없음');
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr');
     await page.goto(BASE + '/landxi/v3/ops-accounts/');
-    await expect(page.locator('.acc-tab')).toHaveText([/가입 신청/, /비밀번호 재설정/, '계정', '로그인 실패', '처리 기록']);
-    for (const k of ['signup', 'reset', 'users', 'fails', 'log']) {
+    await expect(page.locator('.acc-tab')).toHaveText([/가입 신청/, /비밀번호 재설정/, /저장 용량/, '계정', '부서', '로그인 기록', '로그인 실패', '처리 기록', '운영 정보']);
+    for (const k of ['signup', 'reset', 'users', 'logins', 'fails', 'log']) {
       await page.goto(BASE + '/landxi/v3/ops-accounts/#' + k);
       await page.waitForSelector('.acc-card .acc-tbl, .acc-card .k-empty:not([data-kind="loading"])', { timeout: 15000 });
     }

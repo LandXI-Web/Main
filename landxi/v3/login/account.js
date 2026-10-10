@@ -15,6 +15,7 @@
    스타일은 같은 폴더 account.css — 처음 열 때 스스로 붙인다. */
 import { modal } from '../kit/modal.js';
 import { h, api, API } from '../kit/util.js';
+import { contact as liveContact, telHref } from '../kit/contact.js';
 
 const CSS = new URL('./account.css', import.meta.url).href;
 const MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -206,7 +207,9 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
     if (user) { const pane = TABS.find(([key]) => key === k)[2]; setTimeout(() => pane.querySelector('input:not([type=checkbox]),select,button')?.focus({ preventScroll: true }), 0); }
   }
   show(TABS.some(([k]) => k === tab) ? tab : 'signup');
-  const foot = h('p.ac-foot', {}, h('span', { text: '문의' }), h('a', { href: 'tel:' + PHONE, text: PHONE }));
+  const tel = h('a', { href: 'tel:' + PHONE, text: PHONE });
+  const foot = h('p.ac-foot', {}, h('span', { text: '문의' }), tel);
+  liveContact().then((c) => { tel.href = telHref(c.tel); tel.textContent = c.tel; });   // LX 관리자 '운영 정보' 값(원칙 170)
   const body = h('div.ac', { dataset: { realm, site } }, bar, pSignup, pFind, pReset, foot);
   m = modal({ title: '계정 찾기 · 신청', body, onClose });
   m.el.classList.add('ac-md');

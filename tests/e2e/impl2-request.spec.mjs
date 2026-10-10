@@ -102,17 +102,19 @@ async function send(page, file, memo) {
   await page.fill('#memo', memo);
   await expect(page.locator('#go')).toBeEnabled();
 }
-async function openInbox(page, memo) {
+async function openInbox(page, memo) {                     // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 목록 · 한 건 서랍)
   await page.goto(BASE + '/landxi/v3/ops-core/#/approvals', { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.oc-tbl tbody tr', { timeout: 60000 });
-  const rows = page.locator('.oc-tbl tbody tr', { hasText: '분석 요청' });
+  await page.waitForSelector('.rq-row[data-id]', { timeout: 60000 });
+  const rows = page.locator('.rq-row[data-id]');
   await expect(rows.first()).toBeVisible();
   for (let i = 0; i < await rows.count(); i++) {          // 이 시험의 의뢰(메모 = 요청 사유)
     await rows.nth(i).click();
-    await page.waitForSelector('.oc-sheet', { timeout: 10000 });
-    if ((await page.locator('.oc-sheet').innerText()).includes(memo)) return;
+    const sh = page.locator('.k-drawer.is-open .rq-sheet');
+    await sh.waitFor({ timeout: 10000 });
+    await page.waitForTimeout(500);
+    if ((await sh.innerText()).includes(memo)) return;
   }
-  throw new Error('결재함에 의뢰가 없습니다');
+  throw new Error('요청 관리에 의뢰가 없습니다');
 }
 
 test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
@@ -152,11 +154,11 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
 
     const a = await admin(browser);
     await openInbox(a, 'e2e 승인 확인');
-    const sheet = a.locator('.oc-sheet');
-    await expect(sheet).toContainText('판단 근거', { timeout: 15000 });
-    await expect(sheet).toContainText('범위');
-    await expect(sheet).toContainText('대기열');
-    await expect(sheet.locator('.oc-rq-img')).toBeVisible();
+    const sheet = a.locator('.k-drawer.is-open .rq-sheet');
+    await expect(sheet).toContainText('순번', { timeout: 15000 });          // 관리 칸(순번 · 급함 · 담당 · 예상 시작)
+    await expect(sheet).toContainText('예상 시작');
+    await expect(sheet).toContainText('누가 · 왜');
+    await expect(sheet.locator('.rq-pic img')).toBeVisible();
     await a.waitForTimeout(600);
     await shot(a, 'after-inbox-request.png');
     if (process.env.LX_NO_GPU) return;                                                   // 캡처만 다시(분석 대기열 0 — GPU 시험은 한 번만)
@@ -183,7 +185,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await expect(g.locator('#det')).toContainText('확인 대기', { timeout: 20000 });
     const a = await admin(browser);
     await openInbox(a, 'e2e 거절 확인');
-    const sheet = a.locator('.oc-sheet');
+    const sheet = a.locator('.k-drawer.is-open .rq-sheet');
     await sheet.locator('.oc-acts button', { hasText: '거절' }).click();
     await expect(sheet.locator('.oc-need')).toContainText('거절 사유를 적어 주세요');      // 사유 없이는 보내지 않는다
     await sheet.locator('.oc-reason').fill('영상 범위가 서비스 대상과 맞지 않습니다');
@@ -201,10 +203,10 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     const a = await admin(browser);
     await a.goto(BASE + '/landxi/v3/ops-infra/?view=tenants#/tenants', { waitUntil: 'domcontentloaded' });
     await a.waitForSelector('.org', { timeout: 60000 });
-    await a.locator('.org', { hasText: '남원' }).locator('.adj').click();
+    await a.locator('.org', { hasText: '남원' }).click();                        // 기관 한 곳 새 화면(now 질문 17 ⓑ) → '영상과 배경' 탭
+    await a.locator('.tp-tabs button[data-k="img"]').click();
     await expect(a.locator('.sh-l li').first()).toBeVisible({ timeout: 20000 });
-    await expect(a.locator('.sh[aria-label="공유 영상"]')).toContainText('공유 영상');   // 같은 서랍에 '기관 메인 배경 사진' 칸(.sh.mp)이 더해졌다(기관-12)
-    await a.locator('.k-drawer .k-dr-b').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await expect(a.locator('.sh[aria-label="공유 영상"]')).toContainText('공유 영상');   // 같은 탭에 '기관 메인 배경 사진' 칸(.sh.mp)
     await a.waitForTimeout(600);
     await shot(a, 'after-admin-shares.png');
   });

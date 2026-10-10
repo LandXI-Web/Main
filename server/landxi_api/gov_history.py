@@ -297,9 +297,15 @@ async def bell_extra(p: Principal) -> list[dict]:
     · 기관: 새 결과 — 볼 수 있는 서비스의 새 판 가운데 읽지 않은 것(우리 공간의 알림 기록과 같은 판정) → 그 서비스(여럿이면 내 서비스)"""
     out: list[dict] = []
     async with db(realm="lx") as c:
-        if p.realm == "lx" and p.is_admin:
-            rows = await c.fetch("SELECT s.id, s.place, s.created_at, t.name AS tname FROM shoot_requests s LEFT JOIN tenants t ON t.id=s.tenant_id "
-                                 "WHERE s.state='sent' ORDER BY s.created_at DESC LIMIT 20")
+        if p.realm == "lx" and (p.is_admin or p.role == "staff"):
+            # 관리자 = 모두 · 직원 = 그 기관 촬영 요청 담당으로 지정된 것만(LX 관리자 '기관 한 곳' 화면 · now 질문 17 ⓑ)
+            try:
+                rows = await c.fetch("SELECT s.id, s.place, s.created_at, t.name AS tname FROM shoot_requests s LEFT JOIN tenants t ON t.id=s.tenant_id "
+                                     "WHERE s.state='sent' AND ($1::text IS NULL OR s.tenant_id IN (SELECT tenant_id FROM tenant_shoot_staff WHERE user_id=$1)) "
+                                     "ORDER BY s.created_at DESC LIMIT 20", None if p.is_admin else p.user_id)
+            except Exception:  # noqa: BLE001 — 담당 표가 없는 DB
+                rows = await c.fetch("SELECT s.id, s.place, s.created_at, t.name AS tname FROM shoot_requests s LEFT JOIN tenants t ON t.id=s.tenant_id "
+                                     "WHERE s.state='sent' ORDER BY s.created_at DESC LIMIT 20") if p.is_admin else []
             if rows:
                 nm = lambda t: (t.get("ko") if isinstance(t, dict) else str(t or "")).split()[-1] if t else ""  # noqa: E731
                 out.append({"kind": "shoot", "n": len(rows), "href": "/landxi/v3/lx-inbox/#shoots",
@@ -316,12 +322,12 @@ async def bell_extra(p: Principal) -> list[dict]:
                 cards = [r["card_id"] for r in await c.fetch("SELECT card_id FROM space_assign WHERE tenant_id=$1 AND user_id=$2", p.tenant_id, p.user_id)]
             if cards is None or cards:
                 rows = await c.fetch(
-                    "SELECT l.card_id, l.line, l.at, g.edition FROM space_log l LEFT JOIN space_guides g ON g.id = l.guide_id "
-                    "WHERE l.tenant_id=$1 AND l.kind='guide' AND NOT coalesce(l.backfill,false) AND ($2::timestamptz IS NULL OR l.at > $2) "
+                    "SELECT l.card_id, l.kind, l.line, l.at, g.edition FROM space_log l LEFT JOIN space_guides g ON g.id = l.guide_id "
+                    "WHERE l.tenant_id=$1 AND l.kind IN ('guide','version') AND NOT coalesce(l.backfill,false) AND ($2::timestamptz IS NULL OR l.at > $2) "
                     "AND ($3::text[] IS NULL OR l.card_id = ANY($3::text[])) ORDER BY l.at DESC LIMIT 10", p.tenant_id, seen, cards)
                 if rows:
                     one = len({r["card_id"] for r in rows}) == 1
                     out.append({"kind": "result", "n": len(rows),
                                 "href": "/landxi/v3/gov-select/?" + (f"service={rows[0]['card_id']}" if one else "list=1"),
-                                "items": [{"title": str(r["line"] or "").split(" — ")[0], "at": _iso(r["at"])} for r in rows[:3]]})
+                                "items": [{"title": str(r["line"] or "") if r["kind"] == "version" else str(r["line"] or "").split(" — ")[0], "at": _iso(r["at"])} for r in rows[:3]]})   # 새 판 알림은 달라진 점 한 줄까지(나중 19)
     return out

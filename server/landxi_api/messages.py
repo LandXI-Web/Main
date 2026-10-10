@@ -112,11 +112,18 @@ async def _resolve_card(conn, tenant: str | None, body: dict, finding_rule: str 
     return None, dep
 
 
-async def _owner(conn, card_id: str | None) -> dict | None:
-    """서비스 카드의 담당 LX 직원 — 그 카드를 낸 프로젝트의 프로젝트장(프로젝트 쪽 한 곳 projects.project_of_card) → 카드의 담당 칸
+async def _owner(conn, card_id: str | None, tenant: str | None = None) -> dict | None:
+    """서비스 카드의 담당 LX 직원 — (기관을 주면) 그 기관 × 서비스의 LX 헬프데스크 담당(LX 관리자가 '기관 한 곳' 화면에서 정함 · now 질문 17 ⓑ)
+    → 그 카드를 낸 프로젝트의 프로젝트장(프로젝트 쪽 한 곳 projects.project_of_card) → 카드의 담당 칸
     → 그 카드를 공개 · 다른 지역 적용 요청한 LX 직원(가장 최근) · 없으면 None(LX 관리자가 받는다)."""
     if not card_id:
         return None
+    if tenant:
+        from .spaces import helpdesk_of
+        hd = await helpdesk_of(conn, tenant, card_id)
+        if hd:
+            nm = await conn.fetchval("SELECT name FROM lx_users WHERE id=$1", hd)
+            return {"id": hd, "name": nm, "via": "helpdesk"}
     try:
         from .projects import project_of_card
     except Exception:                                   # 프로젝트 백본이 없는 배포 — 아래 길로
@@ -309,7 +316,7 @@ async def recipient(request: Request, pnu: str | None = None, card: str | None =
             frule = await conn.fetchval("SELECT rule FROM survey_findings WHERE pnu=$1 ORDER BY (id=$2) DESC, (tenant_id=$3) DESC, score DESC NULLS LAST LIMIT 1",
                                         pnu, fid or "", p.tenant_id)
         cid, _ = await _resolve_card(conn, p.tenant_id, {"card": card, "rule": rule, "set": set, "deploy": deploy}, frule)
-        o = await _owner(conn, cid)
+        o = await _owner(conn, cid, p.tenant_id)
         svc = await _card_name(conn, cid)
     return {"service": svc, "recipient": {"kind": "staff", "name": o["name"], "via": o.get("via")} if o else {"kind": "admin", "name": None},
             "at": now_iso()}
@@ -336,7 +343,7 @@ async def create(body: dict, request: Request):
         if not dep and cid:
             dep = await conn.fetchval("SELECT id FROM deploys WHERE tenant_id=$1 AND card_id=$2 ORDER BY (stage='ga') DESC, updated_at DESC NULLS LAST LIMIT 1",
                                       p.tenant_id, cid)
-        owner = await _owner(conn, cid)
+        owner = await _owner(conn, cid, p.tenant_id)
         ctx["service"] = await _card_name(conn, cid)
         ctx["from"] = str(body.get("from") or "")[:24] or None
         if not ll:
@@ -395,7 +402,7 @@ async def create_file(body: dict, request: Request):
     why = re.sub(r"\s+", " ", str(body.get("why") or "")).strip()[:160] or None
     async with db(realm="lx") as conn:                       # 서비스 · 담당 판정(배포본은 그 기관 것만 — _resolve_card 가 기관 조건을 건다)
         cid, dep = await _resolve_card(conn, p.tenant_id, {"deploy": body.get("deploy")}, None)   # 그 기관에 켜진 서비스(배포본)만 — 카드 이름만으로는 받지 않는다
-        owner = await _owner(conn, cid)
+        owner = await _owner(conn, cid, p.tenant_id)
         svc = await _card_name(conn, cid)
         dept = await conn.fetchval("SELECT dept FROM tenant_users WHERE id=$1 AND tenant_id=$2", p.user_id, p.tenant_id)
     where = f"못 읽는 파일 · {files[0]}" + (f" 외 {len(files) - 1}개" if len(files) > 1 else "")
