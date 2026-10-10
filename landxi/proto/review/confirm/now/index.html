@@ -55,7 +55,7 @@ footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px
 </main>
 <div class="bar"><b id="cnt">0 / 28 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
 <script>
-const KEY='lx-confirm-0930-rnow';
+const KEY='lx-confirm-0930-rnow-20261010220657';  // 10-10: 페이지를 다시 구우면 새 열쇠 — 지난 판에서 고른 답이 같은 번호 질문에 미리 골라져 보이지 않게
 let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
 const cards=[...document.querySelectorAll('.c')];

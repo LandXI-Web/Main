@@ -250,7 +250,7 @@ def build():
     secs = ''.join(f'<section><h2>{esc(h)}</h2><p class="sub">{esc(d)}</p>{"".join(card(i) for i in items)}</section>' for h, d, items in SECTIONS)
     done = '' if not DONE else '<section><h2>이미 만든 것 — 구현 확인</h2><p class="sub">열어 보시고 완료 또는 다시를 골라 주세요.</p>' + ''.join(card(i, True) for i in DONE) + '</section>'
     n = sum(len(i) for _, _, i in SECTIONS) + len(DONE)
-    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', os.environ.get('LX_CONFIRM_TITLE') or ('확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차'))
+    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__STAMP__', __import__('time').strftime('%Y%m%d%H%M%S')).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', os.environ.get('LX_CONFIRM_TITLE') or ('확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차'))
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
     print('confirm page:', n, 'items,', len(os.listdir(os.path.join(OUT, 'img'))), 'images')
 
@@ -312,7 +312,7 @@ __BODY__
 </main>
 <div class="bar"><b id="cnt">0 / __N__ 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
 <script>
-const KEY='lx-confirm-0930-r__R__';
+const KEY='lx-confirm-0930-r__R__-__STAMP__';  // 10-10: 페이지를 다시 구우면 새 열쇠 — 지난 판에서 고른 답이 같은 번호 질문에 미리 골라져 보이지 않게
 let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
 const cards=[...document.querySelectorAll('.c')];
