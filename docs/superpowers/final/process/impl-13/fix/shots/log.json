@@ -1,0 +1,47 @@
+{
+ "xi-muju-1440.png": {
+  "shot_at": "2026-10-11 09:39",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "무주군 — 글 '아직 결과가 없습니다'와 지도가 같은 판정(결과 층 안 그림)"
+ },
+ "xi-muju-state": {
+  "hud": "empty",
+  "text": "AI 분석 결과 · 무주군\n아직 결과가 없습니다",
+  "vis": 0
+ },
+ "xi-muju-layers-1440.png": {
+  "shot_at": "2026-10-11 09:39",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "층 목록 — 무주군 전역 분석 층은 직접 켜기 전 꺼짐(켜면 그려짐)"
+ },
+ "global-1440-rect": [
+  1032,
+  1424,
+  1440
+ ],
+ "global-1440.png": {
+  "shot_at": "2026-10-11 09:39",
+  "url": "https://app.land-xi.dev/landxi/v3/global/index.html?country=KGZ&tab=season&season=Autumn+2025&district=92254566B31675215078110",
+  "note": "해외 화면 1440px — 오른쪽 판이 자리에 앉은 뒤(판 오른쪽 끝 1424 / 화면 1440)"
+ },
+ "global-1920-rect": [
+  1512,
+  1904,
+  1920
+ ],
+ "global-1920.png": {
+  "shot_at": "2026-10-11 09:39",
+  "url": "https://app.land-xi.dev/landxi/v3/global/index.html?country=KGZ&tab=season&season=Autumn+2025&district=92254566B31675215078110",
+  "note": "해외 화면 1920px — 오른쪽 판이 자리에 앉은 뒤(판 오른쪽 끝 1904 / 화면 1920)"
+ },
+ "release-infer-1440.png": {
+  "shot_at": "2026-10-11 09:40",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=infer",
+  "note": "주차장 2026 infer 탭"
+ },
+ "release-publish-1440.png": {
+  "shot_at": "2026-10-11 09:40",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "주차장 2026 publish 탭"
+ }
+}

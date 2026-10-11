@@ -490,7 +490,7 @@ const regionEmds = () => (S.region ? S.emds.filter((e) => inRegion(e.cd, S.regio
 let rdSeq = 0;
 async function regionData(r) {
   const my = ++rdSeq;
-  S.remd = []; S.remdMeta = null;
+  S.remd = []; S.remdMeta = null; S.aiUser = false;
   if (S.aiByRegion) { S.layers.ai = false; S.aiByRegion = false; }   // 앞 지역에서 자동으로 켠 AI 분석 층은 지역을 옮기면 되돌린다
   map.getSource('xc-emd')?.setData({ type: 'FeatureCollection', features: [] });
   clearResultLayers();
@@ -634,7 +634,7 @@ let failToast = null;
 function hudFailed(my) {
   if (my !== seq) return;
   const big = hudBig.__big;
-  hudState(big, 'fail'); drawBars([]); setPoints([]); S.last = null; S.need = null; S.hudFail = true;
+  S.aiHas = null; hudState(big, 'fail'); drawBars([]); setPoints([]); S.last = null; S.need = null; S.hudFail = true;
   SH.fresh(null); renderChips();
   if (S.list) openList();
   failToast = K.toast('현황을 불러오지 못했습니다', { ms: 12000, action: { label: '다시 시도', onClick: () => refresh() } });
@@ -736,7 +736,7 @@ async function refreshAI(my) {
   const setLab = () => { const lab = hudBig.querySelector('.k-big-l'); if (lab) { lab.textContent = AI_LABEL; lab.append(h('span.xc-where', { text: ` · ${where}` })); } };
   if (hudBig.dataset.shown !== scope) setLab();
   if (hudBig.dataset.shown !== scope || hudBig.dataset.st !== 'ok') hudState(big, 'wait');
-  S.last = null; S.need = null; S.suspect = null; drawBars([]); setPoints([]);
+  S.last = null; S.need = null; S.suspect = null; drawBars([]); setPoints([]); S.aiHas = undefined;
   hudBig.hidden = false;
   S.hudFail = false;
   let j = null;
@@ -752,6 +752,7 @@ async function refreshAI(my) {
   }
   if (my !== seq) return;
   const r = aiResult(j);
+  S.aiHas = !!r; applyLayers(); if (S.tool === 'layers') renderLayers();   // 글이 정해지면 층도 같은 판정으로
   setLab();
   hudSus.replaceChildren(); delete hudSus.dataset.v; delete hudSus.dataset.metric;
   if (r) {
@@ -1060,7 +1061,7 @@ async function agentOp(a) {
       if (!hit.length) return { ok: false, reason: `이 지역에는 ${a.only} AI 분석 결과가 없습니다` };
       const before = JSON.stringify([S.layers.ai, (S.res || []).map((it) => !!S.resOn[it.id])]);
       for (const it of S.res || []) S.resOn[it.id] = hit.includes(it);
-      S.layers.ai = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
+      S.layers.ai = true; S.aiUser = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
       return { ok: true, same: before === JSON.stringify([true, (S.res || []).map((it) => !!S.resOn[it.id])]) };
     }
     if (k === 'sus' && want && a.only === true) {
@@ -1069,9 +1070,9 @@ async function agentOp(a) {
       S.layers.sus = true; S.layers.ai = false; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
       return { ok: true, same: same0 };
     }
-    const same = S.layers[k] === want && (k !== 'ai' || !want || (S.res || []).every((it) => S.resOn[it.id]));
+    const same = (k === 'ai' ? aiOn() : S.layers[k]) === want && (k !== 'ai' || !want || (S.res || []).every((it) => S.resOn[it.id]));
     S.layers[k] = want;
-    if (k === 'ai') { S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
+    if (k === 'ai') { S.aiUser = true; S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
     applyLayers();
     if (S.tool === 'layers') renderLayers();
     // 기관 화면: 결과 층을 껐는데 지도에 주황 점(실태조사 필지)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
@@ -1320,19 +1321,22 @@ function showPop(title, ...kids) {
 }
 function renderLayers() {
   const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ...(map.getLayer('xc-lxmap') ? [['lxmap', 'LX맵']] : []), ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · LX맵 = 기관 화면(나중 8 ⓐ)
-  const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.layers[k]), onclick: (e) => { if (k === 'lxmap') { setLxmap(!S.layers.lxmap); e.currentTarget.setAttribute('aria-pressed', String(S.layers.lxmap)); return; } S.layers[k] = !S.layers[k]; if (k === 'ai') S.aiByRegion = false; e.currentTarget.setAttribute('aria-pressed', String(S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
+  const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(k === 'ai' ? aiOn() : S.layers[k]), onclick: (e) => { if (k === 'lxmap') { setLxmap(!S.layers.lxmap); e.currentTarget.setAttribute('aria-pressed', String(S.layers.lxmap)); return; } if (k === 'ai') { S.layers.ai = !aiOn(); S.aiUser = true; S.aiByRegion = false; } else S.layers[k] = !S.layers[k]; e.currentTarget.setAttribute('aria-pressed', String(k === 'ai' ? aiOn() : S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   // AI 분석 아래: 이 지역에 결과가 있는 세트(이름 = 카탈로그 · 전역 분석 결과)
-  const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(S.layers.ai && S.resOn[it.id])), 'data-res': it.id,
-    onclick: (e) => { if (!S.layers.ai) { S.layers.ai = true; S.resOn[it.id] = true; } else S.resOn[it.id] = !S.resOn[it.id]; applyLayers(); renderLayers(); } },
+  const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(aiOn() && S.resOn[it.id])), 'data-res': it.id,
+    onclick: (e) => { S.aiUser = true; if (!aiOn()) { S.layers.ai = true; S.resOn[it.id] = true; } else S.resOn[it.id] = !S.resOn[it.id]; applyLayers(); renderLayers(); } },
   h('i.xc-sw'), h('span', { text: it.name?.ko || it.id })));
   const ai = rows.findIndex((b) => b.querySelector('[data-k="ai"]'));
   rows.splice(ai + 1, 0, ...sub);
   showPop('층', h('div.xc-rows-p', {}, ...rows));
 }
+/** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
+    (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */
+const aiOn = () => !!S.layers.ai && (S.aiUser || S.aiHas === true || S.aiHas === null);   // undefined = 요약 조회 중(그리지 않고 기다림) · null = 요약 조회 실패(층은 그대로)
 function applyLayers() {
   setVis(map, (S.imgLayers || []).filter((l) => map.getLayer(l)), S.layers.img);
   setVis(map, susSet(), S.layers.sus);
-  for (const it of S.res || []) setVis(map, it.ids, !!(S.layers.ai && S.resOn[it.id]));
+  for (const it of S.res || []) setVis(map, it.ids, !!(aiOn() && S.resOn[it.id]));
   setVis(map, S.parcelLayers, S.layers.parcel);
   setVis(map, S.emdLayers, S.layers.emd);
   if (map.getLayer('xc-lxmap')) setVis(map, ['xc-lxmap'], S.layers.lxmap);

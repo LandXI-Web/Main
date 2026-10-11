@@ -64,7 +64,7 @@ function acCard(c, href, more) {
   const acc = md.acc && md.acc.value !== null && md.acc.value !== undefined ? md.acc.value : null;
   const tg = c.targets || [];
   const tgText = tg.length > 3 ? `${tg.slice(0, 3).join(' · ')} 외 ${tg.length - 3}곳` : tg.join(' · ');
-  return h('article.k-sc.la-ac', { dataset: { kind: 'analyze', state: c.state || 'none' } }, pic,
+  return h('article.k-sc.la-ac', { dataset: { kind: 'analyze', state: c.state || 'none', card: c.id || '' } }, pic,
     h('div.k-sc-b.la-ac-b', {},
       h('h3.k-sc-t', { text: c.name || '' }),
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),

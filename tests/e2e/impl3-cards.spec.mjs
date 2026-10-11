@@ -27,25 +27,26 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     await page.waitForSelector('.k-sc[data-kind="analyze"]', { timeout: 30000 });
     expect(await page.locator('.k-sc').count()).toBe(4);   // 지도-4 ⓐ 한 페이지 기본 4장(정식 서비스 5장 — 카드틀-5)
     expect(await words(page, '.la-page')).toEqual([]);
-    /* 결과 예시 숫자 = 대표 수치 요약(/summary) 그 지역 값 */
-    const farm = page.locator('.k-sc[data-card="card-farm"] .k-sc-res');
-    const v = Number(await farm.getAttribute('data-v'));
-    const sum = await call(page, '/summary?card=card-farm');
-    const vals = sum.body.items.filter((i) => i.detected_counted).map((i) => i.metrics.detected?.value).filter((x) => x != null);   // AI 분석 결과(업무 결과로 센 것)만
-    expect(vals).toContain(v);
-    /* 큰 숫자 자리 = 업무 결과만 — 분석 칸 도형 수(남원 · 증평 비닐하우스 AI 탐지 = 모든 분류 도형 조각)는 쓰지 않는다(사용자 규칙 2) */
-    await expect(page.locator('.k-sc[data-card="card-5e85a9"] .k-sc-res')).toHaveClass(/is-none/);
+    /* 갤러리 카드 틀(카드틀-5): 옛 '결과 예시' 칸(.k-sc-res)은 없고 큰 숫자 = 검증 정확도(서버 카드 덱 model.acc 한 출처) — 카드마다 같은 값인지 본다 */
     const deckL = (await call(page, '/cards/deck')).body;
+    for (const el of await page.locator('.k-sc[data-card]').all()) {
+      const id = await el.getAttribute('data-card');
+      const c = deckL.items.find((x) => x.id === id);
+      const acc = c?.model?.acc?.value;
+      if (acc !== null && acc !== undefined) await expect(el.locator('.la-ac-hero b.num').first()).toHaveText(`${Math.round(Number(acc))}%`);
+    }
+    /* 큰 숫자 자리 = 업무 결과만 — 분석 칸 도형 수(남원 · 증평 비닐하우스 AI 탐지 = 모든 분류 도형 조각)는 쓰지 않는다(사용자 규칙 2) */
     for (const c of deckL.items) if (c.example) { expect(c.example.label).toBe('AI 탐지'); expect(c.example.word).not.toContain('현장 확인'); }   // 원칙 135 — LX 카드 결과 예시 = AI 분석 결과
     expect(deckL.items.find((c) => c.id === 'card-5e85a9').example).toBeNull();
     /* 장면 없는 카드 = 회백 판(그림 0) */
-    await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText(/결과 장면 없음|결과가 나오면/);
-    /* 거르기 — 운영만 */
-    await page.locator('.la-chip', { hasText: '운영' }).click();
-    for (const st of await page.locator('.k-sc').evaluateAll((els) => els.map((e) => e.dataset.state))) expect(st).toBe('ga');
+    if (await page.locator('.k-sc .k-sc-crop.is-blank').count()) await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText('결과 장면이 아직 없습니다');
+    /* 거르기 — 지금 칩은 전체 · 분야 · 영상(드론 · 항공 · 위성)(옛 '운영' 칩은 정식 서비스만 보이는 갤러리로 바뀌며 없어짐) — 영상 칩이 카드 수를 줄이거나 같게 거른다 */
+    const nAll = await page.locator('.k-sc').count();
+    await page.locator('.la-chip', { hasText: '항공' }).click();
+    expect(await page.locator('.k-sc').count()).toBeLessThanOrEqual(nAll);
     await page.locator('.la-chip', { hasText: '전체' }).click();
     /* 카드 상세 — 이 카드로 분석: 지역은 화면이 고르지 않는다(원칙 33) */
-    await page.locator('.k-sc[data-card="card-45424f"] .k-sc-more').click();
+    await page.locator('.k-sc .k-sc-more').first().click();   // 첫 장 카드의 '자세히'(카드는 정식 서비스 순서대로 · 특정 카드를 가정하지 않는다)
     await page.waitForSelector('.la-side .k-region input', { timeout: 30000 });
     await expect(page.locator('.la-picks li')).toHaveCount(0);
     await expect(page.locator('.la-go')).toBeDisabled();

@@ -1,0 +1,5 @@
+[
+ {"id":"고침-XI맵글","title":"XI맵 — 글과 지도 층이 같은 출처","opts":["완료","다시"],"evidence":"shots/xi-muju-1440.png · shots/xi-muju-layers-1440.png","note":"무주군: 글 '아직 결과가 없습니다'이면 지도에 결과 층을 그리지 않는다. 층 목록에서 직접 켜면 그려진다."},
+ {"id":"고침-해외판","title":"해외 화면 오른쪽 판","opts":["완료","다시"],"evidence":"shots/global-1440.png · shots/global-1920.png","note":"판이 자리에 앉은 뒤 오른쪽 끝이 화면 안(1440: 1424/1440 · 1920: 1904/1920). 고정 위치 배치 결함은 없었고 들어오는 중간에 찍힌 장면이 잘려 보였던 것."},
+ {"id":"고침-정확도이름표","title":"주차장 2026 — 정확도 이름표","opts":["완료","다시"],"evidence":"shots/release-infer-1440.png · shots/release-publish-1440.png","note":"40%는 '이 프로젝트 학습 모델', 89%는 '공개 서비스 모델 · 지난 판 2.0' 이름표로 구분. 값은 모두 kit/acc.js 규칙(서버 acc_env 와 같은 순서)."}
+]

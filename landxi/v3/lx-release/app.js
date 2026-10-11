@@ -67,7 +67,7 @@ async function drawInfer() {
         h('input', { type: 'radio', name: 'model', value: m.id, checked: on, onchange: () => { st.model = m.id; drawModels(); drawImgs(); } }),
         h('span.rl-m-l', {}, h('b', { text: `${m.n}번째 학습` }), unitsEl('span', join(m.name, (m.classes || []).join(' · '), m.gsd_word)),
           unitsEl('small', join(`${mdhm(m.at)} 학습`, m.status_label, m.deployed ? `${m.deployed}판에 쓰임` : '배포 전'))),
-        h('span.rl-acc', {}, h('em', { text: '정확도' }), h('b', { text: pct(m.acc) }), bar(m.acc, !on))));
+        h('span.rl-acc', {}, h('em', { text: '이 프로젝트 학습 모델' }), h('b', { text: pct(m.acc) }), bar(m.acc, !on))));
     return li;
   }));
   drawModels();
@@ -223,9 +223,11 @@ async function drawPublish() {
   const ledger = h('select.t-input', { 'aria-label': '대장 형식' }, ...(d.ledger_kinds || []).map((k) => h('option', { value: k.kind, text: k.label })));
   function drawModelBits() {
     const x = m();
+    /* 두 값은 서로 다른 모델일 수 있다 — 이번 판 = 이 프로젝트가 학습한 모델 · 지난 판 = 지금 공개 중인 서비스 모델. 이름표로 가른다(같은 모델이면 판 이름만) */
+    const other = !!(prev && x && prev.model?.id && prev.model.id !== x.id);
     accEl.replaceChildren(
-      h('span', {}, h('em', { text: '이번 판' }), h('b', { text: pct(x?.acc) }), bar(x?.acc)),
-      h('span', {}, h('em', { text: prev ? `지난 판 ${prev.version}` : '지난 판' }), h('b', { text: prev ? pct(prev.model?.acc) : '—' }), bar(prev?.model?.acc, true)));
+      h('span', {}, h('em', { text: other ? '이 프로젝트 학습 모델 · 이번 판' : '이번 판' }), h('b', { text: pct(x?.acc) }), bar(x?.acc)),
+      h('span', {}, h('em', { text: prev ? `${other ? '공개 서비스 모델 · ' : ''}지난 판 ${prev.version}` : '지난 판' }), h('b', { text: prev ? pct(prev.model?.acc) : '—' }), bar(prev?.model?.acc, true)));
     /* 기반 · 지난 판보다 낮으면 빨간 경고 한 줄(질문 9 ⓑ) — 막지 않는다 · 관리자 신청서에도 같은 줄 */
     lowEl.textContent = x?.low ? `${x.low} — 신청은 할 수 있고, 관리자가 보고 판단합니다` : '';
     lowEl.hidden = !x?.low;

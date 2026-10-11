@@ -74,7 +74,7 @@ test.describe('구현 9차 · 분석 서비스 배포', () => {
     expect(cats).toEqual(expect.arrayContaining(['농지·시설', '환경', '건축·변화', '안전', '해외']));
     await check(page);
     await page.locator('#pane-deploys .im-tabs button[data-tab="usage"]').click();
-    await expect(page.locator('.rv-tbl--usage th')).toHaveText(['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', '마지막 사용'], { timeout: 20000 });
+    await expect(page.locator('.rv-tbl--usage th')).toHaveText(['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', 'API 호출', '마지막 사용'], { timeout: 20000 });
     await check(page);
     await page.goto('v3/ops-core/');
     await expect(page.locator('.oc-use b')).toHaveText('서비스 사용 현황', { timeout: 30000 });

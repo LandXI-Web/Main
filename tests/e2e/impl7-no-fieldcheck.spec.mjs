@@ -45,10 +45,7 @@ for (const vp of [{ w: 1440, h: 900, k: '1440' }, { w: 390, h: 844, k: '390' }])
       await page.waitForSelector('.k-sc[data-kind="analyze"]', { timeout: 30000 });
       await page.waitForTimeout(1500);
       expect(await page.locator('body').innerText()).not.toMatch(NO);
-      const farm = page.locator('.k-sc[data-card="card-farm"] .k-sc-res');
-      await expect(farm).toContainText('AI 분석 결과');
-      const sumFarm = await call(page, '/summary?card=card-farm');
-      expect(sumFarm.items.filter((i) => i.detected_counted).map((i) => i.metrics.detected.value)).toContain(Number(await farm.getAttribute('data-v')));
+      // 갤러리 카드 틀(카드틀-5)에는 옛 '결과 예시' 칸(.k-sc-res)이 없다 — 결과 예시 큰 숫자는 아래 카드 상세(.la-big)에서 본다. 갤러리는 현장 확인 글 0(위 NO 검사)만.
       await shot(page, `analyze-${vp.k}`);
 
       /* 카드 상세 — 결과 예시 큰 숫자 */
