@@ -1,0 +1,300 @@
+{
+ "main1-hero-1510.png": {
+  "at": "2026-10-11T15:10:29",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 첫 화면 — 소개 글(PC 26px)"
+ },
+ "main5-kyrgyz-districts-1510.png": {
+  "at": "2026-10-11T15:10:42",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 해외 장면 — 군별 경작지 색칠"
+ },
+ "main5-kyrgyz-zoom-1510.png": {
+  "at": "2026-10-11T15:10:50",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 해외 장면 — 경작지가 가장 많은 군으로 다가간 실제 판정 칸"
+ },
+ "main3-need-one-1511.png": {
+  "at": "2026-10-11T15:11:01",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "문의 창 — 연락처와 메일 둘 다 비면 안내(보내지 않음)"
+ },
+ "main3-two-fields-1511.png": {
+  "at": "2026-10-11T15:11:02",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "문의 창 — 연락처(전화) · 메일 주소 두 칸(보내지 않음)"
+ },
+ "q8-login-1511.png": {
+  "at": "2026-10-11T15:11:07",
+  "url": "https://app.land-xi.dev/landxi/v3/login/",
+  "note": "로그인 — 아이디 칸 안내 · 비밀번호 칸 '숨기기' 글자 단추(칸 값은 시험 글자 · 로그인하지 않음)"
+ },
+ "q11-188-dashboard-1511.png": {
+  "at": "2026-10-11T15:11:19",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드 — 머리줄 남은 시간 · 진행 현황 칸 안 '공개 뒤 결과 확인 남음'"
+ },
+ "gpt25-gpt27-analyze-1511.png": {
+  "at": "2026-10-11T15:11:25",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "분석하기 — 카드(그림 없으면 '그림 없음') · AI 모델 정확도"
+ },
+ "qa2-imagery-radio-1511.png": {
+  "at": "2026-10-11T15:11:34",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 자세히 — 영상 고르기(하나만 · 라디오)"
+ },
+ "gpt3-5-analyze-detail-1511.png": {
+  "at": "2026-10-11T15:11:35",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 자세히 — '이 카드의 조건'의 AI 모델 정확도"
+ },
+ "gpt25-apply-cover-1511.png": {
+  "at": "2026-10-11T15:11:41",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "배포 신청서 — 대표 그림 칸(필수 · 신청하지 않음)"
+ },
+ "FAILED:mapsvc": "Locator.click: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator(\".lm-grp\").filter(has_text=\"비닐하우스 분석서비스\").first.locator(\"li\").filter(has_text=\"남원시\").first.locator(\".lm-dlb\")\n    - locator resolved to <button type=\"button\" class=\"lm-dlb\" aria-expanded=\"false\" aria-label=\"남원시 비닐하우스 분석서비스 내려",
+ "_chat": [
+  {
+   "q": "비닐하우스 단동만 펼쳐줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음\n켜진 층에는 비닐하우스 단동 구분이 없습니다 — AI가 '비닐하우스' 한 가지로만 찾은 결과입니다. 지도는 그대로 두었습니다. 지금 결과의 분류: 비닐하우스."
+  },
+  {
+   "q": "면적 1,000㎡ 넘는 것만 보여 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 1,000㎡ 넘음 — 152건\n조건을 걸었습니다."
+  },
+  {
+   "q": "조건 풀어 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음 — 703건\n조건을 모두 풀었습니다 — 켜진 층의 결과를 모두 보여 줍니다."
+  },
+  {
+   "q": "보고서 초안 만들어 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음 — 결과 703건 · 읍면동 23곳\nAI 분석 결과 보고서 초안을 만들었습니다 — 지도 그림 · 영상 시점 · AI 모델 정확도를 함께 실었습니다."
+  },
+  {
+   "q": "면적 1,000㎡ 넘는 것만 보여 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 — 152건\n조건을 걸었습니다."
+  },
+  {
+   "q": "운봉읍만",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 60건\n앞 조건(1,000㎡ 넘음)에 운봉읍 조건을 더했습니다.\n조건은 쌓입니다 — '조건 풀어 줘'로 모두, '면적 조건만 풀어 줘'처럼 하나씩 풉니다."
+  },
+  {
+   "q": "읍면동 통계 보여 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 결과 60건 · 읍면동 1곳\n많은 곳: 운봉읍 60건\n층별: 여주시 하거동 프로젝트 주차장 2026 0건 · 남원시 비닐하우스 60건"
+  },
+  {
+   "q": "보고서 초안 만들어 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 결과 60건 · 읍면동 1곳\nAI 분석 결과 보고서 초안을 만들었습니다 — 지도 그림 · 영상 시점 · AI 모델 정확도를 함께 실었습니다."
+  },
+  {
+   "q": "비닐하우스 단동만 펼쳐줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음\n켜진 층에는 비닐하우스 단동 구분이 없습니다 — AI가 '비닐하우스' 한 가지로만 찾은 결과입니다. 지도는 그대로 두었습니다. 지금 결과의 분류: 비닐하우스."
+  },
+  {
+   "q": "면적 1,000㎡ 넘는 것만 보여 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 1,000㎡ 넘음 — 152건\n조건을 걸었습니다."
+  },
+  {
+   "q": "조건 풀어 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음 — 703건\n조건을 모두 풀었습니다 — 켜진 층의 결과를 모두 보여 줍니다."
+  },
+  {
+   "q": "보고서 초안 만들어 줘",
+   "a": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 없음 — 결과 703건 · 읍면동 23곳\nAI 분석 결과 보고서 초안을 만들었습니다 — 지도 그림 · 영상 시점 · AI 모델 정확도를 함께 실었습니다."
+  },
+  {
+   "q": "면적 1,000㎡ 넘는 것만 보여 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 — 152건\n조건을 걸었습니다."
+  },
+  {
+   "q": "운봉읍만",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 60건\n앞 조건(1,000㎡ 넘음)에 운봉읍 조건을 더했습니다.\n조건은 쌓입니다 — '조건 풀어 줘'로 모두, '면적 조건만 풀어 줘'처럼 하나씩 풉니다."
+  },
+  {
+   "q": "읍면동 통계 보여 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 결과 60건 · 읍면동 1곳\n많은 곳: 운봉읍 60건\n층별: 여주시 하거동 프로젝트 주차장 2026 0건 · 남원시 비닐하우스 60건"
+  },
+  {
+   "q": "보고서 초안 만들어 줘",
+   "a": "대상: 켜진 층 2개(여주시 하거동 프로젝트 주차장 2026 · 남원시 비닐하우스) · 조건: 1,000㎡ 넘음 · 운봉읍 — 결과 60건 · 읍면동 1곳\nAI 분석 결과 보고서 초안을 만들었습니다 — 지도 그림 · 영상 시점 · AI 모델 정확도를 함께 실었습니다."
+  }
+ ],
+ "FAILED:q5-report-map": "Locator.click: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator(\"a.k-ck-file\").last\n",
+ "map-edge-1514.png": {
+  "at": "2026-10-11T15:14:43",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 항공영상 — 가장자리 띠 · '영상끼리 만나는 경계' 안내 한 줄(바탕 아래)"
+ },
+ "gpt3-8-xi-tilt-1514.png": {
+  "at": "2026-10-11T15:14:55",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "XI맵 첫 화면 → 입체(자리 잡은 뒤 · 흰 공백 없음)"
+ },
+ "gpt3-8-xi-region-tilt-moving-1515.png": {
+  "at": "2026-10-11T15:15:04",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52190",
+  "note": "XI맵 남원 입체 — 기울이는 중"
+ },
+ "gpt3-8-xi-region-tilt-1515.png": {
+  "at": "2026-10-11T15:15:11",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52190",
+  "note": "XI맵 남원 입체 — 자리 잡은 뒤"
+ },
+ "xi-layers-1515.png": {
+  "at": "2026-10-11T15:15:21",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "XI맵 무주군 — 왼쪽 도구 '층'"
+ },
+ "q188-warn-1515.png": {
+  "at": "2026-10-11T15:15:36",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "끝나기 5분 전 알림(흉내 — 이 브라우저 시계만 앞으로 옮김 · 서버 값은 그대로)"
+ },
+ "q188-admin-lx-1515.png": {
+  "at": "2026-10-11T15:15:47",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#session",
+  "note": "계정 → '자동 로그아웃' 탭(LX 계정)"
+ },
+ "main3-admin-list-1515.png": {
+  "at": "2026-10-11T15:15:50",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#inquiries",
+  "note": "계정 관리 → '문의' 탭 목록(연락처 · 메일 두 칸)"
+ },
+ "gpt3-6-improve-1515.png": {
+  "at": "2026-10-11T15:15:57",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/improve",
+  "note": "배포 → '개선 후보' 목록(사용자 질문은 '질문 원문' 표시)"
+ },
+ "q188-namwon-1516.png": {
+  "at": "2026-10-11T15:16:12",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-accounts/#session",
+  "note": "남원시 관리자 — 계정 → '자동 로그아웃'(자기 기관만)"
+ },
+ "gpt3-1-request-1516.png": {
+  "at": "2026-10-11T15:16:21",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-request/",
+  "note": "남원시 요청하기 → 분석 요청 — 올리기 칸 없이 LX 영상 하나 고르기(고르기만 · 요청하지 않음)"
+ },
+ "gpt3-2-parcels-1516.png": {
+  "at": "2026-10-11T15:16:50",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=sus",
+  "note": "남원시 경작·휴경 분석서비스 → 필지 목록 + 한 행 상세(AI 분석 결과 · 판정 단추 없음)"
+ },
+ "fusion-1517.png": {
+  "at": "2026-10-11T15:17:01",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-fusion/",
+  "note": "남원시 행정정보와 비교 — '의심 필지' 말 대신 'AI 분석 결과 필지'"
+ },
+ "mock-b1-board-korea-1517.png": {
+  "at": "2026-10-11T15:17:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=board",
+  "note": "시안 — b1-board-korea",
+  "errors": []
+ },
+ "mock-b2-fix-in-place-1517.png": {
+  "at": "2026-10-11T15:17:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=fix",
+  "note": "시안 — b2-fix-in-place",
+  "errors": []
+ },
+ "mock-b3-global-kgz-1517.png": {
+  "at": "2026-10-11T15:17:28",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=global",
+  "note": "시안 — b3-global-kgz",
+  "errors": []
+ },
+ "mock-b4-global-focus-1517.png": {
+  "at": "2026-10-11T15:17:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=global&z=focus",
+  "note": "시안 — b4-global-focus",
+  "errors": []
+ },
+ "mock-b5-edges-1517.png": {
+  "at": "2026-10-11T15:17:57",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/edges.html",
+  "note": "시안 — b5-edges",
+  "errors": []
+ },
+ "mock-api-guide-1440-1517.png": {
+  "at": "2026-10-11T15:17:59",
+  "url": "file:///E:/Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC/01.%20%EB%94%94%EC%9E%90%EC%9D%B8/docs/superpowers/final/process/design-r18/open-api-3/mock/api-guide.html",
+  "note": "시안 — 사이트 API 안내"
+ },
+ "_summary": {
+  "start": "2026-10-11T15:09:59",
+  "end": "2026-10-11T15:19:25",
+  "failed": [],
+  "viewport": "1440x900",
+  "base": "https://app.land-xi.dev",
+  "errors": {
+   "staff": []
+  }
+ },
+ "q7-map-service-1518.png": {
+  "at": "2026-10-11T15:18:38",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — 왼쪽 칸 슬림 · 묶음 접고 펴기 · 범례 오른쪽 위"
+ },
+ "q7-folded-1518.png": {
+  "at": "2026-10-11T15:18:40",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — '접기'로 칸을 접은 모습"
+ },
+ "q6-download-1518.png": {
+  "at": "2026-10-11T15:18:43",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "층 줄 '내려받기' — 처음 한 번 동의 한 줄 · GeoJSON · SHP · 필지 엑셀(형식은 누르지 않음)"
+ },
+ "qa5-chat-single-1518.png": {
+  "at": "2026-10-11T15:18:55",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — '비닐하우스 단동만' → 구분이 없어 거르지 않고 그렇게 답함"
+ },
+ "qa5-chat-area-1518.png": {
+  "at": "2026-10-11T15:18:58",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — '면적 1,000㎡ 넘는 것만' → 지도에 조건"
+ },
+ "q5-chat-report-1519.png": {
+  "at": "2026-10-11T15:19:03",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 보고서 초안(AI 분석 결과 보고서)"
+ },
+ "q5-report-map-1519.png": {
+  "at": "2026-10-11T15:19:04",
+  "url": "(내려받은 보고서 파일 안의 지도 그림)",
+  "note": "보고서 안 지도 그림"
+ },
+ "gpt3-3-stack-1519.png": {
+  "at": "2026-10-11T15:19:14",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 면적 → 운봉읍 조건이 쌓임 · 답 첫 줄 = 대상 · 조건 · 수 · 왼쪽 조건 칩 둘"
+ },
+ "gpt3-4-stats-1519.png": {
+  "at": "2026-10-11T15:19:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "읍면동 통계 — 켜진 층 · 같은 조건 · 같은 수"
+ },
+ "gpt3-4-report-1519.png": {
+  "at": "2026-10-11T15:19:19",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "보고서 초안 — 통계와 같은 대상 · 같은 조건 · 같은 수"
+ },
+ "list-1519.png": {
+  "at": "2026-10-11T15:19:21",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "층 줄의 '목록' — 결과 표(넓은 것부터 · 지금 조건 그대로)"
+ },
+ "list-pick-1519.png": {
+  "at": "2026-10-11T15:19:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "목록 첫 줄 → 지도가 그 도형으로 가고 속성 칸 · '← 목록으로'"
+ },
+ "words-check-1522.png": {
+  "at": "2026-10-11T15:22:25",
+  "url": "node tools/check/words.mjs",
+  "note": "금칙어 검사 결과"
+ }
+}
