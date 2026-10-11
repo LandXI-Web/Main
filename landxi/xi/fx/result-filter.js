@@ -36,3 +36,13 @@ export function filterResults(map, cond) {
   return n;
 }
 export const resultFilter = (map) => FILT.get(map) || null;
+/* 도형 하나(결과 타일 속성)가 조건에 맞는지 — condExpr 과 같은 식(지도 서비스가 고른 도형이 조건에서 빠지면 속성 칸을 닫는다 · GPT4-1) */
+export function matchCond(p, c) {
+  if (!c || c.clear) return true;
+  const a = Number(p?.area_m2 ?? 0) || 0;
+  if (c.cls?.length && !c.cls.includes(String(p?.cls))) return false;
+  if (c.emd?.length && !c.emd.includes(String(p?.emd))) return false;
+  if (c.area_min != null && !(c.area_op_min === '>=' ? a >= +c.area_min : a > +c.area_min)) return false;
+  if (c.area_max != null && !(c.area_op_max === '<=' ? a <= +c.area_max : a < +c.area_max)) return false;
+  return true;
+}

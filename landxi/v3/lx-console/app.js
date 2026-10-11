@@ -139,8 +139,10 @@ async function drawJobs() {
   const cells = h('div.ld-cells.ld-cells--2', {},
     cell(n('done'), '완료', n('done') ? '' : 'is-zero'), cell(n('failed'), '실패', n('failed') ? 'is-warn' : 'is-zero'),
     cell(n('cancelled'), '취소', n('cancelled') ? '' : 'is-zero'), cell(n('running'), '진행 중', n('running') ? '' : 'is-zero'));
-  /* 종류별 — 한 줄(AI 분석 276 · 결과 갱신 108 …) */
-  const kinds = (j.kinds || []).slice(0, 5).map((k) => h('span', {}, k.label + ' ', h('b.num', { text: k.n.toLocaleString('ko-KR') })));
+  /* 종류별 — 한 줄(AI 분석 276 · 결과 갱신 108 …) · 다섯 갈래가 넘으면 넷 + '기타 n' — 종류별 합 = 위 네 칸의 합(GPT4-3) */
+  const ks = j.kinds || [];
+  const show = ks.length > 5 ? [...ks.slice(0, 4), { label: '기타', n: ks.slice(4).reduce((a, k) => a + (Number(k.n) || 0), 0) }] : ks;
+  const kinds = show.map((k) => h('span', {}, k.label + ' ', h('b.num', { text: k.n.toLocaleString('ko-KR') })));
   box.replaceChildren(cells, ...(kinds.length ? [h('p.ld-kinds', {}, h('span.ld-k', { text: '종류별' }), ...kinds)] : []));
 }
 

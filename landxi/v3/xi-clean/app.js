@@ -154,7 +154,7 @@ async function boot() {
     : [['layers', '레이어'], ['swipe', '가르기'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
-  SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: 'grid' })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
+  SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: false })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
   SH.rail.setAttribute('aria-label', '도구');
   dedupeRole();
   patchRail();

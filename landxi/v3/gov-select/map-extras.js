@@ -59,7 +59,7 @@ export async function mapCard({ host, card, region = () => null, center = () => 
     h('p.gx-l', { text: '보고 있는 결과' }),
     h('p.gx-t', {}, h('b', { text: name }), h('span.gx-ed', { text: `${val(g.edition)}판` })),
     r0 || totTxt ? h('p.gx-s', {}, h('i', { 'aria-hidden': 'true' }), h('span', {}, ...[r0?.shot, r0?.analyzed ? `${ymd(r0.analyzed)} 분석` : '', totTxt].filter(Boolean)
-      .flatMap((t, i, a) => [h('span.gx-seg', { text: t + (i < a.length - 1 ? ' ·' : '') }), i < a.length - 1 ? ' ' : '']))) : null,   // 마디 가운데서 줄이 바뀌지 않게
+      .flatMap((t, i, a) => [h('span.gx-seg', { text: t + (i < a.length - 1 ? ' ·' : '') }), i < a.length - 1 ? ' ' : '']))) : '',   // 마디 가운데서 줄이 바뀌지 않게
     h('p.gx-links', {}, more, h('a.t-btn.t-btn--text.gx-more', { href: at('gov-fusion/') + svcQ(), text: '행정정보와 비교' })),
     reqBtn);
   return box;

@@ -261,7 +261,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
         catch (e) { toast(e.message || '지금은 저장할 수 없습니다'); }
         save.disabled = false;
       });
-      see.append(boxes.length ? h('div.acc-cks', {}, ...boxes.map((b) => b.el)) : h('p.acc-help', { text: '우리 기관이 받은 서비스가 아직 없습니다' }), boxes.length ? save : null);
+      see.append(boxes.length ? h('div.acc-cks', {}, ...boxes.map((b) => b.el)) : h('p.acc-help', { text: '우리 기관이 받은 서비스가 아직 없습니다' }), boxes.length ? save : '');
     })();
     out.append(
       h('div.acc-row', {}, h('p.t-label', { text: '역할' }), h('div.acc-inline', {}, h('div.acc-sel', {}, sel, h('span.acc-sel__c', { 'aria-hidden': 'true', html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="6 9 12 15 18 9"/></svg>' })), setRole)),

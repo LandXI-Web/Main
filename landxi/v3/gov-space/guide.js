@@ -30,7 +30,7 @@ export function what(b) {
     h('p.sp-note', { text: '우리 기관 관할 안 결과' }));
   else {   // 첫 결과 전 · 업무 결과가 아닌 결과(분석 칸마다 나눈 도형 조각 — 개수를 싣지 않는다 · 사용자 규칙 2)
     const [n1, n2] = String(b.what?.note || '결과가 나오면 종류와 개수가 붙습니다').split(' — ');
-    wrap.append(h('p.sp-none', { text: n1 }), n2 ? h('p.sp-note', { text: n2 }) : null);
+    wrap.append(h('p.sp-none', { text: n1 }), n2 ? h('p.sp-note', { text: n2 }) : '');
   }
   if (cls.length) {
     wrap.append(h('ul.sp-chips', {}, ...cls.map((c) => h('li', {}, h('span', { text: c.name }), val(c.n) !== null && val(c.n) !== undefined ? h('b.num', { text: num(c.n) }) : null))));

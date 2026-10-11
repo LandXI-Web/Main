@@ -311,7 +311,7 @@ function create(opts) {
     // 따옴표 안 요지('지도 화면을 이미지로 저장')는 한 덩이 — 줄이 그 안에서 끊기지 않게(법전 §2-1)
     const txt = h('span.k-chat-note-t', {}, ...msg.split(/('[^']{1,24}')/).filter(Boolean).map((x) => (/^'.*'$/.test(x) ? h('span.k-nb', { text: x }) : document.createTextNode(x))));
     note.append(txt,
-      it.try ? h('button.k-chat-note-go', { type: 'button', text: L.tryIt, onclick: () => { notes.shift(); drawNote(); if (box.dataset.state !== 'busy') { input.value = it.try; form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); } } }) : null,
+      it.try ? h('button.k-chat-note-go', { type: 'button', text: L.tryIt, onclick: () => { notes.shift(); drawNote(); if (box.dataset.state !== 'busy') { input.value = it.try; form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); } } }) : '',
       h('button.k-chat-note-x', { type: 'button', 'aria-label': L.dismiss, html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: () => { notes.shift(); drawNote(); } }));
     if (!it.__seen) { it.__seen = true; seenNote(it.id); }
   }
@@ -736,7 +736,7 @@ function create(opts) {
     conf.hidden = false;
     conf.innerHTML = '';
     conf.append(h('p.k-ck-cq', { text: d?.title || d?.say || tl(lang, `tool.${d?.tool}`) || tl(lang, 'cmdk.confirm') }),   // plan 3.4 — 도구가 준 제목 먼저
-      d?.line ? h('p.k-ck-cl', { text: d.line }) : null,
+      d?.line ? h('p.k-ck-cl', { text: d.line }) : '',
       h('div.k-ck-cb', {},
         h('button.t-btn', { type: 'button', text: d?.ok_label || tl(lang, 'cmdk.run'), onclick: () => decide(d.confirm_id, 'approve') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: tl(lang, 'cmdk.cancel'), onclick: () => decide(d.confirm_id, 'reject') })));

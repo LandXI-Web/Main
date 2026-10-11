@@ -17,7 +17,6 @@ import { brandForm } from './brand-form.js';
 import { govRail } from './menu.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';   // 서비스 카드 한 벌 ③ 기관 서비스 선택(확인 대장 14차 카드-1 ⓐ)
 import { renderDash, primary } from './dash.js';
-import { apiKeysSection } from './api-keys.js';   // 기관 정보 → 받은 API 키(보기만 · 원칙 178)
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -193,9 +192,7 @@ function renderOrg() {
     brand, mainHref: main,
     onSaved(b) { Object.assign(B, b); brand = b; applyBrand(document.documentElement, b); favicon(b); paintMast(); },
   }));
-  { const href = new URL('./api-keys.css', import.meta.url).href;
-    if (!document.querySelector(`link[href="${href}"]`)) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href })); }
-  apiKeysSection().then((sec) => { if (sec) page.insertBefore(sec, page.querySelector('.gs-foot') || null); });
+  // '받은 API 키' 칸은 뺐다(GPT4-5 · 원칙 184) — 키는 기관 공유와 따로 · 신청 시스템 × 서비스로 LX 관리자가 내고, 외부 기관 시스템은 보안성 검토 전이라 승인이 막혀 기관에 걸린 키가 0. 기관 키가 생기면 api-keys.js 를 다시 잇는다
 }
 
 if (view === 'org') renderOrg(); else if (view === 'svc') await renderSvc(); else await renderList();

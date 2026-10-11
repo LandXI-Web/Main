@@ -10,7 +10,7 @@ import { h, api, API, session } from '../kit/util.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { createStage } from '../kit/stage.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
-import { addResultLayers, setVis, filterResults } from '../../xi/fx/arrive.js';
+import { addResultLayers, setVis, filterResults, matchCond } from '../../xi/fx/arrive.js';
 
 const who = await K.gate('lx-map');
 const Q = new URLSearchParams(location.search);
@@ -48,7 +48,7 @@ catch (e) {
 }
 
 /* 상태 — 줄 하나 = 결과 세트 하나 */
-const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, dl: null, filter: null, fold: false, lg: true, list: null };
+const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, pickP: null, dl: null, filter: null, fold: false, lg: true, list: null };
 function absorb(d) {
   for (const g of d.groups || []) {
     let G = ST.groups.find((x) => x.key === g.key);
@@ -238,6 +238,11 @@ function drawLegend() {
 function setFilter(a) {
   const n = filterResults(map, a);
   ST.filter = a.clear ? null : { ...a };
+  /* 고른 도형이 이 조건에서 빠지면 선택과 속성 칸을 함께 닫는다(GPT4-1) — 조건을 풀면 지도에 다시 보이고 다시 고를 수 있다 */
+  if (ST.pick && props.dataset.view === 'props' && ST.pickP && !matchCond(ST.pickP, ST.filter)) {
+    closeProps();
+    K.toast('고른 도형은 이 조건에서 빠져 속성 칸을 닫았습니다');
+  }
   drawLeft();
   if (ST.list) { const x = ST.items.get(ST.list); if (x) openList(x, true); }   // 목록 보기가 열려 있으면 같은 조건으로 다시
   window.__lm.filterAt = performance.now();
@@ -353,7 +358,7 @@ function setBase(k) {
 /* ── 오른쪽 속성 칸 — 결과 값(결과 타일 속성 그대로) + 필지 정보(연속지적 GET /parcels) ── */
 let HOVER = null;
 function closeProps() {
-  props.hidden = true; delete props.dataset.job; ST.pick = null; ST.list = null; delete props.dataset.view;
+  props.hidden = true; delete props.dataset.job; ST.pick = null; ST.pickP = null; ST.list = null; delete props.dataset.view;
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* 층이 내려갔으면 그대로 */ } HOVER = null; }
   drawLeft();
 }
@@ -362,7 +367,7 @@ async function openProps(f, x, lngLat) {
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* */ } }
   HOVER = f.id != null ? { source: f.source, sourceLayer: f.sourceLayer, id: f.id } : null;
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: true }); } catch { /* */ } }
-  ST.pick = x.job; props.dataset.job = x.job; props.dataset.view = 'props'; props.hidden = false;
+  ST.pick = x.job; ST.pickP = p; props.dataset.job = x.job; props.dataset.view = 'props'; props.hidden = false;
   if (ST.list && ST.list !== x.job) ST.list = null;
   const area = p.area_m2 != null ? Number(p.area_m2) : null;
   const conf = p.conf != null ? Math.round(Number(p.conf) * 100) : null;
@@ -370,7 +375,7 @@ async function openProps(f, x, lngLat) {
   const parcel = h('dl.lm-kv', {}, row('지번', h('span.lm-none', { text: '불러오는 중' })));
   const near = [lngLat.lng, lngLat.lat];
   props.replaceChildren(
-    ST.list === x.job ? h('button.lm-tbtn.lm-back', { type: 'button', text: '← 목록으로', onclick: () => openList(x, true) }) : null,
+    ST.list === x.job ? h('button.lm-tbtn.lm-back', { type: 'button', text: '← 목록으로', onclick: () => openList(x, true) }) : '',
     h('header.lm-ph', {}, h('div', {}, h('h2', { text: p.cls || '결과' }), h('small', { text: x.g.name }),
       h('small', { text: [x.region, p.emd && !String(x.region).includes(p.emd) ? p.emd : ''].filter(Boolean).join(' · ') })),
       h('button.lm-x', { type: 'button', 'aria-label': '속성 닫기', text: '×', onclick: closeProps })),

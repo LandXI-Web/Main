@@ -78,7 +78,7 @@ export function mountShoot(pane, { org, cards, onSent }) {
     let more = false;
     const draw = () => emdBox.replaceChildren(...emdList.slice(0, more ? emdList.length : 4).map((f) => h('button.gy-chip', { type: 'button', text: f.properties?.name || f.properties?.nm || '',
       'aria-selected': String(S.emd === f), onclick: () => { S.emd = f; setAoi(f.geometry, `${f.properties?.name || ''}`); draw(); } })),
-    emdList.length > 4 ? h('button.gy-chip', { type: 'button', text: more ? '줄이기' : '더 보기', onclick: () => { more = !more; draw(); } }) : null);
+    emdList.length > 4 ? h('button.gy-chip', { type: 'button', text: more ? '줄이기' : '더 보기', onclick: () => { more = !more; draw(); } }) : '');
     draw();
   }
   /* 끌어서 네모 그리기 — '범위 그리기'를 누른 동안만(지도 끌기를 잠시 멈춘다) */

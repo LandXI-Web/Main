@@ -123,7 +123,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   let cur = rail?.current ?? 0, done = rail?.done;
   const badges = {};                                     // 칸 숫자(요청함) — id → n
   /* 칸 그림 — 아이콘 또는 글자 표기(XI맵 = 'XI' · ChatGEO 'LX' 와 같은 방식 · 새 아이콘 없음) */
-  const glyphHtml = (it) => it.glyph ? `<i class="k-rail-g" aria-hidden="true">${esc(it.glyph)}</i>` : icon(it.icon);
+  const glyphHtml = (it) => it.icon === false ? '' : it.glyph ? `<i class="k-rail-g" aria-hidden="true">${esc(it.glyph)}</i>` : icon(it.icon);
   const badgeHtml = (it) => { const n = badges[it.id]; return n ? `<i class="k-rail-b num" aria-hidden="true">${n > 99 ? '99+' : n}</i>` : ''; };
   const drawRail = () => {
     if (!rail) return;
@@ -137,7 +137,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
         : `${glyphHtml(it)}${badgeHtml(it)}<span>${esc(it.label)}</span>`;
       const n = badges[it.id];
       const attrs = `data-i="${i}"${it.id ? ` data-id="${esc(it.id)}"` : ''}${i === cur ? ' aria-current="true"' : ''}${steps ? ` data-st="${st}"` : ''}${n ? ` aria-label="${esc(it.label)} ${n}건"` : ''}`;
-      const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '') + (it.end ? ' k-rail-i--end' : '');   // end = 레일 아래쪽 묶음(기관 정보 · 계정 — 기관 메뉴)
+      const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '') + (it.end ? ' k-rail-i--end' : '') + (it.icon === false && !steps ? ' k-rail-i--txt' : '');   // end = 레일 아래쪽 묶음(기관 정보 · 계정 — 기관 메뉴)
       const sep = it.sep && !steps ? '<span class="k-rail-sep" aria-hidden="true"></span>' : '';   // 구분선(지도-1 ⓐ — 분석 흐름 | 데이터 · 요청함)
       return sep + (it.href ? `<a class="${cls}" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="${cls}" ${attrs}>${inner}</button>`);
     }).join('') + (more ? `<button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"${rail.items[cur]?.more ? ' data-on="1"' : ''}>${icon('menu')}<span>${esc(t('shell.menu'))}</span></button>` : '');

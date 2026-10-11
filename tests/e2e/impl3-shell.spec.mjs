@@ -78,7 +78,9 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await page.goto('v3/lx-project/?project=' + pid);
     const bar = page.locator('.k-sub .lxp-bar');
     await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /추론/, /결과 확인/, /배포 신청/], { timeout: 20000 });   // 10-09 배포-1 · 원칙 151
-    await expect(bar.locator('.lxp-st[data-st="now"]')).toHaveCount(1);
+    /* 프로젝트를 읽은 뒤 = 칸 상태가 서버 값(완료 · 지금 · 건너뜀)으로 — 끝까지 간 프로젝트(배포 승인됨)는 '지금' 칸이 없다 · 있으면 하나 */
+    await expect(bar.locator('.lxp-st[data-st="done"], .lxp-st[data-st="now"]').first()).toBeVisible({ timeout: 20000 });
+    expect(await bar.locator('.lxp-st[data-st="now"]').count()).toBeLessThanOrEqual(1);
     await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-ingest/'), { timeout: 20000 }), bar.locator('.lxp-st').first().click()]);
     expect(new URL(page.url()).searchParams.get('project')).toBe(pid);
     await expect(page.locator('.k-sub .lxp-bar-name b')).not.toBeEmpty();
@@ -100,7 +102,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     const pid = pr?.id;
     test.skip(!pid, '배포 신청 단계 프로젝트 없음');
     await page.goto('v3/lx-project/?project=' + pid);
-    await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });   // 프로젝트를 읽은 뒤(단계마다 그 대상이 붙은 주소)
+    await page.locator('.k-sub .lxp-st[data-st="done"], .k-sub .lxp-st[data-st="now"]').first().waitFor({ timeout: 20000 });   // 끝까지 간 프로젝트는 '지금' 칸이 없다(배포 승인됨)   // 프로젝트를 읽은 뒤(단계마다 그 대상이 붙은 주소)
     /* 추론(4) · 배포 신청(6) — 그 프로젝트 맥락의 lx-release */
     await page.locator('.k-sub .lxp-st').nth(3).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-release/') && u.searchParams.get('stage') === 'infer', { timeout: 20000 });
@@ -111,7 +113,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await expect(page.locator('.rl-card h2').first()).toHaveText('배포 신청', { timeout: 20000 });
     /* 학습 판 — 업무 10 이 아니라 그 프로젝트 한 장 */
     await page.goto('v3/lx-project/?project=' + pid);
-    await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });
+    await page.locator('.k-sub .lxp-st[data-st="done"], .k-sub .lxp-st[data-st="now"]').first().waitFor({ timeout: 20000 });   // 끝까지 간 프로젝트는 '지금' 칸이 없다(배포 승인됨)
     await page.locator('.k-sub .lxp-st').nth(2).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/'), { timeout: 20000 });
     await expect(page.locator('.tr-card')).toHaveCount(1, { timeout: 20000 });

@@ -80,7 +80,7 @@ async function edit(cid) {
         ['쓰이는 곳', cur.uses?.text || '—'], ['판 · 담당', `${cur.version ? 'v' + cur.version : '판 없음'} · ${cur.owner || '담당 미지정'}`],
         ['걸리는 시간', cur.time?.text || '첫 분석 뒤 표시'], ['기관 검토 요청', cur.reports?.value ? `${nf(cur.reports.value)}건${cur.reports_sum ? ` · ${cur.reports_sum}` : ''}` : '없음'],
       ].map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v })))),
-      cur.edited?.at ? h('p.la-note', { text: `마지막으로 고친 때 ${ymd(cur.edited.at)}` }) : null);
+      cur.edited?.at ? h('p.la-note', { text: `마지막으로 고친 때 ${ymd(cur.edited.at)}` }) : '');
   };
   paint();
 

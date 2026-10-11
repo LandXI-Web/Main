@@ -18,7 +18,7 @@ TRIGGER = re.compile(r"^\s*명령\s?바\s?블록\s?확인\s*$")
 SPECS = {"blocks_probe": {"description": "명령 바 블록 시험(차트·파일·영상 조각)", "properties": {"region": {"type": "string"}}, "route_only": True}}
 WHY = {"blocks_probe": "명령 바 블록 시험"}
 SAY = {"blocks_probe": "블록 만들기"}
-IMG = Path(__file__).resolve().parents[3] / "landxi" / "v3" / "kit" / "img" / "drone.webp"
+IMG = Path(__file__).resolve().parents[3] / "landxi" / "v3" / "main" / "data" / "crop-card-farm.webp"   # 실제 영상 조각(kit/img 그림은 사용자 결정으로 지움 · c6cf65fd)
 
 
 def allowed(name: str, p) -> bool:
