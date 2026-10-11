@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3182F6"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8B95A1"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0B1F3A" flood-opacity="0.08"/></filter>
+  </defs>
+  <rect width="1440" height="960" fill="#F2F4F6"/>
+
+  <!-- 머리 -->
+  <text x="56" y="64" font-size="28" font-weight="700" fill="#191F28">핵심 코어 한 바퀴</text>
+  <text x="56" y="98" font-size="17" fill="#4E5968">XI맵에서 고친 도형이 데이터하우스에 쌓이고, 다시 학습한 모델이 분석서비스 새 판이 되어 XI맵으로 돌아온다</text>
+  <g transform="translate(1250,40)"><rect width="134" height="40" rx="20" fill="#FFF4E5" stroke="#F59F00" stroke-width="2"/><text x="67" y="26" font-size="17" font-weight="700" fill="#D9480F" text-anchor="middle">시안 · 10-12</text></g>
+
+  <!-- 세 화면 기둥 -->
+  <g filter="url(#sh)">
+    <rect x="56" y="140" width="420" height="560" rx="20" fill="#FFFFFF"/>
+    <rect x="510" y="140" width="420" height="560" rx="20" fill="#FFFFFF"/>
+    <rect x="964" y="140" width="420" height="560" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="84" y="184" font-size="22" font-weight="700" fill="#191F28">XI맵</text>
+  <text x="84" y="210" font-size="15" fill="#6B7684">보고 · 그 자리에서 고친다</text>
+  <text x="538" y="184" font-size="22" font-weight="700" fill="#191F28">데이터하우스</text>
+  <text x="538" y="210" font-size="15" fill="#6B7684">학습 데이터 아카이브 · 클래스별로 쌓인다</text>
+  <text x="992" y="184" font-size="22" font-weight="700" fill="#191F28">분석서비스</text>
+  <text x="992" y="210" font-size="15" fill="#6B7684">모델 새 판이 서비스 새 판이 된다</text>
+
+  <!-- ① 클래스 고르기 -->
+  <g transform="translate(84,236)">
+    <rect width="364" height="196" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">객체를 누르고 클래스를 고른다</text>
+    <rect x="20" y="54" width="324" height="124" rx="10" fill="#FFFFFF" stroke="#E5E8EB"/>
+    <text x="36" y="80" font-size="14" fill="#6B7684">비닐하우스 분석서비스의 클래스</text>
+    <rect x="36" y="92" width="94" height="30" rx="15" fill="#E8F3FF" stroke="#3182F6"/><text x="83" y="112" font-size="14" fill="#1B64DA" text-anchor="middle">비닐하우스</text>
+    <rect x="138" y="92" width="62" height="30" rx="15" fill="#F2F4F6"/><text x="169" y="112" font-size="14" fill="#333D4B" text-anchor="middle">건물</text>
+    <rect x="208" y="92" width="96" height="30" rx="15" fill="#F2F4F6"/><text x="256" y="112" font-size="14" fill="#333D4B" text-anchor="middle">해당 없음</text>
+    <rect x="36" y="132" width="168" height="30" rx="15" fill="#FFFFFF" stroke="#3182F6" stroke-dasharray="4 3"/><text x="120" y="152" font-size="14" fill="#1B64DA" text-anchor="middle">+ 새 클래스 더하기</text>
+  </g>
+  <!-- ② 고친 칸 -->
+  <g transform="translate(84,452)">
+    <rect width="364" height="224" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">고친 자리 둘레 한 칸이</text>
+    <text x="52" y="56" font-size="17" font-weight="700" fill="#191F28">학습 데이터 1장이 된다</text>
+    <rect x="20" y="74" width="140" height="134" rx="8" fill="#DDE7D5"/>
+    <rect x="20" y="74" width="140" height="134" rx="8" fill="none" stroke="#3182F6" stroke-dasharray="6 4" stroke-width="2"/>
+    <rect x="44" y="98" width="46" height="28" fill="#FFFFFF" fill-opacity="0.7" stroke="#20C997" stroke-width="2"/>
+    <rect x="98" y="104" width="42" height="24" fill="#FFFFFF" fill-opacity="0.7" stroke="#20C997" stroke-width="2"/>
+    <rect x="52" y="146" width="80" height="40" fill="#FFFFFF" fill-opacity="0.85" stroke="#3182F6" stroke-width="3"/>
+    <text x="176" y="102" font-size="14" fill="#333D4B">누르기 없음 —</text>
+    <text x="176" y="122" font-size="14" fill="#333D4B">고치면 저절로</text>
+    <text x="176" y="150" font-size="14" fill="#6B7684">고친 사람 · 영상 ·</text>
+    <text x="176" y="170" font-size="14" fill="#6B7684">모델 판 · 원래 모양</text>
+    <text x="176" y="190" font-size="14" fill="#6B7684">이 함께 남음</text>
+  </g>
+
+  <!-- ③ 클래스 층 -->
+  <g transform="translate(538,236)">
+    <rect width="364" height="250" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">클래스 층에 쌓인다</text>
+    <g font-size="14">
+      <rect x="20" y="54" width="324" height="44" rx="8" fill="#FFFFFF" stroke="#E5E8EB"/>
+      <text x="34" y="81" fill="#191F28" font-weight="600">비닐하우스</text><text x="150" y="81" fill="#6B7684">표준 · XI맵 고친 것 · 올린 것</text>
+      <rect x="20" y="106" width="324" height="44" rx="8" fill="#FFFFFF" stroke="#3182F6"/>
+      <text x="34" y="133" fill="#191F28" font-weight="600">연동 비닐하우스</text><text x="168" y="133" fill="#1B64DA">새 클래스 · 배우는 중</text>
+      <rect x="20" y="158" width="324" height="44" rx="8" fill="#FFFFFF" stroke="#E5E8EB"/>
+      <text x="34" y="185" fill="#191F28" font-weight="600">건물</text><text x="150" y="185" fill="#6B7684">표준 · XI맵 고친 것</text>
+    </g>
+    <text x="20" y="232" font-size="14" fill="#6B7684">출처 · 판 · 이용 조건 · 내려받기는 관리자 승인</text>
+  </g>
+  <!-- ④ 알림 -->
+  <g transform="translate(538,506)">
+    <rect width="364" height="170" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">기준을 넘으면 재학습 알림</text>
+    <rect x="20" y="56" width="324" height="94" rx="10" fill="#FFFFFF" stroke="#E5E8EB"/>
+    <text x="36" y="84" font-size="14" fill="#333D4B">비닐하우스 · 새 학습 데이터가</text>
+    <text x="36" y="104" font-size="14" fill="#333D4B">기준에 닿았습니다</text>
+    <rect x="36" y="114" width="150" height="28" rx="8" fill="#3182F6"/><text x="111" y="133" font-size="14" fill="#fff" text-anchor="middle" font-weight="600">학습으로 가기</text>
+    <text x="198" y="133" font-size="13" fill="#8B95A1">프로젝트장이 누름</text>
+  </g>
+
+  <!-- ⑤ 학습 · 비교 -->
+  <g transform="translate(992,236)">
+    <rect width="364" height="190" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">5</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">학습 → 같은 검증 묶음으로 비교</text>
+    <polyline points="28,150 70,138 112,126 154,112 196,104 238,98 280,92 322,88" fill="none" stroke="#3182F6" stroke-width="3"/>
+    <line x1="28" y1="104" x2="330" y2="104" stroke="#8B95A1" stroke-dasharray="6 4"/>
+    <text x="232" y="122" font-size="13" fill="#8B95A1">지금 판</text>
+    <text x="28" y="178" font-size="14" fill="#6B7684">GPU 한 장 · 관리자가 배정 · 밤</text>
+  </g>
+  <!-- 막는 자리 -->
+  <g transform="translate(992,438)">
+    <rect width="364" height="70" rx="12" fill="#FFF5F5" stroke="#F03E3E" stroke-width="1.5"/>
+    <text x="20" y="30" font-size="15" font-weight="700" fill="#C92A2A">막는 자리 — 나빠진 판은 후보로 남음</text>
+    <text x="20" y="54" font-size="14" fill="#6B7684">기존 클래스 하나라도 떨어지면 신청서가 안 채워짐</text>
+  </g>
+  <!-- ⑥ 배포 신청 → 승인 → 새 판 -->
+  <g transform="translate(992,520)">
+    <rect width="364" height="156" rx="14" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <circle cx="26" cy="28" r="15" fill="#3182F6"/><text x="26" y="34" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">6</text>
+    <text x="52" y="34" font-size="17" font-weight="700" fill="#191F28">배포 신청 → 관리자 승인 → 새 판</text>
+    <text x="20" y="70" font-size="14" fill="#333D4B">비닐하우스 분석서비스 · 다음 판</text>
+    <text x="20" y="92" font-size="14" fill="#6B7684">찾는 것: 비닐하우스 · 연동 비닐하우스</text>
+    <text x="20" y="114" font-size="14" fill="#6B7684">같은 모델을 쓰는 서비스는 함께 신청</text>
+    <text x="20" y="138" font-size="14" fill="#1B64DA">공유 기관에 '새 판' 알림</text>
+  </g>
+
+  <!-- 바퀴 화살표 -->
+  <path d="M448,560 C490,560 495,360 538,360" fill="none" stroke="#3182F6" stroke-width="3" marker-end="url(#ar)"/>
+  <path d="M720,486 L720,506" fill="none" stroke="#3182F6" stroke-width="3" marker-end="url(#ar)"/>
+  <path d="M902,590 C945,590 950,330 992,330" fill="none" stroke="#3182F6" stroke-width="3" marker-end="url(#ar)"/>
+  <path d="M1174,426 L1174,438" fill="none" stroke="#3182F6" stroke-width="3"/>
+  <path d="M1174,508 L1174,520" fill="none" stroke="#3182F6" stroke-width="3" marker-end="url(#ar)"/>
+  <!-- 7 돌아옴 -->
+  <path d="M1356,640 C1420,660 1420,736 1300,736 L200,736 C120,736 40,700 40,560 C40,420 60,340 84,330" fill="none" stroke="#3182F6" stroke-width="3" stroke-dasharray="10 6" marker-end="url(#ar)"/>
+  <g transform="translate(560,716)"><rect width="320" height="40" rx="20" fill="#3182F6"/><circle cx="22" cy="20" r="13" fill="#fff"/><text x="22" y="26" font-size="15" font-weight="700" fill="#3182F6" text-anchor="middle">7</text><text x="176" y="26" font-size="15" font-weight="600" fill="#fff" text-anchor="middle">XI맵 결과도 밤에 새 판으로 다시 분석</text></g>
+
+  <!-- 새 클래스 곁길 -->
+  <path d="M290,396 C330,396 360,420 538,412" fill="none" stroke="#8B95A1" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ag)"/>
+  <g transform="translate(300,402)"><rect width="200" height="26" rx="13" fill="#F2F4F6"/><text x="100" y="18" font-size="13" fill="#4E5968" text-anchor="middle">새 클래스 → 관리자 승인</text></g>
+
+  <!-- 같은 기준 셋 -->
+  <g transform="translate(56,790)">
+    <rect width="1328" height="140" rx="20" fill="#FFFFFF" filter="url(#sh)"/>
+    <text x="28" y="40" font-size="18" font-weight="700" fill="#191F28">세 화면이 함께 보는 기준 셋 — 한 곳에 두고 세 화면이 같은 값을 읽는다</text>
+    <g transform="translate(28,60)">
+      <rect width="410" height="60" rx="12" fill="#E8F3FF"/>
+      <text x="18" y="26" font-size="16" font-weight="700" fill="#1B64DA">클래스 표</text>
+      <text x="18" y="48" font-size="14" fill="#333D4B">서비스마다 · 판마다 · 모델이 찾는지(배우는 중)</text>
+    </g>
+    <g transform="translate(459,60)">
+      <rect width="410" height="60" rx="12" fill="#E6FCF5"/>
+      <text x="18" y="26" font-size="16" font-weight="700" fill="#087F5B">학습 데이터 아카이브</text>
+      <text x="18" y="48" font-size="14" fill="#333D4B">클래스 층 · 출처(XI맵 · 올림 · AI 허브) · 판(잠금)</text>
+    </g>
+    <g transform="translate(890,60)">
+      <rect width="410" height="60" rx="12" fill="#FFF4E6"/>
+      <text x="18" y="26" font-size="16" font-weight="700" fill="#D9480F">모델 계보</text>
+      <text x="18" y="48" font-size="14" fill="#333D4B">어느 판에서 · 어떤 학습 데이터로 · 나아졌나</text>
+    </g>
+  </g>
+</svg>
