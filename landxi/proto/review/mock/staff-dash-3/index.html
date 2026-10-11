@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>시안 · LX 직원 대시보드 3차 (밝은 톤 + 생동감)</title>
+<meta name="description" content="LX 직원 대시보드 — 전국 AI 현황 미니 지도 · 오늘 할 일 · 최근 분석 결과 · 진행 현황 · 저장 용량 · 내가 돌린 작업 · 메모 · 요청함 · 공지">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<link rel="stylesheet" href="../../../../v3/lx-project/context.css" data-lxp="1">
+<link rel="stylesheet" href="../../../../v3/lx-project/board.css" data-lxp-board="1">
+<link rel="stylesheet" href="../../../../v3/kit/me.css" data-k-me="">
+<link rel="stylesheet" href="../../../../v3/lx-console/console.css">
+<link rel="stylesheet" href="sd3.css">
+</head>
+<body class="t k-shelled sd3-boot"><div class="k-app has-rail has-more is-staff"><header class="t-mast k-mast"><a class="k-word" href="/landxi/v3/lx-console/"><span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" id="sd3-fresh" tabindex="0" data-live="1" aria-label="마지막 갱신 20:41" data-why="마지막 갱신 20:41"><i></i><span class="num">20:41</span></span><button class="k-sess" type="button" title="누르면 로그인 시간을 연장합니다">자동 로그아웃 내일 20:41 · 남은 24시간</button><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">LX 직원</button><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header><nav class="t-rail k-rail" aria-label="메뉴"><a class="k-rail-i" href="/landxi/v3/lx-console/" data-i="0" data-id="home" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5L10 4l7 5.5V16H3z"></path></svg><span>대시보드</span></a><a class="k-rail-i" href="/landxi/v3/lx-project/" data-i="1" data-id="projects"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h5l2 2h7v9H3z"></path></svg><span>프로젝트</span></a><a class="k-rail-i" href="/landxi/v3/lx-analyze/" data-i="2" data-id="analyze"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"></path><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"></path></svg><span>분석하기</span></a><a class="k-rail-i k-rail-i--more" href="/landxi/v3/lx-map/" data-i="3" data-id="mapsvc"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"></path></svg><span>지도 서비스</span></a><a class="k-rail-i k-rail-i--more" href="/landxi/v3/xi-clean/" data-i="4" data-id="ximap"><i class="k-rail-g" aria-hidden="true">XI</i><span>XI맵</span></a><span class="k-rail-sep" aria-hidden="true"></span><a class="k-rail-i k-rail-i--more" href="/landxi/v3/lx-ingest/" data-i="5" data-id="data"><svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="5" rx="6" ry="2"></ellipse><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"></path></svg><span>데이터</span></a><a class="k-rail-i" href="/landxi/v3/lx-inbox/" data-i="6" data-id="inbox"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"></path></svg><span>요청함</span></a><button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14 M3 10h14 M3 15h14"></path></svg><span>메뉴</span></button></nav><main class="k-main" id="main"><div class="ld sd3"><div class="ld-in">
+
+<!-- ① 히어로 띠 — 전국 AI 현황 미니 지도(XI맵과 같은 출처 GET /ximap/board · 시군구 서비스 색) + 내 프로젝트 지역 빛나는 점 + 핵심 둘 -->
+<section class="sd3-hero t-card" aria-label="전국 AI 분석 현황">
+  <div class="sd3-map" id="sd3-map" aria-label="전국 AI 분석 결과 지도 · 시군구 서비스 색 · 내 프로젝트 지역은 빛나는 점"></div>
+  <div class="sd3-hero-r">
+    <div class="sd3-glass">
+      <p class="sd3-hero-k"><b>전국 AI 분석 결과</b><span>시군구 20곳 · 서비스 8가지 · 마지막 분석 10.07</span></p>
+      <div class="sd3-keys">
+        <a class="sd3-key" href="/landxi/v3/lx-project/?scope=mine"><b class="num sd3-cu" data-n="4">0</b><span>내 프로젝트</span></a>
+        <a class="sd3-key" href="#sd3-todo"><b class="num sd3-cu" data-n="6">0</b><span>오늘 할 일</span></a>
+      </div>
+      <p class="sd3-hero-s"><span>지도의 빛나는 점이 내 프로젝트 지역 —</span> <span>누르면 그 프로젝트</span></p>
+    </div>
+  </div>
+  <div class="sd3-hero-x">
+    <ul class="sd3-leg" id="sd3-leg" aria-label="서비스 색"></ul>
+    <div class="sd3-pop" id="sd3-pop" hidden></div>
+    <a class="sd3-hero-go" href="/landxi/v3/xi-clean/">XI맵에서 전국 결과 →</a>
+  </div>
+</section>
+
+<div class="sd3-cols">
+<!-- 왼쪽 줄기 -->
+<div class="sd3-col sd3-col--a">
+<section class="t-card ld-card sd3-todo" id="sd3-todo" aria-label="오늘 할 일">
+<div class="ld-hd"><div class="ld-h"><h2>오늘 할 일</h2><span class="ld-sub">6건 · 오래 기다린 순 · 누르면 그 자리로</span></div></div>
+<ol class="sd3-tl">
+<li class="is-hot"><a href="/landxi/v3/lx-inbox/#requests"><span class="sd3-when num">10.01</span><span class="sd3-td"><b>분석 요청 확인</b><span>광주전남특별시 · 순천시 와룡동 등 3곳 드론 영상</span><span class="sd3-tag wait">대기</span><span class="sd3-tag mock">담당 지정 전</span></span><span class="sd3-go">요청함 →</span></a></li>
+<li class="is-hot"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=train"><span class="sd3-when num">10.08</span><span class="sd3-td"><b>학습 2건</b><span>메모리 부족 · 같은 설정으로 다시 돌릴 수 있습니다</span><span class="sd3-tag stop">멈춤</span><span class="sd3-tag mock">시안</span></span><span class="sd3-go"><span class="sd3-act">다시 돌리기</span></span></a></li>
+<li><a href="/landxi/v3/lx-map/?project=prj_2d3939d12a"><span class="sd3-when num">10.01</span><span class="sd3-td"><b>결과 확인 · 공개 뒤 남음</b><span>곤포사일리지 2026 · 보령시</span><span class="sd3-tag wait">대기</span></span><span class="sd3-go">지도에서 확인 →</span></a></li>
+<li><a href="/landxi/v3/lx-map/?project=prj_15e3127d72"><span class="sd3-when num">10.07</span><span class="sd3-td"><b>결과 확인 · 공개 뒤 남음</b><span>건축물 2026 · 원주시</span><span class="sd3-tag wait">대기</span></span><span class="sd3-go">지도에서 확인 →</span></a></li>
+<li><a href="/landxi/v3/lx-map/?project=prj_3fdba452d5"><span class="sd3-when num">10.09</span><span class="sd3-td"><b>결과 확인 · 공개 뒤 남음</b><span>비닐하우스 2026 · 남원시 덕과면 외 2곳</span><span class="sd3-tag wait">대기</span></span><span class="sd3-go">지도에서 확인 →</span></a></li>
+<li><a href="/landxi/v3/lx-map/?project=prj_b2fa593a12"><span class="sd3-when num">10.10</span><span class="sd3-td"><b>결과 확인 · 공개 뒤 남음</b><span>주차장 2026 · 여주시 하거동 외 1곳</span><span class="sd3-tag wait">대기</span></span><span class="sd3-go">지도에서 확인 →</span></a></li>
+</ol>
+</section>
+
+<section class="t-card ld-card sd3-recent" aria-label="최근 분석 결과">
+<div class="ld-hd"><div class="ld-h"><h2>최근 분석 결과</h2><a class="ld-more" href="/landxi/v3/lx-map/">지도 서비스</a></div><small class="ld-sub">AI가 찾은 수 · 결과 확인 전 · 작은 그림은 지금 결과 그대로 · 올리면 도형이 드러납니다</small></div>
+<ol class="sd3-rl" id="sd3-rl"></ol>
+</section>
+
+<div class="sd3-two">
+<section class="t-card ld-card ld-inbox sd3-mini" aria-label="요청함"><div class="ld-hd"><div class="ld-h"><h2>요청함</h2><a class="ld-more" href="/landxi/v3/lx-inbox/">전체</a></div></div><p class="sd3-mini-l"><a href="/landxi/v3/lx-inbox/">검토 요청 <b class="num">0</b></a><a href="/landxi/v3/lx-inbox/#requests">분석 요청 <b class="num">0</b></a><a href="/landxi/v3/lx-inbox/#approvals">보낸 요청 <b class="num">0</b></a></p></section>
+<section class="t-card ld-card ld-notice sd3-mini" aria-label="공지"><div class="ld-hd"><div class="ld-h"><h2>공지</h2></div></div><p class="sd3-mini-l sd3-mini-none">새 공지가 없습니다</p></section>
+</div>
+</div>
+
+<!-- 가운데 줄기 — 진행 현황(연결선 위 빛 점은 일이 있는 단계만) · 저장 용량(도넛 차오름 · 최소 표시 폭) -->
+<div class="sd3-col sd3-col--b">
+<section class="t-card ld-card ld-board" aria-label="프로젝트 진행 현황"><div class="ld-hd"><div class="ld-h"><h2>프로젝트 진행 현황</h2></div><small class="ld-sub"><span>진행 중 4 ·</span> <span>남은 일 있는 4</span></small></div><div class="ld-flow"><ol class="ld-pf sd3-pf" aria-label="프로젝트 단계"><li data-n="0" data-key="ingest"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=ingest&amp;from=board" aria-label="데이터 올리기 0개"><b class="num">0</b><span>데이터 올리기</span></a></li><li data-n="0" data-key="label"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=label&amp;from=board" aria-label="학습데이터 구축 0개"><b class="num">0</b><span>학습데이터 구축</span></a></li><li data-n="0" data-key="train"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=train&amp;from=board" aria-label="학습 0개"><b class="num">0</b><span>학습</span></a></li><li data-n="0" data-key="infer"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=infer&amp;from=board" aria-label="추론 0개"><b class="num">0</b><span>추론</span></a></li><li data-n="0" data-key="review"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=review&amp;from=board" aria-label="결과 확인 0개"><b class="num">0</b><span>결과 확인</span></a></li><li data-n="4" data-key="deploy" class="has-work"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=deploy&amp;from=board" aria-label="배포 신청 4개 · 남은 일 있는 4"><b class="num sd3-cu" data-n="4">0</b><span>배포 신청</span><em>남은 일 4</em></a></li></ol><p class="ld-after"><span class="ld-after-k">공개 뒤 결과 확인 남음</span><a href="/landxi/v3/lx-map/?project=prj_b2fa593a12">주차장 2026</a><span>외 3곳</span></p></div><p class="ld-foot-s"><a class="ld-more" href="/landxi/v3/lx-project/?scope=mine&amp;from=board">프로젝트 목록</a></p></section>
+
+<section class="t-card ld-card ld-store" aria-label="저장 용량"><div class="ld-hd"><div class="ld-h"><h2>저장 용량</h2><button class="ld-more" type="button">내 정보</button></div><small class="ld-sub">할당 50 GB</small></div><div class="ld-store-b"><div class="k-me-dnr"><div class="k-me-dn sd3-dn" style="--dn:132px"><svg viewBox="0 0 100 100" role="img" aria-label="사용량 29.8 MB · 할당의 0.1%"><circle r="44" cx="50" cy="50" fill="none" stroke-width="12" style="stroke: var(--k-me-dn-bg, var(--bg-1));"></circle><circle r="44" cx="50" cy="50" fill="none" stroke-width="12" stroke-dasharray="94.64 181.82" stroke-dashoffset="0.00" style="stroke: var(--ink);"></circle><circle r="44" cx="50" cy="50" fill="none" stroke-width="12" stroke-dasharray="83.49 192.97" stroke-dashoffset="-94.64" style="stroke: var(--sub-2);"></circle><circle r="44" cx="50" cy="50" fill="none" stroke-width="12" stroke-dasharray="80.62 195.84" stroke-dashoffset="-178.13" style="stroke: var(--sub);"></circle><circle r="44" cx="50" cy="50" fill="none" stroke-width="12" stroke-dasharray="17.71 258.75" stroke-dashoffset="-258.75" style="stroke: var(--mute);"></circle></svg><div class="k-me-dn-c"><b class="num sd3-cu" data-n="29.8" data-d="1">0</b><span>MB</span><small>할당의 0.1%</small></div></div><ul class="k-me-lg"><li><i style="background:var(--ink)"></i><span title="비닐하우스 2026">비닐하우스 2026</span><b class="num">34%</b><small class="num">10.2 MB</small></li><li><i style="background:var(--sub-2)"></i><span title="주차장 2026">주차장 2026</span><b class="num">30%</b><small class="num">9.0 MB</small></li><li><i style="background:var(--sub)"></i><span title="건축물 2026">건축물 2026</span><b class="num">29%</b><small class="num">8.7 MB</small></li><li><i style="background:var(--mute)"></i><span title="곤포사일리지 2026">곤포사일리지 2026</span><b class="num">6%</b><small class="num">1.9 MB</small></li></ul></div><div class="k-me-gauge"><p class="k-me-gk"><span>할당 50 GB 대비</span><b class="num">0.1%</b></p><div class="k-me-bar sd3-bar" role="img" aria-label="할당의 0.1% 사용"><i style="width:1%"></i></div></div><p class="ld-store-s"><span>프로젝트 4개의 학습데이터 · 올린 파일.</span> <span>기본 할당 50 GB — LX 관리자가 정함</span></p><div class="ld-store-a"><button class="k-me-ask" type="button">용량 증량 신청</button></div></div></section>
+</div>
+
+<!-- 오른쪽 줄기 — 메모(시안) · 내가 돌린 작업(실제로 돌 때만 맥박) · 최근 프로젝트 -->
+<div class="sd3-col sd3-col--c">
+<section class="t-card ld-card sd3-memo" aria-label="메모">
+<div class="ld-hd"><div class="ld-h"><h2>메모 <span class="sd3-tag mock">시안</span></h2><button class="ld-more" type="button">새 메모</button></div><small class="ld-sub">나만 보는 메모 · 고정은 위에</small></div>
+<ul class="sd3-ml">
+<li class="is-pin"><span class="sd3-mt">남원 덕과면 결과 확인 끝나면 비닐하우스 재학습 걸기 — 밤에</span><span class="sd3-mm"><em>고정</em><span class="num">10.09</span></span></li>
+<li><span class="sd3-mt">순천 드론 영상 — 영상 표준 변환 확인한 뒤 광주전남에 답하기</span><span class="sd3-mm"><span class="num">10.01</span></span></li>
+</ul>
+<div class="sd3-min" aria-hidden="true"><span>메모 적기</span></div>
+</section>
+
+<section class="t-card ld-card ld-jobs" id="sd3-jobs" aria-label="내가 돌린 작업"><div class="ld-hd"><div class="ld-h"><h2>내가 돌린 작업</h2><span class="sd3-live" id="sd3-live" hidden><i></i><span>지금 도는 중</span><span class="sd3-tag mock" id="sd3-live-tag" hidden>흉내</span></span></div><small class="ld-sub">9.26 – 10.11</small></div><div class="ld-jobs-b"><div class="ld-cells ld-cells--2"><div class="ld-cell ld-cell--ro"><b class="num sd3-cu" data-n="406">0</b><span>완료 <span class="sd3-tag done">끝남</span></span></div><div class="ld-cell ld-cell--ro is-warn"><b class="num sd3-cu" data-n="3">0</b><span>실패 <span class="sd3-tag stop">실패</span></span></div><div class="ld-cell ld-cell--ro"><b class="num sd3-cu" data-n="36">0</b><span>취소</span></div><div class="ld-cell ld-cell--ro is-zero" id="sd3-running"><b class="num">0</b><span>진행 중</span></div></div><p class="ld-kinds"><span class="ld-k">종류별</span><span>AI 분석 <b class="num">278</b></span><span>결과 갱신 <b class="num">110</b></span><span>위성 지수 <b class="num">28</b></span><span>학습 <b class="num">21</b></span><span>기타 <b class="num">8</b></span></p></div></section>
+
+<section class="t-card ld-card sd3-recentp" aria-label="최근 프로젝트">
+<div class="ld-hd"><div class="ld-h"><h2>최근 프로젝트</h2><a class="ld-more" href="/landxi/v3/lx-project/?scope=mine">전체</a></div><small class="ld-sub">마지막 작업 순 · 모두 배포 신청 단계</small></div>
+<div class="sd3-chips"><a class="sd3-chip" href="/landxi/v3/lx-project/?project=prj_b2fa593a12"><b>주차장 2026</b><span>여주시 외 1곳</span><small class="num">10.10</small></a><a class="sd3-chip" href="/landxi/v3/lx-project/?project=prj_3fdba452d5"><b>비닐하우스 2026</b><span>남원시 외 2곳</span><small class="num">10.09</small></a><a class="sd3-chip" href="/landxi/v3/lx-project/?project=prj_15e3127d72"><b>건축물 2026</b><span>원주시</span><small class="num">10.07</small></a><a class="sd3-chip" href="/landxi/v3/lx-project/?project=prj_2d3939d12a"><b>곤포사일리지 2026</b><span>보령시</span><small class="num">10.01</small></a></div>
+</section>
+</div>
+</div>
+</div></div>
+</main></div>
+
+<div class="k-chat-root" style="--k-chat-r: 24px; --k-chat-b: 24px; --k-chat-cb: 92px; --k-chat-max: 728px;"><span class="k-chat-tag" aria-hidden="true">XI ChatGEO</span><button class="k-chat-fab" type="button" aria-label="XI ChatGEO 열기" aria-expanded="false"><span class="k-chat-face k-chat-face--fab" data-face="idle"><img src="../../../../assets/brand/vector/lx-lockup.svg" alt="" decoding="async" draggable="false" class="k-chat-face-i" data-crop="" style="aspect-ratio: 2.12137 / 1;"></span></button></div>
+<div class="sd3-stamp"><b>시안</b><span id="sd3-t"></span></div>
+<script src="sd3-data.js"></script>
+<script src="sd3.js"></script>
+</body></html>

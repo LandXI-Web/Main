@@ -1,0 +1,181 @@
+/* sd3.css — 시안 · LX 직원 대시보드 3차(밝은 톤 + 생동감 · 원칙 201). 칸 · 정보 구조는 2차(staff-dash-2) 그대로, 여기서는
+   ① 히어로 띠(전국 AI 현황 미니 지도 · 유리 패널) ② 결과 작은 그림 + 훑기 ③ 진행 단계 연결선 위 빛 점(일이 있는 단계만)
+   ④ 맥박(실제로 돌 때만) ⑤ 숫자 · 도넛 차오름 · 카드 떠오름 ⑥ 글자 꼬리표 ⑦ 빈 칸 한 줄. 다크 · 네온 0 · prefers-reduced-motion 이면 모두 끔.
+   PC 1440 · 법전 system-v2.2-toss(회백 바탕 · 흰 카드 · 아이콘 0). 서버 호출 0 · 바깥 타일 요청 0. */
+.sd3 .ld-in{gap:16px}
+.sd3-cols{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,3fr) minmax(0,3fr);gap:16px;align-items:start}
+.sd3-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.sd3 .ld-card .ld-foot-s,.sd3 .ld-kinds,.sd3 .ld-store-a{margin-top:0}
+.sd3 .ld-hd{min-height:0}
+
+/* ⑤ 카드 — 올리면 살짝 떠오름(기울기 없음) · 처음 한 번 등장(스태거 ≤ 600ms) */
+.sd3 .ld-card{transition:transform var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui);will-change:transform}
+.sd3 .ld-card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(28,31,37,.03),0 10px 24px rgba(28,31,37,.08)}
+.sd3-boot .sd3-hero,.sd3-boot .ld-card{opacity:0;transform:translateY(8px)}
+.sd3-in .sd3-hero,.sd3-in .ld-card{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
+.sd3-in .sd3-col--a .ld-card{transition-delay:80ms}.sd3-in .sd3-col--b .ld-card{transition-delay:140ms}.sd3-in .sd3-col--c .ld-card{transition-delay:200ms}
+
+/* ① 히어로 띠 — 밝은 지도 바탕(옅은 바다색 → 흰) · 왼쪽 미니 지도 · 오른쪽 유리 패널 */
+.sd3-hero{position:relative;display:grid;grid-template-columns:372px 400px minmax(0,1fr);gap:24px;min-height:352px;padding:20px 24px;overflow:hidden;border-radius:var(--r-24);
+  background:linear-gradient(100deg,#E9F1F8 0%,#F3F7FA 55%,#FFFFFF 100%)}
+.sd3-map{position:relative;min-width:0;height:352px;margin:-20px 0 -20px -24px}
+.sd3-hero-x{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;gap:12px;min-width:0}
+.sd3-hero-x .sd3-leg{justify-content:flex-end}
+.sd3-map svg{display:block;width:100%;height:100%}
+.sd3-map .land{fill:#FFFFFF;stroke:#DCE3EA;stroke-width:.8;stroke-linejoin:round}
+.sd3-map .res{stroke:#FFFFFF;stroke-width:.9;stroke-linejoin:round;transition:fill-opacity var(--d-500) var(--e-cam);cursor:default}
+.sd3-boot .sd3-map .res{fill-opacity:0!important}
+.sd3-map .res:hover{fill-opacity:.95!important}
+.sd3-map .dot{cursor:pointer}
+.sd3-map .dot .halo{fill:var(--ai);fill-opacity:.22;transform-box:fill-box;transform-origin:center;animation:sd3-halo 2.6s var(--e-ui) infinite}
+.sd3-map .dot .core{fill:#FFFFFF;stroke:var(--ai);stroke-width:2.2}
+.sd3-map .dot.is-on .core{fill:var(--ai)}
+.sd3-map .dot:hover .core{stroke-width:3}
+@keyframes sd3-halo{0%{transform:scale(.6);fill-opacity:.32}70%{transform:scale(1.5);fill-opacity:0}100%{transform:scale(1.5);fill-opacity:0}}
+.sd3-map .lbl{font:600 12px var(--font-body);fill:var(--ink);pointer-events:none;paint-order:stroke;stroke:#FFFFFF;stroke-width:3px;stroke-linejoin:round;opacity:0;transition:opacity var(--d-180) var(--e-ui)}
+.sd3-map .dot:hover .lbl,.sd3-map .dot:focus-visible .lbl,.sd3-map .dot.is-on .lbl{opacity:1}
+.sd3-hero-r{position:relative;display:flex;flex-direction:column;gap:12px;justify-content:center;min-width:0}
+.sd3-glass{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:var(--r-16);background:rgba(255,255,255,.66);border:1px solid rgba(28,31,37,.06);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.sd3-hero-k{display:flex;flex-direction:column;gap:2px;margin:0}
+.sd3-hero-k b{font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.sd3-hero-k span{font:500 13px/20px var(--font-body);color:var(--sub)}
+.sd3-keys{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sd3-key{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:var(--r-8);background:rgba(255,255,255,.8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
+.sd3-key:hover{background:#FFFFFF}
+.sd3-key b{font:800 36px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.sd3-key span{font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.sd3-hero-s{margin:0;font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
+.sd3-hero-s span{display:inline-block}
+.sd3-leg{list-style:none;margin:0;padding:0 4px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.sd3-leg li{display:inline-flex;align-items:center;gap:5px;font:500 12px/18px var(--font-body);color:var(--sub-2);white-space:nowrap}
+.sd3-leg i{width:9px;height:9px;border-radius:50%;flex:none}
+.sd3-hero-go{font:500 13px/18px var(--font-body);color:var(--sub-2);text-decoration:none;white-space:nowrap}
+.sd3-hero-go:hover{color:var(--ink)}
+/* 점을 누르면 — 그 프로젝트(유리 카드 · 범례 아래 자리) */
+.sd3-pop{position:relative;align-self:stretch;width:auto;max-width:300px;margin-left:auto;padding:14px 16px;border-radius:var(--r-16);background:rgba(255,255,255,.9);border:1px solid rgba(28,31,37,.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12);display:flex;flex-direction:column;gap:6px;z-index:3}
+.sd3-pop[hidden]{display:none}
+.sd3-pop b{font:700 16px/22px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.sd3-pop span{font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
+.sd3-pop .sd3-pop-st{display:flex;align-items:center;gap:6px;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.sd3-pop a{margin-top:4px;font:500 13px/18px var(--font-body);color:var(--ink);text-decoration:none}
+.sd3-pop a:hover{text-decoration:underline}
+.sd3-pop .sd3-pop-x{position:absolute;right:8px;top:8px;width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--sub);font:400 16px/24px var(--font-body);cursor:pointer}
+.sd3-pop .sd3-pop-x:hover{background:var(--bg-0);color:var(--ink)}
+
+/* ⑥ 꼬리표 — 글자만(아이콘 0 · 원칙 126) · 멈춤 · 실패 = 붉은 글자 · 대기 = 주황 · 끝남 = 초록 · 시안 = 노랑 바탕 */
+.sd3-tag{display:inline-block;vertical-align:middle;font:600 11px/16px var(--font-body);letter-spacing:0;padding:0 6px;border-radius:4px;background:var(--bg-0);color:var(--sub-2);white-space:nowrap}
+.sd3-tag.stop{background:#FFF0F1;color:#D7263D}
+.sd3-tag.wait{background:#FFF4E5;color:#B45309}
+.sd3-tag.done{background:#E9F8EE;color:#1E7E46}
+.sd3-tag.mock{background:#FFF4D6;color:#8A5A00}
+.ld-h h2 .sd3-tag{margin-left:6px;position:relative;top:-2px}
+.ld-cell span .sd3-tag{margin-left:2px;position:relative;top:-1px}
+
+/* 오늘 할 일 — 2차 그대로(한 줄 = 날짜 · 무엇 + 어디 · 꼬리표 · 가는 곳) */
+.sd3-tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sd3-tl li{border-top:1px solid var(--rule)}
+.sd3-tl li:first-child{border-top:0}
+.sd3-tl > li > a{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:7px 8px;margin:0 -8px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
+.sd3-tl > li > a:hover{background:var(--bg-0)}
+.sd3-tl li.is-hot > a{box-shadow:inset 3px 0 0 var(--warn)}
+.sd3-when{font-size:13px;color:var(--sub);white-space:nowrap}
+.sd3-td{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:0}
+.sd3-td b{font:600 var(--fs-label)/22px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-td > span:not(.sd3-tag){flex:1 1 auto;min-width:0;font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-td > span:not(.sd3-tag)::before{content:"— "}
+.sd3-td .sd3-tag{flex:none}
+.sd3-go{font:500 13px/18px var(--font-body);color:var(--sub-2);white-space:nowrap}
+.sd3-tl a:hover .sd3-go{color:var(--ink)}
+.sd3-act{display:inline-block;font:500 13px/24px var(--font-body);color:var(--ink);padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);white-space:nowrap}
+.sd3-tl > li > a:hover .sd3-act{background:var(--bg-0)}
+
+/* ② 최근 분석 결과 — 날짜 · 작은 그림(지금 결과 그대로 · 올리면 도형 훑기) · 이름 + 어디 · 찾은 수 */
+.sd3-rl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sd3-rl li{border-top:1px solid var(--rule)}
+.sd3-rl li:first-child{border-top:0}
+.sd3-rl a{display:grid;grid-template-columns:44px 132px minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 8px;margin:0 -8px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
+.sd3-rl a:hover{background:var(--bg-0)}
+.sd3-th{position:relative;width:132px;height:80px;border-radius:var(--r-8);overflow:hidden;background:var(--bg-0)}
+.sd3-th img{display:block;width:100%;height:100%;object-fit:cover}
+.sd3-th svg{position:absolute;inset:0;width:100%;height:100%}
+.sd3-th .ov{fill:var(--ai);fill-opacity:.26;stroke:#FFFFFF;stroke-width:3;stroke-linejoin:round;opacity:0;transition:opacity var(--d-380) var(--e-ui)}
+.sd3-th .ov2{fill:none;stroke:var(--ai);stroke-width:2;stroke-linejoin:round;opacity:0;transition:opacity var(--d-380) var(--e-ui)}
+.sd3-th .ov,.sd3-th .ov2{clip-path:inset(0 100% 0 0)}
+.sd3-rl a:hover .sd3-th .ov,.sd3-rl a:hover .sd3-th .ov2,.sd3-rl a:focus-visible .sd3-th .ov,.sd3-rl a:focus-visible .sd3-th .ov2{opacity:1;animation:sd3-sweep var(--d-750) var(--e-cam) forwards}
+.sd3-th::after{content:"";position:absolute;top:0;bottom:0;left:-12%;width:10%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));opacity:0;pointer-events:none}
+.sd3-rl a:hover .sd3-th::after{animation:sd3-shine var(--d-750) var(--e-cam) forwards}
+@keyframes sd3-sweep{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes sd3-shine{0%{left:-12%;opacity:1}100%{left:102%;opacity:0}}
+.sd3-rt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sd3-rt b{font:600 var(--fs-label)/22px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-rt b .sd3-tag{margin-left:6px;position:relative;top:-1px}
+.sd3-rt span{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-n{display:flex;flex-direction:column;align-items:flex-end;gap:0}
+.sd3-n b{font:800 22px/26px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.sd3-n small{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+
+/* ⑦ 빈 칸(요청함 0 · 공지 없음) — 한 줄 높이로 작게 · 둘 나란히 */
+.sd3-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.sd3-mini.t-card{padding:14px 20px;gap:6px}
+.sd3-mini .ld-h h2{font-size:16px;line-height:24px}
+.sd3-mini-l{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sd3-mini-l a{color:var(--sub);text-decoration:none}
+.sd3-mini-l a:hover{color:var(--ink)}
+.sd3-mini-l b{font-weight:700;color:var(--mute);margin-left:2px}
+.sd3-mini-none{color:var(--sub)}
+
+/* ③ 진행 현황 — 연결선 위 빛 점(일이 있는 단계에만 · 앞 단계에서 그 단계로 천천히) */
+.sd3-pf li{position:relative}
+.sd3-pf li.has-work::after{content:"";position:absolute;left:10px;top:-10px;width:7px;height:7px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 3px rgba(15,169,160,.18);opacity:0;animation:sd3-flow 2.8s var(--e-ui) infinite;pointer-events:none}
+.sd3-pf li.has-work:first-child::after{display:none}
+@keyframes sd3-flow{0%{top:-18px;opacity:0}25%{opacity:1}75%{opacity:1}100%{top:12px;opacity:0}}
+.sd3-pf a{z-index:1}
+.sd3-pf b{position:relative;z-index:1}
+
+/* ④ 살아 있음 — 내 작업이 실제로 돌 때만(sd3.js 가 running > 0 일 때 is-live 를 붙인다 · ?pulse=1 은 '흉내' 꼬리표와 함께) */
+.sd3-live{display:inline-flex;align-items:center;gap:6px;font:500 12px/18px var(--font-body);color:var(--ai)}
+.sd3-live i{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:sd3-pulse 1.6s var(--e-ui) infinite}
+.is-live #sd3-running b{color:var(--ai)}
+.is-live #sd3-running::before{content:"";position:absolute;left:-4px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--ai);animation:sd3-pulse 1.6s var(--e-ui) infinite}
+#sd3-running{position:relative}
+.is-live .k-fresh i{animation:sd3-pulse 1.6s var(--e-ui) infinite}
+@keyframes sd3-pulse{0%{box-shadow:0 0 0 0 rgba(15,169,160,.45)}70%{box-shadow:0 0 0 8px rgba(15,169,160,0)}100%{box-shadow:0 0 0 0 rgba(15,169,160,0)}}
+
+/* ⑤ 도넛 · 막대 차오름(처음 한 번 · 0.6초) · 저장 용량 최소 표시 폭 */
+.sd3-dn svg circle{transition:stroke-dasharray var(--d-500) var(--e-cam),stroke-dashoffset var(--d-500) var(--e-cam)}
+.sd3-boot .sd3-dn svg circle:not(:first-child){stroke-dasharray:0 276.46!important}
+.sd3-bar i{min-width:6px;transition:width var(--d-500) var(--e-cam)}
+.sd3-boot .sd3-bar i{width:0!important;min-width:0}
+
+/* 메모 · 최근 프로젝트 — 2차 그대로 */
+.sd3-ml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sd3-ml li{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--rule)}
+.sd3-ml li:first-child{border-top:0;padding-top:0}
+.sd3-mt{font:400 var(--fs-label)/21px var(--font-body);color:var(--ink);word-break:keep-all}
+.sd3-ml li.is-pin .sd3-mt{font-weight:500}
+.sd3-mm{display:flex;gap:8px;align-items:center;font:400 12px/16px var(--font-body);color:var(--sub)}
+.sd3-mm em{font-style:normal;font-weight:600;color:var(--sub-2);background:var(--bg-0);padding:0 6px;border-radius:4px}
+.sd3-min{display:flex;align-items:center;height:40px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-label)/20px var(--font-body);color:var(--mute)}
+.sd3-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sd3-chip{display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 12px;border-radius:12px;background:var(--bg-0);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui),transform var(--d-180) var(--e-ui)}
+.sd3-chip:hover{background:var(--rule);transform:translateY(-1px)}
+.sd3-chip b{font:600 var(--fs-label)/20px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-chip span{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd3-chip small{font-size:12px;color:var(--sub)}
+
+/* 시안 도장(원칙 162) */
+.sd3-stamp{position:fixed;left:50%;top:10px;margin-left:-60px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding:8px 14px;border:3px solid #fff;background:#D33;color:#fff;transform:rotate(-4deg);box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}
+.sd3-stamp b{font:800 22px/1 var(--font-display);letter-spacing:.08em}
+.sd3-stamp span{font:500 11px/14px var(--font-body)}
+
+/* 움직임 끄기 */
+@media (prefers-reduced-motion:reduce){
+  .sd3 *,.sd3 *::before,.sd3 *::after{animation:none!important;transition:none!important}
+  .sd3-boot .sd3-hero,.sd3-boot .ld-card{opacity:1;transform:none}
+  .sd3-boot .sd3-map .res{fill-opacity:inherit!important}
+  .sd3-th .ov,.sd3-th .ov2{clip-path:none}
+  .sd3-rl a:hover .sd3-th .ov,.sd3-rl a:hover .sd3-th .ov2{opacity:1}
+  .sd3 .ld-card:hover{transform:none}
+}
+@media (max-width:1180px){.sd3-cols{grid-template-columns:1fr 1fr}.sd3-col--a{grid-column:1/-1}.sd3-hero{grid-template-columns:1fr}.sd3-map{height:260px}}
+@media (max-width:760px){.sd3-cols{grid-template-columns:1fr}.sd3-two{grid-template-columns:1fr}}

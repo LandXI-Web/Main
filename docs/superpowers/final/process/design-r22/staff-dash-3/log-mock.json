@@ -1,0 +1,52 @@
+{
+ "shots": [
+  {
+   "file": "mock-dash3-1440-2058.png",
+   "shot_at": "2026-10-11T20:58:11+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html",
+   "note": "시안 PC 1440×900 첫 화면"
+  },
+  {
+   "file": "mock-dash3-full-1440-2058.png",
+   "shot_at": "2026-10-11T20:58:12+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html",
+   "note": "시안 세로 전체(1440×1480 창)"
+  },
+  {
+   "file": "mock-dash3-open-1440-2058.png",
+   "shot_at": "2026-10-11T20:58:14+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html?open=52190",
+   "note": "지도의 점(남원시)을 눌러 그 프로젝트가 열린 장면"
+  },
+  {
+   "file": "mock-dash3-hover-result-2058.png",
+   "shot_at": "2026-10-11T20:58:15+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html",
+   "note": "둘째 결과 행에 올려 도형이 한 번 훑어지며 드러난 뒤(최근 분석 결과 칸)"
+  },
+  {
+   "file": "mock-dash3-pulse-fake-2058.png",
+   "shot_at": "2026-10-11T20:58:18+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html?pulse=1",
+   "note": "흉내 장면 — 지금 도는 작업 0이라 '흉내' 꼬리표"
+  },
+  {
+   "file": "mock-dash3-motion-2058.webm",
+   "shot_at": "2026-10-11T20:58:30+09:00",
+   "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-3/index.html",
+   "note": "녹화 약 10초 — 등장 · 숫자 차오름 · 빛 점 · 결과 행 올리기(훑기) · 점 누르기 · 진행 단계 빛 점"
+  }
+ ],
+ "heights": [
+  923,
+  855,
+  916.875,
+  392,
+  900
+ ],
+ "errors": [
+  "외부 요청 https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+  "외부 요청 https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+  "외부 요청 https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+ ]
+}
