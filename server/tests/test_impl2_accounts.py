@@ -233,7 +233,7 @@ def test_reset_temp_password_forces_change(live, tok):
     assert [x for x in mine if x["action"] == "account.reset.issue"][0]["who"]  # 누가 발급했는지
 
 
-# ── 기관 관리자는 자기 기관만 · LX 관리자는 전부 ──────────────────────────────────────────
+# ── 계정 관리는 각자 범위(원칙 177 · 10-11): 기관 관리자 = 자기 기관만 · LX 관리자 = LX 계정만 ──────────────
 def test_tenant_manager_scope(live, tok):
     mn, mg, pw = mail("nw"), mail("gj"), newpw()
     assert signup(mn, pw, tenant="namwon").status_code == 201
@@ -241,17 +241,17 @@ def test_tenant_manager_scope(live, tok):
     nw = get("/accounts/requests?kind=signup", tok["namwon"]).json()["items"]
     assert any(x["login"] == mn for x in nw) and not any(x["login"] == mg for x in nw)
     assert all(x["realm"] == "tenant" and x["tenant_id"] == "namwon" for x in nw)
-    both = get("/accounts/requests?kind=signup", tok["admin"]).json()["items"]
-    assert {mn, mg} <= {x["login"] for x in both}                              # LX 관리자는 전부 본다(원칙 72)
-    assert all(x["can_decide"] is False for x in both if x["realm"] == "tenant")  # 기관 신청은 보기만(승인 · 반려 버튼 없음)
+    adm = get("/accounts/requests?kind=signup&state=all", tok["admin"]).json()["items"]
+    assert adm and all(x["realm"] == "lx" for x in adm)                        # LX 관리자 = LX 신청만(기관 신청 안 보임 · 원칙 177)
+    assert not ({mn, mg} & {x["login"] for x in adm})
     assert all(x["can_decide"] is True for x in nw)
-    gid = pending_id(tok["admin"], mg)
+    gid = pending_id(tok["gj"], mg)
     nid = pending_id(tok["namwon"], mn)
     assert post(f"/accounts/signup/{gid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 404   # 다른 기관 = 없음
-    for d in ({"decision": "approve"}, {"decision": "reject", "reason": "시험 반려"}):                               # LX 관리자 = 기관 가입 승인에 관여 0
+    for d in ({"decision": "approve"}, {"decision": "reject", "reason": "시험 반려"}):                               # LX 관리자 = 기관 신청은 범위 밖(없음)
         r = post(f"/accounts/signup/{nid}/decide", d, token=tok["admin"])
-        assert r.status_code == 403 and r.json()["error"]["code"] == "tenant_signup"
-    assert get("/accounts/summary", tok["admin"]).json()["counts"]["signup_view"] >= 2                               # 보기만 하는 기관 신청 수
+        assert r.status_code == 404
+    assert get("/accounts/summary", tok["admin"]).json()["counts"]["signup_view"] == 0                               # 기관 신청 수도 세지 않는다
     assert post(f"/accounts/signup/{nid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 200   # 자기 기관 = 그 기관 관리자가 승인
     assert post(f"/accounts/signup/{gid}/decide", {"decision": "reject", "reason": "시험 반려"}, token=tok["gj"]).status_code == 200   # 광주전남 관리자가 반려
     s = login(mn, pw, site="gov", tenant="namwon")
@@ -264,7 +264,9 @@ def test_tenant_manager_scope(live, tok):
     assert STAFF_ID in lx_ids
     assert post(f"/accounts/users/lx/{STAFF_ID}/lock", {"locked": True}, token=tok["namwon"]).status_code == 404        # LX 계정 = 관할 밖
     uid = [u["id"] for u in users["items"] if u["login"] == mn][0]
-    gj_user = [u for u in get("/accounts/users?realm=tenant&tenant_id=gwangju-jeonnam", tok["admin"]).json()["items"]][0]
+    assert get("/accounts/users?realm=tenant&tenant_id=gwangju-jeonnam", tok["admin"]).json()["items"] == []        # LX 관리자 = 기관 계정 0(원칙 177)
+    gj_user = [u for u in get("/accounts/users", tok["gj"]).json()["items"] if u["tenant_id"] == "gwangju-jeonnam"][0]
+    assert post(f"/accounts/users/tenant/{gj_user['id']}/lock", {"locked": True}, token=tok["admin"]).status_code == 404   # LX 관리자도 기관 계정은 못 바꾼다
     assert post(f"/accounts/users/tenant/{gj_user['id']}/temp-password", {}, token=tok["namwon"]).status_code == 404   # 다른 기관 계정
     assert post(f"/accounts/users/tenant/{TENANT_ID['namwon']}/temp-password", {}, token=tok["namwon"]).json()["error"]["code"] == "self_account"
     r = post(f"/accounts/users/tenant/{uid}/role", {"role": "manager"}, token=tok["namwon"])
@@ -335,7 +337,8 @@ def test_failures_scope(live, tok):
     assert mine and len({x["org"] for x in nw}) == 1                           # 기관 관리자는 자기 기관 실패만
     assert mine[0]["reason_ko"] == "없는 아이디"
     allf = [x for x in get("/accounts/failures", tok["admin"]).json()["items"] if x["login"] == mn]
-    assert len(allf) == 2                                                       # LX 관리자는 전부
+    assert len(allf) == 0                                                       # LX 관리자 = LX 입구 실패만(기관 입구 0 · 원칙 177)
+    assert len([x for x in get("/accounts/failures", tok["gj"]).json()["items"] if x["login"] == mn]) == 1
     assert get("/accounts/failures", tok["staff"]).status_code == 403
 
 
@@ -359,8 +362,8 @@ def test_old_ids_disabled_not_deleted(live, tok):
             assert post("/auth/login", {**body, "password": config.DEV_PASSWORD}).status_code == 200, body
         users = {u["id"]: u for u in get("/accounts/users", tok["admin"]).json()["items"]}
         assert users["u_lx_staff"]["status"] == "disabled" and users[STAFF_ID]["status"] == "active"
-        for path in ("/accounts/users/lx/u_lx_staff/lock", "/accounts/users/tenant/u_namwon_manager/temp-password"):
-            r = post(path, {"locked": False} if path.endswith("lock") else {}, token=tok["admin"])
+        for path, who in (("/accounts/users/lx/u_lx_staff/lock", "admin"), ("/accounts/users/tenant/u_namwon_manager/temp-password", "namwon")):   # 기관 계정은 그 기관 관리자(원칙 177)
+            r = post(path, {"locked": False} if path.endswith("lock") else {}, token=tok[who])
             assert r.status_code == 409 and r.json()["error"]["code"] == "disabled_account"                              # 되살리지 않는다
         assert c.execute("SELECT status FROM lx_users WHERE id='u_lx_staff'").fetchone()[0] == "disabled"
         moved = {"projects": "lead_id", "approvals": "requested_by", "jobs": "submitted_by", "ledger_imports": "created_by", "agent_runs": "user_id"}

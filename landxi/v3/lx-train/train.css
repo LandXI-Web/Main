@@ -149,3 +149,7 @@
 .tr-smp-n b{font:800 32px/1 var(--font-display);letter-spacing:-.03em}
 .tr-smp-n small{font:500 14px/1 var(--font-body);color:var(--sub)}
 .tf-data{margin:0 0 4px}
+
+/* 원칙 181 — 학습 탭 설명 칸(lx-project/explain.css) 자리 */
+.tr-ex{max-width:var(--content-max);margin:-8px auto 24px}
+.tr-ex .lxp-ex{background:var(--bg-1)}

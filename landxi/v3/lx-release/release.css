@@ -137,3 +137,9 @@
 .rl-set-f{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:20px}
 /* 배포 신청서 — 기반 · 지난 판보다 낮은 정확도 경고 한 줄(질문 9 ⓑ · 막지 않음) */
 .rl-low{margin:6px 0 0;font:600 var(--fs-label)/20px var(--font-body);color:var(--warn)}
+/* 배포 신청서 — 분야 · 쓸 수 있는 영상(질문 5 · 원칙 165) */
+.rl-cks{display:flex;flex-wrap:wrap;gap:8px}
+.rl-ck{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 14px/20px var(--font-body);color:var(--ink);cursor:pointer}
+.rl-ck:has(input:checked){border-color:var(--ink);background:var(--bg-0)}
+.rl-newgrp{margin-top:8px;max-width:320px}
+.rl-dl dd > .t-input{box-sizing:border-box;max-width:100%}

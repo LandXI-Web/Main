@@ -80,7 +80,8 @@ def test_reject_from_held(tok, temp_request):
 def test_tenant_page_and_helpdesk(tok):
     a = H(tok["admin"])
     j = httpx.get(B + "/tenants/namwon/page", headers=a, timeout=120).json()
-    assert j["name"] and j["host"] and j["services"] and "views" in j
+    assert j["name"] and j["host"] and j["services"] and "views" not in j          # 개별 계정 없이 요약 숫자만(원칙 177)
+    assert all(k in j["counts"] for k in ("accounts", "managers", "viewers", "logins_month"))
     card = j["services"][0]["card"]
     staff = j["staff"][0]["id"]
     try:

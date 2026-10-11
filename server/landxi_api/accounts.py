@@ -14,8 +14,8 @@
 
 승인하는 사람(관할 — 서버가 정본 · 원칙 39):
   LX 직원 신청 · LX 계정 재설정 = LX 관리자 · 기관 사용자 신청 = 그 기관 관리자(manager)만 승인 · 반려.
-  LX 관리자는 기관 가입 승인에 관여하지 않는다(원칙 72 · 10-01 "LX 는 기관 가입 승인에는 관여하지 않지만 사용자 확인·통제·지원") —
-  기관 신청은 보기만(서버도 결정 403 tenant_signup) · 기관 계정은 확인 · 잠금 · 지원(임시 비밀번호 · 재설정 요청 처리).
+  계정 관리는 각자 범위(원칙 177 · 10-11 — 원칙 72 '다 보고 돕는다'를 대신함): LX 관리자 = LX 계정 · LX 로그인 기록만(기관 신청 · 기관 계정 ·
+  기관 로그인 기록은 목록에도 안 나오고 바꾸지도 못한다 — not_found). 기관 한 곳 화면 '사용과 계정'에는 요약 숫자만(spaces.tenant_page).
   기관 관리자는 자기 기관 것만 보이고 바꿀 수 있다. 내 계정에 걸린 일(재설정 · 잠금 · 역할 · 임시 비밀번호)은 스스로 하지 않는다(409 self_account).
   사용 중지된 계정(status disabled — 옛 아이디 정리 · 0015_mail_accounts.sql)은 목록에 '사용 중지'로 보이고 바꾸지 않는다(409 disabled_account).
   반려는 사유 필수(400 reason_required). 누가 승인·반려·재설정했는지는 요청 행(decided_*)과 audit_log(account.*) 두 곳에 남는다.
@@ -362,8 +362,11 @@ def _mine(p: Principal, realm: str, user_id: str) -> bool:
 
 
 def _in_scope(p: Principal, realm: str, tenant_id: str | None) -> bool:
-    """LX 관리자 = 전부 · 기관 관리자 = 자기 기관 계정만(LX 계정 0)."""
-    return p.is_admin or (realm == "tenant" and tenant_id == p.tenant_id)
+    """계정 관리는 각자 범위(원칙 177 · 10-11 "LX는 LX 관리자만 남원시는 남원시 관리자만"):
+    LX 관리자 = LX 계정만(기관 계정 0) · 기관 관리자 = 자기 기관 계정만(LX 계정 0 · 다른 기관 0)."""
+    if p.is_admin:
+        return realm == "lx"
+    return realm == "tenant" and p.realm == "tenant" and tenant_id == p.tenant_id
 
 
 def _can_decide_signup(p: Principal, realm: str) -> bool:
@@ -409,11 +412,11 @@ async def _last_login(conn, ids: list[str]) -> dict:
 async def summary(request: Request):
     p = _who(request)
     pl = await pool()
-    w = "" if p.is_admin else " AND realm='tenant' AND tenant_id=$1"
+    w = " AND realm='lx'" if p.is_admin else " AND realm='tenant' AND tenant_id=$1"      # 각자 범위(원칙 177)
     a = [] if p.is_admin else [p.tenant_id]
-    # 가입 신청 수 = 내가 승인 · 반려할 것(LX 관리자 = LX 직원 신청 · 기관 관리자 = 자기 기관 신청). LX 관리자가 보기만 하는 기관 신청은 따로(signup_view)
-    s = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending'" + (" AND realm='lx'" if p.is_admin else w), *a)
-    sv = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending' AND realm='tenant'") if p.is_admin else 0
+    # 가입 신청 수 = 내가 승인 · 반려할 것(LX 관리자 = LX 직원 신청 · 기관 관리자 = 자기 기관 신청). 기관 신청은 LX 관리자에게 보이지 않는다(원칙 177)
+    s = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending'" + w, *a)
+    sv = 0
     r = await pl.fetchval("SELECT count(*) FROM reset_requests WHERE state='pending'" + w, *a)
     st = 0
     if p.is_admin:                                     # 저장 용량 늘리기 요청(S-19 · LX 계정만)
@@ -433,7 +436,9 @@ async def list_requests(request: Request, kind: str = "signup", state: str = "pe
     table = "signup_requests" if kind == "signup" else "reset_requests"
     q = f"SELECT * FROM {table} WHERE ($1::text = 'all' OR state = 'pending')"
     args = [state]
-    if not p.is_admin:
+    if p.is_admin:                                     # 각자 범위(원칙 177) — LX 관리자 = LX 계정의 신청만
+        q += " AND realm='lx'"
+    else:
         q += " AND realm='tenant' AND tenant_id=$2"
         args.append(p.tenant_id)
     rows = await pl.fetch(q + " ORDER BY created_at DESC LIMIT 200", *args)
@@ -579,8 +584,8 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
                             "dept_listed": (_dkey(u["dept"]) in keys) if keys and (u["dept"] or "").strip() else None})
             extra = {"solo": await solo_admin(conn, p), "storage_default": env(await storage_default(conn), "GB", "recorded", "기본 할당(lx_settings)"),
                      "depts": env(len(set(keys.values())), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)")}
-        if realm in (None, "", "tenant"):
-            tid = tenant_id if p.is_admin else p.tenant_id
+        if realm in (None, "", "tenant") and not p.is_admin:     # 기관 계정 = 그 기관 관리자만(원칙 177 — LX 관리자 화면에 섞지 않는다)
+            tid = p.tenant_id
             rows = await conn.fetch("SELECT id, tenant_id, login, role, status, name, dept, must_change, created_at, lock_until FROM tenant_users "
                                     "WHERE ($1::text IS NULL OR tenant_id=$1) ORDER BY tenant_id, (status = 'disabled'), login", tid)
             for u in rows:
@@ -593,7 +598,7 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
         x["last_login"] = _iso(last.get(x["id"]))
         x["last_login_where"] = _entry_ko(ent.get(x["id"]), tn) if x["id"] in ent else None
         x["mine"] = _mine(p, x["realm"], x["id"])
-    orgs = [{"id": k, "name": v} for k, v in tn.items() if k not in ("lx", "lx-demo")] if p.is_admin else [{"id": p.tenant_id, "name": tn.get(p.tenant_id, "")}]
+    orgs = [] if p.is_admin else [{"id": p.tenant_id, "name": tn.get(p.tenant_id, "")}]
     return {"items": out, "orgs": orgs, "roles": {k: [{"id": r, "label": ROLE_KO[(k, r)]} for r in v] for k, v in ROLES.items()}, **extra, "at": now_iso()}
 
 
@@ -675,7 +680,8 @@ async def account_log(request: Request):
     p = _who(request)
     pl = await pool()
     if p.is_admin:
-        rows = await pl.fetch("SELECT id, actor, realm, action, subject, after, at FROM audit_log WHERE action LIKE 'account.%' ORDER BY id DESC LIMIT 100")
+        rows = await pl.fetch("SELECT id, actor, realm, action, subject, after, at FROM audit_log WHERE action LIKE 'account.%' "     # LX 계정 일만(원칙 177)
+                              "AND coalesce(after->>'realm', realm) = 'lx' ORDER BY id DESC LIMIT 100")
     else:
         rows = await pl.fetch("SELECT id, actor, realm, action, subject, after, at FROM audit_log WHERE action LIKE 'account.%' "
                               "AND after->>'tenant_id' = $1 ORDER BY id DESC LIMIT 100", p.tenant_id)
@@ -695,11 +701,11 @@ async def account_log(request: Request):
 
 @router.get("/accounts/failures")
 async def login_failures(request: Request):
-    """실패한 로그인 — LX 관리자 = 전부 · 기관 관리자 = 자기 기관 입구의 실패만. 이 PC 안 요청은 접속 주소 대신 '이 PC'."""
+    """실패한 로그인 — LX 관리자 = LX 계정 입구의 실패만 · 기관 관리자 = 자기 기관 입구의 실패만(원칙 177). 이 PC 안 요청은 접속 주소 대신 '이 PC'."""
     p = _who(request)
     pl = await pool()
     if p.is_admin:
-        rows = await pl.fetch("SELECT at, realm, tenant_id, login, site, ip, reason FROM login_failures ORDER BY id DESC LIMIT 200")
+        rows = await pl.fetch("SELECT at, realm, tenant_id, login, site, ip, reason FROM login_failures WHERE realm='lx' ORDER BY id DESC LIMIT 200")   # LX 입구만(원칙 177)
     else:
         rows = await pl.fetch("SELECT at, realm, tenant_id, login, site, ip, reason FROM login_failures WHERE realm='tenant' AND tenant_id=$1 "
                               "ORDER BY id DESC LIMIT 200", p.tenant_id)
@@ -714,11 +720,11 @@ async def login_failures(request: Request):
 @router.get("/accounts/logins")
 async def login_records(request: Request):
     """로그인 기록(나중 17 · 보안 점검) — 시각 · 아이디 · 소속 · 들어온 입구(Land-XI · LX 관리자 · 기관 주소) · 주소 이름 · 접속 주소.
-    LX 관리자 = 전부 · 기관 관리자 = 자기 기관 계정의 로그인만. 이 PC 안 요청은 접속 주소 대신 '이 PC'."""
+    LX 관리자 = LX 계정의 로그인만 · 기관 관리자 = 자기 기관 계정의 로그인만(원칙 177). 이 PC 안 요청은 접속 주소 대신 '이 PC'."""
     p = _who(request)
     pl = await pool()
     if p.is_admin:
-        rows = await pl.fetch("SELECT id, actor, realm, subject, after, at FROM audit_log WHERE action='login' ORDER BY id DESC LIMIT 200")
+        rows = await pl.fetch("SELECT id, actor, realm, subject, after, at FROM audit_log WHERE action='login' AND realm='lx' ORDER BY id DESC LIMIT 200")   # LX 계정만(원칙 177)
     else:
         rows = await pl.fetch("SELECT id, actor, realm, subject, after, at FROM audit_log WHERE action='login' AND realm='tenant' "
                               "AND actor IN (SELECT id FROM tenant_users WHERE tenant_id=$1) ORDER BY id DESC LIMIT 200", p.tenant_id)

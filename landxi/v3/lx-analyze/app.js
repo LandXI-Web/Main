@@ -59,6 +59,7 @@ function acCard(c, href, more) {
     pic.classList.add('is-sample');
     authBlob(c.sample).then((u) => pic.append(img(u))).catch(() => blank(pic));
   } else blank(pic);
+  if ((c.groups || []).length) pic.append(h('div.la-ac-cat', {}, ...c.groups.map((g) => h('span', { text: g }))));   // 분야(여러 개 · 질문 5)
   const md = c.model || {};
   const acc = md.acc && md.acc.value !== null && md.acc.value !== undefined ? md.acc.value : null;
   const tg = c.targets || [];
@@ -71,6 +72,7 @@ function acCard(c, href, more) {
         h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: '검증 정확도' })),
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '—', title: tg.join(' · ') })),
+      (c.imagery_kinds || []).length ? h('div.la-ac-imk', { 'aria-label': '쓸 수 있는 영상' }, ...c.imagery_kinds.map((k) => h('span', { text: k }))) : null,
       h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: href(c), text: '분석하기' }), h('a.k-sc-more', { href: more(c), text: '자세히 →' }))));
 }
 
@@ -94,8 +96,12 @@ async function gallery() {
   box.remove();
   if (!deck) { const e = h('div'); page.append(e); K.empty(e, { kind: 'error', title: '분석 서비스를 불러오지 못했습니다', onRetry: () => location.reload() }); return; }
   const all = (deck.items || []).filter((c) => c.official);
-  const F = { grp: Q.get('grp') || '', q: '', per: readPer(), page: 1 };
-  const groups = (deck.groups || []).filter((g) => all.some((c) => c.group === g));
+  const F = { grp: Q.get('grp') || '', img: Q.get('img') || '', q: '', per: readPer(), page: 1 };
+  /* 분야 칩 = LX 관리자의 분야 목록 순서(서버 deck.groups) · 서비스가 없는 분야는 숨김 · 한 서비스가 여러 분야에(질문 5 · 원칙 165) */
+  const inG = (c, g) => (c.groups || (c.group ? [c.group] : [])).includes(g);
+  const groups = (deck.groups || []).filter((g) => all.some((c) => inG(c, g)));
+  const KINDS = ['드론', '항공', '위성'];                 // 쓸 수 있는 영상(배포 신청서에서 고름) — 영상별 거르기
+  const inK = (c, k) => (c.imagery_kinds || []).includes(k);
   const chipsEl = h('div.la-chips', { role: 'group', 'aria-label': '거르기' });
   const viewEl = h('div.la-view', { role: 'group', 'aria-label': '보기 개수' });
   const href = (c) => withRegion(`?card=${encodeURIComponent(c.id)}`) + '#analyze';
@@ -104,14 +110,17 @@ async function gallery() {
     chipsEl.replaceChildren(
       h('button.la-chip', { type: 'button', 'aria-pressed': String(!F.grp), onclick: () => { F.grp = ''; F.page = 1; draw(); } }, '전체', h('small.num', { text: String(all.length) })),
       ...groups.map((g) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.grp === g), onclick: () => { F.grp = F.grp === g ? '' : g; F.page = 1; draw(); } },
-        g, h('small.num', { text: String(all.filter((c) => c.group === g).length) }))));
+        g, h('small.num', { text: String(all.filter((c) => inG(c, g)).length) }))),
+      h('span.la-chips-sep', { 'aria-hidden': 'true' }), h('span.la-chips-k', { text: '영상' }),
+      ...KINDS.map((k) => h('button.la-chip', { type: 'button', 'aria-pressed': String(F.img === k), onclick: () => { F.img = F.img === k ? '' : k; F.page = 1; draw(); } },
+        k, h('small.num', { text: String(all.filter((c) => inK(c, k)).length) }))));
     viewEl.replaceChildren(h('span.la-view-k', { text: '한 페이지' }),
       ...perList().map((k) => h('button.la-view-b.num', { type: 'button', 'aria-pressed': String(F.per === k), 'aria-label': `한 페이지 ${k}장`,
         onclick: () => { F.per = k; F.page = 1; savePer(k); draw(); } }, String(k))),
       h('span.la-view-u', { text: '장' }));
     grid.dataset.n = String(F.per);
     const q = F.q.replace(/\s+/g, '');
-    const list = all.filter((c) => (!F.grp || c.group === F.grp)
+    const list = all.filter((c) => (!F.grp || inG(c, F.grp)) && (!F.img || inK(c, F.img))
       && (!q || [c.name, c.line, c.finds, ...(c.targets || [])].some((s) => String(s || '').replace(/\s+/g, '').includes(q))));
     if (!list.length) {
       pager.replaceChildren();

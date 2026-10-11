@@ -130,8 +130,11 @@ async function edit(cid) {
   const I = c.info || {};
   const name = inp('name', c.name, '', 40);
   const line = inp('line', I.line, c.line || '한 줄로 — 무엇을 찾아 무엇을 남기나', 60);
-  const grp = h('select.t-input', { name: 'group', disabled: ro || undefined }, h('option', { value: '', text: '분류 없음' }),
-    ...(c.groups || []).map((g) => h('option', { value: g, text: g, selected: (I.grp || c.group) === g || undefined })));
+  /* 분야 — 여러 개(질문 5 · 원칙 165). 목록 = LX 관리자 '배포 → 분야' 탭의 분야 표(순서 그대로) */
+  const mine = new Set(c.groups || []);
+  const grp = h('div.lc-grps', { role: 'group', 'aria-label': '분야' }, ...(c.all_groups || []).map((g) => h('label.lc-grp', {},
+    h('input', { type: 'checkbox', value: g, checked: mine.has(g) || undefined, disabled: ro || undefined }), h('span', { text: g }))));
+  const grpField = h('div.lc-f', {}, h('span.lc-l', { text: '분야' }), grp, h('span.lc-h', { text: '여러 개 고를 수 있습니다 — 분석하기 거르기 칩 · 기관 공유 묶음. 새 분야는 LX 관리자가 만듭니다' }));
 
   /* ③ 결과 예시 — 어느 지역 값을 보일지 · 말(AI 분석 결과 · 원칙 135: 다듬은 결과의 AI 탐지 수만 · 서버가 도형 조각 수는 비워 준다) */
   const withVal = (c.regions || []).filter((r) => r.detected && r.detected.value);
@@ -149,7 +152,7 @@ async function edit(cid) {
   const msg = h('p.lc-msg', { role: 'status' });
   form.append(
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '대표 이미지' }), sceneBox, up),
-    h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이름 · 무엇을 찾나' }), field('이름', name), field('무엇을 찾나', line, '카드에 두 줄까지 보입니다'), field('분류', grp, '분석하기의 거르기 칩')),
+    h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이름 · 무엇을 찾나' }), field('이름', name), field('무엇을 찾나', line, '카드에 두 줄까지 보입니다'), grpField),
     h('section.t-card.lc-sec', {}, h('h2.la-h', {}, '결과 예시', h('small', { text: '숫자는 서버 값 그대로' })), field('보일 지역', exSel), field('말', word, '셈 단위가 필지 · 동으로 확인된 결과에만 붙습니다 — 예: 비닐하우스 동')),
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이 카드의 조건' }), field('입력 영상', imagery), field('시점', tp), field('찾는 것', finds), field('대조', compare)),
     h('div.lc-act', {}, ro ? h('p.lc-h', { text: '이 카드의 담당 프로젝트장과 LX 관리자가 고칩니다' }) : null, msg, save));
@@ -159,7 +162,7 @@ async function edit(cid) {
     if (ro) return;
     save.disabled = true; msg.textContent = '저장하는 중'; msg.dataset.lv = '';
     const body = {
-      name: name.value.trim(), line: line.value, group: grp.value, result_sgg: exSel.value, result_word: word.value,
+      name: name.value.trim(), line: line.value, groups: [...grp.querySelectorAll('input:checked')].map((x) => x.value), result_sgg: exSel.value, result_word: word.value,
       imagery: imagery.value, timepoints: tp.value, finds: finds.value, compare: compare.value, scene: pick ? { src: pick } : null,
     };
     try {

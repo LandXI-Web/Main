@@ -57,13 +57,22 @@ test.describe('구현 9차 · 분석 서비스 배포', () => {
     page.on('pageerror', (e) => errs.push(String(e)));
     await frontDoor(page, new URL(baseURL).origin, 'lxadmin@lx.or.kr', 'admin');
     await page.goto('v3/ops-infra/#/deploys');
-    await expect(page.locator('#pane-deploys .im-tabs button > span')).toHaveText(['배포 신청', '기관 공유', '사용 현황', '개선 후보'], { timeout: 20000 });
+    await expect(page.locator('#pane-deploys .im-tabs button[data-tab="cat"]')).toBeVisible({ timeout: 20000 });
+    const want = ['배포 신청', '기관 공유', '사용 현황', '분야', '개선 후보'];                    // 분야 탭(질문 5 · 원칙 165) — 다른 탭이 더 붙어도 이 순서는 그대로
+    expect((await page.locator('#pane-deploys .im-tabs button > span').allTextContents()).filter((t) => want.includes(t))).toEqual(want);
     await expect(page.locator('.rv-pane[data-tab="req"] .rv-card h2').first()).toHaveText('배포 신청', { timeout: 20000 });
     await check(page);
     await page.locator('#pane-deploys .im-tabs button[data-tab="share"]').click();
     await expect(page.locator('.rv-tbl--matrix')).toHaveCount(1, { timeout: 20000 });
     await expect(page.locator('.rv-tbl--matrix tbody input[type=checkbox]').first()).toBeVisible();
     expect(await page.locator('.rv-pane[data-tab="share"] table').count()).toBe(1);           // 공유 상태 표 없음 — 체크 표 하나
+    await expect(page.locator('.rv-tbl--matrix tr.rv-gh').first()).toBeVisible();          // 분야 묶음 머리줄(분야 목록 순서)
+    await page.locator('#pane-deploys .im-tabs button[data-tab="cat"]').click();
+    await expect(page.locator('.rv-tbl--cat tbody tr').first()).toBeVisible({ timeout: 20000 });
+    const cats = await page.locator('.rv-tbl--cat .rv-cat-nm b').allTextContents();
+    expect(cats.length).toBeGreaterThanOrEqual(5);
+    expect(cats).toEqual(expect.arrayContaining(['농지·시설', '환경', '건축·변화', '안전', '해외']));
+    await check(page);
     await page.locator('#pane-deploys .im-tabs button[data-tab="usage"]').click();
     await expect(page.locator('.rv-tbl--usage th')).toHaveText(['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', '마지막 사용'], { timeout: 20000 });
     await check(page);

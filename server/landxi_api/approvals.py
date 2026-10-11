@@ -340,6 +340,10 @@ async def decide(aid: str, body: dict, request: Request):
             elif st == "card":                    # 서비스 공개(D2-ⓐ) — 승인자 = 결재한 관리자(만든 직원이 아니라)
                 await conn.execute("UPDATE card_versions SET approved_by=$2, approved_at=now() WHERE id=$1", sid, p.user_id)
                 effect = {"card_version": sid, "published": True}
+                from .categories import on_card_approved          # 신청서의 분야 · 서비스 설명 · 쓸 수 있는 영상 → 서비스(질문 5 · 원칙 165)
+                cat = await on_card_approved(conn, sid, pl, p.user_id)
+                if cat:
+                    effect["category"] = cat
             elif st == "request":                 # 기관 영상 분석 의뢰(GF-2) — 분석 준비(대기열은 결재 뒤 배경에서)
                 from .requests import on_decided
                 effect = await on_decided(conn, sid, "approve", reason, p.user_id)

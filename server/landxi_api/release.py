@@ -501,6 +501,10 @@ async def apply_view(pid: str, request: Request):
         jobs = [j for j in await _infer_jobs(conn, pid, people) if j["state"] == "done"]
         samples = {m["id"]: await _sample_of(conn, pid, m["sample_id"]) for m in models}
         orgs = await _orgs(conn)
+        from . import categories as CT
+        cats = await CT.load(conn)
+        cinf = await conn.fetchrow("SELECT line, imagery, imagery_kinds FROM card_info WHERE card_id=$1", card) if card else None
+        asked = await conn.fetch("SELECT name, state FROM card_group_requests WHERE project_id=$1 AND state='open' ORDER BY at", pid)
     j = PJ._judge(r, f)
     rv = next((s for s in j["stages"] if s["key"] == "review"), {})
     shared = []                                         # 이 서비스를 지금 공유받은 기관(기관 '서비스 선택'과 같은 판정)
@@ -532,6 +536,15 @@ async def apply_view(pid: str, request: Request):
             "pick": pick, "scenes": jobs[:12],
             "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": bool(rv.get("skip")),
             "status": status, "versions": versions, "shared": shared, "ledger_kinds": kinds,
+            # 분야 · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 지금 서비스의 값이 미리 골라져 있다(첫 판은 비어 있음). 승인되면 서비스에 반영
+            "category": {"groups": [{"id": g["id"], "name": g["name"], "descr": g["descr"]} for g in cats["list"]],
+                         "picked": (cats["of"].get(card) or []) if card else [],
+                         "desc": (cinf["line"] if cinf else None) or "",
+                         "kinds": list(CT.IMAGERY_KINDS),
+                         # 쓸 수 있는 영상 — 정해 둔 값 → 영상 조건 글 → 고른 모델이 배운 영상(학습 해상도 말 · 분석하기 카드와 같은 판정)
+                         "picked_kinds": (list(cinf["imagery_kinds"] or []) if cinf else []) or CT.kinds_from(cinf["imagery"] if cinf else None)
+                                         or CT.kinds_from(next((x.get("gsd_word") for x in models if x["id"] == pick), None)),
+                         "asked": [x["name"] for x in asked]},
             "can": {"apply": p.user_id == r["lead_id"], "lead": (people.get(r["lead_id"]) if r["lead_id"] else None)}, "as_of": now_iso()}
 
 
@@ -557,6 +570,8 @@ async def apply(pid: str, body: dict, request: Request):
         r, members = await _member_project(conn, p, pid)
         if p.user_id != r["lead_id"]:
             raise ApiError("forbidden", "배포 신청은 프로젝트장이 합니다")
+        from . import categories as CT
+        cat = CT.clean_form(body, {g["id"] for g in (await CT.load(conn))["list"]})
         people = await _people(conn)
         models = await project_models(conn, pid)
         m = next((x for x in models if x["id"] == mid), None)
@@ -591,7 +606,14 @@ async def apply(pid: str, body: dict, request: Request):
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
             "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
-            "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene}
+            "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene,
+            **({"category": {k: v for k, v in cat.items() if k != "new_group"}} if any(k != "new_group" for k in cat) else {})}
+    if cat.get("new_group"):                          # 새 분야 요청(만드는 것은 LX 관리자 · 배포 '분야' 탭)
+        async with db(realm="lx") as conn:
+            if not await conn.fetchval("SELECT 1 FROM card_group_requests WHERE project_id=$1 AND lower(name)=lower($2) AND state='open'", pid, cat["new_group"]):
+                await conn.execute("INSERT INTO card_group_requests(name, project_id, card_id, by) VALUES ($1,$2,$3,$4)",
+                                   cat["new_group"], pid, await _card_of(conn, pid), p.user_id)
+        form["new_group"] = cat["new_group"]
     extra = {"memo": memo, "form": form, "kind_word": "배포 신청", **({"test": True} if test else {})}
     if rej:                                          # 거절된 판을 고쳐서 다시 신청 — 같은 판 번호 · 새 승인 요청 한 줄
         return await _reapply(p, pid, r, rej, m, extra)
@@ -740,7 +762,8 @@ async def _services_list(conn) -> list[dict]:
         if not mine and not dps:
             continue
         st = _status_of(dps)
-        out.append({"id": c["id"], "name": _ko(c["name"]) or c["id"], "version": mine[-1] if mine else None, "state": st,
+        from .cards import _words                       # 화면 용어표(판독 → AI 분석) — 분석하기 카드와 같은 이름
+        out.append({"id": c["id"], "name": _words(_ko(c["name"])) or c["id"], "version": mine[-1] if mine else None, "state": st,
                     "state_label": {"ops": "운영", "pilot": "시범", "first": "첫 결과 전"}.get(st, STATUS_LABEL.get(st, ""))})
     return out
 
@@ -752,6 +775,8 @@ async def shares(request: Request):
         orgs = await _orgs(conn)
         svcs = await _services_list(conn)
         last = await latest_shares(conn)
+        from . import categories as CT
+        cats = await CT.load(conn)                       # 기관 공유 표도 분야 목록(순서)을 따른다(질문 5 · 원칙 165)
     eff = await _effective(orgs)
     rows = []
     for s in svcs:
@@ -762,11 +787,13 @@ async def shares(request: Request):
             cells[o["id"]] = {"shared": on, "at": _iso(x["at"]) if x and x["shared"] == on else None,
                               "year": (eff[o["id"]].get(s["id"]) or {}).get("year"), "test": bool(x and x["test"] and x["shared"] == on),
                               "sgg": list(x["sgg"]) if on and x and x["shared"] and x.get("sgg") else None}   # 광역 — 고른 소속 시군구(None = 전체 · 나중 13 ⓐ)
-        rows.append({**s, "cells": cells, "n": sum(1 for c in cells.values() if c["shared"])})
-    rows.sort(key=lambda r: (-r["n"], r["state"] != "ops", r["name"]))
+        rows.append({**s, "cells": cells, "n": sum(1 for c in cells.values() if c["shared"]), "groups": CT.names_of(cats, s["id"])})
+    gord = {g["name"]: i for i, g in enumerate(cats["list"])}
+    rows.sort(key=lambda r: (gord.get((r["groups"] or [None])[0], len(gord)), -r["n"], r["state"] != "ops", r["name"]))
     for o in orgs:                                       # 광역 기관 — 소속 시군구 목록(공유할 때 고른다 · 나중 13 ⓐ)
         o["regions"] = _wide_regions(o["id"]) if o.get("wide") else None
     return {"orgs": [{k: o[k] for k in ("id", "name", "full", "word", "wide", "n", "regions")} for o in orgs], "items": rows,
+            "groups": [g["name"] for g in cats["list"]],
             "services": env(len(rows), "count", "recorded", "승인된 판 · 배포 기록이 있는 서비스"), "as_of": now_iso()}
 
 
@@ -881,3 +908,8 @@ async def usage(request: Request):
                         "orgs": env(sum(1 for t in totals if t["services"]["value"]), "count", "recorded", "공유받은 기관"),
                         "month": env(month, "count", "recorded", "이번 달 분석(공유된 서비스 · LX + 기관 요청)"), "last": last_all},
             "as_of": now_iso()}
+
+
+# 분야(카테고리) 관리 라우트(categories.py) — 이 라우터에 붙인다(main.py 를 건드리지 않는다 · 질문 5 · 원칙 165)
+from . import categories as _categories  # noqa: E402
+router.include_router(_categories.router)

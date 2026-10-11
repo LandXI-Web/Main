@@ -1,0 +1,17 @@
+/* explain.css — 학습 · 추론 탭 설명 칸(원칙 181 · explain.js). 회백 칸 · 그림 왼쪽 · 글 오른쪽 · 아이콘 0 · 토큰만. */
+.lxp-ex{display:flex;flex-wrap:wrap;align-items:center;gap:24px;padding:16px 20px;border-radius:12px;background:var(--bg-0);min-width:0}
+.lxp-ex-g{flex:none;display:block}
+.lxp-ex-g .bx{fill:var(--bg-1);stroke:var(--rule);stroke-width:1}
+.lxp-ex-g .bx.on{stroke:var(--ink);stroke-width:1.5}
+.lxp-ex-g .lab{fill:none;stroke:var(--accent);stroke-width:1.5}
+.lxp-ex-g .ov{fill:var(--accent);opacity:.18}
+.lxp-ex-g .cut{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 2}
+.lxp-ex-g .ln{fill:none;stroke:var(--sub);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.lxp-ex-g .tx{font:500 11px var(--font-body);fill:var(--sub);text-anchor:middle}
+.lxp-ex-g .tm{font:700 12px var(--font-body);fill:var(--ink);text-anchor:middle}
+.lxp-ex-t{flex:1 1 300px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lxp-ex-t h3{margin:0 0 4px;font:700 15px/22px var(--font-body);color:var(--ink)}
+.lxp-ex-t p{margin:0;font:400 13px/20px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.lxp-ex-t p span{display:inline-block}
+.lxp-ex-t p.lxp-ex-k{margin-top:4px;color:var(--ink)}
+.lxp-ex-k b{font-weight:600}

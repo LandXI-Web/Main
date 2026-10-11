@@ -38,3 +38,7 @@
   .lc-up-row{grid-template-columns:minmax(0,1fr)}
   .lc-facts .la-dl{grid-template-columns:minmax(0,1fr)}
 }
+/* 분야 여러 개(질문 5 · 원칙 165) */
+.lc-grps{display:flex;flex-wrap:wrap;gap:8px}
+.lc-grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 14px/20px var(--font-body);color:var(--ink);cursor:pointer}
+.lc-grp:has(input:checked){border-color:var(--ink);background:var(--bg-0)}

@@ -1180,7 +1180,9 @@ async def tenant_page(tid: str, request: Request):
         sp = await c.fetchrow("SELECT mode, state, created_at FROM spaces WHERE tenant_id=$1", tid)
         full = await c.fetchval("SELECT name FROM tenants WHERE id=$1", tid)
         users = await c.fetch("SELECT id, name, role, status, dept FROM tenant_users WHERE tenant_id=$1 ORDER BY (status='disabled'), role, name", tid)
-        asg = await c.fetch("SELECT user_id, card_id FROM space_assign WHERE tenant_id=$1", tid)
+        # 이번 달 로그인한 기관 계정 수(요약 숫자만 — 개별 계정 · 로그인 기록은 그 기관 관리자 화면에서 · 원칙 177)
+        n_login = await c.fetchval("SELECT count(DISTINCT actor) FROM audit_log WHERE action='login' AND realm='tenant' AND at >= date_trunc('month', now()) "
+                                   "AND actor IN (SELECT id FROM tenant_users WHERE tenant_id=$1)", tid)
         staff = [{"id": u["id"], "name": u["name"] or ROLE_WORD.get(u["role"], "LX"), "role": ROLE_WORD.get(u["role"], "LX"), "dept": u["dept"]}
                  for u in await c.fetch("SELECT id, name, role, dept FROM lx_users WHERE status='active' AND role IN ('staff','admin') "
                                         "ORDER BY role DESC, name NULLS LAST, id")]
@@ -1207,10 +1209,6 @@ async def tenant_page(tid: str, request: Request):
     for s in out_svcs:
         if s["staff"]:
             s["staff"]["name"] = sname.get(s["staff"]["id"]) or "LX 직원"
-    by: dict[str, list[str]] = {}
-    for a in asg:
-        by.setdefault(a["user_id"], []).append(a["card_id"])
-    names = {s["card"]: s["name"] for s in svcs}
     act = [u for u in users if u["status"] != "disabled"]
     mgr = [u for u in act if u["role"] == "manager"]
     status_n: dict[str, int] = {}
@@ -1225,13 +1223,13 @@ async def tenant_page(tid: str, request: Request):
                        "accounts": _cnt(len(act), "기관 계정(사용 중지 뺌)", "명"),
                        "managers": _cnt(len(mgr), "기관 관리자", "명"), "viewers": _cnt(len(act) - len(mgr), "부서 사용자", "명"),
                        "disabled": _cnt(len(users) - len(act), "사용 중지(옛 아이디)", "명"),
+                       "logins_month": _cnt(int(n_login or 0), "이번 달 로그인한 기관 계정", "명"),
                        "requests_month": _cnt(int(n_req or 0), "이번 달 보낸 분석 요청"),
                        "shoots_month": _cnt(int(n_shoot or 0), "이번 달 보낸 촬영 요청") if n_shoot is not None else None},
             "log": [{"kind": r["kind"], "line": r["line"], "at": _iso(r["at"])} for r in logs],
             "services": out_svcs,
             "shoot": {"id": shoot, "name": sname.get(shoot) or "LX 직원"} if shoot else None,
             "staff": staff,
-            "views": {u["id"]: ("모든 서비스" if u["role"] == "manager" else (", ".join(names.get(x, x) for x in sorted(by.get(u["id"], []))) or "없음")) for u in users},
             "as_of": now_iso()}
 
 

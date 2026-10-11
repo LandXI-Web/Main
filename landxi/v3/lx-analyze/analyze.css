@@ -233,3 +233,11 @@ body.la-boot .k-app{visibility:hidden}
 .la-im-more:hover{border-color:var(--ink)}
 .la-im-map[hidden],.la-im-r .la-note[hidden]{display:none}
 @media (max-width:960px){.la-im-grid{grid-template-columns:minmax(0,1fr)}}
+/* 분야 표시 · 영상별 거르기(질문 5 · 원칙 165) */
+.la-chips-sep{width:1px;height:20px;margin:0 4px;background:var(--rule)}
+.la-chips-k{font:500 13px/18px var(--font-body);color:var(--sub)}
+.la-ac-pic{position:relative}
+.la-ac-cat{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 20px)}
+.la-ac-cat span{padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);font:600 12px/18px var(--font-body);color:var(--ink);white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.la-ac-imk{display:flex;flex-wrap:wrap;gap:4px}
+.la-ac-imk span{padding:1px 8px;border:1px solid var(--rule);border-radius:999px;font:500 12px/18px var(--font-body);color:var(--ink-2)}

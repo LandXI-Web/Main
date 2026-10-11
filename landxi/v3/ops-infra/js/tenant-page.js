@@ -1,7 +1,7 @@
 /* '기관 한 곳' 화면 — LX 관리자 대시보드 → 기관 → 카드를 누르면 서랍이 아니라 새 화면(now 페이지 질문 17 ⓑ 탭 넷 · 시안 design-r10/gov-3 admin-tenant-page).
    머리(마크 · 이름 · 공간 · 주소 · 기관 관리자) → 탭 넷: 개요 · 서비스와 담당 · 영상과 배경 · 사용과 계정. 주소 #/tenants/o/{기관}.
    값은 서버 한 곳 — GET /tenants/{id}/page(머리 · 개요 · 서비스 · 담당 · 볼 서비스) · /ops/tenants(사용 현황 — 기관 카드와 같은 값) ·
-   GET /accounts/users(계정 — 계정 관리와 같은 값) · 공유 영상 · 배경 사진(tenants.js 그대로). 담당 바꾸기 = PUT /tenants/{id}/helpdesk(처리 기록). */
+   계정은 /tenants/{id}/page 의 요약 숫자만(원칙 177 — 개별 계정은 그 기관 관리자 화면) · 공유 영상 · 배경 사진(tenants.js 그대로). 담당 바꾸기 = PUT /tenants/{id}/helpdesk(처리 기록). */
 import { api, h, esc, empty, toast } from './kit.js';
 import { orgs, DIM } from './data.js';
 import { shares, mainPhoto } from './tenants.js';
@@ -12,9 +12,7 @@ const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const nf = (v, d = 0) => (v == null ? '—' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: d }));
 const md = (s) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? `${m[1]}.${m[2]}` : '—'; };
 const ymd = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? `${m[1]}.${m[2]}.${m[3]}` : '—'; };
-const mdhm = (s) => { const m = /^\d{4}-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(s || '')); return m ? `${m[1]}.${m[2]} ${m[3]}:${m[4]}` : '—'; };
 const TABS = [['all', '개요'], ['svc', '서비스와 담당'], ['img', '영상과 배경'], ['use', '사용과 계정']];
-const ROLE_KO = { manager: '기관 관리자', viewer: '부서 사용자' };
 const LV = { 운영: 'ok', 시범: 'wait' };
 
 export function mountTenantPage(root) {
@@ -142,21 +140,14 @@ export function mountTenantPage(root) {
     const use = h('section.t-card.tp-card', {}, h('div.tp-us', {}, u('storage_gb', '저장', bsub), u('gpu_s_month', 'GPU 시간', '분석 · 학습 포함'),
       u('area_km2_month', '분석 면적', '분석 요청으로 돌린 넓이'), u('llm_requests_month', 'XI ChatGEO 요청', '채팅으로 지도 제어 · 분석 · 보고서')),
     h('p.tp-foot', { text: '이번 달 · 얼마나 쓰고 있나만 봅니다(막는 한도 없음).' }));
-    const acc = h('section.t-card.tp-card', {}, h('div.tp-hold'));
-    empty(acc.firstChild, { kind: 'loading', compact: true });
-    api(`/accounts/users?realm=tenant&tenant_id=${encodeURIComponent(cur)}`).then((j) => {
-      const all = (j.items || []).filter((x) => x.tenant_id === cur);
-      const on = all.filter((x) => x.status !== 'disabled'), off = all.filter((x) => x.status === 'disabled');
-      const row = (x) => h('tr', {}, h('td', {}, h('b', { text: x.name || '이름 없음' }), h('small', { text: x.login })), h('td', { text: x.dept || '—' }),
-        h('td', { text: x.role_ko || ROLE_KO[x.role] || '' }), h('td', { text: P.views?.[x.id] || '—' }),
-        h('td', {}, x.last_login ? mdhm(x.last_login) : '—', x.last_login_where ? h('small', { text: x.last_login_where }) : null),
-        h('td', {}, h('span.t-chip', { dataset: { lv: x.status === 'active' ? 'ok' : x.status === 'disabled' ? 'gap' : 'warn' }, text: x.status === 'active' ? '사용 중' : x.status === 'disabled' ? '사용 중지' : '잠김' })));
-      const t = h('table.tp-t', {}, h('thead', {}, h('tr', {}, ...['이름', '부서', '역할', '볼 수 있는 서비스', '마지막 로그인', '상태'].map((s) => h('th', { text: s })))), h('tbody', {}, ...on.map(row)));
-      const fold = off.length ? h('details.tp-fold', {}, h('summary', { text: `사용 중지 ${off.length} 보기` }), h('table.tp-t', {}, h('tbody', {}, ...off.map(row)))) : null;
-      acc.replaceChildren(t, fold || '', h('p.tp-foot', {}, '가입 승인은 기관 관리자가 합니다. 잠금 · 임시 비밀번호는 ', h('a', { href: '/landxi/v3/ops-accounts/', text: '계정 관리' }), '에서.'));
-    }).catch(() => { acc.replaceChildren(h('div.tp-hold')); empty(acc.firstChild, { kind: 'error', compact: true }); });
+    /* 계정은 요약 숫자만(원칙 177 · 10-11 "계정 관리는 각자") — 개별 계정 · 로그인 기록 · 부서는 그 기관 관리자 화면에서 */
+    const C = P.counts || {};
+    const a = (e, label) => h('div.tp-u', {}, h('b.num', {}, nf(val(e) ?? 0), h('small', { text: '명' })), h('span', { text: label }));
+    const acc = h('section.t-card.tp-card', {}, h('div.tp-us', {}, a(C.accounts, '계정'), a(C.managers, '기관 관리자'), a(C.viewers, '부서 사용자'),
+      a(C.logins_month, '이번 달 로그인')),
+    h('p.tp-foot', { text: `가입 승인 · 잠금 · 비밀번호 · 로그인 기록 · 부서는 ${P.name || '그 기관'} 기관 관리자가 관리합니다.${val(C.disabled) ? ` 사용 중지 ${nf(val(C.disabled))}명은 세지 않았습니다.` : ''}` }));
     return h('div.tp-use', {}, h('h2.tp-h2', {}, '사용 현황', h('small', { text: '이번 달' })), use,
-      h('h2.tp-h2', {}, '계정', h('small', { text: `기관 관리자 ${nf(val(P.counts.managers))} · 부서 사용자 ${nf(val(P.counts.viewers))}${val(P.counts.disabled) ? ` · 사용 중지 ${nf(val(P.counts.disabled))}` : ''}` })), acc);
+      h('h2.tp-h2', {}, '계정', h('small', { text: '요약' })), acc);
   }
 
   function paint() {

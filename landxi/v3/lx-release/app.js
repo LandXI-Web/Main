@@ -53,6 +53,7 @@ async function loading(p) { const done = hold({ onRetry: () => location.reload()
 async function drawInfer() {
   let d;
   try { d = await loading(api(base + '/infer')); } catch (e) { page.replaceChildren(h('p.rl-empty', { text: e.message || '추론 화면을 열 수 없습니다' })); return; }
+  const { inferExplain } = await import('../lx-project/explain.js');     // 원칙 181 — 추론이 무엇을 하는지(자동 조각 나누기) 설명 칸
   const st = { model: null, img: null, emd: '', ranges: null };
   const models = d.models || [];
   st.model = (models.find((m) => m.status === 'registered') || models[0])?.id || null;
@@ -134,11 +135,13 @@ async function drawInfer() {
     reset.hidden = same;
   }
   confIn.addEventListener('input', sync); minIn.addEventListener('input', sync);
+  /* 원칙 181 — 칸 이름에 뜻이 보이게: 결과로 남길 기준(신뢰도 · 최소 크기) */
   const setBox = h('details.rl-set', {},
-    h('summary', {}, h('span', { text: '설정' }), sumEl),
+    h('summary', {}, h('span', { text: '결과로 남길 기준' }), sumEl),
     h('div.rl-set-b', {},
-      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '신뢰도 기준' }), h('small', { text: 'AI가 이만큼 확실할 때만 결과로 남깁니다(0~1)' })), confIn),
-      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '최소 크기' }), h('small', { text: '이보다 작은 것은 결과에서 뺍니다' })), h('span.rl-set-u', {}, minIn, h('em', { text: '㎡' }))),
+      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '신뢰도 기준(0~1)' }),
+        h('small', {}, h('span', { text: 'AI가 이 정도 이상 확신한 것만 결과로 남깁니다 ·' }), ' ', h('span', { text: '높이면 결과가 적고 정확해집니다' }))), confIn),
+      h('label.rl-set-r', {}, h('span.rl-set-k', {}, h('b', { text: '최소 크기' }), h('small', { text: '이보다 작은 도형은 결과에서 버립니다' })), h('span.rl-set-u', {}, minIn, h('em', { text: '㎡' }))),
       h('div.rl-set-f', {}, setNote, reset)));
   sync();
 
@@ -163,6 +166,7 @@ async function drawInfer() {
   const can = d.can?.run;
   const left = card('추론', '배포 신청 없이 · 이 프로젝트 모델로 분석',
     h('p.rl-lede', { text: '학습한 모델로 영상을 바로 분석해 봅니다. 결과는 나와 프로젝트 참여자만 봅니다.' }),
+    inferExplain(),
     h('div.rl-step', {}, h('h3', { text: '모델' }), models.length ? mList : h('p.rl-empty', { text: '아직 학습한 모델이 없습니다 — 학습 단계에서 먼저 학습해 주세요' })),
     h('div.rl-step', {}, h('h3', { text: '영상' }),
       h('p.rl-grp', { text: '프로젝트 영상' }), iProj,
@@ -240,6 +244,16 @@ async function drawPublish() {
 
   if (d.first) row('서비스', svcName, h('small', { text: '첫 판입니다 — 승인되면 새 분석 서비스가 됩니다' }));
   else row('서비스', h('b', { text: d.service?.name || '' }), d.service?.line ? h('small', { text: d.service.line }) : null);
+  /* 분야(여러 개) · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 승인되면 서비스 카드 · 분석하기 거르기에 반영. 새 분야는 요청만(만드는 것은 LX 관리자) */
+  const CT = d.category || { groups: [], picked: [], kinds: [], picked_kinds: [] };
+  const ck = (name, value, on, text) => h('label.rl-ck', {}, h('input', { type: 'checkbox', name, value, checked: on || undefined }), h('span', { text }));
+  const grpBox = h('div.rl-cks', { role: 'group', 'aria-label': '분야' }, ...CT.groups.map((g) => ck('grp', g.id, CT.picked.includes(g.id), g.name)));
+  const newGrp = h('input.t-input.rl-newgrp', { type: 'text', maxlength: '20', placeholder: '목록에 없으면 새 분야 이름(요청)', 'aria-label': '새 분야 요청' });
+  const desc = h('input.t-input', { type: 'text', maxlength: '60', value: CT.desc || '', placeholder: '예: 필지별 경작 · 휴경 유무와 면적을 분석할 수 있는 서비스입니다', 'aria-label': '서비스 설명' });
+  const kindBox = h('div.rl-cks', { role: 'group', 'aria-label': '쓸 수 있는 영상' }, ...CT.kinds.map((k) => ck('kind', k, CT.picked_kinds.includes(k), k)));
+  row('분야', grpBox, newGrp, h('small', { text: (CT.asked || []).length ? `요청한 새 분야 ${CT.asked.join(' · ')} — LX 관리자가 만들면 목록에 나타납니다` : '여러 개 고를 수 있습니다 · 분석하기 거르기와 서비스 카드에 보입니다 · 새 분야는 LX 관리자가 만듭니다' }));
+  row('서비스 설명', desc, h('small', { text: '분석하기 카드에 이 글이 그대로 보입니다 — 무엇을 분석해 무엇을 알 수 있는지 한 문장' }));
+  row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석하기의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
   row('정확도', accEl, lowEl, h('small', { text: '학습 끝 검증 값' }));
   row('학습 데이터', dataEl);
@@ -256,6 +270,8 @@ async function drawPublish() {
     go.disabled = true; msg.textContent = '';
     try {
       const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined,
+        groups: [...grpBox.querySelectorAll('input:checked')].map((x) => x.value), desc: desc.value.trim(), new_group: newGrp.value.trim() || undefined,
+        imagery_kinds: [...kindBox.querySelectorAll('input:checked')].map((x) => x.value),
         ...(d.first ? { name: svcName.value.trim(), ledger_kind: ledger.value || undefined } : {}) } });
       toast(r.again ? '고쳐서 다시 신청했습니다' : '배포를 신청했습니다 — LX 관리자가 검토합니다');
       await drawPublish();
@@ -263,11 +279,11 @@ async function drawPublish() {
     } catch (e) { devlog('apply', e.code || e.message); msg.textContent = e.message || '신청하지 못했습니다'; go.disabled = false; }
   });
   const lead = d.can?.lead;
-  const foot = h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '신청서의 값은 모두 서버 기록입니다 · 직원이 적는 것은 메모 한 칸입니다')),
+  const foot = h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '신청서의 값은 모두 서버 기록입니다 · 직원이 적는 것은 분야 · 설명 · 메모입니다')),
     canApply ? go : h('p.rl-note', { text: s.state === 'pending' ? 'LX 관리자가 검토 중입니다' : `배포 신청은 프로젝트장${lead ? `(${lead})` : ''}이 합니다` }));
   const head = card('배포 신청', join(d.service?.name || svcName.value, `${ver}판`), h('p.rl-ver', { text: prev ? `지난 판 ${prev.version} · ${md(prev.approved_at)} 승인` : '첫 판입니다' }),
     dl, h('div.rl-step', {}, h('h3', { text: '메모' }), memo), foot, msg);
-  if (!canApply) { [mSel, memo, svcName, ledger].forEach((x) => { x.disabled = true; }); sceneEl.querySelectorAll('input').forEach((x) => { x.disabled = true; }); }
+  if (!canApply) { [mSel, memo, svcName, ledger, newGrp, desc].forEach((x) => { x.disabled = true; }); [sceneEl, grpBox, kindBox].forEach((b) => b.querySelectorAll('input').forEach((x) => { x.disabled = true; })); }
 
   /* 오른쪽 — 신청 상태 · 지난 판 · 공유된 기관 */
   const steps = [

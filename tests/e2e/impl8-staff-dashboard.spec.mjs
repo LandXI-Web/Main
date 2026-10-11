@@ -1,6 +1,6 @@
 // 구현 8차 · LX 직원 대시보드 한 번에 정리(직원-6 4차 · 직원-7 · 10-09 13:14) — 로그인 폼 입력만(세션 주입 0) · 읽기만(신청을 보내지 않는다) · GPU 0.
 // 확인: ① 대시보드 칸 = 프로젝트 진행 현황 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지 — 옛 칸(내 프로젝트 · 우리 서비스 · 바로 분석하기 · 최근 활동) 0
-//       ② 흐름도 네 단계 숫자 = 서버 목록(GET /projects?scope=mine)을 네 단계로 묶은 수 · 칩 둘 + 외 n개
+//       ② 프로젝트 진행 현황 = 다른 칸과 같은 크기의 요약 칸(원칙 176 · 10-11) — 여섯 단계 한 줄씩(숫자 = 서버 목록을 단계로 묶은 수 · 남은 일) · 칩 · 진행 그래프 0
 //       ③ 단계를 누르면 메뉴 '프로젝트' 목록(?stage=)이 그 단계만 · 남은 일 먼저 · 진행 n/4 · '지금' = 서버 next
 //       ④ 증량 신청은 내 정보 창 한 길(폼이 같은 자리에서 펼쳐짐) ⑤ 가로 넘침 0 · 콘솔 오류 0 · '결재' · '반려' 0
 // LX_SHOTS=1 이면 증거 캡처(docs/superpowers/final/process/impl-8/staff-dashboard/shots).
@@ -59,18 +59,19 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
     await expect(page.locator('.ld-card h2')).toHaveText([/^프로젝트 진행 현황/, /^저장 용량/, /^내가 돌린 작업/, /^요청함/, /^공지/], { timeout: 20000 });
     for (const old of ['.lc-mine', '.lc-pr', '.ld-svc', '.ld-quick', '.ld-act', '.ld-th', '.ld-go', '.ld-recent']) await expect(page.locator(old)).toHaveCount(0);
 
-    /* ② 흐름도 숫자 = 서버 목록을 네 단계로 묶은 수 */
+    /* ② 요약 칸 — 다섯 칸 같은 크기 · 여섯 단계 숫자 = 서버 목록을 단계로 묶은 수 · 칩 · 그래프 0 */
     const want = [0, 0, 0, 0, 0, 0];
-    for (const p of j.items) want[G[p.stage.key] ?? 0] += 1;
+    const warnN = [0, 0, 0, 0, 0, 0];
+    for (const p of j.items) { const g = G[p.stage.key] ?? 0; want[g] += 1; if (p.blocked?.[0] && p.blocked[0].kind !== 'wait') warnN[g] += 1; }
+    const ws = await page.locator('.ld-row > .ld-card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+    expect(ws.length).toBe(5);
+    expect(Math.max(...ws) - Math.min(...ws)).toBeLessThanOrEqual(1);
+    await expect(page.locator('.ld-board .sb-chip, .ld-board .sb-st-g')).toHaveCount(0);
     if (j.items.length) {
-      await expect(page.locator('.ld-board .sb-st')).toHaveCount(6);
-      await expect(page.locator('.ld-board .sb-st-l')).toHaveText(['데이터 올리기', '학습데이터 구축', '학습', '추론', '결과 확인', '배포 신청']);
-      expect((await page.locator('.ld-board .sb-st-row > b').allTextContents()).map(Number)).toEqual(want);
-      for (let i = 0; i < 6; i++) {
-        const st = page.locator('.ld-board .sb-st').nth(i);
-        await expect(st.locator('.sb-chip:not(.sb-chip--more)')).toHaveCount(Math.min(2, want[i]));
-        if (want[i] > 2) await expect(st.locator('.sb-chip--more')).toHaveText(`외 ${want[i] - 2}개`);
-      }
+      await expect(page.locator('.ld-board .ld-pf li')).toHaveCount(6);
+      await expect(page.locator('.ld-board .ld-pf span')).toHaveText(['데이터 올리기', '학습데이터 구축', '학습', '추론', '결과 확인', '배포 신청']);
+      expect((await page.locator('.ld-board .ld-pf b').allTextContents()).map(Number)).toEqual(want);
+      for (let i = 0; i < 6; i++) await expect(page.locator('.ld-board .ld-pf li').nth(i).locator('em')).toHaveCount(warnN[i] ? 1 : 0);
     }
     await page.waitForTimeout(600);
     const m1 = await measure(page);
@@ -83,7 +84,7 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
     const gi = want.findIndex((n) => n > 0);
     if (gi >= 0) {
       await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/') && /stage=/.test(u.search), { timeout: 15000 }),
-        page.locator('.ld-board .sb-st-b').nth(gi).click()]);
+        page.locator('.ld-board .ld-pf a').nth(gi).click()]);
       await page.locator('.lxp-list .sb-tb tbody tr').first().waitFor({ timeout: 20000 });
       await expect(page.locator('.lxp-flow .sb-st[data-open]')).toHaveCount(1);
       await expect(page.locator('.lxp-list .sb-tb tbody tr')).toHaveCount(want[gi]);

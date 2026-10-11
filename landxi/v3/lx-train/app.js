@@ -155,6 +155,11 @@ function labelSlot(host, cls = 'tr-label') {
 const MODELS = (modelsJ?.items || []).filter((m) => ['seg', 'obb', 'det'].includes(m.task));
 const FB = fbJ?.items || [];
 devlog('models', `${MODELS.length} trainable / ${(modelsJ?.items || []).length}`);
+/* 원칙 181 — 프로젝트 '학습' 탭 맨 위 설명 칸(무슨 모델로 무엇을 배우나 · 접지 않음). 모델 종류 = 이 프로젝트 모델의 서버 기록(task) */
+if (PRJ && !IS_LABEL) {
+  const { trainExplain } = await import('../lx-project/explain.js');
+  pane.querySelector('.tr-h').after(h('div.tr-ex', {}, trainExplain(MODELS.find((m) => m.id === projectModel(PRJ)) || null)));
+}
 
 /* 모델 학습 기록(카드) — 등록된 것만 읽는다(없는 파일을 두드리지 않는다) */
 const CARD = new Map();

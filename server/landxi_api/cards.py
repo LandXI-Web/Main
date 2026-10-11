@@ -32,7 +32,7 @@ router = APIRouter()
 
 CID_RE = re.compile(r"^card-[a-z0-9-]{2,40}$")
 FILE_RE = re.compile(r"^scene-[0-9a-f]{12}\.jpg$")
-GROUPS = ["농지·시설", "환경", "건축·변화", "안전", "해외"]
+GROUPS = ["농지·시설", "환경", "건축·변화", "안전", "해외"]     # 옛 상수 — 분야 표(0030_card_groups · categories.py)가 없을 때만 쓴다(질문 5 · 원칙 165)
 LIMITS = {"name": 40, "line": 60, "result_word": 20, "imagery": 40, "timepoints": 40, "finds": 60, "compare": 60, "caption": 40}
 SCENE_MAX_BYTES = 8_000_000
 SCENE_MIN_PX, SCENE_OUT_PX = 320, 1600
@@ -176,8 +176,25 @@ async def _load(conn) -> dict:
     rules = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM survey_rules")}
     live = await conn.fetch("SELECT card_id, sgg_cd, region_profile, tenant_id FROM deploys WHERE stage IN ('ga','canary','shadow') AND NOT coalesce(test,false)")
     owner_names = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM lx_users")}
+    from . import categories
+    cats = await categories.load(conn)          # 분야 목록(LX 관리자가 관리 · 순서) + 서비스 × 분야(여러 개)
     return {"cards": cards, "info": info, "vers": vers, "models": models, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
-            "owner_names": owner_names, "learned": _learned, "gsd_word": gsd_word}
+            "owner_names": owner_names, "learned": _learned, "gsd_word": gsd_word, "cats": cats}
+
+
+def _groups(m: dict) -> list[str]:
+    """분야 이름 목록(순서대로) — 분야 표 한 출처. 표가 없을 때만 옛 상수."""
+    c = m.get("cats") or {}
+    return [g["name"] for g in c["list"]] if c.get("ready") else list(GROUPS)
+
+
+def _card_groups(m: dict, cid: str, inf: dict, scope: str | None) -> list[str]:
+    from .categories import names_of
+    c = m.get("cats") or {}
+    if c.get("ready"):
+        return names_of(c, cid)
+    g = inf.get("grp") or ("해외" if scope == "global" else None)
+    return [g] if g else []
 
 
 def _owner(m: dict, cid: str, card) -> dict:
@@ -346,8 +363,11 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
             if re.fullmatch(r"smp_[0-9a-f]{6,20}", sid):
                 sample_src = f"/training/samples/{sid}/preview/0?size=800"      # API 아래 경로 — 화면이 로그인 토큰으로 받아 그린다(직원 전용)
                 break
+    from .categories import kinds_from
+    grps = _card_groups(m, cid, inf, card["scope"])
     out = {
-        "id": cid, "name": _name(card["name"]), "scope": card["scope"] or "local", "group": inf.get("grp") or ("해외" if card["scope"] == "global" else None),
+        "id": cid, "name": _name(card["name"]), "scope": card["scope"] or "local", "group": grps[0] if grps else None, "groups": grps,
+        "imagery_kinds": list(inf.get("imagery_kinds") or []) or kinds_from(imagery),     # 쓸 수 있는 영상(배포 신청서에서 고름 · 없으면 영상 조건 글에서)
         "state": state, "state_label": STAGE_WORD[state],
         "line": _words(inf.get("line")), "scene": scene, **({"scenes": scenes} if p.realm == "tenant" else {}),
         "where": example["region"] if example else where_any, "as_of": example["as_of"] if example else None, "example": example,
@@ -388,7 +408,7 @@ async def _deck_lx(p) -> dict:
         mine = [it for it in items if it["card"] == c["id"]]
         out.append(_card_core(m, c, mine, p))
     out.sort(key=lambda x: (RANK[x["state"]], 0 if x["scene"] else 1, x["scope"] == "global", x["name"]))
-    return {"items": out, "total": len(out), "groups": GROUPS, "as_of": now_iso(), "computed_at": at}
+    return {"items": out, "total": len(out), "groups": _groups(m), "as_of": now_iso(), "computed_at": at}
 
 
 async def _deck_tenant(p) -> dict:
@@ -471,7 +491,7 @@ async def _deck_tenant(p) -> dict:
         for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):
             core.pop(k, None)
         out.append(core)
-    return {"items": out, "total": len(out), "short": short, "as_of": now_iso(), "computed_at": at, "scope": "assigned" if dept_only else "all"}
+    return {"items": out, "total": len(out), "groups": _groups(m), "short": short, "as_of": now_iso(), "computed_at": at, "scope": "assigned" if dept_only else "all"}
 
 
 @router.get("/cards/deck")
@@ -531,7 +551,8 @@ async def one(cid: str, request: Request):
                  "base": ({"name": model_label(base["name"], base["metrics"]), "acc": acc_env(base["metrics"])} if base else None)}
     return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"),
             "scene_pick": inf.get("scene") or None, "result_sgg": inf.get("result_sgg"), "result_word": inf.get("result_word"),
-            "info": {k: inf.get(k) for k in ("line", "grp", "imagery", "timepoints", "finds", "compare")}, "groups": GROUPS,
+            "info": {k: inf.get(k) for k in ("line", "grp", "imagery", "timepoints", "finds", "compare")},
+            "all_groups": _groups(m),                 # 고를 수 있는 분야(분야 표 순서) — groups 는 이 카드의 분야(여러 개)
             "versions": [{"version": v["version"], "approved_at": v["approved_at"].isoformat(timespec="seconds") if v["approved_at"] else None} for v in vers],
             "as_of": now_iso()}
 
@@ -555,11 +576,17 @@ async def put(cid: str, body: dict, request: Request):
     for k in ("line", "result_word", "imagery", "timepoints", "finds", "compare"):
         if k in body:
             upd[k] = _txt(body.get(k), k)
-    if "group" in body:
-        g = body.get("group") or None
-        if g is not None and g not in GROUPS:
-            raise ApiError("bad_request", "분류는 정해진 것 중에서 고릅니다", {"allowed": GROUPS})
-        upd["grp"] = g
+    want_groups = None                                # 분야(여러 개 · 분야 표 이름) — groups:[이름…] 또는 옛 group:이름
+    if "groups" in body or "group" in body:
+        names = body.get("groups") if "groups" in body else ([body.get("group")] if body.get("group") else [])
+        allowed = _groups(m)
+        if not isinstance(names, list) or any(n not in allowed for n in names):
+            raise ApiError("bad_request", "분야는 목록에 있는 것 중에서 고릅니다", {"allowed": allowed})
+        if (m.get("cats") or {}).get("ready"):
+            by_name = {g["name"]: g["id"] for g in m["cats"]["list"]}
+            want_groups = [by_name[n] for n in names]
+        else:
+            upd["grp"] = names[0] if names else None
     if "result_sgg" in body:
         v = str(body.get("result_sgg") or "") or None
         if v and v not in {str(it.get("sgg_cd")) for it in mine if it.get("sgg_cd")}:
@@ -581,6 +608,9 @@ async def put(cid: str, body: dict, request: Request):
         await conn.execute("INSERT INTO card_info(card_id, updated_by) VALUES ($1,$2) ON CONFLICT (card_id) DO NOTHING", cid, p.user_id)
         for k, v in upd.items():                      # jsonb 칸(scene)은 연결의 jsonb 변환기가 그대로 바꾼다(문자열로 두 번 싸지 않는다)
             await conn.execute(f"UPDATE card_info SET {k}=$2, updated_at=now(), updated_by=$3 WHERE card_id=$1", cid, v, p.user_id)
+        if want_groups is not None:
+            from .categories import set_card_groups
+            upd["groups"] = await set_card_groups(conn, cid, want_groups, p.user_id)
         if name and name != core["name"]:
             await conn.execute("UPDATE cards SET name = jsonb_build_object('ko', $2::text, 'en', coalesce(name->>'en', $2::text)) WHERE id=$1", cid, name)
         await audit(conn, p, "card.info", cid, before, {**upd, **({"name": name} if name else {})})

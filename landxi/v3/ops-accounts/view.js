@@ -1,7 +1,8 @@
 /* 계정 화면 — LX 관리자(ops-accounts · 전부)와 기관 관리자(gov-accounts · 자기 기관만)가 같은 모양으로 쓴다(원칙 43 UI/UX 통일성).
    탭 다섯: 가입 신청 · 비밀번호 재설정 · 계정 · 로그인 실패 · 처리 기록. 목록 → 행을 누르면 오른쪽 서랍(K5) → 승인 · 반려(사유 필수 — 결재함과 같은 모양).
    서버가 정본(server/landxi_api/accounts.py): 관할(기관 관리자 = 자기 기관) · 내 계정 스스로 바꾸기 0 · 누가 처리했는지 기록.
-   LX 관리자는 기관 가입 신청을 보기만 한다(원칙 72 — 승인 · 반려는 그 기관 관리자 · 서버가 can_decide 로 알린다). 옛 아이디는 '사용 중지'(바꾸기 0).
+   계정 관리는 각자 범위(원칙 177 · 10-11): LX 관리자 = LX 계정 · LX 로그인 기록만 · 기관 관리자 = 자기 기관 계정 · 로그인 기록 · 부서만(서버가 거른다).
+   기관 계정은 LX 관리자 화면에 섞지 않는다 — 기관 한 곳 화면 '사용과 계정'에 요약 숫자만. 옛 아이디는 '사용 중지'(바꾸기 0).
    LX 관리자에게만 탭 둘이 더 있다(기관 관리자 화면에는 없음):
    · 저장 용량(제안 S-19 · 용량-1 · 10-09) — 탭 하나에 전체 현황 · 기본 할당(처음 50 GB) · 계정별 할당 표 · 증량 신청 서랍(승인 · 거절)을 모았다(storage.js).
      예전 '저장 용량 요청' 탭과 계정 서랍의 할당 칸은 이 탭으로 옮김(기능 그대로). 할당을 넘어도 막지 않는다(알리기만).
@@ -65,7 +66,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
 
   /* 소속 고르기(LX 관리자 · 계정 탭) — 전체 · LX · 기관들 */
   function mountFilter(orgs) {
-    if (!LX || orgSel) return;
+    if (!LX || orgSel || !orgs.length) return;          // LX 관리자 = LX 계정만(원칙 177) — 서버가 기관 목록을 주지 않으면 소속 고르기도 없다
     orgSel = h('select.t-input.acc-org', { 'aria-label': '소속' }, h('option', { value: '', text: '소속 전체' }), h('option', { value: 'lx', text: 'LX' }),
       ...orgs.map((o) => h('option', { value: 'tenant:' + o.id, text: o.name })));
     orgSel.addEventListener('change', () => load('users'));

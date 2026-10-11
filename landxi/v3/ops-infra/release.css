@@ -97,3 +97,27 @@
 .rv-sg-g label{display:flex;align-items:center;gap:6px;font:400 14px/20px var(--font-body);color:var(--ink);cursor:pointer}
 .rv-sg-acts{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;position:sticky;bottom:0;padding-top:8px;background:var(--bg-1)}
 .rv-sg-acts .t-btn{height:48px}
+/* 분야 탭(질문 5 · 원칙 165) · 기관 공유 분야 묶음 머리줄 */
+.rv-grid--cat{grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
+.rv-cat-side{display:grid;gap:16px;align-content:start}
+.rv-tbl--cat td.rv-cat-ord{width:72px;white-space:nowrap}
+.rv-ab{width:26px;height:26px;margin-right:4px;border:1px solid var(--rule);border-radius:6px;background:var(--bg-1);color:var(--ink-2);font:600 13px/1 var(--font-body);cursor:pointer}
+.rv-ab:disabled{opacity:.35;cursor:default}
+.rv-cat-nm{min-width:220px}
+.rv-cat-nm small{white-space:nowrap}
+.rv-svc{display:flex;flex-wrap:wrap;gap:4px 6px}
+.rv-svc span{padding:2px 8px;border-radius:999px;background:var(--bg-0);font:400 12px/18px var(--font-body);color:var(--ink-2);white-space:nowrap}
+.rv-cat-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rv-cat-edit .t-input{width:150px}
+.rv-cat-new{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:14px}
+.rv-cat-new .t-input{width:220px}
+.rv-cat-new .rv-note{margin:0}
+.rv-hist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.rv-hist li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;font:400 13px/20px var(--font-body);color:var(--ink)}
+.rv-hist li > small{color:var(--sub)}
+.rv-hist li > div{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;word-break:keep-all}
+.rv-hist li > div small{color:var(--sub)}
+.rv-hist-acts{display:inline-flex;gap:10px}
+.rv-hist-acts .rv-link{border:0;background:none;padding:0;cursor:pointer}
+.rv-tbl--cat .rv-link{border:0;background:none;padding:0;cursor:pointer;white-space:nowrap}
+.rv-tbl--matrix tr.rv-gh th{padding:16px 10px 6px;font:600 13px/18px var(--font-body);color:var(--ink-2);border-bottom:1px solid var(--rule)}

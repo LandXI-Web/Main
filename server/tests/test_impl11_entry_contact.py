@@ -37,16 +37,17 @@ def test_login_entry_recorded_and_listed(live, tok):
     items = httpx.get(B + "/accounts/logins", headers=H(tok["admin"]), timeout=30).json()["items"]
     a = next(x for x in items if x["ip"] == ip_a)
     assert a["site_ko"] == "LX 관리자" and a["host"] == "admin.land-xi.dev" and a["org"] == "LX" and a["login"] == ADMIN_LOGIN
-    n = next(x for x in items if x["ip"] == ip_n)
-    assert n["site_ko"] == "기관 · 남원시" and n["host"] == "namwon.land-xi.dev" and "남원시" in n["org"]
+    assert not any(x["ip"] == ip_n for x in items) and all(x["org"] == "LX" for x in items)    # LX 관리자 = LX 계정 로그인만(원칙 177)
     inside = [x for x in items if x["ip"] == "이 PC" and x["site_ko"] != "—"]
     assert all(x["site_ko"] == "이 PC" for x in inside)                       # 이 PC 안 로그인(시험 · 개발)은 '이 PC'
     # 기관 관리자 = 자기 기관 계정의 로그인만 · 직원은 못 본다
     mine = httpx.get(B + "/accounts/logins", headers=H(tok["namwon"]), timeout=30).json()["items"]
     assert mine and len({x["org"] for x in mine}) == 1 and "남원시" in mine[0]["org"] and any(x["ip"] == ip_n for x in mine)
+    n = next(x for x in mine if x["ip"] == ip_n)
+    assert n["site_ko"] == "기관 · 남원시" and n["host"] == "namwon.land-xi.dev"
     assert httpx.get(B + "/accounts/logins", headers=H(tok["staff"]), timeout=30).status_code == 403
     # 계정 목록 '최근 로그인'에 입구
-    us = httpx.get(B + "/accounts/users?realm=tenant&tenant_id=namwon", headers=H(tok["admin"]), timeout=30).json()["items"]
+    us = httpx.get(B + "/accounts/users", headers=H(tok["namwon"]), timeout=30).json()["items"]          # 기관 계정 = 그 기관 관리자 화면
     me = next(x for x in us if x["id"] == TENANT_ID["namwon"])
     assert me["last_login_where"] == "기관 · 남원시"
     for t in (t_admin, t_nw):

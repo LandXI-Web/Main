@@ -1,23 +1,38 @@
-/* console.css — LX 직원 대시보드(직원-6 4차 · 직원-7 · 10-09 한 번에 정리 · 시안 design-r14/lx-staff-board/dashboard.html). PC 만(원칙 139).
-   맨 위 넓은 칸 = 프로젝트 진행 현황 흐름도(lx-project/board.css) · 아래 줄 넷 = 저장 용량 · 내가 돌린 작업 · 요청함 · 공지.
+/* console.css — LX 직원 대시보드(직원-6 4차 · 직원-7 · 10-09 한 번에 정리 · 원칙 176 대시보드는 요약 10-11). PC 만(원칙 139).
+   한 줄 다섯 칸 같은 크기 = 프로젝트 진행 현황(요약 · 여섯 단계 한 줄씩) · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지.
+   1440 에서 칸 너비 약 250 — 2×3 은 한 칸이 비어 한쪽으로 쏠려서, 다섯 칸 한 줄을 고름.
    회백 바탕 위 흰 카드 16 · 그림자 0 · 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css) · 법전 system-v2.2-toss. */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:24px 24px 40px}
 .ld-in{display:flex;flex-direction:column;gap:16px;margin:0 auto}
 .ld-in > .lxp-ntcs:empty{display:none}
 .ld-card{display:flex;flex-direction:column;gap:12px;min-width:0;box-sizing:border-box}
+.ld-card.t-card{padding:20px}
+.ld-hd{display:flex;flex-direction:column;gap:2px;min-height:52px}
 .ld-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.ld-h h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-.ld-sub{margin-left:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);letter-spacing:0}
+.ld-h h2{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.ld-sub{font:500 13px/20px var(--font-body);color:var(--sub);letter-spacing:0;word-break:keep-all}
+.ld-sub span{display:inline-block}
 .ld-more{flex:none;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;transition:background-size var(--d-380) var(--e-ui)}
 .ld-more::after{content:" →"}
 .ld-more:hover{background-size:100% 1px}
 button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 
-/* ① 프로젝트 진행 현황 — 흐름도(board.css) */
-.ld-board{gap:16px}
+/* ① 프로젝트 진행 현황 — 요약 칸: 여섯 단계 한 줄씩(숫자 · 단계 이름 · 남은 일) · 왼쪽 가는 선 = 흐름 */
+.ld-flow{flex:1}
+.ld-pf{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;position:relative}
+.ld-pf::before{content:"";position:absolute;left:13px;top:14px;bottom:14px;width:1px;background:var(--rule)}
+.ld-pf a{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:3px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
+.ld-pf a:hover{background:var(--bg-0)}
+.ld-pf b{justify-self:center;min-width:22px;padding:0 2px;background:var(--bg-1);text-align:center;font:800 17px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.ld-pf a:hover b{background:var(--bg-0)}
+.ld-pf span{font:500 var(--fs-label)/24px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-pf em{font:500 12px/18px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
+.ld-pf li[data-n="0"] b{color:var(--mute)}
+.ld-pf li[data-n="0"] span{color:var(--sub)}
+.ld-foot-s .ld-more{font-size:13px}
 
-/* ② 아래 줄 — 네 칸 같은 높이 */
-.ld-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
+/* 다섯 칸 같은 크기 · 같은 높이 */
+.ld-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;align-items:stretch}
 .ld-foot-s{margin:auto 0 0;padding-top:10px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
 
 /* 숫자 칸(요청함 · 내가 돌린 작업) */
@@ -62,6 +77,6 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-ntc-by{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
 .ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
 
-/* 좁은 PC — 아래 줄 둘씩 */
-@media (max-width:1180px){.ld-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* 좁은 PC — 셋씩 */
+@media (max-width:1180px){.ld-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .ld-foot-s span{display:inline-block}
