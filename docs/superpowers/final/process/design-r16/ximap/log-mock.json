@@ -1,0 +1,32 @@
+[
+ {
+  "file": "m1-home-ledger-1440-0911.png",
+  "shot_at": "2026-10-11T09:11:28",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=home",
+  "flags": []
+ },
+ {
+  "file": "m2-source-year-1440-0913.png",
+  "shot_at": "2026-10-11T09:13:11",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=source",
+  "flags": []
+ },
+ {
+  "file": "m3-run-fill-1440-0911.png",
+  "shot_at": "2026-10-11T09:11:44",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=run",
+  "flags": []
+ },
+ {
+  "file": "m4-change-chat-1440-0913.png",
+  "shot_at": "2026-10-11T09:13:17",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=change",
+  "flags": []
+ },
+ {
+  "file": "m5-global-same-map-1440-0911.png",
+  "shot_at": "2026-10-11T09:11:55",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=global",
+  "flags": []
+ }
+]

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 다시 짜기</title>
+<link rel="stylesheet" href="xm.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">XI맵</span>
+    <div class="search" id="search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span id="searchT">시군구 · 지번 · 또는 XI ChatGEO 에 질문</span></div>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role" id="roleName">LX 직원</span>
+    <span class="bell"><svg viewBox="0 0 20 20"><path d="M5 14V9a5 5 0 0110 0v5l1.5 2h-13z M8.5 18h3"/></svg><i></i></span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="도구" id="rail"></nav>
+  <main class="main"><div class="stage" id="stage"></div><div id="ui"></div></main>
+</div>
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">시안은 실제 결과 데이터를 서버에서 읽습니다 — LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 16차 · XI맵 시안 — 코드 수정 0 · 서버 수정 0 · GPU 0.
+   실제: 전국 시군구 경계 · 결과 수(/regions) · 구례군 2023 결과 PMTiles · 남원 드론 4시점 · 남원 두 시점 변화 자료 · 키르기스 구역 경계 · Sentinel-2 경작지 결과 · 브이월드 · Sentinel-2 바탕.
+   시안(아직 없는 것): 국토지리정보원 연도별 층 · 해마다 전국 결과 장부 · 그린 범위 분석의 차오름 · 새 영상 알림. */
+import { createStage } from '../../../../v3/kit/stage.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+import { addResultLayers } from '../../../../xi/fx/arrive.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'home';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => Number(n).toLocaleString('ko-KR');
+const LX = '../../../../';
+const ui = document.getElementById('ui');
+const now = new Date(); document.getElementById('clock').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${document.getElementById('clock').textContent}`;
+const AI = '#0FA9A0';
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+/* ── 도구 레일: 영상 · 분석 · 변화 · 층 · 보고서 ── */
+const ICON = {
+  img: '<rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M3 13l4-4 3 3 2-2 5 5"/><circle cx="13.5" cy="7.5" r="1.2"/>',
+  scan: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  diff: '<path d="M3 15l4-6 3 4 3-7 4 9z"/><path d="M3 5h14" stroke-dasharray="2 2"/>',
+  layers: '<path d="M10 3l7 4-7 4-7-4z M3 11l7 4 7-4 M3 14.5l7 4 7-4"/>',
+  doc: '<path d="M5 3h7l3 3v11H5z M12 3v3h3 M7.5 10h5M7.5 13h5"/>',
+};
+const TOOLS = [['source', '영상', 'img'], ['run', '분석', 'scan'], ['change', '변화', 'diff'], ['layers', '층', 'layers'], ['report', '보고서', 'doc']];
+const svg = (k) => `<svg viewBox="0 0 20 20" aria-hidden="true">${ICON[k]}</svg>`;
+document.getElementById('rail').innerHTML = TOOLS.map(([id, l, ic]) => `<a class="ri${id === v ? ' on' : ''}" href="?v=${id === 'layers' || id === 'report' ? v : id}">${svg(ic)}${l}</a>`).join('');
+
+/* ── 공통 조각 ── */
+function hud({ k, h1, src, sub, p, plain = false, si = '' }) {
+  return `<section class="hud" data-plain="${plain ? 1 : 0}"><div class="k">${esc(k)}</div><h1>${esc(h1)}</h1>
+    <a class="src" href="?v=source"><i></i>${esc(src)}${sub ? ` <small>· ${esc(sub)}</small>` : ''}</a>${si ? `<span class="si">${esc(si)}</span>` : ''}
+    ${p ? `<p>${p}</p>` : ''}</section>`;
+}
+function timeline({ label, ticks, pick, has, none = [], cmp = false, tips = {} }) {
+  const li = ticks.map((t, i) => {
+    const cls = [has.includes(t) && 'has', pick.includes(t) && 'pick', none.includes(t) && 'none'].filter(Boolean).join(' ');
+    return `<li class="${cls}" data-t="${esc(t)}" data-tip="${esc(tips[t] || '')}"><i></i>${esc(String(t).replace(/^2025-/, '25-'))}</li>`;
+  }).join('');
+  let span = '';
+  if (pick.length === 2) { const a = ticks.indexOf(pick[0]), b = ticks.indexOf(pick[1]); span = `<i class="span" style="left:${18 + (label ? 0 : 0)}px"></i>`; span = `<i class="span" data-a="${a}" data-b="${b}"></i>`; }
+  return `<div class="tl" id="tl">${label ? `<span class="lab">${esc(label)}</span>` : ''}<ol>${li}</ol>${span}<b class="cmp${cmp ? ' on' : ''}">두 해 비교</b></div>`;
+}
+function placeSpan() {
+  const s = document.querySelector('.tl .span'); if (!s) return;
+  const lis = [...document.querySelectorAll('.tl li')]; const a = lis[+s.dataset.a], b = lis[+s.dataset.b]; const tl = document.getElementById('tl').getBoundingClientRect();
+  const ra = a.querySelector('i').getBoundingClientRect(), rb = b.querySelector('i').getBoundingClientRect();
+  s.style.left = (ra.left + ra.width / 2 - tl.left) + 'px'; s.style.width = (rb.left + rb.width / 2 - ra.left - ra.width / 2) + 'px'; s.style.top = (ra.top + ra.height / 2 - tl.top - 1.5) + 'px';
+}
+const chat = (open) => `<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>${open || ''}`;
+const where = (kr) => `<div class="where"><b class="${kr ? 'on' : ''}">대한민국</b><b class="${kr ? '' : 'on'}">키르기스스탄</b></div>`;
+const news = (t, s) => `<div class="news"><i></i>${esc(t)}<small>${esc(s)}</small></div>`;
+
+/* ── 데이터 ── */
+async function regionsFC() {
+  const [g, l] = await Promise.all([api('/regions?geom=1&limit=400'), api('/regions?limit=400')]);
+  const n = Object.fromEntries((l.items || []).map((r) => [r.sgg_cd, r]));
+  const feats = (g.features || g.items || []).map((f) => {
+    const p = f.properties || f; const cd = String(p.sgg_cd || p.code); const r = n[cd] || {};
+    return { type: 'Feature', geometry: f.geometry, properties: { cd, name: p.name || r.name, n: r.n_findings?.value || 0, img: !!r.has_imagery } };
+  }).filter((f) => f.geometry);
+  return { type: 'FeatureCollection', features: feats };
+}
+function mapReady() { document.documentElement.dataset.mapReady = '1'; }
+let ST, MAP;
+async function stage(bounds, opts = {}) {
+  ST = createStage(document.getElementById('stage'), { bounds, interactive: true, ...opts });
+  await ST.ready; MAP = ST.map; return MAP;
+}
+const KOREA = [125.0, 33.1, 130.0, 38.6];
+
+/* ═══ home — 전국 결과 장부 ═══ */
+async function home(withPanel) {
+  const fc = await regionsFC();
+  const withN = fc.features.filter((f) => f.properties.n > 0).length, withImg = fc.features.filter((f) => f.properties.img).length;
+  ui.innerHTML = where(true) + hud({ k: 'XI맵 · 전국', h1: 'AI 분석 결과 장부', src: '국토지리정보원 항공 2023', sub: '25cm', si: '연도별 층 연결 전',
+    p: `시군구 <b>${withN}곳</b>에 결과가 있습니다. 나머지도 범위를 그리면 바로 분석합니다.` })
+    + timeline({ label: '영상 연도', ticks: [2011, 2013, 2015, 2017, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026], pick: [2023], has: [2023], none: [2026], tips: { 2023: `2023년 — 결과 ${withN}곳`, 2025: '2025년 — 장부 없음 · 전국 분석 대기', 2026: '2026년 — 새 영상 아직 없음' } })
+    + `<div class="leg"><span><i class="ramp"></i>결과 있음 <small>진할수록 많음</small></span><span><i style="background:rgba(255,255,255,.55);border:1px solid #B0B8C1"></i>등록 영상 있음 · 결과 전</span><span><i style="background:transparent;border:1px dashed #B0B8C1"></i>범위를 그리면 바로 분석</span></div>`
+    + news('새 영상 확인 — 2026년 항공영상 층 아직 없음', '10-11 확인 · 시안') + chat();
+  if (withPanel) { ui.insertAdjacentHTML('beforeend', sourcePanel()); ui.classList.add('has-panel'); ui.classList.add('no-leg'); }
+  await stage(KOREA);
+  MAP.addSource('sgg', { type: 'geojson', data: fc });
+  const ramp = ['interpolate', ['linear'], ['get', 'n'], 1, 'rgba(15,169,160,.35)', 2000, 'rgba(15,169,160,.6)', 12000, 'rgba(15,169,160,.92)'];
+  MAP.addLayer({ id: 'sgg-fill', type: 'fill', source: 'sgg', paint: { 'fill-color': ['case', ['>', ['get', 'n'], 0], ramp, ['get', 'img'], 'rgba(255,255,255,.55)', 'rgba(255,255,255,0)'] } }, 'slot-overlay');
+  MAP.addLayer({ id: 'sgg-line', type: 'line', source: 'sgg', paint: { 'line-color': '#fff', 'line-width': 0.6, 'line-opacity': 0.75 } }, 'slot-overlay');
+  MAP.fitBounds(KOREA, { padding: { top: 90, bottom: 110, left: 60, right: 40 }, duration: 0 });
+  document.querySelectorAll('.tl li').forEach((li) => { li.onclick = () => { document.querySelectorAll('.tl li').forEach((x) => x.classList.remove('pick')); li.classList.add('pick'); }; });
+  await idle(); mapReady();
+}
+function sourcePanel() {
+  return `<section class="panel"><h2>영상<span class="x">×</span></h2><p class="note">보이는 영상이 곧 분석에 들어가는 영상입니다. 영상은 저장하지 않고 결과만 남깁니다. <span class="si">시안</span></p>
+    <div class="grp"><h3>항공</h3>
+      <div class="opt pick"><i class="dot"></i><div>국토지리정보원 · 연도별<small>2020~2025 25cm · 2011~2019 51cm · 전국</small></div><span class="r">연결 전</span></div>
+      <div class="chips">${[2019, 2020, 2021, 2022, 2023, 2024, 2025].map((y) => `<span class="chip${y === 2023 ? ' pick' : ''}">${y}</span>`).join('')}<span class="chip dim">2026 없음</span></div>
+    </div>
+    <div class="grp"><h3>위성</h3>
+      <div class="opt"><i class="dot"></i><div>브이월드 최신<small>약 24cm · 연도 없음 · 새 영상을 알아채는 데</small></div><span class="r">지금 바탕</span></div>
+      <div class="opt dim"><i class="dot"></i><div>국토위성<small>51cm · 한 시점 · 키 필요</small></div></div>
+      <div class="opt"><i class="dot"></i><div>Sentinel-2 · 해외<small>10m · 2017~2025 · 키르기스스탄 등</small></div></div>
+    </div>
+    <div class="grp"><h3>드론 · 기관이 맡긴 영상</h3>
+      <div class="opt"><i class="dot"></i><div>남원 AOI 2025 · 국산리 · 익산 황등<small>네 시점 · 5cm · 1.36cm</small></div></div>
+    </div>
+    </section>`;
+}
+
+/* ═══ run — 범위를 그리면 바로 전역 분석(차오름) ═══ */
+async function run() {
+  ui.classList.add('has-panel');
+  const rs = await api('/regions/12730/results'); const it = rs.items?.[0];
+  ui.innerHTML = where(true) + hud({ k: 'XI맵 · 전북특별자치도', h1: '구례군', src: '국토지리정보원 항공 2025', sub: '25cm', si: '시안 · 바탕은 브이월드 최신' })
+    + timeline({ label: '영상 연도', ticks: [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026], pick: [2025], has: [2023], none: [2026], tips: { 2025: '2025년 — 이 범위 첫 분석' } })
+    + `<section class="panel"><h2>분석<span class="x">×</span></h2><p class="note">그린 범위의 2025년 영상을 지금 불러 분석합니다. 칸이 차오르면 그대로 결과 층이 됩니다.</p>
+      <div class="row"><span>그린 범위 · 토지면 일대</span></div>
+      <div class="prog"><i></i></div>
+      <div class="row"><span class="num">분석 중</span><span>— 끝난 칸부터 지도에 보입니다</span><span class="si">시안</span></div>
+      <a class="go ghost">멈추기</a>
+      <p class="foot">2023년 결과(${nf(it?.count?.value || 0)}건)는 장부에 있어 다시 돌리지 않습니다. 끝나면 2023년과 바로 비교할 수 있습니다.</p></section>`
+    + `<div class="leg"><span><i style="background:${AI}"></i>2023년 결과 <small>장부</small></span><span><i style="background:rgba(0,109,247,.55)"></i>지금 분석 끝난 칸</span><span><i style="background:transparent;border:1.5px dashed #006DF7"></i>기다리는 칸</span></div>` + chat();
+  await stage(it?.bounds || [127.368, 35.124, 127.62, 35.365]);
+  if (it) { MAP.addSource('res', await sourceSpec(it)); addResultLayers(MAP, 'res', 'res', { kind: 'result', sourceLayer: it.layer || 'results', visible: true }); }
+  // 그린 범위(시안) + 칸(차오름 장면)
+  const poly = [[127.405, 35.225], [127.455, 35.232], [127.470, 35.200], [127.445, 35.170], [127.400, 35.178], [127.405, 35.225]];
+  MAP.addSource('aoi', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [poly] } } });
+  MAP.addLayer({ id: 'aoi-line', type: 'line', source: 'aoi', paint: { 'line-color': '#fff', 'line-width': 2.5 } });
+  const inRing = (pt, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c; } return c; };
+  const cells = []; const d = 0.0055;
+  for (let y = 35.232; y > 35.168; y -= d) for (let x = 127.40; x < 127.47; x += d) { if (inRing([x + d / 2, y - d / 2], poly)) cells.push([x, y]); }
+  const doneN = Math.round(cells.length * 0.38);
+  const cfc = { type: 'FeatureCollection', features: cells.map(([x, y], i) => ({ type: 'Feature', properties: { done: i < doneN ? 1 : 0, cur: i === doneN ? 1 : 0 }, geometry: { type: 'Polygon', coordinates: [[[x, y], [x + d, y], [x + d, y - d], [x, y - d], [x, y]]] } })) };
+  MAP.addSource('cells', { type: 'geojson', data: cfc });
+  MAP.addLayer({ id: 'cells-fill', type: 'fill', source: 'cells', paint: { 'fill-color': ['case', ['==', ['get', 'cur'], 1], 'rgba(255,182,51,.55)', ['==', ['get', 'done'], 1], 'rgba(0,109,247,.42)', 'rgba(255,255,255,.08)'] } });
+  MAP.addLayer({ id: 'cells-line', type: 'line', source: 'cells', paint: { 'line-color': '#006DF7', 'line-width': 1, 'line-dasharray': [2, 2], 'line-opacity': ['case', ['==', ['get', 'done'], 1], 0.2, 0.8] } });
+  MAP.fitBounds([127.33, 35.13, 127.56, 35.30], { padding: { top: 80, bottom: 100, left: 420, right: 40 }, duration: 0 });
+  await idle(); mapReady();
+}
+
+/* ═══ change — 두 시점 비교(남원 드론 4시점 · 변화 자료는 저장소 자산) ═══ */
+async function change() {
+  const [cat, chg] = await Promise.all([api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' })), fetch(LX + 'assets/data/geo/namwon-change.geojson').then((r) => r.json())]);
+  const drone = (cat.items || []).filter((i) => /^namwon-aoi-25/.test(i.id));
+  const by = {}; let bb = null;
+  for (const f of chg.features) { const c = f.properties.cls; by[c] = by[c] || { n: 0, a: 0 }; by[c].n++; by[c].a += f.properties.area_m2 || 0;
+    const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]; for (const [x, y] of ring) bb = bb ? [Math.min(bb[0], x), Math.min(bb[1], y), Math.max(bb[2], x), Math.max(bb[3], y)] : [x, y, x, y]; }
+  ui.classList.add('has-panel');
+  const NM = { built_new: ['건물 생김', AI], veg_gain: ['식생 늘어남', '#2E9E5B'], veg_loss: ['식생 줄어듦', '#FFB633'] };
+  const rows = Object.keys(NM).filter((k) => by[k]).map((k) => `<tr><td><i class="sw" style="background:${NM[k][1]}"></i>${NM[k][0]}</td><td class="n">${nf(by[k].n)}곳</td><td class="n">${nf(Math.round(by[k].a))}㎡</td></tr>`).join('');
+  const total = Object.values(by).reduce((s, x) => s + x.n, 0);
+  ui.innerHTML = where(true) + hud({ k: 'XI맵 · 남원시', h1: '남원 AOI', src: '드론 2025-04 → 2025-06', sub: '1cm급', p: `두 시점을 겹쳐 바뀐 곳만 칠했습니다 — <b>${nf(total)}곳</b>` })
+    + timeline({ label: '촬영 시점', ticks: ['2025-04', '2025-06', '2025-08', '2025-10'], pick: ['2025-04', '2025-06'], has: ['2025-04', '2025-06', '2025-08', '2025-10'], cmp: true })
+    + `<section class="panel"><h2>변화<span class="x">×</span></h2><p class="note">장부의 두 시점을 고르면 다시 돌리지 않고 바로 비교합니다.</p>
+      <table class="tbl"><tr><th>무엇이</th><th style="text-align:right">곳</th><th style="text-align:right">면적</th></tr>${rows}</table>
+      <p class="foot">값은 저장소의 남원 두 시점 변화 자료에서 그대로 셌습니다(학습 모델 결과가 아닌 변화 지수 · 예시). 전국은 해마다 장부가 쌓이면 같은 틀로 봅니다. <span class="si">시안</span></p></section>`
+    + `<div class="leg">${Object.keys(NM).map((k) => `<span><i style="background:${NM[k][1]}"></i>${NM[k][0]}</span>`).join('')}</div>`
+    + chat(`<div class="cbox"><h3>XI ChatGEO <small>말로 같은 틀을 움직입니다</small></h3>
+      <div class="msg me">남원 AOI 4월과 6월 변화 보여 줘</div>
+      <div class="msg ai">2025년 4월과 6월 드론 영상을 비교했습니다. 바뀐 곳 <b>${nf(total)}곳</b> — ${Object.keys(NM).filter((k) => by[k]).map((k) => `${NM[k][0]} <b>${nf(by[k].n)}</b>`).join(' · ')}. 지도에 칠했습니다.</div>
+      <div class="cin">예: 8월과 비교해 줘 · 건물 생긴 곳만 · 표로</div></div>`);
+  await stage(bb || [127.33, 35.50, 127.40, 35.56]);
+  const d0 = drone.find((i) => i.id === 'namwon-aoi-2504');
+  if (d0) { MAP.addSource('drone', await sourceSpec(d0)); MAP.addLayer({ id: 'drone', type: 'raster', source: 'drone' }, 'slot-imagery'); }
+  MAP.addSource('chg', { type: 'geojson', data: chg });
+  MAP.addLayer({ id: 'chg-fill', type: 'fill', source: 'chg', paint: { 'fill-color': ['match', ['get', 'cls'], 'built_new', AI, 'veg_gain', '#2E9E5B', 'veg_loss', '#FFB633', '#fff'], 'fill-opacity': 0.72 } });
+  MAP.addLayer({ id: 'chg-line', type: 'line', source: 'chg', paint: { 'line-color': '#fff', 'line-width': 0.6, 'line-opacity': 0.8 } });
+  MAP.fitBounds(bb, { padding: { top: 80, bottom: 100, left: 420, right: 440 }, duration: 0 });
+  placeSpan(); await idle(); mapReady();
+}
+
+/* ═══ global — 같은 지도에서 해외(키르기스스탄 · Sentinel-2) ═══ */
+async function global() {
+  const [adm, crop] = await Promise.all([fetch(LX + 'data/global/kgz-adm2.geojson').then((r) => r.json()), fetch(LX + 'data/global/district-cropland-2025.json').then((r) => r.json())]);
+  for (const f of adm.features) f.properties.ha = crop.districts?.[f.properties.code]?.crop_ha?.value || 0;
+  const n = adm.features.filter((f) => f.properties.ha > 0).length;
+  ui.innerHTML = where(false) + hud({ k: 'XI맵 · 해외', h1: '키르기스스탄', src: 'Sentinel-2 · 2025', sub: '10m', p: `구역 <b>${n}곳</b>에 경작지 결과가 있습니다. 2017년과 겹치면 변화가 보입니다.` })
+    + timeline({ label: '영상 연도', ticks: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], pick: [2025], has: [2017, 2025], tips: { 2025: '2025년 — 경작지 결과' } })
+    + `<div class="leg"><span><i class="ramp"></i>경작지 면적 <small>진할수록 넓음</small></span><span><i style="background:transparent;border:1px dashed #B0B8C1"></i>구역을 누르면 바로 분석</span></div>` + chat();
+  await stage([70.5, 39.0, 80.5, 43.5]);
+  MAP.addSource('adm', { type: 'geojson', data: adm });
+  MAP.addLayer({ id: 'adm-fill', type: 'fill', source: 'adm', paint: { 'fill-color': ['interpolate', ['linear'], ['get', 'ha'], 0, 'rgba(15,169,160,0)', 1000, 'rgba(15,169,160,.18)', 20000, 'rgba(15,169,160,.38)', 60000, 'rgba(15,169,160,.6)'] } }, 'slot-overlay');
+  MAP.addLayer({ id: 'adm-line', type: 'line', source: 'adm', paint: { 'line-color': '#fff', 'line-width': 0.8, 'line-opacity': 0.85 } }, 'slot-overlay');
+  MAP.fitBounds([69.3, 39.2, 80.3, 43.3], { padding: { top: 90, bottom: 110, left: 60, right: 40 }, duration: 0 });
+  await idle(); mapReady();
+}
+function idle() { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > 12000 ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, 3000); }); }
+
+/* ── 시작 ── */
+(async () => {
+  await new Promise((r) => (window.maplibregl ? r() : window.addEventListener('load', r)));
+  await ensureLogin();
+  if (v === 'home') await home(false);
+  else if (v === 'source') await home(true);
+  else if (v === 'run') await run();
+  else if (v === 'change') await change();
+  else if (v === 'global') await global();
+  else await home(false);
+})().catch((e) => { console.error(e); ui.insertAdjacentHTML('beforeend', `<p class="note" style="position:absolute;left:28px;top:24px;color:#F04452">${esc(e.message || e)}</p>`); mapReady(); });
+</script>
+</body>
+</html>
