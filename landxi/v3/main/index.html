@@ -87,7 +87,7 @@
     <div class="m-flow-in">
       <p class="m-bridge t-enter">한 번 만들면</p>
       <h2 class="t-h2 m-h t-enter"><span>분석 모델을</span><span>행정서비스로 제공</span></h2>
-      <p class="t-body m-p t-enter">모델·규칙·대장 형식을 한 벌로 묶어 실태조사 서비스로 만듭니다.</p>
+      <p class="t-body m-p t-enter"><span>AI 모델 · 분석 기준 · 결과 형식을 한 벌로 묶어</span> <span>어느 지역에나 쓰는 분석서비스로 만듭니다.</span></p>
       <div class="m-cards" id="cards"></div>
     </div>
   </section>
@@ -110,8 +110,9 @@
         <div class="t-card t-card--map m-card">
           <p class="m-bridge">위성 한 장으로</p>
           <h2 class="t-h2 m-h"><span>해외 사업지도</span><span>같은 방식으로 지원</span></h2>
-          <p class="t-body m-p">위성 영상과 현지 행정단위로<br>해외 기관의 조사를 돕습니다.</p>
-          <p class="m-tag" id="ch6-tag"></p>
+          <p class="t-body m-p" id="ch6-p">위성 영상과 현지 행정단위로<br>해외 기관의 조사를 돕습니다.</p>
+          <div class="m-big" id="ch6-big"></div>
+          <p class="m-tag m-tag--s" id="ch6-tag"></p>
         </div>
       </div>
 
@@ -120,7 +121,7 @@
         <p class="t-body m-p"><span>국토 위성·항공·드론 영상과 AI로</span> <span>현장조사와 행정서비스를 지원합니다.</span></p>
         <div class="m-cta">
           <a class="t-btn" href="../login/" data-login>로그인</a>
-          <a class="t-btn t-btn--2" href="tel:0637131218" title="문의 063-713-1218" data-contact="tel">문의하기</a>
+          <button class="t-btn t-btn--2" type="button" data-inquiry>문의하기</button>
           <a class="m-top" href="#top">처음으로</a>
         </div>
       </div>
@@ -138,12 +139,12 @@
 <footer class="m-foot">
   <div class="m-foot-in">
     <span>한국국토정보공사</span><span>문의 <span data-contact="tel">063-713-1218</span></span>
-    <span class="m-src" aria-label="데이터 출처"><b>LX</b><b>V-World</b><b>국토지리정보원</b><b>AI Hub</b></span>
+    <span class="m-src" aria-label="데이터 출처"><b>LX</b><b>V-World</b><b>국토지리정보원</b><b>AI Hub</b><b>Copernicus Sentinel-2</b><b>Esri 토지피복</b></span>
   </div>
 </footer>
 
 <script type="module" src="./main.js"></script>
 <script type="module" src="./me.js"></script>
-<script type="module">import { applyContact } from '../kit/contact.js'; applyContact();</script><!-- 문의 연락처 = LX 관리자 '운영 정보' 값(원칙 170) --><!-- 로그인한 LX 계정이면 '로그인' 자리가 '내 화면으로'(자동 이동 없음) -->
+<script type="module">import { applyContact } from '../kit/contact.js'; import { bindInquiry } from '../kit/inquiry.js'; applyContact(); bindInquiry();</script><!-- 문의 연락처 = LX 관리자 '운영 정보' 값(원칙 170) --><!-- 로그인한 LX 계정이면 '로그인' 자리가 '내 화면으로'(자동 이동 없음) -->
 </body>
 </html>

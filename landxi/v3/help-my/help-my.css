@@ -56,6 +56,7 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-contact{display:flex;flex-direction:column;gap:12px;padding-top:16px}
 .hm-ct{display:flex;align-items:center;gap:16px;padding:20px;border-radius:var(--r-16);background:var(--bg-0);color:var(--ink);text-decoration:none;transition:transform var(--d-180) var(--e-ui)}
 .hm-ct:hover{transform:translateX(4px)}
+.hm-ask{align-self:flex-start;margin-top:4px}
 .hm-ct:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hm-ct svg{flex:none;width:24px;height:24px;stroke:var(--ink);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .hm-v{font:700 var(--fs-sub)/var(--lh-sub) var(--font-num);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;word-break:break-all}

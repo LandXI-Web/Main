@@ -69,6 +69,8 @@
 .ac-foot { display: flex; gap: 12px; margin: 20px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); }
 .ac-foot a { color: var(--ink-2); font-family: var(--font-num); font-variant-numeric: tabular-nums; text-decoration: none; }
 .ac-foot a:hover { text-decoration: underline; }
+.ac-ask { margin-left: auto; padding: 0; border: 0; background: none; font: inherit; color: var(--ink); cursor: pointer; }
+.ac-ask:hover { text-decoration: underline; }
 
 @media (max-width: 640px) {
   .k-md-bg:has(.ac-md) { padding-top: 8px; }

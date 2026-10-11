@@ -14,6 +14,7 @@ import { drawer } from '../kit/panel.js';
 import { table } from '../kit/table.js';
 import { whoami, FRONT } from '../kit/auth-gate.js';
 import { contact as liveContact, telHref } from '../kit/contact.js';
+import { openInquiry } from '../kit/inquiry.js';
 
 const BASE = new URL('./', import.meta.url);
 export const TABS = [
@@ -87,7 +88,8 @@ async function faq(el) {
 function contact(el) {
   const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `${svg('tel')}<span class="hm-v">${esc(CONTACT.tel)}</span>` });
   const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `${svg('mail')}<span class="hm-v">${esc(CONTACT.mail)}</span>` });
-  el.append(h('div.hm-contact', {}, tel, mail));
+  const ask = h('button.t-btn.t-btn--2.hm-ask', { type: 'button', text: '문의하기', onclick: () => openInquiry() });   // 문의 창(메인 · 로그인 창과 같은 부품 · 10-11 메인 지시 3)
+  el.append(h('div.hm-contact', {}, tel, mail, ask));
   liveContact().then((c) => {          // LX 관리자 '운영 정보' 값(원칙 170) — 못 읽으면 처음 값 그대로
     tel.href = telHref(c.tel); tel.querySelector('.hm-v').textContent = c.tel;
     mail.href = 'mailto:' + c.mail; mail.querySelector('.hm-v').textContent = c.mail;

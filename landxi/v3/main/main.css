@@ -64,6 +64,8 @@ main{position:relative;z-index:3}
 .m-over .m-p{margin-top:16px}
 .m-big{margin-top:28px;padding-top:24px;border-top:1px solid var(--rule)}
 .m-tag{margin:24px 0 0;padding-top:20px;border-top:1px solid var(--rule);font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+#ch6-p span{display:block;word-break:keep-all}
+.m-tag--s{margin-top:12px;padding-top:0;border-top:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
 .m-cap{position:fixed;right:var(--mx);bottom:28px;margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:#fff;text-shadow:var(--hud-shadow);opacity:0;transition:opacity var(--d-750) var(--e-cam)}
 .m-ch.is-in .m-cap{opacity:1}
 .m-ch.is-out .m-cap{opacity:0}
@@ -151,6 +153,18 @@ main{position:relative;z-index:3}
 .m-flow .m-bridge{margin-bottom:16px}
 .m-cards{margin-top:64px}
 .m-cards .k-svc-t{min-height:0}
+/* 10-11 메인 지시 2 — '서비스'를 누르면 제목 · 글 · 카드 셋이 스크롤 없이 한 화면에(1366×768 · 1440×900 · 1920×1080).
+   마스트 아래부터 화면 높이 하나 · 가운데 정렬 · 카드 그림 높이는 화면 높이에 맞춰 줄인다(글 줄 수는 그대로). */
+@media (min-width:961px){
+  #ch4.m-flow{min-height:100vh;min-height:100svh;box-sizing:border-box;display:flex;align-items:center;padding:calc(var(--mast) + clamp(20px,5vh,64px)) var(--mx) clamp(20px,4vh,56px)}
+  #ch4 .m-flow-in{width:100%}
+  #ch4 .m-cards{margin-top:clamp(24px,4.4vh,56px)}
+  #ch4 .k-svc{gap:8px;padding-bottom:20px}
+  #ch4 .k-svc-crop{aspect-ratio:auto;height:clamp(132px,calc(100svh - 616px),300px)}
+  #ch4 .k-svc-t{-webkit-line-clamp:1}
+  #ch4 .m-p{max-width:none}
+  #ch4 .m-p span{display:block;word-break:keep-all}
+}
 .m-more{margin:4px 24px 0!important;align-self:flex-start;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
 .m-more::after{content:"→";margin-left:6px;display:inline-block;transition:transform var(--d-380) var(--e-ui)}
 a.k-svc:hover .m-more::after{transform:translateX(4px)}

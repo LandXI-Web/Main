@@ -16,6 +16,7 @@
 import { modal } from '../kit/modal.js';
 import { h, api, API } from '../kit/util.js';
 import { contact as liveContact, telHref } from '../kit/contact.js';
+import { openInquiry } from '../kit/inquiry.js';
 
 const CSS = new URL('./account.css', import.meta.url).href;
 const MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -208,7 +209,8 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
   }
   show(TABS.some(([k]) => k === tab) ? tab : 'signup');
   const tel = h('a', { href: 'tel:' + PHONE, text: PHONE });
-  const foot = h('p.ac-foot', {}, h('span', { text: '문의' }), tel);
+  const ask = h('button.ac-ask', { type: 'button', text: '문의하기', onclick: () => openInquiry() });   // 문의 창(메인 · 도움말과 같은 부품 · 10-11 메인 지시 3)
+  const foot = h('p.ac-foot', {}, h('span', { text: '문의' }), tel, ask);
   liveContact().then((c) => { tel.href = telHref(c.tel); tel.textContent = c.tel; });   // LX 관리자 '운영 정보' 값(원칙 170)
   const body = h('div.ac', { dataset: { realm, site } }, bar, pSignup, pFind, pReset, foot);
   m = modal({ title: '계정 찾기 · 신청', body, onClose });

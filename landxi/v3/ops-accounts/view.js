@@ -17,6 +17,7 @@ import { modal } from '../kit/modal.js';
 import { h, esc, ymd, api, API, session } from '../kit/util.js';
 import { size, gb } from '../kit/me.js';
 import { mountStorage } from './storage.js';
+import { mountInquiries } from './inquiries.js';
 
 const TABS = [
   { id: 'signup', label: '가입 신청', count: 'signup' },
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'fails', label: '로그인 실패' },
   { id: 'log', label: '처리 기록' },
   { id: 'ops', label: '운영 정보', lx: true },   // 문의 연락처(원칙 170) — 메인 · 도움말 · 로그인 창이 이 값을 읽는다
+  { id: 'inquiries', label: '문의', count: 'inquiries', lx: true },   // 문의하기 창으로 들어온 문의(10-11 메인 지시 3) — 새 문의 수
 ];
 const NONE = { signup: '새 가입 신청이 없습니다', reset: '비밀번호 재설정 요청이 없습니다', users: '계정이 없습니다',
   logins: '로그인 기록이 없습니다', fails: '실패한 로그인이 없습니다', log: '처리 기록이 없습니다' };
@@ -62,6 +64,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       const j = await api('/accounts/summary');
       for (const k of ['signup', 'reset', ...(LX ? ['storage'] : [])]) { const n = j.counts?.[k] || 0; const el = btn[k].querySelector('.acc-n'); el.textContent = String(n); el.hidden = !n; }
     } catch { /* 숫자만 빠진다 */ }
+    if (LX) api('/inquiries').then((q) => { const n = q.counts?.new || 0; const el = btn.inquiries?.querySelector('.acc-n'); if (el) { el.textContent = String(n); el.hidden = !n; } }).catch(() => {});
   };
 
   /* 소속 고르기(LX 관리자 · 계정 탭) — 전체 · LX · 기관들 */
@@ -105,6 +108,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     if (tab === 'depts') { await loadDepts(mine); return; }
     if (tab === 'storage') { await mountStorage(card, { mine: () => cur === mine, onChange: counts }); return; }
     if (tab === 'ops') { await loadOps(mine); return; }
+    if (tab === 'inquiries') { await mountInquiries(card, { mine: () => cur === mine, onChange: counts }); return; }
     let rows = [];
     try {
       if (tab === 'signup' || tab === 'reset') rows = (await api(`/accounts/requests?kind=${tab}`)).items || [];

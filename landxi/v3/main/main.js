@@ -155,6 +155,12 @@ async function addLayers() {
     await st.geo('kgz', d.kgz, 'focus');
     st.map.setPaintProperty('k-kgz-l', 'line-width', 1.6);
   }
+  // 해외 장면 분석 결과(10-11 메인 지시 5) — 군별 농경지 비율(짙을수록 많다) · 군 경계는 가는 흰 선
+  if (d.kgzc && !st.map.getSource('k-kgzc')) {
+    await st.geo('kgzc', d.kgzc.geojson, 'ai');
+    st.map.setPaintProperty('k-kgzc-l', 'line-color', '#FFFFFF');
+    st.map.setPaintProperty('k-kgzc-l', 'line-width', 0.7);
+  }
   S.paint = {}; S.last = '';
 }
 /* 장면이 이번 프레임에 원하는 값만 켠다 — 나머지 층은 0(다른 장면 층이 새지 않게) */
@@ -162,7 +168,7 @@ const LAYERS = [['k-river-f', 'fill-opacity'], ['k-river-l', 'line-opacity'], ['
   ['k-sgg-l', 'line-opacity'], ['k-sgg-f', 'fill-opacity'], ['k-parcel-l', 'line-opacity'], ['k-parcel-f', 'fill-opacity'],
   ['k-aiin-f', 'fill-opacity'], ['k-aiin-l', 'line-opacity'], ['k-aiin-h', 'line-opacity'], ['k-ainear-f', 'fill-opacity'], ['k-ainear-l', 'line-opacity'], ['k-ainear-h', 'line-opacity'],
   ['k-emd-f', 'fill-opacity'], ['k-emd-l', 'line-opacity'], ['k-emd-h', 'line-opacity'], ['k-ghp-f', 'fill-opacity'], ['k-ghp-l', 'line-opacity'], ['k-ghp-h', 'line-opacity'],
-  ['k-kgz-l', 'line-opacity'], ['k-kgz-f', 'fill-opacity']];
+  ['k-kgz-l', 'line-opacity'], ['k-kgz-f', 'fill-opacity'], ['k-kgzc-f', 'fill-opacity'], ['k-kgzc-l', 'line-opacity'], ['k-kgzc-h', 'line-opacity']];
 const want = (id, prop, v) => { S.want[id + '|' + prop] = v; };
 function flushLayers() { for (const [id, prop] of LAYERS) op(id, prop, S.want[id + '|' + prop] ?? 0); }
 /* 불투명도 — 같은 값이면 건드리지 않는다 */
@@ -549,7 +555,13 @@ function askScene(s3) {
   want('k-emd-f', 'fill-opacity', o <= 0 ? 0 : ['*', o, val]);
   want('k-emd-l', 'line-opacity', 0.6 * seg(s3, 0.04, 0.16));
 }
-function kgzScene(o) { want('k-kgz-l', 'line-opacity', 0.95 * o); want('k-kgz-f', 'fill-opacity', 0.12 * o); }
+function kgzScene(o) {
+  want('k-kgz-l', 'line-opacity', 0.95 * o); want('k-kgz-f', 'fill-opacity', S.data.kgzc ? 0 : 0.12 * o);
+  // 군별 농경지 비율(0 ~ 44%) → 옅은 청록 ~ 짙은 청록. 분석 결과는 군 경계보다 조금 늦게 차오른다
+  const c = seg(o, 0.35, 1);
+  want('k-kgzc-f', 'fill-opacity', c <= 0 ? 0 : ['*', c, ['interpolate', ['linear'], ['get', 'share'], 0, 0.04, 0.03, 0.16, 0.1, 0.5, 0.3, 0.9]]);
+  want('k-kgzc-l', 'line-opacity', 0.45 * c);
+}
 
 /* 배포 점 라벨(DOM · 지도 좌표를 따라) */
 function labels(o) {
@@ -665,17 +677,28 @@ function fillDeploys(dd, sum) {
   labelsEl.innerHTML = '';
   S.labels = regions.map((r) => { const el = h('div.m-lbl', {}, h('i.m-dot', { dataset: { st: r.ga ? 'ga' : 'pilot' } }), h('span', { text: r.name })); labelsEl.append(el); return { el, at: r.at }; });
 }
+/* ch6 — 해외 분석 결과(이미 있는 실제 결과 · 지어낸 숫자 0): 군별 농경지 합계 큰 숫자 + 무엇을 어떻게 분석했는지 한 줄 */
+function fillKgz(k) {
+  $('#ch6-p').innerHTML = `<span>키르기스스탄 ${k.n}개 군의 농경지를</span> <span>위성 영상 AI 분석으로 찾았습니다.</span>`;
+  $('#ch6-tag').textContent = `${k.year}년 Sentinel-2 영상 · 색이 짙을수록 농경지가 많은 군`;
+  const ch6 = $('#ch6');
+  const env = { value: Math.round(k.total_ha / 100), unit: 'km2',   // ha → ㎢(같은 값 · 큰 숫자가 카드 한 줄에)
+    basis: k.basis || 'estimate', as_of: k.as_of, source: `${k.year} Sentinel-2 10 m AI 토지피복 · 농경지` };
+  const mk = () => { if (!S.bn6) S.bn6 = bignum($('#ch6-big'), env, { label: 'AI 분석 결과' }); };
+  if (ch6.classList.contains('is-in')) mk(); else ch6.addEventListener('ch:in', mk, { once: true });
+}
 const short = (s = '') => { const p = String(s).trim().split(/\s+/); return p.length > 1 ? p[p.length - 1] : p[0]; };
 
 /* ── 부팅 ─────────────────────────────────────────────── */
 async function load() {
-  const [stats, parcel, agent, dd, kgz, sum] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz(), loadSummary()]);
+  const [stats, parcel, agent, dd, kgz, sum, kgzc] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz(), loadSummary(), D.kgzCrop()]);
   if (stats.status === 'fulfilled') { S.data.stats = stats.value; fillStats(stats.value); }
   else { empty($('#ch1-big'), { kind: 'first', compact: true }); }
   if (parcel.status === 'fulfilled') { S.data.parcel = parcel.value; fillParcel(parcel.value); }
   if (agent.status === 'fulfilled') { S.data.agent = agent.value; S.data.agent.dense = denseWin(agent.value.gh); fillAgent(agent.value); }
   if (dd.status === 'fulfilled') fillDeploys(dd.value, sum.status === 'fulfilled' ? sum.value : null); else empty($('#cards'), { kind: 'first' });
   if (kgz.status === 'fulfilled') { S.data.kgz = kgz.value; $('#ch6-tag').textContent = `키르기스스탄 · ${kgz.value.features.length}개 지역`; }
+  if (kgzc.status === 'fulfilled') { S.data.kgzc = kgzc.value; fillKgz(kgzc.value); }
   cams(); addLayers();
   deferPrefetch();
   devlog('sources', JSON.stringify(D.SRC));

@@ -240,3 +240,8 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 @media (max-width: 1200px) { .acs { grid-template-columns: 1fr; } .acs-dr { position: static; } .acs-cells { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .acs-gb input[type=number]::-webkit-inner-spin-button, .acs-gb input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .acs-gb input[type=number] { -moz-appearance: textfield; }
+
+/* 문의 탭(10-11 메인 지시 3) — 행을 누르면 서랍 · 내용 전체 */
+.acc-card[data-tab="inquiries"] .acc-tbl tbody tr { cursor: pointer; transition: background var(--d-180) var(--e-ui); }
+.acc-card[data-tab="inquiries"] .acc-tbl tbody tr:hover { background: var(--bg-0); }
+.acc-iq-body { margin: 0; padding: 16px; border-radius: 12px; background: var(--bg-0); font: 400 var(--fs-body)/var(--lh-body) var(--font-body); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }

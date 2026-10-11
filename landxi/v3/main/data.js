@@ -19,6 +19,7 @@ async function guestOk(path) {
   OAS ||= fetch(API.prefix + '/openapi.json', { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const j = await OAS;
   const op = j?.paths?.['/api/v1' + p]?.get || j?.paths?.[p]?.get;
+  if (op && !op.parameters) return true;   // 바깥 주소의 줄인 계약(공개 관문 slimOpenapi)은 인자 목록을 싣지 않는다 — 경로가 있으면 부른다(서버 카드 이름 한 출처)
   return !!op?.parameters?.some((x) => x.name === 'public');
 }
 
@@ -65,6 +66,9 @@ export async function deploys() {
   SRC.deploys = 'public-copy';
   return local('public-deploys.json');
 }
+
+/** ch6 · 키르기스스탄 군별 농경지 — 이미 있는 실제 분석 결과(Sentinel-2 10 m AI 토지피복 2025 · 군 폴리곤 안 경작지 면적)의 공개 사본(tools/build-kgz.py) */
+export const kgzCrop = () => local('kgz-crop-2025.json');
 
 /** ch6 · 키르기스스탄 1단계 행정구역(읽기) */
 export const kgz = () => fetch('/landxi/global/data/kgz-adm1.geojson').then((r) => r.json());
