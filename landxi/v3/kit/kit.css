@@ -193,3 +193,6 @@ button.t-step{cursor:pointer}
 .t [hidden]{display:none!important}
 .k-ck-i:focus-visible{outline:0}
 @media (max-width:640px){.k-big--hud .t-hud{font-size:72px}}
+/* '이 화면은?' — 세 화면(분석하기 · 지도 서비스 · XI맵) 첫 화면의 작은 글자 링크 → 지원 '세 화면'(바퀴 4 · 세 화면 경계) */
+.k-what{font:500 13px/20px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.k-what:hover{color:var(--ink)}

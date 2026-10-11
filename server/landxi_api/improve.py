@@ -15,7 +15,10 @@ POST /assist/feedback               {run_id?, kind: not_helpful|card_cancel|map_
 GET  /assist/notices                → {items:[{id, text, try}]}  그 사람에게 온 '이제 됩니다' · 안 본 것만
 POST /assist/notices/{id}/seen      → 204
 GET  /improve/items?state=&role=    → 자주 막히는 요청(LX 관리자 · 담당 프로젝트장)
-POST /improve/items/{id}/adopt      {how?}            채택 → 확인 대기
+POST /improve/items/{id}/adopt      {mode?, how?, src?, dst?, text?, try?, test?}
+                                    채택 — mode=dev(개발 할 일 → 확인 대기) | alias(다른 이름 더하기) · intent(질문 뜻 연결) · phrase(답 문구)
+                                    = 바로 반영(표 한 줄 → 다음 질문부터 적용 · 원칙 197)
+POST /improve/items/{id}/revert                       바로 반영 되돌리기(표 줄 끔 → 새로 옴)
 POST /improve/items/{id}/hold       {reason, until}   보류(사유 · 다시 볼 날짜)
 POST /improve/items/{id}/already    {text, try?}      이미 됨(안내 문구 한 줄 · 누르면 보낼 질문)
 POST /improve/items/{id}/reopen                       다시 고르기(새로 옴으로)
@@ -55,6 +58,9 @@ HOW = {  # 채택 때 제안 방법 한 줄(관리자가 적지 않으면) — �
     "other": "질문의 뜻을 알아듣도록 보완",
 }
 STATE_KO = {"new": "새로 옴", "adopted": "채택", "built": "만들어짐", "held": "보류", "already": "이미 됨"}
+# 채택 갈래(원칙 197) — 쉬운 것(코드 없이 표 한 줄)은 바로 반영 · 새 기능 · 새 분류는 개발 할 일
+ADOPT_KO = {"alias": "다른 이름 더하기", "intent": "질문 뜻 연결", "phrase": "답 문구", "dev": "개발 할 일"}
+QUICK = ("alias", "intent", "phrase")
 ROLE_KO = {"staff": "LX 직원", "admin": "LX 관리자", "sales": "LX 영업", "tenant": "기관"}
 SIG_BLOCK = ("blocked", "map_failed")             # '몇 번' = 막힌 횟수
 SOURCE_KO = {"check-1001": "10-01 점검"}
@@ -482,6 +488,62 @@ def hint_for(text: str) -> dict | None:
     return None
 
 
+# ═══ 바로 반영(원칙 197) — 채택한 다른 이름 · 질문 뜻 연결 · 답 문구를 다음 질문부터 ══════════════════
+RULES_TTL_S = 5                                    # 게이트웨이 일꾼이 여럿이어도 5초 안에 같은 표(채택 즉시 → 다음 질문부터)
+_RULES: dict = {"rows": [], "at": 0.0}
+_LEFT = r"(?<![가-힣A-Za-z0-9])"                    # 다른 이름은 낱말 앞머리에서만(비닐하우스 안의 '하우스'는 그대로)
+
+
+async def rules_fresh(force: bool = False) -> list[dict]:
+    if not force and time.time() - _RULES["at"] < RULES_TTL_S:
+        return _RULES["rows"]
+    try:
+        async with db(realm="lx") as conn:
+            rows = await conn.fetch("SELECT id, item_id, mode, src, dst, text, try FROM improve_rules WHERE active ORDER BY at")
+        _RULES.update(rows=[dict(r) for r in rows], at=time.time())
+    except Exception:  # noqa: BLE001
+        _RULES["at"] = time.time()
+    return _RULES["rows"]
+
+
+def _norm_q(t: str) -> str:
+    return re.sub(r"[\s?？!.~]+", "", str(t or ""))
+
+
+def _intent_hit(msg: str, src: str) -> bool:
+    a, b = _norm_q(msg), _norm_q(src)
+    if b and b in a:
+        return True
+    ta, tb = tokens(gist(msg)), tokens(gist(src))
+    return bool(ta and tb) and jaccard(ta, tb) >= 0.7
+
+
+async def rewrite(msg: str) -> tuple[str, list[str]]:
+    """질문 → (알아들을 질문, 적용한 줄 id). 질문 뜻 연결이 먼저(질문 전체를 바꿈) · 그다음 다른 이름(낱말만 바꿈)."""
+    rows = await rules_fresh()
+    out, used = str(msg or ""), []
+    for r in rows:
+        if r["mode"] == "intent" and r["dst"] and _intent_hit(out, r["src"]):
+            out = r["dst"]
+            used.append(r["id"])
+            break
+    for r in rows:
+        if r["mode"] == "alias" and r["src"] and r["dst"]:
+            rx = re.compile(_LEFT + re.escape(r["src"]))
+            if rx.search(out):
+                out = rx.sub(r["dst"], out)
+                used.append(r["id"])
+    return out, used
+
+
+def phrase_for(msg: str) -> dict | None:
+    """답 문구 줄 — 같은 뜻 질문이면 {text, try}(이미 됨 안내와 같은 자리)."""
+    for r in _RULES["rows"]:
+        if r["mode"] == "phrase" and r["text"] and _intent_hit(msg, r["src"]):
+            return {"text": r["text"], "try": r["try"]}
+    return None
+
+
 # ═══ 모으기 — 답이 끝나는 곳(runner.emit)에서 ════════════════════════════════════════
 TERMINAL = ("agent.done", "agent.rejected", "agent.failed")
 RUN_ID = re.compile(r"^run_\d{12}[0-9a-f]{6}$")    # 실제 답의 번호(runner.ulid) — 시험 run(run_test… · run_t… · run_r3route)은 모으지 않는다
@@ -497,9 +559,13 @@ async def record_run(ctx, event: str, data: dict) -> None:
         return
     if not RUN_ID.match(str(getattr(ctx, "run_id", "") or "")):
         return
-    msg = str((getattr(ctx, "state", None) or {}).get("msg") or "")
+    st = getattr(ctx, "state", None) or {}
+    msg = str(st.get("msg_asked") or st.get("msg") or "")      # 사용자가 실제로 쓴 말(바로 반영으로 바꾸기 전)
     if not msg.strip():
         return
+    ph = phrase_for(msg)                                         # 답 문구(원칙 197 · 바로 반영) — 같은 뜻 질문의 답에 그 문구
+    if ph:
+        data["hint"] = ph
     sigs = classify(event, data, getattr(ctx, "steps", None))
     _refresh_already()
     if not _NAMES["ok"]:
@@ -507,7 +573,7 @@ async def record_run(ctx, event: str, data: dict) -> None:
             await ensure_names(wait=False)
         except Exception:  # noqa: BLE001
             pass
-    if any(s == "blocked" for s, _ in sigs):
+    if any(s == "blocked" for s, _ in sigs) and not ph:
         h = hint_for(msg)
         if h:
             data["hint"] = {"text": h["text"], "try": h["try"]}
@@ -669,7 +735,7 @@ async def feedback(body: dict, request: Request):
         ctx_kind = "server" if row["state"] == "failed" else (REJECT_KIND.get(str(row["error"] or "")) if row["state"] == "rejected" else None)
     await ensure_names(wait=True)
     if kind == "map_failed":
-        k = "screen" if re.search(r"이 화면|지도가 없|층이 없", summary + " " + str(answer or "")) else "action"
+        k = "screen" if re.search(r"이 화면|지도가 없|층이 없|레이어가 없", summary + " " + str(answer or "")) else "action"
     else:
         k = ctx_kind or kind_of_text(answer) or "other"
     g = gist(text) if text else (gist(summary) if summary else {"not_helpful": "도움이 안 된 답", "card_cancel": "확인 카드 취소",
@@ -749,12 +815,13 @@ def _cnt(v, src: str) -> dict:
     return env(int(v or 0), "count", "recorded", src)
 
 
-async def _items(conn, p: Principal, scope, where: str = "true", args: list | None = None, one: str | None = None) -> list[dict]:
+async def _items(conn, p: Principal, scope, where: str = "true", args: list | None = None, one: str | None = None, show_hidden: bool = False) -> list[dict]:
     sw, sa = _scope_sql(scope, 1)
     extra_args = list(args or [])
     w = f"({sw}) AND ({where})" + (f" AND i.id=${len(sa) + len(extra_args) + 1}" if one else "")
     # 시험으로만 모인 줄은 '새로 옴'이면 감춘다 — 고른 줄(채택 · 보류 · 이미 됨 · 만들어짐)은 남긴다(횟수만 뺌)
-    w += " AND (i.state <> 'new' OR EXISTS (SELECT 1 FROM improve_signals t WHERE t.item_id=i.id AND NOT t.test))"
+    if not show_hidden:                               # 결정 직후 그 줄을 돌려줄 때만 감추지 않는다(시험 줄을 되돌린 뒤에도 그 줄을 돌려준다)
+        w += " AND (i.state <> 'new' OR EXISTS (SELECT 1 FROM improve_signals t WHERE t.item_id=i.id AND NOT t.test))"
     rows = await conn.fetch(
         "SELECT i.*, "
         "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig IN ('blocked','map_failed')) AS n_block, "
@@ -769,7 +836,8 @@ async def _items(conn, p: Principal, scope, where: str = "true", args: list | No
         "  GROUP BY s.gist) x) AS gists, "
         "(SELECT count(DISTINCT s.tenant_id) FILTER (WHERE s.tenant_id <> 'lx') FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_orgs, "
         "(SELECT count(*) FROM improve_askers a WHERE a.item_id=i.id AND NOT a.test) AS n_askers, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_real "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_real, "
+        "(SELECT row_to_json(r) FROM (SELECT mode, src, dst, text, try, test FROM improve_rules r WHERE r.item_id=i.id AND r.active ORDER BY r.at DESC LIMIT 1) r) AS rule "
         f"FROM improve_items i WHERE {w} ORDER BY i.last_at DESC LIMIT 500", *sa, *extra_args, *([one] if one else []))
     who = {}
     ids = {r["decided_by"] for r in rows if r["decided_by"]} | {r["notice_by"] for r in rows if r["notice_by"]}
@@ -813,9 +881,19 @@ def _item(r, p: Principal, who: dict) -> dict:
         "askers": _cnt(r["n_askers"], "개선 후보(improve_askers · 90일)"),
         "test_only": not r["n_real"],                    # 시험으로만 모인 줄(횟수에서 뺌)
         "decided": {"by": _who(r["decided_by"], who), "md": _md(r["decided_at"])} if r["decided_at"] else None,
-        "can": {"decide": st in ("new", "held", "already", "adopted"), "notify": p.is_admin and st == "adopted",
-                "reopen": st in ("held", "already", "adopted")},
+        "can": {"decide": st in ("new", "held", "already", "adopted"), "notify": p.is_admin and st == "adopted" and r["adopt_mode"] not in QUICK,
+                "reopen": st in ("held", "already") or (st == "adopted" and r["adopt_mode"] not in QUICK),
+                "revert": st == "adopted" and r["adopt_mode"] in QUICK},
     }
+    # 채택 갈래(원칙 197) — 바로 반영(표 한 줄 · 다음 질문부터) | 개발 할 일(확인 대기)
+    if st == "adopted":
+        mode = r["adopt_mode"] or "dev"
+        rule = r["rule"]
+        if isinstance(rule, str):
+            rule = json.loads(rule)
+        d["adopt"] = {"mode": mode, "mode_label": ADOPT_KO.get(mode, mode), "quick": mode in QUICK,
+                      "rule": {k: rule.get(k) for k in ("src", "dst", "text", "try", "test")} if rule else None,
+                      "state_word": "반영됨 — 다시 물어보세요" if mode in QUICK and rule else "개발 할 일 · 확인 대기"}
     return d
 
 
@@ -851,9 +929,9 @@ async def list_items(request: Request, state: str | None = None, role: str | Non
             "kinds": KINDS, "as_of": now_iso()}
 
 
-async def _one(conn, p: Principal, iid: str) -> tuple[dict, object]:
+async def _one(conn, p: Principal, iid: str, show_hidden: bool = False) -> tuple[dict, object]:
     scope = await _my_scope(conn, p)
-    got = await _items(conn, p, scope, one=iid)
+    got = await _items(conn, p, scope, one=iid, show_hidden=show_hidden)
     if not got:
         raise ApiError("not_found", "그 줄을 찾지 못했습니다")
     return got[0], scope
@@ -867,9 +945,39 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
         if action == "adopt":
             if cur["state"] == "built":
                 raise ApiError("conflict", "이미 만들어진 줄입니다", status=409)
-            how = re.sub(r"\s+", " ", str(body.get("how") or "")).strip()[:120] or None
-            await conn.execute("UPDATE improve_items SET state='adopted', ledger='확인 대기', how=coalesce($2, how, $4), decided_by=$3, decided_at=now(), "
-                               "updated_at=now() WHERE id=$1", iid, how, p.user_id, HOW.get(cur["kind"]))
+            mode = str(body.get("mode") or "dev")
+            if mode not in ADOPT_KO:
+                raise ApiError("bad_request", "채택 갈래를 골라 주세요")
+
+            def one(k, n=100):
+                return re.sub(r"\s+", " ", str(body.get(k) or "")).strip()[:n] or None
+            how = one("how", 120)
+            if mode in QUICK:
+                src, dst, text, tr = one("src"), one("dst"), one("text", 120), one("try")
+                if mode == "alias" and not (src and dst and src != dst and len(src) >= 2):
+                    raise ApiError("bad_request", "사용자가 쓴 말과 플랫폼이 쓰는 말을 적어 주세요(두 글자 이상 · 서로 다르게)")
+                if mode == "intent" and not (src and dst):
+                    raise ApiError("bad_request", "이런 질문과 알아들을 질문을 적어 주세요")
+                if mode == "phrase" and not text:
+                    raise ApiError("bad_request", "답에 붙일 문구를 한 줄 적어 주세요")
+                if mode == "phrase" and not src:
+                    src = cur["gist"]
+                await conn.execute("UPDATE improve_rules SET active=false, off_by=$2, off_at=now() WHERE item_id=$1 AND active", iid, p.user_id)
+                await conn.execute("INSERT INTO improve_rules(id, item_id, mode, src, dst, text, try, test, by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+                                   "ir_" + secrets.token_hex(6), iid, mode, src, dst if mode != "phrase" else None, text if mode == "phrase" else None,
+                                   tr if mode == "phrase" else None, bool(body.get("test")), p.user_id)
+                how = how or {"alias": f"'{src}'도 '{dst}'로 알아듣기", "intent": f"'{src}' → '{dst}'로 알아듣기", "phrase": f"답에 '{text}' 붙이기"}[mode]
+                await conn.execute("UPDATE improve_items SET state='adopted', adopt_mode=$4, ledger='바로 반영', how=$2, decided_by=$3, decided_at=now(), "
+                                   "updated_at=now() WHERE id=$1", iid, how[:120], p.user_id, mode)
+            else:
+                await conn.execute("UPDATE improve_items SET state='adopted', adopt_mode='dev', ledger='확인 대기', how=coalesce($2, how, $4), decided_by=$3, "
+                                   "decided_at=now(), updated_at=now() WHERE id=$1", iid, how, p.user_id, HOW.get(cur["kind"]))
+        elif action == "revert":
+            if cur["state"] != "adopted" or not (cur.get("adopt") or {}).get("quick"):
+                raise ApiError("conflict", "바로 반영한 줄만 되돌릴 수 있습니다", status=409)
+            await conn.execute("UPDATE improve_rules SET active=false, off_by=$2, off_at=now() WHERE item_id=$1 AND active", iid, p.user_id)
+            await conn.execute("UPDATE improve_items SET state='new', adopt_mode=NULL, ledger=NULL, decided_by=$2, decided_at=now(), updated_at=now() WHERE id=$1",
+                               iid, p.user_id)
         elif action == "hold":
             reason = re.sub(r"\s+", " ", str(body.get("reason") or "")).strip()[:120]
             if not reason:
@@ -896,7 +1004,9 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
         elif action == "reopen":
             if cur["state"] in ("new", "built"):
                 raise ApiError("conflict", "다시 고를 수 없는 줄입니다", status=409)
-            await conn.execute("UPDATE improve_items SET state='new', ledger=NULL, decided_by=$2, decided_at=now(), updated_at=now() WHERE id=$1", iid, p.user_id)
+            await conn.execute("UPDATE improve_rules SET active=false, off_by=$2, off_at=now() WHERE item_id=$1 AND active", iid, p.user_id)
+            await conn.execute("UPDATE improve_items SET state='new', adopt_mode=NULL, ledger=NULL, decided_by=$2, decided_at=now(), updated_at=now() WHERE id=$1",
+                               iid, p.user_id)
         elif action == "notify":
             if not p.is_admin:
                 raise ApiError("forbidden", "'이제 됩니다'는 LX 관리자가 보냅니다")
@@ -913,16 +1023,23 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
                                "updated_at=now() WHERE id=$1", iid, text, tr, len(askers), p.user_id)
         else:
             raise ApiError("bad_request", "알 수 없는 동작")
-        await audit(conn, p, f"improve.{action}", iid, before, {k: v for k, v in body.items() if k in ("how", "reason", "until", "text", "try")})
-        out, _ = await _one(conn, p, iid)
+        await audit(conn, p, f"improve.{action}", iid, before, {k: v for k, v in body.items() if k in ("how", "reason", "until", "text", "try", "mode", "src", "dst", "test")})
+        out, _ = await _one(conn, p, iid, show_hidden=True)
     if action in ("already", "reopen"):
         _refresh_already(force=True)
+    if action in ("adopt", "revert", "reopen"):
+        await rules_fresh(force=True)
     return out
 
 
 @router.post("/improve/items/{iid}/adopt")
 async def adopt(iid: str, request: Request, body: dict | None = None):
     return {"item": await _decide(request, iid, "adopt", body or {}), "as_of": now_iso()}
+
+
+@router.post("/improve/items/{iid}/revert")
+async def revert(iid: str, request: Request):
+    return {"item": await _decide(request, iid, "revert", {}), "as_of": now_iso()}
 
 
 @router.post("/improve/items/{iid}/hold")
@@ -952,10 +1069,10 @@ CHECK_1001 = [
     ("지명을 붙인 확대·이동이 지명을 버림", None, "action", [
         (2, "구례군 확대해 줘", "staff", "lx-console", "lx", "10:58:54"),
         (19, "남원시 운봉읍으로 이동해서 비닐하우스 결과만 보여 줘", "staff", "xi-clean", "lx", "11:03:08")]),
-    ("현장 확인 필요 · 지적선 층 켜기", "이 화면에는 그 층이 없음", "screen", [
+    ("현장 확인 필요 · 지적선 레이어 켜기", "이 화면에는 그 레이어가 없음", "screen", [
         (4, "현장 확인 필요 필지만 보여 줘", "staff", "lx-console", "lx", "10:59:07"),
         (5, "지적선 켜 줘", "staff", "lx-console", "lx", "10:59:13")]),
-    ("\"껐습니다·켰습니다\"인데 지도가 그대로", "말과 화면 다름 — 결과 층 끄기 · 이미 켜진 영상 층", "action", [
+    ("\"껐습니다·켰습니다\"인데 지도가 그대로", "말과 화면 다름 — 결과 레이어 끄기 · 이미 켜진 영상 레이어", "action", [
         (3, "영상 층 켜 줘", "staff", "lx-console", "lx", "10:59:00"),
         (18, "AI 분석 결과 층 꺼 줘", "staff", "xi-clean", "lx", "11:02:58")]),
     ("우리 시 현장 확인 필요 몇 건", "'우리 시'를 관할로 풀지 못해 \"해당 지역 데이터가 없습니다\"", "nodata", [

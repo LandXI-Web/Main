@@ -12,6 +12,7 @@ import { sse, API } from '../../shared/api-v1.js';
 import { sourceSpec, EXT_OK } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
 import { analyzer } from './analyze.js';
+import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
 import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 결과(원칙 135 · 요약 한 출처)
 
@@ -134,7 +135,7 @@ const S = {
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null;
 
 /* ═══ 부팅 ═══ */
 async function boot() {
@@ -148,8 +149,9 @@ async function boot() {
   if (!S.fc) { S.layers.sus = false; S.layers.ai = true; }
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
-  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['tilt', '입체'], ['sweep', '대조'], ['report', '보고서']]
-    : [['layers', '층'], ['swipe', '가르기'], ['tilt', '입체'], ['report', '보고서']];
+  // 입체는 뺐다(원칙 196 · GPT3-8 '입체가 의미있나??' → 입체 빼기) — 단추 · 지형 타일 로딩 · 기울기 모두 없음(위에서 내려다보는 지도만)
+  const tools = S.fc ? [['layers', '레이어'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['sweep', '대조'], ['report', '보고서']]
+    : [['layers', '레이어'], ['swipe', '가르기'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
   SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: 'grid' })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
@@ -182,6 +184,7 @@ async function boot() {
 
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
+  try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
   K.devDrawer({ stage, who });
@@ -247,6 +250,12 @@ async function boot() {
     const poll = () => (map.areTilesLoaded() || performance.now() - t0 > 900 ? out() : setTimeout(poll, 60)); poll(); }
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
+  // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
+  if (S.lx) {
+    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); },
+      onLeave: () => (S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 })) });
+    if (Q.get('nation') && Q.get('nation') !== 'kr') NAT.go(Q.get('nation'), { first: true });
+  }
   // 기관 — 서비스 대시보드의 '결과 지도' 탭에서 왔으면 '보고 있는 결과' 카드 · '이 영상으로 분석 요청'(18차 N-1 ⓐ · 촬영-1 ⓑ · gov-select/map-extras.js)
   if (canRequest(who) && Q.get('service')) import('../gov-select/map-extras.js').then((m) => m.mapCard({ host: mainEl, card: Q.get('service'), region: () => S.region,
     center: () => { const c = map.getCenter(); return [c.lng, c.lat]; } })).catch((e) => K.devlog('map-card', String(e?.message || e)));
@@ -420,7 +429,6 @@ function wireMap() {
     map.on('mousemove', 'sgg-hit', (e) => { if (AN?.active || map.getZoom() >= 9.5) return; map.getCanvas().style.cursor = 'pointer'; map.setFilter('sgg-hover', ['==', ['to-string', ['get', 'code']], String(e.features?.[0]?.properties?.code ?? '')]); });
     map.on('mouseleave', 'sgg-hit', () => { if (AN?.active) return; map.getCanvas().style.cursor = ''; map.setFilter('sgg-hover', ['==', ['to-string', ['get', 'code']], '']); });
   }
-  map.on('zoomend', () => terrainFor(map.getZoom()));
 }
 
 /* ═══ 지역 = 변수 ═══ */
@@ -547,6 +555,7 @@ async function addResultList(items, my) {
 }
 
 async function setRegion(r, { first = false, to = null } = {}) {
+  if (NAT && NAT.id !== 'kr') NAT.go('kr', { quiet: true });   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
   S.region = r; S.cond.emd = null; S.sel = null; closeDrawer(); closePop();
   renderChips();                        // 이전 지역의 읍면동 칩을 바로 지운다(관할 밖 포함)
   if (AN?.running) { AN.detach(); S.tool = null; }      // 진행 중 전역 분석 — 서버 작업은 계속, 화면만 떼어 낸다(돌아오면 이어 보기)
@@ -984,7 +993,7 @@ const camNow = () => ({ center: [+map.getCenter().lng.toFixed(5), +map.getCenter
 /** 카메라 이동(지역 · 읍면동) — 입체(S.tilt)면 지금 기울기를 유지한다(전역 분석을 시작해도 평면으로 풀리지 않게 · r3-xi) */
 /* 비행은 화면 프레임(requestAnimationFrame)으로 돈다 — 탭이 뒤로 가면 프레임이 멈춰 끝나지 않는다. 동작 끝 신호가 영영 안 나가지 않게
    비행 시간 + 1.5초에서 기다림을 끊는다(카메라는 탭이 다시 보이면 이어서 도착한다). */
-const goKeep = (b, o = {}) => Promise.race([stage.go(b, { ...o, pitch: S.tilt ? (Math.round(map.getPitch()) || 55) : 0 }),
+const goKeep = (b, o = {}) => Promise.race([stage.go(b, { ...o, pitch: 0 }),
   new Promise((res) => setTimeout(() => res(true), (o.ms ?? 2400) + 1500))]);
 const settled = () => new Promise((res) => { if (!map.isMoving()) return setTimeout(res, 60); map.once('moveend', () => setTimeout(res, 60)); setTimeout(res, 4000); });
 let agentQ = Promise.resolve();
@@ -1054,15 +1063,16 @@ async function agentOp(a) {
     return true;
   }
   if (a.op === 'map_view') {
-    const p0 = map.getPitch(), p = Math.max(0, Math.min(70, +a.pitch || 0));
+    if ((+a.pitch || 0) > 0) return { ok: false, reason: 'XI맵은 위에서 내려다보는 지도만 씁니다(입체 보기 없음)' };   // 원칙 196
+    const p0 = map.getPitch(), p = 0;
     if (Math.abs(p - p0) < 0.5 && Math.abs((+a.bearing || 0) - map.getBearing()) < 0.5) return { ok: true, same: true };   // 바뀐 것 0 — '이미 입체로 보고 있습니다'(확인 16차 규칙 ①)
     await setView(p, +a.bearing || 0); return true;
   }
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
-    if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
+    if (!k) return { ok: false, reason: '그 레이어는 이 지도에 없습니다' };
     const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
-    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
+    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 레이어가 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 레이어가 없습니다' : '이 지역에는 그 레이어가 없습니다' };
     const want = a.on !== false;
     if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
       // '비닐하우스 결과만' — 그 서비스 결과 세트만 켠다(이름 = 카탈로그 · 없으면 못 함)
@@ -1086,7 +1096,7 @@ async function agentOp(a) {
     if (S.tool === 'layers') renderLayers();
     // 기관 화면: 결과 층을 껐는데 지도에 주황 점(실태조사 필지)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
     const susOn = k === 'ai' && !want && S.layers.sus && (S.last?.items || []).length > 0;
-    return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 층도 끄기', q: '현장 확인 필요 층 꺼 줘' } : null };
+    return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 레이어도 끄기', q: '현장 확인 필요 레이어 꺼 줘' } : null };
   }
   if (a.op === 'analysis_watch') {                     // 말로 실행한 분석 — 진행 보기에 붙는다(결과가 읍면동 순으로 차오름 · 범위 문장은 작업 값 그대로)
     if (!AN || !a.job_id) return { ok: false, reason: '진행 화면을 열 수 없습니다' };
@@ -1301,7 +1311,6 @@ function tool(id) {
   SH.go(-1);
   if (id === 'list') { if (S.list) { closeDrawer(); S.list = null; } else { closePop(); openList(); } return; }
   if (id === 'swipe') return toggleSwipe();
-  if (id === 'tilt') return toggleTilt();
   if (id === 'analyze') {
     if (AN.active) { if (!AN.running) AN.stop(); S.tool = null; patchRail(); return; }
     closePop(); closeDrawer(); S.tool = 'analyze'; patchRail();
@@ -1337,7 +1346,7 @@ function renderLayers() {
   h('i.xc-sw'), h('span', { text: it.name?.ko || it.id })));
   const ai = rows.findIndex((b) => b.querySelector('[data-k="ai"]'));
   rows.splice(ai + 1, 0, ...sub);
-  showPop('층', h('div.xc-rows-p', {}, ...rows));
+  showPop('레이어', h('div.xc-rows-p', {}, ...rows));
 }
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */
@@ -1557,24 +1566,11 @@ function cmpBar() {
   el.replaceChildren(left, h('i.xc-cmp-d', { 'aria-hidden': 'true' }), right);
 }
 
-/* 입체 — 지형(카탈로그 terrain) + 기울기 · 지형은 지역 축척에서만 */
-async function terrainFor(z) {
-  const dem = (S.cat?.items || []).find((i) => i.kind === 'terrain');
-  const want = !!(S.tilt && dem && z >= 8 && z < 13.5);   // 전국 축척은 지형 없이 기울기만(지형 자료는 지역 것 · 타일 빈자리 줄임 · GPT2-1)
-  const has = !!map.getTerrain();
-  if (want && !has) { if (!map.getSource('xc-dem')) map.addSource('xc-dem', await sourceSpec(dem)); map.setTerrain({ source: 'xc-dem', exaggeration: 1.4 }); }
-  else if (!want && has) map.setTerrain(null);
-}
-const TILT = { pitch: 55, bearing: -14 };
-async function toggleTilt() { await setView(S.tilt ? 0 : TILT.pitch, S.tilt ? 0 : TILT.bearing); }
-/** 시점 — '입체' 버튼과 말로 하는 시점(map_view)이 같은 코드: 기울기 > 0 이면 입체(지형 포함) */
+/* 입체는 뺐다(원칙 196) — 지형 타일을 싣지 않고 기울기도 0. 시점 함수는 '위에서 보기'만(말로 하는 map_view 의 평면 복귀) */
 async function setView(pitch, bearing) {
-  S.tilt = pitch > 0; patchRail();
-  if (S.els?.hud) S.els.hud.dataset.tilt = S.tilt ? '1' : '';   // 입체 = 큰 숫자를 작은 칸으로(GPT2-1)
-  await terrainFor(map.getZoom());
-  // 입체일 때 아직 안 온 먼 타일 자리는 밝은 바탕(#F2F4F6) 대신 영상과 비슷한 어두운 땅빛 — 먼 연결 · 느린 그림에서 '넓은 흰 공백'이 보이지 않게(GPT3-8)
-  if (map.getLayer('bg')) map.setPaintProperty('bg', 'background-color', S.tilt ? '#3A4640' : '#F2F4F6');
-  map.easeTo({ pitch, bearing, duration: RM() ? 0 : 1250, easing: (t) => 1 - Math.pow(1 - t, 3) });
+  S.tilt = false; patchRail();
+  if (S.els?.hud) S.els.hud.dataset.tilt = '';
+  map.easeTo({ pitch: 0, bearing: 0, duration: RM() ? 0 : 600 });
 }
 
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) closePop(); });

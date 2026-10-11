@@ -243,3 +243,25 @@
 .xc-cmp-s:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .xc-cmp-d{width:1px;height:20px;background:var(--rule)}
 @media (max-width:640px){.xc-cmp{bottom:88px;left:50%}.xc-cmp-s{max-width:132px;font-size:12.5px}}
+
+/* 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외 — 시안 design-r19/ximap-board) — 같은 지도에서 나라만 바꾼다 */
+.xn-bar{position:absolute;z-index:12;right:16px;top:16px;display:inline-flex;gap:2px;height:40px;padding:0 5px;align-items:center;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map)}
+.xn-b{height:30px;padding:0 12px;border:0;border-radius:6px;background:none;font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);cursor:pointer}
+.xn-b:hover{color:var(--ink)}
+.xn-b[aria-pressed="true"]{color:var(--ink);background:var(--bg-0);font-weight:700}
+.xn-hud{position:absolute;z-index:6;left:16px;bottom:48px;max-width:min(440px,calc(100% - 32px));padding:16px 18px;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);color:var(--ink)}
+.xn-hud[hidden]{display:none}
+.xn-k{margin:0;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.xn-h{margin:2px 0 6px;font:800 28px/36px var(--font-display);letter-spacing:-.02em}
+.xn-p{margin:0;font:500 15px/22px var(--font-body);color:var(--ink-2)}
+.xn-p span{display:block}
+.xn-p b{font-weight:700}
+.xn-more{display:inline-block;margin-top:10px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.xn-more[hidden]{display:none}
+.xn-leg{position:absolute;z-index:12;right:16px;top:64px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map);font:500 13px/1 var(--font-body);color:var(--sub)}
+.xn-leg[hidden]{display:none}
+.xn-ramp{display:inline-block;width:88px;height:10px;border-radius:3px;background:linear-gradient(90deg,rgba(46,158,91,.14),rgba(46,158,91,.85))}
+.xn-sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+.xn-what{position:absolute;z-index:5;left:16px;bottom:14px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.88)}
+.k-main[data-nation="kg"] .xc-hud,.k-main[data-nation="kg"] .xc-pop,.k-main[data-nation="kg"] .xa-card,.k-main[data-nation="kg"] .xc-grip,.k-main[data-nation="kg"] .xc-cmp{display:none!important}
+@media (max-width:640px){.xn-bar{top:8px;right:8px}.xn-leg{top:56px;right:8px}.xn-hud{left:16px;bottom:96px}.xn-h{font-size:28px;line-height:36px}}

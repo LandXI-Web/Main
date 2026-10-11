@@ -27,7 +27,7 @@ SPECS: dict[str, dict] = {
         "description": "한 필지의 대장(지목·면적·용도지역) vs 현황(AI 면적) · 의심 규칙 · 이력.",
         "properties": {"pnu": {"type": "string", "description": "19자리 PNU"}}, "required": ["pnu"]},
     "results_stats": {
-        "description": "AI 결과 층의 읍면동·클래스별 개수·면적(봉투).",
+        "description": "AI 결과 레이어의 읍면동·클래스별 개수·면적(봉투).",
         "properties": {"region": REGION, "set": {"type": "string", "description": "results/{tenant}/{name} (없으면 그 지역의 토지피복 결과)"},
                        "by": {"type": "string", "enum": ["emd", "cls"]}, "emd": {"type": "string"}, "cls": {"type": "string", "enum": ["건물", "경작지", "주차장", "비닐하우스"]}}},
     "results_features": {
@@ -39,7 +39,7 @@ SPECS: dict[str, dict] = {
     "results_parcels_join": {
         "description": "AI 결과 × 필지 공간 결합(지목·클래스 필터).",
         "properties": {"region": REGION, "set": {"type": "string"}, "cls": {"type": "string"}, "jimok": {"type": "string"}, "emd_cd": {"type": "string"}}},
-    "catalog_layers": {"description": "현재 뷰의 영상 사다리 · 결과 층 목록.", "properties": {}},
+    "catalog_layers": {"description": "현재 뷰의 영상 사다리 · 결과 레이어 목록.", "properties": {}},
     "jobs_quote": {
         "description": "화면에 그려진 프레임을 분석하는 작업 견적(면적·shard·GPU·s 추정·쿼터). 프레임 분석 요청이면 이것을 먼저 부른다.",
         "properties": {"service": {"type": "string", "enum": ["greenhouse", "building", "farmland", "parking"],
@@ -56,7 +56,7 @@ SPECS: dict[str, dict] = {
     "map_arrive": {"description": "직전 도구 결과(필지·피처)를 지도에 도착(스윕·락온·숫자)시킨다.",
                    "properties": {"step": {"type": "integer", "description": "결과를 낸 계획 단계 번호(생략 = 마지막)"}}},
     "map_flyto": {"description": "인용된 필지로 지도 이동 + 필지 카드.", "properties": {"pnu": {"type": "string"}}, "required": ["pnu"]},
-    "map_on": {"description": "결과 층 켜기.", "properties": {"set": {"type": "string"}}, "required": ["set"]},
+    "map_on": {"description": "결과 레이어 켜기.", "properties": {"set": {"type": "string"}}, "required": ["set"]},
     "map_frame": {"description": "직전 결과 범위를 분석 프레임으로 표시.", "properties": {"step": {"type": "integer"}}},
     "drawer_open": {"description": "보고서·통계·의심 큐 서랍 열기.", "properties": {"kind": {"type": "string", "enum": ["report", "stats", "findings"]},
                                                                            "emd": {"type": "string"}, "rule": {"type": "string", "enum": RULES}}, "required": ["kind"]},

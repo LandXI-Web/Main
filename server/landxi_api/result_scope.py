@@ -8,7 +8,7 @@
   chips(cond)         조건 → 칩 [{k:'cls'|'area'|'emd', label}] (화면 조건 줄 · 답 첫 줄이 같은 말)
   label(cond)         칩 글을 ' · ' 로
   layer_names(jobs)   작업 → 사람이 읽는 레이어 이름('남원시 비닐하우스' · '여주시 하거동 프로젝트 ○○') — 목록 줄과 같은 재료
-  scope_line(...)     답 첫 줄 '대상: 켜진 층 n개(이름) · 조건: …'
+  scope_line(...)     답 첫 줄 '대상: 켜진 레이어 n개(이름) · 조건: …'
 """
 from __future__ import annotations
 
@@ -128,10 +128,10 @@ async def layer_names(jobs: list[str]) -> list[dict]:
     return out
 
 
-def scope_line(names: list[dict], cond: dict | None = None, why: str = "켜진 층") -> str:
-    """답 첫 줄 — 대상(레이어 n개 · 이름) · 조건. why = '켜진 층' | '질문의 지역' | '지금 보는 지역'."""
+def scope_line(names: list[dict], cond: dict | None = None, why: str = "켜진 레이어") -> str:
+    """답 첫 줄 — 대상(레이어 n개 · 이름) · 조건. why = '켜진 레이어' | '질문의 지역' | '지금 보는 지역'."""
     nm = [x["name"] for x in names]
     shown = " · ".join(nm[:3]) + (f" 외 {len(nm) - 3}개" if len(nm) > 3 else "")
-    head = f"대상: {why} {len(nm)}개({shown})" if why == "켜진 층" else f"대상: {shown}({why})"
+    head = f"대상: {why} {len(nm)}개({shown})" if why == "켜진 레이어" else f"대상: {shown}({why})"
     lb = label(cond or {})
     return f"{head} · 조건: {lb or '없음'}"

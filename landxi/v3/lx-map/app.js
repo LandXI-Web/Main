@@ -211,9 +211,9 @@ function drawLeft() {
     h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
   left.replaceChildren(
-    h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),
-      h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
-    h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
+    h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }),   // 세 화면 경계(바퀴 4)
+      h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 레이어 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
+    h('div.lm-groups', { 'aria-label': '분석 결과 레이어' }, ...groups),
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl, h('p.lm-bn', { text: '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다' })));
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
@@ -261,7 +261,7 @@ document.addEventListener('kit:agent-action', (e) => {
   if (a?.op !== 'map_filter') return;
   e.preventDefault();
   const ok = setFilter(a);
-  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_filter', ok, by: 'lx-map', ...(ok ? {} : { reason: '켜진 결과 층이 없습니다' }) } }));
+  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_filter', ok, by: 'lx-map', ...(ok ? {} : { reason: '켜진 결과 레이어가 없습니다' }) } }));
 });
 K.mountCmdk({ stage: ST0, context: () => {
   const on = all().filter((x) => shown(x) && !x.empty && !x.failed);
@@ -324,7 +324,7 @@ function drawCap() {
   const on = all().filter(shown);
   cap.hidden = !on.length;
   cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(val(x.found) ?? 0)}건`}` })),
-    ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 층` })] : []));
+    ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 레이어` })] : []));
 }
 async function toggle(x) {
   x.on = !x.on;
@@ -470,7 +470,7 @@ if (WANT && ST.items.get(WANT)?.empty) {
 }
 if (WANT && !ST.items.has(WANT)) {
   const r = (D.running || []).find((x) => x.job === WANT);
-  K.toast(r ? `${r.name} · ${r.region} — 분석 중입니다. 끝나면 여기에 층으로 쌓입니다` : '그 결과는 이 계정의 지도 서비스에 없습니다');
+  K.toast(r ? `${r.name} · ${r.region} — 분석 중입니다. 끝나면 여기에 레이어로 쌓입니다` : '그 결과는 이 계정의 지도 서비스에 없습니다');
 }
 S.fresh(D.as_of);
 release();

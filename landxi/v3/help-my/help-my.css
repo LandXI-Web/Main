@@ -76,3 +76,21 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
   .hm-tabs{gap:16px}
 }
 @media (prefers-reduced-motion:reduce){.hm-pane,.hm-ink,.hm-open p,.hm-q p,.hm-ct{transition:none;animation:none}}
+
+/* 세 화면(LX 계정 · 바퀴 4) — 그림 한 장 + 이름 + 한 줄 + 찍은 때 */
+.hm-sc-h{margin:16px 0 4px;font:700 17px/24px var(--font-display);color:var(--ink)}
+.hm-sc{margin:16px 0 0;padding:0 0 16px;border-bottom:1px solid var(--rule)}
+.hm-sc-img{display:block;border-radius:var(--r-8);overflow:hidden;border:1px solid var(--rule)}
+.hm-sc-img img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:left top}
+.hm-sc h3{margin:12px 0 2px;font:700 16px/24px var(--font-display);color:var(--ink)}
+.hm-sc p{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2);word-break:keep-all}
+.hm-sc small{display:block;margin-top:6px;font:500 12px/16px var(--font-num);color:var(--sub)}
+.hm-sc-flow{margin:16px 0 0;font:500 14px/22px var(--font-body);color:var(--sub);word-break:keep-all}
+.hm-sc-flow b{color:var(--ink)}
+/* 단독 쪽에서 '세 화면'은 넓게 — 세 그림을 나란히(서랍 안은 위아래) */
+.hm-card[data-tab="screens"]{width:min(1240px,100%)}
+@media (min-width:900px){
+  .hm-card[data-tab="screens"] .hm-sc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .hm-card[data-tab="screens"] .hm-sc{border-bottom:0;padding-bottom:0}
+}
+.hm-sc p span{display:block}

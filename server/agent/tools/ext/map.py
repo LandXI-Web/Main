@@ -4,7 +4,7 @@
                                      기관 계정은 관할 안만(관할 밖이면 '이 기관의 데이터가 아닙니다').
   map_zoom(zoom | delta)             확대·축소(절대 줌 또는 ±단계)
   map_view(pitch, bearing | preset)  시점 — preset '3d'(입체 · XI맵 '입체' 버튼과 같은 값) · 'top'(위에서)
-  map_layer(layer, on)               층 켜기·끄기 — imagery(영상) · results(AI 분석 결과) · findings(현장 확인 필요) · parcels(지적선)
+  map_layer(layer, on)               레이어 켜기·끄기 — imagery(영상) · results(AI 분석 결과) · findings(현장 확인 필요) · parcels(지적선)
 
 숫자는 내지 않는다(봉투 0) — 지도 동작만. 지역 문자열 하드코딩 0(이름은 regions 표에서 찾는다).
 """
@@ -32,11 +32,11 @@ SPECS: dict[str, dict] = {
                        "pitch": {"type": "number", "description": "기울기 0–70도"},
                        "bearing": {"type": "number", "description": "방향 -180–180도"}}},
     "map_layer": {
-        "description": "지도 층 켜기·끄기. imagery=항공·드론 영상 · results=AI 분석 결과 · findings=현장 확인 필요 필지 · parcels=지적선. "
+        "description": "지도 레이어 켜기·끄기. imagery=항공·드론 영상 · results=AI 분석 결과 · findings=현장 확인 필요 필지 · parcels=지적선. "
                        "'영상 켜 줘' = imagery on true · '결과 꺼 줘' = results on false.",
         "properties": {"layer": {"type": "string", "enum": ["imagery", "results", "findings", "parcels"]},
                        "on": {"type": "boolean", "description": "켜기 true · 끄기 false(기본 true)"},
-                       "only": {"type": "string", "description": "그 층만(결과 층이면 서비스 낱말 · 예 '비닐하우스')"}},
+                       "only": {"type": "string", "description": "그 레이어만(결과 레이어이면 서비스 낱말 · 예 '비닐하우스')"}},
         "required": ["layer"]},
     "map_compare": {
         "description": "두 시점 영상을 좌우로 나란히(XI맵 가르기) — '2023년과 2025년 영상 비교' · '두 시점 나란히'. 연도를 말하면 그 해(없으면 가까운 해).",
@@ -55,11 +55,11 @@ HANDLERS: dict = {}
 WRITE: set[str] = set()
 CONFIRM: set[str] = set()
 CLIENT = set(SPECS)
-WHY = {"map_region": "지역으로 이동", "map_zoom": "확대·축소", "map_view": "시점 바꾸기", "map_layer": "층 켜기·끄기", "screen_open": "XI맵 열기",
+WHY = {"map_region": "지역으로 이동", "map_zoom": "확대·축소", "map_view": "시점 바꾸기", "map_layer": "레이어 켜기·끄기", "screen_open": "XI맵 열기",
        "map_compare": "두 시점 나란히", "map_draw": "범위 그리기 켜기", "map_snapshot": "지도 그림 파일"}
-SAY = {"map_region": "지역으로 이동", "map_zoom": "지도 확대·축소", "map_view": "시점 바꾸기", "map_layer": "층 켜기·끄기", "screen_open": "XI맵 열기",
+SAY = {"map_region": "지역으로 이동", "map_zoom": "지도 확대·축소", "map_view": "시점 바꾸기", "map_layer": "레이어 켜기·끄기", "screen_open": "XI맵 열기",
        "map_compare": "두 시점 나란히 놓기", "map_draw": "범위 그리기 켜기", "map_snapshot": "지도 그림 파일 만들기"}
-HINT = ("지도 이동·확대·축소·시점(3D·위에서)·층(영상·결과) 요청은 map_region · map_zoom · map_view · map_layer 를 부른다. "
+HINT = ("지도 이동·확대·축소·시점(3D·위에서)·레이어(영상·결과) 요청은 map_region · map_zoom · map_view · map_layer 를 부른다. "
         "두 시점 영상 비교는 map_compare · 범위 그려 분석은 map_draw · 지도 그림 저장은 map_snapshot. "
         "지역 이동은 결과가 없어도 map_region 으로 한다. 이 도구를 부르지 않았으면 '이동했습니다·켰습니다' 같은 동작 문장을 쓰지 않는다.")
 
@@ -283,7 +283,7 @@ async def map_layer(args: dict, ctx) -> Out:
     if only not in (None, "", False):
         a["only"] = True if only in (True, "true", "1") else str(only)[:20]
     out.ui_actions.append(a)
-    out.data = {"층": LAYER_KO[layer], "켜기": on, "실행": "됨"}
+    out.data = {"레이어": LAYER_KO[layer], "켜기": on, "실행": "됨"}
     return out
 
 
@@ -348,7 +348,7 @@ SNAP_RX = re.compile(r"(지도|화면).{0,14}(이미지|그림\s*파일|그림�
 SNAP_NOT = re.compile(r"보고서|공문|조문|법")
 FIND_ONLY = re.compile(r"현장\s*확인\s*필요\s*(필지)?\s*(만|층|레이어)?\s*(보여|켜|표시|띄워)")
 SERVICE_WORDS = re.compile(r"비닐하우스|건물|경작지|휴경지|주차장|해양쓰레기|방치\s*쓰레기|불법\s*소각|폐가|포트홀|도로\s*시설")
-ONLY_RESULT = re.compile(r"결과\s*(만|층)|만\s*(보여|켜|표시)")
+ONLY_RESULT = re.compile(r"결과\s*(만|층|레이어)|만\s*(보여|켜|표시)")
 YEAR_RX = re.compile(r"(20\d{2})\s*년?")
 
 
@@ -362,7 +362,7 @@ def _years(t: str) -> list[int]:
 
 
 async def route_map(msg: str, ctx) -> dict | None:
-    """지도 동작 문장 → {tool, args[, then]}. 지명이 있으면 먼저 그곳으로 옮기고 나서 확대 · 층 · 시점(규칙 ③ · expand 1).
+    """지도 동작 문장 → {tool, args[, then]}. 지명이 있으면 먼저 그곳으로 옮기고 나서 확대 · 레이어 · 시점(규칙 ③ · expand 1).
     두 시점 · 범위 그리기 · 그림 저장(둘째 묶음)도 여기서 모델 없이 고른다. 섞인 자료 질문이면 None(모델 · 다른 직행)."""
     t = re.sub(r"\s+", " ", msg or "").strip()
     if t and len(t) <= 40 and XI_OPEN.search(t) and allowed("screen_open", ctx.principal):
@@ -379,12 +379,12 @@ async def route_map(msg: str, ctx) -> dict | None:
         return {"tool": "map_draw", "args": {"region": talk.pick(ctx, groups[0])[0]["sgg_cd"]} if groups else {}}
     if SNAP_RX.search(t) and not SNAP_NOT.search(t):
         return {"tool": "map_snapshot", "args": {}}
-    # '현장 확인 필요 필지만 보여 줘' — 층 켜기(숫자 질문은 다른 직행)
+    # '현장 확인 필요 필지만 보여 줘' — 레이어 켜기(숫자 질문은 다른 직행)
     if FIND_ONLY.search(t) and not re.search(r"몇|건수|얼마|목록|상위|차트|보고서", t):
-        # LX 화면에는 '현장 확인 필요' 층이 없다(원칙 135) — LX 계정은 AI 분석 결과 층으로
+        # LX 화면에는 '현장 확인 필요' 레이어가 없다(원칙 135) — LX 계정은 AI 분석 결과 레이어로
         cand = [{"tool": "map_layer", "args": {"layer": "results" if talk.lx_ai(ctx) else "findings", "on": True, "only": True}}]
         return _with_place(t, groups, cand, ctx)
-    # '○○읍으로 이동해서 비닐하우스 결과만 보여 줘' — 이동 먼저 + 그 서비스 결과 층만(expand 1)
+    # '○○읍으로 이동해서 비닐하우스 결과만 보여 줘' — 이동 먼저 + 그 서비스 결과 레이어만(expand 1)
     svc = SERVICE_WORDS.search(t)
     if svc and ONLY_RESULT.search(t) and (MOVE_RX.search(t) or SHOW_RX.search(t)) and not re.search(r"몇|건수|얼마|목록|상위|차트|보고서|대장|요약", t):
         cand = [{"tool": "map_layer", "args": {"layer": "results", "on": True, "only": re.sub(r"\s+", "", svc.group(0))}}]

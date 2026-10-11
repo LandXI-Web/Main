@@ -88,7 +88,7 @@ _TASKS: dict[str, asyncio.Task] = {}
 
 WHY = {
     "survey_stats": "범위 건수 봉투 확인", "survey_findings": "조건 일치 의심 필지 · 점수순", "survey_parcel": "필지 대장 vs 현황",
-    "map_arrive": "지도에 도착(스윕·락온·숫자)", "map_flyto": "필지로 이동", "parcel_card": "필지 카드", "map_on": "층 켜기", "map_frame": "프레임 표시",
+    "map_arrive": "지도에 도착(스윕·락온·숫자)", "map_flyto": "필지로 이동", "parcel_card": "필지 카드", "map_on": "레이어 켜기", "map_frame": "프레임 표시",
     "drawer_open": "서랍 열기", "results_stats": "AI 결과 집계", "results_features": "뷰 안 피처", "parcel_at": "좌표 필지",
     "results_parcels_join": "AI × 필지 결합", "catalog_layers": "영상·결과 목록", "jobs_quote": "견적(면적·shard·GPU·s)",
     "jobs_submit": "실행 — 사람 승인 필요", "survey_state": "상태 변경 — 사람 승인 필요", "survey_reports_draft": "초안 .docx 조립(F2-S 서식)",
@@ -378,8 +378,8 @@ SYSTEM = """너는 Land-XI XI맵의 GeoAI 에이전트다(LX 한국국토정보�
 9) 어느 지역에 어떤 서비스 결과가 있는지 · 서비스 상태 · '○○ 몇 건' 은 summary_lookup 으로 확인한다. 결과가 없으면 '해당 지역 데이터가 없습니다'라고만 답한다.
 10) 대장 × AI 질문('대장상 ~인데 AI가 ~')은 ledger_findings, 실태조사 의심은 survey_findings · survey_stats. 질문에 시군구가 있으면 region 인자로 넘긴다.
 11) 용어: '판독' 대신 'AI 분석', '반입' 대신 '데이터 올리기', '검수' 대신 '결과 확인'. 지역·기관 이름은 데이터에 있는 그대로 쓴다.
-12) 지도 동작(이동·확대·축소·층 켜기·3D·채색·두 시점 비교·범위 그리기·그림 저장·분석 실행)은 도구를 불러야만 일어난다. 맞는 도구가 없거나 부르지 않았으면 그 동작을 했다고 쓰지 말고 '그 지도 동작은 아직 없는 기능입니다.' 한 문장만 쓴다(대신 할 수 있는 것은 서버가 버튼으로 붙인다).
-13) 도구 이름·API·파일·내부 코드는 답에 쓰지 않는다. 프레임·레이어·폴리곤 같은 내부 말 대신 범위·층·도형.
+12) 지도 동작(이동·확대·축소·레이어 켜기·3D·채색·두 시점 비교·범위 그리기·그림 저장·분석 실행)은 도구를 불러야만 일어난다. 맞는 도구가 없거나 부르지 않았으면 그 동작을 했다고 쓰지 말고 '그 지도 동작은 아직 없는 기능입니다.' 한 문장만 쓴다(대신 할 수 있는 것은 서버가 버튼으로 붙인다).
+13) 도구 이름·API·파일·내부 코드는 답에 쓰지 않는다. 프레임·폴리곤 같은 내부 말 대신 범위·도형. 지도에서 켜고 끄는 것은 '레이어'라고 부른다('층'이라고 하지 않는다).
 15) '의심 필지'와 '현장 확인 필요'는 다른 숫자다. 물은 이름의 숫자를 먼저 쓰고, 다른 이름의 숫자는 다음 문장에 이름을 밝혀 쓴다. 두 지역 비교는 같은 이름의 숫자끼리만.
 14) '결과 요약·정리·알려 줘·보여 줘'는 이미 있는 결과를 읽는 질문이다. summary_lookup · survey_stats 로 답하고, 분석 실행(analysis_run · jobs_submit · survey_build)을 부르지 않는다. 실행은 '실행·돌려·시작'을 말할 때만.
 16) '읍면동별 · 통계 · 집계'처럼 AI 분석 결과를 읍면동으로 나눠 달라는 질문은 results_stats(region · by "emd" · cls)로 답한다. summary_lookup 의 의심 필지 · 신고 숫자로 대신하지 않는다."""
@@ -400,7 +400,7 @@ You call only the platform tools, with the user's own permissions. Rules:
 11) "By district / statistics / breakdown" of AI results → results_stats (region · by "emd" · cls). Do not answer with summary_lookup's flagged-parcel or report counts."""
 
 
-LX_RULE = ("\n\n추가 규칙(원칙 135 · LX · 기관 계정 모두): '현장 확인 필요' 숫자 · 층 · 말을 쓰지 않는다. 지역의 대표 숫자는 AI 분석 결과다"
+LX_RULE = ("\n\n추가 규칙(원칙 135 · LX · 기관 계정 모두): '현장 확인 필요' 숫자 · 레이어 · 말을 쓰지 않는다. 지역의 대표 숫자는 AI 분석 결과다"
            "(summary_lookup 의 AI 분석 결과 봉투). 의심 필지는 물었을 때만 그 이름으로 쓴다.")
 
 
@@ -425,7 +425,7 @@ def context_line(c: dict, intent: str) -> str:
     if v.get("center"):
         parts.append(f"지도 중심={[round(x, 4) for x in v['center']]} 줌={round(v.get('zoom') or 0, 1)}")
     if c.get("on"):
-        parts.append(f"켜진 층={c['on'][:6]}")
+        parts.append(f"켜진 레이어={c['on'][:6]}")
     parts.append("프레임=있음(사람이 그림)" if c.get("frame") else "프레임=없음")
     return "[현재 화면] " + " · ".join(parts)
 
@@ -656,7 +656,7 @@ EN_LAYER = {"imagery": re.compile(r"\b(?:imagery|images?|aerial|satellite|drone|
 EN_DATA = re.compile(r"how\s+many|\bcount\b|summar|report|describe|explain|\blist\b|\bwhat\b|\bwhy\b|ndvi|\bstatus\b|\bgpu", re.I)
 MAP_SAY = {
     "ko": {"in": "지도를 확대했습니다.", "out": "지도를 축소했습니다.", "3d": "지도를 3D 시점으로 기울였습니다.", "top": "지도를 위에서 보는 시점으로 바꿨습니다.",
-           "on": "{layer} 층을 켰습니다.", "off": "{layer} 층을 껐습니다."},
+           "on": "{layer} 레이어를 켰습니다.", "off": "{layer} 레이어를 껐습니다."},
     "en": {"in": "Zoomed in on the map.", "out": "Zoomed out on the map.", "3d": "Tilted the map to a 3D view.", "top": "Switched the map to a top-down view.",
            "on": "Turned on the {layer} layer.", "off": "Turned off the {layer} layer."},
 }
@@ -684,7 +684,7 @@ def map_answer(ctx: Ctx, name: str, args: dict, out) -> str | None:
         if key == "on" and a.get("only") and lg == "ko":
             only = a.get("only")
             return (f"{only} AI 분석 결과만 켰습니다." if isinstance(only, str) and only not in ("True", "true", "1")
-                    else f"{LAYER_NAME['ko'].get(a.get('layer'), '영상')} 층만 남겼습니다.")
+                    else f"{LAYER_NAME['ko'].get(a.get('layer'), '영상')} 레이어만 남겼습니다.")
     else:
         d = getattr(out, "data", None) or {}
         place = str(d.get("이동") or a.get("name") or "").strip()
@@ -872,8 +872,16 @@ async def execute(ctx: Ctx, message: str):
     scr = audit.screen(message, p)
     msg = scr["message"]
     ctx.lang = lang_of(message)
-    ctx.state["msg"] = msg
     await persist_start(ctx, msg)
+    ctx.state["msg_asked"] = msg                      # 사용자가 쓴 말 그대로(개선 고리가 모으는 말)
+    try:                                              # 개선 후보 '채택 — 바로 반영'(원칙 197): 다른 이름 · 질문 뜻 연결 → 다음 질문부터 알아듣는다
+        from landxi_api import improve as _improve
+        msg, used = await _improve.rewrite(msg)
+        if used:
+            ctx.state["rules"] = used
+    except Exception:  # noqa: BLE001
+        pass
+    ctx.state["msg"] = msg
     if scr["pii"]:
         await audit.log(p, "agent.pii_masked", ctx.run_id, {"kinds": scr["pii"]})
     if scr["reject"]:

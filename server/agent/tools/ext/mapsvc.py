@@ -1,14 +1,14 @@
 """지도 서비스 · XI맵을 말로 — 세부 거르기 · AI 분석 결과 보고서(원칙 193 · 확인 대장 10-11 Q5 ⓑ · QA-고침-5).
 
   map_filter(cls?, area_min?, area_op_min?, area_max?, area_op_max?, emd?, clear?)
-      '비닐하우스 단동만 펼쳐줘' · '면적 1,000㎡ 넘는 것만' · '운봉읍만' · '조건 풀어 줘' → 지금 지도에 켜진 결과 층(화면이 context.sets 로 알린 것)를
-      결과 타일 속성(cls · area_m2 · emd)으로 거른다. 서버는 그 층의 실제 결과(detections — 타일과 같은 행)에 그 값이 있는지 먼저 본다:
+      '비닐하우스 단동만 펼쳐줘' · '면적 1,000㎡ 넘는 것만' · '운봉읍만' · '조건 풀어 줘' → 지금 지도에 켜진 결과 레이어(화면이 context.sets 로 알린 것)를
+      결과 타일 속성(cls · area_m2 · emd)으로 거른다. 서버는 그 레이어의 실제 결과(detections — 타일과 같은 행)에 그 값이 있는지 먼저 본다:
       없는 값(예: 단동 · 연동 구분이 없는 결과)은 거르지 않고 '없다'고 답하며, 그 질문은 개선 고리(improve · '자료 없음')로 간다.
       맞는 수 = 같은 행을 같은 조건으로 센 값(봉투) · 화면은 ui_action map_filter 로 같은 조건을 바로 건다(모델 호출 0 · 1초 안 목표).
   ai_report(request)
       '보고서 초안 만들어 줘'(LX 계정) → AI 분석 결과 보고서 .docx — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도.
       의심 필지 · 현장 확인 개념 없음(원칙 135). 대상 = 질문의 지역(그 지역의 결과 — 통계 답과 같은 세트 선택 · results._set)
-      → 지금 화면에 켜진 층(context.sets) → 화면 지역(context.region) → 없으면 묻는다. 숫자 = 지도 서비스와 같은 행(지운 결과 제외).
+      → 지금 화면에 켜진 레이어(context.sets) → 화면 지역(context.region) → 없으면 묻는다. 숫자 = 지도 서비스와 같은 행(지운 결과 제외).
 ROUTE 는 모델 앞 직행(LLM 0). 지역 · 지명 고정값 0.
 """
 from __future__ import annotations
@@ -23,26 +23,26 @@ from .. import Out, ToolError
 
 SPECS = {
     "map_filter": {
-        "description": "지도에 켜진 AI 분석 결과 층를 분류 · 면적 · 읍면동 조건으로 거른다('비닐하우스 단동만' · '1,000㎡ 넘는 것만' · '○○면만' · '조건 풀어 줘').",
+        "description": "지도에 켜진 AI 분석 결과 레이어를 분류 · 면적 · 읍면동 조건으로 거른다('비닐하우스 단동만' · '1,000㎡ 넘는 것만' · '○○면만' · '조건 풀어 줘').",
         "properties": {"cls": {"type": "string", "description": "분류(예 '비닐하우스' · '비닐하우스 단동')"},
                        "area_min": {"type": "number"}, "area_op_min": {"type": "string", "enum": [">", ">="]},
                        "area_max": {"type": "number"}, "area_op_max": {"type": "string", "enum": ["<", "<="]},
                        "emd": {"type": "string", "description": "읍면동 이름"}, "clear": {"type": "boolean"},
                        "clear_only": {"type": "string", "description": "하나씩 풀기 — 'area' · 'emd' · 'cls'(쉼표)"}, "request": {"type": "string"}}},
     "map_stats": {
-        "description": "켜진 결과 층(지금 걸린 조건 그대로)의 읍면동별 개수 · 면적 — 대상 층 · 조건을 답 첫 줄에.",
+        "description": "켜진 결과 레이어(지금 걸린 조건 그대로)의 읍면동별 개수 · 면적 — 대상 레이어 · 조건을 답 첫 줄에.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"}}},
     "ai_report": {
-        "description": "AI 분석 결과 보고서 초안(.docx) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도. 지역이 없으면 지금 화면의 결과 층 · 지역.",
+        "description": "AI 분석 결과 보고서 초안(.docx) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도. 지역이 없으면 지금 화면의 결과 레이어 · 지역.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"}}},
 }
 WRITE: set[str] = set()
 CONFIRM: set[str] = set()
 CLIENT = {"map_filter"}
 NO_LLM = {"map_filter", "map_stats", "ai_report"}
-WHY = {"map_filter": "켜진 결과 층 거르기", "map_stats": "켜진 결과 층 읍면동 통계", "ai_report": "AI 분석 결과 보고서 .docx 만들기"}
+WHY = {"map_filter": "켜진 결과 레이어 거르기", "map_stats": "켜진 결과 레이어 읍면동 통계", "ai_report": "AI 분석 결과 보고서 .docx 만들기"}
 SAY = {"map_filter": "조건으로 거르기", "map_stats": "읍면동별로 세기", "ai_report": "AI 분석 결과 보고서 만들기"}
-HINT = ("켜진 결과 층를 분류 · 면적 · 읍면동으로 거르는 말('○○만 보여 줘' · '1,000㎡ 넘는 것만')은 map_filter. "
+HINT = ("켜진 결과 레이어를 분류 · 면적 · 읍면동으로 거르는 말('○○만 보여 줘' · '1,000㎡ 넘는 것만')은 map_filter. "
         "LX 계정의 보고서 초안은 ai_report(AI 분석 결과 보고서).")
 
 
@@ -168,12 +168,12 @@ def _route_front():
     ROUTES.insert(at, ("mapsvc_first", ROUTE_FIRST))
 
 
-# ── 켜진 층 ───────────────────────────────────────────────────────────────────
+# ── 켜진 레이어 ───────────────────────────────────────────────────────────────────
 _SET = re.compile(r"^results/[\w.-]+/(job_[0-9A-Z]{20,32})$")
 
 
 async def _jobs_on(ctx) -> list[str]:
-    """화면이 알린 켜진 결과 층(context.sets) → 이 계정이 볼 수 있는 작업 id(최대 12). 모르는 모양 · 남의 기관 것은 버린다."""
+    """화면이 알린 켜진 결과 레이어(context.sets) → 이 계정이 볼 수 있는 작업 id(최대 12). 모르는 모양 · 남의 기관 것은 버린다."""
     sets = (getattr(ctx, "context", None) or {}).get("sets") or []
     ids = []
     for s in sets[:24] if isinstance(sets, list) else []:
@@ -228,10 +228,10 @@ KIND_KO = {"cls": "분류", "area": "면적", "emd": "읍면동"}
 
 async def map_filter(args: dict, ctx) -> Out:
     """조건은 쌓인다(GPT3-3 · 10-11) — 새 조건은 지금 걸린 조건(화면이 context.filter 로 알림) 위에 더해지고, 같은 종류(분류 · 면적 · 읍면동)는 바꿔 끼운다.
-    '조건 풀어 줘' = 모두 · '면적 조건만 풀어 줘' = 하나만. 답 첫 줄 = 대상(켜진 층 · 이름) · 지금 걸린 조건 전부 · 맞는 수."""
+    '조건 풀어 줘' = 모두 · '면적 조건만 풀어 줘' = 하나만. 답 첫 줄 = 대상(켜진 레이어 · 이름) · 지금 걸린 조건 전부 · 맞는 수."""
     from landxi_api import result_scope as RSC
     from landxi_api.envelope import env
-    out = Out(source="켜진 결과 층(결과 타일과 같은 행)")
+    out = Out(source="켜진 결과 레이어(결과 타일과 같은 행)")
     ctx.state["talk_kind"] = None
     prev = RSC.clean((getattr(ctx, "context", None) or {}).get("filter"))
     jobs = await _jobs_on(ctx)
@@ -251,18 +251,18 @@ async def map_filter(args: dict, ctx) -> Out:
             if jobs:
                 names = await RSC.layer_names(jobs)
                 n, _ = await _count(jobs, {})
-                out.env("n", "켜진 결과 층의 AI 분석 결과(조건 없음)", env(n, "count", "inferred", "켜진 결과 층(지운 결과 제외)"))
+                out.env("n", "켜진 결과 레이어의 AI 분석 결과(조건 없음)", env(n, "count", "inferred", "켜진 결과 레이어(지운 결과 제외)"))
                 out.answer = RSC.scope_line(names, {}) + " — {{n}}건\n" + (
-                    "조건을 모두 풀었습니다 — 켜진 층의 결과를 모두 보여 줍니다." if not keys
+                    "조건을 모두 풀었습니다 — 켜진 레이어의 결과를 모두 보여 줍니다." if not keys
                     else f"{' · '.join(KIND_KO[k] for k in gone)} 조건을 풀었습니다 — 남은 조건이 없어 모두 보여 줍니다.")
             else:
-                out.answer = "조건을 모두 풀었습니다 — 켜진 층의 결과를 모두 보여 줍니다."
+                out.answer = "조건을 모두 풀었습니다 — 켜진 레이어의 결과를 모두 보여 줍니다."
             return out
         new_note = f"{' · '.join(KIND_KO[k] for k in gone)} 조건을 풀었습니다 — 남은 조건은 그대로입니다."
     if not jobs:
         ctx.state["cannot"] = {"kind": "screen"}
         out.data = {"status": "none"}
-        out.answer = "지금 지도에 켜진 결과 층이 없습니다. 왼쪽에서 층을 켠 뒤 다시 말씀해 주세요."
+        out.answer = "지금 지도에 켜진 결과 레이어가 없습니다. 왼쪽에서 레이어를 켠 뒤 다시 말씀해 주세요."
         return out
     names = await RSC.layer_names(jobs)
     classes, emds = await _avail(jobs)
@@ -289,7 +289,7 @@ async def map_filter(args: dict, ctx) -> Out:
             ctx.state["cannot"] = {"kind": "nodata"}           # 개선 고리 — '자료 없음'(못 거른 조건)으로 모인다(원칙 193 자동 진화 관리)
             have = " · ".join(_ko(c) for c in classes[:4])
             out.data = {"status": "missing", "missing": miss, "classes": classes[:8]}
-            out.answer = (RSC.scope_line(names, prev) + "\n켜진 층에는 " + " · ".join(miss) + ". 지도는 그대로 두었습니다."
+            out.answer = (RSC.scope_line(names, prev) + "\n켜진 레이어에는 " + " · ".join(miss) + ". 지도는 그대로 두었습니다."
                           + (f" 지금 결과의 분류: {have}." if have else ""))
             return out
         # 쌓기 — 같은 종류는 바꿔 끼우고(면적은 위 · 아래를 한 조건으로), 다른 종류는 더한다
@@ -311,7 +311,7 @@ async def map_filter(args: dict, ctx) -> Out:
         if not bits:
             bits.append("같은 조건이 이미 걸려 있습니다.")
         new_note = " ".join(bits)
-    # 앞 조건의 값이 지금 켜진 층에 없으면 뺀다(레이어를 바꾼 경우)
+    # 앞 조건의 값이 지금 켜진 레이어에 없으면 뺀다(레이어를 바꾼 경우)
     if cond.get("cls"):
         cond["cls"] = [c for c in cond["cls"] if c in classes]
         if not cond["cls"]:
@@ -325,8 +325,8 @@ async def map_filter(args: dict, ctx) -> Out:
     label = RSC.label(cond)
     act = {"op": "map_filter", "label": label, "n": n, "chips": chips, **{k: v for k, v in cond.items() if k in RSC.KEYS}}
     out.ui_actions.append(act)
-    out.env("n", f"조건({label or '없음'})에 맞는 AI 분석 결과", env(n, "count", "inferred", "켜진 결과 층(지운 결과 제외)"))
-    out.env("m2", f"조건({label or '없음'})에 맞는 결과 면적 합", env(round(m2), "m2", "inferred", "켜진 결과 층(지운 결과 제외)"))
+    out.env("n", f"조건({label or '없음'})에 맞는 AI 분석 결과", env(n, "count", "inferred", "켜진 결과 레이어(지운 결과 제외)"))
+    out.env("m2", f"조건({label or '없음'})에 맞는 결과 면적 합", env(round(m2), "m2", "inferred", "켜진 결과 레이어(지운 결과 제외)"))
     out.data = {"status": "ok", "조건": label, "맞는 수": "n", "조건 칩": [c["label"] for c in chips]}
     tail = "" if len(chips) < 2 else "\n조건은 쌓입니다 — '조건 풀어 줘'로 모두, '면적 조건만 풀어 줘'처럼 하나씩 풉니다."
     out.answer = (RSC.scope_line(names, cond) + (" — {{n}}건" if n else " — 0건") + "\n" + new_note
@@ -342,12 +342,12 @@ async def _jobs_with(jobs: list[str], cls: list[str]) -> set[str]:
 
 
 async def map_stats(args: dict, ctx) -> Out:
-    """켜진 결과 층(지금 걸린 조건 그대로)의 읍면동별 개수 · 면적 — 보고서 · 거르기와 같은 범위 · 같은 행(GPT3-4 · 원칙 3).
-    질문에 지역이 있으면 그 지역의 켜진 층만, 켜진 층에 그 지역이 없으면 그 지역의 결과(보고서와 같은 고르기)."""
+    """켜진 결과 레이어(지금 걸린 조건 그대로)의 읍면동별 개수 · 면적 — 보고서 · 거르기와 같은 범위 · 같은 행(GPT3-4 · 원칙 3).
+    질문에 지역이 있으면 그 지역의 켜진 레이어만, 켜진 레이어에 그 지역이 없으면 그 지역의 결과(보고서와 같은 고르기)."""
     from landxi_api import result_scope as RSC
     from landxi_api.deps import db
     from landxi_api.envelope import env
-    out = Out(source="켜진 결과 층(결과 타일과 같은 행)")
+    out = Out(source="켜진 결과 레이어(결과 타일과 같은 행)")
     t = re.sub(r"\s+", " ", args.get("request") or ctx.state.get("msg") or "").strip()
     try:
         jobs, why = await _target_jobs(ctx, t)
@@ -360,9 +360,9 @@ async def map_stats(args: dict, ctx) -> Out:
     if not jobs:
         ctx.state["cannot"] = {"kind": "screen"}
         out.data = {"status": "none"}
-        out.answer = "지금 지도에 켜진 결과 층이 없습니다. 왼쪽에서 층을 켠 뒤 다시 말씀해 주세요."
+        out.answer = "지금 지도에 켜진 결과 레이어가 없습니다. 왼쪽에서 레이어를 켠 뒤 다시 말씀해 주세요."
         return out
-    cond = RSC.clean((getattr(ctx, "context", None) or {}).get("filter")) if why == "켜진 층" else {}
+    cond = RSC.clean((getattr(ctx, "context", None) or {}).get("filter")) if why == "켜진 레이어" else {}
     classes, emds = await _avail(jobs)
     cw = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
     if cw:
@@ -390,7 +390,7 @@ async def map_stats(args: dict, ctx) -> Out:
         e[1] += float(r["m2"])
         per[r["job_id"]] = per.get(r["job_id"], 0) + int(r["n"])
     tot = sum(v[0] for v in by.values())
-    out.env("total", "대상 층의 AI 분석 결과 수(지금 조건 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
+    out.env("total", "대상 레이어의 AI 분석 결과 수(지금 조건 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "결과가 있는 읍면동 수", env(len([k for k in by if k != "읍면동 밖"]), "곳", "inferred", "detections"))
     top = sorted(by.items(), key=lambda x: (-x[1][0], x[0]))
     rows_c = []
@@ -405,7 +405,7 @@ async def map_stats(args: dict, ctx) -> Out:
     if len(names) > 1:
         for i, x in enumerate(names):
             out.env(f"l{i}", f"{x['name']} 결과 수", env(per.get(x["job"], 0), "count", "inferred", "detections"))
-        lay = "\n층별: " + " · ".join(f"{x['name']} {{{{l{i}}}}}건" for i, x in enumerate(names))
+        lay = "\n레이어별: " + " · ".join(f"{x['name']} {{{{l{i}}}}}건" for i, x in enumerate(names))
     out.data = {"status": "ok", "대상": [x["name"] for x in names], "조건": RSC.label(cond), "읍면동": [e for e, _ in top[:12]]}
     out.answer = line + (f"\n많은 곳: {body}" if body else "\n맞는 결과가 없습니다(0건).") + lay
     return out
@@ -420,13 +420,13 @@ def _ko(c: str) -> str:
 # ── AI 분석 결과 보고서 ───────────────────────────────────────────────────────────
 CLS_COLOR = {"경작지": "#0FA9A0", "비닐하우스": "#07706A", "건물": "#2B3440", "주차장": "#8F99A8"}
 NOTICE = "AI 분석 결과(검수 전)는 참고자료입니다 — 처분은 담당자가 정합니다."
-NEED = "어느 지역의 보고서를 만들까요? 지역 이름을 함께 말씀하시거나, 지도 서비스에서 결과 층을 켠 뒤 다시 말씀해 주세요."
+NEED = "어느 지역의 보고서를 만들까요? 지역 이름을 함께 말씀하시거나, 지도 서비스에서 결과 레이어를 켠 뒤 다시 말씀해 주세요."
 
 
 async def _target_jobs(ctx, text: str) -> tuple[list[str], str]:
     """보고서 · 읍면동 통계 대상 작업 — 같은 질문 맥락이면 같은 범위(GPT3-4 · 원칙 3).
-    ① 질문의 지역: 켜진 층 가운데 그 지역 것이 있으면 그 레이어들(켜진 층) · 없으면 그 지역의 결과(results._set)
-    ② 켜진 층 전부 ③ 화면 지역. → (작업 id 들, 어디서 골랐는지 '켜진 층' | '질문의 지역' | '지금 보는 지역')."""
+    ① 질문의 지역: 켜진 레이어 가운데 그 지역 것이 있으면 그 레이어들(켜진 레이어) · 없으면 그 지역의 결과(results._set)
+    ② 켜진 레이어 전부 ③ 화면 지역. → (작업 id 들, 어디서 골랐는지 '켜진 레이어' | '질문의 지역' | '지금 보는 지역')."""
     from ... import talk
     from .. import results as RS
     from landxi_api import result_scope as RSC
@@ -440,11 +440,11 @@ async def _target_jobs(ctx, text: str) -> tuple[list[str], str]:
             want = {x["sgg_cd"] for x in named}
             mine = [x["job"] for x in await RSC.layer_names(on) if x["sgg"] in want]
             if mine:
-                return mine, "켜진 층"
+                return mine, "켜진 레이어"
         s = await RS._set({"region": named[0]["sgg_cd"], **({"cls": cls} if cls else {})}, ctx)
         return [s.rsplit("/", 1)[-1]], "질문의 지역"
     if on:
-        return on[:12], "켜진 층"
+        return on[:12], "켜진 레이어"
     if (ctx.context or {}).get("region"):
         s = await RS._set({**({"cls": cls} if cls else {})}, ctx)
         return [s.rsplit("/", 1)[-1]], "지금 보는 지역"
@@ -464,7 +464,7 @@ async def _job_data(job: str, cond: dict | None = None) -> dict | None:
             return None
         from landxi_api import result_scope as RSC
         ca: list = [job]
-        cw = RSC.sql(cond or {}, ca)                              # 지금 걸린 조건(켜진 층 보고서 · 지도 서비스와 같은 범위)
+        cw = RSC.sql(cond or {}, ca)                              # 지금 걸린 조건(켜진 레이어 보고서 · 지도 서비스와 같은 범위)
         rows = await c.fetch("SELECT coalesce(nullif(emd, ''), '') AS emd, cls, count(*) AS n, coalesce(sum(area_m2), 0) AS m2 FROM detections "
                              "WHERE job_id=$1 AND edit_state <> 'deleted'" + "".join(" AND " + x for x in cw) + " GROUP BY 1, 2", *ca)
     o = j["options"] if isinstance(j["options"], dict) else json.loads(j["options"] or "{}")
@@ -599,7 +599,7 @@ def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes
     st.font.size = Pt(10)
     st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
     head = parts[0]
-    title = f"{head['region']} {head['service']} AI 분석 결과 보고서(초안)" if len(parts) == 1 else f"AI 분석 결과 보고서(초안) — 결과 층 {len(parts)}개"
+    title = f"{head['region']} {head['service']} AI 분석 결과 보고서(초안)" if len(parts) == 1 else f"AI 분석 결과 보고서(초안) — 결과 레이어 {len(parts)}개"
     doc.core_properties.title = title
     doc.core_properties.author = "Land-XI"
     _font(sec.header.paragraphs[0].add_run(f"Land-XI · AI 분석 결과 · 초안"), 8, False, "6B7780")
@@ -657,7 +657,7 @@ def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes
                 crow.append([_ko(cl), n, round(m2)])
             _tbl(doc, ["분류", "개수(건)", "면적(㎡)"], crow, widths=[6, 4, 5], size=9)
     _p(doc, "", space_after=2)
-    _p(doc, "읽는 법 — 개수 · 면적은 AI가 그린 결과의 수와 넓이입니다(결과 확인 전 · 지운 결과 제외). 지도 서비스의 결과 층 · 내려받기 파일과 같은 값입니다.",
+    _p(doc, "읽는 법 — 개수 · 면적은 AI가 그린 결과의 수와 넓이입니다(결과 확인 전 · 지운 결과 제외). 지도 서비스의 결과 레이어 · 내려받기 파일과 같은 값입니다.",
        8.5, False, "6B7780")
     buf = io.BytesIO()
     doc.save(buf)
@@ -690,7 +690,7 @@ async def ai_report(args: dict, ctx) -> Out:
         out.answer = NEED
         return out
     from landxi_api import result_scope as RSC
-    cond = RSC.clean((ctx.context or {}).get("filter")) if why == "켜진 층" else {}   # 지도에 걸린 조건 그대로(통계 · 거르기와 같은 범위)
+    cond = RSC.clean((ctx.context or {}).get("filter")) if why == "켜진 레이어" else {}   # 지도에 걸린 조건 그대로(통계 · 거르기와 같은 범위)
     em = next((m for m in EMD_RX.findall(t) if m not in EMD_SKIP and m != "읍면동"), None)
     if em:
         av = (await _avail(jobs))[1]
@@ -731,7 +731,7 @@ async def ai_report(args: dict, ctx) -> Out:
         (d0 / "ai-report-map.png").write_bytes(pngs[0])
     tot = sum(int(r["n"]) for d in parts for r in d["rows"])
     n_emd = len({(d["job"], r["emd"]) for d in parts for r in d["rows"] if r["emd"]})
-    out.env("total", "보고서의 AI 분석 결과 수(지도 서비스 결과 층과 같은 행 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
+    out.env("total", "보고서의 AI 분석 결과 수(지도 서비스 결과 레이어와 같은 행 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "보고서에 실린 읍면동 수", env(n_emd, "곳", "inferred", "detections"))
     out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
     if pngs and pngs[0]:

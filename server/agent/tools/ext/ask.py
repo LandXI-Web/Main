@@ -93,7 +93,7 @@ async def survey_count(args: dict, ctx) -> Out:
     if r:
         await talk.remember(ctx, r["sgg_cd"])
         nm = r["name"]
-        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 층만 켜 줘") if talk.lx_ai(ctx) and talk.on_xi(ctx) and talk.has_map(ctx) is not False
+        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 레이어만 켜 줘") if talk.lx_ai(ctx) and talk.on_xi(ctx) and talk.has_map(ctx) is not False
                else talk.btn("현장 확인 필요 필지만 보여 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
                else talk.btn("지도에서 보기", href=talk.xi_href(ctx, r["sgg_cd"])) if talk.xi_href(ctx, r["sgg_cd"]) else None)
         talk.set_next(ctx, [see, talk.btn("읍면동별 차트", q=f"{nm} 의심 필지 읍면동별 차트로 보여 줘"),
@@ -126,7 +126,7 @@ async def ai_count(args: dict, ctx) -> Out:
     out.data = {"지역": place, "숫자": talk.AI_LABEL, "서비스": svc}
     if r:
         await talk.remember(ctx, r["sgg_cd"])
-        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 층만 켜 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
+        see = (talk.btn("AI 분석 결과만 보여 줘", q="AI 분석 결과 레이어만 켜 줘") if talk.on_xi(ctx) and talk.has_map(ctx) is not False
                else talk.btn("지도에서 보기", href=talk.xi_href(ctx, r["sgg_cd"])) if talk.xi_href(ctx, r["sgg_cd"]) else None)
         talk.set_next(ctx, [see, talk.btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘"),
                             talk.btn("보고서 초안", q=f"{nm} 보고서 초안 만들어 줘")])

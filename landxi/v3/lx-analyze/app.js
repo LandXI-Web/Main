@@ -78,7 +78,7 @@ function acCard(c, href, more) {
 async function gallery() {
   document.title = '분석하기 · Land-XI';
   page.append(h('header.la-head', {}, h('h1.t-h3', { text: '분석하기' }),
-    h('p.la-sub', { text: '정식 분석 서비스를 골라 지역을 정하면 AI가 분석합니다' })));
+    h('p.la-sub', {}, '정식 분석 서비스를 골라 지역을 정하면 AI가 분석합니다 ', h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }))));   // 세 화면 경계(바퀴 4)
   const tools = h('div.la-tools');
   const grid = h('div.la-grid.la-acg');
   const box = h('div');
@@ -285,7 +285,7 @@ function condCard(c) {
 
 /* ═════════════ 영상 고르기(질문 3 ⓐ · 원칙 153 · 시안 design-r15/map-service-3 B) ═════════════
    고른 지역을 덮는 공유 영상(서버 GET /cards/{카드}/imagery — 분석 판정과 한 출처)을 카드 두 열로: 미리보기(실제 영상에서 만든 것) · 해상도 · 촬영 시기 · 범위 ·
-   '이 서비스에 맞음 / 해상도 차이가 커 결과가 거칠 수 있음 / 맞지 않음(고를 수 없음)'. 오른쪽 = 범위 지도(고른 영상 청록 · 다른 영상 흰 테두리).
+   '이 서비스에 맞음 / 해상도 차이가 커 결과가 거칠 수 있음 / 맞지 않음(고를 수 없음)'. 오른쪽 = 범위 지도(고른 영상 하나만 청록 · 다른 영상은 카드에 마우스를 올릴 때만 옅은 점선 — 흰 선 여러 겹 겹침 없앰 · QA-고침-2 바퀴 4).
    영상 원천(브이월드 · 국토지리정보원 연도별)은 분석 작업이 원천 타일을 부르는 길이 서버에 없어 줄을 두지 않는다(구현 12차 보고). */
 function imageryCard(c) {
   const tabs = h('div.la-im-tabs', { role: 'tablist', 'aria-label': '지역' });
@@ -293,12 +293,13 @@ function imageryCard(c) {
   const more = h('button.la-im-more', { type: 'button', hidden: true });
   let all = false;   // 처음엔 여섯 장(고른 영상 먼저) · '더 보기'로 모두
   const mapBox = h('div.la-im-map');
-  const note = h('p.la-note', { text: '테두리는 영상이 실제로 덮는 범위입니다. 고른 영상 범위 안에서만 분석하고, 범위 밖은 결과에 나오지 않습니다.' });
+  const note = h('p.la-note', { text: '청록 테두리는 고른 영상이 실제로 덮는 범위입니다. 이 범위 안에서만 분석합니다. 다른 영상 카드에 마우스를 올리면 그 범위가 점선으로 보입니다.' });
   const el = h('section.t-card.la-box.la-wide.la-im', { id: 'imagery', 'aria-label': '영상 고르기' },
     h('h2.la-h', {}, '영상 고르기', h('small', { text: '고른 지역을 덮는 공유 영상 · 한 번에 영상 하나' })), tabs,
     h('div.la-im-body', {}, h('div.la-im-r', {}, mapBox, note), grid, more));
   const cache = new Map();
   let stage = null, seq = 0;
+  const dash = () => { try { const m = stage.map; m.setPaintProperty('k-hover-l', 'line-dasharray', [2, 2]); m.setPaintProperty('k-hover-l', 'line-opacity', 0.7); m.setPaintProperty('k-hover-f', 'fill-opacity', 0); } catch { /* 지도 전 */ } };
   const thumbs = new Map();
   const thumb = (id) => {
     if (!thumbs.has(id)) thumbs.set(id, authBlob(`/catalog/imagery/${encodeURIComponent(id)}/thumb`).catch(() => null));
@@ -341,7 +342,8 @@ function imageryCard(c) {
       // 영상은 하나만(원칙 185) — 라디오 하나 묶음 · 맞지 않는 영상은 고를 수 없음
       const rd = h('input.la-im-rd', { type: 'radio', name: `la-im-${c.id}`, value: x.id, checked: !!on || undefined, disabled: x.fit === 'no' || undefined,
         'aria-label': x.name, onchange: () => { if (x.fit === 'no') return; onPick(x); show(regions, sgg, x.pick ? null : x.id, onPick, onTab); } });
-      return h('label.la-im-c', { dataset: { on: on ? '1' : '0', no: x.fit === 'no' ? '1' : '0' }, title: x.fit === 'no' ? x.fit_text : undefined },
+      const peek = (v) => { if (!stage || on) return; stage.geo('hover', fc(v ? [x] : []), 'focus').then(() => dash()).catch(() => {}); };
+      return h('label.la-im-c', { dataset: { on: on ? '1' : '0', no: x.fit === 'no' ? '1' : '0' }, title: x.fit === 'no' ? x.fit_text : undefined, onmouseenter: () => peek(true), onmouseleave: () => peek(false) },
         rd, pic, h('div.la-im-b', {}, h('p.la-im-n', { text: x.name }),
           h('dl', {}, h('dt', { text: '해상도' }), h('dd.num', { text: x.gsd_word || '—' }), h('dt', { text: '촬영 시기' }), h('dd.num', { text: x.when || '—' }),
             h('dt', { text: '범위' }), h('dd', { text: x.range || '—' })),
@@ -351,7 +353,7 @@ function imageryCard(c) {
     try {
       if (!stage) { stage = K.createStage(mapBox, { bounds: d.bounds || K.KOREA, interactive: true, scale: false }); await stage.ready; }
       if (my !== seq) return;
-      await stage.geo('others', fc(items.filter((x) => !cur || x.id !== cur.id)), 'focus');
+      await stage.geo('hover', fc([]), 'focus'); dash();         // 다른 영상 = 평소엔 안 그림(겹친 흰 선 없음) · 카드에 올릴 때만 옅은 점선 하나
       await stage.geo('pick', fc(cur ? [cur] : []), 'ai');
       stage.map.resize();
       stage.map.fitBounds(d.bounds || cur?.bounds, { padding: 20, duration: 0 });
@@ -377,7 +379,7 @@ function analyzePanel(side, c, picker) {
   const list = h('ul.la-picks');
   const eta = h('div.la-eta');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
-  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 층으로 쌓입니다.');
+  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 레이어로 쌓입니다.');
   const done = h('div.la-done', { hidden: true });
   side.append(step(1, '어디', '한 곳 · 영상 하나'), where, list, step(2, '결과까지'), eta, go, msg, done);
 
@@ -453,7 +455,7 @@ function analyzePanel(side, c, picker) {
     done.hidden = false;
     done.replaceChildren(h('p.la-done-h', { text: res.some((r) => r.ok) ? '분석을 시작했습니다' : '시작하지 못했습니다' }),
       h('ul', {}, ...res.map((r) => h('li', {}, h('b', { text: r.name }), r.ok ? h('a.t-btn.t-btn--text', { href: mapHref(r.map), text: r.running ? '분석 중 · 지도 서비스' : '지도 서비스에서 보기' }) : h('span.warn', { text: r.why })))));
-    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · 끝나면 지도 서비스에 층으로 쌓입니다', { action: { label: '지도 서비스', href: mapHref(res.find((r) => r.ok).map) } });
+    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · 끝나면 지도 서비스에 레이어로 쌓입니다', { action: { label: '지도 서비스', href: mapHref(res.find((r) => r.ok).map) } });
   });
   draw();
 }

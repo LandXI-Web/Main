@@ -62,7 +62,7 @@ def basis_of(row) -> str:
 
 # ─────────────────────────── Finding ───────────────────────────
 def finding_item(row: dict) -> dict:
-    """survey_findings 행 → Finding(v1.1-22). 대표점은 geometry(Point) · 폴리곤은 PMTiles 층."""
+    """survey_findings 행 → Finding(v1.1-22). 대표점은 geometry(Point) · 폴리곤은 PMTiles 레이어."""
     lon, lat = row.get("lon"), row.get("lat")
     b = "inferred"
     pm = row.get("parcel_m2")
@@ -188,7 +188,7 @@ def explain(row: dict, parcel: dict, cut: dict | None = None) -> dict:
 def _yongdo_gap(p: dict) -> dict:
     if p.get("src") in (None, "canon"):
         return {"key": "yongdo", "label": "용도지역 미결합", "note": "대표점이 용도지역 폴리곤 밖"}
-    return {"key": "yongdo", "label": "용도지역 미결합", "note": "용도지역·농업진흥지역 층 대조 전(연속지적만 적재)"}
+    return {"key": "yongdo", "label": "용도지역 미결합", "note": "용도지역·농업진흥지역 레이어 대조 전(연속지적만 적재)"}
 
 
 def parcel_facts(p: dict, img: str | None = None) -> dict:

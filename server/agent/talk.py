@@ -323,7 +323,7 @@ async def resolve(ctx, text: str, *, allow_prev: bool = True) -> tuple[dict | No
 
 
 # ── 지도 없는 화면의 지도 동작(규칙 ④ · expand 12) ────────────────────────────────────────────
-OP_WORD = {"map_region": "옮기지", "map_zoom": "확대하지", "map_view": "기울이지", "map_layer": "층을 켜지", "map_compare": "두 시점을 나란히 놓지",
+OP_WORD = {"map_region": "옮기지", "map_zoom": "확대하지", "map_view": "기울이지", "map_layer": "레이어를 켜지", "map_compare": "두 시점을 나란히 놓지",
            "map_draw": "범위 그리기를 켜지", "map_snapshot": "그림 파일로 만들지", "map_arrive": "지도에 표시하지", "map_on": "지도에 칠하지"}
 OP_PARAM = {"map_compare": "compare", "map_draw": "tool"}
 

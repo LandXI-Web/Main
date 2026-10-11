@@ -1,0 +1,64 @@
+{
+ "shots": [
+  {
+   "f": "what-mapsvc-1440-1706.png",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+   "at": "2026-10-11 17:06"
+  },
+  {
+   "f": "layer-xi-rail-1440-1706.png",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+   "at": "2026-10-11 17:06"
+  },
+  {
+   "f": "layer-chatgeo-1440-1706.png",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+   "at": "2026-10-11 17:06"
+  },
+  {
+   "f": "global-kgz-1440-1706.png",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+   "at": "2026-10-11 17:06"
+  },
+  {
+   "f": "global-kgz-focus-1440-1706.png",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+   "at": "2026-10-11 17:06"
+  },
+  {
+   "f": "qa2-imagery-one-1440-1707.png",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+   "at": "2026-10-11 17:07"
+  },
+  {
+   "f": "qa2-imagery-hover-1440-1707.png",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+   "at": "2026-10-11 17:07"
+  },
+  {
+   "f": "what-analyze-1440-1707.png",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+   "at": "2026-10-11 17:07"
+  },
+  {
+   "f": "edges-help-1440-1707.png",
+   "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=screens",
+   "at": "2026-10-11 17:07"
+  }
+ ],
+ "errors": [],
+ "rail": [
+  "레이어",
+  "가르기",
+  "보고서",
+  "분석"
+ ],
+ "terrain": {
+  "pitch": 0,
+  "maxPitch": 0,
+  "dem": false,
+  "terrain": false
+ },
+ "chat": "XI ChatGEO\n공간지식 추론 서비스\n(지도 제어 · 분석 · 보고서)\n\n영상 꺼 줘\n\n영상 레이어를 껐습니다.\n\n레이어 켜기·끄기\n\n도움 안 됐어요\n\n어느 지역에 어떤 결과가 있어?\n지금 있는 결과 요약해 줘\n농지 전용 근거 조문 알려 줘",
+ "kgzHud": "키르기스스탄 · Sokuluk 군\n\n경작지 판정\n\n경작지 854㎢ · 군 면적의 42%\n청록 칸 = AI가 경작지로 판정한 곳(약 40 m 칸)\n\n달별 변화 자세히 보기"
+}

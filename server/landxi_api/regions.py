@@ -949,15 +949,15 @@ LANDCOVER_CLASSES = {"건물", "주차장", "경작지", "비닐하우스"}
 
 @router.get("/regions/{sgg_cd}/results")
 async def region_results(sgg_cd: str, request: Request):
-    """그 시군구에 결과가 있는 모든 결과 층 — ① 카탈로그 결과 층(범위가 이 시군구와 겹치는 것 · 권한 관문 그대로)
-    ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(층 주소에만)."""
+    """그 시군구에 결과가 있는 모든 결과 레이어 — ① 카탈로그 결과 레이어(범위가 이 시군구와 겹치는 것 · 권한 관문 그대로)
+    ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(레이어 주소에만)."""
     p = require(principal(request))
     _kick_emd_fill()
     r = region_of(sgg_cd)
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
-    ensure_region(p, r["sgg_cd"])                         # 기관 계정: 관할 밖 결과 층 0
-    if p.realm == "tenant":                               # 광역 기관 — 공유 때 고른 소속 시군구 밖은 결과 층 0(LX 보관 · 나중 13 ⓐ)
+    ensure_region(p, r["sgg_cd"])                         # 기관 계정: 관할 밖 결과 레이어 0
+    if p.realm == "tenant":                               # 광역 기관 — 공유 때 고른 소속 시군구 밖은 결과 레이어 0(LX 보관 · 나중 13 ⓐ)
         try:
             from .release import share_sgg
             async with db(realm="lx") as conn:

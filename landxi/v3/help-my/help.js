@@ -17,13 +17,15 @@ import { contact as liveContact, telHref } from '../kit/contact.js';
 import { openInquiry } from '../kit/inquiry.js';
 
 const BASE = new URL('./', import.meta.url);
-export const TABS = [
+export const ALL_TABS = [
   { id: 'notice', label: '공지' },
   { id: 'faq', label: '자주 묻는 질문' },
+  { id: 'screens', label: '세 화면', lx: true },   // 분석하기 · 지도 서비스 · XI맵 경계(바퀴 4 · 세 화면 경계 '이대로 구현') — LX 계정만
   { id: 'contact', label: '문의' },
   { id: 'me', label: '내 계정' },
 ];
 export const CONTACT = { tel: '063-713-1218', mail: 'landxi@lx.or.kr' };   // 처음 값 — 실제 값은 LX 관리자 '운영 정보'(원칙 170 · kit/contact.js)
+export const TABS = ALL_TABS.filter((t) => !t.lx);
 const MAX = 10;
 
 const ICON = {
@@ -142,11 +144,29 @@ async function me(el, whoIn) {
   el.append(dl, ...(edit ? [h('div.hm-me-acts', {}, edit, out)] : [out]));
 }
 
-const PANES = { notice, faq, contact, me };
+/* ── 탭 · 세 화면(LX 계정) — 같은 LX 직원 메뉴에서 열리는 세 화면을 실제 그림 + 한 줄씩(그림은 지금 화면에서 새로 찍음 · data/screens/at.json 에 찍은 때) ── */
+const SCREENS = [
+  ['analyze', '분석하기', '정식 분석서비스를 골라 내 영상 하나를 분석에 맡깁니다.', '../lx-analyze/'],
+  ['mapsvc', '지도 서비스', '내가 돌린 결과를 레이어로 켜서 보고 내려받습니다.', '../lx-map/'],
+  ['ximap', 'XI맵', ['전국에 쌓인 AI 분석 결과를 지도 한 장에서 봅니다.', '사업 나라(키르기스스탄)도 같은 지도에서 봅니다.'], '../xi-clean/'],
+];
+async function screens(el) {
+  let at = {};
+  try { at = await (await fetch(new URL('data/screens/at.json', BASE), { cache: 'no-cache' })).json(); } catch { /* 찍은 때 없음 */ }
+  const top = window.top !== window ? '_top' : undefined;
+  el.append(h('h2.hm-sc-h', { text: '세 화면은 이렇게 다릅니다' }),
+    h('div.hm-sc-row', {}, ...SCREENS.map(([k, name, line, href]) => h('article.hm-sc', {},
+      h('a.hm-sc-img', { href: new URL(href, BASE).href, target: top, 'aria-label': name + ' 열기' }, h('img', { src: new URL(`data/screens/${k}.jpg`, BASE).href, alt: name + ' 화면' })),
+      h('h3', { text: name }), h('p', {}, ...[].concat(line).map((t) => h('span', { text: t }))), at[k] ? h('small', { text: at[k] }) : null))),
+    h('p.hm-sc-flow', {}, h('b', { text: '분석하기' }), '에서 만든 결과 → ', h('b', { text: '지도 서비스' }), '에서 보고 내려받기 → 전국에 쌓인 결과는 ', h('b', { text: 'XI맵' }), '에서 한눈에'));
+}
+
+const PANES = { notice, faq, screens, contact, me };
 
 /** 판에 지원 서랍 내용을 붙인다 → { go(tabId) } */
 export function mountHelp(el, { who = null, tab } = {}) {
   el.classList.add('hm');
+  const TABS = ALL_TABS.filter((t) => !t.lx || who?.me?.realm === 'lx');   // '세 화면'은 LX 계정만
   const start = TABS.some((t) => t.id === tab) ? tab : 'notice';
   const bar = h('div.hm-tabs', { role: 'tablist', 'aria-label': '지원' });
   const body = h('div.hm-body');

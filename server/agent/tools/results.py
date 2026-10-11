@@ -64,7 +64,7 @@ async def _get(ctx, path: str, params: dict | None = None):
 
 
 async def _set(args, ctx) -> str:
-    """결과 세트 — 인자 그대로, 없으면 지역(region 인자 · 화면 문맥 · 기관 관할)의 결과 층 중 토지피복 먼저(GET /regions/{sgg}/results).
+    """결과 세트 — 인자 그대로, 없으면 지역(region 인자 · 화면 문맥 · 기관 관할)의 결과 레이어 중 토지피복 먼저(GET /regions/{sgg}/results).
     모델이 지어낸 세트 이름(형식이 다름)은 버리고 지역으로 찾는다(QA-통계 · 10-11 — 'results/tenant/default/greenhouse' 로 세 번 실패)."""
     s = args.get("set")
     if s and not _SET_RX.match(str(s)):

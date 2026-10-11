@@ -45,8 +45,14 @@ function decided(x, admin) {
   const st = x.state;
   const chip = (t, lv) => `<span class="t-chip im-st"${lv ? ` data-lv="${lv}"` : ''}>${esc(t)}</span>`;
   let line = '', acts = '';
-  if (st === 'adopted') {
-    line = `${chip('채택 · 확인 대기')}<small>제안 방법 — ${esc(x.how || '')}</small>`;
+  if (st === 'adopted' && x.adopt?.quick) {
+    // 바로 반영(원칙 197) — 표 한 줄로 다음 질문부터 · 되돌리기
+    const r = x.adopt.rule || {};
+    const what = x.adopt.mode === 'alias' ? `'${r.src}'도 '${r.dst}'로 알아듣습니다` : x.adopt.mode === 'intent' ? `'${r.src}' → '${r.dst}'로 알아듣습니다` : `답에 "${r.text || ''}"`;
+    line = `${chip(`채택 · 바로 반영 · ${x.adopt.mode_label}`)}<small><b>반영됨 — 다시 물어보세요</b> · ${esc(what)}${r.test ? ' · 시험' : ''}</small>`;
+    acts += `<button class="t-btn t-btn--2 im-b" type="button" data-a="revert">되돌리기</button>`;
+  } else if (st === 'adopted') {
+    line = `${chip('채택 · 개발 할 일 · 확인 대기')}<small>제안 방법 — ${esc(x.how || '')}</small>`;
     if (admin && x.can?.notify) acts += `<button class="t-btn im-b" type="button" data-a="notify">이제 됩니다 보내기</button>`;
   } else if (st === 'held') {
     line = `${chip(`보류 · ${x.hold?.until_md || ''} 다시 봄`, 'wait')}<small>사유 — ${esc(x.hold?.reason || '')}</small>`;
@@ -119,7 +125,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     if (!st.data) return;
     paintTop();
     const all = st.data.items || [];
-    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>채택하면 확인 대장에 '확인 대기'로 올라갑니다</span>`;
+    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>채택 — 다른 이름 · 질문 뜻 연결 · 답 문구는 바로 반영 · 새 기능 · 새 분류는 개발 할 일(확인 대기)</span>`;
     if (!all.length) { hold({ kind: 'first', title: '아직 막힌 요청이 없습니다', compact: true }); return; }
     const list = rows();
     if (!list.length) { hold({ kind: 'first', title: '이 조건의 요청이 없습니다', compact: true }); return; }
@@ -162,7 +168,8 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const tr = b.closest('tr[data-id]'); const id = tr?.dataset.id;
     const x = st.data.items.find((y) => y.id === id); if (!x) return;
     const a = b.dataset.a;
-    if (a === 'adopt') { b.disabled = true; act(id, 'adopt').then(() => toast("채택했습니다 — 확인 대장 '확인 대기'로 올라갑니다")).catch(() => { b.disabled = false; }); }
+    if (a === 'adopt') adoptForm(x);
+    else if (a === 'revert') { b.disabled = true; act(id, 'revert').then(() => toast('되돌렸습니다 — 다음 질문부터 예전처럼 답합니다')).catch(() => { b.disabled = false; }); }
     else if (a === 'reopen') { act(id, 'reopen').then(() => toast('새로 옴으로 돌렸습니다')).catch(() => {}); }
     else if (a === 'hold') holdForm(x);
     else if (a === 'already') alreadyForm(x);
@@ -176,7 +183,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const f = h('form.im-form', { novalidate: true },
       h('p.im-form-g', {}, h('span', { text: '요청' }), h('b', { text: x.gist })),
       note ? h('p.im-form-n', { text: note }) : null,
-      ...fields.map((d) => h('label.im-f', {}, h('span', { text: d.label }), d.el, d.hint ? h('small', { text: d.hint }) : null)),
+      ...fields.map((d) => h(d.div ? 'div.im-f' : 'label.im-f', {}, h('span', { text: d.label }), d.el, d.hint ? h('small', { text: d.hint }) : null)),
       msg, h('div.im-form-a', {}, go));
     const m = modal({ title, body: f, size: 'md' });
     f.addEventListener('submit', async (e) => {
@@ -188,6 +195,30 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     });
     requestAnimationFrame(() => f.querySelector('input')?.focus());
     return m;
+  }
+  /** 채택 — 바로 반영(다른 이름 더하기 · 질문 뜻 연결 · 답 문구 — 코드 없이 표 한 줄) 또는 개발 할 일(새 기능 · 새 분류 → 확인 대기) · 원칙 197 */
+  function adoptForm(x) {
+    const MODES = [['alias', '다른 이름 더하기', '바로 반영'], ['intent', '질문 뜻 연결', '바로 반영'], ['phrase', '답 문구', '바로 반영'], ['dev', '개발 할 일', '새 기능 · 새 분류']];
+    let mode = 'alias';
+    const seg = h('div.im-modes', { role: 'radiogroup', 'aria-label': '채택 갈래' });
+    const inp = (ph, v = '') => h('input.t-input', { type: 'text', maxlength: '100', placeholder: ph, value: v });
+    const F = {
+      alias: [{ label: '사용자가 쓴 말', el: inp('예: 영농') }, { label: '플랫폼이 쓰는 말', el: inp('예: 경작·휴경'), hint: '다음 질문부터 앞의 말을 뒤의 말로 알아듣습니다' }],
+      intent: [{ label: '이런 질문', el: inp('', x.gist.includes('○○') ? '' : x.gist) }, { label: '이 질문으로 알아듣기', el: inp('예: 비닐하우스 결과만 보여 줘'), hint: '같은 뜻의 질문이 오면 이 질문으로 바꿔 답합니다' }],
+      phrase: [{ label: '답에 붙일 문구 한 줄', el: inp('예: 이 질문은 지도 서비스에서 레이어를 켠 뒤 물어보세요') }, { label: '누르면 보낼 질문(고르지 않아도 됩니다)', el: inp('') }],
+      dev: [{ label: '제안 방법 한 줄', el: inp(x.how || '예: 비닐하우스 단동 · 연동을 나누는 분류 더하기') , hint: "확인 대장에 '확인 대기'로 올라가고, 만들어지면 '이제 됩니다'를 보냅니다" }],
+    };
+    const box = h('div.im-mode-f');
+    const paintF = () => { box.replaceChildren(...F[mode].map((d) => h('label.im-f', {}, h('span', { text: d.label }), d.el, d.hint ? h('small', { text: d.hint }) : null))); };
+    seg.append(...MODES.map(([k, t, s2]) => h('button.im-mode', { type: 'button', role: 'radio', 'aria-checked': String(k === mode), onclick: (e) => {
+      mode = k; seg.querySelectorAll('.im-mode').forEach((b2) => b2.setAttribute('aria-checked', String(b2 === e.currentTarget))); paintF(); } }, h('b', { text: t }), h('small', { text: s2 }))));
+    paintF();
+    form('채택', x, [{ label: '어느 쪽인가요', el: h('div', {}, seg, box), div: true }], '채택', async () => {
+      const v = (i) => F[mode][i]?.el.value.trim() || undefined;
+      const body = mode === 'alias' ? { mode, src: v(0), dst: v(1) } : mode === 'intent' ? { mode, src: v(0), dst: v(1) } : mode === 'phrase' ? { mode, text: v(0), try: v(1) } : { mode, how: v(0) };
+      await act(x.id, 'adopt', body);
+      toast(mode === 'dev' ? "채택했습니다 — 개발 할 일로 확인 대장 '확인 대기'에 올라갑니다" : '바로 반영했습니다 — 다음 질문부터 적용됩니다. 다시 물어보세요');
+    }, '다른 이름 · 질문 뜻 연결 · 답 문구는 코드 없이 바로 반영되고, 새 기능 · 새 분류는 개발 할 일로 올라갑니다');
   }
   function holdForm(x) {
     const reason = h('input.t-input', { type: 'text', maxlength: '120', placeholder: '예: 다음 학습 회차에 함께 보기로' });
@@ -257,7 +288,7 @@ export function openImproveDrawer({ onCount } = {}) {
     onClose: () => history.replaceState(null, '', location.pathname + location.search) });
   // 요청과 다른 것(GPT2-8) — 어디서 왔고 · 채택하면 무엇이 바뀌는지 한 줄씩
   body.append(h('p.im-dr-s', {}, h('b', { text: '사람이 맡긴 요청이 아닙니다.' }), ' XI ChatGEO 가 내 서비스 · 기관에서 답하지 못한 질문을 모은 것입니다.'),
-    h('p.im-dr-s', { text: '채택하면 만들 기능으로 확인 대장에 올라가고, 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
+    h('p.im-dr-s', { text: '채택하면 쉬운 것(다른 이름 · 질문 뜻 연결 · 답 문구)은 바로 반영되고, 새 기능은 개발 할 일로 올라가 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
   const host = h('div');
   body.append(host);
   improveBoard(host, { admin: false, compact: true, onCount }).load();
