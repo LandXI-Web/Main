@@ -391,7 +391,7 @@ def test_s7_port_approval_health(live, tok):
         assert dec.status_code == 200
         assert httpx.post(B + f"/deploys/{did}/rollout", headers=ad, json={"stage": "shadow"}, timeout=20).json()["stage"] == "shadow"
         h = envok(httpx.get(B + "/deploys?with=health", headers=ad, timeout=60).json())
-        assert all(it["health"]["next_action"] in ("retrain", "sample_review", "update_deploy", "none") for it in h["items"])
+        assert all(it["health"]["next_action"] in ("retrain", "review", "update_deploy", "none") for it in h["items"])
         assert did not in [x["id"] for x in h["items"]]                                    # 시험 배포본 기본 제외
         pub = envok(httpx.get(B + "/deploys?public=1", timeout=30).json())
         assert pub["items"] and all(x["stage"] in ("ga", "canary") for x in pub["items"]) and did not in [x["id"] for x in pub["items"]]

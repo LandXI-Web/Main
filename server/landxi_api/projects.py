@@ -321,8 +321,8 @@ async def _facts(conn, r) -> dict:
             "SELECT count(*) FROM survey_findings s JOIN lx_users u ON u.id = s.updated_by WHERE s.verdict IS NOT NULL "
             "AND s.sgg_cd = ANY($1::text[]) AND s.updated_at >= $2", codes, rnd_at) or 0
     # 결과 확인(원칙 198 · 10-11) — 이번 회차에 직원이 지도에서 결과를 보고 '확인했음'을 누른 기록(project_links kind review_seen · ref '회차:사람')
-    seen = await conn.fetchrow("SELECT by, at FROM project_links WHERE project_id=$1 AND kind='review_seen' AND round=$2 ORDER BY at DESC LIMIT 1",
-                               pid, r["round"])
+    seen = await conn.fetchrow("SELECT l.by, l.at, u.name FROM project_links l LEFT JOIN lx_users u ON u.id = l.by "
+                               "WHERE l.project_id=$1 AND l.kind='review_seen' AND l.round=$2 ORDER BY l.at DESC LIMIT 1", pid, r["round"])
     # 추론(배포-1) — 이 프로젝트 모델로 돌린 분석(추론 탭 · 분석 작업 대기열 · options.project_id) · 이번 회차 것
     infers = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
                               "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
@@ -396,6 +396,7 @@ def _judge(r, f) -> dict:
     rv["progress"] = None
     if f["seen"]:
         rv["seen_at"] = f["seen"]["at"].astimezone(KST).isoformat() if f["seen"]["at"] else None
+        rv["seen_by"] = f["seen"]["name"]                # 누가 '확인했음'을 눌렀나(배포 신청서 · 관리자 배포 화면 — 제안 3)
     else:
         rv["next"] = "지도에서 결과 보기"
     if done_inf:

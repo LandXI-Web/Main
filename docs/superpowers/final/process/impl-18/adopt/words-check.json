@@ -1,0 +1,299 @@
+{
+ "at": "2026-10-11T10:42:47.086Z",
+ "words": [
+  "결재",
+  "반려",
+  "현장 확인",
+  "시연",
+  "데모",
+  "준비 중",
+  "검증 정확도",
+  "무허가 건축 의심"
+ ],
+ "results": [
+  {
+   "screen": "기관 · 내 서비스",
+   "url": "/landxi/v3/gov-select/?list=1",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 서비스 대시보드(card-living)",
+   "url": "/landxi/v3/gov-select/?service=card-living",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 통계·보고서(card-living)",
+   "url": "/landxi/v3/gov-select/?service=card-living&tab=stats",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 필지 목록 + 상세(card-living)",
+   "url": "/landxi/v3/gov-report/?service=card-living&tab=sus",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 서비스 대시보드(card-farm)",
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 통계·보고서(card-farm)",
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    },
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/history/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 필지 목록 + 상세(card-farm)",
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 서비스 대시보드(card-road)",
+   "url": "/landxi/v3/gov-select/?service=card-road",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 통계·보고서(card-road)",
+   "url": "/landxi/v3/gov-select/?service=card-road&tab=stats",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/summary"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 필지 목록 + 상세(card-road)",
+   "url": "/landxi/v3/gov-report/?service=card-road&tab=sus",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 요청하기(분석 요청)",
+   "url": "/landxi/v3/gov-request/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "기관 · 요청하기(촬영 요청)",
+   "url": "/landxi/v3/gov-request/?tab=shoot",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 대시보드",
+   "url": "/landxi/v3/lx-console/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기",
+   "url": "/landxi/v3/lx-analyze/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(경작·휴경 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-farm",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-farm"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(비닐하우스 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-5e85a9",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-5e85a9"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(건축물 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-45424f",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-45424f"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(곤포사일리지 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-d8fc01",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-d8fc01"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 지도 서비스",
+   "url": "/landxi/v3/lx-map/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 요청함",
+   "url": "/landxi/v3/lx-inbox/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 관리자 · 대시보드",
+   "url": "/landxi/v3/ops-core/",
+   "hits": [],
+   "resp": [
+    {
+     "word": "시연",
+     "key": "name",
+     "text": "Meiktila damage (시연 한정)",
+     "url": "/api/v1/deploys"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 관리자 · 요청 관리",
+   "url": "/landxi/v3/ops-core/#/approvals",
+   "hits": [],
+   "resp": [
+    {
+     "word": "시연",
+     "key": "note",
+     "text": "[추정 기반 초기값] 영업 시연",
+     "url": "/api/v1/ops/tenants"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 관리자 · 배포",
+   "url": "/landxi/v3/ops-infra/#/deploys",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 관리자 · 배포 → 개선 후보",
+   "url": "/landxi/v3/ops-infra/#/deploys/improve",
+   "hits": [],
+   "resp": [
+    {
+     "word": "시연",
+     "key": "name",
+     "text": "Meiktila damage (시연 한정)",
+     "url": "/api/v1/deploys"
+    },
+    {
+     "word": "시연",
+     "key": "note",
+     "text": "[추정 기반 초기값] 영업 시연",
+     "url": "/api/v1/ops/tenants"
+    },
+    {
+     "word": "시연",
+     "key": "note",
+     "text": "시연 · 결과 미기록",
+     "url": "/api/v1/jobs"
+    }
+   ],
+   "errors": []
+  }
+ ]
+}

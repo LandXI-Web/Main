@@ -72,6 +72,10 @@
 /* 운영 카드는 첫 프레임부터 불투명(지도 점이 비치지 않게) — 들어올 때 위치만 움직인다 */
 .dp-ops .t-card{background:var(--bg-1)}
 .dp-nop{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 결과 확인 칸(원칙 198) — 지도에서 봤음(누가 · 언제) · 아직 보지 않음 */
+.dp-rv{display:flex;flex-direction:column;gap:2px;font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap}
+.dp-rv small{font:400 12px/16px var(--font-body);color:var(--sub)}
+.dp-rv[data-rv="no"]{color:var(--warn)}
 .dp-ops[hidden]{display:none}
 .dp-ops .k-table td:last-child{white-space:nowrap}
 .dp-next{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:500 13px/1 var(--font-body);color:var(--ink)}

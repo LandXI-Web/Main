@@ -1,7 +1,8 @@
 /* 개선 후보 — XI ChatGEO 가 못 한 요청을 모아 묶은 '자주 막히는 요청'(구현 4차 · 확인 대장 16차 개선-1 확인 · 원칙 98 · 72).
    LX 관리자 대시보드 → 배포(서비스 관리) → '개선 후보' 탭 하나(새 메뉴 없음 · 시안 new-e-candidates).
    LX 직원(담당 프로젝트장)은 요청함의 '개선 후보' 칸에서 자기 서비스 · 기관에서 온 것만 같은 모양으로 본다(openImproveDrawer).
-   줄마다 채택 · 보류(사유 · 다시 볼 날짜) · 이미 됨(안내 문구 한 줄 → 다음부터 같은 요청의 답에 그 문구와 버튼). 반려 없음.
+   줄마다 시스템 제안(서버가 정한 고칠 방법 한 줄 + 근거 한 줄 · 원칙 197 고침) → 이대로 반영 · 개발 요청 · 보류(사유 · 다시 볼 날짜) 셋만.
+   관리자가 갈래(다른 이름 · 질문 뜻 연결 · 답 문구)를 고르지 않는다 — 서버 suggest 그대로. 반려 없음.
    채택한 것이 만들어지면 LX 관리자가 '이제 됩니다 보내기' → 물었던 사람의 채팅창 맨 위 한 줄(메일 · 문자 없음).
    숫자는 서버 값 그대로(GET /improve/items) — 지어낸 값 0 · 세지 않은 칸은 '—'. 대화 원문은 서버에도 없다(요지 · 지명 등은 ○○). */
 import { api, h, esc, empty, toast, drawer } from './kit.js';
@@ -52,7 +53,7 @@ function decided(x, admin) {
     line = `${chip(`채택 · 바로 반영 · ${x.adopt.mode_label}`)}<small><b>반영됨 — 다시 물어보세요</b> · ${esc(what)}${r.test ? ' · 시험' : ''}</small>`;
     acts += `<button class="t-btn t-btn--2 im-b" type="button" data-a="revert">되돌리기</button>`;
   } else if (st === 'adopted') {
-    line = `${chip('채택 · 개발 할 일 · 확인 대기')}<small>제안 방법 — ${esc(x.how || '')}</small>`;
+    line = `${chip('개발 요청 · 확인 대기')}<small>제안 방법 — ${esc(x.how || '')}</small>`;
     if (admin && x.can?.notify) acts += `<button class="t-btn im-b" type="button" data-a="notify">이제 됩니다 보내기</button>`;
   } else if (st === 'held') {
     line = `${chip(`보류 · ${x.hold?.until_md || ''} 다시 봄`, 'wait')}<small>사유 — ${esc(x.hold?.reason || '')}</small>`;
@@ -74,11 +75,19 @@ function meta(x) {
     <span class="t-chip im-k">${esc(x.kind_label)}</span></span>`;
 }
 
+/** 시스템 제안(원칙 197 고침) — 서버가 정한 고칠 방법 한 줄 + 근거 한 줄(새로 옴 줄만) */
+function suggestBox(x) {
+  const sg = x.state === 'new' ? x.suggest : null;
+  if (!sg) return '';
+  return `<div class="im-sg" data-mode="${esc(sg.mode)}"><p><span class="im-sg-k">시스템 제안</span>${esc(sg.line)}</p><small>근거: ${esc(sg.why)}</small></div>`;
+}
+
 function buttons(x, admin) {
   if (x.state === 'new') {
-    return `<div class="im-acts"><button class="t-btn im-b" type="button" data-a="adopt">채택</button>
-      <button class="t-btn t-btn--2 im-b" type="button" data-a="hold">보류</button>
-      <button class="t-btn t-btn--2 im-b" type="button" data-a="already">이미 됨</button></div>`;
+    const sg = x.suggest || {};
+    return `<div class="im-acts">${sg.quick ? '<button class="t-btn im-b" type="button" data-a="apply">이대로 반영</button>' : ''}
+      <button class="t-btn ${sg.quick ? 't-btn--2 ' : ''}im-b" type="button" data-a="dev">개발 요청</button>
+      <button class="t-btn t-btn--2 im-b" type="button" data-a="hold">보류</button></div>`;
   }
   return decided(x, admin);
 }
@@ -125,14 +134,14 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     if (!st.data) return;
     paintTop();
     const all = st.data.items || [];
-    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>채택 — 다른 이름 · 질문 뜻 연결 · 답 문구는 바로 반영 · 새 기능 · 새 분류는 개발 할 일(확인 대기)</span>`;
+    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>시스템 제안 — 서버가 줄마다 고칠 방법을 정합니다 · 이대로 반영은 다음 질문부터(되돌리기 있음) · 없는 기능 · 분류는 개발 요청</span>`;
     if (!all.length) { hold({ kind: 'first', title: '아직 막힌 요청이 없습니다', compact: true }); return; }
     const list = rows();
     if (!list.length) { hold({ kind: 'first', title: '이 조건의 요청이 없습니다', compact: true }); return; }
     box.innerHTML = `<table class="im-t">
       <thead><tr><th>자주 막히는 요청</th><th class="num">몇 번</th><th>역할</th><th>화면</th><th class="num">다시 물음</th><th class="num">도움 안 됨</th><th>분류</th><th class="im-th-a"><span class="im-sr">누르기</span></th></tr></thead>
       <tbody>${list.map((x) => `<tr data-id="${esc(x.id)}" data-state="${esc(x.state)}">
-        <td data-k="요청" class="im-g">${x.asked ? `<span class="im-from">질문 원문</span><b data-user-text>${esc(q(x.gist))}</b>` : `<b>${esc(x.gist)}</b>`}${subLine(x) ? `<small${userSub(x) ? ' data-user-text' : ''}>${esc(subLine(x))}</small>` : ''}${meta(x)}</td>
+        <td data-k="요청" class="im-g">${x.asked ? `<span class="im-from">질문 원문</span><b data-user-text>${esc(q(x.gist))}</b>` : `<b>${esc(x.gist)}</b>`}${subLine(x) ? `<small${userSub(x) ? ' data-user-text' : ''}>${esc(subLine(x))}</small>` : ''}${suggestBox(x)}${meta(x)}</td>
         <td data-k="몇 번" class="num"><b data-metric="몇 번" data-v="${val(x.n) ?? ''}">${cnt(x.n)}</b></td>
         <td data-k="역할">${esc((x.roles || []).join(' · ') || '—')}</td>
         <td data-k="화면">${(x.screens || []).length ? x.screens.map((s) => `<span class="im-seg">${esc(s)}</span>`).join(' · ') : '—'}</td>
@@ -168,11 +177,11 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const tr = b.closest('tr[data-id]'); const id = tr?.dataset.id;
     const x = st.data.items.find((y) => y.id === id); if (!x) return;
     const a = b.dataset.a;
-    if (a === 'adopt') adoptForm(x);
+    if (a === 'apply') { b.disabled = true; act(id, 'adopt', { use: 'suggest' }).then(() => toast('반영했습니다 — 다음 질문부터 적용됩니다. 다시 물어보세요')).catch(() => { b.disabled = false; }); }
+    else if (a === 'dev') { b.disabled = true; act(id, 'adopt', { mode: 'dev' }).then(() => toast("개발 요청으로 올렸습니다 — 확인 대장 '확인 대기'")).catch(() => { b.disabled = false; }); }
     else if (a === 'revert') { b.disabled = true; act(id, 'revert').then(() => toast('되돌렸습니다 — 다음 질문부터 예전처럼 답합니다')).catch(() => { b.disabled = false; }); }
     else if (a === 'reopen') { act(id, 'reopen').then(() => toast('새로 옴으로 돌렸습니다')).catch(() => {}); }
     else if (a === 'hold') holdForm(x);
-    else if (a === 'already') alreadyForm(x);
     else if (a === 'notify') notifyForm(x);
   });
 
@@ -196,30 +205,6 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     requestAnimationFrame(() => f.querySelector('input')?.focus());
     return m;
   }
-  /** 채택 — 바로 반영(다른 이름 더하기 · 질문 뜻 연결 · 답 문구 — 코드 없이 표 한 줄) 또는 개발 할 일(새 기능 · 새 분류 → 확인 대기) · 원칙 197 */
-  function adoptForm(x) {
-    const MODES = [['alias', '다른 이름 더하기', '바로 반영'], ['intent', '질문 뜻 연결', '바로 반영'], ['phrase', '답 문구', '바로 반영'], ['dev', '개발 할 일', '새 기능 · 새 분류']];
-    let mode = 'alias';
-    const seg = h('div.im-modes', { role: 'radiogroup', 'aria-label': '채택 갈래' });
-    const inp = (ph, v = '') => h('input.t-input', { type: 'text', maxlength: '100', placeholder: ph, value: v });
-    const F = {
-      alias: [{ label: '사용자가 쓴 말', el: inp('예: 영농') }, { label: '플랫폼이 쓰는 말', el: inp('예: 경작·휴경'), hint: '다음 질문부터 앞의 말을 뒤의 말로 알아듣습니다' }],
-      intent: [{ label: '이런 질문', el: inp('', x.gist.includes('○○') ? '' : x.gist) }, { label: '이 질문으로 알아듣기', el: inp('예: 비닐하우스 결과만 보여 줘'), hint: '같은 뜻의 질문이 오면 이 질문으로 바꿔 답합니다' }],
-      phrase: [{ label: '답에 붙일 문구 한 줄', el: inp('예: 이 질문은 지도 서비스에서 층을 켠 뒤 물어보세요') }, { label: '누르면 보낼 질문(고르지 않아도 됩니다)', el: inp('') }],
-      dev: [{ label: '제안 방법 한 줄', el: inp(x.how || '예: 비닐하우스 단동 · 연동을 나누는 분류 더하기') , hint: "확인 대장에 '확인 대기'로 올라가고, 만들어지면 '이제 됩니다'를 보냅니다" }],
-    };
-    const box = h('div.im-mode-f');
-    const paintF = () => { box.replaceChildren(...F[mode].map((d) => h('label.im-f', {}, h('span', { text: d.label }), d.el, d.hint ? h('small', { text: d.hint }) : null))); };
-    seg.append(...MODES.map(([k, t, s2]) => h('button.im-mode', { type: 'button', role: 'radio', 'aria-checked': String(k === mode), onclick: (e) => {
-      mode = k; seg.querySelectorAll('.im-mode').forEach((b2) => b2.setAttribute('aria-checked', String(b2 === e.currentTarget))); paintF(); } }, h('b', { text: t }), h('small', { text: s2 }))));
-    paintF();
-    form('채택', x, [{ label: '어느 쪽인가요', el: h('div', {}, seg, box), div: true }], '채택', async () => {
-      const v = (i) => F[mode][i]?.el.value.trim() || undefined;
-      const body = mode === 'alias' ? { mode, src: v(0), dst: v(1) } : mode === 'intent' ? { mode, src: v(0), dst: v(1) } : mode === 'phrase' ? { mode, text: v(0), try: v(1) } : { mode, how: v(0) };
-      await act(x.id, 'adopt', body);
-      toast(mode === 'dev' ? "채택했습니다 — 개발 할 일로 확인 대장 '확인 대기'에 올라갑니다" : '바로 반영했습니다 — 다음 질문부터 적용됩니다. 다시 물어보세요');
-    }, '다른 이름 · 질문 뜻 연결 · 답 문구는 코드 없이 바로 반영되고, 새 기능 · 새 분류는 개발 할 일로 올라갑니다');
-  }
   function holdForm(x) {
     const reason = h('input.t-input', { type: 'text', maxlength: '120', placeholder: '예: 다음 학습 회차에 함께 보기로' });
     const until = h('input.t-input', { type: 'date', min: plusDays(1), value: plusDays(14) });
@@ -227,14 +212,6 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
       await act(x.id, 'hold', { reason: reason.value.trim(), until: until.value });
       toast('보류했습니다');
     });
-  }
-  function alreadyForm(x) {
-    const text = h('input.t-input', { type: 'text', maxlength: '120', placeholder: '예: 분석은 LX가 합니다 — 분석 요청을 보내 주세요' });
-    const tr = h('input.t-input', { type: 'text', maxlength: '100', placeholder: '예: 분석 요청 보내는 법 알려 줘' });
-    form('이미 됨', x, [{ label: '안내 문구 한 줄', el: text }, { label: '버튼을 누르면 보낼 질문(고르지 않아도 됩니다)', el: tr }], '저장', async () => {
-      await act(x.id, 'already', { text: text.value.trim(), try: tr.value.trim() || undefined });
-      toast('저장했습니다 — 다음부터 같은 요청에 이 안내가 나갑니다');
-    }, '다음부터 같은 요청을 하면 XI ChatGEO 답에 이 문구와 버튼이 바로 나갑니다');
   }
   function notifyForm(x) {
     const n = val(x.askers) || 0;
@@ -288,7 +265,7 @@ export function openImproveDrawer({ onCount } = {}) {
     onClose: () => history.replaceState(null, '', location.pathname + location.search) });
   // 요청과 다른 것(GPT2-8) — 어디서 왔고 · 채택하면 무엇이 바뀌는지 한 줄씩
   body.append(h('p.im-dr-s', {}, h('b', { text: '사람이 맡긴 요청이 아닙니다.' }), ' XI ChatGEO 가 내 서비스 · 기관에서 답하지 못한 질문을 모은 것입니다.'),
-    h('p.im-dr-s', { text: '채택하면 쉬운 것(다른 이름 · 질문 뜻 연결 · 답 문구)은 바로 반영되고, 새 기능은 개발 할 일로 올라가 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
+    h('p.im-dr-s', { text: '줄마다 시스템이 고칠 방법을 미리 적어 둡니다. 이대로 반영하면 다음 질문부터 바뀌고, 없는 기능은 개발 요청으로 올라가 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
   const host = h('div');
   body.append(host);
   improveBoard(host, { admin: false, compact: true, onCount }).load();

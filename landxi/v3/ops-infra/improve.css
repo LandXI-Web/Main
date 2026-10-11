@@ -36,6 +36,11 @@
 .im-t td.im-g{min-width:240px;max-width:420px}
 .im-t td.im-g > b{display:block;font-weight:600}
 .im-t td.im-g small{display:block;margin-top:2px;font:400 13px/19px var(--font-body);color:var(--sub)}
+/* 시스템 제안(원칙 197 고침) — 고칠 방법 한 줄 + 근거 한 줄 */
+.im-sg{margin-top:10px;padding:10px 12px;border-radius:var(--r-8);background:var(--bg-0)}
+.im-sg p{margin:0;font:500 14px/21px var(--font-body);color:var(--ink);word-break:keep-all}
+.im-sg-k{display:inline-block;margin-right:8px;font:600 13px/21px var(--font-body);color:var(--sub)}
+.im-t td.im-g .im-sg small{margin-top:2px;word-break:keep-all}
 .im-t td.num b{font:600 18px/22px var(--font-num)}
 .im-t td.num{font:500 15px/22px var(--font-num);color:var(--ink-2)}
 .im-seg{display:inline-block;white-space:nowrap}

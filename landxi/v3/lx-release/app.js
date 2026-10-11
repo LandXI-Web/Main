@@ -284,7 +284,8 @@ async function drawPublish() {
   row('학습 데이터', dataEl);
   // 결과 확인(원칙 198) — 지도에서 결과를 봤는가 하나(1차 표본 검증 없음 · 숫자 없음)
   row('결과 확인', d.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: d.review_done ? '' : 'rl-warn', text: d.review_done ? '지도에서 봤음' : '아직 보지 않음' }),
-    d.review_done || d.review_skip ? null : h('small', { text: '프로젝트의 결과 확인(지도에서 결과 보기)이 남았습니다 — 관리자 신청서에 그대로 보입니다' }));
+    d.review_skip ? null : d.review_done ? ((d.review_by || d.review_at) ? h('small', { text: [d.review_by, d.review_at ? md(d.review_at) : ''].filter(Boolean).join(' · ') }) : null)
+      : h('small', { text: '프로젝트의 결과 확인(지도에서 결과 보기)이 남았습니다 — 관리자 신청서에 그대로 보입니다' }));
   row('결과 장면', sceneEl);
   if (d.first && (d.ledger_kinds || []).length) row('대장 형식', ledger);
 

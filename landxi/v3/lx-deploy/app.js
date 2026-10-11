@@ -414,11 +414,13 @@ async function openPlant() {
 plantBtn.addEventListener('click', openPlant);
 
 /* ── ⑥ 운영·신고: 큰 숫자(재학습 필요) + 표 ───────────────────── */
-/** 정밀도 칸 — 값이 있으면 lx-review 와 같은 numHtml(0.00 · ~ · 호버 표본 n건). 규칙은 걸렸는데 표본 검수 전이면 '표본 k/100'. 규칙이 없는 업무만 '—' */
-const precCell = (v) => {
+/** 결과 확인 칸(원칙 198 · 표본 세기 없음) — 그 서비스 프로젝트의 이번 회차 '확인했음'(서버 health.review = 프로젝트 화면 · 지도 서비스와 같은 기록)
+    지도에서 봤음 + 누가 · 언제 | 아직 보지 않음 | 프로젝트 기록이 없는 서비스는 '—' */
+const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
+const reviewCell = (v) => {
   if (!v) return '<span class="dp-nop">—</span>';
-  if (v.value == null) return `<span class="dp-nop" title="${esc(v.source)}">표본 ${esc(String(v.k))}/100</span>`;
-  return `<span title="${esc(v.source)}">${numHtml(v, { unit: '', digits: 2 })}</span>`;
+  if (!v.done) return '<span class="dp-rv" data-rv="no">아직 보지 않음</span>';
+  return `<span class="dp-rv" data-rv="yes">지도에서 봤음<small>${esc([v.by, md(v.at)].filter(Boolean).join(' · '))}</small></span>`;
 };
 async function renderOps() {
   if (!D.healthReady) { opsEl.innerHTML = ''; const c = h('section.t-card.t-card--map.dp-opscard'); empty(c.appendChild(h('div')), { kind: 'loading', compact: true }); opsEl.append(c); void opsEl.offsetWidth; opsEl.classList.add('is-in'); }
@@ -434,16 +436,16 @@ async function renderOps() {
   bignum(big, retrainEnv(), { label: '재학습 필요', unit: '건' });
   opsEl.append(tcard);
   if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', text: scoped() && !Q.get('card') ? '서비스 카드를 공개하면 여기서 관리합니다' : '이 카드가 깔린 기관이 아직 없습니다' }); return; }
-  const rank = { 재학습: 0, '갱신 배포': 1, '표본 확인': 2, 없음: 3 };
+  const rank = { 재학습: 0, '갱신 배포': 1, '결과 확인': 2, 없음: 3 };
   table(tcard.appendChild(h('div')), {
     cols: [
       { key: 'name', label: '배포본', fmt: (_, r) => `<span class="dp-wk">${esc(workName(r.d.card_id))}<small>${esc(regionShort(r.d))}</small></span>` },
-      { key: 'precision', label: '정밀도', num: true, fmt: precCell },   // lx-review 와 같은 표기(0.00 · 표본 < 100 이면 ~ · 기록 전이면 표본 수)
+      { key: 'review', label: '결과 확인', fmt: reviewCell },   // 원칙 198 — 지도에서 봤음 · 아직 보지 않음(프로젝트 단계 · 배포 신청서와 같은 서버 판정)
       { key: 'reports', label: '기관 신고', num: true, fmt: (v) => numHtml(v, { unit: '건' }) },   // summary reports — 합 = LX 직원 대시보드 '기관 신고'
       { key: 'last', label: '마지막 학습', fmt: (v) => esc(v ? ymd(v) : '—') },
       { key: 'next', label: '다음 행동', fmt: (v) => `<span class="dp-next" data-n="${esc(v)}">${esc(v)}</span>` },
     ],
-    rows: rows.map((r) => ({ ...r, name: workName(r.d.card_id), precision: r.h.precision, reports: reportsEnv(r.d) || null, last: r.h.lastTrain, next: r.h.next, rank: rank[r.h.next] ?? 9 }))
+    rows: rows.map((r) => ({ ...r, name: workName(r.d.card_id), review: r.h.review, reports: reportsEnv(r.d) || null, last: r.h.lastTrain, next: r.h.next, rank: rank[r.h.next] ?? 9 }))
       .sort((a, b) => a.rank - b.rank || (b.reports?.value || 0) - (a.reports?.value || 0)),
     onRow: (r) => { tab('deploy'); select(r.d.id); },
   });

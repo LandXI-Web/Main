@@ -5,7 +5,7 @@
                     · 프로젝트 신청서(이번 판) — 직원 배포 신청서 '이번 판' · 관리자 배포 신청(검토 중 신청 '이번 판')
      AI 분석 결과   · 서비스 · 지역  — 분석하기 자세히 큰 숫자 · 기관 '내 서비스' 카드
      분석한 면적    · 기관            — 관리자 '기관' 화면(이번 달) · (사용 현황은 서비스별 칸이라 따로 적기만)
-     결과 확인      · 프로젝트        — 봤음 · 안 봄(원칙 198 · 숫자 없음): 프로젝트 목록 진행 칸 · 프로젝트 화면 단계 칸 · 배포 신청서 · 관리자 신청서(검토 중) · 'n/m' · '표본 확인'이 남으면 '숫자 남음'
+     결과 확인      · 프로젝트        — 봤음 · 안 봄(원칙 198 · 숫자 없음): 프로젝트 목록 진행 칸 · 프로젝트 화면 단계 칸 · 배포 신청서 · 관리자 신청서(검토 중) · 관리자 배포(운영 탭) · 'n/m' · '표본 확인'이 남으면 '숫자 남음'
    그리고 모든 요청을 지켜 이 PC 주소(localhost · 127.0.0.1 · 사설 IP · :4173 · :8700 등) 호출이 0인지 본다.
    못 읽은 칸은 '—'(경고 · 실패 아님). 같은 이름인데 값이 다르거나 이 PC 주소 호출이 있으면 종료 코드 1.
    사용: node tools/check/numbers.mjs [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--json 파일]
@@ -235,6 +235,26 @@ try {
         if (r.proj) put(`정확도 · ${r.proj} 신청서(이번 판)`, '관리자 배포 신청(검토 중)', now?.v || null);
         if (r.proj) put(`결과 확인 · ${r.proj}`, '관리자 배포 신청(검토 중)', r.rv === '지도에서 봤음' ? '봤음' : r.rv === '아직 보지 않음' ? '안 봄' : r.rv && /\d/.test(r.rv) ? '숫자 남음' : null);
       }
+    }
+    // 배포(운영 탭 · lx-deploy) — 결과 확인 칸(원칙 198 · 바퀴 5): 지도에서 봤음 · 아직 보지 않음. '표본 k/100' · '표본 확인'이 남으면 '숫자 남음'
+    await go(ap, HOST.admin + '/landxi/v3/lx-deploy/?tab=ops');
+    await settle(ap, '.dp-ops tbody tr, .dp-empty');
+    const dps = await ap.evaluate(() => {
+      const heads = [...document.querySelectorAll('.dp-ops thead th')].map((t) => t.innerText.trim());
+      const ci = heads.indexOf('결과 확인');
+      return { heads, rows: [...document.querySelectorAll('.dp-ops tbody tr')].map((tr) => ({
+        name: tr.querySelector('.dp-wk')?.firstChild?.textContent?.trim() || tr.cells[0]?.innerText.split('\n')[0].trim(),
+        rv: ci >= 0 ? tr.cells[ci]?.querySelector('.dp-rv')?.firstChild?.textContent?.trim() || tr.cells[ci]?.innerText.trim() : null, all: tr.innerText })) };
+    });
+    if (!dps.heads.includes('결과 확인')) warns.push(`배포(운영) 표에 '결과 확인' 칸이 없음: ${dps.heads.join(' · ')}`);
+    const pOfSvc = Object.fromEntries(Object.entries(svcOfProject).filter(([, s]) => s).map(([p, s]) => [s, p]));
+    const seenSvc = new Set();
+    for (const r of dps.rows) {
+      if (!r.name || seenSvc.has(r.name)) continue;      // 같은 서비스 배포본은 같은 프로젝트 기록 — 한 줄만
+      seenSvc.add(r.name);
+      const w = /표본/.test(r.all) ? '숫자 남음' : r.rv === '지도에서 봤음' ? '봤음' : r.rv === '아직 보지 않음' ? '안 봄' : null;
+      const p = pOfSvc[r.name] || Object.entries(pOfSvc).find(([s]) => s.includes(r.name) || r.name.includes(s))?.[1];
+      put(p ? `결과 확인 · ${p}` : `결과 확인 · 서비스 ${r.name}`, '관리자 배포(운영)', w, w ? '' : '프로젝트 기록 없는 서비스(—)');
     }
     await A.ctx.close();
     } catch (e) { warns.push(`관리자 화면을 읽지 못함: ${e.message}`); }

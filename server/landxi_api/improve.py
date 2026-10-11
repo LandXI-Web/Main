@@ -15,7 +15,10 @@ POST /assist/feedback               {run_id?, kind: not_helpful|card_cancel|map_
 GET  /assist/notices                → {items:[{id, text, try}]}  그 사람에게 온 '이제 됩니다' · 안 본 것만
 POST /assist/notices/{id}/seen      → 204
 GET  /improve/items?state=&role=    → 자주 막히는 요청(LX 관리자 · 담당 프로젝트장)
-POST /improve/items/{id}/adopt      {mode?, how?, src?, dst?, text?, try?, test?}
+GET  /improve/items  의 새로 옴 · 보류 줄마다 suggest = 시스템 제안 {mode, line(한 줄), why(근거), quick} — 코드 규칙만(원칙 197 고침 · 아래 suggest())
+POST /improve/items/{id}/adopt      {use: "suggest"}  이대로 반영 — 서버가 정한 제안 그대로(관리자는 갈래를 고르지 않는다)
+                                    {mode: "dev"}      개발 요청(제안 방법 = 시스템 제안 · 없으면 분류의 기본 방법)
+                                    {mode?, how?, src?, dst?, text?, try?, test?}  (시험 · 예전 호출 그대로)
                                     채택 — mode=dev(개발 할 일 → 확인 대기) | alias(다른 이름 더하기) · intent(질문 뜻 연결) · phrase(답 문구)
                                     = 바로 반영(표 한 줄 → 다음 질문부터 적용 · 원칙 197)
 POST /improve/items/{id}/revert                       바로 반영 되돌리기(표 줄 끔 → 새로 옴)
@@ -544,6 +547,201 @@ def phrase_for(msg: str) -> dict | None:
     return None
 
 
+# ═══ 시스템 제안(원칙 197 고침 · 10-11) — 후보마다 고칠 방법을 서버가 미리 정한다 ══════════════════════
+# 관리자는 '이대로 반영 / 개발 요청 / 보류'만 누른다(갈래를 고르지 않는다). 정하는 것은 코드 규칙뿐(언어 모델 0 · GPU 0) · 애매하면 개발 요청.
+#   ① 개발 요청 — 서버 응답 없음 · 결과에 없는 세부 분류(예 비닐하우스 단동 · 연동)
+#   ② 다른 이름 — 질문의 낱말이 아래 표에 있고, 바꿀 말이 결과 분류 · 서비스 이름에 있을 때(예 '온실' → 비닐하우스)
+#   ③ 답 문구 — 이미 있는 도구가 알아듣는 말인데 막힘(지도에 결과 층이 없음 등) · 권한 밖 · 화면 밖처럼 답은 맞고 다음 할 일이 없을 때
+#   ④ 질문 뜻 연결 — 이미 있는 도구(거르기 · 읍면동별 세기 · 보고서)로 답할 수 있는데 그 말을 못 알아들을 때
+#   ⑤ 그 밖 = 개발 요청(분류의 기본 방법)
+ALIAS_WORDS = {  # 사용자가 쓰는 말 → 플랫폼 말 후보(앞에서부터 · 결과 분류 · 서비스 이름에 있는 것만 씀)
+    "온실": ["비닐하우스"], "하우스": ["비닐하우스"], "시설하우스": ["비닐하우스"], "비닐온실": ["비닐하우스"], "그린하우스": ["비닐하우스"],
+    "농경지": ["경작지"], "논밭": ["경작지"], "전답": ["경작지"], "영농": ["경작·휴경"],
+    "휴경지": ["비경작지"], "묵밭": ["비경작지"], "묵정밭": ["비경작지"],
+    "건축물": ["건물"], "가옥": ["건물"],
+    "곤포": ["곤포사일리지"], "사일리지": ["곤포사일리지"], "마시멜로": ["곤포사일리지"], "볏짚말이": ["곤포사일리지"],
+    "주차면": ["주차장"], "자동차": ["차량"],
+    "해양쓰레기": ["해안 쓰레기"], "바다쓰레기": ["해안 쓰레기"], "해변쓰레기": ["해안 쓰레기"],
+}
+SUB_MODS = [(re.compile(r"단동"), "단동", "단동"), (re.compile(r"연동|다동"), "다동", "연동")]   # 세부 분류 말(결과 분류 이름 끝 · 화면 말)
+INTENT_WIDE = [  # 이미 있는 도구가 할 수 있는데 그 말로는 못 알아듣는 질문 → 알아듣는 질문
+    ("map_stats", re.compile(r"(동네|읍|면|동|마을|지역)\s*(별|마다)|몇\s*개씩|나눠\s*서?\s*(세|보여|알려)"), "{cls} 읍면동별로 세어 줘"),
+    ("ai_report", re.compile(r"레포트|보고\s*문서|정리해서\s*(문서|파일)|한글\s*파일|docx", re.I), "AI 분석 결과 보고서 만들어 줘"),
+    ("map_filter", re.compile(r"(만\s*(남겨|골라|추려))|(빼고|제외하고)\s*(다|모두)?\s*(지워|숨겨)"), "{cls}만 보여 줘"),
+]
+TOOL_SAY = {"map_stats": "읍면동별로 세기", "ai_report": "AI 분석 결과 보고서", "map_filter": "조건으로 거르기"}
+PHRASE_RULES = [  # (분류 · 낱말) → 답에 붙일 다음 할 일 한 줄 · 누르면 보낼 질문
+    ("scope", re.compile(r"분석\s*(실행|돌려|해)|전역\s*분석"), "분석은 LX가 합니다 — 요청하기의 '분석 요청'으로 맡겨 주세요", "분석 요청 보내는 법 알려 줘"),
+    ("scope", re.compile(r"한도"), "한도는 LX 관리자가 정합니다 — 요청하기로 늘려 달라고 보내 주세요", None),
+    ("scope", re.compile(r"관할|다른\s*지역|결과\s*보기|보여"), "우리 기관 관할 밖 지역은 볼 수 없습니다 — 필요하면 LX에 분석 요청을 보내 주세요", None),
+    ("action", re.compile(r"내려\s*받|다운로드|GeoJSON|SHP", re.I), "결과 파일은 지도 서비스에서 층마다 '내려받기'로 받을 수 있습니다(GeoJSON · SHP · 필지 엑셀)", None),
+    ("other", re.compile(r"내려\s*받|다운로드|GeoJSON|SHP", re.I), "결과 파일은 지도 서비스에서 층마다 '내려받기'로 받을 수 있습니다(GeoJSON · SHP · 필지 엑셀)", None),
+    ("screen", re.compile(r"층|지적선"), "이 화면에는 그 층이 없습니다 — 층이 있는 지도 서비스나 XI맵에서 물어보세요", None),
+]
+LAW_WORDS = re.compile(r"법|조문|조례|시행령|규정|허가|신고|과태료|이행강제금|벌금|지침|고시")
+_VOCAB: dict = {"words": set(), "classes": set(), "at": 0.0}
+VOCAB_TTL_S = 1800
+_STATIC_CLASSES = {"건물", "주차장", "경작지", "비닐하우스", "비닐하우스_단동", "비닐하우스_다동", "비경작지", "곤포사일리지", "차량"}
+
+
+def _jong(w: str) -> int:
+    """끝 글자 받침(0 = 없음 · 8 = ㄹ) — 한글이 아니면 0."""
+    ch = re.sub(r"[\s'\"”’.…·]+$", "", str(w or ""))[-1:]
+    return (ord(ch) - 0xAC00) % 28 if ch and "가" <= ch <= "힣" else 0
+
+
+def eul(w: str) -> str:
+    return "을" if _jong(w) else "를"
+
+
+def ro(w: str) -> str:
+    j = _jong(w)
+    return "으로" if j and j != 8 else "로"
+
+
+async def vocab(force: bool = False) -> dict:
+    """플랫폼이 쓰는 말 — 결과 분류(실제 결과에 있는 것) · 서비스 이름 · 업무 이름. 30분 캐시 · 못 읽으면 기본 분류."""
+    if not force and _VOCAB["words"] and time.time() - _VOCAB["at"] < VOCAB_TTL_S:
+        return _VOCAB
+    classes, words = set(_STATIC_CLASSES), set()
+    try:
+        async with db(realm="lx") as conn:
+            try:
+                classes |= {r["cls"] for r in await asyncio.wait_for(conn.fetch("SELECT DISTINCT cls FROM detections WHERE cls IS NOT NULL"), 8)}
+            except Exception:  # noqa: BLE001
+                pass
+            for r in await conn.fetch("SELECT name, domain FROM cards"):
+                nm = r["name"]
+                if isinstance(nm, str):
+                    try:
+                        nm = json.loads(nm)
+                    except ValueError:
+                        nm = {"ko": nm}
+                for s in ((nm or {}).get("ko"), r["domain"]):
+                    if s:
+                        words.add(str(s))
+    except Exception:  # noqa: BLE001
+        pass
+    words |= {c.replace("_", " ") for c in classes}
+    _VOCAB.update(words=words, classes={c for c in classes if re.search(r"[가-힣]", c)}, at=time.time())
+    return _VOCAB
+
+
+def _in_vocab(w: str, V: dict, head: bool = False) -> str | None:
+    """w 가 결과 분류 · 서비스 이름에 있으면 어디에 있는지(근거 말). head = 낱말 앞머리로만 본다(사용자 말 쪽 —
+    '곤포'가 '곤포사일리지'의 앞머리면 이미 플랫폼 말 · 바꾸면 '곤포사일리지사일리지'가 된다)."""
+    if w in V["classes"]:
+        return "결과 분류에 있음"
+    hit = (lambda x: re.search(_LEFT + re.escape(w), x)) if head else (lambda x: w in x)
+    if any(hit(x) for x in V["words"]):
+        return "서비스 이름에 있음"
+    return None
+
+
+def _routes(t: str) -> str | None:
+    """이미 있는 도구가 이 말을 알아듣나(지도 · 결과 층 같은 자리가 맞으면) — 도구 이름 · 아니면 None."""
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from agent.tools.ext import mapsvc as M
+    except Exception:  # noqa: BLE001
+        return None
+    if M.REPORT_ASK.search(t) and M.REPORT_DO.search(t):
+        return "ai_report"
+    if M.parse_filter(t):
+        return "map_filter"
+    if M.STATS_RX.search(t):
+        return "map_stats"
+    return None
+
+
+def _cls_in(t: str, V: dict) -> str | None:
+    """질문에 나온 결과 분류(긴 말 먼저) — 다른 이름 표도 본다."""
+    for c in sorted(V["classes"], key=len, reverse=True):
+        c2 = c.replace("_", " ")
+        if "_" not in c and re.search(_LEFT + re.escape(c2), t):
+            return c
+    for src, dsts in ALIAS_WORDS.items():
+        if re.search(_LEFT + re.escape(src), t):
+            d = next((x for x in dsts if x in V["classes"]), None)
+            if d:
+                return d
+    return None
+
+
+def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
+    """후보 하나 → 시스템 제안 {mode, src, dst, text, try, how, line, why, quick}. 코드 규칙만 · 애매하면 개발 요청."""
+    kind = it.get("kind") or "other"
+    g = str(it.get("gist") or "")
+    texts = [g] + [x for x in (it.get("examples") or []) if x]
+    t_all = " ".join(texts)
+    n = int(it.get("n_sum") or 0)
+    cnt = f"같은 질문 {n}번" if n else ("시험 줄" if it.get("test_only") else "아직 센 횟수 없음")
+    clean = lambda s: MASK not in s and len(s) <= 60   # noqa: E731 — 가린 자리가 있는 말은 '알아들을 질문'으로 쓰지 않는다
+    active_alias = {r["src"] for r in (rules or []) if r.get("mode") == "alias"}
+
+    def dev(what: str, why: str) -> dict:
+        how = what[:120]
+        return {"mode": "dev", "quick": False, "how": how, "line": f"개발 요청 — {what}", "why": f"{cnt} · {why}"}
+
+    if kind == "server":
+        return dev(HOW["server"], "답 서버가 응답하지 않음")
+    # ① 결과에 없는 세부 분류(단동 · 연동) — 개발 요청
+    for rx, key, word in SUB_MODS:
+        if rx.search(t_all):
+            base = _cls_in(t_all, V) or "비닐하우스"
+            base = base.split("_")[0]
+            have = f"{base}_{key}" in V["classes"]
+            return dev(f"'{base} {word}'{iga(word)} 모든 결과에서 나뉘도록 분류 더하기",
+                       "일부 결과에만 있는 분류" if have else "결과 분류에 없음")
+    # ② 다른 이름
+    for s in texts:
+        for src, dsts in ALIAS_WORDS.items():
+            if src in active_alias or not re.search(_LEFT + re.escape(src), s):
+                continue
+            if _in_vocab(src, V, head=True) or any(re.search(_LEFT + re.escape(x), s) for x in dsts):
+                continue                                   # 이미 플랫폼 말이거나 같은 질문에 바꿀 말이 이미 있음
+            for dst in dsts:
+                where = _in_vocab(dst, V)
+                if where:
+                    return {"mode": "alias", "quick": True, "src": src, "dst": dst, "how": f"'{src}'도 '{dst}'{ro(dst)} 알아듣기",
+                            "line": f"'{src}'{eul(src)} '{dst}'{ro(dst)} 알아듣게 합니다", "why": f"{cnt} · '{dst}'{iga(dst)} {where}"}
+    # ③ 이미 있는 도구가 알아듣는 말인데 막힘 — 자리(결과 층)가 없던 것 → 답 문구
+    for s in texts:
+        tool = _routes(s)
+        if tool and kind in ("nodata", "screen", "action", "other"):
+            txt = ("지도에 결과 층을 켠 뒤 물어보세요 — 켜진 결과로 바로 답합니다" if tool != "ai_report"
+                   else "보고서는 LX 계정에서 결과 층을 켠 뒤 만들 수 있습니다")
+            tr = s if clean(s) else None
+            return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": tr, "how": f"답에 '{txt}' 붙이기",
+                    "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · 이미 있는 '{TOOL_SAY[tool]}'{ro(TOOL_SAY[tool])} 답할 수 있는 말 — 결과 층이 없던 자리"}
+    # ④ 질문 뜻 연결 — 이미 있는 도구로 답할 수 있는데 못 알아들은 말
+    for s in texts:
+        for tool, rx, tpl in INTENT_WIDE:
+            if not rx.search(s):
+                continue
+            c = _cls_in(s, V)
+            if "{cls}" in tpl and not c:
+                continue
+            dst = tpl.format(cls=(c or "").replace("_", " ")).strip()
+            if _routes(dst) != tool or _norm_q(dst) == _norm_q(s):
+                continue
+            return {"mode": "intent", "quick": True, "src": s, "dst": dst, "how": f"'{s}' → '{dst}'{ro(dst)} 알아듣기",
+                    "line": f"이 질문을 '{dst}'{ro(dst)} 알아듣게 합니다", "why": f"{cnt} · 이미 있는 '{TOOL_SAY[tool]}'{ro(TOOL_SAY[tool])} 답할 수 있음"}
+    # ⑤ 답은 맞고 다음 할 일이 없음 — 권한 밖 · 화면 밖 · 업무 밖 → 답 문구
+    for k, rx, txt, tr in PHRASE_RULES:
+        if kind == k and rx.search(t_all + " " + str(it.get("note") or "")):
+            return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": tr, "how": f"답에 '{txt}' 붙이기",
+                    "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · " + ("이미 있는 기능 — 어디서 하는지 안내가 없음" if k in ("action", "other") else "거절은 맞음 — 다음 할 일 안내가 없음")}
+    if kind == "law" and not LAW_WORDS.search(t_all):
+        txt = "Land-XI 는 국토 · 실태조사 업무와 법령 질문에 답합니다"
+        return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": None, "how": f"답에 '{txt}' 붙이기",
+                "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · 업무 밖 질문 — 못 찾은 것이 맞음"}
+    # ⑥ 그 밖 — 없는 기능 · 애매함 → 개발 요청
+    return dev(HOW.get(kind) or HOW["other"], f"{KINDS.get(kind, '그 밖')} — 이미 있는 말 · 도구로는 답할 수 없음")
+
+
 # ═══ 모으기 — 답이 끝나는 곳(runner.emit)에서 ════════════════════════════════════════
 TERMINAL = ("agent.done", "agent.rejected", "agent.failed")
 RUN_ID = re.compile(r"^run_\d{12}[0-9a-f]{6}$")    # 실제 답의 번호(runner.ulid) — 시험 run(run_test… · run_t… · run_r3route)은 모으지 않는다
@@ -816,12 +1014,14 @@ def _cnt(v, src: str) -> dict:
 
 
 async def _items(conn, p: Principal, scope, where: str = "true", args: list | None = None, one: str | None = None, show_hidden: bool = False) -> list[dict]:
+    V = await vocab()
+    rules = await rules_fresh()
     sw, sa = _scope_sql(scope, 1)
     extra_args = list(args or [])
     w = f"({sw}) AND ({where})" + (f" AND i.id=${len(sa) + len(extra_args) + 1}" if one else "")
     # 시험으로만 모인 줄은 '새로 옴'이면 감춘다 — 고른 줄(채택 · 보류 · 이미 됨 · 만들어짐)은 남긴다(횟수만 뺌)
     if not show_hidden:                               # 결정 직후 그 줄을 돌려줄 때만 감추지 않는다(시험 줄을 되돌린 뒤에도 그 줄을 돌려준다)
-        w += " AND (i.state <> 'new' OR EXISTS (SELECT 1 FROM improve_signals t WHERE t.item_id=i.id AND NOT t.test))"
+        w += " AND (i.state <> 'new' OR i.source = 'test' OR EXISTS (SELECT 1 FROM improve_signals t WHERE t.item_id=i.id AND NOT t.test))"
     rows = await conn.fetch(
         "SELECT i.*, "
         "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig IN ('blocked','map_failed')) AS n_block, "
@@ -843,7 +1043,7 @@ async def _items(conn, p: Principal, scope, where: str = "true", args: list | No
     ids = {r["decided_by"] for r in rows if r["decided_by"]} | {r["notice_by"] for r in rows if r["notice_by"]}
     if ids:
         who = {r["id"]: (r["name"], r["role"]) for r in await conn.fetch("SELECT id, name, role FROM lx_users WHERE id = ANY($1::text[])", list(ids))}
-    return [_item(r, p, who) for r in rows]
+    return [_item(r, p, who, V, rules) for r in rows]
 
 
 def _who(uid, who: dict) -> str | None:
@@ -855,7 +1055,7 @@ def _who(uid, who: dict) -> str | None:
     return f"LX 직원 {nm}" if nm else "LX 직원"
 
 
-def _item(r, p: Principal, who: dict) -> dict:
+def _item(r, p: Principal, who: dict, V: dict | None = None, rules: list | None = None) -> dict:
     src = "개선 후보(improve_signals)"
     check = r["source"] in SOURCE_KO and not r["n_live"]
     roles = [ROLE_KO.get(x, x) for x in (r["roles"] or []) if x]
@@ -880,6 +1080,7 @@ def _item(r, p: Principal, who: dict) -> dict:
                    "try": r["notice_try"]} if r["notice_at"] else None,
         "askers": _cnt(r["n_askers"], "개선 후보(improve_askers · 90일)"),
         "test_only": not r["n_real"],                    # 시험으로만 모인 줄(횟수에서 뺌)
+        "test_item": r["source"] == "test",               # 시험으로 넣은 줄(시험 표시 · 바로 반영 줄도 시험 줄로)
         "decided": {"by": _who(r["decided_by"], who), "md": _md(r["decided_at"])} if r["decided_at"] else None,
         "can": {"decide": st in ("new", "held", "already", "adopted"), "notify": p.is_admin and st == "adopted" and r["adopt_mode"] not in QUICK,
                 "reopen": st in ("held", "already") or (st == "adopted" and r["adopt_mode"] not in QUICK),
@@ -894,6 +1095,13 @@ def _item(r, p: Principal, who: dict) -> dict:
         d["adopt"] = {"mode": mode, "mode_label": ADOPT_KO.get(mode, mode), "quick": mode in QUICK,
                       "rule": {k: rule.get(k) for k in ("src", "dst", "text", "try", "test")} if rule else None,
                       "state_word": "반영됨 — 다시 물어보세요" if mode in QUICK and rule else "개발 할 일 · 확인 대기"}
+    # 시스템 제안(원칙 197 고침) — 아직 고르지 않은 줄(새로 옴 · 보류)마다 서버가 고칠 방법을 미리 정한다
+    if V is not None and st in ("new", "held"):
+        n_sum = int(r["n_block"] or 0) + int(r["n_reask"] or 0) + int(r["n_nh"] or 0) + int(r["n_cancel"] or 0)
+        sg = suggest({"kind": r["kind"], "gist": r["gist"], "examples": [x for x in (r["gists"] or []) if x and x != r["gist"]],
+                      "note": r["note"], "n_sum": n_sum, "test_only": not r["n_real"]}, V, rules)
+        d["suggest"] = sg
+        d["can"].update({"apply": bool(sg.get("quick")), "dev": True, "hold": st == "new"})
     return d
 
 
@@ -945,9 +1153,19 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
         if action == "adopt":
             if cur["state"] == "built":
                 raise ApiError("conflict", "이미 만들어진 줄입니다", status=409)
+            if body.get("use") == "suggest":              # 이대로 반영(원칙 197 고침) — 서버가 정한 제안을 그대로(화면이 보낸 값은 쓰지 않는다)
+                sg = cur.get("suggest")
+                if not sg or not sg.get("quick"):
+                    raise ApiError("conflict", "이 줄은 바로 반영할 방법이 없습니다 — 개발 요청으로 올려 주세요", status=409)
+                body = {"mode": sg["mode"], "src": sg.get("src"), "dst": sg.get("dst"), "text": sg.get("text"), "try": sg.get("try"),
+                        "how": sg.get("how"), "test": bool(body.get("test")) or cur.get("test_item"), "use": "suggest"}
+            elif str(body.get("mode") or "dev") == "dev" and not body.get("how") and cur.get("suggest"):
+                body = {**body, "mode": "dev", "how": cur["suggest"]["how"] if cur["suggest"]["mode"] == "dev" else None}
             mode = str(body.get("mode") or "dev")
             if mode not in ADOPT_KO:
                 raise ApiError("bad_request", "채택 갈래를 골라 주세요")
+            if mode in QUICK and cur.get("test_item"):
+                body = {**body, "test": True}
 
             def one(k, n=100):
                 return re.sub(r"\s+", " ", str(body.get(k) or "")).strip()[:n] or None
@@ -1023,7 +1241,7 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
                                "updated_at=now() WHERE id=$1", iid, text, tr, len(askers), p.user_id)
         else:
             raise ApiError("bad_request", "알 수 없는 동작")
-        await audit(conn, p, f"improve.{action}", iid, before, {k: v for k, v in body.items() if k in ("how", "reason", "until", "text", "try", "mode", "src", "dst", "test")})
+        await audit(conn, p, f"improve.{action}", iid, before, {k: v for k, v in body.items() if k in ("how", "reason", "until", "text", "try", "mode", "src", "dst", "test", "use")})
         out, _ = await _one(conn, p, iid, show_hidden=True)
     if action in ("already", "reopen"):
         _refresh_already(force=True)

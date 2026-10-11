@@ -119,8 +119,9 @@ def _public_view(r) -> dict:
             "sgg_cd": r["sgg_cd"], "scale": r["scale"], "updated_at": _iso(r["updated_at"]), "center": c, "bbox": bb}
 
 
-async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict, last_train: dict) -> dict:
-    """정밀도(현장 판정) · 오탐 신고(feedback fp) · 마지막 학습(모델 지표 기준월) → next_action(재학습 · 표본 검수 · 갱신 배포 · 없음)."""
+async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict, last_train: dict, reviews: dict | None = None) -> dict:
+    """정밀도(현장 판정) · 오탐 신고(feedback fp) · 마지막 학습(모델 지표 기준월) · 결과 확인(프로젝트 '확인했음' · 원칙 198)
+    → next_action(재학습 · 결과 확인 · 갱신 배포 · 없음). 표본 검수(표본 k/100)는 1차에서 뺐다(원칙 198)."""
     t = r["tenant_id"]
     v = verdicts_by_tenant.get(t, {"tp": 0, "fp": 0})
     judged = v["tp"] + v["fp"]
@@ -135,10 +136,11 @@ async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict,
         except ValueError:
             days = None
     th = THRESHOLDS
+    rv = (reviews or {}).get(r["card_id"])
     if (prec is not None and prec < th["precision_min_pct"]) or fpn > th["fp_reports_max"]:
         nxt = "retrain"
-    elif judged < th["judged_min"] and r["stage"] in ("ga", "canary"):
-        nxt = "sample_review"
+    elif rv is not None and not rv["done"] and r["stage"] in ("ga", "canary"):
+        nxt = "review"
     elif days is not None and days > th["train_max_days"]:
         nxt = "update_deploy"
     else:
@@ -148,7 +150,9 @@ async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict,
             "judged": env(judged, "count", "recorded", src_v),
             "fp_reports": env(fpn, "count", "recorded", "오탐 신고"),
             "last_train": lt, "last_train_days": env(days, "count", "recorded", "모델 지표 기준월", None if days is not None else "학습 기록 없음"),
-            "next_action": nxt, "next_action_label": {"retrain": "재학습", "sample_review": "표본 검수", "update_deploy": "갱신 배포", "none": "없음"}[nxt],
+            "next_action": nxt, "next_action_label": {"retrain": "재학습", "review": "결과 확인", "update_deploy": "갱신 배포", "none": "없음"}[nxt],
+            # 결과 확인(원칙 198) — 이 서비스 프로젝트의 이번 회차 '확인했음'(프로젝트 화면 · 지도 서비스와 같은 기록) · 프로젝트가 없으면 null
+            "review": rv,
             "thresholds": {k: env(v, "%" if k.endswith("pct") else "count", "estimate", "deploys.THRESHOLDS", "[추정 초기값]") for k, v in th.items()}}
 
 
@@ -165,6 +169,20 @@ async def _health_inputs(conn):
     for x in await conn.fetch("SELECT cv.id, max(m.metrics->'box_mAP50'->>'as_of') a FROM card_versions cv LEFT JOIN models m ON m.id = ANY(cv.model_ids) GROUP BY 1"):
         lt[x["id"]] = x["a"]
     return fb, vv, lt
+
+
+async def review_by_card() -> dict:
+    """서비스(카드) → 결과 확인 {done, by, at, project} — 그 카드를 만든 프로젝트(가장 최근에 바뀐 것)의 이번 회차 '확인했음'
+    (project_links kind review_seen · 프로젝트 단계 판정과 같은 기록 · 원칙 198)."""
+    from .envelope import KST as _K
+    async with db(realm="lx") as c:
+        rows = await c.fetch(
+            "SELECT DISTINCT ON (l.ref) l.ref AS card, p.id, s.by, s.at, u.name FROM project_links l JOIN projects p ON p.id = l.project_id "
+            "LEFT JOIN LATERAL (SELECT x.by, x.at FROM project_links x WHERE x.project_id = p.id AND x.kind = 'review_seen' AND x.round = p.round "
+            "ORDER BY x.at DESC LIMIT 1) s ON true LEFT JOIN lx_users u ON u.id = s.by "
+            "WHERE l.kind = 'card' ORDER BY l.ref, p.updated_at DESC")
+    return {r["card"]: {"done": bool(r["at"]), "by": r["name"] if r["at"] else None,
+                        "at": r["at"].astimezone(_K).isoformat(timespec="minutes") if r["at"] else None, "project": r["id"]} for r in rows}
 
 
 @router.get("/deploys")
@@ -186,8 +204,12 @@ async def list_deploys(request: Request, tenant_id: str | None = None, card_id: 
         items = [await deploy_dict(conn, r) for r in rows]
         if "health" in want:
             fb, vv, lt = await _health_inputs(conn)
+            try:
+                rvs = await review_by_card()
+            except Exception:  # noqa: BLE001
+                rvs = {}
             for it, r in zip(items, rows):
-                it["health"] = await health_of(conn, r, fb, vv, lt)
+                it["health"] = await health_of(conn, r, fb, vv, lt, rvs)
     return {"items": items, "total": len(items), "as_of": now_iso()}
 
 
