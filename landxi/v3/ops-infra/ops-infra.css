@@ -100,6 +100,8 @@
 .org{display:flex;flex-direction:column;padding:28px 32px;cursor:pointer;transition:box-shadow var(--d-180) var(--e-ui),transform var(--d-180) var(--e-ui)}
 .org:hover{box-shadow:var(--elev-map);transform:translateY(-2px)}
 .org header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.org-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--sub)}
+.org-link:hover{text-decoration-color:var(--ink)}
 .org h2{margin:0;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .org .t-chip[data-st="near"]{color:var(--ink)}
 .org .t-chip[data-st="near"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lock);margin-right:6px}

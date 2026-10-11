@@ -134,3 +134,21 @@ class LXJSON(JSONResponse):
 class RawJSON(LXJSON):
     """GeoJSON 등 데이터 본문 — 봉투 검사를 'lx' 메타 블록에만 적용."""
     check = False
+
+
+def split_round(parts, digits: int = 1, total: float | None = None) -> list:
+    """나눈 값을 반올림해도 합이 맞게(최대 나머지 방식 · GPT5-3) — 합계는 반올림 전 값의 합을 한 번 반올림한 값,
+    각 칸은 내림한 뒤 남은 몫을 소수 부분이 큰 칸부터 하나씩. digits=0 이면 정수."""
+    q = 10 ** digits
+    vals = [float(x or 0) * q for x in parts]
+    want = round((sum(vals) / q if total is None else float(total)) * q)
+    base = [math.floor(v) for v in vals]
+    left = int(want - sum(base))
+    order = sorted(range(len(vals)), key=lambda i: -(vals[i] - base[i]))
+    if left >= 0:
+        for i in order[:left]:
+            base[i] += 1
+    else:
+        for i in list(reversed(order))[: -left]:
+            base[i] -= 1
+    return [int(b) for b in base] if digits == 0 else [round(b / q, digits) for b in base]

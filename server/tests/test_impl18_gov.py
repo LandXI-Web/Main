@@ -48,6 +48,7 @@ def test_report_same_numbers(rep, tok):
     assert sum(e["n"] for e in rep["emd_rows"]) == total                       # 읍면동 합 = 합계
     assert sum(v(c["n"]) for c in rep["classes"]) == total                     # 분류별 합 = 합계
     assert round(sum(v(e["m2"]) for e in rep["emd_rows"]) / 1e4, 1) == v(rep["area_ha"])
+    assert round(sum(v(e["ha"]) for e in rep["emd_rows"]), 1) == v(rep["area_ha"])          # 읍면동 ha 합 = 합계(GPT5-3)
     assert v(rep["acc"]) is not None and 0 < v(rep["acc"]) <= 100
     assert rep["services"] and all(s["card"] for s in rep["services"])
     words = str(rep)
@@ -149,7 +150,7 @@ def test_public_record():
     j = r.json()
     with pg() as c:
         done = {x[0] for x in c.execute("SELECT sgg_cd FROM survey_sgg WHERE state='done'").fetchall()}
-        svc = c.execute("SELECT count(DISTINCT card_id) FROM service_results WHERE replaced_at IS NULL").fetchone()[0]
+        svc = c.execute("SELECT count(DISTINCT card_id) FROM service_results WHERE replaced_at IS NULL AND origin IN ('deploy', 'job')").fetchone()[0]   # XI맵 전국 결과와 같은 줄(GPT5-1)
     assert v(j["sgg"]) == len(j["places"]) == len(done)                        # 실태조사 집계가 끝난 시군구와 같은 수
     assert {p["sgg_cd"] for p in j["places"]} == done
     assert v(j["services"]["n"]) == len(j["services"]["names"]) == svc

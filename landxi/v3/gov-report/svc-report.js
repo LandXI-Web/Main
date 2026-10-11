@@ -97,7 +97,7 @@ export function svcReport({ svc, stage, onAuth, fusionHref }) {
     const body = show.map((r) => tr(r.emd, [...(many ? cls.map((k) => nf(cnt(r, k))) : []), nf(r.n), nf(val(r.ha), 1)]));
     if (rest.length) {
       const sum = (f) => rest.reduce((a, r) => a + f(r), 0);
-      body.push(tr(`그 밖 ${rest.length}곳`, [...(many ? cls.map((k) => nf(sum((r) => cnt(r, k)))) : []), nf(sum((r) => r.n)), nf(sum((r) => val(r.m2) || 0) / 1e4, 1)], 'dim'));   // 면적은 ㎡ 합을 한 번에 ha 로(줄마다 반올림한 값을 더하지 않는다)
+      body.push(tr(`그 밖 ${rest.length}곳`, [...(many ? cls.map((k) => nf(sum((r) => cnt(r, k)))) : []), nf(sum((r) => r.n)), nf(Math.round(sum((r) => val(r.ha) || 0) * 10) / 10, 1)], 'dim'));   // 서버가 합이 맞게 나눈 줄 값(최대 나머지 · GPT5-3)을 더해 열 합 = 합계
     }
     body.push(tr('합계', [...(many ? (d.classes || []).map((c) => nf(val(c.n))) : []), nf(val(d.total)), nf(val(d.area_ha), 1)], 'sum'));
     return h('table.gr-rtb', {}, h('thead', {}, head), h('tbody', {}, ...body));

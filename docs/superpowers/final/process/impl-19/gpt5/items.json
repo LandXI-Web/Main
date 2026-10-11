@@ -1,0 +1,10 @@
+[
+ {"id": "GPT5-1", "title": "메인 '서비스 7가지' = XI맵 '서비스 7가지' — 한 출처 · 토지피복은 이름만 따로", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-1-ximap-hud-1440-2244.png", "numbers-check.txt"], "where": "https://app.land-xi.dev/landxi/v3/xi-clean/ · https://app.land-xi.dev/landxi/v3/main/"},
+ {"id": "GPT5-2", "title": "바퀴 4 고침(거른 뒤 상세 닫힘 · 속성 null) 재확인 — 바깥 주소 e2e 통과", "opts": ["완료", "다시"], "evidence": ["README.md"], "where": "https://app.land-xi.dev/landxi/v3/lx-map/"},
+ {"id": "GPT5-3", "title": "보고서 면적 — 분류 · 읍면동 칸 합 = 합계(운봉읍 34.9 + 5.9 = 40.8) · 화면 · .docx · LX 보고서", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-3-gov-report-unbong-1440-2252.png", "report-unbong.docx"], "where": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report (운봉읍)"},
+ {"id": "GPT5-4", "title": "XI맵 나라 바꾸면 검색 칸 비움 · 돌아오면 지역 이름", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-4-ximap-kg-search-1440-2245.png"], "where": "https://app.land-xi.dev/landxi/v3/xi-clean/"},
+ {"id": "GPT5-5", "title": "관리자 배포 신청 옛 기록 — 사람 말로", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-5-admin-old-request-1440-2252.png"], "where": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys"},
+ {"id": "GPT5-6", "title": "관리자 대시보드 지도 — 같은 기관 이름표 하나 · 겹치면 비켜 놓기 · 바탕 대비 조금", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-6-admin-map-1440-2251.png"], "where": "https://admin.land-xi.dev/landxi/v3/ops-core/"},
+ {"id": "GPT5-7", "title": "기관 한 곳으로 가는 길 — 기관 이름 밑줄 · '기관 보기'", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-7-admin-orgs-1440-2251.png", "shots/GPT5-7-admin-org-page-1440-2251.png"], "where": "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=tenants"},
+ {"id": "GPT5-8", "title": "프로젝트 목록 진행 — 6/6 아래 '건너뜀 n · 공개 뒤 남은 일 n'", "opts": ["완료", "다시"], "evidence": ["shots/GPT5-8-project-list-1440-2245.png"], "where": "https://app.land-xi.dev/landxi/v3/lx-project/"}
+]

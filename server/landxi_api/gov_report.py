@@ -31,7 +31,7 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from .deps import ApiError, Principal, audit, db, principal
-from .envelope import KST, env, now_iso
+from .envelope import KST, env, now_iso, split_round
 
 router = APIRouter()
 CARD_RE = re.compile(r"^card-[a-z0-9-]{2,40}$")
@@ -346,8 +346,11 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         e = cls.setdefault(k, [0, 0.0])
         e[0] += r["n"]
         e[1] += r["m2"]
-    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(round(v[1] / 1e4, 1), "ha", "measured", SRC)}
-               for k, v in sorted(cls.items(), key=lambda kv: -kv[1][0])]
+    tot_ha = round(tot_m2 / 1e4, 1)                              # 합계 = 반올림 전 면적의 합을 한 번 반올림
+    cls_l = sorted(cls.items(), key=lambda kv: -kv[1][0])
+    cls_ha = split_round([v[1] / 1e4 for _, v in cls_l], 1, tot_ha)   # 분류 칸도 합이 합계와 같게(최대 나머지 · GPT5-3)
+    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC)}
+               for i, (k, v) in enumerate(cls_l)]
     by: dict[str, dict] = {}
     for r in rs:
         e = by.setdefault(r["emd"] or "읍면동 밖", {"emd": r["emd"] or "읍면동 밖", "n": 0, "m2": 0.0, "by": {}})
@@ -355,8 +358,10 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         e["m2"] += r["m2"]
         k = class_ko(r["cls"])
         e["by"][k] = e["by"].get(k, 0) + r["n"]
-    emd_rows = [{"emd": e["emd"], "n": e["n"], "ha": env(round(e["m2"] / 1e4, 1), "ha", "measured", SRC), "m2": env(round(e["m2"], 1), "m2", "measured", SRC),
-                 "by": [{"cls": k, "n": v} for k, v in e["by"].items()]} for e in sorted(by.values(), key=lambda x: (-x["n"], x["emd"]))]
+    emd_l = sorted(by.values(), key=lambda x: (-x["n"], x["emd"]))
+    emd_ha = split_round([e["m2"] / 1e4 for e in emd_l], 1, tot_ha)   # 읍면동 칸 합 = 합계(GPT5-3)
+    emd_rows = [{"emd": e["emd"], "n": e["n"], "ha": env(emd_ha[i], "ha", "measured", SRC), "m2": env(round(e["m2"], 1), "m2", "measured", SRC),
+                 "by": [{"cls": k, "n": v} for k, v in e["by"].items()]} for i, e in enumerate(emd_l)]
     ld = None
     try:
         c = await compare(p, card, None, emd)
@@ -371,7 +376,7 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         "service": {"card": card, "name": svc["name"]}, "region": region or "—", "sgg": sgg, "emd": emd, "emds": emds,
         "unit": unit, "made": dt.datetime.now(KST).strftime("%Y.%m.%d"),
         "imagery": shot, "analyzed": _ymd(analyzed),
-        "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(round(tot_m2 / 1e4, 1), "ha", "measured", SRC),
+        "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(tot_ha, "ha", "measured", SRC),
         "classes": classes,
         "acc": env(acc, "%", "measured", "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값(분석하기 카드와 같은 출처)", as_of=acc_at or None),
         "emd_rows": emd_rows, "emd_n": env(len([e for e in emd_rows if e["emd"] != "읍면동 밖"]), "count", "inferred", SRC),
@@ -607,7 +612,7 @@ async def record() -> dict:
             places.append({"sgg_cd": r["sgg_cd"], "name": r.get("name"), "center": r["center"]})
     async with db(realm="lx") as c:
         sv = await c.fetch("SELECT s.card_id, c.name, count(*) n FROM service_results s JOIN cards c ON c.id = s.card_id "
-                           "WHERE s.replaced_at IS NULL GROUP BY 1, 2 ORDER BY 3 DESC, 1")
+                           "WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job') GROUP BY 1, 2 ORDER BY 3 DESC, 1")   # XI맵 전국 결과(ximap.build_board)와 같은 줄 — '서비스 n가지' 한 출처(GPT5-1)
         cards = await c.fetch("SELECT c.id, c.name, c.scope, (SELECT count(*) FROM service_results s WHERE s.card_id=c.id AND s.replaced_at IS NULL) n, "
                               "EXISTS(SELECT 1 FROM deploys d WHERE d.card_id=c.id AND NOT coalesce(d.test,false) AND d.stage <> 'draft') dp FROM cards c")
         og = await c.fetch("SELECT DISTINCT ON (g.tenant_id) g.tenant_id, t.name, d.sgg_cd FROM space_guides g JOIN tenants t ON t.id=g.tenant_id "

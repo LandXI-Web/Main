@@ -10,7 +10,7 @@ import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
 import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, nb, projectNotices } from './context.js';
 import { staffMenu, STAFF_HREF } from '../kit/lx-menu.js';
-import { GROUPS, N, groupOf, flow, seg4El, doneN, kick, ago, sortBy } from './board.js';
+import { GROUPS, N, groupOf, flow, seg4El, doneN, progNote, kick, ago, sortBy } from './board.js';
 import { openNewProject } from './new.js';
 import { retrainCard, logCard, openHandover } from './sheets.js';
 
@@ -94,7 +94,7 @@ async function list() {
         h('td', { title: (p.regions || []).map((g) => g.full || g.name).join(' · '), text: regionWord(p.regions) }),
         h('td.nw', { text: p.lead?.name || '—' }),
         h('td', { text: archived() ? '보관' : nb(p.next?.text || '—') }),
-        h('td.nw', {}, archived() ? h('span.sb-none', { text: '—' }) : h('span.sb-prog', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/${N}` }))),
+        h('td.nw', {}, archived() ? h('span.sb-none', { text: '—' }) : h('span.sb-prog', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/${N}` }), progNote(p) ? h('small.sb-prog-n', { text: progNote(p) }) : null)),
         h('td.num.nw', { text: ago(p.last_at || p.updated_at) }),
         h('td', {}, k && !archived() ? h('span.sb-kick', { dataset: { kind: k.kind }, text: k.text }) : h('span.sb-none', { text: '—' })),
         h('td.nw', {}, h('a.sb-open-l', { href: projectHref(p.id), text: '열기' })));

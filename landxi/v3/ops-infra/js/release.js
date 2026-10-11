@@ -81,7 +81,7 @@ export function mountRelease(root) {
     const row = (k, ...v) => dl.append(h('div', {}, h('dt', { text: k }), h('dd', {}, ...v)));
     if (!x.form) {                       // 신청서가 생기기 전(10-09 전)의 서비스 공개 승인 기록 — 서버 값이 없어 지어내지 않는다
       row('모델', h('b', { text: x.model_name || '—' }));
-      row('신청서', h('span.rv-dim', { text: '신청서가 생기기 전 기록이라 서버 값이 없습니다' }));
+      row('신청서', h('span.rv-dim', { text: '이 신청에는 모델 기록이 남아 있지 않습니다 — 예전 방식으로 낸 신청' }));   // 사람 말로(GPT5-5)
       if (x.memo) row('메모', h('span', { text: x.memo }));
       return finish(x, dl);
     }

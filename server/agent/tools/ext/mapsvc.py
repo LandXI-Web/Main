@@ -641,7 +641,11 @@ def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes
             e[1] += float(r["m2"])
         _p(doc, "", space_after=2)
         _p(doc, "읍면동별 개수 · 면적", 11, True, "14202A", space_after=2)
-        rows = [[e, v[0], round(v[1]), f"{(v[0] / tot_n * 100 if tot_n else 0):.1f}%"] for e, v in sorted(by_emd.items(), key=lambda x: (-x[1][0], x[0]))]
+        from landxi_api.envelope import split_round
+        el = sorted(by_emd.items(), key=lambda x: (-x[1][0], x[0]))
+        m2s = split_round([v[1] for _, v in el], 0, round(tot_m2))          # 줄 합 = 합계(최대 나머지 · GPT5-3)
+        pcs = split_round([v[0] / tot_n * 100 if tot_n else 0 for _, v in el], 1, 100 if tot_n else 0)
+        rows = [[e, v[0], m2s[i], f"{pcs[i]:.1f}%"] for i, (e, v) in enumerate(el)]
         rows.append(["합계", tot_n, round(tot_m2), "100%" if tot_n else "—"])
         t = _tbl(doc, ["읍면동", "개수(건)", "면적(㎡)", "개수 비율"], rows, widths=[5.2, 3.6, 4.4, 4.0], size=9)
         for cell in t.rows[-1].cells:
@@ -654,7 +658,9 @@ def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes
             for cl in cls_set:
                 n = sum(int(r["n"]) for r in d["rows"] if r["cls"] == cl)
                 m2 = sum(float(r["m2"]) for r in d["rows"] if r["cls"] == cl)
-                crow.append([_ko(cl), n, round(m2)])
+                crow.append([_ko(cl), n, m2])
+            for x, m in zip(crow, split_round([x[2] for x in crow], 0)):   # 분류 칸 합 = 반올림 전 합을 한 번 반올림
+                x[2] = m
             _tbl(doc, ["분류", "개수(건)", "면적(㎡)"], crow, widths=[6, 4, 5], size=9)
     _p(doc, "", space_after=2)
     _p(doc, "읽는 법 — 개수 · 면적은 AI가 그린 결과의 수와 넓이입니다(결과 확인 전 · 지운 결과 제외). 지도 서비스의 결과 층 · 내려받기 파일과 같은 값입니다.",

@@ -218,8 +218,12 @@ async def build_board(p) -> dict:
     services = []
     for sv in sorted(svcs.values(), key=lambda s: -s["n_regions"]):
         services.append({"id": sv["id"], "name": sv["name"], "n_regions": env(sv["n_regions"], "count", "recorded", "결과가 있는 시군구"),
-                         "n": env(sv["n"], "count", "inferred", SRC_N, as_of=last)})
+                         "n": env(sv["n"], "count", "inferred", SRC_N, as_of=last),
+                         # 서비스 = 서비스 결과 장부의 서비스(메인 '서비스 n가지'와 같은 줄) · 전역 분석 = 서비스가 붙지 않은 시군구 전역 분석(토지피복 등) — GPT5-1
+                         "kind": "analysis" if sv["id"] in ("landcover", "ai") else "service"})
+    n_svc = sum(1 for x in services if x["kind"] == "service")
     return {"regions": out, "services": services,
+            "n_services": env(n_svc, "가지", "recorded", "서비스 결과 장부의 서비스(전역 분석 제외 — 메인 '서비스 n가지'와 같은 출처)"),
             "n_regions": env(len(out), "count", "recorded", "결과가 있는 시군구(서비스 결과 장부 + 시군구 전역 분석)", as_of=last),
             "years": years, "last_at": last, "as_of": now_iso(),
             "source": "서비스 결과 장부(지금 결과) + 시군구 전역 분석"}

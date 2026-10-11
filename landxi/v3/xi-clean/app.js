@@ -268,8 +268,8 @@ async function boot() {
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
   if (S.lx) {
-    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); BD?.show(false); hudBoard.hidden = true; },
-      onLeave: () => { BD?.show(true); if (!S.region) paintBoardHud(); return S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 }); } });
+    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
+      onLeave: () => { BD?.show(true); if (searchInput) searchInput.value = S.cond.emd?.nm || S.region?.name || ''; if (!S.region) paintBoardHud(); return S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 }); } });
     const nb = mainEl.querySelector('.xn-bar'); if (nb) S.els.top.append(nb);   // 사업 나라 = 오른쪽 위 한 줄 안
     if (Q.get('nation') && Q.get('nation') !== 'kr') NAT.go(Q.get('nation'), { first: true });
   }
@@ -875,9 +875,12 @@ function paintBoardHud() {
   if (!d) { hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }), h('p.xb-p', { text: '결과를 불러오지 못했습니다' })); X.hud = { label: '전국 AI 분석 결과', n: null, from: 'board', state: 'fail' }; return; }
   const r = S.region, br = boardRegion(r);
   if (!r) {
+    // 서비스 n가지 = 서비스 결과 장부의 서비스(메인 '서비스 n가지'와 같은 출처) · 토지피복 같은 전역 분석은 이름만 따로(GPT5-1 · 규칙 3)
+    const svcN = d.n_services ? ev(d.n_services) : d.services.filter((x) => x.kind !== 'analysis').length;
+    const extra = d.services.filter((x) => x.kind === 'analysis').map((x) => x.name);
     const yr = d.years?.length === 1 ? `${d.years[0]}년 영상까지` : d.years?.length ? `${d.years[0]}~${d.years[d.years.length - 1]}년 영상` : '';
     hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }),
-      h('p.xb-p', {}, h('span', {}, '시군구 ', h('b', { text: `${nf(ev(d.n_regions))}곳` }), ` · 서비스 ${d.services.length}가지`),
+      h('p.xb-p', {}, h('span', {}, '시군구 ', h('b', { text: `${nf(ev(d.n_regions))}곳` }), ` · 서비스 ${nf(svcN)}가지`, ...extra.map((x) => ` · ${x}`)),
         h('span', { text: [d.last_at ? `마지막 분석 ${shortDate(d.last_at)}` : null, yr].filter(Boolean).join(' · ') })),
       BD.legend,                                     // 서비스 색 · 켜고 끄기 = 전국 칸 안(지도 아래쪽은 고치기 막대 · 알림 자리)
       h('p.xb-tip', { text: '시군구를 누르면 확대되고, 객체를 누르면 그 자리에서 고칩니다' }));

@@ -161,7 +161,7 @@ export function mountTenants(root) {
   function paintLlm() {
     llmu.innerHTML = llmUsage().map((r) => {
       const u = r.requests?.value;
-      return `<tr data-id="${esc(r.id)}"><th scope="row">${esc(r.name)}</th>
+      return `<tr data-id="${esc(r.id)}"><th scope="row"><a class="org-link" href="#/tenants/o/${encodeURIComponent(r.id)}">${esc(r.name)}</a></th>
         <td class="num"><b data-metric="XI ChatGEO 요청 건수" data-tenant="${esc(r.id)}" data-v="${u ?? ''}">${u == null ? '—' : nf(u, 0)}</b><small> 건</small></td></tr>`;
     }).join('');
   }
@@ -170,13 +170,14 @@ export function mountTenants(root) {
     grid.style.setProperty('--n', list.length);
     grid.innerHTML = list.map((o) => `
       <section class="t-card org" data-id="${esc(o.id)}">
-        <header><h2>${esc(o.name)}</h2><span class="t-chip">이번 달</span></header>
+        <header><h2><a class="org-link" href="#/tenants/o/${encodeURIComponent(o.id)}">${esc(o.name)}</a></h2><span class="t-chip">이번 달</span></header>
         <div class="rings stats">${['storage_gb', 'gpu_s_month', 'area_km2_month'].map((k) => stat(k, o.dims[k])).join('')}</div>
-        <div class="org-acts"><button class="t-btn t-btn--2 go" type="button">기관 화면 열기</button></div>
+        <div class="org-acts"><button class="t-btn t-btn--2 go" type="button">기관 보기</button></div>
       </section>`).join('');
     paintLlm();
   }
-  /* 기관을 누르면 서랍이 아니라 '기관 한 곳' 새 화면(now 질문 17 ⓑ — 탭 넷 · tenant-page.js) · 카드 어디를 눌러도 열린다 */
+  /* 기관을 누르면 서랍이 아니라 '기관 한 곳' 새 화면(now 질문 17 ⓑ — 탭 넷 · tenant-page.js) · 카드 어디를 눌러도 열린다.
+     들어가는 길이 보이게(GPT5-7) — 기관 이름에 밑줄 링크 · 단추 '기관 보기' · 아래 요청 건수 표의 기관 이름도 같은 링크(새 아이콘 없음) */
   grid.addEventListener('click', (e) => {
     const card = e.target.closest('.org'); if (!card) return;
     location.hash = '#/tenants/o/' + encodeURIComponent(card.dataset.id);

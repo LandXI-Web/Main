@@ -4,6 +4,7 @@
      정확도         · 서비스(지금 판)  — 분석하기 카드 'AI 모델 정확도' · 분석하기 자세히 · 배포 신청서 '지난 판' · 관리자 배포 신청(승인된 신청 '이번 판')
                     · 프로젝트 신청서(이번 판) — 직원 배포 신청서 '이번 판' · 관리자 배포 신청(검토 중 신청 '이번 판')
      AI 분석 결과   · 서비스 · 지역  — 분석하기 자세히 큰 숫자 · 기관 '내 서비스' 카드
+     서비스 수      — 메인 'n가지 서비스 결과' · XI맵 전국 결과 '서비스 n가지'(GPT5-1)
      분석한 면적    · 기관            — 관리자 '기관' 화면(이번 달) · (사용 현황은 서비스별 칸이라 따로 적기만)
      결과 확인      · 프로젝트        — 봤음 · 안 봄(원칙 198 · 숫자 없음): 프로젝트 목록 진행 칸 · 프로젝트 화면 단계 칸 · 배포 신청서 · 관리자 신청서(검토 중) · 관리자 배포(운영 탭) · 'n/m' · '표본 확인'이 남으면 '숫자 남음'
    그리고 모든 요청을 지켜 이 PC 주소(localhost · 127.0.0.1 · 사설 IP · :4173 · :8700 등) 호출이 0인지 본다.
@@ -148,6 +149,15 @@ try {
     for (const r of projs.rows) {
       put(`결과 확인 · ${r.name}`, '프로젝트 목록', LEFT.test(r.todo) ? '숫자 남음' : RVW(r.st), r.st ? '' : '진행 칸 없음(보관 등)');
     }
+    // 서비스 수 — 메인 '시군구 n곳에 분석 결과 제공'의 'n가지 서비스' = XI맵 전국 결과 '서비스 n가지'(GPT5-1 · 같은 이름 = 같은 값 · 토지피복 같은 전역 분석은 이름만 따로)
+    await go(page, HOST.app + '/landxi/v3/main/');
+    await page.waitForFunction(() => /\d+가지 서비스/.test(document.querySelector('#ch5-p')?.textContent || ''), null, { timeout: 25000 }).catch(() => warns.push('메인 서비스 수 칸이 안 보임'));
+    const mainSvc = await page.evaluate(() => (document.querySelector('#ch5-p')?.textContent || '').match(/(\d+)가지 서비스/)?.[1] || null);
+    put('서비스 수(결과를 낸 서비스)', '메인 · 분석 결과 제공', mainSvc ? mainSvc + '가지' : null);
+    await go(page, HOST.app + '/landxi/v3/xi-clean/');
+    await page.waitForFunction(() => /서비스 \d+가지/.test(document.querySelector('.xb-p')?.textContent || ''), null, { timeout: 40000 }).catch(() => warns.push('XI맵 전국 결과 칸이 안 보임'));
+    const xiSvc = await page.evaluate(() => (document.querySelector('.xb-p')?.textContent || '').match(/서비스 (\d+)가지/)?.[1] || null);
+    put('서비스 수(결과를 낸 서비스)', 'XI맵 전국 결과', xiSvc ? xiSvc + '가지' : null);
     const svcOfProject = {};
     for (const p of projs.ids) {
       const q = encodeURIComponent(p.id);

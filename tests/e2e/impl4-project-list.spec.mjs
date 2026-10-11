@@ -48,7 +48,11 @@ test.describe('프로젝트 목록 — 진행 현황(흐름도 · 여섯 단계 
       const p = byId.get(await row.getAttribute('data-id'));
       const want = seg4(p);
       expect(await row.locator('.lxp-seg i').evaluateAll((is) => is.map((x) => x.dataset.st)), p.name).toEqual(want);
-      await expect(row.locator('.sb-prog small')).toHaveText(`${p.progress.n}/6`);
+      await expect(row.locator('.sb-prog small.num')).toHaveText(`${p.progress.n}/6`);
+      // 진행 옆 작은 말 — 건너뜀 n · 공개 뒤 남은 일 n(서버 steps · blocked 그대로 · GPT5-8)
+      const sk = want.filter((x) => x === 'skip').length, af = p.blocked.filter((b) => b.kind === 'after').length;
+      const note = [sk ? `건너뜀 ${sk}` : '', af ? `공개 뒤 남은 일 ${af}` : ''].filter(Boolean).join(' · ');
+      if (note) await expect(row.locator('.sb-prog-n')).toHaveText(note); else await expect(row.locator('.sb-prog-n')).toHaveCount(0);
       expect(p.progress.n).toBe(want.filter((x) => x === 'done' || x === 'skip').length);
       expect(nb(await row.locator('td').nth(3).innerText())).toBe(nb(p.next?.text || '—'));
       const k = row.locator('.sb-kick');
