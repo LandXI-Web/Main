@@ -36,11 +36,11 @@
       <form class="form e" id="form" method="post" action="#" novalidate autocomplete="on" onsubmit="event.preventDefault();window.__lxSubmit=1"><!-- 화면 코드가 늦게 올라와도 브라우저가 폼을 그대로 보내지 않게(바깥 주소 405) — 준비되면 auth.js 가 이어서 보낸다 -->
         <div class="fld" data-f="id">
           <label class="fld__l" for="id">아이디</label>
-          <input class="t-input" id="id" name="username" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" required>
+          <input class="t-input" id="id" name="username" type="text" inputmode="email" autocomplete="username" spellcheck="false" autocapitalize="off" placeholder="메일 주소" required>
         </div>
         <div class="fld" data-f="pw">
           <label class="fld__l" for="pw">비밀번호</label>
-          <input class="t-input" id="pw" name="password" type="password" autocomplete="current-password" required>
+          <div class="pw-box"><input class="t-input" id="pw" name="password" type="password" autocomplete="current-password" required><button class="pw-see" id="pw-see" type="button" aria-controls="pw" aria-pressed="false">보기</button></div><!-- 비밀번호 보기 — 글자 단추 · 아이콘 없음(Q8 ⓑ · 원칙 126) -->
         </div>
 
         <p class="msg" id="msg" role="alert" hidden></p>

@@ -120,7 +120,7 @@ _VAL_N: dict[str, int | None] = {}
 
 
 def val_images(md, n_val: dict) -> int | None:
-    """검증 정확도의 기준 — 학습 끝 검증에 쓴 영상 수(GPT2-7 · 원칙 181). 이 화면에서 학습한 모델 = 학습 자료 기록(train_samples.n_val) ·
+    """AI 모델 정확도의 기준 — 학습 끝 검증에 쓴 영상 수(GPT2-7 · 원칙 181). 이 화면에서 학습한 모델 = 학습 자료 기록(train_samples.n_val) ·
     밖에서 들여온 모델 = 학습 폴더(args.yaml 의 data → dataset.yaml 의 val 폴더)의 영상 파일 수. 둘 다 없으면 None(지어내지 않는다)."""
     sid = str(md.get("sample_id") or "") if hasattr(md, "get") else ""
     if sid and n_val.get(sid):
@@ -295,7 +295,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     def scene_ok(sc) -> bool:
         if not sc or not sc.get("src"):
             return False
-        if p.realm != "tenant":
+        if p.realm != "tenant" or sc.get("cover"):           # 대표 그림(배포 신청 · 원칙 186)은 지역 결과가 아니므로 누구에게나
             return True
         from .regions import region_allowed
         return (sc.get("tenant") == p.tenant_id) or bool(sc.get("sgg") and region_allowed(p, sc["sgg"]))
@@ -382,7 +382,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     reports_sum = f"{len(lk)}곳 합" if len(lk) > 1 else None
     own = _owner(m, cid, card)
     can_analyze = bool(learned) and (card["scope"] or "local") != "global"
-    # 분석하기 카드(카드틀-5 · 6 ⓐ · 원칙 145 · 146) — 모델 = 지금 판의 학습된 모델(없으면 앞 판) · 검증 정확도 = 그 모델 기록의 학습 끝 검증 값
+    # 분석하기 카드(카드틀-5 · 6 ⓐ · 원칙 145 · 146) — 모델 = 지금 판의 학습된 모델(없으면 앞 판) · AI 모델 정확도 = 그 모델 기록의 학습 끝 검증 값
     #   (분할 모델은 마스크 mAP50 먼저) · 모델 갱신 = 그 검증 기록의 날 · 대상 지역 = 이 카드의 요약 항목 시군구 전부(운영 → 시범 → 첫 결과 전).
     #   정식 서비스 = 등록된 모델 + 돌고 있는 배포본(운영 · 시범 · 뒤에서 돌림)이 있는 카드만 — 나머지 카드는 지우지 않고 화면이 숨긴다.
     cur_learned = [m["models"][x] for x in ((cur["model_ids"] or []) if cur else []) if x in m["models"] and m["learned"](m["models"][x])] or learned
@@ -581,7 +581,7 @@ async def one(cid: str, request: Request):
                         "reports": env(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0), "count", "recorded", "기관이 보낸 신고")})
     scenes = [s for s in (inf.get("scenes") or []) if s.get("src")]
     vers = sorted([v for v in m["vers"] if v["card_id"] == cid], key=lambda v: _ver_key(v["version"]), reverse=True)
-    # 학습 정보(원칙 166 — 무엇으로 배웠나는 자세히 화면에) — 카드의 검증 정확도 모델(core.model)의 학습 표본 · 기반 모델. 기록 없으면 비움(지어내지 않는다)
+    # 학습 정보(원칙 166 — 무엇으로 배웠나는 자세히 화면에) — 카드의 AI 모델 정확도 모델(core.model)의 학습 표본 · 기반 모델. 기록 없으면 비움(지어내지 않는다)
     learn = None
     if core.get("model"):
         async with db(realm="lx") as conn:
@@ -927,8 +927,12 @@ async def analyze(cid: str, body: dict, request: Request):
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만 분석을 시작합니다")
-    region = str(body.get("region") or "")
-    pl = await _plan(p, cid, region, str(body.get("imagery") or "") or None)
+    # 분석하기는 영상 하나만(10-11 QA-고침-2 · 원칙 185) — 영상 · 지역은 한 개씩만 받는다(목록 · 쉼표 묶음 · 여러 개 칸은 거절)
+    im, rg = body.get("imagery"), body.get("region")
+    if isinstance(im, (list, tuple, dict)) or isinstance(rg, (list, tuple, dict)) or any(k in body for k in ("imageries", "imagery_ids", "regions"))             or "," in str(im or "") or "," in str(rg or ""):
+        raise ApiError("bad_request", "분석은 한 번에 영상 하나만 합니다", {"field": "imagery"})
+    region = str(rg or "")
+    pl = await _plan(p, cid, region, str(im or "") or None)
     if not pl["fits"]:
         raise ApiError("conflict", pl["note"] or "이 카드로 이 지역을 분석할 수 없습니다", {"region": pl["sgg"]}, 409)
     async with db(realm="lx") as conn:

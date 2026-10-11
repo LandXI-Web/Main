@@ -6,8 +6,10 @@ GET  /release/projects/{pid}/infer/ranges?imagery_id 그 영상 안 읍면동(�
 POST /release/projects/{pid}/infer                   {model_id, imagery_id, emd_cd?} → 지금 있는 분석 작업(POST /jobs · 게이트웨이 작업 대기열 · 전력 규칙)
                                                      작업 options.project_id · project_infer = 이 프로젝트의 추론(배포 신청 없이 · 보는 사람 = 나 · 프로젝트 참여자)
 GET  /release/imagery/{iid}/thumb                    영상 미리보기(원칙 153 — 카탈로그 썸네일과 같은 그림 · LX 직원도)
-GET  /release/projects/{pid}/apply                   배포 신청서 — 서버 값(모델 · 검증 정확도 · 결과 장면 · 학습 데이터 · 결과 확인) · 지난 판 · 신청 상태 · 판 기록
-POST /release/projects/{pid}/apply                   {model_id, memo?, scene_job?, name?, ledger_kind?} 프로젝트장 — 승인 요청 한 줄(approvals subject card · 지금 있는 서비스 공개 승인 흐름)
+GET  /release/projects/{pid}/apply                   배포 신청서 — 서버 값(모델 · AI 모델 정확도 · 결과 장면 · 학습 데이터 · 결과 확인) · 지난 판 · 신청 상태 · 판 기록
+POST /release/projects/{pid}/cover                   대표 그림 올리기(PNG · JPG · WebP · 8MB 이하 · 짧은 변 320 이상) → {name, src} — 신청서의 '대표 그림'(원칙 186)
+GET  /release/files/{pid}/{name}                     올린 대표 그림(신청서 · 관리자 신청서 미리보기)
+POST /release/projects/{pid}/apply                   {model_id, cover(필수 — 올린 그림 name · 'current' = 지금 서비스 그림 그대로), memo?, scene_job?, name?, ledger_kind?} 프로젝트장 — 승인 요청 한 줄(approvals subject card · 지금 있는 서비스 공개 승인 흐름)
                                                      거절된 판이면 같은 판을 고쳐서 다시 신청(새 승인 요청 줄) · 아니면 새 판(첫 판이면 새 서비스)
 LX 관리자('배포' 메뉴 세 탭):
 GET  /release/requests                               신청 — 배포 신청(승인 요청 · 서비스 공개) 목록 + 신청서. 승인 · 거절 = POST /approvals/{id}/decide(거절 사유 필수 · 지금 있는 길)
@@ -19,10 +21,16 @@ GET  /release/usage                                  사용 현황 — 기관 ×
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import json
+import re
+import shutil
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Request, UploadFile
+from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
+from . import config
 from . import projects as PJ
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
@@ -503,7 +511,7 @@ async def apply_view(pid: str, request: Request):
         orgs = await _orgs(conn)
         from . import categories as CT
         cats = await CT.load(conn)
-        cinf = await conn.fetchrow("SELECT line, imagery, imagery_kinds FROM card_info WHERE card_id=$1", card) if card else None
+        cinf = await conn.fetchrow("SELECT line, imagery, imagery_kinds, scene->>'src' AS cover FROM card_info WHERE card_id=$1", card) if card else None
         asked = await conn.fetch("SELECT name, state FROM card_group_requests WHERE project_id=$1 AND state='open' ORDER BY at", pid)
     j = PJ._judge(r, f)
     rv = next((s for s in j["stages"] if s["key"] == "review"), {})
@@ -534,6 +542,7 @@ async def apply_view(pid: str, request: Request):
             "models": [{**m, "sample": samples.get(m["id"]), "can_apply": m["status"] == "registered",
                         "low": low_line(low_acc(m["acc"], m.get("base"), (prev or {}).get("model", {}).get("acc")))} for m in models],
             "pick": pick, "scenes": jobs[:12],
+            "cover": {"current": (cinf["cover"] if cinf else None) or None},          # 대표 그림(필수 · 원칙 186) — 지금 서비스 카드 그림(있으면 그대로 둘 수 있다)
             "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": bool(rv.get("skip")),
             "status": status, "versions": versions, "shared": shared, "ledger_kinds": kinds,
             # 분야 · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 지금 서비스의 값이 미리 골라져 있다(첫 판은 비어 있음). 승인되면 서비스에 반영
@@ -556,6 +565,80 @@ def _next_ver(versions: list) -> str:
         except (TypeError, ValueError):
             pass
     return f"{int(max(nums, default=0)) + 1}.0"
+
+
+# ── 대표 그림(10-11 GPT2-5 · 원칙 186) — 정식 배포 서비스는 신청 때 그림을 꼭 올린다 · 승인되면 분석하기 카드 그림이 된다 ──
+COVER_RE = re.compile(r"^cover-[0-9a-f]{12}\.jpg$")
+PID_RE = re.compile(r"^[A-Za-z0-9_\-]{3,64}$")
+
+
+def _cover_dir(pid: str):
+    return config.DATA_ROOT / "release" / pid
+
+
+def cover_path(pid: str, name: str):
+    if not PID_RE.match(pid or "") or not COVER_RE.match(name or ""):
+        return None
+    f = _cover_dir(pid) / name
+    return f if f.is_file() else None
+
+
+@router.post("/release/projects/{pid}/cover", status_code=201)
+async def put_cover(pid: str, request: Request, file: UploadFile = File(...)):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r, _ = await _member_project(conn, p, pid)
+    if p.user_id != r["lead_id"]:
+        raise ApiError("forbidden", "배포 신청은 프로젝트장이 합니다")
+    from .cards import SCENE_MAX_BYTES, _normalize_scene
+    data = await file.read(SCENE_MAX_BYTES + 1)
+    if len(data) > SCENE_MAX_BYTES:
+        raise ApiError("bad_request", "그림은 8MB 이하만 올릴 수 있습니다", {"field": "cover"})
+    jpg = await run_in_threadpool(_normalize_scene, data)
+    name = f"cover-{hashlib.sha256(jpg).hexdigest()[:12]}.jpg"
+    d = _cover_dir(pid)
+
+    def _write():
+        d.mkdir(parents=True, exist_ok=True)
+        (d / name).write_bytes(jpg)
+    await run_in_threadpool(_write)
+    return {"name": name, "src": f"/api/v1/release/files/{pid}/{name}", "as_of": now_iso()}
+
+
+@router.get("/release/files/{pid}/{name}")
+async def cover_file(pid: str, name: str):
+    f = cover_path(pid, name)
+    if not f:
+        raise ApiError("not_found", "파일 없음")
+    data = await run_in_threadpool(f.read_bytes)
+    return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=604800, immutable", "X-Content-Type-Options": "nosniff"})
+
+
+async def on_cover_approved(conn, cv_id: str, pl: dict, by: str | None) -> dict | None:
+    """배포 신청 승인 → 신청서의 대표 그림을 서비스 카드 그림(card_info.scene)으로. approvals.decide 가 같은 트랜잭션에서 부른다."""
+    cv = ((pl or {}).get("form") or {}).get("cover") or {}
+    pid, name = str(cv.get("project") or (pl or {}).get("project_id") or ""), str(cv.get("name") or "")
+    if cv.get("keep") or not name:
+        return None
+    f = cover_path(pid, name)
+    if not f:
+        return None
+    from .cards import _scene_dir
+    cid = str(cv_id).split("@")[0]
+    sname = "scene-" + name[len("cover-"):]
+    d = _scene_dir(cid)
+
+    def _copy():
+        d.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(f, d / sname)
+    await run_in_threadpool(_copy)
+    sc = {"src": f"/api/v1/cards/files/{cid}/{sname}", "caption": "", "sgg": None, "cover": True, "up": True}
+    await conn.execute("INSERT INTO card_info(card_id, updated_by) VALUES ($1,$2) ON CONFLICT (card_id) DO NOTHING", cid, by)
+    cur = await conn.fetchval("SELECT scenes FROM card_info WHERE card_id=$1", cid)
+    cur = json.loads(cur) if isinstance(cur, str) else (cur or [])
+    cur = [x for x in cur if isinstance(x, dict) and x.get("src") != sc["src"]] + [sc]
+    await conn.execute("UPDATE card_info SET scene=$2, scenes=$3, updated_at=now(), updated_by=$4 WHERE card_id=$1", cid, sc, cur, by)
+    return {"cover": sc["src"]}
 
 
 @router.post("/release/projects/{pid}/apply", status_code=201)
@@ -591,6 +674,16 @@ async def apply(pid: str, body: dict, request: Request):
             scene = {"job": x["job"], "imagery": x["imagery"]["name"], "range": x["range"], "found": x["found"],
                      "area": x["area"], "at": x["finished_at"], "href": x["href"]}
         sample = await _sample_of(conn, pid, m["sample_id"])
+        # 대표 그림 필수(원칙 186) — 올린 그림 · 또는 지금 서비스 카드 그림 그대로('current' · 이미 그림이 있을 때만)
+        cv_in = str(body.get("cover") or "").strip()
+        cur_scene = await conn.fetchval("SELECT scene->>'src' FROM card_info WHERE card_id=$1", card) if card else None
+        if cv_in == "current" and cur_scene:
+            cover = {"keep": True, "src": cur_scene}
+        elif cv_in and cover_path(pid, cv_in.rsplit("/", 1)[-1]):
+            nm = cv_in.rsplit("/", 1)[-1]
+            cover = {"name": nm, "src": f"/api/v1/release/files/{pid}/{nm}", "project": pid}
+        else:
+            raise ApiError("bad_request", "대표 그림을 올려 주세요 — 승인되면 분석하기 카드 그림이 됩니다", {"field": "cover"})
         prev = next((v for v in versions if v["state"] == "approved"), None)
         pend = next((v for v in versions if v["state"] == "pending"), None)
         if pend:
@@ -606,7 +699,7 @@ async def apply(pid: str, body: dict, request: Request):
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
             "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
-            "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene,
+            "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene, "cover": cover,
             **({"category": {k: v for k, v in cat.items() if k != "new_group"}} if any(k != "new_group" for k in cat) else {})}
     if cat.get("new_group"):                          # 새 분야 요청(만드는 것은 LX 관리자 · 배포 '분야' 탭)
         async with db(realm="lx") as conn:

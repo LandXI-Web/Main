@@ -448,7 +448,7 @@ def _judge(r, f) -> dict:
             "blocked": _blocked(stages, cur, holds)}
 
 
-_KIND_ORDER = {"reject": 0, "before": 1, "wait": 2}
+_KIND_ORDER = {"reject": 0, "before": 1, "after": 2, "wait": 3}
 
 
 def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
@@ -463,6 +463,11 @@ def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
             prog = s.get("progress")
             out.append({"kind": "before", "stage": k, "label": s["label"],
                         "text": f"{s['label']} {prog['n']}/{prog['total']}" if prog else f"{s['label']} 남음"})
+        elif k == "review" and s.get("skip_word") == "건너뜀":
+            # 공개 뒤 건너뛴 결과 확인 — 대시보드 '남은 일'로 올린다(10-11 QA-Q11 ⓐ). 칸 말은 그대로 '건너뜀' · 막힌 곳 종류 after(공개 뒤 남음)
+            prog = s.get("progress")
+            out.append({"kind": "after", "stage": k, "label": s["label"],
+                        "text": f"{s['label']} {prog['n']}/{prog['total']} · 공개 뒤 남음" if prog else f"{s['label']} · 공개 뒤 남음"})
     out.sort(key=lambda b: (_KIND_ORDER[b["kind"]], [x["key"] for x in stages].index(b["stage"])))
     return out
 

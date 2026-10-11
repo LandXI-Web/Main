@@ -80,3 +80,8 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 /* 좁은 PC — 셋씩 */
 @media (max-width:1180px){.ld-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .ld-foot-s span{display:inline-block}
+
+/* 공개 뒤 결과 확인 남음 — 진행 현황 칸 안 작은 줄 하나(QA-Q11 ⓐ) */
+.ld-after{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:4px 8px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.ld-after-k{color:var(--warn);font-weight:500}
+.ld-after a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;word-break:keep-all}

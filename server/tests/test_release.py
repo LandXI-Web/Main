@@ -16,6 +16,17 @@ def pg():
     return psycopg.connect(config.PG_ADMIN_DSN, autocommit=True)
 
 
+def cover(pid, tok_staff, color=(15, 169, 160)):
+    """대표 그림 올리기(원칙 186 — 배포 신청 필수) → 올린 그림 이름"""
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (480, 320), color).save(buf, "PNG")
+    r = httpx.post(B + f"/release/projects/{pid}/cover", headers=H(tok_staff), files={"file": ("cover.png", buf.getvalue(), "image/png")}, timeout=60)
+    assert r.status_code == 201, r.text
+    return r.json()["name"]
+
+
 @pytest.fixture
 def made(live, tok):
     ids = []
@@ -42,11 +53,16 @@ def made(live, tok):
             if not c.execute("SELECT 1 FROM card_versions WHERE card_id=%s", (cd,)).fetchone():
                 c.execute("DELETE FROM cards WHERE id=%s", (cd,))
         c.execute("DELETE FROM projects WHERE id=%s", (pid,))
+        import shutil                                          # 시험으로 올린 대표 그림(원칙 186) · 카드 그림 사본
+        shutil.rmtree(config.DATA_ROOT / "release" / pid, ignore_errors=True)
+        for cd in cards:
+            if not c.execute("SELECT 1 FROM cards WHERE id=%s", (cd,)).fetchone():
+                shutil.rmtree(config.DATA_ROOT / "cards" / cd, ignore_errors=True)
     c.close()
 
 
 def test_infer_view_and_guard(live, tok, made):
-    """추론 탭 — 이 프로젝트 모델(학습 끝 검증 정확도 봉투) · 프로젝트 영상(남원시) · 결과 목록. 다른 프로젝트 모델 · 없는 영상은 거절(대기열에 넣지 않음)."""
+    """추론 탭 — 이 프로젝트 모델(학습 끝 AI 모델 정확도 봉투) · 프로젝트 영상(남원시) · 결과 목록. 다른 프로젝트 모델 · 없는 영상은 거절(대기열에 넣지 않음)."""
     p = made()
     s = H(tok["staff"])
     d = httpx.get(B + f"/release/projects/{p['id']}/infer", headers=s, timeout=60).json()
@@ -72,24 +88,34 @@ def test_apply_reject_reapply_approve(live, tok, made):
     mid = next(m["id"] for m in d["models"] if m["can_apply"])
     r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s,
                    json={"model_id": mid, "memo": "pytest 첫 신청", "name": "pytest 비닐하우스", "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60)
+    assert r.status_code == 400 and r.json()["error"]["detail"]["field"] == "cover"      # 대표 그림 없으면 신청 못 함(원칙 186)
+    cv = cover(p["id"], tok["staff"])
+    r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s,
+                   json={"model_id": mid, "memo": "pytest 첫 신청", "name": "pytest 비닐하우스", "cover": cv,
+                         "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60)
     assert r.status_code == 201, r.text
     aid, ver = r.json()["approval_id"], r.json()["version"]
-    assert httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid}, timeout=60).status_code == 409   # 검토 중
+    assert httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid, "cover": cv}, timeout=60).status_code == 409   # 검토 중
     assert httpx.get(B + "/release/requests", headers=s, timeout=60).status_code == 403                                           # 관리자만
     it = next(x for x in httpx.get(B + "/release/requests", headers=a, timeout=60).json()["items"] if x["id"] == aid)
     assert it["state"] == "pending" and it["memo"] == "pytest 첫 신청" and it["form"]["acc"]["unit"] == "%" and it["form"]["prev"] is None
+    assert it["form"]["cover"]["name"] == cv and httpx.get(B.replace("/api/v1", "") + it["form"]["cover"]["src"], timeout=30).status_code == 200
     assert it["form"]["sample"]["images"]["value"] >= 1 and it["form"]["review"]["total"] == 20
     r = httpx.post(B + f"/approvals/{aid}/decide", headers=a, json={"decision": "reject"}, timeout=60)
     assert r.status_code == 400                                          # 거절 사유 필수
     assert httpx.post(B + f"/approvals/{aid}/decide", headers=a, json={"decision": "reject", "reason": "pytest 결과 확인 먼저"}, timeout=60).status_code == 200
     d = httpx.get(B + f"/release/projects/{p['id']}/apply", headers=s, timeout=60).json()
     assert d["status"]["state"] == "rejected" and d["status"]["reason"] == "pytest 결과 확인 먼저" and d["next_version"] == ver
-    r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid, "memo": "pytest 고쳐서"}, timeout=60)
+    r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid, "memo": "pytest 고쳐서", "cover": cv}, timeout=60)
     assert r.status_code == 201 and r.json()["again"] is True and r.json()["version"] == ver, r.text
     aid2 = r.json()["approval_id"]
     assert httpx.post(B + f"/approvals/{aid2}/decide", headers=a, json={"decision": "approve", "reason": "pytest"}, timeout=60).status_code == 200
     d = httpx.get(B + f"/release/projects/{p['id']}/apply", headers=s, timeout=60).json()
     assert d["status"]["state"] == "approved" and d["status"]["version"] == ver
+    # 승인되면 대표 그림이 분석하기 카드 그림(서버 scene · 원칙 186) · 다음 신청은 '지금 그림 그대로'를 고를 수 있다
+    assert d["cover"]["current"] and d["cover"]["current"].startswith("/api/v1/cards/files/")
+    cd = httpx.get(B + f"/cards/{d['service']['id']}", headers=s, timeout=60).json()
+    assert cd["scene"]["src"] == d["cover"]["current"] and httpx.get(B.replace("/api/v1", "") + cd["scene"]["src"], timeout=30).status_code == 200
     v = next(x for x in d["versions"] if x["version"] == ver)
     assert v["tries"]["value"] == 2
     pr = httpx.get(B + f"/projects/{p['id']}", headers=s, timeout=60).json()
@@ -102,7 +128,7 @@ def test_share_check_reaches_org_and_usage(live, tok, made):
     s, a = H(tok["staff"]), H(tok["admin"])
     d = httpx.get(B + f"/release/projects/{p['id']}/apply", headers=s, timeout=60).json()
     mid = next(m["id"] for m in d["models"] if m["can_apply"])
-    aid = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid, "name": "pytest 공유 서비스",
+    aid = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s, json={"model_id": mid, "name": "pytest 공유 서비스", "cover": cover(p["id"], tok["staff"]),
                      "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60).json()["approval_id"]
     card = httpx.get(B + f"/release/projects/{p['id']}/apply", headers=s, timeout=60).json()["service"]["id"]
     # 승인 전에는 공유할 수 없다
@@ -147,7 +173,7 @@ def test_apply_low_accuracy_warns_not_blocks(live, tok, made):
     m = low[0]
     assert m["base"] and m["acc"]["value"] < m["base"]["acc"]["value"] and "기반 모델" in m["low"]
     r = httpx.post(B + f"/release/projects/{p['id']}/apply", headers=s,
-                   json={"model_id": m["id"], "name": "pytest 낮은 정확도", "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60)
+                   json={"model_id": m["id"], "name": "pytest 낮은 정확도", "cover": cover(p["id"], tok["staff"]), "ledger_kind": (d["ledger_kinds"] or [{}])[0].get("kind")}, timeout=60)
     assert r.status_code == 201, r.text                                  # 막지 않는다
     it = next(x for x in httpx.get(B + "/release/requests", headers=a, timeout=60).json()["items"] if x["id"] == r.json()["approval_id"])
     assert it["form"]["low"] == m["low"]

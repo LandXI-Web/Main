@@ -94,3 +94,9 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
   .k-rail-b{top:2px}
   .k-rail-i:not(.k-rail-i--end) + .k-rail-i--end{margin-top:0}
 }
+
+/* 로그인 남은 시간(원칙 188) — 머리줄 작은 글 · 누르면 연장 · 5분 남으면 주의 색 */
+.k-sess{height:28px;padding:0 10px;border:0;border-radius:var(--r-8);background:none;color:var(--mute);font:400 12px/1 var(--font-body);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer}
+.k-sess:hover{background:var(--bg-0);color:var(--ink-2)}
+.k-sess.is-soon{color:var(--warn);font-weight:500}
+@media (max-width:960px){.k-sess{display:none}}

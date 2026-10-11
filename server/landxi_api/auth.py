@@ -1,4 +1,10 @@
-"""인증(F1-CONTRACT §3) — argon2 · Bearer 토큰(sessions 표 · 24h) · SSE 는 ?access_token= 만.
+"""인증(F1-CONTRACT §3) — argon2 · Bearer 토큰(sessions 표 · 자동 로그아웃 시간 = 관리자 설정 · 기본 24시간) · SSE 는 ?access_token= 만.
+
+자동 로그아웃(10-11 QA-고침-6 · 원칙 188 · 177 각자 범위):
+  GET  /auth/session                 지금 세션 {expires_at, minutes} — 화면 머리줄의 남은 시간 · 끝나는 시각
+  POST /auth/extend                  연장 — 지금부터 설정 시간만큼(끝나기 전에만)
+  GET  /accounts/session-policy      설정 보기 — LX 관리자 = LX 계정 것 · 기관 관리자 = 자기 기관 것
+  PUT  /accounts/session-policy      {minutes} 바꾸기 — 새 로그인 · 연장부터 그 값 · 줄이면 지금 열린 세션도 그 안으로 당긴다(처리 기록)
 
 LX 계정(lx_users)과 기관 계정(tenant_users)은 완전히 다른 표·다른 토큰 접두(lxs_ / lxt_)다.
 """
@@ -17,12 +23,15 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 from . import config
-from .deps import ApiError, CAPS, Principal, db, pool, principal, redis, require
+from .deps import ApiError, CAPS, Principal, audit, db, pool, principal, redis, require
 from .envelope import KST, now_iso
 
 router = APIRouter()
 ph = PasswordHasher()
 TTL = dt.timedelta(hours=24)
+SESSION_OPTIONS = (30, 60, 120, 240, 480, 1440)      # 자동 로그아웃 시간(분) — 관리자가 고르는 값
+SESSION_DEFAULT = 1440                               # 설정 전 = 지금까지 쓰던 24시간 그대로
+SESSION_WORD = {30: "30분", 60: "1시간", 120: "2시간", 240: "4시간", 480: "8시간", 1440: "24시간"}
 
 # 입구 셋(원칙 27 · 확인 대장 6·7) — 입구가 로그인 문(realm)을 정한다. 서버가 정본:
 #   app = LX 계정(직원 · 영업 · 관리자도 — 화면이 LX 직원 첫 화면으로) · admin = LX 관리자 계정만 · gov = 기관 계정
@@ -203,7 +212,8 @@ async def open_session(realm: str, u, tenant_id: str | None, site: str | None, l
     로그인 기록(audit_log action 'login')에 들어온 입구(app · admin · gov) · 주소 이름 · 접속 주소를 함께 남긴다(나중 17 · 보안 점검)."""
     pl = await pool()
     tok = ("lxs_" if realm == "lx" else "lxt_") + secrets.token_urlsafe(32)
-    exp = dt.datetime.now(KST) + TTL
+    minutes = await session_minutes("lx" if realm == "lx" else (tenant_id or ""))
+    exp = dt.datetime.now(KST) + dt.timedelta(minutes=minutes)
     await pl.execute("INSERT INTO sessions(token_hash, realm, user_id, tenant_id, role, expires_at) VALUES ($1,$2,$3,$4,$5,$6)",
                      token_hash(tok), realm, u["id"], tenant_id, u["role"], exp)
     await pl.execute("DELETE FROM sessions WHERE expires_at < now()")
@@ -211,7 +221,94 @@ async def open_session(realm: str, u, tenant_id: str | None, site: str | None, l
         await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, after) VALUES ($1,$2,'login',$3,$4)", u["id"], realm, login_,
                            {"site": site, "host": host or "", "ip": (ip or "")[:64], "tenant_id": tenant_id, "name": u["name"]})
     return {"token": tok, "realm": realm, "role": u["role"], "tenant_id": tenant_id, "site": site,
-            "user": {"id": u["id"], "name": u["name"]}, "expires_at": exp.isoformat(timespec="seconds")}
+            "user": {"id": u["id"], "name": u["name"]}, "expires_at": exp.isoformat(timespec="seconds"), "minutes": str(minutes)}
+
+
+# ── 자동 로그아웃 시간(원칙 188 · 177) ─────────────────────────────────────
+async def session_minutes(scope: str) -> int:
+    """그 범위(LX = 'lx' · 기관 = 기관 id)의 자동 로그아웃 시간(분). 설정 전 · 표 없음 = 기본."""
+    try:
+        v = await (await pool()).fetchval("SELECT minutes FROM session_policy WHERE scope=$1", scope)
+    except Exception:  # noqa: BLE001 — 표가 없는 DB(마이그레이션 전)
+        v = None
+    return int(v) if v in SESSION_OPTIONS else SESSION_DEFAULT
+
+
+def _scope_of(p) -> str:
+    """설정을 바꿀 수 있는 범위 — LX 관리자 = LX 계정 · 기관 관리자 = 자기 기관(원칙 177). 그 밖 = 거절."""
+    if p.is_admin:
+        return "lx"
+    if p.realm == "tenant" and p.role == "manager" and p.tenant_id:
+        return p.tenant_id
+    raise ApiError("forbidden", "관리자만 자동 로그아웃 시간을 정합니다")
+
+
+@router.get("/auth/session")
+async def session_now(request: Request):
+    p = require(principal(request))
+    row = await (await pool()).fetchrow("SELECT expires_at FROM sessions WHERE token_hash=$1", p.token_hash)
+    minutes = await session_minutes("lx" if p.realm == "lx" else (p.tenant_id or ""))
+    return {"expires_at": row["expires_at"].astimezone(KST).isoformat(timespec="seconds") if row else None,
+            "minutes": str(minutes), "word": SESSION_WORD[minutes], "at": now_iso()}
+
+
+@router.post("/auth/extend")
+async def extend(request: Request):
+    """연장 — 지금부터 설정 시간만큼. 끝난 세션은 resolve 가 손님으로 돌려 여기 오지 못한다(다시 로그인)."""
+    p = require(principal(request))
+    minutes = await session_minutes("lx" if p.realm == "lx" else (p.tenant_id or ""))
+    exp = dt.datetime.now(KST) + dt.timedelta(minutes=minutes)
+    await (await pool()).execute("UPDATE sessions SET expires_at=$2 WHERE token_hash=$1", p.token_hash, exp)
+    return {"expires_at": exp.isoformat(timespec="seconds"), "minutes": str(minutes), "word": SESSION_WORD[minutes], "at": now_iso()}
+
+
+@router.get("/accounts/session-policy")
+async def policy_get(request: Request):
+    p = require(principal(request))
+    scope = _scope_of(p)
+    row = None
+    try:
+        row = await (await pool()).fetchrow("SELECT s.minutes, s.updated_at, s.updated_by FROM session_policy s WHERE s.scope=$1", scope)
+    except Exception:  # noqa: BLE001
+        row = None
+    by = None
+    if row and row["updated_by"]:
+        tbl = "lx_users" if scope == "lx" else "tenant_users"
+        by = await (await pool()).fetchval(f"SELECT name FROM {tbl} WHERE id=$1", row["updated_by"])
+    minutes = await session_minutes(scope)
+    # 분 값은 글자로(봉투 규칙 — 숫자 칸은 업무 숫자만 · 이것은 고르는 값)
+    return {"scope": "lx" if scope == "lx" else "tenant", "minutes": str(minutes), "word": SESSION_WORD[minutes],
+            "options": [{"minutes": str(m), "word": SESSION_WORD[m]} for m in SESSION_OPTIONS], "default": str(SESSION_DEFAULT),
+            "updated_at": row["updated_at"].astimezone(KST).isoformat(timespec="seconds") if row and row["updated_at"] else None,
+            "updated_name": by, "at": now_iso()}
+
+
+@router.put("/accounts/session-policy")
+async def policy_put(body: dict, request: Request):
+    p = require(principal(request))
+    scope = _scope_of(p)
+    try:
+        m = int(body.get("minutes"))
+    except (TypeError, ValueError):
+        m = None
+    if m not in SESSION_OPTIONS:
+        raise ApiError("bad_request", "자동 로그아웃 시간을 목록에서 골라 주세요", {"field": "minutes"})
+    before = await session_minutes(scope)
+    pl = await pool()
+    async with pl.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute("INSERT INTO session_policy(scope, minutes, updated_at, updated_by) VALUES ($1,$2,now(),$3) "
+                               "ON CONFLICT (scope) DO UPDATE SET minutes=EXCLUDED.minutes, updated_at=now(), updated_by=EXCLUDED.updated_by",
+                               scope, m, p.user_id)
+            # 줄이면 지금 열린 세션도 새 시간 안으로(늘리면 다음 로그인 · 연장부터)
+            if scope == "lx":
+                await conn.execute("UPDATE sessions SET expires_at = least(expires_at, now() + make_interval(mins => $1)) WHERE realm='lx'", m)
+            else:
+                await conn.execute("UPDATE sessions SET expires_at = least(expires_at, now() + make_interval(mins => $1)) "
+                                   "WHERE realm='tenant' AND tenant_id=$2", m, scope)
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "session.policy", scope, {"minutes": before}, {"minutes": m})
+    return await policy_get(request)
 
 
 @router.get("/auth/tenants")

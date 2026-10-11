@@ -28,6 +28,7 @@ const TABS = [
   { id: 'logins', label: '로그인 기록' },
   { id: 'fails', label: '로그인 실패' },
   { id: 'log', label: '처리 기록' },
+  { id: 'session', label: '자동 로그아웃' },   // 로그인 유지 시간(원칙 188) — LX 관리자 = LX 계정 · 기관 관리자 = 자기 기관(원칙 177)
   { id: 'ops', label: '운영 정보', lx: true },   // 문의 연락처(원칙 170) — 메인 · 도움말 · 로그인 창이 이 값을 읽는다
   { id: 'inquiries', label: '문의', count: 'inquiries', lx: true },   // 문의하기 창으로 들어온 문의(10-11 메인 지시 3) — 새 문의 수
 ];
@@ -108,6 +109,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     if (tab === 'depts') { await loadDepts(mine); return; }
     if (tab === 'storage') { await mountStorage(card, { mine: () => cur === mine, onChange: counts }); return; }
     if (tab === 'ops') { await loadOps(mine); return; }
+    if (tab === 'session') { await loadSession(mine); return; }
     if (tab === 'inquiries') { await mountInquiries(card, { mine: () => cur === mine, onChange: counts }); return; }
     let rows = [];
     try {
@@ -305,6 +307,38 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       h('p.acc-help', {}, h('span', { text: '메인 문의하기 · 맨 아래 · 도움말 문의 · 로그인 창에 보입니다.' }), ' ', h('span', { text: '바꾸면 바로 보이고 처리 기록에 남습니다.' })),
       h('div.acc-ops-f', {}, h('label.acc-ops-r', {}, h('span.t-label', { text: '전화' }), tel), h('label.acc-ops-r', {}, h('span.t-label', { text: '메일' }), mail)),
       note, h('div.acc-acts', {}, save)));
+  }
+
+  /* ── 자동 로그아웃(QA-고침-6 · 원칙 188) — 로그인 뒤 이 시간이 지나면 끝난다 · 끝나기 5분 전 알림과 연장은 모든 화면 머리줄에서.
+     LX 관리자 = LX 계정 것 · 기관 관리자 = 자기 기관 것(원칙 177 — 서버가 범위를 정한다) ── */
+  async function loadSession(mine) {
+    let j;
+    try { j = await api('/accounts/session-policy'); } catch {
+      if (cur !== mine) return;
+      card.innerHTML = ''; const er = h('div'); card.append(er); empty(er, { kind: 'error', onRetry: () => load('session') }); return;
+    }
+    if (cur !== mine) return;
+    card.innerHTML = '';
+    card.dataset.tab = 'session';
+    const nm = `acc-sess-${Date.now()}`;
+    const opts = h('div.acc-sess', { role: 'radiogroup', 'aria-label': '자동 로그아웃 시간' }, ...(j.options || []).map((o) =>
+      h('label.acc-sess-o', {}, h('input', { type: 'radio', name: nm, value: String(o.minutes), checked: String(o.minutes) === String(j.minutes) || undefined }), h('span', { text: o.word }))));
+    const save = h('button.t-btn', { type: 'button', text: '저장', disabled: true });
+    const note = h('p.acc-need', { role: 'status' });
+    const picked = () => Number(opts.querySelector('input:checked')?.value || j.minutes);
+    opts.addEventListener('change', () => { save.disabled = picked() === Number(j.minutes); });
+    save.addEventListener('click', async () => {
+      save.disabled = true; note.textContent = '';
+      try { const r = await api('/accounts/session-policy', { method: 'PUT', body: { minutes: picked() } }); toast(`자동 로그아웃 시간을 ${r.word}으로 바꿨습니다`); load('session'); }
+      catch (e) { note.textContent = e.message || '지금은 저장할 수 없습니다'; save.disabled = false; }
+    });
+    const last = j.updated_at ? `마지막 바꿈 ${when(j.updated_at)}${j.updated_name ? ` · ${j.updated_name}` : ''}` : '처음 값(24시간) 그대로입니다';
+    card.append(h('div.acc-tbl.acc-ops', {},
+      h('div.acc-dp-h', {}, h('div', {}, h('p.acc-dp-t', { text: `자동 로그아웃 · ${LX ? 'LX 계정' : '우리 기관 계정'}` }), h('p.acc-dp-s', {}, h('span', { text: last })))),
+      h('p.acc-help', {}, h('span', { text: '로그인한 뒤 이 시간이 지나면 로그인이 끝납니다.' }), ' ',
+        h('span', { text: '끝나기 5분 전에 알리고, 화면 위 남은 시간을 누르면 연장합니다.' }), ' ',
+        h('span', { text: '줄이면 지금 로그인한 사람도 새 시간 안에서 끝납니다.' })),
+      opts, note, h('div.acc-acts', {}, save)));
   }
 
   /* ── 부서 목록(S-21) — 출처 · 올리기(미리 보기 → 바꾸기) · 다시 불러오기 · 더하기 · 빼기 · 목록에 없는 부서를 쓰는 계정 ── */

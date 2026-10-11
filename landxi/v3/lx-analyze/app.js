@@ -35,7 +35,7 @@ document.body.dataset.ready = '1';
 
 /* ═════════════ 갤러리 — 정식 분석 서비스만(카드틀-5 ⓐ · 6 ⓐ · 원칙 145 · 146) ═════════════
    정식 = 서버가 정한 official(등록된 모델 + 돌고 있는 배포본). 다른 카드는 지우지 않고 여기서만 숨긴다(서비스 카드 관리에는 그대로).
-   카드 한 틀: 그림(결과 장면 > 학습 표본 > 빈 틀) → 이름 → 한 줄 → 검증 정확도 · 모델 갱신 → 대상 지역 n곳 → 분석하기 · 자세히.
+   카드 한 틀: 그림(결과 장면 > 학습 표본 > 빈 틀) → 이름 → 한 줄 → AI 모델 정확도 · 모델 갱신 → 대상 지역 n곳 → 분석하기 · 자세히.
    숫자 · 날짜 = 서버 모델 기록(카드 덱의 model) 한 출처. 보기 개수 = 한 페이지 2 · 4 · 6 · 8장(기본 4장 · 지도-4 ⓐ · 원칙 150) + 페이지 넘김 — 이 브라우저에 기억. */
 function perList() { return [2, 4, 6, 8]; }   // 함수 — 맨 위 await(gallery) 가 이 줄보다 먼저 돈다
 function readPer() { try { const n = +localStorage.getItem('lx-analyze.per'); return perList().includes(n) ? n : 4; } catch { return 4; } }
@@ -50,24 +50,14 @@ async function authBlob(path) {
   return URL.createObjectURL(b);
 }
 
-/* 대체 그림(GPT2-5 · 원칙 140 같은 틀) — 결과 장면 · 학습 표본을 못 받으면 회색 빈 칸 대신 모든 카드가 같은 영상 그림 + '결과 장면 없음' 한 줄.
-   학습 표본 그림은 카드마다 한 번만 받는다(거르기 · 페이지를 바꿔도 같은 그림 · 다시 받는 동안 빈 칸 0) */
-function fallbackSrc() { return new URL('./img/fallback-aerial.jpg', import.meta.url).href; }   // 함수 — 맨 위 await(gallery)가 먼저 돈다
-function blobOnce(path) { const m = (globalThis.__laBlobs ||= new Map()); if (!m.has(path)) m.set(path, authBlob(path)); return m.get(path); }
+/* 카드 그림(10-11 GPT2-5 다시 · 원칙 186) — 배포 신청 때 올린 대표 그림(승인되면 카드 그림 = 서버 scene). 대체 그림 · 학습 표본으로 꾸미지 않는다:
+   그림이 없거나 못 받으면 같은 틀에 '그림 없음' 그대로(원칙 140 같은 틀). */
 function acCard(c, href, more) {
   const pic = h('div.k-sc-crop.la-ac-pic');
-  const blank = (p) => {
-    p.classList.remove('is-sample');
-    const keep = [...p.querySelectorAll('.la-ac-cat')];
-    p.replaceChildren(h('img.la-ac-fb', { src: fallbackSrc(), alt: '', decoding: 'async', onerror: () => { p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '결과 장면 없음' }), ...keep); } }),
-      h('span.k-sc-ex', { text: '결과 장면 없음' }), ...keep);
-  };
-  const img = (src) => h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) });
-  if (c.scene?.src) pic.append(img(c.scene.src));
-  else if (c.sample) {                                     // 결과 장면이 없으면 학습 표본(직원 전용 — 로그인 토큰으로 받는다)
-    pic.classList.add('is-sample');
-    blobOnce(c.sample).then((u) => pic.prepend(img(u))).catch(() => blank(pic));
-  } else blank(pic);
+  const blank = (p) => { const keep = [...p.querySelectorAll('.la-ac-cat')]; p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
+  const src = c.scene?.src ? (String(c.scene.src).startsWith('/api/') ? API.base + c.scene.src : c.scene.src) : null;
+  if (src) pic.append(h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) }));
+  else blank(pic);
   if ((c.groups || []).length) pic.append(h('div.la-ac-cat', {}, ...c.groups.map((g) => h('span', { text: g }))));   // 분야(여러 개 · 질문 5)
   const md = c.model || {};
   const acc = md.acc && md.acc.value !== null && md.acc.value !== undefined ? md.acc.value : null;
@@ -78,8 +68,7 @@ function acCard(c, href, more) {
       h('h3.k-sc-t', { text: c.name || '' }),
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
       h('div.la-ac-hero', {},
-        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: '검증 정확도' }),
-          h('small.la-ac-basis', { text: md.acc?.basis_line || (acc === null ? '' : '검증 영상 수 기록 없음') })),   // 기준 한 줄(모델 기록 · GPT2-7 · 원칙 181) — 모든 카드 같은 자리(원칙 140)
+        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('검증 영상 n장 기준')은 자세히 화면에만(원칙 187)
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '—', title: tg.join(' · ') })),
       (c.imagery_kinds || []).length ? h('div.la-ac-imk', { 'aria-label': '쓸 수 있는 영상' }, ...c.imagery_kinds.map((k) => h('span', { text: k }))) : null,
@@ -176,10 +165,10 @@ async function detail(cid) {
   const crumb = h('nav.la-crumb', { 'aria-label': '위치' }, h('a', { href: './', text: '분석하기' }), h('span', { 'aria-hidden': 'true', text: '›' }), h('b', { text: c.name }));
   const hero = h('figure.la-hero', { class: c.scene ? '' : 'is-blank' });
   if (c.scene) {
-    hero.append(h('img', { src: c.scene.src, alt: '', decoding: 'async', fetchpriority: 'high' }));
+    hero.append(h('img', { src: String(c.scene.src).startsWith('/api/') ? API.base + c.scene.src : c.scene.src, alt: '', decoding: 'async', fetchpriority: 'high' }));
     if (c.scene.caption) hero.append(h('figcaption.la-cap', { text: c.scene.caption }));
     if (c.scene.ex) hero.append(h('span.la-ex', { text: '다른 지역 결과 · 예시' }));
-  } else hero.append(h('span.la-blank', { text: c.state === 'none' ? '첫 결과 전 — 결과가 생기면 장면이 보입니다' : '결과 장면 없음' }));
+  } else hero.append(h('span.la-blank', { text: '그림 없음' }));   // 대체 그림 없이 같은 틀(원칙 186)
 
   const head = h('div.la-dt-head', {},
     h('div.la-tags', {}, chip(c.state, c.state_label), c.version ? h('span.la-tag.num', { text: `v${c.version}` }) : null,
@@ -277,12 +266,12 @@ function usesCard(c) {
 function condCard(c) {
   const t = c.time;
   const L = c.learn;
-  const acc = L?.acc && L.acc.value !== null && L.acc.value !== undefined ? `검증 정확도 ${L.acc.value}%` : '';
+  const acc = L?.acc && L.acc.value !== null && L.acc.value !== undefined ? `AI 모델 정확도 ${L.acc.value}%` : '';
   const smp = L?.sample;
   const learnRows = L ? [
     ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', L.acc?.basis_line ? `학습 끝 ${L.acc.basis_line}` : '모델 기록 · 학습 끝 검증 값'],
     ...(smp ? [['학습 자료', [smp.region, smp.task, `표본 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
-    ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `검증 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
+    ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `AI 모델 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
   ] : [];
   const rows = [
     ['입력 영상', c.imagery || '—'], ['시점', c.timepoints || '—'],
@@ -306,7 +295,7 @@ function imageryCard(c) {
   const mapBox = h('div.la-im-map');
   const note = h('p.la-note', { text: '테두리는 영상이 실제로 덮는 범위입니다. 고른 영상 범위 안에서만 분석하고, 범위 밖은 결과에 나오지 않습니다.' });
   const el = h('section.t-card.la-box.la-wide.la-im', { id: 'imagery', 'aria-label': '영상 고르기' },
-    h('h2.la-h', {}, '영상 고르기', h('small', { text: '고른 지역을 덮는 공유 영상' })), tabs,
+    h('h2.la-h', {}, '영상 고르기', h('small', { text: '고른 지역을 덮는 공유 영상 · 한 번에 영상 하나' })), tabs,
     h('div.la-im-body', {}, h('div.la-im-r', {}, mapBox, note), grid, more));
   const cache = new Map();
   let stage = null, seq = 0;
@@ -349,9 +338,11 @@ function imageryCard(c) {
       const pic = h('div.la-im-th');
       thumb(x.id).then((u) => { if (u) pic.append(h('img', { src: u, alt: '', loading: 'lazy' })); else pic.classList.add('is-blank'); });
       const on = cur && x.id === cur.id;
-      return h('button.la-im-c', { type: 'button', 'aria-pressed': String(!!on), disabled: x.fit === 'no' || undefined, title: x.fit === 'no' ? x.fit_text : undefined,
-        onclick: () => { if (x.fit === 'no' || on) return; onPick(x); show(regions, sgg, x.pick ? null : x.id, onPick, onTab); } },
-        pic, h('div.la-im-b', {}, h('p.la-im-n', { text: x.name }),
+      // 영상은 하나만(원칙 185) — 라디오 하나 묶음 · 맞지 않는 영상은 고를 수 없음
+      const rd = h('input.la-im-rd', { type: 'radio', name: `la-im-${c.id}`, value: x.id, checked: !!on || undefined, disabled: x.fit === 'no' || undefined,
+        'aria-label': x.name, onchange: () => { if (x.fit === 'no') return; onPick(x); show(regions, sgg, x.pick ? null : x.id, onPick, onTab); } });
+      return h('label.la-im-c', { dataset: { on: on ? '1' : '0', no: x.fit === 'no' ? '1' : '0' }, title: x.fit === 'no' ? x.fit_text : undefined },
+        rd, pic, h('div.la-im-b', {}, h('p.la-im-n', { text: x.name }),
           h('dl', {}, h('dt', { text: '해상도' }), h('dd.num', { text: x.gsd_word || '—' }), h('dt', { text: '촬영 시기' }), h('dd.num', { text: x.when || '—' }),
             h('dt', { text: '범위' }), h('dd', { text: x.range || '—' })),
           h('span.la-fit', { dataset: { fit: x.fit }, text: x.fit_text })));
@@ -388,7 +379,7 @@ function analyzePanel(side, c, picker) {
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
   const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 층으로 쌓입니다.');
   const done = h('div.la-done', { hidden: true });
-  side.append(step(1, '어디', '여러 곳 가능'), where, list, step(2, '결과까지'), eta, go, msg, done);
+  side.append(step(1, '어디', '한 곳 · 영상 하나'), where, list, step(2, '결과까지'), eta, go, msg, done);
 
   K.regionPicker(where, { onPick: (r) => add(r) }).then((rp) => {
     rp.input.placeholder = '시군구 이름으로 찾기'; rp.input.value = '';
@@ -398,7 +389,8 @@ function analyzePanel(side, c, picker) {
 
   async function add(r) {
     const inp = where.querySelector('input'); if (inp) setTimeout(() => { inp.value = ''; }, 0);
-    if (!r?.sgg_cd || picks.has(r.sgg_cd) || picks.size >= 5) return;
+    if (!r?.sgg_cd || picks.has(r.sgg_cd)) return;
+    picks.clear();                       // 분석하기는 영상 하나만(원칙 185) — 지역을 새로 고르면 앞 지역을 바꾼다
     picks.set(r.sgg_cd, { name: r.name, fit: null, imagery: null });
     draw();
     showPicker(r.sgg_cd);

@@ -344,6 +344,10 @@ async def decide(aid: str, body: dict, request: Request):
                 cat = await on_card_approved(conn, sid, pl, p.user_id)
                 if cat:
                     effect["category"] = cat
+                from .release import on_cover_approved            # 신청서의 대표 그림 → 분석하기 카드 그림(원칙 186)
+                cov = await on_cover_approved(conn, sid, pl, p.user_id)
+                if cov:
+                    effect["cover"] = cov["cover"]
             elif st == "request":                 # 기관 영상 분석 의뢰(GF-2) — 분석 준비(대기열은 결재 뒤 배경에서)
                 from .requests import on_decided
                 effect = await on_decided(conn, sid, "approve", reason, p.user_id)

@@ -143,3 +143,11 @@
 .rl-ck:has(input:checked){border-color:var(--ink);background:var(--bg-0)}
 .rl-newgrp{margin-top:8px;max-width:320px}
 .rl-dl dd > .t-input{box-sizing:border-box;max-width:100%}
+
+/* 대표 그림(필수 · 원칙 186) — 분석하기 카드와 같은 비율의 틀 · 없으면 같은 틀에 '그림 없음' */
+.rl-cover{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.rl-cover-pic{width:200px;aspect-ratio:16/10;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);box-sizing:border-box;overflow:hidden;display:grid;place-items:center;flex:none}
+.rl-cover-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.rl-cover-pic span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.rl-cover-r{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rl-cover-msg[data-lv="warn"]{color:var(--warn)}

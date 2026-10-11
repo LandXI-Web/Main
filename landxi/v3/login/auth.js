@@ -85,6 +85,10 @@ function say(text, fields = []) {
 }
 function clearErr() { msg.hidden = true; msg.textContent = ''; for (const f of document.querySelectorAll('.fld.bad')) f.classList.remove('bad'); }
 idIn.addEventListener('input', clearErr); pwIn.addEventListener('input', clearErr);
+/* 비밀번호 보기 · 숨기기(Q8 ⓑ) — 글자 단추 하나 · 로그인을 보내면 다시 숨긴다 */
+const pwSee = $('pw-see');
+const pwShow = (on) => { if (!pwSee) return; pwIn.type = on ? 'text' : 'password'; pwSee.textContent = on ? '숨기기' : '보기'; pwSee.setAttribute('aria-pressed', String(on)); };
+pwSee?.addEventListener('click', () => { pwShow(pwIn.type === 'password'); pwIn.focus(); });
 
 /* ── 목적지 ─────────────────────────────────────────────────────── */
 async function exists(url) {
@@ -166,6 +170,7 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (busy) return;
   const login = idIn.value.trim(), password = pwIn.value;
+  pwShow(false);
   if (!login || !password) { say('아이디와 비밀번호를 입력하세요', [!login && 'id', !password && 'pw'].filter(Boolean)); (login ? pwIn : idIn).focus(); return; }
 
   busy = true; go.setAttribute('aria-busy', 'true'); clearErr();

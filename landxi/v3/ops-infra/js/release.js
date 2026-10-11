@@ -9,6 +9,7 @@
    #/deploys/api      API — 외부 연동 API 키(기관 × 공유된 서비스 · LX 관리자가 만들고 관리 · 원칙 178 · apikeys.js). 사용 현황 표에 'API 호출' 열(원칙 160).
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
 import { toast, h, api, nf, drawer } from './kit.js';
+import { API } from '../../../shared/api-v1.js';   // 대표 그림 주소(게이트웨이 파일)
 import { improveBoard } from './improve.js';
 import { apiKeysPane } from './apikeys.js';   // 배포 → API(외부 연동 API 키 · 원칙 178)
 
@@ -94,6 +95,10 @@ export function mountRelease(root) {
     const rv = f.review;
     row('결과 확인', f.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: rv && rv.n >= rv.total ? '' : 'rv-warn', text: rv ? `${nf(rv.n)}/${nf(rv.total)}` : '—' }),
       rv && rv.n < rv.total ? h('small', { text: '프로젝트의 결과 확인 단계가 끝나지 않았습니다' }) : null);
+    // 대표 그림(필수 · 원칙 186) — 승인하면 분석하기 카드 그림이 된다 · 없던 때 신청은 '그림 없음'
+    const cvSrc = f.cover?.src ? (String(f.cover.src).startsWith('/api/') ? API.base + f.cover.src : f.cover.src) : null;
+    row('대표 그림', h('div.rv-cover', {}, cvSrc ? h('img', { src: cvSrc, alt: '대표 그림', loading: 'lazy' }) : h('span', { text: '그림 없음' })),
+      h('small', { text: f.cover?.keep ? '지금 카드 그림 그대로' : cvSrc ? '승인하면 분석하기 카드 그림이 됩니다' : '이 신청에는 대표 그림이 없습니다' }));
     const sc = f.scene;
     row('결과 장면', sc ? h('b', { text: join(sc.imagery, sc.range) }) : h('b', { text: '고르지 않음' }),
       sc ? units('small', join(val(sc.found) == null ? '' : `${nf(val(sc.found))}건`, km2(sc.area), md(sc.at))) : null,

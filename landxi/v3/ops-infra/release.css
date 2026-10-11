@@ -121,3 +121,8 @@
 .rv-hist-acts .rv-link{border:0;background:none;padding:0;cursor:pointer}
 .rv-tbl--cat .rv-link{border:0;background:none;padding:0;cursor:pointer;white-space:nowrap}
 .rv-tbl--matrix tr.rv-gh th{padding:16px 10px 6px;font:600 13px/18px var(--font-body);color:var(--ink-2);border-bottom:1px solid var(--rule)}
+
+/* 대표 그림(원칙 186) — 분석하기 카드와 같은 비율 · 없으면 같은 틀에 '그림 없음' */
+.rv-cover{width:200px;aspect-ratio:16/10;border-radius:8px;background:var(--bg-1);border:1px solid var(--rule);box-sizing:border-box;overflow:hidden;display:grid;place-items:center}
+.rv-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-cover span{font:400 13px/18px var(--font-body);color:var(--sub)}

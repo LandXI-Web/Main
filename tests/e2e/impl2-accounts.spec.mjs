@@ -130,7 +130,7 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
     test.skip(!process.env.DEV_PASSWORD, 'server/.env DEV_PASSWORD 없음');
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr');
     await page.goto(BASE + '/landxi/v3/ops-accounts/');
-    await expect(page.locator('.acc-tab')).toHaveText([/가입 신청/, /비밀번호 재설정/, /저장 용량/, '계정', '부서', '로그인 기록', '로그인 실패', '처리 기록', '운영 정보', /문의/]);   // 문의 탭(받은 문의 · 개수 붙음)은 맨 끝
+    await expect(page.locator('.acc-tab')).toHaveText([/가입 신청/, /비밀번호 재설정/, /저장 용량/, '계정', '부서', '로그인 기록', '로그인 실패', '처리 기록', '자동 로그아웃', '운영 정보', /문의/]);   // 자동 로그아웃(원칙 188)   // 문의 탭(받은 문의 · 개수 붙음)은 맨 끝
     for (const k of ['signup', 'reset', 'users', 'logins', 'fails', 'log']) {
       await page.goto(BASE + '/landxi/v3/ops-accounts/#' + k);
       await page.waitForSelector('.acc-card .acc-tbl, .acc-card .k-empty:not([data-kind="loading"])', { timeout: 15000 });

@@ -93,9 +93,12 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   if (xi) for (const ev of ['pointerdown', 'focus', 'mouseenter']) xi.addEventListener(ev, () => { xi.href = xiHref(); });
   /* 알림 칸 — 새 요청 · 새 답(LX 관리자 · 기관). LX 직원 메뉴가 있는 화면은 왼쪽 '요청함'(숫자)이 같은 일을 한다(10차 메뉴-1 ⓐ — 위 머리는 역할 · XI맵 · ? · 나가기) */
   const bell = !contained && !staff && hasBell(who) ? h('span.k-bell-slot') : null;
+  /* 로그인 남은 시간 · 끝나는 시각(원칙 188) — 머리줄 작은 글 · 끝나기 5분 전 알림 · 눌러 연장(kit/session-clock.js) */
+  const sess = who && !contained ? h('button.k-sess', { type: 'button', hidden: true }) : null;
+  if (sess) import('./session-clock.js').then((m) => m.mountClock(sess)).catch(() => {});
   const mast = h('header.t-mast.k-mast', {},
     h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
-    h('span.sp'), slot, fresh,
+    h('span.sp'), slot, fresh, sess,
     role ? h(meOk(who) ? 'button.t-role.k-role.k-me-b' : 'span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
     xi, bell, help, who ? exit : null);
   const meBtn = mast.querySelector('button.k-me-b');

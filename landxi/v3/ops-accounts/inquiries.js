@@ -31,7 +31,8 @@ export async function mountInquiries(card, { mine = () => true, onChange } = {})
     { key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v)}</b>` },
     { key: 'org', label: '소속', fmt: (v) => esc(v || '—') },
     { key: 'kind_ko', label: '종류' },
-    { key: 'contact', label: '연락처', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
+    { key: 'phone', label: '연락처(전화)', fmt: (v) => `<span class="acc-m">${esc(v || '—')}</span>` },
+    { key: 'email', label: '메일 주소', fmt: (v) => `<span class="acc-m">${esc(v || '—')}</span>` },
     { key: 'st', label: '상태', fmt: (v, r) => { const [t, lv] = stOf(r); return `<span class="t-chip"${lv ? ` data-lv="${lv}"` : ''}>${esc(t)}</span>`; } },
   ];
   const reload = async () => { onChange?.(); await mountInquiries(card, { mine, onChange }); };
@@ -40,7 +41,7 @@ export async function mountInquiries(card, { mine = () => true, onChange } = {})
     if (!r.read && !r.test) {                         // 열면 읽음(누가 언제 — 서버가 남긴다)
       try { Object.assign(r, await api(`/inquiries/${encodeURIComponent(r.id)}/mark`, { method: 'POST', body: { read: true } })); r.st = stOf(r)[0]; T.set(rows); mark(); onChange?.(); } catch { /* 읽음 표시만 빠진다 */ }
     }
-    const dl = h('dl.acc-dl', {}, ...[['받은 때', when(r.at)], ['소속', r.org || '—'], ['연락처', r.contact], ['종류', r.kind_ko],
+    const dl = h('dl.acc-dl', {}, ...[['받은 때', when(r.at)], ['소속', r.org || '—'], ['연락처(전화)', r.phone || '—'], ['메일 주소', r.email || '—'], ['종류', r.kind_ko],
       ['읽음', r.read ? `${when(r.read_at)}${r.read_name ? ` · ${r.read_name}` : ''}` : '—'],
       ['답함', r.answered ? `${when(r.answered_at)}${r.answered_name ? ` · ${r.answered_name}` : ''}` : '—'], ['접속 주소', r.ip || '—']]
       .flatMap(([k, v]) => [h('dt', { text: k }), h('dd', { text: v })]));

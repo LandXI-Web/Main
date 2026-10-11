@@ -47,6 +47,12 @@ body.t { overflow: hidden; }
 .fld__l { display: block; margin: 0 0 6px; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); }
 .fld .t-input { font: 400 var(--fs-body)/1 var(--font-body); }
 .fld.bad .t-input { border-color: var(--warn); }
+/* 비밀번호 '보기' 글자 단추(Q8 ⓑ · 아이콘 없음) — 칸 안 오른쪽 */
+.pw-box { position: relative; }
+.pw-box .t-input { width: 100%; box-sizing: border-box; padding-right: 64px; }
+.pw-see { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); cursor: pointer; }
+.pw-see:hover { color: var(--ink); background: var(--bg-0); }
+.pw-see:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .fld .t-input:-webkit-autofill { -webkit-text-fill-color: var(--ink); -webkit-box-shadow: 0 0 0 44px var(--bg-1) inset; }
 .sel { position: relative; }
 .sel__i { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }

@@ -12,12 +12,12 @@ import { nf } from '../kit/i18n.js';
 import { sig } from '../kit/sig.js';
 import { h, esc, api, API, session, isEnvelope } from '../kit/util.js';
 import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
-import { accOf } from '../kit/acc.js';   // 검증 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
+import { accOf } from '../kit/acc.js';   // AI 모델 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
 
 const V3 = '/landxi/v3/';
 const val = (e) => (isEnvelope(e) ? e.value : e);
 const num = (e, d = 0) => (val(e) == null ? '—' : `<span class="num">${nf(val(e), d)}</span>${sig(e)}`);
-/** 학습 모델 정확도(정수 %) — 같은 계산 규칙(kit/acc.js) · 화면 이름은 '이번 학습 · 학습 n%'(검증 정확도 = 공개 서비스 모델 값만) */
+/** 학습 모델 정확도(정수 %) — 같은 계산 규칙(kit/acc.js) · 화면 이름은 '이번 학습 · 학습 n%'(AI 모델 정확도 = 공개 서비스 모델 값만) */
 const perf = (m) => accOf(m?.metrics);
 const pct = (e) => (e ? `<span class="num">${nf(e.value)}</span>%${sig(e)}` : '—');
 const gsdWord = (g) => (g == null ? '' : g < 0.1 ? `${+(g * 100).toFixed(1)}cm 드론` : `${Math.round(g * 100)}cm 항공`);
@@ -328,7 +328,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     for (const m of ms) { const n = baseName(m); seen[n] = (seen[n] || 0) + 1; nth.set(m.id, seen[n]); }
     const two = (x) => String(x).padStart(2, '0');
     const when = (s) => { const d = new Date(s); return isNaN(d) ? '' : `${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`; };
-    const label = (m) => { const n = baseName(m); const a = perf(m); return seen[n] > 1 ? `${n} · ${a ? `학습 ${a.value}%` : m.created_at ? when(m.created_at) : nth.get(m.id) + '번째'}` : n; };   // 같은 이름은 검증 정확도로 가른다(fix9)
+    const label = (m) => { const n = baseName(m); const a = perf(m); return seen[n] > 1 ? `${n} · ${a ? `학습 ${a.value}%` : m.created_at ? when(m.created_at) : nth.get(m.id) + '번째'}` : n; };   // 같은 이름은 AI 모델 정확도로 가른다(fix9)
     ms.sort((a, b) => (!!a.train_job - !!b.train_job) || label(a).localeCompare(label(b), 'ko'));
     baseSel.innerHTML = ms.map((m) => `<option value="${esc(m.id)}">${esc(label(m))}</option>`).join('');
     pickBase();
@@ -436,7 +436,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     const dl = h('dl.tf-dl');
     const row = (k, v) => dl.append(h('dt.t-label', { text: k }), h('dd', { html: v }));
     row('새 모델', esc(model.name || '새 모델'));
-    /* '검증 정확도'는 공개 서비스 모델 값에만 쓴다(10-10 확인 9 ⓐ) — 학습 모델 값은 '이번 학습'처럼 다른 이름 */
+    /* 'AI 모델 정확도'는 공개 서비스 모델 값에만 쓴다(10-10 확인 9 ⓐ) — 학습 모델 값은 '이번 학습'처럼 다른 이름 */
     row('이번 학습', pct(perf(model)));
     if (base) row('기반 모델', esc(baseName(base)) + (perf(base) ? ` · 학습 ${pct(perf(base))}` : ''));
     row('클래스', esc((model.classes || []).join(' · ')));

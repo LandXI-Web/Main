@@ -27,7 +27,7 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     await page.waitForSelector('.k-sc[data-kind="analyze"]', { timeout: 30000 });
     expect(await page.locator('.k-sc').count()).toBe(4);   // 지도-4 ⓐ 한 페이지 기본 4장(정식 서비스 5장 — 카드틀-5)
     expect(await words(page, '.la-page')).toEqual([]);
-    /* 갤러리 카드 틀(카드틀-5): 옛 '결과 예시' 칸(.k-sc-res)은 없고 큰 숫자 = 검증 정확도(서버 카드 덱 model.acc 한 출처) — 카드마다 같은 값인지 본다 */
+    /* 갤러리 카드 틀(카드틀-5): 옛 '결과 예시' 칸(.k-sc-res)은 없고 큰 숫자 = AI 모델 정확도(서버 카드 덱 model.acc 한 출처) — 카드마다 같은 값인지 본다 */
     const deckL = (await call(page, '/cards/deck')).body;
     for (const el of await page.locator('.k-sc[data-card]').all()) {
       const id = await el.getAttribute('data-card');
@@ -38,8 +38,9 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     /* 큰 숫자 자리 = 업무 결과만 — 분석 칸 도형 수(남원 · 증평 비닐하우스 AI 탐지 = 모든 분류 도형 조각)는 쓰지 않는다(사용자 규칙 2) */
     for (const c of deckL.items) if (c.example) { expect(c.example.label).toBe('AI 탐지'); expect(c.example.word).not.toContain('현장 확인'); }   // 원칙 135 — LX 카드 결과 예시 = AI 분석 결과
     expect(deckL.items.find((c) => c.id === 'card-5e85a9').example).toBeNull();
-    /* 장면 없는 카드 = 회백 판(그림 0) */
-    if (await page.locator('.k-sc .k-sc-crop.is-blank').count()) await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText('결과 장면이 아직 없습니다');
+    /* 그림 없는 카드 = 같은 틀에 '그림 없음'(대체 그림 0 · 원칙 186) */
+    if (await page.locator('.k-sc .k-sc-crop.is-blank').count()) await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText('그림 없음');   // 대체 그림 없이 같은 틀(원칙 186)
+    expect(await page.locator('.la-ac-pic img[src*="fallback"]').count()).toBe(0);
     /* 거르기 — 지금 칩은 전체 · 분야 · 영상(드론 · 항공 · 위성)(옛 '운영' 칩은 정식 서비스만 보이는 갤러리로 바뀌며 없어짐) — 영상 칩이 카드 수를 줄이거나 같게 거른다 */
     const nAll = await page.locator('.k-sc').count();
     await page.locator('.la-chip', { hasText: '항공' }).click();

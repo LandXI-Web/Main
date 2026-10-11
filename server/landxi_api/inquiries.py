@@ -1,7 +1,7 @@
 """문의 — 메인 · 도움말 · 로그인 창의 '문의하기' 창으로 들어온 문의(10-11 메인 지시 3 · 원칙 170).
 
 로그인 없이 부르는 길:
-  POST /public/inquiries   {name, org?, contact(메일 또는 전화), kind: intro|howto|etc, body, consent: true, website?(비워 둠)}
+  POST /public/inquiries   {name, org?, phone?(전화), email?(메일 주소) — 하나 이상 · 형식 확인(10-11 메인-3 · 원칙 189), kind: intro|howto|etc, body, consent: true, website?(비워 둠)}
                             → 201 {ok, at} — 같은 접속 주소 시간당 PER_HOUR 번까지(넘으면 429). website 칸이 채워져 오면(자동 입력기) 받은 척만 한다.
 LX 관리자만 부르는 길(계정 → '문의' 탭):
   GET  /inquiries                    → {items, counts:{new, all}} — 최근 200건. 새 문의 = 읽지 않은 것(시험 제외)
@@ -54,9 +54,20 @@ async def _limit(ip: str):
 async def send(body: dict, request: Request):
     name = _txt(body.get("name"), 1, 40, "name", "이름을 적어 주세요")
     org = _txt(body.get("org"), 0, 80, "org", "소속은 80자까지 적을 수 있습니다")
-    contact = _txt(body.get("contact"), 5, 120, "contact", "답을 받을 메일이나 전화번호를 적어 주세요")
-    if not (_MAIL.match(contact) or _TEL.match(contact)):
-        raise ApiError("bad_request", "메일 주소나 전화번호를 확인해 주세요", {"field": "contact"})
+    phone = _txt(body.get("phone"), 0, 20, "phone", "전화번호를 확인해 주세요")
+    email = _txt(body.get("email"), 0, 120, "email", "메일 주소를 확인해 주세요")
+    old = str(body.get("contact") or "").strip()          # 옛 창(한 칸)에서 온 것 — 모양을 보고 나눠 받는다
+    if old and not phone and not email:
+        if "@" in old:
+            email = old[:120]
+        else:
+            phone = old[:20]
+    if not phone and not email:
+        raise ApiError("bad_request", "답을 받을 전화나 메일 주소를 하나 이상 적어 주세요", {"field": "phone"})
+    if phone and not _TEL.match(phone):
+        raise ApiError("bad_request", "전화번호를 확인해 주세요", {"field": "phone"})
+    if email and not _MAIL.match(email):
+        raise ApiError("bad_request", "메일 주소를 확인해 주세요", {"field": "email"})
     kind = str(body.get("kind") or "")
     if kind not in KIND_KO:
         raise ApiError("bad_request", "문의 종류를 골라 주세요", {"field": "kind"})
@@ -70,14 +81,15 @@ async def send(body: dict, request: Request):
     site = request.headers.get("x-lx-site") if request.headers.get("x-forwarded-for") else None
     iid = "iq_" + secrets.token_hex(5)
     async with db(realm="lx") as conn:
-        await conn.execute("INSERT INTO inquiries(id, name, org, contact, kind, body, consent_at, site, ip) VALUES ($1,$2,$3,$4,$5,$6,now(),$7,$8)",
-                           iid, name, org or None, contact, kind, text, site, ip)
+        await conn.execute("INSERT INTO inquiries(id, name, org, phone, email, kind, body, consent_at, site, ip) VALUES ($1,$2,$3,$4,$5,$6,$7,now(),$8,$9)",
+                           iid, name, org or None, phone or None, email or None, kind, text, site, ip)
     return {"ok": True, "at": now_iso()}
 
 
 def _row(r) -> dict:
     ip = r["ip"] or ""
-    return {"id": r["id"], "at": _iso(r["at"]), "name": r["name"], "org": r["org"] or "", "contact": r["contact"],
+    return {"id": r["id"], "at": _iso(r["at"]), "name": r["name"], "org": r["org"] or "",
+            "phone": r["phone"] or "", "email": r["email"] or "",
             "kind": r["kind"], "kind_ko": KIND_KO.get(r["kind"], r["kind"]), "body": r["body"],
             "read": bool(r["read_at"]), "read_at": _iso(r["read_at"]), "read_name": r["read_name"],
             "answered": bool(r["answered_at"]), "answered_at": _iso(r["answered_at"]), "answered_name": r["answered_name"],

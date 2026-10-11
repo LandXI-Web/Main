@@ -245,3 +245,11 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 .acc-card[data-tab="inquiries"] .acc-tbl tbody tr { cursor: pointer; transition: background var(--d-180) var(--e-ui); }
 .acc-card[data-tab="inquiries"] .acc-tbl tbody tr:hover { background: var(--bg-0); }
 .acc-iq-body { margin: 0; padding: 16px; border-radius: 12px; background: var(--bg-0); font: 400 var(--fs-body)/var(--lh-body) var(--font-body); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* 자동 로그아웃 시간(원칙 188) — 고르기 한 줄 */
+.acc-sess{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}
+.acc-sess-o{position:relative;cursor:pointer}
+.acc-sess-o input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.acc-sess-o span{display:inline-block;padding:8px 16px;border-radius:999px;background:var(--bg-0);font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink-2)}
+.acc-sess-o input:checked + span{background:var(--ink);color:var(--bg-1)}
+.acc-sess-o input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}

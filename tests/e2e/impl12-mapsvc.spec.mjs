@@ -85,14 +85,16 @@ test.describe('구현 12차 · 지도 서비스 · 영상 고르기', () => {
     const cards = page.locator('#imagery .la-im-c');
     await expect(cards.first()).toBeVisible({ timeout: 60000 });
     expect(await cards.count()).toBeGreaterThanOrEqual(2);
-    await expect(page.locator('#imagery .la-im-c[aria-pressed="true"]')).toHaveCount(1);
+    await expect(page.locator('#imagery .la-im-rd:checked')).toHaveCount(1);                       // 영상은 하나만(라디오 · 원칙 185)
+    expect(await page.locator('#imagery input[type=checkbox]').count()).toBe(0);
     await expect(page.locator('#imagery .la-im-map .maplibregl-canvas')).toHaveCount(1);
     for (const k of ['해상도', '촬영 시기', '범위']) await expect(cards.first().locator('dt', { hasText: k })).toBeVisible();
     await expect(cards.first().locator('.la-fit')).toHaveText(/이 서비스에 맞음|결과가 거칠 수 있음/);
-    const other = page.locator('#imagery .la-im-c[aria-pressed="false"]:not([disabled])').first();
+    const other = page.locator('#imagery .la-im-c[data-on="0"][data-no="0"]').first();
     const nm = (await other.locator('.la-im-n').innerText()).trim();
     await other.click();
-    await expect(page.locator('#imagery .la-im-c[aria-pressed="true"] .la-im-n')).toHaveText(nm);
+    await expect(page.locator('#imagery .la-im-c[data-on="1"] .la-im-n')).toHaveText(nm);
+    await expect(page.locator('#imagery .la-im-rd:checked')).toHaveCount(1);
     await expect(page.locator('.la-picks')).toContainText(`영상 · ${nm}`, { timeout: 30000 });
     await expect(page.locator('.la-side')).toContainText('지도 서비스');
     await expect(page.locator('.la-side')).not.toContainText('XI맵');

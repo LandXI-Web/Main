@@ -7,7 +7,7 @@
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
 import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
-import { projectNotices } from '../lx-project/context.js';
+import { projectNotices, stageHref } from '../lx-project/context.js';
 import { GROUPS, groupOf, stageListHref, kick } from '../lx-project/board.js';
 import { openMe, storageDonut, quotaGauge, quotaTag, gb } from '../kit/me.js';
 import { modal } from '../kit/modal.js';
@@ -81,6 +81,13 @@ async function drawBoard() {
       h('a', { href: stageListHref(g.key), 'aria-label': `${g.label} ${n}개${warn ? ` · 남은 일 있는 ${warn}` : ''}` },
         h('b.num', { text: String(n) }), h('span', { text: g.label }), warn ? h('em', { text: `남은 일 ${warn}` }) : null));
   })));
+  /* 공개 뒤 건너뛴 결과 확인 — 남은 일 작은 줄 하나(10-11 QA-Q11 ⓐ · 서버 blocked 'after' 한 출처) · 누르면 그 프로젝트 결과 확인 */
+  const after = items.filter((p) => (p.blocked || []).some((b) => b.kind === 'after'));
+  if (after.length) {
+    const p0 = after[0];
+    box.append(h('p.ld-after', {}, h('span.ld-after-k', { text: '공개 뒤 결과 확인 남음' }),
+      h('a', { href: stageHref(p0, 'review', (p0.stages || []).find((x) => x.key === 'review')?.target), text: p0.name }), after.length > 1 ? h('span', { text: `외 ${after.length - 1}곳` }) : null));
+  }
 }
 
 /* ── ③ 요청함 — 검토 요청 · 분석 요청 · 보낸 요청(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */

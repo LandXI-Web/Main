@@ -1,7 +1,7 @@
 /* 같은 이름 숫자 자동 대조(now 페이지 제안 2 채택 · 사용자 규칙 3 '숫자 한 출처') — 배포(커밋 · 게이트웨이 재시작) 때 돌린다.
    바깥 주소(app · admin · namwon.land-xi.dev)를 로그인 폼으로 열어(세션 주입 없음) 화면에 보이는 숫자를 읽고,
    같은 이름의 숫자가 화면마다 같은지 표로 낸다. 읽는 숫자:
-     정확도         · 서비스(지금 판)  — 분석하기 카드 '검증 정확도' · 분석하기 자세히 · 배포 신청서 '지난 판' · 관리자 배포 신청(승인된 신청 '이번 판')
+     정확도         · 서비스(지금 판)  — 분석하기 카드 'AI 모델 정확도' · 분석하기 자세히 · 배포 신청서 '지난 판' · 관리자 배포 신청(승인된 신청 '이번 판')
                     · 프로젝트 신청서(이번 판) — 직원 배포 신청서 '이번 판' · 관리자 배포 신청(검토 중 신청 '이번 판')
      AI 분석 결과   · 서비스 · 지역  — 분석하기 자세히 큰 숫자 · 기관 '내 서비스' 카드
      분석한 면적    · 기관            — 관리자 '기관' 화면(이번 달) · (사용 현황은 서비스별 칸이라 따로 적기만)
@@ -88,14 +88,14 @@ try {
   /* ── LX 직원(app) ─────────────────────────────── */
   {
     const { ctx, page } = await session(HOST.app, 'test@lx.or.kr');
-    // 분석하기 카드 — 서비스 이름 · 검증 정확도
+    // 분석하기 카드 — 서비스 이름 · AI 모델 정확도
     await go(page, HOST.app + '/landxi/v3/lx-analyze/');
     await settle(page, '.la-ac');
     const cards = await page.evaluate(() => {
       const out = [];
       const per = () => document.querySelectorAll('.la-ac').forEach((a) => {
         const name = a.querySelector('h3')?.innerText.trim();
-        const hero = [...a.querySelectorAll('.la-ac-hero > div')].find((d) => /검증 정확도/.test(d.innerText));
+        const hero = [...a.querySelectorAll('.la-ac-hero > div')].find((d) => /AI 모델 정확도/.test(d.innerText));
         const b = hero?.querySelector('b')?.innerText.replace(/\s+/g, '');
         const more = a.querySelector('a.k-sc-more')?.getAttribute('href');
         out.push({ name, acc: b && b !== '—' ? b : null, href: more });
@@ -109,7 +109,7 @@ try {
       if (!(await next.count()) || await next.isDisabled()) break;
       await next.click(); await page.waitForTimeout(500);
       const more = await page.evaluate(() => [...document.querySelectorAll('.la-ac')].map((a) => {
-        const hero = [...a.querySelectorAll('.la-ac-hero > div')].find((d) => /검증 정확도/.test(d.innerText));
+        const hero = [...a.querySelectorAll('.la-ac-hero > div')].find((d) => /AI 모델 정확도/.test(d.innerText));
         const b = hero?.querySelector('b')?.innerText.replace(/\s+/g, '');
         return { name: a.querySelector('h3')?.innerText.trim(), acc: b && b !== '—' ? b : null, href: a.querySelector('a.k-sc-more')?.getAttribute('href') };
       }));
@@ -125,7 +125,7 @@ try {
         const big = document.querySelector('.la-big[data-v]');
         const lab = document.querySelector('.la-ex-l')?.innerText || '';
         const all = document.querySelector('.la-dt')?.innerText || '';
-        const m = all.match(/검증 정확도[^\d\n]{0,12}(\d{1,3})\s*%/) || all.match(/(\d{1,3})\s*%\s*\n?\s*검증 정확도/);
+        const m = all.match(/AI 모델 정확도[^\d\n]{0,12}(\d{1,3})\s*%/) || all.match(/(\d{1,3})\s*%\s*\n?\s*AI 모델 정확도/);
         return { v: big?.dataset.v ?? null, shown: big?.querySelector('b')?.innerText ?? null, unit: big?.querySelector('.u')?.innerText ?? '', lab, acc: m ? m[1] + '%' : null };
       });
       const reg = (d.lab.split(' · ')[1] || '').trim();

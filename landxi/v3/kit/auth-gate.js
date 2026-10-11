@@ -170,15 +170,20 @@ function expiryWatch(home) {
   if (expiryOn) return;
   expiryOn = true;
   let open = false;
-  addEventListener('lx:session-expired', async () => {
+  addEventListener('lx:session-expired', async (e) => {
     if (open) return;
     open = true;
+    // 끝난 시각(원칙 188) — 머리줄 시계가 준 값 · 없으면 이 브라우저에 남은 세션 값
+    let endAt = e?.detail?.at || null;
+    if (!endAt) { try { endAt = JSON.parse(localStorage.getItem(session.key) || 'null')?.expires_at || null; } catch { /* */ } }
+    const d = endAt ? new Date(endAt) : null;
+    const ended = d && !Number.isNaN(+d) && d <= new Date() ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}에 ` : '';
     const here = location.pathname + location.search;
     const go = () => { session.clear(); WHO = null; location.replace(govPage(home) ? orgHome(lastOrg(), { next: here }) : FRONT + '?next=' + encodeURIComponent(here)); };
     try {
       const { modal } = await import('./modal.js');
       modal({ title: '로그인이 끝났습니다', size: 'md', onClose: () => { open = false; },
-        body: h('div', {}, h('p', { text: '오래 쓰지 않아 로그인이 끝났습니다. 다시 로그인하면 보던 화면으로 돌아옵니다.' }),
+        body: h('div', {}, h('p', { text: `${ended}로그인 시간이 끝났습니다. 다시 로그인하면 보던 화면으로 돌아옵니다.` }),
           h('p', { style: 'margin-top:20px' }, h('button.t-btn', { type: 'button', text: '다시 로그인', onclick: go }))) });
     } catch { go(); }
   });

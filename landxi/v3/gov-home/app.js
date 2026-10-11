@@ -39,7 +39,7 @@ const ORG = orgHere();
 /* ── 말(기관의 언어 — 해외 기관은 영어) ─────────────────────── */
 const KO = {
   menu: '메뉴', svcNav: '서비스', how: '이용 방법', contact: '문의', login: '로그인', mine: '내 서비스',
-  who: (s) => `${s} 직원 계정`, id: '아이디', idPh: '메일 주소', pw: '비밀번호',
+  who: (s) => `${s} 직원 계정`, id: '아이디', idPh: '메일 주소', pw: '비밀번호', see: '보기', hide: '숨기기',
   need: '아이디와 비밀번호를 입력하세요', fail: '아이디 또는 비밀번호가 맞지 않습니다', down: '서버에 연결할 수 없습니다 — 잠시 뒤 다시 시도하세요',
   ask: (c) => `계정 문의 ${c}`, help: '가입 신청 · 아이디 · 비밀번호 찾기', inT: '로그인되어 있습니다', go: '내 서비스로', out: '나가기',
   svc: (s) => `${s} AI 분석 서비스`, since: (y) => `${y}년부터`,
@@ -57,7 +57,7 @@ const KO = {
 };
 const EN = {
   ...KO, menu: 'Menu', svcNav: 'Services', how: 'How to use', contact: 'Contact', login: 'Sign in', mine: 'My services',
-  who: (s) => `${s} staff account`, id: 'User ID', idPh: 'Email address', pw: 'Password',
+  who: (s) => `${s} staff account`, id: 'User ID', idPh: 'Email address', pw: 'Password', see: 'Show', hide: 'Hide',
   need: 'Enter your ID and password', fail: 'The ID or password is incorrect', down: 'Cannot reach the server — please try again shortly',
   ask: (c) => `Account help ${c}`, help: 'Sign up · find ID · reset password', inT: 'Signed in', go: 'Go to my services', out: 'Sign out',
   svc: (s) => `${s} AI analysis services`, since: (y) => `Since ${y}`,
@@ -198,13 +198,16 @@ function paintSignedIn(card, b, s, dest) {
 function paintLogin(card, b) {
   const idIn = h('input.t-input', { name: 'login', type: 'text', autocomplete: 'username', placeholder: L.idPh, spellcheck: 'false', autocapitalize: 'none', required: true });
   const pwIn = h('input.t-input', { name: 'password', type: 'password', autocomplete: 'current-password', required: true });
+  // 비밀번호 보기 — 글자 단추 · 아이콘 없음(Q8 ⓑ · 원칙 126)
+  const see = h('button.gh-see', { type: 'button', 'aria-pressed': 'false', text: L.see,
+    onclick: (e) => { e.preventDefault(); const on = pwIn.type === 'password'; pwIn.type = on ? 'text' : 'password'; see.textContent = on ? L.hide : L.see; see.setAttribute('aria-pressed', String(on)); pwIn.focus(); } });
   const msg = h('p.gh-msg', { role: 'alert', hidden: true });
   const go = h('button.t-btn.gh-go', { type: 'submit', text: L.login });
   const help = h('button.t-btn.t-btn--text.gh-help', { type: 'button', text: L.help });
   const form = h('form.gh-form', { novalidate: true, 'aria-label': L.login },
     h('div.gh-login-h', {}, h('h2', { text: L.login }), h('span.t-label', { text: L.who(b.short) })),
     h('label.gh-f', {}, h('span.t-label', { text: L.id }), idIn),
-    h('label.gh-f', {}, h('span.t-label', { text: L.pw }), pwIn),
+    h('label.gh-f', {}, h('span.t-label', { text: L.pw }), h('span.gh-pw', {}, pwIn, see)),
     msg, go, help,
     b.contact ? h('p.gh-login-f', { text: L.ask(b.contact) }) : null);
   card.replaceChildren(form);

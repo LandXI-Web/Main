@@ -2,7 +2,7 @@
    ?project=<id>&stage=infer   추론 — 이 프로젝트에서 학습한 모델(판 고르기)로 배포 신청 없이 영상 분석 → 결과 목록(보는 사람 = 나 · 프로젝트 참여자)
                                분석은 지금 있는 분석 작업 대기열로만(POST /release/projects/{id}/infer → POST /jobs) · 결과 보기 = 지도 서비스에서 그 결과를 켠다
                                (원칙 149 · 163 — 서버가 준 주소 /landxi/v3/lx-map/?job= · XI맵은 전국 · 해외 실시간 분석)
-   ?project=<id>&stage=publish 배포 신청 — 신청서 = 서버 값(모델 · 검증 정확도 · 학습 데이터 · 결과 확인 · 결과 장면) + 메모 한 칸 · 지난 판 없으면 '첫 판입니다'
+   ?project=<id>&stage=publish 배포 신청 — 신청서 = 서버 값(모델 · AI 모델 정확도 · 학습 데이터 · 결과 확인 · 결과 장면) + 메모 한 칸 · 지난 판 없으면 '첫 판입니다'
                                상태 줄(검토 중 · 승인 · 거절 사유 → 고쳐서 다시 신청). 승인 · 기관 공유는 LX 관리자 '배포' 메뉴.
    숫자는 모두 서버 값(봉투). 아이콘 0 · PC 1440 기준. */
 import { shell } from '../kit/shell.js';
@@ -205,7 +205,7 @@ async function drawInfer() {
 async function drawPublish() {
   let d;
   try { d = await loading(api(base + '/apply')); } catch (e) { page.replaceChildren(h('p.rl-empty', { text: e.message || '배포 신청 화면을 열 수 없습니다' })); return; }
-  const st = { model: d.pick, scene: d.scenes?.[0]?.job || '' };
+  const st = { model: d.pick, scene: d.scenes?.[0]?.job || '', cover: d.cover?.current ? 'current' : '' };
   const s = d.status || { state: 'none' };
   const prev = d.prev;
   const ver = d.next_version;
@@ -255,6 +255,29 @@ async function drawPublish() {
   const kindBox = h('div.rl-cks', { role: 'group', 'aria-label': '쓸 수 있는 영상' }, ...CT.kinds.map((k) => ck('kind', k, CT.picked_kinds.includes(k), k)));
   row('분야', grpBox, newGrp, h('small', { text: (CT.asked || []).length ? `요청한 새 분야 ${CT.asked.join(' · ')} — LX 관리자가 만들면 목록에 나타납니다` : '여러 개 고를 수 있습니다 · 분석하기 거르기와 서비스 카드에 보입니다 · 새 분야는 LX 관리자가 만듭니다' }));
   row('서비스 설명', desc, h('small', { text: '분석하기 카드에 이 글이 그대로 보입니다 — 무엇을 분석해 무엇을 알 수 있는지 한 문장' }));
+  /* 대표 그림(필수 · 10-11 GPT2-5 · 원칙 186) — 정식 배포 서비스라 신청 때 꼭 올린다 · 승인되면 분석하기 카드 그림이 된다. 없으면 신청 못 함 */
+  const coverPic = h('div.rl-cover-pic');
+  const coverFile = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true, 'aria-label': '대표 그림 파일' });
+  const coverBtn = h('button.t-btn.t-btn--2', { type: 'button', text: '대표 그림 올리기' });
+  const coverMsg = h('small.rl-cover-msg');
+  const srcOf = (u) => (String(u).startsWith('/api/') ? API.base + u : u);
+  const paintCover = (src) => coverPic.replaceChildren(src ? h('img', { src: srcOf(src), alt: '대표 그림' }) : h('span', { text: '그림 없음' }));
+  paintCover(d.cover?.current || null);
+  coverBtn.addEventListener('click', () => coverFile.click());
+  coverFile.addEventListener('change', async () => {
+    const f = coverFile.files[0]; if (!f) return;
+    coverBtn.disabled = true; coverMsg.textContent = '올리는 중'; coverMsg.dataset.lv = '';
+    const fd = new FormData(); fd.append('file', f);
+    try {
+      const r = await fetch(API.prefix + base + '/cover', { method: 'POST', body: fd, headers: { authorization: 'Bearer ' + (session.get()?.token || '') } });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(j?.error?.message || '올리지 못했습니다');
+      st.cover = j.name; paintCover(j.src); coverMsg.textContent = '올렸습니다 — 승인되면 분석하기 카드 그림이 됩니다';
+    } catch (e) { coverMsg.textContent = e.message; coverMsg.dataset.lv = 'warn'; }
+    coverBtn.disabled = false; coverFile.value = '';
+  });
+  row('대표 그림', h('div.rl-cover', {}, coverPic, h('div.rl-cover-r', {}, coverBtn, coverFile, coverMsg)),
+    h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석하기 카드 그림이 됩니다(PNG · JPG · WebP)' }));
   row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석하기의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
   row('정확도', accEl, lowEl, h('small', { text: '학습 끝 검증 값' }));
@@ -269,9 +292,11 @@ async function drawPublish() {
   const go = h('button.t-btn', { type: 'button', text: s.state === 'rejected' ? '고쳐서 다시 신청' : '배포 신청' });
   const msg = h('p.rl-msg', { role: 'status' });
   go.addEventListener('click', async () => {
-    go.disabled = true; msg.textContent = '';
+    msg.textContent = '';
+    if (!st.cover) { msg.textContent = '대표 그림을 올려 주세요 — 승인되면 분석하기 카드 그림이 됩니다'; coverBtn.focus(); return; }
+    go.disabled = true;
     try {
-      const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined,
+      const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined, cover: st.cover,
         groups: [...grpBox.querySelectorAll('input:checked')].map((x) => x.value), desc: desc.value.trim(), new_group: newGrp.value.trim() || undefined,
         imagery_kinds: [...kindBox.querySelectorAll('input:checked')].map((x) => x.value),
         ...(d.first ? { name: svcName.value.trim(), ledger_kind: ledger.value || undefined } : {}) } });
@@ -285,7 +310,7 @@ async function drawPublish() {
     canApply ? go : h('p.rl-note', { text: s.state === 'pending' ? 'LX 관리자가 검토 중입니다' : `배포 신청은 프로젝트장${lead ? `(${lead})` : ''}이 합니다` }));
   const head = card('배포 신청', join(d.service?.name || svcName.value, `${ver}판`), h('p.rl-ver', { text: prev ? `지난 판 ${prev.version} · ${md(prev.approved_at)} 승인` : '첫 판입니다' }),
     dl, h('div.rl-step', {}, h('h3', { text: '메모' }), memo), foot, msg);
-  if (!canApply) { [mSel, memo, svcName, ledger, newGrp, desc].forEach((x) => { x.disabled = true; }); [sceneEl, grpBox, kindBox].forEach((b) => b.querySelectorAll('input').forEach((x) => { x.disabled = true; })); }
+  if (!canApply) { [mSel, memo, svcName, ledger, newGrp, desc, coverBtn].forEach((x) => { x.disabled = true; }); [sceneEl, grpBox, kindBox].forEach((b) => b.querySelectorAll('input').forEach((x) => { x.disabled = true; })); }
 
   /* 오른쪽 — 신청 상태 · 지난 판 · 공유된 기관 */
   const steps = [
