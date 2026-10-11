@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI API 안내 (시안)</title>
+<style>
+:root{--bg-0:#F2F4F6;--bg-1:#FFFFFF;--ink:#1C1F25;--ink-2:#333840;--sub:#727780;--sub-2:#4E535C;--rule:#E5E8EB;--mute:#B0B8C1;--accent:#006DF7;--ai:#0FA9A0;--warn:#F04452;--code:#F7F8FA}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg-0);color:var(--ink)}
+body{font-family:Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.draft-band{background:var(--warn);color:#fff;text-align:center;font-weight:800;font-size:15px;padding:8px 16px;letter-spacing:.5px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+header{background:var(--bg-1);border-bottom:1px solid var(--rule)}
+header .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.logo{font-weight:800;font-size:19px;letter-spacing:.5px}
+nav{display:flex;gap:22px;font-size:15px;color:var(--sub-2);flex:1}
+nav .cur{color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent);padding-bottom:4px}
+.login{font-size:15px;font-weight:600;color:var(--ink);border:1px solid var(--rule);border-radius:10px;padding:6px 14px;background:var(--bg-1)}
+.stamp{display:inline-block;background:var(--warn);color:#fff;font-weight:800;font-size:20px;border-radius:8px;padding:2px 14px;letter-spacing:2px;vertical-align:middle;margin-left:12px}
+.hero{padding:56px 0 36px}
+.hero h1{font-size:38px;line-height:1.3;margin:0 0 14px;font-weight:800}
+.hero p{font-size:18px;color:var(--sub-2);margin:0 0 26px;max-width:720px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;border-radius:12px;padding:12px 22px;font-weight:700;font-size:16px}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.sec{background:var(--bg-1);color:var(--ink);border:1px solid var(--rule)}
+section{padding:22px 0}
+h2{font-size:24px;line-height:1.35;margin:0 0 16px;font-weight:800}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{background:var(--bg-1);border-radius:16px;padding:22px 24px;min-width:0}
+.grid2>*,.grid3>*,.svc>*,.rules>*,.form>*{min-width:0}
+.step .n{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--bg-0);font-weight:800;align-items:center;justify-content:center;font-size:15px;margin-bottom:10px}
+.card h3{font-size:18px;margin:0 0 6px;font-weight:700}
+.card p{margin:0;color:var(--sub-2);font-size:15px}
+.api h3{display:flex;align-items:center;gap:10px}
+.verb{font-family:Inter,Consolas,monospace;font-size:13px;font-weight:700;border-radius:6px;padding:2px 8px;background:var(--bg-0);color:var(--ink-2)}
+pre{background:var(--code);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;font-family:Consolas,"D2Coding",monospace;font-size:13px;line-height:1.55;overflow-x:auto;margin:14px 0 0;color:var(--ink-2);white-space:pre}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font-size:14px;color:var(--sub-2)}
+.flow span{background:var(--bg-0);border-radius:8px;padding:3px 10px}
+.flow i{font-style:normal;color:var(--mute)}
+.svc{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.svc .card{padding:16px 18px}
+.svc b{display:block;font-size:16px;margin-bottom:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:13px;border-radius:6px;padding:1px 8px;background:var(--bg-0);color:var(--ink-2)}
+.chip.no{color:var(--sub);background:transparent;border:1px dashed var(--rule)}
+.src td,.src th{padding:12px 14px;border-bottom:1px solid var(--rule);text-align:left;font-size:15px;vertical-align:top}
+.src th{color:var(--sub);font-weight:600;font-size:14px}
+.src tr:last-child td{border-bottom:0}
+table{width:100%;border-collapse:collapse}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.f{display:flex;flex-direction:column;gap:6px}
+.f.full{grid-column:1/-1}
+.f label{font-size:14px;font-weight:600;color:var(--ink-2)}
+.in{border:1px solid var(--rule);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--sub);background:var(--bg-1);min-height:42px}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt{border:1px solid var(--rule);border-radius:10px;padding:8px 14px;font-size:15px;color:var(--ink-2);background:var(--bg-1)}
+.opt.on{border-color:var(--ink);color:var(--ink);font-weight:700}
+.form-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:6px;flex-wrap:wrap}
+.form-foot p{margin:0;color:var(--sub);font-size:14px}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rules ul{margin:6px 0 0;padding-left:18px;color:var(--sub-2);font-size:15px}
+.rules li{margin:4px 0}
+footer{padding:28px 0 40px;color:var(--sub);font-size:14px}
+@media (max-width:900px){
+  .grid3,.grid2,.rules,.form{grid-template-columns:1fr}
+  .svc{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  header .wrap{gap:14px}
+  nav{display:none}
+  .hero{padding:36px 0 24px}
+  .hero h1{font-size:28px}
+  .hero p{font-size:16px}
+  h2{font-size:21px}
+  .svc{grid-template-columns:1fr}
+  .stamp{font-size:16px;padding:2px 10px}
+  .src th:nth-child(3),.src td:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+<div class="draft-band">시안 — 실제 화면이 아닙니다 · 2026-10-11 새로 그림 · 사용자 확인 전</div>
+<header><div class="wrap">
+  <span class="logo">LAND-XI</span>
+  <nav><span>서비스 소개</span><span>도움말</span><span class="cur">API 안내</span></nav>
+  <span class="login">로그인</span>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Land-XI 분석 서비스를<br>다른 시스템에서 부릅니다 <span class="stamp">시안</span></h1>
+    <p>분석 결과를 조회하거나, 범위만 정해 분석을 맡깁니다.<br>영상은 올리지 않습니다 — 공개 영상 원천에서 불러 분석합니다.</p>
+    <div class="btns"><span class="btn pri">키 신청하기</span><span class="btn sec">표준 가이드 보기</span></div>
+  </div>
+
+  <section>
+    <h2>쓰기까지 세 걸음</h2>
+    <div class="grid3">
+      <div class="card step"><span class="n">1</span><h3>키 신청</h3><p>쓰는 시스템과 분석 서비스,<br>범위를 적어 신청합니다.</p></div>
+      <div class="card step"><span class="n">2</span><h3>LX 관리자 승인</h3><p>확인 뒤 서비스마다 키를 드립니다.<br>키 값은 한 번만 전해 드립니다.</p></div>
+      <div class="card step"><span class="n">3</span><h3>호출</h3><p>키를 머리글에 넣어<br>결과 조회 · 분석 호출을 부릅니다.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>두 가지 API</h2>
+    <div class="grid2">
+      <div class="card api">
+        <h3><span class="verb">GET</span>결과 조회</h3>
+        <p>이미 만든 AI 분석 결과를 범위 · 영상 연도로 골라 받습니다.<br>GeoJSON · SHP · 필지 엑셀.</p>
+<pre>curl -H "Authorization: Bearer $LANDXI_KEY" \
+ -G https://api.land-xi.dev/v1/services/building/results \
+ -d region=45190 -d year=2025</pre>
+      </div>
+      <div class="card api">
+        <h3><span class="verb">POST</span>분석 호출</h3>
+        <p>범위와 영상 원천을 정하면 그 자리 영상을 불러 분석합니다.<br>끝나면 알림 주소로 알려 드립니다.</p>
+        <div class="flow"><span>차례 기다림</span><i>→</i><span>영상 부르는 중</span><i>→</i><span>AI 분석 중</span><i>→</i><span>끝</span></div>
+<pre>curl -X POST -H "Authorization: Bearer $LANDXI_KEY" \
+ https://api.land-xi.dev/v1/services/building/analyses \
+ -d '{"area":{"bbox":[127.38,35.40,127.41,35.42]},
+      "imagery":{"source":"ngii-aerial","year":2025}}'</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>쓸 수 있는 분석 서비스</h2>
+    <div class="svc">
+      <div class="card"><b>건축물</b><div class="chips"><span class="chip">결과 조회</span><span class="chip">분석 호출</span></div></div>
+      <div class="card"><b>경작 · 휴경</b><div class="chips"><span class="chip">결과 조회</span><span class="chip">분석 호출</span></div></div>
+      <div class="card"><b>주차장</b><div class="chips"><span class="chip">결과 조회</span><span class="chip">분석 호출</span></div></div>
+      <div class="card"><b>비닐하우스</b><div class="chips"><span class="chip">결과 조회</span><span class="chip no">분석 호출 준비 전</span></div></div>
+    </div>
+    <p style="color:var(--sub);font-size:14px;margin:12px 0 0">서비스마다 분석할 수 있는 영상 원천이 다릅니다. 표준 가이드의 서비스 목록에서 확인하세요.</p>
+  </section>
+
+  <section>
+    <h2>분석에 쓰는 영상 원천</h2>
+    <div class="card" style="padding:6px 10px">
+      <table class="src">
+        <tr><th>원천</th><th>시점</th><th>누가 쓸 수 있나</th></tr>
+        <tr><td>국토지리정보원 항공영상</td><td>연도를 골라 분석<br>(2011–2025)</td><td>승인된 모든 키</td></tr>
+        <tr><td>브이월드 영상</td><td>가장 최근 영상</td><td>승인된 모든 키</td></tr>
+        <tr><td>LX 보유 영상</td><td>등록된 시점</td><td>LX 내부 시스템 키</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="apply">
+    <h2>키 신청</h2>
+    <div class="card">
+      <div class="form">
+        <div class="f full"><label>신청 구분</label><div class="opts"><span class="opt">LX 내부 시스템</span><span class="opt on">LX 다른 서비스</span><span class="opt">외부 기관 시스템</span></div></div>
+        <div class="f"><label>기관 · 부서</label><div class="in">예: LX 드론영상 분석 담당</div></div>
+        <div class="f"><label>쓰는 시스템 이름</label><div class="in">예: 랜디에어</div></div>
+        <div class="f"><label>담당자</label><div class="in">이름</div></div>
+        <div class="f"><label>전화</label><div class="in">전화번호</div></div>
+        <div class="f"><label>메일 주소</label><div class="in">메일 주소</div></div>
+        <div class="f"><label>권한</label><div class="opts"><span class="opt">결과 조회</span><span class="opt on">결과 조회 + 분석 호출</span></div></div>
+        <div class="f full"><label>쓰려는 분석 서비스</label><div class="opts"><span class="opt on">건축물</span><span class="opt on">경작 · 휴경</span><span class="opt">주차장</span><span class="opt">비닐하우스</span><span class="opt">그 밖의 서비스</span></div></div>
+        <div class="f"><label>범위</label><div class="opts"><span class="opt on">전국</span><span class="opt">시도</span><span class="opt">시군구</span></div></div>
+        <div class="f"><label>호출하는 서버 주소(선택)</label><div class="in">고정 주소가 있으면 적어 주세요</div></div>
+        <div class="f full"><label>쓰는 목적</label><div class="in" style="min-height:64px">어떤 업무에 결과를 쓰는지 적어 주세요</div></div>
+      </div>
+      <div class="form-foot">
+        <p>LX 관리자가 확인한 뒤 담당자에게 연락드립니다.<br>개인정보는 신청 확인에만 씁니다.</p>
+        <span class="btn pri">신청하기</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rules">
+      <div class="card"><h3>지켜 주세요</h3><ul>
+        <li>키는 서버에만 두고 화면 코드에 넣지 마세요.</li>
+        <li>결과에는 영상 출처가 붙습니다. 쓰실 때 함께 적어 주세요.</li>
+        <li>AI 결과는 참고자료입니다. 처분은 사람이 확인한 뒤 합니다.</li>
+      </ul></div>
+      <div class="card"><h3>API로 하지 않는 것</h3><ul>
+        <li>영상 올리기 · 영상 내려받기</li>
+        <li>학습 · 모델 바꾸기</li>
+        <li>키에 없는 서비스 · 범위 밖 결과</li>
+      </ul></div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">한국국토정보공사 · Land-XI · 문의는 '키 신청'과 같은 창에서 받습니다.</div></footer>
+</body>
+</html>
