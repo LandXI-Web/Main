@@ -1,0 +1,24 @@
+[
+ {
+  "file": "mock-dash-1440-1952.png",
+  "shot_at": "2026-10-11T19:52:31",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-2/index.html",
+  "col_heights": [
+   887.796875,
+   855,
+   915.59375
+  ],
+  "errors": []
+ },
+ {
+  "file": "mock-dash-full-1440-1952.png",
+  "shot_at": "2026-10-11T19:52:31",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-2/index.html",
+  "note": "시안 PC 1440×900 첫 화면",
+  "col_heights": [
+   887.796875,
+   855,
+   915.59375
+  ]
+ }
+]
