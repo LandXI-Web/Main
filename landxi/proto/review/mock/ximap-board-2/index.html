@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 현황판 — 영상 고르고 조회</title>
+<link rel="stylesheet" href="../../../vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<link rel="stylesheet" href="board2.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m t">
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">시안은 실제 결과를 서버에서 읽습니다. LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 20차 · XI맵 현황판 2(원칙 196) 시안 — 코드 수정 0 · 서버 수정 0 · GPU 0.
+   띠에서 영상을 고르고 '조회'를 누르면 그 영상에서 나온 전국 결과가 한 번에 깔린다. 그 자리 라벨링은 객체를 누르면 지우기 · 분류 바꾸기 · 모양 고치기(꼭짓점) · 새로 그리기 · 메모.
+   실제: 영상 목록(카탈로그) · 시군구 경계 · 결과 있는 시군구의 서비스 · 결과 수 · 끝난 시각(/regions · /regions/{sgg}/results) · 구례군 2023 결과 도형(/results/.../features).
+   시안(없는 것): 영상별 전국 결과 장부(지금은 '2023 항공' 한 가지에만 결과가 있음) · 브이월드 영상 시점 · 라벨링 네 가지 동작과 원래 모양 보존 · 학습 자료 쌓임. */
+import * as K from '../../../../v3/kit/index.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'pick';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => Number(n).toLocaleString('ko-KR');
+const md = (d) => `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`;
+const now = new Date();
+document.getElementById('stampT').textContent = `${md(now)} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+/* 서비스별 색 — 이름은 서비스 카드 이름 그대로 · 서비스 지정 없는 결과는 '토지피복 4분류' */
+const SVC = {
+  'card-farm': ['경작·휴경', '#2E9E5B'], 'card-5e85a9': ['비닐하우스', '#FFB633'], 'card-45424f': ['건축물', '#3182F6'],
+  'card-389c45': ['주차장', '#8B5CF6'], 'card-d8fc01': ['곤포사일리지', '#B07A3A'], 'card-marine': ['해양쓰레기', '#0FA9A0'],
+  landcover: ['토지피복 4분류', '#6B8FA3'],
+};
+const CLS = { building: ['건물', '#3182F6'], parking: ['주차장', '#8B5CF6'], farmland: ['경작지', '#2E9E5B'], greenhouse: ['비닐하우스', '#FFB633'] };
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+let SH, ST, MAP, ui, stageEl;
+function mapReady() { document.documentElement.dataset.mapReady = '1'; }
+function mount() { stageEl = document.createElement('div'); stageEl.className = 'stage'; SH.main.appendChild(stageEl); ui = document.createElement('div'); ui.id = 'ui'; SH.main.appendChild(ui); }
+async function stage(bounds) { ST = K.createStage(stageEl, { bounds, interactive: true }); await ST.ready; MAP = ST.map; return MAP; }
+function idle() { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > 12000 ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, 3000); }); }
+const KOREA = [125.6, 33.8, 129.9, 38.5];
+const PADK = { top: 90, bottom: 150, left: 40, right: 40 };
+function simplify(pts, tol) {
+  const closed = pts.length > 2 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1];
+  const P = closed ? pts.slice(0, -1) : pts;
+  const d2 = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1]; const l2 = dx * dx + dy * dy; let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0; t = Math.max(0, Math.min(1, t)); const x = a[0] + t * dx - p[0], y = a[1] + t * dy - p[1]; return x * x + y * y; };
+  const dp = (a, b) => { if (b - a < 2) return [P[a]]; let mi = -1, md = 0; for (let i = a + 1; i < b; i++) { const d = d2(P[i], P[a], P[b]); if (d > md) { md = d; mi = i; } } return md > tol * tol ? [...dp(a, mi), ...dp(mi, b)] : [P[a]]; };
+  let out = dp(0, P.length - 1); out.push(P[P.length - 1]);
+  if (out.length < 4) out = P.slice();
+  if (closed) out.push(out[0]);
+  return out;
+}
+function bboxOf(g) { let b = null; const walk = (c) => { if (typeof c[0] === 'number') { b = b ? [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])] : [c[0], c[1], c[0], c[1]]; } else c.forEach(walk); }; walk(g.coordinates); return b; }
+
+/* ── 영상 목록(실제 카탈로그에서 센다) ── */
+async function imageryList() {
+  const cat = await api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', locale: 'ko' })).catch(() => ({ items: [] }));
+  const im = (cat.items || []).filter((i) => i.role === 'imagery');
+  const n2023 = im.filter((i) => /-2023-aerial$|^ap25-/.test(i.id)).length;
+  const n2020 = im.filter((i) => /-2020-aerial$/.test(i.id)).length;
+  const up = im.filter((i) => i.source !== 'external' && !/-20\d\d-aerial$|^ap25-|change|landcover|lc-gt/.test(i.id)).length;
+  return [
+    { id: 'vw', t: '브이월드 최신', s: '위성 · 전국', r: '시점 — 브이월드가 주지 않음', mk: 1 },
+    { id: 'ngii2023', t: '국토지리정보원 항공 2023', s: `25cm · 등록 ${n2023}곳`, r: '결과 있는 곳 19곳', on: 1 },
+    { id: 'ngii2020', t: '국토지리정보원 항공 2020', s: `등록 ${n2020}곳`, r: '결과 없음' },
+    { id: 'up', t: '올린 영상', s: `드론 · 위성 ${up}개(남원 · 익산 · 제주)`, r: '결과 남원 1곳' },
+    { id: 'kg', t: '키르기스스탄 Sentinel-2 2025', s: '해외 · 사업 나라', r: '군 41곳' },
+  ];
+}
+
+/* ── 띠 — 영상 고르기 · 조회 · 서비스 · 레이어(글자 단추만) ── */
+function strip({ pick, legend = [], when = '', going = false, done = false }) {
+  return `<div class="strip">
+    <div class="grp"><span class="lab">영상</span><button class="pick" data-open="picker">${esc(pick.t)} <small>${esc(pick.s)}</small> <span class="caret">▾</span></button></div>
+    <button class="go" id="go" ${going ? 'disabled' : ''}>${going ? '조회 중' : done ? '다시 조회' : '조회'}</button>
+    ${legend.length ? `<div class="grp"><span class="lab">서비스</span>${legend.map(([t, c]) => `<b class="on"><i style="background:${c}"></i>${esc(t)}</b>`).join('')}</div>` : ''}
+    ${done ? `<div class="grp"><button data-open="layers">레이어</button></div>` : ''}
+    <span class="sp"></span>
+    ${when ? `<div class="when">${when}</div>` : ''}
+  </div>`;
+}
+function picker(list) {
+  return `<div class="picker"><h3>어느 영상의 결과를 볼까요</h3><ul>${list.map((o) => `<li class="${o.on ? 'on' : ''}" data-img="${o.id}"><div><b>${esc(o.t)}</b><small>${esc(o.s)}</small></div><em class="${o.mk ? 'mk' : ''}">${esc(o.r)}</em></li>`).join('')}</ul>
+    <p class="ft">고른 영상에서 나온 AI 분석 결과만 전국에 깔립니다. <span class="mk">시안 — 영상별 결과 장부</span></p></div>`;
+}
+function hud({ k, h1, p }) { return `<section class="hud"><div class="k">${esc(k)}</div><h1>${esc(h1)}</h1><p>${p}</p></section>`; }
+function wire() {
+  for (const b of ui.querySelectorAll('[data-open=picker]')) b.onclick = () => { location.search = '?v=pick'; };
+  const go = ui.querySelector('#go'); if (go) go.onclick = () => { location.search = '?v=query&hold=0'; };
+  for (const li of ui.querySelectorAll('[data-img]')) li.onclick = () => { if (li.dataset.img === 'kg') location.href = '../ximap-board/index.html?v=global'; else location.search = '?v=query&hold=0'; };
+  const ly = ui.querySelector('[data-open=layers]'); if (ly) ly.onclick = () => { const el = ui.querySelector('.layers'); if (el) el.remove(); else ui.insertAdjacentHTML('beforeend', `<div class="layers"><ul><li class="on">AI 분석 결과<span>켬</span></li><li class="on">시군구 수<span>켬</span></li><li class="on">시군구 경계<span>켬</span></li><li>지적선<span>끔</span></li></ul></div>`); };
+}
+
+/* ── 전국 결과(실제) — 시군구마다 결과 세트를 읽어 서비스 · 수 · 끝난 시각 ── */
+let REG, GEO;
+async function regions() {
+  const [g, l] = await Promise.all([api('/regions?geom=1&limit=400'), api('/regions?limit=400')]);
+  REG = (l.items || []).filter((r) => r.n_findings?.value > 0);
+  GEO = new Map((g.features || g.items || []).map((f) => { const p = f.properties || f; return [String(p.sgg_cd || p.code), f.geometry]; }));
+  return REG;
+}
+function metaOf(items) {
+  const when = (it) => Date.parse(it.finished_at || it.count?.as_of || 0) || 0;
+  const jobs = items.filter((it) => it.from === 'job' && /2023/.test(it.name?.ko || '')).sort((a, b) => when(b) - when(a));
+  const last = jobs[0]; if (!last) return null;
+  const svc = last.card_id && SVC[last.card_id] ? last.card_id : 'landcover';
+  return { svc, n: last.count?.value || 0, t: when(last), running: !last.finished_at };
+}
+function addRegionLayers() {
+  MAP.addSource('sgg', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  const CM = ['match', ['get', 'svc'], ...Object.entries(SVC).flatMap(([k, [, c]]) => [k, c]), 'rgba(0,0,0,0)'];
+  MAP.addLayer({ id: 'sgg-fill', type: 'fill', source: 'sgg', paint: { 'fill-color': CM, 'fill-opacity': 0.74 } }, 'slot-overlay');
+  MAP.addLayer({ id: 'sgg-line', type: 'line', source: 'sgg', paint: { 'line-color': '#fff', 'line-width': 1.4 } }, 'slot-overlay');
+  MAP.on('click', 'sgg-fill', (e) => { const f = e.features?.[0]; if (!f) return; if (f.properties.cd === '12730') location.search = '?v=label'; else MAP.fitBounds(bboxOf(f.geometry), { padding: 80, duration: 1200 }); });
+  MAP.on('mouseenter', 'sgg-fill', () => { MAP.getCanvas().style.cursor = 'pointer'; });
+  MAP.on('mouseleave', 'sgg-fill', () => { MAP.getCanvas().style.cursor = ''; });
+}
+const FEATS = []; const MARKS = [];
+function putRegion(r, m) {
+  const geom = GEO.get(String(r.sgg_cd)); if (!geom) return;
+  FEATS.push({ type: 'Feature', geometry: geom, properties: { cd: String(r.sgg_cd), svc: m.svc } });
+  MAP.getSource('sgg').setData({ type: 'FeatureCollection', features: FEATS });
+  const el = document.createElement('div'); el.className = 'cnt';
+  el.innerHTML = `<i style="background:${SVC[m.svc][1]}"></i>${esc(r.name)} ${nf(m.n)}${m.running ? '<small>진행 중</small>' : ''}`;
+  const c = r.center || [(r.bbox[0] + r.bbox[2]) / 2, (r.bbox[1] + r.bbox[3]) / 2];
+  MARKS.push(new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(c).addTo(MAP));
+  spread();
+}
+/* 꼬리표끼리 겹치면 아래로 한 줄씩 비킨다(구현 때는 지도 글자 층의 충돌 처리로) */
+function spread() {
+  const boxes = [];
+  for (const m of MARKS) {
+    const p = MAP.project(m.getLngLat()); const el = m.getElement(); const w = el.offsetWidth || 90, h = 22;
+    const hit = (dx, dy) => boxes.some((b) => Math.abs(b.x - (p.x + dx)) < (b.w + w) / 2 + 4 && Math.abs(b.y - (p.y + dy)) < h);
+    let best = [0, 0];
+    outer: for (let k = 0; k <= 10; k++) for (const dy of k ? [k * 20, -k * 20] : [0]) for (const dx of [0, 60, -60]) { if (!hit(dx, dy)) { best = [dx, dy]; break outer; } }
+    m.setOffset(best); boxes.push({ x: p.x + best[0], y: p.y + best[1], w });
+  }
+}
+
+/* ═══ 1 · 조회 전 — 영상 고르기 ═══ */
+async function pick() {
+  const list = await imageryList(); const on = list.find((o) => o.on);
+  ui.innerHTML = strip({ pick: on }) + picker(list)
+    + hud({ k: 'XI맵 · 대한민국', h1: '전국 AI 현황판', p: '영상을 고르고 조회를 누르면<br>그 영상에서 나온 전국 분석 결과가 한 번에 깔립니다.' });
+  wire();
+  await stage(KOREA); MAP.fitBounds(KOREA, { padding: PADK, duration: 0 });
+  await idle(); mapReady();
+}
+
+/* ═══ 2 · 조회 중 — 시군구가 들어오는 대로 차오름(숫자 = 들어온 곳 수 · 실제) ═══ */
+async function query() {
+  const hold = Number(q.get('hold') ?? 0);
+  const list = await imageryList(); const on = list.find((o) => o.on);
+  ui.innerHTML = strip({ pick: on, going: true })
+    + `<div class="wait"><h2>전국 결과를 불러오는 중</h2><p>${esc(on.t)} 영상에서 나온 결과를 시군구마다 깔고 있습니다.</p><div class="bar"><i id="bar"></i></div><div class="n"><span id="n1">들어온 곳 0</span><span id="n2"></span></div></div>`
+    + hud({ k: 'XI맵 · 대한민국', h1: '전국 AI 현황판', p: '조회 중 — 들어오는 시군구부터 바로 칠해집니다.' });
+  wire();
+  await stage(KOREA); MAP.fitBounds(KOREA, { padding: PADK, duration: 0 });
+  addRegionLayers();
+  const rs = await regions();
+  document.getElementById('n2').textContent = `전체 ${rs.length}곳`;
+  let k = 0;
+  for (const r of rs) {
+    if (hold && k >= hold) break;
+    const items = (await api(`/regions/${r.sgg_cd}/results`).catch(() => ({ items: [] }))).items || [];
+    const m = metaOf(items); if (!m) continue;
+    putRegion(r, m); k += 1;
+    document.getElementById('bar').style.width = `${Math.round(k / rs.length * 100)}%`;
+    document.getElementById('n1').textContent = `들어온 곳 ${k}`;
+    if (!hold) await new Promise((d) => setTimeout(d, 90));
+  }
+  if (!hold) { location.search = '?v=board'; return; }
+  await idle(); mapReady();
+}
+
+/* ═══ 3 · 조회 뒤 — 전국에 한 번에 ═══ */
+async function board() {
+  const list = await imageryList(); const on = list.find((o) => o.on);
+  const rs = await regions();
+  const sets = await Promise.all(rs.map((r) => api(`/regions/${r.sgg_cd}/results`).catch(() => ({ items: [] }))));
+  const metas = rs.map((r, i) => [r, metaOf(sets[i].items || [])]).filter(([, m]) => m);
+  const present = [...new Set(metas.map(([, m]) => m.svc))].sort((a, b) => Object.keys(SVC).indexOf(a) - Object.keys(SVC).indexOf(b));
+  const lastT = Math.max(...metas.filter(([, m]) => !m.running).map(([, m]) => m.t));
+  ui.innerHTML = strip({ pick: on, legend: present.map((s) => SVC[s]), done: true })
+    + hud({ k: `XI맵 · 대한민국 · 2023년 촬영 영상 · 마지막 분석 ${md(new Date(lastT))}`, h1: '전국 AI 현황판', p: `시군구 <b>${metas.length}곳</b> · 서비스 ${present.length}가지<br>시군구를 누르면 확대되고, 객체를 누르면 그 자리에서 고칩니다.` });
+  wire();
+  await stage(KOREA); MAP.fitBounds(KOREA, { padding: PADK, duration: 0 });
+  addRegionLayers();
+  for (const [r, m] of metas) putRegion(r, m);
+  await idle(); mapReady();
+}
+
+/* ═══ 4~6 · 그 자리 라벨링(구례군 2023 실제 결과 도형) ═══ */
+const FIXBOX = [127.44, 35.19, 127.49, 35.225];
+async function labelScene(kind) {
+  const list = await imageryList(); const on = list.find((o) => o.on);
+  const rs = await api('/regions/12730/results'); const it = (rs.items || []).find((x) => x.from === 'job') || (rs.items || [])[0];
+  const ghx = await api(`/results/${it.set}/features?cls=greenhouse&limit=400`);
+  const c0 = (f) => (f.geometry.type === 'Polygon' ? f.geometry.coordinates[0][0] : f.geometry.coordinates[0][0][0]);
+  const inBox = (f, b) => { const c = c0(f); return c[0] > b[0] && c[0] < b[2] && c[1] > b[1] && c[1] < b[3]; };
+  let cand = (ghx.features || []).filter((f) => inBox(f, FIXBOX) && (f.properties.area_m2 || 0) >= 150 && f.properties.conf < 0.8).sort((a, b) => b.properties.area_m2 - a.properties.area_m2);
+  if (!cand.length) cand = (ghx.features || []).filter((f) => (f.properties.area_m2 || 0) >= 150).sort((a, b) => a.properties.conf - b.properties.conf);
+  const pick = cand[0]; const pp = pick.properties; const pb = bboxOf(pick.geometry);
+  const pc = [(pb[0] + pb[2]) / 2, (pb[1] + pb[3]) / 2];
+  const nm = CLS[pp.cls_en] || [pp.cls, '#0FA9A0'];
+  // 결과 도형은 화소를 따라 그린 것이라 꼭짓점이 수십 개 — 편집하려면 단순화해야 한다(서버 기능 — 시안에서는 약 0.8m 허용치로 여기서 줄임)
+  const ring = simplify((pick.geometry.type === 'Polygon' ? pick.geometry.coordinates[0] : pick.geometry.coordinates[0][0]).slice(), 0.000016);
+  // 모양 고치기(시안) — 꼭짓점 하나를 끌어 옮긴 모양. 원래 모양은 점선으로 함께 남는다
+  const mi = Math.max(1, Math.floor((ring.length - 1) / 3));
+  const dx = (pb[2] - pb[0]) * 0.22, dy = (pb[3] - pb[1]) * 0.28;
+  const moved = ring.map((c, i) => (i === mi || (i === 0 && mi === 0) ? [c[0] + dx, c[1] + dy] : c));
+  if (ring.length > 1 && JSON.stringify(ring[0]) === JSON.stringify(ring[ring.length - 1]) && mi === 0) moved[moved.length - 1] = moved[0];
+  const movedPoly = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [moved] }, properties: {} };
+  const verts = { type: 'FeatureCollection', features: moved.slice(0, -1).map((c, i) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: { drag: i === mi ? 1 : 0 } })) };
+  const mids = { type: 'FeatureCollection', features: moved.slice(0, -1).map((c, i) => { const d = moved[i + 1]; return { type: 'Feature', geometry: { type: 'Point', coordinates: [(c[0] + d[0]) / 2, (c[1] + d[1]) / 2] }, properties: {} }; }) };
+
+  const head = strip({ pick: on, legend: [SVC['card-farm']], done: true, when: `영상 2023년 촬영 · 25cm` });
+  const whereK = 'XI맵 · 구례군 구례읍';
+  if (kind === 'label') {
+    ui.innerHTML = head + hud({ k: whereK, h1: '그 자리에서 라벨링', p: '객체를 누르면 작은 칸이 붙습니다. 메뉴는 그대로, 지도 안에서 끝납니다.' })
+      + `<div class="pop" id="pop"><div class="hd"><i style="background:${nm[1]}"></i><b>${esc(nm[0])}</b><small>신뢰도 ${Math.round(pp.conf * 100)}%</small></div>
+        <dl><dt>면적</dt><dd>${nf(Math.round(pp.area_m2 || 0))}㎡</dd><dt>영상</dt><dd>국토지리정보원 항공 2023 · 25cm</dd><dt>모델</dt><dd>경작·휴경 분석서비스 <span class="mk">판 — 시안</span></dd></dl>
+        <div class="acts"><span>지우기</span><span>분류 바꾸기</span><span class="on">모양 고치기</span><span>새로 그리기</span><span>메모</span></div>
+        <p class="ft">고친 것은 원래 모양과 함께 남고 학습 자료로 쌓입니다.</p></div>`;
+  } else if (kind === 'vertex') {
+    ui.innerHTML = head + hud({ k: whereK, h1: '모양 고치기', p: '꼭짓점을 끌어 옮기고, 변 가운데 점을 누르면 더하고,<br>꼭짓점을 두 번 누르면 뺍니다. 원래 모양은 점선으로 남습니다.' })
+      + `<div class="bar2" id="bar2"><b>모양 고치기</b><span>꼭짓점 ${moved.length - 1}개</span><button>되돌리기</button><button class="p">다 고침</button></div>`
+      + `<div class="tag" id="dragTag">끌어서 옮기는 중</div>`;
+  } else {
+    ui.innerHTML = head + hud({ k: whereK, h1: '고친 것이 남습니다', p: `오늘 고친 것 <b>3</b> — 모양 1 · 지움 1 · 새로 그림 1<br>원래 모양과 함께 남아 학습 자료로 쌓입니다. <span class="mk">시안</span>` })
+      + `<div class="tag" id="fixTag">모양 고침 · 학습 자료</div><div class="tag" id="delTag">지움</div><div class="tag lite" id="newTag">새로 그리는 중 · 비닐하우스</div>
+         <div class="pop" id="memo" style="width:280px"><div class="hd"><b>메모</b></div><textarea readonly>뒤쪽 비닐하우스 두 동이 하나로 잡혔음</textarea><p class="ft">고친 사람 · 시각과 함께 남습니다.</p></div>`;
+  }
+  wire();
+  await stage(FIXBOX);
+  MAP.addSource('r', await sourceSpec(it));
+  const CM = ['match', ['coalesce', ['get', 'cls_en'], ['get', 'cls']], 'building', '#3182F6', '건물', '#3182F6', 'parking', '#8B5CF6', '주차장', '#8B5CF6', 'farmland', '#2E9E5B', '경작지', '#2E9E5B', 'greenhouse', '#FFB633', '비닐하우스', '#FFB633', '#0FA9A0'];
+  const SL = it.layer || 'results';
+  MAP.addLayer({ id: 'r-fill', type: 'fill', source: 'r', 'source-layer': SL, paint: { 'fill-color': CM, 'fill-opacity': 0.28 } });
+  MAP.addLayer({ id: 'r-line', type: 'line', source: 'r', 'source-layer': SL, paint: { 'line-color': CM, 'line-width': 1.4 } });
+  const span = Math.max(pb[2] - pb[0], (pb[3] - pb[1]) * 1.3, 0.0012);
+  const right = kind === 'label' ? 440 : 120;
+  MAP.fitBounds([pc[0] - span * 1.6, pc[1] - span * 1.1, pc[0] + span * 1.6, pc[1] + span * 1.1], { padding: { top: 90, bottom: 140, left: 80, right }, duration: 0 });
+
+  if (kind === 'label') {
+    MAP.addSource('pick', { type: 'geojson', data: pick });
+    MAP.addLayer({ id: 'pick-fill', type: 'fill', source: 'pick', paint: { 'fill-color': nm[1], 'fill-opacity': 0.5 } });
+    MAP.addLayer({ id: 'pick-line', type: 'line', source: 'pick', paint: { 'line-color': '#fff', 'line-width': 5 } });
+    MAP.addLayer({ id: 'pick-line2', type: 'line', source: 'pick', paint: { 'line-color': '#1C1F25', 'line-width': 2.5 } });
+  } else {
+    MAP.addSource('orig', { type: 'geojson', data: pick });
+    MAP.addLayer({ id: 'orig-line', type: 'line', source: 'orig', paint: { 'line-color': '#fff', 'line-width': 2, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } });
+    MAP.addSource('new', { type: 'geojson', data: movedPoly });
+    MAP.addLayer({ id: 'new-fill', type: 'fill', source: 'new', paint: { 'fill-color': nm[1], 'fill-opacity': 0.45 } });
+    MAP.addLayer({ id: 'new-line', type: 'line', source: 'new', paint: { 'line-color': '#1C1F25', 'line-width': 2.5 } });
+  }
+  if (kind === 'vertex') {
+    MAP.addSource('mids', { type: 'geojson', data: mids });
+    MAP.addLayer({ id: 'mids', type: 'circle', source: 'mids', paint: { 'circle-radius': 4, 'circle-color': '#fff', 'circle-stroke-color': '#1C1F25', 'circle-stroke-width': 1, 'circle-opacity': 0.9 } });
+    MAP.addSource('verts', { type: 'geojson', data: verts });
+    MAP.addLayer({ id: 'verts', type: 'circle', source: 'verts', paint: { 'circle-radius': ['case', ['==', ['get', 'drag'], 1], 8, 5], 'circle-color': ['case', ['==', ['get', 'drag'], 1], '#1C1F25', '#fff'], 'circle-stroke-color': ['case', ['==', ['get', 'drag'], 1], '#fff', '#1C1F25'], 'circle-stroke-width': 2 } });
+  }
+  let delF = null, newLine = null;
+  if (kind === 'done') {
+    await idle();
+    const seen = MAP.querySourceFeatures('r', { sourceLayer: SL }).filter((f) => (f.properties.area_m2 || 0) >= 120);
+    const px = MAP.project(pc); const dpx = (f) => { const b = bboxOf(f.geometry); const p = MAP.project([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]); return [Math.hypot(p.x - px.x, p.y - px.y), p]; };
+    const c2 = seen.map((f) => [f, ...dpx(f)]).filter(([, d, p]) => d > 150 && p.x > 140 && p.x < 900 && p.y > 160 && p.y < 700).sort((a, b) => a[1] - b[1]);
+    if (c2.length) {
+      delF = { type: 'Feature', geometry: c2[0][0].geometry, properties: {} };
+      MAP.addSource('del', { type: 'geojson', data: delF });
+      MAP.addLayer({ id: 'del-fill', type: 'fill', source: 'del', paint: { 'fill-color': '#1C1F25', 'fill-opacity': 0.18 } });
+      MAP.addLayer({ id: 'del-line', type: 'line', source: 'del', paint: { 'line-color': '#1C1F25', 'line-width': 2, 'line-dasharray': [1.2, 1.2] } });
+    }
+    // 새로 그리는 중(시안) — 고른 객체 아래쪽 빈 자리에 점 셋
+    const w = (pb[2] - pb[0]), h = (pb[3] - pb[1]);
+    const o = [pb[0] - w * 0.4, pb[1] - h * 1.6];
+    const pts = [[o[0], o[1]], [o[0] + w * 0.9, o[1] - h * 0.1], [o[0] + w * 0.95, o[1] - h * 0.7]];
+    newLine = { type: 'Feature', geometry: { type: 'LineString', coordinates: pts }, properties: {} };
+    MAP.addSource('nl', { type: 'geojson', data: newLine });
+    MAP.addLayer({ id: 'nl-line', type: 'line', source: 'nl', paint: { 'line-color': '#fff', 'line-width': 2.5 } });
+    MAP.addSource('np', { type: 'geojson', data: { type: 'FeatureCollection', features: pts.map((c) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: {} })) } });
+    MAP.addLayer({ id: 'np', type: 'circle', source: 'np', paint: { 'circle-radius': 6, 'circle-color': '#fff', 'circle-stroke-color': '#1C1F25', 'circle-stroke-width': 2 } });
+  }
+  const place = () => {
+    const at = (id, ll, dx = 0, dy = 0) => { const el = document.getElementById(id); if (!el) return; const p = MAP.project(ll); el.style.left = `${p.x + dx}px`; el.style.top = `${p.y + dy}px`; };
+    at('pop', [pb[2], pc[1]], 10, 0);
+    at('bar2', [pc[0], pb[1]], 0, 28);
+    at('dragTag', moved[mi]);
+    at('fixTag', [(pb[0] + pb[2]) / 2, Math.max(pb[3], moved[mi][1])]);
+    if (delF) { const b = bboxOf(delF.geometry); at('delTag', [(b[0] + b[2]) / 2, b[3]]); }
+    if (newLine) { const c = newLine.geometry.coordinates; at('newTag', c[c.length - 1]); }
+    at('memo', [pb[2], pc[1]], 10, 0);
+  };
+  MAP.on('move', place); place();
+  await idle(); place(); mapReady();
+}
+
+await ensureLogin();
+const who = await K.whoami();
+SH = K.shell({ who, home: 'xi-clean', rail: K.staffMenu('ximap') });
+mount();
+const SCENES = { pick, query, board, label: () => labelScene('label'), vertex: () => labelScene('vertex'), done: () => labelScene('done') };
+await (SCENES[v] || pick)();
+</script>
+</body>
+</html>

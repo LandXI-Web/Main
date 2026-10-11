@@ -1,0 +1,38 @@
+[
+ {
+  "file": "c1-pick-imagery-1440-1656.png",
+  "shot_at": "2026-10-11T16:56:53",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=pick",
+  "errors": []
+ },
+ {
+  "file": "c2-query-filling-1440-1657.png",
+  "shot_at": "2026-10-11T16:57:14",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=query&hold=11",
+  "errors": []
+ },
+ {
+  "file": "c3-board-korea-1440-1657.png",
+  "shot_at": "2026-10-11T16:57:26",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=board",
+  "errors": []
+ },
+ {
+  "file": "c4-label-object-1440-1657.png",
+  "shot_at": "2026-10-11T16:57:37",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=label",
+  "errors": []
+ },
+ {
+  "file": "c5-label-vertex-1440-1657.png",
+  "shot_at": "2026-10-11T16:57:47",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=vertex",
+  "errors": []
+ },
+ {
+  "file": "c6-label-done-1440-1658.png",
+  "shot_at": "2026-10-11T16:58:01",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=done",
+  "errors": []
+ }
+]

@@ -1,0 +1,105 @@
+/* 설계 20차 · XI맵 현황판 2 — 셸(마스트 · LX 직원 메뉴)은 kit 그대로, 지도 위 부품만 여기. 아이콘 0 · 글자 단추만(원칙 126) */
+body.m { background: var(--bg-0); color: var(--ink); font-family: var(--font-body); }
+.k-main .stage { position: absolute; inset: 0; }
+#ui { position: absolute; inset: 0; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+
+/* 지도 위 띠 — 영상 고르기 · 조회 · 서비스 · 레이어 (카드 1) */
+.strip { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; gap: 8px; }
+.strip .grp { display: inline-flex; align-items: center; gap: 2px; height: 44px; padding: 0 6px; background: rgba(255,255,255,.96); border-radius: var(--r-8); box-shadow: var(--elev-map); }
+.strip .lab { padding: 0 8px; font: 500 13px/1 var(--font-body); color: var(--sub); }
+.strip .grp b, .strip .grp button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: none; font: 500 14px/1 var(--font-body); color: var(--sub); cursor: pointer; white-space: nowrap; }
+.strip .grp b.on, .strip .grp button.on { color: var(--ink); background: var(--bg-0); }
+.strip .grp b i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.strip .pick { color: var(--ink); font-weight: 600; }
+.strip .pick small { font: 500 12px/1 var(--font-body); color: var(--sub); }
+.strip .pick .caret { font: 500 12px/1 var(--font-body); color: var(--sub); }
+.strip .go { height: 44px; padding: 0 22px; white-space: nowrap; border: 0; border-radius: var(--r-8); background: var(--ink); color: #fff; font: 600 15px/1 var(--font-body); cursor: pointer; box-shadow: var(--elev-map); }
+.strip .go[disabled] { opacity: .55; cursor: default; }
+.strip .sp { flex: 1; }
+.strip .when { height: 44px; display: inline-flex; align-items: center; padding: 0 14px; background: rgba(255,255,255,.96); border-radius: var(--r-8); box-shadow: var(--elev-map); font: 500 13px/1 var(--font-body); color: var(--ink-2); white-space: nowrap; }
+.strip .when b { font-weight: 700; color: var(--ink); margin-left: 6px; }
+
+/* 영상 고르기 — 띠 아래 흰 카드(카드 2) · 한 줄 = 영상 한 종류 · 오른쪽에 어디까지 있는지 */
+.picker { position: absolute; top: 68px; left: 16px; width: 440px; background: rgba(255,255,255,.97); border-radius: var(--r-16); box-shadow: var(--elev-map); padding: 10px; }
+.picker h3 { margin: 8px 14px 6px; font: 500 13px/18px var(--font-body); color: var(--sub); }
+.picker ul { list-style: none; margin: 0; padding: 0; }
+.picker li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--r-8); cursor: pointer; }
+.picker li.on { background: var(--bg-0); }
+.picker li b { font: 600 15px/22px var(--font-body); color: var(--ink); }
+.picker li small { display: block; font: 400 13px/18px var(--font-body); color: var(--sub); }
+.picker li em { font: 500 13px/18px var(--font-num); color: var(--ink-2); font-style: normal; white-space: nowrap; text-align: right; }
+.picker li em.mk { color: var(--sub); }
+.picker .ft { margin: 8px 14px 6px; font: 400 12px/18px var(--font-body); color: var(--sub); }
+.picker .ft .mk, .mk { display: inline-block; padding: 0 6px; border-radius: 4px; background: var(--bg-0); color: var(--sub); font: 500 11px/18px var(--font-body); }
+
+/* 레이어 카드(띠 오른쪽 아래) */
+.layers { position: absolute; top: 68px; right: 16px; width: 220px; background: rgba(255,255,255,.97); border-radius: var(--r-16); box-shadow: var(--elev-map); padding: 10px; }
+.layers li { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; font: 500 14px/20px var(--font-body); color: var(--ink); list-style: none; }
+.layers li span { font: 500 13px/1 var(--font-body); color: var(--sub); }
+.layers li.on span { color: var(--ink); }
+.layers ul { margin: 0; padding: 0; }
+
+/* 조회 중 — 가운데 막대 하나(법전 §7 기다림 = 막대 1 + 글 한 줄) · 숫자는 들어온 시군구 수(실제)뿐 */
+.wait { position: absolute; left: 50%; top: 76px; transform: translate(-50%, 0); width: 360px; padding: 16px 20px 14px; background: rgba(255,255,255,.97); border-radius: var(--r-16); box-shadow: var(--elev-map); }
+.wait h2 { margin: 0 0 4px; font: 700 18px/26px var(--font-display); color: var(--ink); }
+.wait p { margin: 0 0 12px; font: 400 14px/20px var(--font-body); color: var(--sub); }
+.wait .bar { height: 6px; border-radius: 3px; background: var(--bg-0); overflow: hidden; }
+.wait .bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .35s ease; }
+.wait .n { margin-top: 8px; font: 500 13px/18px var(--font-num); color: var(--ink-2); display: flex; justify-content: space-between; }
+
+/* HUD — 카드 없이 영상 위 흰 글자(법전 §6) */
+.hud { position: absolute; left: 24px; bottom: 56px; color: var(--hud-ink); text-shadow: var(--hud-shadow); max-width: 640px; }
+.hud .k { font: 500 14px/20px var(--font-body); opacity: .92; }
+.hud h1 { margin: 2px 0 6px; font: 800 36px/44px var(--font-display); letter-spacing: -.02em; text-wrap: balance; }
+.hud p { margin: 0; font: 500 15px/22px var(--font-body); }
+.hud p b { font-weight: 700; }
+
+/* 시군구 수 꼬리표(지도 위 작은 흰 알약 · 실제 결과 수) */
+.cnt { padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.95); box-shadow: 0 1px 3px rgba(0,0,0,.25); font: 600 12px/16px var(--font-num); color: var(--ink); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.cnt i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.cnt small { font: 500 11px/16px var(--font-body); color: var(--sub); }
+
+/* 그 자리 라벨링 — 객체 옆에 붙는 작은 칸(카드 3) · 모드 바꾸기 없음 */
+.pop { position: absolute; width: 340px; background: rgba(255,255,255,.97); border-radius: var(--r-16); box-shadow: var(--elev-map); padding: 16px 16px 14px; transform: translate(14px, -50%); }
+.pop::before { content: ""; position: absolute; left: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; background: rgba(255,255,255,.97); transform: rotate(45deg); border-radius: 2px; }
+.pop .hd { display: flex; align-items: center; gap: 8px; }
+.pop .hd i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.pop .hd b { font: 700 17px/24px var(--font-display); color: var(--ink); }
+.pop .hd small { margin-left: auto; font: 500 13px/1 var(--font-num); color: var(--sub); }
+.pop dl { margin: 10px 0 0; display: grid; grid-template-columns: 44px 1fr; row-gap: 4px; column-gap: 8px; }
+.pop dt { font: 500 13px/20px var(--font-body); color: var(--sub); }
+.pop dd { margin: 0; font: 500 14px/20px var(--font-body); color: var(--ink-2); }
+.pop .acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+.pop .acts span { height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rule); border-radius: var(--r-8); font: 500 13px/1 var(--font-body); color: var(--ink); cursor: pointer; }
+.pop .acts span.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pop .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pop .chips span { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-8); background: var(--bg-0); font: 500 13px/1 var(--font-body); color: var(--ink-2); }
+.pop .chips span i { width: 8px; height: 8px; border-radius: 2px; }
+.pop .chips span.on { outline: 2px solid var(--ink); }
+.pop textarea { width: 100%; box-sizing: border-box; margin-top: 10px; height: 56px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: var(--r-8); font: 400 13px/18px var(--font-body); resize: none; }
+.pop .ft { margin: 12px 0 0; font: 400 12px/18px var(--font-body); color: var(--sub); }
+
+/* 모양 고치기 작은 막대(칸 대신 — 지도 자리 넓게) */
+.bar2 { position: absolute; transform: translate(-50%, 0); display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; background: rgba(255,255,255,.97); border-radius: var(--r-8); box-shadow: var(--elev-map); white-space: nowrap; }
+.bar2 b { font: 600 14px/20px var(--font-body); color: var(--ink); }
+.bar2 span { font: 400 13px/20px var(--font-body); color: var(--sub); }
+.bar2 button { height: 32px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; font: 500 13px/1 var(--font-body); color: var(--ink); cursor: pointer; }
+.bar2 button.p { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* 지도 위 작은 꼬리표(고친 자리 · 끌고 있는 꼭짓점 · 새로 그리는 중) */
+.tag { position: absolute; transform: translate(-50%, -100%); margin-top: -10px; padding: 4px 8px; border-radius: 6px; background: var(--ink); color: #fff; font: 500 12px/16px var(--font-body); white-space: nowrap; }
+.tag::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: var(--ink); transform: rotate(45deg); }
+.tag.lite { background: rgba(255,255,255,.97); color: var(--ink); box-shadow: var(--elev-map); }
+.tag.lite::after { background: rgba(255,255,255,.97); }
+
+/* 시안 도장 · 로그인 */
+.stamp { position: fixed; right: 16px; bottom: 84px; z-index: 50; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--r-8); background: var(--ink); color: #fff; font: 500 12px/16px var(--font-body); }
+.stamp b { font: 800 14px/16px var(--font-display); letter-spacing: .02em; }
+.login { position: fixed; inset: 0; z-index: 60; background: var(--bg-0); display: grid; place-items: center; }
+.login form { width: 360px; background: #fff; border-radius: var(--r-16); padding: 32px; display: grid; gap: 12px; }
+.login h1 { margin: 0; font: 800 24px/32px var(--font-display); }
+.login .note { margin: 0 0 4px; font: 400 14px/20px var(--font-body); color: var(--sub); }
+.login input { height: 44px; padding: 0 12px; border: 1px solid var(--rule); border-radius: var(--r-8); font: 400 15px var(--font-body); }
+.login button { height: 44px; border: 0; border-radius: var(--r-8); background: var(--ink); color: #fff; font: 500 15px var(--font-body); cursor: pointer; }
+.login .err { margin: 0; min-height: 18px; color: var(--warn); font: 400 13px/18px var(--font-body); }
