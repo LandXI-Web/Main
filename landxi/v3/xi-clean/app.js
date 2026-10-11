@@ -15,6 +15,10 @@ import { analyzer } from './analyze.js';
 import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
 import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 결과(원칙 135 · 요약 한 출처)
+import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX 직원 메뉴 그대로(바퀴 5 · 원칙 191 · 196 18:52 고침)
+import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
+import { createBoard, boardPromise } from './board.js';           // 열자마자 전국 결과(바퀴 5)
+import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -45,7 +49,9 @@ const PRE = SESS ? {
   emd: swr('/survey/stats?by=emd').catch(() => ({ items: [], failed: true })),
   rule: swr('/survey/stats?by=rule').catch(() => ({ items: [], failed: true })),
   // 전국 요약 — 첫 HUD 숫자를 다른 자료와 함께 미리(차례로 부르면 첫 진입이 그만큼 늦다 · GPT2-4)
-  sum: SESS.realm === 'lx' && !new URLSearchParams(location.search).get('region') ? api('/summary') : null,
+  sum: null,                                          // LX = 전국 결과(바퀴 5)가 첫 화면 — 전국 요약은 부르지 않는다
+  // 전국 결과 한 번 호출(바퀴 5) — LX 계정은 열자마자 지도에 칠한다(관문 · 지도와 함께 출발)
+  board: boardPromise(SESS.realm === 'lx'),
 } : {};
 PRE.sum?.catch(() => {});
 /* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
@@ -135,7 +141,7 @@ const S = {
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null;
 
 /* ═══ 부팅 ═══ */
 async function boot() {
@@ -154,11 +160,15 @@ async function boot() {
     : [['layers', '층'], ['swipe', '가르기'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
-  SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: 'grid' })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
-  SH.rail.setAttribute('aria-label', '도구');
+  S.board = S.lx;                                    // 열자마자 전국 결과(LX 계정 · 바퀴 5)
+  // 왼쪽 = 역할 메뉴 그대로(LX 직원 · 관리자 = 직원 메뉴의 XI맵 칸 · 기관 = 기관 메뉴) — XI맵 도구는 지도 오른쪽 위 한 줄(아이콘 + 글자 · 원칙 199)
+  const rail = ['lx/staff', 'lx/admin'].includes(S.key) ? staffMenu('ximap') : S.tenant ? govRail({ who, current: 'list' }) : null;
+  SH = K.shell({ who, home: 'xi-clean', rail });
   dedupeRole();
-  patchRail();
   mainEl = SH.main;
+  toolsEl = h('nav.xc-tools', { 'aria-label': 'XI맵 도구' }, ...tools.map(([id, label]) => h('button.xc-tool', { type: 'button', dataset: { tool: id }, 'aria-pressed': 'false', onclick: () => { tool(id); patchRail(); } },
+    h('span', { 'aria-hidden': 'true', html: `<svg viewBox="0 0 20 20">${ICO[id] || ''}</svg>` }), h('span.xc-tool-l', { text: label }))));
+  patchRail();
 
   // 마스트: 검색 하나(시군구 · 지번 · 문장) + 조건 칩
   SH.mast(buildSearch());
@@ -176,11 +186,14 @@ async function boot() {
   pop = h('section.xc-pop.t-card.t-card--map', { hidden: true });
   const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '가르기', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'));
   const loadEl = h('div.xc-load');
-  mainEl.append(stageEl, bEl, fx, hud, pop, grip, loadEl);
+  // 오른쪽 위 한 줄 = [영상 전환(작은 단추)] [사업 나라] · 그 아래 오른쪽 = 도구 줄(층 · 가르기 · 보고서 · 분석)
+  const top = h('div.xc-top');
+  hudBoard = h('section.xb-hud', { hidden: true, 'aria-live': 'polite' });
+  mainEl.append(stageEl, bEl, fx, hud, hudBoard, pop, grip, top, toolsEl, loadEl);
   loadK = K.empty(h('div.xc-load-c'), { kind: 'loading', progress: 0.08, what: '지역 경계와 분석 집계' });   // 무엇을 기다리나(GPT2-4)
   X.waitFor = '지역 경계와 분석 집계';
   loadEl.append(loadK.el);
-  S.els = { stageEl, bEl, fx, hud, grip, loadEl };
+  S.els = { stageEl, bEl, fx, hud, grip, loadEl, top };
 
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
@@ -195,18 +208,20 @@ async function boot() {
   const same = SESS && (SESS.realm === 'lx') === S.lx;
   const catP = same ? PRE.cat : api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build, locale: 'ko' })).catch(() => ({ items: [], ladder: {} }));
   const aliasP = api('/regions?limit=400').then((j) => j.items || [], () => []);
-  const [emdSt, ruleSt, sgg, names] = await Promise.all([
+  const statsP = Promise.all([
     PRE.emd || api('/survey/stats?by=emd').catch(() => ({ items: [], failed: true })),
     PRE.rule || api('/survey/stats?by=rule').catch(() => ({ items: [], failed: true })),
-    PRE.sgg,
     RULE_NAMES,
   ]);
+  // 전국 결과(바퀴 5) = 첫 화면은 시군구 경계 + 전국 결과 한 번 호출만 기다린다(읍면동 · 규칙 집계 · 코드 별칭은 뒤에서 받아 이어 붙인다 — 열자마자 2초 안)
+  const [emdSt, ruleSt, sgg, names] = S.board ? [null, null, await PRE.sgg, null] : await Promise.all([...await statsP.then((x) => x.slice(0, 2)), PRE.sgg, statsP.then((x) => x[2])]);
   S.ruleNames = names || {};
-  useStats(emdSt, ruleSt);
+  if (S.board) statsP.then(([e, r, n]) => { S.ruleNames = n || {}; useStats(e, r); patchRail(); }, () => {});
+  else useStats(emdSt, ruleSt);
   const sggFC = S.tenant && SESS?.realm !== 'tenant' ? await api('/regions?geom=1').then(scopeFC).catch(() => ({ features: [] })) : sgg;   // 관문 세션이 기관인데 미리 받은 것이 전국이면 관할로 다시
   S.regions = (sggFC.features || []).map((f) => ({ code: String(f.properties.code), name: f.properties.name, sido: f.properties.sido, full: `${f.properties.sido} ${f.properties.name}`, bbox: K.bboxOf(f), geometry: f.geometry }));
   X.regions = S.regions.length;
-  loadAlias(await aliasP);
+  if (S.board) aliasP.then((x) => { loadAlias(x); if (S.region) paintBoardHud(); }); else loadAlias(await aliasP);
   if (S.tenant) S.scopeBox = S.regions.reduce((a, r) => (r.bbox ? (a ? [Math.min(a[0], r.bbox[0]), Math.min(a[1], r.bbox[1]), Math.max(a[2], r.bbox[2]), Math.max(a[3], r.bbox[3])] : [...r.bbox]) : a), null);
 
   // 지역: URL → 기관 관할 → 없으면 전국 — 정해지는 즉시 HUD 조회를 미리 부른다(층 쌓기와 동시에)
@@ -223,11 +238,12 @@ async function boot() {
   await buildLayers(cat);
   mark('layers'); loadK.set({ progress: 0.7 });
   wireMap();
+  if (S.board) mountBoard();
 
   AN = S.canAnalyze ? analyzer({ stage, host: mainEl, catalog: cat, who, demo: S.sales,
     // 분석이 도는 동안은 이미 있는 결과 층을 잠시 내린다(새로 차오르는 결과와 섞이지 않게) — 끝나면 층 설정 그대로
     onBusy: (b) => { S.busy = b; mainEl.dataset.busy = b ? '1' : ''; if (b) for (const it of S.res || []) setVis(map, it.ids, false); else applyLayers(); },
-    onDone: (r) => { if (r) { refresh(); if (!r.replay) { K.toast('분석했습니다'); if (S.region) regionData(S.region); if (r.job?.options?.scope === 'sgg') followSurvey(S.region); } } else if (S.tool === 'analyze') { S.tool = null; patchRail(); } },
+    onDone: (r) => { if (r) { refresh(); if (!r.replay) { K.toast('분석했습니다'); if (S.region) regionData(S.region); BD?.reload(); if (r.job?.options?.scope === 'sgg') followSurvey(S.region); } } else if (S.tool === 'analyze') { S.tool = null; patchRail(); } },
     pick: pickEmd, regionInfo: () => ({ emds: S.remd, meta: S.remdMeta }) }) : null;
 
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
@@ -247,13 +263,14 @@ async function boot() {
   // 판을 걷는 순간: 보이는 타일이 다 왔거나 0.9초(덜 찬 타일 · 흰 사각형을 먼저 보이지 않게)
   { const t0 = performance.now();
     const out = () => { S.els.loadEl.classList.add('is-out'); setTimeout(() => S.els.loadEl.remove(), 600); X.boot.shown = Math.round(performance.now() - X.t0); };
-    const poll = () => (map.areTilesLoaded() || performance.now() - t0 > 900 ? out() : setTimeout(poll, 60)); poll(); }
+    const poll = () => (map.areTilesLoaded() || performance.now() - t0 > (S.board ? 450 : 900) ? out() : setTimeout(poll, 60)); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
   if (S.lx) {
-    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); },
-      onLeave: () => (S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 })) });
+    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); BD?.show(false); hudBoard.hidden = true; },
+      onLeave: () => { BD?.show(true); if (!S.region) paintBoardHud(); return S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 }); } });
+    const nb = mainEl.querySelector('.xn-bar'); if (nb) S.els.top.append(nb);   // 사업 나라 = 오른쪽 위 한 줄 안
     if (Q.get('nation') && Q.get('nation') !== 'kr') NAT.go(Q.get('nation'), { first: true });
   }
   // 기관 — 서비스 대시보드의 '결과 지도' 탭에서 왔으면 '보고 있는 결과' 카드 · '이 영상으로 분석 요청'(18차 N-1 ⓐ · 촬영-1 ⓑ · gov-select/map-extras.js)
@@ -267,16 +284,13 @@ async function boot() {
   if (S.fc && stale && regionEmds().length && !sessionStorage.getItem('xc_swept')) reconcile();   // 대조 = 기관 화면만(원칙 135)
 }
 
-/* ═══ 레일(도구) — 셸 메뉴 레일에 헤어라인 아이콘 · 눌림 상태 ═══ */
+/* ═══ 도구 줄(층 · 가르기 · 보고서 · 분석) — 지도 오른쪽(왼쪽은 역할 메뉴 그대로 · 바퀴 5) · 헤어라인 아이콘 + 글자 · 눌림 · 꺼짐 ═══ */
 function patchRail() {
-  if (!SH) return;
-  SH.rail.querySelectorAll('.k-rail-i').forEach((b) => {
-    const id = S.tools[+b.dataset.i]?.[0]; if (!id) return;
-    b.dataset.tool = id;
-    const svg = b.querySelector('svg'); if (svg) svg.innerHTML = ICO[id] || '';
+  if (!toolsEl) return;
+  toolsEl.querySelectorAll('.xc-tool').forEach((b) => {
+    const id = b.dataset.tool; if (!id) return;
     const on = S.tool === id || (id === 'swipe' && S.swipe) || (id === 'tilt' && S.tilt) || (id === 'list' && S.list) || (id === 'analyze' && AN?.active);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
     const off = S.outside && ['rules', 'list', 'sweep', 'report'].includes(id) || (id === 'sweep' && !regionEmds().length) || (id === 'report' && !regionEmds().length);
     if (off) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
   });
@@ -507,11 +521,11 @@ async function regionData(r) {
   S.remd = []; S.remdMeta = null; S.aiUser = false;
   if (S.aiByRegion) { S.layers.ai = false; S.aiByRegion = false; }   // 앞 지역에서 자동으로 켠 AI 분석 층은 지역을 옮기면 되돌린다
   map.getSource('xc-emd')?.setData({ type: 'FeatureCollection', features: [] });
-  clearResultLayers();
+  if (!S.board) clearResultLayers();                 // 전국 결과(바퀴 5) = 결과 층은 전국 결과가 화면 안 시군구만큼 불러 둔다(지역을 옮겨도 그대로)
   if (!r) return;
   const [emd, res] = await Promise.all([
     api('/regions/' + encodeURIComponent(r.code) + '/emd').catch((e) => { K.devlog('emd', `${e.code || ''} ${e.status ?? 0}`); return null; }),
-    api('/regions/' + encodeURIComponent(r.code) + '/results').catch((e) => { K.devlog('results', `${e.code || ''} ${e.status ?? 0}`); return null; }),
+    S.board ? null : api('/regions/' + encodeURIComponent(r.code) + '/results').catch((e) => { K.devlog('results', `${e.code || ''} ${e.status ?? 0}`); return null; }),
   ]);
   if (my !== rdSeq) return;
   if (emd) {
@@ -554,9 +568,11 @@ async function addResultList(items, my) {
   if (S.tool === 'layers') renderLayers();
 }
 
-async function setRegion(r, { first = false, to = null } = {}) {
-  if (NAT && NAT.id !== 'kr') NAT.go('kr', { quiet: true });   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
-  S.region = r; S.cond.emd = null; S.sel = null; closeDrawer(); closePop();
+/** soft = 사용자가 지도를 직접 확대 · 이동해 들어온 시군구(XI맵 전국 결과 · 바퀴 5) — 카메라는 그대로 두고 지역만 바꾼다(회백 베일 없음 · 경계선만) */
+async function setRegion(r, { first = false, to = null, soft = false } = {}) {
+  if (NAT && NAT.id !== 'kr') { NAT.go('kr', { quiet: true }); BD?.show(true); }   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
+  S.region = r; S.cond.emd = null; S.sel = null;
+  if (!soft) { closeDrawer(); closePop(); ED?.close(); }
   renderChips();                        // 이전 지역의 읍면동 칩을 바로 지운다(관할 밖 포함)
   if (AN?.running) { AN.detach(); S.tool = null; }      // 진행 중 전역 분석 — 서버 작업은 계속, 화면만 떼어 낸다(돌아오면 이어 보기)
   else if (AN?.active) AN.stop();
@@ -570,15 +586,17 @@ async function setRegion(r, { first = false, to = null } = {}) {
   const g = r?.geometry || all;                      // 기관 '전체' = 관할 시군구 전부의 경계
   const polys = g ? (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) : [];
   const cw = (ring) => { let a = 0; for (let i = 0; i < ring.length - 1; i++) a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return a < 0 ? ring : [...ring].reverse(); };
-  map.getSource('xc-rmask')?.setData(g ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
+  map.getSource('xc-rmask')?.setData(g && !soft && !S.board ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
   map.getSource('xc-rline')?.setData(g ? { type: 'Feature', properties: {}, geometry: g } : { type: 'FeatureCollection', features: [] });
   S.els.hud.hidden = S.outside;
   patchRail();
   searchInput.value = r ? r.name : '';
   // to = 말로 한 읍면동 이동 — 시군구를 거치지 않고 한 번에 그 읍면동으로(동작 끝 신호가 늦지 않게)
-  const fly = r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 })
+  const fly = soft ? Promise.resolve(true)
+    : r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 })
     : S.tenant && S.scopeBox ? goKeep(S.scopeBox, { ms: RM() ? 0 : 2400, maxZoom: 11 })      // 기관 '전체' = 관할 전체 범위
     : stage.home({ ms: first ? 0 : 1600 });
+  if (!soft) { const k = (S.flyK = (S.flyK || 0) + 1); S.flying = true; Promise.resolve(fly).finally(() => setTimeout(() => { if (S.flyK === k) S.flying = false; }, 200)); }   // 지역 비행 중에는 손으로 들어온 시군구 판정을 쉰다
   if (S.outside) {
     setPoints([]); regionData(null);
     const d = K.drawer({ title: r.name, host: mainEl, slot: 'right', onClose: () => { S.list = null; patchRail(); } });
@@ -744,6 +762,9 @@ async function refresh() {
 /** LX 화면 HUD — AI 분석 결과(원칙 135 · 10-09). 지역 대표 수치 = GET /summary?region= 의 AI 탐지 중 업무 결과로 센 것(aiResult · 서비스 상세 ·
     결과 확인 · 분석하기 카드와 같은 출처). 셈 단위는 서버 값 그대로(필지 · 동 · 건) · 다른 단위끼리 더하지 않는다. 아래 한 줄 = 그 숫자의 서비스 이름 */
 async function refreshAI(my) {
+  if (S.board) return refreshBoard(my);   // 전국 결과(바퀴 5) — 큰 숫자 없이 지도 위 결과 + 한 칸(전국 · 지금 시군구)
+  if (hudBoard) hudBoard.hidden = true;
+  S.els.hud.hidden = false;
   const where = S.region ? S.region.name : '전국';
   const scope = S.region?.code || 'KR';
   S.els.hud.dataset.scope = scope;
@@ -788,6 +809,110 @@ async function refreshAI(my) {
   hudBig.dataset.shown = scope;
   SH.fresh(j ? new Date() : null);
   renderChips();
+}
+/* ═══ 전국 결과(바퀴 5 · 원칙 196 10-11 18:52 고침) — 열자마자 지도에 바로 ═══
+   한 번 호출(GET /ximap/board)로 시군구 × 서비스 결과를 칠하고(멀리서 = 서비스 색 · 면적당 진하기), 가까이 가면 화면 안 시군구의 객체를 그린다.
+   객체를 누르면 그 자리에서 고친다(edit.js). 영상은 오른쪽 위 작은 전환 단추(최신 영상 · 분석한 영상). */
+const shortDate = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`; };
+const ev = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
+function mountBoard() {
+  BD = createBoard({ map, host: mainEl, h,
+    regionOf: (r) => findRegion(r.sgg_cd) || (r.prev_cd && findRegion(r.prev_cd)) || S.regions.find((x) => lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox)) || null,
+    onRegion: (r, reg) => { if (reg) setRegion(reg); },
+    onSets: (list) => {
+      S.res = list;
+      for (const it of list) S.resOn[it.id] = !it.off;
+      X.results = list.map((x) => x.name?.ko || x.id);
+      applyLayers();
+      if (S.tool === 'layers') renderLayers();
+      ED?.live(list.map((x) => x.set));
+    },
+    onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center) }; if (!S.region) paintBoardHud(); } });
+  S.boardP = BD.load(PRE.board || boardPromise(true)).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
+  const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
+  ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery,
+    onEdited: () => { clearTimeout(S.reloadT); S.reloadT = setTimeout(() => BD.reload(), 400); } });
+  imageryToggle();
+  map.on('zoomend', () => { if (S.region && !hudBoard.hidden) paintBoardHud(); });
+  // 객체 누르기(가까이) — 결과 층의 면 · 점
+  map.on('click', (e) => {
+    if (!S.board || AN?.active || S.swipe || ED.busy || map.getZoom() < BD.NEAR_Z) return;
+    const lyr = (S.res || []).flatMap((it) => it.ids.filter((l) => /-(fill|pt)$/.test(l))).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none');
+    if (!lyr.length) return;
+    const pad = [[e.point.x - 3, e.point.y - 3], [e.point.x + 3, e.point.y + 3]];
+    const f = map.queryRenderedFeatures(pad, { layers: lyr })[0];
+    const L = f && BD.bySource(f.source);
+    const fid = f && (f.properties?.id ?? f.id);
+    if (L && fid != null) { closePop(); ED.open(L, String(fid), e.lngLat); }
+  });
+  // 손으로 확대 · 이동해 들어온 시군구 = 지금 지역(카메라는 그대로) · 멀리 나오면 전국
+  map.on('moveend', () => {
+    if (!S.board || S.flying || NAT?.id && NAT.id !== 'kr' || AN?.running) return;
+    const z = map.getZoom(), c = map.getCenter();
+    if (z < 8.2) { if (S.region) setRegion(null, { soft: true }); return; }
+    if (z < BD.NEAR_Z) return;
+    const pt = [c.lng, c.lat];
+    const r = S.regions.find((x) => x.bbox && pt[0] >= x.bbox[0] && pt[0] <= x.bbox[2] && pt[1] >= x.bbox[1] && pt[1] <= x.bbox[3]
+      && (x.geometry?.type === 'Polygon' ? [x.geometry.coordinates] : x.geometry?.coordinates || []).some((poly) => inRing(pt, poly[0])));
+    if (r && r.code !== S.region?.code) setRegion(r, { soft: true });
+  });
+}
+/** 지금 시군구의 전국 결과 줄(없으면 null) — 지도 경계(옛 코드)와 결과 장부(지금 코드)를 별칭으로 잇는다 */
+const boardRegion = (r) => (r && BD?.data ? BD.data.regions.find((x) => codesOf(r).includes(x.sgg_cd) || (x.prev_cd && codesOf(r).includes(x.prev_cd)) || (lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox))) || null : null);
+async function refreshBoard(my) {
+  hudBig.hidden = true; hudSus.hidden = true; S.els.hud.hidden = true;
+  if (!S.board) return;
+  await S.boardP;
+  if (my !== seq) return;
+  paintBoardHud();
+  SH.fresh(BD?.data ? new Date() : null);
+  renderChips();
+}
+function paintBoardHud() {
+  const d = BD?.data;
+  if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
+  hudBoard.hidden = false;
+  if (!d) { hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }), h('p.xb-p', { text: '결과를 불러오지 못했습니다' })); X.hud = { label: '전국 AI 분석 결과', n: null, from: 'board', state: 'fail' }; return; }
+  const r = S.region, br = boardRegion(r);
+  if (!r) {
+    const yr = d.years?.length === 1 ? `${d.years[0]}년 영상까지` : d.years?.length ? `${d.years[0]}~${d.years[d.years.length - 1]}년 영상` : '';
+    hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }),
+      h('p.xb-p', {}, h('span', {}, '시군구 ', h('b', { text: `${nf(ev(d.n_regions))}곳` }), ` · 서비스 ${d.services.length}가지`),
+        h('span', { text: [d.last_at ? `마지막 분석 ${shortDate(d.last_at)}` : null, yr].filter(Boolean).join(' · ') })),
+      BD.legend,                                     // 서비스 색 · 켜고 끄기 = 전국 칸 안(지도 아래쪽은 고치기 막대 · 알림 자리)
+      h('p.xb-tip', { text: '시군구를 누르면 확대되고, 객체를 누르면 그 자리에서 고칩니다' }));
+    X.hud = { label: '전국 AI 분석 결과', n: ev(d.n_regions), unit: '곳', from: 'board' };
+    return;
+  }
+  const rows = br ? br.items.map((x) => h('li', {}, h('i', { style: { background: BD.color(x.svc) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(ev(x.n))}개` }))) : [];
+  const it0 = br?.items[0];
+  hudBoard.replaceChildren(h('p.xb-k', { text: `${r.sido || ''} · ${r.name}`.replace(/^ · /, '') }), h('h1.xb-h', { text: `${r.name} AI 분석 결과` }),
+    br ? h('ul.xb-rows', {}, ...rows) : h('p.xb-p', { text: '아직 AI 분석 결과가 없습니다' }),
+    br ? h('p.xb-p', { text: [it0?.imagery, br.last_at ? `마지막 분석 ${shortDate(br.last_at)}` : null].filter(Boolean).join(' · ') }) : null,
+    br ? h('p.xb-tip', { text: map.getZoom() < BD.NEAR_Z ? '더 확대하면 객체가 보입니다' : '객체를 누르면 그 자리에서 고칩니다' }) : null);
+  X.hud = { label: `${r.name} AI 분석 결과`, n: br ? ev(br.n) : 0, unit: '개', from: 'board' };
+}
+/* 영상 전환 — 작은 단추 둘(최신 영상 = 바탕 위성 · 분석한 영상 = 결과를 만든 등록 영상). 모양 고치기 · 새로 그리기는 분석한 영상 위에서 */
+function imageryToggle() {
+  S.layers.img = false;                              // 처음 = 최신 영상 위 전국 결과
+  const b1 = h('button.xc-img-b', { type: 'button', text: '최신 영상', 'aria-pressed': 'true' });
+  const b2 = h('button.xc-img-b', { type: 'button', text: '분석한 영상', 'aria-pressed': 'false' });
+  const box = h('div.xc-img', { role: 'group', 'aria-label': '영상' }, b1, b2);
+  b1.onclick = () => setImagery('latest'); b2.onclick = () => setImagery('analyzed');
+  S.imgBtns = [b1, b2];
+  S.boardP?.then((d) => { if (d?.years?.length === 1) b2.textContent = `${d.years[0]} 항공`; });
+  S.els.top.prepend(box);
+  applyLayers();
+}
+/** 영상 전환 — 'latest' | 'analyzed' | null(그대로). 앞의 상태를 돌려준다(편집이 끝나면 되돌리기) */
+function setImagery(k) {
+  const was = S.layers.img ? 'analyzed' : 'latest';
+  if (!k || !S.imgBtns) return was;
+  S.layers.img = k === 'analyzed';
+  S.imgBtns[0].setAttribute('aria-pressed', String(!S.layers.img)); S.imgBtns[1].setAttribute('aria-pressed', String(S.layers.img));
+  applyLayers();
+  if (S.tool === 'layers') renderLayers();
+  return was;
 }
 /** 기관 화면 지역 대표 수치 — GET /summary?region= (fix-server-summary 계약). 실태조사 우선순위 수(field_check)가 있으면 그것, 없으면 AI 탐지(detected).
     → { env, label, unit } · null(요약에 결과 없음) · undefined(요약을 못 읽음 — 호출한 쪽이 목록 값으로) */
@@ -1306,9 +1431,9 @@ async function setState(f, to, btn) {
 
 /* ═══ 도구 ═══ */
 function tool(id) {
-  const b = SH.rail.querySelector(`[data-tool="${id}"]`);
-  if (b?.getAttribute('aria-disabled') === 'true') { SH.go(-1); return; }
-  SH.go(-1);
+  const b = toolsEl?.querySelector(`[data-tool="${id}"]`);
+  if (b?.getAttribute('aria-disabled') === 'true') return;
+  ED?.close();
   if (id === 'list') { if (S.list) { closeDrawer(); S.list = null; } else { closePop(); openList(); } return; }
   if (id === 'swipe') return toggleSwipe();
   if (id === 'analyze') {
@@ -1333,8 +1458,9 @@ function showPop(title, ...kids) {
   pop.append(h('header.xc-pop-h', {}, h('h2', { text: title }), h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: closePop })), ...kids);
   pop.hidden = false;
   // 누른 도구 높이에 맞추되 HUD 아래로
-  const b = SH.rail.querySelector(`[data-tool="${S.tool}"]`), m = mainEl.getBoundingClientRect(), hb = S.els.hud.getBoundingClientRect();
-  if (!MOBILE() && b) { const y = b.getBoundingClientRect().top - m.top; pop.style.top = Math.max(y, hb.bottom - m.top + 12) + 'px'; }
+  // 누른 도구 높이 · 도구 줄 왼쪽에 연다(오른쪽 도구 줄 · 바퀴 5)
+  const b = toolsEl?.querySelector(`[data-tool="${S.tool}"]`), m = mainEl.getBoundingClientRect();
+  if (!MOBILE() && b) { const r = b.getBoundingClientRect(); pop.style.top = Math.max(16, r.top - m.top) + 'px'; }
   else pop.style.top = '';
 }
 function renderLayers() {
@@ -1350,7 +1476,7 @@ function renderLayers() {
 }
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */
-const aiOn = () => !!S.layers.ai && (S.aiUser || S.aiHas === true || S.aiHas === null);   // undefined = 요약 조회 중(그리지 않고 기다림) · null = 요약 조회 실패(층은 그대로)
+const aiOn = () => !!S.layers.ai && (S.board || S.aiUser || S.aiHas === true || S.aiHas === null);   // 전국 결과(바퀴 5) = 결과 층은 전국 결과 장부 그대로   // undefined = 요약 조회 중(그리지 않고 기다림) · null = 요약 조회 실패(층은 그대로)
 function applyLayers() {
   setVis(map, (S.imgLayers || []).filter((l) => map.getLayer(l)), S.layers.img);
   setVis(map, susSet(), S.layers.sus);
@@ -1428,7 +1554,7 @@ async function reconcile() {
   const emds = regionEmds(); if (!emds.length) return;
   S.busy = true; mainEl.dataset.busy = '1';
   sessionStorage.setItem('xc_swept', '1');
-  const btn = SH.rail.querySelector('[data-tool="sweep"]'); btn?.setAttribute('data-busy', '1');
+  const btn = toolsEl?.querySelector('[data-tool="sweep"]'); btn?.setAttribute('data-busy', '1');
   if (S.region) await stage.go(S.region.bbox, { ms: 1250, maxZoom: 12.5 });
   const per = {}; for (const f of S.last?.items || []) (per[f.emd_cd] ||= new Set()).add(f.pnu);
   const big = hudBig.__big;

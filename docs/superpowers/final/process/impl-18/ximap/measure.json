@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-11T11:01:52.215Z",
+  "runs": [
+    {
+      "wall_ms": 2671,
+      "module_to_shown_ms": 1127,
+      "board_ms": 621,
+      "nav_to_module_ms": 1513
+    },
+    {
+      "wall_ms": 1877,
+      "module_to_shown_ms": 609,
+      "board_ms": 463,
+      "nav_to_module_ms": 1212
+    },
+    {
+      "wall_ms": 1852,
+      "module_to_shown_ms": 574,
+      "board_ms": 436,
+      "nav_to_module_ms": 1223
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[
+ {"id": "XI맵-열자마자", "title": "XI맵을 열면 고르기 · 조회 없이 전국 AI 결과가 지도에 바로(서비스 색 · 알약 · 확대하면 객체 · 영상은 작은 전환 단추)", "opts": ["완료", "다시"],
+  "evidence": ["shots/a1-open-national-1440-2003.png", "shots/a2-open-national-1265-2003.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/xi-clean/ (LX 직원)",
+  "note": "시군구 20곳 · 서비스 8가지 · 한 번 호출. 첫 화면 시간: 로그인 직후 처음 2.7~2.9초(터널로 화면을 받는 1.2~1.5초 포함 · 화면 안 1.1초) · 다시 열 때 1.85초."},
+ {"id": "XI맵-메뉴그대로", "title": "XI맵에 들어가도 왼쪽은 LX 직원 메뉴 그대로 · 도구(층 · 가르기 · 보고서 · 분석)는 지도 오른쪽", "opts": ["완료", "다시"],
+  "evidence": ["shots/a1-open-national-1440-2003.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/xi-clean/ (LX 직원)",
+  "note": "도구는 이전 모습(아이콘 + 글자 · '층') 그대로 자리만 옮김. 영상 전환 · 사업 나라는 오른쪽 위 한 줄."},
+ {"id": "XI맵-그자리고치기", "title": "객체를 누르면 그 자리에서 지우기 · 분류 바꾸기 · 모양 고치기 · 새로 그리기 · 메모 + 고친 것 n건 → 그 프로젝트 학습으로", "opts": ["완료", "다시"],
+  "evidence": ["shots/b1-object-card-1440-2003.png", "shots/b2-reshape-vertex-1440-2003.png", "shots/b3-reclass-test-1440-2003.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/xi-clean/ (LX 직원 · 남원 비닐하우스 확대 → 객체 누르기)",
+  "note": "고친 것은 원래 모양 · 누가 · 언제 · 영상 · 모델 판과 함께 기록(학습 자료). 그림의 분류 바꾸기는 시험 표시 · 찍은 뒤 되돌림. 학습 실행은 하지 않고 프로젝트 학습 화면으로 잇기만."},
+ {"id": "XI맵-해외필지", "title": "키르기스스탄을 구획 단위로 — 구획마다 AI 경작지 판정 비율(공개 구획 경계 × 판정 화소)", "opts": ["완료", "다시"],
+  "evidence": ["shots/c1-kg-blocks-1440-2003.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg (확대 9.5↑ · 구획 누르기)",
+  "note": "이 PC 에 키르기스스탄 필지(지적) 경계는 없어 OpenStreetMap 농경지 면 696곳(추이 주 평야)에 Sentinel-2 AI 토지피복 2025 경작지 화소(약 15m)를 묶었다. 화면 말은 '필지'가 아니라 '구획'."}
+]

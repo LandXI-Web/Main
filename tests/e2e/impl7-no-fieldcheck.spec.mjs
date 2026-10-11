@@ -63,16 +63,16 @@ for (const vp of [{ w: 1440, h: 900, k: '1440' }, { w: 390, h: 844, k: '390' }])
       expect(await page.locator('body').innerText()).not.toMatch(NO);
       await shot(page, `dash-${vp.k}`);
 
-      /* XI맵 — 큰 숫자 = AI 분석 결과 · 지역 요약과 같은 값 · 실태조사 도구(규칙 · 목록 · 대조) 없음 */
-      const sum = await call(page, '/summary?region=52190');
+      /* XI맵(바퀴 5) — 열자마자 전국 결과 · 지역 칸 = 그 시군구의 AI 분석 결과(전국 결과 한 번 호출과 같은 값) · 실태조사 도구(규칙 · 목록 · 대조) 없음 */
+      const board = await call(page, '/ximap/board');
       await page.goto(BASE + '/landxi/v3/xi-clean/?region=52190', { waitUntil: 'domcontentloaded' });
-      await page.waitForFunction(() => document.querySelector('.xc-big')?.dataset.st === 'ok' || document.querySelector('.xc-big')?.dataset.st === 'empty', null, { timeout: 60000 });
+      await page.waitForFunction(() => window.__xc?.hud?.from === 'board' && /남원/.test(window.__xc.hud.label || ''), null, { timeout: 60000 });
       await page.waitForTimeout(2500);
       expect(await page.locator('body').innerText()).not.toMatch(NO);
-      await expect(page.locator('.xc-big .k-big-l')).toContainText('AI 분석 결과');
-      const want = aiOf(sum);
+      await expect(page.locator('.xb-hud .xb-h')).toContainText('AI 분석 결과');
+      const want = (board.regions || []).find((r) => r.sgg_cd === '52190')?.n?.value ?? 0;
       const got = await page.evaluate(() => window.__xc.hud?.n);
-      expect(got).toBe(want ?? 0);
+      expect(got).toBe(want);
       for (const t of ['rules', 'list', 'sweep']) await expect(page.locator(`[data-tool="${t}"]`)).toHaveCount(0);
       await shot(page, `xi-${vp.k}`);
       expect(errs).toEqual([]);

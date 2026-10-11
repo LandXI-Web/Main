@@ -265,3 +265,102 @@
 .xn-what{position:absolute;z-index:5;left:16px;bottom:14px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.88)}
 .k-main[data-nation="kg"] .xc-hud,.k-main[data-nation="kg"] .xc-pop,.k-main[data-nation="kg"] .xa-card,.k-main[data-nation="kg"] .xc-grip,.k-main[data-nation="kg"] .xc-cmp{display:none!important}
 @media (max-width:640px){.xn-bar{top:8px;right:8px}.xn-leg{top:56px;right:8px}.xn-hud{left:16px;bottom:96px}.xn-h{font-size:28px;line-height:36px}}
+
+/* ═══ 바퀴 5 — 열자마자 전국 결과 · 왼쪽은 역할 메뉴 그대로 · 도구는 오른쪽(원칙 196 10-11 18:52 고침 · 191 · 199) ═══ */
+/* 오른쪽 위 한 줄: 영상 전환(작은 단추) · 사업 나라 */
+.xc-top{position:absolute;z-index:12;right:16px;top:16px;display:flex;align-items:center;gap:8px}
+.xc-top .xn-bar{position:static}
+.xc-img{display:inline-flex;gap:2px;height:40px;padding:0 5px;align-items:center;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map)}
+.xc-img-b{height:30px;padding:0 12px;border:0;border-radius:6px;background:none;font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.xc-img-b:hover{color:var(--ink)}
+.xc-img-b[aria-pressed="true"]{color:var(--ink);background:var(--bg-0);font-weight:700}
+/* 도구 줄 — 아이콘 + 글자(이전 모습 · '층') · 오른쪽 세로 한 줄 */
+.xc-tools{position:absolute;z-index:12;right:16px;top:68px;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map)}
+.xc-tool{display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:8px 0 7px;border:0;border-radius:6px;background:none;color:var(--sub);cursor:pointer}
+.xc-tool svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.xc-tool-l{font:500 12px/1.2 var(--font-body);white-space:nowrap}
+.xc-tool:hover{background:var(--bg-0);color:var(--ink)}
+.xc-tool[aria-pressed="true"]{background:var(--bg-0);color:var(--ink)}
+.xc-tool[aria-pressed="true"] .xc-tool-l{font-weight:700}
+.xc-tool[aria-disabled="true"]{opacity:.34;cursor:default}
+.xc-tool[aria-disabled="true"]:hover{background:none;color:var(--sub)}
+.xc-tool[data-busy="1"] svg{animation:xc-spin 1.6s linear infinite}
+/* 도구 팝오버 = 도구 줄 왼쪽 */
+@media (min-width:641px){ .xc-pop{left:auto;right:92px} }
+/* 전국 결과 한 칸(왼쪽 위) — 큰 숫자 없이 */
+.xb-hud{position:absolute;z-index:6;left:16px;top:16px;width:min(340px,calc(100% - 32px));padding:16px 18px;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);color:var(--ink)}
+.xb-hud[hidden]{display:none}
+.xb-k{margin:0;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.xb-h{margin:2px 0 8px;font:800 24px/32px var(--font-display);letter-spacing:-.02em;word-break:keep-all}
+.xb-p{margin:0;font:500 15px/22px var(--font-body);color:var(--ink-2)}
+.xb-p span{display:block}
+.xb-p b{font-weight:700;color:var(--ink)}
+.xb-tip{margin:10px 0 0;font:400 13px/19px var(--font-body);color:var(--sub);word-break:keep-all}
+.xb-rows{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:6px}
+.xb-rows li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;font:500 15px/22px var(--font-body);color:var(--ink)}
+.xb-rows i{width:10px;height:10px;border-radius:3px}
+.xb-rows b{font:600 15px/1 var(--font-num)}
+/* 서비스 색(범례 · 켜고 끄기) — 왼쪽 아래 */
+.xb-leg{margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--rule)}
+.xb-leg[hidden]{display:none}
+.xb-leg-h{margin:0 0 6px;font:500 12px/1 var(--font-body);color:var(--sub)}
+.xb-leg-l{display:flex;flex-wrap:wrap;gap:4px 6px}
+.xb-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--rule);border-radius:14px;background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.xb-chip i{width:10px;height:10px;border-radius:3px}
+.xb-chip[aria-pressed="false"]{color:var(--sub);background:var(--bg-0)}
+.xb-chip[aria-pressed="false"] i{opacity:.3}
+/* 시군구 알약 — '이름 · 수' */
+.xb-pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px 0 7px;border:0;border-radius:13px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(25,31,40,.22);font:500 12.5px/1 var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
+.xb-pill[hidden]{display:none}
+.xb-pill b{font-weight:700}
+.xb-pill .num{font:600 12.5px/1 var(--font-num);color:var(--sub-2,var(--sub))}
+.xb-dots{display:inline-flex;gap:2px}
+.xb-dots i{width:8px;height:8px;border-radius:50%}
+/* 그 자리 고치기 칸 · 꼭짓점 막대 */
+.xe-card{position:absolute;z-index:32;left:0;top:0;width:360px;padding:16px 16px 14px;will-change:transform}
+.xe-card[hidden]{display:none}
+.xe-wait{margin:0;font:500 var(--fs-body)/1.4 var(--font-body);color:var(--sub)}
+.xe-h{display:flex;align-items:flex-start;gap:8px;margin:0 0 10px}
+.xe-h > div{flex:1;min-width:0}
+.xe-h h3{margin:0;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);color:var(--ink)}
+.xe-sub{margin:2px 0 0;font:500 13px/18px var(--font-body);color:var(--sub)}
+.xe-st{flex:none;margin-top:2px}
+.xe-dl{margin:0 0 12px;display:grid;gap:6px}
+.xe-dl > div{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:baseline}
+.xe-dl dt{font:500 12.5px/1.3 var(--font-body);color:var(--sub)}
+.xe-dl dd{margin:0;font:500 13.5px/1.35 var(--font-body);color:var(--ink);word-break:keep-all}
+.xe-act{display:flex;flex-wrap:wrap;gap:6px}
+.xe-act .t-btn{flex:1 1 0;min-width:0;min-height:34px;padding:0 4px;font-size:12.5px;white-space:nowrap}
+.xe-ask p{margin:0 0 8px;font:500 var(--fs-body)/1.45 var(--font-body);color:var(--ink);word-break:keep-all}
+.xe-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.xe-chip{height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:16px;background:var(--bg-1);font:500 13.5px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.xe-chip:hover{border-color:var(--ink)}
+.xe-memo{width:100%;margin:0 0 10px;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;font:400 14px/1.45 var(--font-body);color:var(--ink);resize:vertical;box-sizing:border-box}
+.xe-hist{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--rule);display:grid;gap:4px;font:400 12.5px/1.4 var(--font-body);color:var(--sub)}
+.xe-foot{margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font:500 13px/1.4 var(--font-body);color:var(--ink-2)}
+.xe-foot:empty{display:none}
+.xe-train{margin-left:auto;font:700 13px/1.4 var(--font-body);color:var(--accent);text-decoration:none}
+.xe-train::after{content:" →"}
+.xe-train:hover{text-decoration:underline}
+.xe-bar{position:absolute;z-index:33;left:50%;bottom:28px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map);max-width:calc(100% - 32px)}
+.xe-bar[hidden]{display:none}
+.xe-bar-t{font:500 13.5px/1.3 var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xe-bar .t-btn{min-height:34px;padding:0 12px;font-size:13px}
+/* 해외(키르기스스탄)에서는 국내 도구 · 범례를 걷는다 */
+.k-main[data-nation="kg"] .xc-tools,.k-main[data-nation="kg"] .xc-img,.k-main[data-nation="kg"] .xb-hud,.k-main[data-nation="kg"] .xb-leg,.k-main[data-nation="kg"] .xe-card,.k-main[data-nation="kg"] .xb-pill{display:none!important}
+.xn-leg{top:68px}
+@media (max-width:640px){
+  .xc-top{right:8px;top:8px;gap:6px}
+  .xc-img-b{padding:0 8px}
+  .xc-tools{flex-direction:row;top:56px;right:8px;padding:4px}
+  .xc-tool{width:48px;padding:6px 0 5px}
+  .xb-hud{top:112px;left:8px;width:calc(100% - 16px);padding:12px 14px}
+  .xb-h{font-size:20px;line-height:28px}
+  .xe-card{width:calc(100% - 24px)}
+  .xn-leg{top:112px}
+}
+.xn-ramp--blk{background:linear-gradient(90deg,#E8590C,#FFB633 50%,#7CC08F 80%,#2E9E5B)}
+.xn-p .xn-src{margin-top:6px;font:400 12.5px/18px var(--font-body);color:var(--sub)}
+.xe-hist li{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.xe-undo{flex:none;border:0;background:none;padding:0;font:500 12.5px/1.4 var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.xe-undo:hover{color:var(--ink)}

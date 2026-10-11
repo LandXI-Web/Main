@@ -78,14 +78,16 @@ test.describe('외부 검수 바퀴 4 보완', () => {
     expect(await card.locator('.ld-kinds > span:not(.ld-k)').count()).toBeLessThanOrEqual(5);
   });
 
-  test('XI맵 도구(층 · 가르기 · 보고서 · 분석) — 이전 모습 아이콘 + 글자(원칙 199 되돌림)', async ({ page, baseURL }) => {
+  test('XI맵 도구(층 · 가르기 · 보고서 · 분석) — 이전 모습 아이콘 + 글자(원칙 199) · 자리는 지도 오른쪽 · 왼쪽은 직원 메뉴 그대로(바퀴 5)', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await page.goto('v3/xi-clean/');
-    const rail = page.locator('.k-rail[aria-label="도구"], .k-rail').first();
-    await expect(rail.locator('.k-rail-i').first()).toBeVisible({ timeout: 30000 });
-    const labels = await rail.locator('.k-rail-i > span:last-child').allInnerTexts();
+    const tools = page.locator('.xc-tools');
+    await expect(tools.locator('.xc-tool').first()).toBeVisible({ timeout: 30000 });
+    const labels = await tools.locator('.xc-tool-l').allInnerTexts();
     expect(labels.slice(0, 3)).toEqual(['층', '가르기', '보고서']);
-    expect(await rail.locator('.k-rail-i svg').count()).toBe(labels.length);
+    expect(await tools.locator('.xc-tool svg').count()).toBe(labels.length);
+    await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child')).toHaveText('XI맵');
+    expect(await page.locator('.k-rail .k-rail-i', { hasText: '층' }).count()).toBe(0);
   });
 });
