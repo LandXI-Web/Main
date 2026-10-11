@@ -86,7 +86,12 @@ export async function api(path, { method = 'GET', body, headers = {}, raw = fals
   const r = await fetch((path.startsWith('/tiles') || path.startsWith('/files') ? API.base : API.prefix) + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
   if (raw) return r;
   const j = r.status === 204 ? null : await r.json().catch(() => null);
-  if (!r.ok) { const e = (j && j.error) || {}; throw new ApiError(e.code || 'http_' + r.status, e.message, e.detail, r.status); }
+  if (!r.ok) {
+    const e = (j && j.error) || {};
+    /* 쓰던 세션이 서버에서 끝났다(401) — 화면이 '로그인이 끝났습니다' 창을 띄우게 알린다(kit/auth-gate · QA-세션 10-11) */
+    if (r.status === 401 && s && !path.startsWith('/auth/')) { try { dispatchEvent(new CustomEvent('lx:session-expired', { detail: { path } })); } catch { /* 창 없음 */ } }
+    throw new ApiError(e.code || 'http_' + r.status, e.message, e.detail, r.status);
+  }
   return j;
 }
 

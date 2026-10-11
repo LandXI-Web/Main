@@ -104,12 +104,14 @@ async def my_jobs(request: Request, recent: int = 4):
 # XI맵 실시간 · 말로 분석(XI ChatGEO)은 여기 넣지 않는다(XI맵 = 전국 · 해외 실시간 분석 — 원칙 147).
 # 결과 도형 · 속성은 지금 있는 결과 타일(/tiles/pmtiles/{set}.pmtiles)과 필지 API(/parcels)를 그대로 쓴다 — 이 목록은 묶음 · 이름 · 범위 · 수만 준다.
 MY_ANALYSES_SQL = (
-    "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, "
+    "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, j.snapshot_ready, "
     "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
     "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname "
     "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
     "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
-    "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready AND j.result_set IS NOT NULL "
+    "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
+    # 찾은 것이 0건인 분석도 결과다(결과 타일은 만들지 않음) — '결과 없음'으로 쌓는다(QA-결과없음 · 10-11 종단 시험)
+    "AND (j.snapshot_ready OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
     "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
     "  OR (j.options->>'project_infer'='true' AND (j.submitted_by=$1 OR pr.lead_id=$1 "
     "      OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pr.id AND m.user_id=$1))) "
@@ -169,7 +171,8 @@ async def my_analyses(request: Request, job: str | None = None):
         elif o.get("scope_full"):
             scope = f"전역 · 읍면동 {o.get('emd_total')}곳" if o.get("emd_total") else "전역"
         elif o.get("coverage") is not None:
-            scope = f"영상 있는 {round(float(o['coverage']) * 100)}%"
+            pc = float(o["coverage"]) * 100                                      # 1% 미만을 '0%'로 적지 않는다(분석하기 범위 문장과 같은 말 · QA-결과없음)
+            scope = "영상 있는 1% 미만" if pc < 1 else f"영상 있는 {round(pc)}%"
         else:
             scope = ""
         yr = str(r["year"] or (str(r["epoch"])[:4] if r["epoch"] else ""))
@@ -177,7 +180,7 @@ async def my_analyses(request: Request, job: str | None = None):
             b = [round(v, 6) for v in shape(r["env"]).bounds] if r["env"] else None
         except Exception:  # noqa: BLE001
             b = None
-        total = sum(int(v or 0) for v in cnt.values()) if cnt else None
+        total = sum(int(v or 0) for v in cnt.values()) if cnt else 0              # 끝난 분석의 빈 집계 = 찾은 것 0건(QA-결과없음)
         fin = _iso(r["finished_at"])
         g["items"].append({
             "job": r["id"], "set": r["result_set"], "region": region or "—", "sgg_cd": (rg or {}).get("sgg_cd") or sgg,
@@ -185,7 +188,8 @@ async def my_analyses(request: Request, job: str | None = None):
             "imagery": {"id": r["imagery_id"], "name": _name_ko(r["iname"]), "year": yr or None, "word": " ".join(x for x in (yr, gsd_word(r["gsd_m"])) if x)},
             "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
             "by_class": [{"cls": CLASS_KO.get(k, k), "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0))],
-            "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id})
+            "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id,
+            "empty": not r["snapshot_ready"]})                                   # 찾은 것 0건 — 지도에 그릴 결과 층이 없다(범위만)
     running = []
     for r in run:
         o = _jload(r["options"])

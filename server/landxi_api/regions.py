@@ -969,7 +969,7 @@ async def region_results(sgg_cd: str, request: Request):
     lx_ok = p.is_lx or any(in_scope(c, scope) for c in codes)
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
-            "SELECT j.id, j.tenant_id, j.result_set, j.model_id, j.imagery_id, j.finished_at, j.counts, "
+            "SELECT j.id, j.tenant_id, j.result_set, j.model_id, j.imagery_id, j.finished_at, j.counts, j.card_id, j.options, "
             "ST_AsGeoJSON(ST_Envelope(j.aoi))::json AS env, m.classes, i.year, i.epoch "
             "FROM jobs j LEFT JOIN models m ON m.id=j.model_id LEFT JOIN imagery i ON i.id=j.imagery_id "
             "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready "
@@ -988,6 +988,9 @@ async def region_results(sgg_cd: str, request: Request):
         counts = x["counts"] or {}
         if isinstance(counts, str):
             counts = json.loads(counts)
+        _opts = x["options"] or {}
+        if isinstance(_opts, str):
+            _opts = json.loads(_opts)
         try:
             b = [round(v, 6) for v in shape(x["env"]).bounds] if x["env"] else None
         except Exception:
@@ -997,5 +1000,7 @@ async def region_results(sgg_cd: str, request: Request):
                     "set": x["result_set"], "path": x["result_set"] + ".pmtiles", "layer": "results", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
                     "signed": x["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", "basis": "inferred",
                     "count": env(sum(counts.values()) if counts else None, "count", "inferred", "전역 분석 결과(겹침 정리 후)", as_of=fin),
-                    "from": "job", "style": "landcover" if lc else "result", "finished_at": fin})
+                    "from": "job", "style": "landcover" if lc else "result", "finished_at": fin,
+                    # 전역(영상이 시군구를 덮음)인지 · 서비스 카드 분석의 대상 — XI ChatGEO 가 '그 지역 결과'를 고를 때 작은 부분 분석보다 전역 분석을(QA-통계 · 10-11)
+                    "full": bool(_opts.get("scope_full")), "card_id": x["card_id"], "classes": _opts.get("classes") or None})
     return {"sgg_cd": r["sgg_cd"], "name": r["name"], "items": out, "as_of": now_iso()}

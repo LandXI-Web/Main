@@ -397,10 +397,11 @@ function analyzePanel(side, c, picker) {
   async function refit(sgg) {
     const p = picks.get(sgg); if (!p) return;
     p.fit = null; draw();
+    const my = (p.seq = (p.seq || 0) + 1);   // 늦게 온 앞 판정(서버가 고른 영상 · 전역)이 고른 영상의 판정을 덮지 않게(QA-영상판정 · 10-11 종단 시험)
     let f = null;
     try { f = await api(`/cards/${encodeURIComponent(c.id)}/fit?` + new URLSearchParams({ region: sgg, ...(p.imagery ? { imagery: p.imagery.id } : {}) })); }
     catch (e) { f = { fits: false, note: e.message || '지금은 확인할 수 없습니다' }; }
-    if (picks.get(sgg) === p) { p.fit = f; draw(); }
+    if (picks.get(sgg) === p && p.seq === my) { p.fit = f; draw(); }
   }
   /* 영상 고르기 칸 — 지금 보는 지역(여러 곳이면 탭) · 카드를 누르면 그 지역의 분석 영상이 바뀐다 */
   function showPicker(sgg) {

@@ -64,8 +64,11 @@ async def _get(ctx, path: str, params: dict | None = None):
 
 
 async def _set(args, ctx) -> str:
-    """결과 세트 — 인자 그대로, 없으면 지역(region 인자 · 화면 문맥 · 기관 관할)의 결과 층 중 토지피복 먼저(GET /regions/{sgg}/results)."""
+    """결과 세트 — 인자 그대로, 없으면 지역(region 인자 · 화면 문맥 · 기관 관할)의 결과 층 중 토지피복 먼저(GET /regions/{sgg}/results).
+    모델이 지어낸 세트 이름(형식이 다름)은 버리고 지역으로 찾는다(QA-통계 · 10-11 — 'results/tenant/default/greenhouse' 로 세 번 실패)."""
     s = args.get("set")
+    if s and not _SET_RX.match(str(s)):
+        s = None
     if not s:
         from . import scope as S
         reg = await S.region_of(ctx, args)
@@ -73,7 +76,12 @@ async def _set(args, ctx) -> str:
             raise ToolError("bad_request", "어느 지역 결과인지 region(시군구)을 알려 주세요")
         j = await _get(ctx, f"/regions/{reg['sgg']}/results")
         items = [it for it in j.get("items") or [] if it.get("set")]
-        items.sort(key=lambda it: (it.get("style") != "landcover", it.get("from") != "job"))
+        cls = args.get("cls")
+        # 같은 지역에 결과가 여럿이면: 그 대상(cls)을 찾는 서비스의 전역 분석 → 전역 분석 → 토지피복 → 분석 결과 순.
+        # 작은 부분 분석(영상 일부)을 지역 결과로 집지 않는다 — 지도 서비스 · 분석하기와 같은 숫자(QA-통계 · 10-11 종단 시험)
+        items.sort(key=lambda it: (not (cls and it.get("classes") == [cls] and it.get("full")),
+                                   not (it.get("from") == "job" and it.get("full")),
+                                   it.get("style") != "landcover", it.get("from") != "job"))
         if not items:
             raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
         s = items[0]["set"]
@@ -98,12 +106,19 @@ async def catalog_layers(args: dict, ctx) -> Out:
 
 async def results_stats(args: dict, ctx) -> Out:
     s = await _set(args, ctx)
-    j = await _get(ctx, f"/results/{s}/stats", {"by": args.get("by") or "emd"})
+    try:
+        j = await _get(ctx, f"/results/{s}/stats", {"by": args.get("by") or "emd"})
+    except ToolError as e:
+        if e.status != 404 or not args.get("set"):
+            raise
+        s = await _set({**args, "set": None}, ctx)                      # 없는 세트를 짚었으면 지역의 결과로(QA-통계)
+        j = await _get(ctx, f"/results/{s}/stats", {"by": args.get("by") or "emd"})
     out = Out(source=f"GET /api/v1/results/{s}/stats")
     items = j.get("items") or []
     emd = args.get("emd")
     cls = args.get("cls")
-    sel = [it for it in items if (not emd or str(it.get("key", "")).startswith(str(emd))) and (not cls or it.get("cls") == cls)]
+    # 한 가지만 찾는 서비스의 결과는 줄마다 cls 가 비어 있다 — 그 줄을 cls 거르기로 버리지 않는다(QA-통계)
+    sel = [it for it in items if (not emd or str(it.get("key", "")).startswith(str(emd))) and (not cls or it.get("cls") in (cls, None))]
     for it in sel[:16]:
         k = f"{it.get('key')}_{it.get('cls') or ''}"
         if _is_env(it.get("n")):

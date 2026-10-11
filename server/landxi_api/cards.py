@@ -826,8 +826,11 @@ async def imagery_options(cid: str, region: str, request: Request):
             ok = bool(pl["fits"]) and (pl["img"] or {}).get("imagery_id") == want["imagery_id"]
             mg = own.get("gsd_m") or None
             ratio = abs(math.log(float(r["gsd_m"]) / float(mg))) if ok and mg and r.get("gsd_m") else 0.0
-            fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
             km2 = _km2(r["inter"])
+            fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
+            small = fit != "no" and km2 < 0.01                                    # 1 ha 미만 — 분석 범위(읍면동 ∩ 영상 1 ha)에 들지 않아 고를 수 없다(QA-영상)
+            if small:
+                fit = "no"
             pct = round(r["coverage"] * 100)
             rng = (f"{rg['name']} 전역" if r["coverage"] >= 0.95 else f"약 {km2:,.0f}㎢ · {rg['name']}의 {pct}%" if pct >= 1
                    else f"일부 · 약 {km2:,.2f}㎢" if km2 < 1 else f"일부 · 약 {km2:,.1f}㎢")
@@ -840,7 +843,7 @@ async def imagery_options(cid: str, region: str, request: Request):
                           "when": _when(r), "range": rng, "coverage": env(pct, "%", "measured", "영상 범위 ∩ 시군구 면적"),
                           "bounds": [round(v, 6) for v in r["fp"].bounds], "footprint": fp,
                           "fit": fit, "fit_text": {"ok": "이 서비스에 맞음", "rough": "해상도 차이가 커 결과가 거칠 수 있음"}.get(fit)
-                          or "이 서비스 모델과 해상도가 맞지 않음",
+                          or ("이 지역과 겹치는 곳이 너무 작음" if small else "이 서비스 모델과 해상도가 맞지 않음"),
                           "pick": bool(best and r["id"] == best["id"])})
     rb = [round(v, 6) for v in t.bounds] if t is not None and not t.is_empty else None
     return {"region": sgg, "name": rg["name"], "bounds": rb, "items": items, "as_of": now_iso()}
@@ -868,6 +871,9 @@ async def fit(cid: str, region: str, request: Request, imagery: str | None = Non
             return out
         if not q.get("allowed"):
             why = (q.get("reasons") or [""])[0]
+            if why == "no_imagery" and imagery:                                   # 고른 영상이 있는데 겹치는 조각이 없다 — '영상 없음'이 아니다(QA-영상)
+                out.update(fits=False, note="고른 영상이 이 지역과 겹치는 곳이 너무 작아 분석할 수 없습니다")
+                return out
             out.update(fits=False if why != "no_imagery" else None,
                        note={"no_imagery": "이 지역에 등록된 영상이 없습니다", "too_large": "범위가 너무 큽니다 — XI맵에서 읍면동으로 나눠 분석해 주세요",
                              "power_budget": "지금은 GPU 가 바쁩니다 — 잠시 뒤 다시"}.get(why, "지금은 분석할 수 없습니다"))

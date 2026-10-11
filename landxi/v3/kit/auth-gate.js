@@ -6,7 +6,7 @@
    const who = await gate('gov-fusion'); // 명시
    → { session, me, tenant, home, landing }   (tenant = /tenants 항목 · 기관 세션만)
    landingFor(who, site?) → 그 사람의 첫 집 경로(정문 · 셸 '처음' 이 쓴다) — 들어온 입구(site)가 있으면 입구별 표가 먼저 */
-import { api, session, hasRoute, bboxOf } from './util.js';
+import { api, session, hasRoute, bboxOf, h } from './util.js';
 import './sites.js';   // 입구 셋 — 주소 이름 한 곳(globalThis.LX_SITES)
 
 export const FRONT = '/landxi/v3/login/';
@@ -34,6 +34,7 @@ export const ALLOW = {
   'lx-release': ['lx/staff', 'lx/admin'],   // 프로젝트 안 추론 · 배포 신청(10-09 배포-1 · 2)
   'lx-project': ['lx/staff', 'lx/admin'],   // 프로젝트 목록 · 한 장(구현 2차 T1)
   'lx-inbox': ['lx/staff', 'lx/admin'],     // 기관에서 온 요청(구현 2차 검토 요청)
+  'lx-analyze': ['lx/staff', 'lx/admin'],   // 분석하기 — 로그인이 끝난 뒤 다시 로그인하면 이 화면으로(?next · QA-세션 10-11)
   'lx-map': ['lx/staff', 'lx/admin'],       // 지도 서비스 — 내가 돌린 분석 결과 층(원칙 149 · 154 · 163)
   'ops-core': ['lx/admin'],
   'ops-infra': ['lx/admin'],
@@ -157,9 +158,30 @@ export async function gate(home = homeFromPath()) {
     location.replace(FRONT + '?denied=' + encodeURIComponent(home || ''));
     return new Promise(() => {});
   }
+  expiryWatch(home);
   /* 기관 세션 화면의 머리 = 기관 마크 · 이름(구현 2차 T3 · 모든 기관 화면이 같은 틀) — 서비스 선택은 스스로 그린다 */
   if (who.key === 'tenant/local' && home !== 'gov-select') import('../gov-select/brand.js').then((m) => m.brandMast(who.me.tenant_id)).catch(() => {});
   return { ...who, home };
+}
+
+/* 쓰던 중 세션이 끝나면(서버 401) 가운데 창 하나 — 다시 로그인하면 보던 화면으로 돌아온다(?next). 조용히 '로그인이 필요합니다' 글줄만 남지 않게(QA-세션 · 10-11 종단 시험) */
+let expiryOn = false;
+function expiryWatch(home) {
+  if (expiryOn) return;
+  expiryOn = true;
+  let open = false;
+  addEventListener('lx:session-expired', async () => {
+    if (open) return;
+    open = true;
+    const here = location.pathname + location.search;
+    const go = () => { session.clear(); WHO = null; location.replace(govPage(home) ? orgHome(lastOrg(), { next: here }) : FRONT + '?next=' + encodeURIComponent(here)); };
+    try {
+      const { modal } = await import('./modal.js');
+      modal({ title: '로그인이 끝났습니다', size: 'md', onClose: () => { open = false; },
+        body: h('div', {}, h('p', { text: '오래 쓰지 않아 로그인이 끝났습니다. 다시 로그인하면 보던 화면으로 돌아옵니다.' }),
+          h('p', { style: 'margin-top:20px' }, h('button.t-btn', { type: 'button', text: '다시 로그인', onclick: go }))) });
+    } catch { go(); }
+  });
 }
 
 /** 나가기 — 서버 세션 삭제 후 정문 */

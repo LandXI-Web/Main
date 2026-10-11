@@ -121,6 +121,7 @@ async function addImagery(id) {
 /* 결과 층 — 결과 세트 하나 = 결과 타일 하나(지역 결과 층과 같은 길) */
 async function addSet(x) {
   if (x.ids) return;
+  if (x.empty) { x.ids = []; return; }   // 찾은 것 0건 — 그릴 결과 층이 없다(범위로만 간다 · QA-결과없음)
   const item = { id: 'lm-' + x.job, kind: 'vector', set: x.set, layer: 'results', promote_id: 'id', signed: false, source: 'pmtiles' };
   const sid = 'lm-r-' + x.job;
   try { map.addSource(sid, await sourceSpec(item)); } catch (e) { K.devlog('result', `${e?.message || e}`); x.ids = []; return; }
@@ -139,11 +140,20 @@ async function apply() {
   drawLeft(); drawCap();
 }
 const fly = (b) => { if (b) map.fitBounds(b, { padding: pad(), duration: 900, maxZoom: 15 }); };
+/* 결과 도형을 못 받으면(결과 타일 오류) '찾은 것 없음'과 다르게 알린다 — 줄에 '불러오지 못함' + 알림 한 번(다시 시도) · QA-로딩실패 10-11 */
+map.on('error', (e) => {
+  const sid = e?.sourceId || e?.source?.id || '';
+  if (!String(sid).startsWith('lm-r-')) return;
+  const x = ST.items.get(String(sid).slice(5));
+  if (!x || x.failed) return;
+  x.failed = true; drawLeft(); drawCap();
+  K.toast(`${x.g.name} · ${x.region} — 결과 도형을 불러오지 못했습니다`, { action: { label: '다시 시도', onClick: () => location.reload() }, ms: 10000 });
+});
 
 /* ── 왼쪽 ── */
 function drawLeft() {
   const on = all().filter(shown);
-  const tot = on.reduce((a, x) => a + (Number(val(x.found)) || 0), 0);
+  const tot = on.reduce((a, x) => a + (x.failed ? 0 : Number(val(x.found)) || 0), 0);   // 못 그린 층의 수는 '켜진 결과'에 넣지 않는다
   const sum = h('div.lm-sum', {},
     h('div', {}, h('b.num', {}, nf(tot), h('i', { text: '건' })), h('small', { text: `켜진 결과 · 묶음 ${new Set(on.map((x) => x.g.key)).size}개` })),
     h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `내가 돌린 분석 · 묶음 ${ST.groups.length}개` })));
@@ -166,7 +176,7 @@ function drawLeft() {
           h('b', { text: `${x.region} · ${day(x.finished_at)}` }),
           h('span', { text: [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope].filter(Boolean).join(' · ') }),
           (x.by_class || []).length > 1 ? h('span.lm-cls', { text: cls }) : null),
-        h('span.lm-v.num', { text: `${val(x.found) == null ? '—' : nf(val(x.found))}건` })));
+        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(val(x.found))}건` })));
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);
   });
@@ -185,7 +195,7 @@ function drawLeft() {
 function drawCap() {
   const on = all().filter(shown);
   cap.hidden = !on.length;
-  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${nf(val(x.found) ?? 0)}건` })),
+  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(val(x.found) ?? 0)}건`}` })),
     ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 층` })] : []));
 }
 async function toggle(x) {
@@ -275,6 +285,10 @@ if (!ST.items.size) {
   await apply();
   if (first) fly(first.bounds);
 }
+if (WANT && ST.items.get(WANT)?.empty) {
+  const x = ST.items.get(WANT);
+  K.toast(`${x.g.name} · ${x.region} — 분석은 끝났고, 이 범위에서 찾은 것이 없습니다(0건)`, { ms: 8000 });
+}
 if (WANT && !ST.items.has(WANT)) {
   const r = (D.running || []).find((x) => x.job === WANT);
   K.toast(r ? `${r.name} · ${r.region} — 분석 중입니다. 끝나면 여기에 층으로 쌓입니다` : '그 결과는 이 계정의 지도 서비스에 없습니다');
@@ -295,7 +309,7 @@ async function poll() {
     if (fresh.length) {
       const x = fresh[0];
       ST.open.add(x.g.key);
-      K.toast(`분석이 끝났습니다 · ${x.g.name} ${x.region} ${nf(val(x.found) ?? 0)}건`, { action: { label: '켜기', onClick: () => { if (!x.on) toggle(x); } }, ms: 8000 });
+      K.toast(x.empty ? `분석이 끝났습니다 · ${x.g.name} ${x.region} — 찾은 것 없음(0건)` : `분석이 끝났습니다 · ${x.g.name} ${x.region} ${nf(val(x.found) ?? 0)}건`, { action: { label: '켜기', onClick: () => { if (!x.on) toggle(x); } }, ms: 8000 });
     }
     drawLeft();
   } catch { /* 다음 차례에 */ }

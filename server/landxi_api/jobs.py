@@ -769,7 +769,9 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
             break
     shards_n = len(sh or [])
     cov = float((info or {}).get("coverage") or 0.0)
-    if shards_n == 0 or cov < 0.005:
+    # 덮는 비율 0.5% 하한은 서버가 영상을 고를 때만 — 직원이 고른 영상은 겹치는 조각이 있으면 그 곳만 분석한다(QA-영상 · 10-11 종단 시험:
+    # 영상 고르기가 '맞음'으로 보여 준 작은 영상(1㎢ 안팎)이 '등록된 영상이 없습니다'로 막혔다)
+    if shards_n == 0 or (cov < 0.005 and not body.get("imagery_id")):
         reasons.append("no_imagery")
     elif shards_n > SGG_MAX_SHARDS:
         reasons.append("too_large")
