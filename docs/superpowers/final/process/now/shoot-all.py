@@ -24,7 +24,8 @@ PRJ = 'prj_b2fa593a12'
 PNU = '5219025030108240009'
 LOG = json.load(open(os.path.join(OUT, 'log.json'), encoding='utf-8')) if os.path.exists(os.path.join(OUT, 'log.json')) else {}   # 같은 폴더에 다시 찍으면 이어 적는다
 FAILED = []
-BADGE = "document.body.insertAdjacentHTML('beforeend','<div style=\"position:fixed;top:14px;left:14px;z-index:2147483647;background:#E8590C;color:#fff;font:800 28px/1 system-ui,sans-serif;padding:12px 22px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.25)\">시안</div>')"
+def badge(txt):
+    return "document.body.insertAdjacentHTML('beforeend','<div style=\"position:fixed;top:14px;left:14px;z-index:2147483647;background:#E8590C;color:#fff;font:800 28px/1 system-ui,sans-serif;padding:12px 22px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.25)\">%s</div>')" % txt
 
 
 def want(name):
@@ -95,16 +96,35 @@ def go(pg, url, sel=None, wait=1500):
     pg.wait_for_timeout(wait)
 
 
-FEATURE_JS = """(cls) => {
-  const m = window.__lm && window.__lm.map; if (!m) return null;
-  const c = m.getCanvas(), W = c.clientWidth, H = c.clientHeight;
-  const ids = m.getStyle().layers.map((l) => l.id).filter((i) => i.startsWith('lm-r-') && i.endsWith('-fill') && m.getLayoutProperty(i, 'visibility') !== 'none');
-  const fs = m.queryRenderedFeatures([[W * 0.2, H * 0.15], [W * 0.62, H * 0.85]], { layers: ids }).filter((f) => !cls || f.properties.cls === cls);
-  if (!fs.length) return null;
-  const g = fs[0].geometry, ring = g.type === 'MultiPolygon' ? g.coordinates[0][0] : g.coordinates[0];
-  const cen = ring.reduce((a, p) => [a[0] + p[0] / ring.length, a[1] + p[1] / ring.length], [0, 0]);
-  const p = m.project(cen); return { x: p.x, y: p.y };
-}"""
+def rail(pg, label):
+    pg.evaluate("(l) => [...document.querySelectorAll('nav[aria-label=\"도구\"] .k-rail-i')].find(e => e.textContent.trim() === l)?.click()", label)
+
+
+def xi_ready(pg, ms=120000):
+    try:
+        pg.wait_for_function("() => window.__xc && window.__xc.boot && window.__xc.boot.shown", timeout=ms)
+    except Exception:
+        pass
+    pg.wait_for_timeout(3500)
+
+
+def chat_ask(pg, q, name, note, wait_s=150):
+    if not pg.locator('.k-chat-in:visible').count():
+        pg.locator('.k-chat-fab').click()
+        pg.wait_for_timeout(1200)
+    pg.locator('.k-chat-in input, .k-chat-in textarea').first.fill(q)
+    pg.locator('.k-chat-send').click()
+    last, same = '', 0
+    for _ in range(wait_s):
+        pg.wait_for_timeout(1000)
+        t = pg.evaluate("() => (document.querySelector('.k-chat-msg.ai:last-of-type')||document.body).innerText.length + ':' + !!document.querySelector('.k-chat-doing:not([hidden])')")
+        same = same + 1 if t == last and t.endswith('false') else 0
+        last = t
+        if same >= 6:
+            break
+    pg.wait_for_timeout(1500)
+    shoot(pg, name, note)
+
 
 # ───────── LX 직원 (app · test@lx.or.kr) ─────────
 def staff(b):
@@ -112,116 +132,191 @@ def staff(b):
     errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
 
-    def menu():
-        go(pg, f'{APP}/landxi/v3/lx-console/', '.k-rail', 3500)
-        shoot(pg, 'menu', 'LX 직원 메뉴 — 지금 메뉴(지도 서비스 포함)', clip={'x': 0, 'y': 0, 'width': 420, 'height': 560})
-        shoot(pg, 'q10-console', 'LX 직원 대시보드')
-    scene('menu', menu)
+    def dash():
+        go(pg, f'{APP}/landxi/v3/lx-console/', '.k-rail', 4500)
+        shoot(pg, 'dash', 'LX 직원 대시보드 — 프로젝트 진행 현황 요약 칸')
+    scene('dash', dash)
+
+    def dash_loading():
+        held = []
+        rx = re.compile(r'/api/v1/(projects\?scope=mine|me/jobs)')
+        pg.route(rx, lambda r: held.append(r))
+        pg.goto(f'{APP}/landxi/v3/lx-console/', wait_until='domcontentloaded')
+        pg.wait_for_timeout(1500)
+        pg.evaluate(badge('흉내'))
+        shoot(pg, 'dash-loading', '대시보드 첫 순간(흉내 — 프로젝트 목록 · 내 작업 응답을 잠시 붙잡음 · 찍은 뒤 그대로 보냄)')
+        for r in held:
+            r.continue_()
+        pg.unroute(rx)
+    scene('dash-loading', dash_loading)
 
     def projects():
-        go(pg, f'{APP}/landxi/v3/lx-project/?scope=mine', '.k-rail', 3000)
-        shoot(pg, 'q10-projects', '프로젝트 목록')
-    scene('q10-projects', projects)
+        go(pg, f'{APP}/landxi/v3/lx-project/', '.lxp-list .sb-tb tbody tr', 2000)
+        shoot(pg, 'projects', '프로젝트 목록 — 단계 칸과 진행 n/6')
+        pid = pg.evaluate("() => [...document.querySelectorAll('.lxp-list .sb-tb tbody tr')].find(r => /비닐하우스/.test(r.innerText))?.dataset.id")
+        if pid:
+            go(pg, f'{APP}/landxi/v3/lx-project/?project={pid}', '.lxp-bar-steps .lxp-st', 2500)
+            shoot(pg, 'project-detail', '프로젝트 한 건 — 단계 줄(공개 뒤 안 한 추론 · 결과 확인은 건너뜀)')
+    scene('projects', projects)
 
-    def q2():
-        go(pg, f'{APP}/landxi/v3/lx-analyze/?card=card-farm', '.k-rail', 3500)
-        shoot(pg, 'q2-detail-top', '분석하기 자세히 — 위')
-        pg.evaluate("(()=>{const e=[...document.querySelectorAll('*')].filter(x=>x.scrollHeight>x.clientHeight+50&&getComputedStyle(x).overflowY!=='visible'&&x.clientHeight>300);e.forEach(x=>x.scrollTop=x.scrollHeight);window.scrollTo(0,document.body.scrollHeight)})()")
+    def train_infer():
+        go(pg, f'{APP}/landxi/v3/lx-train/?project={PRJ}&stage=train', '.k-rail', 4500)
+        shoot(pg, 'train', '학습 탭 — 맨 위 설명 칸')
+        go(pg, f'{APP}/landxi/v3/lx-release/?project={PRJ}&stage=infer', '.k-rail', 4500)
+        shoot(pg, 'infer', '추론 탭 — 맨 위 설명 칸')
+        go(pg, f'{APP}/landxi/v3/lx-release/?project={PRJ}&stage=publish', '.k-rail', 4500)
+        shoot(pg, 'publish', '배포 신청 탭 — 모델 줄의 정확도 이름표')
+        pg.evaluate("(()=>{const e=[...document.querySelectorAll('label,h3,h4,dt,span,b')].find(x=>/^분야/.test(x.textContent.trim()));if(e)e.scrollIntoView({block:'center'})})()")
         pg.wait_for_timeout(900)
-        shoot(pg, 'q2-detail-low', '분석하기 자세히 — 아래(이 카드의 조건)')
-    scene('q2', q2)
+        shoot(pg, 'apply', '배포 신청서 — 분야 여러 개 · 쓸 수 있는 영상')
+    scene('train', train_infer)
 
-    def q6():
-        go(pg, f'{APP}/landxi/v3/lx-release/?project={PRJ}&stage=infer', '.k-rail', 3500)
-        shoot(pg, 'q6-infer-closed', '추론 — 설정 접힘')
-        pg.locator('details.rl-set summary').first.click()
-        pg.wait_for_timeout(800)
-        shoot(pg, 'q6-infer-open', '추론 — 설정 펼침(신뢰도 기준 · 최소 크기)')
-        pg.evaluate("(()=>{const l=document.querySelector('a.rl-link');if(l)l.scrollIntoView({block:'center'})})()")
-        pg.wait_for_timeout(800)
-        bb = pg.locator('a.rl-link').first.bounding_box()
-        shoot(pg, 'q6-infer-result', '추론 — 결과 목록(바꾼 값 표시) · 결과 칸만', clip={'x': max(0, bb['x'] - 480), 'y': max(0, bb['y'] - 90), 'width': 620, 'height': 240})
-    scene('q6', q6)
-
-    def q9():
-        go(pg, f'{APP}/landxi/v3/lx-release/?project={PRJ}&stage=publish', '.k-rail', 3500)
-        shoot(pg, 'q9-apply-staff', '배포 신청서 — 정확도 경고 자리')
-    scene('q9-apply-staff', q9)
-
-    def later6():
-        go(pg, f'{APP}/landxi/v3/lx-project/?project={PRJ}', '.k-rail', 3500)
-        shoot(pg, 'later6-project', '프로젝트 한 건 — 쉬운 말')
-    scene('later6', later6)
-
-    def q10():
-        go(pg, f'{APP}/landxi/v3/lx-train/?project={PRJ}&stage=label&flow=1', '.k-rail', 3500)
+    def analyze():
+        go(pg, f'{APP}/landxi/v3/lx-analyze/', '.la-ac', 3500)
+        shoot(pg, 'analyze-list', '분석하기 — 분야 거르기 칩 · 서비스 카드 · 검증 정확도 아래 기준 한 줄')
         try:
-            pg.wait_for_selector('.k-drawer', timeout=6000)
-        except Exception:
-            pg.locator('button:has-text("학습데이터 올리기")').first.click()
-            pg.wait_for_selector('.k-drawer', timeout=20000)
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'q10-label-open', '학습데이터 구축 — 올리기 · 라벨 확인 서랍')
-        go(pg, f'{APP}/landxi/v3/lx-train/?project={PRJ}&stage=train&flow=1', '.k-rail', 3500)
-        try:
-            pg.wait_for_selector('.k-drawer', timeout=6000)
-        except Exception:
-            pg.locator('button:has-text("학습 실행")').first.click()
-            pg.wait_for_selector('.k-drawer', timeout=20000)
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'q10-train-open', '학습 — 학습 실행 · 결과 서랍(열기만)')
-    scene('q10-label', q10)
-
-    # 지도 서비스 · 영상 고르기
-    state = {}
-
-    def mapsvc():
-        go(pg, f'{APP}/landxi/v3/lx-map/', 'body[data-ready="1"]', 3000)
-        while pg.locator('.lm-sw[aria-checked="true"]').count():
-            pg.locator('.lm-sw[aria-checked="true"]').first.click()
-        card = pg.locator('.lm-grp', has_text='비닐하우스 분석서비스').first
-        proj = pg.locator('.lm-grp.is-proj', has_text='비닐하우스').first
-        for g in (card, proj):
-            if g.locator('.lm-gt').get_attribute('aria-expanded') != 'true':
-                g.locator('.lm-gt').click()
-            sw = g.locator('.lm-sw').first
-            if sw.get_attribute('aria-checked') != 'true':
-                sw.click()
-        state['pid'] = (proj.get_attribute('data-g') or ':').split(':')[1]
-        pg.wait_for_timeout(5000)
-        shoot(pg, 'a-mapsvc-two-groups', '지도 서비스 — 묶음 둘 동시에')
-        pt = pg.evaluate(FEATURE_JS, '비닐하우스')
-        bb = pg.locator('.lm-stage .maplibregl-canvas').bounding_box()
-        pg.mouse.click(bb['x'] + pt['x'], bb['y'] + pt['y'])
-        pg.wait_for_selector('.lm-props', timeout=15000)
-        pg.wait_for_timeout(3500)
-        shoot(pg, 'b-mapsvc-props', '지도 서비스 — 도형 누르면 오른쪽 속성')
-    scene('a-mapsvc', mapsvc)
-
-    def infer_link():
-        pid = state.get('pid') or PRJ
-        go(pg, f'{APP}/landxi/v3/lx-release/?project={pid}&stage=infer', 'a.rl-link', 1500)
-        pg.evaluate("(()=>{const l=document.querySelector('a.rl-link');if(l)l.scrollIntoView({block:'center'})})()")
-        pg.wait_for_timeout(700)
-        shoot(pg, 'c-infer-result-link', "추론 — '결과 보기'")
-        pg.locator('a.rl-link', has_text='결과 보기').first.click()
-        pg.wait_for_url(lambda u: '/lx-map/' in u, timeout=30000)
-        pg.wait_for_selector('body[data-ready="1"]', timeout=60000)
-        pg.wait_for_selector('.lm-grp.is-proj .lm-sw[aria-checked="true"]', timeout=30000)
-        pg.wait_for_timeout(5000)
-        shoot(pg, 'd-from-infer-to-mapsvc', "'결과 보기' 눌러 지도 서비스에서 그 결과")
-    scene('c-infer', infer_link)
-
-    def imagery():
-        go(pg, f'{APP}/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190', '#imagery .la-im-c', 4000)
-        pg.evaluate("document.querySelector('#imagery').scrollIntoView({block:'start'})")
-        pg.wait_for_timeout(2500)
-        shoot(pg, 'e-imagery-pick', '분석하기 상세 — 영상 고르기')
-        other = pg.locator('#imagery .la-im-c[aria-pressed="false"]:not([disabled])').first
-        other.click()
+            pg.get_by_text('건축·변화', exact=False).first.click(timeout=4000)
+            pg.wait_for_timeout(1200)
+            pg.get_by_role('button', name=re.compile('^항공')).first.click(timeout=4000)
+            pg.wait_for_timeout(1500)
+        except Exception as e:
+            print('칩 못 누름', str(e)[:80])
+        shoot(pg, 'analyze-filtered', '분석하기 — 분야 건축·변화 + 영상 항공으로 거른 모습')
+        pg.route('**/preview/**', lambda r: r.abort())
+        pg.reload()
+        pg.wait_for_selector('.la-ac', timeout=60000)
         pg.wait_for_timeout(3000)
-        shoot(pg, 'f-imagery-other', '다른 영상을 고른 모습')
-    scene('e-imagery', imagery)
+        try:
+            pg.click('text=농지·시설', timeout=4000)
+        except Exception:
+            pass
+        pg.wait_for_timeout(1500)
+        pg.evaluate(badge('흉내'))
+        shoot(pg, 'analyze-fallback', '그림을 못 받은 카드(흉내 — 학습 표본 그림을 막음) · 같은 틀의 대체 그림 + 결과 장면 없음')
+        pg.unroute('**/preview/**')
+    scene('analyze', analyze)
+
+    def detail():
+        go(pg, f'{APP}/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190', '#imagery .la-im-c', 4000)
+        shoot(pg, 'detail-top', '분석하기 자세히 — 위(서비스 소개 · 상태 표시)')
+        pg.evaluate("() => document.querySelector('.la-eta')?.scrollIntoView({ block: 'center' })")
+        pg.wait_for_timeout(700)
+        shoot(pg, 'eta', '결과까지 걸리는 시간 — 고른 영상 · 범위 · 같은 영상 최근 실제 속도')
+        pg.evaluate("() => [...document.querySelectorAll('.la-dl dt')].find(d => d.textContent === '걸리는 시간')?.scrollIntoView({ block: 'center' })")
+        pg.wait_for_timeout(700)
+        shoot(pg, 'cond', '이 카드의 조건 — 걸리는 시간 + 전제')
+        pg.evaluate("document.querySelector('#imagery').scrollIntoView({block:'start'})")
+        pg.wait_for_timeout(1500)
+        shoot(pg, 'imagery-pick', '영상 고르기 — 카드 두 열 + 범위 지도')
+        try:
+            pg.locator('#imagery button', has_text=re.compile('더 보기')).first.click(timeout=4000)
+            pg.wait_for_timeout(1000)
+        except Exception:
+            pass
+        small = pg.locator('#imagery .la-im-c', has_text='남원시 2023 항공영상').first
+        small.scroll_into_view_if_needed()
+        small.click()
+        pg.wait_for_timeout(3000)
+        shoot(pg, 'imagery-small', "겹침이 작은 영상 '남원시 2023 항공영상'을 고른 모습 — 옆 칸이 그 영상 기준으로 바뀜")
+    scene('detail', detail)
+
+    def inbox():
+        go(pg, f'{APP}/landxi/v3/lx-inbox/', '.ib-cells .ib-cell', 2000)
+        shoot(pg, 'inbox', '요청함 — 요청과 개선 후보를 구분한 한 줄')
+        pg.click('.ib-cell[data-k="improve"]')
+        pg.wait_for_timeout(2500)
+        shoot(pg, 'improve', '개선 후보 창 — 어디서 왔고 채택하면 무엇이 바뀌는지(채택은 누르지 않음)')
+    scene('inbox', inbox)
+
+    def mapchat():
+        go(pg, f'{APP}/landxi/v3/lx-map/', 'body[data-ready="1"]', 4000)
+        shoot(pg, 'map-list', '지도 서비스 — 지금 내 분석 결과 목록(켜기 전)')
+        pg.locator('.k-chat-fab').click()
+        pg.wait_for_timeout(1500)
+        shoot(pg, 'chat-open', 'XI ChatGEO — 처음 연 모습')
+        chat_ask(pg, '남원시 비닐하우스 읍면동별로 통계 내 줘', 'chat-stats', 'XI ChatGEO — 읍면동별 통계를 물은 답')
+        chat_ask(pg, '보고서 초안 만들어 줘', 'chat-report', 'XI ChatGEO — 보고서 초안을 청한 답(내려받기는 누르지 않음)')
+        chat_ask(pg, '분석 결과를 GeoJSON 으로 내려받고 싶어', 'chat-geojson', 'XI ChatGEO — 결과 내려받기를 청한 답')
+    scene('chat', mapchat)
+
+    def xi():
+        go(pg, f'{APP}/landxi/v3/xi-clean/index.html', None, 500)
+        xi_ready(pg)
+        shoot(pg, 'xi-arrive', 'XI맵 — 도착(지역 없이 전국)')
+        rail(pg, '입체')
+        pg.wait_for_timeout(1200)
+        shoot(pg, 'xi-tilt-moving', 'XI맵 입체 — 기울이는 중(흰 빈자리 없이 · 전국 건수는 작은 칸)')
+        pg.wait_for_timeout(5500)
+        shoot(pg, 'xi-tilt', 'XI맵 입체 — 자리 잡은 뒤')
+        rail(pg, '입체')
+        go(pg, f'{APP}/landxi/v3/xi-clean/index.html?region=52730', None, 500)
+        xi_ready(pg)
+        shoot(pg, 'xi-muju', 'XI맵 무주군 — 큰 숫자 · 글과 지도 층이 같은 판정')
+        rail(pg, '층')
+        pg.wait_for_timeout(1800)
+        shoot(pg, 'xi-layers', 'XI맵 도구 층')
+        rail(pg, '층')
+        rail(pg, '보고서')
+        pg.wait_for_timeout(2200)
+        shoot(pg, 'xi-report', 'XI맵 도구 보고서')
+        rail(pg, '보고서')
+        rail(pg, '분석')
+        pg.wait_for_timeout(2200)
+        shoot(pg, 'xi-analyze', 'XI맵 도구 분석(실행은 누르지 않음)')
+        go(pg, f'{APP}/landxi/v3/xi-clean/index.html?region=11110', None, 500)
+        xi_ready(pg, 90000)
+        rail(pg, '분석')
+        pg.wait_for_timeout(2200)
+        shoot(pg, 'xi-noimg', 'XI맵 종로구 — 영상 등록이 없는 시군구에서 분석 도구')
+    scene('xi', xi)
+
+    def glob():
+        pg.goto(f'{APP}/landxi/v3/global/index.html', wait_until='domcontentloaded')
+        try:
+            pg.wait_for_function("() => document.querySelector('.gl')?.dataset.level === 'district'", timeout=150000)
+            pg.wait_for_function("() => document.querySelector('.gl-sheet')?.getAnimations().length === 0", timeout=60000)
+        except Exception:
+            pass
+        pg.wait_for_timeout(2000)
+        shoot(pg, 'xi-global', '해외 화면(Kyrgyzstan) — 오른쪽 판이 자리에 앉은 뒤')
+    scene('xi-global', glob)
+
+    # 시안 — 직원 세션을 같이 씀(시안 안 로그인 폼이 뜨면 채움)
+    def mock(path, name, note):
+        def one():
+            pg.goto(f'{APP}/landxi/proto/review/mock/{path}', wait_until='domcontentloaded')
+            try:
+                pg.wait_for_selector('#login:not([hidden]) form, html[data-map-ready="1"]', timeout=30000)
+                if pg.is_visible('#login form'):
+                    pg.fill('#login input[name=login]', 'test@lx.or.kr')
+                    pg.fill('#login input[name=password]', PW)
+                    pg.click('#login button')
+            except Exception:
+                pass
+            try:
+                pg.wait_for_selector('html[data-map-ready="1"]', timeout=150000)
+            except Exception:
+                pass
+            pg.wait_for_timeout(2000)
+            shoot(pg, name, note)
+        scene(name, one)
+    mock('ximap-evolve/index.html?v=front', 'mock-evo-front', '시안 — XI맵 앞면(전국 결과 · 영상 원천 · 연도 · 고치기)')
+    mock('ximap-evolve/index.html?v=fix', 'mock-evo-fix', '시안 — 고치기(구례군 2023 실제 결과 · 칸 다 봤음)')
+    mock('ximap-evolve/index.html?v=gov', 'mock-evo-gov', '시안 — 기관 신고(남원 실제 109건)')
+    mock('ximap-evolve/index.html?v=train', 'mock-evo-train', '시안 — 다시 학습 · 같은 검증 묶음 비교')
+    mock('ximap-evolve/index.html?v=wheel', 'mock-evo-wheel', '시안 — 한 바퀴(보기 → 고치기 → 쌓기 → 다시 학습 → 비교 → 배포 신청 → 새 판)')
+    mock('ximap-r16/index.html?v=global', 'mock-r16-global', '시안 — 같은 지도에서 나라를 바꾼 해외(키르기스스탄)')
+
+    # 세션 끝남 — 마지막(쿠키를 지움). 흉내
+    def expired():
+        go(pg, f'{APP}/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190', '#imagery .la-im-c', 3000)
+        pg.evaluate("() => { const k = 'lx_api_session'; const s = JSON.parse(localStorage.getItem(k) || 'null'); if (s) { s.token = 'expired-sim'; localStorage.setItem(k, JSON.stringify(s)); } }")
+        pg.locator('#imagery .la-im-c:not([disabled])').nth(1).click()
+        pg.wait_for_selector('.k-md', timeout=20000)
+        pg.wait_for_timeout(1200)
+        pg.evaluate(badge('흉내'))
+        shoot(pg, 'session-modal', "쓰던 중 로그인이 끝났을 때(흉내 — 이 브라우저에 저장된 로그인 값을 못 쓰는 값으로 바꿈) — 가운데 창 '로그인이 끝났습니다'")
+    scene('session', expired)
     print('직원 오류', errs[:3])
     c.close()
 
@@ -231,180 +326,171 @@ def admin(b):
     c, pg = login_lx(b, ADMIN, 'lxadmin@lx.or.kr')
     org = ADMIN
 
-    def q9a():
-        go(pg, f'{org}/landxi/v3/ops-infra/#/deploys', '.k-rail', 3500)
-        row = pg.locator('tr:has(.t-chip), tr:has-text("검토 중")').first
-        try:
-            row.click(timeout=5000)
-        except Exception:
-            pass
-        pg.wait_for_timeout(1800)
-        shoot(pg, 'q9-apply-admin', '배포 신청 탭 — 신청 한 건 열기(승인 · 거절은 누르지 않음)')
-    scene('q9-apply-admin', q9a)
+    def hashgo(h, sel, wait=1500):
+        pg.goto(f'{org}/landxi/v3/{h}', wait_until='domcontentloaded')
+        pg.reload(wait_until='domcontentloaded')
+        pg.wait_for_selector(sel, timeout=60000)
+        pg.wait_for_timeout(wait)
 
-    def l1():
-        go(pg, f'{org}/landxi/v3/ops-infra/#/tenants', '.org[data-id="namwon"]', 2500)
-        shoot(pg, 'later1-tenants', '기관 목록 — 분석한 면적')
-    scene('later1', l1)
+    def cat():
+        hashgo('ops-infra/#/deploys/categories', '.k-rail', 3500)
+        shoot(pg, 'admin-category', '배포 → 분야 탭 — 순서 · 이름 · 쓰는 서비스 수')
+        hashgo('ops-infra/#/deploys/share', '.rv-sgg', 1500)
+        shoot(pg, 'admin-share', '배포 → 기관 공유 — 분야 묶음 머리줄')
+    scene('admin-cat', cat)
 
-    def q16():
-        go(pg, f'{org}/landxi/v3/ops-core/#/approvals', '.k-rail', 3500)
-        try:
-            pg.locator('.oc-tabs button', has_text='분석 요청').first.click(timeout=4000)
-        except Exception:
-            pass
-        pg.wait_for_timeout(1500)
-        try:
-            pg.locator('.rq-row[data-id]').first.click(position={'x': 400, 'y': 25}, timeout=8000)
-            pg.wait_for_selector('.k-drawer', timeout=10000)
-        except Exception:
-            print('서랍 안 열림 — 목록만 찍음', flush=True)
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'q16-requests', '요청 관리 · 분석 요청 — 한 건 서랍(바꾸지 않음)')
-    scene('q16', q16)
-
-    def q17():
+    def acc():
+        go(pg, f'{org}/landxi/v3/ops-accounts/', '.acc-tab', 2500)
+        shoot(pg, 'admin-accounts', '계정 관리 — LX 계정만')
+        pg.locator('.acc-tab[data-tab="logins"]').click()
+        pg.wait_for_timeout(2500)
+        shoot(pg, 'admin-logins', '계정 관리 — LX 로그인 기록만')
         go(pg, f'{org}/landxi/v3/ops-infra/#/tenants', '.org[data-id="namwon"]', 1500)
         pg.locator('.org[data-id="namwon"]').click()
         pg.wait_for_selector('.tp-h h1')
-        pg.wait_for_timeout(1800)
-        shoot(pg, 'q17-tenant-overview', "기관 한 곳 — 개요")
-        pg.locator('.tp-tabs button[data-k="svc"]').click()
-        pg.wait_for_selector('.tp-svc')
-        pg.wait_for_timeout(1000)
-        shoot(pg, 'q17-tenant-services', '기관 한 곳 — 서비스와 담당')
         pg.locator('.tp-tabs button[data-k="use"]').click()
-        pg.wait_for_selector('.tp-use .tp-t')
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'q17-tenant-use', '기관 한 곳 — 사용과 계정')
-    scene('q17', q17)
+        pg.wait_for_selector('.tp-use')
+        pg.wait_for_timeout(1800)
+        shoot(pg, 'admin-tenant-use', '기관 한 곳 — 사용과 계정(요약 숫자만)')
+    scene('admin-acc', acc)
 
-    def n13():
-        go(pg, f'{org}/landxi/v3/ops-infra/#/deploys/share', '.rv-sgg', 1500)
-        pg.locator('.rv-sgg').first.click()
-        pg.wait_for_selector('.rv-sg-g label')
-        pg.wait_for_timeout(1000)
-        shoot(pg, 'n13-share-sgg', '기관 공유 — 광역 칸 시군구 고르기(저장 · 거두기는 누르지 않음)')
-    scene('n13', n13)
+    def api():
+        hashgo('ops-infra/#/deploys/api', '.ak-row, .ak-tbl', 1800)
+        shoot(pg, 'api-tab', '배포 → API 탭 — 기관 × 서비스마다 키 줄')
+        pg.locator('tr.ak-pair .ak-mk').first.click()
+        pg.wait_for_selector('.k-drawer .ak-form')
+        pg.wait_for_timeout(800)
+        shoot(pg, 'api-create', "'키 만들기' 서랍(여는 데까지 · 만들지 않음)")
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(600)
+        try:
+            pg.locator('tr.ak-row').first.click(timeout=5000)
+            pg.wait_for_selector('.k-drawer .ak-ctbl', timeout=10000)
+            pg.wait_for_timeout(1000)
+            shoot(pg, 'api-detail', '키 자세히 — 상태 · 끝나는 날 · 형식 · 한도 · 최근 호출 기록(지난 시험 키 · 바꾸지 않음)')
+            pg.keyboard.press('Escape')
+        except Exception:
+            print('키 줄 없음', flush=True)
+        hashgo('ops-infra/#/deploys/usage', '.rv-tbl--usage', 1500)
+        shoot(pg, 'api-usage', '배포 → 사용 현황 — API 호출 열')
+    scene('api', api)
 
-    def p17():
-        go(pg, f'{org}/landxi/v3/ops-accounts/', '.acc-tab', 2500)
-        pg.locator('.acc-tab[data-tab="logins"]').click()
-        pg.wait_for_timeout(2500)
-        shoot(pg, 'p17-logins', '계정 관리 — 로그인 기록(들어온 입구)')
-        pg.locator('.acc-tab[data-tab="users"]').click()
-        pg.wait_for_timeout(2000)
-        pg.locator('tbody tr', has_text='test@lx.or.kr').first.click()
-        pg.wait_for_selector('.k-drawer', timeout=15000)
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'p17-user-drawer', '계정 서랍 — 최근 로그인 · 입구')
-    scene('p17', p17)
-
-    def p170():
-        go(pg, f'{org}/landxi/v3/ops-accounts/', '.acc-tab', 2500)
-        pg.locator('.acc-tab[data-tab="ops"]').click()
-        pg.wait_for_timeout(2500)
-        shoot(pg, 'p170-ops', '계정 관리 — 운영 정보(문의 연락처 · 저장은 누르지 않음)')
-    scene('p170-ops', p170)
+    def inq():
+        go(pg, f'{org}/landxi/v3/ops-accounts/#inquiries', '.acc-card[data-tab="inquiries"] tbody tr', 1500)
+        shoot(pg, 'inq-list', "계정 관리 → '문의' 탭 목록")
+        row = pg.locator('.acc-card[data-tab="inquiries"] tbody tr', has_text='Land-XI 시험').first
+        if not row.count():
+            row = pg.locator('.acc-card[data-tab="inquiries"] tbody tr').first
+        row.click()
+        pg.locator('.k-drawer .acc-iq-body').wait_for()
+        pg.wait_for_timeout(900)
+        shoot(pg, 'inq-open', '문의 한 건 열기(지난 시험 문의 · 바꾸지 않음)')
+    scene('inq', inq)
     c.close()
 
 
-# ───────── 기관 ─────────
+# ───────── 남원 기관 관리자 ─────────
 def namwon(b):
     c, pg = login_org(b, 'namwon')
     base = pg.url.split('/landxi/')[0]
 
-    def p8():
-        go(pg, f'{base}/landxi/v3/xi-clean/?region=52190&pnu={PNU}', '.xc-pi-sw', 4000)
-        pg.wait_for_timeout(2500)
-        shoot(pg, 'p8-card-lxmap-off', '기관 결과 지도 — 필지 카드 · LX맵 끔')
-        pg.locator('.xc-pi-sw').click()
-        pg.wait_for_timeout(4000)
-        shoot(pg, 'p8-card-lxmap-on', '기관 결과 지도 — 필지 카드 · LX맵 켬(보기만)')
-    scene('p8', p8)
+    def acc():
+        go(pg, f'{base}/landxi/v3/gov-accounts/#accounts', '.k-rail', 3000)
+        shoot(pg, 'namwon-accounts', '남원시 관리자 — 계정(자기 기관만)')
+        try:
+            pg.get_by_text('로그인 기록', exact=False).first.click(timeout=5000)
+            pg.wait_for_timeout(2000)
+        except Exception:
+            go(pg, f'{base}/landxi/v3/gov-accounts/#logins', '.k-rail', 2500)
+        shoot(pg, 'namwon-logins', '남원시 관리자 — 로그인 기록(자기 기관만)')
+    scene('namwon-acc', acc)
 
-    def n19():
-        go(pg, f'{base}/landxi/v3/gov-select/', '.k-bell', 3500)
-        pg.locator('.k-bell').click()
-        pg.wait_for_timeout(1500)
-        shoot(pg, 'n19-version-bell', '남원시 기관 — 종 알림')
-    scene('n19', n19)
+    def keys():
+        go(pg, f'{base}/landxi/v3/gov-select/?view=org', '.gk', 1500)
+        pg.locator('.gk').scroll_into_view_if_needed()
+        pg.wait_for_timeout(800)
+        shoot(pg, 'gov-keys', "남원시 기관 정보 — '받은 API 키'(보기만 · 키 값 없음)")
+    scene('gov-keys', keys)
     c.close()
 
 
-def gwangju(b):
-    c, pg = login_org(b, 'gwangju-jeonnam')
-    base = pg.url.split('/landxi/')[0]
+# ───────── 로그인 없이(메인 · 로그인) ─────────
+def scroll_to(pg, rx, limit=200):
+    JS = "(rx)=>{const R=new RegExp(rx);for(const e of document.querySelectorAll('h1,h2,h3,p,div,span')){if(e.children.length==0&&R.test(e.textContent)){let o=1,n=e;while(n&&n!==document.body){o*=parseFloat(getComputedStyle(n).opacity);n=n.parentElement}const b=e.getBoundingClientRect();return [Math.round(b.top),o]}}return null}"
+    for i in range(limit):
+        t = pg.evaluate(JS, rx)
+        if t and t[1] > 0.9 and 0 < t[0] < 800:
+            break
+        pg.mouse.wheel(0, 100)
+        pg.wait_for_timeout(120)
+    pg.wait_for_timeout(1200)
 
-    def n16():
-        go(pg, f'{base}/landxi/v3/gov-accounts/#accounts', '.ds', 2500)
-        pg.locator('.ds').scroll_into_view_if_needed()
-        pg.wait_for_timeout(1000)
-        shoot(pg, 'n16-dept-scope', '광역 기관 계정 — 부서별 관할(바꾸지 않음)')
-    scene('n16', n16)
-    c.close()
 
-
-# ───────── 로그인 없이(메인) ─────────
 def main_pages(b):
     c, pg = newctx(b)
 
-    def m3():
+    def hero():
         go(pg, f'{APP}/landxi/v3/main/', None, 4000)
-        JS = "(()=>{for(const e of document.querySelectorAll('h1,h2,h3,p,div,span')){if(e.children.length==0&&/행정 정보와 맞춰/.test(e.textContent)){let o=1,n=e;while(n&&n!==document.body){o*=parseFloat(getComputedStyle(n).opacity);n=n.parentElement}const b=e.getBoundingClientRect();return [Math.round(b.top),o]}}return null})()"
-        for i in range(160):
-            pg.mouse.wheel(0, 100)
-            pg.wait_for_timeout(120)
-            t = pg.evaluate(JS)
-            if t and t[1] > 0.9 and 0 < t[0] < 850:
-                break
-        for i in range(18):          # 셋째 장면의 마지막 단계('바로 판단')까지
+        shoot(pg, 'main-hero', '메인 — 첫 화면(모토 · 소개 글)')
+        pg.click('.m-nav a[href="#ch4"]')
+        pg.wait_for_timeout(2500)
+        shoot(pg, 'main-services', "메인 '서비스' 장면 — 제목 · 글 · 카드 셋")
+    scene('main-hero', hero)
+
+    def ch3():
+        go(pg, f'{APP}/landxi/v3/main/', None, 3000)
+        scroll_to(pg, '행정 정보와 맞춰')
+        for i in range(18):
             pg.mouse.wheel(0, 100)
             pg.wait_for_timeout(120)
         pg.wait_for_timeout(1200)
-        shoot(pg, 'later9-main3', '메인 — 셋째 장면')
+        shoot(pg, 'main-ch3', '메인 — 셋째 장면(행정 정보와 맞춰 바로 판단)')
+    scene('main-ch3', ch3)
+
+    def ch5():
+        go(pg, f'{APP}/landxi/v3/main/', None, 3000)
+        scroll_to(pg, '바로 열립니다')
+        shoot(pg, 'main-open', "메인 — '같은 서비스가 그 지역 영상과 대장으로 바로 열립니다' 장면")
+    scene('main-open', ch5)
+
+    def kyr():
+        go(pg, f'{APP}/landxi/v3/main/', None, 3500)
+        info = pg.evaluate("() => { const t = document.getElementById('trackB'); const r = t.getBoundingClientRect(); return { top: r.top + scrollY, h: t.offsetHeight }; }")
+        y = info['top'] + (info['h'] - 900) * 0.62
+        pg.evaluate("(yy) => scrollTo({ top: yy - 600, behavior: 'instant' })", y)
+        pg.wait_for_timeout(400)
+        for i in range(6):
+            pg.mouse.wheel(0, 100)
+            pg.wait_for_timeout(120)
+        pg.wait_for_timeout(4000)
+        shoot(pg, 'main-kyrgyz', '메인 마지막 해외 장면 — 키르기스스탄 실제 분석 결과')
         pg.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
+        pg.wait_for_timeout(3500)
+        shoot(pg, 'main-end', '메인 맨 아래 — 마감 문장 · 문의하기')
+        pg.locator('#fin [data-inquiry]').click()
+        pg.locator('.k-md-bg.is-open .iq-form').wait_for()
+        pg.wait_for_timeout(1200)
+        shoot(pg, 'main-inquiry', '문의하기 창(보내지는 않음)')
+    scene('main-kyrgyz', kyr)
+
+    def login():
+        go(pg, f'{APP}/landxi/v3/login/', None, 2500)
+        shoot(pg, 'login-empty', '로그인 화면 — 아이디 · 비밀번호 칸')
+        with pg.expect_navigation(timeout=15000):
+            pg.locator('.door__home').click()
         pg.wait_for_timeout(2500)
-        shoot(pg, 'p170-main-end', '메인 — 맨 아래 문의하기')
-    scene('later9', m3)
+        shoot(pg, 'login-logo-click', 'Land-XI 를 누른 뒤 — 메인으로')
+    scene('login', login)
     c.close()
-
-
-# ───────── 시안 ─────────
-def mocks(b):
-    for qs, name in [('?v=apply', 'mock-c-apply-category'), ('?v=admin', 'mock-c-admin-category'), ('?v=list', 'mock-c-analyze-list'),
-                     ('?v=list&cat=%EA%B1%B4%EC%B6%95%C2%B7%EB%B3%80%ED%99%94&img=%ED%95%AD%EA%B3%B5', 'mock-c-analyze-list-filtered')]:
-        def one(qs=qs, name=name):
-            c, pg = newctx(b)
-            pg.goto(f'{APP}/landxi/proto/review/mock/map-service-3/index.html{qs}', wait_until='domcontentloaded')
-            try:
-                pg.wait_for_selector('html[data-map-ready="1"]', timeout=60000)
-            except Exception:
-                pass
-            pg.wait_for_timeout(2500)
-            pg.evaluate(BADGE)
-            shoot(pg, name, '시안 — 분야 관리', full=True)
-            c.close()
-        scene(name, one)
-
-    def api():
-        c, pg = newctx(b)
-        pg.goto('http://127.0.0.1:4173/docs/superpowers/final/process/design-r15/open-api-2/fig/key-map.html', wait_until='domcontentloaded')
-        pg.wait_for_timeout(2500)
-        pg.evaluate(BADGE)
-        shoot(pg, 'mock-api-key-map', '시안 — 외부 연동 API 키 그림(개발 서버 파일 · 바깥 주소에는 올라가 있지 않음)', full=True)
-        c.close()
-    scene('mock-api', api)
 
 
 with sync_playwright() as p:
     b = p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
     t0 = datetime.datetime.now()
-    GROUPS = {'staff': (staff, ['menu', 'q10-projects', 'q2', 'q6', 'q9-apply-staff', 'later6', 'q10-label', 'a-mapsvc', 'c-infer', 'e-imagery']),
-              'admin': (admin, ['q9-apply-admin', 'later1', 'q16', 'q17', 'n13', 'p17', 'p170-ops']),
-              'namwon': (namwon, ['p8', 'n19']), 'gwangju': (gwangju, ['n16']), 'main': (main_pages, ['later9']), 'mock': (mocks, ['mock'])}
+    GROUPS = {'main': (main_pages, ['main-', 'login']), 'staff': (staff, ['dash', 'projects', 'train', 'analyze', 'detail', 'inbox', 'chat', 'xi', 'mock', 'session']),
+              'admin': (admin, ['admin-', 'api', 'inq']), 'namwon': (namwon, ['namwon-', 'gov-keys'])}
     for nm, (f, names) in GROUPS.items():
-        if not any(want(x) for x in names):
+        if ONLY and not any(want(x) for x in names):
             continue
         try:
             f(b)

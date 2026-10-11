@@ -1,0 +1,314 @@
+{
+ "main-hero-1106.png": {
+  "at": "2026-10-11T11:06:25",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 — 첫 화면(모토 · 소개 글)"
+ },
+ "main-services-1106.png": {
+  "at": "2026-10-11T11:06:45",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 '서비스' 장면 — 제목 · 글 · 카드 셋"
+ },
+ "main-ch3-1108.png": {
+  "at": "2026-10-11T11:08:54",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 — 셋째 장면(행정 정보와 맞춰 바로 판단)"
+ },
+ "main-open-1110.png": {
+  "at": "2026-10-11T11:10:05",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 — '같은 서비스가 그 지역 영상과 대장으로 바로 열립니다' 장면"
+ },
+ "main-kyrgyz-1110.png": {
+  "at": "2026-10-11T11:10:23",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 마지막 해외 장면 — 키르기스스탄 실제 분석 결과"
+ },
+ "main-end-1110.png": {
+  "at": "2026-10-11T11:10:32",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 맨 아래 — 마감 문장 · 문의하기"
+ },
+ "main-inquiry-1110.png": {
+  "at": "2026-10-11T11:10:42",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "문의하기 창(보내지는 않음)"
+ },
+ "login-empty-1111.png": {
+  "at": "2026-10-11T11:11:52",
+  "url": "https://app.land-xi.dev/landxi/v3/login/",
+  "note": "로그인 화면 — 아이디 · 비밀번호 칸"
+ },
+ "login-logo-click-1111.png": {
+  "at": "2026-10-11T11:11:56",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "Land-XI 를 누른 뒤 — 메인으로"
+ },
+ "dash-1112.png": {
+  "at": "2026-10-11T11:12:35",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드 — 프로젝트 진행 현황 요약 칸"
+ },
+ "dash-loading-1112.png": {
+  "at": "2026-10-11T11:12:38",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "대시보드 첫 순간(흉내 — 프로젝트 목록 · 내 작업 응답을 잠시 붙잡음 · 찍은 뒤 그대로 보냄)"
+ },
+ "projects-1112.png": {
+  "at": "2026-10-11T11:12:49",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "프로젝트 목록 — 단계 칸과 진행 n/6"
+ },
+ "project-detail-1112.png": {
+  "at": "2026-10-11T11:12:54",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?project=prj_3fdba452d5",
+  "note": "프로젝트 한 건 — 단계 줄(공개 뒤 안 한 추론 · 결과 확인은 건너뜀)"
+ },
+ "train-1113.png": {
+  "at": "2026-10-11T11:13:01",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_b2fa593a12&stage=train",
+  "note": "학습 탭 — 맨 위 설명 칸"
+ },
+ "infer-1113.png": {
+  "at": "2026-10-11T11:13:08",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=infer",
+  "note": "추론 탭 — 맨 위 설명 칸"
+ },
+ "publish-1113.png": {
+  "at": "2026-10-11T11:13:15",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "배포 신청 탭 — 모델 줄의 정확도 이름표"
+ },
+ "apply-1113.png": {
+  "at": "2026-10-11T11:13:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "배포 신청서 — 분야 여러 개 · 쓸 수 있는 영상"
+ },
+ "analyze-list-1113.png": {
+  "at": "2026-10-11T11:13:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "분석하기 — 분야 거르기 칩 · 서비스 카드 · 검증 정확도 아래 기준 한 줄"
+ },
+ "analyze-filtered-1113.png": {
+  "at": "2026-10-11T11:13:27",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "분석하기 — 분야 건축·변화 + 영상 항공으로 거른 모습"
+ },
+ "analyze-fallback-1113.png": {
+  "at": "2026-10-11T11:13:37",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "그림을 못 받은 카드(흉내 — 학습 표본 그림을 막음) · 같은 틀의 대체 그림 + 결과 장면 없음"
+ },
+ "detail-top-1114.png": {
+  "at": "2026-10-11T11:14:00",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 자세히 — 위(서비스 소개 · 상태 표시)"
+ },
+ "eta-1114.png": {
+  "at": "2026-10-11T11:14:01",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "결과까지 걸리는 시간 — 고른 영상 · 범위 · 같은 영상 최근 실제 속도"
+ },
+ "cond-1114.png": {
+  "at": "2026-10-11T11:14:01",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "이 카드의 조건 — 걸리는 시간 + 전제"
+ },
+ "imagery-pick-1114.png": {
+  "at": "2026-10-11T11:14:03",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "영상 고르기 — 카드 두 열 + 범위 지도"
+ },
+ "imagery-small-1114.png": {
+  "at": "2026-10-11T11:14:07",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "겹침이 작은 영상 '남원시 2023 항공영상'을 고른 모습 — 옆 칸이 그 영상 기준으로 바뀜"
+ },
+ "inbox-1114.png": {
+  "at": "2026-10-11T11:14:13",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/",
+  "note": "요청함 — 요청과 개선 후보를 구분한 한 줄"
+ },
+ "improve-1114.png": {
+  "at": "2026-10-11T11:14:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/#improve",
+  "note": "개선 후보 창 — 어디서 왔고 채택하면 무엇이 바뀌는지(채택은 누르지 않음)"
+ },
+ "map-list-1114.png": {
+  "at": "2026-10-11T11:14:25",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — 지금 내 분석 결과 목록(켜기 전)"
+ },
+ "chat-open-1114.png": {
+  "at": "2026-10-11T11:14:27",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 처음 연 모습"
+ },
+ "chat-stats-1117.png": {
+  "at": "2026-10-11T11:17:01",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 읍면동별 통계를 물은 답"
+ },
+ "chat-report-1119.png": {
+  "at": "2026-10-11T11:19:35",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 보고서 초안을 청한 답(내려받기는 누르지 않음)"
+ },
+ "chat-geojson-1122.png": {
+  "at": "2026-10-11T11:22:08",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "XI ChatGEO — 결과 내려받기를 청한 답"
+ },
+ "mock-evo-front-1123.png": {
+  "at": "2026-10-11T11:23:36",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=front",
+  "note": "시안 — XI맵 앞면(전국 결과 · 영상 원천 · 연도 · 고치기)"
+ },
+ "mock-evo-fix-1123.png": {
+  "at": "2026-10-11T11:23:43",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=fix",
+  "note": "시안 — 고치기(구례군 2023 실제 결과 · 칸 다 봤음)"
+ },
+ "mock-evo-gov-1123.png": {
+  "at": "2026-10-11T11:23:49",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=gov",
+  "note": "시안 — 기관 신고(남원 실제 109건)"
+ },
+ "mock-evo-train-1123.png": {
+  "at": "2026-10-11T11:23:58",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=train",
+  "note": "시안 — 다시 학습 · 같은 검증 묶음 비교"
+ },
+ "mock-evo-wheel-1124.png": {
+  "at": "2026-10-11T11:24:02",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=wheel",
+  "note": "시안 — 한 바퀴(보기 → 고치기 → 쌓기 → 다시 학습 → 비교 → 배포 신청 → 새 판)"
+ },
+ "mock-r16-global-1124.png": {
+  "at": "2026-10-11T11:24:07",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-r16/index.html?v=global",
+  "note": "시안 — 같은 지도에서 나라를 바꾼 해외(키르기스스탄)"
+ },
+ "admin-category-1124.png": {
+  "at": "2026-10-11T11:24:52",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/categories",
+  "note": "배포 → 분야 탭 — 순서 · 이름 · 쓰는 서비스 수"
+ },
+ "admin-share-1125.png": {
+  "at": "2026-10-11T11:25:00",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/share",
+  "note": "배포 → 기관 공유 — 분야 묶음 머리줄"
+ },
+ "admin-accounts-1125.png": {
+  "at": "2026-10-11T11:25:07",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/",
+  "note": "계정 관리 — LX 계정만"
+ },
+ "admin-logins-1125.png": {
+  "at": "2026-10-11T11:25:10",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#logins",
+  "note": "계정 관리 — LX 로그인 기록만"
+ },
+ "admin-tenant-use-1125.png": {
+  "at": "2026-10-11T11:25:17",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants/o/namwon/use",
+  "note": "기관 한 곳 — 사용과 계정(요약 숫자만)"
+ },
+ "api-tab-1125.png": {
+  "at": "2026-10-11T11:25:24",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/api",
+  "note": "배포 → API 탭 — 기관 × 서비스마다 키 줄"
+ },
+ "api-create-1125.png": {
+  "at": "2026-10-11T11:25:27",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/api",
+  "note": "'키 만들기' 서랍(여는 데까지 · 만들지 않음)"
+ },
+ "api-usage-1125.png": {
+  "at": "2026-10-11T11:25:39",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/usage",
+  "note": "배포 → 사용 현황 — API 호출 열"
+ },
+ "inq-list-1125.png": {
+  "at": "2026-10-11T11:25:45",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#inquiries",
+  "note": "계정 관리 → '문의' 탭 목록"
+ },
+ "inq-open-1125.png": {
+  "at": "2026-10-11T11:25:46",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-accounts/#inquiries",
+  "note": "문의 한 건 열기(지난 시험 문의 · 바꾸지 않음)"
+ },
+ "namwon-accounts-1126.png": {
+  "at": "2026-10-11T11:26:02",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-accounts/#accounts",
+  "note": "남원시 관리자 — 계정(자기 기관만)"
+ },
+ "namwon-logins-1126.png": {
+  "at": "2026-10-11T11:26:04",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-accounts/#logins",
+  "note": "남원시 관리자 — 로그인 기록(자기 기관만)"
+ },
+ "gov-keys-1126.png": {
+  "at": "2026-10-11T11:26:11",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/?view=org",
+  "note": "남원시 기관 정보 — '받은 API 키'(보기만 · 키 값 없음)"
+ },
+ "_summary": {
+  "start": "2026-10-11T11:06:18",
+  "end": "2026-10-11T11:28:37",
+  "failed": [],
+  "viewport": "1440x900",
+  "base": "https://app.land-xi.dev"
+ },
+ "session-modal-1126.png": {
+  "at": "2026-10-11T11:26:51",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "쓰던 중 로그인이 끝났을 때(흉내 — 이 브라우저에 저장된 로그인 값을 못 쓰는 값으로 바꿈) — 가운데 창 '로그인이 끝났습니다'"
+ },
+ "xi-arrive-1127.png": {
+  "at": "2026-10-11T11:27:32",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "XI맵 — 도착(지역 없이 전국)"
+ },
+ "xi-tilt-moving-1127.png": {
+  "at": "2026-10-11T11:27:33",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "XI맵 입체 — 기울이는 중(흰 빈자리 없이 · 전국 건수는 작은 칸)"
+ },
+ "xi-tilt-1127.png": {
+  "at": "2026-10-11T11:27:42",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "XI맵 입체 — 자리 잡은 뒤"
+ },
+ "xi-muju-1127.png": {
+  "at": "2026-10-11T11:27:51",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "XI맵 무주군 — 큰 숫자 · 글과 지도 층이 같은 판정"
+ },
+ "xi-layers-1127.png": {
+  "at": "2026-10-11T11:27:56",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "XI맵 도구 층"
+ },
+ "xi-report-1127.png": {
+  "at": "2026-10-11T11:27:58",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "XI맵 도구 보고서"
+ },
+ "xi-analyze-1128.png": {
+  "at": "2026-10-11T11:28:01",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=52730",
+  "note": "XI맵 도구 분석(실행은 누르지 않음)"
+ },
+ "xi-noimg-1128.png": {
+  "at": "2026-10-11T11:28:12",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html?region=11110",
+  "note": "XI맵 종로구 — 영상 등록이 없는 시군구에서 분석 도구"
+ },
+ "xi-global-1128.png": {
+  "at": "2026-10-11T11:28:32",
+  "url": "https://app.land-xi.dev/landxi/v3/global/index.html?country=KGZ&tab=season&season=Autumn+2025&district=92254566B31675215078110",
+  "note": "해외 화면(Kyrgyzstan) — 오른쪽 판이 자리에 앉은 뒤"
+ }
+}
