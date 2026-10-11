@@ -1,25 +1,25 @@
 [
  {
-  "file": "f1-start-1440-1711.png",
-  "shot_at": "2026-10-11T17:11:30",
+  "file": "f1-start-1440-1832.png",
+  "shot_at": "2026-10-11T18:32:51",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=start",
   "errors": []
  },
  {
-  "file": "f2-run-lineage-1440-1711.png",
-  "shot_at": "2026-10-11T17:11:35",
+  "file": "f2-run-lineage-1440-1832.png",
+  "shot_at": "2026-10-11T18:32:56",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=run",
   "errors": []
  },
  {
-  "file": "f3-settings-test-1440-1711.png",
-  "shot_at": "2026-10-11T17:11:39",
+  "file": "f3-settings-test-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:00",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=settings",
   "errors": []
  },
  {
-  "file": "f4-wrong-link-1440-1711.png",
-  "shot_at": "2026-10-11T17:11:44",
+  "file": "f4-wrong-link-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:05",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=wrong",
   "errors": []
  }

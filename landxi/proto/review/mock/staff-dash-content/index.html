@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>LX 직원 대시보드 — 와이어(시안)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* 낮은 정밀도 와이어 — 색 · 서체 · 간격은 최종이 아니다. 숫자는 2026-10-11 12:47 서버에서 LX 직원(test) 계정으로 읽은 실제 값 · '만들면 됨' 꼬리표는 서버에 아직 없는 값. */
+:root{--ink:#222;--mut:#777;--line:#999;--bg:#f4f4f4;--card:#fff;--tag:#ffe9a8;--tag2:#ffd1d1;--acc:#2b5fd9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.45 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink)}
+.top{height:56px;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:16px;padding:0 24px;background:#fff}
+.top b{font-size:16px}.top .r{margin-left:auto;color:var(--mut)}
+.stamp{position:fixed;right:18px;top:70px;background:#d33;color:#fff;font-weight:800;padding:8px 14px;font-size:18px;transform:rotate(-6deg);letter-spacing:1px;z-index:9;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.wrap{display:flex}.rail{width:72px;min-height:860px;border-right:1px dashed var(--line);background:#fff;padding-top:14px}
+.rail div{font-size:11px;text-align:center;color:var(--mut);margin:0 0 18px}.rail div.on{color:var(--acc);font-weight:700}
+main{flex:1;padding:22px 24px 40px;max-width:1368px}
+h1{font-size:18px;margin:0 0 4px}.sub{color:var(--mut);font-size:12px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:start}
+.card{background:var(--card);border:1.5px dashed var(--line);border-radius:8px;padding:14px 16px}
+.card h2{font-size:15px;margin:0 0 2px}.card .s{font-size:12px;color:var(--mut);margin:0 0 10px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+ol,ul{margin:0;padding-left:18px}li{margin:4px 0}
+.big{font-size:26px;font-weight:800;line-height:1}.row{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}.row .k{font-size:12px;color:var(--mut)}
+.tag{display:inline-block;background:var(--tag);font-size:11px;padding:1px 6px;border-radius:4px;margin-left:4px;vertical-align:middle}
+.tag.none{background:var(--tag2)}.tag.ok{background:#dcefd8}
+.go{color:var(--acc);font-size:12px;white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:4px 6px;border-bottom:1px dashed #ddd;text-align:left;vertical-align:top}th{font-weight:600;color:var(--mut);font-size:12px}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.th{border:1.5px dashed var(--line);height:92px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px;background:repeating-linear-gradient(45deg,#f6f6f6 0 8px,#eee 8px 16px)}
+.cap{font-size:12px;margin-top:4px}.cap b{display:block}
+.spark{height:46px;border-bottom:1px solid #ccc;position:relative;margin:6px 0 2px}.spark i{position:absolute;bottom:0;width:10px;background:#bbb}.spark i.on{background:var(--acc)}
+.meter{height:8px;background:#eee;border-radius:4px;overflow:hidden}.meter i{display:block;height:100%;background:#999}
+.foot{font-size:11px;color:var(--mut);margin-top:10px;border-top:1px dashed #ddd;padding-top:6px}
+.hide{display:none}.legend{font-size:12px;color:var(--mut);margin-top:16px}
+.num{font-weight:700}
+</style></head><body>
+<div class="stamp">시안 · 와이어</div>
+<div class="top"><b>LAND-XI</b><span>LX 직원 대시보드</span><span class="r">LX 직원 · 2026-10-11 12:47 서버 값</span></div>
+<div class="wrap">
+<div class="rail"><div class="on">대시보드</div><div>프로젝트</div><div>분석하기</div><div>지도 서비스</div><div>XI맵</div><div>데이터</div><div>요청함</div></div>
+<main>
+
+<!-- ───────── ⓐ 할 일 중심 ───────── -->
+<section id="a">
+<h1>ⓐ 할 일 중심 — 오늘 누를 것 순서</h1>
+<p class="sub">맨 위 왼쪽이 '오늘 할 일'(서버 판정 그대로 · 눌러서 그 자리로). 칸 높이는 내용만큼 · 줄 수가 다르면 높이가 달라도 된다.</p>
+<div class="grid">
+  <div class="card c6">
+    <h2>오늘 할 일 <span class="num">5</span></h2><p class="s">프로젝트 판정 · 작업 · 모델 · 영상 · 기관 요청에서 모아 급한 순서로</p>
+    <ol>
+      <li><b>결과 확인 남음</b> — 주차장 2026 외 3곳 (공개 뒤 0/20) <span class="go">→ 프로젝트 › 결과 확인</span> <span class="tag ok">있음</span></li>
+      <li><b>학습 멈춤 2건</b> — 비닐하우스 2026 (10-08 · 메모리 부족으로 멈춤) <span class="go">→ 다시 돌리기</span> <span class="tag ok">있음</span></li>
+      <li><b>후보 판 1</b> — 비닐하우스 2026 · 10-08 학습 · AI 모델 정확도 92% (지금 판 72%) <span class="go">→ 배포 신청 · 버리기</span> <span class="tag ok">있음</span></li>
+      <li><b>새 영상 1</b> — 비닐하우스 2026 대상 지역에 10-01 등록(마지막 학습 뒤) <span class="go">→ 추론 해 보기</span> <span class="tag ok">있음</span></li>
+      <li><b>기관 분석 요청 1</b> — 광주전남 · 순천시 드론 영상 · 영농관리(10-01 · 확인 대기) <span class="go">→ 요청함</span> <span class="tag">담당 지정 만들면 됨</span></li>
+    </ol>
+    <p class="foot">순서 규칙: 반려 · 멈춤 → 공개 뒤 남은 결과 확인 → 후보 판 → 새 영상 → 기관 요청(서버 blocked · 실패 작업 · 후보 모델 · basis 새 영상 · 분석 요청) <span class="tag">모으는 길 하나 만들면 됨</span></p>
+  </div>
+  <div class="card c3">
+    <h2>프로젝트 진행 현황</h2><p class="s">진행 중 4 · 남은 일 있는 4</p>
+    <table><tr><td>0</td><td>데이터 올리기</td></tr><tr><td>0</td><td>학습데이터 구축</td></tr><tr><td>0</td><td>학습</td></tr><tr><td>0</td><td>추론</td></tr><tr><td>0</td><td>결과 확인</td></tr><tr><td><b>4</b></td><td><b>배포 신청</b> <span style="color:#d33;font-size:12px">남은 일 4</span></td></tr></table>
+    <p class="foot">지금 칸 그대로(원칙 176) · 줄을 누르면 그 단계 목록</p>
+  </div>
+  <div class="card c3">
+    <h2>지금 돌고 있는 것</h2><p class="s">내 작업 · 대기열</p>
+    <div class="row"><div><div class="big">0</div><div class="k">도는 중</div></div><div><div class="big">0</div><div class="k">대기</div></div><div><div class="big">38</div><div class="k">이번 주 끝남</div></div><div><div class="big" style="color:#d33">3</div><div class="k">실패</div></div></div>
+    <p class="foot">대기 중이면 '내 앞에 n건 · 약 m분' <span class="tag">만들면 됨</span> · 끝나면 결과 장면으로</p>
+  </div>
+
+  <div class="card c6">
+    <h2>최근 결과 장면</h2><p class="s">내가 돌린 분석 9건 가운데 최근 셋 · 누르면 지도 서비스에서 그 층</p>
+    <div class="thumbs">
+      <div><div class="th">결과 그림 (타일 → 작은 그림) <span class="tag">만들면 됨</span></div><div class="cap"><b>주차장 2026 · 여주시 하거동</b>10-10 · 주차장 2</div></div>
+      <div><div class="th">결과 그림</div><div class="cap"><b>비닐하우스 2026 · 남원시</b>10-09 · 비닐하우스 25 · 건물 28 · 경작지 91</div></div>
+      <div><div class="th">결과 그림</div><div class="cap"><b>비닐하우스 분석서비스 · 남원시</b>10-07 · 비닐하우스 703</div></div>
+    </div>
+  </div>
+  <div class="card c3">
+    <h2>기관에서 온 것</h2><p class="s">내 서비스 4개 기준 · 최근 30일</p>
+    <table><tr><td>틀렸어요 신고</td><td class="num">0</td><td class="go">LX 전체 109(경작·휴경)</td></tr>
+    <tr><td>결과 내려받기</td><td class="num">0</td><td class="go">LX 전체 19</td></tr>
+    <tr><td>ChatGEO 가 못 한 요청</td><td class="num">1</td><td class="go">→ 보기</td></tr>
+    <tr><td>검토 요청</td><td class="num">0</td><td></td></tr></table>
+    <p class="foot">모두 서버에 있음 · 비닐하우스 서비스가 남원시에 공개 검토 중이라 0이 정직한 값</p>
+  </div>
+  <div class="card c3">
+    <h2>저장 용량 · 요청함 · 공지</h2><p class="s">세 칸을 작게 한 칸으로</p>
+    <div class="row"><div><div class="big">29.8<small style="font-size:12px">MB</small></div><div class="k">할당 50 GB</div></div><div><div class="big">0</div><div class="k">요청함</div></div><div><div class="big">0</div><div class="k">공지</div></div></div>
+    <div class="meter" style="margin-top:8px"><i style="width:1%"></i></div>
+    <p class="foot">내 정보 → · 요청함 전체 → · 공지는 생기면 줄로</p>
+  </div>
+</div>
+<p class="legend">꼬리표: <span class="tag ok">있음</span> 지금 서버 값 · <span class="tag">만들면 됨</span> 있는 표로 셀 수 있으나 길이 없음 · <span class="tag none">없음</span> 표 자체가 없음</p>
+</section>
+
+<!-- ───────── ⓑ 성과 중심 ───────── -->
+<section id="b">
+<h1>ⓑ 성과 중심 — 내 모델 · 서비스가 어떻게 쓰이고 나아지나</h1>
+<p class="sub">맨 위 왼쪽이 '내 서비스 4' 표(판 · 정확도 · 공개 · 쓰임 · 신고 한 줄씩). 할 일은 위 띠 한 줄로만. 칸 높이는 내용만큼.</p>
+<div class="grid">
+  <div class="card c12" style="padding:10px 16px"><b>할 일 5</b> — 결과 확인 남음 4 · 학습 멈춤 2 · 후보 판 1 · 새 영상 1 · 기관 요청 1 <span class="go">→ 각각 그 자리로</span> <span class="tag">모으는 길 만들면 됨</span></div>
+
+  <div class="card c7">
+    <h2>내 서비스 4</h2><p class="s">내가 프로젝트장인 서비스 · 판 · AI 모델 정확도 · 공개 · 최근 30일 쓰임</p>
+    <table><tr><th>서비스</th><th>판</th><th>정확도</th><th>후보 판</th><th>공개 기관</th><th>분석 · 내려받기 · 신고</th></tr>
+    <tr><td>비닐하우스 분석서비스</td><td>2.0 (10-07)</td><td>72%</td><td><b>92%</b> 10-08 <span class="go">→ 배포 신청</span></td><td>남원시 검토 중</td><td>3 · 0 · 0</td></tr>
+    <tr><td>곤포사일리지 분석서비스</td><td>1.0 (09-30)</td><td>98%</td><td>—</td><td>0</td><td>0 · 0 · 0</td></tr>
+    <tr><td>건축물 분석서비스</td><td>2.0 (10-07)</td><td>59%</td><td>—</td><td>0</td><td>2 · 0 · 0</td></tr>
+    <tr><td>주차장 분석서비스</td><td>2.0 (10-07)</td><td>43%</td><td>—</td><td>0</td><td>2 · 0 · 0</td></tr></table>
+    <p class="foot">판 · 정확도 · 후보 · 공개 · 분석 수 · 신고 · 내려받기 모두 서버에 있음(배포 신청 · 결과 세트 · 기관 공유 · 작업 · 신고 · 내려받기 기록) · 한 표로 모으는 길 <span class="tag">만들면 됨</span></p>
+  </div>
+  <div class="card c5">
+    <h2>정확도 흐름 — 비닐하우스</h2><p class="s">판마다 같은 검증 묶음 · 누르면 프로젝트 › 학습</p>
+    <div class="spark"><i style="left:10%;height:72%"></i><i style="left:40%;height:72%"></i><i class="on" style="left:70%;height:92%"></i></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span>1.0 09-30 · 72%</span><span>2.0 10-07 되돌림 · 72%</span><span style="color:var(--acc)">후보 10-08 · 92%</span></div>
+    <p class="foot">서비스마다 한 줄씩 넘겨 보기(주차장 43% · 건축물 59% · 곤포 98%) · 값은 모델 표 그대로 <span class="tag ok">있음</span></p>
+  </div>
+
+  <div class="card c4">
+    <h2>학습 데이터 자산</h2><p class="s">내가 올린 표본 · 이번 주 늘어난 양</p>
+    <div class="row"><div><div class="big">5</div><div class="k">묶음</div></div><div><div class="big">669</div><div class="k">장</div></div><div><div class="big">7,131</div><div class="k">라벨 객체</div></div></div>
+    <table style="margin-top:8px"><tr><td>이번 주 늘어난 양</td><td class="num">+0 장</td><td><span class="tag">만들면 됨</span></td></tr><tr><td>XI맵에서 고친 것 → 학습 자료</td><td class="num">0</td><td><span class="tag none">없음(진화 틀)</span></td></tr><tr><td>다음 재학습 기준까지</td><td>—</td><td><span class="tag none">없음</span></td></tr></table>
+  </div>
+  <div class="card c4">
+    <h2>쓰임 — 기관 · API</h2><p class="s">최근 30일 · 내 서비스 / LX 전체</p>
+    <table><tr><td>기관 내려받기</td><td class="num">0 / 19</td><td class="go">남원 14 · 광주전남 5</td></tr><tr><td>API 결과 가져오기</td><td class="num">0 / 143</td><td class="go">남원 · 경작·휴경</td></tr><tr><td>틀렸어요 신고</td><td class="num">0 / 109</td><td class="go">AI 결과에 대한 것 6</td></tr><tr><td>ChatGEO 못 한 요청</td><td class="num">1 / 32</td><td class="go">→ 서비스 개선</td></tr></table>
+    <p class="foot">모두 서버에 있음(내려받기 기록 · API 호출 · 신고 · 개선 후보)</p>
+  </div>
+  <div class="card c4">
+    <h2>최근 결과 장면</h2><p class="s">최근 셋 · 누르면 지도 서비스</p>
+    <div class="thumbs" style="grid-template-columns:1fr 1fr 1fr"><div class="th">결과 그림 <span class="tag">만들면 됨</span></div><div class="th">결과 그림</div><div class="th">결과 그림</div></div>
+    <p class="cap">주차장 2026 여주시 10-10 · 비닐하우스 2026 남원시 10-09 · 비닐하우스 분석서비스 남원시 10-07</p>
+  </div>
+
+  <div class="card c4">
+    <h2>프로젝트 진행 현황</h2><p class="s">진행 중 4 · 남은 일 4</p>
+    <table><tr><td>0 · 0 · 0 · 0 · 0</td><td>데이터 올리기 ~ 결과 확인</td></tr><tr><td><b>4</b></td><td><b>배포 신청</b> · 남은 일 4</td></tr></table>
+    <p class="foot">여섯 줄 그대로 두어도 됨(원칙 176)</p>
+  </div>
+  <div class="card c4">
+    <h2>지금 돌고 있는 것</h2>
+    <div class="row"><div><div class="big">0</div><div class="k">도는 중</div></div><div><div class="big">0</div><div class="k">대기</div></div><div><div class="big">38</div><div class="k">이번 주 끝남</div></div><div><div class="big" style="color:#d33">3</div><div class="k">실패</div></div></div>
+  </div>
+  <div class="card c4">
+    <h2>저장 용량 · 요청함 · 공지</h2>
+    <div class="row"><div><div class="big">29.8<small style="font-size:12px">MB</small></div><div class="k">할당 50 GB</div></div><div><div class="big">0</div><div class="k">요청함</div></div><div><div class="big">0</div><div class="k">공지</div></div></div>
+  </div>
+</div>
+<p class="legend">꼬리표: <span class="tag ok">있음</span> 지금 서버 값 · <span class="tag">만들면 됨</span> 있는 표로 셀 수 있으나 길이 없음 · <span class="tag none">없음</span> 표 자체가 없음</p>
+</section>
+</main></div>
+<script>
+const v = new URLSearchParams(location.search).get('v');
+if (v === 'a') document.getElementById('b').classList.add('hide');
+if (v === 'b') document.getElementById('a').classList.add('hide');
+</script>
+</body></html>

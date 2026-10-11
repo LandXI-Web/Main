@@ -1,37 +1,37 @@
 [
  {
-  "file": "a1-gov-report-1440-1729.png",
-  "shot_at": "2026-10-11T17:29:24",
+  "file": "a1-gov-report-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:13",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=report",
   "errors": []
  },
  {
-  "file": "a2-gov-fusion-1440-1728.png",
-  "shot_at": "2026-10-11T17:28:00",
+  "file": "a2-gov-fusion-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:15",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=fusion",
   "errors": []
  },
  {
-  "file": "b1-q2-a-1440-1728.png",
-  "shot_at": "2026-10-11T17:28:00",
+  "file": "b1-q2-a-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:18",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q2a",
   "errors": []
  },
  {
-  "file": "b1-q2-b-1440-1728.png",
-  "shot_at": "2026-10-11T17:28:00",
+  "file": "b1-q2-b-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:20",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q2b",
   "errors": []
  },
  {
-  "file": "b2-q3-a-1440-1728.png",
-  "shot_at": "2026-10-11T17:28:00",
+  "file": "b2-q3-a-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:22",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q3a",
   "errors": []
  },
  {
-  "file": "b2-q3-b-1440-1728.png",
-  "shot_at": "2026-10-11T17:28:00",
+  "file": "b2-q3-b-1440-1833.png",
+  "shot_at": "2026-10-11T18:33:25",
   "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q3b",
   "errors": []
  }

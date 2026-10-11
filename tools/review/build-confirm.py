@@ -242,7 +242,7 @@ def build():
         ops = list(it['opts']) + ([] if any(x in it['opts'] for x in ('검토 필요', '보류')) or done else ['검토 필요'])   # 원칙 80 — 고르기만이 아니라 '검토 필요'도
         opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in ops)
         body = (f'<p class="k">지금</p><p>{esc(it["now"])}</p><p class="k">제안</p><p>{esc(it["prop"])}</p>' if not done else f'<p class="k">만든 것</p><p>{esc(it["what"])}</p>')
-        return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"><header><span class="n">{esc(it["id"])}</span><h3>{esc(it["t"])}</h3></header>'
+        return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"{" data-multi=1" if it.get("multi") else ""}><header><span class="n">{esc(it["id"])}</span><h3>{esc(it["t"])}</h3></header>'
                 f'<div class="g"><div class="tx">{body}<p class="k">보는 곳</p><ul class="wh">{where}</ul></div>'
                 f'<div class="im">{shots or "<p class=na>화면 없음 — 작업 방식 항목</p>"}</div></div>'
                 f'<footer><div class="op">{opts}</div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article>')
@@ -318,9 +318,10 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
 const cards=[...document.querySelectorAll('.c')];
 const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
 for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
-  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  const multi=c.dataset.multi==='1',sel=()=>((S[id]||{}).sel||[]);
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',multi?sel().includes(b.dataset.v):b.dataset.v===(S[id]||{}).v)};
   if(st.m)inp.value=st.m;paint();
-  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{if(multi){const x=sel().includes(b.dataset.v)?sel().filter(y=>y!==b.dataset.v):[...sel(),b.dataset.v];S[id]={...(S[id]||{}),sel:x,v:x.join(' / ')}}else{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v}};save();paint();count()});
   inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
 count();
 document.getElementById('copy').onclick=async()=>{

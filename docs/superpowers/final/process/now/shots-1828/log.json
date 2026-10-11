@@ -1,0 +1,274 @@
+{
+ "API3-guide-1827.png": {
+  "at": "2026-10-11T18:27:20",
+  "url": "https://app.land-xi.dev/landxi/v3/api-guide/",
+  "note": "API 안내 — 로그인 없이 열림(세 걸음 · 서비스 목록 · 표준 가이드)"
+ },
+ "GPT4-3-dashboard-1827.png": {
+  "at": "2026-10-11T18:27:34",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드 — '내가 돌린 작업' 종류별 합 = 상태별 합"
+ },
+ "GPT4-1-picked-1827.png": {
+  "at": "2026-10-11T18:27:47",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/?job=job_01M4JX13YPQ4M50XGZCTQPFYVN",
+  "note": "지도 서비스 — 주차장 도형을 눌러 속성 칸(값 없는 칸은 —)"
+ },
+ "GPT4-1-filtered-closed-1827.png": {
+  "at": "2026-10-11T18:27:48",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/?job=job_01M4JX13YPQ4M50XGZCTQPFYVN",
+  "note": "거르기 '면적 1,000㎡ 넘는 것만' — 고른 도형이 빠져 속성 칸이 닫힘"
+ },
+ "GPT4-4-ximap-tools-1827.png": {
+  "at": "2026-10-11T18:27:56",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?sgg=41670",
+  "note": "XI맵 — 도구(레이어 · 가르기 · 보고서 · 분석)는 글자만"
+ },
+ "_rail": [
+  "레이어",
+  "가르기",
+  "보고서",
+  "분석"
+ ],
+ "_terrain": {
+  "pitch": 0,
+  "maxPitch": 0,
+  "dem": false,
+  "terrain": false
+ },
+ "layer-xi-rail-1828.png": {
+  "at": "2026-10-11T18:28:04",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 — 왼쪽 도구 레이어 · 가르기 · 보고서 · 분석(입체 없음)"
+ },
+ "_chat": "XI ChatGEO\n공간지식 추론 서비스\n(지도 제어 · 분석 · 보고서)\n\n영상 꺼 줘\n\n영상 레이어를 껐습니다.\n\n레이어 켜기·끄기\n\n도움 안 됐어요\n\n어느 지역에 어떤 결과가 있어?\n지금 있는 결과 요약해 줘\n농지 전용 근거 조문 알려 줘",
+ "layer-chatgeo-1828.png": {
+  "at": "2026-10-11T18:28:08",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI ChatGEO — '영상 꺼 줘' → '영상 레이어를 껐습니다'"
+ },
+ "global-kgz-1828.png": {
+  "at": "2026-10-11T18:28:20",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+  "note": "XI맵 — 사업 나라 키르기스스탄 · 군 41곳 경작지 결과"
+ },
+ "global-kgz-focus-1828.png": {
+  "at": "2026-10-11T18:28:27",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+  "note": "XI맵 — 군을 눌러 확대 · Sokuluk 군은 실제 판정 칸"
+ },
+ "qa2-imagery-one-1828.png": {
+  "at": "2026-10-11T18:28:40",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 — 영상 고르기 · 고른 영상 하나만 청록 테두리"
+ },
+ "qa2-imagery-hover-1828.png": {
+  "at": "2026-10-11T18:28:41",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "분석하기 — 다른 영상 카드에 올리면 그 범위만 옅은 점선"
+ },
+ "what-analyze-1828.png": {
+  "at": "2026-10-11T18:28:47",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "분석하기 첫 화면 — '이 화면은?'"
+ },
+ "what-mapsvc-1828.png": {
+  "at": "2026-10-11T18:28:58",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 첫 화면 — '이 화면은?'"
+ },
+ "what-ximap-1829.png": {
+  "at": "2026-10-11T18:29:06",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 첫 화면 — '이 화면은?'"
+ },
+ "edges-help-1829.png": {
+  "at": "2026-10-11T18:29:11",
+  "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=screens",
+  "note": "지원 '세 화면' 탭 — 실제 그림 셋 + 한 줄씩"
+ },
+ "_faq_svg": 0,
+ "icons-help-faq-1829.png": {
+  "at": "2026-10-11T18:29:17",
+  "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=faq",
+  "note": "지원 — 자주 묻는 질문(화살표 없음)"
+ },
+ "_contact_svg": 0,
+ "icons-help-contact-1829.png": {
+  "at": "2026-10-11T18:29:18",
+  "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=contact",
+  "note": "지원 — 문의 전화 · 메일(글자만)"
+ },
+ "icons-global-1829.png": {
+  "at": "2026-10-11T18:29:28",
+  "url": "https://app.land-xi.dev/landxi/v3/global/?country=KGZ&tab=season&season=Autumn+2025",
+  "note": "지구본 단추 — '지구본' 글자"
+ },
+ "q-count-project-1829.png": {
+  "at": "2026-10-11T18:29:34",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?project=prj_b2fa593a12",
+  "note": "프로젝트 화면 — '결과 확인' 0/20(이번 묶음)"
+ },
+ "q-count-review-1829.png": {
+  "at": "2026-10-11T18:29:41",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-review/?project=prj_b2fa593a12",
+  "note": "결과 확인 화면 — 표본 0/100(판정에 필요한 수)"
+ },
+ "_plant": "기관에 공유",
+ "icons-deploy-share-1829.png": {
+  "at": "2026-10-11T18:29:59",
+  "url": "https://admin.land-xi.dev/landxi/v3/lx-deploy/?deploy=dp-41390-farm-26",
+  "note": "배포 — '기관에 공유' 단추(글자만)"
+ },
+ "FAILED:API3-keys": "Page.wait_for_selector: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator(\".ak-tbl\") to be visible\n",
+ "_req_rows": 11,
+ "_apikey_section": 0,
+ "GPT4-5-org-info-1831.png": {
+  "at": "2026-10-11T18:31:25",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/?view=org",
+  "note": "남원시 기관 정보 — '받은 API 키' 칸 없음"
+ },
+ "_tile_ic": 0,
+ "icons-gov-today-1831.png": {
+  "at": "2026-10-11T18:31:30",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "note": "남원시 첫 화면 — '오늘' 띠(글자만)"
+ },
+ "mock-ximap-board-2-c1-pick-imagery-1831.png": {
+  "at": "2026-10-11T18:31:51",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=pick",
+  "note": "시안 — c1-pick-imagery",
+  "errors": []
+ },
+ "mock-ximap-board-2-c2-query-filling-1832.png": {
+  "at": "2026-10-11T18:32:06",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=query&hold=11",
+  "note": "시안 — c2-query-filling",
+  "errors": []
+ },
+ "mock-ximap-board-2-c3-board-korea-1832.png": {
+  "at": "2026-10-11T18:32:15",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=board",
+  "note": "시안 — c3-board-korea",
+  "errors": []
+ },
+ "mock-ximap-board-2-c4-label-object-1832.png": {
+  "at": "2026-10-11T18:32:23",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=label",
+  "note": "시안 — c4-label-object",
+  "errors": []
+ },
+ "mock-ximap-board-2-c5-label-vertex-1832.png": {
+  "at": "2026-10-11T18:32:32",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=vertex",
+  "note": "시안 — c5-label-vertex",
+  "errors": []
+ },
+ "mock-ximap-board-2-c6-label-done-1832.png": {
+  "at": "2026-10-11T18:32:41",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board-2/index.html?v=done",
+  "note": "시안 — c6-label-done",
+  "errors": []
+ },
+ "mock-train-flow-f1-start-1832.png": {
+  "at": "2026-10-11T18:32:51",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=start",
+  "note": "시안 — f1-start",
+  "errors": []
+ },
+ "mock-train-flow-f2-run-lineage-1832.png": {
+  "at": "2026-10-11T18:32:56",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=run",
+  "note": "시안 — f2-run-lineage",
+  "errors": []
+ },
+ "mock-train-flow-f3-settings-test-1833.png": {
+  "at": "2026-10-11T18:33:00",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=settings",
+  "note": "시안 — f3-settings-test",
+  "errors": []
+ },
+ "mock-train-flow-f4-wrong-link-1833.png": {
+  "at": "2026-10-11T18:33:05",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow/index.html?v=wrong",
+  "note": "시안 — f4-wrong-link",
+  "errors": []
+ },
+ "mock-gov-report-main-a1-gov-report-1833.png": {
+  "at": "2026-10-11T18:33:13",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=report",
+  "note": "시안 — a1-gov-report",
+  "errors": []
+ },
+ "mock-gov-report-main-a2-gov-fusion-1833.png": {
+  "at": "2026-10-11T18:33:15",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=fusion",
+  "note": "시안 — a2-gov-fusion",
+  "errors": []
+ },
+ "mock-gov-report-main-b1-q2-a-1833.png": {
+  "at": "2026-10-11T18:33:18",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q2a",
+  "note": "시안 — b1-q2-a",
+  "errors": []
+ },
+ "mock-gov-report-main-b1-q2-b-1833.png": {
+  "at": "2026-10-11T18:33:20",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q2b",
+  "note": "시안 — b1-q2-b",
+  "errors": []
+ },
+ "mock-gov-report-main-b2-q3-a-1833.png": {
+  "at": "2026-10-11T18:33:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q3a",
+  "note": "시안 — b2-q3-a",
+  "errors": []
+ },
+ "mock-gov-report-main-b2-q3-b-1833.png": {
+  "at": "2026-10-11T18:33:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/gov-report-main/index.html?v=q3b",
+  "note": "시안 — b2-q3-b",
+  "errors": []
+ },
+ "mock-wire-a-1833.png": {
+  "at": "2026-10-11T18:33:28",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-content/index.html?v=a",
+  "note": "시안 — LX 직원 대시보드 와이어 ⓐ 할 일 중심"
+ },
+ "mock-wire-b-1833.png": {
+  "at": "2026-10-11T18:33:30",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-content/index.html?v=b",
+  "note": "시안 — LX 직원 대시보드 와이어 ⓑ 성과 중심"
+ },
+ "_summary": {
+  "start": "2026-10-11T18:27:17",
+  "end": "2026-10-11T18:35:29",
+  "failed": [],
+  "viewport": "1440x900",
+  "base": "https://app.land-xi.dev",
+  "errors": {
+   "admin": []
+  }
+ },
+ "adopt-form-1835.png": {
+  "at": "2026-10-11T18:35:15",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/improve",
+  "note": "개선 후보 '채택' — 갈래 넷(다른 이름 · 질문 뜻 연결 · 답 문구 · 개발 할 일) 칸 열기(보내지 않음)"
+ },
+ "_keys_text": "배포 신청\n기관 공유\n사용 현황\n분야\n개선 후보\n15\nAPI\nAPI\n켜진 키 0 · 신청 시스템 0\n폐기한 키 32개 보기\n키 만들기\n\n분석 서비스마다 키를 만듭니다. 키를 받은 시스템은 그 서비스의 AI 분석 결과를 범위 · 영상 원천 · 연도로 골라 가져갑니다. 기관 공유와는 따로입니다.\n\n아직 키를 받은 시스템이 없습니다 — API 안내에서 신청이 오",
+ "API3-keys-tab-1835.png": {
+  "at": "2026-10-11T18:35:20",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=deploys#/deploys/api",
+  "note": "배포 → API — 신청 시스템 × 서비스 줄"
+ },
+ "API3-requests-tab-1835.png": {
+  "at": "2026-10-11T18:35:25",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/#/approvals/apikeys",
+  "note": "요청 관리 → 'API 키 신청' 탭"
+ },
+ "API3-approve-open-1835.png": {
+  "at": "2026-10-11T18:35:28",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/#/approvals/apikeys",
+  "note": "'API 키 신청' 처리한 신청 한 줄을 열어 본 모습(승인 · 거절은 누르지 않음)"
+ }
+}
