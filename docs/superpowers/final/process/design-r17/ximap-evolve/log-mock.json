@@ -1,0 +1,32 @@
+[
+ {
+  "file": "e1-front-1440-0949.png",
+  "shot_at": "2026-10-11T09:49:28",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=front",
+  "errors": []
+ },
+ {
+  "file": "e2-fix-1440-0949.png",
+  "shot_at": "2026-10-11T09:49:33",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=fix",
+  "errors": []
+ },
+ {
+  "file": "e3-gov-reports-1440-0949.png",
+  "shot_at": "2026-10-11T09:49:39",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=gov",
+  "errors": []
+ },
+ {
+  "file": "e4-retrain-compare-1440-0949.png",
+  "shot_at": "2026-10-11T09:49:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=train",
+  "errors": []
+ },
+ {
+  "file": "e0-wheel-1440-0949.png",
+  "shot_at": "2026-10-11T09:49:50",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-evolve/index.html?v=wheel",
+  "errors": []
+ }
+]

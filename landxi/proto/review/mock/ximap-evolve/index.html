@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 진화 틀</title>
+<link rel="stylesheet" href="../ximap-r16/xm.css">
+<link rel="stylesheet" href="ev.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m">
+<div class="app" id="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">XI맵</span>
+    <div class="search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span>시군구 · 지번 · 또는 XI ChatGEO 에 질문</span></div>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="도구" id="rail"></nav>
+  <main class="main"><div class="stage" id="stage"></div><div id="ui"></div></main>
+</div>
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">시안은 실제 결과 데이터를 서버에서 읽습니다 — LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 17차 · XI맵 진화 틀(원칙 182) 시안 — 코드 수정 0 · 서버 수정 0 · GPU 0.
+   실제: 전국 시군구 결과 수(/regions) · 구례군 2023 결과(실제 AI 결과 도형 · 신뢰도 · 면적) · 남원시 기관 신고 109건(위치 · 무엇에 대한 신고인가) ·
+         비닐하우스 다시 학습 기록(10-07~08 · 같은 검증 묶음 3,000장 · 원판 91% → 새 모델 87% · 후보로 남음).
+   시안(아직 없는 것): 고치기 판 · 칸 '다 봤음' · 고친 칸 수 · 다시 학습 단추 · 배포 신청 연결. */
+import { createStage } from '../../../../v3/kit/stage.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+import { addResultLayers } from '../../../../xi/fx/arrive.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'front';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => Number(n).toLocaleString('ko-KR');
+const ui = document.getElementById('ui');
+const now = new Date(); const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('clock').textContent = hm;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+const AI = '#0FA9A0';
+const CLS = { building: ['건물', '#3182F6'], parking: ['주차장', '#8B5CF6'], farmland: ['경작지', '#2E9E5B'], greenhouse: ['비닐하우스', '#FFB633'] };
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+/* 도구 레일 — 앞면 핵심 넷: 영상 · 분석 · 변화 · 고치기(LX 직원 · 관리자만) */
+const ICON = {
+  img: '<rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M3 13l4-4 3 3 2-2 5 5"/><circle cx="13.5" cy="7.5" r="1.2"/>',
+  scan: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  diff: '<path d="M3 15l4-6 3 4 3-7 4 9z"/><path d="M3 5h14" stroke-dasharray="2 2"/>',
+  fix: '<path d="M4 16l1-4 8-8 3 3-8 8z M11.5 5.5l3 3"/>',
+};
+const TOOLS = [['front', '영상', 'img'], ['run', '분석', 'scan'], ['change', '변화', 'diff'], ['fix', '고치기', 'fix']];
+const on = { front: 'front', fix: 'fix', gov: 'fix', train: 'fix' }[v];
+document.getElementById('rail').innerHTML = TOOLS.map(([id, l, ic]) => `<a class="ri${id === on ? ' on' : ''}">${id === 'fix' ? '<i class="dotn"></i>' : ''}<svg viewBox="0 0 20 20" aria-hidden="true">${ICON[ic]}</svg>${l}</a>`).join('');
+
+function hud({ k, h1, srcs, p }) {
+  return `<section class="hud"><div class="k">${esc(k)}</div><h1>${esc(h1)}</h1>
+    ${srcs ? `<div class="srcs">${srcs.map(([t, o]) => `<b class="${o ? 'on' : ''}">${esc(t)}</b>`).join('')}</div>` : ''}${p ? `<p>${p}</p>` : ''}</section>`;
+}
+function timeline({ label, ticks, pick, has, none = [] }) {
+  return `<div class="tl" id="tl"><span class="lab">${esc(label)}</span><ol>${ticks.map((t) => `<li class="${[has.includes(t) && 'has', pick.includes(t) && 'pick', none.includes(t) && 'none'].filter(Boolean).join(' ')}" data-tip=""><i></i>${esc(t)}</li>`).join('')}</ol><b class="cmp">두 해 비교</b></div>`;
+}
+const chat = () => '<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>';
+function mapReady() { document.documentElement.dataset.mapReady = '1'; }
+let ST, MAP;
+async function stage(bounds) { ST = createStage(document.getElementById('stage'), { bounds, interactive: true }); await ST.ready; MAP = ST.map; return MAP; }
+function idle() { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > 12000 ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, 3000); }); }
+const KOREA = [125.0, 33.1, 130.0, 38.6];
+
+/* ═══ 앞면 — 전국 기본 · 수시 갱신 영상 한눈에 · 핵심 넷 ═══ */
+async function front() {
+  const [g, l] = await Promise.all([api('/regions?geom=1&limit=400'), api('/regions?limit=400')]);
+  const n = Object.fromEntries((l.items || []).map((r) => [r.sgg_cd, r]));
+  const fc = { type: 'FeatureCollection', features: (g.features || g.items || []).map((f) => { const p = f.properties || f; const cd = String(p.sgg_cd || p.code); const r = n[cd] || {};
+    return { type: 'Feature', geometry: f.geometry, properties: { n: r.n_findings?.value || 0, img: !!r.has_imagery } }; }).filter((f) => f.geometry) };
+  const withN = fc.features.filter((f) => f.properties.n > 0).length;
+  ui.innerHTML = `<div class="where"><b class="on">대한민국</b><b>키르기스스탄</b></div>`
+    + hud({ k: 'XI맵 · 전국', h1: 'AI 분석 결과', srcs: [['브이월드 최신', 1], ['국토지리정보원 연도별', 0], ['올린 영상', 0]],
+      p: `시군구 <b>${withN}곳</b>에 결과가 있습니다. 틀린 결과는 그 자리에서 고칩니다.` })
+    + timeline({ label: '영상 연도', ticks: [2019, 2020, 2021, 2022, 2023, 2024, 2025, '최신'], pick: ['최신'], has: [2023], none: [] })
+    + `<div class="leg"><span><i class="ramp"></i>결과 있음 <small>진할수록 많음</small></span><span><i style="background:transparent;border:1px dashed #B0B8C1"></i>범위를 그리면 바로 분석</span></div>` + chat();
+  await stage(KOREA);
+  MAP.addSource('sgg', { type: 'geojson', data: fc });
+  const ramp = ['interpolate', ['linear'], ['get', 'n'], 1, 'rgba(15,169,160,.35)', 2000, 'rgba(15,169,160,.6)', 12000, 'rgba(15,169,160,.92)'];
+  MAP.addLayer({ id: 'sgg-fill', type: 'fill', source: 'sgg', paint: { 'fill-color': ['case', ['>', ['get', 'n'], 0], ramp, 'rgba(255,255,255,0)'] } }, 'slot-overlay');
+  MAP.addLayer({ id: 'sgg-line', type: 'line', source: 'sgg', paint: { 'line-color': '#fff', 'line-width': 0.6, 'line-opacity': 0.75 } }, 'slot-overlay');
+  MAP.fitBounds(KOREA, { padding: { top: 90, bottom: 110, left: 60, right: 40 }, duration: 0 });
+  await idle(); mapReady();
+}
+
+/* ═══ 고치기 — 구례군 2023 실제 결과 위에서 ═══ */
+const FIXBOX = [127.5985, 35.2605, 127.6075, 35.2650];
+async function fix() {
+  const rs = await api('/regions/12730/results'); const it = (rs.items || []).find((x) => x.from === 'job') || (rs.items || [])[0];
+  const set = it.set;
+  // 결과 조회의 범위(bbox) 거르기가 지금 서버 오류(500)라 — 비닐하우스만 실제 목록으로 받고(128개), 나머지는 실제 결과 지도 조각으로 그린다
+  const ghx = await api(`/results/${set}/features?cls=greenhouse&limit=400`);
+  const c0 = (f) => (f.geometry.type === 'Polygon' ? f.geometry.coordinates[0][0] : f.geometry.coordinates[0][0][0]);
+  const inBox = (f, b) => { const c = c0(f); return c[0] > b[0] && c[0] < b[2] && c[1] > b[1] && c[1] < b[3]; };
+  const gh = (ghx.features || []).filter((f) => inBox(f, FIXBOX) && (f.properties.area_m2 || 0) >= 100).sort((a, b) => a.properties.conf - b.properties.conf);
+  const pick = gh[0]; const pp = pick.properties;
+  const same = (ghx.features || []).filter((f) => f.properties.shard_id === pp.shard_id);
+  let bb = null; for (const f of same) { const rings = f.geometry.type === 'Polygon' ? [f.geometry.coordinates[0]] : f.geometry.coordinates.map((p) => p[0]); for (const r of rings) for (const [x, y] of r) bb = bb ? [Math.min(bb[0], x), Math.min(bb[1], y), Math.max(bb[2], x), Math.max(bb[3], y)] : [x, y, x, y]; }
+  const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, dx = 0.0014, dy = 0.00115;
+  const cell = [cx - dx, cy - dy, cx + dx, cy + dy];
+  const nm = CLS[pp.cls_en] || [pp.cls, AI];
+  ui.innerHTML = hud({ k: 'XI맵 · 구례군', h1: '틀린 결과 고치기', srcs: [['AI 결과 · 국토지리정보원 항공 2023', 1]] })
+    + `<section class="panel r"><h2>고치기<span class="x">×</span></h2><p class="note">틀린 결과를 이 자리에서 고칩니다. 고친 칸은 학습 자료로 쌓입니다.</p>
+      <div class="sel"><i style="background:${nm[1]}"></i><b>${esc(nm[0])}</b><small>신뢰도 ${Math.round(pp.conf * 100)}% · ${nf(Math.round(pp.area_m2 || 0))}㎡</small></div>
+      <div class="acts"><span>지우기</span><span>모양 고치기</span><span class="on">분류 바꾸기</span><span>놓친 것 그리기</span></div>
+      <div class="lab">무엇인가요</div>
+      <div class="chipset">${Object.values(CLS).map(([t]) => `<span class="${t === '건물' ? 'on' : ''}">${t}</span>`).join('')}<span>해당 없음</span></div>
+      <div class="cell"><h4>이 칸 — AI 결과 <span id="inCell">…</span>개</h4><p>모델이 한 번에 본 한 장(약 250m)입니다. 나머지도 맞는지 보고 '다 봤음'을 누르면 이 칸 전체가 학습 자료가 됩니다.</p></div>
+      <a class="go">다 봤음 · 저장</a>
+      <div class="foot">함께 남는 것 — 고친 사람 · 영상(국토지리정보원 항공 2023 · 25cm) · 모델(비닐하우스 분석서비스 2.0판) · 고치기 전 모양. 결과 화면에는 고친 모양이 바로 보입니다.</div></section>`
+    + `<div class="leg">${Object.values(CLS).map(([t, c]) => `<span><i style="background:${c}"></i>${t}</span>`).join('')}<span><i style="background:transparent;border:1.5px dashed #006DF7"></i>고치는 칸</span></div>` + chat();
+  await stage(FIXBOX);
+  MAP.addSource('r', await sourceSpec(it));
+  const CM = ['match', ['coalesce', ['get', 'cls_en'], ['get', 'cls']], 'building', '#3182F6', '건물', '#3182F6', 'parking', '#8B5CF6', '주차장', '#8B5CF6', 'farmland', '#2E9E5B', '경작지', '#2E9E5B', 'greenhouse', '#FFB633', '비닐하우스', '#FFB633', AI];
+  MAP.addLayer({ id: 'r-fill', type: 'fill', source: 'r', 'source-layer': it.layer || 'results', paint: { 'fill-color': CM, 'fill-opacity': 0.3 } });
+  MAP.addLayer({ id: 'r-line', type: 'line', source: 'r', 'source-layer': it.layer || 'results', paint: { 'line-color': CM, 'line-width': 1.4 } });
+  MAP.addSource('pick', { type: 'geojson', data: pick });
+  MAP.addLayer({ id: 'pick-fill', type: 'fill', source: 'pick', paint: { 'fill-color': '#FFB633', 'fill-opacity': 0.55 } });
+  MAP.addLayer({ id: 'pick-line', type: 'line', source: 'pick', paint: { 'line-color': '#fff', 'line-width': 5 } });
+  MAP.addLayer({ id: 'pick-line2', type: 'line', source: 'pick', paint: { 'line-color': '#191F28', 'line-width': 2.5 } });
+  MAP.addSource('cell', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[cell[0], cell[1]], [cell[2], cell[1]], [cell[2], cell[3]], [cell[0], cell[3]], [cell[0], cell[1]]]] } } });
+  MAP.addLayer({ id: 'cell-line', type: 'line', source: 'cell', paint: { 'line-color': '#006DF7', 'line-width': 2, 'line-dasharray': [2, 1.5] } });
+  MAP.fitBounds([cell[0] - 0.0012, cell[1] - 0.0004, cell[2] + 0.0012, cell[3] + 0.0004], { padding: { top: 150, bottom: 80, left: 120, right: 440 }, duration: 0 });
+  await idle();
+  const seen = new Set(); for (const f of MAP.querySourceFeatures('r', { sourceLayer: it.layer || 'results' })) { const g = f.geometry; const c = g.type === 'Polygon' ? g.coordinates[0][0] : g.coordinates[0][0][0]; if (c[0] > cell[0] && c[0] < cell[2] && c[1] > cell[1] && c[1] < cell[3]) seen.add(f.id ?? f.properties.id); }
+  document.getElementById('inCell').textContent = nf(seen.size); mapReady();
+}
+
+/* ═══ 기관 신고 → 고칠 거리 — 남원시 신고 109건이 무엇에 대한 것인가(실제) ═══ */
+async function gov() {
+  const fb = await api('/feedback?state=open');
+  const items = (fb.items || []).filter((x) => x.tenant_id === 'namwon' && x.lnglat);
+  const isAI = (x) => /^results\//.test(x.set_id || '');
+  const ai = items.filter(isAI), work = items.filter((x) => !isAI(x));
+  const by = {}; for (const x of work) { const k = (x.note || '').replace(/^검수:오탐 · /, '').trim() || '메모 없음'; by[k] = (by[k] || 0) + 1; }
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<tr><td>${esc(k)}</td><td class="n">${nf(n)}건</td></tr>`).join('');
+  ui.innerHTML = hud({ k: 'XI맵 · 남원시', h1: '기관이 보낸 신고', srcs: [['브이월드 최신', 1]] })
+    + `<section class="panel r"><h2>고칠 거리<span class="x">×</span></h2><p class="note">기관 신고는 먼저 'AI가 잘못 찾았나'를 가립니다. AI 잘못만 고칠 거리가 됩니다.</p>
+      <div class="blk"><h3><i class="sw" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#F04452"></i>AI가 잘못 찾음 — 고칠 거리<small>지도 빨간 점</small></h3><div class="big">${nf(ai.length)}<span class="to">건</span></div></div>
+      <div class="blk"><h3><i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#8B95A1"></i>업무 판정 — 학습 자료 아님<small>지도 회색 점</small></h3><div class="big">${nf(work.length)}<span class="to">건</span></div>
+        <table class="tbl"><tr><th>적힌 말</th><th style="text-align:right">건</th></tr>${rows}</table></div>
+      <div class="foot">남원시 기관 신고 ${nf(items.length)}건(9-26~10-10 · 지금 실제). 대부분 AI는 건물을 맞게 찾았고 대장에서 적법인 경우라, 이것을 '틀렸다'로 학습하면 모델이 나빠집니다.</div></section>`
+    + `<div class="leg"><span><i style="background:#F04452;border-radius:50%"></i>AI가 잘못 찾음</span><span><i style="background:#8B95A1;border-radius:50%"></i>업무 판정(대장 · 현장 사진)</span></div>` + chat();
+  const pts = { type: 'FeatureCollection', features: items.map((x) => ({ type: 'Feature', properties: { ai: isAI(x) ? 1 : 0 }, geometry: { type: 'Point', coordinates: x.lnglat } })) };
+  await stage([127.28, 35.34, 127.66, 35.55]);
+  MAP.addSource('fb', { type: 'geojson', data: pts });
+  MAP.addLayer({ id: 'fb-c', type: 'circle', source: 'fb', paint: { 'circle-radius': ['case', ['==', ['get', 'ai'], 1], 8, 5.5], 'circle-color': ['case', ['==', ['get', 'ai'], 1], '#F04452', '#8B95A1'], 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } });
+  MAP.fitBounds([127.28, 35.34, 127.66, 35.55], { padding: { top: 120, bottom: 60, left: 60, right: 440 }, duration: 0 });
+  await idle(); mapReady();
+}
+
+/* ═══ 쌓임 → 다시 학습 → 같은 검증 묶음으로 비교(실제 지난 기록) ═══ */
+async function train() {
+  const rs = await api('/regions/12730/results'); const it = (rs.items || [])[0];
+  ui.innerHTML = hud({ k: 'XI맵 · 고치기 · 다시 학습', h1: '비닐하우스 분석서비스' })
+    + `<section class="panel r"><h2>다시 학습<span class="x">×</span></h2>
+      <div class="blk"><h3>고친 칸<small>다시 학습 기준 200칸</small></h3><div class="big">0<span class="to">/ 200칸</span></div><div class="prog zero"><i></i></div>
+        <p>지금은 고치기가 없어 0입니다. 기준을 넘으면 프로젝트장에게 '다시 학습할 수 있습니다'가 갑니다.</p></div>
+      <div class="blk"><h3>지난 다시 학습<small>10-07 ~ 10-08 · 실제</small></h3><div class="prog full"><i></i></div>
+        <div class="kv"><b>자료</b><span>비닐하우스 항공 25cm 33,485장</span><b>진행</b><span>20회 중 20회 · 약 25시간 · GPU 한 장</span></div></div>
+      <div class="blk"><h3>같은 검증 묶음으로 비교<small>고정 3,000장</small></h3>
+        <div class="big"><span>91%</span><span class="to">→</span><span class="down">87%</span></div>
+        <span class="verdict">나아지지 않음 — 후보로 남음</span>
+        <p>지금 판보다 낮아 배포 신청으로 넘기지 않았습니다. 나아지면 이 자리에 '배포 신청서 채우기'가 켜집니다.</p>
+        <a class="go off">배포 신청서 채우기</a></div></section>`
+    + chat();
+  await stage(it?.bounds || [127.368, 35.124, 127.62, 35.365]);
+  if (it) { MAP.addSource('res', await sourceSpec(it)); addResultLayers(MAP, 'res', 'res', { kind: 'result', sourceLayer: it.layer || 'results', visible: true }); }
+  MAP.fitBounds([127.40, 35.15, 127.62, 35.30], { padding: { top: 140, bottom: 60, left: 60, right: 440 }, duration: 0 });
+  await idle(); mapReady();
+}
+
+/* ═══ 한 바퀴 그림 ═══ */
+function wheel() {
+  document.body.className = 'w'; document.getElementById('app').remove(); document.getElementById('stamp').classList.add('w');
+  const N = [
+    ['보기', 'XI맵 앞면 · 전국 · 영상 · 결과'], ['고치기', '지우기 · 모양 · 분류 · 놓친 것'], ['쌓기', "학습 데이터 '고친 것' 층"],
+    ['다시 학습', '밤 · GPU 한 장 · 대기열'], ['비교', '같은 검증 묶음 · 지난 판과'], ['배포 신청', '프로젝트장 → 관리자 승인'], ['새 판', '공유 기관 알림 · 장부 다시 분석'],
+  ];
+  const C = 450, R = 300, W = 214, H = 76;
+  const pos = N.map((_, i) => { const a = (-90 + i * 360 / N.length) * Math.PI / 180; return [C + R * Math.cos(a), C + R * Math.sin(a), a]; });
+  let s = `<svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, sans-serif">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4E5968"/></marker>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#F04452"/></marker></defs>
+    <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#D1D6DB" stroke-width="2"/>`;
+  for (let i = 0; i < N.length; i++) {
+    const a0 = pos[i][2] + 0.26, a1 = pos[(i + 1) % N.length][2] - 0.26 + (i === N.length - 1 ? Math.PI * 2 : 0);
+    const p0 = [C + R * Math.cos(a0), C + R * Math.sin(a0)], p1 = [C + R * Math.cos(a1), C + R * Math.sin(a1)];
+    s += `<path d="M${p0[0]} ${p0[1]} A${R} ${R} 0 0 1 ${p1[0]} ${p1[1]}" fill="none" stroke="#4E5968" stroke-width="2.5" marker-end="url(#ar)"/>`;
+  }
+  N.forEach(([t, d], i) => {
+    const [x, y] = pos[i]; const gate = i === 4; const fixn = i === 1;
+    s += `<g><rect x="${x - W / 2}" y="${y - H / 2}" width="${W}" height="${H}" rx="14" fill="${gate ? '#FFF7F8' : '#fff'}" stroke="${gate ? '#F04452' : fixn ? '#006DF7' : '#D1D6DB'}" stroke-width="${gate || fixn ? 2 : 1.2}"/>
+      <text x="${x - W / 2 + 16}" y="${y - 6}" font-size="13" fill="#8B95A1" font-weight="600">${i + 1}</text>
+      <text x="${x - W / 2 + 34}" y="${y - 6}" font-size="18" fill="#191F28" font-weight="700">${t}</text>
+      <text x="${x - W / 2 + 16}" y="${y + 20}" font-size="13" fill="#4E5968">${d}</text></g>`;
+  });
+  // 바깥에서 들어오는 고칠 거리(기관 · 프로젝트 결과 확인)
+  const [fx, fy] = pos[1];
+  s += `<g><rect x="${fx + 40}" y="${fy - 190}" width="190" height="56" rx="12" fill="#fff" stroke="#D1D6DB"/><text x="${fx + 54}" y="${fy - 166}" font-size="14" fill="#191F28" font-weight="600">기관 '틀렸어요'</text><text x="${fx + 54}" y="${fy - 146}" font-size="12" fill="#4E5968">AI 잘못만 고칠 거리로</text>
+    <path d="M${fx + 120} ${fy - 134}L${fx + 40} ${fy - 44}" stroke="#4E5968" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#ar)"/></g>`;
+  s += `<g><rect x="${fx - 250}" y="${fy + 70}" width="176" height="56" rx="12" fill="#fff" stroke="#D1D6DB"/><text x="${fx - 236}" y="${fy + 94}" font-size="14" fill="#191F28" font-weight="600">프로젝트 결과 확인</text><text x="${fx - 236}" y="${fy + 114}" font-size="12" fill="#4E5968">같은 고치기 화면</text>
+    <path d="M${fx - 74} ${fy + 90}L${fx - 40} ${fy + 44}" stroke="#4E5968" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#ar)"/></g>`;
+  // 비교에서 멈춤
+  const [gx, gy] = pos[4];
+  s += `<g><path d="M${gx} ${gy + H / 2}L${gx} ${gy + H / 2 + 52}" stroke="#F04452" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+    <text x="${gx}" y="${gy + H / 2 + 74}" font-size="14" fill="#C2172F" font-weight="600" text-anchor="middle">나아지지 않으면 멈춤 · 후보로 남음</text></g>`;
+  s += `<text x="${C}" y="${C - 10}" font-size="26" fill="#191F28" font-weight="700" text-anchor="middle">XI맵 진화 한 바퀴</text>
+    <text x="${C}" y="${C + 22}" font-size="15" fill="#4E5968" text-anchor="middle">같은 결과 · 같은 기록으로 이어짐</text></svg>`;
+  const side = `<div class="wside"><h1>앞면은 보여 주고, 뒷면은 고쳐서 키운다</h1>
+    <p class="sub">직원이 XI맵에서 본 틀린 결과를 그 자리에서 고치면, 그 칸이 학습 자료가 되고 다시 학습한 새 판이 같은 검증 묶음에서 나아질 때만 배포 신청으로 갑니다.</p>
+    <div class="wcard"><h3>2 고치기 → 3 쌓기</h3><p>고친 칸마다 누가 · 어느 영상 · 어느 모델 판 · 고치기 전 모양이 남습니다. 학습 데이터 자산의 '고친 것' 층(클래스별)으로 들어갑니다.</p></div>
+    <div class="wcard"><h3>4 다시 학습</h3><p>고친 칸이 기준을 넘으면 프로젝트장이 누릅니다. 밤 시간 · GPU 한 장 · 작업 대기열로만 돕니다.</p></div>
+    <div class="wcard gate"><h3>5 비교 — 막는 자리</h3><p>고정된 검증 묶음에서 지난 판보다 나아야 배포 신청서가 채워집니다. 낮으면 후보로 남고 아무 데도 나가지 않습니다(10-08 비닐하우스 91% → 87% 실제 사례).</p></div>
+    <div class="wcard"><h3>6 배포 신청 → 7 새 판</h3><p>지금 있는 배포 신청 · 관리자 승인 · 기관 공유 · 새 판 알림 길을 그대로 씁니다. 새 판이 나오면 XI맵 장부를 밤에 다시 분석합니다.</p></div></div>`;
+  document.body.insertAdjacentHTML('afterbegin', `<div class="wheel">${s}${side}</div>`);
+  mapReady();
+}
+
+(async () => {
+  if (v === 'wheel') { wheel(); return; }
+  await new Promise((r) => (window.maplibregl ? r() : window.addEventListener('load', r)));
+  await ensureLogin();
+  if (v === 'fix') await fix();
+  else if (v === 'gov') await gov();
+  else if (v === 'train') await train();
+  else await front();
+})().catch((e) => { console.error(e); ui.insertAdjacentHTML('beforeend', `<p class="note" style="position:absolute;left:28px;top:24px;color:#F04452">${esc(e.message || e)}</p>`); mapReady(); });
+</script>
+</body>
+</html>
