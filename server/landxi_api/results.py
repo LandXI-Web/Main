@@ -10,6 +10,7 @@ contract-parcel-ai.md · 첫 응답 ≤ 3초). 저장이 없는 옛 세트 · mi
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from fastapi import APIRouter, Request
@@ -98,18 +99,34 @@ def _feature(r) -> dict:
                            "chip_edge": r["chip_edge"]}}
 
 
+def parse_bbox(bbox: str | None) -> list[float] | None:
+    """'minx,miny,maxx,maxy'(경도,위도 순) → 4개 실수. 개수·숫자·순서가 틀리면 500 이 아니라 400."""
+    if not bbox:
+        return None
+    try:
+        v = [float(x) for x in bbox.split(",")]
+    except ValueError:
+        raise ApiError("bad_request", "bbox 는 숫자 네 개(minx,miny,maxx,maxy)", {"bbox": bbox})
+    if len(v) != 4 or not all(math.isfinite(x) for x in v):
+        raise ApiError("bad_request", "bbox 는 숫자 네 개(minx,miny,maxx,maxy)", {"bbox": bbox})
+    if v[0] > v[2] or v[1] > v[3]:
+        raise ApiError("bad_request", "bbox 순서가 거꾸로입니다(minx<=maxx, miny<=maxy · 경도,위도 순)", {"bbox": bbox})
+    return v
+
+
 @router.get("/results/{set_path:path}/features")
 async def features(set_path: str, request: Request, bbox: str | None = None, cls: str | None = None, limit: int = 2000,
                    offset: int = 0, min_conf: float | None = None):
     p = principal(request)
     rs = await resolve(p, set_path)
-    bb = [float(v) for v in bbox.split(",")] if bbox else None
+    bb = parse_bbox(bbox)
     limit = max(1, min(limit, 10000))
     where = ["job_id=$1", "edit_state <> 'deleted'"]
     args: list = [rs["job_id"]]
     if bb:
-        args.append(bb)
-        where.append(f"geom && ST_MakeEnvelope(${len(args)}[1], ${len(args)}[2], ${len(args)}[3], ${len(args)}[4], 4326)")
+        n = len(args)
+        args.extend(bb)
+        where.append(f"geom && ST_MakeEnvelope(${n+1}::float8, ${n+2}::float8, ${n+3}::float8, ${n+4}::float8, 4326)")
     if cls:
         args.append(cls.split(","))
         where.append(f"(cls = ANY(${len(args)}) OR cls_en = ANY(${len(args)}))")

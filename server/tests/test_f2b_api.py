@@ -190,3 +190,42 @@ print(json.dumps({"ext": m.EXT_ROUTERS, "paths": [r.path for r in m.app.routes i
     bad = code.replace('sys.modules["landxi_api.survey"] = None', 'b = types.ModuleType("landxi_api.survey")\nsys.modules["landxi_api.survey"] = b')
     out = subprocess.run([sys.executable, "-c", bad], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
     assert out.returncode != 0 and "router" in out.stderr            # 있는데 깨졌으면 기동 실패로 드러난다
+
+
+# ── 고침-범위조회: /results/{set}/features?bbox= 가 500 이던 것 ─────────────────
+def test_features_bbox_with_and_without(live, tok):
+    h = H(tok["staff"])
+    all_ = httpx.get(B + f"/results/{GH}/features?limit=1", headers=h, timeout=60).json()
+    assert all_["lx"]["total"] == 2819
+    inside = httpx.get(B + f"/results/{GH}/features?bbox=127.0,35.0,128.0,36.0&limit=5", headers=h, timeout=60)
+    assert inside.status_code == 200, inside.text[:200]
+    j = inside.json()
+    assert 0 < j["lx"]["total"] <= 2819 and len(j["features"]) <= 5
+    # 일부만 덮는 범위(첫 도형 둘레) → 그 도형 포함, 전체보다 적거나 같음
+    g = httpx.get(B + f"/results/{GH}/features?limit=1", headers=h, timeout=60).json()["features"][0]["geometry"]
+    pts = [c for poly in (g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]) for c in poly[0]]
+    xs = [c[0] for c in pts]
+    ys = [c[1] for c in pts]
+    sub = httpx.get(B + f"/results/{GH}/features?bbox={min(xs)},{min(ys)},{max(xs)},{max(ys)}", headers=h, timeout=60).json()
+    assert 1 <= sub["lx"]["total"] <= 2819
+    # cls 와 함께
+    r = httpx.get(B + f"/results/{GH}/features?bbox=127.0,35.0,128.0,36.0&cls=x_none&limit=1", headers=h, timeout=60)
+    assert r.status_code == 200 and r.json()["lx"]["total"] == 0
+
+
+def test_features_bbox_reversed_or_malformed_400(live, tok):
+    h = H(tok["staff"])
+    for bad in ("36.0,127.0,35.0,128.0", "128.0,35.0,127.0,36.0", "1,2,3", "a,b,c,d", "1,2,3,4,5", "nan,0,1,1"):
+        r = httpx.get(B + f"/results/{GH}/features?bbox={bad}", headers=h, timeout=60)
+        assert r.status_code == 400, (bad, r.status_code, r.text[:200])
+        assert r.json()["error"]["code"] == "bad_request"
+
+
+def test_features_bbox_outside_jurisdiction_empty(live, tok):
+    """관할 밖(바다 한가운데 · 해외) 범위 → 500 도 404 도 아닌 200 · 0건."""
+    h = H(tok["staff"])
+    for bb in ("130.0,30.0,131.0,31.0", "-0.2,51.4,0.1,51.6"):
+        r = httpx.get(B + f"/results/{GH}/features?bbox={bb}", headers=h, timeout=60)
+        assert r.status_code == 200, (bb, r.text[:200])
+        j = r.json()
+        assert j["lx"]["total"] == 0 and j["features"] == []
