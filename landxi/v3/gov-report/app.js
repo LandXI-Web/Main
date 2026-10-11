@@ -11,7 +11,8 @@ import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { buildDocx } from './docx.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
-import { govRail } from '../gov-select/menu.js';   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
+import { govRail } from '../gov-select/menu.js';
+import { svcReport } from './svc-report.js';   // 서비스 안 '보고서' = AI 분석 결과 보고서(10-11 gov-보고서)   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
 
 const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
@@ -393,7 +394,7 @@ function tab(k) {
   for (const b of document.querySelectorAll('.gr-tabs button')) b.setAttribute('aria-selected', b.dataset.tab === k ? 'true' : 'false');
   for (const p of document.querySelectorAll('.gr-pane')) p.hidden = p.dataset.pane !== k;
   if (document.body.dataset.big === '1') bigMap(false);
-  if (k === 'report') { document.body.dataset.sheet = '0'; initReport(); }
+  if (k === 'report') { document.body.dataset.sheet = '0'; if (SVC) openSvcReport(); else initReport(); }
   if (k === 'sus') loadSus();
   if (k === 'todo') mapPoints();
   const q = new URLSearchParams();
@@ -406,6 +407,12 @@ function tab(k) {
 for (const b of document.querySelectorAll('.gr-tabs button')) b.addEventListener('click', () => tab(b.dataset.tab));
 
 /* ═════════ 보고서 ═════════ */
+/* 서비스 안(?service=) = AI 분석 결과 보고서 — 서비스 · 읍면동만 고름(규칙 · 소견 · 조치 제안 없음 · svc-report.js) */
+let svcRp = null;
+function openSvcReport() {
+  if (svcRp) return;
+  svcRp = svcReport({ svc: SVC, stage: S.stage, onAuth: toFront, fusionHref: () => '../gov-fusion/?' + new URLSearchParams({ service: SVC }) });
+}
 let rpReady = null;
 function initReport() {
   if (rpReady) { focusEmd(); return rpReady; }
@@ -688,6 +695,7 @@ function remember(cd) {
 }
 const unionBox = (rs) => rs.filter((r) => r.bbox && r.bbox.length === 4).reduce((a, r) => (a ? [Math.min(a[0], r.bbox[0]), Math.min(a[1], r.bbox[1]), Math.max(a[2], r.bbox[2]), Math.max(a[3], r.bbox[3])] : [...r.bbox]), null);
 async function loadRegions() {
+  if (SVC) { S.regions = []; S.region = null; paintRegionPick(); return; }   // 서비스 안(필지 목록 · 보고서)은 실태조사 지역 목록을 읽지 않는다(gov-비교 · /survey/* 끊기)
   try { const j = await api('/survey/regions'); S.regions = (j.items || []).filter((r) => r.state === 'done' || r.state === 'no_ai'); }
   catch (e) { devlog('regions', e.message); if (isAuth(e)) return toFront(); S.regions = []; }
   const want = new URLSearchParams(location.search).get('region');

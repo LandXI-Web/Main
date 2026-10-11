@@ -67,6 +67,13 @@ export async function deploys() {
   return local('public-deploys.json');
 }
 
+/** ch4 · ch5 · 지금까지의 실적(QA-Q2 ⓐ · QA-Q3 ⓐ) — 결과를 낸 시군구 · 서비스 · 운영 기관 · 행정 업무 서비스 이름. 서버가 그 자리에서 센다(사본 없음 · 못 읽으면 null) */
+export async function record() {
+  const r = await server('/public/record');
+  SRC.record = r ? 'server' : 'none';
+  return r;
+}
+
 /** ch6 · 키르기스스탄 군별 농경지 — 이미 있는 실제 분석 결과(Sentinel-2 10 m AI 토지피복 2025 · 군 폴리곤 안 경작지 면적)의 공개 사본(tools/build-kgz.py) */
 export const kgzCrop = () => local('kgz-crop-2025.json');
 

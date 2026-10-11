@@ -14,6 +14,8 @@
 .m-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid #fff;animation:m-ring 2.4s var(--e-cam) infinite}
 .m-dot[data-st="pilot"]{background:#fff;box-shadow:0 0 0 3px var(--ink)}
 .m-dot[data-st="pilot"]::after{display:none}
+.m-nw,#ch4 .m-p span.m-nw{display:inline;white-space:nowrap}
+.m-dot--s{width:10px;height:10px}   /* 결과 있는 시군구(이름 없이 점만 · QA-Q2 ⓐ) */
 @keyframes m-ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}
 .m-lbl span{padding-left:2px}
 

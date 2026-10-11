@@ -680,21 +680,31 @@ function fillDeploys(dd, sum) {
     cards.querySelectorAll('.k-svc').forEach((c, i) => { c.classList.add('t-enter'); c.style.transitionDelay = i * 120 + 'ms'; c.append(h('span.m-more', { text: '자세히' })); });
     enter(cards);
   }
-  // ch5 — 국내 배포 지역 점(시험 배포 제외 · 지역별 하나)
-  const by = new Map();
-  for (const d of dd.deploys) {
-    if (!d.center || d.center[0] < 124 || d.center[0] > 132 || d.center[1] < 33 || d.center[1] > 39) continue;
-    const k = d.region_name?.ko || d.tenant_id;
-    const cur = by.get(k) || { name: short(k), at: d.center, ga: false };
-    // 운영 여부 = 요약 stage(있으면) · 요약이 없으면 배포 기록 단계
-    const it = sum ? itemFor(sum, d.card_id, d, { strict: true }) : null;
-    if (sum ? stageKey(it?.stage) === 'ga' : d.stage === 'ga') cur.ga = true;
-    by.set(k, cur);
-  }
-  const regions = [...by.values()];
-  $('#ch5-tag').textContent = `운영 ${regions.filter((r) => r.ga).length}곳`;
+}
+/* ch4 · ch5 — 지금까지의 실적(QA-Q2 ⓐ · QA-Q3 ⓐ · 숫자 · 이름은 GET /public/record 가 그 자리에서 센 값 · 지어낸 숫자 0).
+   ch5 = 시군구 n곳에 분석 결과 제공 · 서비스 n가지 이름 · 운영 기관 n곳 이름 + 지도에 결과 있는 시군구 점(운영 기관은 채운 점 + 이름).
+   ch4 = 행정 업무에 맞춘 GeoAI 분석서비스 · 서비스 이름들. 못 읽으면 숫자 없이 제목만(빈 숫자를 0으로 쓰지 않는다). */
+function fillRecord(r) {
+  const nf = (x) => Number(x).toLocaleString('ko-KR');
+  const v = (e) => (e && typeof e === 'object' ? e.value : e);
+  const names = r?.work?.names || [];
+  const nw = (arr) => arr.flatMap((x, i) => [...(i ? [' · '] : []), h('span.m-nw', { text: x })]);   // 이름 중간에서 줄이 끊기지 않게(규칙 9)
+  $('#ch4-names').replaceChildren(...(names.length ? [...nw(names), ' —'] : []));
+  if (!r) { $('#ch5-p').textContent = ''; $('#ch5-tag').textContent = ''; return; }
+  const n = v(r.sgg);
+  if (n) $('#ch5-h').innerHTML = `<span>시군구 ${nf(n)}곳에</span><span>분석 결과 제공</span>`;   // 제목 두 줄(규칙 9)
+  const sv = r.services?.names || [];
+  $('#ch5-p').replaceChildren(...(sv.length ? [...nw(sv), ` — ${nf(v(r.services.n))}가지 서비스 결과를 냈습니다.`] : []));
+  const og = r.orgs?.items || [];
+  $('#ch5-tag').textContent = og.length ? `운영 기관 ${nf(v(r.orgs.n))}곳 · ${og.map((o) => o.name).join(' · ')}` : '';
   labelsEl.innerHTML = '';
-  S.labels = regions.map((r) => { const el = h('div.m-lbl', {}, h('i.m-dot', { dataset: { st: r.ga ? 'ga' : 'pilot' } }), h('span', { text: r.name })); labelsEl.append(el); return { el, at: r.at }; });
+  const orgAt = new Map(og.filter((o) => o.sgg_cd && o.center).map((o) => [o.sgg_cd, o]));
+  S.labels = (r.places || []).filter((p) => p.center && !orgAt.has(p.sgg_cd)).map((p) => {
+    const el = h('div.m-lbl', { title: p.name }, h('i.m-dot.m-dot--s', { dataset: { st: 'pilot' } })); labelsEl.append(el); return { el, at: p.center };
+  });
+  for (const o of orgAt.values()) {
+    const el = h('div.m-lbl', {}, h('i.m-dot', { dataset: { st: 'ga' } }), h('span', { text: o.name })); labelsEl.append(el); S.labels.push({ el, at: o.center });
+  }
 }
 /* ch6 — 해외 분석 결과(이미 있는 실제 결과 · 지어낸 숫자 0): 군별 농경지 합계 큰 숫자 + 무엇을 어떻게 분석했는지 한 줄 */
 function fillKgz(k) {
@@ -722,7 +732,7 @@ const short = (s = '') => { const p = String(s).trim().split(/\s+/); return p.le
 
 /* ── 부팅 ─────────────────────────────────────────────── */
 async function load() {
-  const [stats, parcel, agent, dd, kgz, sum, kgzc] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz(), loadSummary(), D.kgzCrop()]);
+  const [stats, parcel, agent, dd, kgz, sum, kgzc, rec] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz(), loadSummary(), D.kgzCrop(), D.record()]);
   if (stats.status === 'fulfilled') { S.data.stats = stats.value; fillStats(stats.value); }
   else { empty($('#ch1-big'), { kind: 'first', compact: true }); }
   if (parcel.status === 'fulfilled') { S.data.parcel = parcel.value; fillParcel(parcel.value); }
@@ -730,6 +740,7 @@ async function load() {
   if (dd.status === 'fulfilled') fillDeploys(dd.value, sum.status === 'fulfilled' ? sum.value : null); else empty($('#cards'), { kind: 'first' });
   if (kgz.status === 'fulfilled') { S.data.kgz = kgz.value; $('#ch6-tag').textContent = `키르기스스탄 · ${kgz.value.features.length}개 지역`; }
   if (kgzc.status === 'fulfilled') { S.data.kgzc = kgzc.value; fillKgz(kgzc.value); }
+  fillRecord(rec.status === 'fulfilled' ? rec.value : null);
   cams(); addLayers();
   deferPrefetch();
   devlog('sources', JSON.stringify(D.SRC));

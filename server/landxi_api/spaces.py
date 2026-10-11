@@ -1411,7 +1411,7 @@ async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
 
 # 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·
 # 서비스 이력 · 통계 · 필지 메모(landxi_api/gov_history.py). 공간 라우터에 붙여 main.py 를 고치지 않는다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
-for _sub in ("shoots", "gov_history"):
+for _sub in ("shoots", "gov_history", "gov_report"):   # gov_report = 기관 AI 분석 결과 보고서 · 행정정보와 비교(서비스 기준) · 공개 실적(10-11 gov-보고서 · gov-비교 · QA-Q2 · Q3)
     try:
         import importlib as _il
         router.include_router(_il.import_module(f"landxi_api.{_sub}").router)

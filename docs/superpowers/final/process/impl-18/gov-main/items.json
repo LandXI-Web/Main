@@ -1,0 +1,18 @@
+[
+ {"id": "gov-보고서", "title": "기관 '보고서' 탭 = AI 분석 결과 보고서(서비스 · 읍면동만 고름 · 개요 · 지도 그림 · 읍면동별 표 · 우리 대장과 다른 필지 · .docx)", "opts": ["완료", "다시"],
+  "evidence": ["shots/a1-gov-report-1440-1923.png", "shots/a1b-gov-report-ledger-1440-1923.png"],
+  "where": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report (남원 로그인 폼 · 서비스 대시보드 → 통계·보고서 → AI 분석 결과 보고서 '만들기')",
+  "note": "합계 2,098필지 = 대시보드 큰 숫자 = 필지 목록. 규칙 · 소견 · 조치 제안 · 판정 · 우선순위 · '의심 필지' 없음. 대장 칸은 올린 대장이 있을 때만."},
+ {"id": "gov-비교", "title": "기관 '행정정보와 비교' = 올린 대장 × 고른 서비스 결과(대장과 AI 결과가 다른 필지 6 · 두 줄 · AI 결과 있는 20 · 영상 범위 밖 1,723 · 표 · 내려받기 · 보고서에 넣기)", "opts": ["완료", "다시"],
+  "evidence": ["shots/a2-gov-fusion-1440-1923.png"],
+  "where": "https://namwon.land-xi.dev/landxi/v3/gov-fusion/?service=card-farm (남원 로그인 폼 · 서비스 대시보드 '행정정보와 비교')",
+  "note": "필지 번호로 맞춤(실태조사 규칙 없음) · 상태 · 판정 · 확인 필요 칩 · 우선순위 · 규칙 이름 · '할 일' 없음 · 이 화면은 /survey/* 를 부르지 않음. 시안의 21 · 1,722 는 실제 값 20 · 1,723."},
+ {"id": "QA-Q2", "title": "메인 '시군구 20곳에 분석 결과 제공' · 서비스 7가지 이름 · 운영 기관 2곳 이름 + 지도에 20곳 점", "opts": ["완료", "다시"],
+  "evidence": ["shots/c4-main-q2-1440-1923.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/main/ (로그인 없음 · 위 '활용 사례')",
+  "note": "숫자 · 이름은 서버가 그 자리에서 셈(GET /public/record — 시군구 전역 분석이 끝난 곳 = 실태조사 집계 끝난 시군구 20 · 서비스 결과 장부 · 공개 결과 설명서)."},
+ {"id": "QA-Q3", "title": "메인 '행정 업무에 맞춘 GeoAI 분석서비스' + 서비스 이름 9가지 + '업무마다 다른 서비스를 만들어 제공합니다'", "opts": ["완료", "다시"],
+  "evidence": ["shots/c3-main-q3-1440-1922.png"],
+  "where": "https://app.land-xi.dev/landxi/v3/main/ (로그인 없음 · 위 '서비스')",
+  "note": "'한 벌로 묶어 · 어느 지역에나' 뺌. 이름 · 수는 서버(국내 서비스 가운데 결과 또는 배포가 있는 것)."}
+]

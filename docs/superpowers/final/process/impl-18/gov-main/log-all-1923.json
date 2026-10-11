@@ -1,0 +1,30 @@
+{
+ "shots": [
+  {
+   "f": "c3-main-q3-1440-1922.png",
+   "at": "2026-10-11T10:22:51.742Z",
+   "url": "https://app.land-xi.dev/landxi/v3/main/"
+  },
+  {
+   "f": "c4-main-q2-1440-1923.png",
+   "at": "2026-10-11T10:23:25.189Z",
+   "url": "https://app.land-xi.dev/landxi/v3/main/"
+  },
+  {
+   "f": "a1-gov-report-1440-1923.png",
+   "at": "2026-10-11T10:23:42.864Z",
+   "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report"
+  },
+  {
+   "f": "a1b-gov-report-ledger-1440-1923.png",
+   "at": "2026-10-11T10:23:43.833Z",
+   "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report"
+  },
+  {
+   "f": "a2-gov-fusion-1440-1923.png",
+   "at": "2026-10-11T10:23:55.831Z",
+   "url": "https://namwon.land-xi.dev/landxi/v3/gov-fusion/?service=card-farm"
+  }
+ ],
+ "console_errors": []
+}

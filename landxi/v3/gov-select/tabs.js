@@ -133,10 +133,11 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   await draw();
   /* 보고서 · 자료 내려받기 — 내려받기는 이 탭 한 곳(N-1 ⓐ) · 분기 공간 1단 서버 그대로(관할 안만 · 처음 한 번 이용 약속 · 기록) */
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
-  if (survey) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: '실태조사 보고서' }), h('small', { text: '읍면별 표 · AI 분석 결과 · 지도 그림' })),
-    h('a.t-btn.gd-ci', { href: rep('report'), text: '만들기' })));
   let me = null, g = null;
   try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); } catch { /* 결과 설명서가 없는 서비스 */ }
+  /* AI 분석 결과 보고서(10-11 gov-보고서) — 결과가 있는 서비스면 모두(실태조사 여부와 무관) · 읍면동별 표 · 지도 그림 · .docx */
+  if (g?.body?.what?.total?.value) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: 'AI 분석 결과 보고서' }), h('small', { text: '읍면동별 개수 · 면적 · 지도 그림' })),
+    h('a.t-btn.gd-ci', { href: rep('report'), text: '만들기' })));
   for (const f of g?.body?.format?.files || []) {
     const btn = h('button.t-btn.t-btn--2', { type: 'button', text: '받기', disabled: !f.ok });
     btn.addEventListener('click', () => fetchFile(g, f, btn, me));
