@@ -1,0 +1,187 @@
+{
+ "before_national": {
+  "1265x710": {
+   "boot": {
+    "gate": 510,
+    "data": 1169,
+    "layers": 2596,
+    "canvas": 2597,
+    "ready": 2605,
+    "shown": 2605
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 5.577518930283265,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:10:44"
+  },
+  "1440x900": {
+   "boot": {
+    "gate": 363,
+    "data": 775,
+    "layers": 1661,
+    "canvas": 1661,
+    "ready": 1667,
+    "shown": 1667
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 6.060356414776569,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:11:00"
+  },
+  "1920x1080": {
+   "boot": {
+    "gate": 310,
+    "data": 893,
+    "layers": 1706,
+    "canvas": 1706,
+    "ready": 1712,
+    "shown": 1712
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 6.404572576865716,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:11:15"
+  },
+  "errors": []
+ },
+ "after_national": {
+  "1265x710": {
+   "boot": {
+    "gate": 480,
+    "data": 1881,
+    "layers": 1903,
+    "canvas": 1903,
+    "ready": 1912,
+    "shown": 1912
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 5.577518930283265,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:40:32"
+  },
+  "1440x900": {
+   "boot": {
+    "gate": 506,
+    "data": 1140,
+    "layers": 1161,
+    "canvas": 1161,
+    "ready": 1168,
+    "shown": 1168
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 6.060356414776569,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:40:49"
+  },
+  "1920x1080": {
+   "boot": {
+    "gate": 501,
+    "data": 1406,
+    "layers": 1424,
+    "canvas": 1425,
+    "ready": 1431,
+    "shown": 1431
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 6.404572576865716,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:41:05"
+  },
+  "errors": []
+ },
+ "after_region": {
+  "1265x710": {
+   "boot": {
+    "gate": 731,
+    "data": 1544,
+    "layers": 1574,
+    "canvas": 1575,
+    "ready": 2517,
+    "shown": 3428
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 10.057049934619805,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:16:50"
+  },
+  "1440x900": {
+   "boot": {
+    "gate": 459,
+    "data": 2404,
+    "layers": 2422,
+    "canvas": 2423,
+    "ready": 3175,
+    "shown": 3433
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 10.539887419113226,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:17:10"
+  },
+  "1920x1080": {
+   "boot": {
+    "gate": 419,
+    "data": 1531,
+    "layers": 1580,
+    "canvas": 1580,
+    "ready": 2914,
+    "shown": 3820
+   },
+   "gl": "ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "slow": false,
+   "cam": {
+    "z": 10.884103581202377,
+    "p": 55.00000000000001
+   },
+   "tilt_button": true,
+   "at": "14:17:29"
+  },
+  "errors": []
+ },
+ "cold_start_1265": {
+  "before": {
+   "data": 1663,
+   "layers": 3797,
+   "ready": 4254,
+   "note": "게이트웨이 다시 켠 직후 · 14:15"
+  },
+  "after": {
+   "data": 1240,
+   "layers": 1257,
+   "ready": 2055,
+   "note": "게이트웨이 다시 켠 직후 · 14:43"
+  }
+ }
+}

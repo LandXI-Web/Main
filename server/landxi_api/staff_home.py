@@ -8,6 +8,8 @@
   GET  /me/analyses                 (LX 계정) 내 분석 목록(지도 서비스) — 분석하기로 내가 돌린 것 + 내가 돌렸거나 참여한 프로젝트의 추론 결과를
                                     분석서비스(카드) · 프로젝트 묶음별로(이름 · 지역 · 영상 · 범위 · 결과 수 · bounds · 결과 세트) — XI맵 실시간 · 말로 분석은 빼고
   GET  /me/analyses/{작업}/formats   (LX 계정) 그 층을 받을 수 있는 형식(GeoJSON · SHP · 필지 엑셀 · 까닭)
+  GET  /me/analyses/{작업}/rows      (LX 계정) '목록 보기' — 그 층의 결과 표(넓은 것부터 · cond=지금 조건 JSON)
+  POST /me/analyses/filter          (LX 계정) {jobs, cond} → 조건에 맞는 수 · 칩(조건 칩 하나 풀기 — XI ChatGEO 거르기와 같은 식)
   GET  /me/analyses/{작업}/download?fmt=geojson|shp|parcels   층 내려받기(Q6 ⓑ · 외부 API 1차와 같은 값 · 같은 함수 · 동의 한 줄 · 기록)
   GET|POST /me/downloads/consent    동의 한 줄(LX 계정마다 한 번) · GET /me/downloads 내려받기 기록(직원 = 내 것 · 관리자 = LX 전부)
   GET  /announcements?limit=        (LX 계정) LX 전체 공지 — 최근 순 · 내린 것은 빼고. 비어 있으면 빈 목록(지어내지 않는다)
@@ -342,6 +344,60 @@ async def dl_layer(job: str, request: Request, fmt: str = "geojson", test: bool 
                            {"fmt": fmt, "rows": n, "job": job, **({"test": True} if test else {})})
         await audit(conn, p, "mapsvc.download", job, None, {"fmt": fmt, "rows": n})
     return resp
+
+
+# ── 조건 칩 풀기 · 목록 보기(외부 검수 3차 GPT3-3 · 도형목록) — 거르기 · 통계 · 보고서와 같은 식(result_scope 한 출처) ──
+async def _my_jobs(p: Principal, jobs) -> list[str]:
+    ok = []
+    for j in [str(x) for x in (jobs or [])][:24]:
+        if j not in ok and await my_job(p, j):
+            ok.append(j)
+    return ok
+
+
+@router.post("/me/analyses/filter")
+async def my_filter_count(request: Request, body: dict | None = None):
+    """{jobs, cond} → 조건에 맞는 수 · 칩 — 지도 서비스 조건 칩 하나를 풀 때(XI ChatGEO 답과 같은 수 · 같은 말)."""
+    from . import result_scope as RSC
+    p = _lx(request)
+    b = body or {}
+    jobs = await _my_jobs(p, b.get("jobs"))
+    cond = RSC.clean(b.get("cond"))
+    n = 0
+    if jobs:
+        a: list = [jobs]
+        w = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a)
+        async with db(realm="lx") as conn:
+            n = int(await conn.fetchval(f"SELECT count(*) FROM detections WHERE {' AND '.join(w)}", *a))
+    return {"n": n, "label": RSC.label(cond), "chips": RSC.chips(cond), "params": cond}   # params = 조건 그대로(구조 필드)
+
+
+@router.get("/me/analyses/{job}/rows")
+async def my_rows(job: str, request: Request, offset: int = 0, limit: int = 50, cond: str | None = None):
+    """'목록 보기' — 그 레이어의 결과 표(넓은 것부터 · 지금 걸린 조건 그대로) · 줄 = 결과 타일과 같은 행(분류 · 면적 · 신뢰도 · 읍면동 · 가운데 · 범위)."""
+    from . import result_scope as RSC
+    from .spaces import class_ko
+    p = _lx(request)
+    if not await my_job(p, job):
+        raise ApiError("not_found", "이 계정의 지도 서비스에 없는 결과입니다")
+    try:
+        c = RSC.clean(json.loads(cond)) if cond else {}
+    except ValueError:
+        c = {}
+    a: list = [job]
+    w = ["job_id = $1", "edit_state <> 'deleted'"] + RSC.sql(c, a)
+    lim, off = max(1, min(int(limit), 200)), max(0, int(offset))
+    async with db(realm="lx") as conn:
+        n = int(await conn.fetchval(f"SELECT count(*) FROM detections WHERE {' AND '.join(w)}", *a))
+        rows = await conn.fetch(f"SELECT id, cls, cls_en, conf, area_m2, emd, ST_X(ST_PointOnSurface(geom)) AS x, ST_Y(ST_PointOnSurface(geom)) AS y, "
+                                f"ST_XMin(geom) AS w, ST_YMin(geom) AS s, ST_XMax(geom) AS e, ST_YMax(geom) AS nn FROM detections "
+                                f"WHERE {' AND '.join(w)} ORDER BY area_m2 DESC NULLS LAST, id LIMIT {lim} OFFSET {off}", *a)
+    # 속성 = 결과 타일 속성과 같은 이름(properties · 데이터 구조) · 가운데 · 범위는 좌표(center · bbox)
+    items = [{"id": str(r["id"]), "properties": {"cls": class_ko(r["cls"], r["cls_en"]),
+                                                  "area_m2": round(float(r["area_m2"]), 1) if r["area_m2"] is not None else None,
+                                                  "conf": round(float(r["conf"]), 3) if r["conf"] is not None else None, "emd": r["emd"] or None},
+              "center": [round(r["x"], 7), round(r["y"], 7)], "bbox": [round(r["w"], 7), round(r["s"], 7), round(r["e"], 7), round(r["nn"], 7)]} for r in rows]
+    return {"n": n, "offset": off, "items": items, "label": RSC.label(c)}
 
 
 @router.get("/me/downloads")

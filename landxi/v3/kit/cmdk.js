@@ -28,7 +28,7 @@ import { t, tl, langOf, nf, locale } from './i18n.js';
 import { bars } from './chart.js';
 import { faceImg } from './assistant-mascot.js';
 import { toast } from './toast.js';
-import { filterResults } from '../../xi/fx/result-filter.js';
+import { filterResults, resultFilter } from '../../xi/fx/result-filter.js';
 
 const EVENTS = ['agent.route', 'agent.plan', 'agent.tool.call', 'agent.tool.result', 'agent.confirm', 'agent.confirm.decided', 'agent.token', 'agent.done', 'agent.failed', 'agent.rejected'];
 const KIT_OPS = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'map_filter']);   // 화면이 처리하지 않을 때 키트가 지도로 하는 동작(map_filter = 켜진 결과 레이어 거르기 · 원칙 193)
@@ -626,6 +626,10 @@ function create(opts) {
     try { if (sessionStorage.getItem('lx.chat.test') === '1') ctx.test = true; } catch { /* */ }   // 시험 · 점검 질문 표시(화면에 보이지 않음) — 개선 고리가 모으지 않는다
     if (runId) ctx.prev_run = runId;   // 이 창의 바로 앞 답('1위 필지' 같은 말은 이 답의 목록으로만 푼다 · 같은 계정 다른 창 답과 섞이지 않게)
     if (cfg.stage?.map) { const b = cfg.stage.map.getBounds(); ctx.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; ctx.zoom = cfg.stage.map.getZoom(); }
+    if (cfg.stage?.map && !ctx.filter) {           // 지금 걸린 거르기 조건 — 새 조건은 이 위에 쌓인다(GPT3-3 · 서버가 합쳐 다시 보낸다)
+      const f = resultFilter(cfg.stage.map);
+      if (f) ctx.filter = Object.fromEntries(['cls', 'emd', 'area_min', 'area_op_min', 'area_max', 'area_op_max'].filter((k) => f[k] != null).map((k) => [k, f[k]]));
+    }
     let r;
     try { r = await api('/agent/runs', { method: 'POST', body: { message: msg, mode: 'map', context: ctx } }); }
     catch (err) {
@@ -803,7 +807,7 @@ function create(opts) {
           // 켜진 결과 레이어를 같은 조건으로 바로 거른다(결과 타일 속성 · 서버가 값이 있는지 먼저 봄) — 지도 서비스는 화면이 직접 처리(조건 줄 · 풀기)
           if (filterResults(map, a) > 0) {
             ok = true;
-            if (!a.clear && a.label) toast(`조건 — ${a.label}`, { action: { label: '조건 풀기', onClick: () => filterResults(map, { clear: true }) }, ms: 8000 });
+            if (!a.clear && a.label) toast(`조건 — ${a.label}${a.n != null ? ` · ${nf(a.n)}건` : ''}`, { action: { label: '조건 풀기', onClick: () => filterResults(map, { clear: true }) }, ms: 8000 });
           } else reason = why('nolayer');
         } else if (a.op === 'map_layer') {
           const L = map.getStyle()?.layers || [];

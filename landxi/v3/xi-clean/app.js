@@ -287,7 +287,8 @@ async function buildLayers(cat) {
   const ladderP = stage.ladder(items, order).then((L) => { S.ladder = L; }, (e) => K.devlog('ladder', String(e?.message || e)));
   await Promise.all([specsP, ladderP]);
   const spec = async (it) => specs.get(it.id) || sourceSpec(it);
-  await cogLayers(items, own);
+  // 원본 등록 영상(지역 축척 8단계부터 보임)의 서명 주소는 첫 도착을 기다리게 하지 않는다 — 영상 수만큼 요청이라 먼 연결에서 첫 진입이 늦었다(GPT3-8 '서버 응답 늦음')
+  cogLayers(items, own).then(() => { try { applyLayers(); } catch { /* 층 설정 전이면 setRegion 이 맞춘다 */ } }, (e) => K.devlog('cog', String(e?.message || e)));
 
   // 시군구 경계(전국 · 지역 고르기)
   const sggIt = S.tenant ? null : items.find((i) => i.role === 'reference' && i.id === 'sigungu');   // 기관 = 전국 경계 층 없음(관할만)
@@ -1571,6 +1572,8 @@ async function setView(pitch, bearing) {
   S.tilt = pitch > 0; patchRail();
   if (S.els?.hud) S.els.hud.dataset.tilt = S.tilt ? '1' : '';   // 입체 = 큰 숫자를 작은 칸으로(GPT2-1)
   await terrainFor(map.getZoom());
+  // 입체일 때 아직 안 온 먼 타일 자리는 밝은 바탕(#F2F4F6) 대신 영상과 비슷한 어두운 땅빛 — 먼 연결 · 느린 그림에서 '넓은 흰 공백'이 보이지 않게(GPT3-8)
+  if (map.getLayer('bg')) map.setPaintProperty('bg', 'background-color', S.tilt ? '#3A4640' : '#F2F4F6');
   map.easeTo({ pitch, bearing, duration: RM() ? 0 : 1250, easing: (t) => 1 - Math.pow(1 - t, 3) });
 }
 

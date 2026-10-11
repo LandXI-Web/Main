@@ -48,7 +48,7 @@ catch (e) {
 }
 
 /* 상태 — 줄 하나 = 결과 세트 하나 */
-const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, dl: null, filter: null, fold: false, lg: true };
+const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, dl: null, filter: null, fold: false, lg: true, list: null };
 function absorb(d) {
   for (const g of d.groups || []) {
     let G = ST.groups.find((x) => x.key === g.key);
@@ -174,9 +174,14 @@ function drawLeft() {
     h('div', {}, h('b.num', {}, nf(tot), h('i', { text: '건' })), h('small', { text: `켜진 결과 · 묶음 ${new Set(on.map((x) => x.g.key)).size}개` })),
     h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `전체 · 묶음 ${ST.groups.length}개` })));
   const run = (D.running || []).length ? h('p.lm-run', {}, h('i'), `분석 중 ${D.running.length}건 — 끝나면 여기에 쌓입니다`) : null;
+  /* 조건 줄 = 칩 여러 개(분류 · 면적 · 읍면동 — 칩마다 풀기) + 맞는 수 + 모두 풀기 · 조건은 쌓인다(GPT3-3) */
+  const chips = ST.filter ? (ST.filter.chips?.length ? ST.filter.chips : [{ k: '', label: ST.filter.label || '' }]) : [];
   const flt = ST.filter ? h('div.lm-flt', { role: 'status' },
-    h('p', {}, h('b', { text: '조건' }), h('span', { text: ST.filter.label || '' }), ST.filter.n != null ? h('em.num', { text: `${nf(ST.filter.n)}건` }) : null),
-    h('button.lm-tbtn', { type: 'button', text: '조건 풀기', onclick: () => setFilter({ op: 'map_filter', clear: true }) })) : null;
+    h('div.lm-fc', {}, h('b', { text: '조건' }),
+      ...chips.map((c) => h('span.lm-chip', {}, h('span', { text: c.label }),
+        c.k ? h('button', { type: 'button', 'aria-label': `${c.label} 조건 풀기`, title: '이 조건 풀기', text: '×', onclick: () => dropChip(c.k) }) : null)),
+      ST.filter.n != null ? h('em.num', { text: `${nf(ST.filter.n)}건` }) : null),
+    h('button.lm-tbtn', { type: 'button', text: chips.length > 1 ? '모두 풀기' : '조건 풀기', onclick: () => setFilter({ op: 'map_filter', clear: true }) })) : null;
   const groups = ST.groups.map((G) => {
     const onN = G.items.filter((x) => x.on).length;
     const open = ST.open.has(G.key);
@@ -191,10 +196,11 @@ function drawLeft() {
       const cls = (x.by_class || []).filter((c) => c.n).map((c) => `${c.cls} ${nf(c.n)}`).join(' · ');
       const more = [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope, (x.by_class || []).length > 1 ? cls : ''].filter(Boolean).join(' · ');
       const canDl = !x.empty && !x.failed;
-      ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl'].filter(Boolean).join(' '), title: more },
+      ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl', ST.list === x.job && 'is-list'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
         h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: `${x.region} · ${day(x.finished_at)}` })),
         h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(val(x.found))}건` }),
+        canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
       if (ST.dl === x.job) ul.append(dlPanel(x));
     }
@@ -233,9 +239,22 @@ function setFilter(a) {
   const n = filterResults(map, a);
   ST.filter = a.clear ? null : { ...a };
   drawLeft();
+  if (ST.list) { const x = ST.items.get(ST.list); if (x) openList(x, true); }   // 목록 보기가 열려 있으면 같은 조건으로 다시
   window.__lm.filterAt = performance.now();
   map.once('idle', () => { window.__lm.filterIdleAt = performance.now(); });
   return n > 0 || !!a.clear;
+}
+/* 칩 하나 풀기 — 남은 조건으로 같은 식(서버 result_scope)으로 다시 세어 건다 */
+const COND_KEYS = ['cls', 'emd', 'area_min', 'area_op_min', 'area_max', 'area_op_max'];
+const condOf = (f) => Object.fromEntries(COND_KEYS.filter((k) => f?.[k] != null).map((k) => [k, f[k]]));
+async function dropChip(k) {
+  const c = condOf(ST.filter);
+  if (k === 'area') COND_KEYS.filter((x) => x.startsWith('area')).forEach((x) => delete c[x]); else delete c[k];
+  if (!Object.keys(c).length) { setFilter({ op: 'map_filter', clear: true }); return; }
+  const jobs = all().filter((x) => shown(x) && !x.empty && !x.failed).map((x) => x.job);
+  let r = null;
+  try { r = await api('/me/analyses/filter', { method: 'POST', body: { jobs, cond: c } }); } catch (e) { K.devlog('filter', String(e?.message || e)); }
+  setFilter({ op: 'map_filter', ...(r?.params || c), label: r?.label || '', chips: r?.chips || [], n: r?.n ?? null });
 }
 document.addEventListener('kit:agent-action', (e) => {
   const a = e.detail;
@@ -334,7 +353,7 @@ function setBase(k) {
 /* ── 오른쪽 속성 칸 — 결과 값(결과 타일 속성 그대로) + 필지 정보(연속지적 GET /parcels) ── */
 let HOVER = null;
 function closeProps() {
-  props.hidden = true; delete props.dataset.job; ST.pick = null;
+  props.hidden = true; delete props.dataset.job; ST.pick = null; ST.list = null; delete props.dataset.view;
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* 층이 내려갔으면 그대로 */ } HOVER = null; }
   drawLeft();
 }
@@ -343,13 +362,15 @@ async function openProps(f, x, lngLat) {
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* */ } }
   HOVER = f.id != null ? { source: f.source, sourceLayer: f.sourceLayer, id: f.id } : null;
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: true }); } catch { /* */ } }
-  ST.pick = x.job; props.dataset.job = x.job; props.hidden = false;
+  ST.pick = x.job; props.dataset.job = x.job; props.dataset.view = 'props'; props.hidden = false;
+  if (ST.list && ST.list !== x.job) ST.list = null;
   const area = p.area_m2 != null ? Number(p.area_m2) : null;
   const conf = p.conf != null ? Math.round(Number(p.conf) * 100) : null;
   const row = (k, ...v) => h('div', {}, h('dt', { text: k }), h('dd', {}, ...v));
   const parcel = h('dl.lm-kv', {}, row('지번', h('span.lm-none', { text: '불러오는 중' })));
   const near = [lngLat.lng, lngLat.lat];
   props.replaceChildren(
+    ST.list === x.job ? h('button.lm-tbtn.lm-back', { type: 'button', text: '← 목록으로', onclick: () => openList(x, true) }) : null,
     h('header.lm-ph', {}, h('div', {}, h('h2', { text: p.cls || '결과' }), h('small', { text: x.g.name }),
       h('small', { text: [x.region, p.emd && !String(x.region).includes(p.emd) ? p.emd : ''].filter(Boolean).join(' · ') })),
       h('button.lm-x', { type: 'button', 'aria-label': '속성 닫기', text: '×', onclick: closeProps })),
@@ -384,6 +405,53 @@ async function openProps(f, x, lngLat) {
     K.devlog('parcels', `${e?.code || ''} ${e?.message || e}`);
     if (props.dataset.job === x.job) parcel.replaceChildren(row('지번', h('span.lm-none', { text: '이 자리의 필지 정보를 읽지 못했습니다' })));
   }
+}
+
+/* ── 목록 보기(GPT 제안 · 접근성) — 그 레이어의 결과 표(넓은 것부터 · 지금 조건 그대로) · 줄을 누르면(키보드 Enter 도) 그 자리로 가서 속성 칸 ── */
+const LIST_N = 50;
+async function openList(x, keep = false, more = false) {
+  if (!keep && !more && ST.list === x.job && props.dataset.view === 'list') { closeProps(); return; }
+  ST.list = x.job; props.dataset.job = x.job; props.dataset.view = 'list'; props.hidden = false;
+  if (!x.on) { await toggle(x); }
+  const L = more && x.rows ? x.rows : { items: [], n: null };
+  const cond = ST.filter ? condOf(ST.filter) : null;
+  const ol = h('ol.lm-rows', { 'aria-label': `${x.region} 결과 목록` });
+  const head = h('header.lm-ph', {}, h('div', {}, h('h2', { text: '결과 목록' }), h('small', { text: `${x.g.name} · ${x.region}` })),
+    h('button.lm-x', { type: 'button', 'aria-label': '목록 닫기', text: '×', onclick: closeProps }));
+  const sub = h('p.lm-rsub', { text: '불러오는 중' });
+  props.replaceChildren(head, sub, ol);
+  drawLeft();
+  try {
+    const q = new URLSearchParams({ offset: String(L.items.length), limit: String(LIST_N), ...(cond ? { cond: JSON.stringify(cond) } : {}) });
+    const r = await api(`/me/analyses/${encodeURIComponent(x.job)}/rows?${q}`);
+    if (ST.list !== x.job) return;
+    x.rows = { n: r.n, items: [...L.items, ...(r.items || [])], label: r.label };
+  } catch (e) {
+    K.devlog('rows', `${e?.code || ''} ${e?.message || e}`);
+    sub.textContent = '목록을 불러오지 못했습니다';
+    return;
+  }
+  const R = x.rows;
+  sub.textContent = `${nf(R.n)}건 · 넓은 것부터${R.label ? ` · 조건 ${R.label}` : ''}`;
+  ol.replaceChildren(...R.items.map((it, i) => { const p = it.properties || {}; return h('li', {}, h('button.lm-row', { type: 'button', onclick: () => pickRow(x, it) },
+    h('span.lm-rn.num', { text: String(i + 1) }), h('b', { text: p.cls || '결과' }), h('span', { text: p.emd || '' }),
+    h('span.num', { text: p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : '—' }))); }));
+  if (R.items.length < R.n) props.append(h('button.lm-tbtn.lm-more', { type: 'button', text: `더 보기 (${nf(R.n - R.items.length)}건 남음)`, onclick: () => openList(x, true, true) }));
+  if (!more) ol.querySelector('button')?.focus({ preventScroll: true });
+}
+function pickRow(x, it) {
+  const ll = { lng: it.center[0], lat: it.center[1] }, b = it.bbox;
+  const fake = { properties: { ...(it.properties || {}) }, id: null };
+  props.hidden = false;                                      // 속성 칸 자리(오른쪽 400)를 비우고 맞춘다
+  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: pad(), maxZoom: 18, duration: 700 });
+  openProps(fake, x, ll);
+  map.once('idle', () => {                                   // 그 자리의 도형을 찾아 강조(타일 속성 그대로) — 못 찾으면 위치만
+    if (props.dataset.job !== x.job) return;
+    const pt = map.project([ll.lng, ll.lat]);
+    const f = map.queryRenderedFeatures(pt, { layers: [`lm-r-${x.job}-fill`].filter((l) => map.getLayer(l)) })[0];
+    if (f && f.id != null) { if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* */ } } HOVER = { source: f.source, sourceLayer: f.sourceLayer, id: f.id }; try { map.setFeatureState(HOVER, { hover: true }); } catch { /* */ } }
+  });
+  props.querySelector('.lm-back')?.focus({ preventScroll: true });
 }
 
 /* ── 처음 ── */
