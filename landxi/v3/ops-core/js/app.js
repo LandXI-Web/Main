@@ -8,6 +8,7 @@ import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, h
 import { mountMap } from './map.js';
 import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(직원-4 ⓐ — LX 직원 대시보드 '공지' 칸에 보인다)
 import { mountRequests } from './requests.js';                   // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 · 급함 · 담당 · 보류)
+import { mountApiApply } from './apiapply.js';                   // 요청 관리 · API 키 신청 탭(외부 연동 API 3차 — 원칙 184)
 
 const who = await gate('ops-core');
 const INFRA = '/landxi/v3/ops-infra/';
@@ -115,21 +116,25 @@ todoEl.addEventListener('click', (e) => {
 const inboxWrap = h('div.oc-inbox-w');
 const tabA = h('button', { type: 'button', role: 'tab', dataset: { t: 'analyze' } }, '분석 요청 ', h('b.num'));
 const tabB = h('button', { type: 'button', role: 'tab', dataset: { t: 'approve' } }, '승인 요청 ', h('b.num'));
-const tabs = h('div.oc-tabs', { role: 'tablist', 'aria-label': '요청 종류' }, tabA, tabB);
+const tabC = h('button', { type: 'button', role: 'tab', dataset: { t: 'apikeys' } }, 'API 키 신청 ', h('b.num'));
+const tabs = h('div.oc-tabs', { role: 'tablist', 'aria-label': '요청 종류' }, tabA, tabB, tabC);
 const head = h('header.oc-ih', {}, h('div', {}, h('h1', { text: '요청 관리' }), h('p', { text: '분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 거절합니다' })), tabs);
 const paneA = h('div.oc-pa');
 const paneB = h('div.oc-pb');
+const paneC = h('div.oc-pc');
 const tbl = h('div.oc-tbl');
 const none = h('div.oc-none');
 paneB.append(tbl, none);
-inboxWrap.append(head, paneA, paneB);
+inboxWrap.append(head, paneA, paneB, paneC);
 inbox.append(inboxWrap);
 const RQ = mountRequests(paneA, { host: S.main, onChanged: () => refresh(true).then(tabCounts) });
-tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) location.hash = b.dataset.t === 'approve' ? '#/approvals/approve' : '#/approvals'; });
+const AK = mountApiApply(paneC, { host: S.main, onChanged: () => tabCounts() });
+tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) location.hash = b.dataset.t === 'approve' ? '#/approvals/approve' : b.dataset.t === 'apikeys' ? '#/approvals/apikeys' : '#/approvals'; });
 const approveList = () => pending().filter((x) => x.kind !== 'request');
 function tabCounts() {
   tabA.querySelector('b').textContent = String(RQ.count());
   tabB.querySelector('b').textContent = String(approveList().length);
+  tabC.querySelector('b').textContent = String(AK.count());
 }
 let T = null, openKey = null, sheet = null;
 
@@ -236,18 +241,19 @@ async function openSheet(item) {
 /* ── 라우터(해시 2개) ─────────────────────── */
 function route() {
   const v = /^#\/approvals/.test(location.hash) ? 'approvals' : 'overview';
-  const tab = /^#\/approvals\/approve/.test(location.hash) ? 'approve' : 'analyze';
+  const tab = /^#\/approvals\/approve/.test(location.hash) ? 'approve' : /^#\/approvals\/apikeys/.test(location.hash) ? 'apikeys' : 'analyze';
   const was = document.body.dataset.tab;
   document.body.dataset.view = v;
   document.body.dataset.tab = tab;
   document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 요청 관리' : 'Land-XI · LX 관리자 대시보드';
   S.go(v === 'approvals' ? 4 : 0); badge();
   if (v === 'approvals') {
-    if (was && was !== tab) { closeAll(); openKey = null; RQ.close(); }
-    tabA.setAttribute('aria-selected', String(tab === 'analyze')); tabB.setAttribute('aria-selected', String(tab === 'approve'));
-    paneA.hidden = tab !== 'analyze'; paneB.hidden = tab !== 'approve';
+    if (was && was !== tab) { closeAll(); openKey = null; RQ.close(); AK.close(); }
+    tabA.setAttribute('aria-selected', String(tab === 'analyze')); tabB.setAttribute('aria-selected', String(tab === 'approve')); tabC.setAttribute('aria-selected', String(tab === 'apikeys'));
+    paneA.hidden = tab !== 'analyze'; paneB.hidden = tab !== 'approve'; paneC.hidden = tab !== 'apikeys';
     drawInbox();
     if (tab === 'analyze') RQ.load().then(tabCounts);
+    AK.load().then(tabCounts);
   }
   else { closeAll(); openKey = null; drawOverview(); M.map.resize(); }
 }

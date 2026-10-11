@@ -219,3 +219,22 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
 .rq-file{padding:0 4px;font:400 13px/20px var(--font-body);color:var(--sub-2)}
 .rq-file summary{cursor:pointer;padding:8px 0}
 .rq-acts{grid-template-columns:1fr 1fr 1.4fr}
+
+/* 요청 관리 · API 키 신청 탭(외부 연동 API 3차 — apiapply.js) */
+.oc-pc[hidden]{display:none}
+.oc-pc{display:flex;flex-direction:column;gap:12px}
+.aa-old{display:inline-flex;align-items:center;gap:8px;font:400 13px/18px var(--font-body);color:var(--sub);cursor:pointer}
+.aa-old input{width:16px;height:16px;margin:0;accent-color:var(--ink)}
+.aa-list{display:flex;flex-direction:column;gap:8px}
+.aa-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px;width:100%;padding:14px 18px;border:0;border-radius:14px;background:var(--bg-1);text-align:left;cursor:pointer;font:inherit;color:var(--ink)}
+.aa-row:hover{background:var(--bg-0)}
+.aa-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.aa-row[data-st="rejected"],.aa-row[data-st="approved"]{color:var(--sub)}
+.aa-main{display:flex;flex-direction:column;min-width:0}
+.aa-main b{font:600 15px/22px var(--font-body)}
+.aa-main small{font:400 13px/18px var(--font-body);color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aa-when{font:400 13px/18px var(--font-num);color:var(--sub)}
+.t-chip.aa-st[data-lv="wait"]{color:var(--accent)}
+.aa-hold{margin:8px 0 0;padding:12px 14px;border-radius:12px;background:var(--bg-0);font:500 var(--fs-label)/22px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.aa-keys{margin:0;padding-left:18px;font:400 var(--fs-label)/24px var(--font-body);color:var(--ink-2)}
+@media (max-width:720px){ .aa-row{grid-template-columns:minmax(0,1fr) auto} .aa-kind,.aa-when{display:none} }

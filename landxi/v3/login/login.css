@@ -215,3 +215,5 @@ body.t { overflow: hidden; }
   .hero__cover { transition: none; animation: none; }
   .axis .t-in, .msg.t-in, .ask__c, .form.nudge { animation: none; }
 }
+.door__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.door__api { font-size: 13px; line-height: 15px; color: var(--sub, #727780); text-decoration: underline; text-underline-offset: 3px; }   /* 바닥 'API 안내'(외부 연동 API 3차) */

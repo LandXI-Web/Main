@@ -215,9 +215,13 @@ function serveFile(req, res, p) {
    키 확인 · 한도 · 틀린 키 반복 막기 · 호출 기록은 게이트웨이(server/landxi_api/ext_api.py)가 한다. 이 주소에는 로그인 · 화면 토큰 길이 없다. */
 const API_HOST = String(process.env.LX_API_HOST || 'api.land-xi.dev').toLowerCase();
 const EXT = /^\/api\/ext(\/|$)/;
-const API_HOME = Buffer.from(JSON.stringify({ service: 'Land-XI 외부 연동 API', version: 'v1', auth: 'Authorization: Bearer <API 키>', start: '/v1/me' }));
+const GUIDE_URL = 'https://' + globalThis.LX_SITES.app.host + '/landxi/v3/api-guide/';   // 사이트 'API 안내'(API 3차 — 로그인 없이 · 키 신청 창)
+const API_HOME = Buffer.from(JSON.stringify({ service: 'Land-XI 외부 연동 API', version: 'v1', auth: 'Authorization: Bearer <API 키>', start: '/v1/me', guide: GUIDE_URL }));
 function serveApiHost(req, res, p) {
-  if (p === '/' && (req.method === 'GET' || req.method === 'HEAD')) return send(res, 200, API_HOME, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  if (p === '/' && (req.method === 'GET' || req.method === 'HEAD')) {                      // 브라우저로 열면 'API 안내' 페이지로 · 프로그램이 부르면 안내 JSON
+    if (/text\/html/.test(String(req.headers.accept || ''))) return send(res, 302, '', { location: GUIDE_URL, 'cache-control': 'no-store' });
+    return send(res, 200, API_HOME, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  }
   if (!/^\/v1\//.test(p)) return send(res, 404, JSON.stringify({ error: { code: 'not_found', message: '없는 주소입니다' } }), { 'content-type': 'application/json' });
   const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '');
   const headers = { ...req.headers, 'x-forwarded-for': ip, 'x-forwarded-proto': 'https', 'x-forwarded-host': req.headers.host || '' };

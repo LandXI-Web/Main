@@ -6,7 +6,7 @@
    #/deploys/categories  분야 — 분야 목록(만들기 · 이름 바꾸기 · 순서 · 쓰는 서비스 수) + 직원이 요청한 새 분야 + 바뀐 기록(/categories · 질문 5 · 원칙 165).
                       분석하기 거르기 칩 · 서비스 카드 · 기관 공유 표가 이 순서를 따른다.
    #/deploys/improve  개선 후보(16차 개선-1 · 그대로 둔다).
-   #/deploys/api      API — 외부 연동 API 키(기관 × 공유된 서비스 · LX 관리자가 만들고 관리 · 원칙 178 · apikeys.js). 사용 현황 표에 'API 호출' 열(원칙 160).
+   #/deploys/api      API — 외부 연동 API 키(API 3차: 신청 시스템 × 분석 서비스 · 기관 공유와 따로 · 원칙 178 · 184 · apikeys.js). 사용 현황 표에 'API 호출' 열(원칙 160).
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
 import { toast, h, api, nf, drawer } from './kit.js';
 import { API } from '../../../shared/api-v1.js';   // 대표 그림 주소(게이트웨이 파일)

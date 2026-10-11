@@ -274,3 +274,4 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 .m-lead span{word-break:keep-all}
 /* 첫 화면 글을 지구 쪽으로(넓은 화면에서 왼쪽 끝에 붙어 지구와 멀어지지 않게 · 10-09) */
 @media (min-width:1101px){.m-hero,.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
+.m-api{color:var(--sub);text-decoration:underline;text-underline-offset:3px}   /* 바닥 'API 안내'(외부 연동 API 3차) */

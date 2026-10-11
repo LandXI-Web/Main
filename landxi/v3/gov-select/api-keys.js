@@ -1,5 +1,5 @@
-/* 기관 정보 → '받은 API 키' — 기관 관리자만 · 보기만(원칙 178 — 키는 LX 관리자가 만들고 관리 · 기관 관리자 발급 아님).
-   우리 기관의 다른 시스템이 공유받은 서비스의 AI 분석 결과를 가져갈 때 쓰는 키 목록. 키 값은 보이지 않는다(만들 때 LX가 한 번만 전함 · 끝 네 자리만).
+/* 기관 정보 → '받은 API 키' — 기관 관리자만 · 보기만(원칙 178 · 184 — 키는 'API 안내'에서 신청하고 LX 관리자가 승인 · 기관 공유와 떨어짐).
+   우리 기관이 신청자인 키 목록(API 3차 — 신청 시스템 × 분석 서비스). 키 값은 보이지 않는다(만들 때 LX가 한 번만 전함 · 끝 네 자리만).
    서버: GET /spaces/me/apikeys(자기 기관 것만 · 폐기한 키 제외). 아이콘 0. */
 import { h } from '../kit/util.js';
 import { api } from '../../shared/api-v1.js';
@@ -16,9 +16,9 @@ export async function apiKeysSection() {
   try { d = await api('/spaces/me/apikeys'); } catch { return null; }
   const items = d.items || [];
   sec.append(h('h3', { text: '받은 API 키' }),
-    h('p.gk-note', { text: '우리 기관의 다른 시스템이 공유받은 서비스의 AI 분석 결과를 가져갈 때 쓰는 키입니다. 키는 LX 관리자가 만들고 관리합니다.' }));
+    h('p.gk-note', { text: '우리 기관의 다른 시스템이 분석 서비스의 AI 분석 결과를 가져갈 때 쓰는 키입니다. 키는 API 안내에서 신청하고 LX 관리자가 승인합니다.' }));
   if (!items.length) {
-    sec.append(h('p.gk-empty', { text: '받은 API 키가 없습니다. 다른 시스템과 이어야 하면 LX 담당자에게 요청해 주세요.' }));
+    sec.append(h('p.gk-empty', { text: '받은 API 키가 없습니다. 다른 시스템과 이어야 하면 API 안내에서 키를 신청해 주세요.' }));
     return sec;
   }
   sec.append(h('div.gk-wrap', {}, h('table.gk-tbl', {},

@@ -52,3 +52,24 @@
   .ak-f{grid-template-columns:minmax(0,1fr);gap:6px}
   .ak-f>.t-label{padding-top:0}
 }
+
+/* API 3차(신청 시스템 × 서비스) — 키 설정 칸(apikey-form.js · 요청 관리 → API 키 신청에서도 씀) */
+.ak-hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ak-kf{display:flex;flex-direction:column;gap:14px}
+.ak-fv{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ak-rd{display:flex;flex-wrap:wrap;gap:8px 16px}
+.ak-rd label,.ak-fm label{display:inline-flex;align-items:center;gap:6px;font:400 var(--fs-label)/22px var(--font-body);color:var(--ink);cursor:pointer}
+.ak-rd input{width:18px;height:18px;margin:0;accent-color:var(--ink)}
+.ak-rd label.is-off,.ak-fm label.is-off{color:var(--sub);cursor:default}
+.ak-hint{margin:0;font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
+.ak-scb{display:flex;flex-direction:column;gap:8px}
+.ak-reg{display:flex;flex-direction:column;gap:8px}
+.ak-reg select.t-input{width:auto;min-width:0;flex:1}
+.ak-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:28px}
+.ak-chip{display:inline-flex;align-items:center;gap:6px}
+.ak-chip button{border:0;background:none;padding:0;font:500 12px/16px var(--font-body);color:var(--sub);cursor:pointer;text-decoration:underline}
+.ak-bb .ak-num{width:110px}
+.ak-num{width:96px}
+.ak-onekey{display:flex;flex-direction:column;gap:6px}
+.ak-onekey .t-label{margin:0}
+.ak-kfw{border-top:1px solid var(--rule);padding-top:14px}
