@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>세 화면 경계 — 분석하기 · 지도 서비스 · XI맵</title>
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<style>
+  body { margin: 0; background: var(--bg-0); color: var(--ink); font-family: var(--font-body); }
+  .wrap { max-width: 1344px; min-height: 100vh; box-sizing: border-box; margin: 0 auto; padding: 40px 48px 48px; display: flex; flex-direction: column; justify-content: center; }
+  h1 { margin: 0 0 6px; font: 800 28px/36px var(--font-display); letter-spacing: -.02em; }
+  .sub { margin: 0 0 24px; font: 400 15px/22px var(--font-body); color: var(--sub); }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .one { background: var(--bg-1); border-radius: var(--r-16); overflow: hidden; }
+  .one img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: left top; border-bottom: 1px solid var(--rule); }
+  .one .t { padding: 18px 20px 20px; }
+  .one h2 { margin: 0 0 4px; font: 700 20px/28px var(--font-display); }
+  .one p { margin: 0; font: 400 15px/22px var(--font-body); color: var(--sub-2); }
+  .one .at { display: block; margin-top: 10px; font: 500 12px/16px var(--font-num); color: var(--sub); }
+  .flow { margin: 28px 0 0; display: flex; align-items: center; gap: 12px; font: 500 14px/20px var(--font-body); color: var(--sub); }
+  .flow b { color: var(--ink); padding: 4px 10px; background: var(--bg-1); border-radius: var(--r-8); }
+</style>
+</head>
+<body class="t">
+<div class="wrap">
+  <h1>세 화면은 이렇게 다릅니다</h1>
+  <p class="sub">같은 LX 직원 메뉴에서 나란히 열리는 세 화면. 모두 10-11 바깥 주소에서 로그인 폼으로 찍은 실제 화면(XI맵은 시안 화면).</p>
+  <div class="row">
+    <article class="one"><img src="img/analyze.png" alt="분석하기 화면"><div class="t"><h2>분석하기</h2><p>정식 분석서비스를 골라 내 영상 하나를 분석에 맡깁니다.</p><span class="at" id="t1"></span></div></article>
+    <article class="one"><img src="img/mapsvc.png" alt="지도 서비스 화면"><div class="t"><h2>지도 서비스</h2><p>내가 돌린 결과를 레이어로 켜서 보고 내려받습니다.</p><span class="at" id="t2"></span></div></article>
+    <article class="one"><img src="img/ximap.png" alt="XI맵 화면(시안)"><div class="t"><h2>XI맵</h2><p>전국 AI 현황판 — 최신 영상 위 전국 결과를 보고, 틀린 것은 그 자리에서 고칩니다.</p><span class="at" id="t3"></span></div></article>
+  </div>
+  <p class="flow"><b>분석하기</b>에서 만든 결과 → <b>지도 서비스</b>에서 보고 내려받기 → 전국에 쌓인 결과는 <b>XI맵</b>에서 한눈에 · 그 자리에서 고치기 → 다음 분석이 나아짐</p>
+</div>
+<script>
+  fetch('img/at.json').then((r) => r.json()).then((j) => { for (const [k, v] of Object.entries(j)) { const el = document.getElementById(k); if (el) el.textContent = v; } }).catch(() => {});
+</script>
+</body>
+</html>

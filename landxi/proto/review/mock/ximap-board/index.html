@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 전국 AI 현황판</title>
+<link rel="stylesheet" href="../../../vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<link rel="stylesheet" href="board.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m t">
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">시안은 실제 결과를 서버에서 읽습니다. LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 19차 · XI맵 = 전국 AI 현황판(원칙 191 방향 답) 시안 — 코드 수정 0 · 서버 수정 0 · GPU 0.
+   셸(마스트 · 왼쪽 LX 직원 메뉴)은 kit 그대로 — XI맵에 들어와도 메뉴가 바뀌지 않는다. XI맵 도구는 지도 위 띠 하나.
+   실제: 시군구 경계 · 결과 있는 시군구와 그 결과의 서비스 · 마지막 분석 시각(/regions · /regions/{sgg}/results) · 구례군 2023 결과 도형(/results/.../features)
+         · 키르기스스탄 군별 경작지(Sentinel-2 10m AI 토지피복 2025 · landxi/v3/main/data) · Sokuluk 군 실제 판정 화소(kgz-crop-focus.png).
+   시안(없는 것): 브이월드 영상 시점 · 결과의 모델 판 꼬리표 · 고치기 · 고친 자리 표시 · 수시 갱신 장부. */
+import * as K from '../../../../v3/kit/index.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'board';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => Number(n).toLocaleString('ko-KR');
+const now = new Date(); const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+
+/* 서비스별 색 — AI 결과 위에서만 색(법전 §1). 이름은 서비스 카드 이름 그대로 */
+const SVC = {
+  'card-farm': ['경작·휴경', '#2E9E5B'], 'card-5e85a9': ['비닐하우스', '#FFB633'], 'card-45424f': ['건축물', '#3182F6'],
+  'card-389c45': ['주차장', '#8B5CF6'], 'card-d8fc01': ['곤포사일리지', '#B07A3A'], 'card-marine': ['해양쓰레기', '#0FA9A0'],
+  landcover: ['토지피복 4분류', '#6B8FA3'],
+};
+const CLS = { building: ['건물', '#3182F6'], parking: ['주차장', '#8B5CF6'], farmland: ['경작지', '#2E9E5B'], greenhouse: ['비닐하우스', '#FFB633'] };
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+let SH, ST, MAP, ui;
+function mapReady() { document.documentElement.dataset.mapReady = '1'; }
+let stageEl;
+function mount() {
+  stageEl = document.createElement('div'); stageEl.className = 'stage'; SH.main.appendChild(stageEl);
+  ui = document.createElement('div'); ui.id = 'ui'; SH.main.appendChild(ui);
+}
+async function stage(bounds) { ST = K.createStage(stageEl, { bounds, interactive: true }); await ST.ready; MAP = ST.map; return MAP; }
+function idle() { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > 12000 ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, 3000); }); }
+const KOREA = [125.6, 33.8, 129.9, 38.5], KGZ = [69.2, 39.1, 80.3, 43.3];
+
+/* 지도 위 띠 — 나라(사업 나라만) · 영상 · 서비스(켜고 끄기) · 최근 갱신 */
+function strip({ country, imagery, legend, fresh }) {
+  const here = (c) => (c === country ? ' on' : '');
+  return `<div class="strip">
+    <div class="grp"><b class="${here('kr')}" data-go="board">대한민국</b><b class="${here('kg')}" data-go="global">키르기스스탄</b></div>
+    <div class="grp"><span class="lab">영상</span>${imagery.map(([t, on]) => `<b class="${on ? 'on' : ''}">${esc(t)}</b>`).join('')}</div>
+    <div class="grp"><span class="lab">서비스</span>${legend.map(([t, c]) => `<b data-svc="${esc(t)}"><i style="background:${c}"></i>${esc(t)}</b>`).join('')}</div>
+    ${fresh ? `<div class="grp"><b class="on"><i class="pulse"></i>${esc(fresh)}</b></div>` : ''}
+  </div>`;
+}
+function hud({ k, h1, p }) { return `<section class="hud"><div class="k">${esc(k)}</div><h1>${esc(h1)}</h1><p>${p}</p></section>`; }
+function wireStrip() {
+  for (const b of ui.querySelectorAll('[data-go]')) b.onclick = () => { location.search = '?v=' + b.dataset.go; };
+}
+
+/* ═══ 1 · 전국 AI 현황판 ═══ */
+async function board() {
+  const [g, l] = await Promise.all([api('/regions?geom=1&limit=400'), api('/regions?limit=400')]);
+  const list = (l.items || []).filter((r) => r.n_findings?.value > 0);
+  const sets = await Promise.all(list.map((r) => api(`/regions/${r.sgg_cd}/results`).catch(() => ({ items: [] }))));
+  const meta = {};
+  list.forEach((r, i) => {
+    const items = sets[i].items || [];
+    const when = (it) => Date.parse(it.finished_at || it.count?.as_of || 0) || 0;
+    const jobs = items.filter((it) => it.from === 'job').sort((a, b) => when(b) - when(a));
+    const last = jobs[0] || items[0];
+    let svc = last?.card_id || null;
+    if (!svc) svc = /해양쓰레기/.test(items.map((it) => it.name?.ko).join(' ')) && !jobs.length ? 'card-marine' : 'landcover';
+    const t = when(last);
+    meta[r.sgg_cd] = { svc, t, fresh: t && (now - t) < 7 * 86400e3, when: t ? new Date(t) : null };
+  });
+  const fc = { type: 'FeatureCollection', features: (g.features || g.items || []).map((f) => { const p = f.properties || f; const cd = String(p.sgg_cd || p.code); const m = meta[cd];
+    return { type: 'Feature', geometry: f.geometry, properties: { cd, name: p.name || '', svc: m?.svc || '', fresh: m?.fresh ? 1 : 0, has: m ? 1 : 0 } }; }).filter((f) => f.geometry) };
+  const present = [...new Set(Object.values(meta).map((m) => m.svc))].filter((s) => SVC[s]).sort((a, b) => Object.keys(SVC).indexOf(a) - Object.keys(SVC).indexOf(b));
+  const freshN = Object.values(meta).filter((m) => m.fresh).length;
+  const freshDay = Object.values(meta).filter((m) => m.fresh).map((m) => m.when).sort((a, b) => b - a)[0];
+  const fd = freshDay ? `${freshDay.getMonth() + 1}-${String(freshDay.getDate()).padStart(2, '0')}` : '';
+  ui.innerHTML = strip({ country: 'kr', imagery: [['브이월드 최신', 1], ['2023 항공', 1], ['올린 영상', 0]], legend: present.map((s) => SVC[s]), fresh: freshN ? `최근 갱신 ${freshN}곳` : '' })
+    + hud({ k: 'XI맵 · 대한민국', h1: '전국 AI 현황판', p: `시군구 <b>${list.length}곳</b>에 AI 분석 결과 · ${fd} 갱신 <b>${freshN}곳</b><br>2023년 항공영상 결과 위에 브이월드 최신 영상. 확대하면 객체, 누르면 그 자리에서 고칩니다.` });
+  wireStrip();
+  await stage(KOREA);
+  MAP.addSource('sgg', { type: 'geojson', data: fc });
+  const CM = ['match', ['get', 'svc'], ...Object.entries(SVC).flatMap(([k, [, c]]) => [k, c]), 'rgba(0,0,0,0)'];
+  MAP.addLayer({ id: 'sgg-fill', type: 'fill', source: 'sgg', filter: ['==', ['get', 'has'], 1], paint: { 'fill-color': CM, 'fill-opacity': 0.72 } }, 'slot-overlay');
+  MAP.addLayer({ id: 'sgg-line', type: 'line', source: 'sgg', paint: { 'line-color': '#fff', 'line-width': ['case', ['==', ['get', 'has'], 1], 1.2, 0.5], 'line-opacity': ['case', ['==', ['get', 'has'], 1], 0.95, 0.55] } }, 'slot-overlay');
+  MAP.addLayer({ id: 'sgg-fresh', type: 'line', source: 'sgg', filter: ['==', ['get', 'fresh'], 1], paint: { 'line-color': '#1C1F25', 'line-width': 2.6 } }, 'slot-overlay');
+  MAP.on('click', 'sgg-fill', (e) => { const f = e.features?.[0]; if (!f) return; const b = bboxOf(f.geometry); MAP.fitBounds(b, { padding: 80, duration: 1200 }); });
+  MAP.on('mouseenter', 'sgg-fill', () => { MAP.getCanvas().style.cursor = 'pointer'; });
+  MAP.on('mouseleave', 'sgg-fill', () => { MAP.getCanvas().style.cursor = ''; });
+  MAP.fitBounds(KOREA, { padding: { top: 90, bottom: 150, left: 40, right: 40 }, duration: 0 });
+  await idle(); mapReady();
+}
+function bboxOf(g) { let b = null; const walk = (c) => { if (typeof c[0] === 'number') { b = b ? [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])] : [c[0], c[1], c[0], c[1]]; } else c.forEach(walk); }; walk(g.coordinates); return b; }
+
+/* ═══ 2 · 확대 → 객체 → 그 자리 작은 칸(구례군 2023 실제 결과) ═══ */
+const FIXBOX = [127.44, 35.19, 127.49, 35.225];
+async function fix() {
+  const rs = await api('/regions/12730/results'); const it = (rs.items || []).find((x) => x.from === 'job') || (rs.items || [])[0];
+  const ghx = await api(`/results/${it.set}/features?cls=greenhouse&limit=400`);
+  const c0 = (f) => (f.geometry.type === 'Polygon' ? f.geometry.coordinates[0][0] : f.geometry.coordinates[0][0][0]);
+  const inBox = (f, b) => { const c = c0(f); return c[0] > b[0] && c[0] < b[2] && c[1] > b[1] && c[1] < b[3]; };
+  let cand = (ghx.features || []).filter((f) => inBox(f, FIXBOX) && (f.properties.area_m2 || 0) >= 150 && f.properties.conf < 0.8).sort((a, b) => b.properties.area_m2 - a.properties.area_m2);
+  if (!cand.length) cand = (ghx.features || []).filter((f) => (f.properties.area_m2 || 0) >= 150).sort((a, b) => a.properties.conf - b.properties.conf);
+  const pick = cand[0]; const pp = pick.properties; const pb = bboxOf(pick.geometry);
+  const pc = [(pb[0] + pb[2]) / 2, (pb[1] + pb[3]) / 2];
+  let fixed = null;
+  const nm = CLS[pp.cls_en] || [pp.cls, '#0FA9A0'];
+  ui.innerHTML = strip({ country: 'kr', imagery: [['브이월드 최신', 1], ['2023 항공', 1], ['올린 영상', 0]], legend: [SVC['card-farm']] })
+    + hud({ k: 'XI맵 · 구례군 구례읍', h1: '그 자리에서 고치기', p: `객체를 누르면 작은 칸이 붙습니다. 메뉴는 그대로, 지도 안에서 끝납니다.` })
+    + `<div class="pop" id="pop"><div class="hd"><i style="background:${nm[1]}"></i><b>${esc(nm[0])}</b><small>신뢰도 ${Math.round(pp.conf * 100)}%</small></div>
+      <dl><dt>면적</dt><dd>${nf(Math.round(pp.area_m2 || 0))}㎡</dd>
+          <dt>영상</dt><dd>2023년 항공영상 · 25cm</dd>
+          <dt>모델</dt><dd>경작·휴경 분석서비스<span class="mk">판 — 시안</span></dd></dl>
+      <div class="acts"><span>지우기</span><span class="on">분류 바꾸기</span><span>모양 고치기</span><span>메모</span></div>
+      <div class="chips">${Object.values(CLS).map(([t, c]) => `<span class="${t === '건물' ? 'on' : ''}"><i style="background:${c}"></i>${t}</span>`).join('')}<span>해당 없음</span></div>
+      <p class="ft">고친 것은 지도에 표시가 남고 학습 자료로 쌓입니다.</p></div>`
+    + `<div class="tag" id="tag" hidden>고친 자리 · 학습 자료로 쌓임</div>`;
+  wireStrip();
+  await stage(FIXBOX);
+  MAP.addSource('r', await sourceSpec(it));
+  const CM = ['match', ['coalesce', ['get', 'cls_en'], ['get', 'cls']], 'building', '#3182F6', '건물', '#3182F6', 'parking', '#8B5CF6', '주차장', '#8B5CF6', 'farmland', '#2E9E5B', '경작지', '#2E9E5B', 'greenhouse', '#FFB633', '비닐하우스', '#FFB633', '#0FA9A0'];
+  const SL = it.layer || 'results';
+  MAP.addLayer({ id: 'r-fill', type: 'fill', source: 'r', 'source-layer': SL, paint: { 'fill-color': CM, 'fill-opacity': 0.28 } });
+  MAP.addLayer({ id: 'r-line', type: 'line', source: 'r', 'source-layer': SL, paint: { 'line-color': CM, 'line-width': 1.4 } });
+  MAP.addSource('pick', { type: 'geojson', data: pick });
+  MAP.addLayer({ id: 'pick-fill', type: 'fill', source: 'pick', paint: { 'fill-color': nm[1], 'fill-opacity': 0.5 } });
+  MAP.addLayer({ id: 'pick-line', type: 'line', source: 'pick', paint: { 'line-color': '#fff', 'line-width': 5 } });
+  MAP.addLayer({ id: 'pick-line2', type: 'line', source: 'pick', paint: { 'line-color': '#1C1F25', 'line-width': 2.5 } });
+  const span = Math.max(pb[2] - pb[0], (pb[3] - pb[1]) * 1.3, 0.0012);
+  MAP.fitBounds([pc[0] - span * 1.6, pc[1] - span * 1.1, pc[0] + span * 1.6, pc[1] + span * 1.1], { padding: { top: 90, bottom: 120, left: 80, right: 420 }, duration: 0 });
+  const place = () => {
+    const p = MAP.project(pc); const pop = document.getElementById('pop'); pop.style.left = `${p.x + 10}px`; pop.style.top = `${p.y}px`;
+    if (fixed) { const fb = bboxOf(fixed.geometry); const fp = MAP.project([(fb[0] + fb[2]) / 2, fb[3]]); const tg = document.getElementById('tag'); tg.style.left = `${fp.x}px`; tg.style.top = `${fp.y}px`; }
+  };
+  MAP.on('move', place); place();
+  await idle();
+  // 고친 자리 표시(시안) — 지금 보이는 결과 중 고른 객체에서 조금 떨어진 객체 하나를 '고친 자리'로 그린다(점선 · 꼬리표)
+  const seen = MAP.querySourceFeatures('r', { sourceLayer: SL }).filter((f) => (f.properties.area_m2 || 0) >= 120);
+  const px = MAP.project(pc); const dpx = (f) => { const b = bboxOf(f.geometry); const p = MAP.project([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]); return [Math.hypot(p.x - px.x, p.y - px.y), p]; };
+  const cand2 = seen.map((f) => [f, ...dpx(f)]).filter(([, d, p]) => d > 140 && p.x > 140 && p.x < 520 && p.y > 160 && p.y < 680).sort((a, b) => a[1] - b[1]);
+  if (cand2.length) {
+    fixed = { type: 'Feature', geometry: cand2[0][0].geometry, properties: {} };
+    MAP.addSource('fixed', { type: 'geojson', data: fixed });
+    MAP.addLayer({ id: 'fixed-fill', type: 'fill', source: 'fixed', paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.35 } });
+    MAP.addLayer({ id: 'fixed-line', type: 'line', source: 'fixed', paint: { 'line-color': '#1C1F25', 'line-width': 2, 'line-dasharray': [1.5, 1.2] } });
+    document.getElementById('tag').hidden = false;
+  }
+  place(); mapReady();
+}
+
+/* ═══ 3 · 같은 XI맵에서 사업 나라(키르기스스탄) — 실제 군별 경작지 · 확대하면 실제 판정 화소 ═══ */
+async function global() {
+  const d = await (await fetch('../../../../v3/main/data/kgz-crop-2025.json')).json();
+  const fc = d.geojson; const focus = d.focus; const z = q.get('z');
+  const top = [...fc.features].sort((a, b) => b.properties.crop_ha - a.properties.crop_ha)[0]?.properties;
+  const imagery = [['Sentinel-2 2025 · 10m', 1]];
+  const legend = [['농지 이용 실태 분석(해외)', '#2E9E5B']];
+  if (z === 'focus') {
+    ui.innerHTML = strip({ country: 'kg', imagery, legend })
+      + hud({ k: `XI맵 · 키르기스스탄 · ${esc(focus.name)} 군`, h1: '실제 판정', p: `경작지 <b>${nf(focus.crop_ha)}ha</b> · 군 면적의 ${Math.round(focus.share * 100)}%<br>확대하면 판정 화소(40m)가 보이고, 누르면 국내와 같은 칸으로 고칩니다.` })
+      + `<div class="leg"><i style="width:12px;height:12px;border-radius:3px;background:#0FA9A0;display:inline-block"></i>경작지로 판정한 화소</div>`;
+  } else {
+    ui.innerHTML = strip({ country: 'kg', imagery, legend })
+      + hud({ k: 'XI맵 · 키르기스스탄 (사업 나라)', h1: '군별 경작지', p: `군 <b>${fc.features.length}곳</b> · 경작지 ${nf(d.total_ha)}ha · 가장 넓은 곳 ${esc(top?.name || '')}<br>군을 누르면 확대되고, 확대하면 실제 판정이 보입니다.` })
+      + `<div class="leg">경작지 비율 <i class="ramp"></i> 높음</div>`;
+  }
+  wireStrip();
+  await stage(z === 'focus' ? focus.bbox : KGZ);
+  MAP.addSource('kg', { type: 'geojson', data: fc });
+  if (z !== 'focus') MAP.addLayer({ id: 'kg-fill', type: 'fill', source: 'kg', paint: { 'fill-color': '#2E9E5B', 'fill-opacity': ['interpolate', ['linear'], ['get', 'share'], 0, 0.12, 0.45, 0.9] } }, 'slot-overlay');
+  MAP.addLayer({ id: 'kg-line', type: 'line', source: 'kg', paint: { 'line-color': '#fff', 'line-width': 1 } }, 'slot-overlay');
+  if (z === 'focus') {
+    const [w, s, e, n] = focus.bbox;
+    MAP.addSource('px', { type: 'image', url: new URL('../../../../v3/main/data/' + focus.png, location.href).href, coordinates: [[w, n], [e, n], [e, s], [w, s]] });
+    MAP.addLayer({ id: 'px', type: 'raster', source: 'px', paint: { 'raster-opacity': 0.85, 'raster-resampling': 'nearest' } }, 'slot-overlay');
+    const foc = fc.features.find((f) => f.properties.name === focus.name);
+    if (foc) { MAP.addSource('foc', { type: 'geojson', data: foc }); MAP.addLayer({ id: 'foc-line', type: 'line', source: 'foc', paint: { 'line-color': '#fff', 'line-width': 2.5 } }); }
+    MAP.fitBounds([74.30, 42.78, 74.52, 42.93], { padding: { top: 90, bottom: 140, left: 60, right: 60 }, duration: 0 });
+  } else {
+    MAP.on('click', 'kg-fill', (e) => { const f = e.features?.[0]; if (!f) return; if (f.properties.name === focus.name) location.search = '?v=global&z=focus'; else MAP.fitBounds(bboxOf(f.geometry), { padding: 80, duration: 1200 }); });
+    MAP.fitBounds(KGZ, { padding: { top: 90, bottom: 150, left: 40, right: 40 }, duration: 0 });
+  }
+  await idle(); mapReady();
+}
+
+await ensureLogin();
+const who = await K.whoami();
+SH = K.shell({ who, home: 'xi-clean', rail: K.staffMenu('ximap') });
+mount();
+await ({ board, fix, global }[v] || board)();
+</script>
+</body>
+</html>

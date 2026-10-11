@@ -1,0 +1,63 @@
+/* 설계 19차 · XI맵 전국 AI 현황판 시안 — 셸(마스트 · LX 직원 메뉴)은 kit 그대로, 지도 위 부품만 여기 */
+body.m { background: var(--bg-0); color: var(--ink); font-family: var(--font-body); }
+.k-main .stage { position: absolute; inset: 0; }
+#ui { position: absolute; inset: 0; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+
+/* 지도 위 작은 띠 — XI맵 도구는 메뉴가 아니라 이 띠 하나(원칙 191: 메뉴는 다른 화면과 같다) */
+.strip { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.strip .grp { display: inline-flex; align-items: center; gap: 2px; height: 40px; padding: 0 6px; background: rgba(255,255,255,.96); border-radius: var(--r-8); box-shadow: var(--elev-map); }
+.strip .grp .lab { padding: 0 8px; font: 500 13px/1 var(--font-body); color: var(--sub); }
+.strip .grp b { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 6px; font: 500 14px/1 var(--font-body); color: var(--sub); cursor: pointer; }
+.strip .grp b.on { color: var(--ink); background: var(--bg-0); }
+.strip .grp b i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.strip .grp b.off { opacity: .45; }
+.strip .grp b.off i { background: transparent !important; border: 1.5px solid var(--mute); }
+.strip .grp .pulse { width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid var(--ink); box-shadow: 0 0 0 3px rgba(28,31,37,.18); }
+.strip .sp { flex: 1; }
+
+/* HUD — 카드 없이 영상 위 흰 글자(법전 §6) */
+.hud { position: absolute; left: 24px; bottom: 56px; color: var(--hud-ink); text-shadow: var(--hud-shadow); }
+.hud .k { font: 500 14px/20px var(--font-body); opacity: .92; }
+.hud h1 { margin: 2px 0 6px; font: 800 36px/44px var(--font-display); letter-spacing: -.02em; }
+.hud p { margin: 0; font: 500 15px/22px var(--font-body); }
+.hud p b { font-weight: 700; }
+
+/* 그 자리 작은 칸 — 객체 옆에 붙는 팝오버(메뉴 모드 전환 없음) */
+.pop { position: absolute; width: 300px; background: rgba(255,255,255,.97); border-radius: var(--r-16); box-shadow: var(--elev-map); padding: 16px 16px 14px; transform: translate(14px, -50%); }
+.pop::before { content: ""; position: absolute; left: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; background: rgba(255,255,255,.97); transform: rotate(45deg); border-radius: 2px; }
+.pop .hd { display: flex; align-items: center; gap: 8px; }
+.pop .hd i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.pop .hd b { font: 700 17px/24px var(--font-display); color: var(--ink); }
+.pop .hd small { margin-left: auto; font: 500 13px/1 var(--font-num); color: var(--sub); }
+.pop dl { margin: 10px 0 0; display: grid; grid-template-columns: 60px 1fr; row-gap: 4px; column-gap: 8px; }
+.pop dt { font: 500 13px/20px var(--font-body); color: var(--sub); }
+.pop dd { margin: 0; font: 500 14px/20px var(--font-body); color: var(--ink-2); }
+.pop dd .mk { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--bg-0); color: var(--sub); font: 500 11px/18px var(--font-body); vertical-align: 1px; }
+.pop .acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.pop .acts span { height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rule); border-radius: var(--r-8); font: 500 13px/1 var(--font-body); color: var(--ink); cursor: pointer; }
+.pop .acts span.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pop .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pop .chips span { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-8); background: var(--bg-0); font: 500 13px/1 var(--font-body); color: var(--ink-2); }
+.pop .chips span i { width: 8px; height: 8px; border-radius: 2px; }
+.pop .chips span.on { outline: 2px solid var(--ink); }
+.pop .ft { margin: 12px 0 0; font: 400 12px/18px var(--font-body); color: var(--sub); }
+
+/* 고친 자리 표시(지도 위 작은 꼬리표) */
+.tag { position: absolute; transform: translate(-50%, -100%); margin-top: -8px; padding: 4px 8px; border-radius: 6px; background: var(--ink); color: #fff; font: 500 12px/16px var(--font-body); white-space: nowrap; }
+.tag::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: var(--ink); transform: rotate(45deg); }
+
+/* 범례(해외 비율) */
+.leg { position: absolute; right: 16px; top: 68px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,.96); border-radius: var(--r-8); box-shadow: var(--elev-map); font: 500 13px/1 var(--font-body); color: var(--sub); }
+.leg .ramp { width: 96px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, rgba(46,158,91,.18), rgba(46,158,91,.9)); }
+
+/* 시안 도장 · 로그인 */
+.stamp { position: fixed; right: 16px; bottom: 84px; z-index: 50; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--r-8); background: var(--ink); color: #fff; font: 500 12px/16px var(--font-body); }
+.stamp b { font: 800 14px/16px var(--font-display); letter-spacing: .02em; }
+.login { position: fixed; inset: 0; z-index: 60; background: var(--bg-0); display: grid; place-items: center; }
+.login form { width: 360px; background: #fff; border-radius: var(--r-16); padding: 32px; display: grid; gap: 12px; }
+.login h1 { margin: 0; font: 800 24px/32px var(--font-display); }
+.login .note { margin: 0 0 4px; font: 400 14px/20px var(--font-body); color: var(--sub); }
+.login input { height: 44px; padding: 0 12px; border: 1px solid var(--rule); border-radius: var(--r-8); font: 400 15px var(--font-body); }
+.login button { height: 44px; border: 0; border-radius: var(--r-8); background: var(--ink); color: #fff; font: 500 15px var(--font-body); cursor: pointer; }
+.login .err { margin: 0; min-height: 18px; color: var(--warn); font: 400 13px/18px var(--font-body); }

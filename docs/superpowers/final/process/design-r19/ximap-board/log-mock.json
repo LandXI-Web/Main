@@ -1,0 +1,51 @@
+[
+ {
+  "file": "b1-board-korea-1440-1237.png",
+  "shot_at": "2026-10-11T12:37:49",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=board",
+  "kind": "mock",
+  "errors": []
+ },
+ {
+  "file": "b2-fix-in-place-1440-1237.png",
+  "shot_at": "2026-10-11T12:37:57",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=fix",
+  "kind": "mock",
+  "errors": []
+ },
+ {
+  "file": "b3-global-kgz-1440-1238.png",
+  "shot_at": "2026-10-11T12:38:04",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=global",
+  "kind": "mock",
+  "errors": []
+ },
+ {
+  "file": "b4-global-focus-1440-1238.png",
+  "shot_at": "2026-10-11T12:38:11",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/index.html?v=global&z=focus",
+  "kind": "mock",
+  "errors": []
+ },
+ {
+  "file": "r1-analyze-1440-1238.png",
+  "shot_at": "2026-10-11T12:38:20",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "kind": "real",
+  "errors": []
+ },
+ {
+  "file": "r2-mapsvc-1440-1238.png",
+  "shot_at": "2026-10-11T12:38:32",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "kind": "real",
+  "errors": []
+ },
+ {
+  "file": "b5-edges-1440-1238.png",
+  "shot_at": "2026-10-11T12:38:36",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-board/edges.html",
+  "kind": "edges",
+  "errors": []
+ }
+]
