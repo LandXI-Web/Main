@@ -1,0 +1,86 @@
+{
+ "at": "2026-10-11 09:13",
+ "calls": [
+  {
+   "path": "/me",
+   "status": 401,
+   "type": "application/json",
+   "bytes": 150,
+   "n": null
+  },
+  {
+   "path": "/me",
+   "status": 200,
+   "type": "application/json",
+   "bytes": 783,
+   "n": null
+  },
+  {
+   "path": "/timepoints",
+   "status": 200,
+   "type": "application/json",
+   "bytes": 692,
+   "n": 2
+  },
+  {
+   "path": "/results?limit=1000",
+   "status": 200,
+   "type": "application/json",
+   "bytes": 830721,
+   "n": 1000
+  },
+  {
+   "path": "/summary",
+   "status": 200,
+   "type": "application/json",
+   "bytes": 1417,
+   "n": null
+  },
+  {
+   "path": "/exports/shp",
+   "status": 200,
+   "type": "application/zip",
+   "bytes": 454586,
+   "n": null
+  },
+  {
+   "path": "/exports/parcels",
+   "status": 200,
+   "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+   "bytes": 165900,
+   "n": null
+  },
+  {
+   "path": "/exports/geojson",
+   "status": 200,
+   "type": "application/geo+json",
+   "bytes": 1678095,
+   "n": 2098
+  },
+  {
+   "path": "/results?edition=999",
+   "status": 404
+  },
+  {
+   "path": "app.land-xi.dev/api/ext/v1/me",
+   "status": 404
+  },
+  {
+   "path": "app.land-xi.dev/api/v1/me (키로 화면 API)",
+   "status": 401
+  }
+ ],
+ "revoked_call": {
+  "status": 401,
+  "code": "key_revoked"
+ },
+ "usage_head": [
+  "기관",
+  "서비스",
+  "LX가 돌린 분석",
+  "기관이 요청한 분석",
+  "API 호출",
+  "마지막 사용"
+ ],
+ "key_on_gov_page": false
+}

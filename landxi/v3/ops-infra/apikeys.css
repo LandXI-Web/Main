@@ -1,0 +1,54 @@
+/* LX 관리자 → 배포 → API 탭(외부 연동 API 키). 짜임은 release.css(rv-*) 그대로 · 토큰은 kit.css · 새 색 0 · 아이콘 0. */
+.ak-tbl td{vertical-align:middle}
+.ak-tbl tr.ak-pair td{padding:18px 10px 8px;border-bottom:1px solid var(--rule)}
+.ak-tbl tr.ak-pair td:first-child{display:table-cell}
+.ak-tbl tr.ak-pair b{font:600 15px/22px var(--font-body);color:var(--ink);margin-right:10px}
+.ak-tbl tr.ak-pair span{font:400 var(--fs-label)/22px var(--font-body);color:var(--ink-2)}
+.ak-tbl tr.ak-pair:first-child td{padding-top:4px}
+.ak-off{display:inline-block;margin-left:10px;font:500 13px/18px var(--font-body);font-style:normal;color:var(--warn)}
+.ak-tbl tr.ak-none td{color:var(--sub);font:400 13px/18px var(--font-body);padding:10px}
+.ak-tbl tr.ak-row{cursor:pointer}
+.ak-tbl tr.ak-row:hover td{background:var(--bg-0)}
+.ak-tbl tr.ak-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ak-tbl tr.ak-row.is-old td{color:var(--sub)}
+.ak-tbl tr.ak-row td:first-child{padding-left:22px}
+.ak-key{display:flex;flex-direction:column}
+.ak-key b{font-weight:500}
+.ak-act{text-align:right;white-space:nowrap}
+.ak-mk{height:34px}
+.t-chip.ak-st[data-lv="ok"]{background:var(--tint,var(--bg-0));color:var(--ink)}
+.t-chip.ak-st[data-lv="warn"]{background:var(--bg-0);color:var(--warn)}
+.ak-old{display:inline-flex;align-items:center;gap:8px;font:400 13px/18px var(--font-body);color:var(--sub);cursor:pointer}
+.ak-old input{width:16px;height:16px;margin:0;accent-color:var(--ink)}
+
+/* 서랍 — 키 만들기 · 한 번 보기 · 자세히 */
+.ak-form,.ak-once,.ak-detail{display:flex;flex-direction:column;gap:14px}
+.ak-for{margin:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.ak-for b{font:600 16px/22px var(--font-body);color:var(--ink)}
+.ak-for span{font:400 var(--fs-label)/22px var(--font-body);color:var(--ink-2)}
+.ak-f{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center}
+.ak-f>.t-label{align-self:start;padding-top:10px}
+.ak-f .t-input{width:100%;box-sizing:border-box}
+.ak-fm{display:flex;flex-wrap:wrap;gap:8px 16px}
+.ak-fm label{display:inline-flex;align-items:center;gap:6px;font:400 var(--fs-label)/22px var(--font-body);color:var(--ink);cursor:pointer}
+.ak-fm input{width:18px;height:18px;margin:0;accent-color:var(--ink)}
+.ak-lim{display:flex;flex-wrap:wrap;gap:8px 16px}
+.ak-lim label{display:inline-flex;align-items:center;gap:6px;font:400 var(--fs-label)/22px var(--font-body);color:var(--sub)}
+.ak-lim .t-input{width:110px}
+.ak-acts{display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid var(--rule)}
+.ak-acts--row{justify-content:flex-start;align-items:center}
+.ak-acts--row .t-input{flex:1;min-width:0}
+.ak-rv{background:var(--warn);border-color:var(--warn)}
+.ak-warn{margin:0;padding:12px 14px;border-radius:12px;background:var(--bg-0);font:600 var(--fs-label)/22px var(--font-body);color:var(--warn)}
+.ak-valbox{display:flex;align-items:center;gap:10px}
+.ak-val{flex:1;min-width:0;padding:12px 14px;border-radius:12px;background:var(--bg-1);font:500 14px/20px ui-monospace,Consolas,monospace;color:var(--ink);word-break:break-all;user-select:all}
+.ak-inl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;width:100%}
+.ak-inl .t-input{width:170px}
+.ak-calls{display:flex;flex-direction:column;gap:8px}
+.ak-calls .t-label{margin:0}
+.ak-ctbl td{padding:8px 10px;font:400 13px/18px var(--font-body)}
+.ak-ctbl tr.is-bad td{color:var(--warn)}
+@media (max-width:720px){
+  .ak-f{grid-template-columns:minmax(0,1fr);gap:6px}
+  .ak-f>.t-label{padding-top:0}
+}

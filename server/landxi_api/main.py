@@ -159,6 +159,17 @@ for _name in ("law", "training", "global_data", "staff_home", "release"):   # st
         print(f"[gateway] ext router landxi_api.{_name}: 건너뜀({type(_e).__name__}: {str(_e)[:120]})", flush=True)
 
 
+# 외부 연동 API 1차(결과 가져오기 · 원칙 174 · 178 · 179) — 화면용 키 관리(/api/v1/apikeys …) + 외부 창구(/api/ext/v1 · 바깥 api.land-xi.dev/v1)
+try:
+    _x = importlib.import_module("landxi_api.ext_api")
+    app.include_router(_x.router, prefix=API)
+    app.include_router(_x.ext, prefix="/api/ext/v1")
+    EXT_ROUTERS["ext_api"] = "mounted"
+except Exception as _e:  # noqa: BLE001
+    EXT_ROUTERS["ext_api"] = f"skipped: {type(_e).__name__}"
+    print(f"[gateway] ext router landxi_api.ext_api: 건너뜀({type(_e).__name__}: {str(_e)[:120]})", flush=True)
+
+
 @app.get(API + "/health")
 async def health():
     r = await redis()

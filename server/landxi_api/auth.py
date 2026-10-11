@@ -67,7 +67,7 @@ async def resolve(request: Request) -> Principal:
         tok = h[7:].strip()
     elif request.url.path.startswith("/api/v1/events/"):
         tok = request.query_params.get("access_token")
-    if not tok:
+    if not tok or tok.startswith("lxk_"):          # 외부 연동 API 키(ext_api)로는 화면 API 를 못 부른다 — 손님(원칙 173 · 사람과 시스템을 섞지 않음)
         return Principal()
     th = token_hash(tok)
     pl = await pool()

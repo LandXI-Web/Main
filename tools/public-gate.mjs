@@ -210,10 +210,33 @@ function serveFile(req, res, p) {
   fs.createReadStream(f).pipe(res);
 }
 
+/* 외부 연동 API 주소(원칙 174 · 178 · 설계 design-r15/open-api-2 5절) — api.land-xi.dev 는 /v1/* 만 게이트웨이 /api/ext/v1/* 로, 나머지는 404(화면 · 화면 API 0).
+   화면 주소(app · admin · gov · 기관 주소)에서는 /api/ext/* 를 404 로 막는다. 이름은 여기 한 곳(LX_API_HOST 로 바꿀 수 있음 · 바꾸면 터널 설정도).
+   키 확인 · 한도 · 틀린 키 반복 막기 · 호출 기록은 게이트웨이(server/landxi_api/ext_api.py)가 한다. 이 주소에는 로그인 · 화면 토큰 길이 없다. */
+const API_HOST = String(process.env.LX_API_HOST || 'api.land-xi.dev').toLowerCase();
+const EXT = /^\/api\/ext(\/|$)/;
+const API_HOME = Buffer.from(JSON.stringify({ service: 'Land-XI 외부 연동 API', version: 'v1', auth: 'Authorization: Bearer <API 키>', start: '/v1/me' }));
+function serveApiHost(req, res, p) {
+  if (p === '/' && (req.method === 'GET' || req.method === 'HEAD')) return send(res, 200, API_HOME, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  if (!/^\/v1\//.test(p)) return send(res, 404, JSON.stringify({ error: { code: 'not_found', message: '없는 주소입니다' } }), { 'content-type': 'application/json' });
+  const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '');
+  const headers = { ...req.headers, 'x-forwarded-for': ip, 'x-forwarded-proto': 'https', 'x-forwarded-host': req.headers.host || '' };
+  delete headers['x-lx-site'];
+  const up = http.request({ ...GW, method: req.method, path: '/api/ext' + req.url, headers }, (r) => {
+    res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
+    r.pipe(res);
+  });
+  up.on('error', () => { if (!res.headersSent) send(res, 502, JSON.stringify({ error: { code: 'gateway_down', message: '서버에 연결할 수 없습니다.' } }), { 'content-type': 'application/json' }); else res.end(); });
+  req.on('aborted', () => up.destroy());
+  req.pipe(up);
+}
+
 http.createServer((req, res) => {
   let p;
   try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { return send(res, 400, '400'); }
   if (p.includes('\0') || p.includes('..')) return send(res, 400, '400');
+  if (hostOf(req) === API_HOST) return serveApiHost(req, res, p);                          // 외부 연동 API 주소 — 화면 길 0
+  if (EXT.test(p)) return send(res, 404, '404');                                            // 화면 주소에서는 외부 창구 0
   if (HIDDEN.test(p)) return send(res, 404, '404');
   if (p === '/api/v1/openapi.json') return slimOpenapi(res);
   if (NEED_LOGIN.test(p) && !hasLogin(req)) return send(res, 401, JSON.stringify({ error: { code: 'unauthorized', message: '로그인이 필요합니다.' } }), { 'content-type': 'application/json' });

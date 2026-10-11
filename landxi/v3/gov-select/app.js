@@ -17,6 +17,7 @@ import { brandForm } from './brand-form.js';
 import { govRail } from './menu.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';   // 서비스 카드 한 벌 ③ 기관 서비스 선택(확인 대장 14차 카드-1 ⓐ)
 import { renderDash, primary } from './dash.js';
+import { apiKeysSection } from './api-keys.js';   // 기관 정보 → 받은 API 키(보기만 · 원칙 178)
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -192,6 +193,9 @@ function renderOrg() {
     brand, mainHref: main,
     onSaved(b) { Object.assign(B, b); brand = b; applyBrand(document.documentElement, b); favicon(b); paintMast(); },
   }));
+  { const href = new URL('./api-keys.css', import.meta.url).href;
+    if (!document.querySelector(`link[href="${href}"]`)) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href })); }
+  apiKeysSection().then((sec) => { if (sec) page.insertBefore(sec, page.querySelector('.gs-foot') || null); });
 }
 
 if (view === 'org') renderOrg(); else if (view === 'svc') await renderSvc(); else await renderList();

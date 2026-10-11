@@ -4,9 +4,11 @@
    #/deploys/share    기관 공유 — 승인된 서비스 × 기관 체크 표 하나(공유 상태 표 없음). 체크 = 그 기관 '서비스 선택'에 바로(PUT /release/shares).
    #/deploys/usage    사용 현황 — 기관 × 공유된 서비스: LX가 돌린 분석 · 기관이 요청한 분석 · 마지막 사용 + 기관별 합계(GET /release/usage).
    #/deploys/improve  개선 후보(16차 개선-1 · 그대로 둔다).
+   #/deploys/api      API — 외부 연동 API 키(기관 × 공유된 서비스 · LX 관리자가 만들고 관리 · 원칙 178 · apikeys.js). 사용 현황 표에 'API 호출' 열(원칙 160).
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
 import { toast, h, api, nf, drawer } from './kit.js';
 import { improveBoard } from './improve.js';
+import { apiKeysPane } from './apikeys.js';   // 배포 → API(외부 연동 API 키 · 원칙 178)
 
 { const href = new URL('../release.css', import.meta.url).href;
   if (!document.querySelector(`link[href="${href}"]`)) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href })); }
@@ -20,7 +22,7 @@ const km2 = (e) => (val(e) == null || val(e) < 0.01 ? '' : `${nf(val(e), val(e) 
 const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 const units = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rv-u', { text: u })); }); return el; };
 const bar = (v, dim = false) => h('span.rv-bar', { class: dim ? 'is-dim' : '' }, h('i', { style: `width:${Math.max(0, Math.min(100, val(v) || 0))}%` }));
-const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['imp', '개선 후보', '/improve']];
+const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api']];
 
 export function mountRelease(root) {
   const nBadge = h('b.num.im-tab-n'), impN = h('b.num.im-tab-n');
@@ -28,8 +30,9 @@ export function mountRelease(root) {
   const panes = Object.fromEntries(TABS.map(([k]) => [k, h('div.rv-pane', { dataset: { tab: k } })]));
   root.append(h('div.im-head', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...Object.values(btn))), ...Object.values(panes));
   const board = improveBoard(panes.imp, { admin: true, onCount: (n) => { impN.textContent = n ? nf(n) : ''; } });
+  const keys = apiKeysPane(panes.api);
   let tab = null;
-  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', improve: 'imp' })[m?.[1]] || 'req'; };
+  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', improve: 'imp', api: 'api' })[m?.[1]] || 'req'; };
   function set(t, push = false) {
     tab = t;
     for (const [k] of TABS) { btn[k].setAttribute('aria-selected', String(k === t)); panes[k].hidden = k !== t; }
@@ -194,10 +197,17 @@ export function mountRelease(root) {
   }
 
   /* ── 사용 현황 ─────────────────────────── */
-  let U = null, orgPick = '';
+  let U = null, orgPick = '', AU = {};
   async function paintUsage() {
     try { U = await api('/release/usage'); } catch (e) { panes.usage.replaceChildren(h('p.rv-empty', { text: e.message || '사용 현황을 불러오지 못했습니다' })); return; }
+    AU = {};                              // API 호출(이번 달 · 시험 키 제외) — 같은 기관 × 서비스 줄에 열 하나(원칙 160)
+    try { for (const x of (await api('/apikeys/usage')).items || []) AU[x.org + '|' + x.service] = x; } catch { /* 열은 0회 */ }
     drawUsage();
+  }
+  function apiCell(a) {                  // API 호출 열 — 이번 달 성공 호출 · 켜진 키 · 마지막 호출(ext_api.usage_month)
+    const n = val(a?.calls) || 0, k = val(a?.keys) || 0;
+    return h('td', {}, n ? h('b.num', { text: `${nf(n)}회` }) : h('span.rv-dim', { text: '0회' }),
+      units('small', join(k ? `켜진 키 ${nf(k)}` : '키 없음', a?.last ? `마지막 ${md(a.last)}` : '')));
   }
   function drawUsage() {
     const sel = h('select.t-input', { 'aria-label': '기관' }, h('option', { value: '', text: '모든 기관' }), ...(U.totals || []).map((t) => h('option', { value: t.org.id, text: t.org.name })));
@@ -211,6 +221,7 @@ export function mountRelease(root) {
         val(r.lx_runs) ? units('small', join(km2(r.area), r.lx_last ? `마지막 ${md(r.lx_last)}` : '')) : null),
       h('td', {}, val(r.org_runs) ? h('b.num', { text: `${nf(val(r.org_runs))}회` }) : h('span.rv-dim', { text: '0회' }),
         val(r.org_runs) ? units('small', join(val(r.org_wait) ? `처리 전 ${nf(val(r.org_wait))}건` : '', r.org_last ? `마지막 ${md(r.org_last)}` : '')) : null),
+      apiCell(AU[r.org.id + '|' + r.service.id]),
       h('td.num', { text: r.last ? md(r.last) : '—' })));
     const tots = (U.totals || []).filter((t) => !orgPick || t.org.id === orgPick);
     const sm = U.summary || {};
@@ -218,12 +229,12 @@ export function mountRelease(root) {
       h('header.rv-h.rv-h--row', {}, h('div', {}, h('h2', { text: '사용 현황' }),
         units('span.rv-sub', join(`기관에 공유한 서비스 ${nf(val(sm.shared))}건`, `기관 ${nf(val(sm.orgs))}`, `이번 달 분석 ${nf(val(sm.month))}회`))),
         h('label.rv-filter', {}, h('span', { text: '기관' }), sel)),
-      items.length ? h('table.rv-tbl.rv-tbl--usage', {}, h('thead', {}, h('tr', {}, ...['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', '마지막 사용'].map((t) => h('th', { text: t })))),
+      items.length ? h('table.rv-tbl.rv-tbl--usage', {}, h('thead', {}, h('tr', {}, ...['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', 'API 호출', '마지막 사용'].map((t) => h('th', { text: t })))),
         h('tbody', {}, ...rows)) : h('p.rv-empty', { text: '공유된 서비스가 없습니다' }),
       h('div.rv-tot', {}, h('p.t-label', { text: '기관별 합계 · 이번 달' }), h('ul', {}, ...tots.map((t) => h('li', {}, h('b', { text: t.org.name }),
         h('div', {}, units('span', join(`서비스 ${nf(val(t.services))}`, `분석 ${nf(val(t.runs))}회`, t.last ? `마지막 ${md(t.last)}` : '')),
           units('small', join(`XI ChatGEO 요청 이번 달 ${nf(val(t.chat) ?? 0)}건`, val(t.storage) == null ? '' : `저장 공간 ${nf(val(t.storage), 1)}GB`))))))),
-      h('p.rv-note', { text: '분석 횟수 · 면적 · 마지막 사용은 분석 작업 기록과 분석 요청 기록에서 셉니다. 기관 합계는 기관 사용량과 같은 값입니다.' }))));
+      h('p.rv-note', { text: '분석 횟수 · 면적 · 마지막 사용은 분석 작업 기록과 분석 요청 기록에서, API 호출은 이번 달 호출 기록(성공 · 시험 키 제외)에서 셉니다. 기관 합계는 기관 사용량과 같은 값입니다.' }))));
   }
 
   function paint() {
@@ -232,6 +243,7 @@ export function mountRelease(root) {
     else if (tab === 'share') paintShare();
     else if (tab === 'usage') paintUsage();
     else if (tab === 'imp') board.load();
+    else if (tab === 'api') keys.load();
   }
   set(want());
   board.load({ quiet: true });          // 탭 숫자(새로 옴)만 먼저
