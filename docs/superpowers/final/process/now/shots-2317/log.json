@@ -1,0 +1,213 @@
+{
+ "FAILED:main-q2": "Locator.wait_for: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"시군구 20곳에 분석 결과\").first to be visible\n",
+ "dashboard-2317.png": {
+  "at": "2026-10-11T23:17:00",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드(지금 화면)"
+ },
+ "_first_view_s": 2.47,
+ "_hud": {
+  "label": "전국 AI 분석 결과",
+  "n": 20,
+  "unit": "곳",
+  "from": "board"
+ },
+ "_tools": [
+  "층",
+  "가르기",
+  "보고서",
+  "분석"
+ ],
+ "ximap-open-2317.png": {
+  "at": "2026-10-11T23:17:05",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 — 열자마자 전국 결과 · 왼쪽은 직원 메뉴 · 도구는 오른쪽"
+ },
+ "ximap-object-card-2317.png": {
+  "at": "2026-10-11T23:17:19",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 — 남원 비닐하우스 객체를 눌러 그 자리 칸(지우기 · 분류 바꾸기 · 모양 고치기 · 새로 그리기 · 메모)"
+ },
+ "ximap-reshape-2317.png": {
+  "at": "2026-10-11T23:17:22",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 — 모양 고치기: 꼭짓점을 끌어 본 모습(저장하지 않고 '그만')"
+ },
+ "ximap-reclass-chips-2317.png": {
+  "at": "2026-10-11T23:17:24",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 — 분류 바꾸기: 고를 분류가 열린 모습(고르지 않음 · 저장 없음)"
+ },
+ "ximap-kg-2317.png": {
+  "at": "2026-10-11T23:17:34",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+  "note": "XI맵 — 나라를 키르기스스탄으로 · 검색 칸이 비어 있음"
+ },
+ "_kg_blocks": 64,
+ "ximap-kg-blocks-2317.png": {
+  "at": "2026-10-11T23:17:45",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+  "note": "XI맵 — 키르기스스탄 구획 · 구획을 눌러 경작지 판정 비율"
+ },
+ "mapsvc-layers-2317.png": {
+  "at": "2026-10-11T23:17:53",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "note": "지도 서비스 — 왼쪽 '층' 목록"
+ },
+ "help-faq-2317.png": {
+  "at": "2026-10-11T23:17:59",
+  "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=faq",
+  "note": "지원 — 자주 묻는 질문(화살표)"
+ },
+ "help-contact-2318.png": {
+  "at": "2026-10-11T23:18:00",
+  "url": "https://app.land-xi.dev/landxi/v3/help-my/?tab=contact",
+  "note": "지원 — 문의 전화 · 메일"
+ },
+ "globe-2318.png": {
+  "at": "2026-10-11T23:18:07",
+  "url": "https://app.land-xi.dev/landxi/v3/global/?country=KGZ&tab=season&season=Autumn+2025",
+  "note": "지구본 단추"
+ },
+ "admin-deploy-share-2318.png": {
+  "at": "2026-10-11T23:18:51",
+  "url": "https://admin.land-xi.dev/landxi/v3/lx-deploy/?deploy=dp-41390-farm-26",
+  "note": "배포 — '기관에 공유' 단추"
+ },
+ "admin-deploy-review-2318.png": {
+  "at": "2026-10-11T23:18:54",
+  "url": "https://admin.land-xi.dev/landxi/v3/lx-deploy/?tab=ops",
+  "note": "배포 → 서비스 관리 — 결과 확인: 지도에서 봤음 · 아직 보지 않음"
+ },
+ "adopt-candidates-2319.png": {
+  "at": "2026-10-11T23:19:02",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/improve",
+  "note": "개선 후보 — 줄마다 시스템 제안 한 줄 · '이대로 반영 · 개발 요청 · 보류'(누르지 않음)"
+ },
+ "admin-old-request-2319.png": {
+  "at": "2026-10-11T23:19:07",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=deploys#/deploys/services",
+  "note": "배포 신청 — 옛 기록: 모델 기록이 남아 있지 않습니다"
+ },
+ "admin-map-2319.png": {
+  "at": "2026-10-11T23:19:15",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드 — 기관 이름표 하나씩 · 겹치면 비켜 놓음"
+ },
+ "admin-orgs-2319.png": {
+  "at": "2026-10-11T23:19:19",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=tenants",
+  "note": "기관 — 기관 이름 밑줄 · '기관 보기'"
+ },
+ "admin-org-page-2319.png": {
+  "at": "2026-10-11T23:19:23",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=tenants#/tenants/o/namwon",
+  "note": "기관 한 곳 — 개요 · 서비스와 담당 · 영상과 배경 · 사용과 계정"
+ },
+ "gov-today-2319.png": {
+  "at": "2026-10-11T23:19:36",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "note": "남원시 첫 화면 — '오늘' 띠"
+ },
+ "gov-ximap-tools-2319.png": {
+  "at": "2026-10-11T23:19:44",
+  "url": "https://namwon.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "남원시 XI맵 — 도구(층 · 가르기 · 보고서)"
+ },
+ "FAILED:gov-report": "Locator.select_option: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator(\"#rp-emd\")\n",
+ "gov-fusion-2321.png": {
+  "at": "2026-10-11T23:21:07",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-fusion/?service=card-farm",
+  "note": "기관 '행정정보와 비교' — 올린 대장 × 서비스 결과"
+ },
+ "mock-dash4-2321.png": {
+  "at": "2026-10-11T23:21:14",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-4/index.html",
+  "note": "시안 — LX 직원 대시보드 4차(① 할 일 → ② 결과 격자 → ③ 진행)"
+ },
+ "mock-dash4-grid-a-hover-2321.png": {
+  "at": "2026-10-11T23:21:21",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-4/index.html",
+  "note": "시안 — ⓐ 4열 격자 · 셋째 칸에 올려 도형이 드러남"
+ },
+ "mock-dash4-grid-b-2x2-2321.png": {
+  "at": "2026-10-11T23:21:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-4/index.html?grid=2",
+  "note": "시안 — ⓑ 2×2(최근 4 · 더 크게)"
+ },
+ "mock-dash4-grid-fill-fake-2321.png": {
+  "at": "2026-10-11T23:21:30",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-4/index.html?fill=1",
+  "note": "시안 · 흉내 — 16칸을 다 채운 모습(같은 결과를 반복한 것 · 실제 아님)"
+ },
+ "mock-flow-start-2321.png": {
+  "at": "2026-10-11T23:21:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=start",
+  "note": "시안 — 학습 작업 흐름 처음: 기본 흐름이 놓여 있음"
+ },
+ "mock-flow-live-2321.png": {
+  "at": "2026-10-11T23:21:39",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=live",
+  "note": "시안 — 학습 중: 반복마다 그래프가 차오름"
+ },
+ "mock-flow-compare-2321.png": {
+  "at": "2026-10-11T23:21:44",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=compare",
+  "note": "시안 — 실험 둘을 나란히 비교"
+ },
+ "_summary": {
+  "start": "2026-10-11T23:15:07",
+  "end": "2026-10-11T23:28:25",
+  "failed": [],
+  "viewport": "1440x900",
+  "base": "https://app.land-xi.dev",
+  "errors": {
+   "staff": []
+  }
+ },
+ "main-q2-2325.png": {
+  "at": "2026-10-11T23:25:01",
+  "url": "https://app.land-xi.dev/landxi/v3/main/",
+  "note": "메인 '활용 사례' — 시군구 곳 수 · 서비스 이름 · 운영 기관 · 지도 점"
+ },
+ "main-q3-2325.png": {
+  "at": "2026-10-11T23:25:13",
+  "url": "https://app.land-xi.dev/landxi/v3/main/#ch4",
+  "note": "메인 '서비스' — 업무마다 다른 서비스"
+ },
+ "gov-report-2325.png": {
+  "at": "2026-10-11T23:25:40",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "note": "기관 보고서 — AI 분석 결과 보고서(남원시 전체)"
+ },
+ "gov-report-ledger-2325.png": {
+  "at": "2026-10-11T23:25:41",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "note": "기관 보고서 — '우리 대장과 다른 필지' 칸"
+ },
+ "gov-report-unbong-2326.png": {
+  "at": "2026-10-11T23:26:04",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "note": "기관 보고서 — 운봉읍: 경작지 + 비경작지 면적 합 = 합계"
+ },
+ "project-list-2327.png": {
+  "at": "2026-10-11T23:27:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "프로젝트 목록 — 진행 칸 · 6/6 아래 건너뜀 · 공개 뒤 남은 일"
+ },
+ "project-review-2327.png": {
+  "at": "2026-10-11T23:27:43",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?project=prj_b2fa593a12",
+  "note": "프로젝트 한 장 — '결과 확인' 단계: 지도에서 결과 보기 + 확인했음(누르지 않음)"
+ },
+ "release-form-2327.png": {
+  "at": "2026-10-11T23:27:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish",
+  "note": "배포 신청서 — 결과 확인: 지도에서 봤음 · 아직 보지 않음"
+ },
+ "map-review-2328.png": {
+  "at": "2026-10-11T23:28:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/?job=job_01M4JX13YPQ4M50XGZCTQPFYVN&project=prj_b2fa593a12",
+  "note": "지도 서비스 — '결과 확인 열기'로 왔을 때 위쪽 한 줄(누르지 않음)"
+ }
+}
