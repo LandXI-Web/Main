@@ -285,7 +285,7 @@ function paintSvcBar() {
     const v = t && t.value !== null && t.value !== undefined ? t.value : null;
     svcBar.append(h('a.gf-svcbar-i.gf-svcbar-all', { href: location.pathname, 'aria-current': QREG ? null : 'true' },
       h('b', { text: '전체' }), h('span', { text: S.region.full || '' }),
-      v !== null ? h('span.num', { text: `의심 필지 ${nf(v)}건`, dataset: { metric: '의심 필지', v: String(v) } }) : null));
+      v !== null ? h('span.num', { text: `AI 분석 결과 필지 ${nf(v)}건`, dataset: { metric: '의심 필지', v: String(v) } }) : null));
   }
   for (const it of [...items].sort((x, y) => String(x.sgg_cd).localeCompare(String(y.sgg_cd)) || key(y) - key(x)).slice(0, 6)) {
     const cd = String(it.sgg_cd);
@@ -321,8 +321,8 @@ function showStatus() {
     if (m) row.append(h('p.gf-svc-m', {}, h('span', { text: m.label }), h('b.num', { text: nf(m.value), dataset: { metric: m.label, v: String(m.value) } }), h('small', { text: m.unit || '' }), K.sigEl(m)));
     /* 의심 필지 — 숫자 한 출처(GET /summary metrics.suspect = survey_sgg · XI맵 · 보고서 · 에이전트와 같은 값). 적재 중이면 '집계 중' */
     const sv = it.metrics?.suspect;
-    if (it.survey_state === 'building') row.append(h('p.gf-svc-m', { dataset: { metric: '의심 필지' } }, h('span', { text: '의심 필지' }), h('small', { text: '집계 중' })));
-    else if (sv && sv.value !== null && sv.value !== undefined) row.append(h('p.gf-svc-m', {}, h('span', { text: sv.label || '의심 필지' }), h('b.num', { text: nf(sv.value), dataset: { metric: sv.label || '의심 필지', v: String(sv.value) } }), h('small', { text: sv.unit === 'count' ? '건' : sv.unit || '' }), K.sigEl(sv)));
+    if (it.survey_state === 'building') row.append(h('p.gf-svc-m', { dataset: { metric: '의심 필지' } }, h('span', { text: 'AI 분석 결과 필지' }), h('small', { text: '집계 중' })));
+    else if (sv && sv.value !== null && sv.value !== undefined) row.append(h('p.gf-svc-m', {}, h('span', { text: sv.label || 'AI 분석 결과 필지' }), h('b.num', { text: nf(sv.value), dataset: { metric: sv.label || '의심 필지', v: String(sv.value) } }), h('small', { text: sv.unit === 'count' ? '건' : sv.unit || '' }), K.sigEl(sv)));
     ingestCard.append(row);
   }
   ingestCard.classList.add('gf-status');
@@ -1000,9 +1000,9 @@ async function openDrawer(a) {
   if (!items.length) return false;
   const name = (S.regions || []).find((r) => String(r.sgg_cd) === String(sgg) || String(r.prev_cd || '') === String(sgg))?.name || S.region.name || '';
   const body = h('div.gf-dr-stats');
-  const be = h('div'); body.append(h('p.gf-ans-h', { text: '읍면동별 의심 필지' }), be);
+  const be = h('div'); body.append(h('p.gf-ans-h', { text: '읍면동별 AI 분석 결과 필지' }), be);
   K.bars(be, { items: items.slice(0, 12), ai: true, unit: '건' });
-  K.drawer({ title: `${name} 의심 필지`.trim(), body, host: stageEl, slot: 'agent' });
+  K.drawer({ title: `${name} AI 분석 결과 필지`.trim(), body, host: stageEl, slot: 'agent' });
   return true;
 }
 

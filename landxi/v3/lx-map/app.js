@@ -214,7 +214,7 @@ function drawLeft() {
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
-    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl));
+    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl, h('p.lm-bn', { text: '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다' })));
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
 }
