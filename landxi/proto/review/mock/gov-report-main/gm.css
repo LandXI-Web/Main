@@ -1,0 +1,108 @@
+/* 설계 20차 · 기관 보고서 · 행정정보와 비교 · 메인 Q2 · Q3 시안 — PC 1440 만 · 코드 수정 0 · 서버 호출 0.
+   바탕 = 10-11 17:20 새로 찍은 실제 화면(jpg). 그 위에 바뀌는 칸만 얹는다. 숫자는 모두 서버 기록(README '숫자 출처'). */
+*{box-sizing:border-box}
+html,body{margin:0;height:900px;overflow:hidden;background:var(--bg-0);color:var(--ink);font:400 14px/20px var(--font-body);word-break:keep-all}
+button{font:inherit;cursor:pointer}
+.view{position:relative;width:1440px;height:900px;overflow:hidden}
+.bg{position:absolute;left:0;top:0;width:1440px;height:900px}
+.cover{position:absolute;background:#F3F5F7}
+:root{--gv:#1B6E4B;--gv-2:#E6F2EC;--red:#D9534F}
+
+/* 공통 조각 */
+.lab{display:block;font:400 12px/16px var(--font-body);color:var(--sub);margin-bottom:6px}
+.sel{display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:10px;background:#fff;font:400 15px/1 var(--font-body)}
+.sel i{font-style:normal;color:var(--sub-2);font-size:12px}
+.btn{height:44px;padding:0 20px;border:0;border-radius:10px;background:var(--gv);color:#fff;font:600 14px/44px var(--font-body)}
+.btn2{background:#fff;color:var(--ink);border:1px solid var(--rule);font-weight:500}
+.tb{width:100%;border-collapse:collapse;font:400 14px/20px var(--font-body)}
+.tb th{font:400 12px/16px var(--font-body);color:var(--sub);text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)}
+.tb td{padding:9px 8px;border-bottom:1px solid #EEF0F2}
+.tb .n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.tb tr.dim td{color:var(--sub)}
+.tb tr.sum td{font-weight:600;border-top:1px solid var(--ink);border-bottom:0}
+.note{position:absolute;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:rgba(255,244,214,.96);border:1px solid #F4C86A;color:#5A3A00;font:400 12px/16px var(--font-body);z-index:8;max-width:360px}
+.note b{font:700 12px/16px var(--font-body);color:#7A4B00}
+.note span::before{content:'· ';color:#B07A1C}
+
+/* ── A-1 보고서 ── */
+.panel.rp{position:absolute;left:120px;top:80px;width:848px;height:804px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.rp-head{height:64px;display:flex;align-items:center;gap:20px;padding:0 24px;border-bottom:1px solid var(--rule)}
+.rp-head .back{font-size:22px;color:var(--ink);width:24px}
+.tabs{display:flex;gap:28px;height:64px}
+.tabs span{display:flex;align-items:center;font:500 16px/1 var(--font-body);color:var(--sub-2)}
+.tabs span.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--gv)}
+.rp-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;padding:18px 24px 14px}
+.rp-form .btn{margin-bottom:0}
+.doc{position:absolute;left:24px;right:24px;top:154px;bottom:0;overflow:hidden;padding:28px 36px 0;background:#F3F5F7;border-radius:14px 14px 0 0}
+.doc-k{margin:0 0 6px;font:500 12px/16px var(--font-body);color:var(--gv)}
+.doc-t{margin:0 0 6px;font:700 22px/30px var(--font-display);letter-spacing:-.01em}
+.doc-m{margin:0 0 18px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.doc h3{margin:18px 0 8px;font:600 15px/20px var(--font-body)}
+.doc-p{margin:8px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.ov,.cmp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cmp{grid-template-columns:1.6fr 1fr 1fr}
+.ov div,.cmp div{padding:12px 14px;border-radius:10px;background:#fff;border:1px solid var(--rule)}
+.ov small,.cmp small{display:block;font:400 12px/16px var(--font-body);color:var(--sub);margin-bottom:4px}
+.ov b,.cmp b{font:700 22px/28px var(--font-num);letter-spacing:-.01em}
+.cmp b{font-size:18px}
+.ov b i,.cmp b i{font:400 12px/1 var(--font-body);color:var(--sub);margin-left:4px;font-style:normal}
+.doc-map{margin:0;display:grid;grid-template-columns:1fr;gap:6px}
+.doc-map img{width:100%;height:130px;object-fit:cover;object-position:center 45%;border-radius:10px;border:1px solid var(--rule)}
+.doc-map figcaption{font:400 12px/16px var(--font-body);color:var(--sub)}
+.rp .tb td{padding:6px 8px}
+.rp .tb{background:#fff;border-radius:10px;overflow:hidden}
+.rp .tb th,.rp .tb td{padding-left:12px;padding-right:12px}
+.note-rp{left:1000px;top:96px;width:420px;max-width:420px}
+
+/* ── A-2 행정정보와 비교 ── */
+.cover-tr{left:1032px;top:80px;width:392px;height:430px;background:transparent}
+.cover-bl{left:88px;top:684px;width:346px;height:200px;background:transparent}
+.panel.fu{position:absolute;left:1000px;top:80px;width:424px;background:#fff;border-radius:16px;padding:18px 22px 18px;box-shadow:0 6px 24px rgba(0,0,0,.14)}
+.steps{list-style:none;margin:0 0 12px;padding:0;display:flex;justify-content:space-between}
+.steps li{position:relative;flex:1;text-align:center;font:400 12px/16px var(--font-body);color:var(--sub);padding-top:30px}
+.steps li::before{content:'✓';position:absolute;left:50%;top:0;width:24px;height:24px;margin-left:-12px;border-radius:12px;background:var(--gv);color:#fff;font:600 12px/24px var(--font-body)}
+.steps li.on::before{content:'';background:#fff;border:2px solid var(--gv)}
+.steps li.on{color:var(--ink)}
+.fu-file{margin:0 0 10px;font:500 14px/20px var(--font-body)}
+.fu-file small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.fu-svc{display:block;margin-bottom:14px}
+.fu-big{margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fu-big span{width:100%;font:400 13px/18px var(--font-body);color:var(--sub)}
+.fu-big b{font:700 40px/44px var(--font-num);letter-spacing:-.02em}
+.fu-big i{font:400 14px/1 var(--font-body);color:var(--sub);font-style:normal}
+.fu-rows{list-style:none;margin:10px 0 12px;padding:0;border-top:1px solid var(--rule)}
+.fu-rows li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEF0F2;font:400 13px/18px var(--font-body)}
+.fu-rows li b{font:600 14px/18px var(--font-num)}
+.fu-rows li.dim{color:var(--sub)}
+.tb-s td{padding:7px 6px;font-size:13px}
+.fu-more{margin:8px 0 12px;font:400 12px/16px var(--font-body);color:var(--sub)}
+.fu-acts{display:flex;gap:8px}
+.fu-acts .btn{flex:1;padding:0;font-size:13px}
+.bigcard{position:absolute;left:88px;top:684px;width:346px;height:200px;background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 6px 24px rgba(0,0,0,.14)}
+.bigcard small{display:block;font:400 14px/18px var(--font-body);color:var(--sub)}
+.bigcard b{font:700 64px/72px var(--font-num);letter-spacing:-.03em}
+.bigcard i{font:400 18px/1 var(--font-body);color:var(--sub);font-style:normal;margin-left:8px}
+.chips{display:flex;gap:8px;margin-top:8px}
+.chips span{height:34px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;font:400 13px/32px var(--font-body);background:#fff}
+.chips span b{font:600 13px/1 var(--font-num);margin-left:4px;letter-spacing:0}
+.note-fu{left:460px;top:720px;width:500px;max-width:500px}
+
+/* ── B 메인 ── */
+.mcard{position:absolute;left:48px;top:136px;width:440px;background:#fff;border-radius:16px;padding:32px 32px 28px;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+.bridge{margin:0 0 10px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.mcard h2,.mtext h2{margin:0 0 16px;display:flex;flex-direction:column;font:700 46px/54px var(--font-display);letter-spacing:-.02em}
+.mcard .p{margin:0;font:400 15px/22px var(--font-body);color:var(--sub)}
+.tag{margin:18px 0 0;padding-top:16px;border-top:1px solid var(--rule);font:500 16px/22px var(--font-body);color:var(--ink)}
+.dots{position:absolute;left:0;top:0;width:1440px;height:900px;pointer-events:none}
+.dots i{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:7px;background:#fff;border:3px solid var(--ink);box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.dots i.on{background:var(--ink);border-color:#fff}
+.cover-ch4{left:0;top:96px;width:1440px;height:310px;background:#F6F7F9}
+.mtext{position:absolute;left:48px;top:140px;width:900px}
+.mtext h2{font-size:48px;line-height:56px;margin-bottom:18px}
+.mtext .p{margin:0;display:flex;flex-direction:column;font:400 16px/24px var(--font-body);color:var(--sub)}
+.note-m{left:1000px;top:120px;width:400px;max-width:400px}
+
+/* 시안 도장 */
+.stamp{position:fixed;right:24px;bottom:20px;display:flex;align-items:baseline;gap:8px;padding:6px 12px;border-radius:8px;background:#FFF4D6;border:1px solid #F4C86A;color:#7A4B00;z-index:9}
+.stamp b{font:700 16px/22px var(--font-display)}
+.stamp span{font:400 12px/1 var(--font-num)}
