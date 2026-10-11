@@ -2,7 +2,8 @@
    칸마다 '불러오는 중'을 띄우지 않는다. 기다리는 칸은 옅은 빈 틀만 두고, 내용 영역(셸의 판 · 없으면 화면) 정가운데에
    점 셋(LX 청록) + 작은 '불러오는 중' 한 줄을 하나만 띄운다. 여러 칸이 동시에 기다리면 하나로 합치고(참조 카운트) 모두 도착하면 사라진다.
    6초 넘게 이어지면 그 아래 '서버 응답이 늦습니다 · 다시 시도'.
-   · watch(el, { onRetry })   칸 하나를 기다림으로 센다 — el 이 화면에 보이는 동안만(숨은 탭 · 떼어 낸 칸은 세지 않는다)
+   · what(선택) = 무엇을 기다리는지 한 줄(예: '전국 결과 요약') — 가운데 글이 '… 불러오는 중'이 된다(GPT2-4 · 늦을 때 무엇이 늦는지)
+   · watch(el, { onRetry, what })   칸 하나를 기다림으로 센다 — el 이 화면에 보이는 동안만(숨은 탭 · 떼어 낸 칸은 세지 않는다)
    · unwatch(el)              그 칸 도착
    · hold({ onRetry }) → release()   칸 없이 기다림 하나(지도 첫 그림 등)
    empty.js(kind 'loading') · bignum.js(도착 전)가 알아서 부른다 — 화면 코드는 그대로. */
@@ -25,7 +26,7 @@ function mount() {
   const card = h('div.k-ld-c', {}, h('div.k-ld-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), label);
   const root = h('div.k-ld', { role: 'status', 'aria-live': 'polite', hidden: true }, h('div.k-ld-in', {}, card, slowEl));
   document.body.append(root);
-  ui = { root, slowEl };
+  ui = { root, slowEl, label };
   addEventListener('resize', place);
   return ui;
 }
@@ -54,6 +55,13 @@ function count() {
     if (el.getClientRects().length) { n++; if (o.onRetry) lastRetry = o.onRetry; }
   }
   for (const o of HOLDS.values()) if (o.onRetry) lastRetry = o.onRetry;
+  if (ui) {   // 무엇을 기다리나 — 마지막으로 알려 준 것 한 줄(없으면 기본 '불러오는 중')
+    let w = '';
+    for (const o of HOLDS.values()) if (o.what) w = o.what;
+    for (const [el, o] of ELS) if (o.what && el.isConnected) w = o.what;
+    const txt = w ? `${w} 불러오는 중` : t('empty.loading');
+    if (ui.label.textContent !== txt) ui.label.textContent = txt;
+  }
   return n;
 }
 
@@ -90,10 +98,10 @@ function hide() {
   setTimeout(() => { if (!shown) { r.hidden = true; ui.slowEl.hidden = true; delete r.dataset.slow; } }, 220);
 }
 
-export function watch(el, { onRetry } = {}) {
+export function watch(el, { onRetry, what } = {}) {
   if (!el) return;
   el.dataset.kWait = '1';
-  ELS.set(el, { onRetry, off: 0 });
+  ELS.set(el, { onRetry, what, off: 0 });
   kick();
 }
 export function unwatch(el) {
@@ -101,9 +109,9 @@ export function unwatch(el) {
   ELS.delete(el); delete el.dataset.kWait;
   kick();
 }
-export function hold({ onRetry } = {}) {
+export function hold({ onRetry, what } = {}) {
   const tk = {};
-  HOLDS.set(tk, { onRetry });
+  HOLDS.set(tk, { onRetry, what });
   kick();
   return () => { if (HOLDS.delete(tk)) kick(); };
 }

@@ -252,7 +252,9 @@ export function openImproveDrawer({ onCount } = {}) {
   history.replaceState(null, '', location.pathname + location.search + '#improve');
   drawer({ title: '개선 후보', body, label: '개선 후보', width: 'min(720px, 100vw)',
     onClose: () => history.replaceState(null, '', location.pathname + location.search) });
-  body.append(h('p.im-dr-s', { text: 'XI ChatGEO 가 내 서비스 · 기관에서 못 한 요청입니다. 채택하면 확인 대장으로 올라가고, 만들어지면 LX 관리자가 물었던 사람에게 알립니다.' }));
+  // 요청과 다른 것(GPT2-8) — 어디서 왔고 · 채택하면 무엇이 바뀌는지 한 줄씩
+  body.append(h('p.im-dr-s', {}, h('b', { text: '사람이 맡긴 요청이 아닙니다.' }), ' XI ChatGEO 가 내 서비스 · 기관에서 답하지 못한 질문을 모은 것입니다.'),
+    h('p.im-dr-s', { text: '채택하면 만들 기능으로 확인 대장에 올라가고, 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
   const host = h('div');
   body.append(host);
   improveBoard(host, { admin: false, compact: true, onCount }).load();

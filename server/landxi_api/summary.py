@@ -25,6 +25,7 @@ LX = 전부. `build(conn, tenant, region, card)` 는 에이전트 도구(fix-age
 """
 from __future__ import annotations
 
+import asyncio
 import re
 import time
 from typing import Any
@@ -324,6 +325,30 @@ async def cached_all() -> tuple[list[dict], str]:
     """LX 전체 항목(60 s 캐시) — 게이트웨이 응답용. 계산식은 build 와 같다(_items)."""
     if _cache["items"] is not None and time.time() - _cache["t"] < TTL:
         return _cache["items"], _cache["at"]
+    # 시간이 지나 낡은 것(invalidate 로 0 이 된 것은 아님)은 지난 값을 바로 주고 뒤에서 다시 센다(GPT2-4 — XI맵 첫 진입 3초 대기)
+    if _cache["items"] is not None and _cache["t"] > 0:
+        if not _cache.get("busy"):
+            _cache["busy"] = True
+            asyncio.create_task(_bg())
+        return _cache["items"], _cache["at"]
+    return await _build_all()
+
+
+async def _bg():
+    try:
+        await _build_all()
+    except Exception:  # noqa: BLE001
+        pass
+    finally:
+        _cache["busy"] = False
+
+
+async def warm():
+    """게이트웨이 기동 때 미리 계산(첫 화면이 계산을 기다리지 않게)."""
+    await _build_all()
+
+
+async def _build_all() -> tuple[list[dict], str]:
     async with db(realm="lx") as c:
         items = await _items(c, LX_ALL)
     _cache.update(t=time.time(), items=items, at=now_iso())

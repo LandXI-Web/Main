@@ -6,6 +6,7 @@
 .ib-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:24px}
 /* LX 직원 — 요청함 숫자 셋(대시보드 '요청함' 칸과 같은 값) */
 .ib-cells{display:flex;gap:8px;margin-left:auto;align-self:center}
+.ib-s-note{flex-basis:100%;font-size:14px;line-height:20px}   /* 요청 · 개선 후보 구분 한 줄(GPT2-8) */
 .ib-cell{display:inline-flex;align-items:baseline;gap:6px;height:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:var(--bg-1);color:var(--sub);font:500 var(--fs-label)/36px var(--font-body);white-space:nowrap}
 button.ib-cell{cursor:pointer;transition:background var(--d-180) var(--e-ui)}
 button.ib-cell:hover{background:var(--rule)}

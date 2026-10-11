@@ -239,7 +239,7 @@ for (const [id, r] of ROWS) {
   const [txt, lv] = CHIP[r.state];
   const chip = el.querySelector('.tr-chip'); chip.textContent = txt; if (lv) chip.dataset.lv = lv;
   /* 검증 정확도 — 분석하기 카드와 같은 값(모델 기록 · fix9) · 모델은 있는데 기록이 없으면 '—' · 모델이 없으면 칸 없음 */
-  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value)}<i class="tr-pct">%</i></span>${sig(r.prec)}`
+  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value)}<i class="tr-pct">%</i></span>${sig(r.prec)}${r.prec.basis_line ? `<small class="tr-basis">${esc(r.prec.basis_line)}</small>` : ''}`   // 기준 한 줄(GPT2-7)
     : r.recent ? `<span class="t-label">최근 학습</span><span class="k-num tr-p" data-recent="${r.recent.value}">${nf(r.recent.value)}<i class="tr-pct">%</i></span>${sig(r.recent)}`
     : r.m ? '<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="">—</span>' : '';
 }

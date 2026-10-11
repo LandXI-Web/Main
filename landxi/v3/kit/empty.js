@@ -4,8 +4,8 @@
                   제목·문장을 따로 준 '~하는 중' 작업 줄은 그 자리 막대 + 한 줄 그대로(오래 걸리는 것이 정상이라 늦음 표시 없음 · slow: true 로 켤 수 있다).
    · 비었을 때    kind 'first' | 'ingest' | 'outside' | '404' = 회백 카드 + 제목 + 문장 1(선택 · ≤ 40자) + 행동 버튼 1(선택).
    · 문제         kind 'error' = 그 자리 한 줄(경고색) + '다시 시도'(기본 = 화면 다시 열기 · onRetry 로 바꾼다).
-   empty(el, { kind, title, text, action: { label, href|onClick }, onRetry, progress: 0..1, compact, slow })
-   → { set({progress}), resolve(data), el }
+   empty(el, { kind, title, text, action: { label, href|onClick }, onRetry, progress: 0..1, compact, slow, what })
+   → { set({progress, what}), resolve(data), el }   (what = 기다리는 것 한 줄 · 가운데 로딩 글)
    옛 호출의 char 옵션은 받아도 그리지 않는다.
    도착 전과 빈 값 구분(하위 호환 · 선택): empty(el, { kind: 'first', data: undefined }) 처럼 data 를 넘기면
      data === undefined(아직 도착 전) → '불러오는 중' 변형 · 나중에 resolve(data) 가
@@ -50,7 +50,7 @@ function clear(el) {
   delete el.dataset.kind; delete el.dataset.slow;
 }
 
-function draw(el, { kind = 'first', title, text, action, progress, compact = false, onRetry, slow } = {}) {
+function draw(el, { kind = 'first', title, text, action, progress, compact = false, onRetry, slow, what } = {}) {
   stopSlow(el);
   const k = KIND[kind] || KIND.first;
   const wait = !!k.wait, err = !!k.err;
@@ -61,8 +61,8 @@ function draw(el, { kind = 'first', title, text, action, progress, compact = fal
     el.classList.add('k-empty', 't-empty', 'k-empty--hold'); el.classList.remove('k-empty--err'); el.classList.toggle('k-empty--sm', compact);
     el.innerHTML = ''; el.dataset.kind = kind; delete el.dataset.slow;
     el.setAttribute('aria-busy', 'true'); el.removeAttribute('role');
-    watch(el, { onRetry });
-    const set = ({ progress: p } = {}) => { if (typeof p === 'number' && p >= 1) unwatch(el); };
+    watch(el, { onRetry, what });
+    const set = ({ progress: p, what: w } = {}) => { if (typeof p === 'number' && p >= 1) unwatch(el); else if (w !== undefined && el.dataset.kWait === '1') watch(el, { onRetry, what: w }); };
     set({ progress });
     return { el, set };
   }

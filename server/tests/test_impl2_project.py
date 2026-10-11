@@ -182,14 +182,15 @@ def test_list_steps_and_blocked(live, tok, made):
 
 
 def test_list_blocked_before_stage_after_publish(live, tok, made):
-    """공개까지 간 프로젝트인데 결과 확인을 한 건도 안 했다 — 지금 칸은 배포 신청(승인됨)이지만 '결과 확인 0/20'(앞 단계 남음)이 막힌 곳에 나온다. 막대는 그 칸만 비어 있다."""
+    """공개까지 간 프로젝트인데 추론 · 결과 확인을 하지 않았다 — 그 칸은 '건너뜀'(skip · 추론은 필수 아님 10-10 · GPT2-3), 배포 신청 칸은 끝남.
+    목록 진행 n/6 = 끝남 + 건너뜀 · 한 장의 단계 상태 · 말과 같은 값(서버 한 출처) · 막힌 곳에 올리지 않는다."""
     p = _publish(tok, made())
     row = _row(tok, p["id"])
-    assert row["stage"]["key"] == "publish" and row["steps"] == ["done", "done", "done", "wait", "wait", "now"]   # 추론(4번째)은 해 보면 좋은 단계 — 막힌 곳 아님
-    assert [b["kind"] for b in row["blocked"]] == ["before"] and row["blocked"][0]["stage"] == "review"
-    rv = stage(p, "review")["progress"]
-    assert row["blocked"][0]["text"] == f"결과 확인 {rv['n']}/{rv['total']}"            # 한 장의 '결과 확인 n/20'과 같은 값
-    assert httpx.get(B + f"/projects/{p['id']}", headers=H(tok["staff"]), timeout=60).json()["blocked"] == row["blocked"]
+    assert row["stage"]["key"] == "publish" and row["steps"] == ["done", "done", "done", "skip", "skip", "done"]
+    assert row["progress"] == {"n": 6, "total": 6} and row["blocked"] == []
+    one = httpx.get(B + f"/projects/{p['id']}", headers=H(tok["staff"]), timeout=60).json()
+    assert [x["state"] for x in one["stages"]] == row["steps"] and one["blocked"] == row["blocked"]
+    assert [x["word"] for x in one["stages"]][3:5] == ["건너뜀", "건너뜀"]
 
 
 def test_list_steps_skip_for_overseas_only(live, tok, made):

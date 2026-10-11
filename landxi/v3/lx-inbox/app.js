@@ -72,7 +72,8 @@ const page = h('div.ib',
   h('header.ib-head', {},
     h('h1.ib-t', { text: admin ? '기관에서 온 요청' : '요청함' }),
     h('p.ib-s', { text: admin ? '모든 기관의 검토 요청과 답을 봅니다. 담당 직원이 없는 요청은 LX 관리자가 답합니다.' : '내가 담당하는 서비스로 온 요청과 내가 올린 승인 요청입니다.' }),
-    cells, admin ? shootStrip() : null),   // 촬영 요청(18차 촬영-1 ⓑ — 받는 쪽 = LX 관리자 · lx-inbox/shoots.js)
+    cells, cells ? h('p.ib-s.ib-s-note', { text: '요청은 기관 · 직원이 맡긴 일이고, 개선 후보는 XI ChatGEO 가 답하지 못한 질문입니다. 개선 후보를 채택하면 만들 기능으로 올라갑니다.' }) : null,   // 둘이 다른 것(GPT2-8)
+    admin ? shootStrip() : null),   // 촬영 요청(18차 촬영-1 ⓑ — 받는 쪽 = LX 관리자 · lx-inbox/shoots.js)
   h('div.ib-grid', {}, h('section.ib-side.t-card', { 'aria-label': '검토 요청 목록' }, tabs, listEl), convEl));
 S.main.append(page);
 document.title = (admin ? '기관에서 온 요청' : '요청함') + ' · Land-XI';

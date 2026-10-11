@@ -1,0 +1,158 @@
+{
+ "xi-boot-ms": {
+  "gate": 323,
+  "data": 979,
+  "layers": 2138,
+  "canvas": 2139,
+  "ready": 2149,
+  "shown": 2149
+ },
+ "gpt2-1-xi-tilt-moving-1440.png": {
+  "shot_at": "2026-10-11 10:49:23",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "입체로 기울이는 중 — 흰 빈자리 없이 거친 바탕이 먼저 · 전국 건수는 작은 칸"
+ },
+ "gpt2-1-xi-tilt-1440.png": {
+  "shot_at": "2026-10-11 10:49:31",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/index.html",
+  "note": "입체 자리 잡은 뒤 — 작은 칸 · 공백 0"
+ },
+ "xi-hud-tilt": {
+  "tilt": "1",
+  "w": 161,
+  "h": 78
+ },
+ "xi-hud-flat": {
+  "tilt": "",
+  "w": 397,
+  "h": 185
+ },
+ "eta": "약 21분\n2023년 25cm 항공 영상 · 남원시 전역 · 같은 영상 최근 분석(10.7)의 실제 속도",
+ "cond-time": "걸리는 시간 | 남원 전역 약 21분 | 25cm 항공 영상 · 10.7 분석 실제 시간",
+ "gpt2-2-eta-1440.png": {
+  "shot_at": "2026-10-11 10:49:42",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "결과까지 — 고른 영상 · 범위 · 같은 영상 최근 실제 속도(서비스 조건과 같은 기록)"
+ },
+ "gpt2-2-cond-1440.png": {
+  "shot_at": "2026-10-11 10:49:42",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/?card=card-5e85a9&region=52190",
+  "note": "이 카드의 조건 — 걸리는 시간 + 전제(어느 영상 · 언제 기록)"
+ },
+ "list": [
+  [
+   "곤포사일리지 2026",
+   "6/6",
+   "done,done,done,skip,skip,done"
+  ],
+  [
+   "건축물 2026",
+   "6/6",
+   "done,done,done,skip,skip,done"
+  ],
+  [
+   "비닐하우스 2026",
+   "6/6",
+   "done,done,done,done,skip,done"
+  ],
+  [
+   "주차장 2026",
+   "6/6",
+   "done,done,done,done,skip,done"
+  ]
+ ],
+ "gpt2-3-list-1440.png": {
+  "shot_at": "2026-10-11 10:49:46",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "프로젝트 목록 — 진행 n/6 = 서버 판정(끝남 + 건너뜀)"
+ },
+ "detail-steps": [
+  "1단계 데이터 올리기 · 완료",
+  "2단계 학습데이터 구축 · 완료",
+  "3단계 학습 · 완료",
+  "4단계 추론 · 완료",
+  "5단계 결과 확인 · 건너뜀",
+  "6단계 배포 신청 · 완료"
+ ],
+ "gpt2-3-detail-1440.png": {
+  "shot_at": "2026-10-11 10:49:50",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?project=prj_3fdba452d5",
+  "note": "프로젝트 상세 — 4 추론 · 5 결과 확인 = 건너뜀, 6 배포 신청 = 완료"
+ },
+ "gpt2-6-dash-loading-1440.png": {
+  "shot_at": "2026-10-11 10:49:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "대시보드 첫 순간(흉내 — 프로젝트 목록 · 내 작업 응답을 붙잡음) — 기다리는 칸은 흐르는 빈 틀 · 표시는 가운데 하나 · 다 온 칸의 0 은 숫자 0"
+ },
+ "gpt2-6-dash-1440.png": {
+  "shot_at": "2026-10-11 10:49:57",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "대시보드 도착 — 0 인 칸은 숫자 0 · 없음 글"
+ },
+ "basis": [
+  [
+   "경작·휴경 분석서비스",
+   "검증 영상 404장 기준"
+  ],
+  [
+   "비닐하우스 분석서비스",
+   "검증 영상 수 기록 없음"
+  ],
+  [
+   "건축물 분석서비스",
+   "검증 영상 수 기록 없음"
+  ],
+  [
+   "곤포사일리지 분석서비스",
+   "검증 영상 12장 기준"
+  ]
+ ],
+ "gpt2-7-analyze-1440.png": {
+  "shot_at": "2026-10-11 10:50:02",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "분석하기 — 검증 정확도 아래 기준 한 줄(모델 기록)"
+ },
+ "fallback": [
+  [
+   "경작·휴경 분석서비스",
+   "",
+   1600
+  ],
+  [
+   "비닐하우스 분석서비스",
+   "",
+   1280
+  ],
+  [
+   "곤포사일리지 분석서비스",
+   "결과 장면 없음",
+   640
+  ]
+ ],
+ "gpt2-5-fallback-1440.png": {
+  "shot_at": "2026-10-11 10:50:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-analyze/",
+  "note": "그림을 못 받은 카드(흉내 — 학습 표본 그림 막음) · 거르기 바꾼 뒤 — 같은 틀의 대체 그림 + 결과 장면 없음"
+ },
+ "gpt2-8-inbox-1440.png": {
+  "shot_at": "2026-10-11 10:50:14",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/",
+  "note": "요청함 — 요청과 개선 후보가 다른 것임을 한 줄로"
+ },
+ "gpt2-8-improve-1440.png": {
+  "shot_at": "2026-10-11 10:50:16",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/",
+  "note": "개선 후보 창 — 어디서 왔고 · 채택하면 무엇이 바뀌는지"
+ },
+ "console_errors": [],
+ "console_errors_sim": [
+  [
+   "analyze-sim",
+   "Failed to load resource: net::ERR_FAILED"
+  ],
+  [
+   "analyze-sim",
+   "Failed to load resource: net::ERR_FAILED"
+  ]
+ ]
+}

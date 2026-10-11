@@ -186,6 +186,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-ac-hero b i{font:700 16px/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
 .la-ac-hero b.d{font-size:20px;font-weight:700;letter-spacing:-.01em}
 .la-ac-hero small{display:block;margin-top:2px;font:500 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+.la-ac-hero small.la-ac-basis{margin-top:0;min-height:16px;color:var(--mute);overflow:hidden;text-overflow:ellipsis}   /* 검증 정확도 기준 한 줄(GPT2-7) */
 .la-acg[data-n="2"] .la-ac-hero,.la-acg[data-n="6"] .la-ac-hero{grid-template-columns:1fr 1fr;padding:14px 16px 12px}
 .la-acg[data-n="2"] .la-ac-hero b,.la-acg[data-n="6"] .la-ac-hero b{font-size:32px;line-height:36px}
 .la-acg[data-n="2"] .la-ac-hero b.d,.la-acg[data-n="6"] .la-ac-hero b.d{font-size:24px}

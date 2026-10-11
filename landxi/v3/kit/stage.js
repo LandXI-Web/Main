@@ -33,7 +33,7 @@ const LOOK = {
   ],
 };
 
-export function createStage(el, { mode = 'app', bounds = KOREA, interactive = true, scale = true, padding } = {}) {
+export function createStage(el, { mode = 'app', bounds = KOREA, interactive = true, scale = true, padding, under = false } = {}) {
   if (!window.maplibregl) throw new Error('[kit/stage] maplibre-gl.js 를 먼저 싣는다');
   el.classList.add('k-stage');
   const wrap = document.createElement('div'); wrap.className = 'k-stage-map'; el.prepend(wrap);
@@ -48,6 +48,12 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   if (scale) map.addControl(new window.maplibregl.ScaleControl({ maxWidth: 96, unit: 'metric' }), 'bottom-left');
 
   const ready = loaded(map).then(() => {
+    // 밑받침 — 아주 거친 한 장(z2 · 동아시아 전체를 타일 한두 장으로)이 늘 깔려, 입체로 기울이거나 돌릴 때 아직 안 온 타일 자리가 흰 바탕으로 비지 않는다(GPT2-1)
+    //   under: true 인 화면만(XI맵 — 입체 보기가 있는 화면 · 지구본 · 영상 숨김 화면은 그대로)
+    if (under) {
+      map.addSource('k-under', { type: 'raster', tiles: [url(EOX)], tileSize: 256, maxzoom: 2 });
+      map.addLayer({ id: 'k-under', type: 'raster', source: 'k-under', paint: { 'raster-fade-duration': 0 } }, 'slot-imagery');
+    }
     map.addSource('k-eox', { type: 'raster', tiles: [url(EOX)], tileSize: 256, maxzoom: 13 });
     map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9] });
     map.addLayer({ id: 'k-eox', type: 'raster', source: 'k-eox', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
@@ -69,7 +75,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   function setMode(m) {
     mode = m; el.dataset.mode = m;
     const sat = m === 'ops' ? -0.4 : 0;     // raster-saturation −0.4 ≈ CSS saturate(.6)
-    for (const id of ['k-eox', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id)])
+    for (const id of ['k-under', 'k-eox', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id)])
       if (map.getLayer(id)) map.setPaintProperty(id, 'raster-saturation', sat);
   }
 

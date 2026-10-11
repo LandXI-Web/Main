@@ -799,7 +799,7 @@ function create(opts) {
         } else if (a.op === 'map_layer') {
           const L = map.getStyle()?.layers || [];
           let ids = a.layer === 'imagery' ? L.filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id) : [];
-          if (a.layer === 'imagery' && !ids.length) ids = ['k-eox', 'k-vw'].filter((id) => map.getLayer(id));   // 영상 층이 따로 없는 화면 = 바탕 위성 영상
+          if (a.layer === 'imagery' && !ids.length) ids = ['k-under', 'k-eox', 'k-vw'].filter((id) => map.getLayer(id));   // 영상 층이 따로 없는 화면 = 바탕 위성 영상
           if (!ids.length) reason = why('nolayer');
           else {
             const want = a.on === false ? 'none' : 'visible';

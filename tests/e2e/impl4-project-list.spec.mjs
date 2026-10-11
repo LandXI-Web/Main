@@ -25,8 +25,8 @@ async function openList(page, baseURL) {
 
 const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
 const GROUPS = [['ingest'], ['label'], ['train'], ['infer'], ['review'], ['publish']];   // 여섯 단계 — 프로젝트 안 단계 막대와 같은 이름(10-10 질문 10 확인 · board.js)
-const seg4 = (p) => { const gi = Math.max(0, GROUPS.findIndex((g) => g.includes(p.stage.key)));
-  return GROUPS.map((g, i) => (i === gi ? 'now' : g.every((k) => ['done', 'skip'].includes(p.steps[KEYS.indexOf(k)])) ? 'done' : 'wait')); };
+// 칸 = 서버 steps 그대로(GPT2-3 한 출처 — 끝남 · 지금 · 남음 · 건너뜀) · n = 서버 progress.n(끝남 + 건너뜀)
+const seg4 = (p) => KEYS.map((k, i) => (['done', 'now', 'wait', 'skip'].includes(p.steps[i]) ? p.steps[i] : 'wait'));
 
 test.describe('프로젝트 목록 — 진행 현황(흐름도 · 여섯 단계 표)', () => {
   test.beforeEach(async ({ request }) => {
@@ -48,7 +48,8 @@ test.describe('프로젝트 목록 — 진행 현황(흐름도 · 여섯 단계 
       const p = byId.get(await row.getAttribute('data-id'));
       const want = seg4(p);
       expect(await row.locator('.lxp-seg i').evaluateAll((is) => is.map((x) => x.dataset.st)), p.name).toEqual(want);
-      await expect(row.locator('.sb-prog small')).toHaveText(`${want.filter((x) => x === 'done').length}/6`);
+      await expect(row.locator('.sb-prog small')).toHaveText(`${p.progress.n}/6`);
+      expect(p.progress.n).toBe(want.filter((x) => x === 'done' || x === 'skip').length);
       expect(nb(await row.locator('td').nth(3).innerText())).toBe(nb(p.next?.text || '—'));
       const k = row.locator('.sb-kick');
       if (p.blocked.length) {

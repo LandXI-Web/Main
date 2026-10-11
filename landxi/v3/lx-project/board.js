@@ -27,21 +27,17 @@ sheet();
 
 /** 프로젝트의 단계(여섯 단계 가운데 몇 번째) — 서버 stage.key 로 */
 export const groupOf = (p) => Math.max(0, GROUPS.findIndex((g) => g.keys.includes(p?.stage?.key)));
-/** 여섯 칸 진행(done · now · wait) — 서버 steps(6칸) 그대로. 건너뛴 칸은 끝난 것으로 */
+/** 여섯 칸 진행(done · now · wait · skip) — 서버 steps(6칸) 그대로(한 출처 · GPT2-3). 셈 = 서버 progress(끝남 + 건너뜀) */
+const SEG_WORD = { done: '완료', now: '지금 단계', wait: '대기', skip: '건너뜀' };
 export function seg4(p) {
-  const gi = groupOf(p);
-  return GROUPS.map((g, i) => {
-    if (i === gi) return 'now';
-    const st = g.keys.map((k) => p?.steps?.[KEYS.indexOf(k)]);
-    return st.every((s) => s === 'done' || s === 'skip') ? 'done' : 'wait';
-  });
+  return KEYS.map((k, i) => (SEG_WORD[p?.steps?.[i]] ? p.steps[i] : 'wait'));
 }
-export const doneN = (p) => seg4(p).filter((x) => x === 'done').length;
+export const doneN = (p) => (p?.progress?.n ?? seg4(p).filter((x) => x === 'done' || x === 'skip').length);
 /** 여섯 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양 */
 export function seg4El(p) {
   const s = seg4(p);
   return h('span.lxp-seg.sb-seg4', { role: 'img', 'aria-label': `여섯 단계 가운데 ${doneN(p)}단계 끝남` },
-    ...s.map((x, i) => h('i', { dataset: { st: x }, title: `${GROUPS[i].label} · ${{ done: '완료', now: '지금 단계', wait: '대기' }[x]}` })));
+    ...s.map((x, i) => h('i', { dataset: { st: x }, title: `${GROUPS[i].label} · ${SEG_WORD[x]}` })));
 }
 /** 남은 일 — 서버 blocked 첫 줄. kind: warn(내가 손댈 것) · wait(승인 대기) · null */
 export function kick(p) {

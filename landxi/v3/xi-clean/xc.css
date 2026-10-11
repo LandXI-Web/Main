@@ -46,6 +46,14 @@
 /* 바탕 영상이 그려지지 않은 지도(밝은 빈 바탕)에서는 큰 숫자를 다른 큰 숫자와 같은 진한 글자로 — 흰 글자가 흐려지지 않게(10-10 고장) */
 .xc-hud[data-base="plain"]{--hud-ink:var(--ink);--hud-shadow:none}
 .xc-big .k-big-l{font-size:var(--fs-sub)}
+/* 입체 — 큰 숫자를 작은 칸으로 접는다(GPT2-1 · 기울인 지도 위 겹침 0 · 평면으로 돌아오면 그대로) */
+.xc-hud[data-tilt="1"]{--hud-ink:var(--ink);--hud-shadow:none;left:16px;top:16px;padding:10px 14px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map)}
+.xc-hud[data-tilt="1"] .xc-big{gap:2px}
+.xc-hud[data-tilt="1"] .xc-big .k-big-l{font-size:var(--fs-label)}
+.xc-hud[data-tilt="1"] .xc-big .t-hud{font-size:32px}
+.xc-hud[data-tilt="1"] .xc-big .k-big-u{font-size:var(--fs-label)}
+.xc-hud[data-tilt="1"] .xc-bars,.xc-hud[data-tilt="1"] .xc-sus{display:none}
+.xc-hud[data-tilt="1"] .xc-big[data-st="wait"] .k-big-row::before{margin:12px 0;width:96px;background:var(--rule);box-shadow:none}
 .xc-big .t-hud{white-space:nowrap}
 .xc-bars{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:4px;width:300px}
 .xc-bar{display:grid;grid-template-columns:minmax(0,1fr) 92px 52px;align-items:center;gap:10px;width:100%;padding:5px 8px;margin-left:-8px;border:0;border-radius:var(--r-8);background:none;color:var(--hud-ink);text-shadow:var(--hud-shadow);text-align:left}

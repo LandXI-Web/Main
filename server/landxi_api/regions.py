@@ -274,6 +274,25 @@ async def derived() -> dict:
     """영상·배포 → 시군구(60 s 캐시 · 권한 무관 · 필터는 응답 단계에서)."""
     if _derived["data"] is not None and time.time() - _derived["t"] < DERIVED_TTL:
         return _derived["data"]
+    # 시간이 지나 낡은 것(무효화 t=0 이 아님)은 지난 값을 바로 주고 뒤에서 다시 센다 — 1분 쉬고 온 첫 요청이 2초 넘게 기다리지 않게(GPT2-4)
+    if _derived["data"] is not None and _derived["t"] > 0:
+        if not _derived.get("busy"):
+            _derived["busy"] = True
+            asyncio.create_task(_derived_bg())
+        return _derived["data"]
+    return await _derived_build()
+
+
+async def _derived_bg():
+    try:
+        await _derived_build()
+    except Exception:  # noqa: BLE001 — 뒤 계산 실패는 다음 요청이 다시
+        pass
+    finally:
+        _derived["busy"] = False
+
+
+async def _derived_build() -> dict:
     regions, geoms, _ = regions_base()
     async with db(realm="lx") as conn:
         imgs = await conn.fetch("SELECT id, name, tier, gsd_m, epoch, year, kind, sgg_cd, export_policy, ST_AsGeoJSON(footprint)::json AS fp FROM imagery")

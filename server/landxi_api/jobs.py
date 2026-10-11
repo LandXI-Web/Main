@@ -90,6 +90,33 @@ async def active_workers(pool: str) -> list[str]:
     return sorted(w for w in out if w)
 
 
+# 결과까지 걸릴 시간 — 끝난 실제 분석 기록(칸 수 ÷ 벽시계 초) 한 출처. 분석하기 '결과까지' · XI맵 확인 카드 · 서비스 조건 '걸리는 시간'이 같은 규칙(GPT2-2).
+# 칸 200개 미만 분석은 시작 · 마무리 시간이 속도를 가려 빼고(10-11: 18칸 2초 기록으로 한 시군구 전역을 '약 1시간 29분'으로 셈), 시험 표시 작업도 뺀다.
+MEASURE_MIN_SHARDS = 200
+
+
+async def measured_eta(img_id: str | None, up: float, shards_n: int) -> dict | None:
+    """같은 영상(같은 해상도 먼저)의 가장 최근 실제 분석 속도 → 없으면 최근 큰 분석 10건의 가운데 값. 장비 · 설정이 바뀌면 속도가 바뀌므로
+    오래된 느린 기록과 섞지 않는다(10-07 뒤 한 시군구 전역 실제 21분 ↔ 09-30 기록 2시간 — 서비스 조건 '걸리는 시간'과 같은 기록이 이긴다)."""
+    if not shards_n:
+        return None
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "SELECT imagery_id, coalesce((options->>'upsample')::float, 1) AS up, (perf->'chips_per_wall_s'->>'value')::float AS r, finished_at FROM jobs "
+            "WHERE state='done' AND kind='infer' AND NOT coalesce(test,false) AND coalesce(shards_total,0) >= $1 "
+            "AND (perf->'chips_per_wall_s'->>'value')::float > 0 ORDER BY finished_at DESC LIMIT 200", MEASURE_MIN_SHARDS)
+    same = [r for r in rows if r["imagery_id"] == img_id and float(r["up"]) == float(up or 1)] or [r for r in rows if r["imagery_id"] == img_id]
+    if same:
+        r0 = same[0]
+        fin = r0["finished_at"].astimezone(KST)
+        return {**env(round(shards_n / float(r0["r"]) + 5), "s", "estimate", "분석 작업 기록", f"같은 영상 최근 분석({fin.month}.{fin.day})의 실제 속도"), "n": 1, "same_image": True}
+    recent = [float(r["r"]) for r in rows[:10]]
+    if recent:
+        med = sorted(recent)[len(recent) // 2]
+        return {**env(round(shards_n / med + 5), "s", "estimate", "분석 작업 기록", f"최근 분석 {len(recent)}건의 실제 속도"), "n": len(recent), "same_image": False}
+    return None
+
+
 # 작업 상한(S-8 · 서버측 shard 계획의 천장) — 넘으면 too_large(쪼개서 다시). 값은 이 PC(A6000 1장 고부하) 기준 [추정 초기값].
 SHARD_CAP = {"infer": 20000, "reinfer": 120000, "index": 120, "survey": 5000, "join": 5000, "tile": 2, "train": 1}
 TRAIN_EPOCHS_MAX = 50
@@ -407,6 +434,9 @@ async def build_quote(p: Principal, body: dict) -> dict:
         n = max(1, len(wk))
         eta = env(round(shards_n / cps / n + 3.0, 1), "s", "estimate", f"gpu_s ÷ 워커 {n} + 스냅샷 3s",
                   "워커 수는 지금 하트비트 기준" if wk else "워커 하트비트 없음 — 1 로 계산")
+        if kind == "infer" and model:
+            me = await measured_eta(img["id"] if img else None, float((plan_opts or {}).get("upsample") or opts.get("upsample") or 1), shards_n)
+            eta = me or eta
     elif kind in ("index", "survey", "join"):
         gpu_s = env(0 if kind != "index" else None, "gpu_s", "estimate", f"kind {kind} — CPU 워커(모델 추론 아님)", "GPU 사용 없음")
         eta = await eta_estimate(adapter_id or kind, shards_n)
@@ -782,6 +812,7 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
         gpu_s = env(round(shards_n / cps, 1), "gpu_s", "estimate", f"models.perf({model['id']}) {cps} chips/s/GPU × {shards_n} shard")
         wk = await active_workers(pool)
         eta = env(round(shards_n / cps / max(1, len(wk)) + 3.0, 1), "s", "estimate", "gpu_s ÷ 워커 + 3 s")
+        eta = await measured_eta(img["id"], up, shards_n) or eta
     else:
         gpu_s = env(None, "gpu_s", "estimate", "bench 전")
         eta = env(None, "s", "estimate", "bench 전")

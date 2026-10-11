@@ -422,16 +422,30 @@ def _judge(r, f) -> dict:
         cur = next((i for i, k in enumerate(order) if not st[k]["done"] and not st[k].get("skip")), last_i)
         if r["round"] > 1 and cur < 2:        # 보완 회차는 학습 단계로 돌아간다(데이터 · 라벨은 앞 회차 것을 이어 쓴다)
             cur = 2 if not st["train"]["done"] else cur
+    # 칸 상태 한 출처(GPT2-3 — 목록 진행 · 상세 단계 · 대시보드 요약이 이 값만 쓴다): 끝남 done · 지금 now · 남음 wait ·
+    # 건너뜀 skip(지금 단계보다 앞인데 끝나지 않은 칸 — 예: 추론 없이 배포 신청 · 추론은 필수 아님 10-10) · 해당 없음 skip(해외 지역의 결과 확인)
     stages = []
     for i, k in enumerate(order):
         s = st[k]
-        state = "now" if i == cur else ("done" if s["done"] else "wait")
+        if s["done"]:
+            state = "done"
+        elif s.get("skip") and i != cur:
+            state, s["skip_word"] = "skip", "해당 없음"
+        elif i == cur:
+            state = "now"
+        elif i < cur:
+            state, s["skip"], s["skip_word"] = "skip", True, "건너뜀"
+        else:
+            state = "wait"
+        s["word"] = {"done": "완료", "now": "지금 단계", "wait": "대기"}.get(state) or s.get("skip_word") or "건너뜀"
         stages.append({"index": i, **{x: y for x, y in s.items() if x != "done"}, "state": state, "done": bool(s["done"])})
     now = stages[cur]
     nxt = {"text": now["next"] or now["label"], "stage": now["key"], "target": now["target"],
            "status_only": bool(now.get("status_only"))}
+    steps = [s["state"] for s in stages]
     return {"stages": stages, "stage": {"index": cur, "key": now["key"], "label": now["label"]}, "next": nxt, "published": f["published"],
-            "steps": [("skip" if s.get("skip") and s["state"] != "now" else s["state"]) for s in stages], "blocked": _blocked(stages, cur, holds)}
+            "steps": steps, "progress": {"n": sum(1 for x in steps if x in ("done", "skip")), "total": len(steps)},   # 끝남 + 건너뜀(목록 n/6 · 대시보드 같은 값)
+            "blocked": _blocked(stages, cur, holds)}
 
 
 _KIND_ORDER = {"reject": 0, "before": 1, "wait": 2}
@@ -474,7 +488,7 @@ async def _sample_ids(conn, pid: str) -> list[str]:
 _TRAIN_OF = "kind='train' AND (options->>'project_id' = $1 OR (options->'samples') ?| $2::text[])"
 
 
-async def _basis(conn, r, f, blocked: list) -> dict:
+async def _basis(conn, r, f, blocked: list, stages: list | None = None) -> dict:
     """재학습 근거(확인 17차 P-3 ⓐ) — 시간 띠 하나(서버 기록의 실제 시각) + 칩 셋(기관 검토 요청 · 새 영상 시점 · 앞 단계 남음) + 근거가 적은가.
     띠의 점: 학습 표본 · 학습 끝 · 모델 승인 · 서비스 공개 · n차 시작 · 프로젝트 만듦 · (마지막 학습 뒤) 새 영상 · 기관 검토 요청 — 시각순, 지금 앞에 넷까지
     (넘치면 '프로젝트 만듦' 부터 · 그다음 오래된 것부터 뺀다). 근거가 적어도 막지 않는다(원칙 70 — 참고 표시, 판단은 프로젝트장)."""
@@ -528,6 +542,11 @@ async def _basis(conn, r, f, blocked: list) -> dict:
         drop = next((x for x in pts if x["kind"] == "created"), None) or next((x for x in pts if not x.get("signal")), pts[0])
         pts.remove(drop)
     before = next((b for b in blocked if b["kind"] == "before"), None)
+    if not before:   # 공개 뒤 건너뛴 단계(GPT2-3 — 칸은 '건너뜀')도 재학습 근거 칩에는 '앞 단계 남음'으로 남긴다(확인 17차 P-3 ⓐ 그대로)
+        sk = next((s for s in (stages or []) if s.get("skip_word") == "건너뜀" and s["key"] not in OPTIONAL), None)
+        if sk:
+            prog = sk.get("progress")
+            before = {"text": f"{sk['label']} {prog['n']}/{prog['total']}" if prog else f"{sk['label']} 남음"}
     return {"points": [{**x, "at": _iso(x["at"])} for x in pts], "now": now_iso(), "trained_at": _iso(trained),
             "reviews": env(int(rv["n"] or 0), "count", "recorded", "기관 검토 요청(마지막 학습 뒤 · 이 프로젝트 서비스)"),
             "imagery": env(n_img, "count", "recorded", "새 영상(마지막 학습 뒤 · 대상 지역에 등록)"),
@@ -545,7 +564,7 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
            "lead": _who(people, r["lead_id"]), "mine": _is_member(p, r, members),
            "round": env(r["round"], "count", "recorded", "프로젝트 회차"), "state": r["state"],
            "stage": j["stage"], "next": j["next"], "published": j["published"],
-           "steps": j["steps"], "blocked": j["blocked"],
+           "steps": j["steps"], "progress": j["progress"], "blocked": j["blocked"],
            "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"]), "last_at": _iso(f["last_at"]),
            "lead_is_me": p.user_id == r["lead_id"]}
     if full:
@@ -560,7 +579,7 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
                     "rounds": [{"round": env(x.get("round"), "count", "recorded", "프로젝트 회차"), "at": x.get("at"),
                                 "by": (_who(people, x.get("by")) or {}).get("name"), "reason": x.get("reason")} for x in (r["rounds"] or [])],
                     # 재학습 근거(띠 · 칩) — 재학습 칸이 열리는 공개된 서비스만
-                    "basis": await _basis(conn, r, f, j["blocked"]) if j["published"] else None})
+                    "basis": await _basis(conn, r, f, j["blocked"], j["stages"]) if j["published"] else None})
     return out
 
 

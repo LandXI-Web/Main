@@ -116,7 +116,8 @@ function actions(c, kind, o) {
 function cropEl(c, kind, o = {}) {
   const sc = c.scene && c.scene.src ? c.scene : null;
   const fig = h('div.k-sc-crop', { class: sc ? '' : 'is-blank' });
-  if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async' }));   // 올린 장면 = 게이트웨이 파일
+  if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async',   // 올린 장면 = 게이트웨이 파일
+    onerror: (e) => { e.target.remove(); fig.classList.add('is-blank'); fig.prepend(h('span.k-sc-blank', { text: '결과 장면 없음' })); } }));   // 못 받으면 회색 빈 그림 대신 같은 틀의 '없음'(GPT2-5)
   else if (kind === 'gov' && !o.row) {   // 기관 카드 — 시작 시기만(시안 기관-3 ⓐ · 그림 0): 열린 서비스 = 첫 결과 전 · 사업 전 = 'YYYY년 시작'
     const off = c.open === false;
     fig.append(h('span.k-sc-blank', {}, h('b', { text: off ? (c.year ? `${c.year}년 시작` : '사업 시작 전') : '첫 결과 전' }),

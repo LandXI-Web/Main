@@ -88,7 +88,10 @@ button.t-step{cursor:pointer}
 @media (max-width:640px){.k-empty{padding:24px}.k-empty--sm{padding:16px 20px}.k-empty[data-kind="loading"]{padding:16px}.k-empty--err{padding:12px 0}.k-empty-b{max-width:100%}}
 @media (prefers-reduced-motion:reduce){.k-empty-p.is-indet i{animation:none}}
 /* 기다리는 칸 = 옅은 빈 틀만(글 · 막대 없음) — 표시는 화면 가운데 하나(loader.js · 원칙 161) */
-.k-empty--hold[data-kind="loading"]{padding:0;min-height:64px;background:var(--bg-0);border-radius:var(--r-12,12px);opacity:.7}
+.k-empty--hold[data-kind="loading"]{padding:0;min-height:64px;background:linear-gradient(90deg,var(--bg-0) 0,var(--bg-1) 50%,var(--bg-0) 100%) 0 0/200% 100%;border-radius:var(--r-12,12px);opacity:.9;animation:k-hold 1.6s linear infinite}
+/* 불러오는 중 빈 틀 = 천천히 흐르는 결(GPT2-6) — '정말 0'(글 '…없습니다' · 숫자 0)과 한눈에 구분. 표시 글은 가운데 하나(원칙 161) */
+@keyframes k-hold{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.k-empty--hold[data-kind="loading"]{animation:none;background:var(--bg-0)}}
 .k-empty--hold.k-empty--sm[data-kind="loading"]{min-height:44px}
 .k-big--wait .t-big,.k-big--wait .t-hud{opacity:.28}
 /* K9-1 가운데 로딩 — 내용 영역 정가운데 하나 · 점 셋(LX 청록) + 작은 한 줄 */

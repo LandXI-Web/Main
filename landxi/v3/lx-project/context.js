@@ -83,11 +83,11 @@ function drawBar(el, pr, key) {
   const steps = h('ol.lxp-bar-steps', { 'aria-label': '프로젝트 단계' });
   STAGES.forEach((s, i) => {
     const x = st[i] || {};
-    const state = !pr ? 'wait' : i === nowI ? 'now' : x.done ? 'done' : 'wait';
-    const word = x.skip ? '해당 없음' : state === 'done' ? '완료' : state === 'now' ? '지금 단계' : '대기';
+    const state = !pr ? 'wait' : x.state || (i === nowI ? 'now' : x.done ? 'done' : 'wait');   // 칸 상태 · 말 = 서버 한 출처(GPT2-3 · 건너뜀 · 해당 없음)
+    const word = x.word || (state === 'done' ? '완료' : state === 'now' ? '지금 단계' : '대기');
     const a = h('a.lxp-st', { href: pr ? stageHref(pr, s.key, x.target) : stageHref(PID, s.key), dataset: { st: state }, title: `${i + 1} ${s.label} · ${word}`,
       'aria-current': i === here ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.label} · ${word}` },
-      h('span.n', { html: state === 'done' ? CHECK : String(i + 1) }), h('span.t', { text: s.label }));
+      h('span.n', { html: state === 'done' ? CHECK : String(i + 1) }), h('span.t', {}, s.label, state === 'skip' ? h('small', { text: word }) : null));
     if (i === here) a.classList.add('is-here');
     steps.append(h('li', {}, a));
   });
@@ -97,7 +97,7 @@ function drawBar(el, pr, key) {
 
 /** 6칸 진행 막대(HTML) — steps = 서버가 준 칸 상태 6(done · now · wait · skip). 끝난 칸 · 지금 칸 · 남은 칸 · 건너뛴 칸을 구분한다.
     대시보드 '내 프로젝트' 줄도 같은 부품을 쓴다(.lxp-seg · context.css). 칸마다 이름표(title) · 막대 전체 읽기 글(aria-label). */
-const SEG_WORD = { done: '완료', now: '지금 단계', wait: '대기', skip: '해당 없음' };
+const SEG_WORD = { done: '완료', now: '지금 단계', wait: '대기', skip: '건너뜀' };
 export function stepSegHtml(steps = []) {
   ensureCss();
   const st = STAGES.map((_, i) => (SEG_WORD[steps?.[i]] ? steps[i] : 'wait'));

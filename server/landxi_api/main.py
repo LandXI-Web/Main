@@ -72,6 +72,14 @@ async def lifespan(app: FastAPI):
         print(f"[gateway] agent ext: {line}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[gateway] agent ext 불러오기 실패: {e!r}", flush=True)
+    async def _warm():                     # 첫 화면(XI맵 · 대시보드)이 쓰는 요약 · 지역 파생을 뒤에서 미리 계산(GPT2-4 — 기동 직후 첫 요청 3초)
+        try:
+            from . import summary as _sm
+            await regions.derived()
+            await _sm.warm()
+        except Exception as e:  # noqa: BLE001
+            print(f"[gateway] warm 실패: {e!r}", flush=True)
+    warm_task = asyncio.create_task(_warm())
     task = asyncio.create_task(ops.alert_loop())
     yield
     task.cancel()

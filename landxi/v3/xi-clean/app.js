@@ -43,7 +43,10 @@ const PRE = SESS ? {
   cat: swr('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: SESS.realm === 'lx' ? 'lx' : 'tenant', locale: 'ko' })).catch(() => ({ items: [], ladder: {} })),
   emd: swr('/survey/stats?by=emd').catch(() => ({ items: [], failed: true })),
   rule: swr('/survey/stats?by=rule').catch(() => ({ items: [], failed: true })),
+  // 전국 요약 — 첫 HUD 숫자를 다른 자료와 함께 미리(차례로 부르면 첫 진입이 그만큼 늦다 · GPT2-4)
+  sum: SESS.realm === 'lx' && !new URLSearchParams(location.search).get('region') ? api('/summary') : null,
 } : {};
+PRE.sum?.catch(() => {});
 /* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
 const scopeFC = (j) => ({ features: (j?.items || []).filter((it) => it.geometry).map((it) => ({ type: 'Feature', geometry: it.geometry,
   properties: { code: String(it.sgg_cd), prev: it.prev_cd ? String(it.prev_cd) : null, name: it.name, sido: String(it.full || '').split(/\s+/)[0] || it.sido } })) });
@@ -172,11 +175,12 @@ async function boot() {
   const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '가르기', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'));
   const loadEl = h('div.xc-load');
   mainEl.append(stageEl, bEl, fx, hud, pop, grip, loadEl);
-  loadK = K.empty(h('div.xc-load-c'), { kind: 'loading', progress: 0.08 });
+  loadK = K.empty(h('div.xc-load-c'), { kind: 'loading', progress: 0.08, what: '지역 경계와 분석 집계' });   // 무엇을 기다리나(GPT2-4)
+  X.waitFor = '지역 경계와 분석 집계';
   loadEl.append(loadK.el);
   S.els = { stageEl, bEl, fx, hud, grip, loadEl };
 
-  stage = K.createStage(stageEl);
+  stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
@@ -211,7 +215,7 @@ async function boot() {
 
   const [cat] = await Promise.all([catP, stage.ready]);
   S.cat = cat;
-  mark('data'); loadK.set({ progress: 0.45 });
+  mark('data'); loadK.set({ progress: 0.45, what: (X.waitFor = '지도') });
 
   await buildLayers(cat);
   mark('layers'); loadK.set({ progress: 0.7 });
@@ -228,7 +232,7 @@ async function boot() {
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw']);
   document.addEventListener('kit:agent-action', (e) => { if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });
 
-  loadK.set({ progress: 0.85 });
+  loadK.set({ progress: 0.85, what: (X.waitFor = r0 ? '지역 결과 요약' : '전국 결과 요약') });
   mark('canvas');
   // 도착 = HUD 숫자 + 지도(지역 베일 · 점)가 그려진 순간. 관할로 날아가는 카메라(2.4초)는 기다리지 않는다
   // 로딩 판은 도착 순간에 걷는다(덜 그려진 지도를 먼저 보이지 않게)
@@ -741,7 +745,10 @@ async function refreshAI(my) {
   S.hudFail = false;
   let j = null;
   for (let t = 0; ; t++) {
-    try { j = await api('/summary' + (S.region ? '?' + new URLSearchParams({ region: S.region.code }) : '')); break; }
+    try {
+      const pre = !S.region && t === 0 ? PRE.sum : null; PRE.sum = null;   // 미리 부른 전국 요약은 첫 번 한 번만
+      j = await (pre || api('/summary' + (S.region ? '?' + new URLSearchParams({ region: S.region.code }) : ''))); break;
+    }
     catch (e) {
       K.devlog('summary', `${e.code || e.name || ''} ${e.status ?? 0} (시도 ${t + 1})`);
       if (my !== seq) return;
@@ -1551,7 +1558,7 @@ function cmpBar() {
 /* 입체 — 지형(카탈로그 terrain) + 기울기 · 지형은 지역 축척에서만 */
 async function terrainFor(z) {
   const dem = (S.cat?.items || []).find((i) => i.kind === 'terrain');
-  const want = !!(S.tilt && dem && z < 13.5);
+  const want = !!(S.tilt && dem && z >= 8 && z < 13.5);   // 전국 축척은 지형 없이 기울기만(지형 자료는 지역 것 · 타일 빈자리 줄임 · GPT2-1)
   const has = !!map.getTerrain();
   if (want && !has) { if (!map.getSource('xc-dem')) map.addSource('xc-dem', await sourceSpec(dem)); map.setTerrain({ source: 'xc-dem', exaggeration: 1.4 }); }
   else if (!want && has) map.setTerrain(null);
@@ -1561,6 +1568,7 @@ async function toggleTilt() { await setView(S.tilt ? 0 : TILT.pitch, S.tilt ? 0 
 /** 시점 — '입체' 버튼과 말로 하는 시점(map_view)이 같은 코드: 기울기 > 0 이면 입체(지형 포함) */
 async function setView(pitch, bearing) {
   S.tilt = pitch > 0; patchRail();
+  if (S.els?.hud) S.els.hud.dataset.tilt = S.tilt ? '1' : '';   // 입체 = 큰 숫자를 작은 칸으로(GPT2-1)
   await terrainFor(map.getZoom());
   map.easeTo({ pitch, bearing, duration: RM() ? 0 : 1250, easing: (t) => 1 - Math.pow(1 - t, 3) });
 }
@@ -1569,7 +1577,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) clos
 /* 늦음 안내 — 12초 안에 도착하지 못하면 말없이 '불러오는 중'에 머물지 않는다(탭이 많아 연결이 막힌 때 등 · c2-numbers) */
 { // 숨은 탭은 지도가 그려지지 않아 늦는 것이 정상 — 보이는 동안 12초를 넘길 때만 알린다
   let tm = 0;
-  const slow = () => { if (X.boot.ready || document.documentElement.dataset.xc === 'error') return; if (document.hidden) return; X.slow = true; try { K.toast('서버 응답이 늦습니다 · 열린 Land-XI 창을 몇 개 닫고 다시 시도하세요', { ms: 30000, action: { label: '다시 시도', onClick: () => location.reload() } }); } catch { /* */ } };
+  const slow = () => { if (X.boot.ready || document.documentElement.dataset.xc === 'error') return; if (document.hidden) return; X.slow = true; try { K.toast(`서버 응답이 늦습니다 · ${X.waitFor || '자료'} 불러오는 중`, { ms: 30000, action: { label: '다시 시도', onClick: () => location.reload() } }); } catch { /* */ } };
   const arm = () => { clearTimeout(tm); if (!document.hidden && !X.boot.ready) tm = setTimeout(slow, 12000); };
   document.addEventListener('visibilitychange', arm); arm(); }
 boot().catch((e) => { console.warn('[xi-clean]', e); document.documentElement.dataset.xc = 'error'; X.err = String(e?.message || e); try { K.toast('XI맵을 열지 못했습니다'); } catch { /* */ } });

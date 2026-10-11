@@ -161,21 +161,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     cardQuote();
   }
 
-  /** 결과까지 걸릴 시간 — 같은 영상 · 같은 해상도로 끝난 최근 분석의 실제 속도(칩/벽시계 초)가 있으면 그것, 없으면 서버 견적 */
-  async function measuredEta(imgId, up, q) {
-    try {
-      const j = await api('/jobs?state=done&limit=100');
-      const done = (j.items || []).filter((x) => x.kind === 'infer' && x.chips_per_wall_s?.value > 0);
-      // 가까운 기록부터: 같은 영상 · 같은 해상도 → 같은 영상 → 최근 분석 전체
-      const tiers = [done.filter((x) => x.imagery_id === imgId && (x.options?.upsample || 1) === up), done.filter((x) => x.imagery_id === imgId), done];
-      const rates = (tiers.find((t) => t.length) || []).map((x) => x.chips_per_wall_s.value).sort((a, b) => a - b);
-      if (rates.length) {
-        const med = rates[Math.floor(rates.length / 2)];
-        return { value: Math.round(q.shards / med + 5), unit: 's', basis: 'estimate', as_of: new Date().toISOString(), source: '분석 작업 기록', note: `최근 같은 영상 분석 ${rates.length}건의 실제 속도` };
-      }
-    } catch { /* 기록 없음 */ }
-    return q.eta_s;
-  }
+  /** 결과까지 걸릴 시간 — 서버 견적 eta_s 한 출처(끝난 실제 분석 기록 · 분석하기 '결과까지'와 같은 값 · GPT2-2) */
+  async function measuredEta(imgId, up, q) { return q.eta_s; }
   function cardMsg(text, { record = true, sgg = false } = {}) {
     card.innerHTML = '';
     card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), h('p.xa-msg', { text }));

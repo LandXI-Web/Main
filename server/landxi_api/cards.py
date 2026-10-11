@@ -26,7 +26,7 @@ from starlette.concurrency import run_in_threadpool
 
 from . import config, summary
 from .deps import ApiError, audit, db, principal, require
-from .envelope import env, now_iso
+from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
@@ -116,6 +116,45 @@ def _biz(it: dict, inf: dict, fc_first: bool = False) -> tuple | None:
     return None
 
 
+_VAL_N: dict[str, int | None] = {}
+
+
+def val_images(md, n_val: dict) -> int | None:
+    """검증 정확도의 기준 — 학습 끝 검증에 쓴 영상 수(GPT2-7 · 원칙 181). 이 화면에서 학습한 모델 = 학습 자료 기록(train_samples.n_val) ·
+    밖에서 들여온 모델 = 학습 폴더(args.yaml 의 data → dataset.yaml 의 val 폴더)의 영상 파일 수. 둘 다 없으면 None(지어내지 않는다)."""
+    sid = str(md.get("sample_id") or "") if hasattr(md, "get") else ""
+    if sid and n_val.get(sid):
+        return int(n_val[sid])
+    mid = md["id"]
+    if mid in _VAL_N:
+        return _VAL_N[mid]
+    out = None
+    try:
+        from pathlib import Path
+        import yaml
+        w = Path(str(md["weights_uri"] or ""))
+        run = w.parent.parent if w.parent.name == "weights" else None
+        if run and (run / "args.yaml").exists():
+            data = str((yaml.safe_load((run / "args.yaml").read_text(encoding="utf-8")) or {}).get("data") or "")
+            cands = [Path(data)] if Path(data).is_absolute() else [d / data for d in [run, *run.parents][:5]]
+            ds = next((c for c in cands if c.exists()), None)
+            if ds:
+                y = yaml.safe_load(ds.read_text(encoding="utf-8")) or {}
+                val = y.get("val")
+                base = Path(str(y.get("path") or ds.parent))
+                vals = val if isinstance(val, list) else [val] if val else []
+                n = 0
+                for v in vals:
+                    vp = Path(str(v)) if Path(str(v)).is_absolute() else base / str(v)
+                    if vp.is_dir():
+                        n += sum(1 for f in vp.iterdir() if f.suffix.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"))
+                out = n or None
+    except Exception:  # noqa: BLE001 — 폴더를 못 읽으면 기준 줄을 내지 않는다
+        out = None
+    _VAL_N[mid] = out
+    return out
+
+
 def _vnum(v) -> float | None:
     try:
         return float(v)
@@ -166,11 +205,13 @@ async def _load(conn) -> dict:
         info[r["card_id"]] = d
     vers = await conn.fetch("SELECT id, card_id, version, model_ids, modules, approved_at FROM card_versions ORDER BY card_id, id")
     models = {r["id"]: r for r in await conn.fetch("SELECT id, task, classes, gsd_trained_m, weights_uri, status, input, metrics, sample_id FROM models")}
+    n_val = {r["id"]: r["n_val"] for r in await conn.fetch("SELECT id, n_val FROM train_samples WHERE n_val IS NOT NULL")}
     appr = await conn.fetch("SELECT payload->>'card_id' AS cid, state, at FROM approvals WHERE subject_type='card' ORDER BY at")
     jobs = await conn.fetch(
-        "SELECT card_id, options->>'sgg_cd' AS sgg, options->>'coverage' AS cov, perf->>'elapsed_s' AS el, finished_at FROM jobs "
-        "WHERE card_id IS NOT NULL AND state='done' AND options->>'scope'='sgg' AND NOT coalesce(test,false) AND NOT coalesce(demo,false) "
-        "AND perf ? 'elapsed_s' ORDER BY finished_at DESC")
+        "SELECT j.card_id, j.options->>'sgg_cd' AS sgg, j.options->>'coverage' AS cov, j.perf->>'elapsed_s' AS el, j.finished_at, i.year AS iyear, i.gsd_m AS igsd "
+        "FROM jobs j LEFT JOIN imagery i ON i.id=j.imagery_id "
+        "WHERE j.card_id IS NOT NULL AND j.state='done' AND j.options->>'scope'='sgg' AND NOT coalesce(j.test,false) AND NOT coalesce(j.demo,false) "
+        "AND j.perf ? 'elapsed_s' ORDER BY j.finished_at DESC")
     lead = await conn.fetch("SELECT l.ref, p.id, p.name, p.lead_id, u.name AS lead FROM project_links l JOIN projects p ON p.id=l.project_id "
                             "LEFT JOIN lx_users u ON u.id=p.lead_id WHERE l.kind='card' ORDER BY l.at")
     rules = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM survey_rules")}
@@ -178,7 +219,7 @@ async def _load(conn) -> dict:
     owner_names = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM lx_users")}
     from . import categories
     cats = await categories.load(conn)          # 분야 목록(LX 관리자가 관리 · 순서) + 서비스 × 분야(여러 개)
-    return {"cards": cards, "info": info, "vers": vers, "models": models, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
+    return {"cards": cards, "info": info, "vers": vers, "models": models, "n_val": n_val, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
             "owner_names": owner_names, "learned": _learned, "gsd_word": gsd_word, "cats": cats}
 
 
@@ -295,13 +336,18 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     if not img_words:
         img_words = [INPUT_WORD.get(x, "") for x in (kind.get("input") or []) if INPUT_WORD.get(x)]
     imagery = inf.get("imagery") or " · ".join(img_words) or None
-    job = next((j for j in m["jobs"] if j["card_id"] == cid and _vnum(j["el"])), None)
+    # 걸리는 시간 = 이 카드로 시군구를 95% 이상 덮은 최근 실제 분석 한 건(작은 범위 · 시험 분석을 '전역'으로 부르지 않는다 — GPT2-2: 0.07% 범위 2초 기록이
+    # '○○ 전역 약 1분 안'으로 보였다) + 전제(어느 영상 · 언제 기록)
+    job = next((j for j in m["jobs"] if j["card_id"] == cid and _vnum(j["el"]) and (_vnum(j["cov"]) or 0) >= 0.95), None)
     time = None
     if job and p.realm != "tenant":
         cov = _vnum(job["cov"])
         reg = _short(None, job["sgg"]).split()[0] if job["sgg"] else ""
         reg = re.sub(r"(시|군|구)$", "", reg) if len(reg) > 2 else reg
+        iw = " ".join(x for x in (f"{job['iyear']}년" if job.get("iyear") else "", gw(job.get("igsd"))) if x)
+        fin = job["finished_at"]
         time = {"text": f"{reg} 전역 {_dur(_vnum(job['el']))}".strip(), "seconds": round(_vnum(job["el"]) or 0),
+                "premise": " · ".join(x for x in (f"{iw} 영상" if iw else "", f"{fin.astimezone(KST).month}.{fin.astimezone(KST).day} 분석 실제 시간" if fin else "") if x),
                 "region": _short(None, job["sgg"]),
                 "coverage": env(round(cov * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}
     # 찾는 것 = 카드 판이 찾는 분류(서비스 만들기에서 고른 것 · 분석 작업이 결과로 남기는 분류와 같은 출처 · 손으로 적은 글보다 먼저) —
@@ -346,7 +392,9 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         e = next((mt[k] for k in ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50") if isinstance(mt.get(k), dict) and _vnum(mt[k].get("value")) is not None), None)
         if e:
             ad = str(e.get("as_of") or "")
-            model_card = {"id": md["id"], "acc": env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
+            nv = val_images(md, m.get("n_val") or {})
+            model_card = {"id": md["id"], "acc": {**env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
+                                                  **({"basis_line": f"검증 영상 {nv:,}장 기준", "val_images": nv} if nv else {})},
                           "updated": ad.replace("-", ".")[:10] or None}
             break
     registered = any((md["status"] or "") == "registered" for md in cur_learned)
@@ -776,22 +824,6 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
                         "coverage": env(round(float(cov) * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}}
 
 
-async def _measured_rate(conn, img_id: str | None, up: float) -> tuple[float | None, int]:
-    """최근 끝난 AI 분석의 실제 속도(칸/벽시계 초) — 같은 영상 · 같은 해상도 → 같은 영상 → 최근 분석 전체(XI맵 '결과까지'와 같은 규칙)."""
-    rows = await conn.fetch("SELECT imagery_id, options, perf FROM jobs WHERE state='done' AND kind='infer' AND perf IS NOT NULL "
-                            "AND NOT coalesce(test,false) ORDER BY finished_at DESC LIMIT 100")
-    done = []
-    for r in rows:
-        v = ((r["perf"] or {}).get("chips_per_wall_s") or {}).get("value") if isinstance((r["perf"] or {}).get("chips_per_wall_s"), dict) else (r["perf"] or {}).get("chips_per_wall_s")
-        if _vnum(v) and _vnum(v) > 0:
-            done.append((r["imagery_id"], float((r["options"] or {}).get("upsample") or 1), float(v)))
-    for tier in ([d for d in done if d[0] == img_id and d[1] == up], [d for d in done if d[0] == img_id], done):
-        if tier:
-            rates = sorted(d[2] for d in tier)
-            return rates[len(rates) // 2], len(tier)
-    return None, 0
-
-
 def _job_body(cid: str, name: str, pl: dict) -> dict:
     return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석하기 · {name}"[:60],
             "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": 0.25}}
@@ -878,12 +910,15 @@ async def fit(cid: str, region: str, request: Request, imagery: str | None = Non
                        note={"no_imagery": "이 지역에 등록된 영상이 없습니다", "too_large": "범위가 너무 큽니다 — XI맵에서 읍면동으로 나눠 분석해 주세요",
                              "power_budget": "지금은 GPU 가 바쁩니다 — 잠시 뒤 다시"}.get(why, "지금은 분석할 수 없습니다"))
             return out
-        async with db(realm="lx") as conn:
-            rate, n = await _measured_rate(conn, (q.get("imagery") or {}).get("id"), float(q.get("upsample") or 1))
-        sec = round(q["shards"] / rate + 5) if rate and q.get("shards") else _vnum((q.get("eta_s") or {}).get("value"))
-        out["eta"] = {"seconds": sec, "text": _dur(sec), "basis": "최근 분석 기록" if rate else "모델 속도"} if sec else None
+        # 결과까지 = 견적의 eta_s 한 출처(jobs.measured_eta — 끝난 실제 분석 기록 · XI맵 확인 카드와 같은 값 · GPT2-2) + 전제(고른 영상 · 범위)
+        e = q.get("eta_s") or {}
+        sec = _vnum(e.get("value"))
         sc = q.get("scope") or {}
         out["scope_text"] = sc.get("text") if isinstance(sc, dict) else None
+        rec = e.get("source") == "분석 작업 기록"
+        out["eta"] = {"seconds": round(sec), "text": _dur(sec), "basis": "최근 분석 기록" if rec else "모델 속도",
+                      "premise": " · ".join(x for x in (pl["imagery"]["word"] and f"{pl['imagery']['word']} 영상", f"{pl['name']} 전역" if (pl["imagery"]["coverage"]["value"] or 0) >= 95 else (f"{pl['name']}의 {pl['imagery']['coverage']['value']}%" if pl["imagery"]["coverage"]["value"] else ""),
+                                                        e.get("note") if rec else "모델 속도로 셈") if x)} if sec else None
     return out
 
 

@@ -50,14 +50,23 @@ async function authBlob(path) {
   return URL.createObjectURL(b);
 }
 
+/* 대체 그림(GPT2-5 · 원칙 140 같은 틀) — 결과 장면 · 학습 표본을 못 받으면 회색 빈 칸 대신 모든 카드가 같은 영상 그림 + '결과 장면 없음' 한 줄.
+   학습 표본 그림은 카드마다 한 번만 받는다(거르기 · 페이지를 바꿔도 같은 그림 · 다시 받는 동안 빈 칸 0) */
+function fallbackSrc() { return new URL('./img/fallback-aerial.jpg', import.meta.url).href; }   // 함수 — 맨 위 await(gallery)가 먼저 돈다
+function blobOnce(path) { const m = (globalThis.__laBlobs ||= new Map()); if (!m.has(path)) m.set(path, authBlob(path)); return m.get(path); }
 function acCard(c, href, more) {
-  const blank = (p) => { p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '결과 장면이 아직 없습니다' })); };
   const pic = h('div.k-sc-crop.la-ac-pic');
+  const blank = (p) => {
+    p.classList.remove('is-sample');
+    const keep = [...p.querySelectorAll('.la-ac-cat')];
+    p.replaceChildren(h('img.la-ac-fb', { src: fallbackSrc(), alt: '', decoding: 'async', onerror: () => { p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '결과 장면 없음' }), ...keep); } }),
+      h('span.k-sc-ex', { text: '결과 장면 없음' }), ...keep);
+  };
   const img = (src) => h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) });
   if (c.scene?.src) pic.append(img(c.scene.src));
   else if (c.sample) {                                     // 결과 장면이 없으면 학습 표본(직원 전용 — 로그인 토큰으로 받는다)
     pic.classList.add('is-sample');
-    authBlob(c.sample).then((u) => pic.append(img(u))).catch(() => blank(pic));
+    blobOnce(c.sample).then((u) => pic.prepend(img(u))).catch(() => blank(pic));
   } else blank(pic);
   if ((c.groups || []).length) pic.append(h('div.la-ac-cat', {}, ...c.groups.map((g) => h('span', { text: g }))));   // 분야(여러 개 · 질문 5)
   const md = c.model || {};
@@ -69,7 +78,8 @@ function acCard(c, href, more) {
       h('h3.k-sc-t', { text: c.name || '' }),
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
       h('div.la-ac-hero', {},
-        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: '검증 정확도' })),
+        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: '검증 정확도' }),
+          h('small.la-ac-basis', { text: md.acc?.basis_line || (acc === null ? '' : '검증 영상 수 기록 없음') })),   // 기준 한 줄(모델 기록 · GPT2-7 · 원칙 181) — 모든 카드 같은 자리(원칙 140)
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '—', title: tg.join(' · ') })),
       (c.imagery_kinds || []).length ? h('div.la-ac-imk', { 'aria-label': '쓸 수 있는 영상' }, ...c.imagery_kinds.map((k) => h('span', { text: k }))) : null,
@@ -270,13 +280,13 @@ function condCard(c) {
   const acc = L?.acc && L.acc.value !== null && L.acc.value !== undefined ? `검증 정확도 ${L.acc.value}%` : '';
   const smp = L?.sample;
   const learnRows = L ? [
-    ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', '모델 기록 · 학습 끝 검증 값'],
+    ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', L.acc?.basis_line ? `학습 끝 ${L.acc.basis_line}` : '모델 기록 · 학습 끝 검증 값'],
     ...(smp ? [['학습 자료', [smp.region, smp.task, `표본 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
     ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `검증 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
   ] : [];
   const rows = [
     ['입력 영상', c.imagery || '—'], ['시점', c.timepoints || '—'],
-    ['걸리는 시간', t ? t.text : '첫 분석 뒤 표시', t ? '최근 분석 기록' : ''],
+    ['걸리는 시간', t ? t.text : '첫 분석 뒤 표시', t ? (t.premise || '최근 분석 기록') : ''],   // 전제(어느 영상 · 언제 기록) — 서버 한 출처(GPT2-2)
     ['찾는 것', c.finds || '—'], ...learnRows,
     ['버전 · 담당', `${c.version ? 'v' + c.version : '판 없음'} · ${c.owner || '담당 미지정'}`],
   ];
@@ -433,7 +443,7 @@ function analyzePanel(side, c, picker) {
       const secs = ok.map(([, p]) => p.fit.eta?.seconds).filter((x) => x);
       const words = ok.map(([, p]) => `${p.name} ${p.fit.eta?.text || '첫 분석 뒤 표시'}`);
       eta.replaceChildren(ok.length === 1 && secs.length ? h('b', { text: ok[0][1].fit.eta.text }) : h('span.la-dash', { text: `${ok.length}곳` }),
-        h('span', { text: ok.length === 1 ? (ok[0][1].fit.eta ? '최근 같은 영상 분석의 실제 속도로' : '첫 분석 뒤 표시') : words.join(' · ') }));
+        h('span', { text: ok.length === 1 ? (ok[0][1].fit.eta ? (ok[0][1].fit.eta.premise || '최근 분석 기록으로') : '첫 분석 뒤 표시') : words.join(' · ') }));
     }
     go.disabled = !ok.length;
     go.textContent = ok.length > 1 ? `${ok.length}곳 분석 시작` : '분석 시작';
