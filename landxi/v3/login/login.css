@@ -31,6 +31,8 @@ body.t { overflow: hidden; }
 .door { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 40px; overflow: auto; }
 .door__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 16px; }
 .door__mark { display: block; height: 16px; width: auto; }
+.door__home { display: block; line-height: 0; border-radius: 4px; }
+.door__home:focus-visible { outline: 2px solid var(--accent, #00A39A); outline-offset: 4px; }
 /* 입구 표기 — 관리자 · 기관 입구만(메인 입구는 표기 없음). 라벨 14 · 보조 잉크 · 한 줄 */
 .door__site { font: 500 var(--fs-label)/1 var(--font-body); color: var(--sub); white-space: nowrap; }
 
