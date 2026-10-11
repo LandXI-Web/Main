@@ -364,7 +364,7 @@ async function main() {
 
   function drawCrumbs() {
     crumbs.innerHTML = '';
-    crumbs.append(h('button.gl-crumb.gl-crumb--globe', { type: 'button', 'aria-label': 'Globe', 'aria-current': S.level === 'globe' ? 'true' : null, html: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c2.2 2 2.2 12 0 14M10 3c-2.2 2-2.2 12 0 14"/></svg>', onclick: () => toGlobe() }));
+    crumbs.append(h('button.gl-crumb.gl-crumb--globe', { type: 'button', text: '지구본', 'aria-current': S.level === 'globe' ? 'true' : null, onclick: () => toGlobe() }));
     if (S.country) {
       crumbs.append(h('span.gl-sep', { 'aria-hidden': 'true', text: '›' }));
       crumbs.append(S.level === 'country' ? h('span.gl-crumb.is-now', { text: S.country.name }) : h('button.gl-crumb', { type: 'button', text: S.country.name, onclick: () => toCountry(S.country) }));

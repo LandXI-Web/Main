@@ -27,7 +27,7 @@ const stageEl = h('div.dp-stage');
 const tabs = h('div.dp-tabs', { role: 'tablist', 'aria-label': '배포·서비스 관리' },
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-deploy', 'aria-selected': 'true', text: '배포' }),
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-ops', 'aria-selected': 'false', text: '서비스 관리' }));
-const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '기관에 공유', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>기관에 공유</span>' });
+const plantBtn = h('button.t-btn.dp-plant', { type: 'button', text: '기관에 공유' });
 const top = h('div.dp-top', {}, tabs, h('span.sp'), plantBtn);
 const legend = h('div.dp-legend', { 'aria-hidden': 'true' }, h('span', {}, h('i'), '운영'), h('span', {}, h('i', { dataset: { s: 'pilot' } }), '시범'), h('span', {}, h('i', { dataset: { s: 'draft' } }), '적용 요청'));
 const opsEl = h('section.dp-ops', { hidden: true, role: 'tabpanel', 'aria-labelledby': 'tab-ops' });

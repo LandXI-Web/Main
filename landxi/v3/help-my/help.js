@@ -79,7 +79,7 @@ async function faq(el) {
   if (!rows.length) { el.append(h('p.hm-none', { text: '공지가 없습니다' })); return; }
   const list = h('div.hm-faq');
   for (const r of rows) {
-    const d = h('details.hm-q', {}, h('summary', {}, h('span', { text: r.q }), h('i', { 'aria-hidden': 'true', html: svg('go') })), h('p', { text: r.a }));
+    const d = h('details.hm-q', {}, h('summary', {}, h('span', { text: r.q })), h('p', { text: r.a }));
     d.addEventListener('toggle', () => { if (d.open) list.querySelectorAll('details[open]').forEach((x) => x !== d && (x.open = false)); });
     list.append(d);
   }
@@ -88,8 +88,8 @@ async function faq(el) {
 
 /* ── 탭 3 · 문의 (전화 · 메일 두 줄) ── */
 function contact(el) {
-  const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `${svg('tel')}<span class="hm-v">${esc(CONTACT.tel)}</span>` });
-  const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `${svg('mail')}<span class="hm-v">${esc(CONTACT.mail)}</span>` });
+  const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `<span class="hm-v">${esc(CONTACT.tel)}</span>` });
+  const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `<span class="hm-v">${esc(CONTACT.mail)}</span>` });
   const ask = h('button.t-btn.t-btn--2.hm-ask', { type: 'button', text: '문의하기', onclick: () => openInquiry() });   // 문의 창(메인 · 로그인 창과 같은 부품 · 10-11 메인 지시 3)
   el.append(h('div.hm-contact', {}, tel, mail, ask));
   liveContact().then((c) => {          // LX 관리자 '운영 정보' 값(원칙 170) — 못 읽으면 처음 값 그대로
