@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>요청하기</title>
-<meta name="description" content="영상을 넣어 분석을 맡기거나, 새로 찍어 달라고 요청합니다. LX 담당이 받습니다.">
+<meta name="description" content="LX가 가진 영상으로 분석을 맡기거나, 새로 찍어 달라고 요청합니다. LX 담당이 받습니다.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../kit/kit.css">
@@ -22,7 +22,7 @@
  <div class="gs-page gq">
   <!-- 요청하기(18차 촬영-1 ⓑ · 원칙 120) — 탭 셋: 분석 요청(기관-5 ⓐ — 왼쪽 세 단계 · 오른쪽 '어디를 분석하나' · 내가 보낸 요청) · 촬영 요청(shoot.js) · 보낸 요청(sent.js) -->
   <header class="gs-head">
-    <div class="gs-head-t"><h1>요청하기</h1><p class="gs-sub">영상을 넣어 분석을 맡기거나, 새로 찍어 달라고 요청합니다 — LX 담당이 받습니다</p></div>
+    <div class="gs-head-t"><h1>요청하기</h1><p class="gs-sub">LX가 가진 영상으로 분석을 맡기거나, 새로 찍어 달라고 요청합니다 — LX 담당이 받습니다</p></div>
   </header>
   <nav class="gs-tabs gq-tabs" role="tablist" aria-label="요청하기">
     <button type="button" class="gs-tab" role="tab" data-tab="new" aria-selected="true">분석 요청</button>
@@ -32,10 +32,11 @@
   <div class="gq-grid gq-pane" data-pane="new">
     <div class="gq-col" aria-label="분석 요청">
       <section class="gq-stp t-card" data-s="1">
-        <div class="gq-sh"><span class="n">1</span><b>영상 넣기</b><span class="gq-done" id="ok-1"></span></div>
-        <div class="gq-src">
-          <div class="gq-tile" id="shared-tile"><div class="gq-shared" id="shared"></div></div>
-          <div class="gq-tile"><p class="t-label gq-or" id="or">우리 영상 파일</p><div id="drop"></div></div>
+        <div class="gq-sh"><span class="n">1</span><b>영상 고르기</b><span class="gq-done" id="ok-1"></span></div>
+        <!-- 원칙 179 · 185(GPT3-1) — 기관이 파일을 올려 맡기는 칸은 없다(보안 검토 전). 관할을 덮는 LX 영상 중 하나를 고른다 -->
+        <p class="gq-note gq-why" id="src-why">보안 검토 전이라 지금은 LX가 가진 영상으로 분석합니다</p>
+        <div class="gq-src" data-n="1">
+          <div class="gq-tile" id="shared-tile"><div class="gq-shared" id="shared" role="radiogroup" aria-label="분석할 영상"></div></div>
         </div>
         <div class="gq-picked" id="picked" hidden></div>
       </section>

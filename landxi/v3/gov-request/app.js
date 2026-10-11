@@ -1,7 +1,8 @@
 /* gov-request — 기관 분기 화면 · 분석 요청(확인 대장 6차 GF-2 · 2차 D1-ⓑ · 5차 역할-4 ⓑ · 1차 FR-1 · 구현 확인 2차 J-9 · 원칙 100 ·
    구현 5차 기관-5 ⓐ — 이름 '분석 요청'(원칙 113) · 시안 design-r8/gov-design/mock/request.html 모양: 왼쪽 세 단계 · 오른쪽 '어디를 분석하나'(작은 지도) · 내가 보낸 요청).
    공무원은 전문가가 아니다 — 세 단계만:
-     ① 영상 넣기      LX 가 이 기관에 공유한 영상 '불러오기' 또는 우리 영상 파일 끌어 놓기(여러 장 · 진행 막대 · 멈춤 · 이어 올리기)
+     ① 영상 고르기    LX 가 가진 영상 중 이 기관 관할을 덮는(공유된) 영상 하나(원칙 185). 기관이 파일을 올려 맡기는 칸은 없다 —
+                      원칙 179(외부 영상 올리기는 1차 미구현 · 보안 검토 전) · GPT3-1. 서버도 기관 올리기를 막는다(requests.py tenant_upload).
      ② 분석 카드 고르기 그 기관에 켜진 서비스를 서비스 카드 한 벌(kit/service-card · 고르는 모양)로 — 이 영상으로 못 하는 카드는 쉬운 말 한 줄
      ③ 요청하기        메모 한 줄(선택) → '분석 요청' — 무상(원칙 60). LX 관리자 · 담당자가 확인한 뒤 대기열 순서대로.
    형식 · 해상도 · 좌표 같은 전문 글은 화면에 없다 — 서버가 파일에서 읽어 처리하고(관할 밖 판정 등 검사는 그대로), 문제일 때만 쉬운 말 한 줄 + 할 일.
@@ -10,9 +11,8 @@
    결과 지도의 '이 영상으로 분석 요청'은 ?service=<배포본>&imagery=<공유 영상> 으로 열어 그 영상이 들어간 채 시작한다.
    지역 고정값 없음 — 관할 · 서비스 · 공유 영상은 모두 로그인 기관에서. */
 import { shell, gate, createStage, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
-import { api, esc, h, session, LS } from '../kit/util.js';
+import { api, esc, h, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
-import { uploadQueue } from '../kit/dropzone.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';
 import { govRail } from '../gov-select/menu.js';
 import { loadBrand } from '../gov-select/brand.js';
@@ -21,8 +21,6 @@ import { loadSent, drawSent } from './sent.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const STATE_LV = { pending: 'wait', held: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
-const RASTER = ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'ecw', 'img'];
-const SIDECAR = ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'prj', 'aux.xml', 'ovr'];
 const ymd = (s) => (/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')) || []).slice(1).join('.');
 const km2 = (e) => { const v = e?.value; return v == null ? '' : v < 0.01 ? '0.01㎢ 미만' : v < 10 ? `약 ${v.toFixed(2)}㎢` : `약 ${Math.round(v).toLocaleString('ko-KR')}㎢`; };
 /** 영상 종류(사용자 말) — 해상도 숫자 대신 '드론영상 · 항공영상 · 위성영상' */
@@ -49,9 +47,8 @@ loadBrand(who.me.tenant_id).then((b) => {
 devDrawer({ who });
 
 const Q = new URLSearchParams(location.search);
-const DKEY = `gq:draft:${who.me.tenant_id}:${who.me.user?.id || ''}`;
 /* svcs = 배포본(서비스) 목록(GET /requests/services) · cards = 카드 덱(GET /cards/deck — 그 기관 것만) · card = 고른 카드 · svc = 고른 배포본 */
-const S = { svcs: [], cards: new Map(), shared: [], mine: [], card: null, svc: Q.get('service') || null, pick: null, draft: LS.get(DKEY), area: null, sel: null, fitGsd: null };
+const S = { svcs: [], cards: new Map(), shared: [], mine: [], card: null, svc: Q.get('service') || null, pick: null, area: null, sel: null, fitGsd: null };
 
 /* ═════════ 지도 — 넣은 영상이 어디인지 ═════════ */
 const stage = createStage($('#map'), { padding: { top: 28, bottom: 28, left: 28, right: 28 } });   // 오른쪽 '어디를 분석하나' 작은 지도(시안)
@@ -114,25 +111,30 @@ async function refreshSent() {
 }
 document.addEventListener('gq:sent', () => refreshSent());
 
-/* ═════════ ① 영상 넣기 — 공유 영상 · 우리 파일 ═════════ */
+/* ═════════ ① 영상 고르기 — 관할을 덮는 LX 영상 하나(원칙 185 · 179) ═════════ */
 const sharedName = (x) => `${org} ${x.year ? x.year + '년 ' : ''}${kindWord(x.gsd_m)}`;
 function drawShared() {
   const el = $('#shared');
   const list = S.shared.filter((x) => x.analyzable);
-  $('#shared-tile').hidden = !list.length;
-  $('.gq-src').dataset.n = list.length ? '2' : '1';
-  if (!list.length) { el.innerHTML = ''; return; }
-  el.innerHTML = `<p class="t-label">LX가 ${esc(org)}에 공유한 영상</p>` + list.slice(0, 4).map((x) => {
-    const on = S.pick?.source === 'shared' && S.pick.imagery.id === x.id;
-    return `<div class="gq-sr${on ? ' is-on' : ''}" data-id="${esc(x.id)}"><div class="t"><b>${esc(sharedName(x))}</b><span>${x.result_services?.length ? '이미 분석한 영상' : '아직 분석하지 않은 영상'}</span></div>
-      <button type="button" class="t-btn t-btn--2" aria-pressed="${on}">${on ? '불러옴' : '불러오기'}</button></div>`;
+  if (!list.length) {
+    el.innerHTML = `<p class="gq-note">관할을 찍은 LX 영상이 아직 없습니다 — 촬영 요청으로 새로 찍어 달라고 할 수 있습니다</p>
+      <button type="button" class="t-btn t-btn--2 gq-small" data-go="shoot">촬영 요청</button>`;
+    return;
+  }
+  el.innerHTML = '<p class="t-label">관할을 찍은 LX 영상 · 하나를 고르세요</p>' + list.map((x) => {
+    const on = S.pick?.imagery?.id === x.id;
+    return `<div class="gq-sr${on ? ' is-on' : ''}" data-id="${esc(x.id)}" role="radio" aria-checked="${on}" tabindex="0"><div class="t"><b>${esc(sharedName(x))}</b><span>${x.result_services?.length ? '이미 분석한 영상' : '아직 분석하지 않은 영상'}</span></div>
+      <span class="t-chip">${on ? '고름' : '고르기'}</span></div>`;
   }).join('');
 }
-$('#shared').addEventListener('click', (e) => {
-  const r = e.target.closest('.gq-sr'); if (!r || !e.target.closest('button')) return;
-  const x = S.shared.find((i) => i.id === r.dataset.id); if (!x) return;
-  pickShared(x);
-});
+function choose(e) {
+  const r = e.target.closest('.gq-sr'); if (!r) return;
+  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault?.();
+  const x = S.shared.find((i) => i.id === r.dataset.id); if (x) pickShared(x);
+}
+$('#shared').addEventListener('click', choose);
+$('#shared').addEventListener('keydown', choose);
 async function pickShared(x) {
   S.pick = { source: 'shared', imagery: x };
   clearMap();
@@ -146,96 +148,10 @@ async function pickShared(x) {
   ready();
 }
 
-const drop = uploadQueue($('#drop'), {
-  base: '/requests/uploads',
-  fields: () => ({ draft_id: S.draft || undefined }),
-  allow: [...RASTER, ...SIDECAR],
-  max: 20e9,
-  title: matchMedia('(max-width: 640px)').matches ? '눌러서 영상 파일을 고르세요' : '파일을 끌어 놓거나 눌러 고르세요',   // 휴대폰엔 끌어 놓기가 없다
-  kinds: '여러 장도 한 번에 넣을 수 있습니다',
-  onStart: (st) => { if (st.draft_id && st.draft_id !== S.draft) { S.draft = st.draft_id; LS.set(DKEY, S.draft); } },
-  onChange: (items) => {
-    if (items.length && S.pick?.source !== 'upload') { S.pick = { source: 'upload', draft: S.draft, read: null }; shownImg = null; clearMap(); drawShared(); drawPicked(); ready(); }
-    if (!items.length && S.pick?.source === 'upload') { S.pick = null; drawPicked(); fitServices(null); ready(); }
-    const done = items.filter((i) => i.state === 'done');
-    if (!drop?.busy() && done.length && done.length === items.filter((i) => i.state !== 'bad').length) readDraft();
-  },
-});
-let readKey = '';
-async function readDraft() {
-  const key = S.draft + ':' + drop.items().filter((i) => i.state === 'done').map((i) => i.id).join(',');
-  if (!S.draft || key === readKey) return;
-  readKey = key;
-  S.pick = { source: 'upload', draft: S.draft, read: 'loading' };
-  drawPicked();
-  try {
-    const rd = await api(`/requests/drafts/${encodeURIComponent(S.draft)}/read`, { method: 'POST', body: {} });
-    if (readKey !== key) return;
-    S.pick = { source: 'upload', draft: S.draft, read: rd };
-    overlay(rd.overlay);
-    stage.geo('fp', FC([rd.footprint]), 'focus');
-    if (rd.bbox) stage.go(rd.bbox, { maxZoom: 17 });
-    if (rd.ok) { whereCap(rd.place ? `${rd.place} 일대` : '넣은 영상'); await fitServices(rd.gsd_m); }
-  } catch (e) {
-    readKey = '';
-    S.pick = { source: 'upload', draft: S.draft, read: { ok: false, code: e.code } };
-  }
-  drawPicked();
-  ready();
-}
-
-/* 서버가 파일에서 읽은 결과 → 쉬운 말 한 줄(서버 검사 그대로 · 전문 용어 없이) */
-const PLAIN = {
-  no_raster: '영상 파일이 아닙니다 — 촬영한 영상 파일을 넣어 주세요',
-  no_georef: '어디를 찍은 영상인지 알 수 없습니다 — 영상과 함께 받은 파일을 모두 넣어 주세요',
-  no_crs: '어디를 찍은 영상인지 알 수 없습니다 — 영상과 함께 받은 파일을 모두 넣어 주세요',
-  mixed_crs: '한 번에 읽을 수 없는 파일이 섞여 있습니다 — 영상을 하나씩 넣어 주세요',
-  rotated: '한 번에 읽을 수 없는 파일이 섞여 있습니다 — 영상을 하나씩 넣어 주세요',
-  not_ready: '아직 넣는 중인 파일이 있습니다',
-};
-const plainWhy = (r) => (r.code === 'out_of_scope' ? `${org} 밖을 찍은 영상입니다 — ${org} 안을 찍은 영상만 분석합니다` : PLAIN[r.code] || '이 파일은 영상으로 읽지 못했습니다 — 다른 영상을 넣어 주세요');
-
-/* 넣은 영상 한 줄 — 어디를 · 언제 찍었나(사용자 말) / 문제면 쉬운 말 한 줄 + 다른 영상으로 */
+/* 고른 영상 — 목록의 '고름' 표시 하나로 보인다(같은 말 두 번 없음) · 머리에 '영상 준비됨 ✓' */
 function drawPicked() {
-  const el = $('#picked'), ok1 = $('#ok-1');
-  const p = S.pick;
-  const up = p?.source === 'upload';
-  el.hidden = !p || (up && !p.read);
-  ok1.textContent = '';
-  $('#drop').hidden = p?.source === 'upload' && p.read && p.read !== 'loading' && !drop.busy() ? true : false;
-  if (el.hidden) return;
-  const other = h('button.t-btn.t-btn--text.gq-other', { type: 'button', text: '다른 영상으로', onclick: () => resetPick() });
-  if (p.source === 'shared') {
-    el.replaceChildren(h('div.t', {}, h('b', { text: sharedName(p.imagery) }), h('span.ok', { text: 'LX가 공유한 영상 · 분석할 수 있습니다 ✓' })), other);
-    ok1.textContent = '영상 준비됨 ✓';
-    return;
-  }
-  if (p.read === 'loading') { el.replaceChildren(h('div.t', {}, h('b', { text: '넣은 영상을 살펴보는 중' }), h('span', { text: '잠시만 기다려 주세요' }))); return; }
-  const r = p.read;
-  const n = drop.items().filter((i) => i.state === 'done').length;
-  if (!r.ok) {
-    el.replaceChildren(h('div.t', {}, h('b.warn', { text: '이 영상으로는 분석할 수 없습니다' }), ...plainWhy(r).split(' — ').map((t) => h('span', { text: t }))), other);
-    el.dataset.lv = 'warn';
-    return;
-  }
-  delete el.dataset.lv;
-  const where = r.place ? `${r.place} 일대` : '넣은 영상';
-  el.replaceChildren(h('div.t', {},
-    h('b', { text: `${where} ${kindWord(r.gsd_m)} · ${n || r.n || 1}장` }),
-    h('span.ok', { text: `${r.date ? whenWord(r.date) + '에 찍은 영상입니다 — ' : ''}분석할 수 있습니다 ✓` }),
-    r.scope === 'partial' ? h('span', { text: `${org} 밖 부분은 빼고 분석합니다` }) : null), other);
-  ok1.textContent = '영상 준비됨 ✓';
-}
-async function resetPick() {
-  if (S.pick?.source === 'upload') await newDraft();
-  S.pick = null; shownImg = null;
-  clearMap(); drawShared(); drawPicked(); await fitServices(null); ready();
-}
-async function newDraft(keepPick = false) {
-  if (S.draft) { try { await api(`/requests/drafts/${encodeURIComponent(S.draft)}`, { method: 'DELETE' }); } catch { /* 이미 없음 */ } }
-  drop.clear(); S.draft = null; LS.set(DKEY, null); readKey = '';
-  if (!keepPick && S.pick?.source === 'upload') S.pick = null;
-  $('#drop').hidden = false;
+  $('#picked').hidden = true;
+  $('#ok-1').textContent = S.pick ? '영상 준비됨 ✓' : '';
 }
 
 /* ═════════ ② 분석 카드 고르기 ═════════ */
@@ -251,10 +167,8 @@ async function fitServices(gsd) {
 function deployOf(card) {
   const ds = S.svcs.filter((s) => s.card === card);
   if (!ds.length) return null;
-  const sgg = S.pick?.read?.sgg_cd;
   const ib = S.pick?.imagery?.bbox;
-  const hit = (sgg && ds.find((d) => d.sgg_cd === sgg))
-    || (ib && ds.find((d) => d.bbox && !(d.bbox[2] < ib[0] || d.bbox[0] > ib[2] || d.bbox[3] < ib[1] || d.bbox[1] > ib[3])));
+  const hit = ib && ds.find((d) => d.bbox && !(d.bbox[2] < ib[0] || d.bbox[0] > ib[2] || d.bbox[3] < ib[1] || d.bbox[1] > ib[3]));
   return hit || ds[0];
 }
 function cardIds() { const out = []; for (const s of S.svcs) if (s.card && !out.includes(s.card)) out.push(s.card); return out; }
@@ -279,7 +193,7 @@ function drawCards() {
 /* ═════════ ③ 요청하기 ═════════ */
 function ready() {
   const p = S.pick;
-  const img = p && (p.source === 'shared' || (p.read && p.read !== 'loading' && p.read.ok)) && !drop.busy();
+  const img = p?.source === 'shared';
   const ds = S.card ? S.svcs.filter((s) => s.card === S.card) : [];
   const ok = ds.length && !ds.every((d) => d.fits === false);
   const dupe = p?.source === 'shared' && ds.some((d) => p.imagery.result_services?.includes(d.id));
@@ -290,14 +204,13 @@ function ready() {
 $('#go').addEventListener('click', async () => {
   const p = S.pick, go = $('#go');
   go.disabled = true;
-  const body = p.source === 'shared' ? { service_id: S.svc, source: 'shared', imagery_id: p.imagery.id } : { service_id: S.svc, source: 'upload', draft_id: p.draft };
+  const body = { service_id: S.svc, source: 'shared', imagery_id: p.imagery.id };
   body.memo = $('#memo').value.trim() || undefined;
   try {
     const rq = await api('/requests', { method: 'POST', body });
     toast('분석 요청을 보냈습니다 · 확인되면 알려 드립니다');
     refreshSent();
     $('#memo').value = '';
-    if (p.source === 'upload') { drop.clear(); S.draft = null; LS.set(DKEY, null); readKey = ''; $('#drop').hidden = false; }
     S.pick = null; shownImg = null;
     clearMap(); drawShared(); drawPicked();
     await loadMine();
@@ -421,16 +334,6 @@ drawPicked(); ready();
 await pickFromMap().catch((e) => devlog('imagery', e.message));
 await stage.ready;
 if (S.area) stage.go(S.area, { maxZoom: 11 });
-/* 새로 고침 · 다시 들어와도 올리던 묶음 이어 쓰기(멈춘 파일은 다시 고르면 받은 자리부터) */
-if (S.draft) {
-  try {
-    const rd = await api(`/requests/drafts/${encodeURIComponent(S.draft)}/read`, { method: 'POST', body: {} });
-    S.pick = { source: 'upload', draft: S.draft, read: rd };
-    overlay(rd.overlay); stage.geo('fp', FC([rd.footprint]), 'focus'); if (rd.bbox) stage.go(rd.bbox, { maxZoom: 17 });
-    if (rd.ok) await fitServices(rd.gsd_m);
-    drawPicked(); ready();
-  } catch (e) { if (e.code !== 'not_ready') { S.draft = null; LS.set(DKEY, null); } }
-}
 devlog('gov-request', `카드 ${cardIds().length} · 공유 영상 ${S.shared.length} · 보낸 요청 ${S.mine.length}`);
 document.body.dataset.ready = '1';
 void session;

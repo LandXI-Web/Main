@@ -280,7 +280,7 @@ async function drawPublish() {
     h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석하기 카드 그림이 됩니다(PNG · JPG · WebP)' }));
   row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석하기의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
-  row('정확도', accEl, lowEl, h('small', { text: '학습 끝 검증 값' }));
+  row('AI 모델 정확도', accEl, lowEl, h('small', { text: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' }));
   row('학습 데이터', dataEl);
   const rv = d.review;
   row('결과 확인', d.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: d.review_done ? '' : 'rl-warn', text: rv ? `${nf(rv.n)}/${nf(rv.total)}` : '—' }),

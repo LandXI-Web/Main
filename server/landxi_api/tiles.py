@@ -258,6 +258,13 @@ def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | N
         reproject(smask, mask, src_transform=src_tr, src_crs=ds.crs, dst_transform=dst_tr, dst_crs="EPSG:3857", resampling=Resampling.nearest)
     if mask.max() == 0:
         return None
+    # GPT3-7 — 영상 가장자리 어두운 띠: 화소 값은 bilinear 로 바깥(채움 0 = 검정)과 섞이고 마스크는 nearest 라
+    # 가장자리 1~2줄이 어둡게 남았다(실측 z13 첫 줄 밝기 48 ↔ 안쪽 74). 마스크를 안쪽으로 2화소 깎아 섞인 줄을 투명으로.
+    # 타일 테두리는 깎지 않는다(erode 기본 테두리 값 = 최대) — 이웃 타일과 이음매 없음.
+    if mask.min() == 0:
+        mask = cv2.erode(mask, np.ones((5, 5), np.uint8))
+        if mask.max() == 0:
+            return None
     rgba = np.dstack([data[2], data[1], data[0], mask])   # BGRA for cv2
     ok, buf = cv2.imencode(".webp", rgba, [cv2.IMWRITE_WEBP_QUALITY, 82])
     return buf.tobytes() if ok else None
@@ -279,7 +286,8 @@ async def cog_tile(iid: str, z: int, x: int, y: int, request: Request, exp: str 
     src = meta["cog"] if meta["cog"] and os.path.exists(meta["cog"]) else meta["raw"]
     if not src or not os.path.exists(src):
         raise ApiError("cog_unavailable", "원본/COG 파일 없음")
-    cp = config.DATA_ROOT / "cache" / "tiles" / "cog" / iid / ("cog" if src == meta["cog"] else "raw") / str(z) / str(x) / f"{y}.webp"
+    # 캐시 판 'e2' — 가장자리 고침(GPT3-7) 전 타일은 쓰지 않는다(옛 캐시 폴더는 지우지 않고 그대로 둔다)
+    cp = config.DATA_ROOT / "cache" / "tiles" / "cog" / iid / (("cog" if src == meta["cog"] else "raw") + "-e2") / str(z) / str(x) / f"{y}.webp"
     hdr = {"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(COG)" if src == meta["cog"] else "rasterio(source window+reproject)"}  # 머리 값은 ASCII 만(한글이면 500)
     if cp.exists():
         return Response(content=cp.read_bytes(), media_type="image/webp", headers=hdr)

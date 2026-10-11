@@ -126,8 +126,9 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     const page = await gov(browser);
     const sr = page.locator('.gq-sr').first();
     await expect(sr).toBeVisible();
-    await sr.locator('button').click();
-    await expect(page.locator('#picked')).toContainText('LX가 공유한 영상');
+    await sr.click();                                                                  // 하나 고르기(원칙 185)
+    await expect(sr).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('#ok-1')).toContainText('영상 준비됨');
     const card = page.locator('.gq-cards .k-sc[data-card="card-5e85a9"]');
     await expect(card.locator('.k-sc-why')).toContainText('이미 분석했습니다');           // 같은 영상 × 같은 서비스는 다시 의뢰하지 않게
     await expect(card).toHaveAttribute('aria-disabled', 'true');
@@ -141,6 +142,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
   });
 
   test('우리 영상 → 의뢰 → 결재함 한 건 → 승인 → 결과 도착(새 시점)', async ({ browser }) => {
+    test.skip(true, '원칙 179 · GPT3-1 — 기관 영상 올리기 닫힘(보안 검토 전)');
     const tif = makeTif('남원_덕과면_항공_2023.tif', 2048, 0);
     const g = await gov(browser);
     await send(g, tif, 'e2e 승인 확인');
@@ -178,6 +180,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
   });
 
   test('거절 — 사유가 기관 내가 보낸 요청에 보인다', async ({ browser }) => {
+    test.skip(true, '원칙 179 · GPT3-1 — 기관 영상 올리기 닫힘(보안 검토 전)');
     const tif = makeTif('남원_덕과면_항공_2023_b.tif', 512, 0.004);
     const g = await gov(browser);
     await send(g, tif, 'e2e 거절 확인');

@@ -151,6 +151,23 @@ def _twho(request: Request) -> Who:
     return Who(p, p.tenant_id, root_rel(p.tenant_id))
 
 
+UPLOAD_CLOSED = "보안 검토 전이라 지금은 LX가 가진 영상으로 분석합니다"
+
+
+def tenant_upload_open() -> bool:
+    """기관이 파일을 올려 분석을 맡기기 — 원칙 179(외부 영상 올리기는 1차 미구현 · 보안 검토 기록만) · GPT3-1.
+    기본 닫힘(config/requests.yaml tenant_upload). 지난 올리기 기록 · 파일은 그대로 둔다(지우는 길도 닫는다)."""
+    return bool(settings().get("tenant_upload", False))
+
+
+def _twho_up(request: Request) -> Who:
+    """기관 올리기 길(올리기 · 조각 · 끝내기 · 취소 · 묶음 읽기 · 묶음 지우기) — 닫혀 있으면 403."""
+    w = _twho(request)
+    if not tenant_upload_open():
+        raise ApiError("forbidden", UPLOAD_CLOSED, {"why": "upload_closed"}, 403)
+    return w
+
+
 def lx_who(request: Request) -> Who:
     """LX 영상 등록(데이터 올리기 → 영상 등록) — LX 직원 · 관리자만."""
     p = require(principal(request), lx=True)
@@ -453,7 +470,7 @@ async def _find_dup(conn, tenant: str, draft: str, size: int, quick: str | None,
 
 @router.post("/requests/uploads", status_code=201)
 async def up_start(body: dict, request: Request):
-    return await start_upload(_twho(request), body)
+    return await start_upload(_twho_up(request), body)
 
 
 async def start_upload(w: Who, body: dict) -> dict:
@@ -556,7 +573,7 @@ async def upload_state(w: Who, uid: str) -> dict:
 
 @router.put("/requests/uploads/{uid}")
 async def up_chunk(uid: str, request: Request, offset: int = 0):
-    return await put_chunk(_twho(request), uid, request, offset)
+    return await put_chunk(_twho_up(request), uid, request, offset)
 
 
 async def put_chunk(w: Who, uid: str, request: Request, offset: int = 0) -> dict:
@@ -594,7 +611,7 @@ async def put_chunk(w: Who, uid: str, request: Request, offset: int = 0) -> dict
 
 @router.delete("/requests/uploads/{uid}")
 async def up_cancel(uid: str, request: Request):
-    return await cancel_upload(_twho(request), uid)
+    return await cancel_upload(_twho_up(request), uid)
 
 
 async def cancel_upload(w: Who, uid: str) -> dict:
@@ -634,7 +651,7 @@ def _sha_file(path: Path) -> str:
 
 @router.post("/requests/uploads/{uid}/finish")
 async def up_finish(uid: str, request: Request):
-    return await finish_upload(_twho(request), uid)
+    return await finish_upload(_twho_up(request), uid)
 
 
 async def finish_upload(w: Who, uid: str) -> dict:
@@ -674,7 +691,7 @@ async def finish_upload(w: Who, uid: str) -> dict:
 
 @router.delete("/requests/drafts/{did}")
 async def draft_delete(did: str, request: Request):
-    return await delete_draft(_twho(request), did)
+    return await delete_draft(_twho_up(request), did)
 
 
 async def delete_draft(w: Who, did: str) -> dict:
@@ -1050,7 +1067,7 @@ def _public_read(rd: dict) -> dict:
 @router.post("/requests/drafts/{did}/read")
 async def draft_read(did: str, request: Request):
     """올린 파일에서 읽은 값 — '이렇게 읽었습니다'(입력 칸 없음 · 원칙 49). 같은 파일 묶음이면 저장해 둔 값을 다시 쓴다."""
-    p = _tuser(request)
+    p = _twho_up(request).p
     if not re.fullmatch(r"dr_[0-9a-f]{12}", did or ""):
         raise ApiError("not_found", "묶음이 없습니다")
     async with db(realm="lx") as conn:
@@ -1168,6 +1185,8 @@ async def create(body: dict, request: Request):
     memo = (str(body.get("memo") or "").strip()[:200]) or None
     if src not in ("shared", "upload"):
         raise ApiError("bad_request", "영상을 먼저 골라 주세요")
+    if src == "upload" and not tenant_upload_open():
+        raise ApiError("forbidden", UPLOAD_CLOSED, {"why": "upload_closed"}, 403)
     async with db(realm="lx") as conn:
         d = next((x for x in await _services(conn, p.tenant_id) if x["id"] == sid), None)
         org = await _tenant_name(conn, p.tenant_id)

@@ -17,6 +17,10 @@ import pytest
 
 from conftest import B, H, _login
 from landxi_api import config
+from landxi_api.requests import tenant_upload_open
+
+# 원칙 179 · GPT3-1 — 기관이 파일을 올려 맡기는 길은 1차에 닫혀 있다(config/requests.yaml tenant_upload). 열려 있을 때만 올리기 시험을 돈다
+needs_upload = pytest.mark.skipif(not tenant_upload_open(), reason="원칙 179 — 기관 영상 올리기 닫힘(보안 검토 전)")
 
 NAMWON_LL = (127.36654, 35.52301)          # 덕과면(관할 안)
 SEOUL_LL = (126.9780, 37.5665)             # 관할 밖
@@ -116,6 +120,7 @@ def made(live):
 
 
 # ── 조각 올리기 · 이어 올리기 · 취소 ──────────────────────────────────────────────
+@needs_upload
 def test_chunk_upload_resume_and_cancel(nw, made, tmp_path):
     """조각은 받은 자리에만 붙는다(자리가 어긋나면 409 + 받은 바이트) · 같은 파일로 다시 시작하면 받은 자리부터 이어 간다 · 취소하면 조각이 지워진다."""
     f = make_tif(tmp_path / "resume_2025.tif", NAMWON_LL, seed=11)
@@ -151,14 +156,18 @@ def test_chunk_upload_resume_and_cancel(nw, made, tmp_path):
 
 
 def test_format_and_realm_guards(nw, tok, tmp_path):
-    """형식 밖 파일 · LX 계정의 올리기는 받지 않는다."""
+    """형식 밖 파일 · LX 계정의 올리기는 받지 않는다(닫혀 있으면 기관 올리기는 모두 403)."""
     r = httpx.post(B + "/requests/uploads", headers=H(nw), json={"filename": "memo.docx", "size": 100}, timeout=30)
-    assert r.status_code == 400 and r.json()["error"]["code"] == "bad_ext"
+    if tenant_upload_open():
+        assert r.status_code == 400 and r.json()["error"]["code"] == "bad_ext"
+    else:
+        assert r.status_code == 403
     r = httpx.post(B + "/requests/uploads", headers=H(tok["staff"]), json={"filename": "a.tif", "size": 100}, timeout=30)
     assert r.status_code == 403
 
 
 # ── 파일에서 읽기 · 관할 밖 거절 ─────────────────────────────────────────────────
+@needs_upload
 def test_read_values_and_out_of_scope(nw, made, tmp_path):
     """해상도 · 촬영일(파일 이름) · 범위 · 좌표계는 파일에서 읽는다 · 관할 밖 영상은 읽은 뒤 거절, 의뢰도 거절(원칙 39)."""
     f = make_tif(tmp_path / "덕과_20250415.tif", NAMWON_LL, seed=21)
@@ -186,6 +195,7 @@ def test_read_values_and_out_of_scope(nw, made, tmp_path):
 
 
 # ── 의뢰 → 결재함 → 반려(사유) · 승인(대기열 앞 한도에서 멈춤 — GPU 0) ─────────────────────────────
+@needs_upload
 def test_request_reject_and_approve_flow(nw, tok, admin2, made, tmp_path):
     f = make_tif(tmp_path / "flow_2024.tif", NAMWON_LL, seed=31)
     did = upload(nw, f).json()["draft_id"]
@@ -242,6 +252,7 @@ def test_request_reject_and_approve_flow(nw, tok, admin2, made, tmp_path):
 
 
 # ── 같은 파일 두 번 올리기 방지 ─────────────────────────────────────────────────
+@needs_upload
 def test_duplicate_blocked(nw, made, tmp_path):
     f = make_tif(tmp_path / "dup_2024.tif", NAMWON_LL, seed=41)
     u = upload(nw, f)
@@ -260,6 +271,7 @@ def test_duplicate_blocked(nw, made, tmp_path):
 
 
 # ── 저장 공간 — 기관 한도로 막지 않고, 서버 전체 저장 여유가 모자랄 때만 막는다(사용자 7차 답) ─────────────────
+@needs_upload
 def test_storage_server_guard_only(nw):
     """기관 저장 한도를 넘어도 올리기는 받는다(사용 현황으로 기록만) · 서버 디스크 여유 선(설정 한 곳)을 넘으면 거절 + 한 줄 · 한 파일 한도."""
     db = pg()
@@ -326,3 +338,29 @@ def test_shared_request_needs_share(nw, tok):
     """공유되지 않은 영상으로는 의뢰할 수 없다(다른 기관 영상 id 를 알아도)."""
     r = httpx.post(B + "/requests", headers=H(tok["gj"]), json={"service_id": "dp-gj-marine-25", "source": "shared", "imagery_id": "ap25-namwon-2023"}, timeout=60)
     assert r.status_code == 404
+
+
+# ── 원칙 179 · GPT3-1 — 기관 영상 올리기 닫힘(화면 · 서버 둘 다) ─────────────────────────────
+@pytest.mark.skipif(tenant_upload_open(), reason="기관 영상 올리기가 열려 있음")
+def test_tenant_upload_closed(nw):
+    """올리기 · 조각 · 끝내기 · 묶음 읽기 · 묶음 지우기 · 올린 영상으로 요청 — 모두 403 + 사람 말 한 줄. 지난 올리기 기록은 그대로."""
+    c = pg()
+    before = c.execute("SELECT count(*), coalesce(sum(size),0) FROM request_uploads WHERE tenant_id='namwon'").fetchone()
+    did = "dr_000000000000"                                                    # 지난 묶음은 건드리지 않는다(없는 묶음 이름)
+    calls = [
+        httpx.post(B + "/requests/uploads", headers=H(nw), json={"filename": "a_2025.tif", "size": 1000}, timeout=30),
+        httpx.put(B + "/requests/uploads/up_x?offset=0", headers={**H(nw), "content-type": "application/octet-stream"}, content=b"x", timeout=30),
+        httpx.post(B + "/requests/uploads/up_x/finish", headers=H(nw), timeout=30),
+        httpx.delete(B + "/requests/uploads/up_x", headers=H(nw), timeout=30),
+        httpx.post(B + f"/requests/drafts/{did}/read", headers=H(nw), json={}, timeout=30),
+        httpx.delete(B + f"/requests/drafts/{did}", headers=H(nw), timeout=30),
+        httpx.post(B + "/requests", headers=H(nw), json={"service_id": SERVICE, "source": "upload", "draft_id": did}, timeout=30),
+    ]
+    for r in calls:
+        assert r.status_code == 403, (r.request.method, r.request.url, r.text)
+        assert "LX가 가진 영상으로 분석합니다" in r.json()["error"]["message"]
+    after = c.execute("SELECT count(*), coalesce(sum(size),0) FROM request_uploads WHERE tenant_id='namwon'").fetchone()
+    c.close()
+    assert before == after                                                     # 지난 기록 · 파일은 지우지 않는다
+    # 공유 영상(관할을 덮는 LX 영상) 목록은 그대로 열린다
+    assert httpx.get(B + "/requests/shared-imagery", headers=H(nw), timeout=30).status_code == 200

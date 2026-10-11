@@ -68,7 +68,7 @@ function acCard(c, href, more) {
       h('h3.k-sc-t', { text: c.name || '' }),
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
       h('div.la-ac-hero', {},
-        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('검증 영상 n장 기준')은 자세히 화면에만(원칙 187)
+        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('학습에 쓰지 않은 영상 n장으로 잼')은 자세히 화면에만(원칙 187 — 이름은 'AI 모델 정확도' 하나 · GPT3-5)
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '—', title: tg.join(' · ') })),
       (c.imagery_kinds || []).length ? h('div.la-ac-imk', { 'aria-label': '쓸 수 있는 영상' }, ...c.imagery_kinds.map((k) => h('span', { text: k }))) : null,
@@ -269,7 +269,7 @@ function condCard(c) {
   const acc = L?.acc && L.acc.value !== null && L.acc.value !== undefined ? `AI 모델 정확도 ${L.acc.value}%` : '';
   const smp = L?.sample;
   const learnRows = L ? [
-    ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', L.acc?.basis_line ? `학습 끝 ${L.acc.basis_line}` : '모델 기록 · 학습 끝 검증 값'],
+    ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', L.acc?.basis_line || '모델 기록'],
     ...(smp ? [['학습 자료', [smp.region, smp.task, `표본 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
     ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `AI 모델 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
   ] : [];

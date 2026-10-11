@@ -34,6 +34,7 @@ test.describe('impl-3 영상 표준 — 분석 의뢰 올리기', () => {
   test.beforeAll(async ({ request }) => { test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐'); });
 
   test('영상이 아닌 파일은 고르는 순간 알리고 보내지 않는다 · 실제 영상은 받는다', async ({ browser }) => {
+    test.skip(true, '원칙 179 · GPT3-1 — 기관 영상 올리기 닫힘(화면 · 서버) — 열리면 다시 켠다');
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr#namwon', 'gov');

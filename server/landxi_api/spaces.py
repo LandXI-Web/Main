@@ -1001,6 +1001,67 @@ async def space_download(card: str, request: Request, fmt: str = "geojson"):
     return Response(data, media_type=mime + "; charset=utf-8", headers={"content-disposition": _disposition(name), "cache-control": "no-store"})
 
 
+
+@router.get("/spaces/me/guides/{card}/parcels")
+async def space_parcels(card: str, request: Request, limit: int = 300, emd: str | None = None):
+    """서비스 필지 목록(GPT3-2 · 원칙 135) — 그 서비스의 AI 분석 결과가 걸친 필지만(다른 서비스 · 실태조사 규칙 목록 섞지 않음).
+    '필지 엑셀' 내려받기와 같은 행(_parcel_rows · 관할 · 부서 범위 그대로) — 숫자 한 출처. 내려받기 기록은 남기지 않는다(보기만)."""
+    p = _me(request)
+    svc, g, _rows = await _guide_or_404(p, card)
+    sets = g["body"].get("sets") or []
+    only = await _only(p, card)
+    # 결과 하나 = 필지 하나로 센 서비스(결과 설명서 단위 '필지' — 경작·휴경 등)는 결과마다 한 줄 → 대시보드 'AI 분석 결과 n필지'와 같은 수.
+    # 물체를 찾는 서비스(비닐하우스 등)는 결과가 걸친 필지로 묶는다('필지 엑셀'과 같은 행).
+    per_result = ((g["body"].get("what") or {}).get("total") or {}).get("unit") == "필지"
+    if per_result:
+        rows = await _result_parcel_rows(p.tenant_id, sets, only)
+    else:
+        rows, _how = await _parcel_rows(p.tenant_id, sets, await _parcel_src(p.tenant_id, sets), only)
+    by: dict[str, int] = {}
+    for r in rows:
+        by[r.get("emd") or "읍면동 모름"] = by.get(r.get("emd") or "읍면동 모름", 0) + 1
+    pick = [r for r in rows if not emd or r.get("emd") == emd][:max(1, min(int(limit or 300), 2000))]
+    pts = {}
+    if pick:
+        async with db(realm="lx") as c:
+            for a in await c.fetch("SELECT pnu, ST_X(ST_PointOnSurface(geom)) x, ST_Y(ST_PointOnSurface(geom)) y FROM survey_parcels WHERE pnu = ANY($1::text[])",
+                                   [str(r["pnu"]) for r in pick]):
+                pts[a["pnu"]] = [round(float(a["x"]), 6), round(float(a["y"]), 6)]
+    src = "이 서비스의 AI 분석 결과 · 연속지적 필지"
+    m2 = lambda v: env(round(float(v), 1), "m2", "inferred", src) if v is not None else None   # noqa: E731
+    items = [{"id": f"{r['pnu']}:{i}", "pnu": str(r["pnu"]), "addr": r.get("addr") or "", "emd": r.get("emd") or "", "jimok": r.get("jimok") or "",
+              "parcel_m2": m2(r.get("parcel_m2")), "hit_m2": m2(r.get("hit")), "n": int(r["n"] or 0),
+              "classes": sorted({class_ko(x) for x in (r.get("classes") or []) if x}), "lnglat": pts.get(str(r["pnu"]))} for i, r in enumerate(pick)]
+    return {"service": {"card": card, "name": svc["name"]}, "total": env(len(rows), "필지", "inferred", src, "AI 분석 결과가 걸친 필지(관할 안)"),
+            "by_emd": [{"emd": k, "parcels": env(v, "필지", "inferred", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
+            "items": items, "limit": len(items), "as_of": now_iso()}
+
+async def _result_parcel_rows(t: str, sets: list[str], only: list[str] | None = None) -> list[dict]:
+    """결과 하나 = 필지 하나인 서비스의 필지 목록 — 결과마다 한 줄(관할 · 부서 범위는 _parcel_rows 와 같은 규칙)."""
+    if not sets:
+        return []
+    codes = _scope_codes(t, only)
+    if codes is not None and not codes:
+        return []
+    pc = " AND left(x.pnu, 5) = ANY($2::text[])" if codes is not None else ""
+    args = [sets] + ([codes] if codes is not None else [])
+    async with db(realm="lx") as c:
+        await c.execute("SET LOCAL jit = off")
+        rows = [dict(r) for r in await c.fetch(
+            "SELECT x.pnu, x.emd, NULL::text jimok, NULL::numeric parcel_m2, 1 n, x.area_m2 hit, x.conf, ARRAY[x.cls] classes FROM detections x "
+            f"WHERE x.job_id = ANY($1::text[]) AND x.edit_state <> 'deleted' AND x.pnu IS NOT NULL{pc} ORDER BY x.area_m2 DESC NULLS LAST, x.pnu", *args)]
+        if rows:
+            attrs = {a["pnu"]: dict(a) for a in await c.fetch("SELECT pnu, addr, emd, jimok_nm, area_m2 FROM survey_parcels WHERE pnu = ANY($1::text[])",
+                                                               list({r["pnu"] for r in rows}))}
+            for r in rows:
+                a = attrs.get(r["pnu"]) or {}
+                r["addr"] = a.get("addr")
+                r["emd"] = (r.get("emd") if r.get("emd") not in NO_EMD else None) or a.get("emd")
+                r["jimok"] = a.get("jimok_nm")
+                r["parcel_m2"] = a.get("area_m2")
+    return rows
+
+
 async def _parcel_src(t: str, sets: list[str]) -> str | None:
     if not sets:
         return None

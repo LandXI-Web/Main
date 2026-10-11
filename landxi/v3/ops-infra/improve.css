@@ -121,3 +121,5 @@
 .im--c .im-acts{justify-content:flex-start;flex-wrap:wrap}
 .im--c .im-dec{align-items:flex-start;text-align:left;margin-left:0;max-width:none}
 .im--c .im-foot{flex-direction:column}
+/* GPT3-6 — 사용자 질문(가린 요지)은 '질문 원문' 표시로 시스템 문구와 따로 */
+.im-t td.im-g .im-from{display:inline-block;margin-bottom:2px;font:500 12px/16px var(--font-body);color:var(--sub)}

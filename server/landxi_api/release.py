@@ -117,7 +117,7 @@ def low_line(low: list[dict]) -> str | None:
     if not low:
         return None
     parts = " · ".join(f"{x['who']} {x['acc']['value']}%" for x in low)
-    return f"이번 판 정확도가 {parts}보다 낮습니다"
+    return f"이번 판 AI 모델 정확도가 {parts}보다 낮습니다"
 
 
 async def _union_km2(job_ids: list[str]) -> float:

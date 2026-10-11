@@ -95,26 +95,29 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     /* '의심 필지'(필지 대조 후보 · 규칙별로 센 수)는 큰 숫자에서 뺀다 — AI 분석 결과보다 큰 다른 뜻의 수가 나란히 서서 헷갈림(원칙 135 · 10-10 고장) */
     nums.replaceChildren(...[['ai', 'AI 분석 결과'], ['fp', '오탐 · AI가 잘못 봄']].filter(([k]) => n[k])
       .map(([k, l]) => h('div.gs-num', { dataset: { k } }, h('b', { html: K.numHtml(n[k]) }), h('span', { text: l }))));
-    /* 읍면별 표 — 우선순위 A 많은 곳부터 열두 줄 + 그 밖 + 전체 · '모두 펼치기' */
-    const rows = j.emd || [];
-    const max = Math.max(1, ...rows.map((r) => val(r.prio_a) || 0));
-    let all = false;
-    const tb = h('tbody');
-    const fill = () => {
-      const show = all ? rows : rows.slice(0, 12), rest = all ? [] : rows.slice(12);
-      const tr = (r, cls) => h('tr', { class: cls || '' }, h('td', { text: r.name }), h('td.num', { text: nf(val(r.suspect)) }),
-        h('td.gs-bar-c', {}, h('i', { style: `--w:${Math.max(2, Math.round(((val(r.prio_a) || 0) / (cls === 'is-rest' ? (val(r.prio_a) || 1) : max)) * 100))}%` })),
-        h('td.num', { text: nf(val(r.prio_a)) }), h('td.num', { text: nf(val(r.fp)) }));
-      const sum = (k, xs) => xs.reduce((a, r) => a + (val(r[k]) || 0), 0);
-      const restRow = rest.length ? tr({ name: `그 밖 ${rest.length}곳`, suspect: sum('suspect', rest), prio_a: sum('prio_a', rest), closed: sum('closed', rest), fp: sum('fp', rest) }, 'is-rest') : null;
-      tb.replaceChildren(...show.map((r) => tr(r)), ...(restRow ? [restRow] : []),
-        tr({ name: `${B.short} 전체`, suspect: val(n.suspect), prio_a: val(n.prio_a), closed: val(n.closed), fp: val(n.fp) }, 'is-total'));
-    };
-    fill();
-    const more = rows.length > 12 ? h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button', text: `${rows.length}곳 모두 펼치기`, onclick: () => { all = !all; more.textContent = all ? '줄이기' : `${rows.length}곳 모두 펼치기`; fill(); } }) : null;
-    table.replaceChildren(h('div.gd-box-h', {}, h('h2', { text: '읍면별' }), h('span.gd-small', { text: '우선순위 A 많은 곳부터' })),
-      h('div.gs-tbl-w', {}, h('table.gs-tbl', {}, h('thead', {}, h('tr', {}, h('th', { text: '읍면동' }), h('th.num', { text: '의심 필지' }), h('th', { text: '' }),
-        h('th.num', { text: '우선순위 A' }), h('th.num', { text: '오탐' }))), tb)), more);
+    /* 읍면별 표 — 이 서비스의 AI 분석 결과 필지(GPT3-2 · 원칙 135 — 실태조사 규칙 수 · '의심' · 우선순위 칸 없음).
+       필지 목록 · 필지 엑셀과 같은 출처(GET /spaces/me/guides/{서비스}/parcels) · 많은 곳부터 열두 줄 + 그 밖 + 전체 · '모두 펼치기' */
+    let pj = null;
+    try { pj = await api(`/spaces/me/guides/${encodeURIComponent(s.card)}/parcels?limit=1`); } catch { pj = null; }
+    const rows = (pj?.by_emd || []).map((r) => ({ name: r.emd, n: val(r.parcels) || 0 }));
+    const tot = val(pj?.total) || 0;
+    if (!pj || !rows.length) { table.replaceChildren(h('div.gd-box-h', {}, h('h2', { text: '읍면별' })), h('p.gs-none', { text: pj ? 'AI 분석 결과가 걸친 필지가 없습니다' : '읍면별 통계를 불러오지 못했습니다' })); }
+    else {
+      const max = Math.max(1, ...rows.map((r) => r.n));
+      let all = false;
+      const tb = h('tbody');
+      const fill = () => {
+        const show = all ? rows : rows.slice(0, 12), rest = all ? [] : rows.slice(12);
+        const tr = (r, cls) => h('tr', { class: cls || '' }, h('td', { text: r.name }), h('td.num', { text: nf(r.n) }),
+          h('td.gs-bar-c', {}, cls ? null : h('i', { style: `--w:${Math.max(2, Math.round((r.n / max) * 100))}%` })));
+        const restRow = rest.length ? tr({ name: `그 밖 ${rest.length}곳`, n: rest.reduce((a, r) => a + r.n, 0) }, 'is-rest') : null;
+        tb.replaceChildren(...show.map((r) => tr(r)), ...(restRow ? [restRow] : []), tr({ name: `${B.short} 전체`, n: tot }, 'is-total'));
+      };
+      fill();
+      const more = rows.length > 12 ? h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button', text: `${rows.length}곳 모두 펼치기`, onclick: () => { all = !all; more.textContent = all ? '줄이기' : `${rows.length}곳 모두 펼치기`; fill(); } }) : null;
+      table.replaceChildren(h('div.gd-box-h', {}, h('h2', { text: '읍면별' }), h('span.gd-small', { text: 'AI 분석 결과 필지 많은 곳부터' })),
+        h('div.gs-tbl-w', {}, h('table.gs-tbl', {}, h('thead', {}, h('tr', {}, h('th', { text: '읍면동' }), h('th.num', { text: 'AI 분석 결과 필지' }), h('th', { text: '' }))), tb)), more);
+    }
     /* 월별 확인 기록(현장 확인 이력)은 화면에서 쓰지 않는다(원칙 135 · 10-10 확인 8 ⓐ) — 아래 그리기는 남겨 둠 */
     month.hidden = true;
     if (month.hidden) return;

@@ -796,6 +796,7 @@ def _item(r, p: Principal, who: dict) -> dict:
     st = r["state"]
     d = {
         "id": r["id"], "seq": r["no"], "gist": r["gist"], "note": r["note"], "examples": examples,
+        "asked": r["gist"] in (r["gists"] or []),        # 줄 이름이 사용자 질문(가린 요지) 그대로인가 — 화면 '질문 원문' 표시(GPT3-6)
         "kind": r["kind"], "kind_label": KINDS.get(r["kind"], r["kind"]),
         "state": st, "state_label": STATE_KO.get(st, st),
         "n": _cnt(r["n_block"], src), "cancel": _cnt(r["n_cancel"], src) if r["n_cancel"] else None,

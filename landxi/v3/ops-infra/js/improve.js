@@ -33,9 +33,12 @@ function subLine(x) {
   if (x.test_only) s = '시험으로 모인 줄 — 횟수에서 뺐습니다';
   else if (x.state === 'new' && x.hold?.reason) s = `지난 보류: ${x.hold.reason}`;
   else if (x.note) s = x.note;
-  else s = (x.examples || []).map(q).join(' · ');
+  else s = (x.examples || []).length ? `같은 뜻 질문 ${(x.examples || []).map(q).join(' · ')}` : '';   // 사용자 질문(가린 요지) — 시스템 문구와 섞지 않게(GPT3-6)
   return [s, c].filter(Boolean).join(' · ');
 }
+
+/** 줄 아래 한 줄이 사용자 질문(같은 뜻 질문)인가 — 금칙어 검사(tools/check/words.mjs)가 사용자 말은 세지 않게 */
+const userSub = (x) => !x.test_only && !(x.state === 'new' && x.hold?.reason) && !x.note && (x.examples || []).length > 0;
 
 /** 결정된 줄의 모습 — 칩 + 한 줄 */
 function decided(x, admin) {
@@ -123,7 +126,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     box.innerHTML = `<table class="im-t">
       <thead><tr><th>자주 막히는 요청</th><th class="num">몇 번</th><th>역할</th><th>화면</th><th class="num">다시 물음</th><th class="num">도움 안 됨</th><th>분류</th><th class="im-th-a"><span class="im-sr">누르기</span></th></tr></thead>
       <tbody>${list.map((x) => `<tr data-id="${esc(x.id)}" data-state="${esc(x.state)}">
-        <td data-k="요청" class="im-g"><b>${esc(x.gist)}</b>${subLine(x) ? `<small>${esc(subLine(x))}</small>` : ''}${meta(x)}</td>
+        <td data-k="요청" class="im-g">${x.asked ? `<span class="im-from">질문 원문</span><b data-user-text>${esc(q(x.gist))}</b>` : `<b>${esc(x.gist)}</b>`}${subLine(x) ? `<small${userSub(x) ? ' data-user-text' : ''}>${esc(subLine(x))}</small>` : ''}${meta(x)}</td>
         <td data-k="몇 번" class="num"><b data-metric="몇 번" data-v="${val(x.n) ?? ''}">${cnt(x.n)}</b></td>
         <td data-k="역할">${esc((x.roles || []).join(' · ') || '—')}</td>
         <td data-k="화면">${(x.screens || []).length ? x.screens.map((s) => `<span class="im-seg">${esc(s)}</span>`).join(' · ') : '—'}</td>
@@ -195,8 +198,8 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     });
   }
   function alreadyForm(x) {
-    const text = h('input.t-input', { type: 'text', maxlength: '120', placeholder: '예: 분석은 LX가 합니다 — 분석 의뢰를 보내 주세요' });
-    const tr = h('input.t-input', { type: 'text', maxlength: '100', placeholder: '예: 분석 의뢰 보내는 법 알려 줘' });
+    const text = h('input.t-input', { type: 'text', maxlength: '120', placeholder: '예: 분석은 LX가 합니다 — 분석 요청을 보내 주세요' });
+    const tr = h('input.t-input', { type: 'text', maxlength: '100', placeholder: '예: 분석 요청 보내는 법 알려 줘' });
     form('이미 됨', x, [{ label: '안내 문구 한 줄', el: text }, { label: '버튼을 누르면 보낼 질문(고르지 않아도 됩니다)', el: tr }], '저장', async () => {
       await act(x.id, 'already', { text: text.value.trim(), try: tr.value.trim() || undefined });
       toast('저장했습니다 — 다음부터 같은 요청에 이 안내가 나갑니다');

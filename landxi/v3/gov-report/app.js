@@ -65,6 +65,16 @@ const app = shell({ who: { ...who, org }, home: 'gov-report', title: org, xiRegi
 app.main.append($('#tpl').content.cloneNode(true));
 document.title = `${org} · 할 일 · Land-XI`;
 devDrawer({ who });
+/* GPT3-2 · 원칙 135 — 서비스 안에서 연 필지 목록(?service=서비스) = 그 서비스의 AI 분석 결과가 걸친 필지만
+   (GET /spaces/me/guides/{서비스}/parcels — '필지 엑셀'과 같은 행 · 숫자 한 출처). 실태조사 규칙 목록 · 판정 · 할 일은 이 길에서 쓰지 않는다 */
+const SVC = new URLSearchParams(location.search).get('service');
+if (SVC) {
+  document.body.dataset.svc = '1';
+  $('#tab-sus').textContent = '필지 목록';
+  $('#tab-todo').hidden = true;
+  $('#back').href = '../gov-select/?' + new URLSearchParams({ service: SVC });
+  $('#back').setAttribute('aria-label', '서비스로 돌아가기');
+}
 
 /* S-2(판정 · 조치 확장)가 서버에 들어왔는가.
    들어오기 전: 판정은 상태 전이 + 사유(서버 기록)로 쓰고, 조치는 서버에 둘 곳이 없으므로 **잠근다**
@@ -198,7 +208,37 @@ async function pick(r) {
   showDetail(r, { fly: true });
 }
 
+/* 서비스 필지 상세 — 주소 · 지목 · 넓이 · AI가 본 것(판정 · 조치 없음 · 원칙 135) + LX 담당에게 검토 요청 */
+async function showSvcDetail(r, { fly }) {
+  const det = $('#det');
+  det.hidden = false; delete det.dataset.stale;
+  $('#det-t').textContent = r.where;
+  $('#det-st').hidden = true;
+  for (const id of ['#verdict', '#b-action', '#lock-line', '#act-line']) $(id).hidden = true;
+  const f = r.f;
+  $('#det-m').innerHTML = [r.emd && `<span>${esc(r.emd)}</span>`, f.jimok && `<span>지목 ${esc(JIMOK[f.jimok] || f.jimok)}</span>`,
+    f.parcel_m2?.value != null && `<span>필지 넓이 ${numHtml(f.parcel_m2, { digits: 0 })}</span>`, f.evid_m2?.value != null && `<span>AI 분석 넓이 ${numHtml(f.evid_m2, { digits: 0 })}</span>`,
+    f.classes.length && `<span>${esc(f.classes.join(' · '))}</span>`].filter(Boolean).join('<i>·</i>');
+  if (S.rvFor !== r.id) {
+    det.querySelectorAll('.k-rv-b, .k-rv').forEach((x) => x.remove());
+    S.rvFor = r.id;
+    reviewAction($('.gr-det-act'), { who: S.who, pnu: f.pnu, lnglat: f.lnglat, card: SVC, from: 'gov-report', before: $('#b-map') });
+  }
+  if (!fly) return;
+  try {
+    const p = await api(`/survey/parcels/${encodeURIComponent(r.pnu)}?with=geom`);
+    if (S.sel !== r) return;
+    const g = p.geometry;
+    await S.stage.geo('sel', { type: 'FeatureCollection', features: g ? [{ type: 'Feature', properties: {}, geometry: g }] : [] }, 'ai');
+    if (!g && !f.lnglat) return;
+    const b = g ? bboxOf(g) : [f.lnglat[0] - 0.002, f.lnglat[1] - 0.002, f.lnglat[0] + 0.002, f.lnglat[1] + 0.002];
+    const pad = Math.max(b[2] - b[0], b[3] - b[1]) * 0.9;
+    S.stage.go([b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad], { ms: 1600, maxZoom: 18 });
+  } catch (e) { devlog('parcel', e.message); if (isAuth(e)) return toFront(); }
+}
+
 async function showDetail(r, { fly }) {
+  if (r.svc) return showSvcDetail(r, { fly });
   $('#det').hidden = false; delete $('#det').dataset.stale;
   $('#det-t').textContent = r.where;
   const st = $('#det-st'); st.textContent = ST[r.st]; st.dataset.lv = r.st;
@@ -357,6 +397,7 @@ function tab(k) {
   if (k === 'sus') loadSus();
   if (k === 'todo') mapPoints();
   const q = new URLSearchParams();
+  if (SVC) q.set('service', SVC);
   if (k !== 'todo') q.set('tab', k);
   if (S.region && S.regions.length > 1) q.set('region', S.region);
   if (isDev()) q.set('dev', '1');
@@ -674,7 +715,7 @@ function paintHead() {
   const nm = (rg && rg.name) || org;
   const el = app.app.querySelector('.k-word .home');
   if (el) el.textContent = nm;
-  document.title = `${nm} · 할 일 · Land-XI`;
+  document.title = `${nm} · ${SVC ? '필지 목록' : '할 일'} · Land-XI`;
 }
 function setRegion(cd) {
   S.region = cd || null;
@@ -691,10 +732,16 @@ $('#sus-rgn').addEventListener('change', (e) => setRegion(e.target.value));
 $('#rp-sgg').addEventListener('change', (e) => setRegion(e.target.value));
 
 /* 큰 숫자 = 의심 필지(숫자 한 출처 GET /survey/stats total = survey_sgg · 첫 화면 · XI맵 · 에이전트와 같은 값). 아래 표는 판정 전 목록 */
-const susBig = bignum($('#sus-big'), null, { label: '의심 필지', unit: '건' });
+const susBig = bignum($('#sus-big'), null, SVC ? { label: 'AI 분석 결과 필지', unit: '필지' } : { label: '의심 필지', unit: '건' });
 const PRI = { A: '우선', B: '보통', C: '참고' };
 const susTbl = table($('#sus-table'), {
-  cols: [
+  cols: SVC ? [
+    { key: 'where', label: '지번', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
+    { key: 'emd', label: '읍면동' },
+    { key: 'jimok', label: '지목', fmt: (v) => esc(JIMOK[v] || v || '—') },
+    { key: 'what', label: 'AI 분석 결과' },
+    { key: 'hit', label: '넓이', fmt: (v) => numHtml(v, { digits: 0 }) },
+  ] : [
     { key: 'where', label: '지번', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
     { key: 'rule', label: '규칙' },
     { key: 'pri', label: '등급', fmt: (v) => esc(PRI[v] || v || '—') },
@@ -705,7 +752,7 @@ const susTbl = table($('#sus-table'), {
 const sggTbl = table($('#sus-sgg'), {
   cols: [
     { key: 'where', label: '시군구', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
-    { key: 'n', label: '의심 필지', fmt: (v, r) => (r.state === 'no_ai' ? 'AI 분석 전' : v ? numHtml(v, { digits: 0 }) : '—') },
+    { key: 'n', label: SVC ? 'AI 분석 결과 필지' : '의심 필지', fmt: (v, r) => (r.state === 'no_ai' ? 'AI 분석 전' : v ? numHtml(v, { digits: 0 }) : '—') },
   ],
   rows: [], limit: 40, onRow: (r) => setRegion(r.id),
 });
@@ -730,7 +777,34 @@ async function loadSusAll() {
   const bb = unionBox(S.regions);
   if (bb && S.stage) S.stage.go(bb, { ms: 1600, maxZoom: 11 });
 }
+/* 서비스 필지 목록 — 큰 숫자 = 그 서비스의 AI 분석 결과 필지(서버 total) · 표 = AI 분석 넓은 순 */
+async function loadSvcParcels() {
+  const box = $('#sus-empty');
+  $('#sus-rgn-f').hidden = true; $('#sus-sgg').hidden = true;
+  if (S.susLoaded === 'svc') { susPoints(); return; }
+  let j;
+  try { j = await api(`/spaces/me/guides/${encodeURIComponent(SVC)}/parcels?limit=500`); }
+  catch (e) { devlog('svc parcels', e.message); if (failLine(e)) return; box.hidden = false; empty(box, { kind: 'first', text: '이 서비스 결과는 필지와 잇지 않습니다' }); return; }
+  S.susLoaded = 'svc';
+  S.sus = (j.items || []).map((x) => ({ id: x.id || x.pnu, pnu: x.pnu, svc: true, where: shortAddr(x.addr) || x.pnu, emd: x.emd, jimok: x.jimok,
+    what: (x.classes || []).join(' · ') || '—', hit: x.hit_m2 || null,
+    f: { pnu: x.pnu, lnglat: x.lnglat, jimok: x.jimok, evid_m2: x.hit_m2 || null, parcel_m2: x.parcel_m2 || null, classes: x.classes || [] } }));
+  $('#sus-big').hidden = false;
+  susBig.set(j.total || null);
+  const has = S.sus.length > 0;
+  $('#sus-table').hidden = !has; box.hidden = has;
+  if (!has) empty(box, { kind: 'first', text: 'AI 분석 결과가 걸친 필지가 없습니다' });
+  susTbl.set(S.sus);
+  let note = $('#sus-note');
+  if (!note) { note = h('p.gr-note', { id: 'sus-note' }); $('#sus-table').after(note); }
+  const tot = j.total?.value || 0;
+  note.textContent = has ? (tot > S.sus.length ? `넓은 순 ${S.sus.length.toLocaleString('ko-KR')}필지 · 전체는 통계·보고서의 필지 엑셀로 받습니다` : '넓은 순') : '';
+  susPoints();
+  const pts = S.sus.filter((r) => r.f.lnglat).map((r) => r.f.lnglat);
+  if (pts.length && S.stage) S.stage.go(bboxOf({ type: 'MultiPoint', coordinates: pts }), { ms: 1600, maxZoom: 13 });
+}
 async function loadSus() {
+  if (SVC) return loadSvcParcels();
   const box = $('#sus-empty');
   if (!S.region && wide()) return loadSusAll();
   $('#sus-sgg').hidden = true;
@@ -769,7 +843,7 @@ let tmr = 0;
 let probeAt = 0;
 sse('/events/tenant', {
   events: ['finding.state'],
-  on: () => { clearTimeout(tmr); tmr = setTimeout(() => load({ quiet: true }), 400); },
+  on: () => { if (SVC) return; clearTimeout(tmr); tmr = setTimeout(() => load({ quiet: true }), 400); },
   /* 끊기면 세션을 한 번 확인(10초에 한 번) — 끊긴 세션이면 누르기 전에 정문으로 */
   onState: (st) => { if (st === 'error' && Date.now() - probeAt > 10000) { probeAt = Date.now(); api('/me').catch((e) => { if (isAuth(e)) toFront(); }); } },
 });
@@ -777,10 +851,10 @@ sse('/events/tenant', {
 /* ═════════ 착지 ═════════ */
 await loadRegions();
 paintHead();
-await load({ keep: false });
+if (!SVC) await load({ keep: false });                 // 서비스 필지 목록에서는 할 일(판정) 목록을 읽지 않는다
 const want = new URLSearchParams(location.search).get('tab');
 if (want === 'report') tab('report');   // 지도 비행을 기다리지 않는다
-else if (want === 'sus' || (!S.rows.length && S.regions.length)) tab('sus');
+else if (SVC || want === 'sus' || (!S.rows.length && S.regions.length)) tab('sus');
 document.body.dataset.state = 'land';
 await S.stage.ready;
 S.stage.map.resize();   // 눌린 띠로 한 번 그려지는 것을 막는다 — 보이기 직전에 크기를 맞춤

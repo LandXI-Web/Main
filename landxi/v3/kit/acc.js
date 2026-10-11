@@ -12,7 +12,7 @@ export function accOf(metrics) {
     const v = num(e);
     if (v === null) continue;
     const basis = e && typeof e === 'object' && ['recorded', 'measured'].includes(e.basis) ? e.basis : 'recorded';
-    return { value: Math.round(v * 100), unit: '%', basis, as_of: (e && e.as_of) || null, source: '모델 기록 · 학습 끝 검증 값', key: k };
+    return { value: Math.round(v * 100), unit: '%', basis, as_of: (e && e.as_of) || null, source: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값', key: k };
   }
   return null;
 }

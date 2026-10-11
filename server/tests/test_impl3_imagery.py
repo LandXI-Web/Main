@@ -46,6 +46,8 @@ def chip(out: Path, px=1024, dx=0.0, crs=True) -> Path:
     return out
 
 
+from landxi_api.requests import tenant_upload_open as _tup   # 원칙 179 · GPT3-1
+
 @pytest.fixture(scope="module")
 def box():
     TEST.mkdir(parents=True, exist_ok=True)
@@ -211,6 +213,7 @@ def test_formats_endpoint(nw, tok):
     assert httpx.get(B + "/imagery/std/originals", headers=H(nw), timeout=30).status_code == 403
 
 
+@pytest.mark.skipif(not _tup(), reason="원칙 179 — 기관 영상 올리기 닫힘(LX 영상 등록은 아래 시험)")
 def test_upload_read_then_standard(nw, tok, box, tmp_path):
     """기관이 올린 영상 → 읽기 → 바로 표준본(작은 파일은 게이트웨이에서) → 기록: 원본 지울 날짜 = 오늘 + 90 · 표준본이 더 작다.
     LX 쪽 판단 근거에만 '표준본' · '원본 지울 날짜'. 묶음을 지우면 표준본도 지운다."""
@@ -237,6 +240,7 @@ def test_upload_read_then_standard(nw, tok, box, tmp_path):
     assert S.get(source=("upload", uid))["state"] == "removed" and not S.absolute(rec["std_path"]).exists()
 
 
+@pytest.mark.skipif(not _tup(), reason="원칙 179 — 기관 영상 올리기 닫힘")
 def test_bad_file_named_tif_is_refused_on_read(nw, box, tmp_path):
     """영상이 아닌 파일(이름만 .tif) — 쉬운 말 한 줄(전문 용어 없이). 화면은 고르는 순간 먼저 막는다(kit/dropzone.js)."""
     from test_impl2_request import upload

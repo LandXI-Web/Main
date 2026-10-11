@@ -393,8 +393,8 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         if e:
             ad = str(e.get("as_of") or "")
             nv = val_images(md, m.get("n_val") or {})
-            model_card = {"id": md["id"], "acc": {**env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습 끝 검증 값", as_of=ad or None),
-                                                  **({"basis_line": f"검증 영상 {nv:,}장 기준", "val_images": nv} if nv else {})},
+            model_card = {"id": md["id"], "acc": {**env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값", as_of=ad or None),
+                                                  **({"basis_line": f"학습에 쓰지 않은 영상 {nv:,}장으로 잼", "val_images": nv} if nv else {})},
                           "updated": ad.replace("-", ".")[:10] or None}
             break
     registered = any((md["status"] or "") == "registered" for md in cur_learned)
