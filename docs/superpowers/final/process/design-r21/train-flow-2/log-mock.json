@@ -1,0 +1,32 @@
+[
+ {
+  "file": "f1-start-1440-1938.png",
+  "shot_at": "2026-10-11T19:38:30",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=start",
+  "errors": []
+ },
+ {
+  "file": "f2-live-epochs-1440-1938.png",
+  "shot_at": "2026-10-11T19:38:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=live",
+  "errors": []
+ },
+ {
+  "file": "f3-two-experiments-1440-1938.png",
+  "shot_at": "2026-10-11T19:38:39",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=compare",
+  "errors": []
+ },
+ {
+  "file": "f4-infer-test-1440-1938.png",
+  "shot_at": "2026-10-11T19:38:44",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=test",
+  "errors": []
+ },
+ {
+  "file": "f5-wrong-link-1440-1938.png",
+  "shot_at": "2026-10-11T19:38:48",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-2/index.html?v=wrong",
+  "errors": []
+ }
+]
