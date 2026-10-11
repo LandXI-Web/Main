@@ -8,6 +8,7 @@ import { idle } from '../engine/lx-map.js';
 import { D, EASE, textIn } from './glass.js';
 import { numHtml } from './provenance.js';
 import { env } from '../../shared/api-v1.js';
+import { registerResult } from './result-filter.js';
 
 export const TEAL = '#0FA9A0', TEAL_DEEP = '#07706A', INK = '#010102', SLATE = '#8F99A8';
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
@@ -47,8 +48,11 @@ export function addResultLayers(map, key, source, { kind, sourceLayer, before = 
     map.addLayer({ id: `${key}-dash`, type: 'line', ...base, filter: f(['==', ['get', 'cls'], '비경작지']), layout: { ...vis, 'line-join': 'miter' }, paint: { ...P.line, 'line-dasharray': [3, 2] } }, before);
     ids.push(`${key}-line`, `${key}-dash`);
   } else if (P.line) { map.addLayer({ id: `${key}-line`, type: 'line', ...base, layout: { ...vis, 'line-join': 'miter' }, paint: P.line }, before); ids.push(`${key}-line`); }
+  registerResult(map, ids);          // 말로 거르기(result-filter.js) — 원래 거르기를 기억하고 지금 조건이 있으면 새 층에도 건다
   return ids;
 }
+
+export { filterResults, resultFilter } from './result-filter.js';
 export const setVis = (map, ids, on) => ids.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none'));
 
 /* ── 단계 기록(테스트·HUD) ── */

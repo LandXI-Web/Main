@@ -63,8 +63,9 @@ HOME_KO = {
     "lx-console": "첫 화면", "xi-clean": "XI맵", "global": "XI맵(해외)", "lx-review": "결과 확인", "lx-ingest": "데이터 올리기",
     "lx-train": "학습", "lx-deploy": "서비스 관리", "lx-project": "프로젝트", "lx-analyze": "분석하기", "lx-cards": "서비스 카드",
     "lx-inbox": "요청함", "ops-core": "LX 관리자 대시보드", "ops-infra": "LX 관리자 대시보드", "ops-accounts": "계정 관리",
-    "gov-select": "내 서비스", "gov-report": "할 일·보고서", "gov-fusion": "내 대장 × AI", "gov-request": "분석 의뢰",
+    "gov-select": "내 서비스", "gov-report": "할 일·보고서", "gov-fusion": "내 대장 × AI", "gov-request": "분석 요청",
     "gov-space": "우리 공간", "gov-accounts": "계정", "help-my": "지원", "sales": "서비스 카탈로그", "service-detail": "서비스",
+    "lx-map": "지도 서비스",
 }
 RETAIN_DAYS = 90                                   # 누가 물었는지 · 알림 — 90일만(원칙 94 의 90일과 같은 기간)
 REASK_S = 180                                      # 3분 안에 같은 뜻으로 다시 물음

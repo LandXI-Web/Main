@@ -10,7 +10,7 @@ import { h, api, API, session } from '../kit/util.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { createStage } from '../kit/stage.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
-import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
+import { addResultLayers, setVis, filterResults } from '../../xi/fx/arrive.js';
 
 const who = await K.gate('lx-map');
 const Q = new URLSearchParams(location.search);
@@ -32,7 +32,9 @@ const stageEl = h('div.lm-stage');
 const cap = h('div.lm-cap', { hidden: true });
 const hint = h('p.lm-hint', { text: '도형을 누르면 오른쪽에 속성이 펼쳐집니다' });
 const props = h('aside.lm-props', { 'aria-label': '속성', hidden: true });
-S.main.append(h('div.lm-page', {}, left, h('div.lm-map', {}, stageEl, cap, hint, props)));
+const mapEl = h('div.lm-map', {}, stageEl, cap, hint, props);
+const page = h('div.lm-page', {}, left, mapEl);
+S.main.append(page);
 
 const release = K.hold({ onRetry: () => location.reload() });
 let D;
@@ -46,7 +48,7 @@ catch (e) {
 }
 
 /* 상태 — 줄 하나 = 결과 세트 하나 */
-const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null };
+const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, dl: null, filter: null, fold: false, lg: true };
 function absorb(d) {
   for (const g of d.groups || []) {
     let G = ST.groups.find((x) => x.key === g.key);
@@ -150,48 +152,155 @@ map.on('error', (e) => {
   K.toast(`${x.g.name} · ${x.region} — 결과 도형을 불러오지 못했습니다`, { action: { label: '다시 시도', onClick: () => location.reload() }, ms: 10000 });
 });
 
-/* ── 왼쪽 ── */
+/* ── 왼쪽(원칙 192 · Q7 — 접고 펴기 · 슬림 · 레이어가 20개여도 묶음 접힘 · 한 줄 높이 · 넘치면 칸 안에서 스크롤) ── */
+const LSK = 'lx-map.ui';
+const UI = (() => { try { return JSON.parse(localStorage.getItem(LSK) || '{}') || {}; } catch { return {}; } })();
+const saveUI = () => { try { localStorage.setItem(LSK, JSON.stringify({ fold: ST.fold, lg: ST.lg })); } catch { /* 저장 못 해도 화면은 그대로 */ } };
+ST.fold = !!UI.fold; ST.lg = UI.lg !== false;
+function fold(v) {
+  ST.fold = v; saveUI();
+  page.classList.toggle('is-folded', v);
+  unfold.hidden = !v;
+  requestAnimationFrame(() => map.resize());
+  (v ? unfold : left.querySelector('.lm-fold'))?.focus();
+}
+const unfold = h('button.lm-unfold', { type: 'button', hidden: true, text: '목록 펼치기', onclick: () => fold(false) });
+mapEl.append(unfold);
+
 function drawLeft() {
   const on = all().filter(shown);
   const tot = on.reduce((a, x) => a + (x.failed ? 0 : Number(val(x.found)) || 0), 0);   // 못 그린 층의 수는 '켜진 결과'에 넣지 않는다
   const sum = h('div.lm-sum', {},
     h('div', {}, h('b.num', {}, nf(tot), h('i', { text: '건' })), h('small', { text: `켜진 결과 · 묶음 ${new Set(on.map((x) => x.g.key)).size}개` })),
-    h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `내가 돌린 분석 · 묶음 ${ST.groups.length}개` })));
+    h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `전체 · 묶음 ${ST.groups.length}개` })));
   const run = (D.running || []).length ? h('p.lm-run', {}, h('i'), `분석 중 ${D.running.length}건 — 끝나면 여기에 쌓입니다`) : null;
+  const flt = ST.filter ? h('div.lm-flt', { role: 'status' },
+    h('p', {}, h('b', { text: '조건' }), h('span', { text: ST.filter.label || '' }), ST.filter.n != null ? h('em.num', { text: `${nf(ST.filter.n)}건` }) : null),
+    h('button.lm-tbtn', { type: 'button', text: '조건 풀기', onclick: () => setFilter({ op: 'map_filter', clear: true }) })) : null;
   const groups = ST.groups.map((G) => {
     const onN = G.items.filter((x) => x.on).length;
     const open = ST.open.has(G.key);
     const solo = ST.solo === G.key;
     const head = h('header.lm-gh', {},
-      h('button.lm-gt', { type: 'button', 'aria-expanded': String(open), onclick: () => { open ? ST.open.delete(G.key) : ST.open.add(G.key); drawLeft(); } },
-        h('span.lm-gn', { text: G.name }), h('small.num', {}, onN ? h('b', { text: String(onN) }) : null, onN ? ' / ' : '', `${G.items.length}건`), h('i', { 'aria-hidden': 'true', text: open ? '−' : '+' })),
-      ST.groups.length > 1 ? h('button.lm-solo', { type: 'button', 'aria-pressed': String(solo), text: solo ? '모든 묶음 보기' : '이 묶음만 보기',
-        onclick: () => soloOf(G) }) : null);
+      h('button.lm-gt', { type: 'button', 'aria-expanded': String(open), title: G.name, onclick: () => { open ? ST.open.delete(G.key) : ST.open.add(G.key); drawLeft(); } },
+        h('i', { 'aria-hidden': 'true', text: open ? '−' : '+' }), h('span.lm-gn', { text: G.name }),
+        h('small.num', {}, onN ? h('b', { text: String(onN) }) : null, onN ? ' / ' : '', `${G.items.length}`)));
     const ul = h('ul.lm-ly', { hidden: !open });
+    if (open && ST.groups.length > 1) ul.append(h('li.lm-solo-li', {}, h('button.lm-solo', { type: 'button', 'aria-pressed': String(solo), text: solo ? '모든 묶음 보기' : '이 묶음만 보기', onclick: () => soloOf(G) })));
     for (const x of G.items) {
       const cls = (x.by_class || []).filter((c) => c.n).map((c) => `${c.cls} ${nf(c.n)}`).join(' · ');
-      ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted'].filter(Boolean).join(' ') },
+      const more = [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope, (x.by_class || []).length > 1 ? cls : ''].filter(Boolean).join(' · ');
+      const canDl = !x.empty && !x.failed;
+      ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
-        h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) },
-          h('b', { text: `${x.region} · ${day(x.finished_at)}` }),
-          h('span', { text: [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope].filter(Boolean).join(' · ') }),
-          (x.by_class || []).length > 1 ? h('span.lm-cls', { text: cls }) : null),
-        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(val(x.found))}건` })));
+        h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: `${x.region} · ${day(x.finished_at)}` })),
+        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(val(x.found))}건` }),
+        canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
+      if (ST.dl === x.job) ul.append(dlPanel(x));
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);
   });
   const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', 'LX맵', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적', `필지 경계 · ${CAD_Z}단계 이상`]];
   const baseEl = h('div.lm-base', { role: 'radiogroup', 'aria-label': '바탕' }, ...bases.map(([k, t, s]) =>
-    h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), onclick: () => setBase(k) }, h('i'), h('span', { text: t }), h('small', { text: s }))));
-  const clsOn = [...new Set(on.flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))];
-  const legend = h('ul.lm-lg', {}, ...clsOn.map((c) => h('li', {}, h('i', { style: `--c:${CLS_COLOR[c] || '#0FA9A0'}` }), c)),
-    ST.base === 'cad' ? h('li', {}, h('i.cad'), '필지 경계') : null);
+    h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
+  const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
   left.replaceChildren(
-    h('div.lm-top', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('p.lm-sub', { text: '내가 돌린 분석 결과가 분석서비스별로 쌓입니다. 켜면 지도에 그려지고 그 범위로 갑니다.' }), sum, run),
-    h('div.lm-groups', {}, ...groups),
-    h('div.lm-bot', {}, h('h2', { text: '바탕' }), baseEl, clsOn.length || ST.base === 'cad' ? h('h2', { text: '범례' }) : null, legend,
-      h('p.lm-foot', { text: '다른 직원이 돌린 분석은 나오지 않습니다(프로젝트 추론은 참여자 모두). 전국 · 해외 실시간 분석은 XI맵에서 합니다.' })));
+    h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),
+      h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
+    h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
+    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl));
+  const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
+  drawLegend();
 }
+
+/* 범례 — 지도 오른쪽 위에 작게(글자 단추로 접고 펴기 · 원칙 126 아이콘 없음) · 속성 칸이 열리면 그 왼쪽으로 비킨다 */
+const legend = h('aside.lm-lgd', { 'aria-label': '범례', hidden: true });
+mapEl.append(legend);
+const colorOf = (c) => CLS_COLOR[c] || CLS_COLOR[String(c).split(' ')[0]] || '#0FA9A0';
+function drawLegend() {
+  const on = all().filter(shown);
+  const cls = [...new Set(on.flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))];
+  const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${colorOf(c)}` }), h('span', { text: c }))),
+    ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '필지 경계' }))] : [])];
+  legend.hidden = !items.length;
+  legend.classList.toggle('is-shut', !ST.lg);
+  legend.replaceChildren(h('button.lm-lgb', { type: 'button', 'aria-expanded': String(ST.lg), onclick: () => { ST.lg = !ST.lg; saveUI(); drawLegend(); } },
+    h('b', { text: '범례' }), h('small', { text: ST.lg ? '접기' : '펴기' })), ST.lg ? h('ul.lm-lg', {}, ...items) : '');
+}
+
+/* ── 말로 거르기(원칙 193) — XI ChatGEO 의 map_filter 를 이 화면이 직접 받아 같은 조건으로 바로 건다 · 조건 줄 + 풀기 ── */
+function setFilter(a) {
+  const n = filterResults(map, a);
+  ST.filter = a.clear ? null : { ...a };
+  drawLeft();
+  window.__lm.filterAt = performance.now();
+  map.once('idle', () => { window.__lm.filterIdleAt = performance.now(); });
+  return n > 0 || !!a.clear;
+}
+document.addEventListener('kit:agent-action', (e) => {
+  const a = e.detail;
+  if (a?.op !== 'map_filter') return;
+  e.preventDefault();
+  const ok = setFilter(a);
+  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_filter', ok, by: 'lx-map', ...(ok ? {} : { reason: '켜진 결과 층이 없습니다' }) } }));
+});
+K.mountCmdk({ stage: ST0, context: () => {
+  const on = all().filter((x) => shown(x) && !x.empty && !x.failed);
+  return { sets: on.map((x) => x.set), region: on[0]?.sgg_cd || null };
+} });
+
+/* ── 레이어 내려받기(Q6 ⓑ · 원칙 59) — GeoJSON · SHP · 필지 엑셀(외부 API 1차와 같은 값) · 처음 한 번 동의 한 줄 · 내려받을 때마다 기록 ── */
+const FMTS = [['geojson', 'GeoJSON'], ['shp', 'SHP'], ['parcels', '필지 엑셀']];
+let CONSENT = null;
+async function openDl(x) {
+  ST.dl = ST.dl === x.job ? null : x.job;
+  if (ST.dl && !CONSENT) { try { CONSENT = await api('/me/downloads/consent'); } catch (e) { K.devlog('consent', String(e?.message || e)); CONSENT = { done: false, line: 'AI 분석 결과는 참고자료이며, 내려받으면 누가 · 무엇을 · 언제 받았는지 기록이 남습니다.' }; } }
+  if (ST.dl && !x.fmts) { try { x.fmts = Object.fromEntries(((await api(`/me/analyses/${encodeURIComponent(x.job)}/formats`)).items || []).map((f) => [f.fmt, f])); } catch (e) { K.devlog('formats', String(e?.message || e)); } }
+  drawLeft();
+}
+let dlSeq = 0;
+function dlPanel(x) {
+  const done = !!CONSENT?.done;
+  const id = `lm-ag-${++dlSeq}`;
+  const agree = done ? null : h('input', { type: 'checkbox', id });
+  const can = (f) => x.fmts?.[f]?.ok !== false;                      // 받을 수 없는 형식(예: 필지와 잇지 않은 결과의 필지 엑셀)은 미리 막고 까닭을 단다
+  const btns = FMTS.map(([f, label]) => h('button.lm-tbtn', { type: 'button', text: label, disabled: !done || !can(f), title: can(f) ? '' : x.fmts[f].why || '',
+    dataset: { fmt: f }, onclick: (e) => download(x, f, label, e.currentTarget, agree) }));
+  if (agree) agree.addEventListener('change', () => btns.forEach((b) => { b.disabled = !agree.checked || !can(b.dataset.fmt); }));
+  return h('li.lm-dl', {},
+    done ? h('p', { text: '내려받으면 누가 · 무엇을 · 언제 받았는지 기록이 남습니다.' }) : h('p', {}, agree, h('label', { for: id, text: ` ${CONSENT?.line || ''} 동의합니다.` })),
+    h('div.lm-dlf', {}, ...btns));
+}
+async function download(x, fmt, label, btn, agree) {
+  btn.disabled = true;
+  const was = btn.textContent; btn.textContent = '받는 중';
+  try {
+    if (!CONSENT?.done) {
+      if (!agree?.checked) throw Object.assign(new Error('동의가 필요합니다'), { code: 'consent' });
+      await api('/me/downloads/consent', { method: 'POST', body: { agree: true } });
+      CONSENT = { ...(CONSENT || {}), done: true };
+    }
+    const tok = session.get()?.token;
+    let tst = false; try { tst = sessionStorage.getItem('lx.chat.test') === '1'; } catch { /* */ }
+    const r = await fetch(`${API.prefix}/me/analyses/${encodeURIComponent(x.job)}/download?fmt=${fmt}${tst ? '&test=1' : ''}`, { headers: tok ? { authorization: 'Bearer ' + tok } : {} });
+    if (!r.ok) { let m = ''; try { m = (await r.json())?.error?.message || ''; } catch { /* */ } throw Object.assign(new Error(m || `내려받지 못했습니다(${r.status})`), { status: r.status }); }
+    const blob = await r.blob();
+    const cd = r.headers.get('content-disposition') || '';
+    const ext = fmt === 'parcels' ? 'xlsx' : fmt === 'shp' ? 'zip' : 'geojson';      // 머리글을 못 읽는 경우(다른 주소의 API)에도 같은 이름 규칙(서버 _dl_name)
+    const nm = decodeURIComponent((/filename\*=UTF-8''([^;]+)/i.exec(cd) || [])[1] || '')
+      || `${[x.region, x.g.name, 'AI분석', day(x.finished_at).replace(/\./g, '')].join('_').replace(/[\/:*?"<>|\s]+/g, '_')}${fmt === 'shp' ? '_shp' : ''}.${ext}`;
+    const a = h('a', { href: URL.createObjectURL(blob), download: nm }); document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    K.toast(`${x.region} ${label} 내려받았습니다 — 기록이 남았습니다`);
+    window.__lm.lastDownload = { fmt, name: nm, bytes: blob.size };
+    ST.dl = null; drawLeft();
+  } catch (e) {
+    K.devlog('download', `${e?.status || e?.code || ''} ${e?.message || e}`);
+    K.toast(e?.message || '내려받지 못했습니다');
+    btn.textContent = was; btn.disabled = false;
+  }
+}
+
 function drawCap() {
   const on = all().filter(shown);
   cap.hidden = !on.length;
@@ -200,6 +309,7 @@ function drawCap() {
 }
 async function toggle(x) {
   x.on = !x.on;
+  if (ST.filter) ST.filter.n = null;                                  // 켜진 레이어가 바뀌면 조건은 그대로 걸고 수는 지운다(다시 물으면 새 수)
   if (x.on && ST.solo && ST.solo !== x.g.key) ST.solo = null;   // 다른 묶음 층을 켜면 '이 묶음만'을 푼다
   await apply();
   if (x.on) fly(x.bounds);
@@ -282,6 +392,7 @@ if (!ST.items.size) {
   left.replaceChildren(h('div.lm-top', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('p.lm-sub', { text: '내가 돌린 분석 결과가 분석서비스별로 쌓입니다.' })), box);
   K.empty(box, { kind: 'first', title: '아직 돌린 분석이 없습니다', text: '분석하기에서 서비스를 골라 분석하면 결과가 여기에 쌓입니다', action: { label: '분석하기', href: '../lx-analyze/' }, compact: true });
 } else {
+  if (ST.fold) fold(true);
   await apply();
   if (first) fly(first.bounds);
 }

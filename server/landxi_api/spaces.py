@@ -895,7 +895,8 @@ async def _parcel_rows(t: str, sets: list[str], src: str | None, only: list[str]
     return out, how
 
 
-def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str) -> bytes:
+def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str, info: list[tuple] | None = None) -> bytes:
+    """info = '안내' 시트 줄(없으면 기관 결과 설명서 줄) — LX 지도 서비스 레이어 내려받기(staff_home)가 같은 함수를 쓴다(원칙 59 · Q6 ⓑ)."""
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     body = g["body"]
@@ -939,8 +940,8 @@ def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str) -> bytes:
     d.column_dimensions["A"].width = 22
     d.column_dimensions["B"].width = 70
     i = wb.create_sheet("안내")
-    for k, v in [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"{g['edition']}판"), ("회차", rl), ("서비스 버전", ver),
-                 ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", NOTICE)]:
+    for k, v in info or [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"{g['edition']}판"), ("회차", rl), ("서비스 버전", ver),
+                         ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", NOTICE)]:
         i.append([k, v])
     i.column_dimensions["A"].width = 14
     i.column_dimensions["B"].width = 80

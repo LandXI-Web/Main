@@ -227,10 +227,11 @@ async function boot() {
     onDone: (r) => { if (r) { refresh(); if (!r.replay) { K.toast('분석했습니다'); if (S.region) regionData(S.region); if (r.job?.options?.scope === 'sgg') followSurvey(S.region); } } else if (S.tool === 'analyze') { S.tool = null; patchRail(); } },
     pick: pickEmd, regionInfo: () => ({ emds: S.remd, meta: S.remdMeta }) }) : null;
 
-  cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null }) });
+  cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
+    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set) }) });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw']);
-  document.addEventListener('kit:agent-action', (e) => { if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });
+  document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
 
   loadK.set({ progress: 0.85, what: (X.waitFor = r0 ? '지역 결과 요약' : '전국 결과 요약') });
   mark('canvas');

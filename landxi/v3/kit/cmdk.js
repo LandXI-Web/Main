@@ -27,9 +27,11 @@ import { devlog } from './dev-drawer.js';
 import { t, tl, langOf, nf, locale } from './i18n.js';
 import { bars } from './chart.js';
 import { faceImg } from './assistant-mascot.js';
+import { toast } from './toast.js';
+import { filterResults } from '../../xi/fx/result-filter.js';
 
 const EVENTS = ['agent.route', 'agent.plan', 'agent.tool.call', 'agent.tool.result', 'agent.confirm', 'agent.confirm.decided', 'agent.token', 'agent.done', 'agent.failed', 'agent.rejected'];
-const KIT_OPS = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer']);   // 화면이 처리하지 않을 때 키트가 지도로 하는 동작
+const KIT_OPS = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'map_filter']);   // 화면이 처리하지 않을 때 키트가 지도로 하는 동작(map_filter = 켜진 결과 레이어 거르기 · 원칙 193)
 /* 그리기 · 보여 주기(10-01 사용자 "시각화한 거 맞어? 안 보이는데?") — 화면에 실제로 그려진 것을 확인한 뒤에만 '그렸습니다'.
    화면이 처리하면 화면이 끝 신호를, 아니면 키트가 지도에 그리고 보이는지 잰 뒤 끝 신호를 낸다. 지도가 없는 화면이면 그리지 못했다고 말하고
    채팅 안에 작은 결과(표) + 'XI맵에서 크게 보기'(그 지역 · 그 규칙을 켠 XI맵). */
@@ -437,7 +439,7 @@ function create(opts) {
   const hasMap = () => !!((cfg.stage?.map && visibleMap(cfg.stage.map)) || liveMap());
   const pageKey = () => cfg.home || document.body.dataset.home || location.pathname.split('/').filter(Boolean).pop() || '';
   const OP_KO = { map_region: '지역 이동', map_zoom: '확대 · 축소', map_view: '시점 바꾸기', map_layer: '층 켜기 · 끄기', map_on: '지도에 칠하기', map_arrive: '지도에 표시',
-    map_flyto: '필지로 이동', map_frame: '범위 표시', map_compare: '두 시점 나란히', map_draw: '범위 그리기', map_snapshot: '지도 그림 저장' };
+    map_flyto: '필지로 이동', map_frame: '범위 표시', map_compare: '두 시점 나란히', map_draw: '범위 그리기', map_snapshot: '지도 그림 저장', map_filter: '조건 거르기' };
   /** 진행형 — 끝 신호 전 동작 문장('옮겼습니다' → '옮기고 있습니다') */
   const WIP = [[/옮겼습니다/g, '옮기고 있습니다'], [/이동했습니다/g, '이동하고 있습니다'], [/확대했습니다/g, '확대하고 있습니다'], [/축소했습니다/g, '축소하고 있습니다'],
     [/기울였습니다/g, '기울이고 있습니다'], [/바꿨습니다/g, '바꾸고 있습니다'], [/켰습니다/g, '켜고 있습니다'], [/껐습니다/g, '끄고 있습니다'], [/남겼습니다/g, '남기고 있습니다'],
@@ -621,6 +623,7 @@ function create(opts) {
     const ctx = { ...ctxNow() };
     ctx.has_map = hasMap();                          // 확인 16차 규칙 ④ — 지도 없는 화면이면 서버가 'XI맵을 ○○에서 열기'로 답한다
     ctx.page = pageKey();                            // 지금 화면(XI맵이면 차트 막대 누르기 · 가르기 등이 된다)
+    try { if (sessionStorage.getItem('lx.chat.test') === '1') ctx.test = true; } catch { /* */ }   // 시험 · 점검 질문 표시(화면에 보이지 않음) — 개선 고리가 모으지 않는다
     if (runId) ctx.prev_run = runId;   // 이 창의 바로 앞 답('1위 필지' 같은 말은 이 답의 목록으로만 푼다 · 같은 계정 다른 창 답과 섞이지 않게)
     if (cfg.stage?.map) { const b = cfg.stage.map.getBounds(); ctx.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; ctx.zoom = cfg.stage.map.getZoom(); }
     let r;
@@ -796,6 +799,12 @@ function create(opts) {
           if (Math.abs(p1 - p0) < 0.5 && Math.abs(b1 - b0) < 0.5) same = true;          // 이미 그 시점 — '바꿨습니다'가 아니라 '이미 ~'
           else map.easeTo({ pitch: p1, bearing: b1, duration: 800 });
           ok = true;
+        } else if (a.op === 'map_filter') {
+          // 켜진 결과 레이어를 같은 조건으로 바로 거른다(결과 타일 속성 · 서버가 값이 있는지 먼저 봄) — 지도 서비스는 화면이 직접 처리(조건 줄 · 풀기)
+          if (filterResults(map, a) > 0) {
+            ok = true;
+            if (!a.clear && a.label) toast(`조건 — ${a.label}`, { action: { label: '조건 풀기', onClick: () => filterResults(map, { clear: true }) }, ms: 8000 });
+          } else reason = why('nolayer');
         } else if (a.op === 'map_layer') {
           const L = map.getStyle()?.layers || [];
           let ids = a.layer === 'imagery' ? L.filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id) : [];
