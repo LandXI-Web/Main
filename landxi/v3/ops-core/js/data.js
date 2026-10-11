@@ -80,7 +80,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '사용량 설정 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개', request: '분석 요청' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '사용량 설정 변경', port: '기관에 공유', model: '모델 등록', card: '서비스 공개', request: '분석 요청' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
