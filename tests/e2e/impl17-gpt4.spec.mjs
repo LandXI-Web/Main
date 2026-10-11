@@ -78,14 +78,14 @@ test.describe('외부 검수 바퀴 4 보완', () => {
     expect(await card.locator('.ld-kinds > span:not(.ld-k)').count()).toBeLessThanOrEqual(5);
   });
 
-  test('XI맵 도구(레이어 · 가르기 · 보고서 · 분석) — 아이콘 없이 글자만(원칙 126)', async ({ page, baseURL }) => {
+  test('XI맵 도구(층 · 가르기 · 보고서 · 분석) — 이전 모습 아이콘 + 글자(원칙 199 되돌림)', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await page.goto('v3/xi-clean/');
     const rail = page.locator('.k-rail[aria-label="도구"], .k-rail').first();
     await expect(rail.locator('.k-rail-i').first()).toBeVisible({ timeout: 30000 });
     const labels = await rail.locator('.k-rail-i > span:last-child').allInnerTexts();
-    expect(labels.slice(0, 3)).toEqual(['레이어', '가르기', '보고서']);
-    await expect(rail.locator('.k-rail-i svg')).toHaveCount(0);
+    expect(labels.slice(0, 3)).toEqual(['층', '가르기', '보고서']);
+    expect(await rail.locator('.k-rail-i svg').count()).toBe(labels.length);
   });
 });

@@ -205,7 +205,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const F = {
       alias: [{ label: '사용자가 쓴 말', el: inp('예: 영농') }, { label: '플랫폼이 쓰는 말', el: inp('예: 경작·휴경'), hint: '다음 질문부터 앞의 말을 뒤의 말로 알아듣습니다' }],
       intent: [{ label: '이런 질문', el: inp('', x.gist.includes('○○') ? '' : x.gist) }, { label: '이 질문으로 알아듣기', el: inp('예: 비닐하우스 결과만 보여 줘'), hint: '같은 뜻의 질문이 오면 이 질문으로 바꿔 답합니다' }],
-      phrase: [{ label: '답에 붙일 문구 한 줄', el: inp('예: 이 질문은 지도 서비스에서 레이어를 켠 뒤 물어보세요') }, { label: '누르면 보낼 질문(고르지 않아도 됩니다)', el: inp('') }],
+      phrase: [{ label: '답에 붙일 문구 한 줄', el: inp('예: 이 질문은 지도 서비스에서 층을 켠 뒤 물어보세요') }, { label: '누르면 보낼 질문(고르지 않아도 됩니다)', el: inp('') }],
       dev: [{ label: '제안 방법 한 줄', el: inp(x.how || '예: 비닐하우스 단동 · 연동을 나누는 분류 더하기') , hint: "확인 대장에 '확인 대기'로 올라가고, 만들어지면 '이제 됩니다'를 보냅니다" }],
     };
     const box = h('div.im-mode-f');

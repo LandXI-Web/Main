@@ -19,7 +19,7 @@ RULE_NM = {"R1": "무허가 건축 의심", "R2": "휴경·전용 의심", "R3":
            "R5": "산지 개간 의심", "R6": "공공용지 점유 의심"}
 _NUM_IN_TEXT = re.compile(r"\d+(?:-\d+)?")
 SRC_DB = "PostGIS survey_findings"
-SET = "survey/findings"               # 지도 레이어(결과 = 실태조사 의심 · 필터로 지역·대장을 싣는다)
+SET = "survey/findings"               # 지도 층(결과 = 실태조사 의심 · 필터로 지역·대장을 싣는다)
 EMD_CHART_MAX = 20                    # 읍면동 막대 수 상한(의심 많은 순)
 
 

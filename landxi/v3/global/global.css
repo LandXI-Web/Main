@@ -10,7 +10,7 @@
 .gl-crumb{height:32px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--sub);font:500 var(--fs-label)/32px var(--font-body);white-space:nowrap;cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
 button.gl-crumb:hover{background:var(--bg-0);color:var(--ink)}
 .gl-crumb.is-now{color:var(--ink);cursor:default;box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
-.gl-crumb--globe{display:inline-flex;align-items:center;justify-content:center}
+.gl-crumb--globe{width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .gl-crumb--globe svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.5;fill:none}
 .gl-crumb--globe[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
 .gl-sep{color:var(--mute);font:400 14px/1 var(--font-body)}

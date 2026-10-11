@@ -1,10 +1,10 @@
-"""바퀴 4 · 개선 후보 '채택' — 쉬운 것은 바로 반영(원칙 197 · 10-11 자동진화-관리) + '층 → 레이어'(원칙 195).
+"""바퀴 4 · 개선 후보 '채택' — 쉬운 것은 바로 반영(원칙 197 · 10-11 자동진화-관리) (지도 말 '층'은 원칙 195 뒤집힘 · 199 로 되돌림).
 
 ① 채택 갈래: 다른 이름 더하기(alias) · 질문 뜻 연결(intent) · 답 문구(phrase) = 바로 반영(표 한 줄) · 개발 할 일(dev) = 확인 대기.
 ② 바로 반영은 다음 질문부터 — 게이트웨이 경로로 '온실'을 '비닐하우스'의 다른 이름으로 채택하면, 같은 질문의 답이 '비닐하우스'로 물은 답과 같아지고,
    되돌리면 예전 답으로 돌아온다(시험 표시 줄 · 끝나면 지움).
 ③ 목록에 갈래 · '반영됨 — 다시 물어보세요' · 되돌리기(can.revert)가 보인다 · 개발 할 일은 '확인 대기'.
-④ 지도에서 켜고 끄는 '층'은 답에서 '레이어'로(서버 문구 · 거르기 답 첫 줄).
+④ 지도에서 켜고 끄는 것은 답에서 이전대로 '층'(서버 문구 · 거르기 답 첫 줄 · 원칙 199 되돌림).
 실행: python -m pytest server/tests/test_impl16_adopt.py -q   (게이트웨이 :8700 · GPU 0 — 질문은 요약 직행 경로)
 """
 import secrets
@@ -92,9 +92,9 @@ def test_dev_adopt_goes_to_ledger(tok, item):
 
 
 def test_layer_word_in_server_answers():
-    """원칙 195 — 서버 문구 · 답 다듬기에서 지도 '층'은 '레이어'(건물 층은 그대로)."""
+    """원칙 195 뒤집힘 · 199 — 서버 문구 · 답 다듬기에서 지도 말은 이전대로 '층'(16차 규칙 '레이어 → 층')."""
     from agent import lint
-    assert lint.scrub_terms("결과 층을 켰습니다.") == "결과 레이어를 켰습니다."
-    assert lint.scrub_terms("3층 건물입니다.") == "3층 건물입니다."
+    assert lint.scrub_terms("결과 층을 켰습니다.") == "결과 층을 켰습니다."
+    assert lint.scrub_terms("결과 레이어 켜기") == "결과 층 켜기"
     from landxi_api import result_scope as RSC
-    assert RSC.scope_line([{"name": "비닐하우스"}]).startswith("대상: 켜진 레이어 1개(")
+    assert RSC.scope_line([{"name": "비닐하우스"}]).startswith("대상: 켜진 층 1개(")

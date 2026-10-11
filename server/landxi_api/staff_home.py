@@ -7,10 +7,10 @@
                                     (작업 표 jobs.submitted_by = 나 · 시험 작업 제외 · 목록 상한과 무관하게 서버에서 센다)
   GET  /me/analyses                 (LX 계정) 내 분석 목록(지도 서비스) — 분석하기로 내가 돌린 것 + 내가 돌렸거나 참여한 프로젝트의 추론 결과를
                                     분석서비스(카드) · 프로젝트 묶음별로(이름 · 지역 · 영상 · 범위 · 결과 수 · bounds · 결과 세트) — XI맵 실시간 · 말로 분석은 빼고
-  GET  /me/analyses/{작업}/formats   (LX 계정) 그 레이어를 받을 수 있는 형식(GeoJSON · SHP · 필지 엑셀 · 까닭)
-  GET  /me/analyses/{작업}/rows      (LX 계정) '목록 보기' — 그 레이어의 결과 표(넓은 것부터 · cond=지금 조건 JSON)
+  GET  /me/analyses/{작업}/formats   (LX 계정) 그 층을 받을 수 있는 형식(GeoJSON · SHP · 필지 엑셀 · 까닭)
+  GET  /me/analyses/{작업}/rows      (LX 계정) '목록 보기' — 그 층의 결과 표(넓은 것부터 · cond=지금 조건 JSON)
   POST /me/analyses/filter          (LX 계정) {jobs, cond} → 조건에 맞는 수 · 칩(조건 칩 하나 풀기 — XI ChatGEO 거르기와 같은 식)
-  GET  /me/analyses/{작업}/download?fmt=geojson|shp|parcels   레이어 내려받기(Q6 ⓑ · 외부 API 1차와 같은 값 · 같은 함수 · 동의 한 줄 · 기록)
+  GET  /me/analyses/{작업}/download?fmt=geojson|shp|parcels   층 내려받기(Q6 ⓑ · 외부 API 1차와 같은 값 · 같은 함수 · 동의 한 줄 · 기록)
   GET|POST /me/downloads/consent    동의 한 줄(LX 계정마다 한 번) · GET /me/downloads 내려받기 기록(직원 = 내 것 · 관리자 = LX 전부)
   GET  /announcements?limit=        (LX 계정) LX 전체 공지 — 최근 순 · 내린 것은 빼고. 비어 있으면 빈 목록(지어내지 않는다)
   POST /announcements               (LX 관리자) {title, body?} 공지 쓰기 → 감사 기록 announce.post
@@ -126,7 +126,7 @@ MY_ANALYSES_SQL = (
     "ORDER BY j.finished_at DESC LIMIT 200")
 
 
-# 아직 도는 내 분석(대기 · 분석 중) — 끝나면 위 목록에 레이어로 쌓인다(지도 서비스 왼쪽 위 한 줄)
+# 아직 도는 내 분석(대기 · 분석 중) — 끝나면 위 목록에 층으로 쌓인다(지도 서비스 왼쪽 위 한 줄)
 MY_RUNNING_SQL = (
     "SELECT j.id, j.state, j.card_id, j.options, c.name->>'ko' AS cname, pr.name AS pname FROM jobs j "
     "LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
@@ -188,7 +188,7 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
         "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
         "by_class": [{"cls": CLASS_KO.get(k, k), "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0))],
         "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id,
-        "empty": not r["snapshot_ready"]}                                    # 찾은 것 0건 — 지도에 그릴 결과 레이어가 없다(범위만)
+        "empty": not r["snapshot_ready"]}                                    # 찾은 것 0건 — 지도에 그릴 결과 층이 없다(범위만)
     return key, gname, proj, item
 
 

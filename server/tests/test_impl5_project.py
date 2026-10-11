@@ -113,7 +113,7 @@ def test_retrain_basis_and_reason_reach_admin(live, tok, made):
     assert b and 1 <= len(b["points"]) <= 4 and all(x["at"] for x in b["points"])
     assert [x["at"] for x in b["points"]] == sorted(x["at"] for x in b["points"])
     assert {"reviews", "imagery", "before", "thin", "trained_at", "now"} <= set(b)
-    assert b["before"] == "결과 확인 0/20"                                   # 앞 단계 남음 = 막힌 곳과 같은 말
+    assert b["before"] == "결과 확인 남음"                                   # 앞 단계 남음 = 막힌 곳과 같은 말
     r = httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(tok["staff"]), json={"reason": "성능 보완"}, timeout=60)
     assert r.status_code == 201, r.text
     p2 = r.json()

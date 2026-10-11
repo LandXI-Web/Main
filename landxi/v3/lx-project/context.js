@@ -20,7 +20,6 @@ const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 �
 export const HOME = at('./');
 const qs = (o) => { const u = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v !== null && v !== undefined && v !== '') u.set(k, v); const s = u.toString(); return s ? '?' + s : ''; };
 
-const ruleOf = (pr) => (typeof pr === 'object' && pr?.task_id ? TASKS.find((t) => t.id === pr.task_id)?.rules?.[0] : null) || null;
 
 /** 프로젝트 화면 주소 */
 export const projectHref = (id) => HOME + qs({ project: id });
@@ -35,7 +34,8 @@ export function stageHref(pr, key, target = {}) {
     case 'ingest': return at('../lx-ingest/') + qs({ project: id, region: t.region || dom });
     case 'label': return at('../lx-train/') + qs({ project: id, stage: 'label', flow: 1 });
     case 'train': return at('../lx-train/') + qs({ project: id, stage: 'train', flow: 1, sample: t.sample, model: t.model });
-    case 'review': return at('../lx-review/') + qs({ project: id, region: t.region || dom, rule: ruleOf(pr) });
+    // 결과 확인(원칙 198) = 지도에서 결과 보기 — 지도 서비스가 이번 회차 추론 결과(job)를 연다(그 자리 고치기도 거기서). 표본 검증 화면(lx-review)은 1차에서 쓰지 않음
+    case 'review': return at('../lx-map/') + qs({ job: t.job, project: id });
     case 'infer': return at('../lx-release/') + qs({ project: id, stage: 'infer' });
     case 'publish': return at('../lx-release/') + qs({ project: id, stage: 'publish' });
     default: return projectHref(id);

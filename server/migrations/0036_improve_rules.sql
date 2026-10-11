@@ -24,7 +24,7 @@ DO $$ BEGIN
 END $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON improve_rules TO landxi_app, landxi_worker;
 
--- 원칙 195(10-11) — 첫 목록(10-01 점검) 줄의 비고 · 요지에 남은 지도 '층'을 '레이어'로(사용자 질문 원문 예시는 그대로)
-UPDATE improve_items SET gist = replace(gist, '지적선 층 켜기', '지적선 레이어 켜기') WHERE gist LIKE '%지적선 층 켜기%';
-UPDATE improve_items SET note = '이 화면에는 그 레이어가 없음' WHERE note = '이 화면에는 그 층이 없음';
-UPDATE improve_items SET note = '말과 화면 다름 — 결과 레이어 끄기 · 이미 켜진 영상 레이어' WHERE note = '말과 화면 다름 — 결과 층 끄기 · 이미 켜진 영상 층';
+-- 원칙 195 뒤집힘 · 199(10-11 18:52) — 화면 말은 이전대로 '층'. 앞서 '레이어'로 바꾼 첫 목록 줄을 되돌린다(멱등)
+UPDATE improve_items SET gist = replace(gist, '지적선 레이어 켜기', '지적선 층 켜기') WHERE gist LIKE '%지적선 레이어 켜기%';
+UPDATE improve_items SET note = '이 화면에는 그 층이 없음' WHERE note = '이 화면에는 그 레이어가 없음';
+UPDATE improve_items SET note = '말과 화면 다름 — 결과 층 끄기 · 이미 켜진 영상 층' WHERE note = '말과 화면 다름 — 결과 레이어 끄기 · 이미 켜진 영상 레이어';

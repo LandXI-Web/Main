@@ -105,9 +105,9 @@ async def plan_body(args: dict, ctx) -> dict:
     imgs = [it for it in layers if it.get("role") == "imagery" and it.get("source") != "external" and it.get("gsd_m") and it.get("bounds")
             and b[0] >= it["bounds"][0] and b[2] <= it["bounds"][2] and b[1] >= it["bounds"][1] and b[3] <= it["bounds"][3]]
     if not imgs:
-        raise ToolError("aoi_outside_footprint", "프레임을 덮는 자체 영상이 없습니다(외부 위성 레이어는 분석 불가)", 400)
+        raise ToolError("aoi_outside_footprint", "프레임을 덮는 자체 영상이 없습니다(외부 위성 층은 분석 불가)", 400)
     # 선호 순서대로: 모델 학습 GSD 의 2.5배 안에 드는 자체 영상이 있으면 그 모델 · 영상은 가장 가까운 GSD → 최신 시점
-    # 후보 쌍(모델 선호 순 × 학습 GSD 가까운 영상 → 최신 시점). 원본 래스터가 없는 레이어는 견적에서 떨어진다 → 다음 후보(jobs_quote)
+    # 후보 쌍(모델 선호 순 × 학습 GSD 가까운 영상 → 최신 시점). 원본 래스터가 없는 층은 견적에서 떨어진다 → 다음 후보(jobs_quote)
     pairs = []
     for m in cands:
         g = float(m.get("gsd_trained_m") or 0.25)

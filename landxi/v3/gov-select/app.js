@@ -134,6 +134,7 @@ const when = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || ''
 const svcShort = (s) => String(s || '').replace(/\s*(행정서비스|서비스)$/, '');
 async function drawBand(band) {
   const tile = (o) => h(o.href ? 'a.gs-tile' : 'div.gs-tile', { ...(o.href ? { href: o.href } : {}), dataset: { k: o.k } },
+    h('span.gs-tile-ic', { html: K.icon(o.icon) }),
     h('span.gs-tile-t', {}, h('b', {}, o.title, o.n !== undefined && o.n !== null ? h('span.num', { text: ` ${o.n}` }) : null), h('small', { text: o.line })),
     o.chip ? h('span.t-chip', { text: o.chip[0], dataset: o.chip[1] ? { lv: o.chip[1] } : {} }) : null,
     o.go ? h('span.gs-tile-go', { text: o.go }) : null);

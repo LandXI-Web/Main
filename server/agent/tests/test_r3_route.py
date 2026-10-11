@@ -395,7 +395,7 @@ def test_m5_action_sentences_in_done(monkeypatch):
     assert d["answer_md"] == "Zoomed in on the map." and d["act_claims"] == ["Zoomed in on the map."] and d["ui_ops"] == ["map_zoom"]
     ctx2 = _ctx(STAFF, "지도 확대")
     asyncio.run(runner.finish(ctx2, "지도를 확대했습니다. 영상 층을 껐습니다.", None, 0.0, {"ms": 0}, {}, lint_on=False))
-    assert _done(ctx2)["act_claims"] == ["지도를 확대했습니다.", "영상 레이어를 껐습니다."]
+    assert _done(ctx2)["act_claims"] == ["지도를 확대했습니다.", "영상 층을 껐습니다."]
 
 
 def test_confirm_card_title(monkeypatch, restore_ext):
@@ -504,7 +504,7 @@ def test_regression_english_units_not_doubled_by_josa():
 
 # ═══ 지도 동작 한 가지 직행 — 모델 없이 한 문장(자리표·숫자 0 · 'M5 동작 문장') ═══════════════════
 @pytest.mark.parametrize("q,want", [("줌 19로 해 줘", "지도 배율을 바꿨습니다."), ("지도 확대해 줘", "지도를 확대했습니다."),
-                                    ("영상 꺼 줘", "영상 레이어를 껐습니다."), ("3D로 기울여 줘", "지도를 3D 시점으로 기울였습니다.")])
+                                    ("영상 꺼 줘", "영상 층을 껐습니다."), ("3D로 기울여 줘", "지도를 3D 시점으로 기울였습니다.")])
 def test_korean_map_direct_runtime_sentence(monkeypatch, q, want):
     _no_llm(monkeypatch)
     ctx = _ctx(STAFF, q)

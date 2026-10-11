@@ -13,7 +13,7 @@ const detailHref = (card) => '/landxi/v3/service-detail/?' + new URLSearchParams
 const STEPS = [
   { t: '대장 올리기', d: '기관 대장 × 필지' },
   { t: '카드 배포본', d: '지역만 바꿔 적용' },
-  { t: '결과 확인', d: '표본 확인 후 공개' },
+  { t: '결과 확인', d: '지도에서 결과 확인 후 공개' },
   { t: '기관 포털', d: '결과로 업무 마감' },
 ];
 

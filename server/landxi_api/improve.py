@@ -735,7 +735,7 @@ async def feedback(body: dict, request: Request):
         ctx_kind = "server" if row["state"] == "failed" else (REJECT_KIND.get(str(row["error"] or "")) if row["state"] == "rejected" else None)
     await ensure_names(wait=True)
     if kind == "map_failed":
-        k = "screen" if re.search(r"이 화면|지도가 없|층이 없|레이어가 없", summary + " " + str(answer or "")) else "action"
+        k = "screen" if re.search(r"이 화면|지도가 없|층이 없", summary + " " + str(answer or "")) else "action"
     else:
         k = ctx_kind or kind_of_text(answer) or "other"
     g = gist(text) if text else (gist(summary) if summary else {"not_helpful": "도움이 안 된 답", "card_cancel": "확인 카드 취소",
@@ -1069,10 +1069,10 @@ CHECK_1001 = [
     ("지명을 붙인 확대·이동이 지명을 버림", None, "action", [
         (2, "구례군 확대해 줘", "staff", "lx-console", "lx", "10:58:54"),
         (19, "남원시 운봉읍으로 이동해서 비닐하우스 결과만 보여 줘", "staff", "xi-clean", "lx", "11:03:08")]),
-    ("현장 확인 필요 · 지적선 레이어 켜기", "이 화면에는 그 레이어가 없음", "screen", [
+    ("현장 확인 필요 · 지적선 층 켜기", "이 화면에는 그 층이 없음", "screen", [
         (4, "현장 확인 필요 필지만 보여 줘", "staff", "lx-console", "lx", "10:59:07"),
         (5, "지적선 켜 줘", "staff", "lx-console", "lx", "10:59:13")]),
-    ("\"껐습니다·켰습니다\"인데 지도가 그대로", "말과 화면 다름 — 결과 레이어 끄기 · 이미 켜진 영상 레이어", "action", [
+    ("\"껐습니다·켰습니다\"인데 지도가 그대로", "말과 화면 다름 — 결과 층 끄기 · 이미 켜진 영상 층", "action", [
         (3, "영상 층 켜 줘", "staff", "lx-console", "lx", "10:59:00"),
         (18, "AI 분석 결과 층 꺼 줘", "staff", "xi-clean", "lx", "11:02:58")]),
     ("우리 시 현장 확인 필요 몇 건", "'우리 시'를 관할로 풀지 못해 \"해당 지역 데이터가 없습니다\"", "nodata", [

@@ -26,6 +26,7 @@ GET    /projects/{pid}/log               기록 · 메모 · 파일(확인 17차
                                          구성원 · 프로젝트장 · LX 관리자만(기관은 안 봄 — 기관과의 대화는 검토 요청). 거르기 = all | auto | memo | file
 POST   /projects/{pid}/notes             {text} 메모 한 줄 · POST /projects/{pid}/files (multipart file · text?) 파일 올리기(작은 문서 · 그림 · 크기 한도 · 형식 제한)
 GET    /projects/{pid}/files/{nid}       올린 파일 내려받기(같은 사람들만)
+POST   /projects/{pid}/review/seen       결과 확인 — '결과를 지도에서 봤음'(원칙 198 · 구성원 · 이번 회차 한 번)
 DELETE /projects/{pid}/notes/{nid}       메모 · 파일 지우기(제안 S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 저장 폴더에서 빠지고(저장 공간이 줄어듦)
                                          내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄
 기록(GET …/log)의 lead_storage · 파일 올리기 답의 lead_storage = 프로젝트장의 저장 용량(할당 · 쓴 비율 · 90% 넘음) — 파일 올리는 자리의 한 줄 · 창(S-19 · 막지 않음)
@@ -35,7 +36,7 @@ DELETE /projects/{pid}/notes/{nid}       메모 · 파일 지우기(제안 S-20)
   데이터 올리기   대상 지역마다 영상 1개 이상(영상 범위 ∩ 지역 경계 — /regions 와 같은 판정)
   학습데이터 구축 이 프로젝트의 학습 표본(라벨 묶음) 1개 이상
   학습           이번 회차 표본으로 학습한 모델이 '쓸 수 있음'(등록 승인)까지
-  결과 확인       대상 지역에서 결과 확인(표본 판정) 한 묶음(20건) — 결과 확인 화면이 한 번에 보는 표본 수
+  결과 확인       지도에서 결과 보기(지도 서비스의 그 추론 결과 + 그 자리 고치기) — 직원이 '확인했음'을 누르면 끝(원칙 198 · 1차 표본 검증 없음)
   발행 요청       이번 회차 서비스 카드(또는 새 판)의 공개 결재 승인
   서비스 관리     끝이 없는 단계 — 공개 뒤. 다음 할 일 = 다른 지역에 적용 · 적용 결재 대기
 판단 기준 표시(정밀도 기준값 등 · 6차 판단-1·2)는 보류라 여기서 판정하지 않는다.
@@ -67,7 +68,7 @@ OPTIONAL = {"infer"}              # 해 보면 좋은 단계 — 끝나지 않�
 SCOPES = ("mine", "led", "joined", "archived", "all")
 SCOPE_WORD = {"mine": "진행 중 · 내가 만든 · 참여한 프로젝트", "led": "진행 중 · 내가 만든 프로젝트", "joined": "진행 중 · 참여한 프로젝트",
               "archived": "보관한 프로젝트", "all": "진행 중 · LX 전체 프로젝트"}
-REVIEW_BATCH = 20                 # 결과 확인 화면이 한 번에 보는 표본 수(lx-review SAMPLE) — 한 묶음을 보면 이 단계는 끝
+REVIEW_BATCH = 20                 # (쓰지 않음 · 원칙 198) 예전 결과 확인 표본 한 묶음 — 표본 판정 기록 · 계산은 남겨 둔다
 NAME_MAX, TASK_MAX, REGIONS_MAX = 60, 40, 30
 REASON_MAX, NOTE_MAX = 200, 300
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
@@ -319,6 +320,9 @@ async def _facts(conn, r) -> dict:
         judged += await conn.fetchval(
             "SELECT count(*) FROM survey_findings s JOIN lx_users u ON u.id = s.updated_by WHERE s.verdict IS NOT NULL "
             "AND s.sgg_cd = ANY($1::text[]) AND s.updated_at >= $2", codes, rnd_at) or 0
+    # 결과 확인(원칙 198 · 10-11) — 이번 회차에 직원이 지도에서 결과를 보고 '확인했음'을 누른 기록(project_links kind review_seen · ref '회차:사람')
+    seen = await conn.fetchrow("SELECT by, at FROM project_links WHERE project_id=$1 AND kind='review_seen' AND round=$2 ORDER BY at DESC LIMIT 1",
+                               pid, r["round"])
     # 추론(배포-1) — 이 프로젝트 모델로 돌린 분석(추론 탭 · 분석 작업 대기열 · options.project_id) · 이번 회차 것
     infers = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
                               "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
@@ -327,7 +331,7 @@ async def _facts(conn, r) -> dict:
                                   "AND l.kind='card_version' AND a.subject_type='card' WHERE l.project_id=$1", pid)
     last_at = max([x for x in [*last, ap_last] if x], default=None)
     return {"have": have, "samples": samples, "jobs": jobs, "model": model, "last_at": last_at, "reg": reg, "model_ap": model_ap, "card": card, "cv_now": cv_now,
-            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers}
+            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers, "seen": seen}
 
 
 def _judge(r, f) -> dict:
@@ -385,18 +389,17 @@ def _judge(r, f) -> dict:
     elif not done_inf:
         inf["next"] = "학습한 모델로 영상 분석" if f["model"] else "학습 뒤 영상 분석"
     inf["progress"] = None
-    # ⑤ 결과 확인 — 대상 지역 표본 판정 한 묶음
+    # ⑤ 결과 확인(원칙 198) — 지도에서 결과 보기(지도 서비스의 그 추론 결과 + 그 자리 고치기). 진행 판정 = 직원이 '확인했음'을 눌렀나 하나.
+    #   표본 20 · 100 세기는 1차에서 뺐다(표본 판정 기록 f['judged'] 는 남겨 두고 쓰지 않음)
     rv = st["review"]
-    rv["done"] = f["judged"] >= REVIEW_BATCH
-    rv["progress"] = {"n": min(f["judged"], REVIEW_BATCH), "total": REVIEW_BATCH}
-    if not rv["done"]:
-        rv["next"] = f"표본 확인 {min(f['judged'], REVIEW_BATCH)}/{REVIEW_BATCH}"
-    dom = next((g for g in regions if not g.get("abroad")), None)
-    if dom:
-        rv["target"] = {"region": dom["code"]}
-    elif regions:
-        rv["next"] = None                   # 해외 지역만 — 결과 확인(필지 표본) 대상이 아니다
-        rv["skip"] = True
+    rv["done"] = bool(f["seen"])
+    rv["progress"] = None
+    if f["seen"]:
+        rv["seen_at"] = f["seen"]["at"].astimezone(KST).isoformat() if f["seen"]["at"] else None
+    else:
+        rv["next"] = "지도에서 결과 보기"
+    if done_inf:
+        rv["target"] = {"job": done_inf[0]["id"]}       # 이번 회차 가장 최근에 끝난 추론 — 지도 서비스가 그 결과를 연다
     # ⑥ 배포 신청 — 이번 회차 카드(또는 새 판) 승인 요청 · 승인 뒤 기관 공유 · 사용 현황은 LX 관리자 '배포' 메뉴(원칙 151 · 152)
     pb = st["publish"]
     pb["target"] = {k: v for k, v in (("model", f["reg"]["id"] if f["reg"] else None), ("card", f["card"])) if v}
@@ -754,6 +757,24 @@ async def add_sample(pid: str, body: dict, request: Request):
     return {**out, "as_of": now_iso()}
 
 
+@router.post("/projects/{pid}/review/seen")
+async def review_seen(pid: str, request: Request):
+    """결과 확인 — '결과를 지도에서 봤음'(원칙 198 · 1차 표본 검증 없음). 구성원 · 프로젝트장이 누른다 · 이번 회차에 한 번(다시 눌러도 그대로)."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        await require_member(conn, p, pid)
+        r = await _row(conn, pid)
+        if r["state"] == "archived":
+            raise ApiError("conflict", "보관한 프로젝트입니다", status=409)
+        rnd = r["round"] or 1
+        await conn.execute("INSERT INTO project_links(project_id, kind, ref, round, by) VALUES ($1,'review_seen',$2,$3,$4) ON CONFLICT DO NOTHING",
+                           pid, f"{rnd}:{p.user_id}", rnd, p.user_id)
+        await conn.execute("UPDATE projects SET updated_at=now() WHERE id=$1", pid)
+        await audit(conn, p, "project.review_seen", pid, None, {"round": rnd})
+        out = await view(conn, p, await _row(conn, pid))
+    return {**out, "as_of": now_iso()}
+
+
 @router.post("/projects/{pid}/archive")
 async def archive(pid: str, body: dict, request: Request):
     """끝난 프로젝트 보관 · 다시 열기 — 프로젝트장 · 관리자. 기록(표본 · 카드 · 이력)은 그대로 두고 '내 프로젝트'에서만 빠진다.
@@ -854,7 +875,7 @@ FILE_TYPES = {"pdf": "application/pdf", "hwp": "application/x-hwp", "hwpx": "app
               "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
 LOG_KINDS = ("all", "auto", "memo", "file")
 _AUDIT_WORD = {"project.create": "프로젝트 만듦", "project.edit": "프로젝트 고침", "project.member.add": "구성원 더함", "project.member.remove": "구성원 뺌",
-               "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작",
+               "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작", "project.review_seen": "결과를 지도에서 봤음",
                "project.note.remove": "메모를 지움"}
 _REMOVED_WORD = {"memo": "메모를 지움", "file": "파일을 지움"}
 

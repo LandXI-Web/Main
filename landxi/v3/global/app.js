@@ -364,7 +364,7 @@ async function main() {
 
   function drawCrumbs() {
     crumbs.innerHTML = '';
-    crumbs.append(h('button.gl-crumb.gl-crumb--globe', { type: 'button', text: '지구본', 'aria-current': S.level === 'globe' ? 'true' : null, onclick: () => toGlobe() }));
+    crumbs.append(h('button.gl-crumb.gl-crumb--globe', { type: 'button', 'aria-label': 'Globe', 'aria-current': S.level === 'globe' ? 'true' : null, html: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c2.2 2 2.2 12 0 14M10 3c-2.2 2-2.2 12 0 14"/></svg>', onclick: () => toGlobe() }));
     if (S.country) {
       crumbs.append(h('span.gl-sep', { 'aria-hidden': 'true', text: '›' }));
       crumbs.append(S.level === 'country' ? h('span.gl-crumb.is-now', { text: S.country.name }) : h('button.gl-crumb', { type: 'button', text: S.country.name, onclick: () => toCountry(S.country) }));
@@ -939,7 +939,7 @@ const CK_EN = {
   '건수 확인': 'Count results', '의심 필지 찾기': 'Find flagged parcels', '필지 대장 대조': 'Check the parcel register', 'AI 결과 집계': 'Sum up AI results',
   'AI 결과 가져오기': 'Get AI results', '필지 조회': 'Look up the parcel', '필지와 결합': 'Join with parcels', '영상 확인': 'Check imagery',
   '분석 범위 계산': 'Estimate the run', '분석 실행': 'Run the analysis', '상태 변경': 'Update status', '지도에 표시': 'Show on the map',
-  '필지로 이동': 'Go to the parcel', '레이어 켜기': 'Turn on a layer', '층 켜기': 'Turn on a layer', '범위 표시': 'Show the area', '목록 열기': 'Open the list', '필지 카드': 'Parcel card',
+  '필지로 이동': 'Go to the parcel', '층 켜기': 'Turn on a layer', '범위 표시': 'Show the area', '목록 열기': 'Open the list', '필지 카드': 'Parcel card',
   '대장 읽기': 'Read the register', '대장과 AI 결과 맞추기': 'Match register and AI results', '대조 규칙 적용': 'Apply rules', '어긋난 필지 찾기': 'Find mismatched parcels',
   '확인': 'Check', '실행': 'Run', '이 기관의 데이터가 아닙니다': 'Outside your districts', '해당 지역 데이터가 없습니다': 'No data for this area yet',
 };

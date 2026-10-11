@@ -178,11 +178,10 @@ def test_3d_is_structural_not_a_number():
 
 def test_banned_terms_scrubbed():
     s = ("GPU·대기열 질문은 **관제 운영 에이전트(AG-6)** 몫입니다. 관제 화면의 GPU 패널. GET /api/v1/ops/gpus 와 runner.py 참고. "
-         "PostGIS survey_findings · V-World 연속지적 · 건축HUB API 키 대기 · 서술: llm · 결과 층을 켰습니다")
+         "PostGIS survey_findings · V-World 연속지적 · 건축HUB API 키 대기 · 서술: llm")
     out = lint.scrub_terms(s)
-    assert lint.banned_hits(s) == sorted({"AG-", "관제", "/api", ".py", "PostGIS", "V-World", "API 키", "llm", "층(레이어 뜻)"})
+    assert lint.banned_hits(s) == sorted({"AG-", "관제", "/api", ".py", "PostGIS", "V-World", "API 키", "llm"})
     assert lint.banned_hits(out) == [], out
-    assert "결과 레이어를 켰습니다" in out and "3층 건물" in lint.scrub_terms("3층 건물")   # 원칙 195 · 건물 층은 그대로
     assert "LX 관리자 화면" in out and "vLLM" in lint.scrub_terms("vLLM 서버")   # 단독 llm 만 · vLLM 은 그대로
 
 

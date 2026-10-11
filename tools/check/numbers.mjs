@@ -5,7 +5,7 @@
                     · 프로젝트 신청서(이번 판) — 직원 배포 신청서 '이번 판' · 관리자 배포 신청(검토 중 신청 '이번 판')
      AI 분석 결과   · 서비스 · 지역  — 분석하기 자세히 큰 숫자 · 기관 '내 서비스' 카드
      분석한 면적    · 기관            — 관리자 '기관' 화면(이번 달) · (사용 현황은 서비스별 칸이라 따로 적기만)
-     결과 확인 n    · 프로젝트        — 프로젝트 목록 '남은 일' · 프로젝트 화면 · 결과 확인 화면 · 배포 신청서 · 관리자 신청서(검토 중)
+     결과 확인      · 프로젝트        — 봤음 · 안 봄(원칙 198 · 숫자 없음): 프로젝트 목록 진행 칸 · 프로젝트 화면 단계 칸 · 배포 신청서 · 관리자 신청서(검토 중) · 'n/m' · '표본 확인'이 남으면 '숫자 남음'
    그리고 모든 요청을 지켜 이 PC 주소(localhost · 127.0.0.1 · 사설 IP · :4173 · :8700 등) 호출이 0인지 본다.
    못 읽은 칸은 '—'(경고 · 실패 아님). 같은 이름인데 값이 다르거나 이 PC 주소 호출이 있으면 종료 코드 1.
    사용: node tools/check/numbers.mjs [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--json 파일]
@@ -133,18 +133,20 @@ try {
       if (d.acc) put(`정확도 · ${c.name} (지금 판)`, '분석하기 자세히', d.acc);
       else put(`정확도 · ${c.name} (지금 판)`, '분석하기 자세히', null, '자세히에 정확도 칸 없음');
     }
-    // 프로젝트 목록 — 남은 일 '결과 확인 n/m'
+    // 프로젝트 목록 — 진행 칸의 5번째(결과 확인) 상태 · 숫자가 남았는지(원칙 198 — 봤음 · 안 봄만)
+    const RVW = (st) => (st === 'done' ? '봤음' : st ? '안 봄' : null);
+    const LEFT = /결과 확인\s*\d+\s*\/\s*\d+|표본 확인/;
     await go(page, HOST.app + '/landxi/v3/lx-project/');
     await settle(page, 'table tbody tr');
     const projs = await page.evaluate(async () => {
-      const rows = [...document.querySelectorAll('table tbody tr')].map((tr) => ({ name: tr.cells[0]?.innerText.trim(), todo: tr.innerText }));
+      const rows = [...document.querySelectorAll('table tbody tr')].map((tr) => ({ name: tr.cells[0]?.innerText.trim(), todo: tr.innerText,
+        st: tr.querySelectorAll('.lxp-seg i')[4]?.dataset.st || null }));
       let ids = [];
       try { const m = await import('/landxi/shared/api-v1.js'); ids = ((await m.api('/projects')).items || []).map((p) => ({ id: p.id, name: p.name })); } catch { /* 없음 */ }
       return { rows, ids };
     });
     for (const r of projs.rows) {
-      const m = r.todo.match(/결과 확인\s*(\d+\s*\/\s*\d+)/);
-      put(`결과 확인 n · ${r.name}`, '프로젝트 목록', m ? m[1] : null, m ? '' : '남은 일에 결과 확인 없음');
+      put(`결과 확인 · ${r.name}`, '프로젝트 목록', LEFT.test(r.todo) ? '숫자 남음' : RVW(r.st), r.st ? '' : '진행 칸 없음(보관 등)');
     }
     const svcOfProject = {};
     for (const p of projs.ids) {
@@ -153,16 +155,10 @@ try {
       await go(page, `${HOST.app}/landxi/v3/lx-project/?project=${q}`);
       await settle(page, '.k-main, main');
       await page.waitForTimeout(2500);
-      let t = await text(page);
-      let m = t.match(/결과 확인\s*\n?\s*(\d+\s*\/\s*\d+)/);
-      put(`결과 확인 n · ${p.name}`, '프로젝트 화면', m ? m[1] : null);
-      // 결과 확인 화면(표본 확인)
-      await go(page, `${HOST.app}/landxi/v3/lx-review/?project=${q}`);
-      await page.waitForFunction(() => /\d+\s*\/\s*\d+/.test(document.body.innerText) && /표본|결과 확인/.test(document.body.innerText), null, { timeout: 25000 }).catch(() => {});
-      await page.waitForTimeout(1500);
-      t = await text(page);
-      m = t.match(/(?:표본 확인|결과 확인)\s*\n?\s*(\d+\s*\/\s*\d+)/);
-      put(`결과 확인 n · ${p.name}`, '결과 확인 화면', m ? m[1] : null);
+      const t = await text(page);
+      const pst = await page.evaluate(() => document.querySelectorAll('.lxp-bar-steps .lxp-st')[4]?.dataset.st || null);
+      put(`결과 확인 · ${p.name}`, '프로젝트 화면', LEFT.test(t) ? '숫자 남음' : RVW(pst));
+      // (결과 확인 = 지도 서비스에서 결과 보기 — 표본 수를 세는 화면은 1차에서 쓰지 않음 · 원칙 198)
       // 배포 신청서
       await go(page, `${HOST.app}/landxi/v3/lx-release/?project=${q}&stage=publish`);
       await settle(page, '.rl-dl');
@@ -179,7 +175,8 @@ try {
       const prev = f.cmp.find((x) => /지난 판/.test(x.k || ''));
       if (now) put(`정확도 · ${p.name} 신청서(이번 판)`, '배포 신청서', now.v === '—' ? null : now.v);
       if (prev && prev.v && prev.v !== '—' && f.name) put(`정확도 · ${f.name} (지금 판)`, `배포 신청서 '${prev.k}'`, prev.v);
-      put(`결과 확인 n · ${p.name}`, '배포 신청서', f.rv === '해당 없음' ? null : f.rv, f.rv === '해당 없음' ? '해당 없음' : '');
+      const fw = f.rv === '지도에서 봤음' ? '봤음' : f.rv === '아직 보지 않음' ? '안 봄' : f.rv && /\d/.test(f.rv) ? '숫자 남음' : null;
+      put(`결과 확인 · ${p.name}`, '배포 신청서', fw, f.rv === '해당 없음' ? '해당 없음' : '');
     }
     await ctx.close();
 
@@ -236,7 +233,7 @@ try {
       if (r.st === '승인') put(`정확도 · ${r.svc} (지금 판)`, '관리자 배포 신청(최근 승인)', now && now.v !== '—' ? now.v : null, r.form ? '' : '신청서 전 기록 — 값 없음');
       if (r.st === '검토 중') {
         if (r.proj) put(`정확도 · ${r.proj} 신청서(이번 판)`, '관리자 배포 신청(검토 중)', now?.v || null);
-        if (r.proj) put(`결과 확인 n · ${r.proj}`, '관리자 배포 신청(검토 중)', r.rv);
+        if (r.proj) put(`결과 확인 · ${r.proj}`, '관리자 배포 신청(검토 중)', r.rv === '지도에서 봤음' ? '봤음' : r.rv === '아직 보지 않음' ? '안 봄' : r.rv && /\d/.test(r.rv) ? '숫자 남음' : null);
       }
     }
     await A.ctx.close();
@@ -274,7 +271,7 @@ try {
 const lines = [];
 const out = (s = '') => { lines.push(s); console.log(s); };
 let bad = 0;
-const order = ['정확도', 'AI 분석 결과', '분석한 면적', '결과 확인 n'];
+const order = ['정확도', 'AI 분석 결과', '분석한 면적', '결과 확인'];
 const keys = [...V.keys()].sort((a, b) => order.findIndex((o) => a.startsWith(o)) - order.findIndex((o) => b.startsWith(o)) || a.localeCompare(b, 'ko'));
 out(`같은 이름 숫자 대조 · ${started.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} · ${HOST.app} · ${HOST.admin} · ${HOST.gov}`);
 out('');

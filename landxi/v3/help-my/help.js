@@ -79,7 +79,7 @@ async function faq(el) {
   if (!rows.length) { el.append(h('p.hm-none', { text: '공지가 없습니다' })); return; }
   const list = h('div.hm-faq');
   for (const r of rows) {
-    const d = h('details.hm-q', {}, h('summary', {}, h('span', { text: r.q })), h('p', { text: r.a }));
+    const d = h('details.hm-q', {}, h('summary', {}, h('span', { text: r.q }), h('i', { 'aria-hidden': 'true', html: svg('go') })), h('p', { text: r.a }));
     d.addEventListener('toggle', () => { if (d.open) list.querySelectorAll('details[open]').forEach((x) => x !== d && (x.open = false)); });
     list.append(d);
   }
@@ -88,8 +88,8 @@ async function faq(el) {
 
 /* ── 탭 3 · 문의 (전화 · 메일 두 줄) ── */
 function contact(el) {
-  const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `<span class="hm-v">${esc(CONTACT.tel)}</span>` });
-  const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `<span class="hm-v">${esc(CONTACT.mail)}</span>` });
+  const tel = h('a.hm-ct', { href: telHref(CONTACT.tel), html: `${svg('tel')}<span class="hm-v">${esc(CONTACT.tel)}</span>` });
+  const mail = h('a.hm-ct', { href: 'mailto:' + CONTACT.mail, html: `${svg('mail')}<span class="hm-v">${esc(CONTACT.mail)}</span>` });
   const ask = h('button.t-btn.t-btn--2.hm-ask', { type: 'button', text: '문의하기', onclick: () => openInquiry() });   // 문의 창(메인 · 로그인 창과 같은 부품 · 10-11 메인 지시 3)
   el.append(h('div.hm-contact', {}, tel, mail, ask));
   liveContact().then((c) => {          // LX 관리자 '운영 정보' 값(원칙 170) — 못 읽으면 처음 값 그대로
@@ -147,7 +147,7 @@ async function me(el, whoIn) {
 /* ── 탭 · 세 화면(LX 계정) — 같은 LX 직원 메뉴에서 열리는 세 화면을 실제 그림 + 한 줄씩(그림은 지금 화면에서 새로 찍음 · data/screens/at.json 에 찍은 때) ── */
 const SCREENS = [
   ['analyze', '분석하기', '정식 분석서비스를 골라 내 영상 하나를 분석에 맡깁니다.', '../lx-analyze/'],
-  ['mapsvc', '지도 서비스', '내가 돌린 결과를 레이어로 켜서 보고 내려받습니다.', '../lx-map/'],
+  ['mapsvc', '지도 서비스', '내가 돌린 결과를 층으로 켜서 보고 내려받습니다.', '../lx-map/'],
   ['ximap', 'XI맵', ['전국에 쌓인 AI 분석 결과를 지도 한 장에서 봅니다.', '사업 나라(키르기스스탄)도 같은 지도에서 봅니다.'], '../xi-clean/'],
 ];
 async function screens(el) {

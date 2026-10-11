@@ -938,7 +938,7 @@ async function onAgentAction(a, once) {
     case 'map_layer': {
       const ids = (LAYERS[a.layer] || []).filter((id) => map.getLayer(id));
       for (const id of ids) map.setLayoutProperty(id, 'visibility', a.on === false ? 'none' : 'visible');
-      return done(a.op, ids.length, '이 화면에는 그 레이어가 없습니다');
+      return done(a.op, ids.length, '이 화면에는 그 층이 없습니다');
     }
     case 'map_on': {
       const f = a.filter || {};

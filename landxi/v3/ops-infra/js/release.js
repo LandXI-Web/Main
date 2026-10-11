@@ -92,9 +92,10 @@ export function mountRelease(root) {
     f.low ? h('p.rv-low', { role: 'note', text: `${f.low} — 막지 않습니다 · 보고 판단해 주세요` }) : null,   // 질문 9 ⓑ(직원 신청서와 같은 줄)
     h('small', { text: f.prev ? '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' : '첫 판입니다 — 비교할 지난 판이 없습니다' }));
     row('학습 데이터', f.sample ? units('b', join(`표본 ${nf(val(f.sample.images))}장`, `${md(f.sample.at)} 올림`)) : h('b.rv-warn', { text: f.model ? '프로젝트 학습 데이터와 연결 기록 없음' : '—' }));
-    const rv = f.review;
-    row('결과 확인', f.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: rv && rv.n >= rv.total ? '' : 'rv-warn', text: rv ? `${nf(rv.n)}/${nf(rv.total)}` : '—' }),
-      rv && rv.n < rv.total ? h('small', { text: '프로젝트의 결과 확인 단계가 끝나지 않았습니다' }) : null);
+    // 결과 확인(원칙 198) — 지도에서 결과를 봤는가 하나(숫자 없음). 예전 신청서(표본 수만 있음)는 다 셌으면 봤음으로
+    const rvDone = f.review_done ?? (f.review ? f.review.n >= f.review.total : null);
+    row('결과 확인', f.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: rvDone ? '' : 'rv-warn', text: rvDone ? '지도에서 봤음' : rvDone === false ? '아직 보지 않음' : '—' }),
+      rvDone === false ? h('small', { text: '프로젝트의 결과 확인(지도에서 결과 보기)이 끝나지 않았습니다' }) : null);
     // 대표 그림(필수 · 원칙 186) — 승인하면 분석하기 카드 그림이 된다 · 없던 때 신청은 '그림 없음'
     const cvSrc = f.cover?.src ? (String(f.cover.src).startsWith('/api/') ? API.base + f.cover.src : f.cover.src) : null;
     row('대표 그림', h('div.rv-cover', {}, cvSrc ? h('img', { src: cvSrc, alt: '대표 그림', loading: 'lazy' }) : h('span', { text: '그림 없음' })),

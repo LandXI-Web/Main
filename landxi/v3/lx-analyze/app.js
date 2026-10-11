@@ -379,7 +379,7 @@ function analyzePanel(side, c, picker) {
   const list = h('ul.la-picks');
   const eta = h('div.la-eta');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
-  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 레이어로 쌓입니다.');
+  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 층으로 쌓입니다.');
   const done = h('div.la-done', { hidden: true });
   side.append(step(1, '어디', '한 곳 · 영상 하나'), where, list, step(2, '결과까지'), eta, go, msg, done);
 
@@ -455,7 +455,7 @@ function analyzePanel(side, c, picker) {
     done.hidden = false;
     done.replaceChildren(h('p.la-done-h', { text: res.some((r) => r.ok) ? '분석을 시작했습니다' : '시작하지 못했습니다' }),
       h('ul', {}, ...res.map((r) => h('li', {}, h('b', { text: r.name }), r.ok ? h('a.t-btn.t-btn--text', { href: mapHref(r.map), text: r.running ? '분석 중 · 지도 서비스' : '지도 서비스에서 보기' }) : h('span.warn', { text: r.why })))));
-    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · 끝나면 지도 서비스에 레이어로 쌓입니다', { action: { label: '지도 서비스', href: mapHref(res.find((r) => r.ok).map) } });
+    if (res.some((r) => r.ok)) K.toast('분석을 시작했습니다 · 끝나면 지도 서비스에 층으로 쌓입니다', { action: { label: '지도 서비스', href: mapHref(res.find((r) => r.ok).map) } });
   });
   draw();
 }

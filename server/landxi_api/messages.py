@@ -34,7 +34,7 @@ BODY_MAX = 500
 STATUS_KO = {"sent": "보냄", "seen": "확인 중", "answered": "답변"}
 VERDICT_KO = {"ok": "맞음", "ai_error": "AI 오류", "unknown": "모름"}
 NO_PARCEL = "이 필지는 볼 수 없습니다"
-# 결과 레이어 이름 → 서비스(재학습 묶음 규칙과 같은 판정 · landxi/v3/lx-deploy/retrain.js SET_CARD 와 같은 표)
+# 결과 층 이름 → 서비스(재학습 묶음 규칙과 같은 판정 · landxi/v3/lx-deploy/retrain.js SET_CARD 와 같은 표)
 SET_CARD = [(re.compile(p, re.I), c) for p, c in (
     (r"farm|greenhouse|landcover|cultiv|crop", "card-farm"), (r"change", "card-change"), (r"living|waste|burn|pile|bld|build", "card-living"),
     (r"marine|debris|shore", "card-marine"), (r"road|vehicle", "card-road"), (r"crowd", "card-crowd"), (r"forest|carbon", "card-forest"))]
@@ -89,7 +89,7 @@ def _rule_of_set(s: str | None) -> str | None:
 
 
 async def _resolve_card(conn, tenant: str | None, body: dict, finding_rule: str | None) -> tuple[str | None, str | None]:
-    """요청이 어느 서비스 카드로 가나 → (card_id, deploy_id). 화면이 준 카드 · 배포본 → 규칙 → 결과 레이어 이름 → 필지의 AI 결과 규칙."""
+    """요청이 어느 서비스 카드로 가나 → (card_id, deploy_id). 화면이 준 카드 · 배포본 → 규칙 → 결과 층 이름 → 필지의 AI 결과 규칙."""
     cards = {r["id"] for r in await conn.fetch("SELECT id FROM cards")}
     dep = None
     if body.get("deploy"):

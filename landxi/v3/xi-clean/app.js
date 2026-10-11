@@ -150,11 +150,11 @@ async function boot() {
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
   // 입체는 뺐다(원칙 196 · GPT3-8 '입체가 의미있나??' → 입체 빼기) — 단추 · 지형 타일 로딩 · 기울기 모두 없음(위에서 내려다보는 지도만)
-  const tools = S.fc ? [['layers', '레이어'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['sweep', '대조'], ['report', '보고서']]
-    : [['layers', '레이어'], ['swipe', '가르기'], ['report', '보고서']];
+  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['sweep', '대조'], ['report', '보고서']]
+    : [['layers', '층'], ['swipe', '가르기'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
-  SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: false })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
+  SH = K.shell({ who, home: 'xi-clean', rail: { kind: 'menu', items: tools.map(([id, label]) => ({ id, label, icon: 'grid' })), current: -1, onPick: (i, it) => { tool(it.id); patchRail(); } } });
   SH.rail.setAttribute('aria-label', '도구');
   dedupeRole();
   patchRail();
@@ -1070,9 +1070,9 @@ async function agentOp(a) {
   }
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
-    if (!k) return { ok: false, reason: '그 레이어는 이 지도에 없습니다' };
+    if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
     const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
-    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 레이어가 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 레이어가 없습니다' : '이 지역에는 그 레이어가 없습니다' };
+    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
     const want = a.on !== false;
     if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
       // '비닐하우스 결과만' — 그 서비스 결과 세트만 켠다(이름 = 카탈로그 · 없으면 못 함)
@@ -1096,7 +1096,7 @@ async function agentOp(a) {
     if (S.tool === 'layers') renderLayers();
     // 기관 화면: 결과 층을 껐는데 지도에 주황 점(실태조사 필지)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
     const susOn = k === 'ai' && !want && S.layers.sus && (S.last?.items || []).length > 0;
-    return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 레이어도 끄기', q: '현장 확인 필요 레이어 꺼 줘' } : null };
+    return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 층도 끄기', q: '현장 확인 필요 층 꺼 줘' } : null };
   }
   if (a.op === 'analysis_watch') {                     // 말로 실행한 분석 — 진행 보기에 붙는다(결과가 읍면동 순으로 차오름 · 범위 문장은 작업 값 그대로)
     if (!AN || !a.job_id) return { ok: false, reason: '진행 화면을 열 수 없습니다' };
@@ -1346,7 +1346,7 @@ function renderLayers() {
   h('i.xc-sw'), h('span', { text: it.name?.ko || it.id })));
   const ai = rows.findIndex((b) => b.querySelector('[data-k="ai"]'));
   rows.splice(ai + 1, 0, ...sub);
-  showPop('레이어', h('div.xc-rows-p', {}, ...rows));
+  showPop('층', h('div.xc-rows-p', {}, ...rows));
 }
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */

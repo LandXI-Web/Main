@@ -552,17 +552,6 @@ def render_unverified(md: str, lang: str = "ko") -> str:
     return re.sub(r"(\{\{env:e\d+\}\})\s*~", r"\1", md)            # 숫자 칩 뒤 '~' 꼬리
 
 
-# 원칙 195 — 지도에서 켜고 끄는 '층' → '레이어'(받침 없는 말로 조사도 맞춤 · 을→를 · 이→가 · 은→는 · 과→와 · 으로→로)
-_LAYER_JOSA = {"으로": "로", "을": "를", "를": "를", "이": "가", "은": "는", "과": "와"}
-_JOSA = r"(으로|을|를|이(?=[\s.,·)!?]|$)|은|과)?"
-LAYER_RX_A = re.compile(r"((?:결과|영상|위성|항공|지적선?|경계|필지|필요|AI|분석|켜진|해당|모든|지도|바탕|데이터|도형|NDVI|구역|그)\s?)층(?![수고짜])" + _JOSA)
-LAYER_RX_B = re.compile(r"(?<![0-9가-힣])층" + _JOSA + r"(?=\s?(?:도|만)?\s?(?:켜|꺼|끄|켰|껐|목록))")
-
-
-def _layer_word(josa: str | None) -> str:
-    return "레이어" + (_LAYER_JOSA[josa] if josa else "")
-
-
 # 화면·보고서 서술 금지어(CLAUDE.md 용어표 · 개발 정보) → 바꿀 말. 순서 = 우선순위.
 BANNED: list[tuple[str, re.Pattern, dict]] = [
     ("AG-", re.compile(r"\s?\(?\s?\bAG-\d+\b\s?\)?"), {"ko": "", "en": ""}),
@@ -574,11 +563,10 @@ BANNED: list[tuple[str, re.Pattern, dict]] = [
     ("V-World", re.compile(r"V-?World|브이월드", re.I), {"ko": "국가 공간정보", "en": "national spatial data"}),
     ("API 키", re.compile(r"API\s?키"), {"ko": "연계", "en": "link"}),
     ("llm", re.compile(r"(?<![A-Za-z])[Ll][Ll][Mm](?![A-Za-z])"), {"ko": "AI", "en": "AI"}),
-    # 확인 16차 규칙 ⑥ — 내부 말 대신 쓰는 말(용어표): 프레임 → 범위 · 폴리곤 → 도형
-    # 원칙 195(10-11) — 16차 '레이어 → 층'을 뒤집음: 지도에서 켜고 끄는 '층'은 '레이어'로(건물 층 등 다른 뜻은 그대로)
+    # 확인 16차 규칙 ⑥ — 내부 말 대신 쓰는 말(용어표): 프레임 → 범위 · 레이어 → 층 · 폴리곤 → 도형
+    # (원칙 195 '레이어로'는 10-11 18:52 뒤집힘 · 원칙 199 — 화면 말은 이전대로 '층')
     ("프레임", re.compile(r"프레임"), {"ko": "범위", "en": "area"}),
-    ("층(레이어 뜻)", LAYER_RX_A, {"ko": lambda m: m.group(1) + _layer_word(m.group(2)), "en": lambda m: m.group(1) + "layer"}),
-    ("층(레이어 뜻)", LAYER_RX_B, {"ko": lambda m: _layer_word(m.group(1)), "en": "layer"}),
+    ("레이어", re.compile(r"레이어"), {"ko": "층", "en": "layer"}),
     ("폴리곤", re.compile(r"폴리곤"), {"ko": "도형", "en": "shape"}),
 ]
 

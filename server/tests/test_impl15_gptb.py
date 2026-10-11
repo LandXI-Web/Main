@@ -51,7 +51,7 @@ def test_stack_swap_drop():
     assert a2["n"] == n2 and a2["area_min"] == 1000.0 and a2["emd"] == ["운봉읍"]                 # 쌓기(앞 조건 유지)
     assert [c["k"] for c in a2["chips"]] == ["area", "emd"]
     first = o2.answer.split("\n")[0]
-    assert first.startswith("대상: 켜진 레이어 1개(") and "1,000㎡ 넘음 · 운봉읍" in first and "{{n}}" in first
+    assert first.startswith("대상: 켜진 층 1개(") and "1,000㎡ 넘음 · 운봉읍" in first and "{{n}}" in first
     assert "앞 조건(1,000㎡ 넘음)에 운봉읍 조건을 더했습니다" in o2.answer
     prev2 = {k: a2[k] for k in ("area_min", "area_op_min", "emd")}
     o3 = arun(M.map_filter({"emd": "산내면"}, _ctx({**base, "filter": prev2}, "산내면만")))
@@ -71,14 +71,14 @@ def test_same_scope_stats_report_filter():
     ctxv = {"page": "lx-map", "sets": SETS, "region": "41670"}
     want = _n("job_id = ANY(%s)", (SETS and [NAMWON_GH, PARK],))
     st = arun(M.map_stats({"request": "읍면동 통계 보여 줘"}, _ctx(ctxv, "읍면동 통계 보여 줘")))
-    assert _env(st, "total") == want and st.answer.startswith("대상: 켜진 레이어 2개(") and "조건: 없음" in st.answer
-    assert "레이어별:" in st.answer and any(b["type"] == "chart" for b in st.blocks)
+    assert _env(st, "total") == want and st.answer.startswith("대상: 켜진 층 2개(") and "조건: 없음" in st.answer
+    assert "층별:" in st.answer and any(b["type"] == "chart" for b in st.blocks)
     rp = arun(M.ai_report({"request": "보고서 초안 만들어 줘"}, _ctx(ctxv, "보고서 초안 만들어 줘")))
-    assert _env(rp, "total") == want and rp.answer.startswith("대상: 켜진 레이어 2개(")       # 통계와 같은 범위 · 같은 수(원칙 3)
+    assert _env(rp, "total") == want and rp.answer.startswith("대상: 켜진 층 2개(")       # 통계와 같은 범위 · 같은 수(원칙 3)
     names = st.data["읍면동"]
     assert "가남읍" not in names                                                                # 켜진 층에 없는 읍면동은 통계에도 없다
     f = arun(M.map_filter({"emd": "가남읍"}, _ctx(ctxv, "가남읍만")))
-    assert not f.ui_actions and "가남읍 결과가 없습니다" in f.answer and f.answer.startswith("대상: 켜진 레이어 2개(")
+    assert not f.ui_actions and "가남읍 결과가 없습니다" in f.answer and f.answer.startswith("대상: 켜진 층 2개(")
     # 조건이 걸린 채 통계 · 보고서 — 같은 조건 · 같은 수
     cond = {"area_min": 1000.0, "area_op_min": ">"}
     n_c = _n("job_id = ANY(%s) AND area_m2 > 1000", ([NAMWON_GH, PARK],))

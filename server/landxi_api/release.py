@@ -543,7 +543,7 @@ async def apply_view(pid: str, request: Request):
                         "low": low_line(low_acc(m["acc"], m.get("base"), (prev or {}).get("model", {}).get("acc")))} for m in models],
             "pick": pick, "scenes": jobs[:12],
             "cover": {"current": (cinf["cover"] if cinf else None) or None},          # 대표 그림(필수 · 원칙 186) — 지금 서비스 카드 그림(있으면 그대로 둘 수 있다)
-            "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": bool(rv.get("skip")),
+            "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": rv.get("skip_word") == "해당 없음",
             "status": status, "versions": versions, "shared": shared, "ledger_kinds": kinds,
             # 분야 · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 지금 서비스의 값이 미리 골라져 있다(첫 판은 비어 있음). 승인되면 서비스에 반영
             "category": {"groups": [{"id": g["id"], "name": g["name"], "descr": g["descr"]} for g in cats["list"]],
@@ -699,7 +699,7 @@ async def apply(pid: str, body: dict, request: Request):
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
             "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
-            "review": rv.get("progress"), "review_skip": bool(rv.get("skip")), "scene": scene, "cover": cover,
+            "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": rv.get("skip_word") == "해당 없음", "scene": scene, "cover": cover,
             **({"category": {k: v for k, v in cat.items() if k != "new_group"}} if any(k != "new_group" for k in cat) else {})}
     if cat.get("new_group"):                          # 새 분야 요청(만드는 것은 LX 관리자 · 배포 '분야' 탭)
         async with db(realm="lx") as conn:

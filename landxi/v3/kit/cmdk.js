@@ -47,15 +47,15 @@ const STR = {
     // 확인 16차 X-1 · 원칙 107 — 머리 부제 · 입력 칸 안내(부제는 의미 단위 두 덩이: '공간지식 추론 서비스' + '(지도 제어 · 분석 · 보고서)')
     title: 'XI ChatGEO', sub: ['공간지식 추론 서비스', '(지도 제어 · 분석 · 보고서)'], open: 'XI ChatGEO 열기', close: '닫기', tag: 'XI ChatGEO', send: '보내기',
     ph: '더 똑똑한 공간지식 추론 서비스를 체험해 보세요', intro: '말로 지도를 움직이고, 결과 · 보고서 · 법령을 찾아 드립니다.', sugg: '추천 질문', log: '대화',
-    draw: '이 화면 지도에는 그 결과 레이어가 없어 그리지 못했습니다', drawNomap: '이 화면에는 지도가 없어 지도에 그리지 못했습니다', xi: 'XI맵에서 크게 보기',
-    found: '찾은 필지', next: '이렇게 해 볼 수 있습니다', mapCan: '이 화면 지도에서는 이동 · 확대 · 축소 · 기울이기 · 영상 레이어 켜고 끄기를 할 수 있습니다.',
+    draw: '이 화면 지도에는 그 결과 층이 없어 그리지 못했습니다', drawNomap: '이 화면에는 지도가 없어 지도에 그리지 못했습니다', xi: 'XI맵에서 크게 보기',
+    found: '찾은 필지', next: '이렇게 해 볼 수 있습니다', mapCan: '이 화면 지도에서는 이동 · 확대 · 축소 · 기울이기 · 영상 층 켜고 끄기를 할 수 있습니다.',
     nomap: '이 화면에는 지도가 없습니다. 지도는 XI맵에서 크게 볼 수 있습니다.', nextMap: ['지도 확대해 줘', '3D로 기울여 줘', '어느 지역에 어떤 결과가 있어?'],
     alt: '다른 뜻이면', more: (n) => `${n}곳 더 보기`, fb: '도움 안 됐어요', fbDone: '알려 주셔서 고맙습니다',
     tryIt: '해 보기', dismiss: '알림 닫기', ok: '실행', snapFail: '지도를 그림 파일로 만들지 못했습니다',
     cant: { map_compare: '이 화면에서는 두 시점을 나란히 볼 수 없습니다', map_draw: '이 화면에서는 범위를 그릴 수 없습니다', map_snapshot: '이 화면에는 지도가 없어 그림 파일로 만들지 못했습니다',
       map_on: '이 화면에서는 지도에 칠할 수 없습니다', map_arrive: '이 화면에서는 지도에 표시할 수 없습니다' },
     xiFor: { map_compare: 'XI맵에서 두 시점 보기', map_draw: 'XI맵에서 범위 그리기', map_on: 'XI맵에서 보기', map_arrive: 'XI맵에서 보기', map_layer: 'XI맵에서 보기' },
-    same: { on: '{layer} 레이어는 이미 켜져 있습니다', off: '{layer} 레이어는 이미 꺼져 있습니다', '3d': '이미 입체로 보고 있습니다', top: '이미 위에서 보고 있습니다', region: '이미 {place}을 보고 있습니다' },
+    same: { on: '{layer} 층은 이미 켜져 있습니다', off: '{layer} 층은 이미 꺼져 있습니다', '3d': '이미 입체로 보고 있습니다', top: '이미 위에서 보고 있습니다', region: '이미 {place}을 보고 있습니다' },
     doing: { _: '답을 찾고 있습니다', find: '결과를 찾고 있습니다', map: '지도를 움직이고 있습니다', law: '법령 조문을 찾고 있습니다', report: '보고서 초안을 만들고 있습니다',
       ops: '운영 현황을 확인하고 있습니다', run: 'AI 분석을 준비하고 있습니다', img: '영상을 살펴보고 있습니다', parcel: '필지를 찾고 있습니다', ledger: '대장과 AI 결과를 맞추고 있습니다' },
   },
@@ -438,7 +438,7 @@ function create(opts) {
   };
   const hasMap = () => !!((cfg.stage?.map && visibleMap(cfg.stage.map)) || liveMap());
   const pageKey = () => cfg.home || document.body.dataset.home || location.pathname.split('/').filter(Boolean).pop() || '';
-  const OP_KO = { map_region: '지역 이동', map_zoom: '확대 · 축소', map_view: '시점 바꾸기', map_layer: '레이어 켜기 · 끄기', map_on: '지도에 칠하기', map_arrive: '지도에 표시',
+  const OP_KO = { map_region: '지역 이동', map_zoom: '확대 · 축소', map_view: '시점 바꾸기', map_layer: '층 켜기 · 끄기', map_on: '지도에 칠하기', map_arrive: '지도에 표시',
     map_flyto: '필지로 이동', map_frame: '범위 표시', map_compare: '두 시점 나란히', map_draw: '범위 그리기', map_snapshot: '지도 그림 저장', map_filter: '조건 거르기' };
   /** 진행형 — 끝 신호 전 동작 문장('옮겼습니다' → '옮기고 있습니다') */
   const WIP = [[/옮겼습니다/g, '옮기고 있습니다'], [/이동했습니다/g, '이동하고 있습니다'], [/확대했습니다/g, '확대하고 있습니다'], [/축소했습니다/g, '축소하고 있습니다'],

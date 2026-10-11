@@ -7,7 +7,7 @@
   · 낮은 식생     = 그 달 경작지 NDVI 분포(index_results hist)에서 기준 미만 비율 × 경작지 면적(추정)
 경계 = landxi/global/data 의 ADM2 파일(화면과 같은 파일). 지역은 변수(지역 이름 하드코딩 0).
 허용: 해외 기관(regions.yaml tenants.*.global) · LX. 기관은 자기 배포 범위와 겹치는 지역의 값만 받는다(밖이면 위치만 · 값 0).
-결과 지역이 하나면 map_region 으로 지도를 옮기고, NDVI 달을 말하면 map_on(ndvi · 달)으로 그 달 레이어를 켠다.
+결과 지역이 하나면 map_region 으로 지도를 옮기고, NDVI 달을 말하면 map_on(ndvi · 달)으로 그 달 층을 켠다.
 """
 from __future__ import annotations
 
@@ -502,7 +502,7 @@ def _fmt(tpl: str, **k) -> str:
 # 지도 동작만 있는 짧은 문장은 모델 앞에서 이 도구로 간다(NDVI 요약으로 새지 않음 · 토큰 0). 답은 동작 한 줄뿐이고 숫자는 없다.
 # 동작 성공 여부는 화면이 kit:agent-action-done {op, ok, reason} 으로 알린다(plan 3.1). 실패 문장 교체는 명령 바(r3-route) 몫.
 LAYERS = {"imagery": "imagery layer", "results": "results layer", "districts": "district boundaries", "mismatch": "mismatched districts"}
-LAYERS_KO = {"imagery": "영상 레이어", "results": "결과 레이어", "districts": "구역 경계", "mismatch": "어긋난 구역"}
+LAYERS_KO = {"imagery": "영상 층", "results": "결과 층", "districts": "구역 경계", "mismatch": "어긋난 구역"}
 SPECS["global_map"] = {
     "description": "해외 지도 동작 — Zoom in/out · turn the imagery (satellite) layer off/on · tilt to 3D / top view · go to a district. "
                    "Overseas map control only: no numbers.",
@@ -514,7 +514,7 @@ SPECS["global_map"] = {
                    "preset": {"type": "string", "enum": ["3d", "top"]},
                    "region": {"type": "string", "description": "district name for op goto (or zoom in/out on a district)"}},
     "required": ["op"]}
-WHY["global_map"] = "해외 지도 동작(확대·레이어·시점·이동)"
+WHY["global_map"] = "해외 지도 동작(확대·층·시점·이동)"
 SAY = {"global_map": "Map control", "global_mismatch": "Compare register and AI", "global_findings": "Summarize findings"}
 
 D_IN = re.compile(r"\bzoom(?:\s+the\s+map)?\s+in\b|\bzoom\s*-?in\b|\bcloser\b|\bmagnify\b|확대|줌\s*인", re.I)
@@ -527,7 +527,7 @@ L_OFF = re.compile(r"\b(turn|switch|shut)\s+(\w+\s+){0,3}?off\b|\bhide\b|\bremov
 L_ON = re.compile(r"\b(turn|switch)\s+(\w+\s+){0,3}?(back\s+)?on\b|\bbring\s+(\w+\s+)?back\b|\benable\b|\brestore\b|\bshow\b|\bdisplay\b|켜|보이게|다시", re.I)
 L_NAME = [("mismatch", re.compile(r"mismatch|어긋", re.I)),
           ("imagery", re.compile(r"imager|satellite|\bimage\b|base\s*map|\bphoto|영상|위성", re.I)),
-          ("results", re.compile(r"\bresults?\s+layer|\bndvi\s+layer|\boverlay|결과\s*(?:층|레이어)", re.I)),
+          ("results", re.compile(r"\bresults?\s+layer|\bndvi\s+layer|\boverlay|결과\s*층", re.I)),
           ("districts", re.compile(r"boundar|border|district\s+lines|경계", re.I))]
 L_PRON = re.compile(r"\bit\b|\bthat\b|\bthe\s+layer\b|\bback\s+on\b|다시\s*켜", re.I)
 BACK_ON = re.compile(r"back\s+on|다시\s*켜", re.I)
@@ -569,7 +569,7 @@ def _place_after_goto(q: str) -> str:
 
 
 async def last_layer(ctx) -> str | None:
-    """'Turn it back on' — 같은 사람의 앞 답(화면이 준 prev_run 까지)이 끈·켠 레이어."""
+    """'Turn it back on' — 같은 사람의 앞 답(화면이 준 prev_run 까지)이 끈·켠 층."""
     p = ctx.principal
     uid = getattr(p, "user_id", None)
     if not uid:
@@ -624,7 +624,7 @@ def map_command(q: str, ctx) -> dict | None:
     if off or on:
         layer = next((k for k, rx in L_NAME if rx.search(t)), None)
         if layer is None and L_PRON.search(t):
-            layer = "last"                           # 'Turn it back on' — 도구가 앞 답이 바꾼 레이어로 푼다(없으면 영상 레이어)
+            layer = "last"                           # 'Turn it back on' — 도구가 앞 답이 바꾼 층으로 푼다(없으면 영상 층)
         if layer:
             cand.append({"op": "layer", "layer": layer, "on": (not off) or bool(BACK_ON.search(t))})
     if len(cand) != 1:

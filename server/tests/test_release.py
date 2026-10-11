@@ -100,7 +100,7 @@ def test_apply_reject_reapply_approve(live, tok, made):
     it = next(x for x in httpx.get(B + "/release/requests", headers=a, timeout=60).json()["items"] if x["id"] == aid)
     assert it["state"] == "pending" and it["memo"] == "pytest 첫 신청" and it["form"]["acc"]["unit"] == "%" and it["form"]["prev"] is None
     assert it["form"]["cover"]["name"] == cv and httpx.get(B.replace("/api/v1", "") + it["form"]["cover"]["src"], timeout=30).status_code == 200
-    assert it["form"]["sample"]["images"]["value"] >= 1 and it["form"]["review"]["total"] == 20
+    assert it["form"]["sample"]["images"]["value"] >= 1 and it["form"]["review"] is None and it["form"]["review_done"] is False   # 원칙 198 — 숫자 없음
     r = httpx.post(B + f"/approvals/{aid}/decide", headers=a, json={"decision": "reject"}, timeout=60)
     assert r.status_code == 400                                          # 거절 사유 필수
     assert httpx.post(B + f"/approvals/{aid}/decide", headers=a, json={"decision": "reject", "reason": "pytest 결과 확인 먼저"}, timeout=60).status_code == 200

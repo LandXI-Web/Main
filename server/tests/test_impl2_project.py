@@ -195,14 +195,27 @@ def test_list_blocked_before_stage_after_publish(live, tok, made):
     assert [x["word"] for x in one["stages"]][3:5] == ["건너뜀", "건너뜀"]
 
 
-def test_list_steps_skip_for_overseas_only(live, tok, made):
-    """해외 지역만 — 결과 확인(필지 표본)은 대상이 아니라 '건너뛴 칸'(skip)으로 나오고 막힌 곳에 올리지 않는다."""
+def test_review_seen_on_map(live, tok, made, other):
+    """결과 확인(원칙 198 · 1차 표본 검증 없음) — 숫자(n/20) 없이 '지도에서 결과 보기', 구성원이 '확인했음'을 누르면 끝 · 구성원 아니면 못 누름."""
+    p = made()
+    rv = stage(p, "review")
+    assert rv["done"] is False and rv.get("progress") is None and rv["next"] == "지도에서 결과 보기"
+    assert httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(other), timeout=30).status_code == 403
+    r = httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(tok["staff"]), timeout=30)
+    assert r.status_code == 200, r.text
+    rv = stage(r.json(), "review")
+    assert rv["done"] is True and rv["state"] == "done" and rv.get("seen_at")
+    assert httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(tok["staff"]), timeout=30).status_code == 200   # 다시 눌러도 그대로
+
+
+def test_list_steps_overseas_review_on_map(live, tok, made):
+    """해외 지역만 — 결과 확인은 지도에서 결과 보기라 해외도 같은 단계(원칙 198 · 예전 '필지 표본 대상 아님 → 건너뜀'은 뺐다)."""
     places = httpx.get(B + "/projects/places", headers=H(tok["staff"]), timeout=30).json()["items"]
     if not places:
         pytest.skip("해외 지역 없음")
     p = made({"name": "pytest 해외 시험", "task": "비닐하우스", "task_id": "greenhouse", "regions": [places[0]["code"]]})
     row = _row(tok, p["id"])
-    assert row["steps"][4] == "skip" and all(b["stage"] != "review" for b in row["blocked"])
+    assert row["steps"][4] == "wait" and stage(p, "review")["next"] == "지도에서 결과 보기"
 
 
 def test_retrain_only_lead(live, tok, made, other):

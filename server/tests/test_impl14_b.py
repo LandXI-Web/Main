@@ -143,7 +143,7 @@ def test_map_filter_only_real_values(live):
     nope = arun(M.map_filter({"emd": "없는면"}, _ctx(ctxv, "없는면만")))
     assert not nope.ui_actions and "없는면 결과가 없습니다" in nope.answer
     none = arun(M.map_filter({"emd": "운봉읍"}, _ctx({"page": "lx-map", "sets": []}, "운봉읍만")))
-    assert not none.ui_actions and "켜진 결과 레이어가 없습니다" in none.answer
+    assert not none.ui_actions and "켜진 결과 층이 없습니다" in none.answer
 
 
 def test_improve_classifies_filter_miss():
