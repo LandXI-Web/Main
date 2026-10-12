@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>시안 · 학습 서식 — 직원이 바꿀 수 있는 것과 없는 것</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../../../../v3/shared/tokens-v2.2.css">
+<style>
+/* 설계 24차 · 학습-서식 설명 그림(시안 · 서버 호출 0). 사용자 질문(10-12) "직원이 뭘 자유롭게 편집한다는 거지?" 에 한 장으로 답한다.
+   법전 system-v2.2-toss: 회백 바탕 · 흰 카드 16 · 잉크 글자 · 아이콘 0 · 색은 AI 청록(--ai) 한 곳만. 숫자는 train-flow-3 과 같은 실제 기록(10-08 판). */
+html,body{margin:0;background:var(--bg-0);color:var(--ink);font:400 15px/22px var(--font-body);word-break:keep-all;-webkit-font-smoothing:antialiased}
+.pg{width:1440px;box-sizing:border-box;padding:40px 48px 44px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font:700 32px/42px var(--font-display);letter-spacing:-.01em}
+.lead{margin:6px 0 0;font:400 17px/26px var(--font-body);color:var(--sub-2);max-width:980px;text-wrap:pretty}
+.lead b{font-weight:600;color:var(--ink)}
+.k{display:inline-block;font:600 11px/16px var(--font-body);padding:0 6px;border-radius:4px;background:var(--bg-0);color:var(--sub-2);vertical-align:middle}
+.k.ai{background:rgba(15,169,160,.12);color:#0A7C76}
+.k.adm{background:var(--rule);color:var(--ink-2)}
+
+/* 1. 서식 = 놓여 있는 기본 흐름 */
+.card{background:var(--bg-1);border-radius:var(--r-16);padding:22px 24px 24px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font:700 20px/28px var(--font-display);display:flex;align-items:center;gap:10px}
+.card h2 small{font:400 14px/20px var(--font-body);color:var(--sub)}
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;position:relative}
+.blk{position:relative;border:1px solid var(--rule);border-radius:12px;padding:12px 14px;background:var(--bg-1);display:flex;flex-direction:column;gap:3px;min-height:72px}
+.blk b{font:700 15px/22px var(--font-body)}
+.blk small{font:400 13px/18px var(--font-body);color:var(--sub-2)}
+.blk .n{font:500 13px/18px var(--font-body);color:var(--ai)}
+.blk::after{content:"";position:absolute;right:-13px;top:50%;width:12px;height:2px;background:var(--mute);margin-top:-1px}
+.blk:last-child::after{display:none}
+.blk.off{border-style:dashed;color:var(--sub)}
+.blk.off b{color:var(--sub)}
+/* 2. 블록마다 바꿀 수 있는 것 · 없는 것 */
+.grid2{display:grid;grid-template-columns:150px repeat(6,minmax(0,1fr));gap:12px;align-items:start}
+.rowk{font:600 14px/20px var(--font-body);color:var(--ink);padding-top:2px;display:flex;flex-direction:column;gap:4px}
+.rowk small{font:400 13px/18px var(--font-body);color:var(--sub)}
+ul.l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+ul.l li{position:relative;padding-left:14px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+ul.l li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink);box-sizing:border-box}
+ul.l.no li{color:var(--sub)}
+ul.l.no li::before{border:0;height:2px;top:9px;background:var(--mute)}
+ul.l li em{font-style:normal;color:var(--sub);font-size:13px}
+.band{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:var(--bg-0)}
+.band b{font:600 15px/22px var(--font-body)}
+.band span{font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.band .q{margin-left:auto;font:600 14px/20px var(--font-body);color:var(--ai);white-space:nowrap}
+.rule{height:1px;background:var(--rule);margin:2px 0}
+
+/* 3. 선택지 둘 */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.opt{display:flex;flex-direction:column;gap:12px}
+.opt h3{margin:0;font:700 19px/26px var(--font-display);display:flex;align-items:baseline;gap:10px}
+.opt h3 .g{font:800 22px/26px var(--font-display);color:var(--ink)}
+.opt .one{margin:0;font:400 15px/22px var(--font-body);color:var(--sub-2)}
+.mini{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.mb{border:1px solid var(--rule);border-radius:8px;padding:8px 9px;display:flex;flex-direction:column;gap:3px;background:var(--bg-1)}
+.mb b{font:600 13px/18px var(--font-body)}
+.mb .v{display:flex;flex-wrap:wrap;gap:3px}
+.mb .v i{font:500 11px/16px var(--font-body);font-style:normal;padding:0 5px;border-radius:4px;background:rgba(15,169,160,.12);color:#0A7C76}
+.mb .v i.fx{background:var(--bg-0);color:var(--sub)}
+.mb.lock{background:var(--bg-0)}
+.mb.add{border-style:dashed;align-items:center;justify-content:center;color:var(--ai);font:600 13px/18px var(--font-body)}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pm h4{margin:0 0 4px;font:600 13px/18px var(--font-body);color:var(--sub)}
+.rec{margin:0;padding:12px 16px;border-radius:12px;background:var(--bg-0);font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.rec b{font-weight:700;color:var(--ink)}
+.stamp{position:fixed;left:50%;top:12px;margin-left:-70px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding:8px 14px;border:3px solid #fff;background:#D33;color:#fff;transform:rotate(-4deg);box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}
+.stamp b{font:800 22px/1 var(--font-display);letter-spacing:.08em}.stamp span{font:500 11px/14px var(--font-body)}
+</style>
+</head>
+<body>
+<div class="pg">
+  <header>
+    <h1>학습 서식 — 직원이 바꿀 수 있는 것과 없는 것</h1>
+    <p class="lead"><b>서식</b>은 프로젝트의 학습 화면을 처음 열면 <b>이미 놓여 있는 기본 흐름</b>입니다.<br>빈 판에서 시작하지 않도록 블록 여섯이 순서대로 이어져 있고, 직원은 그 위에서 고치고 '밤에 돌리기'를 누릅니다.</p>
+  </header>
+
+  <section class="card">
+    <h2>처음 열면 이렇게 놓여 있습니다 <small>비닐하우스 2026 · 10-08 판의 실제 값</small></h2>
+    <div class="flow">
+      <div class="blk"><b>학습 데이터</b><small>25cm 항공 · 35,247장</small></div>
+      <div class="blk"><b>기반 모델</b><small>원판 · 4종 모델</small></div>
+      <div class="blk"><b>학습 설정</b><small>반복 20회 · 크기 1280<br>한 번에 8장</small></div>
+      <div class="blk"><b>학습</b><small>밤 대기열 · GPU 한 장</small><span class="n">학습 끝 검증 90%</span></div>
+      <div class="blk"><b>평가</b><small>같은 검증 묶음 3,000칸</small><span class="n">87%</span></div>
+      <div class="blk off"><b>배포 신청</b><small>나아진 판만 켜짐</small></div>
+    </div>
+    <div class="rule"></div>
+    <div class="grid2">
+      <div class="rowk">직원이 바꿀 수 있는 것<small>블록을 누르면 서랍에서</small></div>
+      <ul class="l"><li>어느 묶음을 쓸지</li><li>묶음 더 보태기</li><li>분류 고르기</li></ul>
+      <ul class="l"><li>원판 · 지난 판 중 고르기</li></ul>
+      <ul class="l"><li>반복 횟수</li><li>이미지 크기</li><li>한 번에 몇 장</li></ul>
+      <ul class="l"><li>이름 붙이기</li><li>지금 또는 밤에</li></ul>
+      <ul class="l"><li><em>없음 — 재는 법은 늘 같음</em></li></ul>
+      <ul class="l"><li>사유 적고 신청</li></ul>
+
+      <div class="rowk">바꿀 수 없는 것 <span class="k adm">관리자 영역</span><small>서버 · 관리자가 정함</small></div>
+      <ul class="l no"><li>검증 묶음은 학습에 못 넣음</li></ul>
+      <ul class="l no"><li>새 모델 등록</li></ul>
+      <ul class="l no"><li>상한 — 반복 · 크기 · 장수</li><li>GPU 메모리 한도</li></ul>
+      <ul class="l no"><li>GPU 배정<br>프로젝트 하나에 한 장</li><li>밤 시간대 · 전력 규칙</li></ul>
+      <ul class="l no"><li>검증 묶음 · 비교 기준</li></ul>
+      <ul class="l no"><li>승인 — LX 관리자</li></ul>
+    </div>
+    <div class="band"><b>그리고 흐름 자체</b><span>블록 넣고 빼기 · 순서 잇기 · 같은 블록 여러 개(설정 A · B 나란히, 데이터 묶음 둘 합치기)</span><span class="q">← 이것을 직원이 해도 되는지가 이번 결정</span></div>
+  </section>
+
+  <section class="opts">
+    <div class="card opt">
+      <h3><span class="g">ⓐ</span>관리자가 흐름을 정해 두고, 직원은 값만 바꿉니다</h3>
+      <p class="one">블록 여섯은 고정. 직원은 서랍에서 값(묶음 · 모델 · 반복 · 크기 · 장수)만 고릅니다.</p>
+      <div class="mini">
+        <div class="mb lock"><b>학습 데이터</b><div class="v"><i>묶음</i><i>분류</i></div></div>
+        <div class="mb lock"><b>기반 모델</b><div class="v"><i>원판 · 지난 판</i></div></div>
+        <div class="mb lock"><b>학습 설정</b><div class="v"><i>반복</i><i>크기</i><i>장수</i></div></div>
+        <div class="mb lock"><b>학습</b><div class="v"><i class="fx">GPU 고정</i></div></div>
+        <div class="mb lock"><b>평가</b><div class="v"><i class="fx">고정</i></div></div>
+        <div class="mb lock"><b>배포 신청</b><div class="v"><i>사유</i></div></div>
+      </div>
+      <div class="pm">
+        <div><h4>좋은 점</h4><ul class="l"><li>누가 열어도 같은 모양 · 실수 적음</li><li>관리자가 업무별 서식 한두 개만 관리</li></ul></div>
+        <div><h4>못 하는 것</h4><ul class="l no"><li>설정 둘을 나란히 돌려 보기</li><li>묶음 둘 합치기<br>— 서식을 늘려 달라고 관리자에게</li></ul></div>
+      </div>
+    </div>
+    <div class="card opt">
+      <h3><span class="g">ⓑ</span>기본 흐름은 놓여 있고, 직원이 블록까지 바꿉니다</h3>
+      <p class="one">값은 ⓐ와 같이 바꾸고, 블록도 더 놓고 빼고 잇습니다. 관리자는 상한과 GPU만 정합니다.</p>
+      <div class="mini">
+        <div class="mb"><b>학습 데이터</b><div class="v"><i>묶음</i><i>분류</i></div></div>
+        <div class="mb add">+ 묶음 하나 더</div>
+        <div class="mb"><b>학습 설정 1</b><div class="v"><i>20회 · 1280</i></div></div>
+        <div class="mb add">+ 설정 2 · 10회</div>
+        <div class="mb"><b>학습 A · B</b><div class="v"><i class="fx">GPU 고정</i></div></div>
+        <div class="mb"><b>평가 → 배포 신청</b><div class="v"><i class="fx">고정</i></div></div>
+      </div>
+      <div class="pm">
+        <div><h4>좋은 점</h4><ul class="l"><li>설정 둘 · 묶음 둘을 한 판에서<br>— 10-11 에 말씀한 자유도</li><li>잘못 잇기는 규칙 넷이 그 자리에서 막음</li></ul></div>
+        <div><h4>조심할 것</h4><ul class="l no"><li>판이 복잡해질 수 있음<br>→ '기본 흐름으로 되돌리기' 단추</li><li>GPU · 상한 · 승인은 그대로 관리자</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="rec"><b>추천 ⓑ.</b> 처음 연 모양은 둘이 같고(기본 흐름이 놓여 있음), 10-11 에 말씀한 '블록 여러 개 · 학습 데이터 더 붙이기 · 다른 설정' 은 ⓑ에서만 됩니다. GPU · 상한 · 승인은 어느 쪽이든 관리자 영역입니다.</p>
+</div>
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+<script>
+(() => { const n = new Date(), p = (x) => String(x).padStart(2, '0'); document.getElementById('stampT').textContent = `${n.getFullYear()}.${p(n.getMonth() + 1)}.${p(n.getDate())} ${p(n.getHours())}:${p(n.getMinutes())} · 값은 10-08 학습 기록`; })();
+</script>
+</body>
+</html>

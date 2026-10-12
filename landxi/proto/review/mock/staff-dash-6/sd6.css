@@ -1,0 +1,73 @@
+/* sd6.css — 시안 · LX 직원 대시보드 6차. 사용자 답(10-12 "너무 왼쪽 오른쪽으로 배치 했네. 위 아래로 배치하는걸로" → 원칙 214):
+   세 줄기(좌 · 중 · 우)를 버리고 위에서 아래로 한 줄기. 줄마다 전체 폭. 칸 모양 · 글 · 움직임은 4차 · 5차(sd5.css) 그대로(원칙 199),
+   여기서는 배치와 '가로로 눕힌' 진행 현황 · 저장 용량만 새로 적는다. '오늘 할 일' 없음(원칙 207). 밝은 톤 · 새 아이콘 0. */
+.sd6 .ld-in{gap:16px;max-width:1344px}
+.sd6-row{width:100%;min-width:0}
+.sd6-in .ld-card,.sd6-in .sd4-nat{transition-delay:0ms}
+.sd6-in .sd6-row:nth-child(2){transition-delay:80ms}.sd6-in .sd6-row:nth-child(3) .ld-card,.sd6-in .sd6-row:nth-child(3){transition-delay:140ms}
+.sd6-in .sd6-row:nth-child(4){transition-delay:200ms}.sd6-in .sd6-row:nth-child(n+5){transition-delay:260ms}
+.sd6-in .sd6-pair .ld-card{opacity:1;transform:none}
+
+/* ① 내 분석 결과 — 3열 × 3행 그대로. 전체 폭이라 칸은 가로로 넓게(2:1 · 560×340 그림의 가운데 띠) · 세로는 세 줄 ≈ 760px */
+.sd6 .sd4-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sd6 .sd4-cell .sd4-th{aspect-ratio:2/1;border-radius:12px}
+.sd6 .sd4-cap{font-size:13px;line-height:18px}
+.sd6 .sd4-cap b.num{font-size:17px;line-height:18px}
+
+/* ② 진행 현황 — 가로 흐름: 단계마다 숫자(위) + 이름(아래), 사이는 선 하나 · 일이 있는 단계로 빛 점이 흘러감 */
+.sd6-board .ld-hd{margin-bottom:4px}
+.sd6-seg{display:inline-flex;align-items:center;gap:4px;margin-left:auto;margin-right:14px}
+.sd6-seg .sd4-tag{margin-right:4px}
+.sd6-seg button{height:28px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--sub-2);font:500 13px/26px var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.sd6-seg button:hover{background:var(--bg-0)}
+.sd6-seg button.is-on{background:var(--ink);border-color:var(--ink);color:#fff}
+.sd6-pf{list-style:none;margin:0;padding:18px 0 6px;position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
+.sd6-pf.is-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.sd6-pf.is-5 .sd6-review{display:none}
+.sd6-pf li{position:relative;min-width:0}
+/* 연결선 — 칸 가운데에서 다음 칸 가운데까지(마지막 칸은 없음) */
+.sd6-pf li::before{content:"";position:absolute;left:50%;right:-50%;top:0;height:2px;background:var(--rule);z-index:0}
+.sd6-pf li:last-child::before{display:none}
+/* 마디 점 — 선 위 · 일이 있으면 잉크 채움 */
+.sd6-pf li::after{content:"";position:absolute;left:calc(50% - 5px);top:-4px;width:10px;height:10px;border-radius:50%;background:var(--bg-1);border:2px solid var(--mute);box-sizing:border-box;z-index:1}
+.sd6-pf li.has-work::after{background:var(--ink);border-color:var(--ink)}
+.sd6-pf a{position:relative;display:flex;flex-direction:column;align-items:center;gap:0;padding:14px 8px 8px;margin:0 4px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui);z-index:1}
+.sd6-pf a:hover{background:var(--bg-0)}
+.sd6-pf b{font:800 32px/36px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.sd6-pf span{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sd6-pf li[data-n="0"] b{color:var(--mute)}
+.sd6-pf li[data-n="0"] span{color:var(--sub)}
+/* 빛 점 — 앞 칸에서 일이 있는 칸으로 가로로 천천히(일이 있는 단계만 · 첫 칸이면 없음) */
+.sd6-pf li.has-work .sd6-flow{position:absolute;top:-3px;left:-50%;width:8px;height:8px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 3px rgba(15,169,160,.18);opacity:0;animation:sd6-flow 3s var(--e-ui) infinite;pointer-events:none;z-index:2}
+.sd6-pf li.has-work:first-child .sd6-flow{display:none}
+@keyframes sd6-flow{0%{left:-50%;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:calc(50% - 4px);opacity:0}}
+.sd6-seg-s{color:var(--sub)}
+
+/* ③ 내가 돌린 작업 · 요청함 — 한 줄에 같은 종류(숫자 칸) 둘 · 같은 높이 */
+.sd6-pair{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:16px;align-items:stretch}
+.sd6-pair .ld-card{height:100%;box-sizing:border-box}
+.sd6-jobs-b{display:flex;flex-direction:column;gap:14px}
+.sd6-cells-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sd6-cells-4 .ld-cell b{font-size:32px}
+.sd6 .ld-kinds{margin-top:0}
+.sd6-inbox .ld-cells{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sd6-inbox .ld-cell b{font-size:32px}
+
+/* ④ 저장 용량 — 가로로 낮게: 도넛 · 프로젝트별 · 할당 대비 막대가 한 줄 */
+.sd6-store-b{display:grid;grid-template-columns:112px minmax(0,1fr) minmax(0,1.2fr);gap:28px;align-items:center}
+.sd6-store-b .k-me-dn{margin:0}
+.sd6-lg{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin:0;padding:0}
+.sd6-gauge{display:flex;flex-direction:column;gap:8px}
+.sd6-gauge .ld-store-s{margin:0}
+.sd6-gauge .ld-store-a{margin-top:2px}
+
+/* ⑤ 소식 · 기록 — 공지(한 줄) → 메모(두 줄 나란히) → 전국 AI 현황(넓고 낮게) → 최근 프로젝트(네 칸 한 줄) */
+.sd6-ml{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.sd6-ml li{border-top:0;padding:4px 0}
+.sd6-nat-b{grid-template-columns:360px minmax(0,1fr);gap:32px;align-items:center}
+.sd6 .sd4-map--s{height:300px}
+.sd6-nat .sd4-leg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 18px;max-width:760px}
+.sd6-chips{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+@media (max-width:1180px){.sd6-pair{grid-template-columns:1fr}.sd6-store-b{grid-template-columns:112px minmax(0,1fr)}.sd6-gauge{grid-column:1/-1}.sd6-chips{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.sd6 .sd4-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sd6-pf{grid-template-columns:repeat(3,minmax(0,1fr))!important;row-gap:18px}.sd6-pf li::before{display:none}.sd6-store-b{grid-template-columns:1fr}.sd6-ml{grid-template-columns:1fr}.sd6-nat-b{grid-template-columns:1fr}.sd6-chips{grid-template-columns:1fr}.sd6-seg{margin-left:0}}

@@ -1,0 +1,14 @@
+[
+ {
+  "file": "template-explainer-1440-1139.png",
+  "shot_at": "2026-10-12T11:39:57",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-template/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "full_page": true,
+  "note": "학습 서식 설명 그림 한 장 — 놓여 있는 기본 흐름 · 블록마다 직원이 바꿀 수 있는 것 / 없는 것(관리자 영역) · 선택지 ⓐ 값만 · ⓑ 블록까지",
+  "errors": []
+ }
+]
