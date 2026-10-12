@@ -82,7 +82,7 @@ ul.l li em{font-style:normal;color:var(--sub);font-size:13px}
       <div class="blk"><b>학습 데이터</b><small>25cm 항공 · 35,247장</small></div>
       <div class="blk"><b>기반 모델</b><small>원판 · 4종 모델</small></div>
       <div class="blk"><b>학습 설정</b><small>반복 20회 · 크기 1280<br>한 번에 8장</small></div>
-      <div class="blk"><b>학습</b><small>밤 대기열 · GPU 한 장</small><span class="n">학습 끝 검증 90%</span></div>
+      <div class="blk"><b>학습</b><small>밤 대기열 · 학습 장비 한 대</small><span class="n">학습 끝 검증 90%</span></div>
       <div class="blk"><b>평가</b><small>같은 검증 묶음 3,000칸</small><span class="n">87%</span></div>
       <div class="blk off"><b>배포 신청</b><small>나아진 판만 켜짐</small></div>
     </div>
@@ -99,8 +99,8 @@ ul.l li em{font-style:normal;color:var(--sub);font-size:13px}
       <div class="rowk">바꿀 수 없는 것 <span class="k adm">관리자 영역</span><small>서버 · 관리자가 정함</small></div>
       <ul class="l no"><li>검증 묶음은 학습에 못 넣음</li></ul>
       <ul class="l no"><li>새 모델 등록</li></ul>
-      <ul class="l no"><li>상한 — 반복 · 크기 · 장수</li><li>GPU 메모리 한도</li></ul>
-      <ul class="l no"><li>GPU 배정<br>프로젝트 하나에 한 장</li><li>밤 시간대 · 전력 규칙</li></ul>
+      <ul class="l no"><li>상한 — 반복 · 크기 · 장수</li><li>장비 메모리 한도</li></ul>
+      <ul class="l no"><li>학습 장비 배정<br>프로젝트 하나에 한 장</li><li>밤 시간대 · 전력 규칙</li></ul>
       <ul class="l no"><li>검증 묶음 · 비교 기준</li></ul>
       <ul class="l no"><li>승인 — LX 관리자</li></ul>
     </div>
@@ -115,7 +115,7 @@ ul.l li em{font-style:normal;color:var(--sub);font-size:13px}
         <div class="mb lock"><b>학습 데이터</b><div class="v"><i>묶음</i><i>분류</i></div></div>
         <div class="mb lock"><b>기반 모델</b><div class="v"><i>원판 · 지난 판</i></div></div>
         <div class="mb lock"><b>학습 설정</b><div class="v"><i>반복</i><i>크기</i><i>장수</i></div></div>
-        <div class="mb lock"><b>학습</b><div class="v"><i class="fx">GPU 고정</i></div></div>
+        <div class="mb lock"><b>학습</b><div class="v"><i class="fx">장비 고정</i></div></div>
         <div class="mb lock"><b>평가</b><div class="v"><i class="fx">고정</i></div></div>
         <div class="mb lock"><b>배포 신청</b><div class="v"><i>사유</i></div></div>
       </div>
@@ -126,23 +126,23 @@ ul.l li em{font-style:normal;color:var(--sub);font-size:13px}
     </div>
     <div class="card opt">
       <h3><span class="g">ⓑ</span>기본 흐름은 놓여 있고, 직원이 블록까지 바꿉니다</h3>
-      <p class="one">값은 ⓐ와 같이 바꾸고, 블록도 더 놓고 빼고 잇습니다. 관리자는 상한과 GPU만 정합니다.</p>
+      <p class="one">값은 ⓐ와 같이 바꾸고, 블록도 더 놓고 빼고 잇습니다. 관리자는 상한과 학습 장비만 정합니다.</p>
       <div class="mini">
         <div class="mb"><b>학습 데이터</b><div class="v"><i>묶음</i><i>분류</i></div></div>
         <div class="mb add">+ 묶음 하나 더</div>
         <div class="mb"><b>학습 설정 1</b><div class="v"><i>20회 · 1280</i></div></div>
         <div class="mb add">+ 설정 2 · 10회</div>
-        <div class="mb"><b>학습 A · B</b><div class="v"><i class="fx">GPU 고정</i></div></div>
+        <div class="mb"><b>학습 A · B</b><div class="v"><i class="fx">장비 고정</i></div></div>
         <div class="mb"><b>평가 → 배포 신청</b><div class="v"><i class="fx">고정</i></div></div>
       </div>
       <div class="pm">
         <div><h4>좋은 점</h4><ul class="l"><li>설정 둘 · 묶음 둘을 한 판에서<br>— 10-11 에 말씀한 자유도</li><li>잘못 잇기는 규칙 넷이 그 자리에서 막음</li></ul></div>
-        <div><h4>조심할 것</h4><ul class="l no"><li>판이 복잡해질 수 있음<br>→ '기본 흐름으로 되돌리기' 단추</li><li>GPU · 상한 · 승인은 그대로 관리자</li></ul></div>
+        <div><h4>조심할 것</h4><ul class="l no"><li>판이 복잡해질 수 있음<br>→ '기본 흐름으로 되돌리기' 단추</li><li>학습 장비 · 상한 · 승인은 그대로 관리자</li></ul></div>
       </div>
     </div>
   </section>
 
-  <p class="rec"><b>추천 ⓑ.</b> 처음 연 모양은 둘이 같고(기본 흐름이 놓여 있음), 10-11 에 말씀한 '블록 여러 개 · 학습 데이터 더 붙이기 · 다른 설정' 은 ⓑ에서만 됩니다. GPU · 상한 · 승인은 어느 쪽이든 관리자 영역입니다.</p>
+  <p class="rec"><b>추천 ⓑ.</b> 처음 연 모양은 둘이 같고(기본 흐름이 놓여 있음), 10-11 에 말씀한 '블록 여러 개 · 학습 데이터 더 붙이기 · 다른 설정' 은 ⓑ에서만 됩니다. 학습 장비 · 상한 · 승인은 어느 쪽이든 관리자 영역입니다.</p>
 </div>
 <div class="stamp"><b>시안</b><span id="stampT"></span></div>
 <script>

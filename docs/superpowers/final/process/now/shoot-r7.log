@@ -1,0 +1,16 @@
+찍음 now-dashboard-1200.png
+비닐하우스 프로젝트 prj_3fdba452d5
+찍음 after-train-board-1200.png
+찍음 after-train-full-1200.png
+찍음 after-train-drawer-1200.png
+찍음 after-loading-train-1200.png
+찍음 now-ximap-glow-1201.png
+실패 xiload Page.wait_for_selector: Timeout 8000ms exceeded. Call log:   - waiting for locator(".k-ld.is-on") to be visible 
+찍음 now-admin-dashboard-1201.png
+찍음 mock-dash6-1201.png
+찍음 mock-dash6-full-1201.png
+찍음 mock-dash6-stages5-1201.png
+찍음 mock-dash6-stages6-1202.png
+찍음 mock-dash6-grid-hover-1202.png
+찍음 mock-train-template-1202.png
+끝 — 실패 ['xiload'] 로그인 2

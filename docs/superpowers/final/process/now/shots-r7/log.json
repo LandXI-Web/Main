@@ -1,0 +1,91 @@
+{
+ "_done": [
+  "dash",
+  "train",
+  "loading",
+  "xi",
+  "adash",
+  "dash6",
+  "dash6full",
+  "dash6s5",
+  "dash6s6",
+  "dash6hover",
+  "template",
+  "template"
+ ],
+ "_logins": 3,
+ "_failed": [
+  "xiload"
+ ],
+ "now-dashboard-1200.png": {
+  "at": "2026-10-12T12:00:41",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드(지금 화면)"
+ },
+ "after-train-board-1200.png": {
+  "at": "2026-10-12T12:00:46",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 — 흐름 판 · 이번 학습 · 학습 이력(첫 화면)"
+ },
+ "after-train-full-1200.png": {
+  "at": "2026-10-12T12:00:47",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 — 세로 전체"
+ },
+ "after-train-drawer-1200.png": {
+  "at": "2026-10-12T12:00:48",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 — 학습 설정 블록을 눌러 연 서랍"
+ },
+ "_loading_label": "불러오는 중",
+ "after-loading-train-1200.png": {
+  "at": "2026-10-12T12:00:53",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 — 응답을 1.5초 늦춰 본 '불러오는 중'(이 시험에서만 늦춤)"
+ },
+ "now-ximap-glow-1201.png": {
+  "at": "2026-10-12T12:01:09",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 — 전국(지금 화면)"
+ },
+ "now-admin-dashboard-1201.png": {
+  "at": "2026-10-12T12:01:31",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드(지금 화면 · 로그인 직후 첫 화면)"
+ },
+ "mock-dash6-1201.png": {
+  "at": "2026-10-12T12:01:37",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-6/index.html",
+  "note": "시안 대시보드 6차 첫 화면"
+ },
+ "mock-dash6-full-1201.png": {
+  "at": "2026-10-12T12:01:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-6/index.html",
+  "note": "시안 대시보드 6차 세로 전체"
+ },
+ "mock-dash6-stages5-1201.png": {
+  "at": "2026-10-12T12:01:54",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-6/index.html",
+  "note": "시안 진행 현황 다섯 칸"
+ },
+ "mock-dash6-stages6-1202.png": {
+  "at": "2026-10-12T12:02:01",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-6/index.html?stages=6",
+  "note": "시안 진행 현황 여섯 칸"
+ },
+ "mock-dash6-grid-hover-1202.png": {
+  "at": "2026-10-12T12:02:09",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-6/index.html",
+  "note": "격자 다섯째 칸에 올린 모습"
+ },
+ "mock-train-template-1202.png": {
+  "at": "2026-10-12T12:02:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-template/index.html",
+  "note": "시안 학습 서식 설명 그림 한 장"
+ },
+ "mock-train-template-1203.png": {
+  "at": "2026-10-12T12:03:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-template/index.html",
+  "note": "시안 학습 서식 설명 그림 한 장"
+ }
+}
