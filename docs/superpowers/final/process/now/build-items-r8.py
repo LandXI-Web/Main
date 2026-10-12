@@ -1,0 +1,167 @@
+"""바퀴 8 now 항목 JSON 만들기 — 그림 파일 이름 뒤 시각은 shots 폴더에서 찾는다. 사용: python build-items-r8.py shots-r8
+진행 숫자는 shots-r8/progress.json(굽는 순간 관리자 세션으로 읽은 GET 응답)에서 그대로 옮긴다."""
+import glob, json, os, sys
+ROOT = r'E:\Land-XI 플랫폼\01. 디자인'
+NOW = os.path.join(ROOT, 'docs', 'superpowers', 'final', 'process', 'now')
+SH = sys.argv[1]
+LOG = json.load(open(os.path.join(SH, 'log.json'), encoding='utf-8'))
+PROG = json.load(open(os.path.join(SH, 'progress.json'), encoding='utf-8'))['body']
+APP, ADMIN = 'https://app.land-xi.dev', 'https://admin.land-xi.dev'
+STAFF = '아이디 test@lx.or.kr · 임시 비밀번호'
+ADM = '아이디 lxadmin@lx.or.kr · 임시 비밀번호'
+NOLOGIN = '로그인 없음(시안 · 서버 호출 없음)'
+IMG = APP + '/landxi/proto/review/confirm/now/img/'
+M = APP + '/landxi/proto/review/mock/'
+
+
+def S(base):
+    f = sorted(glob.glob(os.path.join(SH, base + '-[0-9][0-9][0-9][0-9].png')))
+    assert f, base
+    return os.path.basename(f[-1])
+
+
+def T(*bases):
+    ts = [(lambda f: f[-8:-6] + ':' + f[-6:-4])(S(b)) for b in bases]
+    a, z = min(ts), max(ts)
+    return f'(그림 찍은 시각 10월 12일 {a}' + ('' if a == z else f'–{z}') + ')'
+
+
+def V(o):
+    return o['value'] if isinstance(o, dict) and 'value' in o else o
+
+
+farm = PROG['assets']['farm']
+sch = PROG['schedule']
+pa = LOG['_progress_at']
+pt = pa[11:16]
+done, cells, sgg_done, sgg = V(farm['done']), V(farm['cells']), V(farm['sgg_done']), V(farm['sgg'])
+pct, dkm, tkm, fail = V(farm['pct']), V(farm['done_km2']), V(farm['total_km2']), V(farm['failed'])
+nxt = farm.get('next') or {}
+days = V(sch['days_left']) if sch.get('days_left') is not None else None
+perday = V(sch['est_km2_day'])
+RUNNER = PROG['runner']
+last = farm.get('last_at')
+cnt = farm.get('counts') or {}
+cnt_txt = ' · '.join(f"{k} {V(v['n']):,}곳({V(v['km2'])}㎢)" for k, v in cnt.items())
+LIVE = (f"{pt} 서버에서 읽은 진행: 분석 끝 읍면동 {done:,}곳 / 분석할 범위가 있는 읍면동 {cells:,}곳(시군구 {sgg_done} / {sgg}) · "
+        f"끝난 넓이 {dkm:,}㎢ / 전체 {tkm:,}㎢ = 전국 농지 범위의 {pct}% · 실패 {fail}곳"
+        + (f" · 다음 차례 {nxt.get('sido', '')} {nxt.get('sgg', '')} {nxt.get('emd', '')}".rstrip() if nxt.get('sgg') else '')
+        + (f" · {cnt_txt}" if cnt_txt else '') + '.')
+DAYS = (f"지금 속도(하루 약 {perday:,.0f}㎢, 학습 장비가 놀 때 기준)로 남은 농지는 약 {days}일입니다." if days is not None else '')
+DONE = ['완료', '다시']
+items = []
+
+items.append(dict(section='한눈에', desc='이번에 무엇을 보고 답하시면 되는지입니다. 그림은 이번에 새로 찍은 지금 화면입니다.', items=[dict(
+    id='한눈에', t='이번 페이지에 있는 것 — 지금 화면 네 장',
+    shots=[S('now-projects'), S('now-ximap-national'), S('now-datahouse'), S('now-admin-retrain')], opts=['확인'],
+    where=[[APP + '/landxi/v3/lx-project/', STAFF, '프로젝트(카드 목록) · XI맵(전국) · 데이터하우스'],
+           [ADMIN + '/landxi/v3/ops-infra/#/deploys/retrain', ADM, "LX 관리자 → 배포 → 'XI 재학습'"]],
+    what='위 그림은 프로젝트 목록(분석 서비스 카드와 같은 틀) · XI맵 전국(경작지 면과 분석 예정 빗금) · 데이터하우스(직원 메뉴) · LX 관리자 XI 재학습 탭의 지금 모습입니다. 구성: 구현 확인 열두 가지(프로젝트 둘 · 코어 고리 여섯 · 전국 분석 넷) · 안내 하나(하천) · 시안과 결정 셋 · 새 질문 셋. 구현 확인은 답하신 것을 만든 것이고, 시안은 아직 만들지 않은 모습입니다. ' + T('now-projects', 'now-admin-retrain'))]))
+
+impl = []
+impl.append(dict(id='프로젝트-카드', t='프로젝트 진행 현황이 분석 서비스 카드와 같은 틀로 — 그림 · 이름 · 지금 단계 · 학습 데이터 n장 · AI 모델 정확도 · 대상지 · 구성원 · 마지막 활동',
+    shots=[S('now-projects')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-project/', STAFF, '왼쪽 메뉴 프로젝트 — 카드를 누르면 지금 단계 화면으로']],
+    what="분석하기 카드와 같은 모양으로 바꿨습니다. 카드마다 단계 여섯 칸 · 학습 데이터 n장 · AI 모델 정확도 · 대상지 · 구성원 · 마지막 활동이 보이고, 한 페이지 2 · 4 · 6 · 8장을 고를 수 있습니다. 위 단계 표시는 대시보드 진행 현황과 같은 값이고, 정확도는 분석하기 카드와 같은 값(89 · 96%), 학습 데이터 n장은 학습 화면 학습 이력의 맨 위 줄과 같은 값입니다. " + T('now-projects')))
+impl.append(dict(id='새프로젝트-한창', t='새 프로젝트를 한 창에서 — 이름 · 설명(필수 아님) · 영상 올리기 · 구성원 초대 → 만들기 한 번으로 바로 학습 데이터 구축',
+    shots=[S('now-new-project')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-project/', STAFF, '프로젝트 → 새 프로젝트(그림은 열어 두기만 하고 만들지 않았습니다)'],
+           [IMG + 'new-project-10s.mp4', '로그인 없이 열림 · 영상 10초', '이름 쓰기 → 영상 올리기 → 구성원 → 만들기 → 학습 데이터 구축까지']],
+    what="전에는 누른 횟수 10번에 화면 4~5개였던 것이 이제 8번 · 화면 3개(영상 올리기와 구성원 한 명 포함)입니다. 대상지는 영상에서 저절로 정해지고, 영상 없이 만들 때만 고르는 칸이 보입니다. 올리는 중에 만들면 바로 학습 데이터 구축으로 넘어가고, 단계 막대 밑 한 줄에서 이어 올려 등록되면 대상지가 정해집니다. 이 그림은 창을 열어 이름만 쓴 모습이라 새 프로젝트를 만들지 않았습니다. " + T('now-new-project')))
+impl.append(dict(id='클래스목록', t='클래스(찾는 것의 이름)를 한 곳에서 — 모델 · 서비스 · 결과 · 학습 데이터 · 고친 기록이 같은 클래스를 가리킴',
+    shots=[S('now-datahouse')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-console/', STAFF, '왼쪽 메뉴 데이터하우스 → 학습 데이터 → 클래스별']],
+    what="지금 쓰는 클래스 20개를 서버 한 목록으로 모았습니다. 비닐하우스 아래 세부는 '단동 · 다동'으로 들어가 있습니다(남원 모델에서 온 이름 — 아래 질문에서 여쭙니다). 결과 숫자는 바뀌지 않았고, 표의 '올린 학습 데이터'는 프로젝트에서 올린 묶음 중 그 클래스가 든 그림 수입니다. " + T('now-datahouse')))
+impl.append(dict(id='새클래스승인', t='새 클래스는 직원이 XI맵에서 더하고 LX 관리자가 승인 — 목록에서 고르기 · 새 클래스 더하기 · 비슷한 클래스 먼저 보여 주기',
+    shots=[S('now-class-pick'), S('now-class-add'), S('now-class-similar'), S('now-admin-datahouse')], opts=DONE,
+    where=[[APP + '/landxi/v3/xi-clean/', STAFF, '객체를 눌러 분류 바꾸기 → 새 클래스 더하기'],
+           [ADMIN + '/landxi/v3/lx-ingest/?tab=train', ADM, '데이터하우스 → 학습 데이터 → 승인 대기']],
+    what="'어떤 분류인가요?' 문장 대신 클래스 목록(이 서비스가 찾는 것 · 같은 모델의 다른 클래스 · 승인 대기 · 찾기)에서 고릅니다. 새 클래스는 이름과 세부(위 클래스 고르기) 또는 새 물체로 더하고, 더하기 전에 비슷한 클래스를 먼저 보여 줍니다(세 번째 그림: '연동 비닐하우스' 를 쓰면 단동 · 다동 비닐하우스가 먼저 나옴 — 이 그림에서는 실제로 더하지 않았습니다). 더하면 '승인 대기'로 붙어 학습에 들어가지 않고, LX 관리자가 승인 · 합치기 · 거절합니다. 마지막 그림은 지금 승인 대기가 없는 관리자 화면입니다. " + T('now-class-pick', 'now-admin-datahouse')))
+impl.append(dict(id='고친것학습데이터', t='XI맵에서 고친 것이 데이터하우스에 건수로 쌓이고, 학습 화면 학습 데이터 블록에 보임',
+    shots=[S('now-train-data'), S('now-datahouse')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-project/', STAFF, "프로젝트 '비닐하우스 2026' → 학습 → 학습 데이터 블록을 누름"]],
+    what="그 자리 고치기로 고친 것은 데이터하우스(클래스별 · 고친 것)에 건수로 보이고, 학습 화면의 학습 데이터 블록에 'XI맵에서 고친 것 n건'으로 나옵니다. 되돌린 것 · 시험 · 메모 · 승인 전 클래스는 뺍니다. 지금 실제 고친 것은 0건입니다. '학습 데이터 1장이 되는 때'(아래 결정)가 정해지기 전이라 지금은 건수로만 셉니다. " + T('now-train-data', 'now-datahouse')))
+impl.append(dict(id='데이터하우스', t="데이터하우스 — 직원 메뉴 '데이터' 자리 · 학습 데이터 · 영상 · 행정 자료 탭 · 승인 · 합치기 · 거절 단추는 LX 관리자에게만",
+    shots=[S('now-datahouse')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-console/', STAFF, "왼쪽 메뉴 '데이터하우스'"]],
+    what="메뉴 이름만 '데이터'에서 '데이터하우스'로 바꿨고 자리는 그대로입니다. '영상 · 행정 자료' 탭은 지금까지의 화면 그대로입니다. " + T('now-datahouse')))
+impl.append(dict(id='재학습배포관리', t='XI 재학습 · 배포 관리 — 언제 학습하나 · 분석 서비스별 줄 · 새 모델 후보 · 오늘 밤 순서',
+    shots=[S('now-admin-retrain')], opts=DONE,
+    where=[[ADMIN + '/landxi/v3/ops-infra/#/deploys/retrain', ADM, 'LX 관리자 → 배포 → XI 재학습']],
+    what="학습 장비가 쉴 때 자동으로 학습하는 것이 기본이고, 서비스별로 수동도 고를 수 있습니다. 서비스마다 줄(지금 판 · 쌓인 고친 것 n/200 · 새 클래스 · 방식 · 상태)이 있고, XI 재학습으로 만든 판은 지금 판보다 나아진 경우에만 배포 신청이 받아집니다. 비닐하우스 줄은 지난 실제 학습이 '지금 판보다 낮음 · 후보로 남음'으로 나옵니다. 중요: 학습 데이터 1장이 되는 때(아래 결정)가 정해져야 실제로 돌아갑니다. 정해지기 전에는 기준에 닿아도 '미룸'으로 남습니다. " + T('now-admin-retrain')))
+impl.append(dict(id='학습서식블록', t='학습 서식 — 학습 화면이 기본 흐름으로 열리고 직원이 블록을 넣고 · 빼고 · 순서를 바꿈 · 기본 흐름으로 되돌리기 · 관리자 학습 서식 칸',
+    shots=[S('now-train-flow'), S('now-train-changed'), S('now-admin-template')], opts=DONE,
+    where=[[APP + '/landxi/v3/lx-project/', STAFF, '프로젝트 → 학습'],
+           [ADMIN + '/landxi/v3/ops-infra/#/deploys/templates', ADM, '배포 → 학습 서식']],
+    what="흐름 판의 블록 자리는 관리자가 정한 업무별 기본 흐름(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 평가 · 배포 신청)이고, 값은 그 프로젝트의 최근 학습입니다. 직원은 블록을 더하고 지우고 잇는 것을 바꿀 수 있고(두 번째 그림은 평가를 지우고 추론 시험을 더한 모습), '기본 흐름으로 되돌리기'로 처음 모양이 됩니다. 바꿀 수 없는 것은 학습 장비 배정 · 상한 · 쉬는 시간대 · 검증 묶음 · 승인입니다. 관리자 학습 서식 칸에서 블록 켜고 끄기와 첫 값을 정합니다. 두 번째 그림은 이 사진을 위해서만 바꿔 본 것이고 저장하지 않았습니다. " + T('now-train-flow', 'now-admin-template')))
+items.append(dict(section='구현 확인 — 프로젝트와 코어 고리', desc='답하신 것을 만든 것입니다. 열어 보시고 완료 또는 다시를 골라 주세요. 그림은 지금 바깥 주소 화면입니다.', items=impl))
+
+nat = []
+nat.append(dict(id='전국작업기', t='전국 결과 자산 작업기 — 학습 장비가 놀면 낮에도 바로 읍면동 한 칸씩 분석해 2025년 결과만 쌓음(영상 파일은 저장하지 않음)',
+    shots=[S('now-admin-line'), S('now-ximap-national')], opts=DONE,
+    where=[[ADMIN + '/landxi/v3/ops-core/', ADM, '할 일 줄 — 전국 농지 진행 한 줄']],
+    what="10월 12일 14:41부터 낮에도 계속 돌고 있습니다(밤을 기다리지 않음). 실측: 1㎢ 약 95초 · 전국 농지는 학습 장비가 놀 때 기준 약 30~42일. " + LIVE + ' ' + DAYS + " 하천은 멈춰 있습니다(아래 안내). 사용자 AI 분석이 들어오면 몇 초 안에 비켜 줍니다. " + T('now-admin-line')))
+nat.append(dict(id='XI맵경작지면', t='XI맵 전국 결과 — 빛나는 밀도 대신 분석을 마친 읍면동은 실제 결과 면, 아직인 곳은 흰 빗금 \'분석 예정\' · 올리면 요약 · 누르면 날아감',
+    shots=[S('now-ximap-national'), S('now-ximap-hover'), S('now-ximap-closeup')], opts=DONE,
+    where=[[APP + '/landxi/v3/xi-clean/', STAFF, "왼쪽 위 '전국 결과 자산' 칸 · 지도 빗금 · 올리면 요약 · 누르면 그 읍면동으로"],
+           [IMG + 'national-10s.mp4', '로그인 없이 열림 · 영상 10초(지난 시험 칸 녹화)', '올리면 요약 → 누르면 날아감 → 객체']],
+    what="멀리서는 칸 면, 확대하면 객체가 보입니다. 배경 영상은 그대로입니다. " + LIVE + " 끝난 곳이 아직 적어 전국은 대부분 '분석 예정' 빗금입니다. 세 번째 그림은 끝난 읍면동을 확대한 모습입니다. " + T('now-ximap-national', 'now-ximap-closeup')))
+nat.append(dict(id='전국-유휴즉시', t='전국 분석은 학습 장비가 놀면 언제든(낮 포함) 돌고, 사용자 작업이 오면 비킴',
+    shots=[S('now-ximap-national'), S('now-admin-line')], opts=DONE,
+    where=[[APP + '/landxi/v3/xi-clean/', STAFF, "XI맵 전국 결과 자산 칸 — '지금 분석 중'"],
+           [ADMIN + '/landxi/v3/ops-core/', ADM, '관리자 대시보드 할 일 줄']],
+    what="14:41부터 실제로 돌고 있고, 사용자 AI 분석을 함께 넣었을 때 첫 결과가 4.2초 · 끝이 20.4초에 나왔습니다. " + LIVE + " " + DAYS + " 전국 농지는 약 30~42일(학습 장비가 놀 때 기준 · 농촌 칸이 빠르면 약 30일)입니다. " + T('now-admin-line')))
+nat.append(dict(id='학습장비-부하상한', t='학습 장비는 한 장만 쓰고 풀로드 하지 않음 — 평균 사용률 · 전력에 상한을 두고 재면서 조절',
+    shots=[], opts=DONE,
+    where=[[ADMIN + '/landxi/v3/ops-infra/', ADM, '관리자 → 인프라(학습 장비 상태)']],
+    what="전국 분석만 돌린 17분 동안 한 장(작업 전용)의 평균 사용률은 약 4%, 최대 전력은 약 115W였고, 상한은 사용률 70% · 전력 140W(장당 한도의 70%)입니다. 다른 한 장(AI 도우미용)은 쓰지 않았습니다. 지금은 영상을 읽는 시간이 가장 오래 걸려 장비가 대부분 쉽니다. 시스템 전력 설정은 바꾸지 않았습니다. 실측 기록은 10월 12일 14:57–15:15입니다."))
+items.append(dict(section='구현 확인 — 전국 분석', desc='전국 결과 자산을 쌓는 작업기와 XI맵 화면입니다. 진행 숫자는 이 페이지를 굽는 순간 서버에서 읽은 값 그대로입니다.', items=nat))
+
+items.append(dict(section='안내 — 하천', desc='답하실 것이 아니라 알려 드리는 것입니다.', items=[dict(
+    id='하천범위', t='하천 · 계곡은 멈춤 — 사용자 자료(국가 · 지방 · 소하천)로 범위를 다시 만든 뒤 처음부터',
+    shots=[S('now-ximap-river')], opts=['확인'],
+    where=[[APP + '/landxi/v3/xi-clean/', STAFF, "XI맵 → 전국 결과 자산 → '하천 · 계곡'"]],
+    what="하천은 멈춤 — 사용자 자료(국가 · 지방 · 소하천)로 범위를 다시 만든 뒤 처음부터 분석합니다. 지금 XI맵에서는 하천 · 계곡이 '멈춤'으로 표시됩니다. " + T('now-ximap-river'))]))
+
+dec = []
+dec.append(dict(id='대시보드-v7', t='LX 직원 대시보드 7차 — 위아래 위계는 그대로, 한 화면에 컴팩트하게 — A안(위 격자 크게 · 아래 띠 둘) / B안(격자 아래 한 줄에 진행 · 숫자 칸 모두) 중 어느 쪽으로 (시안)',
+    shots=[S('mock-dash7-A'), S('mock-dash7-A-full'), S('mock-dash7-B'), S('mock-dash7-A-hover')], opts=['A안으로 구현', 'B안으로 구현', '다시'],
+    where=[[M + 'staff-dash-7/index.html?plan=A', NOLOGIN, 'A안 — 격자 칸에 올려 보기'],
+           [M + 'staff-dash-7/index.html?plan=B', NOLOGIN, 'B안 — 한 화면 안에 모두']],
+    now="6차 시안은 줄마다 전체 폭으로 위에서 아래로 놓아 화면 2.7개 길이가 됐습니다. 사용자: '내가 말한게 길게 늘리라는 소리가 아니라 위아래로 배치하여 컴팩트 있게 하란 뜻이었다.'",
+    prop="위아래 위계는 그대로 두고 줄마다 높이를 낮췄습니다. 내 분석 결과 3×3 격자는 낮은 띠로, 진행 현황은 한 줄 낮게, 작업 · 요청함 · 저장 용량은 작은 숫자 칸 한 줄, 공지 · 메모 · 최근 프로젝트는 한 줄 작게(전국 지도 그림은 뺌 — XI맵이 그 자리). A안은 격자를 조금 더 크게 두고 아래에 띠 둘로 1.3화면 길이, B안은 격자 아래 한 줄에 진행 현황과 숫자 칸을 모두 놓아 한 화면(스크롤 없음)입니다. 숫자는 서버 값이고 메모 본문만 시안입니다. " + T('mock-dash7-A', 'mock-dash7-A-hover')))
+dec.append(dict(id='진행현황-다섯칸', t="대시보드 '진행 현황'에서 '결과 확인' 칸을 빼고 다섯 단계로 할까 (시안)",
+    shots=[S('mock-dash7-B'), S('mock-dash7-B-stages6')], opts=['ⓐ 빼고 다섯 칸', 'ⓑ 그대로 둠'],
+    where=[[M + 'staff-dash-7/index.html?plan=B', NOLOGIN, "진행 현황 머리의 '다섯 칸 · 여섯 칸' 단추로 비교"],
+           [M + 'staff-dash-7/index.html?plan=B&stages=6', NOLOGIN, '주소 끝 &stages=6 으로 열면 여섯 칸부터']],
+    now="'결과 확인' 칸은 이제 늘 0입니다. 결과 확인이 더는 진행을 막는 단계가 아니기 때문입니다. 지금 실제 화면은 여섯 칸입니다(위 프로젝트 목록 그림의 단계 표시).",
+    prop="ⓐ 빼고 다섯 칸(데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 배포 신청) — 늘 0인 칸이 없어 깔끔하고 한 줄이 덜 빽빽합니다. ⓑ 그대로 두면 프로젝트 단계 막대와 이름이 같아지지만 0이 계속 보이고, B안의 한 줄에서는 이름이 두 줄로 접힙니다. 정해지면 하나만 남깁니다. " + T('mock-dash7-B', 'mock-dash7-B-stages6')))
+dec.append(dict(id='코어-결정-학습단위', t="결정 3 · XI맵에서 고친 것이 '학습 데이터 1장'이 되는 때 — ⓐ 고치면 저절로 / ⓑ '다 봤음'을 눌러야 (네 장면 그림으로 다시 설명)",
+    shots=['train-unit.png'], opts=['ⓐ 고치면 저절로', "ⓑ '다 봤음'을 눌러야", '다시'],
+    where=[[IMG + 'train-unit.png', '로그인 없이 열림 · 그림(시안)', "그림을 크게 열어 보세요 — ① 하나를 고침 → ② 둘레 네모 한 칸이 학습 데이터 1장 → ③ 칸 안에 안 고친 틀림이 남으면 → ④ ⓐ ⓑ 두 길"]],
+    now="AI는 영상을 네모 조각으로 잘라 배웁니다. 직원이 XI맵에서 비닐하우스 한 동의 테두리를 고치면, 그 자리를 가운데 둔 네모 한 칸(영상과 그 안 모든 비닐하우스 테두리)이 '학습 데이터 1장'이 됩니다. 그 칸 안에 직원이 보지 않은 틀린 것이 남아 있으면 그 1장은 틀린 것까지 통째로 가르칩니다. 지금은 고친 기록만 있고 학습 데이터로 가는 길이 없습니다. 사용자: '아직 이해가 안간다.'",
+    prop="ⓐ 고치면 저절로 — 직원은 고치기만 하고, 30분 조용하면 그 칸이 저절로 1장이 됩니다. 빨리 쌓이지만 안 본 틀림이 섞일 수 있어 되돌리기 · 두 사람이 다르게 고친 칸 제외 · 재학습 뒤 정확도 비교로 막습니다. ⓑ '다 봤음' — 칸 안을 다 보고 빠진 것까지 고친 뒤 단추를 눌러야 1장이 됩니다. 깨끗하지만 손이 더 가고 안 누르면 0장입니다. 추천 ⓐ — 직원 손이 안 가고, 섞인 틀림은 재학습 뒤 정확도 비교에서 걸러져 배포되지 않습니다. 이 결정이 있어야 XI 재학습이 실제로 돕니다. (설계 그림 10월 12일 · 시안)"))
+items.append(dict(section='결정 — 시안', desc="아직 만들지 않은 시안입니다(그림에 '시안' 표시). 고르신 것만 만듭니다.", items=dec))
+
+SC = '학습 장비'
+qs = []
+qs.append(dict(id='모델실험-시작', t='새 AI 모델을 프로젝트로 실험할까 — 무엇부터',
+    shots=[S('now-datahouse'), S('now-admin-retrain')], opts=['ⓐ 경작지부터', 'ⓑ 비닐하우스부터', 'ⓒ 네 가지 전체', '보류'],
+    where=[[APP + '/landxi/v3/lx-console/', STAFF, '데이터하우스 → 학습 데이터 → 클래스별 (지금 쌓인 학습 데이터)'],
+           [ADMIN + '/landxi/v3/ops-infra/#/deploys/retrain', ADM, 'XI 재학습 — 지금 판과 후보 판']],
+    now="지금 전국 분석은 기존 항공 4분류 모델(건물 · 주차장 · 경작지 · 비닐하우스, AI 모델 정확도 89%)로 돌고 있습니다. API 영상은 압축돼 비닐하우스가 약합니다(남원 실증 46%).",
+    prop="제안: 프로젝트 하나에 모델 하나. 학습 데이터는 기존 항공 학습 데이터 + 지리원 API 영상 + XI맵에서 고친 것을 쓰고, 같은 검증 묶음으로 지금 모델과 비교해 나아진 판만 배포 신청합니다. 학습하는 동안에는 전국 분석이 비켜 줍니다. 어느 것부터 실험할까요? ⓐ 경작지부터 · ⓑ 비닐하우스부터 · ⓒ 네 가지 전체 · 보류. " + T('now-datahouse', 'now-admin-retrain')))
+qs.append(dict(id='관리자-장비말', t="관리자 대시보드의 장비 이름 글자를 '학습 장비'로 바꿀까",
+    shots=[S('now-admin-todo')], opts=['학습 장비로 바꿈', '그대로'],
+    where=[[ADMIN + '/landxi/v3/ops-core/', ADM, '할 일 줄 — 그림이 그 부분']],
+    now="관리자 대시보드 할 일 줄에 '전력 예산 0/1 GPU 고부하' 문구가 있습니다(학습 화면은 이미 '학습 장비'로 바꿨습니다).",
+    prop="'전력 예산 0/1 학습 장비 고부하'처럼 학습 장비로 바꿉니다. 다른 곳의 같은 글자도 함께 찾아 바꿉니다. " + T('now-admin-todo')))
+qs.append(dict(id='세부이름-연동', t="비닐하우스 세부 이름 — '다동'인가 '연동'인가",
+    shots=[S('now-datahouse'), S('now-class-similar')], opts=["'연동'으로", "'다동' 그대로"],
+    where=[[APP + '/landxi/v3/lx-console/', STAFF, '데이터하우스 → 학습 데이터 → 클래스별 → 비닐하우스 아래 세부']],
+    now="클래스 목록에서 비닐하우스 아래 세부가 '단동 · 다동'으로 들어가 있습니다(남원 모델에서 온 이름).",
+    prop="'연동'으로 바꾸면 클래스 이름과 결과 표시가 함께 바뀌고, 고친 기록과 학습 데이터는 같은 클래스를 따라갑니다. 그대로 두면 '다동'으로 남습니다. " + T('now-datahouse', 'now-class-similar')))
+items.append(dict(section='질문 — 새로 여쭙니다', desc='이번에 새로 여쭙는 세 가지입니다.', items=qs))
+
+json.dump(items, open(os.path.join(NOW, 'confirm-items.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+print('항목', sum(len(x['items']) for x in items), [len(x['items']) for x in items])

@@ -1,0 +1,172 @@
+{
+ "_done": [
+  "projects",
+  "xinat",
+  "dh",
+  "cls",
+  "train",
+  "adash",
+  "retrain",
+  "dhw",
+  "tmpl",
+  "dA",
+  "dAfull",
+  "dB",
+  "dBs6",
+  "dAhover",
+  "adash",
+  "xiclose"
+ ],
+ "_logins": 4,
+ "_failed": [],
+ "now-projects-1535.png": {
+  "at": "2026-10-12T15:35:23",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "프로젝트 목록(카드)"
+ },
+ "now-new-project-1535.png": {
+  "at": "2026-10-12T15:35:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "새 프로젝트 한 창(만들지 않고 열어 둔 모습)"
+ },
+ "_hud": "전국 결과 자산\n\n농지 전수 · 2025\n하천 · 계곡\n\n분석 끝 읍면동 22곳 · 전국 농지 범위의 0.1%\n\n지금 분석 중 · 전북 · 전주시 완산구\n\n경작지\n비닐하우스\n분석 예정\n\n영상 국토지리정보원 항공 2025 · 영상은 저장하지 않고 결과만 쌓습니다",
+ "now-ximap-national-1535.png": {
+  "at": "2026-10-12T15:35:32",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 전국(경작지 면 · 분석 예정)"
+ },
+ "_hit": [
+  618.4,
+  314.79999999999995,
+  126.75022065379801,
+  37.415828546732214
+ ],
+ "now-ximap-hover-1535.png": {
+  "at": "2026-10-12T15:35:33",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "올리면 요약"
+ },
+ "now-ximap-closeup-1535.png": {
+  "at": "2026-10-12T15:35:41",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=28200",
+  "note": "끝난 읍면동 확대"
+ },
+ "_hud_river": "전국 결과 자산\n\n농지 전수 · 2025\n하천 · 계곡\n\n분석 끝 읍면동 0곳 · 전국 하천 띠의 0%\n\n멈춤 — 하천 범위 자료를 바꾼 뒤 처음부터 다시 분석합니다\n\n건물\n경작지\n비닐하우스\n분석 예정\n\n영상 국토지리정보원 항공 2025 · 영상은 저장하지 않고 결과만 쌓습니다",
+ "now-ximap-river-1535.png": {
+  "at": "2026-10-12T15:35:50",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "하천 · 계곡(멈춤)"
+ },
+ "now-datahouse-1535.png": {
+  "at": "2026-10-12T15:35:55",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-ingest/",
+  "note": "데이터하우스 · 학습 데이터 · 클래스별"
+ },
+ "now-class-pick-1536.png": {
+  "at": "2026-10-12T15:36:02",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 분류 바꾸기 — 클래스 목록"
+ },
+ "now-class-add-1536.png": {
+  "at": "2026-10-12T15:36:03",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "새 클래스 더하기"
+ },
+ "now-class-similar-1536.png": {
+  "at": "2026-10-12T15:36:04",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "비슷한 클래스 먼저"
+ },
+ "now-train-flow-1536.png": {
+  "at": "2026-10-12T15:36:09",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 — 기본 흐름"
+ },
+ "now-train-data-1536.png": {
+  "at": "2026-10-12T15:36:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 데이터 블록 서랍 — 'XI맵에서 고친 것'"
+ },
+ "now-train-changed-1536.png": {
+  "at": "2026-10-12T15:36:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "블록을 바꾼 모습(평가 대신 추론 시험)"
+ },
+ "now-admin-dashboard-1536.png": {
+  "at": "2026-10-12T15:36:28",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드"
+ },
+ "_todo": [
+  "경보 없음",
+  "전력 예산 0/1 GPU 고부하",
+  "전국 농지 0.1% · 하천 멈춤 · 마지막 칸 10-12 15:37",
+  "공지 0건 · 쓰기"
+ ],
+ "now-admin-todo-1536.png": {
+  "at": "2026-10-12T15:36:28",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "관리자 대시보드 할 일 줄(전력 예산 문구)"
+ },
+ "_progress_at": "2026-10-12T15:38:12",
+ "now-admin-retrain-1536.png": {
+  "at": "2026-10-12T15:36:34",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/retrain",
+  "note": "LX 관리자 — 배포 → XI 재학습"
+ },
+ "now-admin-datahouse-1536.png": {
+  "at": "2026-10-12T15:36:39",
+  "url": "https://admin.land-xi.dev/landxi/v3/lx-ingest/?tab=train",
+  "note": "LX 관리자 — 데이터하우스 승인 대기"
+ },
+ "now-admin-template-1536.png": {
+  "at": "2026-10-12T15:36:44",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 — 학습 서식"
+ },
+ "mock-dash7-A-1536.png": {
+  "at": "2026-10-12T15:36:52",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "note": "시안 7차 A안 첫 화면"
+ },
+ "mock-dash7-A-full-1537.png": {
+  "at": "2026-10-12T15:37:00",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "note": "시안 7차 A안 세로 전체"
+ },
+ "mock-dash7-B-1537.png": {
+  "at": "2026-10-12T15:37:07",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=B",
+  "note": "시안 7차 B안 첫 화면"
+ },
+ "mock-dash7-B-stages6-1537.png": {
+  "at": "2026-10-12T15:37:14",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=B&stages=6",
+  "note": "시안 B안 진행 현황 여섯 칸"
+ },
+ "mock-dash7-A-hover-1537.png": {
+  "at": "2026-10-12T15:37:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "note": "A안 격자 다섯째 칸에 올린 모습"
+ },
+ "now-admin-dashboard-1538.png": {
+  "at": "2026-10-12T15:38:11",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드"
+ },
+ "now-admin-todo-1538.png": {
+  "at": "2026-10-12T15:38:11",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "관리자 대시보드 할 일 줄(전력 예산 문구)"
+ },
+ "now-admin-line-1538.png": {
+  "at": "2026-10-12T15:38:11",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "관리자 대시보드 전국 농지 진행 한 줄"
+ },
+ "now-ximap-closeup-1538.png": {
+  "at": "2026-10-12T15:38:54",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52110",
+  "note": "끝난 읍면동 확대(전주시 완산구 둘레)"
+ }
+}
