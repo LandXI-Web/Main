@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1120" viewBox="0 0 1440 1120" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3182F6"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0B1F3A" flood-opacity="0.08"/></filter>
+  </defs>
+  <rect width="1440" height="1120" fill="#F2F4F6"/>
+  <text x="56" y="64" font-size="28" font-weight="700" fill="#191F28">새 클래스가 생기면 무엇이 바뀌나 — 사례 둘</text>
+  <text x="56" y="98" font-size="17" fill="#4E5968">위에서 아래로 차례대로 · 바뀌는 것은 파랑, 그대로인 것은 회색</text>
+  <g transform="translate(1250,40)"><rect width="134" height="40" rx="20" fill="#FFF4E5" stroke="#F59F00" stroke-width="2"/><text x="67" y="26" font-size="17" font-weight="700" fill="#D9480F" text-anchor="middle">시안 · 10-12</text></g>
+
+  <!-- 줄 이름 -->
+  <g font-size="16" font-weight="700" fill="#4E5968">
+    <text x="56" y="214">① 클래스</text>
+    <text x="56" y="370">② 학습 데이터</text>
+    <text x="56" y="526">③ AI 모델</text>
+    <text x="56" y="682">④ 분석서비스</text>
+    <text x="56" y="838">⑤ XI맵 결과</text>
+    <text x="56" y="864" font-size="14" font-weight="400" fill="#6B7684">· 지난 결과</text>
+  </g>
+
+  <!-- 두 사례 머리 -->
+  <g filter="url(#sh)">
+    <rect x="200" y="124" width="580" height="830" rx="20" fill="#FFFFFF"/>
+    <rect x="804" y="124" width="580" height="830" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="228" y="162" font-size="21" font-weight="700" fill="#191F28">가 · 비닐하우스를 연동 · 단동으로 나누기</text>
+  <text x="832" y="162" font-size="21" font-weight="700" fill="#191F28">나 · 태양광을 새로 찾기</text>
+
+  <!-- 가 -->
+  <g transform="translate(224,184)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <rect x="16" y="18" width="98" height="30" rx="15" fill="#FFFFFF" stroke="#B0B8C1"/><text x="65" y="38" font-size="14" fill="#4E5968" text-anchor="middle">비닐하우스</text>
+    <path d="M126 33 L 158 33" stroke="#3182F6" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="166" y="18" width="98" height="30" rx="15" fill="#FFFFFF" stroke="#B0B8C1"/><text x="215" y="38" font-size="14" fill="#4E5968" text-anchor="middle">비닐하우스</text>
+    <rect x="276" y="18" width="80" height="30" rx="15" fill="#F3F0FF" stroke="#7048E8" stroke-dasharray="4 3"/><text x="316" y="38" font-size="14" fill="#5F3DC4" text-anchor="middle">└ 연동</text>
+    <rect x="364" y="18" width="80" height="30" rx="15" fill="#F3F0FF" stroke="#7048E8" stroke-dasharray="4 3"/><text x="404" y="38" font-size="14" fill="#5F3DC4" text-anchor="middle">└ 단동</text>
+    <text x="16" y="80" font-size="15" fill="#191F28">비닐하우스 아래 <tspan font-weight="700">세부 둘</tspan>을 더함 (관리자 승인)</text>
+    <text x="16" y="106" font-size="14" fill="#6B7684">남원 모델의 '다동'이 '연동'과 같은 뜻인지 먼저 확인</text>
+  </g>
+  <g transform="translate(224,340)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">XI맵에서 비닐하우스를 눌러 <tspan font-weight="700">연동 / 단동</tspan>을 고름</text>
+    <text x="16" y="58" font-size="15" fill="#191F28">→ 데이터하우스 비닐하우스 아래 연동 n장 · 단동 n장</text>
+    <text x="16" y="88" font-size="14" fill="#6B7684">보탤 것: 남원 드론 단동 2,138 · 다동 996개</text>
+    <text x="16" y="110" font-size="14" fill="#6B7684">(2cm 영상이라 25cm로 줄여 써도 되는지 시험 필요)</text>
+  </g>
+  <g transform="translate(224,496)">
+    <rect width="532" height="128" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="16" y="32" font-size="15" fill="#191F28"><tspan fill="#8B95A1">4분류 탐지 모델 — 그대로</tspan></text>
+    <rect x="16" y="46" width="500" height="64" rx="10" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="32" y="72" font-size="15" font-weight="700" fill="#1B64DA">+ 새 '나누기 모델' 하나</text>
+    <text x="32" y="96" font-size="14" fill="#4E5968">찾은 비닐하우스 도형만 보고 연동 / 단동을 가름 · 학습 짧음</text>
+  </g>
+  <g transform="translate(224,652)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">비닐하우스 분석서비스 <tspan font-weight="700">2.0 → 3.0</tspan></text>
+    <text x="16" y="58" font-size="14" fill="#4E5968">= 4분류 탐지 모델 + 나누기 모델 · 찾는 것: 비닐하우스(연동 · 단동)</text>
+    <text x="16" y="88" font-size="14" fill="#8B95A1">건축물 · 주차장 · 경작·휴경 서비스는 그대로</text>
+    <text x="16" y="110" font-size="14" fill="#8B95A1">(다시 비교 · 승인 필요 없음)</text>
+  </g>
+  <g transform="translate(224,808)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">비닐하우스 결과가 있는 곳만 밤에 <tspan font-weight="700">나누기만 다시</tspan></text>
+    <text x="16" y="58" font-size="14" fill="#4E5968">찾기는 다시 안 함 · 그 도형 자리 영상만 다시 불러옴</text>
+    <text x="16" y="88" font-size="14" fill="#4E5968">비닐하우스 합계 그대로 (연동 + 단동 = 비닐하우스)</text>
+    <text x="16" y="110" font-size="14" fill="#6B7684">지난 2.0 결과는 '지난 판'으로 남김 (지우지 않음)</text>
+  </g>
+
+  <!-- 나 -->
+  <g transform="translate(828,184)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <rect x="16" y="18" width="80" height="30" rx="15" fill="#FFFFFF" stroke="#B0B8C1"/><text x="56" y="38" font-size="14" fill="#4E5968" text-anchor="middle">건물</text>
+    <rect x="104" y="18" width="80" height="30" rx="15" fill="#FFFFFF" stroke="#B0B8C1"/><text x="144" y="38" font-size="14" fill="#4E5968" text-anchor="middle">경작지</text>
+    <text x="198" y="38" font-size="14" fill="#8B95A1">…</text>
+    <rect x="224" y="18" width="92" height="30" rx="15" fill="#F3F0FF" stroke="#7048E8" stroke-dasharray="4 3"/><text x="270" y="38" font-size="14" fill="#5F3DC4" text-anchor="middle">+ 태양광</text>
+    <text x="16" y="80" font-size="15" fill="#191F28">어디의 세부도 아닌 <tspan font-weight="700">새 물체</tspan> (관리자 승인)</text>
+    <text x="16" y="106" font-size="14" fill="#6B7684">지금 모델은 태양광을 경작지 · 비닐하우스로 잘못 잡을 수 있음</text>
+  </g>
+  <g transform="translate(828,340)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">XI맵에서 잘못 잡힌 것을 <tspan font-weight="700">태양광</tspan>으로 고침</text>
+    <text x="16" y="58" font-size="15" fill="#191F28">→ 데이터하우스 '태양광' 새 줄 n장</text>
+    <text x="16" y="88" font-size="14" fill="#6B7684">보탤 것: 보유 태양광 학습 데이터 3,682장</text>
+    <text x="16" y="110" font-size="14" fill="#6B7684">(촬영 해상도 확인 필요)</text>
+  </g>
+  <g transform="translate(828,496)">
+    <rect width="532" height="128" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <rect x="16" y="14" width="248" height="100" rx="10" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="30" y="40" font-size="15" font-weight="700" fill="#1B64DA">길 ⓐ 태양광 전용 새 모델</text>
+    <text x="30" y="66" font-size="14" fill="#4E5968">4분류 모델은 그대로</text>
+    <text x="30" y="90" font-size="14" fill="#4E5968">다른 서비스 안 흔들림</text>
+    <rect x="272" y="14" width="244" height="100" rx="10" fill="#FFFFFF" stroke="#D1D6DB"/>
+    <text x="286" y="40" font-size="15" font-weight="700" fill="#4E5968">길 ⓑ 4분류 → 5분류</text>
+    <text x="286" y="66" font-size="14" fill="#6B7684">모델 하나로 모두 다시 학습</text>
+    <text x="286" y="90" font-size="14" fill="#6B7684">서비스 넷 모두 다시 비교</text>
+  </g>
+  <g transform="translate(828,652)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">ⓐ 새 <tspan font-weight="700">태양광 분석서비스 1.0</tspan></text>
+    <text x="16" y="58" font-size="14" fill="#4E5968">서비스 만들기 → 배포 신청 → 승인 → 기관에 공유</text>
+    <text x="16" y="88" font-size="14" fill="#8B95A1">ⓑ 이면 네 서비스 모두 새 판 · 한 신청서</text>
+    <text x="16" y="110" font-size="14" fill="#8B95A1">하나라도 정확도가 떨어지면 후보로 남음</text>
+  </g>
+  <g transform="translate(828,808)">
+    <rect width="532" height="128" rx="12" fill="#F4F8FF" stroke="#3182F6"/>
+    <text x="16" y="32" font-size="15" fill="#191F28">새 서비스라 지난 결과 없음 → <tspan font-weight="700">전국 결과 순서에 넣어 밤에</tspan></text>
+    <text x="16" y="58" font-size="14" fill="#4E5968">지난 4분류 결과 중 태양광과 겹친 경작지 · 비닐하우스는</text>
+    <text x="16" y="80" font-size="14" fill="#4E5968">'태양광으로 다시 봄' 표시 (지우지 않음)</text>
+    <text x="16" y="110" font-size="14" fill="#6B7684">4분류 결과 자체는 다음 판까지 그대로</text>
+  </g>
+
+  <!-- 공통 -->
+  <g filter="url(#sh)"><rect x="56" y="978" width="1328" height="112" rx="20" fill="#FFFFFF"/></g>
+  <text x="88" y="1018" font-size="18" font-weight="700" fill="#191F28">두 사례 공통</text>
+  <text x="88" y="1050" font-size="16" fill="#4E5968">새 클래스는 더하는 순간이 아니라 <tspan font-weight="700" fill="#191F28">다시 학습한 모델이 승인된 뒤</tspan>부터 찾습니다 · 그 전에는 세 화면 모두 '배우는 중'(보라 점선)</text>
+  <text x="88" y="1076" font-size="16" fill="#4E5968">서비스 판이 바뀌면 그 서비스 결과만 밤에 다시 · 지난 결과는 지우지 않고 판 이력으로 · 기관 화면에는 승인 뒤에만 보임</text>
+</svg>

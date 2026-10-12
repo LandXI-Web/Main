@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060" viewBox="0 0 1440 1060" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0B1F3A" flood-opacity="0.08"/></filter>
+    <pattern id="hz" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#F2F4F6"/><line x1="0" y1="0" x2="0" y2="8" stroke="#E5E8EB" stroke-width="3"/></pattern>
+  </defs>
+  <rect width="1440" height="1060" fill="#F2F4F6"/>
+
+  <!-- 왼쪽 메뉴(관리자 화면 그대로 · 흐리게) -->
+  <rect x="0" y="0" width="208" height="1060" fill="#FFFFFF"/>
+  <text x="28" y="48" font-size="18" font-weight="700" fill="#191F28">LX 관리자</text>
+  <g font-size="15" fill="#6B7684">
+    <text x="28" y="104">현황</text><text x="28" y="144">인프라</text><text x="28" y="184">기관</text><text x="28" y="224">배포</text>
+    <rect x="16" y="244" width="176" height="40" rx="10" fill="#E8F3FF"/><text x="28" y="270" font-weight="700" fill="#1B64DA">XI 재학습 · 배포</text>
+    <text x="28" y="318">요청 관리</text><text x="28" y="358">검토 요청</text><text x="28" y="398">계정 관리</text>
+  </g>
+
+  <text x="248" y="62" font-size="26" font-weight="700" fill="#191F28">XI 재학습 · 배포 관리</text>
+  <text x="248" y="94" font-size="16" fill="#4E5968">고친 결과로 모델을 다시 학습하고, 나아진 판만 배포 신청까지 · 학습은 쉬는 시간에</text>
+  <g transform="translate(1250,40)"><rect width="134" height="40" rx="20" fill="#FFF4E5" stroke="#F59F00" stroke-width="2"/><text x="67" y="26" font-size="17" font-weight="700" fill="#D9480F" text-anchor="middle">시안 · 10-12</text></g>
+
+  <!-- 1 운영 방식 -->
+  <g filter="url(#sh)"><rect x="248" y="122" width="1136" height="176" rx="18" fill="#FFFFFF"/></g>
+  <text x="276" y="162" font-size="19" font-weight="700" fill="#191F28">언제 학습하나</text>
+  <g transform="translate(276,182)">
+    <rect width="352" height="48" rx="24" fill="#F2F4F6"/>
+    <rect x="4" y="4" width="196" height="40" rx="20" fill="#3182F6"/><text x="102" y="30" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">쉬는 시간에 자동</text>
+    <text x="276" y="30" font-size="16" fill="#4E5968" text-anchor="middle">사람이 누를 때만</text>
+  </g>
+  <g transform="translate(276,246)" font-size="15" fill="#4E5968">
+    <text y="20">새 학습 데이터가 <tspan font-weight="700" fill="#191F28">200장</tspan> 쌓이면 다음 쉬는 시간에 학습 → 비교 → 나아졌으면 배포 신청서를 채워 둠 · 신청과 승인은 사람</text>
+  </g>
+  <g transform="translate(676,178)">
+    <rect width="680" height="58" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="18" y="24" font-size="14" fill="#6B7684">쉬는 시간</text>
+    <text x="18" y="46" font-size="17" font-weight="700" fill="#191F28">매일 22:00 – 06:00</text>
+    <text x="236" y="24" font-size="14" fill="#6B7684">주말</text>
+    <text x="236" y="46" font-size="17" font-weight="700" fill="#191F28">하루 종일</text>
+    <text x="390" y="24" font-size="14" fill="#6B7684">학습 자리</text>
+    <text x="390" y="46" font-size="17" font-weight="700" fill="#191F28">한 번에 하나</text>
+    <text x="560" y="46" font-size="15" fill="#3182F6">바꾸기</text>
+  </g>
+
+  <!-- 2 서비스별 -->
+  <g filter="url(#sh)"><rect x="248" y="318" width="1136" height="398" rx="18" fill="#FFFFFF"/></g>
+  <text x="276" y="358" font-size="19" font-weight="700" fill="#191F28">분석서비스별</text>
+  <g font-size="14" fill="#6B7684">
+    <text x="276" y="398">분석서비스 · 지금 판</text><text x="560" y="398">새 학습 데이터</text><text x="790" y="398">새 클래스</text><text x="960" y="398">상태</text><text x="1180" y="398">할 일</text>
+  </g>
+  <line x1="276" y1="412" x2="1356" y2="412" stroke="#E5E8EB"/>
+  <!-- 줄 1 -->
+  <g transform="translate(0,412)">
+    <text x="276" y="40" font-size="16" font-weight="700" fill="#191F28">비닐하우스 · 2.0</text>
+    <rect x="560" y="26" width="180" height="10" rx="5" fill="#E5E8EB"/><rect x="560" y="26" width="180" height="10" rx="5" fill="#3182F6"/><text x="560" y="60" font-size="13" fill="#4E5968">n / 200장 · 넘음</text>
+    <rect x="790" y="22" width="120" height="28" rx="14" fill="#F3F0FF" stroke="#7048E8" stroke-dasharray="4 3"/><text x="850" y="41" font-size="13" fill="#5F3DC4" text-anchor="middle">연동 · 단동</text>
+    <rect x="960" y="22" width="120" height="28" rx="14" fill="#E8F3FF"/><text x="1020" y="41" font-size="14" font-weight="700" fill="#1B64DA" text-anchor="middle">오늘 밤 학습</text>
+    <rect x="1180" y="20" width="84" height="32" rx="8" fill="#FFFFFF" stroke="#D1D6DB"/><text x="1222" y="41" font-size="14" fill="#191F28" text-anchor="middle">지금 학습</text>
+    <rect x="1272" y="20" width="84" height="32" rx="8" fill="#FFFFFF" stroke="#D1D6DB"/><text x="1314" y="41" font-size="14" fill="#191F28" text-anchor="middle">미루기</text>
+    <line x1="276" y1="76" x2="1356" y2="76" stroke="#F2F4F6"/>
+  </g>
+  <!-- 줄 2 -->
+  <g transform="translate(0,488)">
+    <text x="276" y="40" font-size="16" font-weight="700" fill="#191F28">건축물 · 2.0</text>
+    <rect x="560" y="26" width="180" height="10" rx="5" fill="#E5E8EB"/><rect x="560" y="26" width="64" height="10" rx="5" fill="#3182F6"/><text x="560" y="60" font-size="13" fill="#4E5968">n / 200장</text>
+    <text x="790" y="41" font-size="14" fill="#B0B8C1">—</text>
+    <rect x="960" y="22" width="96" height="28" rx="14" fill="#F2F4F6"/><text x="1008" y="41" font-size="14" fill="#4E5968" text-anchor="middle">쌓는 중</text>
+    <rect x="1180" y="20" width="84" height="32" rx="8" fill="#FFFFFF" stroke="#D1D6DB"/><text x="1222" y="41" font-size="14" fill="#191F28" text-anchor="middle">지금 학습</text>
+    <line x1="276" y1="76" x2="1356" y2="76" stroke="#F2F4F6"/>
+  </g>
+  <!-- 줄 3 -->
+  <g transform="translate(0,564)">
+    <text x="276" y="40" font-size="16" font-weight="700" fill="#191F28">주차장 · 2.0</text>
+    <text x="560" y="41" font-size="14" fill="#4E5968">학습 끝 · 비교 끝</text>
+    <text x="790" y="41" font-size="14" fill="#B0B8C1">—</text>
+    <rect x="960" y="22" width="148" height="28" rx="14" fill="#E6FCF5"/><text x="1034" y="41" font-size="14" font-weight="700" fill="#087F5B" text-anchor="middle">나아짐 · 신청서 채움</text>
+    <rect x="1180" y="20" width="176" height="32" rx="8" fill="#3182F6"/><text x="1268" y="41" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">배포 신청서 보기</text>
+    <line x1="276" y1="76" x2="1356" y2="76" stroke="#F2F4F6"/>
+  </g>
+  <!-- 줄 4 실제 사례 -->
+  <g transform="translate(0,640)">
+    <text x="276" y="36" font-size="16" font-weight="700" fill="#191F28">비닐하우스 25cm 다시 학습</text>
+    <text x="276" y="58" font-size="13" fill="#6B7684">10-08 · 실제 기록</text>
+    <text x="560" y="41" font-size="14" fill="#4E5968">AI 모델 정확도 91% → 87%</text>
+    <text x="790" y="41" font-size="14" fill="#B0B8C1">—</text>
+    <rect x="960" y="22" width="190" height="28" rx="14" fill="#FFF0F0"/><text x="1055" y="41" font-size="14" font-weight="700" fill="#E03131" text-anchor="middle">지금 판보다 낮음 · 후보로</text>
+    <rect x="1180" y="20" width="84" height="32" rx="8" fill="#FFFFFF" stroke="#D1D6DB"/><text x="1222" y="41" font-size="14" fill="#191F28" text-anchor="middle">기록 보기</text>
+  </g>
+
+  <!-- 3 오늘 밤 순서 -->
+  <g filter="url(#sh)"><rect x="248" y="736" width="1136" height="196" rx="18" fill="#FFFFFF"/></g>
+  <text x="276" y="776" font-size="19" font-weight="700" fill="#191F28">오늘 밤 순서</text>
+  <text x="420" y="776" font-size="14" fill="#6B7684">학습 자리 하나를 차례로 나눠 씀 · 기관 AI 분석 요청이 들어오면 언제나 먼저</text>
+  <g transform="translate(276,796)">
+    <g font-size="13" fill="#8B95A1">
+      <text x="0" y="0">22:00</text><text x="268" y="0">00:00</text><text x="536" y="0">02:00</text><text x="804" y="0">04:00</text><text x="1040" y="0">06:00</text>
+    </g>
+    <rect x="0" y="12" width="1080" height="56" rx="10" fill="url(#hz)"/>
+    <rect x="0" y="12" width="200" height="56" rx="10" fill="#3182F6"/><text x="14" y="38" font-size="14" font-weight="700" fill="#FFFFFF">비닐하우스 학습</text><text x="14" y="58" font-size="12" fill="#D0E4FF">나누기 모델</text>
+    <rect x="204" y="12" width="64" height="56" rx="10" fill="#4DABF7"/><text x="236" y="45" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">비교</text>
+    <rect x="272" y="12" width="680" height="56" rx="10" fill="#12B886"/><text x="288" y="38" font-size="14" font-weight="700" fill="#FFFFFF">전국 결과 자산 · 농지 전수</text><text x="288" y="58" font-size="12" fill="#D3F9E8">충청남도 읍면동 차례로 · 이어서</text>
+    <rect x="956" y="12" width="124" height="56" rx="10" fill="#9775FA"/><text x="968" y="38" font-size="13" font-weight="700" fill="#FFFFFF">새 판 다시 분석</text><text x="968" y="58" font-size="12" fill="#EDE7FF">비닐하우스 3곳</text>
+  </g>
+  <text x="276" y="900" font-size="14" fill="#4E5968">아침에: 끝난 것 · 멈춘 것 한 줄 요약 → LX 관리자 대시보드 알림</text>
+
+  <!-- 누가 -->
+  <g transform="translate(248,952)">
+    <rect width="556" height="88" rx="14" fill="#FFFFFF" stroke="#E5E8EB"/>
+    <text x="20" y="32" font-size="16" font-weight="700" fill="#191F28">LX 관리자</text>
+    <text x="20" y="60" font-size="14" fill="#4E5968">자동 · 수동 · 쉬는 시간 · 밤 순서 정함 · 배포 승인</text>
+  </g>
+  <g transform="translate(828,952)">
+    <rect width="556" height="88" rx="14" fill="#FFFFFF" stroke="#E5E8EB"/>
+    <text x="20" y="32" font-size="16" font-weight="700" fill="#191F28">LX 직원 (프로젝트장)</text>
+    <text x="20" y="60" font-size="14" fill="#4E5968">자기 서비스 줄만 · '지금 학습' 요청 · 결과 보고 배포 신청</text>
+  </g>
+</svg>

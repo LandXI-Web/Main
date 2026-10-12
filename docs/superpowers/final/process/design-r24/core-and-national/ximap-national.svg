@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="960" viewBox="0 0 1440 960" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#0B1F3A" flood-opacity="0.12"/></filter>
+    <pattern id="hz" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#EEF1F4"/><line x1="0" y1="0" x2="0" y2="8" stroke="#D5DAE0" stroke-width="2"/></pattern>
+    <clipPath id="c1"><rect x="0" y="0" width="372" height="232" rx="12"/></clipPath>
+    <clipPath id="c2"><rect x="0" y="0" width="372" height="232" rx="12"/></clipPath>
+  </defs>
+  <rect width="1440" height="960" fill="#F7F8FA"/>
+
+  <!-- 왼쪽 직원 메뉴 그대로 -->
+  <rect x="0" y="0" width="200" height="960" fill="#FFFFFF"/>
+  <text x="26" y="46" font-size="18" font-weight="700" fill="#191F28">Land-XI</text>
+  <g font-size="15" fill="#6B7684">
+    <text x="26" y="100">대시보드</text><text x="26" y="140">프로젝트</text><text x="26" y="180">분석하기</text><text x="26" y="220">지도 서비스</text>
+    <rect x="14" y="238" width="172" height="40" rx="10" fill="#E8F3FF"/><text x="26" y="264" font-weight="700" fill="#1B64DA">XI맵</text>
+    <text x="26" y="312">데이터</text><text x="26" y="352">요청함</text>
+  </g>
+
+  <!-- 지도 -->
+  <image href="img/nat-map.png" x="330" y="40" width="660" height="880" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- 위 왼쪽: 무엇을 보고 있나 -->
+  <g transform="translate(224,24)" filter="url(#sh)">
+    <rect width="392" height="236" rx="16" fill="#FFFFFF"/>
+  </g>
+  <g transform="translate(224,24)">
+    <text x="20" y="34" font-size="13" fill="#6B7684">전국 결과 자산</text>
+    <rect x="20" y="46" width="168" height="36" rx="18" fill="#191F28"/><text x="104" y="70" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">농지 전수 · 2025</text>
+    <rect x="196" y="46" width="176" height="36" rx="18" fill="#F2F4F6"/><text x="284" y="70" font-size="14" fill="#4E5968" text-anchor="middle">하천 · 계곡 의심시설</text>
+    <text x="20" y="116" font-size="15" fill="#191F28">분석 끝 <tspan font-weight="700">시군구 n곳</tspan> · 전국 농지의 <tspan font-weight="700">n%</tspan></text>
+    <rect x="20" y="128" width="352" height="10" rx="5" fill="#E5E8EB"/><rect x="20" y="128" width="46" height="10" rx="5" fill="#12B886"/>
+    <text x="20" y="160" font-size="13" fill="#6B7684">오늘 밤 이어서: 충청남도 · 남은 일수는 서버가 셈</text>
+    <g transform="translate(20,180)" font-size="14" fill="#4E5968">
+      <rect width="18" height="18" rx="4" fill="#12B886"/><text x="26" y="14">경작지</text>
+      <rect x="92" width="18" height="18" rx="4" fill="#F59F00"/><text x="118" y="14">비닐하우스</text>
+      <rect x="212" width="18" height="18" rx="4" fill="url(#hz)" stroke="#D1D6DB"/><text x="238" y="14">분석 예정</text>
+    </g>
+    <text x="20" y="222" font-size="12" fill="#8B95A1">영상: 국토지리정보원 항공 · 연도별 (영상은 저장하지 않음)</text>
+  </g>
+
+  <!-- 위 오른쪽: 도구 -->
+  <g transform="translate(1022,24)" filter="url(#sh)"><rect width="394" height="52" rx="14" fill="#FFFFFF"/></g>
+  <g transform="translate(1022,24)" font-size="15" fill="#191F28">
+    <text x="26" y="33">영상</text><text x="110" y="33" font-weight="700" fill="#1B64DA">결과</text><text x="196" y="33">변화</text><text x="282" y="33">고치기</text>
+    <rect x="96" y="40" width="58" height="3" rx="1.5" fill="#3182F6"/>
+  </g>
+
+  <!-- 오른쪽: 확대하면 -->
+  <g transform="translate(1022,100)" filter="url(#sh)"><rect width="394" height="790" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(1022,100)">
+    <text x="20" y="36" font-size="17" font-weight="700" fill="#191F28">확대하면 — 실제 결과 면</text>
+    <text x="20" y="60" font-size="13" fill="#6B7684">충청남도 부여군 남면 · 2025년 영상 · 10-12 실측</text>
+    <g transform="translate(11,76)">
+      <rect width="372" height="232" rx="12" fill="#F2F4F6"/>
+      <image href="img/real-emd-faces.png" x="0" y="-70" width="372" height="372" clip-path="url(#c1)" preserveAspectRatio="xMidYMid slice"/>
+    </g>
+    <text x="20" y="334" font-size="13" fill="#4E5968">읍면동 단위 · 경작지 면이 그대로 보임 (줌 10~13)</text>
+    <g transform="translate(11,350)">
+      <image href="img/real-closeup.jpg" x="0" y="0" width="372" height="232" clip-path="url(#c2)" preserveAspectRatio="xMidYMid slice"/>
+    </g>
+    <text x="20" y="608" font-size="13" fill="#4E5968">더 확대 · 영상 위 객체 하나하나 · 누르면 그 자리 고치기</text>
+    <line x1="20" y1="630" x2="374" y2="630" stroke="#F2F4F6"/>
+    <text x="20" y="660" font-size="14" fill="#6B7684">이 읍면동 결과</text>
+    <text x="20" y="692" font-size="22" font-weight="700" fill="#191F28">경작지 8.5㎢</text>
+    <text x="196" y="692" font-size="22" font-weight="700" fill="#191F28">비닐하우스 746동</text>
+    <text x="20" y="722" font-size="13" fill="#6B7684">읍면동 면적 21.0㎢ 중 · AI 분석 결과(결과 확인 전)</text>
+    <rect x="20" y="740" width="354" height="34" rx="10" fill="#FFF8E6"/>
+    <text x="34" y="762" font-size="13" fill="#8A5A00">비닐하우스는 영상 압축 탓에 덜 찾음 — 재학습 뒤 다시</text>
+  </g>
+
+  <!-- 아래 설명 -->
+  <g transform="translate(224,790)" filter="url(#sh)"><rect width="330" height="130" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(224,790)">
+    <text x="20" y="34" font-size="15" font-weight="700" fill="#191F28">멀리서도 점 · 빛 대신 경작지 면</text>
+    <text x="20" y="60" font-size="13" fill="#4E5968">낮은 줌은 결과로 미리 만든 면 조각</text>
+    <text x="20" y="84" font-size="13" fill="#4E5968">아직 안 된 곳은 빗금 '분석 예정'</text>
+    <text x="20" y="108" font-size="13" fill="#4E5968">숫자는 끝난 곳 것만</text>
+  </g>
+
+  <g transform="translate(1250,914)"><rect width="134" height="36" rx="18" fill="#FFF4E5" stroke="#F59F00" stroke-width="2"/><text x="67" y="24" font-size="15" font-weight="700" fill="#D9480F" text-anchor="middle">시안 · 10-12</text></g>
+  <text x="640" y="944" font-size="12" fill="#8B95A1" text-anchor="middle">지도의 초록 = 지금 서버에 있는 실제 경작지 결과(250m 칸) · 파랑 테두리 = 이번 실측 읍면동</text>
+</svg>

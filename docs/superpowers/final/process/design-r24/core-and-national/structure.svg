@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3182F6"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B0B8C1"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0B1F3A" flood-opacity="0.08"/></filter>
+  </defs>
+  <rect width="1440" height="1000" fill="#F2F4F6"/>
+
+  <text x="56" y="64" font-size="28" font-weight="700" fill="#191F28">분석서비스 · AI 모델 · 클래스는 지금 이렇게 이어져 있습니다</text>
+  <text x="56" y="98" font-size="17" fill="#4E5968">지금 서버에 있는 그대로 (10-12 직접 셈) · 예: 항공 25cm 4분류 모델 하나를 분석서비스 넷이 나눠 씀</text>
+  <g transform="translate(1214,40)"><rect width="170" height="40" rx="20" fill="#E8F3FF" stroke="#3182F6" stroke-width="2"/><text x="85" y="26" font-size="17" font-weight="700" fill="#1B64DA" text-anchor="middle">지금 구조 · 10-12</text></g>
+
+  <!-- 다섯 칸 -->
+  <g filter="url(#sh)">
+    <rect x="56" y="136" width="236" height="470" rx="18" fill="#FFFFFF"/>
+    <rect x="328" y="136" width="268" height="470" rx="18" fill="#FFFFFF"/>
+    <rect x="632" y="136" width="300" height="470" rx="18" fill="#FFFFFF"/>
+    <rect x="968" y="136" width="200" height="470" rx="18" fill="#FFFFFF"/>
+    <rect x="1204" y="136" width="180" height="470" rx="18" fill="#FFFFFF"/>
+  </g>
+  <g font-size="21" font-weight="700" fill="#191F28">
+    <text x="80" y="178">학습 데이터</text><text x="352" y="178">AI 모델 (판)</text><text x="656" y="178">분석서비스 (판)</text><text x="992" y="178">XI맵 결과</text><text x="1228" y="178">그 자리 고치기</text>
+  </g>
+  <g font-size="14" fill="#6B7684">
+    <text x="80" y="202">모델을 가르치는 그림 묶음</text><text x="352" y="202">무엇을 찾을지 학습 때 정해짐</text><text x="656" y="202">모델 하나 + 찾는 것 + 규칙</text><text x="992" y="202">시군구 · 서비스 · 영상 연도</text><text x="1228" y="202">틀린 결과를 고친 기록</text>
+  </g>
+
+  <!-- 학습 데이터 -->
+  <g transform="translate(76,226)">
+    <rect width="196" height="96" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="14" y="28" font-size="15" font-weight="700" fill="#191F28">프로젝트 학습 데이터</text>
+    <text x="14" y="52" font-size="14" fill="#4E5968">비닐하우스 200장</text>
+    <text x="14" y="74" font-size="14" fill="#4E5968">클래스 4 이름 붙음</text>
+  </g>
+  <g transform="translate(76,336)">
+    <rect width="196" height="96" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="14" y="28" font-size="15" font-weight="700" fill="#191F28">AI 허브 표준 데이터</text>
+    <text x="14" y="52" font-size="14" fill="#4E5968">토지피복 항공 · 보유</text>
+    <text x="14" y="74" font-size="14" fill="#4E5968">처음 모델을 만든 바탕</text>
+  </g>
+  <g transform="translate(76,446)">
+    <rect width="196" height="138" rx="12" fill="#FFF8E6" stroke="#F5C451" stroke-dasharray="5 4"/>
+    <text x="14" y="28" font-size="15" font-weight="700" fill="#B76E00">아직 없는 것</text>
+    <text x="14" y="54" font-size="14" fill="#6B4E00">클래스별 아카이브</text>
+    <text x="14" y="76" font-size="14" fill="#6B4E00">(데이터하우스)</text>
+    <text x="14" y="102" font-size="14" fill="#6B4E00">지금은 묶음 단위로만</text>
+    <text x="14" y="124" font-size="14" fill="#6B4E00">쌓여 있음</text>
+  </g>
+
+  <!-- 모델 -->
+  <g transform="translate(348,226)">
+    <rect width="228" height="196" rx="12" fill="#F4F8FF" stroke="#3182F6" stroke-width="1.5"/>
+    <text x="16" y="30" font-size="16" font-weight="700" fill="#191F28">항공 25cm 4분류 모델</text>
+    <text x="16" y="52" font-size="13" fill="#6B7684">AI 모델 정확도 89%</text>
+    <g font-size="14">
+      <rect x="16" y="68" width="88" height="32" rx="16" fill="#FFFFFF" stroke="#3182F6"/><text x="60" y="89" fill="#1B64DA" text-anchor="middle">건물</text>
+      <rect x="112" y="68" width="98" height="32" rx="16" fill="#FFFFFF" stroke="#3182F6"/><text x="161" y="89" fill="#1B64DA" text-anchor="middle">주차장</text>
+      <rect x="16" y="108" width="88" height="32" rx="16" fill="#FFFFFF" stroke="#3182F6"/><text x="60" y="129" fill="#1B64DA" text-anchor="middle">경작지</text>
+      <rect x="112" y="108" width="98" height="32" rx="16" fill="#FFFFFF" stroke="#3182F6"/><text x="161" y="129" fill="#1B64DA" text-anchor="middle">비닐하우스</text>
+    </g>
+    <text x="16" y="166" font-size="13" fill="#4E5968">클래스 넷은 학습 때 정해져 고정</text>
+    <text x="16" y="184" font-size="13" fill="#4E5968">바꾸려면 다시 학습 = 새 판</text>
+  </g>
+  <g transform="translate(348,438)">
+    <rect width="228" height="146" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="16" y="28" font-size="15" font-weight="700" fill="#191F28">모델은 여럿</text>
+    <text x="16" y="52" font-size="14" fill="#4E5968">등록 18 · 후보 2</text>
+    <text x="16" y="76" font-size="14" fill="#4E5968">예: 남원 비닐하우스 모델</text>
+    <text x="16" y="98" font-size="14" fill="#4E5968">= 단동 · 다동 둘 (드론 2cm)</text>
+    <text x="16" y="126" font-size="13" fill="#6B7684">해상도가 다르면 다른 모델</text>
+  </g>
+
+  <!-- 서비스 -->
+  <g font-size="15">
+    <g transform="translate(652,226)"><rect width="260" height="80" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/><text x="16" y="30" font-weight="700" fill="#191F28">건축물 분석서비스 2.0</text><text x="16" y="58" font-size="14" fill="#4E5968">찾는 것</text><rect x="74" y="42" width="70" height="26" rx="13" fill="#E8F3FF"/><text x="109" y="60" font-size="14" fill="#1B64DA" text-anchor="middle">건물</text></g>
+    <g transform="translate(652,316)"><rect width="260" height="80" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/><text x="16" y="30" font-weight="700" fill="#191F28">주차장 분석서비스 2.0</text><text x="16" y="58" font-size="14" fill="#4E5968">찾는 것</text><rect x="74" y="42" width="78" height="26" rx="13" fill="#E8F3FF"/><text x="113" y="60" font-size="14" fill="#1B64DA" text-anchor="middle">주차장</text></g>
+    <g transform="translate(652,406)"><rect width="260" height="80" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/><text x="16" y="30" font-weight="700" fill="#191F28">비닐하우스 분석서비스 2.0</text><text x="16" y="58" font-size="14" fill="#4E5968">찾는 것</text><rect x="74" y="42" width="98" height="26" rx="13" fill="#E8F3FF"/><text x="123" y="60" font-size="14" fill="#1B64DA" text-anchor="middle">비닐하우스</text></g>
+    <g transform="translate(652,496)"><rect width="260" height="80" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/><text x="16" y="30" font-weight="700" fill="#191F28">경작·휴경 분석서비스 2.0</text><text x="16" y="58" font-size="14" fill="#4E5968">찾는 것</text><rect x="74" y="42" width="78" height="26" rx="13" fill="#E8F3FF"/><text x="113" y="60" font-size="14" fill="#1B64DA" text-anchor="middle">경작지</text></g>
+  </g>
+  <g stroke="#3182F6" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M576 300 C 610 300, 620 266, 648 266"/>
+    <path d="M576 316 C 612 316, 620 356, 648 356"/>
+    <path d="M576 332 C 614 332, 616 446, 648 446"/>
+    <path d="M576 348 C 616 348, 612 536, 648 536"/>
+  </g>
+  <path d="M272 300 L 344 300" stroke="#3182F6" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M272 384 C 310 384, 310 330, 344 330" stroke="#3182F6" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+
+  <!-- XI맵 결과 -->
+  <g transform="translate(986,226)">
+    <rect width="164" height="170" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="14" y="28" font-size="15" font-weight="700" fill="#191F28">한 칸 = 시군구 ×</text>
+    <text x="14" y="50" font-size="15" font-weight="700" fill="#191F28">서비스 × 영상 연도</text>
+    <text x="14" y="80" font-size="14" fill="#4E5968">객체마다 클래스</text>
+    <text x="14" y="102" font-size="14" fill="#4E5968">이름이 붙어 있음</text>
+    <text x="14" y="132" font-size="14" fill="#4E5968">새 판 결과가 오면</text>
+    <text x="14" y="154" font-size="14" fill="#4E5968">지난 결과는 이력</text>
+  </g>
+  <path d="M912 400 C 944 400, 950 310, 982 310" stroke="#3182F6" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="918" y="424" font-size="13" fill="#6B7684">AI 분석</text>
+
+  <!-- 고치기 -->
+  <g transform="translate(1220,226)">
+    <rect width="148" height="170" rx="12" fill="#F9FAFB" stroke="#E5E8EB"/>
+    <text x="14" y="28" font-size="15" font-weight="700" fill="#191F28">고친 기록</text>
+    <text x="14" y="54" font-size="14" fill="#4E5968">지움 · 모양 · 클래스</text>
+    <text x="14" y="80" font-size="14" fill="#4E5968">원래 모양 보존</text>
+    <text x="14" y="106" font-size="14" fill="#4E5968">되돌리기 있음</text>
+    <text x="14" y="140" font-size="14" font-weight="700" fill="#191F28">실제 고친 것 0</text>
+    <text x="14" y="160" font-size="12" fill="#6B7684">(시험 기록 60)</text>
+  </g>
+  <path d="M1150 310 L 1216 310" stroke="#3182F6" stroke-width="2" marker-end="url(#ar)"/>
+  <g transform="translate(986,414)">
+    <rect width="382" height="170" rx="12" fill="#FFF8E6" stroke="#F5C451" stroke-dasharray="5 4"/>
+    <text x="16" y="30" font-size="15" font-weight="700" fill="#B76E00">끊긴 곳 — 이번 코어가 이을 곳</text>
+    <text x="16" y="58" font-size="14" fill="#6B4E00">① 고친 것이 학습 데이터로 가지 않음</text>
+    <text x="16" y="84" font-size="14" fill="#6B4E00">② 클래스를 고를 때 모델 이름표만 보임</text>
+    <text x="16" y="110" font-size="14" fill="#6B4E00">③ 새 클래스를 더할 자리 없음</text>
+    <text x="16" y="136" font-size="14" fill="#6B4E00">④ 다시 학습 → 새 판 → XI맵 다시가</text>
+    <text x="36" y="158" font-size="14" fill="#6B4E00">사람 손으로만 이어짐</text>
+  </g>
+  <path d="M1294 584 C 1294 640, 1294 640, 1240 640 L 200 640 C 174 640, 174 620, 174 606" stroke="#B0B8C1" stroke-width="2" stroke-dasharray="7 6" fill="none" marker-end="url(#ag)"/>
+  <text x="560" y="632" font-size="14" fill="#8B95A1">아직 이어지지 않은 길: 고친 것 → 학습 데이터</text>
+
+  <!-- 관계 세 줄 -->
+  <g filter="url(#sh)"><rect x="56" y="668" width="1328" height="290" rx="20" fill="#FFFFFF"/></g>
+  <text x="88" y="712" font-size="20" font-weight="700" fill="#191F28">한 줄로 정리하면</text>
+  <g transform="translate(88,736)">
+    <rect width="1264" height="62" rx="12" fill="#F4F8FF"/>
+    <text x="22" y="40" font-size="19" font-weight="700" fill="#1B64DA">분석서비스 1개(한 판) = AI 모델 1개 + 그 모델 클래스 중 찾는 것 n개 + 규칙 · 대장 형식</text>
+  </g>
+  <g transform="translate(88,808)">
+    <rect width="1264" height="62" rx="12" fill="#F9FAFB"/>
+    <text x="22" y="40" font-size="18" fill="#191F28"><tspan font-weight="700">AI 모델 1개 = 클래스 목록이 고정된 한 판</tspan> · 서비스 여럿이 나눠 씀 (지금 4분류 모델 하나를 서비스 넷이)</text>
+  </g>
+  <g transform="translate(88,880)">
+    <rect width="1264" height="62" rx="12" fill="#F9FAFB"/>
+    <text x="22" y="40" font-size="18" fill="#191F28"><tspan font-weight="700">클래스 = 지금은 따로 된 목록이 없음</tspan> · 모델 · 서비스 판 · 결과 · 학습 데이터 네 곳에 이름으로만 → 한 목록으로 묶는 것이 첫 일</text>
+  </g>
+</svg>
