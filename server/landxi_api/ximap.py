@@ -17,7 +17,7 @@ import json
 import secrets
 import time
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from starlette.concurrency import run_in_threadpool
 
 from .deps import ApiError, audit, db, principal, require
@@ -29,6 +29,9 @@ LANDCOVER = {"건물", "주차장", "경작지", "비닐하우스"}
 _BOARD: dict = {"at": 0.0, "v": None}
 _STATIC_N: dict = {"at": 0.0, "v": {}}
 BOARD_TTL = 60.0
+_SID: dict[str, str] = {}                                   # 결과 층 주소(set) → detections.job_id
+_DENS: dict = {"cells": {}, "out": {}}                      # (묶음, 격자) → (수, 칸 목록) · 격자 → (전국 결과 시각, 응답)
+GRID = {0: 0.02, 1: 0.004}                                  # 멀리(약 2km 칸) · 가까이(약 400m 칸)
 
 
 def _iso(t) -> str | None:
@@ -184,6 +187,7 @@ async def build_board(p) -> dict:
             n = sn.get(s, 0)
             layer = {k: it.get(k) for k in ("id", "set", "path", "layer", "source", "kind", "role", "promote_id", "minzoom", "maxzoom", "bounds", "signed", "attribution", "url")}
         n = max(0, n + delta.get(s, 0))
+        _SID[layer["set"]] = s                                   # 결과 층 → 결과 묶음(밀도 격자가 같은 묶음을 센다 · 바깥에 내지 않음)
         reg = R.region_of(sgg)
         r = regs.get(sgg)
         if r is None:
@@ -240,9 +244,72 @@ async def _rebuild(p):
 
 
 async def warm():
-    """기동 때 전국 결과를 미리 만든다(재기동 직후 첫 XI맵도 바로 · main.lifespan _warm)."""
+    """기동 때 전국 결과 · 밀도 격자를 미리 만든다(재기동 직후 첫 XI맵도 바로 · main.lifespan _warm)."""
     from .deps import Principal
     await _rebuild(Principal(realm="lx", role="staff", user_id="system"))
+    for g in GRID:
+        await build_density(g)
+
+
+# ── 빛나는 밀도(원칙 204 · 10-12 답) ─────────────────────────────────────────
+async def build_density(g: int) -> dict:
+    """전국 결과의 객체 중심을 격자로 센다 — 결과 묶음마다 (칸 x, 칸 y) → 객체 수. 묶음 수가 바뀌었을 때만 다시 센다.
+    한 묶음의 칸 합 = 그 묶음의 객체 수(지운 것 빼고 새로 그린 것 더함 — 전국 결과 수와 같은 값 · 숫자 한 출처)."""
+    bd = _BOARD["v"]
+    if not bd:
+        return {"g": GRID[g], "sets": [], "cells": []}
+    key = (bd.get("as_of"), g)
+    hit = _DENS["out"].get(g)
+    if hit and hit[0] == key:
+        return hit[1]
+    size = GRID[g]
+    sets, todo = [], []
+    for r in bd["regions"]:
+        for x in r["items"]:
+            sid = _SID.get(x["layer"]["set"])
+            if not sid:
+                continue
+            n = x["n"]["value"] or 0
+            sets.append({"svc": x["svc"], "name": x["name"], "region": r["name"], "imagery": x.get("imagery"), "year": x.get("year"), "n": n, "_sid": sid})
+            c = _DENS["cells"].get((sid, g))
+            if not c or c[0] != n:
+                todo.append(sid)
+    if todo:
+        async with db(realm="lx") as conn:
+            rows = await conn.fetch(
+                "SELECT job_id, floor(((ST_XMin(geom) + ST_XMax(geom)) / 2) / $2)::int AS gx, floor(((ST_YMin(geom) + ST_YMax(geom)) / 2) / $2)::int AS gy, "
+                "count(*)::int AS n FROM detections WHERE job_id = ANY($1::text[]) AND coalesce(edit_state, 'raw') <> 'deleted' AND geom IS NOT NULL "
+                "GROUP BY 1, 2, 3", todo, size)
+        got: dict[str, list] = {s: [] for s in todo}
+        for r in rows:
+            got[r["job_id"]].append((r["gx"], r["gy"], r["n"]))
+        for sid in todo:
+            _DENS["cells"][(sid, g)] = (sum(c[2] for c in got[sid]), got[sid])
+    flat, out_sets = [], []
+    for i, s in enumerate(sets):
+        n_cells, cells = _DENS["cells"][(s["_sid"], g)]
+        for gx, gy, n in cells:
+            flat += (gx, gy, i, n)
+        out_sets.append({k: v for k, v in s.items() if k != "_sid"} | {"n_cells": n_cells})
+    out = {"g": size, "sets": out_sets, "cells": flat, "as_of": bd.get("as_of"),
+           "source": "전국 결과(서비스 결과 장부 + 시군구 전역 분석)의 객체 중심을 격자 칸으로 센 수 — 칸 합 = 결과 수"}
+    _DENS["out"][g] = (key, out)
+    return out
+
+
+@router.get("/ximap/density")
+async def density(request: Request, g: int = 0):
+    """빛나는 밀도 — 전국 결과 객체를 격자로 센 칸들(g=0 약 2km · g=1 약 400m). 칸 = [x, y, 묶음 번호, 수] 를 이어 붙인 한 줄(가볍게)."""
+    require(principal(request), lx=True)
+    if g not in GRID:
+        raise ApiError("bad_request", "격자는 0 또는 1")
+    if not _BOARD["v"]:
+        await board(request)
+    body = json.dumps(await build_density(g), ensure_ascii=False, separators=(",", ":")).encode()
+    if "gzip" in (request.headers.get("accept-encoding") or "") and len(body) > 2048:
+        import gzip
+        return Response(gzip.compress(body, 6), media_type="application/json", headers={"Content-Encoding": "gzip", "Vary": "Accept-Encoding", "Cache-Control": "no-store"})
+    return Response(body, media_type="application/json", headers={"Cache-Control": "no-store"})
 
 
 @router.get("/ximap/board")

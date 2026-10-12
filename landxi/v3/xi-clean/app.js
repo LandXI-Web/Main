@@ -17,7 +17,7 @@ import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 
 import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 결과(원칙 135 · 요약 한 출처)
 import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX 직원 메뉴 그대로(바퀴 5 · 원칙 191 · 196 18:52 고침)
 import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
-import { createBoard, boardPromise } from './board.js';           // 열자마자 전국 결과(바퀴 5)
+import { createBoard, boardPromise, densityPromise } from './board.js';   // 열자마자 전국 결과(바퀴 5) · 빛나는 밀도(바퀴 6 · 원칙 204)
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 
 const { h, esc } = K;
@@ -52,6 +52,7 @@ const PRE = SESS ? {
   sum: null,                                          // LX = 전국 결과(바퀴 5)가 첫 화면 — 전국 요약은 부르지 않는다
   // 전국 결과 한 번 호출(바퀴 5) — LX 계정은 열자마자 지도에 칠한다(관문 · 지도와 함께 출발)
   board: boardPromise(SESS.realm === 'lx'),
+  dens0: densityPromise(SESS.realm === 'lx', 0),     // 빛나는 밀도 — 멀리 격자(가벼움)도 함께 출발
 } : {};
 PRE.sum?.catch(() => {});
 /* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
@@ -429,7 +430,7 @@ function wireMap() {
     const ph = hl.length ? map.queryRenderedFeatures(e.point, { layers: hl })[0] : null;
     if (ph?.properties?.pnu) { openParcel(nowPnu(String(ph.properties.pnu))); return; }
     // 먼 축척: 시군구를 누르면 그 지역으로
-    if (map.getZoom() < 9.5 && map.getLayer('sgg-hit')) {
+    if (map.getZoom() < 9.5 && map.getLayer('sgg-hit') && !S.board) {   // 전국 결과(바퀴 6) = 빛나는 곳을 누르면 그 자리로(board.js) — 시군구 면 누르기 없음
       const f = map.queryRenderedFeatures(e.point, { layers: ['sgg-hit'] })[0];
       const r = f && findRegion(String(f.properties?.code ?? ''));
       if (r) setRegion(r);
@@ -440,7 +441,7 @@ function wireMap() {
     map.on('mouseleave', l, () => { if (!AN?.active) map.getCanvas().style.cursor = ''; });
   }
   if (map.getLayer('sgg-hit')) {
-    map.on('mousemove', 'sgg-hit', (e) => { if (AN?.active || map.getZoom() >= 9.5) return; map.getCanvas().style.cursor = 'pointer'; map.setFilter('sgg-hover', ['==', ['to-string', ['get', 'code']], String(e.features?.[0]?.properties?.code ?? '')]); });
+    map.on('mousemove', 'sgg-hit', (e) => { if (AN?.active || S.board || map.getZoom() >= 9.5) return; map.getCanvas().style.cursor = 'pointer'; map.setFilter('sgg-hover', ['==', ['to-string', ['get', 'code']], String(e.features?.[0]?.properties?.code ?? '')]); });
     map.on('mouseleave', 'sgg-hit', () => { if (AN?.active) return; map.getCanvas().style.cursor = ''; map.setFilter('sgg-hover', ['==', ['to-string', ['get', 'code']], '']); });
   }
 }
@@ -818,7 +819,7 @@ const ev = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
 function mountBoard() {
   BD = createBoard({ map, host: mainEl, h,
     regionOf: (r) => findRegion(r.sgg_cd) || (r.prev_cd && findRegion(r.prev_cd)) || S.regions.find((x) => lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox)) || null,
-    onRegion: (r, reg) => { if (reg) setRegion(reg); },
+    onFly: () => { closePop(); ED?.close(); },
     onSets: (list) => {
       S.res = list;
       for (const it of list) S.resOn[it.id] = !it.off;
@@ -827,8 +828,9 @@ function mountBoard() {
       if (S.tool === 'layers') renderLayers();
       ED?.live(list.map((x) => x.set));
     },
-    onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center) }; if (!S.region) paintBoardHud(); } });
-  S.boardP = BD.load(PRE.board || boardPromise(true)).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
+    onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center), glow: BD.glow.layers.length, hot: BD.glow.hot }; if (!S.region) paintBoardHud(); } });
+  BD.busy = () => !!(AN?.active || S.swipe || ED?.busy);
+  S.boardP = BD.load(PRE.board || boardPromise(true), PRE.dens0).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
   const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
   ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery,
     onEdited: () => { clearTimeout(S.reloadT); S.reloadT = setTimeout(() => BD.reload(), 400); } });
@@ -883,7 +885,7 @@ function paintBoardHud() {
       h('p.xb-p', {}, h('span', {}, '시군구 ', h('b', { text: `${nf(ev(d.n_regions))}곳` }), ` · 서비스 ${nf(svcN)}가지`, ...extra.map((x) => ` · ${x}`)),
         h('span', { text: [d.last_at ? `마지막 분석 ${shortDate(d.last_at)}` : null, yr].filter(Boolean).join(' · ') })),
       BD.legend,                                     // 서비스 색 · 켜고 끄기 = 전국 칸 안(지도 아래쪽은 고치기 막대 · 알림 자리)
-      h('p.xb-tip', { text: '시군구를 누르면 확대되고, 객체를 누르면 그 자리에서 고칩니다' }));
+      h('p.xb-tip', {}, h('span', { text: '빛나는 곳을 누르면 그 자리로 갑니다' }), h('span', { text: '객체를 누르면 그 자리에서 고칩니다' })));
     X.hud = { label: '전국 AI 분석 결과', n: ev(d.n_regions), unit: '곳', from: 'board' };
     return;
   }

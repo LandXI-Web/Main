@@ -310,12 +310,16 @@
 .xb-chip[aria-pressed="false"]{color:var(--sub);background:var(--bg-0)}
 .xb-chip[aria-pressed="false"] i{opacity:.3}
 /* 시군구 알약 — '이름 · 수' */
-.xb-pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px 0 7px;border:0;border-radius:13px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(25,31,40,.22);font:500 12.5px/1 var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
-.xb-pill[hidden]{display:none}
-.xb-pill b{font-weight:700}
-.xb-pill .num{font:600 12.5px/1 var(--font-num);color:var(--sub-2,var(--sub))}
-.xb-dots{display:inline-flex;gap:2px}
-.xb-dots i{width:8px;height:8px;border-radius:50%}
+.xb-tipcard{position:absolute;z-index:7;left:0;top:0;min-width:180px;max-width:260px;padding:10px 12px;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 4px 16px rgba(25,31,40,.16);color:var(--ink);pointer-events:none;transition:translate .12s ease-out}
+.xb-tipcard[hidden]{display:none}
+.xb-tc-k{margin:0 0 6px;font:600 13px/18px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.xb-tc-rows{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.xb-tc-rows li{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:7px;font:500 13px/18px var(--font-body)}
+.xb-tc-rows i{width:8px;height:8px;border-radius:50%}
+.xb-tc-rows b{font:600 13px/1 var(--font-num)}
+.xb-tc-p{margin:6px 0 0;font:400 12px/17px var(--font-body);color:var(--sub);word-break:keep-all}
+.xb-tc-tip{margin:4px 0 0;font:500 12px/17px var(--font-body);color:var(--blue,#3182F6)}
+@media (prefers-reduced-motion: reduce){.xb-tipcard{transition:none}}
 /* 그 자리 고치기 칸 · 꼭짓점 막대 */
 .xe-card{position:absolute;z-index:32;left:0;top:0;width:360px;padding:16px 16px 14px;will-change:transform}
 .xe-card[hidden]{display:none}
@@ -347,7 +351,7 @@
 .xe-bar-t{font:500 13.5px/1.3 var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xe-bar .t-btn{min-height:34px;padding:0 12px;font-size:13px}
 /* 해외(키르기스스탄)에서는 국내 도구 · 범례를 걷는다 */
-.k-main[data-nation="kg"] .xc-tools,.k-main[data-nation="kg"] .xc-img,.k-main[data-nation="kg"] .xb-hud,.k-main[data-nation="kg"] .xb-leg,.k-main[data-nation="kg"] .xe-card,.k-main[data-nation="kg"] .xb-pill{display:none!important}
+.k-main[data-nation="kg"] .xc-tools,.k-main[data-nation="kg"] .xc-img,.k-main[data-nation="kg"] .xb-hud,.k-main[data-nation="kg"] .xb-leg,.k-main[data-nation="kg"] .xe-card,.k-main[data-nation="kg"] .xb-tipcard{display:none!important}
 .xn-leg{top:68px}
 @media (max-width:640px){
   .xc-top{right:8px;top:8px;gap:6px}
@@ -364,3 +368,4 @@
 .xe-hist li{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .xe-undo{flex:none;border:0;background:none;padding:0;font:500 12.5px/1.4 var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .xe-undo:hover{color:var(--ink)}
+.xb-tip span{display:block}

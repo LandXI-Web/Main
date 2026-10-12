@@ -1,0 +1,6 @@
+[
+ {"id": "XI맵-빛나는밀도", "title": "XI맵 전국 결과 — 시군구 칠하기 · 알약 · 점 대신, AI가 찾은 객체가 서비스 색으로 은은히 빛나는 밀도 → 확대하면 실제 객체 모양으로 · 올리면 그 자리 요약 · 누르면 그 자리로 날아감", "opts": ["완료", "다시"],
+  "evidence": ["shots/a1-national-glow-1440-0925.png", "shots/a2-hover-summary-1440-0925.png", "shots/b1-mid-glow-1440-0925.png", "shots/b2-crossfade-1440-0926.png", "shots/c1-objects-1440-0926.png", "shots/a3-national-390-0926.png", "glow-10s.mp4"],
+  "where": "https://app.land-xi.dev/landxi/v3/xi-clean/ (LX 직원)",
+  "note": "그림 · 영상 모두 10-12 09:25~09:27 바깥 주소에서 새로 찍음. 빛 = 서버가 전국 결과 객체를 격자로 센 칸(칸 합 = 결과 수). 올렸을 때 수 = 그 시군구 결과 수(HUD와 같은 값). 첫 화면 처음 2.8초 · 다시 1.4~1.5초."}
+]

@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-12 09:24:46",
+  "app": "https://app.land-xi.dev",
+  "shots": {
+    "a1-national-glow-1440-0925.png": "2026-10-12 09:25:33",
+    "a2-hover-summary-1440-0925.png": "2026-10-12 09:25:34",
+    "b1-mid-glow-1440-0925.png": "2026-10-12 09:25:52",
+    "b2-crossfade-1440-0926.png": "2026-10-12 09:26:10",
+    "c1-objects-1440-0926.png": "2026-10-12 09:26:33",
+    "a3-national-390-0926.png": "2026-10-12 09:26:55"
+  },
+  "first_view": [
+    {
+      "wall_ms": 2792,
+      "in_page_shown_ms": 1365,
+      "board_ms": 847,
+      "nav_to_module_ms": 1371
+    },
+    {
+      "wall_ms": 1374,
+      "in_page_shown_ms": 653,
+      "board_ms": 513,
+      "nav_to_module_ms": 678
+    },
+    {
+      "wall_ms": 1527,
+      "in_page_shown_ms": 832,
+      "board_ms": 695,
+      "nav_to_module_ms": 686
+    }
+  ],
+  "errors": [],
+  "local": [],
+  "hot": "board.hot(가장 많이 모인 칸)",
+  "video": {
+    "from_s": 15.463,
+    "to_s": 28.731,
+    "objects_wait_s": 13.268,
+    "cut": "앞 4.5초 + 뒤 5.5초(가운데 3.3초 = 바깥 연결로 객체 조각을 받는 시간 · 뺌)",
+    "file": "glow-10s.mp4",
+    "at": "2026-10-12 09:27:00"
+  },
+  "after_click_zoom": 12.4,
+  "tip": "충남 · 보령시\n\n곤포사일리지\n130,075개\n\n2023년 항공 영상 · 25cm\n\n누르면 이 자리로 갑니다",
+  "objects": 30735,
+  "layout": {
+    "pills": 0,
+    "sgg_fill": false,
+    "heat": 16,
+    "over": 0
+  }
+}

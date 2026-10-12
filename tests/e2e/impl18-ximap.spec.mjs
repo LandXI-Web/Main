@@ -24,9 +24,11 @@ test.describe('XI맵 바퀴 5', () => {
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await page.goto('v3/xi-clean/');
     await page.waitForFunction(() => window.__xc?.board && window.__xc.boot?.shown, null, { timeout: 30000 });
-    const x = await page.evaluate(() => ({ board: window.__xc.board, hud: window.__xc.hud, fills: window.__xc.map.queryRenderedFeatures({ layers: ['xb-sgg-f'] }).length }));
+    const x = await page.evaluate(() => ({ board: window.__xc.board, hud: window.__xc.hud, sgg: !!window.__xc.map.getLayer('xb-sgg-f') }));
     expect(x.board.regions).toBeGreaterThan(0);
-    expect(x.fills).toBeGreaterThan(0);                               // 고르기 · 조회 없이 지도에 칠해짐
+    expect(x.board.glow).toBeGreaterThan(0);                          // 고르기 · 조회 없이 지도에 바로 — 바퀴 6: 시군구 칠하기 대신 빛나는 밀도(원칙 204)
+    expect(x.sgg).toBe(false);
+    await expect(page.locator('.xb-pill')).toHaveCount(0);
     expect(x.hud.label).toBe('전국 AI 분석 결과');
     await expect(page.locator('.xb-hud .xb-h')).toHaveText('전국 AI 분석 결과');
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child')).toHaveText('XI맵');
