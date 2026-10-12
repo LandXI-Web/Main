@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 퍼포먼스 맵</title>
+<link rel="stylesheet" href="perf.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m">
+<div class="app" id="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">XI맵</span>
+    <div class="search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span>시군구 · 지번 · 또는 XI ChatGEO 에 질문</span></div>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴" id="rail"></nav>
+  <main class="main"><div class="stage" id="stage"></div><div id="ui"></div></main>
+</div>
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<nav class="ab" id="ab"><a href="?v=a" data-v="a">A안 · 라이브 지휘소</a><a href="?v=b" data-v="b">B안 · 이야기로 보는 아카이브</a></nav>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">시안은 실제 전국 작업기 · 결과 · 학습 기록을 서버에서 읽습니다 — LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 26차 · XI맵 = 최종 퍼포먼스 맵 시안(원칙 227 · 229) — 코드 수정 0 · 서버 수정 0 · GPU 0.
+   실제(서버에서 그 자리에서 읽음): 전국 작업기 진행(농지 전수 2025 · 끝난 읍면동 · ㎢ · 경작지 수 · 지금 분석 중인 읍면동 · 하루 예상) · 끝난 칸 결과 묶음(흐르는 결과) ·
+         전국 결과 면(지도 조각) · 지금 분석 중인 읍면동 경계 · 남원 2023 비닐하우스 · 2025 경작 결과(지도 조각) · 비닐하우스 재학습 판정(새 판 87% · 지금 판 91%) ·
+         학습 데이터 장수 · XI맵에서 고친 것 수 · 시군구 결과 20곳(2023).
+   시안(아직 없는 것): ChatGEO 답(말 → 지도 움직임은 각본 · 숫자는 서버 값) · '판이 바뀌는 순간'(아직 일어나지 않음 · 예시 동작) · 연도 영상 전환(지리원 연도별 영상은 좌표계가 달라 시안은 바탕 그대로). */
+import { createStage } from '../../../../v3/kit/stage.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+import { addResultLayers } from '../../../../xi/fx/arrive.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const V = q.get('v') === 'b' ? 'b' : 'a';
+const PLAY = q.get('play') === '1';
+const ASK = q.get('ask');
+const SCENE0 = q.get('scene') || 'now';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => (n == null || Number.isNaN(Number(n)) ? '—' : Number(n).toLocaleString('ko-KR'));
+const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+const ui = document.getElementById('ui');
+const now = new Date(); const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('clock').textContent = hm;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+document.querySelector(`#ab a[data-v="${V}"]`).classList.add('on'); document.body.classList.add(V);
+const COLOR = { 경작지: '#2E9E5B', 비닐하우스: '#F59F00', 건물: '#3182F6' };
+const KOREA = [125.0, 33.1, 130.0, 38.6];
+const NAMWON = { cd: '52190', name: '남원시', bbox: [127.1839, 35.3025, 127.6742, 35.5608] };
+const DEOKJIN = { cd: '52113', name: '전주시 덕진구', bbox: [126.998, 35.8017, 127.2343, 35.9031] };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* 직원 메뉴 그대로(원칙 196) — XI맵 켜짐 */
+const MENU = [['대시보드', '<path d="M3 9l7-6 7 6v8H3z"/>'], ['프로젝트', '<path d="M3 5h5l2 2h7v9H3z"/>'], ['분석하기', '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><circle cx="10" cy="10" r="2.5"/>'], ['지도 서비스', '<path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2z M8 3v12 M12 5v12"/>'], ['XI맵', null], ['데이터하우스', '<ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5"/>'], ['요청함', '<path d="M3 11h4l1 2h4l1-2h4v6H3z M5 4h10l2 7H3z"/>']];
+document.getElementById('rail').innerHTML = MENU.map(([l, ic], i) => `<a class="ri${l === 'XI맵' ? ' on' : ''}${l === '데이터하우스' ? ' sep' : ''}">${ic ? `<svg viewBox="0 0 20 20" aria-hidden="true">${ic}</svg>` : '<span class="xi">XI</span>'}${l}</a>`).join('');
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+/* ═══ 재료 — 전부 서버에서(못 읽으면 null → 화면에 '—') ═══ */
+const D = {};
+async function load() {
+  const safe = (p) => api(p).catch(() => null);
+  const [prog, sets, emd, board, retrain, samples, edits] = await Promise.all([
+    safe('/national/progress'), safe('/national/sets?asset=farm&bbox=124,33,132,39'), safe(`/regions/${DEOKJIN.cd}/emd`),
+    safe('/ximap/board'), safe('/retrain'), safe('/training/samples'), safe('/ximap/edits/summary')]);
+  D.prog = prog; D.farm = prog?.assets?.farm || null; D.sets = sets?.sets || []; D.emd = emd; D.board = board; D.retrain = retrain; D.samples = samples; D.edits = edits;
+  D.gh = (retrain?.services || []).find((s) => s.service === '비닐하우스') || null;
+  D.train = D.gh?.project?.id ? await safe(`/projects/${D.gh.project.id}/train`) : null;
+  D.deok = await safe(`/national/region?codes=${DEOKJIN.cd}`);
+  D.nw = (board?.regions || []).find((r) => r.name === '남원시') || null;
+  const nx = D.farm?.next;
+  D.nowCell = nx && emd?.features ? emd.features.find((f) => f.properties?.name === nx.emd) || null : null;
+}
+const F = () => D.farm || {};
+const cnt = (k) => F().counts?.[k];
+
+/* ═══ 지도 ═══ */
+let ST, MAP;
+async function stage(bounds) { ST = createStage(document.getElementById('stage'), { bounds, interactive: true, padding: { top: 90, bottom: 120, left: 60, right: 60 } }); await ST.ready; MAP = ST.map; return MAP; }
+function idle() { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > 12000 ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, 12000); }); }
+function mapReady() { document.documentElement.dataset.mapReady = '1'; }
+const BEFORE = () => (MAP.getLayer('slot-result') ? 'slot-result' : undefined);
+const vis = (ids, on) => ids.forEach((id) => MAP.getLayer(id) && MAP.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'));
+const bySource = (src) => (MAP.getStyle().layers || []).filter((l) => l.source === src).map((l) => l.id);
+
+/* 전국 결과 면 — 실제 지도 조각(농지 전수 2025) · 빗금 없음 · 끝난 칸은 은은히 */
+function addNational() {
+  const v = D.prog?.v?.farm || '0';
+  MAP.addSource('xn', { type: 'vector', tiles: [`${API.base}/tiles/national/farm/${D.prog?.year || 2025}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v)}`], minzoom: 4, maxzoom: 10, attribution: '국토지리정보원 항공 정사영상 · AI 분석 결과' });
+  MAP.addLayer({ id: 'xn-done', type: 'fill', source: 'xn', 'source-layer': 'cells', filter: ['==', ['get', 'done'], 1],
+    paint: { 'fill-color': COLOR.경작지, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.42, 9, 0.22, 11, 0] } }, BEFORE());
+  MAP.addLayer({ id: 'xn-face', type: 'fill', source: 'xn', 'source-layer': 'faces',
+    paint: { 'fill-color': ['match', ['get', 'cls'], '경작지', COLOR.경작지, '비닐하우스', COLOR.비닐하우스, '건물', COLOR.건물, '#5C7CFA'],
+      'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.95, 9, 0.8, 11, 0.55, 13, 0.35, 15, 0.18] } }, BEFORE());
+  // 지금 분석 중인 읍면동 — 차오르는 칸
+  if (D.nowCell) {
+    MAP.addSource('xn-now', { type: 'geojson', data: D.nowCell });
+    MAP.addLayer({ id: 'xn-now-f', type: 'fill', source: 'xn-now', paint: { 'fill-color': '#0FA9A0', 'fill-opacity': 0.18 } }, BEFORE());
+    MAP.addLayer({ id: 'xn-now-l', type: 'line', source: 'xn-now', paint: { 'line-color': '#0FA9A0', 'line-width': 2.2, 'line-opacity': 0.95 } }, BEFORE());
+    let t = 0; (function breathe() { t += 0.035; if (MAP.getLayer('xn-now-f')) MAP.setPaintProperty('xn-now-f', 'fill-opacity', 0.14 + 0.3 * (0.5 + 0.5 * Math.sin(t))); requestAnimationFrame(breathe); })();
+    const c = D.nowCell.properties?.center || centerOf(D.nowCell.geometry);
+    const el = document.createElement('div'); el.className = 'now-dot'; el.innerHTML = `<i></i>${esc(F().next?.emd || '')} · 분석 중`;
+    new window.maplibregl.Marker({ element: el, anchor: 'left', offset: [14, 0] }).setLngLat(c).addTo(MAP);
+  }
+  // 2023 결과가 있는 시군구 20곳 — 2023 으로 넘기면 은은히(시안 · 시군구 중심 · 객체는 확대하면)
+  const feats = (D.board?.regions || []).filter((r) => r.center).map((r) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: r.center }, properties: { n: val(r.n) || 0, name: r.name } }));
+  MAP.addSource('y23', { type: 'geojson', data: { type: 'FeatureCollection', features: feats } });
+  MAP.addLayer({ id: 'y23', type: 'circle', source: 'y23', layout: { visibility: 'none' }, paint: { 'circle-color': COLOR.비닐하우스, 'circle-opacity': 0.55, 'circle-blur': 1, 'circle-radius': ['interpolate', ['linear'], ['get', 'n'], 0, 10, 50000, 26, 140000, 36] } }, BEFORE());
+}
+function centerOf(g) { let x = 0, y = 0, n = 0; const walk = (c) => (typeof c[0] === 'number' ? (x += c[0], y += c[1], n++) : c.forEach(walk)); walk(g.coordinates); return [x / n, y / n]; }
+
+/* 남원 두 해 — 실제 결과 지도 조각(2023 비닐하우스 · 2025 경작) */
+const NW = { ids23: [], ids25: [], loaded: false };
+async function addNamwon() {
+  if (NW.loaded || !D.nw) return; NW.loaded = true;
+  const it23 = D.nw.items.find((i) => i.name === '비닐하우스')?.layer, it25 = D.nw.items.find((i) => i.name === '경작·휴경')?.layer;
+  for (const [key, it] of [['nw23', it23], ['nw25', it25]]) {
+    if (!it) continue;
+    try { MAP.addSource(key, await sourceSpec(it)); addResultLayers(MAP, key, key, { kind: 'result', sourceLayer: it.layer || 'results', visible: false }); NW[key === 'nw23' ? 'ids23' : 'ids25'] = bySource(key); } catch { /* 시안 — 조각이 없으면 비워 둔다 */ }
+  }
+}
+let YEAR = 2025;
+function setYear(y) {
+  YEAR = y; document.querySelectorAll('.tl li').forEach((li) => li.classList.toggle('pick', Number(li.dataset.y) === y));
+  const is25 = y === 2025, is23 = y === 2023;
+  vis(['xn-done', 'xn-face', 'xn-now-f', 'xn-now-l'], is25); vis(['y23'], is23); vis(NW.ids25, is25); vis(NW.ids23, is23);
+  document.querySelectorAll('.now-dot').forEach((e) => { e.style.opacity = is25 ? 1 : 0; });
+  const tip = document.getElementById('tlTip'); if (tip) tip.textContent = is25 ? `농지 전수 2025 · 끝난 읍면동 ${nf(val(F().done))}곳` : is23 ? `2023 결과 · 시군구 ${nf(D.board?.regions?.length)}곳` : '이 해 결과 없음 · 영상은 있음';
+}
+
+/* 흐르는 결과 — 끝난 칸(실제 결과 묶음 위치)에서 차례로 고리가 퍼진다 */
+let flowOn = true;
+function flow() {
+  const sets = D.sets.slice(); if (!sets.length) return;
+  let i = Math.floor(Math.random() * sets.length);
+  (function tick() {
+    if (!flowOn || !MAP) return;
+    const b = sets[i++ % sets.length].bounds;
+    const el = document.createElement('div'); el.className = 'ring';
+    const m = new window.maplibregl.Marker({ element: el }).setLngLat([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]).addTo(MAP);
+    setTimeout(() => m.remove(), 1900);
+    setTimeout(tick, 650);
+  })();
+}
+
+/* ═══ 조각(부품) ═══ */
+function hud({ dark = false, k, big, unit, sub, live } = {}) {
+  return `<section class="hud fade${dark ? ' dark' : ''}" id="hud"><div class="k">${esc(k)}</div><p class="big">${esc(big)}<small>${esc(unit || '')}</small></p>
+    ${sub ? `<p class="sub">${sub}</p>` : ''}${live ? `<span class="live"><i></i>${esc(live)}</span>` : ''}</section>`;
+}
+function timeline({ big = false } = {}) {
+  const has = new Set([...(D.board?.years || []).map(Number), ...(D.prog?.year ? [Number(D.prog.year)] : [])]);
+  const ys = []; for (let y = 2011; y <= 2025; y++) ys.push(y);
+  return `<div class="tl fade${big ? ' big' : ''}" id="tl"><span class="lab">영상 · 결과 연도</span><ol>${ys.map((y) => `<li data-y="${y}" class="${has.has(y) ? 'has' : 'none'}${y === YEAR ? ' pick' : ''}"><span>${String(y).slice(2)}</span></li>`).join('')}</ol><span class="tip" id="tlTip"></span></div>`;
+}
+function legend(dark) {
+  return `<div class="legend fade${dark ? ' dark' : ''}"><span><i style="background:${COLOR.경작지}"></i>경작지</span><span><i style="background:${COLOR.비닐하우스}"></i>비닐하우스</span><span><i style="background:#0FA9A0"></i>지금 분석 중</span></div>`;
+}
+function ask({ wide = false } = {}) {
+  return `<div class="ask fade${wide ? ' wide' : ''}" id="ask">
+    <div class="chips">${ASKS.map((a, i) => `<button type="button" data-i="${i}">${esc(a.q)}</button>`).join('')}</div>
+    <div class="bar"><span class="logo">XI</span><span class="q ph" id="askQ">XI ChatGEO — 말로 지도를 움직이세요</span><button class="send" type="button" aria-label="보내기"><svg viewBox="0 0 20 20"><path d="M3 10h13M11 5l5 5-5 5"/></svg></button></div>
+    <div class="ans" id="askA" hidden></div></div>`;
+}
+function evo({ band = false } = {}) {
+  const fixed = val(D.edits?.total), imgs = val(D.train?.runs?.[0]?.data?.images), v = D.gh?.verdict, ver = D.gh?.version;
+  const items = [
+    ['on', '고친 것', `${nf(fixed)}건`, 'XI맵에서 그 자리 고치기'],
+    ['on', '학습 데이터', `${nf(imgs)}장`, '비닐하우스 25cm'],
+    ['on', '다시 학습', D.train?.runs?.[0] ? `${nf(val(D.train.runs[0].epochs))}번 반복` : '—', D.train?.runs?.[0]?.finished_at ? D.train.runs[0].finished_at.slice(5, 10).replace('-', '.') + ' 끝' : '—'],
+    [v ? (v.better ? 'on' : 'next') : '', '새 판 비교', v ? `${nf(val(v.value))}% · 지금 ${nf(val(v.base))}%` : '—', v ? (v.better ? '새 판이 더 좋음' : '지금 판 유지 · 후보') : '같은 검증 묶음'],
+    ['', '기관에 공유', ver ? `${ver}판` : '—', v?.better ? '배포 신청' : '새 판이 더 좋아지면'],
+  ];
+  return `<section class="evo fade${band ? ' band' : ''}" id="evo"><h3>고치며 똑똑해지는 지도 <small>비닐하우스</small></h3>${band ? `<span class="ver">지금 <b>${esc(ver || '—')}판</b></span>` : '<i class="flow"></i>'}
+    <ol>${items.map(([c, t, n, s]) => `<li class="${c}" data-t="${esc(t)}"><b>${esc(n)}</b>${esc(t)} · ${esc(s)}</li>`).join('')}</ol>
+    <span class="go" id="evoGo">판이 바뀌는 순간 보기 <small>(시안 · 예시 동작)</small></span></section>`;
+}
+/* '판이 바뀌는 순간' — 아직 일어나지 않은 일(시안). 숫자는 바꾸지 않고, 띠와 지도 면이 한 번 밝아지며 '새 판' 자리가 켜진다 */
+async function evolveMoment() {
+  const e = document.getElementById('evo'); if (!e) return;
+  e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash');
+  const li = [...e.querySelectorAll('li')]; li[3].classList.remove('next'); li[3].classList.add('on'); li[3].querySelector('b').textContent = '새 판이 더 좋음 (예시)'; li[4].classList.add('on'); li[4].querySelector('b').textContent = '배포 신청 (예시)';
+  for (const id of ['xn-face', 'xn-done', ...NW.ids23, ...NW.ids25]) if (MAP.getLayer(id) && MAP.getLayer(id).type === 'fill') { MAP.setPaintProperty(id, 'fill-color', '#0FA9A0'); setTimeout(() => MAP.setPaintProperty(id, 'fill-color', id.startsWith('xn') ? COLOR.경작지 : (id.includes('nw23') ? COLOR.비닐하우스 : COLOR.경작지)), 1100); }
+  await sleep(1300);
+}
+
+/* ═══ XI ChatGEO 각본(시안) — 말 → 지도 움직임 · 숫자는 서버 값 ═══ */
+const ASKS = [
+  { q: '전주 덕진구 경작지 보여줘', async run() {
+      await ST.go(DEOKJIN.bbox, { ms: 2000, maxZoom: 11.6 }); setYear(2025);
+      const a = D.deok?.assets?.farm; const c = a?.counts?.경작지;
+      return { html: `<b>전주시 덕진구</b>로 갔습니다. 읍면동 <span class="num">${nf(val(a?.done))}</span>/${nf(val(a?.cells))}곳 분석 끝 · 경작지 <span class="num">${nf(val(c?.n))}곳</span> · ${nf(val(c?.km2))}㎢ — 지금 ${esc(F().next?.emd || '—')}을 분석하고 있습니다.`, did: ['지도 이동', '경작지 결과 켬', '진행 장부 읽음'] }; } },
+  { q: '남원 2023과 2025 비교해 줘', async run() {
+      await addNamwon(); await ST.go(NAMWON.bbox, { ms: 2000, maxZoom: 11.2 }); setYear(2023); await sleep(900); setYear(2025);
+      const g = D.nw?.items?.find((i) => i.name === '비닐하우스'), f = D.nw?.items?.find((i) => i.name === '경작·휴경');
+      return { html: `<b>남원시</b> — 2023년 영상 비닐하우스 <span class="num">${nf(val(g?.n))}동</span> · 2025년 영상 경작지 <span class="num">${nf(val(f?.n))}곳</span>. 아래 연도 막대로 두 해를 넘겨 보세요.`, did: ['지도 이동', '2023 ↔ 2025 결과 바꿈', '연도 막대 켬'] }; } },
+  { q: '오늘 어디까지 했어?', async run() {
+      await ST.home({ ms: 1800 }); setYear(2025);
+      const s = D.prog?.schedule;
+      return { html: `<b>농지 전수 2025</b> — 읍면동 <span class="num">${nf(val(F().done))}곳</span> · ${nf(val(F().done_km2))}㎢ 분석 끝(전국 농지의 ${nf(val(F().pct))}%). 지금 ${esc(F().next?.sido || '')} ${esc(F().next?.sgg || '')} ${esc(F().next?.emd || '')}. 학습 장비가 놀 때 하루 약 ${nf(val(s?.est_km2_day))}㎢ · 남은 일수 ${nf(val(s?.days_left))}일.`, did: ['전국으로', '진행 장부 읽음'] }; } },
+];
+let asking = false;
+async function runAsk(i) {
+  if (asking) return; asking = true;
+  const a = ASKS[i], qEl = document.getElementById('askQ'), aEl = document.getElementById('askA');
+  aEl.classList.remove('in'); aEl.hidden = true; qEl.classList.remove('ph'); qEl.innerHTML = '<span class="caret"></span>';
+  for (let k = 1; k <= a.q.length; k++) { qEl.innerHTML = esc(a.q.slice(0, k)) + '<span class="caret"></span>'; await sleep(45); }
+  const r = await a.run();
+  aEl.innerHTML = `<span class="tag">시안 답 · 숫자는 서버 값</span>${r.html}<div class="did">${r.did.map((d) => `<span>${esc(d)}</span>`).join('')}</div>`;
+  aEl.hidden = false; requestAnimationFrame(() => aEl.classList.add('in'));
+  asking = false;
+}
+function wireUi() {
+  ui.querySelectorAll('.ask .chips button').forEach((b) => b.addEventListener('click', () => runAsk(Number(b.dataset.i))));
+  ui.querySelectorAll('.tl li.has').forEach((li) => li.addEventListener('click', async () => { const y = Number(li.dataset.y); if (y === 2023) await addNamwon(); setYear(y); }));
+  document.getElementById('evoGo')?.addEventListener('click', evolveMoment);
+}
+
+/* ═══ A안 · 라이브 지휘소 — 네 얼굴이 한 화면에, 지도가 주인공 ═══ */
+async function sceneA() {
+  ui.innerHTML = hud({ k: `농지 전수 ${D.prog?.year || '—'} · 지금까지 찾은 경작지`, big: nf(val(cnt('경작지')?.n)), unit: '곳',
+      sub: `읍면동 <b>${nf(val(F().done))}곳</b> · ${nf(val(F().done_km2))}㎢ 분석 끝 · 비닐하우스 ${nf(val(cnt('비닐하우스')?.n))}동`,
+      live: F().next ? `지금 분석 중 · ${F().next.sido} ${F().next.sgg} ${F().next.emd}` : '지금 쉬는 중' })
+    + legend() + timeline() + ask() + evo()
+    + `<div class="src"><span class="on">최신 영상</span><span>분석한 영상</span></div>`;
+  wireUi(); setYear(2025); flow();
+}
+
+/* ═══ B안 · 이야기로 보는 아카이브 — 네 장면을 위 탭으로, 같은 지도 위 ═══ */
+const SCENES = [['now', '살아 있는 전국 분석'], ['time', '시간을 넘나드는 지도'], ['evolve', '고치며 똑똑해지는 지도'], ['talk', '말로 다루는 지도']];
+let SC = null;
+async function sceneB(id) {
+  if (SC === id) return; SC = id;
+  ui.querySelectorAll('.fade').forEach((e) => e.classList.add('hide')); await sleep(260);
+  const tabs = `<nav class="scenes" id="scenes">${SCENES.map(([k, l], i) => `<button type="button" data-s="${k}" class="${k === id ? 'on' : ''}"><b>${i + 1}</b>${esc(l)}</button>`).join('')}</nav>`;
+  flowOn = false;
+  if (id === 'now') {
+    ui.innerHTML = tabs + hud({ k: `농지 전수 ${D.prog?.year || '—'} · 지금까지 찾은 경작지`, big: nf(val(cnt('경작지')?.n)), unit: '곳',
+      sub: `읍면동 <b>${nf(val(F().done))}곳</b> · ${nf(val(F().done_km2))}㎢ 분석 끝 · 학습 장비가 놀 때 하루 약 ${nf(val(D.prog?.schedule?.est_km2_day))}㎢`,
+      live: F().next ? `지금 분석 중 · ${F().next.sido} ${F().next.sgg} ${F().next.emd}` : '지금 쉬는 중' }) + legend();
+    setYear(2025); flowOn = true; flow(); ST.home({ ms: 1800 });
+  } else if (id === 'time') {
+    await addNamwon();
+    ui.innerHTML = tabs + hud({ k: '남원시 · 같은 자리를 해마다', big: nf(D.board?.years?.length), unit: '해의 결과', sub: `2023 비닐하우스 ${nf(val(D.nw?.items?.find((i) => i.name === '비닐하우스')?.n))}동 · 2025 경작지 ${nf(val(D.nw?.items?.find((i) => i.name === '경작·휴경')?.n))}곳<br>영상은 2011년부터 해마다(국토지리정보원) · 결과는 쌓이는 대로 이력이 됩니다` }) + timeline({ big: true }) + legend();
+    await ST.go(NAMWON.bbox, { ms: 2000, maxZoom: 11.2 }); setYear(2023); await sleep(1000); setYear(2025);
+  } else if (id === 'evolve') {
+    await addNamwon();
+    ui.innerHTML = tabs + hud({ k: '비닐하우스 분석서비스 · 고친 것이 새 판이 되기까지', big: nf(val(D.gh?.verdict?.value)), unit: '% 새 판', sub: `지금 판 ${nf(val(D.gh?.verdict?.base))}% · 같은 검증 묶음 · ${esc(D.gh?.state || '—')}` }) + evo({ band: true });
+    setYear(2025);
+  } else if (id === 'talk') {
+    ui.innerHTML = tabs + ask({ wide: true }) + legend();
+    setYear(2025);
+  }
+  ui.querySelectorAll('.fade').forEach((e) => e.classList.add('hide')); requestAnimationFrame(() => ui.querySelectorAll('.fade').forEach((e) => e.classList.remove('hide')));
+  ui.querySelectorAll('.scenes button').forEach((b) => b.addEventListener('click', () => sceneB(b.dataset.s)));
+  wireUi();
+}
+
+/* ═══ 시작 ═══ */
+await ensureLogin();
+await load();
+await stage(KOREA);
+addNational();
+if (V === 'a') { await sceneA(); await idle(); mapReady(); if (ASK != null) { await sleep(1200); runAsk(Number(ASK)); } }
+else { await sceneB(SCENE0); await idle(); mapReady(); }
+if (PLAY) {   // 10초 녹화용 각본
+  if (V === 'a') { await sleep(1500); await runAsk(1); await sleep(1800); document.getElementById('evoGo')?.click(); }
+  else { await sleep(1200); await sceneB('time'); await sleep(2600); await sceneB('evolve'); await sleep(1200); await evolveMoment(); await sleep(800); await sceneB('talk'); await sleep(600); runAsk(0); }
+}
+</script>
+</body>
+</html>

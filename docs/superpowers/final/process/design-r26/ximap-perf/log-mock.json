@@ -1,0 +1,13 @@
+[
+ {
+  "file": "mock-b-evolve-1440-1654.png",
+  "shot_at": "2026-10-12T16:54:00",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=b&scene=evolve",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "B안 장면 3 고치며 똑똑해지는 지도 — 고친 것 → 학습 데이터 → 다시 학습 → 새 판 비교(87% · 지금 91%) → 기관에 공유 (띠 글자 겹침 고친 뒤 다시 찍음)",
+  "errors": []
+ }
+]

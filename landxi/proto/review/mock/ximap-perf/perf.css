@@ -1,0 +1,155 @@
+/* 설계 26차 · XI맵 퍼포먼스 맵 시안(원칙 227 · 229) — 실제 키트(kit.css · stage.css) 위에 시안 전용 틀. PC 1440 만.
+   코드 수정 0 · 서버 수정 0 · GPU 0. 밝은 톤 · 왼쪽 층 목록 없음 · 지도 위 카드 ≤ 3장. */
+@import url("../../../../v3/kit/kit.css");
+@import url("../../../vendor/maplibre/maplibre-gl.css");
+@import url("../../../../v3/kit/stage.css");
+
+html,body{margin:0;background:var(--bg-0)}
+body.m{position:relative;height:900px;overflow:hidden;font:400 16px/26px var(--font-body);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all;text-wrap:pretty}
+body.m *{box-sizing:border-box}
+.app{position:relative;display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-rows:64px minmax(0,1fr);height:900px;background:var(--bg-0)}
+
+/* 마스트 · 직원 메뉴 레일(지금 XI맵과 같은 틀 · 원칙 196) */
+.mast{grid-column:1/-1;height:64px;display:flex;align-items:center;gap:12px;padding:0 24px;background:var(--bg-1);border-bottom:1px solid var(--rule);position:relative;z-index:30}
+.word{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.home{font:500 14px/1 var(--font-body);color:var(--sub);white-space:nowrap}
+.home::before{content:"·";margin-right:10px;color:var(--mute)}
+.sp{flex:1}
+.search{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:460px;height:40px;border:1px solid var(--rule);border-radius:10px;background:var(--bg-1);display:flex;align-items:center;gap:10px;padding:0 14px;font:400 14px/1 var(--font-body);color:var(--sub)}
+.search svg{width:16px;height:16px;stroke:var(--sub);fill:none;stroke-width:1.6;stroke-linecap:round}
+.fresh{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--font-num);color:var(--sub)}
+.fresh i{width:8px;height:8px;border-radius:50%;background:var(--ai)}
+.role{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:8px;background:var(--bg-0);font:500 14px/1 var(--font-body);color:var(--ink)}
+.mb{height:36px;padding:0 12px;border-radius:8px;color:var(--sub);font:500 14px/36px var(--font-body);white-space:nowrap}
+.mb.help{width:36px;padding:0;text-align:center;border:1px solid var(--rule);color:var(--ink);font-family:var(--font-num)}
+.rail{grid-row:2;grid-column:1;background:var(--bg-1);border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px;z-index:20}
+.ri{text-decoration:none;width:64px;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--sub);font:500 12px/1.2 var(--font-body);border-radius:8px}
+.ri svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ri .xi{width:22px;height:22px;border:1.5px solid currentColor;border-radius:6px;font:700 10px/19px var(--font-display);text-align:center}
+.ri.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.ri.sep{margin-top:8px;padding-top:14px;border-top:1px solid var(--rule);border-radius:0}
+.main{grid-row:2;grid-column:2;position:relative;min-width:0;min-height:0;overflow:hidden}
+.stage{position:absolute;inset:0}
+#ui{position:absolute;inset:0;pointer-events:none;z-index:6}
+#ui>*{pointer-events:auto}
+
+/* 시안 도장 · A/B 단추 */
+.stamp{position:absolute;right:24px;top:76px;z-index:40;display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;border-radius:8px;background:#1C1F25;color:#fff}
+.stamp b{font:800 14px/1 var(--font-display);letter-spacing:.02em}
+.stamp span{font-family:var(--font-num);color:#B0B8C1;font-size:13px}
+.ab{position:absolute;right:24px;top:118px;z-index:40;display:flex;gap:4px;padding:4px;border-radius:10px;background:var(--bg-1);box-shadow:var(--elev-map)}
+.ab a{display:block;height:32px;padding:0 12px;border-radius:8px;font:500 13px/32px var(--font-body);color:var(--sub);text-decoration:none;white-space:nowrap}
+.ab a.on{background:var(--ink);color:#fff}
+
+/* 로그인(시안 안) */
+.login{position:absolute;inset:0;z-index:60;display:grid;place-items:center;background:rgba(242,244,246,.92)}
+.login[hidden]{display:none}
+.login form{width:380px;padding:28px;border-radius:16px;background:var(--bg-1);box-shadow:var(--elev-3);display:grid;gap:12px}
+.login h1{margin:0;font:700 24px/32px var(--font-display)}
+.login .note{margin:0;font:400 14px/22px var(--font-body);color:var(--sub)}
+.login input{height:44px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;font:400 15px/1 var(--font-body)}
+.login button{height:44px;border:0;border-radius:8px;background:var(--ink);color:#fff;font:500 15px/1 var(--font-body);cursor:pointer}
+.login .err{margin:0;min-height:20px;font:400 13px/20px var(--font-body);color:var(--warn)}
+
+/* ─── 사진 위 흰 글자(HUD) — 카드 없이 ─── */
+.hud{position:absolute;left:28px;top:24px;max-width:460px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.hud .k{font:500 14px/20px var(--font-body);opacity:.92}
+.hud .big{margin:4px 0 0;font:800 72px/80px var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hud .big small{font:700 28px/1 var(--font-display);letter-spacing:-.01em;margin-left:6px}
+.hud .sub{margin:6px 0 0;font:400 15px/24px var(--font-body);opacity:.95}
+.hud .live{display:inline-flex;align-items:center;gap:10px;margin-top:14px;height:36px;padding:0 14px 0 10px;border-radius:8px;background:rgba(28,31,37,.55);font:500 14px/1 var(--font-body);text-shadow:none;backdrop-filter:none}
+.hud .live i{width:10px;height:10px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 0 rgba(15,169,160,.6);animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(15,169,160,.65)}100%{box-shadow:0 0 0 12px rgba(15,169,160,0)}}
+.hud.dark{color:var(--ink);text-shadow:none}
+.hud.dark .live{color:#fff}
+
+/* 흐르는 결과 — 끝난 칸에서 퍼지는 고리(HTML 마커) */
+.ring{width:14px;height:14px;border-radius:50%;background:rgba(46,158,91,.9);box-shadow:0 0 0 0 rgba(46,158,91,.5);animation:ring 1.8s ease-out 1 forwards;pointer-events:none}
+@keyframes ring{0%{transform:scale(.6);box-shadow:0 0 0 0 rgba(46,158,91,.55)}70%{opacity:1}100%{transform:scale(1);box-shadow:0 0 0 46px rgba(46,158,91,0);opacity:0}}
+.now-dot{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 8px;border-radius:8px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map);font:500 13px/1 var(--font-body);color:var(--ink);white-space:nowrap;pointer-events:none}
+.now-dot i{width:10px;height:10px;border-radius:50%;background:var(--ai);animation:pulse 1.4s ease-out infinite}
+
+/* ─── 시간 막대(연도 넘기기) ─── */
+.tl{position:absolute;left:50%;top:20px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;height:56px;padding:0 16px 0 18px;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map)}
+.tl .lab{font:500 13px/1 var(--font-body);color:var(--sub);white-space:nowrap}
+.tl ol{list-style:none;margin:0;padding:0;display:flex;align-items:flex-end;gap:0}
+.tl li{position:relative;width:34px;height:30px;cursor:pointer;color:var(--mute);font:500 11px/1 var(--font-num);text-align:center}
+.tl li::before{content:"";position:absolute;left:50%;top:0;width:2px;height:12px;margin-left:-1px;background:var(--rule)}
+.tl li span{position:absolute;left:0;right:0;bottom:0}
+.tl li.has{color:var(--ink)}
+.tl li.has::before{height:16px;background:var(--ai)}
+.tl li.pick{color:var(--ink)}
+.tl li.pick::after{content:"";position:absolute;left:50%;top:-6px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px #fff}
+.tl li.none{opacity:.45;cursor:default}
+.tl .tip{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+.tl.big{top:auto;bottom:36px;height:72px;padding:0 24px}
+.tl.big li{width:52px;height:38px;font-size:13px}
+.tl.big .lab{font-size:14px}
+
+/* ─── XI ChatGEO — 화면의 주인공 ─── */
+.ask{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:600px;display:grid;gap:10px}
+.ask .chips{display:flex;gap:8px;justify-content:center}
+.ask .chips button{height:32px;padding:0 12px;border:0;border-radius:8px;background:rgba(255,255,255,.92);box-shadow:var(--elev-map);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.ask .chips button:hover{background:#fff}
+.ask .bar{display:flex;align-items:center;gap:12px;height:56px;padding:0 10px 0 16px;border-radius:16px;background:rgba(255,255,255,.97);box-shadow:var(--elev-map)}
+.ask .bar .logo{width:30px;height:30px;border-radius:8px;background:var(--ai);color:#fff;font:800 11px/30px var(--font-display);text-align:center;flex:none}
+.ask .bar .q{flex:1;font:400 15px/1 var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ask .bar .q.ph{color:var(--sub)}
+.ask .bar .q .caret{display:inline-block;width:2px;height:16px;margin-left:2px;vertical-align:-3px;background:var(--ink);animation:caret 1s steps(2) infinite}
+@keyframes caret{to{opacity:0}}
+.ask .bar .send{width:36px;height:36px;border:0;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+.ask .bar .send svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ask .ans{position:relative;padding:14px 16px 12px;border-radius:16px;background:rgba(255,255,255,.97);box-shadow:var(--elev-map);font:400 14px/22px var(--font-body);color:var(--ink);opacity:0;transform:translateY(8px);transition:opacity .38s var(--e-ui),transform .38s var(--e-ui)}
+.ask .ans.in{opacity:1;transform:none}
+.ask .ans b{font-weight:700}
+.ask .ans .num{font:700 15px/22px var(--font-num);color:var(--ai)}
+.ask .ans .did{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ask .ans .did span{height:24px;padding:0 8px;border-radius:6px;background:var(--bg-0);font:500 12px/24px var(--font-body);color:var(--sub)}
+.ask .ans .tag{position:absolute;right:12px;top:-10px;height:20px;padding:0 8px;border-radius:6px;background:#1C1F25;color:#fff;font:700 11px/20px var(--font-display)}
+.ask.wide{width:720px;bottom:40px}
+
+/* ─── 진화 띠(고친 것 → 학습 → 새 판) ─── */
+.evo{position:absolute;right:24px;bottom:28px;width:236px;padding:14px 16px 12px;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map)}
+.evo h3{margin:0 0 8px;font:700 14px/20px var(--font-body);color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+.evo h3 small{font:500 12px/1 var(--font-body);color:var(--sub)}
+.evo ol{list-style:none;margin:0;padding:0;position:relative}
+.evo ol::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:2px;background:var(--rule)}
+.evo li{position:relative;padding:5px 0 5px 24px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.evo li b{display:block;font:700 14px/20px var(--font-body);color:var(--ink);font-variant-numeric:tabular-nums}
+.evo li::before{content:"";position:absolute;left:3px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--mute);border:2px solid #fff;box-shadow:0 0 0 1px var(--rule)}
+.evo li.on::before{background:var(--ai)}
+.evo li.next::before{background:var(--lock)}
+.evo .flow{position:absolute;left:6px;top:10px;width:4px;height:4px;border-radius:50%;background:var(--ai);animation:flow 3.2s linear infinite}
+@keyframes flow{0%{top:10px;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:calc(100% - 12px);opacity:0}}
+.evo .go{margin-top:8px;display:inline-block;font:500 13px/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.evo.flash{animation:flash .9s var(--e-ui) 1}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(15,169,160,.0)}40%{box-shadow:0 0 0 10px rgba(15,169,160,.35)}100%{box-shadow:var(--elev-map)}}
+.evo.band{right:auto;left:50%;transform:translateX(-50%);bottom:36px;width:900px;padding:18px 24px 16px}
+.evo.band ol{display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+.evo.band ol::before{left:40px;right:40px;top:12px;bottom:auto;height:2px;width:auto}
+.evo.band li{padding:24px 8px 0 8px;text-align:center}
+.evo.band li::before{left:50%;top:6px;margin-left:-5px}
+.evo.band .flow{display:none}
+.evo.band h3 small{display:none}
+.evo.band .ver{position:absolute;right:24px;top:16px;font:700 14px/20px var(--font-num);color:var(--sub)}
+.evo.band .ver b{color:var(--ink)}
+
+/* ─── B안 · 장면 탭 ─── */
+body.b .hud{top:84px}
+.scenes{position:absolute;left:50%;top:20px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map)}
+.scenes button{height:40px;padding:0 18px;border:0;border-radius:8px;background:none;font:500 14px/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.scenes button.on{background:var(--ink);color:#fff}
+.scenes button b{display:inline-block;width:18px;height:18px;margin-right:8px;border-radius:50%;background:var(--bg-0);color:var(--sub);font:700 11px/18px var(--font-num);text-align:center}
+.scenes button.on b{background:rgba(255,255,255,.18);color:#fff}
+
+/* 지도 위 작은 전환(영상) */
+.src{position:absolute;right:24px;top:166px;display:flex;gap:2px;padding:3px;border-radius:8px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map)}
+.src span{height:28px;padding:0 10px;border-radius:6px;font:500 12px/28px var(--font-body);color:var(--sub)}
+.src span.on{background:var(--bg-0);color:var(--ink)}
+
+.legend{position:absolute;left:28px;bottom:132px;display:flex;gap:14px;font:500 13px/1 var(--font-body);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend.dark{color:var(--ink);text-shadow:none}
+
+.fade{transition:opacity .75s var(--e-cam)}
+.hide{opacity:0;pointer-events:none!important}

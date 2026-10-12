@@ -1,0 +1,26 @@
+[
+ {
+  "file": "diag-ximap-1440-1638.png",
+  "shot_at": "2026-10-12T16:38:54",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "지금 XI맵(LX 직원) 첫 화면",
+  "errors": [
+   "기다림 Page.wait_for_selector: Timeout 60000ms exceeded.\nCall log:\n"
+  ]
+ },
+ {
+  "file": "diag-mapsvc-1440-1639.png",
+  "shot_at": "2026-10-12T16:39:04",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "지금 지도 서비스(LX 직원) 첫 화면",
+  "errors": []
+ }
+]
