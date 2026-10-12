@@ -148,3 +148,26 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
   .lxp-list{padding:4px 4px 12px}
   .lxp-next{font-size:20px;line-height:28px}
 }
+
+/* 프로젝트 진행 현황 = 분석 서비스 카드와 같은 틀(원칙 219 · 10-12) — 카드 · 칩 · 보기 개수 · 페이지는 분석하기 CSS(.k-sc · .la-ac · .la-chips · .la-view · .la-pager) 그대로.
+   더한 것은 단계 줄(.lxp-pc-st — 여섯 칸 막대 + 지금 단계)과 사람 · 최근 활동 줄(.lxp-pc-meta)뿐. */
+.lxp-page.lxp-page--cards{max-width:var(--content-max);margin:0 auto;width:100%}
+.lxp-tools[hidden],.lxp-tools .la-chips[hidden]{display:none}
+.lxp-cards{display:flex;flex-direction:column}
+.lxp-pc{cursor:pointer}
+.lxp-pc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lxp-pc .la-ac-cat span{border-radius:var(--r-8)}
+.lxp-pc .k-sc-flag{max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
+.lxp-pc-st{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.lxp-pc-st .lxp-seg{max-width:220px}
+.lxp-pc-w{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pc-w b{font-weight:500;color:var(--ink)}
+.lxp-pc-w .num{font-family:var(--font-num)}
+.lxp-pc-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font:400 13px/18px var(--font-body)}
+.lxp-pc-meta > span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lxp-pc-meta .k{font-size:12px;color:var(--sub)}
+.lxp-pc-meta .v{font-weight:500;font-size:14px;line-height:20px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pc-meta > span:last-child{text-align:right}
+@media (max-width:960px){.lxp-page.lxp-page--pg{padding:20px 20px 40px}.lxp-tools .la-search{width:100%}}
+@media (max-width:640px){.lxp-grid-c,.lxp-grid-c[data-n]{grid-template-columns:minmax(0,1fr)}}
+.lxp-newb{white-space:nowrap;flex:none}

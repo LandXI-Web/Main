@@ -1,0 +1,47 @@
+{
+  "at": "2026-10-12 14:13:57",
+  "app": "https://app.land-xi.dev",
+  "clicks": [
+    "왼쪽 메뉴 프로젝트",
+    "새 프로젝트",
+    "무엇을 칩",
+    "어디 검색 칸",
+    "시군구 고르기",
+    "이름 칸",
+    "만들기",
+    "구성원 고르기(한 명)",
+    "구성원 더하기",
+    "지금 할 일 '학습데이터 구축 열기'"
+  ],
+  "screens": [
+    {
+      "what": "대시보드",
+      "path": "/landxi/v3/lx-console/"
+    },
+    {
+      "what": "프로젝트 진행 현황(표)",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "새 프로젝트 창(이름 · 무엇을 · 어디)",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "프로젝트 한 장",
+      "path": "/landxi/v3/lx-project/"
+    }
+  ],
+  "shots": {
+    "before-list-1440-1414.png": "2026-10-12 14:14:15",
+    "before-new-1440-1414.png": "2026-10-12 14:14:16",
+    "before-project-1440-1414.png": "2026-10-12 14:14:20"
+  },
+  "errors": [],
+  "peopleOnProject": 1,
+  "nextLabel": "학습데이터 구축 열기",
+  "fail": "TimeoutError: page.waitForURL: Timeout 20000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_a37f039478&stage=label&flow=1\"\n===========================================",
+  "n": {
+    "clicks": 10,
+    "screens": 4
+  }
+}

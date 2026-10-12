@@ -65,6 +65,10 @@ export async function attachProject(S, rail, key) {
   drawBar(S.sub, null, key);                       // 프로젝트를 읽기 전 — 단계 이름만(대기)
   const pr = await loadProject();
   drawBar(S.sub, pr, key);
+  /* 새 프로젝트 창에서 올리던 영상(창을 닫고 넘어옴 · 원칙 220) — 이 프로젝트 것이 맡겨져 있으면 단계 막대 밑 한 줄에서 이어 올린다(carry.js) */
+  let carried = false;
+  try { carried = !!pr && JSON.parse(localStorage.getItem('lx-carry') || '[]').includes(pr.id); } catch { /* 보관함을 못 읽으면 건너뜀 */ }
+  if (carried) import('./carry.js').then((m) => m.resumeCarry(S.sub, pr, { onDone: (out) => drawBar(S.sub, out, key) })).catch(() => null);
   return pr;
 }
 
@@ -92,7 +96,7 @@ function drawBar(el, pr, key) {
     steps.append(h('li', {}, a));
   });
   const nx = pr?.next?.text && pr.state !== 'archived' ? h('p.lxp-bar-next', {}, h('span.lxp-bar-k', { text: '다음 할 일' }), h('b', { text: pr.next.text })) : null;
-  el.replaceChildren(h('div.lxp-bar', { class: key === null ? 'is-page' : '' }, key === null ? null : name, steps, nx));
+  el.replaceChildren(h('div.lxp-bar', { class: key === null ? 'is-page' : '' }, key === null ? null : name, steps, nx), ...el.querySelectorAll(':scope > .lxp-carry'));
 }
 
 /** 6칸 진행 막대(HTML) — steps = 서버가 준 칸 상태 6(done · now · wait · skip). 끝난 칸 · 지금 칸 · 남은 칸 · 건너뛴 칸을 구분한다.

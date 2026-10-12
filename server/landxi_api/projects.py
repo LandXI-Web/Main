@@ -8,7 +8,12 @@ GET    /projects?scope=mine|led|joined|archived|all
                                          mine = 내가 만든(프로젝트장) + 참여한(구성원) 진행 중 · led · joined 는 그 한쪽 · archived = 내 보관(끝난) 프로젝트
                                          (관리자는 전체 보관) · all = LX 전체 진행 중. 줄마다 지금 단계 · 다음 할 일 하나 · 마지막 활동
                                          · steps(단계 6 — 데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
-POST   /projects                         {name, task, task_id?, regions:[code..]} → 바로 만들어진다 · 프로젝트장 = 만든 직원
+POST   /projects                         {name, task, task_id?, regions:[code..], description?, members?:[uid..], imagery?:[iid..], from_upload?}
+                                         → 바로 만들어진다 · 프로젝트장 = 만든 직원. 새 프로젝트 한 창(원칙 220 · 10-12): 설명(선택) · 구성원 · 영상을 한 번에.
+                                         imagery(데이터하우스에서 고른 영상)가 있으면 대상 지역 = 그 영상 자리(화면이 고르지 않는다) ·
+                                         from_upload = 영상을 올리는 중이라 지역은 올린 영상이 등록되면 정해진다(그때까지 비어 있음 — POST …/imagery)
+GET    /projects/imagery                 새 프로젝트 창의 '데이터하우스 영상에서 고르기' — LX 영상(이름 · 지역 · 연도 · 종류 · 썸네일 경로)
+POST   /projects/{pid}/imagery           {imagery:[iid..]} 영상을 이 프로젝트에 잇고 그 자리의 지역을 대상 지역에 더한다(프로젝트장 · 구성원)
 GET    /projects/places                  대상 지역 고르기의 해외 항목(국내 시군구는 GET /regions)
 GET    /projects/people                  구성원 고르기(LX 직원 · 관리자)
 GET    /projects/{pid}                   한 장 — 단계 6(완료 조건 자동 판정) · 다음 할 일 · 구성원 · 할 수 있는 것(can)
@@ -291,7 +296,7 @@ async def _facts(conn, r) -> dict:
     jobs = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='train' AND created_at >= $2 AND "
                             "(options->>'project_id' = $1 OR (options->'samples') ?| $3::text[]) ORDER BY created_at DESC",
                             pid, since, sids or ["-"])
-    models = await conn.fetch("SELECT id, name, status, created_at, train_job FROM models WHERE sample_id = ANY($1::text[]) AND train_job IS NOT NULL "
+    models = await conn.fetch("SELECT id, name, status, created_at, train_job, metrics FROM models WHERE sample_id = ANY($1::text[]) AND train_job IS NOT NULL "
                               "AND coalesce(created_at, now()) >= $2 ORDER BY created_at DESC NULLS LAST", sids or ["-"], since)
     model = models[0] if models else None
     reg = next((m for m in models if m["status"] == "registered"), None)
@@ -554,6 +559,96 @@ async def _basis(conn, r, f, blocked: list, stages: list | None = None) -> dict:
             "thin": not rv["n"] and not n_img}
 
 
+async def _train_n(conn, r, f) -> dict | None:
+    """학습 데이터 n장 — 학습 화면 '학습 이력' 맨 위 줄과 같은 값(project_train 의 같은 고르기: 이 프로젝트의 가장 최근 학습이 쓴 묶음 ·
+    표본이면 그 기록 · 이 PC 학습 자산이면 그 묶음 칸 수). 학습 전이면 가장 최근 학습 데이터 묶음. 없으면 None."""
+    from starlette.concurrency import run_in_threadpool
+    from .project_train import _asset_data, _obj
+    sids = [s["id"] for s in f["samples"]]
+    task = str(r["task"] or "").strip()
+    j = await conn.fetchrow(
+        "SELECT options FROM jobs WHERE kind='train' AND coalesce(options->>'eval','') NOT IN ('true','1') AND state IN ('queued','running','done') AND ("
+        "options->>'project_id' = $1 OR (options->'samples') ?| $2::text[] OR "
+        "($3 <> '' AND options->>'project_id' IS NULL AND jsonb_typeof(options->'samples') = 'string' "
+        "AND position($3 in coalesce(options->>'task_name','')) = 1 "
+        "AND NOT EXISTS (SELECT 1 FROM projects q WHERE q.task = $3 AND q.created_at < (SELECT created_at FROM projects WHERE id = $1)))) "
+        "ORDER BY created_at DESC LIMIT 1", r["id"], sids or ["-"], task)
+    src = "학습 데이터(가장 최근 학습이 쓴 묶음 · 학습 화면 학습 이력과 같은 값)"
+    if j:
+        o = _obj(j["options"]) or {}
+        sm = o.get("samples")
+        s1 = sm[0] if isinstance(sm, list) and sm else sm if isinstance(sm, str) else None
+        if isinstance(s1, str):
+            n = await conn.fetchval("SELECT n_images FROM train_samples WHERE id=$1", s1)
+            if n:
+                return env(int(n), "count", "measured", src)
+            a = await run_in_threadpool(_asset_data, s1)
+            v = ((a or {}).get("images") or {}).get("value")
+            if v:
+                return env(int(v), "count", "measured", src)
+    if f["samples"] and f["samples"][0]["n_images"]:
+        return env(int(f["samples"][0]["n_images"]), "count", "measured", "학습 데이터(가장 최근 묶음 · 학습 전)")
+    return None
+
+
+def _acc_of(f) -> dict | None:
+    """AI 모델 정확도 — 이 프로젝트의 등록된 모델(없으면 가장 최근 학습 모델) 기록의 학습 끝 검증 값(분석하기 카드와 같은 셈 release.acc_env). 없으면 None."""
+    from .release import acc_env
+    m = f["reg"] or f["model"]
+    if not m or not m["metrics"]:
+        return None
+    mt = m["metrics"]
+    if isinstance(mt, str):
+        import json
+        try:
+            mt = json.loads(mt)
+        except ValueError:
+            return None
+    e = acc_env(mt)
+    return e if e.get("value") is not None else None
+
+
+async def _pic(conn, r) -> str | None:
+    """카드 그림 — 이 프로젝트에 이은 영상(가장 최근) → 없으면 첫 국내 대상 지역의 영상(최근 촬영 · 고해상도 먼저) 썸네일 경로. 없으면 None(같은 틀에 '그림 없음')."""
+    iid = await conn.fetchval("SELECT ref FROM project_links WHERE project_id=$1 AND kind='imagery' ORDER BY at DESC LIMIT 1", r["id"])
+    if not iid:
+        from .regions import derived
+        dv = await derived()
+        for g in r["regions"] or []:
+            if g.get("abroad"):
+                continue
+            imgs = dv["img"].get(g["code"], [])
+            if imgs:
+                best = sorted(imgs, key=lambda i: (-(int(str(i.get("year") or i.get("epoch") or "0")[:4] or 0) if str(i.get("year") or i.get("epoch") or "0")[:4].isdigit() else 0),
+                                                   i.get("gsd_m") if i.get("gsd_m") is not None else 99))[0]
+                iid = best["id"]
+                break
+    return f"/catalog/imagery/{iid}/thumb" if iid else None
+
+
+async def _imagery_regions(conn, ids: list[str]) -> tuple[list[str], list[str]]:
+    """영상 → (있는 영상 id, 그 자리의 지역 코드) — 국내 = /regions 와 같은 판정(영상 범위 ∩ 시군구 경계 · 영상 시군구) · 해외 = 지역 상자와 겹침.
+    화면이 지역을 고르지 않는다(원칙 33) — 영상 자리가 정한다."""
+    ids = [str(x) for x in (ids or []) if x][:REGIONS_MAX]
+    if not ids:
+        return [], []
+    rows = await conn.fetch("SELECT id, sgg_cd, footprint IS NOT NULL AS fp FROM imagery WHERE id = ANY($1::text[])", ids)
+    have = [x["id"] for x in rows]
+    from .regions import derived
+    dv = await derived()
+    codes: list[str] = []
+    for x in rows:
+        hit = [x["sgg_cd"]] if x["sgg_cd"] else [cd for cd, imgs in dv["img"].items() if any(i["id"] == x["id"] for i in imgs)][:3]
+        if not hit and x["fp"]:
+            for k, a in _abroad_profiles().items():
+                if await conn.fetchval("SELECT 1 FROM imagery WHERE id=$1 AND ST_Intersects(footprint, ST_MakeEnvelope($2,$3,$4,$5,4326))", x["id"], *a["bbox"]):
+                    hit.append(k)
+        for cd in hit:
+            if cd not in codes:
+                codes.append(cd)
+    return have, codes
+
+
 async def view(conn, p: Principal, r, people: dict | None = None, full: bool = True) -> dict:
     people = people or await _people(conn)
     members = await _members(conn, r["id"])
@@ -566,7 +661,13 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
            "stage": j["stage"], "next": j["next"], "published": j["published"],
            "steps": j["steps"], "progress": j["progress"], "blocked": j["blocked"],
            "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"]), "last_at": _iso(f["last_at"]),
-           "lead_is_me": p.user_id == r["lead_id"]}
+           "lead_is_me": p.user_id == r["lead_id"],
+           "description": r.get("description"),
+           # 프로젝트 카드(원칙 219 · 분석하기 카드와 같은 틀) — 그림 · 학습 데이터 n장 · AI 모델 정확도 · 사람. 값은 모두 서버 기록(지어내지 않음)
+           "card": f["card"], "pic": await _pic(conn, r),
+           "train_n": await _train_n(conn, r, f),
+           "acc": _acc_of(f),
+           "people": [x for x in [_who(people, r["lead_id"]), *(_who(people, u) for u in members if u != r["lead_id"])] if x]}
     if full:
         out.update({"stages": j["stages"],
                     "members": [_who(people, u) for u in members if u != r["lead_id"]],
@@ -621,6 +722,28 @@ async def people_list(request: Request):
     return {"items": sorted(items, key=lambda x: (x["role_label"], x["name"])), "as_of": now_iso()}
 
 
+@router.get("/projects/imagery")
+async def imagery_list(request: Request):
+    """새 프로젝트 창의 '데이터하우스 영상에서 고르기' — LX 영상(지형 · 결과 층 빼고). 줄마다 이름 · 지역 · 연도 · 종류 · 썸네일 경로(LX 계정만 받는 그림).
+    최근 촬영 → 이름 순. 경로 · 파일 이름은 내지 않는다."""
+    _lx(request)
+    from .regions import regions_base
+    regs = {x["sgg_cd"]: x for x in regions_base()[0]}
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT id, name, gsd_m, year, epoch, sgg_cd FROM imagery WHERE coalesce(layer->>'role','imagery')='imagery' "
+                                "AND coalesce(kind,'ortho') <> 'terrain' AND (sgg_cd IS NOT NULL OR footprint IS NOT NULL)")
+    kind = lambda g: "드론" if g is not None and g < 0.1 else "위성" if g is not None and g >= 1 else "항공"
+    items = []
+    for x in rows:
+        nm = (x["name"] or {}).get("ko") if isinstance(x["name"], dict) else x["name"]
+        ep = str(x["year"] or x["epoch"] or "")
+        g = float(x["gsd_m"]) if x["gsd_m"] is not None else None
+        items.append({"id": x["id"], "name": nm or "영상", "region": (regs.get(x["sgg_cd"]) or {}).get("name"),
+                      "year": int(ep[:4]) if ep[:4].isdigit() else None, "kind": kind(g), "thumb": f"/catalog/imagery/{x['id']}/thumb"})
+    items.sort(key=lambda i: (-(i["year"] or 0), i["name"]))
+    return {"items": items, "total": env(len(items), "count", "recorded", "LX 영상(지형 · 결과 층 뺌)"), "as_of": now_iso()}
+
+
 @router.get("/projects/notices")
 async def notices(request: Request):
     """나에게 온 알림 중 아직 안 본 것(프로젝트장 넘겨받음 — P-5 ⓐ · 저장 용량 늘리기 요청 승인 · 반려 — S-19). 대시보드 '내 프로젝트' · 프로젝트 목록 맨 위에 한 줄씩.
@@ -647,25 +770,64 @@ async def notice_seen(nid: str, request: Request):
 
 @router.post("/projects", status_code=201)
 async def create(body: dict, request: Request):
-    """프로젝트 만들기 — 입력은 이름 · 무엇을 · 어디 세 칸. 관리자 승인 없이 바로 만들어진다(R-D3 갈림길 ⓐ). 프로젝트장 = 만든 직원."""
+    """프로젝트 만들기 — 관리자 승인 없이 바로 만들어진다(R-D3 갈림길 ⓐ). 프로젝트장 = 만든 직원.
+    새 프로젝트 한 창(원칙 220 · 10-12): 이름(필수) · 설명(선택) · 무엇을 · 영상(데이터하우스에서 고름 = imagery · 올리는 중 = from_upload) · 구성원(members).
+    대상 지역 = 고른 영상의 자리(화면이 고르지 않는다) · 영상이 없을 때만 직원이 고른 regions · 올리는 중이면 등록될 때 정해진다(비어 있음)."""
     p = _lx(request)
     name = str(body.get("name") or "").strip()[:NAME_MAX]
     task = str(body.get("task") or "").strip()[:TASK_MAX]
+    desc = str(body.get("description") or "").strip()[:NOTE_MAX] or None
     if not name:
         raise ApiError("bad_request", "프로젝트 이름을 적어 주세요")
     if not task:
         raise ApiError("bad_request", "무엇을 하는지(업무 · 탐지 대상) 골라 주세요")
-    regions = clean_regions(body.get("regions"))
     task_id = str(body.get("task_id") or "").strip()[:40] or None
+    from_upload = bool(body.get("from_upload"))
+    mem_ids = [str(x) for x in (body.get("members") or []) if x][:30] if isinstance(body.get("members"), list) else []
     pid = "prj_" + secrets.token_hex(5)
     async with db(realm="lx") as conn:
-        await conn.execute("INSERT INTO projects(id, name, task, task_id, regions, lead_id, round, round_at, rounds, created_by) "
-                           "VALUES ($1,$2,$3,$4,$5,$6,1,now(),$7,$6)", pid, name, task, task_id, regions, p.user_id,
-                           [{"round": 1, "at": now_iso(), "by": p.user_id}])
-        await audit(conn, p, "project.create", pid, None, {"name": name, "task": task, "regions": [g["code"] for g in regions]})
+        img_ids, img_codes = await _imagery_regions(conn, body.get("imagery") if isinstance(body.get("imagery"), list) else [])
+        codes = list(dict.fromkeys([*img_codes, *[c for c in (body.get("regions") or []) if c]] if isinstance(body.get("regions"), list) else img_codes))
+        regions = clean_regions(codes) if codes or not from_upload else []
+        if mem_ids:
+            ok = {x["id"] for x in await conn.fetch("SELECT id FROM lx_users WHERE id = ANY($1::text[]) AND status='active' AND role IN ('staff','admin')", mem_ids)}
+            if set(mem_ids) - ok:
+                raise ApiError("bad_request", "LX 직원 · 관리자만 구성원이 됩니다")
+        await conn.execute("INSERT INTO projects(id, name, task, task_id, regions, lead_id, round, round_at, rounds, created_by, description) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,1,now(),$7,$6,$8)", pid, name, task, task_id, regions, p.user_id,
+                           [{"round": 1, "at": now_iso(), "by": p.user_id}], desc)
+        for uid in dict.fromkeys(mem_ids):
+            if uid != p.user_id:
+                await conn.execute("INSERT INTO project_members(project_id, user_id, added_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", pid, uid, p.user_id)
+        for iid in img_ids:
+            await link(conn, pid, "imagery", iid, p.user_id, 1)
+        await audit(conn, p, "project.create", pid, None, {"name": name, "task": task, "regions": [g["code"] for g in regions],
+                                                          "members": mem_ids, "imagery": img_ids, "from_upload": from_upload})
         out = await view(conn, p, await _row(conn, pid))
     from .jobs import ops_event
     await ops_event("project.changed", {"project_id": pid, "action": "create", "by": p.user_id, "at": now_iso()})
+    return {**out, "as_of": now_iso()}
+
+
+@router.post("/projects/{pid}/imagery", status_code=201)
+async def add_imagery(pid: str, body: dict, request: Request):
+    """영상을 이 프로젝트에 잇는다 — 새 프로젝트 창에서 올리던 영상이 등록되면(창을 닫아도 뒤에서 이어 올린 뒤) 화면이 부른다.
+    그 영상 자리의 지역을 대상 지역에 더한다(이미 있으면 그대로 · 화면이 고르지 않는다). 프로젝트장 · 구성원."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r = await require_member(conn, p, pid)
+        ids, codes = await _imagery_regions(conn, body.get("imagery") if isinstance(body.get("imagery"), list) else [])
+        if not ids:
+            raise ApiError("not_found", "영상이 없습니다")
+        have = [g["code"] for g in (r["regions"] or [])]
+        add = [c for c in codes if c not in have]
+        if add:
+            regions = [*(r["regions"] or []), *clean_regions(add)][:REGIONS_MAX]
+            await conn.execute("UPDATE projects SET regions=$2, updated_at=now() WHERE id=$1", pid, regions)
+        for iid in ids:
+            await link(conn, pid, "imagery", iid, p.user_id)
+        await audit(conn, p, "project.imagery", pid, None, {"imagery": ids, "regions": add})
+        out = await view(conn, p, await _row(conn, pid))
     return {**out, "as_of": now_iso()}
 
 

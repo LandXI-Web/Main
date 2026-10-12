@@ -85,18 +85,17 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
     if (gi >= 0) {
       await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/') && /stage=/.test(u.search), { timeout: 15000 }),
         page.locator('.ld-board .ld-pf a').nth(gi).click()]);
-      await page.locator('.lxp-list .sb-tb tbody tr').first().waitFor({ timeout: 20000 });
-      await expect(page.locator('.lxp-flow .sb-st[data-open]')).toHaveCount(1);
-      await expect(page.locator('.lxp-list .sb-tb tbody tr')).toHaveCount(want[gi]);
-      await expect(page.locator('.lxp-list .sb-tb thead th')).toHaveText(['프로젝트', '지역', '담당', '지금', '진행', '마지막 활동', '남은 일', '']);
-      await expect(page.locator('.sb-sort [aria-pressed="true"]')).toHaveText('남은 일 먼저');
+      await page.waitForFunction(() => document.documentElement.dataset.projects === '1', null, { timeout: 20000 });   // 프로젝트 진행 현황 = 카드(구현 23차)
+      await page.locator('.la-view-b', { hasText: '8' }).click();
+      await expect(page.locator('.lxp-tools .la-chip[aria-pressed="true"]')).toHaveCount(1);
+      await expect(page.locator('.lxp-tools .la-chip[aria-pressed="true"]')).toContainText(['데이터 올리기', '학습데이터 구축', '학습', '추론', '결과 확인', '배포 신청'][gi]);
+      await expect(page.locator('.lxp-pc')).toHaveCount(Math.min(8, want[gi]));
       await expect(page.locator('.lxp-back')).toHaveText('대시보드');
       const byId = new Map(j.items.map((p) => [p.id, p]));
-      for (const tr of await page.locator('.lxp-list .sb-tb tbody tr').all()) {
-        const p = byId.get(await tr.getAttribute('data-id'));
-        expect(p, '목록 줄 = 서버 프로젝트').toBeTruthy();
-        await expect(tr.locator('td').nth(3)).toHaveText((p.next?.text || '—').replace(/ · /g, ' · '));
-        await expect(tr.locator('.sb-prog small.num')).toHaveText(/^[0-6]\/6$/);
+      for (const c of await page.locator('.lxp-pc').all()) {
+        const p = byId.get(await c.getAttribute('data-id'));
+        expect(p, '목록 카드 = 서버 프로젝트').toBeTruthy();
+        await expect(c.locator('.lxp-pc-w small.num')).toHaveText(/^ · [0-6]\/6$/);
       }
       await page.waitForTimeout(400);
       const m2 = await measure(page);

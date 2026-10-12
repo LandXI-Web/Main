@@ -1,16 +1,18 @@
 /* lx-project — 프로젝트 목록 · 관리 · 한 장(구현 2차 T1 · 확인 대장 R-D3 · 갈림길 ⓐ · 4차 P1 · 5차 역할-3 ⓑ · 6차 흐름-1 · 10차 메뉴-1 ⓐ · J-1).
    왼쪽 메뉴 = LX 직원 메뉴('프로젝트' 불) · 한 장에서는 마스트 아래 한 줄에 그 프로젝트의 단계 6(context.js) — 생산 6단계는 메뉴가 아니라 프로젝트 안.
    ?project= 없음 = 목록·관리: 내가 만든 · 참여한 · 보관(끝난 것) · 전체 · 새 프로젝트(사용자 10-01 "기존 내가 만든 프로젝트는 어디에서 관리하는지?")
-                 = 프로젝트 진행 현황(직원-6 4차): 흐름도(네 단계 · ?stage= 거르기) + 표(지금 · 진행 n/4 · 마지막 활동 · 남은 일 · ?sort=) — board.js
+                 = 프로젝트 진행 현황 = 분석 서비스 카드와 같은 카드(원칙 219 · 10-12) · 단계 칩(?stage=) · 찾기 · 한 페이지 2 · 4 · 6 · 8장
+                 새 프로젝트 = 한 창(원칙 220 · new.js) → 만들면 바로 그 프로젝트 '학습데이터 구축'
    ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 기록 · 보관
               구현 5차(확인 17차 — 배치는 그대로 두고 칸 안만): 사람의 '넘기기'(P-5 ⓐ) · 재학습 근거 띠 + 사유 창(P-3 ⓐ) · 기록 · 메모 · 파일 최근 3줄 + 서랍(P-4 ⓐ) — sheets.js
    맨 위 알림 한 줄(프로젝트장을 넘겨받음 — context.js projectNotices · 대시보드 '내 프로젝트'와 같은 부품)
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트 · 가운데 창 · 서랍)만 조합. */
 import * as K from '../kit/index.js';
-import { h, api } from '../kit/util.js';
-import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, nb, projectNotices } from './context.js';
+import { h, api, API, session } from '../kit/util.js';
+import { loadDeck } from '../kit/service-card.js';
+import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, projectNotices, units } from './context.js';
 import { staffMenu, STAFF_HREF } from '../kit/lx-menu.js';
-import { GROUPS, N, groupOf, flow, seg4El, doneN, progNote, kick, ago, sortBy } from './board.js';
+import { GROUPS, N, groupOf, seg4El, doneN, kick, ago, sortBy } from './board.js';
 import { openNewProject } from './new.js';
 import { retrainCard, logCard, openHandover } from './sheets.js';
 
@@ -22,38 +24,108 @@ K.devDrawer({ who });
 const page = h('div.lxp-page');
 S.main.append(page);
 
-const regionWord = (rs = []) => (rs.length ? rs[0].name + (rs.length > 1 ? ` 외 ${rs.length - 1}곳` : '') : '—');
 const stageText = (p) => (p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '—');
 
-if (PID) await one(); else await list();
 
-/* ── 목록 · 관리 — 프로젝트 진행 현황(직원-6 4차 · 시안 design-r14/lx-staff-board/progress.html) ─────────
-   맨 위 = 대시보드와 같은 흐름도(board.js · 단계 고르기 ?stage=) · 아래 = 표(프로젝트 · 지역 · 담당 · 지금 · 진행 n/4 · 마지막 활동 · 남은 일 · 열기)
-   정렬 = 남은 일 먼저(기본 · 남은 일 → 오래된 활동 순) · 마지막 활동 · 이름(?sort=). 묶음 = 내 프로젝트 · 내가 만든 · 참여한 · 보관 · 전체(?scope=) */
+/* ── 목록 · 관리 — 프로젝트 진행 현황 = 분석하기의 분석 서비스 카드와 같은 틀(원칙 219 · 10-12) ─────────
+   카드 한 장 = 그림(이 프로젝트 서비스의 결과 장면 · 이은 영상 — 없으면 대상 지역 영상 · 그것도 없으면 '그림 없음') → 이름 → 무엇을(설명) →
+   여섯 단계 막대 + 지금 단계 → 학습 데이터 n장 · AI 모델 정확도 → 대상지 → 구성원 · 마지막 활동 → 열기(지금 단계 화면) · 프로젝트 →.
+   카드를 누르면 그 프로젝트의 지금 단계 화면으로. 숫자는 모두 서버(GET /projects — 대시보드 진행 현황과 같은 값 · 서비스가 있으면 정확도 · 그림은 분석하기 카드 덱과 같은 값).
+   부품 = 분석하기 카드 CSS(lx-analyze/analyze.css .la-ac · kit/service-card.css .k-sc) 그대로 + 단계 줄 · 사람 줄만 더함(project.css .lxp-pc).
+   거르기 = 묶음 탭(내 프로젝트 · 내가 만든 · 참여한 · 보관 · 전체 ?scope=) · 단계 칩(?stage=) · 찾기 · 한 페이지 2 · 4 · 6 · 8장(분석하기와 같은 고르기 · 이 브라우저에 기억). */
+const PER = [2, 4, 6, 8];
+function readPer() { try { const n = +localStorage.getItem('lx-project.per'); return PER.includes(n) ? n : 4; } catch { return 4; } }
+function savePer(n) { try { localStorage.setItem('lx-project.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
+const thumbs = new Map();
+function authPic(path) {               // LX 계정만 받는 그림(영상 썸네일) — 세션을 실어 받는다(분석하기 영상 고르기와 같은 길)
+  if (!thumbs.has(path)) {
+    thumbs.set(path, (async () => {
+      const s = session.get();
+      const r = await fetch(API.prefix + path, { headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+      if (!r.ok || r.status === 204) return null;
+      const b = await r.blob();
+      return b.size ? URL.createObjectURL(b) : null;
+    })().catch(() => null));
+  }
+  return thumbs.get(path);
+}
+const nf = (v) => Number(v).toLocaleString('ko-KR');
+function peopleWord(ps = []) {
+  if (!ps.length) return '—';
+  const names = ps.map((x) => x.name || x.role_label);
+  return names.length > 2 ? `${names.slice(0, 2).join(' · ')} 외 ${names.length - 2}명` : names.join(' · ');
+}
+
+function projCard(p, deckBy) {
+  const archived = p.state === 'archived';
+  const go = archived ? projectHref(p.id) : stageHref(p, p.next?.stage || p.stage?.key, p.next?.target);
+  const svc = p.card ? deckBy.get(p.card) : null;            // 이 프로젝트가 만든 서비스(분석하기 카드 덱) — 결과 장면 · 정확도는 그 카드와 같은 값
+  const pic = h('div.k-sc-crop.la-ac-pic');
+  const blank = () => { const keep = [...pic.querySelectorAll('.la-ac-cat, .k-sc-flag')]; pic.classList.add('is-blank'); pic.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
+  const scene = svc?.scene?.src ? (String(svc.scene.src).startsWith('/api/') ? API.base + svc.scene.src : svc.scene.src) : null;
+  if (scene) pic.append(h('img', { src: scene, alt: '', loading: 'lazy', decoding: 'async', onerror: blank }));
+  else if (p.pic) authPic(p.pic).then((u) => { if (u) pic.prepend(h('img', { src: u, alt: '', decoding: 'async', onerror: blank })); else blank(); });
+  else blank();
+  const st = p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '';
+  pic.append(h('div.la-ac-cat', {}, h('span', { text: archived ? '보관' : st })));
+  const k = archived ? null : kick(p);
+  if (k?.kind === 'warn') pic.append(h('span.k-sc-flag', { text: k.text }));
+  const acc = svc?.model?.acc?.value ?? p.acc?.value ?? null;
+  const tn = p.train_n?.value ?? null;
+  const regs = p.regions || [];
+  const regText = regs.length ? (regs.length > 3 ? `${regs.slice(0, 3).map((g) => g.name).join(' · ')} 외 ${regs.length - 3}곳` : regs.map((g) => g.name).join(' · ')) : '영상이 등록되면 정해집니다';
+  const line = p.description || p.task || '';
+  const el = h('article.k-sc.la-ac.lxp-pc', { dataset: { kind: 'project', id: p.id, stage: GROUPS[groupOf(p)].key }, tabindex: '0', 'aria-label': `${p.name} · ${archived ? '보관' : st}` },
+    pic,
+    h('div.k-sc-b.la-ac-b', {},
+      h('h3.k-sc-t', { text: p.name }),
+      h('p.k-sc-line.la-ac-line', { text: line, title: line }),
+      h('div.lxp-pc-st', {}, archived ? null : seg4El(p),
+        h('span.lxp-pc-w', {}, archived ? h('b', { text: '보관한 프로젝트' }) : h('b', { text: `지금 ${st}` }),
+          archived ? null : h('small.num', { text: ` · ${doneN(p)}/${N}` }), k?.kind === 'wait' ? h('small', { text: ` · ${k.text}` }) : null)),
+      h('div.la-ac-hero', {},
+        h('div', {}, tn === null ? h('b', { text: '—' }) : h('b.num', {}, nf(tn), h('i', { text: '장' })), h('small', { text: '학습 데이터' })),
+        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' }))),
+      h('div.la-ac-where', {}, h('span.k', { text: regs.length ? `대상지 ${regs.length}곳` : '대상지' }), h('span.v', { text: regText, title: regs.map((g) => g.full || g.name).join(' · ') })),
+      h('div.lxp-pc-meta', {},
+        h('span', { title: (p.people || []).map((x) => x.name).join(' · ') }, h('span.k', { text: '구성원' }), h('span.v', { text: peopleWord(p.people) })),
+        h('span', {}, h('span.k', { text: '마지막 활동' }), h('span.v.num', { text: ago(p.last_at || p.updated_at) }))),
+      h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: go, text: '열기' }), h('a.k-sc-more', { href: projectHref(p.id), text: '프로젝트 →' }))));
+  el.addEventListener('click', (e) => { if (!e.target.closest('a')) location.href = go; });
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === el) location.href = go; });
+  return el;
+}
+
 async function list() {
   const TABS = [['mine', '내 프로젝트'], ['led', '내가 만든'], ['joined', '참여한'], ['archived', '보관'], ['all', '전체']];
-  const SORTS = [['kick', '남은 일 먼저'], ['recent', '마지막 활동'], ['name', '이름']];
   const fromBoard = Q.get('from') === 'board';
-  page.classList.add('lxp-page--pg');
+  page.classList.add('lxp-page--pg', 'lxp-page--cards');
   const sub = h('p.lxp-pg-s');
   const head = h('header.lxp-head.lxp-head--row.lxp-head--pg', {},
     h('div.lxp-pg-h', {}, fromBoard ? h('a.lxp-back', { href: STAFF_HREF.home, text: '대시보드' }) : null, h('h1.t-h3', { text: '프로젝트 진행 현황' }), sub),
     h('button.t-btn.lxp-newb', { type: 'button', text: '새 프로젝트', onclick: () => openNewProject() }));
   const tabs = h('div.lxp-tabs', { role: 'tablist', 'aria-label': '프로젝트 묶음' });
-  const flowBox = h('section.t-card.lxp-flow', { 'aria-label': '단계 고르기' });
-  const body = h('section.t-card.lxp-list');
   const notes = h('div.lxp-ntcs');
-  page.append(head, notes, tabs, flowBox, body);
+  const tools = h('div.la-tools.lxp-tools');
+  const chipsEl = h('div.la-chips', { role: 'group', 'aria-label': '단계 거르기' });
+  const viewEl = h('div.la-view', { role: 'group', 'aria-label': '보기 개수' });
+  const search = h('input.t-input.la-search', { type: 'search', placeholder: '프로젝트 이름 · 대상지', 'aria-label': '프로젝트 찾기', autocomplete: 'off' });
+  tools.append(chipsEl, h('div.la-tools-r', {}, viewEl, search));
+  const body = h('section.lxp-cards', { 'aria-label': '프로젝트' });
+  const grid = h('div.la-acg.lxp-grid-c');
+  const pager = h('nav.la-pager', { 'aria-label': '페이지' });
+  page.append(head, notes, tabs, tools, body);
   projectNotices(notes);
-  const wait = h('div'); body.append(wait);
-  K.empty(wait, { kind: 'loading' });
   let scope = TABS.some(([k]) => k === Q.get('scope')) ? Q.get('scope') : null;
   let stage = GROUPS.some((g) => g.key === Q.get('stage')) ? Q.get('stage') : null;
-  let sort = SORTS.some(([k]) => k === Q.get('sort')) ? Q.get('sort') : 'kick';
+  const F = { q: '', per: readPer(), page: 1 };
   let counts = null, items = [];
+  const deckP = loadDeck().catch(() => null);
+  let deckBy = new Map();
   const setQ = () => {
     const u = new URL(location.href);
-    for (const [k, v] of [['scope', scope], ['stage', stage], ['sort', sort === 'kick' ? null : sort]]) { if (v) u.searchParams.set(k, v); else u.searchParams.delete(k); }
+    for (const [k, v] of [['scope', scope], ['stage', stage]]) { if (v) u.searchParams.set(k, v); else u.searchParams.delete(k); }
+    u.searchParams.delete('sort');
     history.replaceState(null, '', u);
   };
   const drawTabs = () => {
@@ -67,59 +139,59 @@ async function list() {
     }
   };
   const archived = () => scope === 'archived';
-  function drawFlow() {
-    flowBox.hidden = archived() || !items.length;
-    if (flowBox.hidden) return;
-    flowBox.replaceChildren(flow(items, { picked: stage, onPick: (k) => { stage = k; setQ(); drawFlow(); drawTable(); } }));
-  }
-  function drawTable() {
+  function draw() {
     const gi = archived() ? -1 : GROUPS.findIndex((g) => g.key === stage);
-    const rows = sortBy(gi >= 0 ? items.filter((p) => groupOf(p) === gi) : items, sort);
-    const title = archived() ? '보관한 프로젝트' : gi >= 0 ? GROUPS[gi].label : '모든 단계';
-    const sortBox = h('div.sb-sort', {}, h('span', { text: '정렬' }), ...SORTS.map(([k, l]) =>
-      h('button.t-chip', { type: 'button', 'aria-pressed': String(k === sort), text: l, onclick: () => { sort = k; setQ(); drawTable(); } })));
-    const hd = h('div.ld-h.lxp-tb-h', {}, h('h2', {}, title, h('small.ld-sub', { text: `${rows.length}개 · ${SORTS.find(([k]) => k === sort)[1]}` })), sortBox);
+    chipsEl.hidden = archived();
+    chipsEl.replaceChildren(
+      h('button.la-chip', { type: 'button', 'aria-pressed': String(gi < 0), onclick: () => { stage = null; F.page = 1; setQ(); draw(); } }, '전체', h('small.num', { text: String(items.length) })),
+      ...GROUPS.map((g, i) => h('button.la-chip', { type: 'button', 'aria-pressed': String(gi === i), dataset: { key: g.key },
+        onclick: () => { stage = gi === i ? null : g.key; F.page = 1; setQ(); draw(); } },
+        `${i + 1} ${g.label}`, h('small.num', { text: String(items.filter((p) => groupOf(p) === i).length) }))));
+    viewEl.replaceChildren(h('span.la-view-k', { text: '한 페이지' }),
+      ...PER.map((k) => h('button.la-view-b.num', { type: 'button', 'aria-pressed': String(F.per === k), 'aria-label': `한 페이지 ${k}장`,
+        onclick: () => { F.per = k; F.page = 1; savePer(k); draw(); } }, String(k))),
+      h('span.la-view-u', { text: '장' }));
+    grid.dataset.n = String(F.per);
+    const q = F.q.replace(/\s+/g, '');
+    const rows = sortBy(items.filter((p) => (gi < 0 || groupOf(p) === gi)
+      && (!q || [p.name, p.task, p.description, ...(p.regions || []).map((g) => g.name)].some((s) => String(s || '').replace(/\s+/g, '').includes(q)))), 'kick');
     if (!rows.length) {
+      pager.replaceChildren();
       const x = h('div');
-      body.replaceChildren(hd, x);
-      K.empty(x, { kind: 'first', compact: true, title: gi >= 0 ? `${GROUPS[gi].label} 단계의 프로젝트가 없습니다` : '프로젝트가 없습니다' });
+      body.replaceChildren(x);
+      K.empty(x, { kind: 'first', compact: true, title: q ? '맞는 프로젝트가 없습니다' : gi >= 0 ? `${GROUPS[gi].label} 단계의 프로젝트가 없습니다` : '프로젝트가 없습니다' });
       return;
     }
-    const tr = rows.map((p) => {
-      const k = kick(p);
-      return h('tr', { tabindex: '0', dataset: { id: p.id, stage: GROUPS[groupOf(p)].key },
-        onclick: (e) => { if (!e.target.closest('a')) location.href = projectHref(p.id); },
-        onkeydown: (e) => { if (e.key === 'Enter') location.href = projectHref(p.id); } },
-        h('td', {}, h('b.acc-b', { text: p.name })),
-        h('td', { title: (p.regions || []).map((g) => g.full || g.name).join(' · '), text: regionWord(p.regions) }),
-        h('td.nw', { text: p.lead?.name || '—' }),
-        h('td', { text: archived() ? '보관' : nb(p.next?.text || '—') }),
-        h('td.nw', {}, archived() ? h('span.sb-none', { text: '—' }) : h('span.sb-prog', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/${N}` }), progNote(p) ? h('small.sb-prog-n', { text: progNote(p) }) : null)),
-        h('td.num.nw', { text: ago(p.last_at || p.updated_at) }),
-        h('td', {}, k && !archived() ? h('span.sb-kick', { dataset: { kind: k.kind }, text: k.text }) : h('span.sb-none', { text: '—' })),
-        h('td.nw', {}, h('a.sb-open-l', { href: projectHref(p.id), text: '열기' })));
-    });
-    const table = h('div.k-table-w', {}, h('table.k-table.sb-tb', {},
-      h('thead', {}, h('tr', {}, ...['프로젝트', '지역', '담당', '지금', '진행', '마지막 활동', '남은 일', ''].map((t, i) => h('th', { class: i === 5 ? 'num' : '', text: t })))),
-      h('tbody', {}, ...tr)));
-    const foot = h('p.sb-pg-n', {}, h('span', { text: '위 단계를 누르면 그 단계의 프로젝트만 보입니다.' }), h('span', { text: '막대 = 여섯 단계 가운데 끝낸 단계.' }),
-      h('span', { text: '빨간 점 = 앞 단계에 남은 일.' }));
-    body.replaceChildren(hd, table, ...(archived() ? [] : [foot]));
+    const pages = Math.max(1, Math.ceil(rows.length / F.per));
+    F.page = Math.min(Math.max(1, F.page), pages);
+    const from = (F.page - 1) * F.per;
+    grid.replaceChildren(...rows.slice(from, from + F.per).map((p) => projCard(p, deckBy)));
+    const goP = (n) => { F.page = n; draw(); };
+    const pb = (label, n, cls = '', aria) => h(`button.la-pg${cls}`, { type: 'button', disabled: n < 1 || n > pages || undefined,
+      'aria-current': n === F.page && !cls ? 'page' : undefined, 'aria-label': aria, onclick: () => goP(n) }, label);
+    pager.replaceChildren(...(pages > 1 ? [pb('‹', F.page - 1, '.ar', '앞 페이지'),
+      ...Array.from({ length: pages }, (_, i) => pb(String(i + 1), i + 1, '', `${i + 1}페이지`)),
+      pb('›', F.page + 1, '.ar', '다음 페이지')] : []),
+      h('small', { text: pages > 1 ? `${rows.length}개 가운데 ${from + 1}–${Math.min(from + F.per, rows.length)}` : `${rows.length}개 모두 한 페이지에` }));
+    body.replaceChildren(grid, pager);
   }
+  search.addEventListener('input', () => { F.q = search.value.trim(); F.page = 1; draw(); });
   async function show(k) {
     scope = k;
     setQ();
     drawTabs();
     body.innerHTML = ''; const w = h('div'); body.append(w); K.empty(w, { kind: 'loading' });
     let j;
-    try { j = await api('/projects?scope=' + k); } catch (e) { body.innerHTML = ''; const x = h('div'); body.append(x); K.empty(x, { kind: 'error', title: '프로젝트를 불러오지 못했습니다', onRetry: () => show(k) }); return; }
+    try { j = await K.during(api('/projects?scope=' + k)); } catch (e) { body.innerHTML = ''; const x = h('div'); body.append(x); K.empty(x, { kind: 'error', title: '프로젝트를 불러오지 못했습니다', onRetry: () => show(k) }); return; }
+    const deck = await deckP;
+    deckBy = new Map((deck?.items || []).map((c) => [c.id, c]));
     counts = j.counts || counts; drawTabs();
     S.fresh(j.as_of);
     items = j.items || [];
     const left = items.filter((p) => kick(p)?.kind === 'warn').length;
     const led = items.filter((p) => p.lead_is_me).length;
-    sub.textContent = archived() ? `보관 ${items.length}` : [`진행 중 ${items.length}`, k === 'mine' || k === 'all' ? `내가 맡은 ${led}` : null, `남은 일 있는 프로젝트 ${left}`].filter(Boolean).join(' · ');
-    drawFlow();
+    sub.replaceChildren(units(archived() ? `보관 ${items.length}` : [`진행 중 ${items.length}`, k === 'mine' || k === 'all' ? `내가 맡은 ${led}` : null, `남은 일 있는 프로젝트 ${left}`].filter(Boolean).join(' · ')));   // 덩어리 사이에서만 꺾임(규칙 9)
+    tools.hidden = !items.length;
     if (!items.length) {
       body.innerHTML = '';
       const x = h('div'); body.append(x);
@@ -127,11 +199,12 @@ async function list() {
       K.empty(x, { kind: 'first', title: words[k], action: k === 'archived' || k === 'joined' ? null : { label: '새 프로젝트', onClick: () => openNewProject() } });
       return;
     }
-    drawTable();
+    draw();
   }
-  /* 첫 묶음 — 주소(?scope=)가 없으면 내 프로젝트(내가 만든 · 참여한 진행 중 — 대시보드 흐름도와 같은 묶음) */
+  /* 첫 묶음 — 주소(?scope=)가 없으면 내 프로젝트(내가 만든 · 참여한 진행 중 — 대시보드 진행 현황과 같은 묶음) */
   await show(scope || 'mine');
-  if (Q.get('new') === '1') openNewProject();
+  document.documentElement.dataset.projects = '1';
+  if (Q.get('new') === '1') openNewProject();   // 옛 주소(대시보드 '새 프로젝트' 등 ?new=1) → 새 프로젝트 한 창
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -252,3 +325,6 @@ function peoplePicker(host, pr) {
 }
 
 window.__lxProject = { get id() { return PID; }, load: () => loadProject() };   // e2e 관측(읽기 전용)
+
+/* 열기 — 아래 상수(PER · 그림 보관)가 먼저 서도록 맨 끝에서 */
+if (PID) await one(); else await list();

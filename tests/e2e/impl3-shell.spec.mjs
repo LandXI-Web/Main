@@ -71,7 +71,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await page.goto('v3/lx-project/?scope=mine');
-    const row = page.locator('.lxp-list .sb-tb tbody tr').first();
+    const row = page.locator('.lxp-pc').first();   // 프로젝트 진행 현황 = 카드(구현 23차)
     const has = await row.waitFor({ timeout: 20000 }).then(() => true).catch(() => false);
     test.skip(!has, '진행 중인 프로젝트 없음');
     const pid = await row.getAttribute('data-id');

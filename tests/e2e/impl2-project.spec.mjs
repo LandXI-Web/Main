@@ -1,4 +1,4 @@
-// 구현 2차 T1 '프로젝트 백본' — 로그인 폼 → LX 직원 대시보드 '내 프로젝트' → 새 프로젝트(이름 · 무엇을 · 어디) → 프로젝트 한 장 →
+// 구현 2차 T1 '프로젝트 백본' — 로그인 폼 → LX 직원 대시보드 '내 프로젝트' → 새 프로젝트 한 창(구현 23차 · 원칙 220) → 바로 학습데이터 구축 →
 // 대시보드 '내 프로젝트' 줄 → 그 단계 화면. 확인 대장 R-D3 · 갈림길 ⓐ · 흐름-1 · 구현 3차(10차 메뉴-1 ⓐ · 14차 대시보드-1 ⓐ · J-1):
 // 왼쪽 메뉴는 어디서나 LX 직원 메뉴(프로젝트에 불) · 생산 6단계는 프로젝트 안(마스트 아래 단계 막대 + 프로젝트 이름).
 // 로그인 폼 입력만(세션 주입 0) · 비밀번호는 server/.env DEV_PASSWORD(출력 0) · 게이트웨이 :8700 이 떠 있어야 한다.
@@ -41,40 +41,45 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await expect(page.locator('.k-mast .lxp-mast')).toHaveCount(0);
     await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
     await expect(page.getByText('오늘', { exact: true })).toHaveCount(0);
-    /* 새 프로젝트 — 세 칸 */
+    /* 새 프로젝트 = 한 창(원칙 220 · 구현 23차) — 이름 · 설명(선택) · 무엇을 · 영상(없으면 대상지 고르기) · 구성원 → 만들기 한 번 → 바로 학습데이터 구축 */
     await page.locator('.k-rail a.k-rail-i[data-id="projects"]').click();
     await page.waitForURL(/\/lx-project\//);
     await page.getByRole('button', { name: '새 프로젝트' }).first().click();
     const box = page.locator('.lxp-new');
     await expect(box).toBeVisible();
+    await box.locator('input[name=name]').fill(NAME);
+    await box.locator('textarea[name=description]').fill('e2e 시험');
     await box.locator('.lxp-chip', { hasText: '비닐하우스' }).click();
+    await expect(box.locator('.lxp-where')).toHaveText('영상 없이 만들면 대상지를 고릅니다');
     await box.locator('.lxp-pick input[placeholder="시군구 이름을 검색"]').waitFor();   // 지역 목록을 받은 뒤(키트 지역 검색 준비)
     await box.locator('.lxp-pick input').fill('남원');
     await box.locator('.lxp-pick [role=option]').first().waitFor();
     await box.locator('.lxp-pick input').press('Enter');
-    await expect(box.locator('.lxp-reg')).toHaveText(/남원시/);
-    await expect(box.locator('input[name=name]')).toHaveValue(/남원시 비닐하우스 \d{4}/);   // 이름은 저절로(고치면 그대로)
-    await box.locator('input[name=name]').fill(NAME);
+    await expect(box.locator('.lxp-regbox .lxp-reg')).toHaveText(/남원시/);
     await box.getByRole('button', { name: '만들기' }).click();
-    /* 바로 만들어진다(관리자 승인 없음) → 프로젝트 한 장 · 메뉴 '프로젝트' · 마스트 아래 단계 6 */
-    await page.waitForURL(/\/lx-project\/\?project=prj_/, { timeout: 20000 });
-    await expect(page.locator('.lxp-title')).toHaveText(NAME);
+    /* 바로 만들어진다(관리자 승인 없음) → 그 프로젝트 '학습데이터 구축' · 메뉴 '프로젝트' · 마스트 아래 단계 6 */
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/') && u.searchParams.get('stage') === 'label' && u.searchParams.get('project')?.startsWith('prj_'), { timeout: 20000 });
+    await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/프로젝트/);
-    await expect(page.locator('.lxp-now .lxp-next')).not.toBeEmpty();
     await expect(page.locator('.k-sub .lxp-st')).toHaveCount(6);
-    /* 대시보드 '자세히 보기' → 프로젝트 목록(내 프로젝트) → 그 줄의 단계 칸을 고르면 그 단계에도 있다 → 프로젝트 한 장 → 다음 할 일(그 단계 화면 · 프로젝트 맥락) */
+    await expect(page.locator('.k-sub .lxp-st[aria-current="step"]')).toContainText('학습데이터');
+    /* 대시보드 '자세히 보기' → 프로젝트 진행 현황(카드) → 그 카드의 단계 칩에도 있다 → '프로젝트 →' 한 장 → 지금 할 일(그 단계 화면 · 프로젝트 맥락) */
     await page.goto('v3/lx-console/');
     await page.locator('.ld-board .ld-more').click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/') && u.searchParams.get('scope') === 'mine', { timeout: 20000 });
-    const row = page.locator('.lxp-list .sb-tb tbody tr', { hasText: NAME });
-    await expect(row).toBeVisible({ timeout: 20000 });
-    await expect(row.locator('.sb-prog small')).toHaveText(/^[01]\/6$/);
-    const stage = await row.getAttribute('data-stage');
-    await page.locator(`.lxp-flow .sb-st[data-key="${stage}"] .sb-st-b`).click();
-    await expect(page.locator(`.lxp-flow .sb-st[data-key="${stage}"][data-open]`)).toHaveCount(1);
-    await expect(row).toBeVisible();
-    await row.locator('.sb-open-l').click();
+    await page.waitForFunction(() => document.documentElement.dataset.projects === '1', null, { timeout: 30000 });
+    await page.locator('.la-search').fill(NAME);
+    const card = page.locator('.lxp-pc', { hasText: NAME });
+    await expect(card).toBeVisible({ timeout: 20000 });
+    await expect(card.locator('.lxp-pc-w small.num')).toHaveText(/ · [01]\/6$/);
+    await expect(card.locator('.k-sc-line')).toHaveText('e2e 시험');
+    const stage = await card.getAttribute('data-stage');
+    await page.locator(`.lxp-tools .la-chip[data-key="${stage}"]`).click();
+    await expect(page.locator(`.lxp-tools .la-chip[data-key="${stage}"]`)).toHaveAttribute('aria-pressed', 'true');
+    await expect(card).toBeVisible();
+    await card.locator('.k-sc-more').click();
     await page.waitForURL(/\/lx-project\/\?project=prj_/, { timeout: 20000 });
+    await expect(page.locator('.lxp-title')).toHaveText(NAME);
     await page.locator('.lxp-now .lxp-go').click();
     await page.waitForURL((u) => /\/landxi\/v3\/lx-(train|ingest|review|deploy)\//.test(u.pathname) && u.searchParams.get('project')?.startsWith('prj_'), { timeout: 20000 });
     await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });

@@ -1,0 +1,125 @@
+{
+  "at": "2026-10-12 14:48:54",
+  "app": "https://app.land-xi.dev",
+  "clicks": [
+    "왼쪽 메뉴 프로젝트",
+    "새 프로젝트",
+    "이름 칸",
+    "무엇을 칩",
+    "영상 파일 고르기(두 파일 한 번에)",
+    "구성원 찾기 칸",
+    "구성원 고르기",
+    "만들기"
+  ],
+  "screens": [
+    {
+      "what": "대시보드",
+      "path": "/landxi/v3/lx-console/"
+    },
+    {
+      "what": "프로젝트 진행 현황(카드)",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "새 프로젝트 한 창",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "학습데이터 구축",
+      "path": "/landxi/v3/lx-train/"
+    }
+  ],
+  "shots": {
+    "a1-cards-1440-1449.png": "2026-10-12 14:49:07",
+    "a2-new-window-1440-1449.png": "2026-10-12 14:49:11",
+    "a3-label-carry-1440-1449.png": "2026-10-12 14:49:15",
+    "a4-label-done-1440-1449.png": "2026-10-12 14:49:23"
+  },
+  "errors": [],
+  "video": {
+    "from_s": 11.2,
+    "to_s": 25.9,
+    "file": "new-project-10s.mp4",
+    "cut": "앞 6초 + 뒤 4초(가운데 4.7초 = 글자 치기 · 기다림 · 뺌)"
+  },
+  "cleanup_before": "{\"projects\": 0, \"imagery\": [], \"drafts\": []}",
+  "cards": [
+    {
+      "name": "곤포사일리지 2026",
+      "stage": "6 배포 신청",
+      "hero": [
+        "60장학습 데이터",
+        "96%AI 모델 정확도"
+      ],
+      "where": "보령시",
+      "pic": true,
+      "go": "/landxi/v3/lx-release/?project=prj_2d3939d12a&stage=publish"
+    },
+    {
+      "name": "건축물 2026",
+      "stage": "6 배포 신청",
+      "hero": [
+        "139장학습 데이터",
+        "89%AI 모델 정확도"
+      ],
+      "where": "원주시",
+      "pic": true,
+      "go": "/landxi/v3/lx-release/?project=prj_15e3127d72&stage=publish"
+    },
+    {
+      "name": "비닐하우스 2026",
+      "stage": "6 배포 신청",
+      "hero": [
+        "35,247장학습 데이터",
+        "89%AI 모델 정확도"
+      ],
+      "where": "증평군 · 함양군 · 남원시",
+      "pic": true,
+      "go": "/landxi/v3/lx-release/?project=prj_3fdba452d5&stage=publish"
+    },
+    {
+      "name": "주차장 2026",
+      "stage": "6 배포 신청",
+      "hero": [
+        "170장학습 데이터",
+        "89%AI 모델 정확도"
+      ],
+      "where": "여주시 · 천안시 서북구",
+      "pic": true,
+      "go": "/landxi/v3/lx-release/?project=prj_b2fa593a12&stage=publish"
+    }
+  ],
+  "optional": [
+    "설명 칸(선택)"
+  ],
+  "member": "LX 관리자",
+  "where_line": "대상지는 올린 영상이 등록되면 영상 자리에서 정해집니다",
+  "busy_at_make": 2,
+  "pid": "prj_24af78c352",
+  "carry_first": "영상 파일 올리는 중 · 1/2",
+  "carry_done": "영상 1장을 등록했습니다 · 대상지 남원시",
+  "after": {
+    "name": "시험 새 프로젝트 한 창",
+    "description": "한 창 만들기 시험 · 끝나면 지움",
+    "task": "비닐하우스",
+    "regions": [
+      "남원시"
+    ],
+    "members": [
+      "LX 관리자"
+    ],
+    "stage": {
+      "index": 1,
+      "key": "label",
+      "label": "학습데이터 구축"
+    },
+    "ingest": "done",
+    "pic": true
+  },
+  "old_url_opens_window": true,
+  "cleanup_after": "{\"projects\": 1, \"imagery\": [\"img-52190-nd-aerial\"], \"drafts\": [\"dr_fc14afd66ecb\"]}",
+  "n": {
+    "clicks": 8,
+    "screens": 4
+  }
+}

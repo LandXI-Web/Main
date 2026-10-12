@@ -198,7 +198,10 @@ async def project_train(pid: str, request: Request):
             "AND coalesce(options->>'eval','') NOT IN ('true','1') AND state IN ('queued','running','done') AND ("
             "options->>'project_id' = $1 OR (options->'samples') ?| $2::text[] OR "
             "($3 <> '' AND options->>'project_id' IS NULL AND jsonb_typeof(options->'samples') = 'string' "
-            "AND position($3 in coalesce(options->>'task_name','')) = 1)) ORDER BY created_at DESC LIMIT 40",
+            "AND position($3 in coalesce(options->>'task_name','')) = 1 "
+            # 프로젝트 이전 학습(프로젝트 표시 없음)은 같은 업무의 가장 먼저 만든 프로젝트 것만 — 새 프로젝트에 남의 학습 이력이 붙지 않게(구현 23차)
+            "AND NOT EXISTS (SELECT 1 FROM projects q WHERE q.task = $3 AND q.created_at < (SELECT created_at FROM projects WHERE id = $1)))) "
+            "ORDER BY created_at DESC LIMIT 40",
             pid, sids or ["-"], task)
         jids = [j["id"] for j in jobs]
         made = {m["train_job"]: m for m in await conn.fetch(
