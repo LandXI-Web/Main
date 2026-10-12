@@ -1,0 +1,7 @@
+실패 newproj Page.wait_for_function: TypeError: Cannot read properties of null (reading 'dataset')     at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:32)     at predicate (eval at evaluate (:311:30), <anonymous>:13:29)     at next (eval at evaluate (:311:30), <anonymous>:29:33)     at eva
+실패 retrain Page.wait_for_selector: Timeout 45000ms exceeded. Call log:   - waiting for locator(".rt-col .rt-tbl tbody tr") to be visible 
+실패 tmpl Page.screenshot: Timeout 45000ms exceeded. Call log:   - taking page screenshot   - waiting for fonts to load... 
+찍음 mock-dash8-1941.png
+실패 d8full Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html", waiting until "load" 
+실패 d8s6 Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html?stages=6", waiting until "load" 
+끝 — 실패 ['newproj', '묶음:admin', 'd8full', 'd8s6', 'retrain', 'tmpl'] 로그인 3

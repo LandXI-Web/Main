@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.gh-login input[name=login]') to be visible[22m
+
+    at frontDoor (E:\Land-XI 플랫폼\01. 디자인\landxi\v3\kit\lint\forbidden.mjs:126:16)
+    at async session (E:\Land-XI 플랫폼\01. 디자인\tools\check\words.mjs:95:5)
+    at async file:///E:/Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC/01.%20%EB%94%94%EC%9E%90%EC%9D%B8/tools/check/words.mjs:118:15 {
+  log: [
+    "  - waiting for locator('.gh-login input[name=login]') to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.21.1

@@ -1,0 +1,6 @@
+실패(묶음) admin Page.goto: Timeout 60000ms exceeded.
+Call log:
+  - navigating to "https://admin.land-xi.dev/landxi/v3/login/", waiting until "domcontentloaded"
+
+찍음 mock-data-map-2011.png
+끝 — 실패 ['묶음:admin', 'retrain', '묶음:admin', '묶음:admin', '묶음:admin', '묶음:staff', '묶음:admin', '묶음:admin'] 로그인 7

@@ -1,0 +1,6 @@
+찍음 now-train-farm-2032.png
+실패 xijeonju Page.wait_for_function: Timeout 60000ms exceeded.
+실패 diag Page.wait_for_function: Timeout 60000ms exceeded.
+실패 perfa Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=a", waiting until "load" 
+실패 perfb Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=b", waiting until "load" 
+끝 — 실패 ['묶음:admin', '묶음:admin', '묶음:admin', '묶음:admin', '묶음:staff', '묶음:admin', '묶음:admin', '묶음:admin', 'xijeonju', 'diag', 'perfa', 'perfb', 'retrain'] 로그인 12

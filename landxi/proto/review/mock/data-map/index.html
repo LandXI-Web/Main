@@ -16,6 +16,7 @@ body{margin:0;background:var(--bg-0);color:var(--ink);font:400 14px/20px var(--f
 .dm-tag{display:inline-block;padding:2px 8px;border-radius:6px;background:#FFF3C4;color:#8A6100;font:600 12px/18px var(--font-body)}
 .dm-card{background:var(--bg-1);border-radius:16px;padding:18px 22px;box-sizing:border-box}
 table.dm-t{width:100%;border-collapse:collapse;table-layout:fixed}
+.dm-t td:nth-child(4){white-space:nowrap}
 .dm-t th,.dm-t td{padding:10px 12px;border-top:1px solid var(--rule);vertical-align:top;text-align:left;font-size:13px;line-height:19px}
 .dm-t th{color:var(--sub);font-weight:500;border-top:0;padding-top:0}
 .dm-t td:first-child{font-weight:700;color:var(--ink);font-size:14px}
@@ -69,7 +70,7 @@ table.dm-t{width:100%;border-collapse:collapse;table-layout:fixed}
 <td><ul><li>프로젝트 <b>학습데이터 구축</b> 단계 — 만든 라벨 묶음 올리기</li><li>XI맵 <b>그 자리에서 고치기</b> → '고친 것 n건'(아직 장 수 아님 · 결정 3 전)</li></ul></td>
 <td><ul><li>학습 화면 <b>학습 데이터 블록</b> — 이 프로젝트 것 · 지난 학습 것 · XI맵에서 고친 것 n건</li><li>데이터하우스 <b>학습 데이터</b> 탭 — 클래스별 · 고친 것 · 승인 대기</li><li>프로젝트 카드 '학습 데이터 n장'</li></ul></td>
 <td>직원(학습)<br>관리자(승인 · XI 재학습)</td>
-<td class="ov"><ul><li>같은 학습 데이터를 <b>두 화면</b>에서 다른 축으로(학습 블록 = 묶음별 · 데이터하우스 = 클래스별)</li><li>데이터하우스에 보이지만 거기서 <b>가져다 쓰는 길이 없음</b>(원칙 133 '공유 데이터 불러오기'가 영상에만 있음)</li><li>머리 문구 'XI맵에서 고친 것 0건 · 승인 대기 0개'가 <b>고친 것만 있다고 읽힘</b> — 올린 장 수는 표 안에만</li></ul></td></tr>
+<td class="ov"><ul><li>같은 학습 데이터를 <b>두 화면</b>에서 다른 축으로(학습 블록 = 묶음별 · 데이터하우스 = 클래스별)</li><li>데이터하우스에 보이지만 거기서 <b>가져다 쓰는 길이 없음</b>('공유 데이터 불러오기'가 영상에만 있음)</li><li>머리 문구 'XI맵에서 고친 것 0건 · 승인 대기 0개'가 <b>고친 것만 있다고 읽힘</b> — 올린 장 수는 표 안에만</li></ul></td></tr>
 
 <tr><td>행정 자료<small>지적 · 대장 · 브이월드</small></td>
 <td><ul><li>외부 연동 — 서버가 자동으로</li><li>프로젝트 데이터 올리기 <b>행정 자료</b> 칸(대장 형식 등록)</li></ul></td>
@@ -109,7 +110,7 @@ table.dm-t{width:100%;border-collapse:collapse;table-layout:fixed}
 <li class="gone">사라짐: 직원 메뉴 '데이터하우스' · 탭 셋 · 승인 대기 목록 · 데이터하우스 '고친 것' 탭 · '비슷한 클래스 먼저' · '공유 데이터셋' 이름</li>
 <li>바뀜: 새 프로젝트 창 · 추론 · 분석하기의 영상 고르기 → 모두 '공유 데이터에서 고르기' 하나</li>
 <li>새 클래스: 라벨 붙일 때 이름을 새로 쓰면 새 클래스. 관리자는 배포 신청 때 본다</li>
-<li>맞는 이유: 직원 일이 프로젝트 안에서 끝남(원칙 133 '관리자가 관리하는 공유 데이터'와 같음) · "왜 고친 것만?" 질문이 사라짐</li>
+<li>맞는 이유: 직원 일이 프로젝트 안에서 끝남('관리자가 관리하는 공유 데이터'와 같음) · "왜 고친 것만?" 질문이 사라짐</li>
 </ul></div>
 <div class="dm-card dm-dir"><h3>ⓑ 데이터하우스 하나로 합친다 — 프로젝트는 거기서 고르기만</h3>
 <p class="l">영상 · 행정 자료 · 학습 데이터 · 고친 것이 모두 데이터하우스 한 곳. 프로젝트의 데이터 올리기 · 학습데이터 구축 단계는 '데이터하우스에서 고르기'가 된다.</p>
@@ -120,5 +121,5 @@ table.dm-t{width:100%;border-collapse:collapse;table-layout:fixed}
 <li>무거운 점: 직원이 프로젝트와 데이터하우스를 오가야 함 · 학습 데이터가 프로젝트 밖에 있어 '내 것'이 흐려짐</li>
 </ul></div>
 </div>
-<p class="dm-foot">근거: impl-22 core-loop · impl-23 project 증거, 데이터하우스(직원 · 관리자) · 학습 화면 · XI맵 고치기 · 추론 · 새 프로젝트 창 실제 화면(10-12). 결과 확인 화면 고치기 없음은 코드(lx-review)에서 확인. 코드 수정 0.</p>
+<p class="dm-foot">근거: 데이터하우스(직원 · 관리자) · 학습 화면 · XI맵 고치기 · 추론 · 새 프로젝트 창 실제 화면(10-12). 결과 확인 화면에 고치기가 없는 것은 화면을 열어 확인.</p>
 </div></body></html>

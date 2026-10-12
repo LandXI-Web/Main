@@ -1,0 +1,59 @@
+{
+ "now-train-vinyl-1037.png": {
+  "at": "2026-10-12T10:37:18",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5",
+  "note": "학습 화면(지금 화면) — 비닐하우스 2026"
+ },
+ "after-improve-candidates-1037.png": {
+  "at": "2026-10-12T10:37:38",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/improve",
+  "note": "개선 후보 — 이대로 반영 · 모아 두기 · 보류 · 모아 둔 평가 질문"
+ },
+ "after-admin-deploy-ops-1037.png": {
+  "at": "2026-10-12T10:37:46",
+  "url": "https://admin.land-xi.dev/landxi/v3/lx-deploy/?tab=ops",
+  "note": "관리자 배포 운영 표 — 결과 확인 칸 없음"
+ },
+ "mock-dash5-1037.png": {
+  "at": "2026-10-12T10:37:53",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "note": "시안 대시보드 5차 첫 화면"
+ },
+ "mock-dash5-full-1038.png": {
+  "at": "2026-10-12T10:38:01",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "note": "시안 대시보드 5차 세로 전체"
+ },
+ "mock-dash5-grid-hover-1038.png": {
+  "at": "2026-10-12T10:38:10",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "note": "격자 다섯째 칸에 올린 모습"
+ },
+ "mock-train3-1038.png": {
+  "at": "2026-10-12T10:38:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "note": "시안 학습 작업 흐름 3차"
+ },
+ "mock-train3-full-1038.png": {
+  "at": "2026-10-12T10:38:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "note": "시안 학습 3차 세로 전체"
+ },
+ "mock-train3-live-1038.png": {
+  "at": "2026-10-12T10:38:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html?v=live",
+  "note": "시안 학습 중"
+ },
+ "mock-train3-drawer-1038.png": {
+  "at": "2026-10-12T10:38:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "note": "시안 학습 설정 블록 서랍"
+ },
+ "_summary": {
+  "failed": [],
+  "errors": {
+   "train": [],
+   "admin": []
+  }
+ }
+}

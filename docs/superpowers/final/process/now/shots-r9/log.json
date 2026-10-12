@@ -1,0 +1,763 @@
+{
+ "_done": [
+  "train",
+  "xijeonju",
+  "diag",
+  "perfa",
+  "perfb",
+  "d8",
+  "newproj",
+  "d8full",
+  "d8s6",
+  "tmpl",
+  "train",
+  "xijeonju",
+  "diag",
+  "dm",
+  "retrain",
+  "newproj",
+  "tmpl",
+  "d8",
+  "d8full",
+  "d8s6",
+  "dm",
+  "train",
+  "xijeonju",
+  "diag",
+  "perfa",
+  "perfb",
+  "tmpl"
+ ],
+ "_logins": 14,
+ "_failed": [
+  "묶음:admin",
+  "묶음:admin",
+  "묶음:admin",
+  "묶음:admin",
+  "묶음:staff",
+  "묶음:admin",
+  "묶음:admin",
+  "묶음:admin",
+  "retrain"
+ ],
+ "_train_text": "LAND-XI\nLX 직원 대시보드\n20:31\n자동 로그아웃 내일 20:31 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n데이터하우스\n요청함\n프로젝트\n경작지 v2 — 항공 · API 영상\n1\n데이터 올리기\n2\n학습데이터 구축\n3\n학습\n4\n추론\n5\n결과 확인\n6\n배포 신청\n\n다음 할 일\n평택시 영상 등록\n\n학습 · AI 모델 작업 흐름\n\n학습 중입니다 · 반복마다 정확도가 아래 그래프에 차오릅니다\n\n멈추기\n블록 더하기\n학습 데이터\n기반 모델\n학습 설정\n학습\n평가\n추론 시험\n배포 신청\n출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요D복제Del지우기\n학습 데이터\n경작지 · 7,300장\n기반 모델\n원판 · 4종 모델\n학습 설정\n반복 12회 · 크기 1280 · 한 번에 4장\n학습\n학습 중 · 3 / 12회\n10-12 17:28 시작\n평가\n학습이 끝나면 같은 검증 묶음으로\n배포 신청\n평가 뒤에 켜져요\n바꿀 수 없는 것 — 학습 장비 배정 · 상한 · 쉬는 시간대 · 검증 묶음 · 승인(LX 관리자)\n기본 흐름으로 되돌리기\n이번 학습 · 반복마다 정확도\n\n10-12 17:28 · 반복 12회 · 반복마다 자체 검증 300장으로 잰 값\n\n81%지금까지\n79%\n81%\n82%\n84%\n85%\n1회\n3회\n6회\n9회\n12회\n81%\n\n끝나면 같은 검증 묶음으로 한 번 더 재요\n\n핵심 수치\n학습 중\n학습 데이터\n7,300장\n기반 모델\n원판 · 4종 모델\n반복 · 크기 · 한 번에\n12회 · 1280 · 4장\n지금까지\n81%\n같은 검증 묶음\n끝나면\n시작\n10-12 17:28\n\n학습 장비 — LX 관리자가 배정 · 프로젝트 하나에 한 장 · 밤 대기열\n\n학습 이력\n이 프로젝트 · 최근 순 · AI 모델 정확도는 학습 끝 검증 값\n날짜\t판\tAI 모델 정확도\t학습 데이터\t상태\n10-12\t첫 판\n원판에서 · 반복 12회 · 크기 1280\n\t—\t7,300장\t학습 중\n05-16\t원판\n건물 · 주차장 · 경작지 · 비닐하우스 4종 모델\n\t89%\t—\t기반 모델\nXI ChatGEO",
+ "_train_at": "2026-10-12T20:32:07",
+ "now-train-farm-1930.png": {
+  "at": "2026-10-12T19:30:23",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+  "note": "프로젝트 '경작지 v2' 학습 화면"
+ },
+ "_hud_jeonju": "전북특별자치도 · 전주시\n\n전주시 AI 분석 결과\n농지 전수 · 경작지\n18,332곳 · 24.99㎢\n농지 전수 · 비닐하우스\n774동\n\n농지 전수 읍면동 59곳 중 59곳 분석 끝",
+ "now-ximap-jeonju-1931.png": {
+  "at": "2026-10-12T19:31:24",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52110",
+  "note": "XI맵 시군구 카드 — 전주"
+ },
+ "now-ximap-diag-1931.png": {
+  "at": "2026-10-12T19:31:44",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "지금 XI맵 첫 화면(진단)"
+ },
+ "mock-perf-a-1932.png": {
+  "at": "2026-10-12T19:32:09",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=a",
+  "note": "시안 XI맵 퍼포먼스 A안"
+ },
+ "mock-perf-b-1932.png": {
+  "at": "2026-10-12T19:32:23",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=b",
+  "note": "시안 XI맵 퍼포먼스 B안"
+ },
+ "_tmpl_text": "LAND-XI\nLX 관리자 대시보드\n21:06\n자동 로그아웃 내일 21:05 · 남은 24시간\nLX 관리자\nXI맵\n1\n?\n나가기\n현황\n인프라\n기관\n배포\n요청 관리\n검토 요청\n계정 관리\n배포 신청\n기관 공유\n사용 현황\n분야\n개선 후보\n15\nAPI\nXI 재학습\n학습 서식\n학습 서식\n직원 학습 화면을 처음 열면 놓이는 기본 흐름 — 직원은 그 위에서 블록을 더하거나 지우고 순서를 바꿀 수 있습니다\n업무\n기본(모든 업무)\n건축물 · 기본 흐름 씀\n주차장 · 기본 흐름 씀\n비닐하우스 · 기본 흐름 씀\n곤포사일리지 · 기본 흐름 씀\nㅀ · 기본 흐름 씀\n\n블록\n\n학습 데이터\n빠질 수 없음\n기반 모델\n빠질 수 없음\n학습 설정\n빠질 수 없음\n학습\n빠질 수 없음\n평가\n추론 시험\n배포 신청\n반복 횟수\n회\n이미지 크기\n640\n1280\n한 번에\n4장\n8장\n\n바꿀 수 없는 것(직원) — 학습 장비 배정(프로젝트 하나에 한 장) · 반복 · 크기 · 장수 상한 · 쉬는 시간대 · 검증 묶음 · 배포 승인\n\n저장\nXI ChatGEO",
+ "mock-dash8-1941.png": {
+  "at": "2026-10-12T19:41:27",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "note": "시안 8차 첫 화면"
+ },
+ "_newproj_text": "새 프로젝트\n\n이름\n\n설명선택\n\n구성원여러 명 가능\n\n영상여러 장 가능\n\n파일 올리기\n데이터하우스에서 고르기\n\n영상 없이 만들면 대상지를 고릅니다\n\n해외 지역\n만들기\n취소\n\n만들면 바로 학습데이터 구축으로 갑니다",
+ "now-new-project-1944.png": {
+  "at": "2026-10-12T19:44:33",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "새 프로젝트 한 창(만들지 않고 열어 둔 모습)"
+ },
+ "mock-dash8-full-1951.png": {
+  "at": "2026-10-12T19:51:21",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "note": "시안 8차 세로 전체"
+ },
+ "mock-dash8-stages6-1954.png": {
+  "at": "2026-10-12T19:54:10",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html?stages=6",
+  "note": "시안 8차 여섯 칸"
+ },
+ "_retrain_dbg": [
+  "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/retrain",
+  "LAND-XI\nLX 관리자 대시보드\n자동 로그아웃 내일 20:24 · 남은 23시간 59분\nLX 관리자\nXI맵\n1\n?\n나가기\n현황\n인프라\n기관\n배포\n요청 관리\n검토 요청\n계정 관리\nXI ChatGEO\n불러오는 중\n\n서버 응답이 늦습니다 · 다시 시도"
+ ],
+ "now-admin-template-1959.png": {
+  "at": "2026-10-12T19:59:29",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 — 학습 서식"
+ },
+ "now-train-farm-2006.png": {
+  "at": "2026-10-12T20:06:07",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+  "note": "프로젝트 '경작지 v2' 학습 화면"
+ },
+ "now-ximap-jeonju-2006.png": {
+  "at": "2026-10-12T20:06:37",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52110",
+  "note": "XI맵 시군구 카드 — 전주"
+ },
+ "now-ximap-diag-2006.png": {
+  "at": "2026-10-12T20:06:52",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "지금 XI맵 첫 화면(진단)"
+ },
+ "_datamap_text": "데이터는 어디서 들어와, 어디에 보이고, 누가 쓰나\n시안 · 진단\n지금 실제 화면 기준(2026-10-12 · LX 직원 · LX 관리자 로그인 폼) · 빨간 줄 = 겹치거나 같은 것을 다른 이름으로 부르는 곳\n데이터\t들어오는 곳\t보이는 곳\t쓰는 사람\t겹침 · 이름 다름\n영상\n항공 · 드론 · 위성\n\t\n프로젝트 데이터 올리기 단계 · 영상 등록\n새 프로젝트 창 파일 올리기\n분석하기 상세 내 정사영상 올리기\n외부 연동(지리원 · 브이월드) — 서버가 들여옴\n\t\n데이터하우스 영상 · 행정 자료 탭(전국 지도)\n새 프로젝트 창 데이터하우스에서 고르기\n추론 화면 프로젝트 영상 | 공유 데이터셋\n분석하기 영상 고르기(공유 영상)\nXI맵 최신 영상 · 분석한 영상\n\t직원(올리고 고름)\n관리자(관리)\n기관(결과만)\t\n같은 영상 목록을 세 이름으로: 데이터하우스 영상 · 공유 데이터셋 · 공유 영상\n데이터 올리기 화면 = 데이터하우스 영상 탭(같은 화면이 프로젝트 안 · 밖 두 이름)\n\n학습 데이터\n영상 조각 + 라벨\n\t\n프로젝트 학습데이터 구축 단계 — 만든 라벨 묶음 올리기\nXI맵 그 자리에서 고치기 → '고친 것 n건'(아직 장 수 아님 · 결정 3 전)\n\t\n학습 화면 학습 데이터 블록 — 이 프로젝트 것 · 지난 학습 것 · XI맵에서 고친 것 n건\n데이터하우스 학습 데이터 탭 — 클래스별 · 고친 것 · 승인 대기\n프로젝트 카드 '학습 데이터 n장'\n\t직원(학습)\n관리자(승인 · XI 재학습)\t\n같은 학습 데이터를 두 화면에서 다른 축으로(학습 블록 = 묶음별 · 데이터하우스 = 클래스별)\n데이터하우스에 보이지만 거기서 가져다 쓰는 길이 없음('공유 데이터 불러오기'가 영상에만 있음)\n머리 문구 'XI맵에서 고친 것 0건 · 승인 대기 0개'가 고친 것만 있다고 읽힘 — 올린 장 수는 표 안에만\n\n행정 자료\n지적 · 대장 · 브이월드\n\t\n외부 연동 — 서버가 자동으로\n프로젝트 데이터 올리기 행정 자료 칸(대장 형식 등록)\n\t\n데이터 올리기 서랍(영상 · 행정 자료 · 필지 단위 결과)\n데이터하우스 영상 · 행정 자료 탭\n\t직원(필지 연결)\n기관(보고서)\t\n영상과 같은 겹침 — 한 화면이 데이터 올리기 / 데이터하우스 두 이름\n\nAI 결과\n객체 · 필지 결과\n\t\n프로젝트 추론 · 분석하기 '이 카드로 분석' · 전국 작업기\n\t\n지도 서비스(내가 돌린 것) · XI맵(전국) · 기관 화면 · 보고서\n\t직원 · 기관 · 관리자\t겹침 없음 — 이름 하나 '분석 결과'\n고친 것\n결과를 손으로 바꾼 기록\n\t\nXI맵 그 자리에서 고치기(분류 바꾸기 · 새 클래스)\n결과 확인 화면에는 고치기가 없음 — 고친 것이 학습으로 안 돌아옴\n\t\n데이터하우스 '고친 것' 탭\n학습 데이터 블록 'XI맵에서 고친 것 n건'\n관리자 배포 → XI 재학습 '쌓인 고친 것 n/기준'\n\t직원(고침)\n관리자(재학습)\t\n고친 것 = 라벨과 같은 것(영상 조각 위에 클래스)인데 이름 · 세는 단위가 다름(건 ↔ 장)\nXI맵에서 고친 것만 데이터하우스에 따로 셈 → \"왜 고친 것만?\" 질문의 원인\n원천 기능 한 줄\n영상 위에 라벨을 붙이거나 고친다\n→\n학습 데이터가 된다\n→\n재학습\n→\n새 판\n→\n결과를 보고 다시 고친다\n\n이 고리에 꼭 필요한 화면은 셋. 나머지(데이터하우스 탭 셋 · 승인 대기 목록 · 비슷한 클래스 먼저 보여 주기 · '공유 데이터셋' 이름)는 고리 밖의 덧붙임이다.\n\n① 라벨 붙이기 · 고치기\n프로젝트 학습데이터 구축 = XI맵 고치기와 같은 동작(영상 조각 위에 클래스 이름). 새 클래스 = 이름을 새로 쓰면 새 클래스 — 그뿐.\n② 학습\n이 프로젝트의 학습 데이터(붙인 것 + 고친 것 한 묶음)로 학습 — 쉬는 시간에 자동.\n③ 새 판 배포 신청 · 승인\n관리자는 여기서 한 번만 본다(새 클래스도 이때 함께). 승인되면 기관에 공유.\nⓐ 데이터하우스를 없앤다 — '프로젝트 안 학습 데이터' + '관리자 공유 데이터' 둘로추천\n\n학습 데이터는 프로젝트 안에만. XI맵에서 고친 것은 그 서비스를 만든 프로젝트의 학습 데이터로 간다. 영상 · 행정 자료는 관리자가 관리하는 '공유 데이터' 한 이름.\n\n사라짐: 직원 메뉴 '데이터하우스' · 탭 셋 · 승인 대기 목록 · 데이터하우스 '고친 것' 탭 · '비슷한 클래스 먼저' · '공유 데이터셋' 이름\n바뀜: 새 프로젝트 창 · 추론 · 분석하기의 영상 고르기 → 모두 '공유 데이터에서 고르기' 하나\n새 클래스: 라벨 붙일 때 이름을 새로 쓰면 새 클래스. 관리자는 배포 신청 때 본다\n맞는 이유: 직원 일이 프로젝트 안에서 끝남('관리자가 관리하는 공유 데이터'와 같음) · \"왜 고친 것만?\" 질문이 사라짐\nⓑ 데이터하우스 하나로 합친다 — 프로젝트는 거기서 고르기만\n\n영상 · 행정 자료 · 학습 데이터 · 고친 것이 모두 데이터하우스 한 곳. 프로젝트의 데이터 올리기 · 학습데이터 구축 단계는 '데이터하우스에서 고르기'가 된다.\n\n사라짐: '공유 데이터셋' · '프로젝트 영상' 구분 · 학습 화면 데이터 블록의 세 선택지(→ 하나) · 데이터 올리기 서랍 · '비슷한 클래스 먼저'\n바뀜: 라벨 붙이기 · 고치기도 데이터하우스 안에서(프로젝트는 묶음을 가리키기만)\n새 클래스: 같은 방법 — 이름을 새로 쓰면 새 클래스\n무거운 점: 직원이 프로젝트와 데이터하우스를 오가야 함 · 학습 데이터가 프로젝트 밖에 있어 '내 것'이 흐려짐\n\n근거: 데이터하우스(직원 · 관리자) · 학습 화면 · XI맵 고치기 · 추론 · 새 프로젝트 창 실제 화면(10-12). 결과 확인 화면에 고치기가 없는 것은 화면을 열어 확인.",
+ "mock-data-map-2011.png": {
+  "at": "2026-10-12T20:11:05",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/data-map/index.html",
+  "note": "데이터 개념 진단 그림(바깥 주소 화면)"
+ },
+ "_reqs": [
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/55.jpg",
+   1554
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/24/53.jpg",
+   1556
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/53.jpg",
+   1557
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/25/52.jpg",
+   1557
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/56.jpg",
+   1557
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/53.jpg",
+   1558
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/24/52.jpg",
+   772
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/56.jpg",
+   770
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/52.jpg",
+   519
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/52.jpg",
+   511
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-core/index.html",
+   "FAIL"
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/54.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/24/57.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/25/57.jpg",
+   262
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/53.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/56.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/57.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/55.jpg",
+   264
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/57.jpg",
+   262
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/57.jpg",
+   261
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/25/59.jpg",
+   264
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/24/58.jpg",
+   266
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/25/58.jpg",
+   267
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/58.jpg",
+   266
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/58.jpg",
+   267
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/58.jpg",
+   266
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/52.jpg",
+   408
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/24/59.jpg",
+   260
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/26/59.jpg",
+   260
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/23/59.jpg",
+   260
+  ],
+  [
+   "ox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/6/27/59.jpg",
+   260
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/openapi.json",
+   3611
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/kit.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/shared/api-v1.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "://admin.land-xi.dev/landxi/v3/kit/auth-gate.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/util.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/stage.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/sig.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/i18n.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/sites.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/modal.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "://admin.land-xi.dev/landxi/xi/engine/lx-map.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "://admin.land-xi.dev/landxi/xi/engine/camera.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "//admin.land-xi.dev/landxi/xi/engine/sources.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "ps://admin.land-xi.dev/landxi/xi/engine/tier.js?v=ef5c388de6",
+   0
+  ],
+  [
+   "in.land-xi.dev/landxi/v3/shared/tokens-v2.2.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/shell.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/stage.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/panel.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/cmdk.css?v=ef5c388de6",
+   0
+  ],
+  [
+   "beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+   0
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/",
+   2822
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/ops-infra/js/kit.js?v=ef5c388de6",
+   1381
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/index.js?v=ef5c388de6",
+   6632
+  ],
+  [
+   "min.land-xi.dev/landxi/v3/ops-infra/js/brand.js?v=ef5c388de6",
+   7255
+  ],
+  [
+   "ps://admin.land-xi.dev/landxi/v3/kit/stepper.js?v=ef5c388de6",
+   7684
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/chart.js?v=ef5c388de6",
+   7962
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/kit/assistant-mascot.js?v=ef5c388de6",
+   9090
+  ],
+  [
+   "admin.land-xi.dev/landxi/xi/fx/result-filter.js?v=ef5c388de6",
+   9138
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/bignum.js?v=ef5c388de6",
+   10671
+  ],
+  [
+   "ps://admin.land-xi.dev/landxi/v3/kit/lx-menu.js?v=ef5c388de6",
+   10744
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/region.js?v=ef5c388de6",
+   10908
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/panel.js?v=ef5c388de6",
+   10975
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/ops-infra/js/app.js?v=ef5c388de6",
+   11502
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/toast.js?v=ef5c388de6",
+   12328
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/deploys.js?v=ef5c388de6",
+   12441
+  ],
+  [
+   "//admin.land-xi.dev/landxi/v3/kit/dev-drawer.js?v=ef5c388de6",
+   12651
+  ],
+  [
+   "nd-xi.dev/landxi/v3/ops-infra/js/apikey-form.js?v=ef5c388de6",
+   14187
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/table.js?v=ef5c388de6",
+   14624
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/loader.js?v=ef5c388de6",
+   15679
+  ],
+  [
+   "min.land-xi.dev/landxi/v3/ops-infra/js/infra.js?v=ef5c388de6",
+   15932
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/gov-select/brand.js?v=ef5c388de6",
+   15977
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/tenants.js?v=ef5c388de6",
+   17147
+  ],
+  [
+   ".land-xi.dev/landxi/v3/gov-select/brand-form.js?v=ef5c388de6",
+   17480
+  ],
+  [
+   "nd-xi.dev/landxi/v3/ops-infra/js/tenant-page.js?v=ef5c388de6",
+   17707
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/empty.js?v=ef5c388de6",
+   18014
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/retrain.js?v=ef5c388de6",
+   18300
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/assets/data/emblems.js",
+   19003
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/apikeys.js?v=ef5c388de6",
+   20332
+  ],
+  [
+   "in.land-xi.dev/landxi/v3/ops-infra/js/spaces.js?v=ef5c388de6",
+   20539
+  ],
+  [
+   "dmin.land-xi.dev/landxi/v3/ops-infra/js/data.js?v=ef5c388de6",
+   20810
+  ],
+  [
+   "tps://admin.land-xi.dev/landxi/v3/kit/notify.js?v=ef5c388de6",
+   21060
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/ops-infra.css?v=ef5c388de6",
+   21462
+  ],
+  [
+   "/admin.land-xi.dev/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+   0
+  ],
+  [
+   "n.land-xi.dev/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+   0
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/kit/shell.js?v=ef5c388de6",
+   21532
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/kit/service-card.js?v=ef5c388de6",
+   21647
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/ops-core/js/data.js?v=ef5c388de6",
+   22196
+  ],
+  [
+   "s://admin.land-xi.dev/landxi/v3/kit/dropzone.js?v=ef5c388de6",
+   22356
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/release.js?v=ef5c388de6",
+   22583
+  ],
+  [
+   "n.land-xi.dev/landxi/v3/ops-infra/js/improve.js?v=ef5c388de6",
+   23730
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/cmdk.js?v=ef5c388de6",
+   26784
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/apikeys.css",
+   1389
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/gov-select/brand.css",
+   1391
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/i18n/ko.json",
+   2295
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/i18n/en.json",
+   2357
+  ],
+  [
+   "https://admin.land-xi.dev/cdn-cgi/rum?",
+   1048
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/me",
+   1078
+  ],
+  [
+   "//admin.land-xi.dev/landxi/assets/brand/vector/lx-lockup.svg",
+   6
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/improve.css",
+   1369
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/spaces.css",
+   1679
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/storage",
+   1807
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/nodes",
+   1883
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/ops/data/i18n-ko.json",
+   3371
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/llm/models",
+   3973
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/health",
+   4034
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/tenants",
+   4088
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/reviews/notify",
+   4591
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/v3/ops-infra/tenant-page.css",
+   4706
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/retrain.css",
+   4753
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/ops-infra/release.css",
+   6073
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/service-card.css",
+   6200
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/queues",
+   5501
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/notify.css",
+   6079
+  ],
+  [
+   "admin.land-xi.dev/landxi/v3/ops-infra/js/law.js?v=ef5c388de6",
+   6254
+  ],
+  [
+   "dmin.land-xi.dev/landxi/v3/kit/session-clock.js?v=ef5c388de6",
+   6295
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/improve/items",
+   6467
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/registry/cards",
+   6933
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/registry/models",
+   7003
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/openapi.json",
+   7439
+  ],
+  [
+   "https://admin.land-xi.dev/landxi/v3/kit/me.css",
+   8017
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/auth/session",
+   1932
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/gpus",
+   8560
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/models",
+   8762
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/law/status",
+   4328
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/approvals?state=pending",
+   4251
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/ops/tenants",
+   18274
+  ],
+  [
+   "ttps://admin.land-xi.dev/landxi/assets/fonts/Inter-500.woff2",
+   27120
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/reviews/notify",
+   1604
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/approvals?state=pending",
+   2020
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/deploys",
+   37075
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/deploys",
+   32526
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/deploys",
+   20760
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/reviews/notify",
+   1608
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/approvals?state=pending",
+   2111
+  ],
+  [
+   "https://admin.land-xi.dev/cdn-cgi/rum?",
+   1447
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/train-templates",
+   3235
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/reviews/notify",
+   1635
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/deploys",
+   32150
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/approvals?state=pending",
+   3239
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/deploys",
+   21819
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/reviews/notify",
+   1384
+  ],
+  [
+   "https://admin.land-xi.dev/api/v1/approvals?state=pending",
+   1750
+  ]
+ ],
+ "_retrain_text": "언제 학습하나\n쉬는 시간에 자동\n사람이 누를 때만\n쉬는 시간\n–\n주말 하루 종일\n기준\n장\n학습 자리\n한 번에 하나\n저장\n\n서비스마다 새 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.\n\nXI맵에서 고친 자리 한 칸(영상 + 그 안 테두리)이 고친 뒤 30분 조용하면 학습 데이터 1장이 됩니다.\n\n지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.\n\n분석서비스별\n분석서비스 · 지금 판\t새 학습 데이터\t새 클래스\t방식\t상태\t\n주차장 · 2.0\n주차장 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n건축물 · 2.0\n건축물 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n비닐하우스 · 2.0\n비닐하우스 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t지금 판보다 낮음 · 후보로 남음\n최근 다시 학습 87% · 지금 판 91%\n\t지금 학습\n곤포사일리지 · 1.0\n곤포사일리지 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n경작·휴경 · 2.1\n프로젝트 없음\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n새 모델 프로젝트 후보\n승인된 새 물체 클래스 — 지금 모델에 없어 새 모델로 학습합니다\n\n아직 없습니다 · 세부 클래스는 위 클래스 서비스 줄에서 나누기로 학습합니다\n\n오늘 밤 순서\n22:00–06:00 · 학습 자리 하나를 차례로 · 기관 AI 분석 요청과 전국 분석이 있으면 그 뒤\n\n오늘 밤 학습할 서비스가 없습니다 — 기준에 닿은 서비스가 없습니다\n\n마지막 확인 10.12 20:14 · 5분마다",
+ "now-admin-retrain-2016.png": {
+  "at": "2026-10-12T20:16:10",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/retrain",
+  "note": "LX 관리자 — 배포 → XI 재학습"
+ },
+ "now-new-project-2018.png": {
+  "at": "2026-10-12T20:18:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "note": "새 프로젝트 한 창(만들지 않고 열어 둔 모습)"
+ },
+ "now-admin-template-2026.png": {
+  "at": "2026-10-12T20:26:37",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 — 학습 서식"
+ },
+ "mock-dash8-2027.png": {
+  "at": "2026-10-12T20:27:34",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "note": "시안 8차 첫 화면"
+ },
+ "mock-dash8-full-2028.png": {
+  "at": "2026-10-12T20:28:43",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "note": "시안 8차 세로 전체"
+ },
+ "mock-dash8-stages6-2029.png": {
+  "at": "2026-10-12T20:29:39",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html?stages=6",
+  "note": "시안 8차 여섯 칸"
+ },
+ "mock-data-map-2030.png": {
+  "at": "2026-10-12T20:30:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/data-map/index.html",
+  "note": "데이터 개념 진단 그림(바깥 주소 화면)"
+ },
+ "now-train-farm-2032.png": {
+  "at": "2026-10-12T20:32:10",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+  "note": "프로젝트 '경작지 v2' 학습 화면(세로로 길게)"
+ },
+ "now-ximap-jeonju-2040.png": {
+  "at": "2026-10-12T20:40:55",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52110",
+  "note": "XI맵 시군구 카드 — 전주"
+ },
+ "now-ximap-diag-2042.png": {
+  "at": "2026-10-12T20:42:14",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "지금 XI맵 첫 화면(진단)"
+ },
+ "mock-perf-a-2042.png": {
+  "at": "2026-10-12T20:42:38",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=a",
+  "note": "시안 XI맵 퍼포먼스 A안"
+ },
+ "mock-perf-b-2042.png": {
+  "at": "2026-10-12T20:42:55",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=b",
+  "note": "시안 XI맵 퍼포먼스 B안"
+ },
+ "now-admin-template-2106.png": {
+  "at": "2026-10-12T21:06:46",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 — 학습 서식"
+ }
+}

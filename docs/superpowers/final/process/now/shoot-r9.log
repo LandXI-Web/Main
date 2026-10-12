@@ -1,0 +1,17 @@
+½ÇÆÐ newproj Page.wait_for_function: TypeError: Cannot read properties of null (reading 'dataset')     at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:32)     at predicate (eval at evaluate (:311:30), <anonymous>:13:29)     at next (eval at evaluate (:311:30), <anonymous>:29:33)     at eva
+ÂïÀ½ now-train-farm-1930.png
+ÂïÀ½ now-ximap-jeonju-1931.png
+ÂïÀ½ now-ximap-diag-1931.png
+ÂïÀ½ mock-perf-a-1932.png
+ÂïÀ½ mock-perf-b-1932.png
+½ÇÆÐ(¹­À½) admin Timeout 38812ms exceeded.
+=========================== logs ===========================
+"domcontentloaded" event fired
+============================================================
+½ÇÆÐ d8 Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html", waiting until "load" 
+½ÇÆÐ d8full Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html", waiting until "load" 
+½ÇÆÐ d8s6 Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html?stages=6", waiting until "load" 
+Traceback (most recent call last):
+  File "E:\Land-XI ÇÃ·§Æû\01. µðÀÚÀÎ\docs\superpowers\final\process\now\shoot-r9.py", line 185, in <module>
+    print('³¡ \u2014 ½ÇÆÐ', LOG['_failed'], '·Î±×ÀÎ', LOG['_logins'])
+UnicodeEncodeError: 'cp949' codec can't encode character '\u2014' in position 2: illegal multibyte sequence

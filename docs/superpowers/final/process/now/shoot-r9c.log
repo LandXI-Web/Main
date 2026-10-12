@@ -1,0 +1,6 @@
+찍음 now-new-project-1944.png
+실패 retrain Page.wait_for_selector: Timeout 90000ms exceeded. Call log:   - waiting for locator(".rt-col .rt-tbl tbody tr") to be visible 
+실패 tmpl Page.screenshot: Timeout 150000ms exceeded. Call log:   - taking page screenshot   - waiting for fonts to load... 
+찍음 mock-dash8-full-1951.png
+찍음 mock-dash8-stages6-1954.png
+끝 — 실패 ['묶음:admin', 'retrain', 'tmpl'] 로그인 5

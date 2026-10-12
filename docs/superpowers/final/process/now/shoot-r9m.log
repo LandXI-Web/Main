@@ -1,0 +1,13 @@
+찍음 now-new-project-2018.png
+실패 train Page.wait_for_function: TypeError: Cannot read properties of null (reading 'dataset')     at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:32)     at predicate (eval at evaluate (:311:30), <anonymous>:13:29)     at next (eval at evaluate (:311:30), <anonymous>:29:33)     at eva
+실패 xijeonju Page.wait_for_function: Timeout 60000ms exceeded.
+실패 diag Page.wait_for_function: Timeout 60000ms exceeded.
+실패 perfa Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=a", waiting until "load" 
+실패 perfb Page.goto: Timeout 60000ms exceeded. Call log:   - navigating to "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf/index.html?v=b", waiting until "load" 
+실패 retrain Page.wait_for_selector: Timeout 90000ms exceeded. Call log:   - waiting for locator(".rt-col .rt-tbl tbody tr") to be visible 
+찍음 now-admin-template-2026.png
+찍음 mock-dash8-2027.png
+찍음 mock-dash8-full-2028.png
+찍음 mock-dash8-stages6-2029.png
+찍음 mock-data-map-2030.png
+끝 — 실패 ['묶음:admin', '묶음:admin', '묶음:admin', '묶음:admin', '묶음:staff', '묶음:admin', '묶음:admin', '묶음:admin', 'train', 'xijeonju', 'diag', 'perfa', 'perfb', 'retrain'] 로그인 11
