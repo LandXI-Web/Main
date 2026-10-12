@@ -190,7 +190,7 @@ async def _imagery_items(stage: str | None) -> list[dict]:
         if stage and lad.get("stage") not in (stage, "both"):
             continue
         meta = r["layer"] or {}
-        if meta.get("role") == "request":         # 기관이 분석 의뢰로 맡긴 영상 — 그 의뢰의 분석에만(영상 목록 · 지도에 내지 않는다 · requests.py)
+        if meta.get("role") in ("request", "national"):   # 기관이 맡긴 영상(requests.py) · 전국 결과 자산의 영상 API 원천(national) — 영상 목록 · 지도에 내지 않는다
             continue
         m = _mf(meta.get("manifest"))
         signed = False

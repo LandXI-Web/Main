@@ -1,0 +1,165 @@
+{
+ "year": 2025,
+ "enabled": true,
+ "assets": {
+  "farm": {
+   "name": "농지 전수",
+   "pct": {
+    "value": 0.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+   },
+   "done_km2": {
+    "value": 0.0,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸 분석 범위"
+   },
+   "total_km2": {
+    "value": 38367.9,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "전체 분석 범위(칸 합)"
+   },
+   "cells": {
+    "value": 3859,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "분석할 범위가 있는 읍면동"
+   },
+   "done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 읍면동"
+   },
+   "failed": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+   },
+   "sgg_done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸이 있는 시군구"
+   },
+   "sgg": {
+    "value": 251,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "분석할 범위가 있는 시군구"
+   },
+   "last_at": null,
+   "counts": {},
+   "next": {
+    "sido": "전북",
+    "sgg": "전주시 완산구",
+    "emd": "다가동2가"
+   }
+  },
+  "river": {
+   "name": "하천 · 계곡",
+   "pct": {
+    "value": 0.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+   },
+   "done_km2": {
+    "value": 0.0,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸 분석 범위"
+   },
+   "total_km2": {
+    "value": 14545.0,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "전체 분석 범위(칸 합)"
+   },
+   "cells": {
+    "value": 3869,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "분석할 범위가 있는 읍면동"
+   },
+   "done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 읍면동"
+   },
+   "failed": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+   },
+   "sgg_done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "끝난 칸이 있는 시군구"
+   },
+   "sgg": {
+    "value": 253,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T14:19:41+09:00",
+    "source": "분석할 범위가 있는 시군구"
+   },
+   "last_at": null,
+   "counts": {},
+   "next": {
+    "sido": "전북",
+    "sgg": "전주시 완산구",
+    "emd": "전동"
+   }
+  }
+ },
+ "v": {
+  "farm": "0.0",
+  "river": "0.0"
+ },
+ "imagery": "국토지리정보원 항공 정사영상 2025 · 25cm · 영상은 저장하지 않음",
+ "runner": {
+  "state": "idle",
+  "why": null,
+  "at": "2026-10-12T14:15:01+09:00",
+  "cell": null
+ },
+ "tonight": {
+  "quiet": {
+   "quiet_start": "22:00",
+   "quiet_end": "06:00",
+   "weekend": true,
+   "now": false
+  },
+  "starts_at": "2026-10-12T22:00+09:00",
+  "est_km2": {
+   "value": 2400,
+   "unit": "km2",
+   "basis": "estimate",
+   "as_of": "2026-10-12T14:19:41+09:00",
+   "source": "10-12 낮 시험 칸 속도(1㎢ 약 12초) × 쉬는 시간 [추정]"
+  }
+ }
+}

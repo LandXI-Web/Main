@@ -159,6 +159,10 @@ try {
     await page.waitForFunction(() => /서비스 \d+가지/.test(document.querySelector('.xb-p')?.textContent || ''), null, { timeout: 40000 }).catch(() => warns.push('XI맵 전국 결과 칸이 안 보임'));
     const xiSvc = await page.evaluate(() => (document.querySelector('.xb-p')?.textContent || '').match(/서비스 (\d+)가지/)?.[1] || null);
     put('서비스 수(결과를 낸 서비스)', 'XI맵 전국 결과', xiSvc ? xiSvc + '가지' : null);
+    // 전국 결과 자산 진행(원칙 218) — XI맵 '전국 농지 범위의 n%' = 관리자 대시보드 '전국 농지 n%'(GET /national/progress 한 출처)
+    await page.waitForFunction(() => /농지 범위의 [\d.]+%/.test(document.querySelector('.xna-p')?.textContent || ''), null, { timeout: 30000 }).catch(() => warns.push('XI맵 전국 결과 자산 칸이 안 보임'));
+    const xiNat = await page.evaluate(() => (document.querySelector('.xna-p')?.textContent || '').match(/농지 범위의 ([\d.]+)%/)?.[1] || null);
+    put('전국 농지 분석 진행', 'XI맵 전국 결과 자산', xiNat ? xiNat + '%' : null);
     const svcOfProject = {};
     for (const p of projs.ids) {
       const q = encodeURIComponent(p.id);
@@ -191,6 +195,11 @@ try {
     try {
     const A = await session(HOST.admin, 'lxadmin@lx.or.kr');
     const ap = A.page;
+    // 전국 결과 자산 진행 — 관리자 대시보드 할 일 줄 '전국 농지 n% · 하천 n%'
+    await go(ap, HOST.admin + '/landxi/v3/ops-core/');
+    await ap.waitForFunction(() => /전국 농지 [\d.]+%/.test(document.querySelector('.oc-todo')?.textContent || ''), null, { timeout: 30000 }).catch(() => warns.push('관리자 대시보드 전국 결과 줄이 안 보임'));
+    const opsNat = await ap.evaluate(() => (document.querySelector('.oc-todo')?.textContent || '').match(/전국 농지 ([\d.]+)%/)?.[1] || null);
+    put('전국 농지 분석 진행', '관리자 대시보드', opsNat ? opsNat + '%' : null);
     // 기관 — 분석한 면적(이번 달)
     await go(ap, HOST.admin + '/landxi/v3/ops-infra/#/tenants');
     await settle(ap, 'figure.stat[data-metric]');

@@ -1,0 +1,127 @@
+"""구현 22 · 전국 결과 자산(원칙 136 · 211 · 218 · 10-12 12:45 확인) — 작업기 · 진행 · XI맵 지도 조각.
+
+① GET /national/progress — 숫자 봉투 · 진행 % = 끝난 범위 ÷ 전체 범위(장부와 같음) · 칸 숫자 합 = 장부 합 · 시험 칸은 숫자에 없음 · 기관 계정 막힘
+② PUT /national/settings — LX 관리자만
+③ GET /tiles/national/... — 판 번호(맞으면 1년 보관 · 옛 판 no-cache) · 칸 층 · 시험 결과는 test=1 일 때만
+④ 쉬는 시간 판정 = 재학습 스케줄러(landxi_api.core.quiet)와 같은 규칙 · 같은 설정
+⑤ 영상 API 원천 — 영상 목록 · 영상 고르기에 나오지 않음 · 칩 한 장 읽기(국토지리정보원 타일 · 메모리만)
+실행: python -m pytest server/tests/test_impl22_national.py -q   (게이트웨이 :8700 · GPU 0 · ⑤는 바깥 인터넷)
+"""
+import datetime as dt
+import gzip
+import json
+import sys
+from pathlib import Path
+
+import httpx
+import psycopg
+import pytest
+
+from conftest import B, H
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from national.common import KST, env_file, quiet  # noqa: E402
+
+ROOT = B.rsplit("/api/v1", 1)[0]
+
+
+def db():
+    return psycopg.connect(env_file()["PG_ADMIN_DSN"], autocommit=True)
+
+
+def get(t, p):
+    r = httpx.get(B + p, headers=H(t), timeout=60)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_progress_one_source(tok):
+    j = get(tok["staff"], "/national/progress")
+    with db() as c:
+        year = j["year"]
+        for a in ("farm", "river"):
+            A = j["assets"][a]
+            for k in ("pct", "done_km2", "total_km2", "cells", "done"):
+                assert set(A[k]) >= {"value", "unit", "basis", "source"}, k
+            tot, done, n = c.execute("SELECT coalesce(sum(target_km2) FILTER (WHERE state<>'skip'),0), coalesce(sum(target_km2) FILTER (WHERE state='done'),0), "
+                                     "count(*) FILTER (WHERE state='done') FROM national_cells WHERE asset=%s AND year=%s AND NOT test", (a, year)).fetchone()
+            assert A["total_km2"]["value"] == round(float(tot), 1)
+            assert A["done"]["value"] == n
+            assert A["pct"]["value"] == (round(100.0 * float(done) / float(tot), 1) if tot else 0.0)
+            # 칸 숫자 합 = 장부(끝난 칸) 합 — 시험 칸은 장부에 없다
+            rows = c.execute("SELECT k, sum((v->>'n')::bigint) FROM national_cells, jsonb_each(counts) e(k, v) WHERE asset=%s AND year=%s AND state='done' AND NOT test GROUP BY k",
+                             (a, year)).fetchall()
+            assert {k: int(v) for k, v in rows} == {k: v["n"]["value"] for k, v in A["counts"].items()}
+        assert j["tonight"]["est_km2"]["basis"] in ("measured", "estimate")
+        assert set(j["v"]) == {"farm", "river"}
+
+
+def test_progress_scope(tok):
+    assert httpx.get(B + "/national/progress", headers=H(tok["namwon"]), timeout=30).status_code == 403
+    assert httpx.put(B + "/national/settings", json={"enabled": True}, headers=H(tok["staff"]), timeout=30).status_code == 403
+    j = get(tok["staff"], "/national/progress")
+    r = httpx.put(B + "/national/settings", json={"enabled": j["enabled"]}, headers=H(tok["admin"]), timeout=30)
+    assert r.status_code == 200 and r.json()["settings"]["enabled"] == j["enabled"]
+
+
+def test_tile_version_cache(tok):
+    j = get(tok["staff"], "/national/progress")
+    v = j["v"]["farm"]
+    u = f"{ROOT}/tiles/national/farm/{j['year']}/6/54/25.pbf"
+    r = httpx.get(u + f"?v={v}", timeout=60)
+    assert r.status_code == 200 and r.headers["x-lx-ver"] == v
+    assert "immutable" in r.headers["cache-control"]
+    data = gzip.decompress(r.content) if r.content[:2] == b"\x1f\x8b" else r.content
+    assert b"cells" in data                                              # 칸(분석 예정 · 끝남) 층
+    old = httpx.get(u + "?v=old", timeout=60)
+    assert old.headers["cache-control"] == "no-cache"                     # 옛 판 = 보관 안 함(작업기가 칸을 마치면 주소가 바뀐다)
+
+
+def test_test_results_hidden_unless_asked(tok):
+    """시험 칸 결과(낮 시험)는 XI맵 기본 객체 · 숫자에 들어가지 않는다 — test=1 로만(증거 촬영). 객체 줄은 데이터베이스에 남지 않는다."""
+    with db() as c:
+        row = c.execute("SELECT job_id, bbox, result_set FROM national_jobs WHERE test AND state='done' AND bbox IS NOT NULL LIMIT 1").fetchone()
+        if not row:
+            pytest.skip("시험 칸 결과 없음(정리됨)")
+        assert c.execute("SELECT count(*) FROM detections WHERE job_id=%s", (row[0],)).fetchone()[0] == 0   # C: 데이터베이스에 객체 0
+    bb = ",".join(str(v) for v in row[1])
+    a = get(tok["staff"], f"/national/sets?asset=farm&bbox={bb}")
+    b = get(tok["staff"], f"/national/sets?asset=farm&bbox={bb}&test=1")
+    assert row[2] not in {x["set"] for x in a["sets"]}
+    s = next(x for x in b["sets"] if x["set"] == row[2])
+    r = httpx.get(f"{ROOT}/tiles/mvt/{s['set']}/14/0/0.pbf?v={s['v']}", timeout=60)
+    assert r.status_code in (200, 204) and "immutable" in r.headers["cache-control"]   # 결과 묶음 지도 조각 = 판 번호 주소(1년 보관)
+
+
+def test_quiet_same_rule_as_retrain():
+    from landxi_api.core import quiet as core_quiet
+    st = {"quiet_start": "22:00", "quiet_end": "06:00", "weekend": True}
+    for d, h in [(12, 13), (12, 22), (13, 5), (13, 6), (17, 14), (18, 9)]:      # 10-12 월 · 10-17 토 · 10-18 일
+        at = dt.datetime(2026, 10, d, h, 0, tzinfo=KST)
+        assert quiet(st, at) == core_quiet(st, at), at
+    assert not quiet(st, dt.datetime(2026, 10, 12, 13, 0, tzinfo=KST))
+    assert quiet(st, dt.datetime(2026, 10, 12, 23, 0, tzinfo=KST))
+
+
+def test_api_imagery_hidden_and_reads():
+    from workers import imagery_src as isrc
+    with db() as c:
+        row = c.execute("SELECT id, footprint IS NULL, layer->>'role' FROM imagery WHERE layer->>'role'='national' ORDER BY id DESC LIMIT 1").fetchone()
+        assert row, "영상 API 원천 행 없음"
+        iid, nofp, role = row
+        assert nofp and role == "national"                                  # footprint 없음 = 영상 고르기 · 겹침 셈에 나오지 않음
+        recs = c.execute(isrc.SQL_ROWS).fetchall()
+        assert iid not in {r[0] for r in recs}
+    ds = isrc.open_imagery(iid)
+    assert isinstance(ds, isrc.ApiDataset) and isrc.open_imagery(iid) is ds   # 프로세스에 하나(동시 호출 4 이하)
+    from rasterio.windows import Window
+    from pyproj import Transformer
+    x, y = Transformer.from_crs(4326, 5179, always_xy=True).transform(127.39, 35.41)
+    col, rowp = ~ds.transform * (x, y)
+    a = ds.read([1, 2, 3], window=Window(int(col), int(rowp), 256, 256), boundless=True, fill_value=0)
+    assert a.shape == (3, 256, 256) and a.max() > 0
+
+
+def test_catalog_hides_api_source(tok):
+    j = get(tok["staff"], "/catalog/layers?stage=domestic&build=lx&locale=ko")
+    assert not [it for it in j.get("items", []) if str(it.get("id", "")).startswith("nat-ngii-air-")]

@@ -382,3 +382,20 @@
 .xe-pk-row[hidden]{display:none}
 .xe-pk .xe-pk-say p{margin:0 0 6px;font:500 13px/1.45 var(--font-body);color:var(--ink)}
 .xe-pk p.xe-sub{margin:4px 0 10px;font:400 12.5px/1.4 var(--font-body);color:var(--sub)}
+/* 전국 결과 자산(바퀴 8 · 원칙 218) — HUD 안 한 칸: 자산 고르기 · 진행 · 분석 예정 */
+.xna-card{margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--rule)}
+.xna-h{margin:0 0 8px;font:500 12px/1 var(--font-body);color:var(--sub)}
+.xna-chips{display:flex;gap:6px;margin:0 0 10px}
+.xna-chip{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:15px;background:var(--bg-1);font:600 13px/1 var(--font-body);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.xna-chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.xna-p{margin:0;font:500 14px/20px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.xna-p b{font:700 14px/20px var(--font-num);color:var(--ink)}
+.xna-bar{height:6px;margin:8px 0 6px;border-radius:3px;background:#E5E8EB;overflow:hidden}
+.xna-bar i{display:block;height:100%;border-radius:3px;background:#2E9E5B}
+.xna-s{margin:0;font:400 12px/17px var(--font-body);color:var(--sub);word-break:keep-all}
+.xna-leg{list-style:none;display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0 0;padding:0}
+.xna-leg li{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--font-body);color:var(--ink-2)}
+.xna-leg i{width:10px;height:10px;border-radius:3px}
+.xna-leg i.xna-hatch{background:repeating-linear-gradient(135deg,rgba(120,132,150,.55) 0 1.2px,transparent 1.2px 4px);border:1px solid var(--rule)}
+.xna-src{margin:6px 0 0;font:400 11px/16px var(--font-body);color:var(--sub);word-break:keep-all}
+.xb-tipcard[data-done="0"] .xb-tc-p{color:var(--ink-2)}

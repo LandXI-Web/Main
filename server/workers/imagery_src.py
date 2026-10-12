@@ -56,9 +56,75 @@ def imagery_path(imagery_id: str) -> str:
     return c[imagery_id]
 
 
+# ── 영상 API 원천(전국 결과 자산 · 원칙 136 · 218) ─────────────────────────────────
+# imagery 행 layer.role = 'national' · path_internal = GDAL WMS 설명 파일(.xml · 국토지리정보원 항공 타일 · 키 없음).
+# 영상 파일을 만들지 않는다 — 칩 창을 읽을 때 그 칸의 타일만 불러 메모리에서 쓴다(디스크 보관 0 · <Cache> 없음).
+# 정중한 호출: 프로세스 안에서 한 번에 한 창만 읽고(잠금) 창 하나의 동시 연결은 설명 파일 MaxConnections(≤4) — 동시 4 이하.
+# 실패하면 2 · 4 · 8 · 16 초 기다렸다 다시(지수 대기) · 그래도 안 되면 칸 실패(작업기가 칸을 다시 넣는다). 404 · 204(바다 등 영상 없음)만 빈 칸.
+_API: dict = {}
+_API_LOCK = threading.Lock()
+_API_ROLE: dict = {}
+API_RETRY_S = (2, 4, 8, 16)
+
+
+class ApiDataset:
+    """rasterio 데이터셋처럼 쓰는 얇은 감싸개 — 워커 · 스케줄러가 부르는 속성만(read · count · crs · transform · window_transform · 크기)."""
+
+    def __init__(self, path: str):
+        import rasterio
+        self.path = path
+        self._ds = rasterio.open(path)
+        self._lock = threading.Lock()
+        for k in ("count", "crs", "transform", "width", "height", "res", "bounds", "profile", "dtypes", "nodata"):
+            setattr(self, k, getattr(self._ds, k))
+        self.closed = False
+        self.reads = 0
+        self.retries = 0
+
+    def window_transform(self, win):
+        return self._ds.window_transform(win)
+
+    def read(self, indexes=None, window=None, boundless=False, fill_value=0, **kw):
+        import time as _t
+        inside = window is not None and window.col_off >= 0 and window.row_off >= 0 \
+            and window.col_off + window.width <= self.width and window.row_off + window.height <= self.height
+        last = None
+        for k, wait in enumerate((0,) + API_RETRY_S):
+            if wait:
+                self.retries += 1
+                _t.sleep(wait)
+            try:
+                with self._lock:
+                    self.reads += 1
+                    if inside or not boundless:
+                        return self._ds.read(indexes, window=window, **kw)
+                    return self._ds.read(indexes, window=window, boundless=True, fill_value=fill_value, **kw)
+            except Exception as e:  # noqa: BLE001 — 네트워크 · 서버 오류 → 지수 대기 뒤 다시
+                last = e
+        raise ImageryUnavailable(f"영상 API 읽기 실패(다시 {len(API_RETRY_S)}번): {last}")
+
+    def close(self):          # 프로세스 안에서 함께 쓰는 핸들 — 닫지 않는다
+        pass
+
+
+def _is_api(imagery_id: str) -> bool:
+    if imagery_id not in _API_ROLE:
+        row = _row(imagery_id)
+        _API_ROLE[imagery_id] = bool(row and isinstance(row[1], dict) and row[1].get("role") == "national")
+    return _API_ROLE[imagery_id]
+
+
 def open_imagery(imagery_id: str):
-    """rasterio 데이터셋 — 같은 스레드에서 다시 부르면 같은 핸들(워커 창 읽기 반복용)."""
+    """rasterio 데이터셋 — 같은 스레드에서 다시 부르면 같은 핸들(워커 창 읽기 반복용). 영상 API 원천은 프로세스에 하나(ApiDataset)."""
     import rasterio
+    if _is_api(imagery_id):
+        p = imagery_path(imagery_id)
+        with _API_LOCK:
+            d = _API.get(p)
+            if d is None:
+                os.environ.setdefault("GDAL_HTTP_TIMEOUT", "30")
+                d = _API[p] = ApiDataset(p)
+        return d
     c = getattr(_local, "ds", None)
     if c is None:
         c = _local.ds = {}

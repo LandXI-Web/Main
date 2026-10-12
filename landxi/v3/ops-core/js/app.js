@@ -81,6 +81,7 @@ function drawOverview() {
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
   if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
   /* 기관 '한도 임박' 줄은 없앴다 — 기관에는 막는 한도가 없다(원칙 83 · 11차 "GPU 는 무상 정책"). 사용량은 '기관' 화면에서 */
+  if (natLine) rows.push(natLine);                  // 전국 결과 자산 진행 한 줄(원칙 218) — GET /national/progress 한 출처 · 누르면 XI맵
   rows.push({ t: annN === null ? '공지 쓰기' : `공지 ${annN}건 · 쓰기`, lv: '', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();
@@ -100,6 +101,22 @@ async function drawUse() {
 }
 drawUse();
 setInterval(drawUse, 60000);
+
+/* 전국 결과 자산 — '전국 농지 n% · 하천 n% · 마지막 칸 시각' 한 줄(학습 장비 쉬는 시간에 도는 작업기 · 원칙 218) */
+let natLine = null;
+async function drawNational() {
+  let j;
+  try { j = await api('/national/progress'); } catch { return; }
+  const v = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
+  const pc = (a) => { const x = v(j.assets?.[a]?.pct); return x > 0 && x < 1 ? x.toFixed(1) : String(Math.floor(x)); };
+  const last = [j.assets?.farm?.last_at, j.assets?.river?.last_at].filter(Boolean).sort().pop();
+  const md = (x) => { const d = new Date(x); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const tail = !j.enabled ? '멈춤' : last ? `마지막 칸 ${md(last)}` : `시작 ${md(j.tonight?.starts_at)}`;
+  natLine = { t: `전국 농지 ${pc('farm')}% · 하천 ${pc('river')}% · ${tail}`, lv: v(j.assets?.farm?.failed) + v(j.assets?.river?.failed) ? 'warn' : '', href: '/landxi/v3/xi-clean/' };
+  drawOverview();
+}
+drawNational();
+setInterval(drawNational, 120000);
 
 /* 공지 — 할 일 목록의 '공지 · 쓰기' 줄(주소는 바꾸지 않고 창만) · 올린 수는 서버 GET /announcements 한 출처 */
 let annN = null;

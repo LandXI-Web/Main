@@ -21,9 +21,9 @@ test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치�
   await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
   await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
   await page.goto('v3/xi-clean/?test=1');
-  await page.waitForFunction(() => window.__xc?.board?.glow > 0 && window.__xc.boot?.shown, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown, null, { timeout: 30000 });
 
-  // 가장 빛나는 칸으로 확대 → 객체 하나의 가운데(자리 고정값 없음)
+  // 결과 객체가 가장 많은 시군구로 확대 → 객체 하나의 가운데(자리 고정값 없음)
   const hot = await page.evaluate(() => window.__xc.board.hot);
   await page.evaluate((c) => window.__xc.map.jumpTo({ center: c, zoom: 12.5 }), hot);
   let spot = null;
@@ -50,7 +50,7 @@ test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치�
   };
   const reopen = async () => {
     await page.goto('v3/xi-clean/?test=1');                    // 같은 주소로 다시 열기(브라우저 보관 그대로)
-    await page.waitForFunction(() => window.__xc?.board?.glow > 0 && window.__xc.boot?.shown, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown, null, { timeout: 30000 });
   };
   const before = await open();
   // ② 고치기(분류 바꾸기 · 시험)
