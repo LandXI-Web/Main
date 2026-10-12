@@ -1,0 +1,187 @@
+{
+  "tag": "after",
+  "at": "2026-10-12 10:03:47",
+  "app": "https://app.land-xi.dev",
+  "rounds": [
+    {
+      "region": "남원",
+      "click_s": 18.807,
+      "first_ms": 1328,
+      "n90_ms": 2441,
+      "zoom": 11.6,
+      "land_ms": 2244,
+      "objects_ms": 2441,
+      "blank_ms": 0,
+      "objects": 39213,
+      "wall_ms": 4475,
+      "req": 75,
+      "kb": 2347,
+      "max_req_kb": 382,
+      "status": {
+        "200": 55,
+        "204": 20
+      },
+      "enc": [
+        "gzip",
+        null
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 1841,
+      "round": "처음"
+    },
+    {
+      "region": "보령",
+      "click_s": 37.438,
+      "first_ms": 1574,
+      "n90_ms": 1828,
+      "zoom": 11.6,
+      "land_ms": 2194,
+      "objects_ms": 2194,
+      "blank_ms": 0,
+      "objects": 31568,
+      "wall_ms": 3856,
+      "req": 23,
+      "kb": 1390,
+      "max_req_kb": 314,
+      "status": {
+        "200": 15,
+        "204": 8
+      },
+      "enc": [
+        null,
+        "gzip"
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 1379,
+      "round": "처음"
+    },
+    {
+      "region": "원주",
+      "click_s": 60.295,
+      "first_ms": 1316,
+      "n90_ms": 1422,
+      "zoom": 11.6,
+      "land_ms": 2126,
+      "objects_ms": 2126,
+      "blank_ms": 0,
+      "objects": 4990,
+      "wall_ms": 3278,
+      "req": 14,
+      "kb": 97,
+      "max_req_kb": 64,
+      "status": {
+        "200": 11,
+        "204": 3
+      },
+      "enc": [
+        "gzip",
+        null
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 596,
+      "round": "처음"
+    },
+    {
+      "region": "남원",
+      "click_s": 73.218,
+      "first_ms": 1431,
+      "n90_ms": 1955,
+      "zoom": 11.6,
+      "land_ms": 2315,
+      "objects_ms": 2315,
+      "blank_ms": 0,
+      "objects": 39213,
+      "wall_ms": 4237,
+      "req": 77,
+      "kb": -58,
+      "max_req_kb": 0,
+      "status": {
+        "200": 59,
+        "204": 18
+      },
+      "enc": [
+        "gzip",
+        null
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 33,
+      "round": "다시"
+    },
+    {
+      "region": "보령",
+      "click_s": 92.397,
+      "first_ms": 1433,
+      "n90_ms": 1745,
+      "zoom": 11.6,
+      "land_ms": 2193,
+      "objects_ms": 2193,
+      "blank_ms": 0,
+      "objects": 31568,
+      "wall_ms": 3904,
+      "req": 24,
+      "kb": -18,
+      "max_req_kb": 0,
+      "status": {
+        "200": 16,
+        "204": 8
+      },
+      "enc": [
+        "gzip",
+        null
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 17,
+      "round": "다시"
+    },
+    {
+      "region": "원주",
+      "click_s": 115.627,
+      "first_ms": 1313,
+      "n90_ms": 1436,
+      "zoom": 11.6,
+      "land_ms": 2121,
+      "objects_ms": 2121,
+      "blank_ms": 0,
+      "objects": 4990,
+      "wall_ms": 3298,
+      "req": 14,
+      "kb": -11,
+      "max_req_kb": 0,
+      "status": {
+        "200": 11,
+        "204": 3
+      },
+      "enc": [
+        "gzip",
+        null
+      ],
+      "cf": [
+        "DYNAMIC"
+      ],
+      "slow_ms": 4,
+      "round": "다시"
+    }
+  ],
+  "errors": [],
+  "local": [],
+  "spots": [
+    "남원",
+    "보령",
+    "원주"
+  ],
+  "video": {
+    "file": "fly-10s.mp4",
+    "at": "2026-10-12 10:05:50",
+    "scene": "남원 처음 — 누르기 1.5초 전부터 10초"
+  }
+}

@@ -18,7 +18,8 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
-const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700 };
+/* 게이트웨이 연결은 이어 쓴다(keep-alive · 동시 수 제한 없음 — 결과 지도 조각이 한꺼번에 수십 개 와도 줄 서지 않게 · impl-20 ximap-speed) */
+const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700, agent: new http.Agent({ keepAlive: true, keepAliveMsecs: 15000, maxSockets: Infinity, maxFreeSockets: 64 }) };
 const HOME = '/landxi/v3/login/';
 /* 입구 셋(원칙 27 · 확인 대장 6·7) — 한 플랫폼의 분기. 세 주소 모두 같은 로그인 화면으로 가고, 로그인 화면이 주소를 보고 알맞은 모습이 된다
    (app·admin = 아이디·비밀번호 · gov = 기관 고르기 + 아이디·비밀번호). 첫 화면은 입구별 표(kit/auth-gate.js LANDING_AT)가 정한다.
@@ -143,6 +144,7 @@ function proxy(req, res, body = null) {
   const headers = { ...req.headers, 'x-forwarded-for': ip, 'x-forwarded-proto': 'https', 'x-forwarded-host': req.headers.host || '' };
   if (body !== null) { headers['content-length'] = String(body.length); delete headers['transfer-encoding']; }
   delete headers['x-lx-site'];                                   // 입구는 주소로만 — 바깥에서 보낸 값은 버린다
+  delete headers.connection; delete headers['keep-alive'];      // 이어 쓰기는 관문 ↔ 게이트웨이 사이에서 정한다(바깥 연결의 close 를 넘기지 않음)
   const site = siteOf(req); if (site) headers['x-lx-site'] = site;
   const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
     res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });

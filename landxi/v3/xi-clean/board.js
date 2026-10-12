@@ -4,7 +4,8 @@
    확대할수록(줌 9~11.5) 밀도가 옅어지고 실제 객체(결과 지도 조각의 도형)가 같은 색으로 진해진다. 올리면 그 자리 요약, 누르면 그 자리로 날아간다.
    시군구 칠하기 · 알약 · 점은 없다(사용자 10-12 "난 저 폴리곤도 싫다"). 지역 문자열 하드코딩 0. */
 import { api } from '../kit/util.js';
-import { sourceSpec } from '../../xi/engine/sources.js';
+import { sourceSpec, tilesFor } from '../../xi/engine/sources.js';
+import { API, signSet } from '../../shared/api-v1.js';
 import { addResultLayers } from '../../xi/fx/arrive.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
@@ -16,6 +17,20 @@ const SPARE = ['#E8590C', '#D6336C', '#1098AD', '#5C7CFA', '#74B816', '#AE3EC9']
 /* 밀도 ↔ 객체 크로스페이드(줌) — 객체는 10(결과 조각이 오는 줌)부터 11.4까지 진해지고, 밀도는 10.4에서 옅어지기 시작해 12에서 사라진다(둘이 겹쳐 끊김 없이) */
 const FADE = { d0: 10.4, d1: 12, o0: 10, o1: 11.4 };
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
+
+/* 결과 지도 조각 — 서버가 조각 하나를 한 요청으로(GET /tiles/mvt/{set}/{z}/{x}/{y}.pbf?v=판) 내준다. 판 = 결과 파일 지문(board 가 줌) —
+   파일이 바뀌면 주소가 바뀌어 옛 조각을 보이지 않고, 같으면 브라우저가 보관해 다시 올 때 바로 그린다(impl-20 ximap-speed).
+   판이 없는 묶음은 예전처럼 PMTiles. 그 자리 고치기는 조각을 바꾸지 않는다(고친 자리 층 = /ximap/edits). */
+async function objSpec(L) {
+  if (!L.v || !L.set || L.source !== 'pmtiles') return sourceSpec({ ...L, kind: 'vector' });
+  let tpl = `${API.base}/tiles/mvt/${L.set}/{z}/{x}/{y}.pbf?v=${L.v}`;
+  if (L.signed) {
+    const u = new URL(await signSet(L.set));
+    tpl = `${u.origin}/tiles/mvt/${L.set}/{z}/{x}/{y}.pbf?v=${L.v}&exp=${u.searchParams.get('exp')}&sig=${u.searchParams.get('sig')}`;
+  }
+  return { type: 'vector', tiles: [tpl], minzoom: L.minzoom ?? 10, maxzoom: L.maxzoom ?? 17, ...(L.bounds ? { bounds: L.bounds } : {}),
+    ...(L.promote_id ? { promoteId: L.promote_id } : {}), attribution: L.attribution || '' };
+}
 
 const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
 const rgba = (c, a) => `rgba(${hex(c).join(',')},${a})`;
@@ -76,7 +91,9 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
     let hold = false;
     if (z >= FADE.d0 && z < HOLD_Z) {
       const ls = [...B.loaded.values()].filter((x) => !B.off.has(x.svc)).flatMap((x) => x.ids.filter((l) => /-(fill|pt)$/.test(l))).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none');
-      hold = !ls.length || map.queryRenderedFeatures({ layers: ls }).length === 0;
+      // 붙듦 = 객체 층이 없거나 · 화면 안 결과 조각이 아직 다 오지 않았거나 · 그려진 객체가 없을 때(일부만 와서 빛이 먼저 빠지지 않게)
+      const pend = [...B.loaded.values()].some((x) => !B.off.has(x.svc) && map.getSource(x.sid) && !map.isSourceLoaded(x.sid));
+      hold = !ls.length || pend || map.queryRenderedFeatures({ layers: ls }).length === 0;
     }
     if (hold === !!B.hold) return;
     B.hold = hold;
@@ -137,24 +154,27 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
   }
   /* 가까이 — 화면 안 시군구의 결과 층(그 시군구 · 서비스 지금 결과 하나) · 크로스페이드가 시작되기 전에 미리 불러 둔다 */
   let nearT = 0;
-  async function near(at) {
+  async function near(at, to) {
     if (!B.data) return;
     const z = map.getZoom();
     if (z < NEAR_Z && !at) return;
     // at = 날아갈 자리(누르면 날아감 — 내려앉을 자리의 결과 층을 출발 전에 불러 둔다 · 도착했을 때 빈 지도가 보이지 않게)
-    const b = map.getBounds(), vb = at ? [at.lng, at.lat, at.lng, at.lat] : [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], mc = at || map.getCenter();
+    // at · to = 내려앉을 자리와 줌 — 그때 화면이 덮을 범위(가장자리 시군구 결과까지 · 내려앉은 뒤 늦게 붙지 않게)
+    const c = map.getCanvas(), deg = (px) => (px / (512 * 2 ** (to ?? map.getZoom()))) * 360;
+    const dx = deg(c.clientWidth / 2), dy = at ? deg(c.clientHeight / 2) * Math.cos((at.lat * Math.PI) / 180) : 0;
+    const b = map.getBounds(), vb = at ? [at.lng - dx, at.lat - dy, at.lng + dx, at.lat + dy] : [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], mc = at || map.getCenter();
     // 화면 안 시군구 중 화면 가운데에 가까운 넷(먼저 보는 곳부터)
     const box = (r) => B.sgg.get(r.sgg_cd)?.bbox || r.bbox;
     const dist = (x) => Math.hypot(Math.max(x[0] - mc.lng, 0, mc.lng - x[2]), Math.max(x[1] - mc.lat, 0, mc.lat - x[3]));
     const inView = B.data.regions.filter((r) => { const x = box(r); return x && !(x[2] < vb[0] || x[0] > vb[2] || x[3] < vb[1] || x[1] > vb[3]); })
       .sort((p, q) => dist(box(p)) - dist(box(q))).slice(0, 4);
     let added = false;
-    for (const r of inView) for (const it of r.items) {
-      const L = it.layer, id = 'xb-r-' + String(L.id || L.set).replace(/[^\w-]/g, '_');
-      if (B.loaded.has(id)) continue;
-      let spec;
-      try { spec = await sourceSpec({ ...L, kind: 'vector' }); } catch { continue; }
-      if (map.getSource(id)) continue;
+    // 서명 · 주소를 한꺼번에(차례로 기다리지 않게)
+    const todo = inView.flatMap((r) => r.items.map((it) => ({ r, it, id: 'xb-r-' + String(it.layer.id || it.layer.set).replace(/[^\w-]/g, '_') }))).filter((x) => !B.loaded.has(x.id));
+    const specs = await Promise.all(todo.map((x) => objSpec(x.it.layer).catch(() => null)));
+    for (let k = 0; k < todo.length; k++) {
+      const { r, it, id } = todo[k], L = it.layer, spec = specs[k];
+      if (!spec || B.loaded.has(id) || map.getSource(id)) continue;
       map.addSource(id, spec);
       const c = B.color[it.svc] || '#0FA9A0', lc = it.style === 'landcover';
       const ids = addResultLayers(map, id, id, { kind: lc ? 'landcover' : 'result', sourceLayer: L.layer, visible: false });
@@ -162,10 +182,27 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
         paint: { 'circle-color': c, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1 } }, 'slot-result');
       ids.push(id + '-pt');
       objectPaint(ids, c, lc);
-      B.loaded.set(id, { id, sid: id, ids, set: L.set, svc: it.svc, sgg: r.sgg_cd, region: r.name, name: { ko: `${r.name} ${it.name}` }, item: it });
+      B.loaded.set(id, { id, sid: id, ids, set: L.set, svc: it.svc, sgg: r.sgg_cd, region: r.name, name: { ko: `${r.name} ${it.name}` }, item: it, tpl: spec.tiles?.[0] || null, bounds: L.bounds });
       added = true;
     }
     if (added) syncSets();
+  }
+  /* 날아가기 전 미리 부르기 — 내려앉을 화면(줌 to)을 덮는 결과 조각을 지금 받아 둔다(브라우저 보관 → 지도가 같은 주소를 부르면 바로).
+     켜진 서비스 · 그 자리에 걸치는 묶음만 · 판 번호 주소(tiles)인 것만 */
+  const WARM = new Set();
+  function warm(at, to) {
+    const tz = Math.floor(to), cam = { center: [at.lng, at.lat], zoom: to }, c = map.getCanvas();
+    for (const x of B.loaded.values()) {
+      if (!x.tpl || B.off.has(x.svc)) continue;
+      const mz = x.item?.layer?.minzoom ?? 10, Mz = x.item?.layer?.maxzoom ?? 17;
+      const z = Math.max(mz, Math.min(Mz, tz));
+      for (const [zz, tx, ty] of tilesFor(cam, z, { W: c.clientWidth, H: c.clientHeight, bounds: x.bounds })) {
+        const u = x.tpl.replace('{z}', zz).replace('{x}', tx).replace('{y}', ty);
+        if (WARM.has(u)) continue;
+        WARM.add(u);
+        fetch(u, { credentials: 'same-origin', priority: 'high' }).then((r) => r.arrayBuffer()).catch(() => {});
+      }
+    }
   }
   function syncSets() { onSets([...B.loaded.values()].map((x) => ({ ...x, off: B.off.has(x.svc) }))); }
 
@@ -226,7 +263,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
     hideTip();
     const z = map.getZoom(), to = Math.min(12.5, Math.max(z + 3, 11.6));   // 빛과 객체가 함께 보이는 줌에 내려앉는다
     onFly?.();
-    near(e.lngLat);
+    near(e.lngLat, to).then(() => warm(e.lngLat, to)).catch(() => {});
     if (RM()) map.jumpTo({ center: e.lngLat, zoom: to });
     else map.flyTo({ center: e.lngLat, zoom: to, speed: 1.1, curve: 1.42, essential: false });
   }
@@ -262,6 +299,12 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
     const j = await api('/ximap/board?fresh=1').catch(() => null);
     if (!j?.regions) return;
     B.data = j; for (const r of j.regions) { const reg = regionOf(r); if (reg) B.sgg.set(r.sgg_cd, reg); }
+    // 결과 파일이 다시 구워졌으면(판이 바뀜) 이미 그린 층의 조각 주소를 새 판으로 — 옛 조각이 보관에서 나오지 않게
+    for (const r of j.regions) for (const it of r.items) {
+      const x = B.loaded.get('xb-r-' + String(it.layer.id || it.layer.set).replace(/[^\w-]/g, '_'));
+      if (!x?.tpl || !it.layer.v || x.tpl.includes('v=' + it.layer.v)) continue;
+      objSpec(it.layer).then((sp) => { if (sp.tiles && map.getSource(x.sid)?.setTiles) { map.getSource(x.sid).setTiles(sp.tiles); x.tpl = sp.tiles[0]; x.item = it; } }).catch(() => {});
+    }
     for (const g of [0, 1]) if (B.dens[g]) api('/ximap/density?g=' + g).then((d) => { if (d?.cells) { B.dens[g] = d; map.getSource('xb-dens' + g)?.setData(densFC(d)); } }).catch(() => {});
     onLoad?.(j);
   }

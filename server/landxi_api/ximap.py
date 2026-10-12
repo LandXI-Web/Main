@@ -322,7 +322,18 @@ async def board(request: Request, fresh: int | None = None):
             await asyncio.sleep(0.05)
     elif time.time() - _BOARD["at"] > BOARD_TTL:
         asyncio.get_running_loop().create_task(_rebuild(p))
-    return _BOARD["v"]
+    return _stamp(_BOARD["v"])
+
+
+def _stamp(bd: dict | None) -> dict | None:
+    """결과 층마다 지금 파일의 판(v) — 보관해 둔 판(board)이 오래돼도 판은 내줄 때 잰다(파일을 다시 구우면 조각 주소가 바뀐다 · impl-20 ximap-speed)."""
+    from .tiles import set_tile_ver
+    for r in (bd or {}).get("regions") or []:
+        for it in r.get("items") or []:
+            L = it.get("layer") or {}
+            if L.get("set") and L.get("source") == "pmtiles":
+                L["v"] = set_tile_ver(L["set"])
+    return bd
 
 
 # ── 객체 하나(편집용 단순화) ────────────────────────────────────────────────
@@ -562,8 +573,10 @@ async def undo_edit(eid: str, request: Request):
 
 
 @router.get("/ximap/edits")
-async def live_edits(request: Request, sets: str = ""):
-    """지도 위 '고친 자리' — 살아 있는 고치기(되돌린 것 뺌 · 묶음 20개까지). 객체마다 마지막 고치기 하나."""
+async def live_edits(request: Request, response: Response, sets: str = ""):
+    """지도 위 '고친 자리' — 살아 있는 고치기(되돌린 것 뺌 · 묶음 20개까지). 객체마다 마지막 고치기 하나.
+    결과 조각은 1년 보관(판 번호 주소)이고 고치기는 조각을 바꾸지 않으므로, 이 층은 보관하지 않는다(no-store · 고친 즉시 새 모습)."""
+    response.headers["Cache-Control"] = "no-store"
     p = require(principal(request), lx=True)
     want = [s for s in sets.split(",") if s][:20]
     ids = []
