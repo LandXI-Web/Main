@@ -1,0 +1,35 @@
+{
+ "job": "job_01M4QAZBG2NBAB587PT79VFJ3E",
+ "submit": "2026-10-12T14:57:07",
+ "events": [
+  {
+   "t": 0.1,
+   "job": "queued",
+   "first_done": false,
+   "shards": "0/36",
+   "national_runner": "running"
+  },
+  {
+   "t": 1.1,
+   "job": "running",
+   "first_done": false,
+   "shards": "0/36",
+   "national_runner": "running"
+  },
+  {
+   "t": 4.2,
+   "job": "running",
+   "first_done": true,
+   "shards": "8/36",
+   "national_runner": "running"
+  },
+  {
+   "t": 20.4,
+   "job": "done",
+   "first_done": true,
+   "shards": "36/36",
+   "national_runner": "running"
+  }
+ ],
+ "after_25s_runner": "running"
+}

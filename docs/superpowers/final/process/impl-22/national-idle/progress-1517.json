@@ -1,0 +1,237 @@
+{
+ "year": 2025,
+ "enabled": true,
+ "assets": {
+  "farm": {
+   "name": "농지 전수",
+   "on": true,
+   "pct": {
+    "value": 0.1,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+   },
+   "done_km2": {
+    "value": 21.3,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸 분석 범위"
+   },
+   "total_km2": {
+    "value": 38367.9,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "전체 분석 범위(칸 합)"
+   },
+   "cells": {
+    "value": 3859,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "분석할 범위가 있는 읍면동"
+   },
+   "done": {
+    "value": 16,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 읍면동"
+   },
+   "failed": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+   },
+   "sgg_done": {
+    "value": 1,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸이 있는 시군구"
+   },
+   "sgg": {
+    "value": 251,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "분석할 범위가 있는 시군구"
+   },
+   "last_at": "2026-10-12T15:15+09:00",
+   "counts": {
+    "경작지": {
+     "n": {
+      "value": 3342,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-10-12T15:16:29+09:00",
+      "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+     },
+     "km2": {
+      "value": 3.93,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-10-12T15:16:29+09:00",
+      "source": "끝난 칸 AI 분석 결과 넓이"
+     },
+     "unit": "곳"
+    },
+    "비닐하우스": {
+     "n": {
+      "value": 104,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-10-12T15:16:29+09:00",
+      "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+     },
+     "km2": {
+      "value": 0.07,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-10-12T15:16:29+09:00",
+      "source": "끝난 칸 AI 분석 결과 넓이"
+     },
+     "unit": "동"
+    }
+   },
+   "next": {
+    "sido": "전북",
+    "sgg": "전주시 완산구",
+    "emd": "삼천동3가"
+   }
+  },
+  "river": {
+   "name": "하천 · 계곡",
+   "on": false,
+   "pct": {
+    "value": 0.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+   },
+   "done_km2": {
+    "value": 0.0,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸 분석 범위"
+   },
+   "total_km2": {
+    "value": 14545.0,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "전체 분석 범위(칸 합)"
+   },
+   "cells": {
+    "value": 3869,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "분석할 범위가 있는 읍면동"
+   },
+   "done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 읍면동"
+   },
+   "failed": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+   },
+   "sgg_done": {
+    "value": 0,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "끝난 칸이 있는 시군구"
+   },
+   "sgg": {
+    "value": 253,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-12T15:16:29+09:00",
+    "source": "분석할 범위가 있는 시군구"
+   },
+   "last_at": null,
+   "counts": {},
+   "next": {
+    "sido": "전북",
+    "sgg": "전주시 완산구",
+    "emd": "전동"
+   }
+  }
+ },
+ "v": {
+  "farm": "16.1791785704",
+  "river": "0.0"
+ },
+ "imagery": "국토지리정보원 항공 정사영상 2025 · 25cm · 영상은 저장하지 않음",
+ "runner": {
+  "state": "running",
+  "why": null,
+  "at": "2026-10-12T15:16:24+09:00",
+  "cell": null
+ },
+ "schedule": {
+  "mode": "idle",
+  "idle_now": true,
+  "starts_at": "2026-10-12T15:16+09:00",
+  "est_km2_day": {
+   "value": 911,
+   "unit": "km2",
+   "basis": "measured",
+   "as_of": "2026-10-12T15:16:29+09:00",
+   "source": "끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+  },
+  "days_left": {
+   "value": 42.1,
+   "unit": "count",
+   "basis": "measured",
+   "as_of": "2026-10-12T15:16:29+09:00",
+   "source": "남은 범위 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)"
+  }
+ },
+ "tonight": {
+  "mode": "idle",
+  "idle_now": true,
+  "starts_at": "2026-10-12T15:16+09:00",
+  "est_km2_day": {
+   "value": 911,
+   "unit": "km2",
+   "basis": "measured",
+   "as_of": "2026-10-12T15:16:29+09:00",
+   "source": "끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+  },
+  "days_left": {
+   "value": 42.1,
+   "unit": "count",
+   "basis": "measured",
+   "as_of": "2026-10-12T15:16:29+09:00",
+   "source": "남은 범위 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)"
+  },
+  "quiet": {
+   "quiet_start": "22:00",
+   "quiet_end": "06:00",
+   "weekend": true,
+   "now": false
+  },
+  "est_km2": {
+   "value": 911,
+   "unit": "km2",
+   "basis": "measured",
+   "as_of": "2026-10-12T15:16:29+09:00",
+   "source": "끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+  }
+ }
+}

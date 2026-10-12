@@ -258,13 +258,24 @@ def admit(pool: str):
             r().hset(f"job:{job_id}", mapping={"shards_total": len(sh), "cursor": 0})
             active[job_id] = {"pool": pool, "priority": int(jh.get("priority", 0)), "tenant": jh.get("tenant_id"), "total": len(sh),
                               "cursor": 0, "started": False, "created": float(jh.get("queued_at_ms", 0)) / 1000,
-                              "resume_seq": int(jh.get("resume_seq") or 0), "slow": is_slow(pool, jh)}
+                              "resume_seq": int(jh.get("resume_seq") or 0), "slow": is_slow(pool, jh), "nat": is_national(jh)}
             log(WHO, f"admit {job_id} kind={jh.get('kind')} model={jh.get('model_id')} adapter={jh.get('adapter') or '-'} shards={len(sh)} "
                      f"plan {int((time.time()-t0)*1000)}ms P{jh.get('priority')}")
             r().xack(stream, "g:sched", eid)
             if not sh:
                 r().xadd("finalize:cpu:small", {"job_id": job_id, "by": WHO, "at": now_iso()})
                 active.pop(job_id, None)
+
+
+NAT_INFLIGHT = int(((_PCFG.get("power") or {}).get("national") or {}).get("inflight", 8))
+
+
+def is_national(jh: dict) -> bool:
+    """전국 결과 자산 작업(options.national · 원칙 221) — 스트림에 한 번에 NAT_INFLIGHT 칸까지만(사용자 작업이 오면 그 몇 칸 뒤에 바로 돈다)."""
+    try:
+        return bool(json.loads(jh.get("options") or "{}").get("national"))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def is_slow(pool: str, jh: dict) -> bool:
@@ -318,6 +329,8 @@ def pick(pool: str, only_new: bool = False) -> str | None:
             continue
         if j.get("slow") and j["cursor"] - int(jh.get("shards_done") or 0) - int(jh.get("shards_failed") or 0) >= 1:
             continue            # 느린 shard 작업(원격 지수 등 · 중앙값 ≥ slow_shard_ms)은 한 번에 1 shard — 다른 cpu 워커가 빠른 작업(실태조사 39칸)을 굶지 않게
+        if j.get("nat") and j["cursor"] - int(jh.get("shards_done") or 0) - int(jh.get("shards_failed") or 0) >= NAT_INFLIGHT:
+            continue            # 전국 작업 — 스트림에 NAT_INFLIGHT 칸까지만(낮에 돌아도 사용자 작업이 그 뒤에 오래 줄 서지 않게)
         j["priority"] = int(jh.get("priority", j["priority"]))
         # (1) 우선순위 (2) 아직 시작 안 한 작업의 첫 묶음 선점(v1.1-17 · 동시 3건 첫 shard ≤ 8s) (3) 기관 deficit
         # (4) 지금까지 배정한 shard 수가 적은 작업(작업 단위 공정 분배 — 8만 shard 전역 뒤에 143 shard 도엽 작업이 줄 서지 않게)
@@ -332,6 +345,11 @@ def _dispatch(pool: str, jid: str, n: int) -> int:
     j = active[jid]
     if j.get("slow"):
         n = 1
+    if j.get("nat"):
+        jh0 = bus.job(jid)
+        n = max(0, min(n, NAT_INFLIGHT - (j["cursor"] - int(jh0.get("shards_done") or 0) - int(jh0.get("shards_failed") or 0))))
+        if not n:
+            return 0
     stream = f"shards:{pool}"
     items = r().lrange(f"jobshards:{jid}", j["cursor"], j["cursor"] + n - 1)
     if not items:
@@ -690,7 +708,7 @@ def restore():
         if cur < total:
             active[jid] = {"pool": jh.get("pool"), "priority": int(jh.get("priority", 0)), "tenant": jh.get("tenant_id"), "total": total,
                            "cursor": cur, "started": jh.get("state") == "running", "created": float(jh.get("queued_at_ms", 0)) / 1000,
-                           "resume_seq": int(jh.get("resume_seq") or 0), "slow": is_slow(jh.get("pool"), jh)}
+                           "resume_seq": int(jh.get("resume_seq") or 0), "slow": is_slow(jh.get("pool"), jh), "nat": is_national(jh)}
             if jh.get("recovering") == "1":
                 r().hdel(f"job:{jid}", "recovering")      # 복구 sweep 이 방금 다시 적은 계획을 restore 가 그대로 이어받는다
             log(WHO, f"restore {jid} cursor {cur}/{total}")

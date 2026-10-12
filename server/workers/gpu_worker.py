@@ -51,6 +51,14 @@ GATE_CHUNK = max(1, int(PWR.get("gate_chunk", 8)))          # 읽어 간 묶음 
 FAST_POLL_S = float(PWR.get("fast_poll_s", 0.1))            # NVML 순간 전력 폴링(반응 지연 ↓)
 QUIET_S = float(PWR.get("other_quiet_s", 20))               # 다른 GPU 가 내려간 뒤 이만큼 조용해야 재개(에이전트 LLM 호출은 몇 초 간격으로 몰려 온다 — 실측 겹침 3구간 중 2구간이 재개 2·14 s 뒤)
 IDLE_RELEASE = float(PWR.get("idle_release_s", 3))
+# 전국 결과 자산(작업 options.national) — 한 장만 · 풀로드 금지(원칙 221 · 10-12). 작은 묶음 + 묶음 사이 쉼(이 GPU 사용률 · 전력을 재며 조절).
+NAT = PWR.get("national", {}) or {}
+NAT_GPU = int(NAT.get("gpu", 0))                            # 전국 작업은 이 장에서만(다른 장 = vLLM 등 · 건드리지 않음)
+NAT_CHUNK = max(1, int(NAT.get("chunk", 4)))                # 한 번에 돌리는 칩 수(묶음 크기)
+NAT_UTIL = float(NAT.get("util_max", 70))                   # 사용률 상한(%) — 이동평균이 넘으면 쉼을 늘린다
+NAT_W = float(NAT.get("power_max_w", 140))                  # 전력 상한(W) — 장당 상한 200 W 의 70%
+NAT_DUTY0 = float(NAT.get("duty", 0.5))                     # 처음 일하는 몫(추론 시간 ÷ (추론 + 쉼))
+nat = {"duty": NAT_DUTY0, "slept": 0.0}
 lease = {"slot": None, "last_work": 0.0, "waiting": False}
 
 
@@ -399,10 +407,12 @@ def smi_sampler():
                 except ValueError:
                     continue
                 smi["ring"].setdefault(i, deque(maxlen=SMI_WIN)).append(u)
+                smi.setdefault("ring30", {}).setdefault(i, deque(maxlen=60)).append(u)      # 30초 창(전국 작업 조절 · 순간 튐에 흔들리지 않게)
                 smi["raw"][i] = u
                 try:
                     smi["power"][i] = round(float(v[2]), 1)
                     smi.setdefault("pring", {}).setdefault(i, deque(maxlen=SMI_WIN)).append(float(v[2]))
+                    smi.setdefault("pring30", {}).setdefault(i, deque(maxlen=60)).append(float(v[2]))
                 except ValueError:
                     smi["power"][i] = None
                 try:
@@ -541,6 +551,16 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     demo = jh.get("demo") == "1"
     tenant = jh.get("tenant_id")
     opts = json.loads(jh.get("options") or "{}")
+    national = bool(opts.get("national"))
+    other_gpu_card = national and A.gpu != NAT_GPU      # 전국 작업은 정한 한 장에서만 — 다른 장 워커는 되돌려 놓는다
+    if national and (other_gpu_card or other_job_waiting(job_id)):     # 다른 작업 칸이 기다리면 읽기 전에 통째로 뒤로(원칙 221)
+        for _, f in entries:
+            r().xadd(STREAM, f)
+        r().xack(STREAM, GROUP, *ids)
+        r().xdel(STREAM, *ids)
+        if other_gpu_card:
+            time.sleep(2)
+        return
     mid = jh.get("model_id")
     ad, meta, _ = ensure_model(mid)
     path = imagery_path(jh.get("imagery_id"))
@@ -577,27 +597,39 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     t_read = 0.0
     # 칸 묶음(GATE_CHUNK)마다: 다른 GPU 확인(전력 규칙 · 폴백 없음) → 그 묶음의 창만 기다림 → 추론 → 바로 기록 · shard.done.
     # (예전: 16칸 창을 다 읽고 16칸을 다 돌린 뒤에야 첫 shard.done — 실시간 분석의 첫 결과가 한 묶음만큼 늦었다)
-    for c0 in range(0, len(shards), GATE_CHUNK):
-        part = shards[c0:c0 + GATE_CHUNK]
+    step = NAT_CHUNK if national else GATE_CHUNK
+    for c0 in range(0, len(shards), step):
+        part = shards[c0:c0 + step]
         if c0 and (bus.job(job_id) or {}).get("state") in ("cancelled", "failed"):
             for s in shards[c0:]:
                 bus.inflight_end(POOL, job_id, s.id)    # 멈춘 작업 — 남은 칸은 돌리지 않는다(GPU 를 바로 놓는다)
             log(WHO, f"job {job_id} 멈춤 — 묶음의 남은 {len(shards) - c0}칸 건너뜀")
+            break
+        if national and c0 and other_job_waiting(job_id):
+            for (_, f), s in zip(entries[c0:], shards[c0:]):     # 전국 작업 — 다른 작업 칸이 기다리면 남은 칸을 스트림 끝으로 돌려 비킨다(원칙 221)
+                bus.inflight_end(POOL, job_id, s.id)
+                r().xadd(STREAM, f)
+            log(WHO, f"전국 작업 {len(shards) - c0}칸 뒤로 — 다른 작업 먼저")
             break
         held = hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
         tp = time.perf_counter()
         for s in part:
             reader(s)
         t_read += time.perf_counter() - tp
+        tg = time.perf_counter()
         results = run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
+        rested = nat_rest(time.perf_counter() - tg, job_id, [x.id for x in shards[c0:]]) if national else 0.0
         if opts.get("classes"):
             results = keep_classes(opts["classes"], results)   # 서비스가 찾는 분류만(예: 4분류 원판 → 비닐하우스 카드는 비닐하우스만)
         if opts.get("live"):
             results = clip_to_aoi(job_id, jh, results)      # 실시간 읍면동 분석 — 범위 밖 결과 제외
         elif sgg:
             results = clip_to_sgg(opts.get("sgg_cd"), results)   # 시군구 전역 — 시군구(읍면동 합집합) 밖 결과 제외
-        t_part = time.perf_counter() - tp               # 전력 게이트 대기(held)는 GPU 시간이 아니다 — tp 는 대기 뒤부터
+        t_part = time.perf_counter() - tp - rested      # 전력 게이트 대기(held) · 전국 작업 쉼(rested)은 GPU 시간이 아니다 — tp 는 대기 뒤부터
+        tc = time.perf_counter()
         _commit_part(job_id, tenant, demo, meta, sdir, part, results, attempts, t_part, held)
+        if national:
+            log(WHO, f"전국 묶음 시간 · 영상 읽기 대기 {tg - tp:.2f}s · 추론+쉼 {tc - tg:.2f}s · 기록 {time.perf_counter() - tc:.2f}s")
     r().xack(STREAM, GROUP, *ids)
     r().xdel(STREAM, *ids)
     jh = bus.job(job_id)
@@ -611,6 +643,47 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         bus.lane(WID, {"job_id": job_id, "to": now_iso(), "state": "done"})
         log(WHO, f"job {job_id} 전 shard 완료 → {lane} (read {t_read*1000:.0f}ms/batch)")
     state["job_id"] = None
+
+
+def other_job_waiting(job_id: str) -> bool:
+    """스트림에 이 전국 작업이 아닌 칸(사용자 AI 분석 등)이 기다리나."""
+    try:
+        seen = {}
+        for _, f in r().xrange(STREAM, count=64):
+            jid = f.get("job_id", "")
+            if jid == job_id or jid in seen:
+                continue
+            h = bus.job(jid) or {}
+            seen[jid] = h.get("state") in ("queued", "running") and '"national"' not in (h.get("options") or "")   # 끝난 작업의 남은 칸은 세지 않음
+            if seen[jid]:
+                return True
+        return False
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def nat_rest(t_gpu: float, job_id: str, shard_ids: list):
+    """전국 작업 묶음 뒤 쉼 — 이 GPU 의 사용률 · 전력 이동평균을 보고 일하는 몫(duty)을 줄이거나 늘린다(풀로드 금지 · 원칙 221).
+    쉼 = 추론 시간 × (1 − duty) ÷ duty. 사용률이 상한 − 5 또는 전력이 상한을 넘으면 duty × 0.8, 넉넉하면 × 1.05(최대 0.9)."""
+    ring = list((smi.get("ring30") or {}).get(A.gpu) or [])
+    pring = list((smi.get("pring30") or {}).get(A.gpu) or [])
+    u = sum(ring) / len(ring) if ring else 0.0                  # 최근 30초 평균 사용률
+    w = sum(pring) / len(pring) if pring else 0.0               # 최근 30초 평균 전력
+    d = nat["duty"]
+    if u > NAT_UTIL - 5 or w > NAT_W:
+        d *= 0.8
+    elif u < NAT_UTIL - 20 and w < NAT_W - 30:
+        d *= 1.05
+    nat["duty"] = d = max(0.1, min(0.9, d))
+    rest = min(10.0, t_gpu * (1 - d) / d)
+    end = time.time() + rest
+    while time.time() < end:                            # 쉬는 동안 고아 감시가 재배정하지 않게 비행 기록을 갱신
+        time.sleep(min(1.0, end - time.time()))
+        for sid in shard_ids:
+            bus.inflight_touch(POOL, job_id, sid)
+    nat["slept"] += rest
+    log(WHO, f"전국 묶음 {len(shard_ids)}칸 남음 · 추론 {t_gpu:.2f}s · 쉼 {rest:.2f}s · duty {d:.2f} · 30초 평균 {u:.0f}% {w:.0f}W")
+    return rest
 
 
 def keep_classes(classes, results: list) -> list:

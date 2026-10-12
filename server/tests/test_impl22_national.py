@@ -53,6 +53,14 @@ def test_progress_one_source(tok):
                              (a, year)).fetchall()
             assert {k: int(v) for k, v in rows} == {k: v["n"]["value"] for k, v in A["counts"].items()}
         assert j["tonight"]["est_km2"]["basis"] in ("measured", "estimate")
+        # 원칙 221 — 학습 장비가 놀 때면 언제든: 일정은 시간대가 아니라 '지금' · 하루 예상 = 속도 × 24시간 · 남은 날 = 남은 ㎢ ÷ 하루 예상
+        S = j["schedule"]
+        assert S["mode"] == "idle" and isinstance(S["idle_now"], bool)
+        assert S["est_km2_day"]["basis"] in ("measured", "estimate") and S["est_km2_day"]["value"] > 0
+        on = (c.execute("SELECT value FROM lx_settings WHERE key='national.run'").fetchone() or [{}])[0] or {}
+        on = (json.loads(on) if isinstance(on, str) else on).get("assets") or ["farm", "river"]      # 켠 자산만(10-12 하천은 사용자 자료 뒤 다시)
+        left = sum(j["assets"][a]["total_km2"]["value"] - j["assets"][a]["done_km2"]["value"] for a in on)
+        assert abs(S["days_left"]["value"] - left / S["est_km2_day"]["value"]) < 0.2
         assert set(j["v"]) == {"farm", "river"}
 
 
@@ -125,3 +133,17 @@ def test_api_imagery_hidden_and_reads():
 def test_catalog_hides_api_source(tok):
     j = get(tok["staff"], "/catalog/layers?stage=domestic&build=lx&locale=ko")
     assert not [it for it in j.get("items", []) if str(it.get("id", "")).startswith("nat-ngii-air-")]
+
+
+def test_idle_anytime_and_gpu_cap():
+    """원칙 221 — 작업기는 시간대를 보지 않고(쉬는 시간 판정 안 씀) 조각을 작게 · 워커는 전국 작업을 한 장에서 사용률 · 전력 상한 아래로."""
+    import inspect
+    from landxi_api import config as cfg
+    from national import runner
+    src = inspect.getsource(runner.loop) + inspect.getsource(runner.run_cell) + inspect.getsource(runner.wait_turn)
+    assert "quiet(" not in src                                   # 쉬는 시간을 기다리지 않는다
+    assert runner.MAX_PART_KM2 <= 15                             # 조각이 작아 몇 분 안에 비킨다
+    nat = cfg.load_yaml("pools")["power"]["national"]
+    lim = cfg.load_yaml("pools")["power"]["power_limit_w"]
+    assert nat["gpu"] == 0 and nat["util_max"] <= 70 and nat["power_max_w"] <= 0.7 * lim and nat["chunk"] <= 8
+

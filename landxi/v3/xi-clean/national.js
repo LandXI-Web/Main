@@ -121,15 +121,15 @@ export function createNational({ map, h, before = 'slot-result' }) {
     const chip = (a) => h('button.xna-chip', { type: 'button', 'aria-pressed': String(a === N.asset), text: a === 'farm' ? `${j.assets.farm.name} · ${j.year}` : j.assets[a].name,
       onclick: () => { if (a === N.asset) return; N.asset = a; setTiles(); paint(); N.onChange?.(a); } });
     const pct = ev(A.pct), done = ev(A.done);
-    const run = j.runner || {}, t = j.tonight || {}, nx = A.next;
-    const at = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? '' : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+    const run = j.runner || {}, t = j.schedule || {}, nx = A.next;
     const where = nx ? `${nx.sido} · ${nx.sgg}` : null;
-    let when;
+    let when;                                       // 학습 장비가 놀 때면 언제든(원칙 221) — 시간대 없음
     if (!j.enabled) when = '멈춤 — 관리자가 다시 켜면 이어서 분석합니다';
+    else if (A.on === false) when = '멈춤 — 하천 범위 자료를 바꾼 뒤 처음부터 다시 분석합니다';
     else if (!nx) when = '모든 칸 분석 끝';
-    else if (t.quiet?.now && run.state === 'running') when = `지금 분석 중 · ${where}`;
-    else if (t.quiet?.now && run.state === 'yield') when = `학습 장비가 다른 일을 하는 동안 기다립니다 · ${where}부터`;
-    else when = t.quiet?.now ? `쉬는 시간 · ${where}부터 차례로` : `${new Date(t.starts_at).getDate() === new Date().getDate() ? '오늘' : '다음'} 쉬는 시간 ${at(t.starts_at)}부터 · ${where}부터`;
+    else if (!t.idle_now || run.state === 'yield') when = `학습 장비가 다른 일을 하는 동안 기다립니다 · ${where}부터`;
+    else if (run.state === 'running') when = `지금 분석 중 · ${where}`;
+    else when = `학습 장비가 놀 때 차례로 · ${where}부터`;
     N.el.replaceChildren(
       h('p.xna-h', { text: '전국 결과 자산' }),
       h('div.xna-chips', { role: 'group', 'aria-label': '결과 자산' }, chip('farm'), chip('river')),
@@ -156,7 +156,7 @@ export function createNational({ map, h, before = 'slot-result' }) {
       }
     }
     return { k: [p.sido, `${p.sgg || ''} ${p.name || ''}`.trim()].filter(Boolean).join(' · '), done: !!p.done, rows,
-      p: p.done ? `${N.year}년 항공 영상 · 25cm · AI 분석 결과` : '분석 예정 — 학습 장비 쉬는 시간에 차례로 분석합니다' };
+      p: p.done ? `${N.year}년 항공 영상 · 25cm · AI 분석 결과` : '분석 예정 — 학습 장비가 놀 때 차례로 분석합니다' };
   }
   /** 날아가기 전 — 내려앉을 화면의 객체 묶음을 붙이고 그 조각을 미리 받아 둔다(브라우저 보관) */
   const WARM = new Set();

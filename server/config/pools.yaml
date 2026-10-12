@@ -14,6 +14,15 @@ power:
   other_quiet_s: 20          # 다른 GPU 가 내려간 뒤 이만큼 조용해야 재개(히스테리시스 · 몰려 오는 LLM 호출 사이에 끼어들지 않게)
   fast_poll_s: 0.1           # NVML 순간 전력 폴링(workers/nvml_power.py · pynvml 없이 ctypes)
   power_limit_w: 200        # nvidia-smi power.limit(장당) — 2026-09-26 전력 상한 200 W × 2 적용(LandXI-GPU-PowerLimit-200W 예약 작업)
+  # 전국 결과 자산 작업(options.national) — 한 장만 · 풀로드 금지(원칙 221 · 10-12). 시스템 전력 상한은 바꾸지 않고 코드 안에서 조절:
+  # 작은 묶음(chunk 칩) + 묶음 사이 쉼(이 장 사용률 · 전력 이동평균을 재며 duty 조절). 다른 장(vLLM 등)은 쓰지 않음.
+  national:
+    gpu: 0
+    chunk: 4
+    util_max: 70             # 사용률 평균 상한(%)
+    power_max_w: 140         # 전력 상한(W) — 장당 상한 200 W 의 70%
+    duty: 0.5
+    inflight: 8              # 스트림에 한 번에 넣는 전국 칸 수(스케줄러) — 사용자 작업이 오면 이 몇 칸 뒤에 바로 돈다
 # 새 작업의 첫 묶음 선점(v1.1-17) — 깊이와 상관없이 바로 넣는 shard 수
 first_chunk: 16
 # shard 고아 감시(v1.1-14) — shard.started 뒤 max(floor_s, 5×중앙값 ms) 안에 done/failed 없으면 timeout → 1회 재배정

@@ -1,0 +1,28 @@
+{
+ "gpu0": {
+  "from": "2026/10/12 14:41:20.112",
+  "to": "2026/10/12 15:15:23.816",
+  "samples_1s": 2029,
+  "util_avg": 3.9,
+  "util_max_1s": 100.0,
+  "util_30s_avg_max": 18.0,
+  "power_avg_w": 45.2,
+  "power_max_w": 134.49,
+  "power_30s_avg_max_w": 80.1,
+  "temp_max_c": 68,
+  "sec_util_over_70": 59
+ },
+ "gpu1": {
+  "from": "2026/10/12 14:41:20.113",
+  "to": "2026/10/12 15:15:23.816",
+  "samples_1s": 2029,
+  "util_avg": 0.0,
+  "util_max_1s": 0.0,
+  "util_30s_avg_max": 0.0,
+  "power_avg_w": 31.1,
+  "power_max_w": 97.22,
+  "power_30s_avg_max_w": 44.4,
+  "temp_max_c": 65,
+  "sec_util_over_70": 0
+ }
+}

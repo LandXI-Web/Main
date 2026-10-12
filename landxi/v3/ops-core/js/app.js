@@ -102,7 +102,7 @@ async function drawUse() {
 drawUse();
 setInterval(drawUse, 60000);
 
-/* 전국 결과 자산 — '전국 농지 n% · 하천 n% · 마지막 칸 시각' 한 줄(학습 장비 쉬는 시간에 도는 작업기 · 원칙 218) */
+/* 전국 결과 자산 — '전국 농지 n% · 하천 n% · 마지막 칸 시각' 한 줄(학습 장비가 놀 때 도는 작업기 · 원칙 218 · 221) */
 let natLine = null;
 async function drawNational() {
   let j;
@@ -111,8 +111,9 @@ async function drawNational() {
   const pc = (a) => { const x = v(j.assets?.[a]?.pct); return x > 0 && x < 1 ? x.toFixed(1) : String(Math.floor(x)); };
   const last = [j.assets?.farm?.last_at, j.assets?.river?.last_at].filter(Boolean).sort().pop();
   const md = (x) => { const d = new Date(x); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
-  const tail = !j.enabled ? '멈춤' : last ? `마지막 칸 ${md(last)}` : `시작 ${md(j.tonight?.starts_at)}`;
-  natLine = { t: `전국 농지 ${pc('farm')}% · 하천 ${pc('river')}% · ${tail}`, lv: v(j.assets?.farm?.failed) + v(j.assets?.river?.failed) ? 'warn' : '', href: '/landxi/v3/xi-clean/' };
+  const tail = !j.enabled ? '멈춤' : last ? `마지막 칸 ${md(last)}` : '학습 장비가 놀 때 분석';
+  const part = (a, nm) => (j.assets?.[a]?.on === false ? `${nm} 멈춤` : `${nm} ${pc(a)}%`);
+  natLine = { t: `전국 ${part('farm', '농지')} · ${part('river', '하천')} · ${tail}`, lv: v(j.assets?.farm?.failed) + v(j.assets?.river?.failed) ? 'warn' : '', href: '/landxi/v3/xi-clean/' };
   drawOverview();
 }
 drawNational();

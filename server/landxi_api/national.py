@@ -1,7 +1,7 @@
 """전국 결과 자산(원칙 136 · 211 · 218 · 10-12 12:45 확인) — 진행 · 설정 · XI맵 지도 조각.
 
   GET  /api/v1/national/progress             LX — 결과 자산마다 진행(끝난 범위 ㎢ ÷ 전체 범위 ㎢) · 끝난 읍면동 · 마지막 칸 시각 · 칸 숫자 합 ·
-                                             작업기 상태(쉬는 중 · 도는 중 · 비킴) · 오늘 밤 일정(시작 시각 · 어디부터) · 지도 조각 판 번호
+                                             작업기 상태(도는 중 · 비킴 · 멈춤) · 일정(학습 장비가 놀 때면 언제든 · 하루 예상 · 남은 날 · 원칙 221) · 지도 조각 판 번호
   PUT  /api/v1/national/settings             LX 관리자 — {enabled, order, year, assets, river_buffer_m} (멈춤 · 재개 = enabled)
   POST /api/v1/national/retry                LX 관리자 — {asset?} 3번 넘게 실패한 칸을 다시 차례에 넣는다
   GET  /tiles/national/{asset}/{year}/{z}/{x}/{y}.pbf?v=판    XI맵 지도 조각(벡터) — 층 셋:
@@ -34,7 +34,7 @@ DEF = {"enabled": True, "year": 2025, "assets": ["farm", "river"],
        "order": ["52", "12", "47", "44", "48", "43", "41", "51", "50", "36", "27", "31", "26", "28", "30", "11"],
        "river_buffer_m": 100, "fetch_max": 4}
 QDEF = {"quiet_start": "22:00", "quiet_end": "06:00", "weekend": True}
-KM2_PER_HOUR = 300          # 하룻밤 예상의 바탕 — 10-12 낮 시험 칸 실측(칩 1장 약 0.4초 · 1㎢ 약 30칩 · 칸 마무리 포함 1㎢ 약 12초) [추정] · 실제 칸이 끝나면 그 속도로 바뀐다
+KM2_PER_HOUR = 53           # 예상의 바탕 — 10-12 14:38 시험 칸 실측(영상 처음 읽기 · 1.69㎢ 114초 · 1㎢ 약 67초 · 영상 읽기가 대부분) [추정] · 실제 칸이 끝나면 그 속도로 바뀐다
 
 
 def _jv(v):
@@ -59,27 +59,6 @@ def _quiet(q: dict, at: dt.datetime) -> bool:
         return True
     a, b, t = _hm(q["quiet_start"]), _hm(q["quiet_end"]), at.hour * 60 + at.minute
     return (a <= t < b) if a < b else (t >= a or t < b)
-
-
-def _next_start(q: dict, at: dt.datetime) -> dt.datetime:
-    """다음 쉬는 시간 시작 — 지금이 쉬는 시간이면 지금. 시간대 시작(오늘/내일) · 주말(토요일 0시) 중 이른 것."""
-    at = at.astimezone(KST).replace(second=0, microsecond=0)
-    if _quiet(q, at):
-        return at
-    s = _hm(q["quiet_start"])
-    t = at.replace(hour=s // 60, minute=s % 60)
-    if t <= at:
-        t += dt.timedelta(days=1)
-    if q.get("weekend"):
-        sat = (at + dt.timedelta(days=(5 - at.weekday()) % 7)).replace(hour=0, minute=0)
-        if sat > at and sat < t:
-            t = sat
-    return t
-
-
-def _window_h(q: dict) -> float:
-    a, b = _hm(q["quiet_start"]), _hm(q["quiet_end"])
-    return ((b - a) % 1440) / 60.0
 
 
 def _runner() -> dict:
@@ -127,6 +106,9 @@ async def progress(request: Request):
         nxt = await conn.fetch(
             "SELECT DISTINCT ON (asset) asset, sido, sgg_name, name FROM national_cells WHERE year=$1 AND NOT test AND state IN ('todo','running') "
             "ORDER BY asset, ord", year)
+        busy = await conn.fetchval(
+            "SELECT count(*) FROM jobs j WHERE j.state IN ('queued','running') AND j.pool <> 'cpu' "
+            "AND NOT EXISTS (SELECT 1 FROM national_jobs n WHERE n.job_id=j.id)")
         rate = await conn.fetchrow(
             "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
             "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL", year)
@@ -144,6 +126,7 @@ async def progress(request: Request):
         n = next((x for x in nxt if x["asset"] == a), None)
         out["assets"][a] = {
             "name": name,
+            "on": a in st["assets"],                    # 켠 자산만 작업기가 돈다(10-12 하천은 사용자 하천 자료로 범위를 다시 만든 뒤 처음부터)
             "pct": env(pct, "%", "measured", "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"),
             "done_km2": env(round(dk, 1), "km2", "measured", "끝난 칸 분석 범위"), "total_km2": env(round(tot, 1), "km2", "measured", "전체 분석 범위(칸 합)"),
             "cells": env(int(r["cells"]) if r else 0, "count", "measured", "분석할 범위가 있는 읍면동"),
@@ -154,15 +137,20 @@ async def progress(request: Request):
             "last_at": r["last"].astimezone(KST).isoformat(timespec="minutes") if r and r["last"] else None,
             "counts": {k: {**v, "unit": UNIT.get(k, "개")} for k, v in cnt.items()},
             "next": {"sido": n["sido"], "sgg": n["sgg_name"], "emd": n["name"]} if n else None}
-    # 하룻밤 예상 — 끝난 칸이 있으면 실제 속도(㎢ ÷ 걸린 시간), 없으면 실측 바탕 [추정]
+    # 일정 — 학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). 하루 예상 = 속도 × 24시간(유휴 기준 · 사용자 작업 · 재학습만큼 늦어짐).
+    # 속도: 끝난 칸이 있으면 실제(㎢ ÷ 걸린 시간 · 비킨 시간 포함), 없으면 낮 시험 칸 실측 바탕 [추정]
     measured = rate and rate["s"] and float(rate["s"]) > 600
     kph = float(rate["km2"]) / (float(rate["s"]) / 3600.0) if measured else KM2_PER_HOUR
+    left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"])
     run = _runner()
     out["runner"] = {"state": run.get("state") or "idle", "why": run.get("why"), "at": run.get("at"), "cell": run.get("name") if not run.get("test") else None}
-    start = _next_start(q, now)
-    out["tonight"] = {"quiet": {**q, "now": _quiet(q, now)}, "starts_at": start.isoformat(timespec="minutes"),
-                      "est_km2": env(round(kph * _window_h(q)), "km2", "measured" if measured else "estimate",
-                                     "끝난 칸의 실제 속도 × 쉬는 시간" if measured else "10-12 낮 시험 칸 속도(1㎢ 약 12초) × 쉬는 시간 [추정]")}
+    basis = "measured" if measured else "estimate"
+    note = "끝난 칸의 실제 속도" if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
+    sched = {"mode": "idle", "idle_now": not busy, "starts_at": now.isoformat(timespec="minutes"),
+             "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
+             "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)")}
+    out["schedule"] = sched
+    out["tonight"] = {**sched, "quiet": {**q, "now": _quiet(q, now)}, "est_km2": sched["est_km2_day"]}   # 예전 이름(호환) — 같은 값
     return out
 
 

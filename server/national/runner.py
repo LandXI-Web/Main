@@ -1,14 +1,17 @@
-"""전국 결과 자산 작업기 — 학습 장비 쉬는 시간에만 칸(읍면동)을 하나씩 분석해 결과만 연도별로 쌓는다(원칙 136 · 211 · 218).
+"""전국 결과 자산 작업기 — 학습 장비가 놀 때면 언제든(낮 포함) 칸(읍면동)을 하나씩 분석해 결과만 연도별로 쌓는다(원칙 136 · 211 · 218 · 221).
 
-  python -m national.runner --loop            예약 작업(LandXI-National · 15분마다)이 부른다. 쉬는 시간이 아니면 바로 끝난다.
+  python -m national.runner --loop            예약 작업(LandXI-National · 15분마다 · 이미 돌면 그대로)이 부른다. 멈춤 설정이거나 남은 칸이 없을 때만 끝난다.
   python -m national.runner --test CELL [--asset farm]   낮 시험 — 칸 하나만(시험 표시 · XI맵 숫자에 들어가지 않음).
   python -m national.runner --cleanup-test    시험 칸 결과 정리(결과 객체 · 작업 · 면 · 중간 파일)
   python -m national.runner --status          지금 상태 한 줄
 
 규칙(재학습 스케줄러와 같은 대기열 규칙 · 원칙 4 GPU 전력):
-  · 쉬는 시간 = 관리자 설정 'core.retrain'(재학습과 같은 시간대 · 기본 밤 22–06 · 주말). 설정 'national.run'.enabled=false 면 멈춤.
-  · 학습 장비 작업은 언제나 하나 — 게이트웨이 작업 대기열로만 넣고(우선순위 가장 낮음 3), 한 칸이 끝나야 다음 칸.
-  · 다른 GPU 작업(학습 · 기관/직원 AI 분석 등 · 시험 포함)이 대기열에 있거나 돌고 있으면 넣지 않고 기다린다(비킴).
+  · 시간대를 기다리지 않는다(10-12 원칙 221 — "유휴인데 왜 굳이 밤에 돌리나"). 설정 'national.run'.enabled=false 면 멈춤.
+  · 학습 장비 작업은 언제나 하나 — 게이트웨이 작업 대기열로만 넣고(우선순위 가장 낮음 3), 한 조각이 끝나야 다음 조각.
+  · 다른 GPU 작업(학습 · 재학습 · 기관/직원 AI 분석 · 시험)이 대기열에 있거나 돌고 있으면 다음 조각을 넣지 않고 기다린다(비킴).
+    조각은 작게(MAX_PART_KM2 · 몇 분) — 사용자 작업이 들어오면 지금 조각이 끝나는 대로 비킨다(대기열 우선순위로 사용자 칩이 먼저 돈다).
+  · GPU 한 장만 · 풀로드 금지 — 워커가 전국 작업(options.national)을 정한 한 장에서 작은 묶음 + 묶음 사이 쉼으로 돌린다(pools.yaml power.national).
+  · 재학습의 '쉬는 시간 자동'은 그대로 — 쉬는 시간에 재학습 차례가 있으면 자리를 비운다.
   · 재학습이 오늘 밤 차례를 기다리면(GET /retrain 의 tonight) 다음 칸을 넣지 않고 자리를 비운다(최대 15분 · 학습이 들어오면 끝날 때까지).
   · 영상은 국토지리정보원 항공 타일(키 없음)을 칩마다 불러 메모리에서만 쓴다(workers.imagery_src.ApiDataset · 동시 4 이하 · 지수 대기).
   · 칸이 끝나면: 칸 숫자(객체 중심이 칸 안인 것만) · 낮은 줌 면(격자) → 결과 객체 줄은 데이터베이스에서 지움(C: 디스크에 쌓지 않음 ·
@@ -29,13 +32,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
-from national.common import (ASSETS, COUNT_CLS, FACE_CLS, KST, OUT, env_file, pg, quiet, quiet_end,  # noqa: E402
-                             quiet_settings, settings)
+from national.common import ASSETS, COUNT_CLS, FACE_CLS, KST, OUT, env_file, pg, settings  # noqa: E402
 
 API = "http://127.0.0.1:8700/api/v1"
 MODEL = "aerial25/best"                 # 항공 25cm 4분류 모델(경작지 · 건물 · 비닐하우스 · 주차장)
 PRIORITY = 3                            # 가장 낮음 — 기관 · 직원 분석이 언제나 먼저
-MAX_PART_KM2 = 140.0                    # 게이트웨이 범위 천장(150㎢) 아래로 조각
+MAX_PART_KM2 = 10.0                     # 조각을 작게 — 사용자 작업이 오면 몇 분 안에 비키게(원칙 221 · 게이트웨이 천장 150㎢ 보다 훨씬 작게)
 TRIES = 3
 LOCK = OUT / "runner.lock"
 STATUS = OUT / "runner.json"
@@ -44,7 +46,7 @@ YIELD_TRAIN_S = 900
 
 
 class Pause(Exception):
-    """쉬는 시간이 끝남 · 멈춤 설정 — 칸을 실패로 세지 않고 다음 쉬는 시간에 이어서(끝난 조각은 다시 하지 않는다)."""
+    """멈춤 설정 — 칸을 실패로 세지 않고 다시 켜면 이어서(끝난 조각은 다시 하지 않는다)."""
 
 
 def log(*a):
@@ -222,7 +224,7 @@ def split_parts(geom):
         if a <= MAX_PART_KM2:
             out.append(p)
             continue
-        n = math.ceil(math.sqrt(a / 100.0))
+        n = math.ceil(math.sqrt(a / (MAX_PART_KM2 * 0.7)))
         x0, y0, x1, y1 = p.bounds
         dx, dy = (x1 - x0) / n, (y1 - y0) / n
         for i in range(n):
@@ -233,7 +235,7 @@ def split_parts(geom):
 
 
 # ── 한 칸 ───────────────────────────────────────────────────────────────────
-def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool = False, stop_at: dt.datetime | None = None) -> dict:
+def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool = False) -> dict:
     from shapely import wkt
     from shapely.geometry import mapping
     row = c.execute("SELECT ST_AsText(target), name, sgg_name, target_km2 FROM national_cells WHERE asset=%s AND year=%s AND cell_cd=%s",
@@ -248,10 +250,8 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
     status(state="running", asset=asset, cell=cd, name=f"{row[2]} {row[1]}", parts=len(parts), test=test)
     jobs = []
     for k, p in enumerate(parts):
-        if not test and stop_at is not None:      # 예약(쉬는 시간) 실행 — 조각마다 쉬는 시간 · 멈춤을 다시 본다
-            st_now = settings(c)
-            if not st_now.get("enabled", True) or not quiet(quiet_settings(c)):
-                raise Pause("쉬는 시간 끝 · 멈춤")
+        if not test:                              # 조각마다 멈춤 · 다른 학습 장비 작업(비킴)을 다시 본다
+            wait_turn(c, g, asset, cd)
         body = {"kind": "infer", "model_id": MODEL, "imagery_id": iid, "aoi": mapping(p), "priority": PRIORITY, "test": test,
                 "label": f"{'test/' if test else ''}national/{asset}/{year}/{cd}/{k}", "options": {"max_km2": 150, "national": {"asset": asset, "year": year, "cell": cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
@@ -329,7 +329,7 @@ def fail_cell(c, asset: str, year: int, cd: str, err: str):
     log(f"  실패({tries}/{TRIES}) — {wait}분 뒤 다시: {err[:200]}")
 
 
-# ── 밤 고리 ─────────────────────────────────────────────────────────────────
+# ── 고리(학습 장비가 놀 때면 언제든) ───────────────────────────────────────────
 def retrain_waiting(g: Gate) -> bool:
     try:
         j = g.call("GET", "/retrain").json()
@@ -338,7 +338,36 @@ def retrain_waiting(g: Gate) -> bool:
         return False
 
 
+_turn = {"yield_retrain_at": 0.0, "train_seen": 0.0}
+
+
+def wait_turn(c, g: Gate, asset: str | None = None, cd: str | None = None):
+    """다음 조각을 넣어도 되나 — 멈춤이면 Pause. 다른 학습 장비 작업이 있거나(비킴) 재학습 차례(쉬는 시간 · 최대 15분)면 기다린다."""
+    while True:
+        if not settings(c).get("enabled", True):
+            raise Pause("멈춤")
+        busy = other_gpu(c)
+        if busy:
+            if any(x.startswith("train") for x in busy):
+                _turn["train_seen"] = time.time()
+            status(state="yield", why="다른 학습 장비 작업", busy=busy, asset=asset, cell=cd)
+            time.sleep(20)
+            continue
+        if not g.h:
+            g.login()
+        if retrain_waiting(g) and time.time() - _turn["train_seen"] > 3600:
+            if not _turn["yield_retrain_at"]:
+                _turn["yield_retrain_at"] = time.time()
+            if time.time() - _turn["yield_retrain_at"] < YIELD_TRAIN_S:
+                status(state="yield", why="재학습 차례", asset=asset, cell=cd)
+                time.sleep(30)
+                continue
+        _turn["yield_retrain_at"] = 0.0
+        return
+
+
 def loop(force_window: bool = False):
+    """학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). force_window 는 예전 --now 호환(같은 동작)."""
     if not take_lock():
         print("이미 돌고 있음")
         return
@@ -347,36 +376,17 @@ def loop(force_window: bool = False):
         with pg() as c:
             # 지난번에 끊긴 칸(프로세스가 멈춤) — 잠금을 잡았으니 다른 작업기는 없다 → 다시 차례에(끝난 조각은 이어 씀)
             c.execute("UPDATE national_cells SET state='todo' WHERE state='running'")
-            yielded_train_at = 0.0
-            last_train_seen = 0.0
             while True:
-                st, qs = settings(c), quiet_settings(c)
+                st = settings(c)
                 if not st.get("enabled", True):
                     status(state="paused")
                     log("멈춤 설정 — 끝")
                     return
-                if not force_window and not quiet(qs):
-                    status(state="idle", next=str(qs["quiet_start"]))
-                    return
                 year = int(st["year"])
-                busy = other_gpu(c)
-                if busy:
-                    if any(x.startswith("train") for x in busy):
-                        last_train_seen = time.time()
-                    status(state="yield", why="다른 학습 장비 작업", busy=busy)
-                    time.sleep(60)
+                try:
+                    wait_turn(c, g)
+                except Pause:
                     continue
-                if not g.h:
-                    g.login()
-                # 재학습이 오늘 밤 차례를 기다리면 자리를 비운다(최대 15분 — 그 사이 학습이 들어오면 위 busy 로 끝날 때까지)
-                if retrain_waiting(g) and time.time() - last_train_seen > 3600:
-                    if not yielded_train_at:
-                        yielded_train_at = time.time()
-                    if time.time() - yielded_train_at < YIELD_TRAIN_S:
-                        status(state="yield", why="재학습 차례")
-                        time.sleep(60)
-                        continue
-                yielded_train_at = 0.0
                 iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
                 nxt = next_cell(c, year, st["assets"])
                 if not nxt:
@@ -386,14 +396,12 @@ def loop(force_window: bool = False):
                 asset, cd, sgg_name, name, tries = nxt
                 log(f"칸 {asset} {cd} {sgg_name} {name} 시작")
                 try:
-                    res = run_cell(c, g, asset, year, cd, iid, stop_at=None if force_window else quiet_end(qs))
+                    res = run_cell(c, g, asset, year, cd, iid)
                     log(f"칸 {asset} {cd} 끝 {res}")
                     status(state="cell_done", asset=asset, cell=cd, last_done=dt.datetime.now(KST).isoformat(timespec="seconds"))
                 except Pause as e:
                     c.execute("UPDATE national_cells SET state='todo' WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
-                    log(f"칸 {asset} {cd} 멈춤({e}) — 다음 쉬는 시간에 이어서")
-                    if force_window:
-                        return
+                    log(f"칸 {asset} {cd} 멈춤({e}) — 다시 켜면 이어서")
                     continue
                 except Exception as e:  # noqa: BLE001
                     fail_cell(c, asset, year, cd, repr(e))
@@ -446,7 +454,7 @@ def cleanup_test():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--loop", action="store_true")
-    ap.add_argument("--now", action="store_true", help="쉬는 시간이 아니어도(관리자 수동 · 시험용)")
+    ap.add_argument("--now", action="store_true", help="예전 호환(지금은 언제나 학습 장비가 놀 때 돈다)")
     ap.add_argument("--test")
     ap.add_argument("--asset", default="farm", choices=ASSETS)
     ap.add_argument("--cleanup-test", action="store_true")
