@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1250" viewBox="0 0 1440 1250" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0B1F3A" flood-opacity="0.08"/></filter>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1C1F25"/></marker>
+    <!-- 작은 마을 한 장면: 밭 바탕 · 길 · 비닐하우스 다섯 동 (네 컷 모두 같은 자리) -->
+    <g id="scene">
+      <rect width="300" height="300" rx="10" fill="#E3ECD9"/>
+      <path d="M0 95 L300 70" stroke="#F7F3E8" stroke-width="12" stroke-linecap="round"/>
+      <path d="M180 0 L210 300" stroke="#F7F3E8" stroke-width="10" stroke-linecap="round"/>
+      <rect x="20" y="130" width="46" height="130" rx="6" fill="#D9E4EC" stroke="#9FB3C0" stroke-width="1.5" transform="rotate(-8 43 195)"/>
+      <rect x="80" y="125" width="46" height="130" rx="6" fill="#D9E4EC" stroke="#9FB3C0" stroke-width="1.5" transform="rotate(-8 103 190)"/>
+      <rect x="225" y="140" width="48" height="110" rx="6" fill="#D9E4EC" stroke="#9FB3C0" stroke-width="1.5" transform="rotate(12 249 195)"/>
+      <rect x="40" y="18" width="100" height="36" rx="6" fill="#D9E4EC" stroke="#9FB3C0" stroke-width="1.5"/>
+      <rect x="230" y="20" width="44" height="34" rx="6" fill="#CFC3B3" stroke="#A89A86" stroke-width="1.5"/>
+    </g>
+  </defs>
+  <rect width="1440" height="1250" fill="#F2F4F6"/>
+
+  <text x="56" y="62" font-size="28" font-weight="700" fill="#1C1F25">결정 3 — XI맵에서 고친 것이 '학습 데이터 1장'이 되는 때</text>
+  <text x="56" y="96" font-size="17" fill="#4E535C">네 장면으로 차례대로 · 청록 테두리 = AI가 찾은 비닐하우스 · 빨강 = 틀린 것 · 네모 칸 = 학습용 영상 조각</text>
+  <g transform="translate(1250,40)"><rect width="134" height="40" rx="8" fill="#FFF4D6" stroke="#8A5A00" stroke-width="1.5"/><text x="67" y="26" font-size="17" font-weight="700" fill="#8A5A00" text-anchor="middle">시안 · 10-12</text></g>
+
+  <!-- ① -->
+  <g transform="translate(56,124)" filter="url(#sh)"><rect width="648" height="430" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(56,124)">
+    <text x="24" y="40" font-size="21" font-weight="700" fill="#1C1F25">① 직원이 XI맵에서 비닐하우스 하나를 고친다</text>
+    <g transform="translate(24,64)">
+      <use href="#scene"/>
+      <!-- AI 결과: 네 동은 맞고 한 동(왼쪽 둘째)은 반쯤만 -->
+      <rect x="20" y="130" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 43 195)"/>
+      <rect x="225" y="140" width="48" height="110" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(12 249 195)"/>
+      <rect x="40" y="18" width="100" height="36" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3"/>
+      <rect x="80" y="125" width="46" height="62" rx="6" fill="none" stroke="#F04452" stroke-width="3" stroke-dasharray="6 4" transform="rotate(-8 103 190)"/>
+      <text x="103" y="215" font-size="13" font-weight="700" fill="#F04452" text-anchor="middle" transform="rotate(-8 103 190)">반쯤만 그림</text>
+    </g>
+    <path d="M336 214 L372 214" stroke="#1C1F25" stroke-width="2" marker-end="url(#ar)"/>
+    <g transform="translate(380,64)">
+      <use href="#scene"/>
+      <rect x="20" y="130" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 43 195)"/>
+      <rect x="225" y="140" width="48" height="110" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(12 249 195)"/>
+      <rect x="40" y="18" width="100" height="36" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3"/>
+      <rect x="80" y="125" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 103 190)"/>
+      <circle cx="98" cy="252" r="7" fill="#FFFFFF" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 103 190)"/>
+      <text x="103" y="280" font-size="13" font-weight="700" fill="#0FA9A0" text-anchor="middle">꼭짓점을 끌어 맞춤</text>
+    </g>
+    <text x="24" y="392" font-size="15" fill="#333840">AI가 비닐하우스 한 동을 반쯤만 그렸다. 직원이 XI맵에서 그 테두리를 눌러</text>
+    <text x="24" y="414" font-size="15" fill="#333840">꼭짓점을 끌어 맞춘다. 이것이 '그 자리 고치기'다.</text>
+  </g>
+
+  <!-- ② -->
+  <g transform="translate(736,124)" filter="url(#sh)"><rect width="648" height="430" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(736,124)">
+    <text x="24" y="40" font-size="21" font-weight="700" fill="#1C1F25">② 고친 자리 둘레 네모 한 칸 = 학습용 영상 조각</text>
+    <g transform="translate(24,64)">
+      <use href="#scene"/>
+      <rect x="20" y="130" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 43 195)"/>
+      <rect x="225" y="140" width="48" height="110" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(12 249 195)"/>
+      <rect x="40" y="18" width="100" height="36" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3"/>
+      <rect x="80" y="125" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 103 190)"/>
+      <!-- 네모 칸 -->
+      <rect x="-2" y="88" width="300" height="212" rx="4" fill="#006DF7" fill-opacity="0.06" stroke="#006DF7" stroke-width="3"/>
+      <text x="8" y="110" font-size="13" font-weight="700" fill="#006DF7">학습용 영상 조각 한 칸</text>
+    </g>
+    <path d="M336 214 L372 214" stroke="#1C1F25" stroke-width="2" marker-end="url(#ar)"/>
+    <!-- 조각 한 장 = 영상 + 테두리들 -->
+    <g transform="translate(380,84)">
+      <rect x="6" y="6" width="236" height="166" rx="8" fill="#FFFFFF" stroke="#B0B8C1"/>
+      <rect x="0" y="0" width="236" height="166" rx="8" fill="#E3ECD9" stroke="#006DF7" stroke-width="2.5"/>
+      <rect x="18" y="28" width="36" height="104" rx="5" fill="#D9E4EC" stroke="#0FA9A0" stroke-width="2.5" transform="rotate(-8 36 80)"/>
+      <rect x="66" y="24" width="36" height="104" rx="5" fill="#D9E4EC" stroke="#0FA9A0" stroke-width="2.5" transform="rotate(-8 84 76)"/>
+      <rect x="178" y="36" width="38" height="88" rx="5" fill="#D9E4EC" stroke="#0FA9A0" stroke-width="2.5" transform="rotate(12 197 80)"/>
+      <text x="118" y="200" font-size="14" font-weight="700" fill="#1C1F25" text-anchor="middle">학습 데이터 1장</text>
+      <text x="118" y="222" font-size="13" fill="#727780" text-anchor="middle">= 영상 조각 + 그 안 모든 비닐하우스 테두리</text>
+    </g>
+    <text x="24" y="392" font-size="15" fill="#333840">AI는 영상을 네모 조각으로 잘라 배운다. 고친 자리를 가운데 둔 네모 한 칸이</text>
+    <text x="24" y="414" font-size="15" fill="#333840">'학습 데이터 1장'이 된다. 그 칸 안의 다른 비닐하우스 테두리도 함께 들어간다.</text>
+  </g>
+
+  <!-- ③ -->
+  <g transform="translate(56,578)" filter="url(#sh)"><rect width="648" height="430" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(56,578)">
+    <text x="24" y="40" font-size="21" font-weight="700" fill="#1C1F25">③ 칸 안에 고치지 않은 틀린 것이 남아 있으면</text>
+    <g transform="translate(24,64)">
+      <use href="#scene"/>
+      <rect x="80" y="125" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 103 190)"/>
+      <rect x="20" y="130" width="46" height="130" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3" transform="rotate(-8 43 195)"/>
+      <rect x="40" y="18" width="100" height="36" rx="6" fill="none" stroke="#0FA9A0" stroke-width="3"/>
+      <!-- 오른쪽 동: AI가 못 찾음(테두리 없음) -->
+      <rect x="225" y="140" width="48" height="110" rx="6" fill="none" stroke="#F04452" stroke-width="3" stroke-dasharray="6 4" transform="rotate(12 249 195)"/>
+      <text x="249" y="270" font-size="13" font-weight="700" fill="#F04452" text-anchor="middle">AI가 못 찾음</text>
+      <rect x="-2" y="88" width="300" height="212" rx="4" fill="#006DF7" fill-opacity="0.06" stroke="#006DF7" stroke-width="3"/>
+    </g>
+    <g transform="translate(380,64)">
+      <rect width="244" height="300" rx="12" fill="#FFF0F1"/>
+      <text x="122" y="48" font-size="16" font-weight="700" fill="#D7263D" text-anchor="middle">이 1장이 AI에게 가르치는 것</text>
+      <text x="122" y="90" font-size="15" fill="#333840" text-anchor="middle">왼쪽 둘 · 위 하나 =</text>
+      <text x="122" y="112" font-size="15" font-weight="700" fill="#0FA9A0" text-anchor="middle">"비닐하우스다" ✓</text>
+      <text x="122" y="156" font-size="15" fill="#333840" text-anchor="middle">오른쪽 하나(테두리 없음) =</text>
+      <text x="122" y="178" font-size="15" font-weight="700" fill="#D7263D" text-anchor="middle">"비닐하우스가 아니다" ✗</text>
+      <text x="122" y="226" font-size="14" fill="#4E535C" text-anchor="middle">직원은 한 동만 고쳤는데</text>
+      <text x="122" y="246" font-size="14" fill="#4E535C" text-anchor="middle">옆의 틀린 것까지 '맞다'고</text>
+      <text x="122" y="266" font-size="14" fill="#4E535C" text-anchor="middle">통째로 배운다.</text>
+    </g>
+    <text x="24" y="392" font-size="15" fill="#333840">조각 안의 다른 비닐하우스는 AI가 그린 그대로 들어간다. 못 찾은 것이 섞이면 AI는</text>
+    <text x="24" y="414" font-size="15" fill="#333840">틀린 것을 배운다. 그래서 '그 칸을 다 봤다'는 확인이 필요할 수 있다.</text>
+  </g>
+
+  <!-- ④ -->
+  <g transform="translate(736,578)" filter="url(#sh)"><rect width="648" height="430" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(736,578)">
+    <text x="24" y="40" font-size="21" font-weight="700" fill="#1C1F25">④ 두 길 — 직원이 하는 일과 결과</text>
+    <!-- ⓐ -->
+    <g transform="translate(24,64)">
+      <rect width="292" height="330" rx="12" fill="#F2F4F6"/>
+      <text x="16" y="34" font-size="17" font-weight="700" fill="#1C1F25">ⓐ 고치면 저절로</text>
+      <text x="16" y="70" font-size="14" font-weight="700" fill="#727780">직원이 하는 일</text>
+      <text x="16" y="94" font-size="15" fill="#333840">고치기만 한다. 끝.</text>
+      <text x="16" y="130" font-size="14" font-weight="700" fill="#727780">그 뒤 저절로</text>
+      <text x="16" y="154" font-size="15" fill="#333840">그 자리가 30분 조용하면</text>
+      <text x="16" y="176" font-size="15" fill="#333840">둘레 한 칸이 1장으로 쌓인다.</text>
+      <text x="16" y="212" font-size="14" font-weight="700" fill="#727780">결과</text>
+      <text x="16" y="236" font-size="15" fill="#1E7E46">+ 손이 안 가서 빨리 쌓인다</text>
+      <text x="16" y="258" font-size="15" fill="#D7263D">− ③처럼 안 본 틀림이 섞일 수 있다</text>
+      <text x="16" y="292" font-size="13" fill="#4E535C">막는 법: 되돌리기 · 두 사람이 다르게</text>
+      <text x="16" y="310" font-size="13" fill="#4E535C">고친 칸 제외 · 재학습 뒤 정확도 비교</text>
+    </g>
+    <!-- ⓑ -->
+    <g transform="translate(332,64)">
+      <rect width="292" height="330" rx="12" fill="#F2F4F6"/>
+      <text x="16" y="34" font-size="17" font-weight="700" fill="#1C1F25">ⓑ '다 봤음'을 눌러야</text>
+      <text x="16" y="70" font-size="14" font-weight="700" fill="#727780">직원이 하는 일</text>
+      <text x="16" y="94" font-size="15" fill="#333840">고친 뒤, 그 칸 안을 모두 보고</text>
+      <text x="16" y="116" font-size="15" fill="#333840">빠진 것까지 고친 다음</text>
+      <text x="16" y="138" font-size="15" fill="#333840">'다 봤음' 단추를 누른다.</text>
+      <text x="16" y="174" font-size="14" font-weight="700" fill="#727780">그 뒤</text>
+      <text x="16" y="198" font-size="15" fill="#333840">누른 순간 그 칸이 1장.</text>
+      <text x="16" y="234" font-size="14" font-weight="700" fill="#727780">결과</text>
+      <text x="16" y="258" font-size="15" fill="#1E7E46">+ 깨끗한 1장(틀림 없음)</text>
+      <text x="16" y="280" font-size="15" fill="#D7263D">− 손이 더 간다 · 안 누르면 0장</text>
+      <text x="16" y="310" font-size="13" fill="#4E535C">'봤음' 단추는 원칙 203이 뺀 확인 기록과 성격이 같다</text>
+    </g>
+  </g>
+
+  <!-- 추천 -->
+  <g transform="translate(56,1032)" filter="url(#sh)"><rect width="1328" height="150" rx="16" fill="#FFFFFF"/></g>
+  <g transform="translate(56,1032)">
+    <text x="24" y="40" font-size="19" font-weight="700" fill="#1C1F25">선택지</text>
+    <rect x="24" y="58" width="300" height="40" rx="8" fill="#1C1F25"/><text x="174" y="84" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">ⓐ 고치면 저절로 (추천)</text>
+    <rect x="340" y="58" width="300" height="40" rx="8" fill="#FFFFFF" stroke="#E5E8EB"/><text x="490" y="84" font-size="15" font-weight="700" fill="#1C1F25" text-anchor="middle">ⓑ '다 봤음'을 눌러야</text>
+    <text x="24" y="128" font-size="15" fill="#333840">추천 ⓐ — 직원 손이 안 가고(원칙 203 · 확인 기록 없음), 섞인 틀림은 재학습 뒤 정확도 비교에서 걸러져 배포되지 않는다. 조각 안이 복잡하면 화면이 "옆 것도 봐 주세요" 한 줄만 띄운다.</text>
+  </g>
+</svg>

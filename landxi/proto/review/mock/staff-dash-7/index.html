@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>시안 · LX 직원 대시보드 7차 (위아래 위계 · 한 화면에 컴팩트)</title>
+<meta name="description" content="LX 직원 대시보드 — 위에서 아래로 위계를 두되 PC 한 화면 안에: ① 내 분석 결과(3×3 지도 격자) ② 진행 현황(한 줄 낮게) ③ 작업 · 요청함 · 저장 용량(작은 숫자 칸 한 줄) ④ 공지 · 메모 · 최근 프로젝트(한 줄 작게). A안 · B안을 단추로 바꿔 봄">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<link rel="stylesheet" href="../../../../v3/lx-project/context.css" data-lxp="1">
+<link rel="stylesheet" href="../../../../v3/lx-project/board.css" data-lxp-board="1">
+<link rel="stylesheet" href="../../../../v3/kit/me.css" data-k-me="">
+<link rel="stylesheet" href="../../../../v3/lx-console/console.css">
+<link rel="stylesheet" href="../staff-dash-5/sd5.css">
+<link rel="stylesheet" href="../staff-dash-6/sd6.css">
+<link rel="stylesheet" href="sd7.css">
+</head>
+<body class="t k-shelled sd4-boot"><div class="k-app has-rail has-more is-staff"><header class="t-mast k-mast"><a class="k-word" href="/landxi/v3/lx-console/"><span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-fresh k-fresh k-sig" id="sd4-fresh" tabindex="0" data-live="1" aria-label="마지막 갱신 09:01" data-why="마지막 갱신 09:01"><i></i><span class="num">09:01</span></span><button class="k-sess" type="button" title="누르면 로그인 시간을 연장합니다">자동 로그아웃 내일 09:01 · 남은 24시간</button><button class="t-role k-role k-me-b" type="button" title="내 정보" aria-haspopup="dialog">LX 직원</button><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header><nav class="t-rail k-rail" aria-label="메뉴"><a class="k-rail-i" href="/landxi/v3/lx-console/" data-i="0" data-id="home" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5L10 4l7 5.5V16H3z"></path></svg><span>대시보드</span></a><a class="k-rail-i" href="/landxi/v3/lx-project/" data-i="1" data-id="projects"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h5l2 2h7v9H3z"></path></svg><span>프로젝트</span></a><a class="k-rail-i" href="/landxi/v3/lx-analyze/" data-i="2" data-id="analyze"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"></path><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"></path></svg><span>분석하기</span></a><a class="k-rail-i k-rail-i--more" href="/landxi/v3/lx-map/" data-i="3" data-id="mapsvc"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"></path></svg><span>지도 서비스</span></a><a class="k-rail-i k-rail-i--more" href="/landxi/v3/xi-clean/" data-i="4" data-id="ximap"><i class="k-rail-g" aria-hidden="true">XI</i><span>XI맵</span></a><span class="k-rail-sep" aria-hidden="true"></span><a class="k-rail-i k-rail-i--more" href="/landxi/v3/lx-ingest/" data-i="5" data-id="data"><svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="5" rx="6" ry="2"></ellipse><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"></path></svg><span>데이터</span></a><a class="k-rail-i" href="/landxi/v3/lx-inbox/" data-i="6" data-id="inbox"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"></path></svg><span>요청함</span></a><button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14 M3 10h14 M3 15h14"></path></svg><span>메뉴</span></button></nav><main class="k-main" id="main"><div class="ld sd4 sd5 sd7 is-A" id="sd7"><div class="ld-in">
+
+<!-- 시안 비교 단추 — A안 · B안(같은 글 · 같은 숫자, 배치만 다름) -->
+<div class="sd7-plan" role="group" aria-label="시안 비교 (A안 · B안)"><span class="sd4-tag mock">시안 비교</span><button type="button" class="is-on" data-plan="A" title="위 격자 크게 · 아래 띠 둘(진행 현황 / 숫자 칸)">A안 · 띠 둘</button><button type="button" data-plan="B" title="격자 아래 한 줄에 진행 현황 · 작업 · 요청함 · 저장 용량 모두">B안 · 한 줄</button><span class="sd7-plan-s" id="sd7-plan-s"></span></div>
+
+<!-- ① 내가 한 일의 결과 — 내 분석 결과 3×3 지도 격자(이 화면의 얼굴) -->
+<section class="t-card ld-card sd4-grid-c sd7-grid-c" id="sd4-grid-c" aria-label="내 분석 결과">
+<div class="ld-hd"><div class="ld-h"><h2>내 분석 결과</h2><a class="ld-more" href="/landxi/v3/lx-map/" id="sd4-grid-all">지도 서비스</a></div><small class="ld-sub" id="sd4-grid-sub">9건 · 최근 순 · 누르면 지도 서비스의 그 결과 · 올리면 도형이 드러납니다</small></div>
+<div class="sd4-grid" id="sd4-grid"></div>
+</section>
+
+<!-- ② · ③ 가운데 — A안: 띠 둘(진행 현황 / 숫자 칸) 위아래 · B안: 한 줄에 모두 -->
+<div class="sd7-mid">
+
+<section class="t-card ld-card sd7-band sd7-board" id="sd6-board" aria-label="프로젝트 진행 현황">
+<div class="ld-hd"><div class="ld-h"><h2>진행 현황</h2><span class="sd6-seg sd7-seg" role="group" aria-label="단계 칸 수 비교 (시안)"><button type="button" class="is-on" data-stages="5">다섯 칸</button><button type="button" data-stages="6">여섯 칸</button></span><a class="ld-more" href="/landxi/v3/lx-project/?scope=mine&amp;from=board">프로젝트 목록</a></div><small class="ld-sub"><span>진행 중 4 ·</span> <span>남은 일 있는 0</span> <span class="sd6-seg-s" id="sd6-seg-s"></span></small></div>
+<ol class="sd6-pf sd7-pf" id="sd6-pf" aria-label="프로젝트 단계">
+<li data-n="0" data-key="ingest"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=ingest&amp;from=board" aria-label="데이터 올리기 0개"><b class="num">0</b><span>데이터 올리기</span></a></li>
+<li data-n="0" data-key="label"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=label&amp;from=board" aria-label="학습데이터 구축 0개"><b class="num">0</b><span>학습데이터 구축</span></a></li>
+<li data-n="0" data-key="train"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=train&amp;from=board" aria-label="학습 0개"><b class="num">0</b><span>학습</span></a></li>
+<li data-n="0" data-key="infer"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=infer&amp;from=board" aria-label="추론 0개"><b class="num">0</b><span>추론</span></a></li>
+<li data-n="0" data-key="review" class="sd6-review"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=review&amp;from=board" aria-label="결과 확인 0개"><b class="num">0</b><span>결과 확인</span></a></li>
+<li data-n="4" data-key="deploy" class="has-work"><a href="/landxi/v3/lx-project/?scope=mine&amp;stage=deploy&amp;from=board" aria-label="배포 신청 4개"><b class="num sd4-cu" data-n="4">0</b><span>배포 신청</span></a></li>
+</ol>
+</section>
+
+<div class="sd7-band sd7-nums">
+<section class="t-card ld-card ld-jobs sd7-jobs" id="sd4-jobs" aria-label="내가 돌린 작업"><div class="ld-hd"><div class="ld-h"><h2>내가 돌린 작업</h2><span class="sd4-live" id="sd4-live" hidden><i></i><span>지금 도는 중</span><span class="sd4-tag mock" id="sd4-live-tag" hidden>흉내</span></span></div><small class="ld-sub">9.26 – 10.11</small></div><div class="ld-cells sd7-cells-4"><div class="ld-cell ld-cell--ro"><b class="num sd4-cu" data-n="406">0</b><span>완료 <span class="sd4-tag done">끝남</span></span></div><div class="ld-cell ld-cell--ro is-warn"><b class="num sd4-cu" data-n="3">0</b><span>실패 <span class="sd4-tag stop">실패</span></span></div><div class="ld-cell ld-cell--ro"><b class="num sd4-cu" data-n="36">0</b><span>취소</span></div><div class="ld-cell ld-cell--ro is-zero" id="sd4-running"><b class="num">0</b><span>진행 중</span></div></div><p class="ld-kinds sd7-kinds"><span class="ld-k">종류별</span><span>AI 분석 <b class="num">278</b></span><span>결과 갱신 <b class="num">110</b></span><span>위성 지수 <b class="num">28</b></span><span>학습 <b class="num">21</b></span><span>필지 연결 <b class="num">6</b></span><span>영상 준비 <b class="num">2</b></span></p></section>
+
+<section class="t-card ld-card ld-inbox sd4-inbox sd7-inbox" aria-label="요청함"><div class="ld-hd"><div class="ld-h"><h2>요청함</h2><a class="ld-more" href="/landxi/v3/lx-inbox/">전체</a></div><small class="ld-sub">기관의 요청과 내가 보낸 요청</small></div><div class="ld-cells"><a class="ld-cell is-zero" href="/landxi/v3/lx-inbox/" aria-label="검토 요청 0건"><b class="num">0</b><span>검토 요청</span></a><a class="ld-cell is-zero" href="/landxi/v3/lx-inbox/#requests" aria-label="분석 요청 0건"><b class="num">0</b><span>분석 요청</span></a><a class="ld-cell is-zero" href="/landxi/v3/lx-inbox/#approvals" aria-label="보낸 요청 0건"><b class="num">0</b><span>보낸 요청</span></a></div><p class="sd4-inbox-s">지금은 기다리는 요청이 없습니다</p></section>
+
+<section class="t-card ld-card ld-store sd7-store" aria-label="저장 용량"><div class="ld-hd"><div class="ld-h"><h2>저장 용량</h2><button class="ld-more" type="button">내 정보</button></div><small class="ld-sub">할당 50 GB · 프로젝트 4개</small></div><div class="sd7-store-b"><div class="ld-cell ld-cell--ro"><b class="num"><span class="sd4-cu" data-n="29.8" data-d="1">0</span> <small>MB</small></b><span>사용 중 · 할당의 0.1%</span></div><div class="sd7-store-r"><div class="k-me-bar sd4-bar" role="img" aria-label="할당의 0.1% 사용"><i style="width:1%"></i></div><p class="sd7-store-s"><span class="ld-k">프로젝트별 MB</span><span>비닐하우스 10.2</span><span>주차장 9.0</span><span>건축물 8.7</span><span>곤포사일리지 1.9</span><button class="k-me-ask sd7-ask" type="button">용량 증량 신청</button></p></div></div></section>
+</div>
+
+</div>
+
+<!-- ④ 소식 · 기록 — 한 줄 작게(공지 · 메모 · 최근 프로젝트 · 전국 AI 현황은 글 한 줄 + 가는 곳) -->
+<section class="t-card ld-card sd7-foot" aria-label="공지 · 메모 · 최근 프로젝트">
+<div class="sd7-foot-c"><h2>공지</h2><p class="sd4-mini-l sd4-mini-none">새 공지가 없습니다</p></div>
+<div class="sd7-foot-c sd7-foot-memo"><h2>메모 <span class="sd4-tag mock">시안</span></h2><ul class="sd7-ml"><li class="is-pin"><span><em>고정</em>남원 덕과면 결과 확인 끝나면 비닐하우스 재학습 걸기 — 밤에</span><small class="num">10.09</small></li><li><span>순천 드론 영상 — 영상 표준 변환 확인한 뒤 광주전남에 답하기</span><small class="num">10.01</small></li></ul></div>
+<div class="sd7-foot-c sd7-foot-recent"><h2>최근 프로젝트 <a class="ld-more" href="/landxi/v3/lx-project/?scope=mine">전체</a></h2><ul class="sd7-rp"><li><a href="/landxi/v3/lx-project/?project=prj_b2fa593a12"><b>주차장 2026</b><span>여주시 외 1곳</span><small class="num">10.10</small></a></li><li><a href="/landxi/v3/lx-project/?project=prj_3fdba452d5"><b>비닐하우스 2026</b><span>증평군 외 2곳</span><small class="num">10.09</small></a></li><li><a href="/landxi/v3/lx-project/?project=prj_15e3127d72"><b>건축물 2026</b><span>원주시</span><small class="num">10.07</small></a></li><li><a href="/landxi/v3/lx-project/?project=prj_2d3939d12a"><b>곤포사일리지 2026</b><span>보령시</span><small class="num">10.01</small></a></li></ul></div>
+<div class="sd7-foot-c sd7-foot-nat"><h2>전국 AI 현황 <a class="ld-more" href="/landxi/v3/xi-clean/">XI맵에서 전국 결과</a></h2><p class="sd4-mini-l"><span>시군구 20곳 · 서비스 8가지</span><span>마지막 분석 10.07</span></p></div>
+</section>
+
+</div></div>
+</main></div>
+
+<div class="k-chat-root" style="--k-chat-r: 24px; --k-chat-b: 24px; --k-chat-cb: 92px; --k-chat-max: 728px;"><span class="k-chat-tag" aria-hidden="true">XI ChatGEO</span><button class="k-chat-fab" type="button" aria-label="XI ChatGEO 열기" aria-expanded="false"><span class="k-chat-face k-chat-face--fab" data-face="idle"><img src="../../../../assets/brand/vector/lx-lockup.svg" alt="" decoding="async" draggable="false" class="k-chat-face-i" data-crop="" style="aspect-ratio: 2.12137 / 1;"></span></button></div>
+<div class="sd4-stamp"><b id="sd4-stamp-b">시안</b><span id="sd4-t"></span></div>
+<script src="../staff-dash-5/sd5-data.js"></script>
+<script src="sd7.js"></script>
+</body></html>

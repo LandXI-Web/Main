@@ -1,0 +1,98 @@
+/* sd7.css — 시안 · LX 직원 대시보드 7차. 사용자 답(10-12 12:45 "내가 말한게 길게 늘리라는 소리가 아니라 위아래로 배치하여 컴팩트 있게 하란 뜻이었다;;" → 원칙 216):
+   6차(한 줄기 · 약 2,460px)를 PC 1440×900 한 화면 안으로. 위아래 위계는 그대로(① 내 분석 결과 → ② 진행 현황 → ③ 작업 · 요청함 · 저장 용량 → ④ 공지 · 메모 · 최근 프로젝트),
+   줄마다 높이를 낮추고 같은 종류 칸은 한 줄에 나란히. 칸 모양 · 글 · 움직임은 4 · 5차(sd5.css) 그대로(원칙 199). '오늘 할 일' 없음(원칙 207). 밝은 톤 · 새 아이콘 0.
+   A안 = 위 격자 크게 · 아래 띠 둘(진행 현황 / 숫자 칸) · B안 = 격자 조금 낮게 · 격자 아래 한 줄에 진행 현황 + 숫자 칸 모두. 단추(?plan=A|B)로 같은 주소에서 바꿔 봄. */
+.sd7 .ld-in{gap:12px;max-width:1344px}
+.sd7 .ld-card{transition-delay:0ms}
+.sd7 .t-card.ld-card{padding:16px 20px;gap:10px}
+.sd7 .ld-hd{margin-bottom:0}
+.sd7 .ld-h h2{font-size:18px;line-height:24px}
+.sd7 .ld-sub{font-size:12px;line-height:16px}
+
+/* 시안 비교 단추 — 마스트 가운데 빈 자리에(본문 높이를 쓰지 않음) */
+.sd7-plan{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap}
+.k-mast .sd7-plan{margin-left:16px}
+.sd7-plan button{height:28px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--sub-2);font:500 13px/26px var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.sd7-plan button:hover{background:var(--bg-0)}
+.sd7-plan button.is-on{background:var(--ink);border-color:var(--ink);color:#fff}
+.sd7-plan-s{display:none}
+
+/* ① 내 분석 결과 — 3×3 그대로 · 칸은 낮은 띠(A안 2.3:1 · B안 3:1) · 설명은 한 줄 */
+.sd7 .sd4-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 12px}
+.sd7 .sd4-cell{gap:4px}
+.sd7 .sd4-cell .sd4-th{aspect-ratio:var(--sd7-ar,2.3/1);border-radius:10px}
+.sd7 .sd4-cap{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;font-size:13px;line-height:18px}
+.sd7 .sd4-cap-1{flex:1 1 auto;min-width:0}
+.sd7 .sd4-cap-2{flex:none;gap:8px}
+.sd7 .sd4-cap b.num{font-size:17px;line-height:18px}
+.sd7 .sd4-cap small{font-size:12px}
+.is-A{--sd7-ar:3/1}
+.is-B{--sd7-ar:3.6/1}
+
+/* 가운데 — A안: 위아래 띠 둘 · B안: 한 줄(진행 현황 5 : 숫자 칸 7) */
+.sd7-mid{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
+.is-B .sd7-mid{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+.sd7-band{min-width:0}
+.sd7-nums{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
+.is-B .sd7-nums{grid-template-columns:minmax(0,1fr)}
+.is-B .sd7-nums .ld-card{padding:12px 16px;gap:6px}
+.sd7-nums .ld-card{height:100%;box-sizing:border-box}
+
+/* ② 진행 현황 — 가로 흐름, 한 줄 낮게(숫자 28 · 이름 13) · 다섯 칸 / 여섯 칸 단추 유지 */
+.sd7-seg{margin-left:auto;margin-right:12px}
+.sd7-seg button{height:24px;padding:0 8px;font-size:12px;line-height:22px}
+.sd7-pf{padding:10px 0 0}
+.sd7-pf a{padding:8px 6px 0;margin:0 2px}
+.sd7-pf b{font-size:26px;line-height:28px}
+.sd7-pf span{font-size:13px}
+.is-B .sd7-pf b{font-size:24px;line-height:26px}
+.is-B .sd7-pf span{font-size:12px;line-height:15px;white-space:normal;word-break:keep-all;text-align:center;text-wrap:balance}
+.is-B .sd7-board .ld-h{flex-wrap:wrap}
+.is-B .sd7-seg{margin-right:8px}
+
+/* ③ 숫자 칸 한 줄 — 작업 · 요청함 · 저장 용량 (숫자 26 · 꼬리표 글자만) */
+.sd7-cells-4{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sd7-nums .ld-cell{padding:0;gap:0}
+.sd7-nums .ld-cell b{font-size:24px;line-height:28px}
+.sd7-nums .ld-cell span{font-size:12px;line-height:16px}
+.sd7-kinds{margin:0;font-size:12px;line-height:16px;gap:4px 10px}
+.sd7 .sd4-inbox .ld-cells{gap:8px}
+.sd7 .sd4-inbox .ld-cell b{font-size:24px;line-height:28px}
+.sd7 .sd4-inbox-s{font-size:12px}
+.sd7-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.sd7-store-b .ld-cell b small{font:600 13px/16px var(--font-body);color:var(--sub);letter-spacing:0}
+.sd7-store-r{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sd7-store-r .k-me-bar{height:6px}
+.sd7-store-s{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:0;font:400 12px/16px var(--font-body);color:var(--sub)}
+.sd7-store-s .ld-k{color:var(--sub-2);font-weight:500}
+.sd7-ask{margin-left:auto;font-size:12px}
+.is-B .sd7-nums{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.1fr);gap:12px}
+.is-B .sd7-cells-4{gap:6px}
+.is-B .sd7-nums .ld-cell b{font-size:22px;line-height:26px}
+.is-B .sd7 .sd4-inbox .ld-cell b,.is-B .sd4-inbox .ld-cell b{font-size:22px;line-height:26px}
+.is-B .sd7-kinds{display:none}
+.is-B .sd7-store-b{grid-template-columns:1fr;gap:6px}
+.is-B .sd7-store-s span{display:none}
+
+/* ④ 소식 · 기록 — 한 줄 작게: 공지 | 메모 | 최근 프로젝트 | 전국 AI 현황 */
+.sd7-foot.t-card.ld-card{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,5fr) minmax(0,5fr) minmax(0,3fr);gap:20px;padding:10px 20px}
+.sd7-foot-c{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sd7-foot-c h2{display:flex;align-items:center;gap:8px;margin:0;font:700 14px/20px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.sd7-foot-c h2 .ld-more{margin-left:auto;font-size:12px}
+.sd7-foot .sd4-mini-l{font-size:12px;line-height:18px;gap:4px 10px}
+.sd7-foot .sd4-mini-l a{color:var(--ink);font-weight:500}
+.sd7-ml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sd7-ml li{display:grid;grid-template-columns:minmax(0,max-content) auto;justify-content:start;align-items:center;gap:6px;min-width:0;font:400 12px/18px var(--font-body);color:var(--ink-2)}
+.sd7-ml li span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd7-ml li.is-pin span{font-weight:500;color:var(--ink)}
+.sd7-ml em{margin-right:4px;font-style:normal;font-weight:600;font-size:11px;color:var(--sub-2);background:var(--bg-0);padding:0 5px;border-radius:4px}
+.sd7-ml small{font-size:11px;color:var(--sub)}
+.sd7-rp{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+.sd7-rp a{display:flex;align-items:baseline;gap:6px;min-width:0;text-decoration:none;color:var(--ink);font:500 12px/18px var(--font-body)}
+.sd7-rp a:hover b{text-decoration:underline}
+.sd7-rp b{font-weight:600;white-space:nowrap}
+.sd7-rp span{flex:1 1 auto;min-width:0;font-weight:400;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd7-rp small{flex:none;font-size:11px;color:var(--sub)}
+
+@media (max-width:1180px){.is-B .sd7-mid{grid-template-columns:1fr}.sd7-nums,.is-B .sd7-nums{grid-template-columns:1fr 1fr}.sd7-foot.t-card.ld-card{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.sd7 .sd4-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sd7-nums,.is-B .sd7-nums{grid-template-columns:1fr}.sd7-foot.t-card.ld-card{grid-template-columns:1fr}.sd7-pf{grid-template-columns:repeat(3,minmax(0,1fr))!important;row-gap:14px}.sd7-pf li::before{display:none}.sd7-seg{margin-left:0}}

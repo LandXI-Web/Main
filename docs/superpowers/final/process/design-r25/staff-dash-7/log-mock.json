@@ -1,0 +1,62 @@
+[
+ {
+  "file": "mock-dash7-A-1440-1257.png",
+  "shot_at": "2026-10-12T12:57:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 1076,
+  "note": "A안 · PC 1440×900 첫 화면 — 위 격자 3×3 크게, 아래 진행 현황 띠가 보이기 시작",
+  "errors": []
+ },
+ {
+  "file": "mock-dash7-A-full-1440-1257.png",
+  "shot_at": "2026-10-12T12:57:32",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "viewport": [
+   1440,
+   1140
+  ],
+  "content_height": 1076,
+  "note": "A안 · 세로 전체 — 격자 → 진행 현황 띠 → 작업 · 요청함 · 저장 용량 띠 → 공지 · 메모 · 최근 프로젝트 · 전국 AI 현황 한 줄",
+  "errors": []
+ },
+ {
+  "file": "mock-dash7-B-1440-1257.png",
+  "shot_at": "2026-10-12T12:57:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=B",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 836,
+  "note": "B안 · PC 1440×900 한 화면 — 격자 3×3(더 낮게) → 한 줄에 진행 현황 + 작업 · 요청함 · 저장 용량 → 소식 한 줄(스크롤 없음)",
+  "errors": []
+ },
+ {
+  "file": "mock-dash7-B-stages6-1440-1257.png",
+  "shot_at": "2026-10-12T12:57:51",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=B&stages=6",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 843,
+  "note": "B안 · 진행 현황 '여섯 칸'(결과 확인 칸 둠)",
+  "errors": []
+ },
+ {
+  "file": "mock-dash7-A-grid-hover-1257.png",
+  "shot_at": "2026-10-12T12:57:59",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-7/index.html?plan=A",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 1076,
+  "note": "A안 · 격자 다섯째 칸(비닐하우스 · 증평군)에 올려 결과 도형이 드러난 뒤",
+  "errors": []
+ }
+]
