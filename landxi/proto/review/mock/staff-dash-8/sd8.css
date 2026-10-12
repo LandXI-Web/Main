@@ -1,0 +1,37 @@
+/* sd8.css — 시안 · LX 직원 대시보드 8차. 사용자 답(10-12 16:18 대시보드-v7 "내 분석 결과가 아래. 분석 결과라기 보다는 최근 진행한 프로젝트.
+   진행 현황이랑 정량적인 대시보드가 위. 그림이 아래" → 원칙 226): 7차 A안의 순서를 뒤집는다.
+   ① 진행 현황(다섯 칸 · 여섯 칸 단추 유지) → ② 내가 돌린 작업 · 요청함 · 저장 용량 → ③ 최근 진행한 프로젝트(프로젝트 목록 카드 틀 .k-sc.la-ac.lxp-pc 그대로 · 4장 한 줄)
+   → ④ 공지 · 메모 · 전국 AI 현황 한 줄. 판은 하나(A/B 없음). 칸 모양 · 글 · 움직임은 4~7차 그대로(원칙 199) · 밝은 톤 · 새 아이콘 0 · 장비 이름 0. */
+.sd8 .ld-in{gap:12px;max-width:1344px}
+.k-mast .sd8-plan{margin-left:12px;display:inline-flex;align-items:center}
+
+/* ①② 띠는 7차 A안 그대로(sd7.css) — 8차는 위아래 순서만 바뀜 */
+.sd8-nums{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
+
+/* ③ 최근 진행한 프로젝트 — 프로젝트 목록 카드(impl-23 a1-cards)와 같은 부품. 대시보드에서는 4장 한 줄 · 그림을 낮게(2.6:1) 하고 구성원 줄을 빼 한 화면 가까이 */
+.sd8-grid.la-acg{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:2px}
+.sd8-grid .k-sc.la-ac{box-shadow:none;border:1px solid var(--rule)}
+.sd8-grid .la-ac-pic{aspect-ratio:2.6/1}
+.sd8-grid .k-sc-b.la-ac-b{padding:12px 14px 14px;gap:8px}
+.sd8-grid .k-sc-t{font-size:16px;line-height:22px}
+.sd8-grid .k-sc-line.la-ac-line{min-height:0;font-size:13px;line-height:18px}
+.sd8-grid .la-ac-hero{padding:10px 12px 8px;gap:8px 16px}
+.sd8-grid .la-ac-hero b{font-size:24px;line-height:28px}
+.sd8-grid .la-ac-hero b i{font-style:normal;font-size:13px;margin-left:2px;color:var(--sub-2)}
+.sd8-grid .la-ac-hero small{font-size:12px}
+.sd8-grid .la-ac-where{font-size:13px;line-height:18px}
+.sd8-grid .lxp-pc-meta{font-size:12px}
+.sd8-grid .lxp-pc-meta .v{font-size:13px;line-height:18px}
+.sd8-grid .k-sc-acts{margin-top:2px}
+.sd8-grid .k-sc-acts .t-btn{height:36px;line-height:34px;padding:0 16px}
+/* 카드 등장은 ③ 이 ②보다 한 박자 뒤(처음 한 번) */
+.sd8-in .sd8-grid .k-sc{opacity:0;transform:translateY(8px);animation:sd8-up var(--d-380) var(--e-ui) forwards}
+.sd8-in .sd8-grid .k-sc:nth-child(2){animation-delay:60ms}.sd8-in .sd8-grid .k-sc:nth-child(3){animation-delay:120ms}.sd8-in .sd8-grid .k-sc:nth-child(4){animation-delay:180ms}
+@keyframes sd8-up{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.sd8-in .sd8-grid .k-sc{opacity:1;transform:none;animation:none}}
+
+/* ④ 소식 한 줄 — 최근 프로젝트 칸을 뺀 셋: 공지 | 메모 | 전국 AI 현황 */
+.sd8-foot.t-card.ld-card{grid-template-columns:minmax(0,2fr) minmax(0,6fr) minmax(0,4fr)}
+
+@media (max-width:1180px){.sd8-grid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}.sd8-nums{grid-template-columns:1fr 1fr}.sd8-foot.t-card.ld-card{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.sd8-grid.la-acg{grid-template-columns:1fr}.sd8-nums{grid-template-columns:1fr}.sd8-foot.t-card.ld-card{grid-template-columns:1fr}}

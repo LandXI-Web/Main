@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>진단 · 데이터는 어디서 들어와 어디에 보이고 누가 쓰나</title>
+<meta name="description" content="데이터 개념 진단(설계 26차) — 영상 · 학습 데이터 · 행정 자료 · AI 결과 · 고친 것이 들어오는 곳 · 보이는 곳 · 쓰는 사람을 표 한 장으로. 겹치는 곳 · 같은 것을 다른 이름으로 부르는 곳은 빨간 표시. 지금 실제 화면(10-12) 기준 · 시안">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../../v3/kit/kit.css">
+<style>
+body{margin:0;background:var(--bg-0);color:var(--ink);font:400 14px/20px var(--font-body);word-break:keep-all}
+.dm{max-width:1344px;margin:0 auto;padding:28px 48px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+.dm-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dm-hd h1{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.dm-hd small{color:var(--sub);font-size:13px}
+.dm-tag{display:inline-block;padding:2px 8px;border-radius:6px;background:#FFF3C4;color:#8A6100;font:600 12px/18px var(--font-body)}
+.dm-card{background:var(--bg-1);border-radius:16px;padding:18px 22px;box-sizing:border-box}
+table.dm-t{width:100%;border-collapse:collapse;table-layout:fixed}
+.dm-t th,.dm-t td{padding:10px 12px;border-top:1px solid var(--rule);vertical-align:top;text-align:left;font-size:13px;line-height:19px}
+.dm-t th{color:var(--sub);font-weight:500;border-top:0;padding-top:0}
+.dm-t td:first-child{font-weight:700;color:var(--ink);font-size:14px}
+.dm-t td:first-child small{display:block;font-weight:400;color:var(--sub);font-size:12px;line-height:16px;margin-top:2px}
+.dm-t ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.dm-t li{position:relative;padding-left:12px}
+.dm-t li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--mute)}
+.dm-t li b{font-weight:600;color:var(--ink-2)}
+.dm-t li.r{color:#C8303E}
+.dm-t li.r::before{background:#F04452}
+.dm-t li.r b{color:#C8303E}
+.dm-t td.ov{background:#FFF1F2;border-left:3px solid #F04452}
+.dm-t td.ov li{color:#9F1D2A}
+.dm-t td.ov li::before{background:#F04452}
+.dm-t td.ok{color:var(--sub)}
+.dm-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dm-card h2{margin:0 0 8px;font:700 17px/24px var(--font-display);letter-spacing:-.01em}
+.dm-card p{margin:0 0 6px;color:var(--ink-2)}
+.dm-loop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px}
+.dm-loop span{padding:8px 14px;border-radius:10px;background:var(--bg-0);font-weight:600;font-size:14px}
+.dm-loop i{color:var(--mute);font-style:normal;font-weight:700}
+.dm-loop span.now{background:var(--ink);color:#fff}
+.dm-keep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
+.dm-keep div{border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.dm-keep b{display:block;font-size:14px;margin-bottom:2px}
+.dm-keep small{color:var(--sub);font-size:12px;line-height:16px;display:block}
+.dm-dir h3{margin:0 0 4px;font:700 16px/22px var(--font-display)}
+.dm-dir p.l{color:var(--ink);font-weight:500}
+.dm-dir ul{margin:6px 0 0;padding-left:16px;color:var(--ink-2)}
+.dm-dir li{margin:2px 0}
+.dm-dir .gone{color:#C8303E}
+.dm-dir .rec{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:6px;background:var(--ink);color:#fff;font-size:11px;font-weight:600;vertical-align:middle}
+.dm-foot{color:var(--sub);font-size:12px;line-height:17px}
+</style>
+</head>
+<body><div class="dm">
+<div class="dm-hd"><h1>데이터는 어디서 들어와, 어디에 보이고, 누가 쓰나</h1><span class="dm-tag">시안 · 진단</span><small>지금 실제 화면 기준(2026-10-12 · LX 직원 · LX 관리자 로그인 폼) · 빨간 줄 = 겹치거나 같은 것을 다른 이름으로 부르는 곳</small></div>
+
+<div class="dm-card">
+<table class="dm-t">
+<colgroup><col style="width:12%"><col style="width:25%"><col style="width:26%"><col style="width:10%"><col style="width:27%"></colgroup>
+<thead><tr><th>데이터</th><th>들어오는 곳</th><th>보이는 곳</th><th>쓰는 사람</th><th>겹침 · 이름 다름</th></tr></thead>
+<tbody>
+<tr><td>영상<small>항공 · 드론 · 위성</small></td>
+<td><ul><li>프로젝트 <b>데이터 올리기</b> 단계 · 영상 등록</li><li>새 프로젝트 창 <b>파일 올리기</b></li><li>분석하기 상세 <b>내 정사영상 올리기</b></li><li>외부 연동(지리원 · 브이월드) — 서버가 들여옴</li></ul></td>
+<td><ul><li>데이터하우스 <b>영상 · 행정 자료</b> 탭(전국 지도)</li><li>새 프로젝트 창 <b>데이터하우스에서 고르기</b></li><li>추론 화면 <b>프로젝트 영상 | 공유 데이터셋</b></li><li>분석하기 영상 고르기(<b>공유 영상</b>)</li><li>XI맵 최신 영상 · 분석한 영상</li></ul></td>
+<td>직원(올리고 고름)<br>관리자(관리)<br>기관(결과만)</td>
+<td class="ov"><ul><li>같은 영상 목록을 <b>세 이름</b>으로: 데이터하우스 영상 · 공유 데이터셋 · 공유 영상</li><li>데이터 올리기 화면 = 데이터하우스 영상 탭(같은 화면이 프로젝트 안 · 밖 두 이름)</li></ul></td></tr>
+
+<tr><td>학습 데이터<small>영상 조각 + 라벨</small></td>
+<td><ul><li>프로젝트 <b>학습데이터 구축</b> 단계 — 만든 라벨 묶음 올리기</li><li>XI맵 <b>그 자리에서 고치기</b> → '고친 것 n건'(아직 장 수 아님 · 결정 3 전)</li></ul></td>
+<td><ul><li>학습 화면 <b>학습 데이터 블록</b> — 이 프로젝트 것 · 지난 학습 것 · XI맵에서 고친 것 n건</li><li>데이터하우스 <b>학습 데이터</b> 탭 — 클래스별 · 고친 것 · 승인 대기</li><li>프로젝트 카드 '학습 데이터 n장'</li></ul></td>
+<td>직원(학습)<br>관리자(승인 · XI 재학습)</td>
+<td class="ov"><ul><li>같은 학습 데이터를 <b>두 화면</b>에서 다른 축으로(학습 블록 = 묶음별 · 데이터하우스 = 클래스별)</li><li>데이터하우스에 보이지만 거기서 <b>가져다 쓰는 길이 없음</b>(원칙 133 '공유 데이터 불러오기'가 영상에만 있음)</li><li>머리 문구 'XI맵에서 고친 것 0건 · 승인 대기 0개'가 <b>고친 것만 있다고 읽힘</b> — 올린 장 수는 표 안에만</li></ul></td></tr>
+
+<tr><td>행정 자료<small>지적 · 대장 · 브이월드</small></td>
+<td><ul><li>외부 연동 — 서버가 자동으로</li><li>프로젝트 데이터 올리기 <b>행정 자료</b> 칸(대장 형식 등록)</li></ul></td>
+<td><ul><li>데이터 올리기 서랍(영상 · 행정 자료 · 필지 단위 결과)</li><li>데이터하우스 영상 · 행정 자료 탭</li></ul></td>
+<td>직원(필지 연결)<br>기관(보고서)</td>
+<td class="ov"><ul><li>영상과 같은 겹침 — 한 화면이 <b>데이터 올리기 / 데이터하우스</b> 두 이름</li></ul></td></tr>
+
+<tr><td>AI 결과<small>객체 · 필지 결과</small></td>
+<td><ul><li>프로젝트 <b>추론</b> · 분석하기 '이 카드로 분석' · 전국 작업기</li></ul></td>
+<td><ul><li>지도 서비스(내가 돌린 것) · XI맵(전국) · 기관 화면 · 보고서</li></ul></td>
+<td>직원 · 기관 · 관리자</td>
+<td class="ok">겹침 없음 — 이름 하나 '분석 결과'</td></tr>
+
+<tr><td>고친 것<small>결과를 손으로 바꾼 기록</small></td>
+<td><ul><li>XI맵 <b>그 자리에서 고치기</b>(분류 바꾸기 · 새 클래스)</li><li class="r">결과 확인 화면에는 고치기가 <b>없음</b> — 고친 것이 학습으로 안 돌아옴</li></ul></td>
+<td><ul><li>데이터하우스 '고친 것' 탭</li><li>학습 데이터 블록 'XI맵에서 고친 것 n건'</li><li>관리자 배포 → XI 재학습 '쌓인 고친 것 n/기준'</li></ul></td>
+<td>직원(고침)<br>관리자(재학습)</td>
+<td class="ov"><ul><li>고친 것 = <b>라벨과 같은 것</b>(영상 조각 위에 클래스)인데 이름 · 세는 단위가 다름(건 ↔ 장)</li><li>XI맵에서 고친 것만 데이터하우스에 따로 셈 → "왜 고친 것만?" 질문의 원인</li></ul></td></tr>
+</tbody></table>
+</div>
+
+<div class="dm-card">
+<h2>원천 기능 한 줄</h2>
+<div class="dm-loop"><span>영상 위에 라벨을 붙이거나 고친다</span><i>→</i><span>학습 데이터가 된다</span><i>→</i><span>재학습</span><i>→</i><span class="now">새 판</span><i>→</i><span>결과를 보고 다시 고친다</span></div>
+<p>이 고리에 꼭 필요한 화면은 셋. 나머지(데이터하우스 탭 셋 · 승인 대기 목록 · 비슷한 클래스 먼저 보여 주기 · '공유 데이터셋' 이름)는 고리 밖의 덧붙임이다.</p>
+<div class="dm-keep">
+<div><b>① 라벨 붙이기 · 고치기</b><small>프로젝트 학습데이터 구축 = XI맵 고치기와 같은 동작(영상 조각 위에 클래스 이름). 새 클래스 = 이름을 새로 쓰면 새 클래스 — 그뿐.</small></div>
+<div><b>② 학습</b><small>이 프로젝트의 학습 데이터(붙인 것 + 고친 것 한 묶음)로 학습 — 쉬는 시간에 자동.</small></div>
+<div><b>③ 새 판 배포 신청 · 승인</b><small>관리자는 여기서 한 번만 본다(새 클래스도 이때 함께). 승인되면 기관에 공유.</small></div>
+</div>
+</div>
+
+<div class="dm-two">
+<div class="dm-card dm-dir"><h3>ⓐ 데이터하우스를 없앤다 — '프로젝트 안 학습 데이터' + '관리자 공유 데이터' 둘로<span class="rec">추천</span></h3>
+<p class="l">학습 데이터는 프로젝트 안에만. XI맵에서 고친 것은 그 서비스를 만든 프로젝트의 학습 데이터로 간다. 영상 · 행정 자료는 관리자가 관리하는 '공유 데이터' 한 이름.</p>
+<ul>
+<li class="gone">사라짐: 직원 메뉴 '데이터하우스' · 탭 셋 · 승인 대기 목록 · 데이터하우스 '고친 것' 탭 · '비슷한 클래스 먼저' · '공유 데이터셋' 이름</li>
+<li>바뀜: 새 프로젝트 창 · 추론 · 분석하기의 영상 고르기 → 모두 '공유 데이터에서 고르기' 하나</li>
+<li>새 클래스: 라벨 붙일 때 이름을 새로 쓰면 새 클래스. 관리자는 배포 신청 때 본다</li>
+<li>맞는 이유: 직원 일이 프로젝트 안에서 끝남(원칙 133 '관리자가 관리하는 공유 데이터'와 같음) · "왜 고친 것만?" 질문이 사라짐</li>
+</ul></div>
+<div class="dm-card dm-dir"><h3>ⓑ 데이터하우스 하나로 합친다 — 프로젝트는 거기서 고르기만</h3>
+<p class="l">영상 · 행정 자료 · 학습 데이터 · 고친 것이 모두 데이터하우스 한 곳. 프로젝트의 데이터 올리기 · 학습데이터 구축 단계는 '데이터하우스에서 고르기'가 된다.</p>
+<ul>
+<li class="gone">사라짐: '공유 데이터셋' · '프로젝트 영상' 구분 · 학습 화면 데이터 블록의 세 선택지(→ 하나) · 데이터 올리기 서랍 · '비슷한 클래스 먼저'</li>
+<li>바뀜: 라벨 붙이기 · 고치기도 데이터하우스 안에서(프로젝트는 묶음을 가리키기만)</li>
+<li>새 클래스: 같은 방법 — 이름을 새로 쓰면 새 클래스</li>
+<li>무거운 점: 직원이 프로젝트와 데이터하우스를 오가야 함 · 학습 데이터가 프로젝트 밖에 있어 '내 것'이 흐려짐</li>
+</ul></div>
+</div>
+<p class="dm-foot">근거: impl-22 core-loop · impl-23 project 증거, 데이터하우스(직원 · 관리자) · 학습 화면 · XI맵 고치기 · 추론 · 새 프로젝트 창 실제 화면(10-12). 결과 확인 화면 고치기 없음은 코드(lx-review)에서 확인. 코드 수정 0.</p>
+</div></body></html>

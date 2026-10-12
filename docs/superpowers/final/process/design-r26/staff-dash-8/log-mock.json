@@ -1,0 +1,38 @@
+[
+ {
+  "file": "mock-dash8-1440-1630.png",
+  "shot_at": "2026-10-12T16:30:17",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 999,
+  "note": "8차 · PC 1440×900 첫 화면 — 위 진행 현황 → 작업 · 요청함 · 저장 용량 → 아래 최근 진행한 프로젝트 카드가 보이기 시작",
+  "errors": []
+ },
+ {
+  "file": "mock-dash8-full-1440-1630.png",
+  "shot_at": "2026-10-12T16:30:23",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html",
+  "viewport": [
+   1440,
+   1063
+  ],
+  "content_height": 999,
+  "note": "8차 · 세로 전체 — 진행 현황 → 숫자 칸 → 최근 진행한 프로젝트 4장 → 공지 · 메모 · 전국 AI 현황 한 줄",
+  "errors": []
+ },
+ {
+  "file": "mock-dash8-stages6-1440-1630.png",
+  "shot_at": "2026-10-12T16:30:36",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-8/index.html?stages=6",
+  "viewport": [
+   1440,
+   900
+  ],
+  "content_height": 999,
+  "note": "8차 · 진행 현황 '여섯 칸'(결과 확인 칸 둠)",
+  "errors": []
+ }
+]
