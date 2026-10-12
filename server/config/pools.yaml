@@ -23,6 +23,13 @@ power:
     power_max_w: 140         # 전력 상한(W) — 장당 상한 200 W 의 70%
     duty: 0.5
     inflight: 8              # 스트림에 한 번에 넣는 전국 칸 수(스케줄러) — 사용자 작업이 오면 이 몇 칸 뒤에 바로 돈다
+  # 학습(kind train · XI 재학습 · 새 모델 실험) — 전국 작업과 같은 상한(10-12 구현 25). 한 장만(gpu) · 배치 뒤 쉼으로 사용률 · 전력 조절.
+  # 학습이 대기열에 있거나 돌면 전국 작업기는 비킨다(national/runner.py wait_turn). 시스템 전력 상한(nvidia-smi)은 바꾸지 않는다.
+  train:
+    gpu: 0
+    util_max: 70             # 사용률 평균 상한(%)
+    power_max_w: 140         # 전력 상한(W) — 장당 상한 200 W 의 70%
+    duty: 0.5
 # 새 작업의 첫 묶음 선점(v1.1-17) — 깊이와 상관없이 바로 넣는 shard 수
 first_chunk: 16
 # shard 고아 감시(v1.1-14) — shard.started 뒤 max(floor_s, 5×중앙값 ms) 안에 done/failed 없으면 timeout → 1회 재배정

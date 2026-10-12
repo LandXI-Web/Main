@@ -1,0 +1,24 @@
+{
+ "at": "2026-10-12T16:48:04",
+ "set": "시험 결과 묶음(지움)",
+ "edits_by_staff": 3,
+ "scan_quiet30": "기다림(조용한 시간 전)",
+ "scan_quiet0_made": 2,
+ "conflict_after_other_person": true,
+ "below_threshold": {
+  "code": "below",
+  "n": 2,
+  "need": 200
+ },
+ "test_env_min1": {
+  "code": "queue",
+  "job_state_seen": "running",
+  "cancelled": true
+ },
+ "tile": {
+  "px": 512,
+  "objects": 6,
+  "edits": 2,
+  "names": "[\"건물\", \"주차장\", \"경작지\", \"비닐하우스\"]"
+ }
+}

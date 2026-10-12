@@ -16,7 +16,7 @@ import { toast } from '../kit/toast.js';
 import { empty } from '../kit/empty.js';
 import { nf } from '../kit/i18n.js';
 import { serviceAcc } from '../kit/acc.js';
-import { sse } from '../../shared/api-v1.js';
+import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
 import { stageHref } from '../lx-project/context.js';
 
 let cssOn = false;
@@ -403,7 +403,7 @@ export async function trainBoard({ host, project: P }) {
     const bigV = r && r.state === 'done' && r.acc ? v(r.acc) : vals.length ? Math.round(vals[vals.length - 1]) : null;
     if (bigV != null) head.append(h('span.tb-big', {}, pct(bigV), h('small', { text: r.state === 'done' ? '학습 끝 검증' : '지금까지' })));
     if (vals.length < 2) {
-      perf.replaceChildren(head, h('p.tb-nolog', { text: !r ? '학습을 시작하면 반복마다 정확도가 여기에 차오릅니다' : LIVE.has(r.state) ? '첫 반복이 끝나면 여기에 그려집니다' : '이 학습은 반복마다 기록이 없습니다' }));
+      perf.replaceChildren(head, h('p.tb-nolog', { text: !r ? '학습을 시작하면 반복마다 정확도가 여기에 차오릅니다' : LIVE.has(r.state) ? (vals.length ? '두 번째 반복이 끝나면 선으로 그려집니다' : '첫 반복이 끝나면 여기에 그려집니다') : '이 학습은 반복마다 기록이 없습니다' }));
       return;
     }
     let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(2, (hi - lo) * 0.18); lo = Math.max(0, Math.floor(lo - pad)); hi = Math.min(100, Math.ceil(hi + pad));
@@ -537,6 +537,7 @@ export async function trainBoard({ host, project: P }) {
   /* 도는 학습 — 반복마다 값이 오면 그래프가 차오른다(작업 사건 흐름) */
   if (live && cur.events_url) {
     const s = sse(cur.events_url, {
+      events: [...JOB_EVENTS, 'train.epoch'],                 // 반복마다 값(train.epoch)은 기본 작업 사건 목록에 없다 — 따로 듣는다
       on: (name, d) => {
         if (name === 'job.started' && cur.state === 'queued') { cur.state = 'running'; render(); drawKeys(); }
         if (name === 'train.epoch' && d && d.epoch > 0 && d.map50 != null) {

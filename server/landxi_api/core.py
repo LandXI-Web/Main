@@ -21,7 +21,10 @@ XI 재학습 · 배포 관리(LX 관리자 배포 안 · 결정 4 ⓐ · 원칙 
   GET  /train-templates                      업무별 기본 흐름(블록 · 학습 설정 첫 값) + 바꿀 수 없는 것(잠금)
   PUT  /train-templates/{업무}                {blocks, cfg} — 관리자 · DELETE 로 업무 서식 지우면 '기본'을 씀
 
-학습 데이터 1장이 되는 때(결정 3)는 아직 결정 전 — 지금은 '고친 기록'으로만 모으고, 세는 규칙은 아래 UNIT · count_units 한 곳에 둔다.
+학습 데이터 1장이 되는 때(결정 3 ⓐ 고치면 저절로 · 10-12 16:18) — 고친 자리 둘레 한 칸이 조용한 시간 뒤 1장(train_tiles.py).
+  데이터하우스 · 학습 화면의 '고친 것 n건'(UNIT · count_units)은 그대로 두고, XI 재학습의 기준 · 대기열은 1장이 된 칸(TILE_UNIT · count_tiles)으로 센다.
+  GET  /retrain/tiles?card=&test=           칸 목록(관리자 · 상태 · 고친 수 · 테두리 수) — 증거 · 점검용
+  POST /retrain/tiles/scan                  {test?, quiet_min?} 칸 한 번 맞추기(관리자 · 시험 증명용). 기동 뒤에는 스케줄러가 5분마다.
 화면 글에 표 이름 · 작업 id · 경로를 쓰지 않는다. 숫자는 서버에서 센 값(봉투).
 """
 from __future__ import annotations
@@ -44,6 +47,7 @@ router = APIRouter()
 # 지금: 고친 기록 한 건 = 한 단위('고친 것 n건'). 학습에 넣는 것 = 되돌리지 않음 · 시험 아님 · 메모 아님 ·
 #       바꾼 클래스가 승인 대기 · 거절이 아님. 결정이 나면(예: '그 자리 한 칸 = 1장') 이 두 줄과 count_units 만 바꾼다.
 UNIT = {"id": "edit", "word": "고친 것", "suffix": "건"}
+TILE_UNIT = {"id": "tile", "word": "학습 데이터", "suffix": "장"}           # 결정 3 ⓐ — 고친 자리 한 칸 = 1장(XI 재학습 기준 · 대기열)
 LEARNABLE = ("e.undone_at IS NULL AND NOT e.test AND e.action <> 'memo' "
              "AND (e.cls_after_id IS NULL OR ca.status = 'approved')")
 PENDING = "e.undone_at IS NULL AND NOT e.test AND e.action <> 'memo' AND ca.status = 'proposed'"
@@ -66,6 +70,10 @@ async def count_units(conn, *, card_id: str | None = None, class_id: str | None 
 
 def units_env(n: int, what: str = "XI맵에서 고친 것") -> dict:
     return env(int(n), "count", "recorded", f"{what}(되돌린 것 · 시험 · 메모 · 승인 전 클래스 뺌)")
+
+
+def tiles_env(n: int, what: str = "XI맵에서 고친 자리로 만든 학습 데이터") -> dict:
+    return env(int(n), "count", "recorded", f"{what}(고친 자리 한 칸 = 1장 · 조용한 시간 뒤 · 둘이 다르게 고친 칸 뺌)")
 
 
 # ── 공통 ──────────────────────────────────────────────────────────────────
@@ -452,7 +460,8 @@ async def datahouse_edits(request: Request, cls: str = "", card: str = "", limit
 
 # ── XI 재학습 · 배포 관리 ───────────────────────────────────────────────────
 SET_KEY = "core.retrain"
-DEF = {"mode": "auto", "quiet_start": "22:00", "quiet_end": "06:00", "weekend": True, "min_new": 200}
+DEF = {"mode": "auto", "quiet_start": "22:00", "quiet_end": "06:00", "weekend": True, "min_new": 200,
+       "tile_quiet_min": 30, "submit": False}     # tile_quiet_min = 고친 뒤 이만큼 조용하면 1장 · submit = 대기열 넣기 켬(환경 LX_RETRAIN_SUBMIT=1 도 켬)
 LAST: dict = {"tick": None, "decisions": []}
 
 
@@ -463,7 +472,8 @@ async def settings(conn) -> dict:
 
 
 def _st_out(st: dict) -> dict:
-    return {**st, "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)")}
+    return {**st, "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)"),
+            "tile_quiet_min": env(int(st.get("tile_quiet_min", 30)), "min", "recorded", "고친 뒤 이만큼 조용하면 1장(관리자 설정)")}
 
 
 def _hm(s: str) -> int:
@@ -541,7 +551,7 @@ async def retrain_gate(conn, model_id: str) -> str | None:
     return None
 
 
-async def _rows(conn, st: dict) -> list[dict]:
+async def _rows(conn, st: dict, test: bool = False) -> list[dict]:
     """서비스마다 줄 — 지금 판 · 쌓인 고친 것 · 기준 · 방식 · 상태 · 새 클래스(세부 → 나누기)."""
     modes = {r["card_id"]: r["mode"] for r in await conn.fetch("SELECT card_id, mode FROM retrain_services")}
     cards = await conn.fetch("SELECT c.id, c.name FROM cards c WHERE EXISTS (SELECT 1 FROM card_versions v WHERE v.card_id=c.id AND v.approved_at IS NOT NULL "
@@ -554,7 +564,8 @@ async def _rows(conn, st: dict) -> list[dict]:
         if not await conn.fetchval("SELECT 1 FROM models WHERE id=$1 AND weights_uri IS NOT NULL", cur["model_ids"][0]):
             continue                                       # 가중치가 없는 모델(지표 · 규칙)은 다시 학습하지 않는다
         last = await conn.fetchrow("SELECT * FROM retrain_runs WHERE card_id=$1 AND state='queued' AND NOT test ORDER BY at DESC LIMIT 1", c["id"])
-        n = await count_units(conn, card_id=c["id"], since=last["units_until"] if last else None)
+        from .train_tiles import count_tiles
+        n = await count_tiles(conn, card_id=c["id"], since=last["units_until"] if last else None, test=test)
         job = await conn.fetchrow("SELECT id, state FROM jobs WHERE id=$1", last["job_id"]) if last and last["job_id"] else None
         detail = [dict(r) for r in await conn.fetch(
             "SELECT c.id, c.name, c.status FROM card_classes cc JOIN classes c ON c.id=cc.class_id WHERE cc.card_id=$1 AND cc.version=$2 AND cc.how='split'",
@@ -575,7 +586,7 @@ async def _rows(conn, st: dict) -> list[dict]:
         else:
             state = ("", "쌓는 중")
         out.append({"card_id": c["id"], "service": _ko(c["name"]), "version": cur["version"],
-                    "units": units_env(n), "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)"),
+                    "units": tiles_env(n), "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)"),
                     "mode": mode, "state": state[1], "tone": state[0],
                     "split": [{"id": d["id"], "name": d["name"]} for d in detail],
                     "pending": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in pend],
@@ -619,9 +630,10 @@ async def retrain_view(request: Request):
         rows = [r for r in rows if r["project"] and r["project"]["lead"] == p.user_id]
     now = dt.datetime.now(KST)
     return {"settings": _st_out(st), "quiet_now": quiet(st, now), "busy": bool(busy), "services": rows, "candidates": cands,
-            "tonight": _tonight(rows, st), "unit": UNIT,
+            "tonight": _tonight(rows, st), "unit": TILE_UNIT,
             "runs": [{"id": r["id"], "service": _ko(r["cname"]), "mode": r["mode"], "state": r["state"], "why": r["why"], "at": _iso(r["at"]),
-                      "units": units_env(r["n_units"], "그때 센 고친 것"), "by": r["by_user"], "test": r["test"]} for r in runs],
+                      "units": tiles_env(r["n_tiles"], "그때 넣은 학습 데이터") if r["n_tiles"] is not None else units_env(r["n_units"], "그때 센 고친 것"),
+                      "by": r["by_user"], "test": r["test"]} for r in runs],
             "last_tick": LAST["tick"], "can_manage": p.role == "admin", "as_of": now_iso()}
 
 
@@ -651,6 +663,13 @@ async def put_settings(request: Request, body: dict):
             st["quiet_end"] = _hm_ok(body["quiet_end"])
         if "weekend" in body:
             st["weekend"] = bool(body["weekend"])
+        if "tile_quiet_min" in body:
+            n = int(body["tile_quiet_min"] or 0)
+            if not 1 <= n <= 24 * 60:
+                raise ApiError("bad_request", "조용한 시간은 1분 이상 하루 이하로 적어 주세요")
+            st["tile_quiet_min"] = n
+        if "submit" in body:
+            st["submit"] = bool(body["submit"])
         if "min_new" in body:
             n = int(body["min_new"] or 0)
             if not 1 <= n <= 100000:
@@ -712,7 +731,9 @@ def decide(rows: list[dict], st: dict, busy: list[str], at: dt.datetime, manual_
 
 import os  # noqa: E402
 
-SUBMIT = os.environ.get("LX_RETRAIN_SUBMIT") == "1"
+from . import config  # noqa: E402
+
+SUBMIT = os.environ.get("LX_RETRAIN_SUBMIT") == "1"          # 또는 설정 core.retrain.submit(관리자)
 
 
 class _Req:
@@ -720,9 +741,11 @@ class _Req:
         self.state = SimpleNamespace(principal=p)
 
 
-async def _enqueue(conn_rows: dict, d: dict, *, test: bool, by: str) -> dict:
-    """대기열에 학습 한 건 — 지금 판 모델에서 이어 학습(세부면 나누기). 제출은 그 서비스 프로젝트장 이름으로 같은 작업 길(/jobs) · 전력 규칙은 서버."""
-    from .jobs import submit
+async def _enqueue(conn_rows: dict, d: dict, *, test: bool, by: str, submit: bool | None = None) -> dict:
+    """대기열에 학습 한 건 — 지금 판 모델에서 이어 학습(세부면 나누기). 학습 데이터 = 지난 학습 데이터(프로젝트 표본) + 이 서비스의 XI맵 칸(1장이 된 것).
+    제출은 그 서비스 프로젝트장 이름으로 같은 작업 길(/jobs) · 전력 규칙은 서버 · 학습 장비 한 장."""
+    from .jobs import submit as submit_job
+    from .train_tiles import run_dataset
     r = conn_rows[d["card_id"]]
     async with db(realm="lx") as conn:
         cur = await _cur_version(conn, d["card_id"])
@@ -730,38 +753,48 @@ async def _enqueue(conn_rows: dict, d: dict, *, test: bool, by: str) -> dict:
                                   "ORDER BY s.created_at DESC LIMIT 1", r["project"]["id"])
         tpl = await templates(conn)
         until = await conn.fetchval("SELECT now()")
+        st = await settings(conn)
+        tiles = [dict(x) for x in await conn.fetch("SELECT id, names, img_path, lbl_path FROM train_tiles WHERE card_id=$1 AND state='made' AND test=$2 "
+                                                   "ORDER BY made_at", d["card_id"], test)]
+    on = (SUBMIT or bool(st.get("submit"))) if submit is None else submit
     cfg = (tpl.get(r["service"]) or tpl.get("기본") or {}).get("params") or {}
-    body = {"kind": "train", "base_model": cur["model_ids"][0], "samples": [smp] if smp else [], "priority": 2, "test": test,
-            "label": f"XI 재학습 · {r['service']}",
-            "options": {"epochs": int(cfg.get("epochs", 3)), "imgsz": int(cfg.get("imgsz", 640)), "batch": int(cfg.get("batch", 4)),
-                        "project_id": r["project"]["id"], "task_name": r["service"],
-                        "retrain": {"card_id": d["card_id"], "mode": d["mode"], "class_id": d["class_id"], "units": d["n"],
-                                    "unit": UNIT["id"], "until": until.isoformat()}}}
     rid = "rt_" + secrets.token_hex(5)
     job_id, state, why = None, "queued", None
-    if not SUBMIT:
-        # 고친 기록을 학습 그림으로 바꾸는 단계는 결정 3(학습 데이터 1장이 되는 때) 뒤에 붙는다 — 그 전에는 대기열에 넣지 않고 '미룸'으로 남긴다
-        # (지난 학습 데이터만으로 다시 학습하는 일이 생기지 않게). 붙으면 환경 LX_RETRAIN_SUBMIT=1.
-        state, why = "held", "학습 데이터 단위가 정해진 뒤 대기열에 넣습니다"
+    if not on:
+        state, why = "held", "대기열 넣기가 꺼져 있습니다(관리자 설정)"
+    elif not tiles:
+        state, why = "held", "1장이 된 학습 데이터가 없습니다"
     else:
+        from .training import sample_yaml
+        base = await asyncio.to_thread(sample_yaml, smp) if smp and not test else None     # 시험은 칸만(지난 학습 데이터를 끌어오지 않음)
+        run_dir = config.DATA_ROOT / "training" / "retrain-auto" / (rid + ("-test" if test else ""))
+        ds = await asyncio.to_thread(run_dataset, run_dir, tiles, base)
+        body = {"kind": "train", "base_model": cur["model_ids"][0], "samples": ds["yaml"].as_posix(), "priority": 2, "test": test,
+                "project_id": r["project"]["id"], "label": f"XI 재학습 · {r['service']}",
+                "options": {"epochs": int(cfg.get("epochs", 3)), "imgsz": int(cfg.get("imgsz", 640)), "batch": int(cfg.get("batch", 4)),
+                            "project_id": r["project"]["id"], "task_name": r["service"],
+                            "retrain": {"card_id": d["card_id"], "mode": d["mode"], "class_id": d["class_id"], "units": d["n"], "tiles": len(tiles),
+                                        "base_sample": smp, "unit": TILE_UNIT["id"], "until": until.isoformat()}}}
         try:
-            j = await submit(body, _Req(Principal(realm="lx", role="staff", user_id=r["project"]["lead"])))
+            j = await submit_job(body, _Req(Principal(realm="lx", role="staff", user_id=r["project"]["lead"])))
             job_id = j["job"]["id"]
         except ApiError as e:
             state, why = "held", e.message
     async with db(realm="lx") as conn:
-        await conn.execute("INSERT INTO retrain_runs(id, card_id, mode, class_id, n_units, units_until, job_id, state, why, by_user, test) "
-                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)", rid, d["card_id"], d["mode"], d["class_id"], d["n"], until, job_id, state, why, by, test)
-    return {"run": rid, "job": job_id, "state": state, "why": why}
+        await conn.execute("INSERT INTO retrain_runs(id, card_id, mode, class_id, n_units, units_until, job_id, state, why, by_user, test, n_tiles) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)", rid, d["card_id"], d["mode"], d["class_id"], d["n"], until, job_id, state, why, by,
+                           test, len(tiles))
+    return {"run": rid, "job": job_id, "state": state, "why": why, "tiles": tiles_env(len(tiles), "이번 학습에 넣은 학습 데이터")}
 
 
 async def tick(*, dry: bool = False, at: dt.datetime | None = None, test: bool = False, manual_card: str | None = None,
-               by: str = "auto", rows_override: list[dict] | None = None, busy_override: list[str] | None = None) -> dict:
+               by: str = "auto", rows_override: list[dict] | None = None, busy_override: list[str] | None = None,
+               st_override: dict | None = None, submit: bool | None = None) -> dict:
     """스케줄러 한 번 — 기준에 닿은 자동 서비스를 쉬는 시간에 대기열로(학습 장비 한 장 · 다른 고부하 작업과 겹치지 않게)."""
     at = at or dt.datetime.now(KST)
     async with db(realm="lx") as conn:
-        st = await settings(conn)
-        rows = rows_override if rows_override is not None else await _rows(conn, st)
+        st = {**(await settings(conn)), **(st_override or {})}
+        rows = rows_override if rows_override is not None else await _rows(conn, st, test=bool(test and submit is not None))
         busy = busy_override if busy_override is not None else await busy_gpu(conn)
     if manual_card:
         rows = [r for r in rows if r["card_id"] == manual_card]
@@ -777,9 +810,9 @@ async def tick(*, dry: bool = False, at: dt.datetime | None = None, test: bool =
                                    "VALUES ($1,$2,$3,$4,$5,now(),'dry','시험 — 대기열에 넣지 않음',$6,true)",
                                    "rt_" + secrets.token_hex(5), d["card_id"], d["mode"], d["class_id"], d["n"], by)
         else:
-            d["result"] = await _enqueue(by_card, d, test=test, by=by)
+            d["result"] = await _enqueue(by_card, d, test=test, by=by, submit=submit)
     out = {"at": at.isoformat(timespec="seconds"), "quiet": quiet(st, at), "busy": busy, "decisions": ds, "dry": dry}
-    if not dry and rows_override is None and not manual_card:
+    if not dry and rows_override is None and not manual_card and not test:
         LAST.update(tick=now_iso(), decisions=ds)
     return out
 
@@ -789,6 +822,10 @@ async def tick_api(request: Request, body: dict):
     """관리자 · 시험 — 한 번 돌려 판단을 본다. rows 를 주면(시험) 그 줄로 판단만(dry 강제)."""
     require(principal(request), admin=True)
     at = dt.datetime.fromisoformat(body["at"]) if body.get("at") else None
+    if body.get("test_tiles"):                             # 시험 환경 — 시험 칸으로 센 줄 · 기준을 낮춰 · 대기열 넣기까지(시험 작업)
+        st = {k: body[k] for k in ("min_new",) if body.get(k) is not None}
+        busy = body.get("busy") if isinstance(body.get("busy"), list) else None
+        return await tick(at=at, test=True, busy_override=busy, st_override=st, submit=bool(body.get("submit")), by="시험")
     rows = body.get("rows")
     busy = body.get("busy") if isinstance(body.get("busy"), list) else None
     return await tick(dry=bool(body.get("dry")) or rows is not None or busy is not None, at=at, test=True, rows_override=rows, busy_override=busy, by="시험")
@@ -816,10 +853,52 @@ async def loop():
     await asyncio.sleep(60)
     while True:
         try:
+            from .train_tiles import scan
+            async with db(realm="lx") as conn:
+                await scan(conn)                           # 고친 기록 → 칸 → 조용해지면 1장(결정 3 ⓐ)
+        except Exception as e:  # noqa: BLE001
+            print(f"[gateway] 학습 칸 맞추기 실패: {e!r}", flush=True)
+        try:
             await tick()
         except Exception as e:  # noqa: BLE001
             print(f"[gateway] retrain tick 실패: {e!r}", flush=True)
         await asyncio.sleep(300)
+
+
+@router.get("/retrain/tiles")
+async def tiles_list(request: Request, card: str = "", test: int = 0, limit: int = 100):
+    """XI맵 고친 자리 칸 목록(관리자) — 상태 · 고친 수 · 사람 수 · 테두리 수 · 1장이 된 때. 화면에는 경로를 내지 않는다."""
+    require(principal(request), admin=True)
+    q, a = ["test=$1"], [bool(test)]
+    if card:
+        a.append(card); q.append(f"card_id=${len(a)}")
+    a.append(max(1, min(int(limit), 500)))
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(f"SELECT id, card_id, state, why, n_edits, cardinality(users) AS nu, n_objects, size_m, px, last_edit_at, made_at, version, "
+                                f"ST_AsGeoJSON(bbox) AS bbox FROM train_tiles WHERE {' AND '.join(q)} ORDER BY updated_at DESC LIMIT ${len(a)}", *a)
+        from .train_tiles import count_tiles
+        n = await count_tiles(conn, card_id=card or None, test=bool(test))
+    def c(v, what, unit="count"):
+        return env(v, unit, "recorded", what) if v is not None else None
+    return {"items": [{"id": r["id"], "card_id": r["card_id"], "state": r["state"], "why": r["why"], "edits": c(r["n_edits"], "이 칸에서 고친 것"),
+                       "people": c(r["nu"], "고친 사람"), "objects": c(r["n_objects"], "이 칸 테두리"), "size_m": c(float(r["size_m"]), "칸 한 변", "m"),
+                       "px": c(r["px"], "조각 화소", "px"), "last_edit": _iso(r["last_edit_at"]), "made": _iso(r["made_at"]),
+                       "version": c(r["version"], "다시 만든 차례"), "bbox": json.loads(r["bbox"]) if r["bbox"] else None} for r in rows],
+            "made": tiles_env(n), "unit": TILE_UNIT, "as_of": now_iso()}
+
+
+@router.post("/retrain/tiles/scan")
+async def tiles_scan(request: Request, body: dict | None = None):
+    """칸 한 번 맞추기(관리자 · 시험 증명용) — test 면 시험 고친 기록만 · quiet_min 으로 조용한 시간을 바꿔 볼 수 있다(시험만)."""
+    require(principal(request), admin=True)
+    body = body or {}
+    test = bool(body.get("test"))
+    qm = int(body["quiet_min"]) if test and body.get("quiet_min") is not None else None
+    from .train_tiles import scan
+    async with db(realm="lx") as conn:
+        res = await scan(conn, test=test, quiet_min=qm)
+    return {"result": {k: env(v, "min" if k == "quiet_min" else "count", "recorded", f"칸 맞추기 {k}") for k, v in res.items()}, "test": test,
+            "as_of": now_iso()}
 
 
 # ── 학습 서식(업무별 기본 흐름) ─────────────────────────────────────────────

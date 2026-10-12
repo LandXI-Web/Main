@@ -59,6 +59,13 @@ NAT_UTIL = float(NAT.get("util_max", 70))                   # 사용률 상한(%
 NAT_W = float(NAT.get("power_max_w", 140))                  # 전력 상한(W) — 장당 상한 200 W 의 70%
 NAT_DUTY0 = float(NAT.get("duty", 0.5))                     # 처음 일하는 몫(추론 시간 ÷ (추론 + 쉼))
 nat = {"duty": NAT_DUTY0, "slept": 0.0}
+# 학습(kind train) — 전국 작업과 같은 상한(10-12 구현 25 · 원칙 221): 한 장만 · 풀로드 금지. 시스템 전력 상한은 바꾸지 않고
+# 배치 뒤 쉼으로 조절(이 장의 30초 평균 사용률 · 전력을 재며 일하는 몫을 줄이고 늘림). 설정 power.train(없으면 power.national 값).
+TRN = {**NAT, **(PWR.get("train", {}) or {})}
+TRN_GPU = int(TRN.get("gpu", NAT_GPU))
+TRN_UTIL = float(TRN.get("util_max", NAT_UTIL))
+TRN_W = float(TRN.get("power_max_w", NAT_W))
+TRN_DUTY0 = float(TRN.get("duty", NAT_DUTY0))
 lease = {"slot": None, "last_work": 0.0, "waiting": False}
 
 
@@ -827,6 +834,19 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
     배치마다 다른 GPU 고부하(vLLM 등)를 확인해 그동안 학습을 멈춘다(두 장 동시 고부하 0). 결과 = 새 모델 행(candidate)."""
     jh = bus.job(job_id)
     ids = [e[0] for e in entries]
+    if A.gpu != TRN_GPU and jh and jh.get("state") not in ("cancelled", "failed", "done"):
+        try:                                            # 학습은 정한 한 장에서만 — 그 장 워커가 살아 있으면 대기열로 되돌린다
+            alive = time.time() - float(r().hget(f"worker:a6000-{TRN_GPU}:hb", "ts") or 0) < 30
+        except Exception:  # noqa: BLE001
+            alive = False
+        if alive:
+            for _, f in entries:
+                r().xadd(STREAM, f)
+            r().xack(STREAM, GROUP, *ids)
+            r().xdel(STREAM, *ids)
+            log(WHO, f"train {job_id}: 학습은 GPU{TRN_GPU} 에서만 — 대기열로 되돌림")
+            time.sleep(1.0)
+            return
     r().xack(STREAM, GROUP, *ids)
     r().xdel(STREAM, *ids)
     if not jh or jh.get("state") in ("cancelled", "failed", "done"):
@@ -862,12 +882,44 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
     state["job_id"] = state["last_job"] = job_id
     r().hset(f"job:{job_id}", "workers", json.dumps([WID]))
     bus.lane(WID, {"job_id": job_id, "from": now_iso(), "to": None, "state": "running", "tenant_id": jh.get("tenant_id")})
-    held = {"s": 0.0, "note": False}
+    held = {"s": 0.0, "note": False, "rest": 0.0, "duty": TRN_DUTY0, "t_last": time.perf_counter(), "n": 0, "log_at": 0.0}
 
     def ev(name, data):
         emit(job_id, name, {"job_id": job_id, **data, "at": now_iso(ms=True)})
 
+    def train_rest():
+        """배치 뒤 쉼 — 풀로드 금지(전국 작업과 같은 상한). 쉼 = 배치 시간 × (1 − duty) ÷ duty.
+        30초 평균 사용률이 상한 − 5 또는 전력이 상한을 넘으면 duty × 0.85, 넉넉하면 × 1.03(0.1–0.9)."""
+        now = time.perf_counter()
+        t_b = max(0.0, now - held["t_last"])
+        ring = list((smi.get("ring30") or {}).get(A.gpu) or [])
+        pring = list((smi.get("pring30") or {}).get(A.gpu) or [])
+        u = sum(ring) / len(ring) if ring else 0.0
+        w = sum(pring) / len(pring) if pring else 0.0
+        d = held["duty"]
+        if time.time() - held.get("adj_at", 0.0) >= 10 and len(ring) >= 10:      # 10초에 한 번만 고친다(30초 평균이 늦게 따라오므로 과하게 줄지 않게)
+            held["adj_at"] = time.time()
+            if u > TRN_UTIL - 5 or w > TRN_W:
+                d *= 0.85
+            elif u < TRN_UTIL - 15 and w < TRN_W - 20:
+                d *= 1.08
+            held["duty"] = d = max(0.1, min(0.9, d))
+        rest = min(10.0, t_b * (1 - d) / d)
+        if rest > 0:
+            time.sleep(rest)
+        held["rest"] += rest
+        held["n"] += 1
+        if time.time() - held["log_at"] > 60:
+            held["log_at"] = time.time()
+            log(WHO, f"학습 배치 {held['n']} · 배치 {t_b:.2f}s · 쉼 {rest:.2f}s · duty {d:.2f} · 30초 평균 {u:.0f}% {w:.0f}W")
+        held["t_last"] = time.perf_counter()
+
     def gate_batch(_tr=None):
+        train_rest()
+        if time.time() - held.get("cx", 0.0) > 5:            # 취소를 5초마다 본다(취소한 학습이 끝까지 돌지 않게)
+            held["cx"] = time.time()
+            if (bus.job(job_id) or {}).get("state") == "cancelled":
+                raise RuntimeError("cancelled")
         t0 = time.time()
         while other_gpu_hot():
             if not held["note"]:
@@ -880,6 +932,7 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
             held["note"] = False
             held["s"] += time.time() - t0
             ev("train.resume", {})
+        held["t_last"] = time.perf_counter()
     f0 = entries[0][1]
     shard = Shard(f0["shard_id"], job_id, (0, 0, 0, 0), None, json.loads(f0.get("params") or "null"))
     ev("shard.started", {"shard_id": shard.id, "bbox": [0, 0, 0, 0], "worker": WID})
@@ -904,6 +957,10 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
                         "held_s": env(round(held["s"], 1), "s", "measured", "전력 규칙 대기(다른 GPU 고부하)"),
                         "shards_total": 1, "shards_done": 1})
         st = "done"
+    elif "cancelled" in str(m.get("error") or "") and (bus.job(job_id) or {}).get("state") == "cancelled":
+        st = "cancelled"                                   # 사람이 취소한 학습 — 실패로 덮지 않는다
+        m = {"error": None}
+        ev("job.cancelled", {})
     else:
         r().hset(f"job:{job_id}", mapping={"state": "failed", "finished_at": now, "error": m.get("error")})
         ev("job.failed", {"error": m.get("error")})
@@ -915,7 +972,7 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
         # 학습 GPU 시간을 사용 기록에 남긴다(장부 고장 ③ · 10-01 — 9월 학습 7건이 기록 0) — 성공 · 실패 모두 GPU 를 썼다.
         # 값 = 학습 벽시계 − 전력 규칙 대기(다른 GPU 고부하로 멈춘 시간) · 기관 = 작업을 낸 기관(LX 학습 = 'lx') · 이 작업 id
         try:
-            used_s = max(0.0, el - held["s"])
+            used_s = max(0.0, el - held["s"] - held["rest"])          # 쉰 시간(풀로드 금지 쉼)도 뺀다
             if used_s > 0:
                 conn.execute("SAVEPOINT lx_train_meter")
                 meter(conn, tenant=jh.get("tenant_id") or "lx", demo=False, job_id=job_id, dim="gpu_s", amount=round(used_s, 3))
@@ -930,7 +987,7 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
     ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": st, "pool": POOL, "at": now})
     bus.lane(WID, {"job_id": job_id, "from": None, "to": now, "state": st, "tenant_id": jh.get("tenant_id")})
     state["job_id"] = None
-    log(WHO, f"train {job_id} {st} · {el}s · 전력 대기 {held['s']:.1f}s")
+    log(WHO, f"train {job_id} {st} · {el}s · 전력 대기 {held['s']:.1f}s · 쉼 {held['rest']:.1f}s")
 
 
 def bus_job_view(jh: dict) -> dict:

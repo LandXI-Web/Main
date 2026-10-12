@@ -58,7 +58,29 @@ def plan(job: dict) -> list[dict]:
     o = job.get("options") or {}
     return [{"shard_id": "train", "base_model": o.get("base_model"), "samples": _one(o.get("samples")), "region": o.get("region"),
              "epochs": min(int(o.get("epochs", DEFAULTS["epochs"])), EPOCHS_MAX), "imgsz": int(o.get("imgsz", DEFAULTS["imgsz"])),
-             "batch": int(o.get("batch", DEFAULTS["batch"])), **({"eval": True} if o.get("eval") else {})}]
+             "batch": int(o.get("batch", DEFAULTS["batch"])), **({"eval": True} if o.get("eval") else {}),
+             **({"hp": hp(o.get("hp"))} if o.get("hp") else {})}]
+
+
+HP_KEYS = {"lr0": (1e-6, 0.05), "lrf": (1e-4, 1.0), "freeze": (0, 24), "warmup_epochs": (0, 5), "close_mosaic": (0, 50), "mosaic": (0.0, 1.0),
+           "fraction": (0.01, 1.0), "patience": (1, 100)}
+HP_STR = {"optimizer": ("SGD", "AdamW", "Adam", "auto"), "cos_lr": (True, False)}
+
+
+def hp(d) -> dict:
+    """학습 설정 덧값(낮은 학습률 · 앞쪽 층 고정 등) — 정해진 열쇠 · 범위만 받는다(그 밖은 버림)."""
+    out = {}
+    for k, v in (d or {}).items() if isinstance(d, dict) else []:
+        if k in HP_KEYS:
+            lo, hi = HP_KEYS[k]
+            try:
+                x = type(lo)(v)
+            except (TypeError, ValueError):
+                continue
+            out[k] = min(hi, max(lo, x))
+        elif k in HP_STR and v in HP_STR[k]:
+            out[k] = v
+    return out
 
 
 def _cfg():
@@ -142,9 +164,10 @@ class Adapter:
         gate = opts.get("_gate")
         if callable(gate):           # 배치마다 전력 규칙(다른 GPU 고부하면 멈춤) — gpu_worker 가 준다
             model.add_callback("on_train_batch_end", gate)
+            model.add_callback("on_val_batch_end", gate)      # 반복마다 검증도 같은 쉼 · 전력 규칙(풀로드 금지)
         emit("train.epoch", {"epoch": 0, "epochs": epochs})
         res = model.train(data=str(yml), epochs=epochs, imgsz=int(p.get("imgsz", DEFAULTS["imgsz"])), batch=int(p.get("batch", DEFAULTS["batch"])),
-                          device=0, project=str(out_dir), name=name, exist_ok=True, workers=0, verbose=False, plots=False)
+                          device=0, project=str(out_dir), name=name, exist_ok=True, workers=0, verbose=False, plots=False, **hp(p.get("hp")))
         best = out_dir / name / "weights" / "best.pt"
         mets = {}
         try:

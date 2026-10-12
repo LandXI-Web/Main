@@ -1,0 +1,242 @@
+{
+ "eval": {
+  "aerial25/best": {
+   "api": {
+    "job": "job_01M4QK90H63PDJ1HX1RY94EZQN",
+    "경작지": {
+     "mask": {
+      "map50": 0.8667,
+      "map50_95": 0.672,
+      "precision": 0.8163,
+      "recall": 0.805
+     },
+     "box": {
+      "map50": 0.8703,
+      "map50_95": 0.6966,
+      "precision": 0.7992,
+      "recall": 0.8141
+     }
+    },
+    "all": {
+     "건물": {
+      "mask": {
+       "map50": 0.8061,
+       "map50_95": 0.5679,
+       "precision": 0.7468,
+       "recall": 0.7529
+      },
+      "box": {
+       "map50": 0.8074,
+       "map50_95": 0.6069,
+       "precision": 0.7249,
+       "recall": 0.763
+      }
+     },
+     "주차장": {
+      "mask": {
+       "map50": 0.5689,
+       "map50_95": 0.3201,
+       "precision": 0.6827,
+       "recall": 0.5312
+      },
+      "box": {
+       "map50": 0.5565,
+       "map50_95": 0.3591,
+       "precision": 0.6668,
+       "recall": 0.5466
+      }
+     },
+     "경작지": {
+      "mask": {
+       "map50": 0.8667,
+       "map50_95": 0.672,
+       "precision": 0.8163,
+       "recall": 0.805
+      },
+      "box": {
+       "map50": 0.8703,
+       "map50_95": 0.6966,
+       "precision": 0.7992,
+       "recall": 0.8141
+      }
+     },
+     "비닐하우스": {
+      "mask": {
+       "map50": 0.3692,
+       "map50_95": 0.2812,
+       "precision": 0.8874,
+       "recall": 0.1475
+      },
+      "box": {
+       "map50": 0.3859,
+       "map50_95": 0.3113,
+       "precision": 0.8973,
+       "recall": 0.1576
+      }
+     }
+    }
+   },
+   "file": {
+    "job": "job_01M4QKAV8M5CQ86ZTBWKDYKX82",
+    "경작지": {
+     "mask": {
+      "map50": 0.9157,
+      "map50_95": 0.757,
+      "precision": 0.8942,
+      "recall": 0.8379
+     },
+     "box": {
+      "map50": 0.9182,
+      "map50_95": 0.7767,
+      "precision": 0.892,
+      "recall": 0.8373
+     }
+    },
+    "all": {
+     "건물": {
+      "mask": {
+       "map50": 0.8891,
+       "map50_95": 0.6938,
+       "precision": 0.8377,
+       "recall": 0.8161
+      },
+      "box": {
+       "map50": 0.8895,
+       "map50_95": 0.7272,
+       "precision": 0.832,
+       "recall": 0.8138
+      }
+     },
+     "주차장": {
+      "mask": {
+       "map50": 0.8951,
+       "map50_95": 0.6407,
+       "precision": 0.8537,
+       "recall": 0.8375
+      },
+      "box": {
+       "map50": 0.8878,
+       "map50_95": 0.699,
+       "precision": 0.8428,
+       "recall": 0.8287
+      }
+     },
+     "경작지": {
+      "mask": {
+       "map50": 0.9157,
+       "map50_95": 0.757,
+       "precision": 0.8942,
+       "recall": 0.8379
+      },
+      "box": {
+       "map50": 0.9182,
+       "map50_95": 0.7767,
+       "precision": 0.892,
+       "recall": 0.8373
+      }
+     },
+     "비닐하우스": {
+      "mask": {
+       "map50": 0.9149,
+       "map50_95": 0.7419,
+       "precision": 0.8753,
+       "recall": 0.8631
+      },
+      "box": {
+       "map50": 0.9262,
+       "map50_95": 0.8054,
+       "precision": 0.8825,
+       "recall": 0.873
+      }
+     }
+    }
+   }
+  }
+ },
+ "aborted": [
+  {
+   "job": "job_01M4QKCNZ1PX5D9JR0D4KB5WDE",
+   "started": "2026-10-12 17:24:13",
+   "cfg": {
+    "epochs": 12,
+    "imgsz": 1280,
+    "batch": 4,
+    "task_name": "경작지",
+    "hp": {
+     "optimizer": "SGD",
+     "lr0": 0.002,
+     "lrf": 0.1,
+     "warmup_epochs": 1,
+     "close_mosaic": 3
+    }
+   },
+   "error": "cancelled",
+   "why": "학습 쉼 조절이 30초 평균을 과하게 따라가 너무 느려 고친 뒤 다시 시작"
+  }
+ ],
+ "train": {
+  "job": "job_01M4QKMB4X8F1JHJHD0D7HSR7Q",
+  "started": "2026-10-12 17:28:24",
+  "cfg": {
+   "epochs": 12,
+   "imgsz": 1280,
+   "batch": 4,
+   "task_name": "경작지",
+   "hp": {
+    "optimizer": "SGD",
+    "lr0": 0.002,
+    "lrf": 0.1,
+    "warmup_epochs": 1,
+    "close_mosaic": 3
+   }
+  }
+ },
+ "epochs_seen": [
+  {
+   "epoch": "1",
+   "time": "2972.9",
+   "train/box_loss": "0.73944",
+   "train/seg_loss": "1.32971",
+   "train/cls_loss": "0.72995",
+   "train/dfl_loss": "1.10108",
+   "metrics/precision(B)": "0.80901",
+   "metrics/recall(B)": "0.74518",
+   "metrics/mAP50(B)": "0.82149",
+   "metrics/mAP50-95(B)": "0.65873",
+   "metrics/precision(M)": "0.79806",
+   "metrics/recall(M)": "0.74061",
+   "metrics/mAP50(M)": "0.81061",
+   "metrics/mAP50-95(M)": "0.6022",
+   "val/box_loss": "0.70738",
+   "val/seg_loss": "1.18691",
+   "val/cls_loss": "0.65379",
+   "val/dfl_loss": "1.02871",
+   "lr/pg0": "0.002056",
+   "lr/pg1": "0.00199886",
+   "lr/pg2": "0.00199886"
+  },
+  {
+   "epoch": "2",
+   "time": "5756.48",
+   "train/box_loss": "0.72188",
+   "train/seg_loss": "1.24719",
+   "train/cls_loss": "0.67963",
+   "train/dfl_loss": "1.08937",
+   "metrics/precision(B)": "0.7663",
+   "metrics/recall(B)": "0.79051",
+   "metrics/mAP50(B)": "0.82804",
+   "metrics/mAP50-95(B)": "0.66642",
+   "metrics/precision(M)": "0.78402",
+   "metrics/recall(M)": "0.76401",
+   "metrics/mAP50(M)": "0.82009",
+   "metrics/mAP50-95(M)": "0.60938",
+   "val/box_loss": "0.7126",
+   "val/seg_loss": "1.2087",
+   "val/cls_loss": "0.66005",
+   "val/dfl_loss": "1.03578",
+   "lr/pg0": "0.00185",
+   "lr/pg1": "0.00185",
+   "lr/pg2": "0.00185"
+  }
+ ]
+}

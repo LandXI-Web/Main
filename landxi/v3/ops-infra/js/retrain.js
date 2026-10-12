@@ -45,9 +45,10 @@ export function retrainPane(root) {
         h('div.rt-kv', {},
           h('label', {}, h('span', { text: '쉬는 시간' }), h('span.rt-pair', {}, qs, '–', qe)),
           h('label.rt-ck', {}, wk, h('span', { text: '주말 하루 종일' })),
-          h('label', {}, h('span', { text: '기준' }), h('span.rt-pair', {}, mn, '건')),
+          h('label', {}, h('span', { text: '기준' }), h('span.rt-pair', {}, mn, '장')),
           h('div', {}, h('span', { text: '학습 자리' }), h('b', { text: '한 번에 하나' })), save)),
-      h('p.rv-note', { text: `서비스마다 새 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다. 지금 학습 데이터는 XI맵에서 고친 것(건수)으로 셉니다.` }),
+      h('p.rv-note', { text: `서비스마다 새 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.` }),
+      h('p.rv-note', { text: `XI맵에서 고친 자리 한 칸(영상 + 그 안 테두리)이 고친 뒤 ${val(R.settings.tile_quiet_min) || 30}분 조용하면 학습 데이터 1장이 됩니다.` }),
       h('p.rv-note', { text: R.busy ? '지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.' : R.quiet_now ? '지금은 쉬는 시간입니다.' : '지금은 쉬는 시간이 아닙니다.' }));
 
     /* ── 분석서비스별 ── */
@@ -63,7 +64,7 @@ export function retrainPane(root) {
         title: n < 1 ? '새 학습 데이터가 없습니다' : '', onclick: () => trainNow(x) });
       return h('tr', {},
         h('td', {}, h('b', { text: `${x.service} · ${x.version}` }), x.project ? h('small', { text: x.project.name }) : h('small', { text: '프로젝트 없음' })),
-        h('td', {}, h('span.rv-bar', {}, h('i', { style: `width:${Math.min(100, Math.round(n / need * 100))}%` })), h('small.num', { text: `${nf(n)} / ${nf(need)}건` })),
+        h('td', {}, h('span.rv-bar', {}, h('i', { style: `width:${Math.min(100, Math.round(n / need * 100))}%` })), h('small.num', { text: `${nf(n)} / ${nf(need)}장` })),
         h('td', {}, ...(x.split.length ? x.split.map((c) => h('span.rt-cls', { text: `${c.name} · 나누기` })) : []),
           ...(x.pending.length ? x.pending.map((c) => h('span.rt-cls.is-wait', { text: `${c.name} · 승인 대기` })) : []), !x.split.length && !x.pending.length ? '—' : null),
         h('td', {}, modeSel),
@@ -73,7 +74,7 @@ export function retrainPane(root) {
     });
     const svc = h('section.t-card.rv-card', {},
       h('header.rv-h', {}, h('h2', { text: '분석서비스별' })),
-      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '새 학습 데이터(고친 것)', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
+      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '새 학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
         : h('p.rv-empty', { text: '다시 학습할 수 있는 분석서비스가 없습니다' }));
 
     /* ── 새 물체 → 새 모델 프로젝트 후보 ── */
