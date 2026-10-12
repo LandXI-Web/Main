@@ -275,9 +275,9 @@ def test_decisions_and_now_works(tok):
     _sql("UPDATE improve_items SET hold_until=current_date WHERE id=%s", (iid,))
     j = httpx.get(B + "/improve/items", headers=A, timeout=60).json()
     assert next(x for x in j["items"] if x["id"] == iid)["state"] == "new"
-    # 채택 → 확인 대기
+    # 채택(갈래 없음) → 모아 둠(원칙 202 고침 — 예전 확인 대기)
     r = httpx.post(B + f"/improve/items/{iid}/adopt", json={}, headers=A, timeout=30)
-    assert r.status_code == 200 and r.json()["item"]["state"] == "adopted" and r.json()["item"]["ledger"] == "확인 대기"
+    assert r.status_code == 200 and r.json()["item"]["state"] == "adopted" and r.json()["item"]["ledger"] == "모아 둠"
     # LX 직원은 '이제 됩니다'를 보낼 수 없다(관리자만) · 담당 밖 줄은 보이지도 않는다
     assert httpx.post(B + f"/improve/items/{iid}/notify", json={}, headers=H(tok["staff"]), timeout=30).status_code in (403, 404)
     # 이제 됩니다 → 물은 사람(기관)에게만 한 줄

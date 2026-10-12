@@ -224,7 +224,7 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
         _s.path.insert(0, str(config.SERVER_ROOT))
         spec.loader.exec_module(mod)
         if not mod.dataset_yaml(samples):
-            raise ApiError("not_found", "학습 표본이 없습니다", {"samples": samples, "allowed": list(mod.DATASETS)})
+            raise ApiError("not_found", "학습 데이터가 없습니다", {"samples": samples, "allowed": list(mod.DATASETS)})
         gpus = int(opts.get("gpus", 1) or 1)
         pw = config.load_yaml("pools").get("power", {}) or {}
         if gpus > int(pw.get("max_hot_gpus", 1)) or busy:

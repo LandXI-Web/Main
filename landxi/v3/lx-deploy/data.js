@@ -180,7 +180,7 @@ export const boxPoly = (b) => ({ type: 'Polygon', coordinates: [[[b[0], b[1]], [
 
 /* ── 운영 건강(명세: GET /deploys?with=health). 재학습 · 정밀도 · 오탐 신고는 retrain.js 한 규칙(콘솔 '오늘' · lx-review 와 같은 원천).
    서버 health 는 기관 단위(한 기관의 모든 배포본에 같은 신고·정밀도)라 업무별로 갈라지지 않는다 → 마지막 학습만 서버 값을 쓴다. ─ */
-const NEXT = { retrain: '재학습', review: '결과 확인', sample: '결과 확인', sample_review: '결과 확인', verify: '결과 확인', redeploy: '갱신 배포', update: '갱신 배포', update_deploy: '갱신 배포', none: '없음', watch: '없음' };
+const NEXT = { retrain: '재학습', redeploy: '갱신 배포', update: '갱신 배포', update_deploy: '갱신 배포', none: '없음', watch: '없음' };
 const envOf = (value, unit, basis, source) => ({ value, unit, basis, as_of: D.asOf, source });
 
 /** 규칙 · 규칙별 정밀도(lx-review) · 배포본별 규칙 의심 수 — 한 번(서랍 · 운영 탭 공용) */
@@ -220,9 +220,8 @@ export function health(d, model = null, due = retrainMap()) {
   let next = '없음';
   if (due.has(d.id)) next = '재학습';
   else if (newer) next = '갱신 배포';
-  else if (h?.review && !h.review.done) next = '결과 확인';      // 결과 확인(원칙 198) = 프로젝트 '확인했음'(서버 판정 하나 · 표본 세기 없음)
   else if (h && NEXT[h.next_action] && NEXT[h.next_action] !== '재학습') next = NEXT[h.next_action];
-  return { precision, review: h?.review ?? null, reports: envOf(reps, 'count', 'recorded', '기관 확인 기록'), lastTrain, next, due: due.get(d.id) || [] };
+  return { precision, reports: envOf(reps, 'count', 'recorded', '기관 확인 기록'), lastTrain, next, due: due.get(d.id) || [] };
 }
 
 /** 재학습 필요 {n}건 — 재학습 묶음 수(= 표 '재학습' 행 수 · 콘솔 '오늘'이 dueSets 를 쓰면 같은 값) */

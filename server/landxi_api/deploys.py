@@ -120,8 +120,8 @@ def _public_view(r) -> dict:
 
 
 async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict, last_train: dict, reviews: dict | None = None) -> dict:
-    """정밀도(현장 판정) · 오탐 신고(feedback fp) · 마지막 학습(모델 지표 기준월) · 결과 확인(프로젝트 '확인했음' · 원칙 198)
-    → next_action(재학습 · 결과 확인 · 갱신 배포 · 없음). 표본 검수(표본 k/100)는 1차에서 뺐다(원칙 198)."""
+    """정밀도(현장 판정) · 오탐 신고(feedback fp) · 마지막 학습(모델 지표 기준월)
+    → next_action(재학습 · 갱신 배포 · 없음). 표본 검수(원칙 198) · 결과 확인 '봤음'(원칙 203)은 뺐다."""
     t = r["tenant_id"]
     v = verdicts_by_tenant.get(t, {"tp": 0, "fp": 0})
     judged = v["tp"] + v["fp"]
@@ -136,11 +136,9 @@ async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict,
         except ValueError:
             days = None
     th = THRESHOLDS
-    rv = (reviews or {}).get(r["card_id"])
+    # 결과 확인 '봤음' 기록은 원칙 203(10-12)으로 다음 행동 · 화면 칸에서 뺐다(reviews 인자는 예전 부르는 곳 그대로 받고 쓰지 않음)
     if (prec is not None and prec < th["precision_min_pct"]) or fpn > th["fp_reports_max"]:
         nxt = "retrain"
-    elif rv is not None and not rv["done"] and r["stage"] in ("ga", "canary"):
-        nxt = "review"
     elif days is not None and days > th["train_max_days"]:
         nxt = "update_deploy"
     else:
@@ -151,8 +149,6 @@ async def health_of(conn, r, feedback_by_tenant: dict, verdicts_by_tenant: dict,
             "fp_reports": env(fpn, "count", "recorded", "오탐 신고"),
             "last_train": lt, "last_train_days": env(days, "count", "recorded", "모델 지표 기준월", None if days is not None else "학습 기록 없음"),
             "next_action": nxt, "next_action_label": {"retrain": "재학습", "review": "결과 확인", "update_deploy": "갱신 배포", "none": "없음"}[nxt],
-            # 결과 확인(원칙 198) — 이 서비스 프로젝트의 이번 회차 '확인했음'(프로젝트 화면 · 지도 서비스와 같은 기록) · 프로젝트가 없으면 null
-            "review": rv,
             "thresholds": {k: env(v, "%" if k.endswith("pct") else "count", "estimate", "deploys.THRESHOLDS", "[추정 초기값]") for k, v in th.items()}}
 
 
@@ -204,12 +200,8 @@ async def list_deploys(request: Request, tenant_id: str | None = None, card_id: 
         items = [await deploy_dict(conn, r) for r in rows]
         if "health" in want:
             fb, vv, lt = await _health_inputs(conn)
-            try:
-                rvs = await review_by_card()
-            except Exception:  # noqa: BLE001
-                rvs = {}
             for it, r in zip(items, rows):
-                it["health"] = await health_of(conn, r, fb, vv, lt, rvs)
+                it["health"] = await health_of(conn, r, fb, vv, lt)   # 결과 확인 '봤음'(review_by_card)은 쓰지 않음 — 원칙 203
     return {"items": items, "total": len(items), "as_of": now_iso()}
 
 

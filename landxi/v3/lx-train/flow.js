@@ -117,14 +117,14 @@ export function openFlow({ host, who, project = null, step = null }) {
   /* ── ① 데이터 올리기 ───────────────────────────── */
   const task = h('input.t-input', { type: 'text', name: 'task', placeholder: '업무 이름 (예: 비닐하우스)', maxlength: '40', 'aria-label': '업무 이름' });
   const regEl = h('div.tf-reg');
-  const file = h('input.tf-file', { type: 'file', accept: '.zip,application/zip', 'aria-label': '라벨 표본 묶음(zip)' });
+  const file = h('input.tf-file', { type: 'file', accept: '.zip,application/zip', 'aria-label': '학습 데이터 묶음(zip)' });
   const up = h('button.t-btn', { type: 'button', text: '올리기', disabled: true });
   const upBar = h('div.t-progress.tf-bar', { hidden: true, role: 'progressbar', 'aria-label': '올리기 진행', 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i'));
   const upMsg = h('p.t-label.tf-msg', { role: 'status', 'aria-live': 'polite' });
-  const prev = h('select.t-input', { 'aria-label': '올린 표본', hidden: true });
+  const prev = h('select.t-input', { 'aria-label': '올린 학습 데이터', hidden: true });
   let region = null, LIMIT = 400 * 1048576;
-  s1.append(h('label.t-label', { text: '업무' }), task, h('label.t-label', { text: '표본 지역(선택)' }), regEl,
-    h('label.t-label', { text: '라벨 표본 묶음(zip · 그림 200장 이하)' }), file, h('div.tf-act', {}, up), upBar, upMsg, prev);
+  s1.append(h('label.t-label', { text: '업무' }), task, h('label.t-label', { text: '학습 데이터 지역(선택)' }), regEl,
+    h('label.t-label', { text: '학습 데이터 묶음(zip · 그림 200장 이하)' }), file, h('div.tf-act', {}, up), upBar, upMsg, prev);
   const dom = project?.regions?.find((g) => !g.abroad) || null;
   regionPicker(regEl, { onPick: (r) => { region = r; }, value: dom?.code });
   if (project) { task.value = project.task || ''; if (dom) region = { sgg_cd: dom.code }; }
@@ -140,7 +140,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     if (f.size > LIMIT) { bad = true; say1(`묶음이 ${MB(f.size)} MB 입니다 — ${MB(LIMIT)} MB 이하로 나눠 묶어 주세요`, 'warn'); ready(); return; }
     const pk = await zipPeek(f);
     const why = !pk ? null : pk.bad ? 'zip 파일을 열 수 없습니다' : !pk.images ? '그림(images 폴더)이 없습니다'
-      : !pk.labels ? '라벨(labels 폴더)이 없습니다' : pk.images > MAX_IMAGES ? `그림이 ${nf(pk.images)}장입니다 — 작은 표본은 ${MAX_IMAGES}장 이하입니다`
+      : !pk.labels ? '라벨(labels 폴더)이 없습니다' : pk.images > MAX_IMAGES ? `그림이 ${nf(pk.images)}장입니다 — 한 번에 ${MAX_IMAGES}장 이하입니다`
         : !pk.names ? '클래스 이름(dataset.yaml)이 없습니다' : null;
     bad = !!why;
     say1(why || (pk ? `${MB(f.size)} MB · 그림 ${nf(pk.images)}장` : `${MB(f.size)} MB`), why ? 'warn' : '');
@@ -200,7 +200,7 @@ export function openFlow({ host, who, project = null, step = null }) {
         say1(done >= total ? '다 올렸습니다 — 묶음을 풀어 검사하는 중' : `올리는 중 ${MB(done)} / ${MB(total)} MB${left(sec)}`);
       });
       say1(''); upBar.hidden = true; up.textContent = '올리기';
-      toast('표본을 올렸습니다');
+      toast('학습 데이터를 올렸습니다');
       showSample(j);
     } catch (e) {
       devlog('sample', `${e.code || ''} ${e.message}`);
@@ -216,8 +216,8 @@ export function openFlow({ host, who, project = null, step = null }) {
     if (!items.length) return;
     const mine = new Set((pj?.items || []).map((x) => x.id));
     prev.hidden = false;
-    prev.innerHTML = '<option value="">이전에 올린 표본 이어 쓰기</option>'
-      + (mine.size ? `<optgroup label="이 프로젝트">${(pj.items || []).map(opt).join('')}</optgroup><optgroup label="다른 표본">` : '')
+    prev.innerHTML = '<option value="">이전에 올린 학습 데이터 이어 쓰기</option>'
+      + (mine.size ? `<optgroup label="이 프로젝트">${(pj.items || []).map(opt).join('')}</optgroup><optgroup label="다른 학습 데이터">` : '')
       + items.filter((x) => !mine.has(x.id)).map(opt).join('') + (mine.size ? '</optgroup>' : '');
     prev.addEventListener('change', async () => {
       if (!prev.value) return;
@@ -229,7 +229,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     /* 프로젝트 안 · 주소에 표본이 없으면 그 프로젝트의 최근 표본을 이어서 연다 */
     if (project && mine.size && !Q().get('sample') && !sample) api('/training/samples/' + pj.items[0].id).then(showSample).catch(() => {});
   }).catch(() => {});
-  if (project && !project.can?.work) { up.remove(); file.disabled = true; say1('표본 올리기는 프로젝트장과 구성원이 합니다'); }
+  if (project && !project.can?.work) { up.remove(); file.disabled = true; say1('학습 데이터 올리기는 프로젝트장과 구성원이 합니다'); }
   /* 학습데이터 구축 — 표본이 준비되면 다음 단계(학습)로 가는 길 한 줄 */
   let nextEl = null;
   function labelNext() {
@@ -275,7 +275,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     buildTrain();
   }
   function tile(i, off) {
-    const img = h('img', { alt: `표본 그림 ${i + 1}`, decoding: 'async' });
+    const img = h('img', { alt: `학습 데이터 그림 ${i + 1}`, decoding: 'async' });
     const b = h('button.tf-x', { type: 'button', text: off ? '다시 넣기' : '빼기' });
     const t = h('figure.tf-t', { dataset: { off: off ? '1' : '' } }, img, b);
     authBlob(`/training/samples/${sample.id}/preview/${i}?size=384`).then((u) => { img.src = u; }).catch(() => { t.dataset.fail = '1'; });
@@ -317,7 +317,7 @@ export function openFlow({ host, who, project = null, step = null }) {
   }
   async function buildTrain() {
     if (s3.childElementCount) { pickBase(); return; }
-    s3.append(h('label.t-label', { text: '기반 모델' }), baseSel, h('p.t-label.tf-note', { text: '작은 표본 · 3회차 · 한 번에 한 건(대기열)' }), h('div.tf-act', {}, go), bar, trMsg, epochs);
+    s3.append(h('label.t-label', { text: '기반 모델' }), baseSel, h('p.t-label.tf-note', { text: '학습 데이터 200장 이하 · 3회차 · 한 번에 한 건(대기열)' }), h('div.tf-act', {}, go), bar, trMsg, epochs);
     /* 프로젝트 안: 학습 시작 = 프로젝트장 · 구성원(공개된 서비스의 재학습은 서버도 거절 — 역할-3 ⓑ) */
     if (project && !project.can?.train) { go.remove(); trMsg.textContent = project.published ? '다시 학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장과 구성원이 시작합니다'; }
     let all = [];

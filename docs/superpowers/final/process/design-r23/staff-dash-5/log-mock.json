@@ -1,0 +1,35 @@
+[
+ {
+  "file": "mock-dash5-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "시안 PC 1440×900 첫 화면 — ① 내 분석 결과 3×3 · ② 진행 현황 · 작업 · 요청함 · ③ 저장 용량 · 공지 · 메모",
+  "errors": []
+ },
+ {
+  "file": "mock-dash5-full-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "viewport": [
+   1440,
+   1260
+  ],
+  "note": "시안 세로 전체(1440×1260 창) — ④ 전국 AI 현황 · 최근 프로젝트까지",
+  "errors": []
+ },
+ {
+  "file": "mock-dash5-grid-hover-0914.png",
+  "shot_at": "2026-10-12T09:14:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/staff-dash-5/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "격자 다섯째 칸(비닐하우스 · 증평군)에 올려 결과 도형이 드러난 뒤",
+  "errors": []
+ }
+]

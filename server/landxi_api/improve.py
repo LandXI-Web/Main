@@ -15,12 +15,15 @@ POST /assist/feedback               {run_id?, kind: not_helpful|card_cancel|map_
 GET  /assist/notices                → {items:[{id, text, try}]}  그 사람에게 온 '이제 됩니다' · 안 본 것만
 POST /assist/notices/{id}/seen      → 204
 GET  /improve/items?state=&role=    → 자주 막히는 요청(LX 관리자 · 담당 프로젝트장)
-GET  /improve/items  의 새로 옴 · 보류 줄마다 suggest = 시스템 제안 {mode, line(한 줄), why(근거), quick} — 코드 규칙만(원칙 197 고침 · 아래 suggest())
+GET  /improve/items  의 새로 옴 · 보류 줄마다 suggest = 시스템 제안 {mode, line(한 줄), why(근거), quick, tag} — 코드 규칙만(원칙 197 · 202 고침 · 아래 suggest())
 POST /improve/items/{id}/adopt      {use: "suggest"}  이대로 반영 — 서버가 정한 제안 그대로(관리자는 갈래를 고르지 않는다)
-                                    {mode: "dev"}      개발 요청(제안 방법 = 시스템 제안 · 없으면 분류의 기본 방법)
+                                    {mode: "collect"}  모아 두기(원칙 202 고침 · 10-12) — XI ChatGEO(LLM) 쪽에서 지금 바로 못 고치는 질문을
+                                                       다음 LLM 개선용 평가 질문 묶음에 쌓는다(GET /improve/eval-set). 예전 {mode: "dev"}도 모아 두기로 받는다
                                     {mode?, how?, src?, dst?, text?, try?, test?}  (시험 · 예전 호출 그대로)
-                                    채택 — mode=dev(개발 할 일 → 확인 대기) | alias(다른 이름 더하기) · intent(질문 뜻 연결) · phrase(답 문구)
+                                    채택 — mode=collect(모아 두기) | alias(다른 이름 더하기) · intent(질문 뜻 연결) · phrase(답 문구)
                                     = 바로 반영(표 한 줄 → 다음 질문부터 적용 · 원칙 197)
+GET  /improve/eval-set[?format=jsonl]  모아 둔 평가 질문 묶음(가린 요지 · 같은 뜻 질문 · 분류 · 꼬리표 · 횟수) — 목록 · 내려받기
+     꼬리표(tag) = 화면 · 분석 기능이 있어야 풀리는 것의 구분 표시만('분석 모델에 클래스 필요' 등 · 받는 곳 없는 요청을 만들지 않는다)
 POST /improve/items/{id}/revert                       바로 반영 되돌리기(표 줄 끔 → 새로 옴)
 POST /improve/items/{id}/hold       {reason, until}   보류(사유 · 다시 볼 날짜)
 POST /improve/items/{id}/already    {text, try?}      이미 됨(안내 문구 한 줄 · 누르면 보낼 질문)
@@ -61,8 +64,10 @@ HOW = {  # 채택 때 제안 방법 한 줄(관리자가 적지 않으면) — �
     "other": "질문의 뜻을 알아듣도록 보완",
 }
 STATE_KO = {"new": "새로 옴", "adopted": "채택", "built": "만들어짐", "held": "보류", "already": "이미 됨"}
-# 채택 갈래(원칙 197) — 쉬운 것(코드 없이 표 한 줄)은 바로 반영 · 새 기능 · 새 분류는 개발 할 일
-ADOPT_KO = {"alias": "다른 이름 더하기", "intent": "질문 뜻 연결", "phrase": "답 문구", "dev": "개발 할 일"}
+# 채택 갈래(원칙 197 · 202 고침) — LLM 쪽에서 되는 것(표 한 줄)은 바로 반영 · 바로 안 되는 질문은 모아 두기(다음 LLM 개선 평가 질문)
+ADOPT_KO = {"alias": "다른 이름 더하기", "intent": "질문 뜻 연결", "phrase": "답 문구", "collect": "모아 두기", "dev": "모아 두기"}   # dev = 예전 '개발 요청'(원칙 202 고침으로 모아 두기와 같게 본다)
+COLLECT = ("collect", "dev")
+TAG_OF_KIND = {"action": "화면 기능 필요", "screen": "화면 기능 필요", "nodata": "분석 결과 필요", "server": "서버 점검 필요"}   # 구분 꼬리표(받는 곳 없음 · 표시만)
 QUICK = ("alias", "intent", "phrase")
 ROLE_KO = {"staff": "LX 직원", "admin": "LX 관리자", "sales": "LX 영업", "tenant": "기관"}
 SIG_BLOCK = ("blocked", "map_failed")             # '몇 번' = 막힌 횟수
@@ -548,12 +553,14 @@ def phrase_for(msg: str) -> dict | None:
 
 
 # ═══ 시스템 제안(원칙 197 고침 · 10-11) — 후보마다 고칠 방법을 서버가 미리 정한다 ══════════════════════
-# 관리자는 '이대로 반영 / 개발 요청 / 보류'만 누른다(갈래를 고르지 않는다). 정하는 것은 코드 규칙뿐(언어 모델 0 · GPU 0) · 애매하면 개발 요청.
-#   ① 개발 요청 — 서버 응답 없음 · 결과에 없는 세부 분류(예 비닐하우스 단동 · 연동)
+# 개선 후보 = XI ChatGEO(LLM) 개선 고리(원칙 202 고침 · 10-12). 관리자는 '이대로 반영 / 모아 두기 / 보류'만 누른다.
+# 정하는 것은 코드 규칙뿐(언어 모델 0 · GPU 0) · LLM 쪽에서 바로 안 되는 것은 모아 두기(다음 LLM 개선 평가 질문).
+# 화면 · 분석 기능이 있어야 풀리는 것은 구분 꼬리표만 붙인다(분석 모델에 클래스 필요 · 화면 기능 필요 등 — 요청을 만들지 않음).
+#   ① 모아 두기 + 꼬리표 — 서버 응답 없음 · 결과에 없는 세부 분류(예 비닐하우스 단동 · 연동 → '분석 모델에 클래스 필요')
 #   ② 다른 이름 — 질문의 낱말이 아래 표에 있고, 바꿀 말이 결과 분류 · 서비스 이름에 있을 때(예 '온실' → 비닐하우스)
 #   ③ 답 문구 — 이미 있는 도구가 알아듣는 말인데 막힘(지도에 결과 층이 없음 등) · 권한 밖 · 화면 밖처럼 답은 맞고 다음 할 일이 없을 때
 #   ④ 질문 뜻 연결 — 이미 있는 도구(거르기 · 읍면동별 세기 · 보고서)로 답할 수 있는데 그 말을 못 알아들을 때
-#   ⑤ 그 밖 = 개발 요청(분류의 기본 방법)
+#   ⑤ 그 밖 = 모아 두기(분류가 지도 동작 · 화면이면 '화면 기능 필요', 자료 없음이면 '분석 결과 필요' 꼬리표)
 ALIAS_WORDS = {  # 사용자가 쓰는 말 → 플랫폼 말 후보(앞에서부터 · 결과 분류 · 서비스 이름에 있는 것만 씀)
     "온실": ["비닐하우스"], "하우스": ["비닐하우스"], "시설하우스": ["비닐하우스"], "비닐온실": ["비닐하우스"], "그린하우스": ["비닐하우스"],
     "농경지": ["경작지"], "논밭": ["경작지"], "전답": ["경작지"], "영농": ["경작·휴경"],
@@ -671,7 +678,7 @@ def _cls_in(t: str, V: dict) -> str | None:
 
 
 def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
-    """후보 하나 → 시스템 제안 {mode, src, dst, text, try, how, line, why, quick}. 코드 규칙만 · 애매하면 개발 요청."""
+    """후보 하나 → 시스템 제안 {mode, src, dst, text, try, how, line, why, quick, tag}. 코드 규칙만 · 바로 안 되면 모아 두기."""
     kind = it.get("kind") or "other"
     g = str(it.get("gist") or "")
     texts = [g] + [x for x in (it.get("examples") or []) if x]
@@ -681,20 +688,20 @@ def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
     clean = lambda s: MASK not in s and len(s) <= 60   # noqa: E731 — 가린 자리가 있는 말은 '알아들을 질문'으로 쓰지 않는다
     active_alias = {r["src"] for r in (rules or []) if r.get("mode") == "alias"}
 
-    def dev(what: str, why: str) -> dict:
-        how = what[:120]
-        return {"mode": "dev", "quick": False, "how": how, "line": f"개발 요청 — {what}", "why": f"{cnt} · {why}"}
+    def dev(what: str, why: str, tag: str | None = None) -> dict:   # 모아 두기(함수 이름은 예전 그대로 · 원칙 202 고침)
+        return {"mode": "collect", "quick": False, "how": what[:120], "tag": tag,
+                "line": "모아 두기 — 다음 XI ChatGEO 개선 때 평가 질문으로 씁니다", "why": f"{cnt} · {why}"}
 
     if kind == "server":
-        return dev(HOW["server"], "답 서버가 응답하지 않음")
-    # ① 결과에 없는 세부 분류(단동 · 연동) — 개발 요청
+        return dev(HOW["server"], "답 서버가 응답하지 않음", TAG_OF_KIND["server"])
+    # ① 결과에 없는 세부 분류(단동 · 연동) — 모아 두기 + '분석 모델에 클래스 필요'(LLM 으로는 풀리지 않음)
     for rx, key, word in SUB_MODS:
         if rx.search(t_all):
             base = _cls_in(t_all, V) or "비닐하우스"
             base = base.split("_")[0]
             have = f"{base}_{key}" in V["classes"]
             return dev(f"'{base} {word}'{iga(word)} 모든 결과에서 나뉘도록 분류 더하기",
-                       "일부 결과에만 있는 분류" if have else "결과 분류에 없음")
+                       f"'{base} {word}' " + ("— 일부 결과에만 있는 분류" if have else "— 결과 분류에 없음"), "분석 모델에 클래스 필요")
     # ② 다른 이름
     for s in texts:
         for src, dsts in ALIAS_WORDS.items():
@@ -738,8 +745,8 @@ def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
         txt = "Land-XI 는 국토 · 실태조사 업무와 법령 질문에 답합니다"
         return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": None, "how": f"답에 '{txt}' 붙이기",
                 "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · 업무 밖 질문 — 못 찾은 것이 맞음"}
-    # ⑥ 그 밖 — 없는 기능 · 애매함 → 개발 요청
-    return dev(HOW.get(kind) or HOW["other"], f"{KINDS.get(kind, '그 밖')} — 이미 있는 말 · 도구로는 답할 수 없음")
+    # ⑥ 그 밖 — LLM 쪽에서 바로 안 됨 → 모아 두기(지도 동작 · 화면 · 자료가 있어야 풀리면 꼬리표)
+    return dev(HOW.get(kind) or HOW["other"], f"{KINDS.get(kind, '그 밖')} — 이미 있는 말 · 도구로는 답할 수 없음", TAG_OF_KIND.get(kind))
 
 
 # ═══ 모으기 — 답이 끝나는 곳(runner.emit)에서 ════════════════════════════════════════
@@ -1086,22 +1093,28 @@ def _item(r, p: Principal, who: dict, V: dict | None = None, rules: list | None 
                 "reopen": st in ("held", "already") or (st == "adopted" and r["adopt_mode"] not in QUICK),
                 "revert": st == "adopted" and r["adopt_mode"] in QUICK},
     }
-    # 채택 갈래(원칙 197) — 바로 반영(표 한 줄 · 다음 질문부터) | 개발 할 일(확인 대기)
+    # 채택 갈래 — 바로 반영(표 한 줄 · 다음 질문부터) | 모아 둠(다음 XI ChatGEO 개선 평가 질문 · 원칙 202 고침)
     if st == "adopted":
-        mode = r["adopt_mode"] or "dev"
+        mode = r["adopt_mode"] or "collect"
+        mode = "collect" if mode == "dev" else mode       # 예전 '개발 요청' 줄 = 모아 둠(원칙 202 고침)
         rule = r["rule"]
         if isinstance(rule, str):
             rule = json.loads(rule)
         d["adopt"] = {"mode": mode, "mode_label": ADOPT_KO.get(mode, mode), "quick": mode in QUICK,
                       "rule": {k: rule.get(k) for k in ("src", "dst", "text", "try", "test")} if rule else None,
-                      "state_word": "반영됨 — 다시 물어보세요" if mode in QUICK and rule else "개발 할 일 · 확인 대기"}
-    # 시스템 제안(원칙 197 고침) — 아직 고르지 않은 줄(새로 옴 · 보류)마다 서버가 고칠 방법을 미리 정한다
-    if V is not None and st in ("new", "held"):
+                      "state_word": "반영됨 — 다시 물어보세요" if mode in QUICK and rule else "모아 둠 — 다음 XI ChatGEO 개선 평가 질문"}
+    # 시스템 제안(원칙 197 · 202 고침) — 아직 고르지 않은 줄(새로 옴 · 보류)마다 서버가 고칠 방법을 미리 정한다.
+    # 모아 둔 줄도 같은 규칙으로 꼬리표(분석 모델에 클래스 필요 등)를 다시 붙인다(표시만)
+    collected = st == "adopted" and (r["adopt_mode"] or "collect") in COLLECT
+    if V is not None and (st in ("new", "held") or collected):
         n_sum = int(r["n_block"] or 0) + int(r["n_reask"] or 0) + int(r["n_nh"] or 0) + int(r["n_cancel"] or 0)
         sg = suggest({"kind": r["kind"], "gist": r["gist"], "examples": [x for x in (r["gists"] or []) if x and x != r["gist"]],
                       "note": r["note"], "n_sum": n_sum, "test_only": not r["n_real"]}, V, rules)
-        d["suggest"] = sg
-        d["can"].update({"apply": bool(sg.get("quick")), "dev": True, "hold": st == "new"})
+        if collected:
+            d["adopt"]["tag"] = sg.get("tag")
+        else:
+            d["suggest"] = sg
+            d["can"].update({"apply": bool(sg.get("quick")), "collect": True, "hold": st == "new"})
     return d
 
 
@@ -1156,12 +1169,13 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
             if body.get("use") == "suggest":              # 이대로 반영(원칙 197 고침) — 서버가 정한 제안을 그대로(화면이 보낸 값은 쓰지 않는다)
                 sg = cur.get("suggest")
                 if not sg or not sg.get("quick"):
-                    raise ApiError("conflict", "이 줄은 바로 반영할 방법이 없습니다 — 개발 요청으로 올려 주세요", status=409)
+                    raise ApiError("conflict", "이 줄은 바로 반영할 방법이 없습니다 — 모아 두기로 쌓아 주세요", status=409)
                 body = {"mode": sg["mode"], "src": sg.get("src"), "dst": sg.get("dst"), "text": sg.get("text"), "try": sg.get("try"),
                         "how": sg.get("how"), "test": bool(body.get("test")) or cur.get("test_item"), "use": "suggest"}
-            elif str(body.get("mode") or "dev") == "dev" and not body.get("how") and cur.get("suggest"):
-                body = {**body, "mode": "dev", "how": cur["suggest"]["how"] if cur["suggest"]["mode"] == "dev" else None}
-            mode = str(body.get("mode") or "dev")
+            elif str(body.get("mode") or "collect") in COLLECT:     # 모아 두기(예전 '개발 요청' 호출도 여기로 · 원칙 202 고침)
+                sg = cur.get("suggest") or {}
+                body = {**body, "mode": "collect", "how": body.get("how") or (sg.get("how") if sg.get("mode") == "collect" else None)}
+            mode = str(body.get("mode") or "collect")
             if mode not in ADOPT_KO:
                 raise ApiError("bad_request", "채택 갈래를 골라 주세요")
             if mode in QUICK and cur.get("test_item"):
@@ -1188,7 +1202,7 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
                 await conn.execute("UPDATE improve_items SET state='adopted', adopt_mode=$4, ledger='바로 반영', how=$2, decided_by=$3, decided_at=now(), "
                                    "updated_at=now() WHERE id=$1", iid, how[:120], p.user_id, mode)
             else:
-                await conn.execute("UPDATE improve_items SET state='adopted', adopt_mode='dev', ledger='확인 대기', how=coalesce($2, how, $4), decided_by=$3, "
+                await conn.execute("UPDATE improve_items SET state='adopted', adopt_mode='collect', ledger='모아 둠', how=coalesce($2, how, $4), decided_by=$3, "
                                    "decided_at=now(), updated_at=now() WHERE id=$1", iid, how, p.user_id, HOW.get(cur["kind"]))
         elif action == "revert":
             if cur["state"] != "adopted" or not (cur.get("adopt") or {}).get("quick"):
@@ -1278,6 +1292,33 @@ async def reopen(iid: str, request: Request):
 @router.post("/improve/items/{iid}/notify")
 async def notify(iid: str, request: Request, body: dict | None = None):
     return {"item": await _decide(request, iid, "notify", body or {}), "as_of": now_iso()}
+
+
+def _sum_n(x: dict) -> int:
+    """막힘 + 다시 물음 + 도움 안 됨 + 취소(목록 정렬과 같은 합)."""
+    def g(k):
+        return int(((x.get(k) or {}).get("value")) or 0)
+    return g("n") + g("reask") + g("not_helpful") + g("cancel")
+
+
+@router.get("/improve/eval-set")
+async def eval_set(request: Request, format: str | None = None):
+    """모아 둔 평가 질문 묶음(원칙 202 고침) — 다음 XI ChatGEO(LLM) 개선 때 '이 질문들에 답하는가'를 재는 질문 목록.
+    질문은 가린 요지(지명 · 지번 · 사람 이름 ○○)와 같은 뜻 질문 둘까지만 — 대화 원문은 서버에도 없다.
+    LX 관리자 = 전부 · LX 직원 = 내 서비스 · 기관 범위(목록과 같은 범위). format=jsonl 이면 한 줄에 하나(내려받기)."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        scope = await _my_scope(conn, p)
+        n0 = len(_scope_sql(scope, 1)[1]) + 1
+        items = await _items(conn, p, scope, f"i.state='adopted' AND coalesce(i.adopt_mode,'collect') = ANY(${n0}::text[])", [list(COLLECT)])
+    rows = [{"id": x["id"], "question": x["gist"], "same": x["examples"], "kind": x["kind_label"], "tag": (x.get("adopt") or {}).get("tag"),
+             "n": _sum_n(x), "test": bool(x["test_item"] or x["test_only"]), "collected": (x.get("decided") or {}).get("md")} for x in items]
+    rows.sort(key=lambda r: -r["n"])
+    if format == "jsonl":
+        body = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
+        return Response(body, media_type="application/x-ndjson; charset=utf-8",
+                        headers={"content-disposition": "attachment; filename*=UTF-8''landxi-chatgeo-eval.jsonl"})
+    return {"items": rows, "total": env(len(rows), "count", "recorded", "개선 후보 모아 두기(improve_items)"), "as_of": now_iso()}
 
 
 # ═══ 첫 목록 — 10-01 점검의 막힌 12줄(설계 7차 audit.md · improve-loop.md ⑥) ════════════════════

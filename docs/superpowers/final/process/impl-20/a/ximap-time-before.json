@@ -1,0 +1,78 @@
+{
+ "at": "2026-10-11T23:55:13.416Z",
+ "app": "https://app.land-xi.dev",
+ "runs": [
+  {
+   "k": 0,
+   "first": {
+    "label": "로그인 직후 처음",
+    "ms": 3376,
+    "boot": {
+     "gate": 512,
+     "data": 817,
+     "layers": 842,
+     "canvas": 844,
+     "ready": 881,
+     "shown": 1360
+    },
+    "landxi_requests": 66,
+    "r304": 41,
+    "from_cache": 7,
+    "revalidated_small": 46
+   },
+   "again": {
+    "label": "다시 열 때",
+    "ms": 1854,
+    "boot": {
+     "gate": 344,
+     "data": 397,
+     "layers": 451,
+     "canvas": 452,
+     "ready": 479,
+     "shown": 607
+    },
+    "landxi_requests": 67,
+    "r304": 44,
+    "from_cache": 9,
+    "revalidated_small": 57
+   },
+   "errors": []
+  },
+  {
+   "k": 1,
+   "first": {
+    "label": "로그인 직후 처음",
+    "ms": 2540,
+    "boot": {
+     "gate": 383,
+     "data": 613,
+     "layers": 638,
+     "canvas": 640,
+     "ready": 664,
+     "shown": 1178
+    },
+    "landxi_requests": 67,
+    "r304": 6,
+    "from_cache": 8,
+    "revalidated_small": 46
+   },
+   "again": {
+    "label": "다시 열 때",
+    "ms": 1919,
+    "boot": {
+     "gate": 368,
+     "data": 419,
+     "layers": 479,
+     "canvas": 480,
+     "ready": 542,
+     "shown": 610
+    },
+    "landxi_requests": 67,
+    "r304": 43,
+    "from_cache": 9,
+    "revalidated_small": 57
+   },
+   "errors": []
+  }
+ ]
+}

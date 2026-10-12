@@ -85,17 +85,6 @@ body.lm-boot .k-app{visibility:hidden}
 .lm-unfold{position:absolute;left:16px;top:16px;z-index:7;height:32px;padding:0 12px!important;border-radius:var(--r-8)!important;background:var(--bg-1)!important;box-shadow:0 1px 4px rgba(0,0,0,.14);font:600 13px/32px var(--font-body)!important;color:var(--ink)!important}
 .lm-unfold[hidden]{display:none}
 .lm-page.is-folded .lm-cap{top:56px}
-/* 결과 확인 한 줄(원칙 198 · ?project=) — 위 왼쪽 · 결과 이름 칸은 그 아래로 */
-.lm-rv{position:absolute;left:16px;top:16px;z-index:6;display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;min-height:32px;padding:8px 8px 8px 14px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:0 1px 4px rgba(0,0,0,.14);font:500 14px/20px var(--font-body);color:var(--ink);max-width:min(620px,calc(100% - 260px));box-sizing:border-box}
-.lm-rv[hidden]{display:none}
-.lm-rv b{font-weight:600}
-.lm-rv span{color:var(--ink-2)}
-.lm-rv small{font:400 13px/20px var(--font-body);color:var(--sub);padding-right:6px}
-.lm-rv .lm-rvb{height:34px;padding:0 14px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 14px/1 var(--font-body);text-align:center;white-space:nowrap}
-.lm-rv .lm-rvb:disabled{opacity:.5;cursor:default}
-.lm-map.has-rv .lm-cap{top:76px}
-.lm-page.is-folded .lm-rv{top:56px}
-.lm-page.is-folded .lm-map.has-rv .lm-cap{top:116px}
 .lm-lgd{position:absolute;right:16px;top:16px;z-index:6;min-width:112px;max-width:200px;padding:4px 10px 8px;border-radius:var(--r-8);background:rgba(255,255,255,.96);box-shadow:0 1px 4px rgba(0,0,0,.14);box-sizing:border-box}
 .lm-lgd[hidden]{display:none}
 .lm-lgd.is-shut{padding-bottom:4px;min-width:0}

@@ -26,7 +26,7 @@ GET    /projects/{pid}/log               기록 · 메모 · 파일(확인 17차
                                          구성원 · 프로젝트장 · LX 관리자만(기관은 안 봄 — 기관과의 대화는 검토 요청). 거르기 = all | auto | memo | file
 POST   /projects/{pid}/notes             {text} 메모 한 줄 · POST /projects/{pid}/files (multipart file · text?) 파일 올리기(작은 문서 · 그림 · 크기 한도 · 형식 제한)
 GET    /projects/{pid}/files/{nid}       올린 파일 내려받기(같은 사람들만)
-POST   /projects/{pid}/review/seen       결과 확인 — '결과를 지도에서 봤음'(원칙 198 · 구성원 · 이번 회차 한 번)
+POST   /projects/{pid}/review/seen       (쓰지 않음 · 원칙 203) 예전 '결과를 지도에서 봤음' 기록 — 경로 · 기록은 남기고 화면에서 부르지 않는다
 DELETE /projects/{pid}/notes/{nid}       메모 · 파일 지우기(제안 S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 저장 폴더에서 빠지고(저장 공간이 줄어듦)
                                          내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄
 기록(GET …/log)의 lead_storage · 파일 올리기 답의 lead_storage = 프로젝트장의 저장 용량(할당 · 쓴 비율 · 90% 넘음) — 파일 올리는 자리의 한 줄 · 창(S-19 · 막지 않음)
@@ -64,7 +64,8 @@ router = APIRouter()
 # 예전 6단계 '서비스 관리'는 직원 쪽에서 뺐다 — 공개된 서비스의 관리(기관 공유 · 사용 현황)는 LX 관리자 '배포' 메뉴(release.py).
 STAGES = [("ingest", "데이터 올리기"), ("label", "학습데이터 구축"), ("train", "학습"), ("infer", "추론"), ("review", "결과 확인"),
           ("publish", "배포 신청")]
-OPTIONAL = {"infer"}              # 해 보면 좋은 단계 — 끝나지 않아도 '앞 단계 남음'(막힌 곳)으로 올리지 않는다
+OPTIONAL = {"infer", "review"}    # 해 보면 좋은 단계 — 끝나지 않아도 '앞 단계 남음'(막힌 곳)으로 올리지 않는다
+GUIDE = {"review"}                # 길만 있는 단계(원칙 203) — 지금 단계 · 다음 할 일이 되지 않는다(결과 확인 = 지도에서 결과 보기)
 SCOPES = ("mine", "led", "joined", "archived", "all")
 SCOPE_WORD = {"mine": "진행 중 · 내가 만든 · 참여한 프로젝트", "led": "진행 중 · 내가 만든 프로젝트", "joined": "진행 중 · 참여한 프로젝트",
               "archived": "보관한 프로젝트", "all": "진행 중 · LX 전체 프로젝트"}
@@ -320,9 +321,7 @@ async def _facts(conn, r) -> dict:
         judged += await conn.fetchval(
             "SELECT count(*) FROM survey_findings s JOIN lx_users u ON u.id = s.updated_by WHERE s.verdict IS NOT NULL "
             "AND s.sgg_cd = ANY($1::text[]) AND s.updated_at >= $2", codes, rnd_at) or 0
-    # 결과 확인(원칙 198 · 10-11) — 이번 회차에 직원이 지도에서 결과를 보고 '확인했음'을 누른 기록(project_links kind review_seen · ref '회차:사람')
-    seen = await conn.fetchrow("SELECT l.by, l.at, u.name FROM project_links l LEFT JOIN lx_users u ON u.id = l.by "
-                               "WHERE l.project_id=$1 AND l.kind='review_seen' AND l.round=$2 ORDER BY l.at DESC LIMIT 1", pid, r["round"])
+    # 결과 확인 '확인했음' 기록(project_links review_seen)은 원칙 203(10-12)으로 판정에 쓰지 않는다 — 기록 · 경로는 남김
     # 추론(배포-1) — 이 프로젝트 모델로 돌린 분석(추론 탭 · 분석 작업 대기열 · options.project_id) · 이번 회차 것
     infers = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
                               "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
@@ -331,7 +330,7 @@ async def _facts(conn, r) -> dict:
                                   "AND l.kind='card_version' AND a.subject_type='card' WHERE l.project_id=$1", pid)
     last_at = max([x for x in [*last, ap_last] if x], default=None)
     return {"have": have, "samples": samples, "jobs": jobs, "model": model, "last_at": last_at, "reg": reg, "model_ap": model_ap, "card": card, "cv_now": cv_now,
-            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers, "seen": seen}
+            "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers}
 
 
 def _judge(r, f) -> dict:
@@ -389,16 +388,13 @@ def _judge(r, f) -> dict:
     elif not done_inf:
         inf["next"] = "학습한 모델로 영상 분석" if f["model"] else "학습 뒤 영상 분석"
     inf["progress"] = None
-    # ⑤ 결과 확인(원칙 198) — 지도에서 결과 보기(지도 서비스의 그 추론 결과 + 그 자리 고치기). 진행 판정 = 직원이 '확인했음'을 눌렀나 하나.
-    #   표본 20 · 100 세기는 1차에서 뺐다(표본 판정 기록 f['judged'] 는 남겨 두고 쓰지 않음)
+    # ⑤ 결과 확인(원칙 203 · 10-12) — '지도에서 결과 보기' 길만. 봤음 · 확인했음 기록을 남기지 않고 진행을 막지 않는다.
+    #   칸 상태는 추론을 따른다(끝난 추론이 있으면 볼 결과가 있음 = 끝 · 추론을 건너뛰면 함께 건너뜀) · 지금 단계가 되지 않는다(아래 GUIDE).
+    #   예전 '확인했음' 기록(project_links review_seen · f['seen'])과 표본 판정(f['judged'])은 지우지 않고 쓰지 않는다.
     rv = st["review"]
-    rv["done"] = bool(f["seen"])
+    rv["done"] = bool(done_inf)
     rv["progress"] = None
-    if f["seen"]:
-        rv["seen_at"] = f["seen"]["at"].astimezone(KST).isoformat() if f["seen"]["at"] else None
-        rv["seen_by"] = f["seen"]["name"]                # 누가 '확인했음'을 눌렀나(배포 신청서 · 관리자 배포 화면 — 제안 3)
-    else:
-        rv["next"] = "지도에서 결과 보기"
+    rv["next"] = "지도에서 결과 보기"
     if done_inf:
         rv["target"] = {"job": done_inf[0]["id"]}       # 이번 회차 가장 최근에 끝난 추론 — 지도 서비스가 그 결과를 연다
     # ⑥ 배포 신청 — 이번 회차 카드(또는 새 판) 승인 요청 · 승인 뒤 기관 공유 · 사용 현황은 LX 관리자 '배포' 메뉴(원칙 151 · 152)
@@ -423,7 +419,7 @@ def _judge(r, f) -> dict:
     if f["published"] and st["publish"]["done"]:
         cur = last_i
     else:
-        cur = next((i for i, k in enumerate(order) if not st[k]["done"] and not st[k].get("skip")), last_i)
+        cur = next((i for i, k in enumerate(order) if not st[k]["done"] and not st[k].get("skip") and k not in GUIDE), last_i)
         if r["round"] > 1 and cur < 2:        # 보완 회차는 학습 단계로 돌아간다(데이터 · 라벨은 앞 회차 것을 이어 쓴다)
             cur = 2 if not st["train"]["done"] else cur
     # 칸 상태 한 출처(GPT2-3 — 목록 진행 · 상세 단계 · 대시보드 요약이 이 값만 쓴다): 끝남 done · 지금 now · 남음 wait ·
@@ -441,7 +437,7 @@ def _judge(r, f) -> dict:
             state, s["skip"], s["skip_word"] = "skip", True, "건너뜀"
         else:
             state = "wait"
-        s["word"] = {"done": "완료", "now": "지금 단계", "wait": "대기"}.get(state) or s.get("skip_word") or "건너뜀"
+        s["word"] = ("결과 보기" if k in GUIDE and state == "done" else None) or {"done": "완료", "now": "지금 단계", "wait": "대기"}.get(state) or s.get("skip_word") or "건너뜀"
         stages.append({"index": i, **{x: y for x, y in s.items() if x != "done"}, "state": state, "done": bool(s["done"])})
     now = stages[cur]
     nxt = {"text": now["next"] or now["label"], "stage": now["key"], "target": now["target"],
@@ -452,7 +448,7 @@ def _judge(r, f) -> dict:
             "blocked": _blocked(stages, cur, holds)}
 
 
-_KIND_ORDER = {"reject": 0, "before": 1, "after": 2, "wait": 3}
+_KIND_ORDER = {"reject": 0, "before": 1, "wait": 3}   # 'after'(공개 뒤 결과 확인 남음)는 원칙 203 으로 뺐다
 
 
 def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
@@ -467,11 +463,6 @@ def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
             prog = s.get("progress")
             out.append({"kind": "before", "stage": k, "label": s["label"],
                         "text": f"{s['label']} {prog['n']}/{prog['total']}" if prog else f"{s['label']} 남음"})
-        elif k == "review" and s.get("skip_word") == "건너뜀":
-            # 공개 뒤 건너뛴 결과 확인 — 대시보드 '남은 일'로 올린다(10-11 QA-Q11 ⓐ). 칸 말은 그대로 '건너뜀' · 막힌 곳 종류 after(공개 뒤 남음)
-            prog = s.get("progress")
-            out.append({"kind": "after", "stage": k, "label": s["label"],
-                        "text": f"{s['label']} {prog['n']}/{prog['total']} · 공개 뒤 남음" if prog else f"{s['label']} · 공개 뒤 남음"})
     out.sort(key=lambda b: (_KIND_ORDER[b["kind"]], [x["key"] for x in stages].index(b["stage"])))
     return out
 
@@ -531,7 +522,7 @@ async def _basis(conn, r, f, blocked: list, stages: list | None = None) -> dict:
     pts = []
     smp = f["samples"][0] if f["samples"] else None
     if smp:
-        pts.append({"kind": "sample", "label": f"표본 {int(smp['n_images'] or 0):,}장" if smp["n_images"] else "학습 표본", "at": smp["created_at"]})
+        pts.append({"kind": "sample", "label": f"학습 데이터 {int(smp['n_images'] or 0):,}장" if smp["n_images"] else "학습 데이터", "at": smp["created_at"]})
     if trained:
         pts.append({"kind": "train", "label": "학습 끝", "at": trained})
     if model_ok:
@@ -580,7 +571,7 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
         out.update({"stages": j["stages"],
                     "members": [_who(people, u) for u in members if u != r["lead_id"]],
                     "can": _can(p, r, members, j["published"]),
-                    "samples": [{"id": s["id"], "task_name": s["task_name"], "images": env(s["n_images"], "count", "measured", "올린 표본 파일"),
+                    "samples": [{"id": s["id"], "task_name": s["task_name"], "images": env(s["n_images"], "count", "measured", "올린 학습 데이터 파일"),
                                  "created_at": _iso(s["created_at"])} for s in f["samples"][:10]],
                     "card": f["card"], "created_by": _who(people, r["created_by"]),
                     "storage": env(await project_bytes(conn, r["id"]), "bytes", "measured",
@@ -751,7 +742,7 @@ async def add_sample(pid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         await require_member(conn, p, pid)
         if not await conn.fetchval("SELECT 1 FROM train_samples WHERE id=$1 AND status <> 'removed'", sid):
-            raise ApiError("not_found", "학습 표본이 없습니다")
+            raise ApiError("not_found", "학습 데이터가 없습니다")
         await link(conn, pid, "sample", sid, p.user_id)
         await audit(conn, p, "project.sample", pid, None, {"sample_id": sid})
         out = await view(conn, p, await _row(conn, pid))
@@ -924,7 +915,7 @@ async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[
     # ② 학습 표본 올림
     for s in await conn.fetch("SELECT s.n_images, s.created_at, s.created_by FROM project_links l JOIN train_samples s ON s.id = l.ref "
                               "WHERE l.project_id=$1 AND l.kind='sample' AND s.status <> 'removed'", pid):
-        add(s["created_at"], "auto", f"학습 표본 {int(s['n_images'] or 0):,}장 올림" if s["n_images"] else "학습 표본 올림", _name(people, s["created_by"]),
+        add(s["created_at"], "auto", f"학습 데이터 {int(s['n_images'] or 0):,}장 올림" if s["n_images"] else "학습 데이터 올림", _name(people, s["created_by"]),
             group="train")
     # ③ 학습 — 끝 · 실패 · 진행 중(이 프로젝트 표본 또는 이 프로젝트로 낸 학습)
     sids = await _sample_ids(conn, pid)

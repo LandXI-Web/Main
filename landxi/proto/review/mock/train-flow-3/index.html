@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>시안 · 학습 — AI 모델 작업 흐름 (3차 · 이 프로젝트 지금 학습 중심)</title>
+<link rel="stylesheet" href="../../../../v3/shared/tokens-v2.2.css">
+<link rel="stylesheet" href="tf3.css">
+</head>
+<body>
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role">LX 직원</span><span class="mb">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span>대시보드</span><span class="on">프로젝트</span><span>분석하기</span><span>지도 서비스</span><span>XI맵</span><span>데이터</span><span>요청함</span>
+  </nav>
+  <div class="stages" id="stages"></div>
+  <main class="main">
+    <section class="board">
+      <div class="board-h"><h1>학습 · AI 모델 작업 흐름</h1><p id="hint"></p><span class="sp"></span><button class="go" id="go">밤에 돌리기</button></div>
+      <div class="add" id="add"><span class="add-k">블록 더하기</span></div>
+      <div class="canvas" id="canvas"><svg class="wires" id="wires"></svg></div>
+    </section>
+    <section class="cur">
+      <div class="perf" id="perf"></div>
+      <div class="keys" id="keys"></div>
+    </section>
+    <section class="hist" id="hist"></section>
+  </main>
+  <aside class="side" id="side" hidden></aside>
+</div>
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+<script src="tf3.js"></script>
+</body>
+</html>

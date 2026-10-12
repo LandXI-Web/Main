@@ -65,7 +65,7 @@ async function drawSamples() {
   const items = j?.items || [];
   if (!items.length) {
     const e = h('div'); samplesBox.replaceChildren(e);
-    empty(e, { kind: 'first', title: j ? '아직 올린 학습데이터가 없습니다' : '학습데이터를 불러오지 못했습니다', text: j ? '라벨 표본 묶음(zip)을 올리면 여기에 보입니다' : '', compact: true });
+    empty(e, { kind: 'first', title: j ? '아직 올린 학습데이터가 없습니다' : '학습데이터를 불러오지 못했습니다', text: j ? '학습 데이터 묶음(zip)을 올리면 여기에 보입니다' : '', compact: true });
     return;
   }
   const day = (s) => String(s || '').slice(0, 10).replace(/-/g, '.');
@@ -292,7 +292,7 @@ function openDrawer(r) {
   row('마지막 학습', `<span class="num">${esc(dayText(dateOf(r.m)) || '—')}</span>`);
   /* 표본 — 서버가 값을 줄 때만 행을 연다(값 없으면 접음 · 큰 숫자 블록과 같은 규칙) */
   const sv = isEnvelope(r.m.samples) ? (r.m.samples.value ?? null) : Number.isFinite(r.m.samples) ? r.m.samples : null;
-  if (sv !== null) row('표본', `<span class="num">${nf(sv)}</span>${isEnvelope(r.m.samples) ? sig(r.m.samples) : ''}`);
+  if (sv !== null) row('학습 데이터', `<span class="num">${nf(sv)}</span>장${isEnvelope(r.m.samples) ? sig(r.m.samples) : ''}`);
   if (!r.t.noReports) row('오탐 신고', `<span class="num${r.reports.length >= CFG.reportMin ? ' tr-warn' : ''}">${nf(r.reports.length)}</span>`);   // 결과층을 모르는 업무(직접 입력)는 세지 않는다(0 을 지어내지 않는다)
   body.append(dl);
 
@@ -440,12 +440,12 @@ async function openSheet(r) {
   const body = h('div.tr-sheet');
   drawer({ title: '미세조정', body, host: S.main, slot: 'sheet' });
   const rp = h('div');
-  const sel = h('select.t-input', { 'aria-label': '표본 영상', hidden: true });
+  const sel = h('select.t-input', { 'aria-label': '학습 데이터 영상', hidden: true });
   const hint = h('p.t-label.tr-hint', { text: '지역을 먼저 고르세요' });
   const go = h('button.t-btn.tr-go', { type: 'button', text: '시작', disabled: true });
   const run = h('div.tr-run', { hidden: true }, h('div.t-progress', {}, h('i')), h('p.t-label.tr-q', { role: 'status', 'aria-live': 'polite' }));
   const noImg = h('div.tr-noimg', { hidden: true });
-  body.append(h('label.t-label', { text: '대상 지역' }), rp, h('label.t-label', { text: '표본 영상' }), hint, sel, noImg, go, run);
+  body.append(h('label.t-label', { text: '대상 지역' }), rp, h('label.t-label', { text: '학습 데이터 영상' }), hint, sel, noImg, go, run);
 
   let region = null;
   const { imgs, ownerOf, allRg } = await sampleIndex();

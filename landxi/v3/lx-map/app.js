@@ -481,34 +481,7 @@ S.fresh(D.as_of);
 release();
 document.body.dataset.ready = '1';
 
-/* 결과 확인(원칙 198 · 제안 1) — 프로젝트에서 '결과 확인 열기'로 왔으면(?project=) 위에 '이 결과 확인했음' 한 줄.
-   구성원 · 프로젝트장만 누른다(서버 can.work) · 같은 서버 기록(POST /projects/{id}/review/seen · 프로젝트 단계 · 배포 신청서와 한 판정).
-   이미 봤으면 누가 · 언제만 보인다. 실패하면 줄을 두지 않는다(지도는 그대로). */
-const PROJ = Q.get('project');
-const rvBar = h('div.lm-rv', { role: 'status', hidden: true });
-mapEl.append(rvBar);
-const mdOf = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
-function paintReview(pr) {
-  const rv = (pr?.stages || []).find((s) => s.key === 'review');
-  if (!rv || pr.state === 'archived') { rvBar.hidden = true; mapEl.classList.remove('has-rv'); return; }
-  const name = h('b', { text: pr.name });
-  if (rv.done) {
-    rvBar.replaceChildren(name, h('span', { text: '결과 확인 · 지도에서 봤음' }), h('small', { text: [rv.seen_by, mdOf(rv.seen_at)].filter(Boolean).join(' · ') }));
-  } else if (pr.can?.work) {
-    const go = h('button.t-btn.lm-rvb', { type: 'button', text: '이 결과 확인했음' });
-    go.addEventListener('click', async () => {
-      go.disabled = true;
-      try { paintReview(await api(`/projects/${encodeURIComponent(pr.id)}/review/seen`, { method: 'POST' })); K.toast('결과 확인을 마쳤습니다 — 프로젝트에 기록했습니다'); }
-      catch (e) { go.disabled = false; K.toast(e?.message || '지금은 기록할 수 없습니다'); }
-    });
-    rvBar.replaceChildren(name, h('span', { text: '지도에서 결과를 다 봤으면' }), go);
-  } else {
-    rvBar.replaceChildren(name, h('span', { text: '결과 확인 · 아직 보지 않음' }));
-  }
-  rvBar.hidden = false;
-  mapEl.classList.add('has-rv');
-}
-if (PROJ) api(`/projects/${encodeURIComponent(PROJ)}`).then(paintReview).catch((e) => K.devlog('결과 확인', `${e?.code || ''} ${e?.message || e}`));
+/* 결과 확인(원칙 203 · 10-12) — 지도 서비스 위 '이 결과 확인했음' 한 줄은 뺐다. 프로젝트에서 오면 지도에서 결과를 보는 길만(?job= 그대로). */
 map.once('idle', () => { document.documentElement.dataset.mapReady = '1'; });
 
 /* 분석 중인 것이 있으면 30초마다 목록을 다시 — 끝난 결과는 꺼진 줄로 쌓이고 알림 한 줄(켜기) */

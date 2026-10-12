@@ -84,9 +84,9 @@ def test_alias_keeps_longer_words():
 
 def test_dev_adopt_goes_to_ledger(tok, item):
     A = H(tok["admin"])
-    r = httpx.post(B + f"/improve/items/{item}/adopt", headers=A, json={"mode": "dev", "how": "단동 · 연동 분류 더하기"}, timeout=30)
+    r = httpx.post(B + f"/improve/items/{item}/adopt", headers=A, json={"mode": "dev", "how": "단동 · 연동 분류 더하기"}, timeout=30)   # 예전 호출 = 모아 두기(원칙 202 고침)
     it = r.json()["item"]
-    assert it["adopt"]["mode"] == "dev" and not it["adopt"]["quick"] and it["ledger"] == "확인 대기" and it["can"]["notify"] and not it["can"]["revert"]
+    assert it["adopt"]["mode"] == "collect" and not it["adopt"]["quick"] and it["ledger"] == "모아 둠" and it["can"]["notify"] and not it["can"]["revert"]
     bad = httpx.post(B + f"/improve/items/{item}/adopt", headers=A, json={"mode": "alias", "src": "가", "dst": "가"}, timeout=30)
     assert bad.status_code == 400
 

@@ -183,29 +183,30 @@ def test_list_steps_and_blocked(live, tok, made):
 
 def test_list_blocked_before_stage_after_publish(live, tok, made):
     """공개까지 간 프로젝트인데 추론 · 결과 확인을 하지 않았다 — 그 칸은 '건너뜀'(skip · 추론은 필수 아님 10-10 · GPT2-3), 배포 신청 칸은 끝남.
-    목록 진행 n/6 = 끝남 + 건너뜀 · 한 장의 단계 상태 · 말과 같은 값(서버 한 출처) · 결과 확인만 '공개 뒤 남음'으로 남은 일에(QA-Q11 ⓐ)."""
+    목록 진행 n/6 = 끝남 + 건너뜀 · 한 장의 단계 상태 · 말과 같은 값(서버 한 출처) · 결과 확인은 남은 일이 아니다(원칙 203 — 'after' 없음)."""
     p = _publish(tok, made())
     row = _row(tok, p["id"])
     assert row["stage"]["key"] == "publish" and row["steps"] == ["done", "done", "done", "skip", "skip", "done"]
     assert row["progress"] == {"n": 6, "total": 6}
-    # 공개 뒤 건너뛴 결과 확인은 '남은 일'(after) 한 줄 — 추론은 필수 아님이라 올리지 않는다(10-11 QA-Q11 ⓐ)
-    assert [(b["kind"], b["stage"]) for b in row["blocked"]] == [("after", "review")] and "공개 뒤 남음" in row["blocked"][0]["text"]
+    # 결과 확인 = 지도에서 결과 보기 길만(원칙 203) — '공개 뒤 남음' 남은 일 없음 · 추론도 필수 아님이라 올리지 않는다
+    assert row["blocked"] == []
     one = httpx.get(B + f"/projects/{p['id']}", headers=H(tok["staff"]), timeout=60).json()
     assert [x["state"] for x in one["stages"]] == row["steps"] and one["blocked"] == row["blocked"]
     assert [x["word"] for x in one["stages"]][3:5] == ["건너뜀", "건너뜀"]
 
 
 def test_review_seen_on_map(live, tok, made, other):
-    """결과 확인(원칙 198 · 1차 표본 검증 없음) — 숫자(n/20) 없이 '지도에서 결과 보기', 구성원이 '확인했음'을 누르면 끝 · 구성원 아니면 못 누름."""
+    """결과 확인(원칙 203 · 10-12) — '지도에서 결과 보기' 길만. '확인했음' 기록은 판정에 쓰지 않는다(예전 경로는 남아 있어도 단계가 바뀌지 않음) ·
+    지금 단계 · 다음 할 일이 결과 확인이 되지 않는다(배포 신청을 막지 않음)."""
     p = made()
     rv = stage(p, "review")
-    assert rv["done"] is False and rv.get("progress") is None and rv["next"] == "지도에서 결과 보기"
+    assert rv["done"] is False and rv.get("progress") is None and rv["next"] == "지도에서 결과 보기" and not rv.get("seen_by")
     assert httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(other), timeout=30).status_code == 403
     r = httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(tok["staff"]), timeout=30)
     assert r.status_code == 200, r.text
-    rv = stage(r.json(), "review")
-    assert rv["done"] is True and rv["state"] == "done" and rv.get("seen_at")
-    assert httpx.post(B + f"/projects/{p['id']}/review/seen", headers=H(tok["staff"]), timeout=30).status_code == 200   # 다시 눌러도 그대로
+    j = r.json()
+    rv = stage(j, "review")
+    assert rv["done"] is False and not rv.get("seen_at") and j["stage"]["key"] != "review" and j["next"]["stage"] != "review"
 
 
 def test_list_steps_overseas_review_on_map(live, tok, made):

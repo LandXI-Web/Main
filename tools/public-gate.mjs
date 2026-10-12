@@ -10,8 +10,11 @@
        https://gov.land-xi.dev/ = 기관 고르기 목록(각 기관 주소로) · 옛 모양 gov.land-xi.dev/{기관}/ 는 기관 주소로 넘긴다(301).
        {기관}은 서버가 만든 기관 목록(GET /api/v1/auth/tenants · 60초 보관)에 있는 것만 — 없는 기관 주소는 404. 주소 규칙은 sites.js gov.orgHost · gov.orgDomains 한 곳.
        기관 마크 그림은 /files/brand/{기관}/mark-<해시>.png 모양만 게이트웨이로 넘긴다(허용 목록).
+   - 화면 파일 보관(10-12 질문 다 ⓐ) — 화면이 부르는 모듈 · 스타일 주소에 판 번호(?v=)를 붙여 내주고, 판 번호가 붙은 주소는 브라우저가 1년 보관한다.
+       판 번호 = 화면 코드 폴더(BUILD_ROOTS) 파일들의 이름 · 크기 · 고친 시각 지문 — 파일 하나라도 고치면 번호가 바뀌어 HTML(매번 새로)이 새 주소를 부른다.
+       판 번호 없는 주소(코드가 import.meta.url 로 만든 스타일 등)는 예전처럼 매번 확인(ETag).
    사용: node tools/public-gate.mjs   (server/start-public.ps1 이 숨김으로 띄운다) */
-import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
@@ -169,10 +172,66 @@ function graph(htmlUrl, html) {
   while (qc.length && css.size < 60) { const u = qc.shift(); if (css.has(u) || !/\.css$/.test(u)) continue; const f = urlToFile(u); if (!f) continue; let t; try { t = fs.readFileSync(f, 'utf8'); } catch { continue; } css.add(u); for (const x of t.matchAll(CSSIMP)) { const v = resolveUrl(x[1], u); if (v && !css.has(v)) qc.push(v); } }
   return [...mods].map((u) => `<link rel="modulepreload" href="${u}">`).concat([...css].map((u) => `<link rel="preload" as="style" href="${u}">`)).join('');
 }
+/* ── 판 번호(화면 파일 보관 · 10-12 질문 다 ⓐ) ─────────────────────────────────────────────
+   화면 코드 폴더의 모든 파일(이름 · 크기 · 고친 시각) 지문 하나. 1.5초마다 다시 잰다(파일 수백 개 — 몇 ms).
+   HTML 은 매번 새로 내주며 그 안의 모듈 · 스타일 주소에 ?v=<판 번호>를 붙인다. 모듈 안의 import 주소도 같은 번호로 바꿔 내준다
+   (한 화면이 같은 모듈을 두 주소로 부르지 않게 — 받은 주소의 번호를 그대로 잇는다). 번호가 붙은 주소 = 1년 보관(immutable). */
+const BUILD_ROOTS = ['v3', 'shared', 'agent', 'xi', 'global', 'ops', 'proto/vendor'].map((d) => path.join(ROOT, 'landxi', ...d.split('/')));
+const CODE_EXT = /\.(m?js|css)$/;
+let BUILD = { v: '', at: 0 };
+function buildId() {
+  if (BUILD.v && Date.now() - BUILD.at < 1500) return BUILD.v;
+  const h = crypto.createHash('sha1');
+  for (const root of BUILD_ROOTS) {
+    let names = []; try { names = fs.readdirSync(root, { recursive: true }); } catch { continue; }
+    names.sort();
+    for (const n of names) {
+      if (!/\.(m?js|css|html)$/.test(n)) continue;
+      try { const st = fs.statSync(path.join(root, n)); h.update(`${root}|${n}|${st.size}|${Math.floor(st.mtimeMs)}\n`); } catch { /* 지워짐 */ }
+    }
+  }
+  BUILD = { v: h.digest('hex').slice(0, 10), at: Date.now() };
+  return BUILD.v;
+}
+const inBuild = (f) => BUILD_ROOTS.some((r) => f.startsWith(r + path.sep));
+/** 주소 하나에 판 번호 — 화면 코드 폴더 안의 있는 .js · .mjs · .css 만(밖 · 외부 · 데이터는 그대로) */
+function withV(spec, baseUrl, v, html = false) {
+  if (!v || /[?#]/.test(spec)) return spec;
+  const u = resolveUrl(spec, baseUrl, html);
+  if (!u || !CODE_EXT.test(u)) return spec;
+  const f = urlToFile(u);
+  if (!f || !inBuild(f) || !fs.existsSync(f)) return spec;
+  return spec + '?v=' + v;
+}
+const JS_SPEC = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])([^'"\n]+)\2/g;
+const CSS_SPEC = /(@import\s+(?:url\()?\s*)(['"]?)([^'")\s]+)\2/g;
+/** 모듈 · 스타일 글 안의 주소에 판 번호 */
+function versionCode(text, url, v, css = false) {
+  return css ? text.replace(CSS_SPEC, (m, a, q, sp) => a + q + withV(sp, url, v) + q)
+    : text.replace(JS_SPEC, (m, a, q, sp) => a + q + withV(sp, url, v) + q);
+}
+/** HTML 안의 모듈 스크립트 · 스타일시트 · 미리 받기 주소에 판 번호 */
+function versionHtml(html, url, v) {
+  return html
+    .replace(/(<script\b[^>]*\ssrc=["'])([^"']+)(["'])/g, (m, a, sp, b) => a + withV(sp, url, v, true) + b)   // 모듈 · 보통 스크립트(지도 엔진 등) 모두
+    .replace(/(<script[^>]*type=["']module["'][^>]*>)([\s\S]*?)(<\/script>)/g, (m, a, body, b) => a + versionCode(body, url, v) + b)
+    .replace(/(<link[^>]*rel=["'](?:stylesheet|modulepreload|preload)["'][^>]*href=["'])([^"']+)(["'])/g, (m, a, sp, b) => a + withV(sp, url, v, true) + b);
+}
 function htmlWithPreload(p, f) {
   const html = fs.readFileSync(f, 'utf8'); const c = PRE.get(p);
   let links; if (c && c.html === html && Date.now() - c.at < 30000) links = c.links; else { links = graph(p, html); PRE.set(p, { html, links, at: Date.now() }); }
-  return links && html.includes('</head>') ? html.replace('</head>', links + '</head>') : html;
+  const out = links && html.includes('</head>') ? html.replace('</head>', links + '</head>') : html;
+  return versionHtml(out, p, buildId());
+}
+/** 모듈 · 스타일 파일을 판 번호 주소로 바꿔 내줄 글(같은 파일 · 같은 고친 시각 · 같은 번호면 다시 쓰지 않는다) */
+const CODE_CACHE = new Map();
+function codeBody(p, f, st, v) {
+  const k = `${p}|${v}`, c = CODE_CACHE.get(k);
+  if (c && c.m === st.mtimeMs && c.s === st.size) return c.b;
+  const b = Buffer.from(versionCode(fs.readFileSync(f, 'utf8'), p, v, /\.css$/.test(f)));
+  if (CODE_CACHE.size > 3000) CODE_CACHE.clear();
+  CODE_CACHE.set(k, { m: st.mtimeMs, s: st.size, b });
+  return b;
 }
 
 function serveFile(req, res, p) {
@@ -186,8 +245,21 @@ function serveFile(req, res, p) {
     return send(res, 404, '404');
   }
   const type = TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
-  /* 화면 코드는 매번 확인(ETag 로 바뀐 것만 받는다). 'private' = Cloudflare 가 가장자리에 보관하거나 브라우저 보관 시간(4시간)으로 덮지 않게
+  /* 화면 코드 — 판 번호(?v=)가 붙은 주소는 1년 보관(고치면 번호가 바뀌어 새 주소) · 번호 없는 주소는 매번 확인(ETag 로 바뀐 것만 받는다).
+     'private' = Cloudflare 가 가장자리에 보관하거나 브라우저 보관 시간(4시간)으로 덮지 않게
      (2026-09-30 r3-train: 'no-cache' 만 보내면 .js 가 max-age=14400 으로 바뀌어 고친 화면이 바깥 주소에서 4시간 늦게 반영됐다) */
+  if (CODE_EXT.test(f) && inBuild(f) && (req.method === 'GET' || req.method === 'HEAD')) {
+    const qv = /[?&]v=([0-9a-f]{6,16})(&|$)/.exec(req.url)?.[1] || null;
+    const v = qv || buildId();
+    let body; try { body = codeBody(p, f, st, v); } catch { body = null; }
+    if (body) {
+      const cache = qv ? 'private, max-age=31536000, immutable' : 'private, no-cache';
+      const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}-${v}"`;
+      if (!qv && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
+      res.writeHead(200, { ...SEC, 'content-type': type, 'content-length': body.length, 'cache-control': cache, etag });
+      return res.end(req.method === 'HEAD' ? undefined : body);
+    }
+  }
   if (/\.html$/.test(f) && req.method === 'GET') {   // HTML 은 미리 받기 목록을 붙여 내준다(매번 새로)
     let body; try { body = Buffer.from(htmlWithPreload(p, f)); } catch { body = null; }
     if (body) { res.writeHead(200, { ...SEC, 'content-type': type, 'content-length': body.length, 'cache-control': 'private, no-cache' }); return res.end(body); }

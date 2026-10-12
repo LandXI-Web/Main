@@ -1,0 +1,46 @@
+[
+ {
+  "file": "f1-done-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:36",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "시안 PC 1440×900 — 10-08 에 끝난 이 프로젝트 학습: 흐름 판 · 반복마다 정확도 그래프 · 핵심 수치",
+  "errors": []
+ },
+ {
+  "file": "f2-done-full-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:42",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "viewport": [
+   1440,
+   1260
+  ],
+  "note": "시안 세로 전체 — 아래 학습 이력 목록(판 · 날짜 · AI 모델 정확도 · 학습 데이터 n장)",
+  "errors": []
+ },
+ {
+  "file": "f3-live-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:47",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html?v=live",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "시안 — 같은 학습이 도는 중일 때(20회 중 12회째 · 그래프가 차오름) · 지금 도는 학습이 없어 '시안' 표시",
+  "errors": []
+ },
+ {
+  "file": "f4-drawer-cfg-1440-0914.png",
+  "shot_at": "2026-10-12T09:14:54",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/train-flow-3/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "학습 설정 블록을 눌러 오른쪽 서랍이 열린 모습(반복 · 크기 · 한 번에 · GPU 한 줄)",
+  "errors": []
+ }
+]

@@ -592,7 +592,7 @@ async def one(cid: str, request: Request):
         smp = None
         if r and r["n_images"]:
             names = r["names"] if isinstance(r["names"], list) else []
-            smp = {"task": r["task_name"], "region": r["region_name"], "images": env(int(r["n_images"]), "count", "measured", "올린 학습 표본 그림"),
+            smp = {"task": r["task_name"], "region": r["region_name"], "images": env(int(r["n_images"]), "count", "measured", "올린 학습 데이터 그림"),
                    "classes": [_clean_cls(str(c)).split()[0] for c in names if c]}
         from .release import acc_env, model_label
         learn = {"acc": core["model"].get("acc"), "updated": core["model"].get("updated"), "sample": smp,

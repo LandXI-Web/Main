@@ -1,9 +1,10 @@
 /* 개선 후보 — XI ChatGEO 가 못 한 요청을 모아 묶은 '자주 막히는 요청'(구현 4차 · 확인 대장 16차 개선-1 확인 · 원칙 98 · 72).
    LX 관리자 대시보드 → 배포(서비스 관리) → '개선 후보' 탭 하나(새 메뉴 없음 · 시안 new-e-candidates).
    LX 직원(담당 프로젝트장)은 요청함의 '개선 후보' 칸에서 자기 서비스 · 기관에서 온 것만 같은 모양으로 본다(openImproveDrawer).
-   줄마다 시스템 제안(서버가 정한 고칠 방법 한 줄 + 근거 한 줄 · 원칙 197 고침) → 이대로 반영 · 개발 요청 · 보류(사유 · 다시 볼 날짜) 셋만.
-   관리자가 갈래(다른 이름 · 질문 뜻 연결 · 답 문구)를 고르지 않는다 — 서버 suggest 그대로. 반려 없음.
-   채택한 것이 만들어지면 LX 관리자가 '이제 됩니다 보내기' → 물었던 사람의 채팅창 맨 위 한 줄(메일 · 문자 없음).
+   개선 후보 = XI ChatGEO(LLM) 개선 고리(원칙 202 고침 · 10-12). 줄마다 시스템 제안(서버가 정한 고칠 방법 한 줄 + 근거 한 줄)
+   → 이대로 반영(LLM 쪽에서 되는 것 — 다른 이름 · 질문 뜻 연결 · 답 문구) · 모아 두기(다음 LLM 개선 평가 질문 묶음) · 보류 셋만.
+   화면 · 분석 기능이 있어야 풀리는 것은 꼬리표('분석 모델에 클래스 필요' 등)만 — 받는 곳 없는 요청을 만들지 않는다.
+   모아 둔 질문은 목록 위 '모아 둔 평가 질문 n · 내려받기'(GET /improve/eval-set). 나아지면 LX 관리자가 '이제 됩니다 보내기'.
    숫자는 서버 값 그대로(GET /improve/items) — 지어낸 값 0 · 세지 않은 칸은 '—'. 대화 원문은 서버에도 없다(요지 · 지명 등은 ○○). */
 import { api, h, esc, empty, toast, drawer } from './kit.js';
 import { modal } from '../../kit/modal.js';
@@ -53,7 +54,8 @@ function decided(x, admin) {
     line = `${chip(`채택 · 바로 반영 · ${x.adopt.mode_label}`)}<small><b>반영됨 — 다시 물어보세요</b> · ${esc(what)}${r.test ? ' · 시험' : ''}</small>`;
     acts += `<button class="t-btn t-btn--2 im-b" type="button" data-a="revert">되돌리기</button>`;
   } else if (st === 'adopted') {
-    line = `${chip('개발 요청 · 확인 대기')}<small>제안 방법 — ${esc(x.how || '')}</small>`;
+    // 모아 둠(원칙 202 고침) — 다음 XI ChatGEO 개선 평가 질문 · 화면 · 분석 기능이 필요하면 꼬리표만
+    line = `${chip('모아 둠')}${x.adopt?.tag ? `<span class="t-chip im-tag">${esc(x.adopt.tag)}</span>` : ''}<small>다음 XI ChatGEO 개선 때 평가 질문으로 씁니다</small>`;
     if (admin && x.can?.notify) acts += `<button class="t-btn im-b" type="button" data-a="notify">이제 됩니다 보내기</button>`;
   } else if (st === 'held') {
     line = `${chip(`보류 · ${x.hold?.until_md || ''} 다시 봄`, 'wait')}<small>사유 — ${esc(x.hold?.reason || '')}</small>`;
@@ -75,18 +77,18 @@ function meta(x) {
     <span class="t-chip im-k">${esc(x.kind_label)}</span></span>`;
 }
 
-/** 시스템 제안(원칙 197 고침) — 서버가 정한 고칠 방법 한 줄 + 근거 한 줄(새로 옴 줄만) */
+/** 시스템 제안(원칙 197 · 202 고침) — 서버가 정한 고칠 방법 한 줄 + 근거 한 줄(새로 옴 줄만) · 꼬리표(화면 · 분석 기능 필요)는 구분 표시만 */
 function suggestBox(x) {
   const sg = x.state === 'new' ? x.suggest : null;
   if (!sg) return '';
-  return `<div class="im-sg" data-mode="${esc(sg.mode)}"><p><span class="im-sg-k">시스템 제안</span>${esc(sg.line)}</p><small>근거: ${esc(sg.why)}</small></div>`;
+  return `<div class="im-sg" data-mode="${esc(sg.mode)}"><p><span class="im-sg-k">시스템 제안</span>${esc(sg.line)}${sg.tag ? `<span class="t-chip im-tag">${esc(sg.tag)}</span>` : ''}</p><small>근거: ${esc(sg.why)}</small></div>`;
 }
 
 function buttons(x, admin) {
   if (x.state === 'new') {
     const sg = x.suggest || {};
     return `<div class="im-acts">${sg.quick ? '<button class="t-btn im-b" type="button" data-a="apply">이대로 반영</button>' : ''}
-      <button class="t-btn ${sg.quick ? 't-btn--2 ' : ''}im-b" type="button" data-a="dev">개발 요청</button>
+      <button class="t-btn ${sg.quick ? 't-btn--2 ' : ''}im-b" type="button" data-a="collect">모아 두기</button>
       <button class="t-btn t-btn--2 im-b" type="button" data-a="hold">보류</button></div>`;
   }
   return decided(x, admin);
@@ -118,13 +120,17 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const fc = val(s.from_check) || 0;
     sumEl.innerHTML = `<p class="t-label">${mine ? '내 서비스 · 기관에서 막힌 요청' : '막힌 요청'}</p>
       <p class="im-big"><b class="num" data-metric="막힌 요청" data-v="${val(s.blocked) ?? ''}">${cnt(s.blocked)}</b><span>건</span></p>
-      <p class="im-sum-s"><span>이번 달 ${cnt(s.blocked_month)}건 · ${cnt(s.groups)}가지로 묶임</span>${fc ? `<span>10-01 점검 ${nf(fc)}건 포함</span>` : ''}</p>`;
+      <p class="im-sum-s"><span>이번 달 ${cnt(s.blocked_month)}건 · ${cnt(s.groups)}가지로 묶임</span>${fc ? `<span>10-01 점검 ${nf(fc)}건 포함</span>` : ''}</p>
+      <p class="im-ev"><button type="button" class="im-ev-l" data-ev="list">모아 둔 평가 질문 <b class="num">${nf(c0(d))}</b></button><button type="button" class="im-ev-d" data-ev="down"${c0(d) ? '' : ' disabled'}>내려받기</button></p>`;
     const c = d.counts || {};
     filt.innerHTML = `<div class="im-fr"><span class="im-fl">역할</span><div class="im-chips" data-f="role">${ROLES.map(([k, t]) =>
       `<button type="button" class="im-chip" data-v="${esc(k)}" aria-pressed="${st.role === k}">${esc(t)}</button>`).join('')}</div></div>
       <div class="im-fr"><span class="im-fl">상태</span><div class="im-chips" data-f="state">${STATES.map(([k, t]) =>
       `<button type="button" class="im-chip" data-v="${k}" aria-pressed="${st.state === k}">${esc(t)}${c[k] ? ` <b class="num">${nf(c[k])}</b>` : ''}</button>`).join('')}</div></div>`;
   }
+
+  /** 모아 둔 줄 수(채택 가운데 바로 반영이 아닌 것 — 서버 eval-set 과 같은 조건) */
+  function c0(d) { return (d.items || []).filter((x) => x.state === 'adopted' && !x.adopt?.quick).length; }
 
   function rows() {
     return (st.data.items || []).filter((x) => x.state === st.state && (!st.role || (x.roles || []).includes(st.role)));
@@ -134,7 +140,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     if (!st.data) return;
     paintTop();
     const all = st.data.items || [];
-    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>시스템 제안 — 서버가 줄마다 고칠 방법을 정합니다 · 이대로 반영은 다음 질문부터(되돌리기 있음) · 없는 기능 · 분류는 개발 요청</span>`;
+    foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>시스템 제안 — 이대로 반영은 다음 질문부터(되돌리기 있음) · XI ChatGEO 로 바로 안 되는 질문은 모아 두기(다음 개선 때 평가 질문)</span>`;
     if (!all.length) { hold({ kind: 'first', title: '아직 막힌 요청이 없습니다', compact: true }); return; }
     const list = rows();
     if (!list.length) { hold({ kind: 'first', title: '이 조건의 요청이 없습니다', compact: true }); return; }
@@ -150,6 +156,21 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
         <td data-k="분류"><span class="t-chip im-k">${esc(x.kind_label)}</span></td>
         <td class="im-a">${buttons(x, admin)}</td></tr>`).join('')}</tbody></table>`;
   }
+
+  /* 모아 둔 평가 질문 — 목록(상태 '채택' 거르기) · 내려받기(JSONL · 서버 eval-set 그대로) */
+  sumEl.addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-ev]'); if (!b) return;
+    if (b.dataset.ev === 'list') { st.state = 'adopted'; paint(); return; }
+    b.disabled = true;
+    try {
+      const j = await api('/improve/eval-set');
+      const text = (j.items || []).map((r) => JSON.stringify(r)).join('\n') + ((j.items || []).length ? '\n' : '');
+      const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/x-ndjson' })), download: 'landxi-chatgeo-eval.jsonl' });
+      document.body.append(a); a.click(); a.remove();
+      toast(`평가 질문 ${nf((j.items || []).length)}개를 내려받았습니다`);
+    } catch (err) { toast(err?.message || '지금은 내려받을 수 없습니다'); }
+    b.disabled = false;
+  });
 
   filt.addEventListener('click', (e) => {
     const b = e.target.closest('.im-chip'); if (!b) return;
@@ -178,7 +199,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const x = st.data.items.find((y) => y.id === id); if (!x) return;
     const a = b.dataset.a;
     if (a === 'apply') { b.disabled = true; act(id, 'adopt', { use: 'suggest' }).then(() => toast('반영했습니다 — 다음 질문부터 적용됩니다. 다시 물어보세요')).catch(() => { b.disabled = false; }); }
-    else if (a === 'dev') { b.disabled = true; act(id, 'adopt', { mode: 'dev' }).then(() => toast("개발 요청으로 올렸습니다 — 확인 대장 '확인 대기'")).catch(() => { b.disabled = false; }); }
+    else if (a === 'collect') { b.disabled = true; act(id, 'adopt', { mode: 'collect' }).then(() => toast('모아 두었습니다 — 다음 XI ChatGEO 개선 때 평가 질문으로 씁니다')).catch(() => { b.disabled = false; }); }
     else if (a === 'revert') { b.disabled = true; act(id, 'revert').then(() => toast('되돌렸습니다 — 다음 질문부터 예전처럼 답합니다')).catch(() => { b.disabled = false; }); }
     else if (a === 'reopen') { act(id, 'reopen').then(() => toast('새로 옴으로 돌렸습니다')).catch(() => {}); }
     else if (a === 'hold') holdForm(x);
@@ -265,7 +286,7 @@ export function openImproveDrawer({ onCount } = {}) {
     onClose: () => history.replaceState(null, '', location.pathname + location.search) });
   // 요청과 다른 것(GPT2-8) — 어디서 왔고 · 채택하면 무엇이 바뀌는지 한 줄씩
   body.append(h('p.im-dr-s', {}, h('b', { text: '사람이 맡긴 요청이 아닙니다.' }), ' XI ChatGEO 가 내 서비스 · 기관에서 답하지 못한 질문을 모은 것입니다.'),
-    h('p.im-dr-s', { text: '줄마다 시스템이 고칠 방법을 미리 적어 둡니다. 이대로 반영하면 다음 질문부터 바뀌고, 없는 기능은 개발 요청으로 올라가 만들어지면 물었던 사람의 XI ChatGEO 창에 알립니다.' }));
+    h('p.im-dr-s', { text: '줄마다 시스템이 고칠 방법을 미리 적어 둡니다. 이대로 반영하면 다음 질문부터 바뀌고, 바로 안 되는 질문은 모아 두었다가 다음 XI ChatGEO 개선 때 평가 질문으로 씁니다.' }));
   const host = h('div');
   body.append(host);
   improveBoard(host, { admin: false, compact: true, onCount }).load();

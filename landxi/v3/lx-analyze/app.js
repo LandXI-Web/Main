@@ -270,7 +270,7 @@ function condCard(c) {
   const smp = L?.sample;
   const learnRows = L ? [
     ['학습', [acc, L.updated ? `${L.updated} 학습` : ''].filter(Boolean).join(' · ') || '—', L.acc?.basis_line || '모델 기록'],
-    ...(smp ? [['학습 자료', [smp.region, smp.task, `표본 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
+    ...(smp ? [['학습 자료', [smp.region, smp.task, `학습 데이터 ${nf(smp.images?.value ?? 0)}장`].filter(Boolean).join(' · '), smp.classes?.length ? `배운 것 ${[...new Set(smp.classes)].join(' · ')}` : '']] : []),
     ...(L.base ? [['기반 모델', [L.base.name, L.base.acc?.value != null ? `AI 모델 정확도 ${L.base.acc.value}%` : ''].filter(Boolean).join(' · ')]] : []),
   ] : [];
   const rows = [

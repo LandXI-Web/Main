@@ -243,7 +243,7 @@ function draw(r) {
       send.disabled = true;
       try {
         await api('/reviews/' + encodeURIComponent(r.id) + '/messages', { method: 'POST', body: { body, verdict: st.verdict || undefined } });
-        toast(st.verdict === 'ai_error' ? '답을 보냈습니다. 다음 학습 표본에 더했습니다' : '답을 보냈습니다');
+        toast(st.verdict === 'ai_error' ? '답을 보냈습니다. 다음 학습 데이터에 더했습니다' : '답을 보냈습니다');
         document.dispatchEvent(new CustomEvent('lx:reviews'));
         await open(r.id, { push: false });
         loadList({ quiet: true });

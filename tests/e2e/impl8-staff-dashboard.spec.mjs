@@ -96,7 +96,7 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
         const p = byId.get(await tr.getAttribute('data-id'));
         expect(p, '목록 줄 = 서버 프로젝트').toBeTruthy();
         await expect(tr.locator('td').nth(3)).toHaveText((p.next?.text || '—').replace(/ · /g, ' · '));
-        await expect(tr.locator('.sb-prog small')).toHaveText(/^[0-6]\/6$/);
+        await expect(tr.locator('.sb-prog small.num')).toHaveText(/^[0-6]\/6$/);
       }
       await page.waitForTimeout(400);
       const m2 = await measure(page);

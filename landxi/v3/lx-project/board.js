@@ -33,11 +33,10 @@ export function seg4(p) {
   return KEYS.map((k, i) => (SEG_WORD[p?.steps?.[i]] ? p.steps[i] : 'wait'));
 }
 export const doneN = (p) => (p?.progress?.n ?? seg4(p).filter((x) => x === 'done' || x === 'skip').length);
-/** 진행 n/6 옆 작은 말 — 건너뜀 n · 공개 뒤 남은 일 n(서버 steps · blocked 그대로 · 원칙 198 · GPT5-8). 둘 다 없으면 '' */
+/** 진행 n/6 옆 작은 말 — 건너뜀 n(서버 steps 그대로 · GPT5-8). '공개 뒤 남은 일'은 원칙 203 으로 뺐다. 없으면 '' */
 export function progNote(p) {
   const skip = seg4(p).filter((x) => x === 'skip').length;
-  const after = (p?.blocked || []).filter((b) => b.kind === 'after').length;
-  return [skip ? `건너뜀 ${skip}` : '', after ? `공개 뒤 남은 일 ${after}` : ''].filter(Boolean).join(' · ');
+  return skip ? `건너뜀 ${skip}` : '';
 }
 /** 여섯 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양 */
 export function seg4El(p) {

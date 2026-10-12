@@ -492,7 +492,7 @@ async def _sample_of(conn, pid: str, model_sample: str | None) -> dict | None:
     s = await conn.fetchrow("SELECT id, task_name, n_images, created_at FROM train_samples WHERE id=$1", model_sample)
     if not s:
         return None
-    return {"id": s["id"], "images": env(s["n_images"], "count", "measured", "올린 표본 파일"), "at": _iso(s["created_at"]), "task": s["task_name"]}
+    return {"id": s["id"], "images": env(s["n_images"], "count", "measured", "올린 학습 데이터 파일"), "at": _iso(s["created_at"]), "task": s["task_name"]}
 
 
 @router.get("/release/projects/{pid}/apply")
@@ -514,7 +514,6 @@ async def apply_view(pid: str, request: Request):
         cinf = await conn.fetchrow("SELECT line, imagery, imagery_kinds, scene->>'src' AS cover FROM card_info WHERE card_id=$1", card) if card else None
         asked = await conn.fetch("SELECT name, state FROM card_group_requests WHERE project_id=$1 AND state='open' ORDER BY at", pid)
     j = PJ._judge(r, f)
-    rv = next((s for s in j["stages"] if s["key"] == "review"), {})
     shared = []                                         # 이 서비스를 지금 공유받은 기관(기관 '서비스 선택'과 같은 판정)
     if card:
         eff = await _effective(orgs)
@@ -543,8 +542,6 @@ async def apply_view(pid: str, request: Request):
                         "low": low_line(low_acc(m["acc"], m.get("base"), (prev or {}).get("model", {}).get("acc")))} for m in models],
             "pick": pick, "scenes": jobs[:12],
             "cover": {"current": (cinf["cover"] if cinf else None) or None},          # 대표 그림(필수 · 원칙 186) — 지금 서비스 카드 그림(있으면 그대로 둘 수 있다)
-            "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": rv.get("skip_word") == "해당 없음",
-            "review_by": rv.get("seen_by"), "review_at": rv.get("seen_at"),
             "status": status, "versions": versions, "shared": shared, "ledger_kinds": kinds,
             # 분야 · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 지금 서비스의 값이 미리 골라져 있다(첫 판은 비어 있음). 승인되면 서비스에 반영
             "category": {"groups": [{"id": g["id"], "name": g["name"], "descr": g["descr"]} for g in cats["list"]],
@@ -665,7 +662,7 @@ async def apply(pid: str, body: dict, request: Request):
             raise ApiError("conflict", "모델 등록 승인 뒤에 배포 신청할 수 있습니다", {"status": m["status"]}, 409)
         card = await _card_of(conn, pid)
         versions = await _versions(conn, pid, card, people)
-        f = await PJ._facts(conn, r)
+        # (결과 확인 판정은 신청서에 넣지 않는다 — 원칙 203)
         scene = None
         if scene_job:
             js = [x for x in await _infer_jobs(conn, pid, people) if x["state"] == "done" and x["job"] == scene_job]
@@ -692,16 +689,13 @@ async def apply(pid: str, body: dict, request: Request):
         rej = next((v for v in versions if v["state"] == "rejected"), None)
         if rej and prev and float(rej["version"]) < float(prev["version"]):
             rej = None
-    j = PJ._judge(r, f)
-    rv = next((s for s in j["stages"] if s["key"] == "review"), {})
     # 신청서 = 신청한 때의 서버 값(숫자는 봉투 그대로 — 관리자 화면이 같은 값을 본다)
     form = {"model": {"id": m["id"], "name": m["name"], "n": m["n"], "classes": m["classes"], "gsd_word": m["gsd_word"], "at": m["at"]},
             "acc": m["acc"], "prev": ({"version": prev["version"], "acc": prev["model"]["acc"], "model": prev["model"]["name"],
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
             "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
-            "review": rv.get("progress"), "review_done": bool(rv.get("done")), "review_skip": rv.get("skip_word") == "해당 없음",
-            "review_by": rv.get("seen_by"), "review_at": rv.get("seen_at"), "scene": scene, "cover": cover,
+            "scene": scene, "cover": cover,
             **({"category": {k: v for k, v in cat.items() if k != "new_group"}} if any(k != "new_group" for k in cat) else {})}
     if cat.get("new_group"):                          # 새 분야 요청(만드는 것은 LX 관리자 · 배포 '분야' 탭)
         async with db(realm="lx") as conn:

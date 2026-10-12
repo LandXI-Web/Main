@@ -6,7 +6,8 @@
      AI 분석 결과   · 서비스 · 지역  — 분석하기 자세히 큰 숫자 · 기관 '내 서비스' 카드
      서비스 수      — 메인 'n가지 서비스 결과' · XI맵 전국 결과 '서비스 n가지'(GPT5-1)
      분석한 면적    · 기관            — 관리자 '기관' 화면(이번 달) · (사용 현황은 서비스별 칸이라 따로 적기만)
-     결과 확인      · 프로젝트        — 봤음 · 안 봄(원칙 198 · 숫자 없음): 프로젝트 목록 진행 칸 · 프로젝트 화면 단계 칸 · 배포 신청서 · 관리자 신청서(검토 중) · 관리자 배포(운영 탭) · 'n/m' · '표본 확인'이 남으면 '숫자 남음'
+     결과 확인 기록 — 숫자 대조가 아니라 남지 않았는지만(원칙 203 · 10-12): 프로젝트 목록 · 프로젝트 화면 · 배포 신청서 · 관리자 신청서 · 관리자 배포(운영 탭)에
+                    '지도에서 봤음 · 아직 보지 않음 · 확인했음 · 공개 뒤 결과 확인 남음' 같은 말이 보이면 실패
    그리고 모든 요청을 지켜 이 PC 주소(localhost · 127.0.0.1 · 사설 IP · :4173 · :8700 등) 호출이 0인지 본다.
    못 읽은 칸은 '—'(경고 · 실패 아님). 같은 이름인데 값이 다르거나 이 PC 주소 호출이 있으면 종료 코드 1.
    사용: node tools/check/numbers.mjs [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--json 파일]
@@ -48,6 +49,10 @@ function watch(page, screen) {
 const V = new Map();
 const put = (key, screen, value, note = '') => { if (!V.has(key)) V.set(key, []); V.get(key).push({ screen, value: value == null || value === '' ? null : String(value).replace(/\s+/g, ''), note }); };
 const warns = [];
+const left203 = [];   // 결과 확인 '봤음' 기록 말이 남은 화면(원칙 203)
+const RV203 = /지도에서 봤음|아직 보지 않음|이 결과 확인했음|확인했음|공개 뒤 (결과 확인 )?남|공개 뒤 남은 일/;
+let seen203 = 0;
+const chk203 = (screen, t) => { seen203++; const m = RV203.exec(t || ''); if (m) left203.push(`${screen} — '${m[0]}'`); };
 
 async function settle(page, sel, ms = 25000) {
   if (sel) await page.waitForSelector(sel, { timeout: ms }).catch(() => warns.push(`기다린 칸이 안 보임: ${sel} · ${page.url()}`));
@@ -134,21 +139,17 @@ try {
       if (d.acc) put(`정확도 · ${c.name} (지금 판)`, '분석하기 자세히', d.acc);
       else put(`정확도 · ${c.name} (지금 판)`, '분석하기 자세히', null, '자세히에 정확도 칸 없음');
     }
-    // 프로젝트 목록 — 진행 칸의 5번째(결과 확인) 상태 · 숫자가 남았는지(원칙 198 — 봤음 · 안 봄만)
-    const RVW = (st) => (st === 'done' ? '봤음' : st ? '안 봄' : null);
-    const LEFT = /결과 확인\s*\d+\s*\/\s*\d+|표본 확인/;
+    // 프로젝트 목록 — 결과 확인 '봤음' 기록 말이 남았는지(원칙 203)
     await go(page, HOST.app + '/landxi/v3/lx-project/');
     await settle(page, 'table tbody tr');
     const projs = await page.evaluate(async () => {
       const rows = [...document.querySelectorAll('table tbody tr')].map((tr) => ({ name: tr.cells[0]?.innerText.trim(), todo: tr.innerText,
-        st: tr.querySelectorAll('.lxp-seg i')[4]?.dataset.st || null }));
+        st: null }));
       let ids = [];
       try { const m = await import('/landxi/shared/api-v1.js'); ids = ((await m.api('/projects')).items || []).map((p) => ({ id: p.id, name: p.name })); } catch { /* 없음 */ }
       return { rows, ids };
     });
-    for (const r of projs.rows) {
-      put(`결과 확인 · ${r.name}`, '프로젝트 목록', LEFT.test(r.todo) ? '숫자 남음' : RVW(r.st), r.st ? '' : '진행 칸 없음(보관 등)');
-    }
+    for (const r of projs.rows) chk203(`프로젝트 목록 · ${r.name}`, r.todo);
     // 서비스 수 — 메인 '시군구 n곳에 분석 결과 제공'의 'n가지 서비스' = XI맵 전국 결과 '서비스 n가지'(GPT5-1 · 같은 이름 = 같은 값 · 토지피복 같은 전역 분석은 이름만 따로)
     await go(page, HOST.app + '/landxi/v3/main/');
     await page.waitForFunction(() => /\d+가지 서비스/.test(document.querySelector('#ch5-p')?.textContent || ''), null, { timeout: 25000 }).catch(() => warns.push('메인 서비스 수 칸이 안 보임'));
@@ -166,9 +167,7 @@ try {
       await settle(page, '.k-main, main');
       await page.waitForTimeout(2500);
       const t = await text(page);
-      const pst = await page.evaluate(() => document.querySelectorAll('.lxp-bar-steps .lxp-st')[4]?.dataset.st || null);
-      put(`결과 확인 · ${p.name}`, '프로젝트 화면', LEFT.test(t) ? '숫자 남음' : RVW(pst));
-      // (결과 확인 = 지도 서비스에서 결과 보기 — 표본 수를 세는 화면은 1차에서 쓰지 않음 · 원칙 198)
+      chk203(`프로젝트 화면 · ${p.name}`, t);   // 결과 확인 = 지도에서 결과 보기 길만(원칙 203)
       // 배포 신청서
       await go(page, `${HOST.app}/landxi/v3/lx-release/?project=${q}&stage=publish`);
       await settle(page, '.rl-dl');
@@ -177,16 +176,14 @@ try {
         const svc = row('서비스');
         const name = svc?.querySelector('b')?.innerText.trim() || svc?.querySelector('input')?.value || '';
         const cmp = [...(row('정확도')?.querySelectorAll('.rl-cmp > span') || [])].map((s) => ({ k: s.querySelector('em')?.innerText.trim(), v: s.querySelector('b')?.innerText.trim() }));
-        const rv = row('결과 확인')?.querySelector('b')?.innerText.trim() || null;
-        return { name, cmp, rv };
+        return { name, cmp, all: document.querySelector('.rl-dl')?.innerText || '', rv: row('결과 확인') ? '결과 확인 줄' : '' };
       });
       svcOfProject[p.name] = f.name;
       const now = f.cmp.find((x) => /이번 판/.test(x.k || ''));
       const prev = f.cmp.find((x) => /지난 판/.test(x.k || ''));
       if (now) put(`정확도 · ${p.name} 신청서(이번 판)`, '배포 신청서', now.v === '—' ? null : now.v);
       if (prev && prev.v && prev.v !== '—' && f.name) put(`정확도 · ${f.name} (지금 판)`, `배포 신청서 '${prev.k}'`, prev.v);
-      const fw = f.rv === '지도에서 봤음' ? '봤음' : f.rv === '아직 보지 않음' ? '안 봄' : f.rv && /\d/.test(f.rv) ? '숫자 남음' : null;
-      put(`결과 확인 · ${p.name}`, '배포 신청서', fw, f.rv === '해당 없음' ? '해당 없음' : '');
+      chk203(`배포 신청서 · ${p.name}`, f.all + ' ' + (f.rv ? '아직 보지 않음' : ''));   // 결과 확인 줄 자체가 남아도 실패
     }
     await ctx.close();
 
@@ -233,9 +230,9 @@ try {
         const det = document.querySelector('.rv-detail');
         const row = (k) => [...(det?.querySelectorAll('.rv-dl > div') || [])].find((d) => d.querySelector('dt')?.innerText.trim() === k)?.querySelector('dd');
         const cmp = [...(row('정확도')?.querySelectorAll('.rv-cmp > span') || [])].map((s) => ({ k: s.querySelector('em')?.innerText.trim(), v: s.querySelector('b')?.innerText.trim() }));
-        const rv = row('결과 확인')?.querySelector('b')?.innerText.trim() || null;
-        return { svc, proj, st, cmp, rv, form: !!row('정확도') };
+        return { svc, proj, st, cmp, rv: det?.innerText || '', rvRow: !!row('결과 확인'), form: !!row('정확도') };
       }, i);
+      chk203(`관리자 배포 신청 · ${r.svc}`, r.rv + (r.rvRow ? ' 아직 보지 않음' : ''));
       const key = `${r.svc}|${r.st}`;
       if (seen.has(key)) continue;                  // 같은 서비스 · 같은 상태는 맨 위(최근) 하나만
       seen.add(key);
@@ -243,29 +240,15 @@ try {
       if (r.st === '승인') put(`정확도 · ${r.svc} (지금 판)`, '관리자 배포 신청(최근 승인)', now && now.v !== '—' ? now.v : null, r.form ? '' : '신청서 전 기록 — 값 없음');
       if (r.st === '검토 중') {
         if (r.proj) put(`정확도 · ${r.proj} 신청서(이번 판)`, '관리자 배포 신청(검토 중)', now?.v || null);
-        if (r.proj) put(`결과 확인 · ${r.proj}`, '관리자 배포 신청(검토 중)', r.rv === '지도에서 봤음' ? '봤음' : r.rv === '아직 보지 않음' ? '안 봄' : r.rv && /\d/.test(r.rv) ? '숫자 남음' : null);
       }
     }
-    // 배포(운영 탭 · lx-deploy) — 결과 확인 칸(원칙 198 · 바퀴 5): 지도에서 봤음 · 아직 보지 않음. '표본 k/100' · '표본 확인'이 남으면 '숫자 남음'
+    // 배포(운영 탭 · lx-deploy) — '결과 확인' 칸이 없어야 한다(원칙 203 · 10-12)
     await go(ap, HOST.admin + '/landxi/v3/lx-deploy/?tab=ops');
     await settle(ap, '.dp-ops tbody tr, .dp-empty');
-    const dps = await ap.evaluate(() => {
-      const heads = [...document.querySelectorAll('.dp-ops thead th')].map((t) => t.innerText.trim());
-      const ci = heads.indexOf('결과 확인');
-      return { heads, rows: [...document.querySelectorAll('.dp-ops tbody tr')].map((tr) => ({
-        name: tr.querySelector('.dp-wk')?.firstChild?.textContent?.trim() || tr.cells[0]?.innerText.split('\n')[0].trim(),
-        rv: ci >= 0 ? tr.cells[ci]?.querySelector('.dp-rv')?.firstChild?.textContent?.trim() || tr.cells[ci]?.innerText.trim() : null, all: tr.innerText })) };
-    });
-    if (!dps.heads.includes('결과 확인')) warns.push(`배포(운영) 표에 '결과 확인' 칸이 없음: ${dps.heads.join(' · ')}`);
-    const pOfSvc = Object.fromEntries(Object.entries(svcOfProject).filter(([, s]) => s).map(([p, s]) => [s, p]));
-    const seenSvc = new Set();
-    for (const r of dps.rows) {
-      if (!r.name || seenSvc.has(r.name)) continue;      // 같은 서비스 배포본은 같은 프로젝트 기록 — 한 줄만
-      seenSvc.add(r.name);
-      const w = /표본/.test(r.all) ? '숫자 남음' : r.rv === '지도에서 봤음' ? '봤음' : r.rv === '아직 보지 않음' ? '안 봄' : null;
-      const p = pOfSvc[r.name] || Object.entries(pOfSvc).find(([s]) => s.includes(r.name) || r.name.includes(s))?.[1];
-      put(p ? `결과 확인 · ${p}` : `결과 확인 · 서비스 ${r.name}`, '관리자 배포(운영)', w, w ? '' : '프로젝트 기록 없는 서비스(—)');
-    }
+    const dps = await ap.evaluate(() => ({ heads: [...document.querySelectorAll('.dp-ops thead th')].map((t) => t.innerText.trim()),
+      all: document.querySelector('.dp-ops')?.innerText || '' }));
+    if (dps.heads.includes('결과 확인')) left203.push("관리자 배포(운영) — '결과 확인' 칸");
+    chk203('관리자 배포(운영)', dps.all);
     await A.ctx.close();
     } catch (e) { warns.push(`관리자 화면을 읽지 못함: ${e.message}`); }
 
@@ -301,7 +284,7 @@ try {
 const lines = [];
 const out = (s = '') => { lines.push(s); console.log(s); };
 let bad = 0;
-const order = ['정확도', 'AI 분석 결과', '분석한 면적', '결과 확인'];
+const order = ['정확도', 'AI 분석 결과', '분석한 면적', '서비스 수'];
 const keys = [...V.keys()].sort((a, b) => order.findIndex((o) => a.startsWith(o)) - order.findIndex((o) => b.startsWith(o)) || a.localeCompare(b, 'ko'));
 out(`같은 이름 숫자 대조 · ${started.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} · ${HOST.app} · ${HOST.admin} · ${HOST.gov}`);
 out('');
@@ -321,8 +304,9 @@ out('');
 out(`이 PC 주소 호출: ${localCalls.length}건${localCalls.length ? ' — ' + [...new Set(localCalls.map((c) => c.url))].slice(0, 10).join(' · ') : ''}`);
 if (warns.length) { out(''); out('경고(실패 아님):'); warns.forEach((w) => out('- ' + w)); }
 out('');
-const fail = bad > 0 || localCalls.length > 0;
-out(fail ? `실패 — 어긋남 ${bad}건 · 이 PC 주소 호출 ${localCalls.length}건` : '통과 — 같은 이름 숫자 모두 같음 · 이 PC 주소 호출 0');
+out(`결과 확인 '봤음' 기록 말(원칙 203 · 본 화면 ${seen203}): ${left203.length}곳${left203.length ? ' — ' + left203.slice(0, 10).join(' · ') : ''}`);
+const fail = bad > 0 || localCalls.length > 0 || left203.length > 0;
+out(fail ? `실패 — 어긋남 ${bad}건 · 이 PC 주소 호출 ${localCalls.length}건 · 결과 확인 기록 말 ${left203.length}곳` : '통과 — 같은 이름 숫자 모두 같음 · 이 PC 주소 호출 0 · 결과 확인 기록 말 0');
 const j = arg('--json', '');
-if (j) fs.writeFileSync(j, JSON.stringify({ at: started.toISOString(), hosts: HOST, result, localCalls, warns, fail }, null, 1));
+if (j) fs.writeFileSync(j, JSON.stringify({ at: started.toISOString(), hosts: HOST, result, localCalls, left203, warns, fail }, null, 1));
 process.exit(fail ? 1 : 0);

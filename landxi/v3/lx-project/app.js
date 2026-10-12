@@ -177,15 +177,9 @@ function draw(pr) {
     nowCard.append(goRow);
   }
   left.append(nowCard);
-  /* 결과 확인(원칙 198) — 지도에서 결과를 보고 '확인했음' 하나(표본 세기 없음). 지금 단계이거나 공개 뒤 남았을 때 · 구성원 · 프로젝트장 */
+  /* 결과 확인(원칙 203 · 10-12) — '확인했음' 기록 없이 지도에서 결과를 보는 길만. 끝난 추론이 있으면 '지금 할 일' 옆에 작은 길 하나 */
   const rvS = pr.stages?.find((s) => s.key === 'review');
-  if (!archived && rvS && !rvS.done && pr.can?.work && (rvS.state === 'now' || rvS.skip_word === '건너뜀')) {
-    const seen = h('button.t-btn.t-btn--2.lxp-go', { type: 'button', text: '확인했음',
-      onclick: () => act(() => api(`/projects/${pr.id}/review/seen`, { method: 'POST' }), '결과 확인을 마쳤습니다') });
-    if (rvS.state === 'now') goRow.append(seen);
-    else left.append(h('section.t-card.lxp-now', { 'aria-label': '결과 확인' }, h('p.t-label', { text: '결과 확인 · 공개 뒤 남음' }),
-      h('p.lxp-next', { text: '지도에서 결과 보기' }), h('div.lxp-acts', {}, h('a.t-btn.lxp-go', { href: stageHref(pr, 'review', rvS.target), text: '결과 확인 열기' }), seen)));
-  }
+  if (!archived && rvS?.target?.job) goRow.append(h('a.t-btn.t-btn--2.lxp-go', { href: stageHref(pr, 'review', rvS.target), text: '지도에서 결과 보기' }));
 
   /* 단계 6 — 마스트 아래 한 줄(context.js · 단계 화면들과 같은 막대 · 완료 조건은 서버 판정) */
 

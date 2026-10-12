@@ -44,7 +44,7 @@ test.describe('구현 9차 · 분석 서비스 배포', () => {
     await check(page);
     await page.goto(`v3/lx-release/?project=${pr.id}&stage=publish`);
     await expect(page.locator('.rl-card h2')).toHaveText(['배포 신청', '신청 상태', '지난 판', '공유된 기관'], { timeout: 20000 });
-    await expect(page.locator('.rl-dl dt')).toContainText(['서비스', '모델', '정확도', '학습 데이터', '결과 확인', '결과 장면']);
+    await expect(page.locator('.rl-dl dt')).toContainText(['서비스', '모델', '정확도', '학습 데이터', '결과 장면']);
     await expect(page.locator('textarea[aria-label="메모"]')).toHaveCount(1);       // 직원이 적는 것은 메모 한 칸
     await expect(page.locator('.rl-flow li b')).toHaveText(['신청 전', '검토 중', '승인', '거절']);
     await check(page);

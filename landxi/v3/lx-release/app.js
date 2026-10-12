@@ -2,7 +2,7 @@
    ?project=<id>&stage=infer   추론 — 이 프로젝트에서 학습한 모델(판 고르기)로 배포 신청 없이 영상 분석 → 결과 목록(보는 사람 = 나 · 프로젝트 참여자)
                                분석은 지금 있는 분석 작업 대기열로만(POST /release/projects/{id}/infer → POST /jobs) · 결과 보기 = 지도 서비스에서 그 결과를 켠다
                                (원칙 149 · 163 — 서버가 준 주소 /landxi/v3/lx-map/?job= · XI맵은 전국 · 해외 실시간 분석)
-   ?project=<id>&stage=publish 배포 신청 — 신청서 = 서버 값(모델 · AI 모델 정확도 · 학습 데이터 · 결과 확인 · 결과 장면) + 메모 한 칸 · 지난 판 없으면 '첫 판입니다'
+   ?project=<id>&stage=publish 배포 신청 — 신청서 = 서버 값(모델 · AI 모델 정확도 · 학습 데이터 · 결과 장면) + 메모 한 칸 · 지난 판 없으면 '첫 판입니다'
                                상태 줄(검토 중 · 승인 · 거절 사유 → 고쳐서 다시 신청). 승인 · 기관 공유는 LX 관리자 '배포' 메뉴.
    숫자는 모두 서버 값(봉투). 아이콘 0 · PC 1440 기준. */
 import { shell } from '../kit/shell.js';
@@ -232,7 +232,7 @@ async function drawPublish() {
     lowEl.textContent = x?.low ? `${x.low} — 신청은 할 수 있고, 관리자가 보고 판단합니다` : '';
     lowEl.hidden = !x?.low;
     dataEl.replaceChildren(x?.sample
-      ? unitsEl('b', join(`표본 ${nf(val(x.sample.images))}장`, `${md(x.sample.at)} 올림`))
+      ? unitsEl('b', join(`${nf(val(x.sample.images))}장`, `${md(x.sample.at)} 올림`))
       : h('b.rl-warn', { text: '이 모델은 프로젝트 학습 데이터와 연결 기록이 없습니다' }));
   }
   mSel.addEventListener('change', () => { st.model = mSel.value; drawModelBits(); });
@@ -282,10 +282,7 @@ async function drawPublish() {
   row('모델', mSel);
   row('AI 모델 정확도', accEl, lowEl, h('small', { text: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' }));
   row('학습 데이터', dataEl);
-  // 결과 확인(원칙 198) — 지도에서 결과를 봤는가 하나(1차 표본 검증 없음 · 숫자 없음)
-  row('결과 확인', d.review_skip ? h('b', { text: '해당 없음' }) : h('b', { class: d.review_done ? '' : 'rl-warn', text: d.review_done ? '지도에서 봤음' : '아직 보지 않음' }),
-    d.review_skip ? null : d.review_done ? ((d.review_by || d.review_at) ? h('small', { text: [d.review_by, d.review_at ? md(d.review_at) : ''].filter(Boolean).join(' · ') }) : null)
-      : h('small', { text: '프로젝트의 결과 확인(지도에서 결과 보기)이 남았습니다 — 관리자 신청서에 그대로 보입니다' }));
+  // 결과 확인 봤음 · 안 봄 줄은 원칙 203(10-12)으로 뺐다 — 결과는 '결과 장면'으로 지도에서 본다
   row('결과 장면', sceneEl);
   if (d.first && (d.ledger_kinds || []).length) row('대장 형식', ledger);
 

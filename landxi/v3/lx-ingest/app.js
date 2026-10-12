@@ -84,7 +84,7 @@ function openDrawer(region) {
   const parcel = K.h('section.lxi-sec', {}, K.h('h3.t-label', { text: '필지 단위 결과' }), K.h('p.lxi-pr', { dataset: { st: 'loading' }, text: '…' }));
   const bImg = K.h('button.t-btn.t-btn--2', { type: 'button', text: '영상 등록', onclick: () => imagerySheet({ host: stageEl, region: cur, under: dr, onDone: afterImagery }) });
   /* 학습 표본(라벨 묶음) 올리기 — 원스톱 학습 서랍으로(r3-train) */
-  const bSample = K.h('a.t-btn.t-btn--2', { href: PID ? stageHref(PID, 'label') : V3 + 'lx-train/?flow=1', text: '학습 표본 올리기' });
+  const bSample = K.h('a.t-btn.t-btn--2', { href: PID ? stageHref(PID, 'label') : V3 + 'lx-train/?flow=1', text: '학습 데이터 올리기' });
   body.append(img, led, parcel);
   if (dr && dr.el.isConnected) { dr.title(region.name); dr.set(body); }
   else dr = K.drawer({ title: region.name, body, host: stageEl, slot: 'right', label: region.full || region.name, onClose: () => { dr = null; } });

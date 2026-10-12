@@ -52,7 +52,7 @@ PALETTE = [(15, 169, 160), (255, 122, 69), (49, 130, 246), (240, 68, 82), (140, 
 def _staff(request: Request):
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
-        raise ApiError("forbidden", "LX 직원·관리자만 학습 표본을 다룹니다")
+        raise ApiError("forbidden", "LX 직원·관리자만 학습 데이터를 다룹니다")
     return p
 
 
@@ -193,7 +193,7 @@ def _meta_of(root: Path) -> dict:
 
 def _pub(r, extra: dict | None = None) -> dict:
     """화면용 — 폴더 경로·만든 사람 id 없음. 숫자는 봉투(올린 파일에서 센 값 · 측정)."""
-    src = "올린 표본 파일"
+    src = "올린 학습 데이터 파일"
     cc = r["class_counts"] or {}
     ci = r["class_images"] or {}
     ex = list(r["excluded"] or [])
@@ -212,7 +212,7 @@ def _pub(r, extra: dict | None = None) -> dict:
 async def _row(conn, sid: str):
     r = await conn.fetchrow("SELECT * FROM train_samples WHERE id=$1", sid)
     if not r or r["status"] == "removed":
-        raise ApiError("not_found", "학습 표본이 없습니다")
+        raise ApiError("not_found", "학습 데이터가 없습니다")
     return r
 
 
@@ -225,7 +225,7 @@ async def upload(request: Request, file: UploadFile = File(...), task_name: str 
     if not task:
         raise ApiError("bad_request", "업무 이름을 적어 주세요")
     if not (file.filename or "").lower().endswith(".zip"):
-        raise ApiError("bad_request", "라벨 표본 묶음(zip)을 올려 주세요")
+        raise ApiError("bad_request", "학습 데이터 묶음(zip)을 올려 주세요")
     sid = "smp_" + secrets.token_hex(5)
     root = ROOT / sid
     (root / "data").mkdir(parents=True, exist_ok=True)
@@ -274,7 +274,7 @@ async def _ingest(p, sid: str, root: Path, zp: Path, task: str, region: str | No
     elif meta["paired"] == 0:
         why = "라벨(labels 폴더 · 그림과 같은 이름의 .txt)이 없습니다"
     elif n > MAX_IMAGES:
-        why = f"그림이 {n}장입니다 — 작은 표본은 {MAX_IMAGES}장 이하입니다"
+        why = f"그림이 {n}장입니다 — 한 번에 {MAX_IMAGES}장 이하입니다"
     elif not meta["names"]:
         why = "클래스 이름(dataset.yaml 의 names)이 없습니다"
     elif any(pr.get("classes") for pr in meta["problems"]):
@@ -364,7 +364,7 @@ async def up_start(body: dict, request: Request):
     if not task:
         raise ApiError("bad_request", "업무 이름을 적어 주세요")
     if not name.lower().endswith(".zip"):
-        raise ApiError("bad_request", "라벨 표본 묶음(zip)을 올려 주세요")
+        raise ApiError("bad_request", "학습 데이터 묶음(zip)을 올려 주세요")
     if size <= 0:
         raise ApiError("bad_request", "빈 파일입니다")
     if size > MAX_ZIP_MB << 20:
