@@ -142,6 +142,9 @@ async function apply() {
   drawLeft(); drawCap();
 }
 const fly = (b) => { if (b) map.fitBounds(b, { padding: pad(), duration: 900, maxZoom: 15 }); };
+/* 층을 켜고 날아간 뒤 결과 도형이 아직이면 가운데 '불러오는 중'(원칙 212 · 0.4초 안에 그려지면 보이지 않음) — 바탕 지도 · 바깥 지도 원천은 기다리지 않는다 */
+let drawWait = null;
+const drawn = () => { drawWait?.(); drawWait = K.untilDrawn(map, { skip: /^(k-|lm-lxmap$|lm-cad$)/ }); };
 /* 결과 도형을 못 받으면(결과 타일 오류) '찾은 것 없음'과 다르게 알린다 — 줄에 '불러오지 못함' + 알림 한 번(다시 시도) · QA-로딩실패 10-11 */
 map.on('error', (e) => {
   const sid = e?.sourceId || e?.source?.id || '';
@@ -335,8 +338,8 @@ async function toggle(x) {
   x.on = !x.on;
   if (ST.filter) ST.filter.n = null;                                  // 켜진 레이어가 바뀌면 조건은 그대로 걸고 수는 지운다(다시 물으면 새 수)
   if (x.on && ST.solo && ST.solo !== x.g.key) ST.solo = null;   // 다른 묶음 층을 켜면 '이 묶음만'을 푼다
-  await apply();
-  if (x.on) fly(x.bounds);
+  if (x.on) { const done = K.hold(); try { await apply(); } finally { done(); } } else await apply();
+  if (x.on) { fly(x.bounds); drawn(); }
   else if (ST.pick && props.dataset.job === x.job) closeProps();
 }
 async function soloOf(G) {
@@ -346,7 +349,7 @@ async function soloOf(G) {
   if (!G.items.some((x) => x.on)) { fresh = G.items[0]; fresh.on = true; }
   await apply();
   const b = union(G.items.filter((x) => x.on).map((x) => x.bounds));
-  fly(fresh?.bounds || b);
+  fly(fresh?.bounds || b); drawn();
 }
 const union = (bs) => bs.filter(Boolean).reduce((a, b) => (a ? [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] : b), null);
 function setBase(k) {
@@ -467,7 +470,7 @@ if (!ST.items.size) {
 } else {
   if (ST.fold) fold(true);
   await apply();
-  if (first) fly(first.bounds);
+  if (first) { fly(first.bounds); drawn(); }
 }
 if (WANT && ST.items.get(WANT)?.empty) {
   const x = ST.items.get(WANT);

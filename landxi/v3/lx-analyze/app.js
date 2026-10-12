@@ -319,7 +319,7 @@ function imageryCard(c) {
     tabs.replaceChildren(...regions.map((r) => h('button.la-chip', { type: 'button', role: 'tab', 'aria-selected': String(r.sgg === sgg), 'aria-pressed': String(r.sgg === sgg), onclick: () => onTab(r.sgg) }, r.name)));
     let d = cache.get(sgg);
     if (!d) {
-      grid.replaceChildren(h('p.la-im-none', { text: '영상을 찾는 중' }));
+      { const w = h('div'); grid.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }); }   // 칸은 옅은 빈 틀 · 0.4초 넘으면 가운데 '불러오는 중'(로딩-1 · 원칙 212)
       try { d = await api(`/cards/${encodeURIComponent(c.id)}/imagery?` + new URLSearchParams({ region: sgg })); cache.set(sgg, d); }
       catch (e) { if (my === seq) grid.replaceChildren(h('p.la-im-none', { text: e.message || '영상 목록을 불러오지 못했습니다' })); return; }
     }
@@ -403,7 +403,7 @@ function analyzePanel(side, c, picker) {
     p.fit = null; draw();
     const my = (p.seq = (p.seq || 0) + 1);   // 늦게 온 앞 판정(서버가 고른 영상 · 전역)이 고른 영상의 판정을 덮지 않게(QA-영상판정 · 10-11 종단 시험)
     let f = null;
-    try { f = await api(`/cards/${encodeURIComponent(c.id)}/fit?` + new URLSearchParams({ region: sgg, ...(p.imagery ? { imagery: p.imagery.id } : {}) })); }
+    try { f = await K.during(api(`/cards/${encodeURIComponent(c.id)}/fit?` + new URLSearchParams({ region: sgg, ...(p.imagery ? { imagery: p.imagery.id } : {}) }))); }   // 0.4초 넘으면 가운데 '불러오는 중'(원칙 212)
     catch (e) { f = { fits: false, note: e.message || '지금은 확인할 수 없습니다' }; }
     if (picks.get(sgg) === p && p.seq === my) { p.fit = f; draw(); }
   }
@@ -448,7 +448,7 @@ function analyzePanel(side, c, picker) {
     go.disabled = true; go.textContent = '시작하는 중';
     const res = [];
     for (const [sgg, p] of ok) {
-      try { const r = await api(`/cards/${encodeURIComponent(c.id)}/analyze`, { method: 'POST', body: { region: sgg, ...(p.imagery ? { imagery: p.imagery.id } : {}) } }); res.push({ ok: true, name: p.name, sgg: r.region, running: r.running, map: r.map }); }
+      try { const r = await K.during(api(`/cards/${encodeURIComponent(c.id)}/analyze`, { method: 'POST', body: { region: sgg, ...(p.imagery ? { imagery: p.imagery.id } : {}) } })); res.push({ ok: true, name: p.name, sgg: r.region, running: r.running, map: r.map }); }
       catch (e) { res.push({ ok: false, name: p.name, why: e.message || '시작하지 못했습니다' }); }
     }
     picks.clear(); draw(); picker?.clear();

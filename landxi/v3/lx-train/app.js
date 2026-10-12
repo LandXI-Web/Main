@@ -51,6 +51,18 @@ const TASKS = !PRJ ? CFG.tasks : (() => {
 })();
 const STEP = { label: 1, train: 3, publish: 5 }[STAGE];
 
+/* 프로젝트 '학습' 단계 = AI 모델 작업 흐름 판(학습-작업흐름-v3 · 10-12 확인 · board.js) — 업무 카드 · 설명 칸 대신 세로 한 줄기(흐름 판 · 이번 학습 · 학습 이력).
+   원스톱 서랍(학습 결과 · 모델 등록 요청)은 이 단계가 아직 끝나지 않았고 주소가 그 칸을 가리킬 때만 그대로 연다(등록 요청 길 유지). */
+if (PRJ && STAGE === 'train') {
+  const { trainBoard } = await import('./board.js');
+  await trainBoard({ host: S.main, project: PRJ });
+  const trDone = (PRJ.stages || []).find((x) => x.key === 'train')?.done;
+  if (q0.get('flow') && (q0.get('model') || q0.get('job')) && !trDone) openFlow({ host: S.main, who, project: PRJ, step: STEP });
+  document.documentElement.dataset.trainReady = '1';
+  S.fresh(new Date().toISOString());
+  await new Promise(() => {});
+}
+
 const grid = h('div.tr-grid', { role: 'list' });
 /* 프로젝트 안(10-10 질문 10 확인) — 단계마다 그 단계 내용만: 학습데이터 구축 = 이 프로젝트 학습데이터(올리기 · 라벨 확인) · 학습 = 이 프로젝트 모델 */
 const IS_LABEL = !!PRJ && STAGE === 'label';

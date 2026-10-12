@@ -111,13 +111,15 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await page.locator('.k-sub .lxp-st').nth(5).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-release/') && u.searchParams.get('stage') === 'publish', { timeout: 20000 });
     await expect(page.locator('.rl-card h2').first()).toHaveText('배포 신청', { timeout: 20000 });
-    /* 학습 판 — 업무 10 이 아니라 그 프로젝트 한 장 */
+    /* 학습 = 그 프로젝트의 AI 모델 작업 흐름(학습-작업흐름-v3 · 10-12) — 업무 카드 판 0 · 흐름 판 · 이번 학습 · 학습 이력 */
     await page.goto('v3/lx-project/?project=' + pid);
     await page.locator('.k-sub .lxp-st[data-st="done"], .k-sub .lxp-st[data-st="now"]').first().waitFor({ timeout: 20000 });   // 끝까지 간 프로젝트는 '지금' 칸이 없다(배포 승인됨)
     await page.locator('.k-sub .lxp-st').nth(2).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/'), { timeout: 20000 });
-    await expect(page.locator('.tr-card')).toHaveCount(1, { timeout: 20000 });
-    await expect(page.locator('.tr-title')).toHaveText('학습');
+    await expect(page.locator('.tb-board h1')).toHaveText('학습 · AI 모델 작업 흐름', { timeout: 20000 });
+    await expect(page.locator('.tr-card')).toHaveCount(0);
+    expect(await page.locator('.tb-node').count()).toBeGreaterThanOrEqual(4);
+    await expect(page.locator('.tb-hist')).toBeVisible();
     /* 학습데이터 구축 — 그 단계 내용만(이 프로젝트 학습데이터 · 모델 판 0 · 10-10 질문 10) */
     await page.locator('.k-sub .lxp-st').nth(1).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/') && u.searchParams.get('stage') === 'label', { timeout: 20000 });

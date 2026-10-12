@@ -2,7 +2,9 @@
    칸마다 '불러오는 중'을 띄우지 않는다. 기다리는 칸은 옅은 빈 틀만 두고, 내용 영역(셸의 판 · 없으면 화면) 정가운데에
    점 셋(LX 청록) + 작은 '불러오는 중' 한 줄을 하나만 띄운다. 여러 칸이 동시에 기다리면 하나로 합치고(참조 카운트) 모두 도착하면 사라진다.
    6초 넘게 이어지면 그 아래 '서버 응답이 늦습니다 · 다시 시도'.
-   · what(선택) = 무엇을 기다리는지 한 줄(예: '전국 결과 요약') — 가운데 글이 '… 불러오는 중'이 된다(GPT2-4 · 늦을 때 무엇이 늦는지)
+   · what(선택) = 무엇을 기다리는지 한 줄(예: '전국 결과 요약') — 가운데 글은 언제나 '불러오는 중' 한 마디(원칙 212 · 10-12), what 은 data-what 에만
+   · 0.4초 안에 끝나는 기다림은 보이지 않는다(SHOW_AFTER · 원칙 212)
+   · during(promise, opts) = hold → 끝나면 release(화면 코드 한 줄로 '오래 걸리면 가운데 불러오는 중')
    · watch(el, { onRetry, what })   칸 하나를 기다림으로 센다 — el 이 화면에 보이는 동안만(숨은 탭 · 떼어 낸 칸은 세지 않는다)
    · unwatch(el)              그 칸 도착
    · hold({ onRetry }) → release()   칸 없이 기다림 하나(지도 첫 그림 등)
@@ -11,7 +13,7 @@ import { h, RM } from './util.js';
 import { t } from './i18n.js';
 
 export const SLOW_MS = 6000;
-const SHOW_AFTER = 120;   // 이보다 짧은 기다림은 표시하지 않는다(깜박임 방지)
+const SHOW_AFTER = 400;   // 이보다 짧은 기다림은 표시하지 않는다(깜박임 방지 · 원칙 212 — 0.4초 안에 끝나면 보이지 않음)
 const GONE_MS = 3000;     // 화면에서 떼어진 채 이만큼 지나면 그 칸은 잊는다
 
 const ELS = new Map();    // el → { onRetry, off: 떼어진 시각 }
@@ -59,7 +61,8 @@ function count() {
     let w = '';
     for (const o of HOLDS.values()) if (o.what) w = o.what;
     for (const [el, o] of ELS) if (o.what && el.isConnected) w = o.what;
-    const txt = w ? `${w} 불러오는 중` : t('empty.loading');
+    const txt = t('empty.loading');   // 글은 '불러오는 중' 한 마디(원칙 212 · 10-12) — 무엇을 기다리는지(what)는 data-what 에만(점검 도구)
+    ui.root.dataset.what = w;
     if (ui.label.textContent !== txt) ui.label.textContent = txt;
   }
   return n;
@@ -117,3 +120,27 @@ export function hold({ onRetry, what } = {}) {
 }
 /** 지금 가운데 표시가 떠 있는가(점검 도구용) */
 export const loaderState = () => ({ shown, slow, waiting: count() });
+
+/** 기다림 하나를 약속(promise)에 건다 — 0.4초 넘게 걸리면 가운데 '불러오는 중'(원칙 212). 결과는 그대로 돌려준다 */
+export async function during(p, opts = {}) {
+  const done = hold(opts);
+  try { return await p; } finally { done(); }
+}
+/** 지도 결과가 다 그려질 때까지 기다림 하나 — 날아간 뒤 · 층을 켠 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212).
+    바탕 지도 원천(skip · 기본 k-*)은 기다리지 않는다(바깥 바탕 원천이 멈춰도 표시가 남지 않게). max 안에 끝나지 않아도 놓는다. → 놓기 함수 */
+export function untilDrawn(map, { skip = /^k-/, max = 15000 } = {}) {
+  if (!map) return () => {};
+  const done = hold();
+  const t0 = performance.now();
+  let tm = 0, off = false;
+  const ready = () => {
+    try {
+      if (map.isMoving()) return false;
+      return Object.keys(map.getStyle()?.sources || {}).filter((id) => !skip.test(id)).every((id) => map.isSourceLoaded(id));
+    } catch { return true; }
+  };
+  const stop = () => { if (off) return; off = true; clearTimeout(tm); done(); };
+  const poll = () => { if (off) return; if (ready() || performance.now() - t0 > max) { stop(); return; } tm = setTimeout(poll, 120); };
+  poll();
+  return stop;
+}

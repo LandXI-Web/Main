@@ -137,6 +137,13 @@ try {
     for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석하기 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
     await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
     await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
+    /* 프로젝트 학습 화면(학습-작업흐름-v3 · 10-12) — 진행 중 프로젝트마다 흐름 판 · 이번 학습 · 학습 이력 */
+    const pids = await s.page.evaluate(async () => {
+      const t = JSON.parse(localStorage.getItem('lx_api_session') || 'null')?.token;
+      const j = await fetch('/api/v1/projects?scope=all', { headers: t ? { authorization: 'Bearer ' + t } : {} }).then((r) => r.json()).catch(() => null);
+      return (j?.items || []).map((x) => ({ id: x.id, n: x.name }));
+    });
+    for (const x of pids.slice(0, 6)) await screen(s, `LX 직원 · 프로젝트 학습(${x.n})`, A + `lx-train/?project=${encodeURIComponent(x.id)}&stage=train`, { wait: '.tb-hist' });
     await s.ctx.close();
   }
   /* ── LX 관리자(admin) ── */
