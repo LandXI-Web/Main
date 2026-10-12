@@ -149,3 +149,7 @@
   .tb-add{padding:0 16px 12px}
   .tb-cv-w{margin:0 12px 12px}
 }
+/* 학습 서식(결정 ⓑ · 10-12 12:45) — 바꿀 수 없는 것 한 줄 + '기본 흐름으로 되돌리기' */
+.tb-lock{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 24px 16px;font:400 12.5px/18px var(--font-body);color:var(--sub)}
+.tb-reset{height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);font:500 13px/30px var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
+.tb-reset:hover{background:var(--bg-0)}

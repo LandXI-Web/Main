@@ -2,11 +2,13 @@
    시안 landxi/proto/review/mock/train-flow-3 를 실제 화면으로 옮김 — 세로 한 줄기:
    ① 흐름 판 — 블록(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 평가 · 추론 시험 · 배포 신청)을 위 칩에서 끌어다 놓거나 눌러 더하고,
       출구 ○ → 다음 블록으로 잇는다. 같은 블록 여러 개 · D 복제 · Delete 지우기 · 선 누르면 끊기 · 블록 누르면 오른쪽 서랍.
-      처음 판 = 이 프로젝트의 가장 최근 학습 그대로(학습-서식은 결정 전 — 서식 없이 지금 기록에서 그린다).
+      처음 판 = 학습 서식(관리자가 정한 업무별 기본 흐름 · GET /train-templates · 결정 ⓑ 블록까지 바꿈 · 10-12 12:45) —
+      블록 자리는 서식, 값은 이 프로젝트의 가장 최근 학습. 직원은 블록 넣기 · 빼기 · 잇기를 바꾸고 '기본 흐름으로 되돌리기'로 처음 모양.
+      학습 데이터 블록 선택지에 'XI맵에서 고친 것 n건'(GET /datahouse/units) — 고친 것은 XI 재학습(쉬는 시간)으로 들어간다.
       '다시 돌리기' = 판 위 학습 블록마다 학습 한 건(그 블록에 이은 학습 데이터 · 기반 모델 · 학습 설정) → 작업 대기열(/jobs/quote → /jobs · 전력 규칙은 서버).
    ② 이번 학습 — 반복마다 정확도 그래프 하나(학습 기록 · 지난 판 겹침 · 기준선 없음) + 핵심 수치.
    ③ 학습 이력 — 목록(날짜 · 판 · AI 모델 정확도 · 학습 데이터 n장 · 상태).
-   GPU 는 고르는 자리 없음 — 'LX 관리자가 배정 · 프로젝트 하나에 한 장' 한 줄(원칙 200).
+   학습 장비는 고르는 자리 없음 — 'LX 관리자가 배정 · 프로젝트 하나에 한 장' 한 줄(원칙 200). 화면 글은 'GPU' 대신 '학습 장비'.
    숫자 = GET /projects/{id}/train(모델 기록 · 학습 기록 · 묶음 기록 · 검증 결과) · 서비스 중 = /cards/deck(분석하기 카드와 같은 규칙 kit/acc.js). 지어낸 값 0. */
 import { h, api } from '../kit/util.js';
 import { modal } from '../kit/modal.js';
@@ -52,7 +54,8 @@ const ONE_WHY = { data: '학습 하나에 학습 데이터는 하나만 — 다�
   train: '평가 하나에 학습 하나만 이어요', eval: '배포 신청 하나에 평가 하나만 이어요' };
 const W = 168, C0 = 20, C1 = 250, C2 = 480, C3 = 710, R = [16, 112, 200];
 const EPOCHS = [3, 10, 20], SIZES = [640, 1280], BATCH = [4, 8], EP_MAX = 50;
-const GPU_LINE = 'GPU — LX 관리자가 배정 · 프로젝트 하나에 한 장';
+const GPU_LINE = '학습 장비 — LX 관리자가 배정 · 프로젝트 하나에 한 장';
+const LOCK_LINE = '바꿀 수 없는 것 — 학습 장비 배정 · 상한 · 쉬는 시간대 · 검증 묶음 · 승인(LX 관리자)';
 
 /** 프로젝트 학습 화면을 host(셸 판)에 그린다. project = GET /projects/{id} 응답 */
 export async function trainBoard({ host, project: P }) {
@@ -65,10 +68,11 @@ export async function trainBoard({ host, project: P }) {
   const wait = h('div'); col.append(wait);
   empty(wait, { kind: 'loading' });                       // 가운데 '불러오는 중' 하나(로딩-1 · 원칙 212)
 
-  let T, deck = null, smp = null;
+  let T, deck = null, smp = null, TPL = null, XU = null;
   try {
-    [T, deck, smp] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
-      api('/cards/deck').catch(() => null), api('/training/samples?project=' + encodeURIComponent(P.id)).catch(() => null)]);
+    [T, deck, smp, TPL, XU] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
+      api('/cards/deck').catch(() => null), api('/training/samples?project=' + encodeURIComponent(P.id)).catch(() => null),
+      api('/train-templates').catch(() => null), api('/datahouse/units?project=' + encodeURIComponent(P.id)).catch(() => null)]);
   } catch (e) {
     col.replaceChildren(); const x = h('div'); col.append(x);
     empty(x, { kind: 'error', title: '학습 기록을 불러오지 못했습니다', onRetry: () => location.reload() });
@@ -106,34 +110,40 @@ export async function trainBoard({ host, project: P }) {
     return ['', '지난 판'];
   }
 
-  /* ── 판의 블록 — 이 프로젝트의 가장 최근 학습 그대로 ── */
+  /* ── 판의 블록 — 학습 서식(업무별 기본 흐름)의 블록 자리 + 이 프로젝트 가장 최근 학습의 값 ── */
   const nodes = {};
   const links = [];
   let picked = null, from = null, seq = 100;
   const dataOf = (r) => (r?.data ? { ref: r.data.ref, name: r.data.name, images: v(r.data.images), val: v(r.data.val), kind: r.data.kind,
     with: v(r.data.with), without: v(r.data.without) } : null);
-  if (cur) {
-    const d = dataOf(cur);
-    nodes.data1 = { id: 'data1', kind: 'data', x: C0, y: R[0], data: d };
-    nodes.base1 = { id: 'base1', kind: 'base', x: C0, y: R[1], base: cur.base?.id || null };
-    nodes.cfg1 = { id: 'cfg1', kind: 'cfg', x: C0, y: R[2], cfg: { epochs: v(cur.epochs), imgsz: cur.imgsz, batch: cur.batch } };
-    nodes.train1 = { id: 'train1', kind: 'train', x: C1, y: R[1], run: cur };
-    nodes.eval1 = { id: 'eval1', kind: 'eval', x: C2, y: R[1], run: cur };
-    nodes.deploy1 = { id: 'deploy1', kind: 'deploy', x: C3, y: R[1], run: cur };
-    links.push({ a: 'data1', b: 'train1' }, { a: 'base1', b: 'train1' }, { a: 'cfg1', b: 'train1' }, { a: 'train1', b: 'eval1' }, { a: 'eval1', b: 'deploy1' });
-  } else {
-    /* 첫 학습 전 — 학습 데이터 · 기반 모델 · 학습 설정 · 학습 네 블록(값은 서랍에서 고른다) */
-    nodes.data1 = { id: 'data1', kind: 'data', x: C0, y: R[0], data: null };
-    nodes.base1 = { id: 'base1', kind: 'base', x: C0, y: R[1], base: null };
-    nodes.cfg1 = { id: 'cfg1', kind: 'cfg', x: C0, y: R[2], cfg: { epochs: 3, imgsz: 640, batch: 4 } };
-    nodes.train1 = { id: 'train1', kind: 'train', x: C1, y: R[1], run: null };
+  const tpl = (TPL?.items && (TPL.items[P.task] || TPL.items['기본'])) || { blocks: ['data', 'base', 'cfg', 'train', 'eval', 'deploy'], params: { epochs: 3, imgsz: 640, batch: 4 } };
+  const tplCfg = tpl.params || tpl.cfg || { epochs: 3, imgsz: 640, batch: 4 };
+  const EPM = TPL?.caps?.params?.epochs || EP_MAX;
+  /** 기본 흐름 — 서식의 블록을 정해진 자리에 놓고 잇는다(처음 열 때 · '기본 흐름으로 되돌리기') */
+  function defaultFlow() {
+    for (const k of Object.keys(nodes)) delete nodes[k];
+    links.length = 0;
+    const has = (k) => tpl.blocks.includes(k);
+    const put = (id, kind, x, y, extra) => { nodes[id] = { id, kind, x, y, ...extra }; };
+    put('data1', 'data', C0, R[0], { data: cur ? dataOf(cur) : null });
+    put('base1', 'base', C0, R[1], { base: cur?.base?.id || null });
+    put('cfg1', 'cfg', C0, R[2], { cfg: cur ? { epochs: v(cur.epochs), imgsz: cur.imgsz, batch: cur.batch } : { ...tplCfg } });
+    put('train1', 'train', C1, R[1], { run: cur || null });
     links.push({ a: 'data1', b: 'train1' }, { a: 'base1', b: 'train1' }, { a: 'cfg1', b: 'train1' });
+    if (has('eval')) { put('eval1', 'eval', C2, R[1], { run: cur || null }); links.push({ a: 'train1', b: 'eval1' }); }
+    if (has('test')) { put('test1', 'test', C2, R[2], {}); links.push({ a: 'train1', b: 'test1' }); }
+    if (has('deploy') && has('eval')) { put('deploy1', 'deploy', C3, R[1], { run: cur || null }); links.push({ a: 'eval1', b: 'deploy1' }); }
+    picked = null; from = null;
   }
+  defaultFlow();
 
   /* 고를 수 있는 것 — 학습 데이터(이 프로젝트 학습데이터 + 지난 학습에 쓴 데이터) · 기반 모델(원판 + 이 프로젝트가 만든 모델) */
   const DATA = [];
   for (const s of smp?.items || []) DATA.push({ ref: s.id, name: s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at) });
   for (const r of runs) { const d = dataOf(r); if (d?.ref && !DATA.some((x) => x.ref === d.ref)) DATA.push(d); }
+  /* XI맵에서 고친 것(고친 기록 · 학습 데이터 1장이 되는 때는 결정 전이라 건수로) — 이 서비스 것만 · 학습은 XI 재학습(쉬는 시간)으로 */
+  const XN = XU ? v(XU.units) : null;
+  if (XN != null) DATA.push({ ref: 'xi-edits', name: 'XI맵에서 고친 것', edits: XN, pending: v(XU.pending) || 0, kind: 'edits' });
   const BASES = [];
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
@@ -145,8 +155,10 @@ export async function trainBoard({ host, project: P }) {
   const cv = h('div.tb-cv');
   const wires = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); wires.classList.add('tb-wires');
   cv.append(wires, h('div.tb-how', {}, '출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요', h('b', { text: 'D' }), '복제', h('b', { text: 'Del' }), '지우기'));
+  const reset = h('button.tb-reset', { type: 'button', text: '기본 흐름으로 되돌리기', onclick: () => { defaultFlow(); render(); } });
   const board = h('section.tb-card.tb-board', { 'aria-label': '학습 작업 흐름' },
-    h('div.tb-board-h', {}, h('h1', { text: '학습 · AI 모델 작업 흐름' }), hint, go), add, h('div.tb-cv-w', {}, cv));
+    h('div.tb-board-h', {}, h('h1', { text: '학습 · AI 모델 작업 흐름' }), hint, go), add, h('div.tb-cv-w', {}, cv),
+    h('div.tb-lock', {}, h('span', { text: LOCK_LINE }), reset));
   const perf = h('section.tb-card.tb-perf', { 'aria-label': '이번 학습' });
   const keys = h('section.tb-card.tb-keys', { 'aria-label': '핵심 수치' });
   const hist = h('section.tb-card.tb-hist', { 'aria-label': '학습 이력' });
@@ -219,7 +231,8 @@ export async function trainBoard({ host, project: P }) {
   function face(n) {
     const o = { line: '', num: '', tag: null, bar: null, cls: '' };
     if (n.kind === 'data') {
-      if (n.data) o.line = [n.data.name, n.data.images != null ? `${nf(n.data.images)}장` : null].filter(Boolean).join(' · ');
+      if (n.data?.kind === 'edits') o.line = `${n.data.name} ${nf(n.data.edits)}건`;
+      else if (n.data) o.line = [n.data.name, n.data.images != null ? `${nf(n.data.images)}장` : null].filter(Boolean).join(' · ');
       else { o.line = '학습 데이터를 고르세요'; o.cls = 'need'; }
     } else if (n.kind === 'base') {
       if (n.base) o.line = baseWord(n.base).long; else { o.line = '모델을 고르세요'; o.cls = 'need'; }
@@ -328,8 +341,9 @@ export async function trainBoard({ host, project: P }) {
       out.push(h('p.tb-lab', { text: '학습 데이터' }));
       if (!DATA.length) out.push(h('p', { text: '아직 이 프로젝트 학습데이터가 없습니다 · 학습데이터 구축에서 올려 주세요' }), h('a.tb-dbtn', { href: stageHref(P, 'label'), text: '학습데이터 구축' }));
       for (const d of DATA) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터',
-        d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.day ? `${d.day} 올림` : '',
-        d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
+        d.kind === 'edits' ? `XI 재학습으로 쉬는 시간에 학습${d.pending ? ` · 승인 대기 ${nf(d.pending)}건 뺌` : ''}`
+          : d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.day ? `${d.day} 올림` : '',
+        d.kind === 'edits' ? `${nf(d.edits)}건` : d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
       out.push(h('p', { text: '다른 학습 데이터로 보려면 학습 데이터 블록과 학습 블록을 하나씩 더 놓아 이어요.' }));
     } else if (n.kind === 'base') {
       out.push(h('p.tb-lab', { text: '지금 있는 모델' }));
@@ -337,15 +351,15 @@ export async function trainBoard({ host, project: P }) {
       out.push(h('p', { text: '기반 모델은 이미 배운 것을 품고 시작해요. 영상 해상도가 같은 모델이 좋아요. 둘을 나란히 보려면 학습 블록도 둘이어야 해요.' }));
     } else if (n.kind === 'cfg') {
       const c = n.cfg;
-      const own = h('input', { type: 'number', min: '1', max: String(EP_MAX), value: EPOCHS.includes(c.epochs) ? '' : String(c.epochs), 'aria-label': '반복 횟수 직접', placeholder: '직접' });
-      own.addEventListener('change', () => { const k = Math.max(1, Math.min(EP_MAX, Math.round(+own.value || 0))); if (k) { c.epochs = k; back(); } });
+      const own = h('input', { type: 'number', min: '1', max: String(EPM), value: EPOCHS.includes(c.epochs) ? '' : String(c.epochs), 'aria-label': '반복 횟수 직접', placeholder: '직접' });
+      own.addEventListener('change', () => { const k = Math.max(1, Math.min(EPM, Math.round(+own.value || 0))); if (k) { c.epochs = k; back(); } });
       const sg = seg(EPOCHS, c.epochs, (k) => `${k}회`, (k) => { c.epochs = k; back(); }); sg.append(own);
-      out.push(h('p.tb-lab', { text: `반복 횟수 · 최대 ${EP_MAX}회` }), sg);
+      out.push(h('p.tb-lab', { text: `반복 횟수 · 최대 ${EPM}회` }), sg);
       const per = cur && cur.state === 'done' && v(cur.took) && v(cur.epochs) ? v(cur.took) / v(cur.epochs) : null;
       if (per) out.push(h('p', { text: `많을수록 오래 걸려요 — 지난 학습은 한 번 반복에 약 ${dur(per)}이었어요.` }));
       out.push(h('p.tb-lab', { text: '이미지 크기' }), seg(SIZES, c.imgsz, String, (k) => { c.imgsz = k; back(); }),
         h('p.tb-lab', { text: '한 번에' }), seg(BATCH, c.batch, (k) => `${k}장`, (k) => { c.batch = k; back(); }),
-        h('p.tb-dgpu', { text: 'GPU 메모리는 관리자가 정한 한도 안에서 서버가 맞춰요.' }),
+        h('p.tb-dgpu', { text: '학습 장비 메모리는 관리자가 정한 한도 안에서 서버가 맞춰요.' }),
         h('p', { style: 'margin-top:10px', text: '다른 설정으로 한 번 더 보려면 학습 설정 블록을 하나 더 놓고(D) 다른 학습에 이어요.' }));
     } else if (n.kind === 'train') {
       const r = n.run;
@@ -355,7 +369,7 @@ export async function trainBoard({ host, project: P }) {
       else out.push(h('span.tb-verdict.ok', { text: `끝남 · ${mdhm(r.finished_at)}` }),
         kv([r.data?.images ? ['학습 데이터', `${nf(v(r.data.images))}장`, true] : null, ['기반 모델', baseWord(r.base?.id).long], ['설정', `반복 ${v(r.epochs)}회 · 크기 ${r.imgsz} · 한 번에 ${r.batch}장`],
           r.took ? ['걸린 시간', dur(v(r.took)), true] : null, r.acc ? ['학습 끝 검증', pct(v(r.acc)), true] : null]));
-      out.push(h('p.tb-dgpu', { text: 'GPU는 LX 관리자가 배정해요 — 프로젝트 하나는 한 번에 GPU 한 장. 여기서 고르거나 바꿀 수 없어요.' }));
+      out.push(h('p.tb-dgpu', { text: '학습 장비는 LX 관리자가 배정해요 — 프로젝트 하나는 한 번에 한 장. 여기서 고르거나 바꿀 수 없어요.' }));
     } else if (n.kind === 'eval') {
       const r = (upTrain(n) || {}).run;
       if (!r || LIVE.has(r.state)) out.push(h('span.tb-verdict', { text: '학습이 끝나면 재요' }), h('p.tb-lab', { text: '어떻게 재나' }), h('p', { text: '학습에 안 쓴 같은 검증 묶음으로 재요. 결과는 AI 모델 정확도 한 줄이에요.' }));
@@ -470,7 +484,8 @@ export async function trainBoard({ host, project: P }) {
     for (const t of trains) {
       if (t.run && LIVE.has(t.run.state)) continue;
       const d = inputs(t.id, 'data')[0], b = inputs(t.id, 'base')[0], c = inputs(t.id, 'cfg')[0];
-      const miss = !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요' : !b ? '기반 모델 블록을 이어 주세요'
+      const miss = !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요'
+        : d.data.kind === 'edits' ? 'XI맵에서 고친 것은 XI 재학습으로 쉬는 시간에 학습해요 — 여기서는 올린 학습 데이터를 골라 주세요' : !b ? '기반 모델 블록을 이어 주세요'
         : !b.base ? '기반 모델 블록에서 모델을 골라 주세요' : !c ? '학습 설정 블록을 이어 주세요' : null;
       if (miss) bad.push([t, miss]); else out.push({ t, d: d.data, b: b.base, c: c.cfg });
     }
@@ -535,5 +550,8 @@ export async function trainBoard({ host, project: P }) {
   }
 
   render(); drawPerf(); drawKeys(); drawHist();
+  /* 판 글꼴 · 스타일이 늦게 붙으면 블록 크기가 바뀐다 — 선을 다시 긋는다(블록 자리는 그대로) */
+  if ('ResizeObserver' in window) new ResizeObserver(() => { if (cv.isConnected) drawWires(); }).observe(cv);
+  document.fonts?.ready?.then(() => { if (cv.isConnected) drawWires(); });
   document.documentElement.dataset.trainBoard = '1';
 }

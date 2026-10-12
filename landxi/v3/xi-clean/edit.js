@@ -123,10 +123,11 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const m = E.sel?.meta || {};
     const it = items.find((x) => x.service === (m.service || '토지피복'));
     const n = val(it?.n) || 0;
-    if (!n) { foot.replaceChildren(h('span', { text: '고친 것은 원래 모양과 함께 학습 자료로 쌓입니다' })); return; }
+    if (!n) { foot.replaceChildren(h('span', { text: '고친 것은 원래 모양과 함께 학습 자료로 쌓입니다' })); place(); return; }
     foot.replaceChildren(h('span', {}, `이 서비스에서 고친 것 `, h('b.num', { text: `${nf(n)}건` })),
       it.project ? h('a.xe-train', { href: new URL(`../lx-train/?${new URLSearchParams({ project: it.project.id, stage: 'train', flow: '1' })}`, import.meta.url).href, text: `${it.project.name} 학습으로` })
         : h('span.xe-sub', { text: ' · 학습 자료로 쌓임' }));
+    place();                                              // 아래 줄이 늦게 붙어 칸이 길어지면 화면 안으로 다시 맞춤
   }
 
   /* ── 고치기 보내기 ── */
@@ -158,12 +159,85 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
       h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '지우기', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '지웠습니다 · 학습 자료로 쌓입니다') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
   }
-  function classes() { const c = E.sel?.meta?.classes || []; return c.length ? c : [E.sel?.properties?.cls].filter(Boolean); }
-  function pickClass() {
+  /* ── 클래스 고르기(원칙 205 · 217) — 질문 문장 없이 클래스 목록(서버 한 곳 · GET /classes/pick)에서 고르고, 없으면 더한다.
+     더한 클래스는 '승인 대기' — LX 관리자가 데이터하우스에서 승인 · 합치기 · 거절하기 전까지 학습에 들어가지 않는다. */
+  async function classList() {
+    try { return await api('/classes/pick?' + new URLSearchParams({ set: E.L.set })); } catch { return null; }
+  }
+  /** 클래스 고르기 칸을 만든다. onPick(클래스, 새로 더했나) · onBack() */
+  async function classPicker(onPick, onBack, { except = null } = {}) {
+    const box = h('div.xe-ask.xe-pk', {});
+    const L = await classList();
+    if (!L) { box.append(h('p', { text: '클래스 목록을 불러오지 못했습니다' }), h('div.xe-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '닫기', onclick: onBack }))); return box; }
+    const chip = (c) => h('button.xe-chip', { type: 'button', class: c.status === 'proposed' ? 'is-wait' : '', onclick: () => onPick(c, false) },
+      c.name, c.status === 'proposed' ? h('small', { text: '승인 대기' }) : null);
+    const not = (xs) => xs.filter((c) => c.name !== except && !(c.aliases || []).includes(except));
+    const group = (t, xs) => (not(xs).length ? [h('p.xe-pk-t', { text: t }), h('div.xe-chips', {}, ...not(xs).map(chip))] : []);
+    const q = h('input.xe-in', { type: 'search', placeholder: '클래스 찾기', 'aria-label': '클래스 찾기' });
+    const hits = h('div.xe-chips');
+    const all = [...L.finds, ...L.model, ...L.pending, ...L.others];
+    q.addEventListener('input', () => {
+      const k = q.value.trim().toLowerCase();
+      hits.replaceChildren(...(k ? not(all).filter((c) => c.name.toLowerCase().includes(k) || (c.aliases || []).some((a) => a.toLowerCase().includes(k))).slice(0, 12).map(chip) : []));
+      place();
+    });
+    const addB = h('button.t-btn.t-btn--2', { type: 'button', text: '새 클래스 더하기',
+      onclick: () => { const f = addForm(L, onPick, () => { f.replaceWith(box); place(); }); box.replaceWith(f); place(); } });
+    box.append(
+      ...group(`${L.service ? `${L.service} 서비스` : '이 서비스'}가 찾는 것`, L.finds),
+      ...group('같은 모델의 다른 클래스', L.model),
+      ...group('승인 대기', L.pending),
+      q, hits,
+      h('div.xe-act', {}, addB, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: onBack })));
+    return box;
+  }
+  /** 새 클래스 더하기 — 이름 · 세부(위 클래스) / 새 물체. 비슷한 클래스가 있으면 먼저 보여 준다. */
+  function addForm(L, onPick, onBack) {
+    const name = h('input.xe-in', { type: 'text', maxlength: 40, placeholder: '예: 연동 비닐하우스', 'aria-label': '새 클래스 이름' });
+    let kind = 'detail';
+    const seen = new Set();
+    const ups = [...L.finds, ...L.model, ...L.others].filter((c) => c.status === 'approved' && !c.parent && !seen.has(c.id) && seen.add(c.id));
+    const cur = E.sel?.properties?.cls;
+    const curId = ups.find((c) => c.name === cur || (c.aliases || []).includes(cur))?.id;
+    const up = h('select.xe-in', { 'aria-label': '위 클래스' }, ...ups.map((c) => h('option', { value: c.id, text: c.name, selected: c.id === curId || undefined })));
+    const upRow = h('label.xe-pk-row', {}, h('span', { text: '위 클래스' }), up);
+    const seg = h('div.xe-seg', { role: 'group', 'aria-label': '구분' });
+    const segs = [['detail', '세부(위 클래스 있음)'], ['object', '새 물체']].map(([k, t]) => h('button', { type: 'button', 'aria-pressed': String(k === kind), text: t,
+      onclick: () => { kind = k; segs.forEach((x, i) => x.setAttribute('aria-pressed', String(['detail', 'object'][i] === k))); upRow.hidden = k !== 'detail'; place(); } }));
+    seg.append(...segs);
+    const say = h('div.xe-pk-say');
+    const chips = (xs) => h('div.xe-chips', {}, ...xs.map((c) => h('button.xe-chip', { type: 'button', class: c.status === 'proposed' ? 'is-wait' : '', onclick: () => onPick(c, false) },
+      c.name, c.status === 'proposed' ? h('small', { text: '승인 대기' }) : null)));
+    const go = async (force = false) => {
+      const nm = name.value.trim();
+      if (!nm) { name.focus(); return; }
+      if (!force) {                     // 비슷한 클래스를 먼저 보여 준다(같은 뜻이면 그것을 고르게 · 남발 막기)
+        const sm = await api('/classes/similar?' + new URLSearchParams({ name: nm })).catch(() => null);
+        if (sm?.same) { say.replaceChildren(h('p', { text: `'${sm.same.name}' 클래스가 이미 있어요 · 골라 주세요` }), chips([sm.same])); place(); return; }
+        if (sm?.similar?.length) {
+          say.replaceChildren(h('p', { text: '비슷한 클래스가 있어요 · 같은 뜻이면 골라 주세요' }), chips(sm.similar),
+            h('button.xe-undo', { type: 'button', text: '그래도 더하기', onclick: () => go(true) }));
+          place(); return;
+        }
+      }
+      try {
+        const j = await api('/classes', { method: 'POST', body: { name: nm, kind, parent_id: kind === 'detail' ? up.value : null, set: E.L.set, force: true, ...(TEST ? { test: true } : {}) } });
+        onPick(j.class, true);
+      } catch (e) { K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '더하지 못했습니다'); place(); }
+    };
+    const f = h('div.xe-ask.xe-pk', {}, h('p.xe-pk-t', { text: '새 클래스' }), name, seg, upRow, say,
+      h('p.xe-sub', { text: '관리자 승인 전까지는 학습에 들어가지 않습니다' }),
+      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '더하기', onclick: () => go(false) }), h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: onBack })));
+    setTimeout(() => name.focus(), 30);
+    return f;
+  }
+  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더했습니다 · 승인 전까지 학습에 들어가지 않습니다`
+    : c.status === 'proposed' ? `${c.name}(으)로 바꿨습니다 · 승인 대기 클래스입니다` : `${c.name}(으)로 바꿨습니다 · 학습 데이터로 쌓입니다`);
+  async function pickClass() {
     const now = E.sel.properties.cls;
-    render(h('div.xe-ask', {}, h('p', { text: '어떤 분류인가요?' }),
-      h('div.xe-chips', {}, ...classes().filter((c) => c !== now).map((c) => h('button.xe-chip', { type: 'button', text: c, onclick: () => send({ fid: E.sel.id, action: 'reclass', cls: c }, `${c}(으)로 바꿨습니다 · 학습 자료로 쌓입니다`) }))),
-      h('div.xe-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
+    render(h('p.xe-wait', { text: '불러오는 중' }));
+    const box = await classPicker((c, added) => send({ fid: E.sel.id, action: 'reclass', cls_id: c.id, cls: c.name }, doneWord(c, added)), () => render(), { except: now });
+    render(box);
   }
   function writeMemo() {
     const ta = h('textarea.xe-memo', { rows: 3, maxlength: 500, placeholder: '예: 현장 사진으로는 창고 — 다음 판에서 확인', 'aria-label': '메모' });
@@ -254,16 +328,17 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     stopDraw();
     E.at = at; card.hidden = false;
     src('xe-shape').setData({ type: 'Feature', geometry, properties: {} });
-    const pick = (c) => api('/ximap/edits', { method: 'POST', body: { set: E.L.set, action: 'add', cls: c, geometry, ...(TEST ? { test: true } : {}) } }).then((j) => {
+    const pick = (c) => api('/ximap/edits', { method: 'POST', body: { set: E.L.set, action: 'add', cls_id: c.id, cls: c.name, geometry, ...(TEST ? { test: true } : {}) } }).then((j) => {
       src('xe-shape').setData(EMPTY);
-      K.toast(`${c} 하나를 새로 그렸습니다 · 학습 자료로 쌓입니다`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
+      K.toast(`${c.name} 하나를 새로 그렸습니다 · ${c.status === 'proposed' ? '승인 대기 클래스입니다' : '학습 데이터로 쌓입니다'}`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
       onEdited?.(j); live();
       if (E.sel) render(); else close();
     }, (e) => K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '그리지 못했습니다'));
-    card.replaceChildren(h('header.xe-h', {}, h('div', {}, h('h3', { text: '새로 그린 객체' }), h('p.xe-sub', { text: E.L?.item?.name || '' }))),
-      h('div.xe-ask', {}, h('p', { text: '어떤 분류인가요?' }), h('div.xe-chips', {}, ...classes().map((c) => h('button.xe-chip', { type: 'button', text: c, onclick: () => pick(c) }))),
-        h('div.xe-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => { src('xe-shape').setData(EMPTY); if (E.sel) render(); else close(); } }))));
+    const cancel = () => { src('xe-shape').setData(EMPTY); if (E.sel) render(); else close(); };
+    const wait = h('p.xe-wait', { text: '불러오는 중' });
+    card.replaceChildren(h('header.xe-h', {}, h('div', {}, h('h3', { text: '새로 그린 객체' }), h('p.xe-sub', { text: E.L?.item?.name || '' }))), wait);
     place();
+    classPicker((c) => pick(c), cancel).then((box) => { wait.replaceWith(box); place(); });
   }
   map.on('click', (e) => {
     if (E.mode !== 'draw') return;

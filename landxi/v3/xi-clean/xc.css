@@ -369,3 +369,16 @@
 .xe-undo{flex:none;border:0;background:none;padding:0;font:500 12.5px/1.4 var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .xe-undo:hover{color:var(--ink)}
 .xb-tip span{display:block}
+/* 클래스 고르기 · 새 클래스 더하기(원칙 205 · 217 · edit.js classPicker) */
+.xe-pk{max-height:min(56vh,460px);overflow:auto}
+.xe-pk-t{margin:0 0 6px!important;font:600 12.5px/1.3 var(--font-body)!important;color:var(--sub)!important}
+.xe-chip.is-wait{border-style:dashed;border-color:#8B6CF6}
+.xe-chip small{margin-left:6px;font:500 11.5px/1 var(--font-body);color:#6E4EE0}
+.xe-in{width:100%;height:34px;margin:0 0 8px;padding:0 10px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);font:500 13.5px/1 var(--font-body);color:var(--ink);box-sizing:border-box}
+.xe-seg{display:flex;gap:4px;margin:0 0 8px;padding:3px;border-radius:10px;background:var(--bg-2,#F2F4F6)}
+.xe-seg button{flex:1;height:30px;border:0;border-radius:8px;background:none;font:500 13px/1 var(--font-body);color:var(--sub);cursor:pointer}
+.xe-seg button[aria-pressed="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.xe-pk-row{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:8px;font:500 12.5px/1.3 var(--font-body);color:var(--sub)}
+.xe-pk-row[hidden]{display:none}
+.xe-pk .xe-pk-say p{margin:0 0 6px;font:500 13px/1.45 var(--font-body);color:var(--ink)}
+.xe-pk p.xe-sub{margin:4px 0 10px;font:400 12.5px/1.4 var(--font-body);color:var(--sub)}

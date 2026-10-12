@@ -19,7 +19,7 @@ export const STAFF_MENU = [
   { id: 'analyze', label: '분석하기', icon: 'scan' },
   { id: 'mapsvc', label: '지도 서비스', icon: 'map', more: true },
   { id: 'ximap', label: 'XI맵', glyph: 'XI', more: true },
-  { id: 'data', label: '데이터', icon: 'data', more: true, sep: true },
+  { id: 'data', label: '데이터하우스', icon: 'data', more: true, sep: true },
   { id: 'inbox', label: '요청함', icon: 'inbox' },
 ];
 /* 화면(셸 home) → 메뉴 칸. 프로젝트 맥락(?project=)이 있으면 단계 화면도 '프로젝트'(context.js 가 정한다).

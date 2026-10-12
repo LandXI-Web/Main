@@ -12,6 +12,7 @@ import { toast, h, api, nf, drawer } from './kit.js';
 import { API } from '../../../shared/api-v1.js';   // 대표 그림 주소(게이트웨이 파일)
 import { improveBoard } from './improve.js';
 import { apiKeysPane } from './apikeys.js';   // 배포 → API(외부 연동 API 키 · 원칙 178)
+import { retrainPane, templatePane } from './retrain.js';   // 배포 → XI 재학습 · 학습 서식(원칙 213 · 217 · 10-12 12:45)
 
 { const href = new URL('../release.css', import.meta.url).href;
   if (!document.querySelector(`link[href="${href}"]`)) document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href })); }
@@ -25,7 +26,7 @@ const km2 = (e) => (val(e) == null || val(e) < 0.01 ? '' : `${nf(val(e), val(e) 
 const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 const units = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rv-u', { text: u })); }); return el; };
 const bar = (v, dim = false) => h('span.rv-bar', { class: dim ? 'is-dim' : '' }, h('i', { style: `width:${Math.max(0, Math.min(100, val(v) || 0))}%` }));
-const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api']];
+const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates']];
 
 export function mountRelease(root) {
   const nBadge = h('b.num.im-tab-n'), impN = h('b.num.im-tab-n'), catN = h('b.num.im-tab-n');
@@ -34,8 +35,9 @@ export function mountRelease(root) {
   root.append(h('div.im-head', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...Object.values(btn))), ...Object.values(panes));
   const board = improveBoard(panes.imp, { admin: true, onCount: (n) => { impN.textContent = n ? nf(n) : ''; } });
   const keys = apiKeysPane(panes.api);
+  const rt = retrainPane(panes.rt), tpl = templatePane(panes.tpl);
   let tab = null;
-  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api' })[m?.[1]] || 'req'; };
+  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl' })[m?.[1]] || 'req'; };
   function set(t, push = false) {
     tab = t;
     for (const [k] of TABS) { btn[k].setAttribute('aria-selected', String(k === t)); panes[k].hidden = k !== t; }
@@ -330,6 +332,8 @@ export function mountRelease(root) {
     else if (tab === 'cat') paintCat();
     else if (tab === 'imp') board.load();
     else if (tab === 'api') keys.load();
+    else if (tab === 'rt') rt.load();
+    else if (tab === 'tpl') tpl.load();
   }
   set(want());
   board.load({ quiet: true });          // 탭 숫자(새로 옴)만 먼저

@@ -660,6 +660,10 @@ async def apply(pid: str, body: dict, request: Request):
             raise ApiError("bad_request", "이 프로젝트에서 학습한 모델을 골라 주세요")
         if m["status"] != "registered":
             raise ApiError("conflict", "모델 등록 승인 뒤에 배포 신청할 수 있습니다", {"status": m["status"]}, 409)
+        from .core import retrain_gate                 # XI 재학습 판은 같은 검증 묶음에서 나아진 경우만 배포 신청 후보(원칙 213)
+        why = await retrain_gate(conn, mid)
+        if why:
+            raise ApiError("conflict", why, None, 409)
         card = await _card_of(conn, pid)
         versions = await _versions(conn, pid, card, people)
         # (결과 확인 판정은 신청서에 넣지 않는다 — 원칙 203)

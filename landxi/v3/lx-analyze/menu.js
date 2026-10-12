@@ -13,7 +13,7 @@ export async function staffRail(current) {
     { id: 'analyze', label: '분석하기', icon: 'scan', href: at('../lx-analyze/') },
     { id: 'mapsvc', label: '지도 서비스', icon: 'map', href: at('../lx-map/') },
     { id: 'ximap', label: 'XI맵', glyph: 'XI', href: at('../xi-clean/') },
-    { id: 'data', label: '데이터', icon: 'data', href: at('../lx-ingest/'), sep: true },
+    { id: 'data', label: '데이터하우스', icon: 'data', href: at('../lx-ingest/'), sep: true },
     { id: 'inbox', label: '요청함', icon: 'inbox', href: at('../lx-inbox/') },
   ];
   return { kind: 'menu', items, current: Math.max(0, items.findIndex((i) => i.id === current)) };

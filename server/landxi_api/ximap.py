@@ -462,6 +462,11 @@ async def make_edit(request: Request, body: dict):
     test = bool(body.get("test"))
     eid = "ed_" + secrets.token_hex(6)
     async with db(realm="lx") as conn:
+        cls_id = None
+        if body.get("cls_id") and action in ("reclass", "add"):        # 클래스 목록에서 고름(원칙 205 · core.py) — 이름은 목록 이름
+            from .core import class_for_edit
+            c = await class_for_edit(conn, str(body["cls_id"]))
+            cls_id, body = c["id"], {**body, "cls": c["name"]}
         meta = await _meta(conn, job_id)
         base = {"model_id": meta["model_id"], "card_id": meta["card_id"], "card_version": meta["version"], "imagery_id": meta["imagery_id"], "sgg_cd": meta["sgg_cd"]}
         if action == "add":
@@ -520,6 +525,8 @@ async def make_edit(request: Request, body: dict):
                 await conn.execute(f"UPDATE detections SET {', '.join(sets)}, edited_by=${len(args)} WHERE job_id=$1 AND id=$2", *args)
             if after_geom:
                 await conn.execute(f"UPDATE result_edits SET geom_after = {GEO.format('$2')} WHERE id=$1", eid, after_geom)
+        from .core import tag_edit
+        await tag_edit(conn, eid, cls_id)                              # 고친 기록 → 클래스 id(클래스 한 곳)
         await audit(conn, p, "ximap.edit", f"{job_id}/{fid}", None, {"edit": eid, "action": action, "test": test})
         new = await _row(conn, job_id, fid)
         n = await _card_count(conn, base["card_id"])

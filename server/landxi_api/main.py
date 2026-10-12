@@ -83,8 +83,16 @@ async def lifespan(app: FastAPI):
             print(f"[gateway] warm 실패: {e!r}", flush=True)
     warm_task = asyncio.create_task(_warm())
     task = asyncio.create_task(ops.alert_loop())
+    try:                                   # XI 재학습 스케줄러(원칙 213 · 쉬는 시간 · 기준 닿은 서비스만 · 학습 장비 한 장 대기열로)
+        from . import core as _core
+        rt_task = asyncio.create_task(_core.loop())
+    except Exception as e:  # noqa: BLE001
+        rt_task = None
+        print(f"[gateway] retrain loop 건너뜀: {e!r}", flush=True)
     yield
     task.cancel()
+    if rt_task:
+        rt_task.cancel()
     await close()
 
 
@@ -158,7 +166,7 @@ for _name in ("survey", "agent"):
     print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
 
 # C2 확장 라우터(c2-report-law 법령 원문·색인 등) — 있으면 붙이고, 없거나 불러오기에 실패하면 건너뛴다(게이트웨이는 뜬다 · 로그 1줄).
-for _name in ("law", "training", "global_data", "staff_home", "release", "inquiries", "ximap", "project_train"):   # staff_home = LX 직원 대시보드 칸(저장 용량 · 내가 돌린 작업 · 공지 — 직원-4 ⓐ · 직원-5 ⓐ) · release = 분석 서비스 배포(추론 · 배포 신청 · 기관 공유 · 사용 현황 — 배포-1~5) · inquiries = 문의하기 창으로 들어온 문의(10-11 메인 지시 3) · ximap = XI맵 전국 결과 · 그 자리 고치기(바퀴 5) · project_train = 프로젝트 학습 화면 기록(학습-작업흐름-v3)
+for _name in ("law", "training", "global_data", "staff_home", "release", "inquiries", "ximap", "project_train", "core"):   # staff_home = LX 직원 대시보드 칸(저장 용량 · 내가 돌린 작업 · 공지 — 직원-4 ⓐ · 직원-5 ⓐ) · release = 분석 서비스 배포(추론 · 배포 신청 · 기관 공유 · 사용 현황 — 배포-1~5) · inquiries = 문의하기 창으로 들어온 문의(10-11 메인 지시 3) · ximap = XI맵 전국 결과 · 그 자리 고치기(바퀴 5) · project_train = 프로젝트 학습 화면 기록(학습-작업흐름-v3)
     try:
         _m = importlib.import_module(f"landxi_api.{_name}")
         app.include_router(_m.router, prefix=API)

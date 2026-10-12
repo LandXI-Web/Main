@@ -18,11 +18,47 @@ const V3 = '/landxi/v3/';
    왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js · 10차 메뉴-1 ⓐ · J-1) — 프로젝트 맥락(?project=)이면 '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js).
    프로젝트 밖에서 이 화면은 메뉴 '데이터'(영상 · 행정 자산이 지역에 갖춰졌나 · 올리기). */
 const PR = projectRail('ingest');
-const S = K.shell({ who, home: 'lx-ingest', rail: PR || staffMenu('data') });
+const S = K.shell({ who, home: 'lx-ingest', rail: PR || { ...staffMenu('data'), sub: true } });
 if (PR) attachProject(S, PR, 'ingest');
 
+/* ── 데이터하우스(결정 2 ⓐ · 10-12 12:45) — 프로젝트 밖에서 이 화면은 메뉴 '데이터하우스'. 탭 둘:
+   학습 데이터(클래스별 · 고친 것 · 승인 대기 — datahouse.js) · 영상 · 행정 자료(지금 화면 그대로 · 처음 열 때 그린다).
+   주소 ?tab=imagery 또는 ?region= 이면 영상 · 행정 자료로 연다. 프로젝트 안(?project=)은 지금 화면 그대로(탭 없음). */
+let imgOn = null;
+if (!PR) {
+  const { mountDatahouse } = await import('./datahouse.js');
+  const dh = K.h('div.dh-host');
+  S.main.append(dh);
+  let D = null;
+  const tabs = [['train', '학습 데이터'], ['imagery', '영상 · 행정 자료']];
+  const bar = K.h('nav.dh-tabs', { role: 'tablist', 'aria-label': '데이터하우스' });
+  const btns = tabs.map(([k, t]) => K.h('button', { type: 'button', role: 'tab', dataset: { tab: k }, text: t, onclick: () => show(k, true) }));
+  bar.append(...btns);
+  S.sub.append(bar);
+  if (!document.querySelector('link[data-dh]')) document.head.append(K.h('link', { rel: 'stylesheet', href: new URL('./datahouse.css', import.meta.url).href, dataset: { dh: '1' } }));
+  async function show(k, push) {
+    btns.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === k)));
+    document.title = `데이터하우스 · ${k === 'train' ? '학습 데이터' : '영상 · 행정 자료'} · Land-XI`;
+    if (push) { const u = new URL(location.href); u.searchParams.set('tab', k); if (k === 'train') u.searchParams.delete('region'); history.replaceState(null, '', u); }
+    if (k === 'train') {
+      if (!D) D = mountDatahouse(dh);
+      D.pane.hidden = false;
+      if (imgOn) imgOn.hidden = true;
+      document.documentElement.dataset.ready = '1';
+    } else {
+      if (D) D.pane.hidden = true;
+      if (!imgOn) await imageryScreen(); else imgOn.hidden = false;
+    }
+  }
+  await show(qs.get('tab') === 'imagery' || (qs.get('region') && qs.get('tab') !== 'train') ? 'imagery' : 'train');
+} else {
+  await imageryScreen();
+}
+
+async function imageryScreen() {
 /* ── 판: 지도 무대 + 지역 카드 ─────────────────────────────────── */
 const stageEl = K.h('div.lxi-stage');
+imgOn = stageEl;
 S.main.append(stageEl);
 const st = K.createStage(stageEl);
 K.devDrawer({ stage: st, who });
@@ -134,7 +170,7 @@ async function pick(region, { fly = true } = {}) {
   if (!region) return;
   const my = ++token;
   cur = region;
-  history.replaceState(null, '', location.pathname + '?region=' + encodeURIComponent(region.sgg_cd) + (PID ? '&project=' + encodeURIComponent(PID) : '') + (qs.get('dev') ? '&dev=' + qs.get('dev') : ''));
+  history.replaceState(null, '', location.pathname + '?region=' + encodeURIComponent(region.sgg_cd) + (PID ? '&project=' + encodeURIComponent(PID) : '&tab=imagery') + (qs.get('dev') ? '&dev=' + qs.get('dev') : ''));
   const ui = openDrawer(region);
   map.getSource('lxi-fp').setData(EMPTY);
 
@@ -192,3 +228,4 @@ if (first) { picker.input.value = first.name; setTimeout(() => pick(first), 700)
 /* ?dev=1 — 검증용 상태 조회(개발자 서랍과 같은 조건 · 화면 문구 0) */
 if (qs.get('dev') === '1') window.__lxi = { map, state: () => ({ cur: cur?.sgg_cd || null, parcel: UI?.parcel?.dataset.st || null }) };
 document.documentElement.dataset.ready = '1';
+}
