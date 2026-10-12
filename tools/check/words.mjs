@@ -34,6 +34,8 @@ export const WORDS = [
   ['검증 정확도', /검증\s?정확도/], ['무허가 건축 의심', /무허가\s?건축\s?의심/],
   // 10-12 원칙 209 · 202 고침 · 203 — '표본 n장'(→ 학습 데이터 n장) · 개선 후보 '개발 요청'(→ 모아 두기) · 결과 확인 '봤음' 기록
   ['표본 n장', /표본\s?[\d,]+\s?장|학습\s?데이터\s?표본|표본\s?학습/], ['개발 요청', /개발\s?요청/], ['봤음 기록', /지도에서\s?봤음|이 결과 확인했음/],
+  // 10-12 XI맵 시군구 카드 'nullnull' — 값이 비었는데 글자로 이어 붙은 것(화면 글 · 속성). 영문자 · 숫자 · 밑줄에 붙은 낱말(예: annulled · nullable)은 세지 않는다
+  ['null · undefined · NaN', /(^|[^A-Za-z0-9_])(null|undefined|NaN)(?![A-Za-z0-9_])/],
 ];
 const hitWords = (s) => WORDS.filter(([, re]) => re.test(s)).map(([k]) => k);
 /** 서버 응답에서 사람이 읽는 칸 */
@@ -137,6 +139,11 @@ try {
     for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석하기 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
     await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
     await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
+    /* XI맵 — 전국 · 결과 있는 시군구 · 결과 없는 시군구(카드 글에 값 없음 글자가 새지 않는지) */
+    const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => window.__xc.map.jumpTo({ center: [a, b], zoom: c }), [x, y, z]); await p.waitForTimeout(4000); };
+    await screen(s, 'LX 직원 · XI맵(전국)', A + 'xi-clean/', { wait: '.xb-hud', ms: 4000 });
+    await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(127.39, 35.42, 11) });
+    await screen(s, 'LX 직원 · XI맵(시군구 · 종로)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(126.97, 37.57, 11) });
     /* 프로젝트 학습 화면(학습-작업흐름-v3 · 10-12) — 진행 중 프로젝트마다 흐름 판 · 이번 학습 · 학습 이력 */
     const pids = await s.page.evaluate(async () => {
       const t = JSON.parse(localStorage.getItem('lx_api_session') || 'null')?.token;

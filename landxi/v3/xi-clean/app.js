@@ -18,6 +18,7 @@ import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 �
 import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX 직원 메뉴 그대로(바퀴 5 · 원칙 191 · 196 18:52 고침)
 import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
 import { createBoard, boardPromise, nationalPromise } from './board.js';   // 열자마자 전국 결과(바퀴 5) · 전국 결과 자산 면(바퀴 8 · 원칙 218 — 빛나는 밀도 대신)
+import { NCOLOR } from './national.js';                          // 전국 결과 자산 색(시군구 카드 숫자 점)
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 
 const { h, esc } = K;
@@ -872,6 +873,21 @@ async function refreshBoard(my) {
   SH.fresh(BD?.data ? new Date() : null);
   renderChips();
 }
+/** 전국 결과 자산이 끝낸 읍면동의 이 시군구 합 — 'wait'(받는 중) · 값 · null(받지 못함). 1분 보관 · 받으면 카드를 다시 그린다 */
+const NATR = new Map();
+function natRegion(r) {
+  const key = codesOf(r).join(',');
+  if (!key) return null;
+  const c = NATR.get(key);
+  if (!c || (!c.busy && Date.now() - c.t >= 60000)) loadNatRegion(key);
+  return c && 'j' in c ? c.j : 'wait';
+}
+function loadNatRegion(key) {
+  const prev = NATR.get(key); NATR.set(key, { ...(prev && 'j' in prev ? { j: prev.j } : {}), busy: true, t: prev?.t || 0 });
+  api('/national/region?' + new URLSearchParams({ codes: key })).then((j) => NATR.set(key, { j: j?.assets ? j : null, t: Date.now() }))
+    .catch(() => NATR.set(key, { j: prev && 'j' in prev ? prev.j : null, t: Date.now() }))
+    .finally(() => { if (S.region && codesOf(S.region).join(',') === key && hudBoard && !hudBoard.hidden) paintBoardHud(); });
+}
 function paintBoardHud() {
   const d = BD?.data;
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
@@ -892,13 +908,27 @@ function paintBoardHud() {
     X.hud = { label: '전국 AI 분석 결과', n: ev(d.n_regions), unit: '곳', from: 'board' };
     return;
   }
+  const nr = natRegion(r);                           // 전국 결과 자산 작업기가 끝낸 읍면동의 이 시군구 합(GET /national/region · 진행 장부 한 출처)
   const rows = br ? br.items.map((x) => h('li', {}, h('i', { style: { background: BD.color(x.svc) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(ev(x.n))}개` }))) : [];
+  const nrows = [];
+  if (!br && nr && nr !== 'wait') for (const a of Object.values(nr.assets || {})) {
+    if (!(ev(a.done) > 0)) continue;
+    for (const [cls, c] of Object.entries(a.counts || {})) {
+      const n = ev(c.n); if (!(n > 0)) continue;
+      const km = cls === '경작지' && ev(c.km2) > 0 ? ` · ${Number(ev(c.km2)).toFixed(2)}㎢` : '';
+      nrows.push(h('li', {}, h('i', { style: { background: NCOLOR[cls] || '#5C7CFA' } }), h('span', { text: `${a.name} · ${cls}` }), h('b.num', { text: `${nf(n)}${c.unit || '개'}${km}` })));
+    }
+  }
+  const nDone = nr && nr !== 'wait' ? Object.values(nr.assets || {}).reduce((t, a) => t + ev(a.done), 0) : 0;
+  const nCells = nr && nr !== 'wait' ? Object.values(nr.assets || {}).filter((a) => ev(a.done) > 0).map((a) => `${a.name} 읍면동 ${nf(ev(a.cells))}곳 중 ${nf(ev(a.done))}곳 분석 끝`).join(' · ') : '';
   const it0 = br?.items[0];
-  hudBoard.replaceChildren(h('p.xb-k', { text: `${r.sido || ''} · ${r.name}`.replace(/^ · /, '') }), h('h1.xb-h', { text: `${r.name} AI 분석 결과` }),
-    br ? h('ul.xb-rows', {}, ...rows) : h('p.xb-p', { text: '아직 AI 분석 결과가 없습니다' }),
-    br ? h('p.xb-p', { text: [it0?.imagery, br.last_at ? `마지막 분석 ${shortDate(br.last_at)}` : null].filter(Boolean).join(' · ') }) : null,
-    br ? h('p.xb-tip', { text: map.getZoom() < BD.NEAR_Z ? '더 확대하면 객체가 보입니다' : '객체를 누르면 그 자리에서 고칩니다' }) : null);
-  X.hud = { label: `${r.name} AI 분석 결과`, n: br ? ev(br.n) : 0, unit: '개', from: 'board' };
+  const body = br ? [h('ul.xb-rows', {}, ...rows), h('p.xb-p', { text: [it0?.imagery, br.last_at ? `마지막 분석 ${shortDate(br.last_at)}` : null].filter(Boolean).join(' · ') }),
+      h('p.xb-tip', { text: map.getZoom() < BD.NEAR_Z ? '더 확대하면 객체가 보입니다' : '객체를 누르면 그 자리에서 고칩니다' })]
+    : nr === 'wait' ? [h('p.xb-p', { text: '불러오는 중' })]
+    : nrows.length ? [h('ul.xb-rows', {}, ...nrows), h('p.xb-p', { text: nCells })]
+    : [h('p.xb-p', { text: '분석 예정' })];            // 정말 결과가 없는 곳 — 숫자를 지어내지 않는다
+  hudBoard.replaceChildren(...[h('p.xb-k', { text: `${r.sido || ''} · ${r.name}`.replace(/^ · /, '') }), h('h1.xb-h', { text: `${r.name} AI 분석 결과` }), ...body].filter(Boolean));
+  X.hud = { label: `${r.name} AI 분석 결과`, n: br ? ev(br.n) : 0, unit: '개', from: 'board', nat: nDone ? { done: nDone } : null };
 }
 /* 영상 전환 — 작은 단추 둘(최신 영상 = 바탕 위성 · 분석한 영상 = 결과를 만든 등록 영상). 모양 고치기 · 새로 그리기는 분석한 영상 위에서 */
 function imageryToggle() {

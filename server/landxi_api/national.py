@@ -226,6 +226,36 @@ async def _tile(asset: str, year: int, z: int, x: int, y: int, test: bool) -> by
     return b"".join(parts)
 
 
+@router.get("/national/region")
+async def region_summary(request: Request, codes: str = "", year: int | None = None):
+    """한 시군구(지도 경계 코드 · 옛 코드 별칭 쉼표 구분)의 전국 결과 — 진행 장부(national_cells)에서 센 값 한 출처(GET /national/progress 와 같은 장부).
+    구가 있는 시는 구 칸을 모두 합친다. 끝난 읍면동이 없으면 done = 0 · counts 비어 있음(지어낸 숫자 없음)."""
+    require(principal(request), lx=True)
+    cs = [c.strip() for c in codes.split(",") if c.strip().isdigit() and len(c.strip()) == 5][:8]
+    if not cs:
+        raise ApiError("bad_request", "시군구 코드")
+    pre = sorted({c[:4] if c.endswith("0") else c for c in cs})
+    async with db(realm="lx") as conn:
+        if year is None:
+            year = int((await _settings(conn))[0]["year"])
+        rows = await conn.fetch(
+            "SELECT asset, count(*) FILTER (WHERE state<>'skip') AS cells, count(*) FILTER (WHERE state='done') AS done, max(done_at) AS last "
+            "FROM national_cells WHERE year=$1 AND NOT test AND sgg_cd LIKE ANY (SELECT p || '%' FROM unnest($2::text[]) p) GROUP BY asset", year, pre)
+        sums = await conn.fetch(
+            "SELECT asset, k AS cls, sum((v->>'n')::bigint) AS n, sum((v->>'km2')::numeric) AS km2 FROM national_cells, jsonb_each(counts) AS e(k, v) "
+            "WHERE year=$1 AND NOT test AND state='done' AND sgg_cd LIKE ANY (SELECT p || '%' FROM unnest($2::text[]) p) GROUP BY asset, k", year, pre)
+    out = {"year": year, "assets": {}}
+    for a, name in ASSETS.items():
+        r = next((x for x in rows if x["asset"] == a), None)
+        cnt = {s["cls"]: {"n": env(int(s["n"] or 0), "count", "measured", "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"),
+                          "km2": env(round(float(s["km2"] or 0), 2), "km2", "measured", "끝난 칸 AI 분석 결과 넓이"), "unit": UNIT.get(s["cls"], "개")}
+               for s in sums if s["asset"] == a}
+        out["assets"][a] = {"name": name, "cells": env(int(r["cells"]) if r else 0, "count", "measured", "분석할 범위가 있는 읍면동"),
+                            "done": env(int(r["done"]) if r else 0, "count", "measured", "끝난 읍면동"),
+                            "last_at": r["last"].astimezone(KST).isoformat(timespec="minutes") if r and r["last"] else None, "counts": cnt}
+    return out
+
+
 @router.get("/national/sets")
 async def sets(request: Request, asset: str = "farm", bbox: str = "", year: int | None = None, test: int = 0):
     require(principal(request), lx=True)
