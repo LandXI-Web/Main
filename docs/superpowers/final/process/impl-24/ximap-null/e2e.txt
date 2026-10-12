@@ -4,5 +4,5 @@ Running 3 tests using 2 workers
 [1/3] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
 [2/3] tests\e2e\impl22-national.spec.mjs:13:1 › 전국 결과 자산 — 결과 면 · 분석 예정 · 올리면 요약 · 누르면 날아감
 [3/3] tests\e2e\impl18-ximap.spec.mjs:41:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
-  3 passed (25.2s)
+  3 passed (24.3s)
 exit 0

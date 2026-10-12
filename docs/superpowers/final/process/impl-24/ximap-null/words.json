@@ -1,5 +1,5 @@
 {
- "at": "2026-10-12T07:05:48.176Z",
+ "at": "2026-10-12T07:13:22.126Z",
  "words": [
   "결재",
   "반려",
@@ -267,6 +267,32 @@
   {
    "screen": "LX 직원 · XI맵(시군구 · 남원)",
    "url": "/landxi/v3/xi-clean/?region=52190",
+   "hits": [],
+   "resp": [
+    {
+     "word": "무허가 건축 의심",
+     "key": "name",
+     "text": "무허가 건축 의심",
+     "url": "/api/v1/survey/rules"
+    },
+    {
+     "word": "무허가 건축 의심",
+     "key": "name",
+     "text": "무허가 건축 의심",
+     "url": "/api/v1/survey/stats"
+    },
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/survey/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · XI맵(시군구 · 전주 · 구가 있는 시)",
+   "url": "/landxi/v3/xi-clean/?region=52110",
    "hits": [],
    "resp": [
     {

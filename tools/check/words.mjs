@@ -143,6 +143,7 @@ try {
     const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => window.__xc.map.jumpTo({ center: [a, b], zoom: c }), [x, y, z]); await p.waitForTimeout(4000); };
     await screen(s, 'LX 직원 · XI맵(전국)', A + 'xi-clean/', { wait: '.xb-hud', ms: 4000 });
     await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(127.39, 35.42, 11) });
+    await screen(s, 'LX 직원 · XI맵(시군구 · 전주 · 구가 있는 시)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(127.13, 35.82, 11) });
     await screen(s, 'LX 직원 · XI맵(시군구 · 종로)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(126.97, 37.57, 11) });
     /* 프로젝트 학습 화면(학습-작업흐름-v3 · 10-12) — 진행 중 프로젝트마다 흐름 판 · 이번 학습 · 학습 이력 */
     const pids = await s.page.evaluate(async () => {

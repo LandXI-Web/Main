@@ -718,6 +718,15 @@ def region_of(sgg_cd: str | None) -> dict | None:
     return r or next((x for x in regions if x.get("prev_cd") == sgg_cd), None)
 
 
+def city_children(sgg_cd: str | None) -> list[dict]:
+    """구가 있는 시 코드(예: 전주 52110) → 그 아래 구 행들(regions_base 의 parent_cd 로 계산 · 지역 이름 하드코딩 0)."""
+    if not sgg_cd:
+        return []
+    cd = str(sgg_cd)[:5]
+    regions, _, _ = regions_base()
+    return [x for x in regions if x.get("parent_cd") == cd]
+
+
 def sgg_codes(sgg_cd: str | None) -> list[str]:
     """그 시군구를 가리키는 코드 전부(지금 · 옛)."""
     r = region_of(sgg_cd)
@@ -903,12 +912,22 @@ async def region_emd(sgg_cd: str, request: Request, full: int | None = None):
     """그 시군구 읍면동 경계 FeatureCollection(emd_cd · name · bbox · center). 옛/새 코드 모두 받는다."""
     p = principal(request)
     r = region_of(sgg_cd)
-    if not r:
+    kids = [] if r else city_children(sgg_cd)             # 구가 있는 시(지도의 시 코드) = 그 아래 구들의 읍면동을 합친다(표의 parent_cd 로 계산)
+    if not r and not kids:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
     if p.realm == "tenant":
-        ensure_region(p, r["sgg_cd"])                     # 기관 계정: 관할 밖 읍면동 경계 0
+        for k in (kids or [r]):
+            ensure_region(p, k["sgg_cd"])                 # 기관 계정: 관할 밖 읍면동 경계 0
+    if kids:
+        try:
+            fcs = [await run_in_threadpool(emd_fc, k["sgg_cd"]) for k in kids]
+        except EmdUnavailable as e:
+            raise ApiError("upstream_unavailable", "읍면동 경계를 받을 수 없습니다", {"sgg_cd": str(sgg_cd)[:5], "reason": str(e)}, status=503) from None
+        fc = {"features": [f for x in fcs for f in (x.get("features") or [])], "source": fcs[0].get("source"), "fetched_at": min(str(x.get("fetched_at")) for x in fcs)}
+        r = {"sgg_cd": str(sgg_cd)[:5], "prev_cd": None, "name": str(kids[0]["name"]).split()[0]}
     try:
-        fc = await run_in_threadpool(emd_fc, r["sgg_cd"])
+        if not kids:
+            fc = await run_in_threadpool(emd_fc, r["sgg_cd"])
     except EmdUnavailable as e:
         raise ApiError("upstream_unavailable", "읍면동 경계를 받을 수 없습니다", {"sgg_cd": r["sgg_cd"], "reason": str(e)}, status=503) from None
     k = (r["sgg_cd"], bool(full), fc.get("fetched_at"))
