@@ -74,7 +74,7 @@ function projCard(p, deckBy) {
   const tn = p.train_n?.value ?? null;
   const regs = p.regions || [];
   const regText = regs.length ? (regs.length > 3 ? `${regs.slice(0, 3).map((g) => g.name).join(' · ')} 외 ${regs.length - 3}곳` : regs.map((g) => g.name).join(' · ')) : '영상이 등록되면 정해집니다';
-  const line = p.description || p.task || '';
+  const line = p.description || p.task || (p.finds || []).join(' · ');   // 업무를 묻지 않는 새 프로젝트 = 학습 데이터 클래스(원칙 225)
   const el = h('article.k-sc.la-ac.lxp-pc', { dataset: { kind: 'project', id: p.id, stage: GROUPS[groupOf(p)].key }, tabindex: '0', 'aria-label': `${p.name} · ${archived ? '보관' : st}` },
     pic,
     h('div.k-sc-b.la-ac-b', {},
@@ -154,7 +154,7 @@ async function list() {
     grid.dataset.n = String(F.per);
     const q = F.q.replace(/\s+/g, '');
     const rows = sortBy(items.filter((p) => (gi < 0 || groupOf(p) === gi)
-      && (!q || [p.name, p.task, p.description, ...(p.regions || []).map((g) => g.name)].some((s) => String(s || '').replace(/\s+/g, '').includes(q)))), 'kick');
+      && (!q || [p.name, p.task, p.description, ...(p.finds || []), ...(p.regions || []).map((g) => g.name)].some((s) => String(s || '').replace(/\s+/g, '').includes(q)))), 'kick');
     if (!rows.length) {
       pager.replaceChildren();
       const x = h('div');
@@ -228,7 +228,8 @@ function draw(pr) {
   const archived = pr.state === 'archived';
   const round = pr.round?.value || 1;
   /* 머리 — 이름 · 무엇을 · 어디 · 회차 */
-  const meta = h('div.lxp-meta', {}, h('span.t-chip', { text: pr.task }),
+  const what = pr.task || (pr.finds || []).join(' · ');                  // 옛 프로젝트 = 업무 그대로 · 새 프로젝트 = 학습 데이터 클래스(원칙 225)
+  const meta = h('div.lxp-meta', {}, what ? h('span.t-chip', { text: what }) : null,
     ...pr.regions.map((g) => h('span.t-chip', { dataset: { lv: 'wait' }, title: g.full || g.name, text: g.name })),
     round > 1 ? h('span.t-chip', { text: `${round}차` }) : null);
   page.append(h('header.lxp-head', {}, h('p.t-label', { text: archived ? '프로젝트 · 보관' : '프로젝트' }), h('h1.t-h3.lxp-title', { text: pr.name }), meta));

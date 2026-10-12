@@ -8,7 +8,7 @@ GET    /projects?scope=mine|led|joined|archived|all
                                          mine = 내가 만든(프로젝트장) + 참여한(구성원) 진행 중 · led · joined 는 그 한쪽 · archived = 내 보관(끝난) 프로젝트
                                          (관리자는 전체 보관) · all = LX 전체 진행 중. 줄마다 지금 단계 · 다음 할 일 하나 · 마지막 활동
                                          · steps(단계 6 — 데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
-POST   /projects                         {name, task, task_id?, regions:[code..], description?, members?:[uid..], imagery?:[iid..], from_upload?}
+POST   /projects                         {name, task?, task_id?, regions:[code..], description?, members?:[uid..], imagery?:[iid..], from_upload?}
                                          → 바로 만들어진다 · 프로젝트장 = 만든 직원. 새 프로젝트 한 창(원칙 220 · 10-12): 설명(선택) · 구성원 · 영상을 한 번에.
                                          imagery(데이터하우스에서 고른 영상)가 있으면 대상 지역 = 그 영상 자리(화면이 고르지 않는다) ·
                                          from_upload = 영상을 올리는 중이라 지역은 올린 영상이 등록되면 정해진다(그때까지 비어 있음 — POST …/imagery)
@@ -649,6 +649,28 @@ async def _imagery_regions(conn, ids: list[str]) -> tuple[list[str], list[str]]:
     return have, codes
 
 
+async def _finds(conn, f) -> list[str]:
+    """프로젝트가 찾는 것 = 학습데이터 구축에서 올린 묶음(train_samples.names)의 클래스 — 클래스 한 곳(classes · class_labels)의 이름으로,
+    합쳐진 클래스는 합친 쪽 이름 · 거절된 것은 뺀다. 목록에 없는 글자는 그대로. 학습 데이터가 없으면 []."""
+    sids = [s["id"] for s in f["samples"]]
+    if not sids:
+        return []
+    rows = await conn.fetch(
+        "SELECT n.label, c.name, c.status, m.name AS merged FROM train_samples s "
+        "CROSS JOIN LATERAL jsonb_array_elements_text(CASE WHEN jsonb_typeof(s.names) = 'array' THEN s.names ELSE '[]'::jsonb END) "
+        "WITH ORDINALITY AS n(label, i) "
+        "LEFT JOIN class_labels l ON l.label = n.label LEFT JOIN classes c ON c.id = l.class_id LEFT JOIN classes m ON m.id = c.merged_into "
+        "WHERE s.id = ANY($1::text[]) ORDER BY s.created_at, n.i", sids)
+    out: list[str] = []
+    for x in rows:
+        if x["status"] == "rejected":
+            continue
+        nm = (x["merged"] or x["name"] or x["label"] or "").strip()
+        if nm and nm not in out:
+            out.append(nm)
+    return out[:12]
+
+
 async def view(conn, p: Principal, r, people: dict | None = None, full: bool = True) -> dict:
     people = people or await _people(conn)
     members = await _members(conn, r["id"])
@@ -663,6 +685,8 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
            "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"]), "last_at": _iso(f["last_at"]),
            "lead_is_me": p.user_id == r["lead_id"],
            "description": r.get("description"),
+           # 찾는 것 — 이 프로젝트 학습 데이터에 실제로 붙은 클래스(클래스 한 곳 이름 · 원칙 225: 새 프로젝트는 '무엇을'을 묻지 않는다)
+           "finds": await _finds(conn, f),
            # 프로젝트 카드(원칙 219 · 분석하기 카드와 같은 틀) — 그림 · 학습 데이터 n장 · AI 모델 정확도 · 사람. 값은 모두 서버 기록(지어내지 않음)
            "card": f["card"], "pic": await _pic(conn, r),
            "train_n": await _train_n(conn, r, f),
@@ -771,16 +795,15 @@ async def notice_seen(nid: str, request: Request):
 @router.post("/projects", status_code=201)
 async def create(body: dict, request: Request):
     """프로젝트 만들기 — 관리자 승인 없이 바로 만들어진다(R-D3 갈림길 ⓐ). 프로젝트장 = 만든 직원.
-    새 프로젝트 한 창(원칙 220 · 10-12): 이름(필수) · 설명(선택) · 무엇을 · 영상(데이터하우스에서 고름 = imagery · 올리는 중 = from_upload) · 구성원(members).
+    새 프로젝트 한 창(원칙 220 · 10-12): 이름(필수) · 설명(선택) · 영상(데이터하우스에서 고름 = imagery · 올리는 중 = from_upload) · 구성원(members).
     대상 지역 = 고른 영상의 자리(화면이 고르지 않는다) · 영상이 없을 때만 직원이 고른 regions · 올리는 중이면 등록될 때 정해진다(비어 있음)."""
     p = _lx(request)
     name = str(body.get("name") or "").strip()[:NAME_MAX]
-    task = str(body.get("task") or "").strip()[:TASK_MAX]
+    # 무엇을(업무)은 묻지 않는다(원칙 225) — 찾는 것은 학습데이터 구축에서 올린 클래스로 저절로(view 'finds'). 옛 화면 · 시험이 보내면 그대로 받는다
+    task = str(body.get("task") or "").strip()[:TASK_MAX] or None
     desc = str(body.get("description") or "").strip()[:NOTE_MAX] or None
     if not name:
         raise ApiError("bad_request", "프로젝트 이름을 적어 주세요")
-    if not task:
-        raise ApiError("bad_request", "무엇을 하는지(업무 · 탐지 대상) 골라 주세요")
     task_id = str(body.get("task_id") or "").strip()[:40] or None
     from_upload = bool(body.get("from_upload"))
     mem_ids = [str(x) for x in (body.get("members") or []) if x][:30] if isinstance(body.get("members"), list) else []
@@ -853,9 +876,9 @@ async def patch_project(pid: str, body: dict, request: Request):
             if not (p.user_id == r["lead_id"] or p.is_admin):
                 raise ApiError("forbidden", "프로젝트장이 고칩니다")
             name = str(edits.get("name", r["name"]) or "").strip()[:NAME_MAX]
-            task = str(edits.get("task", r["task"]) or "").strip()[:TASK_MAX]
-            if not name or not task:
-                raise ApiError("bad_request", "이름과 무엇을은 비울 수 없습니다")
+            task = str(edits.get("task", r["task"]) or "").strip()[:TASK_MAX] or None   # 비울 수 있음(원칙 225)
+            if not name:
+                raise ApiError("bad_request", "프로젝트 이름은 비울 수 없습니다")
             regions = clean_regions(edits["regions"]) if "regions" in edits else r["regions"]
             tid = (str(edits.get("task_id") or "").strip()[:40] or None) if "task_id" in edits else r["task_id"]
             await conn.execute("UPDATE projects SET name=$2, task=$3, task_id=$4, regions=$5, updated_at=now() WHERE id=$1", pid, name, task, tid, regions)

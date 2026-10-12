@@ -1,4 +1,4 @@
-// 구현 23차 — 새 프로젝트 = 한 창(원칙 220 · 10-12). 로그인 폼 → 프로젝트 → 새 프로젝트 → 이름 · 설명 · 무엇을 · 데이터하우스 영상 고르기 · 구성원 →
+// 구현 23차 — 새 프로젝트 = 한 창(원칙 220 · 10-12). 로그인 폼 → 프로젝트 → 새 프로젝트 → 이름 · 설명 · 데이터하우스 영상 고르기('무엇을' 없음 · 원칙 225) · 구성원 →
 // 만들기 한 번 → 바로 그 프로젝트 '학습데이터 구축'. 대상지는 고른 영상 자리에서(화면이 고르지 않음). 옛 주소(?new=1)도 같은 창.
 // 로그인 폼 입력만(세션 주입 0) · 비밀번호는 server/.env DEV_PASSWORD(출력 0) · 게이트웨이 :8700. 영상은 올리지 않는다(고르기만) · 학습 · 분석 0.
 // 만든 시험 프로젝트는 끝에서 지운다. (파일 올리기 → 창을 닫고 넘어가도 이어 올리기는 docs/superpowers/final/process/impl-23/project/shoot.mjs 가 바깥 주소에서 확인)
@@ -32,11 +32,11 @@ test.describe('구현 23차 · 새 프로젝트 한 창', () => {
     await page.goto('v3/lx-project/?new=1');                                   // 옛 주소 → 새 창
     const box = page.locator('.lxp-new.lxp-new--one');
     await expect(box).toBeVisible({ timeout: 30000 });
-    await expect(box.locator('.lxp-l')).toHaveText([/^이름/, /^설명선택/, /^무엇을/, /^구성원/, /^영상/]);
+    await expect(box.locator('.lxp-l')).toHaveText([/^이름/, /^설명선택/, /^구성원/, /^영상/]);
+    await expect(box.getByText('무엇을', { exact: false }).filter({ hasNotText: '왜' })).toHaveCount(0);   // '무엇을' 칸 없음(설명 칸 안내 글 '무엇을 왜'만)
     await expect(box.getByRole('button', { name: '만들기' })).toBeDisabled();
     await box.locator('input[name=name]').fill(NAME);
     await box.locator('textarea[name=description]').fill('한 창 시험');
-    await box.locator('.lxp-chip', { hasText: '비닐하우스' }).click();
     await expect(box.getByRole('button', { name: '만들기' })).toBeDisabled();  // 영상 · 대상지가 아직 없음
     /* 데이터하우스 영상에서 고르기 — 고르면 대상지 = 그 영상 자리(고르기 칸은 숨음) */
     await box.locator('.lxp-vt', { hasText: '데이터하우스' }).click();
@@ -59,6 +59,8 @@ test.describe('구현 23차 · 새 프로젝트 한 창', () => {
     const pr = await (await request.get('http://127.0.0.1:8700/api/v1/projects/' + new URL(page.url()).searchParams.get('project'), { headers: { authorization: 'Bearer ' + tok } })).json();
     await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });
     expect(pr.description).toBe('한 창 시험');
+    expect(pr.task).toBeNull();                                               // 업무를 묻지 않음(원칙 225)
+    expect(pr.finds).toEqual([]);                                             // 찾는 것 = 올린 학습 데이터 클래스(아직 없음)
     expect(pr.regions.map((g) => g.name)).toContain(region);
     expect(pr.members.map((m) => m.name)).toContain(who);
     expect(pr.pic).toMatch(/^\/catalog\/imagery\/.+\/thumb$/);

@@ -41,7 +41,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await expect(page.locator('.k-mast .lxp-mast')).toHaveCount(0);
     await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
     await expect(page.getByText('오늘', { exact: true })).toHaveCount(0);
-    /* 새 프로젝트 = 한 창(원칙 220 · 구현 23차) — 이름 · 설명(선택) · 무엇을 · 영상(없으면 대상지 고르기) · 구성원 → 만들기 한 번 → 바로 학습데이터 구축 */
+    /* 새 프로젝트 = 한 창(원칙 220 · 구현 23차) — 이름 · 설명(선택) · 영상('무엇을' 없음 · 원칙 225)(없으면 대상지 고르기) · 구성원 → 만들기 한 번 → 바로 학습데이터 구축 */
     await page.locator('.k-rail a.k-rail-i[data-id="projects"]').click();
     await page.waitForURL(/\/lx-project\//);
     await page.getByRole('button', { name: '새 프로젝트' }).first().click();
@@ -49,7 +49,6 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await expect(box).toBeVisible();
     await box.locator('input[name=name]').fill(NAME);
     await box.locator('textarea[name=description]').fill('e2e 시험');
-    await box.locator('.lxp-chip', { hasText: '비닐하우스' }).click();
     await expect(box.locator('.lxp-where')).toHaveText('영상 없이 만들면 대상지를 고릅니다');
     await box.locator('.lxp-pick input[placeholder="시군구 이름을 검색"]').waitFor();   // 지역 목록을 받은 뒤(키트 지역 검색 준비)
     await box.locator('.lxp-pick input').fill('남원');

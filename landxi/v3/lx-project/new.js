@@ -1,7 +1,7 @@
 /* new.js — 새 프로젝트 = 한 창(원칙 220 · 10-12 사용자 "프로젝트 명 쓰고. 설명(필수 아님)란 있고. 영상 업로드, 구성원 초대를 시작해서
    바로 학습데이터 구축 화면으로 전환할 수 있는거 아닌가. 너무 불필요한 스텝을 늘린거 같다." · 예전 한 장 시안 design-r10/lx-staff/mock/a-new.html).
    한 창에서 채우고 '만들기' 한 번 → 바로 그 프로젝트 '학습데이터 구축' 화면으로(프로젝트 한 장 · 데이터 올리기 화면을 거치지 않는다).
-     이름(필수) · 설명(선택) · 무엇을(업무 하나 — 학습 · 결과 확인 규칙이 쓰는 값이라 남김 · 칩 한 줄) ·
+     이름(필수) · 설명(선택) · ('무엇을'은 묻지 않는다 — 원칙 225 · 찾는 것은 학습데이터 구축에서 올린 클래스로 저절로 · 서버 view 'finds') ·
      영상 — 파일 올리기(키트 조각 올리기 · 여러 파일 · 진행 막대 — 데이터 올리기와 같은 길) 또는 데이터하우스 영상에서 고르기 ·
      대상지 — 영상 자리에서 저절로(화면이 고르지 않는다) · 영상 없이 만들 때만 시군구 · 해외 지역을 고른다 ·
      구성원 — LX 계정 찾기 · 여러 명.
@@ -11,7 +11,6 @@ import { h, api, API, session } from '../kit/util.js';
 import { regionPicker } from '../kit/region.js';
 import { toast } from '../kit/toast.js';
 import { uploadQueue } from '../kit/dropzone.js';
-import { TASKS } from '../lx-console/matrix.js';
 import { stageHref, ensureCss } from './context.js';
 
 let open = null;
@@ -42,22 +41,6 @@ export function openNewProject({ onMade } = {}) {
   /* ── 이름 · 설명 ── */
   const nameIn = h('input.t-input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'off', 'aria-label': '이름', placeholder: '예: 비닐하우스 실태조사 2026' });
   const descIn = h('textarea.t-input.lxp-desc', { name: 'description', maxlength: '300', rows: '2', 'aria-label': '설명', placeholder: '무엇을 왜 하는지 한두 줄' });
-
-  /* ── 무엇을(업무 하나) ── */
-  const chips = h('div.lxp-chips', { role: 'group', 'aria-label': '무엇을' });
-  const own = h('input.t-input.lxp-own', { type: 'text', maxlength: '40', autocomplete: 'off', 'aria-label': '업무 · 탐지 대상 직접 입력', placeholder: '업무 · 탐지 대상', hidden: true });
-  let task = null, taskId = null;
-  for (const t of [...TASKS.map((x) => ({ id: x.id, name: x.name })), { id: '', name: '직접 입력' }]) {
-    const b = h('button.t-chip.lxp-chip', { type: 'button', 'aria-pressed': 'false', text: t.name, dataset: { id: t.id } });
-    b.addEventListener('click', () => {
-      chips.querySelectorAll('.lxp-chip').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      own.hidden = t.id !== '';
-      if (t.id) { task = t.name; taskId = t.id; } else { task = own.value.trim() || null; taskId = null; own.focus(); }
-      ready();
-    });
-    chips.append(b);
-  }
-  own.addEventListener('input', () => { task = own.value.trim() || null; ready(); });
 
   /* ── 영상 — 파일 올리기 · 데이터하우스에서 고르기 ── */
   const tabUp = h('button.lxp-vt', { type: 'button', role: 'tab', 'aria-selected': 'true', text: '파일 올리기' });
@@ -206,7 +189,6 @@ export function openNewProject({ onMade } = {}) {
       h('div.lxp-new-c', {},
         field('이름', null, nameIn),
         field('설명', '선택', descIn),
-        field('무엇을', '하나 고르기', chips, own),
         field('구성원', '여러 명 가능', memChips, h('div.lxp-mem', {}, memIn, memList))),
       h('div.lxp-new-c', {},
         field('영상', '여러 장 가능', vtabs, upBox, pickBox, whereLine, regBox))),
@@ -218,7 +200,7 @@ export function openNewProject({ onMade } = {}) {
 
   function ready() {
     const where = picked.size || upFiles().length || regions.length;
-    go.disabled = !(nameIn.value.trim() && task && where);
+    go.disabled = !(nameIn.value.trim() && where);
     err.hidden = true;
   }
   nameIn.addEventListener('input', ready);
@@ -227,7 +209,7 @@ export function openNewProject({ onMade } = {}) {
     go.disabled = true; err.hidden = true;
     const files = upFiles();
     const busy = q?.busy() || files.some((i) => i.state !== 'done');
-    const body = { name: nameIn.value.trim(), description: descIn.value.trim() || undefined, task, task_id: taskId,
+    const body = { name: nameIn.value.trim(), description: descIn.value.trim() || undefined,
       imagery: [...picked.keys()], members: [...mem.keys()],
       regions: picked.size || files.length ? [] : regions.map((r) => r.code) };
     try {

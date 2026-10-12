@@ -1,0 +1,97 @@
+{
+  "at": "2026-10-12 16:27:50",
+  "app": "https://app.land-xi.dev",
+  "clicks": [
+    "왼쪽 메뉴 프로젝트",
+    "새 프로젝트",
+    "이름 칸",
+    "영상 파일 고르기(두 파일 한 번에)",
+    "구성원 찾기 칸",
+    "구성원 고르기",
+    "만들기"
+  ],
+  "screens": [
+    {
+      "what": "대시보드",
+      "path": "/landxi/v3/lx-console/"
+    },
+    {
+      "what": "프로젝트 진행 현황(카드)",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "새 프로젝트 한 창",
+      "path": "/landxi/v3/lx-project/"
+    },
+    {
+      "what": "학습데이터 구축",
+      "path": "/landxi/v3/lx-train/"
+    },
+    {
+      "what": "학습",
+      "path": "/landxi/v3/lx-train/"
+    }
+  ],
+  "shots": {
+    "b1-new-window-1440-1628.png": "2026-10-12 16:28:13",
+    "b2-label-1440-1628.png": "2026-10-12 16:28:38",
+    "b3-train-default-1440-1628.png": "2026-10-12 16:28:44"
+  },
+  "errors": [],
+  "video": {
+    "from_s": 18.3,
+    "to_s": 50.4,
+    "file": "new-project-10s.mp4",
+    "cut": "앞 6초(창 · 채우기 · 만들기) + 뒤 4초(학습 판 열림) · 가운데(이어 올리기 기다림) 뺌"
+  },
+  "cleanup_before": "{\"projects\": 0, \"imagery\": [], \"drafts\": []}",
+  "fields": [
+    "이름",
+    "설명선택",
+    "구성원여러 명 가능",
+    "영상여러 장 가능"
+  ],
+  "what_field": 0,
+  "member": "LX 관리자",
+  "make_enabled": true,
+  "pid": "prj_8618e891ce",
+  "carry_done": "영상 1장을 등록했습니다 · 대상지 남원시",
+  "label_task_field": 0,
+  "label_labels": [
+    "학습 데이터 지역(선택)",
+    "학습 데이터 묶음(zip · 그림 200장 이하)",
+    ""
+  ],
+  "board": {
+    "kinds": [
+      "data",
+      "base",
+      "cfg",
+      "train",
+      "eval",
+      "deploy"
+    ],
+    "base_blocks": [
+      "data",
+      "base",
+      "cfg",
+      "train",
+      "eval",
+      "deploy"
+    ],
+    "task": null,
+    "finds": [],
+    "regions": [
+      "남원시"
+    ],
+    "members": [
+      "LX 관리자"
+    ],
+    "default_flow": true
+  },
+  "cleanup_after": "{\"projects\": 1, \"imagery\": [\"img-52190-nd-aerial\"], \"drafts\": [\"dr_a93f5e429fa5\"]}",
+  "n": {
+    "clicks": 7,
+    "screens": 5
+  }
+}

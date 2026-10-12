@@ -123,11 +123,12 @@ export function openFlow({ host, who, project = null, step = null }) {
   const upMsg = h('p.t-label.tf-msg', { role: 'status', 'aria-live': 'polite' });
   const prev = h('select.t-input', { 'aria-label': '올린 학습 데이터', hidden: true });
   let region = null, LIMIT = 400 * 1048576;
-  s1.append(h('label.t-label', { text: '업무' }), task, h('label.t-label', { text: '학습 데이터 지역(선택)' }), regEl,
+  /* 프로젝트 안에서는 업무를 묻지 않는다(원칙 225) — 묶음 이름은 프로젝트 업무(옛 프로젝트) · 없으면 프로젝트 이름, 찾는 것은 묶음의 클래스(dataset.yaml)로 저절로 */
+  s1.append(...(project ? [] : [h('label.t-label', { text: '업무' }), task]), h('label.t-label', { text: '학습 데이터 지역(선택)' }), regEl,
     h('label.t-label', { text: '학습 데이터 묶음(zip · 그림 200장 이하)' }), file, h('div.tf-act', {}, up), upBar, upMsg, prev);
   const dom = project?.regions?.find((g) => !g.abroad) || null;
   regionPicker(regEl, { onPick: (r) => { region = r; }, value: dom?.code });
-  if (project) { task.value = project.task || ''; if (dom) region = { sgg_cd: dom.code }; }
+  if (project) { task.value = String(project.task || project.name || '').slice(0, 40); if (dom) region = { sgg_cd: dom.code }; }
   const say1 = (t, lv = '') => { upMsg.textContent = t; upMsg.dataset.lv = lv; };
   let bad = false;
   const ready = () => { up.disabled = bad || !(task.value.trim() && file.files?.length); };
