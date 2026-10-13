@@ -399,7 +399,7 @@ async def require_cog_scope(p, iid: str):
     if p.realm != "tenant" or not p.tenant_id or p.tenant_id == "lx-demo":
         raise ApiError("forbidden", "원본 동적 타일은 LX 세션 또는 공유받은 기관만", {"imagery_id": iid})
     from .catalog import _share_candidates, shared_ids
-    if iid not in await shared_ids(p.tenant_id):
+    if iid not in await shared_ids(p.tenant_id, every=True):       # 비공개로 내린 영상도 이미 공유된 결과 아래 조각은 그대로(10-14)
         raise ApiError("forbidden", "이 기관에 공유된 영상이 아닙니다", {"imagery_id": iid})
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT id, sgg_cd, ST_AsGeoJSON(footprint)::json AS fp FROM imagery WHERE id=$1 AND tier='raw'", iid)

@@ -63,7 +63,19 @@ test.describe('impl-22 · 핵심 코어 고리', () => {
     await expect(page.locator('.sd-tbl tbody tr').first()).toBeVisible({ timeout: 30000 });
     const n = await page.evaluate(async () => { const { api } = await import('/landxi/shared/api-v1.js'); const j = await api('/projects/imagery?all=1'); return j.items.length; });
     await expect(page.locator('.sd-n')).toHaveText(`영상 ${n.toLocaleString('ko-KR')}장`);
-    await expect(page.locator('.sd-tbl thead')).toContainText('직원에게');
+    await expect(page.locator('.sd-tbl thead')).toContainText('공개');                        // 비공개 = 직원 · 기관 모두에서 빠짐(10-14)
+    /* 탭 셋(10-14 공유데이터-탭) — 영상 · 학습 데이터 · 행정 자료 · 탭을 바꿔도 틀 크기 같음(원칙 231) */
+    await expect(page.locator('.sd-tabs button')).toHaveText(['영상', '학습 데이터', '행정 자료']);
+    const box = () => page.evaluate(() => ['.sd-card', '.sd-body', '.sd-pg'].map((s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map(Math.round).join(','); }).join('|'));
+    const b0 = await box();
+    await page.locator('.sd-tabs button', { hasText: '학습 데이터' }).click();
+    await expect(page.locator('.sd-tbl thead')).toContainText('출처', { timeout: 30000 });
+    const tr = await page.evaluate(async () => { const { api } = await import('/landxi/shared/api-v1.js'); return (await api('/shared/train-data')).items.length; });
+    await expect(page.locator('.sd-tbl tbody tr')).toHaveCount(Math.min(tr, 12));
+    expect(await box()).toBe(b0);
+    await page.locator('.sd-tabs button', { hasText: '행정 자료' }).click();
+    await expect(page.locator('.sd-sub')).toHaveText(['브이월드', '기관 대장'], { timeout: 30000 });
+    expect(await box()).toBe(b0);
     expect(errs).toEqual([]);
   });
 });

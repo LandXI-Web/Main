@@ -513,6 +513,24 @@ async def _get_import(p: Principal, tenant: str, iid: str):
     return r
 
 
+@router.get("/shared/ledgers")
+async def shared_ledgers(request: Request):
+    """LX 관리자 '공유 데이터' · 행정 자료 탭(10-14 공유데이터-탭 · 원칙 240) — 기관이 올린 대장(기관 대장 올리기로 들어온 것) 읽기만.
+    올리기 · 지우기는 기관 화면에만(여기서는 새로 만들지 않는다). 행 수 = 대장 파일 행(기관 화면 반입 기록과 같은 값)."""
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        tn = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM tenants")}
+        rows = await conn.fetch("SELECT id, tenant_id, kind, rows, created_at, confirmed_at FROM ledger_imports WHERE state <> 'failed' "
+                                "ORDER BY coalesce(confirmed_at, created_at) DESC LIMIT 500")
+    def _nm(v):
+        return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
+    items = [{"id": r["id"], "tenant": _nm(tn.get(r["tenant_id"])) or None, "name": KINDS.get(r["kind"]),
+              "rows": env(r["rows"], "count", "recorded", "대장 파일 행"),
+              "at": (r["confirmed_at"] or r["created_at"]).astimezone(KST).isoformat(timespec="seconds") if (r["confirmed_at"] or r["created_at"]) else None}
+             for r in rows]
+    return {"items": items, "total": len(items), "as_of": now_iso()}
+
+
 @router.get("/t/{tenant}/survey/registry")
 async def list_imports(tenant: str, request: Request, latest: int | None = None, kind: str | None = None):
     p = _gate(principal(request), tenant)

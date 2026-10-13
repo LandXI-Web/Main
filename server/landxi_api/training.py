@@ -437,15 +437,72 @@ async def up_finish(uid: str, request: Request):
 
 
 @router.get("/training/samples")
-async def list_samples(request: Request, project: str | None = None):
+async def list_samples(request: Request, project: str | None = None, shared: int = 0):
     _staff(request)
     async with db(realm="lx") as conn:
-        if project:                                          # 프로젝트 학습데이터만(프로젝트 맥락의 '이전에 올린 표본')
+        if shared:                                           # 관리자가 공개한 학습 데이터(학습 화면 '공유 데이터에서 고르기' · 10-14 공유데이터-탭)
+            rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' AND staff_shared ORDER BY created_at DESC LIMIT 50")
+        elif project:                                        # 프로젝트 학습데이터만(프로젝트 맥락의 '이전에 올린 표본')
             rows = await conn.fetch("SELECT s.* FROM train_samples s JOIN project_links l ON l.kind='sample' AND l.ref=s.id AND l.project_id=$1 "
                                     "WHERE s.status <> 'removed' ORDER BY s.created_at DESC LIMIT 50", project)
         else:
             rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC LIMIT 50")
     return {"items": [_pub(r) for r in rows], "total": len(rows), "as_of": now_iso()}
+
+
+# ── LX 관리자 '공유 데이터' · 학습 데이터 탭(10-14 공유데이터-탭 · 원칙 232 · 240) ─────────────────────────
+# 학습 데이터는 프로젝트 안(원칙 232) — 관리자는 보기 · 직원에게 공개 · 내리기(비공개)만. 새 묶음을 만들지 않는다.
+# 줄 = 프로젝트 학습데이터(올린 묶음 · train_samples × project_links) + 그 프로젝트가 만든 분석서비스에서 XI맵으로 고친
+# 수정된 부분(train_tiles 1장이 된 칸 · 학습 화면 /train-data/xi 와 같은 셈 — 숫자 한 출처). 수정된 부분은 XI 재학습으로만 학습해서 공개 칸이 없다.
+@router.get("/shared/train-data")
+async def shared_train_data(request: Request):
+    require(principal(request), admin=True)
+    from .core import project_cards
+    from .train_tiles import count_tiles
+    src = "올린 학습 데이터 파일"
+    items = []
+    async with db(realm="lx") as conn:
+        pname = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM projects")}
+        first = {}
+        for r in await conn.fetch("SELECT l.ref, l.project_id FROM project_links l JOIN projects p ON p.id=l.project_id WHERE l.kind='sample' "
+                                  "ORDER BY l.at NULLS LAST, l.project_id"):
+            first.setdefault(r["ref"], r["project_id"])          # 처음 올린 프로젝트(다른 프로젝트가 더해 쓴 줄은 겹쳐 세지 않는다)
+        for s in await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC"):
+            pid = first.get(s["id"])
+            items.append({"id": s["id"], "source": "sample", "project": {"id": pid, "name": pname.get(pid)} if pid else None,
+                          "classes": list(s["names"] or []), "images": env(s["n_images"], "count", "measured", src),
+                          "shared": bool(s["staff_shared"]), "at": s["created_at"].isoformat(timespec="seconds") if s["created_at"] else None})
+        for pid in [r["project_id"] for r in await conn.fetch("SELECT DISTINCT project_id FROM project_links WHERE kind='card'")]:
+            if pid not in pname:
+                continue
+            cards = await project_cards(conn, pid)
+            n = 0
+            for c in cards:
+                n += await count_tiles(conn, card_id=c)
+            if not n:
+                continue
+            t = await conn.fetchrow("SELECT max(made_at) AS at, (SELECT array_agg(DISTINCT x) FROM train_tiles t2, jsonb_array_elements_text(coalesce(t2.names,'[]'::jsonb)) x "
+                                    "WHERE t2.card_id = ANY($1::text[]) AND t2.state='made' AND NOT t2.test) AS names "
+                                    "FROM train_tiles WHERE card_id = ANY($1::text[]) AND state='made' AND NOT test", cards)
+            items.append({"id": f"edits:{pid}", "source": "edits", "project": {"id": pid, "name": pname.get(pid)},
+                          "classes": sorted(t["names"] or []) if t else [], "images": env(n, "count", "measured", "XI맵에서 고친 곳이 모인 학습 데이터"),
+                          "shared": None, "at": t["at"].isoformat(timespec="seconds") if t and t["at"] else None})
+    items.sort(key=lambda x: x["at"] or "", reverse=True)
+    return {"items": items, "total": len(items), "as_of": now_iso()}
+
+
+@router.patch("/training/samples/{sid}")
+async def sample_share(sid: str, body: dict, request: Request):
+    """LX 관리자 — 학습 데이터(올린 묶음)를 직원에게 공개 · 내리기. 공개된 묶음은 학습 화면 '공유 데이터에서 고르기'에 나온다."""
+    p = require(principal(request), admin=True)
+    if "shared" not in body:
+        raise ApiError("bad_request", "바꿀 것이 없습니다")
+    want = bool(body.get("shared"))
+    async with db(realm="lx") as conn:
+        r = await _row(conn, sid)
+        await conn.execute("UPDATE train_samples SET staff_shared=$2, updated_at=now() WHERE id=$1", sid, want)
+        await audit(conn, p, "sample.share", sid, {"shared": bool(r["staff_shared"])}, {"shared": want})
+    return {"ok": True, "id": sid, "shared": want, "as_of": now_iso()}
 
 
 @router.get("/training/samples/{sid}")

@@ -68,11 +68,12 @@ export async function trainBoard({ host, project: P }) {
   const wait = h('div'); col.append(wait);
   empty(wait, { kind: 'loading' });                       // 가운데 '불러오는 중' 하나(로딩-1 · 원칙 212)
 
-  let T, deck = null, smp = null, TPL = null, XU = null;
+  let T, deck = null, smp = null, TPL = null, XU = null, SHR = null;
   try {
-    [T, deck, smp, TPL, XU] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
+    [T, deck, smp, TPL, XU, SHR] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
       api('/cards/deck').catch(() => null), api('/training/samples?project=' + encodeURIComponent(P.id)).catch(() => null),
-      api('/train-templates').catch(() => null), api('/train-data/xi?project=' + encodeURIComponent(P.id)).catch(() => null)]);
+      api('/train-templates').catch(() => null), api('/train-data/xi?project=' + encodeURIComponent(P.id)).catch(() => null),
+      api('/training/samples?shared=1').catch(() => null)]);   // 관리자가 공개한 학습 데이터(공유 데이터 · 10-14 공유데이터-탭)
   } catch (e) {
     col.replaceChildren(); const x = h('div'); col.append(x);
     empty(x, { kind: 'error', title: '학습 기록을 불러오지 못했습니다', onRetry: () => location.reload() });
@@ -142,6 +143,9 @@ export async function trainBoard({ host, project: P }) {
   for (const r of runs) { const d = dataOf(r); if (d?.ref && !DATA.some((x) => x.ref === d.ref)) DATA.push(d); }
   /* 수정된 부분 — 이 프로젝트가 만든 분석서비스의 결과를 XI맵에서 고친 곳 n장(서비스가 있을 때만) · 학습은 XI 재학습으로 */
   if (XU?.cards?.length) DATA.push({ ref: 'xi-edits', name: '수정된 부분', images: v(XU.tiles) ?? 0, kind: 'edits' });
+  /* 공유 데이터에서 고르기 — LX 관리자가 '공유 데이터 · 학습 데이터'에서 공개한 다른 프로젝트의 올린 묶음(장수 = 같은 n_images) */
+  const SHARED = (SHR?.items || []).filter((s) => !DATA.some((x) => x.ref === s.id))
+    .map((s) => ({ ref: s.id, name: s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at) }));
   const BASES = [];
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
@@ -338,6 +342,9 @@ export async function trainBoard({ host, project: P }) {
       for (const d of DATA) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터',
         d.kind === 'edits' ? ''
           : d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.day ? `${d.day} 올림` : '',
+        d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
+      if (SHARED.length) out.push(h('p.tb-lab', { text: '공유 데이터에서 고르기' }));
+      for (const d of SHARED) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터', d.day ? `${d.day} 올림` : '',
         d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
       out.push(h('p', { text: '다른 학습 데이터로 보려면 학습 데이터 블록과 학습 블록을 하나씩 더 놓아 이어요.' }));
     } else if (n.kind === 'base') {

@@ -732,6 +732,8 @@ async def imagery_edit(iid: str, body: dict, request: Request):
             raise ApiError("not_found", "영상이 없습니다")
         await conn.execute(f"UPDATE imagery SET {', '.join(sets)} WHERE id=$1", *args)
         await audit(conn, p, "imagery.edit", iid, {"name": row["name"], "year": row["year"], "visible": row["staff_visible"]}, after)
+    if "visible" in after:
+        _share_cache.clear()                     # 비공개 영상은 기관 목록에서도 바로 빠지게(10-14)
     _fresh()
     return {"ok": True, "id": iid, **after, "as_of": now_iso()}
 
@@ -766,7 +768,7 @@ import time as _time
 
 from .envelope import KST as _KST
 
-_share_cache: dict[str, tuple[float, set]] = {}
+_share_cache: dict[str, tuple[float, set, set]] = {}
 _share_seeded = False
 
 
@@ -796,18 +798,20 @@ async def _seed_shares(conn) -> None:
     _share_seeded = True
 
 
-async def shared_ids(tenant_id: str | None) -> set[str]:
-    """기관에 공유된 LX 영상 id(10초 캐시)."""
+async def shared_ids(tenant_id: str | None, every: bool = False) -> set[str]:
+    """기관에 공유된 LX 영상 id(10초 캐시). 관리자가 '공유 데이터'에서 비공개로 둔 영상은 뺀다(10-14 비공개-기관공유 —
+    기관 영상 층 · 요청하기 영상 목록 · 요청 접수 모두 이 한 곳). every=True = 비공개도(이미 공유된 분석 결과 아래 영상 조각 · 서명)."""
     if not tenant_id:
         return set()
     c = _share_cache.get(tenant_id)
-    if c and _time.time() - c[0] < 10:
-        return c[1]
-    async with db(realm="lx") as conn:
-        await _seed_shares(conn)
-        ids = {r["imagery_id"] for r in await conn.fetch("SELECT imagery_id FROM imagery_shares WHERE tenant_id=$1", tenant_id)}
-    _share_cache[tenant_id] = (_time.time(), ids)
-    return ids
+    if not (c and _time.time() - c[0] < 10):
+        async with db(realm="lx") as conn:
+            await _seed_shares(conn)
+            rows = await conn.fetch("SELECT s.imagery_id, coalesce(i.staff_visible, true) AS vis FROM imagery_shares s "
+                                    "LEFT JOIN imagery i ON i.id = s.imagery_id WHERE s.tenant_id=$1", tenant_id)
+        c = (_time.time(), {r["imagery_id"] for r in rows}, {r["imagery_id"] for r in rows if r["vis"]})
+        _share_cache[tenant_id] = c
+    return set(c[1] if every else c[2])
 
 
 def _share_candidates(tid: str, rows: list) -> list:
@@ -848,7 +852,8 @@ async def tenant_shares(tid: str, request: Request):
         await _seed_shares(conn)
         rows = await conn.fetch("SELECT i.id, i.name, i.tier, i.gsd_m, i.year, i.epoch, i.kind, i.sgg_cd, i.pmtiles_set, i.path_internal, i.layer, "
                                 "ST_AsGeoJSON(i.footprint)::json AS fp FROM imagery i WHERE coalesce(i.layer->>'role','imagery') = 'imagery' "
-                                "AND coalesce(i.kind,'ortho') <> 'terrain' AND (i.sgg_cd IS NOT NULL OR i.footprint IS NOT NULL)")
+                                "AND coalesce(i.kind,'ortho') <> 'terrain' AND (i.sgg_cd IS NOT NULL OR i.footprint IS NOT NULL) "
+                                "AND i.staff_visible")             # 관리자 '공유 데이터'에서 비공개로 둔 영상은 기관 공유 목록에도 없다(10-14 비공개-기관공유)
         sh = {r["imagery_id"]: r for r in await conn.fetch("SELECT imagery_id, shared_at FROM imagery_shares WHERE tenant_id=$1", tid)}
     cands = await run_in_threadpool(_share_candidates, tid, rows)
     # 영상 표준(원칙 94 · 확인 대장 15차 영상-3 ⓑ) — 원본 지울 날짜 한 칸(숫자 한 출처 imagery_std · 경로는 내지 않는다)

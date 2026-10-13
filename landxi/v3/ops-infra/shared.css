@@ -1,13 +1,14 @@
-/* LX 관리자 '공유 데이터'(js/shared.js) — 목록 한 장. 토스 톤 · 아이콘 0. */
-.sd-card{display:flex;flex-direction:column;gap:14px;max-width:1392px;min-width:0}
-.sd-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+/* LX 관리자 '공유 데이터'(js/shared.js) — 탭 셋(영상 · 학습 데이터 · 행정 자료). 토스 톤 · 아이콘 0.
+   틀 고정(원칙 231): 카드 높이 · 머리 · 탭 줄 · 페이지 줄 높이가 고정이고 몸통만 안쪽 스크롤 — 탭 · 페이지 · 찾기로 틀이 변하지 않는다. */
+.sd-card{display:flex;flex-direction:column;gap:14px;max-width:1392px;min-width:0;height:max(560px,calc(100dvh - 132px));box-sizing:border-box}
+.sd-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;flex:none;min-height:40px}
 .sd-h h2{margin:0;display:flex;align-items:baseline;gap:10px;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
 .sd-n{font:500 14px/20px var(--font-body);color:var(--sub)}
 .sd-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .sd-q{width:260px;max-width:100%}
 .sd-tbl-w{overflow-x:auto}
 .sd-tbl{width:100%;border-collapse:collapse;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
-.sd-tbl th{text-align:left;padding:0 10px 8px;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule);white-space:nowrap}
+.sd-tbl th{position:sticky;top:0;z-index:1;background:var(--bg-1,#fff);text-align:left;padding:8px 10px 8px;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule);white-space:nowrap}
 .sd-tbl td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:middle;white-space:nowrap}
 .sd-tbl td b{font-weight:500;white-space:normal;word-break:keep-all}
 .sd-c-im{width:72px}
@@ -19,7 +20,20 @@
 .sd-do{text-align:right}
 .sd-do .t-btn{margin-left:6px}
 .sd-none{margin:0;padding:16px;border-radius:12px;background:var(--bg-0);font:400 14px/20px var(--font-body);color:var(--sub)}
-.sd-pg{display:flex;align-items:center;justify-content:flex-end;gap:12px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.sd-body{flex:1 1 0;min-height:0;overflow:auto}
+.sd-wait{height:100%;display:flex;align-items:center;justify-content:center}
+.sd-tabs{display:flex;gap:24px;flex:none;padding:0 2px;border-bottom:1px solid var(--rule)}
+.sd-tabs button{position:relative;height:44px;padding:0 2px;border:0;background:none;cursor:pointer;font:500 16px/44px var(--font-body);color:var(--sub);white-space:nowrap}
+.sd-tabs button::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform var(--d-380,.38s) var(--e-ui,ease)}
+.sd-tabs button[aria-selected="true"]{color:var(--ink)}
+.sd-tabs button[aria-selected="true"]::after{transform:none}
+.sd-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.sd-tools .is-off{visibility:hidden}
+.sd-sub{margin:4px 0 6px;font:600 14px/20px var(--font-body);color:var(--sub)}
+.sd-sub:not(:first-child){margin-top:20px}
+.sd-cls{white-space:normal!important;word-break:keep-all;max-width:360px}
+.sd-dash{color:var(--mute)}
+.sd-pg{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:none;min-height:24px;font:500 13px/18px var(--font-body);color:var(--sub)}
 .sd-pg button{border:0;background:none;font:inherit;color:var(--ink);cursor:pointer}
 .sd-pg button:disabled{color:var(--mute);cursor:default}
 .sd-form{display:flex;flex-direction:column;gap:12px}

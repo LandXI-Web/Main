@@ -174,6 +174,10 @@ try {
     await screen(s, 'LX 관리자 · 배포 → XI 재학습', O + 'ops-infra/#/deploys/retrain', { wait: '.rt-when', ms: 2000 });
     await screen(s, 'LX 관리자 · 배포 → 학습 서식', O + 'ops-infra/#/deploys/templates', { wait: '.rt-blks', ms: 2000 });
     await screen(s, 'LX 관리자 · 공유 데이터', O + 'ops-infra/#/shared', { wait: '.sd-tbl', ms: 2000 });   // 10-13 관리자-공유데이터(원칙 238)
+    await screen(s, 'LX 관리자 · 공유 데이터 → 학습 데이터', O + 'ops-infra/#/shared', { wait: '.sd-tbl', ms: 1000,   // 10-14 공유데이터-탭(원칙 240)
+      act: async (p) => { await p.locator('.sd-tabs button', { hasText: '학습 데이터' }).click(); await p.waitForSelector('.sd-body table, .sd-none', { timeout: 30000 }); } });
+    await screen(s, 'LX 관리자 · 공유 데이터 → 행정 자료', O + 'ops-infra/#/shared', { wait: '.sd-tbl', ms: 1000,
+      act: async (p) => { await p.locator('.sd-tabs button', { hasText: '행정 자료' }).click(); await p.waitForSelector('.sd-sub', { timeout: 30000 }); } });
     await s.ctx.close();
   }
 } finally {
