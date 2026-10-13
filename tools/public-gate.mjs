@@ -146,14 +146,22 @@ function proxy(req, res, body = null) {
   delete headers['x-lx-site'];                                   // 입구는 주소로만 — 바깥에서 보낸 값은 버린다
   delete headers.connection; delete headers['keep-alive'];      // 이어 쓰기는 관문 ↔ 게이트웨이 사이에서 정한다(바깥 연결의 close 를 넘기지 않음)
   const site = siteOf(req); if (site) headers['x-lx-site'] = site;
-  const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
-    res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
-    if (/text\/event-stream/.test(r.headers['content-type'] || '')) res.flushHeaders?.();
-    r.pipe(res);
-  });
-  up.on('error', () => { if (!res.headersSent) send(res, 502, JSON.stringify({ error: { code: 'gateway_down', message: '서버에 연결할 수 없습니다.' } }), { 'content-type': 'application/json' }); else res.end(); });
-  req.on('aborted', () => up.destroy());
-  if (body !== null) up.end(body); else req.pipe(up);
+  /* 게이트웨이가 먼저 닫은 이어 둔 연결에 보낸 읽기 요청은 한 번 새 연결로 다시 보낸다(본문 없는 GET · HEAD 만) */
+  const retriable = (req.method === 'GET' || req.method === 'HEAD') && body === null;
+  const go = (again) => {
+    const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
+      res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
+      if (/text\/event-stream/.test(r.headers['content-type'] || '')) res.flushHeaders?.();
+      r.pipe(res);
+    });
+    up.on('error', (e) => {
+      if (again && retriable && !res.headersSent && /ECONNRESET|EPIPE/.test(e.code || '')) return go(false);
+      if (!res.headersSent) send(res, 502, JSON.stringify({ error: { code: 'gateway_down', message: '서버에 연결할 수 없습니다.' } }), { 'content-type': 'application/json' }); else res.end();
+    });
+    req.on('aborted', () => up.destroy());
+    if (body !== null) up.end(body); else if (retriable) up.end(); else req.pipe(up);
+  };
+  go(true);
 }
 
 
@@ -309,7 +317,7 @@ function serveApiHost(req, res, p) {
   req.pipe(up);
 }
 
-http.createServer((req, res) => {
+const gate = http.createServer((req, res) => {
   let p;
   try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { return send(res, 400, '400'); }
   if (p.includes('\0') || p.includes('..')) return send(res, 400, '400');
@@ -347,4 +355,9 @@ http.createServer((req, res) => {
   if (p === '/favicon.ico') return send(res, 204);
   if (p === '/landxi/proto/env.js') return send(res, 200, envJs(), { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
   serveFile(req, res, p);
-}).listen(PORT, '127.0.0.1', () => console.log('public gate http://127.0.0.1:' + PORT + HOME + ' · 입구 ' + Object.entries(ENTRY).map(([h, s]) => s + '=' + h).join(' ')));
+});
+/* 터널(cloudflared)은 관문과의 이어 둔 연결을 90초 가까이 재사용한다 — Node 기본 5초에 관문이 먼저 닫으면 그 틈에 온 요청이 터널에서 502
+   ('forcibly closed' · 10-13~14 words.mjs 촬영 요청 화면의 502). 관문이 터널보다 늦게 닫도록 한다. */
+gate.keepAliveTimeout = 120_000;
+gate.headersTimeout = 125_000;
+gate.listen(PORT, '127.0.0.1', () => console.log('public gate http://127.0.0.1:' + PORT + HOME + ' · 입구 ' + Object.entries(ENTRY).map(([h, s]) => s + '=' + h).join(' ')));
