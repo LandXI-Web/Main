@@ -1,0 +1,15 @@
+[
+ {
+  "file": "perf2-10s-1142.mp4",
+  "shot_at": "2026-10-13T11:42:56",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok&cursor=1",
+  "viewport": [
+   1440,
+   900
+  ],
+  "seconds": 11.0,
+  "frames_received": 126,
+  "note": "실제 마우스 한 바퀴를 장면별로 잘라 이음(빨리 감기 없음): 읍면동 올림 → 다른 읍면동 올림 → 누름(객체로 펼쳐짐) → 객체 눌러 모양 고치기(예시 동작) → XI ChatGEO \"1,000㎡ 넘는 경작지만\" → 거른 결과",
+  "errors": []
+ }
+]

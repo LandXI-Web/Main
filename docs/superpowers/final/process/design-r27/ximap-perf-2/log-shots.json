@@ -1,0 +1,57 @@
+[
+ {
+  "file": "first-1440-1127.png",
+  "shot_at": "2026-10-13T11:27:14",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "첫 화면 — 범례 없음 · 전국 실제 경작지 면 · 지금 분석 중인 읍면동 차오름 · 시간 막대 · XI ChatGEO · 고치며 똑똑해지는 지도",
+  "errors": []
+ },
+ {
+  "file": "hover-1440-1127.png",
+  "shot_at": "2026-10-13T11:27:47",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "올림 — 그 읍면동이 떠오르고(다른 곳은 가라앉음) 경작지 면이 차오름 · 옆에 이름과 숫자 한 줄(색 점이 곧 이름표)",
+  "errors": []
+ },
+ {
+  "file": "press-1440-1128.png",
+  "shot_at": "2026-10-13T11:28:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "누름 — 그 읍면동으로 내려가 객체로 펼쳐짐 → 객체 하나 눌러 그 자리 고치기(지우기 · 분류 바꾸기 · 모양 고치기)",
+  "errors": []
+ },
+ {
+  "file": "time-1440-1128.png",
+  "shot_at": "2026-10-13T11:28:57",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=namwon",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "시간 — 막대를 끌어 2023 · 2025 결과가 겹침(남원 실제 결과) · 바뀐 곳 빛남은 예시 동작",
+  "errors": []
+ },
+ {
+  "file": "filter-1440-1129.png",
+  "shot_at": "2026-10-13T11:29:32",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "말로 거르기 — \"1,000㎡ 넘는 경작지만\" → 나머지 흐려짐 · 답에 화면 안 숫자",
+  "errors": []
+ }
+]

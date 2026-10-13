@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 퍼포먼스 맵 2</title>
+<link rel="stylesheet" href="perf2.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m">
+<div class="app" id="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">XI맵</span>
+    <div class="search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span>시군구 · 지번 · 또는 XI ChatGEO 에 질문</span></div>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴" id="rail"></nav>
+  <main class="main" id="main"><div class="stage" id="stage"></div><div id="ui"></div><div class="tip-b" id="tip"></div></main>
+</div>
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 27차 · XI맵 퍼포먼스 맵 시안 2(원칙 229 · 233 · 230) — 26차 A안 바탕 한 판. 코드 수정 0 · 서버 수정 0 · GPU 0.
+   바뀐 점: 범례 없음(색의 뜻은 올린 곳 · 누른 곳 말풍선과 ChatGEO 답 안에서) · 결과 자체가 반응(올림 = 그 읍면동이 떠오르고 면이 차오름 + 숫자 한 줄,
+   누름 = 객체로 펼쳐짐 → 객체 하나 눌러 그 자리 고치기, 시간 막대 끌기 = 두 해 겹침, ChatGEO = 조건대로 거름) · XI맵 정보는 지도 안에만(왼쪽 메뉴 옆 0).
+   실제(서버에서 그 자리에서 읽음): 전국 작업기 진행 · 읍면동 칸(이름 · 끝남 · 경작지 수 · ㎢ · 비닐하우스 수 — 지도 조각 속성) · 전국 결과 면 · 끝난 칸 결과 묶음(객체) ·
+         남원 2023 비닐하우스 · 2025 경작 결과 · 비닐하우스 재학습 판정 · 학습 데이터 장수 · 고친 것 수.
+   예시 동작(표시함): 고치기 단추를 눌렀을 때 저장(시안은 화면에서만) · 두 해 사이 '바뀐 곳' 빛남(차이 계산은 서버 재료 필요) · ChatGEO 답 문구(각본 · 숫자는 서버 · 화면 값). */
+import { createStage } from '../../../../v3/kit/stage.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+import { sourceSpec } from '../../../../xi/engine/sources.js';
+import { addResultLayers } from '../../../../xi/fx/arrive.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const AT = q.get('at');            // deok · namwon — 촬영용 시작 위치
+const ASK = q.get('ask');
+const CUR = q.get('cursor') === '1';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n) => (n == null || Number.isNaN(Number(n)) ? '—' : Number(n).toLocaleString('ko-KR'));
+const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ui = document.getElementById('ui'), TIP = document.getElementById('tip'), MAIN = document.getElementById('main');
+const now = new Date(); const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('clock').textContent = hm;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+const COLOR = { 경작지: '#2E9E5B', 비닐하우스: '#F59F00', 건물: '#3182F6' };
+const UNIT = { 경작지: '곳', 비닐하우스: '동', 건물: '동' };
+const dot = (c) => `<i class="dot" style="background:${COLOR[c] || '#5C7CFA'}"></i>`;
+const KOREA = [125.0, 33.1, 130.0, 38.6];
+const NAMWON = { bbox: [127.1839, 35.3025, 127.6742, 35.5608] };
+const DEOKJIN = { cd: '52113', bbox: [126.998, 35.8017, 127.2343, 35.9031] };
+const OBJ_Z = 11;
+
+/* 직원 메뉴 그대로(원칙 196) — 이 영역에는 XI맵 정보를 붙이지 않는다(원칙 233) */
+const MENU = [['대시보드', '<path d="M3 9l7-6 7 6v8H3z"/>'], ['프로젝트', '<path d="M3 5h5l2 2h7v9H3z"/>'], ['분석하기', '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><circle cx="10" cy="10" r="2.5"/>'], ['지도 서비스', '<path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2z M8 3v12 M12 5v12"/>'], ['XI맵', null], ['데이터하우스', '<ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5"/>'], ['요청함', '<path d="M3 11h4l1 2h4l1-2h4v6H3z M5 4h10l2 7H3z"/>']];
+document.getElementById('rail').innerHTML = MENU.map(([l, ic]) => `<a class="ri${l === 'XI맵' ? ' on' : ''}${l === '데이터하우스' ? ' sep' : ''}">${ic ? `<svg viewBox="0 0 20 20" aria-hidden="true">${ic}</svg>` : '<span class="xi">XI</span>'}${l}</a>`).join('');
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } });
+        session.set(r); box.hidden = true; done();
+      } catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+
+/* ═══ 재료 — 전부 서버에서(못 읽으면 '—') ═══ */
+const D = {};
+async function load() {
+  const safe = (p) => api(p).catch(() => null);
+  const [prog, sets, board, retrain, edits] = await Promise.all([
+    safe('/national/progress'), safe('/national/sets?asset=farm&bbox=124,33,132,39'),
+    safe('/ximap/board'), safe('/retrain'), safe('/ximap/edits/summary')]);
+  D.prog = prog; D.farm = prog?.assets?.farm || null; D.sets = sets?.sets || []; D.board = board; D.retrain = retrain; D.edits = edits;
+  D.gh = (retrain?.services || []).find((s) => s.service === '비닐하우스') || null;
+  D.train = D.gh?.project?.id ? await safe(`/projects/${D.gh.project.id}/train`) : null;
+  D.nw = (board?.regions || []).find((r) => r.name === '남원시') || null;
+}
+const F = () => D.farm || {};
+const cnt = (k) => F().counts?.[k];
+
+/* ═══ 지도 ═══ */
+let ST, MAP;
+async function stage(bounds) { ST = createStage(document.getElementById('stage'), { bounds, interactive: true, padding: { top: 100, bottom: 150, left: 60, right: 60 } }); await ST.ready; MAP = ST.map; return MAP; }
+function idle(max = 12000) { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > max ? r() : setTimeout(poll, 120)); MAP.once('idle', poll); setTimeout(poll, max); }); }
+const FACE = (k = 1) => ['interpolate', ['linear'], ['zoom'], 4, 0.95 * k, 9, 0.8 * k, 11, 0.5 * k, 13, 0.25 * k, 15, 0.12 * k];
+const BEFORE = () => (MAP.getLayer('slot-result') ? 'slot-result' : undefined);
+const L = (id) => MAP.getLayer(id);
+const setP = (id, k, v) => L(id) && MAP.setPaintProperty(id, k, v);
+const bySource = (src) => (MAP.getStyle().layers || []).filter((l) => l.source === src).map((l) => l.id);
+const clsColor = ['match', ['get', 'cls'], '경작지', COLOR.경작지, '경작', COLOR.경작지, '비닐하우스', COLOR.비닐하우스, '건물', COLOR.건물, '#5C7CFA'];
+
+function addNational() {
+  const v = D.prog?.v?.farm || '0';
+  MAP.addSource('xn', { type: 'vector', tiles: [`${API.base}/tiles/national/farm/${D.prog?.year || 2025}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v)}`], minzoom: 4, maxzoom: 10, attribution: '국토지리정보원 항공 정사영상 · AI 분석 결과' });
+  const B = BEFORE();
+  MAP.addLayer({ id: 'xn-face', type: 'fill', source: 'xn', 'source-layer': 'faces',
+    paint: { 'fill-color': clsColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.95, 9, 0.8, 11, 0.5, 13, 0.25, 15, 0.12], 'fill-opacity-transition': { duration: 400 } } }, B);
+  // 올린 곳만 떠오르게 — 다른 칸은 살짝 가라앉는다
+  MAP.addLayer({ id: 'xn-veil', type: 'fill', source: 'xn', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'], maxzoom: 12.5,
+    paint: { 'fill-color': '#0E1622', 'fill-opacity': 0, 'fill-opacity-transition': { duration: 300 } } }, B);
+  MAP.addLayer({ id: 'xn-hot-sh', type: 'line', source: 'xn', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'],
+    paint: { 'line-color': '#000', 'line-opacity': 0.35, 'line-width': 10, 'line-blur': 8, 'line-translate': [4, 7] } }, B);
+  MAP.addLayer({ id: 'xn-hot-f', type: 'fill', source: 'xn', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'],
+    paint: { 'fill-color': COLOR.경작지, 'fill-opacity': 0 } }, B);
+  MAP.addLayer({ id: 'xn-hot-l', type: 'line', source: 'xn', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'],
+    paint: { 'line-color': '#fff', 'line-width': 2.4, 'line-opacity': 0.95 } }, B);
+  MAP.addLayer({ id: 'xn-hit', type: 'fill', source: 'xn', 'source-layer': 'cells', paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, B);
+  // 지금 분석 중인 읍면동 — 숨 쉬듯 차오름(칸 지도 조각에서 이름으로 찾음 · 지역 하드코딩 0)
+  const nx = F().next;
+  if (nx) {
+    const f = ['all', ['==', ['get', 'name'], nx.emd], ['==', ['get', 'sgg'], nx.sgg]];
+    MAP.addLayer({ id: 'xn-now-f', type: 'fill', source: 'xn', 'source-layer': 'cells', filter: f, paint: { 'fill-color': '#0FA9A0', 'fill-opacity': 0.18 } }, B);
+    MAP.addLayer({ id: 'xn-now-l', type: 'line', source: 'xn', 'source-layer': 'cells', filter: f, paint: { 'line-color': '#0FA9A0', 'line-width': 2.4, 'line-opacity': 0.95 } }, B);
+    let t = 0; (function breathe() { t += 0.035; setP('xn-now-f', 'fill-opacity', (0.15 + 0.4 * (0.5 + 0.5 * Math.sin(t))) * YRES.n25); requestAnimationFrame(breathe); })();
+  }
+}
+function centerOf(g) { let x = 0, y = 0, n = 0; const walk = (c) => (typeof c[0] === 'number' ? (x += c[0], y += c[1], n++) : c.forEach(walk)); walk(g.coordinates); return [x / n, y / n]; }
+function bboxOf(gs) { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); gs.forEach((g) => walk(g.coordinates)); return [w, s, e, n]; }
+const cellFeatures = (cd) => MAP.querySourceFeatures('xn', { sourceLayer: 'cells', filter: ['==', ['get', 'cd'], cd] });
+
+/* 흐르는 결과 — 끝난 칸(실제 결과 묶음 위치)에서 차례로 고리 */
+function flow() {
+  const sets = D.sets.slice(); if (!sets.length) return;
+  let i = Math.floor(Math.random() * sets.length);
+  (function tick() {
+    if (!MAP) return;
+    if (MAP.getZoom() < 9 && YRES.n25 > 0.5) {
+      const b = sets[i++ % sets.length].bounds;
+      const el = document.createElement('div'); el.className = 'ring';
+      const m = new window.maplibregl.Marker({ element: el }).setLngLat([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]).addTo(MAP);
+      setTimeout(() => m.remove(), 1900);
+    }
+    setTimeout(tick, 650);
+  })();
+}
+
+/* ═══ HUD — 지도 안쪽 왼쪽 위. 전국이면 전국, 시군구로 들어가면 그 시군구(칸 속성에서 합한 값 · 원칙 233) ═══ */
+function hudHtml(k, big, unit, sub, live) {
+  return `<div class="k">${esc(k)}</div>${big ? `<p class="big">${esc(big)}<small>${esc(unit)}</small></p>` : ''}${sub ? `<p class="sub">${sub}</p>` : ''}${live ? `<span class="live"><i></i>${esc(live)}</span>` : ''}`;
+}
+let HUDKEY = '';
+function hudNational() {
+  return ['전국', `농지 전수 ${D.prog?.year || '—'} · 지금까지 찾은 경작지`, nf(val(cnt('경작지')?.n)), '곳', `읍면동 <b>${nf(val(F().done))}곳</b> · ${nf(val(F().done_km2))}㎢`,
+    F().next ? `지금 분석 중 · ${F().next.sido} ${F().next.sgg} ${F().next.emd}` : '지금 쉬는 중'];
+}
+function hudRegion() {
+  if (MAP.getZoom() < 9.2) return hudNational();
+  const c = MAP.project(MAP.getCenter());
+  const hit = MAP.queryRenderedFeatures([[c.x - 30, c.y - 30], [c.x + 30, c.y + 30]], { layers: ['xn-hit'] })[0];
+  if (!hit) return hudNational();
+  const sgg = hit.properties.sgg, all = MAP.querySourceFeatures('xn', { sourceLayer: 'cells', filter: ['==', ['get', 'sgg'], sgg] });
+  const seen = new Map(); all.forEach((f) => seen.set(f.properties.cd, f.properties));
+  const cs = [...seen.values()], done = cs.filter((p) => p.done);
+  const n1 = done.reduce((a, p) => a + (p.n1 || 0), 0), a1 = done.reduce((a, p) => a + (p.a1 || 0), 0);
+  if (!done.length) return [sgg, `${hit.properties.sido} ${sgg}`, '', '', `농지 전수 ${D.prog?.year || ''} 분석 차례 전`, null];
+  return [sgg, `${hit.properties.sido} ${sgg} · 찾은 경작지`, nf(n1), '곳', `읍면동 <b>${nf(done.length)}</b>/${nf(cs.length)}곳 · ${a1.toFixed(1)}㎢`, null];
+}
+function paintHud() {
+  const h = document.getElementById('hud'); if (!h) return;
+  const [key, k, big, unit, sub, live] = hudRegion();
+  if (key === HUDKEY && h.dataset.big === big) return;
+  HUDKEY = key; h.classList.add('swap');
+  setTimeout(() => { h.innerHTML = hudHtml(k, big, unit, sub, live); h.dataset.big = big; h.classList.remove('swap'); }, 220);
+}
+
+/* ═══ 1 · 올리면 — 그 읍면동이 떠오르고 면이 차오른다 + 숫자 한 줄(색의 뜻은 그 자리 이름표) ═══ */
+let HOT = null, hotAnim = 0;
+function setHot(p) {
+  const cd = p?.cd || null;
+  if (cd === HOT) return; HOT = cd;
+  const f = ['==', ['get', 'cd'], cd || '__'];
+  ['xn-hot-sh', 'xn-hot-f', 'xn-hot-l'].forEach((id) => L(id) && MAP.setFilter(id, f));
+  if (L('xn-veil')) { MAP.setFilter('xn-veil', cd ? ['!=', ['get', 'cd'], cd] : ['==', ['get', 'cd'], '__']); setP('xn-veil', 'fill-opacity', cd ? 0.45 : 0); }
+  cancelAnimationFrame(hotAnim);
+  if (cd) { const t0 = performance.now(), to = p.done ? 0.38 : 0.1; (function rise() { const k = Math.min(1, (performance.now() - t0) / 700), e = 1 - Math.pow(1 - k, 3); setP('xn-hot-f', 'fill-opacity', to * e); setP('xn-hot-l', 'line-width', 1 + 2 * e); if (k < 1) hotAnim = requestAnimationFrame(rise); })(); }
+}
+function cellLine(p) {
+  if (!p.done) return '<span class="r wait">아직 분석 전</span>';
+  const rows = [];
+  if (p.n1 != null) rows.push(`<span class="r">${dot('경작지')}경작지 <b>${nf(p.n1)}곳</b>${p.a1 != null ? ` · ${Number(p.a1).toFixed(2)}㎢` : ''}</span>`);
+  if (p.n2) rows.push(`<span class="r">${dot('비닐하우스')}비닐하우스 <b>${nf(p.n2)}동</b></span>`);
+  return rows.join('');
+}
+function showTip(pt, html) {
+  TIP.innerHTML = html; const w = MAIN.clientWidth;
+  const x = Math.min(pt.x + 18, w - 320), y = Math.max(pt.y - 64, 90);
+  TIP.style.left = x + 'px'; TIP.style.top = y + 'px'; TIP.classList.add('in');
+}
+const hideTip = () => TIP.classList.remove('in');
+
+/* ═══ 2 · 누르면 — 그 읍면동으로 내려가 객체로 펼쳐지고, 객체 하나를 눌러 그 자리 고치기 ═══ */
+const OBJ = new Map(); let objSeq = 0;
+function objPaint(id, kind) {
+  const big = ['boolean', ['feature-state', 'big'], false], sel = ['boolean', ['feature-state', 'sel'], false], fix = ['boolean', ['feature-state', 'fix'], false], hov = ['boolean', ['feature-state', 'hov'], false];
+  const flt = FILTER ? ['case', big, 1, 0.08] : 1;
+  if (kind === 'f') setP(id, 'fill-opacity', ['*', ['case', sel, 0.6, hov, 0.45, 0.3], flt, OPEN]);
+  else { setP(id, 'line-opacity', ['*', ['case', sel, 1, 0.95], flt, OPEN]); setP(id, 'line-width', ['interpolate', ['linear'], ['zoom'], OBJ_Z, ['case', sel, 3.2, hov, 2.2, 0.6], 15, ['case', sel, 3.2, hov, 2.2, 1.4]]); setP(id, 'line-color', ['case', fix, '#0FA9A0', sel, '#fff', clsColor]); }
+}
+let OPEN = 1, FILTER = null;
+function repaintObjs() { for (const o of OBJ.values()) { objPaint(o.f, 'f'); objPaint(o.l, 'l'); } }
+async function objects() {
+  if (!MAP.getSource('xn') || MAP.getZoom() < OBJ_Z - 0.5) return;
+  const g = MAP.getBounds(), b = [g.getWest(), g.getSouth(), g.getEast(), g.getNorth()], my = ++objSeq;
+  const j = await api(`/national/sets?asset=farm&year=${D.prog?.year || 2025}&bbox=${b.map((v) => v.toFixed(4)).join(',')}`).catch(() => null);
+  if (!j?.sets || my !== objSeq) return;
+  for (const o of j.sets) {
+    const sid = 'xo-' + o.set.replace(/[^\w-]/g, '_');
+    if (OBJ.has(sid) || MAP.getSource(sid)) continue;
+    MAP.addSource(sid, { type: 'vector', tiles: [`${API.base}/tiles/mvt/${o.set}/{z}/{x}/{y}.pbf?v=${o.v}`], minzoom: 10, maxzoom: 17, bounds: o.bounds, promoteId: 'id' });
+    const B = BEFORE(), flt = ['in', ['get', 'cls'], ['literal', ['경작지', '비닐하우스']]];
+    MAP.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: flt, paint: { 'fill-color': clsColor, 'fill-opacity-transition': { duration: 500 } } }, B);
+    MAP.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: flt, paint: { 'line-color': clsColor, 'line-opacity-transition': { duration: 500 } } }, B);
+    OBJ.set(sid, { f: sid + '-f', l: sid + '-l', src: sid });
+    objPaint(sid + '-f', 'f'); objPaint(sid + '-l', 'l');
+  }
+}
+/* 펼쳐짐 — 내려앉은 뒤 객체가 0 → 제 빛으로(시간에 따라 OPEN 0 → 1) */
+async function unfold() {
+  const t0 = performance.now();
+  await new Promise((r) => { (function step() { const k = Math.min(1, (performance.now() - t0) / 900); OPEN = 1 - Math.pow(1 - k, 3); repaintObjs(); if (k < 1) requestAnimationFrame(step); else r(); })(); });
+}
+let PIN = null;
+function pin(lngLat, html, anchor = 'left') {
+  PIN?.remove();
+  const el = document.createElement('div'); el.className = 'pin-b'; el.innerHTML = html;
+  PIN = new window.maplibregl.Marker({ element: el, anchor, offset: anchor === 'left' ? [18, 0] : [0, -14] }).setLngLat(lngLat).addTo(MAP);
+  requestAnimationFrame(() => el.classList.add('in'));
+  return el;
+}
+async function openCell(p, lngLat) {
+  hideTip(); setHot(null);
+  const fs = cellFeatures(p.cd); if (!fs.length) return;
+  const b = bboxOf(fs.map((f) => f.geometry));
+  OPEN = 0; repaintObjs(); PIN?.remove();
+  await ST.go(b, { ms: 1800, maxZoom: 14 });
+  await objects(); OPEN = 0; repaintObjs(); await sleep(250); await unfold();
+  pin([b[2], (b[1] + b[3]) / 2], `<span class="n">${esc(p.name)}<small style="font:500 12px/1 var(--font-body);color:var(--sub);margin-left:6px">${esc(p.sgg)}</small></span>${cellLine(p)}`);
+  paintHud();
+}
+/* 객체 — 올리면 살짝 밝게, 누르면 그 자리 고치기 */
+let HOV = null, SEL = null;
+const objLayers = () => [...OBJ.values()].flatMap((o) => [o.f]).filter((id) => L(id));
+function fstate(o, st) { if (o) MAP.setFeatureState({ source: o.source, sourceLayer: 'results', id: o.id }, st); }
+function areaOf(g) {  // 화면 도형으로 잰 넓이(㎡) — 속성에 넓이가 없을 때만
+  const R = 6378137, ring = (c) => { let s = 0; for (let i = 0; i < c.length - 1; i++) { const [x1, y1] = c[i], [x2, y2] = c[i + 1]; s += ((x2 - x1) * Math.PI / 180) * (2 + Math.sin(y1 * Math.PI / 180) + Math.sin(y2 * Math.PI / 180)); } return Math.abs(s * R * R / 2); };
+  const poly = (p) => ring(p[0]) - p.slice(1).reduce((a, h) => a + ring(h), 0);
+  return g.type === 'Polygon' ? poly(g.coordinates) : g.type === 'MultiPolygon' ? g.coordinates.reduce((a, p) => a + poly(p), 0) : 0;
+}
+const areaM2 = (f) => (f.properties.area_m2 != null ? Number(f.properties.area_m2) : areaOf(f.geometry));
+let FIXED = 0;
+function openObj(f, lngLat) {
+  fstate(SEL, { sel: false }); SEL = { source: f.source, id: f.id }; fstate(SEL, { sel: true });
+  const c = f.properties.cls, a = areaM2(f);
+  if (MAP.getZoom() < 15.4) MAP.easeTo({ center: lngLat, zoom: 15.6, duration: 800 });
+  const bb = bboxOf([f.geometry]);
+  const el = pin([bb[2], Math.max(bb[1], Math.min(bb[3], lngLat.lat))], `<span class="n">${dot(c)} ${esc(c)}</span><span class="r">${nf(Math.round(a))}㎡</span>
+    <div class="acts"><button type="button" data-a="del">지우기</button><button type="button" data-a="cls">분류 바꾸기</button><button type="button" data-a="shape" class="pri">모양 고치기</button></div>`);
+  el.querySelectorAll('button').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); fixObj(el, b.dataset.a); }));
+}
+function fixObj(el, a) {
+  fstate(SEL, { fix: true }); FIXED += 1;
+  el.querySelector('.acts').outerHTML = `<p class="done">${a === 'del' ? '지움' : a === 'cls' ? '분류 바꿈' : '모양 고침'} · 다음 학습에 들어감<span class="ex">예시 동작</span></p>`;
+  const e = document.getElementById('evo'); if (e) { e.querySelector('[data-k="fix"] b').textContent = `${nf((val(D.edits?.total) || 0) + FIXED)}건`; e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); }
+}
+
+function wireMap() {
+  MAP.on('mousemove', (e) => {
+    const nwF = [...NW.ids23, ...NW.ids25].filter((id) => L(id)?.type === 'fill' && MAP.getLayoutProperty(id, 'visibility') !== 'none');
+    const nwHit = nwF.length && (YRES.n23 > 0.05 || YRES.n25 > 0.05) ? MAP.queryRenderedFeatures(e.point, { layers: nwF })[0] : null;
+    if (nwHit) {
+      const is23 = NW.ids23.includes(nwHit.layer.id), c = is23 ? '비닐하우스' : '경작지';
+      if ((is23 ? YRES.n23 : YRES.n25) > 0.05) { setHot(null); MAP.getCanvas().style.cursor = 'pointer'; showTip(e.point, `<span class="r">${dot(c)}${is23 ? 2023 : 2025} ${c}${nwHit.properties.area_m2 != null ? ` · <b>${nf(Math.round(nwHit.properties.area_m2))}㎡</b>` : ''}</span>`); return; }
+    }
+    if (MAP.getZoom() >= OBJ_Z) {
+      setHot(null); hideTip();
+      const f = MAP.queryRenderedFeatures(e.point, { layers: objLayers() })[0];
+      const nh = f ? { source: f.source, id: f.id } : null;
+      if (HOV?.id !== nh?.id || HOV?.source !== nh?.source) { fstate(HOV, { hov: false }); HOV = nh; fstate(HOV, { hov: true }); }
+      if (f && !(SEL && SEL.id === f.id)) showTip(e.point, `<span class="r">${dot(f.properties.cls)}${esc(f.properties.cls)} · <b>${nf(Math.round(areaM2(f)))}㎡</b></span>`); else hideTip();
+      MAP.getCanvas().style.cursor = f ? 'pointer' : '';
+      return;
+    }
+    const f = MAP.queryRenderedFeatures(e.point, { layers: ['xn-hit'] })[0];
+    if (!f) { setHot(null); hideTip(); MAP.getCanvas().style.cursor = ''; return; }
+    const p = f.properties; setHot(p); MAP.getCanvas().style.cursor = 'pointer';
+    showTip(e.point, `<span class="n">${esc(p.name)}<small>${esc(p.sgg)}</small></span>${cellLine(p)}`);
+  });
+  MAP.getCanvas().addEventListener('mouseleave', () => { setHot(null); hideTip(); });
+  MAP.on('click', (e) => {
+    if (MAP.getZoom() >= OBJ_Z) {
+      const f = MAP.queryRenderedFeatures(e.point, { layers: objLayers() })[0];
+      if (f) { hideTip(); openObj(f, e.lngLat); } else { fstate(SEL, { sel: false }); SEL = null; PIN?.remove(); }
+      return;
+    }
+    const f = MAP.queryRenderedFeatures(e.point, { layers: ['xn-hit'] })[0];
+    if (f) openCell(f.properties, e.lngLat);
+  });
+  MAP.on('moveend', () => { objects(); paintHud(); });
+}
+
+/* ═══ 3 · 시간 막대를 끌면 — 두 해 결과가 겹쳐 바뀐다 ═══ */
+const Y0 = 2011, Y1 = 2025, YRES = { n25: 1, n23: 0 };
+const NW = { ids23: [], ids25: [], loaded: false };
+async function addNamwon() {
+  if (NW.loaded || !D.nw) return; NW.loaded = true;
+  const it23 = D.nw.items.find((i) => i.name === '비닐하우스')?.layer, it25 = D.nw.items.find((i) => i.name === '경작·휴경')?.layer;
+  for (const [key, it] of [['nw23', it23], ['nw25', it25]]) {
+    if (!it) continue;
+    try {
+      MAP.addSource(key, await sourceSpec(it)); addResultLayers(MAP, key, key, { kind: 'result', sourceLayer: it.layer || 'results', visible: true });
+      const ids = bySource(key), col = key === 'nw23' ? COLOR.비닐하우스 : COLOR.경작지;
+      ids.forEach((id) => { const t = L(id)?.type; if (t === 'fill') setP(id, 'fill-color', col); if (t === 'line') setP(id, 'line-color', col); });
+      NW[key === 'nw23' ? 'ids23' : 'ids25'] = ids;
+    } catch { /* 조각이 없으면 비워 둔다 */ }
+  }
+  // 바뀐 곳 빛남(예시 동작) — 2023 결과 테두리에 빛
+  if (it23 && MAP.getSource('nw23')) {
+    MAP.addLayer({ id: 'nw-glow', type: 'line', source: 'nw23', 'source-layer': it23.layer || 'results', paint: { 'line-color': '#FFE066', 'line-width': 6, 'line-blur': 5, 'line-opacity': 0 } }, BEFORE());
+    let t = 0; (function pulse() { t += 0.06; const k = YRES.glow || 0; setP('nw-glow', 'line-opacity', k * (0.45 + 0.4 * Math.sin(t))); requestAnimationFrame(pulse); })();
+  }
+  setYear(YV);
+}
+let YV = 2025;
+function setYear(y) {
+  YV = Math.max(Y0, Math.min(Y1, y));
+  const t25 = Math.max(0, Math.min(1, (YV - 2023) / 2)), t23 = YV < 2023 ? Math.max(0, 1 - (2023 - YV)) : 1 - t25;
+  YRES.n25 = YV >= 2023 ? t25 : 0; YRES.n23 = t23; YRES.glow = YV > 2023.15 && YV < 2024.85 ? 1 - Math.abs(YV - 2024) / 0.85 : 0;
+  const scale = (ids, k) => ids.forEach((id) => { const ly = L(id); if (!ly) return; if (ly.type === 'fill') setP(id, 'fill-opacity', 0.35 * k); if (ly.type === 'line') setP(id, 'line-opacity', 0.95 * k); });
+  scale(NW.ids23, YRES.n23); scale(NW.ids25, YRES.n25);
+  setP('xn-face', 'fill-opacity', FILTER ? 0.04 * YRES.n25 : FACE(YRES.n25));
+  OPEN = YRES.n25; repaintObjs();
+  const tl = document.getElementById('tl'); if (!tl) return;
+  const x = ((YV - Y0) / (Y1 - Y0)) * 100;
+  tl.querySelector('.knob').style.left = x + '%';
+  tl.querySelector('.fill').style.left = '0'; tl.querySelector('.fill').style.width = x + '%';
+  const yr = Math.round(YV), mid = YRES.glow > 0;
+  tl.querySelector('.yv').innerHTML = mid ? `2023 + 2025<small>바뀐 곳 빛남 <span class="ex">예시 동작</span></small>` : `${yr}년<small>${yr === 2025 ? '전국 · 남원' : yr === 2023 ? '남원 · 시군구 20곳' : '영상만'}</small>`;
+}
+function timeline() {
+  const has = new Set([2023, 2025]); let ticks = '';
+  for (let y = Y0; y <= Y1; y++) { const x = ((y - Y0) / (Y1 - Y0)) * 100; ticks += `<i class="tick${has.has(y) ? ' has' : ''}" style="left:${x}%"></i>${y % 2 === 1 || has.has(y) ? `<span class="yl${has.has(y) ? ' has' : ''}" style="left:${x}%">${String(y).slice(2)}</span>` : ''}`; }
+  return `<div class="tl" id="tl"><div class="track" id="track">${ticks}<i class="fill"></i><i class="knob" id="knob"></i></div><span class="yv"></span></div>`;
+}
+function wireTimeline() {
+  const tr = document.getElementById('track'); let drag = false;
+  const at = (e) => { const r = tr.getBoundingClientRect(); return Y0 + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * (Y1 - Y0); };
+  tr.addEventListener('pointerdown', async (e) => { drag = true; tr.setPointerCapture(e.pointerId); await addNamwon(); setYear(at(e)); });
+  tr.addEventListener('pointermove', (e) => { if (drag) setYear(at(e)); });
+  tr.addEventListener('pointerup', (e) => { drag = false; const y = at(e); if (Math.abs(y - 2024) > 0.85) setYear(Math.round(y)); });
+}
+
+/* ═══ 4 · XI ChatGEO 에 말하면 — 지도가 그 조건대로 거른다(각본 · 숫자는 서버 · 화면 값) ═══ */
+/* 화면 안쪽에 중심이 있는 끝난 읍면동(경작지 많은 순) */
+function visibleCells() {
+  const cv = MAP.getCanvas(), W = cv.clientWidth, H = cv.clientHeight, m = new Map();
+  MAP.queryRenderedFeatures({ layers: ['xn-hit'] }).forEach((f) => {
+    if (!f.properties.done) return;
+    const c = MAP.project(centerOf(f.geometry));
+    if (c.x < 260 || c.x > W - 260 || c.y < 200 || c.y > H - 260) return;
+    const o = m.get(f.properties.cd); if (!o) m.set(f.properties.cd, { p: f.properties, c });
+  });
+  return [...m.values()].sort((a, b) => (b.p.n1 || 0) - (a.p.n1 || 0));
+}
+function busiestCell() {
+  const m = new Map(); visibleCells().forEach((v) => m.set(v.p.cd, v.p));
+  if (!m.size) MAP.querySourceFeatures('xn', { sourceLayer: 'cells', filter: ['==', ['get', 'done'], 1] }).forEach((f) => m.set(f.properties.cd, f.properties));
+  return [...m.values()].sort((a, b) => (b.n1 || 0) - (a.n1 || 0))[0] || null;
+}
+function applyFilter(min) {
+  FILTER = min ? { min } : null;
+  let n = 0, all = 0;
+  for (const o of OBJ.values()) {
+    const seen = new Map();
+    MAP.querySourceFeatures(o.src, { sourceLayer: 'results', filter: ['==', ['get', 'cls'], '경작지'] }).forEach((f) => { const a = areaM2(f); if (!seen.has(f.id) || seen.get(f.id) < a) seen.set(f.id, a); });
+    MAP.querySourceFeatures(o.src, { sourceLayer: 'results' }).forEach((f) => MAP.setFeatureState({ source: o.src, sourceLayer: 'results', id: f.id }, { big: false }));
+    for (const [id, a] of seen) { all++; const big = min ? a > min : true; if (big) n++; MAP.setFeatureState({ source: o.src, sourceLayer: 'results', id }, { big }); }
+  }
+  repaintObjs();
+  setP('xn-face', 'fill-opacity', min ? 0.04 : FACE(YRES.n25));
+  return { n, all };
+}
+const ASKS = [
+  { q: '1,000㎡ 넘는 경작지만', async run() {
+      if (MAP.getZoom() < 13) { const p = busiestCell(); if (p) { const b = bboxOf(cellFeatures(p.cd).map((f) => f.geometry)); await ST.go(b, { ms: 1800, maxZoom: 14 }); } }
+      await objects(); OPEN = 1; repaintObjs(); await idle(3500); await sleep(300);
+      const r = applyFilter(1000);
+      return `${dot('경작지')}<b>경작지 1,000㎡ 넘는 곳</b> <span class="num">${nf(r.n)}곳</span> — 지금 화면 안 ${nf(r.all)}곳 중. 나머지는 흐리게 했습니다.`;
+    } },
+  { q: '남원 2023과 2025 비교해 줘', async run() {
+      applyFilter(0); await addNamwon(); PIN?.remove(); await ST.go(NAMWON.bbox, { ms: 1800, maxZoom: 11.2 });
+      for (let y = 2025; y >= 2024; y -= 0.05) { setYear(y); await sleep(30); }
+      const g = D.nw?.items?.find((i) => i.name === '비닐하우스'), f = D.nw?.items?.find((i) => i.name === '경작·휴경');
+      return `<b>남원시</b> — ${dot('비닐하우스')}2023 비닐하우스 <span class="num">${nf(val(g?.n))}동</span> · ${dot('경작지')}2025 경작지 <span class="num">${nf(val(f?.n))}곳</span>. 위 막대를 끌어 두 해를 겹쳐 보세요.`;
+    } },
+  { q: '오늘 어디까지 했어?', async run() {
+      applyFilter(0); PIN?.remove(); setYear(2025); await ST.home({ ms: 1800 });
+      return `<b>농지 전수 ${D.prog?.year || '—'}</b> — 읍면동 <span class="num">${nf(val(F().done))}곳</span> · ${nf(val(F().done_km2))}㎢ 분석 끝. 지금 ${esc(F().next?.sgg || '')} ${esc(F().next?.emd || '')}.`;
+    } },
+];
+let asking = false;
+async function runAsk(i) {
+  if (asking) return; asking = true;
+  const a = ASKS[i], qEl = document.getElementById('askQ'), aEl = document.getElementById('askA');
+  aEl.classList.remove('in'); aEl.hidden = true; qEl.classList.remove('ph');
+  for (let k = 1; k <= a.q.length; k++) { qEl.innerHTML = esc(a.q.slice(0, k)) + '<span class="caret"></span>'; await sleep(40); }
+  const html = await a.run();
+  aEl.innerHTML = `<span class="tag">시안 답</span>${html}`;
+  aEl.hidden = false; requestAnimationFrame(() => aEl.classList.add('in'));
+  const chips = document.querySelector('.ask .chips');
+  chips.querySelector('.reset')?.remove();
+  if (i === 0) { const b = document.createElement('button'); b.type = 'button'; b.className = 'reset'; b.textContent = '원래대로'; b.onclick = () => { applyFilter(0); aEl.hidden = true; b.remove(); }; chips.prepend(b); }
+  asking = false;
+}
+function ask() {
+  return `<div class="ask" id="ask"><div class="chips">${ASKS.map((a, i) => `<button type="button" data-i="${i}">${esc(a.q)}</button>`).join('')}</div>
+    <div class="bar"><span class="logo">XI</span><span class="q ph" id="askQ">XI ChatGEO 에 말로 — 지도가 따라 움직입니다</span><button class="send" type="button" aria-label="보내기"><svg viewBox="0 0 20 20"><path d="M3 10h13M11 5l5 5-5 5"/></svg></button></div>
+    <div class="ans" id="askA" hidden></div></div>`;
+}
+function evo() {
+  const v = D.gh?.verdict, imgs = val(D.train?.runs?.[0]?.data?.images);
+  return `<section class="evo" id="evo"><h3>고치며 똑똑해지는 지도</h3>
+    <p data-k="fix"><span>고친 것</span><b>${nf(val(D.edits?.total))}건</b></p>
+    <p><span>학습 데이터</span><b>${nf(imgs)}장</b></p>
+    <p><span>비닐하우스 새 판</span><b>${v ? `${nf(val(v.value))}%` : '—'}<span style="font-weight:500;color:var(--sub)"> · 지금 ${v ? nf(val(v.base)) : '—'}%</span></b></p></section>`;
+}
+
+/* ═══ 시작 ═══ */
+await ensureLogin();
+await load();
+await stage(KOREA);
+addNational();
+const [, k0, b0, u0, s0, l0] = hudNational();
+ui.innerHTML = `<section class="hud" id="hud" data-big="${esc(b0)}">${hudHtml(k0, b0, u0, s0, l0)}</section>` + timeline() + ask() + evo()
+  + `<div class="src"><span class="on">최신 영상</span><span>분석한 영상</span></div>`;
+HUDKEY = '전국';
+ui.querySelectorAll('.ask .chips button').forEach((b) => b.addEventListener('click', () => runAsk(Number(b.dataset.i))));
+wireTimeline(); setYear(2025); wireMap(); flow();
+if (CUR) { const c = document.createElement('div'); c.className = 'cur'; document.body.append(c); addEventListener('mousemove', (e) => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }); addEventListener('mousedown', () => c.classList.add('down')); addEventListener('mouseup', () => c.classList.remove('down')); }
+if (AT === 'deok') await ST.go(DEOKJIN.bbox, { ms: 10, maxZoom: 10.6 });
+if (AT === 'namwon') { await addNamwon(); await ST.go(NAMWON.bbox, { ms: 10, maxZoom: 11.2 }); }
+await idle(); paintHud();
+document.documentElement.dataset.mapReady = '1';
+/* 촬영 도우미 — 화면 좌표만 돌려준다(누르기 · 올리기는 실제 마우스로) */
+window.__pt = {
+  cell() { const v = visibleCells()[0]; if (!v) return null; const r = MAP.getCanvas().getBoundingClientRect(); return { x: r.left + v.c.x, y: r.top + v.c.y }; },
+  cell2() { const vs = visibleCells(); const v = vs[3] || vs[1]; if (!v) return null; const r = MAP.getCanvas().getBoundingClientRect(); return { x: r.left + v.c.x, y: r.top + v.c.y }; },
+  obj() {
+    const r = MAP.getCanvas().getBoundingClientRect(), ls = objLayers();
+    const fs = MAP.queryRenderedFeatures([[r.width * 0.35, r.height * 0.3], [r.width * 0.6, r.height * 0.65]], { layers: ls }).filter((f) => f.properties.cls === '경작지' && areaM2(f) < 30000).sort((a, b) => areaM2(b) - areaM2(a)).slice(0, 12);
+    for (const f of fs) {
+      const ring = (f.geometry.type === 'Polygon' ? f.geometry.coordinates : f.geometry.coordinates[0])[0], c = MAP.project(centerOf(f.geometry));
+      const cands = [c, ...ring.slice(0, 40).map((v) => { const q = MAP.project(v); return { x: c.x * 0.6 + q.x * 0.4, y: c.y * 0.6 + q.y * 0.4 }; })];
+      for (const pt of cands) { const h = MAP.queryRenderedFeatures([pt.x, pt.y], { layers: ls })[0]; if (h && h.id === f.id && h.source === f.source) return { x: r.left + pt.x, y: r.top + pt.y }; }
+    }
+    return null;
+  },
+  year(y) { const r = document.getElementById('track').getBoundingClientRect(); return { x: r.left + ((y - Y0) / (Y1 - Y0)) * r.width, y: r.top + 12 }; },
+  fix() { const b = document.querySelector('.pin-b button.pri'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; },
+  chip(i) { const b = document.querySelector(`.ask .chips button[data-i="${i}"]`); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; },
+};
+if (ASK != null) { await sleep(800); runAsk(Number(ASK)); }
+</script>
+</body>
+</html>
