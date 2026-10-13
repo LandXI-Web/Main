@@ -680,6 +680,84 @@ async def register_imagery(request: Request):
     return out
 
 
+# ── LX 관리자 '공유 데이터'(10-13 관리자-공유데이터 · 원칙 238) ─────────────────────────────
+# 목록 = 직원 '공유 데이터에서 고르기'와 같은 GET /projects/imagery(관리자는 ?all=1 로 비공개까지 · visible).
+# 올리기 = 영상 등록 그대로(조각 올리기 → POST /catalog/imagery {draft_id}). 여기는 정보 고치기 · 공개/비공개 · 지우기만.
+#   PATCH  /catalog/imagery/{iid}   {name?, year?, visible?}   LX 관리자
+#   DELETE /catalog/imagery/{iid}                              LX 관리자 — 분석에 쓴 영상은 지우지 않는다(409) · 파일은 그대로 둔다
+SHARED_ROW = "coalesce(layer->>'role','imagery')='imagery' AND coalesce(kind,'ortho') <> 'terrain'"
+
+
+def _admin(request: Request):
+    from .deps import require
+    p = require(principal(request), lx=True)
+    if not p.is_admin:
+        raise ApiError("forbidden", "LX 관리자만 할 수 있습니다")
+    return p
+
+
+def _fresh() -> None:
+    try:
+        from .regions import _derived
+        _derived["t"] = 0
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@router.patch("/catalog/imagery/{iid}")
+async def imagery_edit(iid: str, body: dict, request: Request):
+    import datetime as dt
+    from .deps import audit
+    p = _admin(request)
+    sets, args, after = [], [iid], {}
+    if "name" in body:
+        nm = str(body.get("name") or "").strip()[:80]
+        if not nm:
+            raise ApiError("bad_request", "영상 이름을 적어 주세요")
+        args.append({"ko": nm, "en": nm}); sets.append(f"name=${len(args)}"); after["name"] = nm
+    if "year" in body:
+        try:
+            year = int(body.get("year"))
+            assert 1990 <= year <= dt.date.today().year + 1
+        except Exception:
+            raise ApiError("bad_request", "촬영 연도를 확인해 주세요")
+        args.append(year); sets.append(f"year=${len(args)}"); after["year"] = year
+    if "visible" in body:
+        args.append(bool(body.get("visible"))); sets.append(f"staff_visible=${len(args)}"); after["visible"] = bool(body.get("visible"))
+    if not sets:
+        raise ApiError("bad_request", "바꿀 것이 없습니다")
+    async with db(realm="lx") as conn:
+        row = await conn.fetchrow(f"SELECT name, year, staff_visible FROM imagery WHERE id=$1 AND {SHARED_ROW}", iid)
+        if not row:
+            raise ApiError("not_found", "영상이 없습니다")
+        await conn.execute(f"UPDATE imagery SET {', '.join(sets)} WHERE id=$1", *args)
+        await audit(conn, p, "imagery.edit", iid, {"name": row["name"], "year": row["year"], "visible": row["staff_visible"]}, after)
+    _fresh()
+    return {"ok": True, "id": iid, **after, "as_of": now_iso()}
+
+
+@router.delete("/catalog/imagery/{iid}")
+async def imagery_delete(iid: str, request: Request):
+    from .deps import audit
+    p = _admin(request)
+    async with db(realm="lx") as conn:
+        row = await conn.fetchrow(f"SELECT id, name, sgg_cd, year FROM imagery WHERE id=$1 AND {SHARED_ROW}", iid)
+        if not row:
+            raise ApiError("not_found", "영상이 없습니다")
+        if await conn.fetchval("SELECT 1 FROM jobs WHERE imagery_id=$1 AND kind <> 'tile' LIMIT 1", iid):
+            raise ApiError("conflict", "분석에 쓴 영상이라 지울 수 없습니다", None, 409)
+        async with conn.transaction():
+            await conn.execute("UPDATE jobs SET imagery_id=NULL WHERE imagery_id=$1 AND kind='tile'", iid)
+            await conn.execute("DELETE FROM imagery_shares WHERE imagery_id=$1", iid)
+            await conn.execute("DELETE FROM project_links WHERE kind='imagery' AND ref=$1", iid)
+            await conn.execute("DELETE FROM imagery_std WHERE source_kind='imagery' AND source_id=$1", iid)   # 같은 id 로 다시 올리면 표준본을 새로 만들게(파일은 그대로)
+            await conn.execute("DELETE FROM imagery WHERE id=$1", iid)
+            await audit(conn, p, "imagery.delete", iid, {"name": row["name"], "sgg_cd": row["sgg_cd"], "year": row["year"]}, None)
+    _share_cache.clear()
+    _fresh()
+    return {"ok": True, "id": iid, "as_of": now_iso()}
+
+
 # ── LX 영상 공유(확인 대장 5차 역할-4 ⓑ — LX 관리자가 기관마다 고른다) ─────────────────────────────
 # 공유 = 권한 한 줄(imagery_shares: 기관 × 영상) — 복사 0 · 원본 파일 0. 기관 세션의 영상 층(layer_items)과 분석 의뢰의 '불러오기'(requests.py)가
 # 이 한 표만 본다. 관할 밖 영상은 공유할 수 없다(원칙 39). 첫 실행 때 한 번, 지금 기관에 보이던 관할 안 영상(지도 이미지 · 기관 공개)을 그대로 옮겨 적는다

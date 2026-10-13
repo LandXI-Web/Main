@@ -851,7 +851,8 @@ async def imagery_options(cid: str, region: str, request: Request):
         if not cv:
             raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
         aoi = mapping(geoms[sgg]) if sgg in geoms else None
-        for r in cands[:24]:
+        hidden = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE NOT staff_visible")}   # 관리자 '공유 데이터' 비공개(10-13)
+        for r in [c for c in cands if c["id"] not in hidden][:24]:
             want = _img_dict(r)
             pl = await plan_analysis(conn, None, cid, cv, sgg, aoi, img=want)
             own = (pl.get("pick") or {}).get("own") or {}

@@ -1,0 +1,33 @@
+/* LX 관리자 '공유 데이터'(js/shared.js) — 목록 한 장. 토스 톤 · 아이콘 0. */
+.sd-card{display:flex;flex-direction:column;gap:14px;max-width:1392px;min-width:0}
+.sd-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.sd-h h2{margin:0;display:flex;align-items:baseline;gap:10px;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.sd-n{font:500 14px/20px var(--font-body);color:var(--sub)}
+.sd-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sd-q{width:260px;max-width:100%}
+.sd-tbl-w{overflow-x:auto}
+.sd-tbl{width:100%;border-collapse:collapse;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.sd-tbl th{text-align:left;padding:0 10px 8px;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule);white-space:nowrap}
+.sd-tbl td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:middle;white-space:nowrap}
+.sd-tbl td b{font-weight:500;white-space:normal;word-break:keep-all}
+.sd-c-im{width:72px}
+.sd-im{display:block;width:64px;height:48px;border-radius:6px;overflow:hidden;background:var(--bg-0)}
+.sd-im img{width:100%;height:100%;object-fit:cover;display:block}
+.sd-vis{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:999px;background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.sd-vis[aria-pressed="true"]{border-color:#1B64DA;color:#1B64DA}
+.sd-vis:disabled{opacity:.6;cursor:default}
+.sd-do{text-align:right}
+.sd-do .t-btn{margin-left:6px}
+.sd-none{margin:0;padding:16px;border-radius:12px;background:var(--bg-0);font:400 14px/20px var(--font-body);color:var(--sub)}
+.sd-pg{display:flex;align-items:center;justify-content:flex-end;gap:12px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.sd-pg button{border:0;background:none;font:inherit;color:var(--ink);cursor:pointer}
+.sd-pg button:disabled{color:var(--mute);cursor:default}
+.sd-form{display:flex;flex-direction:column;gap:12px}
+.sd-form label{display:flex;flex-direction:column;gap:6px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.sd-yr{width:140px}
+.sd-del{margin:0;font:500 15px/22px var(--font-body);color:var(--ink);word-break:keep-all}
+.sd-err{margin:0;min-height:0;font:400 13px/18px var(--font-body);color:#D93A3A}
+.sd-err:empty{display:none}
+.sd-act{display:flex;justify-content:flex-end;gap:8px}
+.sd-up{min-height:200px}
+@media (max-width:960px){.sd-q{width:100%}.sd-tools{width:100%}}

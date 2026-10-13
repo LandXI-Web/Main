@@ -1,10 +1,10 @@
 /* board.js — 프로젝트 '학습' 화면 = AI 모델 작업 흐름(학습-작업흐름-v3 · 10-12 11:26 '이대로 구현' · 원칙 183 · 200 · 208 · 209).
    시안 landxi/proto/review/mock/train-flow-3 를 실제 화면으로 옮김 — 세로 한 줄기:
-   ① 흐름 판 — 블록(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 평가 · 추론 시험 · 배포 신청)을 위 칩에서 끌어다 놓거나 눌러 더하고,
+   ① 흐름 판 — 블록(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 추론 · 배포 신청 — 10-13 '평가'→'추론' · '추론 시험'은 '추론'과 같은 것이라 하나로)을 위 칩에서 끌어다 놓거나 눌러 더하고,
       출구 ○ → 다음 블록으로 잇는다. 같은 블록 여러 개 · D 복제 · Delete 지우기 · 선 누르면 끊기 · 블록 누르면 오른쪽 서랍.
       처음 판 = 학습 서식('기본' 하나 · GET /train-templates · 결정 ⓑ 블록까지 바꿈 · 10-12 12:45 · 10-13 기본 하나) —
       블록 자리는 서식, 값은 이 프로젝트의 가장 최근 학습. 직원은 블록 넣기 · 빼기 · 잇기를 바꾸고 '기본 흐름으로 되돌리기'로 처음 모양.
-      학습 데이터 블록 선택지에 'XI맵에서 고친 곳 n장'(GET /train-data/xi — 이 프로젝트가 만든 분석서비스에서 고친 곳이 모인 학습 데이터 · 10-13 데이터-개념 ⓐ)
+      학습 데이터 블록 선택지에 '수정된 부분 n장'(10-13 저절로-문구 · 사용자 말 그대로)(GET /train-data/xi — 이 프로젝트가 만든 분석서비스에서 고친 곳이 모인 학습 데이터 · 10-13 데이터-개념 ⓐ)
       — 학습은 XI 재학습(쉬는 시간)이 같은 칸으로 한다.
       '다시 돌리기' = 판 위 학습 블록마다 학습 한 건(그 블록에 이은 학습 데이터 · 기반 모델 · 학습 설정) → 작업 대기열(/jobs/quote → /jobs · 전력 규칙은 서버).
    ② 이번 학습 — 반복마다 정확도 그래프 하나(학습 기록 · 지난 판 겹침 · 기준선 없음) + 핵심 수치.
@@ -44,19 +44,18 @@ const ordName = (i) => `${ORD[i] || `${i + 1}번째`} 판`;
 const clsWords = (cls = []) => [...new Set(cls.map((c) => String(c).split('_')[0]))];
 const LIVE = new Set(['queued', 'running']);
 
-const KIND = { data: '학습 데이터', base: '기반 모델', cfg: '학습 설정', train: '학습', eval: '평가', test: '추론 시험', deploy: '배포 신청' };
-const IN = { train: ['data', 'base', 'cfg'], eval: ['train'], test: ['train', 'base'], deploy: ['eval'] };
+const KIND = { data: '학습 데이터', base: '기반 모델', cfg: '학습 설정', train: '학습', eval: '추론', deploy: '배포 신청' };   // 10-13 '평가' → '추론'(원칙 235) · '추론 시험' 블록은 '추론'과 하나로
+const IN = { train: ['data', 'base', 'cfg'], eval: ['train'], deploy: ['eval'] };
 const ONE = { train: ['data', 'base', 'cfg'], eval: ['train'], deploy: ['eval'] };
-const WHY = { train: '학습에는 학습 데이터 · 기반 모델 · 학습 설정만 들어와요', eval: '평가는 학습이 끝난 모델에만 이어요', test: '추론 시험은 학습한 모델이나 기반 모델에 이어요', deploy: '배포 신청에는 평가만 이어요',
+const WHY = { train: '학습에는 학습 데이터 · 기반 모델 · 학습 설정만 들어와요', eval: '추론은 학습이 끝난 모델에만 이어요', deploy: '배포 신청에는 추론만 이어요',
   data: '학습 데이터 앞에는 아무것도 오지 않아요', base: '기반 모델 앞에는 아무것도 오지 않아요', cfg: '학습 설정 앞에는 아무것도 오지 않아요' };
 const ONE_WHY = { data: '학습 하나에 학습 데이터는 하나만 — 다른 데이터로 보려면 학습 블록을 하나 더 놓아요',
   base: '학습 하나에 기반 모델은 하나만 — 둘을 나란히 보려면 학습 블록을 하나 더 놓아요',
   cfg: '학습 하나에 학습 설정은 하나만 — 설정을 바꿔 보려면 학습 블록을 하나 더 놓아요',
-  train: '평가 하나에 학습 하나만 이어요', eval: '배포 신청 하나에 평가 하나만 이어요' };
+  train: '추론 하나에 학습 하나만 이어요', eval: '배포 신청 하나에 추론 하나만 이어요' };
 const W = 168, C0 = 20, C1 = 250, C2 = 480, C3 = 710, R = [16, 112, 200];
 const EPOCHS = [3, 10, 20], SIZES = [640, 1280], BATCH = [4, 8], EP_MAX = 50;
 const GPU_LINE = '학습 장비 — LX 관리자가 배정 · 프로젝트 하나에 한 장';
-const LOCK_LINE = '바꿀 수 없는 것 — 학습 장비 배정 · 상한 · 쉬는 시간대 · 검증 묶음 · 승인(LX 관리자)';
 
 /** 프로젝트 학습 화면을 host(셸 판)에 그린다. project = GET /projects/{id} 응답 */
 export async function trainBoard({ host, project: P }) {
@@ -105,7 +104,7 @@ export async function trainBoard({ host, project: P }) {
     if (r.model?.id && r.model.id === serving) return ['ok', '서비스 중'];
     const s = r.same, sb = s?.base;
     if (r.model && ['candidate', 'pending'].includes(r.model.status)) {
-      if (s && sb && v(s.value) < v(sb.value)) return ['down', `같은 검증 묶음 ${pct(v(s.value))} · 원판 ${pct(v(sb.value))}보다 낮아 후보로 남음`];
+      if (s && sb && v(s.value) < v(sb.value)) return ['down', `추론 ${pct(v(s.value))} · 원판 ${pct(v(sb.value))}보다 낮아 후보로 남음`];
       return ['', r.model.status === 'pending' ? '승인 대기' : '후보'];
     }
     return ['', '지난 판'];
@@ -132,7 +131,6 @@ export async function trainBoard({ host, project: P }) {
     put('train1', 'train', C1, R[1], { run: cur || null });
     links.push({ a: 'data1', b: 'train1' }, { a: 'base1', b: 'train1' }, { a: 'cfg1', b: 'train1' });
     if (has('eval')) { put('eval1', 'eval', C2, R[1], { run: cur || null }); links.push({ a: 'train1', b: 'eval1' }); }
-    if (has('test')) { put('test1', 'test', C2, R[2], {}); links.push({ a: 'train1', b: 'test1' }); }
     if (has('deploy') && has('eval')) { put('deploy1', 'deploy', C3, R[1], { run: cur || null }); links.push({ a: 'eval1', b: 'deploy1' }); }
     picked = null; from = null;
   }
@@ -142,8 +140,8 @@ export async function trainBoard({ host, project: P }) {
   const DATA = [];
   for (const s of smp?.items || []) DATA.push({ ref: s.id, name: s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at) });
   for (const r of runs) { const d = dataOf(r); if (d?.ref && !DATA.some((x) => x.ref === d.ref)) DATA.push(d); }
-  /* XI맵에서 고친 곳 — 이 프로젝트가 만든 분석서비스의 결과를 고친 곳이 모인 학습 데이터 n장(서비스가 있을 때만) · 학습은 XI 재학습(쉬는 시간)으로 */
-  if (XU?.cards?.length) DATA.push({ ref: 'xi-edits', name: 'XI맵에서 고친 곳', images: v(XU.tiles) ?? 0, kind: 'edits' });
+  /* 수정된 부분 — 이 프로젝트가 만든 분석서비스의 결과를 XI맵에서 고친 곳 n장(서비스가 있을 때만) · 학습은 XI 재학습으로 */
+  if (XU?.cards?.length) DATA.push({ ref: 'xi-edits', name: '수정된 부분', images: v(XU.tiles) ?? 0, kind: 'edits' });
   const BASES = [];
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
@@ -158,7 +156,7 @@ export async function trainBoard({ host, project: P }) {
   const reset = h('button.tb-reset', { type: 'button', text: '기본 흐름으로 되돌리기', onclick: () => { defaultFlow(); render(); } });
   const board = h('section.tb-card.tb-board', { 'aria-label': '학습 작업 흐름' },
     h('div.tb-board-h', {}, h('h1', { text: '학습 · AI 모델 작업 흐름' }), hint, go), add, h('div.tb-cv-w', {}, cv),
-    h('div.tb-lock', {}, h('span', { text: LOCK_LINE }), reset));
+    h('div.tb-lock', {}, reset));
   const perf = h('section.tb-card.tb-perf', { 'aria-label': '이번 학습' });
   const keys = h('section.tb-card.tb-keys', { 'aria-label': '핵심 수치' });
   const hist = h('section.tb-card.tb-hist', { 'aria-label': '학습 이력' });
@@ -245,18 +243,16 @@ export async function trainBoard({ host, project: P }) {
       else { o.num = r.acc ? `학습 끝 검증 ${pct(v(r.acc))}` : ''; o.line = `끝남 · ${mdhm(r.finished_at)} · ${v(r.epochs)}회`; }
     } else if (n.kind === 'eval') {
       const r = (upTrain(n) || {}).run;
-      if (!r || LIVE.has(r.state)) o.line = '학습이 끝나면 같은 검증 묶음으로';
+      if (!r || LIVE.has(r.state)) o.line = '학습이 끝나면';
       else if (r.same) {
-        o.line = `같은 검증 묶음${r.same.images ? ` ${nf(v(r.same.images))}칸` : ''} · ${pct(v(r.same.value))}`;
+        o.line = pct(v(r.same.value));
         const b = r.same.base;
         if (b) { const d = v(r.same.value) - v(b.value); o.tag = [d < 0 ? `원판 ${pct(v(b.value))}보다 낮음` : d > 0 ? `원판 ${pct(v(b.value))}보다 높음` : `원판 ${pct(v(b.value))}와 같음`, d < 0 ? 'down' : d > 0 ? 'ok' : '']; }
-      } else o.line = '같은 검증 묶음으로 잰 값 없음';
-    } else if (n.kind === 'test') {
-      o.line = '추론 단계에서 영상 하나로';
+      } else o.line = '—';
     } else if (n.kind === 'deploy') {
       const r = (upTrain(n) || {}).run;
       const [k, t] = r ? stateOf(r) : ['', ''];
-      if (!r || LIVE.has(r.state)) { o.line = '평가 뒤에 켜져요'; o.cls = 'off'; }
+      if (!r || LIVE.has(r.state)) { o.line = '추론 뒤에 켜져요'; o.cls = 'off'; }
       else if (k === 'ok') o.line = '서비스 중';
       else if (k === 'down') { o.line = '원판보다 낮아 꺼짐'; o.cls = 'off'; }
       else o.line = t === '지난 판' ? '지난 판' : '배포 신청으로';
@@ -277,7 +273,7 @@ export async function trainBoard({ host, project: P }) {
       el.append(h('small', { text: f.line }));
       if (f.bar != null) el.append(h('div.tb-bar', {}, h('i', { style: `width:${f.bar}%` })));
       if (f.tag && f.tag[0]) el.append(h('span.tb-tag', { class: f.tag[1] || '', text: f.tag[0] }));
-      if (!['deploy', 'test'].includes(n.kind)) el.append(h('i.tb-port', { class: from === n.id ? 'is-from' : '', 'aria-hidden': 'true', title: '이어 갈 블록 고르기' }));
+      if (n.kind !== 'deploy') el.append(h('i.tb-port', { class: from === n.id ? 'is-from' : '', 'aria-hidden': 'true', title: '이어 갈 블록 고르기' }));
       el.addEventListener('click', (e) => {
         if (e.target.classList.contains('tb-port') && !e.target.classList.contains('in')) { from = from === n.id ? null : n.id; render(); return; }
         if (from && from !== n.id) { connect(from, n.id); from = null; return; }
@@ -358,7 +354,6 @@ export async function trainBoard({ host, project: P }) {
       if (per) out.push(h('p', { text: `많을수록 오래 걸려요 — 지난 학습은 한 번 반복에 약 ${dur(per)}이었어요.` }));
       out.push(h('p.tb-lab', { text: '이미지 크기' }), seg(SIZES, c.imgsz, String, (k) => { c.imgsz = k; back(); }),
         h('p.tb-lab', { text: '한 번에' }), seg(BATCH, c.batch, (k) => `${k}장`, (k) => { c.batch = k; back(); }),
-        h('p.tb-dgpu', { text: '학습 장비 메모리는 관리자가 정한 한도 안에서 서버가 맞춰요.' }),
         h('p', { style: 'margin-top:10px', text: '다른 설정으로 한 번 더 보려면 학습 설정 블록을 하나 더 놓고(D) 다른 학습에 이어요.' }));
     } else if (n.kind === 'train') {
       const r = n.run;
@@ -368,23 +363,20 @@ export async function trainBoard({ host, project: P }) {
       else out.push(h('span.tb-verdict.ok', { text: `끝남 · ${mdhm(r.finished_at)}` }),
         kv([r.data?.images ? ['학습 데이터', `${nf(v(r.data.images))}장`, true] : null, ['기반 모델', baseWord(r.base?.id).long], ['설정', `반복 ${v(r.epochs)}회 · 크기 ${r.imgsz} · 한 번에 ${r.batch}장`],
           r.took ? ['걸린 시간', dur(v(r.took)), true] : null, r.acc ? ['학습 끝 검증', pct(v(r.acc)), true] : null]));
-      out.push(h('p.tb-dgpu', { text: '학습 장비는 LX 관리자가 배정해요 — 프로젝트 하나는 한 번에 한 장. 여기서 고르거나 바꿀 수 없어요.' }));
     } else if (n.kind === 'eval') {
       const r = (upTrain(n) || {}).run;
-      if (!r || LIVE.has(r.state)) out.push(h('span.tb-verdict', { text: '학습이 끝나면 재요' }), h('p.tb-lab', { text: '어떻게 재나' }), h('p', { text: '학습에 안 쓴 같은 검증 묶음으로 재요. 결과는 AI 모델 정확도 한 줄이에요.' }));
-      else if (!r.same) out.push(h('span.tb-verdict', { text: '같은 검증 묶음 값 없음' }), h('p', { style: 'margin-top:10px', text: '이 판은 같은 검증 묶음으로 재지 않았어요. 학습 끝 검증 값만 있어요.' }));
+      if (!r || LIVE.has(r.state)) out.push(h('span.tb-verdict', { text: '학습이 끝나면 추론합니다' }));
+      else if (!r.same) out.push(h('span.tb-verdict', { text: '추론 값 없음' }));
       else {
         const s = r.same, b = s.base, low = b && v(s.value) < v(b.value);
-        out.push(h('span.tb-verdict', { class: low ? 'down' : b ? 'ok' : '', text: `${md(s.at)} · ${b ? (low ? '원판보다 낮음' : '원판보다 높거나 같음') : '같은 검증 묶음'}` }),
-          kv([s.images ? ['같은 검증 묶음', `${nf(v(s.images))}칸`, true] : null, ['이 판', pct(v(s.value)), true], b ? ['원판', pct(v(b.value)), true] : null]),
-          h('p', { text: `학습 중 자체 검증(${pct(v(r.acc))})과 같은 검증 묶음 값(${pct(v(s.value))})은 다른 묶음으로 잰 값이에요. 배포 기준은 같은 검증 묶음 값이에요.` }));
+        out.push(h('span.tb-verdict', { class: low ? 'down' : b ? 'ok' : '', text: `${md(s.at)}${b ? ` · ${low ? '원판보다 낮음' : '원판보다 높거나 같음'}` : ''}` }),
+          kv([['이 판', pct(v(s.value)), true], b ? ['원판', pct(v(b.value)), true] : null]));
       }
-    } else if (n.kind === 'test') {
-      out.push(h('p', { text: '배포 전에 영상 하나로 결과를 눈으로 보는 자리예요. 추론 단계에서 이 프로젝트 모델로 돌려요.' }), h('a.tb-dbtn', { href: stageHref(P, 'infer'), text: '추론 열기' }));
+      out.push(h('a.tb-dbtn', { href: stageHref(P, 'infer'), text: '추론 열기' }));
     } else if (n.kind === 'deploy') {
       const r = (upTrain(n) || {}).run;
       const [k] = r ? stateOf(r) : [''];
-      out.push(h('span.tb-verdict', { class: k === 'ok' ? 'ok' : k === 'down' ? 'down' : '', text: !r || LIVE.has(r.state) ? '평가가 끝나면 켜져요' : k === 'ok' ? '이 판이 서비스 중이에요' : k === 'down' ? '원판보다 낮아 꺼져 있어요' : '배포 신청할 수 있어요' }),
+      out.push(h('span.tb-verdict', { class: k === 'ok' ? 'ok' : k === 'down' ? 'down' : '', text: !r || LIVE.has(r.state) ? '추론이 끝나면 켜져요' : k === 'ok' ? '이 판이 서비스 중이에요' : k === 'down' ? '원판보다 낮아 꺼져 있어요' : '배포 신청할 수 있어요' }),
         h('p', { style: 'margin-top:10px', text: '배포 신청은 프로젝트 마지막 단계에서 해요. LX 관리자가 비교 값을 보고 승인해요.' }), h('a.tb-dbtn', { href: stageHref(P, 'publish'), text: '배포 신청 열기' }));
     }
     side.replaceChildren(...out);
@@ -398,7 +390,7 @@ export async function trainBoard({ host, project: P }) {
     const vals = (r ? liveLog : []).map((x) => x * 100);
     const N = r ? v(r.epochs) : 0;
     const head = h('div.tb-ph', {}, h('h2', { text: '이번 학습 · 반복마다 정확도' }));
-    if (r) head.append(h('p', { text: [r.started_at ? `${mdhm(r.started_at)}${r.finished_at ? ` → ${mdhm(r.finished_at)}` : ''}` : '', `반복 ${N}회`, r.data?.val ? `반복마다 자체 검증 ${nf(v(r.data.val))}장으로 잰 값` : ''].filter(Boolean).join(' · ') }));
+    if (r) head.append(h('p', { text: [r.started_at ? `${mdhm(r.started_at)}${r.finished_at ? ` → ${mdhm(r.finished_at)}` : ''}` : '', `반복 ${N}회`].filter(Boolean).join(' · ') }));
     const bigV = r && r.state === 'done' && r.acc ? v(r.acc) : vals.length ? Math.round(vals[vals.length - 1]) : null;
     if (bigV != null) head.append(h('span.tb-big', {}, pct(bigV), h('small', { text: r.state === 'done' ? '학습 끝 검증' : '지금까지' })));
     if (vals.length < 2) {
@@ -434,9 +426,7 @@ export async function trainBoard({ host, project: P }) {
       tip.style.left = Math.min(X(ep) / Wd * rc.width + 10, rc.width - 130) + 'px'; tip.style.top = (e.clientY - rc.top - 36) + 'px';
     });
     s2.addEventListener('mouseleave', () => { tip.style.display = cross.style.display = 'none'; });
-    const foot = r.state === 'done' && r.same ? `학습이 끝난 뒤 같은 검증 묶음${r.same.images ? ` ${nf(v(r.same.images))}칸` : ''}으로 잰 값은 ${pct(v(r.same.value))} — 배포 기준은 이 값이에요`
-      : LIVE.has(r.state) ? '끝나면 같은 검증 묶음으로 한 번 더 재요' : '';
-    perf.replaceChildren(head, plot, ...(foot ? [h('p.tb-foot', { text: foot })] : []));
+    perf.replaceChildren(head, plot);
   }
   function drawKeys() {
     const r = cur;
@@ -449,12 +439,12 @@ export async function trainBoard({ host, project: P }) {
       ['기반 모델', baseWord(r.base?.id).long, 'txt'],
       ['반복 · 크기 · 한 번에', `${v(r.epochs)}회 · ${r.imgsz} · ${r.batch}장`, 'num'],
       [r.state === 'done' ? '학습 끝 검증' : '지금까지', r.state === 'done' ? pct(v(r.acc)) : liveLog.length ? pct(liveLog[liveLog.length - 1] * 100) : '—', 'num'],
-      ['같은 검증 묶음', s ? `${pct(v(s.value))}${b ? ` (원판 ${pct(v(b.value))})` : ''}` : r.state === 'done' ? '—' : '끝나면', `num${s && b && v(s.value) < v(b.value) ? ' down' : ''}`],
+      ['추론', s ? `${pct(v(s.value))}${b ? ` (원판 ${pct(v(b.value))})` : ''}` : r.state === 'done' ? '—' : '끝나면', `num${s && b && v(s.value) < v(b.value) ? ' down' : ''}`],
       [r.state === 'done' ? '걸린 시간' : '시작', r.state === 'done' ? (r.took ? dur(v(r.took)) : '—') : mdhm(r.started_at || r.created_at), 'num'],
     ];
     keys.replaceChildren(h('h2', {}, '핵심 수치', h('span.tb-st', { class: k, text: short })),
       h('div.tb-kv', {}, ...rows.flatMap(([a, b2, c]) => [h('span', {}, h('b', { text: a })), h('span', { class: c, text: b2 })])),
-      h('p.tb-gpu', { text: `${GPU_LINE} · 밤 대기열` }));
+      h('p.tb-gpu', { text: GPU_LINE }));
   }
   /* ── ③ 학습 이력 ── */
   function drawHist() {
@@ -464,14 +454,14 @@ export async function trainBoard({ host, project: P }) {
       return h('tr', { class: i === 0 ? 'is-now' : '' },
         h('td.num', { text: md(r.finished_at || r.started_at || r.created_at) }),
         h('td', {}, nameOf.get(r.job), h('small', { text: how })),
-        h('td.num', {}, h('b', { text: r.acc ? pct(v(r.acc)) : '—' }), i === 0 && r.same ? h('small', { text: `같은 검증 묶음 ${pct(v(r.same.value))}` }) : null),
+        h('td.num', {}, h('b', { text: r.acc ? pct(v(r.acc)) : '—' }), i === 0 && r.same ? h('small', { text: `추론 ${pct(v(r.same.value))}` }) : null),
         h('td.num', { text: r.data?.images ? `${nf(v(r.data.images))}장` : '—' }),
         h('td', {}, h('span.tb-st', { class: k, text: t })));
     });
     if (base0) rows.push(h('tr', {}, h('td.num', { text: md(base0.day) }), h('td', {}, '원판', h('small', { text: `${clsWords(base0.classes).join(' · ')} ${clsWords(base0.classes).length}종 모델` })),
       h('td.num', {}, h('b', { text: base0.acc ? pct(v(base0.acc)) : '—' })), h('td.num', { text: '—' }),
       h('td', {}, base0.id === serving ? h('span.tb-st.ok', { text: '서비스 중' }) : null, base0.id === serving ? ' ' : null, h('span.tb-st.base', { text: '기반 모델' }))));   // 공개 서비스가 원판을 쓰면 '서비스 중'(분석하기 카드와 같은 규칙)
-    hist.replaceChildren(h('h2', {}, '학습 이력', h('small', { text: '이 프로젝트 · 최근 순 · AI 모델 정확도는 학습 끝 검증 값' })),
+    hist.replaceChildren(h('h2', {}, '학습 이력', h('small', { text: '최근 순' })),
       rows.length ? h('div.tb-tbl-w', {}, h('table.tb-tbl', {}, h('thead', {}, h('tr', {}, ...[['날짜', ''], ['판', ''], ['AI 모델 정확도', 'num'], ['학습 데이터', 'num'], ['상태', '']].map(([a, c]) => h('th', { class: c, text: a })))),
         h('tbody', {}, ...rows))) : h('p.tb-foot', { text: '아직 학습 기록이 없습니다' }));
   }
@@ -484,7 +474,7 @@ export async function trainBoard({ host, project: P }) {
       if (t.run && LIVE.has(t.run.state)) continue;
       const d = inputs(t.id, 'data')[0], b = inputs(t.id, 'base')[0], c = inputs(t.id, 'cfg')[0];
       const miss = !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요'
-        : d.data.kind === 'edits' ? 'XI맵에서 고친 곳은 쉬는 시간에 저절로 학습해요' : !b ? '기반 모델 블록을 이어 주세요'
+        : d.data.kind === 'edits' ? '수정된 부분은 XI 재학습에서 학습합니다' : !b ? '기반 모델 블록을 이어 주세요'
         : !b.base ? '기반 모델 블록에서 모델을 골라 주세요' : !c ? '학습 설정 블록을 이어 주세요' : null;
       if (miss) bad.push([t, miss]); else out.push({ t, d: d.data, b: b.base, c: c.cfg });
     }
@@ -500,7 +490,6 @@ export async function trainBoard({ host, project: P }) {
       h('p', { text: '대기열에 들어가 차례가 오면 돌아요. 끝나면 이 화면 이력에 쌓이고, 배포는 LX 관리자 승인 뒤 바뀝니다.' }),
       h('ul', {}, ...out.map((x) => h('li', {}, `${x.d.name || '학습 데이터'}${x.d.images != null ? ` ${nf(x.d.images)}장` : ''} · ${baseWord(x.b).long}`,
         h('small', { text: `반복 ${x.c.epochs}회 · 크기 ${x.c.imgsz} · 한 번에 ${x.c.batch}장` })))),
-      h('p.tb-dgpu', { text: GPU_LINE }),
       h('div.tb-md-act', {}, no, okB));
     const m = modal({ title: '학습을 시작할까요', body });
     no.addEventListener('click', () => m.close());

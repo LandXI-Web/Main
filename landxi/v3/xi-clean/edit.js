@@ -1,7 +1,8 @@
 /* XI맵 그 자리 고치기(바퀴 5 · 원칙 182 · 191 · 196 · 설계 20차 ximap-board-2 c4~c6) — 객체를 누르면 그 자리에 작은 칸.
    지우기 · 분류 바꾸기 · 모양 고치기(꼭짓점 끌기 · 변 가운데 점 = 꼭짓점 더하기 · 꼭짓점 두 번 누르기 = 빼기) · 새로 그리기 · 메모.
-   고친 것은 서버가 원래 모양과 함께 남긴다(POST /ximap/edits — 누가 · 언제 · 영상 · 모델 판) → 학습 자료.
-   칸 아래 한 줄 = 이 서비스에서 고친 것 n건 → 그 프로젝트 학습으로(단추만 · 학습 실행은 하지 않는다).
+   고친 것은 서버가 원래 모양과 함께 남긴다(POST /ximap/edits — 누가 · 언제 · 영상 · 모델 판) → 학습 데이터.
+   칸 아래 한 줄(10-13 저절로-문구 · 사용자 말 그대로) = '수정된 부분 n장'(1장이 된 칸 · 학습 화면 · XI 재학습과 같은 셈) → 그 프로젝트 학습으로(단추만).
+   n 이 0 이면 '수정된 부분은 학습 데이터로 저장됩니다.' 한 줄. 이 밖의 덧말(토스트 꼬리 '학습 자료로 쌓입니다')은 뺐다.
    모양 고치기 · 새로 그리기는 분석한 영상 위에서(끝나면 보던 영상으로 되돌린다). 시험 고치기 = 주소에 test=1. */
 import { api } from '../kit/util.js';
 
@@ -117,16 +118,16 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     place();
     retrainLine(foot);
   }
-  /** 고친 것 n건 → 그 서비스 프로젝트 학습으로(단추만) */
+  /** 수정된 부분 n장 → 그 서비스 프로젝트 학습으로(단추만) */
   async function retrainLine(foot) {
     const items = await cardCount();
     const m = E.sel?.meta || {};
     const it = items.find((x) => x.service === (m.service || '토지피복'));
-    const n = val(it?.n) || 0;
-    if (!n) { foot.replaceChildren(h('span', { text: '고친 것은 원래 모양과 함께 학습 자료로 쌓입니다' })); place(); return; }
-    foot.replaceChildren(h('span', {}, `이 서비스에서 고친 것 `, h('b.num', { text: `${nf(n)}건` })),
+    const n = val(it?.tiles) || 0;
+    if (!n) { foot.replaceChildren(h('span', { text: '수정된 부분은 학습 데이터로 저장됩니다.' })); place(); return; }
+    foot.replaceChildren(h('span', {}, '수정된 부분 ', h('b.num', { text: `${nf(n)}장` })),
       it.project ? h('a.xe-train', { href: new URL(`../lx-train/?${new URLSearchParams({ project: it.project.id, stage: 'train', flow: '1' })}`, import.meta.url).href, text: `${it.project.name} 학습으로` })
-        : h('span.xe-sub', { text: ' · 학습 자료로 쌓임' }));
+        : null);
     place();                                              // 아래 줄이 늦게 붙어 칸이 길어지면 화면 안으로 다시 맞춤
   }
 
@@ -156,7 +157,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
 
   function askDelete() {
     render(h('div.xe-ask', {}, h('p', { text: '이 객체를 지울까요? 원래 모양은 기록에 남습니다.' }),
-      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '지우기', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '지웠습니다 · 학습 자료로 쌓입니다') }),
+      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '지우기', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '지웠습니다') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
   }
   /* ── 클래스 고르기(원칙 205 · 217 · 223) — 질문 문장 없이 클래스 목록(서버 한 곳 · GET /classes/pick)에서 고르고, 없으면 이름을 새로 써서 더한다.
@@ -216,7 +217,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     setTimeout(() => name.focus(), 30);
     return f;
   }
-  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다 · 학습 데이터로 쌓입니다` : `${c.name}(으)로 바꿨습니다 · 학습 데이터로 쌓입니다`);
+  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다` : `${c.name}(으)로 바꿨습니다`);
   async function pickClass() {
     const now = E.sel.properties.cls;
     render(h('p.xe-wait', { text: '불러오는 중' }));
@@ -262,7 +263,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const nv = val(E.sel.edit?.n_vertices), ne = val(E.sel.edit?.n_vertices_edit);
     bar.replaceChildren(h('span.xe-bar-t', { text: nv && ne && nv > ne ? `꼭짓점 ${ne}개로 단순화해 열었습니다(원래 ${nv}개)` : '꼭짓점을 끌어 모양을 고치세요' }),
       h('button.t-btn.t-btn--2', { type: 'button', text: '되돌리기', onclick: () => { const x = S.hist.pop(); if (x) { S.ring = x; drawShape(); } } }),
-      h('button.t-btn', { type: 'button', text: '다 고침', onclick: async () => { const geometry = shapeGeom(); stopShape(); await send({ fid: E.sel.id, action: 'reshape', geometry }, '모양을 고쳤습니다 · 원래 모양과 함께 학습 자료로 쌓입니다'); } }),
+      h('button.t-btn', { type: 'button', text: '다 고침', onclick: async () => { const geometry = shapeGeom(); stopShape(); await send({ fid: E.sel.id, action: 'reshape', geometry }, '모양을 고쳤습니다'); } }),
       h('button.t-btn.t-btn--text', { type: 'button', text: '그만', onclick: () => { stopShape(); render(); } }));
     bar.hidden = false;
     card.hidden = true;
@@ -314,7 +315,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     src('xe-shape').setData({ type: 'Feature', geometry, properties: {} });
     const pick = (c) => api('/ximap/edits', { method: 'POST', body: { set: E.L.set, action: 'add', cls_id: c.id, cls: c.name, geometry, ...(TEST ? { test: true } : {}) } }).then((j) => {
       src('xe-shape').setData(EMPTY);
-      K.toast(`${c.name} 하나를 새로 그렸습니다 · 학습 데이터로 쌓입니다`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
+      K.toast(`${c.name} 하나를 새로 그렸습니다`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
       onEdited?.(j); live();
       if (E.sel) render(); else close();
     }, (e) => K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '그리지 못했습니다'));

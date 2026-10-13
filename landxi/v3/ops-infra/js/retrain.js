@@ -1,10 +1,10 @@
 /* LX 관리자 → 배포 → 'XI 재학습' · '학습 서식' 탭(결정 4 ⓐ · 원칙 213 · 학습 서식 ⓑ · 10-12 12:45 확인).
-   XI 재학습: 언제 학습하나(쉬는 시간 자동 기본 / 사람이 누를 때만) · 쉬는 시간대 · 기준 → 분석서비스마다 줄(지금 판 · 모인 학습 데이터 · 기준 · 방식 · 상태)
+   XI 재학습: 언제 학습하나(쉬는 시간 자동 기본 / 사람이 누를 때만) · 쉬는 시간대 · 기준 → 분석서비스마다 줄(지금 판 · 학습 데이터 · 기준 · 방식 · 상태)
               → 새 클래스 갈 곳(세부 = 위 클래스 서비스의 나누기 학습 · 새 물체 = 새 모델 프로젝트 후보) → 오늘 밤 순서.
               학습은 쉬는 시간에 학습 장비 한 장 대기열로만(전국 분석 등 다른 고부하 작업이 있으면 다음 차례 — 서버 스케줄러).
-              새 판은 같은 검증 묶음에서 나아진 경우만 배포 신청 후보. 신청 · 승인은 사람.
+              새 판은 나아진 경우만 배포 신청 후보. 신청 · 승인은 사람.
    학습 서식: '기본' 하나(블록 · 학습 설정 첫 값 · 10-13 학습서식-기본하나 — 업무별 고르기 없앰) — 직원 학습 화면이 처음 열 때 놓이는 흐름. 바꿀 수 없는 것은 잠금 줄.
-   문구(10-13 원칙 230): '30분 조용하면 1장' 류 설명 대신 'XI맵에서 고친 곳은 학습 데이터로 모입니다' · 칸 머리 '모인 학습 데이터'.
+   문구(10-13 원칙 235 · 사용자 말 그대로): 안내 한 줄 '수정된 부분은 학습 데이터로 저장됩니다.' · 칸 머리 '학습 데이터' · 숫자 '수정된 부분 n장'. 이 밖의 덧말 뺌.
    숫자는 서버 봉투(GET /retrain · /train-templates). 아이콘 0 · 'GPU' 글자 0(학습 장비). */
 import { toast, h, api, nf } from './kit.js';
 
@@ -47,9 +47,8 @@ export function retrainPane(root) {
           h('label', {}, h('span', { text: '쉬는 시간' }), h('span.rt-pair', {}, qs, '–', qe)),
           h('label.rt-ck', {}, wk, h('span', { text: '주말 하루 종일' })),
           h('label', {}, h('span', { text: '기준' }), h('span.rt-pair', {}, mn, '장')),
-          h('div', {}, h('span', { text: '학습 자리' }), h('b', { text: '한 번에 하나' })), save)),
-      h('p.rv-note', { text: 'XI맵에서 고친 곳은 학습 데이터로 모입니다.' }),
-      h('p.rv-note', { text: `서비스마다 모인 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.` }),
+          save)),
+      h('p.rv-note', { text: '수정된 부분은 학습 데이터로 저장됩니다.' }),
       h('p.rv-note', { text: R.busy ? '지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.' : R.quiet_now ? '지금은 쉬는 시간입니다.' : '지금은 쉬는 시간이 아닙니다.' }));
 
     /* ── 분석서비스별 ── */
@@ -62,7 +61,7 @@ export function retrainPane(root) {
         : h('span', { text: x.mode === 'auto' ? '쉬는 시간 자동' : '수동' });
       const vd = x.verdict;
       const now = h('button.t-btn.t-btn--2', { type: 'button', text: '지금 학습', disabled: n < 1 || x.tone === 'live' || undefined,
-        title: n < 1 ? '모인 학습 데이터가 없습니다' : '', onclick: () => trainNow(x) });
+        title: n < 1 ? '수정된 부분 0장' : '', onclick: () => trainNow(x) });
       return h('tr', {},
         h('td', {}, h('b', { text: `${x.service} · ${x.version}` }), x.project ? h('small', { text: x.project.name }) : h('small', { text: '프로젝트 없음' })),
         h('td', {}, h('span.rv-bar', {}, h('i', { style: `width:${Math.min(100, Math.round(n / need * 100))}%` })), h('small.num', { text: `${nf(n)} / ${nf(need)}장` })),
@@ -74,21 +73,21 @@ export function retrainPane(root) {
     });
     const svc = h('section.t-card.rv-card', {},
       h('header.rv-h', {}, h('h2', { text: '분석서비스별' })),
-      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '모인 학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
+      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
         : h('p.rv-empty', { text: '다시 학습할 수 있는 분석서비스가 없습니다' }));
 
     /* ── 새 물체 → 새 모델 프로젝트 후보 ── */
     const cands = (R.candidates || []);
     const cand = h('section.t-card.rv-card', {},
-      h('header.rv-h', {}, h('h2', { text: '새 모델 프로젝트 후보' }), h('span.rv-sub', { text: 'XI맵에서 새로 쓴 새 물체 클래스 — 지금 모델에 없어 새 모델로 학습합니다' })),
-      cands.length ? h('ul.rt-list', {}, ...cands.map((c) => h('li', {}, h('b', { text: c.name }), c.test ? h('span.rv-test', { text: '시험' }) : null, h('span.rv-sub', { text: `고친 것 ${nf(val(c.units))}건` }),
+      h('header.rv-h', {}, h('h2', { text: '새 모델 프로젝트 후보' })),
+      cands.length ? h('ul.rt-list', {}, ...cands.map((c) => h('li', {}, h('b', { text: c.name }), c.test ? h('span.rv-test', { text: '시험' }) : null, h('span.rv-sub', { text: `수정된 부분 ${nf(val(c.tiles) ?? 0)}장` }),
         h('a.rv-link', { href: '/landxi/v3/lx-project/', text: '프로젝트 만들기' }))))
-        : h('p.rv-empty', { text: '아직 없습니다 · 세부 클래스는 위 클래스 서비스 줄에서 나누기로 학습합니다' }));
+        : h('p.rv-empty', { text: '아직 없습니다' }));
 
     /* ── 오늘 밤 순서 ── */
     const tn = R.tonight || [];
     const night = h('section.t-card.rv-card', {},
-      h('header.rv-h', {}, h('h2', { text: '오늘 밤 순서' }), h('span.rv-sub', { text: `${st.quiet_start}–${st.quiet_end} · 학습 자리 하나를 차례로 · 기관 AI 분석 요청과 전국 분석이 있으면 그 뒤` })),
+      h('header.rv-h', {}, h('h2', { text: '오늘 밤 순서' }), h('span.rv-sub', { text: `${st.quiet_start}–${st.quiet_end}` })),
       tn.length ? h('ol.rt-night', {}, ...tn.map((t) => h('li', {}, h('b', { text: t.service }), h('span', { text: t.what }))))
         : h('p.rv-empty', { text: '오늘 밤 학습할 서비스가 없습니다 — 기준에 닿은 서비스가 없습니다' }),
       R.last_tick ? h('p.rv-note', { text: `마지막 확인 ${mdhm(R.last_tick)} · 5분마다` }) : null,
@@ -107,7 +106,7 @@ export function retrainPane(root) {
   return { load };
 }
 
-const BW = { data: '학습 데이터', base: '기반 모델', cfg: '학습 설정', train: '학습', eval: '평가', test: '추론 시험', deploy: '배포 신청' };
+const BW = { data: '학습 데이터', base: '기반 모델', cfg: '학습 설정', train: '학습', eval: '추론', deploy: '배포 신청' };   // 10-13 '평가' → '추론' · '추론 시험'은 '추론'과 하나로(직원 학습 화면과 같은 이름)
 
 export function templatePane(root) {
   sheet();
@@ -121,7 +120,7 @@ export function templatePane(root) {
     const man = T.can_manage;
     const cur = T.items[task];
     const on = new Set(cur.blocks);
-    const boxes = T.blocks.map((b) => {
+    const boxes = T.blocks.filter((b) => BW[b]).map((b) => {
       const must = T.must.includes(b);
       const ck = h('input', { type: 'checkbox', checked: on.has(b) || undefined, disabled: must || !man || undefined, dataset: { b } });
       return h('label.rt-ck.rt-blk', {}, ck, h('span', { text: BW[b] || b }), must ? h('small', { text: '빠질 수 없음' }) : null);
@@ -136,7 +135,7 @@ export function templatePane(root) {
       catch (e) { toast(e?.message || '저장하지 못했습니다'); }
     } });
     root.replaceChildren(h('div.rt-col', {}, h('section.t-card.rv-card', {},
-      h('header.rv-h', {}, h('h2', { text: '학습 서식' }), h('span.rv-sub', { text: '직원 학습 화면을 처음 열면 놓이는 기본 흐름 — 직원은 그 위에서 블록을 더하거나 지우고 순서를 바꿀 수 있습니다' })),
+      h('header.rv-h', {}, h('h2', { text: '학습 서식' })),
       h('div', {}, h('p.t-label', { text: '블록' }), h('div.rt-blks', {}, ...boxes)),
       h('div.rt-kv', {}, h('label', {}, h('span', { text: '반복 횟수' }), h('span.rt-pair', {}, ep, '회')), h('label', {}, h('span', { text: '이미지 크기' }), sz), h('label', {}, h('span', { text: '한 번에' }), bt)),
       h('p.rv-note', { text: `바꿀 수 없는 것(직원) — ${T.locked.join(' · ')}` }),

@@ -486,7 +486,12 @@ async def _candidates(conn) -> list[dict]:
         has_model = await conn.fetchval("SELECT 1 FROM model_classes WHERE class_id=$1", r["id"])
         if has_model:
             continue
-        out.append({"id": r["id"], "name": r["name"], "units": units_env(n), "test": r["test"], "at": _iso(r["decided_at"])})
+        # 수정된 부분 n장(10-13 저절로-문구 · 건 → 장) = 이 클래스로 고친 기록이 든, 1장이 된 칸
+        nt = int(await conn.fetchval(f"SELECT count(*) FROM train_tiles t WHERE t.state='made' AND EXISTS (SELECT 1 {EDITS_FROM} "
+                                     "WHERE e.id = ANY(t.edit_ids) AND (e.cls_after_id = $1 OR (e.cls_after_id IS NULL AND e.cls_before_id = $1)))",
+                                     r["id"]) or 0)
+        out.append({"id": r["id"], "name": r["name"], "units": units_env(n), "tiles": tiles_env(nt, "수정된 부분(1장이 된 칸)"),
+                    "test": r["test"], "at": _iso(r["decided_at"])})
     return out
 
 
@@ -789,7 +794,7 @@ TPL_KEY = "train.templates"
 BLOCKS = ("data", "base", "cfg", "train", "eval", "test", "deploy")
 MUST = ("data", "base", "cfg", "train")
 CAPS = {"epochs": 50, "imgsz": (640, 1280), "batch": (4, 8)}
-LOCKED = ["학습 장비 배정(프로젝트 하나에 한 장)", "반복 · 크기 · 장수 상한", "쉬는 시간대", "검증 묶음", "배포 승인"]
+LOCKED = ["학습 장비 배정(프로젝트 하나에 한 장)", "반복 · 크기 · 장수 상한", "쉬는 시간", "배포 승인"]   # 10-13 용어 되돌림 — '검증 묶음' 뺌
 
 
 async def templates(conn) -> dict:

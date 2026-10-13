@@ -1,0 +1,26 @@
+[
+ {
+  "id": "용어-되돌림",
+  "title": "'평가'는 '추론'으로 — 최근에 새로 생긴 말을 원래 말로 되돌리고 덧말을 뺐습니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/before-train-board-1440-1357.png", "shots/after-train-board-1440-1359.png", "shots/before-train-eval-drawer-1440-1357.png", "shots/after-train-eval-drawer-1440-1359.png", "shots/before-admin-templates-1440-1358.png", "shots/after-admin-templates-1440-1359.png"],
+  "where": "app.land-xi.dev → 프로젝트 → 학습(LX 직원 로그인 폼) · admin.land-xi.dev → 배포 → 학습 서식",
+  "note": "학습 화면 블록 '평가'는 '추론'으로 바꾸고, 같은 것을 부르던 '추론 시험' 블록은 없앴습니다(추론 블록에 '추론 열기'). '같은 검증 묶음 n칸' · '자체 검증' · 판 아래 '바꿀 수 없는 것' 줄 · 학습 장비 안내 세 곳 · 이력 머리 설명을 뺐습니다. 관리자 학습 서식도 같은 블록 이름(여섯)입니다. 전체 표는 README '용어 표'."
+ },
+ {
+  "id": "고친것-문구",
+  "title": "고친 것 문구 — '수정된 부분은 학습 데이터로 저장됩니다.' · 칸 머리 '학습 데이터' · 숫자 '수정된 부분 n장'",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/before-admin-retrain-1440-1358.png", "shots/after-admin-retrain-1440-1359.png", "shots/before-train-data-drawer-1440-1357.png", "shots/after-train-data-drawer-1440-1359.png", "shots/before-ximap-edit-foot-1440-1357.png", "shots/after-ximap-edit-foot-1440-1359.png"],
+  "where": "admin.land-xi.dev → 배포 → XI 재학습 · app.land-xi.dev → 프로젝트 → 학습 → 학습 데이터 블록 · XI맵 → 객체 누르기 → 칸 아래 줄",
+  "note": "XI 재학습 안내는 한 줄 '수정된 부분은 학습 데이터로 저장됩니다.', 칸 머리 '학습 데이터', 새 모델 프로젝트 후보 '수정된 부분 n장'. 학습 화면 선택지 '수정된 부분 0장'. XI맵 그 자리 고치기 칸 아래 줄은 0이면 '수정된 부분은 학습 데이터로 저장됩니다.', 있으면 '수정된 부분 n장'(건 → 장 — 모두 1장이 된 칸으로 같은 셈). 알림 꼬리 '· 학습 자료로 쌓입니다'와 그 밖의 덧말은 뺐습니다."
+ },
+ {
+  "id": "관리자-공유데이터",
+  "title": "LX 관리자 메뉴 '공유 데이터' — 직원이 고르는 영상 목록과 같은 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/after-admin-shared-1440-1403.png", "shots/after-admin-shared-upload-1440-1403.png", "shots/after-admin-shared-hidden-1440-1403.png", "shots/after-admin-shared-edit-1440-1404.png", "shots/after-admin-shared-delete-ask-1440-1404.png", "shots/after-admin-shared-deleted-1440-1404.png"],
+  "where": "admin.land-xi.dev → 왼쪽 메뉴 '공유 데이터'(LX 관리자 로그인 폼)",
+  "note": "목록은 직원 '공유 데이터에서 고르기'와 같은 서버 목록입니다(영상 83장 = 직원 목록 83). 시험 영상 하나를 올려 84장 → 비공개로 바꾸니 직원 목록 83 → 이름을 고치고 → 지워 83장으로 돌아왔습니다. 분석에 쓴 영상은 지울 수 없다고 알립니다. 행정 자료는 올리기 · 고치기 서버 기능이 없어(브이월드에서 읽어 봄) 이번에는 영상만 — 어떻게 둘지 여쭙니다."
+ }
+]

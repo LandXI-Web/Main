@@ -18,8 +18,9 @@ const RAIL = [
   { id: 'approvals', label: '요청 관리', icon: 'inbox', href: OPS + '#/approvals' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },
   { id: 'accounts', label: '계정 관리', icon: 'check' },
+  { id: 'shared', label: '공유 데이터', icon: 'data', href: INFRA + '?view=shared' },   // 영상 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기(10-13 관리자-공유데이터 · 원칙 238)
 ];
-const S = shell({ who, home: 'ops-accounts', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.length - 1 } });
+const S = shell({ who, home: 'ops-accounts', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === 'accounts') } });
 // 역할 칩 — 이름이 역할 문구와 같으면 한 번만('LX 관리자')
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }

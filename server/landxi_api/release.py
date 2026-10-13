@@ -245,7 +245,7 @@ async def project_models(conn, pid: str) -> list[dict]:
 async def _imagery(conn, r) -> tuple[list, list]:
     """분석할 수 있는 영상(원본이 있는 정사영상) — 프로젝트 대상 지역과 겹치는 것(프로젝트 영상) · 나머지(공유 데이터셋)."""
     from .regions import derived, region_of
-    rows = await conn.fetch("SELECT id, name, kind, gsd_m, year, epoch, sgg_cd, ST_Area(footprint::geography)/1e6 AS km2, "
+    rows = await conn.fetch("SELECT id, name, kind, gsd_m, year, epoch, sgg_cd, staff_visible, ST_Area(footprint::geography)/1e6 AS km2, "
                             "ST_XMin(footprint) x0, ST_YMin(footprint) y0, ST_XMax(footprint) x1, ST_YMax(footprint) y1 FROM imagery "
                             "WHERE path_internal IS NOT NULL AND footprint IS NOT NULL AND kind = 'ortho' "
                             "AND coalesce(layer->>'role','imagery') = 'imagery' ORDER BY year DESC NULLS LAST, id")
@@ -261,6 +261,8 @@ async def _imagery(conn, r) -> tuple[list, list]:
             mine |= {i["id"] for i in dv["img"].get(g["code"], [])}
     proj, shared = [], []
     for x in rows:
+        if x["id"] not in mine and not x["staff_visible"]:   # 관리자 '공유 데이터'에서 비공개로 둔 영상은 공유 목록에 없다(10-13)
+            continue
         rg = region_of(x["sgg_cd"]) if x["sgg_cd"] else None
         it = {"id": x["id"], "name": _ko(x["name"]) or x["id"], "gsd_m": float(x["gsd_m"]) if x["gsd_m"] is not None else None,
               "gsd_word": _gsd(x["gsd_m"]), "when": str(x["year"]) if x["year"] else (str(x["epoch"])[:7] if x["epoch"] else None),

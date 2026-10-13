@@ -754,15 +754,18 @@ async def people_list(request: Request, q: str | None = None):
 
 
 @router.get("/projects/imagery")
-async def imagery_list(request: Request):
+async def imagery_list(request: Request, all: str = ""):
     """새 프로젝트 창의 '공유 데이터에서 고르기' — LX 영상(지형 · 결과 층 빼고). 줄마다 이름 · 지역 · 연도 · 종류 · 썸네일 경로(LX 계정만 받는 그림).
-    최근 촬영 → 이름 순. 경로 · 파일 이름은 내지 않는다."""
-    _lx(request)
+    최근 촬영 → 이름 순. 경로 · 파일 이름은 내지 않는다.
+    LX 관리자 '공유 데이터'(10-13 · 원칙 238)는 같은 목록을 ?all=1 로 — 비공개(직원에게 안 보임) 영상까지 · visible. total 은 언제나 직원에게 보이는 수."""
+    p = _lx(request)
+    every = all == "1" and p.is_admin
     from .regions import regions_base
     regs = {x["sgg_cd"]: x for x in regions_base()[0]}
     async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT id, name, gsd_m, year, epoch, sgg_cd FROM imagery WHERE coalesce(layer->>'role','imagery')='imagery' "
-                                "AND coalesce(kind,'ortho') <> 'terrain' AND (sgg_cd IS NOT NULL OR footprint IS NOT NULL)")
+        rows = await conn.fetch("SELECT id, name, gsd_m, year, epoch, sgg_cd, staff_visible FROM imagery WHERE coalesce(layer->>'role','imagery')='imagery' "
+                                "AND coalesce(kind,'ortho') <> 'terrain' AND (sgg_cd IS NOT NULL OR footprint IS NOT NULL)"
+                                + ("" if every else " AND staff_visible"))
     kind = lambda g: "드론" if g is not None and g < 0.1 else "위성" if g is not None and g >= 1 else "항공"
     items = []
     for x in rows:
@@ -770,9 +773,11 @@ async def imagery_list(request: Request):
         ep = str(x["year"] or x["epoch"] or "")
         g = float(x["gsd_m"]) if x["gsd_m"] is not None else None
         items.append({"id": x["id"], "name": nm or "영상", "region": (regs.get(x["sgg_cd"]) or {}).get("name"),
-                      "year": int(ep[:4]) if ep[:4].isdigit() else None, "kind": kind(g), "thumb": f"/catalog/imagery/{x['id']}/thumb"})
+                      "year": int(ep[:4]) if ep[:4].isdigit() else None, "kind": kind(g), "thumb": f"/catalog/imagery/{x['id']}/thumb",
+                      **({"visible": bool(x["staff_visible"])} if every else {})})
     items.sort(key=lambda i: (-(i["year"] or 0), i["name"]))
-    return {"items": items, "total": env(len(items), "count", "recorded", "LX 영상(지형 · 결과 층 뺌)"), "as_of": now_iso()}
+    n = sum(1 for i in items if i.get("visible", True))
+    return {"items": items, "total": env(n, "count", "recorded", "LX 영상(지형 · 결과 층 · 비공개 뺌)"), "as_of": now_iso()}
 
 
 @router.get("/projects/notices")

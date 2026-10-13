@@ -615,6 +615,7 @@ async def edits_summary(request: Request):
     """서비스별 고친 것 수(되돌린 것 뺌) → 그 서비스 프로젝트 — '재학습으로 잇는 길'(학습 실행은 하지 않는다)."""
     p = require(principal(request), lx=True)
     from .projects import project_of_card
+    from .train_tiles import count_tiles
     async with db(realm="lx") as conn:
         rows = await conn.fetch("SELECT e.card_id, c.name AS cname, count(*) AS n, count(*) FILTER (WHERE e.test) AS n_test, max(e.at) AS last "
                                 "FROM result_edits e LEFT JOIN cards c ON c.id = e.card_id WHERE e.undone_at IS NULL GROUP BY e.card_id, c.name ORDER BY n DESC")
@@ -623,6 +624,8 @@ async def edits_summary(request: Request):
             pr = await project_of_card(conn, r["card_id"]) if r["card_id"] else None
             out.append({"card_id": r["card_id"], "service": svc_name(r["cname"]) if r["cname"] else "토지피복",
                         "n": env(int(r["n"]), "count", "recorded", "고친 것(되돌린 것 뺌)"), "n_test": env(int(r["n_test"]), "count", "recorded", "그중 시험 고치기"),
+                        # 수정된 부분 n장 = 1장이 된 칸(학습 화면 · XI 재학습과 같은 셈 · 10-13 저절로-문구)
+                        "tiles": env(await count_tiles(conn, card_id=r["card_id"]) if r["card_id"] else 0, "count", "recorded", "수정된 부분(1장이 된 칸)"),
                         "last_at": _iso(r["last"]),
                         "project": {"id": pr["id"], "name": pr["name"]} if pr else None})
     return {"items": out, "total": env(sum(x["n"]["value"] for x in out), "count", "recorded", "고친 것(되돌린 것 뺌)"), "as_of": now_iso()}
