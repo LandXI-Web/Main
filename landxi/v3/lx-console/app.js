@@ -1,11 +1,11 @@
 /* app.js — LX 직원 대시보드(구현 26차 · 설계 26차 8차 시안 배치 · 원칙 214 위아래 · 216 컴팩트 · 226 위 = 진행 현황 · 정량 숫자, 아래 = 최근 진행한 프로젝트 그림).
    위에서 아래로 네 줄(1440×900 에서 약 1.1화면):
-     ① 프로젝트 진행 현황 — 가로 흐름(서버 단계 그대로 · lx-project/board.js GROUPS · 숫자 = 프로젝트 카드의 단계와 같은 값) · 단계를 누르면 메뉴 '프로젝트' 목록(?stage=)
-     ② 내가 돌린 작업 · 요청함 · 저장 용량 — 숫자 칸 한 줄
+     ① 프로젝트 진행 현황 · 요청함 · 저장 용량 — 숫자 칸 한 줄(10-13 대시보드-v8: '내가 돌린 작업' 칸을 없애고 그 자리에 진행 현황 · 같은 크기)
+        진행 현황 = 가로 흐름(서버 단계 그대로 · lx-project/board.js GROUPS · 숫자 = 프로젝트 카드의 단계와 같은 값) · 단계를 누르면 메뉴 '프로젝트' 목록(?stage=)
      ③ 최근 진행한 프로젝트 — 프로젝트 목록과 같은 카드 부품(lx-project/card.js · compact: '무엇을' 줄 없이 찾는 것 · 구성원 줄 없음) 최근 활동 순 4장
      ④ 공지 · 메모(나만) · 전국 AI 현황 — 한 줄
-   숫자는 모두 서버(GET /projects?scope=mine · /me/storage · /me/jobs · 요청함 숫자 · /announcements · /me/memos · /ximap/board) — 지어낸 값 0 · 내부 지표 0.
-   움직임(원칙 201): 처음 한 번 떠오름 · 숫자 차오름(0.6초) · 빛 점은 일이 있는 단계만 · 맥박은 내 작업이 실제로 돌 때만 · prefers-reduced-motion 이면 끔. */
+   숫자는 모두 서버(GET /projects?scope=mine · /me/storage · 요청함 숫자 · /announcements · /me/memos · /ximap/board) — 지어낸 값 0 · 내부 지표 0.
+   움직임(원칙 201): 처음 한 번 떠오름 · 숫자 차오름(0.6초) · prefers-reduced-motion 이면 끔. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
 import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
@@ -28,10 +28,7 @@ const moreLink = (text, href) => h('a.ld-more', { href, text });
 const boardSub = h('small.ld-sub');
 const board = h('section.t-card.ld-card.ld-board', { 'aria-label': '프로젝트 진행 현황' },
   head('프로젝트 진행 현황', moreLink('프로젝트 목록', stageListHref(null)), boardSub), h('div.ld-flow'));
-/* ② 숫자 칸 한 줄 */
-const jobsSub = h('small.ld-sub');
-const live = h('span.ld-live', { hidden: true }, h('i'), h('span', { text: '지금 도는 중' }));
-const jobs = h('section.t-card.ld-card.ld-jobs', { 'aria-label': '내가 돌린 작업' }, head(h('span', {}, '내가 돌린 작업'), live, jobsSub), h('div.ld-jobs-b'));
+/* ① 숫자 칸 한 줄 — 진행 현황(위 board) · 요청함 · 저장 용량 */
 const inbox = h('section.t-card.ld-card.ld-inbox', { 'aria-label': '요청함' },
   head('요청함', moreLink('전체', STAFF_HREF.inbox), h('small.ld-sub', { text: '기관의 요청과 내가 보낸 요청' })), h('div.ld-inbox-b'));
 const storeSub = h('small.ld-sub');
@@ -48,13 +45,13 @@ const foot = h('section.t-card.ld-card.ld-foot', { 'aria-label': '공지 · 메�
   footC('공지', null, noticeB), footC('메모', h('small.ld-foot-k', { text: '나만 보입니다' }), memoB), footC('전국 AI 현황', moreLink('XI맵에서 전국 결과', STAFF_HREF.ximap), natB));
 
 const notes = h('div.lxp-ntcs');
-const page = h('div.ld', {}, h('div.ld-in', {}, notes, board, h('div.ld-nums', {}, jobs, inbox, store), recent, foot));
+const page = h('div.ld', {}, h('div.ld-in', {}, notes, h('div.ld-nums', {}, board, inbox, store), recent, foot));
 S.main.append(page);
 
 /* 불러오는 중(원칙 212) · 못 불러옴(다시 시도) */
 const wait = (el) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }).set({ progress: null }); };
 const fail = (el, retry) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'error', compact: true, onRetry: retry }); };
-for (const el of [board.querySelector('.ld-flow'), inbox.querySelector('.ld-inbox-b'), store.querySelector('.ld-store-b'), jobs.querySelector('.ld-jobs-b'),
+for (const el of [board.querySelector('.ld-flow'), inbox.querySelector('.ld-inbox-b'), store.querySelector('.ld-store-b'),
   recent.querySelector('.ld-rgrid'), noticeB, memoB, natB]) wait(el);
 
 const two = (n) => String(n).padStart(2, '0');
@@ -85,7 +82,7 @@ const num = (tag, v, d = 0, kids = []) => { const el = h(tag, { dataset: { cu: S
 
 projectNotices(notes);                               // 나에게 온 알림(프로젝트장 넘겨받음 · 증량 신청 승인 · 거절) — 없으면 아무것도 그리지 않는다
 requestAnimationFrame(() => page.classList.add('is-in'));
-Promise.allSettled([drawProjects(), drawStore(), drawJobs(), drawInbox(), drawNotice(), drawMemos(), drawNational()]).then(() => {
+Promise.allSettled([drawProjects(), drawStore(), drawInbox(), drawNotice(), drawMemos(), drawNational()]).then(() => {
   window.__lxConsole = { ready: true };              // e2e 관측(읽기 전용)
   document.documentElement.dataset.consoleReady = '1';
 });
@@ -115,7 +112,6 @@ async function drawProjects() {
     const n = by[i].length;
     const warn = by[i].filter((p) => kick(p)?.kind === 'warn').length;
     return h('li', { dataset: { n: String(n), key: g.key }, class: n ? 'has-work' : '' },
-      n && i ? h('i.ld-pf-flow', { 'aria-hidden': 'true' }) : null,
       h('a', { href: stageListHref(g.key), 'aria-label': `${g.label} ${n}개${warn ? ` · 남은 일 있는 ${warn}` : ''}` },
         num('b.num', n), h('span', { text: g.label }), warn ? h('em', { text: `남은 일 ${warn}` }) : null));
   }));
@@ -133,30 +129,7 @@ async function drawProjects() {
   grid.dataset.n = String(top.length);
 }
 
-/* ── ② 내가 돌린 작업 — 완료 · 실패 · 취소 · 진행 중 한 줄 · 종류별 한 줄 ── */
-async function drawJobs() {
-  const box = jobs.querySelector('.ld-jobs-b');
-  let j;
-  try { j = await api('/me/jobs'); } catch { fail(box, () => { wait(box); drawJobs(); }); return; }
-  const c = j.counts || {}, n = (k) => Number(ev(c[k])) || 0;
-  const total = n('done') + n('failed') + n('cancelled') + n('running');
-  jobsSub.textContent = total && j.first ? `${md(j.first)} – ${md(j.last)}` : '';
-  live.hidden = !n('running');                                      // 맥박 = 내 작업이 실제로 돌 때만
-  page.classList.toggle('is-live', n('running') > 0);
-  if (!total) { const x = h('div'); box.replaceChildren(x); K.empty(x, { kind: 'first', title: '돌린 작업이 없습니다', compact: true }); return; }
-  const cell = (v, label, cls) => h('div.ld-cell.ld-cell--ro', { class: cls }, num('b.num', v), h('span', { text: label }));
-  const cells = h('div.ld-cells.ld-cells--4', {},
-    cell(n('done'), '완료', n('done') ? '' : 'is-zero'), cell(n('failed'), '실패', n('failed') ? 'is-warn' : 'is-zero'),
-    cell(n('cancelled'), '취소', n('cancelled') ? '' : 'is-zero'), cell(n('running'), '진행 중', n('running') ? 'is-run' : 'is-zero'));
-  /* 종류별 — 한 줄 · 다섯 갈래가 넘으면 넷 + '기타 n' — 종류별 합 = 위 네 칸의 합(GPT4-3) */
-  const ks = j.kinds || [];
-  const show = ks.length > 5 ? [...ks.slice(0, 4), { label: '기타', n: ks.slice(4).reduce((a, k) => a + (Number(k.n) || 0), 0) }] : ks;
-  const kinds = show.map((k) => h('span', {}, k.label + ' ', h('b.num', { text: k.n.toLocaleString('ko-KR') })));
-  box.replaceChildren(cells, ...(kinds.length ? [h('p.ld-kinds', {}, h('span.ld-k', { text: '종류별' }), ...kinds)] : []));
-  countUp(cells);
-}
-
-/* ── ② 요청함 — 검토 요청 · 분석 요청 · 보낸 요청(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */
+/* ── 요청함 — 검토 요청 · 분석 요청 · 보낸 요청(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */
 async function drawInbox() {
   const box = inbox.querySelector('.ld-inbox-b');
   const c = await requestCounts().catch(() => null);
@@ -169,7 +142,7 @@ async function drawInbox() {
   countUp(cells);
 }
 
-/* ── ② 저장 용량 — 쓴 양(큰 숫자) · 할당 대비 막대 · 프로젝트별 · 증량 신청(내 정보 창 한 길 · GET /me/storage 한 출처) ── */
+/* ── 저장 용량 — 쓴 양(큰 숫자) · 할당 대비 막대 · 프로젝트별 · 증량 신청(내 정보 창 한 길 · GET /me/storage 한 출처) ── */
 async function drawStore() {
   const box = store.querySelector('.ld-store-b');
   let j;

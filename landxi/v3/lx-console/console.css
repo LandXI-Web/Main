@@ -1,5 +1,5 @@
 /* console.css — LX 직원 대시보드(구현 26차 · 8차 시안 배치 · 원칙 214 위아래 · 216 컴팩트 · 226). PC 만(원칙 139).
-   위에서 아래로: ① 프로젝트 진행 현황(가로 흐름) → ② 내가 돌린 작업 · 요청함 · 저장 용량(숫자 칸 한 줄) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
+   위에서 아래로: ① 프로젝트 진행 현황 · 요청함 · 저장 용량(숫자 칸 한 줄 · 진행 현황이 옛 '내가 돌린 작업' 자리 · 같은 크기) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
    → ④ 공지 · 메모 · 전국 AI 현황(한 줄). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:20px 24px 32px}
 .ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:1344px}
@@ -25,28 +25,21 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld.is-in .ld-recent{transition-delay:140ms}
 .ld.is-in .ld-foot{transition-delay:200ms}
 
-/* ① 프로젝트 진행 현황 — 가로 흐름: 단계마다 숫자(위) + 이름(아래) · 사이 선 하나 · 일이 있는 단계로 빛 점 */
+/* ① 프로젝트 진행 현황 — 작은 칸(옛 '내가 돌린 작업' 자리 · 같은 크기): 여섯 단계를 3×2 로, 단계마다 숫자(위) + 이름(아래) · 이름은 한 줄(잘림 0) · 일이 있는 단계는 숫자가 진하게 */
 .ld-flow{min-width:0}
-.ld-pf{list-style:none;margin:0;padding:10px 0 0;position:relative;display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,1fr))}
+.ld-pf{list-style:none;margin:0;padding:0;position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px}
 .ld-pf li{position:relative;min-width:0}
-.ld-pf li::before{content:"";position:absolute;left:50%;right:-50%;top:0;height:2px;background:var(--rule)}
-.ld-pf li:last-child::before{display:none}
-.ld-pf li::after{content:"";position:absolute;left:calc(50% - 5px);top:-4px;width:10px;height:10px;border-radius:50%;background:var(--bg-1);border:2px solid var(--mute);box-sizing:border-box;z-index:1}
-.ld-pf li.has-work::after{background:var(--ink);border-color:var(--ink)}
-.ld-pf a{position:relative;display:flex;flex-direction:column;align-items:center;padding:10px 6px 2px;margin:0 2px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui);z-index:1}
+.ld-pf a{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
 .ld-pf a:hover{background:var(--bg-0)}
-.ld-pf b{font:800 26px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
-.ld-pf span{font:500 13px/18px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.ld-pf em{font:500 12px/16px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
+.ld-pf b{font:800 24px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.ld-pf span{font:500 12px/16px var(--font-body);color:var(--ink-2);white-space:nowrap;max-width:100%}
+.ld-pf em{font:500 11px/16px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
 .ld-pf li[data-n="0"] b{color:var(--mute)}
 .ld-pf li[data-n="0"] span{color:var(--sub)}
-.ld-pf-flow{position:absolute;top:-3px;left:-50%;width:8px;height:8px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 3px rgba(15,169,160,.18);opacity:0;animation:ld-flow 3s var(--e-ui) infinite;pointer-events:none;z-index:2}
-@keyframes ld-flow{0%{left:-50%;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:calc(50% - 4px);opacity:0}}
 
-/* ② 숫자 칸 한 줄 — 내가 돌린 작업 · 요청함 · 저장 용량 */
+/* ① 숫자 칸 한 줄 — 프로젝트 진행 현황 · 요청함 · 저장 용량 */
 .ld-nums{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
 .ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.ld-cells--4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .ld-cell{position:relative;display:flex;flex-direction:column;gap:0;min-width:0;padding:2px 6px;margin:-2px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
 .ld-cell:hover{background:var(--bg-0)}
 .ld-cell b{font:800 24px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -56,17 +49,8 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-cell.is-warn b{color:var(--warn)}
 .ld-cell.is-run b{color:var(--ai)}
 .ld-cell--ro:hover{background:none}
-.ld-jobs-b{display:flex;flex-direction:column;gap:10px}
-.ld-kinds{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--rule);padding-top:8px;font:400 12px/16px var(--font-body);color:var(--sub-2)}
-.ld-kinds > span{display:inline-block;white-space:nowrap}
-.ld-kinds b{font:500 12px/16px var(--font-num);color:var(--ink)}
 .ld-inbox-b{display:flex;flex-direction:column;gap:10px}
 .ld-inbox-s{margin:0;border-top:1px solid var(--rule);padding-top:8px;font:400 12px/16px var(--font-body);color:var(--sub)}
-/* 지금 도는 작업이 있을 때만 맥박 */
-.ld-live{display:inline-flex;align-items:center;gap:6px;font:500 12px/18px var(--font-body);color:var(--ai)}
-.ld-live[hidden]{display:none}
-.ld-live i{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:ld-pulse 1.6s var(--e-ui) infinite}
-@keyframes ld-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
 /* 저장 용량 — 쓴 양(큰 숫자) | 막대 · 프로젝트별 · 증량 신청 */
 .ld-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
 .ld-store-r{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -132,10 +116,8 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 
 @media (prefers-reduced-motion:reduce){
   .ld-in > .ld-card,.ld-nums > .ld-card{opacity:1;transform:none;transition:none}
-  .ld-pf-flow,.ld-live i{animation:none}
-  .ld-pf-flow{display:none}
 }
 
 /* 좁은 PC */
 @media (max-width:1180px){.ld-nums{grid-template-columns:1fr 1fr}.ld-rgrid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}.ld-foot.t-card.ld-card{grid-template-columns:1fr 1fr}}
-@media (max-width:760px){.ld-nums,.ld-foot.t-card.ld-card{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}.ld-pf li::before{display:none}}
+@media (max-width:760px){.ld-nums,.ld-foot.t-card.ld-card{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{row-gap:8px}}
