@@ -66,16 +66,11 @@ test.describe('외부 검수 바퀴 4 보완', () => {
     expect(errs, errs.join('\n')).toEqual([]);
   });
 
-  test('직원 대시보드 — 내가 돌린 작업: 종류별 합 = 상태별 합(다섯 갈래가 넘으면 기타)', async ({ page, baseURL }) => {
+  test('직원 대시보드 — 내가 돌린 작업 칸은 없음(10-13 사용자 "내가 돌린 작업은 삭제")', async ({ page, baseURL }) => {
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
-    const card = page.locator('.ld-jobs');
-    await expect(card.locator('.ld-cell b').first()).toBeVisible({ timeout: 20000 });
-    const num = (t) => Number(String(t).replace(/[^\d]/g, '')) || 0;
-    const cells = (await card.locator('.ld-cell b').allInnerTexts()).map(num).reduce((a, b) => a + b, 0);
-    const kinds = (await card.locator('.ld-kinds b.num').allInnerTexts()).map(num).reduce((a, b) => a + b, 0);
-    expect(kinds).toBe(cells);
-    expect(await card.locator('.ld-kinds > span:not(.ld-k)').count()).toBeLessThanOrEqual(5);
+    await expect(page.locator('.ld-board h2')).toContainText('프로젝트 진행 현황', { timeout: 20000 });
+    await expect(page.locator('.ld-jobs')).toHaveCount(0);
   });
 
   test('XI맵 도구(층 · 가르기 · 보고서 · 분석) — 이전 모습 아이콘 + 글자(원칙 199) · 자리는 지도 오른쪽 · 왼쪽은 직원 메뉴 그대로(바퀴 5)', async ({ page, baseURL }) => {
