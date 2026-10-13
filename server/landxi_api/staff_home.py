@@ -15,6 +15,7 @@
   GET  /announcements?limit=        (LX 계정) LX 전체 공지 — 최근 순 · 내린 것은 빼고. 비어 있으면 빈 목록(지어내지 않는다)
   POST /announcements               (LX 관리자) {title, body?} 공지 쓰기 → 감사 기록 announce.post
   POST /announcements/{id}/remove   (LX 관리자) 공지 내리기(지우지 않고 removed_at) → 감사 기록 announce.remove
+  GET|POST /me/memos · POST /me/memos/{id}/pin|remove   (LX 계정) 내 메모(나만 · 고정 위 · 200자 · 50개) — 대시보드 아래 한 줄(원칙 201 · 226)
 화면에 내는 값은 이름 · 크기 · 수 · 시각만(작업 id · 경로 · 내부 지표는 화면이 쓰지 않는다 — card_id · sgg_cd 는 이름을 찾는 열쇠).
 """
 from __future__ import annotations
@@ -451,4 +452,59 @@ async def remove_announcement(aid: str, request: Request):
         if not r:
             raise ApiError("not_found", "공지가 없습니다")
         await audit(conn, p, "announce.remove", aid, {"title": r["title"]}, None)
+    return {"ok": True, "at": now_iso()}
+
+
+# ── 메모(나만 보는 짧은 글 · 원칙 201 · 226 — 대시보드 아래 한 줄) ─────────────────────
+MEMO_MAX, MEMO_KEEP = 200, 50
+
+
+def _memo(r) -> dict:
+    return {"id": r["id"], "body": r["body"], "pinned": bool(r["pinned"]), "at": _iso(r["at"])}
+
+
+@router.get("/me/memos")
+async def my_memos(request: Request, limit: int = 20):
+    """내 메모 — 고정이 위 · 최근 순. 비어 있으면 빈 목록(지어내지 않는다)."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT * FROM lx_memos WHERE user_id=$1 ORDER BY pinned DESC, at DESC LIMIT $2", p.user_id, max(1, min(limit, MEMO_KEEP)))
+        n = await conn.fetchval("SELECT count(*) FROM lx_memos WHERE user_id=$1", p.user_id)
+    return {"items": [_memo(r) for r in rows], "total": int(n or 0), "as_of": now_iso()}
+
+
+@router.post("/me/memos", status_code=201)
+async def post_memo(body: dict, request: Request):
+    p = _lx(request)
+    text = " ".join(str(body.get("body") or "").split())
+    if not text:
+        raise ApiError("bad_request", "메모를 적어 주세요", {"field": "body"})
+    if len(text) > MEMO_MAX:
+        raise ApiError("bad_request", f"메모는 {MEMO_MAX}자까지입니다", {"field": "body"})
+    async with db(realm="lx") as conn:
+        n = await conn.fetchval("SELECT count(*) FROM lx_memos WHERE user_id=$1", p.user_id)
+        if int(n or 0) >= MEMO_KEEP:
+            raise ApiError("bad_request", f"메모는 {MEMO_KEEP}개까지입니다 — 지난 메모를 지워 주세요")
+        r = await conn.fetchrow("INSERT INTO lx_memos(id, user_id, body, pinned) VALUES ($1,$2,$3,$4) RETURNING *",
+                                "mm_" + secrets.token_hex(5), p.user_id, text, bool(body.get("pinned")))
+    return {"item": _memo(r), "at": now_iso()}
+
+
+@router.post("/me/memos/{mid}/pin")
+async def pin_memo(mid: str, body: dict, request: Request):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("UPDATE lx_memos SET pinned=$3 WHERE id=$1 AND user_id=$2 RETURNING *", mid, p.user_id, bool(body.get("pinned")))
+    if not r:
+        raise ApiError("not_found", "메모가 없습니다")
+    return {"item": _memo(r), "at": now_iso()}
+
+
+@router.post("/me/memos/{mid}/remove")
+async def remove_memo(mid: str, request: Request):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchval("DELETE FROM lx_memos WHERE id=$1 AND user_id=$2 RETURNING id", mid, p.user_id)
+    if not r:
+        raise ApiError("not_found", "메모가 없습니다")
     return {"ok": True, "at": now_iso()}

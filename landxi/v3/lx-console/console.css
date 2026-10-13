@@ -1,83 +1,141 @@
-/* console.css — LX 직원 대시보드(직원-6 4차 · 직원-7 · 10-09 한 번에 정리 · 원칙 176 대시보드는 요약 10-11). PC 만(원칙 139).
-   한 줄 다섯 칸 같은 크기 = 프로젝트 진행 현황(요약 · 여섯 단계 한 줄씩) · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지.
-   1440 에서 칸 너비 약 250 — 2×3 은 한 칸이 비어 한쪽으로 쏠려서, 다섯 칸 한 줄을 고름.
-   회백 바탕 위 흰 카드 16 · 그림자 0 · 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css) · 법전 system-v2.2-toss. */
-.ld{height:100%;overflow:auto;box-sizing:border-box;padding:24px 24px 40px}
-.ld-in{display:flex;flex-direction:column;gap:16px;margin:0 auto}
+/* console.css — LX 직원 대시보드(구현 26차 · 8차 시안 배치 · 원칙 214 위아래 · 216 컴팩트 · 226). PC 만(원칙 139).
+   위에서 아래로: ① 프로젝트 진행 현황(가로 흐름) → ② 내가 돌린 작업 · 요청함 · 저장 용량(숫자 칸 한 줄) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
+   → ④ 공지 · 메모 · 전국 AI 현황(한 줄). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
+.ld{height:100%;overflow:auto;box-sizing:border-box;padding:20px 24px 32px}
+.ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:1344px}
 .ld-in > .lxp-ntcs:empty{display:none}
-.ld-card{display:flex;flex-direction:column;gap:12px;min-width:0;box-sizing:border-box}
-.ld-card.t-card{padding:20px}
-.ld-hd{display:flex;flex-direction:column;gap:2px;min-height:52px}
+.ld-card{display:flex;flex-direction:column;gap:10px;min-width:0;box-sizing:border-box}
+.ld-card.t-card{padding:16px 20px}
+.ld-hd{display:flex;flex-direction:column;gap:0}
 .ld-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.ld-h h2{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-.ld-sub{font:500 13px/20px var(--font-body);color:var(--sub);letter-spacing:0;word-break:keep-all}
+.ld-h h2{margin:0;font:700 18px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.ld-sub{font:500 12px/16px var(--font-body);color:var(--sub);letter-spacing:0;word-break:keep-all}
 .ld-sub span{display:inline-block}
-.ld-more{flex:none;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;transition:background-size var(--d-380) var(--e-ui)}
+.ld-more{flex:none;font:500 13px/18px var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;transition:background-size var(--d-380) var(--e-ui)}
 .ld-more::after{content:" →"}
 .ld-more:hover{background-size:100% 1px}
 button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
+.ld-k{color:var(--sub-2);font-weight:500}
+.ld-foot-s{margin:0;font:400 12px/16px var(--font-body);color:var(--sub);word-break:keep-all}
 
-/* ① 프로젝트 진행 현황 — 요약 칸: 여섯 단계 한 줄씩(숫자 · 단계 이름 · 남은 일) · 왼쪽 가는 선 = 흐름 */
-.ld-flow{flex:1}
-.ld-pf{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;position:relative}
-.ld-pf::before{content:"";position:absolute;left:13px;top:14px;bottom:14px;width:1px;background:var(--rule)}
-.ld-pf a{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:3px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
+/* 처음 한 번 떠오름(원칙 201 · 줄마다 한 박자씩) */
+.ld-in > .ld-card,.ld-nums > .ld-card{opacity:0;transform:translateY(8px)}
+.ld.is-in .ld-in > .ld-card,.ld.is-in .ld-nums > .ld-card{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
+.ld.is-in .ld-nums > .ld-card{transition-delay:80ms}
+.ld.is-in .ld-recent{transition-delay:140ms}
+.ld.is-in .ld-foot{transition-delay:200ms}
+
+/* ① 프로젝트 진행 현황 — 가로 흐름: 단계마다 숫자(위) + 이름(아래) · 사이 선 하나 · 일이 있는 단계로 빛 점 */
+.ld-flow{min-width:0}
+.ld-pf{list-style:none;margin:0;padding:10px 0 0;position:relative;display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,1fr))}
+.ld-pf li{position:relative;min-width:0}
+.ld-pf li::before{content:"";position:absolute;left:50%;right:-50%;top:0;height:2px;background:var(--rule)}
+.ld-pf li:last-child::before{display:none}
+.ld-pf li::after{content:"";position:absolute;left:calc(50% - 5px);top:-4px;width:10px;height:10px;border-radius:50%;background:var(--bg-1);border:2px solid var(--mute);box-sizing:border-box;z-index:1}
+.ld-pf li.has-work::after{background:var(--ink);border-color:var(--ink)}
+.ld-pf a{position:relative;display:flex;flex-direction:column;align-items:center;padding:10px 6px 2px;margin:0 2px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui);z-index:1}
 .ld-pf a:hover{background:var(--bg-0)}
-.ld-pf b{justify-self:center;min-width:22px;padding:0 2px;background:var(--bg-1);text-align:center;font:800 17px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
-.ld-pf a:hover b{background:var(--bg-0)}
-.ld-pf span{font:500 var(--fs-label)/24px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ld-pf em{font:500 12px/18px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
+.ld-pf b{font:800 26px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.ld-pf span{font:500 13px/18px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ld-pf em{font:500 12px/16px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
 .ld-pf li[data-n="0"] b{color:var(--mute)}
 .ld-pf li[data-n="0"] span{color:var(--sub)}
-.ld-foot-s .ld-more{font-size:13px}
+.ld-pf-flow{position:absolute;top:-3px;left:-50%;width:8px;height:8px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 3px rgba(15,169,160,.18);opacity:0;animation:ld-flow 3s var(--e-ui) infinite;pointer-events:none;z-index:2}
+@keyframes ld-flow{0%{left:-50%;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:calc(50% - 4px);opacity:0}}
 
-/* 다섯 칸 같은 크기 · 같은 높이 */
-.ld-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;align-items:stretch}
-.ld-foot-s{margin:auto 0 0;padding-top:10px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub);word-break:keep-all}
-
-/* 숫자 칸(요청함 · 내가 돌린 작업) */
+/* ② 숫자 칸 한 줄 — 내가 돌린 작업 · 요청함 · 저장 용량 */
+.ld-nums{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
 .ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.ld-cell{display:flex;flex-direction:column;gap:4px;min-width:0;padding:4px 6px;margin:-4px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
+.ld-cells--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ld-cell{position:relative;display:flex;flex-direction:column;gap:0;min-width:0;padding:2px 6px;margin:-2px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
 .ld-cell:hover{background:var(--bg-0)}
-.ld-cell b{font:800 28px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
-.ld-cell span{font:500 var(--fs-label)/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.ld-cell b{font:800 24px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.ld-cell b small{font:600 13px/16px var(--font-body);color:var(--sub);letter-spacing:0}
+.ld-cell > span{font:500 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
 .ld-cell.is-zero b{color:var(--mute)}
 .ld-cell.is-warn b{color:var(--warn)}
+.ld-cell.is-run b{color:var(--ai)}
 .ld-cell--ro:hover{background:none}
-.ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
-.ld-jobs-b{display:flex;flex-direction:column;gap:12px;flex:1}
-.ld-kinds{margin:auto 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;border-top:1px solid var(--rule);padding-top:10px;font:400 13px/18px var(--font-body);color:var(--sub-2)}
+.ld-jobs-b{display:flex;flex-direction:column;gap:10px}
+.ld-kinds{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--rule);padding-top:8px;font:400 12px/16px var(--font-body);color:var(--sub-2)}
 .ld-kinds > span{display:inline-block;white-space:nowrap}
-.ld-kinds b{font:500 13px/18px var(--font-num);color:var(--ink)}
-.ld-k{color:var(--sub)}
+.ld-kinds b{font:500 12px/16px var(--font-num);color:var(--ink)}
+.ld-inbox-b{display:flex;flex-direction:column;gap:10px}
+.ld-inbox-s{margin:0;border-top:1px solid var(--rule);padding-top:8px;font:400 12px/16px var(--font-body);color:var(--sub)}
+/* 지금 도는 작업이 있을 때만 맥박 */
+.ld-live{display:inline-flex;align-items:center;gap:6px;font:500 12px/18px var(--font-body);color:var(--ai)}
+.ld-live[hidden]{display:none}
+.ld-live i{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:ld-pulse 1.6s var(--e-ui) infinite}
+@keyframes ld-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+/* 저장 용량 — 쓴 양(큰 숫자) | 막대 · 프로젝트별 · 증량 신청 */
+.ld-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.ld-store-r{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ld-bar.k-me-bar{height:6px;background:var(--bg-0)}
+.ld-bar.k-me-bar i{min-width:6px;transition:width var(--d-500) var(--e-cam)}
+.ld-store-s{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin:0;font:400 12px/16px var(--font-body);color:var(--sub)}
+.ld-store-s > span{display:inline-flex;align-items:baseline;gap:4px;min-width:0;max-width:100%;white-space:nowrap}
+.ld-pn{overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.ld-store-s b{font:500 12px/16px var(--font-num);color:var(--ink-2)}
+.ld-store-a{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:2px 0 0;font:500 12px/16px var(--font-body)}
+.ld-store-a .k-me-ask{margin-left:auto;font-size:12px}
+.ld-store-p{color:var(--ink-2)}
+.ld-warn{color:var(--warn)}
 
-/* 저장 용량 — 도넛 · 범례(위아래) · 할당 대비 막대 · 증량 신청(내 정보 창 한 길 · kit/me.js) */
-.ld-store-b{display:flex;flex-direction:column;gap:10px;flex:1}
-.ld-store .k-me-dnr{flex-direction:column;align-items:stretch;gap:12px;padding:0}
-.ld-store .k-me-dn{margin:0 auto;--k-me-dn-bg:var(--bg-0)}
-.ld-store .k-me-lg{gap:6px}
-.ld-store .k-me-lg li{font-size:13px;line-height:18px}
-.ld-store .k-me-gauge .k-me-bar{background:var(--bg-0)}
-.ld-store-s{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
-.ld-store-s span,.ld-store-p span{display:inline-block}
-.ld-store-a{display:flex;gap:16px;margin-top:auto;padding-top:10px;border-top:1px solid var(--rule)}
-.ld-store-p{margin:0;font:500 13px/19px var(--font-body);color:var(--ink-2)}
-.ld-warn{margin:0;font:500 13px/19px var(--font-body);color:var(--warn)}
+/* ③ 최근 진행한 프로젝트 — 프로젝트 목록 카드(lx-project/card.js · compact) 4장 한 줄 · 그림은 낮게(2.6:1) */
+.ld-rgrid.la-acg{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:2px}
+.ld-rgrid .k-sc.la-ac{box-shadow:none;border:1px solid var(--rule)}
+.ld-rgrid .la-ac-pic{aspect-ratio:2.6/1}
+.ld-rgrid .k-sc-b.la-ac-b{padding:12px 14px 14px;gap:8px}
+.ld-rgrid .k-sc-t{font-size:16px;line-height:22px}
+.ld-rgrid .k-sc-line.la-ac-line{display:block;min-height:18px;font-size:13px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset}
+.ld-rgrid .la-ac-hero{padding:10px 12px 8px;gap:8px 16px}
+.ld-rgrid .la-ac-hero b{font-size:24px;line-height:28px}
+.ld-rgrid .la-ac-hero b i{font-style:normal;font-size:13px;margin-left:2px;color:var(--sub-2)}
+.ld-rgrid .la-ac-hero small{font-size:12px}
+.ld-rgrid .la-ac-where{font-size:13px;line-height:18px}
+.ld-rgrid .k-sc-acts{margin-top:2px}
+.ld-rgrid .k-sc-acts .t-btn{height:36px;line-height:34px;padding:0 16px}
 
-/* 공지 */
+/* ④ 한 줄 — 공지 | 메모 | 전국 AI 현황 */
+.ld-foot.t-card.ld-card{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);gap:24px;padding:12px 20px}
+.ld-foot-c{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ld-foot-c h2{display:flex;align-items:center;gap:8px;margin:0;font:700 14px/20px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.ld-foot-c h2 .ld-more{margin-left:auto;font-size:12px}
+.ld-foot-k{font:500 11px/16px var(--font-body);color:var(--sub)}
+.ld-foot-none{margin:0;font:400 12px/18px var(--font-body);color:var(--sub)}
 .ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ld-ntc li{border-top:1px solid var(--rule)}
-.ld-ntc li:first-child{border-top:0}
-.ld-ntc button{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;width:calc(100% + 16px);padding:8px;margin:0 -8px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.ld-ntc button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:calc(100% + 12px);padding:1px 6px;margin:0 -6px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left;font:400 12px/18px var(--font-body);color:var(--ink)}
 .ld-ntc button:hover{background:var(--bg-0)}
-.ld-ntc button b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ld-ntc li.ld-ntc-none{border:0;padding:18px 0;border-radius:var(--r-8);background:var(--bg-0);text-align:center;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
-.ld-when{font-size:13px;color:var(--sub);white-space:nowrap}
+.ld-ntc b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ld-ntc small{font-size:11px;color:var(--sub)}
 .ld-ntc-md{display:flex;flex-direction:column;gap:12px;padding-bottom:8px}
 .ld-ntc-by{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
 .ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
+/* 메모 — 줄마다 글 · 날짜 · (가리키면) 고정 · 지우기 */
+.ld-memo-b{display:flex;flex-direction:column;gap:4px}
+.ld-ml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.ld-ml li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;min-width:0;padding:1px 6px;margin:0 -6px;border-radius:6px;font:400 12px/18px var(--font-body);color:var(--ink-2)}
+.ld-ml li:hover,.ld-ml li:focus-within{background:var(--bg-0)}
+.ld-ml-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-ml li.is-pin .ld-ml-t{font-weight:500;color:var(--ink)}
+.ld-ml em{margin-right:6px;font-style:normal;font-weight:600;font-size:11px;color:var(--sub-2);background:var(--bg-0);padding:0 5px;border-radius:4px}
+.ld-ml li:hover em,.ld-ml li:focus-within em{background:var(--bg-1)}
+.ld-ml small{font-size:11px;color:var(--sub)}
+.ld-ml-a{display:inline-flex;gap:8px;opacity:0;transition:opacity var(--d-180) var(--e-ui)}
+.ld-ml li:hover .ld-ml-a,.ld-ml li:focus-within .ld-ml-a{opacity:1}
+.ld-ml-b{border:0;padding:0;background:none;cursor:pointer;font:500 11px/18px var(--font-body);color:var(--sub-2);white-space:nowrap}
+.ld-ml-b:hover{color:var(--ink);text-decoration:underline}
+.ld-memo-b .ld-ml-in.t-input{width:100%;max-width:100%;box-sizing:border-box;height:28px;min-height:28px;padding:0 10px;font-size:12px;border-radius:6px}
+/* 전국 AI 현황 */
+.ld-nat-l{display:flex;flex-wrap:wrap;gap:2px 12px;margin:0;font:400 12px/18px var(--font-body);color:var(--sub-2)}
+.ld-nat-l span{display:inline-block;white-space:nowrap}
 
-/* 좁은 PC — 셋씩 */
-@media (max-width:1180px){.ld-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.ld-foot-s span{display:inline-block}
+@media (prefers-reduced-motion:reduce){
+  .ld-in > .ld-card,.ld-nums > .ld-card{opacity:1;transform:none;transition:none}
+  .ld-pf-flow,.ld-live i{animation:none}
+  .ld-pf-flow{display:none}
+}
 
+/* 좁은 PC */
+@media (max-width:1180px){.ld-nums{grid-template-columns:1fr 1fr}.ld-rgrid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}.ld-foot.t-card.ld-card{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.ld-nums,.ld-foot.t-card.ld-card{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}.ld-pf li::before{display:none}}

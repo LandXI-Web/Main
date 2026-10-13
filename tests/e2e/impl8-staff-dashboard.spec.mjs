@@ -1,6 +1,7 @@
-// 구현 8차 · LX 직원 대시보드 한 번에 정리(직원-6 4차 · 직원-7 · 10-09 13:14) — 로그인 폼 입력만(세션 주입 0) · 읽기만(신청을 보내지 않는다) · GPU 0.
-// 확인: ① 대시보드 칸 = 프로젝트 진행 현황 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지 — 옛 칸(내 프로젝트 · 우리 서비스 · 바로 분석하기 · 최근 활동) 0
-//       ② 프로젝트 진행 현황 = 다른 칸과 같은 크기의 요약 칸(원칙 176 · 10-11) — 여섯 단계 한 줄씩(숫자 = 서버 목록을 단계로 묶은 수 · 남은 일) · 칩 · 진행 그래프 0
+// 구현 8차 · LX 직원 대시보드 한 번에 정리(직원-6 4차 · 직원-7 · 10-09 13:14) → 구현 26차 8차 시안 배치(원칙 214 · 216 · 226) — 로그인 폼 입력만(세션 주입 0) · 읽기만(신청을 보내지 않는다) · GPU 0.
+// 확인: ① 위에서 아래로 = 프로젝트 진행 현황 → 내가 돌린 작업 · 요청함 · 저장 용량(한 줄) → 최근 진행한 프로젝트(카드 ≤ 4) → 공지 · 메모 · 전국 AI 현황(한 줄)
+//          옛 칸(내 프로젝트 · 우리 서비스 · 바로 분석하기 · 최근 활동 · 내 분석 결과 격자) 0 · 1440×900 에서 약 1.1화면
+//       ② 진행 현황 = 서버 단계 그대로(숫자 = 서버 목록을 단계로 묶은 수 · 남은 일) · 칩 · 진행 그래프 0 · 최근 카드 = 프로젝트 목록 카드 부품('무엇을' 줄 없음 · 최근 활동 순)
 //       ③ 단계를 누르면 메뉴 '프로젝트' 목록(?stage=)이 그 단계만 · 남은 일 먼저 · 진행 n/4 · '지금' = 서버 next
 //       ④ 증량 신청은 내 정보 창 한 길(폼이 같은 자리에서 펼쳐짐) ⑤ 가로 넘침 0 · 콘솔 오류 0 · '결재' · '반려' 0
 // LX_SHOTS=1 이면 증거 캡처(docs/superpowers/final/process/impl-8/staff-dashboard/shots).
@@ -55,20 +56,34 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
     await page.reload();
     const j = await (await got).json();
 
-    /* ① 칸 — 시안 4차 그대로 · 옛 칸 0 */
-    await expect(page.locator('.ld-card h2')).toHaveText([/^프로젝트 진행 현황/, /^저장 용량/, /^내가 돌린 작업/, /^요청함/, /^공지/], { timeout: 20000 });
-    for (const old of ['.lc-mine', '.lc-pr', '.ld-svc', '.ld-quick', '.ld-act', '.ld-th', '.ld-go', '.ld-recent']) await expect(page.locator(old)).toHaveCount(0);
+    /* ① 칸 — 위에서 아래로(8차 시안 배치) · 옛 칸 0 */
+    await expect(page.locator('.ld-in > .ld-card > .ld-hd h2, .ld-nums > .ld-card > .ld-hd h2')).toHaveText([/^프로젝트 진행 현황/, /^내가 돌린 작업/, /^요청함/, /^저장 용량/, /^최근 진행한 프로젝트/], { timeout: 20000 });
+    await expect(page.locator('.ld-foot .ld-foot-c > h2')).toHaveText([/^공지/, /^메모/, /^전국 AI 현황/]);
+    for (const old of ['.lc-mine', '.lc-pr', '.ld-svc', '.ld-quick', '.ld-act', '.ld-th', '.ld-go', '.ld-row', '.sd4-grid']) await expect(page.locator(old)).toHaveCount(0);
 
-    /* ② 요약 칸 — 다섯 칸 같은 크기 · 여섯 단계 숫자 = 서버 목록을 단계로 묶은 수 · 칩 · 그래프 0 */
+    /* ② 진행 현황 숫자 = 서버 목록을 단계로 묶은 수 · 숫자 칸 셋은 한 줄 · 칩 · 그래프 0 */
     const want = [0, 0, 0, 0, 0, 0];
     const warnN = [0, 0, 0, 0, 0, 0];
     for (const p of j.items) { const g = G[p.stage.key] ?? 0; want[g] += 1; if (p.blocked?.[0] && p.blocked[0].kind !== 'wait') warnN[g] += 1; }
-    const ws = await page.locator('.ld-row > .ld-card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
-    expect(ws.length).toBe(5);
-    expect(Math.max(...ws) - Math.min(...ws)).toBeLessThanOrEqual(1);
+    const tops = await page.locator('.ld-nums > .ld-card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+    expect(tops.length).toBe(3);
+    expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
     await expect(page.locator('.ld-board .sb-chip, .ld-board .sb-st-g')).toHaveCount(0);
     if (j.items.length) {
+      /* 최근 진행한 프로젝트 — 마지막 활동 순 ≤ 4장 · 프로젝트 목록과 같은 카드(.lxp-pc) · '무엇을'(업무) 줄 없이 찾는 것 · 구성원 줄 없음 */
+      const t = (p) => +new Date(p.last_at || p.updated_at || 0) || 0;
+      const top = j.items.slice().sort((a, b) => t(b) - t(a)).slice(0, 4);
+      await expect(page.locator('.ld-recent .lxp-pc')).toHaveCount(top.length);
+      expect(await page.locator('.ld-recent .lxp-pc').evaluateAll((els) => els.map((e) => e.dataset.id))).toEqual(top.map((p) => p.id));
+      for (const [i, p] of top.entries()) {
+        await expect(page.locator('.ld-recent .lxp-pc').nth(i).locator('.la-ac-line')).toHaveText(((p.finds || []).join(' · ') || p.description || '').trim());
+        await expect(page.locator('.ld-recent .lxp-pc').nth(i).locator('.lxp-pc-w small.num')).toHaveText(/^ · [0-6]\/6$/);
+      }
+      await expect(page.locator('.ld-recent .lxp-pc-meta')).toHaveCount(0);
+      const hh = await page.locator('.ld').evaluate((e) => e.scrollHeight);
+      expect(hh, '1440×900 에서 약 1.1화면(본문 ≤ 1.3배)').toBeLessThanOrEqual(Math.round(844 * 1.3));
       await expect(page.locator('.ld-board .ld-pf li')).toHaveCount(6);
+      await page.waitForTimeout(900);                                         // 숫자 차오름(0.6초) 뒤 최종 값
       await expect(page.locator('.ld-board .ld-pf span')).toHaveText(['데이터 올리기', '학습데이터 구축', '학습', '추론', '결과 확인', '배포 신청']);
       expect((await page.locator('.ld-board .ld-pf b').allTextContents()).map(Number)).toEqual(want);
       for (let i = 0; i < 6; i++) await expect(page.locator('.ld-board .ld-pf li').nth(i).locator('em')).toHaveCount(warnN[i] ? 1 : 0);
@@ -104,7 +119,7 @@ test.describe('구현 8차 · LX 직원 대시보드 — 한 번에 정리', () 
       expect(m2.overflowX).toBeLessThanOrEqual(0);
       expect(m2.banned).toEqual([]);
       await page.goBack();
-      await page.locator('.ld-store .k-me-dn').waitFor({ timeout: 20000 });
+      await page.locator('.ld-store .ld-store-b .ld-cell').waitFor({ timeout: 20000 });
     }
 
     /* ④ 증량 신청 — 대시보드 칸 → 내 정보 창(폼이 같은 자리에서 펼쳐짐 · 보내지 않는다) */

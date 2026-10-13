@@ -8,12 +8,13 @@
    맨 위 알림 한 줄(프로젝트장을 넘겨받음 — context.js projectNotices · 대시보드 '내 프로젝트'와 같은 부품)
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트 · 가운데 창 · 서랍)만 조합. */
 import * as K from '../kit/index.js';
-import { h, api, API, session } from '../kit/util.js';
+import { h, api } from '../kit/util.js';
 import { loadDeck } from '../kit/service-card.js';
 import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, projectNotices, units } from './context.js';
 import { staffMenu, STAFF_HREF } from '../kit/lx-menu.js';
-import { GROUPS, N, groupOf, seg4El, doneN, kick, ago, sortBy } from './board.js';
+import { GROUPS, groupOf, kick, sortBy } from './board.js';
 import { openNewProject } from './new.js';
+import { projCard } from './card.js';                    // 카드 한 부품(대시보드 '최근 진행한 프로젝트'와 같은 것)
 import { retrainCard, logCard, openHandover } from './sheets.js';
 
 const who = await K.gate('lx-console');                  // 들어오는 사람 = LX 직원 대시보드와 같다(LX 직원 · 관리자)
@@ -36,65 +37,6 @@ const stageText = (p) => (p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '�
 const PER = [2, 4, 6, 8];
 function readPer() { try { const n = +localStorage.getItem('lx-project.per'); return PER.includes(n) ? n : 4; } catch { return 4; } }
 function savePer(n) { try { localStorage.setItem('lx-project.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
-const thumbs = new Map();
-function authPic(path) {               // LX 계정만 받는 그림(영상 썸네일) — 세션을 실어 받는다(분석하기 영상 고르기와 같은 길)
-  if (!thumbs.has(path)) {
-    thumbs.set(path, (async () => {
-      const s = session.get();
-      const r = await fetch(API.prefix + path, { headers: s ? { authorization: 'Bearer ' + s.token } : {} });
-      if (!r.ok || r.status === 204) return null;
-      const b = await r.blob();
-      return b.size ? URL.createObjectURL(b) : null;
-    })().catch(() => null));
-  }
-  return thumbs.get(path);
-}
-const nf = (v) => Number(v).toLocaleString('ko-KR');
-function peopleWord(ps = []) {
-  if (!ps.length) return '—';
-  const names = ps.map((x) => x.name || x.role_label);
-  return names.length > 2 ? `${names.slice(0, 2).join(' · ')} 외 ${names.length - 2}명` : names.join(' · ');
-}
-
-function projCard(p, deckBy) {
-  const archived = p.state === 'archived';
-  const go = archived ? projectHref(p.id) : stageHref(p, p.next?.stage || p.stage?.key, p.next?.target);
-  const svc = p.card ? deckBy.get(p.card) : null;            // 이 프로젝트가 만든 서비스(분석하기 카드 덱) — 결과 장면 · 정확도는 그 카드와 같은 값
-  const pic = h('div.k-sc-crop.la-ac-pic');
-  const blank = () => { const keep = [...pic.querySelectorAll('.la-ac-cat, .k-sc-flag')]; pic.classList.add('is-blank'); pic.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
-  const scene = svc?.scene?.src ? (String(svc.scene.src).startsWith('/api/') ? API.base + svc.scene.src : svc.scene.src) : null;
-  if (scene) pic.append(h('img', { src: scene, alt: '', loading: 'lazy', decoding: 'async', onerror: blank }));
-  else if (p.pic) authPic(p.pic).then((u) => { if (u) pic.prepend(h('img', { src: u, alt: '', decoding: 'async', onerror: blank })); else blank(); });
-  else blank();
-  const st = p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '';
-  pic.append(h('div.la-ac-cat', {}, h('span', { text: archived ? '보관' : st })));
-  const k = archived ? null : kick(p);
-  if (k?.kind === 'warn') pic.append(h('span.k-sc-flag', { text: k.text }));
-  const acc = svc?.model?.acc?.value ?? p.acc?.value ?? null;
-  const tn = p.train_n?.value ?? null;
-  const regs = p.regions || [];
-  const regText = regs.length ? (regs.length > 3 ? `${regs.slice(0, 3).map((g) => g.name).join(' · ')} 외 ${regs.length - 3}곳` : regs.map((g) => g.name).join(' · ')) : '영상이 등록되면 정해집니다';
-  const line = p.description || p.task || (p.finds || []).join(' · ');   // 업무를 묻지 않는 새 프로젝트 = 학습 데이터 클래스(원칙 225)
-  const el = h('article.k-sc.la-ac.lxp-pc', { dataset: { kind: 'project', id: p.id, stage: GROUPS[groupOf(p)].key }, tabindex: '0', 'aria-label': `${p.name} · ${archived ? '보관' : st}` },
-    pic,
-    h('div.k-sc-b.la-ac-b', {},
-      h('h3.k-sc-t', { text: p.name }),
-      h('p.k-sc-line.la-ac-line', { text: line, title: line }),
-      h('div.lxp-pc-st', {}, archived ? null : seg4El(p),
-        h('span.lxp-pc-w', {}, archived ? h('b', { text: '보관한 프로젝트' }) : h('b', { text: `지금 ${st}` }),
-          archived ? null : h('small.num', { text: ` · ${doneN(p)}/${N}` }), k?.kind === 'wait' ? h('small', { text: ` · ${k.text}` }) : null)),
-      h('div.la-ac-hero', {},
-        h('div', {}, tn === null ? h('b', { text: '—' }) : h('b.num', {}, nf(tn), h('i', { text: '장' })), h('small', { text: '학습 데이터' })),
-        h('div', {}, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' }))),
-      h('div.la-ac-where', {}, h('span.k', { text: regs.length ? `대상지 ${regs.length}곳` : '대상지' }), h('span.v', { text: regText, title: regs.map((g) => g.full || g.name).join(' · ') })),
-      h('div.lxp-pc-meta', {},
-        h('span', { title: (p.people || []).map((x) => x.name).join(' · ') }, h('span.k', { text: '구성원' }), h('span.v', { text: peopleWord(p.people) })),
-        h('span', {}, h('span.k', { text: '마지막 활동' }), h('span.v.num', { text: ago(p.last_at || p.updated_at) }))),
-      h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: go, text: '열기' }), h('a.k-sc-more', { href: projectHref(p.id), text: '프로젝트 →' }))));
-  el.addEventListener('click', (e) => { if (!e.target.closest('a')) location.href = go; });
-  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === el) location.href = go; });
-  return el;
-}
 
 async function list() {
   const TABS = [['mine', '내 프로젝트'], ['led', '내가 만든'], ['joined', '참여한'], ['archived', '보관'], ['all', '전체']];

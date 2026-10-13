@@ -41,11 +41,13 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
-    await expect(page.locator('.ld-card h2')).toHaveText([/^프로젝트 진행 현황/, /^저장 용량/, /^내가 돌린 작업/, /^요청함/, /^공지/]);
+    await expect(page.locator('.ld-in > .ld-card > .ld-hd h2, .ld-nums > .ld-card > .ld-hd h2')).toHaveText([/^프로젝트 진행 현황/, /^내가 돌린 작업/, /^요청함/, /^저장 용량/, /^최근 진행한 프로젝트/]);   // 구현 26차 위아래 배치(원칙 226)
+    await expect(page.locator('.ld-foot .ld-foot-c > h2')).toHaveText([/^공지/, /^메모/, /^전국 AI 현황/]);
     await expect(page.locator('.k-mast')).not.toContainText('AI 기반 국토정보');   // 머리에서 잘려 보이던 부제는 없앴다
     /* 요청함 숫자 셋 — 왼쪽 메뉴 숫자(있으면)는 그 합 */
     const cells = page.locator('.ld-inbox .ld-cell b');
     await expect(cells).toHaveCount(3, { timeout: 20000 });
+    await page.waitForTimeout(900);                                           // 숫자 차오름 뒤 최종 값
     const sum = (await cells.allTextContents()).reduce((s, x) => s + (Number(x) || 0), 0);
     const badge = page.locator('.k-rail-i[data-id="inbox"] .k-rail-b');
     if (sum) await expect(badge).toHaveText(String(sum)); else await expect(badge).toHaveCount(0);
