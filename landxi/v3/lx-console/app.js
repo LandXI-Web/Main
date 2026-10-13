@@ -3,8 +3,8 @@
      ① 프로젝트 진행 현황 · 요청함 · 저장 용량 — 숫자 칸 한 줄(10-13 대시보드-v8: '내가 돌린 작업' 칸을 없애고 그 자리에 진행 현황 · 같은 크기)
         진행 현황 = 가로 흐름(서버 단계 그대로 · lx-project/board.js GROUPS · 숫자 = 프로젝트 카드의 단계와 같은 값) · 단계를 누르면 메뉴 '프로젝트' 목록(?stage=)
      ③ 최근 진행한 프로젝트 — 프로젝트 목록과 같은 카드 부품(lx-project/card.js · compact: '무엇을' 줄 없이 찾는 것 · 구성원 줄 없음) 최근 활동 순 4장
-     ④ 공지 · 메모(나만) · 전국 AI 현황 — 한 줄
-   숫자는 모두 서버(GET /projects?scope=mine · /me/storage · 요청함 숫자 · /announcements · /me/memos · /ximap/board) — 지어낸 값 0 · 내부 지표 0.
+     (맨 위) 공지사항(가로 2칸) · 메모(오른쪽 1칸) — 10-13 대시보드-v8: 전국 AI 현황 칸은 삭제
+   숫자는 모두 서버(GET /projects?scope=mine · /me/storage · 요청함 숫자 · /announcements · /me/memos) — 지어낸 값 0 · 내부 지표 0.
    움직임(원칙 201): 처음 한 번 떠오름 · 숫자 차오름(0.6초) · prefers-reduced-motion 이면 끔. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
@@ -38,21 +38,20 @@ const store = h('section.t-card.ld-card.ld-store', { 'aria-label': '저장 용�
 const recentMore = moreLink('프로젝트 목록', STAFF_HREF.projects + '?scope=mine');
 const recent = h('section.t-card.ld-card.ld-recent', { 'aria-label': '최근 진행한 프로젝트' },
   head('최근 진행한 프로젝트', recentMore, h('small.ld-sub', { text: '마지막 활동 순 · 누르면 그 프로젝트의 지금 단계 화면' })), h('div.la-acg.lxp-grid-c.ld-rgrid'));
-/* ④ 공지 · 메모 · 전국 AI 현황 */
-const footC = (title, more, body) => h('div.ld-foot-c', {}, h('h2', {}, title, more || null), body);
-const noticeB = h('div.ld-ntc-b'), memoB = h('div.ld-memo-b'), natB = h('div.ld-nat-b');
-const foot = h('section.t-card.ld-card.ld-foot', { 'aria-label': '공지 · 메모 · 전국 AI 현황' },
-  footC('공지', null, noticeB), footC('메모', h('small.ld-foot-k', { text: '나만 보입니다' }), memoB), footC('전국 AI 현황', moreLink('XI맵에서 전국 결과', STAFF_HREF.ximap), natB));
+/* ① 맨 위 한 줄 — 공지(가로 2칸) | 메모(오른쪽 1칸) · 아래 숫자 줄과 같은 열 폭 · 칸 높이 고정(안쪽 스크롤) */
+const topC = (cls, label, title, more, body) => h('section.t-card.ld-card.ld-top-c.' + cls, { 'aria-label': label }, h('h2', {}, title, more || null), body);
+const noticeB = h('div.ld-ntc-b'), memoB = h('div.ld-memo-b');
+const top = h('div.ld-top', {}, topC('ld-top-n', '공지사항', '공지사항', null, noticeB), topC('ld-top-m', '메모', '메모', h('small.ld-foot-k', { text: '나만 보입니다' }), memoB));
 
 const notes = h('div.lxp-ntcs');
-const page = h('div.ld', {}, h('div.ld-in', {}, notes, h('div.ld-nums', {}, board, inbox, store), recent, foot));
+const page = h('div.ld', {}, h('div.ld-in', {}, notes, top, h('div.ld-nums', {}, board, inbox, store), recent));
 S.main.append(page);
 
 /* 불러오는 중(원칙 212) · 못 불러옴(다시 시도) */
 const wait = (el) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }).set({ progress: null }); };
 const fail = (el, retry) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'error', compact: true, onRetry: retry }); };
 for (const el of [board.querySelector('.ld-flow'), inbox.querySelector('.ld-inbox-b'), store.querySelector('.ld-store-b'),
-  recent.querySelector('.ld-rgrid'), noticeB, memoB, natB]) wait(el);
+  recent.querySelector('.ld-rgrid'), noticeB, memoB]) wait(el);
 
 const two = (n) => String(n).padStart(2, '0');
 const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
@@ -63,7 +62,7 @@ function when(s) {
   return mmdd(s);
 }
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);   // 서버 봉투 → 값
-const MEMO_SHOW = 3;                                  // 메모 칸에 보이는 줄(고정 위 · 최근 순)
+const MEMO_SHOW = 6;                                  // 메모 칸에 보이는 줄(고정 위 · 최근 순 · 넘치면 안쪽 스크롤)
 const nf = (n, d = 0) => Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /* 숫자 차오름 — 그 칸이 그려질 때 한 번(0.6초) · 줄임 설정이면 바로 */
@@ -82,7 +81,7 @@ const num = (tag, v, d = 0, kids = []) => { const el = h(tag, { dataset: { cu: S
 
 projectNotices(notes);                               // 나에게 온 알림(프로젝트장 넘겨받음 · 증량 신청 승인 · 거절) — 없으면 아무것도 그리지 않는다
 requestAnimationFrame(() => page.classList.add('is-in'));
-Promise.allSettled([drawProjects(), drawStore(), drawInbox(), drawNotice(), drawMemos(), drawNational()]).then(() => {
+Promise.allSettled([drawProjects(), drawStore(), drawInbox(), drawNotice(), drawMemos()]).then(() => {
   window.__lxConsole = { ready: true };              // e2e 관측(읽기 전용)
   document.documentElement.dataset.consoleReady = '1';
 });
@@ -175,10 +174,10 @@ async function drawStore() {
   countUp(big);
 }
 
-/* ── ④ 공지 — LX 관리자가 쓴 실제 글(GET /announcements) · 누르면 본문 창. 비면 '새 공지가 없습니다'(지어내지 않는다) ── */
+/* ── 공지 — LX 관리자가 쓴 실제 글(GET /announcements) · 누르면 본문 창. 비면 '새 공지가 없습니다'(지어내지 않는다) ── */
 async function drawNotice() {
   let j;
-  try { j = await api('/announcements?limit=2'); } catch { fail(noticeB, () => { wait(noticeB); drawNotice(); }); return; }
+  try { j = await api('/announcements?limit=6'); } catch { fail(noticeB, () => { wait(noticeB); drawNotice(); }); return; }
   const items = j.items || [];
   if (!items.length) { noticeB.replaceChildren(h('p.ld-foot-none', { text: '새 공지가 없습니다' })); return; }
   const day = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())}`; };
@@ -189,7 +188,7 @@ async function drawNotice() {
   ...(j.total > items.length ? [h('p.ld-foot-s', { text: `공지 ${j.total}건 중 최근 ${items.length}` })] : []));
 }
 
-/* ── ④ 메모 — 나만 보는 짧은 글(GET · POST /me/memos) · 고정은 위 · 적기 한 줄(Enter) · 줄마다 고정 · 지우기 ── */
+/* ── 메모 — 나만 보는 짧은 글(GET · POST /me/memos) · 고정은 위 · 적기 한 줄(Enter) · 줄마다 고정 · 지우기 ── */
 async function drawMemos() {
   let j;
   try { j = await api('/me/memos?limit=' + MEMO_SHOW); } catch { fail(memoB, () => { wait(memoB); drawMemos(); }); return; }
@@ -210,15 +209,4 @@ async function drawMemos() {
     run(() => api('/me/memos', { method: 'POST', body: { body } }));
   });
   memoB.replaceChildren(...[list, inp, j.total > items.length ? h('p.ld-foot-s', { text: `메모 ${j.total}개 중 고정 · 최근 ${items.length}` }) : null].filter(Boolean));
-}
-
-/* ── ④ 전국 AI 현황 — XI맵 전국 결과와 같은 한 출처(GET /ximap/board · 결과가 있는 시군구 · 서비스 가지 · 마지막 분석) ── */
-async function drawNational() {
-  let j;
-  try { j = await api('/ximap/board'); } catch { fail(natB, () => { wait(natB); drawNational(); }); return; }
-  const nr = ev(j?.n_regions), ns = ev(j?.n_services);
-  if (!nr) { natB.replaceChildren(h('p.ld-foot-none', { text: '아직 전국 결과가 없습니다' })); return; }
-  natB.replaceChildren(h('p.ld-nat-l', {},
-    h('span', { text: `결과가 있는 시군구 ${nr}곳` }), ns ? h('span', { text: `서비스 ${ns}가지` }) : null,
-    j.last_at ? h('span', { text: `마지막 분석 ${mmdd(j.last_at)}` }) : null));
 }

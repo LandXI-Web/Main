@@ -1,6 +1,6 @@
 /* console.css — LX 직원 대시보드(구현 26차 · 8차 시안 배치 · 원칙 214 위아래 · 216 컴팩트 · 226). PC 만(원칙 139).
    위에서 아래로: ① 프로젝트 진행 현황 · 요청함 · 저장 용량(숫자 칸 한 줄 · 진행 현황이 옛 '내가 돌린 작업' 자리 · 같은 크기) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
-   → ④ 공지 · 메모 · 전국 AI 현황(한 줄). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
+   (맨 위에 공지사항 가로 2칸 + 메모 1칸 한 줄 · 전국 AI 현황 칸은 삭제). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:20px 24px 32px}
 .ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:1344px}
 .ld-in > .lxp-ntcs:empty{display:none}
@@ -19,11 +19,10 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-foot-s{margin:0;font:400 12px/16px var(--font-body);color:var(--sub);word-break:keep-all}
 
 /* 처음 한 번 떠오름(원칙 201 · 줄마다 한 박자씩) */
-.ld-in > .ld-card,.ld-nums > .ld-card{opacity:0;transform:translateY(8px)}
-.ld.is-in .ld-in > .ld-card,.ld.is-in .ld-nums > .ld-card{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
+.ld-in > .ld-card,.ld-nums > .ld-card,.ld-top > .ld-card{opacity:0;transform:translateY(8px)}
+.ld.is-in .ld-in > .ld-card,.ld.is-in .ld-nums > .ld-card,.ld.is-in .ld-top > .ld-card{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
 .ld.is-in .ld-nums > .ld-card{transition-delay:80ms}
 .ld.is-in .ld-recent{transition-delay:140ms}
-.ld.is-in .ld-foot{transition-delay:200ms}
 
 /* ① 프로젝트 진행 현황 — 작은 칸(옛 '내가 돌린 작업' 자리 · 같은 크기): 여섯 단계를 3×2 로, 단계마다 숫자(위) + 이름(아래) · 이름은 한 줄(잘림 0) · 일이 있는 단계는 숫자가 진하게 */
 .ld-flow{min-width:0}
@@ -80,11 +79,18 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-rgrid .k-sc-acts{margin-top:2px}
 .ld-rgrid .k-sc-acts .t-btn{height:36px;line-height:34px;padding:0 16px}
 
-/* ④ 한 줄 — 공지 | 메모 | 전국 AI 현황 */
-.ld-foot.t-card.ld-card{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);gap:24px;padding:12px 20px}
-.ld-foot-c{display:flex;flex-direction:column;gap:4px;min-width:0}
-.ld-foot-c h2{display:flex;align-items:center;gap:8px;margin:0;font:700 14px/20px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
-.ld-foot-c h2 .ld-more{margin-left:auto;font-size:12px}
+/* 맨 위 한 줄 — 공지사항(가로 2칸) | 메모(1칸) · 열 폭은 아래 숫자 줄과 같은 3칸 · 높이 고정(원칙 231) · 많으면 안쪽 스크롤 */
+.ld-top{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
+.ld-top-n{grid-column:1 / 3}
+.ld-top-m{grid-column:3}
+.ld-top > .ld-card.t-card{height:148px;padding:12px 20px;gap:6px;overflow:hidden}
+.ld-top-c h2{display:flex;align-items:center;gap:8px;flex:none;margin:0;font:700 14px/20px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.ld-top-c h2 .ld-more{margin-left:auto;font-size:12px}
+.ld-ntc-b,.ld-memo-b{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:4px}
+.ld-ntc-b{overflow:auto}
+.ld-ntc-b > .ld-ntc{flex:none}
+.ld-memo-b > .ld-ml{flex:1 1 0;min-height:0;overflow:auto}
+.ld-memo-b > .ld-ml-in,.ld-memo-b > .ld-foot-s{flex:none}
 .ld-foot-k{font:500 11px/16px var(--font-body);color:var(--sub)}
 .ld-foot-none{margin:0;font:400 12px/18px var(--font-body);color:var(--sub)}
 .ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
@@ -110,14 +116,11 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-ml-b{border:0;padding:0;background:none;cursor:pointer;font:500 11px/18px var(--font-body);color:var(--sub-2);white-space:nowrap}
 .ld-ml-b:hover{color:var(--ink);text-decoration:underline}
 .ld-memo-b .ld-ml-in.t-input{width:100%;max-width:100%;box-sizing:border-box;height:28px;min-height:28px;padding:0 10px;font-size:12px;border-radius:6px}
-/* 전국 AI 현황 */
-.ld-nat-l{display:flex;flex-wrap:wrap;gap:2px 12px;margin:0;font:400 12px/18px var(--font-body);color:var(--sub-2)}
-.ld-nat-l span{display:inline-block;white-space:nowrap}
 
 @media (prefers-reduced-motion:reduce){
-  .ld-in > .ld-card,.ld-nums > .ld-card{opacity:1;transform:none;transition:none}
+  .ld-in > .ld-card,.ld-nums > .ld-card,.ld-top > .ld-card{opacity:1;transform:none;transition:none}
 }
 
 /* 좁은 PC */
-@media (max-width:1180px){.ld-nums{grid-template-columns:1fr 1fr}.ld-rgrid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}.ld-foot.t-card.ld-card{grid-template-columns:1fr 1fr}}
-@media (max-width:760px){.ld-nums,.ld-foot.t-card.ld-card{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{row-gap:8px}}
+@media (max-width:1180px){.ld-nums,.ld-top{grid-template-columns:1fr 1fr}.ld-top-n,.ld-top-m{grid-column:auto}.ld-rgrid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.ld-nums,.ld-top{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{row-gap:8px}}
