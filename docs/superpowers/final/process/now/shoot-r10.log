@@ -1,0 +1,19 @@
+ÂïÀ½ now-staff-dash-1251.png
+ÂïÀ½ now-new-project-1251.png
+ÂïÀ½ now-new-pick-1252.png
+ÂïÀ½ now-new-member-1252.png
+ÂïÀ½ now-train-farm-1252.png
+ÂïÀ½ now-train-data-1252.png
+ÂïÀ½ now-xi-national-1252.png
+ÂïÀ½ now-admin-dash-1252.png
+ÂïÀ½ now-admin-template-1253.png
+ÂïÀ½ now-admin-retrain-1253.png
+ÂïÀ½ mock-p2-first-1253.png
+ÂïÀ½ mock-p2-hover-1253.png
+ÂïÀ½ mock-p2-press-1254.png
+ÂïÀ½ mock-p2-time-1254.png
+ÂïÀ½ mock-p2-filter-1255.png
+Traceback (most recent call last):
+  File "E:\Land-XI ÇÃ·§Æû\01. µğÀÚÀÎ\docs\superpowers\final\process\now\shoot-r10.py", line 250, in <module>
+    print('³¡ \u2014 ½ÇÆĞ', LOG['_failed'], '·Î±×ÀÎ', LOG['_logins'])
+UnicodeEncodeError: 'cp949' codec can't encode character '\u2014' in position 2: illegal multibyte sequence

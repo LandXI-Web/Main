@@ -242,8 +242,12 @@ def build():
         ops = list(it['opts']) + ([] if any(x in it['opts'] for x in ('검토 필요', '보류')) or done else ['검토 필요'])   # 원칙 80 — 고르기만이 아니라 '검토 필요'도
         opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in ops)
         body = (f'<p class="k">지금</p><p>{esc(it["now"])}</p><p class="k">제안</p><p>{esc(it["prop"])}</p>' if not done else f'<p class="k">만든 것</p><p>{esc(it["what"])}</p>')
+        tbl = ''
+        if it.get('table'):
+            tr = it['table']
+            tbl = '<table class="tb"><thead><tr>' + ''.join(f'<th>{esc(x)}</th>' for x in tr[0]) + '</tr></thead><tbody>' + ''.join('<tr>' + ''.join(f'<td>{esc(x)}</td>' for x in r) + '</tr>' for r in tr[1:]) + '</tbody></table>'
         return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"{" data-multi=1" if it.get("multi") else ""}><header><span class="n">{esc(it["id"])}</span><h3>{esc(it["t"])}</h3></header>'
-                f'<div class="g"><div class="tx">{body}<p class="k">보는 곳</p><ul class="wh">{where}</ul></div>'
+                f'<div class="g"><div class="tx">{body}{tbl}<p class="k">보는 곳</p><ul class="wh">{where}</ul></div>'
                 f'<div class="im">{shots or "<p class=na>화면 없음 — 작업 방식 항목</p>"}</div></div>'
                 f'<footer><div class="op">{opts}</div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article>')
 
@@ -284,6 +288,7 @@ h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:ba
 h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.tb{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 4px}.tb th,.tb td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;text-wrap:pretty}.tb th{color:var(--mute);font-weight:600}
 .wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
 .wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}

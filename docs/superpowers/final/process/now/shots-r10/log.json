@@ -1,0 +1,135 @@
+{
+ "_done": [
+  "dash",
+  "newproj",
+  "train",
+  "xinat",
+  "line",
+  "tmpl",
+  "retrain",
+  "p2first",
+  "p2hover",
+  "p2press",
+  "p2time",
+  "p2filter"
+ ],
+ "_logins": 3,
+ "_failed": [],
+ "_dash_text": "LAND-XI\nLX 직원 대시보드\n12:51\n자동 로그아웃 내일 12:51 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n요청함\n프로젝트 진행 현황\n프로젝트 목록\n진행 중 6 · 남은 일 있는 0\n2\n데이터 올리기\n0\n학습데이터 구축\n0\n학습\n0\n추론\n0\n결과 확인\n4\n배포 신청\n요청함\n전체\n기관의 요청과 내가 보낸 요청\n0\n검토 요청\n0\n분석 요청\n0\n보낸 요청\n\n지금은 기다리는 요청이 없습니다\n\n저장 용량\n내 정보\n기본 할당 50 GB · 프로젝트 6개\n29.8 MB\n사용 중 · 할당의 0.1%\n\n프로젝트별\n비닐하우스 2026\n10.2 MB\n주차장 2026\n9.0 MB\n건축물 2026\n8.7 MB\n곤포사일리지 2026\n1.9 MB\n외 2개\n\n용량 증량 신청\n\n최근 진행한 프로젝트\n프로젝트 목록 · 전체 6\n마지막 활동 순 · 누르면 그 프로젝트의 지금 단계 화면\n1 데이터 올리기\n경작지 v2 — 항공 · API 영상\n\n프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 실험.\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 어제\n7,300장\n학습 데이터\n—\nAI 모델 정확도\n대상지 3곳\n이천시 · 여주시 · 평택시\n열기\n프로젝트 →\n그림 없음\n1 데이터 올리기\n테스트\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 어제\n—\n학습 데이터\n—\nAI 모델 정확도\n대상지 1곳\n종로구\n열기\n프로젝트 →\n6 배포 신청\n주차장 2026\n\n주차장\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 3일 전\n170장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 2곳\n여주시 · 천안시 서북구\n열기\n프로젝트 →\n6 배포 신청\n비닐하우스 2026\n\n건물 · 주차장 · 경작지 · 비닐하우스\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 4일 전\n35,247장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 3곳\n증평군 · 함양군 · 남원시\n열기\n프로젝트 →\n공지\n\n새 공지가 없습니다\n\n메모\n나만 보입니다\n전국 AI 현황\nXI맵에서 전국 결과\n\n결과가 있는 시군구 20곳\n서비스 7가지\n마지막 분석 10.07\n\nXI ChatGEO",
+ "now-staff-dash-1251.png": {
+  "at": "2026-10-13T12:51:52",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드"
+ },
+ "_newproj_text": "새 프로젝트\n\n이름\n\n설명\n\n구성원\n\n영상\n\n파일 올리기\n공유 데이터에서 고르기\n영상 파일을 끌어 놓거나 눌러 고르세요\n\n대상지\n\n해외 지역\n만들기\n취소",
+ "now-new-project-1251.png": {
+  "at": "2026-10-13T12:51:58",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?new=1&scope=mine",
+  "note": "새 프로젝트 창(열기)"
+ },
+ "now-new-pick-1252.png": {
+  "at": "2026-10-13T12:52:00",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?new=1&scope=mine",
+  "note": "새 프로젝트 창(공유 데이터에서 고르기)"
+ },
+ "now-new-member-1252.png": {
+  "at": "2026-10-13T12:52:02",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-project/?new=1&scope=mine",
+  "note": "새 프로젝트 창(구성원 찾기)"
+ },
+ "_newproj_rects": {
+  "1440x900": {
+   "open": [
+    1040,
+    820
+   ],
+   "pick": [
+    1040,
+    820
+   ],
+   "member": [
+    1040,
+    820
+   ]
+  },
+  "1280x800": {
+   "open": [
+    1040,
+    752
+   ],
+   "pick": [
+    1040,
+    752
+   ],
+   "member": [
+    1040,
+    752
+   ]
+  }
+ },
+ "_train_text": "LAND-XI\nLX 직원 대시보드\n12:52\n자동 로그아웃 내일 12:51 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n요청함\n프로젝트\n경작지 v2 — 항공 · API 영상\n1\n데이터 올리기\n2\n학습데이터 구축\n3\n학습\n4\n추론\n5\n결과 확인\n6\n배포 신청\n\n다음 할 일\n평택시 영상 등록\n\n학습 · AI 모델 작업 흐름\n\n10-13 에 끝난 학습 · 같은 설정으로 다시 돌리거나 블록을 바꿔 새로 돌릴 수 있어요\n\n다시 돌리기\n블록 더하기\n학습 데이터\n기반 모델\n학습 설정\n학습\n평가\n추론 시험\n배포 신청\n출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요D복제Del지우기\n학습 데이터\n경작지 · 7,300장\n기반 모델\n원판 · 4종 모델\n학습 설정\n반복 12회 · 크기 1280 · 한 번에 4장\n학습\n학습 끝 검증 83%\n끝남 · 10-13 04:13 · 12회\n평가\n같은 검증 묶음 · 86%\n원판 90%보다 낮음\n배포 신청\n원판보다 낮아 꺼짐\n바꿀 수 없는 것 — 학습 장비 배정 · 상한 · 쉬는 시간대 · 검증 묶음 · 승인(LX 관리자)\n기본 흐름으로 되돌리기\n이번 학습 · 반복마다 정확도\n\n10-12 17:28 → 10-13 04:13 · 반복 12회 · 반복마다 자체 검증 300장으로 잰 값\n\n83%학습 끝 검증\n79%\n81%\n82%\n84%\n85%\n1회\n3회\n6회\n9회\n12회\n83%\n\n학습이 끝난 뒤 같은 검증 묶음으로 잰 값은 86% — 배포 기준은 이 값이에요\n\n핵심 수치\n끝남 · 후보로 남음\n학습 데이터\n7,300장\n기반 모델\n원판 · 4종 모델\n반복 · 크기 · 한 번에\n12회 · 1280 · 4장\n학습 끝 검증\n83%\n같은 검증 묶음\n86% (원판 90%)\n걸린 시간\n10시간 46분\n\n학습 장비 — LX 관리자가 배정 · 프로젝트 하나에 한 장 · 밤 대기열\n\n학습 이력\n이 프로젝트 · 최근 순 · AI 모델 정확도는 학습 끝 검증 값\n날짜\t판\tAI 모델 정확도\t학습 데이터\t상태\n10-13\t첫 판\n원판에서 · 반복 12회 · 크기 1280\n\t83%\n같은 검증 묶음 86%\n\t7,300장\t같은 검증 묶음 86% · 원판 90%보다 낮아 후보로 남음\n05-16\t원판\n건물 · 주차장 · 경작지 · 비닐하우스 4종 모델\n\t89%\t—\t기반 모델\nXI ChatGEO",
+ "_train_at": "2026-10-13T12:52:20",
+ "now-train-farm-1252.png": {
+  "at": "2026-10-13T12:52:22",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+  "note": "프로젝트 '경작지 v2' 학습 화면(세로로 길게)"
+ },
+ "now-train-data-1252.png": {
+  "at": "2026-10-13T12:52:24",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+  "note": "학습 화면 · 학습 데이터 블록"
+ },
+ "_xna": "전국 결과 자산\n\n농지 전수 · 2025\n하천 · 계곡\n\n분석 끝 읍면동 106곳 · 전국 농지 범위의 1%\n\n학습 장비가 놀 때 차례로 · 전북 · 익산시부터\n\n경작지\n비닐하우스\n분석 예정\n\n영상 국토지리정보원 항공 2025 · 영상은 저장하지 않고 결과만 쌓습니다",
+ "now-xi-national-1252.png": {
+  "at": "2026-10-13T12:52:34",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 전국 결과 자산 칸"
+ },
+ "_admin_line": [
+  "경보 없음",
+  "전력 예산 0/1 GPU 고부하",
+  "전국 농지 1% · 하천 0.4% · 마지막 칸 10-13 12:52",
+  "공지 0건 · 쓰기"
+ ],
+ "now-admin-dash-1252.png": {
+  "at": "2026-10-13T12:52:50",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드"
+ },
+ "now-admin-template-1253.png": {
+  "at": "2026-10-13T12:53:00",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 — 학습 서식"
+ },
+ "_retrain_text": "언제 학습하나\n쉬는 시간에 자동\n사람이 누를 때만\n쉬는 시간\n–\n주말 하루 종일\n기준\n장\n학습 자리\n한 번에 하나\n저장\n\nXI맵에서 고친 곳은 학습 데이터로 모입니다.\n\n서비스마다 모인 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.\n\n지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.\n\n분석서비스별\n분석서비스 · 지금 판\t모인 학습 데이터\t새 클래스\t방식\t상태\t\n주차장 · 2.0\n주차장 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n건축물 · 2.0\n건축물 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n비닐하우스 · 2.0\n비닐하우스 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t지금 판보다 낮음 · 후보로 남음\n최근 다시 학습 87% · 지금 판 91%\n\t지금 학습\n곤포사일리지 · 1.0\n곤포사일리지 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n경작·휴경 · 2.1\n프로젝트 없음\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n새 모델 프로젝트 후보\nXI맵에서 새로 쓴 새 물체 클래스 — 지금 모델에 없어 새 모델로 학습합니다\n\n아직 없습니다 · 세부 클래스는 위 클래스 서비스 줄에서 나누기로 학습합니다\n\n오늘 밤 순서\n22:00–06:00 · 학습 자리 하나를 차례로 · 기관 AI 분석 요청과 전국 분석이 있으면 그 뒤\n\n오늘 밤 학습할 서비스가 없습니다 — 기준에 닿은 서비스가 없습니다\n\n마지막 확인 10.13 12:52 · 5분마다",
+ "now-admin-retrain-1253.png": {
+  "at": "2026-10-13T12:53:01",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/retrain",
+  "note": "LX 관리자 — 배포 → XI 재학습"
+ },
+ "mock-p2-first-1253.png": {
+  "at": "2026-10-13T12:53:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html",
+  "note": "시안 첫 화면"
+ },
+ "mock-p2-hover-1253.png": {
+  "at": "2026-10-13T12:53:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "note": "시안 올림"
+ },
+ "mock-p2-press-1254.png": {
+  "at": "2026-10-13T12:54:14",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "note": "시안 누름"
+ },
+ "mock-p2-time-1254.png": {
+  "at": "2026-10-13T12:54:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=namwon",
+  "note": "시안 시간"
+ },
+ "mock-p2-filter-1255.png": {
+  "at": "2026-10-13T12:55:04",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-2/index.html?at=deok",
+  "note": "시안 말로 거르기"
+ }
+}
