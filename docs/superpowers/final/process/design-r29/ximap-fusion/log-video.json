@@ -1,0 +1,15 @@
+[
+ {
+  "file": "fusion-10s-0729.mp4",
+  "shot_at": "2026-10-14T07:29:44",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "seconds": 10.2,
+  "frames_received": 1323,
+  "note": "실제 마우스 한 바퀴를 장면별로 잘라 이음: 첫 화면 → \"남원시 농지 이용 실태 어때?\" → 뜻 확인 · 융합 → 대시보드 전환 → 읍면동 막대 누름(지도 · 표 따라감) → 지도로 돌아가기 → \"어제 호우 지역에 비닐하우스 몇 동?\" → 대시보드",
+  "errors": []
+ }
+]

@@ -1,0 +1,57 @@
+[
+ {
+  "file": "first-1440-0728.png",
+  "shot_at": "2026-10-14T07:28:56",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "첫 화면 — 지도 · 지금 분석 중 · XI ChatGEO 예시 질문 두 개",
+  "errors": []
+ },
+ {
+  "file": "mean-1440-0728.png",
+  "shot_at": "2026-10-14T07:28:58",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "말함 — XI ChatGEO 가 뜻 확인(지역 · 업무 · 비교) → 융합 재료가 차례로 켜짐",
+  "errors": []
+ },
+ {
+  "file": "dash1-1440-0729.png",
+  "shot_at": "2026-10-14T07:29:07",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "대시보드 전환 — 남원시 농지 이용: 지도는 왼쪽으로 작아지고 큰 숫자 · 읍면동별 · 지목별 · 의심 종류별 · 필지 표(공시지가) · 해석",
+  "errors": []
+ },
+ {
+  "file": "pick1-1440-0729.png",
+  "shot_at": "2026-10-14T07:29:13",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "막대 누름 — 지도가 그 읍면동으로 · 표가 그 읍면동 필지로",
+  "errors": []
+ },
+ {
+  "file": "dash2-1440-0729.png",
+  "shot_at": "2026-10-14T07:29:28",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "대시보드 전환 — 어제 호우 × 비닐하우스: 강수(예시 동작 · 공식 특보는 기상청 키 뒤) × 전국 분석 비닐하우스",
+  "errors": []
+ }
+]

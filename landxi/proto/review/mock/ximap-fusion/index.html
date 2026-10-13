@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · XI맵 융합 대시보드</title>
+<link rel="stylesheet" href="fusion.css">
+<script defer src="../../../vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="m">
+<div class="app" id="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">XI맵</span>
+    <div class="search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span>시군구 · 지번 · 또는 XI ChatGEO 에 질문</span></div>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span id="clock"></span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴" id="rail"></nav>
+  <main class="main" id="main">
+    <div class="stage" id="stage"></div>
+    <button type="button" class="mapback" id="back">지도로 돌아가기</button>
+    <span class="mapname" id="mapname"></span>
+    <div id="ui"></div><div class="tip-b" id="tip"></div>
+    <section class="dash-p" id="dash" aria-label="통계"></section>
+  </main>
+</div>
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<div class="login" id="login" hidden>
+  <form id="loginForm"><h1>로그인</h1><p class="note">LX 직원 계정으로 로그인하세요.</p>
+    <input type="email" name="login" placeholder="아이디(메일)" autocomplete="username" required>
+    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <p class="err" id="loginErr"></p><button type="submit">로그인</button></form>
+</div>
+
+<script type="module">
+/* 설계 29차 · XI맵 융합 대시보드 시안(원칙 241). 실제 화면 · 서버 수정 0 · GPU 0.
+   흐름: 말(또는 시군구 누름) → XI ChatGEO 가 뜻 확인(지역 · 업무 · 비교) → 융합(AI 분석 결과 × 지적 × 실시간) → 화면이 대시보드로 전환
+   (지도는 왼쪽으로 작아짐 · 큰 숫자 · 차트 · 표 · 해석) → 차트 막대 ↔ 지도 서로 따라 움직임 → 지도로 돌아가기.
+   숫자: 서버 API 그 자리 읽기(실태조사 집계 · 의심 필지 · 필지 공시지가 · 전국 분석 칸). 지목별만 snap.json(데이터베이스 읽기 · 구현 때 집계 API).
+   어제 강수: 키 없이 되는 공개 기상 자료(Open-Meteo)를 그 자리에서 — 공식(기상청 특보)은 키 신청 뒤라 '예시 동작' 표시. 못 읽으면 '—'. */
+import { createStage } from '../../../../v3/kit/stage.js';
+import { api, API, session } from '../../../../shared/api-v1.js';
+API.mode = 'on';
+
+const q = new URLSearchParams(location.search);
+const ASK = q.get('ask'), CUR = q.get('cursor') === '1';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nf = (n, d = 0) => (n == null || Number.isNaN(Number(n)) ? '—' : Number(n).toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d }));
+const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const MAIN = document.getElementById('main'), ui = document.getElementById('ui'), TIP = document.getElementById('tip'), DASH = document.getElementById('dash');
+const now = new Date(), hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+document.getElementById('clock').textContent = hm;
+document.getElementById('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+const yday = new Date(now.getTime() - 86400000), YD = `${yday.getMonth() + 1}월 ${yday.getDate()}일`;
+const AI = '#0FA9A0', KOREA = [125.0, 33.1, 130.0, 38.6];
+const JM = { 답: '답', 전: '전', 과: '과수원', 임: '임야', 구: '구거', 도: '도로', 천: '하천', 대: '대지', 유: '유지', 제: '제방', 잡: '잡종지', 창: '창고용지', 장: '공장용지', 학: '학교용지' };
+const RAIN = [[60, '#0B3C7A'], [30, '#1F5FA8'], [10, '#3B82C4'], [1, '#8DB8E2'], [0, '#E3EDF7']];   // 한 색(파랑) 밝음 → 짙음
+const rainC = (mm) => (mm == null ? '#D5DAE0' : RAIN.find(([t]) => mm >= t)[1]);
+const HEAVY = 60;   // 호우 — 하루 60mm 이상(예시 기준 · 공식 특보는 기상청 연결 뒤)
+
+/* 직원 메뉴 — 지금 실제 메뉴 그대로 */
+const MENU = [['대시보드', '<path d="M3 9l7-6 7 6v8H3z"/>'], ['프로젝트', '<path d="M3 5h5l2 2h7v9H3z"/>'], ['분석하기', '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><circle cx="10" cy="10" r="2.5"/>'], ['지도 서비스', '<path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2z M8 3v12 M12 5v12"/>'], ['XI맵', null], ['요청함', '<path d="M3 11h4l1 2h4l1-2h4v6H3z M5 4h10l2 7H3z"/>']];
+document.getElementById('rail').innerHTML = MENU.map(([l, ic]) => `<a class="ri${l === 'XI맵' ? ' on' : ''}${l === '요청함' ? ' sep' : ''}">${ic ? `<svg viewBox="0 0 20 20" aria-hidden="true">${ic}</svg>` : '<span class="xi">XI</span>'}${l}</a>`).join('');
+
+async function ensureLogin() {
+  if (session.get()) return;
+  const box = document.getElementById('login'); box.hidden = false;
+  await new Promise((done) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try { const r = await api('/auth/login', { method: 'POST', body: { login: f.get('login'), password: f.get('password'), realm: 'lx' } }); session.set(r); box.hidden = true; done(); }
+      catch (err) { document.getElementById('loginErr').textContent = err.message || '로그인하지 못했습니다'; }
+    });
+  });
+}
+const safe = (p) => api(p).catch(() => null);
+
+/* ═══ 지도 ═══ */
+let ST, MAP, PROG, SGG, SNAP;
+function bboxOf(gs) { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); gs.forEach((g) => walk(g.coordinates)); return [w, s, e, n]; }
+const L = (id) => MAP.getLayer(id);
+const setP = (id, k, v) => L(id) && MAP.setPaintProperty(id, k, v);
+function idle(max = 10000) { return new Promise((r) => { const t0 = performance.now(); const poll = () => (MAP.areTilesLoaded() || performance.now() - t0 > max ? r() : setTimeout(poll, 150)); MAP.once('idle', poll); setTimeout(poll, max); }); }
+function resizeFor(ms) { const t0 = performance.now(); (function f() { MAP.resize(); if (performance.now() - t0 < ms) requestAnimationFrame(f); })(); }
+
+function baseLayers() {
+  /* 전국 분석(지금 도는 AI 분석) — 결과 면 · 칸 */
+  const v = PROG?.v?.farm || '0', yr = PROG?.year || 2025;
+  MAP.addSource('nf', { type: 'vector', tiles: [`${API.base}/tiles/national/farm/${yr}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v)}`], minzoom: 4, maxzoom: 10, attribution: '국토지리정보원 항공 정사영상 · AI 분석 결과' });
+  MAP.addLayer({ id: 'nf-face', type: 'fill', source: 'nf', 'source-layer': 'faces', paint: { 'fill-color': ['match', ['get', 'cls'], '비닐하우스', '#F59F00', '#2E9E5B'], 'fill-opacity': 0.8 } });
+  MAP.addLayer({ id: 'nf-rain', type: 'fill', source: 'nf', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'], paint: { 'fill-color': '#3B82C4', 'fill-opacity': 0.72 } });
+  MAP.addLayer({ id: 'nf-cell', type: 'line', source: 'nf', 'source-layer': 'cells', filter: ['==', ['get', 'done'], 1], paint: { 'line-color': '#fff', 'line-width': 0.6, 'line-opacity': 0.5 } });
+  MAP.addLayer({ id: 'nf-sel', type: 'line', source: 'nf', 'source-layer': 'cells', filter: ['==', ['get', 'cd'], '__'], paint: { 'line-color': '#1C1F25', 'line-width': 3 } });
+  const nx = PROG?.assets?.farm?.next;
+  if (nx) MAP.addLayer({ id: 'nf-now', type: 'fill', source: 'nf', 'source-layer': 'cells', filter: ['all', ['==', ['get', 'name'], nx.emd], ['==', ['get', 'sgg'], nx.sgg]], paint: { 'fill-color': AI, 'fill-opacity': 0.5 } });
+  /* 시군구 — 올리면 떠오름 · 누르면 통계 */
+  MAP.addSource('sg', { type: 'geojson', data: SGG });
+  MAP.addLayer({ id: 'sg-hit', type: 'fill', source: 'sg', paint: { 'fill-color': '#000', 'fill-opacity': 0 } });
+  MAP.addLayer({ id: 'sg-hot', type: 'line', source: 'sg', filter: ['==', ['get', 'code'], '__'], paint: { 'line-color': '#fff', 'line-width': 2.4 } });
+  /* 읍면동(대시보드 지역) */
+  MAP.addSource('emd', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'emd_cd' });
+  MAP.addLayer({ id: 'emd-f', type: 'fill', source: 'emd', paint: { 'fill-color': ['coalesce', ['get', 'col'], '#E5E8EB'], 'fill-opacity': ['case', ['boolean', ['feature-state', 'on'], false], 0.85, 0.62] } });
+  MAP.addLayer({ id: 'emd-l', type: 'line', source: 'emd', paint: { 'line-color': ['case', ['boolean', ['feature-state', 'on'], false], '#1C1F25', '#ffffff'], 'line-width': ['case', ['boolean', ['feature-state', 'on'], false], 3, 0.8] } });
+  MAP.addSource('pt', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  MAP.addLayer({ id: 'pt-c', type: 'circle', source: 'pt', paint: { 'circle-radius': 7, 'circle-color': '#1C1F25', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2.5 } });
+}
+
+/* 지도에서 누르기 — 시군구 말풍선 '통계 보기' · 대시보드 중엔 읍면동/칸을 누르면 차트가 따라감 */
+let MODE = 'map', PICK = null;
+function wireMap() {
+  MAP.on('mousemove', (e) => {
+    if (MODE !== 'map' || TIP.classList.contains('pin')) return;
+    const s = MAP.queryRenderedFeatures(e.point, { layers: ['sg-hit'] })[0];
+    MAP.setFilter('sg-hot', ['==', ['get', 'code'], s ? s.properties.code : '__']);
+    MAP.getCanvas().style.cursor = s ? 'pointer' : '';
+    if (s) showTip(e.point, `<span class="n">${esc(s.properties.name)}</span>`); else TIP.classList.remove('in');
+  });
+  MAP.on('click', (e) => {
+    if (MODE === 'map') {
+      const s = MAP.queryRenderedFeatures(e.point, { layers: ['sg-hit'] })[0]; if (!s) { TIP.classList.remove('in', 'pin'); return; }
+      const p = s.properties;
+      showTip(e.point, `<span class="n">${esc(p.name)}</span><button type="button" class="go" id="goStat">통계 보기</button>`, true);
+      document.getElementById('goStat').onclick = () => { TIP.classList.remove('in', 'pin'); surveyDash(p.code, p.name, [p.code, p.code2018].filter(Boolean)); };
+      return;
+    }
+    if (PICK) {
+      const ly = PICK.layer; const f = MAP.queryRenderedFeatures(e.point, { layers: [ly] })[0];
+      if (f) PICK.fn(ly === 'emd-f' ? f.properties.emd_cd : f.properties.cd, true);
+    }
+  });
+}
+function showTip(pt, html, pin) { TIP.innerHTML = html; TIP.style.left = Math.min(pt.x + 18, MAIN.clientWidth - 260) + 'px'; TIP.style.top = Math.max(pt.y - 40, 80) + 'px'; TIP.classList.add('in'); TIP.classList.toggle('pin', !!pin); }
+
+/* ═══ 지도 ↔ 대시보드 전환 ═══ */
+async function toDash(html, mapName) {
+  DASH.innerHTML = html; DASH.scrollTop = 0;
+  document.getElementById('mapname').innerHTML = esc(mapName || '') + (live() ? `<br>${live()}` : '');
+  MODE = 'dash'; TIP.classList.remove('in', 'pin'); MAIN.classList.add('dash'); resizeFor(900);
+  await sleep(800);
+}
+async function toMap() {
+  MODE = 'map'; PICK = null; MAIN.classList.remove('dash'); resizeFor(900);
+  MAP.getSource('emd').setData({ type: 'FeatureCollection', features: [] }); MAP.getSource('pt').setData({ type: 'FeatureCollection', features: [] });
+  MAP.setFilter('nf-rain', ['==', ['get', 'cd'], '__']); MAP.setFilter('nf-sel', ['==', ['get', 'cd'], '__']); setP('nf-face', 'fill-opacity', 0.8);
+  await sleep(850); await ST.go(KOREA, { ms: 1600, maxZoom: 7.2 });
+}
+document.getElementById('back').onclick = toMap;
+
+/* ═══ 대시보드 부품(차트는 한 계열 · 막대 위 올림 = 값 · 누름 = 지도와 표가 따라감) ═══ */
+const kpi = (l, v, u, s, cls = '', tag = '') => `<div class="card kpi c3 ${cls}"><div class="l">${esc(l)}${tag ? ` <span class="ex">${tag}</span>` : ''}</div><div class="v">${v}<small>${esc(u)}</small></div>${s ? `<div class="s">${s}</div>` : ''}</div>`;
+function vbars(id, rows, { rain = false, unit = '' } = {}) {
+  const mx = Math.max(1, ...rows.map((r) => r.v || 0)), top = rows.reduce((a, r, i) => ((r.v || 0) > (rows[a]?.v || 0) ? i : a), 0);
+  return `<div class="vb${rain ? ' rain' : ''}" id="${id}">${rows.map((r, i) => `<div class="b${i === top ? ' top' : ''}" data-k="${esc(r.k)}"><span class="t">${nf(r.v, r.d || 0)}${unit}</span><i style="height:${Math.max(1.5, (100 * (r.v || 0)) / mx)}%"></i></div>`).join('')}</div>`
+    + `<div class="vx">${rows.map((r) => `<span data-k="${esc(r.k)}">${esc(r.l)}</span>`).join('')}</div>`;
+}
+function hbars(rows, { rain = false, unit = '' } = {}) {
+  const mx = Math.max(1, ...rows.map((r) => r.v || 0));
+  return `<div class="hb${rain ? ' rain' : ''}">${rows.map((r) => `<div class="r"><span class="n">${esc(r.l)}</span><span class="bar"><i style="width:${(100 * (r.v || 0)) / mx}%"></i></span><span class="v">${nf(r.v)}${unit}</span></div>`).join('')}</div>`;
+}
+function wireBars(id, fn) { document.querySelectorAll(`#${id} .b`).forEach((b) => b.addEventListener('click', () => fn(b.dataset.k))); }
+function markBar(id, k) {
+  document.querySelectorAll(`#${id} .b`).forEach((b) => b.classList.toggle('on', b.dataset.k === k));
+  document.querySelectorAll(`#${id} + .vx span`).forEach((s) => s.classList.toggle('on', s.dataset.k === k));
+}
+function csv(name, cols, rows) {
+  const body = [cols.join(','), ...rows.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv' })); a.download = name; a.click();
+}
+const means = (arr) => `<div class="means">${arr.map(([k, v]) => `<span><em>${esc(k)}</em>${esc(v)}</span>`).join('')}</div>`;
+const live = () => { const nx = PROG?.assets?.farm?.next; return nx ? `<span class="live"><i></i>지금 분석 중 · ${esc(nx.sgg)} ${esc(nx.emd)}</span>` : ''; };
+
+/* ═══ 대시보드 ① 실태조사 융합 — AI 분석 결과 × 연속지적(필지 · 지목 · 공시지가) × 행정 대장. 어느 시군구든 같은 틀 ═══ */
+async function surveyDash(sgg, name, codes) {
+  const [st, se, nr, emd] = await Promise.all([safe(`/survey/stats?by=rule&sgg=${sgg}`), safe(`/survey/stats?by=emd&sgg=${sgg}`), safe(`/national/region?codes=${(codes || [sgg]).join(',')}`), safe(`/regions/${sgg}/emd`)]);
+  const rules = st?.items || [], R2 = rules.find((r) => r.key === 'R2'), L1 = rules.find((r) => r.key === 'L1');
+  const farm = nr?.assets?.farm?.counts || {};
+  const emds = (se?.items || []).map((it) => ({ k: it.cd, l: it.key, v: val(it.by_rule?.R2), p: val(it.parcels) })).filter((r) => r.k);
+  emds.sort((a, b) => (b.v || 0) - (a.v || 0));
+  const jm = SNAP?.jimok?.[sgg]?.R2 || null;
+  const jmRows = jm ? Object.entries(jm).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ l: JM[k] || k, v })) : [];
+  const ruleRows = rules.filter((r) => val(r.n)).map((r) => ({ l: r.name.replace(/\(.*\)/, ''), v: val(r.n) })).sort((a, b) => b.v - a.v);
+  const r2n = val(R2?.n), tot = val(st?.total);
+  const jmTop = jmRows[0], jmSum = jmRows.reduce((a, r) => a + r.v, 0);
+  const sayL = [
+    emds.length && r2n ? `휴경·전용 의심은 <b>${esc(emds[0].l)} ${nf(emds[0].v)}필지</b> · ${esc(emds[1]?.l || '')} ${nf(emds[1]?.v)} · ${esc(emds[2]?.l || '')} ${nf(emds[2]?.v)} 순으로 많습니다.` : '',
+    jmTop ? `지목은 <b>${esc(jmTop.l)} ${nf((100 * jmTop.v) / jmSum)}%</b>, ${esc(jmRows[1]?.l || '')} ${nf((100 * (jmRows[1]?.v || 0)) / jmSum)}%입니다.` : '',
+    tot ? `의심 필지 ${nf(tot)} 가운데 <b>현장 확인 필요 ${nf(val(st?.field_check))}필지</b>부터 보시면 됩니다.` : '',
+  ].filter(Boolean);
+  const html = `<div class="grid">
+    <div class="c12 dh"><h2>${esc(name)} · 농지 이용</h2>${means([['지역', name], ['업무', '휴경·전용 의심'], ['비교', '읍면동 · 지목']])}</div>
+    ${kpi(R2?.name || '휴경·전용 의심', nf(r2n), '필지', `전체 필지 ${nf(val(st?.parcels))} 중`, 'main')}
+    ${kpi('현장 확인 필요', nf(val(st?.field_check)), '필지', `의심 필지 ${nf(tot)}`)}
+    ${kpi('AI 경작지', nf(val(farm.경작지?.n)), '곳', `비닐하우스 ${nf(val(farm.비닐하우스?.n))}동`)}
+    ${kpi(L1?.name || '대장 농지 위 건물', nf(val(L1?.n)), '필지', '행정 대장 × AI 분석 결과')}
+    <div class="card ch c8"><h3>읍면동별 휴경·전용 의심 <small>필지</small></h3>${vbars('bE', emds.slice(0, 16))}</div>
+    <div class="card ch c4"><h3>지목별 <small>필지</small></h3>${jmRows.length ? hbars(jmRows.slice(0, 5)) : '<p class="s">—</p>'}<h3 style="margin-top:22px">의심 종류별 <small>필지</small></h3>${hbars(ruleRows.slice(0, 4))}</div>
+    <div class="card tb c8"><div class="top"><h3 id="tbT">휴경·전용 의심 필지</h3><button type="button" class="dl" id="dl">내려받기</button></div><table><thead><tr><th>지번</th><th>읍면동</th><th>지목</th><th class="num">면적(㎡)</th><th class="num">공시지가(원/㎡)</th><th>농업진흥</th></tr></thead><tbody id="tbB"><tr><td colspan="6">—</td></tr></tbody></table></div>
+    <div class="card say c4"><div class="hd"><span class="logo">XI</span><b>XI ChatGEO</b><span class="ex">시안 답</span></div>${sayL.map((l) => `<p>${l}</p>`).join('')}</div>
+  </div>`;
+  /* 지도 — 그 시군구 읍면동을 의심 수로 칠함(한 색 · 밝음 → 짙음) */
+  const mx = Math.max(1, ...emds.map((r) => r.v || 0)), byCd = new Map(emds.map((r) => [r.k, r]));
+  const tint = (v) => { const t = Math.sqrt((v || 0) / mx); return `rgb(${Math.round(226 - 211 * t)},${Math.round(244 - 75 * t)},${Math.round(242 - 82 * t)})`; };
+  const fc = { type: 'FeatureCollection', features: (emd?.features || []).map((f) => ({ ...f, properties: { ...f.properties, col: tint(byCd.get(f.properties.emd_cd)?.v) } })) };
+  setP('nf-face', 'fill-opacity', 0.25);
+  MAP.getSource('emd').setData(fc);
+  const bb = fc.features.length ? bboxOf(fc.features.map((f) => f.geometry)) : null;
+  await toDash(html, name);
+  if (bb) await ST.go(bb, { ms: 1200, maxZoom: 11 });
+  let SEL = null, ROWS = [];
+  async function table(cd) {
+    const j = await safe(`/survey/findings?sgg=${sgg}&rule=R2&limit=10${cd ? `&emd_cd=${cd}` : ''}`);
+    const it = j?.items || [];
+    const ji = await Promise.all(it.map((x) => safe(`/survey/parcels/${x.pnu}`).then((p) => val(p?.facts?.ledger?.jiga))));
+    ROWS = it.map((x, i) => ({ x, jiga: ji[i] }));
+    document.getElementById('tbT').textContent = `휴경·전용 의심 필지${cd ? ` · ${byCd.get(cd)?.l || ''}` : ''}`;
+    document.getElementById('tbB').innerHTML = ROWS.length ? ROWS.map(({ x, jiga }, i) => `<tr data-i="${i}"><td class="addr">${esc((x.addr || '').split(' ').slice(-2).join(' '))}</td><td>${esc(x.emd)}</td><td>${esc(JM[x.jimok] || x.jimok)}</td><td class="num">${nf(val(x.parcel_m2))}</td><td class="num">${nf(jiga)}</td><td>${x.nongup ? '진흥구역' : '—'}</td></tr>`).join('') : '<tr><td colspan="6">—</td></tr>';
+    document.querySelectorAll('#tbB tr[data-i]').forEach((tr) => tr.addEventListener('click', () => {
+      document.querySelectorAll('#tbB tr').forEach((t) => t.classList.remove('on')); tr.classList.add('on');
+      const { x } = ROWS[Number(tr.dataset.i)], ll = x.lnglat || x.geometry?.coordinates; if (!ll) return;
+      MAP.getSource('pt').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: ll }, properties: {} }] });
+      MAP.easeTo({ center: ll, zoom: 15, duration: 1200 });
+    }));
+  }
+  async function pick(cd, fromMap) {
+    if (SEL) MAP.setFeatureState({ source: 'emd', id: SEL }, { on: false });
+    SEL = SEL === cd && !fromMap ? null : cd;
+    if (SEL) MAP.setFeatureState({ source: 'emd', id: SEL }, { on: true });
+    markBar('bE', SEL); MAP.getSource('pt').setData({ type: 'FeatureCollection', features: [] });
+    const f = fc.features.find((x) => x.properties.emd_cd === SEL);
+    ST.go(f ? bboxOf([f.geometry]) : bb, { ms: 1000, maxZoom: f ? 13 : 11 });
+    await table(SEL);
+  }
+  wireBars('bE', (k) => pick(k)); PICK = { layer: 'emd-f', fn: pick };
+  document.getElementById('dl').onclick = () => csv(`${name}-휴경전용의심.csv`, ['주소', '읍면동', '지목', '면적㎡', '공시지가원㎡', '농업진흥'], ROWS.map(({ x, jiga }) => [x.addr, x.emd, JM[x.jimok] || x.jimok, val(x.parcel_m2), jiga, x.nongup || '']));
+  table(null);
+}
+
+/* ═══ 대시보드 ② 기상 융합 — 어제 강수 × 전국 분석 비닐하우스(분석이 끝난 읍면동 전부 · 지역 고정 없음) ═══ */
+function doneCells() {
+  const m = new Map();
+  MAP.querySourceFeatures('nf', { sourceLayer: 'cells', filter: ['==', ['get', 'done'], 1] }).forEach((f) => {
+    const p = f.properties, b = bboxOf([f.geometry]), o = m.get(p.cd);
+    if (!o) m.set(p.cd, { cd: p.cd, emd: p.name, sgg: p.sgg, sido: p.sido, n1: p.n1 || 0, n2: p.n2 || 0, b });
+    else o.b = [Math.min(o.b[0], b[0]), Math.min(o.b[1], b[1]), Math.max(o.b[2], b[2]), Math.max(o.b[3], b[3])];
+  });
+  return [...m.values()];
+}
+async function rainOf(cells) {
+  const key = (c) => `${(Math.round(((c.b[0] + c.b[2]) / 2) * 20) / 20).toFixed(2)},${(Math.round(((c.b[1] + c.b[3]) / 2) * 20) / 20).toFixed(2)}`;
+  const uniq = [...new Set(cells.map(key))];
+  try {
+    const out = new Map();
+    for (let i = 0; i < uniq.length; i += 150) {
+      const part = uniq.slice(i, i + 150), lon = part.map((k) => k.split(',')[0]).join(','), lat = part.map((k) => k.split(',')[1]).join(',');
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=1&forecast_days=1&timezone=Asia%2FSeoul`).then((x) => x.json());
+      (Array.isArray(r) ? r : [r]).forEach((d, j) => out.set(part[j], d?.daily?.precipitation_sum?.[0] ?? null));
+    }
+    cells.forEach((c) => { c.mm = out.get(key(c)); });
+  } catch { cells.forEach((c) => { c.mm = null; }); }
+  return cells;
+}
+async function rainDash() {
+  if (MAP.getZoom() > 7.6) { await ST.go(KOREA, { ms: 1200, maxZoom: 7.2 }); await idle(6000); }
+  const cells = await rainOf(doneCells());
+  const has = cells.some((c) => c.mm != null);
+  const heavy = cells.filter((c) => c.mm != null && c.mm >= HEAVY), wet = cells.filter((c) => c.mm != null && c.mm >= 1);
+  const sum = (a, k) => a.reduce((s, c) => s + (c[k] || 0), 0);
+  const maxC = [...cells].filter((c) => c.mm != null).sort((a, b) => b.mm - a.mm)[0];
+  const sggN = new Set(cells.map((c) => c.sgg)).size;
+  const bands = [['60mm 이상', 60, 1e9], ['30–60mm', 30, 60], ['10–30mm', 10, 30], ['1–10mm', 1, 10], ['1mm 미만', -1, 1]].map(([l, a, b]) => ({ l, v: has ? sum(cells.filter((c) => c.mm != null && c.mm >= a && c.mm < b), 'n2') : null }));
+  const bySgg = [...cells.reduce((m, c) => m.set(c.sgg, (m.get(c.sgg) || 0) + c.n2), new Map())].map(([l, v]) => ({ l, v })).sort((a, b) => b.v - a.v);
+  const top = [...cells].filter((c) => c.mm != null).sort((a, b) => b.mm - a.mm || b.n2 - a.n2).slice(0, 24);
+  const sayL = has ? [
+    `어제(${YD}) 하루 ${HEAVY}mm 넘게 온 읍면동은 <b>${nf(heavy.length)}곳</b>${heavy.length ? ` — 비닐하우스 <b>${nf(sum(heavy, 'n2'))}동</b>` : ''}입니다.`,
+    maxC ? `가장 많이 온 곳은 <b>${esc(maxC.sgg)} ${esc(maxC.emd)} ${nf(maxC.mm, 1)}mm</b> · 비닐하우스 ${nf(maxC.n2)}동입니다.` : '',
+    `비가 1mm 넘게 온 읍면동 ${nf(wet.length)}곳의 비닐하우스는 ${nf(sum(wet, 'n2'))}동입니다.`,
+  ].filter(Boolean) : ['어제 강수 자료를 읽지 못했습니다.'];
+  const html = `<div class="grid">
+    <div class="c12 dh"><h2>어제 호우 · 비닐하우스</h2>${means([['언제', YD], ['어디', `분석된 ${nf(sggN)}개 시군구`], ['무엇', '비닐하우스 × 강수']])}<span class="ex">강수 · 예시 동작</span></div>
+    ${kpi('호우 지역 비닐하우스', has ? nf(sum(heavy, 'n2')) : '—', '동', `하루 ${HEAVY}mm 이상 읍면동 ${has ? nf(heavy.length) : '—'}곳`, 'main')}
+    ${kpi('비 온 곳 비닐하우스', has ? nf(sum(wet, 'n2')) : '—', '동', `1mm 이상 읍면동 ${has ? nf(wet.length) : '—'}곳`, '')}
+    ${kpi('가장 많이 온 곳', maxC ? nf(maxC.mm, 1) : '—', 'mm', maxC ? `${esc(maxC.sgg)} ${esc(maxC.emd)}` : '', '')}
+    ${kpi('AI 비닐하우스', nf(sum(cells, 'n2')), '동', `읍면동 ${nf(cells.length)}곳`)}
+    <div class="card ch c8"><h3>읍면동별 어제 강수 <small>mm · 많은 순</small></h3>${vbars('bR', top.slice(0, 16).map((c) => ({ k: c.cd, l: c.emd, v: c.mm, d: 1 })), { rain: true })}</div>
+    <div class="card ch c4"><h3>강수 구간별 비닐하우스 <small>동</small></h3>${hbars(bands, { rain: true })}<h3 style="margin-top:22px">시군구별 비닐하우스 <small>동</small></h3>${hbars(bySgg.slice(0, 4))}</div>
+    <div class="card tb c8"><div class="top"><h3>읍면동 목록</h3><button type="button" class="dl" id="dl">내려받기</button></div><table><thead><tr><th>시군구</th><th>읍면동</th><th class="num">어제 강수(mm)</th><th class="num">비닐하우스(동)</th><th class="num">경작지(곳)</th></tr></thead><tbody id="tbB">${top.slice(0, 10).map((c) => `<tr data-k="${esc(c.cd)}"><td>${esc(c.sgg)}</td><td>${esc(c.emd)}</td><td class="num">${nf(c.mm, 1)}</td><td class="num">${nf(c.n2)}</td><td class="num">${nf(c.n1)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="card say c4"><div class="hd"><span class="logo">XI</span><b>XI ChatGEO</b><span class="ex">시안 답</span></div>${sayL.map((l) => `<p>${l}</p>`).join('')}</div>
+  </div>`;
+  /* 지도 — 끝난 읍면동을 어제 강수로 칠함 */
+  const expr = ['match', ['get', 'cd'], ...cells.flatMap((c) => [c.cd, rainC(c.mm)]), '#D5DAE0'];
+  MAP.setFilter('nf-rain', ['==', ['get', 'done'], 1]); setP('nf-rain', 'fill-color', expr); setP('nf-face', 'fill-opacity', 0.15);
+  const bb = cells.length ? cells.reduce((a, c) => [Math.min(a[0], c.b[0]), Math.min(a[1], c.b[1]), Math.max(a[2], c.b[2]), Math.max(a[3], c.b[3])], [180, 90, -180, -90]) : KOREA;
+  await toDash(html, '어제 강수 · 비닐하우스');
+  await ST.go(bb, { ms: 1200, maxZoom: 10 });
+  let SEL = null; const byCd = new Map(cells.map((c) => [c.cd, c]));
+  function pick(cd, fromMap) {
+    SEL = SEL === cd && !fromMap ? null : cd;
+    MAP.setFilter('nf-sel', ['==', ['get', 'cd'], SEL || '__']); markBar('bR', SEL);
+    document.querySelectorAll('#tbB tr').forEach((t) => t.classList.toggle('on', t.dataset.k === SEL));
+    const c = byCd.get(SEL); ST.go(c ? c.b : bb, { ms: 1000, maxZoom: c ? 12 : 10 });
+  }
+  wireBars('bR', (k) => pick(k)); PICK = { layer: 'nf-rain', fn: pick };
+  document.querySelectorAll('#tbB tr').forEach((tr) => tr.addEventListener('click', () => pick(tr.dataset.k)));
+  document.getElementById('dl').onclick = () => csv('어제강수-비닐하우스.csv', ['시도', '시군구', '읍면동', '어제강수mm', '비닐하우스동', '경작지곳'], [...cells].sort((a, b) => (b.mm ?? -1) - (a.mm ?? -1)).map((c) => [c.sido, c.sgg, c.emd, c.mm, c.n2, c.n1]));
+}
+
+/* ═══ XI ChatGEO — 말하면 뜻 확인 → 융합 → 대시보드 ═══ */
+const ASKS = [
+  { q: '남원시 농지 이용 실태 어때?', mean: [['지역', '남원시'], ['업무', '휴경·전용 의심'], ['비교', '읍면동 · 지목']], fuse: ['AI 분석 결과', '연속지적 · 지목', '공시지가', '행정 대장'],
+    run: () => { const f = SGG.features.find((x) => x.properties.name === '남원시'); return surveyDash(f?.properties.code || '52190', '남원시', [f?.properties.code, f?.properties.code2018].filter(Boolean)); } },
+  { q: '어제 호우 지역에 비닐하우스 몇 동?', mean: [['언제', YD], ['어디', '호우 지역'], ['무엇', '비닐하우스']], fuse: ['AI 분석 결과', '기상'], run: () => rainDash() },
+];
+let asking = false;
+async function runAsk(i) {
+  if (asking) return; asking = true;
+  if (MODE === 'dash') await toMap();
+  const a = ASKS[i], qEl = document.getElementById('askQ'), aEl = document.getElementById('askA');
+  aEl.classList.remove('in'); aEl.hidden = true; qEl.classList.remove('ph');
+  for (let k = 1; k <= a.q.length; k++) { qEl.innerHTML = esc(a.q.slice(0, k)) + '<span class="caret"></span>'; await sleep(38); }
+  aEl.innerHTML = `<span class="tag">시안 답</span><div class="mean">${a.mean.map(([k, v]) => `<span><em>${esc(k)}</em>${esc(v)}</span>`).join('')}</div><div class="fuse">${a.fuse.map((f) => `<span>${esc(f)}</span>`).join('')}</div>`;
+  aEl.hidden = false; requestAnimationFrame(() => aEl.classList.add('in'));
+  await sleep(700);
+  for (const s of aEl.querySelectorAll('.fuse span')) { s.classList.add('ok'); await sleep(320); }
+  await sleep(300);
+  await a.run();
+  aEl.classList.remove('in'); aEl.hidden = true; qEl.classList.add('ph'); qEl.textContent = 'XI ChatGEO';
+  asking = false;
+}
+
+/* ═══ 시작 ═══ */
+await ensureLogin();
+[PROG, SGG, SNAP] = await Promise.all([safe('/national/progress'), fetch('/landxi/assets/data/geo/sigungu.geojson').then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })), fetch('snap.json').then((r) => r.json()).catch(() => null)]);
+ST = createStage(document.getElementById('stage'), { bounds: KOREA, interactive: true, padding: { top: 80, bottom: 160, left: 40, right: 40 } }); await ST.ready; MAP = ST.map;
+baseLayers(); wireMap();
+const nx = PROG?.assets?.farm?.next;
+ui.innerHTML = (nx ? `<span class="live-n"><i></i>지금 분석 중 · ${esc(nx.sgg)} ${esc(nx.emd)}</span>` : '')
+  + `<div class="ask" id="ask"><div class="chips">${ASKS.map((a, i) => `<button type="button" data-i="${i}">${esc(a.q)}</button>`).join('')}</div>
+    <div class="ans" id="askA" hidden></div>
+    <div class="bar"><span class="logo">XI</span><span class="q ph" id="askQ">XI ChatGEO</span><button class="send" type="button" aria-label="보내기"><svg viewBox="0 0 20 20"><path d="M3 10h13M11 5l5 5-5 5"/></svg></button></div></div>`;
+ui.querySelectorAll('.ask .chips button').forEach((b) => b.addEventListener('click', () => runAsk(Number(b.dataset.i))));
+if (CUR) { const c = document.createElement('div'); c.className = 'cur'; document.body.append(c); addEventListener('mousemove', (e) => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }); addEventListener('mousedown', () => c.classList.add('down')); addEventListener('mouseup', () => c.classList.remove('down')); }
+await idle();
+document.documentElement.dataset.mapReady = '1';
+/* 촬영 도우미 — 화면 좌표만(누르기는 실제 마우스로) */
+const ctr = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+window.__pt = {
+  chip: (i) => ctr(document.querySelector(`.ask .chips button[data-i="${i}"]`)),
+  bar: (id, n) => ctr(document.querySelectorAll(`#${id} .b`)[n]),
+  row: (n) => ctr(document.querySelectorAll('#tbB tr')[n]),
+  back: () => ctr(document.getElementById('back')),
+  busy: () => asking,
+  dash: () => MODE === 'dash',
+};
+if (ASK != null) { await sleep(600); runAsk(Number(ASK)); }
+</script>
+</body>
+</html>
