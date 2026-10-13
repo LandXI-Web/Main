@@ -1,0 +1,423 @@
+{
+ "_done": [
+  "dash",
+  "train",
+  "xinat",
+  "p3first",
+  "p3hover",
+  "p3press",
+  "p3filter",
+  "line",
+  "shared",
+  "retrain",
+  "tmpl"
+ ],
+ "_logins": 2,
+ "_failed": [],
+ "_dash_text": "LAND-XI\nLX 직원 대시보드\n14:54\n자동 로그아웃 내일 14:54 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n요청함\n공지사항\n\n새 공지가 없습니다\n\n메모\n나만 보입니다\n프로젝트 진행 현황\n프로젝트 목록\n진행 중 6 · 남은 일 있는 0\n2\n데이터 올리기\n0\n학습데이터 구축\n0\n학습\n0\n추론\n0\n결과 확인\n4\n배포 신청\n요청함\n전체\n기관의 요청과 내가 보낸 요청\n0\n검토 요청\n0\n분석 요청\n0\n보낸 요청\n\n지금은 기다리는 요청이 없습니다\n\n저장 용량\n내 정보\n기본 할당 50 GB · 프로젝트 6개\n29.8 MB\n사용 중 · 할당의 0.1%\n\n프로젝트별\n비닐하우스 2026\n10.2 MB\n주차장 2026\n9.0 MB\n건축물 2026\n8.7 MB\n곤포사일리지 2026\n1.9 MB\n외 2개\n\n용량 증량 신청\n\n최근 진행한 프로젝트\n프로젝트 목록 · 전체 6\n마지막 활동 순 · 누르면 그 프로젝트의 지금 단계 화면\n1 데이터 올리기\n경작지 v2 — 항공 · API 영상\n\n프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 실험.\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 어제\n7,300장\n학습 데이터\n—\nAI 모델 정확도\n대상지 3곳\n이천시 · 여주시 · 평택시\n열기\n프로젝트 →\n그림 없음\n1 데이터 올리기\n테스트\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 어제\n—\n학습 데이터\n—\nAI 모델 정확도\n대상지 1곳\n종로구\n열기\n프로젝트 →\n6 배포 신청\n주차장 2026\n\n주차장\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 3일 전\n170장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 2곳\n여주시 · 천안시 서북구\n열기\n프로젝트 →\n6 배포 신청\n비닐하우스 2026\n\n건물 · 주차장 · 경작지 · 비닐하우스\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 4일 전\n35,247장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 3곳\n증평군 · 함양군 · 남원시\n열기\n프로젝트 →\nXI ChatGEO",
+ "now-staff-dash-1454.png": {
+  "at": "2026-10-13T14:54:30",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드"
+ },
+ "_train_project": "prj_3fdba452d5",
+ "_train_text": "LAND-XI\nLX 직원 대시보드\n14:54\n자동 로그아웃 내일 14:54 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n요청함\n프로젝트\n비닐하우스 2026\n데이터 올리기\n학습데이터 구축\n학습\n추론\n결과 확인\n배포 신청\n\n다음 할 일\n배포 승인됨\n\n학습 · AI 모델 작업 흐름\n\n10-08 에 끝난 학습 · 같은 설정으로 다시 돌리거나 블록을 바꿔 새로 돌릴 수 있어요\n\n다시 돌리기\n블록 더하기\n학습 데이터\n기반 모델\n학습 설정\n학습\n추론\n배포 신청\n출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요D복제Del지우기\n학습 데이터\n비닐하우스 25cm · 35,247장\n기반 모델\n원판 · 4종 모델\n학습 설정\n반복 20회 · 크기 1280 · 한 번에 8장\n학습\n학습 끝 검증 90%\n끝남 · 10-08 19:11 · 20회\n추론\n87%\n원판 91%보다 낮음\n배포 신청\n원판보다 낮아 꺼짐\n기본 흐름으로 되돌리기\n이번 학습 · 반복마다 정확도\n\n10-07 18:34 → 10-08 19:11 · 반복 20회\n\n90%학습 끝 검증\n69%\n75%\n82%\n88%\n94%\n1회\n5회\n10회\n15회\n20회\n90%\n핵심 수치\n끝남 · 후보로 남음\n학습 데이터\n35,247장\n기반 모델\n원판 · 4종 모델\n반복 · 크기 · 한 번에\n20회 · 1280 · 8장\n학습 끝 검증\n90%\n추론\n87% (원판 91%)\n걸린 시간\n24시간 37분\n\n학습 장비 — LX 관리자가 배정 · 프로젝트 하나에 한 장\n\n학습 이력\n최근 순\n날짜\t판\tAI 모델 정확도\t학습 데이터\t상태\n10-08\t세 번째 판\n원판에서 · 반복 20회 · 크기 1280\n\t90%\n추론 87%\n\t35,247장\t추론 87% · 원판 91%보다 낮아 후보로 남음\n09-30\t두 번째 판\n첫 판에서 이어서 · 반복 3회 · 크기 640\n\t70%\t200장\t지난 판\n09-30\t첫 판\n원판에서 · 반복 3회 · 크기 640\n\t66%\t200장\t지난 판\n05-16\t원판\n건물 · 주차장 · 경작지 · 비닐하우스 4종 모델\n\t89%\t—\t서비스 중 기반 모델\nXI ChatGEO",
+ "_train_chips": [
+  "학습 데이터 비닐하우스 25cm · 35,247장",
+  "기반 모델 원판 · 4종 모델",
+  "학습 설정 반복 20회 · 크기 1280 · 한 번에 8장",
+  "학습 학습 끝 검증 90% 끝남 · 10-08 19:11 · 20회",
+  "추론 87% 원판 91%보다 낮음",
+  "배포 신청 원판보다 낮아 꺼짐"
+ ],
+ "_train_at": "2026-10-13T14:54:42",
+ "now-train-board-1454.png": {
+  "at": "2026-10-13T14:54:44",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "프로젝트 '비닐하우스 2026' 학습 화면(세로로 길게)"
+ },
+ "_train_data_drawer": "× 학습 데이터 학습 데이터 비닐하우스 09-30 올림 200장 비닐하우스 25cm 있는 칸 27,247 + 없는 칸 8,000 35,247장 수정된 부분 0장 다른 학습 데이터로 보려면 학습 데이터 블록과 학습 블록을 하나씩 더 놓아 이어요.",
+ "now-train-data-1454.png": {
+  "at": "2026-10-13T14:54:46",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+  "note": "학습 화면 · 학습 데이터 블록"
+ },
+ "_xna": "전국 결과 자산\n\n농지 전수 · 2025\n하천 · 계곡\n\n분석 끝 읍면동 123곳 · 전국 농지 범위의 1%\n\n학습 장비가 놀 때 차례로 · 전북 · 군산시부터\n\n경작지\n비닐하우스\n분석 예정\n\n영상 국토지리정보원 항공 2025 · 영상은 저장하지 않고 결과만 쌓습니다",
+ "now-xi-national-1454.png": {
+  "at": "2026-10-13T14:54:55",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 전국 결과 자산 칸"
+ },
+ "mock-p3-first-1455.png": {
+  "at": "2026-10-13T14:55:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-3/index.html",
+  "note": "시안 첫 화면"
+ },
+ "mock-p3-hover-1455.png": {
+  "at": "2026-10-13T14:55:35",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-3/index.html",
+  "note": "시안 올림"
+ },
+ "mock-p3-press-1456.png": {
+  "at": "2026-10-13T14:56:07",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-3/index.html",
+  "note": "시안 누름"
+ },
+ "mock-p3-filter-1456.png": {
+  "at": "2026-10-13T14:56:30",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-3/index.html",
+  "note": "시안 말로 거르기"
+ },
+ "_admin_line": [
+  "경보 없음",
+  "전력 예산 0/1 GPU 고부하",
+  "전국 농지 1% · 하천 0.6% · 마지막 칸 10-13 14:56",
+  "공지 0건 · 쓰기"
+ ],
+ "_progress": {
+  "year": 2025,
+  "enabled": true,
+  "assets": {
+   "farm": {
+    "name": "농지 전수",
+    "on": true,
+    "pct": {
+     "value": 1.5,
+     "unit": "%",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+    },
+    "done_km2": {
+     "value": 564.6,
+     "unit": "km2",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸 분석 범위"
+    },
+    "total_km2": {
+     "value": 38367.9,
+     "unit": "km2",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "전체 분석 범위(칸 합)"
+    },
+    "cells": {
+     "value": 3859,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "분석할 범위가 있는 읍면동"
+    },
+    "done": {
+     "value": 123,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동"
+    },
+    "failed": {
+     "value": 0,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+    },
+    "sgg_done": {
+     "value": 4,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸이 있는 시군구"
+    },
+    "sgg": {
+     "value": 251,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "분석할 범위가 있는 시군구"
+    },
+    "last_at": "2026-10-13T14:56+09:00",
+    "counts": {
+     "경작지": {
+      "n": {
+       "value": 116590,
+       "unit": "count",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+      },
+      "km2": {
+       "value": 242.43,
+       "unit": "km2",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과 넓이"
+      },
+      "unit": "곳"
+     },
+     "비닐하우스": {
+      "n": {
+       "value": 6708,
+       "unit": "count",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+      },
+      "km2": {
+       "value": 1.73,
+       "unit": "km2",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과 넓이"
+      },
+      "unit": "동"
+     }
+    },
+    "model_done": {
+     "value": 71,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동 가운데 지금 전국 분석 모델로 만든 곳(진행 장부 model_id)"
+    },
+    "redo": {
+     "value": 52,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동 가운데 옛 판 결과라 새 판으로 다시 분석할 곳 — 새 결과가 나올 때까지 옛 결과 그대로"
+    },
+    "next": {
+     "sido": "전북",
+     "sgg": "군산시",
+     "emd": "소룡동"
+    }
+   },
+   "river": {
+    "name": "하천 · 계곡",
+    "on": true,
+    "pct": {
+     "value": 0.6,
+     "unit": "%",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"
+    },
+    "done_km2": {
+     "value": 101.6,
+     "unit": "km2",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸 분석 범위"
+    },
+    "total_km2": {
+     "value": 15761.2,
+     "unit": "km2",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "전체 분석 범위(칸 합)"
+    },
+    "cells": {
+     "value": 3855,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "분석할 범위가 있는 읍면동"
+    },
+    "done": {
+     "value": 107,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동"
+    },
+    "failed": {
+     "value": 0,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "3번 넘게 실패한 읍면동(관리자가 다시)"
+    },
+    "sgg_done": {
+     "value": 4,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 칸이 있는 시군구"
+    },
+    "sgg": {
+     "value": 253,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "분석할 범위가 있는 시군구"
+    },
+    "last_at": "2026-10-13T14:56+09:00",
+    "counts": {
+     "비닐하우스": {
+      "n": {
+       "value": 2284,
+       "unit": "count",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+      },
+      "km2": {
+       "value": 0.64,
+       "unit": "km2",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과 넓이"
+      },
+      "unit": "동"
+     },
+     "경작지": {
+      "n": {
+       "value": 25818,
+       "unit": "count",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+      },
+      "km2": {
+       "value": 56.08,
+       "unit": "km2",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과 넓이"
+      },
+      "unit": "곳"
+     },
+     "건물": {
+      "n": {
+       "value": 28337,
+       "unit": "count",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"
+      },
+      "km2": {
+       "value": 6.97,
+       "unit": "km2",
+       "basis": "measured",
+       "as_of": "2026-10-13T14:56:57+09:00",
+       "source": "끝난 칸 AI 분석 결과 넓이"
+      },
+      "unit": "동"
+     }
+    },
+    "model_done": {
+     "value": 74,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동 가운데 지금 전국 분석 모델로 만든 곳(진행 장부 model_id)"
+    },
+    "redo": {
+     "value": 33,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-10-13T14:56:57+09:00",
+     "source": "끝난 읍면동 가운데 옛 판 결과라 새 판으로 다시 분석할 곳 — 새 결과가 나올 때까지 옛 결과 그대로"
+    },
+    "next": {
+     "sido": "전북",
+     "sgg": "군산시",
+     "emd": "옥구읍"
+    }
+   }
+  },
+  "v": {
+   "farm": "123.1791870999",
+   "river": "107.1791871007"
+  },
+  "model": {
+   "id": "trained/job_01M4QKMB4X8F1JHJHD0D7HSR7Q",
+   "name": "경작지 학습 2026.10.13"
+  },
+  "imagery": "국토지리정보원 항공 정사영상 2025 · 25cm · 영상은 저장하지 않음",
+  "runner": {
+   "state": "running",
+   "why": null,
+   "at": "2026-10-13T14:56:48+09:00",
+   "cell": "군산시 소룡동",
+   "asset": "farm"
+  },
+  "schedule": {
+   "mode": "idle",
+   "idle_now": true,
+   "starts_at": "2026-10-13T14:56+09:00",
+   "est_km2_day": {
+    "value": 2836,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-13T14:56:57+09:00",
+    "source": "최근 6시간에 끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+   },
+   "days_left": {
+    "value": 19,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-13T14:56:57+09:00",
+    "source": "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)"
+   }
+  },
+  "tonight": {
+   "mode": "idle",
+   "idle_now": true,
+   "starts_at": "2026-10-13T14:56+09:00",
+   "est_km2_day": {
+    "value": 2836,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-13T14:56:57+09:00",
+    "source": "최근 6시간에 끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+   },
+   "days_left": {
+    "value": 19,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-10-13T14:56:57+09:00",
+    "source": "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)"
+   },
+   "quiet": {
+    "quiet_start": "22:00",
+    "quiet_end": "06:00",
+    "weekend": true,
+    "now": false
+   },
+   "est_km2": {
+    "value": 2836,
+    "unit": "km2",
+    "basis": "measured",
+    "as_of": "2026-10-13T14:56:57+09:00",
+    "source": "최근 6시간에 끝난 칸의 실제 속도 × 24시간(학습 장비가 놀 때 기준)"
+   }
+  }
+ },
+ "_progress_at": "2026-10-13T14:56:57",
+ "now-admin-dash-1456.png": {
+  "at": "2026-10-13T14:56:57",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "note": "LX 관리자 대시보드"
+ },
+ "_shared_text": "LAND-XI\nLX 관리자 대시보드\n14:57\n자동 로그아웃 내일 14:56 · 남은 24시간\nLX 관리자\nXI맵\n1\n?\n나가기\n현황\n인프라\n기관\n배포\n요청 관리\n검토 요청\n계정 관리\n공유 데이터\n공유 데이터\n영상 83장\n영상 올리기\n\t이름\t지역\t연도\t종류\t직원에게\t\n\n\t2025-04 2m · 남원 시가지\t남원시\t2025\t위성\t공개\t정보 고치기지우기\n\n\t2025-04 드론 1cm급 · 남원 AOI\t남원시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t2025-06 드론 · 남원 AOI\t남원시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t2025-08 드론 · 남원 AOI\t남원시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t2025-10 2m · 남원 시가지\t남원시\t2025\t위성\t공개\t정보 고치기지우기\n\n\t2025-10 드론 · 남원 AOI\t남원시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t국산리 드론 5cm A68\t김제시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t국산리 드론 5cm A71\t김제시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t변화 지수 2025-04→10 · 국산리\t남원시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t익산 황등 3·4지구 드론 1.36cm\t익산시\t2025\t드론\t공개\t정보 고치기지우기\n\n\t2023 25cm 항공 · 남원\t남원시\t2023\t항공\t공개\t정보 고치기지우기\n\n\t강진군 2023 25cm 항공\t강진군\t2023\t항공\t공개\t정보 고치기지우기\n‹ 앞\n1 / 7\n다음 ›\nXI ChatGEO",
+ "now-admin-shared-1457.png": {
+  "at": "2026-10-13T14:57:11",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/shared",
+  "note": "LX 관리자 - 공유 데이터"
+ },
+ "_retrain_text": "언제 학습하나\n쉬는 시간에 자동\n사람이 누를 때만\n쉬는 시간\n–\n주말 하루 종일\n기준\n장\n저장\n\n수정된 부분은 학습 데이터로 저장됩니다.\n\n지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.\n\n분석서비스별\n분석서비스 · 지금 판\t학습 데이터\t새 클래스\t방식\t상태\t\n주차장 · 2.0\n주차장 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n건축물 · 2.0\n건축물 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n비닐하우스 · 2.0\n비닐하우스 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t지금 판보다 낮음 · 후보로 남음\n최근 다시 학습 87% · 지금 판 91%\n\t지금 학습\n곤포사일리지 · 1.0\n곤포사일리지 2026\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n경작·휴경 · 2.1\n프로젝트 없음\n\t\n0 / 200장\n\t—\t\n쉬는 시간 자동\n수동\n\t쌓는 중\t지금 학습\n새 모델 프로젝트 후보\n\n아직 없습니다\n\n오늘 밤 순서\n22:00–06:00\n\n오늘 밤 학습할 서비스가 없습니다 — 기준에 닿은 서비스가 없습니다\n\n마지막 확인 10.13 14:56 · 5분마다",
+ "now-admin-retrain-1457.png": {
+  "at": "2026-10-13T14:57:12",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/retrain",
+  "note": "LX 관리자 - 배포 → XI 재학습"
+ },
+ "_tmpl_text": "학습 데이터\n빠질 수 없음\n기반 모델\n빠질 수 없음\n학습 설정\n빠질 수 없음\n학습\n빠질 수 없음\n추론\n배포 신청",
+ "now-admin-template-1457.png": {
+  "at": "2026-10-13T14:57:15",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/deploys/templates",
+  "note": "LX 관리자 - 학습 서식"
+ }
+}
