@@ -1,0 +1,15 @@
+[
+ {
+  "file": "perf3-10s-1412.mp4",
+  "shot_at": "2026-10-13T14:12:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-perf-3/index.html?cursor=1",
+  "viewport": [
+   1440,
+   900
+  ],
+  "seconds": 11.0,
+  "frames_received": 145,
+  "note": "실제 마우스 한 바퀴를 장면별로 잘라 이음(빨리 감기 없음): 첫 화면 → 함양군 올림 → 남원시 올림 → 누름(모든 결과가 객체로 펼쳐짐) → 객체 눌러 모양 고치기(예시 동작) → XI ChatGEO \"비닐하우스만 보여 줘\" → 거른 결과",
+  "errors": []
+ }
+]
