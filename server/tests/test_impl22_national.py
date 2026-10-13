@@ -147,3 +147,61 @@ def test_idle_anytime_and_gpu_cap():
     lim = cfg.load_yaml("pools")["power"]["power_limit_w"]
     assert nat["gpu"] == 0 and nat["util_max"] <= 70 and nat["power_max_w"] <= 0.7 * lim and nat["chunk"] <= 8
 
+
+def test_fetch_governor_auto():
+    """영상 호출 동시 수 자동 조절(10-13) — 오류율 > 1% · 응답 p50 > 기준×2 면 한 단계 내림 + 쉼, 30분 안정이면 상한까지 한 단계 올림."""
+    from workers import imagery_src as isrc
+    now = [1000.0]
+    g = isrc.FetchGovernor(16, None, clock=lambda: now[0])
+    assert g.level == 16 and g.steps() == [1, 2, 4, 8, 16]
+    for _ in range(isrc.FETCH_WINDOW * 3):
+        g.record(True, 0.5)                       # 기준 0.5초
+    assert g.level == 16
+    for k in range(isrc.FETCH_WINDOW):
+        g.record(k >= 3, 0.5)                     # 오류 3/200 = 1.5%
+    assert g.level == 8 and g.rest_until > now[0]
+    for _ in range(isrc.FETCH_WINDOW):
+        g.record(True, 1.2)                       # 기준의 2배 넘음
+    assert g.level == 4
+    now[0] += isrc.FETCH_STABLE_S + 1
+    for _ in range(isrc.FETCH_WINDOW):
+        g.record(True, 0.5)
+    assert g.level == 8                           # 30분 안정 → 한 단계
+    now[0] += isrc.FETCH_STABLE_S + 1
+    for _ in range(isrc.FETCH_WINDOW * 2):
+        g.record(True, 0.5)
+    assert g.level == 16                          # 상한까지만
+    g.set_cap(4)
+    assert g.level == 4 and g.cap == 4            # 관리자가 상한을 내리면 바로
+    g.set_cap(8)
+    assert g.level == 8                           # 상한을 올리면 한 단계
+    g.set_cap(99)
+    assert g.cap == isrc.FETCH_HARD_MAX           # 16 위는 사용자 결정
+    # 동시 수를 올려도 응답 시간만 늘면(서버가 줄 세움 · 처리량 그대로) — 낮은 동시 수에서 잰 기준으로 내려온다
+    h = isrc.FetchGovernor(4, None, clock=lambda: now[0])
+    for _ in range(isrc.FETCH_WINDOW * 3):
+        h.record(True, 1.0)
+    h.set_cap(8)
+    assert h.level == 8
+    for _ in range(isrc.FETCH_WINDOW):
+        h.record(True, 2.5)
+    assert h.level == 4
+    # 서버가 빠를 때(수십 ms) 두 배 흔들림은 내리지 않는다
+    q = isrc.FetchGovernor(4, None, clock=lambda: now[0])
+    for _ in range(isrc.FETCH_WINDOW * 3):
+        q.record(True, 0.04)
+    for _ in range(isrc.FETCH_WINDOW):
+        q.record(True, 0.09)
+    assert q.level == 4
+
+
+def test_fetch_max_setting_bounds(tok):
+    """fetch_max 는 관리자 API 로만 · 1–16 밖은 거절(설정은 바뀌지 않음)."""
+    with db() as c:
+        before = c.execute("SELECT value FROM lx_settings WHERE key='national.run'").fetchone()[0]
+    r = httpx.put(B + "/national/settings", headers=H(tok["admin"]), json={"fetch_max": 17}, timeout=30)
+    assert r.status_code == 400, r.text
+    r = httpx.put(B + "/national/settings", headers=H(tok["staff"]), json={"fetch_max": 8}, timeout=30)
+    assert r.status_code in (401, 403)
+    with db() as c:
+        assert c.execute("SELECT value FROM lx_settings WHERE key='national.run'").fetchone()[0] == before

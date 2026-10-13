@@ -1,0 +1,335 @@
+{
+ "from": "2026-10-13 11:29:00+09",
+ "cells": [
+  {
+   "asset": "river",
+   "cell": "52111141",
+   "km2": 0.7437,
+   "done_at": "2026-10-13T11:29:50.379126+09:00",
+   "counts": {
+    "건물": {
+     "n": 291,
+     "km2": 0.132
+    },
+    "경작지": {
+     "n": 9,
+     "km2": 0.002
+    }
+   },
+   "jobs": [
+    "job_01M4SHCBAP3M3S205BZ5D32AFP"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52111142",
+   "km2": 0.5817,
+   "done_at": "2026-10-13T11:29:58.870590+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHGH2K36EKZ1VGP8E26VWV"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52111143",
+   "km2": 1.223,
+   "done_at": "2026-10-13T11:30:15.511179+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHGS6B46G53APN7B516KAT"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52111144",
+   "km2": 1.0327,
+   "done_at": "2026-10-13T11:30:31.937427+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHH9EA1ZN6JZTC7Y4GHY8Q"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52111145",
+   "km2": 0.1025,
+   "done_at": "2026-10-13T11:30:40.208546+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHHSES0T73B59JWE31MADX"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113102",
+   "km2": 0.6022,
+   "done_at": "2026-10-13T11:30:56.614490+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHJ1HCR69BQ17GRHTM0QAG"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113103",
+   "km2": 0.2488,
+   "done_at": "2026-10-13T11:31:04.925912+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHJHJYRNZ55M6MN4DKP6JK"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113104",
+   "km2": 0.0555,
+   "done_at": "2026-10-13T11:31:13.510329+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHJSZ5C7053EQWQDPBTXXS"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113105",
+   "km2": 0.186,
+   "done_at": "2026-10-13T11:31:29.996957+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHK2391TB7R5V3SBRDWK5J",
+    "job_01M4SHKA27XAPB36EQN9HPBP85"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113106",
+   "km2": 0.5027,
+   "done_at": "2026-10-13T11:31:38.330728+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHKJ5ABG6XD2E5VRRQX5XT"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113107",
+   "km2": 0.1725,
+   "done_at": "2026-10-13T11:31:46.614543+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHKT9VKR9FSSP2BMW6QZ3W"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113108",
+   "km2": 0.4681,
+   "done_at": "2026-10-13T11:32:03.085387+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHM2CWQ77QQD7KQ92HNCRP",
+    "job_01M4SHMABM4141ZNM84ATH430N"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113109",
+   "km2": 0.3593,
+   "done_at": "2026-10-13T11:32:19.641335+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHMJJ05YF9WKC4SY44V6QT",
+    "job_01M4SHMTH8V40VGK71JQ74N4JK"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113110",
+   "km2": 0.0877,
+   "done_at": "2026-10-13T11:32:27.941624+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHN2N4VZ1F7V5RBAMEPH09"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113111",
+   "km2": 0.3592,
+   "done_at": "2026-10-13T11:32:45.091120+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHNB5MMJMZR1M5C2K8Z74S",
+    "job_01M4SHNK93MAGR25CPJJBYQGYX"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113112",
+   "km2": 1.0431,
+   "done_at": "2026-10-13T11:33:01.510136+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHNVG16TXDX3FMY7B1AJEG"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113113",
+   "km2": 1.4152,
+   "done_at": "2026-10-13T11:33:18.175105+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHPBS26JAZGK1HWWCA1GC3"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113114",
+   "km2": 0.1848,
+   "done_at": "2026-10-13T11:33:26.462451+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHPVT6QRPM058B4W0Z06C1"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113115",
+   "km2": 0.384,
+   "done_at": "2026-10-13T11:33:34.847155+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHQ3WY4MC3HQ9SQC3P4NQV"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113116",
+   "km2": 0.4165,
+   "done_at": "2026-10-13T11:33:43.138066+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHQC3AMNN1ZZ1XZ4NFSYNY"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113117",
+   "km2": 0.4184,
+   "done_at": "2026-10-13T11:33:51.396597+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHQM573WZJKJR3K4M42552"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113118",
+   "km2": 0.5917,
+   "done_at": "2026-10-13T11:33:59.764849+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHQW7YM6A9WQ6WS6NZHM02"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113119",
+   "km2": 0.6582,
+   "done_at": "2026-10-13T11:34:08.056352+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHR4DG0Y59N85Z2FDVT766"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113120",
+   "km2": 0.9995,
+   "done_at": "2026-10-13T11:34:24.584689+09:00",
+   "counts": {},
+   "jobs": [
+    "job_01M4SHRCK7P7CQFSBJSWVPHWQT"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113121",
+   "km2": 0.3184,
+   "done_at": "2026-10-13T11:34:33.028131+09:00",
+   "counts": {
+    "건물": {
+     "n": 27,
+     "km2": 0.017
+    },
+    "경작지": {
+     "n": 4,
+     "km2": 0.001
+    }
+   },
+   "jobs": [
+    "job_01M4SHRWPWNRK2XV7DH4QJNH17"
+   ]
+  },
+  {
+   "asset": "river",
+   "cell": "52113122",
+   "km2": 0.4724,
+   "done_at": "2026-10-13T11:40:26.122385+09:00",
+   "counts": {
+    "건물": {
+     "n": 145,
+     "km2": 0.036
+    },
+    "경작지": {
+     "n": 98,
+     "km2": 0.107
+    },
+    "비닐하우스": {
+     "n": 3,
+     "km2": 0.0
+    }
+   },
+   "jobs": [
+    "job_01M4SHS4XG9H92AKSMKSKJNHQM"
+   ]
+  }
+ ],
+ "jobs": [
+  "job_01M4SHCBAP3M3S205BZ5D32AFP",
+  "job_01M4SHGH2K36EKZ1VGP8E26VWV",
+  "job_01M4SHGS6B46G53APN7B516KAT",
+  "job_01M4SHH9EA1ZN6JZTC7Y4GHY8Q",
+  "job_01M4SHHSES0T73B59JWE31MADX",
+  "job_01M4SHJ1HCR69BQ17GRHTM0QAG",
+  "job_01M4SHJHJYRNZ55M6MN4DKP6JK",
+  "job_01M4SHJSZ5C7053EQWQDPBTXXS",
+  "job_01M4SHK2391TB7R5V3SBRDWK5J",
+  "job_01M4SHKA27XAPB36EQN9HPBP85",
+  "job_01M4SHKJ5ABG6XD2E5VRRQX5XT",
+  "job_01M4SHKT9VKR9FSSP2BMW6QZ3W",
+  "job_01M4SHM2CWQ77QQD7KQ92HNCRP",
+  "job_01M4SHMABM4141ZNM84ATH430N",
+  "job_01M4SHMJJ05YF9WKC4SY44V6QT",
+  "job_01M4SHMTH8V40VGK71JQ74N4JK",
+  "job_01M4SHN2N4VZ1F7V5RBAMEPH09",
+  "job_01M4SHNB5MMJMZR1M5C2K8Z74S",
+  "job_01M4SHNK93MAGR25CPJJBYQGYX",
+  "job_01M4SHNVG16TXDX3FMY7B1AJEG",
+  "job_01M4SHPBS26JAZGK1HWWCA1GC3",
+  "job_01M4SHPVT6QRPM058B4W0Z06C1",
+  "job_01M4SHQ3WY4MC3HQ9SQC3P4NQV",
+  "job_01M4SHQC3AMNN1ZZ1XZ4NFSYNY",
+  "job_01M4SHQM573WZJKJR3K4M42552",
+  "job_01M4SHQW7YM6A9WQ6WS6NZHM02",
+  "job_01M4SHR4DG0Y59N85Z2FDVT766",
+  "job_01M4SHRCK7P7CQFSBJSWVPHWQT",
+  "job_01M4SHRWPWNRK2XV7DH4QJNH17",
+  "job_01M4SHS4XG9H92AKSMKSKJNHQM"
+ ],
+ "n_cells": 26,
+ "km2": 13.628,
+ "dry": false
+}

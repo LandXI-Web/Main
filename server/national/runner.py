@@ -13,7 +13,8 @@
   · GPU 한 장만 · 풀로드 금지 — 워커가 전국 작업(options.national)을 정한 한 장에서 작은 묶음 + 묶음 사이 쉼으로 돌린다(pools.yaml power.national).
   · 재학습의 '쉬는 시간 자동'은 그대로 — 쉬는 시간에 재학습 차례가 있으면 자리를 비운다.
   · 재학습이 오늘 밤 차례를 기다리면(GET /retrain 의 tonight) 다음 칸을 넣지 않고 자리를 비운다(최대 15분 · 학습이 들어오면 끝날 때까지).
-  · 영상은 국토지리정보원 항공 타일(키 없음)을 칩마다 불러 메모리에서만 쓴다(workers.imagery_src.ApiDataset · 동시 4 이하 · 지수 대기).
+  · 영상은 국토지리정보원 항공 타일(키 없음)을 칩마다 불러 메모리에서만 쓴다(workers.imagery_src.ApiDataset · 동시 호출 수는
+    관리자 상한 fetch_max(1–16) 아래에서 오류율 · 응답 시간으로 자동 조절 · 지수 대기).
   · 칸이 끝나면: 칸 숫자(객체 중심이 칸 안인 것만) · 낮은 줌 면(격자) → 결과 객체 줄은 데이터베이스에서 지움(C: 디스크에 쌓지 않음 ·
     객체는 E: 결과 묶음 파일 = 지도 조각 · GeoJSON 에 남음) → 중간 칩 파일 바로 지움 → 장부 done(판 번호가 바뀜).
   · 실패하면 다시(10 · 20 · 40분 뒤) — 3번 넘게 실패하면 failed(관리자가 다시).
@@ -175,6 +176,37 @@ XML = """<GDAL_WMS>
 """
 
 
+def api_ok(year: int) -> bool:
+    """영상 API 가 그림을 주나 — 타일 하나(전북 전주 · 25cm 층). '접속 지연' 안내 페이지(404 html) · 5xx · 끊김이면 False.
+    장애 동안 칸을 실패로 세지 않고 기다리게(10-13 실측: 국토지리정보원이 몇 분 동안 안내 페이지를 줌)."""
+    import requests
+    res = 17112760.32 / (256 * 2 ** 18)
+    x, y = int((965000 + 200000) / res / 256), int((4000000 - 1745000) / res / 256)
+    url = (f"https://map.ngii.go.kr/airmapprime/map/wmts?service=WMTS&request=GetTile&version=1.0.0&layer=mapprime:air_{year}&style=&format=image/jpeg"
+           f"&tilematrixset=NGIS_AIR&tilematrix=18&tilerow={y}&tilecol={x}")
+    try:
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (LandXI)", "Referer": "https://map.ngii.go.kr/"}, timeout=30)
+        return r.status_code == 200 and (r.headers.get("content-type") or "").startswith("image/")
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def wait_api(year: int, cd: str | None = None):
+    """영상 API 가 돌아올 때까지 기다림(2분마다 타일 하나) — 멈춤 설정이면 Pause."""
+    first = True
+    while not api_ok(year):
+        if first:
+            log("영상 API 응답 없음(접속 지연 안내 · 오류) — 돌아올 때까지 기다림")
+            first = False
+        status(state="yield", why="영상 API 응답 없음", cell=cd)
+        time.sleep(120)
+        with pg() as c2:
+            if not settings(c2).get("enabled", True):
+                raise Pause("멈춤")
+    if not first:
+        log("영상 API 다시 응답 — 이어서")
+
+
 def imagery_id(year: int) -> str:
     return f"nat-ngii-air-{year}"
 
@@ -183,7 +215,7 @@ def ensure_imagery(c, year: int, conn_max: int) -> str:
     """국토지리정보원 항공 정사영상 {year} 층 — 25.5cm(2020~) · EPSG:5179 타일. footprint 를 두지 않는다(영상 목록 · 영상 고르기에 나오지 않게)."""
     p = OUT / "imagery-api" / f"ngii-air-{year}.xml"
     p.parent.mkdir(parents=True, exist_ok=True)
-    body = XML.format(year=year, conn=max(1, min(4, int(conn_max))))
+    body = XML.format(year=year, conn=max(1, min(16, int(conn_max))))     # 동시 호출 상한(관리자 fetch_max · 1–16) — 워커의 자동 조절 장치가 이 아래에서 쓴다
     if not p.exists() or p.read_text(encoding="utf-8") != body:
         p.write_text(body, encoding="utf-8")
     iid = imagery_id(year)
@@ -277,6 +309,8 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
                 c.execute("UPDATE national_jobs SET state=%s, done_at=now() WHERE job_id=%s", (stt, jid))
                 if stt != "done":
                     raise RuntimeError(f"작업 {stt}: {str(v.get('error') or '')[:200]}")
+                if int(v.get("shards_failed") or 0) > 0:           # 칩 일부를 못 읽음(영상 API 장애 등) — 빈 결과로 '끝'을 만들지 않는다
+                    raise RuntimeError(f"작업 칩 {v.get('shards_failed')}개 실패 — 칸을 다시")
                 break
             status(state="running", asset=asset, cell=cd, part=k + 1, parts=len(parts), done=v.get("shards_done"), total=v.get("shards_total"), test=test)
     out = finish_cell(c, asset, year, cd, jobs, test=test)
@@ -388,6 +422,10 @@ def loop(force_window: bool = False):
                 except Pause:
                     continue
                 iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
+                try:
+                    wait_api(year)
+                except Pause:
+                    continue
                 nxt = next_cell(c, year, st["assets"])
                 if not nxt:
                     status(state="all_done", year=year)
@@ -404,6 +442,10 @@ def loop(force_window: bool = False):
                     log(f"칸 {asset} {cd} 멈춤({e}) — 다시 켜면 이어서")
                     continue
                 except Exception as e:  # noqa: BLE001
+                    if not api_ok(year):                 # 영상 API 장애 — 칸 탓이 아니므로 실패로 세지 않고 차례로 되돌린다(끝난 조각은 이어 씀)
+                        c.execute("UPDATE national_cells SET state='todo' WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
+                        log(f"칸 {asset} {cd} 영상 API 장애로 멈춤 — 돌아오면 이어서: {repr(e)[:160]}")
+                        continue
                     fail_cell(c, asset, year, cd, repr(e))
                     time.sleep(30)
     finally:

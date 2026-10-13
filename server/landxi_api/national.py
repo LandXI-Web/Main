@@ -2,7 +2,7 @@
 
   GET  /api/v1/national/progress             LX — 결과 자산마다 진행(끝난 범위 ㎢ ÷ 전체 범위 ㎢) · 끝난 읍면동 · 마지막 칸 시각 · 칸 숫자 합 ·
                                              작업기 상태(도는 중 · 비킴 · 멈춤) · 일정(학습 장비가 놀 때면 언제든 · 하루 예상 · 남은 날 · 원칙 221) · 지도 조각 판 번호
-  PUT  /api/v1/national/settings             LX 관리자 — {enabled, order, year, assets, river_buffer_m} (멈춤 · 재개 = enabled)
+  PUT  /api/v1/national/settings             LX 관리자 — {enabled, order, year, assets, river_buffer_m, fetch_max(1–16)} (멈춤 · 재개 = enabled)
   POST /api/v1/national/retry                LX 관리자 — {asset?} 3번 넘게 실패한 칸을 다시 차례에 넣는다
   GET  /tiles/national/{asset}/{year}/{z}/{x}/{y}.pbf?v=판    XI맵 지도 조각(벡터) — 층 셋:
          cells  칸(읍면동 · 분석할 범위가 있는 곳만) · done 0/1 · 이름 · 칸 숫자(끝난 곳만 — 지어낸 숫자 0) · 줌 ≤ 10(더 가까이는 늘려 씀)
@@ -112,6 +112,10 @@ async def progress(request: Request):
         rate = await conn.fetchrow(
             "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
             "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL", year)
+        # 최근 속도(최근 6시간에 끝난 칸) — 영상 호출 동시 수 같은 운영 설정이 바뀌면 예상이 그 속도를 따라간다(10-13). 칸 시간이 30분 넘을 때만.
+        recent = await conn.fetchrow(
+            "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
+            "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '6 hours'", year)
         ver = await versions(conn, year)
     now = dt.datetime.now(KST)
     out = {"year": year, "enabled": bool(st.get("enabled", True)), "assets": {}, "v": ver,
@@ -140,13 +144,16 @@ async def progress(request: Request):
     # 일정 — 학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). 하루 예상 = 속도 × 24시간(유휴 기준 · 사용자 작업 · 재학습만큼 늦어짐).
     # 속도: 끝난 칸이 있으면 실제(㎢ ÷ 걸린 시간 · 비킨 시간 포함), 없으면 낮 시험 칸 실측 바탕 [추정]
     measured = rate and rate["s"] and float(rate["s"]) > 600
+    fresh = recent and recent["s"] and float(recent["s"]) > 1800 and float(recent["km2"] or 0) > 0
+    if fresh:
+        rate = recent
     kph = float(rate["km2"]) / (float(rate["s"]) / 3600.0) if measured else KM2_PER_HOUR
     left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"])
     run = _runner()
     out["runner"] = {"state": run.get("state") or "idle", "why": run.get("why"), "at": run.get("at"), "cell": run.get("name") if not run.get("test") else None,
                      "asset": run.get("asset") if not run.get("test") else None}   # 지금 도는 칸의 자산(농지 · 하천 번갈아 — 다른 자산 칸에 '지금 분석 중'을 쓰지 않게)
     basis = "measured" if measured else "estimate"
-    note = "끝난 칸의 실제 속도" if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
+    note = ("최근 6시간에 끝난 칸의 실제 속도" if fresh else "끝난 칸의 실제 속도") if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
     sched = {"mode": "idle", "idle_now": not busy, "starts_at": now.isoformat(timespec="minutes"),
              "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
              "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)")}
@@ -174,11 +181,17 @@ async def put_settings(request: Request, body: dict):
             st["assets"] = [a for a in body["assets"] if a in ASSETS] or st["assets"]
         if "river_buffer_m" in body:
             st["river_buffer_m"] = max(20, min(500, int(body["river_buffer_m"])))
+        if "fetch_max" in body:                                 # 영상 호출 동시 수 상한(10-13 · 16 위는 사용자 결정) — 워커가 이 아래에서 자동 조절
+            fm = int(body["fetch_max"])
+            if not 1 <= fm <= 16:
+                raise ApiError("bad_request", "영상 호출 동시 수(1–16)")
+            st["fetch_max"] = fm
         await conn.execute("INSERT INTO lx_settings(key, value, updated_by, updated_at) VALUES ('national.run', $1, $2, now()) "
                            "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()",
                            st, p.user_id)                       # jsonb 는 연결 코덱이 직렬화(json.dumps 를 두 번 하면 글자 하나로 들어간다)
         await audit(conn, p, "national.settings", "national.run", old, st)
     return {"settings": {"enabled": st["enabled"], "year": st["year"], "order": st["order"], "assets": st["assets"],
+                         "fetch_max": env(int(st.get("fetch_max", 4)), "count", "recorded", "영상 호출 동시 수 상한(관리자 설정 · 실제 쓰는 값은 그 아래에서 자동)"),
                          "river_buffer_m": env(st["river_buffer_m"], "m2" if False else "count", "recorded", "하천 띠 폭(양쪽 · m)")}}
 
 
