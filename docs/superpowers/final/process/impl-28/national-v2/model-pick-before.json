@@ -1,0 +1,218 @@
+{
+ "deploys": {
+  "dp-12110-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-12130-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-12730-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-12780-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-41390-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-41670-389c45-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-43745-5e85a9-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-44133-389c45-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-44180-d8fc01-26": {
+   "None": "trained/job_01M3RNTFXBJACWD21KPW2AWYAH",
+   "0.018": "trained/job_01M3RNTFXBJACWD21KPW2AWYAH",
+   "0.12": null,
+   "0.25": null,
+   "0.51": null
+  },
+  "dp-48870-5e85a9-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-51130-45424f-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-52190-5e85a9-26": {
+   "None": "aerial25/best",
+   "0.018": null,
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-gj-marine-25": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-gj-marine-27": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-kgz-agri-farm-26": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-lx-farm-26": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-lx-global-farm-26": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-mm-meiktila-25": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-nw-change": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-nw-crowd-27": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-nw-farm-25": {
+   "None": "namwon/cultivate_uncultivate/train",
+   "0.018": "namwon/cultivate_uncultivate/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-nw-living-23": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  },
+  "dp-nw-road-26": {
+   "None": "namwon/Silage/train",
+   "0.018": "namwon/Silage/train",
+   "0.12": "aerial25/best",
+   "0.25": "aerial25/best",
+   "0.51": "aerial25/best"
+  }
+ },
+ "analyze": {
+  "ortho@0.018": "namwon/Vinyl_house/train2",
+  "ortho@0.12": "aerial25/best",
+  "ortho@0.25": "aerial25/best",
+  "ortho@0.51": "aerial25/best",
+  "drone@0.018": null,
+  "drone@0.12": null,
+  "drone@0.25": null,
+  "drone@0.51": null
+ },
+ "card_models": {
+  "card-389c45@1.0": [
+   "trained/job_01M3RVCSB1YJA9WTR7C1KBXW1P"
+  ],
+  "card-389c45@2.0": [
+   "aerial25/best"
+  ],
+  "card-45424f@1.0": [
+   "trained/job_01M3RYW5YKK0B7WRQT5DHB0M1H"
+  ],
+  "card-45424f@2.0": [
+   "aerial25/best"
+  ],
+  "card-5e85a9@1.0": [
+   "trained/job_01M3RCHBC5J3ACX9VH2BEVCFE7"
+  ],
+  "card-5e85a9@2.0": [
+   "aerial25/best"
+  ],
+  "card-change@1.0": [
+   "unsupervised-change"
+  ],
+  "card-d8fc01@1.0": [
+   "trained/job_01M3RNTFXBJACWD21KPW2AWYAH"
+  ],
+  "card-farm@2.0": [
+   "aerial25/best"
+  ],
+  "card-farm@2.1": [
+   "namwon/cultivate_uncultivate/train"
+  ],
+  "card-global-disaster@0.1": [],
+  "card-global-farm@0.1": [
+   "index/ndvi_pc"
+  ],
+  "card-living@1.3": [],
+  "card-marine@1.2": [],
+  "card-road@2.1": []
+ },
+ "models": {
+  "aerial25/best": "registered",
+  "trained/job_01M4QKMB4X8F1JHJHD0D7HSR7Q": "candidate"
+ }
+}

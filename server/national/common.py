@@ -18,7 +18,8 @@ COUNT_CLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물", "경�
 FACE_CLS = COUNT_CLS
 DEF = {"enabled": True, "year": 2025, "assets": ["farm", "river"],
        "order": ["52", "12", "47", "44", "48", "43", "41", "51", "50", "36", "27", "31", "26", "28", "30", "11"],
-       "river_buffer_m": 100, "fetch_max": 4}
+       "river_buffer_m": 100, "fetch_max": 4,
+       "model": "trained/job_01M4QKMB4X8F1JHJHD0D7HSR7Q"}   # 전국 분석 모델 = 경작지 새 판(10-13 경작지v2-처리 ⓐ · 학습 job_01M4QKMB4X8F1JHJHD0D7HSR7Q 의 best) — 기관 영상 분석은 지금 모델 그대로
 QUIET_DEF = {"quiet_start": "22:00", "quiet_end": "06:00", "weekend": True}
 OUT = config.DATA_ROOT / "national"          # E: 아래(작업 장부 로그 · 영상 API 설명 파일) — C: 에 아무것도 두지 않는다
 

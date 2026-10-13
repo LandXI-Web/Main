@@ -2,7 +2,9 @@
 
   GET  /api/v1/national/progress             LX — 결과 자산마다 진행(끝난 범위 ㎢ ÷ 전체 범위 ㎢) · 끝난 읍면동 · 마지막 칸 시각 · 칸 숫자 합 ·
                                              작업기 상태(도는 중 · 비킴 · 멈춤) · 일정(학습 장비가 놀 때면 언제든 · 하루 예상 · 남은 날 · 원칙 221) · 지도 조각 판 번호
-  PUT  /api/v1/national/settings             LX 관리자 — {enabled, order, year, assets, river_buffer_m, fetch_max(1–16)} (멈춤 · 재개 = enabled)
+  PUT  /api/v1/national/settings             LX 관리자 — {enabled, order, year, assets, river_buffer_m, fetch_max(1–16), model} (멈춤 · 재개 = enabled)
+                                             model = 전국 분석 모델(등록된 모델만 · 10-13 경작지v2-처리 ⓐ). 바꾸면 다른 판으로 끝난 칸은 새 판으로 다시
+                                             분석할 차례가 된다(옛 결과는 새 결과가 나올 때까지 그대로 보임 · 칸마다 판 = national_cells.model_id).
   POST /api/v1/national/retry                LX 관리자 — {asset?} 3번 넘게 실패한 칸을 다시 차례에 넣는다
   GET  /tiles/national/{asset}/{year}/{z}/{x}/{y}.pbf?v=판    XI맵 지도 조각(벡터) — 층 셋:
          cells  칸(읍면동 · 분석할 범위가 있는 곳만) · done 0/1 · 이름 · 칸 숫자(끝난 곳만 — 지어낸 숫자 0) · 줌 ≤ 10(더 가까이는 늘려 씀)
@@ -32,7 +34,7 @@ CLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물", "경작지"
 UNIT = {"경작지": "곳", "비닐하우스": "동", "건물": "동"}
 DEF = {"enabled": True, "year": 2025, "assets": ["farm", "river"],
        "order": ["52", "12", "47", "44", "48", "43", "41", "51", "50", "36", "27", "31", "26", "28", "30", "11"],
-       "river_buffer_m": 100, "fetch_max": 4}
+       "river_buffer_m": 100, "fetch_max": 4, "model": "trained/job_01M4QKMB4X8F1JHJHD0D7HSR7Q"}   # national.common.DEF 와 같은 값(전국 분석 모델 = 경작지 새 판 · 10-13)
 QDEF = {"quiet_start": "22:00", "quiet_end": "06:00", "weekend": True}
 KM2_PER_HOUR = 53           # 예상의 바탕 — 10-12 14:38 시험 칸 실측(영상 처음 읽기 · 1.69㎢ 114초 · 1㎢ 약 67초 · 영상 읽기가 대부분) [추정] · 실제 칸이 끝나면 그 속도로 바뀐다
 
@@ -103,9 +105,16 @@ async def progress(request: Request):
         sums = await conn.fetch(
             "SELECT asset, k AS cls, sum((v->>'n')::bigint) AS n, sum((v->>'km2')::numeric) AS km2 FROM national_cells, jsonb_each(counts) AS e(k, v) "
             "WHERE year=$1 AND NOT test AND state='done' GROUP BY asset, k", year)
-        nxt = await conn.fetch(
-            "SELECT DISTINCT ON (asset) asset, sido, sgg_name, name FROM national_cells WHERE year=$1 AND NOT test AND state IN ('todo','running') "
-            "ORDER BY asset, ord", year)
+        model = str(st.get("model") or DEF["model"])
+        nxt = await conn.fetch(                  # 다음 칸 — 작업기 next_cell 과 같은 차례(새 판으로 다시 할 끝난 칸 포함)
+            "SELECT DISTINCT ON (asset) asset, sido, sgg_name, name FROM national_cells WHERE year=$1 AND NOT test "
+            "AND (state IN ('todo','running') OR (state='done' AND model_id IS DISTINCT FROM $2 AND tries < 3)) "
+            "ORDER BY asset, ord", year, model)
+        redo = await conn.fetch(                 # 판 — 끝난 칸 가운데 지금 설정 판으로 만든 칸 · 옛 판이라 다시 할 칸(장부 한 출처)
+            "SELECT asset, count(*) FILTER (WHERE model_id IS NOT DISTINCT FROM $2) AS cur, count(*) FILTER (WHERE model_id IS DISTINCT FROM $2) AS old, "
+            "coalesce(sum(target_km2) FILTER (WHERE model_id IS DISTINCT FROM $2),0) AS old_km2 FROM national_cells "
+            "WHERE year=$1 AND NOT test AND state='done' GROUP BY asset", year, model)
+        mrow = await conn.fetchrow("SELECT name FROM models WHERE id=$1", model)
         busy = await conn.fetchval(
             "SELECT count(*) FROM jobs j WHERE j.state IN ('queued','running') AND j.pool <> 'cpu' "
             "AND NOT EXISTS (SELECT 1 FROM national_jobs n WHERE n.job_id=j.id)")
@@ -118,7 +127,9 @@ async def progress(request: Request):
             "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '6 hours'", year)
         ver = await versions(conn, year)
     now = dt.datetime.now(KST)
+    mname = (_jv(mrow["name"]).get("ko") if mrow and mrow["name"] else None)
     out = {"year": year, "enabled": bool(st.get("enabled", True)), "assets": {}, "v": ver,
+           "model": {"id": model, "name": mname},                  # 전국 분석 모델(관리자 확인용 · 화면에 모델 id 를 쓰지 않는다)
            "imagery": f"국토지리정보원 항공 정사영상 {year} · 25cm · 영상은 저장하지 않음"}
     for a, name in ASSETS.items():
         r = next((x for x in rows if x["asset"] == a), None)
@@ -128,6 +139,7 @@ async def progress(request: Request):
         cnt = {s["cls"]: {"n": env(int(s["n"] or 0), "count", "measured", "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"),
                           "km2": env(round(float(s["km2"] or 0), 2), "km2", "measured", "끝난 칸 AI 분석 결과 넓이")} for s in sums if s["asset"] == a}
         n = next((x for x in nxt if x["asset"] == a), None)
+        rd = next((x for x in redo if x["asset"] == a), None)
         out["assets"][a] = {
             "name": name,
             "on": a in st["assets"],                    # 켠 자산만 작업기가 돈다(10-12 하천은 사용자 하천 자료로 범위를 다시 만든 뒤 처음부터)
@@ -140,6 +152,8 @@ async def progress(request: Request):
             "sgg": env(int(r["sgg"]) if r else 0, "count", "measured", "분석할 범위가 있는 시군구"),
             "last_at": r["last"].astimezone(KST).isoformat(timespec="minutes") if r and r["last"] else None,
             "counts": {k: {**v, "unit": UNIT.get(k, "개")} for k, v in cnt.items()},
+            "model_done": env(int(rd["cur"]) if rd else 0, "count", "measured", "끝난 읍면동 가운데 지금 전국 분석 모델로 만든 곳(진행 장부 model_id)"),
+            "redo": env(int(rd["old"]) if rd else 0, "count", "measured", "끝난 읍면동 가운데 옛 판 결과라 새 판으로 다시 분석할 곳 — 새 결과가 나올 때까지 옛 결과 그대로"),
             "next": {"sido": n["sido"], "sgg": n["sgg_name"], "emd": n["name"]} if n else None}
     # 일정 — 학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). 하루 예상 = 속도 × 24시간(유휴 기준 · 사용자 작업 · 재학습만큼 늦어짐).
     # 속도: 끝난 칸이 있으면 실제(㎢ ÷ 걸린 시간 · 비킨 시간 포함), 없으면 낮 시험 칸 실측 바탕 [추정]
@@ -148,7 +162,7 @@ async def progress(request: Request):
     if fresh:
         rate = recent
     kph = float(rate["km2"]) / (float(rate["s"]) / 3600.0) if measured else KM2_PER_HOUR
-    left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"])
+    left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"]) +         sum(float(r["old_km2"]) for r in redo if r["asset"] in st["assets"])          # 새 판으로 다시 할 끝난 칸도 남은 일
     run = _runner()
     out["runner"] = {"state": run.get("state") or "idle", "why": run.get("why"), "at": run.get("at"), "cell": run.get("name") if not run.get("test") else None,
                      "asset": run.get("asset") if not run.get("test") else None}   # 지금 도는 칸의 자산(농지 · 하천 번갈아 — 다른 자산 칸에 '지금 분석 중'을 쓰지 않게)
@@ -156,7 +170,7 @@ async def progress(request: Request):
     note = ("최근 6시간에 끝난 칸의 실제 속도" if fresh else "끝난 칸의 실제 속도") if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
     sched = {"mode": "idle", "idle_now": not busy, "starts_at": now.isoformat(timespec="minutes"),
              "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
-             "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)")}
+             "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)")}
     out["schedule"] = sched
     out["tonight"] = {**sched, "quiet": {**q, "now": _quiet(q, now)}, "est_km2": sched["est_km2_day"]}   # 예전 이름(호환) — 같은 값
     return out
@@ -181,6 +195,12 @@ async def put_settings(request: Request, body: dict):
             st["assets"] = [a for a in body["assets"] if a in ASSETS] or st["assets"]
         if "river_buffer_m" in body:
             st["river_buffer_m"] = max(20, min(500, int(body["river_buffer_m"])))
+        if "model" in body:                                     # 전국 분석 모델(10-13 경작지v2-처리 ⓐ) — 등록된 분할 모델만 · 경작지를 찾는 모델만
+            m = await conn.fetchrow("SELECT status, task, classes FROM models WHERE id=$1", str(body["model"]))
+            cls = _jv(m["classes"]) if m and isinstance(m["classes"], str) else ((m["classes"] if m else None) or [])
+            if not m or m["status"] != "registered" or m["task"] != "seg" or "경작지" not in cls:
+                raise ApiError("bad_request", "전국 분석 모델은 등록된 경작지 분할 모델만")
+            st["model"] = str(body["model"])
         if "fetch_max" in body:                                 # 영상 호출 동시 수 상한(10-13 · 16 위는 사용자 결정) — 워커가 이 아래에서 자동 조절
             fm = int(body["fetch_max"])
             if not 1 <= fm <= 16:
@@ -190,7 +210,7 @@ async def put_settings(request: Request, body: dict):
                            "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()",
                            st, p.user_id)                       # jsonb 는 연결 코덱이 직렬화(json.dumps 를 두 번 하면 글자 하나로 들어간다)
         await audit(conn, p, "national.settings", "national.run", old, st)
-    return {"settings": {"enabled": st["enabled"], "year": st["year"], "order": st["order"], "assets": st["assets"],
+    return {"settings": {"enabled": st["enabled"], "year": st["year"], "order": st["order"], "assets": st["assets"], "model": st.get("model") or DEF["model"],
                          "fetch_max": env(int(st.get("fetch_max", 4)), "count", "recorded", "영상 호출 동시 수 상한(관리자 설정 · 실제 쓰는 값은 그 아래에서 자동)"),
                          "river_buffer_m": env(st["river_buffer_m"], "m2" if False else "count", "recorded", "하천 띠 폭(양쪽 · m)")}}
 
@@ -202,6 +222,9 @@ async def retry(request: Request, body: dict | None = None):
     async with db(realm="lx") as conn:
         n = await conn.fetchval("WITH u AS (UPDATE national_cells SET state='todo', tries=0, next_try_at=NULL WHERE state='failed' "
                                 "AND ($1::text IS NULL OR asset=$1) RETURNING 1) SELECT count(*) FROM u", a)
+        # 새 판으로 다시 하다 3번 넘게 실패한 끝난 칸(옛 결과 그대로) — 다시 차례에(결과는 새 판이 나올 때까지 그대로)
+        n += await conn.fetchval("WITH u AS (UPDATE national_cells SET tries=0, next_try_at=NULL WHERE state='done' AND tries >= 3 "
+                                 "AND ($1::text IS NULL OR asset=$1) RETURNING 1) SELECT count(*) FROM u", a)
         await audit(conn, p, "national.retry", a or "all", None, {"n": n})
     return {"requeued": int(n)}
 
@@ -286,7 +309,8 @@ async def sets(request: Request, asset: str = "farm", bbox: str = "", year: int 
         rows = await conn.fetch(
             "SELECT n.result_set, n.bbox FROM national_jobs n WHERE n.asset=$1 AND n.year=$2 AND n.state='done' AND n.result_set IS NOT NULL "
             "AND n.bbox IS NOT NULL AND n.bbox[1] <= $5 AND n.bbox[3] >= $3 AND n.bbox[2] <= $6 AND n.bbox[4] >= $4 "
-            "AND (CASE WHEN n.test THEN $7 ELSE EXISTS (SELECT 1 FROM national_cells c WHERE c.asset=n.asset AND c.year=n.year AND c.cell_cd=n.cell_cd AND c.state='done') END) "
+            "AND (CASE WHEN n.test THEN $7 ELSE EXISTS (SELECT 1 FROM national_cells c WHERE c.asset=n.asset AND c.year=n.year AND c.cell_cd=n.cell_cd AND c.state='done' "
+            "     AND n.model_id IS NOT DISTINCT FROM c.model_id) END) "          # 칸의 지금 판 결과 묶음만(새 판으로 바꿔 끼운 칸의 옛 묶음은 내주지 않음)
             "LIMIT 200", asset, year, w, so, e, n, bool(test))
     out = []
     for r in rows:

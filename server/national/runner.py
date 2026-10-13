@@ -18,6 +18,9 @@
   · 칸이 끝나면: 칸 숫자(객체 중심이 칸 안인 것만) · 낮은 줌 면(격자) → 결과 객체 줄은 데이터베이스에서 지움(C: 디스크에 쌓지 않음 ·
     객체는 E: 결과 묶음 파일 = 지도 조각 · GeoJSON 에 남음) → 중간 칩 파일 바로 지움 → 장부 done(판 번호가 바뀜).
   · 실패하면 다시(10 · 20 · 40분 뒤) — 3번 넘게 실패하면 failed(관리자가 다시).
+  · 모델 = 설정 'national.run'.model(10-13 경작지v2-처리 ⓐ — 전국 분석은 API 영상 + 경작지 새 판 · 기관 영상 분석은 지금 모델 그대로).
+    칸마다 결과를 만든 판을 장부(national_cells.model_id · national_jobs.model_id)에 남긴다. 끝난 칸의 판이 설정과 다르면 그 칸을 새 판으로
+    처음부터 다시 분석한다 — 그동안 옛 결과는 '끝'으로 그대로 보이고(진행 · XI맵 · 관리자 숫자 그대로), 새 판 결과가 나오면 한 번에 바꿔 끼운다.
 """
 from __future__ import annotations
 
@@ -33,10 +36,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
-from national.common import ASSETS, COUNT_CLS, FACE_CLS, KST, OUT, env_file, pg, settings  # noqa: E402
+from national.common import ASSETS, COUNT_CLS, DEF, FACE_CLS, KST, OUT, env_file, pg, settings  # noqa: E402
 
 API = "http://127.0.0.1:8700/api/v1"
-MODEL = "aerial25/best"                 # 항공 25cm 4분류 모델(경작지 · 건물 · 비닐하우스 · 주차장)
+MODEL = DEF["model"]                    # 경작지 새 판(항공 · API 영상 · 4분류 그대로) — 설정 'national.run'.model 이 이긴다(model_of)
 PRIORITY = 3                            # 가장 낮음 — 기관 · 직원 분석이 언제나 먼저
 MAX_PART_KM2 = 10.0                     # 조각을 작게 — 사용자 작업이 오면 몇 분 안에 비키게(원칙 221 · 게이트웨이 천장 150㎢ 보다 훨씬 작게)
 TRIES = 3
@@ -237,11 +240,17 @@ def other_gpu(c) -> list[str]:
     return [f"{k} {n}" for k, n in rows]
 
 
-def next_cell(c, year: int, assets) -> tuple | None:
+def model_of(st: dict) -> str:
+    return str(st.get("model") or MODEL)
+
+
+def next_cell(c, year: int, assets, model: str = MODEL) -> tuple | None:
+    """다음 칸 — 아직인 칸 · 다시 할 실패 칸 · **다른 판으로 끝난 칸(새 판으로 다시 · redo)**. 순번(ord)대로라 먼저 끝난 칸부터 다시 한다."""
     return c.execute(
-        "SELECT asset, cell_cd, sgg_name, name, tries FROM national_cells WHERE year=%s AND asset = ANY(%s) AND NOT test "
-        "AND (state='todo' OR (state='failed' AND tries < %s AND coalesce(next_try_at, now()) <= now())) "
-        "AND coalesce(next_try_at, now() - interval '1 s') <= now() ORDER BY ord, asset LIMIT 1", (year, list(assets), TRIES)).fetchone()
+        "SELECT asset, cell_cd, sgg_name, name, tries, state='done' AS redo FROM national_cells WHERE year=%s AND asset = ANY(%s) AND NOT test "
+        "AND (state='todo' OR (state='failed' AND tries < %s AND coalesce(next_try_at, now()) <= now()) "
+        "     OR (state='done' AND model_id IS DISTINCT FROM %s AND tries < %s)) "
+        "AND coalesce(next_try_at, now() - interval '1 s') <= now() ORDER BY ord, asset LIMIT 1", (year, list(assets), TRIES, model, TRIES)).fetchone()
 
 
 def split_parts(geom):
@@ -267,7 +276,8 @@ def split_parts(geom):
 
 
 # ── 한 칸 ───────────────────────────────────────────────────────────────────
-def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool = False) -> dict:
+def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool = False, model: str = MODEL, redo: bool = False) -> dict:
+    """redo = 다른 판으로 끝난 칸을 새 판으로 다시 — 칸은 '끝'(옛 결과) 그대로 두고 새 판 결과가 나오면 finish_cell 이 한 번에 바꿔 끼운다."""
     from shapely import wkt
     from shapely.geometry import mapping
     row = c.execute("SELECT ST_AsText(target), name, sgg_name, target_km2 FROM national_cells WHERE asset=%s AND year=%s AND cell_cd=%s",
@@ -276,18 +286,19 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
         raise RuntimeError("칸 범위 없음")
     parts = split_parts(wkt.loads(row[0]))
     key = ("test:" if test else "") + cd
-    if not test:
+    if not test and not redo:
         c.execute("UPDATE national_cells SET state='running', started_at=now(), err=NULL WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
     t0 = time.time()
-    status(state="running", asset=asset, cell=cd, name=f"{row[2]} {row[1]}", parts=len(parts), test=test)
+    status(state="running", asset=asset, cell=cd, name=f"{row[2]} {row[1]}", parts=len(parts), test=test, redo=redo)
     jobs = []
     for k, p in enumerate(parts):
         if not test:                              # 조각마다 멈춤 · 다른 학습 장비 작업(비킴)을 다시 본다
             wait_turn(c, g, asset, cd)
-        body = {"kind": "infer", "model_id": MODEL, "imagery_id": iid, "aoi": mapping(p), "priority": PRIORITY, "test": test,
+        body = {"kind": "infer", "model_id": model, "imagery_id": iid, "aoi": mapping(p), "priority": PRIORITY, "test": test,
                 "label": f"{'test/' if test else ''}national/{asset}/{year}/{cd}/{k}", "options": {"max_km2": 150, "national": {"asset": asset, "year": year, "cell": cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
-                         "AND j.state IN ('queued','running','done') ORDER BY n.at DESC LIMIT 1", (asset, year, key, k)).fetchone()
+                         "AND j.state IN ('queued','running','done') AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
+                         (asset, year, key, k, model)).fetchone()   # 같은 판 작업만 이어 쓴다(옛 판 조각을 새 판 결과로 쓰지 않음)
         if prev:                                 # 끊겼다 다시 이어 하기 — 같은 조각의 작업이 아직 살아 있거나 끝났으면 그것을 쓴다
             jid = prev[0]
         else:
@@ -296,8 +307,8 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
                 raise RuntimeError(f"작업 넣기 실패 {r.status_code} {r.text[:200]}")
             jid = r.json()["job"]["id"]
         jobs.append(jid)
-        c.execute("INSERT INTO national_jobs(job_id, asset, year, cell_cd, part, test) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-                  (jid, asset, year, key, k, test))
+        c.execute("INSERT INTO national_jobs(job_id, asset, year, cell_cd, part, test, model_id) VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                  (jid, asset, year, key, k, test, model))
         log(f"  조각 {k + 1}/{len(parts)} 넣음 {jid} · {round(p.area * 1e4, 2)}")
         # 한 조각씩 끝까지(학습 장비 작업은 언제나 하나)
         while True:
@@ -313,12 +324,18 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
                     raise RuntimeError(f"작업 칩 {v.get('shards_failed')}개 실패 — 칸을 다시")
                 break
             status(state="running", asset=asset, cell=cd, part=k + 1, parts=len(parts), done=v.get("shards_done"), total=v.get("shards_total"), test=test)
-    out = finish_cell(c, asset, year, cd, jobs, test=test)
+    out = finish_cell(c, asset, year, cd, jobs, test=test, model=model, t0=t0)
     out["sec"] = round(time.time() - t0)
     return out
 
 
-def finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bool = False) -> dict:
+def finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bool = False, model: str = MODEL, t0: float | None = None) -> dict:
+    """칸 마무리 — 숫자 · 낮은 줌 면 · 장부를 한 거래(transaction)로 바꾼다. 새 판으로 다시 한 칸이면 XI맵이 옛 결과 → 새 결과로 한 번에 바뀐다(사이 빈칸 없음)."""
+    with c.transaction():
+        return _finish_cell(c, asset, year, cd, jobs, test=test, model=model, t0=t0)
+
+
+def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bool, model: str, t0: float | None) -> dict:
     key = ("test:" if test else "") + cd
     inside = ("FROM detections d JOIN national_cells n ON n.asset=%s AND n.year=%s AND n.cell_cd=%s "
               "WHERE d.job_id = ANY(%s) AND d.cls = ANY(%s) AND ST_Intersects(n.geom_s, ST_PointOnSurface(d.geom))")
@@ -347,19 +364,21 @@ def finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: boo
         if d.exists():
             freed += sum(f.stat().st_size for f in d.glob("*") if f.is_file())
             shutil.rmtree(d, ignore_errors=True)
-    if not test:
-        c.execute("UPDATE national_cells SET state='done', done_at=now(), counts=%s, err=NULL WHERE asset=%s AND year=%s AND cell_cd=%s",
-                  (json.dumps(counts, ensure_ascii=False), asset, year, cd))
+    if not test:                               # 이 칸의 지금 결과 = 이 판(model_id) · 다시 시도 0 · 시작 시각 = 이번 차례 시작(속도 계산)
+        c.execute("UPDATE national_cells SET state='done', done_at=now(), counts=%s, err=NULL, model_id=%s, tries=0, next_try_at=NULL, "
+                  "started_at=coalesce(to_timestamp(%s), started_at) WHERE asset=%s AND year=%s AND cell_cd=%s",
+                  (json.dumps(counts, ensure_ascii=False), model, t0, asset, year, cd))
     return {"counts": counts, "jobs": len(jobs), "rows_moved_out": deleted, "freed_mb": round(freed / 1e6, 1)}
 
 
-def fail_cell(c, asset: str, year: int, cd: str, err: str):
+def fail_cell(c, asset: str, year: int, cd: str, err: str, redo: bool = False):
+    """실패 — 다시(10 · 20 · 40분 뒤). 새 판으로 다시 하던 칸(redo)은 '끝'(옛 결과) 그대로 두고 시도 횟수만 센다(3번 넘으면 옛 판 그대로 · 관리자가 다시)."""
     row = c.execute("UPDATE national_cells SET tries=tries+1, err=%s WHERE asset=%s AND year=%s AND cell_cd=%s RETURNING tries",
                     (err[:500], asset, year, cd)).fetchone()
     tries = row[0] if row else TRIES
     wait = 10 * 2 ** (tries - 1)
     c.execute("UPDATE national_cells SET state=%s, next_try_at=now() + make_interval(mins => %s) WHERE asset=%s AND year=%s AND cell_cd=%s",
-              ("failed" if tries >= TRIES else "todo", wait, asset, year, cd))
+              ("done" if redo else ("failed" if tries >= TRIES else "todo"), wait, asset, year, cd))
     log(f"  실패({tries}/{TRIES}) — {wait}분 뒤 다시: {err[:200]}")
 
 
@@ -426,27 +445,29 @@ def loop(force_window: bool = False):
                     wait_api(year)
                 except Pause:
                     continue
-                nxt = next_cell(c, year, st["assets"])
+                model = model_of(st)
+                nxt = next_cell(c, year, st["assets"], model)
                 if not nxt:
                     status(state="all_done", year=year)
                     log("남은 칸 없음 — 끝")
                     return
-                asset, cd, sgg_name, name, tries = nxt
-                log(f"칸 {asset} {cd} {sgg_name} {name} 시작")
+                asset, cd, sgg_name, name, tries, redo = nxt
+                back = "done" if redo else "todo"          # 멈춤 · 영상 장애로 물러날 때 — 새 판으로 다시 하던 칸은 옛 결과('끝') 그대로
+                log(f"칸 {asset} {cd} {sgg_name} {name} 시작" + (f" · 새 판으로 다시({model})" if redo else ""))
                 try:
-                    res = run_cell(c, g, asset, year, cd, iid)
+                    res = run_cell(c, g, asset, year, cd, iid, model=model, redo=redo)
                     log(f"칸 {asset} {cd} 끝 {res}")
                     status(state="cell_done", asset=asset, cell=cd, last_done=dt.datetime.now(KST).isoformat(timespec="seconds"))
                 except Pause as e:
-                    c.execute("UPDATE national_cells SET state='todo' WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
+                    c.execute("UPDATE national_cells SET state=%s WHERE asset=%s AND year=%s AND cell_cd=%s", (back, asset, year, cd))
                     log(f"칸 {asset} {cd} 멈춤({e}) — 다시 켜면 이어서")
                     continue
                 except Exception as e:  # noqa: BLE001
                     if not api_ok(year):                 # 영상 API 장애 — 칸 탓이 아니므로 실패로 세지 않고 차례로 되돌린다(끝난 조각은 이어 씀)
-                        c.execute("UPDATE national_cells SET state='todo' WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
+                        c.execute("UPDATE national_cells SET state=%s WHERE asset=%s AND year=%s AND cell_cd=%s", (back, asset, year, cd))
                         log(f"칸 {asset} {cd} 영상 API 장애로 멈춤 — 돌아오면 이어서: {repr(e)[:160]}")
                         continue
-                    fail_cell(c, asset, year, cd, repr(e))
+                    fail_cell(c, asset, year, cd, repr(e), redo=redo)
                     time.sleep(30)
     finally:
         drop_lock()
@@ -469,7 +490,7 @@ def run_test(cd: str, asset: str):
                 return
             iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
             log(f"시험 칸 {asset} {cd}")
-            res = run_cell(c, g, asset, year, cd, iid, test=True)
+            res = run_cell(c, g, asset, year, cd, iid, test=True, model=model_of(st))
             log(f"시험 끝 {res}")
             status(state="test_done", asset=asset, cell=cd, test=True, result=res)
             print(json.dumps(res, ensure_ascii=False))

@@ -60,6 +60,9 @@ def test_progress_one_source(tok):
         on = (c.execute("SELECT value FROM lx_settings WHERE key='national.run'").fetchone() or [{}])[0] or {}
         on = (json.loads(on) if isinstance(on, str) else on).get("assets") or ["farm", "river"]      # 켠 자산만(10-12 하천은 사용자 자료 뒤 다시)
         left = sum(j["assets"][a]["total_km2"]["value"] - j["assets"][a]["done_km2"]["value"] for a in on)
+        model = (json.loads(c.execute("SELECT value::text FROM lx_settings WHERE key='national.run'").fetchone()[0]) or {}).get("model") or j["model"]["id"]
+        left += float(c.execute("SELECT coalesce(sum(target_km2),0) FROM national_cells WHERE year=%s AND NOT test AND state='done' AND asset = ANY(%s) "
+                                "AND model_id IS DISTINCT FROM %s", (year, on, model)).fetchone()[0])   # 구현 28 — 새 판으로 다시 할 끝난 칸도 남은 일
         assert abs(S["days_left"]["value"] - left / S["est_km2_day"]["value"]) < 0.2
         assert set(j["v"]) == {"farm", "river"}
 
