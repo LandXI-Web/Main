@@ -3,9 +3,10 @@
   농지(farm)  = 읍면동 ∩ 농지 둘레. 농지 둘레 = ESA WorldCover 2021 v200(10m · 공개 · 키 없음 · AWS 공개 저장소에서 칸 범위만 원격으로 읽음 ·
                 파일을 받아 두지 않음)의 '경작지(40)' 칸을 약 30m 로 읽어 둘레를 잇고(닫힘) 약 110m 넓힌 면. 0.05㎢ 보다 작은 외딴 조각은 뺀다.
   하천(river) = 읍면동 ∩ 하천 띠. 하천 띠 = 하천 면을 양쪽 river_buffer_m(기본 100m) 넓힌 면.
-                국가 · 지방하천: 국토교통부 하천망(브이월드 데이터 API LT_C_WKMSTRM · 등급 국가하천 · 지방1급 · 지방2급).
-                소하천: 공개 원본(국가공간정보 연속주제 '소하천/소하천구역' · 전국하천표준데이터)은 계정 로그인 · 인증키가 있어야 받을 수 있어
-                        자동으로 받지 못했다 → 보유 자료(행정안전부 하천 · 계곡 과제의 소하천구역 면 · 252 시군구)를 쓴다. 원본을 받으면 그것으로 바꾼다.
+                하천 면 = 사용자 자료 '하천 통합본'(10-13 · 원칙 222) — 행정안전부 하천 · 계곡 대국민 서버의 통합 하천구역 면
+                (국가하천 · 지방하천 · 소하천 세 등급을 붙은 것끼리 합친 한 층 · 원본 정밀도 전국 재추출본 · 252 시군구 · 경위도).
+                0.05° 격자 조각으로 나뉘어 있고 한 면이 걸친 조각마다 같은 면이 들어 있어 (시군구, 면 번호)로 겹침을 뺀다. 읽기만 한다.
+                (10-12 까지의 옛 범위 = 브이월드 하천망(국가 · 지방) + 소하천구역 면 → 장부 national_cells_river_old 로 보관 · 숫자 · 지도에 안 씀)
 
   python -m national.targets [--sgg 52190] [--year 2025] [--asset farm|river] [--force]   (server 폴더에서)
 같은 칸을 다시 만들어도 이미 끝난(done) 칸은 그대로 둔다(--force 여도 범위만 바꾸고 결과 · 상태는 둔다).
@@ -26,9 +27,9 @@ from national.common import OUT, pg, settings  # noqa: E402
 
 WC_URL = "/vsicurl/https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{t}_Map.tif"
 WC_SRC = "ESA WorldCover 10m 2021 v200(경작지 분류 · CC BY 4.0)"
-RIVER_SRC = {"national_local": "국토교통부 하천망(브이월드 LT_C_WKMSTRM · 국가하천 · 지방하천)",
-             "small": "소하천구역(보유 · 행정안전부 하천·계곡 과제 자료) — 공개 원본(국가공간정보 연속주제 소하천/소하천구역)은 계정이 있어야 받음"}
-SMALL_DIR = Path(r"E:/행안부/07. 대국민 서버/data/river_dedup")
+RIVER_SRC = {"uni": "하천 통합본(사용자 자료 · 행정안전부 하천·계곡 대국민 서버 통합 하천구역 면 · 국가 · 지방 · 소하천)"}
+UNI_DIR = Path(r"E:/행안부/07. 대국민 서버/data/river_grid_uni")   # 읽기만(행안부 서버가 쓰는 폴더)
+SMALL_DIR = Path(r"E:/행안부/07. 대국민 서버/data/river_dedup")     # 옛 범위(10-12 까지) — 지금은 안 씀
 WC_RES = 0.00033            # 약 30m(원본 10m 의 3배 · 원격 개요 층에서 읽음)
 FARM_DIL, FARM_ERO = 8, 5   # 칸 수 — 잇기(약 260m) 뒤 줄이기(약 160m) → 순 약 100~110m 넓힘
 FARM_MIN_KM2 = 0.05
@@ -167,17 +168,69 @@ def vworld_rivers(bounds) -> list:
     return out
 
 
+_UNI: dict = {}
+
+
+def _uni_tiles() -> tuple[float, dict]:
+    """통합본 격자 — (gx, gy) → 그 조각을 가진 시군구 폴더 목록. index.json 과 폴더 이름만 읽는다."""
+    if "tiles" in _UNI:
+        return _UNI["cell"], _UNI["tiles"]
+    idx = json.loads((UNI_DIR / "index.json").read_text(encoding="utf-8"))
+    if not idx.get("unified"):
+        raise RuntimeError("하천 통합본 색인이 통합(unified) 층이 아님")
+    tiles: dict = {}
+    for reg in idx["regions"]:
+        d = UNI_DIR / reg
+        if not d.is_dir():
+            continue
+        for p in d.glob("*.json.gz"):
+            gx, gy = p.name[:-8].split("_")
+            tiles.setdefault((int(gx), int(gy)), []).append(reg)
+    _UNI["cell"], _UNI["tiles"] = float(idx["cell"]), tiles
+    log(f"하천 통합본 격자 {len(tiles)}칸 · {len(idx['regions'])} 시군구")
+    return _UNI["cell"], tiles
+
+
+def uni_rivers(bounds) -> list:
+    """범위에 걸친 통합본 하천 면(4326). 같은 면이 여러 조각에 들어 있으므로 (시군구, 면 번호)로 한 번만."""
+    from shapely.geometry import box, shape
+    cell, tiles = _uni_tiles()
+    bb = box(*bounds)
+    seen, out = set(), []
+    for gx in range(int(math.floor(bounds[0] / cell)), int(math.floor(bounds[2] / cell)) + 1):
+        for gy in range(int(math.floor(bounds[1] / cell)), int(math.floor(bounds[3] / cell)) + 1):
+            for reg in tiles.get((gx, gy), ()):
+                d = json.load(gzip.open(UNI_DIR / reg / f"{gx}_{gy}.json.gz"))
+                for fc in d.values():
+                    for f in fc.get("features", []):
+                        k = (reg, f.get("id"))
+                        if k in seen:
+                            continue
+                        seen.add(k)
+                        try:
+                            g = shape(f["geometry"])
+                            g = g if g.is_valid else g.buffer(0)
+                        except Exception:  # noqa: BLE001
+                            continue
+                        if not g.is_empty and g.intersects(bb):
+                            out.append(g)
+    return out
+
+
 def river_band(bounds, buffer_m: float):
-    from shapely.geometry import box
     from shapely.ops import transform, unary_union
-    nat = [g for g, _ in vworld_rivers(bounds)]
-    tree, geoms = _small_index()
-    small = [geoms[i] for i in tree.query(box(*bounds))] if tree is not None else []
-    allg = [transform(F, g) for g in nat + small]
-    if not allg:
-        return None, {"national_local": len(nat), "small": len(small)}
-    band = unary_union(allg).buffer(buffer_m, 4)
-    return transform(B, band), {"national_local": len(nat), "small": len(small)}
+    from shapely.geometry import box
+    uni = uni_rivers(bounds)
+    if not uni:
+        return None, {"uni": 0}
+    # 통합 면은 한 물줄기가 통째로 하나라 시군구 밖으로 멀리 뻗는다 → 범위(+띠 폭 여유)로 먼저 자른다(결과 같음 · 빠름)
+    m = buffer_m / 80000 + 0.01
+    clip = box(bounds[0] - m, bounds[1] - m, bounds[2] + m, bounds[3] + m)
+    parts = [transform(F, x) for x in (g.intersection(clip) for g in uni) if not x.is_empty]
+    if not parts:
+        return None, {"uni": 0}
+    band = unary_union(parts).buffer(buffer_m, 4)
+    return transform(B, band), {"uni": len(uni)}
 
 
 # ── 칸 만들기 ───────────────────────────────────────────────────────────────

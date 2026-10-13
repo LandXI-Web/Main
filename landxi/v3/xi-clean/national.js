@@ -128,7 +128,7 @@ export function createNational({ map, h, before = 'slot-result' }) {
     else if (A.on === false) when = '멈춤 — 하천 범위 자료를 바꾼 뒤 처음부터 다시 분석합니다';
     else if (!nx) when = '모든 칸 분석 끝';
     else if (!t.idle_now || run.state === 'yield') when = `학습 장비가 다른 일을 하는 동안 기다립니다 · ${where}부터`;
-    else if (run.state === 'running') when = `지금 분석 중 · ${where}`;
+    else if (run.state === 'running' && (!run.asset || run.asset === N.asset)) when = `지금 분석 중 · ${where}`;
     else when = `학습 장비가 놀 때 차례로 · ${where}부터`;
     N.el.replaceChildren(
       h('p.xna-h', { text: '전국 결과 자산' }),
