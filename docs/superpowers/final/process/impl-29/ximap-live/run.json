@@ -1,0 +1,109 @@
+{
+  "at": "2026-10-14 08:32:04",
+  "app": "https://app.land-xi.dev",
+  "shots": {
+    "a1-national-1440-0832.png": "2026-10-14 08:32:21",
+    "b1-sido-hover-1440-0832.png": "2026-10-14 08:32:35",
+    "c1-sigungu-press-1440-0832.png": "2026-10-14 08:32:45",
+    "c2-task-row-1440-0832.png": "2026-10-14 08:32:48",
+    "d1-emd-hover-1440-0832.png": "2026-10-14 08:32:55",
+    "e1-chat-filter-1440-0833.png": "2026-10-14 08:33:02"
+  },
+  "errors": [],
+  "local": [],
+  "steps": {
+    "national": {
+      "hud": "전국 · AI 분석 결과\n\n1,494,076개\n\n서비스 7가지 · 토지피복\n\n지금 분석 중 · 장수군 산서면",
+      "legend": 0,
+      "task": null,
+      "layers": [
+        "xn-farm-face",
+        "xn-farm-hit",
+        "xn-river-face",
+        "xn-river-hit",
+        "xb-grid"
+      ]
+    },
+    "sido_hover": {
+      "tip": "남원시\n\n토지피복\n132,424개\n경작지(농지 전수)\n82,853곳\n건물(하천 · 계곡)\n34,874동\n비닐하우스(농지 전수)\n19,152동\n경작·휴경\n2,098곳\n비닐하우스\n703동\n국토 변화\n456곳"
+    },
+    "press": {
+      "pin": "남원시\n\n토지피복\n132,424개\n경작지(농지 전수)\n82,853곳\n건물(하천 · 계곡)\n34,874동\n비닐하우스(농지 전수)\n19,152동\n경작·휴경\n2,098곳\n비닐하우스\n703동",
+      "hud": "남원시",
+      "zoom": 10.54
+    },
+    "task_row": {
+      "task": "경작지",
+      "hud": "남원시\n\n경작지\n원래대로"
+    },
+    "task_reset": {
+      "task": null
+    },
+    "emd_hover": {
+      "tip": "덕과면\n남원시\n\n건물\n964동\n경작지\n3,752곳\n비닐하우스\n280동"
+    },
+    "chat_filter": {
+      "task": "비닐하우스",
+      "hud": "전국 · 비닐하우스\n\n132,764동\n\n서비스 7가지 · 토지피복\n\n비닐하우스\n원래대로\n\n지금 분석 중 · 장수군 번암면",
+      "agent": {
+        "op": "map_task",
+        "ok": true,
+        "reason": null,
+        "same": false,
+        "before": {
+          "center": [
+            127.6,
+            36
+          ],
+          "zoom": 6.4,
+          "pitch": 0,
+          "bearing": 0,
+          "region": null,
+          "img": false,
+          "ai": true,
+          "sus": false,
+          "parcel": true
+        },
+        "after": {
+          "center": [
+            127.6,
+            36
+          ],
+          "zoom": 6.4,
+          "pitch": 0,
+          "bearing": 0,
+          "region": null,
+          "img": false,
+          "ai": true,
+          "sus": false,
+          "parcel": true
+        },
+        "at": "2026-10-13T23:32:59.834Z"
+      },
+      "answer": "비닐하우스만 지도에 남겼습니다 — AI 분석 결과 132,764동.\n\n업무 거르기\n\n도움 안 됐어요"
+    },
+    "chat_reset": {
+      "task": null
+    }
+  },
+  "bad": [],
+  "first_view_ms": 4124,
+  "perf": {
+    "national_idle": {
+      "fps": 60,
+      "cpu_main_pct": 1,
+      "js_heap_mb": 19
+    },
+    "sido_hover": {
+      "fps": 60,
+      "cpu_main_pct": 7,
+      "js_heap_mb": 32
+    }
+  },
+  "video": {
+    "from_s": 60.879,
+    "to_s": 78.513,
+    "file": "ximap-15s.mp4",
+    "len_s": 17.634000000000007
+  }
+}

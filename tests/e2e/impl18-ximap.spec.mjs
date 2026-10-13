@@ -29,8 +29,9 @@ test.describe('XI맵 바퀴 5', () => {
     expect(x.board.nat.layers.length).toBeGreaterThan(0);             // 고르기 · 조회 없이 지도에 바로 — 바퀴 8: 빛나는 밀도 대신 전국 결과 자산 면 · 분석 예정(원칙 218)
     expect(x.sgg).toBe(false);
     await expect(page.locator('.xb-pill')).toHaveCount(0);
-    expect(x.hud.label).toBe('전국 AI 분석 결과');
-    await expect(page.locator('.xb-hud .xb-h')).toHaveText('전국 AI 분석 결과');
+    expect(x.hud.label).toBe('전국 · AI 분석 결과');                    // 10-14 3차 구조 — 업무 이름 고정 없음 · 범례 표 없음
+    await expect(page.locator('.xb-hud .xb-k')).toHaveText('전국 · AI 분석 결과');
+    await expect(page.locator('.xb-leg, .xna-card, .xb-chip')).toHaveCount(0);
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child')).toHaveText('XI맵');
     const tb = await page.locator('.xc-tools').boundingBox(), vw = page.viewportSize().width;
     expect(tb.x).toBeGreaterThan(vw / 2);                               // 도구 = 지도 오른쪽

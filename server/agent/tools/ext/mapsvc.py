@@ -5,6 +5,9 @@
       결과 타일 속성(cls · area_m2 · emd)으로 거른다. 서버는 그 층의 실제 결과(detections — 타일과 같은 행)에 그 값이 있는지 먼저 본다:
       없는 값(예: 단동 · 연동 구분이 없는 결과)은 거르지 않고 '없다'고 답하며, 그 질문은 개선 고리(improve · '자료 없음')로 간다.
       맞는 수 = 같은 행을 같은 조건으로 센 값(봉투) · 화면은 ui_action map_filter 로 같은 조건을 바로 건다(모델 호출 0 · 1초 안 목표).
+  map_task(task?, clear?)
+      XI맵 '○○만 보여 줘'(분류 이름만 · 면적 · 읍면동 조건 없음) → 업무 거르기: 그 업무 결과만 지도에 남긴다(서비스 결과 · 시군구 전역 분석 · 전국 분석 모두).
+      '원래대로' · '다 보여 줘' → 모두. 숫자 = XI맵 첫 화면과 같은 출처(전국 결과 장부 + 전국 분석 진행 장부). (10-14 원칙 239)
   ai_report(request)
       '보고서 초안 만들어 줘'(LX 계정) → AI 분석 결과 보고서 .docx — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도.
       의심 필지 · 현장 확인 개념 없음(원칙 135). 대상 = 질문의 지역(그 지역의 결과 — 통계 답과 같은 세트 선택 · results._set)
@@ -32,23 +35,26 @@ SPECS = {
     "map_stats": {
         "description": "켜진 결과 층(지금 걸린 조건 그대로)의 읍면동별 개수 · 면적 — 대상 층 · 조건을 답 첫 줄에.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"}}},
+    "map_task": {
+        "description": "XI맵에서 한 업무(비닐하우스 · 경작지 · 건물 · 주차장 · 곤포사일리지 · 토지피복 · 국토 변화 · 해양쓰레기) 결과만 지도에 남기거나('○○만 보여 줘') 모두 다시 보인다('원래대로').",
+        "properties": {"task": {"type": "string", "description": "업무 이름"}, "clear": {"type": "boolean"}, "request": {"type": "string"}}},
     "ai_report": {
         "description": "AI 분석 결과 보고서 초안(.docx) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도. 지역이 없으면 지금 화면의 결과 층 · 지역.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"}}},
 }
 WRITE: set[str] = set()
 CONFIRM: set[str] = set()
-CLIENT = {"map_filter"}
-NO_LLM = {"map_filter", "map_stats", "ai_report"}
-WHY = {"map_filter": "켜진 결과 층 거르기", "map_stats": "켜진 결과 층 읍면동 통계", "ai_report": "AI 분석 결과 보고서 .docx 만들기"}
-SAY = {"map_filter": "조건으로 거르기", "map_stats": "읍면동별로 세기", "ai_report": "AI 분석 결과 보고서 만들기"}
+CLIENT = {"map_filter", "map_task"}
+NO_LLM = {"map_filter", "map_task", "map_stats", "ai_report"}
+WHY = {"map_filter": "켜진 결과 층 거르기", "map_task": "XI맵 업무 거르기", "map_stats": "켜진 결과 층 읍면동 통계", "ai_report": "AI 분석 결과 보고서 .docx 만들기"}
+SAY = {"map_filter": "조건으로 거르기", "map_task": "업무 거르기", "map_stats": "읍면동별로 세기", "ai_report": "AI 분석 결과 보고서 만들기"}
 HINT = ("켜진 결과 층을 분류 · 면적 · 읍면동으로 거르는 말('○○만 보여 줘' · '1,000㎡ 넘는 것만')은 map_filter. "
         "LX 계정의 보고서 초안은 ai_report(AI 분석 결과 보고서).")
 
 
 def allowed(name: str, p) -> bool:
     realm = getattr(p, "realm", None)
-    if name == "ai_report":
+    if name in ("ai_report", "map_task"):
         return realm == "lx"
     return realm in ("lx", "tenant")
 
@@ -128,6 +134,83 @@ def parse_filter(t: str) -> dict | None:
     return a
 
 
+# ── XI맵 업무 거르기(10-14) — 업무 이름 하나만 고른 말 ─────────────────────────────────────
+TASK_WORDS = [(r"비닐\s*하우스|온실|하우스", "비닐하우스"), (r"건물|건축물", "건물"), (r"경작지|농경지|논밭|경작|휴경", "경작지"), (r"주차장", "주차장"),
+              (r"곤포|사일리지", "곤포사일리지"), (r"토지\s*피복", "토지피복"), (r"국토\s*변화", "국토 변화"), (r"해양\s*쓰레기", "해양쓰레기")]
+TASK_UNIT = {"경작지": "곳", "비닐하우스": "동", "건물": "동", "주차장": "곳", "곤포사일리지": "개", "토지피복": "개", "국토 변화": "곳", "해양쓰레기": "개"}
+TASK_OF = {"경작·휴경": "경작지", "경작": "경작지", "건축물": "건물"}
+NAT_CLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물",)}       # 전국 분석 — 자산마다 한 분류씩(겹쳐 세지 않게 · XI맵 첫 화면 합계와 같은 규칙)
+
+
+def parse_task(t: str) -> dict | None:
+    """XI맵 문장 → 업무 거르기 인자. 면적 · 읍면동 · 단동/연동 조건이 있으면 None(그건 map_filter)."""
+    t = re.sub(r"\s+", " ", t or "").strip()
+    if not t or len(t) > 60 or NOT_RX.search(t):
+        return None
+    if CLEAR_RX.search(t):
+        return None if _clear_keys(t) else {"clear": True, "request": t}
+    if not ONLY_RX.search(t) or AREA_RX.search(t) or any(re.search(rx, t) for rx, _ in SUB_WORDS):
+        return None
+    hits = [k for rx, k in TASK_WORDS if re.search(rx, t)]
+    rest = t
+    for rx, _ in TASK_WORDS:
+        rest = re.sub(rx, " ", rest)
+    if len(set(hits)) != 1 or [x for x in EMD_RX.findall(rest) if x not in EMD_SKIP]:
+        return None
+    return {"task": hits[0], "request": t}
+
+
+async def _task_count(task: str) -> tuple[int, int]:
+    """(서비스 결과 수, 전국 분석 수) — 전국 결과 장부(GET /ximap/board) · 전국 분석 진행 장부(GET /national/progress)와 같은 출처."""
+    from landxi_api import ximap as XM
+    from landxi_api.deps import Principal, db
+    if not XM._BOARD.get("v"):
+        await XM._rebuild(Principal(realm="lx", role="staff", user_id="system"))
+    bd = XM._BOARD.get("v") or {}
+    svc = sum(int((s.get("n") or {}).get("value") or 0) for s in bd.get("services", []) if TASK_OF.get(s.get("name"), s.get("name")) == task)
+    nat = 0
+    assets = [a for a, cs in NAT_CLS.items() if task in cs]
+    if assets:
+        async with db(realm="lx") as c:
+            from landxi_api.national import _settings
+            year = int((await _settings(c))[0]["year"])
+            nat = int(await c.fetchval(
+                "SELECT coalesce(sum((counts->$1->>'n')::bigint), 0) FROM national_cells WHERE year=$2 AND NOT test AND state='done' AND asset = ANY($3::text[])",
+                task, year, assets) or 0)
+    return svc, nat
+
+
+async def map_task(args: dict, ctx) -> Out:
+    from landxi_api.envelope import env
+    out = Out(source="전국 결과 장부 + 전국 분석 진행 장부")
+    ctx.state["talk_kind"] = None
+    if args.get("clear"):
+        out.ui_actions.append({"op": "map_task", "clear": True})
+        if (getattr(ctx, "context", None) or {}).get("filter"):
+            out.ui_actions.append({"op": "map_filter", "clear": True})
+        out.data = {"status": "clear"}
+        out.answer = "모든 업무 결과를 다시 보여 줍니다."
+        return out
+    task = str(args.get("task") or "")
+    if task not in TASK_UNIT:
+        out.data = {"status": "none"}
+        out.answer = "어느 업무 결과를 보여 드릴까요?"
+        return out
+    svc, nat = await _task_count(task)
+    n = svc + nat
+    if not n:
+        ctx.state["cannot"] = {"kind": "nodata"}
+        out.data = {"status": "missing"}
+        out.answer = f"{task} 결과가 아직 없습니다. 지도는 그대로 두었습니다."
+        return out
+    u = TASK_UNIT[task]
+    out.ui_actions.append({"op": "map_task", "task": task, "n": n})
+    out.env("n", f"{task} AI 분석 결과", env(n, u, "inferred", "전국 결과 장부 + 전국 분석 진행 장부(끝난 읍면동) — XI맵 첫 화면 합계와 같은 셈"))
+    out.data = {"status": "ok", "업무": task, "수": "n"}
+    out.answer = f"{task}만 지도에 남겼습니다 — AI 분석 결과 {{{{n}}}}."
+    return out
+
+
 REPORT_ASK = re.compile(r"보고서|리포트|report", re.I)
 REPORT_DO = re.compile(r"초안|써\s*줘|써줘|작성|만들어|뽑아|draft|write", re.I)
 
@@ -141,6 +224,10 @@ def ROUTE(msg: str, ctx):
     if getattr(p, "realm", None) == "lx" and len(t) <= 120 and REPORT_ASK.search(t) and REPORT_DO.search(t) \
             and not re.search(r"법령|조문|근거\s*조", t) and not re.search(r"실태\s*조사|의심", t):
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
+    if c.get("page") == "xi-clean" and getattr(p, "realm", None) == "lx":
+        k = parse_task(t)
+        if k:
+            return {"tool": "map_task", "args": k, "intent": "map"}
     if c.get("page") in ("lx-map", "xi-clean") or c.get("sets") is not None:
         a = parse_filter(t)
         if a:
@@ -751,5 +838,5 @@ async def ai_report(args: dict, ctx) -> Out:
     return out
 
 
-HANDLERS = {"map_filter": map_filter, "map_stats": map_stats, "ai_report": ai_report}
+HANDLERS = {"map_filter": map_filter, "map_task": map_task, "map_stats": map_stats, "ai_report": ai_report}
 _route_front()

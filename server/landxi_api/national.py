@@ -165,7 +165,8 @@ async def progress(request: Request):
     left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"]) +         sum(float(r["old_km2"]) for r in redo if r["asset"] in st["assets"])          # 새 판으로 다시 할 끝난 칸도 남은 일
     run = _runner()
     out["runner"] = {"state": run.get("state") or "idle", "why": run.get("why"), "at": run.get("at"), "cell": run.get("name") if not run.get("test") else None,
-                     "asset": run.get("asset") if not run.get("test") else None}   # 지금 도는 칸의 자산(농지 · 하천 번갈아 — 다른 자산 칸에 '지금 분석 중'을 쓰지 않게)
+                     "asset": run.get("asset") if not run.get("test") else None,   # 지금 도는 칸의 자산(농지 · 하천 번갈아 — 다른 자산 칸에 '지금 분석 중'을 쓰지 않게)
+                     "cd": run.get("cell") if not run.get("test") and run.get("state") == "running" else None}   # 지금 도는 칸(읍면동 코드 · XI맵 '지금 분석 중' 한 줄)
     basis = "measured" if measured else "estimate"
     note = ("최근 6시간에 끝난 칸의 실제 속도" if fresh else "끝난 칸의 실제 속도") if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
     sched = {"mode": "idle", "idle_now": not busy, "starts_at": now.isoformat(timespec="minutes"),

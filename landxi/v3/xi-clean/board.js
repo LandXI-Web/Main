@@ -1,15 +1,20 @@
-/* XI맵 전국 결과(바퀴 8 · 원칙 218 10-12 12:45 '전국-결과-보기' — 빛나는 밀도 대신 실제 경작지 면 · 배경은 그대로 · 199 · 196 · 182) — 열자마자 지도에 바로.
-   멀리서 = 전국 결과 자산(national.js — 분석을 마친 읍면동은 실제 결과 면 · 아직인 곳은 빗금 '분석 예정'). 빛나는 밀도 층은 걷었다.
+/* XI맵 전국 결과(원칙 218 · 229 · 233 · 237 · 10-14 XI맵 3차 구조) — 열자마자 서버에 있는 모든 결과가 함께(특정 업무 기본 선택 없음 · 범례 표 없음).
+   멀리서 = 서비스 결과 · 시군구 전역 분석(전국 결과 객체를 약 2km 칸으로 센 실제 결과 칸 · GET /ximap/density) + 전국 분석 결과 면(national.js · 농지 전수 · 하천 · 계곡).
    한 번 호출(GET /ximap/board — 서비스 결과 장부 + 시군구 전역 분석)로 시군구 × 서비스 → 찾은 객체 수 · 끝난 시각 · 영상 · 결과 층(가까이에서 객체).
-   올리면 그 자리(읍면동) 요약, 누르면 그 자리로 날아간다. 시군구 칠하기 · 알약 · 점은 없다. 지역 문자열 하드코딩 0. */
+   올리면 — 멀리선 그 시군구, 가까이선 그 읍면동이 떠오르며 여러 업무 숫자(지도 안 말풍선). 누르면 그곳으로 내려가 객체로 펼친다.
+   업무 거르기(말풍선 업무 줄 · XI ChatGEO '○○만 보여 줘') = 그 업무 결과만 · '원래대로'. 지역 문자열 하드코딩 0. */
 import { api } from '../kit/util.js';
 import { sourceSpec, tilesFor } from '../../xi/engine/sources.js';
 import { API, signSet } from '../../shared/api-v1.js';
 import { addResultLayers } from '../../xi/fx/arrive.js';
-import { createNational, nationalPromise, NCOLOR } from './national.js';
+import { createNational, nationalPromise, NCOLOR, NCLS } from './national.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 const NEAR_Z = 9.5;
+const CELL_Z = 8.6;                                    // 이보다 멀면 시군구 · 가까우면 읍면동이 떠오른다
+/* 업무 이름 — 서버 서비스 이름을 같은 업무로 묶는 것만(새 이름 0) */
+export const TASK_OF = { '경작·휴경': '경작지', 경작: '경작지', 건축물: '건물' };
+export const taskOf = (n) => TASK_OF[n] || n;
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* 서비스 색 — 화면 색일 뿐(자료 아님). 이름이 표에 없으면 남는 색을 차례로 */
 const NAMED = { '경작·휴경': '#2E9E5B', 비닐하우스: '#F59F00', 건축물: '#3182F6', 주차장: '#8B5CF6', 곤포사일리지: '#B07A3A', 해양쓰레기: '#0FA9A0', 토지피복: '#5C8DA8' };
@@ -41,11 +46,9 @@ export const boardPromise = (on) => (on ? api('/ximap/board').catch((e) => ({ er
 /** 전국 결과 자산 진행(판 번호 포함) — 첫 화면과 함께 출발 */
 export { nationalPromise };
 
-export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
-  const B = { data: null, color: {}, off: new Set(), loaded: new Map(), sgg: new Map(), svcIdx: new Map() };
-  const NAT = createNational({ map, h });
-  const legend = h('section.xb-leg', { hidden: true, 'aria-label': '서비스' });
-  host.append(legend);
+export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg, regionRows, onRegion, onCell, onMiss }) {
+  const B = { data: null, color: {}, off: new Set(), loaded: new Map(), sgg: new Map(), svcIdx: new Map(), task: null };
+  const NAT = createNational({ map });
   const tip = h('div.xb-tipcard', { hidden: true, role: 'status', 'aria-live': 'polite' });
   host.append(tip);
 
@@ -55,16 +58,6 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
     services.forEach((s, i) => B.svcIdx.set(s.id, i));
   }
   const val = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
-
-  function drawLegend() {
-    const S = B.data.services;
-    legend.replaceChildren(
-      h('p.xb-leg-h', { text: '서비스' }),
-      h('div.xb-leg-l', {}, ...S.map((s) => h('button.xb-chip', { type: 'button', 'aria-pressed': String(!B.off.has(s.id)), title: `결과가 있는 시군구 ${val(s.n_regions)}곳`,
-        onclick: () => { if (B.off.has(s.id)) B.off.delete(s.id); else B.off.add(s.id); drawLegend(); syncSets(); hideTip(); } },
-      h('i', { style: { background: B.color[s.id] } }), h('span', { text: s.name })))));
-    legend.hidden = !S.length;
-  }
 
   /* ── 객체 — 밀도와 같은 서비스 색 · 줌에 따라 서서히 진해짐 ── */
   function objectPaint(ids, c, landcover) {
@@ -142,47 +135,137 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
   }
   function syncSets() { onSets([...B.loaded.values()].map((x) => ({ ...x, off: B.off.has(x.svc) }))); }
 
-  /* ── 올리면 그 자리 요약 · 누르면 그 자리로 ── 
-     요약 = 그 읍면동의 전국 결과 자산 칸(끝난 곳은 장부 숫자 · 아직인 곳은 '분석 예정' — 지어낸 숫자 0) */
-  const around = (pt) => NAT.at(pt);
-  function hideTip() { tip.hidden = true; B.tipAt = null; }
-  function showTip(pt, p) {
-    const sum = NAT.summary(p);
-    tip.replaceChildren(...[
-      h('p.xb-tc-k', { text: sum.k }),
-      sum.rows.length ? h('ul.xb-tc-rows', {}, ...sum.rows.map((r) => h('li', {}, h('i', { style: { background: NCOLOR[r.c] } }), h('span', { text: r.c }), h('b', { text: r.text })))) : null,
-      h('p.xb-tc-p', { text: sum.p }),
-      h('p.xb-tc-tip', { text: '누르면 이 자리로 갑니다' })].filter(Boolean));
-    tip.dataset.done = sum.done ? '1' : '0';
-    tip.hidden = false;
+  /* ── 멀리서 보이는 서비스 결과 칸 — 전국 결과 객체를 약 2km 칸으로 센 실제 칸(칸 합 = 결과 수 · GET /ximap/density) ──
+     시군구 줌(8.6~9.5)에서 옅어지고 가까이는 객체가 맡는다. 빛 · 흐림 없이 결과가 있는 칸만 그 서비스 색으로 */
+  const gridFilter = () => (B.task ? ['==', ['get', 'k'], B.task] : null);
+  async function grid() {
+    const d = await api('/ximap/density?g=0').catch(() => null);
+    if (!d?.cells?.length || map.getSource('xb-grid')) return;
+    const g = d.g, fs = [], c = d.cells;
+    for (let i = 0; i + 3 < c.length; i += 4) {
+      const st = d.sets[c[i + 2]]; if (!st) continue;
+      const x0 = c[i] * g, y0 = c[i + 1] * g;
+      fs.push({ type: 'Feature', properties: { k: taskOf(st.name), svc: st.svc, n: c[i + 3], lc: st.svc === 'landcover' ? 1 : 0 },
+        geometry: { type: 'Polygon', coordinates: [[[x0, y0], [x0 + g, y0], [x0 + g, y0 + g], [x0, y0 + g], [x0, y0]]] } });
+    }
+    map.addSource('xb-grid', { type: 'geojson', data: { type: 'FeatureCollection', features: fs }, maxzoom: 9 });
+    const col = ['match', ['get', 'svc'], ...Object.entries(B.color).flat(), '#5C7CFA'];
+    map.addLayer({ id: 'xb-grid', type: 'fill', source: 'xb-grid', maxzoom: 9.6, ...(gridFilter() ? { filter: gridFilter() } : {}), layout: { visibility: B.hidden ? 'none' : 'visible' },
+      paint: { 'fill-color': col, 'fill-antialias': false,
+        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, ['case', ['==', ['get', 'lc'], 1], 0.35, 0.85], 7.5, ['case', ['==', ['get', 'lc'], 1], 0.3, 0.75], 8.6, ['case', ['==', ['get', 'lc'], 1], 0.12, 0.35], 9.5, 0] } },
+    map.getLayer('slot-result') ? 'slot-result' : undefined);
+  }
+
+  /* ── 시군구 경계(떠오르기 · 누르기) — 지도 경계 geojson(지역 고정값 없음) ── */
+  const NONE = ['==', ['get', 'code'], '__'];
+  const NOCELL = ['==', ['get', 'cd'], '__'];
+  function sggLayers() {
+    const B0 = map.getLayer('slot-reference') ? 'slot-reference' : undefined;
+    if (sgg?.features?.length && !map.getSource('xb-sg')) {
+      map.addSource('xb-sg', { type: 'geojson', data: sgg });
+      map.addLayer({ id: 'xb-sg-veil', type: 'fill', source: 'xb-sg', maxzoom: CELL_Z, filter: NONE, paint: { 'fill-color': '#0E1622', 'fill-opacity': 0.38 } }, B0);
+      map.addLayer({ id: 'xb-sg-hit', type: 'fill', source: 'xb-sg', maxzoom: CELL_Z, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, B0);
+      map.addLayer({ id: 'xb-sg-hot-sh', type: 'line', source: 'xb-sg', maxzoom: CELL_Z, filter: NONE, paint: { 'line-color': '#000', 'line-opacity': 0.35, 'line-width': 10, 'line-blur': 8, 'line-translate': [4, 7] } }, B0);
+      map.addLayer({ id: 'xb-sg-hot-f', type: 'fill', source: 'xb-sg', maxzoom: CELL_Z, filter: NONE, paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.14 } }, B0);
+      map.addLayer({ id: 'xb-sg-hot-l', type: 'line', source: 'xb-sg', maxzoom: CELL_Z, filter: NONE, paint: { 'line-color': '#FFFFFF', 'line-width': 2.4, 'line-opacity': 0.95 } }, B0);
+    }
+    // 읍면동 칸(전국 분석 칸) 떠오르기 — 자산마다 같은 모양 한 벌
+    for (const a of NAT.assets) {
+      const s = NAT.src(a);
+      if (!map.getSource(s) || map.getLayer(`xb-cell-${a}-f`)) continue;
+      map.addLayer({ id: `xb-cell-${a}-f`, type: 'fill', source: s, 'source-layer': 'cells', filter: NOCELL, paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.16 } }, B0);
+      map.addLayer({ id: `xb-cell-${a}-l`, type: 'line', source: s, 'source-layer': 'cells', filter: NOCELL, paint: { 'line-color': '#FFFFFF', 'line-width': 2.2, 'line-opacity': 0.95 } }, B0);
+    }
+  }
+  let HOT = null;
+  function setHot(x) {                                // x = {kind:'sg', code} | {kind:'cell', cd} | null
+    const key = x ? x.kind + (x.code || x.cd) : null;
+    if (key === HOT) return; HOT = key;
+    const sg = x?.kind === 'sg' ? ['==', ['get', 'code'], x.code] : NONE;
+    for (const id of ['xb-sg-hot-sh', 'xb-sg-hot-f', 'xb-sg-hot-l']) if (map.getLayer(id)) map.setFilter(id, sg);
+    if (map.getLayer('xb-sg-veil')) map.setFilter('xb-sg-veil', x?.kind === 'sg' ? ['!=', ['get', 'code'], x.code] : NONE);
+    const cf = x?.kind === 'cell' ? ['==', ['get', 'cd'], x.cd] : NOCELL;
+    for (const a of NAT.assets) for (const id of [`xb-cell-${a}-f`, `xb-cell-${a}-l`]) if (map.getLayer(id)) map.setFilter(id, cf);
+  }
+
+  /* ── 올리면 그 자리 말풍선 · 누르면 그 자리로 ── 숫자 = 서비스 결과 장부 + 전국 분석 진행 장부(지어낸 숫자 0) */
+  const UNIT = { 경작지: '곳', 비닐하우스: '동', 건물: '동', 주차장: '곳', 곤포사일리지: '개', 토지피복: '개', '국토 변화': '곳', 해양쓰레기: '개' };
+  const colorOf = (k) => NCOLOR[k] || Object.entries(NAMED).find(([n]) => taskOf(n) === k)?.[1] || '#5C7CFA';
+  function rowEls(rows) {
+    return h('ul.xb-tc-rows', {}, ...rows.map((r) => h('li', {}, h('i', { style: { background: colorOf(r.k) } }), h('span', { text: r.name || r.k }), h('b', { text: `${nf(r.n)}${r.unit || UNIT[r.k] || '개'}` }))));
+  }
+  function hideTip() { tip.hidden = true; }
+  function placeTip(pt) {
     const W = host.clientWidth, w = tip.offsetWidth, hh = tip.offsetHeight;
     const x = pt.x + 18 + w > W - 96 ? pt.x - 18 - w : pt.x + 18, y = Math.max(8, Math.min(host.clientHeight - hh - 8, pt.y - hh / 2));
     tip.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;
   }
+  function tipCell(pt, p) {
+    const rows = NAT.cellRows(p).map((r) => ({ k: r.c, n: r.n, unit: r.unit }));
+    tip.replaceChildren(...[h('p.xb-tc-k', {}, h('b', { text: p.name || '' }), h('small', { text: p.sgg || '' })),
+      rows.length ? rowEls(rows) : h('p.xb-tc-p', { text: '분석 예정' })]);
+    tip.dataset.done = p.done ? '1' : '0';
+    tip.hidden = false; placeTip(pt);
+  }
+  function tipRegion(pt, f) {
+    const { rows, wait } = regionRows(f.properties.code);
+    tip.replaceChildren(...[h('p.xb-tc-k', {}, h('b', { text: f.properties.name })),
+      rows.length ? rowEls(rows) : null, wait ? h('p.xb-tc-p', { text: '불러오는 중' }) : !rows.length ? h('p.xb-tc-p', { text: '분석 예정' }) : null].filter(Boolean));
+    tip.dataset.done = rows.length ? '1' : '0';
+    tip.hidden = false; placeTip(pt);
+  }
+  function region(pt) {
+    if (!map.getLayer('xb-sg-hit') || map.getZoom() >= CELL_Z) return null;
+    return map.queryRenderedFeatures([pt.x, pt.y], { layers: ['xb-sg-hit'] })[0] || null;
+  }
+  const cellAt = (pt) => (map.getZoom() >= CELL_Z ? NAT.at(pt) : null);
   let raf = 0, lastPt = null;
   const busy = () => B.hidden || !B.data || (B.isBusy && B.isBusy());
+  function hover(pt) {
+    if (busy() || map.isMoving()) { hideTip(); setHot(null); return; }
+    const c = cellAt(pt);
+    if (c) { setHot({ kind: 'cell', cd: c.cd }); map.getCanvas().style.cursor = 'pointer'; tipCell(pt, c); return; }
+    const f = region(pt);
+    if (f) { setHot({ kind: 'sg', code: f.properties.code }); map.getCanvas().style.cursor = 'pointer'; tipRegion(pt, f); return; }
+    setHot(null); hideTip();
+    if (map.getZoom() < NEAR_Z) map.getCanvas().style.cursor = '';
+  }
   function onMove(e) {
+    if (e.originalEvent && e.originalEvent.target !== map.getCanvas()) { hideTip(); setHot(null); return; }   // 말풍선 · 칸 위에서는 지도 말풍선을 띄우지 않는다
     lastPt = e.point;
     if (raf) return;
-    raf = requestAnimationFrame(() => {
-      raf = 0;
-      if (busy() || map.isMoving()) { hideTip(); return; }
-      const sum = around(lastPt);
-      map.getCanvas().style.cursor = sum ? 'pointer' : '';
-      if (sum) showTip(lastPt, sum); else hideTip();
-    });
+    raf = requestAnimationFrame(() => { raf = 0; hover(lastPt); });
   }
   function onClick(e) {
-    if (busy() || map.getZoom() >= NEAR_Z + 1) return;
-    const sum = around(e.point);
-    if (!sum) return;
-    hideTip();
+    if (busy() || map.getZoom() >= NEAR_Z + 1 || (e.originalEvent && e.originalEvent.target !== map.getCanvas())) return;
+    const c = cellAt(e.point);
+    const f = c ? null : region(e.point);
+    if (!c && !f) { onMiss?.(); return; }
+    hideTip(); setHot(null);
+    if (f) { onRegion?.(f.properties.code); return; }
     const z = map.getZoom(), to = Math.min(12.5, Math.max(z + 3, 11.6));   // 결과 면과 객체가 함께 보이는 줌에 내려앉는다
     onFly?.();
     NAT.warm(e.lngLat, to);
     near(e.lngLat, to).then(() => warm(e.lngLat, to)).catch(() => {});
-    if (RM()) map.jumpTo({ center: e.lngLat, zoom: to });
-    else map.flyTo({ center: e.lngLat, zoom: to, speed: 1.1, curve: 1.42, essential: false });
+    const land = () => onCell?.(c, e.lngLat);
+    if (RM()) { map.jumpTo({ center: e.lngLat, zoom: to }); land(); }
+    else { map.flyTo({ center: e.lngLat, zoom: to, speed: 1.1, curve: 1.42, essential: false }); map.once('moveend', land); }
+  }
+
+  /* ── 업무 거르기 — 그 업무 결과만(서비스 결과 · 시군구 전역 분석 · 전국 분석) · null = 원래대로 ── */
+  function setTask(k) {
+    B.task = k || null;
+    B.off = new Set(B.task ? (B.data?.services || []).filter((s) => taskOf(s.name) !== B.task).map((s) => s.id) : []);
+    syncSets();
+    if (map.getLayer('xb-grid')) map.setFilter('xb-grid', gridFilter());
+    NAT.setTask(B.task);
+    hideTip();
+  }
+  /** 지금 지도에 결과가 있는 업무 이름(서버 서비스 + 전국 분석 분류) — 말로 거르기 · 말풍선 */
+  function tasks() {
+    const t = new Set((B.data?.services || []).map((s) => taskOf(s.name)));
+    for (const a of NAT.assets) for (const c of NCLS[a] || []) t.add(c);
+    return [...t];
   }
 
   async function load(p, np) {
@@ -191,12 +274,13 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
     B.data = j;
     for (const r of j.regions) { const reg = regionOf(r); if (reg) B.sgg.set(r.sgg_cd, reg); }
     colors(j.services);
-    drawLegend();
+    sggLayers();
+    grid();
     map.on('moveend', () => { clearTimeout(nearT); nearT = setTimeout(near, 120); });
     map.on('movestart', hideTip);
     map.on('mousemove', onMove);
-    map.on('mouseout', () => { hideTip(); });
-    map.getCanvas().addEventListener('mouseleave', () => { hideTip(); map.getCanvas().style.cursor = ''; });
+    map.on('mouseout', () => { hideTip(); setHot(null); });
+    map.getCanvas().addEventListener('mouseleave', () => { hideTip(); setHot(null); map.getCanvas().style.cursor = ''; });
     map.on('click', onClick);
     near();
     onLoad?.(j);
@@ -223,7 +307,11 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly }) {
   }
   /** 지도에 그려진 결과 층 → 그 층의 묶음(누른 객체가 어느 결과인지) */
   const bySource = (sid) => B.loaded.get(sid) || null;
-  function show(on) { B.hidden = !on; NAT.show(on); if (!on) hideTip(); legend.style.display = on ? '' : 'none'; }
-  return { load, reload, near, bySource, show, legend, color: (svc) => B.color[svc], get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z,
-    set busy(f) { B.isBusy = f; }, around: (pt) => around(pt), nat: NAT, hot, get natInfo() { return { layers: NAT.layers.filter((l) => map.getLayer(l)), at: B.natAt, asset: NAT.asset }; } };
+  function show(on) {
+    B.hidden = !on; NAT.show(on); if (!on) { hideTip(); setHot(null); }
+    if (map.getLayer('xb-grid')) map.setLayoutProperty('xb-grid', 'visibility', on ? 'visible' : 'none');
+  }
+  return { load, reload, near, bySource, show, color: (svc) => B.color[svc], colorOf, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
+    set busy(f) { B.isBusy = f; }, nat: NAT, hot, setTask, tasks, get task() { return B.task; }, rehover: () => { if (!tip.hidden && lastPt) hover(lastPt); },
+    get natInfo() { return { layers: NAT.layers.filter((l) => map.getLayer(l)), at: B.natAt, assets: NAT.assets }; } };
 }

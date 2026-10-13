@@ -69,9 +69,9 @@ for (const vp of [{ w: 1440, h: 900, k: '1440' }, { w: 390, h: 844, k: '390' }])
       await page.waitForFunction(() => window.__xc?.hud?.from === 'board' && /남원/.test(window.__xc.hud.label || ''), null, { timeout: 60000 });
       await page.waitForTimeout(2500);
       expect(await page.locator('body').innerText()).not.toMatch(NO);
-      await expect(page.locator('.xb-hud .xb-h')).toContainText('AI 분석 결과');
+      await expect(page.locator('.xb-hud .xb-k')).toContainText('남원');           // 10-14 3차 구조 — 지도 안 글자 = 그 시군구 이름 + 여러 업무 숫자
       const want = (board.regions || []).find((r) => r.sgg_cd === '52190')?.n?.value ?? 0;
-      const got = await page.evaluate(() => window.__xc.hud?.n);
+      const got = await page.evaluate(() => window.__xc.hud?.board);
       expect(got).toBe(want);
       for (const t of ['rules', 'list', 'sweep']) await expect(page.locator(`[data-tool="${t}"]`)).toHaveCount(0);
       await shot(page, `xi-${vp.k}`);

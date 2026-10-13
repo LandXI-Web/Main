@@ -17,8 +17,8 @@ import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 
 import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 결과(원칙 135 · 요약 한 출처)
 import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX 직원 메뉴 그대로(바퀴 5 · 원칙 191 · 196 18:52 고침)
 import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
-import { createBoard, boardPromise, nationalPromise } from './board.js';   // 열자마자 전국 결과(바퀴 5) · 전국 결과 자산 면(바퀴 8 · 원칙 218 — 빛나는 밀도 대신)
-import { NCOLOR } from './national.js';                          // 전국 결과 자산 색(시군구 카드 숫자 점)
+import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';   // 열자마자 서버에 있는 모든 결과(10-14 XI맵 3차 구조 · 원칙 229 · 237)
+import { NCLS } from './national.js';                            // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게)
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 
 const { h, esc } = K;
@@ -191,7 +191,8 @@ async function boot() {
   // 오른쪽 위 한 줄 = [영상 전환(작은 단추)] [사업 나라] · 그 아래 오른쪽 = 도구 줄(층 · 가르기 · 보고서 · 분석)
   const top = h('div.xc-top');
   hudBoard = h('section.xb-hud', { hidden: true, 'aria-live': 'polite' });
-  mainEl.append(stageEl, bEl, fx, hud, hudBoard, pop, grip, top, toolsEl, loadEl);
+  const statsSlot = h('section.xb-stats', { hidden: true, 'aria-label': '통계' });   // 지도 위 통계 판 자리(지도 영역 안 · 지금은 비워 둠 — 다음 지시)
+  mainEl.append(stageEl, bEl, fx, hud, hudBoard, statsSlot, pop, grip, top, toolsEl, loadEl);
   loadK = K.empty(h('div.xc-load-c'), { kind: 'loading', progress: 0.08, what: '지역 경계와 분석 집계' });   // 무엇을 기다리나(GPT2-4)
   X.waitFor = '지역 경계와 분석 집계';
   loadEl.append(loadK.el);
@@ -203,7 +204,7 @@ async function boot() {
   { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready) return; wait?.(); wait = K.untilDrawn(map); }); }
   try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
-  map.on('idle', () => { hud.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
+  map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
   K.devDrawer({ stage, who });
   hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
 
@@ -253,7 +254,7 @@ async function boot() {
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
     sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set) }) });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
-  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw']);
+  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
 
   loadK.set({ progress: 0.85, what: (X.waitFor = r0 ? '지역 결과 요약' : '전국 결과 요약') });
@@ -272,7 +273,7 @@ async function boot() {
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
   if (S.lx) {
-    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
+    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
       onLeave: () => { BD?.show(true); if (searchInput) searchInput.value = S.cond.emd?.nm || S.region?.name || ''; if (!S.region) paintBoardHud(); return S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 }); } });
     const nb = mainEl.querySelector('.xn-bar'); if (nb) S.els.top.append(nb);   // 사업 나라 = 오른쪽 위 한 줄 안
     if (Q.get('nation') && Q.get('nation') !== 'kr') NAT.go(Q.get('nation'), { first: true });
@@ -820,9 +821,15 @@ async function refreshAI(my) {
 const shortDate = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`; };
 const ev = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
 function mountBoard() {
-  BD = createBoard({ map, host: mainEl, h,
+  // 시군구 경계(떠오르기 · 누르기) — 지도 경계 그대로(코드 · 이름만)
+  const sggFC = { type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, name: r.name } })) };
+  BD = createBoard({ map, host: mainEl, h, sgg: sggFC,
     regionOf: (r) => findRegion(r.sgg_cd) || (r.prev_cd && findRegion(r.prev_cd)) || S.regions.find((x) => lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox)) || null,
-    onFly: () => { closePop(); ED?.close(); },
+    regionRows: (code) => regionRows(findRegion(code)),
+    onRegion: (code) => { const r = findRegion(code); if (r) openRegion(r); },
+    onCell: (p, at) => pinCell(p, at),
+    onMiss: () => unpin(),
+    onFly: () => { closePop(); ED?.close(); unpin(); },
     onSets: (list) => {
       S.res = list;
       for (const it of list) S.resOn[it.id] = !it.off;
@@ -831,14 +838,14 @@ function mountBoard() {
       if (S.tool === 'layers') renderLayers();
       ED?.live(list.map((x) => x.set));
     },
-    onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center), nat: BD.natInfo, hot: BD.hot() }; if (!S.region) paintBoardHud(); } });
+    onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center), nat: BD.natInfo, hot: BD.hot() }; paintBoardHud(); } });
   BD.busy = () => !!(AN?.active || S.swipe || ED?.busy);
+  BD.nat.onData = () => { if (BD.data) paintBoardHud(); };   // 진행 장부를 다시 읽으면(30초) 합계 · '지금 분석 중' 한 줄을 새로
   S.boardP = BD.load(PRE.board || boardPromise(true), PRE.nat).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
   const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
   ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery,
     onEdited: () => { clearTimeout(S.reloadT); S.reloadT = setTimeout(() => BD.reload(), 400); } });
   imageryToggle();
-  map.on('zoomend', () => { if (S.region && !hudBoard.hidden) paintBoardHud(); });
   // 객체 누르기(가까이) — 결과 층의 면 · 점
   map.on('click', (e) => {
     if (!S.board || AN?.active || S.swipe || ED.busy || map.getZoom() < BD.NEAR_Z) return;
@@ -848,18 +855,19 @@ function mountBoard() {
     const f = map.queryRenderedFeatures(pad, { layers: lyr })[0];
     const L = f && BD.bySource(f.source);
     const fid = f && (f.properties?.id ?? f.id);
-    if (L && fid != null) { closePop(); ED.open(L, String(fid), e.lngLat); }
+    if (L && fid != null) { closePop(); unpin(); ED.open(L, String(fid), e.lngLat); }
   });
+  // 손으로 한 단계 넘게 멀어지면 누른 자리 말풍선을 닫는다(옮기기만 하면 그대로 따라감)
+  map.on('zoomend', (e) => { if (e.originalEvent && PIN && map.getZoom() < PIN.z - 0.8) unpin(); });
   // 손으로 확대 · 이동해 들어온 시군구 = 지금 지역(카메라는 그대로) · 멀리 나오면 전국
   map.on('moveend', () => {
     if (!S.board || S.flying || NAT?.id && NAT.id !== 'kr' || AN?.running) return;
     const z = map.getZoom(), c = map.getCenter();
-    if (z < 8.2) { if (S.region) setRegion(null, { soft: true }); return; }
-    if (z < BD.NEAR_Z) return;
+    if (z < 8.2) { unpin(); if (S.region) setRegion(null, { soft: true }); else paintBoardHud(); return; }
     const pt = [c.lng, c.lat];
     const r = S.regions.find((x) => x.bbox && pt[0] >= x.bbox[0] && pt[0] <= x.bbox[2] && pt[1] >= x.bbox[1] && pt[1] <= x.bbox[3]
       && (x.geometry?.type === 'Polygon' ? [x.geometry.coordinates] : x.geometry?.coordinates || []).some((poly) => inRing(pt, poly[0])));
-    if (r && r.code !== S.region?.code) setRegion(r, { soft: true });
+    if (r && r.code !== S.region?.code) setRegion(r, { soft: true }); else paintBoardHud();
   });
 }
 /** 지금 시군구의 전국 결과 줄(없으면 null) — 지도 경계(옛 코드)와 결과 장부(지금 코드)를 별칭으로 잇는다 */
@@ -873,7 +881,7 @@ async function refreshBoard(my) {
   SH.fresh(BD?.data ? new Date() : null);
   renderChips();
 }
-/** 전국 결과 자산이 끝낸 읍면동의 이 시군구 합 — 'wait'(받는 중) · 값 · null(받지 못함). 1분 보관 · 받으면 카드를 다시 그린다 */
+/** 전국 분석이 끝낸 읍면동의 이 시군구 합 — 'wait'(받는 중) · 값 · null(받지 못함). 1분 보관 · 받으면 지도 안 글자 · 말풍선을 다시 그린다 */
 const NATR = new Map();
 function natRegion(r) {
   const key = codesOf(r).join(',');
@@ -886,49 +894,119 @@ function loadNatRegion(key) {
   const prev = NATR.get(key); NATR.set(key, { ...(prev && 'j' in prev ? { j: prev.j } : {}), busy: true, t: prev?.t || 0 });
   api('/national/region?' + new URLSearchParams({ codes: key })).then((j) => NATR.set(key, { j: j?.assets ? j : null, t: Date.now() }))
     .catch(() => NATR.set(key, { j: prev && 'j' in prev ? prev.j : null, t: Date.now() }))
-    .finally(() => { if (S.region && codesOf(S.region).join(',') === key && hudBoard && !hudBoard.hidden) paintBoardHud(); });
+    .finally(() => { BD?.rehover?.(); if (S.region && codesOf(S.region).join(',') === key) paintBoardHud(); if (PIN?.code && findRegion(PIN.code) && codesOf(findRegion(PIN.code)).join(',') === key) PIN.redraw?.(); });
 }
+/** 한 시군구의 여러 업무 숫자 — 서비스 결과 장부(GET /ximap/board) + 전국 분석 진행 장부(GET /national/region). 지어낸 숫자 0.
+    → { rows: [{ k(업무 · 거르기 열쇠), name(화면 이름), n, unit }], wait } */
+function regionRows(r) {
+  if (!r) return { rows: [], wait: false };
+  const br = boardRegion(r), nr = natRegion(r), rows = [];
+  for (const x of br?.items || []) { const n = ev(x.n); if (n > 0) rows.push({ k: taskOf(x.name), name: x.name, n, unit: BD.UNIT[taskOf(x.name)] || '개' }); }
+  if (nr && nr !== 'wait') for (const [a, A] of Object.entries(nr.assets || {})) {
+    if (!(ev(A.done) > 0)) continue;
+    for (const cls of NCLS[a] || []) {
+      const c = A.counts?.[cls], n = ev(c?.n); if (!(n > 0)) continue;
+      rows.push({ k: cls, name: `${cls}(${A.name})`, n, unit: c.unit || BD.UNIT[cls] || '개' });
+    }
+  }
+  rows.sort((p, q) => q.n - p.n);
+  return { rows, wait: nr === 'wait' };
+}
+/** 전국 합계 — 서비스 결과 장부 + 전국 분석(자산마다 한 분류씩 · 겹쳐 세지 않게) · task = 그 업무만(XI ChatGEO 업무 거르기 답과 같은 셈) */
+function boardTotal(task = null) {
+  const d = BD?.data, nd = BD?.nat?.data;
+  let n = 0;
+  for (const s of d?.services || []) if (!task || taskOf(s.name) === task) n += ev(s.n);
+  for (const [a, A] of Object.entries(nd?.assets || {})) {
+    if (A.on === false) continue;
+    for (const cls of NCLS[a] || []) if (!task || cls === task) n += ev(A.counts?.[cls]?.n);
+  }
+  return n;
+}
+/* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237) — 업무 이름 고정 없음 · 범례 표 없음. 전국 = 모든 결과 합 · 시군구로 들어가면 그 시군구의 여러 업무 함께 ═══ */
+let HUDKEY = '';
 function paintBoardHud() {
   const d = BD?.data;
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
   hudBoard.hidden = false;
-  if (!d) { hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }), h('p.xb-p', { text: '결과를 불러오지 못했습니다' })); X.hud = { label: '전국 AI 분석 결과', n: null, from: 'board', state: 'fail' }; return; }
-  const r = S.region, br = boardRegion(r);
-  if (!r) {
+  const task = BD?.task || null;
+  const reset = task ? h('p.xb-task', {}, h('i', { style: { background: BD.colorOf(task) } }), h('span', { text: task }),
+    h('button.xb-reset', { type: 'button', text: '원래대로', onclick: () => applyTask(null) })) : null;
+  let kids, key;
+  if (!d) {
+    kids = [h('p.xb-k', { text: '전국 · AI 분석 결과' }), h('p.xb-p', { text: '결과를 불러오지 못했습니다' })];
+    key = 'fail'; X.hud = { label: '전국 · AI 분석 결과', n: null, from: 'board', state: 'fail' };
+  } else if (!S.region || map.getZoom() < 8.2) {
     // 서비스 n가지 = 서비스 결과 장부의 서비스(메인 '서비스 n가지'와 같은 출처) · 토지피복 같은 전역 분석은 이름만 따로(GPT5-1 · 규칙 3)
     const svcN = d.n_services ? ev(d.n_services) : d.services.filter((x) => x.kind !== 'analysis').length;
     const extra = d.services.filter((x) => x.kind === 'analysis').map((x) => x.name);
-    const yr = d.years?.length === 1 ? `${d.years[0]}년 영상까지` : d.years?.length ? `${d.years[0]}~${d.years[d.years.length - 1]}년 영상` : '';
-    hudBoard.replaceChildren(h('p.xb-k', { text: 'XI맵 · 대한민국' }), h('h1.xb-h', { text: '전국 AI 분석 결과' }),
-      h('p.xb-p', {}, h('span', {}, '시군구 ', h('b', { text: `${nf(ev(d.n_regions))}곳` }), ` · 서비스 ${nf(svcN)}가지`, ...extra.map((x) => ` · ${x}`)),
-        h('span', { text: [d.last_at ? `마지막 분석 ${shortDate(d.last_at)}` : null, yr].filter(Boolean).join(' · ') })),
-      BD.legend,                                     // 서비스 색 · 켜고 끄기 = 전국 칸 안(지도 아래쪽은 고치기 막대 · 알림 자리)
-      BD.nat.el,                                     // 전국 결과 자산(농지 전수 · 하천 · 계곡) — 진행 · 분석 예정(원칙 218)
-      h('p.xb-tip', {}, h('span', { text: '지역을 누르면 그 자리로 갑니다' }), h('span', { text: '객체를 누르면 그 자리에서 고칩니다' })));
-    X.hud = { label: '전국 AI 분석 결과', n: ev(d.n_regions), unit: '곳', from: 'board' };
-    return;
+    const total = boardTotal(task), unit = task ? BD.UNIT[task] || '개' : '개';
+    const run = BD.nat.running();
+    kids = [h('p.xb-k', { text: task ? `전국 · ${task}` : '전국 · AI 분석 결과' }),
+      h('p.xb-big', {}, h('b.num', { text: nf(total) }), h('small', { text: unit })),
+      h('p.xb-p', {}, '서비스 ', h('b', { text: `${nf(svcN)}가지` }), ...extra.map((x) => ` · ${x}`)),
+      reset,
+      run?.label ? h('p.xb-live', {}, h('i'), h('span', { text: `지금 분석 중 · ${run.label}` })) : null];
+    key = ['kr', total, task, run?.label].join('|');
+    X.hud = { label: '전국 · AI 분석 결과', n: total, unit, task, from: 'board' };
+  } else {
+    const r = S.region, { rows, wait } = regionRows(r);
+    const shown = task ? rows.filter((x) => x.k === task) : rows;
+    const pinned = PIN?.code === r.code;                // 누른 자리 말풍선이 같은 숫자를 보이면 왼쪽 위는 이름만(같은 줄 두 번 0)
+    kids = [h('p.xb-k.xb-k--r', { text: r.name }),
+      pinned ? null : shown.length ? h('ul.xb-rows', {}, ...shown.slice(0, 6).map((x) => h('li', {}, h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(x.n)}${x.unit}` }))))
+        : h('p.xb-p', { text: wait ? '불러오는 중' : '분석 예정' }),
+      reset];
+    key = ['r', r.code, task, wait, pinned, JSON.stringify(shown.map((x) => [x.name, x.n]))].join('|');
+    const br = boardRegion(r);
+    X.hud = { label: r.name, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length };
   }
-  const nr = natRegion(r);                           // 전국 결과 자산 작업기가 끝낸 읍면동의 이 시군구 합(GET /national/region · 진행 장부 한 출처)
-  const rows = br ? br.items.map((x) => h('li', {}, h('i', { style: { background: BD.color(x.svc) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(ev(x.n))}개` }))) : [];
-  const nrows = [];
-  if (!br && nr && nr !== 'wait') for (const a of Object.values(nr.assets || {})) {
-    if (!(ev(a.done) > 0)) continue;
-    for (const [cls, c] of Object.entries(a.counts || {})) {
-      const n = ev(c.n); if (!(n > 0)) continue;
-      const km = cls === '경작지' && ev(c.km2) > 0 ? ` · ${Number(ev(c.km2)).toFixed(2)}㎢` : '';
-      nrows.push(h('li', {}, h('i', { style: { background: NCOLOR[cls] || '#5C7CFA' } }), h('span', { text: `${a.name} · ${cls}` }), h('b.num', { text: `${nf(n)}${c.unit || '개'}${km}` })));
-    }
-  }
-  const nDone = nr && nr !== 'wait' ? Object.values(nr.assets || {}).reduce((t, a) => t + ev(a.done), 0) : 0;
-  const nCells = nr && nr !== 'wait' ? Object.values(nr.assets || {}).filter((a) => ev(a.done) > 0).map((a) => `${a.name} 읍면동 ${nf(ev(a.cells))}곳 중 ${nf(ev(a.done))}곳 분석 끝`).join(' · ') : '';
-  const it0 = br?.items[0];
-  const body = br ? [h('ul.xb-rows', {}, ...rows), h('p.xb-p', { text: [it0?.imagery, br.last_at ? `마지막 분석 ${shortDate(br.last_at)}` : null].filter(Boolean).join(' · ') }),
-      h('p.xb-tip', { text: map.getZoom() < BD.NEAR_Z ? '더 확대하면 객체가 보입니다' : '객체를 누르면 그 자리에서 고칩니다' })]
-    : nr === 'wait' ? [h('p.xb-p', { text: '불러오는 중' })]
-    : nrows.length ? [h('ul.xb-rows', {}, ...nrows), h('p.xb-p', { text: nCells })]
-    : [h('p.xb-p', { text: '분석 예정' })];            // 정말 결과가 없는 곳 — 숫자를 지어내지 않는다
-  hudBoard.replaceChildren(...[h('p.xb-k', { text: `${r.sido || ''} · ${r.name}`.replace(/^ · /, '') }), h('h1.xb-h', { text: `${r.name} AI 분석 결과` }), ...body].filter(Boolean));
-  X.hud = { label: `${r.name} AI 분석 결과`, n: br ? ev(br.n) : 0, unit: '개', from: 'board', nat: nDone ? { done: nDone } : null };
+  if (key === HUDKEY) return;
+  HUDKEY = key;
+  hudBoard.replaceChildren(...kids.filter(Boolean));
+}
+/* ═══ 누르면 — 그곳으로 내려가 객체로 펼치고, 그 자리 옆 말풍선에 여러 업무 숫자(업무 줄 = 그 업무만) ═══ */
+let PIN = null;
+function unpin() { const had = PIN; PIN?.marker.remove(); PIN = null; if (had?.code) paintBoardHud(); }
+function pinAt(lngLat, title, sub, getRows, code = null) {
+  unpin();
+  const el = h('div.xb-pin', { role: 'dialog', 'aria-label': title });
+  const marker = new window.maplibregl.Marker({ element: el, anchor: 'left', offset: [18, 0] }).setLngLat(lngLat).addTo(map);
+  PIN = { marker, code, redraw: null, z: map.getZoom() };
+  const draw = () => {
+    const { rows, wait } = getRows();
+    const shown = rows.slice(0, 6);
+    el.replaceChildren(...[h('p.xb-pin-n', {}, h('b', { text: title }), sub ? h('small', { text: sub }) : null),
+      shown.length ? h('ul.xb-pin-rows', {}, ...shown.map((x) => h('li', {}, h('button', { type: 'button', 'aria-pressed': String(BD.task === x.k), onclick: (e) => { e.stopPropagation(); applyTask(BD.task === x.k ? null : x.k); draw(); } },
+        h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(x.n)}${x.unit}` })))))
+        : h('p.xb-pin-p', { text: wait ? '불러오는 중' : '분석 예정' })].filter(Boolean));
+  };
+  PIN.redraw = draw;
+  draw();
+  requestAnimationFrame(() => el.classList.add('in'));
+}
+async function openRegion(r) {
+  unpin();
+  await setRegion(r);                                     // 그 시군구로 내려간다(객체는 가까이 오면 펼쳐짐 · 전국 결과 층 그대로)
+  if (S.region?.code !== r.code) return;
+  const b = map.getBounds(), c = map.getCenter();
+  pinAt([b.getEast() - (b.getEast() - b.getWest()) * 0.32, c.lat], r.name, null, () => regionRows(r), r.code);
+  paintBoardHud();
+}
+function pinCell(p, at) {
+  const rows = () => ({ rows: BD.nat.cellRows(p).map((x) => ({ k: x.c, name: x.c, n: x.n, unit: x.unit })), wait: false });
+  const g = BD.nat.cellGeom(p.asset, p.cd);
+  let ll = at;
+  if (g) { let e = -180, so = 90, no = -90; const walk = (c) => (typeof c[0] === 'number' ? (e = Math.max(e, c[0]), so = Math.min(so, c[1]), no = Math.max(no, c[1])) : c.forEach(walk)); g.forEach((x) => walk(x.coordinates)); if (e > -180) ll = { lng: e, lat: (so + no) / 2 }; }
+  pinAt(ll, p.name || '', p.sgg || '', rows);
+}
+/** 업무 거르기 — k = 업무 이름(그 업무만) · null(원래대로). 말풍선 업무 줄 · XI ChatGEO 업무 거르기 같은 길 */
+function applyTask(k) {
+  BD?.setTask(k || null);
+  PIN?.redraw?.();
+  paintBoardHud();
+  X.task = BD?.task || null;
+  return BD?.task || null;
 }
 /* 영상 전환 — 작은 단추 둘(최신 영상 = 바탕 위성 · 분석한 영상 = 결과를 만든 등록 영상). 모양 고치기 · 새로 그리기는 분석한 영상 위에서 */
 function imageryToggle() {
@@ -1187,6 +1265,14 @@ async function regionFromAgent(a) {
     || (a.sgg_cd && await regionByCode(String(a.sgg_cd))) || (a.name && findRegion(a.name)) || null;
 }
 async function agentOp(a) {
+  if (a.op === 'map_task') {                           // XI ChatGEO 업무 거르기 — '○○만 보여 줘' · '원래대로'(말풍선 업무 줄과 같은 길)
+    if (!BD?.data) return { ok: false, reason: '전국 결과를 불러오지 못했습니다' };
+    if (a.clear) { const was = BD.task; applyTask(null); return was ? true : { ok: true, same: true }; }
+    if (!BD.tasks().includes(a.task)) return { ok: false, reason: `${a.task} 결과가 지도에 없습니다` };
+    const same = BD.task === a.task;
+    applyTask(a.task);
+    return same ? { ok: true, same: true } : true;
+  }
   if (a.op === 'map_on' && a.filter) {
     const f = a.filter, e = f.emd_cd ? S.emds.find((x) => x.cd === String(f.emd_cd)) : null;
     const r = e ? byCode(e.cd) : null;
