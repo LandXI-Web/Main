@@ -1,0 +1,101 @@
+[
+ {
+  "file": "namwon-relief-z140-1440-0824.png",
+  "shot_at": "2026-10-14T08:24:25",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 새 베이스(도심 + 둘레 산)",
+  "errors": []
+ },
+ {
+  "file": "namwon-relief-z166-1440-0824.png",
+  "shot_at": "2026-10-14T08:24:33",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&ai=0&z=16.6&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 새 베이스 가까이(건물 그림자 · 둘레 음영)",
+  "errors": []
+ },
+ {
+  "file": "namwon-ai-z166-1440-0824.png",
+  "shot_at": "2026-10-14T08:24:39",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&z=16.6&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 새 베이스 + AI 결과(건물 · 경작지 · 비닐하우스 · 주차장)",
+  "errors": []
+ },
+ {
+  "file": "namwon-ai-z140-1440-0824.png",
+  "shot_at": "2026-10-14T08:24:45",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 새 베이스 + AI 결과(넓게)",
+  "errors": []
+ },
+ {
+  "file": "namwon-now-z166-1440-0824.png",
+  "shot_at": "2026-10-14T08:24:52",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=now&z=16.6&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 지금 XI맵 베이스(브이월드 영상) + AI 결과 — 비교",
+  "errors": []
+ },
+ {
+  "file": "bishkek-relief-z140-1440-0825.png",
+  "shot_at": "2026-10-14T08:25:02",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 새 베이스",
+  "errors": []
+ },
+ {
+  "file": "bishkek-relief-z166-1440-0825.png",
+  "shot_at": "2026-10-14T08:25:09",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&ai=0&z=16.6&c=74.6040,42.8760",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 새 베이스 가까이",
+  "errors": []
+ },
+ {
+  "file": "bishkek-ai-z150-1440-0825.png",
+  "shot_at": "2026-10-14T08:25:16",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&z=15.0&c=74.5800,42.8920",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 새 베이스 + AI 결과(2017→2025 새로 생긴 시가지 · 경작지)",
+  "errors": []
+ },
+ {
+  "file": "bishkek-now-z150-1440-0825.png",
+  "shot_at": "2026-10-14T08:25:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=now&z=15.0&c=74.5800,42.8920",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 지금 XI맵 베이스(Sentinel-2 영상 · z13 이상은 확대만) + AI 결과 — 비교",
+  "errors": []
+ }
+]
