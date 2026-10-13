@@ -83,4 +83,4 @@ def test_old_task_still_read(tok, made):
 def test_default_template_always_there(tok):
     t = httpx.get(B + "/train-templates", headers=H(tok["staff"]), timeout=30).json()
     assert "기본" in t["items"] and set(["data", "base", "cfg", "train"]) <= set(t["items"]["기본"]["blocks"])
-    assert None not in t["tasks"] and "" not in t["tasks"]                           # 업무 없는 프로젝트는 서식 목록에 끼지 않는다
+    assert list(t["items"]) == ["기본"] and "tasks" not in t                          # 10-13 학습 서식은 '기본' 하나(업무별 고르기 없음)

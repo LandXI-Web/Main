@@ -159,8 +159,8 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
       h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '지우기', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '지웠습니다 · 학습 자료로 쌓입니다') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
   }
-  /* ── 클래스 고르기(원칙 205 · 217) — 질문 문장 없이 클래스 목록(서버 한 곳 · GET /classes/pick)에서 고르고, 없으면 더한다.
-     더한 클래스는 '승인 대기' — LX 관리자가 데이터하우스에서 승인 · 합치기 · 거절하기 전까지 학습에 들어가지 않는다. */
+  /* ── 클래스 고르기(원칙 205 · 217 · 223) — 질문 문장 없이 클래스 목록(서버 한 곳 · GET /classes/pick)에서 고르고, 없으면 이름을 새로 써서 더한다.
+     이름을 새로 쓰면 새 클래스(10-13 데이터-개념 ⓐ — 승인 대기 · 비슷한 클래스 먼저 없음). 관리자는 배포 신청 승인 때 모델 클래스로 본다. */
   async function classList() {
     try { return await api('/classes/pick?' + new URLSearchParams({ set: E.L.set })); } catch { return null; }
   }
@@ -169,13 +169,12 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const box = h('div.xe-ask.xe-pk', {});
     const L = await classList();
     if (!L) { box.append(h('p', { text: '클래스 목록을 불러오지 못했습니다' }), h('div.xe-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '닫기', onclick: onBack }))); return box; }
-    const chip = (c) => h('button.xe-chip', { type: 'button', class: c.status === 'proposed' ? 'is-wait' : '', onclick: () => onPick(c, false) },
-      c.name, c.status === 'proposed' ? h('small', { text: '승인 대기' }) : null);
+    const chip = (c) => h('button.xe-chip', { type: 'button', onclick: () => onPick(c, false) }, c.name);
     const not = (xs) => xs.filter((c) => c.name !== except && !(c.aliases || []).includes(except));
     const group = (t, xs) => (not(xs).length ? [h('p.xe-pk-t', { text: t }), h('div.xe-chips', {}, ...not(xs).map(chip))] : []);
     const q = h('input.xe-in', { type: 'search', placeholder: '클래스 찾기', 'aria-label': '클래스 찾기' });
     const hits = h('div.xe-chips');
-    const all = [...L.finds, ...L.model, ...L.pending, ...L.others];
+    const all = [...L.finds, ...L.model, ...L.others];
     q.addEventListener('input', () => {
       const k = q.value.trim().toLowerCase();
       hits.replaceChildren(...(k ? not(all).filter((c) => c.name.toLowerCase().includes(k) || (c.aliases || []).some((a) => a.toLowerCase().includes(k))).slice(0, 12).map(chip) : []));
@@ -186,12 +185,11 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     box.append(
       ...group(`${L.service ? `${L.service} 서비스` : '이 서비스'}가 찾는 것`, L.finds),
       ...group('같은 모델의 다른 클래스', L.model),
-      ...group('승인 대기', L.pending),
       q, hits,
       h('div.xe-act', {}, addB, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: onBack })));
     return box;
   }
-  /** 새 클래스 더하기 — 이름 · 세부(위 클래스) / 새 물체. 비슷한 클래스가 있으면 먼저 보여 준다. */
+  /** 새 클래스 더하기 — 이름 · 세부(위 클래스) / 새 물체. 같은 이름이 이미 있으면 그 클래스로 바꾼다(서버). */
   function addForm(L, onPick, onBack) {
     const name = h('input.xe-in', { type: 'text', maxlength: 40, placeholder: '예: 연동 비닐하우스', 'aria-label': '새 클래스 이름' });
     let kind = 'detail';
@@ -205,34 +203,20 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const segs = [['detail', '세부(위 클래스 있음)'], ['object', '새 물체']].map(([k, t]) => h('button', { type: 'button', 'aria-pressed': String(k === kind), text: t,
       onclick: () => { kind = k; segs.forEach((x, i) => x.setAttribute('aria-pressed', String(['detail', 'object'][i] === k))); upRow.hidden = k !== 'detail'; place(); } }));
     seg.append(...segs);
-    const say = h('div.xe-pk-say');
-    const chips = (xs) => h('div.xe-chips', {}, ...xs.map((c) => h('button.xe-chip', { type: 'button', class: c.status === 'proposed' ? 'is-wait' : '', onclick: () => onPick(c, false) },
-      c.name, c.status === 'proposed' ? h('small', { text: '승인 대기' }) : null)));
-    const go = async (force = false) => {
+    const go = async () => {
       const nm = name.value.trim();
       if (!nm) { name.focus(); return; }
-      if (!force) {                     // 비슷한 클래스를 먼저 보여 준다(같은 뜻이면 그것을 고르게 · 남발 막기)
-        const sm = await api('/classes/similar?' + new URLSearchParams({ name: nm })).catch(() => null);
-        if (sm?.same) { say.replaceChildren(h('p', { text: `'${sm.same.name}' 클래스가 이미 있어요 · 골라 주세요` }), chips([sm.same])); place(); return; }
-        if (sm?.similar?.length) {
-          say.replaceChildren(h('p', { text: '비슷한 클래스가 있어요 · 같은 뜻이면 골라 주세요' }), chips(sm.similar),
-            h('button.xe-undo', { type: 'button', text: '그래도 더하기', onclick: () => go(true) }));
-          place(); return;
-        }
-      }
       try {
-        const j = await api('/classes', { method: 'POST', body: { name: nm, kind, parent_id: kind === 'detail' ? up.value : null, set: E.L.set, force: true, ...(TEST ? { test: true } : {}) } });
-        onPick(j.class, true);
+        const j = await api('/classes', { method: 'POST', body: { name: nm, kind, parent_id: kind === 'detail' ? up.value : null, set: E.L.set, ...(TEST ? { test: true } : {}) } });
+        onPick(j.class, !j.existing);
       } catch (e) { K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '더하지 못했습니다'); place(); }
     };
-    const f = h('div.xe-ask.xe-pk', {}, h('p.xe-pk-t', { text: '새 클래스' }), name, seg, upRow, say,
-      h('p.xe-sub', { text: '관리자 승인 전까지는 학습에 들어가지 않습니다' }),
-      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '더하기', onclick: () => go(false) }), h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: onBack })));
+    const f = h('div.xe-ask.xe-pk', {}, h('p.xe-pk-t', { text: '새 클래스' }), name, seg, upRow,
+      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '더하기', onclick: go }), h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: onBack })));
     setTimeout(() => name.focus(), 30);
     return f;
   }
-  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더했습니다 · 승인 전까지 학습에 들어가지 않습니다`
-    : c.status === 'proposed' ? `${c.name}(으)로 바꿨습니다 · 승인 대기 클래스입니다` : `${c.name}(으)로 바꿨습니다 · 학습 데이터로 쌓입니다`);
+  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다 · 학습 데이터로 쌓입니다` : `${c.name}(으)로 바꿨습니다 · 학습 데이터로 쌓입니다`);
   async function pickClass() {
     const now = E.sel.properties.cls;
     render(h('p.xe-wait', { text: '불러오는 중' }));
@@ -330,7 +314,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     src('xe-shape').setData({ type: 'Feature', geometry, properties: {} });
     const pick = (c) => api('/ximap/edits', { method: 'POST', body: { set: E.L.set, action: 'add', cls_id: c.id, cls: c.name, geometry, ...(TEST ? { test: true } : {}) } }).then((j) => {
       src('xe-shape').setData(EMPTY);
-      K.toast(`${c.name} 하나를 새로 그렸습니다 · ${c.status === 'proposed' ? '승인 대기 클래스입니다' : '학습 데이터로 쌓입니다'}`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
+      K.toast(`${c.name} 하나를 새로 그렸습니다 · 학습 데이터로 쌓입니다`, { ms: 8000, action: { label: '되돌리기', onClick: () => undo(j.edit.id) } });
       onEdited?.(j); live();
       if (E.sel) render(); else close();
     }, (e) => K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '그리지 못했습니다'));

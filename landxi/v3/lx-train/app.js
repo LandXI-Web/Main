@@ -479,7 +479,7 @@ async function openSheet(r) {
     sel.innerHTML = list.map((i) => `<option value="${esc(i.id)}">${esc(imgName(i, rg))}</option>`).join('');
     sel.hidden = !list.length; hint.hidden = !!rg; go.disabled = !list.length;
     noImg.hidden = !!list.length || !rg;
-    if (!list.length && rg) empty(noImg, { kind: 'ingest', compact: true, action: { label: '영상 등록', href: `/landxi/v3/lx-ingest/?region=${encodeURIComponent(rg.sgg_cd)}` } });
+    if (!list.length && rg) empty(noImg, { kind: 'ingest', compact: true, ...(PID ? { action: { label: '영상 등록', href: `/landxi/v3/lx-ingest/?project=${encodeURIComponent(PID)}&region=${encodeURIComponent(rg.sgg_cd)}` } } : {}) });   // 프로젝트 안에서만(10-13)
     devlog('samples', `${rg?.sgg_cd} ${list.map((i) => i.id).join(',')}`);
   };
   const picker = await regionPicker(rp, { onPick: fill, value: REGION || undefined });

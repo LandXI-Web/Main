@@ -152,7 +152,8 @@ test.describe('v3 통합 — 로그인 · 첫 화면 · 이동', () => {
     for (const house of ['lx-ingest', 'lx-train', 'lx-review', 'lx-deploy', 'xi-clean']) {
       await page.goto(`v3/${house}/`);
       await page.waitForTimeout(800);
-      expect(new URL(page.url()).pathname.startsWith(`/landxi/v3/${house}/`)).toBe(true);
+      const to = house === 'lx-ingest' ? 'lx-project' : house;   // 데이터하우스 없앰(10-13) — 프로젝트 밖 데이터 올리기 주소는 프로젝트 목록으로
+      await page.waitForURL((u) => u.pathname.startsWith(`/landxi/v3/${to}/`), { timeout: 15000 });
     }
   });
 

@@ -109,7 +109,7 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-carry-r{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
 .lxp-carry-r:hover{border-color:var(--ink)}
 @media (max-width:640px){.lxp-carry{padding:6px 12px;gap:10px}.lxp-carry-b{width:80px}}
-/* 새 프로젝트 한 창(원칙 220 · 10-12) — 이름 · 설명 · 무엇을 · 영상(파일 올리기 / 데이터하우스에서 고르기 · 대상지는 영상에서) · 구성원 → 만들기 한 번 */
+/* 새 프로젝트 한 창(원칙 220 · 10-12) — 이름 · 설명 · 구성원 · 영상(파일 올리기 / 공유 데이터에서 고르기 · 대상지는 영상에서) → 만들기 한 번 */
 .lxp-new.lxp-new--one{width:min(720px,calc(100vw - 32px))}
 .lxp-desc{height:auto;min-height:64px;padding:10px 14px;resize:vertical;font:400 15px/22px var(--font-body)}
 .lxp-vtabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
@@ -153,7 +153,16 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
   .lxp-new.lxp-new--one{width:min(1040px,calc(100vw - 64px))}
   .lxp-new-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;align-items:start}
 }
+/* 창 크기 고정(원칙 231 · 10-13) — 처음부터 크게 잡고, 고르기를 열거나 목록 · 올린 파일이 길어져도 창 · 칸 자리는 그대로(안쪽만 스크롤).
+   제목 · 만들기 줄은 제자리, 가운데 칸만 스크롤(스크롤 막대 자리도 미리 잡아 칸이 옆으로 밀리지 않음). */
+.lxp-new.lxp-new--one{height:min(820px,calc(100vh - 48px));max-height:none;overflow:hidden}
+.lxp-new--one > h2,.lxp-new--one > .lxp-act,.lxp-new--one > .lxp-err{flex:none}
+.lxp-new--one .lxp-new-g{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-gutter:stable}
+@media (min-width:1100px){
+  .lxp-new--one .lxp-new-g{grid-template-rows:minmax(0,1fr);align-items:stretch;overflow:hidden}
+  .lxp-new--one .lxp-new-c{min-height:0;overflow-y:auto;scrollbar-gutter:stable;scrollbar-width:thin;padding:2px 2px 8px 2px;margin:-2px -10px 0 -2px}
+}
 /* 고르기 칸 — 3열 · 이름은 두 줄까지 어절 단위(글자 중간 끊김 없음 · 규칙 9) */
 .lxp-pk-g{grid-template-columns:repeat(3,minmax(0,1fr))}
-.lxp-pk-c b{white-space:normal;word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px}
+.lxp-pk-c b{white-space:normal;word-break:keep-all;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px}
 .lxp-pk-c small{white-space:normal;word-break:keep-all}

@@ -1,5 +1,5 @@
 // impl-22 핵심 코어 고리(10-12 12:45 확인 · 원칙 205 · 213 · 217) — GPU 0(학습을 시작하지 않음) · 로그인 폼 입력만.
-// 데이터하우스(메뉴 이름 · 학습 데이터 탭 · 영상 · 행정 자료 탭) · 학습 화면 기본 흐름 · 되돌리기 · 'XI맵에서 고친 것 n건' · 'GPU' 글자 0 ·
+// 데이터하우스 없앰(10-13 — 옛 주소 → 프로젝트 목록) · 학습 화면 기본 흐름 · 되돌리기 · 'XI맵에서 고친 곳 n장' · 'GPU' 글자 0 ·
 // LX 관리자 배포 → XI 재학습 · 학습 서식.
 import { test, expect } from '@playwright/test';
 import { frontDoor } from '../../landxi/v3/kit/lint/forbidden.mjs';
@@ -7,19 +7,14 @@ import { frontDoor } from '../../landxi/v3/kit/lint/forbidden.mjs';
 const watch = (page) => { const errs = []; page.on('pageerror', (e) => errs.push(String(e))); page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); }); return errs; };
 
 test.describe('impl-22 · 핵심 코어 고리', () => {
-  test('LX 직원 — 데이터하우스 · 학습 서식 흐름 · 고친 것 선택지', async ({ page, baseURL }) => {
+  test('LX 직원 — 데이터하우스 없음(옛 주소 → 프로젝트 목록) · 학습 서식 기본 흐름 · XI맵에서 고친 곳 선택지', async ({ page, baseURL }) => {
     const errs = watch(page);
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => !/\/login\/?$/.test(u.pathname), { timeout: 20000 });
-    await page.goto('v3/lx-ingest/');
-    await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child')).toHaveText('데이터하우스', { timeout: 20000 });
-    await expect(page.locator('.dh-tabs button')).toHaveText(['학습 데이터', '영상 · 행정 자료']);
-    await expect(page.locator('.dh-tbl tbody tr').first()).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('.dh-seg button')).toHaveText([/클래스별/, /고친 것/, /승인 대기/]);
-    await expect(page.locator('.dh-act button', { hasText: '승인' })).toHaveCount(0);           // 관리 단추는 관리자만
-    await page.locator('.dh-tabs button', { hasText: '영상 · 행정 자료' }).click();
-    await expect(page.locator('.lxi-pick')).toBeVisible({ timeout: 20000 });
-
+    await page.goto('v3/lx-ingest/?tab=train');                                              // 옛 데이터하우스 주소
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-project/'), { timeout: 20000 });
+    await expect(page.locator('.k-rail .k-rail-i[aria-current="true"] > span:last-child')).toHaveText('프로젝트', { timeout: 20000 });
+    await expect(page.locator('.k-rail')).not.toContainText('데이터하우스');
     const url = await page.evaluate(async () => {
       const { api } = await import('/landxi/shared/api-v1.js');
       const j = await api('/projects?scope=all');
@@ -35,7 +30,9 @@ test.describe('impl-22 · 핵심 코어 고리', () => {
     await expect(page.locator('.tb-lock')).toContainText('바꿀 수 없는 것');
     await expect(page.locator('.tb-pane')).not.toContainText('GPU');
     await page.locator('.tb-node[data-kind="data"]').first().click();
-    await expect(page.locator('.tb-side .tb-opt', { hasText: 'XI맵에서 고친 것' })).toContainText(/\d+건/);
+    const xi = page.locator('.tb-side .tb-opt', { hasText: 'XI맵에서 고친 곳' });                // 그 프로젝트가 만든 분석서비스가 있을 때만(1장이 된 칸 n장)
+    if (await xi.count()) await expect(xi).toContainText(/\d[\d,]*장/);
+    await expect(page.locator('.tb-side')).not.toContainText('승인 대기');
     await page.keyboard.press('Escape');
     await page.locator('.tb-add .tb-chip', { hasText: '추론 시험' }).click();
     await page.keyboard.press('Escape');
@@ -54,8 +51,10 @@ test.describe('impl-22 · 핵심 코어 고리', () => {
     await expect(page.locator('.rt-tbl tbody tr').first()).toBeVisible();
     await expect(page.locator('.rt-tbl')).toContainText('비닐하우스');
     await expect(page.locator('.rt-col')).not.toContainText('GPU');
+    await expect(page.locator('.rt-col')).not.toContainText('조용하면');
     await page.locator('.im-tabs button', { hasText: '학습 서식' }).click();
     await expect(page.locator('.rt-blk')).toHaveCount(7);
+    await expect(page.locator('.rt-kv select[aria-label="업무"]')).toHaveCount(0);           // 학습 서식은 '기본' 하나(10-13)
     await expect(page.locator('.rt-blk input:disabled')).toHaveCount(4);                     // 빠질 수 없는 블록
     expect(errs).toEqual([]);
   });

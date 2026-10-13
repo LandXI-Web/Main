@@ -11,7 +11,8 @@ test('LX 관리자 — 배포 → XI 재학습: 고친 자리 한 칸 = 학습 �
   await page.goto('v3/ops-infra/#/deploys/retrain');
   await expect(page.locator('.rt-tbl tbody tr').first()).toBeVisible({ timeout: 30000 });
   await expect(page.locator('.rt-tbl tbody tr').first().locator('small.num')).toHaveText(/^\d[\d,]* \/ \d[\d,]*장$/);
-  await expect(page.locator('.rv-note', { hasText: '분 조용하면 학습 데이터 1장이 됩니다' })).toHaveCount(1);
+  await expect(page.locator('.rv-note', { hasText: 'XI맵에서 고친 곳은 학습 데이터로 모입니다' })).toHaveCount(1);   // 10-13 쉬운 말(원칙 230)
+  await expect(page.locator('.rt-col')).not.toContainText('조용하면');
   await expect(page.locator('.rt-tbl')).not.toContainText('GPU');
   expect(errs).toEqual([]);
 });

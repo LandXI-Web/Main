@@ -303,6 +303,8 @@ async def _ingest(p, sid: str, root: Path, zp: Path, task: str, region: str | No
         if project_id:                                       # 프로젝트 학습데이터로 잇는다(프로젝트 → 학습데이터 구축 단계)
             from .projects import link
             await link(conn, str(project_id), "sample", sid, p.user_id)
+        from .core import sample_classes_from_names          # 묶음 이름표 → 클래스 한 곳(새 이름 = 새 클래스 · 10-13 데이터-개념 ⓐ)
+        await sample_classes_from_names(conn, sid, meta["names"], p.user_id)
         r = await _row(conn, sid)
     return _pub(r, {"as_of": now_iso()})
 

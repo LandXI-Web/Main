@@ -10,9 +10,9 @@ GET    /projects?scope=mine|led|joined|archived|all
                                          · steps(단계 6 — 데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
 POST   /projects                         {name, task?, task_id?, regions:[code..], description?, members?:[uid..], imagery?:[iid..], from_upload?}
                                          → 바로 만들어진다 · 프로젝트장 = 만든 직원. 새 프로젝트 한 창(원칙 220 · 10-12): 설명(선택) · 구성원 · 영상을 한 번에.
-                                         imagery(데이터하우스에서 고른 영상)가 있으면 대상 지역 = 그 영상 자리(화면이 고르지 않는다) ·
+                                         imagery(공유 데이터에서 고른 영상)가 있으면 대상 지역 = 그 영상 자리(화면이 고르지 않는다) ·
                                          from_upload = 영상을 올리는 중이라 지역은 올린 영상이 등록되면 정해진다(그때까지 비어 있음 — POST …/imagery)
-GET    /projects/imagery                 새 프로젝트 창의 '데이터하우스 영상에서 고르기' — LX 영상(이름 · 지역 · 연도 · 종류 · 썸네일 경로)
+GET    /projects/imagery                 새 프로젝트 창의 '공유 데이터에서 고르기' — LX 영상(이름 · 지역 · 연도 · 종류 · 썸네일 경로)
 POST   /projects/{pid}/imagery           {imagery:[iid..]} 영상을 이 프로젝트에 잇고 그 자리의 지역을 대상 지역에 더한다(프로젝트장 · 구성원)
 GET    /projects/places                  대상 지역 고르기의 해외 항목(국내 시군구는 GET /regions)
 GET    /projects/people                  구성원 고르기(LX 직원 · 관리자)
@@ -738,17 +738,24 @@ async def places(request: Request):
 
 
 @router.get("/projects/people")
-async def people_list(request: Request):
-    _lx(request)
+async def people_list(request: Request, q: str | None = None):
+    """구성원 고르기 — 가입 승인된 LX 계정(LX 직원 · 관리자 · 사용 중)만. 승인 전 가입 신청 · 잠긴 · 사용 중지 계정 · 기관 계정은 없다.
+    q 를 주면(새 프로젝트 창 구성원 찾기 · 10-13) 이름 또는 메일 일부로 찾고 나 자신은 뺀다. 메일은 응답에 내지 않는다."""
+    p = _lx(request)
     async with db(realm="lx") as conn:
         ppl = await _people(conn)
-    items = [{"id": x["id"], "name": x["name"], "role_label": x["role_label"]} for x in ppl.values() if x["active"] and x["role"] in ("staff", "admin")]
+        logins = {r["id"]: (r["login"] or "").lower() for r in await conn.fetch("SELECT id, login FROM lx_users")} if q is not None else {}
+    rows = [x for x in ppl.values() if x["active"] and x["role"] in ("staff", "admin")]
+    if q is not None:
+        k = "".join(q.split()).lower()[:60]
+        rows = [x for x in rows if x["id"] != p.user_id and (not k or k in "".join(x["name"].split()).lower() or k in logins.get(x["id"], ""))]
+    items = [{"id": x["id"], "name": x["name"], "role_label": x["role_label"]} for x in rows]
     return {"items": sorted(items, key=lambda x: (x["role_label"], x["name"])), "as_of": now_iso()}
 
 
 @router.get("/projects/imagery")
 async def imagery_list(request: Request):
-    """새 프로젝트 창의 '데이터하우스 영상에서 고르기' — LX 영상(지형 · 결과 층 빼고). 줄마다 이름 · 지역 · 연도 · 종류 · 썸네일 경로(LX 계정만 받는 그림).
+    """새 프로젝트 창의 '공유 데이터에서 고르기' — LX 영상(지형 · 결과 층 빼고). 줄마다 이름 · 지역 · 연도 · 종류 · 썸네일 경로(LX 계정만 받는 그림).
     최근 촬영 → 이름 순. 경로 · 파일 이름은 내지 않는다."""
     _lx(request)
     from .regions import regions_base
@@ -795,7 +802,7 @@ async def notice_seen(nid: str, request: Request):
 @router.post("/projects", status_code=201)
 async def create(body: dict, request: Request):
     """프로젝트 만들기 — 관리자 승인 없이 바로 만들어진다(R-D3 갈림길 ⓐ). 프로젝트장 = 만든 직원.
-    새 프로젝트 한 창(원칙 220 · 10-12): 이름(필수) · 설명(선택) · 영상(데이터하우스에서 고름 = imagery · 올리는 중 = from_upload) · 구성원(members).
+    새 프로젝트 한 창(원칙 220 · 10-12): 이름(필수) · 설명(선택) · 영상(공유 데이터에서 고름 = imagery · 올리는 중 = from_upload) · 구성원(members).
     대상 지역 = 고른 영상의 자리(화면이 고르지 않는다) · 영상이 없을 때만 직원이 고른 regions · 올리는 중이면 등록될 때 정해진다(비어 있음)."""
     p = _lx(request)
     name = str(body.get("name") or "").strip()[:NAME_MAX]

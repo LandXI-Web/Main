@@ -175,10 +175,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     card.innerHTML = '';
     const box = h('div.xa-empty');
     card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), box);
-    // 다음 행동 = 영상 등록(LX 직원 화면) — 그 지역을 들고 간다
-    const code = regionInfo?.()?.meta?.sgg_cd || region?.code || '';
-    const act = !tenant && !demo ? { label: '영상 등록', href: '../lx-ingest/' + (code ? '?' + new URLSearchParams({ region: code }) : '') } : null;
-    empty(box, { kind: 'ingest', compact: true, ...(act ? { action: act } : {}) });
+    // 영상 · 행정 자료는 공유 데이터(LX 관리자) — 직원 '영상 등록'(데이터하우스) 길은 없앰(10-13 데이터-개념 ⓐ)
+    empty(box, { kind: 'ingest', compact: true });
     card.hidden = false;
   }
   /* 전체 범위 기록 보기 — 이 지역 시군 전역을 이미 끝낸 분석 기록이 있으면 보조 동작 하나(없으면 버튼 없음) */
@@ -261,12 +259,9 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       live() { if (!prep) return; prep = false; prog.classList.remove('is-prep'); line.textContent = '분석 중 '; line.append(pct, '%', where); },
       emd(nm) { where.textContent = nm ? ` · ${nm}` : ''; } };
   }
-  /** 영상이 없는 나머지 — 한 줄 + '영상 등록'(LX 직원 · 관리자만 · 그 지역을 들고 간다) */
+  /** 영상이 없는 나머지 — 한 줄(영상 · 행정 자료는 공유 데이터 — 데이터하우스 '영상 등록' 길은 없앰 · 10-13) */
   function restLine(rest) {
-    const code = regionInfo?.()?.meta?.sgg_cd || region?.code || '';
-    const p = h('p.xa-rest', { text: rest });
-    if (staff && !demo) p.append(' ', h('a.t-btn.t-btn--text.xa-reg', { href: '../lx-ingest/' + (code ? '?' + new URLSearchParams({ region: code }) : ''), text: '영상 등록' }));
-    return p;
+    return h('p.xa-rest', { text: rest });
   }
   function cardDone(n, envN, { replay = false } = {}) {
     card.innerHTML = '';

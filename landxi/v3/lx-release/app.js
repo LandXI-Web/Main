@@ -74,7 +74,7 @@ async function drawInfer() {
 
   const pick = () => models.find((m) => m.id === st.model);
   const fits = (img) => { const m = pick(); if (!m?.gsd_m || !img.gsd_m) return true; const r = img.gsd_m / m.gsd_m; return r <= 2 && r >= 0.5; };
-  const find = h('input.t-input.rl-find', { type: 'search', placeholder: '공유 데이터셋에서 지역 이름으로 찾기', 'aria-label': '영상 찾기' });
+  const find = h('input.t-input.rl-find', { type: 'search', placeholder: '지역 이름', 'aria-label': '공유 데이터에서 찾기' });
   const iProj = h('ul.rl-imgs'), iShared = h('ul.rl-imgs');
   const SHOW = 6;
   function imgRow(it) {
@@ -170,10 +170,10 @@ async function drawInfer() {
     h('div.rl-step', {}, h('h3', { text: '모델' }), models.length ? mList : h('p.rl-empty', { text: '아직 학습한 모델이 없습니다 — 학습 단계에서 먼저 학습해 주세요' })),
     h('div.rl-step', {}, h('h3', { text: '영상' }),
       h('p.rl-grp', { text: '프로젝트 영상' }), iProj,
-      h('p.rl-grp', { text: '공유 데이터셋' }), find, iShared),
+      h('p.rl-grp', { text: '공유 데이터에서 고르기' }), find, iShared),
     h('div.rl-step', {}, h('h3', { text: '범위' }), rangeSel, rangeNote),
     setBox,
-    h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '분석은 작업 대기열 순서대로 · GPU 한 장씩 돕니다')), can ? go : h('p.rl-note', { text: '추론은 프로젝트장 · 구성원이 합니다' })), msg);
+    h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '분석은 작업 대기열 순서대로 돕니다')), can ? go : h('p.rl-note', { text: '추론은 프로젝트장 · 구성원이 합니다' })), msg);
 
   /* 오른쪽 — 결과 목록 */
   const jl = h('ol.rl-jobs');

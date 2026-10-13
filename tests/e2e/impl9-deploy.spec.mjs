@@ -1,5 +1,5 @@
 // 구현 9차 · 분석 서비스 배포(10-09 배포-1 · 2 · 3 ⓐ · 5) — 로그인 폼 입력만(세션 주입 0) · 읽기만(분석 · 신청 · 공유를 보내지 않는다) · GPU 0.
-// 확인: ① 프로젝트 단계 6 = … 학습 → 추론 → 결과 확인 → 배포 신청(서비스 관리 없음) ② 추론 탭 = 모델 · 영상(프로젝트 · 공유 데이터셋) · 범위 · 결과 목록
+// 확인: ① 프로젝트 단계 6 = … 학습 → 추론 → 결과 확인 → 배포 신청(서비스 관리 없음) ② 추론 탭 = 모델 · 영상(프로젝트 · 공유 데이터에서 고르기) · 범위 · 결과 목록
 //       ③ 배포 신청 = 서버 값 칸 + 메모 한 칸 · 상태 줄 ④ 관리자 '배포' = 배포 신청 · 기관 공유 · 사용 현황(+ 개선 후보) · 공유는 체크 표 하나
 //       ⑤ 대시보드 '서비스 사용 현황' 요약 ⑥ 가로 넘침 0 · 콘솔 오류 0 · '결재' · '반려' · '서비스 관리' 0
 import { test, expect } from '@playwright/test';
@@ -40,7 +40,7 @@ test.describe('구현 9차 · 분석 서비스 배포', () => {
     await expect(bar.locator('.lxp-st')).toHaveText([/데이터 올리기/, /학습데이터 구축/, /^\d?학습$/, /추론/, /결과 확인/, /배포 신청/], { timeout: 20000 });
     await expect(page.locator('.rl-card h2')).toHaveText(['추론', '추론 결과'], { timeout: 20000 });
     await expect(page.locator('.rl-step h3')).toHaveText(['모델', '영상', '범위']);
-    await expect(page.locator('.rl-grp')).toHaveText(['프로젝트 영상', '공유 데이터셋']);
+    await expect(page.locator('.rl-grp')).toHaveText(['프로젝트 영상', '공유 데이터에서 고르기']);
     await check(page);
     await page.goto(`v3/lx-release/?project=${pr.id}&stage=publish`);
     await expect(page.locator('.rl-card h2')).toHaveText(['배포 신청', '신청 상태', '지난 판', '공유된 기관'], { timeout: 20000 });

@@ -49,7 +49,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await expect(box).toBeVisible();
     await box.locator('input[name=name]').fill(NAME);
     await box.locator('textarea[name=description]').fill('e2e 시험');
-    await expect(box.locator('.lxp-where')).toHaveText('영상 없이 만들면 대상지를 고릅니다');
+    await expect(box.locator('.lxp-where')).toHaveText('대상지');                         // 칸 이름만(10-13 원칙 230)
     await box.locator('.lxp-pick input[placeholder="시군구 이름을 검색"]').waitFor();   // 지역 목록을 받은 뒤(키트 지역 검색 준비)
     await box.locator('.lxp-pick input').fill('남원');
     await box.locator('.lxp-pick [role=option]').first().waitFor();
@@ -82,7 +82,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
     await page.locator('.lxp-now .lxp-go').click();
     await page.waitForURL((u) => /\/landxi\/v3\/lx-(train|ingest|review|deploy)\//.test(u.pathname) && u.searchParams.get('project')?.startsWith('prj_'), { timeout: 20000 });
     await expect(page.locator('.k-sub .lxp-bar-name b')).toHaveText(NAME, { timeout: 20000 });
-    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['대시보드', '프로젝트', '분석하기', '지도 서비스', 'XI맵', '데이터하우스', '요청함']);
+    await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(['대시보드', '프로젝트', '분석하기', '지도 서비스', 'XI맵', '요청함']);   // 데이터하우스 없앰(10-13)
     await expect(page.locator('.k-rail .k-rail-i[aria-current="true"]')).toHaveText(/프로젝트/);
     await expect(page.locator('.k-sub .lxp-st')).toHaveCount(6);
     await expect(page.locator('.k-sub .lxp-st').nth(1)).toContainText('학습데이터');

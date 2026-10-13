@@ -294,8 +294,8 @@ function imageryCard(c) {
   let all = false;   // 처음엔 여섯 장(고른 영상 먼저) · '더 보기'로 모두
   const mapBox = h('div.la-im-map');
   const note = h('p.la-note', { text: '청록 테두리는 고른 영상이 실제로 덮는 범위입니다. 이 범위 안에서만 분석합니다. 다른 영상 카드에 마우스를 올리면 그 범위가 점선으로 보입니다.' });
-  const el = h('section.t-card.la-box.la-wide.la-im', { id: 'imagery', 'aria-label': '영상 고르기' },
-    h('h2.la-h', {}, '영상 고르기', h('small', { text: '고른 지역을 덮는 공유 영상 · 한 번에 영상 하나' })), tabs,
+  const el = h('section.t-card.la-box.la-wide.la-im', { id: 'imagery', 'aria-label': '공유 데이터에서 고르기' },
+    h('h2.la-h', {}, '공유 데이터에서 고르기', h('small', { text: '한 번에 영상 하나' })), tabs,
     h('div.la-im-body', {}, h('div.la-im-r', {}, mapBox, note), grid, more));
   const cache = new Map();
   let stage = null, seq = 0;
@@ -327,7 +327,7 @@ function imageryCard(c) {
     const items = d.items || [];
     const cur = items.find((x) => x.id === chosen) || items.find((x) => x.pick) || null;
     if (!items.length) {
-      grid.replaceChildren(h('p.la-im-none', {}, `${d.name}을 덮는 영상이 아직 없습니다 · `, h('a', { href: '../lx-ingest/', text: '데이터 올리기' })));
+      grid.replaceChildren(h('p.la-im-none', { text: `${d.name}을 덮는 영상이 아직 없습니다` }));   // 영상 · 행정 자료는 공유 데이터(관리자) — 직원은 고르기만(10-13)
       mapBox.hidden = true; note.hidden = true; more.hidden = true; return;
     }
     const ordered = cur ? [cur, ...items.filter((x) => x.id !== cur.id)] : items;
@@ -422,12 +422,12 @@ function analyzePanel(side, c, picker) {
       const f = p.fit;
       const line = !f ? h('span.s.wait', { text: '영상과 카드 조건을 보는 중' })
         : f.fits ? h('span.s.ok', { text: `${f.imagery?.word ? f.imagery.word + ' · ' : ''}카드 조건에 맞음 ✓` })
-          : f.fits === null ? h('span.s', {}, '등록된 영상이 없습니다 · ', h('a', { href: '../lx-ingest/', text: '데이터 올리기' }))
+          : f.fits === null ? h('span.s', { text: '등록된 영상이 없습니다' })
             : h('span.s.warn', { text: f.note || '이 카드로 분석할 수 없습니다' });
       const img = p.imagery ? p.imagery.name : f?.imagery?.word ? `${f.imagery.word} 영상` : '';
       return h('li', {}, h('div.r1', {}, h('b', { text: p.name }), h('button.la-x', { type: 'button', 'aria-label': `${p.name} 빼기`, text: '×', onclick: () => { picks.delete(sgg); draw(); showPicker(null); } })),
         line, ...(f?.fits && f.scope_text ? String(f.scope_text).split(' — ').map((t) => h('span.s.sub', { text: t })) : []),
-        picker && f && f.fits !== null ? h('span.s.sub', {}, `영상 · ${img || '서버가 고름'} · `, h('a', { href: '#imagery', text: '영상 고르기', onclick: (e) => { e.preventDefault(); showPicker(sgg); picker.el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } })) : null,
+        picker && f && f.fits !== null ? h('span.s.sub', {}, `영상 · ${img || '서버가 고름'} · `, h('a', { href: '#imagery', text: '공유 데이터에서 고르기', onclick: (e) => { e.preventDefault(); showPicker(sgg); picker.el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } })) : null,
         f?.running ? h('span.s', {}, '이미 분석 중입니다 · ', h('a', { href: MAPSVC, text: '지도 서비스' })) : null);
     }));
     const ok = [...picks.entries()].filter(([, p]) => p.fit?.fits && !p.fit.running);

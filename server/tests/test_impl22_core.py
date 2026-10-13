@@ -1,12 +1,12 @@
 """바퀴 8 · 핵심 코어 고리(원칙 205 · 213 · 217 · 10-12 12:45 확인) — GPU 0(학습을 대기열에 넣지 않는다).
 
 ① 클래스 한 곳: 모델 · 서비스 판 · 결과 · 학습 데이터 묶음 · 고친 기록이 같은 클래스 id 를 가리킨다(결과 글자는 그대로 — 숫자 바뀌지 않음).
-② 새 클래스: 직원이 더하면 '승인 대기'(비슷한 이름은 먼저 보여 줌) · 그 클래스로 고친 것은 학습 데이터에 안 들어감 · 관리자만 승인 · 합치기 · 거절.
-③ 세부(위 클래스 있음)를 승인하면 위 클래스 서비스의 지금 판에 '배우는 중 · 나누기'로 붙고, 새 물체는 새 모델 프로젝트 후보.
-④ 고친 것 → 학습 데이터: 데이터하우스 · 학습 화면 선택지에 '고친 것 n건'(학습에 넣는 것만 센다 — 결정 3 전 규칙 한 곳).
+② 새 클래스: 이름을 새로 쓰면 새 클래스(10-13 — 승인 대기 · 합치기 · 거절 · 비슷한 클래스 먼저 없음) · 같은 이름이면 그 클래스.
+③ 세부(위 클래스 있음)는 위 클래스 서비스의 지금 판에 '배우는 중 · 나누기'로 붙고, XI맵에서 새로 쓴 새 물체는 새 모델 프로젝트 후보.
+④ 고친 것 → 그 서비스를 만든 프로젝트의 학습 데이터 n장(학습 화면 선택지 · GET /train-data/xi — 데이터하우스 없앰 10-13).
 ⑤ XI 재학습 · 배포 관리: 서비스마다 줄 · 쉬는 시간 자동 기본 · 수동 · 기준 · 스케줄러 판단(쉬는 시간 · 기준 · 다른 고부하 작업 · 학습 자리 하나) ·
    10-08 비닐하우스 다시 학습(같은 검증 묶음 87% < 지금 판 91%)은 '지금 판보다 낮음 · 후보로 남음'.
-⑥ 학습 서식: 업무별 기본 흐름 · 빠질 수 없는 블록 · 관리자만 바꿈.
+⑥ 학습 서식: '기본' 하나 · 빠질 수 없는 블록 · 관리자만 바꿈.
 시험으로 만든 클래스 · 고친 기록 · 재학습 기록은 '시험' 표시 후 지워 0 으로 되돌린다.
 실행: python -m pytest server/tests/test_impl22_core.py -q   (게이트웨이 :8700)
 """
@@ -104,78 +104,56 @@ def test_edit_points_to_class_id(tok):
     assert u["feature"]["properties"]["cls"] == cur
 
 
-# ② ③ 새 클래스 ───────────────────────────────────────────────
+# ② ③ 새 클래스 — 이름을 새로 쓰면 새 클래스(10-13 데이터-개념 ⓐ · 승인 대기 · 합치기 · 거절 · 비슷한 클래스 먼저 없음) ──────
 def test_new_class_flow(tok):
     s_, a_ = tok["staff"], tok["admin"]
     x = _board_pick(s_)
     st = x["layer"]["set"]
     gh = next(c for c in get(s_, "/classes")["items"] if c["name"] == "비닐하우스")
-    # 비슷한 이름 먼저(화면은 GET 으로 먼저 묻는다) → 서버도 POST 에서 한 번 더 막음(409 similar)
-    sm = get(s_, "/classes/similar?name=연동 비닐하우스")
-    assert sm["same"] is None and {"단동 비닐하우스", "다동 비닐하우스"} <= {c["name"] for c in sm["similar"]}
-    assert get(s_, "/classes/similar?name=비닐하우스_다동")["same"]["name"] == "다동 비닐하우스"
+    # 직원이 이름을 새로 쓰면 바로 새 클래스(승인 대기 없음) — 세부는 비닐하우스 서비스 지금 판에 '배우는 중 · 나누기'
     r = call(s_, "POST", "/classes", {"name": "연동 비닐하우스", "kind": "detail", "parent_id": gh["id"], "set": st, "test": True})
-    assert r.status_code == 409 and r.json()["error"]["detail"]["similar"]
-    # 이미 있는 이름(다른 이름 포함)은 더할 수 없음
-    r = call(s_, "POST", "/classes", {"name": "비닐하우스_다동", "kind": "object", "test": True, "force": True})
-    assert r.status_code == 409
-    r = call(s_, "POST", "/classes", {"name": "연동 비닐하우스", "kind": "detail", "parent_id": gh["id"], "set": st, "test": True, "force": True})
     assert r.status_code == 201, r.text
     c = r.json()["class"]
-    assert c["status"] == "proposed" and c["parent"]["id"] == gh["id"] and c["test"]
-    # 직원은 결정 못 함
-    assert call(s_, "POST", f"/classes/{c['id']}/decide", {"action": "approve"}).status_code == 403
-    # 승인 대기 클래스로 고친 것 = 학습에 안 들어감
+    assert c["status"] == "approved" and c["parent"]["id"] == gh["id"] and c["test"] and r.json()["existing"] is False
+    assert sql("SELECT state, how FROM card_classes WHERE card_id='card-5e85a9' AND class_id=%s", c["id"]) == [("learning", "split")]
+    rt = next(r for r in get(a_, "/retrain")["services"] if r["card_id"] == "card-5e85a9")
+    assert [d["name"] for d in rt["split"]] == ["연동 비닐하우스"] and "pending" not in rt
+    # 같은 이름(다른 이름 · 이름표 포함)을 쓰면 그 클래스(새로 만들지 않음)
+    again = call(s_, "POST", "/classes", {"name": "연동 비닐하우스", "kind": "object", "test": True}).json()
+    assert again["existing"] is True and again["class"]["id"] == c["id"]
+    al = call(s_, "POST", "/classes", {"name": "비닐하우스_다동", "kind": "object", "test": True}).json()
+    assert al["existing"] is True and al["class"]["name"] == "다동 비닐하우스"
+    # 그 클래스로 고친 것은 바로 학습에 들어가는 고친 기록(승인 대기 단계 없음)
     f = get(s_, f"/results/{st}/features?limit=1")["features"][0]
     e = call(s_, "POST", "/ximap/edits", {"set": st, "fid": f["id"], "action": "reclass", "cls_id": c["id"], "test": True}).json()
-    sql("UPDATE result_edits SET test=false WHERE id=%s", e["edit"]["id"])          # 시험 줄을 잠깐 실제처럼 세어 본다(곧 되돌림)
-    try:
-        dh = get(s_, "/datahouse/classes")
-        mine = next(i for i in dh["items"] if i["id"] == c["id"])
-        assert mine["edits"]["value"] == 0 and mine["edits_pending"]["value"] == 1 and mine["status"] == "proposed"
-        assert dh["edits_pending"]["value"] >= 1
-        # 관리자 승인 → 세부는 비닐하우스 서비스 지금 판에 '배우는 중 · 나누기'
-        ok = call(a_, "POST", f"/classes/{c['id']}/decide", {"action": "approve"})
-        assert ok.status_code == 200 and ok.json()["class"]["status"] == "approved"
-        assert sql("SELECT state, how FROM card_classes WHERE card_id='card-5e85a9' AND class_id=%s", c["id"]) == [("learning", "split")]
-        mine = next(i for i in get(s_, "/datahouse/classes")["items"] if i["id"] == c["id"])
-        assert mine["edits"]["value"] == 1                                            # 승인되면 학습에 들어간다
-        rt = next(r for r in get(a_, "/retrain")["services"] if r["card_id"] == "card-5e85a9")
-        assert [d["name"] for d in rt["split"]] == ["연동 비닐하우스"]
-    finally:
-        sql("UPDATE result_edits SET test=true WHERE id=%s", e["edit"]["id"])
-        call(s_, "POST", f"/ximap/edits/{e['edit']['id']}/undo", {})
-    # 합치기 · 거절
-    o = call(s_, "POST", "/classes", {"name": "시험 태양광", "kind": "object", "card_id": "card-45424f", "test": True, "force": True}).json()["class"]
-    m = call(s_, "POST", "/classes", {"name": "시험 하우스 묶음", "kind": "object", "card_id": "card-45424f", "test": True, "force": True}).json()["class"]
-    rj = call(a_, "POST", f"/classes/{o['id']}/decide", {"action": "reject", "note": "시험"}).json()["class"]
-    assert rj["status"] == "rejected"
-    mg = call(a_, "POST", f"/classes/{m['id']}/decide", {"action": "merge", "into": gh["id"]}).json()["class"]
-    assert mg["status"] == "merged" and mg["merged_into"] == gh["id"]
-    assert sql("SELECT class_id FROM class_labels WHERE label='시험 하우스 묶음'")[0][0] == gh["id"]
-    sql("UPDATE classes SET aliases = array_remove(aliases, '시험 하우스 묶음') WHERE id=%s", gh["id"])
-    sql("DELETE FROM class_labels WHERE label='시험 하우스 묶음'")
-    # 새 물체(승인) → 새 모델 프로젝트 후보
-    n = call(a_, "POST", "/classes", {"name": "시험 새 물체", "kind": "object", "test": True, "force": True}).json()["class"]
-    assert n["status"] == "approved"                                                # 관리자가 더하면 바로 승인
+    assert sql("SELECT cls_after_id FROM result_edits WHERE id=%s", e["edit"]["id"])[0][0] == c["id"]
+    call(s_, "POST", f"/ximap/edits/{e['edit']['id']}/undo", {})
+    # 없앤 길 — 승인 · 합치기 · 거절 · 비슷한 클래스 먼저 · 분류 바꾸기의 '승인 대기' 묶음
+    assert call(a_, "POST", f"/classes/{c['id']}/decide", {"action": "approve"}).status_code in (404, 405)
+    assert call(s_, "GET", "/classes/similar?name=연동").status_code in (404, 405)
+    assert "pending" not in get(s_, "/classes/pick?" + str(httpx.QueryParams({"set": st})))
+    # XI맵에서 새로 쓴 새 물체 → 새 모델 프로젝트 후보
+    n = call(s_, "POST", "/classes", {"name": "시험 새 물체", "kind": "object", "set": st, "test": True}).json()["class"]
+    assert n["status"] == "approved"
     assert any(cd["id"] == n["id"] for cd in get(a_, "/retrain")["candidates"])
     # 시험 정리 — 시험 클래스만 지울 수 있음
     assert call(a_, "DELETE", "/classes/cl_building").status_code == 403
-    for cid in (c["id"], o["id"], m["id"], n["id"]):
+    for cid in (c["id"], n["id"]):
         assert call(a_, "DELETE", f"/classes/{cid}").status_code == 200
     assert sql("SELECT count(*) FROM classes WHERE test")[0][0] == 0
 
 
-# ④ 고친 것 → 학습 데이터 ──────────────────────────────────────
-def test_units_one_rule(tok):
-    dh = get(tok["staff"], "/datahouse/classes")
-    real = sql("SELECT count(*) FROM result_edits e LEFT JOIN classes ca ON ca.id=e.cls_after_id WHERE e.undone_at IS NULL AND NOT e.test "
-               "AND e.action <> 'memo' AND (e.cls_after_id IS NULL OR ca.status='approved')")[0][0]
-    assert dh["edits"]["value"] == real and dh["unit"]["id"] == "edit"
-    u = get(tok["staff"], "/datahouse/units?project=prj_3fdba452d5")
-    assert u["card_id"] == "card-5e85a9" and u["units"]["value"] >= 0
-    gh = next(i for i in dh["items"] if i["name"] == "비닐하우스")
-    assert gh["samples"]["value"] == 130 and any(s["card_id"] == "card-5e85a9" for s in gh["services"])   # 올린 묶음 class_images(비닐하우스 130)
+# ④ 고친 것 → 그 서비스를 만든 프로젝트의 학습 데이터(1장이 된 칸 · 결정 3 ⓐ 그대로) ──────────────
+def test_project_xi_data(tok):
+    u = get(tok["staff"], "/train-data/xi?project=prj_3fdba452d5")
+    assert "card-5e85a9" in u["cards"] and u["unit"]["id"] == "tile"
+    real = sql("SELECT count(*) FROM train_tiles WHERE state='made' AND NOT test AND card_id = ANY(%s)", u["cards"])[0][0]
+    assert u["tiles"]["value"] == real
+    # 서비스가 없는 프로젝트는 0장 · 빈 묶음
+    assert get(tok["staff"], "/train-data/xi?project=prj_none")["cards"] == []
+    # 데이터하우스 화면용 길은 없앰
+    for p in ("/datahouse/classes", "/datahouse/edits", "/datahouse/units?project=prj_3fdba452d5"):
+        assert call(tok["staff"], "GET", p).status_code == 404
 
 
 # ⑤ XI 재학습 · 배포 관리 ─────────────────────────────────────
@@ -233,16 +211,22 @@ def test_service_mode_and_settings(tok):
     assert call(a, "PUT", "/retrain/settings", {"quiet_start": "25:00"}).status_code == 400
 
 
-# ⑥ 학습 서식 ─────────────────────────────────────────────────
+# ⑥ 학습 서식 — '기본' 하나(10-13) · 옛 업무별 값은 지우지 않고 쓰지 않음 ─────────────────────
 def test_templates(tok):
     a, s_ = tok["admin"], tok["staff"]
     T = get(s_, "/train-templates")
+    assert list(T["items"]) == ["기본"] and "tasks" not in T
     assert T["items"]["기본"]["blocks"][:4] == ["data", "base", "cfg", "train"] and not T["can_manage"]
     assert "학습 장비 배정(프로젝트 하나에 한 장)" in T["locked"]
-    assert call(s_, "PUT", "/train-templates/주차장", {"blocks": ["data", "base", "cfg", "train"]}).status_code == 403
-    assert call(a, "PUT", "/train-templates/주차장", {"blocks": ["data", "base", "train"]}).status_code == 400
-    r = call(a, "PUT", "/train-templates/주차장", {"blocks": ["data", "base", "cfg", "train", "eval", "test", "deploy"], "params": {"epochs": 99, "imgsz": 1280, "batch": 8}})
-    assert r.status_code == 200 and r.json()["template"]["params"] == {"epochs": 50, "imgsz": 1280, "batch": 8}   # 상한은 서버가 지킴
-    assert get(s_, "/train-templates")["items"]["주차장"]["blocks"][-2:] == ["test", "deploy"]
-    assert call(a, "DELETE", "/train-templates/주차장").status_code == 200
-    assert "주차장" not in get(s_, "/train-templates")["items"]
+    assert call(s_, "PUT", "/train-templates/기본", {"blocks": ["data", "base", "cfg", "train"]}).status_code == 403
+    assert call(a, "PUT", "/train-templates/주차장", {"blocks": ["data", "base", "cfg", "train"]}).status_code == 400   # 업무별 서식 없음
+    assert call(a, "PUT", "/train-templates/기본", {"blocks": ["data", "base", "train"]}).status_code == 400
+    assert call(a, "DELETE", "/train-templates/기본").status_code in (404, 405)
+    before = sql("SELECT value FROM lx_settings WHERE key='train.templates'")[0][0]
+    try:
+        r = call(a, "PUT", "/train-templates/기본", {"blocks": ["data", "base", "cfg", "train", "eval", "test", "deploy"], "params": {"epochs": 99, "imgsz": 1280, "batch": 8}})
+        assert r.status_code == 200 and r.json()["template"]["params"] == {"epochs": 50, "imgsz": 1280, "batch": 8}   # 상한은 서버가 지킴
+        assert get(s_, "/train-templates")["items"]["기본"]["blocks"][-2:] == ["test", "deploy"]
+    finally:
+        import json as _j
+        sql("UPDATE lx_settings SET value=%s::jsonb WHERE key='train.templates'", _j.dumps(before, ensure_ascii=False))

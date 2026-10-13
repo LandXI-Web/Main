@@ -2,9 +2,10 @@
    바로 학습데이터 구축 화면으로 전환할 수 있는거 아닌가. 너무 불필요한 스텝을 늘린거 같다." · 예전 한 장 시안 design-r10/lx-staff/mock/a-new.html).
    한 창에서 채우고 '만들기' 한 번 → 바로 그 프로젝트 '학습데이터 구축' 화면으로(프로젝트 한 장 · 데이터 올리기 화면을 거치지 않는다).
      이름(필수) · 설명(선택) · ('무엇을'은 묻지 않는다 — 원칙 225 · 찾는 것은 학습데이터 구축에서 올린 클래스로 저절로 · 서버 view 'finds') ·
-     영상 — 파일 올리기(키트 조각 올리기 · 여러 파일 · 진행 막대 — 데이터 올리기와 같은 길) 또는 데이터하우스 영상에서 고르기 ·
+     영상 — 파일 올리기(키트 조각 올리기 · 여러 파일 · 진행 막대 — 데이터 올리기와 같은 길) 또는 공유 데이터에서 고르기 ·
      대상지 — 영상 자리에서 저절로(화면이 고르지 않는다) · 영상 없이 만들 때만 시군구 · 해외 지역을 고른다 ·
-     구성원 — LX 계정 찾기 · 여러 명.
+     구성원 — 가입 승인된 LX 계정을 이름 · 메일 일부로 찾기(서버 GET /projects/people?q= · 나 자신 · 잠긴 · 기관 계정 없음) · 여러 명.
+   10-13 다시(원칙 230 · 231): 칸 이름만(설명 · 안내 문구 없음) · 창 크기 고정(처음부터 크게 · 안쪽만 스크롤 — 고르기를 열거나 목록이 길어져도 창 · 칸 자리 그대로).
    '만들기' 때 아직 올라가는 파일이 있으면 이 브라우저 보관함에 맡기고 넘어간다 — 단계 화면 위 한 줄에서 이어 올리고, 등록되면 대상지가 정해진다(carry.js).
    다 올라간 뒤면 바로 등록해 그 영상 자리로 대상지를 정하고 만든다. 관리자 승인 없음 · 프로젝트장 = 만든 직원(서버 POST /projects). */
 import { h, api, API, session } from '../kit/util.js';
@@ -36,15 +37,15 @@ export function openNewProject({ onMade } = {}) {
   ensureCss();
   const back = document.activeElement;
   const dim = h('div.t-dim.lxp-dim');
-  const field = (label, sub, ...kids) => h('div.lxp-f', {}, h('p.lxp-l', {}, label, sub ? h('small', { text: sub }) : null), ...kids);
+  const field = (label, ...kids) => h('div.lxp-f', {}, h('p.lxp-l', { text: label }), ...kids);
 
   /* ── 이름 · 설명 ── */
-  const nameIn = h('input.t-input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'off', 'aria-label': '이름', placeholder: '예: 비닐하우스 실태조사 2026' });
-  const descIn = h('textarea.t-input.lxp-desc', { name: 'description', maxlength: '300', rows: '2', 'aria-label': '설명', placeholder: '무엇을 왜 하는지 한두 줄' });
+  const nameIn = h('input.t-input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'off', 'aria-label': '이름' });
+  const descIn = h('textarea.t-input.lxp-desc', { name: 'description', maxlength: '300', rows: '2', 'aria-label': '설명' });
 
-  /* ── 영상 — 파일 올리기 · 데이터하우스에서 고르기 ── */
+  /* ── 영상 — 파일 올리기 · 공유 데이터에서 고르기 ── */
   const tabUp = h('button.lxp-vt', { type: 'button', role: 'tab', 'aria-selected': 'true', text: '파일 올리기' });
-  const tabPick = h('button.lxp-vt', { type: 'button', role: 'tab', 'aria-selected': 'false', text: '데이터하우스에서 고르기' });
+  const tabPick = h('button.lxp-vt', { type: 'button', role: 'tab', 'aria-selected': 'false', text: '공유 데이터에서 고르기' });
   const upBox = h('div.lxp-up');
   const pickBox = h('div.lxp-pk', { hidden: true });
   const vtabs = h('div.lxp-vtabs', { role: 'tablist', 'aria-label': '영상' }, tabUp, tabPick);
@@ -60,18 +61,17 @@ export function openNewProject({ onMade } = {}) {
       allow: [...(f.raster || FALLBACK.raster), ...(f.sidecar || FALLBACK.sidecar)],
       max: f.limit?.size || 20e9,
       title: '영상 파일을 끌어 놓거나 눌러 고르세요',
-      kinds: ['여러 장도 한 번에 · 위치 파일(TFW 등)은 함께'],
       onStart: (s) => { if (s.draft_id) draft = s.draft_id; },
       onChange: () => { drawWhere(); ready(); },
     });
   });
   const upFiles = () => (q ? q.items().filter((i) => !['bad', 'cancel'].includes(i.state)) : []);
 
-  /* 데이터하우스 영상 — 서버 GET /projects/imagery(이름 · 지역 · 연도 · 종류 · 썸네일) · 찾기 · 6장씩 · 여러 장 고르기 */
+  /* 공유 데이터 영상 — 서버 GET /projects/imagery(이름 · 지역 · 연도 · 종류 · 썸네일) · 찾기 · 6장씩 · 여러 장 고르기 */
   const picked = new Map();
   let pickAll = null, pickPage = 1;
   const pickQ = h('input.t-input.lxp-pk-q', { type: 'search', placeholder: '영상 이름 · 지역 · 연도', 'aria-label': '영상 찾기', autocomplete: 'off' });
-  const pickGrid = h('div.lxp-pk-g', { role: 'group', 'aria-label': '데이터하우스 영상' });
+  const pickGrid = h('div.lxp-pk-g', { role: 'group', 'aria-label': '공유 데이터' });
   const pickNav = h('div.lxp-pk-n');
   pickBox.append(pickQ, pickGrid, pickNav);
   pickQ.addEventListener('input', () => { pickPage = 1; drawPick(); });
@@ -140,23 +140,16 @@ export function openNewProject({ onMade } = {}) {
   function drawWhere() {
     const pk = [...new Set([...picked.values()].map((x) => x.region).filter(Boolean))];
     const ups = upFiles().length;
-    if (picked.size || ups) {
-      regBox.hidden = true;
-      whereLine.textContent = pk.length && !ups ? `대상지 ${pk.join(' · ')} · 고른 영상 자리에서 정했습니다`
-        : pk.length ? `대상지 ${pk.join(' · ')} 외 · 올린 영상이 등록되면 더해집니다` : '대상지는 올린 영상이 등록되면 영상 자리에서 정해집니다';
-    } else {
-      regBox.hidden = false;
-      whereLine.textContent = '영상 없이 만들면 대상지를 고릅니다';
-    }
+    regBox.hidden = !!(picked.size || ups);
+    whereLine.textContent = pk.length ? `대상지 ${pk.join(' · ')}` : picked.size || ups ? '' : '대상지';
+    whereLine.hidden = !whereLine.textContent;
   }
 
-  /* ── 구성원 — LX 계정 찾기 · 여러 명 ── */
+  /* ── 구성원 — 가입 승인된 LX 계정(이름 · 메일 일부) · 여러 명 · 나 자신 없음 ── */
   const mem = new Map();
   const memChips = h('div.lxp-picked');
-  const memIn = h('input.t-input', { type: 'search', placeholder: 'LX 직원 이름 찾기', 'aria-label': '구성원 찾기', autocomplete: 'off' });
+  const memIn = h('input.t-input', { type: 'search', placeholder: '이름 · 메일', 'aria-label': '구성원 찾기', autocomplete: 'off' });
   const memList = h('ul.lxp-mem-l', { role: 'listbox', hidden: true });
-  let people = null;
-  const loadPeople = () => (people ??= api('/projects/people').then((j) => j.items || []).catch(() => { people = null; return []; }));
   const drawMem = () => {
     memChips.replaceChildren(...[...mem.values()].map((u) => {
       const x = h('button.t-chip.lxp-reg', { type: 'button', 'aria-label': `${u.name} 빼기` }, h('span', { text: u.name }), h('i', { 'aria-hidden': 'true', text: '×' }));
@@ -165,17 +158,19 @@ export function openNewProject({ onMade } = {}) {
     }));
     memChips.hidden = !mem.size;
   };
+  let memSeq = 0, memT = 0;
   async function drawMemList() {
-    const all = await loadPeople();
-    const s = memIn.value.replace(/\s+/g, '');
-    const rows = all.filter((u) => !mem.has(u.id) && (!s || `${u.name}${u.role_label}`.replace(/\s+/g, '').includes(s))).slice(0, 6);
+    const my = ++memSeq;
+    const j = await api('/projects/people?' + new URLSearchParams({ q: memIn.value.trim() })).catch(() => null);
+    if (my !== memSeq) return;
+    const rows = (j?.items || []).filter((u) => !mem.has(u.id)).slice(0, 6);
     memList.replaceChildren(...(rows.length ? rows.map((u) => h('li', { role: 'option' },
       h('button', { type: 'button', onclick: () => { mem.set(u.id, u); memIn.value = ''; drawMem(); drawMemList(); memIn.focus(); } },
-        h('b', { text: u.name }), h('small', { text: u.role_label })))) : [h('li.lxp-mem-none', { text: '맞는 사람이 없습니다' })]));
+        h('b', { text: u.name }), h('small', { text: u.role_label })))) : [h('li.lxp-mem-none', { text: j ? '찾는 계정이 없습니다' : '불러오지 못했습니다' })]));
     memList.hidden = false;
   }
   memIn.addEventListener('focus', drawMemList);
-  memIn.addEventListener('input', drawMemList);
+  memIn.addEventListener('input', () => { clearTimeout(memT); memT = setTimeout(drawMemList, 200); });
   memIn.addEventListener('blur', () => setTimeout(() => { if (!memList.contains(document.activeElement)) memList.hidden = true; }, 150));
   drawMem();
 
@@ -187,13 +182,13 @@ export function openNewProject({ onMade } = {}) {
     h('h2.t-h4', { text: '새 프로젝트' }),
     h('div.lxp-new-g', {},
       h('div.lxp-new-c', {},
-        field('이름', null, nameIn),
-        field('설명', '선택', descIn),
-        field('구성원', '여러 명 가능', memChips, h('div.lxp-mem', {}, memIn, memList))),
+        field('이름', nameIn),
+        field('설명', descIn),
+        field('구성원', memChips, h('div.lxp-mem', {}, memIn, memList))),
       h('div.lxp-new-c', {},
-        field('영상', '여러 장 가능', vtabs, upBox, pickBox, whereLine, regBox))),
+        field('영상', vtabs, upBox, pickBox, whereLine, regBox))),
     err,
-    h('div.lxp-act', {}, go, cancel, h('p.lxp-note', { text: '만들면 바로 학습데이터 구축으로 갑니다' })));
+    h('div.lxp-act', {}, go, cancel));
   document.body.append(dim, box);
   requestAnimationFrame(() => { dim.classList.add('is-in'); box.classList.add('is-in'); });
   drawWhere();

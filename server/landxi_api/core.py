@@ -1,28 +1,28 @@
-"""핵심 코어 고리 — 클래스 한 곳 · 새 클래스(직원 더함 · 관리자 승인) · 고친 것 → 학습 데이터 · 데이터하우스 · XI 재학습 · 배포 관리 · 학습 서식
-(원칙 205 · 213 · 217 · 10-12 12:45 확인 · 마이그레이션 0038).
+"""핵심 코어 고리 — 클래스 한 곳 · 새 클래스(이름을 새로 쓰면 새 클래스) · 고친 것 → 프로젝트 학습 데이터 · XI 재학습 · 배포 관리 · 학습 서식
+(원칙 205 · 213 · 217 · 223 · 232 · 10-13 데이터-개념 ⓐ · 마이그레이션 0038).
 
-클래스
+클래스(서버 한 곳 · 내부)
   GET  /classes?q=&status=                   클래스 목록(이름 · 다른 이름 · 위 클래스 · 세부/새 물체 · 상태) — 세 화면이 같은 id 를 읽는다.
-  GET  /classes/pick?set=                    XI맵 그 자리 고치기의 '분류 바꾸기' 목록 — 이 서비스가 찾는 것 · 같은 모델의 다른 클래스 · 승인 대기(이 서비스) · 그 밖.
-  POST /classes                              {name, kind: detail|object, parent_id?, set?, card_id?, test?, force?} — 직원 = 승인 대기 · 관리자 = 바로 승인.
-                                             비슷한 이름이 있으면 409 similar(같은 뜻이면 그것을 고르게) · force 로 그래도 더함. 서비스당 승인 대기 상한.
-  POST /classes/{id}/decide                  {action: approve|merge|reject, into?, note?} — LX 관리자만. 합치면 고친 기록이 그 클래스로 옮겨 간다.
+  GET  /classes/pick?set=                    XI맵 그 자리 고치기의 '분류 바꾸기' 목록 — 이 서비스가 찾는 것 · 같은 모델의 다른 클래스 · 그 밖.
+  POST /classes                              {name, kind: detail|object, parent_id?, set?, card_id?, test?} — 이름을 새로 쓰면 바로 새 클래스(승인 대기 없음 ·
+                                             10-13 데이터-개념 ⓐ). 같은 이름(다른 이름 포함)이 있으면 그 클래스를 돌려준다. 관리자는 배포 신청 승인 때 모델 클래스로 본다.
   DELETE /classes/{id}                       시험 표시 클래스만(시험 정리 — 관리자).
-데이터하우스(직원 메뉴 '데이터하우스' · 결정 2 ⓐ)
-  GET  /datahouse/classes                    클래스마다 학습 데이터(올린 묶음 장수) · 고친 것 n건 · 쓰는 서비스 · 상태 + 승인 대기
-  GET  /datahouse/edits?class=&card=         고친 기록 목록(최근 순) — 누가 · 언제 · 무엇을
+  학습데이터 구축에서 올린 묶음의 새 이름도 새 클래스(training.py → sample_classes_from_names).
+  (없앰 10-13: 승인 대기 · 합치기 · 거절 · 비슷한 클래스 먼저 · 데이터하우스 화면용 GET /datahouse/classes · /datahouse/edits)
+프로젝트 학습 데이터(XI맵에서 고친 곳)
+  GET  /train-data/xi?project=               그 프로젝트가 만든 분석서비스에서 XI맵으로 고친 곳이 모인 학습 데이터 n장(1장이 된 칸 · train_tiles)
 XI 재학습 · 배포 관리(LX 관리자 배포 안 · 결정 4 ⓐ · 원칙 213)
-  GET  /retrain                              방식(쉬는 시간 자동 기본) · 쉬는 시간대 · 기준 + 서비스마다 줄(지금 판 · 쌓인 고친 것 · 기준 · 상태) + 새 클래스 갈 곳 + 오늘 밤 순서
+  GET  /retrain                              방식(쉬는 시간 자동 기본) · 쉬는 시간대 · 기준 + 서비스마다 줄(지금 판 · 모인 학습 데이터 · 기준 · 상태) + 새 클래스 갈 곳 + 오늘 밤 순서
   PUT  /retrain/settings                     {mode, quiet_start, quiet_end, weekend, min_new} — 관리자
   PUT  /retrain/services/{card}              {mode: auto|manual} — 관리자
   POST /retrain/tick                         {dry?, at?, test?} — 스케줄러 한 번(관리자 · 시험 증명용). 기동 뒤에는 5분마다 저절로(dry 아님).
   POST /retrain/services/{card}/now          수동 '지금 학습'(프로젝트장 · 관리자) — 같은 대기열 · 같은 전력 규칙
-학습 서식(결정 ⓑ 블록까지 바꿈)
-  GET  /train-templates                      업무별 기본 흐름(블록 · 학습 설정 첫 값) + 바꿀 수 없는 것(잠금)
-  PUT  /train-templates/{업무}                {blocks, cfg} — 관리자 · DELETE 로 업무 서식 지우면 '기본'을 씀
+학습 서식('기본' 하나 · 10-13 학습서식-기본하나)
+  GET  /train-templates                      '기본' 흐름(블록 · 학습 설정 첫 값) + 바꿀 수 없는 것(잠금). 옛 업무별 서식 값은 지우지 않고 쓰지 않는다.
+  PUT  /train-templates/기본                  {blocks, params} — 관리자. 다른 이름은 400.
 
 학습 데이터 1장이 되는 때(결정 3 ⓐ 고치면 저절로 · 10-12 16:18) — 고친 자리 둘레 한 칸이 조용한 시간 뒤 1장(train_tiles.py).
-  데이터하우스 · 학습 화면의 '고친 것 n건'(UNIT · count_units)은 그대로 두고, XI 재학습의 기준 · 대기열은 1장이 된 칸(TILE_UNIT · count_tiles)으로 센다.
+  XI 재학습의 기준 · 대기열 · 학습 화면의 'XI맵에서 고친 곳 n장'은 1장이 된 칸(TILE_UNIT · count_tiles)으로 센다.
   GET  /retrain/tiles?card=&test=           칸 목록(관리자 · 상태 · 고친 수 · 테두리 수) — 증거 · 점검용
   POST /retrain/tiles/scan                  {test?, quiet_min?} 칸 한 번 맞추기(관리자 · 시험 증명용). 기동 뒤에는 스케줄러가 5분마다.
 화면 글에 표 이름 · 작업 id · 경로를 쓰지 않는다. 숫자는 서버에서 센 값(봉투).
@@ -43,14 +43,13 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
-# ── 학습 데이터 단위(결정 3 — 아직 결정 전 · 바꿔 끼우는 곳은 여기 하나) ──────────────────
-# 지금: 고친 기록 한 건 = 한 단위('고친 것 n건'). 학습에 넣는 것 = 되돌리지 않음 · 시험 아님 · 메모 아님 ·
-#       바꾼 클래스가 승인 대기 · 거절이 아님. 결정이 나면(예: '그 자리 한 칸 = 1장') 이 두 줄과 count_units 만 바꾼다.
+# ── 학습 데이터 단위 ──────────────────────────────────────────────────────
+# 고친 기록 한 건(UNIT · count_units)은 새 모델 프로젝트 후보 줄의 셈에만 남는다. 학습 데이터는 1장이 된 칸(TILE_UNIT · count_tiles · 결정 3 ⓐ).
+# 학습에 넣는 고친 기록 = 되돌리지 않음 · 시험 아님 · 메모 아님 · 바꾼 클래스가 쓰이는 클래스(승인 대기 단계는 10-13 없앰 — 옛 줄 대비 조건만 남김).
 UNIT = {"id": "edit", "word": "고친 것", "suffix": "건"}
 TILE_UNIT = {"id": "tile", "word": "학습 데이터", "suffix": "장"}           # 결정 3 ⓐ — 고친 자리 한 칸 = 1장(XI 재학습 기준 · 대기열)
 LEARNABLE = ("e.undone_at IS NULL AND NOT e.test AND e.action <> 'memo' "
              "AND (e.cls_after_id IS NULL OR ca.status = 'approved')")
-PENDING = "e.undone_at IS NULL AND NOT e.test AND e.action <> 'memo' AND ca.status = 'proposed'"
 EDITS_FROM = "FROM result_edits e LEFT JOIN classes ca ON ca.id = e.cls_after_id"
 
 
@@ -72,8 +71,8 @@ def units_env(n: int, what: str = "XI맵에서 고친 것") -> dict:
     return env(int(n), "count", "recorded", f"{what}(되돌린 것 · 시험 · 메모 · 승인 전 클래스 뺌)")
 
 
-def tiles_env(n: int, what: str = "XI맵에서 고친 자리로 만든 학습 데이터") -> dict:
-    return env(int(n), "count", "recorded", f"{what}(고친 자리 한 칸 = 1장 · 조용한 시간 뒤 · 둘이 다르게 고친 칸 뺌)")
+def tiles_env(n: int, what: str = "XI맵에서 고친 곳이 모인 학습 데이터") -> dict:
+    return env(int(n), "count", "recorded", what)
 
 
 # ── 공통 ──────────────────────────────────────────────────────────────────
@@ -182,8 +181,7 @@ async def list_classes(request: Request, q: str = "", status: str = ""):
     if q.strip():
         k = q.strip().lower()
         items = [x for x in items if k in x["name"].lower() or any(k in a.lower() for a in x["aliases"])]
-    return {"items": items, "pending": env(sum(1 for x in items if x["status"] == "proposed"), "count", "recorded", "승인 대기 클래스"),
-            "as_of": now_iso()}
+    return {"items": items, "as_of": now_iso()}
 
 
 @router.get("/classes/pick")
@@ -214,44 +212,35 @@ async def pick_classes(request: Request, set_: str = Query("", alias="set")):
         return out
     a = take(finds or res)
     b = take(model + res)
-    pend = [x for x in by.values() if x["status"] == "proposed" and (not card or x["card_id"] in (card, None))]
-    seen |= {x["id"] for x in pend}
     rest = [x for x in by.values() if x["id"] not in seen and x["status"] == "approved"]
     return {"service": meta.get("service"), "card_id": card, "version": cur["version"] if cur else meta.get("version"),
-            "finds": a, "model": b, "pending": pend, "others": rest, "as_of": now_iso()}
+            "finds": a, "model": b, "others": rest, "as_of": now_iso()}
 
 
-def _similar(name: str, rows) -> list[dict]:
-    k = name.strip().lower()
-    out = []
-    for r in rows:
-        words = [r["name"], *(r["aliases"] or [])]
-        best = max(difflib.SequenceMatcher(None, k, w.lower()).ratio() for w in words)
-        if best >= 0.6 or any(k and (k in w.lower() or w.lower() in k) for w in words):
-            out.append({"id": r["id"], "name": r["name"], "status": r["status"], "parent": r["parent_name"]})
-    return out[:4]
+async def on_approved(conn, cid: str, parent_id: str | None) -> None:
+    """새 클래스가 쓰이기 시작할 때 — 세부(위 클래스 있음)는 그 위 클래스를 찾는 서비스의 지금 판에 '배우는 중 · 나누기'로 붙는다
+    (학습 뒤 승인된 새 판에서 찾음 · 결정 5 ⓐ). 새 물체는 XI 재학습 '새 모델 프로젝트 후보'로(_candidates)."""
+    if not parent_id:
+        return
+    for r in await conn.fetch("SELECT DISTINCT card_id FROM card_classes WHERE class_id=$1", parent_id):
+        cur = await _cur_version(conn, r["card_id"])
+        if cur:
+            await conn.execute("INSERT INTO card_classes(card_id, version, class_id, state, how) VALUES ($1,$2,$3,'learning','split') "
+                               "ON CONFLICT DO NOTHING", r["card_id"], cur["version"], cid)
 
 
-@router.get("/classes/similar")
-async def similar_classes(request: Request, name: str = ""):
-    """새 클래스를 더하기 전에 — 같은 이름(다른 이름 포함) · 비슷한 이름(같은 뜻이면 그것을 고르게). 화면은 이것을 먼저 부른다(오류 응답 없이)."""
-    require(principal(request), lx=True, roles=("staff", "admin"))
-    nm = " ".join(name.split())[:40]
-    if not nm:
-        return {"same": None, "similar": []}
-    async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT c.id, c.name, c.aliases, c.status, p.name AS parent_name FROM classes c LEFT JOIN classes p ON p.id=c.parent_id "
-                                "WHERE c.status IN ('approved','proposed')")
-    same = next((r for r in rows if r["name"].lower() == nm.lower() or nm.lower() in [a.lower() for a in r["aliases"] or []]), None)
-    return {"same": {"id": same["id"], "name": same["name"], "status": same["status"]} if same else None,
-            "similar": _similar(nm, rows)}
-
-
-MAX_PROPOSED = 3                                        # 서비스당 승인 대기 상한(남발 막기)
+async def _same_name(conn, name: str):
+    """같은 이름(다른 이름 · 학습 데이터 묶음의 이름표 포함) — 있으면 그 클래스(합쳐진 것은 합친 곳으로)."""
+    k = name.lower()
+    r = await conn.fetchrow("SELECT c.id FROM classes c WHERE c.status='approved' AND (lower(c.name)=$1 OR $1 = ANY(SELECT lower(a) FROM unnest(c.aliases) a))", k)
+    if r:
+        return r["id"]
+    return await conn.fetchval("SELECT l.class_id FROM class_labels l JOIN classes c ON c.id=l.class_id WHERE lower(l.label)=$1 AND c.status='approved'", k)
 
 
 @router.post("/classes", status_code=201)
 async def add_class(request: Request, body: dict):
+    """이름을 새로 쓰면 새 클래스(10-13 데이터-개념 ⓐ — 승인 대기 · 비슷한 클래스 먼저 없음). 같은 이름이 있으면 그 클래스를 돌려준다(existing)."""
     p = require(principal(request), lx=True, roles=("staff", "admin"))
     name = " ".join(str(body.get("name") or "").split())[:40]
     kind = str(body.get("kind") or "object")
@@ -276,74 +265,39 @@ async def add_class(request: Request, body: dict):
         if parent:
             pr = await conn.fetchrow("SELECT id, status FROM classes WHERE id=$1", parent)
             if not pr or pr["status"] != "approved":
-                raise ApiError("bad_request", "위 클래스는 승인된 클래스여야 합니다")
-        rows = await conn.fetch("SELECT c.id, c.name, c.aliases, c.status, p.name AS parent_name FROM classes c LEFT JOIN classes p ON p.id=c.parent_id "
-                                "WHERE c.status IN ('approved','proposed')")
-        same = [r for r in rows if r["name"].lower() == name.lower() or name.lower() in [a.lower() for a in r["aliases"] or []]]
+                raise ApiError("bad_request", "위 클래스를 목록에서 골라 주세요")
+        same = await _same_name(conn, name)
         if same:
-            raise ApiError("conflict", f"'{same[0]['name']}' 클래스가 이미 있습니다 — 목록에서 고르세요", {"similar": _similar(name, same)}, 409)
-        sim = _similar(name, rows)
-        if sim and not body.get("force"):
-            raise ApiError("conflict", "비슷한 클래스가 있습니다 — 같은 뜻이면 그것을 고르세요", {"similar": sim}, 409)
-        admin = p.role == "admin"
-        if not admin and card:
-            n = await conn.fetchval("SELECT count(*) FROM classes WHERE status='proposed' AND card_id=$1 AND NOT test", card)
-            if n >= MAX_PROPOSED and not test:
-                raise ApiError("conflict", f"이 서비스에 승인 대기 클래스가 {MAX_PROPOSED}개 있습니다 — 관리자 결정 뒤 더할 수 있습니다", None, 409)
+            r = await conn.fetchrow(CLS_SELECT + " WHERE c.id=$1", same)
+            return {"class": _cls_row(r), "existing": True}
         cid = "cl_" + secrets.token_hex(5)
         await conn.execute("INSERT INTO classes(id, name, parent_id, kind, status, card_id, created_by, created_from, test, decided_by, decided_at) "
-                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
-                           cid, name, parent, kind, "approved" if admin else "proposed", card, p.user_id, from_edit, test,
-                           p.user_id if admin else None, dt.datetime.now(KST) if admin else None)
-        if admin:
-            await conn.execute("INSERT INTO class_labels(label, class_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", name, cid)
+                           "VALUES ($1,$2,$3,$4,'approved',$5,$6,$7,$8,$6,now())",
+                           cid, name, parent, kind, card, p.user_id, from_edit, test)
+        await conn.execute("INSERT INTO class_labels(label, class_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", name, cid)
+        await on_approved(conn, cid, parent)
         await audit(conn, p, "class.add", cid, None, {"name": name, "kind": kind, "parent": parent, "card": card, "test": test})
         r = await conn.fetchrow(CLS_SELECT + " WHERE c.id=$1", cid)
-    return {"class": _cls_row(r)}
+    return {"class": _cls_row(r), "existing": False}
 
 
-@router.post("/classes/{cid}/decide")
-async def decide_class(cid: str, request: Request, body: dict):
-    p = require(principal(request), admin=True)
-    action = str(body.get("action") or "")
-    note = (str(body.get("note") or "").strip()[:300]) or None
-    if action not in ("approve", "merge", "reject"):
-        raise ApiError("bad_request", "action = approve · merge · reject")
-    async with db(realm="lx") as conn:
-        c = await conn.fetchrow("SELECT * FROM classes WHERE id=$1", cid)
-        if not c:
-            raise ApiError("not_found", "그 클래스가 없습니다")
-        if c["status"] != "proposed":
-            raise ApiError("conflict", "승인 대기 클래스만 결정할 수 있습니다", None, 409)
-        into = None
-        if action == "approve":
-            await conn.execute("UPDATE classes SET status='approved', decided_by=$2, decided_at=now(), decide_note=$3 WHERE id=$1", cid, p.user_id, note)
-            await conn.execute("INSERT INTO class_labels(label, class_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", c["name"], cid)
-            # 세부 → 그 위 클래스를 찾는 서비스의 지금 판에 '배우는 중 · 나누기'로 붙는다(학습 뒤 승인된 새 판에서 찾음)
-            if c["parent_id"]:
-                for r in await conn.fetch("SELECT DISTINCT card_id FROM card_classes WHERE class_id=$1", c["parent_id"]):
-                    cur = await _cur_version(conn, r["card_id"])
-                    if cur:
-                        await conn.execute("INSERT INTO card_classes(card_id, version, class_id, state, how) VALUES ($1,$2,$3,'learning','split') "
-                                           "ON CONFLICT DO NOTHING", r["card_id"], cur["version"], cid)
-        elif action == "merge":
-            into = str(body.get("into") or "")
-            t = await conn.fetchrow("SELECT id, name, status FROM classes WHERE id=$1", into)
-            if not t or t["status"] != "approved" or t["id"] == cid:
-                raise ApiError("bad_request", "합칠 곳은 승인된 다른 클래스여야 합니다")
-            await conn.execute("UPDATE classes SET status='merged', merged_into=$2, decided_by=$3, decided_at=now(), decide_note=$4 WHERE id=$1",
-                               cid, into, p.user_id, note)
-            await conn.execute("UPDATE classes SET aliases = array_append(aliases, $2) WHERE id=$1 AND NOT ($2 = ANY(aliases))", into, c["name"])
-            await conn.execute("INSERT INTO class_labels(label, class_id) VALUES ($1,$2) ON CONFLICT (label) DO UPDATE SET class_id=EXCLUDED.class_id", c["name"], into)
-            # 고친 기록 · 고친 결과가 합친 클래스로 옮겨 간다(이름이 바뀌어도 이어짐)
-            await conn.execute("UPDATE detections d SET cls=$3 FROM result_edits e WHERE e.cls_after_id=$1 AND e.undone_at IS NULL AND d.id=e.det_id AND d.cls=$2",
-                               cid, c["name"], t["name"])
-            await conn.execute("UPDATE result_edits SET cls_after_id=$2 WHERE cls_after_id=$1", cid, into)
-        else:
-            await conn.execute("UPDATE classes SET status='rejected', decided_by=$2, decided_at=now(), decide_note=$3 WHERE id=$1", cid, p.user_id, note)
-        await audit(conn, p, "class.decide", cid, {"status": c["status"]}, {"action": action, "into": into, "note": note})
-        r = await conn.fetchrow(CLS_SELECT + " WHERE c.id=$1", cid)
-    return {"class": _cls_row(r)}
+async def sample_classes_from_names(conn, sample_id: str, names, user_id: str | None) -> int:
+    """학습데이터 구축에서 올린 묶음의 이름표 → 클래스 id(sample_classes). 목록에 없는 이름은 새 클래스(새 물체)로 — 이름을 새로 쓰면 새 클래스.
+    새로 만든 클래스 수를 돌려준다."""
+    made = 0
+    for nm in names or []:
+        nm = " ".join(str(nm).split())[:40]
+        if not nm:
+            continue
+        cid = await conn.fetchval("SELECT class_id FROM class_labels WHERE label=$1", nm) or await _same_name(conn, nm)
+        if not cid:
+            cid = "cl_" + secrets.token_hex(5)
+            await conn.execute("INSERT INTO classes(id, name, kind, status, created_by, created_from, decided_by, decided_at) "
+                               "VALUES ($1,$2,'object','approved',$3,$4,$3,now())", cid, nm, user_id, sample_id)
+            made += 1
+        await conn.execute("INSERT INTO class_labels(label, class_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", nm, cid)
+        await conn.execute("INSERT INTO sample_classes(sample_id, class_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", sample_id, cid)
+    return made
 
 
 @router.delete("/classes/{cid}")
@@ -368,94 +322,24 @@ async def drop_test_class(cid: str, request: Request):
     return {"ok": True}
 
 
-# ── 데이터하우스 ───────────────────────────────────────────────────────────
-@router.get("/datahouse/classes")
-async def datahouse_classes(request: Request):
-    p = require(principal(request), lx=True)
-    async with db(realm="lx") as conn:
-        await sync_models(conn)
-        rows = await conn.fetch(CLS_SELECT + " WHERE c.status IN ('approved','proposed') ORDER BY c.name")
-        smp = await conn.fetch("SELECT sc.class_id, s.id, s.class_images, s.n_images, s.names FROM sample_classes sc JOIN train_samples s ON s.id = sc.sample_id")
-        lab = {r["id"]: [] for r in rows}
-        for r in await conn.fetch("SELECT label, class_id FROM class_labels"):
-            lab.setdefault(r["class_id"], []).append(r["label"])
-        edits = {r["k"]: r for r in await conn.fetch(
-            f"SELECT coalesce(e.cls_after_id, e.cls_before_id) AS k, count(*) FILTER (WHERE {LEARNABLE}) AS n, "
-            f"count(*) FILTER (WHERE {PENDING}) AS np, max(e.at) FILTER (WHERE {LEARNABLE}) AS last "
-            f"{EDITS_FROM} GROUP BY 1")}
-        svc = {}
-        for r in await conn.fetch("SELECT cc.class_id, cc.state, cc.card_id, cc.version, c.name FROM card_classes cc JOIN cards c ON c.id = cc.card_id"):
-            cur = await _cur_version(conn, r["card_id"])
-            if cur and cur["version"] == r["version"]:
-                svc.setdefault(r["class_id"], []).append({"card_id": r["card_id"], "name": _ko(r["name"]), "state": r["state"]})
-        nmodels = {r["class_id"]: r["n"] for r in await conn.fetch(
-            "SELECT mc.class_id, count(DISTINCT mc.model_id) AS n FROM model_classes mc JOIN models m ON m.id = mc.model_id "
-            "WHERE m.status = 'registered' AND mc.class_id IS NOT NULL GROUP BY 1")}
-        tot = await count_units(conn)
-        npend_e = int(await conn.fetchval(f"SELECT count(*) {EDITS_FROM} WHERE {PENDING}") or 0)
-    items = []
-    for r in rows:
-        x = _cls_row(r)
-        imgs, sets = 0, 0
-        names = set(lab.get(r["id"], [])) | {r["name"]}
-        for s in smp:
-            if s["class_id"] != r["id"]:
-                continue
-            ci = s["class_images"] if isinstance(s["class_images"], dict) else json.loads(s["class_images"] or "{}")
-            imgs += sum(int(v) for k, v in (ci or {}).items() if k in names)
-            sets += 1
-        e = edits.get(r["id"])
-        x.update({"samples": env(imgs, "count", "measured", "올린 학습 데이터 묶음에서 이 클래스가 든 그림"),
-                  "sample_sets": env(sets, "count", "recorded", "학습 데이터 묶음"),
-                  "edits": units_env(int(e["n"]) if e else 0), "edits_pending": env(int(e["np"]) if e else 0, "count", "recorded", "승인 대기 클래스로 고친 것"),
-                  "last_edit": _iso(e["last"]) if e else None, "services": svc.get(r["id"], []),
-                  "models": env(int(nmodels.get(r["id"], 0)), "count", "recorded", "등록된 AI 모델")})
-        items.append(x)
-    return {"items": items, "edits": units_env(tot), "edits_pending": env(npend_e, "count", "recorded", "승인 대기 클래스로 고친 것"),
-            "pending": env(sum(1 for x in items if x["status"] == "proposed"), "count", "recorded", "승인 대기 클래스"),
-            "unit": UNIT, "can_decide": p.role == "admin", "as_of": now_iso()}
+# ── 프로젝트 학습 데이터 — XI맵에서 고친 곳(10-13 데이터-개념 ⓐ) ─────────────────────────────
+async def project_cards(conn, project: str) -> list[str]:
+    """그 프로젝트가 만든 분석서비스(project_links kind='card') — XI맵에서 고친 곳은 이 서비스들의 칸."""
+    return [r["ref"] for r in await conn.fetch("SELECT ref FROM project_links WHERE project_id=$1 AND kind='card' ORDER BY ref", project)]
 
 
-@router.get("/datahouse/units")
-async def datahouse_units(request: Request, card: str = "", project: str = ""):
-    """학습 화면 '학습 데이터' 블록의 선택지 — 이 서비스(또는 프로젝트의 서비스)에서 XI맵으로 고친 것 n건(학습에 넣는 것만)."""
+@router.get("/train-data/xi")
+async def train_data_xi(request: Request, project: str = ""):
+    """학습 화면 '학습 데이터' 블록 — 이 프로젝트가 만든 분석서비스의 결과를 XI맵에서 고친 곳이 모인 학습 데이터 n장(1장이 된 칸 · 결정 3 ⓐ 그대로).
+    학습에 넣는 것은 XI 재학습(쉬는 시간 · 서비스마다 줄)이 같은 칸으로 한다."""
     require(principal(request), lx=True)
+    from .train_tiles import count_tiles
     async with db(realm="lx") as conn:
-        if not card and project:
-            card = await conn.fetchval("SELECT ref FROM project_links WHERE project_id=$1 AND kind='card' LIMIT 1", project) or ""
-        n = await count_units(conn, card_id=card) if card else 0
-        npend = int(await conn.fetchval(f"SELECT count(*) {EDITS_FROM} WHERE {PENDING} AND e.card_id=$1", card) or 0) if card else 0
-    return {"card_id": card or None, "units": units_env(n), "pending": env(npend, "count", "recorded", "승인 대기 클래스로 고친 것"), "unit": UNIT, "as_of": now_iso()}
-
-
-ACT = {"delete": "지움", "reclass": "클래스 바꿈", "reshape": "모양 고침", "add": "새로 그림", "memo": "메모"}
-
-
-@router.get("/datahouse/edits")
-async def datahouse_edits(request: Request, cls: str = "", card: str = "", limit: int = 50, test: int = 0):
-    require(principal(request), lx=True)
-    q, a = ["e.undone_at IS NULL", "e.action <> 'memo'"], []
-    if not test:
-        q.append("NOT e.test")
-    if cls:
-        a.append(cls); q.append(f"(e.cls_after_id = ${len(a)} OR e.cls_before_id = ${len(a)})")
-    if card:
-        a.append(card); q.append(f"e.card_id = ${len(a)}")
-    a.append(max(1, min(int(limit), 200)))
-    async with db(realm="lx") as conn:
-        rows = await conn.fetch(
-            f"SELECT e.id, e.action, e.at, e.test, e.sgg_cd, e.card_id, cb.name AS before, ca.name AS after, ca.status AS ast, u.name AS who, c.name AS cname "
-            f"FROM result_edits e LEFT JOIN classes ca ON ca.id = e.cls_after_id LEFT JOIN classes cb ON cb.id = e.cls_before_id "
-            f"LEFT JOIN lx_users u ON u.id = e.by_user LEFT JOIN cards c ON c.id = e.card_id WHERE {' AND '.join(q)} ORDER BY e.at DESC LIMIT ${len(a)}", *a)
-    from .regions import regions_base
-    try:
-        names = {r.get("sgg_cd"): r.get("name") for r in regions_base()[0]}
-    except Exception:  # noqa: BLE001
-        names = {}
-    return {"items": [{"id": r["id"], "action": ACT.get(r["action"], r["action"]), "at": _iso(r["at"]), "who": r["who"] or "LX 직원",
-                       "service": _ko(r["cname"]) if r["cname"] else None, "region": names.get(r["sgg_cd"]),
-                       "before": r["before"], "after": r["after"], "pending": r["ast"] == "proposed", "test": r["test"]} for r in rows],
-            "as_of": now_iso()}
+        cards = await project_cards(conn, project) if project else []
+        n = 0
+        for c in cards:
+            n += await count_tiles(conn, card_id=c)
+    return {"cards": cards, "tiles": tiles_env(n), "unit": TILE_UNIT, "as_of": now_iso()}
 
 
 # ── XI 재학습 · 배포 관리 ───────────────────────────────────────────────────
@@ -473,7 +357,7 @@ async def settings(conn) -> dict:
 
 def _st_out(st: dict) -> dict:
     return {**st, "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)"),
-            "tile_quiet_min": env(int(st.get("tile_quiet_min", 30)), "min", "recorded", "고친 뒤 이만큼 조용하면 1장(관리자 설정)")}
+            "tile_quiet_min": env(int(st.get("tile_quiet_min", 30)), "min", "recorded", "고친 곳이 학습 데이터로 모이기까지(관리자 설정)")}
 
 
 def _hm(s: str) -> int:
@@ -570,8 +454,6 @@ async def _rows(conn, st: dict, test: bool = False) -> list[dict]:
         detail = [dict(r) for r in await conn.fetch(
             "SELECT c.id, c.name, c.status FROM card_classes cc JOIN classes c ON c.id=cc.class_id WHERE cc.card_id=$1 AND cc.version=$2 AND cc.how='split'",
             c["id"], cur["version"])]
-        pend = [dict(r) for r in await conn.fetch(
-            "SELECT c.id, c.name, c.kind, c.status FROM classes c WHERE c.status='proposed' AND c.card_id=$1 AND NOT c.test", c["id"])]
         vd = await _verdict(conn, c["id"], cur)
         pr = await _project(conn, c["id"])
         mode = modes.get(c["id"], st["mode"])
@@ -589,14 +471,15 @@ async def _rows(conn, st: dict, test: bool = False) -> list[dict]:
                     "units": tiles_env(n), "min_new": env(int(st["min_new"]), "count", "recorded", "재학습 기준(관리자 설정)"),
                     "mode": mode, "state": state[1], "tone": state[0],
                     "split": [{"id": d["id"], "name": d["name"]} for d in detail],
-                    "pending": [{"id": d["id"], "name": d["name"], "kind": d["kind"]} for d in pend],
                     "verdict": vd, "project": {"id": pr["id"], "name": pr["name"], "lead": pr["lead_id"]} if pr else None})
     return out
 
 
 async def _candidates(conn) -> list[dict]:
-    """승인된 새 물체(위 클래스 없음 · 씨앗이 아닌 것) → 새 모델 프로젝트 후보(결정 5 ⓐ). 세부는 위 클래스 서비스 줄의 '나누기'로."""
-    rows = await conn.fetch(CLS_SELECT + " WHERE c.kind='object' AND c.status='approved' AND c.created_by IS NOT NULL ORDER BY c.decided_at DESC")
+    """XI맵에서 이름을 새로 쓴 새 물체(위 클래스 없음 · 씨앗이 아닌 것) → 새 모델 프로젝트 후보(결정 5 ⓐ). 세부는 위 클래스 서비스 줄의 '나누기'로.
+    학습데이터 구축에서 올린 묶음의 새 이름(이미 프로젝트 안)은 후보가 아니다."""
+    rows = await conn.fetch(CLS_SELECT + " WHERE c.kind='object' AND c.status='approved' AND c.created_by IS NOT NULL "
+                            "AND NOT EXISTS (SELECT 1 FROM train_samples s WHERE s.id = c.created_from) ORDER BY c.decided_at DESC")
     out = []
     for r in rows:
         n = await count_units(conn, class_id=r["id"])
@@ -757,7 +640,7 @@ async def _enqueue(conn_rows: dict, d: dict, *, test: bool, by: str, submit: boo
         tiles = [dict(x) for x in await conn.fetch("SELECT id, names, img_path, lbl_path FROM train_tiles WHERE card_id=$1 AND state='made' AND test=$2 "
                                                    "ORDER BY made_at", d["card_id"], test)]
     on = (SUBMIT or bool(st.get("submit"))) if submit is None else submit
-    cfg = (tpl.get(r["service"]) or tpl.get("기본") or {}).get("params") or {}
+    cfg = (tpl.get("기본") or {}).get("params") or {}                          # 학습 서식은 '기본' 하나(10-13)
     rid = "rt_" + secrets.token_hex(5)
     job_id, state, why = None, "queued", None
     if not on:
@@ -901,7 +784,7 @@ async def tiles_scan(request: Request, body: dict | None = None):
             "as_of": now_iso()}
 
 
-# ── 학습 서식(업무별 기본 흐름) ─────────────────────────────────────────────
+# ── 학습 서식('기본' 하나 · 10-13 학습서식-기본하나 — 옛 업무별 값은 lx_settings 에 그대로 두고 읽지 않는다) ─────────────────────────────────────────────
 TPL_KEY = "train.templates"
 BLOCKS = ("data", "base", "cfg", "train", "eval", "test", "deploy")
 MUST = ("data", "base", "cfg", "train")
@@ -920,14 +803,17 @@ async def templates(conn) -> dict:
     return v
 
 
+TPL_ONE = "기본"
+
+
 @router.get("/train-templates")
 async def get_templates(request: Request):
     p = require(principal(request), lx=True)
     async with db(realm="lx") as conn:
         v = await templates(conn)
-        tasks = [r["task"] for r in await conn.fetch("SELECT DISTINCT task FROM projects WHERE task IS NOT NULL ORDER BY task")]
         row = await conn.fetchrow("SELECT updated_at, updated_by FROM lx_settings WHERE key=$1", TPL_KEY)
-    return {"items": v, "tasks": tasks, "blocks": list(BLOCKS), "must": list(MUST), "caps": {"params": {"epochs": CAPS["epochs"], "imgsz": list(CAPS["imgsz"]), "batch": list(CAPS["batch"])}},
+    return {"items": {TPL_ONE: v[TPL_ONE]}, "blocks": list(BLOCKS), "must": list(MUST),
+            "caps": {"params": {"epochs": CAPS["epochs"], "imgsz": list(CAPS["imgsz"]), "batch": list(CAPS["batch"])}},
             "locked": LOCKED, "updated_at": _iso(row["updated_at"]) if row else None, "can_manage": p.role == "admin", "as_of": now_iso()}
 
 
@@ -935,6 +821,8 @@ async def get_templates(request: Request):
 async def put_template(task: str, request: Request, body: dict):
     p = require(principal(request), admin=True)
     task = task.strip()[:40]
+    if task != TPL_ONE:
+        raise ApiError("bad_request", "학습 서식은 '기본' 하나입니다")
     blocks = [b for b in BLOCKS if b in (body.get("blocks") or [])]
     if not all(b in blocks for b in MUST):
         raise ApiError("bad_request", "학습 데이터 · 기반 모델 · 학습 설정 · 학습 블록은 빠질 수 없습니다")
@@ -952,16 +840,3 @@ async def put_template(task: str, request: Request, body: dict):
                            "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()", TPL_KEY, v, p.user_id)
         await audit(conn, p, "train.template", task, before, v[task])
     return {"task": task, "template": v[task]}
-
-
-@router.delete("/train-templates/{task}")
-async def del_template(task: str, request: Request):
-    p = require(principal(request), admin=True)
-    if task == "기본":
-        raise ApiError("bad_request", "기본 흐름은 지울 수 없습니다")
-    async with db(realm="lx") as conn:
-        v = await templates(conn)
-        before = v.pop(task, None)
-        await conn.execute("UPDATE lx_settings SET value=$2, updated_by=$3, updated_at=now() WHERE key=$1", TPL_KEY, v, p.user_id)
-        await audit(conn, p, "train.template.drop", task, before, None)
-    return {"ok": True}

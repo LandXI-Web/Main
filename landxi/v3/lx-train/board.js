@@ -2,9 +2,10 @@
    시안 landxi/proto/review/mock/train-flow-3 를 실제 화면으로 옮김 — 세로 한 줄기:
    ① 흐름 판 — 블록(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 평가 · 추론 시험 · 배포 신청)을 위 칩에서 끌어다 놓거나 눌러 더하고,
       출구 ○ → 다음 블록으로 잇는다. 같은 블록 여러 개 · D 복제 · Delete 지우기 · 선 누르면 끊기 · 블록 누르면 오른쪽 서랍.
-      처음 판 = 학습 서식(관리자가 정한 업무별 기본 흐름 · GET /train-templates · 결정 ⓑ 블록까지 바꿈 · 10-12 12:45) —
+      처음 판 = 학습 서식('기본' 하나 · GET /train-templates · 결정 ⓑ 블록까지 바꿈 · 10-12 12:45 · 10-13 기본 하나) —
       블록 자리는 서식, 값은 이 프로젝트의 가장 최근 학습. 직원은 블록 넣기 · 빼기 · 잇기를 바꾸고 '기본 흐름으로 되돌리기'로 처음 모양.
-      학습 데이터 블록 선택지에 'XI맵에서 고친 것 n건'(GET /datahouse/units) — 고친 것은 XI 재학습(쉬는 시간)으로 들어간다.
+      학습 데이터 블록 선택지에 'XI맵에서 고친 곳 n장'(GET /train-data/xi — 이 프로젝트가 만든 분석서비스에서 고친 곳이 모인 학습 데이터 · 10-13 데이터-개념 ⓐ)
+      — 학습은 XI 재학습(쉬는 시간)이 같은 칸으로 한다.
       '다시 돌리기' = 판 위 학습 블록마다 학습 한 건(그 블록에 이은 학습 데이터 · 기반 모델 · 학습 설정) → 작업 대기열(/jobs/quote → /jobs · 전력 규칙은 서버).
    ② 이번 학습 — 반복마다 정확도 그래프 하나(학습 기록 · 지난 판 겹침 · 기준선 없음) + 핵심 수치.
    ③ 학습 이력 — 목록(날짜 · 판 · AI 모델 정확도 · 학습 데이터 n장 · 상태).
@@ -72,7 +73,7 @@ export async function trainBoard({ host, project: P }) {
   try {
     [T, deck, smp, TPL, XU] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
       api('/cards/deck').catch(() => null), api('/training/samples?project=' + encodeURIComponent(P.id)).catch(() => null),
-      api('/train-templates').catch(() => null), api('/datahouse/units?project=' + encodeURIComponent(P.id)).catch(() => null)]);
+      api('/train-templates').catch(() => null), api('/train-data/xi?project=' + encodeURIComponent(P.id)).catch(() => null)]);
   } catch (e) {
     col.replaceChildren(); const x = h('div'); col.append(x);
     empty(x, { kind: 'error', title: '학습 기록을 불러오지 못했습니다', onRetry: () => location.reload() });
@@ -116,7 +117,7 @@ export async function trainBoard({ host, project: P }) {
   let picked = null, from = null, seq = 100;
   const dataOf = (r) => (r?.data ? { ref: r.data.ref, name: r.data.name, images: v(r.data.images), val: v(r.data.val), kind: r.data.kind,
     with: v(r.data.with), without: v(r.data.without) } : null);
-  const tpl = (TPL?.items && (TPL.items[P.task] || TPL.items['기본'])) || { blocks: ['data', 'base', 'cfg', 'train', 'eval', 'deploy'], params: { epochs: 3, imgsz: 640, batch: 4 } };
+  const tpl = TPL?.items?.['기본'] || { blocks: ['data', 'base', 'cfg', 'train', 'eval', 'deploy'], params: { epochs: 3, imgsz: 640, batch: 4 } };
   const tplCfg = tpl.params || tpl.cfg || { epochs: 3, imgsz: 640, batch: 4 };
   const EPM = TPL?.caps?.params?.epochs || EP_MAX;
   /** 기본 흐름 — 서식의 블록을 정해진 자리에 놓고 잇는다(처음 열 때 · '기본 흐름으로 되돌리기') */
@@ -141,9 +142,8 @@ export async function trainBoard({ host, project: P }) {
   const DATA = [];
   for (const s of smp?.items || []) DATA.push({ ref: s.id, name: s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at) });
   for (const r of runs) { const d = dataOf(r); if (d?.ref && !DATA.some((x) => x.ref === d.ref)) DATA.push(d); }
-  /* XI맵에서 고친 것(고친 기록 · 학습 데이터 1장이 되는 때는 결정 전이라 건수로) — 이 서비스 것만 · 학습은 XI 재학습(쉬는 시간)으로 */
-  const XN = XU ? v(XU.units) : null;
-  if (XN != null) DATA.push({ ref: 'xi-edits', name: 'XI맵에서 고친 것', edits: XN, pending: v(XU.pending) || 0, kind: 'edits' });
+  /* XI맵에서 고친 곳 — 이 프로젝트가 만든 분석서비스의 결과를 고친 곳이 모인 학습 데이터 n장(서비스가 있을 때만) · 학습은 XI 재학습(쉬는 시간)으로 */
+  if (XU?.cards?.length) DATA.push({ ref: 'xi-edits', name: 'XI맵에서 고친 곳', images: v(XU.tiles) ?? 0, kind: 'edits' });
   const BASES = [];
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
@@ -231,8 +231,7 @@ export async function trainBoard({ host, project: P }) {
   function face(n) {
     const o = { line: '', num: '', tag: null, bar: null, cls: '' };
     if (n.kind === 'data') {
-      if (n.data?.kind === 'edits') o.line = `${n.data.name} ${nf(n.data.edits)}건`;
-      else if (n.data) o.line = [n.data.name, n.data.images != null ? `${nf(n.data.images)}장` : null].filter(Boolean).join(' · ');
+      if (n.data) o.line = [n.data.name, n.data.images != null ? `${nf(n.data.images)}장` : null].filter(Boolean).join(' · ');
       else { o.line = '학습 데이터를 고르세요'; o.cls = 'need'; }
     } else if (n.kind === 'base') {
       if (n.base) o.line = baseWord(n.base).long; else { o.line = '모델을 고르세요'; o.cls = 'need'; }
@@ -341,9 +340,9 @@ export async function trainBoard({ host, project: P }) {
       out.push(h('p.tb-lab', { text: '학습 데이터' }));
       if (!DATA.length) out.push(h('p', { text: '아직 이 프로젝트 학습데이터가 없습니다 · 학습데이터 구축에서 올려 주세요' }), h('a.tb-dbtn', { href: stageHref(P, 'label'), text: '학습데이터 구축' }));
       for (const d of DATA) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터',
-        d.kind === 'edits' ? `XI 재학습으로 쉬는 시간에 학습${d.pending ? ` · 승인 대기 ${nf(d.pending)}건 뺌` : ''}`
+        d.kind === 'edits' ? ''
           : d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.day ? `${d.day} 올림` : '',
-        d.kind === 'edits' ? `${nf(d.edits)}건` : d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
+        d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
       out.push(h('p', { text: '다른 학습 데이터로 보려면 학습 데이터 블록과 학습 블록을 하나씩 더 놓아 이어요.' }));
     } else if (n.kind === 'base') {
       out.push(h('p.tb-lab', { text: '지금 있는 모델' }));
@@ -485,7 +484,7 @@ export async function trainBoard({ host, project: P }) {
       if (t.run && LIVE.has(t.run.state)) continue;
       const d = inputs(t.id, 'data')[0], b = inputs(t.id, 'base')[0], c = inputs(t.id, 'cfg')[0];
       const miss = !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요'
-        : d.data.kind === 'edits' ? 'XI맵에서 고친 것은 XI 재학습으로 쉬는 시간에 학습해요 — 여기서는 올린 학습 데이터를 골라 주세요' : !b ? '기반 모델 블록을 이어 주세요'
+        : d.data.kind === 'edits' ? 'XI맵에서 고친 곳은 쉬는 시간에 저절로 학습해요' : !b ? '기반 모델 블록을 이어 주세요'
         : !b.base ? '기반 모델 블록에서 모델을 골라 주세요' : !c ? '학습 설정 블록을 이어 주세요' : null;
       if (miss) bad.push([t, miss]); else out.push({ t, d: d.data, b: b.base, c: c.cfg });
     }

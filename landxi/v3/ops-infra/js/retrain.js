@@ -1,9 +1,10 @@
 /* LX 관리자 → 배포 → 'XI 재학습' · '학습 서식' 탭(결정 4 ⓐ · 원칙 213 · 학습 서식 ⓑ · 10-12 12:45 확인).
-   XI 재학습: 언제 학습하나(쉬는 시간 자동 기본 / 사람이 누를 때만) · 쉬는 시간대 · 기준 → 분석서비스마다 줄(지금 판 · 쌓인 고친 것 · 기준 · 방식 · 상태)
+   XI 재학습: 언제 학습하나(쉬는 시간 자동 기본 / 사람이 누를 때만) · 쉬는 시간대 · 기준 → 분석서비스마다 줄(지금 판 · 모인 학습 데이터 · 기준 · 방식 · 상태)
               → 새 클래스 갈 곳(세부 = 위 클래스 서비스의 나누기 학습 · 새 물체 = 새 모델 프로젝트 후보) → 오늘 밤 순서.
               학습은 쉬는 시간에 학습 장비 한 장 대기열로만(전국 분석 등 다른 고부하 작업이 있으면 다음 차례 — 서버 스케줄러).
               새 판은 같은 검증 묶음에서 나아진 경우만 배포 신청 후보. 신청 · 승인은 사람.
-   학습 서식: 업무별 기본 흐름(블록 · 학습 설정 첫 값) — 직원 학습 화면이 처음 열 때 놓이는 흐름. 바꿀 수 없는 것은 잠금 줄.
+   학습 서식: '기본' 하나(블록 · 학습 설정 첫 값 · 10-13 학습서식-기본하나 — 업무별 고르기 없앰) — 직원 학습 화면이 처음 열 때 놓이는 흐름. 바꿀 수 없는 것은 잠금 줄.
+   문구(10-13 원칙 230): '30분 조용하면 1장' 류 설명 대신 'XI맵에서 고친 곳은 학습 데이터로 모입니다' · 칸 머리 '모인 학습 데이터'.
    숫자는 서버 봉투(GET /retrain · /train-templates). 아이콘 0 · 'GPU' 글자 0(학습 장비). */
 import { toast, h, api, nf } from './kit.js';
 
@@ -47,8 +48,8 @@ export function retrainPane(root) {
           h('label.rt-ck', {}, wk, h('span', { text: '주말 하루 종일' })),
           h('label', {}, h('span', { text: '기준' }), h('span.rt-pair', {}, mn, '장')),
           h('div', {}, h('span', { text: '학습 자리' }), h('b', { text: '한 번에 하나' })), save)),
-      h('p.rv-note', { text: `서비스마다 새 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.` }),
-      h('p.rv-note', { text: `XI맵에서 고친 자리 한 칸(영상 + 그 안 테두리)이 고친 뒤 ${val(R.settings.tile_quiet_min) || 30}분 조용하면 학습 데이터 1장이 됩니다.` }),
+      h('p.rv-note', { text: 'XI맵에서 고친 곳은 학습 데이터로 모입니다.' }),
+      h('p.rv-note', { text: `서비스마다 모인 학습 데이터가 기준에 닿으면 다음 쉬는 시간에 학습 → 같은 검증 묶음으로 비교 → 나아진 판만 배포 신청 후보. 신청과 승인은 사람이 합니다.` }),
       h('p.rv-note', { text: R.busy ? '지금 학습 장비를 쓰는 다른 작업이 있어, 학습은 그 뒤 차례입니다.' : R.quiet_now ? '지금은 쉬는 시간입니다.' : '지금은 쉬는 시간이 아닙니다.' }));
 
     /* ── 분석서비스별 ── */
@@ -61,12 +62,11 @@ export function retrainPane(root) {
         : h('span', { text: x.mode === 'auto' ? '쉬는 시간 자동' : '수동' });
       const vd = x.verdict;
       const now = h('button.t-btn.t-btn--2', { type: 'button', text: '지금 학습', disabled: n < 1 || x.tone === 'live' || undefined,
-        title: n < 1 ? '새 학습 데이터가 없습니다' : '', onclick: () => trainNow(x) });
+        title: n < 1 ? '모인 학습 데이터가 없습니다' : '', onclick: () => trainNow(x) });
       return h('tr', {},
         h('td', {}, h('b', { text: `${x.service} · ${x.version}` }), x.project ? h('small', { text: x.project.name }) : h('small', { text: '프로젝트 없음' })),
         h('td', {}, h('span.rv-bar', {}, h('i', { style: `width:${Math.min(100, Math.round(n / need * 100))}%` })), h('small.num', { text: `${nf(n)} / ${nf(need)}장` })),
-        h('td', {}, ...(x.split.length ? x.split.map((c) => h('span.rt-cls', { text: `${c.name} · 나누기` })) : []),
-          ...(x.pending.length ? x.pending.map((c) => h('span.rt-cls.is-wait', { text: `${c.name} · 승인 대기` })) : []), !x.split.length && !x.pending.length ? '—' : null),
+        h('td', {}, ...(x.split.length ? x.split.map((c) => h('span.rt-cls', { text: `${c.name} · 나누기` })) : ['—'])),
         h('td', {}, modeSel),
         h('td', {}, h('span.rt-st', { dataset: { tone: x.tone || '' }, text: x.state }),
           vd && vd.value ? h('small', { text: `최근 다시 학습 ${pct(vd.value)} · 지금 판 ${pct(vd.base)}` }) : null),
@@ -74,13 +74,13 @@ export function retrainPane(root) {
     });
     const svc = h('section.t-card.rv-card', {},
       h('header.rv-h', {}, h('h2', { text: '분석서비스별' })),
-      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '새 학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
+      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '모인 학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
         : h('p.rv-empty', { text: '다시 학습할 수 있는 분석서비스가 없습니다' }));
 
     /* ── 새 물체 → 새 모델 프로젝트 후보 ── */
     const cands = (R.candidates || []);
     const cand = h('section.t-card.rv-card', {},
-      h('header.rv-h', {}, h('h2', { text: '새 모델 프로젝트 후보' }), h('span.rv-sub', { text: '승인된 새 물체 클래스 — 지금 모델에 없어 새 모델로 학습합니다' })),
+      h('header.rv-h', {}, h('h2', { text: '새 모델 프로젝트 후보' }), h('span.rv-sub', { text: 'XI맵에서 새로 쓴 새 물체 클래스 — 지금 모델에 없어 새 모델로 학습합니다' })),
       cands.length ? h('ul.rt-list', {}, ...cands.map((c) => h('li', {}, h('b', { text: c.name }), c.test ? h('span.rv-test', { text: '시험' }) : null, h('span.rv-sub', { text: `고친 것 ${nf(val(c.units))}건` }),
         h('a.rv-link', { href: '/landxi/v3/lx-project/', text: '프로젝트 만들기' }))))
         : h('p.rv-empty', { text: '아직 없습니다 · 세부 클래스는 위 클래스 서비스 줄에서 나누기로 학습합니다' }));
@@ -111,17 +111,15 @@ const BW = { data: '학습 데이터', base: '기반 모델', cfg: '학습 설�
 
 export function templatePane(root) {
   sheet();
-  let T = null, task = '기본';
+  let T = null;
+  const task = '기본';                                    // 학습 서식은 '기본' 하나(10-13 · 옛 업무별 값은 서버에 그대로 · 쓰지 않음)
   async function load() {
     try { T = await api('/train-templates'); } catch (e) { root.replaceChildren(h('p.rv-empty', { text: e?.message || '학습 서식을 불러오지 못했습니다' })); return; }
     draw();
   }
   function draw() {
     const man = T.can_manage;
-    const cur = T.items[task] || T.items['기본'];
-    const own = !!T.items[task];
-    const pick = h('select.rt-in', { 'aria-label': '업무', onchange: (e) => { task = e.target.value; draw(); } },
-      ...['기본', ...T.tasks].map((t) => h('option', { value: t, text: t === '기본' ? '기본(모든 업무)' : `${t}${T.items[t] ? '' : ' · 기본 흐름 씀'}`, selected: t === task || undefined })));
+    const cur = T.items[task];
     const on = new Set(cur.blocks);
     const boxes = T.blocks.map((b) => {
       const must = T.must.includes(b);
@@ -134,19 +132,15 @@ export function templatePane(root) {
     const bt = h('select.rt-in', { disabled: !man || undefined, 'aria-label': '한 번에' }, ...(cap.batch || [4, 8]).map((x) => h('option', { value: String(x), text: `${x}장`, selected: x === p.batch || undefined })));
     const save = h('button.t-btn', { type: 'button', text: '저장', onclick: async () => {
       const blocks = [...root.querySelectorAll('.rt-blk input')].filter((i) => i.checked).map((i) => i.dataset.b);
-      try { await api(`/train-templates/${encodeURIComponent(task)}`, { method: 'PUT', body: { blocks, params: { epochs: +ep.value, imgsz: +sz.value, batch: +bt.value } } }); toast(`${task === '기본' ? '기본' : task} 흐름을 저장했습니다`); load(); }
+      try { await api(`/train-templates/${encodeURIComponent(task)}`, { method: 'PUT', body: { blocks, params: { epochs: +ep.value, imgsz: +sz.value, batch: +bt.value } } }); toast('기본 흐름을 저장했습니다'); load(); }
       catch (e) { toast(e?.message || '저장하지 못했습니다'); }
     } });
-    const drop = own && task !== '기본' ? h('button.t-btn.t-btn--2', { type: 'button', text: '기본 흐름 쓰기', onclick: async () => {
-      try { await api(`/train-templates/${encodeURIComponent(task)}`, { method: 'DELETE' }); toast(`${task}는 기본 흐름을 씁니다`); load(); } catch (e) { toast(e?.message || '바꾸지 못했습니다'); }
-    } }) : null;
     root.replaceChildren(h('div.rt-col', {}, h('section.t-card.rv-card', {},
       h('header.rv-h', {}, h('h2', { text: '학습 서식' }), h('span.rv-sub', { text: '직원 학습 화면을 처음 열면 놓이는 기본 흐름 — 직원은 그 위에서 블록을 더하거나 지우고 순서를 바꿀 수 있습니다' })),
-      h('div.rt-kv', {}, h('label', {}, h('span', { text: '업무' }), pick)),
       h('div', {}, h('p.t-label', { text: '블록' }), h('div.rt-blks', {}, ...boxes)),
       h('div.rt-kv', {}, h('label', {}, h('span', { text: '반복 횟수' }), h('span.rt-pair', {}, ep, '회')), h('label', {}, h('span', { text: '이미지 크기' }), sz), h('label', {}, h('span', { text: '한 번에' }), bt)),
       h('p.rv-note', { text: `바꿀 수 없는 것(직원) — ${T.locked.join(' · ')}` }),
-      man ? h('div.rt-act', {}, save, drop) : null)));
+      man ? h('div.rt-act', {}, save) : null)));
   }
   return { load };
 }

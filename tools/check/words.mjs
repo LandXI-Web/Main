@@ -1,7 +1,7 @@
 /* 금칙어 검사(GPT 전수 검사 제안 · 바퀴 4-1 '외부 검수 보완' — numbers.mjs 옆) — 배포(커밋 · 게이트웨이 재시작) 때 돌린다.
    바깥 주소(app · admin · {기관}.land-xi.dev)를 로그인 폼으로 열어(세션 주입 없음) 주요 화면 · 상세 화면 · 관리자 개선 후보를 보고
    화면에 보이는 글(본문 · title · aria-label · placeholder · alt)에서 금칙어를 센다:
-     결재 · 반려 · 현장 확인 · 시연 · 데모 · 준비 중 · 검증 정확도 · 무허가 건축 의심
+     결재 · 반려 · 현장 확인 · 시연 · 데모 · 준비 중 · 검증 정확도 · 무허가 건축 의심 · 데이터하우스(10-13)
    빼는 곳: 개발자 서랍(.k-dev) · [data-lint-skip] · 사용자가 쓴 말 그대로([data-user-text] — 예: 개선 후보의 '질문 원문').
    응답 문구: 화면이 받은 서버 JSON 응답에서 사람이 읽는 칸(message · text · title · label · line · note · why · hint · sub · answer …)의
    글도 같은 금칙어로 세어 따로 적는다(경고 — 화면에 안 나온 값일 수 있음). 화면 글에 금칙어가 있거나 화면 오류(콘솔 오류)가 있으면 종료 코드 1.
@@ -36,6 +36,8 @@ export const WORDS = [
   ['표본 n장', /표본\s?[\d,]+\s?장|학습\s?데이터\s?표본|표본\s?학습/], ['개발 요청', /개발\s?요청/], ['봤음 기록', /지도에서\s?봤음|이 결과 확인했음/],
   // 10-12 XI맵 시군구 카드 'nullnull' — 값이 비었는데 글자로 이어 붙은 것(화면 글 · 속성). 영문자 · 숫자 · 밑줄에 붙은 낱말(예: annulled · nullable)은 세지 않는다
   ['null · undefined · NaN', /(^|[^A-Za-z0-9_])(null|undefined|NaN)(?![A-Za-z0-9_])/],
+  // 10-13 데이터-개념 ⓐ(원칙 232) — 데이터하우스를 없앴다(학습 데이터는 프로젝트 안 · 영상 · 행정 자료는 '공유 데이터에서 고르기')
+  ['데이터하우스', /데이터\s?하우스/],
 ];
 const hitWords = (s) => WORDS.filter(([, re]) => re.test(s)).map(([k]) => k);
 /** 서버 응답에서 사람이 읽는 칸 */
@@ -139,6 +141,8 @@ try {
     for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석하기 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
     await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
     await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
+    await screen(s, 'LX 직원 · 프로젝트', A + 'lx-project/', { wait: 'main' });                       // 10-13 — 메뉴에 데이터하우스 없음
+    await screen(s, 'LX 직원 · 새 프로젝트 창', A + 'lx-project/?new=1', { wait: '.lxp-new--one' });
     /* XI맵 — 전국 · 결과 있는 시군구 · 결과 없는 시군구(카드 글에 값 없음 글자가 새지 않는지) */
     const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => window.__xc.map.jumpTo({ center: [a, b], zoom: c }), [x, y, z]); await p.waitForTimeout(4000); };
     await screen(s, 'LX 직원 · XI맵(전국)', A + 'xi-clean/', { wait: '.xb-hud', ms: 4000 });
@@ -162,6 +166,8 @@ try {
     await screen(s, 'LX 관리자 · 요청 관리', O + 'ops-core/#/approvals', { wait: 'main' });
     await screen(s, 'LX 관리자 · 배포', O + 'ops-infra/#/deploys', { wait: 'main' });
     await screen(s, 'LX 관리자 · 배포 → 개선 후보', O + 'ops-infra/#/deploys/improve', { wait: '.im-t, .k-empty', ms: 3000 });
+    await screen(s, 'LX 관리자 · 배포 → XI 재학습', O + 'ops-infra/#/deploys/retrain', { wait: '.rt-when', ms: 2000 });
+    await screen(s, 'LX 관리자 · 배포 → 학습 서식', O + 'ops-infra/#/deploys/templates', { wait: '.rt-blks', ms: 2000 });
     await s.ctx.close();
   }
 } finally {
