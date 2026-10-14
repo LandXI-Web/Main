@@ -1,7 +1,7 @@
 /* lx-analyze — 분석하기(갤러리 · 카드 상세 · 이 카드로 분석). 업무 화면: 회백 바탕 위 흰 카드 · 그림자 0 · 토큰 · 부품은 키트(kit.css · service-card.css) · 법전 v2.2. */
 body.la-boot .k-app{visibility:hidden}
 .la-scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain}
-.la-page{max-width:var(--content-max);margin:0 auto;padding:32px 48px 64px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px}
+.la-page{max-width:var(--wide-max);margin:0 auto;padding:32px 48px 64px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px}
 .la-page :where(input,button,a.t-btn){box-sizing:border-box}
 
 /* 머리 · 거르기 */
@@ -171,6 +171,8 @@ body.la-boot .k-app{visibility:hidden}
 .la-acg{display:grid;gap:20px;align-items:stretch;grid-template-columns:repeat(4,minmax(0,1fr))}
 .la-acg[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
 .la-acg[data-n="6"]{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+/* 넓은 화면(원칙 248) — 한 페이지 6장은 2200 이상에서 한 줄 6열 */
+@media (min-width:2200px){.la-acg[data-n="6"]{grid-template-columns:repeat(6,minmax(0,1fr));gap:20px}.la-acg[data-n="6"] .la-ac .la-ac-pic{aspect-ratio:16/10}}
 @media (max-width:1199px){.la-acg,.la-acg[data-n="6"]{grid-template-columns:repeat(3,minmax(0,1fr))}.la-acg[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .la-ac .la-ac-pic{aspect-ratio:16/10}
 .la-acg[data-n="6"] .la-ac .la-ac-pic{aspect-ratio:3/2}

@@ -5,9 +5,9 @@ html.hm-embed,html.hm-embed body{margin:0;background:var(--bg-1)}
 html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-root{padding:0 0 24px}
 
-/* 단독 쪽 — 셸 판 가운데 흰 카드 한 장(서랍 폭) */
+/* 단독 쪽 — 셸 판 가운데 흰 카드 한 장(PC 는 720 — 서랍 폭 392 는 넓은 화면에서 제목이 두 줄로 꺾여 원칙 248 로 넓힘) */
 .hm-stage{height:100%;overflow:auto;display:flex;justify-content:center;padding:40px 16px}
-.hm-card{width:var(--sheet);max-width:100%;align-self:flex-start;padding:24px 24px 28px;border-radius:var(--r-16);box-shadow:var(--elev-map)}
+.hm-card{width:min(720px,100%);max-width:100%;align-self:flex-start;padding:24px 24px 28px;border-radius:var(--r-16);box-shadow:var(--elev-map)}
 .hm-h{margin:0 0 12px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
 
 /* 탭 */

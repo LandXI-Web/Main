@@ -1,5 +1,6 @@
 /* lx-inbox — 기관에서 온 요청. 판 1장 = 뷰포트 · 스크롤은 목록 · 대화 카드 안에서만(법전 §3). 토큰만. */
 .ib{height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:24px;padding:32px 48px 32px;max-width:1440px;margin:0 auto;overflow:hidden}
+@media (min-width:1600px){.ib{max-width:var(--wide-max)}.ib-grid{grid-template-columns:minmax(360px,480px) minmax(0,1fr)}}
 .ib-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding-bottom:20px;border-bottom:1px solid var(--rule)}
 .ib-t{margin:0;font:700 var(--fs-h3)/var(--lh-h3) var(--font-display);letter-spacing:var(--ls-h3);color:var(--ink)}
 .ib-s{margin:0;font:400 var(--fs-body,16px)/26px var(--font-body);color:var(--sub)}

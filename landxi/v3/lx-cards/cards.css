@@ -42,3 +42,4 @@
 .lc-grps{display:flex;flex-wrap:wrap;gap:8px}
 .lc-grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 14px/20px var(--font-body);color:var(--ink);cursor:pointer}
 .lc-grp:has(input:checked){border-color:var(--ink);background:var(--bg-0)}
+.k-sc-spec dd{text-wrap:balance}   /* 카드 칸 값이 두 줄이면 고르게 — 괄호 한 덩어리만 남는 줄 0(원칙 248 · 법전 §2-1)*/

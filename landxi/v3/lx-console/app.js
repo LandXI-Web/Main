@@ -118,9 +118,10 @@ async function drawProjects() {
   countUp(ol);
   /* '공개 뒤 결과 확인 남음' 줄은 원칙 203(10-12)으로 뺐다 — 결과 확인은 남은 일이 아니다 */
 
-  /* ③ 마지막 활동 순 4장 — 카드 = 프로젝트 목록 카드 그대로(compact) */
+  /* ③ 마지막 활동 순 한 줄 — 카드 = 프로젝트 목록 카드 그대로(compact). 장 수 = 그 해상도의 열 수(원칙 248 · console.css 와 같은 경계: 4 · 1600 이상 5 · 2200 이상 6) */
   const t = (p) => +new Date(p.last_at || p.updated_at || 0) || 0;
-  const top = items.slice().sort((a, b) => t(b) - t(a)).slice(0, 4);
+  const recentN = matchMedia('(min-width:2200px)').matches ? 6 : matchMedia('(min-width:1600px)').matches ? 5 : 4;
+  const top = items.slice().sort((a, b) => t(b) - t(a)).slice(0, recentN);
   recentMore.textContent = `프로젝트 목록 · 전체 ${items.length}`;
   const deck = await loadDeck().catch(() => null);
   const deckBy = new Map((deck?.items || []).map((c) => [c.id, c]));

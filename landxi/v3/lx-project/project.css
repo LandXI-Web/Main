@@ -1,5 +1,7 @@
 /* lx-project — 프로젝트 목록 · 한 장. 업무 표형 화면: 회백 바탕 위 흰 카드 · 그림자 0 · 토큰·부품은 키트(kit.css) · 법전 system-v2.2-toss. */
-.lxp-page{height:100%;overflow:auto;box-sizing:border-box;padding:40px 48px 64px;max-width:1180px}
+.lxp-page{height:100%;overflow:auto;box-sizing:border-box;padding:40px 48px 64px;max-width:1180px;margin:0 auto}
+/* 프로젝트 한 장 — 가운데 · 넓은 화면은 조금 넓게(원칙 248) */
+@media (min-width:1600px){.lxp-page{max-width:1440px}.lxp-grid{grid-template-columns:minmax(0,1fr) 420px}}
 .lxp-head{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
 .lxp-head h1{margin:0}
 .lxp-head .t-label{margin:0}
@@ -151,7 +153,7 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 
 /* 프로젝트 진행 현황 = 분석 서비스 카드와 같은 틀(원칙 219 · 10-12) — 카드 · 칩 · 보기 개수 · 페이지는 분석하기 CSS(.k-sc · .la-ac · .la-chips · .la-view · .la-pager) 그대로.
    더한 것은 단계 줄(.lxp-pc-st — 여섯 칸 막대 + 지금 단계)과 사람 · 최근 활동 줄(.lxp-pc-meta)뿐. */
-.lxp-page.lxp-page--cards{max-width:var(--content-max);margin:0 auto;width:100%}
+.lxp-page.lxp-page--cards{max-width:var(--wide-max);margin:0 auto;width:100%}
 .lxp-tools[hidden],.lxp-tools .la-chips[hidden]{display:none}
 .lxp-cards{display:flex;flex-direction:column}
 .lxp-pc{cursor:pointer}

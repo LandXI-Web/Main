@@ -2,6 +2,7 @@
    세로 한 줄기: ① 흐름 판 ② 이번 학습(반복마다 정확도 그래프 하나 + 핵심 수치) ③ 학습 이력 목록. 블록을 누를 때만 오른쪽 서랍. 토스 톤 · 아이콘 0. */
 .tb-pane{position:absolute;inset:0;overflow:auto;padding:20px 24px 40px;overscroll-behavior:contain}
 .tb-col{display:flex;flex-direction:column;gap:16px;max-width:1320px;margin:0 auto}
+@media (min-width:1600px){.tb-col{max-width:var(--wide-max)}}
 .tb-card{border-radius:16px;background:var(--bg-1);box-shadow:0 1px 0 rgba(28,31,37,.03)}
 
 /* ① 흐름 판 */

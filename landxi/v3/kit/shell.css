@@ -100,3 +100,9 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 .k-sess:hover{background:var(--bg-0);color:var(--ink-2)}
 .k-sess.is-soon{color:var(--warn);font-weight:500}
 @media (max-width:960px){.k-sess{display:none}}
+
+/* 화면 폭 규칙(원칙 248 · 10-14) — 넓은 화면에서 업무 화면 내용 폭이 늘어난다. 변수만 둔다(쓰는 화면만 바뀜 · 지금은 LX 직원 화면).
+   1600 미만 = 법전 최대 폭 1,344 그대로 · 1600–2199 = 1,760(1920 에서 꽉 참) · 2200 이상 = 2,240(2560 에서 양옆 여백 균형) */
+:root{--wide-max:var(--content-max,1344px)}
+@media (min-width:1600px){:root{--wide-max:1760px}}
+@media (min-width:2200px){:root{--wide-max:2240px}}

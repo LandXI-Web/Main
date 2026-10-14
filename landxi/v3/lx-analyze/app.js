@@ -38,7 +38,8 @@ document.body.dataset.ready = '1';
    카드 한 틀: 그림(결과 장면 > 학습 표본 > 빈 틀) → 이름 → 한 줄 → AI 모델 정확도 · 모델 갱신 → 대상 지역 n곳 → 분석하기 · 자세히.
    숫자 · 날짜 = 서버 모델 기록(카드 덱의 model) 한 출처. 보기 개수 = 한 페이지 2 · 4 · 6 · 8장(기본 4장 · 지도-4 ⓐ · 원칙 150) + 페이지 넘김 — 이 브라우저에 기억. */
 function perList() { return [2, 4, 6, 8]; }   // 함수 — 맨 위 await(gallery) 가 이 줄보다 먼저 돈다
-function readPer() { try { const n = +localStorage.getItem('lx-analyze.per'); return perList().includes(n) ? n : 4; } catch { return 4; } }
+function perDef() { return matchMedia('(min-width:2200px)').matches ? 6 : 4; }   // 고르기 전 기본 = 그 해상도 한 줄(원칙 248 · 2200 이상 6열)
+function readPer() { try { const n = +localStorage.getItem('lx-analyze.per'); return perList().includes(n) ? n : perDef(); } catch { return perDef(); } }
 function savePer(n) { try { localStorage.setItem('lx-analyze.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
 
 async function authBlob(path) {

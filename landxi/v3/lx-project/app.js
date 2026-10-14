@@ -35,7 +35,8 @@ const stageText = (p) => (p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '�
    부품 = 분석하기 카드 CSS(lx-analyze/analyze.css .la-ac · kit/service-card.css .k-sc) 그대로 + 단계 줄 · 사람 줄만 더함(project.css .lxp-pc).
    거르기 = 묶음 탭(내 프로젝트 · 내가 만든 · 참여한 · 보관 · 전체 ?scope=) · 단계 칩(?stage=) · 찾기 · 한 페이지 2 · 4 · 6 · 8장(분석하기와 같은 고르기 · 이 브라우저에 기억). */
 const PER = [2, 4, 6, 8];
-function readPer() { try { const n = +localStorage.getItem('lx-project.per'); return PER.includes(n) ? n : 4; } catch { return 4; } }
+const perDef = () => (matchMedia('(min-width:2200px)').matches ? 6 : 4);   // 고르기 전 기본 = 그 해상도 한 줄(원칙 248 · 2200 이상 6열)
+function readPer() { try { const n = +localStorage.getItem('lx-project.per'); return PER.includes(n) ? n : perDef(); } catch { return perDef(); } }
 function savePer(n) { try { localStorage.setItem('lx-project.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
 
 async function list() {

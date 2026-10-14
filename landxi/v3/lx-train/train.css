@@ -2,11 +2,11 @@
 
 .tr-pane{position:absolute;inset:0;overflow:auto;padding:32px var(--margin) 48px;transition:padding-right var(--d-380) var(--e-ui);overscroll-behavior:contain}
 .tr-pane.has-drawer{padding-right:calc(var(--sheet) + 48px)}
-.tr-h{display:flex;align-items:baseline;gap:16px;max-width:var(--content-max);margin:0 auto 24px}
+.tr-h{display:flex;align-items:baseline;gap:16px;max-width:var(--wide-max);margin:0 auto 24px}
 .tr-title{margin:0}
 
 /* 카드 목록 — K7 변형(크롭 = 표본 칩) · 1440 에서 5 × 2 한 판 */
-.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:var(--gutter);max-width:var(--content-max);margin:0 auto}
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:var(--gutter);max-width:var(--wide-max);margin:0 auto}
 .tr-card{padding-bottom:20px;gap:8px;text-decoration:none;cursor:pointer}
 .tr-card > *:not(.k-svc-crop){margin:0 20px}
 .tr-card .k-svc-crop{aspect-ratio:16/10;margin-bottom:4px}
@@ -151,5 +151,5 @@
 .tf-data{margin:0 0 4px}
 
 /* 원칙 181 — 학습 탭 설명 칸(lx-project/explain.css) 자리 */
-.tr-ex{max-width:var(--content-max);margin:-8px auto 24px}
+.tr-ex{max-width:var(--wide-max);margin:-8px auto 24px}
 .tr-ex .lxp-ex{background:var(--bg-1)}

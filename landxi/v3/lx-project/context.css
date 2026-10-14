@@ -25,6 +25,7 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-bar-next b{font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 프로젝트 화면 — 이름은 판 머리에 크게 있으므로 한 줄에는 단계와 다음 할 일만 */
 .lxp-bar.is-page .lxp-bar-steps{max-width:980px}
+@media (min-width:1600px){.lxp-bar.is-page .lxp-bar-steps{max-width:none}}   /* 넓은 화면 = 단계 화면들과 같이 한 줄을 다 쓴다(원칙 248) */
 @media (max-width:1280px){.lxp-bar-next{display:none}.lxp-bar{gap:16px}}
 @media (max-width:960px){
   .lxp-bar{flex-wrap:wrap;gap:4px 12px;min-height:0;padding:8px 12px}

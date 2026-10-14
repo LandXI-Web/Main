@@ -2,7 +2,7 @@
    위에서 아래로: ① 프로젝트 진행 현황 · 요청함 · 저장 용량(숫자 칸 한 줄 · 진행 현황이 옛 '내가 돌린 작업' 자리 · 같은 크기) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
    (맨 위에 공지사항 가로 2칸 + 메모 1칸 한 줄 · 전국 AI 현황 칸은 삭제). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:20px 24px 32px}
-.ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:1344px}
+.ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:var(--wide-max)}
 .ld-in > .lxp-ntcs:empty{display:none}
 .ld-card{display:flex;flex-direction:column;gap:10px;min-width:0;box-sizing:border-box}
 .ld-card.t-card{padding:16px 20px}
@@ -66,6 +66,9 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 
 /* ③ 최근 진행한 프로젝트 — 프로젝트 목록 카드(lx-project/card.js · compact) 4장 한 줄 · 그림은 낮게(2.6:1) */
 .ld-rgrid.la-acg{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:2px}
+/* 넓은 화면 = 한 줄 장 수가 늘어난다(원칙 248 — 1600 이상 5 · 2200 이상 6 · app.js recentN 과 같은 경계) */
+@media (min-width:1600px){.ld-rgrid.la-acg{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (min-width:2200px){.ld-rgrid.la-acg{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .ld-rgrid .k-sc.la-ac{box-shadow:none;border:1px solid var(--rule)}
 .ld-rgrid .la-ac-pic{aspect-ratio:2.6/1}
 .ld-rgrid .k-sc-b.la-ac-b{padding:12px 14px 14px;gap:8px}
@@ -76,7 +79,7 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-rgrid .la-ac-hero b i{font-style:normal;font-size:13px;margin-left:2px;color:var(--sub-2)}
 .ld-rgrid .la-ac-hero small{font-size:12px}
 .ld-rgrid .la-ac-where{font-size:13px;line-height:18px}
-.ld-rgrid .k-sc-acts{margin-top:2px}
+.ld-rgrid .k-sc-acts{margin-top:auto}   /* 한 줄 카드의 단추 줄을 아래에 맞춘다(칸 높이 들쭉날쭉 0 · 원칙 248) */
 .ld-rgrid .k-sc-acts .t-btn{height:36px;line-height:34px;padding:0 16px}
 
 /* 맨 위 한 줄 — 공지사항(가로 2칸) | 메모(1칸) · 열 폭은 아래 숫자 줄과 같은 3칸 · 높이 고정(원칙 231) · 많으면 안쪽 스크롤 */

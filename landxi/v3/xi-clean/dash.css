@@ -1,5 +1,8 @@
 /* XI맵 융합 대시보드(10-14 11:02 · 원칙 241 · 245) — 지도는 왼쪽 작은 판, 나머지가 대시보드(시안 ximap-fusion 그대로). 밝은 톤 · 흰 카드 16 · 회백 바탕. */
 [data-dash="1"]{--xd-map:min(400px,30%);background:var(--bg-0)}
+/* 넓은 화면 = 왼쪽 지도 판이 함께 커진다(원칙 248) */
+@media (min-width:1600px){[data-dash="1"]{--xd-map:min(560px,32%)}}
+@media (min-width:2200px){[data-dash="1"]{--xd-map:min(760px,34%)}}
 [data-dash="1"] > .xc-stage{left:16px;top:16px;bottom:16px;right:auto;width:var(--xd-map);border-radius:var(--r-16);overflow:hidden;box-shadow:var(--elev-map);transition:width .9s var(--e-cam)}
 [data-dash="1"] > :is(.xb-hud,.xc-top,.xc-tools,.xc-hud,.xb-stats,.xc-pop,.xc-grip,.xc-chips){display:none!important}
 [data-dash="1"] .xn-what,[data-dash="1"] .maplibregl-marker.xb-pin,[data-dash="1"] .maplibregl-ctrl-bottom-left,[data-dash="1"] .maplibregl-ctrl-bottom-right{display:none}
@@ -91,6 +94,7 @@
 /* 선 · 산점 */
 .xd-line,.xd-sc{width:100%;height:auto;display:block;overflow:visible}
 .xd-line{aspect-ratio:560/200}.xd-sc{aspect-ratio:560/230}
+.xd-line,.xd-sc{max-height:400px}   /* 넓은 칸에서 그림이 화면 높이를 넘게 커지지 않게(원칙 248) */
 .xd-line .g,.xd-sc .g{stroke:var(--rule);stroke-width:1}
 .xd-sc .avg{stroke:var(--mute);stroke-width:1.5;stroke-dasharray:4 4}
 .xd-line .ax,.xd-sc .ax{font:400 11px/1 var(--font-num);fill:var(--sub)}
