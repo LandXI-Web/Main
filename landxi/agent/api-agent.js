@@ -56,11 +56,11 @@ export function events(runId, on) {
   return { close() { closed = true; es && es.close(); } };
 }
 
-/** 초안 .docx — Bearer 로 받아 blob 저장(브라우저 다운로드 · 파일명 = 서버 Content-Disposition) */
-export async function downloadDocx(url, fallbackName) {
+/** 초안 한글 문서(.hwpx) — Bearer 로 받아 blob 저장(브라우저 다운로드 · 파일명 = 서버 Content-Disposition) */
+export async function downloadDraft(url, fallbackName) {
   const s = session.get();
   const r = await fetch(base() + url, { headers: s ? { authorization: 'Bearer ' + s.token } : {} });
-  if (!r.ok) throw new AgentError('docx_' + r.status, '초안 파일을 받지 못함');
+  if (!r.ok) throw new AgentError('draft_' + r.status, '초안 파일을 받지 못함');
   const cd = r.headers.get('content-disposition') || '';
   const m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
   const name = m ? decodeURIComponent(m[1]) : fallbackName;

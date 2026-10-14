@@ -1,6 +1,6 @@
 """구현 18차 · 바퀴 5(확인 대장 10-11 18:52 — gov-보고서 · gov-비교 이대로 구현 · QA-Q2 ⓐ · QA-Q3 ⓐ). 실서버(:8700) · GPU 0 · vLLM 0.
 
-  기관 AI 분석 결과 보고서   GET /spaces/me/report(.docx · /map.png) — 합계 = 대시보드 큰 숫자(결과 설명서) = 필지 목록 total · 읍면동 합 = 합계 ·
+  기관 AI 분석 결과 보고서   GET /spaces/me/report(.hwpx · /map.png) — 합계 = 대시보드 큰 숫자(결과 설명서) = 필지 목록 total · 읍면동 합 = 합계 ·
                              규칙 · 소견 · 조치 제안 · '의심' · '현장 확인' 말 0 · 올린 대장이 있으면 '우리 대장과 다른 필지'
   행정정보와 비교            GET /spaces/me/ledger/compare(.xlsx) — 결과 세트 필지 번호 × 대장 필지 번호(실태조사 규칙 없음) ·
                              다른 필지 = 두 줄 합 · AI 결과 있음 + AI 분석 전 = 대장 필지 · 다른 기관 대장 0 · 올리기(지번만) → 맞춤 → 결과(시험 뒤 지움)
@@ -55,7 +55,7 @@ def test_report_same_numbers(rep, tok):
     assert not any(w in words for w in ("의심", "현장 확인", "소견", "조치 제안"))
 
 
-def test_report_emd_and_docx(rep, tok):
+def test_report_emd_and_hwpx(rep, tok):
     t = tok["namwon"]
     emd = rep["emd_rows"][0]["emd"]
     e = httpx.get(B + "/spaces/me/report", params={"card": CARD, "emd": emd}, headers=H(t), timeout=120).json()
@@ -63,9 +63,13 @@ def test_report_emd_and_docx(rep, tok):
     assert httpx.get(B + "/spaces/me/report", params={"card": CARD, "emd": "없는읍"}, headers=H(t), timeout=60).status_code == 404
     png = httpx.get(B + "/spaces/me/report/map.png", params={"card": CARD}, headers=H(t), timeout=180)
     assert png.status_code == 200 and png.content[:4] == b"\x89PNG"
-    d = httpx.get(B + "/spaces/me/report.docx", params={"card": CARD}, headers=H(t), timeout=180)
-    assert d.status_code == 200 and d.content[:2] == b"PK"
-    xml = zipfile.ZipFile(io.BytesIO(d.content)).read("word/document.xml").decode("utf-8")
+    d = httpx.get(B + "/spaces/me/report.hwpx", params={"card": CARD}, headers=H(t), timeout=180)
+    assert d.status_code == 200 and d.headers["content-type"].startswith("application/hwp+zip")
+    from landxi_api import hwpx as HX
+    assert HX.check(d.content) == [] and "BinData/image1.png" in zipfile.ZipFile(io.BytesIO(d.content)).namelist()   # 지도 그림 1장
+    assert ".hwpx" in d.headers["content-disposition"]
+    xml = HX.text_of(d.content)
+    assert httpx.get(B + "/spaces/me/report.docx", params={"card": CARD}, headers=H(t), timeout=60).status_code == 404   # .docx 는 더 내지 않음
     assert "읍면동별 개수 · 면적" in xml and f"{v(rep['total']):,}" in xml
     assert not any(w in xml for w in BAD)
     if rep.get("ledger"):

@@ -3,7 +3,7 @@
 운영 게이트웨이에는 붙지 않는다. 환경 변수 LX_AGENT_EXT_EXTRA=agent.tests.ext_probe 로 띄운 게이트웨이에서만 불린다(스크린샷 증거 · 테스트).
 ROUTE: LX 계정이 정확히 '명령 바 블록 확인' 이라고 물을 때만 직행.
   chart = 실제 survey_stats(by=emd) 봉투(지금 지도의 시군구) → 읍면동 막대
-  file  = 같은 봉투로 만든 .docx(run 폴더) → 내려받기 버튼
+  file  = 같은 봉투로 만든 한글 문서 .hwpx(run 폴더) → 내려받기 버튼
   image = Land-XI 자산 영상 한 장(run 폴더로 복사) → 영상 조각 + 꼬리표
 """
 from __future__ import annotations
@@ -46,16 +46,12 @@ async def blocks_probe(args: dict, ctx) -> Out:
         raise ToolError("not_found", "읍면동 집계가 없습니다", 404)
     out.blocks.append({"type": "chart", "kind": "bar", "title": "읍면동별 의심 건수", "rows": [{"label": r["label"], "env": r["env"]} for r in rows[:8]]})
     d = config.run_dir(ctx.run_id)
-    import docx
-    doc = docx.Document()
-    doc.add_heading("읍면동별 의심 건수", level=1)
-    t = doc.add_table(rows=1, cols=2)
-    t.rows[0].cells[0].text, t.rows[0].cells[1].text = "읍면동", "의심 건수"
-    for r in rows[:8]:
-        c = t.add_row().cells
-        c[0].text, c[1].text = r["label"], f"{r['value']:,}" if isinstance(r["value"], (int, float)) else "—"
-    doc.save(d / "blocks.docx")
-    out.blocks.append({"type": "file", "label": "읍면동별_의심_건수.docx", "href": config.run_href(ctx.run_id, "blocks.docx")})
+    from landxi_api import hwpx as HX
+    doc = HX.Doc()
+    doc.title("읍면동별 의심 건수")
+    doc.table([["읍면동", "의심 건수"]] + [[r["label"], f"{r['value']:,}" if isinstance(r["value"], (int, float)) else "—"] for r in rows[:8]], [60, 40], aligns=["l", "r"])
+    (d / "blocks.hwpx").write_bytes(doc.package("읍면동별 의심 건수"))
+    out.blocks.append({"type": "file", "label": "읍면동별_의심_건수.hwpx", "href": config.run_href(ctx.run_id, "blocks.hwpx")})
     if IMG.is_file():
         shutil.copyfile(IMG, d / "tile.webp")
         out.blocks.append({"type": "image", "src": config.run_href(ctx.run_id, "tile.webp"), "caption": "드론 영상 조각", "tag": "AI 의견 · 근거 아님"})

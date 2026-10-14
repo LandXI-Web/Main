@@ -1,6 +1,6 @@
-"""실태조사 보고서 초안 — 서식 `survey-emd` · python-docx · LLM 없이 닫힌다.
+"""실태조사 보고서 초안 — 서식 `survey-emd` · 한글 문서(.hwpx · 공용 서식 landxi_api.hwpx · 10-14 원칙 250) · LLM 없이 닫힌다.
 
-    build_draft(code, rule=None, top=20, narrative=None, fmt="dict"|"docx", realm="lx", tenant="") -> dict | bytes
+    build_draft(code, rule=None, top=20, narrative=None, fmt="dict"|"hwpx", realm="lx", tenant="") -> dict | bytes
 
 code = 읍면동(법정동 8·10자리) 또는 시군구(5자리) — 대상은 호출자가 정한다(지역 고정값 없음).
 ① 개요 ② 집계표(규칙 × 등급 × 상태) ③ 의심 상위 N ④ 근거 영상(그 지역 영상의 연도·해상도) ⑤ 법적 근거(법령 원문 조문 인용) ⑥ 조치 제안.
@@ -12,7 +12,6 @@ narrative(에이전트 서술): 문장마다 `[n]` 인용 검사 — 없거나 �
 from __future__ import annotations
 
 import datetime as dt
-import io
 import re
 
 from . import rules as R
@@ -441,148 +440,64 @@ def as_json(d: dict, narrative=None) -> dict:
 
 def filename(emd_name: str, at: dt.datetime | None = None) -> str:
     at = at or dt.datetime.now(KST)
-    return f"실태조사_초안_{emd_name}_{at:%Y%m%d}.docx"
+    return f"실태조사_초안_{emd_name}_{at:%Y%m%d}.hwpx"
 
 
-# ─────────────────────────── docx ───────────────────────────
+# ─────────────────────────── 한글 문서(.hwpx · 10-14 원칙 250) ───────────────────────────
 TAG = {"inferred": "AI 추론 · 검수 전", "recorded": "기록", "measured": "실측", "estimate": "추정"}
 
 
-def _font(run, size=None, bold=None, color=None):
-    from docx.oxml.ns import qn
-    from docx.shared import Pt, RGBColor
-    run.font.name = "맑은 고딕"
-    rpr = run._element.get_or_add_rPr()
-    rf = rpr.find(qn("w:rFonts"))
-    if rf is None:
-        rf = rpr.makeelement(qn("w:rFonts"), {})
-        rpr.append(rf)
-    for k in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
-        rf.set(qn(k), "맑은 고딕")
-    if size:
-        run.font.size = Pt(size)
-    if bold is not None:
-        run.bold = bold
-    if color:
-        run.font.color.rgb = RGBColor.from_string(color)
-    return run
+def _n(v) -> str:
+    """표 칸 숫자 — 정수 1,234 · 소수 1,234.5(예전 문서 표와 같은 글자)."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return str(v)
+    if isinstance(v, int):
+        return f"{v:,}"
+    if isinstance(v, float):
+        return f"{v:,.1f}"
+    return str(v)
 
 
-def _p(doc, text="", size=10, bold=False, color=None, align=None, space_after=4):
-    from docx.shared import Pt
-    p = doc.add_paragraph()
-    if text:
-        _font(p.add_run(text), size, bold, color)
-    p.paragraph_format.space_after = Pt(space_after)
-    if align:
-        p.alignment = align
-    return p
-
-
-def _shade(cell, hex_fill):
-    from docx.oxml import OxmlElement
-    from docx.oxml.ns import qn
-    tcpr = cell._element.get_or_add_tcPr()
-    shd = OxmlElement("w:shd")
-    shd.set(qn("w:val"), "clear")
-    shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), hex_fill)
-    tcpr.append(shd)
-
-
-def _tbl(doc, header: list[str], rows: list[list], widths=None, size=8.5, head_fill="E8ECEF"):
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Cm
-    t = doc.add_table(rows=1, cols=len(header))
-    t.style = "Table Grid"
-    for i, h in enumerate(header):
-        c = t.rows[0].cells[i]
-        c.text = ""
-        _font(c.paragraphs[0].add_run(h), size, True)
-        c.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _shade(c, head_fill)
-    for r in rows:
-        cells = t.add_row().cells
-        for i, v in enumerate(r):
-            cells[i].text = ""
-            s = "" if v is None else (f"{v:,}" if isinstance(v, int) else (f"{v:,.1f}" if isinstance(v, float) else str(v)))
-            _font(cells[i].paragraphs[0].add_run(s), size)
-            if isinstance(v, (int, float)):
-                cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    if widths:
-        for row in t.rows:
-            for i, w in enumerate(widths):
-                row.cells[i].width = Cm(w)
-    return t
-
-
-def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
-    from docx import Document
-    from docx.enum.section import WD_ORIENT
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Cm, Pt
+def render_hwpx(d: dict, narrative=None) -> tuple[bytes, str]:
+    """실태조사 보고서 초안 — 공용 한글 문서 서식(landxi_api.hwpx). ① 개요 ② 집계표 ③ 의심 상위 ④ 근거 영상 ⑤ 법적 근거(조문 원문) ⑥ 조치 제안 · 인용."""
+    from landxi_api import hwpx as HX
     j = as_json(d, narrative)
-    doc = Document()
-    sec = doc.sections[0]
-    sec.orientation = WD_ORIENT.PORTRAIT
-    sec.page_width, sec.page_height = Cm(21.0), Cm(29.7)
-    sec.left_margin = sec.right_margin = Cm(1.8)
-    sec.top_margin = sec.bottom_margin = Cm(1.6)
-    st = doc.styles["Normal"]
-    st.font.name = "맑은 고딕"
-    st.font.size = Pt(10)
-    from docx.oxml.ns import qn
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
-    doc.core_properties.title = j["title"]
-    doc.core_properties.author = j.get("org") or "Land-XI"
-    doc.core_properties.comments = ""
-    # 머리
-    hdr = sec.header.paragraphs[0]
-    _font(hdr.add_run(" · ".join(x for x in ["Land-XI 실태조사", j.get("org"), j["place"], "초안"] if x)), 8, False, "6B7780")
-    _p(doc, j["title"], 17, True, "14202A", space_after=2)
-    _p(doc, f"작성 {j['generated'][:16].replace('T', ' ')} · 기관 {j.get('org') or '—'} · 대상 {' '.join(x for x in (j.get('sido'), j['place']) if x)}"
-            + (f" · 규칙 {rule_name(j['rule'])}" if j["rule"] else " · 전체 규칙") + f" · 상위 {j['limit']}건", 9, False, "56626B")
-    box = doc.add_table(rows=1, cols=1)
-    box.style = "Table Grid"
-    c = box.rows[0].cells[0]
-    _shade(c, "FFF4E5")
-    c.text = ""
-    _font(c.paragraphs[0].add_run(j["fixed"]), 11, True, "9A3412")
-    c.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _font(c.add_paragraph().add_run(("검토 대상 후보 목록입니다. " if _lx(d) else "현장조사 대상 후보 목록입니다. ") + "판단 기준값은 [추정 초기값]이며 법령 기준이 아닙니다. "
-                                    "수치 꼬리표: AI 추론 · 검수 전 / 기록 / 실측 / 추정."), 8.5, False, "7C2D12")
-    # ① 개요
-    _p(doc, "", space_after=2)
-    _p(doc, "① 개요", 12.5, True, "14202A")
+    at = d["at"]
+    made_t = at.strftime("%Y. %m. %d. %H:%M")
+    doc = HX.Doc()
+    target = " ".join(x for x in (j.get("sido"), j["place"]) if x)
+    doc.title(j["title"], " · ".join(x for x in [target, (f"규칙 {rule_name(j['rule'])}" if j["rule"] else "전체 규칙"), f"상위 {j['limit']}건"] if x))
     o = j["overview"]
-    _tbl(doc, ["항목", "내용", "꼬리표"], [
-        ["기관", o.get("org") or "—", ""],
-        ["대상", " ".join(x for x in (j.get("sido"), j["place"]) if x), ""],
-        ["필지 수", f"{o['parcels']['value']:,}필지 · {o['area_ha']['value']:,.1f} ha", TAG["measured"]],
-        ["영상", " / ".join(o["imagery"]) or "—", "기록"],
-        ["대장", o["ledger"] + " (연속지적도 표기 지목 · 토지대장 원본과 다를 수 있음)", "기록"],
-        ["규칙", "; ".join(f"{r['name']}: {r['condition']}" for r in o["rules"]), TAG["estimate"]],
-        ["기준값", o["thresholds_note"], TAG["estimate"]],
-    ], widths=[3.0, 11.6, 2.8])
+    doc.overview([("기관", o.get("org") or "—"), ("대상", target), ("필지 수", f"{o['parcels']['value']:,}필지 · {o['area_ha']['value']:,.1f} ha"),
+                  ("만든 날짜", made_t)])
+    doc.notice(j["fixed"], ("검토 대상 후보 목록입니다. " if _lx(d) else "현장조사 대상 후보 목록입니다. ") + "판단 기준값은 [추정 초기값]이며 법령 기준이 아닙니다. "
+               "수치 꼬리표: AI 추론 · 검수 전 / 기록 / 실측 / 추정.")
+    # ① 개요
+    doc.heading("① 개요", number=False)
+    doc.table([["항목", "내용", "꼬리표"],
+               ["영상", " / ".join(o["imagery"]) or "—", "기록"],
+               ["대장", o["ledger"] + " (연속지적도 표기 지목 · 토지대장 원본과 다를 수 있음)", "기록"],
+               ["규칙", "; ".join(f"{r['name']}: {r['condition']}" for r in o["rules"]), TAG["estimate"]],
+               ["기준값", o["thresholds_note"], TAG["estimate"]]], [17, 66, 17], aligns=["c", "l", "c"])
     for s in j["narrative"].get("overview", []):
-        _p(doc, plain_rules(s), 9.5, space_after=2)
+        doc.body_text(plain_rules(s))
     # ② 집계표
-    _p(doc, "", space_after=2)
-    _p(doc, "② 집계표 — 규칙 × 등급 × 상태", 12.5, True, "14202A")
+    doc.heading("② 집계표 — 규칙 × 등급 × 상태", number=False)
     rows = []
     for r in j["table"]:
         rows.append([r["name"], r["A"]["value"], r["B"]["value"], r["C"]["value"], r["total"]["value"],
                      *[sum(r["by_state"][s]["value"] for s in ss if s in r["by_state"]) for _, ss in REPORT_STATES]])
     tot = ["계"] + [sum(x[i] for x in rows) for i in range(1, 5 + len(REPORT_STATES))]
-    _tbl(doc, ["규칙", "A", "B", "C", "계", *[k for k, _ in REPORT_STATES]], rows + [tot],
-         widths=[4.6, 1.2, 1.2, 1.4, 1.4, 1.9, 1.9, 1.9, 1.9])
-    _p(doc, f"꼬리표: 등급·건수 = AI 추론 · 검수 전 / 상태 = 기록. 등급 A = {j['sgg']} 전체 점수 상위 5%, B = 다음 20%.",
-       8, False, "56626B")
+    doc.table([["규칙", "A", "B", "C", "계", *[k for k, _ in REPORT_STATES]]] + [[_n(c) for c in x] for x in rows + [tot]],
+              [26, 7, 7, 8, 8, 11, 11, 11, 11], aligns=["l"] + ["r"] * (4 + len(REPORT_STATES)), total_row=True, small=True,
+              caption="규칙 × 등급 × 상태 (단위: 건)")
+    doc.small(f"꼬리표: 등급·건수 = AI 추론 · 검수 전 / 상태 = 기록. 등급 A = {j['sgg']} 전체 점수 상위 5%, B = 다음 20%.")
     for s in j["narrative"].get("findings", []):
-        _p(doc, plain_rules(s), 9.5, space_after=2)
+        doc.body_text(plain_rules(s))
     # ③ 의심 상위 N
-    _p(doc, "", space_after=2)
-    _p(doc, f"③ 의심 상위 {len(j['top_items'])}건 (점수순)", 12.5, True, "14202A")
+    doc.heading(f"③ 의심 상위 {len(j['top_items'])}건 (점수순)", number=False)
     strip = [x for x in ((j.get("region_full") or "") + " ", (j.get("sgg") or "") + " ") if x.strip()]
 
     def short(a):
@@ -590,73 +505,63 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
         for s in strip:
             a = a.replace(s, "")
         return re.sub(r"^\S+(특별시|광역시|특별자치도|특별자치시|도)\s", "", a)
-    trs = [[x["order"], x["pnu"], short(x["addr"]), x["jimok"], " · ".join(x["rules"]), x["priority"],
-            x["evid_m2"]["value"], f"{x['evid_pct']['value']:.0f}%", "-" if x["conf"]["value"] is None else f"{x['conf']['value']:.2f}",
+    trs = [[_n(x["order"]), x["pnu"], short(x["addr"]), x["jimok"], " · ".join(x["rules"]), x["priority"],
+            _n(x["evid_m2"]["value"]), f"{x['evid_pct']['value']:.0f}%", "-" if x["conf"]["value"] is None else f"{x['conf']['value']:.2f}",
             STATE_KO.get(x["state"], x["state"])] for x in j["top_items"]]
-    _tbl(doc, ["No", "PNU", "소재지", "지목", "해당 규칙", "등급", "근거면적㎡", "필지 대비", "신뢰도", "상태"], trs,
-         widths=[0.8, 3.2, 3.2, 0.9, 2.6, 0.8, 1.6, 1.3, 1.1, 1.3], size=7.5)
-    _p(doc, "같은 필지가 여러 규칙에 걸리면 점수가 가장 높은 한 줄로 적고, '해당 규칙' 칸에 규칙을 모두 적었습니다.", 8, False, "56626B")
-    _p(doc, "꼬리표: 근거면적·비율·신뢰도 = AI 추론 · 검수 전. 소유자 성명은 싣지 않습니다(연속지적도에 없음).", 8, False, "56626B")
+    doc.table([["No", "필지 번호", "소재지", "지목", "해당 규칙", "등급", "근거면적㎡", "필지 대비", "신뢰도", "상태"]] + trs,
+              [4, 20, 14, 6, 16, 5, 9, 7, 7, 8], aligns=["c", "l", "l", "c", "l", "c", "r", "r", "r", "c"], small=True,
+              caption=f"의심 상위 {len(j['top_items'])}건")
+    doc.small("같은 필지가 여러 규칙에 걸리면 점수가 가장 높은 한 줄로 적고, '해당 규칙' 칸에 규칙을 모두 적었습니다.")
+    doc.small("꼬리표: 근거면적·비율·신뢰도 = AI 추론 · 검수 전. 소유자 성명은 싣지 않습니다(연속지적도에 없음).")
     # ④ 근거 영상
-    _p(doc, "", space_after=2)
-    _p(doc, "④ 근거 영상", 12.5, True, "14202A")
+    doc.heading("④ 근거 영상", number=False)
     im = j["imagery_note"]
-    _tbl(doc, ["구분", "건수(상위 목록 안)", "영상"], [
-        ["여러 시점 비교 가능", im["multi"]["value"], " / ".join(im.get("imagery") or []) or "—"],
-        ["한 시점", im["single"]["value"], (im.get("imagery") or ["—"])[0]],
-    ], widths=[4.0, 3.0, 10.4])
-    _p(doc, im["note"], 8, False, "56626B")
+    doc.table([["구분", "건수(상위 목록 안)", "영상"],
+               ["여러 시점 비교 가능", _n(im["multi"]["value"]), " / ".join(im.get("imagery") or []) or "—"],
+               ["한 시점", _n(im["single"]["value"]), (im.get("imagery") or ["—"])[0]]], [24, 18, 58], aligns=["l", "r", "l"])
+    doc.small(im["note"])
     # ⑤ 법적 근거 — 법령 원문 조문 인용
-    _p(doc, "", space_after=2)
-    _p(doc, "⑤ 법적 근거", 12.5, True, "14202A")
-    _tbl(doc, ["규칙", "조문", "시행일", "원문"],
-         [[" · ".join(x["rule_names"]), x["label"].split(" · 시행")[0], x["effective"] or "—", x["text"] if x["text"] else x["status"]] for x in j["law"]],
-         widths=[2.8, 3.8, 1.8, 9.0], size=7.5)
-    _p(doc, "조문은 국가법령정보센터 공개 원문 그대로입니다. " + ("위반 여부는 담당자가 판단합니다." if _lx(d) else "위반 여부는 현장 확인 후 담당자가 판단합니다."),
-       8, False, "56626B")
+    doc.heading("⑤ 법적 근거", number=False)
+    doc.table([["규칙", "조문", "시행일", "원문"]] +
+              [[" · ".join(x["rule_names"]), x["label"].split(" · 시행")[0], x["effective"] or "—", x["text"] if x["text"] else x["status"]] for x in j["law"]],
+              [16, 22, 11, 51], aligns=["l", "l", "c", "l"], small=True, caption="규칙별 근거 조문(원문)")
+    doc.small("조문은 국가법령정보센터 공개 원문 그대로입니다. " + ("위반 여부는 담당자가 판단합니다." if _lx(d) else "위반 여부는 현장 확인 후 담당자가 판단합니다."))
     # ⑥ 조치 제안
-    _p(doc, "", space_after=2)
-    _p(doc, "⑥ 조치 제안", 12.5, True, "14202A")
+    doc.heading("⑥ 조치 제안", number=False)
     a = j["actions"]
-    _p(doc, ("우선 검토 대상" if _lx(d) else "현장조사 우선 대상") + f": A등급 {a['field_targets']['value']:,}건 (AI 추론 · 검수 전)", 10, True)
+    doc.para(("우선 검토 대상" if _lx(d) else "현장조사 우선 대상") + f": A등급 {a['field_targets']['value']:,}건 (AI 추론 · 검수 전)", HX.P_BODY, HX.C_BOLD)
     for s in a["checklist"]:
-        _p(doc, "□ " + s, 9.5, space_after=1)
+        doc.item(s, "□")
     for s in j["narrative"].get("actions", []):
-        _p(doc, plain_rules(s), 9.5, space_after=2)
-    _p(doc, a["fixed"], 10.5, True, "9A3412", space_after=6)
+        doc.body_text(plain_rules(s))
+    doc.notice(a["fixed"])
     # 인용
-    _p(doc, "인용", 10, True, "14202A")
+    doc.heading("인용", number=False)
     for c in j["citations"]:
         v = c.get("value")
         if v is None:
-            _p(doc, f"[{c['n']}] {c['label']} — 법령 원문", 8, False, "56626B", space_after=0)
+            doc.small(f"[{c['n']}] {c['label']} — 법령 원문")
             continue
         unit = {"count": "건", "필지": "필지"}.get(v["unit"], " " + v["unit"])
-        _p(doc, plain_rules(f"[{c['n']}] {c['label']}: {v['value']:,}{unit} — {TAG.get(v['basis'], v['basis'])} · {v['source']}"), 8, False, "56626B", space_after=0)
-    _p(doc, f"서술: {j['narrative_source']}", 8, False, "56626B")
-    buf = io.BytesIO()
-    doc.save(buf)
-    return buf.getvalue(), j["filename"]
+        doc.small(plain_rules(f"[{c['n']}] {c['label']}: {v['value']:,}{unit} — {TAG.get(v['basis'], v['basis'])} · {v['source']}"))
+    doc.small(f"서술: {j['narrative_source']}")
+    doc.source(f"Land-XI 실태조사 · {REPORT_SRC}", made_t)
+    return doc.package(j["title"], at, j.get("org") or "Land-XI"), j["filename"]
 
 
 def build_draft(emd_cd: str, rule: str | None = None, top: int = 20, narrative=None, fmt: str = "dict",
                 realm: str = "lx", tenant: str = ""):
-    """에이전트·화면이 부르는 한 함수 — fmt 'dict' → 봉투 JSON · 'docx' → bytes. realm/tenant 는 호출자의 RLS."""
+    """에이전트·화면이 부르는 한 함수 — fmt 'dict' → 봉투 JSON · 'hwpx' → 한글 문서 bytes. realm/tenant 는 호출자의 RLS."""
     d = collect(emd_cd, rule, top, realm, tenant)
-    if fmt == "docx":
-        return render_docx(d, narrative)[0]
+    if fmt == "hwpx":
+        return render_hwpx(d, narrative)[0]
     return as_json(d, narrative)
 
 
-def docx_text(blob: bytes) -> str:
-    """docx 안 글자 전부(본문 · 표 · 머리) — 개발 문구 검사용."""
-    from docx import Document
-    d = Document(io.BytesIO(blob))
-    parts = [p.text for p in d.paragraphs]
-    parts += [c.text for t in d.tables for r in t.rows for c in r.cells]
-    for s in d.sections:
-        parts += [p.text for p in s.header.paragraphs]
-    return "\n".join(parts)
+def doc_text(blob: bytes) -> str:
+    """한글 문서 안 글자 전부(본문 · 표) — 개발 문구 검사용."""
+    from landxi_api.hwpx import text_of
+    return text_of(blob)
 
 
 DEV_WORDS = re.compile(r"PostGIS|V-World|API\s?키|건축HUB|inspected|closed|dismissed|2차|RAG|\bllm\b|LLM|survey_|emd_cd|덕과면|AOI|도엽|"
@@ -667,11 +572,11 @@ def dev_words(text: str) -> list[str]:
     return sorted({m.group(0) for m in DEV_WORDS.finditer(text)})
 
 
-if __name__ == "__main__":   # python -m survey.report <법정동 8자리|시군구 5자리> R1 20 out.docx
+if __name__ == "__main__":   # python -m survey.report <법정동 8자리|시군구 5자리> R1 20 out.hwpx
     import sys
     emd, rl, n, out = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] != "-" else None), \
         int(sys.argv[3]) if len(sys.argv) > 3 else 20, sys.argv[4] if len(sys.argv) > 4 else None
-    blob, name = render_docx(collect(emd, rl, n))
+    blob, name = render_hwpx(collect(emd, rl, n))
     p = out or name
     open(p, "wb").write(blob)
     print(p, len(blob), "bytes")

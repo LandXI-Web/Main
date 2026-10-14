@@ -1659,7 +1659,7 @@ function renderReport() {
   let e = reportEmd() || list[0];
   const sel = h('select.xc-sel', { 'aria-label': '보고서 대상 읍면동', onchange: () => { e = list.find((x) => x.cd === sel.value) || e; } },
     ...list.slice().sort((a, b) => a.nm.localeCompare(b.nm, 'ko')).map((x) => h('option', { value: x.cd, text: x.nm, selected: x.cd === e.cd || undefined })));
-  const btn = h('button.t-btn', { type: 'button', text: '보고서 초안(.docx)', onclick: () => report(e, btn) });
+  const btn = h('button.t-btn', { type: 'button', text: '보고서 초안(한글 문서)', onclick: () => report(e, btn) });
   showPop('보고서', h('p.t-label.xc-pop-l', { text: S.region.name }), sel, h('div.xc-act', {}, btn));
   X.reportDefault = { region: S.region.name, emd: e.nm };
 }
@@ -1675,13 +1675,13 @@ function reportEmd() {
   return top ? inR.find((x) => x.cd === top[0]) || null : null;
 }
 
-/* 보고서 초안 — 에이전트(POST /agent/report/draft · SSE) → .docx. 분석이 GPU 를 쓰는 동안은 LLM 없는 초안으로(전력 규칙) */
+/* 보고서 초안 — 에이전트(POST /agent/report/draft · SSE) → 한글 문서(.hwpx · 10-14 원칙 250). 분석이 GPU 를 쓰는 동안은 LLM 없는 초안으로(전력 규칙) */
 async function report(e, btn) {
   if (!e || btn.disabled) return;
   btn.disabled = true; btn.textContent = '초안 작성 중';
-  const name = `실태조사_초안_${e.nm}.docx`;
+  const name = `실태조사_초안_${e.nm}.hwpx`;
   const save = (blob) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); K.toast('보고서 초안을 만들었습니다'); };
-  const plain = async () => { const r = await api('/survey/reports/draft?' + new URLSearchParams({ emd_cd: e.cd, format: 'docx', top: '20', ...(S.cond.rule ? { rule: S.cond.rule } : {}) }), { raw: true }); if (!r.ok) throw new Error(r.status); save(await r.blob()); };
+  const plain = async () => { const r = await api('/survey/reports/draft?' + new URLSearchParams({ emd_cd: e.cd, format: 'hwpx', top: '20', ...(S.cond.rule ? { rule: S.cond.rule } : {}) }), { raw: true }); if (!r.ok) throw new Error(r.status); save(await r.blob()); };
   try {
     if (S.busy) await plain();
     else {
@@ -1689,7 +1689,7 @@ async function report(e, btn) {
       const url = await new Promise((res, rej) => {
         let errs = 0;
         const s = sse(r.events_url.replace(/^\/api\/v1/, ''), { events: ['agent.done', 'agent.failed', 'agent.rejected'],
-          on: (n, d) => { s.close(); if (n === 'agent.done') res(d?.artifact?.docx_url || `/agent/runs/${r.run.id}/draft.docx`); else rej(new Error(n)); },
+          on: (n, d) => { s.close(); if (n === 'agent.done') res(d?.artifact?.file_url || `/agent/runs/${r.run.id}/draft.hwpx`); else rej(new Error(n)); },
           onState: (st) => { if (st === 'error' && ++errs >= 3) { s.close(); rej(new Error('timeout')); } } });
         setTimeout(() => { s.close(); rej(new Error('timeout')); }, 120000);
       });
@@ -1701,7 +1701,7 @@ async function report(e, btn) {
   } catch (err) {
     K.devlog('report', String(err?.message || err));
     try { await plain(); } catch { K.toast('보고서를 만들지 못했습니다'); }
-  } finally { btn.disabled = false; btn.textContent = '보고서 초안(.docx)'; }
+  } finally { btn.disabled = false; btn.textContent = '보고서 초안(한글 문서)'; }
 }
 
 /* 대조 — 실제 작업(POST /jobs kind:survey + SSE) · 읍면동 칸마다 탐지 순간 · 끊기면 3번 다시 → 실패 확정 */

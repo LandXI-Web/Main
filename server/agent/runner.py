@@ -91,7 +91,7 @@ WHY = {
     "map_arrive": "지도에 도착(스윕·락온·숫자)", "map_flyto": "필지로 이동", "parcel_card": "필지 카드", "map_on": "층 켜기", "map_frame": "프레임 표시",
     "drawer_open": "서랍 열기", "results_stats": "AI 결과 집계", "results_features": "뷰 안 피처", "parcel_at": "좌표 필지",
     "results_parcels_join": "AI × 필지 결합", "catalog_layers": "영상·결과 목록", "jobs_quote": "견적(면적·shard·GPU·s)",
-    "jobs_submit": "실행 — 사람 승인 필요", "survey_state": "상태 변경 — 사람 승인 필요", "survey_reports_draft": "초안 .docx 조립(F2-S 서식)",
+    "jobs_submit": "실행 — 사람 승인 필요", "survey_state": "상태 변경 — 사람 승인 필요", "survey_reports_draft": "초안 한글 문서 만들기(실태조사 보고서 서식)",
     "llm_write": "서술 3단락 작성(Gemma 4)", "llm_review": "검토: 숫자 검증기(인용 봉투만) · 봉투 뜻 검사(규칙 + 교정자)",
 }
 
@@ -1656,8 +1656,8 @@ def auto_blocks(ctx: Ctx, artifact: dict | None) -> list[dict]:
         if want and groups.get(want):
             sc = MSG[ctx.lang]["scope"][want] if ctx.lang in MSG else MSG["ko"]["scope"][want]
             out.append({"type": "chart", "kind": "bar", "title": say(ctx, "chart", scope=sc), "rows": groups[want][:12], "by": "runtime"})
-    if artifact and (artifact.get("docx_url") or artifact.get("href")) and not any(b.get("type") == "file" for b in ctx.blocks):
-        out.append({"type": "file", "label": artifact.get("filename") or "초안.docx", "href": artifact.get("href") or artifact.get("docx_url"), "by": "runtime"})
+    if artifact and (artifact.get("file_url") or artifact.get("href")) and not any(b.get("type") == "file" for b in ctx.blocks):
+        out.append({"type": "file", "label": artifact.get("filename") or "초안.hwpx", "href": artifact.get("href") or artifact.get("file_url"), "by": "runtime"})
     return out
 
 

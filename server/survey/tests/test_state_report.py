@@ -1,8 +1,9 @@
-"""상태기계(배정 없음 · 판정 전 → 확인 → 종결/오탐 · 역방향 409 · client_id 멱등) → audit_log · events 표 · SSE 발행 · 보고서 docx."""
+"""상태기계(배정 없음 · 판정 전 → 확인 → 종결/오탐 · 역방향 409 · client_id 멱등) → audit_log · events 표 · SSE 발행 · 보고서 한글 문서(.hwpx)."""
 import asyncio
 import io
 import json
 import uuid
+import zipfile
 
 import httpx
 import pytest
@@ -119,17 +120,20 @@ def test_publish_fake_bus(monkeypatch):
     assert [s[0] for s in sent] == ["events:tenant:namwon", "ops:events"] and all(s[1] == "finding.state" for s in sent)
 
 
-def test_report_docx_rows_and_phrase():
-    from docx import Document
+def test_report_hwpx_rows_and_phrase():
+    import re as _re
+    from landxi_api import hwpx as HX
     from survey import report
-    blob = report.build_draft("52190450", "R1", 20, fmt="docx")
-    d = Document(io.BytesIO(blob))
-    top_tbl = [t for t in d.tables if t.rows[0].cells[0].text == "No"][0]
-    assert len(top_tbl.rows) == 1 + 20
-    txt = report.docx_text(blob)
+    blob = report.build_draft("52190450", "R1", 20, fmt="hwpx")
+    assert HX.check(blob) == []
+    sec = zipfile.ZipFile(io.BytesIO(blob)).read("Contents/section0.xml").decode("utf-8")
+    tbls = _re.findall(r"<hp:tbl .*?</hp:tbl>", sec, _re.S)
+    top_tbl = [t for t in tbls if "<hp:t>No</hp:t>" in t][0]
+    assert top_tbl.count("<hp:tr>") == 1 + 20
+    txt = report.doc_text(blob)
     assert report.FIXED_LX in txt and "현장 확인" not in txt and "[추정 초기값]" in txt and "⑤ 법적 근거" in txt   # 원칙 135 — 모든 계정 보고서
     assert "[법령 확인 · 2차 RAG]" not in txt and report.dev_words(txt) == [], report.dev_words(txt)
-    heads = [c.text for t in d.tables for c in t.rows[0].cells]
+    heads = [h for t in tbls for h in _re.findall(r"<hp:t>([^<]*)</hp:t>", t.split("</hp:tr>")[0])]
     assert not [h for h in heads if "성명" in h or "소유자" in h]
     j = report.build_draft("52190450", "R1", 20)
     assert j["narrative_by"] == "rule" and len(j["top_items"]) == 20
@@ -189,7 +193,7 @@ def test_report_sgg_level_two_sido_region_cited_no_dev_words():
             S.lx_tx(c)
             want = c.execute("SELECT findings FROM survey_sgg WHERE sgg_cd=%s", (cd,)).fetchone()[0]
         assert j["citations"][1]["value"]["value"] == want                                            # 의심 건수 한 출처
-        txt = report.docx_text(report.build_draft(cd, None, 10, fmt="docx"))
+        txt = report.doc_text(report.build_draft(cd, None, 10, fmt="hwpx"))
         assert report.dev_words(txt) == [], (cd, report.dev_words(txt))
         names = ["광주전남특별시", "전남광주통합특별시", "전라남도", "광주광역시", "전북특별자치도", "전라북도", "충청북도", "충청남도", "경기도",
                  "강원특별자치도", "경상북도", "경상남도", "제주특별자치도", "서울특별시", "부산광역시"]
@@ -198,8 +202,8 @@ def test_report_sgg_level_two_sido_region_cited_no_dev_words():
         assert j["sido"] and j["sido"] in txt and "전남광주통합특별시" not in txt
 
 
-def test_report_api_docx(api, h_nw):
-    r = httpx.get(f"{api}/survey/reports/draft", params={"emd_cd": "52190450", "rule": "R1", "top": 20, "format": "docx"}, headers=h_nw, timeout=60)
-    assert r.status_code == 200 and r.headers["content-type"].startswith("application/vnd.openxmlformats")
-    assert "filename*=UTF-8''" in r.headers["content-disposition"]
+def test_report_api_hwpx(api, h_nw):
+    r = httpx.get(f"{api}/survey/reports/draft", params={"emd_cd": "52190450", "rule": "R1", "top": 20, "format": "hwpx"}, headers=h_nw, timeout=60)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/hwp+zip")
+    assert "filename*=UTF-8''" in r.headers["content-disposition"] and ".hwpx" in r.headers["content-disposition"]
     assert r.content[:2] == b"PK"

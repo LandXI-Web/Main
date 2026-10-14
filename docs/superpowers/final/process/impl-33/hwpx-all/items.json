@@ -1,0 +1,20 @@
+[
+ {
+  "id": "보고서-한글-전체",
+  "t": "모든 문서를 한글 문서(.hwpx)로 — 기관 보고서 탭 · 실태조사 보고서 초안 · XI ChatGEO 보고서 초안 · 기관 화면 보고서 · XI맵 보고서",
+  "shots": [
+   "opened/A.png",
+   "opened/B.png",
+   "opened/C.png",
+   "opened/D.png",
+   "opened/E.png",
+   "opened/F.png"
+  ],
+  "opts": ["완료", "다시"],
+  "where": [
+   ["https://namwon.land-xi.dev/landxi/v3/gov-report/?tab=report", "기관 보고서 (남원 기관)", "서비스 안 '보고서' 탭 → '한글 문서 내려받기' · 서비스 밖 보고서 탭 → '한글 문서 내려받기' · '초안 만들기' 뒤 '한글 문서 내려받기'"],
+   ["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "XI ChatGEO 에 '남원시 AI 분석 결과 보고서 초안 만들어 줘' → 파일 단추 · 도구 '보고서' → '보고서 초안(한글 문서)' · 대시보드 '보고서로'"]
+  ],
+  "now": "Land-XI 가 내려주는 문서는 모두 한글 문서(.hwpx)입니다. .docx 는 더 내지 않습니다. 모든 문서가 같은 서식(A4 · 함초롬바탕/돋움 · 제목 · 개요 표 · 그림 번호 · 표 번호 · 출처 · 만든 날짜)이고, 숫자는 화면과 같습니다(한글 2020 으로 열어 확인)."
+ }
+]

@@ -1,7 +1,7 @@
 /* 기관 '보고서' 탭 = AI 분석 결과 보고서(서비스 기준) — 확인 대장 10-11 18:52 'gov-보고서' 이대로 구현 · 시안 design-r20/gov-report-main ?v=report.
    고르는 것 둘: 서비스(기관에 열린 서비스 · 결과 있는 것) · 읍면동(전체 또는 하나). 규칙 · 소견 · 조치 제안 · 판정 · 우선순위 없음(원칙 135 · 3).
-   문서 = ① 개요(합계 · 분류별 · AI 모델 정확도) ② 지도 그림 ③ 읍면동별 개수 · 면적 ④ 우리 대장과 다른 필지(올린 대장이 있을 때만) → .docx.
-   숫자 한 출처 = GET /spaces/me/report(결과 설명서 결과 세트 × 관할 — 대시보드 큰 숫자 · 필지 목록과 같은 행). 지도 그림 · .docx 도 같은 서버 함수. */
+   문서 = ① 개요(합계 · 분류별 · AI 모델 정확도) ② 지도 그림 ③ 읍면동별 개수 · 면적 ④ 우리 대장과 다른 필지(올린 대장이 있을 때만) → 한글 문서(.hwpx · 10-14 원칙 250).
+   숫자 한 출처 = GET /spaces/me/report(결과 설명서 결과 세트 × 관할 — 대시보드 큰 숫자 · 필지 목록과 같은 행). 지도 그림 · 한글 문서도 같은 서버 함수. */
 import { api, h } from '../kit/util.js';
 import { toast, devlog } from '../kit/index.js';
 
@@ -19,7 +19,7 @@ export function svcReport({ svc, stage, onAuth, fusionHref }) {
   const svcSel = h('select.t-input', { id: 'rp-svc', 'aria-label': '서비스' });
   const emdSel = h('select.t-input', { id: 'rp-emd2', 'aria-label': '읍면동' });
   const go = h('button.t-btn', { type: 'submit', text: '보고서 만들기' });
-  const dl = h('button.t-btn.t-btn--2', { type: 'button', text: '.docx 내려받기' });
+  const dl = h('button.t-btn.t-btn--2', { type: 'button', text: '한글 문서 내려받기' });
   form.append(h('label.gr-field', {}, h('span.t-label', { text: '서비스' }), svcSel), h('label.gr-field', {}, h('span.t-label', { text: '읍면동' }), emdSel), go, dl);
   old.replaceWith(form);
   const doc = $('#doc');
@@ -129,26 +129,26 @@ export function svcReport({ svc, stage, onAuth, fusionHref }) {
     } catch (e) { devlog('report map', e.message); el.dataset.state = 'none'; el.replaceChildren(h('p.gr-err', { text: '지도 그림을 불러오지 못했습니다' })); }
   }
 
-  async function docx() {
+  async function download() {
     dl.disabled = true;
     try {
-      const r = await api('/spaces/me/report.docx?' + new URLSearchParams({ card: S.card, ...(S.emd ? { emd: S.emd } : {}) }), { raw: true });
+      const r = await api('/spaces/me/report.hwpx?' + new URLSearchParams({ card: S.card, ...(S.emd ? { emd: S.emd } : {}) }), { raw: true });
       if (!r.ok) throw Object.assign(new Error('http ' + r.status), { status: r.status });
       const cd = r.headers.get('content-disposition') || '';
       const m = /filename\*=UTF-8''([^;]+)/.exec(cd);
-      const name = m ? decodeURIComponent(m[1]) : 'AI분석결과보고서.docx';
+      const name = m ? decodeURIComponent(m[1]) : 'AI분석결과보고서.hwpx';
       const u = URL.createObjectURL(await r.blob());
       const a = document.createElement('a'); a.href = u; a.download = name; document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(u), 4000);
       toast('내려받았습니다');
-    } catch (e) { devlog('report docx', e.message); if (e.status === 401 || e.status === 403) return onAuth?.(); toast('내려받지 못했습니다'); }
+    } catch (e) { devlog('report hwpx', e.message); if (e.status === 401 || e.status === 403) return onAuth?.(); toast('내려받지 못했습니다'); }
     finally { dl.disabled = false; }
   }
 
   form.addEventListener('submit', (e) => { e.preventDefault(); load(); });
   svcSel.addEventListener('change', () => { S.card = svcSel.value; S.emd = ''; load(); });
   emdSel.addEventListener('change', () => { S.emd = emdSel.value; load(); });
-  dl.addEventListener('click', docx);
+  dl.addEventListener('click', download);
   load();
   return { reload: load };
 }

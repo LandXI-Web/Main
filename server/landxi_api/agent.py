@@ -7,9 +7,9 @@ POST /agent/runs/{id}/client         → 클라이언트 도구 ms(브라우저 
 POST /agent/runs/{id}/acts           → 화면 지도 동작 결과(ok·reason) 기록 → agent_runs.perf.acts_*(R3 M5 · acts_ok=0 = 동작 모두 실패)
 GET  /agent/runs · /agent/runs/{id}  → 감사(본인 · 기관 · LX 전체 — RLS)
 GET  /agent/models                   → 실제 백엔드 헬스(agent:models 30s)
-POST /agent/report/draft             → 202 {run, events_url} · 완료 시 agent.done.artifact.docx_url
-GET  /agent/runs/{id}/draft.docx     → 초안 파일(Bearer)
-GET  /agent/runs/{id}/files/{name}   → run 산출 파일(.docx·.png·.jpg·.webp·.csv·.pdf·.xlsx · 권한 = run 소유 기관 · 명령 바 file·image 블록)
+POST /agent/report/draft             → 202 {run, events_url} · 완료 시 agent.done.artifact.file_url(한글 문서 .hwpx)
+GET  /agent/runs/{id}/draft.hwpx     → 초안 파일(한글 문서 · Bearer · 10-14 원칙 250)
+GET  /agent/runs/{id}/files/{name}   → run 산출 파일(.hwpx·.png·.jpg·.webp·.csv·.pdf·.xlsx · 권한 = run 소유 기관 · 명령 바 file·image 블록)
 게스트 0(401). 외부 클라우드 호출 0.
 """
 from __future__ import annotations
@@ -360,7 +360,7 @@ async def models(request: Request):
     return {"items": items, "active": active["name"] if active else None, "external": False, "chain": config.CHAIN, "as_of": now_iso()}
 
 
-FILE_TYPES = {"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "png": "image/png", "jpg": "image/jpeg",
+FILE_TYPES = {"hwpx": "application/hwp+zip", "png": "image/png", "jpg": "image/jpeg",
               "jpeg": "image/jpeg", "webp": "image/webp", "csv": "text/csv; charset=utf-8", "pdf": "application/pdf",
               "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
 
@@ -379,22 +379,22 @@ async def run_file(run_id: str, name: str, request: Request):
         raise ApiError("not_found", "파일 없음(작성 중이거나 실패)")
     ext = f.suffix.lower().lstrip(".")
     art = row["artifact"] or {}
-    shown = art.get("filename") if (ext == "docx" and name == "draft.docx") else name
+    shown = art.get("filename") if (ext == "hwpx" and name == "draft.hwpx") else name
     return FileResponse(str(f), media_type=FILE_TYPES.get(ext, "application/octet-stream"),
                         headers={"Content-Disposition": f"{'inline' if ext in ('png', 'jpg', 'jpeg', 'webp') else 'attachment'}; filename=\"file.{ext}\"; filename*=UTF-8''{urlquote(shown or name)}",
                                  "Cache-Control": "private, max-age=600", "Access-Control-Expose-Headers": "Content-Disposition"})
 
 
-@router.get("/agent/runs/{run_id}/draft.docx")
+@router.get("/agent/runs/{run_id}/draft.hwpx")
 async def draft_file(run_id: str, request: Request):
     p = require(principal(request))
     row = await _own_run(p, run_id)
     _, config, _, _ = _agent()
-    f = config.ARTIFACT_DIR / run_id / "draft.docx"
+    f = config.ARTIFACT_DIR / run_id / "draft.hwpx"
     if not f.exists():
         raise ApiError("not_found", "초안 파일 없음(작성 중이거나 실패)")
     art = row["artifact"] or {}
-    name = art.get("filename") or "실태조사_초안.docx"
-    return FileResponse(str(f), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        headers={"Content-Disposition": f"attachment; filename=\"draft.docx\"; filename*=UTF-8''{urlquote(name)}",
+    name = art.get("filename") or "실태조사_초안.hwpx"
+    return FileResponse(str(f), media_type="application/hwp+zip",
+                        headers={"Content-Disposition": f"attachment; filename=\"draft.hwpx\"; filename*=UTF-8''{urlquote(name)}",
                                  "Access-Control-Expose-Headers": "Content-Disposition"})

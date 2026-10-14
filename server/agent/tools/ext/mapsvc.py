@@ -9,7 +9,7 @@
       XI맵 '○○만 보여 줘'(분류 이름만 · 면적 · 읍면동 조건 없음) → 업무 거르기: 그 업무 결과만 지도에 남긴다(서비스 결과 · 시군구 전역 분석 · 전국 분석 모두).
       '원래대로' · '다 보여 줘' → 모두. 숫자 = XI맵 첫 화면과 같은 출처(전국 결과 장부 + 전국 분석 진행 장부). (10-14 원칙 239)
   ai_report(request)
-      '보고서 초안 만들어 줘'(LX 계정) → AI 분석 결과 보고서 .docx — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도.
+      '보고서 초안 만들어 줘'(LX 계정) → AI 분석 결과 보고서 한글 문서(.hwpx · 10-14 원칙 250) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도.
       의심 필지 · 현장 확인 개념 없음(원칙 135). 대상 = 질문의 지역(그 지역의 결과 — 통계 답과 같은 세트 선택 · results._set)
       → 지금 화면에 켜진 층(context.sets) → 화면 지역(context.region) → 없으면 묻는다. 숫자 = 지도 서비스와 같은 행(지운 결과 제외).
 ROUTE 는 모델 앞 직행(LLM 0). 지역 · 지명 고정값 0.
@@ -39,14 +39,14 @@ SPECS = {
         "description": "XI맵에서 한 업무(비닐하우스 · 경작지 · 건물 · 주차장 · 곤포사일리지 · 토지피복 · 국토 변화 · 해양쓰레기) 결과만 지도에 남기거나('○○만 보여 줘') 모두 다시 보인다('원래대로').",
         "properties": {"task": {"type": "string", "description": "업무 이름"}, "clear": {"type": "boolean"}, "request": {"type": "string"}}},
     "ai_report": {
-        "description": "AI 분석 결과 보고서 초안(.docx) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도. 지역이 없으면 지금 화면의 결과 층 · 지역.",
+        "description": "AI 분석 결과 보고서 초안(한글 문서) — 읍면동별 개수 · 면적 · 지도 그림 · 영상 시점 · AI 모델 정확도. 지역이 없으면 지금 화면의 결과 층 · 지역.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"}}},
 }
 WRITE: set[str] = set()
 CONFIRM: set[str] = set()
 CLIENT = {"map_filter", "map_task"}
 NO_LLM = {"map_filter", "map_task", "map_stats", "ai_report"}
-WHY = {"map_filter": "켜진 결과 층 거르기", "map_task": "XI맵 업무 거르기", "map_stats": "켜진 결과 층 읍면동 통계", "ai_report": "AI 분석 결과 보고서 .docx 만들기"}
+WHY = {"map_filter": "켜진 결과 층 거르기", "map_task": "XI맵 업무 거르기", "map_stats": "켜진 결과 층 읍면동 통계", "ai_report": "AI 분석 결과 보고서 한글 문서 만들기"}
 SAY = {"map_filter": "조건으로 거르기", "map_task": "업무 거르기", "map_stats": "읍면동별로 세기", "ai_report": "AI 분석 결과 보고서 만들기"}
 HINT = ("켜진 결과 층을 분류 · 면적 · 읍면동으로 거르는 말('○○만 보여 줘' · '1,000㎡ 넘는 것만')은 map_filter. "
         "LX 계정의 보고서 초안은 ai_report(AI 분석 결과 보고서).")
@@ -677,77 +677,42 @@ def _emd_counts(d: dict) -> dict:
     return out
 
 
-def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes, str]:
-    from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.oxml.ns import qn
-    from docx.shared import Cm, Pt
-    from survey.report import _font, _p, _shade, _tbl
-    doc = Document()
-    sec = doc.sections[0]
-    sec.page_width, sec.page_height = Cm(21.0), Cm(29.7)
-    sec.left_margin = sec.right_margin = Cm(1.8)
-    sec.top_margin = sec.bottom_margin = Cm(1.6)
-    st = doc.styles["Normal"]
-    st.font.name = "맑은 고딕"
-    st.font.size = Pt(10)
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
+def _hwpx(parts: list[dict], pngs: list[bytes | None], made: str, now: dt.datetime | None = None) -> tuple[bytes, str]:
+    """AI 분석 결과 보고서 — 한글 문서(공용 서식 landxi_api.hwpx · 10-14 원칙 250). 숫자 = 지도 서비스 결과 층과 같은 행."""
+    from landxi_api import hwpx as HX
+    from landxi_api.envelope import split_round
     head = parts[0]
     title = f"{head['region']} {head['service']} AI 분석 결과 보고서(초안)" if len(parts) == 1 else f"AI 분석 결과 보고서(초안) — 결과 층 {len(parts)}개"
-    doc.core_properties.title = title
-    doc.core_properties.author = "Land-XI"
-    _font(sec.header.paragraphs[0].add_run(f"Land-XI · AI 분석 결과 · 초안"), 8, False, "6B7780")
-    _p(doc, title, 16, True, "14202A", space_after=2)
-    _p(doc, f"작성 {made} · AI 분석 결과(검수 전)", 9, False, "56626B")
-    box = doc.add_table(rows=1, cols=1)
-    box.style = "Table Grid"
-    c = box.rows[0].cells[0]
-    _shade(c, "EEF6F6")
-    c.text = ""
-    _font(c.paragraphs[0].add_run(NOTICE), 10, True, "07706A")
-    c.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc = HX.Doc()
+    doc.title("AI 분석 결과 보고서(초안)",                     # 제목은 짧게(두 줄 넘김 · 글자 중간 끊김 0) — 지역 · 서비스는 부제
+              f"{head['region']} · {head['service']} · 결과 확인 전" if len(parts) == 1 else f"결과 층 {len(parts)}개 · 결과 확인 전")
+    doc.notice(NOTICE)
     for k, (d, png) in enumerate(zip(parts, pngs), 1):
         tot_n = sum(int(r["n"]) for r in d["rows"])
         tot_m2 = sum(float(r["m2"]) for r in d["rows"])
-        pre = f"{k}. " if len(parts) > 1 else ""
-        _p(doc, "", space_after=2)
-        _p(doc, f"{pre}개요" if not pre else f"{pre}{d['region']} · {d['service']}", 12.5, True, "14202A")
+        doc.heading("개요" if len(parts) == 1 else f"{d['region']} · {d['service']}")
         fin = d["finished"].astimezone(dt.timezone(dt.timedelta(hours=9))).strftime("%Y.%m.%d") if d["finished"] else "—"
-        _tbl(doc, ["항목", "내용"], [
-            ["분석 서비스", d["service"]],
-            ["지역", d["region"] + (f" · {d['scope']}" if d["scope"] else "")],
-            *([["조건", d["cond"]]] if d.get("cond") else []),
-            ["영상 시점", d["imagery"]["name"] if d["imagery"]["word"] and d["imagery"]["word"] in (d["imagery"]["name"] or "")
-             else " · ".join(x for x in (d["imagery"]["word"], d["imagery"]["name"]) if x) or "—"],
-            ["분석한 날", fin],
-            ["AI 모델 정확도", f"{d['acc']}%" + (f" (학습 끝 검증 · {d['acc_at'].replace('-', '.')})" if d.get("acc_at") else "") if d["acc"] is not None else "기록 없음"],
-            ["찾은 결과", f"{tot_n:,}건 · 면적 합 {round(tot_m2):,}㎡ ({tot_m2 / 1e4:,.1f}ha)"],
-        ], widths=[3.6, 13.6], size=9.5)
-        if png:
-            _p(doc, "", space_after=2)
-            _p(doc, "지도 그림", 11, True, "14202A", space_after=2)
-            doc.add_picture(io.BytesIO(png), width=Cm(16.5))
-            _p(doc, "읍면동 경계 위에 AI가 찾은 결과를 칠했습니다(지도 서비스 범례와 같은 색).", 8.5, False, "6B7780")
+        img = (d["imagery"]["name"] if d["imagery"]["word"] and d["imagery"]["word"] in (d["imagery"]["name"] or "")
+               else " · ".join(x for x in (d["imagery"]["word"], d["imagery"]["name"]) if x) or "—")
+        acc = (f"{d['acc']}%" + (f" (학습 끝 검증 · {d['acc_at'].replace('-', '.')})" if d.get("acc_at") else "")) if d["acc"] is not None else "기록 없음"
+        doc.overview([("분석 서비스", d["service"]), ("지역", d["region"] + (f" · {d['scope']}" if d["scope"] else "")),
+                      *([("조건", d["cond"])] if d.get("cond") else []), ("영상 시점", img), ("분석한 날", fin), ("AI 모델 정확도", acc),
+                      ("찾은 결과", f"{tot_n:,}건 · 면적 합 {round(tot_m2):,}㎡ ({tot_m2 / 1e4:,.1f}ha)"), ("만든 날짜", made)], cols=1)
+        sv = re.sub(r"\s*분석\s*서비스$", "", d["service"])
+        doc.figure(png, f"{d['region']} {sv} AI 분석 결과", max_w=int(HX.TEXT_W * 0.82), note="읍면동 경계 위에 AI가 찾은 결과를 칠했습니다")
         by_emd: dict[str, list] = {}
         for r in d["rows"]:
             e = by_emd.setdefault(r["emd"] or "읍면동 밖", [0, 0.0])
             e[0] += int(r["n"])
             e[1] += float(r["m2"])
-        _p(doc, "", space_after=2)
-        _p(doc, "읍면동별 개수 · 면적", 11, True, "14202A", space_after=2)
-        from landxi_api.envelope import split_round
         el = sorted(by_emd.items(), key=lambda x: (-x[1][0], x[0]))
         m2s = split_round([v[1] for _, v in el], 0, round(tot_m2))          # 줄 합 = 합계(최대 나머지 · GPT5-3)
         pcs = split_round([v[0] / tot_n * 100 if tot_n else 0 for _, v in el], 1, 100 if tot_n else 0)
-        rows = [[e, v[0], m2s[i], f"{pcs[i]:.1f}%"] for i, (e, v) in enumerate(el)]
-        rows.append(["합계", tot_n, round(tot_m2), "100%" if tot_n else "—"])
-        t = _tbl(doc, ["읍면동", "개수(건)", "면적(㎡)", "개수 비율"], rows, widths=[5.2, 3.6, 4.4, 4.0], size=9)
-        for cell in t.rows[-1].cells:
-            _shade(cell, "F2F4F6")
+        rows = [["읍면동", "개수(건)", "면적(㎡)", "개수 비율"]] + [[e, f"{v[0]:,}", f"{m2s[i]:,}", f"{pcs[i]:.1f}%"] for i, (e, v) in enumerate(el)]
+        rows.append(["합계", f"{tot_n:,}", f"{round(tot_m2):,}", "100%" if tot_n else "—"])
+        doc.table(rows, [30, 22, 26, 22], aligns=["l", "r", "r", "r"], total_row=True, caption="읍면동별 개수 · 면적")
         cls_set = sorted({r["cls"] for r in d["rows"] if r["cls"]})
         if len(cls_set) > 1:
-            _p(doc, "", space_after=2)
-            _p(doc, "분류별", 11, True, "14202A", space_after=2)
             crow = []
             for cl in cls_set:
                 n = sum(int(r["n"]) for r in d["rows"] if r["cls"] == cl)
@@ -755,15 +720,11 @@ def _docx(parts: list[dict], pngs: list[bytes | None], made: str) -> tuple[bytes
                 crow.append([_ko(cl), n, m2])
             for x, m in zip(crow, split_round([x[2] for x in crow], 0)):   # 분류 칸 합 = 반올림 전 합을 한 번 반올림
                 x[2] = m
-            _tbl(doc, ["분류", "개수(건)", "면적(㎡)"], crow, widths=[6, 4, 5], size=9)
-    _p(doc, "", space_after=2)
-    _p(doc, "읽는 법 — 개수 · 면적은 AI가 그린 결과의 수와 넓이입니다(결과 확인 전 · 지운 결과 제외). 지도 서비스의 결과 층 · 내려받기 파일과 같은 값입니다.",
-       8.5, False, "6B7780")
-    buf = io.BytesIO()
-    doc.save(buf)
+            doc.table([["분류", "개수(건)", "면적(㎡)"]] + [[a, f"{b:,}", f"{c:,}"] for a, b, c in crow], [40, 30, 30], aligns=["l", "r", "r"], caption="분류별")
+    doc.source("Land-XI AI 분석 결과 — 개수 · 면적은 AI가 그린 결과의 수와 넓이입니다(결과 확인 전 · 지운 결과 제외). 지도 서비스의 결과 층 · 내려받기 파일과 같은 값입니다.", made)
     svc = re.sub(r"\s*분석\s*서비스$", "", head["service"]) if len(parts) == 1 else "결과층"
-    name = re.sub(r"[\\/:*?\"<>|\s—]+", "_", f"{head['region']}_{svc}_AI분석보고서_{made[:10].replace('.', '')}").strip("_") + ".docx"
-    return buf.getvalue(), name
+    name = HX.safe_name(f"{head['region']}_{svc}_AI분석보고서_{made[:10].replace('.', '')}")
+    return doc.package(title, now), name
 
 
 async def ai_report(args: dict, ctx) -> Out:
@@ -820,13 +781,13 @@ async def ai_report(args: dict, ctx) -> Out:
 
     def build():
         pngs = [_map_png(d["job"], d["sgg"], g, _emd_counts(d)) for d, g in zip(parts, geos)]
-        blob, name = _docx(parts, pngs, made)
+        blob, name = _hwpx(parts, pngs, made, now)
         return blob, name, pngs
     blob, name, pngs = await asyncio.to_thread(build)
     d0 = config.ARTIFACT_DIR / ctx.run_id
     d0.mkdir(parents=True, exist_ok=True)
     (d0 / name).write_bytes(blob)
-    (d0 / "draft.docx").write_bytes(blob)
+    (d0 / "draft.hwpx").write_bytes(blob)
     if pngs and pngs[0]:
         (d0 / "ai-report-map.png").write_bytes(pngs[0])
     tot = sum(int(r["n"]) for d in parts for r in d["rows"])
@@ -836,7 +797,7 @@ async def ai_report(args: dict, ctx) -> Out:
     out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
     if pngs and pngs[0]:
         out.blocks.append({"type": "image", "src": file_href(ctx.run_id, "ai-report-map.png"), "caption": "보고서 지도 그림", "tag": "AI 분석 결과"})
-    ctx.state["artifact"] = {"docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "href": file_href(ctx.run_id, name), "filename": name,
+    ctx.state["artifact"] = {"file_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.hwpx", "href": file_href(ctx.run_id, name), "filename": name,
                              "place": parts[0]["region"]}
     out.data = {"보고서": name, "대상": [f"{d['region']} {d['service']}" for d in parts], "고른 곳": why}
     names = await RSC.layer_names(jobs)                     # 대상 = 고른 레이어 전부(조건에 0건인 레이어도 — 통계 첫 줄과 같은 대상)

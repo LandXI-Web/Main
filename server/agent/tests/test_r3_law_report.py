@@ -1,9 +1,9 @@
-"""R3 r3-law-report — 법령 본 조문 먼저(M9) · 영어 법령 질문 · 보고서 가드(M10) · 공문은 보고서로 안내(M15 → 원칙 40) · docx 규칙 코드·중복(M16).
+"""R3 r3-law-report — 법령 본 조문 먼저(M9) · 영어 법령 질문 · 보고서 가드(M10) · 공문은 보고서로 안내(M15 → 원칙 40) · 한글 문서 규칙 코드·중복(M16).
 
     cd server && python -m pytest agent/tests/test_r3_law_report.py -q
 
 법령 색인은 임시 폴더에 국가법령정보센터 공개 원문 7개(픽스처 = 운영 색인에 올린 파일과 같은 원문)로 만든다. 지어낸 조문 0.
-보고서·공문 docx 시험은 실제 실태조사 결과(PostGIS)를 읽는다 — DB 가 없으면 그 시험만 건너뛴다.
+보고서·공문 한글 문서 시험은 실제 실태조사 결과(PostGIS)를 읽는다 — DB 가 없으면 그 시험만 건너뛴다.
 """
 import asyncio
 import re
@@ -321,7 +321,7 @@ def test_dedupe_place():
     assert AR.dedupe_place("강진군 도암면 의심") == "강진군 도암면 의심"
 
 
-# ── DB 시험(실태조사 결과) — 보고서 docx · 공문 docx (서로 다른 시도 두 곳) ─────────────────
+# ── DB 시험(실태조사 결과) — 보고서 · 공문 요청 한글 문서 (서로 다른 시도 두 곳) ─────────────────
 def _db():
     try:
         from survey.report import _conn
@@ -337,11 +337,11 @@ CODE = re.compile(r"\b[RL]\d\b")
 
 @needs_db
 @pytest.mark.parametrize("code,tenant,place", [(KANGJIN, "gwangju-jeonnam", "강진군"), (NAMWON, "namwon", "남원시")])
-def test_m16_report_docx_no_codes_no_dupes(code, tenant, place):
+def test_m16_report_hwpx_no_codes_no_dupes(code, tenant, place):
     from survey import report as S
     d = S.collect(code, None, 10, "tenant", tenant)
-    blob, name = S.render_docx(d)
-    text = S.docx_text(blob)
+    blob, name = S.render_hwpx(d)
+    text = S.doc_text(blob)
     j = S.as_json(d)
     assert not CODE.findall(text), CODE.findall(text)[:5]                  # 규칙 코드 0
     pn = [x["pnu"] for x in j["top_items"]]
@@ -353,12 +353,12 @@ def test_m16_report_docx_no_codes_no_dupes(code, tenant, place):
 
 @needs_db
 @pytest.mark.parametrize("code,tenant,place", [(KANGJIN, "gwangju-jeonnam", "강진군"), (NAMWON, "namwon", "남원시")])
-def test_m15_letter_request_gets_report_docx(code, tenant, place):
-    """공문을 청하면 공문은 만들지 않는다는 한 줄 + 같은 지역 실태조사 보고서 초안(.docx) — 보고서 서식에 배정 · 시정명령 · 공문 0."""
+def test_m15_letter_request_gets_report_hwpx(code, tenant, place):
+    """공문을 청하면 공문은 만들지 않는다는 한 줄 + 같은 지역 실태조사 보고서 초안(.hwpx) — 보고서 서식에 배정 · 시정명령 · 공문 0."""
     from survey import report as S
     d = S.collect(code, None, 10, "tenant", tenant)
-    blob, name = S.render_docx(d)
-    text = S.docx_text(blob)
+    blob, name = S.render_hwpx(d)
+    text = S.doc_text(blob)
     assert name.startswith(f"실태조사_초안_{place}_")
     for w in ("배정", "시정명령", "이행강제금", "원상복구", "공문", "협조 요청"):
         assert w not in text, w

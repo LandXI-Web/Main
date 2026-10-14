@@ -5,7 +5,7 @@
   GET  /api/v1/spaces/me/report?card=&emd=             AI 분석 결과 보고서 — 개요(합계 · 분류별 · AI 모델 정확도 · 영상 · 분석한 날) · 읍면동별 개수 · 면적 ·
                                                        (올린 대장이 있으면) 우리 대장과 다른 필지. 규칙 입력 없음 · 소견 · 조치 제안 없음.
   GET  /api/v1/spaces/me/report/map.png?card=&emd=     보고서 지도 그림(읍면동 경계 + 결과 — LX 보고서와 같은 그림 함수)
-  GET  /api/v1/spaces/me/report.docx?card=&emd=        같은 내용의 .docx
+  GET  /api/v1/spaces/me/report.hwpx?card=&emd=        같은 내용의 한글 문서(.hwpx · 공용 서식 hwpx.py · 10-14 원칙 250)
   GET  /api/v1/spaces/me/ledger/compare?card=&import_id=&geom=   올린 대장 × 고른 서비스 결과(필지 번호로 맞춤) — 사실 그대로:
                                                        대장과 AI 결과가 다른 필지 · 어떻게 다른지 두 줄 · AI 결과 있는 필지 · AI 분석 전(영상 범위 밖) · 표
   GET  /api/v1/spaces/me/ledger/compare.xlsx?card=&import_id=    같은 행 엑셀(대장 필지 전부 · 다른 필지 먼저)
@@ -404,77 +404,50 @@ async def _png(p: Principal, card: str, emd: str | None, d: dict | None = None) 
     return png
 
 
-def _docx(d: dict, png: bytes | None) -> tuple[bytes, str]:
-    from docx import Document
-    from docx.oxml.ns import qn
-    from docx.shared import Cm, Pt
-    from survey.report import _font, _p, _shade, _tbl
-    doc = Document()
-    sec = doc.sections[0]
-    sec.page_width, sec.page_height = Cm(21.0), Cm(29.7)
-    sec.left_margin = sec.right_margin = Cm(1.8)
-    sec.top_margin = sec.bottom_margin = Cm(1.6)
-    st = doc.styles["Normal"]
-    st.font.name = "맑은 고딕"
-    st.font.size = Pt(10)
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
+def _hwpx(d: dict, png: bytes | None) -> tuple[bytes, str]:
+    """AI 분석 결과 보고서 — 한글 문서(공용 서식 hwpx.py · 10-14 원칙 250). 숫자 = report_data(화면 보고서 탭과 같은 값)."""
+    from . import hwpx as HX
     name, region, unit = d["service"]["name"], d["region"], d["unit"]
-    title = f"{name} · {region}"
-    doc.core_properties.title = f"AI 분석 결과 보고서 — {title}"
-    doc.core_properties.author = "Land-XI"
-    _font(sec.header.paragraphs[0].add_run("AI 분석 결과 보고서"), 8, False, "6B7780")
-    _p(doc, "AI 분석 결과 보고서", 9, True, "07706A", space_after=2)
-    _p(doc, title, 16, True, "14202A", space_after=2)
-    meta = " · ".join(x for x in (region, f"작성 {d['made']}", f"영상 {d['imagery']}" if d["imagery"] else None,
-                                   f"분석 {d['analyzed']}" if d["analyzed"] else None) if x)
-    _p(doc, meta, 9, False, "56626B")
-    _p(doc, "", space_after=2)
-    _p(doc, "개요", 12.5, True, "14202A")
-    rows = [["AI 분석 결과", f"{d['total']['value']:,}{unit} · {d['area_ha']['value']:,.1f}ha"]]
+    now = dt.datetime.now(KST)
+    made_t = now.strftime("%Y. %m. %d. %H:%M")
+    doc = HX.Doc()
+    doc.title("AI 분석 결과 보고서", f"{name} · {region}")
+    doc.overview([("지역", region), ("분석 서비스", name), ("영상", d["imagery"] or "—"), ("분석한 날", d["analyzed"] or "—"),
+                  ("AI 모델 정확도", f"{d['acc']['value']}%" if d["acc"]["value"] is not None else "기록 없음"), ("만든 날짜", made_t)])
+    doc.notice("AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")
+    doc.heading("결과 개요")
+    rows = [["항목", "개수", "면적(ha)"], ["AI 분석 결과 합계", f"{d['total']['value']:,}{unit}", f"{d['area_ha']['value']:,.1f}"]]
     for c in d["classes"]:
-        rows.append([c["name"], f"{c['n']['value']:,}{unit} · {c['ha']['value']:,.1f}ha"])
-    rows.append(["AI 모델 정확도", f"{d['acc']['value']}%" if d["acc"]["value"] is not None else "기록 없음"])
-    if d["imagery"]:
-        rows.append(["영상", d["imagery"]])
-    if d["analyzed"]:
-        rows.append(["분석한 날", d["analyzed"]])
-    _tbl(doc, ["항목", "내용"], rows, widths=[4.2, 13.0], size=9.5)
+        rows.append([c["name"], f"{c['n']['value']:,}{unit}", f"{c['ha']['value']:,.1f}"])
+    doc.table(rows, [44, 28, 28], aligns=["l", "r", "r"])
     if png:
-        _p(doc, "", space_after=2)
-        _p(doc, "지도", 11, True, "14202A", space_after=2)
-        doc.add_picture(io.BytesIO(png), width=Cm(16.5))
-        _p(doc, "읍면동 경계 위에 AI 분석 결과를 칠했습니다.", 8.5, False, "6B7780")
-    _p(doc, "", space_after=2)
-    _p(doc, "읍면동별 개수 · 면적", 11, True, "14202A", space_after=2)
+        doc.heading("지도")
+        doc.figure(png, f"{region} {_short_svc(name)} AI 분석 결과", "읍면동 경계 위에 AI 분석 결과를 칠했습니다", max_w=int(HX.TEXT_W * 0.82))
+    doc.heading("읍면동별 개수 · 면적")
     cls_names = [c["name"] for c in d["classes"]]
     many = len(cls_names) > 1
     head = ["읍면동", *(cls_names if many else []), "계", "면적(ha)"]
-    body = [[e["emd"], *([{b["cls"]: b["n"] for b in e["by"]}.get(k, 0) for k in cls_names] if many else []), e["n"], f"{e['ha']['value']:,.1f}"] for e in d["emd_rows"]]
-    body.append(["합계", *([c["n"]["value"] for c in d["classes"]] if many else []), d["total"]["value"], f"{d['area_ha']['value']:,.1f}"])
-    t = _tbl(doc, head, body, size=9)
-    for cell in t.rows[-1].cells:
-        _shade(cell, "F2F4F6")
+    body = [[e["emd"], *([f"{({b['cls']: b['n'] for b in e['by']}).get(k, 0):,}" for k in cls_names] if many else []), f"{e['n']:,}", f"{e['ha']['value']:,.1f}"]
+            for e in d["emd_rows"]]
+    body.append(["합계", *([f"{c['n']['value']:,}" for c in d["classes"]] if many else []), f"{d['total']['value']:,}", f"{d['area_ha']['value']:,.1f}"])
+    doc.table([head] + body, [3] + [2] * (len(head) - 1), aligns=["l"] + ["r"] * (len(head) - 1), total_row=True, small=len(head) > 6,
+              caption=f"읍면동별 개수 · 면적 (단위: {unit} · ha)")
     ld = d.get("ledger")
     if ld:
-        _p(doc, "", space_after=2)
-        _p(doc, "우리 대장과 다른 필지", 11, True, "14202A", space_after=2)
-        lr = [["올린 대장", f"{ld['ledger']['name']} · {ld['ledger']['parcels']['value']:,}필지"],
+        doc.heading("우리 대장과 다른 필지")
+        lr = [["항목", "필지"], ["올린 대장", f"{ld['ledger']['name']} · {ld['ledger']['parcels']['value']:,}필지"],
               ["AI 결과가 있는 필지", f"{ld['with_ai']['value']:,}필지"]]
         for x in ld["lines"]:
             lr.append([x["label"], f"{x['n']['value']:,}필지"])
         lr.append([ld["no_ai_label"], f"{ld['no_ai']['value']:,}필지"])
-        _tbl(doc, ["항목", "내용"], lr, widths=[7.2, 10.0], size=9.5)
+        doc.table(lr, [60, 40], aligns=["l", "r"])
         if ld.get("top"):
-            _p(doc, "", space_after=2)
-            _tbl(doc, ["지번", "대장", "AI 분석", "필지 면적(㎡)"],
-                 [[x["where"], x["ledger"], x["ai"] or "—", f"{x['area']['parcel']['value']:,.0f}" if x["area"]["parcel"]["value"] else "—"] for x in ld["top"]], size=9)
-    _p(doc, "", space_after=2)
-    _p(doc, "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다. 개수 · 면적은 서비스 대시보드 · 필지 목록 · 내려받기 파일과 같은 값입니다.",
-       8.5, False, "6B7780")
-    buf = io.BytesIO()
-    doc.save(buf)
-    fname = re.sub(r"[\\/:*?\"<>|\s—·]+", "_", f"{region}_{_short_svc(name)}_AI분석결과보고서_{d['made'].replace('.', '')}").strip("_") + ".docx"
-    return buf.getvalue(), fname
+            doc.table([["지번", "대장", "AI 분석", "필지 면적(㎡)"]] +
+                      [[x["where"], x["ledger"], x["ai"] or "—", f"{x['area']['parcel']['value']:,.0f}" if x["area"]["parcel"]["value"] else "—"] for x in ld["top"]],
+                      [22, 14, 44, 20], aligns=["l", "l", "l", "r"], caption="대장과 다른 필지(면적이 큰 순 5곳)")
+    doc.source("Land-XI AI 분석 결과 — 개수 · 면적은 서비스 대시보드 · 필지 목록 · 내려받기 파일과 같은 값입니다(결과 확인 전 · 지운 결과 제외).", made_t)
+    fname = HX.safe_name(f"{region}_{_short_svc(name)}_AI분석결과보고서_{d['made'].replace('.', '')}")
+    return doc.package(f"AI 분석 결과 보고서 — {name} · {region}", now), fname
 
 
 @router.get("/spaces/me/report")
@@ -498,20 +471,20 @@ async def gov_report_map(request: Request, card: str, emd: str | None = None):
     return Response(png, media_type="image/png", headers={"cache-control": "private, max-age=300"})
 
 
-@router.get("/spaces/me/report.docx")
-async def gov_report_docx(request: Request, card: str, emd: str | None = None):
+@router.get("/spaces/me/report.hwpx")
+async def gov_report_hwpx(request: Request, card: str, emd: str | None = None):
+    from .xreport import hwpx_response
     p = _me(request)
     emd = (emd or "").strip() or None
     d = await report_data(p, card, emd)
     png = await _png(p, card, emd, d)
-    blob, name = await run_in_threadpool(_docx, d, png)
+    blob, name = await run_in_threadpool(_hwpx, d, png)
     async with db(p) as c:
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
                         p.tenant_id, card, f"{p.name or '담당자'} — {d['service']['name']} AI 분석 결과 보고서 내려받기({d['region']})", p.user_id,
                         {"fmt": "report", "emd": emd, "rows": d["total"]["value"]})
         await audit(c, p, "space.report", f"{p.tenant_id}/{card}", None, {"emd": emd})
-    return Response(blob, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    headers={"content-disposition": f"attachment; filename=\"report.docx\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store"})
+    return hwpx_response(blob, name)
 
 
 @router.get("/spaces/me/ledger/compare")

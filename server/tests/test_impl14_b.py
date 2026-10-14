@@ -155,7 +155,7 @@ def test_improve_classifies_filter_miss():
 def test_ai_report_same_numbers_and_words(staff):
     t, it = staff
     from agent.tools.ext import mapsvc as M
-    from survey.report import docx_text
+    from survey.report import doc_text
     c = _ctx({"page": "lx-map", "sets": [f"results/lx/{NAMWON_GH}"]}, "보고서 초안 만들어 줘")
     out = arun(M.ai_report({"request": "보고서 초안 만들어 줘"}, c))
     tot = next(e for k, _, e in out.envelopes if k == "total")
@@ -163,12 +163,14 @@ def test_ai_report_same_numbers_and_words(staff):
     f = next(b for b in out.blocks if b["type"] == "file")
     from agent import config as AC
     d = AC.ARTIFACT_DIR / c.run_id
-    txt = docx_text((d / "draft.docx").read_bytes())
-    for w in ("읍면동별 개수 · 면적", "AI 모델 정확도", "영상 시점", "지도 그림", "합계"):
+    from landxi_api import hwpx as HX
+    assert HX.check((d / "draft.hwpx").read_bytes()) == []
+    txt = doc_text((d / "draft.hwpx").read_bytes())
+    for w in ("읍면동별 개수 · 면적", "AI 모델 정확도", "영상 시점", "그림 1.", "합계"):
         assert w in txt, w
     for bad in ("의심", "현장 확인", "현장조사", "실태조사", "job_", "GPU"):
         assert bad not in txt, bad
-    assert f["label"].endswith(".docx") and (d / f["label"]).exists()
+    assert f["label"].endswith(".hwpx") and (d / f["label"]).exists()
     # 지역이 없고 켜진 층도 없으면 묻는다 · 질문의 지역이 있으면 그 지역(통계 답과 같은 세트)
     ask = arun(M.ai_report({"request": "보고서 초안 만들어 줘"}, _ctx({"page": "lx-console"}, "보고서 초안 만들어 줘")))
     assert "어느 지역" in ask.answer and not ask.blocks

@@ -4,12 +4,11 @@
    광역 기관(관할 시군구 여럿) = '전체'(관할 합계 · 시군구별 표)로 도착하고 시군구는 사용자가 고른다 — 화면이 대신 고르지 않는다(최근 고른 곳은 기억만).
    [할 일] 판정 대기(보류 · 옛 기록) 큰 숫자(K6) · 표(K12) · 행 → 미니 지도(K3) + 판정 3택
    → 상태 쓰기(POST /survey/findings/{fid}/state) → 표 갱신 · 큰 숫자 감소 · SSE /events/tenant 로 다른 창의 변경도 반영.
-   [보고서] 시군구 · 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → .docx 내려받기.
+   [보고서] 시군구 · 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → 한글 문서(.hwpx) 내려받기(서버 한 곳 · 10-14 원칙 250).
    관할 = 로그인 기관(세션). 지역 고정값 없음. */
 import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
-import { buildDocx } from './docx.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
 import { govRail } from '../gov-select/menu.js';
 import { svcReport } from './svc-report.js';   // 서비스 안 '보고서' = AI 분석 결과 보고서(10-11 gov-보고서)   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
@@ -416,7 +415,7 @@ function openSvcReport() {
 let rpReady = null;
 function initReport() {
   if (rpReady) { focusEmd(); return rpReady; }
-  const lock = (on) => { for (const id of ['#rp-emd', '#rp-rule', '#rp-go', '#rp-docx']) $(id).disabled = on; };
+  const lock = (on) => { for (const id of ['#rp-emd', '#rp-rule', '#rp-go', '#rp-dl']) $(id).disabled = on; };
   if (wide() && !S.region) {           // 광역 '전체' — 읍면동 보고서는 시군구를 고른 뒤에(시군구를 대신 고르지 않는다)
     S.emd = [];
     $('#rp-emd').innerHTML = '';
@@ -517,7 +516,7 @@ function paint(md, envs, cites, live) {
       if (t === 'env' && e) return `<span class="gr-chip">${numHtml(e)}</span><!--k-->`;
       return (envs ? '<span class="gr-chip">—</span>' : '<span class="gr-chip gr-chip--wait" aria-hidden="true"></span>') + '<!--k-->';
     })
-    /* 칩 바로 뒤 공백 — 조사 · 문장부호 앞이면 붙인다(tidy · .docx 와 같은 규칙) */
+    /* 칩 바로 뒤 공백 — 조사 · 문장부호 앞이면 붙인다(tidy · 한글 문서와 같은 규칙) */
     .replace(RE_CHIP_GAP, '').replace(/<!--k-->/g, '')
     .replace(/\[(\d{1,2}(?:\s*[,·]\s*\d{1,2})*)\]/g, (_, ns) => ns.split(/\s*[,·]\s*/).map((n) => {
       const c = cmap.get(n); const tip = c ? uncode(shortAddr(c.addr) || plain(c.label)) : '';
@@ -590,7 +589,7 @@ $('#rp-form').addEventListener('submit', async (e) => {
         paint(d.answer_md || buf, d.envelopes || {}, d.citations, false);
         notes(d.citations, d.answer_md || buf);
         go.disabled = false;
-        armDocx({ emd_cd, rule, as_of: d.as_of });
+        armDoc({ emd_cd, rule, as_of: d.as_of });
         toast('초안을 만들었습니다');
       }
       if (name === 'agent.failed' || name === 'agent.rejected') fail(d?.message || name);
@@ -598,19 +597,20 @@ $('#rp-form').addEventListener('submit', async (e) => {
   });
 });
 
-/* .docx = 화면에서 본 세 문단 그대로(같은 제목 아래) + 부속 표(집계 · 상위 10건 · 조치 기록) + 본문이 인용한 각주.
+/* 한글 문서(.hwpx) = 화면에서 본 세 문단 그대로(같은 제목 아래) + 부속 표(집계 · 상위 10건 · 조치 기록) + 본문이 인용한 각주.
+   문서는 서버가 같은 서식으로 짓는다(POST /report/screen.hwpx — 받은 글 · 숫자 그대로 · 다른 문서와 같은 서식 · 10-14 원칙 250).
    파일 안 글은 모두 사용자 말 — 기관 이름은 로그인 기관, 규칙은 규칙 이름, 개발 정보(표 이름 · 요청 · 코드)는 넣지 않는다. */
 const W_ST = { open: '판정 전', assigned: '판정 전', inspected: '확인됨', closed: '종결', dismissed: '종결' };
 const n0 = (v) => (v === null || v === undefined || v === '' ? '—' : Number(v).toLocaleString('ko-KR'));
 const ymd = (d) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-function armDocx({ emd_cd, rule }) {
+function armDoc({ emd_cd, rule }) {
   const emd = (S.emd.find((e) => e.cd === emd_cd) || {}).key || '';
   const ruleNm = rule ? (S.rules.find((r) => r.id === rule) || {}).name || '' : '전체';
   /* 부속 표 자료 — 초안이 끝나는 즉시 모아 둔다(내려받기 누를 때 기다리지 않게) · 규칙 '전체' = R1–R6(의심 필지와 같은 범위) */
   const q = (x) => api(`/survey/findings?emd_cd=${emd_cd}&rule=${encodeURIComponent(rule || 'R1,R2,R3,R4,R5,R6')}${x}`).catch(() => null);
   const data = Promise.all([q('&sort=score&limit=10'), q('&priority=A&limit=1'), q('&priority=B&limit=1'), q('&priority=C&limit=1'),
     q('&state=assigned,inspected,closed,dismissed&sort=updated&limit=200'), S.s2 ? api('/survey/actions?limit=500').catch(() => null) : null]);
-  const a = $('#docx');
+  const a = $('#doc-dl');
   a.onclick = async (ev) => {
     ev.preventDefault();
     try {
@@ -645,37 +645,39 @@ function armDocx({ emd_cd, rule }) {
       const notesTxt = [...document.querySelectorAll('#notes li')].map((li) => li.innerText.replace(/\s+/g, ' ').replace(/^\[(\d+)\]\s*/, '[$1] ').trim());
       const now = new Date();
       const title = `${emd} 실태조사 보고서(초안)`;
-      const blob = buildDocx({
-        title, author: org,
-        meta: [org, `작성 ${ymd(now)}`, ruleNm && `규칙 ${ruleNm}`].filter(Boolean).join(' · '),
+      const file = `실태조사_초안_${emd}_${ymd(now).replace(/\./g, '')}`;
+      const r = await api('/report/screen.hwpx', { method: 'POST', raw: true, body: { doc: {
+        title, author: org, file,
+        meta: [org, ruleNm && `규칙 ${ruleNm}`].filter(Boolean).join(' · '),
         sections, tables, notes: notesTxt, foot: 'AI 분석 결과는 참고자료이며, 위법 여부는 담당자가 정합니다.',
-      });
-      const u = URL.createObjectURL(blob);
-      const t = document.createElement('a'); t.href = u; t.download = `실태조사_초안_${emd}_${ymd(now).replace(/\./g, '')}.docx`;
+        source: `Land-XI 실태조사 · ${org || ''} 화면에 보인 글과 숫자 그대로`.replace(/\s+/g, ' ') } } });
+      if (!r.ok) throw Object.assign(new Error('http ' + r.status), { status: r.status });
+      const u = URL.createObjectURL(await r.blob());
+      const t = document.createElement('a'); t.href = u; t.download = decodeURIComponent(r.headers.get('x-lx-report-name') || '') || `${file}.hwpx`;
       document.body.append(t); t.click(); t.remove();
       setTimeout(() => URL.revokeObjectURL(u), 4000);
       toast('내려받았습니다');
-    } catch (err) { devlog('docx', err.message); toast('내려받지 못했습니다'); }
+    } catch (err) { devlog('hwpx', err.message); if (isAuth(err)) return toFront(); toast('내려받지 못했습니다'); }
   };
   $('#doc-act').hidden = false;
 }
 
 /* 문서 내려받기 — 서버 보고서(기관 · 시군구 · 읍면동 이름은 자료에서 · LLM 없이) */
-$('#rp-docx').addEventListener('click', async () => {
+$('#rp-dl').addEventListener('click', async () => {
   const emd_cd = $('#rp-emd').value, rule = $('#rp-rule').value;
   if (!emd_cd) return;
-  const b = $('#rp-docx'); b.disabled = true;
+  const b = $('#rp-dl'); b.disabled = true;
   try {
-    const r = await api(`/survey/reports/draft?emd_cd=${encodeURIComponent(emd_cd)}${rule ? `&rule=${encodeURIComponent(rule)}` : ''}&format=docx`, { raw: true });
+    const r = await api(`/survey/reports/draft?emd_cd=${encodeURIComponent(emd_cd)}${rule ? `&rule=${encodeURIComponent(rule)}` : ''}&format=hwpx`, { raw: true });
     if (!r.ok) { const e = new Error('http ' + r.status); e.status = r.status; throw e; }
     const blob = await r.blob();
     const emdNm = (S.emd.find((e) => e.cd === emd_cd) || {}).key || emd_cd, sggNm = (regionOf(S.region) || {}).name || '';
-    const name = decodeURIComponent(r.headers.get('x-lx-report-name') || '') || `실태조사_초안_${[sggNm, emdNm].filter(Boolean).join('_')}_${ymd(new Date()).replace(/\./g, '')}.docx`;
+    const name = decodeURIComponent(r.headers.get('x-lx-report-name') || '') || `실태조사_초안_${[sggNm, emdNm].filter(Boolean).join('_')}_${ymd(new Date()).replace(/\./g, '')}.hwpx`;
     const u = URL.createObjectURL(blob);
     const t = document.createElement('a'); t.href = u; t.download = name; document.body.append(t); t.click(); t.remove();
     setTimeout(() => URL.revokeObjectURL(u), 4000);
     toast('내려받았습니다');
-  } catch (e) { devlog('report docx', e.message); if (isAuth(e)) return toFront(); toast('내려받지 못했습니다'); }
+  } catch (e) { devlog('report hwpx', e.message); if (isAuth(e)) return toFront(); toast('내려받지 못했습니다'); }
   finally { b.disabled = false; }
 });
 

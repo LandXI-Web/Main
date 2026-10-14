@@ -1,6 +1,8 @@
 """XI맵 융합 대시보드 '보고서로' — 화면에 낸 대시보드를 한글 문서(HWPX)로(10-14 사용자 · 원칙 247).
 
 POST /api/v1/ximap/report.hwpx   LX 계정 · body = {"spec": 대시보드 사양}
+POST /api/v1/report/screen.hwpx  로그인한 누구나 · body = {"doc": 화면에 보인 보고서(제목 · 문단 · 부속 표 · 근거)} — 기관 보고서 화면 내려받기(10-14 원칙 250)
+  문서 짓기는 공용 hwpx.py(모든 내려받는 문서 같은 서식).
   사양 = XI ChatGEO 대시보드 도구(agent/tools/ext/dash.py)가 화면에 준 그것 그대로 — 숫자는 다시 세지 않고 화면 값 그대로(숫자 한 출처).
   문서 = 제목 · 개요 표(지역 · 업무 · 비교 · 자료 · 만든 날짜) · 1. 주요 숫자(표) · 2. 해석 · 3. 차트(그림 n · PNG) · 4. 표 · 출처.
 
@@ -16,16 +18,16 @@ import datetime as dt
 import io
 import re
 import threading
-import zipfile
 from urllib.parse import quote
-from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
+from . import hwpx as H
 from .deps import ApiError, principal, require
 from .envelope import KST
+from .hwpx import Doc
 
 router = APIRouter()
 
@@ -92,13 +94,6 @@ def nf(v, d=0) -> str:
     if d and "." in s:
         s = s.rstrip("0").rstrip(".")
     return "0" if s in ("-0", "") else s
-
-
-_CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-
-
-def T(s) -> str:
-    return escape(_CTRL.sub("", str(s if s is not None else "")))
 
 
 # ── 차트 그림(PNG) ────────────────────────────────────────────────────────────────
@@ -357,254 +352,6 @@ CHART = {"bar": ch_bar, "hist": ch_hist, "donut": ch_donut, "stack": ch_stack, "
 CHART_NOTE = {"scatter": "주황 = 넓이에 비해 많은 곳 · 청록 = 적은 곳 · 점선 = 평균", "heat": "업무마다 많은 칸이 짙습니다"}
 
 
-# ── HWPX(OWPML) 짓기 ──────────────────────────────────────────────────────────────
-NS = ('xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" '
-      'xmlns:hp10="http://www.hancom.co.kr/hwpml/2016/paragraph" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" '
-      'xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" '
-      'xmlns:hhs="http://www.hancom.co.kr/hwpml/2011/history" xmlns:hm="http://www.hancom.co.kr/hwpml/2011/master-page" '
-      'xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf" xmlns:dc="http://purl.org/dc/elements/1.1/" '
-      'xmlns:opf="http://www.idpf.org/2007/opf/" xmlns:ooxmlchart="http://www.hancom.co.kr/hwpml/2016/ooxmlchart" '
-      'xmlns:hwpunitchar="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar" xmlns:epub="http://www.idpf.org/2007/ops" '
-      'xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"')
-XMLH = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
-FONTS = ("함초롬바탕", "함초롬돋움")            # 0 = 바탕(본문) · 1 = 돋움(제목 · 표)
-LANGS = ("HANGUL", "LATIN", "HANJA", "JAPANESE", "OTHER", "SYMBOL", "USER")
-PAGE_W, PAGE_H, M_LR, M_T, M_B, M_HF = 59528, 84188, 7087, 5668, 4252, 4252   # A4 · 좌우 25mm · 위 20mm · 아래 15mm
-TEXT_W = PAGE_W - 2 * M_LR
-
-
-def _fontfaces():
-    ti = ('<hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" '
-          'letterform="1" midline="1" xHeight="1"/>')
-    out = []
-    for lg in LANGS:
-        fs = "".join(f'<hh:font id="{i}" face="{f}" type="TTF" isEmbedded="0">{ti}</hh:font>' for i, f in enumerate(FONTS))
-        out.append(f'<hh:fontface lang="{lg}" fontCnt="{len(FONTS)}">{fs}</hh:fontface>')
-    return f'<hh:fontfaces itemCnt="{len(LANGS)}">{"".join(out)}</hh:fontfaces>'
-
-
-def _bf(i, line=None, fill=None, sides=("left", "right", "top", "bottom")):
-    b = "".join(f'<hh:{s}Border type="{"SOLID" if line and s in sides else "NONE"}" width="0.12 mm" color="{line or "#000000"}"/>'
-                for s in ("left", "right", "top", "bottom"))
-    fb = f'<hc:fillBrush><hc:winBrush faceColor="{fill}" hatchColor="#FF000000" alpha="0"/></hc:fillBrush>' if fill else ""
-    return (f'<hh:borderFill id="{i}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">'
-            '<hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>'
-            f'{b}<hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>{fb}</hh:borderFill>')
-
-
-# 테두리: 1 없음 · 2 없음(글자용) · 3 표 칸(옅은 회색 선) · 4 표 머리 칸(회색 바탕) · 5 큰 숫자 칸(옅은 바탕) · 6 제목 아래 선
-BORDERS = [_bf(1), _bf(2), _bf(3, "#C9CED6"), _bf(4, "#C9CED6", "#EEF1F4"), _bf(5, "#C9CED6", "#F7F8FA"), _bf(6, "#191F28", None, ("bottom",))]
-
-# 글자 모양: (높이 1/100pt, 글꼴, 굵게, 색)
-CHARS = [
-    (1000, 0, False, "#000000"),   # 0 바탕글
-    (1050, 0, False, "#191F28"),   # 1 본문
-    (1800, 1, True, "#191F28"),    # 2 제목
-    (1250, 1, True, "#191F28"),    # 3 장 제목(1. 2. …)
-    (900, 1, False, "#4E5968"),    # 4 작은 글(만든 날짜 · 주석)
-    (950, 1, False, "#191F28"),    # 5 표 글
-    (950, 1, True, "#333D4B"),     # 6 표 머리
-    (1500, 1, True, "#191F28"),    # 7 큰 숫자
-    (900, 1, True, "#4E5968"),     # 8 그림 번호
-]
-
-
-def _charpr(i, h, font, bold, color):
-    ref = " ".join(f'{a}="{font}"' for a in ("hangul", "latin", "hanja", "japanese", "other", "symbol", "user"))
-    same = lambda v: " ".join(f'{a}="{v}"' for a in ("hangul", "latin", "hanja", "japanese", "other", "symbol", "user"))
-    return (f'<hh:charPr id="{i}" height="{h}" textColor="{color}" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">'
-            f'<hh:fontRef {ref}/><hh:ratio {same(100)}/><hh:spacing {same(0)}/><hh:relSz {same(100)}/><hh:offset {same(0)}/>'
-            f'{"<hh:bold/>" if bold else ""}<hh:underline type="NONE" shape="SOLID" color="#000000"/><hh:strikeout shape="NONE" color="#000000"/>'
-            '<hh:outline type="NONE"/><hh:shadow type="NONE" color="#B2B2B2" offsetX="10" offsetY="10"/></hh:charPr>')
-
-
-# 문단 모양: (정렬, 줄 간격 %, 위 여백, 아래 여백, 왼쪽 들여, 다음과 함께)
-PARAS = [
-    ("JUSTIFY", 160, 0, 0, 0, False),     # 0 바탕글
-    ("JUSTIFY", 165, 0, 600, 0, False),   # 1 본문
-    ("CENTER", 130, 0, 400, 0, False),    # 2 제목
-    ("LEFT", 140, 1600, 600, 0, True),    # 3 장 제목
-    ("RIGHT", 130, 0, 0, 0, False),       # 4 오른쪽(만든 날짜)
-    ("CENTER", 130, 0, 0, 0, False),      # 5 표 칸 가운데
-    ("LEFT", 130, 0, 0, 0, False),        # 6 표 칸 왼쪽
-    ("CENTER", 130, 400, 200, 0, True),   # 7 그림
-    ("CENTER", 130, 0, 800, 0, False),    # 8 그림 번호
-    ("LEFT", 165, 0, 400, 1000, False),   # 9 해석 줄(○ 들여)
-    ("LEFT", 130, 0, 200, 0, False),      # 10 작은 글 왼쪽
-    ("LEFT", 130, 0, 200, 0, True),       # 11 표 번호(표와 함께)
-]
-
-
-def _parapr(i, align, line, prev, nxt, left, keep):
-    mg = (f'<hh:margin><hc:intent value="{-left if left else 0}" unit="HWPUNIT"/><hc:left value="{left}" unit="HWPUNIT"/>'
-          f'<hc:right value="0" unit="HWPUNIT"/><hc:prev value="{prev}" unit="HWPUNIT"/><hc:next value="{nxt}" unit="HWPUNIT"/></hh:margin>'
-          f'<hh:lineSpacing type="PERCENT" value="{line}" unit="HWPUNIT"/>')
-    return (f'<hh:paraPr id="{i}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">'
-            f'<hh:align horizontal="{align}" vertical="BASELINE"/><hh:heading type="NONE" idRef="0" level="0"/>'
-            f'<hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="{1 if keep else 0}" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>'
-            '<hh:autoSpacing eAsianEng="0" eAsianNum="0"/>'
-            f'<hp:switch><hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">{mg}</hp:case><hp:default>{mg}</hp:default></hp:switch>'
-            '<hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>')
-
-
-def header_xml(n_pic: int, n_tbl: int) -> str:
-    chars = "".join(_charpr(i, *c) for i, c in enumerate(CHARS))
-    paras = "".join(_parapr(i, *p) for i, p in enumerate(PARAS))
-    return (f'{XMLH}<hh:head {NS} version="1.4" secCnt="1"><hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>'
-            f'<hh:refList>{_fontfaces()}<hh:borderFills itemCnt="{len(BORDERS)}">{"".join(BORDERS)}</hh:borderFills>'
-            f'<hh:charProperties itemCnt="{len(CHARS)}">{chars}</hh:charProperties>'
-            '<hh:tabProperties itemCnt="1"><hh:tabPr id="0" autoTabLeft="0" autoTabRight="0"/></hh:tabProperties>'
-            f'<hh:paraProperties itemCnt="{len(PARAS)}">{paras}</hh:paraProperties>'
-            '<hh:styles itemCnt="1"><hh:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/></hh:styles>'
-            '</hh:refList><hh:compatibleDocument targetProgram="HWP201X"><hh:layoutCompatibility/></hh:compatibleDocument>'
-            '<hh:docOption><hh:linkinfo path="" pageInherit="0" footnoteInherit="0"/></hh:docOption><hh:trackchageConfig flags="56"/></hh:head>')
-
-
-SEC_PR = ('<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" '
-          'memoShapeIDRef="0" textVerticalWidthHead="0" masterPageCnt="0"><hp:grid lineGrid="0" charGrid="0" wonggojiFormat="0"/>'
-          '<hp:startNum pageStartsOn="BOTH" page="0" pic="0" tbl="0" equation="0"/>'
-          '<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/>'
-          '<hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/>'
-          f'<hp:pagePr landscape="WIDELY" width="{PAGE_W}" height="{PAGE_H}" gutterType="LEFT_ONLY"><hp:margin header="{M_HF}" footer="{M_HF}" gutter="0" left="{M_LR}" right="{M_LR}" top="{M_T}" bottom="{M_B}"/></hp:pagePr>'
-          '<hp:footNotePr><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/><hp:noteLine length="-1" type="SOLID" width="0.12 mm" color="#000000"/>'
-          '<hp:noteSpacing betweenNotes="283" belowLine="567" aboveLine="850"/><hp:numbering type="CONTINUOUS" newNum="1"/><hp:placement place="EACH_COLUMN" beneathText="0"/></hp:footNotePr>'
-          '<hp:endNotePr><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/><hp:noteLine length="14692344" type="SOLID" width="0.12 mm" color="#000000"/>'
-          '<hp:noteSpacing betweenNotes="0" belowLine="567" aboveLine="850"/><hp:numbering type="CONTINUOUS" newNum="1"/><hp:placement place="END_OF_DOCUMENT" beneathText="0"/></hp:endNotePr>'
-          + "".join(f'<hp:pageBorderFill type="{t}" borderFillIDRef="1" textBorder="PAPER" headerInside="0" footerInside="0" fillArea="PAPER"><hp:offset left="1417" right="1417" top="1417" bottom="1417"/></hp:pageBorderFill>' for t in ("BOTH", "EVEN", "ODD"))
-          + '</hp:secPr><hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>')
-
-
-class Doc:
-    def __init__(self):
-        self.body: list[str] = []
-        self.bins: list[tuple[str, bytes]] = []
-        self.n_tbl = 0
-        self.plain: list[str] = []
-        self._id = 1000
-
-    def nid(self):
-        self._id += 1
-        return self._id
-
-    @staticmethod
-    def _p(inner, para=1, first=False):
-        sec = '<hp:run charPrIDRef="0">' + SEC_PR + '</hp:run>' if first else ''
-        return (f'<hp:p id="0" paraPrIDRef="{para}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">'
-                f'{sec}{inner}</hp:p>')
-
-    @staticmethod
-    def _run(text, char=1):
-        return f'<hp:run charPrIDRef="{char}"><hp:t>{T(text)}</hp:t></hp:run>'
-
-    def para(self, text, para=1, char=1, runs=None):
-        inner = "".join(self._run(t, c) for t, c in runs) if runs else self._run(text, char)
-        self.body.append(self._p(inner, para, first=not self.body))
-        self.plain.append("".join(t for t, _ in runs) if runs else str(text))
-
-    def table(self, rows: list[list], widths: list[int], head_rows=1, head_col=False, aligns=None, big_row=None):
-        """rows[r][c] = 글자 · widths = 칸 폭 비율. head_rows = 머리 줄 수 · head_col = 첫 칸을 머리처럼."""
-        self.n_tbl += 1
-        tot = sum(widths)
-        ws = [int(TEXT_W * w / tot) for w in widths]
-        ws[-1] = TEXT_W - sum(ws[:-1])
-        H = 1700
-        trs = []
-        for ri, r in enumerate(rows):
-            tcs = []
-            for ci, c in enumerate(r):
-                head = ri < head_rows or (head_col and ci == 0)
-                big = big_row is not None and ri == big_row
-                bf = 4 if head else (5 if big else 3)
-                char = 6 if head else (7 if big else 5)
-                al = 5 if (head or big or (aligns and aligns[ci] == "c")) else (6 if not aligns or aligns[ci] == "l" else 4)
-                tcs.append(f'<hp:tc name="" header="{1 if ri < head_rows else 0}" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="{bf}">'
-                           '<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">'
-                           f'{self._p(self._run(c, char), al)}</hp:subList><hp:cellAddr colAddr="{ci}" rowAddr="{ri}"/><hp:cellSpan colSpan="1" rowSpan="1"/>'
-                           f'<hp:cellSz width="{ws[ci]}" height="{2400 if big else H}"/><hp:cellMargin left="510" right="510" top="141" bottom="141"/></hp:tc>')
-            trs.append(f'<hp:tr>{"".join(tcs)}</hp:tr>')
-        th = sum(2400 if (big_row is not None and i == big_row) else H for i in range(len(rows)))
-        tbl = (f'<hp:tbl id="{self.nid()}" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" '
-               f'repeatHeader="1" rowCnt="{len(rows)}" colCnt="{len(widths)}" cellSpacing="0" borderFillIDRef="3" noAdjust="0">'
-               f'<hp:sz width="{TEXT_W}" widthRelTo="ABSOLUTE" height="{th}" heightRelTo="ABSOLUTE" protect="0"/>'
-               '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="PARA" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>'
-               '<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="510" right="510" top="141" bottom="141"/>'
-               f'{"".join(trs)}</hp:tbl>')
-        self.body.append(self._p(f'<hp:run charPrIDRef="1">{tbl}<hp:t/></hp:run>', 1, first=not self.body))
-        self.plain.extend(" | ".join(str(c) for c in r) for r in rows)
-
-    def picture(self, png: bytes, w_px: int, h_px: int, max_w=TEXT_W):
-        k = len(self.bins) + 1
-        bid = f"image{k}"
-        self.bins.append((bid, png))
-        w = max_w
-        h = int(w * h_px / max(1, w_px))
-        if h > 52000:                                      # 아주 긴 그림은 높이를 줄인다(쪽 안에)
-            h = 52000
-            w = int(h * w_px / max(1, h_px))
-        org_w, org_h = int(w_px * 7200 / 150), int(h_px * 7200 / 150)
-        pic = (f'<hp:pic id="{self.nid()}" zOrder="0" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="{self.nid()}" reverse="0">'
-               f'<hp:offset x="0" y="0"/><hp:orgSz width="{org_w}" height="{org_h}"/><hp:curSz width="{w}" height="{h}"/><hp:flip horizontal="0" vertical="0"/>'
-               '<hp:rotationInfo angle="0" centerX="0" centerY="0" rotateimage="1"/><hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>'
-               f'<hc:scaMatrix e1="{w / org_w:.6f}" e2="0" e3="0" e4="0" e5="{h / org_h:.6f}" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo>'
-               f'<hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="{org_w}" y="0"/><hc:pt2 x="{org_w}" y="{org_h}"/><hc:pt3 x="0" y="{org_h}"/></hp:imgRect>'
-               f'<hp:imgClip left="0" right="{w_px * 75}" top="0" bottom="{h_px * 75}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/>'
-               f'<hp:imgDim dimwidth="{w_px * 75}" dimheight="{h_px * 75}"/><hc:img binaryItemIDRef="{bid}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/>'
-               f'<hp:sz width="{w}" widthRelTo="ABSOLUTE" height="{h}" heightRelTo="ABSOLUTE" protect="0"/>'
-               '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="PARA" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>'
-               '<hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic>')
-        self.body.append(self._p(f'<hp:run charPrIDRef="1">{pic}<hp:t/></hp:run>', 7, first=not self.body))
-
-    def section_xml(self):
-        return f'{XMLH}<hs:sec {NS}>{"".join(self.body)}</hs:sec>'
-
-    def package(self, title: str, made: dt.datetime) -> bytes:
-        items = "".join(f'<opf:item id="{b}" href="BinData/{b}.png" media-type="image/png" isEmbeded="1"/>' for b, _ in self.bins)
-        hpf = (f'{XMLH}<opf:package {NS} version="" unique-identifier="" id=""><opf:metadata><opf:title>{T(title)}</opf:title><opf:language>ko</opf:language>'
-               '<opf:meta name="creator" content="text">Land-XI</opf:meta><opf:meta name="subject" content="text"/><opf:meta name="description" content="text"/>'
-               '<opf:meta name="lastsaveby" content="text">Land-XI</opf:meta>'
-               f'<opf:meta name="CreatedDate" content="text">{made.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}</opf:meta>'
-               f'<opf:meta name="ModifiedDate" content="text">{made.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}</opf:meta>'
-               '<opf:meta name="keyword" content="text"/></opf:metadata>'
-               f'<opf:manifest><opf:item id="header" href="Contents/header.xml" media-type="application/xml"/>{items}'
-               '<opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/><opf:item id="settings" href="settings.xml" media-type="application/xml"/></opf:manifest>'
-               '<opf:spine><opf:itemref idref="header" linear="yes"/><opf:itemref idref="section0" linear="yes"/></opf:spine></opf:package>')
-        version = (f'{XMLH}<hv:HCFVersion xmlns:hv="http://www.hancom.co.kr/hwpml/2011/version" tagetApplication="WORDPROCESSOR" major="5" minor="1" micro="0" '
-                   'buildNumber="1" os="1" xmlVersion="1.4" application="Hancom Office Hangul" appVersion="11, 0, 0, 0 WIN32LEWindows_10"/>')
-        container = (f'{XMLH}<ocf:container xmlns:ocf="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf"><ocf:rootfiles>'
-                     '<ocf:rootfile full-path="Contents/content.hpf" media-type="application/hwpml-package+xml"/>'
-                     '<ocf:rootfile full-path="Preview/PrvText.txt" media-type="text/plain"/>'
-                     '<ocf:rootfile full-path="META-INF/container.rdf" media-type="application/rdf+xml"/></ocf:rootfiles></ocf:container>')
-        P = "http://www.hancom.co.kr/hwpml/2016/meta/pkg#"
-        rdf = (f'{XMLH}<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
-               f'<rdf:Description rdf:about=""><ns0:hasPart xmlns:ns0="{P}" rdf:resource="Contents/header.xml"/></rdf:Description>'
-               f'<rdf:Description rdf:about="Contents/header.xml"><rdf:type rdf:resource="{P}HeaderFile"/></rdf:Description>'
-               f'<rdf:Description rdf:about=""><ns0:hasPart xmlns:ns0="{P}" rdf:resource="Contents/section0.xml"/></rdf:Description>'
-               f'<rdf:Description rdf:about="Contents/section0.xml"><rdf:type rdf:resource="{P}SectionFile"/></rdf:Description>'
-               f'<rdf:Description rdf:about=""><rdf:type rdf:resource="{P}Document"/></rdf:Description></rdf:RDF>')
-        manifest = f'{XMLH}<odf:manifest xmlns:odf="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"/>'
-        settings = (f'{XMLH}<ha:HWPApplicationSetting xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0">'
-                    '<ha:CaretPosition listIDRef="0" paraIDRef="0" pos="0"/></ha:HWPApplicationSetting>')
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, "w") as z:
-            def put(name, data, store=False):
-                zi = zipfile.ZipInfo(name, date_time=made.timetuple()[:6])
-                zi.compress_type = zipfile.ZIP_STORED if store else zipfile.ZIP_DEFLATED
-                z.writestr(zi, data if isinstance(data, bytes) else data.encode("utf-8"))
-            put("mimetype", "application/hwp+zip", store=True)          # 맨 앞 · 압축 없음(형식 규칙)
-            put("version.xml", version, store=True)
-            put("Contents/header.xml", header_xml(len(self.bins), self.n_tbl))
-            for b, data in self.bins:
-                put(f"BinData/{b}.png", data, store=True)
-            put("Contents/section0.xml", self.section_xml())
-            put("Preview/PrvText.txt", "\r\n".join(self.plain)[:1024])
-            put("settings.xml", settings)
-            put("META-INF/container.rdf", rdf)
-            put("Contents/content.hpf", hpf)
-            put("META-INF/container.xml", container)
-            put("META-INF/manifest.xml", manifest)
-        return buf.getvalue()
-
-
 # ── 대시보드 사양 → 문서 ─────────────────────────────────────────────────────────
 _CODE = re.compile(r"\b\d{5,10}\b")                        # 시군구 · 읍면동 코드가 글자에 섞이면 뺀다
 
@@ -627,20 +374,14 @@ def build_hwpx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
     means = dict((str(a), str(b)) for a, b in (spec.get("means") or []) if a)
     region = means.get("지역", "")
     d = Doc()
-    d.para(f"{title} 보고", 2, 2)
-    # 개요 표
-    ov = [["지역", region or "—", "업무", means.get("업무", "—")],
-          ["비교", means.get("비교", "—"), "만든 날짜", made_t],
-          ["자료", " · ".join(spec.get("fuse") or []) or "AI 분석 결과", "작성", "Land-XI XI맵"]]
-    d.table(ov, [14, 36, 14, 36], head_rows=0, head_col=False, aligns=["c", "l", "c", "l"])
-    _mark_head_cols(d, (0, 2))
+    d.title(f"{title} 보고")
+    d.overview([("지역", region or "—"), ("업무", means.get("업무", "—")), ("비교", means.get("비교", "—")), ("만든 날짜", made_t),
+                ("자료", " · ".join(spec.get("fuse") or []) or "AI 분석 결과"), ("작성", "Land-XI XI맵")])
     if spec.get("note"):
-        d.para(f"※ {spec['note']}", 10, 4)
-    sec = 0
+        d.small(f"※ {spec['note']}")
     kp = spec.get("kpis") or []
     if kp:
-        sec += 1
-        d.para(f"{sec}. 주요 숫자", 3, 3)
+        d.heading("주요 숫자")
         heads = [str(k.get("label", "")) for k in kp[:4]]
         vals = [f"{nf(k.get('value'), k.get('d') or 0)}{k.get('unit') or ''}" for k in kp[:4]]
         rows = [heads, vals]
@@ -650,18 +391,15 @@ def build_hwpx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
         d.table(rows, [1] * len(heads), head_rows=1, big_row=1, aligns=["c"] * len(heads))
     say = [_say_clean(x) for x in (spec.get("say") or []) if _say_clean(x)]
     if say or spec.get("live"):
-        sec += 1
-        d.para(f"{sec}. 해석", 3, 3)
+        d.heading("해석")
         for s in say:
-            d.para(f"○ {s}", 9, 1)
+            d.item(s)
         if spec.get("live"):
-            d.para(f"○ 지금 분석 중: {spec['live']}", 9, 1)
+            d.item(f"지금 분석 중: {spec['live']}")
     panels = spec.get("panels") or []
     charts = [p for p in panels if p.get("type") in CHART]
-    fig_n = 0
     if charts:
-        sec += 1
-        d.para(f"{sec}. 차트", 3, 3)
+        d.heading("차트")
         with _MPL_LOCK:
             for p in charts:
                 try:
@@ -670,25 +408,16 @@ def build_hwpx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
                     r = None
                 if not r:
                     continue
-                fig_n += 1
-                d.picture(*r)
-                cap = f"그림 {fig_n}. {p.get('title', '')}"
+                cap = str(p.get("title", ""))
                 if p.get("unit") and p["type"] not in ("scatter",):
                     cap += f" (단위: {p['unit']})"
-                d.para(cap, 8, 8)
-                if CHART_NOTE.get(p["type"]):
-                    d.body.pop()
-                    d.plain.pop()
-                    d.para(f"{cap} — {CHART_NOTE[p['type']]}", 8, 8)
+                d.figure(r[0], cap, CHART_NOTE.get(p["type"]))
     tabs = [p for p in panels if p.get("type") in ("rank", "table")]
     if tabs:
-        sec += 1
-        d.para(f"{sec}. 표", 3, 3)
-        tn = 0
+        d.heading("표")
         for p in tabs:
-            tn += 1
             unit = p.get("unit") or ""
-            d.para(f"표 {tn}. {p.get('title', '')}{f' (단위: {unit})' if unit and p['type'] == 'rank' else ''}", 11, 8)
+            cap = f"{p.get('title', '')}{f' (단위: {unit})' if unit and p['type'] == 'rank' else ''}"
             if p["type"] == "rank":
                 ex = p.get("extra")
                 head = ["순위", "이름", "수"] + ([str(ex.get("label", ""))] if ex else [])
@@ -698,28 +427,25 @@ def build_hwpx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
                     if ex:
                         row.append(nf(r.get(ex.get("key")), 1) if r.get(ex.get("key")) is not None else "—")
                     rows.append(row)
-                d.table(rows, [8, 36, 28, 28][:len(head)], aligns=["c", "l", "r", "r"][:len(head)])
+                d.table(rows, [8, 36, 28, 28][:len(head)], aligns=["c", "l", "r", "r"][:len(head)], caption=cap)
             else:
                 num = set(p.get("num") or [])
                 rows = [[str(c) for c in p.get("cols") or []]] + [[_table_cell(c, i) for i, c in enumerate(r)] for r in p.get("rows") or []]
                 n = len(rows[0]) or 1
-                d.table(rows, [1] * n, aligns=["r" if i in num else "l" for i in range(n)])
-            d.para("", 10, 4)
-    # 출처 · 만든 날짜
+                d.table(rows, [1] * n, aligns=["r" if i in num else "l" for i in range(n)], caption=cap)
+            d.blank()
     src = " · ".join(spec.get("fuse") or []) or "AI 분석 결과"
-    d.para(f"출처: Land-XI XI맵 융합 대시보드({src}) · 숫자는 대시보드 화면과 같은 값입니다.", 10, 4)
-    d.para(f"만든 날짜: {made_t}", 4, 4)
-    name = re.sub(r"[\\/:*?\"<>|\s—·]+", "_", f"{title}_보고서_{made.replace('. ', '').rstrip('.')}").strip("_") + ".hwpx"
+    d.source(f"Land-XI XI맵 융합 대시보드({src}) · 숫자는 대시보드 화면과 같은 값입니다.", made_t)
+    name = H.safe_name(f"{title}_보고서_{made.replace('. ', '').rstrip('.')}")
     return d.package(title + " 보고", now), name
 
 
-def _mark_head_cols(d: Doc, cols: tuple[int, ...]):
-    """개요 표 — 지정한 칸(이름 칸)만 머리 칸 모양으로(바탕 회색 · 굵게)."""
-    t = d.body[-1]
-    for c in cols:
-        t = re.sub(rf'(<hp:tc [^>]*?borderFillIDRef=")3(">(?:(?!</hp:tc>).)*?<hp:cellAddr colAddr="{c}")', r"\g<1>4\2", t, flags=re.S)
-    t = re.sub(r'(borderFillIDRef="4">(?:(?!</hp:tc>).)*?)<hp:run charPrIDRef="5">', r'\1<hp:run charPrIDRef="6">', t, flags=re.S)
-    d.body[-1] = t
+def hwpx_response(blob: bytes, name: str) -> Response:
+    """한글 문서 내려받기 응답 — 모든 문서 같은 머리(파일 이름 = UTF-8 · 화면이 읽는 X-LX-Report-Name)."""
+    return Response(blob, media_type=H.MEDIA,
+                    headers={"content-disposition": f"attachment; filename=\"report.hwpx\"; filename*=UTF-8''{quote(name)}",
+                             "x-lx-report-name": quote(name), "cache-control": "no-store",
+                             "access-control-expose-headers": "Content-Disposition, X-LX-Report-Name"})
 
 
 @router.post("/ximap/report.hwpx")
@@ -733,5 +459,74 @@ async def report_hwpx(request: Request):
     if not isinstance(spec, dict) or not spec.get("title") or not isinstance(spec.get("panels") or [], list):
         raise ApiError("bad_request", "대시보드 사양이 필요합니다")
     blob, name = await run_in_threadpool(build_hwpx, spec)
-    return Response(blob, media_type="application/hwp+zip",
-                    headers={"content-disposition": f"attachment; filename=\"report.hwpx\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store"})
+    return hwpx_response(blob, name)
+
+
+# ── 화면에서 본 보고서 → 한글 문서(기관 보고서 화면 '내려받기' — 브라우저가 문서를 짓던 것을 서버 한 곳으로 · 같은 서식) ─────────────
+_LIM = {"title": 120, "meta": 300, "h": 80, "para": 2000, "cell": 200, "note": 400, "foot": 400}
+
+
+def _s(v, n) -> str:
+    return re.sub(r"\s+", " ", str(v if v is not None else "")).strip()[:n]
+
+
+def build_screen(doc: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
+    """doc = {title, author?, meta?, overview?:[[이름, 값]], notice?, sections:[{h, paras[]}], tables:[{h, note?, head[], rows[][]}], notes[], foot?, file?}
+    — 화면에 보인 글 · 숫자 그대로(서버는 다시 세지 않는다 · 숫자 한 출처). 같은 서식(제목 · 개요 표 · 장 제목 · 표 n. · 출처 · 만든 날짜)."""
+    now = now or dt.datetime.now(KST)
+    made_t = now.strftime("%Y. %m. %d. %H:%M")
+    title = _s(doc.get("title"), _LIM["title"]) or "보고서"
+    d = Doc()
+    d.title(title, _s(doc.get("meta"), _LIM["meta"]) or None)
+    ov = doc.get("overview") if isinstance(doc.get("overview"), list) else []
+    ov = [(_s(x[0], 40), _s(x[1], _LIM["cell"])) for x in ov[:12] if isinstance(x, (list, tuple)) and len(x) >= 2]
+    if ov:
+        d.overview(ov + [("만든 날짜", made_t)])
+    if doc.get("notice"):
+        d.notice(_s(doc["notice"], _LIM["foot"]))
+    for sec in (doc.get("sections") or [])[:12]:
+        if not isinstance(sec, dict):
+            continue
+        paras = [_s(p, _LIM["para"]) for p in (sec.get("paras") or [])[:40] if _s(p, 10)]
+        if not paras:
+            continue
+        d.heading(re.sub(r"^[①-⑳]\s*", "", _s(sec.get("h"), _LIM["h"])))
+        for p in paras:
+            d.body_text(p)
+    tabs = [t for t in (doc.get("tables") or [])[:8] if isinstance(t, dict) and t.get("head")]
+    if tabs:
+        d.heading("부속 표")
+        for t in tabs:
+            head = [_s(c, 40) for c in t["head"][:12]]
+            rows = [[_s(c, _LIM["cell"]) for c in r[:len(head)]] for r in (t.get("rows") or [])[:300] if isinstance(r, list)]
+            num = [bool(rows) and all(re.fullmatch(r"—|-|[\d,.]+%?", r[i] if i < len(r) else "—") for r in rows) for i in range(len(head))]
+            d.table([head] + (rows or [["없음"] + [""] * (len(head) - 1)]), None, aligns=["r" if x else "l" for x in num],
+                    small=len(head) > 6, caption=re.sub(r"^부속\s*표\s*\d+\s*·\s*", "", _s(t.get("h"), _LIM["h"])))
+            if t.get("note"):
+                d.small(_s(t["note"], _LIM["note"]))
+    notes = [_s(x, _LIM["note"]) for x in (doc.get("notes") or [])[:60] if _s(x, 5)]
+    if notes:
+        d.heading("근거")
+        for x in notes:
+            d.small(x)
+    if doc.get("foot"):
+        d.blank()
+        d.small(_s(doc["foot"], _LIM["foot"]))
+    d.source(_s(doc.get("source"), _LIM["note"]) or "Land-XI · 화면에 보인 글과 숫자 그대로", made_t)
+    stem = _s(doc.get("file"), 100) or f"{title}_{now:%Y%m%d}"
+    return d.package(title, now, _s(doc.get("author"), 60) or "Land-XI"), H.safe_name(re.sub(r"\.(hwpx|docx)$", "", stem))
+
+
+@router.post("/report/screen.hwpx")
+async def report_screen(request: Request):
+    """기관 · LX 화면 어디서나 — 로그인한 사람만. 받은 글만 문서로 짓는다(자료를 읽지 않음 → 계정 범위 밖 자료 0)."""
+    require(principal(request))
+    try:
+        body = await request.json()
+    except Exception:
+        raise ApiError("bad_request", "문서 내용이 필요합니다")
+    doc = (body or {}).get("doc") if isinstance(body, dict) else None
+    if not isinstance(doc, dict) or not doc.get("title"):
+        raise ApiError("bad_request", "문서 내용이 필요합니다")
+    blob, name = await run_in_threadpool(build_screen, doc)
+    return hwpx_response(blob, name)

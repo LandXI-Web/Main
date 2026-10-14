@@ -22,7 +22,7 @@ def _env(k: str, d: str) -> str:
 
 DATA_ROOT = Path(_env("LX_DATA_ROOT", "E:/Land-XI 플랫폼/02. 데이터"))
 SURVEY_DIR = DATA_ROOT / "survey"
-ARTIFACT_DIR = DATA_ROOT / "agent"                # run 별 산출(.docx) — LX_DATA_ROOT/agent/run_…/draft.docx
+ARTIFACT_DIR = DATA_ROOT / "agent"                # run 별 산출(한글 문서 .hwpx) — LX_DATA_ROOT/agent/run_…/draft.hwpx
 REPLAY_DIR = REPO_ROOT / "landxi" / "agent" / "data" / "replay"
 GATEWAY = _env("LX_AGENT_GATEWAY", "http://127.0.0.1:8700/api/v1")   # 도구 = 계약 API(사용자 토큰 상속 · 루프백)
 
@@ -56,7 +56,7 @@ def chain() -> list[str]:
 
 
 def run_dir(run_id: str) -> Path:
-    """run 산출 폴더(LX_DATA_ROOT/agent/<run_id>/) — 도구가 .docx·.png 를 여기에 쓰고 file·image 블록으로 알린다."""
+    """run 산출 폴더(LX_DATA_ROOT/agent/<run_id>/) — 도구가 .hwpx·.png 를 여기에 쓰고 file·image 블록으로 알린다."""
     if not re.fullmatch(r"[A-Za-z0-9_-]{4,64}", run_id or ""):
         raise ValueError("run_id 형식")
     d = ARTIFACT_DIR / run_id
@@ -64,7 +64,7 @@ def run_dir(run_id: str) -> Path:
     return d
 
 
-RUN_FILE = re.compile(r"^[\w가-힣.() -]{1,100}\.(docx|png|jpg|jpeg|webp|csv|pdf|xlsx)$")
+RUN_FILE = re.compile(r"^[\w가-힣.() -]{1,100}\.(hwpx|png|jpg|jpeg|webp|csv|pdf|xlsx)$")
 
 
 def run_href(run_id: str, name: str) -> str:

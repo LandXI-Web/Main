@@ -20,11 +20,9 @@ import json
 import re
 import secrets
 import time
-import urllib.parse
 
 import asyncpg
 from fastapi import APIRouter, Request
-from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from . import ledger as LG
@@ -1094,8 +1092,8 @@ async def report_draft(request: Request, emd_cd: str, rule: str | None = None, t
         raise ApiError("bad_request", "emd_cd = 법정동 8자리")
     if rule and rule not in RULE_IDS:
         raise ApiError("bad_request", "rule 은 R1..R6")
-    if format not in ("json", "docx"):
-        raise ApiError("bad_request", "format 은 json|docx")
+    if format not in ("json", "hwpx", "docx"):                 # docx = 옛 화면 주소 — 받는 파일은 한글 문서(.hwpx · 10-14 원칙 250)
+        raise ApiError("bad_request", "format 은 json|hwpx")
     top = max(1, min(int(top), 200))
     from survey import report
     realm, tenant = p.rls()
@@ -1105,11 +1103,9 @@ async def report_draft(request: Request, emd_cd: str, rule: str | None = None, t
         raise ApiError("not_found", str(e))
     if format == "json":
         return report.as_json(d)
-    blob, name = await run_in_threadpool(report.render_docx, d, None)
-    q = urllib.parse.quote(name)
-    return Response(blob, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    headers={"Content-Disposition": f"attachment; filename=\"survey-draft-{emd_cd}.docx\"; filename*=UTF-8''{q}",
-                             "X-LX-Report-Name": q, "Cache-Control": "no-store"})
+    from .xreport import hwpx_response
+    blob, name = await run_in_threadpool(report.render_hwpx, d, None)
+    return hwpx_response(blob, name)
 
 
 # ─────────────────────────── 관리 작업(c2-numbers · CPU · 게이트웨이 안) ───────────────────────────

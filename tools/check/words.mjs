@@ -6,6 +6,7 @@
    응답 문구: 화면이 받은 서버 JSON 응답에서 사람이 읽는 칸(message · text · title · label · line · note · why · hint · sub · answer …)의
    글도 같은 금칙어로 세어 따로 적는다(경고 — 화면에 안 나온 값일 수 있음). 화면 글에 금칙어가 있거나 화면 오류(콘솔 오류)가 있으면 종료 코드 1.
    사용: node tools/check/words.mjs [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--tenant namwon] [--json 파일]
+   10-14 원칙 250: '.docx · Word' 금칙(모든 문서 = 한글 문서) · 기관 보고서 탭도 본다.
    비밀번호는 env LX_PW / DEV_PASSWORD 또는 server/.env 의 DEV_PASSWORD(화면 · 출력에 적지 않는다). */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -43,6 +44,8 @@ export const WORDS = [
   ['평가(→ 추론)', /평가(?!\s?질문)/], ['추론 시험', /추론\s?시험/], ['검증 묶음', /검증\s?묶음/], ['자체 검증', /자체\s?검증/],
   ['고친 곳 · 모인 학습 데이터', /고친\s?곳|모인\s?학습\s?데이터/], ['고친 것 n건', /고친\s?것\s?[\d,]+\s?건/],
   ['학습 자료로 쌓임', /학습\s?(자료|데이터)로\s?쌓/], ['학습 자리', /학습\s?자리/],
+  // 10-14 원칙 250 — 모든 문서는 한글 문서(.hwpx). 화면에 '.docx' · 'Word' 표기 0
+  ['.docx · Word', /\bdocx\b|\bWord\b|워드\s?(문서|파일)/i],
 ];
 const hitWords = (s) => WORDS.filter(([, re]) => re.test(s)).map(([k]) => k);
 /** 서버 응답에서 사람이 읽는 칸 */
@@ -129,6 +132,7 @@ try {
     for (const c of cards.slice(0, 6)) {
       await screen(s, `기관 · 서비스 대시보드(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}`, { wait: '.gs-page' });
       await screen(s, `기관 · 통계·보고서(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}&tab=stats`, { wait: '.gs-page' });
+      await screen(s, `기관 · 보고서(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '#rp-form', ms: 3500 });   // 10-14 원칙 250 — 한글 문서 단추
       await screen(s, `기관 · 필지 목록 + 상세(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=sus`, { wait: '.gr-board', ms: 3500,
         act: async (p) => { const r = p.locator('#sus-table tbody tr').first(); if (await r.count()) await r.click(); } });
     }

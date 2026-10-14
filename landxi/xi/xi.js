@@ -745,7 +745,7 @@ async function boot() {
   ecard = emdCard($('emd-card'), { A: M.A, canFrame: G.frame, toAoi, openDrawer: (k, q) => { if (G.drawer) { dr.open(k, q); state.drawer = k; } },
     frameEmd: (name) => { const f = emdFeatures.find((e) => e.nm === name); if (f) ft.set(f.geometry.type === 'Polygon' ? f.geometry : { type: 'Polygon', coordinates: f.geometry.coordinates[0] }); } });
   dr = drawer($('drawer'), { onUrl: () => { state.drawer = dr.S.kind; writeUrl(); }, onClose: () => { if (ex?.S.pendingFly) ex.fly(); xiEmit('drawer', { kind: 'report', open: false }); },
-    // 보고서 '초안 작성' 탭 — F2-E 가 XI.provide('report-draft') 로 맡으면 그쪽 · 아니면 F2-A 규칙 초안(F2-S docx 또는 브라우저 조립 docx)
+    // 보고서 '초안 작성' 탭 — F2-E 가 XI.provide('report-draft') 로 맡으면 그쪽 · 아니면 F2-A 규칙 초안(서버 한글 문서 .hwpx)
     onDraft: (slot, q) => { xiEmit('drawer', { kind: 'report', tab: 'draft', open: true, ...q }); const p = XI.provider('report-draft'); if (p) { try { if (p(slot, q) !== false) { slot.dataset.by = 'provider'; return; } } catch (e) { console.warn('[XI] report-draft provider', e); } } slot.dataset.by = 'f2a'; import('./survey/report-draft.js').then((m) => m.renderDraft(slot, q)); } });
   // 3차 판정: 보고서/통계 서랍(#drawer)은 HUD 아래(--dr-top)에서 시작 · 폭 ≤ 600(1280 = 520) — HUD · 필지 카드 교차 0.
   //   열림/닫힘을 'xi:rdrawer' 로 알린다 → 필지 카드 v2 는 요약(머리 + 버튼)으로 서랍 왼쪽에, 의심 큐 서랍/레일은 초안 동안 비킨다(:root[data-rdrawer])

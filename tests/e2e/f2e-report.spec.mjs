@@ -1,4 +1,4 @@
-// F2-E 장면 2 — 보고서 서랍 '초안 작성'(종이 SPLIT-5050) · 토큰 즉시 타이핑 · 서술 문장 전부 [n] · [3] → 지도 flyTo + 필지 카드 · .docx 3클릭
+// F2-E 장면 2 — 보고서 서랍 '초안 작성'(종이 SPLIT-5050) · 토큰 즉시 타이핑 · 서술 문장 전부 [n] · [3] → 지도 flyTo + 필지 카드 · 한글 문서(.hwpx) 3클릭
 import { test, expect } from '@playwright/test';
 
 /* ── F1-CONTRACT §12 픽스처(각 spec 안에 복사) ── */
@@ -39,7 +39,7 @@ const CONTRACT = new Set(['catalog_layers', 'results_stats', 'results_features',
 
 test.skip(!API, 'on 모드 전용');
 
-test('초안 작성 → 타이핑 → [3] flyTo + 필지 카드 → .docx', async ({ page }) => {
+test('초안 작성 → 타이핑 → [3] flyTo + 필지 카드 → 한글 문서', async ({ page }) => {
   test.setTimeout(180000);
   const errs = watch(page);
   await bootXI(page, { q: '?mode=survey' });
@@ -64,7 +64,7 @@ test('초안 작성 → 타이핑 → [3] flyTo + 필지 카드 → .docx', asyn
   expect(await paper.locator('.ag-body .ag-n').count()).toBeGreaterThan(2);
   expect(await paper.locator('.ag-paper-plan li').count()).toBe(5);        // survey_stats · survey_findings · llm_write · llm_review · survey_reports_draft
   // 봉투 뜻 단언(2차 판정): 필지 문장(필지 인용 [n] 또는 리 이름)에 읍면동 집계 봉투(연속지적 필지 수)·다른 규칙 건수 자리표가
-  // 표기(봉투 뜻 확인 필요) 없이 들어가면 실패 · .docx 는 F2-S 정본 서식 경로
+  // 표기(봉투 뜻 확인 필요) 없이 들어가면 실패 · 한글 문서는 F2-S 정본 서식 경로
   const misuse = await page.evaluate(() => {
     const d = window.LXAgentDraft.done, rule = d.report?.rule || 'R1';
     const parcelN = new Set((d.citations || []).filter((c) => c.kind === 'parcel').map((c) => c.n));
@@ -86,10 +86,10 @@ test('초안 작성 → 타이핑 → [3] flyTo + 필지 카드 → .docx', asyn
         }
       }
     }
-    return { bad, docx: d.artifact?.docx?.path, source: d.artifact?.source };
+    return { bad, doc: d.artifact?.doc?.path, source: d.artifact?.source };
   });
   expect(misuse.bad, JSON.stringify(misuse.bad)).toEqual([]);
-  expect(misuse.docx, misuse.source).toBe('f2s');
+  expect(misuse.doc, misuse.source).toBe('f2s');
   expect(misuse.source).toContain('F2-S 정본 서식');
   await expect(paper.locator('.ag-void2')).toContainText('법령 인용 · 2차');
   const addr = await paper.locator('.ag-evt').evaluateAll((els) => els.flatMap((e) => e.textContent.match(/\d+(-\d+)?/g) || []));
@@ -106,11 +106,11 @@ test('초안 작성 → 타이핑 → [3] flyTo + 필지 카드 → .docx', asyn
   await page.waitForTimeout(600);
   await expect(paper).toBeVisible();
   await page.screenshot({ path: 'shots/f2/E/e2e-report-cite.png' });
-  // .docx
-  const [dl] = await Promise.all([page.waitForEvent('download'), paper.locator('.ag-docx').click()]);
-  expect(dl.suggestedFilename()).toMatch(/^실태조사_초안_아영면_\d{8}\.docx$/);
+  // 한글 문서(.hwpx)
+  const [dl] = await Promise.all([page.waitForEvent('download'), paper.locator('.ag-doc').click()]);
+  expect(dl.suggestedFilename()).toMatch(/^실태조사_초안_아영면_\d{8}\.hwpx$/);
   const p = await dl.path();
   const fs = await import('node:fs');
-  expect(fs.statSync(p).size).toBeGreaterThan(20000);
+  expect(fs.statSync(p).size).toBeGreaterThan(8000);
   expect(errs).toEqual([]);
 });

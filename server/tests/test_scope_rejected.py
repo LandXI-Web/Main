@@ -131,6 +131,6 @@ def test_rejected_features_absent(tok):
     assert not [a for a in acts if a["kind"] in ("correction", "penalty", "restore") and a["state"] != "cancelled"]   # 옛 기록은 취소로
     from survey import report as S
     assert not hasattr(S, "render_letter")
-    txt = S.docx_text(S.build_draft(NAMWON, None, 10, fmt="docx", realm="tenant", tenant="namwon"))
+    txt = S.doc_text(S.build_draft(NAMWON, None, 10, fmt="hwpx", realm="tenant", tenant="namwon"))
     for w in ("배정", "시정명령", "이행강제금", "공문"):
         assert w not in txt, w

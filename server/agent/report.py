@@ -1,17 +1,16 @@
-"""보고서 초안(AG-2 · F1-CONTRACT v1.1-26) — survey_stats · survey_findings → Gemma 4 서술 3단락(문장마다 [n]) → 검증기 → .docx.
+"""보고서 초안(AG-2 · F1-CONTRACT v1.1-26) — survey_stats · survey_findings → Gemma 4 서술 3단락(문장마다 [n]) → 검증기 → 한글 문서(.hwpx).
 
-.docx 는 F2-S `server/survey/report.py build_draft(emd_cd, rule, top, narrative, fmt='docx', realm, tenant)` 정본 서식으로 만든다.
+한글 문서(.hwpx · 10-14 원칙 250)는 F2-S `server/survey/report.py build_draft(emd_cd, rule, top, narrative, fmt='hwpx', realm, tenant)` 정본 서식으로 만든다.
 에이전트 인용 [n] 은 F2-S 문서의 '인용' 번호로 옮기고(같은 값·뜻 봉투) 필지는 '③ No k' 로 표 행을 가리킨다.
 F2-S 호출이 실패하면 예외 사유를 artifact.source 에 그대로 적고 같은 여섯 절을 로컬 서식으로 만든다.
 검증: 자리표 밖 숫자는 그 문장의 인용 봉투로만 승격(strict) · 봉투 뜻 검사(결정적 규칙 + LLM 교정자 표) → 어긋난 문장 = '봉투 뜻 확인 필요'.
 고정 문구: 'AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님'. 법령 근거 = 법령 색인(agent.rag) 조문 원문 인용. 성명 열 0.
 대상 = 질문 → 화면 현재 지역 → 없으면 '지역을 알려 주세요'(resolve_target · 지역 고정값 없음). 시군구(5자리)·읍면동 둘 다 된다.
-말로 요청(도구 report_draft · tools/ext/report.py)과 서랍 요청(POST /agent/report/draft)이 같은 서식 함수(survey.report build_draft · render_docx)를 쓴다.
+말로 요청(도구 report_draft · tools/ext/report.py)과 서랍 요청(POST /agent/report/draft)이 같은 서식 함수(survey.report build_draft · render_hwpx)를 쓴다.
 """
 from __future__ import annotations
 
 import datetime as dt
-import io
 import json
 import re
 import time
@@ -163,7 +162,7 @@ async def meaning_check(ctx: Ctx, md: str, rule: str) -> list[dict]:
     return flags
 
 
-# ── 평문(종이 · .docx) ─────────────────────────────────────────────────────────
+# ── 평문(종이 · 한글 문서) ─────────────────────────────────────────────────────────
 def fmt_env(e: dict, dec: bool = True) -> str:
     v = e.get("value")
     if not isinstance(v, (int, float)) or isinstance(v, bool):
@@ -254,88 +253,52 @@ def _auto_cite(md: str, ctx: Ctx) -> tuple[str, list[str]]:
     return "\n".join(out_lines), left
 
 
-def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: str, ctx: Ctx, stats_ids: dict, find_ids: dict, run_id: str,
+def build_hwpx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: str, ctx: Ctx, stats_ids: dict, find_ids: dict, run_id: str,
                      model: str) -> bytes:
-    from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.oxml.ns import qn
-    from docx.shared import Pt, RGBColor
-
-    doc = Document()
-    st = doc.styles["Normal"]
-    st.font.name = "맑은 고딕"
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
-    st.font.size = Pt(10.5)
-
-    def h(text, lvl=1):
-        p = doc.add_heading(text, level=lvl)
-        for r in p.runs:
-            r.font.name = "맑은 고딕"
-            r._element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
-            r.font.color.rgb = RGBColor(0x01, 0x01, 0x02)
-        return p
-
+    """정본 서식(survey.report)이 실패했을 때의 간이 서식 — 같은 한글 문서 서식(landxi_api.hwpx)."""
+    from landxi_api import hwpx as HX
     from .tools.survey import RULE_NM
+    now = dt.datetime.now(KST)
+    made_t = now.strftime("%Y. %m. %d. %H:%M")
     rn = RULE_NM.get(rule or "") if rule else None
-    h(f"{emd} 실태조사 초안" + (f" — {rn}" if rn else ""), 0)
-    meta = doc.add_paragraph()
-    meta.add_run(f"초안 · 검토 필요 · {fixed_of(ctx)}\n").bold = True
-    meta.add_run(f"대상 {emd} · 연속지적도 × AI 영상 분석 · 판단 기준값 [추정 초기값] · AI 가 작성한 초안(사람 확인 필요) · {dt.datetime.now(KST):%Y-%m-%d %H:%M}")
-    h("① 개요 · ② 소견 · ⑥ 조치 제안", 1)
+    title = f"{emd} 실태조사 초안" + (f" — {rn}" if rn else "")
+    doc = HX.Doc()
+    doc.title(title, "초안 · 검토 필요")
+    doc.overview([("대상", emd), ("자료", "연속지적도 × AI 영상 분석"), ("판단 기준값", "[추정 초기값]"), ("만든 날짜", made_t)])
+    doc.notice(fixed_of(ctx), "AI 가 작성한 초안입니다 — 사람이 확인해야 합니다.")
+    doc.heading("① 개요 · ② 소견 · ⑥ 조치 제안", number=False)
     for para in _rule_words(narrative_plain).split("\n"):
         t = para.strip()
         if not t:
             continue
         if t.startswith("#"):
-            p = doc.add_paragraph()
-            r = p.add_run(t.lstrip("# ").strip())
-            r.bold = True
+            doc.para(t.lstrip("# ").strip(), HX.P_BODY, HX.C_BOLD)
         else:
-            doc.add_paragraph(t)
-    h("② 집계표", 1)
-    tb = doc.add_table(rows=1, cols=3)
-    tb.style = "Table Grid"
-    for c, t in zip(tb.rows[0].cells, ["항목", "값", "꼬리표"]):
-        c.text = t
-    for key, eid in stats_ids.items():
-        e = ctx.envs[eid]
-        row = tb.add_row().cells
-        row[0].text = ctx.env_meta[eid]
-        row[1].text = fmt_env(e)
-        row[2].text = BASIS_KO.get(e.get("basis"), "")
-    h("③ 의심 상위 필지(" + ("검토 대상 후보" if _lx(ctx) else "현장조사 대상 후보") + ")", 1)
-    cits = [c for c in ctx.citations if c.get("kind") == "parcel"]
-    tb2 = doc.add_table(rows=1, cols=6)
-    tb2.style = "Table Grid"
-    for c, t in zip(tb2.rows[0].cells, ["[n]", "주소", "PNU", "규칙·등급", "근거면적", "신뢰도"]):
-        c.text = t
-    for c in cits:
+            doc.body_text(t)
+    doc.heading("② 집계표", number=False)
+    doc.table([["항목", "값", "꼬리표"]] + [[ctx.env_meta[eid], fmt_env(ctx.envs[eid]), BASIS_KO.get(ctx.envs[eid].get("basis"), "")] for eid in stats_ids.values()],
+              [56, 22, 22], aligns=["l", "r", "c"])
+    doc.heading("③ 의심 상위 필지(" + ("검토 대상 후보" if _lx(ctx) else "현장조사 대상 후보") + ")", number=False)
+    rows = [["[n]", "주소", "필지 번호", "규칙·등급", "근거면적", "신뢰도"]]
+    for c in [c for c in ctx.citations if c.get("kind") == "parcel"]:
         ev = [ctx.envs.get(x) for x in c.get("env") or []]
-        row = tb2.add_row().cells
-        row[0].text = f"[{c['n']}]"
-        row[1].text = c.get("addr") or ""
-        row[2].text = c.get("pnu") or ""
-        row[3].text = _rule_words(f"{c.get('rule') or ''} {c.get('priority') or ''}")
-        row[4].text = fmt_env(ev[0]) if len(ev) > 0 and ev[0] else "—"
-        row[5].text = fmt_env(ev[2]) if len(ev) > 2 and ev[2] else "—"
-    h("④ 근거 영상", 1)
-    doc.add_paragraph("그 지역 AI 분석 영상(연도·해상도는 실태조사 결과 표기) · AI 추론 · 검수 전")
-    h("⑤ 법적 근거", 1)
+        rows.append([f"[{c['n']}]", c.get("addr") or "", c.get("pnu") or "", _rule_words(f"{c.get('rule') or ''} {c.get('priority') or ''}"),
+                     fmt_env(ev[0]) if len(ev) > 0 and ev[0] else "—", fmt_env(ev[2]) if len(ev) > 2 and ev[2] else "—"])
+    doc.table(rows, [7, 27, 22, 18, 14, 12], aligns=["c", "l", "l", "l", "r", "r"], small=True)
+    doc.heading("④ 근거 영상", number=False)
+    doc.body_text("그 지역 AI 분석 영상(연도·해상도는 실태조사 결과 표기) · AI 추론 · 검수 전")
+    doc.heading("⑤ 법적 근거", number=False)
     try:
         from survey.report import law_basis
         for x in law_basis([rule] if rule else ["R1", "R2", "R3", "R4", "R5", "R6"]):
-            doc.add_paragraph(f"{x['label']} — {x['text'] or x['status']}")
+            doc.body_text(f"{x['label']} — {x['text'] or x['status']}")
     except Exception:  # noqa: BLE001
-        doc.add_paragraph("법령 데이터에 없습니다")
-    h("근거 목록", 1)
+        doc.body_text("법령 데이터에 없습니다")
+    doc.heading("근거 목록", number=False)
     for c in ctx.citations:
-        doc.add_paragraph(_rule_words(f"[{c['n']}] {c.get('label') or c.get('addr') or ''}") + (f" · PNU {c['pnu']}" if c.get("pnu") else ""))
-    foot = doc.add_paragraph()
-    foot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    foot.add_run(f"{fixed_of(ctx)} · 소유자 성명 없음(연속지적도에 없음)").italic = True
-    bio = io.BytesIO()
-    doc.save(bio)
-    return bio.getvalue()
+        doc.small(_rule_words(f"[{c['n']}] {c.get('label') or c.get('addr') or ''}") + (f" · 필지 번호 {c['pnu']}" if c.get("pnu") else ""))
+    doc.source(f"Land-XI 실태조사 · {fixed_of(ctx)} · 소유자 성명 없음(연속지적도에 없음)", made_t)
+    return doc.package(title, now)
 
 
 SECTION = {"개요": "overview", "소견": "findings", "조치": "actions"}
@@ -483,8 +446,8 @@ def _tenant(p) -> str:
     return tenant_of(p)
 
 
-async def build_docx(emd, emd_cd, rule, top, md, lr, ctx, stats_ids, find_ids, model, flags) -> tuple[bytes, str, dict]:
-    """F2-S server/survey/report.py build_draft(fmt='docx', realm, tenant) 정본 서식 우선. 실패하면 사유를 그대로 source 에 적고 로컬 서식."""
+async def build_doc(emd, emd_cd, rule, top, md, lr, ctx, stats_ids, find_ids, model, flags) -> tuple[bytes, str, dict]:
+    """한글 문서(.hwpx) — F2-S server/survey/report.py build_draft(fmt='hwpx', realm, tenant) 정본 서식 우선. 실패하면 사유를 그대로 source 에 적고 로컬 서식."""
     import asyncio
     p = ctx.principal
     realm, tenant = p.realm, _tenant(p)
@@ -499,9 +462,9 @@ async def build_docx(emd, emd_cd, rule, top, md, lr, ctx, stats_ids, find_ids, m
             f2s = await asyncio.to_thread(s_report.build_draft, emd_cd, rule, top, None, "dict", realm, tenant)
             narr, stat = narrative_for_f2s(lr.answer_md, lr, ctx, flags, f2s)
             ok, bad = s_report.check_narrative(narr, len(f2s.get("citations") or []), f2s.get("citations") or [])
-            data = await asyncio.to_thread(s_report.build_draft, emd_cd, rule, top, narr, "docx", realm, tenant)
+            data = await asyncio.to_thread(s_report.build_draft, emd_cd, rule, top, narr, "hwpx", realm, tenant)
             if not isinstance(data, (bytes, bytearray)):
-                raise TypeError(f"build_draft(fmt='docx') 가 {type(data).__name__} 을 돌려줌")
+                raise TypeError(f"build_draft(fmt='hwpx') 가 {type(data).__name__} 을 돌려줌")
             nar = "AI 서술 인용 검사 통과" if ok else f"AI 서술 기각({len(bad)}건) → 자동 작성 문장"
             src = (f"실태조사 보고서 서식 · {nar} · 서술 {stat['kept']}문장"
                    + (f" · 뜻 확인 필요 {stat['flagged']}" if stat["flagged"] else "")
@@ -512,7 +475,7 @@ async def build_docx(emd, emd_cd, rule, top, md, lr, ctx, stats_ids, find_ids, m
         except Exception as e:  # noqa: BLE001
             why = f"F2-S build_draft {type(e).__name__}: {str(e)[:160]}"
     plain = render_plain(lr.answer_md, ctx.envs, lr.unverified, ctx.env_meta, flags)
-    data = build_docx_local(emd, emd_cd, rule, plain, ctx, stats_ids, find_ids, ctx.run_id, model)
+    data = build_hwpx_local(emd, emd_cd, rule, plain, ctx, stats_ids, find_ids, ctx.run_id, model)
     return data, "실태조사 보고서 간이 서식", {"path": "local", "error": why}
 
 
@@ -541,6 +504,7 @@ async def _repair_cites(ctx: Ctx, md: str, uncited: list[str]) -> tuple[str, lis
 
 # ── 대상 지역 · 파일 (말로 요청 · 서랍 요청 공통) ─────────────────────────────────────────
 NEED_REGION = "지역을 알려 주세요(예: ○○시 보고서 초안)"
+DRAFT = "draft.hwpx"                      # run 폴더의 초안 파일(한글 문서 · 10-14 원칙 250)
 
 
 def file_href(run_id: str, name: str) -> str:
@@ -654,8 +618,8 @@ async def resolve_target(ctx: Ctx, region=None, emd=None, text: str | None = Non
     return {"error": "need_region", "message": NEED_REGION}
 
 
-async def compose_docx(ctx: Ctx, tgt: dict, rule: str | None = None, top: int = 10) -> dict:
-    """말로 요청한 보고서 — 서랍 요청과 같은 서식 함수(survey.report)로 .docx 를 run 폴더에 둔다(자동 작성 문장 · 인용 검사 · 법령 조문)."""
+async def compose_doc(ctx: Ctx, tgt: dict, rule: str | None = None, top: int = 10) -> dict:
+    """말로 요청한 보고서 — 서랍 요청과 같은 서식 함수(survey.report)로 한글 문서(.hwpx)를 run 폴더에 둔다(자동 작성 문장 · 인용 검사 · 법령 조문)."""
     import asyncio
     from survey import report as s_report
     p = ctx.principal
@@ -664,16 +628,16 @@ async def compose_docx(ctx: Ctx, tgt: dict, rule: str | None = None, top: int = 
     def build():
         d = s_report.collect(tgt["code"], rule, top, realm, tenant)
         j = s_report.as_json(d)
-        blob, _ = s_report.render_docx(d)
+        blob, _ = s_report.render_hwpx(d)
         return j, blob
     j, blob = await asyncio.to_thread(build)
     d = config.ARTIFACT_DIR / ctx.run_id
     d.mkdir(parents=True, exist_ok=True)
     fname = j["filename"]
     (d / fname).write_bytes(blob)
-    (d / "draft.docx").write_bytes(blob)
+    (d / DRAFT).write_bytes(blob)
     return {"json": j, "bytes": len(blob), "filename": fname, "href": file_href(ctx.run_id, fname),
-            "docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "place": j["place"]}
+            "file_url": f"/api/v1/agent/runs/{ctx.run_id}/{DRAFT}", "place": j["place"]}
 
 
 _DUP_PLACE = re.compile(r"([가-힣]{2,}(?:시|군|구|읍|면|동|리))(?:의|에서의)?\s+\1(?![가-힣])")
@@ -724,8 +688,8 @@ async def draft(ctx: Ctx, body: dict):
              {"i": 2, "tool": "survey_findings", "args": {**rarg, **emd_arg, "top": top, **rg0}, "why": WHY["survey_findings"], "by": "template"},
              {"i": 3, "tool": "llm_write", "args": {"paragraphs": 3}, "why": WHY["llm_write"], "by": "template"},
              {"i": 4, "tool": "llm_review", "args": {"lint": "strict", "meaning": "rules+llm"}, "why": WHY.get("llm_review", "검토: 숫자 검증기 · 봉투 뜻 검사"), "by": "template"},
-             {"i": 5, "tool": "survey_reports_draft", "args": {"template": "survey-emd", "emd_cd": emd_cd, "rule": rule, "format": "docx"},
-              "why": WHY["survey_reports_draft"], "by": "template"}]
+             {"i": 5, "tool": "survey_reports_draft", "args": {"template": "survey-emd", "emd_cd": emd_cd, "rule": rule, "format": "hwpx"},
+              "why": "초안 한글 문서 만들기(실태조사 보고서 서식)", "by": "template"}]
     await emit(ctx, "agent.plan", {"steps": steps, "round": 1, "route": route, "template": "survey-emd", "emd": emd_n, "emd_cd": emd_cd, "rule": rule})
     rg = rg0                                               # 읍면동 이름은 전국에서 겹친다 — 초안 대상 시군구로 묶는다
     r1 = await run_tool(ctx, 1, "survey_stats", {"by": "rule", **emd_arg, **rg}, by="template")
@@ -777,25 +741,25 @@ async def draft(ctx: Ctx, body: dict):
     await persist_tool(ctx, step_r)
     await emit(ctx, "agent.tool.result", {"i": 4, "tool": "llm_review", "ok": True, "ms": ms_r, "source": step_r["result_ref"], "summary": {}, "ui_actions": [],
                                           "meaning_flags": flags, "unverified": lr.unverified})
-    # ⑤ .docx
+    # ⑤ 한글 문서(.hwpx)
     await emit(ctx, "agent.tool.call", {"i": 5, "tool": "survey_reports_draft", "args": steps[4]["args"], "by": "template"})
     t1 = time.perf_counter()
     stats_ids = {k: v for (i, k), v in ctx.keymap.items() if i == 1}
     find_ids = {k: v for (i, k), v in ctx.keymap.items() if i == 2}
     b = config.BACKENDS.get(res.backend, {})
-    data, src, docx_info = await build_docx(emd_n, emd_cd, rule, top, lr.answer_md, lr, ctx, stats_ids, find_ids, f"{res.model} · {b.get('label')}", flags)
+    data, src, doc_info = await build_doc(emd_n, emd_cd, rule, top, lr.answer_md, lr, ctx, stats_ids, find_ids, f"{res.model} · {b.get('label')}", flags)
     d = config.ARTIFACT_DIR / ctx.run_id
     d.mkdir(parents=True, exist_ok=True)
-    fname = f"실태조사_초안_{tgt['place'].replace(' ', '_')}_{dt.datetime.now(KST):%Y%m%d}.docx"
-    (d / "draft.docx").write_bytes(data)
+    fname = f"실태조사_초안_{tgt['place'].replace(' ', '_')}_{dt.datetime.now(KST):%Y%m%d}.hwpx"
+    (d / DRAFT).write_bytes(data)
     (d / fname).write_bytes(data)
     ms4 = round((time.perf_counter() - t1) * 1000, 1)
     step4 = {"i": 5, "tool": "survey_reports_draft", "args": steps[4]["args"], "ms": ms4, "ok": True, "by": "template", "result_ref": src[:300]}
     ctx.steps.append(step4)
     await persist_tool(ctx, step4)
     size = {"value": len(data), "unit": "bytes", "basis": "measured", "as_of": dt.datetime.now(KST).isoformat(timespec="seconds"), "source": src}
-    artifact = {"docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "href": file_href(ctx.run_id, fname), "filename": fname, "place": tgt["place"], "bytes": size, "source": src,
-                "template": "survey-emd", "fixed": fixed_of(ctx), "law": "법령 조문 인용", "docx": docx_info}
+    artifact = {"file_url": f"/api/v1/agent/runs/{ctx.run_id}/{DRAFT}", "href": file_href(ctx.run_id, fname), "filename": fname, "place": tgt["place"], "bytes": size, "source": src,
+                "template": "survey-emd", "fixed": fixed_of(ctx), "law": "법령 조문 인용", "doc": doc_info}
     await emit(ctx, "agent.tool.result", {"i": 5, "tool": "survey_reports_draft", "ok": True, "ms": ms4, "source": src, "summary": {},
                                           "ui_actions": [], "artifact": artifact})
     await finish(ctx, md, res, started, route, {"first_token_ms": res.first_token_ms}, artifact=artifact, lint_result=lr,

@@ -248,13 +248,13 @@ export async function tenantStream(on) {
   return sse('/events/tenant', { events: ['job.state', 'deploy.changed', 'finding.state', 'usage.delta'], on });
 }
 
-/* ── 보고서 초안(F2-S · LLM 없이 docx) ── */
-export async function draftDocx({ emd_cd, rule, top = 20 }) {
+/* ── 보고서 초안(F2-S · LLM 없이 · 한글 문서 .hwpx · 10-14 원칙 250) ── */
+export async function draftDoc({ emd_cd, rule, top = 20 }) {
   if (!routeOn()) return null;
-  const p = new URLSearchParams({ format: 'docx', top: String(top) }); if (emd_cd) p.set('emd_cd', emd_cd); if (rule) p.set('rule', rule);
+  const p = new URLSearchParams({ format: 'hwpx', top: String(top) }); if (emd_cd) p.set('emd_cd', emd_cd); if (rule) p.set('rule', rule);
   try {
     const r = await opt('/survey/reports/draft?' + p);
-    if (r instanceof Response) { const cd = r.headers.get('content-disposition') || ''; const m = /filename\*?=(?:UTF-8'')?"?([^";]+)/i.exec(cd); return { blob: await r.blob(), name: m ? decodeURIComponent(m[1]) : `실태조사_초안_${emd_cd || '남원'}.docx` }; }
+    if (r instanceof Response) { const cd = r.headers.get('content-disposition') || ''; const m = /filename\*?=(?:UTF-8'')?"?([^";]+)/i.exec(cd); return { blob: await r.blob(), name: m ? decodeURIComponent(m[1]) : `실태조사_초안_${emd_cd || '보고서'}.hwpx` }; }
   } catch (e) { log('draft', e.code); }
   return null;
 }

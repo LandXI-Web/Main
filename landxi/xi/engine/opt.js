@@ -14,7 +14,7 @@ export async function opt(path, { method = 'GET', body, base = null } = {}) {
   const r = await fetch(u, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store' });
   const ct = r.headers.get('content-type') || '';
   if (r.status === 204) return null;
-  if (!/json/.test(ct)) return r;   // 파일(docx · ndjson)은 Response 그대로
+  if (!/json/.test(ct)) return r;   // 파일(hwpx · ndjson)은 Response 그대로
   const j = await r.json().catch(() => null);
   if (j && j.__lxerr) { const e = (j.__lxerr.body && j.__lxerr.body.error) || {}; throw new ApiError(e.code || 'http_' + j.__lxerr.status, e.message || '', e.detail, j.__lxerr.status); }
   return j;

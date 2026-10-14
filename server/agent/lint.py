@@ -438,7 +438,7 @@ def fix_cites(md: str, valid: set[int]) -> tuple[str, list[int]]:
         bad.extend(n for n in ns if n not in valid)
         return ("[" + ", ".join(map(str, ok)) + "]") if ok else ""
     out = CITE.sub(sub, md)
-    out = re.sub(r"[ \t]+([.!?。])(?![A-Za-z0-9가-힣])", r"\1", out)       # '습니다 .' → '습니다.' ('.docx' 앞 공백은 그대로)
+    out = re.sub(r"[ \t]+([.!?。])(?![A-Za-z0-9가-힣])", r"\1", out)       # '습니다 .' → '습니다.' ('.hwpx' 앞 공백은 그대로)
     return out, sorted(set(bad))
 
 

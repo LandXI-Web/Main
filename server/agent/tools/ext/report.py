@@ -1,10 +1,10 @@
-"""말로 보고서(C2 ④) — '○○ 보고서 초안' → 실태조사 보고서 .docx(명령 바 file 블록).
+"""말로 보고서(C2 ④) — '○○ 보고서 초안' → 실태조사 보고서 한글 문서(.hwpx · 명령 바 file 블록 · 10-14 원칙 250).
 Land-XI 의 문서 기능은 보고서까지다(원칙 40 · 확인 FR-15 반려) — '공문 · 협조 요청 · 시행문'을 청하면 공문은 만들지 않는다고 한 줄 알리고
 같은 지역의 실태조사 보고서 초안으로 안내한다(공문 서식 · 공문 경로 없음).
 
   report_draft(region?, emd?, rule?, request?)
     대상 = 질문(인자·문장) → 화면 현재 지역 → 기관 관할 실태조사가 한 곳이면 그곳 → 없으면 '지역을 알려 주세요'(지역 고정값 0).
-    보고서 서식 = 서랍 보고서와 같은 함수(survey.report · agent.report.compose_docx) — [1] = 요청 지역 연속지적 필지 수, 시도 이름 한 가지,
+    보고서 서식 = 서랍 보고서와 같은 함수(survey.report · agent.report.compose_doc) — [1] = 요청 지역 연속지적 필지 수, 시도 이름 한 가지,
     의심 건수 = 한 출처(survey_counts), 법적 근거 = 법령 색인 조문 원문, 규칙은 이름으로(코드 0), 같은 필지 한 줄, 개발 문구 0.
     가드(plan 3.2): 관할 안인데 결과가 없으면 {"status":"no_data","text":"해당 지역 데이터가 없습니다","next":"XI맵에서 {지역} AI 분석을 먼저 실행하세요"},
     관할 밖이면 {"status":"outside","text":"이 기관의 데이터가 아닙니다"} — 답은 그 글자 그대로(모델이 바꿔 말하지 않게 도구가 답을 정한다).
@@ -19,7 +19,7 @@ from .. import Out
 RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
 SPECS = {
     "report_draft": {
-        "description": "실태조사 보고서 초안(.docx)을 만든다. '○○ 보고서 초안 써 줘' · '○○읍 실태조사 보고서'. 공문은 만들지 않는다 — "
+        "description": "실태조사 보고서 초안(한글 문서)을 만든다. '○○ 보고서 초안 써 줘' · '○○읍 실태조사 보고서'. 공문은 만들지 않는다 — "
                        "공문 · 협조 요청 · 시행문을 청해도 이 도구로 보고서 초안을 만든다. 지역은 질문에 있을 때만 region(시군구)·emd(읍면동)로 넘기고, "
                        "request 에 사용자 문장을 그대로 넣는다.",
         "properties": {"region": {"type": "string", "description": "시군구 이름 또는 5자리 코드(질문에 있을 때만)"},
@@ -31,7 +31,7 @@ WRITE: set[str] = set()
 CONFIRM: set[str] = set()
 CLIENT: set[str] = set()
 NO_LLM = {"report_draft"}                      # ROUTE 직행 답이 런타임 문장(LLM 0) — LLM 사슬이 잠시 죽어도 답할 수 있다(runner.needs_llm 이 읽을 자리)
-WHY = {"report_draft": "보고서 초안 .docx 만들기"}
+WHY = {"report_draft": "보고서 초안 한글 문서 만들기"}
 SAY = {"report_draft": "보고서 초안 만들기"}
 HINT = ("보고서 초안 요청은 report_draft 를 한 번 부른다(지역은 질문에 있을 때만). 공문 · 협조 요청 · 시행문 요청도 report_draft — 공문은 만들지 않고 보고서로 안내한다. "
         "초안 파일은 명령 바에 내려받기 버튼으로 뜬다. 도구가 status(no_data·outside)와 text 를 주면 그 글자 그대로 답한다.")
@@ -108,7 +108,7 @@ async def report_draft(args: dict, ctx) -> Out:
     from survey.report import NotFound
     rule = args.get("rule") if args.get("rule") in RULES else None
     try:
-        res = await AR.compose_docx(ctx, tgt, rule, 10)
+        res = await AR.compose_doc(ctx, tgt, rule, 10)
     except NotFound:
         return guard("no_data", lang, tgt.get("sgg_name") or tgt.get("place"))
     j = res["json"]
@@ -122,9 +122,9 @@ async def report_draft(args: dict, ctx) -> Out:
     for x in laws[:4]:
         out.citations.append({"kind": "law", "label": x["label"], "law_ref": x["law_ref"]})
     out.blocks.append({"type": "file", "label": res["filename"], "href": res["href"]})
-    ctx.state["artifact"] = {"docx_url": res["docx_url"], "href": res["href"], "filename": res["filename"], "place": res["place"]}
+    ctx.state["artifact"] = {"file_url": res["file_url"], "href": res["href"], "filename": res["filename"], "place": res["place"]}
     if lang == "en":
-        out.answer = (LETTER_EN if letter else "") + f"Drafted the survey report for {j['place']}. Download the .docx below (AI draft · needs human review)."
+        out.answer = (LETTER_EN if letter else "") + f"Drafted the survey report for {j['place']}. Download the Hangul document (.hwpx) below (AI draft · needs human review)."
     else:
         # 확인 16차 규칙 ⑤ · ⑥ — 숫자 이름은 다른 화면과 같게('의심 필지') · 두 문장 안
         out.answer = ((LETTER_KO if letter else "") + f"{j['place']} 실태조사 보고서 초안을 만들었습니다"

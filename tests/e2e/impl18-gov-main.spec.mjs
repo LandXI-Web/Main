@@ -34,8 +34,8 @@ test.describe('구현 18차 — 기관 보고서 · 행정정보와 비교 · �
     await page.selectOption('#rp-emd2', emd);
     await expect(page.locator('.gr-rdoc-t')).toContainText(emd, { timeout: 60000 });
     const dl = page.waitForEvent('download');
-    await page.locator('#rp-form button', { hasText: '.docx 내려받기' }).click();
-    expect((await dl).suggestedFilename()).toMatch(/AI분석결과보고서.*\.docx$/);
+    await page.locator('#rp-form button', { hasText: '한글 문서 내려받기' }).click();
+    expect((await dl).suggestedFilename()).toMatch(/AI분석결과보고서.*\.hwpx$/);
     expect(survey).toEqual([]);
     expect(errs).toEqual([]);
   });

@@ -49,7 +49,7 @@ test('off · 장면 1 재생 — 계획 · 봉투 칩 · 녹음 표기 · 요청
   expect(w.errs).toEqual([]);
 });
 
-test('off · 보고서 초안 재생 — 타이핑 · 인용 · docx 비활성(시연) · CSV', async ({ page }) => {
+test('off · 보고서 초안 재생 — 타이핑 · 인용 · 한글 문서 비활성(기록 재생) · CSV', async ({ page }) => {
   test.setTimeout(90000);
   const w = watch(page);
   await bootOff(page);
@@ -57,7 +57,7 @@ test('off · 보고서 초안 재생 — 타이핑 · 인용 · docx 비활성(�
   await page.waitForFunction(() => document.documentElement.dataset.agentDraftDone === '1', null, { timeout: 60000 });
   await expect(page.locator('.ag-paper .ag-pmast')).toContainText('기록 · 저장 결과 재생');
   expect(await page.locator('.ag-paper .ag-body .ag-cite').count()).toBeGreaterThan(2);
-  await expect(page.locator('.ag-paper .ag-docx')).toBeDisabled();
+  await expect(page.locator('.ag-paper .ag-doc')).toBeDisabled();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('.ag-paper .ag-csv').click()]);
   expect(dl.suggestedFilename()).toMatch(/\.csv$/);
   expect(w.net).toEqual([]);

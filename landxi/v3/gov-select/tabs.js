@@ -135,7 +135,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
   let me = null, g = null;
   try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); } catch { /* 결과 설명서가 없는 서비스 */ }
-  /* AI 분석 결과 보고서(10-11 gov-보고서) — 결과가 있는 서비스면 모두(실태조사 여부와 무관) · 읍면동별 표 · 지도 그림 · .docx */
+  /* AI 분석 결과 보고서(10-11 gov-보고서) — 결과가 있는 서비스면 모두(실태조사 여부와 무관) · 읍면동별 표 · 지도 그림 · 한글 문서 */
   if (g?.body?.what?.total?.value) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: 'AI 분석 결과 보고서' }), h('small', { text: '읍면동별 개수 · 면적 · 지도 그림' })),
     h('a.t-btn.gd-ci', { href: rep('report'), text: '만들기' })));
   for (const f of g?.body?.format?.files || []) {

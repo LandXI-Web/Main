@@ -228,7 +228,7 @@ def test_blocks_env_keys_become_envelope_ids_and_auto_chart():
     o = Out(source="t")
     o.env("emd_1", "운봉읍 의심 건수", {"value": 30, "unit": "count", "basis": "inferred"})
     o.env("emd_2", "아영면 의심 건수", {"value": 12, "unit": "count", "basis": "inferred"})
-    o.blocks.append({"type": "file", "label": "a.docx", "href": config.run_href("run_test0002", "a.docx")})
+    o.blocks.append({"type": "file", "label": "a.hwpx", "href": config.run_href("run_test0002", "a.hwpx")})
     o.blocks.append({"type": "chart", "kind": "bar", "title": "x", "rows": [{"label": "운봉읍", "env": "emd_1"}, {"label": "숫자", "env": 5}]})
     o.blocks.append({"type": "script", "src": "x"})                  # 모르는 블록은 버린다
     runner.register(ctx, 1, o)
@@ -236,10 +236,10 @@ def test_blocks_env_keys_become_envelope_ids_and_auto_chart():
     assert kinds == ["file", "chart"] and ctx.blocks[1]["rows"] == [{"label": "운봉읍", "env": "e1"}]   # 숫자 직접 값은 버림
     ctx2 = _ctx(msg="읍면동별 차트로 보여 줘")
     runner.register(ctx2, 1, Out(envelopes=o.envelopes))
-    d = _finish(ctx2, "읍면동별 의심 건수입니다.", artifact={"docx_url": "/api/v1/agent/runs/run_x/draft.docx", "filename": "초안.docx"})
+    d = _finish(ctx2, "읍면동별 의심 건수입니다.", artifact={"file_url": "/api/v1/agent/runs/run_x/draft.hwpx", "filename": "초안.hwpx"})
     chart = next(b for b in d["blocks"] if b["type"] == "chart")
     assert [r["label"] for r in chart["rows"]] == ["운봉읍", "아영면"] and chart["rows"][0]["env"] == "e1"
-    assert any(b["type"] == "file" and b["label"] == "초안.docx" for b in d["blocks"])
+    assert any(b["type"] == "file" and b["label"] == "초안.hwpx" for b in d["blocks"])
 
 
 def test_probe_extension_blocks(monkeypatch, fresh_ext, tmp_path):
@@ -262,7 +262,7 @@ def test_probe_extension_blocks(monkeypatch, fresh_ext, tmp_path):
     assert asyncio.run(runner.ext_route(runner.Ctx(run_id="run_test0004", principal=NAMWON, token=None, context={}), "명령 바 블록 확인")) is None
     r = asyncio.run(runner.run_tool(ctx, 1, "blocks_probe", {}))
     assert r["ok"] and sorted(b["type"] for b in ctx.blocks) == ["chart", "file", "image"]
-    assert (tmp_path / "run_test0003" / "blocks.docx").is_file() and (tmp_path / "run_test0003" / "tile.webp").is_file()
+    assert (tmp_path / "run_test0003" / "blocks.hwpx").is_file() and (tmp_path / "run_test0003" / "tile.webp").is_file()
     assert all(b.get("href", b.get("src", "")).startswith("/api/v1/agent/runs/run_test0003/files/") for b in ctx.blocks if b["type"] != "chart")
 
 
@@ -287,8 +287,9 @@ def test_health_reports_dokpamo_not_connected():
 
 
 def test_run_files_names():
-    assert config.RUN_FILE.match("draft.docx") and config.RUN_FILE.match("영상_조각-1.png")
-    for bad in ("../x.docx", "a/b.png", "x.exe", "x.py", ""):
+    assert config.RUN_FILE.match("draft.hwpx") and config.RUN_FILE.match("영상_조각-1.png")
+    assert not config.RUN_FILE.match("draft.docx")                 # .docx 는 더 내지 않음(10-14 원칙 250)
+    for bad in ("../x.hwpx", "a/b.png", "x.exe", "x.py", ""):
         assert not (config.RUN_FILE.match(bad) and "/" not in bad and ".." not in bad), bad
     with pytest.raises(ValueError):
         config.run_dir("../etc")
@@ -306,8 +307,8 @@ def test_main_mounts_law_router_optionally():
 def test_device_ordinals_and_file_names_are_not_numbers():
     r = lint.lint("GPU 0은 대기 중이고 GPU 1은 사용 중입니다.", {"e1": {"value": 0, "unit": "%"}, "e2": {"value": 1, "unit": "count"}})
     assert not r.unverified and "{{" not in r.answer_md
-    md, _ = lint.fix_cites("아래에서 .docx 파일을 받습니다 [1] .", {1})
-    assert md == "아래에서 .docx 파일을 받습니다 [1]."
+    md, _ = lint.fix_cites("아래에서 .hwpx 파일을 받습니다 [1] .", {1})
+    assert md == "아래에서 .hwpx 파일을 받습니다 [1]."
     assert "\x01" not in Path(lint.__file__).read_text(encoding="utf-8")        # 역참조 깨짐(제어 문자) 0
 
 

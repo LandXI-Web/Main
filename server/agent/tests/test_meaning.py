@@ -1,4 +1,4 @@
-"""2차 판정 뒤 — 봉투 '뜻' 오용 · 인용 범위 승격 · 구조 숫자 · nearest · 보고서 .docx 정본 경로(F2-S build_draft). LLM 없이 결정적."""
+"""2차 판정 뒤 — 봉투 '뜻' 오용 · 인용 범위 승격 · 구조 숫자 · nearest · 보고서 한글 문서(.hwpx) 정본 경로(F2-S build_draft). LLM 없이 결정적."""
 import asyncio
 import sys
 from pathlib import Path
@@ -170,26 +170,26 @@ def test_narrative_for_f2s_maps_citations_and_drops_unmapped():
     assert ok is not None and bad == []
 
 
-def test_build_docx_uses_f2s_canonical_path(monkeypatch):
-    """F2-S server/survey/report.py 가 있으면 정본 경로(fmt='docx', realm, tenant)가 선택된다 — 로컬 임시 서식 아님."""
+def test_build_doc_uses_f2s_canonical_path(monkeypatch):
+    """F2-S server/survey/report.py 가 있으면 정본 경로(fmt='hwpx', realm, tenant)가 선택된다 — 로컬 임시 서식 아님."""
     from survey import report as s_report
     calls = []
 
     def fake(emd_cd, rule=None, top=20, narrative=None, fmt="dict", realm="lx", tenant=""):
         calls.append({"emd_cd": emd_cd, "rule": rule, "fmt": fmt, "realm": realm, "tenant": tenant, "narrative": narrative})
-        return F2S_DICT if fmt == "dict" else b"PK-docx-bytes"
+        return F2S_DICT if fmt == "dict" else b"PK-hwpx-bytes"
     monkeypatch.setattr(s_report, "build_draft", fake)
     ctx = make_ctx()
     md = "## 개요\n운봉읍 연속지적 필지 수는 {{env:e3}}임 [1]."
     lr = lint.lint(md, ctx.envs, ctx.whitelist, scope=lint.scope_of(ctx, strict=True))
-    data, src, info = asyncio.run(report.build_docx("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
-    assert data == b"PK-docx-bytes" and info["path"] == "f2s"
+    data, src, info = asyncio.run(report.build_doc("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
+    assert data == b"PK-hwpx-bytes" and info["path"] == "f2s"
     assert "미도착" not in src and "F2-S" not in src          # 화면·문서에 내부 코드 0(c2-report-law · 문구는 그쪽 몫)
-    assert [c["fmt"] for c in calls] == ["dict", "docx"] and calls[1]["realm"] == "lx" and calls[1]["tenant"] == "lx"
+    assert [c["fmt"] for c in calls] == ["dict", "hwpx"] and calls[1]["realm"] == "lx" and calls[1]["tenant"] == "lx"
     assert calls[1]["narrative"]["overview"][0].endswith("[1].")
 
 
-def test_build_docx_failure_reason_is_recorded(monkeypatch):
+def test_build_doc_failure_reason_is_recorded(monkeypatch):
     from survey import report as s_report
 
     def boom(*a, **k):
@@ -197,8 +197,10 @@ def test_build_docx_failure_reason_is_recorded(monkeypatch):
     monkeypatch.setattr(s_report, "build_draft", boom)
     ctx = make_ctx()
     lr = lint.lint("## 개요\n운봉읍 연속지적 필지 수는 {{env:e3}}임 [1].", ctx.envs, ctx.whitelist, scope=lint.scope_of(ctx, strict=True))
-    data, src, info = asyncio.run(report.build_docx("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
+    data, src, info = asyncio.run(report.build_doc("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
     assert info["path"] == "local" and data[:2] == b"PK"
+    from landxi_api import hwpx as HX
+    assert HX.check(data) == []                                   # 간이 서식도 같은 한글 문서 형식
     assert "TypeError" in str(info.get("error") or "") + src      # 실패 이유는 기록(개발자 서랍) · 서식 이름에는 내부 코드 0
     assert "미도착" not in src
 

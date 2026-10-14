@@ -64,7 +64,7 @@ export function renderMd(md, { envs = {}, meta = {}, unverified = [], live = fal
   for (const s of uncited || []) if (s) marks.push({ s: String(s).trim(), kind: 'uncited', why: '인용 없는 문장 — 근거 확인 필요' });
   marks.forEach((mk, k) => { const at = src.indexOf(mk.s); if (at >= 0) src = src.slice(0, at) + `⁣${k}⁤` + mk.s + '⁣/⁤' + src.slice(at + mk.s.length); });
   const inline = (t) => {
-    // 자리표 바로 뒤 단위 토큰(건·필지·개·㎡ …)이 칩 단위와 같으면 흡수 — 화면 문장이 .docx 와 같게('387 건 … 건임' 중복 0)
+    // 자리표 바로 뒤 단위 토큰(건·필지·개·㎡ …)이 칩 단위와 같으면 흡수 — 화면 문장이 한글 문서와 같게('387 건 … 건임' 중복 0)
     t = t.replace(/(\{\{\s*env\s*:\s*([A-Za-z0-9_]+)\s*\}\})\s*(건|필지|개|㎡|ha|km²|%|곳)/g, (m, ph, id, u) => (envs[id] && unitKo(envs[id].unit) === u ? ph : m));
     // 스트리밍 중(live): 자리표·인용·표지 밖 숫자(한글 단위 포함)는 한 프레임도 맨숫자로 보이지 않게 '검증 중' 표지 — done 뒤 검증기가 칩/취소선으로 확정
     if (live) t = t.split(/(\{\{[^}]*\}\}|\[\d{1,2}(?:\s*[,·]\s*\d{1,2})*\]|⁣\d+⁤)/).map((seg, i) => (i % 2 ? seg : seg.replace(/\d[\d,.]*(?:\s*(?:만|천|억|조))?/g, '⁣V⁤'))).join('');

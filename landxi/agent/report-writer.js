@@ -1,6 +1,6 @@
 /* report-writer.js — 보고서 서랍 '초안 작성' 탭(AG-2 · 종이 무대 SPLIT-5050). XI.provide('report-draft') 로 슬롯을 맡는다.
    POST /agent/report/draft → SSE: 계획 4행(survey_stats · survey_findings · llm_write · survey_reports_draft) → agent.token 도착 즉시 타이핑 →
-   숫자 칩 락온 → done(검증기 · 인용 [n]) → '내보내기 .docx'(서버 파일 · Bearer) · 'CSV(BOM)'. [n] 클릭 → 지도 flyTo + 필지 카드 v2(서랍 유지).
+   숫자 칩 락온 → done(검증기 · 인용 [n]) → '내보내기(한글 문서)'(서버 .hwpx 파일 · Bearer) · 'CSV(BOM)'. [n] 클릭 → 지도 flyTo + 필지 카드 v2(서랍 유지).
    off · llm_unavailable → ag0-report.ndjson(실제 run 녹음) 재생 · 표기 '기록 · 저장 결과 재생'. 법령 인용 = 2차 결손. */
 import { API, probe, session } from '../shared/api-v1.js';
 import * as A from './api-agent.js';
@@ -34,13 +34,13 @@ export class ReportWriter {
       <div class="ag-split"><article class="ag-doc" aria-live="polite"><h2>${esc(this.emdName)} 농지 실태조사 초안</h2>
         <p class="ag-meta">대장 V-World 연속지적(2026-09-24) · 영상 2023 항공 25cm · 2025 드론(A02) · 규칙 ${esc(this.q.rule)} · 임계 추정 초기값 · <b>초안 · 검토 필요</b></p><div class="ag-body"></div></article>
         <aside class="ag-ev" aria-label="근거 목록"><h4>근거 [n] · 필지 · 봉투</h4><div class="ag-evl"></div></aside></div>
-      <div class="ag-paper-bot"><button type="button" class="ag-btn ag-btn--fill ag-docx" disabled>내보내기 .docx</button><button type="button" class="ag-btn ag-btn--line ag-csv" disabled>CSV(BOM)</button>
+      <div class="ag-paper-bot"><button type="button" class="ag-btn ag-btn--fill ag-doc" disabled>내보내기(한글 문서)</button><button type="button" class="ag-btn ag-btn--line ag-csv" disabled>CSV(BOM)</button>
         <span class="ag-void2">법령 인용 · 2차</span><span class="ag-req"></span><span class="ag-pstate">작성 준비</span></div>`;
     slot.appendChild(el);
     this.el = el;
     const s = session.get(); el.querySelector('.ag-req').textContent = `요청자 ${s?.role ? `${s.realm}·${s.role}` : '현재 계정'}`;
     el.addEventListener('click', (e) => { const b = e.target.closest('[data-cite]'); if (b) { e.preventDefault(); this.go(+b.dataset.cite); } });
-    el.querySelector('.ag-docx').addEventListener('click', () => this.docx());
+    el.querySelector('.ag-doc').addEventListener('click', () => this.download());
     el.querySelector('.ag-csv').addEventListener('click', () => this.csv());
     this.start();
   }
@@ -101,11 +101,11 @@ export class ReportWriter {
       const m = d.model || {};
       this.$('.ag-pmodel').innerHTML = m.id ? `${esc(m.id)} · ${esc(m.backend === 'vllm' ? 'vLLM' : m.backend || '')} · 온프레미스 · ${d.tokens ? chip(d.tokens, { meaning: '토큰', id: 'tok' }) : ''}` : '';
       this.$('.ag-pstate').textContent = `초안 · 검토 필요 · 인용 없는 문장 ${(d.uncited || []).length} · 검증 안 된 숫자 ${(d.unverified || []).length} · 봉투 뜻 확인 필요 ${(d.meaning_flags || []).length}${d.bad_cites?.length ? ` · 없는 인용 번호 ${d.bad_cites.length} 제거` : ''}${this.S.replay ? ' · 기록 재생' : ''}`;
-      this.$('.ag-docx').disabled = !(this.S.artifact && !this.S.replay);
-      this.$('.ag-docx').title = this.S.replay ? '기록 재생 — 서버 파일 없음(시연)' : this.S.artifact?.filename || '';
+      this.$('.ag-doc').disabled = !(this.S.artifact && !this.S.replay);
+      this.$('.ag-doc').title = this.S.replay ? '기록 재생 — 서버 파일 없음(시연)' : this.S.artifact?.filename || '';
       this.$('.ag-csv').disabled = false;
       document.documentElement.dataset.agentDraftFlags = String((d.meaning_flags || []).length);
-      document.documentElement.dataset.agentDraftDocxPath = d.artifact?.docx?.path || '';
+      document.documentElement.dataset.agentDraftDocPath = d.artifact?.doc?.path || '';
       window.LXAgentDraft = { done: d, replay: this.S.replay };      // 검사용(e2e · 판정): 봉투 뜻 · 인용 · 검증기 결과
       document.documentElement.dataset.agentDraftDone = '1';
     } else if (name === 'agent.failed') {
@@ -129,13 +129,13 @@ export class ReportWriter {
     document.documentElement.dataset.agentDraftCite = String(n);
     this.cite?.(n, this.S.citations);
   }
-  async docx() {
+  async download() {
     const a = this.S.artifact; if (!a) return;
-    const b = this.$('.ag-docx'); b.disabled = true;
+    const b = this.$('.ag-doc'); b.disabled = true;
     try {
-      const r = await A.downloadDocx(a.docx_url, a.filename);
+      const r = await A.downloadDraft(a.file_url, a.filename);
       this.$('.ag-pstate').textContent = `${r.name} · ${Math.round(r.bytes / 1024)} KB 내려받음`;
-      document.documentElement.dataset.agentDocx = r.name;
+      document.documentElement.dataset.agentDoc = r.name;
       this.XI.toast?.(`${r.name} · 서버 파일(${a.source || ''})`);
     } catch (e) { this.$('.ag-pstate').textContent = `${e.code} · ${e.message}`; }
     b.disabled = false;
