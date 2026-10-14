@@ -1,0 +1,120 @@
+{
+ "_done": [
+  "dash",
+  "xifirst",
+  "xipress",
+  "xichat",
+  "fusion",
+  "tabs"
+ ],
+ "_logins": 2,
+ "_failed": [],
+ "_dash_text": "LAND-XI\nLX 직원 대시보드\n09:11\n자동 로그아웃 내일 09:11 · 남은 24시간\nLX 직원\n?\n나가기\n대시보드\n프로젝트\n분석하기\n지도 서비스\nXI\nXI맵\n요청함\n공지사항\n\n새 공지가 없습니다\n\n메모\n나만 보입니다\n프로젝트 진행 현황\n프로젝트 목록\n진행 중 6 · 남은 일 있는 0\n2\n데이터 올리기\n0\n학습데이터 구축\n0\n학습\n0\n추론\n0\n결과 확인\n4\n배포 신청\n요청함\n전체\n기관의 요청과 내가 보낸 요청\n0\n검토 요청\n0\n분석 요청\n0\n보낸 요청\n\n지금은 기다리는 요청이 없습니다\n\n저장 용량\n내 정보\n기본 할당 50 GB · 프로젝트 6개\n29.8 MB\n사용 중 · 할당의 0.1%\n\n프로젝트별\n비닐하우스 2026\n10.2 MB\n주차장 2026\n9.0 MB\n건축물 2026\n8.7 MB\n곤포사일리지 2026\n1.9 MB\n외 2개\n\n용량 증량 신청\n\n최근 진행한 프로젝트\n프로젝트 목록 · 전체 6\n마지막 활동 순 · 누르면 그 프로젝트의 지금 단계 화면\n1 데이터 올리기\n경작지 v2 — 항공 · API 영상\n\n프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 실험.\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 2일 전\n7,300장\n학습 데이터\n—\nAI 모델 정확도\n대상지 3곳\n이천시 · 여주시 · 평택시\n열기\n프로젝트 →\n그림 없음\n1 데이터 올리기\n테스트\n\n지금 1 데이터 올리기 · 0/6 · 마지막 활동 2일 전\n—\n학습 데이터\n—\nAI 모델 정확도\n대상지 1곳\n종로구\n열기\n프로젝트 →\n6 배포 신청\n주차장 2026\n\n주차장\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 4일 전\n170장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 2곳\n여주시 · 천안시 서북구\n열기\n프로젝트 →\n6 배포 신청\n비닐하우스 2026\n\n건물 · 주차장 · 경작지 · 비닐하우스\n\n지금 6 배포 신청 · 6/6 · 마지막 활동 5일 전\n35,247장\n학습 데이터\n89%\nAI 모델 정확도\n대상지 3곳\n증평군 · 함양군 · 남원시\n열기\n프로젝트 →\nXI ChatGEO",
+ "now-staff-dash-0911.png": {
+  "at": "2026-10-14T09:11:21",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "note": "LX 직원 대시보드"
+ },
+ "_xi_first": {
+  "hud": "전국 · AI 분석 결과\n\n1,523,518개\n\n서비스 7가지 · 토지피복\n\n지금 분석 중 · 장수군 계남면",
+  "task": null
+ },
+ "now-xi-first-0911.png": {
+  "at": "2026-10-14T09:11:29",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI맵 첫 화면(전국 · 업무 기본 없음)"
+ },
+ "_xi_press": {
+  "pin": "남원시\n\n토지피복\n132,424개\n경작지(농지 전수)\n82,853곳\n건물(하천 · 계곡)\n34,874동\n비닐하우스(농지 전수)\n19,152동\n경작·휴경\n2,098곳\n비닐하우스\n703동",
+  "hud": "남원시"
+ },
+ "now-xi-press-0911.png": {
+  "at": "2026-10-14T09:11:47",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 시군구 누름(말풍선)"
+ },
+ "_xi_task": {
+  "task": "경작지",
+  "hud": "남원시\n\n경작지\n원래대로"
+ },
+ "now-xi-task-0911.png": {
+  "at": "2026-10-14T09:11:51",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+  "note": "XI맵 말풍선 업무 줄 누름(그 업무만)"
+ },
+ "_xi_chat": {
+  "task": "비닐하우스",
+  "hud": "전국 · 비닐하우스\n\n136,833동\n\n서비스 7가지 · 토지피복\n\n비닐하우스\n원래대로\n\n지금 분석 중 · 장수군 계남면"
+ },
+ "now-xi-chat-0911.png": {
+  "at": "2026-10-14T09:11:59",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "note": "XI ChatGEO 비닐하우스만 보여 줘"
+ },
+ "mock-fu-first-0912.png": {
+  "at": "2026-10-14T09:12:11",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "note": "시안 융합 대시보드 첫 화면"
+ },
+ "mock-fu-mean-0912.png": {
+  "at": "2026-10-14T09:12:13",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "note": "시안 뜻 확인"
+ },
+ "mock-fu-dash1-0912.png": {
+  "at": "2026-10-14T09:12:22",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "note": "시안 대시보드 전환 1"
+ },
+ "mock-fu-pick-0912.png": {
+  "at": "2026-10-14T09:12:29",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "note": "시안 막대 누름"
+ },
+ "mock-fu-dash2-0913.png": {
+  "at": "2026-10-14T09:13:02",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/ximap-fusion/index.html",
+  "note": "시안 대시보드 전환 2"
+ },
+ "_sd_img_head": "공유 데이터 영상 83장 영상 올리기",
+ "now-sd-img-0913.png": {
+  "at": "2026-10-14T09:13:42",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/shared",
+  "note": "공유 데이터 영상 탭"
+ },
+ "_sd_train": [
+  "건축물 2026 건물 139장 올린 묶음 2026.09.30 비공개",
+  "주차장 2026 주차장 170장 올린 묶음 2026.09.30 비공개",
+  "— 곤포사일리지 100장 올린 묶음 2026.09.30 비공개",
+  "곤포사일리지 2026 곤포사일리지 60장 올린 묶음 2026.09.30 비공개",
+  "비닐하우스 2026 건물 · 주차장 · 경작지 외 1 200장 올린 묶음 2026.09.30 비공개"
+ ],
+ "now-sd-train-0913.png": {
+  "at": "2026-10-14T09:13:44",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/shared",
+  "note": "공유 데이터 학습 데이터 탭"
+ },
+ "_sd_admin": [
+  "연속지적",
+  "용도지역·농업진흥",
+  "개발제한구역",
+  "건축물대장",
+  "전북특별자치도 남원시 농지대장 2026.09.30 1,743행",
+  "전북특별자치도 남원시 농지대장 2026.09.30 5,665행",
+  "광주전남특별시 농지대장 2026.09.30 7,726행",
+  "광주전남특별시 농지대장 2026.09.30 3,110행",
+  "전북특별자치도 남원시 농지대장 2026.09.30 13,866행",
+  "광주전남특별시 농지대장 2026.09.30 3,600행",
+  "광주전남특별시 농지대장 2026.09.30 3,600행",
+  "전북특별자치도 남원시 농지대장 2026.09.30 13,866행",
+  "광주전남특별시 농지대장 2026.09.30 3,990행",
+  "광주전남특별시 농지대장 2026.09.30 3,600행",
+  "광주전남특별시 농지대장 2026.09.30 7,726행",
+  "광주전남특별시 농지대장 2026.09.30 2,004행"
+ ],
+ "now-sd-admin-0913.png": {
+  "at": "2026-10-14T09:13:45",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/#/shared",
+  "note": "공유 데이터 행정 자료 탭"
+ }
+}
