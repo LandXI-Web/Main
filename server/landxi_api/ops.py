@@ -462,12 +462,51 @@ async def ops_models(request: Request):
     return {"items": items, "total": len(items), "as_of": now_iso()}
 
 
+_ten_cache: dict = {"at": 0.0, "out": None, "task": None}
+TEN_FRESH_S = 60          # 이보다 새 값은 그대로 · 넘으면 지난 값을 바로 주고 뒤에서 다시 센다(저장 공간 du · 행 크기 합이 수십 초 — 10-14 재검수)
+
+
+async def _ten_compute() -> dict:
+    async with db(realm="lx") as conn:
+        ts = [x["id"] for x in await conn.fetch("SELECT id FROM tenants ORDER BY id")]
+    sem = asyncio.Semaphore(3)          # DB 연결을 다 쓰지 않게 세 기관씩
+
+    async def one(t):
+        async with sem:
+            return await usage_of(t)
+    items = await asyncio.gather(*(one(t) for t in ts))
+    out = {"items": list(items), "total": len(ts), "as_of": now_iso()}
+    _ten_cache.update(at=time.time(), out=out)
+    return out
+
+
+def tenants_usage_stale() -> None:
+    """한도가 바뀌면 다음 요청은 새로 센 값을 기다린다."""
+    _ten_cache["out"] = None
+
+
+def _ten_refresh() -> asyncio.Task:
+    """한 번에 하나만 센다(여러 화면 · 여러 요청이 동시에 와도 같은 계산을 기다린다)."""
+    t = _ten_cache.get("task")
+    if t is None or t.done():
+        t = asyncio.create_task(_ten_compute())
+        _ten_cache["task"] = t
+    return t
+
+
+async def tenants_usage() -> dict:
+    out = _ten_cache.get("out")
+    if out is not None:
+        if time.time() - _ten_cache["at"] > TEN_FRESH_S:
+            _ten_refresh()
+        return out
+    return await asyncio.shield(_ten_refresh())
+
+
 @router.get("/ops/tenants")
 async def ops_tenants(request: Request):
     require(principal(request), admin=True)
-    async with db(realm="lx") as conn:
-        ts = [x["id"] for x in await conn.fetch("SELECT id FROM tenants ORDER BY id")]
-    return {"items": [await usage_of(t) for t in ts], "total": len(ts), "as_of": now_iso()}
+    return await tenants_usage()
 
 
 _pub_cache: dict = {}
@@ -617,6 +656,8 @@ async def alert_loop():
     if "flow" not in _side:
         from .deploys import flow_loop
         _side["flow"] = asyncio.create_task(flow_loop())
+    if "ten" not in _side:            # 기관 사용 현황을 미리 세어 둔다(첫 화면이 수십 초 기다리지 않게)
+        _side["ten"] = _ten_refresh()
     while True:
         try:
             await evaluate_alerts_once()
