@@ -1,0 +1,18 @@
+[
+ {
+  "id": "보고서-한글",
+  "t": "융합 대시보드 '보고서로' — 화면 대시보드를 한글 문서(.hwpx)로 내려받기",
+  "shots": [
+   "shots/r2-task-dash-1440-1346.png",
+   "shots/r2-task-after-click-1440-1346.png",
+   "opened/hwp-r2-task-p1-1346.png",
+   "opened/hwp-r1-overview-p2-1346.png",
+   "opened/hwp-r2-task-end-1346.png"
+  ],
+  "opts": ["완료", "다시"],
+  "where": [
+   ["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "아래 채팅 창에 '남원시 비닐하우스 어디가 많아?' → 대시보드 오른쪽 위 '보고서로'"]
+  ],
+  "now": "받는 파일은 .hwp 가 아니라 한글 표준 문서 .hwpx 입니다(한글 2014 이상에서 열림 · 한글에서 .hwp 로 다시 저장 가능). 제목 · 개요 표 · 주요 숫자 · 해석 · 차트 그림 · 표 · 출처 · 만든 날짜 — 숫자는 화면과 같습니다(한글 2020 으로 열어 확인)."
+ }
+]

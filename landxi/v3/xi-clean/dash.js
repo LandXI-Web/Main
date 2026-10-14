@@ -211,7 +211,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
       cards.push(`<div class="xd-card xd-p xd-p--${p.type}" style="grid-column:span ${span(p)}" data-i="${i}">${(DRAW[p.type] || (() => ''))(p)}</div>`);
       if (i === 0) cards.push(`<div class="xd-card xd-say" style="grid-column:span ${span(p) === 8 ? 4 : 8}"><p class="xd-sayh"><span class="xd-logo">XI</span>XI ChatGEO</p>${(s.say || []).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`);
     });
-    panel.innerHTML = `<header class="xd-h"><h2>${esc(s.title)}</h2><div class="xd-means">${means}</div></header>
+    panel.innerHTML = `<header class="xd-h"><h2>${esc(s.title)}</h2><div class="xd-means">${means}</div><button type="button" class="xd-dl xd-rep" style="margin-left:auto">보고서로</button></header>
       ${s.note ? `<p class="xd-notice">${esc(s.note)}</p>` : ''}
       <div class="xd-kpis" style="--k:${Math.min(4, (s.kpis || []).length || 1)}">${kp}</div>
       <div class="xd-grid">${cards.join('')}</div>`;
@@ -220,7 +220,24 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
       if (p?.pick) el.querySelectorAll('[data-k]').forEach((b) => { b.classList.add('pk'); b.addEventListener('click', () => pick(b.dataset.k)); });
       if (p?.type === 'table' && p.dl) el.querySelector('.xd-dl')?.addEventListener('click', () => csv(p.dl, p.cols, p.rows));
     });
+    panel.querySelector('.xd-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
     panel.scrollTop = 0;
+  }
+  /** '보고서로' — 지금 화면의 대시보드(같은 사양 · 같은 숫자)를 한글 문서(.hwpx)로 내려받기(10-14 원칙 247) */
+  async function report(s, b) {
+    if (b.disabled) return;
+    const t0 = b.textContent; b.disabled = true; b.textContent = '만드는 중';
+    try {
+      const r = await api('/ximap/report.hwpx', { method: 'POST', body: { spec: s }, raw: true });
+      if (!r.ok) throw new Error('http ' + r.status);
+      const cd = r.headers.get('content-disposition') || '', m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+      const name = m ? decodeURIComponent(m[1]) : `${String(s.title || '대시보드').replace(/[\/:*?"<>|\s·—]+/g, '_')}_보고서.hwpx`;
+      const u = URL.createObjectURL(await r.blob());
+      const a = document.createElement('a'); a.href = u; a.download = name; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 4000);
+      b.textContent = '내려받았습니다';
+    } catch { b.textContent = '내려받지 못했습니다'; }
+    setTimeout(() => { b.textContent = t0; b.disabled = false; }, 1600);
   }
   /** 뜻 확인(지역 · 업무 · 비교) → 융합 재료 차례로 켜짐 — 아래 채팅 창 위 한 줄(시안 흐름 그대로) */
   async function confirmMeaning(s) {
