@@ -1,0 +1,20 @@
+{
+  "phase": "before",
+  "at": "2026-10-14 11:13:04",
+  "app": "https://app.land-xi.dev",
+  "shots": {
+    "before-kg-country-1440-1113.png": "2026-10-14 11:13:25",
+    "before-bishkek-1440-1113.png": "2026-10-14 11:13:42",
+    "before-ysykata-1440-1113.png": "2026-10-14 11:14:00",
+    "before-meiktila-1440-1114.png": "2026-10-14 11:14:17"
+  },
+  "errors": [],
+  "tiles": {
+    "ok": 0,
+    "blank": 0,
+    "bad": []
+  },
+  "sweep": [],
+  "credit": null,
+  "done": "2026-10-14 11:14:17"
+}

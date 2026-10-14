@@ -14,6 +14,9 @@ import { bboxOf, RM } from './util.js';
 export const KOREA = [124.5, 33.0, 131.9, 38.7];
 const EOX = 'tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg';
 const VW = 'xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
+/* 해외 바탕 — Copernicus Sentinel-2 L2A 원 자료로 만든 구름 없는 모자이크(10 m · 무료 · 상업 이용 가능 · 10-14 해외바탕-교체).
+   판 목록(나라 판 낮은 줌 · 구역 판 고줌 · 범위)은 조각 폴더의 meta.json 이 정한다(지역 고정값 0) · 없으면(정적 배포) 그냥 건너뛴다. */
+const S2 = new URL('../../data/tiles/overseas-s2/', import.meta.url).href;
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 /* 데이터 층 모양 3종 — 색은 AI 결과 위에서만 청록(법전 §1) */
@@ -58,6 +61,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
     map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9] });
     map.addLayer({ id: 'k-eox', type: 'raster', source: 'k-eox', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
     map.addLayer({ id: 'k-vw', type: 'raster', source: 'k-vw', minzoom: 6.5, paint: { 'raster-fade-duration': 500, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6.5, 0, 7.4, 1] } }, 'slot-imagery');
+    overseas().catch(() => { /* 해외 바탕 조각 없음 — 기존 바탕 그대로 */ });
     // 전국 바탕(EOX)이 멈추면 국내 바탕(V-World)을 전국 축척부터 바로 — 빈 바탕 지도 대신(10-10 고장 · EOX 무응답 실측)
     //   V-World 위성은 낮은 축척에서 세계 전체를 그려 준다(z0–7 실측) — 범위 없이 다시 올린다(층 순서는 그대로 · 자체 영상 아래 · 지구본 장면 포함)
     onExtDown((host) => {
@@ -75,8 +79,32 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   function setMode(m) {
     mode = m; el.dataset.mode = m;
     const sat = m === 'ops' ? -0.4 : 0;     // raster-saturation −0.4 ≈ CSS saturate(.6)
-    for (const id of ['k-under', 'k-eox', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id)])
+    for (const id of ['k-under', 'k-eox', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^(img-|k-s2-)/.test(l.id)).map((l) => l.id)])
       if (map.getLayer(id)) map.setPaintProperty(id, 'raster-saturation', sat);
+  }
+
+  /** 해외 바탕 판을 국내 바탕(k-vw) 바로 위에 — 자체 영상(img-*) · 결과 층 아래. 화면에 판이 보이면 지도 아래 출처 한 줄 */
+  async function overseas() {
+    const r = await fetch(S2 + 'meta.json');
+    if (!r.ok) return;
+    const meta = await r.json();
+    const sets = Object.entries(meta.sets || {}).sort((a, b) => a[1].minzoom - b[1].minzoom);
+    if (!sets.length) return;
+    const ls = map.getStyle().layers, next = ls[ls.findIndex((l) => l.id === 'k-vw') + 1]?.id;
+    for (const [id, s] of sets) {
+      map.addSource('k-s2-' + id, { type: 'raster', tiles: [S2 + id + '/{z}/{x}/{y}.webp'], tileSize: 256, bounds: s.bounds, minzoom: s.minzoom, maxzoom: s.maxzoom });
+      map.addLayer({ id: 'k-s2-' + id, type: 'raster', source: 'k-s2-' + id, paint: { 'raster-fade-duration': 300, 'raster-saturation': mode === 'ops' ? -0.4 : 0 } }, next);
+    }
+    const cr = document.createElement('p');
+    cr.className = 'k-credit'; cr.hidden = true; cr.textContent = meta.attribution || 'Contains modified Copernicus Sentinel data';
+    cr.style.cssText = 'position:absolute;right:8px;bottom:3px;margin:0;font-size:10.5px;line-height:1.3;color:rgba(255,255,255,.92);text-shadow:0 0 3px rgba(0,0,0,.6);pointer-events:none;z-index:2;white-space:nowrap';
+    el.append(cr);
+    const upd = () => {
+      const b = map.getBounds(), z = map.getZoom();
+      cr.hidden = !sets.some(([id, s]) => z >= s.minzoom && map.getLayoutProperty('k-s2-' + id, 'visibility') !== 'none'
+        && !(s.bounds[2] < b.getWest() || s.bounds[0] > b.getEast() || s.bounds[3] < b.getSouth() || s.bounds[1] > b.getNorth()));
+    };
+    map.on('moveend', upd); upd();
   }
 
   /** 지역으로(시군구 경계) — region = { bbox } | bbox 배열 | GeoJSON */

@@ -1,0 +1,24 @@
+[
+ {
+  "id": "해외바탕-교체",
+  "t": "XI맵 해외 바탕 영상을 무료 · 상업 이용 가능한 Sentinel-2 원 자료 구름 없는 모자이크(10 m)로 바꿈 — 키르기스스탄(나라 전체 · 추이 주 비슈케크 · 소쿨룩 · 으슥아타) · 미얀마(나라 전체 · 메이크틸라)",
+  "mock": false,
+  "shots": [
+   "shots/before-kg-country-1440-1113.png",
+   "shots/after-kg-country-1440-1509.png",
+   "shots/before-bishkek-1440-1113.png",
+   "shots/after-bishkek-1440-1510.png",
+   "shots/before-ysykata-1440-1113.png",
+   "shots/after-ysykata-1440-1510.png",
+   "shots/before-meiktila-1440-1114.png",
+   "shots/after-meiktila-1440-1510.png"
+  ],
+  "videos": [],
+  "opts": ["완료", "다시"],
+  "where": [
+   ["landxi/v3/xi-clean/?nation=kg", "XI맵 · 키르기스스탄(로그인 LX 직원)", "나라 전체에서 비슈케크까지 확대해 보세요. 오른쪽 아래에 영상 출처가 보입니다"]
+  ],
+  "now": "해외 바탕 = 2026 여름(키르기스스탄) · 2025–26 건기(미얀마) Sentinel-2 장면을 구름 가림 후 중앙값 합성. 키르기스스탄 나라 z5–10 · 추이 주 z11–14 · 미얀마 나라 z5–9 · 메이크틸라 z10–14. 약 190 MB · CPU만 · 굽기 약 1시간 반. 지도 아래 'Contains modified Copernicus Sentinel data 2025–2026'.",
+  "prop": "나라 판 밖(세계 낮은 줌 · 지구본)과 로그인 · 메인 · 해외 첫 화면 사다리는 아직 EOx — 세계 낮은 줌 판(공공 도메인 영상)으로 함께 바꿀지 결정 필요."
+ }
+]

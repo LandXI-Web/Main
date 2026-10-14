@@ -1,0 +1,741 @@
+{
+  "phase": "after",
+  "at": "2026-10-14 15:09:22",
+  "app": "https://app.land-xi.dev",
+  "shots": {
+    "after-kg-country-1440-1509.png": "2026-10-14 15:09:47",
+    "after-bishkek-1440-1510.png": "2026-10-14 15:10:03",
+    "after-ysykata-1440-1510.png": "2026-10-14 15:10:21",
+    "after-meiktila-1440-1510.png": "2026-10-14 15:10:32"
+  },
+  "errors": [],
+  "tiles": {
+    "ok": 500,
+    "blank": 0,
+    "bad": []
+  },
+  "sweep": [
+    {
+      "at": "bishkek",
+      "z": 5,
+      "ok": 6,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 6,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 6,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 15,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 7,
+      "ok": 24,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 30,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 8,
+      "ok": 30,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 42,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 9,
+      "ok": 20,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 33,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 10,
+      "ok": 35,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 12,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 35,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 11,
+      "ok": 24,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 4,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 32,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 12,
+      "ok": 28,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 2,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 36,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 13,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 24,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "bishkek",
+      "z": 14,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 12,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 5,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 6,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 6,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 15,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 7,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 24,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 8,
+      "ok": 5,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 35,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 9,
+      "ok": 4,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 27,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 10,
+      "ok": 5,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 12,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 30,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 11,
+      "ok": 16,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 4,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 34,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 12,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 4,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 30,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 13,
+      "ok": 28,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 2,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 36,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "ysykata",
+      "z": 14,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 6,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 5,
+      "ok": 8,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 8,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 6,
+      "ok": 20,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 26,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 7,
+      "ok": 24,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 30,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 8,
+      "ok": 34,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 42,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 9,
+      "ok": 9,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 9,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 9,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 10,
+      "ok": 25,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 6,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 30,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 11,
+      "ok": 24,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 31,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 12,
+      "ok": 28,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 31,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 13,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 24,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    },
+    {
+      "at": "meiktila",
+      "z": 14,
+      "ok": 0,
+      "blank": 0,
+      "src": {
+        "k-s2-kg": {
+          "n": 0,
+          "err": 0
+        },
+        "k-s2-mm": {
+          "n": 1,
+          "err": 0
+        },
+        "k-s2-mm-meiktila": {
+          "n": 8,
+          "err": 0
+        },
+        "k-s2-kg-chuy": {
+          "n": 0,
+          "err": 0
+        }
+      }
+    }
+  ],
+  "credit": "Contains modified Copernicus Sentinel data 2025–2026",
+  "done": "2026-10-14 15:19:46"
+}
