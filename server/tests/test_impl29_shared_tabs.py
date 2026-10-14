@@ -88,7 +88,8 @@ def test_ledgers_read_only(tok):
     n = sql("SELECT count(*) FROM ledger_imports WHERE state <> 'failed'")[0][0]
     assert r.json()["total"] == min(n, 500)
     for x in r.json()["items"]:
-        assert set(x) == {"id", "tenant", "name", "rows", "at"}             # 파일 이름 · 경로 없음
+        base = {"id", "owner", "tenant", "name", "kind", "kind_label", "rows", "at"}   # 파일 이름 · 경로 없음(구현 31 — LX 줄은 공개 · 지도에 놓인 행 더함)
+        assert set(x) == (base | {"shared", "located"} if x["owner"] == "lx" else base)
 
 
 def test_private_hidden_from_tenant(tok):

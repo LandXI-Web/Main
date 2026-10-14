@@ -73,8 +73,14 @@ test.describe('impl-22 · 핵심 코어 고리', () => {
     const tr = await page.evaluate(async () => { const { api } = await import('/landxi/shared/api-v1.js'); return (await api('/shared/train-data')).items.length; });
     await expect(page.locator('.sd-tbl tbody tr')).toHaveCount(Math.min(tr, 12));
     expect(await box()).toBe(b0);
+    /* 탭마다 그 탭의 올리기 — 같은 자리 · 같은 크기(10-14 공유데이터-탭 다시 · 원칙 231 · 246) */
+    const upBox = () => page.evaluate(() => { const r = document.querySelector('.sd-up-b').getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map(Math.round).join(','); });
+    await expect(page.locator('.sd-up-b')).toHaveText('학습 데이터 올리기');
+    const u0 = await upBox();
     await page.locator('.sd-tabs button', { hasText: '행정 자료' }).click();
-    await expect(page.locator('.sd-sub')).toHaveText(['브이월드', '기관 대장'], { timeout: 30000 });
+    await expect(page.locator('.sd-sub')).toHaveText(['LX', '기관 대장', '브이월드'], { timeout: 30000 });
+    await expect(page.locator('.sd-up-b')).toHaveText('행정 자료 올리기');
+    expect(await upBox()).toBe(u0);
     expect(await box()).toBe(b0);
     expect(errs).toEqual([]);
   });

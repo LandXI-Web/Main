@@ -32,6 +32,7 @@ from pathlib import Path, PurePosixPath
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import Response
+from starlette.concurrency import run_in_threadpool
 
 from . import config
 from .deps import ApiError, audit, db, principal, require
@@ -438,15 +439,19 @@ async def up_finish(uid: str, request: Request):
 
 @router.get("/training/samples")
 async def list_samples(request: Request, project: str | None = None, shared: int = 0):
-    _staff(request)
+    p = _staff(request)
     async with db(realm="lx") as conn:
         if shared:                                           # 관리자가 공개한 학습 데이터(학습 화면 '공유 데이터에서 고르기' · 10-14 공유데이터-탭)
             rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' AND staff_shared ORDER BY created_at DESC LIMIT 50")
         elif project:                                        # 프로젝트 학습데이터만(프로젝트 맥락의 '이전에 올린 표본')
             rows = await conn.fetch("SELECT s.* FROM train_samples s JOIN project_links l ON l.kind='sample' AND l.ref=s.id AND l.project_id=$1 "
                                     "WHERE s.status <> 'removed' ORDER BY s.created_at DESC LIMIT 50", project)
-        else:
+        elif p.role == "admin":
             rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC LIMIT 50")
+        else:                                                # 직원 — 공유 데이터의 비공개 묶음(프로젝트 없음 · 남이 올림)은 빼고(10-14 원칙 246)
+            rows = await conn.fetch("SELECT s.* FROM train_samples s WHERE s.status <> 'removed' AND (s.staff_shared OR s.created_by = $1 "
+                                    "OR EXISTS (SELECT 1 FROM project_links l WHERE l.kind='sample' AND l.ref=s.id)) "
+                                    "ORDER BY s.created_at DESC LIMIT 50", p.user_id)
     return {"items": [_pub(r) for r in rows], "total": len(rows), "as_of": now_iso()}
 
 
@@ -470,8 +475,9 @@ async def shared_train_data(request: Request):
         for s in await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC"):
             pid = first.get(s["id"])
             items.append({"id": s["id"], "source": "sample", "project": {"id": pid, "name": pname.get(pid)} if pid else None,
-                          "classes": list(s["names"] or []), "images": env(s["n_images"], "count", "measured", src),
-                          "shared": bool(s["staff_shared"]), "at": s["created_at"].isoformat(timespec="seconds") if s["created_at"] else None})
+                          "name": s["task_name"], "classes": list(s["names"] or []), "images": env(s["n_images"], "count", "measured", src),
+                          "shared": bool(s["staff_shared"]), "edit": not pid,     # 프로젝트 없는 묶음 = 공유 데이터에서 올린 것(고치기 · 지우기)
+                          "at": s["created_at"].isoformat(timespec="seconds") if s["created_at"] else None})
         for pid in [r["project_id"] for r in await conn.fetch("SELECT project_id FROM project_links WHERE kind='card' UNION "
                                                               "SELECT DISTINCT project_id FROM train_tiles WHERE project_id IS NOT NULL")]:
             if pid not in pname:
@@ -495,16 +501,83 @@ async def shared_train_data(request: Request):
 
 @router.patch("/training/samples/{sid}")
 async def sample_share(sid: str, body: dict, request: Request):
-    """LX 관리자 — 학습 데이터(올린 묶음)를 직원에게 공개 · 내리기. 공개된 묶음은 학습 화면 '공유 데이터에서 고르기'에 나온다."""
+    """LX 관리자 — 학습 데이터 공개 · 비공개(공개된 묶음은 학습 화면 '공유 데이터에서 고르기'에 나온다).
+    공유 데이터에서 올린 묶음(프로젝트 없음)은 정보 고치기도 — 이름(task_name) · 클래스 이름(서버 클래스 목록의 이름으로 맞춤 · 10-14 원칙 246).
+    프로젝트 학습 데이터는 공개/비공개만(학습 데이터는 프로젝트 안 · 원칙 232)."""
     p = require(principal(request), admin=True)
-    if "shared" not in body:
+    if not any(k in body for k in ("shared", "name", "names")):
         raise ApiError("bad_request", "바꿀 것이 없습니다")
-    want = bool(body.get("shared"))
     async with db(realm="lx") as conn:
         r = await _row(conn, sid)
-        await conn.execute("UPDATE train_samples SET staff_shared=$2, updated_at=now() WHERE id=$1", sid, want)
-        await audit(conn, p, "sample.share", sid, {"shared": bool(r["staff_shared"])}, {"shared": want})
-    return {"ok": True, "id": sid, "shared": want, "as_of": now_iso()}
+        before, after = {}, {}
+        if ("name" in body or "names" in body) and await _linked(conn, sid):
+            raise ApiError("forbidden", "프로젝트 학습 데이터는 그 프로젝트에서 고칩니다")
+        if "shared" in body:
+            want = bool(body.get("shared"))
+            await conn.execute("UPDATE train_samples SET staff_shared=$2, updated_at=now() WHERE id=$1", sid, want)
+            before["shared"], after["shared"] = bool(r["staff_shared"]), want
+        if "name" in body:
+            nm = " ".join(str(body.get("name") or "").split())[:40]
+            if not nm:
+                raise ApiError("bad_request", "이름을 적어 주세요")
+            await conn.execute("UPDATE train_samples SET task_name=$2, updated_at=now() WHERE id=$1", sid, nm)
+            before["name"], after["name"] = r["task_name"], nm
+        if "names" in body:
+            old = list(r["names"] or [])
+            new = [" ".join(str(x or "").split())[:40] for x in (body.get("names") or [])]
+            if len(new) != len(old) or not all(new):
+                raise ApiError("bad_request", "클래스 이름을 모두 골라 주세요")
+            if len(set(new)) != len(new):
+                raise ApiError("bad_request", "같은 클래스를 두 번 고를 수 없습니다")
+            if new != old:
+                from .core import _same_name, sample_classes_from_names
+                for a, b in zip(old, new):
+                    if a != b and not await _same_name(conn, b):
+                        raise ApiError("bad_request", "클래스 목록에 있는 이름을 골라 주세요", {"name": b})
+                if await _used(conn, sid):
+                    raise ApiError("conflict", "학습에 쓴 학습 데이터라 클래스를 바꿀 수 없습니다", None, 409)
+                root = Path(r["dir"])
+                meta = await run_in_threadpool(_meta_of, root)
+                meta["names"] = new
+                cc, ci = await run_in_threadpool(_recount, meta["items"], new)
+                await run_in_threadpool(write_lists, root, meta, set(int(i) for i in (r["excluded"] or [])))
+                await conn.execute("UPDATE train_samples SET names=$2, class_counts=$3, class_images=$4, updated_at=now() WHERE id=$1", sid, new, cc, ci)
+                await conn.execute("DELETE FROM sample_classes WHERE sample_id=$1", sid)
+                await sample_classes_from_names(conn, sid, new, p.user_id)
+                before["names"], after["names"] = old, new
+        await audit(conn, p, "sample.edit" if set(after) - {"shared"} else "sample.share", sid, before, after)
+    return {"ok": True, "id": sid, **after, "as_of": now_iso()}
+
+
+async def _linked(conn, sid: str) -> bool:
+    return bool(await conn.fetchval("SELECT 1 FROM project_links WHERE kind='sample' AND ref=$1 LIMIT 1", sid))
+
+
+async def _used(conn, sid: str) -> bool:
+    """학습에 쓴 묶음 — 이 묶음으로 만든 모델 또는 이 묶음을 쓴 학습 작업(기다림 · 도는 중 포함)."""
+    return bool(await conn.fetchval(
+        "SELECT 1 FROM models WHERE sample_id=$1 UNION ALL SELECT 1 FROM jobs WHERE kind='train' AND "
+        "((jsonb_typeof(options->'samples')='array' AND options->'samples' ? $1) OR options->>'samples' = $1) LIMIT 1", sid))
+
+
+@router.delete("/training/samples/{sid}")
+async def sample_delete(sid: str, request: Request):
+    """LX 관리자 — 공유 데이터에서 올린 학습 데이터(프로젝트 없음) 지우기. 학습에 쓴 묶음은 지우지 않는다(409 · 영상과 같은 규칙)."""
+    p = require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        r = await _row(conn, sid)
+        if await _linked(conn, sid):
+            raise ApiError("forbidden", "프로젝트 학습 데이터는 그 프로젝트에서 다룹니다")
+        if await _used(conn, sid):
+            raise ApiError("conflict", "학습에 쓴 학습 데이터라 지울 수 없습니다", None, 409)
+        async with conn.transaction():
+            await conn.execute("DELETE FROM sample_classes WHERE sample_id=$1", sid)
+            await conn.execute("UPDATE train_samples SET status='removed', staff_shared=false, updated_at=now() WHERE id=$1", sid)
+            await audit(conn, p, "sample.delete", sid, {"name": r["task_name"], "images": r["n_images"]}, None)
+    d = Path(r["dir"])
+    if d.is_dir() and d.parent.resolve() == ROOT.resolve():   # 서버 학습 데이터 폴더 안의 그 묶음만
+        shutil.rmtree(d, ignore_errors=True)
+    return {"ok": True, "id": sid, "as_of": now_iso()}
 
 
 @router.get("/training/samples/{sid}")

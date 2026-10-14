@@ -106,28 +106,34 @@ def read_table(raw: bytes, ext: str) -> tuple[list[str], list[dict], list | None
     elif ext == "xlsx":
         df = pd.read_excel(io.BytesIO(raw), dtype=str, engine="openpyxl").fillna("")
     else:
-        import tempfile
-        import zipfile
-
-        import pyogrio
-        with tempfile.TemporaryDirectory() as d:
-            p = Path(d) / f"in.{ext}"
-            p.write_bytes(raw)
-            if ext == "zip":
-                with zipfile.ZipFile(p) as z:
-                    z.extractall(d)
-                shp = next(iter(sorted(Path(d).rglob("*.shp"))), None) or next(iter(sorted(Path(d).rglob("*.gpkg"))), None)
-                if not shp:
-                    raise ApiError("bad_request", "ZIP 안에 SHP·GPKG 가 없습니다")
-                p = shp
-            gdf = pyogrio.read_dataframe(p, encoding="cp949" if p.suffix == ".shp" and not (p.with_suffix(".cpg")).exists() else None)
-        if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
-            gdf = gdf.to_crs(4326)
+        gdf = read_gdf(raw, ext)
         pts = [(g.representative_point().x, g.representative_point().y) if g is not None and not g.is_empty else None for g in gdf.geometry]
         df = pd.DataFrame(gdf.drop(columns=gdf.geometry.name)).astype(str).replace({"None": "", "nan": ""})
     cols = [str(c) for c in df.columns]
     rows = [{str(k): ("" if v is None else str(v)).strip() for k, v in r.items()} for r in df.to_dict(orient="records")]
     return cols, rows, pts
+
+
+def read_gdf(raw: bytes, ext: str):
+    """SHP(zip) · GPKG · GeoJSON → GeoDataFrame(EPSG:4326). 기관 대장 올리기와 LX 행정 자료 올리기가 같은 판별."""
+    import tempfile
+    import zipfile
+
+    import pyogrio
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / f"in.{ext}"
+        p.write_bytes(raw)
+        if ext == "zip":
+            with zipfile.ZipFile(p) as z:
+                z.extractall(d)
+            shp = next(iter(sorted(Path(d).rglob("*.shp"))), None) or next(iter(sorted(Path(d).rglob("*.gpkg"))), None)
+            if not shp:
+                raise ApiError("bad_request", "ZIP 안에 SHP·GPKG 가 없습니다")
+            p = shp
+        gdf = pyogrio.read_dataframe(p, encoding="cp949" if p.suffix == ".shp" and not (p.with_suffix(".cpg")).exists() else None)
+    if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(4326)
+    return gdf
 
 
 # ── 규칙 L-* ─────────────────────────────────────────────────────────────────
@@ -513,22 +519,225 @@ async def _get_import(p: Principal, tenant: str, iid: str):
     return r
 
 
+# ── LX 관리자 '공유 데이터' · 행정 자료 탭(10-14 공유데이터-탭 · 원칙 240 · 246) ─────────────────────────
+# 기관 대장 = 기관 화면에서 올린 것(읽기만 · 그 기관 것). LX 행정 자료 = 관리자가 여기서 올린 것 — 같은 표(ledger_imports · tenant_id 'lx')
+# · 같은 형식 판별(read_table · read_gdf · 성명 · 연락처 열 버림). 지도 층은 도형 파일(GeoJSON · EPSG:4326) 하나로 둔다.
+# 공개면 직원 지도 서비스의 층으로 고른다(GET /shared/layers — 브이월드 층과 같은 자리).
+LX_OWNER = "lx"
+LAYER_DIR = config.DATA_ROOT / "shared" / "ledger"
+LAYER_EXTS = {"zip", "gpkg", "geojson", "json", "csv", "xlsx"}
+
+
+def _layer_path(iid: str) -> Path:
+    if not re.fullmatch(r"imp_[0-9A-Za-z]{10,40}", iid or ""):
+        raise ApiError("not_found", "행정 자료가 없습니다")
+    return LAYER_DIR / f"{iid}.geojson"
+
+
+def _layer_fc(raw: bytes, ext: str) -> tuple[int, dict, list[str], dict | None]:
+    """→ (행 수, 도형 FeatureCollection, 버린 열, 주소 찾기 할 일 | None). 도형 파일은 도형 그대로 · 표(CSV · XLSX)는 경도 · 위도 열의 점.
+    표에 좌표 열이 없고 주소(지번) 열만 있으면 빈 FC + {'jibun': 열, 'rows': 행} — 위치는 V-World 주소 찾기로(상한 VW_CAP)."""
+    if ext in ("csv", "xlsx"):
+        cols, rows, _ = read_table(raw, ext)
+        role = {}
+        for c in cols:
+            g = guess_role(c)
+            if g and g != "pii":
+                role.setdefault(g, c)
+        keep = [c for c in cols if not is_pii(c)]
+        dropped = [c for c in cols if c not in keep]
+        feats = []
+        if "lon" in role and "lat" in role:
+            for r in rows:
+                try:
+                    x, y = float(r.get(role["lon"]) or ""), float(r.get(role["lat"]) or "")
+                except ValueError:
+                    continue
+                if -180 <= x <= 180 and -90 <= y <= 90:
+                    feats.append({"type": "Feature", "properties": {c: r.get(c) for c in keep}, "geometry": {"type": "Point", "coordinates": [x, y]}})
+            return len(rows), {"type": "FeatureCollection", "features": feats}, dropped, None
+        if "jibun" in role:
+            return len(rows), {"type": "FeatureCollection", "features": []}, dropped, {"jibun": role["jibun"], "rows": [{c: r.get(c) for c in keep} for r in rows]}
+        raise ApiError("bad_request", "주소나 경도 · 위도 열이 없습니다")
+    gdf = read_gdf(raw, ext)
+    cols = [str(c) for c in gdf.columns if c != gdf.geometry.name]
+    dropped = [c for c in cols if is_pii(c)]
+    gdf = gdf.drop(columns=dropped)
+    for c in gdf.columns:
+        if c != gdf.geometry.name:
+            gdf[c] = gdf[c].astype(str).replace({"None": "", "nan": "", "NaT": ""})
+    fc = json.loads(gdf.to_json(drop_id=True))
+    feats = [f for f in fc.get("features") or [] if f.get("geometry")]
+    return len(gdf), {"type": "FeatureCollection", "features": feats}, dropped, None
+
+
+def _bbox(fc: dict) -> list[float] | None:
+    a = [180.0, 90.0, -180.0, -90.0]
+
+    def walk(c):
+        if c and isinstance(c[0], (int, float)):
+            a[0], a[1], a[2], a[3] = min(a[0], c[0]), min(a[1], c[1]), max(a[2], c[0]), max(a[3], c[1])
+        else:
+            for x in c or []:
+                walk(x)
+    for f in fc.get("features") or []:
+        walk((f.get("geometry") or {}).get("coordinates") or [])
+    return [round(v, 6) for v in a] if a[0] <= a[2] else None
+
+
+def _shared_row(r, tn: dict | None = None) -> dict:
+    def _nm(v):
+        return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
+    lx = r["tenant_id"] == LX_OWNER
+    st = r["stats"] or {}
+    at = r["confirmed_at"] or r["created_at"]
+    out = {"id": r["id"], "owner": "lx" if lx else "tenant", "tenant": None if lx else (_nm((tn or {}).get(r["tenant_id"])) or None),
+           "name": (r["name"] or KINDS.get(r["kind"])) if lx else KINDS.get(r["kind"]), "kind": r["kind"], "kind_label": KINDS.get(r["kind"]),
+           "rows": env(r["rows"], "count", "recorded", "대장 파일 행"),
+           "at": at.astimezone(KST).isoformat(timespec="seconds") if at else None}
+    if lx:
+        out["shared"] = bool(r["staff_shared"])
+        out["located"] = env(int(st.get("located") or 0), "count", "recorded", "지도에 놓인 행")
+    return out
+
+
 @router.get("/shared/ledgers")
 async def shared_ledgers(request: Request):
-    """LX 관리자 '공유 데이터' · 행정 자료 탭(10-14 공유데이터-탭 · 원칙 240) — 기관이 올린 대장(기관 대장 올리기로 들어온 것) 읽기만.
-    올리기 · 지우기는 기관 화면에만(여기서는 새로 만들지 않는다). 행 수 = 대장 파일 행(기관 화면 반입 기록과 같은 값)."""
+    """LX 관리자 — LX 행정 자료(여기서 올림 · 고치기 · 공개 · 지우기) + 기관 대장(읽기만). 행 수 = 대장 파일 행(기관 화면 반입 기록과 같은 값)."""
     require(principal(request), admin=True)
     async with db(realm="lx") as conn:
         tn = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM tenants")}
-        rows = await conn.fetch("SELECT id, tenant_id, kind, rows, created_at, confirmed_at FROM ledger_imports WHERE state <> 'failed' "
-                                "ORDER BY coalesce(confirmed_at, created_at) DESC LIMIT 500")
-    def _nm(v):
-        return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
-    items = [{"id": r["id"], "tenant": _nm(tn.get(r["tenant_id"])) or None, "name": KINDS.get(r["kind"]),
-              "rows": env(r["rows"], "count", "recorded", "대장 파일 행"),
-              "at": (r["confirmed_at"] or r["created_at"]).astimezone(KST).isoformat(timespec="seconds") if (r["confirmed_at"] or r["created_at"]) else None}
-             for r in rows]
+        rows = await conn.fetch("SELECT id, tenant_id, kind, name, rows, stats, staff_shared, created_at, confirmed_at FROM ledger_imports "
+                                "WHERE state <> 'failed' ORDER BY coalesce(confirmed_at, created_at) DESC LIMIT 500")
+    items = [_shared_row(r, tn) for r in rows]
+    return {"items": items, "total": len(items), "kinds": KINDS, "as_of": now_iso()}
+
+
+@router.post("/shared/ledgers", status_code=201)
+async def shared_ledger_upload(request: Request, file: UploadFile = File(...), kind: str = Form(...), name: str = Form("")):
+    """LX 관리자 — 행정 자료 올리기. SHP(zip) · GPKG · GeoJSON · CSV(주소 · 좌표 열) · XLSX. 성명 · 연락처 열은 저장하지 않는다(기관 대장과 같은 규칙)."""
+    p = require(principal(request), admin=True)
+    if kind not in KINDS:
+        raise ApiError("bad_request", "종류를 고르세요", {"allowed": list(KINDS)})
+    fname = file.filename or "upload"
+    ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+    if ext not in LAYER_EXTS:
+        raise ApiError("bad_request", "SHP(zip) · GPKG · GeoJSON · CSV 만 올릴 수 있습니다", {"allowed": sorted(LAYER_EXTS)})
+    raw = await file.read(MAX_BYTES + 1)
+    if len(raw) > MAX_BYTES:
+        raise ApiError("bad_request", "20MB까지 올릴 수 있습니다", status=413)
+    if ext == "json":
+        ext = "geojson"
+    try:
+        n, fc, dropped, todo = await run_in_threadpool(_layer_fc, raw, ext)
+    except ApiError:
+        raise
+    except Exception as e:  # noqa: BLE001
+        raise ApiError("bad_request", "파일을 읽을 수 없습니다", {"error": type(e).__name__})
+    if not n:
+        raise ApiError("bad_request", "행이 없습니다")
+    if todo:                                             # 주소 열만 있는 표 — V-World 주소 찾기(상한 VW_CAP · 일일 쿼터 보호)
+        from .proxy import vworld_key
+        key, dom = vworld_key()
+        if key:
+            import httpx
+            async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
+                for r in todo["rows"][:VW_CAP]:
+                    q = str(r.get(todo["jibun"]) or "").strip()
+                    if not q:
+                        continue
+                    try:
+                        pt = await _vworld_search(c, key, dom, q)
+                    except Exception:  # noqa: BLE001
+                        pt = None
+                    if pt:
+                        fc["features"].append({"type": "Feature", "properties": r, "geometry": {"type": "Point", "coordinates": list(pt)}})
+    if not fc["features"]:
+        raise ApiError("bad_request", "지도에 놓을 수 있는 행이 없습니다 — 도형 · 경도 · 위도 · 주소를 확인해 주세요")
+    iid = "imp_" + _ulid()
+    nm = " ".join(str(name or "").split())[:60] or Path(fname).stem[:60]
+    LAYER_DIR.mkdir(parents=True, exist_ok=True)
+    _layer_path(iid).write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    st = {"located": len(fc["features"]), "bbox": _bbox(fc)}
+    async with db(realm="lx") as conn:
+        await conn.execute("INSERT INTO ledger_imports(id, tenant_id, kind, name, filename, fmt, bytes, rows, dropped, state, stats, created_by, confirmed_at) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'matched',$10,$11,now())",
+                           iid, LX_OWNER, kind, nm, fname[:200], ext, len(raw), n, dropped, st, p.user_id)
+        await audit(conn, p, "ledger.shared.upload", iid, None, {"kind": kind, "rows": n, "located": st["located"], "dropped": dropped, "fmt": ext})
+        r = await conn.fetchrow("SELECT * FROM ledger_imports WHERE id=$1", iid)
+    return {**_shared_row(r), "dropped": dropped, "as_of": now_iso()}
+
+
+async def _lx_row(conn, iid: str):
+    r = await conn.fetchrow("SELECT * FROM ledger_imports WHERE id=$1", iid)
+    if not r:
+        raise ApiError("not_found", "행정 자료가 없습니다")
+    if r["tenant_id"] != LX_OWNER:
+        raise ApiError("forbidden", "기관이 올린 대장은 그 기관 화면에서 다룹니다")
+    return r
+
+
+@router.patch("/shared/ledgers/{iid}")
+async def shared_ledger_edit(iid: str, body: dict, request: Request):
+    """LX 관리자 — 정보 고치기(이름 · 종류) · 공개/비공개(공개면 직원 지도 서비스 층)."""
+    p = require(principal(request), admin=True)
+    sets, args, before, after = [], [iid], {}, {}
+    async with db(realm="lx") as conn:
+        r = await _lx_row(conn, iid)
+        if "name" in body:
+            nm = " ".join(str(body.get("name") or "").split())[:60]
+            if not nm:
+                raise ApiError("bad_request", "이름을 적어 주세요")
+            args.append(nm); sets.append(f"name=${len(args)}"); before["name"], after["name"] = r["name"], nm
+        if "kind" in body:
+            k = str(body.get("kind") or "")
+            if k not in KINDS:
+                raise ApiError("bad_request", "종류를 고르세요", {"allowed": list(KINDS)})
+            args.append(k); sets.append(f"kind=${len(args)}"); before["kind"], after["kind"] = r["kind"], k
+        if "shared" in body:
+            args.append(bool(body.get("shared"))); sets.append(f"staff_shared=${len(args)}")
+            before["shared"], after["shared"] = bool(r["staff_shared"]), bool(body.get("shared"))
+        if not sets:
+            raise ApiError("bad_request", "바꿀 것이 없습니다")
+        await conn.execute(f"UPDATE ledger_imports SET {', '.join(sets)} WHERE id=$1", *args)
+        await audit(conn, p, "ledger.shared.edit", iid, before, after)
+    return {"ok": True, "id": iid, **after, "as_of": now_iso()}
+
+
+@router.delete("/shared/ledgers/{iid}")
+async def shared_ledger_delete(iid: str, request: Request):
+    """LX 관리자 — LX 행정 자료 지우기(확인 한 번 · 화면). 기관 대장은 여기서 지우지 않는다."""
+    p = require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        r = await _lx_row(conn, iid)
+        await conn.execute("DELETE FROM ledger_imports WHERE id=$1", iid)
+        await audit(conn, p, "ledger.shared.delete", iid, {"name": r["name"], "kind": r["kind"], "rows": r["rows"]}, None)
+    _layer_path(iid).unlink(missing_ok=True)
+    return {"ok": True, "id": iid, "as_of": now_iso()}
+
+
+@router.get("/shared/layers")
+async def shared_layers(request: Request):
+    """LX 직원 · 관리자 — 공개된 LX 행정 자료(지도 서비스 층 고르기 · 브이월드 층과 같은 자리)."""
+    require(principal(request), lx=True)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND staff_shared AND state <> 'failed' "
+                                "ORDER BY coalesce(name, kind)", LX_OWNER)
+    items = [{**_shared_row(r), "bbox": (r["stats"] or {}).get("bbox")} for r in rows if _layer_path(r["id"]).exists()]
     return {"items": items, "total": len(items), "as_of": now_iso()}
+
+
+@router.get("/shared/layers/{iid}")
+async def shared_layer(iid: str, request: Request):
+    """도형(GeoJSON) — 직원은 공개된 것만 · 관리자는 모두."""
+    p = require(principal(request), lx=True)
+    f = _layer_path(iid)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT tenant_id, staff_shared FROM ledger_imports WHERE id=$1", iid)
+    if not r or r["tenant_id"] != LX_OWNER or (not r["staff_shared"] and p.role != "admin") or not f.exists():
+        raise ApiError("not_found", "행정 자료가 없습니다")
+    from fastapi.responses import Response as _R
+    return _R(content=f.read_bytes(), media_type="application/geo+json", headers={"cache-control": "private, no-store"})
 
 
 @router.get("/t/{tenant}/survey/registry")

@@ -1,0 +1,10 @@
+[
+ {
+  "id": "공유데이터-탭",
+  "title": "공유 데이터 — 학습 데이터 · 행정 자료도 올리고 관리합니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/train-upload-1440-1141.png", "shots/train-public-1440-1141.png", "shots/staff-train-public-1440-1141.png", "shots/train-edit-1440-1141.png", "shots/train-delete-1440-1142.png", "shots/admin-upload-1440-1142.png", "shots/admin-public-1440-1142.png", "shots/staff-map-public-1440-1142.png", "shots/staff-map-private-1440-1142.png", "shots/admin-edit-1440-1142.png"],
+  "where": "admin.land-xi.dev → 공유 데이터 → 학습 데이터 · 행정 자료(LX 관리자 로그인 폼) · app.land-xi.dev → 프로젝트 → 학습 → 학습 데이터 블록 · 지도 서비스 '행정 자료'(LX 직원)",
+  "note": "세 탭 모두 오른쪽 위 같은 자리 · 같은 크기 단추로 올립니다(영상 올리기 · 학습 데이터 올리기 · 행정 자료 올리기). 학습 데이터는 프로젝트 학습데이터 구축과 같은 묶음(zip — 그림 · 라벨 · 클래스 이름)을 받아 공유 학습 데이터로 둡니다 — 공개하면 직원 학습 화면 '공유 데이터에서 고르기'에 나오고, 정보 고치기(이름 · 클래스를 클래스 목록에서 고름) · 지우기(학습에 쓴 것은 지우지 않음)가 됩니다. 프로젝트 학습 데이터는 지금처럼 보기 · 공개만입니다. 행정 자료는 SHP(zip) · GPKG · GeoJSON · CSV(주소 · 좌표 열)를 받아 LX 행정 자료로 둡니다 — 공개하면 직원 지도 서비스 아래 '행정 자료' 줄에서 층으로 켭니다. 기관이 올린 대장 · 브이월드는 읽기만입니다. 시험 자료는 모두 지웠습니다."
+ }
+]

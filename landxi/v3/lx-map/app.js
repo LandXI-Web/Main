@@ -75,7 +75,7 @@ if (ST.groups[0]) ST.open.add(ST.groups[0].key);
 const ST0 = createStage(stageEl, { bounds: first?.bounds || K.KOREA, interactive: true });
 await ST0.ready;
 const map = ST0.map;
-window.__lm = { map };   // 점검 손잡이(화면에 보이지 않음 · 캡처 · e2e 가 도형 자리를 찾는다)
+window.__lm = { map, shared: () => SHL.map((L) => L.id) };   // 점검 손잡이(화면에 보이지 않음 · 캡처 · e2e 가 도형 자리를 찾는다)
 const pad = () => ({ top: 72, bottom: 48, left: 48, right: props.hidden ? 48 : 400 });
 let CAT = [];
 try { CAT = (await api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' }))).items || []; }
@@ -102,6 +102,34 @@ map.addSource('lm-lxmap', { type: 'raster', tiles: ['lmwms://lt_c_landinfobasema
 map.addLayer({ id: 'lm-lxmap', type: 'raster', source: 'lm-lxmap', minzoom: LXMAP_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-result');
 map.addSource('lm-cad', { type: 'raster', tiles: ['lmwms://lp_pa_cbnd_bubun/lp_pa_cbnd_bubun_line/{z}/{x}/{y}'], tileSize: 512, minzoom: CAD_Z - 1, maxzoom: 19 });
 map.addLayer({ id: 'lm-cad', type: 'raster', source: 'lm-cad', minzoom: CAD_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-result');
+
+/* LX 행정 자료(공유 데이터에서 관리자가 공개한 것 · 10-14 원칙 246) — 바탕(브이월드 층) 아래 줄에서 켜고 끈다. 도형 = GET /shared/layers/{id}(GeoJSON) */
+let SHL = [];
+try { SHL = (await api('/shared/layers')).items || []; } catch (e) { K.devlog('shared-layers', String(e?.message || e)); }
+const shlOn = new Set();
+async function toggleShared(L) {
+  const sid = 'lm-sh-' + L.id;
+  if (shlOn.has(L.id)) { shlOn.delete(L.id); for (const k of ['-f', '-l', '-p']) if (map.getLayer(sid + k)) map.setLayoutProperty(sid + k, 'visibility', 'none'); drawLeft(); return; }
+  shlOn.add(L.id); drawLeft();
+  if (!map.getSource(sid)) {
+    const done = K.hold();
+    try {
+      const tok = session.get()?.token;
+      const r = await fetch(API.prefix + '/shared/layers/' + encodeURIComponent(L.id), { headers: tok ? { authorization: 'Bearer ' + tok } : {} });
+      if (!r.ok) throw new Error(String(r.status));
+      map.addSource(sid, { type: 'geojson', data: await r.json() });
+      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]], paint: { 'fill-color': '#3182F6', 'fill-opacity': 0.12 } }, 'slot-result');
+      map.addLayer({ id: sid + '-l', type: 'line', source: sid, filter: ['!', ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]]], paint: { 'line-color': '#1B64DA', 'line-width': 1.4 } }, 'slot-result');
+      map.addLayer({ id: sid + '-p', type: 'circle', source: sid, filter: ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]], paint: { 'circle-radius': 4, 'circle-color': '#1B64DA', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } }, 'slot-result');
+    } catch (e) {
+      shlOn.delete(L.id); drawLeft();
+      K.devlog('shared-layer', `${L.id} ${e?.message || e}`);
+      K.toast(`${L.name} — 불러오지 못했습니다`);
+      return;
+    } finally { done(); }
+  } else for (const k of ['-f', '-l', '-p']) if (map.getLayer(sid + k)) map.setLayoutProperty(sid + k, 'visibility', 'visible');
+  if (L.bbox) map.fitBounds([[L.bbox[0], L.bbox[1]], [L.bbox[2], L.bbox[3]]], { padding: pad(), duration: 900, maxZoom: 15 });
+}
 
 /* 분석에 쓴 영상 — 카탈로그의 그 영상(구운 타일 또는 원본 동적 타일 · 서명 주소) */
 const imgOn = new Set();
@@ -217,7 +245,10 @@ function drawLeft() {
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }),   // 세 화면 경계(바퀴 4)
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
-    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl, h('p.lm-bn', { text: '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다' })));
+    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
+      SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
+        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null,
+      h('p.lm-bn', { text: '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다' })));
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
 }
@@ -230,7 +261,8 @@ function drawLegend() {
   const on = all().filter(shown);
   const cls = [...new Set(on.flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))];
   const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${colorOf(c)}` }), h('span', { text: c }))),
-    ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '필지 경계' }))] : [])];
+    ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '필지 경계' }))] : []),
+    ...SHL.filter((L) => shlOn.has(L.id)).map((L) => h('li', {}, h('i.shl'), h('span', { text: L.name })))];
   legend.hidden = !items.length;
   legend.classList.toggle('is-shut', !ST.lg);
   legend.replaceChildren(h('button.lm-lgb', { type: 'button', 'aria-expanded': String(ST.lg), onclick: () => { ST.lg = !ST.lg; saveUI(); drawLegend(); } },
