@@ -1,0 +1,9 @@
+tests/test_impl31_dash.py::test_parse_kinds PASSED                       [ 12%]
+tests/test_impl31_dash.py::test_route_order PASSED                       [ 25%]
+tests/test_impl31_dash.py::test_task_same_as_board_and_national PASSED   [ 37%]
+tests/test_impl31_dash.py::test_emd_sums PASSED                          [ 50%]
+tests/test_impl31_dash.py::test_jimok_rule_area_time PASSED              [ 62%]
+tests/test_impl31_dash.py::test_variety_and_scales PASSED                [ 75%]
+tests/test_impl31_dash.py::test_scale_rules PASSED                       [ 87%]
+tests/test_impl31_dash.py::test_tool_answer PASSED                       [100%]
+============================== 8 passed in 9.13s ==============================

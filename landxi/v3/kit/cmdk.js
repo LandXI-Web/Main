@@ -201,7 +201,7 @@ export function mountCmdk(opts = {}) {
 }
 
 function create(opts) {
-  const cfg = { stage: null, guest: false, context: () => ({}), onAction: null, who: null, home: '' };
+  const cfg = { stage: null, guest: false, context: () => ({}), onAction: null, who: null, home: '', dock: null, dockHost: null, sugg: null };
   const configure = (o = {}) => {
     if (o.stage) cfg.stage = o.stage;
     if (typeof o.context === 'function') cfg.context = o.context;
@@ -209,7 +209,10 @@ function create(opts) {
     if (o.who !== undefined) cfg.who = o.who;
     if (o.home) cfg.home = o.home;
     if (o.guest !== undefined) cfg.guest = !!o.guest;
-    applyGuest(); drawSugg(); bindStore();
+    if (o.dock !== undefined) cfg.dock = o.dock;           // 'bottom' = 지도 아래 가운데 채팅 창(XI맵 · 10-14 원칙 244) · 없으면 오른쪽 아래 버튼 → 창
+    if (o.dockHost) cfg.dockHost = o.dockHost;
+    if (o.sugg !== undefined) cfg.sugg = o.sugg;           // 화면이 주는 추천 질문(함수 · 배열)
+    applyGuest(); drawSugg(); bindStore(); applyDock();
   };
 
   /* ── 창 ── */
@@ -253,6 +256,8 @@ function create(opts) {
   const ctxNow = () => { try { return cfg.context() || {}; } catch { return {}; } };
   function suggestions() {
     if (cfg.guest) return [];
+    if (typeof cfg.sugg === 'function') { try { const x = cfg.sugg(); if (Array.isArray(x)) return x; } catch { /* 화면 추천이 실패하면 기본 */ } }
+    else if (Array.isArray(cfg.sugg)) return cfg.sugg;
     if (LOC === 'en') return SUGG.en;
     const home = cfg.home || document.body.dataset.home || location.pathname.split('/').filter(Boolean).pop() || '';
     const key = cfg.who?.key || '';
@@ -274,11 +279,45 @@ function create(opts) {
     }
   };
 
+  /* ── 아래 채팅 창(dock 'bottom' · XI맵) — 같은 창 · 같은 대화 · 같은 답 모양을 지도 아래 가운데에. 대화 칸(위) · 추천 질문 · 입력 줄(아래) ──
+     버튼 · 꼬리표 없음 · 대화가 있으면 대화 칸이 입력 줄 위로 펼쳐지고 닫기(×)로 접는다(입력 줄은 늘 보임). */
+  let dlog = null;
+  const dlogo = h('span.k-chat-dlogo', { 'aria-hidden': 'true', text: 'XI' });
+  const syncDock = () => { if (root.dataset.dock) root.toggleAttribute('data-turns', !!log.querySelector('.k-chat-msg.me')); };
+  new MutationObserver(syncDock).observe(log, { childList: true });
+  function applyDock() {
+    const on = cfg.dock === 'bottom' && !cfg.guest;
+    if (on === !!root.dataset.dock) { syncDock(); return; }
+    if (on) {
+      if (!dlog) { dlog = h('div.k-chat-dlog'); log.before(dlog); dlog.append(log, xBtn); }
+      form.prepend(dlogo);
+      root.dataset.dock = 'bottom'; root.dataset.fold = '1';
+      if (cfg.dockHost && root.parentElement !== cfg.dockHost) cfg.dockHost.append(root);
+      box.hidden = false; tag.hidden = true;
+      input.placeholder = S.title; input.setAttribute('aria-label', S.title);
+      input.addEventListener('focus', () => { if (root.dataset.dock) delete root.dataset.fold; });
+    } else {
+      delete root.dataset.dock; delete root.dataset.fold;
+      if (dlog) { dlog.before(log); head.append(xBtn); dlog.remove(); dlog = null; }
+      dlogo.remove();
+      if (root.parentElement !== document.body) document.body.append(root);
+      box.hidden = !store.data.open; applyGuest();
+    }
+    syncDock();
+  }
+
   /* ── 열기 · 닫기 · 단축키 ── */
   /* R3 — 여는 즉시 입력 칸에 초점(다음 프레임을 기다리지 않는다): 연 직후 친 글자가 사라지지 않고, 앞 질문은 선택돼 새 글자로 바뀐다(두 번 붙기 0) */
   let openedAt = 0;
   const open = (q, { focus = true } = {}) => {
     if (cfg.guest) return;                                          // 로그인 전에는 열지 않는다
+    if (root.dataset.dock) {                                        // 아래 채팅 창 — 늘 떠 있다 · 대화 칸만 펼친다
+      if (focus) delete root.dataset.fold;
+      if (q) input.value = q;
+      if (focus) { try { input.focus({ preventScroll: true }); } catch { input.focus(); } input.select(); }
+      requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
+      return;
+    }
     const was = box.hidden;
     if (was) openedAt = Date.now();
     box.hidden = false; root.dataset.open = '1'; fab.setAttribute('aria-expanded', 'true'); tag.hidden = true;
@@ -292,6 +331,7 @@ function create(opts) {
     requestAnimationFrame(() => { if (!box.hidden && document.activeElement !== input) input.focus({ preventScroll: true }); });
   };
   const hide = () => {
+    if (root.dataset.dock) { root.dataset.fold = '1'; return; }    // 아래 채팅 창 — 대화 칸만 접는다(입력 줄은 그대로)
     if (box.hidden) return;
     const inside = box.contains(document.activeElement);
     box.hidden = true; delete root.dataset.open; fab.setAttribute('aria-expanded', 'false'); tag.hidden = false;
@@ -331,9 +371,9 @@ function create(opts) {
   tag.addEventListener('click', () => open());
   xBtn.addEventListener('click', hide);
   addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') { if (cfg.guest) return; e.preventDefault(); box.hidden ? open() : hide(); }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') { if (cfg.guest) return; e.preventDefault(); root.dataset.dock || box.hidden ? open() : hide(); }
     else if (e.key === 'Escape' && !box.hidden && !e.defaultPrevented && !document.querySelector('.k-md-bg')) { e.stopPropagation(); hide(); }
-    else if (!box.hidden && !cfg.guest && e.target !== input && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing
+    else if (!box.hidden && !cfg.guest && !root.dataset.dock && e.target !== input && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing
       && (e.target === document.body || box.contains(e.target) || e.target === fab)
       && !(e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)))) {
       // 열린 창 안(방금 누른 버튼 등)에 초점이 남아 있을 때 친 글자 → 입력 칸으로 넘긴다
@@ -393,6 +433,7 @@ function create(opts) {
     const raw = input.value.trim(); if (!raw) return;
     newTurn(raw);
     live.fresh = true;
+    delete root.dataset.fold;
     box.dataset.state = 'busy';                     // 화면이 가로채 스스로 답하면 화면이 done 으로 바꾼다
     faces('think'); save();
     setTimeout(() => { if (input.value.trim() === raw || input.value.trim().startsWith(raw + '\n')) input.value = ''; }, 40);
@@ -1074,7 +1115,7 @@ function create(opts) {
   }
   let placing = false;
   function place(force = false) {
-    if (placing || !root.isConnected || root.hidden) return;
+    if (placing || !root.isConnected || root.hidden || root.dataset.dock) return;
     if (!force && !box.hidden && !isPhone() && Date.now() - openedAt > 4000) return;   // 열려 있는 동안은 자리를 옮기지 않는다(막 연 4초 — 화면이 서는 동안은 옮긴다)
     placing = true;
     const W = innerWidth, H = innerHeight, phone = isPhone(), gap = phone ? 16 : 24;
@@ -1144,6 +1185,6 @@ function create(opts) {
   function button() { return h('span.k-ck-btn', { hidden: true, 'aria-hidden': 'true' }, h('span')); }
 
   configure(opts);
-  const apiObj = { el: box, open, close, button, renderBlocks, acts, fab };
+  const apiObj = { el: box, open, close, button, renderBlocks, acts, fab, sugg: () => drawSugg() };   // sugg = 화면이 지역을 바꾸면 추천 질문을 다시
   return { api: apiObj, configure };
 }

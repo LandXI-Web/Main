@@ -20,6 +20,7 @@ import { govRail } from '../gov-select/menu.js';                  // 기관 계�
 import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';   // 열자마자 서버에 있는 모든 결과(10-14 XI맵 3차 구조 · 원칙 229 · 237)
 import { NCLS } from './national.js';                            // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게)
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
+import { createDash } from './dash.js';                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -143,7 +144,7 @@ const S = {
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null;
 
 /* ═══ 부팅 ═══ */
 async function boot() {
@@ -201,7 +202,7 @@ async function boot() {
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
-  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready) return; wait?.(); wait = K.untilDrawn(map); }); }
+  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on) return; wait?.(); wait = K.untilDrawn(map); }); }
   try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
@@ -252,9 +253,16 @@ async function boot() {
     pick: pickEmd, regionInfo: () => ({ emds: S.remd, meta: S.remdMeta }) }) : null;
 
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
-    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set) }) });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
+    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set) }),
+    // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
+    dock: 'bottom', dockHost: mainEl, sugg: xiSugg });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
+  if (S.board) DS = createDash({ map, stage, host: mainEl, h,
+    sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
+    onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },
+    onShown: () => cmdk?.close({ force: true }),          // 대시보드가 서면 아래 채팅 창의 대화 칸을 접는다(입력 줄은 그대로 · 누르면 다시 펼침)
+    onLeave: () => { BD?.show(true); HUDKEY = ''; paintBoardHud(); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
-  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task']);
+  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
 
   loadK.set({ progress: 0.85, what: (X.waitFor = r0 ? '지역 결과 요약' : '전국 결과 요약') });
@@ -575,6 +583,7 @@ async function addResultList(items, my) {
 
 /** soft = 사용자가 지도를 직접 확대 · 이동해 들어온 시군구(XI맵 전국 결과 · 바퀴 5) — 카메라는 그대로 두고 지역만 바꾼다(회백 베일 없음 · 경계선만) */
 async function setRegion(r, { first = false, to = null, soft = false } = {}) {
+  queueMicrotask(() => cmdk?.sugg?.());                 // 아래 채팅 창 추천 질문 = 지금 지역
   if (NAT && NAT.id !== 'kr') { NAT.go('kr', { quiet: true }); BD?.show(true); }   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
   S.region = r; S.cond.emd = null; S.sel = null;
   if (!soft) { closeDrawer(); closePop(); ED?.close(); }
@@ -839,7 +848,7 @@ function mountBoard() {
       ED?.live(list.map((x) => x.set));
     },
     onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center), nat: BD.natInfo, hot: BD.hot() }; paintBoardHud(); } });
-  BD.busy = () => !!(AN?.active || S.swipe || ED?.busy);
+  BD.busy = () => !!(AN?.active || S.swipe || ED?.busy || DS?.on);
   BD.nat.onData = () => { if (BD.data) paintBoardHud(); };   // 진행 장부를 다시 읽으면(30초) 합계 · '지금 분석 중' 한 줄을 새로
   S.boardP = BD.load(PRE.board || boardPromise(true), PRE.nat).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
   const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
@@ -848,7 +857,7 @@ function mountBoard() {
   imageryToggle();
   // 객체 누르기(가까이) — 결과 층의 면 · 점 · 전국 결과 객체(줌 11+ · 원칙 243 — 같은 칸 · 같은 동작)
   map.on('click', (e) => {
-    if (!S.board || AN?.active || S.swipe || ED.busy || map.getZoom() < BD.NEAR_Z) return;
+    if (!S.board || AN?.active || S.swipe || ED.busy || DS?.on || map.getZoom() < BD.NEAR_Z) return;
     const lyr = (S.res || []).flatMap((it) => it.ids.filter((l) => /-(fill|pt)$/.test(l))).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none');
     const pad = [[e.point.x - 3, e.point.y - 3], [e.point.x + 3, e.point.y + 3]];
     const f = lyr.length ? map.queryRenderedFeatures(pad, { layers: lyr })[0] : null;
@@ -872,7 +881,7 @@ function mountBoard() {
   map.on('zoomend', (e) => { if (e.originalEvent && PIN && map.getZoom() < PIN.z - 0.8) unpin(); });
   // 손으로 확대 · 이동해 들어온 시군구 = 지금 지역(카메라는 그대로) · 멀리 나오면 전국
   map.on('moveend', () => {
-    if (!S.board || S.flying || NAT?.id && NAT.id !== 'kr' || AN?.running) return;
+    if (!S.board || S.flying || DS?.on || NAT?.id && NAT.id !== 'kr' || AN?.running) return;
     const z = map.getZoom(), c = map.getCenter();
     if (z < 8.2) { unpin(); if (S.region) setRegion(null, { soft: true }); else paintBoardHud(); return; }
     const pt = [c.lng, c.lat];
@@ -990,7 +999,8 @@ function pinAt(lngLat, title, sub, getRows, code = null) {
     el.replaceChildren(...[h('p.xb-pin-n', {}, h('b', { text: title }), sub ? h('small', { text: sub }) : null),
       shown.length ? h('ul.xb-pin-rows', {}, ...shown.map((x) => h('li', {}, h('button', { type: 'button', 'aria-pressed': String(BD.task === x.k), onclick: (e) => { e.stopPropagation(); applyTask(BD.task === x.k ? null : x.k); draw(); } },
         h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(x.n)}${x.unit}` })))))
-        : h('p.xb-pin-p', { text: wait ? '불러오는 중' : '분석 예정' })].filter(Boolean));
+        : h('p.xb-pin-p', { text: wait ? '불러오는 중' : '분석 예정' }),
+      code && S.lx ? h('button.xb-pin-dash', { type: 'button', text: '통계 보기', onclick: (e) => { e.stopPropagation(); ask(`${title} 현황 보여 줘`); } }) : null].filter(Boolean));
   };
   PIN.redraw = draw;
   draw();
@@ -1232,6 +1242,13 @@ async function pickEmd(ll) {
   S.cond.emd = e; renderChips(); searchInput.value = e.nm; refresh();
   return emdFrame(e);
 }
+/** XI ChatGEO 추천 질문(아래 채팅 창) — 지금 지역 이름을 넣은 셋(업무 거르기 · 대시보드 · 실태). 지역 고정값 0 */
+function xiSugg() {
+  if (!S.lx) return null;
+  const r = S.region?.name;
+  return r ? ['비닐하우스만 보여 줘', `${r} 현황 보여 줘`, `${r} 농지 이용 실태 어때?`]
+    : ['비닐하우스만 보여 줘', '전국 분석 얼마나 진행됐어?', '전국 비닐하우스 현황'];
+}
 function ask(q) {
   cmdk.open(q);
   requestAnimationFrame(() => cmdk.el.querySelector('form')?.requestSubmit());
@@ -1276,6 +1293,10 @@ async function regionFromAgent(a) {
     || (a.sgg_cd && await regionByCode(String(a.sgg_cd))) || (a.name && findRegion(a.name)) || null;
 }
 async function agentOp(a) {
+  if (a.op === 'ximap_dash') {                         // XI ChatGEO 대시보드 — 뜻 확인 → 융합 재료 → 화면이 대시보드로(지도는 왼쪽 작은 판)
+    if (!DS) return { ok: false, reason: '이 화면에서는 대시보드를 열 수 없습니다' };
+    return DS.show(a.spec);
+  }
   if (a.op === 'map_task') {                           // XI ChatGEO 업무 거르기 — '○○만 보여 줘' · '원래대로'(말풍선 업무 줄과 같은 길)
     if (!BD?.data) return { ok: false, reason: '전국 결과를 불러오지 못했습니다' };
     if (a.clear) { const was = BD.task; applyTask(null); return was ? true : { ok: true, same: true }; }

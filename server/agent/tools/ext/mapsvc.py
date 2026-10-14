@@ -225,6 +225,13 @@ def ROUTE(msg: str, ctx):
             and not re.search(r"법령|조문|근거\s*조", t) and not re.search(r"실태\s*조사|의심", t):
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
     if c.get("page") == "xi-clean" and getattr(p, "realm", None) == "lx":
+        try:                                             # XI맵 통계 · 현황 · 비교 질문 = 융합 대시보드(dash.py · 10-14 11:02) — 지도 서비스 통계(map_stats)보다 먼저
+            from .dash import ROUTE as _dash
+            d = _dash(t, ctx)
+            if d:
+                return d
+        except Exception:  # noqa: BLE001
+            pass
         k = parse_task(t)
         if k:
             return {"tool": "map_task", "args": k, "intent": "map"}

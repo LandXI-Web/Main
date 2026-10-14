@@ -189,3 +189,31 @@ a.k-ck-file{text-decoration:none}
 .k-chat-note-go{flex:none;min-height:28px;padding:3px 10px;border:0;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 12.5px/1.3 var(--font-body);cursor:pointer}
 .k-chat-note-x{flex:none;width:28px;height:28px;padding:0;border:0;border-radius:var(--r-8);background:none;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .k-chat-note-x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+
+/* ── 아래 채팅 창(dock · XI맵 — 10-14 원칙 244 · 3차 시안 자리 그대로): 지도 아래 가운데 · 대화 칸 → 추천 질문 → 입력 줄(XI · 보내기) ──
+   같은 창 · 같은 답 모양(말풍선 · 계획 줄 · 숫자 칩 · 버튼). 버튼 · 꼬리표 없음. 대화가 없거나 접으면 입력 줄 · 추천 질문만. */
+.k-chat-root[data-dock]{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:30;width:min(680px,calc(100% - 32px));pointer-events:none}
+.k-chat-root[data-dock] > *{pointer-events:auto}
+.k-chat-root[data-dock] .k-chat-fab,.k-chat-root[data-dock] .k-chat-tag{display:none!important}
+.k-chat-root[data-dock] .k-ck.k-chat{position:static;width:100%;max-width:none;height:auto;max-height:none;background:none;box-shadow:none;border-radius:0;overflow:visible;animation:none;gap:8px}
+.k-chat-root[data-dock] .k-chat-h{display:none}
+.k-chat-dlogo{display:none}
+.k-chat-root[data-dock] .k-chat-dlog{position:relative;background:var(--bg-0);border-radius:var(--r-16);box-shadow:var(--elev-map);overflow:hidden;animation:k-chat-in var(--d-380) var(--e-ui)}
+.k-chat-root[data-dock]:not([data-turns]) .k-chat-dlog,.k-chat-root[data-dock][data-fold] .k-chat-dlog{display:none}
+.k-chat-root[data-dock] .k-chat-dlog .k-chat-b{flex:none;max-height:min(44vh,440px);padding:16px 52px 16px 16px}
+.k-chat-root[data-dock] .k-chat-dlog .k-chat-x{position:absolute;top:8px;right:8px;z-index:2;background:var(--bg-1);box-shadow:0 1px 0 rgba(28,31,37,.04)}
+.k-chat-root[data-dock] .k-chat-sugg{justify-content:center;padding:0;background:none;border:0;gap:8px}
+.k-chat-root[data-dock] .k-chat-sugg .k-chat-chip{background:var(--bg-1);box-shadow:var(--elev-map);min-height:34px;padding:6px 14px;font-size:14px}
+.k-chat-root[data-dock] .k-chat-sugg .k-chat-chip:hover{background:var(--bg-0)}
+.k-chat-root[data-dock] .k-chat-note{border-radius:var(--r-16);box-shadow:var(--elev-map)}
+.k-chat-root[data-dock] .k-chat-in{height:56px;padding:0 6px 0 12px;gap:12px;background:var(--bg-1);border:0!important;border-radius:var(--r-16);box-shadow:var(--elev-map)}
+.k-chat-root[data-dock] .k-chat-dlogo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--r-8);background:var(--ai);color:#fff;font:800 12px/1 var(--font-display);letter-spacing:-.02em}
+.k-chat-root[data-dock] .k-chat-in .k-ck-i{flex:1;min-width:0;height:44px;border:0;outline:0;background:none;padding:0;font:500 16px/1 var(--font-body);color:var(--ink)}
+.k-chat-root[data-dock] .k-chat-in .k-ck-i::placeholder{color:var(--sub);font-size:16px}
+.k-chat-root[data-dock] .k-chat-in .k-ck-i:focus{box-shadow:none}
+.k-chat-root[data-dock] .k-chat-in:focus-within{box-shadow:var(--elev-map),0 0 0 2px rgba(0,109,247,.35)}
+.k-chat-root[data-dock] .k-chat-send{width:44px;height:44px}
+@media (max-width:640px){
+  .k-chat-root[data-dock]{bottom:12px;width:calc(100% - 24px)}
+  .k-chat-root[data-dock] .k-chat-sugg{justify-content:flex-start}
+}
