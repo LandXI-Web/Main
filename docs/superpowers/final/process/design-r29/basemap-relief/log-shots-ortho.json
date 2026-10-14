@@ -1,0 +1,156 @@
+[
+ {
+  "file": "namwon-ortho-z150-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:20",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=0&ai=0&z=15.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 정사만(국토지리정보원 · 브이월드 영상)",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade1-z150-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:31",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=1&ai=0&z=15.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 정사 + 입체 약",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade2-z150-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:37",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=2&ai=0&z=15.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 정사 + 입체 중",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade3-z150-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:43",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=3&ai=0&z=15.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 정사 + 입체 강",
+  "errors": []
+ },
+ {
+  "file": "namwon-ortho-z170-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:48",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=0&ai=0&z=17.0&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 가까이 · 정사만",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade2-z170-1440-0901.png",
+  "shot_at": "2026-10-14T09:01:55",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=2&ai=0&z=17.0&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 가까이 · 정사 + 입체 중(건물 둘레 음영)",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade3-z170-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:01",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=3&ai=0&z=17.0&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 가까이 · 정사 + 입체 강",
+  "errors": []
+ },
+ {
+  "file": "namwon-shade2-ai-z166-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:09",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=namwon&base=ortho&shade=2&z=16.6&c=127.3905,35.4105",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "남원 · 정사 + 입체 중 + AI 결과",
+  "errors": []
+ },
+ {
+  "file": "bishkek-ortho-z140-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:15",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=0&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 정사만(Sentinel-2 2025-08-27 · 10 m)",
+  "errors": []
+ },
+ {
+  "file": "bishkek-shade1-z140-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:24",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=1&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 정사 + 입체 약",
+  "errors": []
+ },
+ {
+  "file": "bishkek-shade2-z140-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:30",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=2&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 정사 + 입체 중",
+  "errors": []
+ },
+ {
+  "file": "bishkek-shade3-z140-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:36",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=3&ai=0&z=14.0",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 정사 + 입체 강",
+  "errors": []
+ },
+ {
+  "file": "bishkek-shade2-z166-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:44",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=2&ai=0&z=16.6&c=74.6040,42.8760",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 가까이 · 정사 + 입체 중(10 m 영상 확대)",
+  "errors": []
+ },
+ {
+  "file": "bishkek-shade2-ai-z150-1440-0902.png",
+  "shot_at": "2026-10-14T09:02:53",
+  "url": "https://app.land-xi.dev/landxi/proto/review/mock/basemap-relief/index.html?city=bishkek&base=ortho&shade=2&z=15.0&c=74.5800,42.8920",
+  "viewport": [
+   1440,
+   900
+  ],
+  "note": "비슈케크 · 정사 + 입체 중 + AI 결과(새로 생긴 시가지 · 경작지)",
+  "errors": []
+ }
+]

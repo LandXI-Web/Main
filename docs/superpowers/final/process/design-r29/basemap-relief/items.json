@@ -14,7 +14,10 @@
    "shots/bishkek-now-z150-1440-0825.png"
   ],
   "videos": [],
-  "opts": ["이대로 넓히기", "다시"],
+  "opts": [
+   "이대로 넓히기",
+   "다시"
+  ],
   "where": [
    [
     "landxi/proto/review/mock/basemap-relief/index.html",
@@ -24,5 +27,37 @@
   ],
   "now": "남원 도심 + 둘레(약 6.5 km 사방, 건물 17,231동 · 브이월드 층수) · 비슈케크(약 6 km 사방, 건물 43,663동 · Overture/OSM · 층수 없는 건물은 면적 · 용도로 추정). 지형은 Copernicus 30 m 표고. 남원 위에 서버의 실제 AI 분석 결과(건물 · 경작지 · 비닐하우스 · 주차장), 비슈케크 위에 2017→2025 새로 생긴 시가지. 굽기 CPU 만 · 지역당 4–5분 · 자료 · 비용 0원.",
   "prop": "넓히면: 국내 전체 약 40–60 GB · 30개 병렬로 하룻밤(6–8시간) · 키르기스스탄 약 10–20 GB. 저장 상한 200 GB 제안. 월 1회 바뀐 건물 칸만 다시 굽기. 운영 XI맵엔 바탕 단추 '입체' 하나 추가(z12 아래는 지금 바탕)."
+ },
+ {
+  "id": "XI맵-정사입체",
+  "t": "XI맵 정사 입체 바탕 — 정사영상 위에 지형 음영 · 건물 둘레 음영을 얹어 입체감(기울이기 없음). 강도 약 · 중 · 강 비교, 흰 모형 판은 비교용으로 남김",
+  "mock": true,
+  "shots": [
+   "shots/namwon-ortho-z150-1440-0901.png",
+   "shots/namwon-shade1-z150-1440-0901.png",
+   "shots/namwon-shade2-z150-1440-0901.png",
+   "shots/namwon-shade3-z150-1440-0901.png",
+   "shots/namwon-shade2-z170-1440-0901.png",
+   "shots/namwon-shade2-ai-z166-1440-0902.png",
+   "shots/bishkek-ortho-z140-1440-0902.png",
+   "shots/bishkek-shade1-z140-1440-0902.png",
+   "shots/bishkek-shade2-z140-1440-0902.png",
+   "shots/bishkek-shade3-z140-1440-0902.png",
+   "shots/bishkek-shade2-ai-z150-1440-0902.png"
+  ],
+  "videos": [],
+  "opts": [
+   "이대로 넓히기",
+   "다시"
+  ],
+  "where": [
+   [
+    "landxi/proto/review/mock/basemap-relief/index.html",
+    "시안 · XI맵 입체 베이스(바깥 주소 · 로그인 없음)",
+    "'정사 입체'에서 강도 정사만 · 약 · 중 · 강을 바꿔 보고, AI 결과를 켜 보세요. 흰 모형 · 지금 영상과 비교할 수 있습니다"
+   ]
+  ],
+  "now": "국내(남원)는 국토지리정보원 최신 항공 정사(브이월드 영상 · 약 24 cm), 해외(비슈케크)는 Sentinel-2 10 m(2025-08-27). 그 위에 산 그늘 · 산 밝힘 · 건물 둘레 음영을 투명 조각으로 얹음 — 정사에 실제 그림자가 있어 건물 그림자는 아주 옅게. 추천 강도: 남원 중 · 비슈케크 약~중. 굽기 CPU 만 · 지역당 4–6분.",
+  "prop": "해외에서 무료 · 상업 가능한 고해상(1 m 아래) 연속 정사는 없음 → 해외 바탕은 Sentinel-2 10 m 가 최선. 지금 XI맵 해외 바탕(EOxCloudless)은 비상업 라이선스라 Sentinel-2 직접 모자이크로 바꾸기를 제안. 운영엔 바탕 위 '입체' 켜기/끄기 하나."
  }
 ]

@@ -15,8 +15,9 @@ html,body{margin:0;height:100%;background:#F2F4F6;color:#1C1F25;font-family:Pret
 .bar{position:fixed;left:24px;top:24px;z-index:5;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:#fff;
   box-shadow:0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12)}
 .seg{display:flex;gap:4px;padding:4px;border-radius:8px;background:#F2F4F6}
-.seg button{flex:1;min-width:96px;height:36px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:#727780;font:500 14px/36px Pretendard,sans-serif;cursor:pointer}
+.seg button{flex:1;min-width:64px;white-space:nowrap;height:36px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:#727780;font:500 14px/36px Pretendard,sans-serif;cursor:pointer}
 .seg button[aria-pressed=true]{background:#fff;color:#1C1F25;box-shadow:0 1px 3px rgba(28,31,37,.12)}
+.seg[hidden]{display:none}
 .seg button:focus-visible,.tog:focus-visible{outline:2px solid #006DF7;outline-offset:2px}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:16px;height:36px;padding:0 4px 0 8px;border:0;background:none;color:#1C1F25;font:500 14px/20px Pretendard,sans-serif;cursor:pointer}
 .tog i{position:relative;width:40px;height:24px;border-radius:8px;background:#B0B8C1;transition:background .2s}
@@ -35,7 +36,8 @@ html,body{margin:0;height:100%;background:#F2F4F6;color:#1C1F25;font-family:Pret
 <div id="map" role="region" aria-label="지도"></div>
 <div class="bar">
   <div class="seg" id="city"><button type="button" data-v="namwon" aria-pressed="true">남원</button><button type="button" data-v="bishkek" aria-pressed="false">비슈케크</button></div>
-  <div class="seg" id="base"><button type="button" data-v="relief" aria-pressed="true">새 베이스</button><button type="button" data-v="now" aria-pressed="false">지금 영상</button></div>
+  <div class="seg" id="base"><button type="button" data-v="ortho" aria-pressed="true">정사 입체</button><button type="button" data-v="relief" aria-pressed="false">흰 모형</button><button type="button" data-v="now" aria-pressed="false">지금 영상</button></div>
+  <div class="seg" id="shade"><button type="button" data-v="0" aria-pressed="false">정사만</button><button type="button" data-v="1" aria-pressed="false">약</button><button type="button" data-v="2" aria-pressed="true">중</button><button type="button" data-v="3" aria-pressed="false">강</button></div>
   <button type="button" class="tog" id="ai" aria-pressed="true">AI 결과<i></i></button>
 </div>
 <div class="stamp"><b>시안</b><span id="stampT"></span></div>
@@ -54,13 +56,16 @@ const CLS = {
   cropland:   { ko: '경작지', c: '#7BB342' },
   new_built:  { ko: '새로 생긴 시가지', c: '#0FA9A0', sub: '2017년과 2025년 비교' },
 };
-const S = { city: 'namwon', base: 'relief', ai: true };
+const S = { city: 'namwon', base: 'ortho', shade: '2', ai: true };
+// 입체 강도 — 지형 음영 · 건물 둘레 음영 층의 불투명도(정사 위 곱하기 효과)
+const SHADE = { 0: [0, 0, 0], 1: [0.45, 0.45, 0.35], 2: [0.75, 0.75, 0.6], 3: [1, 1, 0.85] };   // [산 그늘, 산 밝힘, 건물 둘레]
 const pad = (n) => String(n).padStart(2, '0');
 const d = new Date(); document.getElementById('stampT').textContent = `${d.getMonth() + 1}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const colorExpr = ['match', ['get', 'cls_en'], ...Object.entries(CLS).flatMap(([k, v]) => [k, v.c]), '#0FA9A0'];
 
 const ATT_R = { namwon: '건물 © 국토교통부 브이월드 · 도로·하천 © OpenStreetMap 기여자(ODbL) · 표고 © DLR · Airbus(Copernicus)',
                 bishkek: '건물 © Overture Maps(OSM · ODbL 포함) · 도로·하천 © OpenStreetMap 기여자(ODbL) · 표고 © DLR · Airbus(Copernicus) · 결과 10m 토지피복 © Impact Observatory · Esri(CC BY 4.0)' };
+const ATT_B = { namwon: '건물 © 국토교통부 브이월드', bishkek: '건물 © Overture Maps(OSM · ODbL 포함)' };
 const style = {
   version: 8,
   sources: {
@@ -68,6 +73,13 @@ const style = {
     'r-bishkek': { type: 'raster', tiles: [DATA + 'tiles/bishkek/{z}/{x}/{y}.webp?v=3'], tileSize: 256, minzoom: 13, maxzoom: 18, bounds: CITY.bishkek.bbox, attribution: ATT_R.bishkek },
     'now-eox': { type: 'raster', tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg'], tileSize: 256, maxzoom: 13, attribution: 'Sentinel-2 cloudless © EOX(Copernicus)' },
     'now-vw': { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9], attribution: '영상 © 브이월드' },
+    'o-namwon': { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9], attribution: '영상 © 국토지리정보원 · 브이월드' },
+    'o-bishkek': { type: 'raster', tiles: [DATA + 'tiles/bishkek-s2/{z}/{x}/{y}.webp?v=1'], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: CITY.bishkek.bbox, attribution: 'Contains modified Copernicus Sentinel data 2025' },
+    ...Object.fromEntries(['namwon', 'bishkek'].flatMap((c) => [
+      [`sh-${c}-t`, { type: 'raster', tiles: [DATA + `tiles/${c}-shade/terrain/{z}/{x}/{y}.webp?v=2`], tileSize: 256, minzoom: 13, maxzoom: 16, bounds: CITY[c].bbox, attribution: '표고 © DLR · Airbus(Copernicus)' }],
+      [`sh-${c}-l`, { type: 'raster', tiles: [DATA + `tiles/${c}-shade/light/{z}/{x}/{y}.webp?v=2`], tileSize: 256, minzoom: 13, maxzoom: 16, bounds: CITY[c].bbox }],
+      [`sh-${c}-b`, { type: 'raster', tiles: [DATA + `tiles/${c}-shade/bldg/{z}/{x}/{y}.webp?v=2`], tileSize: 256, minzoom: 13, maxzoom: 18, bounds: CITY[c].bbox, attribution: ATT_B[c] }],
+    ])),
     'ai-namwon':  { type: 'geojson', data: DATA + 'overlay/namwon-ai.geojson', generateId: true },
     'ai-bishkek': { type: 'geojson', data: DATA + 'overlay/bishkek-ai.geojson', generateId: true },
   },
@@ -78,6 +90,13 @@ const style = {
     { id: 'r-namwon', type: 'raster', source: 'r-namwon', paint: { 'raster-fade-duration': 150 } },
     { id: 'r-bishkek', type: 'raster', source: 'r-bishkek', paint: { 'raster-fade-duration': 150 } },
     ...['namwon', 'bishkek'].flatMap((c) => [
+      { id: `o-${c}`, type: 'raster', source: `o-${c}`, layout: { visibility: 'none' } },
+      { id: `sh-${c}-t`, type: 'raster', source: `sh-${c}-t`, layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0 } },
+      { id: `sh-${c}-l`, type: 'raster', source: `sh-${c}-l`, layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0 } },
+      { id: `sh-${c}-b`, type: 'raster', source: `sh-${c}-b`, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 0 } },
+    ]),
+    ...['namwon', 'bishkek'].flatMap((c) => [
+      { id: `ai-${c}-c`, type: 'line', source: `ai-${c}`, layout: { visibility: 'none' }, paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 1.6, 18, 4], 'line-opacity': 0.85 } },
       { id: `ai-${c}-f`, type: 'fill', source: `ai-${c}`, paint: { 'fill-color': colorExpr, 'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.62, 0.34] } },
       { id: `ai-${c}-l`, type: 'line', source: `ai-${c}`, paint: { 'line-color': colorExpr, 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.4, 18, 1.4], 'line-opacity': 0.9 } },
     ]),
@@ -92,13 +111,23 @@ window.addEventListener('DOMContentLoaded', () => {
   window.__map = map;
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
   function apply() {
-    const rel = S.base === 'relief';
+    const rel = S.base === 'relief', ort = S.base === 'ortho', now = S.base === 'now', img = !rel;
+    const [ot, ol, ob] = SHADE[S.shade];
     for (const c of ['namwon', 'bishkek']) {
-      vis('r-' + c, rel && S.city === c);
-      vis(`ai-${c}-f`, S.ai && S.city === c); vis(`ai-${c}-l`, S.ai && S.city === c);
+      const on = S.city === c;
+      vis('r-' + c, rel && on);
+      vis('o-' + c, ort && on);
+      for (const [k, v] of [['t', ot], ['l', ol], ['b', ob]]) { vis(`sh-${c}-${k}`, ort && on && v > 0); map.setPaintProperty(`sh-${c}-${k}`, 'raster-opacity', v); }
+      vis(`ai-${c}-c`, S.ai && on && img);
+      vis(`ai-${c}-f`, S.ai && on); vis(`ai-${c}-l`, S.ai && on);
+      // 영상 위에서는 흰 테두리 + 굵은 선 · 채움은 조금 옅게(결과 색이 묻히지 않게)
+      map.setPaintProperty(`ai-${c}-l`, 'line-width', img ? ['interpolate', ['linear'], ['zoom'], 14, 0.9, 18, 2.2] : ['interpolate', ['linear'], ['zoom'], 14, 0.4, 18, 1.4]);
+      map.setPaintProperty(`ai-${c}-l`, 'line-opacity', img ? 1 : 0.9);
+      map.setPaintProperty(`ai-${c}-f`, 'fill-opacity', ['case', ['boolean', ['feature-state', 'hover'], false], img ? 0.6 : 0.62, img ? 0.38 : 0.34]);
     }
-    vis('now-eox', !rel); vis('now-vw', !rel && S.city === 'namwon');
-    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(S[b.parentElement.id] === b.dataset.v)));
+    vis('now-eox', now); vis('now-vw', now && S.city === 'namwon');
+    document.getElementById('shade').hidden = !ort;
+    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(String(S[b.parentElement.id]) === b.dataset.v)));
     document.getElementById('ai').setAttribute('aria-pressed', String(S.ai));
   }
   function fly(c) {
@@ -108,6 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   document.getElementById('city').addEventListener('click', (e) => { const v = e.target.closest('button')?.dataset.v; if (!v || v === S.city) return; S.city = v; fly(v); apply(); });
   document.getElementById('base').addEventListener('click', (e) => { const v = e.target.closest('button')?.dataset.v; if (!v) return; S.base = v; apply(); });
+  document.getElementById('shade').addEventListener('click', (e) => { const v = e.target.closest('button')?.dataset.v; if (!v) return; S.shade = v; apply(); });
   document.getElementById('ai').addEventListener('click', () => { S.ai = !S.ai; apply(); });
   // 결과는 범례 없이 — 가리키면 이름(원칙 233)
   const tip = document.getElementById('tip'); let hov = null;
@@ -126,7 +156,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const q = new URLSearchParams(location.search);
   if (q.get('city') in CITY) S.city = q.get('city');
-  if (q.get('base') === 'now') S.base = 'now';
+  if (['now', 'relief', 'ortho'].includes(q.get('base'))) S.base = q.get('base');
+  if (q.get('shade') in SHADE) S.shade = q.get('shade');
   if (q.get('ai') === '0') S.ai = false;
   map.on('load', () => {
     fly(S.city);
