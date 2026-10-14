@@ -55,7 +55,7 @@
 
 ## 6. 검증
 
-- 서버 시험: agent 515 통과 · tests 64 통과(시간에 민감한 `test_month_sums_read_recorded_tenant` 한 번 실패 → 다시 돌려 통과) → `server-tests.txt`
+- 서버 시험: agent 515 통과 · tests 65 통과(관련 6개 파일 · 앞선 한 번은 시간에 민감한 `test_month_sums_read_recorded_tenant`가 1회 실패 → 다시 돌려 통과) → `server-tests.txt`
 - e2e: gpt3-fix · impl18-gov-main 5 통과(`e2e.txt`)
 - `words.mjs`: 화면 44개 중 43개 금칙어 0. 배포 탭 1건은 위 남은 것 3(`words-check.txt`)
 - `numbers.mjs`: 통과(`numbers-check.txt`)
