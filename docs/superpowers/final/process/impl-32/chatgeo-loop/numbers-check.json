@@ -1,0 +1,155 @@
+{
+ "at": "2026-10-14T05:36:12.768Z",
+ "hosts": {
+  "app": "https://app.land-xi.dev",
+  "admin": "https://admin.land-xi.dev",
+  "gov": "https://namwon.land-xi.dev"
+ },
+ "result": [
+  {
+   "name": "전국 농지 분석 진행",
+   "verdict": "한 화면",
+   "rows": [
+    {
+     "screen": "관리자 대시보드",
+     "value": "9%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 건축물 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "관리자 배포 신청(최근 승인)",
+     "value": null,
+     "note": "신청서 전 기록 — 값 없음"
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 경작·휴경 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "95%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "95%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 곤포사일리지 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "96%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "96%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 비닐하우스 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "관리자 배포 신청(최근 승인)",
+     "value": null,
+     "note": "신청서 전 기록 — 값 없음"
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 주차장 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "관리자 배포 신청(최근 승인)",
+     "value": null,
+     "note": "신청서 전 기록 — 값 없음"
+    }
+   ]
+  },
+  {
+   "name": "AI 분석 결과 · 경작·휴경 분석서비스 · 남원시",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 자세히",
+     "value": "2,098필지",
+     "note": ""
+    },
+    {
+     "screen": "기관 내 서비스(namwon)",
+     "value": "2,098",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "서비스 수(결과를 낸 서비스)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "메인 · 분석 결과 제공",
+     "value": "7가지",
+     "note": ""
+    },
+    {
+     "screen": "XI맵 전국 결과",
+     "value": "7가지",
+     "note": ""
+    }
+   ]
+  }
+ ],
+ "localCalls": [],
+ "left203": [],
+ "warns": [
+  "기다린 칸이 안 보임: table tbody tr · https://app.land-xi.dev/landxi/v3/lx-project/?scope=mine",
+  "기다린 칸이 안 보임: figure.stat[data-metric] · https://admin.land-xi.dev/landxi/v3/ops-infra/#/tenants"
+ ],
+ "fail": false
+}

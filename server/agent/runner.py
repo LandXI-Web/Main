@@ -827,6 +827,9 @@ async def ext_route(ctx: Ctx, msg: str) -> dict | None:
             ctx.state.setdefault("route_errors", []).append(f"{mod}: {type(e).__name__}")
             continue
         if isinstance(hit, dict) and hit.get("tool") in registry.SPECS and registry.allowed(hit["tool"], ctx.principal):
+            if not _tool_open(ctx, hit["tool"]):            # 정기 개선 바퀴 판(원칙 249) — 승인 전 새 도구는 시험 질문에만
+                ctx.state.setdefault("route_skipped", []).append(f"{mod}:{hit['tool']}:release")
+                continue
             if lookup and hit["tool"] in registry.CONFIRM:
                 ctx.state.setdefault("route_skipped", []).append(f"{mod}:{hit['tool']}")
                 continue
@@ -840,6 +843,34 @@ async def ext_route(ctx: Ctx, msg: str) -> dict | None:
     if hit:
         return hit
     return await tenant_run_route(ctx, msg)
+
+
+def is_test(ctx: Ctx) -> bool:
+    """시험 · 점검 질문(답 번호 run_test…) — 개선 고리가 모으지 않고, 승인 전 판의 규칙 · 도구를 쓴다(개선 바퀴 '잰다')."""
+    return str(getattr(ctx, "run_id", "") or "").startswith("run_test")
+
+
+def _tool_open(ctx: Ctx, name: str) -> bool:
+    try:
+        from landxi_api import improve as _improve
+        return _improve.tool_open(name, is_test(ctx))
+    except Exception:  # noqa: BLE001
+        return True
+
+
+async def example_line(ctx: Ctx, msg: str) -> str:
+    """예시 질문 붙이기(정기 개선 바퀴 (b) · 원칙 249) — 비슷한 예시 질문 · 도구 호출 짝(셋까지)을 길잡이 앞에 한 단락으로. 없으면 ''."""
+    try:
+        from landxi_api import improve as _improve
+        ex = await _improve.examples_for(msg, test=is_test(ctx))
+    except Exception:  # noqa: BLE001
+        return ""
+    ex = [e for e in ex if e.get("tool") in registry.SPECS and registry.allowed(e["tool"], ctx.principal) and _tool_open(ctx, e["tool"])]
+    if not ex:
+        return ""
+    ctx.state["examples"] = [e["id"] for e in ex]
+    rows = [f"- '{e['q']}' → {e['tool']}({json.dumps(e['args'], ensure_ascii=False)})" for e in ex]
+    return "\n\n비슷한 질문의 예(이 플랫폼에서 확인된 짝 — 같은 뜻이면 같은 도구를 쓴다):\n" + "\n".join(rows)
 
 
 async def reject(ctx: Ctx, category: str, message: str, scr: dict, region=None, event_error: str = "out_of_scope"):
@@ -876,7 +907,7 @@ async def execute(ctx: Ctx, message: str):
     ctx.state["msg_asked"] = msg                      # 사용자가 쓴 말 그대로(개선 고리가 모으는 말)
     try:                                              # 개선 후보 '채택 — 바로 반영'(원칙 197): 다른 이름 · 질문 뜻 연결 → 다음 질문부터 알아듣는다
         from landxi_api import improve as _improve
-        msg, used = await _improve.rewrite(msg)
+        msg, used = await _improve.rewrite(msg, test=is_test(ctx))
         if used:
             ctx.state["rules"] = used
     except Exception:  # noqa: BLE001
@@ -926,7 +957,10 @@ async def execute(ctx: Ctx, message: str):
         return
     small = route["intent"] == "smalltalk" and backends.rule_classify(msg) == "smalltalk" and not (ctx.lang == "en" and MAPWORD_EN.search(msg))
     tools = registry.tools_for(p) if not small else None
-    messages = [{"role": "system", "content": sys_prompt(ctx)},
+    if tools:                                         # 정기 개선 바퀴 판(원칙 249) — 승인 전 새 도구는 시험 질문에만 · 거절 · 되돌린 판의 도구는 내놓지 않는다
+        tools = [t for t in tools if _tool_open(ctx, ((t.get("function") or {}).get("name") or t.get("name") or ""))]
+    ex_line = await example_line(ctx, msg) if not small else ""
+    messages = [{"role": "system", "content": sys_prompt(ctx) + ex_line},
                 {"role": "user", "content": context_line(ctx.context, route["intent"]) + "\n\n" + msg}]
     first_ms, last_res, plan_sent, i = None, None, False, 0
     fallbacks: list[dict] = []

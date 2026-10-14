@@ -1,0 +1,14 @@
+{
+ "note": "XI ChatGEO 개선 바퀴 1회차 — 고칠 것(서버 API 로 · by 시스템 · 새 판에 묶음 · 승인 전에는 시험 질문에만 적용)",
+ "tools": ["result_files", "platform_about"],
+ "fixes": [
+  {"item": "ic_121a5fc58faa", "how": "a", "body": {"use": "suggest"}, "why": "시스템 제안 그대로(이대로 반영) — 한도 질문에 다음 할 일 한 줄"},
+  {"item": "ic_45aa5c492fbf", "how": "a", "body": {"mode": "phrase", "src": "해안 쓰레기 몇 곳", "text": "해안 쓰레기는 AI 분석 결과가 있는 지역에서만 셉니다 — 결과가 있는 서비스는 '결과 요약해 줘'로 볼 수 있습니다"}, "why": "결과 없는 지역에서 '데이터가 없습니다'로 끝남 — 다음 할 일 한 줄"},
+  {"item": "ic_fe5a56a83bf8", "how": "a", "body": {"mode": "intent", "src": "비닐하우스만 보기", "dst": "비닐하우스만 보여 줘"}, "why": "XI맵 업무 거르기는 '보여 줘'만 알아들음 — 같은 뜻으로 연결"},
+  {"item": "ic_44b68abc9a21", "how": "a", "body": {"mode": "intent", "src": "허가 없이 지은 건물에 물리는 이행강제금은 얼마", "dst": "무허가 건축물 이행강제금 조문 알려줘"}, "why": "풀어 쓴 법령 질문 — 본 조문(건축법 제80조)으로 바로 찾게"},
+  {"item": "ic_bfc3c456e0b8", "how": "d", "body": {"mode": "tool", "how": "새 도구 '결과 파일 내려받기'(지도 서비스 층 내려받기와 같은 길)"}, "why": "도구 없음"},
+  {"item": "ic_e3cfcdd0b428", "how": "d", "body": {"mode": "tool", "how": "새 도구 'Land-XI 소개'"}, "why": "도구 없음 — 법령 찾기로 가서 '법령 데이터에 없습니다'"},
+  {"item": "ic_56cf212c3cbd", "how": "collect", "body": {"mode": "collect"}, "why": "지도 바탕 흑백 — 화면 기능이 있어야 풀림(꼬리표 '화면 기능 필요')"}
+ ],
+ "notify_also": ["ic_0401d5b9ebe6", "ic_376b0f69e552"]
+}

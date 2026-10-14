@@ -47,7 +47,11 @@ function decided(x, admin) {
   const st = x.state;
   const chip = (t, lv) => `<span class="t-chip im-st"${lv ? ` data-lv="${lv}"` : ''}>${esc(t)}</span>`;
   let line = '', acts = '';
-  if (st === 'adopted' && x.adopt?.quick) {
+  if (st === 'adopted' && x.adopt?.release) {
+    // 정기 개선 바퀴 판에 묶인 줄(원칙 249) — 판이 승인되면 다음 질문부터 · 물었던 사람에게 '이제 됩니다'
+    const rl = x.adopt.release;
+    line = `${chip(`새 판 ${rl.seq} · ${x.adopt.mode_label}`, rl.state === 'pending' ? 'wait' : '')}<small>${rl.state === 'approved' ? '<b>반영됨 — 다시 물어보세요</b>' : esc(rl.state_label)}</small>`;
+  } else if (st === 'adopted' && x.adopt?.quick) {
     // 바로 반영(원칙 197) — 표 한 줄로 다음 질문부터 · 되돌리기
     const r = x.adopt.rule || {};
     const what = x.adopt.mode === 'alias' ? `'${r.src}'도 '${r.dst}'로 알아듣습니다` : x.adopt.mode === 'intent' ? `'${r.src}' → '${r.dst}'로 알아듣습니다` : `답에 "${r.text || ''}"`;
@@ -106,12 +110,42 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
   root.append(h('div.im-top', {}, sumEl, filt), box, foot);
 
   const hold = (o) => { const x = h('div'); box.replaceChildren(x); empty(x, o); };
+  const relEl = h('section.t-card.im-rel', { hidden: true, 'aria-label': '새 판' });
+  if (admin) sumEl.parentElement.after(relEl);
   async function load({ quiet = false } = {}) {
     if (!st.data && !quiet) hold({ kind: 'loading', compact: true });
     try { st.data = await api('/improve/items'); }
     catch (e) { if (!st.data) hold({ kind: 'error', compact: true, onRetry: () => load() }); return; }
     onCount?.(st.data.counts?.new ?? 0, st.data);
+    if (admin) { try { st.rel = (await api('/improve/releases')).items || []; } catch { st.rel = st.rel || []; } }
     paint();
+  }
+
+  /* 새 판(정기 개선 바퀴 · 원칙 249) — 승인 요청 판 한 줄(승인 · 거절) · 없으면 가장 최근 승인 판 한 줄(되돌리기) */
+  function paintRel() {
+    const list = st.rel || [];
+    const r = list.find((x) => x.state === 'pending') || list.find((x) => x.state === 'approved');
+    relEl.hidden = !r;
+    if (!r) { relEl.innerHTML = ''; return; }
+    const c = r.counts || {}, b = c.before || {}, a = c.after || {};
+    const ok = (x) => (x['답함'] || 0) + (x['안내함'] || 0);
+    const pend = r.state === 'pending';
+    relEl.dataset.state = r.state;
+    relEl.innerHTML = `<p class="im-rel-t"><b>새 판 ${esc(r.seq)}</b><span>질문 <b class="num" data-metric="개선된 질문" data-v="${val(r.better) ?? ''}">${cnt(r.better)}</b>개 개선</span>
+        <span class="t-chip im-st"${pend ? ' data-lv="wait"' : ''}>${esc(pend ? '승인 요청' : '승인')}</span></p>
+      <p class="im-rel-s">답한 질문 ${nf(ok(b))} → ${nf(ok(a))} / ${nf(a.total || 0)} · 나빠진 질문 ${cnt(r.worse)}${r.md ? ` · ${esc(r.md)}` : ''}</p>
+      <div class="im-acts">${pend ? '<button class="t-btn im-b" type="button" data-r="approve">승인</button><button class="t-btn t-btn--2 im-b" type="button" data-r="reject">거절</button>'
+        : '<button class="t-btn t-btn--2 im-b" type="button" data-r="revert">되돌리기</button>'}</div>`;
+    relEl.querySelectorAll('button[data-r]').forEach((bt) => bt.addEventListener('click', async () => {
+      const act = bt.dataset.r;
+      bt.disabled = true;
+      try {
+        const j = await api(`/improve/releases/${encodeURIComponent(r.id)}/${act}`, { method: 'POST', body: {} });
+        toast(act === 'approve' ? (val(j.sent) ? `승인했습니다 — ${nf(val(j.sent))}명에게 '이제 됩니다'를 보냈습니다` : '승인했습니다 — 다음 질문부터 적용됩니다')
+          : act === 'reject' ? '거절했습니다' : '되돌렸습니다 — 다음 질문부터 예전처럼 답합니다');
+        await load({ quiet: true });
+      } catch (err) { toast(err?.message || '지금은 바꿀 수 없습니다'); bt.disabled = false; }
+    }));
   }
 
   function paintTop() {
@@ -139,6 +173,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
   function paint() {
     if (!st.data) return;
     paintTop();
+    if (admin) paintRel();
     const all = st.data.items || [];
     foot.innerHTML = `<span>'다시 물음 · 도움 안 됨' — 10-01 점검에서 온 줄은 세지 않아 비워 둡니다(—)</span><span>시스템 제안 — 이대로 반영은 다음 질문부터(되돌리기 있음) · XI ChatGEO 로 바로 안 되는 질문은 모아 두기(다음 개선 때 평가 질문)</span>`;
     if (!all.length) { hold({ kind: 'first', title: '아직 막힌 요청이 없습니다', compact: true }); return; }

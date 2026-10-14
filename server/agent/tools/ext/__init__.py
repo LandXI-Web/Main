@@ -11,6 +11,7 @@
   GUARD_PASS : re.Pattern(선택) — 이 문장은 '해당 지역 데이터가 없습니다' 가드를 건너뛴다(관할 밖 가드는 그대로)
   PREPARE  : dict[name → (args, ctx) → args](선택 · 확인 카드 전에 인자 해석 · sync/async)
   CONTRACT : dict[name → (None, method, path)](선택 · 계약 경로가 있으면)
+  GATED    : set(선택) — XI ChatGEO 정기 개선 바퀴(원칙 249)에서 더한 도구. 판이 승인되기 전에는 시험 질문에만 길이 열린다(landxi_api.improve.tool_open)
 모듈 하나가 불러오기에 실패해도 서버는 뜬다(경고만). 같은 이름이 겹치면 먼저 불린 것(기본 도구 → 파일 이름순)이 이기고 경고를 남긴다.
 시험용 모듈은 환경 변수 LX_AGENT_EXT_EXTRA(쉼표 목록 · 모듈 경로)로만 더한다.
 """
@@ -34,6 +35,7 @@ SAY: dict[str, str] = {}
 HINTS: list[str] = []
 ROUTES: list[tuple[str, Callable]] = []
 GUARD_PASS: list[re.Pattern] = []
+GATED: set[str] = set()                   # 정기 개선 바퀴 판으로만 여는 도구(원칙 249)
 PREPARE: dict[str, Callable] = {}
 WARNINGS: list[str] = []
 _STATE = {"done": False}
@@ -103,6 +105,7 @@ def _merge(short: str, m, registry, from_contract) -> list[str]:
     route = getattr(m, "ROUTE", None)
     if callable(route):
         ROUTES.append((short, route))
+    GATED.update(x for x in (getattr(m, "GATED", None) or ()) if x in got)
     gp = getattr(m, "GUARD_PASS", None)
     if isinstance(gp, re.Pattern):
         GUARD_PASS.append(gp)
@@ -145,6 +148,7 @@ def unload(registry, from_contract):
         d.clear()
     for lst in (HINTS, ROUTES, GUARD_PASS, WARNINGS):
         lst.clear()
+    GATED.clear()
     _STATE["done"] = False
 
 

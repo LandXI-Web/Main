@@ -142,3 +142,11 @@
 .im-ev button b{margin-left:2px;font:600 14px/21px var(--font-num)}
 .im-ev button:disabled{color:var(--sub);text-decoration:none;cursor:default}
 .im-tag{height:24px;margin-left:8px;font-size:12px;white-space:nowrap;color:var(--sub)}
+
+/* 새 판(정기 개선 바퀴 · 원칙 249) — 요약 칸 아래 한 줄 · 승인 · 거절 */
+.im-rel{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+.im-rel[hidden]{display:none}
+.im-rel-t{margin:0;display:flex;align-items:center;gap:10px;font:500 15px/22px var(--font-body);color:var(--ink)}
+.im-rel-t b.num{font:600 15px/22px var(--font-num)}
+.im-rel-s{margin:0;flex:1 1 240px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.im-rel .im-acts{margin:0}
