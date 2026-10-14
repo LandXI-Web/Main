@@ -39,7 +39,7 @@ HINT = ("보고서 초안 요청은 report_draft 를 한 번 부른다(지역은
 ASK = re.compile(r"보고서|공문|협조\s*요청|시행문|report|letter", re.I)
 LETTER = re.compile(r"공문|협조\s*요청|시행문|official\s+letter|\bletter\b", re.I)
 DRAFT = re.compile(r"초안|써\s*줘|써줘|작성|만들어|뽑아|draft|write", re.I)
-RULE_WORDS = {"R1": r"무허가|불법\s*건축", "R2": r"휴경", "R3": r"비닐하우스", "R4": r"주차장", "R5": r"산지|임야|개간", "R6": r"공공용지|도로|구거|하천"}
+RULE_WORDS = {"R1": r"무허가|불법\s*건축|(?<!대장 )(?<!대장)농지\s*위\s*건물", "R2": r"휴경", "R3": r"비닐하우스", "R4": r"주차장", "R5": r"산지|임야|개간", "R6": r"공공용지|도로|구거|하천"}
 NO_DATA = "해당 지역 데이터가 없습니다"
 NOT_TENANT = "이 기관의 데이터가 아닙니다"
 

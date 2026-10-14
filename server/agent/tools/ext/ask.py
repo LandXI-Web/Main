@@ -231,6 +231,11 @@ HANDLERS.update({"ai_count": ai_count, "survey_count": survey_count, "survey_com
 GAP_RX = re.compile(r"(대장|지목).{0,14}(논|밭|답|전|과수원|농지).{0,24}비닐\s*하우스|비닐\s*하우스.{0,14}(대장|지목).{0,10}(논|밭|농지)")
 
 
+# 규칙 한 가지 · 읍면동을 말한 건수 질문은 직행하지 않는다(시군구 전체 숫자로 답하지 않게 — 모델이 survey_stats 에 규칙 · 읍면동을 싣는다 · 10-14 재검수)
+NARROW_RX = re.compile(r"무허가|불법\s*건축|(?<!대장 )(?<!대장)농지\s*위\s*건물|휴경|비닐하우스|주차장|임야|개간|공공용지|구거|하천"
+                       r"|[가-힣]{2,6}(?:읍|면|동)(?=\s|$|[의에은는이가을를서])")
+
+
 async def ROUTE(msg: str, ctx):
     """숫자 질문 · 두 지역 비교 · 지역 없는 '이 지역 결과 요약' — 맞으면 위 도구로 바로(모델 0)."""
     from ... import talk
@@ -242,6 +247,8 @@ async def ROUTE(msg: str, ctx):
     groups = talk.regions_in(t)
     named = [talk.pick(ctx, g)[0] for g in groups]
     has_field, has_sus = bool(FIELD_RX.search(t)), bool(SUS_RX.search(t))
+    if (has_field or has_sus) and NARROW_RX.search(t):
+        return None
     # 두 지역 비교(같은 이름의 숫자끼리)
     if len(named) == 2 and CMP_RX.search(t) and (has_field or has_sus or re.search(r"필지|건수|몇", t)) and not re.search(r"영상|시점|대장", t):
         return {"tool": "survey_compare", "args": {"regions": [r["sgg_cd"] for r in named], "name": "field_check" if has_field and not has_sus else "suspects"}}

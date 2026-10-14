@@ -1,6 +1,6 @@
-# R1 무허가 건축 의심 — 임계는 모두 [추정 초기값](법령 기준 아님 · 현장조사로 보정). 원천: 02. 데이터/_scripts/survey/s3_survey.py TH
+# R1 농지 위 건물(옛 이름 무허가 건축 의심 — 화면 금칙어 · 10-14 통일) — 임계는 모두 [추정 초기값](법령 기준 아님 · 현장조사로 보정). 원천: 02. 데이터/_scripts/survey/s3_survey.py TH
 id: R1
-name: 무허가 건축 의심
+name: 농지 위 건물
 condition: "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ {R1_bld_m2:.0f}㎡"
 jimok: [전, 답, 과]
 thresholds: {R1_bld_m2: 33.0}

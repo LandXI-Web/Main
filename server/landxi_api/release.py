@@ -973,6 +973,8 @@ async def usage(request: Request):
         rq.setdefault((x["tenant_id"], x["card_id"]), []).append(x)
     ms = _month_start()
     rows, totals = [], []
+    from .ops import tenants_usage              # 기관 사용량 = LX 관리자 사용 현황과 같은 한 출처(미리 세어 둔 값 · 10-14 재검수)
+    U = {x["tenant_id"]: x for x in (await tenants_usage())["items"]}
     for o in orgs:
         mine = eff[o["id"]]
         n_runs = 0
@@ -995,7 +997,7 @@ async def usage(request: Request):
                          "lx_last": _iso(last_lx),
                          "org_runs": env(len(rs), "count", "recorded", "기관이 요청한 분석(분석 요청)"),
                          "org_wait": env(wait, "count", "recorded", "기관 분석 요청 중 처리 전"), "org_last": _iso(last_rq), "last": _iso(last)})
-        u = await usage_of(o["id"])
+        u = U.get(o["id"]) or await usage_of(o["id"])
         d = u.get("dims") or {}
         totals.append({"org": {"id": o["id"], "name": o["name"], "word": o["word"]}, "services": env(len(mine), "count", "recorded", "공유된 서비스"),
                        "runs": env(n_runs, "count", "recorded", "LX가 돌린 분석 + 기관이 요청한 분석(공유된 서비스)"), "last": _iso(last_o),

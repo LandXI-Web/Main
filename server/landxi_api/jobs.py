@@ -1100,8 +1100,9 @@ async def submit(body: dict, request: Request):
 
 @router.get("/jobs")
 async def list_jobs(request: Request, state: str | None = None, tenant_id: str | None = None, limit: int = 50, include_test: int | None = None,
-                    kind: str | None = None, since: str | None = None):
-    """pytest·시험 작업(test=true)은 기본 제외(관제·콘솔 목록 · S-9 시드 정리) — include_test=1 이면 포함.
+                    kind: str | None = None, since: str | None = None, geom: int = 1):
+    """geom=0 → 작업 범위(aoi) 도형을 빼고 준다(목록 · 건수만 쓰는 화면 — 500건이면 도형이 6 MB · 10-14 재검수).
+    pytest·시험 작업(test=true)은 기본 제외(관제·콘솔 목록 · S-9 시드 정리) — include_test=1 이면 포함.
     ?since=YYYY-MM-DD[THH:MM] → 그 뒤 작업만 + 기간 전체 건수(count · 목록 상한 500 과 무관 · ops-infra 요청)."""
     p = require(principal(request))
     since_ts = None
@@ -1119,7 +1120,14 @@ async def list_jobs(request: Request, state: str | None = None, tenant_id: str |
     async with db(p) as conn:
         rows = await conn.fetch(f"SELECT {JOB_COLS} FROM jobs WHERE {where} ORDER BY created_at DESC LIMIT {max(1, min(limit, 500))}", *args)
         n_all = await conn.fetchval(f"SELECT count(*) FROM jobs WHERE {where}", *args) if since_ts else None
-    items = [await job_dict(x, await r.hgetall(f"job:{x['id']}")) for x in rows]
+    pipe = r.pipeline(transaction=False)               # 작업마다 따로 묻지 않고 한 번에(500건 · 10-14 재검수)
+    for x in rows:
+        pipe.hgetall(f"job:{x['id']}")
+    lives = await pipe.execute() if rows else []
+    items = [await job_dict(x, lv) for x, lv in zip(rows, lives)]
+    if not geom:
+        for it in items:
+            it.pop("aoi", None)
     out = {"items": items, "total": len(items), "as_of": now_iso()}
     if since_ts:
         out["since"] = since_ts.isoformat(timespec="seconds")

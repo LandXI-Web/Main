@@ -1,0 +1,93 @@
+
+Running 8 tests using 3 workers
+
+[1/8] tests\e2e\gpt3-fix.spec.mjs:15:3 › GPT3 외부 검수 보완 — 기관 화면 › GPT3-1 분석 요청 — 올리기 칸 0 · LX 영상 하나 고르기 · 촬영 요청은 그대로
+[2/8] tests\e2e\impl18-gov-main.spec.mjs:15:3 › 구현 18차 — 기관 보고서 · 행정정보와 비교 · 메인 실적 › 기관 보고서 탭 — 서비스 · 읍면동 · 개요 · 지도 그림 · 읍면동 표 · 대장 칸 · 합계 = 대시보드
+[3/8] tests\e2e\f1c-tenants-quota.spec.mjs:20:1 › 6기관 · 링 6 · 격리 4 · 한도 [추정 기반 초기값] · 사용 봉투
+[4/8] tests\e2e\gpt3-fix.spec.mjs:39:3 › GPT3 외부 검수 보완 — 기관 화면 › GPT3-2 경작·휴경 필지 목록 — 그 서비스 결과만 · 대시보드와 같은 수 · 의심 0 · 행 → 상세
+  1) tests\e2e\f1c-tenants-quota.spec.mjs:20:1 › 6기관 · 링 6 · 격리 4 · 한도 [추정 기반 초기값] · 사용 봉투 ─────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.tn-item')
+    Expected: 6
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 5000ms
+      - waiting for locator('.tn-item')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      22 |   await admin(page); await page.goto(OPS + '/landxi/ops/tenants.html?t=namwon');
+      23 |   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
+    > 24 |   await expect(page.locator('.tn-item')).toHaveCount(6);
+         |                                          ^
+      25 |   for (const id of ['lx', 'namwon', 'gwangju-jeonnam', 'kgz-agri', 'kgz-land', 'lx-demo']) await expect(page.locator(`.tn-item[data-t="${id}"]`)).toHaveCount(1);
+      26 |   await expect(page.locator('.tn-ring')).toHaveCount(8);   // F2-C: + LLM 토큰/월 · 에이전트 실행/일
+      27 |   await expect(page.locator('.tn-iso .og-tag')).toHaveCount(4);
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1c-tenants-quota.spec.mjs:24:42
+
+    Error Context: test-results\f1c-tenants-quota-6기관-·-링-6-·-격리-4-·-한도-추정-기반-초기값-·-사용-봉투\error-context.md
+
+    Error Context: test-results\f1c-tenants-quota-6기관-·-링-6-·-격리-4-·-한도-추정-기반-초기값-·-사용-봉투\error-context.md
+
+
+[5/8] tests\e2e\f1c-tenants-quota.spec.mjs:35:1 › 슬라이더 → 링 여유 구간 500 · hard 를 월말 예측 아래로 → 초과 예상 [추정] 고스트 → 사유 없이 저장 거부 → 사유와 저장 → approvals 행
+[6/8] tests\e2e\impl18-gov-main.spec.mjs:43:3 › 구현 18차 — 기관 보고서 · 행정정보와 비교 · 메인 실적 › 행정정보와 비교 — 다른 필지 = 두 줄 합 · 표 · 내려받기 · 보고서에 넣기 · /survey/* 0
+[7/8] tests\e2e\impl18-gov-main.spec.mjs:68:3 › 구현 18차 — 기관 보고서 · 행정정보와 비교 · 메인 실적 › 메인 — ch5 시군구 n곳(점 n개) · 서비스 · 운영 기관 · ch4 행정 업무에 맞춘 GeoAI 분석서비스
+  2) tests\e2e\f1c-tenants-quota.spec.mjs:35:1 › 슬라이더 → 링 여유 구간 500 · hard 를 월말 예측 아래로 → 초과 예상 [추정] 고스트 → 사유 없이 저장 거부 → 사유와 저장 → approvals 행 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.tn-edit input[type=range]').nth(1)
+
+
+      37 |   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
+      38 |   const ring = page.locator('.tn-ring[data-dim="gpu_s_month"]');
+    > 39 |   const setRange = (i, v) => page.locator('.tn-edit input[type=range]').nth(i).evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }, v);
+         |                                                                                ^
+      40 |   await setRange(1, '1000'); await setRange(0, '800');
+      41 |   const durs = await ring.locator('circle.rg-seg').evaluateAll((cs) => cs.flatMap((c) => c.getAnimations().map((a) => a.effect.getTiming().duration)));
+      42 |   expect(durs.length).toBeGreaterThan(0); for (const d of durs) expect([500, 120]).toContain(d);
+        at setRange (E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1c-tenants-quota.spec.mjs:39:80)
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1c-tenants-quota.spec.mjs:40:9
+
+    Error Context: test-results\f1c-tenants-quota-슬라이더-→-링-d6c5f-장-거부-→-사유와-저장-→-approvals-행\error-context.md
+
+    Error Context: test-results\f1c-tenants-quota-슬라이더-→-링-d6c5f-장-거부-→-사유와-저장-→-approvals-행\error-context.md
+
+
+[8/8] tests\e2e\f1c-tenants-quota.spec.mjs:53:1 › usage.delta → lx gpu_s 막대·숫자가 따라온다
+  3) tests\e2e\f1c-tenants-quota.spec.mjs:53:1 › usage.delta → lx gpu_s 막대·숫자가 따라온다 ────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.textContent: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.tn-item[data-t="lx"] [data-k="gpu"]')
+
+
+      55 |   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
+      56 |   const num = page.locator('.tn-item[data-t="lx"] [data-k="gpu"]');
+    > 57 |   const before = await num.textContent();
+         |                            ^
+      58 |   const { job } = await (await fetch(B + '/api/v1/jobs', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + s.token }, body: JSON.stringify({ kind: 'infer', model_id: 'car_v2_obb', aoi: { type: 'Polygon', coordinates: [[[126.944, 35.995], [126.949, 35.995], [126.949, 35.999], [126.944, 35.995]]] } }) })).json();
+      59 |   await fetch(B + '/worker/claim', { method: 'POST', body: '{"pool":"a6000"}', headers: { 'content-type': 'application/json' } });
+      60 |   await wk('job.started', { job_id: job.id, workers: ['a6000-0'], shards_total: 2 });
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1c-tenants-quota.spec.mjs:57:28
+
+    Error Context: test-results\f1c-tenants-quota-usage-delta-→-lx-gpu-s-막대·숫자가-따라온다\error-context.md
+
+    Error Context: test-results\f1c-tenants-quota-usage-delta-→-lx-gpu-s-막대·숫자가-따라온다\error-context.md
+
+
+  3 failed
+    tests\e2e\f1c-tenants-quota.spec.mjs:20:1 › 6기관 · 링 6 · 격리 4 · 한도 [추정 기반 초기값] · 사용 봉투 ──────────
+    tests\e2e\f1c-tenants-quota.spec.mjs:35:1 › 슬라이더 → 링 여유 구간 500 · hard 를 월말 예측 아래로 → 초과 예상 [추정] 고스트 → 사유 없이 저장 거부 → 사유와 저장 → approvals 행 
+    tests\e2e\f1c-tenants-quota.spec.mjs:53:1 › usage.delta → lx gpu_s 막대·숫자가 따라온다 ─────────────────
+  5 passed (1.2m)

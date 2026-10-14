@@ -8,7 +8,7 @@
    #/deploys/improve  개선 후보(16차 개선-1 · 그대로 둔다).
    #/deploys/api      API — 외부 연동 API 키(API 3차: 신청 시스템 × 분석 서비스 · 기관 공유와 따로 · 원칙 178 · 184 · apikeys.js). 사용 현황 표에 'API 호출' 열(원칙 160).
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
-import { toast, h, api, nf, drawer } from './kit.js';
+import { toast, h, api, nf, drawer, empty, during } from './kit.js';
 import { API } from '../../../shared/api-v1.js';   // 대표 그림 주소(게이트웨이 파일)
 import { improveBoard } from './improve.js';
 import { apiKeysPane } from './apikeys.js';   // 배포 → API(외부 연동 API 키 · 원칙 178)
@@ -219,9 +219,11 @@ export function mountRelease(root) {
   /* ── 사용 현황 ─────────────────────────── */
   let U = null, orgPick = '', AU = {};
   async function paintUsage() {
-    try { U = await api('/release/usage'); } catch (e) { panes.usage.replaceChildren(h('p.rv-empty', { text: e.message || '사용 현황을 불러오지 못했습니다' })); return; }
+    if (!U) { const x = h('div'); panes.usage.replaceChildren(x); empty(x, { kind: 'loading', compact: true }); }   // 첫 도착 전 빈 화면 대신 '불러오는 중'(원칙 212)
+    const au = api('/apikeys/usage').catch(() => null);   // 두 값을 함께 부른다
+    try { U = await during(api('/release/usage')); } catch (e) { panes.usage.replaceChildren(h('p.rv-empty', { text: e.message || '사용 현황을 불러오지 못했습니다' })); return; }
     AU = {};                              // API 호출(이번 달 · 시험 키 제외) — 같은 기관 × 서비스 줄에 열 하나(원칙 160)
-    try { for (const x of (await api('/apikeys/usage')).items || []) AU[x.org + '|' + x.service] = x; } catch { /* 열은 0회 */ }
+    for (const x of (await au)?.items || []) AU[x.org + '|' + x.service] = x;   // 못 받으면 열은 0회
     drawUsage();
   }
   function apiCell(a) {                  // API 호출 열 — 이번 달 성공 호출 · 켜진 키 · 마지막 호출(ext_api.usage_month)

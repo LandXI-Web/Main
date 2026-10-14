@@ -30,3 +30,6 @@
 .gr-rtb tr.sum td{font-weight:600;background:#F8F9FA;border-bottom:0}
 .gr-a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 @media (max-width:760px){.gr-form--svc{grid-template-columns:1fr 1fr}.gr-doc--svc{padding:20px 16px}}
+
+/* 서버 문장 끝 한 단어 줄 막기(10-14 재검수 · 원칙 9 줄바꿈) */
+.gr small,.gr p,.gr li{text-wrap:pretty}

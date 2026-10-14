@@ -90,6 +90,18 @@ async def region_of(ctx, args: dict) -> dict:
     q = asked or (ctx.context or {}).get("region")
     hits = resolve(q)
     if asked and not hits:
+        # 읍면동 이름이 지역 칸에 들어온 경우('운봉읍' → region) — 화면 지역 · 관할 시군구의 읍면동이면 그 시군구 + emd 로 읽는다
+        rest = {k: v for k, v in args.items() if k not in ("region", "sgg_cd")}
+        if not str(asked).isdigit():
+            try:
+                base = await region_of(ctx, rest)
+            except ToolError:
+                base = None
+            if base and base.get("sgg") and emd_resolve(base, asked)[0]:
+                args.pop("region", None)
+                args.pop("sgg_cd", None)
+                args.setdefault("emd", asked)
+                return base
         raise ToolError("not_found", f"'{asked}' 지역을 찾지 못했습니다", 404)
     if p.realm == "tenant":
         R = _regions()

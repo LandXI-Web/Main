@@ -38,15 +38,17 @@ export async function loadGpus() {
   return true;
 }
 export async function loadInfra() {
-  const [q, st, n, m, lm, hl, j] = await Promise.all([
-    safe('/ops/queues'), safe('/ops/storage'), safe('/ops/nodes'), safe('/ops/models'), safe('/ops/llm/models'), safe('/health'), safe('/jobs?limit=500'),
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 16) + 'Z';
+  const [q, st, n, m, lm, hl, j, c24] = await Promise.all([
+    safe('/ops/queues'), safe('/ops/storage'), safe('/ops/nodes'), safe('/ops/models'), safe('/ops/llm/models'), safe('/health'), safe('/jobs?limit=500&geom=0'),
+    safe('/jobs?limit=1&geom=0&since=' + encodeURIComponent(since)),   // 최근 24시간 작업 수 = 서버가 센 수(목록 500건 상한에 걸리지 않게 · 10-14 재검수)
   ]);
   if (q) S.queues = q; if (st) S.storage = st; if (n) S.nodes = n; if (m) S.models = m.items || []; if (lm) S.llm = lm; if (hl) S.health = hl;
   if (j) {
-    const since = Date.now() - 24 * 3600 * 1000;
     const items = j.items || [];
     S.jobs = items;
-    S.jobs24 = { value: items.filter((x) => new Date(x.created_at).getTime() >= since).length, unit: 'count', basis: 'measured', as_of: j.as_of, source: '분석 작업 기록' };
+    S.jobs24 = c24?.count ? { ...c24.count, source: '분석 작업 기록' }
+      : { value: items.filter((x) => new Date(x.created_at).getTime() >= Date.parse(since)).length, unit: 'count', basis: 'measured', as_of: j.as_of, source: '분석 작업 기록' };
   }
 }
 export async function loadOrg() {

@@ -1130,7 +1130,23 @@ async def _items(conn, p: Principal, scope, where: str = "true", args: list | No
     ids = {r["decided_by"] for r in rows if r["decided_by"]} | {r["notice_by"] for r in rows if r["notice_by"]}
     if ids:
         who = {r["id"]: (r["name"], r["role"]) for r in await conn.fetch("SELECT id, name, role FROM lx_users WHERE id = ANY($1::text[])", list(ids))}
-    return [_item(r, p, who, V, rules) for r in rows]
+    works = await _works(conn)
+    out = [_item(r, p, who, V, rules) for r in rows]
+    for d in out:                                     # 지난 평가에서 이미 답한 새로 옴 줄 — '이대로 반영'(답 문구 붙이기) 대신 '지금 됩니다'
+        if d["state"] == "new" and d["id"] in works:
+            d["works"] = True
+            d.pop("suggest", None)
+            d["can"]["apply"] = False
+    return out
+
+
+async def _works(conn) -> set:
+    """가장 최근 판(승인 요청 · 승인)의 평가에서 지금 그대로 답하는 개선 후보(after.works · 정기 개선 바퀴가 싣는다)."""
+    r = await conn.fetchrow("SELECT after FROM improve_releases WHERE state IN ('pending', 'approved') ORDER BY no DESC LIMIT 1")
+    a = r["after"] if r else None
+    if isinstance(a, str):
+        a = json.loads(a)
+    return {str(x) for x in ((a or {}).get("works") or [])}
 
 
 def _who(uid, who: dict) -> str | None:
@@ -1508,6 +1524,7 @@ async def release_submit(rid: str, request: Request, body: dict):
     b, a = _score(body.get("before")), _score(body.get("after"))
     worse, better = int(body.get("worse") or 0), int(body.get("better") or 0)
     items = [str(x) for x in (body.get("better_items") or []) if x][:200]
+    works = [str(x) for x in (body.get("works") or []) if x][:500]     # 고치기 전에도 이미 답하던 후보(화면 '지금 됩니다')
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM improve_releases WHERE id=$1", rid)
         if not r:
@@ -1515,7 +1532,7 @@ async def release_submit(rid: str, request: Request, body: dict):
         if r["state"] != "draft":
             raise ApiError("conflict", "만드는 중인 판만 승인 요청할 수 있습니다", status=409)
         await conn.execute("UPDATE improve_releases SET before=$2::jsonb, after=$3::jsonb, better=$4, worse=$5, better_items=$6 WHERE id=$1",
-                           rid, json.dumps(b, ensure_ascii=False), json.dumps(a, ensure_ascii=False), better, worse, items)
+                           rid, json.dumps(b, ensure_ascii=False), json.dumps({**a, "works": works}, ensure_ascii=False), better, worse, items)
         ok = worse == 0 and (a["답함"] + a["안내함"]) > (b["답함"] + b["안내함"]) and a["total"] >= b["total"]
         if not ok:
             await audit(conn, p, "improve.release.blocked", rid, None, {"before": b, "after": a, "worse": worse})

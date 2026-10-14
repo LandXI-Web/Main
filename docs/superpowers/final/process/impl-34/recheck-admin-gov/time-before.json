@@ -1,0 +1,2591 @@
+{
+ "a-dash": {
+  "url": "/landxi/v3/ops-core/#/",
+  "first": {
+   "tDom": 7,
+   "done": 16,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [],
+   "bad": [],
+   "pending": [],
+   "n": 0,
+   "at": "/landxi/v3/ops-core/#/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 341,
+   "done": 18045,
+   "ldFirst": 1582,
+   "ldLast": 2900,
+   "ldMs": 1435,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 15981,
+     "st": 200
+    },
+    {
+     "u": "/release/usage",
+     "ms": 15924,
+     "st": 200
+    },
+    {
+     "u": "/national/progress",
+     "ms": 1951,
+     "st": 200
+    },
+    {
+     "u": "/requests/manage",
+     "ms": 1945,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 15,
+   "at": "/landxi/v3/ops-core/#/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-req": {
+  "url": "/landxi/v3/ops-core/#/approvals",
+  "first": {
+   "tDom": 8,
+   "done": 464,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 398,
+     "st": 200
+    },
+    {
+     "u": "/requests/manage",
+     "ms": 384,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-core/#/approvals",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 7,
+   "done": 465,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 396,
+     "st": 200
+    },
+    {
+     "u": "/requests/manage",
+     "ms": 360,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-core/#/approvals",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-req-approve": {
+  "url": "/landxi/v3/ops-core/#/approvals/approve",
+  "first": {
+   "tDom": 6,
+   "done": 428,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 330,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 1,
+   "at": "/landxi/v3/ops-core/#/approvals/approve",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 332,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 314,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 1,
+   "at": "/landxi/v3/ops-core/#/approvals/approve",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-req-api": {
+  "url": "/landxi/v3/ops-core/#/approvals/apikeys",
+  "first": {
+   "tDom": 6,
+   "done": 453,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 330,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 1,
+   "at": "/landxi/v3/ops-core/#/approvals/apikeys",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 5,
+   "done": 339,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/api-applications",
+     "ms": 306,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 1,
+   "at": "/landxi/v3/ops-core/#/approvals/apikeys",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-infra": {
+  "url": "/landxi/v3/ops-infra/#/infra",
+  "first": {
+   "tDom": 967,
+   "done": 22212,
+   "ldFirst": 2177,
+   "ldLast": 21124,
+   "ldMs": 19057,
+   "slowSeen": true,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 19423,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500",
+     "ms": 6568,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 3100,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 3077,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 23,
+   "at": "/landxi/v3/ops-infra/#/infra",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 883,
+   "done": 22553,
+   "ldFirst": 2075,
+   "ldLast": 19928,
+   "ldMs": 17963,
+   "slowSeen": true,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 18315,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4847,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 1988,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 1811,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 24,
+   "at": "/landxi/v3/ops-infra/#/infra",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-tenants": {
+  "url": "/landxi/v3/ops-infra/#/tenants",
+  "first": {
+   "tDom": 7,
+   "done": 18,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [],
+   "bad": [],
+   "pending": [],
+   "n": 0,
+   "at": "/landxi/v3/ops-infra/#/tenants",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 17,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [],
+   "bad": [],
+   "pending": [],
+   "n": 0,
+   "at": "/landxi/v3/ops-infra/#/tenants",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-tenant1": {
+  "url": "/landxi/v3/ops-infra/#/tenants/o/namwon",
+  "first": {
+   "tDom": 6,
+   "done": 447,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/tenants/namwon/page",
+     "ms": 385,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 1,
+   "at": "/landxi/v3/ops-infra/#/tenants/o/namwon",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 558,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/tenants/namwon/page",
+     "ms": 364,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 319,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/tenants/o/namwon",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-req": {
+  "url": "/landxi/v3/ops-infra/#/deploys",
+  "first": {
+   "tDom": 6,
+   "done": 5329,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 1371,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 973,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 817,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 710,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 15,
+   "at": "/landxi/v3/ops-infra/#/deploys",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 1325,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 322,
+     "st": 200
+    },
+    {
+     "u": "/categories",
+     "ms": 304,
+     "st": 200
+    },
+    {
+     "u": "/release/requests",
+     "ms": 301,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 3,
+   "at": "/landxi/v3/ops-infra/#/deploys",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-share": {
+  "url": "/landxi/v3/ops-infra/#/deploys/share",
+  "first": {
+   "tDom": 6,
+   "done": null,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 23881,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 18624,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 18574,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 18482,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/ops/tenants",
+     "ms": 23760
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 17637
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 16845
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 13414
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 12612
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10192
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10046
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 9539
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 3881
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 2955
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 2954
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 2954
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1716
+    },
+    {
+     "u": "/deploys",
+     "ms": 1716
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 930
+    }
+   ],
+   "n": 93,
+   "at": "/landxi/v3/ops-infra/#/deploys/share",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 7,
+   "done": 21903,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 14527,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 14502,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 13739,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 4401,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 67,
+   "at": "/landxi/v3/ops-infra/#/deploys/share",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-usage": {
+  "url": "/landxi/v3/ops-infra/#/deploys/usage",
+  "first": {
+   "tDom": 7,
+   "done": null,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500",
+     "ms": 6105,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4442,
+     "st": 200
+    },
+    {
+     "u": "/release/usage",
+     "ms": 3777,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 3490,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/ops/tenants",
+     "ms": 26427
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 26028
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 23603
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 22974
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 19211
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 18664
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 15542
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 14824
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 11562
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10767
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10220
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 6008
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 5878
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 3862
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 3048
+    }
+   ],
+   "n": 94,
+   "at": "/landxi/v3/ops-infra/#/deploys/usage",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 6787,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4295,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1682,
+     "st": 200
+    },
+    {
+     "u": "/release/usage",
+     "ms": 1594,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 1503,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 18,
+   "at": "/landxi/v3/ops-infra/#/deploys/usage",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-cat": {
+  "url": "/landxi/v3/ops-infra/#/deploys/categories",
+  "first": {
+   "tDom": 7,
+   "done": null,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 12738,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 12528,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10126,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4651,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/ops/tenants",
+     "ms": 24481
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 20803
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 20803
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 17627
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 17233
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 13900
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 11766
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 10337
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 4923
+    }
+   ],
+   "n": 84,
+   "at": "/landxi/v3/ops-infra/#/deploys/categories",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 1367,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 318,
+     "st": 200
+    },
+    {
+     "u": "/categories",
+     "ms": 304,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/deploys/categories",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-api": {
+  "url": "/landxi/v3/ops-infra/#/deploys/api",
+  "first": {
+   "tDom": 5,
+   "done": 3273,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/deploys",
+     "ms": 2594,
+     "st": 200
+    },
+    {
+     "u": "/apikeys",
+     "ms": 1368,
+     "st": 200
+    },
+    {
+     "u": "/approvals?state=pending",
+     "ms": 1043,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 1023,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 6,
+   "at": "/landxi/v3/ops-infra/#/deploys/api",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": null,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 17811,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 17555,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 15347,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 15327,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/ops/tenants",
+     "ms": 19263
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 12869
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 12232
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 9840
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 9514
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 8510
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 4940
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 4831
+    },
+    {
+     "u": "/tenants",
+     "ms": 260
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 260
+    },
+    {
+     "u": "/deploys",
+     "ms": 260
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 260
+    },
+    {
+     "u": "/registry/models",
+     "ms": 260
+    }
+   ],
+   "n": 95,
+   "at": "/landxi/v3/ops-infra/#/deploys/api",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-rt": {
+  "url": "/landxi/v3/ops-infra/#/deploys/retrain",
+  "first": {
+   "tDom": 7,
+   "done": 13217,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500",
+     "ms": 10996,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 5694,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 4714,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 4509,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 15,
+   "at": "/landxi/v3/ops-infra/#/deploys/retrain",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 1225,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/retrain",
+     "ms": 345,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 319,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/deploys/retrain",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-tpl": {
+  "url": "/landxi/v3/ops-infra/#/deploys/templates",
+  "first": {
+   "tDom": 7,
+   "done": 12822,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/tenants",
+     "ms": 8321,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 7053,
+     "st": 200
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 6883,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500",
+     "ms": 5909,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 43,
+   "at": "/landxi/v3/ops-infra/#/deploys/templates",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 1261,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/deploys",
+     "ms": 488,
+     "st": 200
+    },
+    {
+     "u": "/approvals?state=pending",
+     "ms": 330,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 330,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 318,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 5,
+   "at": "/landxi/v3/ops-infra/#/deploys/templates",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-imp": {
+  "url": "/landxi/v3/ops-infra/#/deploys/improve",
+  "first": {
+   "tDom": 6,
+   "done": 1135,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/improve/items",
+     "ms": 355,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 320,
+     "st": 200
+    },
+    {
+     "u": "/improve/releases",
+     "ms": 296,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 3,
+   "at": "/landxi/v3/ops-infra/#/deploys/improve",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 7,
+   "done": 6253,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4132,
+     "st": 200
+    },
+    {
+     "u": "/ops/queues",
+     "ms": 854,
+     "st": 200
+    },
+    {
+     "u": "/health",
+     "ms": 766,
+     "st": 200
+    },
+    {
+     "u": "/ops/models",
+     "ms": 750,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 12,
+   "at": "/landxi/v3/ops-infra/#/deploys/improve",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-shared-img": {
+  "url": "/landxi/v3/ops-infra/#/shared",
+  "first": {
+   "tDom": 7,
+   "done": 5863,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500",
+     "ms": 4185,
+     "st": 200
+    },
+    {
+     "u": "/ops/queues",
+     "ms": 906,
+     "st": 200
+    },
+    {
+     "u": "/health",
+     "ms": 809,
+     "st": 200
+    },
+    {
+     "u": "/ops/models",
+     "ms": 807,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 23,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 6,
+   "done": 448,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 332,
+     "st": 200
+    },
+    {
+     "u": "/projects/imagery?all=1",
+     "ms": 303,
+     "st": 200
+    },
+    {
+     "u": "/catalog/imagery/namwon-aoi-2504/thumb",
+     "ms": 14,
+     "st": 200
+    },
+    {
+     "u": "/catalog/imagery/ap25-namwon-2023/thumb",
+     "ms": 14,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-shared-train": {
+  "url": "/landxi/v3/ops-infra/#/shared",
+  "first": {
+   "tDom": 5,
+   "done": 852,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 324,
+     "st": 200
+    },
+    {
+     "u": "/shared/train-data",
+     "ms": 318,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 5,
+   "done": 1513,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/shared/train-data",
+     "ms": 330,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 328,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-shared-admin": {
+  "url": "/landxi/v3/ops-infra/#/shared",
+  "first": {
+   "tDom": 5,
+   "done": 3156,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 1362,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 320,
+     "st": 200
+    },
+    {
+     "u": "/shared/ledgers",
+     "ms": 314,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 3,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 5,
+   "done": 1244,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/ops/gpus",
+     "ms": 319,
+     "st": 200
+    },
+    {
+     "u": "/shared/ledgers",
+     "ms": 315,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/landxi/v3/ops-infra/#/shared",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-accounts": {
+  "url": "/landxi/v3/ops-accounts/",
+  "first": {
+   "tDom": 958,
+   "done": 2169,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/inquiries",
+     "ms": 309,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 302,
+     "st": 200
+    },
+    {
+     "u": "/accounts/summary",
+     "ms": 296,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 296,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 6,
+   "at": "/landxi/v3/ops-accounts/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 435,
+   "done": 7536,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/me",
+     "ms": 5933,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 585,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 578,
+     "st": 200
+    },
+    {
+     "u": "/accounts/summary",
+     "ms": 466,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 6,
+   "at": "/landxi/v3/ops-accounts/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-list": {
+  "url": "/landxi/v3/gov-select/?list=1",
+  "first": {
+   "tDom": 621,
+   "done": null,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/cards/deck",
+     "ms": 409,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 361,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 343,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 327,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/auth/session",
+     "ms": 29865
+    }
+   ],
+   "n": 13,
+   "at": "/landxi/v3/gov-select/?list=1",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 623,
+   "done": 2878,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/cards/deck",
+     "ms": 417,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 359,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 346,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 342,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 13,
+   "at": "/landxi/v3/gov-select/?list=1",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-dash": {
+  "url": "/landxi/v3/gov-select/?service=card-farm",
+  "first": {
+   "tDom": 634,
+   "done": 3181,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/cards/deck",
+     "ms": 395,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 391,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 338,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me",
+     "ms": 337,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-select/?service=card-farm",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 599,
+   "done": 3135,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/cards/deck",
+     "ms": 361,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 335,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me",
+     "ms": 335,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/guides/card-farm",
+     "ms": 324,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-select/?service=card-farm",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-hist": {
+  "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+  "first": {
+   "tDom": 633,
+   "done": 3250,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/cards/deck",
+     "ms": 405,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 372,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 371,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 357,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 11,
+   "at": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 612,
+   "done": 3110,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/reviews/notify",
+     "ms": 407,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 406,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 349,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 345,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 11,
+   "at": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-stats": {
+  "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+  "first": {
+   "tDom": 614,
+   "done": 4443,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/history/stats?card=card-farm&period=all",
+     "ms": 519,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/guides/card-farm/parcels?limit=1",
+     "ms": 419,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 413,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 375,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 15,
+   "at": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 624,
+   "done": 4466,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/history/stats?card=card-farm&period=all",
+     "ms": 501,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 429,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/guides/card-farm/parcels?limit=1",
+     "ms": 414,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 371,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 15,
+   "at": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-req": {
+  "url": "/landxi/v3/gov-request/",
+  "first": {
+   "tDom": 1507,
+   "done": 3905,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/requests",
+     "ms": 600,
+     "st": 200
+    },
+    {
+     "u": "/auth/tenants",
+     "ms": 560,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 529,
+     "st": 200
+    },
+    {
+     "u": "/requests/shared-imagery",
+     "ms": 366,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-request/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 631,
+   "done": 2704,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/requests",
+     "ms": 591,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 580,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 353,
+     "st": 200
+    },
+    {
+     "u": "/requests/shared-imagery",
+     "ms": 322,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-request/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-shoot": {
+  "url": "/landxi/v3/gov-request/?tab=shoot",
+  "first": {
+   "tDom": 619,
+   "done": 3474,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/brand/namwon",
+     "ms": 647,
+     "st": 200
+    },
+    {
+     "u": "/regions/52190/emd?full=1",
+     "ms": 640,
+     "st": 200
+    },
+    {
+     "u": "/requests",
+     "ms": 587,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 369,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 16,
+   "at": "/landxi/v3/gov-request/?tab=shoot",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 630,
+   "done": 2834,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/requests",
+     "ms": 585,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 562,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 351,
+     "st": 200
+    },
+    {
+     "u": "/regions?geom=1",
+     "ms": 319,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 16,
+   "at": "/landxi/v3/gov-request/?tab=shoot",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-sent": {
+  "url": "/landxi/v3/gov-request/?tab=sent",
+  "first": {
+   "tDom": 631,
+   "done": 3582,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/me",
+     "ms": 1062,
+     "st": 200
+    },
+    {
+     "u": "/requests",
+     "ms": 614,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 558,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 396,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-request/?tab=sent",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 633,
+   "done": 2720,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/requests",
+     "ms": 591,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 584,
+     "st": 200
+    },
+    {
+     "u": "/cards/deck",
+     "ms": 354,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 331,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 14,
+   "at": "/landxi/v3/gov-request/?tab=sent",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-report": {
+  "url": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "first": {
+   "tDom": 938,
+   "done": 6068,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/report/map.png?card=card-farm",
+     "ms": 2875,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/report?card=card-farm",
+     "ms": 1013,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 296,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 294,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 8,
+   "at": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 962,
+   "done": 2834,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/report?card=card-farm",
+     "ms": 650,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 335,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 293,
+     "st": 200
+    },
+    {
+     "u": "/auth/tenants",
+     "ms": 292,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 8,
+   "at": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-parcels": {
+  "url": "/landxi/v3/gov-report/?service=card-farm",
+  "first": {
+   "tDom": 382,
+   "done": 2259,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/guides/card-farm/parcels?limit=500",
+     "ms": 528,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 316,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 293,
+     "st": 200
+    },
+    {
+     "u": "/auth/tenants",
+     "ms": 289,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 7,
+   "at": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 343,
+   "done": 2119,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/guides/card-farm/parcels?limit=500",
+     "ms": 482,
+     "st": 200
+    },
+    {
+     "u": "/me",
+     "ms": 304,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 302,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 296,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 7,
+   "at": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-fusion": {
+  "url": "/landxi/v3/gov-fusion/?service=card-farm",
+  "first": {
+   "tDom": 904,
+   "done": 4613,
+   "ldFirst": 2964,
+   "ldLast": 4496,
+   "ldMs": 1640,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/ledger/compare?card=card-farm&geom=1",
+     "ms": 1394,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 388,
+     "st": 200
+    },
+    {
+     "u": "/me",
+     "ms": 326,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/report/services",
+     "ms": 309,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 12,
+   "at": "/landxi/v3/gov-fusion/?service=card-farm",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 388,
+   "done": 3952,
+   "ldFirst": 2382,
+   "ldLast": 3837,
+   "ldMs": 1562,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/spaces/me/ledger/compare?card=card-farm&geom=1",
+     "ms": 1334,
+     "st": 200
+    },
+    {
+     "u": "/deploys",
+     "ms": 361,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 320,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/report/services",
+     "ms": 312,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 12,
+   "at": "/landxi/v3/gov-fusion/?service=card-farm",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-map": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": {
+   "tDom": 1096,
+   "done": 7319,
+   "ldFirst": 2842,
+   "ldLast": 7212,
+   "ldMs": 3829,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/survey/stats?by=emd",
+     "ms": 514,
+     "st": 200
+    },
+    {
+     "u": "/survey/stats?by=rule",
+     "ms": 485,
+     "st": 200
+    },
+    {
+     "u": "/catalog/layers?stage=domestic&build=tenant&locale=ko",
+     "ms": 436,
+     "st": 200
+    },
+    {
+     "u": "/survey/rules",
+     "ms": 434,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 19,
+   "at": "/landxi/v3/xi-clean/?service=card-farm&region=52190",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 370,
+   "done": 3629,
+   "ldFirst": 2218,
+   "ldLast": 3523,
+   "ldMs": 1414,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/survey/stats?by=emd",
+     "ms": 506,
+     "st": 200
+    },
+    {
+     "u": "/survey/stats?by=rule",
+     "ms": 425,
+     "st": 200
+    },
+    {
+     "u": "/catalog/layers?stage=domestic&build=tenant&locale=ko",
+     "ms": 421,
+     "st": 200
+    },
+    {
+     "u": "/regions/52190/results",
+     "ms": 415,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 19,
+   "at": "/landxi/v3/xi-clean/?service=card-farm&region=52190",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-org": {
+  "url": "/landxi/v3/gov-select/?view=org",
+  "first": {
+   "tDom": 662,
+   "done": 2563,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/reviews/notify",
+     "ms": 353,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 343,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 335,
+     "st": 200
+    },
+    {
+     "u": "/summary",
+     "ms": 315,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 8,
+   "at": "/landxi/v3/gov-select/?view=org",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 662,
+   "done": 2500,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/reviews/notify",
+     "ms": 348,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 331,
+     "st": 200
+    },
+    {
+     "u": "/regions",
+     "ms": 327,
+     "st": 200
+    },
+    {
+     "u": "/summary",
+     "ms": 317,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 8,
+   "at": "/landxi/v3/gov-select/?view=org",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "g-accounts": {
+  "url": "/landxi/v3/gov-accounts/",
+  "first": {
+   "tDom": 910,
+   "done": 4735,
+   "ldFirst": 3428,
+   "ldLast": 4628,
+   "ldMs": 1308,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/reviews/notify",
+     "ms": 1696,
+     "st": 200
+    },
+    {
+     "u": "/accounts/requests?kind=signup",
+     "ms": 1352,
+     "st": 200
+    },
+    {
+     "u": "/auth/session",
+     "ms": 1343,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/dept-scope",
+     "ms": 1332,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 9,
+   "at": "/landxi/v3/gov-accounts/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 338,
+   "done": 2120,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/me",
+     "ms": 309,
+     "st": 200
+    },
+    {
+     "u": "/reviews/notify",
+     "ms": 309,
+     "st": 200
+    },
+    {
+     "u": "/accounts/requests?kind=signup",
+     "ms": 303,
+     "st": 200
+    },
+    {
+     "u": "/spaces/me/dept-scope",
+     "ms": 300,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 9,
+   "at": "/landxi/v3/gov-accounts/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "m-main": {
+  "url": "/landxi/v3/main/",
+  "first": {
+   "tDom": 2693,
+   "done": 4399,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/openapi.json",
+     "ms": 560,
+     "st": 200
+    },
+    {
+     "u": "/public/sample-parcel",
+     "ms": 459,
+     "st": 200
+    },
+    {
+     "u": "/public/contact",
+     "ms": 437,
+     "st": 200
+    },
+    {
+     "u": "/public/record",
+     "ms": 331,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 9,
+   "at": "/landxi/v3/main/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 369,
+   "done": 2251,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/public/contact",
+     "ms": 1494,
+     "st": 200
+    },
+    {
+     "u": "/deploys?public=1",
+     "ms": 1245,
+     "st": 200
+    },
+    {
+     "u": "/registry/cards?public=1",
+     "ms": 1231,
+     "st": 200
+    },
+    {
+     "u": "/public/sample-parcel",
+     "ms": 555,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 9,
+   "at": "/landxi/v3/main/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "m-login": {
+  "url": "/landxi/v3/login/",
+  "first": {
+   "tDom": 975,
+   "done": 3346,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/public/stats?set=river-occupy&by=sigungu&geom=1",
+     "ms": 1465,
+     "st": 200
+    },
+    {
+     "u": "/ops/public/findings?sgg=52190",
+     "ms": 762,
+     "st": 200
+    },
+    {
+     "u": "/public/stats?set=river-occupy&by=sigungu",
+     "ms": 320,
+     "st": 200
+    },
+    {
+     "u": "/openapi.json",
+     "ms": 275,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 4,
+   "at": "/landxi/v3/login/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 369,
+   "done": 2660,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/public/stats?set=river-occupy&by=sigungu&geom=1",
+     "ms": 1373,
+     "st": 200
+    },
+    {
+     "u": "/ops/public/findings?sgg=52190",
+     "ms": 1007,
+     "st": 200
+    },
+    {
+     "u": "/public/stats?set=river-occupy&by=sigungu",
+     "ms": 291,
+     "st": 200
+    },
+    {
+     "u": "/openapi.json",
+     "ms": 280,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 4,
+   "at": "/landxi/v3/login/",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "m-govhome": {
+  "url": "/",
+  "first": {
+   "tDom": 1305,
+   "done": 2579,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/brand/namwon/main",
+     "ms": 302,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 300,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 627,
+   "done": 1594,
+   "ldFirst": null,
+   "ldLast": null,
+   "ldMs": 0,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/brand/namwon/main",
+     "ms": 301,
+     "st": 200
+    },
+    {
+     "u": "/brand/namwon",
+     "ms": 300,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 2,
+   "at": "/",
+   "err": null,
+   "pageErr": []
+  }
+ }
+}

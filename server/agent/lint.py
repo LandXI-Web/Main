@@ -568,6 +568,9 @@ BANNED: list[tuple[str, re.Pattern, dict]] = [
     ("프레임", re.compile(r"프레임"), {"ko": "범위", "en": "area"}),
     ("레이어", re.compile(r"레이어"), {"ko": "층", "en": "layer"}),
     ("폴리곤", re.compile(r"폴리곤"), {"ko": "도형", "en": "shape"}),
+    # 실태조사 규칙 코드(R1–R6 · L1–L3)는 답에 쓰지 않는다 — 규칙 이름만 · 옛 이름 '무허가 건축 의심'은 '농지 위 건물' 한 이름으로(10-14 재검수)
+    ("규칙 코드", re.compile(r"\s?\(\s?[RL][1-6]\s?\)|(?<![A-Za-z0-9])[RL][1-6]\s+(?=[가-힣])"), {"ko": "", "en": ""}),
+    ("무허가 건축 의심", re.compile(r"무허가\s?건축\s?의심"), {"ko": "농지 위 건물", "en": "building on farmland"}),
 ]
 
 

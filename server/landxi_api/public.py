@@ -116,7 +116,7 @@ def _place(addr: str | None) -> str | None:
 
 @router.get("/public/sample-parcel")
 async def sample_parcel():
-    """익명 필지 카드 1 — 가장 설명이 분명한 표본(무허가 건축 의심 A · 지목 전/답 · 근거 90–260㎡ · 신뢰도 ≥ 0.8 · 필지 700–2600㎡).
+    """익명 필지 카드 1 — 가장 설명이 분명한 표본(농지 위 건물 A · 지목 전/답 · 근거 90–260㎡ · 신뢰도 ≥ 0.8 · 필지 700–2600㎡).
     지역 고정 0: 조건에 맞는 전국 의심 중 점수 1위(지금 적재분). 10분 캐시."""
     c = _cache.get("sample")
     if c and time.time() - c[0] < 600:

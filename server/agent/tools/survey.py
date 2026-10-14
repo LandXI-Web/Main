@@ -15,7 +15,7 @@ from . import Out, ToolError
 from . import scope as S
 from . import survey_local as L
 
-RULE_NM = {"R1": "무허가 건축 의심", "R2": "휴경·전용 의심", "R3": "용도 불일치(비농지 위 비닐하우스)", "R4": "농지 전용 의심(주차장)",
+RULE_NM = {"R1": "농지 위 건물", "R2": "휴경·전용 의심", "R3": "용도 불일치(비농지 위 비닐하우스)", "R4": "농지 전용 의심(주차장)",
            "R5": "산지 개간 의심", "R6": "공공용지 점유 의심"}
 _NUM_IN_TEXT = re.compile(r"\d+(?:-\d+)?")
 SRC_DB = "PostGIS survey_findings"

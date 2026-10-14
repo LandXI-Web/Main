@@ -282,6 +282,8 @@ async def _apply_quota(conn, sid: str, pl: dict, aid: str) -> dict:
         await conn.execute("INSERT INTO quotas(tenant_id, dim, soft, hard, policy, note) VALUES ($1,$2,$3,$4,coalesce($5,'notify'),$6) "
                            "ON CONFLICT (tenant_id, dim) DO UPDATE SET soft=coalesce($3, quotas.soft), hard=coalesce($4, quotas.hard), "
                            "policy=coalesce($5, quotas.policy), note=$6", sid, dim, v.get("soft"), v.get("hard"), v.get("policy"), f"결재 {aid}")
+    from .ops import tenants_usage_stale
+    tenants_usage_stale()
     return {"quota": sid, "dims": list(before), "before": before}
 
 

@@ -88,12 +88,22 @@ def main(plan_path: str, before_path: str, out_dir: str) -> None:
     notify = sorted(set(items_better) | {x for x in (plan.get("notify_also") or [])
                                           if any(r["item"] == x and r["after"] == "답함" for r in cmp["rows"])})
     sub = {"before": {"total": before["total"], **before["summary"]}, "after": {"total": after["total"], **after["summary"]},
-           "better": cmp["better"], "worse": cmp["worse"], "better_items": notify}
+           "better": cmp["better"], "worse": cmp["worse"], "better_items": notify,
+           "works": works_before(before)}
     r = E._retry(httpx.post, E.B + f"/improve/releases/{rid}/submit", headers=A, json=sub, timeout=60)
     log.append({"step": "submit", "status": r.status_code, "body": r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text[:200]})
     (out / "compare.json").write_text(json.dumps({**cmp, "submit": sub, "log": log}, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     print(json.dumps({"before": sub["before"], "after": sub["after"], "better": cmp["better"], "worse": cmp["worse"], "flaky": cmp["flaky"],
                       "submit": r.status_code}, ensure_ascii=False))
+
+
+def works_before(before: dict) -> list[str]:
+    """고치기 전 평가에서 이미 '답함'이던 개선 후보(그 후보의 질문 모두) — 화면은 '이대로 반영' 대신 '지금 됩니다'."""
+    by: dict[str, list[str]] = {}
+    for r in before.get("rows") or []:
+        if r.get("item"):
+            by.setdefault(r["item"], []).append(r["verdict"])
+    return sorted(k for k, v in by.items() if v and all(x == "답함" for x in v))
 
 
 if __name__ == "__main__":

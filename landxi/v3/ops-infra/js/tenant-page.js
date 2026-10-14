@@ -84,7 +84,7 @@ export function mountTenantPage(root) {
       cell(nf((val(c.requests_month) || 0) + (val(c.shoots_month) || 0)), '건', '이번 달 보낸 요청', `분석 ${nf(val(c.requests_month))} · 촬영 ${nf(val(c.shoots_month))}`),
       cell(st == null ? '—' : st < 1 && st > 0 ? nf(st * 1000) : nf(st, st < 10 ? 1 : 0), st != null && st < 1 && st > 0 ? 'MB' : 'GB', '저장', llm != null ? `XI ChatGEO 요청 ${nf(llm)}건 · 이번 달` : ''));
     const rec = h('section.t-card.tp-rec', {}, h('h2', {}, '최근 기록', h('small', { text: '이 기관에서 일어난 일' })),
-      P.log.length ? h('ul', {}, ...P.log.slice(0, 6).map((l) => h('li', {}, h('span.num', { text: md(l.at) }), h('span', { text: l.line })))) : h('p.tp-none', { text: '아직 기록이 없습니다' }));
+      P.log.length ? h('ul', {}, ...P.log.slice(0, 6).map((l) => h('li', {}, h('span.num', { text: md(l.at) }), h('span', { text: String(l.line || '').replace(/ (?=\S+$)/, ' ') })   /* 문장 끝 한 단어 줄 막기(10-14 재검수) */))) : h('p.tp-none', { text: '아직 기록이 없습니다' }));
     return h('div.tp-ov', {}, cells, rec);
   }
 

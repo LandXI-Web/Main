@@ -54,7 +54,7 @@ def rule_name(rid: str | None) -> str:
 
 
 def plain_rules(s: str) -> str:
-    """글 속 규칙 코드(R1–R6 · L1–L3)를 규칙 이름으로 — 'R1–R6' → '전체 규칙', 'R1 무허가 건축 의심' → '무허가 건축 의심'."""
+    """글 속 규칙 코드(R1–R6 · L1–L3)를 규칙 이름으로 — 'R1–R6' → '전체 규칙', 'R1 농지 위 건물' → '농지 위 건물'."""
     if not s:
         return s
     s = re.sub(r"(?<![A-Za-z0-9])R1\s*[–~-]\s*R6(?![0-9])", "전체 규칙", s)

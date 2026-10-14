@@ -150,3 +150,6 @@
 .im-rel-t b.num{font:600 15px/22px var(--font-num)}
 .im-rel-s{margin:0;flex:1 1 240px;font:400 13px/20px var(--font-body);color:var(--sub)}
 .im-rel .im-acts{margin:0}
+
+/* 서버 문장 끝 한 단어 줄 막기(10-14 재검수 · 원칙 9 줄바꿈) */
+.im small,.im p{text-wrap:pretty}

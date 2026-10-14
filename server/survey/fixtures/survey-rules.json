@@ -8,7 +8,7 @@
  "items": [
   {
    "id": "R1",
-   "name": "무허가 건축 의심",
+   "name": "농지 위 건물",
    "condition": "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡",
    "basis": "estimate",
    "thresholds": [

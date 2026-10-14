@@ -310,7 +310,7 @@ def test_m15_law_route_skips_letter():
 # ── M16 사용자 말(규칙 코드 0) · 지역 이름 겹침 ─────────────────────────────
 def test_plain_rules_and_dev_words():
     from survey.report import dev_words, plain_rules
-    assert plain_rules("R1 무허가 건축 의심 12건") == "무허가 건축 의심 12건"
+    assert plain_rules("R1 농지 위 건물 12건") == "농지 위 건물 12건"
     assert plain_rules("강진군 R4 건수") == "강진군 농지 전용 의심(주차장) 건수"
     assert plain_rules("규칙 R1–R6") == "규칙 전체 규칙"
     assert "R1" in dev_words("규칙 R1") and "L1" in dev_words("L1 대장") and not dev_words("PNU 4681025021")

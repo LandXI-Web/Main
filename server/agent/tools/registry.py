@@ -12,7 +12,7 @@ REGION = {"type": "string", "description": "시군구 이름 또는 5자리 코�
 
 SPECS: dict[str, dict] = {
     "survey_findings": {
-        "description": "실태조사 의심 필지 목록(우선순위 점수순 · 지역 = region 또는 관할). R1 무허가 건축 의심(지목 전·답·과수원 위 AI 건물) · R2 휴경·전용 의심 · "
+        "description": "실태조사 의심 필지 목록(우선순위 점수순 · 지역 = region 또는 관할). R1 농지 위 건물(= 무허가 건축 의심 · 지목 전·답·과수원 위 AI 건물) · R2 휴경·전용 의심 · "
                        "R3 비농지 위 비닐하우스 · R4 농지 위 주차장 · R5 임야 개간 · R6 공공용지(도로·구거·하천) 위 건물. '답 위 건물'=rule R1+jimok 답.",
         "properties": {"region": REGION, "rule": {"type": "string", "enum": RULES}, "emd": {"type": "string", "description": "읍면동 이름"},
                        "jimok": {"type": "string", "enum": ["전", "답", "과"], "description": "지목 한 글자"},

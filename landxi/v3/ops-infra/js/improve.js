@@ -89,6 +89,11 @@ function suggestBox(x) {
 }
 
 function buttons(x, admin) {
+  if (x.state === 'new' && x.works) {   // 지난 평가에서 이미 답한 줄 — '이대로 반영' 대신 '지금 됩니다'
+    return `<div class="im-dec"><span class="t-chip im-st">지금 됩니다</span></div><div class="im-acts">
+      <button class="t-btn t-btn--2 im-b" type="button" data-a="collect">모아 두기</button>
+      <button class="t-btn t-btn--2 im-b" type="button" data-a="hold">보류</button></div>`;
+  }
   if (x.state === 'new') {
     const sg = x.suggest || {};
     return `<div class="im-acts">${sg.quick ? '<button class="t-btn im-b" type="button" data-a="apply">이대로 반영</button>' : ''}
