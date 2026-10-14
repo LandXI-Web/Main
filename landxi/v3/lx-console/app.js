@@ -89,6 +89,7 @@ Promise.allSettled([drawProjects(), drawStore(), drawInbox(), drawNotice(), draw
 /* ── ① 진행 현황 · ③ 최근 진행한 프로젝트 — 같은 한 번의 GET /projects?scope=mine(숫자 한 출처 — 진행 현황 = 프로젝트 카드 단계) ── */
 async function drawProjects() {
   const box = board.querySelector('.ld-flow'), grid = recent.querySelector('.ld-rgrid');
+  const deckP = loadDeck().catch(() => null);   // 카드 덱은 프로젝트 목록과 같이 받는다(순서대로 기다리지 않게 · impl-34 속도)
   let j;
   try { j = await api('/projects?scope=mine'); } catch {
     const retry = () => { wait(box); wait(grid); drawProjects(); };
@@ -123,7 +124,7 @@ async function drawProjects() {
   const recentN = matchMedia('(min-width:2200px)').matches ? 6 : matchMedia('(min-width:1600px)').matches ? 5 : 4;
   const top = items.slice().sort((a, b) => t(b) - t(a)).slice(0, recentN);
   recentMore.textContent = `프로젝트 목록 · 전체 ${items.length}`;
-  const deck = await loadDeck().catch(() => null);
+  const deck = await deckP;
   const deckBy = new Map((deck?.items || []).map((c) => [c.id, c]));
   grid.replaceChildren(...top.map((p) => projCard(p, deckBy, { compact: true })));
   grid.dataset.n = String(top.length);

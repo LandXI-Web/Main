@@ -37,6 +37,9 @@ const page = h('div.lm-page', {}, left, mapEl);
 S.main.append(page);
 
 const release = K.hold({ onRetry: () => location.reload() });
+/* 바탕 층 목록 · 행정 자료 목록은 결과 목록과 같이 받아 둔다(지도 준비 뒤 순서대로 기다리지 않게 · impl-34 속도) */
+const catP = api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' })).then((j) => j.items || [], (e) => { K.devlog('catalog', String(e?.message || e)); return []; });
+const shlP = api('/shared/layers').then((j) => j.items || [], (e) => { K.devlog('shared-layers', String(e?.message || e)); return []; });
 let D;
 try { D = await api('/me/analyses' + (WANT ? '?' + new URLSearchParams({ job: WANT }) : '')); }
 catch (e) {
@@ -77,9 +80,7 @@ await ST0.ready;
 const map = ST0.map;
 window.__lm = { map, shared: () => SHL.map((L) => L.id) };   // 점검 손잡이(화면에 보이지 않음 · 캡처 · e2e 가 도형 자리를 찾는다)
 const pad = () => ({ top: 72, bottom: 48, left: 48, right: props.hidden ? 48 : 400 });
-let CAT = [];
-try { CAT = (await api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' }))).items || []; }
-catch (e) { K.devlog('catalog', String(e?.message || e)); }
+const CAT = await catP;
 
 /* V-World WMS 를 게이트웨이 중계(/proxy/vworld/wms · 키는 서버)로 — LX맵(편집지적도 lt_c_landinfobasemap)과 연속지적(lp_pa_cbnd_bubun 선) 두 층.
    V-World 는 LX맵을 약 0.6m/화소보다 가까울 때만 그린다 → 512 화소 타일 · 지도 18단계부터(XI맵 필지 카드와 같은 값). 지역 고정값 없음(전국). */
@@ -104,8 +105,7 @@ map.addSource('lm-cad', { type: 'raster', tiles: ['lmwms://lp_pa_cbnd_bubun/lp_p
 map.addLayer({ id: 'lm-cad', type: 'raster', source: 'lm-cad', minzoom: CAD_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-result');
 
 /* LX 행정 자료(공유 데이터에서 관리자가 공개한 것 · 10-14 원칙 246) — 바탕(브이월드 층) 아래 줄에서 켜고 끈다. 도형 = GET /shared/layers/{id}(GeoJSON) */
-let SHL = [];
-try { SHL = (await api('/shared/layers')).items || []; } catch (e) { K.devlog('shared-layers', String(e?.message || e)); }
+const SHL = await shlP;
 const shlOn = new Set();
 async function toggleShared(L) {
   const sid = 'lm-sh-' + L.id;

@@ -1,0 +1,18 @@
+[
+ {
+  "id": "재검수-직원",
+  "title": "LX 직원 화면 기능 41개 — 바깥 주소에서 직접 눌러 확인했습니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/dash-memo.jpg", "shots/dash-quota.jpg", "shots/new-picked.jpg", "shots/new-created.jpg", "shots/st-ingest.jpg", "shots/label-more.jpg", "shots/train-block.jpg", "shots/st-infer.jpg", "shots/st-publish.jpg", "shots/an-where-settled.jpg", "shots/map-props.jpg", "shots/map-dl.jpg", "shots/xi-hover.jpg", "shots/xi-edit-open.jpg", "shots/xi-filter.jpg", "shots/xi-dash-3.jpg", "shots/xi-report-pop.jpg", "shots/xi-wonbong.jpg", "shots/inbox-improve.jpg", "shots/help.jpg"],
+  "where": "app.land-xi.dev (LX 직원 로그인 폼 · 한 번 로그인) — 대시보드 · 프로젝트 목록 · 새 프로젝트 한 창 · 여섯 단계 · 분석하기 · 지도 서비스 · XI맵 · 요청함 · 지원 · 서비스 카드 — PC 1440",
+  "note": "됨 37 · 고침 1 · 이상함 3. 고친 것: XI맵 그 자리 고치기 칸이 Esc 로 안 닫히던 것(아래 채팅 창이 Esc 를 먼저 가로챘음). 분석하기 '원주시'는 지금 지역 목록 · 쓰이는 곳 · 어디 고르기 모두에 뜹니다. 이상함: 증량 승인 기록(50 → 100 GB)과 지금 할당(기본 50 GB)이 다름 · XI맵 보고서 읍면동 목록에 '광치동-5' · 지역 찾기에 '강원 원주'처럼 시도를 붙이면 못 찾음. ChatGEO '운봉읍 무허가 건축 의심 필지'는 화면이 남원시일 때만 답하고 전국 · 다른 시군구 화면에서는 '해당 지역 데이터가 없습니다' — 원인 확인(읍면동을 화면 지역 안에서만 찾음) · 고치기는 관리자 · 기관 쪽 에이전트가 같은 파일을 고치는 중이라 넘김. 학습 · 분석 · 배포 신청은 누르지 않았고 시험 프로젝트는 확인 뒤 지웠습니다."
+ },
+ {
+  "id": "속도-직원",
+  "title": "LX 직원 화면 — 느린 곳 다섯을 줄였습니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["time-before.json", "time-after.json", "time-after2.json", "time-after3.json", "shots/an-where-settled.jpg", "shots/after-dash.jpg", "shots/after-mapsvc.jpg"],
+  "where": "app.land-xi.dev (LX 직원 로그인 폼) — PC 1440 · 화면마다 처음 · 다시 두 번 · 후는 세 번 잰 가운데 값",
+  "note": "분석하기 지역 고르기 → 영상 · 조건 3.8초 → 1.8초(서버가 영상 범위 83장을 요청마다 다시 풀던 것) · 학습데이터 구축 처음 5.2초 → 3.5초(라벨 그림 한 장마다 폴더 전체를 다시 훑던 것) · 데이터 올리기 4.5 · 3.7초 → 3.3 · 2.4초(일부러 0.7초 기다리던 것 · 차례로 받던 목록) · 지도 서비스 '불러오는 중' 3.1 · 2.3초 → 2.0 · 1.5초 · 대시보드 2.4 · 2.1초 → 1.6 · 1.6초. 화면 모양 · 문구는 그대로입니다. 남은 것: XI맵 첫 화면 2 ~ 3초(전국 읍면동 집계 1.5 MB) · 학습데이터 구축 3초대(세 번 차례로 기다림) — 구조를 바꿔야 해서 이번엔 하지 않았습니다. 바깥 주소는 요청 한 번에 약 0.3초가 바닥이고, 다른 에이전트가 같은 서버를 써서 값이 흔들립니다."
+ }
+]

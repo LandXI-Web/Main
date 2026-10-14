@@ -72,9 +72,11 @@ export function bboxOf(g) {
 /* 서버에 경로가 있는가(신설 API 가 아직 없을 때 404 로 콘솔을 더럽히지 않게 · 게이트웨이 openapi 한 번 읽기) */
 let ROUTES = null;
 /* openapi 는 매번 재검증(no-cache) — force-cache 면 브라우저에 남은 옛 경로 목록 때문에 새 서버 경로(/regions 등)를 '없음'으로 판정했다 */
+const routes = () => (ROUTES ||= fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => (j ? Object.keys(j.paths || {}).map((p) => p.replace(/^\/api\/v1/, '')) : null)).catch(() => null));
+/* 화면이 열릴 때 바로 한 번 받아 둔다 — 로그인 확인(/me)과 같이 받아, 화면 자료를 받은 뒤 다시 기다리는 한 바퀴(약 0.3초)를 없앤다(impl-34 속도) */
+if (typeof window !== 'undefined' && API?.prefix) routes();
 export async function hasRoute(path) {
-  if (!ROUTES) ROUTES = fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => (j ? Object.keys(j.paths || {}).map((p) => p.replace(/^\/api\/v1/, '')) : null)).catch(() => null);
-  const list = await ROUTES;
+  const list = await routes();
   if (!list) return false;
   const want = path.split('?')[0];
   return list.some((p) => p === want || new RegExp('^' + p.replace(/\{[^}]+\}/g, '[^/]+') + '$').test(want));

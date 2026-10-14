@@ -29,6 +29,7 @@ imgOn = stageEl;
 S.main.append(stageEl);
 const st = K.createStage(stageEl);
 K.devDrawer({ stage: st, who });
+const catP = D.catalog().catch(() => null), listP = D.regions();   // 지도 준비와 같이 받는다(순서대로 기다리지 않게 · impl-34 속도)
 
 const pickEl = K.h('div.lxi-pick-in');
 const pickCard = K.card({ map: true, cls: 'lxi-pick', body: pickEl });
@@ -45,7 +46,7 @@ map.addSource('lxi-fp', { type: 'geojson', data: EMPTY });
 map.addLayer({ id: 'lxi-fp-l', type: 'line', source: 'lxi-fp', paint: { 'line-color': '#FFFFFF', 'line-width': 1.4, 'line-dasharray': [2, 1.5], 'line-opacity': 0.95 } }, 'slot-overlay');
 
 /* 전국: 자체 영상이 있는 곳(점) — 카탈로그가 정한다 */
-const cat = await D.catalog().catch(() => null);
+const cat = await catP;
 S.fresh(cat?.as_of || null);
 if (cat) {
   const pts = (cat.items || []).filter((i) => i.role === 'imagery' && i.source !== 'external' && i.bounds).map((i) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [(i.bounds[0] + i.bounds[2]) / 2, (i.bounds[1] + i.bounds[3]) / 2] } }));
@@ -171,7 +172,7 @@ function afterImagery(out) {
 }
 
 /* ── 지역 선택(K4) · 지도 누르기 ───────────────────────────────── */
-const list = await D.regions();
+const list = await listP;
 const picker = await K.regionPicker(pickEl, { onPick: (r) => pick(r) });
 map.on('click', async (e) => {
   try {
@@ -191,7 +192,7 @@ const want = qs.get('region');
 const first = (want && list.find((r) => r.sgg_cd === want || r.profile === want))
   || K.recent().map((k) => list.find((r) => r.sgg_cd === k)).find(Boolean)
   || firstRegion(list);
-if (first) { picker.input.value = first.name; setTimeout(() => pick(first), 700); }
+if (first) { picker.input.value = first.name; setTimeout(() => pick(first), 0); }   // 바로 그 지역으로(0.7초 기다림 없앰 · impl-34 속도)
 /* ?dev=1 — 검증용 상태 조회(개발자 서랍과 같은 조건 · 화면 문구 0) */
 if (qs.get('dev') === '1') window.__lxi = { map, state: () => ({ cur: cur?.sgg_cd || null, parcel: UI?.parcel?.dataset.st || null }) };
 document.documentElement.dataset.ready = '1';

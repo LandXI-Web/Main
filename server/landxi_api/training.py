@@ -588,8 +588,18 @@ async def get_sample(sid: str, request: Request):
     return _pub(r, {"as_of": now_iso()})
 
 
+_ITEMS: dict = {}   # (묶음, 바뀐 시각) → 그림 목록 — 미리보기 한 장마다 폴더 전체를 다시 훑지 않는다(9장 동시 1.6초 → 0.2초 · impl-34 속도)
+
+
 def _items(r) -> list[dict]:
-    return inspect_tree(Path(r["dir"]) / "data")["items"]
+    key = (r["id"], str(r.get("updated_at")), r["dir"])
+    hit = _ITEMS.get(key)
+    if hit is None:
+        hit = inspect_tree(Path(r["dir"]) / "data")["items"]
+        if len(_ITEMS) > 64:
+            _ITEMS.clear()
+        _ITEMS[key] = hit
+    return hit
 
 
 def render_preview(img_path: Path, label_path: Path | None, names: list[str], size: int = 512) -> bytes:

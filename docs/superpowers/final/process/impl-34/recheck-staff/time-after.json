@@ -1,0 +1,1420 @@
+{
+ "_project": {
+  "PID": "prj_3fdba452d5",
+  "name": "비닐하우스 2026",
+  "st": {
+   "ingest": "/landxi/v3/lx-ingest/?project=prj_3fdba452d5&region=43745",
+   "label": "/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=label&flow=1",
+   "train": "/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train&flow=1&sample=smp_94f1ab120e&model=trained%2Fjob_01M3RG60R78XYV0STPWC9B69AB",
+   "infer": "/landxi/v3/lx-release/?project=prj_3fdba452d5&stage=infer",
+   "review": "/landxi/v3/lx-map/?job=job_01M4FJDMZZAFDWB4HJ00E6X7GJ&project=prj_3fdba452d5",
+   "publish": "/landxi/v3/lx-release/?project=prj_3fdba452d5&stage=publish"
+  }
+ },
+ "dash": {
+  "url": "/landxi/v3/lx-console/",
+  "first": {
+   "tag": "first",
+   "dcl": 375,
+   "done": 1607,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 14,
+   "top": [
+    {
+     "api": "GET /projects?scope=mine",
+     "ms": 568,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 354,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 347,
+     "failed": false
+    },
+    {
+     "api": "GET /me/storage",
+     "ms": 331,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 330,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/notices",
+     "ms": 327,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 404,
+   "done": 3228,
+   "loading": {
+    "vis": 1201,
+    "first": 2304,
+    "lastHide": 3505,
+    "still": false
+   },
+   "apiN": 14,
+   "top": [
+    {
+     "api": "GET /projects?scope=mine",
+     "ms": 1484,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 1259,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 1256,
+     "failed": false
+    },
+    {
+     "api": "GET /me/storage",
+     "ms": 1129,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 1119,
+     "failed": false
+    },
+    {
+     "api": "GET /me/memos?limit=6",
+     "ms": 1098,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "projects": {
+  "url": "/landxi/v3/lx-project/",
+  "first": {
+   "tag": "first",
+   "dcl": 987,
+   "done": 3433,
+   "loading": {
+    "vis": 848,
+    "first": 2426,
+    "lastHide": 3274,
+    "still": false
+   },
+   "apiN": 11,
+   "top": [
+    {
+     "api": "GET /projects?scope=mine",
+     "ms": 1115,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 620,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/notices",
+     "ms": 605,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 605,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 605,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 552,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 398,
+   "done": 1631,
+   "loading": {
+    "vis": 221,
+    "first": 1623,
+    "lastHide": 1844,
+    "still": false
+   },
+   "apiN": 11,
+   "top": [
+    {
+     "api": "GET /projects?scope=mine",
+     "ms": 571,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 347,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 321,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/notices",
+     "ms": 314,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 309,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 308,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "project": {
+  "url": "/landxi/v3/lx-project/?project=…",
+  "first": {
+   "tag": "first",
+   "dcl": 399,
+   "done": 1786,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 388,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5/log",
+     "ms": 365,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/people",
+     "ms": 337,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 320,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 311,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 308,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 411,
+   "done": 2896,
+   "loading": {
+    "vis": 949,
+    "first": 2013,
+    "lastHide": 2962,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 1131,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 1075,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 1055,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 956,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 688,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5/log",
+     "ms": 339,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "ingest": {
+  "url": "/landxi/v3/lx-ingest/?project=…&region=43745",
+  "first": {
+   "tag": "first",
+   "dcl": 972,
+   "done": 4517,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 23,
+   "top": [
+    {
+     "api": "GET /me",
+     "ms": 948,
+     "failed": false
+    },
+    {
+     "api": "GET /survey/build/43745",
+     "ms": 644,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 614,
+     "failed": false
+    },
+    {
+     "api": "GET /regions",
+     "ms": 565,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers",
+     "ms": 459,
+     "failed": false
+    },
+    {
+     "api": "GET /regions/43745?geom=1",
+     "ms": 388,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 428,
+   "done": 2747,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 23,
+   "top": [
+    {
+     "api": "GET /survey/build/43745",
+     "ms": 453,
+     "failed": false
+    },
+    {
+     "api": "GET /proxy/vworld/data?service=data&request=GetFeature&size=1&page=1&format=json&crs=EPSG%3A4326&geome",
+     "ms": 429,
+     "failed": false
+    },
+    {
+     "api": "GET /proxy/vworld/data?service=data&request=GetFeature&size=1&page=1&format=json&crs=EPSG%3A4326&geome",
+     "ms": 413,
+     "failed": false
+    },
+    {
+     "api": "GET /proxy/vworld/data?service=data&request=GetFeature&size=1&page=1&format=json&crs=EPSG%3A4326&geome",
+     "ms": 411,
+     "failed": false
+    },
+    {
+     "api": "GET /proxy/vworld/data?service=data&request=GetFeature&size=1&page=1&format=json&crs=EPSG%3A4326&geome",
+     "ms": 410,
+     "failed": false
+    },
+    {
+     "api": "GET /proxy/vworld/data?service=data&request=GetFeature&size=1&page=1&format=json&crs=EPSG%3A4326&geome",
+     "ms": 410,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "label": {
+  "url": "/landxi/v3/lx-train/?project=…&stage=label&flow=1",
+  "first": {
+   "tag": "first",
+   "dcl": 969,
+   "done": 5325,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 26,
+   "top": [
+    {
+     "api": "GET /training/samples?project=prj_3fdba452d5",
+     "ms": 1832,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 921,
+     "failed": false
+    },
+    {
+     "api": "GET /registry/models",
+     "ms": 757,
+     "failed": false
+    },
+    {
+     "api": "GET /registry/cards",
+     "ms": 744,
+     "failed": false
+    },
+    {
+     "api": "GET /feedback",
+     "ms": 673,
+     "failed": false
+    },
+    {
+     "api": "GET /training/samples",
+     "ms": 664,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 385,
+   "done": 3173,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 26,
+   "top": [
+    {
+     "api": "GET /training/samples?project=prj_3fdba452d5",
+     "ms": 796,
+     "failed": false
+    },
+    {
+     "api": "GET /registry/cards",
+     "ms": 410,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 410,
+     "failed": false
+    },
+    {
+     "api": "GET /training/samples",
+     "ms": 403,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 402,
+     "failed": false
+    },
+    {
+     "api": "GET /registry/models",
+     "ms": 400,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "train": {
+  "url": "/landxi/v3/lx-train/?project=…&stage=train&flow=1&sample=smp_94f1ab120e&model=trained%2Fjob_01M3RG60R78XYV0STPWC9B69AB",
+  "first": {
+   "tag": "first",
+   "dcl": 387,
+   "done": 2401,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 12,
+   "top": [
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 383,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 370,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5/train",
+     "ms": 352,
+     "failed": false
+    },
+    {
+     "api": "GET /train-data/xi?project=prj_3fdba452d5",
+     "ms": 349,
+     "failed": false
+    },
+    {
+     "api": "GET /train-templates",
+     "ms": 335,
+     "failed": false
+    },
+    {
+     "api": "GET /training/samples?shared=1",
+     "ms": 334,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 414,
+   "done": 2090,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 12,
+   "top": [
+    {
+     "api": "GET /openapi.json",
+     "ms": 439,
+     "failed": false
+    },
+    {
+     "api": "GET /cards/deck",
+     "ms": 390,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5/train",
+     "ms": 369,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 365,
+     "failed": false
+    },
+    {
+     "api": "GET /train-data/xi?project=prj_3fdba452d5",
+     "ms": 353,
+     "failed": false
+    },
+    {
+     "api": "GET /train-templates",
+     "ms": 348,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "infer": {
+  "url": "/landxi/v3/lx-release/?project=…&stage=infer",
+  "first": {
+   "tag": "first",
+   "dcl": 947,
+   "done": 2970,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 18,
+   "top": [
+    {
+     "api": "GET /release/projects/prj_3fdba452d5/infer",
+     "ms": 421,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 400,
+     "failed": false
+    },
+    {
+     "api": "GET /release/imagery/img-12110-2023-aerial/thumb",
+     "ms": 367,
+     "failed": false
+    },
+    {
+     "api": "GET /release/imagery/img-52190-2023-aerial/thumb",
+     "ms": 365,
+     "failed": false
+    },
+    {
+     "api": "GET /release/imagery/img-12730-2023-aerial/thumb",
+     "ms": 358,
+     "failed": false
+    },
+    {
+     "api": "GET /release/imagery/ap25-namwon-2023/thumb",
+     "ms": 358,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 373,
+   "done": 1427,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 18,
+   "top": [
+    {
+     "api": "GET /release/projects/prj_3fdba452d5/infer",
+     "ms": 383,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 366,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 320,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 311,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 311,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 310,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "review": {
+  "url": "/landxi/v3/lx-map/?job=job_01M4FJDMZZAFDWB4HJ00E6X7GJ&project=…",
+  "first": {
+   "tag": "first",
+   "dcl": 1013,
+   "done": 2085,
+   "loading": {
+    "vis": 2158,
+    "first": 2155,
+    "lastHide": 4313,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /reviews/notify",
+     "ms": 457,
+     "failed": false
+    },
+    {
+     "api": "GET /me/analyses?job=job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+     "ms": 417,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 417,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 408,
+     "failed": false
+    },
+    {
+     "api": "GET /shared/layers",
+     "ms": 370,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 370,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 422,
+   "done": 1521,
+   "loading": {
+    "vis": 1560,
+    "first": 1592,
+    "lastHide": 3152,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /me/analyses?job=job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+     "ms": 427,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 427,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 422,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 391,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 381,
+     "failed": false
+    },
+    {
+     "api": "GET /shared/layers",
+     "ms": 348,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "publish": {
+  "url": "/landxi/v3/lx-release/?project=…&stage=publish",
+  "first": {
+   "tag": "first",
+   "dcl": 388,
+   "done": 1448,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 7,
+   "top": [
+    {
+     "api": "GET /release/projects/prj_3fdba452d5/apply",
+     "ms": 432,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 397,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 330,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 319,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 318,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 311,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 390,
+   "done": 1432,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 7,
+   "top": [
+    {
+     "api": "GET /release/projects/prj_3fdba452d5/apply",
+     "ms": 421,
+     "failed": false
+    },
+    {
+     "api": "GET /projects/prj_3fdba452d5",
+     "ms": 367,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 327,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 315,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 310,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 305,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "analyze": {
+  "url": "/landxi/v3/lx-analyze/",
+  "first": {
+   "tag": "first",
+   "dcl": 963,
+   "done": 1955,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 6,
+   "top": [
+    {
+     "api": "GET /cards/deck",
+     "ms": 347,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 338,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 334,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 320,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 299,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 298,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 436,
+   "done": 1441,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 6,
+   "top": [
+    {
+     "api": "GET /cards/deck",
+     "ms": 342,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 327,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 314,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 312,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 309,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 302,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "cards": {
+  "url": "/landxi/v3/lx-cards/",
+  "first": {
+   "tag": "first",
+   "dcl": 948,
+   "done": 1948,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 6,
+   "top": [
+    {
+     "api": "GET /cards/deck",
+     "ms": 366,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 338,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 333,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 330,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 301,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 299,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 388,
+   "done": 1387,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 6,
+   "top": [
+    {
+     "api": "GET /cards/deck",
+     "ms": 327,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 318,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 317,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 311,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 306,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 295,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "mapsvc": {
+  "url": "/landxi/v3/lx-map/",
+  "first": {
+   "tag": "first",
+   "dcl": 423,
+   "done": 1487,
+   "loading": {
+    "vis": 2000,
+    "first": 1590,
+    "lastHide": 3589,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /reviews/notify",
+     "ms": 449,
+     "failed": false
+    },
+    {
+     "api": "GET /me/analyses",
+     "ms": 404,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 398,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 380,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 346,
+     "failed": false
+    },
+    {
+     "api": "GET /shared/layers",
+     "ms": 322,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 434,
+   "done": 1481,
+   "loading": {
+    "vis": 1449,
+    "first": 1657,
+    "lastHide": 3106,
+    "still": false
+   },
+   "apiN": 8,
+   "top": [
+    {
+     "api": "GET /reviews/notify",
+     "ms": 420,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 419,
+     "failed": false
+    },
+    {
+     "api": "GET /me/analyses",
+     "ms": 370,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 364,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 334,
+     "failed": false
+    },
+    {
+     "api": "GET /shared/layers",
+     "ms": 334,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "ximap": {
+  "url": "/landxi/v3/xi-clean/",
+  "first": {
+   "tag": "first",
+   "dcl": 1138,
+   "done": 2876,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 13,
+   "top": [
+    {
+     "api": "GET /survey/stats?by=emd",
+     "ms": 1061,
+     "failed": false
+    },
+    {
+     "api": "GET /national/progress",
+     "ms": 812,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 755,
+     "failed": false
+    },
+    {
+     "api": "GET /survey/stats?by=rule",
+     "ms": 714,
+     "failed": false
+    },
+    {
+     "api": "GET /ximap/board",
+     "ms": 657,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 657,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 443,
+   "done": 2394,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 13,
+   "top": [
+    {
+     "api": "GET /survey/stats?by=emd",
+     "ms": 1358,
+     "failed": false
+    },
+    {
+     "api": "GET /survey/stats?by=rule",
+     "ms": 1057,
+     "failed": false
+    },
+    {
+     "api": "GET /national/progress",
+     "ms": 1030,
+     "failed": false
+    },
+    {
+     "api": "GET /catalog/layers?stage=domestic&build=lx&locale=ko",
+     "ms": 994,
+     "failed": false
+    },
+    {
+     "api": "GET /survey/rules",
+     "ms": 992,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 874,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "inbox": {
+  "url": "/landxi/v3/lx-inbox/",
+  "first": {
+   "tag": "first",
+   "dcl": 988,
+   "done": 5054,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 7,
+   "top": [
+    {
+     "api": "GET /me",
+     "ms": 2088,
+     "failed": false
+    },
+    {
+     "api": "GET /improve/items",
+     "ms": 1657,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews?box=todo&limit=200",
+     "ms": 355,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 339,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 339,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 311,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 438,
+   "done": 1482,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 7,
+   "top": [
+    {
+     "api": "GET /openapi.json",
+     "ms": 515,
+     "failed": false
+    },
+    {
+     "api": "GET /improve/items",
+     "ms": 360,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 346,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 328,
+     "failed": false
+    },
+    {
+     "api": "GET /approvals?state=pending",
+     "ms": 325,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews?box=todo&limit=200",
+     "ms": 315,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "help": {
+  "url": "/landxi/v3/help-my/",
+  "first": {
+   "tag": "first",
+   "dcl": 947,
+   "done": 1941,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 4,
+   "top": [
+    {
+     "api": "GET /auth/session",
+     "ms": 309,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 307,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 303,
+     "failed": false
+    },
+    {
+     "api": "GET /reviews/notify",
+     "ms": 303,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  },
+  "again": {
+   "tag": "again",
+   "dcl": 380,
+   "done": 1907,
+   "loading": {
+    "vis": 0,
+    "first": null,
+    "lastHide": null,
+    "still": false
+   },
+   "apiN": 4,
+   "top": [
+    {
+     "api": "GET /reviews/notify",
+     "ms": 858,
+     "failed": false
+    },
+    {
+     "api": "GET /auth/session",
+     "ms": 833,
+     "failed": false
+    },
+    {
+     "api": "GET /me",
+     "ms": 306,
+     "failed": false
+    },
+    {
+     "api": "GET /openapi.json",
+     "ms": 301,
+     "failed": false
+    }
+   ],
+   "pending": [],
+   "login": false
+  }
+ },
+ "_errors": []
+}
