@@ -1,0 +1,18 @@
+[
+ {
+  "id": "502-원인",
+  "title": "바깥 주소에서 가끔 나던 502 — 서버가 큰 응답을 만드느라 멈추던 것을 고쳤습니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["load-before-1.json", "load-after-1.json", "load-after-with-ximap.json", "ximap-console-before.json", "ximap-console-after.json", "ximap-console-fake502.json"],
+  "where": "app.land-xi.dev · admin.land-xi.dev · namwon.land-xi.dev — 세 입구 화면을 30초 동안 동시에 열기 · XI맵 여덟 곳 날아가기",
+  "note": "큰 응답(실태조사 집계 · 작업 목록 · 배포 목록)이 몰리면 서버가 몇 초씩 멈췄고, 감시가 서버를 다시 켜는 사이 화면이 502 를 받았습니다. 응답 만들기를 따로 돌리게 고친 뒤 같은 부하에서 처리량 13 → 24건/초, 3초 넘게 걸린 요청 13 → 0, 가장 느린 요청 20초 → 3초 미만, 502 0. 서버를 다시 켜는 몇 초 동안 온 화면 요청은 관문이 기다렸다 보냅니다. XI맵 콘솔의 'pt' 수백 건은 이 502 를 받은 지도 조각이었고, 이제 그 조각만 다시 받아 콘솔 오류 0입니다."
+ },
+ {
+  "id": "502-로그아웃안함",
+  "title": "서버가 잠깐 끊겨도 로그인 화면으로 떨어지지 않습니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/staff-502-during.png", "shots/staff-502-after.png", "shots/admin-502-during.png", "shots/admin-502-after.png", "shots/gov-502-during.png", "shots/gov-502-after.png", "sim502-result.json"],
+  "where": "app.land-xi.dev(LX 직원 대시보드) · admin.land-xi.dev(LX 관리자 대시보드) · namwon.land-xi.dev(내 서비스) — 로그인 폼으로 들어간 뒤 서버 끊김을 7초 흉내",
+  "note": "로그인 화면으로 보내는 것은 로그인 시간이 끝났을 때(401)뿐입니다. 서버가 잠깐 끊기면 화면은 두 번 다시 묻고, 그래도 안 되면 가운데 '불러오는 중 · 서버 응답이 늦습니다 · 다시 시도'를 띄운 채 기다렸다가 서버가 돌아오면 보던 화면을 그대로 엽니다. 새 문구는 없습니다(기존 불러오는 중 모양)."
+ }
+]

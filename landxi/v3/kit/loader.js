@@ -75,7 +75,7 @@ function tick() {
   if (n > 0) {
     if (!since) since = now;
     if (!shown && now - since >= SHOW_AFTER) show();
-    if (shown && !slow && now - since >= SLOW_MS) { slow = true; ui.slowEl.hidden = false; ui.root.dataset.slow = '1'; }
+    if (shown && !slow && now - since >= ([...HOLDS.values()].some((o) => o.slowNow) ? 0 : SLOW_MS)) { slow = true; ui.slowEl.hidden = false; ui.root.dataset.slow = '1'; }
   } else {
     since = 0; lastRetry = null;
     if (shown) hide();
@@ -112,9 +112,10 @@ export function unwatch(el) {
   ELS.delete(el); delete el.dataset.kWait;
   kick();
 }
-export function hold({ onRetry, what } = {}) {
+/* slowNow — 이미 기다렸다(자동 재시도가 끝났다) · 처음부터 '서버 응답이 늦습니다 · 다시 시도'를 함께(서버 연결 끊김 · impl-34 no-502) */
+export function hold({ onRetry, what, slowNow = false } = {}) {
   const tk = {};
-  HOLDS.set(tk, { onRetry, what });
+  HOLDS.set(tk, { onRetry, what, slowNow });
   kick();
   return () => { if (HOLDS.delete(tk)) kick(); };
 }

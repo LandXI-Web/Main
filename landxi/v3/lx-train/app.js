@@ -123,7 +123,7 @@ async function file(url, as = 'json') {
 const getS = (p) => api(p).then((j) => ({ j, s: 200 }), (e) => ({ j: null, s: e?.status || 0 }));
 const [mR, fR, SUM, cardsJ, deckJ] = await Promise.all([getS('/registry/models'), getS('/feedback'), summary(), get('/registry/cards'), get('/cards/deck')]);
 const DECK = deckJ?.items || [];   // 서비스 카드 덱 — 공개 서비스가 쓰는 모델의 AI 모델 정확도(분석하기 카드와 같은 값)
-if ([mR.s, fR.s].some((s) => s === 401 || s === 403)) {
+if ([mR.s, fR.s].some((s) => s === 401)) {   // 로그인으로 보내는 것은 401(세션 끝남)뿐 · 502 · 503 은 아래 '다시 시도'(impl-34 no-502)
   session.clear();
   location.replace(FRONT + '?next=' + encodeURIComponent(location.pathname + location.search));
   await new Promise(() => {});

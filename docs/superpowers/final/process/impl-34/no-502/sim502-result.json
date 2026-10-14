@@ -1,0 +1,56 @@
+[
+ {
+  "who": "LX 직원",
+  "page": "/landxi/v3/lx-console/",
+  "fake502": 6,
+  "during": {
+   "path": "/landxi/v3/lx-console/",
+   "loader": true,
+   "slow": true,
+   "slowText": "서버 응답이 늦습니다 · 다시 시도",
+   "session": true
+  },
+  "after": {
+   "path": "/landxi/v3/lx-console/",
+   "loader": false,
+   "main": true
+  },
+  "errors": []
+ },
+ {
+  "who": "LX 관리자",
+  "page": "/landxi/v3/ops-core/",
+  "fake502": 8,
+  "during": {
+   "path": "/landxi/v3/ops-core/",
+   "loader": true,
+   "slow": true,
+   "slowText": "서버 응답이 늦습니다 · 다시 시도",
+   "session": true
+  },
+  "after": {
+   "path": "/landxi/v3/ops-core/",
+   "loader": false,
+   "main": true
+  },
+  "errors": []
+ },
+ {
+  "who": "기관(남원)",
+  "page": "/landxi/v3/gov-select/?list=1",
+  "fake502": 7,
+  "during": {
+   "path": "/landxi/v3/gov-select/",
+   "loader": true,
+   "slow": true,
+   "slowText": "서버 응답이 늦습니다 · 다시 시도",
+   "session": true
+  },
+  "after": {
+   "path": "/landxi/v3/gov-select/",
+   "loader": false,
+   "main": true
+  },
+  "errors": []
+ }
+]

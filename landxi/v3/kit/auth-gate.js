@@ -125,14 +125,20 @@ async function tenantOf(id) {
   } catch { return { id, scope: 'local', name: { ko: '', en: '' }, approx: true }; }
 }
 
-let WHO = null;
-/** 확인만(이동 없음) — 세션이 없거나 서버가 거절하면 null */
+let WHO = null, WHO_DOWN = false;
+/** 확인만(이동 없음) — 세션이 없거나 서버가 거절하면 null.
+    서버가 잠깐 끊겨(502 · 503 · 504 · 연결 끊김 — api 가 이미 두 번 다시 물었다) 확인하지 못했으면 세션은 그대로 두고 null(WHO_DOWN · impl-34 no-502) */
 export async function whoami() {
   if (WHO) return WHO;
+  WHO_DOWN = false;
   const s = session.get();
   if (!s) return null;
   let me;
-  try { me = await api('/me'); } catch (e) { if (e.status === 401 || e.status === 403) session.clear(); return null; }
+  try { me = await api('/me'); } catch (e) {
+    if (e.status === 401 || e.status === 403) session.clear();
+    else WHO_DOWN = true;
+    return null;
+  }
   let tenant = null;
   if (me.realm === 'tenant') tenant = await tenantOf(me.tenant_id);
   const key = keyOf(me, tenant);
@@ -147,7 +153,8 @@ export async function gate(home = homeFromPath()) {
     location.replace('https://' + SITES.app.host + location.pathname.replace(/^\/[^/]+(?=\/landxi\/)/, '') + location.search);
     return new Promise(() => {});
   }
-  const who = await whoami();
+  let who = await whoami();
+  if (!who && WHO_DOWN) who = await waitServer();
   const here = location.pathname + location.search;
   if (!who) {
     if (govPage(home)) location.replace(orgHome(lastOrg(), { next: here }));   // 기관 화면 — 그 기관 메인의 로그인으로(Land-XI 로그인 아님)
@@ -162,6 +169,23 @@ export async function gate(home = homeFromPath()) {
   /* 기관 세션 화면의 머리 = 기관 마크 · 이름(구현 2차 T3 · 모든 기관 화면이 같은 틀) — 서비스 선택은 스스로 그린다 */
   if (who.key === 'tenant/local' && home !== 'gov-select') import('../gov-select/brand.js').then((m) => m.brandMast(who.me.tenant_id)).catch(() => {});
   return { ...who, home };
+}
+
+/* 서버가 잠깐 끊겼을 때(502 · 503 · 504 · 연결 끊김) — 로그인 화면으로 보내지 않는다. 가운데 '불러오는 중 · 서버 응답이 늦습니다 · 다시 시도'
+   (loader 모양 그대로)를 띄우고 몇 초마다 다시 묻다가, 서버가 돌아오면 그대로 화면을 연다. 로그인으로 가는 것은 401(세션 끝남)일 때뿐 */
+/** 마지막 확인이 서버 끊김 때문에 실패했는가(로그인 화면으로 보내지 않을 때) */
+export const serverDown = () => WHO_DOWN;
+async function waitServer() {
+  const { hold } = await import('./loader.js');
+  let now = null;
+  const release = hold({ slowNow: true, onRetry: () => now && now() });
+  try {
+    for (let k = 0; ; k++) {
+      await new Promise((ok) => { now = ok; setTimeout(ok, Math.min(2000 + k * 1000, 8000)); });
+      const w = await whoami();
+      if (w || !WHO_DOWN) return w;
+    }
+  } finally { release(); }
 }
 
 /* 쓰던 중 세션이 끝나면(서버 401) 가운데 창 하나 — 다시 로그인하면 보던 화면으로 돌아온다(?next). 조용히 '로그인이 필요합니다' 글줄만 남지 않게(QA-세션 · 10-11 종단 시험) */

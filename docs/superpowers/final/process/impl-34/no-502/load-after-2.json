@@ -1,0 +1,223 @@
+{
+ "dur_s": 30,
+ "conc": 12,
+ "requests": 586,
+ "status": {
+  "200": 553,
+  "400": 33
+ },
+ "slow_over_3s": 0,
+ "slowest": [],
+ "fails": [
+  {
+   "at": "2026-10-14T07:46:00.172Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 286,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:45:59.898Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 593,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:45:59.954Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 583,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:01.835Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 298,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:02.424Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 318,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:02.673Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 308,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:02.741Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 294,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:02.919Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 299,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:04.780Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 304,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:04.868Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 291,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:05.490Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 294,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:05.770Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 289,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:06.045Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 306,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:07.163Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 311,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:07.452Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 370,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:08.494Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 347,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:08.841Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 674,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:15.167Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 392,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:15.609Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 291,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:16.262Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 291,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:16.497Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 286,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:16.517Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 289,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:17.319Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 889,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:18.208Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 316,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:20.735Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 314,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:21.575Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 307,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:22.038Z",
+   "k": "gov",
+   "p": "/spaces/me/report",
+   "ms": 286,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:22.062Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 292,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:22.285Z",
+   "k": "app",
+   "p": "/national/sets",
+   "ms": 585,
+   "st": 400
+  },
+  {
+   "at": "2026-10-14T07:46:22.817Z",
+   "k": "gov",
+   "p": "/spaces/me/ledger/compare",
+   "ms": 318,
+   "st": 400
+  }
+ ]
+}

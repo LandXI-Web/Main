@@ -146,8 +146,12 @@ function proxy(req, res, body = null) {
   delete headers['x-lx-site'];                                   // 입구는 주소로만 — 바깥에서 보낸 값은 버린다
   delete headers.connection; delete headers['keep-alive'];      // 이어 쓰기는 관문 ↔ 게이트웨이 사이에서 정한다(바깥 연결의 close 를 넘기지 않음)
   const site = siteOf(req); if (site) headers['x-lx-site'] = site;
-  /* 게이트웨이가 먼저 닫은 이어 둔 연결에 보낸 읽기 요청은 한 번 새 연결로 다시 보낸다(본문 없는 GET · HEAD 만) */
+  /* 게이트웨이가 먼저 닫은 이어 둔 연결에 보낸 읽기 요청은 한 번 새 연결로 다시 보낸다(본문 없는 GET · HEAD 만).
+     게이트웨이가 다시 켜지는 몇 초(감시 재기동 · 배포 재시작 — 연결 거절 ECONNREFUSED) 동안 온 읽기 요청은 0.5초 간격으로 12초까지 기다렸다 보낸다
+     — 그 틈의 화면 요청이 502 로 끝나 로그인으로 떨어지지 않게(impl-34 no-502). 쓰기 요청(POST 등)은 다시 보내지 않는다. */
   const retriable = (req.method === 'GET' || req.method === 'HEAD') && body === null;
+  const t0 = Date.now(); let gone = false;
+  res.on('close', () => { if (!res.writableFinished) gone = true; });   // 바깥 연결이 끊기면 기다리지 않는다
   const go = (again) => {
     const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
       res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
@@ -156,6 +160,8 @@ function proxy(req, res, body = null) {
     });
     up.on('error', (e) => {
       if (again && retriable && !res.headersSent && /ECONNRESET|EPIPE/.test(e.code || '')) return go(false);
+      if (retriable && !res.headersSent && !gone && e.code === 'ECONNREFUSED' && Date.now() - t0 < 12000) return void setTimeout(() => (gone ? res.end() : go(again)), 500);
+      if (!gone) console.error(`${new Date().toISOString()} 502 ${e.code || e.message} ${req.method} ${req.url.split('?')[0].slice(0, 90)} ${Date.now() - t0}ms`);   // 원인 기록(impl-34 · 바깥 연결이 먼저 끊긴 것은 빼고)
       if (!res.headersSent) send(res, 502, JSON.stringify({ error: { code: 'gateway_down', message: '서버에 연결할 수 없습니다.' } }), { 'content-type': 'application/json' }); else res.end();
     });
     req.on('aborted', () => up.destroy());

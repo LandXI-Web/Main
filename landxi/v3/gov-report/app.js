@@ -27,9 +27,9 @@ const plain = (s) => String(s || '').split(/\s+·\s+/).filter((x) => !/\/|\b(GET
 const uncode = (s) => String(s || '').replace(/\bR\d\s*·\s*/g, '').replace(/\bR\d\s+(?=[가-힣])/g, '');
 
 /* ═════════ 실패 처리 ═════════
-   401/403 = 세션이 끊김 → 관문(K2)과 같은 방식으로 정문(?next=지금 주소)으로.
-   그 밖(503 · 네트워크) = 이전 행 · 큰 숫자를 그대로 두고 토스트 한 줄. 빈 상태 카드는 서버가 200 으로 빈 목록을 줄 때만. */
-const isAuth = (e) => !!e && (e.status === 401 || e.status === 403);
+   401 = 세션이 끊김 → 관문(K2)과 같은 방식으로 정문(?next=지금 주소)으로(로그인으로 보내는 것은 401 뿐 · impl-34 no-502).
+   그 밖(403 · 502 · 503 · 네트워크) = 이전 행 · 큰 숫자를 그대로 두고 토스트 한 줄. 빈 상태 카드는 서버가 200 으로 빈 목록을 줄 때만. */
+const isAuth = (e) => !!e && e.status === 401;
 let leaving = false;
 function toFront() {
   if (leaving) return; leaving = true;

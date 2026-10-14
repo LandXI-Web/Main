@@ -1,7 +1,7 @@
 /* help-my 쪽 부팅. 두 가지로 뜬다.
    · ?embed=1 — K1 기본 `?` 가 K5 서랍 안 iframe 으로 부른다: 셸 없이 탭 + 내용만. Esc 는 바깥 서랍을 닫는다.
    · 단독 /landxi/v3/help-my/ — 정문 로그인한 사람만(K2) · K1 셸 + 흰 카드 한 장. */
-import { gate, whoami, FRONT } from '../kit/auth-gate.js';
+import { gate, whoami, serverDown, FRONT } from '../kit/auth-gate.js';
 import { shell } from '../kit/shell.js';
 import { h } from '../kit/util.js';
 import { mountHelp } from './help.js';
@@ -13,7 +13,8 @@ const tab = q.get('tab') || undefined;
 async function boot() {
   if (embed) {
     document.documentElement.classList.add('hm-embed');
-    const who = await whoami();
+    let who = await whoami();
+    while (!who && serverDown()) { await new Promise((ok) => setTimeout(ok, 3000)); who = await whoami(); }   // 서버가 잠깐 끊김 — 로그인으로 보내지 않고 다시 묻는다(impl-34)
     if (!who) { window.top.location.replace(FRONT + '?next=' + encodeURIComponent(window.top.location.pathname + window.top.location.search)); return; }
     // 바깥 서랍 — 제목을 명세 문구 `지원` 으로(키트 기본 제목이 다를 때) · Esc 를 바깥으로 넘긴다
     try {

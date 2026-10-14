@@ -162,6 +162,7 @@ def judge_power(gl: list[dict], th: float, mx: int, lease_gpu: list[int], recent
 
 
 OVERLAP_CACHE: dict = {"at": 0.0, "v": None}
+_OVERLAP_LOCK = asyncio.Lock()
 
 
 def count_overlap(samples: list[dict], th: float) -> dict:
@@ -180,20 +181,30 @@ async def _overlap_recent(r, th: float) -> dict:
     """최근 2시간(폴러 스트림 전체 · MAXLEN ~3600 × 2 s) 동시 고부하 표본 수 · 30 s 캐시."""
     if OVERLAP_CACHE["v"] is not None and time.time() - OVERLAP_CACHE["at"] < 30:
         return OVERLAP_CACHE["v"]
-    out = {"n": None, "last_at": None, "samples": 0}
-    try:
-        xs = await r.xrange("ops:gpu")
-        js = []
-        for _id, f in xs or []:
-            try:
-                js.append(json.loads(f.get("json") or "{}"))
-            except Exception:  # noqa: BLE001
-                continue
-        out = count_overlap(js, th)
-        out["since"] = js[0].get("at") if js else None
-    except Exception:  # noqa: BLE001
-        pass
-    OVERLAP_CACHE.update(at=time.time(), v=out)
+    # 한 번에 한 계산만(impl-34 no-502) — 캐시가 끝난 순간 GPU 칸 요청이 몰리면 요청마다 3,600 표본을 루프 위에서 다시 읽어 루프가 막혔다.
+    # 표본 읽기 · 세기는 스레드에서. 기다린 요청은 방금 계산한 값을 쓴다.
+    async with _OVERLAP_LOCK:
+        if OVERLAP_CACHE["v"] is not None and time.time() - OVERLAP_CACHE["at"] < 30:
+            return OVERLAP_CACHE["v"]
+        out = {"n": None, "last_at": None, "samples": 0}
+        try:
+            xs = await r.xrange("ops:gpu")
+            out = await asyncio.to_thread(_overlap_from, xs or [], th)
+        except Exception:  # noqa: BLE001
+            pass
+        OVERLAP_CACHE.update(at=time.time(), v=out)
+        return out
+
+
+def _overlap_from(xs, th: float) -> dict:
+    js = []
+    for _id, f in xs:
+        try:
+            js.append(json.loads(f.get("json") or "{}"))
+        except Exception:  # noqa: BLE001
+            continue
+    out = count_overlap(js, th)
+    out["since"] = js[0].get("at") if js else None
     return out
 
 

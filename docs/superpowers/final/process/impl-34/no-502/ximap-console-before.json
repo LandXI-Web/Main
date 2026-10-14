@@ -1,0 +1,29 @@
+{
+ "counts": {
+  "error:pt": 120
+ },
+ "errs": [
+  {
+   "type": "error",
+   "t": "pt",
+   "loc": {
+    "url": "",
+    "line": 1,
+    "column": 392,
+    "lineNumber": 1,
+    "columnNumber": 392
+   }
+  },
+  {
+   "type": "error",
+   "t": "pt",
+   "loc": {
+    "url": "",
+    "line": 1,
+    "column": 392,
+    "lineNumber": 1,
+    "columnNumber": 392
+   }
+  }
+ ]
+}

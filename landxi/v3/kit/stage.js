@@ -36,6 +36,29 @@ const LOOK = {
   ],
 };
 
+/* 지도 조각이 잠깐 끊긴 서버(502 · 503 · 504 · 연결 끊김)로 못 온 것 — 지도 엔진은 '오류' 듣는 이가 없으면 콘솔에 오류 객체를 그대로 찍었다
+   (XI맵 콘솔의 'pt' 수백 건 = 지도 엔진의 AJAXError · impl-34 no-502). 그 조각만 조금 뒤 다시 받는다(조각마다 2번까지 · 1.5초 · 4초).
+   그 밖의 오류(404 · 모양 오류 등)와 다시 받기를 다 쓴 경우는 경고 한 줄로 남긴다(화면마다 따로 단 오류 처리는 그대로 받는다). */
+const TILE_RETRY = new Set([0, 502, 503, 504]);
+function tileRetry(map) {
+  const tries = new Map();
+  map.on('error', (e) => {
+    const err = e?.error, st = err?.status, sid = e?.sourceId || e?.source?.id;
+    if (err?.name === 'AbortError' || /aborted/i.test(String(err?.message || ''))) return;
+    const c = e?.tile?.tileID?.canonical;
+    if (sid && TILE_RETRY.has(st) && map.getSource(sid)) {
+      const key = sid + '/' + (c ? `${c.z}/${c.x}/${c.y}` : '*');
+      const n = tries.get(key) || 0;
+      if (n < 2) {
+        tries.set(key, n + 1);
+        setTimeout(() => { try { if (map.getSource(sid)) map.refreshTiles(sid, c ? [{ z: c.z, x: c.x, y: c.y }] : undefined); } catch { /* 지도가 닫혔다 */ } }, n ? 4000 : 1500);
+        return;
+      }
+    }
+    console.warn('[지도]', String(err?.message || err || e).slice(0, 200));
+  });
+}
+
 export function createStage(el, { mode = 'app', bounds = KOREA, interactive = true, scale = true, padding, under = false } = {}) {
   if (!window.maplibregl) throw new Error('[kit/stage] maplibre-gl.js 를 먼저 싣는다');
   el.classList.add('k-stage');
@@ -46,6 +69,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   const soft = /swiftshader|llvmpipe|software/i.test(gpuInfo().renderer || '');
   const map = createMap({ container: wrap, mode: 'flat', center: [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], zoom: 6, maxPitch: soft ? 45 : 60, interactive });
   map.getCanvas().setAttribute('aria-label', '지도');
+  tileRetry(map);
   let pad = padding || defaultPad();
   map.fitBounds(bounds, { padding: pad, duration: 0 });
   if (scale) map.addControl(new window.maplibregl.ScaleControl({ maxWidth: 96, unit: 'metric' }), 'bottom-left');

@@ -96,6 +96,33 @@ async def lifespan(app: FastAPI):
     await close()
 
 
+# ── 이벤트 루프 막힘 줄이기(impl-34 no-502) ──
+# 1) async 경로의 반환값 변환 · 직렬화 · 봉투 검사를 전용 스레드 4개에서(envelope.prerender). 지도 조각 · 영상 그리기가 쓰는
+#    공용 스레드(anyio 40칸)와 나눠, 지도 조각이 몰려도 JSON 응답이 그 줄에 서지 않게 한다. 응답 모델이 있는 경로는 FastAPI 그대로.
+import concurrent.futures as _cf  # noqa: E402
+import importlib.util  # noqa: E402
+import fastapi.routing as _fr  # noqa: E402
+from .envelope import prerender as _prerender  # noqa: E402
+
+_JSON_POOL = _cf.ThreadPoolExecutor(max_workers=4, thread_name_prefix="lx-json")
+_orig_serialize = _fr.serialize_response
+
+
+async def _serialize_off_loop(*, field=None, response_content=None, **kw):
+    if field is None:
+        try:
+            return await asyncio.get_running_loop().run_in_executor(_JSON_POOL, _prerender, response_content)
+        except RuntimeError:             # 스레드에서 읽는 사이 루프가 같은 보관 사전을 고쳤다(드묾) — 예전처럼 루프에서 한 번 더
+            return _prerender(response_content)
+    return await _orig_serialize(field=field, response_content=response_content, **kw)
+
+
+_fr.serialize_response = _serialize_off_loop
+# 2) httpcore 는 연결을 닫을 때마다 'import sniffio' 를 해 본다 — 설치돼 있지 않으면 매번 파일 경로를 뒤진다(XI ChatGEO 스트림마다 · 루프 위).
+#    없을 때는 '없음'을 한 번 적어 두어 바로 ImportError 가 나게 한다(뜻은 같다 = asyncio).
+if importlib.util.find_spec("sniffio") is None:
+    sys.modules["sniffio"] = None  # type: ignore[assignment]
+
 app = FastAPI(title="Land-XI API", version=config.VERSION, default_response_class=LXJSON, lifespan=lifespan,
               docs_url="/api/v1/docs", openapi_url="/api/v1/openapi.json")
 app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_credentials=False,

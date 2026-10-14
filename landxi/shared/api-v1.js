@@ -76,6 +76,9 @@ export async function probe(force = false) {
 }
 
 /* ── 호출 ─────────────────────────────────────────────────────────────── */
+const TRANSIENT = new Set([502, 503, 504]);
+/** 잠깐 끊긴 서버(502 · 503 · 504 · 연결 끊김) — 로그아웃하지 않고 '다시 시도'로 받을 실패인가 */
+export const isTransient = (e) => !!e && (e.status === 0 || TRANSIENT.has(e.status) || e.code === 'network');
 export class ApiError extends Error { constructor(code, message, detail, status) { super(message || code); this.code = code; this.detail = detail; this.status = status; } }
 export async function api(path, { method = 'GET', body, headers = {}, raw = false } = {}) {
   if (API.mode === 'off') throw new ApiError('offline', 'off 모드 — 픽스처를 쓰세요');
@@ -83,7 +86,18 @@ export async function api(path, { method = 'GET', body, headers = {}, raw = fals
   const h = { accept: 'application/json', ...headers };
   if (body !== undefined) h['content-type'] = 'application/json';
   if (s) h.authorization = 'Bearer ' + s.token;
-  const r = await fetch((path.startsWith('/tiles') || path.startsWith('/files') ? API.base : API.prefix) + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
+  const url = (path.startsWith('/tiles') || path.startsWith('/files') ? API.base : API.prefix) + path;
+  const init = { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) };
+  /* 잠깐 끊긴 서버(502 · 503 · 504 · 연결 끊김)는 읽기 요청(GET · HEAD)만 짧게 두 번 다시 묻는다(0.7초 · 1.8초 · impl-34 no-502).
+     로그인 화면으로 보내는 것은 401(세션 없음 · 끝남)뿐 — 그 밖의 실패는 화면이 '다시 시도'로 받는다. */
+  const again = method === 'GET' || method === 'HEAD';
+  let r;
+  for (let k = 0; ; k++) {
+    try { r = await fetch(url, init); }
+    catch (err) { if (!again || k >= 2) throw new ApiError('network', '서버에 연결할 수 없습니다', null, 0); await new Promise((ok) => setTimeout(ok, k ? 1800 : 700)); continue; }
+    if (!again || k >= 2 || !TRANSIENT.has(r.status)) break;
+    await new Promise((ok) => setTimeout(ok, k ? 1800 : 700));
+  }
   if (raw) return r;
   const j = r.status === 204 ? null : await r.json().catch(() => null);
   if (!r.ok) {

@@ -119,6 +119,14 @@ class LXJSON(JSONResponse):
     check = True
 
     def render(self, content) -> bytes:
+        pre = getattr(content, "_lx_raw", None)
+        if pre is not None:                      # 스레드에서 미리 만든 본문(prerender · impl-34 no-502) — 이벤트 루프에서는 다시 만들지 않는다
+            err = getattr(content, "_lx_err", None)
+            if err is not None and config.DEV and self.check and self.status_code < 400:
+                self.status_code = 500
+                return dumps({"error": {"code": "envelope_missing", "message": f"봉투 없는 숫자: {err.path} = {err.value!r}",
+                                        "detail": {"path": err.path}}, "request_id": "req_env"})
+            return pre
         raw = dumps(content)
         if config.DEV and self.check and self.status_code < 400:
             parsed = json.loads(raw)
@@ -129,6 +137,34 @@ class LXJSON(JSONResponse):
                 return dumps({"error": {"code": "envelope_missing", "message": f"봉투 없는 숫자: {e.path} = {e.value!r}",
                                         "detail": {"path": e.path}}, "request_id": "req_env"})
         return raw
+
+
+class _PreDict(dict):
+    __slots__ = ("_lx_raw", "_lx_err")
+
+
+class _PreList(list):
+    __slots__ = ("_lx_raw", "_lx_err")
+
+
+def prerender(content):
+    """응답 본문을 미리 만든다(스레드에서 부른다 · impl-34 no-502).
+    FastAPI 는 async 경로의 반환값 변환(jsonable_encoder)과 LXJSON.render(직렬화 · 다시 읽기 · 봉투 검사)를 이벤트 루프에서 돌린다 —
+    큰 응답(실태조사 집계 1.5 MB · 작업 목록 · 배포 목록)이 몰리면 루프가 수 초씩 막혀 health 가 20 s 넘게 안 와 감시가 게이트웨이를 다시 켰고,
+    그 사이 관문이 502 를 돌려 화면이 로그인으로 떨어졌다. 결과(본문 바이트 · 봉투 검사)는 예전과 같다 — jsonable_encoder 결과를 그대로 검사한다."""
+    from fastapi.encoders import jsonable_encoder
+    enc = jsonable_encoder(content)
+    if not isinstance(enc, (dict, list)):
+        return enc
+    out = _PreDict(enc) if isinstance(enc, dict) else _PreList(enc)
+    out._lx_raw = dumps(enc)
+    out._lx_err = None
+    if config.DEV:
+        try:
+            scan(enc)
+        except EnvelopeMissing as e:
+            out._lx_err = e
+    return out
 
 
 class RawJSON(LXJSON):
