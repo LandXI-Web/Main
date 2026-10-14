@@ -106,6 +106,17 @@ def finalize(job_id: str):
                     cp.write_row((tenant, job_id, p.get("shard_id"), p["id"], p["cls"], p["cls_en"], p.get("cid"), p.get("conf"), p.get("area_m2"),
                                   p.get("emd"), p.get("emd_cd"), bool(p.get("chip_edge")), "raw", to_wkb(set_srid(g, 4326), hex=True, include_srid=True)))
             conn.commit()
+        # 지운 자리 기억(원칙 243) — 이 결과 범위의 고친 자리를 새 객체에 저절로 적용(지움 · 분류 · 모양 · 새로 그림 · 연도가 다르면 다시 확인)
+        try:
+            from landxi_api.edit_memory import apply_sync
+            with bus.pg() as conn:
+                bus.lx_tx(conn)
+                mem = apply_sync(conn, job_id)
+                conn.commit()
+            if mem.get("applied") or mem.get("recheck"):
+                log(WHO, f"지운 자리 기억 {job_id}: {mem}")
+        except Exception as e:  # noqa: BLE001
+            log(WHO, "edit memory error", job_id, repr(e))
     t_nms = time.time() - t0
     started = float(jh.get("started_ts") or t0)
     elapsed = round(time.time() - started, 1)

@@ -10,6 +10,7 @@
          cells  칸(읍면동 · 분석할 범위가 있는 곳만) · done 0/1 · 이름 · 칸 숫자(끝난 곳만 — 지어낸 숫자 0) · 줌 ≤ 10(더 가까이는 늘려 씀)
          faces  낮은 줌용 단순화 결과 면 — 줌 ≤ 7 약 200m 칸 · 줌 8~10 약 80m 칸(그 분류가 칸을 덮는 곳)
   GET  /api/v1/national/sets?asset=&bbox=w,s,e,n   LX — 그 범위의 끝난 칸 결과 묶음(객체 지도 조각 · 판 번호) — 줌 11부터 XI맵이 객체를 그린다.
+       객체를 누르면 서비스 결과와 같은 그 자리 고치기(ximap.py — 누른 객체만 한 줄로 올림 · 칸 숫자를 고친 만큼 맞춤 · 원칙 243).
        객체는 데이터베이스에 쌓지 않고(C: 디스크) E: 의 결과 묶음 파일(/tiles/mvt 판 번호 주소)에서 읽는다.
        판 = 그 자산 · 연도의 끝난 칸 수 + 마지막 칸 시각 — 작업기가 칸을 마칠 때마다 바뀐다. 판이 맞으면 1년 보관, 옛 판은 no-cache(impl-20 판 번호 방식).
 화면 글에 표 이름 · 작업 id · 경로 · 좌표를 쓰지 않는다. 숫자는 장부(national_cells)에서 센 값 하나.
@@ -83,9 +84,13 @@ async def versions(conn, year: int) -> dict:
         return c[1]
     rows = await conn.fetch("SELECT asset, count(*) FILTER (WHERE state='done') AS n, max(done_at) AS last FROM national_cells "
                             "WHERE year=$1 AND NOT test GROUP BY asset", year)
+    # 전국 결과를 그 자리에서 고치면(지우기 · 되돌리기 등) 칸 숫자가 바뀐다 — 판에 고친 횟수를 붙여 지도 조각(칸 숫자)도 새로 받게(원칙 243)
+    eds = {r["asset"]: int(r["k"]) for r in await conn.fetch(
+        "SELECT n.asset, count(*) + count(e.undone_at) AS k FROM result_edits e JOIN national_jobs n ON n.job_id = e.set_id "
+        "WHERE n.year=$1 AND NOT e.test GROUP BY n.asset", year)}
     out = {a: "0" for a in ASSETS}
     for r in rows:
-        out[r["asset"]] = f"{r['n']}.{int(r['last'].timestamp()) if r['last'] else 0}"
+        out[r["asset"]] = f"{r['n']}.{int(r['last'].timestamp()) if r['last'] else 0}" + (f".{eds[r['asset']]}" if eds.get(r["asset"]) else "")
     _VER[k] = (time.time(), out)
     return out
 

@@ -34,6 +34,8 @@ const two = (n) => String(n).padStart(2, '0');
 const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
 const mdhm = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${two(d.getHours())}:${two(d.getMinutes())}`; };
 const pct = (e) => (val(e) == null ? '—' : `${nf(val(e))}%`);
+/* 지운 자리 n곳 중 다시 잡은 곳 m곳(원칙 243 · 그 판의 새 결과에서 서버가 잰 값 · 없으면 줄 없음) */
+const memLine = (m) => (m ? `지운 자리 ${nf(val(m.places))}곳 중 다시 잡은 곳 ${nf(val(m.again))}곳` : '');
 const km2 = (e) => (val(e) == null || val(e) < 0.01 ? '' : `${nf(val(e), val(e) < 1 ? 2 : val(e) < 100 ? 1 : 0)}km²`);   // 관리자 화면과 같은 자릿수
 const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 const unitsEl = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rl-u', { text: u })); }); return el; };
@@ -219,7 +221,7 @@ async function drawPublish() {
   const mSel = h('select.t-input', { 'aria-label': '모델' }, ...(d.models || []).map((x) => h('option', { value: x.id, disabled: !x.can_apply,
     text: join(`${x.n}번째 학습`, x.name, pct(x.acc), x.can_apply ? '' : '모델 등록 승인 뒤 신청할 수 있습니다') })));
   if (st.model) mSel.value = st.model;
-  const accEl = h('div.rl-cmp'), lowEl = h('p.rl-low', { role: 'note' }), dataEl = h('div'), sceneEl = h('div.rl-scenes', { role: 'radiogroup', 'aria-label': '결과 장면' });
+  const accEl = h('div.rl-cmp'), lowEl = h('p.rl-low', { role: 'note' }), memEl = h('p.rl-mem'), dataEl = h('div'), sceneEl = h('div.rl-scenes', { role: 'radiogroup', 'aria-label': '결과 장면' });
   const ledger = h('select.t-input', { 'aria-label': '대장 형식' }, ...(d.ledger_kinds || []).map((k) => h('option', { value: k.kind, text: k.label })));
   function drawModelBits() {
     const x = m();
@@ -231,6 +233,7 @@ async function drawPublish() {
     /* 기반 · 지난 판보다 낮으면 빨간 경고 한 줄(질문 9 ⓑ) — 막지 않는다 · 관리자 신청서에도 같은 줄 */
     lowEl.textContent = x?.low ? `${x.low} — 신청은 할 수 있고, 관리자가 보고 판단합니다` : '';
     lowEl.hidden = !x?.low;
+    memEl.textContent = memLine(x?.memory); memEl.hidden = !x?.memory;
     dataEl.replaceChildren(x?.sample
       ? unitsEl('b', join(`${nf(val(x.sample.images))}장`, `${md(x.sample.at)} 올림`))
       : h('b.rl-warn', { text: '이 모델은 프로젝트 학습 데이터와 연결 기록이 없습니다' }));
@@ -280,7 +283,7 @@ async function drawPublish() {
     h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석하기 카드 그림이 됩니다(PNG · JPG · WebP)' }));
   row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석하기의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
-  row('AI 모델 정확도', accEl, lowEl, h('small', { text: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' }));
+  row('AI 모델 정확도', accEl, lowEl, memEl, h('small', { text: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' }));
   row('학습 데이터', dataEl);
   // 결과 확인 봤음 · 안 봄 줄은 원칙 203(10-12)으로 뺐다 — 결과는 '결과 장면'으로 지도에서 본다
   row('결과 장면', sceneEl);

@@ -13,6 +13,9 @@ XI맵 그 자리 고치기로 고친 자리 둘레 한 칸(학습용 영상 조�
           분류 순서 = 모델 머리 순서(+ 머리에 없는 새 클래스는 뒤에).
   다시    이미 1장이 된 칸을 또 고치면 기다림으로 돌아가 조용한 시간 뒤 다시 만든다(같은 줄 · version + 1 · 1장 그대로).
 
+저절로 적용한 줄(지운 자리 기억 · source='memory')은 칸을 만들지 않는다 — 원래 고친 줄이 그 자리 1장을 이미 만든다(원칙 243).
+전국 결과(객체 줄을 쌓지 않는 묶음)의 칸은 테두리를 결과 묶음 파일 + 고친 줄에서 만들고, 학습 데이터는 전국 분석 모델을 학습한 프로젝트로 간다(project_id).
+
 시험(test=True)은 시험 고친 기록만 · '시험' 칸 · xi-tiles/{서비스}-test/ 에 만들고 정리할 수 있다(drop_test).
 화면 글에 경로 · id 를 쓰지 않는다. 숫자는 센 값.
 """
@@ -33,7 +36,7 @@ PX = 512
 QUIET_MIN = 30
 ROOT = config.DATA_ROOT / "training" / "xi-tiles"
 
-LIVE = "e.undone_at IS NULL AND e.action <> 'memo' AND (e.cls_after_id IS NULL OR ca.status = 'approved')"
+LIVE = "e.undone_at IS NULL AND e.action <> 'memo' AND e.source <> 'memory' AND (e.cls_after_id IS NULL OR ca.status = 'approved')"
 FROM = "FROM result_edits e LEFT JOIN classes ca ON ca.id = e.cls_after_id"
 
 
@@ -102,7 +105,7 @@ async def scan(conn, *, test: bool = False, quiet_min: int | None = None, now: d
     st = await _settings(conn)
     q = int(st.get("tile_quiet_min", QUIET_MIN) if quiet_min is None else quiet_min)
     rows = await conn.fetch(
-        f"SELECT e.id, e.set_id, e.det_id, e.fid, e.action, e.cls_after, e.by_user, e.at, e.card_id, e.model_id, e.imagery_id, "
+        f"SELECT e.id, e.set_id, e.det_id, e.fid, e.action, e.cls_after, e.by_user, e.at, e.card_id, e.model_id, e.imagery_id, e.project_id, "
         f"ST_X(ST_Centroid(coalesce(e.geom_after, e.geom_before))) AS lon, ST_Y(ST_Centroid(coalesce(e.geom_after, e.geom_before))) AS lat, "
         f"md5(coalesce(ST_AsBinary(e.geom_after), ''::bytea)) AS g_after "
         f"{FROM} WHERE {LIVE} AND e.test = $1 AND coalesce(e.geom_after, e.geom_before) IS NOT NULL", test)
@@ -122,7 +125,7 @@ async def scan(conn, *, test: bool = False, quiet_min: int | None = None, now: d
         gx, gy = cell_of(x, y, size)
         key = (r["set_id"], f"EPSG:{epsg}", gx, gy)
         c = cells.setdefault(key, {"edits": [], "size": size, "epsg": epsg, "card_id": r["card_id"], "model_id": r["model_id"],
-                                   "imagery_id": r["imagery_id"]})
+                                   "imagery_id": r["imagery_id"], "project_id": r["project_id"]})
         c["edits"].append(dict(r))
     seen = set()
     out = {"cells": len(cells), "waiting": 0, "made": 0, "conflict": 0, "empty": 0, "failed": 0, "dropped": 0, "kept": 0, "quiet_min": q}
@@ -147,13 +150,14 @@ async def scan(conn, *, test: bool = False, quiet_min: int | None = None, now: d
         tid = old["id"] if old else "tt_" + secrets.token_hex(5)
         if old:
             await conn.execute("UPDATE train_tiles SET state=$2, why=$3, edit_ids=$4, n_edits=$5, users=$6, last_edit_at=$7, card_id=$8, model_id=$9, "
-                               "imagery_id=$10, size_m=$11, px=$12, bbox=ST_GeomFromText($13, 4326), updated_at=now() WHERE id=$1",
+                               "imagery_id=$10, size_m=$11, px=$12, bbox=ST_GeomFromText($13, 4326), project_id=$14, updated_at=now() WHERE id=$1",
                                tid, state if why or old["state"] != "made" else "waiting", why, eids, len(eids), users, last, c["card_id"], c["model_id"],
-                               c["imagery_id"], size, PX, bbox)
+                               c["imagery_id"], size, PX, bbox, c["project_id"])
         else:
             await conn.execute("INSERT INTO train_tiles(id, card_id, set_id, model_id, imagery_id, crs, gx, gy, size_m, px, bbox, state, why, edit_ids, "
-                               "n_edits, users, last_edit_at, test) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,ST_GeomFromText($11,4326),$12,$13,$14,$15,$16,$17,$18)",
-                               tid, c["card_id"], set_id, c["model_id"], c["imagery_id"], crs, gx, gy, size, PX, bbox, state, why, eids, len(eids), users, last, test)
+                               "n_edits, users, last_edit_at, test, project_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,ST_GeomFromText($11,4326),$12,$13,$14,$15,$16,$17,$18,$19)",
+                               tid, c["card_id"], set_id, c["model_id"], c["imagery_id"], crs, gx, gy, size, PX, bbox, state, why, eids, len(eids), users, last, test,
+                               c["project_id"])
         if why:
             out["conflict"] += 1
             continue
@@ -183,12 +187,18 @@ async def make_tile(conn, tid: str) -> str:
         "SELECT d.cls, ST_AsGeoJSON(ST_Intersection(ST_MakeValid(ST_Transform(d.geom, $2::int)), ST_MakeEnvelope($3::float8,$4::float8,$5::float8,$6::float8,$2::int))) AS g "
         "FROM detections d WHERE d.job_id=$1 AND coalesce(d.edit_state,'raw') <> 'deleted' AND d.geom IS NOT NULL "
         "AND ST_Intersects(d.geom, ST_Transform(ST_MakeEnvelope($3::float8,$4::float8,$5::float8,$6::float8,$2::int), 4326))", t["set_id"], epsg, x0, y0, x1, y1)
+    dets = [dict(d) for d in dets]
+    if await conn.fetchval("SELECT EXISTS (SELECT 1 FROM national_jobs WHERE job_id=$1)", t["set_id"]):
+        # 전국 결과 — 객체 줄은 결과 묶음 파일에 있다(데이터베이스에는 고친 · 누른 객체만). 데이터베이스에 없는 객체를 파일에서 더한다
+        have = {r["fid"] for r in await conn.fetch("SELECT fid FROM detections WHERE job_id=$1 AND fid IS NOT NULL", t["set_id"])}
+        tenant = await conn.fetchval("SELECT tenant_id FROM jobs WHERE id=$1", t["set_id"]) or "lx"
+        dets += await asyncio.to_thread(_file_dets, t["set_id"], tenant, have, epsg, x0, y0, x1, y1)
     polys = []
     for d in dets:
         cls = d["cls"] or ""
         if cls not in names:
             names.append(cls)
-        g = json.loads(d["g"]) if d["g"] else None
+        g = json.loads(d["g"]) if isinstance(d["g"], str) else d["g"]
         if not g:
             continue
         parts = []
@@ -219,6 +229,34 @@ async def make_tile(conn, tid: str) -> str:
     await conn.execute("UPDATE train_tiles SET state='made', why=NULL, names=$2, n_objects=$3, img_path=$4, lbl_path=$5, made_at=now(), "
                        "version=version+1, updated_at=now() WHERE id=$1", tid, json.dumps(names, ensure_ascii=False), len(lines), str(img_p), str(lbl_p))
     return "made"
+
+
+def _file_dets(job_id: str, tenant: str, have: set, epsg: int, x0: float, y0: float, x1: float, y1: float) -> list[dict]:
+    """결과 묶음 파일에서 칸(UTM)에 드는 객체 — 데이터베이스에 있는 객체(have)는 빼고, 칸 경계로 잘라 UTM GeoJSON 으로."""
+    from pyproj import Transformer
+    from shapely.geometry import box, mapping, shape
+    from shapely.ops import transform
+    from .edit_memory import result_file_features
+    to_utm = Transformer.from_crs(4326, epsg, always_xy=True).transform
+    to_ll = Transformer.from_crs(epsg, 4326, always_xy=True).transform
+    cell = box(x0, y0, x1, y1)
+    w, s, e, n = transform(to_ll, cell).bounds
+    out = []
+    for fid, f in result_file_features(job_id, tenant).items():
+        if fid in have:
+            continue
+        try:
+            g = shape(f["geometry"])
+            b = g.bounds
+            if b[2] < w or b[0] > e or b[3] < s or b[1] > n:
+                continue
+            gi = transform(to_utm, g).buffer(0).intersection(cell)
+        except Exception:  # noqa: BLE001
+            continue
+        if gi.is_empty:
+            continue
+        out.append({"cls": (f.get("properties") or {}).get("cls"), "g": mapping(gi)})
+    return out
 
 
 def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: float, px: int, out: Path) -> bool:
@@ -255,11 +293,14 @@ def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: fl
     return True
 
 
-async def count_tiles(conn, *, card_id: str | None = None, since=None, test: bool = False) -> int:
-    """학습 데이터(장) — 1장이 된 칸. since = 지난번 학습에 넣은 시각 뒤에 1장이 된(또는 다시 만든) 것."""
+async def count_tiles(conn, *, card_id: str | None = None, since=None, test: bool = False, project_id: str | None = None) -> int:
+    """학습 데이터(장) — 1장이 된 칸. since = 지난번 학습에 넣은 시각 뒤에 1장이 된(또는 다시 만든) 것.
+    project_id = 서비스 카드가 없는 결과(전국 결과)의 칸이 간 프로젝트."""
     q, a = ["state='made'", "test=$1"], [test]
     if card_id:
         a.append(card_id); q.append(f"card_id=${len(a)}")
+    if project_id:
+        a.append(project_id); q.append(f"project_id=${len(a)} AND card_id IS NULL")
     if since:
         a.append(since); q.append(f"made_at > ${len(a)}")
     return int(await conn.fetchval(f"SELECT count(*) FROM train_tiles WHERE {' AND '.join(q)}", *a) or 0)

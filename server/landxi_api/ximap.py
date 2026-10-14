@@ -8,6 +8,9 @@ POST /ximap/edits                       {set, fid?, action: delete|reclass|resha
 POST /ximap/edits/{id}/undo             되돌리기(고친 사람 · 관리자 · 그 객체의 마지막 고치기만).
 GET  /ximap/edits?sets=a,b              지금 살아 있는 고치기(지도 위 '고친 자리' 층) — 묶음별 · 되돌린 것 뺌.
 GET  /ximap/edits/summary               서비스별 고친 것 수 → 그 서비스의 프로젝트(재학습으로 잇는 단추 · 학습 실행은 하지 않음).
+POST /ximap/memory/apply                {set, force?} 관리자 — 지운 자리 기억을 그 결과에 적용(작업기 마무리가 저절로 하는 일 · 시험 · 다시 적용용).
+전국 결과(전국 작업기 · 객체 줄을 데이터베이스에 쌓지 않는 묶음)도 같은 칸에서 고친다 — 누른 객체만 결과 묶음 파일에서 한 줄로 올려 고친다(원칙 243).
+지운 자리 기억(edit_memory.py · 원칙 243): 고친 자리는 모양 · 분류 · 영상 연도로도 남아 다시 추론한 새 결과에 저절로 적용된다(source='memory').
 권한: 보기 = LX 영역(직원 · 관리자 · 영업) · 고치기 = LX 직원 · 관리자(결과 고치기와 같은 묶음). 작업 id · 파일 경로는 화면 글에 쓰지 않는다(층 주소에만).
 """
 from __future__ import annotations
@@ -345,7 +348,7 @@ async def _resolve(p, set_id: str) -> dict:
 async def _meta(conn, job_id: str) -> dict:
     """결과 묶음 → 서비스 · 모델 · 영상 · 끝난 시각(작업이면 작업 표 · 정적 묶음이면 결과 장부)."""
     out = {"card_id": None, "service": None, "model_id": None, "model": None, "imagery_id": None, "imagery": None, "finished_at": None,
-           "classes": [], "version": None, "sgg_cd": None}
+           "classes": [], "version": None, "sgg_cd": None, "national": None, "year": None}
     j = await conn.fetchrow("SELECT j.card_id, j.model_id, j.imagery_id, j.finished_at, j.options, m.classes, m.name AS mname, m.version AS mver, c.name AS cname "
                             "FROM jobs j LEFT JOIN models m ON m.id=j.model_id LEFT JOIN cards c ON c.id=j.card_id WHERE j.id=$1", job_id)
     led = await conn.fetchrow("SELECT s.card_id, s.service_version, s.imagery_id, s.analyzed_at, s.sgg_cd, s.year, c.name AS cname FROM service_results s "
@@ -357,6 +360,13 @@ async def _meta(conn, job_id: str) -> dict:
         mn = (_jl(j["mname"]) or {}).get("ko") if j["mname"] else None
         out["model"] = mn or (f"{j['model_id'].split('/')[0]} {j['mver']}" if j["mver"] else None)
         out["service"] = svc_name(j["cname"]) if j["cname"] else ("토지피복" if out["classes"] and set(out["classes"]) <= LANDCOVER else None)
+        nat = o.get("national") if isinstance(o, dict) else None
+        if nat:                                                   # 전국 결과 — 서비스 이름 = 결과 자산(농지 전수 · 하천 · 계곡)
+            from .national import ASSETS as NAT_ASSETS
+            out["service"] = NAT_ASSETS.get(str(nat.get("asset")), out["service"])
+            out["national"] = nat
+            out["sgg_cd"] = out["sgg_cd"] or await conn.fetchval("SELECT sgg_cd FROM national_cells WHERE asset=$1 AND year=$2::int AND cell_cd=$3 LIMIT 1",
+                                                                 str(nat.get("asset")), int(nat.get("year") or 0), str(nat.get("cell")))
     if led:
         out["card_id"] = out["card_id"] or led["card_id"]
         out["service"] = out["service"] or svc_name(led["cname"])
@@ -368,6 +378,9 @@ async def _meta(conn, job_id: str) -> dict:
     if out["imagery_id"]:
         im = await conn.fetchrow("SELECT id, name, year, epoch, gsd_m, layer FROM imagery WHERE id=$1", out["imagery_id"])
         out["imagery"] = _img_label(dict(im)) if im else None
+        if im:
+            y = im["year"] or (str(im["epoch"] or "")[:4] if str(im["epoch"] or "")[:4].isdigit() else None)
+            out["year"] = int(y) if y else None
     elif led and led["year"]:
         out["imagery"] = f"{led['year']}년 영상"
     if not out["classes"]:
@@ -388,11 +401,88 @@ async def _row(conn, job_id: str, fid: str):
     return await conn.fetchrow(f"SELECT {FEAT} FROM detections d WHERE d.job_id=$1 AND (d.fid=$2 OR d.id::text=$2) LIMIT 1", job_id, fid)
 
 
-async def _history(conn, job_id: str, fid: str) -> list[dict]:
-    rows = await conn.fetch("SELECT e.id, e.action, e.cls_before, e.cls_after, e.memo, e.at, e.undone_at, e.test, u.name AS who FROM result_edits e "
+async def _history(conn, job_id: str, fid: str, p=None) -> list[dict]:
+    """고치기 이력 — 저절로 적용한 줄(source='memory')은 원래 고친 사람 이름 · 되돌리기는 그 사람 · 관리자(mine)."""
+    rows = await conn.fetch("SELECT e.id, e.action, e.cls_before, e.cls_after, e.memo, e.at, e.undone_at, e.test, e.source, e.by_user, u.name AS who FROM result_edits e "
                             "LEFT JOIN lx_users u ON u.id = e.by_user WHERE e.set_id=$1 AND e.fid=$2 ORDER BY e.at DESC LIMIT 20", job_id, fid)
+
+    def can(r):
+        return bool(p) and (r["by_user"] == p.user_id or p.role == "admin")
     return [{"id": r["id"], "action": r["action"], "cls_before": r["cls_before"], "cls_after": r["cls_after"], "memo": r["memo"],
-             "at": _iso(r["at"]), "undone": bool(r["undone_at"]), "test": r["test"], "who": r["who"] or "LX 직원"} for r in rows]
+             "at": _iso(r["at"]), "undone": bool(r["undone_at"]), "test": r["test"], "who": r["who"] or "LX 직원",
+             "memory": r["source"] == "memory", **({"mine": True} if r["source"] == "memory" and can(r) else {})} for r in rows]
+
+
+async def _rechecks(conn, job_id: str, fid: str) -> list[dict]:
+    """영상 연도가 달라 저절로 적용하지 않은 이 자리의 지난 고치기('다시 확인' · 원칙 243)."""
+    rows = await conn.fetch("SELECT k.action, k.year_edit, e.at, u.name AS who FROM edit_rechecks k JOIN result_edits e ON e.id = k.from_edit "
+                            "LEFT JOIN lx_users u ON u.id = e.by_user WHERE k.set_id=$1 AND k.fid=$2 AND e.undone_at IS NULL ORDER BY e.at DESC LIMIT 3", job_id, fid)
+    return [{"action": r["action"], "year": r["year_edit"], "at": _iso(r["at"]), "who": r["who"] or "LX 직원"} for r in rows]
+
+
+# ── 전국 결과(객체 줄을 데이터베이스에 쌓지 않는 묶음) ─────────────────────────────
+async def _nat(conn, job_id: str):
+    return await conn.fetchrow("SELECT n.asset, n.year, n.cell_cd, n.model_id, j.tenant_id FROM national_jobs n JOIN jobs j ON j.id = n.job_id WHERE n.job_id=$1",
+                               job_id)
+
+
+async def _materialize(conn, job_id: str, fid: str):
+    """누른 전국 결과 객체 한 줄을 결과 묶음 파일(E:)에서 데이터베이스로 — 고칠 때만 · 이미 있으면 그대로."""
+    nat = await _nat(conn, job_id)
+    if not nat:
+        return None
+    from .edit_memory import result_file_features
+    f = (await run_in_threadpool(result_file_features, job_id, nat["tenant_id"])).get(fid)
+    if not f:
+        return None
+    await conn.execute("SELECT pg_advisory_xact_lock(hashtext($1))", f"{job_id}/{fid}")
+    r = await _row(conn, job_id, fid)
+    if r:
+        return r
+    pr = f.get("properties") or {}
+    await conn.execute(
+        "INSERT INTO detections(tenant_id, job_id, shard_id, fid, cls, cls_en, cid, conf, area_m2, emd, emd_cd, chip_edge, edit_state, geom) "
+        "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'raw', ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($13),4326)))",
+        nat["tenant_id"], job_id, pr.get("shard_id"), fid, pr.get("cls"), pr.get("cls_en"), int(pr["cid"]) if pr.get("cid") is not None else None,
+        float(pr["conf"]) if pr.get("conf") is not None else None, round(float(pr["area_m2"]), 1) if pr.get("area_m2") is not None else None,
+        pr.get("emd"), pr.get("emd_cd"), bool(pr.get("chip_edge")), json.dumps(f["geometry"]))
+    return await _row(conn, job_id, fid)
+
+
+async def _nat_part(conn, job_id: str, det_id) -> tuple | None:
+    """전국 결과 객체 한 줄이 진행 장부 칸 숫자에 드는 몫 → (분류, ㎡) | None — 끝난 칸 · 그 칸의 지금 판 · 세는 분류 · 가운데가 칸 안 · 지우지 않은 것."""
+    if det_id is None:
+        return None
+    from .national import CLS as NAT_CLS
+    r = await conn.fetchrow(
+        "SELECT d.cls, coalesce(d.area_m2, 0)::float8 AS a, n.asset FROM detections d JOIN national_jobs n ON n.job_id = d.job_id "
+        "JOIN national_cells c ON c.asset = n.asset AND c.year = n.year AND c.cell_cd = n.cell_cd AND NOT c.test AND c.state = 'done' "
+        "AND c.model_id IS NOT DISTINCT FROM n.model_id "
+        "WHERE d.id = $1 AND d.job_id = $2 AND coalesce(d.edit_state, 'raw') <> 'deleted' AND ST_Intersects(c.geom_s, ST_PointOnSurface(d.geom))", det_id, job_id)
+    if not r or r["cls"] not in NAT_CLS.get(r["asset"], ()):
+        return None
+    return (r["cls"], float(r["a"]))
+
+
+async def _nat_count(conn, job_id: str, before: tuple | None, after: tuple | None) -> None:
+    """진행 장부 칸 숫자를 고친 만큼 맞춘다(숫자 한 출처 — XI맵 · 관리자 · 진행이 같은 장부)."""
+    if before == after:
+        return
+    nat = await _nat(conn, job_id)
+    if not nat:
+        return
+    for part, sign in ((before, -1), (after, 1)):
+        if not part:
+            continue
+        cls, a = part
+        await conn.execute(
+            "UPDATE national_cells SET counts = jsonb_set(coalesce(counts, '{}'::jsonb), ARRAY[$4::text], jsonb_build_object("
+            "'n', greatest(0, coalesce((counts->$4::text->>'n')::int, 0) + $5::int), "
+            "'km2', greatest(0, round((coalesce((counts->$4::text->>'km2')::numeric, 0) + $6::numeric), 3)))) "
+            "WHERE asset=$1 AND year=$2 AND cell_cd=$3 AND state='done'",
+            nat["asset"], nat["year"], nat["cell_cd"], cls, sign, sign * a / 1e6)
+    from . import national as NAT
+    NAT._VER.clear()
 
 
 @router.get("/ximap/feature")
@@ -401,7 +491,7 @@ async def feature(request: Request, set: str, fid: str, tol: float = 1.5):
     rs = await _resolve(p, set)
     tol = max(0.0, min(float(tol), 10.0))
     async with db(realm="lx") as conn:
-        r = await _row(conn, rs["job_id"], fid)
+        r = await _row(conn, rs["job_id"], fid) or await _materialize(conn, rs["job_id"], fid)
         if not r:
             raise ApiError("not_found", "그 객체를 찾지 못했습니다")
         simp = await conn.fetchrow(
@@ -409,8 +499,9 @@ async def feature(request: Request, set: str, fid: str, tol: float = 1.5):
             "ST_NPoints(ST_SimplifyPreserveTopology(ST_Transform(geom, 5186), $3::float8)) AS nv "
             "FROM detections WHERE job_id=$1 AND (fid=$2 OR id::text=$2) LIMIT 1", rs["job_id"], fid, tol)
         meta = await _meta(conn, rs["job_id"])
-        hist = await _history(conn, rs["job_id"], r["fid"] or str(r["id"]))
-    return {"type": "Feature", "id": r["fid"] or str(r["id"]), "geometry": r["g"], "properties": _fprops(r),
+        hist = await _history(conn, rs["job_id"], r["fid"] or str(r["id"]), p)
+        again = await _rechecks(conn, rs["job_id"], r["fid"] or str(r["id"]))
+    return {"type": "Feature", "id": r["fid"] or str(r["id"]), "geometry": r["g"], "properties": _fprops(r), "recheck": again,
             "edit": {"geometry": simp["g"], "options": {"tol_m": tol},
                      "n_vertices": env(int(r["nv"] or 0), "count", "measured", "결과 도형 꼭짓점"),
                      "n_vertices_edit": env(int(simp["nv"] or 0), "count", "measured", f"편집용 단순화(허용치 {tol:g}m)")},
@@ -469,6 +560,11 @@ async def make_edit(request: Request, body: dict):
             cls_id, body = c["id"], {**body, "cls": c["name"]}
         meta = await _meta(conn, job_id)
         base = {"model_id": meta["model_id"], "card_id": meta["card_id"], "card_version": meta["version"], "imagery_id": meta["imagery_id"], "sgg_cd": meta["sgg_cd"]}
+        proj = None
+        if meta.get("national") and not meta["card_id"]:          # 전국 결과 — 학습 데이터는 전국 분석 모델을 학습한 프로젝트로(경작지 새 판 → 경작지 v2)
+            from .edit_memory import project_of_model
+            proj = await project_of_model(conn, meta["model_id"])
+        nat_before = None
         if action == "add":
             cls = str(body.get("cls") or "").strip()
             if not cls:
@@ -486,10 +582,11 @@ async def make_edit(request: Request, body: dict):
                 f"imagery_id, sgg_cd, by_user, test) VALUES ($1,$2,$3,$4,$5,'add',$6,NULL,{GEO.format('$7')},$8,$9,$10,$11,$12,$13,$14,$15)",
                 eid, tenant, job_id, det, fid, cls, gj, memo, base["model_id"], base["card_id"], base["card_version"], base["imagery_id"], base["sgg_cd"], p.user_id, test)
         else:
-            row = await _row(conn, job_id, fid)
+            row = await _row(conn, job_id, fid) or await _materialize(conn, job_id, fid)
             if not row:
                 raise ApiError("not_found", "그 객체를 찾지 못했습니다")
             fid = row["fid"] or str(row["id"])
+            nat_before = await _nat_part(conn, job_id, row["id"]) if meta.get("national") else None
             cols = {"cls_before": row["cls"], "state_before": row["edit_state"], "conf_before": row["conf"]}
             sets, args = [], [job_id, row["id"]]
             after_geom = None
@@ -525,6 +622,10 @@ async def make_edit(request: Request, body: dict):
                 await conn.execute(f"UPDATE detections SET {', '.join(sets)}, edited_by=${len(args)} WHERE job_id=$1 AND id=$2", *args)
             if after_geom:
                 await conn.execute(f"UPDATE result_edits SET geom_after = {GEO.format('$2')} WHERE id=$1", eid, after_geom)
+        await conn.execute("UPDATE result_edits SET year=$2::int, project_id=$3 WHERE id=$1", eid, meta.get("year"), proj)   # 지운 자리 기억 — 영상 연도
+        if meta.get("national") and not test:                         # 시험 고치기는 진행 장부 숫자를 바꾸지 않는다
+            det = await conn.fetchval("SELECT det_id FROM result_edits WHERE id=$1", eid)
+            await _nat_count(conn, job_id, nat_before, await _nat_part(conn, job_id, det))
         from .core import tag_edit
         await tag_edit(conn, eid, cls_id)                              # 고친 기록 → 클래스 id(클래스 한 곳)
         await audit(conn, p, "ximap.edit", f"{job_id}/{fid}", None, {"edit": eid, "action": action, "test": test})
@@ -539,7 +640,7 @@ async def make_edit(request: Request, body: dict):
 async def _card_count(conn, card_id: str | None) -> int:
     if not card_id:
         return 0
-    return int(await conn.fetchval("SELECT count(*) FROM result_edits WHERE card_id=$1 AND undone_at IS NULL", card_id) or 0)
+    return int(await conn.fetchval("SELECT count(*) FROM result_edits WHERE card_id=$1 AND undone_at IS NULL AND source <> 'memory'", card_id) or 0)
 
 
 @router.post("/ximap/edits/{eid}/undo")
@@ -558,6 +659,8 @@ async def undo_edit(eid: str, request: Request):
         if later and e["action"] != "memo":
             raise ApiError("conflict", "이 객체를 그 뒤에 또 고쳤습니다 — 나중 것부터 되돌리세요")
         a = e["action"]
+        nat = await _nat(conn, e["set_id"]) if not e["test"] else None
+        nat_before = await _nat_part(conn, e["set_id"], e["det_id"]) if nat else None
         if a == "add":
             await conn.execute("DELETE FROM detections WHERE id=$1 AND edit_state='added'", e["det_id"])
         elif a == "delete":
@@ -570,6 +673,8 @@ async def undo_edit(eid: str, request: Request):
             await conn.execute("UPDATE detections d SET geom=e.geom_before, area_m2=round(ST_Area(ST_Transform(e.geom_before,5186))::numeric,1), "
                                "edit_state=coalesce(e.state_before,'raw') FROM result_edits e WHERE e.id=$1 AND d.id=e.det_id", eid)
         await conn.execute("UPDATE result_edits SET undone_by=$2, undone_at=now() WHERE id=$1", eid, p.user_id)
+        if nat:
+            await _nat_count(conn, e["set_id"], nat_before, await _nat_part(conn, e["set_id"], e["det_id"]) if a != "add" else None)
         await audit(conn, p, "ximap.undo", f"{e['set_id']}/{e['fid']}", {"edit": eid, "action": a}, None)
         new = await _row(conn, e["set_id"], e["fid"]) if a != "add" else None
         n = await _card_count(conn, e["card_id"])
@@ -580,7 +685,7 @@ async def undo_edit(eid: str, request: Request):
 
 
 @router.get("/ximap/edits")
-async def live_edits(request: Request, response: Response, sets: str = ""):
+async def live_edits(request: Request, response: Response, sets: str = "", bbox: str = ""):
     """지도 위 '고친 자리' — 살아 있는 고치기(되돌린 것 뺌 · 묶음 20개까지). 객체마다 마지막 고치기 하나.
     결과 조각은 1년 보관(판 번호 주소)이고 고치기는 조각을 바꾸지 않으므로, 이 층은 보관하지 않는다(no-store · 고친 즉시 새 모습)."""
     response.headers["Cache-Control"] = "no-store"
@@ -592,14 +697,23 @@ async def live_edits(request: Request, response: Response, sets: str = ""):
             ids.append((await _resolve(p, s))["job_id"])
         except ApiError:
             continue
-    if not ids:
+    box = None
+    try:                                                          # 전국 결과(줌 11+) — 화면 범위 안 전국 결과 묶음의 고친 자리(묶음이 많아 범위로)
+        box = [float(v) for v in bbox.split(",")] if bbox else None
+        if box and (len(box) != 4 or box[2] - box[0] > 1.0 or box[3] - box[1] > 1.0):
+            box = None
+    except ValueError:
+        box = None
+    if not ids and not box:
         return {"type": "FeatureCollection", "features": []}
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
             "SELECT DISTINCT ON (e.set_id, e.fid) e.id, e.set_id, e.fid, e.action, e.cls_before, e.cls_after, e.memo, e.test, e.at, "
             "ST_AsGeoJSON(coalesce(e.geom_after, d.geom, e.geom_before), 7)::json AS g, ST_AsGeoJSON(e.geom_before, 7)::json AS g0 "
-            "FROM result_edits e LEFT JOIN detections d ON d.id = e.det_id WHERE e.undone_at IS NULL AND e.set_id = ANY($1::text[]) "
-            "ORDER BY e.set_id, e.fid, e.at DESC", ids)
+            "FROM result_edits e LEFT JOIN detections d ON d.id = e.det_id WHERE e.undone_at IS NULL AND (e.set_id = ANY($1::text[]) "
+            "OR ($2::float8[] IS NOT NULL AND e.set_id IN (SELECT job_id FROM national_jobs) "
+            "    AND coalesce(e.geom_after, e.geom_before) && ST_MakeEnvelope($2[1], $2[2], $2[3], $2[4], 4326))) "
+            "ORDER BY e.set_id, e.fid, e.at DESC", ids, box)
     feats = []
     for r in rows:
         pr = {"edit": r["id"], "fid": r["fid"], "action": r["action"], "cls": r["cls_after"] or r["cls_before"], "test": r["test"]}
@@ -618,8 +732,22 @@ async def edits_summary(request: Request):
     from .train_tiles import count_tiles
     async with db(realm="lx") as conn:
         rows = await conn.fetch("SELECT e.card_id, c.name AS cname, count(*) AS n, count(*) FILTER (WHERE e.test) AS n_test, max(e.at) AS last "
-                                "FROM result_edits e LEFT JOIN cards c ON c.id = e.card_id WHERE e.undone_at IS NULL GROUP BY e.card_id, c.name ORDER BY n DESC")
+                                "FROM result_edits e LEFT JOIN cards c ON c.id = e.card_id WHERE e.undone_at IS NULL AND e.source <> 'memory' "
+                                "AND NOT EXISTS (SELECT 1 FROM national_jobs n WHERE n.job_id = e.set_id) GROUP BY e.card_id, c.name ORDER BY n DESC")
+        # 전국 결과(결과 자산마다) — 학습 데이터는 전국 분석 모델을 학습한 프로젝트(원칙 243 · 결정 3 규칙 그대로)
+        nat = await conn.fetch("SELECT n.asset, max(e.project_id) AS project_id, count(*) AS n, count(*) FILTER (WHERE e.test) AS n_test, max(e.at) AS last "
+                               "FROM result_edits e JOIN national_jobs n ON n.job_id = e.set_id WHERE e.undone_at IS NULL AND e.source <> 'memory' "
+                               "GROUP BY n.asset ORDER BY n DESC")
         out = []
+        from .national import ASSETS as NAT_ASSETS
+        for r in nat:
+            pr = await conn.fetchrow("SELECT id, name FROM projects WHERE id=$1", r["project_id"]) if r["project_id"] else None
+            nt = await conn.fetchval("SELECT count(*) FROM train_tiles t WHERE t.state='made' AND NOT t.test AND t.set_id IN "
+                                     "(SELECT job_id FROM national_jobs WHERE asset=$1)", r["asset"])
+            out.append({"card_id": None, "service": NAT_ASSETS.get(r["asset"], r["asset"]),
+                        "n": env(int(r["n"]), "count", "recorded", "고친 것(되돌린 것 뺌)"), "n_test": env(int(r["n_test"]), "count", "recorded", "그중 시험 고치기"),
+                        "tiles": env(int(nt or 0), "count", "recorded", "수정된 부분(1장이 된 칸)"), "last_at": _iso(r["last"]),
+                        "project": {"id": pr["id"], "name": pr["name"]} if pr else None})
         for r in rows:
             pr = await project_of_card(conn, r["card_id"]) if r["card_id"] else None
             out.append({"card_id": r["card_id"], "service": svc_name(r["cname"]) if r["cname"] else "토지피복",
@@ -629,3 +757,16 @@ async def edits_summary(request: Request):
                         "last_at": _iso(r["last"]),
                         "project": {"id": pr["id"], "name": pr["name"]} if pr else None})
     return {"items": out, "total": env(sum(x["n"]["value"] for x in out), "count", "recorded", "고친 것(되돌린 것 뺌)"), "as_of": now_iso()}
+
+
+@router.post("/ximap/memory/apply")
+async def memory_apply(request: Request, body: dict):
+    """지운 자리 기억을 그 결과에 적용(LX 관리자 · 작업기 마무리가 저절로 하는 일과 같은 함수) — {set, force?}."""
+    p = require(principal(request), admin=True)
+    rs = await _resolve(p, str(body.get("set") or ""))
+    from .edit_memory import apply as mem_apply
+    async with db(realm="lx") as conn:
+        res = await mem_apply(conn, rs["job_id"], force=bool(body.get("force")))
+        await audit(conn, p, "ximap.memory", rs["job_id"], None, res)
+    _invalidate()
+    return {"result": {k: env(v, "count", "recorded", f"지운 자리 기억 {k}") if isinstance(v, int) else v for k, v in res.items()}, "as_of": now_iso()}

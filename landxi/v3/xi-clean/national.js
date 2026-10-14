@@ -81,7 +81,7 @@ export function createNational({ map, before = 'slot-result' }) {
       map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: clsFilter(asset), layout: { visibility: vis },
         paint: { 'line-color': clsColor, 'line-width': ['interpolate', ['linear'], ['zoom'], OBJ_Z, 0.6, 15, 1.4],
           'line-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, 0.95] } }, B);
-      OBJ.set(sid, { ids: [sid + '-f', sid + '-l'], asset, tpl: objTpl(o), bounds: o.bounds });
+      OBJ.set(sid, { ids: [sid + '-f', sid + '-l'], asset, set: o.set, tpl: objTpl(o), bounds: o.bounds });
     }
   }
 
@@ -184,5 +184,8 @@ export function createNational({ map, before = 'slot-result' }) {
   return { load, refresh, show, at, rows, cellRows, cellGeom, warm, setTask, running, nf,
     get data() { return N.data; }, get assets() { return N.assets; }, get task() { return N.task; },
     set onData(f) { N.onData = f; },
-    get layers() { return layers(); }, hitLayers, src, get objects() { return [...OBJ.keys()]; }, RM };
+    get layers() { return layers(); }, hitLayers, src, get objects() { return [...OBJ.keys()]; }, RM,
+    /** 객체 층(줌 11+) — 누르면 그 자리 고치기(원칙 243 · 서비스 결과와 같은 칸) */
+    objLayers: () => [...OBJ.values()].filter(() => !N.hidden).map((o) => o.ids[0]).filter((id) => map.getLayer(id)),
+    bySource: (sid) => { const o = OBJ.get(sid); return o ? { set: o.set, asset: o.asset } : null; }, OBJ_Z };
 }

@@ -515,6 +515,8 @@ async def apply_view(pid: str, request: Request):
         cats = await CT.load(conn)
         cinf = await conn.fetchrow("SELECT line, imagery, imagery_kinds, scene->>'src' AS cover FROM card_info WHERE card_id=$1", card) if card else None
         asked = await conn.fetch("SELECT name, state FROM card_group_requests WHERE project_id=$1 AND state='open' ORDER BY at", pid)
+        from .edit_memory import memory_for_model     # 지운 자리 n곳 중 다시 잡은 곳 m곳(원칙 243 · 그 판의 새 결과에서 잰 값 · 없으면 줄 없음)
+        mem = {m["id"]: await memory_for_model(conn, m["id"]) for m in models}
     j = PJ._judge(r, f)
     shared = []                                         # 이 서비스를 지금 공유받은 기관(기관 '서비스 선택'과 같은 판정)
     if card:
@@ -540,7 +542,7 @@ async def apply_view(pid: str, request: Request):
             "service": {"id": card, "name": _ko(cinfo["name"]) if cinfo else None, "line": ((cinfo["intro"] or {}).get("headline") if cinfo else None),
                         "default_name": (f"{r['task']} 분석서비스" if r["task"] else r["name"])[:60]},
             "first": prev is None, "prev": prev, "next_version": open_v["version"] if open_v and open_v["state"] == "rejected" else _next_ver(versions),
-            "models": [{**m, "sample": samples.get(m["id"]), "can_apply": m["status"] == "registered",
+            "models": [{**m, "sample": samples.get(m["id"]), "can_apply": m["status"] == "registered", "memory": mem.get(m["id"]),
                         "low": low_line(low_acc(m["acc"], m.get("base"), (prev or {}).get("model", {}).get("acc")))} for m in models],
             "pick": pick, "scenes": jobs[:12],
             "cover": {"current": (cinf["cover"] if cinf else None) or None},          # 대표 그림(필수 · 원칙 186) — 지금 서비스 카드 그림(있으면 그대로 둘 수 있다)
@@ -678,6 +680,8 @@ async def apply(pid: str, body: dict, request: Request):
             scene = {"job": x["job"], "imagery": x["imagery"]["name"], "range": x["range"], "found": x["found"],
                      "area": x["area"], "at": x["finished_at"], "href": x["href"]}
         sample = await _sample_of(conn, pid, m["sample_id"])
+        from .edit_memory import memory_for_model
+        memory = await memory_for_model(conn, m["id"])  # 신청한 때 잰 값 그대로 신청서에(관리자 화면이 같은 값을 본다)
         # 대표 그림 필수(원칙 186) — 올린 그림 · 또는 지금 서비스 카드 그림 그대로('current' · 이미 그림이 있을 때만)
         cv_in = str(body.get("cover") or "").strip()
         cur_scene = await conn.fetchval("SELECT scene->>'src' FROM card_info WHERE card_id=$1", card) if card else None
@@ -701,7 +705,7 @@ async def apply(pid: str, body: dict, request: Request):
                                        "at": prev["approved_at"]} if prev else None),
             "sample": ({"images": sample["images"], "at": sample["at"]} if sample else None),
             "base": m.get("base"), "low": low_line(low_acc(m["acc"], m.get("base"), prev["model"]["acc"] if prev else None)),
-            "scene": scene, "cover": cover,
+            "scene": scene, "cover": cover, **({"memory": memory} if memory else {}),
             **({"category": {k: v for k, v in cat.items() if k != "new_group"}} if any(k != "new_group" for k in cat) else {})}
     if cat.get("new_group"):                          # 새 분야 요청(만드는 것은 LX 관리자 · 배포 '분야' 탭)
         async with db(realm="lx") as conn:

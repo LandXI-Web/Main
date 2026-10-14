@@ -1,0 +1,79 @@
+{
+ "at": "2026-10-14 09:42:24",
+ "source_set": "남원 비닐하우스 분석서비스 결과(2023 항공 영상)",
+ "box_km2": 0.161,
+ "edits": [
+  {
+   "id": "ed_1b5cce266eec",
+   "fid": "r060c140-121",
+   "cls": "비닐하우스",
+   "action": "delete",
+   "to": null
+  },
+  {
+   "id": "ed_71caad1e85c4",
+   "fid": "r059c140-34",
+   "cls": "비닐하우스",
+   "action": "delete",
+   "to": null
+  },
+  {
+   "id": "ed_8ba7b9db93bb",
+   "fid": "r061c139-70",
+   "cls": "비닐하우스",
+   "action": "reclass",
+   "to": "경작지"
+  }
+ ],
+ "job": "job_01M4VXRM5GR8SWRRE0JTB73H7J",
+ "submitted": "2026-10-14 09:42:27",
+ "state": "done",
+ "finished": "2026-10-14 09:42:35",
+ "new_objects": 20,
+ "run": {
+  "places": 3,
+  "applied": 3,
+  "recheck": 0,
+  "del_places": 2,
+  "del_again": 2
+ },
+ "applied_rows": [
+  {
+   "action": "delete",
+   "cls_before": "비닐하우스",
+   "cls_after": null,
+   "from_edit": "ed_1b5cce266eec",
+   "by": "u_mail_test",
+   "source": "memory",
+   "now_state": "deleted",
+   "now_cls": "비닐하우스",
+   "fid": "r000c000-0"
+  },
+  {
+   "action": "delete",
+   "cls_before": "비닐하우스",
+   "cls_after": null,
+   "from_edit": "ed_71caad1e85c4",
+   "by": "u_mail_test",
+   "source": "memory",
+   "now_state": "deleted",
+   "now_cls": "비닐하우스",
+   "fid": "r000c001-3"
+  },
+  {
+   "action": "reclass",
+   "cls_before": "비닐하우스",
+   "cls_after": "경작지",
+   "from_edit": "ed_8ba7b9db93bb",
+   "by": "u_mail_test",
+   "source": "memory",
+   "now_state": "edited",
+   "now_cls": "경작지",
+   "fid": "r001c000-7"
+  }
+ ],
+ "deleted_places_still_showing": [
+  0,
+  0
+ ]
+}

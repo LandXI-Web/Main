@@ -337,8 +337,19 @@ def finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: boo
 
 def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bool, model: str, t0: float | None) -> dict:
     key = ("test:" if test else "") + cd
+    # 0) 지운 자리 기억(원칙 243) — 작업기 마무리가 이미 적용했으면 그대로(한 결과에 한 번). 숫자 · 면은 적용 뒤 값으로 센다
+    mem = {"applied": 0, "recheck": 0}
+    try:
+        from landxi_api.edit_memory import apply_sync
+        for jid in jobs:
+            r = apply_sync(c, jid)
+            for k in mem:
+                mem[k] += int(r.get(k) or 0) if not r.get("skip") else 0
+    except Exception as e:  # noqa: BLE001
+        log(f"  지운 자리 기억 적용 실패(칸은 그대로 마무리): {e!r}")
     inside = ("FROM detections d JOIN national_cells n ON n.asset=%s AND n.year=%s AND n.cell_cd=%s "
-              "WHERE d.job_id = ANY(%s) AND d.cls = ANY(%s) AND ST_Intersects(n.geom_s, ST_PointOnSurface(d.geom))")
+              "WHERE d.job_id = ANY(%s) AND d.cls = ANY(%s) AND coalesce(d.edit_state, 'raw') <> 'deleted' "
+              "AND ST_Intersects(n.geom_s, ST_PointOnSurface(d.geom))")
     args = (asset, year, cd, jobs, list(COUNT_CLS[asset]))
     # 1) 칸 숫자 — 객체 중심이 이 읍면동 안인 것만(칩이 경계를 넘어 읽은 이웃 칸 객체는 이웃 칸이 센다) · 진행 막대 · 요약의 한 출처
     rows = c.execute(f"SELECT d.cls, count(*), coalesce(sum(d.area_m2),0) {inside} GROUP BY d.cls", args).fetchall()
@@ -356,7 +367,9 @@ def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bo
         rs = c.execute("SELECT result_set FROM jobs WHERE id=%s", (jid,)).fetchone()
         c.execute("UPDATE national_jobs SET bbox=%s, result_set=%s WHERE job_id=%s",
                   ([round(float(v), 6) for v in b] if b and b[0] is not None else None, rs[0] if rs else None, jid))
-    deleted = c.execute("DELETE FROM detections WHERE job_id = ANY(%s)", (jobs,)).rowcount
+    # 고친(저절로 적용 포함) 객체 줄은 남긴다 — 그 자리 고치기 · 되돌리기 · 학습 칸이 쓴다(몇 줄 · 원칙 243)
+    deleted = c.execute("DELETE FROM detections WHERE job_id = ANY(%s) AND id NOT IN (SELECT det_id FROM result_edits WHERE set_id = ANY(%s) "
+                        "AND det_id IS NOT NULL)", (jobs, jobs)).rowcount
     # 4) 중간 칩 파일은 바로 지움(결과는 결과 묶음 파일에 남음)
     freed = 0
     for jid in jobs:
@@ -368,7 +381,7 @@ def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bo
         c.execute("UPDATE national_cells SET state='done', done_at=now(), counts=%s, err=NULL, model_id=%s, tries=0, next_try_at=NULL, "
                   "started_at=coalesce(to_timestamp(%s), started_at) WHERE asset=%s AND year=%s AND cell_cd=%s",
                   (json.dumps(counts, ensure_ascii=False), model, t0, asset, year, cd))
-    return {"counts": counts, "jobs": len(jobs), "rows_moved_out": deleted, "freed_mb": round(freed / 1e6, 1)}
+    return {"counts": counts, "jobs": len(jobs), "rows_moved_out": deleted, "freed_mb": round(freed / 1e6, 1), "memory": mem}
 
 
 def fail_cell(c, asset: str, year: int, cd: str, err: str, redo: bool = False):

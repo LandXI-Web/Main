@@ -339,6 +339,8 @@ async def train_data_xi(request: Request, project: str = ""):
         n = 0
         for c in cards:
             n += await count_tiles(conn, card_id=c)
+        if project:                                        # 서비스 카드가 없는 결과(전국 결과 — 이 프로젝트가 학습한 모델)를 고친 곳(원칙 243)
+            n += await count_tiles(conn, project_id=project)
     return {"cards": cards, "tiles": tiles_env(n), "unit": TILE_UNIT, "as_of": now_iso()}
 
 
@@ -455,6 +457,9 @@ async def _rows(conn, st: dict, test: bool = False) -> list[dict]:
             "SELECT c.id, c.name, c.status FROM card_classes cc JOIN classes c ON c.id=cc.class_id WHERE cc.card_id=$1 AND cc.version=$2 AND cc.how='split'",
             c["id"], cur["version"])]
         vd = await _verdict(conn, c["id"], cur)
+        if vd:                                             # 지운 자리 n곳 중 다시 잡은 곳 m곳(원칙 243 · 그 판의 새 결과에서 잰 값)
+            from .edit_memory import memory_for_model
+            vd["memory"] = await memory_for_model(conn, vd["model"])
         pr = await _project(conn, c["id"])
         mode = modes.get(c["id"], st["mode"])
         if job and job["state"] in ("queued", "running"):

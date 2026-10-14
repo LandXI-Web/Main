@@ -14,7 +14,7 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 const ACT = { delete: '지움', reclass: '분류 바꿈', reshape: '모양 고침', add: '새로 그림', memo: '메모' };
 
 export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery }) {
-  const E = { card: null, at: null, sel: null, mode: null, sets: [] };
+  const E = { card: null, at: null, sel: null, mode: null, sets: [], box: null };
   const card = h('section.xe-card.t-card.t-card--map', { hidden: true, role: 'dialog', 'aria-label': '객체 고치기' });
   const bar = h('div.xe-bar', { hidden: true, role: 'toolbar', 'aria-label': '모양 고치기' });
   host.append(card, bar);
@@ -45,8 +45,17 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
   async function live(sets = E.sets) {
     E.sets = sets;
     layers();
-    if (!sets.length) { src('xe-live').setData(EMPTY); return; }
-    try { src('xe-live').setData(await api('/ximap/edits?' + new URLSearchParams({ sets: sets.join(',') }))); } catch { /* 그대로 */ }
+    if (!sets.length && !E.box) { src('xe-live').setData(EMPTY); return; }
+    const q = { sets: sets.join(',') };
+    if (E.box) q.bbox = E.box.map((v) => v.toFixed(5)).join(',');     // 전국 결과(줌 11+)의 고친 자리 — 화면 범위
+    try { src('xe-live').setData(await api('/ximap/edits?' + new URLSearchParams(q))); } catch { /* 그대로 */ }
+  }
+  let boxT = 0;
+  function liveBox(b) {
+    const was = E.box;
+    E.box = b && b[2] - b[0] <= 1 && b[3] - b[1] <= 1 ? b : null;
+    if (!was && !E.box) return;
+    clearTimeout(boxT); boxT = setTimeout(() => live(), 250);
   }
 
   /* ── 칸 위치: 누른 자리 옆(지도를 움직이면 따라간다) ── */
@@ -92,7 +101,10 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
       ['모델', m.model || (m.version ? `서비스 ${m.version}판` : '—')],
       ['분석', m.finished_at ? md(m.finished_at) : '—'],
     ];
-    const state = p.edit_state === 'deleted' ? '지움' : p.edit_state === 'added' ? '새로 그림' : p.edit_state === 'edited' ? '고침' : null;
+    /* 지운 자리 기억(원칙 243) — 영상 연도가 달라 저절로 적용하지 않은 자리는 '이전에 지운 자리'(다시 확인) */
+    const rc = (f.recheck || [])[0];
+    const state = p.edit_state === 'deleted' ? '지움' : p.edit_state === 'added' ? '새로 그림' : p.edit_state === 'edited' ? '고침'
+      : rc ? `이전에 ${{ delete: '지운', reclass: '분류 바꾼', reshape: '모양 고친' }[rc.action] || '고친'} 자리` : null;
     const head = h('header.xe-h', {},
       h('div', {}, h('h3', { text: p.cls || '객체' }), h('p.xe-sub', { text: [conf != null ? `신뢰도 ${conf}%` : null, p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : null].filter(Boolean).join(' · ') })),
       state ? h('span.t-chip.xe-st', { text: state }) : null,
@@ -110,7 +122,8 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
         h('button.t-btn.t-btn--2', { type: 'button', text: '메모', onclick: writeMemo })));
     }
     const hist = (f.history || []).filter((x) => !x.undone).slice(0, 2);
-    if (hist.length) kids.push(h('ul.xe-hist', {}, ...hist.map((x) => h('li', {}, h('span', { text: `${md(x.at)} ${x.who} · ${ACT[x.action] || x.action}${x.action === 'reclass' && x.cls_after ? ` → ${x.cls_after}` : ''}${x.memo ? ` · ${x.memo}` : ''}${x.test ? ' · 시험' : ''}` }),
+    const was = hist.length ? [] : (f.recheck || []).slice(0, 1).map((x) => h('li', {}, h('span', { text: `${md(x.at)} ${x.who} · ${ACT[x.action] || x.action}${x.year ? ` · ${x.year}년 영상` : ''}` })));
+    if (hist.length || was.length) kids.push(h('ul.xe-hist', {}, ...was, ...hist.map((x) => h('li', {}, h('span', { text: `${md(x.at)} ${x.who} · ${ACT[x.action] || x.action}${x.action === 'reclass' && x.cls_after ? ` → ${x.cls_after}` : ''}${x.memo ? ` · ${x.memo}` : ''}${x.test ? ' · 시험' : ''}` }),
       x.mine ? h('button.xe-undo', { type: 'button', text: '되돌리기', onclick: () => undo(x.id) }) : null))));
     const foot = h('p.xe-foot');
     kids.push(foot);
@@ -334,5 +347,5 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
   map.on('dblclick', (e) => { if (E.mode === 'draw' && D.pts.length >= 3) { e.preventDefault(); finishDraw(); } });
   addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (E.mode === 'shape') { stopShape(); render(); } else if (E.mode === 'draw') stopDraw(); else if (!card.hidden) close(); } });
 
-  return { open, close, live, get busy() { return !!E.mode; }, get open_() { return !card.hidden; }, undo };
+  return { open, close, live, liveBox, get busy() { return !!E.mode; }, get open_() { return !card.hidden; }, undo };
 }

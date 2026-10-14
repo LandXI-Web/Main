@@ -136,6 +136,7 @@
 .rl-set-u em{font:400 13px/18px var(--font-body);color:var(--sub);font-style:normal}
 .rl-set-f{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:20px}
 /* 배포 신청서 — 기반 · 지난 판보다 낮은 정확도 경고 한 줄(질문 9 ⓑ · 막지 않음) */
+.rl-mem{margin:6px 0 0;font:500 var(--fs-label)/20px var(--font-body)}
 .rl-low{margin:6px 0 0;font:600 var(--fs-label)/20px var(--font-body);color:var(--warn)}
 /* 배포 신청서 — 분야 · 쓸 수 있는 영상(질문 5 · 원칙 165) */
 .rl-cks{display:flex;flex-wrap:wrap;gap:8px}

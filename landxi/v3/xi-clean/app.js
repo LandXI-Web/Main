@@ -846,16 +846,27 @@ function mountBoard() {
   ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery,
     onEdited: () => { clearTimeout(S.reloadT); S.reloadT = setTimeout(() => BD.reload(), 400); } });
   imageryToggle();
-  // 객체 누르기(가까이) — 결과 층의 면 · 점
+  // 객체 누르기(가까이) — 결과 층의 면 · 점 · 전국 결과 객체(줌 11+ · 원칙 243 — 같은 칸 · 같은 동작)
   map.on('click', (e) => {
     if (!S.board || AN?.active || S.swipe || ED.busy || map.getZoom() < BD.NEAR_Z) return;
     const lyr = (S.res || []).flatMap((it) => it.ids.filter((l) => /-(fill|pt)$/.test(l))).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none');
-    if (!lyr.length) return;
     const pad = [[e.point.x - 3, e.point.y - 3], [e.point.x + 3, e.point.y + 3]];
-    const f = map.queryRenderedFeatures(pad, { layers: lyr })[0];
+    const f = lyr.length ? map.queryRenderedFeatures(pad, { layers: lyr })[0] : null;
     const L = f && BD.bySource(f.source);
     const fid = f && (f.properties?.id ?? f.id);
-    if (L && fid != null) { closePop(); unpin(); ED.open(L, String(fid), e.lngLat); }
+    if (L && fid != null) { closePop(); unpin(); ED.open(L, String(fid), e.lngLat); return; }
+    const nl = BD.nat.objLayers();
+    const nf_ = nl.length && map.getZoom() >= BD.nat.OBJ_Z - 0.5 ? map.queryRenderedFeatures(pad, { layers: nl })[0] : null;
+    const no = nf_ && BD.nat.bySource(nf_.source);
+    const nid = nf_ && (nf_.properties?.id ?? nf_.id);
+    if (no && nid != null) { closePop(); unpin(); ED.open({ set: no.set, item: { name: nf_.properties?.cls || '' } }, String(nid), e.lngLat); }
+  });
+  // 전국 결과의 고친 자리(줌 11+) — 화면 범위로(묶음이 많아 범위로 묻는다)
+  map.on('moveend', () => {
+    if (!S.board) return;
+    const on = map.getZoom() >= BD.nat.OBJ_Z - 0.5 && BD.nat.assets.length;
+    const g = map.getBounds();
+    ED.liveBox(on ? [g.getWest(), g.getSouth(), g.getEast(), g.getNorth()] : null);
   });
   // 손으로 한 단계 넘게 멀어지면 누른 자리 말풍선을 닫는다(옮기기만 하면 그대로 따라감)
   map.on('zoomend', (e) => { if (e.originalEvent && PIN && map.getZoom() < PIN.z - 0.8) unpin(); });

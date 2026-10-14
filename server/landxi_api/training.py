@@ -472,18 +472,20 @@ async def shared_train_data(request: Request):
             items.append({"id": s["id"], "source": "sample", "project": {"id": pid, "name": pname.get(pid)} if pid else None,
                           "classes": list(s["names"] or []), "images": env(s["n_images"], "count", "measured", src),
                           "shared": bool(s["staff_shared"]), "at": s["created_at"].isoformat(timespec="seconds") if s["created_at"] else None})
-        for pid in [r["project_id"] for r in await conn.fetch("SELECT DISTINCT project_id FROM project_links WHERE kind='card'")]:
+        for pid in [r["project_id"] for r in await conn.fetch("SELECT project_id FROM project_links WHERE kind='card' UNION "
+                                                              "SELECT DISTINCT project_id FROM train_tiles WHERE project_id IS NOT NULL")]:
             if pid not in pname:
                 continue
             cards = await project_cards(conn, pid)
             n = 0
             for c in cards:
                 n += await count_tiles(conn, card_id=c)
+            n += await count_tiles(conn, project_id=pid)           # 전국 결과를 고친 곳(원칙 243 · 학습 화면과 같은 셈)
             if not n:
                 continue
             t = await conn.fetchrow("SELECT max(made_at) AS at, (SELECT array_agg(DISTINCT x) FROM train_tiles t2, jsonb_array_elements_text(coalesce(t2.names,'[]'::jsonb)) x "
-                                    "WHERE t2.card_id = ANY($1::text[]) AND t2.state='made' AND NOT t2.test) AS names "
-                                    "FROM train_tiles WHERE card_id = ANY($1::text[]) AND state='made' AND NOT test", cards)
+                                    "WHERE (t2.card_id = ANY($1::text[]) OR (t2.card_id IS NULL AND t2.project_id = $2)) AND t2.state='made' AND NOT t2.test) AS names "
+                                    "FROM train_tiles WHERE (card_id = ANY($1::text[]) OR (card_id IS NULL AND project_id = $2)) AND state='made' AND NOT test", cards, pid)
             items.append({"id": f"edits:{pid}", "source": "edits", "project": {"id": pid, "name": pname.get(pid)},
                           "classes": sorted(t["names"] or []) if t else [], "images": env(n, "count", "measured", "XI맵에서 고친 곳이 모인 학습 데이터"),
                           "shared": None, "at": t["at"].isoformat(timespec="seconds") if t and t["at"] else None})
