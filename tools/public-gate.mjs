@@ -19,7 +19,8 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
 /* 게이트웨이 연결은 이어 쓴다(keep-alive · 동시 수 제한 없음 — 결과 지도 조각이 한꺼번에 수십 개 와도 줄 서지 않게 · impl-20 ximap-speed) */
-const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700, agent: new http.Agent({ keepAlive: true, keepAliveMsecs: 15000, maxSockets: Infinity, maxFreeSockets: 64 }) };
+/* 쉬는 연결은 60초에 관문이 먼저 닫는다 — 게이트웨이(uvicorn --timeout-keep-alive 75)가 닫는 순간에 그 연결로 보낸 요청이 걸리지 않게(재검수 남은 고장 · 로그인 직후 응답 없음) */
+const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700, agent: new http.Agent({ keepAlive: true, keepAliveMsecs: 15000, maxSockets: Infinity, maxFreeSockets: 64, timeout: 60_000 }) };
 const HOME = '/landxi/v3/login/';
 /* 입구 셋(원칙 27 · 확인 대장 6·7) — 한 플랫폼의 분기. 세 주소 모두 같은 로그인 화면으로 가고, 로그인 화면이 주소를 보고 알맞은 모습이 된다
    (app·admin = 아이디·비밀번호 · gov = 기관 고르기 + 아이디·비밀번호). 첫 화면은 입구별 표(kit/auth-gate.js LANDING_AT)가 정한다.
@@ -151,9 +152,15 @@ function proxy(req, res, body = null) {
      — 그 틈의 화면 요청이 502 로 끝나 로그인으로 떨어지지 않게(impl-34 no-502). 쓰기 요청(POST 등)은 다시 보내지 않는다. */
   const retriable = (req.method === 'GET' || req.method === 'HEAD') && body === null;
   const t0 = Date.now(); let gone = false;
-  res.on('close', () => { if (!res.writableFinished) gone = true; });   // 바깥 연결이 끊기면 기다리지 않는다
+  res.on('close', () => {                                         // 바깥 연결이 끊기면 기다리지 않는다
+    if (res.writableFinished) return;
+    gone = true;
+    if (!res.headersSent && Date.now() - t0 > 10000) console.error(`${new Date().toISOString()} gone ${Date.now() - t0}ms ${req.method} ${req.url.split('?')[0].slice(0, 90)} (게이트웨이 답 전에 바깥이 끊음)`);
+  });
   const go = (again) => {
     const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
+      const ms = Date.now() - t0;
+      if (ms > 5000) console.error(`${new Date().toISOString()} slow ${ms}ms ${req.method} ${req.url.split('?')[0].slice(0, 90)} ${r.statusCode}${up.reusedSocket ? ' reused' : ''}`);   // 게이트웨이 응답이 늦은 것(관문 · 터널 쪽과 가르기)
       res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
       if (/text\/event-stream/.test(r.headers['content-type'] || '')) res.flushHeaders?.();
       r.pipe(res);
@@ -192,7 +199,7 @@ function graph(htmlUrl, html) {
    화면 코드 폴더의 모든 파일(이름 · 크기 · 고친 시각) 지문 하나. 1.5초마다 다시 잰다(파일 수백 개 — 몇 ms).
    HTML 은 매번 새로 내주며 그 안의 모듈 · 스타일 주소에 ?v=<판 번호>를 붙인다. 모듈 안의 import 주소도 같은 번호로 바꿔 내준다
    (한 화면이 같은 모듈을 두 주소로 부르지 않게 — 받은 주소의 번호를 그대로 잇는다). 번호가 붙은 주소 = 1년 보관(immutable). */
-const BUILD_ROOTS = ['v3', 'shared', 'agent', 'xi', 'global', 'ops', 'proto/vendor'].map((d) => path.join(ROOT, 'landxi', ...d.split('/')));
+const BUILD_ROOTS = ['v3', 'shared', 'agent', 'xi', 'global', 'ops', 'proto/vendor', 'assets/data'].map((d) => path.join(ROOT, 'landxi', ...d.split('/')));
 const CODE_EXT = /\.(m?js|css)$/;
 let BUILD = { v: '', at: 0 };
 function buildId() {

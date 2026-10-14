@@ -1,0 +1,18 @@
+[
+ {
+  "case": "직원·전국",
+  "answer": "agent.done {\"run_id\": \"run_2610141801118ea808\", \"answer_md\": \"운봉읍 농지 위 건물 의심 필지는 {{env:e3}}입니다. 해당 수치는 AI 분석을 통해 도출된 현장조사 대상 후보입니다.\", \"envelopes\": {\"e1\": {\"value\": 1883, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-11T10:00:46+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e2\": {\"value\": 31211, \"unit\": \"필지\", \"basis\": \"recorded\", \"as_of\": \"2026-10-14T18:01:12.447+09:00\", \"source\": \"PostGIS survey_parcels\", \"note\": \"연속지적\"}, \"e3\": {\"value\": 431, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-14T18:01:12.447+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e4\": {\"value\": 1309, \"unit\": \""
+ },
+ {
+  "case": "직원·함양",
+  "answer": "agent.done {\"run_id\": \"run_261014180114fa10ee\", \"answer_md\": \"운봉읍 농지 위 건물 의심 필지는 {{env:e3}}입니다. 해당 수치는 AI 분석을 통해 도출된 현장조사 대상 후보입니다.\", \"envelopes\": {\"e1\": {\"value\": 1883, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-11T10:00:46+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e2\": {\"value\": 31211, \"unit\": \"필지\", \"basis\": \"recorded\", \"as_of\": \"2026-10-14T18:01:15.620+09:00\", \"source\": \"PostGIS survey_parcels\", \"note\": \"연속지적\"}, \"e3\": {\"value\": 431, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-14T18:01:15.620+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e4\": {\"value\": 1309, \"unit\": \""
+ },
+ {
+  "case": "직원·남원옛코드",
+  "answer": "agent.done {\"run_id\": \"run_261014180116f87bcd\", \"answer_md\": \"운봉읍 농지 위 건물 의심 필지는 {{env:e3}}입니다. 해당 수치는 AI 분석을 통해 도출된 현장조사 대상 후보입니다.\", \"envelopes\": {\"e1\": {\"value\": 1883, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-11T10:00:46+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e2\": {\"value\": 31211, \"unit\": \"필지\", \"basis\": \"recorded\", \"as_of\": \"2026-10-14T18:01:17.980+09:00\", \"source\": \"PostGIS survey_parcels\", \"note\": \"연속지적\"}, \"e3\": {\"value\": 431, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-14T18:01:17.980+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e4\": {\"value\": 1309, \"unit\": \""
+ },
+ {
+  "case": "기관 남원",
+  "answer": "agent.done {\"run_id\": \"run_26101418011983e0cb\", \"answer_md\": \"운봉읍 농지 위 건물 의심 필지는 {{env:e3}}입니다. 해당 수치는 AI 분석을 통해 도출된 결과입니다.\", \"envelopes\": {\"e1\": {\"value\": 1883, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-11T10:00:46+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e2\": {\"value\": 31211, \"unit\": \"필지\", \"basis\": \"recorded\", \"as_of\": \"2026-10-14T18:01:20.248+09:00\", \"source\": \"PostGIS survey_parcels\", \"note\": \"연속지적\"}, \"e3\": {\"value\": 431, \"unit\": \"count\", \"basis\": \"inferred\", \"as_of\": \"2026-10-14T18:01:20.248+09:00\", \"source\": \"PostGIS survey_findings(시군구 남원시)\", \"note\": \"의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님\"}, \"e4\": {\"value\": 1309, \"unit\": \"count\", "
+ }
+]

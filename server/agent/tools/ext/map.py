@@ -163,7 +163,6 @@ def _same(a: str, b: str) -> bool:
 
 async def _emd_candidates(name: str) -> list[dict]:
     """전국에서 이 이름의 읍면동(실태조사 읍면동 표 + 받아 둔 읍면동 경계 파일) → [{emd_cd, name, sgg_cd}]."""
-    import json as _json
     from landxi_api import config as gcfg
     hits: dict[str, dict] = {}
     try:
@@ -176,18 +175,48 @@ async def _emd_candidates(name: str) -> list[dict]:
                 hits[str(x["emd_cd"])[:8]] = {"emd_cd": str(x["emd_cd"]), "name": nm, "sgg_cd": str(x["sgg_cd"] or str(x["emd_cd"])[:5])}
     except Exception:                                      # noqa: BLE001 — 표가 없으면 경계 파일만
         pass
-    d = gcfg.DATA_ROOT / "cache" / "regions"
-    for f in (sorted(d.glob("emd-*.geojson")) if d.exists() else []):
+    import asyncio
+    ix = await asyncio.to_thread(_emd_file_index, gcfg.DATA_ROOT / "cache" / "regions")
+    for c in ix.get((name or "").replace(" ", ""), []):
+        hits.setdefault(c["emd_cd"][:8], dict(c))
+    return list(hits.values())
+
+
+_emd_names: dict = {"sig": None, "ix": {}}
+
+
+def _emd_file_index(d) -> dict[str, list[dict]]:
+    """받아 둔 읍면동 경계 파일(시군구마다 하나) → 이름(빈칸 없이) → [{emd_cd, name, sgg_cd}]. 파일이 바뀔 때만 다시 읽는다(전국 134MB를 매번 읽지 않게)."""
+    import json as _json
+    files = sorted(d.glob("emd-*.geojson")) if d.exists() else []
+    sig = (len(files), max((f.stat().st_mtime for f in files), default=0))
+    if _emd_names["sig"] == sig:
+        return _emd_names["ix"]
+    keep = d / "emd-names.json"                            # 이름만 모은 사본(게이트웨이를 다시 켜도 바로)
+    try:
+        got = _json.loads(keep.read_text(encoding="utf-8"))
+        if tuple(got.get("sig") or ()) == sig:
+            _emd_names.update(sig=sig, ix=got["ix"])
+            return got["ix"]
+    except Exception:                                      # noqa: BLE001 — 없거나 깨졌으면 다시 만든다
+        pass
+    ix: dict[str, list[dict]] = {}
+    for f in files:
         try:
             fc = _json.loads(f.read_text(encoding="utf-8"))
         except Exception:                                  # noqa: BLE001
             continue
         for ft in fc.get("features") or []:
             pr = ft.get("properties") or {}
-            if _same(name, pr.get("name")):
-                cd = str(pr.get("emd_cd") or "")
-                hits.setdefault(cd[:8], {"emd_cd": cd, "name": pr.get("name"), "sgg_cd": f.stem.split("-", 1)[1]})
-    return list(hits.values())
+            nm = str(pr.get("name") or "").replace(" ", "")
+            if nm:
+                ix.setdefault(nm, []).append({"emd_cd": str(pr.get("emd_cd") or ""), "name": pr.get("name"), "sgg_cd": f.stem.split("-", 1)[1]})
+    _emd_names.update(sig=sig, ix=ix)
+    try:
+        keep.write_text(_json.dumps({"sig": list(sig), "ix": ix}, ensure_ascii=False), encoding="utf-8")
+    except Exception:                                      # noqa: BLE001
+        pass
+    return ix
 
 
 async def resolve_emd(name: str, ctx, sgg: dict | None = None) -> tuple[dict, dict]:

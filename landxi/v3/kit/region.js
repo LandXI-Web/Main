@@ -56,6 +56,12 @@ export async function regionPicker(el, { onPick, public: pub = false, value } = 
   const items = await loadRegions({ public: pub });
   let opts = [], sel = -1;
   const norm = (s) => String(s || '').replace(/\s+/g, '');
+  /* 시도 머리말('강원' · '강원도' · '전라북도' · '서울시')이 이 시군구의 시도인가 — 전라북 → 전북처럼 줄여 쓴 이름도 */
+  const abbr = (x) => { const b = String(x || '').replace(/(특별자치도|특별자치시|특별시|광역시|시|도)$/, ''); return b.length === 3 ? b[0] + b[2] : b; };
+  const sidoHit = (w, r) => {
+    const sd = String(r.sido || '').split(' ')[0];
+    return !!sd && (sd.startsWith(w) || (!!abbr(w) && abbr(sd).startsWith(abbr(w))));
+  };
 
   const draw = () => {
     const q = norm(input.value);
@@ -69,7 +75,9 @@ export async function regionPicker(el, { onPick, public: pub = false, value } = 
       for (const r of items) { if (!groups.has(r.sido)) groups.set(r.sido, []); groups.get(r.sido).push(r); }
       for (const [g, rs] of groups) html += `<li class="k-region-g" role="presentation">${esc(g)}</li>` + rs.map(push).join('');
     } else {
-      const hit = items.filter((r) => norm(r.full).includes(q) || norm(r.name).includes(q));
+      const words = input.value.trim().split(/\s+/).filter(Boolean);
+      const hit = items.filter((r) => norm(r.full).includes(q) || norm(r.name).includes(q)
+        || (words.length > 1 && sidoHit(words[0], r) && words.slice(1).every((w) => norm(r.full).includes(w))));   // '강원 원주' · '전라북도 남원시' — 시도 + 시군구
       html = hit.map(push).join('');
     }
     list.innerHTML = html || `<li class="k-region-none" role="presentation">${esc(t('region.none'))}</li>`;

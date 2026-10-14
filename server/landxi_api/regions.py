@@ -11,6 +11,7 @@ import asyncio
 import datetime as dt
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -559,7 +560,24 @@ def find(q: str) -> list[dict]:
         stem = nm[:-1] if len(nm) > 2 and nm[-1] in "시군구" else nm
         if qs in (nm, full, stem) or (r["sido_short"] or "") + nm == qs or nm.startswith(qs) or (len(qs) >= 2 and qs in full):
             out.append(r)
+    if not out and " " in q:                               # '강원 원주' · '강원도 원주시' · '전라북도 남원' — 시도 + 시군구를 함께 친 것
+        head, _, rest = q.partition(" ")
+        out = [r for r in find(rest) if _sido_hit(head, r)]
     return out
+
+
+def _sido_hit(head: str, r: dict) -> bool:
+    """시도 머리말('강원' · '강원도' · '전라북도' · '서울시' …)이 이 시군구의 시도인가."""
+    sd, ss = r.get("sido") or "", r.get("sido_short") or ""
+    h = (full_label(head) or head).strip()
+    if not h or not sd:
+        return False
+    if h in (sd, ss) or sd.startswith(h):
+        return True
+    base = re.sub(r"(특별자치도|특별자치시|특별시|광역시|시|도)$", "", h)
+    if len(base) == 3:                                     # 전라북 → 전북 · 경상남 → 경남 · 충청북 → 충북
+        base = base[0] + base[2]
+    return bool(base) and (base == ss or sd.startswith(base))
 
 
 _geo_static: dict = {}

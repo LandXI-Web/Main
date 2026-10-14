@@ -1,0 +1,377 @@
+{
+ "phase": "after",
+ "at": "2026-10-14T08:43:30.786Z",
+ "cases": [
+  {
+   "who": "LX 직원",
+   "page": "/landxi/v3/lx-console/",
+   "done_median": 1692,
+   "start_median": 988,
+   "runs": [
+    {
+     "done": 1695,
+     "gateEnd": 1004,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 380,
+       "ms": 283
+      },
+      {
+       "u": "/me",
+       "from": 380,
+       "ms": 287
+      },
+      {
+       "u": "/me/storage",
+       "from": 673,
+       "ms": 325
+      },
+      {
+       "u": "/me/memos?limit=6",
+       "from": 673,
+       "ms": 331
+      },
+      {
+       "u": "/auth/session",
+       "from": 679,
+       "ms": 325
+      }
+     ],
+     "at": "/landxi/v3/lx-console/"
+    },
+    {
+     "done": 1714,
+     "gateEnd": 978,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 375,
+       "ms": 276
+      },
+      {
+       "u": "/me",
+       "from": 375,
+       "ms": 276
+      },
+      {
+       "u": "/me/storage",
+       "from": 657,
+       "ms": 319
+      },
+      {
+       "u": "/me/memos?limit=6",
+       "from": 657,
+       "ms": 321
+      },
+      {
+       "u": "/auth/session",
+       "from": 661,
+       "ms": 317
+      }
+     ],
+     "at": "/landxi/v3/lx-console/"
+    },
+    {
+     "done": 1684,
+     "gateEnd": 988,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 379,
+       "ms": 271
+      },
+      {
+       "u": "/me",
+       "from": 380,
+       "ms": 279
+      },
+      {
+       "u": "/me/memos?limit=6",
+       "from": 664,
+       "ms": 317
+      },
+      {
+       "u": "/me/storage",
+       "from": 664,
+       "ms": 324
+      },
+      {
+       "u": "/auth/session",
+       "from": 668,
+       "ms": 325
+      }
+     ],
+     "at": "/landxi/v3/lx-console/"
+    },
+    {
+     "done": 1692,
+     "gateEnd": 990,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 368,
+       "ms": 287
+      },
+      {
+       "u": "/me",
+       "from": 368,
+       "ms": 290
+      },
+      {
+       "u": "/me/storage",
+       "from": 663,
+       "ms": 327
+      },
+      {
+       "u": "/me/memos?limit=6",
+       "from": 664,
+       "ms": 320
+      },
+      {
+       "u": "/auth/session",
+       "from": 668,
+       "ms": 317
+      }
+     ],
+     "at": "/landxi/v3/lx-console/"
+    }
+   ],
+   "console_errors": []
+  },
+  {
+   "who": "LX 관리자",
+   "page": "/landxi/v3/ops-core/",
+   "done_median": 1808,
+   "start_median": 757,
+   "runs": [
+    {
+     "done": 1619,
+     "gateEnd": 836,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 475,
+       "ms": 359
+      },
+      {
+       "u": "/me",
+       "from": 475,
+       "ms": 361
+      },
+      {
+       "u": "/auth/session",
+       "from": 961,
+       "ms": 378
+      }
+     ],
+     "at": "/landxi/v3/ops-core/"
+    },
+    {
+     "done": 1808,
+     "gateEnd": 715,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 391,
+       "ms": 306
+      },
+      {
+       "u": "/me",
+       "from": 392,
+       "ms": 323
+      },
+      {
+       "u": "/auth/session",
+       "from": 847,
+       "ms": 484
+      }
+     ],
+     "at": "/landxi/v3/ops-core/"
+    },
+    {
+     "done": 1647,
+     "gateEnd": 757,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 400,
+       "ms": 348
+      },
+      {
+       "u": "/me",
+       "from": 400,
+       "ms": 357
+      },
+      {
+       "u": "/auth/session",
+       "from": 887,
+       "ms": 478
+      }
+     ],
+     "at": "/landxi/v3/ops-core/"
+    },
+    {
+     "done": 2354,
+     "gateEnd": 862,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 466,
+       "ms": 394
+      },
+      {
+       "u": "/me",
+       "from": 467,
+       "ms": 395
+      },
+      {
+       "u": "/auth/session",
+       "from": 984,
+       "ms": 467
+      }
+     ],
+     "at": "/landxi/v3/ops-core/"
+    }
+   ],
+   "console_errors": []
+  },
+  {
+   "who": "기관(남원)",
+   "page": "/landxi/v3/gov-select/?list=1",
+   "done_median": 1479,
+   "start_median": 692,
+   "runs": [
+    {
+     "done": 1482,
+     "gateEnd": 696,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 388,
+       "ms": 301
+      },
+      {
+       "u": "/auth/tenants",
+       "from": 388,
+       "ms": 302
+      },
+      {
+       "u": "/me",
+       "from": 388,
+       "ms": 306
+      },
+      {
+       "u": "/brand/namwon",
+       "from": 388,
+       "ms": 308
+      },
+      {
+       "u": "/auth/session",
+       "from": 707,
+       "ms": 342
+      }
+     ],
+     "at": "/landxi/v3/gov-select/?list=1"
+    },
+    {
+     "done": 1480,
+     "gateEnd": 695,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 378,
+       "ms": 311
+      },
+      {
+       "u": "/me",
+       "from": 378,
+       "ms": 313
+      },
+      {
+       "u": "/auth/tenants",
+       "from": 378,
+       "ms": 313
+      },
+      {
+       "u": "/brand/namwon",
+       "from": 378,
+       "ms": 317
+      },
+      {
+       "u": "/auth/session",
+       "from": 702,
+       "ms": 358
+      }
+     ],
+     "at": "/landxi/v3/gov-select/?list=1"
+    },
+    {
+     "done": 1463,
+     "gateEnd": 692,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 378,
+       "ms": 309
+      },
+      {
+       "u": "/me",
+       "from": 378,
+       "ms": 311
+      },
+      {
+       "u": "/auth/tenants",
+       "from": 378,
+       "ms": 311
+      },
+      {
+       "u": "/brand/namwon",
+       "from": 378,
+       "ms": 314
+      },
+      {
+       "u": "/auth/session",
+       "from": 699,
+       "ms": 314
+      }
+     ],
+     "at": "/landxi/v3/gov-select/?list=1"
+    },
+    {
+     "done": 1479,
+     "gateEnd": 687,
+     "seq": [
+      {
+       "u": "/openapi.json",
+       "from": 379,
+       "ms": 301
+      },
+      {
+       "u": "/auth/tenants",
+       "from": 379,
+       "ms": 303
+      },
+      {
+       "u": "/me",
+       "from": 379,
+       "ms": 303
+      },
+      {
+       "u": "/brand/namwon",
+       "from": 379,
+       "ms": 308
+      },
+      {
+       "u": "/auth/session",
+       "from": 694,
+       "ms": 349
+      }
+     ],
+     "at": "/landxi/v3/gov-select/?list=1"
+    }
+   ],
+   "console_errors": []
+  }
+ ]
+}

@@ -3,7 +3,7 @@
    기관색이 쓰이는 자리는 넷뿐(법전 · brand.md): 마크 · 현재 위치 표시 · 진행 막대 · 서비스 얼굴 판. 나머지는 법전 토큰 그대로.
    대비 검사식은 서버(landxi_api/brand.py check_colors)와 같다 — 화면은 미리 보여 주기만 하고, 저장 여부는 서버가 정한다. */
 import { api, API } from '../../shared/api-v1.js';
-import { h, esc } from '../kit/util.js';
+import { h, esc, early } from '../kit/util.js';
 import { emblemOf } from '../../assets/data/emblems.js';
 
 /* 브랜드 스타일 한 벌 — 이 모듈을 쓰는 화면(LX 관리자 화면 포함)에 한 번만 붙인다 */
@@ -43,7 +43,7 @@ export function mix(a, b, t) {
 
 /* ── 읽기 · 입히기 ─────────────────────────────────────────── */
 /** 서버 정본 — 로그인 전에도 읽힌다(공개 정보만). 세션이 있으면 고칠 수 있는지(can_edit)도 온다 */
-export const loadBrand = (id) => api(`/brand/${encodeURIComponent(id)}`);
+export const loadBrand = (id) => early(`/brand/${encodeURIComponent(id)}`) || api(`/brand/${encodeURIComponent(id)}`);
 
 /** 기관색을 CSS 변수로(--ci 진한 · --ci-t1 연한 · --ci-line 판 위 선). 서비스 얼굴 판(emblems)은 .gb-face 안에서 이 값을 쓴다 */
 export function applyBrand(el, b) {

@@ -75,6 +75,24 @@ let ROUTES = null;
 const routes = () => (ROUTES ||= fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => (j ? Object.keys(j.paths || {}).map((p) => p.replace(/^\/api\/v1/, '')) : null)).catch(() => null));
 /* 화면이 열릴 때 바로 한 번 받아 둔다 — 로그인 확인(/me)과 같이 받아, 화면 자료를 받은 뒤 다시 기다리는 한 바퀴(약 0.3초)를 없앤다(impl-34 속도) */
 if (typeof window !== 'undefined' && API?.prefix) routes();
+/* 로그인 확인(/me) · 기관 정보(/auth/tenants) · 기관 색(/brand/기관)도 화면이 열릴 때 함께 받기 시작한다 — 서로 기다리지 않게(바깥 주소 왕복 약 0.3초씩).
+   한 번만 쓴다(early) · 세션이 바뀌었으면 버린다. 실패(401 · 502 …)는 받은 쪽(auth-gate)이 예전과 같이 처리한다 */
+const EARLY = new Map();
+/** 로그인이 필요한 화면만 부른다(kit/auth-gate — 로그인 · 메인 · 기관 메인은 부르지 않음) */
+export function startEarly() {
+  const s = session.get();
+  if (!s || EARLY.size || typeof window === 'undefined' || !API?.prefix || API.mode === 'off') return;
+  const keep = (k) => { const pr = api(k); pr.catch(() => {}); EARLY.set(k, { tok: s.token, pr }); };
+  keep('/me');
+  if (s.realm === 'tenant' && s.tenant_id) { keep('/auth/tenants'); keep('/brand/' + encodeURIComponent(s.tenant_id)); }
+}
+/** 화면이 열릴 때 먼저 받기 시작한 요청(같은 세션 · 한 번) — 없으면 null */
+export function early(path) {
+  const e = EARLY.get(path);
+  if (!e) return null;
+  EARLY.delete(path);
+  return session.get()?.token === e.tok ? e.pr : null;
+}
 export async function hasRoute(path) {
   const list = await routes();
   if (!list) return false;

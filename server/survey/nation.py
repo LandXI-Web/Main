@@ -615,9 +615,10 @@ def refresh_sgg(conn, sgg: str) -> dict:
 
 
 def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
-    """survey_emd(읍면동 요약) — 필지 수 · 면적 · 지목 상위 · AI 결합 · 의심(규칙 · 등급) · 상위 5 · 범위."""
+    """survey_emd(읍면동 요약) — 필지 수 · 면적 · 지목 상위 · AI 결합 · 의심(규칙 · 등급) · 상위 5 · 범위.
+    이름 = 그 읍면동 필지에 가장 많이 적힌 이름(한 필지의 주소가 '광치동-5'처럼 잘못 읽혀도 읍면동 이름이 되지 않게 · 재검수 남은 고장)."""
     base = conn.execute(
-        "SELECT emd_cd, max(emd), count(*), sum(area_m2) / 1e4, count(*) FILTER (WHERE jimok = ANY(%s)), "
+        "SELECT emd_cd, mode() WITHIN GROUP (ORDER BY emd), count(*), sum(area_m2) / 1e4, count(*) FILTER (WHERE jimok = ANY(%s)), "
         "ST_XMin(ST_Extent(geom)), ST_YMin(ST_Extent(geom)), ST_XMax(ST_Extent(geom)), ST_YMax(ST_Extent(geom)) "
         "FROM survey_parcels WHERE sgg_cd = %s GROUP BY emd_cd", (list(FARM), sgg)).fetchall()
     jt: dict = {}

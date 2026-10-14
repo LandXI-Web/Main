@@ -171,6 +171,8 @@ def load(D, geoms):
     susp = pd.read_csv(S.SURVEY_DIR / "namwon-parcel-suspects.csv", encoding="utf-8-sig", dtype={"pnu": str})
     tl = json.loads((S.SURVEY_DIR / "namwon-parcel-timeline.json").read_text(encoding="utf-8"))
     emd_of = dict(zip(D["pnu"], D["emd_cd"]))
+    # 읍면동 이름 = 같은 읍면동 코드의 가장 많은 이름(원천 한 필지의 주소가 '광치동-5'처럼 잘못 읽힌 것을 읍면동 이름으로 싣지 않는다)
+    D["emd"] = D.groupby("emd_cd")["emd"].transform(lambda s: s.mode().iat[0] if s.notna().any() else s)
     with psycopg.connect(config.PG_ADMIN_DSN, autocommit=False) as conn:
         cur = conn.cursor()
         # 1) 필지

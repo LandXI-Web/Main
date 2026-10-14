@@ -6,7 +6,7 @@
    const who = await gate('gov-fusion'); // 명시
    → { session, me, tenant, home, landing }   (tenant = /tenants 항목 · 기관 세션만)
    landingFor(who, site?) → 그 사람의 첫 집 경로(정문 · 셸 '처음' 이 쓴다) — 들어온 입구(site)가 있으면 입구별 표가 먼저 */
-import { api, session, hasRoute, bboxOf, h } from './util.js';
+import { api, session, hasRoute, bboxOf, h, early, startEarly } from './util.js';
 import './sites.js';   // 입구 셋 — 주소 이름 한 곳(globalThis.LX_SITES)
 
 export const FRONT = '/landxi/v3/login/';
@@ -63,6 +63,8 @@ export const LANDING = { 'lx/staff': 'lx-console', 'lx/admin': 'ops-core', 'lx/s
 export const LANDING_AT = {};
 
 export const homeFromPath = (p = location.pathname) => (new RegExp('^' + V3 + '([^/]+)/').exec(p) || [])[1] || null;
+/* 로그인이 필요한 화면이면 /me(기관 세션은 기관 정보 · 기관 색도)를 지금 함께 받기 시작한다 — gate 가 부를 때 차례로 기다리지 않게 */
+if (typeof location !== 'undefined' && Array.isArray(ALLOW[homeFromPath()])) startEarly();
 
 /* ── 기관 주소(구현 2차 T3 · 사용자 구현 확인 I-1 "Land-XI 로그인은 LX 직원만 이용하는 창구" · 7차 결정 기관-주소 ⓒ) ──
    기관 사용자는 Land-XI 로그인으로 들어오지 않는다 — 자기 기관 주소({기관}.land-xi.dev)의 로그인으로 들어오고, 끝난 세션 · 나가기도 거기로 돌아간다.
@@ -111,9 +113,10 @@ export const allowed = (home, key) => ALLOW[home] === null || ALLOW[home] === un
 
 /** 기관 정보 — 공개 디렉터리(S-1 GET /auth/tenants)가 있으면 그것, 없으면 그 기관의 배포 기록에서 국내/해외를 읽는다(접두어 추론 0). */
 async function tenantOf(id) {
-  if (await hasRoute('/auth/tenants')) {
-    try { const j = await api('/auth/tenants'); const t = (j.items || []).find((x) => x.id === id); if (t) return t; } catch { /* 아래로 */ }
-  }
+  const pre = early('/auth/tenants');                 // 화면이 열릴 때 /me 와 함께 받기 시작한 것
+  let dir = pre ? await pre.catch(() => null) : null;
+  if (!dir && await hasRoute('/auth/tenants')) { try { dir = await api('/auth/tenants'); } catch { /* 아래로 */ } }
+  { const t = (dir?.items || []).find((x) => x.id === id); if (t) return t; }
   try {
     const j = await api('/deploys');
     const mine = (j.items || []).filter((d) => d.tenant_id === id);
@@ -134,7 +137,7 @@ export async function whoami() {
   const s = session.get();
   if (!s) return null;
   let me;
-  try { me = await api('/me'); } catch (e) {
+  try { me = await (early('/me') || api('/me')); } catch (e) {
     if (e.status === 401 || e.status === 403) session.clear();
     else WHO_DOWN = true;
     return null;

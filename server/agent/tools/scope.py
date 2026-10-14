@@ -102,6 +102,12 @@ async def region_of(ctx, args: dict) -> dict:
                 args.pop("sgg_cd", None)
                 args.setdefault("emd", asked)
                 return base
+            got = await _emd_nation(ctx, str(asked))     # 화면 시군구에 없으면 전국에서(기관은 관할 안만) · 여러 곳이면 되묻는다
+            if got:
+                args.pop("region", None)
+                args.pop("sgg_cd", None)
+                args.setdefault("emd", got[1])
+                return got[0]
         raise ToolError("not_found", f"'{asked}' 지역을 찾지 못했습니다", 404)
     if p.realm == "tenant":
         R = _regions()
@@ -124,6 +130,43 @@ async def region_of(ctx, args: dict) -> dict:
         return {"sgg": None, "codes": [], "name": None, "full": None, "asked": False}
     h = hits[0]
     return {"sgg": h["sgg_cd"], "codes": codes_of(h["sgg_cd"]), "name": h.get("name"), "full": h.get("full"), "asked": bool(asked)}
+
+
+async def _emd_nation(ctx, asked: str) -> tuple[dict, str] | None:
+    """읍면동 이름(앞에 시군구를 붙여도 됨: '남원 운봉읍') → (region_of 모양 dict, 읍면동 이름) | None.
+    전국 읍면동 경계 이름에서 찾는다. 기관 세션은 관할 밖 후보를 아예 보지 않는다. 같은 이름이 여러 시군구면 되묻기(ToolError)."""
+    from .ext.map import _emd_candidates
+    R = _regions()
+    words = asked.split()
+    name, head = words[-1], " ".join(words[:-1])
+    if not re.search(r"[가-힣]", name):
+        return None
+    cands = await _emd_candidates(name)
+    if not cands and name[-1] not in "읍면동가리":
+        for tail in "읍면동":
+            cands = await _emd_candidates(name + tail)
+            if cands:
+                break
+    regs: dict[str, tuple[dict, str]] = {}
+    for c in cands:
+        r = R.region_of(c["sgg_cd"])
+        if r:
+            regs.setdefault(r["sgg_cd"], (r, c.get("name") or name))
+    if head:
+        want = {c for h in resolve(head) for c in codes_of(h["sgg_cd"])}
+        regs = {k: v for k, v in regs.items() if set(codes_of(k)) & want}
+    p = ctx.principal
+    if p.realm == "tenant":
+        sc = R.tenant_scope(p.tenant_id)
+        regs = {k: v for k, v in regs.items() if any(R.in_scope(c, sc) for c in codes_of(k))}
+    elif p.realm != "lx":
+        return None
+    if not regs:
+        return None
+    if len(regs) > 1:
+        raise ToolError("bad_request", f"'{name}'이 여러 시군구에 있습니다: " + " · ".join((r.get("full") or r["name"]) for r, _ in list(regs.values())[:5]))
+    r, nm = next(iter(regs.values()))
+    return {"sgg": r["sgg_cd"], "codes": codes_of(r["sgg_cd"]), "name": r.get("name"), "full": r.get("full"), "asked": True}, nm
 
 
 def in_region(pnu, reg: dict) -> bool:
