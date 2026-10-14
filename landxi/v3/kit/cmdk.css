@@ -217,3 +217,5 @@ a.k-ck-file{text-decoration:none}
   .k-chat-root[data-dock]{bottom:12px;width:calc(100% - 24px)}
   .k-chat-root[data-dock] .k-chat-sugg{justify-content:flex-start}
 }
+/* 버튼이 비킬 자리가 없는 스크롤 판 — 끝에 버튼 높이 + 간격만큼 여백(cmdk.js clear · 10-14 원칙 248) */
+.k-chat-clear::after{content:"";display:block;flex:none;height:80px}

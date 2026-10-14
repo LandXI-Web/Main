@@ -127,3 +127,5 @@
 .rv-cover{width:200px;aspect-ratio:16/10;border-radius:8px;background:var(--bg-1);border:1px solid var(--rule);box-sizing:border-box;overflow:hidden;display:grid;place-items:center}
 .rv-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .rv-cover span{font:400 13px/18px var(--font-body);color:var(--sub)}
+/* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
+@media (min-width:1600px){.rv-grid{max-width:var(--wide-max)}}

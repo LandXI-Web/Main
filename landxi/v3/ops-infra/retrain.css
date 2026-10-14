@@ -35,3 +35,5 @@
 .rt-blk{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--rule);border-radius:10px;font:500 14px/1 var(--font-body);color:var(--ink)}
 .rt-blk small{font:400 11.5px/1 var(--font-body);color:var(--sub)}
 .rt-act{display:flex;gap:8px}
+/* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
+@media (min-width:1600px){.rt-col{max-width:var(--wide-max)}}

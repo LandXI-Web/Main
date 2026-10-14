@@ -1,0 +1,6 @@
+const fs=require('fs');const L=(ph)=>{const M={};for(const f of fs.readdirSync('shots/'+ph).filter(x=>x.startsWith('metrics-')))Object.assign(M,JSON.parse(fs.readFileSync('shots/'+ph+'/'+f)));return M};
+const B=L('before'),A=L('after');const W=['1280','1366','1440','1920','2560'];
+const MAPS=new Set(['a-dash','g-fusion','g-parcel','g-map','m-main','g-report','g-parcels']);const PH={v:''};
+const probs=(m,id)=>{if(!m||!m.vw)return null;const p=[];if(m.docOverX>0)p.push('넘침');if(m.off.length)p.push('잘림');if(!MAPS.has(id)&&m.wPct<80)p.push('폭'+m.wPct);if(m.heads.length)p.push('제목3줄');if(m.orphans.length)p.push('한단어:'+m.orphans.join('/'));if(m.fab&&m.fab.filter(t=>t!=='지도').length&&(PH.v==='a'||id.startsWith('s-')))p.push('단추덮음');if(/login|gov-home|\/\?next/.test(m.at||'')&&!/^m-/.test(id))p.push('로그아웃');return p};
+let tb=0,ta=0;for(const id of Object.keys(B)){if(id[0]=='_')continue;const row=[id];for(const w of W){PH.v='b';const b=probs(B[id][w],id);PH.v='a';const a=probs(A[id]?.[w],id);tb+=b?b.length:0;ta+=a?a.length:0;row.push((b?b.join(','):'-')+' → '+(a?a.join(','):'-')+' ['+(B[id][w]?.wPct??'')+'→'+(A[id]?.[w]?.wPct??'')+']')}console.log(row.join(' | '))}
+console.log('total',tb,ta);

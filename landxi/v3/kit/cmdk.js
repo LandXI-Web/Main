@@ -1094,7 +1094,8 @@ function create(opts) {
     const out = { ctl: [], text: [] };
     const inStrip = (r) => r.width > 0 && r.height > 0 && r.right > left && r.left < mr.right && r.bottom > mr.top && r.top < mr.bottom;
     const shown = (r, el) => {                                     // 가려지거나 스크롤 밖이면 빼다
-      const x = (Math.max(r.left, left) + Math.min(r.right, mr.right)) / 2, y = (r.top + r.bottom) / 2;
+      // 화면 아래로 이어지는 카드(전체가 링크)도 보이는 부분에서 잰다(10-14 · 가운데가 화면 밖이면 놓치던 것)
+      const x = (Math.max(r.left, left) + Math.min(r.right, mr.right)) / 2, y = (Math.max(r.top, mr.top) + Math.min(r.bottom, mr.bottom, innerHeight)) / 2;
       const top = document.elementsFromPoint(x, y).find((n) => !root.contains(n));
       return !!top && (top === el || el.contains(top) || top.contains(el)) && !isMapish(top);
     };
@@ -1114,6 +1115,20 @@ function create(opts) {
     return out;
   }
   let placing = false;
+  /** 버튼이 자리를 비킬 수 없을 때 — 그 아래 세로로 스크롤하는 판 끝에 버튼 높이만큼 여백(.k-chat-clear) · 끝까지 내리면 가리는 것이 없다 */
+  let cleared = null;
+  function clear(x, y) {
+    let sc = null;
+    if (x !== null) {
+      for (let n = document.elementsFromPoint(x, y).find((e) => !root.contains(e)); n && n !== document.body; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) { if (cs.display === 'block' || (cs.display === 'flex' && cs.flexDirection === 'column')) sc = n; break; }
+      }
+    }
+    if (cleared && cleared !== sc) cleared.classList.remove('k-chat-clear');
+    if (sc && !sc.classList.contains('k-chat-clear')) sc.classList.add('k-chat-clear');   // 이미 있으면 건드리지 않는다(자리 재기 되풀이 방지)
+    cleared = sc;
+  }
   function place(force = false) {
     if (placing || !root.isConnected || root.hidden || root.dataset.dock) return;
     if (!force && !box.hidden && !isPhone() && Date.now() - openedAt > 4000) return;   // 열려 있는 동안은 자리를 옮기지 않는다(막 연 4초 — 화면이 서는 동안은 옮긴다)
@@ -1152,8 +1167,10 @@ function create(opts) {
           return best;
         };
         /* 휴대폰 — 좁은 화면은 어디든 글이라 누르는 것(버튼 · 링크 · 입력)만, 같은 자리에서 180 안에서만 비킨다(스크롤 화면 한가운데로 뛰지 않게) */
-        const pick = phone ? search(0, false, 180) || { b: B0, tw: 0 } : search(tagW) || search(0) || least() || { b: B0, tw: tagW };
+        // 빈 자리가 없으면(카드가 오른쪽 아래까지 꽉 찬 화면) 꼬리표 없이 제자리 — 카드 위로 뛰어오르지 않고, 목록 끝에 버튼만큼 여백을 둔다(clear)
+        const pick = phone ? search(0, false, 180) || { b: B0, tw: 0 } : search(tagW) || search(0) || least() || { b: B0, tw: 0, clear: true };
         B = pick.b; withTag = pick.tw > 0;
+        clear(pick.clear ? W - R0 - 28 : null, H - B0 - 28);
       } catch (err) { devlog('chat place', String(err?.message || err)); R = R0; B = B0; }
       root.style.pointerEvents = '';
     }

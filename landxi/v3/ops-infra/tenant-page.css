@@ -71,3 +71,5 @@
   .tp-us{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tp-card{overflow-x:auto}
 }
+/* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
+@media (min-width:1600px){.tp{max-width:var(--wide-max)}}

@@ -5,7 +5,7 @@ body.gh main{flex:1}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .gh :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
-.gh-in{max-width:var(--content-max);margin:0 auto;padding:0 var(--margin);box-sizing:border-box;width:100%}
+.gh-in{max-width:var(--wide-max);margin:0 auto;padding:0 var(--margin);box-sizing:border-box;width:100%}
 
 /* 상단 바 64 */
 .gh-top{position:sticky;top:0;z-index:30;background:var(--bg-1);border-bottom:1px solid var(--rule)}

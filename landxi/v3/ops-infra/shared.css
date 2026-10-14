@@ -54,3 +54,5 @@
 .sd-cls-f{display:flex;flex-direction:column;gap:6px;font:500 13px/18px var(--font-body);color:var(--sub)}
 @media (max-width:960px){.sd-q{width:100%}.sd-tools{width:100%}}
 .sd-form .t-input{box-sizing:border-box;width:100%;max-width:100%}
+/* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
+@media (min-width:1600px){.sd-card{max-width:var(--wide-max)}}

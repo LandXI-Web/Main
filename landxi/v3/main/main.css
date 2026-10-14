@@ -277,3 +277,5 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 /* 첫 화면 글을 지구 쪽으로(넓은 화면에서 왼쪽 끝에 붙어 지구와 멀어지지 않게 · 10-09) */
 @media (min-width:1101px){.m-hero,.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
 .m-api{color:var(--sub);text-decoration:underline;text-underline-offset:3px}   /* 바닥 'API 안내'(외부 연동 API 3차) */
+/* 화면 최적화(10-14 원칙 248) — 1280 · 1366 에서 '국토정보 통합조사'가 두 줄로 꺾여 제목이 3줄이 되던 것: 글 칸만 지구 쪽으로 조금 넓힌다(글자 크기 그대로) */
+@media (min-width:1101px) and (max-width:1439px){.m-hero{width:calc(52vw - var(--mx) - 24px)}}

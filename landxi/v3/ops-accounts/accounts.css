@@ -253,3 +253,5 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 .acc-sess-o span{display:inline-block;padding:8px 16px;border-radius:999px;background:var(--bg-0);font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink-2)}
 .acc-sess-o input:checked + span{background:var(--ink);color:var(--bg-1)}
 .acc-sess-o input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+/* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
+@media (min-width:1600px){.acc-w{max-width:var(--wide-max)}}
