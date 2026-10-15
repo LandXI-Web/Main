@@ -46,6 +46,23 @@ const MONY = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-US', { m
 const HANGUL = /[ㄱ-ㆎ가-힣]/;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* ── 작황 하락 결과 보관(브라우저 Cache Storage · 값 + 그림) — 못 쓰는 환경이면 조용히 매번 잰다 ── */
+const DROP_CACHE = 'gl-drop-v1';
+const dropReq = (k) => new Request(location.origin + '/__gl-drop/' + encodeURIComponent(k));
+async function dropGet(k) {
+  try {
+    const r = await (await caches.open(DROP_CACHE)).match(dropReq(k)); if (!r) return null;
+    const m = JSON.parse(r.headers.get('x-meta') || 'null'); if (!m || !Number.isFinite(m.km2)) return null;
+    return { ...m, url: URL.createObjectURL(await r.blob()) };
+  } catch { return null; }
+}
+async function dropPut(k, r) {
+  try {
+    const blob = await (await fetch(r.url)).blob();
+    await (await caches.open(DROP_CACHE)).put(dropReq(k), new Response(blob, { headers: { 'content-type': 'image/png', 'x-meta': JSON.stringify({ km2: r.km2, cropKm2: r.cropKm2, coverage: r.coverage }) } }));
+  } catch { /* 보관 못 함 — 다음에 다시 잰다 */ }
+}
+
 /* ── 기하 도우미 ── */
 function ringHas(r, x, y) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
 function geomHas(g, x, y) {
@@ -66,10 +83,16 @@ const REG = { v: null, busy: false, err: '', show: true, ok: false };   // 이 �
 const S = { tab: Math.max(0, STR.tabs.map((x) => x.toLowerCase()).indexOf((q.get('tab') || '').toLowerCase())), level: 'globe', country: null, district: null, season: null, run: null };
 
 async function main() {
+  // 글로브가 보이기 전(로그인 확인 · 배포 · 경계 받기 약 1.5–2.5초) — 키트 가운데 'Loading' 하나(원칙 212) · 글로브가 서면 놓는다
+  const boot = K.hold();
+  addEventListener('pagehide', boot, { once: true });
   const who = await K.gate('global');
   // 첫 확인이 늦으면(느린 기기 · 게이트웨이 바쁨) off 로 굳지 않게 한 번 더 — 실패를 '배포 없음'으로 두지 않는다
   // /health 가 0.5–6 s 걸릴 때가 있다(실측) — 기본 1.5 s 에 끊기면 off 로 굳어 배포 0 처럼 보인다 → 이 화면은 8 s 까지 기다린다
   if (!(await probe()).ok) { API.probeMs = Math.max(API.probeMs || 0, 8000); await probe(true); }
+  // 작황 하락 계산 타일은 서버 중계로(재시도 · 30일 보관 — 빠진 타일 때문에 숫자가 볼 때마다 달라지지 않게) · 길이 없으면 PC 직통
+  const PC_DATA = 'https://planetarycomputer.microsoft.com/api/data/v1/';
+  if (await K.hasRoute('/proxy/pc/data/{path}')) NT.useFetch((u) => { const s = session.get(); return fetch(u.startsWith(PC_DATA) ? API.prefix + '/proxy/pc/data/' + u.slice(PC_DATA.length) : u, s ? { headers: { authorization: 'Bearer ' + s.token } } : {}); });
   const isLX = who.me.realm === 'lx';
   const isLXsales = isLX && who.me.role === 'sales';   // 영업 계정은 읽기만(대장 올리기 0)
 
@@ -240,7 +263,15 @@ async function main() {
     const cur = s.months.filter(sidOf), prev = s.months.map(prevOf).filter((x) => x.sid);
     if (!job || !ndm || !wc || !cur.length || !prev.length) return (CH[key] = { state: 'none' });
     const R0 = (CH[key] = { state: 'calc' });
+    const y0 = s.key.replace(/\d{4}$/, (y) => String(+y - 1));
+    const span = `${MON(s.months[0])}–${MONY(s.months[s.months.length - 1])}`;
+    const okOf = (r) => Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2,
+      env: envOf(r1(r.km2), 'km2', 'estimate', DROP_WHAT(span, y0), job.finished_at) });
+    // 같은 작업 · 지역 · 계절 · 모자이크면 값이 같다 — 한 번 잰 결과(값 · 그림)를 이 브라우저에 두고 다음부터 바로 쓴다
+    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, (wc.params?.items || []).join(',')].join('|');
     R0.p = (async () => {
+      const hit = await dropGet(dk);
+      if (hit && hit.coverage >= COVER_MIN) return okOf(hit);
       const { grid, mask } = geoOf(D0);
       const [crop, A, B] = await Promise.all([
         NT.cropOf(wc.tiles, wc.params?.items || [], grid),
@@ -250,11 +281,8 @@ async function main() {
       if (!crop) { Object.assign(R0, { state: 'low' }); return R0; }
       const r = await NT.dropOf(A, B, mask, crop, grid);
       if (r.coverage < COVER_MIN) { Object.assign(R0, { state: 'low', cover: r.coverage }); return R0; }
-      const y0 = s.key.replace(/\d{4}$/, (y) => String(+y - 1));
-      const span = `${MON(s.months[0])}–${MONY(s.months[s.months.length - 1])}`;
-      Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2,
-        env: envOf(r1(r.km2), 'km2', 'estimate', DROP_WHAT(span, y0), job.finished_at) });
-      return R0;
+      if (!crop.miss && ![...A, ...B].some((x) => x.miss)) dropPut(dk, r);   // 빠진 타일 없이 잰 값만 보관
+      return okOf(r);
     })().catch(() => Object.assign(R0, { state: 'low' }));
     R0.p.then(() => { if (S.district === D0 && S.season === s) { hud(D0); if (S.tab === 0) renderSheet(); else dlCheck(D0); } });
     return R0;
@@ -283,6 +311,11 @@ async function main() {
   const seasons = [];
   for (const m of MONTHS) { const k = `${SEASON_OF(m)} ${m.slice(0, 4)}`; let s = seasons.find((x) => x.key === k); if (!s) seasons.push(s = { key: k, months: [] }); s.months.push(m); }
   S.season = seasons.find((s) => s.key === q.get('season')) || seasons[seasons.length - 1];
+
+  /* 착지 지역을 미리 정하고 결과 그림 · 실행 견적을 지금 시작한다 — 글로브 · 비행(약 7초)과 겹쳐 받아 도착하자마자 큰 숫자 · Run(10-15 해외첫화면-고침) */
+  const want = countries.get((q.get('country') || '').toUpperCase()) || [...countries.values()].sort((a, b) => b.deploys.length - a.deploys.length)[0] || null;
+  const pickOf = (A) => A.feats.find((d) => d.id === q.get('district')) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
+  const early = want ? districtsOf(want).then((A) => { const p = pickOf(A); if (p) changeOf(p, S.season); return p; }).catch(() => null) : null;
 
   /* ── 무대 ── */
   let st;
@@ -409,12 +442,22 @@ async function main() {
     hud(null, true);
     renderSheet();
     changeOf(D0, S.season);   // 비행과 함께 계절 결과 그림을 미리 받는다(도착 즉시 큰 숫자)
+    quote(D0);                // 견적도 비행과 함께(도착 즉시 Run)
     if (fly) await st.go(D0.bbox, { maxZoom: 11.2 });
     // 도착 — 이번 계절 결과가 있으면 변화 화소가 차오르고 큰 숫자가 선다 · 없으면 'No result yet'(견적은 착지를 막지 않는다 · 뒤에서)
     changeOf(D0, S.season);
     hud(D0);
     renderSheet();
     quoteSoon();
+    warmSeasons(D0);
+  }
+  /** 이 지역의 다른 계절 결과도 뒤에서 하나씩 미리 잰다(끝난 작업이 있는 계절만) — 계절을 바꾸면 바로 큰 숫자 */
+  async function warmSeasons(D0) {
+    for (const s of [S.season, ...[...seasons].reverse().filter((x) => x !== S.season)]) {
+      if (S.district !== D0) return;
+      const c = changeOf(D0, s);
+      if (c.p) await c.p.catch(() => null);
+    }
   }
   let cellFc = EMPTY;
   const cellsOn = (on) => { cellFc.features.forEach((f) => { f.properties.on = on ? 1 : 0; }); map.getSource('gl-cells').setData(cellFc); };
@@ -453,7 +496,8 @@ async function main() {
       return;
     }
     const c = changeOf(D0, S.season);
-    if (c.state === 'calc') { big.el.classList.add('is-wait'); big.set(null); big.el.querySelector('.k-big-none').hidden = true; return; }
+    // 결과 그림을 받는 중 — 키트 '불러오는 중'(화면 가운데 하나 · 원칙 212) · 값 자리는 비운 채
+    if (c.state === 'calc') { big.el.classList.add('is-wait'); big.set(undefined); return; }
     const e = c.state === 'ok' ? c.env : null;
     big.set(e, { unit: STR.km2, digits: 1 });
     big.el.classList.toggle('is-none', !e);
@@ -580,17 +624,27 @@ async function main() {
   const runAoi = (D0) => { const b = D0.deploy ? inter(D0.bbox, D0.deploy.bbox) || D0.bbox : D0.bbox; const mb = mos?.bounds; return { type: 'Polygon', coordinates: [ring(mb ? inter(b, mb) || b : b)] }; };
   const runBody = (D0) => ({ kind: 'index', model_id: 'index/ndvi_pc', ...(D0.deploy && !D0.deploy.contract ? { deploy_id: D0.deploy.id, card_id: D0.deploy.card_id } : {}), aoi: runAoi(D0),
     options: { months: S.season.months, cloud_max: 15, mask: 'worldcover-40', source: 'pc-s2-mosaic' }, priority: 0 });
-  async function quote() {
-    const D0 = S.district; if (!D0) return;
+  /** D0 = 견적할 지역(기본 지금 지역 · 착지 전 미리 견적할 때는 착지할 지역) — 같은 계절 작업 이어 보기는 그 지역에 닿은 뒤 한 번 */
+  const QC = new Map();
+  async function quote(D0 = S.district) {
+    if (!D0) return;
     const key = D0.id + '|' + S.season.key;
-    if (S.quote?.key === key) return runState();
+    const join = async () => { if (S.quote?.key === key && S.quote.allowed && !S.quote.joined && S.district === D0) { S.quote.joined = true; await resume(D0, S.quote.eta); } };
+    if (S.quote?.key === key) { if (!S.quote.pending) await join(); return runState(); }
+    const qc = QC.get(key);   // 1분 안에 받은 같은 견적(계절을 오가도 다시 묻지 않는다)
+    if (qc && Date.now() - qc.at < 60000) { S.quote = { ...qc.q }; await join(); return runState(); }
     S.quote = { key, pending: true }; runState();
     if (!covered(D0)) { S.quote = { key, allowed: false, reason: STR.none }; return runState(); }
+    let next;
     try {
-      const qt = await api('/jobs/quote', { method: 'POST', body: runBody(D0) });
-      S.quote = { key, allowed: !!qt.allowed, eta: V(qt.eta_s), reason: qt.allowed ? '' : reasonOf(qt.reasons) };
-      if (qt.allowed) await resume(D0, V(qt.eta_s));
-    } catch (e) { S.quote = { key, allowed: false, reason: e.status === 403 ? STR.guard : STR.none }; }
+      // 견적이 20초 안에 오지 않으면 'Checking…'에 멈추지 않고 이유 한 줄(기존 문구)로 넘긴다
+      const qt = await Promise.race([api('/jobs/quote', { method: 'POST', body: runBody(D0) }), wait(20000).then(() => { throw Object.assign(new Error('slow'), { code: 'busy' }); })]);
+      next = { key, allowed: !!qt.allowed, eta: V(qt.eta_s), reason: qt.allowed ? '' : reasonOf(qt.reasons) };
+    } catch (e) { next = { key, allowed: false, reason: e.status === 403 ? STR.guard : e.code === 'busy' ? reasonOf(['busy']) : STR.none }; }
+    if (S.quote?.key !== key || !S.quote.pending) return runState();   // 그새 다른 지역 · 계절을 골랐다 — 늦은 답은 버린다
+    S.quote = next;
+    if (next.allowed) QC.set(key, { at: Date.now(), q: { ...next } });
+    await join();
     runState();
   }
   const reasonOf = (rs = []) => (rs.some((r) => /outside|tenant|forbidden/.test(r)) ? STR.guard : rs.some((r) => /quota/.test(r)) ? 'Monthly limit reached' : rs.some((r) => /power|busy/.test(r)) ? 'Queue is busy · try again shortly' : STR.none);
@@ -647,7 +701,7 @@ async function main() {
     S.run.finish = (ok) => {
       clearTimeout(S.run.timer); S.run.sub?.close(); S.run.done = true;
       bar.style.width = ok ? '100%' : '0%';
-      S.quote = null; runState(); quoteSoon();
+      S.quote = null; QC.clear(); runState(); quoteSoon();
       if (ok && S.district === D0) renderSheet();
     };
     runState(); tick();
@@ -888,7 +942,6 @@ async function main() {
   ckEnglish(ck.el, { run: ckRun, where: () => [S.district?.name || S.country?.name, S.season?.key].filter(Boolean) });
 
   /* ── 시작 ── */
-  const want = countries.get((q.get('country') || '').toUpperCase()) || [...countries.values()].sort((a, b) => b.deploys.length - a.deploys.length)[0] || null;
   S.country = want;
   // 좁은 화면 마스트 좌 = 짧은 이름(예: 'Agri · KGZ') — 키트가 ≤960 에서 기관명을 숨기므로 화면이 한 줄 더 둔다
   {
@@ -903,10 +956,11 @@ async function main() {
     const word = SH.app.querySelector('.k-word');
     if (word && sn) word.append(h('span.gl-home-s', { title: orgEn || sn }, h('span.gl-home-n', { text: sn }), iso ? h('span', { text: ' · ' + iso }) : null));
   }
+  early?.then((p) => p && quote(p));   // 견적도 비행과 겹쳐(화면 부품이 다 선 뒤 — 여기서)
   await toGlobe({ fly: false });
   // 흰 글로브가 한 번 그려진 뒤에야 판을 보인다(기본 메르카토르 위성 · 투영 전환 프레임이 정문 뒤에 비치지 않게)
   await new Promise((r) => { let n = 0; const f = () => (++n >= 3 ? r() : map.once('render', f)); map.triggerRepaint(); map.once('render', f); setTimeout(r, 1500); });
-  stageEl.classList.add('gl-on');
+  stageEl.classList.add('gl-on'); boot();
   document.body.dataset.state = 'globe';
   if (!want) {   // 이 기관에 해외 배포가 아직 없다 — 글로브 위 K9 한 장(지역을 지어내지 않는다)
     renderSheet();
@@ -917,19 +971,19 @@ async function main() {
   await wait(RM() ? 0 : 900);
   await toCountry(want, { fly: true });
   regLoad();   // 이 사람의 최근 대장 대조(있으면 지도에 칠하고 대장 탭에 목록) — 착지를 막지 않는다
-  const A = admCache[want.iso];
-  const pick = A.feats.find((d) => d.id === q.get('district')) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
+  const pick = (await early) || pickOf(admCache[want.iso]);
   if (pick) changeOf(pick, S.season);
   if (pick) { await wait(RM() ? 0 : 350); await toDistrict(pick, { fly: true }); }
   document.body.dataset.state = 'ready';
 
   function mapError() {
+    boot();
     main.innerHTML = '';
     const e = h('div'); main.append(h('div.gl-err', {}, e));
     K.empty(e, { kind: 'error', title: STR.maperr, action: { label: STR.retry, onClick: () => location.reload() } });
     document.body.dataset.state = 'error';
   }
-  function loadError() { stageEl.classList.add('gl-on'); return mapError(); }
+  function loadError() { stageEl.classList.add('gl-on'); boot(); return mapError(); }
 }
 
 /* Ctrl K 영문판 — 키트 K10 은 계획 줄·확인 카드·거절 문구가 국문(키트 en 사전 요청 중).

@@ -1,0 +1,147 @@
+{
+  "app": "https://app.land-xi.dev",
+  "login": "…@lx.or.kr#kgz-agri",
+  "at": "2026-10-15T01:27:37.061Z",
+  "rows": [
+    {
+      "what": "첫 표시(가운데 Loading 또는 글로브)",
+      "ok": "됨",
+      "ms": 900,
+      "note": "Loading",
+      "shot": "00-loading-1440-1027.png"
+    },
+    {
+      "what": "로그인 → 해외 첫 화면",
+      "ok": "됨",
+      "ms": 5184,
+      "note": "/landxi/v3/global/",
+      "shot": null
+    },
+    {
+      "what": "글로브 그려짐",
+      "ok": "됨",
+      "ms": 1597,
+      "shot": null
+    },
+    {
+      "what": "나라 → 지역 자동 착지",
+      "ok": "됨",
+      "ms": 10045,
+      "note": "Crop condition drop · Ysyk-Ata",
+      "shot": null
+    },
+    {
+      "what": "'Checking…' 사라지고 'Run this season' 켜짐",
+      "ok": "됨",
+      "ms": 10047,
+      "note": "",
+      "shot": null
+    },
+    {
+      "what": "큰 숫자(작황 하락)",
+      "ok": "됨",
+      "ms": 10588,
+      "note": "117.9 km² · 착지 뒤 541 ms",
+      "shot": "01-landing-1440-1027.png"
+    },
+    {
+      "what": "글자 14px 미만 0(지역 화면)",
+      "ok": "됨",
+      "ms": null,
+      "note": "",
+      "shot": null
+    },
+    {
+      "what": "계절 바꾸기(Summer 2025)",
+      "ok": "됨",
+      "ms": 1329,
+      "note": "136.7 km² · Run 켜짐",
+      "shot": "02-season-1440-1027.png"
+    },
+    {
+      "what": "계절 되돌리기(Autumn 2025)",
+      "ok": "됨",
+      "ms": 770,
+      "note": "117.9 km²",
+      "shot": null
+    },
+    {
+      "what": "NDVI 탭(달별 선 · 지도 NDVI)",
+      "ok": "됨",
+      "ms": 194,
+      "note": "0.25",
+      "shot": "03-ndvi-1440-1027.png"
+    },
+    {
+      "what": "Sprawl 탭(건물 면적 2017 · 2025)",
+      "ok": "됨",
+      "ms": 705,
+      "note": "2017 109.9 km² 2025 127.1 km² · 큰 숫자 17.2",
+      "shot": "04-sprawl-1440-1027.png"
+    },
+    {
+      "what": "Register 탭(구역 대장 올리기 → 대조)",
+      "ok": "됨",
+      "ms": 2516,
+      "note": "Matched 5 of 6 rows to local districts · 83.3% · 1줄 · 큰 숫자 1",
+      "shot": "05-register-1440-1027.png"
+    },
+    {
+      "what": "대장 표 줄 누르기 → 그 구역으로",
+      "ok": "됨",
+      "ms": 2558,
+      "note": "Districts that don't match · Ysyk-Ata → Districts that don't match · Ysyk-Ata",
+      "shot": null
+    },
+    {
+      "what": "Download(CSV)",
+      "ok": "됨",
+      "ms": 656,
+      "note": "ysyk-ata-changes.csv · 11줄",
+      "shot": null
+    },
+    {
+      "what": "도움말(?)",
+      "ok": "됨",
+      "ms": 29,
+      "note": "",
+      "shot": "07-help-1440-1027.png"
+    },
+    {
+      "what": "XI ChatGEO(영어 질문 → 영어 답)",
+      "ok": "됨",
+      "ms": 3184,
+      "note": "The mean NDVI for Ysyk-Ata during Autumn 2025 is 0.3. This reflects the seasonal vegetation status for the current perio",
+      "shot": "09-chatgeo-1440-1027.png"
+    },
+    {
+      "what": "위치 띠 — 나라로",
+      "ok": "됨",
+      "ms": 367,
+      "note": "",
+      "shot": "10-country-1440-1027.png"
+    },
+    {
+      "what": "내 구역 밖 누르기 → 안내 한 줄",
+      "ok": "됨",
+      "ms": null,
+      "note": "Outside your districts",
+      "shot": "11-guard-1440-1027.png"
+    },
+    {
+      "what": "위치 띠 — 글로브로",
+      "ok": "됨",
+      "ms": 37,
+      "note": "",
+      "shot": "12-globe-1440-1027.png"
+    },
+    {
+      "what": "Sign out",
+      "ok": "됨",
+      "ms": 2748,
+      "note": "/",
+      "shot": null
+    }
+  ],
+  "console_errors": []
+}

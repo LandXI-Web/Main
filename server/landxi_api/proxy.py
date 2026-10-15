@@ -323,6 +323,56 @@ async def global_tile(z: int, x: int, y: int, year: str = "2025", searchid: str 
                                                             "Access-Control-Expose-Headers": "X-LX-Cache, X-LX-Tile-Source"})
 
 
+# ── PC 원값 타일 중계 · 디스크 캐시(해외 첫 화면 작황 하락 계산 · 10-15 해외첫화면-고침) ──────────────────────────
+# 브라우저가 PC 를 직접 부르면 많이 부를 때 PC 가 CORS 머리 없는 오류(429 등)를 줘 타일 몇 장이 빠지고 → 같은 지역 숫자가 볼 때마다 달랐다.
+# 서버가 대신 받아(재시도 · 30일 보관) 같은 타일은 늘 같게 · 두 번째부터는 디스크에서 바로.
+_PC_TILE_PATH = re.compile(r"^(mosaic/tiles/[0-9a-f]{32}|item/tiles)/WebMercatorQuad/\d{1,2}/\d{1,7}/\d{1,7}@1x(\.png)?$")
+_PC_TILE_COLL = {"esa-worldcover", "sentinel-2-l2a"}
+
+
+@router.get("/proxy/pc/data/{path:path}")
+async def pc_data_tile(path: str, request: Request):
+    """PC data 타일(mosaic · item) 중계 — 로그인 필요 · 컬렉션 두 개만 · 204(자료 없음)도 보관. X-LX-Cache(hit|miss)."""
+    import asyncio
+    from .deps import require
+    require(principal(request))
+    if not _PC_TILE_PATH.match(path) or request.query_params.get("collection") not in _PC_TILE_COLL:
+        raise ApiError("bad_request", "타일 주소 오류")
+    q = request.url.query
+    ck = f"pcdata/{path}?{q}"
+    hdr = {"Cache-Control": "private, max-age=2592000"}
+    body, meta = cache_get("pctiles", ck, TILE_TTL)
+    if body is not None:
+        if meta.get("ctype") == "empty":
+            return Response(status_code=204, headers={**hdr, "X-LX-Cache": "hit"})
+        return Response(content=body, media_type=meta["ctype"], headers={**hdr, "X-LX-Cache": "hit"})
+    url = f"{PC}/data/v1/{path}?{q}"
+    last = None
+    for a in range(4):
+        if a:
+            await asyncio.sleep(0.6 * 2 ** (a - 1))
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0), transport=transport,
+                                         headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
+                r = await c.get(url)
+        except httpx.HTTPError as e:
+            last = type(e).__name__
+            continue
+        if r.status_code == 204:
+            cache_put("pctiles", ck, b"", "empty")
+            return Response(status_code=204, headers={**hdr, "X-LX-Cache": "miss"})
+        if r.status_code == 404:                         # 범위 밖 · 자료 없음 — 빈 타일로(보관은 하지 않음)
+            return Response(status_code=204, headers={"Cache-Control": "no-store", "X-LX-Cache": "miss"})
+        ctype = r.headers.get("content-type", "")
+        if r.status_code == 200 and ctype.startswith("image/"):
+            cache_put("pctiles", ck, r.content, ctype)
+            return Response(content=r.content, media_type=ctype, headers={**hdr, "X-LX-Cache": "miss"})
+        last = r.status_code
+        if r.status_code not in (429, 500, 502, 503, 504):
+            break
+    raise ApiError("upstream_error", "영상 타일을 받지 못했습니다", {"upstream": last}, status=502)
+
+
 def _tiles_for(bbox: list[float], z: int) -> list[tuple[int, int, int]]:
     import math
 

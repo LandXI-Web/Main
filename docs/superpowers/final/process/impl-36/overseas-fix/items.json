@@ -1,0 +1,11 @@
+[
+ {
+  "id": "해외첫화면-고침",
+  "title": "해외 기관 첫 화면 — 지역에 닿으면 큰 숫자와 'Run this season'이 바로 섭니다",
+  "opts": ["완료", "다시"],
+  "evidence": ["shots/00-loading-1440-1027.png", "shots/01-landing-1440-1027.png", "shots/02-season-1440-1027.png", "shots/03-ndvi-1440-1027.png", "shots/04-sprawl-1440-1027.png", "shots/05-register-1440-1027.png", "shots/07-help-1440-1027.png", "shots/09-chatgeo-1440-1027.png", "shots/11-guard-1440-1027.png", "check.json", "check-with-run.json"],
+  "before": ["../../design-r30/overseas/shots/now-org-kgz-1440-0947.png"],
+  "where": "kgz-agri.land-xi.dev 해외 기관 로그인 → 첫 화면(Kyrgyzstan › Ysyk-Ata)",
+  "note": "전에는 지역에 닿은 뒤 약 11초 동안 큰 숫자 자리가 비어 있었습니다. 'Checking…'도 2–3초 남았고 'Run this season'은 꺼져 있었습니다. 위성 타일을 많이 받다가 몇 장이 빠지면 같은 지역 숫자가 볼 때마다 달랐습니다(117.9 / 100.2 km²). 이제 계산과 실행 확인을 비행과 함께 시작합니다. 타일은 서버가 대신 받아 보관합니다. 그래서 닿을 때 숫자와 Run이 함께 서고(0–0.5초), 숫자는 늘 117.9 km²입니다. 처음 보는 지역 · 계절만 약 6초 걸리고, 그동안 가운데에 'Loading'이 뜹니다. 계절 바꾸기는 1.3초입니다. 해외 화면 기능 열여덟 가지를 눌러 보니 모두 됐고(대장 올리기 · 내려받기 · 계절 실행 · XI ChatGEO 포함) 화면 오류는 0입니다. 열고 지역에 닿기까지 약 10초는 기존 비행 움직임이라 그대로 두었습니다."
+ }
+]

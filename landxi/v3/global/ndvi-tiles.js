@@ -34,6 +34,24 @@ export function maskOf(grid, geometry) {
   return m;
 }
 
+/* 타일 받기 — 화면이 서버 중계(로그인 머리 · 30일 보관)로 바꿔 끼운다 · 실패하면 조금 쉬고 다시(최대 4번) */
+let FETCH = (u) => fetch(u);
+export const useFetch = (f) => { FETCH = f; };
+const PAUSE = [0, 400, 1200, 2400];
+/** u → Blob(자료 있음) · null(자료 없음 204) · 'miss'(끝내 못 받음) */
+async function getTile(u) {
+  for (let a = 0; a < PAUSE.length; a++) {
+    if (PAUSE[a]) await new Promise((r) => setTimeout(r, PAUSE[a]));
+    try {
+      const r = await FETCH(u);
+      if (r.status === 204) return null;
+      if (r.ok) return await r.blob();
+      if (r.status === 404) return null;
+    } catch { /* 다시 */ }
+  }
+  return 'miss';
+}
+
 const cache = new Map();
 /** 한 달 → { v: Uint8Array(값 0…255), ok: Uint8Array(유효) } · 같은 달·격자는 한 번만 받는다 */
 export function monthOf(template, searchid, grid) {
@@ -49,26 +67,21 @@ export function monthOf(template, searchid, grid) {
       while (i < jobs.length) {
         const [tx, ty] = jobs[i++];
         const u = base.replace('{z}', grid.z).replace('{x}', tx).replace('{y}', ty);
-        for (let a = 0; a < 2; a++) {
-          try {
-            const r = await fetch(u);
-            if (r.status === 204) break;
-            if (!r.ok) continue;
-            const bmp = await createImageBitmap(await r.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
-            g.drawImage(bmp, (tx - grid.tx0) * TS, (ty - grid.ty0) * TS); bmp.close?.();
-            break;
-          } catch { /* 한 번 더 */ }
-        }
+        const b = await getTile(u);
+        if (b === 'miss') { miss++; continue; }
+        if (!b) continue;
+        try { const bmp = await createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }); g.drawImage(bmp, (tx - grid.tx0) * TS, (ty - grid.ty0) * TS); bmp.close?.(); } catch { miss++; }
       }
     };
+    let miss = 0;
     await Promise.all(Array.from({ length: 8 }, one));
     const d = g.getImageData(0, 0, grid.W, grid.H).data, n = grid.W * grid.H;
     const v = new Uint8Array(n), ok = new Uint8Array(n);
     for (let k = 0; k < n; k++) { v[k] = d[k * 4]; ok[k] = d[k * 4 + 3] > 127 ? 1 : 0; }
-    return { v, ok };
+    return { v, ok, miss };
   })();
   cache.set(key, p);
-  p.catch(() => cache.delete(key));
+  p.then((x) => { if (x.miss) cache.delete(key); }, () => cache.delete(key));
   return p;
 }
 
@@ -108,26 +121,22 @@ export function cropOf(template, items, grid) {
       while (i < jobs.length) {
         const [tx, ty, it] = jobs[i++];
         const u = base.replace('{item}', it).replace('{z}', grid.z).replace('{x}', tx).replace('{y}', ty);
-        for (let a = 0; a < 2; a++) {
-          try {
-            const r = await fetch(u);
-            if (r.status === 204) break;
-            if (!r.ok) continue;
-            const bmp = await createImageBitmap(await r.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
-            g.drawImage(bmp, (tx - grid.tx0) * TS, (ty - grid.ty0) * TS); bmp.close?.(); got++;
-            break;
-          } catch { /* 한 번 더 */ }
-        }
+        const b = await getTile(u);
+        if (b === 'miss') { miss++; continue; }
+        if (!b) continue;
+        try { const bmp = await createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }); g.drawImage(bmp, (tx - grid.tx0) * TS, (ty - grid.ty0) * TS); bmp.close?.(); got++; } catch { miss++; }
       }
     };
+    let miss = 0;
     await Promise.all(Array.from({ length: 6 }, one));
     if (!got) return null;
     const d = g.getImageData(0, 0, grid.W, grid.H).data, n = grid.W * grid.H, m = new Uint8Array(n);
     for (let k = 0; k < n; k++) m[k] = d[k * 4 + 3] > 127 && d[k * 4] === 40 ? 1 : 0;
+    m.miss = miss;   // 못 받은 타일 수(0 이어야 보관)
     return m;
   })();
   cropCache.set(grid.key, p);
-  p.catch(() => cropCache.delete(grid.key));
+  p.then((x) => { if (!x || x.miss) cropCache.delete(grid.key); }, () => cropCache.delete(grid.key));
   return p;
 }
 

@@ -1,0 +1,21 @@
+{
+  "first": {
+    "globe": 2954,
+    "run": 7592,
+    "arrive": 9127,
+    "big": 9983,
+    "value": "117.9",
+    "seen": [
+      "loading"
+    ]
+  },
+  "revisit": {
+    "globe": 2609,
+    "run": 7241,
+    "arrive": 9046,
+    "big": 9046,
+    "value": "117.9",
+    "seen": []
+  },
+  "errors": []
+}
