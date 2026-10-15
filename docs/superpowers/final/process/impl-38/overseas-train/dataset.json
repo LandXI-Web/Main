@@ -1,0 +1,40 @@
+{
+ "blocks": 231,
+ "chips": {
+  "train": 2464,
+  "val": 448,
+  "test": 784
+ },
+ "chips_total": 3696,
+ "year": 2021,
+ "months": [
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "bands": [
+  "blue",
+  "green",
+  "red",
+  "nir",
+  "swir16",
+  "swir22"
+ ],
+ "classes": [
+  "나무",
+  "초지·관목",
+  "경작지",
+  "시가지",
+  "물·습지",
+  "맨땅·눈"
+ ],
+ "bytes": 1301945163,
+ "made_at": "2026-10-15T17:05:04",
+ "label": "ESA WorldCover 2021(v200) · 학습은 2020(v100)과 같은 화소만",
+ "version": 2,
+ "mountain_blocks": 35
+}

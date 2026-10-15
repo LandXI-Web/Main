@@ -40,6 +40,7 @@ CLOUD_MAX = 70                               # 장면 전체 구름 %(STAC) — 
 MAX_ITEMS = 6                                # 달마다 · MGRS 칸마다 SCL 을 볼 장면 수 상한(구름 적은 순)
 BLOCK = 2048                                 # 읽기 조각(화소) — 조각마다 스레드 하나
 RES = 10
+READ_TRIES = 8
 
 
 @dataclass
@@ -164,7 +165,7 @@ def read_block(href: str, grid: Grid, r0: int, c0: int, h: int, w: int, nearest:
     l = grid.x0 + c0 * RES
     t = grid.y0 - r0 * RES
     r, b = l + w * RES, t - h * RES
-    for k in range(4):
+    for k in range(READ_TRIES):
         try:
             ds = _open(href)
             epsg = ds.crs.to_epsg() if ds.crs else None
@@ -198,9 +199,9 @@ def read_block(href: str, grid: Grid, r0: int, c0: int, h: int, w: int, nearest:
                 _tl.ds.pop(href).close()
             except Exception:  # noqa: BLE001
                 pass
-            if k == 3:
+            if k == READ_TRIES - 1:
                 raise
-            time.sleep(3 * (k + 1))
+            time.sleep(min(60, 4 * 2 ** k))         # 링크가 붐비면 열기 · 읽기가 끊긴다('does not exist' 로도 나옴) — 길게 기다렸다 다시
     return None
 
 
@@ -227,7 +228,7 @@ def item_box(item: dict, epsg: int):
 
 
 def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: ThreadPoolExecutor | None = None,
-                    stats: dict | None = None, log=None) -> np.ndarray:
+                    stats: dict | None = None, log=None, max_obs: int = MAX_OBS) -> np.ndarray:
     """그 달 합성 (6, H, W) uint16 — 0 = 맑은 화소 없음.
     ① 구름 적은 후보 장면들의 SCL 을 한꺼번에 읽고(작음 · 20 m) ② 메모리에서 장면을 고르고(화소마다 맑은 관측 최대 2개)
     ③ 고른 장면 × 띠 × 조각을 한꺼번에 읽어 더한다 — 원격 읽기는 대기 시간이 길어 한 장면씩 차례로 읽으면 느리다."""
@@ -260,7 +261,12 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
     pool = pool or ThreadPoolExecutor(48)
     try:
         jobs = [(ci, bk) for ci, (it, bl) in enumerate(cands) for bk in bl]
-        scl = dict(zip(jobs, pool.map(lambda j: read_block(cands[j[0]][0]["assets"]["scl"]["href"], grid, *j[1], True), jobs)))
+        def scl_read(j):
+            try:
+                return read_block(cands[j[0]][0]["assets"]["scl"]["href"], grid, *j[1], True)
+            except Exception:  # noqa: BLE001 — 그 장면의 SCL 을 끝내 못 읽으면 그 장면은 고르지 않는다
+                return None
+        scl = dict(zip(jobs, pool.map(scl_read, jobs)))
         st["scl_reads"] = st.get("scl_reads", 0) + len(jobs)
         cnt = np.zeros((grid.h, grid.w), np.uint8)
         need_total = sum(h * w for _, _, h, w in blocks)
@@ -272,7 +278,7 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
                 if sc is None:
                     continue
                 r0, c0, h, w = bk
-                ok = np.isin(sc, VALID_SCL) & (cnt[r0:r0 + h, c0:c0 + w] < MAX_OBS)
+                ok = np.isin(sc, VALID_SCL) & (cnt[r0:r0 + h, c0:c0 + w] < max_obs)
                 n = int(ok.sum())
                 if n > 0.01 * h * w or n > 20000:
                     take.append((bk, ok))
@@ -284,7 +290,7 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
                 cnt[r0:r0 + h, c0:c0 + w] += ok.astype(np.uint8)
             chosen.append((it, take))
             if log:
-                full = int((cnt >= MAX_OBS).sum())
+                full = int((cnt >= max_obs).sum())
                 log(f"  {year}-{month:02d} {it['id']} 구름 {it['properties'].get('eo:cloud_cover', 0):.0f}% · 2개 {full / max(1, need_total):.1%}")
         del scl
         acc = np.zeros((len(BANDS), grid.h, grid.w), np.float32)
@@ -319,13 +325,13 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
     return out
 
 
-def composite(grid: Grid, year: int, *, blocks=None, months=MONTHS, log=None, threads: int = 48) -> tuple[np.ndarray, dict]:
+def composite(grid: Grid, year: int, *, blocks=None, months=MONTHS, log=None, threads: int = 48, max_obs: int = MAX_OBS) -> tuple[np.ndarray, dict]:
     """달별 합성 전부 (7 × 6, H, W) uint16 + 통계(달마다 쓴 장면 · 맑은 화소 비율)."""
-    st: dict = {"year": year, "grid": {"epsg": grid.epsg, "x0": grid.x0, "y0": grid.y0, "w": grid.w, "h": grid.h}}
+    st: dict = {"year": year, "max_obs": max_obs, "grid": {"epsg": grid.epsg, "x0": grid.x0, "y0": grid.y0, "w": grid.w, "h": grid.h}}
     out = np.zeros((len(months) * len(BANDS), grid.h, grid.w), np.uint16)
     with ThreadPoolExecutor(threads) as pool:
         for k, m in enumerate(months):
-            out[k * len(BANDS):(k + 1) * len(BANDS)] = month_composite(grid, year, m, blocks=blocks, pool=pool, stats=st, log=log)
+            out[k * len(BANDS):(k + 1) * len(BANDS)] = month_composite(grid, year, m, blocks=blocks, pool=pool, stats=st, log=log, max_obs=max_obs)
     return out, st
 
 

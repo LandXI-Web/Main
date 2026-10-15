@@ -1,0 +1,23 @@
+{
+ "학습 1판": {
+  "from": "2026-10-15T15:36:06",
+  "to": "2026-10-15T15:38:24",
+  "samples_s": 138,
+  "gpu0": {
+   "util_mean": 31.2,
+   "util_max": 99.0,
+   "util_30s_max": 45.8,
+   "power_mean_w": 108.1,
+   "power_max_w": 189.07,
+   "power_30s_max_w": 182.6,
+   "s_util_over_70": 1,
+   "s_power_over_140": 39
+  },
+  "gpu1": {
+   "util_mean": 0.0,
+   "power_max_w": 93.48
+  },
+  "both_over_100w_s": 0
+ },
+ "학습 4판(쓰는 판)": null
+}

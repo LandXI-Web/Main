@@ -40,6 +40,7 @@ PRIORITY = 3
 PART_KM2 = 1500.0
 TRIES = 3
 TURN_WAIT_S = 300
+OBS = 1                 # 나라 전체 합성은 화소마다 맑은 관측 1개(구름 적은 순 첫 번째) — 받는 양이 절반(학습 묶음은 2개 평균 · 실측 링크 15–45 MB/s)
 
 
 def root(country: str, year: int) -> Path:
@@ -189,7 +190,8 @@ def prepare(country: str, year: int, cd: str) -> dict:
     blocks = s2.blocks_of(grid, mask_geom=gu)
     t0 = time.time()
     log(f"합성 시작 {cd} {row[1]} · 격자 {grid.w}×{grid.h} · 조각 {len(blocks)}")
-    stack, st = s2.composite(grid, year, blocks=blocks, log=lambda m: print(time.strftime('%H:%M:%S'), m, flush=True), threads=64)
+    stack, st = s2.composite(grid, year, blocks=blocks, log=lambda m: print(time.strftime('%H:%M:%S'), m, flush=True), threads=48,
+                               max_obs=OBS)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(".tmp.tif")
     s2.write_tif(tmp, stack, grid, {"country": country, "year": year, "cell": cd, "months": st["months"]})
@@ -523,10 +525,12 @@ def summary(country: str = "kgz", year: int = 2025) -> dict:
         cells = c.execute("SELECT state, count(*), coalesce(sum(area_km2),0) FROM overseas_cells WHERE country=%s AND year=%s AND NOT test GROUP BY state",
                           (country, year)).fetchall()
         sums = c.execute("SELECT k, sum((v->>'n')::bigint), sum((v->>'km2')::numeric) FROM overseas_cells, jsonb_each(counts) AS e(k, v) "
-                         "WHERE country=%s AND year=%s AND state='done' AND NOT test GROUP BY k", (country, year)).fetchall()
-        per = c.execute("SELECT cell_cd, name, adm1_name, area_km2, counts FROM overseas_cells WHERE country=%s AND year=%s AND state='done' ORDER BY ord",
-                        (country, year)).fetchall()
-    return {"country": country, "year": year, "cells": {s: {"n": int(n), "km2": round(float(a))} for s, n, a in cells},
+                         "WHERE country=%s AND year=%s AND state='done' AND NOT test AND model_id IS NOT DISTINCT FROM "
+                         "(SELECT value->>'model' FROM lx_settings WHERE key='overseas.run') GROUP BY k", (country, year)).fetchall()
+        model = settings(c).get("model")
+        per = c.execute("SELECT cell_cd, name, adm1_name, area_km2, counts, model_id FROM overseas_cells WHERE country=%s AND year=%s AND state='done' "
+                        "AND model_id IS NOT DISTINCT FROM %s ORDER BY ord", (country, year, model)).fetchall()
+    return {"country": country, "year": year, "model": model, "cells": {s: {"n": int(n), "km2": round(float(a))} for s, n, a in cells},
             "counts": {k: {"n": int(n), "km2": round(float(a), 1)} for k, n, a in sums},
             "per_cell": [{"cell": r[0], "name": r[1], "adm1": r[2], "area_km2": float(r[3] or 0), "counts": _jv(r[4])} for r in per]}
 

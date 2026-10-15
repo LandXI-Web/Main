@@ -1,0 +1,22 @@
+{
+ "해외 칸 분석(Kemin~Ysyk-Ata · 전국 작업기와 번갈아)": {
+  "from": "2026-10-15T17:29:59",
+  "to": "2026-10-15T17:55:50",
+  "samples_s": 1543,
+  "gpu0": {
+   "util_mean": 7.6,
+   "util_max": 100.0,
+   "util_30s_max": 22.0,
+   "power_mean_w": 43.7,
+   "power_max_w": 123.58,
+   "power_30s_max_w": 79.8,
+   "s_util_over_70": 76,
+   "s_power_over_140": 0
+  },
+  "gpu1": {
+   "util_mean": 0.1,
+   "power_max_w": 93.14
+  },
+  "both_over_100w_s": 0
+ }
+}

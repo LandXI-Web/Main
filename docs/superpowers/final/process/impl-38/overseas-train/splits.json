@@ -1,0 +1,3546 @@
+{
+ "made_at": "2026-10-15T14:51:33",
+ "seed": 20261015,
+ "block_px": 256,
+ "chip_px": 64,
+ "rule": "묶음째(2.56 km) 주마다 학습 70 · 검증 10 · 시험 20 — 이 목록이 바뀌지 않는 한 같은 시험 묶음",
+ "blocks": [
+  {
+   "lon": 69.489599,
+   "lat": 39.847044,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.531,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-00",
+   "split": "train"
+  },
+  {
+   "lon": 70.879549,
+   "lat": 40.106345,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.286,
+    "built": 0.016,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-01",
+   "split": "test"
+  },
+  {
+   "lon": 69.7003,
+   "lat": 40.009107,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.255,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-02",
+   "split": "train"
+  },
+  {
+   "lon": 72.149247,
+   "lat": 40.268408,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.332,
+    "built": 0.331,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-03",
+   "split": "train"
+  },
+  {
+   "lon": 71.178773,
+   "lat": 40.268408,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.578,
+    "built": 0.24,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-04",
+   "split": "train"
+  },
+  {
+   "lon": 70.880319,
+   "lat": 40.138758,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.541,
+    "built": 0.082,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-05",
+   "split": "test"
+  },
+  {
+   "lon": 70.793179,
+   "lat": 40.009107,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.552,
+    "built": 0.007,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-06",
+   "split": "train"
+  },
+  {
+   "lon": 69.699271,
+   "lat": 39.847044,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.481,
+    "built": 0.022,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-07",
+   "split": "test"
+  },
+  {
+   "lon": 71.221906,
+   "lat": 40.300821,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.634,
+    "built": 0.047,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-08",
+   "split": "train"
+  },
+  {
+   "lon": 69.532419,
+   "lat": 40.073932,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.317,
+    "built": 0.009,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-09",
+   "split": "train"
+  },
+  {
+   "lon": 69.656782,
+   "lat": 39.749805,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.597,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-10",
+   "split": "train"
+  },
+  {
+   "lon": 71.294697,
+   "lat": 39.911869,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.842,
+    "built": 0.013,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-11",
+   "split": "test"
+  },
+  {
+   "lon": 71.264121,
+   "lat": 40.300821,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.678,
+    "built": 0.079,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-12",
+   "split": "val"
+  },
+  {
+   "lon": 69.615402,
+   "lat": 39.847044,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.778,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-13",
+   "split": "train"
+  },
+  {
+   "lon": 70.496606,
+   "lat": 39.879456,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.023,
+    "built": 0.184,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-14",
+   "split": "train"
+  },
+  {
+   "lon": 70.836707,
+   "lat": 40.073932,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.132,
+    "built": 0.173,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-15",
+   "split": "train"
+  },
+  {
+   "lon": 69.785606,
+   "lat": 40.17117,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.248,
+    "built": 0.121,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-16",
+   "split": "train"
+  },
+  {
+   "lon": 71.34855,
+   "lat": 40.300821,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.091,
+    "built": 0.16,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-17",
+   "split": "val"
+  },
+  {
+   "lon": 70.86665,
+   "lat": 39.555329,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.13,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-18",
+   "split": "train"
+  },
+  {
+   "lon": 70.709112,
+   "lat": 40.009107,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.129,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-19",
+   "split": "train"
+  },
+  {
+   "lon": 70.950953,
+   "lat": 39.587742,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.105,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-20",
+   "split": "train"
+  },
+  {
+   "lon": 70.494864,
+   "lat": 39.782218,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.014,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-21",
+   "split": "test"
+  },
+  {
+   "lon": 70.913037,
+   "lat": 39.749805,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.004,
+    "built": 0.015,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-22",
+   "split": "train"
+  },
+  {
+   "lon": 71.474135,
+   "lat": 40.268408,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.079,
+    "built": 0.057,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-23",
+   "split": "train"
+  },
+  {
+   "lon": 71.430903,
+   "lat": 40.235996,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-24",
+   "split": "train"
+  },
+  {
+   "lon": 70.951742,
+   "lat": 39.620155,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.007,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-25",
+   "split": "train"
+  },
+  {
+   "lon": 71.759957,
+   "lat": 40.009107,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-26",
+   "split": "val"
+  },
+  {
+   "lon": 69.741205,
+   "lat": 39.847044,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.009,
+    "built": 0.048,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "id": "bat-27",
+   "split": "test"
+  },
+  {
+   "lon": 72.921891,
+   "lat": 40.610574,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.798,
+    "built": 0.128,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-00",
+   "split": "train"
+  },
+  {
+   "lon": 72.790315,
+   "lat": 40.383685,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.301,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-01",
+   "split": "train"
+  },
+  {
+   "lon": 73.386577,
+   "lat": 40.545749,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.478,
+    "built": 0.003,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-02",
+   "split": "train"
+  },
+  {
+   "lon": 73.477045,
+   "lat": 40.740225,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.534,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-03",
+   "split": "test"
+  },
+  {
+   "lon": 73.396672,
+   "lat": 40.902288,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.574,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-04",
+   "split": "val"
+  },
+  {
+   "lon": 72.454464,
+   "lat": 40.545749,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.938,
+    "built": 0.051,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-05",
+   "split": "test"
+  },
+  {
+   "lon": 73.09153,
+   "lat": 40.610574,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.613,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-06",
+   "split": "train"
+  },
+  {
+   "lon": 73.397598,
+   "lat": 40.934701,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.402,
+    "built": 0.003,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-07",
+   "split": "train"
+  },
+  {
+   "lon": 73.310595,
+   "lat": 40.869875,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.558,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-08",
+   "split": "train"
+  },
+  {
+   "lon": 72.281256,
+   "lat": 40.221622,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.316,
+    "built": 0.099,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-09",
+   "split": "train"
+  },
+  {
+   "lon": 72.409481,
+   "lat": 40.351273,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.695,
+    "built": 0.002,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-10",
+   "split": "test"
+  },
+  {
+   "lon": 73.222927,
+   "lat": 40.772637,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.653,
+    "built": 0.003,
+    "water": 0.155,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-11",
+   "split": "test"
+  },
+  {
+   "lon": 72.70291,
+   "lat": 40.221622,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.758,
+    "built": 0.114,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-12",
+   "split": "train"
+  },
+  {
+   "lon": 73.08923,
+   "lat": 40.513336,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.276,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-13",
+   "split": "train"
+  },
+  {
+   "lon": 72.792171,
+   "lat": 40.480923,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.152,
+    "built": 0.48,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-14",
+   "split": "train"
+  },
+  {
+   "lon": 72.708096,
+   "lat": 40.513336,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.318,
+    "built": 0.229,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-15",
+   "split": "test"
+  },
+  {
+   "lon": 72.577438,
+   "lat": 40.286447,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.648,
+    "built": 0.103,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-16",
+   "split": "test"
+  },
+  {
+   "lon": 72.91441,
+   "lat": 40.254034,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.226,
+    "built": 0.115,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-17",
+   "split": "train"
+  },
+  {
+   "lon": 73.095388,
+   "lat": 40.772637,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.004,
+    "built": 0.0,
+    "water": 0.826,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-18",
+   "split": "train"
+  },
+  {
+   "lon": 72.916437,
+   "lat": 40.351273,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.039,
+    "built": 0.0,
+    "water": 0.148,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-19",
+   "split": "train"
+  },
+  {
+   "lon": 72.27361,
+   "lat": 39.540955,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.041,
+    "built": 0.002,
+    "water": 0.102,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-20",
+   "split": "train"
+  },
+  {
+   "lon": 73.378451,
+   "lat": 40.254034,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.011,
+    "built": 0.007,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-21",
+   "split": "train"
+  },
+  {
+   "lon": 73.20162,
+   "lat": 39.929908,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.017,
+    "snow": 0.159
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-22",
+   "split": "train"
+  },
+  {
+   "lon": 73.02651,
+   "lat": 39.605781,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-23",
+   "split": "train"
+  },
+  {
+   "lon": 73.741828,
+   "lat": 41.031939,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-24",
+   "split": "val"
+  },
+  {
+   "lon": 74.309219,
+   "lat": 40.31886,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.003,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-25",
+   "split": "val"
+  },
+  {
+   "lon": 72.405606,
+   "lat": 40.059558,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-26",
+   "split": "train"
+  },
+  {
+   "lon": 72.611219,
+   "lat": 39.767844,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.003,
+    "snow": 0.49
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "id": "osh-27",
+   "split": "train"
+  },
+  {
+   "lon": 72.062113,
+   "lat": 42.618942,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.547,
+    "built": 0.002,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-00",
+   "split": "train"
+  },
+  {
+   "lon": 71.711222,
+   "lat": 42.554116,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.93,
+    "built": 0.002,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-01",
+   "split": "train"
+  },
+  {
+   "lon": 72.62813,
+   "lat": 42.521704,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.272,
+    "built": 0.044,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-02",
+   "split": "test"
+  },
+  {
+   "lon": 71.537096,
+   "lat": 42.618942,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.689,
+    "built": 0.049,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-03",
+   "split": "train"
+  },
+  {
+   "lon": 71.406124,
+   "lat": 42.651354,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.391,
+    "built": 0.001,
+    "water": 0.002,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-04",
+   "split": "train"
+  },
+  {
+   "lon": 71.5385,
+   "lat": 42.748592,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.758,
+    "built": 0.159,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-05",
+   "split": "train"
+  },
+  {
+   "lon": 72.191298,
+   "lat": 42.521704,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.724,
+    "built": 0.129,
+    "water": 0.007,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-06",
+   "split": "train"
+  },
+  {
+   "lon": 72.016565,
+   "lat": 42.521704,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.909,
+    "built": 0.036,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-07",
+   "split": "val"
+  },
+  {
+   "lon": 72.365253,
+   "lat": 42.489291,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.971,
+    "built": 0.002,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-08",
+   "split": "train"
+  },
+  {
+   "lon": 71.450814,
+   "lat": 42.748592,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.954,
+    "built": 0.022,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-09",
+   "split": "val"
+  },
+  {
+   "lon": 72.146286,
+   "lat": 42.456878,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.888,
+    "built": 0.0,
+    "water": 0.003,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-10",
+   "split": "train"
+  },
+  {
+   "lon": 71.536398,
+   "lat": 42.554116,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.973,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-11",
+   "split": "test"
+  },
+  {
+   "lon": 71.799119,
+   "lat": 42.586529,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.354,
+    "built": 0.063,
+    "water": 0.077,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-12",
+   "split": "train"
+  },
+  {
+   "lon": 71.493345,
+   "lat": 42.618942,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.564,
+    "built": 0.068,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-13",
+   "split": "train"
+  },
+  {
+   "lon": 72.191986,
+   "lat": 42.554116,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.453,
+    "built": 0.154,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-14",
+   "split": "test"
+  },
+  {
+   "lon": 72.322348,
+   "lat": 42.521704,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.584,
+    "built": 0.092,
+    "water": 0.003,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-15",
+   "split": "train"
+  },
+  {
+   "lon": 72.364476,
+   "lat": 42.456878,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.829,
+    "built": 0.087,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-16",
+   "split": "train"
+  },
+  {
+   "lon": 72.539895,
+   "lat": 42.489291,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.179,
+    "built": 0.084,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-17",
+   "split": "train"
+  },
+  {
+   "lon": 71.535702,
+   "lat": 42.489291,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.001,
+    "built": 0.0,
+    "water": 0.103,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-18",
+   "split": "train"
+  },
+  {
+   "lon": 71.66835,
+   "lat": 42.618942,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.447,
+    "built": 0.006,
+    "water": 0.406,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-19",
+   "split": "test"
+  },
+  {
+   "lon": 71.58122,
+   "lat": 42.651354,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.035,
+    "built": 0.001,
+    "water": 0.299,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-20",
+   "split": "train"
+  },
+  {
+   "lon": 71.924268,
+   "lat": 42.229989,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-21",
+   "split": "train"
+  },
+  {
+   "lon": 71.750345,
+   "lat": 42.229989,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-22",
+   "split": "val"
+  },
+  {
+   "lon": 71.837806,
+   "lat": 42.262402,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-23",
+   "split": "test"
+  },
+  {
+   "lon": 72.540764,
+   "lat": 42.521704,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-24",
+   "split": "train"
+  },
+  {
+   "lon": 72.450113,
+   "lat": 42.392053,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.003,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-25",
+   "split": "train"
+  },
+  {
+   "lon": 72.017163,
+   "lat": 42.554116,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.245,
+    "built": 0.007,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-26",
+   "split": "train"
+  },
+  {
+   "lon": 71.186417,
+   "lat": 42.489291,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "id": "tal-27",
+   "split": "test"
+  },
+  {
+   "lon": 73.135603,
+   "lat": 41.168535,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.589,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-00",
+   "split": "test"
+  },
+  {
+   "lon": 72.906914,
+   "lat": 40.811996,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.692,
+    "built": 0.045,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-01",
+   "split": "train"
+  },
+  {
+   "lon": 73.081339,
+   "lat": 40.909234,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.603,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-02",
+   "split": "test"
+  },
+  {
+   "lon": 72.658996,
+   "lat": 41.006472,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.809,
+    "built": 0.074,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-03",
+   "split": "train"
+  },
+  {
+   "lon": 73.087068,
+   "lat": 41.038885,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.838,
+    "built": 0.133,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-04",
+   "split": "test"
+  },
+  {
+   "lon": 71.600176,
+   "lat": 41.363012,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.807,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-05",
+   "split": "train"
+  },
+  {
+   "lon": 73.371727,
+   "lat": 41.622313,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.286,
+    "built": 0.004,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-06",
+   "split": "train"
+  },
+  {
+   "lon": 71.863475,
+   "lat": 41.5899,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.508,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-07",
+   "split": "train"
+  },
+  {
+   "lon": 71.857555,
+   "lat": 41.363012,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.719,
+    "built": 0.138,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-08",
+   "split": "train"
+  },
+  {
+   "lon": 72.744324,
+   "lat": 41.006472,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.88,
+    "built": 0.113,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-09",
+   "split": "train"
+  },
+  {
+   "lon": 73.122493,
+   "lat": 40.876821,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.277,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-10",
+   "split": "train"
+  },
+  {
+   "lon": 72.616333,
+   "lat": 41.006472,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.875,
+    "built": 0.047,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-11",
+   "split": "train"
+  },
+  {
+   "lon": 73.048641,
+   "lat": 41.136123,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.462,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-12",
+   "split": "train"
+  },
+  {
+   "lon": 73.219633,
+   "lat": 41.136123,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 1.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-13",
+   "split": "val"
+  },
+  {
+   "lon": 72.745591,
+   "lat": 41.038885,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.105,
+    "built": 0.701,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-14",
+   "split": "val"
+  },
+  {
+   "lon": 71.557279,
+   "lat": 41.363012,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.387,
+    "built": 0.151,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-15",
+   "split": "train"
+  },
+  {
+   "lon": 72.953537,
+   "lat": 40.909234,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.763,
+    "built": 0.181,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-16",
+   "split": "train"
+  },
+  {
+   "lon": 72.404114,
+   "lat": 41.038885,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.693,
+    "built": 0.143,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-17",
+   "split": "train"
+  },
+  {
+   "lon": 72.289692,
+   "lat": 41.46025,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.002,
+    "water": 0.127,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-18",
+   "split": "train"
+  },
+  {
+   "lon": 72.303617,
+   "lat": 41.881614,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.163,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-19",
+   "split": "train"
+  },
+  {
+   "lon": 73.077568,
+   "lat": 41.784376,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.013,
+    "built": 0.0,
+    "water": 0.876,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-20",
+   "split": "train"
+  },
+  {
+   "lon": 70.356926,
+   "lat": 41.622313,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.022,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-21",
+   "split": "train"
+  },
+  {
+   "lon": 71.301594,
+   "lat": 41.46025,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-22",
+   "split": "val"
+  },
+  {
+   "lon": 70.921372,
+   "lat": 42.011265,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-23",
+   "split": "test"
+  },
+  {
+   "lon": 70.74339,
+   "lat": 41.492662,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-24",
+   "split": "train"
+  },
+  {
+   "lon": 71.137041,
+   "lat": 41.94644,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.003
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-25",
+   "split": "test"
+  },
+  {
+   "lon": 72.842844,
+   "lat": 41.330599,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-26",
+   "split": "train"
+  },
+  {
+   "lon": 72.131641,
+   "lat": 41.914027,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.002
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "id": "jal-27",
+   "split": "test"
+  },
+  {
+   "lon": 77.923931,
+   "lat": 42.392125,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.719,
+    "built": 0.0,
+    "water": 0.013,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-00",
+   "split": "test"
+  },
+  {
+   "lon": 77.967524,
+   "lat": 42.392125,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.92,
+    "built": 0.0,
+    "water": 0.006,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-01",
+   "split": "train"
+  },
+  {
+   "lon": 78.188121,
+   "lat": 42.456951,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.811,
+    "built": 0.041,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-02",
+   "split": "train"
+  },
+  {
+   "lon": 78.503981,
+   "lat": 42.683839,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.332,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-03",
+   "split": "test"
+  },
+  {
+   "lon": 78.053465,
+   "lat": 42.359713,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.762,
+    "built": 0.112,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-04",
+   "split": "train"
+  },
+  {
+   "lon": 76.612143,
+   "lat": 42.132824,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.293,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-05",
+   "split": "train"
+  },
+  {
+   "lon": 78.454321,
+   "lat": 42.554189,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.55,
+    "built": 0.002,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-06",
+   "split": "train"
+  },
+  {
+   "lon": 78.237139,
+   "lat": 42.586601,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.323,
+    "built": 0.0,
+    "water": 0.484,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-07",
+   "split": "train"
+  },
+  {
+   "lon": 78.460183,
+   "lat": 42.683839,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.258,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-08",
+   "split": "train"
+  },
+  {
+   "lon": 78.374015,
+   "lat": 42.716252,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.666,
+    "built": 0.236,
+    "water": 0.008,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-09",
+   "split": "train"
+  },
+  {
+   "lon": 76.872627,
+   "lat": 42.132824,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.428,
+    "built": 0.005,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-10",
+   "split": "test"
+  },
+  {
+   "lon": 78.284995,
+   "lat": 42.683839,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.652,
+    "built": 0.029,
+    "water": 0.04,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-11",
+   "split": "train"
+  },
+  {
+   "lon": 78.638501,
+   "lat": 42.748665,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.65,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-12",
+   "split": "train"
+  },
+  {
+   "lon": 78.635372,
+   "lat": 42.683839,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.711,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-13",
+   "split": "test"
+  },
+  {
+   "lon": 77.699602,
+   "lat": 42.197649,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.015,
+    "built": 0.095,
+    "water": 0.003,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-14",
+   "split": "train"
+  },
+  {
+   "lon": 76.224409,
+   "lat": 42.456951,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.006,
+    "built": 0.294,
+    "water": 0.469,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-15",
+   "split": "train"
+  },
+  {
+   "lon": 76.180771,
+   "lat": 42.456951,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.037,
+    "built": 0.726,
+    "water": 0.093,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-16",
+   "split": "train"
+  },
+  {
+   "lon": 77.611674,
+   "lat": 42.165236,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.391,
+    "built": 0.153,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-17",
+   "split": "val"
+  },
+  {
+   "lon": 76.744646,
+   "lat": 42.262474,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.681,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-18",
+   "split": "train"
+  },
+  {
+   "lon": 77.400816,
+   "lat": 42.392125,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 1.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-19",
+   "split": "train"
+  },
+  {
+   "lon": 77.177312,
+   "lat": 42.165236,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.001,
+    "built": 0.039,
+    "water": 0.398,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-20",
+   "split": "val"
+  },
+  {
+   "lon": 79.290769,
+   "lat": 41.905935,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-21",
+   "split": "train"
+  },
+  {
+   "lon": 78.778034,
+   "lat": 42.035586,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.449
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-22",
+   "split": "train"
+  },
+  {
+   "lon": 79.069767,
+   "lat": 42.619014,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-23",
+   "split": "test"
+  },
+  {
+   "lon": 77.375955,
+   "lat": 41.48457,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.036,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-24",
+   "split": "train"
+  },
+  {
+   "lon": 78.387906,
+   "lat": 42.035586,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.002,
+    "snow": 0.006
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-25",
+   "split": "val"
+  },
+  {
+   "lon": 79.282843,
+   "lat": 42.521776,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-26",
+   "split": "train"
+  },
+  {
+   "lon": 77.08748,
+   "lat": 42.035586,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.061,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "id": "iss-27",
+   "split": "test"
+  },
+  {
+   "lon": 74.214391,
+   "lat": 42.816116,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.974,
+    "built": 0.004,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-00",
+   "split": "train"
+  },
+  {
+   "lon": 75.660056,
+   "lat": 42.751291,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.341,
+    "built": 0.008,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-01",
+   "split": "train"
+  },
+  {
+   "lon": 73.600778,
+   "lat": 42.913354,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.636,
+    "built": 0.033,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-02",
+   "split": "train"
+  },
+  {
+   "lon": 74.26591,
+   "lat": 43.205069,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.793,
+    "built": 0.028,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-03",
+   "split": "train"
+  },
+  {
+   "lon": 73.775109,
+   "lat": 42.783704,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.97,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-04",
+   "split": "train"
+  },
+  {
+   "lon": 73.820978,
+   "lat": 42.945767,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.841,
+    "built": 0.001,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-05",
+   "split": "train"
+  },
+  {
+   "lon": 74.698048,
+   "lat": 42.848529,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.445,
+    "built": 0.367,
+    "water": 0.003,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-06",
+   "split": "test"
+  },
+  {
+   "lon": 74.964535,
+   "lat": 42.945767,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.58,
+    "built": 0.017,
+    "water": 0.009,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-07",
+   "split": "val"
+  },
+  {
+   "lon": 73.601064,
+   "lat": 42.945767,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.926,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-08",
+   "split": "train"
+  },
+  {
+   "lon": 74.43529,
+   "lat": 42.880942,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.441,
+    "built": 0.402,
+    "water": 0.013,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-09",
+   "split": "train"
+  },
+  {
+   "lon": 73.599355,
+   "lat": 42.751291,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.273,
+    "built": 0.001,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-10",
+   "split": "train"
+  },
+  {
+   "lon": 73.645356,
+   "lat": 42.97818,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.799,
+    "built": 0.011,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-11",
+   "split": "test"
+  },
+  {
+   "lon": 74.17343,
+   "lat": 42.97818,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.817,
+    "built": 0.0,
+    "water": 0.042,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-12",
+   "split": "test"
+  },
+  {
+   "lon": 73.954345,
+   "lat": 43.043005,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.784,
+    "built": 0.0,
+    "water": 0.009,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-13",
+   "split": "train"
+  },
+  {
+   "lon": 74.439654,
+   "lat": 43.075418,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.227,
+    "built": 0.108,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-14",
+   "split": "train"
+  },
+  {
+   "lon": 73.687704,
+   "lat": 42.816116,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.452,
+    "built": 0.274,
+    "water": 0.047,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-15",
+   "split": "train"
+  },
+  {
+   "lon": 74.302826,
+   "lat": 42.848529,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.119,
+    "built": 0.668,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-16",
+   "split": "test"
+  },
+  {
+   "lon": 74.699773,
+   "lat": 42.913354,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.795,
+    "built": 0.132,
+    "water": 0.016,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-17",
+   "split": "train"
+  },
+  {
+   "lon": 74.614312,
+   "lat": 43.010593,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.183,
+    "built": 0.03,
+    "water": 0.312,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-18",
+   "split": "val"
+  },
+  {
+   "lon": 74.260808,
+   "lat": 42.945767,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.66,
+    "built": 0.002,
+    "water": 0.132,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-19",
+   "split": "test"
+  },
+  {
+   "lon": 74.571081,
+   "lat": 43.043005,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.773,
+    "built": 0.0,
+    "water": 0.105,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-20",
+   "split": "val"
+  },
+  {
+   "lon": 73.510013,
+   "lat": 42.524402,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.004
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-21",
+   "split": "train"
+  },
+  {
+   "lon": 74.160156,
+   "lat": 42.232688,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-22",
+   "split": "train"
+  },
+  {
+   "lon": 73.333985,
+   "lat": 42.232688,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-23",
+   "split": "train"
+  },
+  {
+   "lon": 76.235026,
+   "lat": 42.848529,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-24",
+   "split": "train"
+  },
+  {
+   "lon": 74.956556,
+   "lat": 42.686466,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-25",
+   "split": "train"
+  },
+  {
+   "lon": 74.826082,
+   "lat": 42.718878,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.006,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-26",
+   "split": "test"
+  },
+  {
+   "lon": 75.920132,
+   "lat": 42.686466,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.0
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "id": "chu-27",
+   "split": "train"
+  },
+  {
+   "lon": 75.574777,
+   "lat": 42.204004,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.452,
+    "built": 0.01,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-00",
+   "split": "train"
+  },
+  {
+   "lon": 75.531314,
+   "lat": 42.204004,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.46,
+    "built": 0.035,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-01",
+   "split": "test"
+  },
+  {
+   "lon": 74.831467,
+   "lat": 42.009528,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.408,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-02",
+   "split": "train"
+  },
+  {
+   "lon": 75.853856,
+   "lat": 41.555751,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.581,
+    "built": 0.017,
+    "water": 0.004,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-03",
+   "split": "train"
+  },
+  {
+   "lon": 75.418526,
+   "lat": 41.393687,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.268,
+    "built": 0.0,
+    "water": 0.05,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-04",
+   "split": "train"
+  },
+  {
+   "lon": 75.447564,
+   "lat": 42.301242,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.259,
+    "built": 0.053,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-05",
+   "split": "train"
+  },
+  {
+   "lon": 75.271505,
+   "lat": 42.236417,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.776,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-06",
+   "split": "test"
+  },
+  {
+   "lon": 75.313012,
+   "lat": 42.171592,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.492,
+    "built": 0.008,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-07",
+   "split": "train"
+  },
+  {
+   "lon": 74.482597,
+   "lat": 41.879877,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.293,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-08",
+   "split": "train"
+  },
+  {
+   "lon": 75.748629,
+   "lat": 42.204004,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.455,
+    "built": 0.432,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-09",
+   "split": "train"
+  },
+  {
+   "lon": 75.572535,
+   "lat": 42.139179,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.293,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-10",
+   "split": "test"
+  },
+  {
+   "lon": 74.298607,
+   "lat": 41.101973,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.252,
+    "built": 0.0,
+    "water": 0.004,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-11",
+   "split": "train"
+  },
+  {
+   "lon": 75.033096,
+   "lat": 41.4261,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.347,
+    "built": 0.001,
+    "water": 0.097,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-12",
+   "split": "val"
+  },
+  {
+   "lon": 75.661703,
+   "lat": 42.204004,
+   "stratum": "crop",
+   "wc_frac": {
+    "crop": 0.57,
+    "built": 0.001,
+    "water": 0.006,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-13",
+   "split": "test"
+  },
+  {
+   "lon": 74.830731,
+   "lat": 41.977115,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.482,
+    "built": 0.088,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-14",
+   "split": "val"
+  },
+  {
+   "lon": 76.020675,
+   "lat": 41.4261,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.003,
+    "built": 0.266,
+    "water": 0.032,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-15",
+   "split": "train"
+  },
+  {
+   "lon": 74.045189,
+   "lat": 41.393687,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.039,
+    "built": 0.13,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-16",
+   "split": "val"
+  },
+  {
+   "lon": 75.666951,
+   "lat": 41.134386,
+   "stratum": "built",
+   "wc_frac": {
+    "crop": 0.137,
+    "built": 0.116,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-17",
+   "split": "test"
+  },
+  {
+   "lon": 75.308916,
+   "lat": 40.58337,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.534,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-18",
+   "split": "train"
+  },
+  {
+   "lon": 74.462631,
+   "lat": 40.680608,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.124,
+    "snow": 0.027
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-19",
+   "split": "train"
+  },
+  {
+   "lon": 75.927703,
+   "lat": 42.333655,
+   "stratum": "water",
+   "wc_frac": {
+    "crop": 0.002,
+    "built": 0.0,
+    "water": 0.166,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-20",
+   "split": "train"
+  },
+  {
+   "lon": 76.877696,
+   "lat": 41.393687,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.006
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-21",
+   "split": "train"
+  },
+  {
+   "lon": 75.164577,
+   "lat": 41.523338,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-22",
+   "split": "train"
+  },
+  {
+   "lon": 74.08671,
+   "lat": 41.264036,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-23",
+   "split": "train"
+  },
+  {
+   "lon": 73.701698,
+   "lat": 41.361274,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-24",
+   "split": "train"
+  },
+  {
+   "lon": 75.706262,
+   "lat": 41.037148,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-25",
+   "split": "train"
+  },
+  {
+   "lon": 74.129542,
+   "lat": 41.264036,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-26",
+   "split": "train"
+  },
+  {
+   "lon": 76.757364,
+   "lat": 41.555751,
+   "stratum": "other",
+   "wc_frac": {
+    "crop": 0.001,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.004
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "id": "nar-27",
+   "split": "test"
+  },
+  {
+   "lon": 72.299205,
+   "lat": 39.847044,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.074,
+    "snow": 0.216,
+    "bare": 0.528
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "added": "2판 산지",
+   "id": "bat-m0",
+   "split": "test"
+  },
+  {
+   "lon": 70.827084,
+   "lat": 39.652567,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.002,
+    "snow": 0.11,
+    "bare": 0.528
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "added": "2판 산지",
+   "id": "bat-m1",
+   "split": "val"
+  },
+  {
+   "lon": 71.413519,
+   "lat": 39.68498,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.11,
+    "bare": 0.737
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "added": "2판 산지",
+   "id": "bat-m2",
+   "split": "train"
+  },
+  {
+   "lon": 71.834291,
+   "lat": 39.749805,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.53,
+    "bare": 0.457
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "added": "2판 산지",
+   "id": "bat-m3",
+   "split": "train"
+  },
+  {
+   "lon": 70.456343,
+   "lat": 39.976694,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0,
+    "bare": 1.0
+   },
+   "oblast": "Batken",
+   "oblast_code": "38789647B43528262636538",
+   "added": "2판 산지",
+   "id": "bat-m4",
+   "split": "train"
+  },
+  {
+   "lon": 74.090663,
+   "lat": 40.124384,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.01,
+    "bare": 0.5
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "added": "2판 산지",
+   "id": "osh-m0",
+   "split": "test"
+  },
+  {
+   "lon": 73.839145,
+   "lat": 40.156796,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.005,
+    "snow": 0.092,
+    "bare": 0.613
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "added": "2판 산지",
+   "id": "osh-m1",
+   "split": "val"
+  },
+  {
+   "lon": 72.188208,
+   "lat": 39.346479,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.01,
+    "bare": 0.533
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "added": "2판 산지",
+   "id": "osh-m2",
+   "split": "train"
+  },
+  {
+   "lon": 73.104864,
+   "lat": 39.378892,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.997,
+    "bare": 0.003
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "added": "2판 산지",
+   "id": "osh-m3",
+   "split": "train"
+  },
+  {
+   "lon": 73.619473,
+   "lat": 39.865082,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.087,
+    "bare": 0.707
+   },
+   "oblast": "Osh",
+   "oblast_code": "38789647B74878035894071",
+   "added": "2판 산지",
+   "id": "osh-m4",
+   "split": "train"
+  },
+  {
+   "lon": 71.751255,
+   "lat": 42.294815,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0,
+    "bare": 0.444
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "added": "2판 산지",
+   "id": "tal-m0",
+   "split": "test"
+  },
+  {
+   "lon": 73.629978,
+   "lat": 42.456878,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.032,
+    "snow": 0.214,
+    "bare": 0.73
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "added": "2판 산지",
+   "id": "tal-m1",
+   "split": "val"
+  },
+  {
+   "lon": 72.708816,
+   "lat": 42.294815,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.019,
+    "bare": 0.619
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "added": "2판 산지",
+   "id": "tal-m2",
+   "split": "train"
+  },
+  {
+   "lon": 73.318173,
+   "lat": 42.294815,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.018,
+    "snow": 0.078,
+    "bare": 0.484
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "added": "2판 산지",
+   "id": "tal-m3",
+   "split": "train"
+  },
+  {
+   "lon": 70.967743,
+   "lat": 42.262402,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.003,
+    "snow": 0.603,
+    "bare": 0.374
+   },
+   "oblast": "Talas",
+   "oblast_code": "38789647B46237219042962",
+   "added": "2판 산지",
+   "id": "tal-m4",
+   "split": "train"
+  },
+  {
+   "lon": 72.049894,
+   "lat": 42.076091,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.012,
+    "snow": 0.437,
+    "bare": 0.474
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "added": "2판 산지",
+   "id": "jal-m0",
+   "split": "test"
+  },
+  {
+   "lon": 70.783614,
+   "lat": 41.200948,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.001,
+    "bare": 0.64
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "added": "2판 산지",
+   "id": "jal-m1",
+   "split": "val"
+  },
+  {
+   "lon": 73.777539,
+   "lat": 41.94644,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.027,
+    "snow": 0.272,
+    "bare": 0.444
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "added": "2판 산지",
+   "id": "jal-m2",
+   "split": "train"
+  },
+  {
+   "lon": 71.523871,
+   "lat": 41.816789,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.01,
+    "snow": 0.04,
+    "bare": 0.421
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "added": "2판 산지",
+   "id": "jal-m3",
+   "split": "train"
+  },
+  {
+   "lon": 71.874653,
+   "lat": 42.011265,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.001,
+    "built": 0.0,
+    "water": 0.007,
+    "snow": 0.3,
+    "bare": 0.568
+   },
+   "oblast": "Jalal-Abad",
+   "oblast_code": "38789647B85532999857943",
+   "added": "2판 산지",
+   "id": "jal-m4",
+   "split": "train"
+  },
+  {
+   "lon": 77.462821,
+   "lat": 41.516983,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.132,
+    "snow": 0.0,
+    "bare": 0.413
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "added": "2판 산지",
+   "id": "iss-m0",
+   "split": "test"
+  },
+  {
+   "lon": 77.59084,
+   "lat": 41.48457,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.013,
+    "bare": 0.612
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "added": "2판 산지",
+   "id": "iss-m1",
+   "split": "val"
+  },
+  {
+   "lon": 78.966729,
+   "lat": 42.3273,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.11,
+    "bare": 0.57
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "added": "2판 산지",
+   "id": "iss-m2",
+   "split": "train"
+  },
+  {
+   "lon": 78.55684,
+   "lat": 41.938348,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.018,
+    "snow": 0.0,
+    "bare": 0.614
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "added": "2판 산지",
+   "id": "iss-m3",
+   "split": "train"
+  },
+  {
+   "lon": 76.954762,
+   "lat": 41.905935,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.012,
+    "snow": 0.25,
+    "bare": 0.607
+   },
+   "oblast": "Issyk-Kul",
+   "oblast_code": "38789647B57762434555293",
+   "added": "2판 산지",
+   "id": "iss-m4",
+   "split": "train"
+  },
+  {
+   "lon": 75.47459,
+   "lat": 42.49199,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.03,
+    "bare": 0.763
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "added": "2판 산지",
+   "id": "chu-m0",
+   "split": "test"
+  },
+  {
+   "lon": 74.73146,
+   "lat": 42.459577,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.627,
+    "bare": 0.368
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "added": "2판 산지",
+   "id": "chu-m1",
+   "split": "val"
+  },
+  {
+   "lon": 73.553184,
+   "lat": 42.459577,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.013,
+    "snow": 0.176,
+    "bare": 0.725
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "added": "2판 산지",
+   "id": "chu-m2",
+   "split": "train"
+  },
+  {
+   "lon": 74.560016,
+   "lat": 42.589228,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.001,
+    "bare": 0.444
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "added": "2판 산지",
+   "id": "chu-m3",
+   "split": "train"
+  },
+  {
+   "lon": 75.036939,
+   "lat": 42.459577,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.005,
+    "snow": 0.014,
+    "bare": 0.609
+   },
+   "oblast": "Chuy",
+   "oblast_code": "38789647B49701521312730",
+   "added": "2판 산지",
+   "id": "chu-m4",
+   "split": "train"
+  },
+  {
+   "lon": 74.945664,
+   "lat": 41.361274,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.062,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0,
+    "bare": 0.683
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "added": "2판 산지",
+   "id": "nar-m0",
+   "split": "test"
+  },
+  {
+   "lon": 76.04773,
+   "lat": 41.037148,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.6,
+    "bare": 0.342
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "added": "2판 산지",
+   "id": "nar-m1",
+   "split": "val"
+  },
+  {
+   "lon": 75.020914,
+   "lat": 40.93991,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.002,
+    "bare": 0.506
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "added": "2판 산지",
+   "id": "nar-m2",
+   "split": "train"
+  },
+  {
+   "lon": 74.588825,
+   "lat": 40.615783,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.0,
+    "built": 0.0,
+    "water": 0.001,
+    "snow": 0.137,
+    "bare": 0.59
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "added": "2판 산지",
+   "id": "nar-m3",
+   "split": "train"
+  },
+  {
+   "lon": 74.814136,
+   "lat": 41.231624,
+   "stratum": "mountain",
+   "wc_frac": {
+    "crop": 0.003,
+    "built": 0.0,
+    "water": 0.0,
+    "snow": 0.0,
+    "bare": 0.465
+   },
+   "oblast": "Naryn",
+   "oblast_code": "38789647B68189783551847",
+   "added": "2판 산지",
+   "id": "nar-m4",
+   "split": "train"
+  }
+ ],
+ "version": 2,
+ "v2": "10-15 산지 묶음 추가(1판 묶음 · 나눔 그대로) — 높은 산 눈 · 빙하를 물로 그리던 것 고침"
+}

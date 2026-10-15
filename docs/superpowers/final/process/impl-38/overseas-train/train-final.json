@@ -1,0 +1,390 @@
+{
+ "weights": "E:\\Land-XI 플랫폼\\02. 데이터\\models\\overseas\\kgz\\job_01M4ZAKM9WN18KXRE0FGYVAFG5\\best.pt",
+ "metrics": {
+  "test": {
+   "oa": 0.8356,
+   "miou": 0.669,
+   "classes": {
+    "나무": {
+     "iou": 0.5295,
+     "f1": 0.6924,
+     "precision": 0.6935,
+     "recall": 0.6912,
+     "px": 85261
+    },
+    "초지·관목": {
+     "iou": 0.684,
+     "f1": 0.8123,
+     "precision": 0.8228,
+     "recall": 0.8021,
+     "px": 1229670
+    },
+    "경작지": {
+     "iou": 0.8098,
+     "f1": 0.8949,
+     "precision": 0.897,
+     "recall": 0.8929,
+     "px": 1129923
+    },
+    "시가지": {
+     "iou": 0.7098,
+     "f1": 0.8303,
+     "precision": 0.8021,
+     "recall": 0.8604,
+     "px": 133527
+    },
+    "물·습지": {
+     "iou": 0.6142,
+     "f1": 0.761,
+     "precision": 0.6633,
+     "recall": 0.8925,
+     "px": 62678
+    },
+    "맨땅·눈": {
+     "iou": 0.667,
+     "f1": 0.8002,
+     "precision": 0.7966,
+     "recall": 0.8039,
+     "px": 570205
+    }
+   }
+  },
+  "val": {
+   "oa": 0.8403,
+   "miou": 0.6947,
+   "classes": {
+    "나무": {
+     "iou": 0.3979,
+     "f1": 0.5693,
+     "precision": 0.5884,
+     "recall": 0.5514,
+     "px": 57182
+    },
+    "초지·관목": {
+     "iou": 0.663,
+     "f1": 0.7974,
+     "precision": 0.7871,
+     "recall": 0.808,
+     "px": 625286
+    },
+    "경작지": {
+     "iou": 0.8189,
+     "f1": 0.9005,
+     "precision": 0.9037,
+     "recall": 0.8972,
+     "px": 458140
+    },
+    "시가지": {
+     "iou": 0.6866,
+     "f1": 0.8142,
+     "precision": 0.7892,
+     "recall": 0.8407,
+     "px": 93014
+    },
+    "물·습지": {
+     "iou": 0.8413,
+     "f1": 0.9138,
+     "precision": 0.8968,
+     "recall": 0.9315,
+     "px": 62516
+    },
+    "맨땅·눈": {
+     "iou": 0.7605,
+     "f1": 0.864,
+     "precision": 0.879,
+     "recall": 0.8494,
+     "px": 538870
+    }
+   }
+  },
+  "best_val_f1_target": 0.8762,
+  "chips": {
+   "train": 2464,
+   "val": 448,
+   "test": 784
+  },
+  "class_weight": [
+   1.0,
+   0.603,
+   0.688,
+   1.0,
+   1.0,
+   0.783
+  ]
+ },
+ "log": [
+  {
+   "epoch": 1,
+   "epochs": 40,
+   "loss": 1.1605
+  },
+  {
+   "epoch": 2,
+   "epochs": 40,
+   "loss": 0.8018,
+   "val_f1_target": 0.7869,
+   "val_oa": 0.7832,
+   "val_miou": 0.5751,
+   "best": true
+  },
+  {
+   "epoch": 3,
+   "epochs": 40,
+   "loss": 0.6214
+  },
+  {
+   "epoch": 4,
+   "epochs": 40,
+   "loss": 0.5087,
+   "val_f1_target": 0.8072,
+   "val_oa": 0.7978,
+   "val_miou": 0.6151,
+   "best": true
+  },
+  {
+   "epoch": 5,
+   "epochs": 40,
+   "loss": 0.4515
+  },
+  {
+   "epoch": 6,
+   "epochs": 40,
+   "loss": 0.4053,
+   "val_f1_target": 0.8314,
+   "val_oa": 0.7975,
+   "val_miou": 0.6347,
+   "best": true
+  },
+  {
+   "epoch": 7,
+   "epochs": 40,
+   "loss": 0.3631
+  },
+  {
+   "epoch": 8,
+   "epochs": 40,
+   "loss": 0.3461,
+   "val_f1_target": 0.8296,
+   "val_oa": 0.815,
+   "val_miou": 0.6306
+  },
+  {
+   "epoch": 9,
+   "epochs": 40,
+   "loss": 0.3366
+  },
+  {
+   "epoch": 10,
+   "epochs": 40,
+   "loss": 0.3461,
+   "val_f1_target": 0.8491,
+   "val_oa": 0.8299,
+   "val_miou": 0.6597,
+   "best": true
+  },
+  {
+   "epoch": 11,
+   "epochs": 40,
+   "loss": 0.3034
+  },
+  {
+   "epoch": 12,
+   "epochs": 40,
+   "loss": 0.3026,
+   "val_f1_target": 0.8473,
+   "val_oa": 0.8298,
+   "val_miou": 0.6692
+  },
+  {
+   "epoch": 13,
+   "epochs": 40,
+   "loss": 0.2926
+  },
+  {
+   "epoch": 14,
+   "epochs": 40,
+   "loss": 0.2764,
+   "val_f1_target": 0.855,
+   "val_oa": 0.8153,
+   "val_miou": 0.6491,
+   "best": true
+  },
+  {
+   "epoch": 15,
+   "epochs": 40,
+   "loss": 0.2906
+  },
+  {
+   "epoch": 16,
+   "epochs": 40,
+   "loss": 0.2759,
+   "val_f1_target": 0.8469,
+   "val_oa": 0.8355,
+   "val_miou": 0.6712
+  },
+  {
+   "epoch": 17,
+   "epochs": 40,
+   "loss": 0.2561
+  },
+  {
+   "epoch": 18,
+   "epochs": 40,
+   "loss": 0.2454,
+   "val_f1_target": 0.8574,
+   "val_oa": 0.8192,
+   "val_miou": 0.667,
+   "best": true
+  },
+  {
+   "epoch": 19,
+   "epochs": 40,
+   "loss": 0.2315
+  },
+  {
+   "epoch": 20,
+   "epochs": 40,
+   "loss": 0.2431,
+   "val_f1_target": 0.8596,
+   "val_oa": 0.8237,
+   "val_miou": 0.6462,
+   "best": true
+  },
+  {
+   "epoch": 21,
+   "epochs": 40,
+   "loss": 0.2409
+  },
+  {
+   "epoch": 22,
+   "epochs": 40,
+   "loss": 0.2342,
+   "val_f1_target": 0.8565,
+   "val_oa": 0.817,
+   "val_miou": 0.6612
+  },
+  {
+   "epoch": 23,
+   "epochs": 40,
+   "loss": 0.2245
+  },
+  {
+   "epoch": 24,
+   "epochs": 40,
+   "loss": 0.223,
+   "val_f1_target": 0.8618,
+   "val_oa": 0.8397,
+   "val_miou": 0.6872,
+   "best": true
+  },
+  {
+   "epoch": 25,
+   "epochs": 40,
+   "loss": 0.2146
+  },
+  {
+   "epoch": 26,
+   "epochs": 40,
+   "loss": 0.2143,
+   "val_f1_target": 0.8504,
+   "val_oa": 0.8359,
+   "val_miou": 0.6762
+  },
+  {
+   "epoch": 27,
+   "epochs": 40,
+   "loss": 0.2117
+  },
+  {
+   "epoch": 28,
+   "epochs": 40,
+   "loss": 0.2105,
+   "val_f1_target": 0.8762,
+   "val_oa": 0.8403,
+   "val_miou": 0.6947,
+   "best": true
+  },
+  {
+   "epoch": 29,
+   "epochs": 40,
+   "loss": 0.2045
+  },
+  {
+   "epoch": 30,
+   "epochs": 40,
+   "loss": 0.2016,
+   "val_f1_target": 0.8697,
+   "val_oa": 0.8463,
+   "val_miou": 0.6936
+  },
+  {
+   "epoch": 31,
+   "epochs": 40,
+   "loss": 0.1918
+  },
+  {
+   "epoch": 32,
+   "epochs": 40,
+   "loss": 0.1964,
+   "val_f1_target": 0.8585,
+   "val_oa": 0.8354,
+   "val_miou": 0.6802
+  },
+  {
+   "epoch": 33,
+   "epochs": 40,
+   "loss": 0.1892
+  },
+  {
+   "epoch": 34,
+   "epochs": 40,
+   "loss": 0.1847,
+   "val_f1_target": 0.8756,
+   "val_oa": 0.8378,
+   "val_miou": 0.6913
+  },
+  {
+   "epoch": 35,
+   "epochs": 40,
+   "loss": 0.183
+  },
+  {
+   "epoch": 36,
+   "epochs": 40,
+   "loss": 0.175,
+   "val_f1_target": 0.8746,
+   "val_oa": 0.8445,
+   "val_miou": 0.6966
+  },
+  {
+   "epoch": 37,
+   "epochs": 40,
+   "loss": 0.1799
+  },
+  {
+   "epoch": 38,
+   "epochs": 40,
+   "loss": 0.1794,
+   "val_f1_target": 0.8746,
+   "val_oa": 0.845,
+   "val_miou": 0.6955
+  },
+  {
+   "epoch": 39,
+   "epochs": 40,
+   "loss": 0.1755
+  },
+  {
+   "epoch": 40,
+   "epochs": 40,
+   "loss": 0.1783,
+   "val_f1_target": 0.8722,
+   "val_oa": 0.8414,
+   "val_miou": 0.6931
+  }
+ ],
+ "ms": 254661,
+ "basis": "measured",
+ "country": "kgz",
+ "source": "작은 U-Net · dataset-v2.npz · 시험 묶음(고정 목록) 대 WorldCover 2021"
+}

@@ -1,0 +1,22 @@
+{
+ "학습 6판": {
+  "from": "2026-10-15T17:24:46",
+  "to": "2026-10-15T17:29:01",
+  "samples_s": 254,
+  "gpu0": {
+   "util_mean": 20.2,
+   "util_max": 96.0,
+   "util_30s_max": 28.4,
+   "power_mean_w": 115.0,
+   "power_max_w": 177.69,
+   "power_30s_max_w": 129.8,
+   "s_util_over_70": 59,
+   "s_power_over_140": 43
+  },
+  "gpu1": {
+   "util_mean": 0.4,
+   "power_max_w": 92.63
+  },
+  "both_over_100w_s": 0
+ }
+}
