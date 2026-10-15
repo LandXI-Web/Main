@@ -183,9 +183,12 @@ async def review_by_card() -> dict:
 
 @router.get("/deploys")
 async def list_deploys(request: Request, tenant_id: str | None = None, card_id: str | None = None, stage: str | None = None,
-                       public: int | None = None, include_test: int | None = None):
-    """?with=health → 운영 건강 · ?public=1(또는 게스트) → 실결과 있는 운영·시범 배포본만(요약 필드). 시험 배포본은 기본 제외."""
+                       public: int | None = None, include_test: int | None = None, geom: str | None = None):
+    """?with=health → 운영 건강 · ?public=1(또는 게스트) → 실결과 있는 운영·시범 배포본만(요약 필드). 시험 배포본은 기본 제외.
+    ?geom=bbox → aoi 를 범위 네모(ST_Envelope)로만 — 범위만 쓰는 화면(관리자 · 대시보드 지도 점)용. 경계 도형이 응답의 9할이라
+    (배포본 23개 287KB → 약 25KB) 바깥 주소에서 화면마다 1~2초 걸리던 것을 줄인다(바퀴 14 재검수)."""
     p = principal(request)
+    cols = COLS.replace("ST_AsGeoJSON(aoi, 6)::json AS aoi", "ST_AsGeoJSON(ST_Envelope(aoi), 6)::json AS aoi") if geom == "bbox" else COLS
     want = set((request.query_params.get("with") or "").split(",")) - {""}
     if (public and p.realm != "tenant") or p.guest:      # 기관 계정은 공개 목록(전국 배포본)으로 돌아가지 못한다(원칙 39) — 자기 기관 것만
         async with db(realm="lx") as conn:
@@ -194,7 +197,7 @@ async def list_deploys(request: Request, tenant_id: str | None = None, card_id: 
         return {"items": items, "total": env(len(items), "count", "recorded", "운영·시범 배포본(실결과)"), "public": True, "as_of": now_iso()}
     require(p)
     async with db(p) as conn:
-        rows = await conn.fetch(f"SELECT {COLS} FROM deploys WHERE ($1::text IS NULL OR tenant_id=$1) AND ($2::text IS NULL OR card_id=$2) "
+        rows = await conn.fetch(f"SELECT {cols} FROM deploys WHERE ($1::text IS NULL OR tenant_id=$1) AND ($2::text IS NULL OR card_id=$2) "
                                 "AND ($3::text IS NULL OR stage=$3) AND ($4 OR NOT coalesce(test,false)) ORDER BY year NULLS LAST, id",
                                 tenant_id, card_id, stage, bool(include_test))
         items = [await deploy_dict(conn, r) for r in rows]

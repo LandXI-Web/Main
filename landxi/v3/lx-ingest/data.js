@@ -324,7 +324,7 @@ export async function saveLedgerSchema({ kind, card, columns }) {
    예전의 결합 실행(작업 kind join) · 결합률(결과 1,200건 표본 · 읍면동별)은 뺐다 — 서버 실태조사 표와 숫자가 둘로 갈리던 것(55.2% ↔ 60.8%)도 함께 사라진다. */
 export async function parcelState(region) {
   if (!/^\d{5}$/.test(String(region?.sgg_cd || ''))) return null;
-  try { return await api(`/survey/build/${encodeURIComponent(region.sgg_cd)}`); }
+  try { const r = await api(`/survey/build/${encodeURIComponent(region.sgg_cd)}?soft=1`); return r?.state ? r : null; }   // 없으면 빈 상태(404 콘솔 오류 없이)
   catch (e) { if (e.code !== 'not_found') devlog('parcel state', e.code || e.message); return null; }
 }
 

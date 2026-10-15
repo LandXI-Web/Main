@@ -347,3 +347,21 @@ def test_outside_register_answer_moves_map(glob, monkeypatch):
             assert [a["op"] for a in o.ui_actions] == ["map_region"] and o.ui_actions[0]["name"] == place and not o.envelopes
     o = run(G.global_mismatch({"region": "Yeosu"}, Ctx(KG)))                      # 국내 지명: 움직이지 않음 · 동작 말도 없음
     assert o.ui_actions == [] and "map" not in o.answer
+
+
+# ── 작황 하락 질문 → 화면 큰 숫자(Crop condition drop)와 같은 값(구현 36 재검수 · 숫자 한 출처) ──────────────
+def test_crop_drop_uses_screen_number(glob):
+    q = "How much cropland dropped in Ysyk-Ata this season?"
+    shown = {"district": "Ysyk-Ata", "season": "Autumn 2025", "value": 117.9, "unit": "km2", "as_of": "2026-10-15T10:00:00"}
+    c = Ctx(KG, context={"district": "Ysyk-Ata", "season": "Autumn 2025", "drop": shown})
+    r = G.ROUTE(q, c)
+    assert r["tool"] == "global_summary" and r["args"]["metric"] == "drop"
+    o = run(G.global_summary(r["args"], c))
+    k = o.data["crop_condition_drop"]
+    e = {kk: ee for kk, _, ee in o.envelopes}[k]
+    assert e["value"] == 117.9 and e["unit"] == "km2"
+    assert "ndvi_mean" not in o.data                                   # NDVI 평균으로 답하지 않는다
+    # 화면이 아직 안 잰 계절 · 다른 지역 값은 쓰지 않는다
+    o2 = run(G.global_summary({"region": "Ysyk-Ata", "metric": "drop"}, Ctx(KG, context={"drop": {**shown, "district": "Sokuluk"}})))
+    assert o2.data["crop_condition_drop"].startswith("Not measured")
+    assert G.ROUTE("Show June NDVI for Ysyk-Ata", c)["args"].get("metric") != "drop"

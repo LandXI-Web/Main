@@ -53,7 +53,7 @@ export async function loadInfra() {
 }
 export async function loadOrg() {
   const [t, u, d, c, rm, mods] = await Promise.all([
-    safe('/tenants'), safe('/ops/tenants'), safe('/deploys'), safe('/registry/cards'), safe('/registry/models'),
+    safe('/tenants'), safe('/ops/tenants'), safe('/deploys?geom=bbox'), safe('/registry/cards'), safe('/registry/models'),
     Object.keys(S.mods).length ? null : fetch('/landxi/ops/data/i18n-ko.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]);
   if (t) S.tenants = t.items || []; if (u) S.usage = u.items || []; if (d) S.deploys = d.items || []; if (c) S.cards = c.items || [];
@@ -61,7 +61,7 @@ export async function loadOrg() {
   if (mods?.module) S.mods = mods.module;
   S.at = Date.now();
 }
-export const loadDeploys = async () => { const d = await safe('/deploys'); if (d) S.deploys = d.items || []; };
+export const loadDeploys = async () => { const d = await safe('/deploys?geom=bbox'); if (d) S.deploys = d.items || []; };
 export const loadUsage = async () => { const u = await safe('/ops/tenants'); if (u) S.usage = u.items || []; };
 
 /* ── 이름(사용자 말) ─────────────────── */

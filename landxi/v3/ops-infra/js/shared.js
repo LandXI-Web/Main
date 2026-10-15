@@ -67,7 +67,7 @@ function askDrop(title, name, run, done) {
   go.addEventListener('click', async () => {
     go.disabled = true;
     try { await run(); m.close(true); toast('삭제했습니다'); done(); }
-    catch (e) { go.disabled = false; err.textContent = e?.message || '지우지 못했습니다'; }
+    catch (e) { go.disabled = false; err.textContent = e?.message || '삭제하지 못했습니다'; }
   });
 }
 function visBtn(on, label, onclick) {

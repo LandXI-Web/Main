@@ -33,7 +33,7 @@ POST   /projects/{pid}/notes             {text} 메모 한 줄 · POST /projects
 GET    /projects/{pid}/files/{nid}       올린 파일 내려받기(같은 사람들만)
 POST   /projects/{pid}/review/seen       (쓰지 않음 · 원칙 203) 예전 '결과를 지도에서 봤음' 기록 — 경로 · 기록은 남기고 화면에서 부르지 않는다
 DELETE /projects/{pid}/notes/{nid}       메모 · 파일 지우기(제안 S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 저장 폴더에서 빠지고(저장 공간이 줄어듦)
-                                         내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄
+                                         내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 삭제 / 파일을 삭제' 한 줄
 기록(GET …/log)의 lead_storage · 파일 올리기 답의 lead_storage = 프로젝트장의 저장 용량(할당 · 쓴 비율 · 90% 넘음) — 파일 올리는 자리의 한 줄 · 창(S-19 · 막지 않음)
 
 단계 6(흐름-1 의 LX 직원 부분 · 레일 순서): 데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리.
@@ -1065,8 +1065,8 @@ FILE_TYPES = {"pdf": "application/pdf", "hwp": "application/x-hwp", "hwpx": "app
 LOG_KINDS = ("all", "auto", "memo", "file")
 _AUDIT_WORD = {"project.create": "프로젝트 만듦", "project.edit": "프로젝트 고침", "project.member.add": "구성원 더함", "project.member.remove": "구성원 뺌",
                "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작", "project.review_seen": "결과를 지도에서 봤음",
-               "project.note.remove": "메모를 지움"}
-_REMOVED_WORD = {"memo": "메모를 지움", "file": "파일을 지움"}
+               "project.note.remove": "메모를 삭제"}
+_REMOVED_WORD = {"memo": "메모를 삭제", "file": "파일을 삭제"}
 
 
 async def _logger(conn, p: Principal, pid: str):
@@ -1088,7 +1088,7 @@ def can_remove_note(p: Principal | None, r, by: str | None) -> bool:
 
 async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[dict]:
     """한 프로젝트의 기록 — 자동(감사 기록 · 학습 표본 · 학습 · 결재 · 적용) + 메모 + 파일. 시각 내림차순. 지어낸 줄 0(모두 서버 기록).
-    p(보는 사람)가 있으면 메모 · 파일 줄마다 지울 수 있는지(can_remove) 붙인다. 지운 메모 · 파일은 줄이 빠지고 '○○ · 메모를 지움' 한 줄만 남는다(내용 없음)."""
+    p(보는 사람)가 있으면 메모 · 파일 줄마다 지울 수 있는지(can_remove) 붙인다. 지운 메모 · 파일은 줄이 빠지고 '○○ · 메모를 삭제' 한 줄만 남는다(내용 없음)."""
     pid = r["id"]
     out: list[dict] = []
     add = lambda at, kind, text, who, **kw: out.append({"at": at, "kind": kind, "text": text, "who": who, **kw}) if at else None  # noqa: E731
@@ -1264,13 +1264,13 @@ async def add_file(pid: str, request: Request, file: UploadFile = File(...), tex
 @router.delete("/projects/{pid}/notes/{nid}")
 async def remove_note(pid: str, nid: str, request: Request):
     """메모 · 파일 지우기(S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 프로젝트 저장 폴더에서 빠지고(저장 공간 숫자가 줄어듦 — _PROJECT_BYTES 한 곳),
-    메모 · 파일의 내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄만(감사 기록 project.note.remove)."""
+    메모 · 파일의 내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 삭제 / 파일을 삭제' 한 줄만(감사 기록 project.note.remove)."""
     p = _lx(request)
     async with db(realm="lx") as conn:
         r = await _logger(conn, p, pid)
         n = await conn.fetchrow("SELECT id, kind, by, file_rel, removed_at FROM project_notes WHERE id=$1 AND project_id=$2 FOR UPDATE", nid, pid)
         if not n or n["removed_at"]:
-            raise ApiError("not_found", "이미 지웠거나 없는 메모 · 파일입니다")
+            raise ApiError("not_found", "이미 삭제했거나 없는 메모 · 파일입니다")
         if not can_remove_note(p, r, n["by"]):
             raise ApiError("forbidden", "쓴 사람 · 프로젝트장 · LX 관리자만 지웁니다")
         if n["kind"] == "file" and n["file_rel"]:

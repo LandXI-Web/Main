@@ -783,7 +783,12 @@ async function main() {
   const ckStage = { get map() { return st.map; }, go: (b, o) => (inArea(b) ? st.go(b, o) : null), geo: (...a) => (ckRun.hit ? st.geo(...a) : null) };
   const ck = K.mountCmdk({
     stage: ckStage,
-    context: () => ({ locale: 'en', country: S.country?.name, region: S.district?.name, district: S.district?.name, season: S.season?.key }),
+    // drop = 화면 큰 숫자(Crop condition drop)와 같은 값 — 묻는 답이 이 숫자를 그대로 쓴다(숫자 한 출처)
+    context: () => {
+      const c = S.district && S.season ? CH[S.district.id + '|' + S.season.key] : null;
+      const drop = c?.state === 'ok' && c.env ? { district: S.district.name, season: S.season.key, value: c.env.value, unit: c.env.unit, as_of: c.env.as_of } : undefined;
+      return { locale: 'en', country: S.country?.name, region: S.district?.name, district: S.district?.name, season: S.season?.key, drop };
+    },
     onAction: (a) => { if (inArea(actBox(a))) ckRun.hit = true; },
   });
   SH.mast(h('button.k-mast-b.gl-ask', { type: 'button', onclick: () => ck.open() }, h('span', { text: STR.ask }), h('kbd', { text: T('cmdk.key') })));

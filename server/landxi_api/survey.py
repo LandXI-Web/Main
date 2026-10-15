@@ -691,6 +691,8 @@ async def survey_build_state(sgg_cd: str, request: Request):
     async with db(p) as conn:
         r = await conn.fetchrow(f"SELECT {SGG_COLS}, build_job_id, job_id FROM survey_sgg WHERE sgg_cd = ANY($1::text[])", cs)
     if not r:
+        if request.query_params.get("soft") == "1":       # 화면이 '아직 없음'을 묻는 길 — 없는 것이 정상이라 404(브라우저 콘솔 오류) 대신 빈 상태(바퀴 14 재검수)
+            return {"sgg_cd": sgg_cd, "state": None}
         raise ApiError("not_found", "이 시군구는 아직 실태조사를 만들지 않았습니다", {"sgg_cd": sgg_cd})
     d = _sgg_row(r)
     if not p.is_lx:

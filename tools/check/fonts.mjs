@@ -26,7 +26,7 @@ export const EXCEPT = [
 ];
 
 /* 화면 안에서 — 보이는 글의 글자 크기 · (폭마다) 칸 문제 */
-function measure(except) {
+export function measure(except) {
   const W = innerWidth, H = innerHeight;
   const root = getComputedStyle(document.documentElement);
   const OLD = new Set(['--fs-label', '--fs-sub', '--fs-h4']);

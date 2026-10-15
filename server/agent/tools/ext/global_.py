@@ -44,7 +44,7 @@ SPECS = {
         "description": "해외(글로벌) 결과 요약 — NDVI 월평균 · 계절 평균 · 시가지(건물 면적) 변화. 해외 지역·NDVI·season·crop·sprawl·built area 질문과 "
                        "'Show/Zoom to <district>' 는 이것으로 답한다(지도를 그 지역으로 옮긴다). Overseas results: NDVI, season, built-area change.",
         "properties": {"region": REGION,
-                       "metric": {"type": "string", "enum": ["all", "ndvi", "season", "sprawl"], "description": "보고 싶은 값(기본 all)"},
+                       "metric": {"type": "string", "enum": ["all", "ndvi", "season", "sprawl", "drop"], "description": "보고 싶은 값(기본 all) — drop = 작황 하락 면적(Crop condition drop · 화면 큰 숫자)"},
                        "month": {"type": "string", "description": "달(YYYY-MM 또는 영어 달 이름, 예: June) — NDVI 달"}}},
     "global_parcels": {
         "description": "해외 지역 경작지 중 식생이 낮은 곳(NDVI 기준 미만) 비율·면적 — 'How many fields show low vegetation?' 같은 질문. "
@@ -378,6 +378,9 @@ async def global_summary(args: dict, ctx) -> Out:
         out.answer = outside_text(d, my, ctx)
         return out
     metric = args.get("metric") or "all"
+    if metric == "drop":                # 작황 하락 면적 — 화면 큰 숫자(Crop condition drop)와 같은 값(숫자 한 출처)
+        out.data = drop_data(d, out, ctx)
+        return out
     nd = await ndvi_months(d, ctx.principal)
     months = list(nd)
     data: dict = {"district": d["name"], "country": d["iso"]}
@@ -417,6 +420,26 @@ async def global_summary(args: dict, ctx) -> Out:
             data["built_area"] = "No built-area result covering this district"
     out.data = data
     return out
+
+
+def drop_data(d: dict, out: Out, ctx) -> dict:
+    """작황 하락(Crop condition drop) — 해외 화면이 이 지역 · 이 계절에 잰 값(화면 큰 숫자)을 문맥으로 보낸다.
+    값은 화면이 PC 위성 원값 타일로 잰 것 하나뿐이라 서버가 다시 재지 않고 그 값을 그대로 쓴다. 다른 지역 · 아직 안 잰 계절이면 값 없음."""
+    c = (ctx.context or {}).get("drop") or {}
+    season = (ctx.context or {}).get("season") or c.get("season")
+    data: dict = {"district": d["name"], "country": d["iso"], "season": season}
+    v = c.get("value")
+    ok = (isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 <= v < 1e6
+          and norm(str(c.get("district") or "")) == norm(d["name"]))
+    if ok:
+        src = "Sentinel-2 NDVI · cropland (WorldCover) · this season vs the same season last year"
+        data["crop_condition_drop"] = out.env("drop", f"Crop condition drop · {d['name']} · {c.get('season') or season}",
+                                              env(round(float(v), 1), "km2", "estimate", src, c.get("as_of"),
+                                                  "cropland where season-mean NDVI fell 0.1 or more"))
+        out.whitelist |= {str(c.get("season") or "")[-4:]} - {""}
+    else:
+        data["crop_condition_drop"] = "Not measured yet for this district and season"
+    return data
 
 
 async def global_parcels(args: dict, ctx) -> Out:
@@ -471,6 +494,7 @@ GLOBAL_ASK = re.compile(r"ndvi|vegetation|crop|season|sprawl|built|urban|constru
                         r"식생|작황|계절|시가지|건물 면적|보고서|요약|이동|보여", re.I)
 SPRAWL_ASK = re.compile(r"sprawl|built|urban|construction|building|시가지|건물", re.I)
 SEASON_ASK = re.compile(r"season|crop condition|계절|작황", re.I)
+DROP_ASK = re.compile(r"\bdrop|declin|decreas|\bfell\b|\bfall(en)?\b|\blost\b|\bloss\b|작황\s*하락|하락", re.I)   # 작황 하락 면적(화면 큰 숫자)
 MONTH_RX = re.compile(r"\b(\d{4}-\d{2}|jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep(t|tember)?|oct(ober)?|nov(ember)?|dec(ember)?)\b", re.I)
 
 
@@ -908,6 +932,8 @@ def ROUTE(msg: str, ctx):
         return None
     if SPRAWL_ASK.search(q):
         args["metric"] = "sprawl"
+    elif DROP_ASK.search(q) and not re.search(r"ndvi", q, re.I):
+        args["metric"] = "drop"
     elif m or re.search(r"ndvi", q, re.I):
         args["metric"] = "ndvi"
     elif SEASON_ASK.search(q):

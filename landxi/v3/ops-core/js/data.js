@@ -25,7 +25,7 @@ export async function loadAll(onRest) {
     onRest?.();
   });
   const [d, t, c, ap] = await Promise.all([
-    safe('/deploys'), safe('/tenants'), safe('/registry/cards'),
+    safe('/deploys?geom=bbox'), safe('/tenants'), safe('/registry/cards'),
     s9 ? safe('/approvals?state=pending') : Promise.resolve(null),
   ]);
   if (d) D.deploys = d.items || [];
@@ -42,7 +42,7 @@ export async function loadAll(onRest) {
 /** 레일 '결재' 배지만(다른 LX 관리자 화면) — 결재 표 · 배포 기록만 읽는다(사용량 집계를 부르지 않는다) */
 export async function loadPending() {
   const s9 = await hasS9();
-  const [d, ap] = await Promise.all([safe('/deploys'), s9 ? safe('/approvals?state=pending') : Promise.resolve(null)]);
+  const [d, ap] = await Promise.all([safe('/deploys?geom=bbox'), s9 ? safe('/approvals?state=pending') : Promise.resolve(null)]);
   if (d) D.deploys = d.items || [];
   D.srvApprovals = ap ? (ap.items || []) : null;
   D.mode = ap ? 'server' : 'adapter';
@@ -50,7 +50,7 @@ export async function loadPending() {
   return D;
 }
 export async function loadFast() {
-  const [d, g] = await Promise.all([safe('/deploys'), safe('/ops/gpus')]);
+  const [d, g] = await Promise.all([safe('/deploys?geom=bbox'), safe('/ops/gpus')]);
   if (d) D.deploys = d.items || [];
   if (g) D.gpus = g;
   if (D.mode === 'server') { const ap = await safe('/approvals?state=pending'); if (ap) D.srvApprovals = ap.items || []; }

@@ -1,0 +1,6 @@
+2026-10-15 바퀴 14 재검수 · 서버 시험(이 PC 게이트웨이 :8700)
+agent/tests/test_r3_global.py · test_vlm_global.py — 61 passed (새 test_crop_drop_uses_screen_number 포함)
+tests/test_impl5_account_extras.py · test_scope_rejected.py · test_f3_server.py — 37 passed · 1 failed
+  failed = test_storage_quota_request_approve_reject: 시작 조건이 'test@lx.or.kr 할당 없음'인데 지난 재검수(impl-34 recheck-fix 4a)에서 승인 기록대로 100 GB 로 맞춰 둔 데이터라 처음 줄에서 멈춤(이번 고침과 무관 · 아무것도 바꾸지 않고 끝남)
+  메모 · 파일 삭제 기록 '메모를 삭제' · '파일을 삭제' 시험(test_note_and_file_remove) 통과
+tests/test_impl36_recheck.py(새) — 3 passed: /deploys?geom=bbox 범위 같음 · /survey/build?soft=1 · /public/stats 본문 다시 씀

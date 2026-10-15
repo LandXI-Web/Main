@@ -388,12 +388,35 @@ _PNG: dict[tuple, tuple[float, bytes]] = {}
 
 
 async def _png(p: Principal, card: str, emd: str | None, d: dict | None = None) -> bytes | None:
-    from agent.tools.ext.mapsvc import _map_png
     svc, g, rows, body, sets, codes, only = await _svc(p, card)
     key = (p.tenant_id, card, emd or "", g["edition"], tuple(only or []))
     hit = _PNG.get(key)
     if hit and time.time() - hit[0] < 600:
         return hit[1]
+    if hit and not d:            # 10분 지난 그림 — 화면에는 바로 주고 뒤에서 새로 그린다(보고서 탭 처음 열 때 3~5초 기다리던 것 · 바퀴 14 재검수). 한글 문서(d 있음)는 늘 새로
+        if key not in _PNG_BUSY:
+            _PNG_BUSY.add(key)
+
+            async def _again():
+                try:
+                    await _png_make(p, card, emd, None, key, sets, codes)
+                except Exception:            # 다음 요청이 다시 그린다
+                    pass
+                finally:
+                    _PNG_BUSY.discard(key)
+            t = asyncio.create_task(_again())
+            _PNG_TASKS.add(t)
+            t.add_done_callback(_PNG_TASKS.discard)
+        return hit[1]
+    return await _png_make(p, card, emd, d, key, sets, codes)
+
+
+_PNG_BUSY: set = set()
+_PNG_TASKS: set = set()
+
+
+async def _png_make(p: Principal, card: str, emd: str | None, d: dict | None, key, sets, codes) -> bytes | None:
+    from agent.tools.ext.mapsvc import _map_png
     d = d or await report_data(p, card, emd)
     geo = await _geo(p, sets, codes, emd)
     counts = {e["emd"]: e["n"] for e in d["emd_rows"] if e["emd"] != "읍면동 밖"}

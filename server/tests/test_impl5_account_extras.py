@@ -144,7 +144,7 @@ def test_note_and_file_remove(live, tok, made, other):
         assert httpx.delete(B + f"/projects/{pid}/notes/{memo}", headers=H(other), timeout=30).status_code == 403
         flags = {x["id"]: x["can_remove"] for x in httpx.get(B + f"/projects/{pid}/log", headers=s, timeout=60).json()["items"] if x.get("id")}
         assert flags == {memo: True, fid: True, mine: True}                 # 프로젝트장은 구성원 메모도
-        # 쓴 사람이 메모를 지운다 — 줄이 빠지고 '메모를 지움' 한 줄(내용 없음)
+        # 쓴 사람이 메모를 지운다 — 줄이 빠지고 '메모를 삭제' 한 줄(내용 없음)
         r = httpx.delete(B + f"/projects/{pid}/notes/{memo}", headers=s, timeout=30)
         assert r.status_code == 200 and r.json()["kind"] == "memo"
         assert httpx.delete(B + f"/projects/{pid}/notes/{memo}", headers=s, timeout=30).status_code == 404
@@ -157,7 +157,7 @@ def test_note_and_file_remove(live, tok, made, other):
         assert httpx.get(B + f"/projects/{pid}/files/{fid}", headers=s, timeout=30).status_code == 404
         j = httpx.get(B + f"/projects/{pid}/log", headers=s, timeout=60).json()
         texts = [(x["text"], x["who"]) for x in j["items"][:3]]
-        assert ("파일을 지움", "LX 관리자") in texts and ("메모를 지움", "LX 직원") in texts
+        assert ("파일을 삭제", "LX 관리자") in texts and ("메모를 삭제", "LX 직원") in texts
         assert "pytest 잘못 올린 메모" not in str(j) and "pytest 지울 그림" not in str(j) and "pytest 구성원 메모" not in str(j)
         assert V(j["counts"]["memo"]) == 0 and V(j["counts"]["file"]) == 0
         c = pg()

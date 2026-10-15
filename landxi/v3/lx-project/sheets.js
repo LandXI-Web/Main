@@ -198,7 +198,7 @@ function line(pr, x, onChange) {
   return h('li', { dataset: { kind: x.kind } }, h('span.lxp-lg-w.num', { text: at(x.at) }), what);
 }
 
-/** 지우기 확인 창(S-20) — 지우면 되돌릴 수 없고, 기록에는 '누가 · 메모를 지움' 한 줄만(내용은 남지 않음). 파일은 저장 공간에서 빠진다 */
+/** 지우기 확인 창(S-20) — 지우면 되돌릴 수 없고, 기록에는 '누가 · 메모를 삭제' 한 줄만(내용은 남지 않음). 파일은 저장 공간에서 빠진다 */
 function openRemove(pr, x, onChange) {
   const file = x.kind === 'file';
   const what = file ? (x.file?.name || '파일') : x.text;
@@ -220,7 +220,7 @@ function openRemove(pr, x, onChange) {
       m.close(true);
       toast(file ? '파일을 삭제했습니다' : '메모를 삭제했습니다');
       await onChange?.();
-    } catch (e) { m.close(true); problem('지우지 못했습니다', e.message || '잠시 뒤 다시 해 주세요.'); }
+    } catch (e) { m.close(true); problem('삭제하지 못했습니다', e.message || '잠시 뒤 다시 해 주세요.'); }
   });
   return m;
 }

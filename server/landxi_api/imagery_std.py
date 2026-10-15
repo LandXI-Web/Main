@@ -831,7 +831,7 @@ def run_record(rec_id: str, *, job_id: str | None = None, epsg: int | None = Non
         update(rec_id, state="failed", error=u.line)
         return get(rec_id)
     except QualityFail as q:
-        update(rec_id, state="failed", error="표준본 화질이 확인 기준에 못 미쳐 원본으로 분석합니다(원본은 지우지 않음)", checks=q.checks)
+        update(rec_id, state="failed", error="표준본 화질이 확인 기준에 못 미쳐 원본으로 분석합니다(원본은 삭제하지 않음)", checks=q.checks)
         return get(rec_id)
     except Exception as e:  # noqa: BLE001
         update(rec_id, state="failed", error="표준본을 만들지 못했습니다 — 원본으로 분석합니다", checks={"detail": repr(e)[:600]})
@@ -947,7 +947,7 @@ def view(r: dict | None, lx: bool = True) -> dict | None:
         return None
     st = r["state"]
     word = {"queued": "표준으로 바꿀 차례", "converting": "표준으로 바꾸는 중", "ready": "표준본 확인", "failed": "원본으로 씀",
-            "deferred": "표준 변환 미룸", "removed": "지움"}.get(st, st)
+            "deferred": "표준 변환 미룸", "removed": "삭제"}.get(st, st)
     from .envelope import env
     out = {"state": st, "state_word": word, "rule": r.get("rule"),
            "orig_size": env(r.get("orig_size"), "bytes", "measured", "imagery_std(원본 크기)"),

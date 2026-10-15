@@ -27,7 +27,7 @@ export async function load({ force = false } = {}) {
     settle('feedback30', api('/feedback?since=30d')),
     settle('drafts', api('/deploys?stage=draft')),
     settle('reports', api('/feedback?kind=report')),
-    settle('deploys', api('/deploys')),
+    settle('deploys', api('/deploys?geom=bbox')),
     settle('cards', api('/registry/cards')),
     summary({ force }),   // 대표 수치(결과 확인 대기 · 기관 신고) 한 출처
   ]);

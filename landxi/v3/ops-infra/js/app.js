@@ -85,9 +85,13 @@ function paint(v = cur) {
 }
 addEventListener('hashchange', show);
 
-await Promise.all([loadGpus(), loadInfra(), loadOrg()]);
+// 인프라 자료(작업 목록 500건 · 대기열 · 저장소)는 인프라 탭만 쓴다 — 다른 탭으로 열면 그 탭을 먼저 그리고 뒤에서 받는다
+// (작업 목록은 서버가 만드는 데 0.8초 남짓이라 같이 부르면 다른 요청이 모두 그만큼 밀린다 · 바퀴 14 재검수 · 속도)
+const first = want() === 'infra';
+await Promise.all([loadGpus(), loadOrg(), first ? loadInfra() : null]);
 boot.remove();
 show();
+if (!first) setTimeout(() => loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }), 1500);
 Sh.fresh(new Date());
 if (deepDeploy) V.deploys.open(deepDeploy);
 const deepOrg = qs.get('tenant'); if (deepOrg && cur === 'tenants') V.tenants.open(deepOrg);
@@ -99,7 +103,8 @@ async function tickGpu() {
   if (await loadGpus()) { if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
 }
 setInterval(tickGpu, 2500);
-setInterval(async () => { await loadInfra(); if (cur === 'infra') V.infra.paintRest(); }, 15000);
+setInterval(async () => { if (cur !== 'infra' || document.hidden) return; await loadInfra(); if (cur === 'infra') V.infra.paintRest(); }, 15000);
+addEventListener('hashchange', () => { if (cur === 'infra') loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }); });   // 다른 탭에 있다가 인프라로 오면 새로
 setInterval(async () => { await loadOrg(); if (cur !== 'infra') paint(); }, 30000);
 
 /* 관제 스트림은 서버가 4173 을 허용한 뒤(S-9 = power_budget 이 응답에 있음)에만 연다 — 거절로 콘솔을 더럽히지 않게 */

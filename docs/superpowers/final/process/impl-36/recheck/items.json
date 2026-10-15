@@ -1,0 +1,18 @@
+[
+ {
+  "id": "재검수-바퀴14",
+  "title": "모든 화면 기능 90개를 바깥 주소에서 다시 눌러 보았습니다 — 안 되던 것은 고쳤습니다",
+  "opts": ["확인"],
+  "evidence": ["abroad-chatgeo-drop-1440.jpg", "abroad-landing-1440.jpg", "ximap-filter-1440.jpg", "ximap-edit-deleted-1440.jpg", "ximap-dash-1440.jpg", "dash-heat-1280.jpg", "admin-shared-detail-1440.jpg", "admin-ledger-upload-1440.jpg", "staff-ingest-open-1440.jpg", "staff-mapsvc-download-1440.jpg", "gov-report-1440.jpg", "check.json", "run-recheck-1440.json", "checks/words-check.txt", "checks/numbers-check.txt", "checks/fonts-check.txt"],
+  "where": "app · admin · namwon · kgz-agri.land-xi.dev — LX 직원 · LX 관리자 · 남원 기관 · 해외 기관 로그인 폼(역할마다 한 번) · 메인 — PC 1440",
+  "note": "LX 직원 17 · XI맵 14 · LX 관리자 20 · 남원 기관 14 · 메인 5 · 해외 기관 20 — 모두 됩니다. 고친 것: 해외 XI ChatGEO 가 '작황이 얼마나 떨어졌나'에 NDVI 평균으로 답하던 것 → 화면 큰 숫자와 같은 117.9 km² 로 답합니다. 남은 '지움' 말(프로젝트 기록 · 결과 확인 · 영상 원본 등)은 모두 '삭제'로 맞췄습니다. 융합 대시보드 표 머리가 1280 에서 가운뎃점 · 한 단어로 꺾이던 것을 낱말 사이에서만 꺾이게 했습니다. 대시보드 → 데이터 올리기에서 나던 콘솔 오류를 없앴습니다. 검사기 셋(금칙어 · 같은 숫자 · 글자 크기)이 이제 해외 화면도 보고, 셋 모두 통과입니다. 남은 것: 기관에서 XI맵(서비스로 열기)이 6~8초 · '불러오는 중'이 두 번 뜸(같은 화면을 다른 작업이 고치는 중) · 해외 큰 숫자가 새 브라우저마다 0.1 km² 다를 때가 있음."
+ },
+ {
+  "id": "속도-바퀴14",
+  "title": "느린 화면을 재서 줄였습니다 — 관리자 탭 · 기관 보고서 · 로그인",
+  "opts": ["확인"],
+  "evidence": ["time-table.md", "time-before.json", "time-after.json", "time-after2.json", "time-after3.json"],
+  "where": "바깥 주소 · PC 1440 · 화면마다 처음 · 다시 · 후는 두세 번 잰 가운데 값",
+  "note": "LX 관리자 인프라 · 기관 · 배포 · 공유 데이터 탭 15곳: '불러오는 중'이 2.3~5.7초 → 0~3.1초(네 곳은 0.4초 안이라 안 보임). 다른 탭을 열어도 인프라용 작업 목록 500건을 다 받을 때까지 기다리던 것을 인프라 탭만 기다리게 하고, 배포 목록을 범위만 받게(287KB → 50KB) 했습니다. 기관 보고서 첫 열기 7.5초 → 3.0초(지도 그림을 먼저 주고 뒤에서 새로). 로그인 3.7 → 3.1초(바탕 도형을 매번 다시 만들지 않음). 화면 모양 · 문구는 그대로입니다. 남은 것: 기관 지도(XI맵) 6.6~7.7초 · XI맵 첫 화면 4.7초(전국 집계 1.5MB) · 해외 첫 화면 10초(글로브 → 지역 비행 움직임)."
+ }
+]

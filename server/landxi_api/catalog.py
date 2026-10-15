@@ -927,10 +927,10 @@ async def tenant_shares(tid: str, request: Request):
         if not x or x["state"] != "ready":
             return None
         if x["orig_deleted_at"]:
-            return "원본 지움 · 표준본으로 씀"
+            return "원본 삭제 · 표준본으로 씀"
         if x["orig_delete_on"]:
             return f"원본 지울 날짜 {date_word(x['orig_delete_on'])}"
-        return "원본 보관(지우지 않음)" if not x["orig_owned"] else None
+        return "원본 보관(삭제하지 않음)" if not x["orig_owned"] else None
     wheres = await run_in_threadpool(_where_words, cands)
     items = []
     for r in cands:

@@ -54,6 +54,8 @@ function spark(vals, c = RAMP.teal[4]) {
 function kpi(k, main, c) {
   return `<div class="xd-card xd-kpi${main ? ' is-main' : ''}"><p class="xd-l">${esc(k.label)}</p><p class="xd-v"><b class="num">${nf(k.value, k.d || 0)}</b><small>${esc(k.unit || '')}</small></p>${k.sub ? `<p class="xd-s">${esc(k.sub)}</p>` : ''}${spark(k.spark, c)}</div>`;
 }
+/** 표 머리 줄바꿈(법전 §2-1) — 가운뎃점(·)에서 꺾지 않고 의미 단위(낱말 사이)에서만: '경작·휴경' 한 덩어리 · '(하천 · 계곡)' → '(하천 ·' / '계곡)' */
+const nw = (t) => !String(t).includes('·') ? esc(t) : String(t).split(/(?<=·)\s+/).map((x) => `<span class="nw">${esc(x)}</span>`).join(' ');
 function head(p) { return `<h3>${esc(p.title)}${p.unit ? ` <small>${esc(p.unit)}</small>` : ''}</h3>`; }
 
 function bar(p) {
@@ -89,7 +91,7 @@ function heat(p) {
   const cols = p.cols || [], rows = p.rows || [];
   const cmax = cols.map((_, j) => Math.max(1, ...rows.map((r) => r.vals[j] || 0)));
   const r = RAMP[p.scale?.hue] || RAMP.teal;
-  return `${head(p)}<div class="xd-heat" style="--c:${cols.length}"><span></span>${cols.map((c) => { const m = /^(.+?)(\(.+\))$/.exec(String(c)); return `<span class="ch">${m ? `${esc(m[1])}<small>${esc(m[2])}</small>` : esc(c)}</span>`; }).join('')}
+  return `${head(p)}<div class="xd-heat" style="--c:${cols.length}"><span></span>${cols.map((c) => { const m = /^(.+?)(\(.+\))$/.exec(String(c)); return `<span class="ch">${m ? `${nw(m[1])}<small>${nw(m[2])}</small>` : nw(c)}</span>`; }).join('')}
     ${rows.map((rw) => `<button type="button" class="rh" data-k="${esc(rw.k)}">${esc(rw.label)}</button>${rw.vals.map((v, j) => { const bg = v ? lerpRamp(r, 0.08 + 0.8 * Math.sqrt(v / cmax[j])) : '#F2F4F6'; return `<span class="cell num" style="background:${bg};color:${inkOn(bg)}" ${hoverAttrs(`${rw.label} · ${cols[j]}`, nf(v))}>${v ? nf(v) : ''}</span>`; }).join('')}`).join('')}</div>
     <p class="xd-note">업무마다 많은 칸이 짙습니다</p>`;
 }

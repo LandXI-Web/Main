@@ -1415,7 +1415,7 @@ def _std_line(recs: list[dict]) -> tuple[str | None, str | None]:
     days = sorted(v["orig_delete_on"] for v in recs if v.get("orig_delete_on") and not v.get("orig_deleted_at"))
     gone = any(v.get("orig_deleted_at") for v in recs)
     keep = int(STD.settings()["original"]["keep_days"])
-    when = STD.date_word(days[0]) if days else ("지웠습니다" if gone else (f"표준본 확인 뒤 {keep}일" if ("converting" in st or "queued" in st) else None))
+    when = STD.date_word(days[0]) if days else ("삭제했습니다" if gone else (f"표준본 확인 뒤 {keep}일" if ("converting" in st or "queued" in st) else None))
     return line, when
 
 

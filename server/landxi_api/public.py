@@ -10,12 +10,12 @@ from __future__ import annotations
 import json
 import time
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from shapely.geometry import shape
 
 from . import config
 from .deps import ApiError, db
-from .envelope import env, now_iso
+from .envelope import LXJSON, env, now_iso
 
 router = APIRouter()
 RIVER = config.SERVER_ROOT / "seed" / "public-river-occupy.json"
@@ -60,6 +60,10 @@ async def public_stats(request: Request, set: str = "river-occupy", by: str = "s
     if by not in SETS[set]["by"]:
         raise ApiError("bad_request", "by 는 sigungu", {"allowed": SETS[set]["by"]})
     d = _river()
+    key = ("stats", set, by, bool(geom), _base(request), RIVER.stat().st_mtime)
+    hit = _cache.setdefault("bodies", {}).get(key)
+    if hit is not None:                          # 같은 원본 · 같은 주소면 만든 본문을 그대로(시군구 도형 1.6MB 를 매번 다시 만들던 0.6초 · 로그인 · 메인 화면 · 바퀴 14 재검수)
+        return Response(content=hit, media_type="application/json")
     src = d["source"]
     names = _names()
     items = []
@@ -85,7 +89,12 @@ async def public_stats(request: Request, set: str = "river-occupy", by: str = "s
         out["geojson"] = {"type": "FeatureCollection", "features": [
             {"type": "Feature", "properties": {**gs[cd]["properties"], "value": vals.get(cd)}, "geometry": gs[cd]["geometry"]}
             for cd in gs]}
-    return out
+    body = LXJSON(out).body
+    bodies = _cache["bodies"]
+    if len(bodies) > 16:                         # 주소(바깥 · 이 PC) × 도형 유무 몇 가지뿐 — 넘치면 비운다
+        bodies.clear()
+    bodies[key] = body
+    return Response(content=body, media_type="application/json")
 
 
 def _base(request: Request) -> str:
