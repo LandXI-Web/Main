@@ -37,10 +37,10 @@ export async function mountDeptScope(host) {
   }
   paint();
   const css = document.createElement('style');
-  css.textContent = `.ds{margin-top:24px;padding:20px 24px;background:var(--bg-1);border-radius:16px}.ds-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px;font:700 20px/28px var(--font-display);color:var(--ink)}
-.ds-h small{font:400 13px/18px var(--font-body);color:var(--sub)}.ds-t{width:100%;border-collapse:collapse}.ds-t th{text-align:left;padding:8px;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
-.ds-t td{padding:10px 8px;border-bottom:1px solid var(--rule);font:400 15px/20px var(--font-body);color:var(--ink)}.ds-sel{height:40px;max-width:280px}.ds-w{font-size:13px;color:var(--sub)}
-.ds-n{margin:10px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}`;
+  css.textContent = `.ds{margin-top:24px;padding:20px 24px;background:var(--bg-1);border-radius:16px}.ds-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px;font:700 var(--fs-t2)/28px var(--font-display);color:var(--ink)}
+.ds-h small{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}.ds-t{width:100%;border-collapse:collapse}.ds-t th{text-align:left;padding:8px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
+.ds-t td{padding:10px 8px;border-bottom:1px solid var(--rule);font:400 var(--fs-body)/21px var(--font-body);color:var(--ink)}.ds-sel{height:40px;max-width:280px}.ds-w{font-size:var(--fs-aux);color:var(--sub)}
+.ds-n{margin:10px 0 0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}`;
   document.head.append(css);
   return sec;
 }

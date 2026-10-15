@@ -1,7 +1,7 @@
 /* me.css — 내 정보 창(kit/me.js · 확인 17차 P-5 ⓐ). 가운데 창(modal.css) 안 · 토큰은 shared/tokens-v2.2.css */
 .k-me{display:flex;flex-direction:column;gap:14px}
 .k-me-f{display:flex;flex-direction:column;gap:6px}
-.k-me-l{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.k-me-l{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
 .k-me-l small{margin-left:6px;font-weight:400;color:var(--sub)}
 .k-me .t-input{box-sizing:border-box}
 .k-me-ro{margin:0;display:flex;align-items:center;height:44px;padding:0 14px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-body)/1 var(--font-body);color:var(--sub-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text}
@@ -9,36 +9,36 @@
 .k-me-st .k-me-l{margin:0}
 .k-me-sv{margin:0;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2)}
 .k-me-sv b{font:500 var(--fs-body)/24px var(--font-num);color:var(--ink)}
-.k-me-sub{margin:0;font:400 13px/18px var(--font-body);color:var(--sub);text-wrap:balance}
+.k-me-sub{margin:0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);text-wrap:balance}
 .k-me-bar{height:6px;border-radius:3px;background:var(--rule);overflow:hidden}
 .k-me-bar i{display:block;height:100%;border-radius:3px;background:var(--ink)}
 /* 저장 용량(제안 S-19) — 머리 줄(이름표 · 늘리기 요청) · 쓴 비율 · 90% 넘음 한 줄 · 요청 중 / 지난 요청 */
 .k-me-sth{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.k-me-ask{flex:none;border:0;background:none;padding:2px 0;font:500 var(--fs-label)/20px var(--font-body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.k-me-ask{flex:none;border:0;background:none;padding:2px 0;font:500 var(--fs-aux)/20px var(--font-body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .k-me-ask:hover{color:var(--ink)}
 .k-me-ask:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .k-me-sv span{display:inline-block}
-.k-me-sv small{font:500 13px/24px var(--font-num);color:var(--sub)}
+.k-me-sv small{font:500 var(--fs-aux)/28px var(--font-num);color:var(--sub)}
 .k-me-st.is-warn .k-me-bar i{background:var(--warn)}
-.k-me-warn{margin:0;font:500 13px/19px var(--font-body);color:var(--warn)}
+.k-me-warn{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--warn)}
 .k-me-warn span,.k-me-req span,.k-me-now span{display:inline-block}
-.k-me-req{margin:0;padding-top:8px;border-top:1px solid var(--rule);font:400 13px/19px var(--font-body);color:var(--ink-2)}
+.k-me-req{margin:0;padding-top:8px;border-top:1px solid var(--rule);font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink-2)}
 .k-me-req.is-no{color:var(--sub-2)}
 /* 늘리기 요청 창 */
-.k-me-now{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 var(--fs-label)/21px var(--font-body);color:var(--ink-2)}
+.k-me-now{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 var(--fs-aux)/21px var(--font-body);color:var(--ink-2)}
 .k-me-gb{position:relative;display:block}
 .k-me-gb .t-input{width:100%;padding-right:48px}
-.k-me-gb i{position:absolute;right:14px;top:50%;transform:translateY(-50%);font:500 var(--fs-label)/1 var(--font-num);font-style:normal;color:var(--sub);pointer-events:none}
-.k-me-hint{font:400 13px/18px var(--font-body);color:var(--sub)}
-.k-me-say{margin:0;font:400 13px/19px var(--font-body);color:var(--sub)}
+.k-me-gb i{position:absolute;right:14px;top:50%;transform:translateY(-50%);font:500 var(--fs-aux)/1 var(--font-num);font-style:normal;color:var(--sub);pointer-events:none}
+.k-me-hint{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.k-me-say{margin:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
 .k-me-say span{display:inline-block}   /* 뜻 단위로만 꺾인다(줄바꿈 규칙 9) */
-.k-me-err{margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
+.k-me-err{margin:0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--warn)}
 .k-me-err[hidden]{display:none}
 .k-me-act{display:flex;align-items:center;gap:16px;margin-top:2px}
 .k-me-act .t-btn:not(.t-btn--text){padding:0 28px}
 .k-me-x{color:var(--sub)}
 .k-me-x::after{content:none}
-.k-me-wait{margin:0;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.k-me-wait{margin:0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 /* 머리의 내 이름(셸 역할 칸) — 누르면 내 정보 */
 button.k-role.k-me-b{border:0;cursor:pointer;transition:background var(--d-180) var(--e-ui)}
 button.k-role.k-me-b:hover{background:var(--rule)}
@@ -51,56 +51,56 @@ button.k-role.k-me-b::after{content:"";flex:none;width:6px;height:6px;margin-lef
 .k-me-two > .k-me{min-width:0}
 .k-me-r{display:flex;flex-direction:column;gap:14px;min-width:0}
 .k-me-r .k-me-st{gap:12px}
-.k-me-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-8);background:var(--bg-1);color:var(--sub-2);font:500 12px/22px var(--font-body);white-space:nowrap}
+.k-me-tag{display:inline-flex;align-items:center;height:26px;padding:0 8px;border-radius:var(--r-8);background:var(--bg-1);color:var(--sub-2);font:500 var(--fs-tag)/26px var(--font-body);white-space:nowrap}
 .k-me-st .k-me-bar{background:var(--bg-1)}   /* 회백 칸 안의 막대 길은 흰색(회백 위 회색 길은 거의 안 보인다) */
 /* 큰 숫자(29.8 MB) — 대시보드 큰 숫자와 같은 모양 */
 .k-me-big{margin:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
-.k-me-big b{font:800 32px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
-.k-me-big > span{font:700 18px/1 var(--font-display);color:var(--ink)}
-.k-me-big small{margin-left:4px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.k-me-big b{font:800 var(--fs-num)/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.k-me-big > span{font:700 var(--fs-t2)/1 var(--font-display);color:var(--ink)}
+.k-me-big small{margin-left:4px;font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
 .k-me-big.is-zero b{color:var(--mute)}
 /* 프로젝트별 막대 줄(이름 | 막대 | 크기) — 대시보드 저장 용량 칸과 같은 부품 */
 .k-me-bars{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .k-me-bars li{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) auto;align-items:center;gap:12px}
-.k-me-pn{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.k-me-pv{font:500 var(--fs-label)/20px var(--font-num);color:var(--ink);white-space:nowrap;text-align:right;min-width:5.5em}
-.k-me-bars li.k-me-more{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.k-me-pn{font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k-me-pv{font:500 var(--fs-aux)/20px var(--font-num);color:var(--ink);white-space:nowrap;text-align:right;min-width:5.5em}
+.k-me-bars li.k-me-more{display:block;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 /* 늘리기 요청 이력 줄(날짜 | 할당 → 원하는 값 · 이유 | 상태) */
 .k-me-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.k-me-rows li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.k-me-rows li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-aux)/20px var(--font-body);color:var(--ink-2)}
 .k-me-rows li:first-child{border-top:0;padding-top:0}
-.k-me-rw{font-size:13px;color:var(--sub);white-space:nowrap}
+.k-me-rw{font-size:var(--fs-aux);color:var(--sub);white-space:nowrap}
 .k-me-rt{min-width:0;word-break:keep-all}
 .k-me-rt b{font-weight:500;color:var(--ink)}
 .k-me-rt i{margin-left:6px;font-style:normal;color:var(--sub)}
-.k-me-rt small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
-.k-me-rs{font:500 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.k-me-rt small{display:block;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.k-me-rs{font:500 var(--fs-aux)/23px var(--font-body);color:var(--sub);white-space:nowrap}
 .k-me-rs.is-no{color:var(--warn)}
 @media (max-width:960px){.k-me-two{grid-template-columns:1fr;gap:20px}}
-@media (max-width:640px){.k-me-big b{font-size:26px}.k-me-bars li{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px}.k-me-pv{min-width:0}}
+@media (max-width:640px){.k-me-big b{font-size:var(--fs-num)}.k-me-bars li{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px}.k-me-pv{min-width:0}}
 /* 저장 용량 도넛 · 할당 대비 막대 · 증량 신청 폼(직원-7 · 10-09 · 시안 design-r14/lx-staff-board my) — 대시보드 저장 용량 칸도 같은 부품. 색 0(잉크 농도 4단) */
 .k-me-dnr{display:flex;align-items:center;gap:16px;padding:4px 0}
 .k-me-dn{position:relative;flex:none;width:var(--dn);height:var(--dn)}
 .k-me-dn svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
 .k-me-dn-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.k-me-dn-c b{font:800 26px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
-.k-me-dn-c span{font:700 13px/1.4 var(--font-display);color:var(--ink)}
-.k-me-dn-c small{margin-top:2px;font:500 11px/14px var(--font-body);color:var(--sub);white-space:nowrap}
+.k-me-dn-c b{font:800 var(--fs-num)/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.k-me-dn-c span{font:700 var(--fs-aux)/1.4 var(--font-display);color:var(--ink)}
+.k-me-dn-c small{margin-top:2px;font:500 var(--fs-tag)/18px var(--font-body);color:var(--sub);white-space:nowrap}
 .k-me-lg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
-.k-me-lg li{display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;align-items:center;gap:8px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.k-me-lg li{display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;align-items:center;gap:8px;font:400 var(--fs-aux)/21px var(--font-body);color:var(--ink-2)}
 .k-me-lg li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .k-me-lg i{width:8px;height:8px;border-radius:2px}
-.k-me-lg b{font:500 13px/20px var(--font-num);color:var(--ink);text-align:right;min-width:3em}
-.k-me-lg small{font:400 12px/20px var(--font-num);color:var(--sub);min-width:4.5em;text-align:right}
-.k-me-lg li.k-me-lg-none{display:block;font-size:13px;color:var(--sub)}
+.k-me-lg b{font:500 var(--fs-aux)/23px var(--font-num);color:var(--ink);text-align:right;min-width:3em}
+.k-me-lg small{font:400 var(--fs-tag)/23px var(--font-num);color:var(--sub);min-width:4.5em;text-align:right}
+.k-me-lg li.k-me-lg-none{display:block;font-size:var(--fs-aux);color:var(--sub)}
 .k-me-gauge{display:flex;flex-direction:column;gap:6px}
-.k-me-gk{margin:0;display:flex;justify-content:space-between;gap:12px;font:400 13px/18px var(--font-body);color:var(--sub)}
-.k-me-gk b{font:500 13px/18px var(--font-num);color:var(--ink)}
+.k-me-gk{margin:0;display:flex;justify-content:space-between;gap:12px;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.k-me-gk b{font:500 var(--fs-aux)/21px var(--font-num);color:var(--ink)}
 .k-me-gauge.is-warn .k-me-bar i{background:var(--warn)}
 .k-me-gauge.is-warn .k-me-gk b{color:var(--warn)}
 .k-me-foot{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--rule)}
 .k-me-foot .k-me-ask{align-self:flex-start}
-.k-me-pend{margin:0;font:500 13px/19px var(--font-body);color:var(--ink-2)}
+.k-me-pend{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink-2)}
 .k-me-pend span{display:inline-block}
 .k-me-askf{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:10px;background:var(--bg-1);border:1px solid var(--ink)}
 .k-me-askf > .k-me-l{margin:0}
@@ -108,7 +108,7 @@ button.k-role.k-me-b::after{content:"";flex:none;width:6px;height:6px;margin-lef
 .k-me-askf .t-input{box-sizing:border-box;width:100%}
 .k-me-askf .k-me-act{margin-top:0}
 .k-me-askf .t-btn:not(.t-btn--text){height:40px;padding:0 20px}
-.k-me-none{margin:0;padding:14px;border-radius:var(--r-8);background:var(--bg-1);text-align:center;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.k-me-none{margin:0;padding:14px;border-radius:var(--r-8);background:var(--bg-1);text-align:center;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
 .k-me-rt small.is-no{color:var(--warn)}
 .k-me-rs.is-wait{color:var(--ink)}
 .k-me-r .k-me-st{gap:10px}

@@ -1,0 +1,10 @@
+[
+ {
+  "id": "글자크기-표준",
+  "title": "글자 크기를 일곱 단계로 정리하고, 작은 글자를 없앴습니다 — 대시보드는 한 단계 더 크게",
+  "opts": ["완료", "다시"],
+  "evidence": ["staff-dash-1440-before.jpg", "staff-dash-1440-after.jpg", "staff-dash-2560-before.jpg", "staff-dash-2560-after.jpg", "admin-dash-1440-before.jpg", "admin-dash-1440-after.jpg", "gov-dash-1440-before.jpg", "gov-dash-1440-after.jpg", "staff-infer-1280-before.jpg", "staff-infer-1280-after.jpg", "admin-req-1440-before.jpg", "admin-req-1440-after.jpg", "staff-result-map-1440-before.jpg", "staff-result-map-1440-after.jpg", "gov-report-1280-before.jpg", "gov-report-1280-after.jpg"],
+  "where": "app.land-xi.dev (LX 직원 · LX 관리자 로그인 폼) · namwon.land-xi.dev (남원 기관 관리자 로그인 폼) · 로그인 없이 메인 · 로그인 · 남원 기관 메인 — 화면 53개 · 1280 · 1366 · 1440 · 1920 · 2560",
+  "note": "그전에는 글자 크기가 24가지(11 · 11.5 · 12 · 12.5 · 13 · 13.5 · 14 …)였고 화면 글의 40%(1,673곳)가 14px 보다 작았습니다. 이제 꼬리표 14 · 보조 15 · 본문 16 · 제목 2 20 · 제목 1 28 · 숫자 32 · 큰 숫자 80 단계만 씁니다(소개형 화면 큰 제목 40 · 48 은 따로). 직원 · 관리자 · 기관 대시보드 메인은 한 단계 더 키웠습니다(작은 설명 12 → 15, 본문 13–14 → 16, 카드 제목 → 20, 칸 숫자 24 → 32). 커져서 넘친 칸은 칸 폭 · 줄바꿈으로 맞췄고(지도 서비스 왼쪽 판 · 추론 정확도 칸 · 요청 관리 단추 칸 · 보고서 개요 숫자), 다섯 해상도에서 가로 넘침 · 제목 3줄 · 한 단어 줄 모두 0 입니다. 화면 배치 · 문구는 그대로입니다. XI맵 · 관리자 공유 데이터 · 지도 영상 출처 글은 다른 작업 중이라 손대지 않았고 남은 작은 글 목록을 README 5절에 적었습니다."
+ }
+]

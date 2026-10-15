@@ -11,8 +11,8 @@
 
 /* 목록 — 묶음 탭(밑줄 = 액센트) · 표 */
 .lxp-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--rule)}
-.lxp-tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 14px;border:0;background:none;cursor:pointer;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);box-shadow:inset 0 -2px 0 transparent;transition:color var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
-.lxp-tab b{font:500 13px/1 var(--font-num);color:inherit}
+.lxp-tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 14px;border:0;background:none;cursor:pointer;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);box-shadow:inset 0 -2px 0 transparent;transition:color var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
+.lxp-tab b{font:500 var(--fs-aux)/1 var(--font-num);color:inherit}
 .lxp-tab:hover{color:var(--ink)}
 .lxp-tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 .lxp-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -27,27 +27,27 @@
 .lxp-pg-h > h1{margin:0;grid-column:2}
 .lxp-pg-h > .lxp-pg-s{grid-column:2}
 .lxp-pg-h:not(:has(.lxp-back)){display:flex;flex-direction:column;gap:2px}
-.lxp-back{grid-row:1/3;grid-column:1;align-self:center;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub);text-decoration:none;white-space:nowrap}
+.lxp-back{grid-row:1/3;grid-column:1;align-self:center;font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);text-decoration:none;white-space:nowrap}
 .lxp-back::before{content:"← "}
 .lxp-back:hover{color:var(--ink)}
-.lxp-pg-s{margin:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.lxp-pg-s{margin:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
 .lxp-flow{padding:20px 24px}
 .lxp-flow[hidden]{display:none}
-.lxp-flow .sb-st-row > b{font-size:40px}
+.lxp-flow .sb-st-row > b{font-size:var(--fs-xl)}
 .lxp-flow .sb-st-b{padding:14px 18px}
 .lxp-tb-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.lxp-tb-h h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-.lxp-tb-h .ld-sub{margin-left:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);letter-spacing:0}
+.lxp-tb-h h2{margin:0;font:700 var(--fs-t1)/38px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.lxp-tb-h .ld-sub{margin-left:10px;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub);letter-spacing:0}
 
 /* 한 장 — 왼쪽(지금 할 일 · 단계) · 오른쪽(사람 · 재학습) */
 .lxp-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
 .lxp-col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.lxp-h{margin:0 0 16px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.lxp-h{margin:0 0 16px;font:500 var(--fs-t2)/var(--lh-t2) var(--font-body);color:var(--ink)}
 .lxp-now{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .lxp-now .t-label{margin:0}
 .lxp-acts{display:flex;flex-wrap:wrap;gap:8px}
-.lxp-next{margin:0 0 8px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
-.lxp-why{margin:0 0 4px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
+.lxp-next{margin:0 0 8px;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.lxp-why{margin:0 0 4px;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--warn)}
 .lxp-row{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
 .lxp-row:first-of-type{border-top:0;padding-top:0}
 .lxp-row--top{align-items:start}
@@ -55,9 +55,9 @@
 .lxp-who{font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
 .lxp-mems{display:flex;flex-wrap:wrap;gap:8px}
 .lxp-mem{gap:6px}
-.lxp-x{border:0;background:none;padding:0 2px;cursor:pointer;color:var(--sub);font:500 14px/1 var(--font-body)}
+.lxp-x{border:0;background:none;padding:0 2px;cursor:pointer;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body)}
 .lxp-x:hover{color:var(--ink)}
-.lxp-none{font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.lxp-none{font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 .lxp-add{display:flex;gap:8px;margin-top:12px}
 .lxp-add .t-input{flex:1;min-width:0}
 .lxp-add .t-btn{flex:none;padding:0 14px}
@@ -70,8 +70,8 @@
 /* ── 구현 5차(확인 17차 · 시안 design-r8/project-page) — 배치는 그대로, 칸 안만 ── */
 .lxp-kh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .lxp-kh .lxp-h{margin:0}
-.lxp-ksub{font:500 13px/18px var(--font-body);color:var(--sub);white-space:nowrap}
-.lxp-more,.lxp-link{flex:none;border:0;background:none;padding:0;cursor:pointer;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-ksub{font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-more,.lxp-link{flex:none;border:0;background:none;padding:0;cursor:pointer;font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .lxp-more:focus-visible,.lxp-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .lxp-row--act{grid-template-columns:88px minmax(0,1fr) auto}
 /* 재학습 — 시간 띠 하나(점 = 서버 기록 시각 · 빈 점 = 지금) + 칩 셋 + 회색 한 줄(P-3 ⓐ) */
@@ -81,28 +81,28 @@
 .lxp-pt i{position:relative;z-index:1;box-sizing:border-box;width:16px;height:16px;border-radius:50%;background:var(--ink);border:3px solid var(--bg-1);box-shadow:0 0 0 1.5px var(--ink)}
 .lxp-pt.is-sig i{background:var(--bg-1);border-width:4px;border-color:var(--ink);box-shadow:0 0 0 2px var(--bg-1)}
 .lxp-pt.is-now i{background:var(--bg-1);box-shadow:0 0 0 1.5px var(--mute)}
-.lxp-pt b{font:500 12px/16px var(--font-body);color:var(--ink);white-space:nowrap}
-.lxp-pt span{font:500 11px/14px var(--font-num);color:var(--sub);white-space:nowrap}
+.lxp-pt b{font:500 var(--fs-tag)/19px var(--font-body);color:var(--ink);white-space:nowrap}
+.lxp-pt span{font:500 var(--fs-tag)/18px var(--font-num);color:var(--sub);white-space:nowrap}
 .lxp-pt.is-now b{color:var(--sub)}
 .lxp-sig{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.lxp-sig span{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:400 13px/1 var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-sig span{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/1 var(--font-body);color:var(--sub);white-space:nowrap}
 .lxp-sig b{font-weight:500;color:var(--ink)}
 .lxp-sig .is-warn,.lxp-sig .is-warn b{color:var(--warn)}
 .lxp-rt-f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;border-top:1px solid var(--rule)}
-.lxp-rt-f p{margin:0;min-width:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub);text-wrap:balance}
+.lxp-rt-f p{margin:0;min-width:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub);text-wrap:balance}
 .lxp-rt-f .t-btn{flex:none;height:40px;padding:0 16px}
 /* 기록 · 메모 · 파일 — 최근 3줄 · 서랍(P-4 ⓐ) */
 .lxp-lg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.lxp-lg li{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.lxp-lg li{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-aux)/20px var(--font-body);color:var(--ink-2)}
 .lxp-lg li:first-child{border-top:0;padding-top:0}
-.lxp-lg-w{font:500 13px/20px var(--font-num);color:var(--sub);white-space:nowrap}
+.lxp-lg-w{font:500 var(--fs-aux)/23px var(--font-num);color:var(--sub);white-space:nowrap}
 .lxp-lg-t{min-width:0;overflow-wrap:anywhere;word-break:keep-all}
 .lxp-lg-t b{font-weight:500;color:var(--ink)}
 .lxp-lg-t i{font-style:normal;color:var(--sub);white-space:nowrap}
 .lxp-lg-t i::before{content:" · "}
 .lxp-lg li[data-kind="memo"],.lxp-lg li[data-kind="file"]{background:var(--bg-0);border-radius:var(--r-8);border-top:0;padding:8px 10px;margin:4px -10px 0}
 .lxp-lg li.lxp-lg-none{display:block;color:var(--sub);border:0;padding:0}
-.lxp-file{display:inline-flex;align-items:center;max-width:100%;margin-top:4px;padding:3px 8px;border:0;border-radius:6px;background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);font:500 12px/16px var(--font-body);color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lxp-file{display:inline-flex;align-items:center;max-width:100%;margin-top:4px;padding:3px 8px;border:0;border-radius:6px;background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);font:500 var(--fs-tag)/19px var(--font-body);color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 .lxp-file.is-pk{cursor:default;margin:0}
 .lxp-lg-wr{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
@@ -113,30 +113,30 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 .lxp-lg-in .t-btn{flex:none;height:40px;padding:0 14px}
 .lxp-dr .lxp-lg-dr{display:flex;flex-direction:column;gap:14px}
 .lxp-lg-chips .lxp-chip{gap:4px}
-.lxp-lg-chips .lxp-chip small{font:500 12px/1 var(--font-num);color:inherit;opacity:.75}
+.lxp-lg-chips .lxp-chip small{font:500 var(--fs-tag)/1 var(--font-num);color:inherit;opacity:.75}
 .lxp-lg--all li{padding:10px 0}
 /* 작은 창 몸통(재학습 사유 · 넘기기 · 문제 알림) — 키트 가운데 창 안 */
 .lxp-sh{display:flex;flex-direction:column;gap:16px}
 .lxp-sh .t-input{box-sizing:border-box}
-.lxp-say{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 var(--fs-label)/21px var(--font-body);color:var(--ink-2);text-wrap:pretty}
+.lxp-say{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 var(--fs-aux)/21px var(--font-body);color:var(--ink-2);text-wrap:pretty}
 .lxp-say b{font-weight:500;color:var(--ink)}
-.lxp-sh-n{margin:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.lxp-sh-n{margin:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
 .lxp-own[hidden]{display:none}
 /* 메모 · 파일 지우기(S-20) — 줄 끝 작은 글자 버튼 · 확인 창 */
-.lxp-lg-rm{margin-left:8px;padding:0;border:0;background:none;font:500 12px/20px var(--font-body);color:var(--sub);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-lg-rm{margin-left:8px;padding:0;border:0;background:none;font:500 var(--fs-tag)/23px var(--font-body);color:var(--sub);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .lxp-lg-rm:hover{color:var(--warn)}
 .lxp-lg-rm:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .lxp-rm-what{margin:0;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2);overflow-wrap:anywhere}
 .lxp-rm-what b{font-weight:500;color:var(--ink)}
-.lxp-rm-what small{font:400 13px/24px var(--font-num);color:var(--sub)}
+.lxp-rm-what small{font:400 var(--fs-aux)/28px var(--font-num);color:var(--sub)}
 /* 저장 용량 90% 넘음 한 줄(S-19 · 막지 않음) — 파일 올리는 자리 위 */
 .lxp-quota-slot:empty{display:none}
-.lxp-quota{margin:0 0 10px;font:500 13px/19px var(--font-body);color:var(--warn)}
+.lxp-quota{margin:0 0 10px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--warn)}
 .lxp-quota span{display:inline-block}
-.lxp-quota-ask{padding:0;border:0;background:none;font:500 13px/19px var(--font-body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-quota-ask{padding:0;border:0;background:none;font:500 var(--fs-aux)/22px var(--font-body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 @media (max-width:640px){
   .lxp-band{margin:2px -8px 14px}
-  .lxp-pt b{font-size:11px}
+  .lxp-pt b{font-size:var(--fs-tag)}
   .lxp-lg li{grid-template-columns:76px minmax(0,1fr)}
   .lxp-rt-f{flex-wrap:wrap}
 }
@@ -148,7 +148,7 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
   .lxp-tabs{overflow-x:auto}
   .lxp-tab{padding:0 10px;flex:none}
   .lxp-list{padding:4px 4px 12px}
-  .lxp-next{font-size:20px;line-height:28px}
+  .lxp-next{font-size:var(--fs-t2);line-height:28px}
 }
 
 /* 프로젝트 진행 현황 = 분석 서비스 카드와 같은 틀(원칙 219 · 10-12) — 카드 · 칩 · 보기 개수 · 페이지는 분석하기 CSS(.k-sc · .la-ac · .la-chips · .la-view · .la-pager) 그대로.
@@ -162,13 +162,13 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 .lxp-pc .k-sc-flag{max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
 .lxp-pc-st{display:flex;flex-direction:column;gap:6px;margin-top:2px}
 .lxp-pc-st .lxp-seg{max-width:220px}
-.lxp-pc-w{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pc-w{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);text-wrap:pretty}
 .lxp-pc-w b{font-weight:500;color:var(--ink)}
 .lxp-pc-w .num{font-family:var(--font-num)}
-.lxp-pc-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font:400 13px/18px var(--font-body)}
+.lxp-pc-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font:400 var(--fs-aux)/21px var(--font-body)}
 .lxp-pc-meta > span{display:flex;flex-direction:column;gap:2px;min-width:0}
-.lxp-pc-meta .k{font-size:12px;color:var(--sub)}
-.lxp-pc-meta .v{font-weight:500;font-size:14px;line-height:20px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pc-meta .k{font-size:var(--fs-tag);color:var(--sub)}
+.lxp-pc-meta .v{font-weight:500;font-size:var(--fs-aux);line-height:21px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lxp-pc-meta > span:last-child{text-align:right}
 @media (max-width:960px){.lxp-page.lxp-page--pg{padding:20px 20px 40px}.lxp-tools .la-search{width:100%}}
 @media (max-width:640px){.lxp-grid-c,.lxp-grid-c[data-n]{grid-template-columns:minmax(0,1fr)}}

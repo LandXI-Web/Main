@@ -9,18 +9,18 @@
 .lc-form{display:flex;flex-direction:column;gap:16px;min-width:0}
 .lc-sec{display:flex;flex-direction:column;gap:14px}
 .lc-f{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 12px;align-items:center}
-.lc-l{font:500 14px/20px var(--font-body);color:var(--ink-2)}
-.lc-h{grid-column:2;margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lc-l{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink-2)}
+.lc-h{grid-column:2;margin:0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .lc-h[data-lv="warn"]{color:var(--warn)}
 .lc-f .t-input:disabled{background:var(--bg-0);color:var(--ink-2)}
 .lc-scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .lc-sc{position:relative;display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:none;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .lc-sc img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:10px;display:block;background:var(--rule)}
-.lc-sc span{font:400 12px/16px var(--font-body);color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lc-sc span{font:400 var(--fs-tag)/19px var(--font-body);color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .lc-sc[aria-checked="true"] img{outline:3px solid var(--ink);outline-offset:-3px}
-.lc-sc[aria-checked="true"]::after{content:"✓";position:absolute;right:8px;top:8px;width:24px;height:24px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:700 13px/24px var(--font-num);text-align:center}
+.lc-sc[aria-checked="true"]::after{content:"✓";position:absolute;right:8px;top:8px;width:28px;height:28px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:700 var(--fs-aux)/28px var(--font-num);text-align:center}
 .lc-sc--none{aspect-ratio:3/2;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-0)}
-.lc-sc--none span{font-size:14px;color:var(--sub)}
+.lc-sc--none span{font-size:var(--fs-aux);color:var(--sub)}
 .lc-sc--none[aria-checked="true"]{outline:3px solid var(--ink);outline-offset:-3px}
 .lc-sc:disabled{cursor:default}
 .lc-up{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--rule)}
@@ -29,7 +29,7 @@
 .lc-act{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}
 .lc-act .lc-h{grid-column:auto;margin-right:auto}
 .lc-save{min-width:140px}
-.lc-msg{margin:0;font:500 14px/20px var(--font-body);color:var(--sub)}
+.lc-msg{margin:0;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .lc-msg[data-lv="warn"]{color:var(--warn)}
 @media (max-width:1099px){.lc-grid{grid-template-columns:minmax(0,1fr)}.lc-left{position:static}.lc-prev{max-width:420px}}
 @media (max-width:640px){
@@ -40,6 +40,6 @@
 }
 /* 분야 여러 개(질문 5 · 원칙 165) */
 .lc-grps{display:flex;flex-wrap:wrap;gap:8px}
-.lc-grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 14px/20px var(--font-body);color:var(--ink);cursor:pointer}
+.lc-grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);cursor:pointer}
 .lc-grp:has(input:checked){border-color:var(--ink);background:var(--bg-0)}
 .k-sc-spec dd{text-wrap:balance}   /* 카드 칸 값이 두 줄이면 고르게 — 괄호 한 덩어리만 남는 줄 0(원칙 248 · 법전 §2-1)*/

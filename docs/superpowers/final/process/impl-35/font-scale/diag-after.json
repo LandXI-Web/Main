@@ -1,0 +1,1067 @@
+{
+ "sizes": {
+  "12": {
+   "n": 4,
+   "screens": 4,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "p.k-credit": "NASA Blue Marble",
+    "button.maplibregl-popup-close-button": "×"
+   }
+  },
+  "13": {
+   "n": 45,
+   "screens": 3,
+   "groups": [
+    "LX 관리자"
+   ],
+   "ex": {}
+  },
+  "14": {
+   "n": 1060,
+   "screens": 50,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "LX 직원"
+   ],
+   "ex": {
+    "button.k-sess": "자동 로그아웃 내일 09:13 ·",
+    "b.k-bell-n": "1",
+    "span": "현황",
+    "div.maplibregl-ctrl.maplibregl-ctrl-scale": "50 km",
+    "small.rq-sub": "전력 규칙 — 한 번에 한 건",
+    "button.rq-mv": "▲"
+   }
+  },
+  "15": {
+   "n": 2139,
+   "screens": 53,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "span.home": "LX 관리자 대시보드",
+    "span.num": "09:14",
+    "button.t-role.k-role": "LX 관리자",
+    "a.k-mast-b.k-xi": "XI맵",
+    "button.k-mast-b.k-help": "?",
+    "button.k-mast-b.k-exit": "나가기"
+   }
+  },
+  "16": {
+   "n": 645,
+   "screens": 51,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "span.word": "LAND-XI",
+    "span.oc-pt-n": "남원시",
+    "span": "운영",
+    "a.t-btn.oc-open": "승인 요청함 열기",
+    "span.oc-use-n": "·",
+    "small": "아직 기관 사용 기록이 없습니다"
+   }
+  },
+  "18": {
+   "n": 3,
+   "screens": 3,
+   "groups": [
+    "LX 관리자"
+   ],
+   "ex": {}
+  },
+  "20": {
+   "n": 195,
+   "screens": 37,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "span.k-big-u": "건",
+    "h6": "기다리는 API 키 신청이 없습니",
+    "p.hero-tail": "09:15:00 기준 · 전력 예",
+    "b": "0",
+    "b.num": "13.4",
+    "span": "남원"
+   }
+  },
+  "22": {
+   "n": 3,
+   "screens": 3,
+   "groups": [
+    "LX 관리자"
+   ],
+   "ex": {}
+  },
+  "26": {
+   "n": 1,
+   "screens": 1,
+   "groups": [
+    "LX 직원"
+   ],
+   "ex": {}
+  },
+  "28": {
+   "n": 60,
+   "screens": 23,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "span.n": "0",
+    "a.org-link": "광주전남특별시",
+    "h2": "서비스",
+    "h3": "개요",
+    "h4.bf-pv-h": "드론·항공 영상을 AI로 분석해 ",
+    "b": "남원시"
+   }
+  },
+  "32": {
+   "n": 101,
+   "screens": 24,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인",
+    "LX 직원"
+   ],
+   "ex": {
+    "b.num": "3",
+    "b.rq-n.num": "1",
+    "span.k-big-u": "/ 1",
+    "b.stat-n.num": "6.9",
+    "h1.acc-h": "계정",
+    "h1.ib-t": "기관에서 온 요청"
+   }
+  },
+  "40": {
+   "n": 10,
+   "screens": 10,
+   "groups": [
+    "기관(남원)"
+   ],
+   "ex": {
+    "h1": "기관 정보",
+    "b": "6"
+   }
+  },
+  "48": {
+   "n": 8,
+   "screens": 7,
+   "groups": [
+    "LX 관리자",
+    "메인 · 로그인"
+   ],
+   "ex": {
+    "h1": "남원시",
+    "b.num": "20",
+    "span": "행정 업무에 맞춘",
+    "h1.door__h.e": "AI 기반 국토정보통합조사"
+   }
+  },
+  "56": {
+   "n": 2,
+   "screens": 1,
+   "groups": [
+    "메인 · 로그인"
+   ],
+   "ex": {
+    "h1.gh-h1": "드론·항공 영상을 AI로 분석해 ",
+    "b": "남원시"
+   }
+  },
+  "64": {
+   "n": 2,
+   "screens": 2,
+   "groups": [
+    "기관(남원)",
+    "LX 직원"
+   ],
+   "ex": {
+    "span.k-num": "2,098"
+   }
+  },
+  "80": {
+   "n": 7,
+   "screens": 6,
+   "groups": [
+    "LX 관리자",
+    "기관(남원)",
+    "메인 · 로그인"
+   ],
+   "ex": {
+    "span.t-big": "2,098",
+    "b": "6",
+    "span": "AI 기반"
+   }
+  },
+  "124": {
+   "n": 1,
+   "screens": 1,
+   "groups": [
+    "기관(남원)"
+   ],
+   "ex": {}
+  }
+ },
+ "per": {
+  "a-dash": {
+   "group": "admin",
+   "sizes": [
+    12,
+    14,
+    15,
+    16,
+    20,
+    80
+   ],
+   "n": 43,
+   "small": 1,
+   "le12": 1,
+   "n13": 0
+  },
+  "a-req": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    32,
+    48
+   ],
+   "n": 60,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-req-approve": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    48
+   ],
+   "n": 39,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-req-api": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    48
+   ],
+   "n": 29,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-infra": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32,
+    80
+   ],
+   "n": 106,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-tenants": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 87,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-tenant1": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32,
+    48
+   ],
+   "n": 70,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-req": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 75,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-share": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 90,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-usage": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 118,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-cat": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 85,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-api": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 37,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-rt": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 90,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-tpl": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 49,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-dep-imp": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    48
+   ],
+   "n": 239,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-shared-img": {
+   "group": "admin",
+   "sizes": [
+    13,
+    14,
+    15,
+    16,
+    18,
+    22
+   ],
+   "n": 115,
+   "small": 21,
+   "le12": 0,
+   "n13": 21
+  },
+  "a-shared-train": {
+   "group": "admin",
+   "sizes": [
+    13,
+    14,
+    15,
+    16,
+    18,
+    22
+   ],
+   "n": 86,
+   "small": 13,
+   "le12": 0,
+   "n13": 13
+  },
+  "a-shared-admin": {
+   "group": "admin",
+   "sizes": [
+    13,
+    14,
+    15,
+    16,
+    18,
+    22
+   ],
+   "n": 120,
+   "small": 11,
+   "le12": 0,
+   "n13": 11
+  },
+  "a-accounts": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 31,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "a-reviews": {
+   "group": "admin",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 26,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-list": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32,
+    40
+   ],
+   "n": 80,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-dash": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    40,
+    64
+   ],
+   "n": 63,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-hist": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    40
+   ],
+   "n": 134,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-stats": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32,
+    40
+   ],
+   "n": 80,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-req": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    40
+   ],
+   "n": 62,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-shoot": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    40
+   ],
+   "n": 55,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-sent": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    40
+   ],
+   "n": 25,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-report": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 119,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-parcels": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    80
+   ],
+   "n": 147,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-fusion": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    20,
+    40,
+    80
+   ],
+   "n": 77,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-parcel": {
+   "group": "gov",
+   "sizes": [
+    12,
+    14,
+    15,
+    20,
+    40,
+    80
+   ],
+   "n": 82,
+   "small": 1,
+   "le12": 1,
+   "n13": 0
+  },
+  "g-map": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    124
+   ],
+   "n": 34,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-org": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    40
+   ],
+   "n": 74,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "g-accounts": {
+   "group": "gov",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 23,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "m-main": {
+   "group": "main",
+   "sizes": [
+    12,
+    15,
+    16,
+    20,
+    28,
+    32,
+    48,
+    80
+   ],
+   "n": 54,
+   "small": 1,
+   "le12": 1,
+   "n13": 0
+  },
+  "m-login": {
+   "group": "main",
+   "sizes": [
+    15,
+    16,
+    20,
+    32,
+    48
+   ],
+   "n": 16,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "m-govhome": {
+   "group": "main",
+   "sizes": [
+    15,
+    16,
+    20,
+    28,
+    32,
+    56
+   ],
+   "n": 74,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-dash": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 128,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-projects": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 133,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-newproj": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 149,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-project": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 74,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-ingest": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 47,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-label": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    28,
+    32
+   ],
+   "n": 72,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-train": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 105,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-infer": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 166,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-review": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20
+   ],
+   "n": 59,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-publish": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    28,
+    32
+   ],
+   "n": 115,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-analyze": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 99,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-cards": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 197,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-mapsvc": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20
+   ],
+   "n": 54,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-ximap": {
+   "group": "staff",
+   "sizes": [
+    12,
+    14,
+    15,
+    16,
+    26,
+    64
+   ],
+   "n": 37,
+   "small": 1,
+   "le12": 1,
+   "n13": 0
+  },
+  "s-inbox": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    20,
+    32
+   ],
+   "n": 30,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  },
+  "s-help": {
+   "group": "staff",
+   "sizes": [
+    14,
+    15,
+    16,
+    28
+   ],
+   "n": 27,
+   "small": 0,
+   "le12": 0,
+   "n13": 0
+  }
+ },
+ "res": {
+  "1280": {
+   "screens": 53,
+   "over": 0,
+   "off": 0,
+   "heads": 0,
+   "orph": 2,
+   "err": 0
+  },
+  "1366": {
+   "screens": 53,
+   "over": 0,
+   "off": 0,
+   "heads": 0,
+   "orph": 0,
+   "err": 0
+  },
+  "1440": {
+   "screens": 53,
+   "over": 0,
+   "off": 0,
+   "heads": 0,
+   "orph": 0,
+   "err": 0
+  },
+  "1920": {
+   "screens": 53,
+   "over": 0,
+   "off": 0,
+   "heads": 0,
+   "orph": 0,
+   "err": 0
+  },
+  "2560": {
+   "screens": 53,
+   "over": 0,
+   "off": 0,
+   "heads": 0,
+   "orph": 0,
+   "err": 0
+  }
+ },
+ "otherSmall": {
+  "a-shared-img": {
+   "13": {
+    "n": 21,
+    "ex": [
+     "th",
+     "button.sd-vis",
+     "button",
+     "span.num"
+    ]
+   }
+  },
+  "a-shared-train": {
+   "13": {
+    "n": 13,
+    "ex": [
+     "th",
+     "button.sd-vis"
+    ]
+   }
+  },
+  "a-shared-admin": {
+   "13": {
+    "n": 11,
+    "ex": [
+     "th",
+     "button",
+     "span.num"
+    ]
+   }
+  },
+  "s-ximap": {
+   "12": {
+    "n": 1,
+    "ex": [
+     "p.k-credit"
+    ]
+   }
+  }
+ },
+ "errors": []
+}

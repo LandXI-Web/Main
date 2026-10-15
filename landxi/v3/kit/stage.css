@@ -4,6 +4,6 @@
 .k-stage.is-ready .k-stage-map{opacity:1}
 .k-stage .maplibregl-ctrl-attrib,.k-stage .maplibregl-ctrl-logo,.k-stage .maplibregl-ctrl-group{display:none!important}
 .k-stage .maplibregl-ctrl-bottom-left{left:16px;bottom:16px}
-.k-stage .maplibregl-ctrl-scale{margin:0;padding:2px 6px 0;border:1.5px solid #fff;border-top:0;background:transparent;color:#fff;font:500 12px/1.4 var(--font-num);text-shadow:var(--hud-shadow);box-shadow:none}
+.k-stage .maplibregl-ctrl-scale{margin:0;white-space:nowrap;padding:2px 6px 0;border:1.5px solid #fff;border-top:0;background:transparent;color:#fff;font:500 var(--fs-tag)/1.4 var(--font-num);text-shadow:var(--hud-shadow);box-shadow:none}
 .k-stage[data-mode="ops"] .maplibregl-ctrl-scale{border-color:var(--ink);color:var(--ink);text-shadow:none}
 .k-stage .maplibregl-canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}

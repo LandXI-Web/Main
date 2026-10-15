@@ -8,12 +8,12 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 /* 단독 쪽 — 셸 판 가운데 흰 카드 한 장(PC 는 720 — 서랍 폭 392 는 넓은 화면에서 제목이 두 줄로 꺾여 원칙 248 로 넓힘) */
 .hm-stage{height:100%;overflow:auto;display:flex;justify-content:center;padding:40px 16px}
 .hm-card{width:min(720px,100%);max-width:100%;align-self:flex-start;padding:24px 24px 28px;border-radius:var(--r-16);box-shadow:var(--elev-map)}
-.hm-h{margin:0 0 12px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.hm-h{margin:0 0 12px;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
 
 /* 탭 */
 .hm-tabs{position:relative;display:flex;gap:20px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
 .hm-tabs::-webkit-scrollbar{display:none}
-.hm-tab{flex:none;height:44px;padding:0;border:0;background:none;color:var(--sub);font:500 15px/1 var(--font-body);cursor:pointer;white-space:nowrap;transition:color var(--d-180) var(--e-ui)}
+.hm-tab{flex:none;height:44px;padding:0;border:0;background:none;color:var(--sub);font:500 var(--fs-body)/1 var(--font-body);cursor:pointer;white-space:nowrap;transition:color var(--d-180) var(--e-ui)}
 .hm-tab:hover{color:var(--ink)}
 .hm-tab[aria-selected="true"]{color:var(--ink);font-weight:700}
 .hm-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
@@ -28,21 +28,21 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-tbl .k-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .hm-tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .hm-tbl tbody tr{cursor:pointer}
-.hm-tbl tbody td{padding:14px 0;border-bottom:1px solid var(--rule);vertical-align:top;font:500 15px/22px var(--font-body);color:var(--ink)}
+.hm-tbl tbody td{padding:14px 0;border-bottom:1px solid var(--rule);vertical-align:top;font:500 var(--fs-body)/23px var(--font-body);color:var(--ink)}
 .hm-tbl tbody td.num{text-align:right;padding-left:12px}
 .hm-tbl tbody tr:not(.hm-open):hover .hm-tt{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
 .hm-tbl tbody tr[aria-expanded] td{border-bottom-color:transparent}
 .hm-tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
 .hm-pin{float:left;width:6px;height:6px;margin:8px 8px 0 0;border-radius:50%;background:var(--ink)}
-.hm-d{font:400 13px/22px var(--font-num);color:var(--sub);font-variant-numeric:tabular-nums}
+.hm-d{font:400 var(--fs-aux)/25px var(--font-num);color:var(--sub);font-variant-numeric:tabular-nums}
 .hm-open td{padding:0 0 14px !important;cursor:default}
-.hm-open p{margin:0;color:var(--sub-2);font:400 14px/21px var(--font-body);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;animation:hm-in var(--d-380) var(--e-ui)}
+.hm-open p{margin:0;color:var(--sub-2);font:400 var(--fs-aux)/23px var(--font-body);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;animation:hm-in var(--d-380) var(--e-ui)}
 .hm-tbl .k-more{margin-top:12px}
 @keyframes hm-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 
 /* 자주 묻는 질문 — 한 줄 질문 · 펼치면 답 ≤ 2줄 */
 .hm-q{border-bottom:1px solid var(--rule)}
-.hm-q summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 0;cursor:pointer;font:500 15px/22px var(--font-body);color:var(--ink);word-break:keep-all}
+.hm-q summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 0;cursor:pointer;font:500 var(--fs-body)/23px var(--font-body);color:var(--ink);word-break:keep-all}
 .hm-q summary::-webkit-details-marker{display:none}
 .hm-q summary span{flex:1}
 .hm-q summary:hover span{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
@@ -50,7 +50,7 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-q summary i{flex:none;display:flex;color:var(--mute);transition:transform var(--d-380) var(--e-ui)}
 .hm-q summary i svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .hm-q[open] summary i{transform:rotate(90deg);color:var(--ink)}
-.hm-q p{margin:0 0 14px;color:var(--sub-2);font:400 14px/21px var(--font-body);word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;animation:hm-in var(--d-380) var(--e-ui)}
+.hm-q p{margin:0 0 14px;color:var(--sub-2);font:400 var(--fs-aux)/23px var(--font-body);word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;animation:hm-in var(--d-380) var(--e-ui)}
 
 /* 문의 — 두 줄 · 누르면 전화/메일 */
 .hm-contact{display:flex;flex-direction:column;gap:12px;padding-top:16px}
@@ -59,13 +59,13 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-ask{align-self:flex-start;margin-top:4px}
 .hm-ct:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hm-ct svg{flex:none;width:24px;height:24px;stroke:var(--ink);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.hm-v{font:700 var(--fs-sub)/var(--lh-sub) var(--font-num);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;word-break:break-all}
+.hm-v{font:700 var(--fs-t2)/var(--lh-t2) var(--font-num);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;word-break:break-all}
 
 /* 내 계정 — 라벨 4줄 + 로그아웃 */
 .hm-me{margin:8px 0 24px}
 .hm-me div{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--rule)}
-.hm-me dt{flex:none;width:72px;color:var(--sub);font:400 var(--fs-label)/var(--lh-label) var(--font-body)}
-.hm-me dd{margin:0;flex:1;min-width:0;color:var(--ink);font:500 15px/22px var(--font-body);word-break:keep-all}
+.hm-me dt{flex:none;width:72px;color:var(--sub);font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
+.hm-me dd{margin:0;flex:1;min-width:0;color:var(--ink);font:500 var(--fs-body)/23px var(--font-body);word-break:keep-all}
 .hm-out{width:100%}
 .hm-me-acts{display:flex;gap:8px}
 .hm-me-acts .t-btn{flex:1}   /* 내 정보 고치기 · 로그아웃(LX 계정 — 확인 17차 P-5 ⓐ) */
@@ -78,14 +78,14 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 @media (prefers-reduced-motion:reduce){.hm-pane,.hm-ink,.hm-open p,.hm-q p,.hm-ct{transition:none;animation:none}}
 
 /* 세 화면(LX 계정 · 바퀴 4) — 그림 한 장 + 이름 + 한 줄 + 찍은 때 */
-.hm-sc-h{margin:16px 0 4px;font:700 17px/24px var(--font-display);color:var(--ink)}
+.hm-sc-h{margin:16px 0 4px;font:700 var(--fs-t2)/28px var(--font-display);color:var(--ink)}
 .hm-sc{margin:16px 0 0;padding:0 0 16px;border-bottom:1px solid var(--rule)}
 .hm-sc-img{display:block;border-radius:var(--r-8);overflow:hidden;border:1px solid var(--rule)}
 .hm-sc-img img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:left top}
-.hm-sc h3{margin:12px 0 2px;font:700 16px/24px var(--font-display);color:var(--ink)}
-.hm-sc p{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2);word-break:keep-all}
-.hm-sc small{display:block;margin-top:6px;font:500 12px/16px var(--font-num);color:var(--sub)}
-.hm-sc-flow{margin:16px 0 0;font:500 14px/22px var(--font-body);color:var(--sub);word-break:keep-all}
+.hm-sc h3{margin:12px 0 2px;font:700 var(--fs-t2)/30px var(--font-display);color:var(--ink)}
+.hm-sc p{margin:0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub-2);word-break:keep-all}
+.hm-sc small{display:block;margin-top:6px;font:500 var(--fs-tag)/19px var(--font-num);color:var(--sub)}
+.hm-sc-flow{margin:16px 0 0;font:500 var(--fs-aux)/24px var(--font-body);color:var(--sub);word-break:keep-all}
 .hm-sc-flow b{color:var(--ink)}
 /* 단독 쪽에서 '세 화면'은 넓게 — 세 그림을 나란히(서랍 안은 위아래) */
 .hm-card[data-tab="screens"]{width:min(1240px,100%)}

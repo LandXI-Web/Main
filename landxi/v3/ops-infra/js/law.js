@@ -13,12 +13,12 @@ const when = (iso) => {
 };
 const CSS = `
 .law-c{display:flex;flex-direction:column;gap:12px}
-.law-c .row b small{font:400 12px/1 var(--font-body);color:var(--sub);margin-left:2px}
+.law-c .row b small{font:400 var(--fs-tag)/1 var(--font-body);color:var(--sub);margin-left:2px}
 .law-c{gap:10px}
-.law-d summary{cursor:pointer;font:500 13px/1.4 var(--font-body);color:var(--sub)}
+.law-d summary{cursor:pointer;font:500 var(--fs-aux)/1.4 var(--font-body);color:var(--sub)}
 .law-l{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow:auto}
-.law-l li{display:flex;justify-content:space-between;gap:8px;font:400 13px/1.35 var(--font-body);color:var(--ink)}
-.law-l li small{flex:none;font:400 12px/1.35 var(--font-num);color:var(--sub)}
+.law-l li{display:flex;justify-content:space-between;gap:8px;font:400 var(--fs-aux)/1.35 var(--font-body);color:var(--ink)}
+.law-l li small{flex:none;font:400 var(--fs-tag)/1.35 var(--font-num);color:var(--sub)}
 .law-b{display:flex;gap:8px;flex-wrap:wrap}
 .law-b input{display:none}
 `;

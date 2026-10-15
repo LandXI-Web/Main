@@ -9,7 +9,7 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
 .k-word{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
 .k-mast-slot{display:inline-flex;align-items:center;gap:12px;min-width:0}
 .k-mast-slot:empty{display:none}
-.k-mast-b{height:36px;min-width:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.k-mast-b{height:36px;min-width:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
 .k-mast-b:hover{background:var(--bg-0);color:var(--ink)}
 .k-help{padding:0;width:36px;border:1px solid var(--rule);color:var(--ink);font-family:var(--font-num)}
 .k-role b{font-weight:500;color:var(--sub)}
@@ -20,7 +20,7 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
 .k-rail{gap:4px}
 .k-rail-i{width:60px;padding:10px 0 8px;border:0;background:none;border-radius:var(--r-8);display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--sub);cursor:pointer;text-decoration:none;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
 .k-rail-i svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.k-rail-i > span:last-child{font:500 13px/1.2 var(--font-body);text-align:center;word-break:keep-all}
+.k-rail-i > span:last-child{font:500 var(--fs-tag)/1.2 var(--font-body);text-align:center;word-break:keep-all}
 .k-rail-i:hover{background:var(--bg-0);color:var(--ink)}
 .k-rail-i[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 
@@ -29,7 +29,7 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
 .k-rail--steps::before{content:"";position:absolute;left:50%;top:48px;bottom:48px;width:2px;margin-left:-1px;background:var(--rule)}
 .k-rail--steps .k-rail-i{position:relative;box-shadow:none;background:none}
 .k-rail--steps .k-rail-i:hover{background:var(--bg-0)}
-.k-rail--steps .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:2px solid var(--rule);color:var(--mute);font:500 13px/1 var(--font-num);transition:background var(--d-380) var(--e-ui),border-color var(--d-380) var(--e-ui)}
+.k-rail--steps .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:2px solid var(--rule);color:var(--mute);font:500 var(--fs-aux)/1 var(--font-num);transition:background var(--d-380) var(--e-ui),border-color var(--d-380) var(--e-ui)}
 .k-rail--steps .n svg{width:14px;height:14px;stroke:#fff;stroke-width:2;fill:none}
 .k-rail--steps .n[data-st="done"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .k-rail--steps .n[data-st="now"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -65,18 +65,18 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 
 /* ── LX 직원 메뉴(lx-menu.js · 10차 메뉴-1 ⓐ) — 칸 숫자 · 휴대폰 '메뉴' · 마스트 아래 한 줄 ── */
 .k-rail-i{position:relative}
-.k-rail-b{position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--warn);color:#fff;font:500 11px/18px var(--font-num);font-style:normal;text-align:center}
+.k-rail-b{position:absolute;top:2px;left:calc(50% + 4px);min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:var(--warn);color:#fff;font:500 var(--fs-tag)/20px var(--font-num);font-style:normal;text-align:center}
 .k-app .k-rail-more{display:none}
 /* 구분선 · 글자 표기(지도-1 ⓐ — XI맵 = 'XI' · 새 아이콘 없음) */
 .k-rail-sep{display:block;flex:none;width:36px;height:1px;margin:6px 0 2px;background:var(--rule)}
-.k-rail-g{width:20px;height:20px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:800 11px/1 var(--font-display);font-style:normal;letter-spacing:-.02em;color:currentColor;border:1.5px solid currentColor;border-radius:5px}
+.k-rail-g{width:22px;height:22px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:800 var(--fs-tag)/1 var(--font-display);font-style:normal;letter-spacing:-.02em;color:currentColor;border:1.5px solid currentColor;border-radius:5px}
 .k-rail-i:not(.k-rail-i--end) + .k-rail-i--end{margin-top:auto}   /* 아래쪽 묶음(기관 정보 · 계정) — PC 레일 아래로 */
 .k-app.has-sub{grid-template-rows:var(--mast) auto minmax(0,1fr)}
 .k-app.has-sub .k-rail{grid-row:2/4}
 .k-app.has-sub .k-main{grid-row:3}
 .k-sub{grid-row:2;grid-column:-2/-1;position:relative;z-index:14;min-width:0;min-height:64px;background:var(--bg-1);border-bottom:1px solid var(--rule)}
 .k-more{display:flex;flex-direction:column;gap:2px;margin:0 -8px}
-.k-more-i{display:flex;align-items:center;gap:14px;width:100%;min-height:52px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--ink);font:500 16px/1.3 var(--font-body);text-align:left;text-decoration:none;cursor:pointer}
+.k-more-i{display:flex;align-items:center;gap:14px;width:100%;min-height:52px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--ink);font:500 var(--fs-body)/1.3 var(--font-body);text-align:left;text-decoration:none;cursor:pointer}
 .k-more-i:hover{background:var(--bg-0)}
 .k-more-ic{display:inline-flex;color:var(--sub)}
 .k-more-ic svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -96,7 +96,7 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 }
 
 /* 로그인 남은 시간(원칙 188) — 머리줄 작은 글 · 누르면 연장 · 5분 남으면 주의 색 */
-.k-sess{height:28px;padding:0 10px;border:0;border-radius:var(--r-8);background:none;color:var(--mute);font:400 12px/1 var(--font-body);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer}
+.k-sess{height:28px;padding:0 10px;border:0;border-radius:var(--r-8);background:none;color:var(--mute);font:400 var(--fs-tag)/1 var(--font-body);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer}
 .k-sess:hover{background:var(--bg-0);color:var(--ink-2)}
 .k-sess.is-soon{color:var(--warn);font-weight:500}
 @media (max-width:960px){.k-sess{display:none}}

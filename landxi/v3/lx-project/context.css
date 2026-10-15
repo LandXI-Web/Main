@@ -1,28 +1,28 @@
 /* context.css — 프로젝트 맥락(마스트 아래 한 줄: 프로젝트 이름 · 단계 6 · 다음 할 일 — 10차 메뉴-1 ⓐ · J-1). 토큰은 키트(kit.css) · 법전 system-v2.2-toss. */
 .lxp-bar{display:flex;align-items:center;gap:20px;min-height:64px;padding:0 24px;box-sizing:border-box}
 .lxp-bar-name{display:flex;flex-direction:column;gap:2px;flex:0 1 170px;min-width:0;text-decoration:none;color:var(--ink)}
-.lxp-bar-name b{font:500 15px/22px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-bar-name b{font:500 var(--fs-body)/23px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
-.lxp-bar-k{font:500 12px/16px var(--font-body);color:var(--sub)}
+.lxp-bar-k{font:500 var(--fs-tag)/19px var(--font-body);color:var(--sub)}
 .lxp-bar-steps{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin:0;padding:0;list-style:none;position:relative}
 .lxp-bar-steps li{position:relative;display:flex;min-width:0}
 .lxp-bar-steps li + li::before{content:"";position:absolute;left:-6px;right:calc(100% - 6px);top:50%;width:12px;height:2px;margin-top:-1px;background:var(--rule)}
 .lxp-st{display:flex;align-items:center;gap:6px;min-width:0;width:100%;padding:8px;border-radius:var(--r-8);text-decoration:none;color:var(--sub);transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
 .lxp-st:hover{background:var(--bg-0);color:var(--ink)}
-.lxp-st .n{flex:none;width:24px;height:24px;border-radius:50%;box-sizing:border-box;border:2px solid var(--rule);background:var(--bg-1);color:var(--mute);display:inline-flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-num)}
+.lxp-st .n{flex:none;width:24px;height:24px;border-radius:50%;box-sizing:border-box;border:2px solid var(--rule);background:var(--bg-1);color:var(--mute);display:inline-flex;align-items:center;justify-content:center;font:500 var(--fs-tag)/1 var(--font-num)}
 .lxp-st .n svg{width:12px;height:12px;stroke:#fff;stroke-width:2.2;fill:none}
 .lxp-st[data-st="done"] .n{background:var(--ink);border-color:var(--ink);color:#fff}
 .lxp-st[data-st="now"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
-.lxp-st .t{font:500 14px/18px var(--font-body);word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lxp-st .t{font:500 var(--fs-aux)/19px var(--font-body);word-break:keep-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .lxp-st[data-st="done"] .t,.lxp-st[data-st="now"] .t{color:var(--ink)}
 /* 건너뜀 · 해당 없음(GPT2-3) — 점선 칸 + 이름 아래 작은 말(미완과 구분) */
 .lxp-st[data-st="skip"] .n{border-style:dashed;border-color:var(--mute);background:none}
-.lxp-st .t small{display:block;font:500 12px/16px var(--font-body);color:var(--mute)}
+.lxp-st .t small{display:block;font:500 var(--fs-tag)/19px var(--font-body);color:var(--mute)}
 .lxp-st.is-here{background:var(--bg-0);box-shadow:inset 0 -2px 0 var(--accent)}
 .lxp-st.is-here .t{color:var(--ink)}
 .lxp-st:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .lxp-bar-next{flex:0 1 170px;min-width:0;margin:0;display:flex;flex-direction:column;gap:2px;text-align:right}
-.lxp-bar-next b{font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-bar-next b{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 프로젝트 화면 — 이름은 판 머리에 크게 있으므로 한 줄에는 단계와 다음 할 일만 */
 .lxp-bar.is-page .lxp-bar-steps{max-width:980px}
 @media (min-width:1600px){.lxp-bar.is-page .lxp-bar-steps{max-width:none}}   /* 넓은 화면 = 단계 화면들과 같이 한 줄을 다 쓴다(원칙 248) */
@@ -33,7 +33,7 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
   .lxp-bar-steps li + li::before{display:none}
   .lxp-bar-steps{flex:1 1 100%;gap:2px}
   .lxp-st{flex-direction:column;gap:4px;padding:6px 2px}
-  .lxp-st .t{font-size:12px;line-height:16px;max-width:100%;text-align:center}
+  .lxp-st .t{font-size:var(--fs-tag);line-height:19px;max-width:100%;text-align:center}
   .lxp-st.is-here{box-shadow:inset 0 -2px 0 var(--accent)}
 }
 
@@ -43,11 +43,11 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-seg i[data-st="done"]{background:var(--ink)}
 .lxp-seg i[data-st="now"]{background:var(--accent)}
 .lxp-seg i[data-st="skip"]{background:none;box-shadow:inset 0 0 0 1px var(--mute)}
-.lxp-stuck{display:flex;align-items:flex-start;gap:8px;min-width:128px;font:500 var(--fs-label)/20px var(--font-body);color:var(--warn);text-wrap:balance}
+.lxp-stuck{display:flex;align-items:flex-start;gap:8px;min-width:128px;font:500 var(--fs-aux)/20px var(--font-body);color:var(--warn);text-wrap:balance}
 .lxp-stuck::before{content:"";flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:currentColor}
 .lxp-stuck[data-kind="wait"]{color:var(--ink)}
 .lxp-stuck[data-kind="wait"]::before{background:var(--lock)}
-.lxp-stuck small{font:400 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-stuck small{font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub);white-space:nowrap}
 .lxp-stuck.is-none{color:var(--mute);font-weight:400}
 .lxp-stuck.is-none::before{content:none}
 
@@ -61,13 +61,13 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-new h2{margin:0}
 .lxp-new .t-input{box-sizing:border-box}
 .lxp-f{display:flex;flex-direction:column;gap:8px}
-.lxp-l{margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.lxp-l{margin:0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
 .lxp-l small{margin-left:6px;font-size:inherit;font-weight:400;color:var(--sub)}
 .lxp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .lxp-chip{border:0;cursor:pointer;height:32px;padding:0 12px;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
 .lxp-chip:hover{background:var(--rule)}
 .lxp-chip[aria-pressed="true"]{background:var(--ink);color:#fff}
-.lxp-chip[aria-pressed="true"]::before{content:"✓";margin-right:6px;font-size:12px}
+.lxp-chip[aria-pressed="true"]::before{content:"✓";margin-right:6px;font-size:var(--fs-tag)}
 .lxp-chip:focus-visible,.lxp-reg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lxp-picked{display:flex;flex-wrap:wrap;gap:8px}
 .lxp-picked[hidden]{display:none}
@@ -75,14 +75,14 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-reg i{font-style:normal;color:rgba(255,255,255,.7)}
 .lxp-pick .k-region{width:100%}
 .lxp-far-row{display:flex}
-.lxp-far-b{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub-2)}
-.lxp-err{margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
+.lxp-far-b{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub-2)}
+.lxp-err{margin:0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--warn)}
 .lxp-err[hidden]{display:none}
 .lxp-act{display:flex;align-items:center;gap:16px}
 .lxp-act .t-btn{padding:0 28px}
 .lxp-cancel{color:var(--sub)}
 .lxp-cancel::after{content:none}
-.lxp-note{margin:0;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.lxp-note{margin:0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 @media (max-width:640px){.lxp-new{padding:22px 20px 20px;gap:14px}}
 @media (prefers-reduced-motion:reduce){.lxp-new,.lxp-dim{transition:none}}
 
@@ -92,10 +92,10 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-ntc{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule)}
 .lxp-ntc::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--ink)}
 .lxp-ntc-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.lxp-ntc-t b{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);text-wrap:balance}
-.lxp-ntc-t small{font:400 13px/18px var(--font-body);color:var(--sub);overflow-wrap:anywhere}
-.lxp-ntc-go{flex:none;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
-.lxp-ntc-ok{flex:none;height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:500 13px/1 var(--font-body);cursor:pointer;white-space:nowrap}
+.lxp-ntc-t b{font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink);text-wrap:balance}
+.lxp-ntc-t small{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);overflow-wrap:anywhere}
+.lxp-ntc-go{flex:none;font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-ntc-ok{flex:none;height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer;white-space:nowrap}
 .lxp-ntc-ok:hover{border-color:var(--ink)}
 .ld-card .lxp-ntcs{margin:0 0 12px}
 .ld-card .lxp-ntc{background:var(--bg-0);box-shadow:none}
@@ -103,18 +103,18 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-u{display:inline-block;max-width:100%}   /* 덧말 한 덩어리(이름 · 시각 · 메모) — 덩어리 사이에서만 꺾인다 */
 /* 새 프로젝트 창에서 올리던 영상 — 단계 막대 밑 한 줄(carry.js · 원칙 220). 화면 위 얇은 줄 하나(끝나면 8초 뒤 사라짐) */
 .lxp-carry{display:flex;align-items:center;gap:16px;min-height:40px;padding:6px 24px;box-sizing:border-box;border-top:1px solid var(--rule);background:var(--bg-1)}
-.lxp-carry-t{font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lxp-carry-t{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .lxp-carry-b{flex:none;width:200px}
 .lxp-carry-b[hidden]{display:none}
 .lxp-carry-a:empty{display:none}
-.lxp-carry-r{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.lxp-carry-r{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux)/1 var(--font-body);color:var(--ink);cursor:pointer}
 .lxp-carry-r:hover{border-color:var(--ink)}
 @media (max-width:640px){.lxp-carry{padding:6px 12px;gap:10px}.lxp-carry-b{width:80px}}
 /* 새 프로젝트 한 창(원칙 220 · 10-12) — 이름 · 설명 · 구성원 · 영상(파일 올리기 / 공유 데이터에서 고르기 · 대상지는 영상에서) → 만들기 한 번 */
 .lxp-new.lxp-new--one{width:min(720px,calc(100vw - 32px))}
-.lxp-desc{height:auto;min-height:64px;padding:10px 14px;resize:vertical;font:400 15px/22px var(--font-body)}
+.lxp-desc{height:auto;min-height:64px;padding:10px 14px;resize:vertical;font:400 var(--fs-body)/23px var(--font-body)}
 .lxp-vtabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
-.lxp-vt{height:38px;padding:0 12px;border:0;background:none;cursor:pointer;color:var(--sub);font:500 14px/1 var(--font-body);box-shadow:inset 0 -2px 0 transparent}
+.lxp-vt{height:38px;padding:0 12px;border:0;background:none;cursor:pointer;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);box-shadow:inset 0 -2px 0 transparent}
 .lxp-vt:hover{color:var(--ink)}
 .lxp-vt[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 .lxp-vt:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -125,25 +125,25 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-pk-c{display:flex;flex-direction:column;gap:2px;padding:6px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);text-align:left;cursor:pointer;min-width:0;position:relative}
 .lxp-pk-c:hover{border-color:var(--ink-2)}
 .lxp-pk-c[aria-pressed="true"]{border:2px solid var(--ink);padding:5px}
-.lxp-pk-c[aria-pressed="true"]::after{content:"✓";position:absolute;right:10px;top:10px;width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;font:700 13px/22px var(--font-num);text-align:center}
+.lxp-pk-c[aria-pressed="true"]::after{content:"✓";position:absolute;right:10px;top:10px;width:25px;height:25px;border-radius:6px;background:var(--ink);color:#fff;font:700 var(--fs-aux)/25px var(--font-num);text-align:center}
 .lxp-pk-c:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lxp-pk-im{display:block;aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:var(--bg-0);margin-bottom:4px}
 .lxp-pk-im img{width:100%;height:100%;object-fit:cover;display:block}
-.lxp-pk-c b{font:500 13px/18px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lxp-pk-c small{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lxp-pk-w{grid-column:1/-1;margin:0;padding:16px;border-radius:var(--r-8);background:var(--bg-0);font:400 14px/20px var(--font-body);color:var(--sub)}
-.lxp-pk-n{display:flex;align-items:center;justify-content:space-between;gap:12px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.lxp-pk-c b{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pk-c small{font:400 var(--fs-tag)/19px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lxp-pk-w{grid-column:1/-1;margin:0;padding:16px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.lxp-pk-n{display:flex;align-items:center;justify-content:space-between;gap:12px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .lxp-pk-pg{display:inline-flex;align-items:center;gap:10px}
 .lxp-pk-pg button:disabled{color:var(--mute);cursor:default}
-.lxp-where{margin:2px 0 0;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.lxp-where{margin:2px 0 0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub-2)}
 .lxp-regbox{display:flex;flex-direction:column;gap:8px}
 .lxp-mem{position:relative}
 .lxp-mem-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:3;margin:0;padding:4px;list-style:none;background:var(--bg-1);border:1px solid var(--rule);border-radius:var(--r-8);box-shadow:var(--elev-map);max-height:240px;overflow:auto}
 .lxp-mem-l button{display:flex;align-items:baseline;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left}
 .lxp-mem-l button:hover,.lxp-mem-l button:focus-visible{background:var(--bg-0);outline:none}
-.lxp-mem-l b{font:500 14px/20px var(--font-body);color:var(--ink)}
-.lxp-mem-l small{font:400 13px/18px var(--font-body);color:var(--sub)}
-.lxp-mem-none{padding:8px 10px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lxp-mem-l b{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink)}
+.lxp-mem-l small{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.lxp-mem-none{padding:8px 10px;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .lxp-new--one .lxp-act{flex-wrap:wrap}
 .lxp-new--one .lxp-act .lxp-note{margin-left:auto}
 @media (max-width:640px){.lxp-pk-g{grid-template-columns:repeat(2,minmax(0,1fr))}.lxp-new--one .lxp-act .lxp-note{margin-left:0;flex-basis:100%}}

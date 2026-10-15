@@ -11,7 +11,7 @@
 .lxi-sec{display:flex;flex-direction:column;gap:8px}
 .lxi-sec h3{margin:0}
 .lxi-sec-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.lxi-sec-a{border:0;background:none;padding:2px 0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--accent);cursor:pointer}
+.lxi-sec-a{border:0;background:none;padding:2px 0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--accent);cursor:pointer}
 .lxi-sec-a:hover{text-decoration:underline}
 /* 필지 단위 결과 한 줄(서버 실태조사 상태) */
 .lxi-pr{margin:0;padding:10px 0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
@@ -34,8 +34,8 @@
 .lxi-acts .t-btn{flex:1;min-width:128px}
 .lxi-img .k-empty{min-height:0;padding:16px 20px;box-sizing:border-box}
 .lxi-img .k-empty-b{max-width:none;gap:4px}
-.lxi-img .k-empty-b h6{font-size:17px;line-height:24px}
-.lxi-img .k-empty-b p{font-size:13px;line-height:19px}
+.lxi-img .k-empty-b h6{font-size:var(--fs-t2);line-height:28px}
+.lxi-img .k-empty-b p{font-size:var(--fs-aux);line-height:22px}
 
 /* 시트가 열린 동안 지역 서랍은 숨는다(K5 '같은 자리 이전 서랍 닫힘') */
 .lxi .k-drawer.lxi-under{visibility:hidden;opacity:0;pointer-events:none}
@@ -52,7 +52,7 @@
 /* 영상 등록 — 파일 끌어 놓기(키트 uploadQueue) · 아래 한 줄(파일에서 읽는 것 · 등록 중) */
 .lxi-up{display:flex;flex-direction:column;gap:12px;padding-top:4px}
 .lxi-up .k-uq .k-drop{min-height:152px}
-.lxi-up-s{margin:0;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.lxi-up-s{margin:0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 .lxi-up .lxi-bar{margin-top:0}
 .lxi-bar.is-indet i{width:32%;animation:lxi-indet 1.25s var(--e-ui) infinite}
 @keyframes lxi-indet{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
@@ -64,7 +64,7 @@
 .lxi-map{display:flex;flex-direction:column;gap:8px}
 .lxi-m{display:grid;grid-template-columns:minmax(0,1fr) 20px 132px;align-items:center;gap:8px}
 .lxi-arrow{color:var(--sub);text-align:center}
-.lxi-mean{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.lxi-mean{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
 
 @media (prefers-reduced-motion:reduce){.lxi-skel i,.lxi-bar.is-indet i{animation:none}}
 

@@ -5,12 +5,12 @@
 .k-drawer.is-closing{opacity:0;transform:translateX(24px)}
 .k-dr-grip{display:none}
 .k-dr-h{display:flex;align-items:center;gap:12px;padding:20px 16px 12px 24px}
-.k-dr-t{flex:1;margin:0;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.k-dr-t{flex:1;margin:0;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
 .k-dr-x{width:36px;height:36px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .k-dr-x:hover{background:var(--bg-0);color:var(--ink)}
 .k-dr-x svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round}
 .k-dr-b{flex:1;overflow:auto;padding:4px 24px 24px;overscroll-behavior:contain}
-.k-card-t{margin:0 0 12px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.k-card-t{margin:0 0 12px;font:500 var(--fs-t2)/var(--lh-t2) var(--font-body);color:var(--ink)}
 @media (max-width:640px){
   .k-drawer,.k-drawer--in{position:fixed;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;max-height:72vh;border-radius:var(--r-16) var(--r-16) 0 0;transform:translateY(40px)}
   .k-drawer.is-closing{transform:translateY(40px)}

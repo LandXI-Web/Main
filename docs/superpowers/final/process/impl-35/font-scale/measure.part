@@ -1,0 +1,53 @@
+function measure() {
+  const W = innerWidth, H = innerHeight;
+  const vis = (el) => { const s = getComputedStyle(el); if (s.visibility === 'hidden' || s.display === 'none' || +s.opacity === 0) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const clippedBy = (el) => { for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { const s = getComputedStyle(p); if (s.overflowX !== 'visible' || s.overflowY !== 'visible') return p; } return null; };
+  const main = document.querySelector('.k-main') || document.body;
+  const mr = main.getBoundingClientRect();
+  const out = { vw: W, vh: H, docOverX: document.documentElement.scrollWidth - document.documentElement.clientWidth, bodyOverX: document.body.scrollWidth - document.body.clientWidth, main: [mr.x, mr.y, mr.width, mr.height].map(Math.round) };
+  // 화면 밖으로 나간 요소(잘림 포함)
+  const off = [], innerScroll = [], ellipsis = [], heads = [], orphans = [], grids = [];
+  const all = [...document.querySelectorAll('body *')].filter((e) => !e.closest('.maplibregl-canvas-container, .maplibregl-map canvas, svg *, .k-dev, [hidden]'));
+  let minX = 1e9, maxX = -1e9, maxY = -1e9, minY = 1e9;
+  for (const el of all) {
+    if (!vis(el)) continue;
+    const r = el.getBoundingClientRect();
+    const s = getComputedStyle(el);
+    if (s.position === 'fixed' && el.closest('.k-toast')) continue;
+    const name = el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '');
+    if (r.right > W + 1 && r.left < W) { const c = clippedBy(el); const cr = c?.getBoundingClientRect(); if (!c || cr.right > W + 1) off.push(name + ' ' + Math.round(r.right - W)); }
+    if ((s.overflowX === 'auto' || s.overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) innerScroll.push(name + ' ' + (el.scrollWidth - el.clientWidth));
+    if (s.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) ellipsis.push(name + ' «' + el.textContent.trim().slice(0, 24) + '»');
+    // 내용 경계(main 안 잎 요소)
+    if (main.contains(el) && el !== main && (el.children.length === 0 || /^(IMG|CANVAS|INPUT|BUTTON|TABLE|SELECT|TEXTAREA|svg)$/i.test(el.tagName))) {
+      if (r.right <= mr.right + 1 && r.left >= mr.left - 1 && r.bottom > mr.top && r.top < mr.bottom && r.width < mr.width * 0.98) { minX = Math.min(minX, r.left); maxX = Math.max(maxX, r.right); maxY = Math.max(maxY, r.bottom); minY = Math.min(minY, r.top); }
+    }
+    // 제목 줄 수
+    if (/^H[1-4]$/.test(el.tagName) || /(^|[-_])(title|tit|h|head|name)($|[-_\s])/.test(typeof el.className === 'string' ? el.className : '')) {
+      const lh = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.3;
+      if (el.children.length <= 2 && el.textContent.trim().length > 3) { const lines = Math.round(r.height / lh); if (lines > 2 && parseFloat(s.fontSize) >= 18) heads.push(name + ' ' + lines + '줄 «' + el.textContent.trim().slice(0, 20) + '»'); }
+    }
+    // 한 단어 줄(잎 글자)
+    if (el.childElementCount === 0 && el.textContent.trim().split(/\s+/).length >= 3 && r.height > parseFloat(s.fontSize) * 1.9 && main.contains(el)) {
+      const tn = [...el.childNodes].find((n) => n.nodeType === 3); if (tn) {
+        const txt = tn.textContent; const re = /\S+/g; let m; const tops = [];
+        while ((m = re.exec(txt))) { const rg = document.createRange(); rg.setStart(tn, m.index); rg.setEnd(tn, m.index + m[0].length); const rr = rg.getClientRects()[0]; if (rr) tops.push([Math.round(rr.top), m[0]]); }
+        const lines = []; for (const [t, w] of tops) { const L = lines.find((l) => Math.abs(l.t - t) < 4); if (L) L.w.push(w); else lines.push({ t, w: [w] }); }
+        if (lines.length >= 2 && lines[lines.length - 1].w.length === 1 && lines[lines.length - 1].w[0].length <= 4) orphans.push(name + ' «…' + lines[lines.length - 1].w[0] + '»');
+      }
+    }
+    // 격자 열 수
+    if ((s.display === 'grid' || s.display === 'flex' && s.flexWrap === 'wrap') && el.children.length >= 3 && main.contains(el)) {
+      const kids = [...el.children].filter(vis); if (kids.length >= 3) {
+        const tops = new Map(); for (const k of kids) { const t = Math.round(k.getBoundingClientRect().top); tops.set(t, (tops.get(t) || 0) + 1); }
+        const cols = Math.max(...tops.values()); const ws = kids.map((k) => Math.round(k.getBoundingClientRect().width));
+        const hs = kids.slice(0, cols).map((k) => Math.round(k.getBoundingClientRect().height));
+        if (cols >= 2 && r.width > 300) grids.push({ el: name, cols, n: kids.length, w: Math.round(r.width), kidW: Math.min(...ws), h: [Math.min(...hs), Math.max(...hs)] });
+      }
+    }
+  }
+  out.off = [...new Set(off)].slice(0, 12); out.innerScroll = [...new Set(innerScroll)].slice(0, 8); out.ellipsis = [...new Set(ellipsis)].slice(0, 10);
+  out.heads = [...new Set(heads)].slice(0, 8); out.orphans = [...new Set(orphans)].slice(0, 10); out.grids = grids.slice(0, 10);
+  if (maxX > minX) { out.content = [minX, minY, maxX - minX, maxY - minY].map(Math.round); out.wPct = Math.round((maxX - minX) / mr.width * 100); out.bottomGapPct = Math.round((mr.bottom - maxY) / mr.height * 100); out.leftGap = Math.round(minX - mr.left); out.rightGap = Math.round(mr.right - maxX); }
+  return out;
+}

@@ -24,7 +24,7 @@ test.describe('구현 14차 b · 지도 서비스', () => {
     await page.goto('v3/lx-map/');
     await expect(page.locator('body[data-ready="1"]')).toHaveCount(1, { timeout: 60000 });
     // 왼쪽 — 폭 300 이하 · 레이어 줄 한 줄(32) · 레이어 칸만 스크롤(overflow auto)
-    expect((await page.locator('.lm-left').boundingBox()).width).toBeLessThanOrEqual(300);
+    expect((await page.locator('.lm-left').boundingBox()).width).toBeLessThanOrEqual(350);   // 슬림 344(글자 표준 단계로 296 → 344 · 원칙 257)
     const card = page.locator('.lm-grp', { hasText: '비닐하우스 분석서비스' });
     if ((await card.locator('.lm-gt').getAttribute('aria-expanded')) !== 'true') await card.locator('.lm-gt').click();
     while (await page.locator('.lm-sw[aria-checked="true"]').count()) await page.locator('.lm-sw[aria-checked="true"]').first().click();

@@ -1,29 +1,30 @@
 /* 기관 'AI 분석 결과 보고서'(서비스 기준 · 10-11 gov-보고서) — svc-report.js 칸 배치만. */
 .gr-form--svc{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto}
+@media (max-width:1365px){.gr-form--svc{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}   /* 1280 — 글자 표준 단계(원칙 257)로 고르기 칸이 좁아져 단추는 다음 줄 */
 .gr-form--svc .gr-field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 20px) 19px,calc(100% - 15px) 19px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px;cursor:pointer}
 .gr-doc--svc{padding:28px 36px}
-.gr-wait,.gr-err{margin:24px 0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.gr-wait,.gr-err{margin:24px 0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 .gr-rdoc{max-width:760px;margin:0 auto}
-.gr-rdoc-k{margin:0 0 6px;font:600 13px/18px var(--font-body);color:var(--accent)}
-.gr-rdoc-t{margin:0;font:700 var(--fs-h3,24px)/1.35 var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);word-break:keep-all}
-.gr-rdoc-m{margin:4px 0 0;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
-.gr-rdoc h3{margin:28px 0 10px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
-.gr-rdoc-p{margin:10px 0 0;font:400 var(--fs-label)/24px var(--font-body);color:var(--sub-2);word-break:keep-all}
+.gr-rdoc-k{margin:0 0 6px;font:600 var(--fs-aux)/21px var(--font-body);color:var(--accent)}
+.gr-rdoc-t{margin:0;font:700 var(--fs-h3)/1.35 var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);word-break:keep-all}
+.gr-rdoc-m{margin:4px 0 0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
+.gr-rdoc h3{margin:28px 0 10px;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.gr-rdoc-p{margin:10px 0 0;font:400 var(--fs-aux)/24px var(--font-body);color:var(--sub-2);word-break:keep-all}
 .gr-ov,.gr-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .gr-ov-i,.gr-cmp>div{padding:14px 16px;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);min-width:0}
-.gr-ov-i small,.gr-cmp small{display:block;font:500 13px/18px var(--font-body);color:var(--sub)}
-.gr-ov-i b,.gr-cmp b{display:flex;align-items:baseline;gap:4px;margin-top:6px;font:700 24px/1.1 var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
-.gr-ov-i b i,.gr-cmp b i{font:500 12px/1 var(--font-body);font-style:normal;color:var(--sub);white-space:nowrap}
-.gr-ov-i b{font-size:22px;flex-wrap:nowrap}
+.gr-ov-i small,.gr-cmp small{display:block;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.gr-ov-i b,.gr-cmp b{display:flex;align-items:baseline;gap:4px;margin-top:6px;font:700 var(--fs-num)/1.1 var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.gr-ov-i b i,.gr-cmp b i{font:500 var(--fs-tag)/1 var(--font-body);font-style:normal;color:var(--sub);white-space:nowrap}
+.gr-ov-i b{font-size:var(--fs-num);flex-wrap:wrap;row-gap:2px}
 .gr-ov{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-.gr-cmp .gr-cmp-n{font:600 var(--fs-label)/var(--lh-label) var(--font-body)}
+.gr-cmp .gr-cmp-n{font:600 var(--fs-aux)/var(--lh-aux) var(--font-body)}
 .gr-map-fig{margin:0}
 .gr-map-img{min-height:220px;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);overflow:hidden;display:grid;place-items:center}
 .gr-map-img[data-state="loading"]{background:linear-gradient(90deg,var(--bg-1),#EEF0F2,var(--bg-1));background-size:200% 100%;animation:gr-shim 1.2s linear infinite}
 .gr-map-img img{display:block;width:100%;height:auto}
-.gr-map-fig figcaption{margin-top:6px;font:400 13px/18px var(--font-body);color:var(--sub)}
-.gr-rtb{width:100%;border-collapse:collapse;background:var(--bg-1);border-radius:var(--r-8);overflow:hidden;font:400 var(--fs-label)/var(--lh-label) var(--font-body)}
-.gr-rtb th{padding:9px 14px;text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
+.gr-map-fig figcaption{margin-top:6px;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.gr-rtb{width:100%;border-collapse:collapse;background:var(--bg-1);border-radius:var(--r-8);overflow:hidden;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
+.gr-rtb th{padding:9px 14px;text-align:left;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
 .gr-rtb td{padding:9px 14px;border-bottom:1px solid var(--rule);color:var(--ink)}
 .gr-rtb .n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
 .gr-rtb tr.dim td{color:var(--sub)}
@@ -32,4 +33,5 @@
 @media (max-width:760px){.gr-form--svc{grid-template-columns:1fr 1fr}.gr-doc--svc{padding:20px 16px}}
 
 /* 서버 문장 끝 한 단어 줄 막기(10-14 재검수 · 원칙 9 줄바꿈) */
-.gr small,.gr p,.gr li{text-wrap:pretty}
+.gr p,.gr li{text-wrap:pretty}
+.gr small{text-wrap:balance}   /* 짧은 설명 줄 — 마지막 줄에 한 단어만 남지 않게(1280 · 원칙 257) */

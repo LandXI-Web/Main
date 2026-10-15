@@ -6,30 +6,30 @@
 .k-bell{position:relative;width:36px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .k-bell svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .k-bell[aria-expanded="true"]{background:var(--bg-0);color:var(--ink)}
-.k-bell-n{position:absolute;top:1px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ink);color:#fff;font:600 11px/18px var(--font-num);text-align:center;box-sizing:border-box;pointer-events:none}
+.k-bell-n{position:absolute;top:-1px;right:-2px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--ink);color:#fff;font:600 var(--fs-tag)/20px var(--font-num);text-align:center;box-sizing:border-box;pointer-events:none}
 .k-bell-n[hidden]{display:none}
 
 .k-bell-pop{position:fixed;z-index:70;width:360px;max-width:calc(100vw - 16px);max-height:min(560px,calc(100vh - 88px));display:flex;flex-direction:column;
   padding:16px;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);box-sizing:border-box;animation:k-bell-in var(--d-180) var(--e-ui)}
 @keyframes k-bell-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.k-bell-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 8px;font:500 16px/24px var(--font-body);color:var(--ink)}
-.k-bell-h small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.k-bell-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 8px;font:500 var(--fs-body)/24px var(--font-body);color:var(--ink)}
+.k-bell-h small{font:500 var(--fs-aux)/1 var(--font-body);color:var(--sub)}
 .k-bell-list{display:flex;flex-direction:column;gap:2px;overflow:auto;min-height:0}
 .k-bell-i{display:flex;flex-direction:column;gap:4px;width:100%;padding:10px 12px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;transition:background var(--d-180) var(--e-ui)}
 .k-bell-i:hover{background:var(--bg-0)}
 .k-bell-i:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .k-bell-i[data-unread="1"]{background:var(--bg-0)}
 .k-bell-t{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.k-bell-t b{font:500 15px/22px var(--font-body);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-bell-t b{font:500 var(--fs-body)/23px var(--font-body);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-bell-i[data-unread="1"] .k-bell-t b{font-weight:700;color:var(--ink)}
-.k-bell-t time{flex:none;font:400 13px/1 var(--font-num);color:var(--sub)}
-.k-bell-l{font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-bell-t time{flex:none;font:400 var(--fs-aux)/1 var(--font-num);color:var(--sub)}
+.k-bell-l{font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-bell-none{margin:4px 0}
 /* 다른 할 일(분석 의뢰 · 가입 신청 · 재설정 요청) — 대화 목록 위 한 묶음 · 숫자는 오른쪽 */
 .k-bell-list--x{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 a.k-bell-i,div.k-bell-i{box-sizing:border-box;color:inherit;text-decoration:none}   /* 버튼과 같은 폭(채움 포함) */
 div.k-bell-i--x{cursor:default}
-.k-bell-t b.k-bell-x{flex:none;font:700 15px/22px var(--font-num);color:var(--ink)}
+.k-bell-t b.k-bell-x{flex:none;font:700 var(--fs-body)/23px var(--font-num);color:var(--ink)}
 .k-bell-all{align-self:flex-start;margin:12px 4px 2px}
 
 /* ── 검토 요청(기관 필지 카드 안) ───────────── */
@@ -37,18 +37,18 @@ div.k-bell-i--x{cursor:default}
 .k-rv[hidden]{display:none}
 .k-rv-f{display:flex;flex-direction:column;gap:0}
 .k-rv .t-input,.k-rv-add .t-input{box-sizing:border-box}
-.k-rv-l{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
-.k-rv-l small{font:400 13px/1 var(--font-body);color:var(--sub)}
+.k-rv-l{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink-2)}
+.k-rv-l small{font:400 var(--fs-aux)/1 var(--font-body);color:var(--sub)}
 .k-rv-btns{display:flex;align-items:center;gap:8px;margin-top:12px}
 .k-rv-go{flex:1}
-.k-rv-x{height:44px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer}
+.k-rv-x{height:44px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer}
 .k-rv-x:hover{background:var(--bg-0);color:var(--ink)}
-.k-rv-to{display:flex;flex-wrap:wrap;gap:0 8px;margin:12px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-to{display:flex;flex-wrap:wrap;gap:0 8px;margin:12px 0 0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
 .k-rv-to b{font-weight:500;color:var(--ink-2)}
-.k-rv-note{margin:2px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-note{margin:2px 0 0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
 .k-rv-done{padding:16px;border-radius:var(--r-8);background:var(--bg-0)}
 .k-rv-done p{margin:0}
-.k-rv-done > p:first-child b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.k-rv-done > p:first-child b{font:500 var(--fs-body)/23px var(--font-body);color:var(--ink)}
 .k-rv-done .t-btn--text{margin-top:12px}
 
 /* ── 내가 보낸 요청(서랍) · 대화 ───────────── */
@@ -57,11 +57,11 @@ div.k-bell-i--x{cursor:default}
 .k-rv-list > .k-rv-row:hover{background:var(--bg-0)}
 .k-rv-list > .k-rv-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .k-rv-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.k-rv-top b{font:500 16px/24px var(--font-body);color:var(--ink)}
+.k-rv-top b{font:500 var(--fs-body)/24px var(--font-body);color:var(--ink)}
 .k-rv-row[data-unread="1"] .k-rv-top b{font-weight:700}
-.k-rv-meta{font:400 13px/20px var(--font-body);color:var(--sub)}
-.k-rv-memo{font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
-.k-rv-ans{display:flex;gap:8px;padding:8px 12px;margin-top:4px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
+.k-rv-meta{font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
+.k-rv-memo{font:400 var(--fs-aux)/20px var(--font-body);color:var(--ink-2)}
+.k-rv-ans{display:flex;gap:8px;padding:8px 12px;margin-top:4px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub-2)}
 .k-rv-ans b{flex:none;font-weight:500;color:var(--ink)}
 
 .k-rv-conv{display:flex;flex-direction:column}
@@ -73,12 +73,12 @@ div.k-bell-i--x{cursor:default}
 .k-rv-m{padding:12px 16px;border-radius:var(--r-16);background:var(--bg-0)}
 .k-rv-m[data-side="lx"]{background:var(--bg-1);border:1px solid var(--rule);box-shadow:inset 2px 0 0 var(--ink)}
 .k-rv-m p{margin:0}
-.k-rv-mw{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-mw{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
 .k-rv-mw b{font-weight:500;color:var(--ink-2)}
 .k-rv-mw time{font-family:var(--font-num)}
-.k-rv-mv{display:flex;gap:8px;margin-top:6px !important;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-mv{display:flex;gap:8px;margin-top:6px !important;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
 .k-rv-mv b{font-weight:500;color:var(--ink)}
-.k-rv-mb{margin-top:4px !important;font:400 15px/24px var(--font-body);color:var(--ink);white-space:pre-wrap}
+.k-rv-mb{margin-top:4px !important;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink);white-space:pre-wrap}
 .k-rv-mb:empty{display:none}
 .k-rv-add{display:flex;gap:8px;margin-top:16px}
 .k-rv-add .t-input{flex:1;min-width:0}
@@ -91,6 +91,6 @@ div.k-bell-i--x{cursor:default}
 }
 
 /* 메일 알림 상태 한 줄(기관 · 18차 N-1 ⓐ 알림 ⓑ — 설정이 없으면 종만) */
-.k-bell-mail{margin:6px 4px 2px;padding:0;font:400 12px/17px var(--font-body);color:var(--sub);word-break:keep-all}
+.k-bell-mail{margin:6px 4px 2px;padding:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);word-break:keep-all}
 /* 새 결과 · 새 판 알림 — 달라진 점 한 줄이 잘리지 않게 두 줄까지(나중 19) */
 .k-bell-i--x[data-kind="result"] .k-bell-l{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:keep-all}
