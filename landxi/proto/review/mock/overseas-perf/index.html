@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 해외 퍼포먼스</title>
+<style>
+:root{--bg-0:#F2F4F6;--bg-1:#FFFFFF;--ink:#191F28;--sub:#727780;--sub-2:#4E535C;--rule:#E5E8EB;--mute:#B0B8C1;--accent:#006DF7;--ai:#0FA9A0;--lock:#FFB633;--warn:#F04452;
+--crop:#2E9E5B;--new:#2EC86E;--lost:#F08C28;--built:#3182F6;
+--fs-big:80px;--fs-num:32px;--fs-t1:28px;--fs-t2:20px;--fs-body:16px;--fs-aux:15px;--fs-tag:14px;
+--f-h:'Paperlogy','Pretendard',system-ui,sans-serif;--f-b:'Pretendard',system-ui,sans-serif;--f-n:'Inter','Pretendard',system-ui,sans-serif;
+--elev-map:0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12);--e-ui:cubic-bezier(.22,1,.36,1)}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg-0);color:var(--ink);font:400 var(--fs-body)/26px var(--f-b);word-break:keep-all;min-width:1280px}
+.num{font-family:var(--f-n);font-variant-numeric:tabular-nums}
+button{font:500 var(--fs-aux)/22px var(--f-b);color:var(--ink);background:var(--bg-1);border:1px solid var(--rule);border-radius:8px;padding:8px 14px;cursor:pointer}
+button[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mast{height:64px;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--bg-1);border-bottom:1px solid var(--rule)}
+.word{font:800 18px/1 var(--f-h);letter-spacing:.02em}.home{font:700 var(--fs-t2)/28px var(--f-h)}
+.sp{flex:1}.role{font:500 var(--fs-tag)/20px var(--f-b);color:var(--sub)}
+.seg{display:flex;gap:6px}
+.vswitch{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:30;display:flex;gap:6px;background:var(--bg-1);padding:4px;border-radius:12px;box-shadow:var(--elev-map)}
+.stamp{position:fixed;right:16px;bottom:16px;z-index:40;background:var(--ink);color:#fff;border-radius:8px;padding:6px 12px;font:500 var(--fs-tag)/20px var(--f-b)}
+.stamp b{margin-right:8px}
+.ex{display:inline-block;font:500 var(--fs-tag)/20px var(--f-b);color:var(--sub);border:1px dashed var(--mute);border-radius:6px;padding:0 8px;margin-left:8px;vertical-align:middle}
+/* ── A안 지도 ── */
+.a{position:relative;height:calc(100vh - 64px);min-height:820px;overflow:hidden;background:#E9EEF2}
+.a svg.kg{position:absolute;left:16px;top:236px;width:820px;height:460px}
+.kg path{stroke:#fff;stroke-width:.9;fill:#DCE2E8;transition:fill .5s var(--e-ui)}
+.kg path.on{fill:var(--crop)}
+.kg path.scan{fill:var(--lock)}
+.kg rect.aoi{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3}
+.hud{position:absolute;left:40px;top:28px;z-index:3}
+.hud .k{font:500 var(--fs-aux)/22px var(--f-b);color:var(--sub-2)}
+.hud .big{font:800 var(--fs-big)/88px var(--f-h);letter-spacing:-.03em}
+.hud .big small{font:700 var(--fs-t1)/36px var(--f-h);margin-left:6px}
+.hud .p{font:400 var(--fs-body)/26px var(--f-b);color:var(--sub-2)}
+.zoom{position:absolute;right:24px;top:24px;width:560px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);overflow:hidden;z-index:4}
+.zoom header{display:flex;align-items:center;gap:8px;padding:16px 20px 12px}
+.zoom h2{font:700 var(--fs-t2)/28px var(--f-h)}
+.pic{position:relative;width:560px;height:508px;overflow:hidden;cursor:crosshair}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .6s var(--e-ui)}
+.pic .glow{animation:glow 1.6s ease-in-out infinite alternate}
+@keyframes glow{from{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}to{filter:drop-shadow(0 0 3px rgba(255,255,255,.9))}}
+.chips{display:flex;gap:8px;padding:12px 20px 16px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;font:500 var(--fs-aux)/22px var(--f-b)}
+.chip i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chip b{font:600 var(--fs-aux)/22px var(--f-n)}
+.fix{position:absolute;z-index:6;width:300px;background:var(--bg-1);border-radius:12px;box-shadow:var(--elev-map);padding:14px 16px}
+.fix .t{font:700 var(--fs-aux)/22px var(--f-b);margin-bottom:8px}
+.fix .row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.fix p{font:400 var(--fs-tag)/20px var(--f-b);color:var(--sub-2)}
+.dot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--ink);z-index:5}
+.ask{position:absolute;left:50%;transform:translateX(-50%);bottom:28px;width:760px;z-index:7}
+.ans{background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);padding:18px 22px;margin-bottom:12px}
+.ans .q{font:500 var(--fs-aux)/22px var(--f-b);color:var(--sub)}
+.ans .r{font:400 var(--fs-body)/26px var(--f-b);margin-top:6px}
+.ans .r b{font:800 var(--fs-num)/40px var(--f-h);color:var(--ink);margin-right:4px}
+.ans .acts{display:flex;gap:8px;margin-top:12px}
+.bar{display:flex;align-items:center;gap:12px;height:56px;padding:0 10px 0 20px;background:var(--bg-1);border-radius:28px;box-shadow:var(--elev-map)}
+.bar .nm{font:700 var(--fs-aux)/22px var(--f-b);color:var(--ai)}
+.bar .in{flex:1;font:400 var(--fs-body)/26px var(--f-b)}
+.bar button{border-radius:20px;background:var(--ink);color:#fff;border:0}
+.dash{position:absolute;inset:16px;z-index:8;background:var(--bg-0);border-radius:16px;box-shadow:var(--elev-map);padding:24px;display:grid;grid-template-columns:1.2fr 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:16px;opacity:0;transform:translateY(24px);pointer-events:none;transition:all .5s var(--e-ui)}
+.dash.open{opacity:1;transform:none;pointer-events:auto}
+.dash .hd{grid-column:1/-1;display:flex;align-items:center;gap:12px}
+.dash .hd h2{font:700 var(--fs-t1)/36px var(--f-h)}
+.card{background:var(--bg-1);border-radius:16px;padding:20px;overflow:hidden}
+.card h3{font:700 var(--fs-t2)/28px var(--f-h);margin-bottom:12px}
+.kv{font:400 var(--fs-tag)/20px var(--f-b);color:var(--sub)}
+.big2{font:800 var(--fs-num)/40px var(--f-h)}
+.bars{display:grid;grid-template-columns:110px 1fr 70px;gap:6px 10px;align-items:center;font:400 var(--fs-aux)/22px var(--f-b)}
+.bars .b{height:14px;border-radius:7px;background:var(--crop)}
+.bars .v{text-align:right;font-family:var(--f-n)}
+/* ── B안 보드 ── */
+.bd{padding:24px;display:grid;grid-template-columns:1fr 1fr 400px;grid-template-rows:auto 340px 290px;gap:16px;min-height:calc(100vh - 64px)}
+.bd .top{grid-column:1/3;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.bd .mapc{grid-column:1/2}
+.bd .cal{grid-column:2/3}
+.bd .sw{grid-column:1/2}
+.bd .loop{grid-column:2/3}
+.bd .chat{grid-column:3/4;grid-row:1/4;display:flex;flex-direction:column}
+.chat .log{flex:1;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.msg{max-width:92%;padding:12px 14px;border-radius:12px;font:400 var(--fs-body)/24px var(--f-b)}
+.msg.me{align-self:flex-end;background:var(--ink);color:#fff}
+.msg.ai{background:var(--bg-0)}
+.msg.ai b{font:800 var(--fs-t2)/28px var(--f-h)}
+.chat .bar{border-radius:12px;box-shadow:none;border:1px solid var(--rule);margin-top:12px}
+.kpi .v{font:800 var(--fs-num)/40px var(--f-h)}
+.kpi .v small{font:700 var(--fs-t2)/28px var(--f-h);margin-left:4px}
+.kpi .l{font:500 var(--fs-aux)/22px var(--f-b);color:var(--sub-2)}
+.kpi .s{font:400 var(--fs-tag)/20px var(--f-b);color:var(--sub);margin-top:4px}
+.bd svg.kg{width:100%;height:270px}
+.swp{position:relative;height:200px;border-radius:12px;overflow:hidden}
+.swp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.swp .r{clip-path:inset(0 0 0 50%)}
+.swp input{position:absolute;inset:auto 12px 10px 12px;width:calc(100% - 24px)}
+.swp .lb{position:absolute;top:10px;font:600 var(--fs-tag)/20px var(--f-b);background:rgba(25,31,40,.72);color:#fff;border-radius:6px;padding:2px 8px}
+.step{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+.step div{background:var(--bg-0);border-radius:12px;padding:12px 14px}
+.step b{display:block;font:800 var(--fs-num)/40px var(--f-h);white-space:nowrap}
+.step span{font:500 var(--fs-aux)/22px var(--f-b);color:var(--sub-2)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="vswitch"><button id="vA" aria-pressed="true">A안 · 살아 있는 나라 지도</button><button id="vB" aria-pressed="false">B안 · 융합 대시보드</button></div>
+<header class="mast">
+  <span class="word">LAND-XI</span><span class="home" id="home">XI맵</span>
+  <div class="seg" style="margin-left:16px"><button aria-pressed="false">대한민국</button><button aria-pressed="true">키르기스스탄</button></div>
+  <span class="sp"></span><span class="role">LX 직원</span>
+</header>
+
+<!-- A안 -->
+<main class="a" id="A">
+  <div class="hud">
+    <div class="k">키르기스스탄 · <span id="yr"></span>년 경작지</div>
+    <div class="big num"><span id="bigN">0</span><small>㎢</small></div>
+    <div class="p">군 <b class="num" id="doneN">0</b>/41곳 분석 · Sentinel-2 10 m</div>
+  </div>
+  <svg class="kg" id="kgA" viewBox="0 0 1000 560"></svg>
+  <section class="zoom">
+    <header><h2>소쿨룩 평야</h2><span class="ex">실측 · 시기 보정 전</span><span class="sp"></span>
+      <div class="seg"><button data-t="2021">2021</button><button data-t="2025" aria-pressed="true">2025</button><button data-t="chg">바뀐 곳</button></div></header>
+    <div class="pic" id="pic">
+      <img id="im21" src="s2-2021.webp" alt="" style="opacity:0"><img id="im25" src="s2-2025.webp" alt="">
+      <img id="cr21" src="crop-2021.png" alt="" style="opacity:0"><img id="cr25" src="crop-2025.png" alt="">
+      <img id="chg" class="glow" src="change.png" alt="" style="opacity:0"><img id="fal" src="fallow.png" alt="" style="opacity:0">
+    </div>
+    <div class="chips" id="chipsA"></div>
+  </section>
+  <div class="ask">
+    <div class="ans" id="ans" hidden></div>
+    <div class="bar"><span class="nm">XI ChatGEO</span><span class="in" id="askIn">소쿨룩 평야 휴경 얼마나 돼?</span><button id="askGo">묻기</button></div>
+  </div>
+  <section class="dash" id="dash">
+    <div class="hd"><h2>소쿨룩 평야 · 2021 → 2025</h2><span class="ex">예시 동작</span><span class="sp"></span><button id="dashX">지도로</button></div>
+    <div class="card"><h3>군별 경작지</h3><div class="bars" id="bars"></div></div>
+    <div class="card"><h3>바뀐 곳</h3><div id="chgList"></div></div>
+    <div class="card"><h3>휴경 의심</h3><div class="big2 num" id="falN"></div><div class="kv" style="margin-top:6px">2021 경작지 중 2025 봄 · 여름 모두 초록이 약한 곳 · 현장 확인 전</div></div>
+    <div class="card" style="grid-column:1/2"><h3>모델 정확도</h3><div id="acc"></div></div>
+    <div class="card" style="grid-column:2/4"><h3>작물 달력 · 으슥아타 경작지 초록 정도</h3><svg id="calA" viewBox="0 0 820 170" style="width:100%;height:170px"></svg></div>
+  </section>
+</main>
+
+<!-- B안 -->
+<main class="bd" id="B" hidden>
+  <div class="top">
+    <div class="card kpi"><div class="l">경작지 · 나라 전체</div><div class="v num" id="kB1"></div><div class="s" id="kB1s"></div></div>
+    <div class="card kpi"><div class="l">휴경 의심 · 소쿨룩 평야</div><div class="v num" id="kB2"></div><div class="s">현장 확인 전</div></div>
+    <div class="card kpi"><div class="l">시가지로 바뀐 경작지 · 소쿨룩 평야</div><div class="v num" id="kB3"></div><div class="s">2021 → 2025</div></div>
+  </div>
+  <div class="card mapc"><h3>군별 경작지 비율</h3><svg class="kg" id="kgB" viewBox="0 0 1000 560"></svg></div>
+  <div class="card cal"><h3>작물 달력</h3><svg id="calB" viewBox="0 0 440 220" style="width:100%;height:220px"></svg><div class="kv">으슥아타 경작지 · 2025 달마다 초록 정도(가운데 값 · 위 10%)</div></div>
+  <div class="card sw"><h3>두 해 넘나들기 · 소쿨룩 평야</h3>
+    <div class="swp"><img src="s2-2021.webp" alt=""><img src="crop-2021.png" alt=""><img class="r" src="s2-2025.webp" alt=""><img class="r glow" src="change.png" alt="">
+      <span class="lb" style="left:10px">2021</span><span class="lb" style="right:10px">2025 · 바뀐 곳</span><input type="range" min="5" max="95" value="50" id="swB"></div></div>
+  <div class="card loop"><h3>고치며 똑똑해지기<span class="ex">예시 동작</span></h3>
+    <div class="step"><div><b class="num" id="lp1"></b><span>학습 데이터 조각</span></div><div><b class="num" id="lp2">0장</b><span>수정된 부분</span></div><div><b class="num" id="lp3"></b><span>경작지 정확도</span></div><div><b class="num">—</b><span>다음 학습</span></div></div>
+    <p class="kv" style="margin-top:12px">수정된 부분은 학습 데이터로 저장됩니다.</p></div>
+  <aside class="card chat"><h3>XI ChatGEO</h3><div class="log" id="logB"></div><div class="bar"><span class="in">이 화면에 대해 물어보세요</span><button>묻기</button></div></aside>
+</main>
+
+<div class="stamp"><b>시안</b><span id="stampT"></span></div>
+
+<script type="module">
+/* 설계 30차 · 해외 퍼포먼스 시안(원칙 256 · 229) — 실제 화면 · 서버 수정 0 · GPU 0.
+   숫자 출처: 군 41곳 경작지 = kgz-crop-2025.json(메인 · XI맵과 같은 파일), 소쿨룩 평야 그림 · 변화 · 휴경 의심 · 정확도 = 이번 실측(data.js · design-r30/overseas README),
+   작물 달력 = 으슥아타 2025 달별 초록 정도(02. 데이터/global/ysykata-ndvi-2025.json). 차오름 순서 · 고치기 저장 · ChatGEO 답 문구 = 예시 동작. */
+import { KG } from './districts.js';
+import { R } from './data.js';
+const $ = (id) => document.getElementById(id);
+const nf = (n) => Math.round(n).toLocaleString('ko-KR');
+const q = new URLSearchParams(location.search);
+const now = new Date(), hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+$('stampT').textContent = `${now.getMonth() + 1}-${String(now.getDate()).padStart(2, '0')} ${hm}`;
+const A = R.area_ha, U = R.best;
+const green = (s) => { const t = Math.min(1, s / 0.45); return `rgb(${Math.round(220 - t * 174)},${Math.round(226 - t * 68)},${Math.round(232 - t * 141)})`; };
+
+function draw(svg, color) {
+  svg.innerHTML = KG.d.map((d, i) => `<path data-i="${i}" d="${d.d}"><title>${d.n} · 경작지 ${nf(d.ha / 100)}㎢</title></path>`).join('')
+    + `<rect class="aoi" x="${KG.aoi[0]}" y="${KG.aoi[1]}" width="${KG.aoi[2]}" height="${KG.aoi[3]}"/>`;
+  if (color) svg.querySelectorAll('path').forEach((p, i) => { p.style.fill = green(KG.d[i].s); });
+}
+/* A안 — 나라가 서쪽부터 차오름(예시 동작: 실제로는 전국 작업기가 군을 하나씩 끝낼 때) */
+function startA() {
+  $('yr').textContent = KG.year;
+  const svg = $('kgA'); draw(svg, false);
+  const ps = [...svg.querySelectorAll('path')]; let i = 0, sum = 0;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches || q.get('still') === '1';
+  const step = () => {
+    if (i >= ps.length) return;
+    const p = ps[i], d = KG.d[i]; p.classList.add('scan');
+    setTimeout(() => { p.classList.remove('scan'); p.style.fill = green(d.s); }, reduce ? 0 : 260);
+    sum += d.ha; i++; $('bigN').textContent = nf(sum / 100); $('doneN').textContent = i;
+    if (!reduce) setTimeout(step, 150); else step();
+  };
+  step();
+  const chips = [[ 'var(--crop)', '경작지', A.crop2025_model ], [ 'var(--new)', '새 경작', A.new_crop ], [ 'var(--lost)', '경작 줄어듦', A.lost_crop ], [ 'var(--built)', '새 시가지', A.new_built ]];
+  $('chipsA').innerHTML = chips.map(([c, l, v]) => `<span class="chip"><i style="background:${c}"></i>${l} <b>${nf(v)}ha</b></span>`).join('');
+  const show = (t) => {
+    document.querySelectorAll('.zoom [data-t]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
+    $('im21').style.opacity = t === '2021' ? 1 : 0; $('im25').style.opacity = t === '2021' ? 0 : 1;
+    $('cr21').style.opacity = t === '2021' ? 1 : 0; $('cr25').style.opacity = t === '2025' ? 1 : 0; $('chg').style.opacity = t === 'chg' ? 1 : 0;
+  };
+  document.querySelectorAll('.zoom [data-t]').forEach((b) => b.onclick = () => show(b.dataset.t));
+  if (q.get('t')) show(q.get('t'));
+  /* 고치며 똑똑해지기 — 그 자리 고치기 칸(삭제 · 클래스 바꾸기 · 수정 · 메모 · 원칙 252) */
+  let fixed = 0, pop;
+  $('pic').onclick = (e) => {
+    const r = $('pic').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    pop?.remove(); document.querySelectorAll('.dot').forEach((d) => d.remove());
+    const dot = document.createElement('i'); dot.className = 'dot'; dot.style.left = x + 'px'; dot.style.top = y + 'px'; $('pic').append(dot);
+    pop = document.createElement('div'); pop.className = 'fix'; pop.style.left = Math.min(x + 16, 240) + 'px'; pop.style.top = Math.min(y + 8, 330) + 'px';
+    pop.innerHTML = `<div class="t">경작지<span class="ex">예시 동작</span></div><div class="row"><button>삭제</button><button data-c>클래스 바꾸기</button><button>수정</button><button>메모</button></div><p>수정된 부분은 학습 데이터로 저장됩니다.</p>`;
+    pop.querySelector('[data-c]').onclick = (ev) => { ev.stopPropagation(); fixed++; pop.querySelector('p').textContent = `초지로 바꿈 · 수정된 부분 ${fixed}장`; };
+    pop.onclick = (ev) => ev.stopPropagation();
+    $('pic').append(pop);
+  };
+  /* 말로 다루기 → 대시보드 */
+  const ask = () => {
+    $('ans').hidden = false;
+    $('ans').innerHTML = `<div class="q">소쿨룩 평야 휴경 얼마나 돼?<span class="ex">예시 동작</span></div>
+      <div class="r"><b class="num">${nf(A.fallow_candidate_2025)}</b>ha가 휴경 의심입니다. 2021년 경작지 ${nf(A.crop2021_model)}ha 중 2025년 봄 · 여름 모두 초록이 약한 곳입니다. 현장 확인 전입니다.</div>
+      <div class="acts"><button id="toDash">대시보드로</button><button id="toMap">지도에 표시</button></div>`;
+    $('toDash').onclick = () => $('dash').classList.add('open');
+    $('toMap').onclick = () => { show('2025'); $('fal').style.opacity = 1; };
+  };
+  $('askGo').onclick = ask; $('dashX').onclick = () => $('dash').classList.remove('open');
+  if (q.get('ask') === '1' || q.get('dash') === '1') ask();
+  if (q.get('dash') === '1') $('dash').classList.add('open');
+  if (q.get('fal') === '1') { show('2025'); $('fal').style.opacity = 1; }
+  // 대시보드 칸
+  const top = [...KG.d].sort((a, b) => b.ha - a.ha).slice(0, 8), mx = top[0].ha;
+  $('bars').innerHTML = top.map((d) => `<span>${d.n}</span><i class="b" style="width:${Math.round(d.ha / mx * 100)}%"></i><span class="v">${nf(d.ha / 100)}㎢</span>`).join('');
+  $('chgList').innerHTML = chips.slice(1).map(([c, l, v]) => `<div class="chip" style="margin-bottom:10px"><i style="background:${c}"></i>${l} <b class="num">${nf(v)}ha</b></div>`).join('')
+    + `<div class="kv">같은 모델로 2021 · 2025 두 해를 그려 비교 · 표본 범위 ${nf(A.aoi / 100)}㎢</div>`;
+  $('falN').textContent = `${nf(A.fallow_candidate_2025)}ha`;
+  $('acc').innerHTML = `<div class="big2 num">${U.crop_f1.toFixed(2)}</div><div class="kv">경작지 맞춤 정도(F1) · 시험 조각 ${R.chips.test}장 · 정답 = ESA WorldCover 2021</div>`;
+  cal($('calA'), 170);
+}
+function cal(svg, H) {
+  const M = R.ndvi_months, W = +svg.viewBox.baseVal.width, pad = 28, x = (i) => pad + i * (W - 2 * pad) / (M.length - 1), y = (v) => H - 30 - v * (H - 50);
+  const line = (k) => M.map((m, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(m[k]).toFixed(1)}`).join('');
+  svg.innerHTML = `<path d="${line('p90')}" fill="none" stroke="var(--crop)" stroke-width="2" stroke-dasharray="5 4"/><path d="${line('mid')}" fill="none" stroke="var(--crop)" stroke-width="3"/>`
+    + M.map((m, i) => `<circle cx="${x(i)}" cy="${y(m.mid)}" r="4" fill="var(--crop)"/><text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="14" fill="#727780">${+m.m.slice(5)}월</text>`).join('');
+}
+/* B안 — 시즌 보드 */
+function startB() {
+  draw($('kgB'), true);
+  $('kB1').innerHTML = `${nf(KG.total_ha / 100)}<small>㎢</small>`; $('kB1s').textContent = `군 41곳 · ${KG.year}년`;
+  $('kB2').innerHTML = `${nf(A.fallow_candidate_2025)}<small>ha</small>`; $('kB3').innerHTML = `${nf(A.lost_to_built)}<small>ha</small>`;
+  cal($('calB'), 220);
+  $('lp1').textContent = `${nf(R.chips.train + R.chips.val + R.chips.test)}장`; $('lp3').textContent = U.crop_f1.toFixed(2);
+  $('swB').oninput = (e) => document.querySelectorAll('.swp .r').forEach((im) => { im.style.clipPath = `inset(0 0 0 ${e.target.value}%)`; });
+  $('logB').innerHTML = `<div class="msg me">소쿨룩 휴경 얼마?</div>
+    <div class="msg ai"><b class="num">${nf(A.fallow_candidate_2025)}ha</b> · 소쿨룩 평야 휴경 의심(2025). 현장 확인 전입니다.<span class="ex">예시 동작</span></div>
+    <div class="msg me">시가지로 바뀐 경작지는?</div>
+    <div class="msg ai"><b class="num">${nf(A.lost_to_built)}ha</b> · 2021 → 2025. 지도 왼쪽 아래 그림에 파란색입니다.<span class="ex">예시 동작</span></div>`;
+}
+const pick = (v) => { $('A').hidden = v !== 'a'; $('B').hidden = v !== 'b'; $('vA').setAttribute('aria-pressed', String(v === 'a')); $('vB').setAttribute('aria-pressed', String(v === 'b')); $('home').textContent = v === 'a' ? 'XI맵' : '융합 대시보드'; };
+let bOn = false;
+$('vA').onclick = () => pick('a'); $('vB').onclick = () => { pick('b'); if (!bOn) { startB(); bOn = true; } };
+startA();
+if (q.get('v') === 'b') $('vB').onclick();
+</script>
+</body>
+</html>

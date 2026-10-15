@@ -1,0 +1,56 @@
+[
+ {
+  "id": "해외-학습데이터",
+  "t": "해외 학습 데이터 — Sentinel-2(10 m)로 경작지 · 휴경 · 시가지 확장부터. 정답은 공개 판정(ESA WorldCover) + 고치기 + 현장 라벨, 같은 검증 묶음 고정",
+  "mock": false,
+  "shots": [
+   "chips-sample.png",
+   "shots/now-org-kgz-1440-0947.png",
+   "shots/now-ximap-kg-1440-0947.png",
+   "shots/now-ximap-sokuluk-1440-0947.png"
+  ],
+  "videos": [],
+  "opts": [
+   "이대로 시작",
+   "다시"
+  ],
+  "where": [
+   [
+    "docs/superpowers/final/process/design-r30/overseas/README.md",
+    "진단 표 · 학습 데이터 방안 · 실측 표",
+    "2 · 3절"
+   ]
+  ],
+  "now": "소쿨룩 평야 553㎢에서 Sentinel-2 두 시기 + WorldCover 2021로 조각 1,330장을 만들어 재 봄(CPU만 · GPU 0). 작은 U-Net 경작지 F1 0.95(겹침 0.909) · 지수 규칙 0.63 · 한 시기 0.94 · 조각 300장부터 포화. Esri 2025와 경작지 겹침 0.73. 두 날짜 비교는 수확 시기 차이가 섞여 '경작 줄어듦'이 부풀려짐 → 달별 합성으로 가야 함.",
+  "prop": "1단계(약 1주): 농경 주 7곳 달별 합성 → 조각 약 3,000장 + 금 표본 200점 → 경작지 · 시가지 · 물 모델 → 나라 전체 추론 → XI맵 해외 결과를 우리 모델로(금 표본 F1 0.90 이상이면). 2단계: 휴경 · 두 해 변화 · 고치기 · ChatGEO. 3단계: 작물 종류(밀 · 보리 · 옥수수 · 감자) — 현장 라벨을 주시면."
+ },
+ {
+  "id": "해외-퍼포먼스",
+  "t": "해외도 국내 XI맵처럼 — A안 살아 있는 나라 지도(차오름 · 말로 · 고치기 · 두 해) / B안 융합 대시보드",
+  "mock": true,
+  "shots": [
+   "shots/mock-a-ask-1440-0950.png",
+   "shots/mock-a-change-1440-0950.png",
+   "shots/mock-a-dash-1440-0950.png",
+   "shots/mock-a-fill-1440-0950.png",
+   "shots/mock-a-fix-1440-0950.png",
+   "shots/mock-a-full-1440-0950.png",
+   "shots/mock-b-board-1440-0950.png"
+  ],
+  "videos": [],
+  "opts": [
+   "A안",
+   "B안",
+   "다시"
+  ],
+  "where": [
+   [
+    "landxi/proto/review/mock/overseas-perf/index.html",
+    "시안 · 해외 퍼포먼스",
+    "위 단추로 A안 · B안. A안: 지도 오른쪽 그림의 2021 · 2025 · 바뀐 곳, 그림을 눌러 고치기, 아래 '묻기' → '대시보드로'"
+   ]
+  ],
+  "now": "지금 해외는 우리 모델 없이 공개 판정을 군 41곳 · 구획 696곳 비율로 보임. 고치기 · 대시보드 · 나라 전체 분석 · 휴경 질문 없음. 시안 숫자는 실제 값(군 41곳 · 소쿨룩 실측 · 으슥아타 달별 초록 정도), 차오름 순서 · 고치기 저장 · ChatGEO 답 문구는 예시 동작.",
+  "prop": "권하는 것: XI맵은 A안, '대시보드로'가 여는 판은 B안 모양(국내 XI맵 → 융합 대시보드 길과 같게)."
+ }
+]
