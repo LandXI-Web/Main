@@ -1,0 +1,44 @@
+[
+ {
+  "id": "XI맵-지적층",
+  "t": "'층' 판 클래스 체크박스 아래 '지적' 한 줄(기본 꺼짐 · LX 직원 · 기관 모두) — 켜면 LX맵 편집지적도(필지선 · 지번)가 지도에. 보이지 않는 축척에서는 체크박스만 흐리게(새 문구 없음) · 지적이 켜지면 빈 땅 위 마우스도 손가락",
+  "shots": ["shots/staff-cad-far-1440-2044.png", "shots/staff-namwon-cad-on-1440-2044.png", "shots/staff-hamyang-cad-on-1440-2045.png", "shots/staff-jeju-cad-on-1440-2045.png", "shots/gov-namwon-cad-on-1440-2049.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "오른쪽 '층' → 맨 아래 '지적' 체크 → 지도를 가까이(줌 17 이상)"],
+            ["https://namwon.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (남원 기관)", "같은 '층' → '지적'"]],
+  "now": "줌 15.2 = 흐림(투명도 0.38) · 줌 17.6 = 또렷 · 남원 · 함양 · 제주 · 남원 기관 모두 LX맵 타일이 그려짐 · 위쪽 'LX맵' 줄(기관)은 '지적' 한 줄로 합침"
+ },
+ {
+  "id": "XI맵-필지카드",
+  "t": "지적이 켜진 채 빈 땅을 누르면 누른 곳 옆에 필지 카드 — 지번 · 지목 · 면적 · 공시지가 + 그 필지 안 AI 결과(클래스별 수 · 면적) + 지목과 어긋나는 점(기존 실태조사 규칙 이름). 기관은 '자세히' = 기존 기관 필지 카드",
+  "shots": ["shots/staff-namwon-parcel-card-1440-2045.png", "shots/staff-hamyang-parcel-card-1440-2045.png", "shots/staff-jeju-parcel-card-1440-2045.png", "shots/staff-miss-card-1440-2046.png", "shots/gov-namwon-parcel-card-1440-2049.png", "shots/gov-namwon-drawer-1440-2049.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "'지적' 켠 뒤 줌 17 이상에서 객체가 없는 땅 누르기"],
+            ["https://namwon.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (남원 기관)", "같은 방법 → 카드 '자세히'"]],
+  "now": "남원 = 우리 데이터베이스(연속지적 정본) · 함양 = 우리 데이터베이스(연속지적 전국) + 공시지가만 V-World · 제주 = V-World 연속지적(모양 · 면적은 서버가 계산) · 남원 기관 같은 필지(향교동 753) 지목 답 · 3,231.1㎡ · 113,500원/㎡ = 기관 필지 카드 같은 값 · 같은 필지 다시 누르기 = 서버 호출 0"
+ },
+ {
+  "id": "XI맵-소속필지",
+  "t": "객체를 눌러 그 자리 고치기 칸이 열리면 맨 위에 '운림리 31-2 · 대지 · 14,688.5㎡' 한 줄(필지 카드와 같은 출처 · 같은 반올림). 누르면 그 필지 카드 — 논밭처럼 AI 결과가 땅을 덮은 곳에서도 필지 카드로",
+  "shots": ["shots/staff-namwon-object-parcel-1440-2045.png", "shots/staff-hamyang-object-parcel-1440-2045.png", "shots/staff-miss-object-1440-2046.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "가까이에서 객체 누르기 → 칸 맨 위 한 줄"]],
+  "now": "남원 · 함양 모두 칸 첫 줄 = 소속 필지(보조 글자 단계) · 지적 층을 켜지 않아도 나옴 · 기관 화면은 고치기 칸이 없어 해당 없음"
+ },
+ {
+  "id": "클래스끔-통계",
+  "t": "'층' 판에서 끈 클래스가 XI ChatGEO 지도 위 통계 숫자에서도 빠짐 — 화면이 끈 클래스를 질문과 함께 넘기고 서버 집계(업무별 · 읍면동별 · 시군구별 · 해마다 · 날짜별)가 그 줄을 빼고 셈. 왼쪽 위 '보이는 것 기준'은 그대로",
+  "shots": ["shots/staff-stat-all-1440-2046.png", "shots/staff-stat-off-1440-2046.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "'층' → 클래스 '건물' 끄기 → XI ChatGEO '남원시 현황 보여 줘'"]],
+  "now": "남원시 AI 분석 결과 272,559개 → 건물 끔 237,685개(빠진 34,874 = 건물(하천 · 계곡) 줄 그대로) · 끈 뒤에 묻는 질문부터 적용"
+ },
+ {
+  "id": "변화이름-한글",
+  "t": "변화 탐지 결과의 영어 분류(built_new · veg_gain …)가 클래스 목록 · 겹침 고르기 · 고치기 칸 · 필지 카드에 한글 이름으로(서버 한글 이름표 한 곳)",
+  "shots": ["shots/staff-class-names-1440-2046.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "남원 변화 결과 자리에서 '층' → 클래스"]],
+  "now": "built_new → 새 건물 · other → 기타 변화 · veg_gain → 식생 늘어남 · veg_loss → 식생 줄어듦"
+ }
+]

@@ -491,3 +491,28 @@
 .k-main[data-nation="kg"] .xv-a,.k-main[data-nation="kg"] .xv-b{display:none!important}
 @media (prefers-reduced-motion: reduce){.xv-track.is-flow{animation:none}}
 @media (max-width:640px){.xv-a{top:112px;left:12px;width:calc(100% - 24px)}.xv-b{bottom:84px}.xv-sw{bottom:150px}}
+
+/* ═══ 지적 층 · 필지 카드 · 소속 필지(10-15 원칙 266) — 글자는 단계 토큰만(꼬리표 14 · 보조 15 · 본문 16) ═══ */
+.xc-row--cad.is-far .xc-cb{opacity:.38}
+.xc-row--cad.is-far span{color:var(--sub)}
+.xe-pcl{margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--rule);font:600 var(--fs-aux)/22px var(--font-body);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xe-pcl[hidden]{display:none}
+button.xe-pcl{display:block;width:100%;border:0;border-bottom:1px solid var(--rule);background:none;text-align:left;cursor:pointer;border-radius:0}
+button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
+.xp-card{width:360px}
+.xp-dl > div{grid-template-columns:64px minmax(0,1fr)}
+.xp-dl dd small{margin-left:8px;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.xp-l{margin:0 0 6px;font:600 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.xp-none{margin:0 0 4px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.xp-ai{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:6px}
+.xp-ai li{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;align-items:center;gap:10px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.xp-ai i{width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.xp-ai span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-ai b{font:700 var(--fs-aux)/22px var(--font-num);text-align:right}
+.xp-ai em{font:500 var(--fs-tag)/22px var(--font-num);font-style:normal;color:var(--sub);text-align:right;min-width:72px}
+.xp-miss{list-style:none;margin:12px 0 0;padding:10px 12px;border-radius:10px;background:rgba(240,68,82,.08);display:grid;gap:4px}
+.xp-miss li{font:600 var(--fs-aux)/22px var(--font-body);color:var(--warn,#F04452)}
+.xp-card .xe-act{margin-top:14px}
+/* 층 판이 길어지면(결과 세트 · 클래스 · 지적) 아래 채팅 창 뒤로 숨지 않게 판 안에서 넘김 */
+.xc-pop:not([hidden]){display:flex;flex-direction:column;max-height:calc(100% - 132px);box-sizing:border-box}
+.xc-pop > .xc-rows-p{overflow-y:auto;min-height:0;overscroll-behavior:contain}

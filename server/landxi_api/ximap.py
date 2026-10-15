@@ -25,6 +25,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
+from .spaces import CLASS_KO
 
 router = APIRouter()
 
@@ -233,6 +234,8 @@ async def build_board(p) -> dict:
             "n_services": env(n_svc, "가지", "recorded", "서비스 결과 장부의 서비스(전역 분석 제외 — 메인 '서비스 n가지'와 같은 출처)"),
             "n_regions": env(len(out), "count", "recorded", "결과가 있는 시군구(서비스 결과 장부 + 시군구 전역 분석)", as_of=last),
             "years": years, "last_at": last, "as_of": now_iso(),
+            # 결과 분류의 한글 이름표(결과 조각에 영문 코드만 있을 때 — 변화 탐지 built_new 등) · 한 곳(spaces.CLASS_KO)
+            "class_ko": dict(CLASS_KO),
             "source": "서비스 결과 장부(지금 결과) + 시군구 전역 분석"}
 
 

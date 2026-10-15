@@ -359,7 +359,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (run !== O.run) return true;
     const lvl = s.map?.level;
     if (O.bb) stage.go(O.bb, { ms: RM() || fast ? 0 : 1400, maxZoom: lvl === 'sgg' ? 9 : 11.5, pitch: 0 });
-    window.__xc && (window.__xc.dash = { mode: 'map', step: O.step, kind: s.kind, title: s.title, rule: s.rule, panels: (s.panels || []).map((p) => p.type), map: s.map ? { level: lvl, scale: s.map.scale?.kind, hue: s.map.scale?.hue, meaning: s.map.meaning, n: Object.keys(s.map.values || {}).length } : null, main: s.main, fill: 'running', tags: 0, tour: null });
+    window.__xc && (window.__xc.dash = { mode: 'map', step: O.step, kind: s.kind, title: s.title, rule: s.rule, panels: (s.panels || []).map((p) => p.type), map: s.map ? { level: lvl, scale: s.map.scale?.kind, hue: s.map.scale?.hue, meaning: s.map.meaning, n: Object.keys(s.map.values || {}).length } : null, main: s.main, off: s.off || null, kpis: (s.kpis || []).map((k) => [k.label, k.value]), fill: 'running', tags: 0, tour: null });
     if (fast) { for (const f of O.feats) fstate(f.properties.k, { t: 1 }); showTags(topOf(O.feats.length)); if (window.__xc?.dash) { window.__xc.dash.fill = 'done'; window.__xc.dash.tags = O.tags.size; window.__xc.dash.tour = 'skip'; } return true; }
     await sleep(350);
     await fillUp(O.feats, run);

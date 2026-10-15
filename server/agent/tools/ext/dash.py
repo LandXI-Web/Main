@@ -166,8 +166,42 @@ def _nf(v, d=0):
 
 
 # ── 대시보드 짓기 ────────────────────────────────────────────────────────────────
-async def build(args: dict) -> dict:
+class _Off:
+    """끈 클래스(XI맵 '층' 판 체크박스 · 10-15 원칙 265)를 뺀 집계 — 같은 함수 · 같은 장부, 줄만 거른다(숫자 한 출처)."""
+
+    def __init__(self, XD, off):
+        self.XD, self.off = XD, tuple(off)
+
+    async def agg_task(self, sgg=None):
+        return self.XD.without(await self.XD.agg_task(sgg), self.off)
+
+    async def agg_emd(self, sgg):
+        return self.XD.without(await self.XD.agg_emd(sgg), self.off)
+
+    async def agg_region(self):
+        return self.XD.without(await self.XD.agg_region(), self.off)
+
+    async def agg_year(self, sgg):
+        return self.XD.without(await self.XD.agg_year(sgg), self.off)
+
+    async def agg_time(self, sgg=None):
+        return await self.XD.agg_time(sgg, self.off)
+
+    def __getattr__(self, k):                     # 지목별 · 의심 종류별 · 면적 구간별(업무를 고른 질문)은 그대로
+        return getattr(self.XD, k)
+
+
+def off_classes(ctx) -> list[str]:
+    """화면이 보낸 끈 클래스(context.cls_off) — 짧은 이름 문자열만 · 20개까지."""
+    c = getattr(ctx, "context", None) or {}
+    v = c.get("cls_off") or []
+    return [str(x)[:24] for x in v if isinstance(x, str) and x.strip()][:20] if isinstance(v, list) else []
+
+
+async def build(args: dict, off: list[str] | None = None) -> dict:
     from landxi_api import xdash as XD
+    if off:
+        XD = _Off(XD, off)
     kind = args.get("kind") or "overview"
     regs = [r for r in str(args.get("region") or "").split(",") if r]
     task = args.get("task") or None
@@ -593,7 +627,10 @@ async def ximap_dash(args: dict, ctx) -> Out:
     if not args.get("kind"):
         c = getattr(ctx, "context", None) or {}
         args = parse(args.get("request") or "", c.get("region")) or {**args, "kind": "overview"}
-    spec = await build(args)
+    off = off_classes(ctx)
+    spec = await build(args, off)
+    if off:
+        spec["off"] = off                         # 끈 클래스를 뺀 숫자(화면 왼쪽 위 '보이는 것 기준'과 같은 기준)
     m = spec.get("main") or {}
     out.ui_actions.append({"op": "ximap_dash", "spec": spec})
     # 답 끝 다음 단계(10-15 원칙 262 — 먼저 지도에만 가시화 · 통계는 원할 때 한 단계 더): 화면이 눌림을 받아 2 · 3단계로(새 질문 아님)

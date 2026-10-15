@@ -39,6 +39,16 @@ _C: dict = {}
 TTL = 60.0
 
 
+def _nat_cls_sql(off=()) -> str:
+    """전국 분석 자산마다 세는 분류(NCLS) — 끈 클래스를 뺀 SQL 조건(이름은 NCLS 고정값만 · 사용자 값은 넣지 않음)."""
+    parts = []
+    for a, cs in NCLS.items():
+        keep = [c for c in cs if c not in set(off or ())]
+        if keep:
+            parts.append(f"(asset='{a}' AND k IN ({','.join(repr(c) for c in keep)}))")
+    return " OR ".join(parts) or "false"
+
+
 def task_of(name: str) -> str:
     return TASK_OF.get(name, name)
 
@@ -385,8 +395,29 @@ async def agg_area(sgg: str | None, task: str) -> dict:
 
 
 # ── 날짜별(지금 도는 전국 분석) ──────────────────────────────────────────────────
-async def agg_time(sgg: str | None = None) -> dict:
-    key = ("time", sgg)
+def without(res: dict, off) -> dict:
+    """끈 클래스(XI맵 '층' 판 체크박스)를 뺀 집계 사본 — 업무 줄 k · 읍면동/시군구 칸 · 해마다 줄. 원본(캐시)은 그대로.
+    k = 업무 이름(task_of) = 화면 클래스 이름(XI맵 visRows 와 같은 기준)."""
+    off = set(off or ())
+    if not off or not isinstance(res, dict):
+        return res
+    out = dict(res)
+    if "rows" in res and res.get("by") == "task":
+        out["rows"] = [r for r in res["rows"] if r.get("k") not in off]
+    if "cols" in res:
+        drop = {c["name"] for c in res["cols"] if c.get("k") in off}
+        out["cols"] = [c for c in res["cols"] if c.get("k") not in off]
+        rows = [{**r, "vals": {k: v for k, v in (r.get("vals") or {}).items() if k not in drop}} for r in res.get("rows", [])]
+        out["rows"] = [r for r in rows if r["vals"]] if res.get("by") == "region" else rows
+    if "series" in res:
+        out["series"] = [x for x in res["series"] if x.get("k") not in off]
+    out["off"] = sorted(off)
+    return out
+
+
+async def agg_time(sgg: str | None = None, off=()) -> dict:
+    off = tuple(sorted(set(off or ())))
+    key = ("time", sgg, off)
     if (c := _cache(key, 30)) is not None:
         return c
     async with db(realm="lx") as conn:
@@ -400,7 +431,7 @@ async def agg_time(sgg: str | None = None) -> dict:
         unit = "hour" if span["a"] and (span["b"] - span["a"]) < dt.timedelta(days=4) else "day"
         rows = await conn.fetch(
             f"SELECT date_trunc('{unit}', done_at AT TIME ZONE 'Asia/Seoul') AS t, count(*)::int AS cells, "
-            "coalesce(sum((SELECT sum((v->>'n')::bigint) FROM jsonb_each(counts) e(k, v) WHERE (asset='farm' AND k IN ('경작지','비닐하우스')) OR (asset='river' AND k='건물'))), 0)::bigint AS n "
+            f"coalesce(sum((SELECT sum((v->>'n')::bigint) FROM jsonb_each(counts) e(k, v) WHERE {_nat_cls_sql(off)})), 0)::bigint AS n "
             f"FROM national_cells WHERE year=$1 AND NOT test AND state='done' AND done_at IS NOT NULL{where} GROUP BY 1 ORDER BY 1", *args)
         run = await conn.fetchrow(
             f"SELECT sgg_name, name FROM national_cells WHERE year=$1 AND NOT test AND state='running'{where} ORDER BY started_at DESC NULLS LAST LIMIT 1", *args)

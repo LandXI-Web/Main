@@ -1,0 +1,128 @@
+{
+ "at": "2026-10-15T11:49:23.832Z",
+ "hosts": {
+  "app": "https://app.land-xi.dev",
+  "admin": "https://admin.land-xi.dev",
+  "gov": "https://namwon.land-xi.dev"
+ },
+ "result": [
+  {
+   "name": "정확도 · 건축물 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 경작·휴경 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "95%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "95%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 곤포사일리지 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "96%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "96%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 비닐하우스 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "정확도 · 주차장 분석서비스 (지금 판)",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 카드",
+     "value": "89%",
+     "note": ""
+    },
+    {
+     "screen": "분석하기 자세히",
+     "value": "89%",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "AI 분석 결과 · 경작·휴경 분석서비스 · 남원시",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "분석하기 자세히",
+     "value": "2,098필지",
+     "note": ""
+    },
+    {
+     "screen": "기관 내 서비스(namwon)",
+     "value": "2,098",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "서비스 수(결과를 낸 서비스)",
+   "verdict": "한 화면",
+   "rows": [
+    {
+     "screen": "메인 · 분석 결과 제공",
+     "value": null,
+     "note": ""
+    },
+    {
+     "screen": "XI맵 전국 결과",
+     "value": "7가지",
+     "note": ""
+    }
+   ]
+  }
+ ],
+ "localCalls": [],
+ "left203": [],
+ "warns": [
+  "메인 서비스 수 칸이 안 보임"
+ ],
+ "fail": false
+}

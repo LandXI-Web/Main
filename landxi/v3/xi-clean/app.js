@@ -23,7 +23,8 @@ import { NCLS, NCOLOR } from './national.js';                    // 전국 분�
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 import { createDash } from './dash.js';                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
 import { createOnMap } from './onmap.js';                         // 같은 사양을 지도 위에서(10-15 원칙 258 — 기본 · '통계' 단추로 대시보드와 바꿔 볼 수 있다)
-import { createShowcase } from './showcase.js';                   // 왼쪽 위 결과 표시 콘셉트 셋 A · B · C(10-15 원칙 259 · 시안 단추 · 기본은 지금 모양)
+import { createShowcase } from './showcase.js';
+import { createParcels } from './parcel.js';                      // 지적 층 · 필지 카드 · 객체 소속 필지(10-15 원칙 266 · 123)                   // 왼쪽 위 결과 표시 콘셉트 셋 A · B · C(10-15 원칙 259 · 시안 단추 · 기본은 지금 모양)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -150,7 +151,7 @@ const S = {
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
   clsOff: new Set(),                                 // 끈 클래스(XI맵 '층' 판 체크박스 · 10-15) — 지도 · 왼쪽 위 숫자 · 말풍선 숫자에서 빠짐('보이는 것 기준')
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null, PC = null;
 /* 통계 표출 단계(10-15 원칙 262 — "대시보드를 원치 않을 수 있고. 지도에 가시화되어서 보기만 하고 싶어할수도"): 0 = 없음 · 1 = 지도에만(한 줄) · 2 = 지도 위 통계 판 · 3 = 대시보드.
    질문하면 늘 1단계부터(이미 2 · 3단계를 보고 있으면 그 단계에 새 사양). '통계' 단추 · 답 끝 '통계 보기' · '크게 보기' · 판의 '지도만' · 대시보드 '지도로 돌아가기'로 오간다.
    옛 'xc_statv'(지도 위 ↔ 대시보드 기억)는 쓰지 않는다 — 단계가 대신한다 */
@@ -273,7 +274,7 @@ async function boot() {
     pick: pickEmd, regionInfo: () => ({ emds: S.remd, meta: S.remdMeta }) }) : null;
 
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
-    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set) }),
+    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set), cls_off: [...S.clsOff] }),   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
     // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
     dock: 'bottom', dockHost: mainEl, sugg: xiSugg });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
   if (S.board) DS = createDash({ map, stage, host: mainEl, h,
@@ -399,16 +400,19 @@ async function buildLayers(cat) {
     if (canRequest(S.who)) { map.addLayer({ id: sid + '-hit', type: 'fill', source: sid, 'source-layer': it.layer, minzoom: 14, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, 'slot-overlay'); S.hitLayers = [...(S.hitLayers || []), sid + '-hit']; }
     S.parcelLayers.push(sid + '-l'); S.susLayers.push(sid + '-s', sid + '-sl');
   }
-  if (S.tenant) lxmapLayer();
+  lxmapLayer();                                      // 지적(LX맵 편집지적도) — LX 직원 · 기관 모두(10-15 원칙 266)
   // 실태조사 우선순위 필지 점(기관 화면만 · 먼 축척 · 필지 면이 차오르면 물러난다)
   map.addSource('xc-pts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({ id: 'xc-pts-glow', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-blur': 1, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 3, 9, 6, 12, 12, 14, 14], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 0.3, 14, 0] } }, 'slot-overlay');
   map.addLayer({ id: 'xc-pts', type: 'circle', source: 'xc-pts', paint: { 'circle-color': AMBER, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 1.4, 9, 2, 12, 3.2, 14, 4.5],
     'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 8, 0.4, 12, 1], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 1, 14.5, 0], 'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 0.9, 14.5, 0] } }, 'slot-overlay');
 }
-/* LX맵(편집지적도 · V-World WMS 층 lt_c_landinfobasemap) — 연속지적(필지 속성)과 다른 '지도 그림'(원칙 123). 게이트웨이 중계(/proxy/vworld/wms · 키는 서버).
-   V-World 는 이 층을 약 0.6m/화소보다 가까운 축척에서만 그린다(그보다 멀면 투명 한 장) → 512 화소 타일로 받아 지도 z18 부터 켠다. 지역 고정값 없음. */
-const LXMAP_Z = 18;
+/* LX맵(편집지적도 · V-World WMS 층 lt_c_landinfobasemap) — 연속지적(필지 속성)과 다른 '지도 그림'(원칙 123). 게이트웨이 중계(/proxy/vworld/wms · 키는 서버 · 30일 보관).
+   V-World 는 이 층을 약 0.8m/화소보다 가까운 축척에서만 그린다(그보다 멀면 투명 한 장 · 10-15 실측 0.8 그림 · 0.9 빈 장).
+   → 타일 하나를 0.75m/화소가 되게 받아(z16 타일 = 1024 화소 → 512 로 줄임) 지도 z17 부터 켠다. 더 먼 축척(z15 · 16)은 한 화면에 수십 MB 라 받지 않는다(정중하게).
+   지역 고정값 없음. */
+const LXMAP_Z = 17;
+const CAD_MPP = 0.75;
 const R3857 = 20037508.342789244;
 async function blankTile() { const c = new OffscreenCanvas(1, 1); return createImageBitmap(c); }
 function lxmapLayer() {
@@ -418,25 +422,35 @@ function lxmapLayer() {
       const m = /^lxmap:\/\/(\d+)\/(\d+)\/(\d+)/.exec(params.url);
       if (!m) return { data: await blankTile() };
       const [z, x, y] = [+m[1], +m[2], +m[3]], s = (2 * R3857) / 2 ** z, x0 = -R3857 + x * s, y1 = R3857 - y * s;
+      const px = Math.min(1024, Math.max(512, Math.ceil(s / CAD_MPP / 256) * 256));   // V-World 가 그리는 축척이 되게(0.75m/화소)
       const q = new URLSearchParams({ SERVICE: 'WMS', REQUEST: 'GetMap', VERSION: '1.3.0', LAYERS: 'lt_c_landinfobasemap', STYLES: '', CRS: 'EPSG:3857',
-        BBOX: [x0, y1 - s, x0 + s, y1].map((v) => v.toFixed(2)).join(','), WIDTH: '512', HEIGHT: '512', FORMAT: 'image/png', TRANSPARENT: 'true' });
+        BBOX: [x0, y1 - s, x0 + s, y1].map((v) => v.toFixed(2)).join(','), WIDTH: String(px), HEIGHT: String(px), FORMAT: 'image/png', TRANSPARENT: 'true' });
       const tok = session.get()?.token;
       try {
         const r = await fetch(API.prefix + '/proxy/vworld/wms?' + q, { headers: tok ? { authorization: 'Bearer ' + tok } : {}, signal: ac.signal });
         if (!r.ok || !/^image\//.test(r.headers.get('content-type') || '')) return { data: await blankTile() };
-        return { data: await createImageBitmap(await r.blob()) };
+        const b = await r.blob();
+        return { data: await (px > 512 ? createImageBitmap(b, { resizeWidth: 512, resizeHeight: 512, resizeQuality: 'high' }) : createImageBitmap(b)) };
       } catch { return { data: await blankTile() }; }
     });
   }
   map.addSource('xc-lxmap', { type: 'raster', tiles: ['lxmap://{z}/{x}/{y}'], tileSize: 512, minzoom: LXMAP_Z - 1, maxzoom: 19 });
   map.addLayer({ id: 'xc-lxmap', type: 'raster', source: 'xc-lxmap', minzoom: LXMAP_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-overlay');
 }
-/** LX맵 켜고 끄기(층 창 · 필지 카드 '이 자리 LX맵 겹쳐 보기' 같은 값) — 멀리 있으면 '가까이 확대하면 보입니다' */
+/** 지적(LX맵) 켜고 끄기(층 판 '지적' · 기관 필지 카드 '이 자리 LX맵 겹쳐 보기' 같은 값) — 멀리 있으면 층 판 '지적' 줄이 흐려질 뿐(새 문구 없음 · 10-15) */
 function setLxmap(on, { near = null } = {}) {
-  S.layers.lxmap = !!on; applyLayers();
-  if (!on) return;
+  S.layers.lxmap = !!on; applyLayers(); paintCadRow();
+  if (!on) { PC?.close(); return; }
   if (near) map.easeTo({ center: near, zoom: Math.max(map.getZoom(), LXMAP_Z + 0.5), duration: 900 });
-  else if (map.getZoom() < LXMAP_Z) K.toast('LX맵은 지도를 가까이 확대하면 보입니다');
+}
+/** 지적 층이 켜져 있고 보이는 축척 — 빈 땅을 누르면 필지 카드 · 마우스 손가락 */
+const cadOn = () => !!S.layers.lxmap && !!map?.getLayer('xc-lxmap') && map.getZoom() >= LXMAP_Z && !AN?.active && !S.swipe && !DS?.on;
+/** 층 판의 '지적' 줄 — 보이지 않는 축척이면 체크박스만 흐리게 */
+function paintCadRow() {
+  const r = pop?.querySelector('[data-cad]');
+  if (!r) return;
+  r.setAttribute('aria-checked', String(!!S.layers.lxmap));
+  r.classList.toggle('is-far', map.getZoom() < LXMAP_Z);
 }
 const susSet = () => [...S.susLayers, 'xc-pts', 'xc-pts-glow'];
 
@@ -474,6 +488,8 @@ function wireMap() {
     const lyr = ['xc-pts', ...S.susLayers.filter((l) => l.endsWith('-s'))].filter((l) => map.getLayer(l));
     const hit = map.queryRenderedFeatures(pad, { layers: lyr })[0];
     if (hit?.properties?.pnu) { const t = String(hit.properties.pnu).slice(2); const f = (S.last?.items || []).find((x) => String(x.pnu).slice(2) === t); openParcel(f?.pnu || String(hit.properties.pnu), { fly: hit.layer.id === 'xc-pts' }); return; }
+    /* 지적 층이 켜져 있으면(기관 · 전국 결과 판 없는 화면) 빈 땅 = 그 자리 필지 카드(지도 안) — '자세히' = 아래 기관 필지 카드 */
+    if (!S.board && cadOn()) { PC.open(e.lngLat); return; }
     /* 기관 — 지도에서 필지를 누르면 필지 카드(대장 · AI 분석 · 검토 요청) */
     const hl = (S.hitLayers || []).filter((l) => map.getLayer(l));
     const ph = hl.length ? map.queryRenderedFeatures(e.point, { layers: hl })[0] : null;
@@ -485,6 +501,10 @@ function wireMap() {
       if (r) setRegion(r);
     }
   });
+  if (!S.board) map.on('mousemove', (e) => { if (e.originalEvent && e.originalEvent.target !== map.getCanvas()) return; if (AN?.active || S.swipe) return; if (S.layers.lxmap) map.getCanvas().style.cursor = cadOn() ? 'pointer' : ''; });
+  map.on('zoom', paintCadRow);
+  PC = createParcels({ map, host: mainEl, h, K, objLayers, clsName, colorOf: (c) => (BD?.colorOf(clsName(c)) || BD?.colorOf(c) || '#0FA9A0'), unitOf: (c) => BD?.UNIT?.[c] || UNIT_K[c] || '개',
+    onMore: S.tenant ? (pnu) => openParcel(pnu) : null });
   for (const l of ['xc-pts', ...S.susLayers.filter((x) => x.endsWith('-s'))]) {
     map.on('mouseenter', l, () => { if (!AN?.active) map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', l, () => { if (!AN?.active) map.getCanvas().style.cursor = ''; });
@@ -902,7 +922,7 @@ function mountBoard() {
   BD.nat.onData = () => { if (BD.data) paintBoardHud(); };   // 진행 장부를 다시 읽으면(30초) 합계 · '지금 분석 중' 한 줄을 새로
   S.boardP = BD.load(PRE.board || boardPromise(true), PRE.nat).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
   const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
-  ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery, colorFor, hideOrig,
+  ED = createEditor({ map, host: mainEl, h, K, canEdit, setImagery, colorFor, hideOrig, clsName, parcelLine: (ll) => PC?.line(ll), onParcel: (ll) => PC?.open(ll),
     onEdited: () => { clearTimeout(S.reloadT); S.reloadT = setTimeout(() => BD.reload(), 400); } });
   mountObjectHover();
   imageryToggle();
@@ -911,8 +931,8 @@ function mountBoard() {
   map.on('click', (e) => {
     if (!S.board || AN?.active || S.swipe || ED.busy || DS?.on || map.getZoom() < BD.NEAR_Z) return;
     const hs = objectsAt(e.point);
-    if (!hs.length) { closePicker(); return; }
-    closePop(); unpin(); closePicker();
+    if (!hs.length) { closePicker(); if (cadOn()) { closePop(); unpin(); ED.close(); PC.open(e.lngLat); } return; }   // 지적 층 켜짐 · 빈 땅 = 그 필지 카드
+    closePop(); unpin(); closePicker(); PC?.close();
     if (hs.length === 1) { openObject(hs[0], e.lngLat); return; }
     pickObject(hs, e.lngLat);
   });
@@ -1205,6 +1225,9 @@ function hideOrig(set, fids) {
 }
 const objLayers = () => [...(S.res || []).flatMap((it) => it.ids.filter((l) => /-(fill|pt)$/.test(l))).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none'),
   ...(BD?.nat && map.getZoom() >= BD.nat.OBJ_Z - 0.5 ? BD.nat.objLayers() : []), ...(map.getLayer('xe-live-fill') ? ['xe-live-fill'] : [])];
+/** 결과 분류 이름 — 결과 조각에 영문 코드만 있으면(변화 탐지 built_new 등) 서버 한글 이름표(GET /ximap/board class_ko · spaces.CLASS_KO 한 곳) */
+const clsName = (c) => { const k = String(c ?? ''); return BD?.data?.class_ko?.[k.toLowerCase()] || k; };
+const UNIT_K = { 경작지: '곳', 비닐하우스: '동', 건물: '동', 주차장: '곳' };
 /** 그 점의 객체들(겹친 것 모두 · 같은 객체는 한 번 · 맨 위부터) → [{f, set, fid, cls, area, live}] */
 function objectsAt(pt) {
   const lyr = objLayers(); if (!lyr.length) return [];
@@ -1212,11 +1235,11 @@ function objectsAt(pt) {
   const seen = new Set(), out = [];
   for (const f of map.queryRenderedFeatures(pad, { layers: lyr })) {
     const live = f.layer.id === 'xe-live-fill';
-    const set = live ? f.properties?.set : (BD.bySource(f.source)?.set || BD.nat.bySource(f.source)?.set);
+    const set = live ? f.properties?.set : (BD?.bySource(f.source)?.set || BD?.nat?.bySource(f.source)?.set);
     const fid = live ? f.properties?.fid : (f.properties?.id ?? f.id);
     if (!set || fid == null) continue;
     const key = set + '|' + fid; if (seen.has(key)) continue; seen.add(key);
-    const L = live ? { set, item: { name: f.properties?.cls || '' } } : (BD.bySource(f.source) || { set, item: { name: f.properties?.cls || '' } });
+    const L = live ? { set, item: { name: f.properties?.cls || '' } } : (BD?.bySource(f.source) || { set, item: { name: f.properties?.cls || '' } });
     out.push({ f, L, set, fid: String(fid), cls: f.properties?.cls || '', area: Number(f.properties?.area_m2) || null, live });
   }
   return out;
@@ -1229,7 +1252,7 @@ function pickObject(hs, at) {
   const el = h('div.xe-pick.t-card.t-card--map', { role: 'listbox', 'aria-label': '겹친 객체' },
     h('p.xe-pick-t', {}, h('span', { text: '겹침' }), h('b.num', { text: String(hs.length) })),
     ...hs.map((o) => h('button.xe-pick-r', { type: 'button', role: 'option', onclick: () => { closePicker(); openObject(o, at); } },
-      h('i', { style: { background: colorFor(o.set, o.cls) } }), h('span', { text: o.cls || '객체' }), h('b.num', { text: o.area != null ? `${nf(Math.round(o.area))}㎡` : '' }))));
+      h('i', { style: { background: colorFor(o.set, o.cls) } }), h('span', { text: clsName(o.cls) || '객체' }), h('b.num', { text: o.area != null ? `${nf(Math.round(o.area))}㎡` : '' }))));
   PICK = new window.maplibregl.Marker({ element: el, anchor: 'left', offset: [14, 0] }).setLngLat(at).addTo(map);
   requestAnimationFrame(() => el.classList.add('in'));
 }
@@ -1244,7 +1267,7 @@ function mountObjectHover() {
     const top = hs[0]?.f || null;
     const k = top && top.id != null ? { source: top.source, sourceLayer: top.sourceLayer, id: top.id } : null;
     if (!k || !hv || k.source !== hv.source || k.id !== hv.id) { unhover(); if (k) { hv = k; try { map.setFeatureState(hv, { hover: true }); } catch { hv = null; } } }
-    if (ok) map.getCanvas().style.cursor = hs.length ? 'pointer' : '';   // 객체 = 손가락 · 빈 지도 = 지도 기본(끌기)
+    if (ok) map.getCanvas().style.cursor = hs.length || cadOn() ? 'pointer' : '';   // 객체 = 손가락 · 빈 지도 = 지도 기본(끌기) · 지적 층이 켜지면 빈 땅(필지)도 손가락
     ovl.hidden = hs.length < 2;
     if (hs.length >= 2) { ovl.textContent = `겹침 ${hs.length}`; ovl.style.transform = `translate(${Math.round(pt.x + 14)}px,${Math.round(pt.y + 18)}px)`; }
     X.objHover = { n: hs.length, top: hs[0] ? { cls: hs[0].cls, set: hs[0].set } : null, cursor: map.getCanvas().style.cursor };
@@ -1867,7 +1890,7 @@ function showPop(title, ...kids) {
   else pop.style.top = '';
 }
 function renderLayers() {
-  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ...(map.getLayer('xc-lxmap') ? [['lxmap', 'LX맵']] : []), ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · LX맵 = 기관 화면(나중 8 ⓐ)
+  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · LX맵(편집지적도) = 아래 '지적' 한 줄(10-15 원칙 266)
   const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(k === 'ai' ? aiOn() : S.layers[k]), onclick: (e) => { if (k === 'lxmap') { setLxmap(!S.layers.lxmap); e.currentTarget.setAttribute('aria-pressed', String(S.layers.lxmap)); return; } if (k === 'ai') { S.layers.ai = !aiOn(); S.aiUser = true; S.aiByRegion = false; } else S.layers[k] = !S.layers[k]; e.currentTarget.setAttribute('aria-pressed', String(k === 'ai' ? aiOn() : S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   // AI 분석 아래: 이 지역에 결과가 있는 세트(이름 = 카탈로그 · 전역 분석 결과)
   const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(aiOn() && S.resOn[it.id])), 'data-res': it.id,
@@ -1878,9 +1901,13 @@ function renderLayers() {
   const cls = S.board && aiOn() ? visibleClasses() : [];
   const clsRows = cls.map((c) => h('button.xc-row.xc-row--cls', { type: 'button', role: 'checkbox', 'aria-checked': String(!S.clsOff.has(c)), 'data-cls': c,
     onclick: () => { if (S.clsOff.has(c)) S.clsOff.delete(c); else S.clsOff.add(c); applyClsOff(); renderLayers(); } },
-  h('i.xc-cb'), h('i.xc-dot', { style: { background: BD.colorOf(c) } }), h('span', { text: c })));
-  rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []));
+  h('i.xc-cb'), h('i.xc-dot', { style: { background: BD.colorOf(c) } }), h('span', { text: clsName(c) })));
+  // 지적(LX맵 편집지적도 · 10-15 원칙 266) — 클래스 체크박스 옆 한 줄 · 기본 꺼짐 · 보이지 않는 축척이면 체크박스만 흐리게
+  const cad = map.getLayer('xc-lxmap') ? h('button.xc-row.xc-row--cls.xc-row--cad', { type: 'button', role: 'checkbox', 'aria-checked': String(!!S.layers.lxmap), 'data-cad': '1',
+    onclick: () => setLxmap(!S.layers.lxmap) }, h('i.xc-cb'), h('span', { text: '지적' })) : null;
+  rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []), ...(cad ? [cad] : []));
   showPop('층', h('div.xc-rows-p', {}, ...rows));
+  paintCadRow();
 }
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */

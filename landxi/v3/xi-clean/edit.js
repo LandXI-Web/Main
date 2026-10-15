@@ -14,7 +14,8 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 /* 같은 뜻은 한 말(10-15 원칙 252 — '지움' · '지우기' → '삭제' · 동작 넷 = 삭제 · 클래스 바꾸기 · 수정 · 메모) */
 const ACT = { delete: '삭제', reclass: '클래스 바꿈', reshape: '수정', add: '새로 그림', memo: '메모' };
 
-export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, colorFor, hideOrig }) {
+export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, colorFor, hideOrig, clsName = (c) => c, parcelLine = null, onParcel = null }) {
+  // parcelLine(누른 자리) → '운림리 31-2 · 답 · 1,240㎡'(소속 필지 · 필지 카드와 같은 출처 · 10-15 원칙 266) · clsName = 영문 분류 코드 → 한글 이름표
   // colorFor(묶음, 클래스) → 그 결과 층 색 · hideOrig(묶음, [객체 id]) → 원래 객체 숨김(10-15 사용자 "클래스를 바꿔 봤는데 색상은 그대로네?" — 바꾼 즉시 새 클래스 색 · 저장 뒤 · 다른 사람도 같게)
   const E = { card: null, at: null, sel: null, mode: null, sets: [], box: null, hidden: new Set() };
   const card = h('section.xe-card.t-card.t-card--map', { hidden: true, role: 'dialog', 'aria-label': '객체 고치기' });
@@ -97,6 +98,11 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
   async function open(L, fid, at) {
     layers(); stopShape(); stopDraw();
     E.at = at; E.L = L;
+    E.pcl = null; E.pclEl = null;
+    if (parcelLine) {
+      const mine = (E.pclSeq = (E.pclSeq || 0) + 1);
+      Promise.resolve(parcelLine(at)).then((t) => { if (mine !== E.pclSeq) return; E.pcl = t || ''; if (E.pclEl) { E.pclEl.textContent = E.pcl; E.pclEl.hidden = !E.pcl; place(); } }, () => {});
+    }
     card.hidden = false; card.replaceChildren(h('p.xe-wait', { text: '불러오는 중' })); place();
     let f;
     try { f = await api('/ximap/feature?' + new URLSearchParams({ set: L.set, fid })); }
@@ -124,11 +130,14 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
     const state = p.edit_state === 'deleted' ? '삭제됨' : p.edit_state === 'added' ? '새로 그림' : p.edit_state === 'edited' ? '수정됨'
       : rc ? `이전에 ${{ delete: '삭제한', reclass: '클래스 바꾼', reshape: '수정한' }[rc.action] || '수정한'} 자리` : null;
     const head = h('header.xe-h', {},
-      h('div', {}, h('h3', { text: p.cls || '객체' }), h('p.xe-sub', { text: [conf != null ? `신뢰도 ${conf}%` : null, p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : null].filter(Boolean).join(' · ') })),
+      h('div', {}, h('h3', { text: clsName(p.cls) || '객체' }), h('p.xe-sub', { text: [conf != null ? `신뢰도 ${conf}%` : null, p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : null].filter(Boolean).join(' · ') })),
       state ? h('span.t-chip.xe-st', { text: state, dataset: { s: p.edit_state || 'recheck' } }) : null,
       h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: close }));
     const dl = h('dl.xe-dl', {}, ...lines.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v, title: v }))));
-    const kids = [head, dl];
+    // 맨 위 소속 필지 한 줄 — 누르면 그 필지 카드(객체가 땅을 덮은 곳에서도 필지 카드로 · onParcel)
+    E.pclEl = parcelLine ? (onParcel ? h('button.xe-pcl', { type: 'button', text: E.pcl || '', hidden: !E.pcl, onclick: () => { const at = E.at; close(); onParcel(at); } })
+      : h('p.xe-pcl', { text: E.pcl || '', hidden: !E.pcl })) : null;
+    const kids = [...(E.pclEl ? [E.pclEl] : []), head, dl];
     if (note) kids.push(note);
     if (canEdit && !note) {
       const del = p.edit_state === 'deleted';
