@@ -1,0 +1,9 @@
+
+Running 5 tests using 3 workers
+
+[1/5] tests\e2e\impl12-mapsvc.spec.mjs:30:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 지도 서비스 — 메뉴 칸 · 묶음 둘 켜기 · 도형 누르면 오른쪽 속성 · XI맵 요소 0 · 추론 결과 보기가 여기로
+[2/5] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+[3/5] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[4/5] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+[5/5] tests\e2e\impl12-mapsvc.spec.mjs:82:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 분석하기 상세 — 영상 고르기: 카드 두 열 · 범위 지도 · 맞음 표시 · 다른 영상을 고르면 오른쪽 칸이 따라온다 · 결과 안내는 지도 서비스
+  5 passed (22.8s)

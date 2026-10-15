@@ -1,0 +1,247 @@
+{
+ "at": "2026-10-15 21:27:28",
+ "app": "https://app.land-xi.dev",
+ "shots": {
+  "01-xi-default-1440-2128.png": "2026-10-15 21:28:53",
+  "02-layers-dots-1440-2128.png": "2026-10-15 21:29:02",
+  "03-color-open-1440-2129.png": "2026-10-15 21:29:11",
+  "04-color-purple-1440-2129.png": "2026-10-15 21:29:20",
+  "05-color-cvd-op40-1440-2129.png": "2026-10-15 21:29:31",
+  "06-reload-remembered-1440-2129.png": "2026-10-15 21:29:51",
+  "07-stat-panel-1440-2130.png": "2026-10-15 21:30:11",
+  "08-stat-color-open-1440-2130.png": "2026-10-15 21:30:20",
+  "09-stat-viridis-step-1440-2130.png": "2026-10-15 21:30:29",
+  "10-reset-1440-2130.png": "2026-10-15 21:30:52",
+  "11-list-all-1440-2131.png": "2026-10-15 21:31:22",
+  "12-list-class-off-1440-2131.png": "2026-10-15 21:31:32"
+ },
+ "errors": [],
+ "bad": [],
+ "local": [],
+ "xi": {
+  "classes": [
+   [
+    "건물",
+    "rgb(49, 130, 246)"
+   ],
+   [
+    "경작지",
+    "rgb(46, 158, 91)"
+   ],
+   [
+    "비경작지",
+    "rgb(92, 124, 250)"
+   ],
+   [
+    "비닐하우스",
+    "rgb(245, 159, 0)"
+   ],
+   [
+    "주차장",
+    "rgb(139, 92, 246)"
+   ]
+  ],
+  "target": "비닐하우스",
+  "afterPick": {
+   "paint": {
+    "nat": 18,
+    "natWith": 18,
+    "svc": 4,
+    "svcWith": 4
+   },
+   "boardColor": null,
+   "colors": {
+    "cls": {
+     "비닐하우스": "#7C5CFA"
+    },
+    "op": 1,
+    "custom": true,
+    "stat": {
+     "ramp": null,
+     "step": null,
+     "op": 1,
+     "custom": false
+    }
+   },
+   "dot": "rgb(124, 92, 250)",
+   "reclassColor": "#7C5CFA",
+   "hudDots": [
+    "rgb(92, 141, 168)",
+    "rgb(46, 158, 91)",
+    "rgb(49, 130, 246)",
+    "rgb(124, 92, 250)",
+    "rgb(46, 158, 91)",
+    "rgb(124, 92, 250)"
+   ]
+  },
+  "afterSet": {
+   "colors": {
+    "cls": {
+     "건물": "#0072B2",
+     "경작지": "#E69F00",
+     "비경작지": "#009E73",
+     "비닐하우스": "#D55E00",
+     "주차장": "#CC79A7"
+    },
+    "op": 0.6,
+    "custom": true,
+    "stat": {
+     "ramp": null,
+     "step": null,
+     "op": 1,
+     "custom": false
+    }
+   },
+   "opacity": "[\"interpolate\",[\"linear\"],[\"zoom\"],10.5,0,11.5,[\"*\",0.6,[\"case\",[\"boolean\",[\"feature-state\",\"hover\"],false],0.55,0.28]]]"
+  },
+  "reload": {
+   "colors": {
+    "cls": {
+     "건물": "#0072B2",
+     "경작지": "#E69F00",
+     "비경작지": "#009E73",
+     "비닐하우스": "#D55E00",
+     "주차장": "#CC79A7"
+    },
+    "op": 0.6,
+    "custom": true,
+    "stat": {
+     "ramp": null,
+     "step": null,
+     "op": 1,
+     "custom": false
+    }
+   },
+   "dots": [
+    [
+     "건물",
+     "rgb(0, 114, 178)"
+    ],
+    [
+     "경작지",
+     "rgb(230, 159, 0)"
+    ],
+    [
+     "비경작지",
+     "rgb(0, 158, 115)"
+    ],
+    [
+     "비닐하우스",
+     "rgb(213, 94, 0)"
+    ],
+    [
+     "주차장",
+     "rgb(204, 121, 167)"
+    ]
+   ],
+   "paintCvd": {
+    "nat": 18,
+    "natWith": 18,
+    "svc": 4,
+    "svcWith": 4
+   }
+  },
+  "reset": {
+   "colors": {
+    "cls": {},
+    "op": 1,
+    "custom": false,
+    "stat": {
+     "ramp": null,
+     "step": null,
+     "op": 1,
+     "custom": false
+    }
+   },
+   "paintPurple": {
+    "nat": 101,
+    "natWith": 0,
+    "svc": 8,
+    "svcWith": 0
+   },
+   "paintCvd": {
+    "nat": 101,
+    "natWith": 0,
+    "svc": 8,
+    "svcWith": 0
+   }
+  }
+ },
+ "stat": {
+  "shown": true,
+  "before": {
+   "cols": [
+    "#7C451D",
+    "#7C451D",
+    "#7C451D",
+    "#7C451D",
+    "#D07A3A",
+    "#D07A3A"
+   ],
+   "legend": "<div class=\"xo-scale is-step\"><span class=\"num\">88</span><i style=\"background:#F5D7BC\"></i><i style=\"background:#EDB98C\"></i><i style=\"background:#E2985E\"></i><i style=\"background:#D07A3A\"></i><i style=\"background:#7C451D\"></i><span class=\"num\">2,765.9</span><small>개/㎢</small></div>",
+   "cat": []
+  },
+  "after": {
+   "cols": [
+    "#FDE725",
+    "#FDE725",
+    "#FDE725",
+    "#FDE725",
+    "#5EC962",
+    "#5EC962"
+   ],
+   "legend": "<div class=\"xo-scale is-step\"><span class=\"num\">88</span><i style=\"background:#440154\"></i><i style=\"background:#3B528B\"></i><i style=\"background:#21918C\"></i><i style=\"background:#5EC962\"></i><i style=\"background:#FDE725\"></i><span class=\"num\">2,765.9</span><small>개/㎢</small></div>",
+   "colors": {
+    "ramp": "viridis",
+    "step": true,
+    "op": 1,
+    "custom": true
+   },
+   "dot": "background:conic-gradient(#3B528B 0deg 120deg, #5EC962 120deg 240deg, #FDE725 240deg 360deg)",
+   "cat": []
+  },
+  "reset": {
+   "cols": [
+    "#7C451D",
+    "#7C451D",
+    "#7C451D",
+    "#7C451D",
+    "#D07A3A",
+    "#D07A3A"
+   ],
+   "same": true
+  }
+ },
+ "list": {
+  "layer": {
+   "region": "남원시 덕과면",
+   "cls": [
+    "경작지",
+    "건물",
+    "비닐하우스"
+   ]
+  },
+  "before": {
+   "sub": "144건 · 넓은 것부터",
+   "cls": [
+    "경작지",
+    "건물",
+    "비닐하우스"
+   ]
+  },
+  "off": "경작지",
+  "after": {
+   "sub": "53건 · 넓은 것부터 · 보이는 것 기준",
+   "cls": [
+    "건물",
+    "비닐하우스"
+   ],
+   "left": "55건 켜진 결과 · 묶음 2개 9건 전체 · 묶음 5개 보이는 것 기준"
+  },
+  "offGone": true
+ },
+ "small": [],
+ "login_at": "2026-10-15 21:27:43",
+ "cdpShots": 12,
+ "done": "2026-10-15 21:31:34"
+}

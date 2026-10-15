@@ -21,7 +21,8 @@ import { govRail } from '../gov-select/menu.js';                  // 기관 계�
 import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';   // 열자마자 서버에 있는 모든 결과(10-14 XI맵 3차 구조 · 원칙 229 · 237)
 import { NCLS, NCOLOR } from './national.js';                    // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게) · 분류 색
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
-import { createDash } from './dash.js';                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
+import { createDash, setUserColors } from './dash.js';
+import { colors as colorPanel, colorState, paintLayers, RAMPS } from '../kit/colors.js';   // 색 바꾸기(원칙 264 · 지도 서비스와 같은 공용 칸)                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
 import { createOnMap } from './onmap.js';                         // 같은 사양을 지도 위에서(10-15 원칙 258 — 기본 · '통계' 단추로 대시보드와 바꿔 볼 수 있다)
 import { createShowcase } from './showcase.js';
 import { createParcels } from './parcel.js';                      // 지적 층 · 필지 카드 · 객체 소속 필지(10-15 원칙 266 · 123)                   // 왼쪽 위 결과 표시 콘셉트 셋 A · B · C(10-15 원칙 259 · 시안 단추 · 기본은 지금 모양)
@@ -288,6 +289,7 @@ async function boot() {
     onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림)
     onShown: () => cmdk?.close({ force: true }),          // 날아가기 시작하면 아래 채팅 창의 대화 칸을 접는다(답은 그때까지 읽힘 · 입력 줄은 그대로)
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
+    onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
     onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
     mountStatSwitch(); }
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
@@ -919,6 +921,8 @@ function mountBoard() {
     },
     onLoad: (j) => { X.board = { regions: ev(j.n_regions), services: j.services.length, at: Math.round(performance.now() - X.t0), centers: j.regions.filter((r) => r.center).map((r) => r.center), nat: BD.natInfo, hot: BD.hot() }; paintBoardHud(); } });
   BD.busy = () => !!(AN?.active || S.swipe || ED?.busy || DS?.on);
+  userColorsToKit();                                                          // 기억한 색으로 시작(색 바꾸기 · 원칙 264)
+  map.on('styledata', schedulePaint);                                         // 새로 붙는 결과 층(화면 안 시군구 · 전국 결과 객체)도 같은 색으로
   BD.nat.onData = () => { if (BD.data) paintBoardHud(); };   // 진행 장부를 다시 읽으면(30초) 합계 · '지금 분석 중' 한 줄을 새로
   S.boardP = BD.load(PRE.board || boardPromise(true), PRE.nat).catch((e) => { K.devlog('board', String(e?.message || e)); return null; });
   const canEdit = ['lx/staff', 'lx/admin'].includes(S.key);
@@ -1212,6 +1216,7 @@ const sameSet = (a, b) => !!a && !!b && (a === b || a.endsWith('/' + b) || b.end
 const svcSetOf = (set) => (S.res || []).find((it) => sameSet(it.set, set)) || null;
 const natSetOf = (set) => { for (const sid of BD?.nat?.objects || []) { const o = BD.nat.bySource(sid); if (o && sameSet(o.set, set)) return o.set; } return null; };
 function colorFor(set, cls) {
+  const u = userCol(cls); if (u) return u;                                   // 사람이 바꾼 클래스 색(색 바꾸기)
   if (natSetOf(set)) return NCOLOR[cls] || BD.colorOf(cls);
   const it = svcSetOf(set);
   if (it?.item?.style === 'landcover') return LC_COL[cls] || BD.colorOf(cls);
@@ -1285,6 +1290,69 @@ function applyClsOff() {
   X.clsOff = [...S.clsOff];
 }
 const visRows = (rows) => (S.clsOff.size ? rows.filter((x) => !S.clsOff.has(x.k)) : rows);
+/* ═══ 색 바꾸기(10-15 원칙 264 · 공용 kit/colors.js — 지도 서비스 층 줄 색 점과 같은 칸 · 같은 동작) ═══
+   '층' 판 클래스 줄의 색 점 → 클래스마다 색 · 색 묶음 · 직접 · 투명도 · '기본 색으로'. 사람 · 화면별 기억.
+   반영: 서비스 결과 층 · 전국 결과(면 · 객체) · 고친 자리 층(클래스 바꾸기 뒤 새 색) · 말풍선 · 업무 줄 · 겹침 고르기 점 · 지도 위 통계 판의 범주 점.
+   지도 위 통계(값 척도)는 판의 '지도 색' 점 → 색 띠 · 연속/단계 · 투명도(같은 칸 · 척도만). 바꾼 것이 없으면 원래 모양 그대로(원칙 199). */
+const CK = 'cls', SK = 'stat';
+let CST = colorState(CK, {}), SST = colorState(SK, { mode: 'scale' });
+/** 사람이 바꾼 그 클래스 색(없으면 null) — 결과 조각의 코드(built_new 등)와 한글 이름 모두로 찾는다 */
+function userCol(c) {
+  const m = CST.cls, k = String(c ?? ''); if (!k) return null;
+  if (m[k]) return m[k];
+  for (const [r, v] of Object.entries(m)) if (clsName(r) === k || clsName(k) === r) return v;
+  return null;
+}
+/** 클래스 원래 색(체크박스 줄 점 · 색 칸 '기본') — 전국 결과 분류 색 · 그 밖 업무 색 */
+const baseCol = (c) => NCOLOR[c] || BD?.baseColorOf?.(clsName(c)) || BD?.baseColorOf?.(c) || '#0FA9A0';
+/** 색을 입힐 결과 층 — 서비스 결과(면 · 테두리 · 점) · 전국 결과 면 · 전국 결과 객체 */
+function colorLayerIds() {
+  const ids = [];
+  for (const it of S.res || []) ids.push(...(it.ids || []));
+  for (const a of BD?.nat?.assets || []) ids.push(BD.nat.src(a) + '-face');
+  for (const sid of BD?.nat?.objects || []) ids.push(sid + '-f', sid + '-l');
+  return ids.filter((l) => map.getLayer(l) && !l.endsWith('-hit'));
+}
+const PAINTED = new WeakMap();   // 층 → 칠한 판 번호(새로 붙은 층만 칠한다)
+let CVER = 0, CRAF = 0, CEVER = false;
+function paintColors() {
+  CRAF = 0;
+  if (!CST.custom && !CEVER) return;                                         // 한 번도 바꾸지 않았으면 손대지 않는다
+  CEVER = true;
+  for (const id of colorLayerIds()) {
+    const L = map.getLayer(id); if (PAINTED.get(L) === CVER) continue;
+    paintLayers(map, [id], CST, { prop: 'cls', fallback: 'orig', halo: id.endsWith('-halo') ? [id] : [] });
+    PAINTED.set(map.getLayer(id), CVER);
+  }
+}
+const schedulePaint = () => { if (!CRAF) CRAF = requestAnimationFrame(paintColors); };
+function userColorsToKit() {
+  setUserColors({ cls: (k) => userCol(k), ramp: SST.custom ? { stops: SST.rampSet ? RAMPS.find((r) => r.id === SST.ramp)?.stops || null : null, step: SST.stepSet ? SST.step : null } : null });
+  if (BD) BD.userColor = (k) => userCol(k);
+  X.colors = { cls: { ...CST.cls }, op: CST.op, custom: CST.custom, stat: { ramp: SST.rampSet ? SST.ramp : null, step: SST.stepSet ? SST.step : null, op: SST.op, custom: SST.custom } };
+}
+/** 바뀐 색을 화면 모두에 — 지도 층 · 점 · 말풍선 · 고친 자리 · 지도 위 통계 */
+function colorsChanged() {
+  CST = colorState(CK, {}); SST = colorState(SK, { mode: 'scale' });
+  userColorsToKit();
+  CVER++; paintColors();
+  for (const b of pop.querySelectorAll('.xc-cdot')) b.firstElementChild?.style.setProperty('background', userCol(b.dataset.cls) || baseCol(b.dataset.cls));
+  HUDKEY = ''; VKEY = ''; paintBoardHud(); PIN?.redraw?.(); BD?.rehover?.(); SC?.refresh?.();
+  ED?.live();
+  OM?.recolor?.();
+}
+X.colorFor = (set, cls) => colorFor(set, cls);   // 실증 기록용(화면엔 없음)
+function openClsColors(btn, c) {
+  const cls = visibleClasses();
+  colorPanel(btn, { key: CK, title: '클래스', beside: pop, open: c,
+    classes: cls.map((k) => ({ k, label: clsName(k), color: baseCol(k) })), onChange: colorsChanged });
+}
+const RAMP_OF_HUE = { teal: 'teal', blue: 'blue', orange: 'heat' };
+function openStatColors(btn, m) {
+  const sc = m?.scale || {}, f = (v) => (v == null ? '' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));
+  colorPanel(btn, { key: SK, title: m?.title || '', scaleOnly: true, ramp: RAMP_OF_HUE[sc.hue] || 'teal', defStep: sc.kind === 'step', beside: btn.closest('.xo') || null,
+    scale: { label: '지도 색', lo: sc.kind === 'div' ? `−${f(sc.max)}%` : f(sc.min), hi: sc.kind === 'div' ? `+${f(sc.max)}%` : f(sc.max) }, onChange: colorsChanged });
+}
 /** 지금 지도에 그려진 결과의 클래스 목록 — 전국 분석 분류 + 켜진 서비스 결과 조각에서 읽은 분류(지역 하드코딩 0) */
 function visibleClasses() {
   const out = new Set(BD?.nat?.assets?.length ? BD.nat.classes() : []);
@@ -1899,9 +1967,11 @@ function renderLayers() {
   const ai = rows.findIndex((b) => b.querySelector('[data-k="ai"]'));
   // 클래스 켜기/끄기(10-15) — AI 분석 결과 세트 아래 체크박스 · 색 점 = 그 클래스 색 · 끄면 지도 · 숫자에서 빠짐('보이는 것 기준')
   const cls = S.board && aiOn() ? visibleClasses() : [];
-  const clsRows = cls.map((c) => h('button.xc-row.xc-row--cls', { type: 'button', role: 'checkbox', 'aria-checked': String(!S.clsOff.has(c)), 'data-cls': c,
+  const clsRows = cls.map((c) => h('div.xc-clsr', {}, h('button.xc-row.xc-row--cls', { type: 'button', role: 'checkbox', 'aria-checked': String(!S.clsOff.has(c)), 'data-cls': c,
     onclick: () => { if (S.clsOff.has(c)) S.clsOff.delete(c); else S.clsOff.add(c); applyClsOff(); renderLayers(); } },
-  h('i.xc-cb'), h('i.xc-dot', { style: { background: BD.colorOf(c) } }), h('span', { text: clsName(c) })));
+  h('i.xc-cb'), h('i.xc-dot', { 'aria-hidden': 'true' }), h('span', { text: clsName(c) })),
+  h('button.xc-cdot', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${clsName(c)} 색`, title: '색', dataset: { cls: c }, onclick: (e) => openClsColors(e.currentTarget, c) },
+    h('i', { style: { background: userCol(c) || baseCol(c) } }))));
   // 지적(LX맵 편집지적도 · 10-15 원칙 266) — 클래스 체크박스 옆 한 줄 · 기본 꺼짐 · 보이지 않는 축척이면 체크박스만 흐리게
   const cad = map.getLayer('xc-lxmap') ? h('button.xc-row.xc-row--cls.xc-row--cad', { type: 'button', role: 'checkbox', 'aria-checked': String(!!S.layers.lxmap), 'data-cad': '1',
     onclick: () => setLxmap(!S.layers.lxmap) }, h('i.xc-cb'), h('span', { text: '지적' })) : null;

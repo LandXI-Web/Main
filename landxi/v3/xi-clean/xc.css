@@ -92,6 +92,14 @@
 .xc-row--cls[aria-checked="true"] .xc-cb::after{opacity:1}
 .xc-row--cls[aria-checked="false"] span{color:var(--sub)}
 .xc-dot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+/* 클래스 색 점 = 색 바꾸기 단추(원칙 264 · 지도 서비스 색 점과 같은 모양 · 같은 동작) — 체크박스 줄 위 같은 자리에 겹쳐 둔다(단추 안 단추 금지) */
+.xc-clsr{position:relative}
+.xc-clsr .xc-dot{visibility:hidden}
+.xc-cdot{position:absolute;left:40px;top:50%;width:20px;height:20px;margin-top:-10px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;display:grid;place-items:center}
+.xc-cdot i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 0 2px var(--bg-1)}
+.xc-cdot:hover i,.xc-cdot[aria-expanded="true"] i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 0 2px var(--bg-1),0 0 0 3.5px var(--ink)}
+.xc-cdot:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.xc-row--cls[aria-checked="false"] + .xc-cdot i{opacity:.45}
 .xc-pop-l + .xc-row--cls{margin-top:2px}
 .xb-vis{opacity:.85}
 /* 겹친 객체 — 올리면 '겹침 n' 작은 표시(마우스 옆) · 누르면 고르기 목록(클래스 색 점 · 클래스 · 면적) */

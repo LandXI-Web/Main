@@ -25,18 +25,43 @@ const DIV = ['#355FA3', '#7E9FD6', '#C6D4EE', '#ECEEF1', '#F0CBC7', '#DB8B83', '
 let CAT = [];
 const catFor = (hue) => { const r = RAMP[hue] || RAMP.teal, acc = hue === 'orange' ? RAMP.teal[4] : RAMP.orange[4]; return [r[5], r[3], acc, '#6B7684', r[1], '#9AA4B0', '#C4CAD2', '#DDE1E6']; };
 /** 카드마다 한 색(그 값의 뜻 색) — 막대 · 순위가 CSS 변수로 쓴다 */
-const varsFor = (hue) => { const r = RAMP[hue] || RAMP.teal; return `--xd-c0:${r[6]};--xd-c1:${r[5]};--xd-c3:${r[3]}`; };
+const varsFor = (hue) => { const r = rampFor(hue); return `--xd-c0:${r[6]};--xd-c1:${r[5]};--xd-c3:${r[3]}`; };
 const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
 const mix = (a, b, t) => { const x = hex(a), y = hex(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 function lerpRamp(r, t) { t = Math.max(0, Math.min(1, t)); const p = t * (r.length - 1), i = Math.floor(p); return i >= r.length - 1 ? r[r.length - 1] : mix(r[i], r[i + 1], p - i); }
+/* ── 사람이 고른 지도 색(색 바꾸기 · 원칙 264 · 공용 kit/colors.js 상태) — 띠(5색) · 연속/단계 · 클래스 색. 바꾼 것이 없으면 위 램프 그대로(원칙 199) ── */
+let USER = null;                    // { stops: [5색] | null, step: true|false|null }
+let UCLS = () => null;              // 클래스(업무) 이름 → 사람이 고른 색 | null
+export function setUserColors({ ramp, cls } = {}) { if (ramp !== undefined) USER = ramp; if (cls) UCLS = cls; }
+/** 범주 점(도넛 · 누적 막대) — 클래스 이름이면 사람이 고른 그 색 · 아니면 원래 범주 색 */
+export const catColor = (name, fb) => UCLS(String(name ?? '')) || fb;
+/** 지금 쓰는 램프(7칸) — 사람이 고른 띠가 있으면 그 5색을 7칸으로 */
+export function rampFor(hue) { const s = USER?.stops; return s ? [mix(s[0], '#FFFFFF', 0.6), s[0], s[1], s[2], s[3], mix(s[3], s[4], 0.5), s[4]] : RAMP[hue] || RAMP.teal; }
+/** 사람이 고른 연속 · 단계를 척도에 */
+function scaleOf(sc) {
+  if (!sc || USER?.step == null || sc.kind === 'div') return sc;
+  if (USER.step && sc.kind !== 'step') { const lo = sc.min ?? 0, hi = sc.max ?? 1; return { ...sc, kind: 'step', breaks: [1, 2, 3, 4].map((i) => lo + ((hi - lo) * i) / 5) }; }
+  if (!USER.step && sc.kind === 'step') return { ...sc, kind: 'seq' };
+  return sc;
+}
 /** 값 → 색. sc = {kind: seq|step|div, hue, min, max, breaks} */
-export function colorOf(sc, v) {
+export function colorOf(sc0, v) {
   if (v == null || Number.isNaN(v)) return '#E5E8EB';
-  if (sc?.kind === 'div') { const m = sc.max || 1; return lerpRamp(DIV, 0.5 + Math.max(-1, Math.min(1, v / m)) / 2); }
-  const r = RAMP[sc?.hue] || RAMP.teal;
+  const sc = scaleOf(sc0), us = USER?.stops;
+  if (sc?.kind === 'div') { const m = sc.max || 1; return lerpRamp(us || DIV, 0.5 + Math.max(-1, Math.min(1, v / m)) / 2); }
+  const r = rampFor(sc?.hue);
   if (sc?.kind === 'step') { const b = sc.breaks || []; let k = b.findIndex((x) => v < x); if (k < 0) k = b.length; return r[[1, 2, 3, 4, 6][Math.min(k, 4)]]; }
   const lo = sc?.min ?? 0, hi = sc?.max ?? 1;
-  return lerpRamp(r.slice(1), hi > lo ? (v - lo) / (hi - lo) : 1);
+  return lerpRamp(us || r.slice(1), hi > lo ? (v - lo) / (hi - lo) : 1);
+}
+/** 색 척도 띠(지도 위 통계 판 · 대시보드 같은 모양) — pre = 'xd' | 'xo' */
+export function scaleHtml(sc0, unit, pre) {
+  if (!sc0) return '';
+  const sc = scaleOf(sc0), us = USER?.stops;
+  if (sc.kind === 'div') return `<div class="${pre}-scale"><span class="num">−${nf(sc.max, 0)}%</span><i style="background:linear-gradient(90deg,${(us || DIV).join(',')})"></i><span class="num">+${nf(sc.max, 0)}%</span></div>`;
+  const r = rampFor(sc.hue);
+  if (sc.kind === 'step') return `<div class="${pre}-scale is-step"><span class="num">${nf(sc.min, 1)}</span>${[1, 2, 3, 4, 6].map((i) => `<i style="background:${r[i]}"></i>`).join('')}<span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`;
+  return `<div class="${pre}-scale"><span class="num">${nf(sc.min, 1)}</span><i style="background:linear-gradient(90deg,${(us || r.slice(1)).join(',')})"></i><span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`;
 }
 const inkOn = (bg) => { const [r, g, b] = hex(bg); return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1C1F25' : '#FFFFFF'; };
 
@@ -78,15 +103,15 @@ function hist(p) {
 function donut(p) {
   const rows = (p.rows || []).filter((r) => r.v > 0), tot = rows.reduce((s, r) => s + r.v, 0) || 1;
   const R = 56, C = 2 * Math.PI * R; let off = 0;
-  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="${CAT[i % CAT.length]}" stroke-width="14" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${hoverAttrs(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
+  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="${catColor(r.label, CAT[i % CAT.length])}" stroke-width="14" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${hoverAttrs(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
   return `${head(p)}<div class="xd-donut"><svg viewBox="0 0 140 140" aria-hidden="true"><g transform="rotate(-90 70 70)">${segs}</g><text x="70" y="72" text-anchor="middle" class="xd-dt num">${nf(tot, p.d || 0)}</text><text x="70" y="92" text-anchor="middle" class="xd-du">${esc(p.unit || '')}</text></svg>
-    <ul class="xd-leg">${rows.map((r, i) => `<li data-k="${esc(r.k)}"><i style="background:${CAT[i % CAT.length]}"></i><span>${esc(r.label)}</span><b class="num">${nf((r.v / tot) * 100, 1)}%</b></li>`).join('')}</ul></div>`;
+    <ul class="xd-leg">${rows.map((r, i) => `<li data-k="${esc(r.k)}"><i style="background:${catColor(r.label, CAT[i % CAT.length])}"></i><span>${esc(r.label)}</span><b class="num">${nf((r.v / tot) * 100, 1)}%</b></li>`).join('')}</ul></div>`;
 }
 function stack(p) {
   const rows = p.rows || [], ser = p.series || [];
   const mx = Math.max(1, ...rows.map((r) => r.vals.reduce((s, v) => s + (v || 0), 0)));
-  const leg = `<ul class="xd-leg xd-leg--row">${ser.map((s, i) => `<li><i style="background:${CAT[i % CAT.length]}"></i><span>${esc(s)}</span></li>`).join('')}</ul>`;
-  return `${head(p)}${leg}<div class="xd-st">${rows.map((r) => { const t = r.vals.reduce((s, v) => s + (v || 0), 0); return `<button type="button" class="xd-sr" data-k="${esc(r.k)}"><span class="n">${esc(r.label)}</span><span class="bar" style="width:${(100 * t) / mx}%">${r.vals.map((v, i) => (v ? `<i style="flex:${v};background:${CAT[i % CAT.length]}" ${hoverAttrs(`${r.label} · ${ser[i]}`, nf(v) + (p.unit || ''))}></i>` : '')).join('')}</span><span class="v num">${nf(t)}</span></button>`; }).join('')}</div>`;
+  const leg = `<ul class="xd-leg xd-leg--row">${ser.map((s, i) => `<li><i style="background:${catColor(s, CAT[i % CAT.length])}"></i><span>${esc(s)}</span></li>`).join('')}</ul>`;
+  return `${head(p)}${leg}<div class="xd-st">${rows.map((r) => { const t = r.vals.reduce((s, v) => s + (v || 0), 0); return `<button type="button" class="xd-sr" data-k="${esc(r.k)}"><span class="n">${esc(r.label)}</span><span class="bar" style="width:${(100 * t) / mx}%">${r.vals.map((v, i) => (v ? `<i style="flex:${v};background:${catColor(ser[i], CAT[i % CAT.length])}" ${hoverAttrs(`${r.label} · ${ser[i]}`, nf(v) + (p.unit || ''))}></i>` : '')).join('')}</span><span class="v num">${nf(t)}</span></button>`; }).join('')}</div>`;
 }
 function heat(p) {
   const cols = p.cols || [], rows = p.rows || [];
@@ -155,13 +180,7 @@ function pack(items) {
   return out;
 }
 
-function legend(sc, unit) {
-  if (!sc) return '';
-  if (sc.kind === 'div') return `<div class="xd-scale"><span class="num">−${nf(sc.max, 0)}%</span><i style="background:linear-gradient(90deg,${DIV.join(',')})"></i><span class="num">+${nf(sc.max, 0)}%</span></div>`;
-  const r = RAMP[sc.hue] || RAMP.teal;
-  if (sc.kind === 'step') { const cs = [1, 2, 3, 4, 6].map((i) => r[i]); return `<div class="xd-scale is-step"><span class="num">${nf(sc.min, 1)}</span>${cs.map((c) => `<i style="background:${c}"></i>`).join('')}<span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`; }
-  return `<div class="xd-scale"><span class="num">${nf(sc.min, 1)}</span><i style="background:linear-gradient(90deg,${r.slice(1).join(',')})"></i><span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`;
-}
+const legend = (sc, unit) => scaleHtml(sc, unit, 'xd');
 
 /* ═══ 대시보드 ═══ */
 export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onBack }) {

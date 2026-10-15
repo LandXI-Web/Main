@@ -62,6 +62,7 @@ export function colorState(key, def = {}) {
     step: typeof s.step === 'boolean' ? s.step : !!def.step,
   };
   st.custom = !!(Object.keys(cls).length || st.op !== 1 || st.mode !== (def.mode || 'cls') || s.ramp || typeof s.step === 'boolean');
+  st.rampSet = !!(s.ramp && RAMPS.some((r) => r.id === s.ramp)); st.stepSet = typeof s.step === 'boolean';   // 사람이 고른 띠 · 단계인가(기본을 따르는가)
   st.colorOf = (k) => cls[k] || def.classes?.[k] || null;
   return st;
 }
@@ -97,7 +98,7 @@ export function scaleOpacity(expr, k) {
 const ORIG = new WeakMap();   // map → Map(층 id → 원래 칠)
 const PROPS = { fill: ['fill-color', 'fill-opacity', 'fill-outline-color'], line: ['line-color', 'line-opacity'], circle: ['circle-color', 'circle-opacity', 'circle-stroke-opacity'] };
 /** 층들에 상태를 칠한다. 바꾼 것이 없으면 원래 칠로 되돌린다.
-    o = { prop: 'cls'(클래스 속성), value: { prop, min, max }(척도), base: 클래스 기본색 {k: 색}, fallback, single: 한 색 층의 클래스 키, halo: 색은 두고 진하기만 바꿀 층 id } */
+    o = { prop: 'cls'(클래스 속성), value: { prop, min, max }(척도), base: 클래스 기본색 {k: 색}, fallback('orig' = 바꾸지 않은 클래스는 그 층 원래 색), single: 한 색 층의 클래스 키, halo: 색은 두고 진하기만 바꿀 층 id } */
 export function paintLayers(map, ids, st, o = {}) {
   const reg = ORIG.get(map) || new Map(); ORIG.set(map, reg);
   for (const id of ids) {
@@ -110,7 +111,8 @@ export function paintLayers(map, ids, st, o = {}) {
     let col;
     if (st.mode === 'scale' && o.value) col = rampExpr(o.value.prop, o.value.min ?? 0, o.value.max ?? 1, st.ramp, st.step);
     else if (o.single) col = st.cls?.[o.single] || orig[cK];                                       // 한 색 층(행정 자료 등)
-    else col = Object.keys(st.cls || {}).length ? classExpr(o.prop || 'cls', { ...(o.base || {}), ...st.cls }, o.fallback || '#0FA9A0') : orig[cK];
+    else if (o.fallback === 'orig' && Object.keys(st.cls || {}).length && JSON.stringify(orig[cK] ?? '').includes('"zoom"')) col = orig[cK];   // 줌 식 색은 match 안에 넣을 수 없다 — 그대로
+    else col = Object.keys(st.cls || {}).length ? classExpr(o.prop || 'cls', { ...(o.base || {}), ...st.cls }, o.fallback === 'orig' ? (orig[cK] ?? '#0FA9A0') : o.fallback || '#0FA9A0') : orig[cK];
     const isHalo = (o.halo || []).includes(id);                                                       // 헤일로(옅은 테두리)는 색은 그대로 · 진하기만
     map.setPaintProperty(id, cK, isHalo ? orig[cK] : col);
     map.setPaintProperty(id, oK, scaleOpacity(orig[oK] ?? 1, st.op));
@@ -141,13 +143,14 @@ const grad = (cs) => el('span.kc-strip', { 'aria-hidden': 'true', style: { backg
 const steps = (cs) => strip(cs);
 
 /** 색 고르기 칸을 anchor 옆에 연다.
-    o = { key, title, classes: [{k, label, color}], scale: { label, lo, hi } | null, ramp(기본 띠), defMode, beside(이 요소 오른쪽에 붙여 연다), onChange(st), onClose } */
+    o = { key, title, classes: [{k, label, color}], scale: { label, lo, hi } | null, ramp(기본 띠), defMode, defStep(기본 단계 여부), scaleOnly(척도만 · 나눔 단추 없음),
+          open(처음 펼칠 클래스), beside(이 요소 오른쪽에 붙여 연다), onChange(st), onClose } */
 export function colors(anchor, o) {
   if (OPEN?.anchor === anchor) { OPEN.close(); return null; }
   OPEN?.close();
   const key = skey(o.key);
   const base = Object.fromEntries((o.classes || []).map((c) => [c.k, c.color]));
-  const def = { classes: base, ramp: o.ramp, mode: o.defMode || 'cls' };
+  const def = { classes: base, ramp: o.ramp, mode: o.scaleOnly ? 'scale' : o.defMode || 'cls', step: o.defStep };
   const raw = () => load(key) || {};
   const put = (patch, quiet) => { const s = { ...raw(), ...patch }; for (const k of Object.keys(s)) if (s[k] == null) delete s[k]; save(key, Object.keys(s).length ? s : null); emit(quiet); };
   const emit = (quiet) => {
@@ -157,16 +160,16 @@ export function colors(anchor, o) {
 
   const box = el('div.kc.t-card.t-card--map', { role: 'dialog', 'aria-label': `${o.title || ''} 색`.trim() });
   const multi = (o.classes || []).length > 1;
-  let openCls = null;
+  let openCls = o.open ?? null;
   function draw() {
     const st = colorState(o.key, def);
     const kids = [];
     kids.push(el('header.kc-h', {}, el('b', { text: '색' }), o.title ? el('span', { text: o.title }) : null,
       el('button.kc-x', { type: 'button', 'aria-label': '닫기', text: '×', onclick: () => close() })));
-    if (o.scale) {
+    if (o.scale && !o.scaleOnly) {
       kids.push(el('div.kc-seg', { role: 'radiogroup' },
         ...[['cls', o.clsLabel || '분류'], ['scale', o.scale.label || '값']].map(([m, t]) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(st.mode === m), text: t,
-          onclick: () => put({ mode: m === (o.defMode || 'cls') ? null : m }) }))));
+          onclick: () => put({ mode: m === def.mode ? null : m }) }))));
     }
     if (st.mode === 'scale' && o.scale) {
       kids.push(el('div.kc-ramps', { role: 'radiogroup', 'aria-label': '색 띠' }, ...RAMPS.map((r) => el('button.kc-ramp', { type: 'button', role: 'radio', 'aria-checked': String(st.ramp === r.id), title: r.name, 'aria-label': r.name,
@@ -214,7 +217,7 @@ export function colors(anchor, o) {
   function place() {
     const r = anchor.getBoundingClientRect(), W = innerWidth, H = innerHeight, bw = box.offsetWidth || 312, bh = box.offsetHeight || 360;
     let x = (o.beside ? o.beside.getBoundingClientRect().right : r.right) + 8, y = r.top - 12;   // beside = 이 칸 바로 옆에(목록 칸을 가리지 않게)
-    if (x + bw > W - 8) x = Math.max(8, r.left - bw - 8);
+    if (x + bw > W - 8) x = Math.max(8, (o.beside ? o.beside.getBoundingClientRect().left : r.left) - bw - 8);   // 오른쪽이 모자라면 그 칸 왼쪽에(칸을 가리지 않게)
     if (y + bh > H - 8) y = Math.max(8, H - bh - 8);
     box.style.left = `${Math.round(x)}px`; box.style.top = `${Math.round(y)}px`;
   }

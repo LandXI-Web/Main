@@ -11,14 +11,13 @@
    판 폭은 왼쪽 가장자리를 끌어 바꾸고 접고 펼친다(공용 부품 kit/panes.js · 원칙 263) — 접힘 = 1단계 한 줄. */
 import { api } from '../kit/util.js';
 import { panes } from '../kit/panes.js';
-import { RAMP, colorOf } from './dash.js';
+import { RAMP, colorOf, rampFor, scaleHtml, catColor } from './dash.js';
 
 const nf = (v, d = 0) => (v == null || Number.isNaN(Number(v)) ? '—' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: Math.max(0, Math.min(3, d | 0)), minimumFractionDigits: 0 }));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, RM() ? 0 : ms));
 const ease = (t) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
-const DIV = ['#355FA3', '#7E9FD6', '#C6D4EE', '#ECEEF1', '#F0CBC7', '#DB8B83', '#B04A40'];
 const catFor = (hue) => { const r = RAMP[hue] || RAMP.teal, acc = hue === 'orange' ? RAMP.teal[4] : RAMP.orange[4]; return [r[5], r[3], acc, '#6B7684', r[1], '#9AA4B0', '#C4CAD2', '#DDE1E6']; };
 const hueOf = (s) => s.map?.scale?.hue || (s.panels || []).find((p) => p.scale?.hue)?.scale.hue || 'teal';
 const tipAttr = (label, val) => `data-tip="${esc(`<b>${esc(label)}</b> ${val}`)}"`;
@@ -40,14 +39,14 @@ function hist(p) {
 function donut(p, CAT) {
   const rows = (p.rows || []).filter((r) => r.v > 0), tot = rows.reduce((s, r) => s + r.v, 0) || 1;
   const R = 40, C = 2 * Math.PI * R; let off = 0;
-  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="50" cy="50" fill="none" stroke="${CAT[i % CAT.length]}" stroke-width="11" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${tipAttr(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
+  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="50" cy="50" fill="none" stroke="${catColor(r.label, CAT[i % CAT.length])}" stroke-width="11" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${tipAttr(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
   return `<div class="xo-donut"><svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(-90 50 50)">${segs}</g></svg>
-    <ul class="xo-leg">${rows.slice(0, 6).map((r, i) => `<li data-k="${esc(r.k)}"><i style="background:${CAT[i % CAT.length]}"></i><span>${esc(r.label)}</span><b class="num">${nf((r.v / tot) * 100, 1)}%</b></li>`).join('')}</ul></div>`;
+    <ul class="xo-leg">${rows.slice(0, 6).map((r, i) => `<li data-k="${esc(r.k)}"><i style="background:${catColor(r.label, CAT[i % CAT.length])}"></i><span>${esc(r.label)}</span><b class="num">${nf((r.v / tot) * 100, 1)}%</b></li>`).join('')}</ul></div>`;
 }
 function stack(p, CAT) {
   const rows = (p.rows || []).slice(0, 8), ser = p.series || [], mx = Math.max(1, ...rows.map((r) => r.vals.reduce((s, v) => s + (v || 0), 0)));
-  return `<ul class="xo-leg xo-leg--row">${ser.map((s, i) => `<li><i style="background:${CAT[i % CAT.length]}"></i><span>${esc(s)}</span></li>`).join('')}</ul>
-    <div class="xo-rows">${rows.map((r) => { const t = r.vals.reduce((s, v) => s + (v || 0), 0); return `<button type="button" class="xo-r" data-k="${esc(r.k)}"><span class="n">${esc(r.label)}</span><b class="v num">${nf(t)}</b><span class="bar is-st" style="width:${(100 * t) / mx}%">${r.vals.map((v, i) => (v ? `<i style="flex:${v};background:${CAT[i % CAT.length]}" ${tipAttr(`${r.label} · ${ser[i]}`, nf(v) + (p.unit || ''))}></i>` : '')).join('')}</span></button>`; }).join('')}</div>`;
+  return `<ul class="xo-leg xo-leg--row">${ser.map((s, i) => `<li><i style="background:${catColor(s, CAT[i % CAT.length])}"></i><span>${esc(s)}</span></li>`).join('')}</ul>
+    <div class="xo-rows">${rows.map((r) => { const t = r.vals.reduce((s, v) => s + (v || 0), 0); return `<button type="button" class="xo-r" data-k="${esc(r.k)}"><span class="n">${esc(r.label)}</span><b class="v num">${nf(t)}</b><span class="bar is-st" style="width:${(100 * t) / mx}%">${r.vals.map((v, i) => (v ? `<i style="flex:${v};background:${catColor(ser[i], CAT[i % CAT.length])}" ${tipAttr(`${r.label} · ${ser[i]}`, nf(v) + (p.unit || ''))}></i>` : '')).join('')}</span></button>`; }).join('')}</div>`;
 }
 function heat(p) {
   const cols = (p.cols || []).slice(0, 6), rows = (p.rows || []).slice(0, 8), r = RAMP[p.scale?.hue] || RAMP.teal;
@@ -85,13 +84,14 @@ function table(p) {
 }
 const DRAW = { bar, rank, hist, donut, stack, heat, line, scatter, table };
 
-function legend(sc, unit) {
-  if (!sc) return '';
-  if (sc.kind === 'div') return `<div class="xo-scale"><span class="num">−${nf(sc.max, 0)}%</span><i style="background:linear-gradient(90deg,${DIV.join(',')})"></i><span class="num">+${nf(sc.max, 0)}%</span></div>`;
-  const r = RAMP[sc.hue] || RAMP.teal;
-  if (sc.kind === 'step') return `<div class="xo-scale is-step"><span class="num">${nf(sc.min, 1)}</span>${[1, 2, 3, 4, 6].map((i) => `<i style="background:${r[i]}"></i>`).join('')}<span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`;
-  return `<div class="xo-scale"><span class="num">${nf(sc.min, 1)}</span><i style="background:linear-gradient(90deg,${r.slice(1).join(',')})"></i><span class="num">${nf(sc.max, 1)}</span><small>${esc(unit || '')}</small></div>`;
+const legend = (sc, unit) => scaleHtml(sc, unit, 'xo');
+/** 지도 위 통계 면 진하기 — 차오름 t × 줌(원래 식) × 사람이 고른 진하기 k */
+function fillOp(k = 1) {
+  const T = ['coalesce', ['feature-state', 't'], 0], ON = ['boolean', ['feature-state', 'on'], false], r = (x) => +(x * k).toFixed(3);
+  return ['interpolate', ['linear'], ['zoom'], 8, ['*', T, ['case', ON, r(0.95), r(0.84)]], 12.5, ['*', T, ['case', ON, r(0.7), r(0.46)]]];
 }
+/** 색 점(지도 색 띠의 색 다섯 · 바꾸면 바로) */
+const dotCss = (sc) => { const r = rampFor(sc?.hue), cs = [r[2], r[4], r[6]]; return `background:conic-gradient(${cs.map((c, i) => `${c} ${i * 120}deg ${(i + 1) * 120}deg`).join(', ')})`; };
 /** 가장 큰 고리의 무게중심(꼬리표 자리) */
 function centroid(g) {
   if (!g) return null;
@@ -107,7 +107,7 @@ function centroid(g) {
 const bboxOf = (fs) => { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); fs.forEach((f) => f.geometry && walk(f.geometry.coordinates)); return w < e ? [w, s, e, n] : null; };
 
 /* ═══ 지도 위 표출 ═══ */
-export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep }) {
+export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep, onColor = null, opacity = () => 1 }) {
   const O = { on: false, step: 1, sync: false, spec: null, fc: null, sel: null, hover: null, bb: null, feats: [], tags: new Map(), hoverTag: null, cand: [], run: 0, tour: null, CAT: [] };
   const panel = h('section.xo', { hidden: true, 'aria-label': '지도 위 통계' });
   const mini = h('div.xo-mini', { hidden: true, role: 'status', 'aria-label': '지도 위 결과' });   // 1단계 한 줄(제목 · 큰 숫자 · '통계 보기' · 닫기)
@@ -154,14 +154,33 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (map.getSource('xo-f')) return;
     map.addSource('xo-f', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'k' });
     const T = ['coalesce', ['feature-state', 't'], 0], ON = ['boolean', ['feature-state', 'on'], false];
+    const k = opacity();                                                    // 사람이 고른 투명도(색 바꾸기 · 원칙 264 — 1 = 원래)
     map.addLayer({ id: 'xo-fill', type: 'fill', source: 'xo-f', paint: { 'fill-color': ['coalesce', ['get', 'col'], '#E5E8EB'],
-      'fill-opacity': ['interpolate', ['linear'], ['zoom'], 8, ['*', T, ['case', ON, 0.95, 0.84]], 12.5, ['*', T, ['case', ON, 0.7, 0.46]]] } });   // zoom 은 맨 바깥(스타일 규칙) · 차오름 t × 가까이 갈수록 옅게(결과가 비침)
+      'fill-opacity': fillOp(k) } });   // zoom 은 맨 바깥(스타일 규칙) · 차오름 t × 가까이 갈수록 옅게(결과가 비침)
     map.addLayer({ id: 'xo-glow', type: 'line', source: 'xo-f', paint: { 'line-color': ['coalesce', ['get', 'col'], '#2E9A90'], 'line-width': 12, 'line-blur': 8, 'line-opacity': ['coalesce', ['feature-state', 'g'], 0] } });
     map.addLayer({ id: 'xo-line', type: 'line', source: 'xo-f', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ON, 3, 1], 'line-opacity': ['*', T, 0.95] } });
     map.on('click', 'xo-fill', (e) => { if (!O.on) return; const k = e.features?.[0]?.properties?.k; if (k) { stopTour(); pick(k, true); } });
     map.on('mousemove', 'xo-fill', (e) => { if (!O.on) return; map.getCanvas().style.cursor = 'pointer'; const k = e.features?.[0]?.properties?.k; if (k) hover(k, 'map'); });
     map.on('mouseleave', 'xo-fill', () => { map.getCanvas().style.cursor = ''; hover(null, 'map'); });
     for (const ev of ['mousedown', 'wheel', 'touchstart']) map.on(ev, () => stopTour());
+  }
+  /** 사람이 바꾼 지도 색 다시 칠하기 — 면 · 척도 띠 · 판 카드(막대 색 · 범주 점) · 색 점. 판을 새로 그리지 않는다(열린 색 칸이 붙어 있게) */
+  function recolor() {
+    if (map.getLayer('xo-fill')) map.setPaintProperty('xo-fill', 'fill-opacity', fillOp(opacity()));
+    const s = O.spec; if (!O.on || !s) return;
+    const m = s.map;
+    if (m) {
+      for (const f of O.feats) f.properties.col = f.properties.v == null ? '#E5E8EB' : colorOf(m.scale, f.properties.v);
+      map.getSource('xo-f')?.setData(O.fc);
+      const old = panel.querySelector('.xo-mp > div'); if (old) old.outerHTML = legend(m.scale, m.unit);
+      panel.querySelector('.xo-cd')?.setAttribute('style', dotCss(m.scale));
+    }
+    const vars = (hue) => { const r = rampFor(hue); return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
+    panel.querySelectorAll('.xo-p').forEach((el) => {
+      const p = s.panels?.[Number(el.dataset.i)]; if (!p) return;
+      el.style.cssText = el.style.cssText.replace(/--xo-c0:[^;]+;--xo-c1:[^;]+;--xo-c3:[^;]+/, vars(p.scale?.hue || hueOf(s)));
+      const pb = el.querySelector('.xo-pb'); if (pb && (p.type === 'donut' || p.type === 'stack')) pb.innerHTML = (DRAW[p.type])(p, O.CAT);
+    });
   }
   const fstate = (k, s) => { try { map.setFeatureState({ source: 'xo-f', id: k }, s); } catch { /* 층 없음 */ } };
 
@@ -296,15 +315,16 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     const head = `<div class="xo-card xo-head"><div class="xo-ht"><h2>${esc(s.title)}</h2><button type="button" class="xo-x" aria-label="닫기">×</button></div>
       <p class="xo-l">${esc(main.label || '')}</p><p class="xo-big"><b class="num">${nf(main.value, main.d || 0)}</b><small>${esc(main.unit || '')}</small></p>
       ${kr.length ? `<div class="xo-kp">${kr.slice(0, 3).map((k) => `<div><span>${esc(k.label)}</span><b class="num">${nf(k.value, k.d || 0)}<small>${esc(k.unit || '')}</small></b></div>`).join('')}</div>` : ''}
-      ${m ? `<div class="xo-mp"><span class="t">지도 색 · ${esc(m.title)}</span>${legend(m.scale, m.unit)}</div>` : ''}
+      ${m ? `<div class="xo-mp"><span class="t">${onColor ? `<button type="button" class="xo-cd" aria-haspopup="dialog" aria-expanded="false" aria-label="지도 색" title="색" style="${dotCss(m.scale)}"></button>` : ''}지도 색 · ${esc(m.title)}</span>${legend(m.scale, m.unit)}</div>` : ''}
       ${s.live ? `<p class="xo-live"><i></i>지금 분석 중 · ${esc(s.live)}</p>` : ''}
       ${s.note ? `<p class="xo-notice">${esc(s.note)}</p>` : ''}
       ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${esc(l)}</p>`).join('')}</div></div>` : ''}
       <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서로</button><button type="button" class="xo-big2">크게 보기</button><button type="button" class="xo-only">지도만</button></div></div>`;
-    const vars = (hue) => { const r = RAMP[hue] || RAMP.teal; return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
+    const vars = (hue) => { const r = rampFor(hue); return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
     const cards = (s.panels || []).map((p, i) => `<div class="xo-card xo-p xo-p--${p.type}${i < 2 ? ' open' : ''}" data-i="${i}" style="animation-delay:${RM() ? 0 : 80 + i * 70}ms;${vars(p.scale?.hue || hueOf(s))}"><button type="button" class="xo-ph" aria-expanded="${i < 2}"><span>${esc(p.title)}</span>${p.unit ? `<small>${esc(p.unit)}</small>` : ''}<i></i></button><div class="xo-pb">${(DRAW[p.type] || (() => ''))(p, O.CAT)}</div></div>`);
     panel.innerHTML = head + cards.join('');
     panel.querySelector('.xo-x').onclick = () => leave();
+    panel.querySelector('.xo-cd')?.addEventListener('click', (e) => onColor?.(e.currentTarget, m));
     panel.querySelector('.xo-tour')?.addEventListener('click', () => (O.tour ? stopTour() : tour(topOf(3))));
     panel.querySelector('.xo-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
     panel.querySelector('.xo-big2')?.addEventListener('click', () => setStep(3));
@@ -384,5 +404,5 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (window.__xc) window.__xc.dash = null;
     if (!quiet) onLeave?.();
   }
-  return { show, leave, setStep, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)) };
+  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)) };
 }

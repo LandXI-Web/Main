@@ -374,8 +374,9 @@ async def my_filter_count(request: Request, body: dict | None = None):
 
 
 @router.get("/me/analyses/{job}/rows")
-async def my_rows(job: str, request: Request, offset: int = 0, limit: int = 50, cond: str | None = None):
-    """'목록 보기' — 그 레이어의 결과 표(넓은 것부터 · 지금 걸린 조건 그대로) · 줄 = 결과 타일과 같은 행(분류 · 면적 · 신뢰도 · 읍면동 · 가운데 · 범위)."""
+async def my_rows(job: str, request: Request, offset: int = 0, limit: int = 50, cond: str | None = None, off: str | None = None):
+    """'목록 보기' — 그 레이어의 결과 표(넓은 것부터 · 지금 걸린 조건 그대로) · 줄 = 결과 타일과 같은 행(분류 · 면적 · 신뢰도 · 읍면동 · 가운데 · 범위).
+    off = 화면에서 끈 클래스(보이는 이름 JSON 목록 · 원칙 265) — 그 클래스 줄은 표와 수에서 빠진다."""
     from . import result_scope as RSC
     from .spaces import class_ko
     p = _lx(request)
@@ -385,20 +386,31 @@ async def my_rows(job: str, request: Request, offset: int = 0, limit: int = 50, 
         c = RSC.clean(json.loads(cond)) if cond else {}
     except ValueError:
         c = {}
+    try:
+        offs = {str(x) for x in (json.loads(off) if off else []) if isinstance(x, str)}
+    except ValueError:
+        offs = set()
     a: list = [job]
     w = ["job_id = $1", "edit_state <> 'deleted'"] + RSC.sql(c, a)
-    lim, off = max(1, min(int(limit), 200)), max(0, int(offset))
+    lim, ofs = max(1, min(int(limit), 200)), max(0, int(offset))
     async with db(realm="lx") as conn:
+        if offs:   # 보이는 이름(class_ko) → 저장된 (cls, cls_en) 짝으로 바꿔 뺀다
+            pairs = await conn.fetch("SELECT DISTINCT coalesce(cls,'') AS c, coalesce(cls_en,'') AS e FROM detections WHERE job_id = $1", job)
+            SEP = chr(31)
+            drop = [r['c'] + SEP + r['e'] for r in pairs if class_ko(r["c"] or None, r["e"] or None) in offs]
+            if drop:
+                a.append(drop)
+                w.append(f"NOT (coalesce(cls,'') || chr(31) || coalesce(cls_en,'') = ANY(${len(a)}::text[]))")
         n = int(await conn.fetchval(f"SELECT count(*) FROM detections WHERE {' AND '.join(w)}", *a))
         rows = await conn.fetch(f"SELECT id, cls, cls_en, conf, area_m2, emd, ST_X(ST_PointOnSurface(geom)) AS x, ST_Y(ST_PointOnSurface(geom)) AS y, "
                                 f"ST_XMin(geom) AS w, ST_YMin(geom) AS s, ST_XMax(geom) AS e, ST_YMax(geom) AS nn FROM detections "
-                                f"WHERE {' AND '.join(w)} ORDER BY area_m2 DESC NULLS LAST, id LIMIT {lim} OFFSET {off}", *a)
+                                f"WHERE {' AND '.join(w)} ORDER BY area_m2 DESC NULLS LAST, id LIMIT {lim} OFFSET {ofs}", *a)
     # 속성 = 결과 타일 속성과 같은 이름(properties · 데이터 구조) · 가운데 · 범위는 좌표(center · bbox)
     items = [{"id": str(r["id"]), "properties": {"cls": class_ko(r["cls"], r["cls_en"]),
                                                   "area_m2": round(float(r["area_m2"]), 1) if r["area_m2"] is not None else None,
                                                   "conf": round(float(r["conf"]), 3) if r["conf"] is not None else None, "emd": r["emd"] or None},
               "center": [round(r["x"], 7), round(r["y"], 7)], "bbox": [round(r["w"], 7), round(r["s"], 7), round(r["e"], 7), round(r["nn"], 7)]} for r in rows]
-    return {"n": n, "offset": off, "items": items, "label": RSC.label(c)}
+    return {"n": n, "offset": ofs, "items": items, "label": RSC.label(c)}
 
 
 @router.get("/me/downloads")

@@ -337,6 +337,7 @@ function setClsOff(c) {
   if (ST.pickP && ST.clsOff.has(String(ST.pickP.cls)) && props.dataset.view === 'props') closeProps();   // 고른 객체의 클래스를 끄면 속성 칸도 닫는다
   closePick();
   drawLeft(); drawCap();
+  if (ST.list && props.dataset.view === 'list') { const x = ST.items.get(ST.list); if (x) openList(x, true); }   // 목록 보기도 끈 클래스를 빼고 다시
   window.__lm.clsOff = [...ST.clsOff];
 }
 
@@ -591,7 +592,7 @@ async function openList(x, keep = false, more = false) {
   props.replaceChildren(head, sub, ol);
   drawLeft();
   try {
-    const q = new URLSearchParams({ offset: String(L.items.length), limit: String(LIST_N), ...(cond ? { cond: JSON.stringify(cond) } : {}) });
+    const q = new URLSearchParams({ offset: String(L.items.length), limit: String(LIST_N), ...(cond ? { cond: JSON.stringify(cond) } : {}), ...(ST.clsOff.size ? { off: JSON.stringify([...ST.clsOff]) } : {}) });
     const r = await api(`/me/analyses/${encodeURIComponent(x.job)}/rows?${q}`);
     if (ST.list !== x.job) return;
     x.rows = { n: r.n, items: [...L.items, ...(r.items || [])], label: r.label };
@@ -601,7 +602,7 @@ async function openList(x, keep = false, more = false) {
     return;
   }
   const R = x.rows;
-  sub.textContent = `${nf(R.n)}건 · 넓은 것부터${R.label ? ` · 조건 ${R.label}` : ''}`;
+  sub.textContent = `${nf(R.n)}건 · 넓은 것부터${R.label ? ` · 조건 ${R.label}` : ''}${ST.clsOff.size ? ' · 보이는 것 기준' : ''}`;
   ol.replaceChildren(...R.items.map((it, i) => { const p = it.properties || {}; return h('li', {}, h('button.lm-row', { type: 'button', onclick: () => pickRow(x, it) },
     h('span.lm-rn.num', { text: String(i + 1) }), h('b', { text: p.cls || '결과' }), h('span', { text: p.emd || '' }),
     h('span.num', { text: p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : '—' }))); }));

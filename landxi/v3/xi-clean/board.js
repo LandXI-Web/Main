@@ -190,7 +190,9 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
 
   /* ── 올리면 그 자리 말풍선 · 누르면 그 자리로 ── 숫자 = 서비스 결과 장부 + 전국 분석 진행 장부(지어낸 숫자 0) */
   const UNIT = { 경작지: '곳', 비닐하우스: '동', 건물: '동', 주차장: '곳', 곤포사일리지: '개', 토지피복: '개', '국토 변화': '곳', 해양쓰레기: '개' };
-  const colorOf = (k) => NCOLOR[k] || Object.entries(NAMED).find(([n]) => taskOf(n) === k)?.[1] || '#5C7CFA';
+  const baseColorOf = (k) => NCOLOR[k] || Object.entries(NAMED).find(([n]) => taskOf(n) === k)?.[1] || '#5C7CFA';
+  let userColor = null;                                                                   // 사람이 바꾼 클래스 색(색 바꾸기 · 원칙 264) — 말풍선 · 업무 줄 점도 같은 색
+  const colorOf = (k) => userColor?.(k) || baseColorOf(k);
   function rowEls(rows) {
     return h('ul.xb-tc-rows', {}, ...rows.map((r) => h('li', {}, h('i', { style: { background: colorOf(r.k) } }), h('span', { text: r.name || r.k }), h('b', { text: `${nf(r.n)}${r.unit || UNIT[r.k] || '개'}` }))));
   }
@@ -314,7 +316,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
     B.hidden = !on; NAT.show(on); if (!on) { hideTip(); setHot(null); }
     if (map.getLayer('xb-grid')) map.setLayoutProperty('xb-grid', 'visibility', on ? 'visible' : 'none');
   }
-  return { load, reload, near, bySource, show, color: (svc) => B.color[svc], colorOf, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
+  return { load, reload, near, bySource, show, color: (svc) => B.color[svc], colorOf, baseColorOf, set userColor(f) { userColor = f; }, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
     set busy(f) { B.isBusy = f; }, nat: NAT, hot, setTask, setOffCls, tasks, get task() { return B.task; }, get offCls() { return [...B.offCls]; }, rehover: () => { if (!tip.hidden && lastPt) hover(lastPt); },
     setLayers: (set) => [...B.loaded.values()].find((x) => x.set === set) || null,
     get natInfo() { return { layers: NAT.layers.filter((l) => map.getLayer(l)), at: B.natAt, assets: NAT.assets }; } };
