@@ -1,6 +1,7 @@
 /* 인프라 뷰 — 큰 숫자 `동시 고부하 GPU {n} / {m}` + 장비 표 + 큐 + 저장 공간 + 언어 모델(모델별 줄 · 국산 모델 연결 자리 · 꺼졌을 때만 켜기) + 법령 색인 칸.
    성능 수치(부하 · 메모리 · 전력)는 플랫폼에서 이 표 한 곳에만. GPU 는 순번으로만(제품명 · 포트 · 경로 0). 갱신은 숫자만 바뀐다(튐 없음). */
 import { bignum, table, esc, nf, toast, devlog } from './kit.js';
+import { panes } from '../../kit/panes.js';
 import { S, budget, HOT, HOT_W, gpuWork, hotNote, judgedAt, llmRows, startLlm, restartServer, waitBoot } from './data.js';
 
 const val = (e) => (e && typeof e === 'object' ? e.value : e);
@@ -103,6 +104,7 @@ export function mountInfra(root) {
     </aside>
   </div>`;
   const $ = (s) => root.querySelector(s);
+  panes($('.side'), { edge: 'left', key: 'infra', cssVar: '--vi-side', min: 300, max: 600, otherMin: 560, below: 1181 });   // 칸 크기 조절(원칙 263)
   const big = bignum($('#big'), null, { label: '동시 고부하 GPU' });
   const T = table($('#gpu-t'), { cols: COLS, rows: [] });
 

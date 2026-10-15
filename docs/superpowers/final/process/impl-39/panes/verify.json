@@ -1,0 +1,2222 @@
+[
+ {
+  "role": "app",
+  "name": "직원-지도서비스",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 344,
+    "grow": 464,
+    "shrink": 280,
+    "key": 296,
+    "reset": 344,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-결과확인",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-분석하기-상세",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 380,
+    "grow": 500,
+    "shrink": 320,
+    "key": 352,
+    "reset": 380,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-요청함",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 400,
+    "grow": 520,
+    "shrink": 300,
+    "key": 332,
+    "reset": 400,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-서비스카드",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 280,
+    "key": 312,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-프로젝트",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-새프로젝트창",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 446,
+    "grow": 578,
+    "shrink": 312,
+    "key": 368,
+    "reset": 446,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-데이터올리기",
+  "size": "1440x900",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right is-short",
+    "s0": 336,
+    "grow": 472,
+    "shrink": 276,
+    "key": 340,
+    "reset": 336,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-학습",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 372,
+    "grow": 492,
+    "shrink": 300,
+    "key": 332,
+    "reset": 372,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-지도서비스",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 344,
+    "grow": 464,
+    "shrink": 280,
+    "key": 296,
+    "reset": 344,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-결과확인",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-분석하기-상세",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 380,
+    "grow": 500,
+    "shrink": 320,
+    "key": 352,
+    "reset": 380,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-요청함",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 400,
+    "grow": 520,
+    "shrink": 300,
+    "key": 332,
+    "reset": 400,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-서비스카드",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 280,
+    "key": 312,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-프로젝트",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-새프로젝트창",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 446,
+    "grow": 578,
+    "shrink": 312,
+    "key": 368,
+    "reset": 446,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-데이터올리기",
+  "size": "1280x800",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right is-short",
+    "s0": 336,
+    "grow": 472,
+    "shrink": 276,
+    "key": 340,
+    "reset": 336,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-학습",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 372,
+    "grow": 492,
+    "shrink": 300,
+    "key": 332,
+    "reset": 372,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-지도서비스",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 344,
+    "grow": 464,
+    "shrink": 280,
+    "key": 296,
+    "reset": 344,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-결과확인",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-분석하기-상세",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 380,
+    "grow": 500,
+    "shrink": 320,
+    "key": 352,
+    "reset": 380,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-요청함",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 400,
+    "grow": 520,
+    "shrink": 300,
+    "key": 332,
+    "reset": 400,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-서비스카드",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 280,
+    "key": 312,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-프로젝트",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-새프로젝트창",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 446,
+    "grow": 578,
+    "shrink": 312,
+    "key": 368,
+    "reset": 446,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-데이터올리기",
+  "size": "1366x768",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right is-short",
+    "s0": 336,
+    "grow": 472,
+    "shrink": 276,
+    "key": 340,
+    "reset": 336,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-학습",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 372,
+    "grow": 492,
+    "shrink": 300,
+    "key": 332,
+    "reset": 372,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-지도서비스",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 344,
+    "grow": 464,
+    "shrink": 280,
+    "key": 296,
+    "reset": 344,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-결과확인",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-분석하기-상세",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 380,
+    "grow": 500,
+    "shrink": 320,
+    "key": 352,
+    "reset": 380,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-요청함",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 400,
+    "grow": 520,
+    "shrink": 300,
+    "key": 332,
+    "reset": 400,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-서비스카드",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 280,
+    "key": 312,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-프로젝트",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 332,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-새프로젝트창",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 446,
+    "grow": 578,
+    "shrink": 312,
+    "key": 368,
+    "reset": 446,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-데이터올리기",
+  "size": "1920x1080",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right is-short",
+    "s0": 336,
+    "grow": 472,
+    "shrink": 276,
+    "key": 340,
+    "reset": 336,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-학습",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 372,
+    "grow": 492,
+    "shrink": 300,
+    "key": 332,
+    "reset": 372,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-지도서비스",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 344,
+    "grow": 464,
+    "shrink": 280,
+    "key": 296,
+    "reset": 344,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-결과확인",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 472,
+    "key": 504,
+    "reset": 504,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-분석하기-상세",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 380,
+    "grow": 500,
+    "shrink": 320,
+    "key": 352,
+    "reset": 380,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-요청함",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 400,
+    "grow": 520,
+    "shrink": 300,
+    "key": 332,
+    "reset": 400,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-서비스카드",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 280,
+    "key": 312,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-프로젝트",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 332,
+    "grow": 452,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-새프로젝트창",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 446,
+    "grow": 578,
+    "shrink": 312,
+    "key": 368,
+    "reset": 446,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-데이터올리기",
+  "size": "2560x1440",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right is-short",
+    "s0": 336,
+    "grow": 472,
+    "shrink": 276,
+    "key": 340,
+    "reset": 336,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 352,
+    "grow": 472,
+    "shrink": 320,
+    "key": 352,
+    "reset": 352,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "app",
+  "name": "직원-학습",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 372,
+    "grow": 492,
+    "shrink": 300,
+    "key": 332,
+    "reset": 372,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-대시보드",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 408,
+    "grow": 576,
+    "shrink": 368,
+    "key": 496,
+    "reset": 408,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-인프라",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-공유데이터",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 420,
+    "grow": 540,
+    "shrink": 320,
+    "key": 352,
+    "reset": 420,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-기관한곳",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 472,
+    "grow": 592,
+    "shrink": 320,
+    "key": 352,
+    "reset": 472,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-배포",
+  "size": "1440x900",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-요청관리",
+  "size": "1440x900",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-저장용량",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-서비스배포",
+  "size": "1440x900",
+  "handles": 0,
+  "defaultSame": false,
+  "moved": [
+   "dp-stage k-stage is-ready",
+   "dp-top",
+   "dp-legend",
+   "dp-ops is-in pn-pane pn-pane--x"
+  ],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-대시보드",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 408,
+    "grow": 576,
+    "shrink": 368,
+    "key": 496,
+    "reset": 408,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-인프라",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-공유데이터",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 420,
+    "grow": 540,
+    "shrink": 320,
+    "key": 352,
+    "reset": 420,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-기관한곳",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 440,
+    "grow": 560,
+    "shrink": 560,
+    "key": 592,
+    "reset": 592,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-배포",
+  "size": "1280x800",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-요청관리",
+  "size": "1280x800",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-저장용량",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-서비스배포",
+  "size": "1280x800",
+  "handles": 0,
+  "defaultSame": false,
+  "moved": [
+   "dp-stage k-stage is-ready",
+   "dp-top",
+   "dp-legend",
+   "dp-ops is-in pn-pane pn-pane--x"
+  ],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-대시보드",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 408,
+    "grow": 576,
+    "shrink": 368,
+    "key": 496,
+    "reset": 408,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-인프라",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-공유데이터",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 420,
+    "grow": 540,
+    "shrink": 320,
+    "key": 352,
+    "reset": 420,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-기관한곳",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 592,
+    "grow": 712,
+    "shrink": 320,
+    "key": 352,
+    "reset": 472,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-배포",
+  "size": "1366x768",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-요청관리",
+  "size": "1366x768",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-저장용량",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-서비스배포",
+  "size": "1366x768",
+  "handles": 0,
+  "defaultSame": false,
+  "moved": [
+   "dp-stage k-stage is-ready",
+   "dp-top",
+   "dp-legend",
+   "dp-ops is-in pn-pane pn-pane--x"
+  ],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-대시보드",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 408,
+    "grow": 576,
+    "shrink": 368,
+    "key": 496,
+    "reset": 408,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-인프라",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-공유데이터",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 420,
+    "grow": 540,
+    "shrink": 320,
+    "key": 352,
+    "reset": 420,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-기관한곳",
+  "size": "1920x1080",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-배포",
+  "size": "1920x1080",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-요청관리",
+  "size": "1920x1080",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-저장용량",
+  "size": "1920x1080",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-서비스배포",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 760,
+    "grow": 880,
+    "shrink": 480,
+    "key": 512,
+    "reset": 760,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-대시보드",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 408,
+    "grow": 528,
+    "shrink": 320,
+    "key": 352,
+    "reset": 408,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-인프라",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 360,
+    "grow": 480,
+    "shrink": 300,
+    "key": 332,
+    "reset": 360,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-공유데이터",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 420,
+    "grow": 540,
+    "shrink": 320,
+    "key": 352,
+    "reset": 420,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-기관한곳",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 888,
+    "grow": 720,
+    "shrink": 320,
+    "key": 352,
+    "reset": 888,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-배포",
+  "size": "2560x1440",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-요청관리",
+  "size": "2560x1440",
+  "handles": 0,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-저장용량",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "admin",
+  "name": "관리자-서비스배포",
+  "size": "2560x1440",
+  "handles": 2,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--right",
+    "s0": 760,
+    "grow": 880,
+    "shrink": 480,
+    "key": 512,
+    "reset": 760,
+    "overflow": false,
+    "mainOverflow": false
+   },
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 320,
+    "key": 352,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-서비스대시보드",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-필지목록",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 440,
+    "grow": 560,
+    "shrink": 340,
+    "key": 353,
+    "reset": 439,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-행정정보와비교",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 392,
+    "shrink": 392,
+    "key": 424,
+    "reset": 424,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-요청하기",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-서비스대시보드",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-필지목록",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 440,
+    "grow": 560,
+    "shrink": 340,
+    "key": 354,
+    "reset": 438,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-행정정보와비교",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 424,
+    "grow": 424,
+    "shrink": 424,
+    "key": 456,
+    "reset": 456,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-요청하기",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-서비스대시보드",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-필지목록",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 440,
+    "grow": 560,
+    "shrink": 340,
+    "key": 354,
+    "reset": 439,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-행정정보와비교",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 456,
+    "grow": 456,
+    "shrink": 456,
+    "key": 488,
+    "reset": 488,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-요청하기",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-서비스대시보드",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 512,
+    "key": 544,
+    "reset": 544,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-필지목록",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 800,
+    "grow": 920,
+    "shrink": 520,
+    "key": 534,
+    "reset": 800,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-행정정보와비교",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 488,
+    "grow": 488,
+    "shrink": 488,
+    "key": 520,
+    "reset": 520,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-요청하기",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 300,
+    "key": 332,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-서비스대시보드",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 544,
+    "grow": 664,
+    "shrink": 664,
+    "key": 696,
+    "reset": 696,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-필지목록",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 1280,
+    "grow": 1000,
+    "shrink": 600,
+    "key": 614,
+    "reset": 1280,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-행정정보와비교",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 520,
+    "grow": 520,
+    "shrink": 520,
+    "key": 552,
+    "reset": 552,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "gov",
+  "name": "기관-요청하기",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 480,
+    "grow": 600,
+    "shrink": 300,
+    "key": 332,
+    "reset": 480,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "abroad",
+  "name": "해외-첫화면",
+  "size": "1440x900",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 340,
+    "key": 372,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "abroad",
+  "name": "해외-첫화면",
+  "size": "1280x800",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 340,
+    "key": 372,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "abroad",
+  "name": "해외-첫화면",
+  "size": "1366x768",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 340,
+    "key": 372,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "abroad",
+  "name": "해외-첫화면",
+  "size": "1920x1080",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 340,
+    "key": 372,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ },
+ {
+  "role": "abroad",
+  "name": "해외-첫화면",
+  "size": "2560x1440",
+  "handles": 1,
+  "defaultSame": true,
+  "moved": [],
+  "drags": [
+   {
+    "cls": "pn-h--x pn-h--left",
+    "s0": 392,
+    "grow": 512,
+    "shrink": 340,
+    "key": 372,
+    "reset": 392,
+    "overflow": false,
+    "mainOverflow": false
+   }
+  ],
+  "errs": []
+ }
+]

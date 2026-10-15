@@ -41,6 +41,7 @@
 
 /* 한 장 — 왼쪽(지금 할 일 · 단계) · 오른쪽(사람 · 재학습) */
 .lxp-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.lxp-grid[style*="--lxp-side"]{grid-template-columns:minmax(0,1fr) var(--lxp-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .lxp-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .lxp-h{margin:0 0 16px;font:500 var(--fs-t2)/var(--lh-t2) var(--font-body);color:var(--ink)}
 .lxp-now{display:flex;flex-direction:column;align-items:flex-start;gap:8px}

@@ -4,6 +4,7 @@
 body.gq-boot .k-app{visibility:hidden}
 .gq :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
 .gq-grid{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-items:start}
+.gq-grid[style*="--gq-side"]{grid-template-columns:minmax(0,1fr) var(--gq-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .gq-col{display:flex;flex-direction:column;gap:24px;min-width:0}
 
 /* 단계 카드 */

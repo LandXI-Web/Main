@@ -26,6 +26,7 @@ body.la-boot .k-app{visibility:hidden}
 /* 상세 — 왼쪽(장면 · 이름 · 내용) · 오른쪽 고정(이 카드로 분석) */
 .la-page--dt{gap:0}
 .la-dt{display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-areas:"top side" "body side";gap:20px 24px;align-items:start}
+.la-dt[style*="--la-side"]{grid-template-columns:minmax(0,1fr) var(--la-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .la-dt-top{grid-area:top;display:flex;flex-direction:column;gap:16px;min-width:0}
 .la-dt-body{grid-area:body;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;min-width:0}
 .la-side{grid-area:side;position:sticky;top:24px;display:flex;flex-direction:column;gap:12px;padding:24px}

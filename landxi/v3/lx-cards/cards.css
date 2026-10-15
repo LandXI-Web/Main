@@ -1,6 +1,7 @@
 /* lx-cards — 서비스 카드 관리. 분석하기(lx-analyze/analyze.css)와 같은 틀 · 같은 카드 부품 · 토큰은 키트 그대로. */
 .lc-page{gap:16px}
 .lc-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;align-items:start}
+.lc-grid[style*="--lc-left"]{grid-template-columns:var(--lc-left) minmax(0,1fr)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .lc-left{position:sticky;top:24px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .lc-k{margin:0}
 .lc-prev .k-sc:hover{transform:none;box-shadow:none}

@@ -1,7 +1,7 @@
 /* lx-deploy — ⑤ 배포·이식 + ⑥ 운영·신고(명세 §2.7). "어느 기관에 깔렸고, 잘 돌고 있는가?"
    부품: K1 셸 · K2 관문 · K3 무대 · K4 지역 · K5 서랍 · K6 큰 숫자 · K8 세로 스텝퍼 · K9 빈 상태 · K12 표 · K13 토스트 · K14 개발자 서랍.
    지역은 변수: URL ?deploy= · ?region= · ?card= · ?tab=ops, 없으면 배포 기록 중 가장 급한 곳(이식 요청 → 시범 → 운영). */
-import { ALLOW, shell, gate, createStage, regionPicker, drawer, bignum, numHtml, stepper, empty, table, toast, devDrawer, devlog, h, esc } from '../kit/index.js';
+import { ALLOW, shell, gate, createStage, regionPicker, drawer, panes, bignum, numHtml, stepper, empty, table, toast, devDrawer, devlog, h, esc } from '../kit/index.js';
 import { api, sse } from '../../shared/api-v1.js';
 import { projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
@@ -32,6 +32,7 @@ const top = h('div.dp-top', {}, tabs, h('span.sp'), plantBtn);
 const legend = h('div.dp-legend', { 'aria-hidden': 'true' }, h('span', {}, h('i'), '운영'), h('span', {}, h('i', { dataset: { s: 'pilot' } }), '시범'), h('span', {}, h('i', { dataset: { s: 'draft' } }), '적용 요청'));
 const opsEl = h('section.dp-ops', { hidden: true, role: 'tabpanel', 'aria-labelledby': 'tab-ops' });
 root.append(stageEl, top, legend, opsEl);
+panes(opsEl, { edge: 'right', key: 'ops', host: root, container: root, min: 480, max: 1200, otherMin: 320, below: 961, collapse: false });   // 운영 칸 폭 끌어서(원칙 263)
 S.main.append(root);
 document.addEventListener('kit:drawer', (e) => root.classList.toggle('has-drawer', e.detail.open > 0));
 

@@ -128,6 +128,7 @@ async function main() {
   const tip = h('div.gl-tip', { hidden: true });
   const sheet = K.card({ map: true, cls: 'gl-sheet' });
   main.append(stageEl, crumbs, hudEl, guard, tip, sheet);
+  K.panes(sheet, { edge: 'left', key: 'sheet', cssVar: '--sheet', varHost: main, host: main, container: main, min: 340, max: 720, otherMin: 360, below: 961 });   // 오른쪽 칸 폭 끌어서 · 접기(원칙 263)
 
   /* ── 데이터(병렬) ── */
   const fx = (f) => fetch(DATA + f).then((r) => (r.ok ? r.json() : null)).catch(() => null);

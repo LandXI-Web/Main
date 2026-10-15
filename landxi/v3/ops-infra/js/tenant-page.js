@@ -7,6 +7,7 @@ import { orgs, DIM } from './data.js';
 import { shares, mainPhoto } from './tenants.js';
 import { openBrand } from './brand.js';
 import { orgUrl } from '../../kit/auth-gate.js';
+import { panes } from '../../kit/panes.js';
 
 const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const nf = (v, d = 0) => (v == null ? '—' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: d }));
@@ -85,7 +86,9 @@ export function mountTenantPage(root) {
       cell(st == null ? '—' : st < 1 && st > 0 ? nf(st * 1000) : nf(st, st < 10 ? 1 : 0), st != null && st < 1 && st > 0 ? 'MB' : 'GB', '저장', llm != null ? `XI ChatGEO 요청 ${nf(llm)}건 · 이번 달` : ''));
     const rec = h('section.t-card.tp-rec', {}, h('h2', {}, '최근 기록', h('small', { text: '이 기관에서 일어난 일' })),
       P.log.length ? h('ul', {}, ...P.log.slice(0, 6).map((l) => h('li', {}, h('span.num', { text: md(l.at) }), h('span', { text: String(l.line || '').replace(/ (?=\S+$)/, ' ') })   /* 문장 끝 한 단어 줄 막기(10-14 재검수) */))) : h('p.tp-none', { text: '아직 기록이 없습니다' }));
-    return h('div.tp-ov', {}, cells, rec);
+    const ov = h('div.tp-ov', {}, cells, rec);
+    panes(rec, { edge: 'left', key: 'rec', cssVar: '--tp-rec', min: 320, max: 0.6, otherMin: 480, below: 961 });   // 칸 크기 조절(원칙 263)
+    return ov;
   }
 
   function staffSel(curId, none, onPick) {

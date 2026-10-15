@@ -180,6 +180,7 @@ function draw(pr) {
   const grid = h('div.lxp-grid'); page.append(grid);
   const left = h('div.lxp-col'), right = h('div.lxp-col');
   grid.append(left, right);
+  K.panes(right, { edge: 'left', key: 'side', cssVar: '--lxp-side', min: 300, max: 640, otherMin: 480, below: 1101 });   // 칸 크기 조절(원칙 263)
 
   /* 지금 할 일 — 다음 할 일 하나 + 그 단계 화면 */
   const nx = pr.next || {};

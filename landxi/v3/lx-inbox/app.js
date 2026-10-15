@@ -4,7 +4,7 @@
    판정: 맞음 · AI 오류 · 모름(선택). 'AI 오류'는 서버가 재학습 표본으로 이어 쓴다. 주소 ?id= 로 그 대화를 바로 연다(알림 칸에서 온 길).
    LX 직원 = 왼쪽 메뉴 '요청함'(10차 메뉴-1 ⓐ — 기관에서 온 검토 요청 · 분석 의뢰 · 내가 올린 결재 · 알림). 머리 아래 숫자 셋은 대시보드 '요청함' 칸 · 메뉴 숫자와
    같은 한 곳(kit/lx-menu.js requestCounts) — 분석 의뢰 · 내 결재는 눌러 목록(#requests · #approvals 로 바로 연다). */
-import { gate, shell, createStage, empty, toast, devDrawer, devlog, numHtml, drawer } from '../kit/index.js';
+import { gate, shell, createStage, panes, empty, toast, devDrawer, devlog, numHtml, drawer } from '../kit/index.js';
 import { h, api, bboxOf } from '../kit/util.js';
 import { msg, when } from '../kit/notify.js';
 import { staffMenu, requestCounts } from '../kit/lx-menu.js';
@@ -76,6 +76,7 @@ const page = h('div.ib',
     cells, cells ? h('p.ib-s.ib-s-note', { text: '요청은 기관 · 직원이 맡긴 일이고, 개선 후보는 XI ChatGEO 가 답하지 못한 질문입니다. 개선 후보를 채택하면 만들 기능으로 올라갑니다.' }) : null,   // 둘이 다른 것(GPT2-8)
     admin ? shootStrip() : null),   // 촬영 요청(18차 촬영-1 ⓑ — 받는 쪽 = LX 관리자 · lx-inbox/shoots.js)
   h('div.ib-grid', {}, h('section.ib-side.t-card', { 'aria-label': '검토 요청 목록' }, tabs, listEl), convEl));
+panes(page.querySelector('.ib-side'), { edge: 'right', key: 'list', cssVar: '--ib-side', min: 300, max: 640, otherMin: 420, below: 961 });   // 목록 · 상세 칸 크기 조절(원칙 263)
 S.main.append(page);
 document.title = (admin ? '기관에서 온 요청' : '요청함') + ' · Land-XI';
 

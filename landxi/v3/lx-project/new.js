@@ -12,6 +12,7 @@ import { h, api, API, session } from '../kit/util.js';
 import { regionPicker } from '../kit/region.js';
 import { toast } from '../kit/toast.js';
 import { uploadQueue } from '../kit/dropzone.js';
+import { panes } from '../kit/panes.js';
 import { stageHref, ensureCss } from './context.js';
 
 let open = null;
@@ -190,6 +191,7 @@ export function openNewProject({ onMade } = {}) {
     err,
     h('div.lxp-act', {}, go, cancel));
   document.body.append(dim, box);
+  { const c0 = box.querySelector('.lxp-new-c'); panes(c0, { edge: 'right', key: 'new', cssVar: '--lxp-new-l', min: 300, max: 640, otherMin: 380, below: 1100, collapse: false }); }   // 창 안 두 칸 크기 조절(원칙 263 · 창 크기는 그대로)
   requestAnimationFrame(() => { dim.classList.add('is-in'); box.classList.add('is-in'); });
   drawWhere();
 

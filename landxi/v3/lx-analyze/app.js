@@ -180,7 +180,9 @@ async function detail(cid) {
   const picker = c.can_analyze ? imageryCard(c) : null;   // 영상 고르기(질문 3 ⓐ) — 오른쪽에서 지역을 고르면 그 지역을 덮는 영상 카드 두 열 + 범위 지도
   const body = h('div.la-dt-body', {}, picker?.el, resultCard(c), compareCard(c), usesCard(c), condCard(c));
   const side = h('aside.la-side', { id: 'analyze', 'aria-label': '이 카드로 분석' });
-  page.append(h('div.la-dt', {}, h('div.la-dt-top', {}, crumb, hero, head), side, body));
+  const dt = h('div.la-dt', {}, h('div.la-dt-top', {}, crumb, hero, head), side, body);
+  page.append(dt);
+  K.panes(side, { edge: 'left', key: 'side', cssVar: '--la-side', varHost: dt, min: 320, max: 640, otherMin: 520, below: 1100 });   // 칸 크기 조절(원칙 263)
   analyzePanel(side, c, picker);
   if (location.hash === '#analyze' && matchMedia('(max-width: 1099px)').matches) side.scrollIntoView({ block: 'start' });
   S.fresh(c.as_of);
@@ -300,6 +302,7 @@ function imageryCard(c) {
     h('div.la-im-body', {}, h('div.la-im-r', {}, mapBox, note), grid, more));
   const cache = new Map();
   let stage = null, seq = 0;
+  K.panes(mapBox, { edge: 'bottom', key: 'im-map', min: 160, max: 640, otherMin: null, collapse: false, map: () => stage?.map });   // 범위 지도 높이 끌어서(원칙 263)
   const dash = () => { try { const m = stage.map; m.setPaintProperty('k-hover-l', 'line-dasharray', [2, 2]); m.setPaintProperty('k-hover-l', 'line-opacity', 0.7); m.setPaintProperty('k-hover-f', 'fill-opacity', 0); } catch { /* 지도 전 */ } };
   const thumbs = new Map();
   const thumb = (id) => {

@@ -68,7 +68,9 @@ async function edit(cid) {
   const prev = h('div.lc-prev');
   const form = h('form.lc-form', { novalidate: true });
   const facts = h('section.t-card.la-box.lc-facts', { 'aria-label': '서버 값' });
-  page.append(crumb, h('div.lc-grid', {}, h('div.lc-left', {}, h('p.t-label.lc-k', { text: '분석하기에 보이는 카드' }), prev, facts), form));
+  const lcLeft = h('div.lc-left', {}, h('p.t-label.lc-k', { text: '분석하기에 보이는 카드' }), prev, facts);
+  page.append(crumb, h('div.lc-grid', {}, lcLeft, form));
+  K.panes(lcLeft, { edge: 'right', key: 'left', cssVar: '--lc-left', min: 280, max: 560, otherMin: 480, below: 1100 });   // 칸 크기 조절(원칙 263)
 
   let cur = c;
   const paint = () => {

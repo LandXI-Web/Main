@@ -56,6 +56,7 @@
 @media (min-width:1600px){.sd-card{max-width:var(--wide-max)}}
 /* 줄을 누르면 오른쪽 상세 판(10-15 공유데이터-상세 · 원칙 255) — 판 폭 · 높이 고정(원칙 231) · 글자 본문 15px · 보조 15 · 꼬리표 14 이상(원칙 257 · 토큰만) */
 .sd-split{flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px}
+.sd-split[style*="--sd-det"]{grid-template-columns:minmax(0,1fr) var(--sd-det)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .sd-list{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
 .sd-row{cursor:pointer}
 .sd-row:hover td{background:var(--bg-0)}

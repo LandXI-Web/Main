@@ -10,7 +10,7 @@
    18차 촬영-1 ⓑ — 이 화면이 메뉴 '요청하기': 탭 셋 분석 요청(?tab=new) · 촬영 요청(?tab=shoot · shoot.js) · 보낸 요청(?tab=sent · sent.js).
    결과 지도의 '이 영상으로 분석 요청'은 ?service=<배포본>&imagery=<공유 영상> 으로 열어 그 영상이 들어간 채 시작한다.
    지역 고정값 없음 — 관할 · 서비스 · 공유 영상은 모두 로그인 기관에서. */
-import { shell, gate, createStage, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
+import { shell, gate, createStage, panes, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';
@@ -52,6 +52,8 @@ const S = { svcs: [], cards: new Map(), shared: [], mine: [], card: null, svc: Q
 
 /* ═════════ 지도 — 넣은 영상이 어디인지 ═════════ */
 const stage = createStage($('#map'), { padding: { top: 28, bottom: 28, left: 28, right: 28 } });   // 오른쪽 '어디를 분석하나' 작은 지도(시안)
+/* 칸 크기 조절(원칙 263) — 왼쪽 단계 · 오른쪽 칸 사이(분석 요청 · 촬영 요청 두 탭 같은 폭) */
+for (const g of document.querySelectorAll('.gq-grid')) panes(g.querySelector(':scope > aside.gq-col'), { edge: 'left', key: 'side', cssVar: '--gq-side', varHost: g, min: 300, max: 720, otherMin: 480, below: 961, map: () => stage.map });
 /** 미리 보기 한 줄 — 어디를 찍은 영상인지(사용자 말) · 없으면 안내 한 줄 */
 function whereCap(text) {
   const cap = $('#map-cap'), note = $('#map-note');

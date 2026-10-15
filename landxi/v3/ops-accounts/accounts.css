@@ -168,6 +168,7 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 /* 저장 용량 탭 하나(용량-1 · 10-09 · 시안 design-r14/lx-staff-board admin) — 왼쪽: 전체 현황 · 기본 할당 · 계정별 할당 표 / 오른쪽: 증량 신청 서랍(승인 · 거절) */
 .acc-w.acc-w--wide { max-width: none; padding: 32px 40px 48px; }
 .acs { display: grid; grid-template-columns: minmax(0, 1fr) 392px; gap: 16px; align-items: start; }
+.acs[style*="--acs-dr"] { grid-template-columns: minmax(0, 1fr) var(--acs-dr); }   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .acs-l { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .acs-h { margin: 0 0 4px; }
 .acs-h h2 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font: 700 var(--fs-t1)/var(--lh-t1) var(--font-display); letter-spacing: var(--ls-h4); color: var(--ink); }

@@ -8,6 +8,7 @@
 import { h, api } from '../kit/util.js';
 import { toast } from '../kit/toast.js';
 import { empty } from '../kit/empty.js';
+import { panes } from '../kit/panes.js';
 import { size, gb, pctWord } from '../kit/me.js';
 
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
@@ -201,5 +202,6 @@ export async function mountStorage(card, { mine = () => true, onChange } = {}) {
   card.innerHTML = '';
   card.dataset.tab = 'storage';
   card.append(h('div.acs', {}, h('div.acs-l', {}, ov, set, tbl), dr));
+  panes(dr, { edge: 'left', key: 'storage', cssVar: '--acs-dr', min: 320, max: 640, otherMin: 560, below: 1201 });   // 칸 크기 조절(원칙 263)
   pick(picked && reqs.find((x) => x.id === picked.id) || reqs[0] || null);
 }

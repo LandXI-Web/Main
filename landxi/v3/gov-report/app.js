@@ -6,7 +6,7 @@
    → 상태 쓰기(POST /survey/findings/{fid}/state) → 표 갱신 · 큰 숫자 감소 · SSE /events/tenant 로 다른 창의 변경도 반영.
    [보고서] 시군구 · 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → 한글 문서(.hwpx) 내려받기(서버 한 곳 · 10-14 원칙 250).
    관할 = 로그인 기관(세션). 지역 고정값 없음. */
-import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
+import { shell, gate, createStage, drawer, panes, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
@@ -92,6 +92,8 @@ const actOf = (a) => {
 
 /* ═════════ 지도(미니) ═════════ */
 S.stage = createStage($('#map'), { padding: { top: 40, bottom: 40, left: 40, right: 40 } });
+/* 칸 크기 조절(원칙 263) — 왼쪽 판 · 오른쪽 지도 칸 사이를 끌어서 · 접기 */
+panes($('#side'), { edge: 'left', key: 'side', cssVar: '--gr-side', varHost: $('.gr'), min: 340, max: 0.7, otherMin: 480, below: 761, map: () => S.stage.map });
 
 /* ═════════ 데이터 ═════════ */
 const shortAddr = (a) => String(a || '').split(/\s+/).slice(2).join(' ');

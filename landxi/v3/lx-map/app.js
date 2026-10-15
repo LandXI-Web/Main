@@ -78,6 +78,9 @@ if (ST.groups[0]) ST.open.add(ST.groups[0].key);
 const ST0 = createStage(stageEl, { bounds: first?.bounds || K.KOREA, interactive: true });
 await ST0.ready;
 const map = ST0.map;
+/* 칸 크기 조절(원칙 263) — 왼쪽 결과 층 칸 · 오른쪽 속성 칸을 끌어서. 접기는 원래 '접기' 단추 그대로 */
+K.panes(left, { edge: 'right', key: 'left', cssVar: '--lm-left', varHost: page, min: 280, max: 600, otherMin: 480, collapse: false, map });
+K.panes(props, { edge: 'left', key: 'props', host: mapEl, container: mapEl, min: 300, max: 640, otherMin: 320, collapse: false, onChange: (s) => { if (s) mapEl.style.setProperty('--lm-pw', s + 'px'); } });
 window.__lm = { map, shared: () => SHL.map((L) => L.id) };   // 점검 손잡이(화면에 보이지 않음 · 캡처 · e2e 가 도형 자리를 찾는다)
 const pad = () => ({ top: 72, bottom: 48, left: 48, right: props.hidden ? 48 : 400 });
 const CAT = await catP;

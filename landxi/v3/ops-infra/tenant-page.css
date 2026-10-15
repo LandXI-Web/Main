@@ -22,6 +22,7 @@
 .tp-tabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .tp-tabs small{margin-left:6px;font:600 var(--fs-tag)/1 var(--font-num);opacity:.7}
 .tp-ov{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:20px;align-items:start}
+.tp-ov[style*="--tp-rec"]{grid-template-columns:minmax(0,1fr) var(--tp-rec)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .tp-cells{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .tp-cell{display:flex;flex-direction:column;gap:4px;padding:20px 22px;border-radius:var(--r-16);background:var(--bg-1)}
 .tp-cell b{font:700 var(--fs-num)/1.1 var(--font-num);color:var(--ink)}

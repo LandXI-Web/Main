@@ -1,7 +1,7 @@
 /* ops-core — 관리자 집: 현황(밝은 배포 지도 + 결재 대기 큰 숫자 + 할 일) + 결재함.
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
-import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
+import { gate, shell, bignum, table, drawer, panes, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
 import { h, esc, ymd, api } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, hasS9, canon } from './data.js';
@@ -51,6 +51,7 @@ const todoEl = h('ul.oc-todo');
 const useEl = h('a.oc-use', { href: INFRA + '#/deploys/usage', 'aria-label': '서비스 사용 현황 — 배포 메뉴에서 전체 보기' });
 const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '승인 대기' }, big, openBtn, todoEl, useEl);
 over.append(stageEl, seg, legend, card);
+panes(card, { edge: 'left', key: 'card', host: over, container: over, min: 320, max: 640, otherMin: 360, below: 961 });   // 오른쪽 칸 폭 끌어서 · 접기(원칙 263)
 
 const M = mountMap(stageEl);
 const B = bignum(big, null, { label: '승인 대기', unit: '건' });

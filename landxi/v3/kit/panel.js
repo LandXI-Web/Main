@@ -5,6 +5,7 @@
    card({ title, body, map:true }) → .t-card 엘리먼트 */
 import { h } from './util.js';
 import { t } from './i18n.js';
+import { panes } from './panes.js';
 
 const STACK = [];
 const MAX = 3;
@@ -16,7 +17,7 @@ addEventListener('keydown', (e) => {
   e.preventDefault(); STACK[STACK.length - 1].close();
 });
 
-export function drawer({ title = '', body = '', host = document.body, slot = 'right', onClose, width, label } = {}) {
+export function drawer({ title = '', body = '', host = document.body, slot = 'right', onClose, width, label, resize = true } = {}) {
   for (const d of [...STACK]) if (d.slot === slot) d.close(true);
   while (STACK.length >= MAX) STACK[0].close(true);
   const head = h('div.k-dr-h', {}, h('h2.k-dr-t', { text: title }), h('button.k-dr-x', { type: 'button', 'aria-label': t('panel.close'), html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>' }));
@@ -25,12 +26,15 @@ export function drawer({ title = '', body = '', host = document.body, slot = 'ri
   if (width) el.style.setProperty('--k-dr-w', typeof width === 'number' ? width + 'px' : width);
   if (host !== document.body) { el.classList.add('k-drawer--in'); if (getComputedStyle(host).position === 'static') host.style.position = 'relative'; }
   host.appendChild(el);
+  /* 끌어서 폭 조절 · 접기(원칙 263) — 왼쪽 가장자리 손잡이 · 사람 · 화면별 기억 */
+  const pn = resize ? panes(el, { edge: 'left', key: `drawer.${slot}${width ? '.' + width : ''}`, fixed: host === document.body, host: host === document.body ? undefined : host, container: host === document.body ? undefined : host, min: 320, max: 760, otherMin: 320, z: 41 }) : null;
   const api = {
     el, slot, body: main,
     set(b) { main.innerHTML = ''; if (typeof b === 'string') main.innerHTML = b; else if (b) main.append(b); return api; },
     title(s) { head.querySelector('.k-dr-t').textContent = s; return api; },
     close(silent = false) {
       const i = STACK.indexOf(api); if (i < 0) return; STACK.splice(i, 1);
+      pn?.destroy();
       el.classList.remove('is-open'); el.classList.add('is-closing');
       setTimeout(() => el.remove(), 380);
       if (!silent) onClose?.();

@@ -1,5 +1,6 @@
 /* gov-report — 할 일 · 판정 · 조치 · 보고서. 토큰·부품은 kit.css(토큰 포함) 그대로, 이 파일은 배치만. */
 .gr{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;padding:16px 16px 16px 48px;box-sizing:border-box}
+.gr[style*="--gr-side"]{grid-template-columns:minmax(0,1fr) var(--gr-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 
 /* ── 왼쪽 판 ─────────────────────────── */
 .gr-board{min-height:0;display:flex;flex-direction:column;background:var(--bg-1);border-radius:var(--r-16);overflow:hidden}

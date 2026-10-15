@@ -89,7 +89,9 @@ export async function renderDash(ctx) {
   const newLine = h('div.gd-new', { hidden: true });
   const main = h('div.gd-main'), side = h('div.gd-side');
   const pre = h('div.gd-pre');
-  page.append(newLine, pre, h('div.gd-grid', {}, main, side));
+  const grid = h('div.gd-grid', {}, main, side);
+  page.append(newLine, pre, grid);
+  K.panes(side, { edge: 'left', key: 'side', cssVar: '--gd-side', varHost: grid, min: 300, max: 760, otherMin: 480, below: 961 });   // 칸 크기 조절(원칙 263)
   if (TAB === 'history') { document.body.dataset.tab = 'history'; await renderHistory(main, side, { s, B }); return; }
   if (TAB === 'stats') { document.body.dataset.tab = 'stats'; await renderStats(main, side, { s, B, rep, pre, survey }); return; }
 

@@ -53,6 +53,7 @@
 
 /* ② 이번 학습 */
 .tb-cur{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:16px;align-items:stretch}
+.tb-cur[style*="--tb-keys"]{grid-template-columns:minmax(0,1fr) var(--tb-keys)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .tb-perf{position:relative;padding:16px 20px 12px}
 .tb-ph{display:flex;align-items:baseline;gap:12px;min-height:28px;flex-wrap:wrap}
 .tb-ph h2{margin:0;font:600 var(--fs-t2)/28px var(--font-body);white-space:nowrap}

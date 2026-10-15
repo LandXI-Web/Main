@@ -34,6 +34,7 @@ const catP = D.catalog().catch(() => null), listP = D.regions();   // 지도 준
 const pickEl = K.h('div.lxi-pick-in');
 const pickCard = K.card({ map: true, cls: 'lxi-pick', body: pickEl });
 stageEl.append(pickCard);
+K.panes(pickCard, { edge: 'right', key: 'pick', host: stageEl, container: stageEl, min: 260, max: 560, otherMin: 400 });   // 왼쪽 칸 폭 끌어서 · 접기(원칙 263)
 
 const padFor = () => (matchMedia('(max-width: 640px)').matches ? { top: 92, bottom: Math.round(innerHeight * 0.48) + 24, left: 24, right: 24 } : { top: 120, bottom: 48, left: 96, right: 440 });
 st.pad(padFor()); addEventListener('resize', () => st.pad(padFor()));

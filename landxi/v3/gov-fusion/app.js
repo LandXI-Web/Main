@@ -153,6 +153,7 @@ const stepEl = h('div.gf-steps');
 const panes = { drop: h('div.gf-pane', { hidden: true }), cols: h('div.gf-pane', { hidden: true }), join: h('div.gf-pane', { hidden: true }), result: h('div.gf-pane', { hidden: true }) };
 sheet.append(stepEl, ...Object.values(panes));
 stageEl.append(sheet);
+K.panes(sheet, { edge: 'left', key: 'sheet', cssVar: '--sheet', varHost: stageEl, host: stageEl, container: stageEl, min: 340, max: 720, otherMin: 360, below: 1101 });   // 오른쪽 칸 폭 끌어서 · 접기(원칙 263) — 지도 위 다른 카드도 같은 --sheet 를 따라 비킴
 const steps = K.stepper(stepEl, [{ t: '올리기' }, { t: '열 확인' }, { t: '결합' }, { t: '결과' }], { current: 0 });
 const ORDER = ['drop', 'cols', 'join', 'result'];
 function pane(k, { step } = {}) {

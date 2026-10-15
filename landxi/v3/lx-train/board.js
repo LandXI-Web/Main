@@ -16,6 +16,7 @@ import { modal } from '../kit/modal.js';
 import { toast } from '../kit/toast.js';
 import { empty } from '../kit/empty.js';
 import { nf } from '../kit/i18n.js';
+import { panes } from '../kit/panes.js';
 import { serviceAcc } from '../kit/acc.js';
 import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
 import { stageHref } from '../lx-project/context.js';
@@ -65,6 +66,7 @@ export async function trainBoard({ host, project: P }) {
   pane.append(col);
   const side = h('aside.tb-side', { hidden: true, 'aria-label': '블록 설정' });
   host.append(pane, side);
+  panes(side, { edge: 'left', key: 'side', host, container: host, min: 300, max: 640, otherMin: 320, collapse: false });   // 블록 설정 칸 폭(원칙 263)
   const wait = h('div'); col.append(wait);
   empty(wait, { kind: 'loading' });                       // 가운데 '불러오는 중' 하나(로딩-1 · 원칙 212)
 
@@ -165,6 +167,7 @@ export async function trainBoard({ host, project: P }) {
   const keys = h('section.tb-card.tb-keys', { 'aria-label': '핵심 수치' });
   const hist = h('section.tb-card.tb-hist', { 'aria-label': '학습 이력' });
   col.append(board, h('div.tb-cur', {}, perf, keys), hist);
+  panes(keys, { edge: 'left', key: 'keys', cssVar: '--tb-keys', min: 300, max: 640, otherMin: 420, below: 961 });   // 칸 크기 조절(원칙 263)
 
   if (!cur) hint.textContent = '아직 학습 기록이 없습니다 · 블록을 눌러 학습 데이터와 기반 모델을 고른 뒤 학습을 시작하세요';
   else if (live) hint.textContent = cur.state === 'queued' ? '학습이 대기열에서 차례를 기다리는 중입니다' : '학습 중입니다 · 반복마다 정확도가 아래 그래프에 차오릅니다';

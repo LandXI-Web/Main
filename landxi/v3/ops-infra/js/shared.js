@@ -18,6 +18,7 @@ import { h, api, toast, empty, during, nf } from './kit.js';
 import { session } from '../../../shared/api-v1.js';
 import { API } from '../../kit/util.js';
 import { modal } from '../../kit/modal.js';
+import { panes } from '../../kit/panes.js';
 import { uploadQueue } from '../../kit/dropzone.js';
 import { zipPeek, peekWhy, sendChunked } from '../../kit/sample-upload.js';
 import { LEDGER } from '../../lx-ingest/data.js';
@@ -155,6 +156,7 @@ export function mountShared(root) {
   root.append(h('section.t-card.sd-card', { 'aria-label': '공유 데이터' },
     h('header.sd-h', {}, h('h2', {}, '공유 데이터', count), h('div.sd-tools', {}, q, up)), bar,
     h('div.sd-split', {}, h('div.sd-list', {}, body, pager), det)));
+  panes(det, { edge: 'left', key: 'shared', cssVar: '--sd-det', min: 320, max: 760, otherMin: 520, below: 961 });   // 목록 · 자세히 칸 크기 조절(원칙 263)
   q.addEventListener('input', () => { page = 1; draw(); });
 
   function go(k) {

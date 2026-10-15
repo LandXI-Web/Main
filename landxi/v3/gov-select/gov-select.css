@@ -137,6 +137,7 @@ a.gs-tile:hover{box-shadow:var(--elev-map)}
 .gd-new > span{flex:1 1 280px;min-width:0}
 .gd-new-go{margin-left:auto;font-size:var(--fs-body)}
 .gd-grid{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-items:start}
+.gd-grid[style*="--gd-side"]{grid-template-columns:minmax(0,1fr) var(--gd-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .gd-main,.gd-side{display:flex;flex-direction:column;gap:24px;min-width:0}
 .gd-scene{position:relative;border-radius:var(--r-16);overflow:hidden;aspect-ratio:21/9;min-height:300px;background:var(--rule)}
 .gd-scene > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
