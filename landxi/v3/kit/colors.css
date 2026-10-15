@@ -1,0 +1,49 @@
+/* colors.css — 지도 층 색 바꾸기 칸(colors.js · 원칙 264). kit.css 가 함께 불러온다. 글자 = 표준 단계(꼬리표 14 이상 · 원칙 257). */
+.kc{position:fixed;z-index:80;width:312px;max-height:calc(100vh - 16px);overflow:auto;box-sizing:border-box;padding:12px 14px 12px;border-radius:var(--r-16,16px);background:var(--bg-1,#fff);box-shadow:var(--elev-map);display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateY(4px);transition:opacity var(--d-180,180ms) var(--e-ui,ease),transform var(--d-180,180ms) var(--e-ui,ease);font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.kc.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.kc{transition:none}}
+.kc button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.kc button:focus-visible,.kc input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kc-h{display:flex;align-items:baseline;gap:8px}
+.kc-h b{font:700 var(--fs-t2)/28px var(--font-display);flex:none}
+.kc-h span{flex:1;min-width:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kc-x{width:28px;height:28px;border-radius:var(--r-8)!important;font:400 var(--fs-t2)/28px var(--font-num)!important;color:var(--sub)!important;text-align:center!important;flex:none;align-self:center}
+.kc-x:hover{background:var(--bg-0)!important;color:var(--ink)!important}
+/* 나눔 단추(분류 · 신뢰도 / 연속 · 단계) */
+.kc-seg{display:flex;padding:2px;border-radius:var(--r-8);background:var(--bg-0)}
+.kc-seg button{flex:1;height:30px;border-radius:6px;text-align:center!important;font:500 var(--fs-tag)/30px var(--font-body)!important;color:var(--sub)!important}
+.kc-seg button[aria-checked="true"]{background:var(--bg-1)!important;color:var(--ink)!important;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+/* 색 묶음 · 색 띠 — 띠 그림만(이름은 title) */
+.kc-sets,.kc-ramps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kc-ramps{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kc-set,.kc-ramp{height:30px;padding:5px!important;border-radius:var(--r-8)!important;box-shadow:inset 0 0 0 1px var(--rule);display:flex}
+.kc-set:hover,.kc-ramp:hover{box-shadow:inset 0 0 0 1px var(--sub)}
+.kc-set[aria-checked="true"],.kc-ramp[aria-checked="true"]{box-shadow:inset 0 0 0 2px var(--ink)}
+.kc-strip{display:block;flex:1;border-radius:4px;min-height:14px}
+.kc-key{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"s s s" "a . b";gap:2px 0}
+.kc-key .kc-strip{grid-area:s;height:12px}
+.kc-key span.num{font:500 var(--fs-tag)/20px var(--font-num);color:var(--sub)}
+.kc-key span.num:last-child{grid-area:b}
+/* 클래스 줄 — 누르면 색 칸이 펼쳐짐 */
+.kc-rows{display:flex;flex-direction:column;gap:2px}
+.kc-row{border-radius:var(--r-8)}
+.kc-c{width:100%;display:flex;align-items:center;gap:10px;height:34px;padding:0 8px!important;border-radius:var(--r-8)!important}
+.kc-c:hover,.kc-c[aria-expanded="true"]{background:var(--bg-0)!important}
+.kc-c i{flex:none;width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.kc-c span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kc-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding:8px 8px 4px}
+.kc-sw{width:100%;aspect-ratio:1;min-width:24px;border-radius:6px!important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
+.kc-sw[aria-selected="true"]{box-shadow:0 0 0 2px var(--bg-1),0 0 0 4px var(--ink)}
+.kc-rc{display:flex;align-items:center;gap:6px;padding:4px 8px}
+.kc-rc span{flex:none;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub);margin-right:2px}
+.kc-rc .kc-sw{width:24px;min-width:24px;flex:none}
+.kc-own{display:flex;align-items:center;gap:8px;padding:4px 8px 6px;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub);cursor:pointer}
+.kc-in{width:32px;height:24px;padding:0;border:1px solid var(--rule);border-radius:6px;background:none;cursor:pointer}
+/* 투명도 · 되돌리기 */
+.kc-opr{display:grid;grid-template-columns:auto 1fr 44px;align-items:center;gap:10px;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.kc-opr .num{text-align:right;color:var(--ink);font-family:var(--font-num)}
+.kc-op{width:100%;accent-color:var(--ink)}
+.kc-f{display:flex;justify-content:flex-end;border-top:1px solid var(--rule);padding-top:8px}
+.kc-reset{font:500 var(--fs-tag)/21px var(--font-body)!important;color:var(--sub)!important;text-decoration:underline;text-underline-offset:3px}
+.kc-reset:hover:not(:disabled){color:var(--ink)!important}
+.kc-reset:disabled{color:var(--mute)!important;cursor:default;text-decoration:none}
