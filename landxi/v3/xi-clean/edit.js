@@ -14,8 +14,9 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 /* 같은 뜻은 한 말(10-15 원칙 252 — '지움' · '지우기' → '삭제' · 동작 넷 = 삭제 · 클래스 바꾸기 · 수정 · 메모) */
 const ACT = { delete: '삭제', reclass: '클래스 바꿈', reshape: '수정', add: '새로 그림', memo: '메모' };
 
-export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery }) {
-  const E = { card: null, at: null, sel: null, mode: null, sets: [], box: null };
+export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, colorFor, hideOrig }) {
+  // colorFor(묶음, 클래스) → 그 결과 층 색 · hideOrig(묶음, [객체 id]) → 원래 객체 숨김(10-15 사용자 "클래스를 바꿔 봤는데 색상은 그대로네?" — 바꾼 즉시 새 클래스 색 · 저장 뒤 · 다른 사람도 같게)
+  const E = { card: null, at: null, sel: null, mode: null, sets: [], box: null, hidden: new Set() };
   const card = h('section.xe-card.t-card.t-card--map', { hidden: true, role: 'dialog', 'aria-label': '객체 고치기' });
   const bar = h('div.xe-bar', { hidden: true, role: 'toolbar', 'aria-label': '수정' });
   host.append(card, bar);
@@ -27,6 +28,9 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     map.addLayer({ id: 'xe-live-del', type: 'fill', source: 'xe-live', filter: ['all', ['==', ['get', 'action'], 'delete'], ['==', ['get', 'part'], 'now']], paint: { 'fill-color': '#F04452', 'fill-opacity': 0.22 } }, 'slot-overlay');
     map.addLayer({ id: 'xe-live-dl', type: 'line', source: 'xe-live', filter: ['all', ['==', ['get', 'action'], 'delete'], ['==', ['get', 'part'], 'now']], paint: { 'line-color': '#F04452', 'line-width': 1.6, 'line-dasharray': [2, 2] } }, 'slot-overlay');
     map.addLayer({ id: 'xe-live-before', type: 'line', source: 'xe-live', filter: ['==', ['get', 'part'], 'before'], paint: { 'line-color': '#FFFFFF', 'line-width': 1.4, 'line-dasharray': [2, 2], 'line-opacity': 0.9 } }, 'slot-overlay');
+    // 클래스 바꿈 · 수정 · 새로 그림 = 새 클래스 색으로 채움(원래 객체는 숨김 — 결과 조각은 그대로, 이 층이 대신 그린다) · 올리면 떠오름
+    map.addLayer({ id: 'xe-live-fill', type: 'fill', source: 'xe-live', filter: ['all', ['in', ['get', 'action'], ['literal', ['reclass', 'reshape', 'add']]], ['==', ['get', 'part'], 'now']],
+      paint: { 'fill-color': ['coalesce', ['get', 'col'], '#0FA9A0'], 'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.6, 0.4] } }, 'slot-overlay');
     map.addLayer({ id: 'xe-live-now', type: 'line', source: 'xe-live', filter: ['all', ['!=', ['get', 'action'], 'delete'], ['!=', ['get', 'action'], 'memo'], ['==', ['get', 'part'], 'now']], paint: { 'line-color': '#FFFFFF', 'line-width': 2.4 } }, 'slot-overlay');
     map.addSource('xe-sel', { type: 'geojson', data: EMPTY });
     map.addLayer({ id: 'xe-sel-f', type: 'fill', source: 'xe-sel', paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.18 } }, 'slot-overlay');
@@ -49,7 +53,19 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     if (!sets.length && !E.box) { src('xe-live').setData(EMPTY); return; }
     const q = { sets: sets.join(',') };
     if (E.box) q.bbox = E.box.map((v) => v.toFixed(5)).join(',');     // 전국 결과(줌 11+)의 고친 자리 — 화면 범위
-    try { src('xe-live').setData(await api('/ximap/edits?' + new URLSearchParams(q))); } catch { /* 그대로 */ }
+    let fc;
+    try { fc = await api('/ximap/edits?' + new URLSearchParams(q)); } catch { return; }
+    const by = new Map();
+    for (const f of fc.features || []) {
+      const p = f.properties || {};
+      if (p.part !== 'now') continue;
+      if (['reclass', 'reshape', 'add'].includes(p.action)) p.col = colorFor?.(p.set, p.cls) || null;                    // 새 클래스 색(그 결과 층의 색 규칙)
+      if (p.action === 'reclass' || p.action === 'reshape') (by.get(p.set) || by.set(p.set, []).get(p.set)).push(String(p.fid));
+    }
+    fc.features = (fc.features || []).map((f) => ({ ...f, id: `${f.properties?.set || ''}|${f.properties?.fid || ''}` }));   // 올리면 떠오름(feature-state) 용 id
+    src('xe-live').setData(fc);
+    for (const s of new Set([...E.hidden, ...by.keys()])) hideOrig?.(s, by.get(s) || []);                                 // 원래 객체 숨김 · 되돌리면 다시 보임
+    E.hidden = new Set(by.keys());
   }
   let boxT = 0;
   function liveBox(b) {

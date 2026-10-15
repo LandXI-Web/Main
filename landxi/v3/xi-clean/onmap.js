@@ -6,8 +6,11 @@
      ④ 차트는 지도 오른쪽 가장자리의 작은 떠 있는 판(접고 펼침) — 판 막대에 올리면 지도 그 곳이 떠오르고, 지도에 올리면 판 막대가 강조
      ⑤ 두 지역 비교는 평균과 다른 곳이 빛남 · '보고서로'는 판 머리에서
    가시화 규칙 · 색 척도 뜻(원칙 245)은 서버 사양 그대로(수 = 청록 · ㎢당 = 주황 · 비율 = 보라 · 의심 = 빨강 · 넓이/지가 = 파랑 · 평균 대비 = 발산).
-   숫자 = 사양 값 그대로(지어낸 숫자 0) · 글자 = 토큰 단계만(14px 미만 0) · 지역 하드코딩 0. 대시보드(dash.js)는 그대로 두고 단추로 되돌릴 수 있다. */
+   숫자 = 사양 값 그대로(지어낸 숫자 0) · 글자 = 토큰 단계만(14px 미만 0) · 지역 하드코딩 0. 대시보드(dash.js)는 그대로 두고 단추로 되돌릴 수 있다.
+   단계(10-15 원칙 262 "대시보드를 원치 않을 수 있고. 지도에 가시화되어서 보기만 하고 싶어할수도"): 1 = 지도에만(차오름 · 꼬리표 · 날아가기 + 한 줄) → 2 = '통계 보기'(오른쪽 판) → 3 = '크게 보기'(대시보드 · app.js). 단계마다 되돌아감.
+   판 폭은 왼쪽 가장자리를 끌어 바꾸고 접고 펼친다(공용 부품 kit/panes.js · 원칙 263) — 접힘 = 1단계 한 줄. */
 import { api } from '../kit/util.js';
+import { panes } from '../kit/panes.js';
 import { RAMP, colorOf } from './dash.js';
 
 const nf = (v, d = 0) => (v == null || Number.isNaN(Number(v)) ? '—' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: Math.max(0, Math.min(3, d | 0)), minimumFractionDigits: 0 }));
@@ -104,13 +107,38 @@ function centroid(g) {
 const bboxOf = (fs) => { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); fs.forEach((f) => f.geometry && walk(f.geometry.coordinates)); return w < e ? [w, s, e, n] : null; };
 
 /* ═══ 지도 위 표출 ═══ */
-export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown }) {
-  const O = { on: false, spec: null, fc: null, sel: null, hover: null, bb: null, feats: [], tags: new Map(), hoverTag: null, cand: [], run: 0, tour: null, CAT: [] };
+export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep }) {
+  const O = { on: false, step: 1, sync: false, spec: null, fc: null, sel: null, hover: null, bb: null, feats: [], tags: new Map(), hoverTag: null, cand: [], run: 0, tour: null, CAT: [] };
   const panel = h('section.xo', { hidden: true, 'aria-label': '지도 위 통계' });
+  const mini = h('div.xo-mini', { hidden: true, role: 'status', 'aria-label': '지도 위 결과' });   // 1단계 한 줄(제목 · 큰 숫자 · '통계 보기' · 닫기)
   const mean = h('div.xo-mean', { hidden: true, role: 'status' });
   const tipEl = h('div.xo-tip', { hidden: true, role: 'tooltip' });
-  host.append(panel, mean); document.body.append(tipEl);
-  const padR = () => (panel.offsetWidth || 360) + 96;              // 판 + 오른쪽 도구 열 만큼 지도 카메라를 왼쪽으로
+  host.append(panel, mini, mean); document.body.append(tipEl);
+  const padR = () => (O.step === 2 ? (panel.offsetWidth || 360) + 96 : 0);   // 2단계: 판 + 오른쪽 도구 열 만큼 지도 카메라를 왼쪽으로 · 1단계: 지도 전체
+  /* 판 폭 끌기 · 접기(공용 부품 panes · 사람 · 화면별 기억) — 접으면 1단계(한 줄) · 펼치면 2단계. 프로그램이 바꿀 때(sync)는 되돌이 없음 */
+  let pn = null;
+  function ensurePane() {
+    if (pn) return pn;
+    pn = panes(panel, { edge: 'left', key: 'ximap.stats', min: 300, max: 720, otherMin: 560, cssVar: '--xo-w', varHost: host, host, container: host, map, label: '통계 판 크기',
+      onChange: (_size, c) => { if (O.sync || !O.on) return; if (c && O.step === 2) setStep(1); else if (!c && O.step === 1) setStep(2); } });
+    return pn;
+  }
+  function paintMini(s) {
+    const main = (s.kpis || [])[0] || s.main || {};
+    mini.replaceChildren(h('b.t', { text: s.title || '' }), h('span.v.num', {}, document.createTextNode(nf(main.value, main.d || 0)), h('small', { text: main.unit || '' })),
+      h('button.xo-mini-b', { type: 'button', text: '통계 보기', onclick: () => setStep(2) }), h('button.xo-x', { type: 'button', 'aria-label': '닫기', text: '×', onclick: () => leave() }));
+  }
+  /** 1 ↔ 2 단계 — 1 = 판 접힘 + 한 줄 · 2 = 판 펼침. 3(대시보드)은 app.js 가 맡는다(onStep) */
+  function setStep(n, { silent = false } = {}) {
+    if (n === 3) { onStep?.(3); return; }
+    O.step = n === 2 ? 2 : 1;
+    O.sync = true;
+    try { const p = ensurePane(); if (O.step === 2) p.expand(); else p.collapse(); } finally { O.sync = false; }
+    mini.hidden = O.step !== 1;
+    stage.pad(O.step === 2 ? { right: padR() } : {});
+    if (window.__xc?.dash) window.__xc.dash.step = O.step;
+    if (!silent) onStep?.(O.step);
+  }
 
   function tip(e, html) { if (!html) { tipEl.hidden = true; return; } tipEl.innerHTML = html; tipEl.hidden = false; tipEl.style.left = Math.min(e.clientX + 14, innerWidth - tipEl.offsetWidth - 12) + 'px'; tipEl.style.top = Math.max(8, e.clientY - tipEl.offsetHeight - 10) + 'px'; }
   panel.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
@@ -272,13 +300,15 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
       ${s.live ? `<p class="xo-live"><i></i>지금 분석 중 · ${esc(s.live)}</p>` : ''}
       ${s.note ? `<p class="xo-notice">${esc(s.note)}</p>` : ''}
       ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${esc(l)}</p>`).join('')}</div></div>` : ''}
-      <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서로</button></div></div>`;
+      <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서로</button><button type="button" class="xo-big2">크게 보기</button><button type="button" class="xo-only">지도만</button></div></div>`;
     const vars = (hue) => { const r = RAMP[hue] || RAMP.teal; return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
     const cards = (s.panels || []).map((p, i) => `<div class="xo-card xo-p xo-p--${p.type}${i < 2 ? ' open' : ''}" data-i="${i}" style="animation-delay:${RM() ? 0 : 80 + i * 70}ms;${vars(p.scale?.hue || hueOf(s))}"><button type="button" class="xo-ph" aria-expanded="${i < 2}"><span>${esc(p.title)}</span>${p.unit ? `<small>${esc(p.unit)}</small>` : ''}<i></i></button><div class="xo-pb">${(DRAW[p.type] || (() => ''))(p, O.CAT)}</div></div>`);
     panel.innerHTML = head + cards.join('');
     panel.querySelector('.xo-x').onclick = () => leave();
     panel.querySelector('.xo-tour')?.addEventListener('click', () => (O.tour ? stopTour() : tour(topOf(3))));
     panel.querySelector('.xo-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
+    panel.querySelector('.xo-big2')?.addEventListener('click', () => setStep(3));
+    panel.querySelector('.xo-only')?.addEventListener('click', () => setStep(1));
     panel.querySelectorAll('.xo-p').forEach((el) => { const p = s.panels[Number(el.dataset.i)]; if (p?.type === 'table' && p.dl) el.querySelector('.xo-dl')?.addEventListener('click', () => csv(p.dl, p.cols, p.rows)); });
     panel.scrollTop = 0;
   }
@@ -313,22 +343,24 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     mean.classList.remove('in'); setTimeout(() => { mean.hidden = true; }, 300);
   }
 
-  async function show(s) {
+  /** 보이기 — step 1(기본 · 지도에만 + 한 줄) 또는 2(판). fast = 대시보드에서 돌아올 때(뜻 확인 · 차오름 · 날아가기 없이 바로) */
+  async function show(s, { step = 1, fast = false } = {}) {
     if (!s) return false;
     const run = ++O.run;
     stopTour(); clearTags(); O.sel = null; O.hover = null;
     if (!O.on) { O.on = true; onEnter?.(); }
     host.dataset.onmap = '1';
     if (map.getSource('xo-f')) map.getSource('xo-f').setData({ type: 'FeatureCollection', features: [] });
-    const meaning = confirmMeaning(s);
-    O.spec = s; render(s); panel.hidden = false;
-    stage.pad({ right: padR() });
+    const meaning = fast ? Promise.resolve() : confirmMeaning(s);
+    O.spec = s; render(s); paintMini(s); panel.hidden = false;
+    setStep(step, { silent: true });
     const painted = paintMap(s.map);
     await Promise.all([meaning, painted]);
     if (run !== O.run) return true;
     const lvl = s.map?.level;
-    if (O.bb) stage.go(O.bb, { ms: RM() ? 0 : 1400, maxZoom: lvl === 'sgg' ? 9 : 11.5, pitch: 0 });
-    window.__xc && (window.__xc.dash = { mode: 'map', kind: s.kind, title: s.title, rule: s.rule, panels: (s.panels || []).map((p) => p.type), map: s.map ? { level: lvl, scale: s.map.scale?.kind, hue: s.map.scale?.hue, meaning: s.map.meaning, n: Object.keys(s.map.values || {}).length } : null, main: s.main, fill: 'running', tags: 0, tour: null });
+    if (O.bb) stage.go(O.bb, { ms: RM() || fast ? 0 : 1400, maxZoom: lvl === 'sgg' ? 9 : 11.5, pitch: 0 });
+    window.__xc && (window.__xc.dash = { mode: 'map', step: O.step, kind: s.kind, title: s.title, rule: s.rule, panels: (s.panels || []).map((p) => p.type), map: s.map ? { level: lvl, scale: s.map.scale?.kind, hue: s.map.scale?.hue, meaning: s.map.meaning, n: Object.keys(s.map.values || {}).length } : null, main: s.main, fill: 'running', tags: 0, tour: null });
+    if (fast) { for (const f of O.feats) fstate(f.properties.k, { t: 1 }); showTags(topOf(O.feats.length)); if (window.__xc?.dash) { window.__xc.dash.fill = 'done'; window.__xc.dash.tags = O.tags.size; window.__xc.dash.tour = 'skip'; } return true; }
     await sleep(350);
     await fillUp(O.feats, run);
     if (run !== O.run) return true;
@@ -341,15 +373,16 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (top3.length && !RM()) tour(top3); else if (window.__xc?.dash) window.__xc.dash.tour = 'skip';
     return true;
   }
-  function leave() {
+  /** 걷기 — quiet = 3단계(대시보드)로 넘어갈 때(카메라 · 전국 결과 되돌림 없이 조용히) */
+  function leave({ quiet = false } = {}) {
     if (!O.on) return;
     stopTour(); clearTags(); ++O.run;
     O.on = false; O.spec = null; O.sel = null; O.hover = null; O.feats = [];
-    delete host.dataset.onmap; panel.hidden = true; mean.hidden = true; tip(null, null);
+    delete host.dataset.onmap; panel.hidden = true; mini.hidden = true; mean.hidden = true; tip(null, null);
     if (map.getSource('xo-f')) map.getSource('xo-f').setData({ type: 'FeatureCollection', features: [] });
     stage.pad({});
     if (window.__xc) window.__xc.dash = null;
-    onLeave?.();
+    if (!quiet) onLeave?.();
   }
-  return { show, leave, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)) };
+  return { show, leave, setStep, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)) };
 }

@@ -22,13 +22,17 @@ const TEST = (() => { try { return new URLSearchParams(location.search).get('nat
 export const nationalPromise = (on) => (on ? api('/national/progress').catch((e) => ({ error: e })) : null);
 
 export function createNational({ map, before = 'slot-result' }) {
-  const N = { assets: [], data: null, v: {}, year: null, task: null, hidden: false, onData: null };
+  const N = { assets: [], data: null, v: {}, year: null, task: null, hidden: false, onData: null, off: new Set(), hide: new Map() };   // off = 끈 클래스 · hide = 묶음 → 고친 자리가 대신 그리는 객체 id
+  const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
+  const FID = ['case', ['has', 'id'], ['to-string', ['get', 'id']], ['to-string', ['id']]];
   const tpl = (a, v) => `${API.base}/tiles/national/${a}/${N.year}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v || '0')}${TEST ? '&test=1' : ''}`;
   const src = (a) => 'xn-' + a;
   const clsColor = ['match', ['get', 'cls'], '경작지', NCOLOR.경작지, '비닐하우스', NCOLOR.비닐하우스, '건물', NCOLOR.건물, '#5C7CFA'];
   /** 업무 거르기 — 자산의 분류 중 그 업무만(없으면 그 자산은 비움) */
-  const want = (a) => (N.task ? NCLS[a].filter((c) => c === N.task) : NCLS[a]);
+  const want = (a) => (N.task ? NCLS[a].filter((c) => c === N.task) : NCLS[a]).filter((c) => !N.off.has(c));
   const clsFilter = (a) => ['in', ['get', 'cls'], ['literal', want(a)]];
+  /** 객체 층 거르기 = 분류 + 숨긴 객체(클래스 바꿈 · 수정 — 고친 자리 층이 새 색으로 대신 그린다) */
+  const objFilter = (o) => { const hid = N.hide.get(o.set); return hid?.length ? ['all', clsFilter(o.asset), ['!', ['in', FID, ['literal', hid]]]] : clsFilter(o.asset); };
 
   function addLayers() {
     const B = map.getLayer(before) ? before : undefined;
@@ -52,7 +56,14 @@ export function createNational({ map, before = 'slot-result' }) {
   function setTask(t) {
     N.task = t || null;
     for (const a of N.assets) if (map.getLayer(src(a) + '-face')) map.setFilter(src(a) + '-face', clsFilter(a));
-    for (const o of OBJ.values()) for (const id of o.ids) if (map.getLayer(id)) map.setFilter(id, clsFilter(o.asset));
+    for (const o of OBJ.values()) for (const id of o.ids) if (map.getLayer(id)) map.setFilter(id, objFilter(o));
+  }
+  /** 끈 클래스(체크박스 · 10-15) — 면 · 객체 층 모두 */
+  function setOff(list) { N.off = new Set(list || []); setTask(N.task); }
+  /** 묶음 하나의 숨길 객체 id(고친 자리 층이 대신 그림) — 빈 목록 = 다시 보임. 층이 아직 없으면 올라올 때 적용 */
+  function hide(set, fids) {
+    if (fids?.length) N.hide.set(set, fids.map(String)); else N.hide.delete(set);
+    for (const o of OBJ.values()) if (o.set === set) for (const id of o.ids) if (map.getLayer(id)) map.setFilter(id, objFilter(o));
   }
 
   /* ── 객체(줌 11부터) — 화면 안 끝난 칸의 결과 묶음 지도 조각(판 번호 주소)을 붙인다 ── */
@@ -76,12 +87,13 @@ export function createNational({ map, before = 'slot-result' }) {
       if (OBJ.has(sid) || map.getSource(sid)) continue;
       map.addSource(sid, { type: 'vector', tiles: [objTpl(o)], minzoom: 10, maxzoom: 17, bounds: o.bounds, promoteId: 'id' });
       const vis = N.hidden ? 'none' : 'visible';
-      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: clsFilter(asset), layout: { visibility: vis },
-        paint: { 'fill-color': clsColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, 0.28] } }, B);
-      map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: clsFilter(asset), layout: { visibility: vis },
+      const ob = { ids: [sid + '-f', sid + '-l'], asset, set: o.set, tpl: objTpl(o), bounds: o.bounds };
+      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
+        paint: { 'fill-color': clsColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, ['case', FS_HOVER, 0.55, 0.28]] } }, B);   // 올리면 떠오름(손가락 · 10-15)
+      map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
         paint: { 'line-color': clsColor, 'line-width': ['interpolate', ['linear'], ['zoom'], OBJ_Z, 0.6, 15, 1.4],
           'line-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, 0.95] } }, B);
-      OBJ.set(sid, { ids: [sid + '-f', sid + '-l'], asset, set: o.set, tpl: objTpl(o), bounds: o.bounds });
+      OBJ.set(sid, ob);
     }
   }
 
@@ -181,7 +193,9 @@ export function createNational({ map, before = 'slot-result' }) {
       }
     }
   }
-  return { load, refresh, show, at, rows, cellRows, cellGeom, warm, setTask, running, nf,
+  return { load, refresh, show, at, rows, cellRows, cellGeom, warm, setTask, setOff, hide, running, nf,
+    /** 지금 켜진 자산의 분류(체크박스 목록) · 묶음 → 그 묶음의 층 */
+    classes: () => [...new Set(N.assets.flatMap((a) => NCLS[a] || []))], setLayers: (set) => [...OBJ.values()].find((o) => o.set === set)?.ids || null,
     get data() { return N.data; }, get assets() { return N.assets; }, get task() { return N.task; },
     set onData(f) { N.onData = f; },
     get layers() { return layers(); }, hitLayers, src, get objects() { return [...OBJ.keys()]; }, RM,

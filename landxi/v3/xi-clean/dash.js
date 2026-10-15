@@ -5,6 +5,7 @@
    색: 값의 뜻마다 다른 한 색 램프(수 = 청록 · ㎢당 = 주황 · 비율 = 보라 · 의심 = 빨강 · 넓이/지가 = 파랑) · 평균 대비 = 발산(파랑 ↔ 회색 ↔ 빨강) · 퍼짐이 크면 5단 단계 색.
    지역 문자열 하드코딩 0. */
 import { api } from '../kit/util.js';
+import { panes } from '../kit/panes.js';   // 지도 칸 ↔ 통계 칸 사이를 끌어 크기 조절 · 접고 펼침(원칙 263 · 공용 부품)
 
 const nf = (v, d = 0) => (v == null || Number.isNaN(Number(v)) ? '—' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: Math.max(0, Math.min(3, d | 0)), minimumFractionDigits: 0 }));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -163,15 +164,15 @@ function legend(sc, unit) {
 }
 
 /* ═══ 대시보드 ═══ */
-export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onShown }) {
-  const D = { on: false, spec: null, sel: null, fc: null };
+export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onBack }) {
+  const D = { on: false, spec: null, sel: null, fc: null, pn: null };
   const panel = h('section.xd', { hidden: true, 'aria-label': '대시보드' });
   const back = h('button.xd-back', { type: 'button', text: '지도로 돌아가기', hidden: true });
   const cap = h('div.xd-cap', { hidden: true });
   const mean = h('div.xd-mean', { hidden: true, role: 'status' });
   TIP = h('div.xd-tip', { hidden: true, role: 'tooltip' });
   host.append(panel, back, cap, mean); document.body.append(TIP);
-  back.onclick = () => leave();
+  back.onclick = () => (onBack ? onBack() : leave());   // 3단계 → 2단계(지도 위 통계)로 되돌아감(app.js) · 없으면 닫기
   panel.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
   panel.addEventListener('mouseleave', () => tip(null, null));
 
@@ -281,6 +282,8 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
     host.dataset.dash = '1'; panel.hidden = false; back.hidden = false; cap.hidden = false;
     onShown?.();
     resizeFor(900);
+    // 지도 칸 폭 = 왼쪽 칸(.xc-stage)의 오른쪽 가장자리를 끈다 · 접으면 통계가 전체 · 사람 · 화면별 기억(원칙 263)
+    if (!D.pn && stage.el) D.pn = panes(stage.el, { edge: 'right', key: 'ximap.dash-map', min: 240, max: 1400, otherMin: 560, cssVar: '--xd-map', varHost: host, host, container: host, map, label: '지도 칸 크기' });
     await paintMap(s.map);
     await sleep(500);
     if (D.bb) await stage.go(D.bb, { ms: RM() ? 0 : 1200, maxZoom: s.map?.level === 'sgg' ? 9 : 11.5, pitch: 0 });
@@ -288,14 +291,16 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
     return true;
   }
   function resizeFor(ms) { const t0 = performance.now(); (function f() { try { map.resize(); } catch { /* */ } if (performance.now() - t0 < ms) requestAnimationFrame(f); })(); }
-  function leave() {
+  /** 닫기 — quiet = 2단계(지도 위 통계)로 돌아갈 때(카메라 · 전국 결과 되돌림 없이) */
+  function leave({ quiet = false } = {}) {
     if (!D.on) return;
     D.on = false; D.spec = null; D.sel = null;
+    D.pn?.destroy(); D.pn = null;                                     // 손잡이는 대시보드 동안만(지도 칸 폭 변수는 기본으로)
     delete host.dataset.dash; panel.hidden = true; back.hidden = true; cap.hidden = true; tip(null, null);
     if (map.getSource('xd-f')) map.getSource('xd-f').setData({ type: 'FeatureCollection', features: [] });
     resizeFor(900);
     if (window.__xc) window.__xc.dash = null;
-    onLeave?.();
+    if (!quiet) onLeave?.();
   }
-  return { show, leave, get on() { return D.on; }, pick };
+  return { show, leave, get on() { return D.on; }, get spec() { return D.spec; }, pick };
 }

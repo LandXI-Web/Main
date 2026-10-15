@@ -10,6 +10,9 @@
 .k-main .xv-sw{bottom:96px}
 .k-main[data-onmap="1"] .xv-sw{bottom:140px}
 
+/* 지금 + C(기본 · 원칙 262) — 줄기 겹판은 지도 전체 · 손은 왼쪽 위 결과 표시(xc.css .xb-hud)에서 받는다 */
+.xs-n-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+
 /* ── A · 지도가 곧 계기판 — 왼쪽 가장자리 업무 막대 + 실제 자리에서 끌려 나오는 빛 줄기 ── */
 .xs-a{position:absolute;inset:0}
 .xs-a-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}

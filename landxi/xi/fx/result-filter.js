@@ -5,6 +5,9 @@
    cond = {cls?:[...], emd?:[...], area_min?, area_op_min?('>'|'>='), area_max?, area_op_max?('<'|'<=')} · clear:true = 원래대로. 반환 = 거른 층 수. 바로 반영(타일 다시 받지 않음). */
 const RES = new WeakMap();      // map → Map(층 id → 원래 거르기)
 const FILT = new WeakMap();     // map → 지금 조건(새로 올리는 결과 층에도 같은 조건)
+const OFF = new WeakMap();      // map → 끈 클래스(XI맵 '층' 판 체크박스 · 10-15 사용자 "체크박스 클래스 온오프도 없네?")
+const HIDE = new WeakMap();     // map → Map(층 id → Set(객체 id)) — 고친 자리 층이 새 클래스 색으로 대신 그리는 원래 객체(클래스 바꿈 · 수정)
+const FID = ['case', ['has', 'id'], ['to-string', ['get', 'id']], ['to-string', ['id']]];
 function condExpr(c) {
   if (!c) return null;
   const area = ['to-number', ['get', 'area_m2'], 0];
@@ -18,13 +21,28 @@ function condExpr(c) {
 function applyFilter(map, id, c) {
   if (!map.getLayer(id)) return false;
   const orig = RES.get(map)?.get(id) ?? null, x = condExpr(c);
-  map.setFilter(id, x && orig ? ['all', orig, x] : (x || orig));
+  const off = OFF.get(map), hid = HIDE.get(map)?.get(id);
+  const parts = [orig, x, off?.length ? ['!', ['in', ['to-string', ['get', 'cls']], ['literal', off]]] : null, hid?.size ? ['!', ['in', FID, ['literal', [...hid]]]] : null].filter(Boolean);
+  map.setFilter(id, parts.length > 1 ? ['all', ...parts] : (parts[0] || null));
   return true;
 }
 export function registerResult(map, ids) {
   const reg = RES.get(map) || new Map(); RES.set(map, reg);
   for (const id of ids) reg.set(id, map.getFilter(id) ?? null);
-  if (FILT.has(map)) for (const id of ids) applyFilter(map, id, FILT.get(map));
+  if (FILT.has(map) || OFF.has(map) || HIDE.get(map)?.size) for (const id of ids) applyFilter(map, id, FILT.get(map) || null);
+}
+/** 끈 클래스(체크박스) — 등록된 모든 결과 층에서 그 클래스를 숨긴다 · 빈 목록 = 모두 보임. 반환 = 바뀐 층 수 */
+export function excludeClasses(map, list) {
+  if (list?.length) OFF.set(map, list.map(String)); else OFF.delete(map);
+  const reg = RES.get(map); let n = 0;
+  if (reg) for (const id of reg.keys()) if (applyFilter(map, id, FILT.get(map) || null)) n += 1;
+  return n;
+}
+export const excludedClasses = (map) => OFF.get(map) || [];
+/** 원래 객체 숨김 — 고친 자리 층(xe-live)이 새 클래스 색으로 대신 그리는 객체(클래스 바꿈 · 수정). fids 빈 목록 = 다시 보임 */
+export function hideResults(map, ids, fids) {
+  const m = HIDE.get(map) || new Map(); HIDE.set(map, m);
+  for (const id of ids) { if (fids?.length) m.set(id, new Set(fids.map(String))); else m.delete(id); applyFilter(map, id, FILT.get(map) || null); }
 }
 export function filterResults(map, cond) {
   const reg = RES.get(map);

@@ -1,0 +1,7 @@
+
+Running 3 tests using 2 workers
+
+[1/3] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+[2/3] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[3/3] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+  3 passed (21.3s)

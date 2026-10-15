@@ -4,11 +4,23 @@
 [data-onmap="1"] .xn-what{display:none}
 
 /* ── 판(오른쪽 · 도구 열 왼쪽 · 위 영상 단추 아래 · 아래 채팅 창 위) ── */
-.xo{position:absolute;z-index:21;right:96px;top:68px;bottom:96px;width:360px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px 2px 0}
+.xo{position:absolute;z-index:21;right:96px;top:68px;bottom:96px;width:var(--xo-w,360px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px 2px 0}
 .xo[hidden]{display:none}
 .xo > *{pointer-events:auto;flex:none}
-@media (min-width:1600px){.xo{width:400px}}
-@media (min-width:2200px){.xo{width:440px;right:104px}}
+@media (min-width:1600px){.xo{width:var(--xo-w,400px)}}
+@media (min-width:2200px){.xo{width:var(--xo-w,440px);right:104px}}
+/* 판 폭 손잡이(공용 부품 panes · 판 왼쪽 가장자리) — 판 위에 · 접힘 = 1단계(한 줄만) */
+.k-main > .pn-h{z-index:23}
+/* ── 1단계 한 줄(지도에만 가시화 · 원칙 262) — 제목 · 큰 숫자 · '통계 보기' · 닫기 · 오른쪽 위 판 자리 ── */
+.xo-mini{position:absolute;z-index:21;right:96px;top:68px;display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100% - 300px));height:48px;padding:0 6px 0 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:xo-in .55s var(--e-cam) both}
+.xo-mini[hidden]{display:none}
+.xo-mini .t{font:600 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xo-mini .v{font:800 var(--fs-t2,20px)/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.xo-mini .v small{margin-left:2px;font:600 var(--fs-aux,15px)/1 var(--font-body);color:var(--sub)}
+.xo-mini-b{height:36px;padding:0 14px;border:0;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 var(--fs-aux,15px)/1 var(--font-body);cursor:pointer;white-space:nowrap}
+.xo-mini-b:hover{background:var(--ink-2)}
+.xo-mini .xo-x{margin:0}
+@media (min-width:2200px){.xo-mini{right:104px}}
 .xo-card{background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);padding:16px 18px;animation:xo-in .55s var(--e-cam) both}
 @keyframes xo-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 .xo-ht{display:flex;align-items:flex-start;gap:8px}
@@ -39,7 +51,7 @@
 .xo-say p{margin:0;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);text-wrap:pretty;word-break:keep-all}
 .xo-say p + p{margin-top:4px}
 .xo-logo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--r-8);background:var(--ai);color:#fff;font:800 var(--fs-tag,14px)/1 var(--font-display)}
-.xo-act{display:flex;gap:8px;margin-top:14px}
+.xo-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .xo-act button{height:38px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .xo-act button:hover{background:var(--bg-0)}
 .xo-tour{border-color:var(--ink)!important;background:var(--ink)!important;color:#fff!important}
@@ -162,13 +174,14 @@
 
 @media (max-width:900px){
   .xo{right:16px;left:16px;top:auto;bottom:96px;width:auto;max-height:46%}
+  .xo-mini{right:16px;left:16px;max-width:none}
   .xo-sw{display:none}
 }
-@media (prefers-reduced-motion:reduce){.xo-card,.xo-tag{animation:none}.xo-live i{animation:none}}
+@media (prefers-reduced-motion:reduce){.xo-card,.xo-tag,.xo-mini{animation:none}.xo-live i{animation:none}}
 
 /* 지도 위 통계 동안 아래 채팅 창은 판을 가리지 않게 — 판 왼쪽 공간의 가운데 */
-[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - 456px) / 2);width:min(680px,calc(100% - 488px))}
-@media (min-width:1600px){[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - 496px) / 2);width:min(680px,calc(100% - 528px))}}
+[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - var(--xo-w,360px) - 96px) / 2);width:min(680px,calc(100% - var(--xo-w,360px) - 128px))}
+@media (min-width:1600px){[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - var(--xo-w,400px) - 96px) / 2);width:min(680px,calc(100% - var(--xo-w,400px) - 128px))}}
 @media (max-width:900px){[data-onmap="1"] .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
 /* 지도 위 통계 동안 왼쪽 아래 단추 둘은 채팅 입력 줄 위로 */
 [data-onmap="1"] .xv-sw,[data-onmap="1"] .xo-sw{bottom:96px}

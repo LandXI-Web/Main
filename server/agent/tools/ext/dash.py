@@ -596,6 +596,8 @@ async def ximap_dash(args: dict, ctx) -> Out:
     spec = await build(args)
     m = spec.get("main") or {}
     out.ui_actions.append({"op": "ximap_dash", "spec": spec})
+    # 답 끝 다음 단계(10-15 원칙 262 — 먼저 지도에만 가시화 · 통계는 원할 때 한 단계 더): 화면이 눌림을 받아 2 · 3단계로(새 질문 아님)
+    ctx.state["next"] = [{"label": "통계 보기", "q": "통계 보기"}, {"label": "크게 보기", "q": "크게 보기"}]
     out.env("n", m.get("label") or "결과", env(m.get("value") or 0, m.get("unit") or "개", "inferred", "XI맵 융합 집계 — 화면 대시보드 큰 숫자와 같은 값"))
     out.data = {"status": "ok", "제목": spec["title"], "수": "n"}
     lead = spec.get("note") or ""

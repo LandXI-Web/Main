@@ -47,7 +47,7 @@ export const boardPromise = (on) => (on ? api('/ximap/board').catch((e) => ({ er
 export { nationalPromise };
 
 export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg, regionRows, onRegion, onCell, onMiss }) {
-  const B = { data: null, color: {}, off: new Set(), loaded: new Map(), sgg: new Map(), svcIdx: new Map(), task: null };
+  const B = { data: null, color: {}, off: new Set(), offCls: new Set(), loaded: new Map(), sgg: new Map(), svcIdx: new Map(), task: null };   // offCls = 끈 클래스(체크박스 · 10-15)
   const NAT = createNational({ map });
   const tip = h('div.xb-tipcard', { hidden: true, role: 'status', 'aria-live': 'polite' });
   host.append(tip);
@@ -137,7 +137,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
 
   /* ── 멀리서 보이는 서비스 결과 칸 — 전국 결과 객체를 약 2km 칸으로 센 실제 칸(칸 합 = 결과 수 · GET /ximap/density) ──
      시군구 줌(8.6~9.5)에서 옅어지고 가까이는 객체가 맡는다. 빛 · 흐림 없이 결과가 있는 칸만 그 서비스 색으로 */
-  const gridFilter = () => (B.task ? ['==', ['get', 'k'], B.task] : null);
+  const gridFilter = () => (B.task ? ['==', ['get', 'k'], B.task] : B.offCls.size ? ['!', ['in', ['get', 'k'], ['literal', [...B.offCls]]]] : null);
   async function grid() {
     const d = await api('/ximap/density?g=0').catch(() => null);
     if (!d?.cells?.length || map.getSource('xb-grid')) return;
@@ -255,12 +255,15 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   /* ── 업무 거르기 — 그 업무 결과만(서비스 결과 · 시군구 전역 분석 · 전국 분석) · null = 원래대로 ── */
   function setTask(k) {
     B.task = k || null;
-    B.off = new Set(B.task ? (B.data?.services || []).filter((s) => taskOf(s.name) !== B.task).map((s) => s.id) : []);
+    // 꺼지는 서비스 = 업무 거르기에 안 맞는 것 + 그 서비스의 업무(클래스)를 체크박스로 끈 것(토지피복처럼 여러 클래스인 서비스는 층 거르기가 맡는다)
+    B.off = new Set((B.data?.services || []).filter((s) => (B.task && taskOf(s.name) !== B.task) || B.offCls.has(taskOf(s.name))).map((s) => s.id));
     syncSets();
     if (map.getLayer('xb-grid')) map.setFilter('xb-grid', gridFilter());
     NAT.setTask(B.task);
     hideTip();
   }
+  /** 끈 클래스(체크박스) — 서비스 결과 · 전국 결과 모두 */
+  function setOffCls(list) { B.offCls = new Set(list || []); NAT.setOff(list || []); setTask(B.task); }
   /** 지금 지도에 결과가 있는 업무 이름(서버 서비스 + 전국 분석 분류) — 말로 거르기 · 말풍선 */
   function tasks() {
     const t = new Set((B.data?.services || []).map((s) => taskOf(s.name)));
@@ -312,6 +315,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
     if (map.getLayer('xb-grid')) map.setLayoutProperty('xb-grid', 'visibility', on ? 'visible' : 'none');
   }
   return { load, reload, near, bySource, show, color: (svc) => B.color[svc], colorOf, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
-    set busy(f) { B.isBusy = f; }, nat: NAT, hot, setTask, tasks, get task() { return B.task; }, rehover: () => { if (!tip.hidden && lastPt) hover(lastPt); },
+    set busy(f) { B.isBusy = f; }, nat: NAT, hot, setTask, setOffCls, tasks, get task() { return B.task; }, get offCls() { return [...B.offCls]; }, rehover: () => { if (!tip.hidden && lastPt) hover(lastPt); },
+    setLayers: (set) => [...B.loaded.values()].find((x) => x.set === set) || null,
     get natInfo() { return { layers: NAT.layers.filter((l) => map.getLayer(l)), at: B.natAt, assets: NAT.assets }; } };
 }

@@ -6,6 +6,11 @@
 @media (min-width:1600px){[data-dash="1"]{--xd-map:min(560px,32%)}}
 @media (min-width:2200px){[data-dash="1"]{--xd-map:min(760px,34%)}}
 [data-dash="1"] > .xc-stage{left:var(--xd-gap);top:var(--xd-gap);bottom:var(--xd-gap);right:auto;width:var(--xd-map);border-radius:var(--r-16);overflow:hidden;box-shadow:none;transition:width .9s var(--e-cam)}
+/* 지도 칸 ↔ 통계 칸 손잡이(공용 부품 panes · 원칙 263) — 끄는 동안은 폭 전환 없이 바로 · 지도 칸을 접으면 지도 위 꼬리 판은 숨고 '지도로 돌아가기'만 남는다 */
+html.pn-dragging-x [data-dash="1"] > .xc-stage{transition:none}
+[data-dash="1"] > .pn-h{z-index:23}
+[data-dash="1"]:has(> .xc-stage.pn-collapsed) .xd-cap{display:none}
+[data-dash="1"]:has(> .xc-stage.pn-collapsed) .xd{left:calc(var(--xd-gap) * 2 + 12px);padding-top:calc(var(--xd-gap) + 52px)}
 [data-dash="1"] > :is(.xb-hud,.xc-top,.xc-tools,.xc-hud,.xb-stats,.xc-pop,.xc-grip,.xc-chips,.xv-a,.xv-b,.xv-sw){display:none!important}
 [data-dash="1"] .xn-what,[data-dash="1"] .maplibregl-marker.xb-pin,[data-dash="1"] .maplibregl-ctrl-bottom-left,[data-dash="1"] .maplibregl-ctrl-bottom-right{display:none}
 

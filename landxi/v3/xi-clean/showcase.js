@@ -3,6 +3,8 @@
      A 지도가 곧 계기판 — 결과가 실제 위치에서 왼쪽 가장자리의 업무 막대로 빛 줄기로 끌려 나온다 · 막대에 올리면 그 업무 결과만 지도에서 떠오름
      B 방금 찾은 것 흐름 — 전국 작업기가 방금 끝낸 읍면동에서 실제 결과 객체 모양이 떠올라 오른쪽 '방금 찾은 것' 무대로 날아와 쌓인다 · 누르면 그 자리로
      C 말을 거는 지도 — 결과가 많은 곳마다 말풍선 질문 후보가 떠오르고, 누르면 XI ChatGEO 가 지도 위 통계(원칙 258)로 답한다
+   기본 = '지금 + C'(10-15 원칙 262 사용자: "시안은 지금 + C … A 와 같은 인터렉티브 모습은 괜찮다") — 지금 모양(왼쪽 위 결과 표시)은 그대로 두고 C 말풍선을 얹고,
+     A 의 움직임만 가볍게: 왼쪽 위 숫자 · 업무 줄에 올리면 그 업무 결과가 지도에서 떠오르고(그 업무만 남음) 실제 자리에서 빛 줄기가 그 줄로 끌려 나온다. 장식 막대 없음.
    모든 숫자 · 위치 · 객체 = 서버 실제 값(서비스 결과 장부 /ximap/board · 전국 분석 진행 장부 /national/progress · /national/recent · 결과 묶음 지도 조각).
    없는 것만 '예시 동작'. 특정 업무 기본 없음(원칙 237) · 지도 영역 안(원칙 233) · 왼쪽 메뉴 · 채팅 창 그대로(원칙 253) · 지도 위 통계가 열리면 숨는다.
    글자는 토큰 단계만(14px 미만 0) · 밝은 톤 · 탭이 안 보이면 멈춤 · 움직임 줄이기면 움직이지 않음 · 지역 하드코딩 0. */
@@ -20,7 +22,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const NAT_Z = 8.2;                                                      // 이보다 멀면 전국, 가까우면 지금 시군구(지금 모양과 같은 경계)
 const CELL_N = { 경작지: 'n1', 비닐하우스: 'n2', 건물: 'n3' };
 
-export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, region, onmapOpen }) {
+export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, region, onmapOpen, hud }) {
   const X = (window.__xc ||= {});
   const root = h('section.xs', { hidden: true, 'aria-label': 'AI 분석 결과' });
   host.append(root);
@@ -103,37 +105,83 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
   /* 빛 줄기 — 결과가 있는 실제 자리(화면 안)에서 그 업무 막대 끝으로 끌려 나오는 선 · 업무마다 수가 큰 곳 위주 · 한 번에 60개까지 */
   function drawStreaks() {
     if (!A.svg || !A.rail) return;
-    const W = host.clientWidth, H = host.clientHeight;
-    A.svg.setAttribute('viewBox', `0 0 ${W} ${H}`); A.svg.setAttribute('width', W); A.svg.setAttribute('height', H);
     const rr = A.rail.getBoundingClientRect(), hr = host.getBoundingClientRect();
     const ends = new Map();
     for (const [k, b] of A.rows) { const r = b.getBoundingClientRect(); ends.set(k, { x: r.right - hr.left + 2, y: r.top - hr.top + r.height / 2 }); }
+    const n = streaksInto(A.svg, ends, A.hot, { x: rr.right - hr.left, y: rr.bottom - hr.top }, true);
+    if (X.showcase) X.showcase.streaks = n;
+  }
+  /** 줄기 그리기(A · 지금+C 공용) — ends: 업무 → 끝점(화면 좌표 · '*' = 모든 업무가 한 끝점으로) · hot: 한 업무만(null = 모두) · skip: 이 네모(왼쪽 위 판) 밑 자리는 긋지 않음 · withRun: 돌아가는 칸 고리 */
+  function streaksInto(svg, ends, hot, skip, withRun) {
+    const W = host.clientWidth, H = host.clientHeight;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
     const rows = national() ? points() : points().filter((p) => p.code === region()?.code || (p.cd && region() && (p.sgg === region().name)));
-    const want = A.hot ? rows.filter((p) => p.k === A.hot) : rows;
+    const want = hot ? rows.filter((p) => p.k === hot) : rows;
     const byK = new Map();
-    for (const p of want) { if (!ends.has(p.k)) continue; (byK.get(p.k) || byK.set(p.k, []).get(p.k)).push(p); }
+    for (const p of want) { if (!ends.has(p.k) && !ends.has('*')) continue; (byK.get(p.k) || byK.set(p.k, []).get(p.k)).push(p); }
     const picked = [];
-    const per = A.hot ? 36 : Math.max(6, Math.floor(60 / Math.max(1, byK.size)));
+    const per = hot ? 36 : Math.max(6, Math.floor(60 / Math.max(1, byK.size)));
     for (const [, arr] of byK) { arr.sort((a, b) => b.n - a.n); picked.push(...arr.slice(0, per)); }
-    const run = national() ? runningCell() : null;
+    const run = withRun && national() ? runningCell() : null;
     const frag = document.createDocumentFragment();
-    const railR = rr.right - hr.left, railB = rr.bottom - hr.top;
     let i = 0;
     for (const p of picked) {
       const s = proj(p.lngLat); if (s.x < -20 || s.y < -20 || s.x > W + 20 || s.y > H + 20) continue;
-      if (s.x < railR + 8 && s.y < railB + 8) continue;                      // 막대 판 밑에 있는 자리는 긋지 않는다
-      const e = ends.get(p.k), c1x = s.x - (s.x - e.x) * 0.45, c2x = e.x + 90;
+      if (skip && s.x < skip.x + 8 && s.y < skip.y + 8) continue;           // 왼쪽 위 판 밑에 있는 자리는 긋지 않는다
+      const e = ends.get(p.k) || ends.get('*'), c1x = s.x - (s.x - e.x) * 0.45, c2x = e.x + 90;
       const d = `M${s.x.toFixed(1)},${s.y.toFixed(1)} C${c1x.toFixed(1)},${s.y.toFixed(1)} ${c2x.toFixed(1)},${e.y.toFixed(1)} ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('class', 'xs-a-st' + (A.hot === p.k ? ' is-hot' : ''));
+      g.setAttribute('class', 'xs-a-st' + (hot === p.k ? ' is-hot' : ''));
       g.style.setProperty('--c', colorOf(p.k));
       g.style.setProperty('--dl', `${((i * 0.37) % 2.2).toFixed(2)}s`);
       g.innerHTML = `<path class="l" d="${d}"/><path class="g" d="${d}"/><path class="b" d="${d}"/><circle class="o" cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${Math.min(6, 2.2 + Math.log10(p.n + 1) * 0.8).toFixed(1)}"/>`;
       frag.append(g); i++;
     }
     if (run?.lngLat) { const s = proj(run.lngLat); if (s.x > 0 && s.y > 0 && s.x < W && s.y < H) { const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'xs-a-run'); g.innerHTML = `<circle class="r1" cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="6"/><circle class="r2" cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="6"/>`; frag.append(g); } }
-    A.svg.replaceChildren(frag);
-    if (X.showcase) X.showcase.streaks = i;
+    svg.replaceChildren(frag);
+    return i;
+  }
+
+  /* ═══════════ 지금 + C(기본 · 원칙 262) — 지금 모양 그대로 + C 말풍선 + A 의 끌려 나오는 빛 줄기(올렸을 때만) ═══════════
+     왼쪽 위 결과 표시(app.js .xb-hud)의 업무 줄에 올리면 그 업무만 지도에 남고(applyTask · 말풍선 업무 줄과 같은 길) 그 자리들에서 줄기가 그 줄로 끌려 나온다.
+     큰 숫자에 올리면 모든 업무의 자리에서 큰 숫자로. 내리면 원래대로(올리기 전 거르기). 눌러 고정은 없다(가볍게 · 장식 막대 없음). */
+  const N = { svg: null, hot: null, prev: undefined, raf: 0, el: null };
+  function mountNow() {
+    mountC();
+    N.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); N.svg.setAttribute('class', 'xs-a-svg xs-n-svg'); N.svg.setAttribute('aria-hidden', 'true');
+    root.append(N.svg);
+    const el = hud?.(); N.el = el || null;
+    if (el) {
+      const over = (e) => { const li = e.target.closest('[data-k]'); const k = li ? li.dataset.k : e.target.closest('.xb-big') ? '*' : null; if (k) hotN(k); };
+      const out = (e) => { if (!el.contains(e.relatedTarget)) hotN(null); };
+      el.addEventListener('mouseover', over); el.addEventListener('mouseout', out);
+      SC.subs.push(() => { el.removeEventListener('mouseover', over); el.removeEventListener('mouseout', out); });
+    }
+    on('move', scheduleN);
+    SC.subs.push(() => { hotN(null); N.svg?.remove(); N.svg = null; });
+    X.showcase = { ...(X.showcase || {}), mode: 'now', hot: null, streaks: 0 };
+  }
+  function hotN(k) {
+    if (N.hot === k) return;
+    const was = N.hot; N.hot = k;
+    if (k && was == null) N.prev = BD()?.task ?? null;                  // 올리기 전 거르기를 기억(큰 숫자 · 업무 줄 어느 쪽으로 들어왔든)
+    // 지도만 거른다(BD.setTask) — 왼쪽 위 줄 목록은 그대로 두어(다른 줄은 옅어짐) 손 아래에서 글이 바뀌지 않게
+    if (k && k !== '*') BD()?.setTask(k);
+    else if (N.prev !== undefined) { BD()?.setTask(N.prev); if (!k) N.prev = undefined; }
+    drawN();
+  }
+  function scheduleN() { if (!N.hot || N.raf) return; N.raf = requestAnimationFrame(() => { N.raf = 0; drawN(); }); }
+  function drawN() {
+    if (!N.svg) return;
+    if (!N.hot || !N.el || N.el.hidden) { N.svg.replaceChildren(); if (X.showcase) { X.showcase.hot = null; X.showcase.streaks = 0; } return; }
+    const hr = host.getBoundingClientRect(), ends = new Map();
+    const at = (r) => ({ x: r.right - hr.left + 4, y: r.top - hr.top + r.height / 2 });
+    if (N.hot === '*') { const b = N.el.querySelector('.xb-big'); if (b) ends.set('*', at(b.getBoundingClientRect())); }
+    else { const li = N.el.querySelector(`[data-k="${CSS.escape(N.hot)}"]`); if (li) ends.set(N.hot, at(li.getBoundingClientRect())); }
+    if (!ends.size) { N.svg.replaceChildren(); return; }
+    const hb = N.el.getBoundingClientRect();
+    const n = streaksInto(N.svg, ends, N.hot === '*' ? null : N.hot, { x: hb.right - hr.left, y: hb.bottom - hr.top }, false);
+    if (X.showcase) { X.showcase.hot = N.hot; X.showcase.streaks = n; }
   }
 
   /* ═══════════ B · 방금 찾은 것 흐름 ═══════════ */
@@ -329,7 +377,7 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
       const m = new window.maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -14] }).setLngLat(c.lngLat).addTo(map);
       C.marks.push(m);
     });
-    X.showcase = { ...(X.showcase || {}), mode: 'C', bubbles: keep.map((c) => c.q) };
+    X.showcase = { ...(X.showcase || {}), mode: SC.mode, bubbles: keep.map((c) => c.q) };
   }
   function askC(el, q) {
     if (C.busy) return;
@@ -352,13 +400,14 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
     SC.mode = mode || null;
     root.hidden = !SC.mode; root.dataset.mode = SC.mode || '';
     X.showcase = { mode: SC.mode };
-    if (SC.mode === 'A') mountA(); else if (SC.mode === 'B') mountB(); else if (SC.mode === 'C') mountC();
+    if (SC.mode === 'A') mountA(); else if (SC.mode === 'B') mountB(); else if (SC.mode === 'C') mountC(); else if (SC.mode === 'now') mountNow();
   }
   /** 숫자(장부)가 바뀌면 다시 그린다 — 보드 다시 읽기 · 지역 바뀜 */
   let refT = 0;
-  function refresh() { if (!SC.mode || refT) return; refT = requestAnimationFrame(() => { refT = 0; if (SC.mode === 'A') { A.key = ''; paintA(); } else if (SC.mode === 'B') paintLive(); else if (SC.mode === 'C') { C.key = ''; paintC(); } }); }
+  function refresh() { if (!SC.mode || refT) return; refT = requestAnimationFrame(() => { refT = 0; if (SC.mode === 'A') { A.key = ''; paintA(); } else if (SC.mode === 'B') paintLive(); else if (SC.mode === 'C') { C.key = ''; paintC(); } else if (SC.mode === 'now') { C.key = ''; paintC(); drawN(); } }); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
-  return { set, refresh, get on() { return !!SC.mode; }, get mode() { return SC.mode; } };
+  // on = 지금 모양을 걷는 시안(A · B · C 단독)인가 — '지금 + C'(기본)는 지금 모양 위에 얹으므로 false
+  return { set, refresh, get on() { return !!SC.mode && SC.mode !== 'now'; }, get mode() { return SC.mode; } };
 }
 
 /* ── 지도 조각(MVT) 읽기 — 한 층의 면 고리만(화면에 그릴 모양 · 속성은 cls 만 본다) ── */

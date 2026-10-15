@@ -141,6 +141,10 @@ const openEdit = (center, re) => async (p) => {
   }, re);
   if (!pt) throw new Error('결과 객체를 찾지 못함');
   await p.mouse.click(pt.x, pt.y);
+  // 겹친 객체면 작은 고르기 목록이 먼저 뜬다(10-15 XI맵-겹침고르기) — 첫 줄을 골라 칸을 연다
+  await p.waitForFunction(() => document.querySelector('.xe-pick-r') || document.querySelector('.xe-card:not([hidden])'), null, { timeout: 30000 });
+  const pick = p.locator('.xe-pick-r').first();
+  if (await pick.count()) await pick.click();
   await p.waitForFunction(() => { const c = document.querySelector('.xe-card:not([hidden])'); return c && !/불러오는 중/.test(c.innerText); }, null, { timeout: 30000 });
 };
 
@@ -197,21 +201,22 @@ export async function run(role, s0) {
     const xi = { wait: '.xc-stage', ms: 1000, act: async (p) => { await xiReady(p); await settle(p); await p.waitForTimeout(1500); } };
     await screen(s, 'LX 직원 · XI맵(전국)', X, xi);
     await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', null, { act: jump(127.45, 35.42, 10) });
-    // 결과 표시 콘셉트 A · B · C(10-15 원칙 259 · showcase.js) — 단추를 누르고 움직임이 자리 잡은 뒤 잰다(B 는 카드가 둘 이상 쌓인 뒤)
-    for (const v of ['A', 'B', 'C']) {
-      await screen(s, `LX 직원 · XI맵 결과 표시 시안 ${v}`, X, { ...xi, act: async (p) => { await xi.act(p); await p.locator(`.xv-sw button[data-v="${v}"]`).click();
-        await p.waitForFunction((v) => window.__xc.showcase?.mode === v && (v !== 'B' || window.__xc.showcase.shown >= 2), v, { timeout: 40000 }).catch(() => {}); await p.waitForTimeout(1200); } });
-    }
-    await s.page.locator('.xv-sw button[data-v="now"]').click().catch(() => {});      // 시안 고른 것을 '지금'으로 되돌려 둔다
+    // 결과 표시 = 지금 + C(10-15 원칙 262 · showcase.js) — 말풍선이 뜨고 큰 숫자에 올려 빛 줄기가 나온 뒤 잰다(시안 단추는 뺐다 · ?dev=1 에만)
+    await screen(s, 'LX 직원 · XI맵 결과 표시(지금 + C)', X, { ...xi, act: async (p) => { await xi.act(p);
+      await p.waitForFunction(() => window.__xc.showcase?.mode === 'now' && document.querySelectorAll('.xs-c-bub').length > 0, null, { timeout: 40000 }).catch(() => {});
+      await p.locator('.xb-hud .xb-big').hover().catch(() => {}); await p.waitForTimeout(1200); } });
     await screen(s, 'LX 직원 · XI맵 고치기 칸', X, { ...xi, act: async (p) => { await xi.act(p); await openEdit([127.5345, 35.4335], '^xb-r-')(p); } });
     if (has('--chat')) {
       await screen(s, 'LX 직원 · XI맵 통계(지도 위)', X, { ...xi, act: async (p) => {
         await xi.act(p);
         const inp = p.locator('.k-chat-root[data-dock] .k-ck-i');
         await inp.click(); await inp.pressSequentially('남원시 현황 보여 줘', { delay: 25 }); await inp.press('Enter');
-        await p.waitForFunction(() => window.__xc.dash?.title && (window.__xc.dash.fill === 'done' || !document.querySelector('.xd')?.hidden), null, { timeout: 90000 });   // 지도 위(기본 · 원칙 258) 또는 대시보드
+        await p.waitForFunction(() => window.__xc.dash?.title && (window.__xc.dash.fill === 'done' || !document.querySelector('.xd')?.hidden), null, { timeout: 90000 });   // 1단계 지도에만(원칙 262) — 한 줄 · '통계' 단추
         await settle(p); await p.waitForTimeout(1800);
       } });
+      // 2단계(오른쪽 판) · 3단계(대시보드) — 같은 사양을 단계마다(원칙 262)
+      await screen(s, 'LX 직원 · XI맵 통계 2단계(판)', null, { act: async (p) => { await p.locator('.xo-mini-b').click(); await p.waitForFunction(() => window.__xc.statStep === 2, null, { timeout: 20000 }).catch(() => {}); await p.waitForTimeout(1200); } });
+      await screen(s, 'LX 직원 · XI맵 통계 3단계(대시보드)', null, { act: async (p) => { await p.locator('.xo-big2').click(); await p.waitForFunction(() => window.__xc.statStep === 3 && !document.querySelector('.xd').hidden, null, { timeout: 20000 }).catch(() => {}); await p.waitForTimeout(1500); } });
     }
   }
   /* ── LX 관리자(admin) ── */

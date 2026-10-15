@@ -84,6 +84,29 @@
 .xc-rd{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--rule)}
 .xc-row[aria-pressed="true"] .xc-rd{border:5px solid var(--ink)}
 .xc-key{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--rule)}
+/* 클래스 켜기/끄기(10-15) — 체크박스 + 클래스 색 점 · '층' 판 안 */
+.xc-row--cls{padding:8px 8px 8px 14px}
+.xc-cb{flex:none;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--rule);background:var(--bg-1);position:relative;transition:background var(--d-180) var(--e-ui),border-color var(--d-180) var(--e-ui)}
+.xc-cb::after{content:"";position:absolute;left:5px;top:1.5px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);opacity:0}
+.xc-row--cls[aria-checked="true"] .xc-cb{background:var(--ink);border-color:var(--ink)}
+.xc-row--cls[aria-checked="true"] .xc-cb::after{opacity:1}
+.xc-row--cls[aria-checked="false"] span{color:var(--sub)}
+.xc-dot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.xc-pop-l + .xc-row--cls{margin-top:2px}
+.xb-vis{opacity:.85}
+/* 겹친 객체 — 올리면 '겹침 n' 작은 표시(마우스 옆) · 누르면 고르기 목록(클래스 색 점 · 클래스 · 면적) */
+.xc-ovl{position:absolute;z-index:8;left:0;top:0;padding:4px 9px;border-radius:8px;background:var(--ink);color:#fff;font:600 var(--fs-tag,14px)/20px var(--font-num);pointer-events:none;white-space:nowrap;box-shadow:0 2px 8px rgba(25,31,40,.2)}
+.xc-ovl[hidden]{display:none}
+.xe-pick{width:240px;padding:10px 8px 8px;opacity:0;transform:translateY(4px);transition:opacity var(--d-180) var(--e-ui),transform var(--d-180) var(--e-ui)}
+.xe-pick.in{opacity:1;transform:none}
+.xe-pick-t{display:flex;align-items:baseline;gap:6px;margin:0 0 6px;padding:0 8px;font:600 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}
+.xe-pick-t b{font:700 var(--fs-aux,15px)/20px var(--font-num);color:var(--ink)}
+.xe-pick-r{display:flex;align-items:center;gap:10px;width:100%;padding:9px 8px;border:0;border-radius:var(--r-8);background:none;font:500 var(--fs-aux,15px)/20px var(--font-body);color:var(--ink);cursor:pointer;text-align:left}
+.xe-pick-r:hover,.xe-pick-r:focus-visible{background:var(--bg-0)}
+.xe-pick-r i{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.xe-pick-r span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xe-pick-r b{font:500 var(--fs-tag,14px)/20px var(--font-num);color:var(--sub);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.xe-pick{transition:none}}
 .xc-key[data-k="sus"]{background:#FFB633;border-color:#FFB633}
 .xc-key[data-k="ai"]{background:var(--ai);border-color:var(--ai)}
 .xc-key[data-k="parcel"],.xc-key[data-k="emd"]{background:var(--bg-0)}
@@ -291,6 +314,9 @@
 .xb-hud{position:absolute;z-index:6;left:24px;top:20px;max-width:min(460px,calc(100% - 140px));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 10px rgba(0,0,0,.45);pointer-events:none}
 .xb-hud[hidden]{display:none}
 .xb-hud[data-base="plain"]{color:var(--ink);text-shadow:none}
+/* 지금 + C(showcase.js · 원칙 262) — 큰 숫자 · 업무 줄에 올리면 그 업무 결과가 떠오르고 빛 줄기가 끌려 나온다(손만 받음 · 글은 그대로) */
+.xb-hud .xb-big,.xb-hud .xb-rows li{pointer-events:auto;cursor:default}
+.xb-hud .xb-rows:has(li[data-k]:hover) li:not(:hover){opacity:.55;transition:opacity .2s}
 .xb-k{margin:0;font:600 var(--fs-tag,14px)/20px var(--font-body);opacity:.95;word-break:keep-all}
 .xb-k--r{font:800 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:-.02em;opacity:1}
 .xb-big{margin:2px 0 0;font:800 var(--fs-big)/var(--lh-big) var(--font-display);letter-spacing:-.03em;white-space:nowrap}
