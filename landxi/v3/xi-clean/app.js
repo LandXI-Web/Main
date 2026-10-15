@@ -194,6 +194,7 @@ async function boot() {
   hudBoard = h('section.xb-hud', { hidden: true, 'aria-live': 'polite' });
   const statsSlot = h('section.xb-stats', { hidden: true, 'aria-label': '통계' });   // 지도 위 통계 판 자리(지도 영역 안 · 지금은 비워 둠 — 다음 지시)
   mainEl.append(stageEl, bEl, fx, hud, hudBoard, statsSlot, pop, grip, top, toolsEl, loadEl);
+  if (S.board) mountHudVariants();                    // 왼쪽 위 결과 표시 시안 ⓐ · ⓑ(10-15 원칙 253 · 기본 = 지금 모양)
   loadK = K.empty(h('div.xc-load-c'), { kind: 'loading', progress: 0.08, what: '지역 경계와 분석 집계' });   // 무엇을 기다리나(GPT2-4)
   X.waitFor = '지역 경계와 분석 집계';
   loadEl.append(loadK.el);
@@ -981,9 +982,75 @@ function paintBoardHud() {
     const br = boardRegion(r);
     X.hud = { label: r.name, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length };
   }
+  if (paintHudVariant()) hudBoard.hidden = true;        // 시안 ⓐ · ⓑ 를 보는 동안은 지금 모양을 걷는다
   if (key === HUDKEY) return;
   HUDKEY = key;
   hudBoard.replaceChildren(...kids.filter(Boolean));
+}
+/* ═══ 왼쪽 위 결과 표시 — 시안 두 방향(10-15 원칙 253 '저렇게 보여주는게 최선인가..?') · 같은 숫자(서비스 결과 장부 + 전국 분석 진행 장부) ═══
+   ⓐ 작은 판 = 숫자 하나 + 업무 색 점 줄(누르면 그 업무만) · ⓑ 아래 띠 = 채팅 창 위 얇은 띠에 업무별 수가 흐름(누르면 그 업무만).
+   지도 영역 안(원칙 233) · 특정 업무 기본 없음(원칙 237) · 기본은 지금 모양 · 시안 단추는 LX 계정 XI맵에만(이 브라우저에 기억). */
+let HUDV = 'now', XV = null, VKEY = '';
+function mountHudVariants() {
+  try { HUDV = ['a', 'b'].includes(localStorage.getItem('xc_hudv')) ? localStorage.getItem('xc_hudv') : 'now'; } catch { HUDV = 'now'; }
+  const sa = h('section.xv-a.t-card.t-card--map', { hidden: true, 'aria-live': 'polite', 'aria-label': 'AI 분석 결과' });
+  const sb = h('section.xv-b', { hidden: true, 'aria-live': 'polite', 'aria-label': 'AI 분석 결과' });
+  const btns = [['now', '지금'], ['a', 'ⓐ'], ['b', 'ⓑ']].map(([v, t]) => h('button', { type: 'button', dataset: { v }, 'aria-pressed': String(v === HUDV), text: t,
+    onclick: () => { HUDV = v; try { localStorage.setItem('xc_hudv', v); } catch { /* 저장 못 해도 이 화면에서는 바뀜 */ } btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); VKEY = ''; HUDKEY = ''; paintBoardHud(); } }));
+  const sw = h('div.xv-sw', { role: 'group', 'aria-label': '결과 표시 시안' }, h('span', { text: '시안' }), ...btns);
+  mainEl.append(sa, sb, sw);
+  XV = { a: sa, b: sb, sw };
+}
+/** 업무마다 하나(같은 업무 = 서비스 결과 + 전국 분석 합) — 전국 또는 지금 시군구 */
+function hudTaskRows() {
+  const m = new Map();
+  const add = (k, n, unit) => { if (!(n > 0)) return; const x = m.get(k) || { k, n: 0, unit }; x.n += n; m.set(k, x); };
+  if (!S.region || map.getZoom() < 8.2) {
+    for (const s of BD?.data?.services || []) add(taskOf(s.name), ev(s.n), BD.UNIT[taskOf(s.name)] || '개');
+    for (const [a, A] of Object.entries(BD?.nat?.data?.assets || {})) { if (A.on === false) continue; for (const cls of NCLS[a] || []) add(cls, ev(A.counts?.[cls]?.n), BD.UNIT[cls] || '개'); }
+    return { title: '전국', rows: [...m.values()].sort((p, q) => q.n - p.n), wait: false };
+  }
+  const { rows, wait } = regionRows(S.region);
+  for (const x of rows) add(x.k, x.n, x.unit);
+  return { title: S.region.name, rows: [...m.values()].sort((p, q) => q.n - p.n), wait };
+}
+function paintHudVariant() {
+  if (!XV) return false;
+  const on = HUDV !== 'now' && !!BD?.data && !(NAT?.id && NAT.id !== 'kr');
+  XV.a.hidden = !(on && HUDV === 'a'); XV.b.hidden = !(on && HUDV === 'b');
+  if (!on) { VKEY = ''; return false; }
+  const { title, rows, wait } = hudTaskRows(), task = BD?.task || null;
+  const sel = task ? rows.find((x) => x.k === task) : null;
+  const total = sel ? sel.n : rows.reduce((t, x) => t + x.n, 0), unit = sel ? sel.unit : '개';
+  const run = !S.region ? BD.nat.running?.() : null;
+  const key = [HUDV, title, task, wait, run?.label, JSON.stringify(rows.map((x) => [x.k, x.n]))].join('|');
+  if (key === VKEY) return true;
+  VKEY = key;
+  const pick = (k) => () => { applyTask(BD.task === k ? null : k); };
+  if (HUDV === 'a') {
+    XV.a.replaceChildren(...[
+      h('p.xv-k', { text: sel ? `${title} · ${sel.k}` : `${title} · AI 분석 결과` }),
+      h('p.xv-big', {}, h('b.num', { text: rows.length ? nf(total) : '—' }), h('small', { text: rows.length ? unit : '' })),
+      rows.length ? h('div.xv-dots', { role: 'group', 'aria-label': '업무' }, ...rows.map((x) => h('button.xv-dot', { type: 'button', 'aria-pressed': String(task === x.k), title: `${x.k} ${nf(x.n)}${x.unit}`, onclick: pick(x.k) },
+        h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.k }))))
+        : h('p.xv-p', { text: wait ? '불러오는 중' : '분석 예정' }),
+      run?.label ? h('p.xv-live', {}, h('i'), h('span', { text: `지금 분석 중 · ${run.label}` })) : null].filter(Boolean));
+  } else {
+    const item = (x) => h('button.xv-it', { type: 'button', 'aria-pressed': String(task === x.k), onclick: pick(x.k) },
+      h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.k }), h('b.num', { text: `${nf(x.n)}${x.unit}` }));
+    const track = h('div.xv-track', {}, ...rows.map(item));
+    const lane = h('div.xv-lane', {}, track);
+    XV.b.replaceChildren(h('p.xv-sum', {}, h('span', { text: sel ? `${title} · ${sel.k}` : title }), h('b.num', { text: rows.length ? `${nf(total)}${unit}` : (wait ? '불러오는 중' : '분석 예정') })), lane);
+    // 띠보다 길면 흐른다(같은 줄을 한 번 더 붙여 끊김 없이 · 손을 올리면 멈춤 · 움직임 줄이기면 흐르지 않음)
+    requestAnimationFrame(() => {
+      if (task) { track.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }); return; }   // 업무 하나를 고르면 멈춰 그 업무를 보인다
+      if (track.scrollWidth <= lane.clientWidth + 2 || RM()) return;
+      track.append(...rows.map(item));
+      track.style.setProperty('--xv-s', `${Math.max(18, Math.round(track.scrollWidth / 2 / 40))}s`);
+      track.classList.add('is-flow');
+    });
+  }
+  return true;
 }
 /* ═══ 누르면 — 그곳으로 내려가 객체로 펼치고, 그 자리 옆 말풍선에 여러 업무 숫자(업무 줄 = 그 업무만) ═══ */
 let PIN = null;
@@ -1242,13 +1309,8 @@ async function pickEmd(ll) {
   S.cond.emd = e; renderChips(); searchInput.value = e.nm; refresh();
   return emdFrame(e);
 }
-/** XI ChatGEO 추천 질문(아래 채팅 창) — 지금 지역 이름을 넣은 셋(업무 거르기 · 대시보드 · 실태). 지역 고정값 0 */
-function xiSugg() {
-  if (!S.lx) return null;
-  const r = S.region?.name;
-  return r ? ['비닐하우스만 보여 줘', `${r} 현황 보여 줘`, `${r} 농지 이용 실태 어때?`]
-    : ['비닐하우스만 보여 줘', '전국 분석 얼마나 진행됐어?', '전국 비닐하우스 현황'];
-}
+/** XI ChatGEO 추천 질문(아래 채팅 창) — 없음(10-15 원칙 253 '위에 가이드도 일단 없앤다'). 빈 목록 = 키트 기본 추천도 그리지 않는다 */
+function xiSugg() { return []; }
 function ask(q) {
   cmdk.open(q);
   requestAnimationFrame(() => cmdk.el.querySelector('form')?.requestSubmit());

@@ -1,5 +1,5 @@
 /* XI맵 그 자리 고치기(바퀴 5 · 원칙 182 · 191 · 196 · 설계 20차 ximap-board-2 c4~c6) — 객체를 누르면 그 자리에 작은 칸.
-   지우기 · 분류 바꾸기 · 모양 고치기(꼭짓점 끌기 · 변 가운데 점 = 꼭짓점 더하기 · 꼭짓점 두 번 누르기 = 빼기) · 새로 그리기 · 메모.
+   삭제 · 클래스 바꾸기 · 수정(모양 — 꼭짓점 끌기 · 변 가운데 점 = 꼭짓점 더하기 · 꼭짓점 두 번 누르기 = 빼기) · 메모(10-15 원칙 252 · 새로 그리기는 칸에서 뺌).
    고친 것은 서버가 원래 모양과 함께 남긴다(POST /ximap/edits — 누가 · 언제 · 영상 · 모델 판) → 학습 데이터.
    칸 아래 한 줄(10-13 저절로-문구 · 사용자 말 그대로) = '수정된 부분 n장'(1장이 된 칸 · 학습 화면 · XI 재학습과 같은 셈) → 그 프로젝트 학습으로(단추만).
    n 이 0 이면 '수정된 부분은 학습 데이터로 저장됩니다.' 한 줄. 이 밖의 덧말(토스트 꼬리 '학습 자료로 쌓입니다')은 뺐다.
@@ -11,12 +11,13 @@ const val = (e) => (e && typeof e === 'object' ? e.value : e);
 const TEST = new URLSearchParams(location.search).get('test') === '1';
 const md = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`; };
 const EMPTY = { type: 'FeatureCollection', features: [] };
-const ACT = { delete: '지움', reclass: '분류 바꿈', reshape: '모양 고침', add: '새로 그림', memo: '메모' };
+/* 같은 뜻은 한 말(10-15 원칙 252 — '지움' · '지우기' → '삭제' · 동작 넷 = 삭제 · 클래스 바꾸기 · 수정 · 메모) */
+const ACT = { delete: '삭제', reclass: '클래스 바꿈', reshape: '수정', add: '새로 그림', memo: '메모' };
 
 export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery }) {
   const E = { card: null, at: null, sel: null, mode: null, sets: [], box: null };
   const card = h('section.xe-card.t-card.t-card--map', { hidden: true, role: 'dialog', 'aria-label': '객체 고치기' });
-  const bar = h('div.xe-bar', { hidden: true, role: 'toolbar', 'aria-label': '모양 고치기' });
+  const bar = h('div.xe-bar', { hidden: true, role: 'toolbar', 'aria-label': '수정' });
   host.append(card, bar);
 
   /* ── 지도 층: 고른 객체 · 고친 자리 · 편집 꼭짓점 ── */
@@ -64,7 +65,8 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const p = map.project(E.at), W = host.clientWidth, H = host.clientHeight, w = card.offsetWidth || 320, hh = card.offsetHeight || 300;
     let x = p.x + 18, y = p.y - 40;
     if (x + w > W - 92) x = p.x - w - 18;               // 오른쪽 도구 줄과 겹치지 않게
-    x = Math.max(12, Math.min(x, W - w - 12)); y = Math.max(76, Math.min(y, H - hh - 12));
+    const foot = host.querySelector('.k-chat-root[data-dock]') ? 96 : 12;   // 아래 채팅 창과 겹치지 않게
+    x = Math.max(12, Math.min(x, W - w - 12)); y = Math.max(76, Math.min(y, H - hh - foot));
     card.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
   }
   map.on('move', place);
@@ -101,29 +103,32 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
       ['모델', m.model || (m.version ? `서비스 ${m.version}판` : '—')],
       ['분석', m.finished_at ? md(m.finished_at) : '—'],
     ];
-    /* 지운 자리 기억(원칙 243) — 영상 연도가 달라 저절로 적용하지 않은 자리는 '이전에 지운 자리'(다시 확인) */
+    /* 삭제한 자리 기억(원칙 243) — 영상 연도가 달라 저절로 적용하지 않은 자리는 '이전에 삭제한 자리'(다시 확인) */
     const rc = (f.recheck || [])[0];
-    const state = p.edit_state === 'deleted' ? '지움' : p.edit_state === 'added' ? '새로 그림' : p.edit_state === 'edited' ? '고침'
-      : rc ? `이전에 ${{ delete: '지운', reclass: '분류 바꾼', reshape: '모양 고친' }[rc.action] || '고친'} 자리` : null;
+    const state = p.edit_state === 'deleted' ? '삭제됨' : p.edit_state === 'added' ? '새로 그림' : p.edit_state === 'edited' ? '수정됨'
+      : rc ? `이전에 ${{ delete: '삭제한', reclass: '클래스 바꾼', reshape: '수정한' }[rc.action] || '수정한'} 자리` : null;
     const head = h('header.xe-h', {},
       h('div', {}, h('h3', { text: p.cls || '객체' }), h('p.xe-sub', { text: [conf != null ? `신뢰도 ${conf}%` : null, p.area_m2 != null ? `${nf(Math.round(p.area_m2))}㎡` : null].filter(Boolean).join(' · ') })),
-      state ? h('span.t-chip.xe-st', { text: state }) : null,
+      state ? h('span.t-chip.xe-st', { text: state, dataset: { s: p.edit_state || 'recheck' } }) : null,
       h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: close }));
-    const dl = h('dl.xe-dl', {}, ...lines.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v }))));
+    const dl = h('dl.xe-dl', {}, ...lines.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v, title: v }))));
     const kids = [head, dl];
     if (note) kids.push(note);
     if (canEdit && !note) {
       const del = p.edit_state === 'deleted';
-      kids.push(h('div.xe-act', {},
-        h('button.t-btn.t-btn--2', { type: 'button', text: '지우기', disabled: del || undefined, onclick: askDelete }),
-        h('button.t-btn.t-btn--2', { type: 'button', text: '분류 바꾸기', disabled: del || undefined, onclick: pickClass }),
-        h('button.t-btn.t-btn--2', { type: 'button', text: '모양 고치기', disabled: del || undefined, onclick: startShape }),
-        h('button.t-btn.t-btn--2', { type: 'button', text: '새로 그리기', onclick: startDraw }),
+      // 동작 넷(10-15 원칙 252) — 새로 그리기는 칸에서 뺐다(서버 · 그리기 코드는 그대로)
+      kids.push(h('div.xe-act.xe-act--4', {},
+        h('button.t-btn.t-btn--2.xe-del', { type: 'button', text: '삭제', disabled: del || undefined, onclick: askDelete }),
+        h('button.t-btn.t-btn--2', { type: 'button', text: '클래스 바꾸기', disabled: del || undefined, onclick: pickClass }),
+        h('button.t-btn.t-btn--2', { type: 'button', text: '수정', disabled: del || undefined, onclick: startShape }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '메모', onclick: writeMemo })));
     }
     const hist = (f.history || []).filter((x) => !x.undone).slice(0, 2);
-    const was = hist.length ? [] : (f.recheck || []).slice(0, 1).map((x) => h('li', {}, h('span', { text: `${md(x.at)} ${x.who} · ${ACT[x.action] || x.action}${x.year ? ` · ${x.year}년 영상` : ''}` })));
-    if (hist.length || was.length) kids.push(h('ul.xe-hist', {}, ...was, ...hist.map((x) => h('li', {}, h('span', { text: `${md(x.at)} ${x.who} · ${ACT[x.action] || x.action}${x.action === 'reclass' && x.cls_after ? ` → ${x.cls_after}` : ''}${x.memo ? ` · ${x.memo}` : ''}${x.test ? ' · 시험' : ''}` }),
+    // 이력 줄 = 날짜 | 누가 · 무엇(한 줄) | 되돌리기
+    const row = (x, what, undoB) => h('li', {}, h('time.num', { text: md(x.at) }), h('span', {}, h('b', { text: x.who }), ` · ${what}`), undoB || h('i'));
+    const was = hist.length ? [] : (f.recheck || []).slice(0, 1).map((x) => row(x, `${ACT[x.action] || x.action}${x.year ? ` · ${x.year}년 영상` : ''}`));
+    if (hist.length || was.length) kids.push(h('ul.xe-hist', {}, ...was, ...hist.map((x) => row(x,
+      `${ACT[x.action] || x.action}${x.action === 'reclass' && x.cls_after ? ` → ${x.cls_after}` : ''}${x.memo ? ` · ${x.memo}` : ''}${x.test ? ' · 시험' : ''}`,
       x.mine ? h('button.xe-undo', { type: 'button', text: '되돌리기', onclick: () => undo(x.id) }) : null))));
     const foot = h('p.xe-foot');
     kids.push(foot);
@@ -169,8 +174,8 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
   }
 
   function askDelete() {
-    render(h('div.xe-ask', {}, h('p', { text: '이 객체를 지울까요? 원래 모양은 기록에 남습니다.' }),
-      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '지우기', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '지웠습니다') }),
+    render(h('div.xe-ask', {}, h('p', { text: '이 객체를 삭제할까요?' }),
+      h('div.xe-act', {}, h('button.t-btn', { type: 'button', text: '삭제', onclick: () => send({ fid: E.sel.id, action: 'delete' }, '삭제했습니다') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
   }
   /* ── 클래스 고르기(원칙 205 · 217 · 223) — 질문 문장 없이 클래스 목록(서버 한 곳 · GET /classes/pick)에서 고르고, 없으면 이름을 새로 써서 더한다.
@@ -230,7 +235,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     setTimeout(() => name.focus(), 30);
     return f;
   }
-  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다` : `${c.name}(으)로 바꿨습니다`);
+  const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다` : `${c.name}(으)로 클래스를 바꿨습니다`);
   async function pickClass() {
     const now = E.sel.properties.cls;
     render(h('p.xe-wait', { text: '불러오는 중' }));
@@ -238,7 +243,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     render(box);
   }
   function writeMemo() {
-    const ta = h('textarea.xe-memo', { rows: 3, maxlength: 500, placeholder: '예: 현장 사진으로는 창고 — 다음 판에서 확인', 'aria-label': '메모' });
+    const ta = h('textarea.xe-memo', { rows: 3, maxlength: 500, placeholder: '메모', 'aria-label': '메모' });
     render(h('div.xe-ask', {}, ta, h('div.xe-act', {},
       h('button.t-btn', { type: 'button', text: '저장', onclick: () => { const v = ta.value.trim(); if (v) send({ fid: E.sel.id, action: 'memo', memo: v }, '메모를 남겼습니다'); } }),
       h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: () => render() }))));
@@ -276,7 +281,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery })
     const nv = val(E.sel.edit?.n_vertices), ne = val(E.sel.edit?.n_vertices_edit);
     bar.replaceChildren(h('span.xe-bar-t', { text: nv && ne && nv > ne ? `꼭짓점 ${ne}개로 단순화해 열었습니다(원래 ${nv}개)` : '꼭짓점을 끌어 모양을 고치세요' }),
       h('button.t-btn.t-btn--2', { type: 'button', text: '되돌리기', onclick: () => { const x = S.hist.pop(); if (x) { S.ring = x; drawShape(); } } }),
-      h('button.t-btn', { type: 'button', text: '다 고침', onclick: async () => { const geometry = shapeGeom(); stopShape(); await send({ fid: E.sel.id, action: 'reshape', geometry }, '모양을 고쳤습니다'); } }),
+      h('button.t-btn', { type: 'button', text: '저장', onclick: async () => { const geometry = shapeGeom(); stopShape(); await send({ fid: E.sel.id, action: 'reshape', geometry }, '수정했습니다'); } }),
       h('button.t-btn.t-btn--text', { type: 'button', text: '그만', onclick: () => { stopShape(); render(); } }));
     bar.hidden = false;
     card.hidden = true;

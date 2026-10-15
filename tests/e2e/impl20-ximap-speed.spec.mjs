@@ -56,7 +56,7 @@ test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치�
   // ② 고치기(분류 바꾸기 · 시험)
   const [res] = await Promise.all([
     page.waitForResponse((r) => /\/ximap\/edits$/.test(new URL(r.url()).pathname) && r.request().method() === 'POST'),
-    (async () => { await page.locator('.xe-act button', { hasText: '분류 바꾸기' }).click(); await page.locator('.xe-chip').first().click(); })(),
+    (async () => { await page.locator('.xe-act button', { hasText: '클래스 바꾸기' }).click(); await page.locator('.xe-chip').first().click(); })(),
   ]);
   const ej = await res.json();
   const eid = ej.edit?.id;

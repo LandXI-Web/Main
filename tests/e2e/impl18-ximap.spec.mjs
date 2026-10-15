@@ -63,9 +63,9 @@ test.describe('XI맵 바퀴 5', () => {
     const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await expect(page.locator('.xe-card .xe-act')).toBeVisible({ timeout: 15000 });
-    for (const t of ['지우기', '분류 바꾸기', '모양 고치기', '새로 그리기', '메모']) await expect(page.locator('.xe-act button', { hasText: t })).toHaveCount(1);
+    for (const t of ['삭제', '클래스 바꾸기', '수정', '메모']) await expect(page.locator('.xe-act button', { hasText: new RegExp(`^${t}$`) })).toHaveCount(1);   // 10-15 원칙 252 — 동작 넷
     const before = await page.locator('.xe-h h3').innerText();
-    await page.locator('.xe-act button', { hasText: '분류 바꾸기' }).click();
+    await page.locator('.xe-act button', { hasText: '클래스 바꾸기' }).click();
     await page.locator('.xe-chip').first().click();
     await expect(page.locator('.xe-h h3')).not.toHaveText(before, { timeout: 10000 });
     await expect(page.locator('.xe-hist')).toContainText('시험');

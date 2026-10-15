@@ -1,0 +1,123 @@
+[
+ {
+  "id": "고치기칸",
+  "t": "그 자리 고치기 칸 — 삭제 · 클래스 바꾸기 · 수정 · 메모 넷 · '지움/지우기' → '삭제'로 통일 · 칸 디자인(서비스 결과 · 전국 결과 같은 칸)",
+  "shots": [
+   "shots/before-e1-svc-open-1440-0813.png",
+   "shots/before-e2-nat-open-1440-0813.png",
+   "shots/after-e1-svc-open-1440-0904.png",
+   "shots/after-e2-nat-open-1440-0904.png",
+   "shots/after-e2-nat-ask-1440-0904.png",
+   "shots/after-e2-nat-deleted-1440-0904.png",
+   "shots/after-e2-nat-deleted-1920-0846.png"
+  ],
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "XI맵 (LX 직원)",
+    "확대해 객체(서비스 결과 · 전국 결과)를 누름 → 칸"
+   ]
+  ],
+  "now": "동작 넷(새로 그리기는 칸에서 뺌), 같은 뜻 말은 '삭제' 하나(삭제됨 · 삭제했습니다 · 이전에 삭제한 자리). 정보는 회백 판 안, 이력 줄은 날짜 · 누가 · 무엇 · 되돌리기."
+ },
+ {
+  "id": "XI맵-채팅창",
+  "t": "XI맵 채팅 창 — 위 추천 질문 없음 · 왼쪽 '이 화면은?' 없음 · 아래 가운데 입력 줄 그대로",
+  "shots": [
+   "shots/before-a1-first-1440-0813.png",
+   "shots/before-a1-first-1920-0814.png",
+   "shots/after-a1-first-1440-0842.png",
+   "shots/after-a1-first-1920-0845.png"
+  ],
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "XI맵 (LX 직원)",
+    "첫 화면 아래 가운데"
+   ]
+  ],
+  "now": "입력 줄만 남았습니다. 다른 화면의 '이 화면은?'은 그대로입니다."
+ },
+ {
+  "id": "XI맵-결과표시",
+  "t": "왼쪽 위 분석 결과 표시 — 시안 ⓐ 작은 판(숫자 하나 + 업무 색 점 줄) · ⓑ 채팅 창 위 얇은 띠(업무별 수가 흐름) · 기본은 지금 모양",
+  "shots": [
+   "shots/before-a1-first-1440-0813.png",
+   "shots/before-a2-region-1440-0813.png",
+   "shots/after-va1-national-1440-0843.png",
+   "shots/after-va1-national-1920-0845.png",
+   "shots/after-va2-task-1440-0843.png",
+   "shots/after-va2-task-1920-0845.png",
+   "shots/after-va3-region-1440-0843.png",
+   "shots/after-va3-region-1920-0845.png",
+   "shots/after-vb1-national-1440-0843.png",
+   "shots/after-vb1-national-1920-0845.png",
+   "shots/after-vb2-task-1440-0843.png",
+   "shots/after-vb2-task-1920-0845.png",
+   "shots/after-vb3-region-1440-0843.png",
+   "shots/after-vb3-region-1920-0845.png"
+  ],
+  "opts": [
+   "ⓐ",
+   "ⓑ",
+   "지금대로",
+   "다시"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "XI맵 (LX 직원)",
+    "왼쪽 아래 '시안 · 지금 · ⓐ · ⓑ' 단추"
+   ]
+  ],
+  "now": "시안 표시 단추로 같은 실제 화면에서 바꿔 봅니다. 업무를 누르면 그 업무만, 다시 누르면 원래대로. 숫자는 지금 모양과 같은 장부입니다."
+ },
+ {
+  "id": "융합대시보드-디자인",
+  "t": "융합 대시보드 세련되게 — 채도 낮춘 한 색 + 강조 하나 · 큰 숫자 위계 · 줄마다 꽉 찬 격자 · 둥근 막대 · 얇은 격자선 · 글자 키움",
+  "shots": [
+   "shots/before-d1-overview-1440-0813.png",
+   "shots/before-d1-overview-1920-0815.png",
+   "shots/before-d1-overview-bottom-1440-0813.png",
+   "shots/before-d2-task-1440-0813.png",
+   "shots/before-d2-task-1920-0815.png",
+   "shots/before-d3-survey-1440-0814.png",
+   "shots/before-d3-survey-1920-0815.png",
+   "shots/before-d4-time-1440-0814.png",
+   "shots/before-d5-compare-1440-0814.png",
+   "shots/before-d6-jimok-1440-0814.png",
+   "shots/before-d7-overview2-1440-0814.png",
+   "shots/after-d1-overview-1440-0844.png",
+   "shots/after-d1-overview-1920-0846.png",
+   "shots/after-d1-overview-bottom-1440-0844.png",
+   "shots/after-d2-task-1440-0844.png",
+   "shots/after-d2-task-1920-0846.png",
+   "shots/after-d3-survey-1440-0844.png",
+   "shots/after-d3-survey-1920-0846.png",
+   "shots/after-d4-time-1440-0844.png",
+   "shots/after-d5-compare-1440-0844.png",
+   "shots/after-d6-jimok-1440-0844.png",
+   "shots/after-d7-overview2-1440-0844.png"
+  ],
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "XI맵 · 아래 채팅 창",
+    "'남원시 현황 보여 줘' 등 질문 일곱"
+   ]
+  ],
+  "now": "가시화 9종 · 고르는 규칙 · 색 척도 뜻 · 숫자는 그대로입니다. 해석은 큰 숫자 아래 한 줄 띠로 옮겼습니다."
+ }
+]

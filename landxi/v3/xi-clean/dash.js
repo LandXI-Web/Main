@@ -11,16 +11,20 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, RM() ? 0 : ms));
 
-/* ── 색 램프(밝은 톤 법전 안 · 데이터 위에서만) ── */
+/* ── 색 램프(밝은 톤 법전 안 · 데이터 위에서만 · 10-15 원칙 254: 채도를 낮춘 한 색 램프 — 값의 뜻 색은 그대로) ── */
 export const RAMP = {
-  teal: ['#E3F5F3', '#B5E6E1', '#7FD3CA', '#3FBDB1', '#0FA9A0', '#0B857E', '#07615C'],
-  orange: ['#FFF1E0', '#FFD9AD', '#FFBC70', '#FF9A3C', '#F07B1A', '#C85F0C', '#9A4706'],
-  violet: ['#F1EDFC', '#D9CFF7', '#B9A7F0', '#977DE6', '#7657D6', '#5A3DB4', '#40298A'],
-  red: ['#FDECEC', '#F9C9CB', '#F4A0A4', '#EE757C', '#E34954', '#BE2F3B', '#8F1F29'],
-  blue: ['#E6F0FE', '#C3DAFC', '#93BDFF', '#5E9BFF', '#2F78F0', '#0F55C7', '#003B85'],
+  teal: ['#E6F4F2', '#BFE3DE', '#8DCDC5', '#57B3A9', '#2E9A90', '#1F7B73', '#145953'],
+  orange: ['#FBF0E6', '#F5D7BC', '#EDB98C', '#E2985E', '#D07A3A', '#A95E28', '#7C451D'],
+  violet: ['#F0EEF8', '#D9D3EF', '#B9AEE0', '#968ACB', '#7768B5', '#5B4E96', '#423871'],
+  red: ['#FBEDEE', '#F3CDD0', '#E8A5AA', '#D97980', '#C6525B', '#A23C45', '#772B33'],
+  blue: ['#EAF1FB', '#C9DBF4', '#9EBDE9', '#6F9AD9', '#4A7BC4', '#355FA3', '#25457A'],
 };
-const DIV = ['#1F5FC8', '#6E9DEB', '#BBD1F5', '#ECEEF1', '#F6C6C1', '#EA8277', '#C93A2E'];   // 평균보다 적음(파랑) · 같음(회색) · 많음(빨강)
-const CAT = ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100', '#E87BA4', '#4A3AA7', '#008300', '#E34948'];   // 범주 — 정해진 차례(돌려 쓰지 않음)
+const DIV = ['#355FA3', '#7E9FD6', '#C6D4EE', '#ECEEF1', '#F0CBC7', '#DB8B83', '#B04A40'];   // 평균보다 적음(파랑) · 같음(회색) · 많음(빨강)
+/* 범주(도넛 · 누적 막대) — 한 대시보드에 주 색 하나(짙음 · 옅음) + 강조 하나 + 중립 회색 단계(색 남발 0) */
+let CAT = [];
+const catFor = (hue) => { const r = RAMP[hue] || RAMP.teal, acc = hue === 'orange' ? RAMP.teal[4] : RAMP.orange[4]; return [r[5], r[3], acc, '#6B7684', r[1], '#9AA4B0', '#C4CAD2', '#DDE1E6']; };
+/** 카드마다 한 색(그 값의 뜻 색) — 막대 · 순위가 CSS 변수로 쓴다 */
+const varsFor = (hue) => { const r = RAMP[hue] || RAMP.teal; return `--xd-c0:${r[6]};--xd-c1:${r[5]};--xd-c3:${r[3]}`; };
 const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
 const mix = (a, b, t) => { const x = hex(a), y = hex(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 function lerpRamp(r, t) { t = Math.max(0, Math.min(1, t)); const p = t * (r.length - 1), i = Math.floor(p); return i >= r.length - 1 ? r[r.length - 1] : mix(r[i], r[i + 1], p - i); }
@@ -40,15 +44,15 @@ let TIP = null;
 function tip(e, html) { if (!TIP) return; if (!html) { TIP.hidden = true; return; } TIP.innerHTML = html; TIP.hidden = false; const W = innerWidth; TIP.style.left = Math.min(e.clientX + 14, W - TIP.offsetWidth - 12) + 'px'; TIP.style.top = Math.max(8, e.clientY - TIP.offsetHeight - 10) + 'px'; }
 const hoverAttrs = (label, val) => `data-tip="${esc(`<b>${esc(label)}</b> ${val}`)}"`;
 
-function spark(vals) {
+function spark(vals, c = RAMP.teal[4]) {
   const v = (vals || []).filter((x) => x != null);
   if (v.length < 3) return '';
   const W = 120, H = 32, lo = Math.min(...v), hi = Math.max(...v), d = hi - lo || 1;
   const pts = v.map((x, i) => `${(i / (v.length - 1)) * W},${H - 3 - ((x - lo) / d) * (H - 6)}`).join(' ');
-  return `<svg class="xd-spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#0FA9A0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${W}" cy="${H - 3 - ((v[v.length - 1] - lo) / d) * (H - 6)}" r="3" fill="#0FA9A0"/></svg>`;
+  return `<svg class="xd-spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${W}" cy="${H - 3 - ((v[v.length - 1] - lo) / d) * (H - 6)}" r="3" fill="${c}"/></svg>`;
 }
-function kpi(k, main) {
-  return `<div class="xd-card xd-kpi${main ? ' is-main' : ''}"><p class="xd-l">${esc(k.label)}</p><p class="xd-v"><b class="num">${nf(k.value, k.d || 0)}</b><small>${esc(k.unit || '')}</small></p>${k.sub ? `<p class="xd-s">${esc(k.sub)}</p>` : ''}${spark(k.spark)}</div>`;
+function kpi(k, main, c) {
+  return `<div class="xd-card xd-kpi${main ? ' is-main' : ''}"><p class="xd-l">${esc(k.label)}</p><p class="xd-v"><b class="num">${nf(k.value, k.d || 0)}</b><small>${esc(k.unit || '')}</small></p>${k.sub ? `<p class="xd-s">${esc(k.sub)}</p>` : ''}${spark(k.spark, c)}</div>`;
 }
 function head(p) { return `<h3>${esc(p.title)}${p.unit ? ` <small>${esc(p.unit)}</small>` : ''}</h3>`; }
 
@@ -59,9 +63,9 @@ function bar(p) {
   const vert = p.orient !== 'h' && ((rows.length >= 7 && rows.length <= 12 && short) || (rows.length > 12 && timeLike));
   if (vert) {
     const every = rows.length > 12 ? Math.ceil(rows.length / 8) : 1;          // 막대가 많으면 이름은 몇 칸 걸러(글자가 겹치지 않게 · 올리면 값과 이름)
-    return `${head(p)}<div class="xd-vb" style="--n:${rows.length}">${rows.map((r, i) => `<button type="button" class="xd-b" data-k="${esc(r.k)}" ${hoverAttrs(r.label, nf(r.v, p.d || 0) + (p.unit || ''))}><span class="t num">${nf(r.v)}</span><i style="height:${Math.max(1.5, (100 * (r.v || 0)) / mx)}%;background:${colorOf(p.scale, r.v)}"></i><span class="x">${i % every === 0 ? esc(r.label) : ''}</span></button>`).join('')}</div>`;
+    return `${head(p)}<div class="xd-vb" style="--n:${rows.length}">${rows.map((r, i) => `<button type="button" class="xd-b" data-k="${esc(r.k)}" ${hoverAttrs(r.label, nf(r.v, p.d || 0) + (p.unit || ''))}><span class="t num">${nf(r.v)}</span><i style="height:${Math.max(1.5, (100 * (r.v || 0)) / mx)}%"></i><span class="x">${i % every === 0 ? esc(r.label) : ''}</span></button>`).join('')}</div>`;
   }
-  return `${head(p)}<div class="xd-hb">${rows.map((r) => `<button type="button" class="xd-hr" data-k="${esc(r.k)}" ${hoverAttrs(r.label, nf(r.v) + (p.unit || ''))}><span class="n">${esc(r.label)}</span><span class="bar"><i style="width:${(100 * (r.v || 0)) / mx}%;background:${colorOf(p.scale, r.v)}"></i></span><span class="v num">${nf(r.v, p.d || 0)}</span></button>`).join('')}</div>`;
+  return `${head(p)}<div class="xd-hb">${rows.map((r) => `<button type="button" class="xd-hr" data-k="${esc(r.k)}" ${hoverAttrs(r.label, nf(r.v) + (p.unit || ''))}><span class="n">${esc(r.label)}</span><span class="bar"><i style="width:${(100 * (r.v || 0)) / mx}%"></i></span><span class="v num">${nf(r.v, p.d || 0)}</span></button>`).join('')}</div>`;
 }
 function hist(p) {
   const b = p.bins || [], mx = Math.max(1, ...b.map((x) => x.v || 0));
@@ -70,9 +74,9 @@ function hist(p) {
 }
 function donut(p) {
   const rows = (p.rows || []).filter((r) => r.v > 0), tot = rows.reduce((s, r) => s + r.v, 0) || 1;
-  const R = 54, C = 2 * Math.PI * R; let off = 0;
-  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="${CAT[i % CAT.length]}" stroke-width="22" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${hoverAttrs(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
-  return `${head(p)}<div class="xd-donut"><svg viewBox="0 0 140 140" aria-hidden="true"><g transform="rotate(-90 70 70)">${segs}</g><text x="70" y="68" text-anchor="middle" class="xd-dt num">${nf(tot, p.d || 0)}</text><text x="70" y="86" text-anchor="middle" class="xd-du">${esc(p.unit || '')}</text></svg>
+  const R = 56, C = 2 * Math.PI * R; let off = 0;
+  const segs = rows.map((r, i) => { const len = (r.v / tot) * C; const s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="${CAT[i % CAT.length]}" stroke-width="14" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" ${hoverAttrs(r.label, `${nf(r.v, p.d || 0)}${p.unit || ''} · ${nf((r.v / tot) * 100, 1)}%`)}/>`; off += len; return s; }).join('');
+  return `${head(p)}<div class="xd-donut"><svg viewBox="0 0 140 140" aria-hidden="true"><g transform="rotate(-90 70 70)">${segs}</g><text x="70" y="72" text-anchor="middle" class="xd-dt num">${nf(tot, p.d || 0)}</text><text x="70" y="92" text-anchor="middle" class="xd-du">${esc(p.unit || '')}</text></svg>
     <ul class="xd-leg">${rows.map((r, i) => `<li data-k="${esc(r.k)}"><i style="background:${CAT[i % CAT.length]}"></i><span>${esc(r.label)}</span><b class="num">${nf((r.v / tot) * 100, 1)}%</b></li>`).join('')}</ul></div>`;
 }
 function stack(p) {
@@ -85,13 +89,13 @@ function heat(p) {
   const cols = p.cols || [], rows = p.rows || [];
   const cmax = cols.map((_, j) => Math.max(1, ...rows.map((r) => r.vals[j] || 0)));
   const r = RAMP[p.scale?.hue] || RAMP.teal;
-  return `${head(p)}<div class="xd-heat" style="--c:${cols.length}"><span></span>${cols.map((c) => `<span class="ch">${esc(c)}</span>`).join('')}
-    ${rows.map((rw) => `<button type="button" class="rh" data-k="${esc(rw.k)}">${esc(rw.label)}</button>${rw.vals.map((v, j) => { const bg = v ? lerpRamp(r, 0.12 + 0.88 * Math.sqrt(v / cmax[j])) : '#F2F4F6'; return `<span class="cell num" style="background:${bg};color:${inkOn(bg)}" ${hoverAttrs(`${rw.label} · ${cols[j]}`, nf(v))}>${v ? nf(v) : ''}</span>`; }).join('')}`).join('')}</div>
+  return `${head(p)}<div class="xd-heat" style="--c:${cols.length}"><span></span>${cols.map((c) => { const m = /^(.+?)(\(.+\))$/.exec(String(c)); return `<span class="ch">${m ? `${esc(m[1])}<small>${esc(m[2])}</small>` : esc(c)}</span>`; }).join('')}
+    ${rows.map((rw) => `<button type="button" class="rh" data-k="${esc(rw.k)}">${esc(rw.label)}</button>${rw.vals.map((v, j) => { const bg = v ? lerpRamp(r, 0.08 + 0.8 * Math.sqrt(v / cmax[j])) : '#F2F4F6'; return `<span class="cell num" style="background:${bg};color:${inkOn(bg)}" ${hoverAttrs(`${rw.label} · ${cols[j]}`, nf(v))}>${v ? nf(v) : ''}</span>`; }).join('')}`).join('')}</div>
     <p class="xd-note">업무마다 많은 칸이 짙습니다</p>`;
 }
 function line(p) {
   const pts = p.points || []; if (pts.length < 2) return head(p);
-  const W = 560, H = 200, L = 52, B = 26, T = 12, R = 12;
+  const W = Math.round(70 * (p._w || 8)), H = 200, L = 56, B = 28, T = 12, R = 12, c = (RAMP[p.scale?.hue] || RAMP.teal)[4];
   const vs = pts.map((x) => x.v), hi = Math.max(...vs), lo = 0, d = hi - lo || 1;
   const X = (i) => L + (i / (pts.length - 1)) * (W - L - R), Y = (v) => T + (1 - (v - lo) / d) * (H - T - B);
   const path = pts.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x.v).toFixed(1)}`).join('');
@@ -99,26 +103,26 @@ function line(p) {
   const ticks = [0, 0.5, 1].map((t) => lo + d * t);
   const lab = (x) => (p.grain === 'hour' ? x.t.slice(5, 16).replace('T', ' ') : p.grain === 'day' ? x.t.slice(5, 10) : x.t);
   const every = Math.max(1, Math.ceil(pts.length / 6));
-  return `${head(p)}<svg class="xd-line" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+  return `${head(p)}<svg class="xd-line" viewBox="0 0 ${W} ${H}" style="aspect-ratio:${W}/${H}">
     ${ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="ax num">${nf(v)}</text>`).join('')}
-    <path d="${area}" fill="#0FA9A0" fill-opacity=".12"/><path d="${path}" fill="none" stroke="#0FA9A0" stroke-width="2" stroke-linejoin="round"/>
-    ${pts.map((x, i) => (i % every === 0 || i === pts.length - 1 ? `<text x="${X(i)}" y="${H - 8}" text-anchor="middle" class="ax">${esc(lab(x))}</text>` : '')).join('')}
-    ${pts.map((x, i) => `<rect x="${X(i) - (W - L - R) / pts.length / 2}" y="${T}" width="${(W - L - R) / pts.length}" height="${H - T - B}" fill="transparent" ${hoverAttrs(lab(x), nf(x.v) + (p.unit || ''))}/><circle cx="${X(i)}" cy="${Y(x.v)}" r="${i === pts.length - 1 ? 4 : 0}" fill="#0FA9A0"/>`).join('')}
+    <path d="${area}" fill="${c}" fill-opacity=".08"/><path d="${path}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((x, i) => ((i % every === 0 && (pts.length - 1 - i >= every * 0.7 || i === pts.length - 1)) || i === pts.length - 1 ? `<text x="${X(i)}" y="${H - 8}" text-anchor="middle" class="ax">${esc(lab(x))}</text>` : '')).join('')}
+    ${pts.map((x, i) => `<rect x="${X(i) - (W - L - R) / pts.length / 2}" y="${T}" width="${(W - L - R) / pts.length}" height="${H - T - B}" fill="transparent" ${hoverAttrs(lab(x), nf(x.v) + (p.unit || ''))}/><circle cx="${X(i)}" cy="${Y(x.v)}" r="${i === pts.length - 1 ? 4.5 : 0}" fill="${c}" stroke="#fff" stroke-width="2"/>`).join('')}
   </svg>`;
 }
 function scatter(p) {
   const pts = p.pts || []; if (!pts.length) return head(p);
-  const W = 560, H = 230, L = 52, B = 30, T = 10, R = 14;
+  const W = Math.round(70 * (p._w || 8)), H = 230, L = 56, B = 30, T = 10, R = 14;
   const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y), xh = Math.max(...xs) || 1, yh = Math.max(...ys) || 1;
   const X = (v) => L + (v / xh) * (W - L - R), Y = (v) => T + (1 - v / yh) * (H - T - B);
   // 기울기(넓이당 평균) 기준선 — 선 위는 넓이에 비해 많은 곳
   const k = ys.reduce((s, v) => s + v, 0) / (xs.reduce((s, v) => s + v, 0) || 1);
   const x2 = Math.min(xh, yh / (k || 1));
-  return `<h3>${esc(p.title)} <small>${esc(p.x.label)}(${esc(p.x.unit)}) × ${esc(p.y.label)}(${esc(p.y.unit)})</small></h3><svg class="xd-sc" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+  return `<h3>${esc(p.title)} <small>${esc(p.x.label)}(${esc(p.x.unit)}) × ${esc(p.y.label)}(${esc(p.y.unit)})</small></h3><svg class="xd-sc" viewBox="0 0 ${W} ${H}" style="aspect-ratio:${W}/${H}">
     <line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="g"/><line x1="${L}" x2="${L}" y1="${T}" y2="${H - B}" class="g"/>
     <line x1="${X(0)}" y1="${Y(0)}" x2="${X(x2)}" y2="${Y(k * x2)}" class="avg"/>
     <text x="${L - 6}" y="${T + 8}" text-anchor="end" class="ax num">${nf(yh)}</text><text x="${W - R}" y="${H - 10}" text-anchor="end" class="ax num">${nf(xh, 1)}</text>
-    ${pts.map((q) => `<circle data-k="${esc(q.k)}" cx="${X(q.x)}" cy="${Y(q.y)}" r="6" fill="${q.y > k * q.x ? '#F07B1A' : '#0FA9A0'}" fill-opacity=".85" stroke="#fff" stroke-width="2" ${hoverAttrs(q.label, `${esc(p.x.label)} ${nf(q.x, 2)}${esc(p.x.unit)} · ${nf(q.y)}${esc(p.y.unit)}`)}/>`).join('')}
+    ${pts.map((q) => `<circle data-k="${esc(q.k)}" cx="${X(q.x)}" cy="${Y(q.y)}" r="6" fill="${q.y > k * q.x ? RAMP.orange[4] : RAMP.teal[4]}" fill-opacity=".9" stroke="#fff" stroke-width="1.5" ${hoverAttrs(q.label, `${esc(p.x.label)} ${nf(q.x, 2)}${esc(p.x.unit)} · ${nf(q.y)}${esc(p.y.unit)}`)}/>`).join('')}
   </svg><p class="xd-note"><i class="dot o"></i>넓이에 비해 많은 곳 <i class="dot t"></i>적은 곳 · 선 = 평균</p>`;
 }
 function rank(p) {
@@ -132,6 +136,21 @@ function table(p) {
 const DRAW = { bar, hist, donut, stack, heat, line, scatter, rank, table };
 const BIG = new Set(['heat', 'stack', 'line', 'scatter', 'table']);
 const span = (p) => (BIG.has(p.type) || (p.type === 'bar' && (p.rows || []).length > 8 && p.orient !== 'h') ? 8 : 4);
+/** 격자 균형(10-15 원칙 254) — 줄마다 12칸을 꽉 채운다(빈 칸 · 들쭉날쭉 0): 큰 것 + 작은 것 = 8 + 4 · 큰 것 둘 = 6 + 6 · 작은 것 셋 = 4 · 4 · 4 · 둘 = 6 · 6 · 하나 = 12.
+    XI ChatGEO 해석은 큰 숫자 아래 한 줄 띠 */
+function pack(items) {
+  const out = [], rest = [...items];
+  const take = (w) => { const j = rest.findIndex((x) => x.w === w); return j < 0 ? null : rest.splice(j, 1)[0]; };
+  while (rest.length) {
+    const a = rest.shift();
+    if (a.w === 8) { const b = take(4); if (b) out.push([a, 8], [b, 4]); else { const c = take(8); out.push(...(c ? [[a, 6], [c, 6]] : [[a, 12]])); } continue; }
+    const b = take(8);
+    if (b) { out.push([a, 4], [b, 8]); continue; }
+    const c = take(4), d = c && take(4);
+    out.push(...(d ? [[a, 4], [c, 4], [d, 4]] : c ? [[a, 6], [c, 6]] : [[a, 12]]));
+  }
+  return out;
+}
 
 function legend(sc, unit) {
   if (!sc) return '';
@@ -203,17 +222,20 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
   function render(s) {
-    const kp = (s.kpis || []).map((k, i) => kpi(k, i === 0)).join('');
+    const hue = s.map?.scale?.hue || (s.panels || []).find((p) => p.scale?.hue)?.scale.hue || 'teal';
+    CAT = catFor(hue);
+    const kp = (s.kpis || []).map((k, i) => kpi(k, i === 0, (RAMP[hue] || RAMP.teal)[4])).join('');
     const means = (s.means || []).map(([k, v]) => `<span><em>${esc(k)}</em>${esc(v)}</span>`).join('');
-    const cards = [];
     const ps = s.panels || [];
-    ps.forEach((p, i) => {
-      cards.push(`<div class="xd-card xd-p xd-p--${p.type}" style="grid-column:span ${span(p)}" data-i="${i}">${(DRAW[p.type] || (() => ''))(p)}</div>`);
-      if (i === 0) cards.push(`<div class="xd-card xd-say" style="grid-column:span ${span(p) === 8 ? 4 : 8}"><p class="xd-sayh"><span class="xd-logo">XI</span>XI ChatGEO</p>${(s.say || []).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`);
-    });
+    const say = `<p class="xd-sayh"><span class="xd-logo">XI</span>XI ChatGEO</p><div class="xd-say-l">${(s.say || []).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
+    const items = ps.map((p, i) => ({ i, w: span(p) }));
+    const cards = pack(items).map(([x, w]) => { const p = ps[x.i]; p._w = w;
+      return `<div class="xd-card xd-p xd-p--${p.type}" style="grid-column:span ${w};${varsFor(p.scale?.hue || hue)}" data-i="${x.i}">${(DRAW[p.type] || (() => ''))(p)}</div>`; });
+    if ((s.say || []).length) cards.unshift(`<div class="xd-card xd-say" style="grid-column:span 12">${say}</div>`);
+    const nk = Math.min(4, (s.kpis || []).length || 1);
     panel.innerHTML = `<header class="xd-h"><h2>${esc(s.title)}</h2><div class="xd-means">${means}</div><button type="button" class="xd-dl xd-rep" style="margin-left:auto">보고서로</button></header>
       ${s.note ? `<p class="xd-notice">${esc(s.note)}</p>` : ''}
-      <div class="xd-kpis" style="--k:${Math.min(4, (s.kpis || []).length || 1)}">${kp}</div>
+      <div class="xd-kpis" style="grid-template-columns:${nk > 1 ? `minmax(0,1.5fr) repeat(${nk - 1},minmax(0,1fr))` : 'minmax(0,1fr)'}">${kp}</div>
       <div class="xd-grid">${cards.join('')}</div>`;
     panel.querySelectorAll('.xd-p').forEach((el) => {
       const p = ps[Number(el.dataset.i)];

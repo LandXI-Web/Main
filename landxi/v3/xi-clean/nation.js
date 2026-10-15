@@ -23,11 +23,11 @@ export function mountNation({ map, host, onEnter, onLeave }) {
   const st = { id: 'kr', data: null, sel: null, blk: null };
   const btns = NATIONS.map((n) => h('button.xn-b', { type: 'button', 'aria-pressed': String(n.id === 'kr'), onclick: () => go(n.id) }, n.name));
   const bar = h('div.xn-bar', { role: 'group', 'aria-label': '사업 나라' }, ...btns);
-  const what = h('a.k-what.xn-what', { href: '../help-my/?tab=screens', text: '이 화면은?' });   // 세 화면 경계(바퀴 4)
+  // '이 화면은?' 링크는 XI맵에서 뺐다(10-15 원칙 253)
   const hud = h('section.xn-hud', { hidden: true, 'aria-live': 'polite' });
   const leg = h('div.xn-leg', { hidden: true });
   const more = h('a.xn-more', { href: '../global/', hidden: true, text: '달별 변화 자세히 보기' });
-  host.append(bar, hud, leg, what);
+  host.append(bar, hud, leg);
   hud.append(more);
 
   async function load(n) {
