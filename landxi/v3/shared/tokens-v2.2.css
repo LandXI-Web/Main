@@ -65,7 +65,7 @@
   /* 여백 §3 */
   --margin:48px; --content-max:1344px; --gutter:24px;
   --pad:24px; --gap:16px;
-  --rail:72px; --mast:64px; --sheet:392px;
+  --rail:80px; --mast:64px; --sheet:392px;
   --section:200px;
 
   /* 모션 §4 — 사다리 v2 유지 */

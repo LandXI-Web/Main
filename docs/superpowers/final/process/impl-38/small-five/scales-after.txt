@@ -1,0 +1,7 @@
+남원시 현황 보여 줘 | density {"kind": "step", "hue": "orange", "breaks": [348.9, 459.8, 547.1, 1417.2], "min": 88.0, "max": 2765.9} | n 39 med 514.7
+남원시 비닐하우스 어디가 많아? | density {"kind": "step", "hue": "orange", "breaks": [14.3, 25.0, 33.9, 54.1], "min": 5.9, "max": 169.1, "tail": 169.1} | n 35 med 31.7
+남원시 농지 이용 실태 어때? | ratio {"kind": "seq", "hue": "violet", "min": 0.15, "max": 11.44} | n 39 med 4.85
+전국 분석 얼마나 진행됐어? | count {"kind": "seq", "hue": "teal", "min": 3396, "max": 144274} | n 29 med 66962
+남원시 함양군 비교해 줘 | dev {"kind": "div", "lo": "blue", "hi": "red", "mid": 0, "max": 70.1, "label": "평균보다 적음 · 많음"} | n 2 med 70.1
+남원시 지목별 공시지가 통계 | density {"kind": "step", "hue": "orange", "breaks": [433.3, 525.5, 658.6, 1894.1], "min": 135.3, "max": 3937.5} | n 39 med 558.2
+함양군 현황 보여 줘 | density {"kind": "step", "hue": "orange", "breaks": [29.7, 57.0, 79.9, 103.1], "min": 0.3, "max": 194.6} | n 9 med 57.9

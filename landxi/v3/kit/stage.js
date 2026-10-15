@@ -151,7 +151,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
     const cam = map.cameraForBounds(b, { padding: pad, maxZoom });
     if (!cam) return false;
     const to = { center: cam.center, zoom: Math.min(cam.zoom, maxZoom), pitch, bearing: 0 };
-    if (RM()) { map.jumpTo(to); return true; }
+    if (RM() || ms === 0) { map.jumpTo(to); return true; }   // ms 0 = 날지 않고 그 자리(해외 두 번째 방문 · 10-15)
     return flyLadder([map], to, { duration: ms });
   }
   const home = (opt = {}) => go(bounds, { maxZoom: 7.5, ...opt });

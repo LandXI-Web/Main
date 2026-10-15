@@ -1,0 +1,7 @@
+[
+ {"id": "메뉴칸", "title": "메뉴 칸 넓힘(72 → 80)", "opts": ["완료", "다시"], "note": "'지도 서비스' · '공유 데이터' 한 줄 — 직원 · 관리자 · 기관, 1280 · 1440 · 1920, 넘침 0", "shots": ["shots/staff-home-rail-1440-1515.png", "shots/admin-home-rail-1440-1513.png", "shots/gov-home-rail-1440-1810.png"]},
+ {"id": "밀도색", "title": "㎢당 밀도 색 — 5단 분위 · 극단값은 맨 위 색 + 꼬리표", "opts": ["완료", "다시"], "note": "일곱 질문 중 ㎢당 셋(남원 현황 · 남원 비닐하우스 · 함양 현황)만 바뀜 · 숫자 그대로", "shots": ["shots/before-d1-fill-1440-1112.png", "shots/staff-d1-fill-1440-1515.png", "shots/before-d2-fill-1440-1113.png", "shots/staff-d2-fill-1440-1516.png", "shots/before-d7-fill-1440-1114.png", "shots/staff-d7-fill-1440-1518.png"]},
+ {"id": "해외바로지역", "title": "해외 두 번째 방문부터 바로 지역", "opts": ["완료", "다시"], "note": "처음 11.6초(비행) → 두 번째 3.6초 · 세 번째 4.3초(바로 Ysyk-Ata) · 저장 막힌 창은 처음처럼 비행", "shots": ["shots/global-first-1440-1513.png", "shots/global-second-1440-1514.png", "shots/global-nostore-nostore-1440-1514.png"]},
+ {"id": "대장칠", "title": "대장 칠은 Register 탭에서만", "opts": ["완료", "다시"], "note": "Season 숨김 → Register 보임 → Season 숨김", "shots": ["shots/global-tab-register-1440-1513.png", "shots/global-tab-season-1440-1513.png"]},
+ {"id": "가벼운조각", "title": "결과 파일 먼 축척 가벼운 조각(만들 때 함께 · 기존 44개 다시 굽기)", "opts": ["완료", "다시"], "note": "줌 10 토지피복 1,081KB → 204KB · 열기 시간 전 6.4/3.5초 · 후 6.5/4.2초(3초 미달 — 서버 요청 · 첫 판이 대부분)", "shots": ["shots/gov-ximap-1440-1810.png"]}
+]

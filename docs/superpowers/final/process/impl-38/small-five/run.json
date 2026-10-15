@@ -1,0 +1,929 @@
+{
+ "admin": {
+  "at": "2026-10-15 15:13:16",
+  "errors": [],
+  "bad": [],
+  "landing": "/landxi/v3/ops-core/",
+  "rail": [
+   {
+    "page": "home",
+    "w": 1280,
+    "railW": 81,
+    "items": [
+     {
+      "t": "현황",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "인프라",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "배포",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "검토 요청",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "공유 데이터",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1440,
+    "railW": 81,
+    "items": [
+     {
+      "t": "현황",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "인프라",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "배포",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "검토 요청",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "공유 데이터",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1920,
+    "railW": 81,
+    "items": [
+     {
+      "t": "현황",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "인프라",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "배포",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 56
+     },
+     {
+      "t": "검토 요청",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정 관리",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "공유 데이터",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   }
+  ],
+  "shots": [
+   "admin-home-rail-1280-1513.png",
+   "admin-home-rail-1440-1513.png",
+   "admin-home-rail-1920-1513.png"
+  ]
+ },
+ "global": {
+  "at": "2026-10-15 15:13:31",
+  "errors": [
+   "pageerror TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+   "pageerror TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+   "pageerror TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+   "pageerror TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+   "pageerror TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'."
+  ],
+  "bad": [],
+  "visits": [
+   {
+    "label": "first",
+    "readyMs": 11613,
+    "flew": false,
+    "level": "district",
+    "district": "Ysyk-Ata",
+    "store": [
+     [
+      "lx.global.last.…",
+      "{\"iso\":\"KGZ\",\"d\":\"92254566B31675215078110\"}"
+     ]
+    ],
+    "seq": ""
+   },
+   {
+    "label": "second",
+    "readyMs": 3593,
+    "flew": false,
+    "level": "district",
+    "district": "Ysyk-Ata",
+    "store": [
+     [
+      "lx.global.last.…",
+      "{\"iso\":\"KGZ\",\"d\":\"92254566B31675215078110\"}"
+     ]
+    ],
+    "seq": ""
+   },
+   {
+    "label": "third",
+    "readyMs": 4280,
+    "flew": false,
+    "level": "district",
+    "district": "Ysyk-Ata",
+    "store": [
+     [
+      "lx.global.last.…",
+      "{\"iso\":\"KGZ\",\"d\":\"92254566B31675215078110\"}"
+     ]
+    ],
+    "seq": ""
+   }
+  ],
+  "shots": [
+   "global-first-1440-1513.png",
+   "global-tab-register-1440-1513.png",
+   "global-tab-season-1440-1513.png",
+   "global-second-1440-1514.png",
+   "global-third-1440-1514.png"
+  ],
+  "reg": {
+   "season": "none",
+   "register": "visible",
+   "seasonAgain": "none"
+  }
+ },
+ "global-nostore": {
+  "at": "2026-10-15 15:14:09",
+  "errors": [],
+  "bad": [],
+  "readyMs": 9614,
+  "district": "Ysyk-Ata",
+  "shots": [
+   "global-nostore-nostore-1440-1514.png"
+  ]
+ },
+ "staff": {
+  "at": "2026-10-15 15:15:09",
+  "errors": [],
+  "bad": [],
+  "landing": "/landxi/v3/lx-console/",
+  "rail": [
+   {
+    "page": "home",
+    "w": 1280,
+    "railW": 81,
+    "items": [
+     {
+      "t": "대시보드",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "프로젝트",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "분석하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "지도 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "XI맵",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청함",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1440,
+    "railW": 81,
+    "items": [
+     {
+      "t": "대시보드",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "프로젝트",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "분석하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "지도 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "XI맵",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청함",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1920,
+    "railW": 81,
+    "items": [
+     {
+      "t": "대시보드",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "프로젝트",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "분석하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "지도 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "XI맵",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청함",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   }
+  ],
+  "shots": [
+   "staff-home-rail-1280-1515.png",
+   "staff-home-rail-1440-1515.png",
+   "staff-home-rail-1920-1515.png",
+   "staff-d1-fill-1440-1515.png",
+   "staff-d2-fill-1440-1516.png",
+   "staff-d3-fill-1440-1516.png",
+   "staff-d4-fill-1440-1517.png",
+   "staff-d5-fill-1440-1517.png",
+   "staff-d6-fill-1440-1517.png",
+   "staff-d7-fill-1440-1518.png"
+  ],
+  "q": {
+   "d1": {
+    "q": "남원시 현황 보여 줘",
+    "map": {
+     "level": "emd",
+     "scale": "step",
+     "hue": "orange",
+     "meaning": "density",
+     "n": 39
+    },
+    "colors": {
+     "#7C451D": 8,
+     "#D07A3A": 8,
+     "#F5D7BC": 7,
+     "#E2985E": 8,
+     "#EDB98C": 8
+    },
+    "legend": "지도 색 · ㎢당 AI 분석 결과 88 2,765.9 개/㎢",
+    "tags": [
+     "쌍교동 2,765.9개/㎢",
+     "주생면 547.1개/㎢",
+     "금지면 501.9개/㎢",
+     "덕과면 471.5개/㎢",
+     "식정동 464.2개/㎢"
+    ]
+   },
+   "d2": {
+    "q": "남원시 비닐하우스 어디가 많아?",
+    "map": {
+     "level": "emd",
+     "scale": "step",
+     "hue": "orange",
+     "meaning": "density",
+     "n": 35
+    },
+    "colors": {
+     "#F5D7BC": 6,
+     "#E5E8EB": 4,
+     "#7C451D": 8,
+     "#E2985E": 7,
+     "#EDB98C": 7,
+     "#D07A3A": 7
+    },
+    "legend": "지도 색 · ㎢당 비닐하우스 5.9 169.1 동/㎢",
+    "tags": [
+     "금지면 169.1동/㎢",
+     "금동 148.2동/㎢",
+     "아영면 137동/㎢",
+     "운봉읍 91.4동/㎢",
+     "인월면 76.2동/㎢"
+    ]
+   },
+   "d3": {
+    "q": "남원시 농지 이용 실태 어때?",
+    "map": {
+     "level": "emd",
+     "scale": "seq",
+     "hue": "violet",
+     "meaning": "ratio",
+     "n": 39
+    },
+    "colors": {
+     "#cec6ea": 1,
+     "#d5ceed": 1,
+     "#d8d2ef": 1,
+     "#d9d3ef": 1,
+     "#d7d1ee": 1,
+     "#b5aadd": 1,
+     "#a195d1": 1,
+     "#aea3d9": 1,
+     "#7c6eb9": 1,
+     "#7b6db8": 1,
+     "#a99dd6": 1,
+     "#9689cb": 1,
+     "#a296d2": 1,
+     "#7768b5": 1,
+     "#afa4da": 1,
+     "#cfc7ea": 1,
+     "#9f93d0": 1,
+     "#9083c7": 1,
+     "#9387c9": 1,
+     "#a89cd6": 2,
+     "#8274bd": 1,
+     "#695ba5": 1,
+     "#8375be": 1,
+     "#8c7fc4": 1,
+     "#8578bf": 1,
+     "#8375bd": 1,
+     "#7e70ba": 1,
+     "#5f519a": 1,
+     "#7264b0": 1,
+     "#978bcb": 1,
+     "#897cc2": 1,
+     "#8172bc": 1,
+     "#9c91cf": 1,
+     "#8b7ec3": 1,
+     "#9589ca": 1,
+     "#53478a": 1,
+     "#423871": 1,
+     "#6e60ac": 1
+    },
+    "legend": "지도 색 · 필지 중 의심 비율 0.2 11.4 %",
+    "tags": [
+     "산내면 11.4%",
+     "아영면 9.9%",
+     "금지면 8.9%",
+     "신촌동 8.1%",
+     "인월면 7.6%"
+    ]
+   },
+   "d4": {
+    "q": "전국 분석 얼마나 진행됐어?",
+    "map": {
+     "level": "sgg",
+     "scale": "seq",
+     "hue": "teal",
+     "meaning": "count",
+     "n": 29
+    },
+    "colors": {
+     "#bfe3de": 2,
+     "#b6dfda": 1,
+     "#b0ddd7": 1,
+     "#aedcd6": 1,
+     "#7ec6bd": 1,
+     "#53b1a7": 1,
+     "#2d988e": 1,
+     "#196962": 1,
+     "#7cc5bc": 1,
+     "#3ba298": 1,
+     "#4dada3": 1,
+     "#83c8c0": 1,
+     "#1a6b64": 1,
+     "#49aba1": 1,
+     "#155c56": 1,
+     "#155d57": 1,
+     "#17625b": 1,
+     "#16605a": 1,
+     "#22827a": 1,
+     "#56b2a8": 1,
+     "#73c1b8": 1,
+     "#5fb7ad": 1,
+     "#4baca2": 1,
+     "#43a79d": 1,
+     "#145953": 1,
+     "#2b938a": 1
+    },
+    "legend": "지도 색 · 시군구별 전국 분석 결과 3,396 144,274 개",
+    "tags": [
+     "고창군 144,274개",
+     "익산시 141,862개",
+     "남원시 136,879개",
+     "나주시 131,231개",
+     "고흥군 129,674개"
+    ]
+   },
+   "d5": {
+    "q": "남원시 함양군 비교해 줘",
+    "map": {
+     "level": "sgg",
+     "scale": "div",
+     "meaning": "dev",
+     "n": 2
+    },
+    "colors": {
+     "#355fa3": 1,
+     "#B04A40": 1
+    },
+    "legend": "지도 색 · 평균 대비 ㎢당 결과 −70% +70%",
+    "tags": [
+     "함양군 -70.1%",
+     "남원시 70.1%"
+    ]
+   },
+   "d6": {
+    "q": "남원시 지목별 공시지가 통계",
+    "map": {
+     "level": "emd",
+     "scale": "step",
+     "hue": "orange",
+     "meaning": "density",
+     "n": 39
+    },
+    "colors": {
+     "#7C451D": 8,
+     "#D07A3A": 8,
+     "#E2985E": 8,
+     "#F5D7BC": 7,
+     "#EDB98C": 8
+    },
+    "legend": "지도 색 · ㎢당 필지 135.3 3,937.5 필지/㎢",
+    "tags": [
+     "하정동 3,937.5필지/㎢",
+     "송동면 658.6필지/㎢",
+     "아영면 596.6필지/㎢",
+     "식정동 551.9필지/㎢",
+     "덕과면 527.7필지/㎢"
+    ]
+   },
+   "d7": {
+    "q": "함양군 현황 보여 줘",
+    "map": {
+     "level": "emd",
+     "scale": "step",
+     "hue": "orange",
+     "meaning": "density",
+     "n": 9
+    },
+    "colors": {
+     "#7C451D": 2,
+     "#E2985E": 2,
+     "#E5E8EB": 2,
+     "#EDB98C": 2,
+     "#F5D7BC": 1,
+     "#D07A3A": 2
+    },
+    "legend": "지도 색 · ㎢당 AI 분석 결과 0.3 194.6 개/㎢",
+    "tags": [
+     "함양읍 194.6개/㎢",
+     "백전면 101.7개/㎢",
+     "서상면 79.9개/㎢",
+     "마천면 57.9개/㎢",
+     "서하면 52.9개/㎢"
+    ]
+   }
+  }
+ },
+ "gov": {
+  "at": "2026-10-15 18:10:03",
+  "errors": [],
+  "bad": [],
+  "landing": "/landxi/v3/gov-select/",
+  "rail": [
+   {
+    "page": "home",
+    "w": 1280,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1440,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "home",
+    "w": 1920,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "ximap",
+    "w": 1280,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "ximap",
+    "w": 1440,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   },
+   {
+    "page": "ximap",
+    "w": 1920,
+    "railW": 81,
+    "items": [
+     {
+      "t": "내 서비스",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "요청하기",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "기관 정보",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "계정",
+      "lines": 1,
+      "fs": 14,
+      "w": 76
+     },
+     {
+      "t": "메뉴",
+      "lines": 0,
+      "fs": 14,
+      "w": 0
+     }
+    ],
+    "twoLine": [],
+    "overflowX": false,
+    "mainL": 80
+   }
+  ],
+  "shots": [
+   "gov-home-rail-1280-1810.png",
+   "gov-home-rail-1440-1810.png",
+   "gov-home-rail-1920-1810.png",
+   "gov-ximap-1440-1810.png",
+   "gov-ximap-rail-1280-1810.png",
+   "gov-ximap-rail-1440-1810.png",
+   "gov-ximap-rail-1920-1810.png"
+  ],
+  "ximap": {
+   "ms": 8004,
+   "zoom": 10.54
+  }
+ }
+}

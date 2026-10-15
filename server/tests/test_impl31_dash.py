@@ -153,6 +153,17 @@ def test_scale_rules():
     assert D.scale_for([1, 2], "suspect")["hue"] == "red"
 
 
+def test_density_scale_extreme():
+    """10-15 밀도 색 기준: ㎢당은 5개 이상이면 늘 5단 분위 · 극단값 하나는 분위에서 빠지고 맨 위 단계(tail) — 나머지가 옅어지지 않음."""
+    vals = [20, 35, 50, 60, 80, 90, 110, 130, 150, 170, 2765]
+    s = D.scale_for(vals, "density")
+    assert s["kind"] == "step" and s["hue"] == "orange" and s["tail"] == 2765 and s["max"] == 2765
+    assert len(s["breaks"]) == 4 and s["breaks"][-1] < 200               # 단계 경계는 나머지 값 안에서
+    s2 = D.scale_for([10, 12, 14, 16, 18, 20], "density")                 # 극단값 없음 = 꼬리표 없음
+    assert s2["kind"] == "step" and "tail" not in s2
+    assert D.scale_for(vals, "count")["kind"] == "step" and "tail" not in D.scale_for(vals, "count")   # 다른 척도 뜻 그대로
+
+
 def test_tool_answer(sgg):
     out = run(D.ximap_dash(D.parse(f"{XD.region_name(sgg)} 현황 보여 줘"), _C()))
     assert out.ui_actions[0]["op"] == "ximap_dash" and out.ui_actions[0]["spec"]["kpis"]

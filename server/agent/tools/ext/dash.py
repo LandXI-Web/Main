@@ -109,6 +109,19 @@ def scale_for(vals: list[float], meaning: str) -> dict:
     hue = HUE.get(meaning, "teal")
     if not v:
         return {"kind": "seq", "hue": hue, "min": 0, "max": 1}
+    if meaning == "density" and len(v) >= 5:
+        # ㎢당(10-15 '밀도 색 기준 조정'): 늘 5단 분위 — 극단값(Q3 + 3·IQR 위)은 분위 계산에서 빼고 맨 위 단계 색 + 지도 꼬리표(값 큰 순)로.
+        # 시내 동 하나가 최댓값이어도 나머지 읍면이 옅어지지 않는다.
+        q1, q3 = v[int(len(v) * 0.25)], v[min(len(v) - 1, int(len(v) * 0.75))]
+        fence = q3 + 3 * (q3 - q1)
+        body = [x for x in v if x <= fence] or v
+        tail = [x for x in v if x > fence]
+        qs = [body[min(len(body) - 1, int(len(body) * q))] for q in (0.2, 0.4, 0.6, 0.8)]
+        br = sorted(set(round(x, 2) for x in qs))
+        out = {"kind": "step", "hue": hue, "breaks": br, "min": v[0], "max": v[-1]}
+        if tail:
+            out["tail"] = tail[0]                      # 이 값 이상 = 극단값(꼬리표로 숫자)
+        return out
     med = st.median(v) if v else 0
     skew = (v[-1] / med) if med > 0 else (99 if v[-1] > 0 else 1)
     if len(v) >= 6 and skew >= 6:

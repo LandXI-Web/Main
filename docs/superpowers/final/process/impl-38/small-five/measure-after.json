@@ -1,0 +1,7053 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 8145,
+    "ldN": 1,
+    "ldMs": 5388,
+    "tl": [
+     "ld on @2860 지역 경계와 분석 집계+판",
+     "(지역 결과 요약+판 @3843)",
+     "(지역 결과 요약 @8036)",
+     "ld off @8145"
+    ],
+    "boot": {
+     "gate": 359,
+     "data": 1967,
+     "layers": 1981,
+     "canvas": 1982,
+     "ready": 2580,
+     "shown": 5982
+    },
+    "errs": [],
+    "n": 202,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 9,
+      "ms": 576,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 353,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 601,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 690,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 732,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 358,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 476,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 577,
+      "ms": 603,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 615,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 618,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 577,
+      "ms": 650,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 667,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 577,
+      "ms": 826,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 344,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 578,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 578,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 347,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 352,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 353,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 354,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 354,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 354,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 355,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 358,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 588,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 590,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 653,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 665,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 667,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 1326,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 578,
+      "ms": 2050,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 345,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 345,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 348,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 348,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 352,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 352,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 352,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 353,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 583,
+      "ms": 353,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 584,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 584,
+      "ms": 340,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 584,
+      "ms": 341,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 584,
+      "ms": 343,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 584,
+      "ms": 343,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 584,
+      "ms": 344,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 345,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 347,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 349,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 349,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 351,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 351,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 464,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 601,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 584,
+      "ms": 654,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 1406,
+      "ms": 352,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 1406,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 1406,
+      "ms": 360,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 1406,
+      "ms": 378,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 1414,
+      "ms": 341,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 1414,
+      "ms": 483,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 1414,
+      "ms": 631,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1414,
+      "ms": 1160,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1414,
+      "ms": 1160,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 1415,
+      "ms": 456,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 1760,
+      "ms": 542,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1772,
+      "ms": 478,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1772,
+      "ms": 486,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1773,
+      "ms": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1773,
+      "ms": 483,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1773,
+      "ms": 767,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 1781,
+      "ms": 390,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 1782,
+      "ms": 201,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 1782,
+      "ms": 223,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 1782,
+      "ms": 351,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 2250,
+      "ms": 403,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 2259,
+      "ms": 365,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 2625,
+      "ms": 390,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2724,
+      "ms": 158,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2725,
+      "ms": 164,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2727,
+      "ms": 162,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2727,
+      "ms": 164,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2729,
+      "ms": 162,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2729,
+      "ms": 166,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2730,
+      "ms": 166,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/4cc5fe9f-e228-4a38-9897-91e9fc50bfe5",
+      "at": 2731,
+      "ms": 162,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 2732,
+      "ms": 640,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 2851,
+      "ms": 382,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 2851,
+      "ms": 517,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 2871,
+      "ms": 221,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 2886,
+      "ms": 214,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 2887,
+      "ms": 213,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 2887,
+      "ms": 219,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 2887,
+      "ms": 227,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 2887,
+      "ms": 228,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 2887,
+      "ms": 228,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 2887,
+      "ms": 228,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 2888,
+      "ms": 227,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 2888,
+      "ms": 231,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 2889,
+      "ms": 226,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 2889,
+      "ms": 226,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 2889,
+      "ms": 226,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 2889,
+      "ms": 226,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 2889,
+      "ms": 226,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 2889,
+      "ms": 227,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 3019,
+      "ms": 244,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 3021,
+      "ms": 223,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 3097,
+      "ms": 224,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 3103,
+      "ms": 225,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 3103,
+      "ms": 236,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 3108,
+      "ms": 232,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 3120,
+      "ms": 234,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 3121,
+      "ms": 234,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 3122,
+      "ms": 232,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 3139,
+      "ms": 223,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 3139,
+      "ms": 228,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 3377,
+      "ms": 704,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 3377,
+      "ms": 710,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 3395,
+      "ms": 581,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 3400,
+      "ms": 587,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 3404,
+      "ms": 666,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/853e1163-5798-4c86-8737-853538d18460",
+      "at": 3430,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 3439,
+      "ms": 404,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 3439,
+      "ms": 443,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 3833,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 3834,
+      "ms": 89,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 3834,
+      "ms": 95,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 3834,
+      "ms": 96,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 3834,
+      "ms": 100,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 3834,
+      "ms": 107,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 3834,
+      "ms": 108,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 3834,
+      "ms": 108,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 3835,
+      "ms": 79,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 3836,
+      "ms": 78,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 3836,
+      "ms": 92,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 3836,
+      "ms": 94,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 3836,
+      "ms": 99,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 3836,
+      "ms": 105,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 3847,
+      "ms": 76,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 3884,
+      "ms": 52,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 3918,
+      "ms": 27,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 3918,
+      "ms": 29,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 3924,
+      "ms": 24,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 3926,
+      "ms": 22,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 3926,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 3933,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 3935,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 3935,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 3936,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 3938,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 3939,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 3940,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 3946,
+      "ms": 13,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 3947,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 3947,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 3947,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 3955,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 3960,
+      "ms": 23,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 3963,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 3963,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 3963,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 3964,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 3964,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 3964,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 3988,
+      "ms": 355,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 4068,
+      "ms": 198,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4104,
+      "ms": 399,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 4105,
+      "ms": 406,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4105,
+      "ms": 420,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 4105,
+      "ms": 437,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-change.pmtiles",
+      "at": 4105,
+      "ms": 457,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4105,
+      "ms": 472,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 4343,
+      "ms": 1149,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 4577,
+      "ms": 922,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 4577,
+      "ms": 922,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 4577,
+      "ms": 922,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 4577,
+      "ms": 922,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4583,
+      "ms": 916,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4584,
+      "ms": 915,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4584,
+      "ms": 915,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4584,
+      "ms": 915,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4584,
+      "ms": 917,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4584,
+      "ms": 917,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4584,
+      "ms": 1079,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4585,
+      "ms": 915,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4585,
+      "ms": 963,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4585,
+      "ms": 1079,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 5499,
+      "ms": 1889,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 5509,
+      "ms": 1190,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 5509,
+      "ms": 1191,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 5509,
+      "ms": 1879,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 5509,
+      "ms": 1879,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 5509,
+      "ms": 1880,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 5527,
+      "ms": 1861,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 6372,
+    "ldN": 1,
+    "ldMs": 3049,
+    "tl": [
+     "ld on @2479 +판",
+     "(지역 경계와 분석 집계+판 @2703)",
+     "(지역 결과 요약+판 @2913)",
+     "ld off @6372"
+    ],
+    "boot": {
+     "gate": 671,
+     "data": 1693,
+     "layers": 1700,
+     "canvas": 1700,
+     "ready": 2140,
+     "shown": 3904
+    },
+    "errs": [],
+    "n": 204,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 7,
+      "ms": 501,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 501,
+      "ms": 655,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 396,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 503,
+      "ms": 412,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 503,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 503,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 503,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 425,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 621,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 645,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 645,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 503,
+      "ms": 645,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 656,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 656,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 656,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 503,
+      "ms": 656,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 397,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 400,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 407,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 407,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 505,
+      "ms": 412,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 505,
+      "ms": 412,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 414,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 421,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 421,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 422,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 423,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 619,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 619,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 631,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 631,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 643,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 651,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 1307,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 1501,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 396,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 397,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 413,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 420,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 426,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 436,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 436,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 466,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 617,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 618,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 618,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 642,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 642,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 506,
+      "ms": 644,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 506,
+      "ms": 649,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 653,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 660,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 507,
+      "ms": 23,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 507,
+      "ms": 410,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 507,
+      "ms": 435,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 507,
+      "ms": 639,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 1169,
+      "ms": 642,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 1169,
+      "ms": 673,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 1169,
+      "ms": 673,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 1169,
+      "ms": 703,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 1174,
+      "ms": 633,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 1174,
+      "ms": 657,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1174,
+      "ms": 664,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1174,
+      "ms": 730,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 1174,
+      "ms": 988,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 1175,
+      "ms": 657,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 1812,
+      "ms": 563,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1844,
+      "ms": 383,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1844,
+      "ms": 535,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1845,
+      "ms": 299,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1845,
+      "ms": 532,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1845,
+      "ms": 550,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 1851,
+      "ms": 294,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 1851,
+      "ms": 295,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 1851,
+      "ms": 343,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 1851,
+      "ms": 984,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2052,
+      "ms": 130,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2053,
+      "ms": 127,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2054,
+      "ms": 129,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2055,
+      "ms": 128,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2056,
+      "ms": 133,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2056,
+      "ms": 137,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2058,
+      "ms": 127,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d81a574d-5972-4d56-8b1b-5548b3b3abaf",
+      "at": 2059,
+      "ms": 130,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 2063,
+      "ms": 798,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 2142,
+      "ms": 402,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 2142,
+      "ms": 694,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 2161,
+      "ms": 229,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 2190,
+      "ms": 271,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 2191,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 2191,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 2191,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 2191,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 2191,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 2191,
+      "ms": 271,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 2192,
+      "ms": 269,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 2192,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 2192,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 2192,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 2192,
+      "ms": 270,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 2193,
+      "ms": 268,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 2193,
+      "ms": 269,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 2193,
+      "ms": 269,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 2227,
+      "ms": 390,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 2379,
+      "ms": 860,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 2394,
+      "ms": 227,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 2472,
+      "ms": 242,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 2473,
+      "ms": 233,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 2473,
+      "ms": 239,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 2474,
+      "ms": 236,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 2475,
+      "ms": 231,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 2475,
+      "ms": 235,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 2475,
+      "ms": 236,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 2476,
+      "ms": 238,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 2838,
+      "ms": 398,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 2840,
+      "ms": 396,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 2864,
+      "ms": 454,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 2864,
+      "ms": 577,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 2876,
+      "ms": 549,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 2879,
+      "ms": 356,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 2879,
+      "ms": 431,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/7ec9e6f0-7229-4c5d-a26f-13a74815c62f",
+      "at": 2887,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 2894,
+      "ms": 343,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 2894,
+      "ms": 347,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 2894,
+      "ms": 347,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 2906,
+      "ms": 427,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 2907,
+      "ms": 30,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 2907,
+      "ms": 42,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 2908,
+      "ms": 36,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 2909,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 2909,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 2909,
+      "ms": 28,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 2909,
+      "ms": 29,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 2909,
+      "ms": 43,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 2910,
+      "ms": 26,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 2910,
+      "ms": 30,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 2910,
+      "ms": 31,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 2911,
+      "ms": 31,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 2911,
+      "ms": 36,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 2912,
+      "ms": 37,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 2932,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 2932,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 2940,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 2942,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 2943,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 2943,
+      "ms": 26,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 2944,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 2946,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 2946,
+      "ms": 27,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 2948,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 2951,
+      "ms": 18,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 2952,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 2952,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 2957,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 2957,
+      "ms": 18,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 2957,
+      "ms": 22,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 2961,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 2964,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 2964,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 2966,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 2973,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 2975,
+      "ms": 22,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 2977,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 2978,
+      "ms": 13,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 2978,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 2982,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 3242,
+      "ms": 382,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 3312,
+      "ms": 414,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3333,
+      "ms": 601,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 3352,
+      "ms": 425,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 3352,
+      "ms": 429,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 3352,
+      "ms": 433,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-change.pmtiles",
+      "at": 3352,
+      "ms": 622,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3355,
+      "ms": 432,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 3457,
+      "ms": 231,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 3726,
+      "ms": 807,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 3965,
+      "ms": 572,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 3965,
+      "ms": 572,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 3965,
+      "ms": 572,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 3965,
+      "ms": 572,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 3965,
+      "ms": 573,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 3965,
+      "ms": 573,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3967,
+      "ms": 571,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3967,
+      "ms": 571,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3967,
+      "ms": 571,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3968,
+      "ms": 576,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3968,
+      "ms": 578,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3970,
+      "ms": 575,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3970,
+      "ms": 630,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3970,
+      "ms": 659,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3971,
+      "ms": 601,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3971,
+      "ms": 640,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 4548,
+      "ms": 697,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 4548,
+      "ms": 710,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 4548,
+      "ms": 726,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 4549,
+      "ms": 504,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 4550,
+      "ms": 517,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 6497,
+    "ldN": 1,
+    "ldMs": 3611,
+    "tl": [
+     "ld on @1975 +판",
+     "(지역 결과 요약+판 @2089)",
+     "ld off @6497"
+    ],
+    "boot": {
+     "gate": 388,
+     "data": 1060,
+     "layers": 1072,
+     "canvas": 1073,
+     "ready": 1713,
+     "shown": 4197
+    },
+    "errs": [],
+    "n": 203,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 10,
+      "ms": 565,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 568,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 570,
+      "ms": 327,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 570,
+      "ms": 356,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 570,
+      "ms": 358,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 361,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 361,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 570,
+      "ms": 362,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 367,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 374,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 374,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 374,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 570,
+      "ms": 375,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 378,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 570,
+      "ms": 408,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 354,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 359,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 362,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 364,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 368,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 371,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 572,
+      "ms": 372,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 573,
+      "ms": 359,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 573,
+      "ms": 359,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 360,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 360,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 361,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 361,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 362,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 364,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 364,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 365,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 367,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 367,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 367,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 369,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 369,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 369,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 376,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 405,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 767,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 573,
+      "ms": 877,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 574,
+      "ms": 18,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 361,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 574,
+      "ms": 362,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 574,
+      "ms": 365,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 574,
+      "ms": 365,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 367,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 574,
+      "ms": 368,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 574,
+      "ms": 369,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 574,
+      "ms": 405,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 982,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 982,
+      "ms": 363,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 982,
+      "ms": 389,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 982,
+      "ms": 686,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 986,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 986,
+      "ms": 682,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 986,
+      "ms": 689,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 986,
+      "ms": 690,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 986,
+      "ms": 703,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 986,
+      "ms": 706,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 1330,
+      "ms": 485,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1375,
+      "ms": 315,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1375,
+      "ms": 319,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1375,
+      "ms": 327,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1376,
+      "ms": 215,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1376,
+      "ms": 672,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 1380,
+      "ms": 264,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 1380,
+      "ms": 264,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 1380,
+      "ms": 284,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 1380,
+      "ms": 324,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1489,
+      "ms": 119,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1490,
+      "ms": 119,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1491,
+      "ms": 121,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1492,
+      "ms": 123,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1493,
+      "ms": 122,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1493,
+      "ms": 124,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1494,
+      "ms": 124,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/19f3c0ab-a39e-4244-bbaa-4c5fe8fd08fa",
+      "at": 1495,
+      "ms": 124,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1498,
+      "ms": 542,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1577,
+      "ms": 332,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1577,
+      "ms": 337,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 1589,
+      "ms": 173,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 1657,
+      "ms": 185,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 1657,
+      "ms": 190,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 1657,
+      "ms": 190,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 1657,
+      "ms": 191,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 1657,
+      "ms": 192,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 1658,
+      "ms": 173,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 1658,
+      "ms": 185,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 1658,
+      "ms": 186,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 1658,
+      "ms": 187,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 1658,
+      "ms": 188,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 1658,
+      "ms": 188,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 1658,
+      "ms": 189,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 1658,
+      "ms": 189,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 1658,
+      "ms": 190,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 1658,
+      "ms": 191,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 1693,
+      "ms": 355,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 1702,
+      "ms": 338,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 1711,
+      "ms": 176,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 1713,
+      "ms": 192,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 1766,
+      "ms": 181,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 1833,
+      "ms": 184,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 1856,
+      "ms": 179,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 1857,
+      "ms": 178,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 1858,
+      "ms": 177,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 1859,
+      "ms": 176,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 1859,
+      "ms": 177,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 1859,
+      "ms": 177,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 1860,
+      "ms": 175,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 2043,
+      "ms": 433,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 2043,
+      "ms": 715,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 2044,
+      "ms": 407,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 2061,
+      "ms": 677,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 2065,
+      "ms": 237,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 2065,
+      "ms": 630,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/61cfc841-4092-4481-8679-013528119127",
+      "at": 2073,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 2085,
+      "ms": 230,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 2085,
+      "ms": 230,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 2086,
+      "ms": 606,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 2091,
+      "ms": 30,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 2091,
+      "ms": 50,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 2092,
+      "ms": 18,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 2092,
+      "ms": 19,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 2092,
+      "ms": 50,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 2093,
+      "ms": 24,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 2093,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 2093,
+      "ms": 31,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 2093,
+      "ms": 32,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 2093,
+      "ms": 32,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 2093,
+      "ms": 44,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 2093,
+      "ms": 48,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 2093,
+      "ms": 49,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 2093,
+      "ms": 50,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 2319,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 2320,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 2320,
+      "ms": 20,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 2320,
+      "ms": 22,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 2320,
+      "ms": 26,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 2320,
+      "ms": 33,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 2320,
+      "ms": 43,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 2321,
+      "ms": 21,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 2321,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 2321,
+      "ms": 30,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 2321,
+      "ms": 32,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 2321,
+      "ms": 39,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 2321,
+      "ms": 39,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 2322,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 2324,
+      "ms": 29,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 2324,
+      "ms": 34,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 2337,
+      "ms": 28,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 2338,
+      "ms": 27,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 2344,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 2344,
+      "ms": 25,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 2344,
+      "ms": 26,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 2358,
+      "ms": 31,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 2359,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 2359,
+      "ms": 16,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 2359,
+      "ms": 18,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 2360,
+      "ms": 29,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2491,
+      "ms": 311,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2508,
+      "ms": 318,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2508,
+      "ms": 322,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-change.pmtiles",
+      "at": 2508,
+      "ms": 324,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2508,
+      "ms": 327,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2513,
+      "ms": 325,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 2698,
+      "ms": 1462,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 2819,
+      "ms": 1343,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2824,
+      "ms": 1339,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2824,
+      "ms": 1339,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2824,
+      "ms": 1340,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2824,
+      "ms": 1340,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2824,
+      "ms": 1340,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2860,
+      "ms": 1304,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2860,
+      "ms": 1304,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2860,
+      "ms": 1305,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2860,
+      "ms": 1305,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2860,
+      "ms": 1305,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2860,
+      "ms": 1306,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 4163,
+      "ms": 387,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4180,
+      "ms": 424,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4180,
+      "ms": 700,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4180,
+      "ms": 701,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4180,
+      "ms": 708,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 4180,
+      "ms": 711,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 4551,
+      "ms": 490,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 4551,
+      "ms": 491,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 4551,
+      "ms": 491,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 4551,
+      "ms": 492,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 4551,
+      "ms": 492,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 3763,
+    "ldN": 1,
+    "ldMs": 1801,
+    "tl": [
+     "ld on @1960 +판",
+     "(지역 결과 요약+판 @2093)",
+     "ld off @3763"
+    ],
+    "boot": {
+     "gate": 124,
+     "data": 1151,
+     "layers": 1159,
+     "canvas": 1159,
+     "ready": 1530,
+     "shown": 2477
+    },
+    "errs": [],
+    "n": 180,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 8,
+      "ms": 514,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 496,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 497,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 498,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 498,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 500,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 500,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 505,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 506,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 507,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 516,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 516,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 517,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 517,
+      "ms": 345,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 517,
+      "ms": 346,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 518,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 519,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 519,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 522,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 522,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 522,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 522,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 525,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 525,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 525,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 525,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 525,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 526,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 526,
+      "ms": 197,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 526,
+      "ms": 377,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 526,
+      "ms": 388,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 526,
+      "ms": 393,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 526,
+      "ms": 460,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 866,
+      "ms": 370,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 866,
+      "ms": 597,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 866,
+      "ms": 976,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 866,
+      "ms": 1496,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 866,
+      "ms": 1499,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 866,
+      "ms": 1506,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 906,
+      "ms": 1456,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1017,
+      "ms": 89,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1018,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1020,
+      "ms": 82,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1020,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1021,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1022,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1022,
+      "ms": 89,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/926e5e66-33a4-41eb-94c3-4e21977e24f5",
+      "at": 1023,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1024,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1024,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1025,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1025,
+      "ms": 274,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1025,
+      "ms": 987,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1025,
+      "ms": 1020,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 1028,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1064,
+      "ms": 305,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1064,
+      "ms": 307,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 1065,
+      "ms": 303,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 1079,
+      "ms": 29,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 1080,
+      "ms": 965,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 1103,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 1103,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 1103,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 1104,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 1104,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 1104,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 1105,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 1105,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 1105,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 1106,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 1106,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 1106,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 1106,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 1107,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 1107,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 1124,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 1125,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 1125,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 1125,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 1126,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 1128,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 1128,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 1128,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 1128,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 2015,
+      "ms": 31,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 2015,
+      "ms": 539,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 2028,
+      "ms": 357,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 2028,
+      "ms": 390,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/3c26954f-e91d-4f40-a3bd-0351273a104c",
+      "at": 2037,
+      "ms": 36,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 2045,
+      "ms": 23,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 2045,
+      "ms": 23,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 2092,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 2092,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 2092,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 2092,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 2093,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 2093,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 2093,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 2094,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 2094,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 2095,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 2095,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 2095,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 2095,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 2095,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 2371,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 2378,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 2381,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 2382,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 2382,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 2382,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 2383,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 2383,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 2383,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 2383,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 2383,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 2384,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 2384,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 2384,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 2384,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 2384,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 2394,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 2397,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 2403,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 2405,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 2410,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 2410,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 2410,
+      "ms": 926,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 2410,
+      "ms": 926,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 2410,
+      "ms": 1235,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 2410,
+      "ms": 1235,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 2410,
+      "ms": 1235,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 2413,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 2413,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 2414,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 2414,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 2414,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 2415,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 2461,
+      "ms": 5,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 4160,
+    "ldN": 1,
+    "ldMs": 2258,
+    "tl": [
+     "ld on @1912 지역 경계와 분석 집계+판",
+     "(지역 결과 요약+판 @2041)",
+     "(지역 결과 요약 @3947)",
+     "ld off @4160"
+    ],
+    "boot": {
+     "gate": 46,
+     "data": 991,
+     "layers": 1010,
+     "canvas": 1010,
+     "ready": 1406,
+     "shown": 2276
+    },
+    "errs": [],
+    "n": 180,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 8,
+      "ms": 642,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 629,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 630,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 630,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 633,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 633,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 633,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 633,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 633,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 635,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 637,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 641,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 641,
+      "ms": 341,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 641,
+      "ms": 342,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 642,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 646,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 647,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 648,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 648,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 648,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 648,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 648,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 649,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 649,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 649,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 650,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 652,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 652,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 652,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 652,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 652,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 654,
+      "ms": 369,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 654,
+      "ms": 375,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 654,
+      "ms": 647,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 655,
+      "ms": 374,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 656,
+      "ms": 235,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 659,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 986,
+      "ms": 305,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 987,
+      "ms": 811,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 987,
+      "ms": 811,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 987,
+      "ms": 868,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 987,
+      "ms": 880,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 987,
+      "ms": 1398,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1056,
+      "ms": 81,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1058,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1059,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1060,
+      "ms": 85,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1060,
+      "ms": 85,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1061,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1061,
+      "ms": 88,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/a04bd876-21da-4a4c-a3f0-d92a11b2fd3b",
+      "at": 1062,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1063,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1063,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1064,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 1064,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1064,
+      "ms": 275,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1064,
+      "ms": 908,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1064,
+      "ms": 1326,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 1067,
+      "ms": 308,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1106,
+      "ms": 311,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1107,
+      "ms": 310,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 1108,
+      "ms": 1244,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 1121,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 1132,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 1133,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 1133,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 1133,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 1133,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 1133,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 1134,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 1134,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 1134,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 1134,
+      "ms": 14,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 1134,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 1134,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 1134,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 1134,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 1134,
+      "ms": 15,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 1161,
+      "ms": 10,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 1162,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 1163,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 1164,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 1164,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 1165,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 1165,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 1166,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 1167,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 1303,
+      "ms": 1049,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 1975,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 1975,
+      "ms": 1210,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/945239f3-0900-4fbe-b3bd-84239e5e77b1",
+      "at": 1978,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 1982,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 1983,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 1998,
+      "ms": 392,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 2001,
+      "ms": 386,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 2029,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 2029,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 2029,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 2029,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 2029,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 2030,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 2030,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 2030,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 2032,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 2032,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 2032,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 2032,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 2033,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 2033,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 2035,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 2035,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 2061,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 2062,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 2063,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 2063,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 2063,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 2063,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 2064,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 2064,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 2065,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 2065,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 2065,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 2065,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 2066,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 2066,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 2066,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 2068,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 2352,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 2360,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 2360,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 2360,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 2360,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 2360,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 2361,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 2362,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 2390,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 2407,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 2414,
+      "ms": 695,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 2414,
+      "ms": 695,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 2415,
+      "ms": 772,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 2415,
+      "ms": 772,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 2415,
+      "ms": 772,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 3108,
+      "ms": 77,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 4401,
+    "ldN": 1,
+    "ldMs": 2375,
+    "tl": [
+     "ld on @2024 +판",
+     "(지역 경계와 분석 집계+판 @2133)",
+     "(지역 결과 요약+판 @2579)",
+     "ld off @4401"
+    ],
+    "boot": {
+     "gate": 481,
+     "data": 1307,
+     "layers": 1327,
+     "canvas": 1328,
+     "ready": 1768,
+     "shown": 2949
+    },
+    "errs": [],
+    "n": 180,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/?service=card-farm",
+      "at": 7,
+      "ms": 462,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=0c77f1deb1",
+      "at": 448,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/kit.css?v=0c77f1deb1",
+      "at": 449,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/xc.css?v=0c77f1deb1",
+      "at": 449,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.css?v=0c77f1deb1",
+      "at": 450,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.css?v=0c77f1deb1",
+      "at": 450,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.css?v=0c77f1deb1",
+      "at": 450,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=0c77f1deb1",
+      "at": 450,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/analyze.js?v=0c77f1deb1",
+      "at": 450,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/board.js?v=0c77f1deb1",
+      "at": 451,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/dash.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/onmap.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/nation.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/showcase.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/index.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/util.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.js?v=0c77f1deb1",
+      "at": 454,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.js?v=0c77f1deb1",
+      "at": 461,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/auth-gate.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/shared/api-v1.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/sources.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/ladder.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/lx-map.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/camera.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/arrive.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/lx-console/summary.js?v=0c77f1deb1",
+      "at": 462,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/en.json",
+      "at": 462,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/i18n/ko.json",
+      "at": 462,
+      "ms": 366,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/lx-menu.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/menu.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/national.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/bignum.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/region.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sig.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stepper.js?v=0c77f1deb1",
+      "at": 463,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/empty.js?v=0c77f1deb1",
+      "at": 467,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/loader.js?v=0c77f1deb1",
+      "at": 467,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=0c77f1deb1",
+      "at": 467,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dropzone.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/table.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/chart.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/toast.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/dev-drawer.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/glass.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/provenance.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/fx/result-filter.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/sites.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/engine/tier.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/assistant-mascot.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/modal.js?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/shared/tokens-v2.2.css?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/shell.css?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/stage.css?v=0c77f1deb1",
+      "at": 468,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/panel.css?v=0c77f1deb1",
+      "at": 469,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.css?v=0c77f1deb1",
+      "at": 469,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920",
+      "at": 469,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Regular.woff2",
+      "at": 471,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Pretendard-Medium.woff2",
+      "at": 471,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-7Bold.woff2",
+      "at": 471,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2",
+      "at": 472,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/fonts/Inter-500.woff2",
+      "at": 472,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/tenants",
+      "at": 474,
+      "ms": 399,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 474,
+      "ms": 408,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 474,
+      "ms": 836,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 474,
+      "ms": 877,
+      "fail": false
+     },
+     {
+      "u": "/cdn-cgi/rum?",
+      "at": 475,
+      "ms": 203,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/images/favicon_landxi.png",
+      "at": 477,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/service-card.css",
+      "at": 832,
+      "ms": 379,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 832,
+      "ms": 760,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 832,
+      "ms": 824,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 832,
+      "ms": 828,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 832,
+      "ms": 1232,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 832,
+      "ms": 1234,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1338,
+      "ms": 81,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1339,
+      "ms": 83,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1340,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1341,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1342,
+      "ms": 85,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1342,
+      "ms": 90,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1343,
+      "ms": 85,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.js?v=0c77f1deb1",
+      "at": 1344,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/44cbb111-a932-45bc-adc0-1c18278fde5e",
+      "at": 1344,
+      "ms": 87,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/session-clock.js?v=0c77f1deb1",
+      "at": 1345,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/brand/vector/lx-lockup.svg",
+      "at": 1345,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/notify.css",
+      "at": 1345,
+      "ms": 295,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1345,
+      "ms": 789,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1345,
+      "ms": 1233,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/emblems.js?v=0c77f1deb1",
+      "at": 1351,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1385,
+      "ms": 360,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1385,
+      "ms": 364,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/brand.css",
+      "at": 1386,
+      "ms": 362,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 1388,
+      "ms": 679,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 1402,
+      "ms": 17,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 1402,
+      "ms": 665,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 1416,
+      "ms": 13,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 1416,
+      "ms": 13,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 1417,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 1417,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 1418,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 1418,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 1418,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 1418,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 1418,
+      "ms": 12,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 1418,
+      "ms": 13,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 1519,
+      "ms": 71,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 1522,
+      "ms": 69,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 1523,
+      "ms": 69,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 1524,
+      "ms": 68,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 1583,
+      "ms": 10,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 1584,
+      "ms": 10,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 1584,
+      "ms": 10,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 1585,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 1585,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/emd",
+      "at": 2138,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 2138,
+      "ms": 514,
+      "fail": false
+     },
+     {
+      "u": "blob:https://namwon.land-xi.dev/d7e21f96-6bfd-456e-bc31-8d2e3a7b2047",
+      "at": 2141,
+      "ms": 11,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 2145,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 2145,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 2161,
+      "ms": 432,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/summary?region=52190",
+      "at": 2164,
+      "ms": 427,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1616.jpeg",
+      "at": 2178,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1615.jpeg",
+      "at": 2179,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1615.jpeg",
+      "at": 2179,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1616.jpeg",
+      "at": 2179,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1617.jpeg",
+      "at": 2179,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1617.jpeg",
+      "at": 2180,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1616.jpeg",
+      "at": 2180,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1615.jpeg",
+      "at": 2180,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1616.jpeg",
+      "at": 2180,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1617.jpeg",
+      "at": 2180,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1615.jpeg",
+      "at": 2181,
+      "ms": 8,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1614.jpeg",
+      "at": 2181,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1614.jpeg",
+      "at": 2181,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1617.jpeg",
+      "at": 2181,
+      "ms": 9,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3497/1618.jpeg",
+      "at": 2213,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3498/1618.jpeg",
+      "at": 2215,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1614.jpeg",
+      "at": 2222,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1616.jpeg",
+      "at": 2222,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1614.jpeg",
+      "at": 2564,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1615.jpeg",
+      "at": 2564,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3496/1618.jpeg",
+      "at": 2565,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1617.jpeg",
+      "at": 2565,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1616.jpeg",
+      "at": 2565,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3499/1618.jpeg",
+      "at": 2565,
+      "ms": 7,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1615.jpeg",
+      "at": 2566,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1617.jpeg",
+      "at": 2566,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1614.jpeg",
+      "at": 2566,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3495/1618.jpeg",
+      "at": 2566,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1614.jpeg",
+      "at": 2566,
+      "ms": 6,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1616.jpeg",
+      "at": 2567,
+      "ms": 5,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3500/1618.jpeg",
+      "at": 2589,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1615.jpeg",
+      "at": 2589,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1617.jpeg",
+      "at": 2593,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1616.jpeg",
+      "at": 2595,
+      "ms": 1,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=0c77f1deb1",
+      "at": 2598,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1615.jpeg",
+      "at": 2600,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1614.jpeg",
+      "at": 2600,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1617.jpeg",
+      "at": 2600,
+      "ms": 4,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3494/1618.jpeg",
+      "at": 2601,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1614.jpeg",
+      "at": 2601,
+      "ms": 3,
+      "fail": false
+     },
+     {
+      "u": "/2d/Satellite/service/12/3501/1618.jpeg",
+      "at": 2602,
+      "ms": 2,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=0c77f1deb1",
+      "at": 2605,
+      "ms": 0,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 2611,
+      "ms": 687,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 2611,
+      "ms": 687,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 2611,
+      "ms": 925,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 2611,
+      "ms": 925,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 2611,
+      "ms": 1043,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 2642,
+      "ms": 8,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 6497,
+   "again": 4160,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 481,
+  "data": 1307,
+  "layers": 1327,
+  "canvas": 1328,
+  "ready": 1768,
+  "shown": 2949
+ }
+}

@@ -313,8 +313,13 @@ async function main() {
   S.season = seasons.find((s) => s.key === q.get('season')) || seasons[seasons.length - 1];
 
   /* 착지 지역을 미리 정하고 결과 그림 · 실행 견적을 지금 시작한다 — 글로브 · 비행(약 7초)과 겹쳐 받아 도착하자마자 큰 숫자 · Run(10-15 해외첫화면-고침) */
-  const want = countries.get((q.get('country') || '').toUpperCase()) || [...countries.values()].sort((a, b) => b.deploys.length - a.deploys.length)[0] || null;
-  const pickOf = (A) => A.feats.find((d) => d.id === q.get('district')) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
+  // 두 번째 방문부터는 마지막 본 지역으로 바로(글로브 → 나라 → 지역 비행 없이 · 10-15 해외-바로지역). 이 브라우저 · 이 사람 기준 · 저장이 막히면 처음처럼 비행
+  const LAST_K = 'lx.global.last.' + (who.me.user?.id || tenantId || who.me.realm);
+  const last = LS.get(LAST_K);
+  const want = countries.get((q.get('country') || '').toUpperCase()) || (last && countries.get(last.iso)) || [...countries.values()].sort((a, b) => b.deploys.length - a.deploys.length)[0] || null;
+  const revisit = !!(want && last && last.iso === want.iso && last.d);
+  const lastOf = (A) => (revisit && !q.get('district') ? A.feats.find((d) => d.id === last.d && (d.mine || isLX)) : null);
+  const pickOf = (A) => A.feats.find((d) => d.id === q.get('district')) || lastOf(A) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
   const early = want ? districtsOf(want).then((A) => { const p = pickOf(A); if (p) changeOf(p, S.season); return p; }).catch(() => null) : null;
 
   /* ── 무대 ── */
@@ -428,7 +433,7 @@ async function main() {
     if (fly) await st.go(C.bbox, { maxZoom: 7.2 });
   }
 
-  async function toDistrict(D0, { fly = true } = {}) {
+  async function toDistrict(D0, { fly = true, jump = false } = {}) {
     if (!D0.mine && !isLX) { flashGuard(); return; }
     const A = admCache[S.country.iso];
     S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url();
@@ -443,7 +448,8 @@ async function main() {
     renderSheet();
     changeOf(D0, S.season);   // 비행과 함께 계절 결과 그림을 미리 받는다(도착 즉시 큰 숫자)
     quote(D0);                // 견적도 비행과 함께(도착 즉시 Run)
-    if (fly) await st.go(D0.bbox, { maxZoom: 11.2 });
+    if (fly || jump) await st.go(D0.bbox, { maxZoom: 11.2, ...(jump ? { ms: 0 } : {}) });
+    LS.set(LAST_K, { iso: S.country.iso, d: D0.id });   // 다음 방문은 여기로 바로
     // 도착 — 이번 계절 결과가 있으면 변화 화소가 차오르고 큰 숫자가 선다 · 없으면 'No result yet'(견적은 착지를 막지 않는다 · 뒤에서)
     changeOf(D0, S.season);
     hud(D0);
@@ -558,6 +564,7 @@ async function main() {
     const seq = ++renderSeq;
     delete body.dataset.norun;
     [...tabs.children].forEach((b, i) => b.setAttribute('aria-selected', String(i === S.tab)));
+    regPaint();   // 대장 칠은 대장(Register) 탭에서만(10-15 해외-대장칠)
     const D0 = S.level === 'district' ? S.district : null;
     // 지도 층은 탭마다 하나: Season = 이번 계절 변화 화소(결과 전·실행 중엔 그 달 NDVI) · NDVI = 최근 달 NDVI · Sprawl = 건물 변화 칸
     const lay = { ndvi: null, change: false, cells: false };
@@ -800,7 +807,7 @@ async function main() {
   function regPaint() {
     const fc = REG.v?.geojson || EMPTY;
     map.getSource('gl-reg')?.setData(fc);
-    for (const id of ['gl-reg-f', 'gl-reg-l']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', REG.show && REG.v ? 'visible' : 'none');
+    for (const id of ['gl-reg-f', 'gl-reg-l']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', REG.show && REG.v && S.tab === 3 ? 'visible' : 'none');
   }
   async function regLoad() {
     REG.ok = await K.hasRoute(REG_API + '/latest');
@@ -918,7 +925,7 @@ async function main() {
       const key = LAYER_IDS[a.layer] ? a.layer : 'imagery';
       const on = a.on !== false;
       if (key === 'mismatch' && !REG.v) return fin(false, 'No district register has been uploaded yet');
-      if (key === 'mismatch') { REG.show = on; regPaint(); }
+      if (key === 'mismatch') { REG.show = on; if (on && S.district && S.tab !== 3) { S.tab = 3; url(); hud(S.district); await renderSheet(); } regPaint(); }
       const ids = LAYER_IDS[key]().filter((id) => map.getLayer(id));
       if (!ids.length) return fin(false, `${LAYER_EN[key][0].toUpperCase()}${LAYER_EN[key].slice(1)} is not on the map right now`);
       for (const id of ids) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
@@ -962,7 +969,9 @@ async function main() {
     if (word && sn) word.append(h('span.gl-home-s', { title: orgEn || sn }, h('span.gl-home-n', { text: sn }), iso ? h('span', { text: ' · ' + iso }) : null));
   }
   early?.then((p) => p && quote(p));   // 견적도 비행과 겹쳐(화면 부품이 다 선 뒤 — 여기서)
-  await toGlobe({ fly: false });
+  const fast = revisit ? await early : null;   // 두 번째 방문 — 판이 서기 전에 지역 자리에 둔다(글로브 · 비행 없음)
+  if (fast) { await toCountry(want, { fly: false }); await toDistrict(fast, { fly: false, jump: true }); }
+  else await toGlobe({ fly: false });
   // 흰 글로브가 한 번 그려진 뒤에야 판을 보인다(기본 메르카토르 위성 · 투영 전환 프레임이 정문 뒤에 비치지 않게)
   await new Promise((r) => { let n = 0; const f = () => (++n >= 3 ? r() : map.once('render', f)); map.triggerRepaint(); map.once('render', f); setTimeout(r, 1500); });
   stageEl.classList.add('gl-on'); boot();
@@ -973,6 +982,7 @@ async function main() {
     document.body.dataset.state = 'ready';
     return;
   }
+  if (fast) { regLoad(); document.body.dataset.state = 'ready'; return; }
   await wait(RM() ? 0 : 900);
   await toCountry(want, { fly: true });
   regLoad();   // 이 사람의 최근 대장 대조(있으면 지도에 칠하고 대장 탭에 목록) — 착지를 막지 않는다
