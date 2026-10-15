@@ -11,6 +11,8 @@ import { staffMenu } from '../kit/lx-menu.js';
 import { createStage } from '../kit/stage.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis, filterResults, matchCond } from '../../xi/fx/arrive.js';
+import { excludeClasses } from '../../xi/fx/result-filter.js';
+import { colors, colorState, paintLayers, dotStyle, rampColors } from '../kit/colors.js';
 
 const who = await K.gate('lx-map');
 const Q = new URLSearchParams(location.search);
@@ -51,7 +53,7 @@ catch (e) {
 }
 
 /* 상태 — 줄 하나 = 결과 세트 하나 */
-const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, pickP: null, dl: null, filter: null, fold: false, lg: true, list: null };
+const ST = { groups: [], items: new Map(), solo: null, base: 'img', open: new Set(), pick: null, pickP: null, dl: null, filter: null, fold: false, lg: true, list: null, clsOff: new Set() };
 function absorb(d) {
   for (const g of d.groups || []) {
     let G = ST.groups.find((x) => x.key === g.key);
@@ -159,9 +161,7 @@ async function addSet(x) {
   const sid = 'lm-r-' + x.job;
   try { map.addSource(sid, await sourceSpec(item)); } catch (e) { K.devlog('result', `${e?.message || e}`); x.ids = []; return; }
   x.ids = addResultLayers(map, sid, sid, { kind: 'landcover', sourceLayer: 'results', visible: false });
-  map.on('click', `${sid}-fill`, (e) => { const f = e.features?.[0]; if (f) openProps(f, x, e.lngLat); });
-  map.on('mouseenter', `${sid}-fill`, () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', `${sid}-fill`, () => { map.getCanvas().style.cursor = ''; });
+  paintSet(x);                                                        // 저장해 둔 색(원칙 264) — 바꾼 것이 없으면 원래 모양 그대로
 }
 async function apply() {
   for (const x of all()) {
@@ -203,10 +203,11 @@ mapEl.append(unfold);
 
 function drawLeft() {
   const on = all().filter(shown);
-  const tot = on.reduce((a, x) => a + (x.failed ? 0 : Number(val(x.found)) || 0), 0);   // 못 그린 층의 수는 '켜진 결과'에 넣지 않는다
+  const tot = on.reduce((a, x) => a + (x.failed ? 0 : visN(x) || 0), 0);   // 못 그린 층의 수는 '켜진 결과'에 넣지 않는다 · 끈 클래스는 뺀다('보이는 것 기준')
   const sum = h('div.lm-sum', {},
     h('div', {}, h('b.num', {}, nf(tot), h('i', { text: '건' })), h('small', { text: `켜진 결과 · 묶음 ${new Set(on.map((x) => x.g.key)).size}개` })),
-    h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `전체 · 묶음 ${ST.groups.length}개` })));
+    h('div', {}, h('b.num', {}, nf(ST.items.size), h('i', { text: '건' })), h('small', { text: `전체 · 묶음 ${ST.groups.length}개` })),
+    ST.clsOff.size && on.length ? h('p.lm-vis', { text: '보이는 것 기준' }) : null);
   const run = (D.running || []).length ? h('p.lm-run', {}, h('i'), `분석 중 ${D.running.length}건 — 끝나면 여기에 쌓입니다`) : null;
   /* 조건 줄 = 칩 여러 개(분류 · 면적 · 읍면동 — 칩마다 풀기) + 맞는 수 + 모두 풀기 · 조건은 쌓인다(GPT3-3) */
   const chips = ST.filter ? (ST.filter.chips?.length ? ST.filter.chips : [{ k: '', label: ST.filter.label || '' }]) : [];
@@ -232,8 +233,9 @@ function drawLeft() {
       const canDl = !x.empty && !x.failed;
       ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl', ST.list === x.job && 'is-list'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
+        canDl ? h('button.lm-cd', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${G.name} ${x.region} 색`, title: '색', dataset: { job: x.job }, style: dotStyle(dotColors(x)), onclick: (e) => openColors(x, e.currentTarget) }) : h('span.lm-cd.is-none', { 'aria-hidden': 'true' }),
         h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: `${x.region} · ${day(x.finished_at)}` })),
-        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(val(x.found))}건` }),
+        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}건` }),
         canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
       if (ST.dl === x.job) ul.append(dlPanel(x));
@@ -248,6 +250,7 @@ function drawLeft() {
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }),   // 세 화면 경계(바퀴 4)
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
+    clsBlock(on),
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
       SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
         h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null,
@@ -262,8 +265,10 @@ mapEl.append(legend);
 const colorOf = (c) => CLS_COLOR[c] || CLS_COLOR[String(c).split(' ')[0]] || '#0FA9A0';
 function drawLegend() {
   const on = all().filter(shown);
-  const cls = [...new Set(on.flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))];
-  const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${colorOf(c)}` }), h('span', { text: c }))),
+  const cls = [...new Set(on.filter((x) => colorSt(x).mode !== 'scale').flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))].filter((c) => !ST.clsOff.has(c));
+  const sc = on.find((x) => colorSt(x).mode === 'scale' && !x.empty);
+  const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${shownColor(c)}` }), h('span', { text: c }))),
+    ...(sc ? [h('li.lm-lg-ramp', {}, h('i', { style: `background:linear-gradient(90deg,${rampColors(colorSt(sc).ramp).join(',')})` }), h('span', { text: '신뢰도' }))] : []),
     ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '필지 경계' }))] : []),
     ...SHL.filter((L) => shlOn.has(L.id)).map((L) => h('li', {}, h('i.shl'), h('span', { text: L.name })))];
   legend.hidden = !items.length;
@@ -271,6 +276,126 @@ function drawLegend() {
   legend.replaceChildren(h('button.lm-lgb', { type: 'button', 'aria-expanded': String(ST.lg), onclick: () => { ST.lg = !ST.lg; saveUI(); drawLegend(); } },
     h('b', { text: '범례' }), h('small', { text: ST.lg ? '접기' : '펴기' })), ST.lg ? h('ul.lm-lg', {}, ...items) : '');
 }
+
+/* ── 색 바꾸기(원칙 264 · 공용 부품 kit/colors.js) — 층 줄의 색 점을 누르면 그 층의 색 칸: 클래스마다 색 · 색 묶음 · 투명도 · '신뢰도' 색 띠 · '기본 색으로'.
+   사람 · 화면 · 층별로 브라우저에 기억 · 바꾸면 지도 · 범례 · 겹침 고르기 점에 바로. 바꾼 것이 없으면 원래 결과 모양 그대로(원칙 199). ── */
+const TEAL0 = '#0FA9A0';
+const baseOf = (x) => Object.fromEntries((x.by_class || []).filter((c) => c.n).map((c) => [c.cls, colorOf(c.cls)]));
+const ckey = (x) => 'r.' + x.job;
+const colorSt = (x) => colorState(ckey(x), { classes: baseOf(x) });
+const VALUE = { prop: 'conf', min: 0, max: 1, fill: 0.5 };
+function paintSet(x) {
+  if (!x.ids?.length) return;
+  const st = colorSt(x);
+  paintLayers(map, x.ids, st, { prop: 'cls', base: baseOf(x), value: VALUE, halo: x.ids.filter((l) => l.endsWith('-halo')) });
+  if (st.custom && st.mode === 'scale' && map.getLayer(`lm-r-${x.job}-fill`)) {   // 신뢰도 띠는 면을 고르게(클래스마다 다르던 옅기 대신) — 올리면 진하게
+    const k = st.op;
+    map.setPaintProperty(`lm-r-${x.job}-fill`, 'fill-opacity', ['case', ['boolean', ['feature-state', 'hover'], false], +(Math.min(1, VALUE.fill + 0.25) * k).toFixed(3), +(VALUE.fill * k).toFixed(3)]);
+  }
+}
+/** 이 층에서 지금 보이는 색 — 클래스(바꾼 색 · 원래 색) */
+const clsColor = (x, c) => colorSt(x).cls[c] || colorOf(c);
+const dotColors = (x) => { const st = colorSt(x); if (st.mode === 'scale') return rampColors(st.ramp).filter((_, i) => i % 2 === 0); const cs = Object.keys(baseOf(x)); return cs.length ? cs.map((c) => clsColor(x, c)) : [colorSt(x).cls[x.g.name] || TEAL0]; };
+/** 범례 · 클래스 줄의 색 = 켜진 층 가운데 그 클래스를 가진 첫 층의 색 */
+const shownColor = (c) => { const x = all().find((y) => shown(y) && (y.by_class || []).some((b) => b.cls === c && b.n) && colorSt(y).mode !== 'scale'); return x ? clsColor(x, c) : colorOf(c); };
+function openColors(x, btn) {
+  const cs = (x.by_class || []).filter((c) => c.n);
+  colors(btn, {
+    key: ckey(x), title: `${x.g.name} · ${x.region}`, beside: left,
+    classes: cs.length ? cs.map((c) => ({ k: c.cls, label: c.cls, color: colorOf(c.cls) })) : [{ k: x.g.name, label: x.g.name, color: TEAL0 }],
+    scale: { label: '신뢰도', lo: '0%', hi: '100%' },
+    onChange: () => {
+      paintSet(x);
+      for (const b of left.querySelectorAll(`.lm-cd[data-job="${CSS.escape(x.job)}"]`)) b.setAttribute('style', dotStyle(dotColors(x)));
+      drawLegend(); drawClsDots();
+      const st = colorSt(x);
+      window.__lm.colors = { job: x.job, mode: st.mode, cls: st.cls, op: st.op, ramp: st.ramp, step: st.step, custom: st.custom, fill: map.getLayer(`lm-r-${x.job}-fill`) ? map.getPaintProperty(`lm-r-${x.job}-fill`, 'fill-color') : null };
+    },
+  });
+}
+
+/* ── 클래스 켜기/끄기(원칙 265 · XI맵과 같은 말) — 켜진 결과 층의 클래스 체크박스 · 끄면 지도와 숫자에서 빠짐 + '보이는 것 기준' ── */
+/** 이 층에서 지금 보이는 수 — 끈 클래스의 수를 뺀다(층 결과 수 = 서버 by_class 한 출처) */
+function visN(x) {
+  const n = Number(val(x.found));
+  if (!Number.isFinite(n)) return null;
+  if (!ST.clsOff.size) return n;
+  return Math.max(0, n - (x.by_class || []).filter((c) => ST.clsOff.has(c.cls)).reduce((a, c) => a + (Number(c.n) || 0), 0));
+}
+function clsBlock(on) {
+  const m = new Map();
+  for (const x of on) if (!x.empty && !x.failed) for (const c of x.by_class || []) if (c.n) m.set(c.cls, (m.get(c.cls) || 0) + Number(c.n));
+  if (!m.size) return null;
+  return h('div.lm-cls', { role: 'group', 'aria-label': '클래스' }, h('span.lm-bl', { text: '클래스' }),
+    h('div.lm-clr', {}, ...[...m].map(([c, n]) => h('button.lm-cb', { type: 'button', role: 'checkbox', 'aria-checked': String(!ST.clsOff.has(c)), dataset: { cls: c }, title: c,
+      onclick: () => setClsOff(c) }, h('i.lm-cbx'), h('i.lm-cdt', { style: `background:${shownColor(c)}` }), h('span', { text: c }), h('em.num', { text: nf(n) })))));
+}
+const drawClsDots = () => { for (const b of left.querySelectorAll('.lm-cb')) b.querySelector('.lm-cdt')?.setAttribute('style', `background:${shownColor(b.dataset.cls)}`); };
+function setClsOff(c) {
+  if (ST.clsOff.has(c)) ST.clsOff.delete(c); else ST.clsOff.add(c);
+  excludeClasses(map, [...ST.clsOff]);
+  if (ST.pickP && ST.clsOff.has(String(ST.pickP.cls)) && props.dataset.view === 'props') closeProps();   // 고른 객체의 클래스를 끄면 속성 칸도 닫는다
+  closePick();
+  drawLeft(); drawCap();
+  window.__lm.clsOff = [...ST.clsOff];
+}
+
+/* ── 객체 다루기(원칙 265 · XI맵과 같게) — 객체 위 = 손가락 · 빈 지도 = 지도 기본(끌기) · 올리면 맨 위 하나만 떠오름 · 둘 이상이면 '겹침 n'
+   누르면 하나 = 바로 속성 칸 · 둘 이상 = 작은 고르기 목록(클래스 색 점 · 클래스 · 면적) → 고른 것만 속성 칸 ── */
+const objLayers = () => all().filter((x) => shown(x) && x.ids?.length).map((x) => `lm-r-${x.job}-fill`).filter((l) => map.getLayer(l) && map.getLayoutProperty(l, 'visibility') !== 'none');
+function objectsAt(pt) {
+  const lyr = objLayers(); if (!lyr.length) return [];
+  const seen = new Set(), out = [];
+  for (const f of map.queryRenderedFeatures([[pt.x - 3, pt.y - 3], [pt.x + 3, pt.y + 3]], { layers: lyr })) {
+    const x = ST.items.get(String(f.source).slice(5)); if (!x) continue;
+    const fid = f.properties?.id ?? f.id;
+    const k = f.source + '|' + (fid ?? JSON.stringify(f.properties)); if (seen.has(k)) continue; seen.add(k);
+    out.push({ f, x, cls: f.properties?.cls || '', area: f.properties?.area_m2 != null ? Number(f.properties.area_m2) : null });
+  }
+  return out;
+}
+const ovl = h('div.lm-ovl', { hidden: true, 'aria-hidden': 'true' });
+mapEl.append(ovl);
+let HV = null, PICK = null;
+const sameF = (a, b) => !!a && !!b && a.source === b.source && a.id === b.id;
+function unhover() { if (HV && !sameF(HV, HOVER)) { try { map.setFeatureState(HV, { hover: false }); } catch { /* 층이 내려감 */ } } HV = null; }
+function closePick() { PICK?.remove(); PICK = null; }
+const dotOf = (o) => { const st = colorSt(o.x); return st.mode === 'scale' ? rampColors(st.ramp)[Math.min(4, Math.round((Number(o.f.properties?.conf) || 0) * 4))] : clsColor(o.x, o.cls); };
+function pickList(hs, lngLat) {
+  closePick();
+  const el = h('div.lm-pick.t-card.t-card--map', { role: 'listbox', 'aria-label': '겹친 객체' },
+    h('p.lm-pick-t', {}, h('span', { text: '겹침' }), h('b.num', { text: String(hs.length) })),
+    ...hs.map((o) => h('button.lm-pick-r', { type: 'button', role: 'option', onclick: () => { closePick(); openProps(o.f, o.x, lngLat); } },
+      h('i', { style: `background:${dotOf(o)}` }), h('span', { text: o.cls || o.x.g.name }), h('b.num', { text: o.area != null ? `${nf(Math.round(o.area))}㎡` : '' }))));
+  PICK = new window.maplibregl.Marker({ element: el, anchor: 'left', offset: [14, 0] }).setLngLat(lngLat).addTo(map);
+  requestAnimationFrame(() => { el.classList.add('in'); el.querySelector('button')?.focus({ preventScroll: true }); });
+  window.__lm.pick = hs.map((o) => ({ cls: o.cls, area: o.area, job: o.x.job }));
+}
+{
+  let raf = 0, last = null;
+  const paintHover = (pt) => {
+    const hs = objectsAt(pt);
+    const top = hs[0]?.f || null;
+    const k = top && top.id != null ? { source: top.source, sourceLayer: top.sourceLayer, id: top.id } : null;
+    if (!sameF(k, HV)) { unhover(); if (k) { HV = k; try { map.setFeatureState(HV, { hover: true }); } catch { HV = null; } } }
+    map.getCanvas().style.cursor = hs.length ? 'pointer' : '';          // 객체 = 손가락 · 빈 지도 = 지도 기본(끌기 grab)
+    ovl.hidden = hs.length < 2 || !!PICK;                              // 고르기 목록이 열려 있으면 '겹침 n' 은 숨김
+    if (hs.length >= 2 && !PICK) { ovl.textContent = `겹침 ${hs.length}`; ovl.style.transform = `translate(${Math.round(pt.x + 14)}px,${Math.round(pt.y + 18)}px)`; }
+    window.__lm.hover = { n: hs.length, cursor: getComputedStyle(map.getCanvas()).cursor };
+  };
+  map.on('mousemove', (e) => { if (e.originalEvent && e.originalEvent.target !== map.getCanvas()) return; last = e.point; if (raf) return; raf = requestAnimationFrame(() => { raf = 0; paintHover(last); }); });
+  map.getCanvas().addEventListener('mouseleave', () => { unhover(); ovl.hidden = true; });
+  map.on('movestart', () => { ovl.hidden = true; });
+  map.on('click', (e) => {
+    const hs = objectsAt(e.point);
+    if (!hs.length) { closePick(); return; }
+    ovl.hidden = true;
+    if (hs.length === 1) { closePick(); openProps(hs[0].f, hs[0].x, e.lngLat); } else pickList(hs, e.lngLat);
+  });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closePick(); });
+}
+window.__lm.layers = () => all().map((x) => ({ job: x.job, on: x.on, region: x.region, empty: !!x.empty, cls: (x.by_class || []).filter((c) => c.n).map((c) => c.cls) }));
+window.__lm.objectsAt = (x, y) => objectsAt({ x, y }).map((o) => ({ cls: o.cls, job: o.x.job, area: o.area }));   // 점검 손잡이(화면엔 없음)
 
 /* ── 말로 거르기(원칙 193) — XI ChatGEO 의 map_filter 를 이 화면이 직접 받아 같은 조건으로 바로 건다 · 조건 줄 + 풀기 ── */
 function setFilter(a) {
@@ -366,7 +491,7 @@ async function download(x, fmt, label, btn, agree) {
 function drawCap() {
   const on = all().filter(shown);
   cap.hidden = !on.length;
-  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(val(x.found) ?? 0)}건`}` })),
+  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(visN(x) ?? 0)}건`}` })),
     ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 층` })] : []));
 }
 async function toggle(x) {
@@ -376,6 +501,7 @@ async function toggle(x) {
   if (x.on) { const done = K.hold(); try { await apply(); } finally { done(); } } else await apply();
   if (x.on) { fly(x.bounds); drawn(); }
   else if (ST.pick && props.dataset.job === x.job) closeProps();
+  if (!x.on) closePick();
 }
 async function soloOf(G) {
   if (ST.solo === G.key) { ST.solo = null; await apply(); return; }

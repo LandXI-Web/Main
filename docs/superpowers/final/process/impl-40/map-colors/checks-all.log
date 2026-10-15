@@ -1,0 +1,21 @@
+· gov · words 94초
+· gov · numbers 11초
+· gov · fonts 39초
+· abroad · words 69초
+· abroad · numbers 39초
+· abroad · fonts 21초
+· app · words 113초
+· app · numbers 59초
+· app · fonts 66초
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForTimeout: Page crashed
+    at screen (E:\Land-XI 플랫폼\01. 디자인\tools\check\words.mjs:81:18)
+    at async Module.run (E:\Land-XI 플랫폼\01. 디자인\tools\check\words.mjs:156:7)
+    at async file:///E:/Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC/01.%20%EB%94%94%EC%9E%90%EC%9D%B8/tools/check/all.mjs:31:9 {
+  log: []
+}
+
+Node.js v22.21.1

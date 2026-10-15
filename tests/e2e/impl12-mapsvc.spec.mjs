@@ -54,6 +54,9 @@ test.describe('구현 12차 · 지도 서비스 · 영상 고르기', () => {
     expect(pt).not.toBeNull();
     const bb = await page.locator('.lm-stage .maplibregl-canvas').boundingBox();
     await page.mouse.click(bb.x + pt.x, bb.y + pt.y);
+    // 묶음 둘이 같은 자리를 그리면 겹친 객체 고르기 목록이 먼저 열린다(10-15 원칙 265) — 그 가운데 비닐하우스를 고른다
+    await page.waitForTimeout(600);
+    if (await page.locator('.lm-pick').count()) await page.locator('.lm-pick-r', { hasText: '비닐하우스' }).first().click();
     const props = page.locator('.lm-props');
     await expect(props).toBeVisible({ timeout: 10000 });
     await expect(props.locator('h2')).toHaveText('비닐하우스');

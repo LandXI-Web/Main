@@ -1,0 +1,169 @@
+{
+ "at": "2026-10-15 20:49:28",
+ "app": "https://app.land-xi.dev",
+ "shots": {
+  "01-map-default-1440-2050.png": "2026-10-15 20:50:14",
+  "02-colors-open-1440-2050.png": "2026-10-15 20:50:23",
+  "03-colors-set-cvd-1440-2050.png": "2026-10-15 20:50:32",
+  "04-colors-direct-1440-2050.png": "2026-10-15 20:50:41",
+  "05-colors-opacity-1440-2050.png": "2026-10-15 20:50:50",
+  "06-colors-ramp-step-1440-2050.png": "2026-10-15 20:50:59",
+  "07-colors-ramp-diverging-1440-2051.png": "2026-10-15 20:51:09",
+  "08-colors-remembered-1440-2051.png": "2026-10-15 20:51:27",
+  "09-colors-reset-1440-2051.png": "2026-10-15 20:51:36",
+  "10-mouse-object-1440-2051.png": "2026-10-15 20:51:47",
+  "11-overlap-hover-1440-2051.png": "2026-10-15 20:51:57",
+  "12-overlap-pick-1440-2051.png": "2026-10-15 20:52:05",
+  "13-overlap-picked-1440-2052.png": "2026-10-15 20:52:15",
+  "14-class-off-1440-2052.png": "2026-10-15 20:52:25"
+ },
+ "errors": [],
+ "bad": [],
+ "local": [],
+ "colors": {
+  "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+  "defaultFill": "[\"match\",[\"get\",\"cls\"],\"경작지\",\"#0FA9A0\",\"비닐하우스\",\"#07706A\",\"건물\",\"#010102\",\"주차장\",\"#8F99A8\",\"#0FA9A0\"]",
+  "classes": [
+   "경작지",
+   "건물",
+   "비닐하우스"
+  ],
+  "afterSet": "[\"match\",[\"to-string\",[\"get\",\"cls\"]],\"경작지\",\"#0072B2\",\"건물\",\"#E69F00\",\"비닐하우스\",\"#009E73\",\"#0FA9A0\"]",
+  "afterDirect": "[\"match\",[\"to-string\",[\"get\",\"cls\"]],\"경작지\",\"#7C5CFA\",\"건물\",\"#E69F00\",\"비닐하우스\",\"#009E73\",\"#0FA9A0\"]",
+  "recent": 1,
+  "afterOpacity": "[\"interpolate\",[\"linear\"],[\"zoom\"],11,[\"*\",0.6,[\"case\",[\"boolean\",[\"feature-state\",\"hover\"],false],0.42,[\"*\",0.3,[\"match\",[\"get\",\"cls\"],\"건물\",0.35,\"주차장\",0.3,\"비닐하",
+  "opText": "40%",
+  "afterRamp": "[\"step\",[\"to-number\",[\"get\",\"conf\"],0],\"#440154\",0.2,\"#3B528B\",0.4,\"#21918C\",0.6,\"#5EC962\",0.8,\"#FDE725\"]",
+  "afterDiverging": "[\"interpolate\",[\"linear\"],[\"to-number\",[\"get\",\"conf\"],0],0,\"#D7303F\",0.25,\"#F28E8E\",0.5,\"#F4F5F7\",0.75,\"#7FB0F8\",1,\"#1B5FD0\"]",
+  "afterReload": {
+   "fill": "[\"interpolate\",[\"linear\"],[\"to-number\",[\"get\",\"conf\"],0],0,\"#D7303F\",0.25,\"#F28E8E\",0.5,\"#F4F5F7\",0.75,\"#7FB0F8\",1,\"#1B5FD0\"]",
+   "dot": "background:conic-gradient(#D7303F 0deg 120deg, #F4F5F7 120deg 240deg, #1B5FD0 240deg 360deg)"
+  },
+  "reloadState": {
+   "mode": "신뢰도",
+   "ramp": "발산",
+   "op": "40%"
+  },
+  "afterReset": "[\"match\",[\"get\",\"cls\"],\"경작지\",\"#0FA9A0\",\"비닐하우스\",\"#07706A\",\"건물\",\"#010102\",\"주차장\",\"#8F99A8\",\"#0FA9A0\"]",
+  "resetSame": true
+ },
+ "objects": {
+  "added": 0,
+  "found": {
+   "one": {
+    "x": 330,
+    "y": 314
+   },
+   "two": {
+    "x": 339,
+    "y": 323,
+    "n": 3
+   },
+   "none": {
+    "x": 303,
+    "y": 80
+   },
+   "c": {
+    "x": 424,
+    "y": 64
+   }
+  },
+  "cursorObject": {
+   "n": 1,
+   "cursor": "pointer"
+  },
+  "cursorEmpty": {
+   "n": 0,
+   "cursor": "grab"
+  },
+  "overlapHover": {
+   "n": 3,
+   "cursor": "pointer",
+   "badge": "겹침 3"
+  },
+  "pick": {
+   "list": [
+    {
+     "cls": "건물",
+     "area": 990.1,
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ"
+    },
+    {
+     "cls": "경작지",
+     "area": 1797.8,
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ"
+    },
+    {
+     "cls": "경작지",
+     "area": 2312,
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ"
+    }
+   ],
+   "rows": [
+    "건물 990㎡",
+    "경작지 1,798㎡",
+    "경작지 2,312㎡"
+   ]
+  },
+  "picked": {
+   "props": true,
+   "title": "경작지"
+  }
+ },
+ "classes": {
+  "list": [
+   {
+    "c": "경작지",
+    "n": "91"
+   },
+   {
+    "c": "건물",
+    "n": "28"
+   },
+   {
+    "c": "비닐하우스",
+    "n": "25"
+   },
+   {
+    "c": "주차장",
+    "n": "2"
+   }
+  ],
+  "off": {
+   "cls": "경작지",
+   "before": {
+    "sum": "146건",
+    "drawn": 101
+   },
+   "after": {
+    "sum": "55건",
+    "vis": "보이는 것 기준",
+    "drawn": 0,
+    "checked": "false"
+   }
+  },
+  "backOn": "146건"
+ },
+ "small": [],
+ "login_at": "2026-10-15 20:49:44",
+ "layers": {
+  "n": 9,
+  "target": {
+   "region": "남원시 덕과면",
+   "cls": [
+    "경작지",
+    "건물",
+    "비닐하우스"
+   ],
+   "same": 1
+  }
+ },
+ "cdpShots": 14,
+ "videoStart": 177.064,
+ "videoEnd": 188.395,
+ "video": {
+  "out": "map-colors-10s.mp4",
+  "from_s": 176.6,
+  "len_s": 11.3
+ }
+}

@@ -1,0 +1,18 @@
+[
+ {
+  "id": "색바꾸기-지도서비스",
+  "t": "지도 서비스 왼쪽 층 줄의 색 점을 누르면 '색' 칸 — 클래스마다 색(색 묶음 4벌 중 고르기 · 색 칸 · 최근 색 · 직접) · 투명도 · '신뢰도'로 바꾸면 색 띠(연속 · 단계 · 발산 · 색약 구분 띠 포함) · '기본 색으로'. 바꾸면 지도 · 범례 · 색 점에 바로, 다시 열어도 그대로(사람 · 화면 · 층별로 브라우저에 기억). 공용 부품이라 XI맵도 같은 칸을 쓸 수 있음",
+  "shots": ["shots/01-map-default-1440-2050.png", "shots/02-colors-open-1440-2050.png", "shots/03-colors-set-cvd-1440-2050.png", "shots/04-colors-direct-1440-2050.png", "shots/05-colors-opacity-1440-2050.png", "shots/06-colors-ramp-step-1440-2050.png", "shots/07-colors-ramp-diverging-1440-2051.png", "shots/08-colors-remembered-1440-2051.png", "shots/09-colors-reset-1440-2051.png", "map-colors-10s.mp4"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/lx-map/", "지도 서비스 (LX 직원)", "왼쪽 켜진 층 줄의 색 점"]],
+  "now": "색약 구분 묶음 · 직접 보라 · 투명도 40% · 신뢰도 단계 띠 · 발산 띠 → 다시 열어도 신뢰도 · 발산 · 40% 그대로 → '기본 색으로' = 원래 모양과 같음 · 콘솔 오류 0"
+ },
+ {
+  "id": "객체다루기-지도서비스",
+  "t": "지도 서비스도 XI맵과 같게 — 객체 위 손가락 · 빈 지도 끌기 모양 · 겹친 곳은 마우스 옆 '겹침 n' · 누르면 고르기 목록(클래스 색 점 · 클래스 · 면적) → 고른 것만 오른쪽 속성 칸 · 왼쪽 '클래스' 체크박스로 켜기/끄기(끄면 지도와 숫자에서 빠지고 '보이는 것 기준'). 지도 서비스에는 클래스 바꾸기(고치기)가 없어 해당 없음",
+  "shots": ["shots/10-mouse-object-1440-2051.png", "shots/11-overlap-hover-1440-2051.png", "shots/12-overlap-pick-1440-2051.png", "shots/13-overlap-picked-1440-2052.png", "shots/14-class-off-1440-2052.png", "map-colors-10s.mp4"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/lx-map/", "지도 서비스 (LX 직원)", "켜진 결과 위 마우스 · 겹친 자리 누르기 · 왼쪽 아래 '클래스'"]],
+  "now": "객체 위 pointer · 빈 지도 grab · 겹침 3(건물 990㎡ · 경작지 1,798㎡ · 경작지 2,312㎡) → 고른 경작지만 속성 칸 · 경작지 끔 → 146건 → 55건 '보이는 것 기준' · 그려진 경작지 101 → 0"
+ }
+]
