@@ -6,13 +6,13 @@
     "shape": "/public/stats?set=river-occupy&by=sigungu&geom=1",
     "where": "전국 · 하천구역 건물 점유",
     "unit": "건",
-    "credit": "© EOX"
+    "credit": "NASA · © V-World"
   },
   "scenes": [
     {
       "id": "national", "axis": "Performance", "kind": "view",
       "cam": "korea", "pitch": 0, "bearing": 0,
-      "credit": "© EOX"
+      "credit": "NASA · © V-World"
     },
     {
       "id": "ledger", "axis": "Solution", "kind": "findings",
@@ -32,7 +32,7 @@
     },
     {
       "id": "sprawl", "axis": "GeoAI", "kind": "grid",
-      "where": "비슈케크 · 도시 확장", "unit": "㎢ 늘어남", "credit": "© EOX · Esri",
+      "where": "비슈케크 · 도시 확장", "unit": "㎢ 늘어남", "credit": "Copernicus Sentinel-2 · Esri",
       "cam": { "center": [74.58, 42.875], "zoom": 10.5, "pitch": 36, "bearing": 0 },
       "data": "data:global/kgz-sprawl-2017-2025.json", "min": 8, "digits": 1,
       "value": "summary.delta_km2", "basis": "estimate", "source": "Sentinel 위성 영상 2025"

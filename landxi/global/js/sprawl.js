@@ -5,7 +5,7 @@ import { API, fixture, env, api, session, catalog, quote, submit, sse } from '..
 import { t, num, area } from './i18n.js';
 import { D, prov, pinBox, tween, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, gap, reveal } from './cards-global.js';
-import { opacity, show, rawTiles } from './ladder-global.js';
+import { opacity, show, rawTiles, baseAt } from './ladder-global.js';
 
 const DATA = new URL('../data/', import.meta.url);
 export const CAM_SK = { center: [74.43, 42.855], zoom: 10.35, pitch: 40, bearing: -8 };
@@ -189,8 +189,9 @@ export function sprawlScene(stage, ctx) {
     const b = ensureMapB(stage);
     await stage.mapBReady;
     if (!b.getSource('b-sw')) {
-      const eox = ctx.ladder.cat.by['eox-s2cloudless-2025'];
-      if (eox && !b.getSource('b-eox')) { b.addSource('b-eox', { type: 'raster', tileSize: 256, tiles: [dcache(rawTiles(eox))], minzoom: 3, maxzoom: 14 }); b.addLayer({ id: 'b-eox', type: 'raster', source: 'b-eox', paint: { 'raster-fade-duration': D[500] } }); }
+      const sb = swipeSrc('2025')?.bounds;
+      const base = await baseAt(sb ? [(sb[0] + sb[2]) / 2, (sb[1] + sb[3]) / 2] : b.getCenter().toArray());   // 밑바탕 = 그 자리 Sentinel-2 판(10-15 EOx-모두교체 · 층 id 는 그대로)
+      if (base && !b.getSource('b-eox')) { b.addSource('b-eox', { ...base, minzoom: Math.max(3, base.minzoom || 0) }); b.addLayer({ id: 'b-eox', type: 'raster', source: 'b-eox', paint: { 'raster-fade-duration': D[500] } }); }
       b.addSource('b-sw', swipeSrc('2025'));
       b.addLayer({ id: 'b-sw', type: 'raster', source: 'b-sw', paint: { 'raster-fade-duration': D[500] } });
     }

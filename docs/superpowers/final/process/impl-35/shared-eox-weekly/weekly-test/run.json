@@ -1,0 +1,30 @@
+{
+ "at": "2026-10-15T08:34:43+09:00",
+ "mode": "small",
+ "why": "시험 실행 — 바로 고칠 수 있는 후보 하나",
+ "test": true,
+ "items": [
+  "ic_9f3f72a5a21c"
+ ],
+ "dir": "20261015-0834-test",
+ "release": "rel_a43480b533c4",
+ "release_no": null,
+ "state": "closed",
+ "before": {
+  "total": 15,
+  "답함": 13,
+  "안내함": 2,
+  "못 함": 0
+ },
+ "after": {
+  "total": 15,
+  "답함": 13,
+  "안내함": 2,
+  "못 함": 0
+ },
+ "better": 0,
+ "worse": 0,
+ "flaky": 0,
+ "tidy": [],
+ "minutes": 0.8
+}

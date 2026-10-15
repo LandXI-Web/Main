@@ -1,0 +1,278 @@
+{
+ "at": "2026-10-15 08:35:10",
+ "total": 15,
+ "summary": {
+  "답함": 13,
+  "안내함": 2,
+  "못 함": 0
+ },
+ "rows": [
+  {
+   "id": "ic_9f3f72a5a21c#0",
+   "item": "ic_9f3f72a5a21c",
+   "no": 53,
+   "q": "전역 분석 실행",
+   "masked": "전역 분석 실행",
+   "role": "tenant",
+   "page": "gov-report",
+   "kind": "권한 밖",
+   "state": "new",
+   "verdict": "안내함",
+   "block": "권한 밖",
+   "tools": [],
+   "ms": 1192,
+   "answer": "분석은 LX가 합니다 — 어느 서비스로 맡길지 아래에서 고르면 분석 요청 카드가 뜹니다.",
+   "hint": null
+  },
+  {
+   "id": "b01",
+   "item": null,
+   "no": null,
+   "q": "남원시 의심 필지 몇 건이야?",
+   "masked": "남원시 의심 필지 몇 건이야?",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "survey_count"
+   ],
+   "ms": 2593,
+   "answer": "남원시 의심 필지는 n입니다.",
+   "hint": null
+  },
+  {
+   "id": "b02",
+   "item": null,
+   "no": null,
+   "q": "운봉읍 무허가 건축 의심 필지 보여줘",
+   "masked": "운봉읍 무허가 건축 의심 필지 보여줘",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "survey_stats",
+    "survey_findings",
+    "map_arrive"
+   ],
+   "ms": 4269,
+   "answer": "조건에 맞는 의심 필지 n 중 점수 상위 n를 지도에 표시했습니다. 1위는 남원시 운봉읍 권포리 1229-3으로 AI 건물 근거 면적 n입니다 [2]. 현장조사 대상 후보이며 건축물대장 대조 전입니다.",
+   "hint": null
+  },
+  {
+   "id": "b03",
+   "item": null,
+   "no": null,
+   "q": "읍면동별 의심 건수 순위 보여줘",
+   "masked": "읍면동별 의심 건수 순위 보여줘",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "fusion_chart"
+   ],
+   "ms": 2257,
+   "answer": "남원시 전체 의심 필지는 n입니다. 읍면동별로 막대 차트에 나누어 보였습니다.",
+   "hint": null
+  },
+  {
+   "id": "b04",
+   "item": null,
+   "no": null,
+   "q": "남원시로 이동해 줘",
+   "masked": "남원시로 이동해 줘",
+   "role": "staff",
+   "page": "xi-clean",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "map_region"
+   ],
+   "ms": 1596,
+   "answer": "전북특별자치도 남원시로 지도를 옮겼습니다.",
+   "hint": null
+  },
+  {
+   "id": "b05",
+   "item": null,
+   "no": null,
+   "q": "지도 확대해 줘",
+   "masked": "지도 확대해 줘",
+   "role": "staff",
+   "page": "xi-clean",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "map_zoom"
+   ],
+   "ms": 763,
+   "answer": "지도를 확대했습니다.",
+   "hint": null
+  },
+  {
+   "id": "b06",
+   "item": null,
+   "no": null,
+   "q": "비닐하우스만 보여 줘",
+   "masked": "비닐하우스만 보여 줘",
+   "role": "staff",
+   "page": "xi-clean",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "map_task"
+   ],
+   "ms": 755,
+   "answer": "비닐하우스만 지도에 남겼습니다 — AI 분석 결과 n.",
+   "hint": null
+  },
+  {
+   "id": "b07",
+   "item": null,
+   "no": null,
+   "q": "원래대로 다 보여 줘",
+   "masked": "원래대로 다 보여 줘",
+   "role": "staff",
+   "page": "xi-clean",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "map_task"
+   ],
+   "ms": 774,
+   "answer": "모든 업무 결과를 다시 보여 줍니다.",
+   "hint": null
+  },
+  {
+   "id": "b08",
+   "item": null,
+   "no": null,
+   "q": "건축법 제11조 내용 알려줘",
+   "masked": "건축법 제11조 내용 알려줘",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "law_search"
+   ],
+   "ms": 819,
+   "answer": "관련 조문 원문입니다. 「건축법」 제11조(건축허가) 제1항 · 시행 2026-02-27 “① 건축물을 건축하거나 대수선하려는 자는 특별자치시장ㆍ특별자치도지사 또는 시장ㆍ군수ㆍ구청장의 허가를 받아야 한다. 다만, 21층 이상의 건축물 등 대통령령으로 정하는 용도 및 규모의 건축물을 특별",
+   "hint": null
+  },
+  {
+   "id": "b09",
+   "item": null,
+   "no": null,
+   "q": "농지 전용 허가 근거 조문 알려줘",
+   "masked": "농지 전용 허가 근거 조문 알려줘",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "law_search"
+   ],
+   "ms": 1173,
+   "answer": "관련 조문 원문입니다. 「농지법」 제34조(농지의 전용허가ㆍ협의) 제1항 · 시행 2026-09-18 “①농지를 전용하려는 자는 다음 각 호의 어느 하나에 해당하는 경우 외에는 대통령령으로 정하는 바에 따라 농림축산식품부장관의 허가(다른 법률에 따라 농지전용허가가 의제되는 협의를 포함한",
+   "hint": null
+  },
+  {
+   "id": "b10",
+   "item": null,
+   "no": null,
+   "q": "우리 지역 결과 요약해 줘",
+   "masked": "우리 지역 결과 요약해 줘",
+   "role": "tenant",
+   "page": "gov-report",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "summary_lookup"
+   ],
+   "ms": 869,
+   "answer": "남원시에서 결과가 있는 서비스는 경작·휴경 분석서비스(운영 중 · AI 분석 결과 n), 국토 변화 분석서비스(시범 운영 중 · AI 분석 결과 n), 비닐하우스 분석서비스(시범 운영 중)입니다.",
+   "hint": null
+  },
+  {
+   "id": "b11",
+   "item": null,
+   "no": null,
+   "q": "구례군 결과 보여 줘",
+   "masked": "구례군 결과 보여 줘",
+   "role": "tenant",
+   "page": "gov-report",
+   "kind": "되던 질문",
+   "verdict": "안내함",
+   "block": "권한 밖",
+   "tools": [],
+   "ms": 35,
+   "answer": "구례군은 이 기관 계정에서 볼 수 없습니다.",
+   "hint": null
+  },
+  {
+   "id": "b12",
+   "item": null,
+   "no": null,
+   "q": "안녕하세요",
+   "masked": "안녕하세요",
+   "role": "staff",
+   "page": "lx-console",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [],
+   "ms": 1527,
+   "answer": "반갑습니다. Land-XI XI맵 GeoAI 에이전트입니다.",
+   "hint": null
+  },
+  {
+   "id": "b13",
+   "item": null,
+   "no": null,
+   "q": "작업 대기열 상태 알려줘",
+   "masked": "작업 대기열 상태 알려줘",
+   "role": "admin",
+   "page": "ops",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "ops_queues"
+   ],
+   "ms": 800,
+   "answer": "대기 중인 분석 작업은 n, 진행 중인 작업은 n입니다. 작업기는 GPU 서버 n, 일반 서버 n입니다.",
+   "hint": null
+  },
+  {
+   "id": "b14",
+   "item": null,
+   "no": null,
+   "q": "Zoom in",
+   "masked": "Zoom in",
+   "role": "staff",
+   "page": "xi-clean",
+   "kind": "되던 질문",
+   "verdict": "답함",
+   "block": null,
+   "tools": [
+    "map_zoom"
+   ],
+   "ms": 758,
+   "answer": "Zoomed in on the map.",
+   "hint": null
+  }
+ ]
+}

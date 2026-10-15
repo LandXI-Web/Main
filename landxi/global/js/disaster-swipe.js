@@ -6,7 +6,7 @@ import { fixture } from '../../shared/api-v1.js';
 import { t, num } from './i18n.js';
 import { D, prov, lockOn, wait, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, reveal } from './cards-global.js';
-import { show, s2Pair, rawTiles } from './ladder-global.js';
+import { show, s2Pair, rawTiles, baseAt } from './ladder-global.js';
 
 const DATA = new URL('../data/', import.meta.url);
 export const CAM_MK = { center: [95.884, 20.892], zoom: 13.9, pitch: 0, bearing: 0 };   // Maxar 타일 범위 [95.858, 20.864, 95.934, 20.937] 안
@@ -76,9 +76,9 @@ export function meiktilaScene(stage, ctx) {
     }
     const b = ensureMapB(stage);
     await stage.mapBReady;
-    const eox = cat.by['eox-s2cloudless-2025'];
-    if (eox && !b.getSource('b-base')) {
-      b.addSource('b-base', { type: 'raster', tiles: [dcache(rawTiles(eox))], tileSize: 256, minzoom: 3, maxzoom: 14 });
+    const base = await baseAt(A?.bounds ? [(A.bounds[0] + A.bounds[2]) / 2, (A.bounds[1] + A.bounds[3]) / 2] : CAM_MK.center);   // 밑바탕 = 그 자리 Sentinel-2 판(10-15 EOx-모두교체)
+    if (base && !b.getSource('b-base')) {
+      b.addSource('b-base', { ...base, minzoom: Math.max(3, base.minzoom || 0) });
       b.addLayer({ id: 'b-base', type: 'raster', source: 'b-base', paint: { 'raster-fade-duration': D[500] } });
     }
     if (A && !b.getSource('b-pre')) {   // 도착 크로스페이드용 — 본 지도와 같은 사전 영상(평소 숨김)

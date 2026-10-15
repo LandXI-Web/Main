@@ -613,6 +613,51 @@ async def shared_ledgers(request: Request):
     return {"items": items, "total": len(items), "kinds": KINDS, "as_of": now_iso()}
 
 
+@router.get("/shared/ledgers/{iid}")
+async def shared_ledger_detail(iid: str, request: Request):
+    """LX 관리자 '공유 데이터' 행정 자료 줄을 누르면(10-15 공유데이터-상세 · 원칙 255) — 지도 미리보기(도형) · 속성 표 앞 5줄 · 행 수 · 종류.
+    LX 행정 자료 = 올린 도형 파일. 기관 대장 = 대장 행(성명 · 연락처 없이 저장된 열만) + 맞춘 필지 도형(앞 1,500필지)."""
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT * FROM ledger_imports WHERE id=$1 AND state <> 'failed'", iid)
+        if not r:
+            raise ApiError("not_found", "행정 자료가 없습니다")
+        tn = {x["id"]: x["name"] for x in await conn.fetch("SELECT id, name FROM tenants WHERE id=$1", r["tenant_id"])}
+        st = r["stats"] or {}
+        st = json.loads(st) if isinstance(st, str) else st
+        if r["tenant_id"] == LX_OWNER:
+            f = _layer_path(iid)
+            fc = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {"type": "FeatureCollection", "features": []}
+            feats = fc.get("features") or []
+            cols = list(dict.fromkeys(k for ft in feats[:50] for k in (ft.get("properties") or {})))[:8]
+            head = [{c: (ft.get("properties") or {}).get(c) for c in cols} for ft in feats[:5]]
+            gtypes = sorted({(ft.get("geometry") or {}).get("type") for ft in feats if ft.get("geometry")} - {None})
+            bbox = st.get("bbox") or _bbox(fc)
+            shape = fc if len(feats) <= 3000 else {"type": "FeatureCollection", "features": feats[:3000]}
+        else:
+            snaps = await conn.fetch("SELECT pnu, payload FROM registry_snapshots WHERE import_id=$1 ORDER BY row_no LIMIT 5", iid)
+            heads = [json.loads(s["payload"]) if isinstance(s["payload"], str) else dict(s["payload"] or {}) for s in snaps]
+            mp = r["mapping"] or {}
+            mp = json.loads(mp) if isinstance(mp, str) else mp
+            col = lambda k: str(mp.get(k) or k)            # 저장 열(역할) → 그 기관 파일의 원래 열 이름
+            keys = list(dict.fromkeys(k for h in heads for k in h))[:8]
+            cols = [col(k) for k in keys]
+            head = [{col(k): h.get(k) for k in keys} for h in heads]
+            g = await conn.fetch("SELECT ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00001), 6) AS g FROM "
+                                 "(SELECT DISTINCT pnu FROM registry_snapshots WHERE import_id=$1 AND pnu IS NOT NULL LIMIT 1500) s "
+                                 "JOIN survey_parcels p ON p.pnu = s.pnu", iid)
+            feats = [{"type": "Feature", "properties": {}, "geometry": json.loads(x["g"])} for x in g if x["g"]]
+            shape = {"type": "FeatureCollection", "features": feats}
+            gtypes = ["Polygon"] if feats else []
+            bbox = _bbox(shape)
+    GT = {"Point": "점", "MultiPoint": "점", "LineString": "선", "MultiLineString": "선", "Polygon": "면", "MultiPolygon": "면"}
+    def _nm(v):
+        return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
+    return {**_shared_row(r, tn), "tenant": None if r["tenant_id"] == LX_OWNER else (_nm(tn.get(r["tenant_id"])) or None),
+            "geom": " · ".join(dict.fromkeys(GT.get(t, t) for t in gtypes)) or None, "columns": cols, "head": head, "bbox": bbox, "shape": shape,
+            "fmt": (r["fmt"] or "").upper() or None, "as_of": now_iso()}
+
+
 @router.post("/shared/ledgers", status_code=201)
 async def shared_ledger_upload(request: Request, file: UploadFile = File(...), kind: str = Form(...), name: str = Form("")):
     """LX 관리자 — 행정 자료 올리기. SHP(zip) · GPKG · GeoJSON · CSV(주소 · 좌표 열) · XLSX. 성명 · 연락처 열은 저장하지 않는다(기관 대장과 같은 규칙)."""

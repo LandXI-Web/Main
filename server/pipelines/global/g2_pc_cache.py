@@ -185,14 +185,7 @@ def catalog_fixture():
         item("gibs-viirs-truecolor", "NASA GIBS VIIRS NOAA-20 true colour · daily", "NASA GIBS VIIRS NOAA-20 트루컬러 · 일자별", "raster", "imagery", "external",
              "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg", 0, 9, W, 375, "daily",
              "NASA open data (no restriction)", "Imagery: NASA GIBS / ESDIS", "public", "n/a", "NASA", 10, 0, 5, {"date": "yesterday(UTC)"}),
-        item("eox-s2cloudless-2025", "EOX Sentinel-2 cloudless 2025", "EOX Sentinel-2 cloudless 2025", "raster", "imagery", "external",
-             "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg", 3, 14, W, 10, "2025", "CC BY-NC-SA 4.0",
-             "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)", "public", "n/a", "EOX IT Services GmbH", 20, 5, 9,
-             note="non-commercial — build=lx|tenant public demo only · excluded from build=export (2017 edition instead)"),
-        item("eox-s2cloudless-2017", "EOX Sentinel-2 cloudless 2017", "EOX Sentinel-2 cloudless 2017", "raster", "imagery", "external",
-             "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2017_3857/default/g/{z}/{y}/{x}.jpg", 3, 14, W, 10, "2017", "CC BY 4.0",
-             "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)", "public", "n/a", "EOX IT Services GmbH", 21, 5, 9,
-             note="verified blank (white tiles) over Kyrgyzstan 2026-09-24 — not used in KGZ scenes"),
+        # 10-15 EOx-모두교체 — 비상업 EOX s2cloudless(2025 · 2017) 두 항목을 뺐다(세계 바탕은 화면이 서버 판 tiles/world-bm 에서 읽는다)
         item("gibs-hls-s30", "NASA GIBS HLS S30 30 m · daily", "NASA GIBS HLS S30 30 m · 일자별", "raster", "imagery", "external",
              "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/HLS_S30_Nadir_BRDF_Adjusted_Reflectance/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png", 8, 12, W, 30, "daily",
              "NASA open data (no restriction)", "Imagery: NASA GIBS / ESDIS · HLS", "public", "n/a", "NASA", 30, 9, 12, {"date": "yesterday(UTC)"}),
@@ -237,7 +230,7 @@ def catalog_fixture():
                           "Contains modified Copernicus Sentinel data 2025 · Microsoft Planetary Computer", "public", "n/a", "ESA / Copernicus", 82 if key == "pre" else 83, 10, 14,
                           {"item": f["id"], "cloud": round(f["properties"]["eo:cloud_cover"], 1)}, note="Maxar fallback (build=export|public)"))
     doc = {"items": items,
-           "ladder": {"global": ["gibs-viirs-truecolor", "eox-s2cloudless-2025", "gibs-hls-s30", "pc-s2-mosaic", "pc-worldcover-2021", "pc-ndvi-mosaic", "overture-buildings", "maxar-mm-meiktila"],
+           "ladder": {"global": ["gibs-viirs-truecolor", "gibs-hls-s30", "pc-s2-mosaic", "pc-worldcover-2021", "pc-ndvi-mosaic", "overture-buildings", "maxar-mm-meiktila"],
                       "domestic_bridge": ["xdworld-satellite"]},
            "as_of": mos["fetched_at"][:10], "source": "F1-D fixture · F1-CONTRACT §4.1 LayerItem · external URLs verified in recon-0924/global-map.md §1",
            "fetched_at": mos["fetched_at"], "license": "per item (license field)"}

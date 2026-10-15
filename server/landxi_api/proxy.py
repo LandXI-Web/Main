@@ -249,11 +249,12 @@ async def pc_search(request: Request):
     return await _pc("POST", f"{PC}/stac/v1/search", raw, "pc/search", 6 * 3600, "search:" + raw.decode())
 
 
-# ── S-11 글로벌 타일 프록시·캐시(EOX → PC → V-World 사다리) ─────────────────────────
+# ── S-11 글로벌 타일 프록시·캐시(세계 바탕 → PC → V-World 사다리) ─────────────────────────
+# 세계 바탕 = 서버에서 구운 판(NASA Blue Marble · 공공 · z0–8 · 데이터 폴더 tiles/world-bm · 10-15 EOx-모두교체 — 비상업 EOX 를 뺐다).
 # 첫 방문 하강 실패 0: 상류 하나가 느리거나 막히면 다음 단으로 · 받은 타일은 디스크 캐시(30일) · 착지 타일은 견적과 분리해 미리 데운다(warm).
 TILE_TTL = 30 * 86400
 TILE_LADDER = [
-    ("eox", "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg", 0, 15, None),
+    ("world", "local:tiles/world-bm/{z}/{x}/{y}.webp", 0, 8, None),
     ("pc", "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png"
            "?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual|1,2,3&nodata=0", 8, 14, "searchid"),
     ("vworld", "https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg", 5, 19, None),
@@ -281,7 +282,14 @@ async def fetch_tile(z: int, x: int, y: int, year: str = "2025", searchid: str |
             continue
         if name == "vworld" and not _tile_in_korea(z, x, y):
             continue
-        ck = f"{name}/{year if name == 'eox' else (searchid or '')}/{z}/{x}/{y}"
+        if tpl.startswith("local:"):                     # 서버에서 구운 판 — 파일 그대로(캐시 · 상류 없음)
+            f = config.DATA_ROOT / tpl[6:].format(z=z, x=x, y=y)
+            if f.is_file():
+                _tile_stats["hit"] += 1
+                return f.read_bytes(), "image/webp", name, "hit"
+            tried.append({"source": name, "status": 404})
+            continue
+        ck = f"{name}/{searchid or ''}/{z}/{x}/{y}"
         body, meta = cache_get("tiles", ck, TILE_TTL)
         if body is not None:
             _tile_stats["hit"] += 1
@@ -306,7 +314,7 @@ async def fetch_tile(z: int, x: int, y: int, year: str = "2025", searchid: str |
 
 @router.get("/proxy/tiles/global/{z}/{x}/{y}")
 async def global_tile(z: int, x: int, y: int, year: str = "2025", searchid: str | None = None, source: str | None = None):
-    """사다리 타일(인증 불필요 · 공개 영상만) — 응답 헤더 X-LX-Tile-Source(eox|pc|vworld) · X-LX-Cache(hit|miss)."""
+    """사다리 타일(인증 불필요 · 공개 영상만) — 응답 헤더 X-LX-Tile-Source(world|pc|vworld) · X-LX-Cache(hit|miss)."""
     if not (0 <= z <= 19) or not (0 <= x < 2 ** z) or not (0 <= y < 2 ** z):
         raise ApiError("bad_request", "타일 좌표 오류")
     body, ctype, src, cache = await fetch_tile(z, x, y, year, searchid, source)

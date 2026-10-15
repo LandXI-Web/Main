@@ -89,7 +89,7 @@ addOwn('namwon-parcels.pmtiles', { id: 'parcels-namwon', name: { ko: '남원 필
   attribution: 'C04 국토정보기본도 2.0 · 2021-12 기준', export_policy: 'never', security_review: 'pending', unit: '필지', epoch: '2021-12' });
 
 const LADDER = { domestic: ['gibs-viirs-truecolor', 'gibs-hls-s30', 'xdworld-satellite', 'ap25-namwon-2023', 'namwon-city-2504', 'namwon-city-2510', 'namwon-aoi-2504', 'namwon-aoi-2506', 'namwon-aoi-2508', 'namwon-aoi-2510'],
-  global: ['gibs-viirs-truecolor', 'eox-s2cloudless-2025', 'gibs-hls-s30', 'pc-s2-mosaic', 'pc-worldcover-2021', 'maxar-mm-meiktila'] };
+  global: ['gibs-viirs-truecolor', 'gibs-hls-s30', 'pc-s2-mosaic', 'pc-worldcover-2021', 'maxar-mm-meiktila'] };
 const all = [...ext, ...own];
 const OWN_IMG = (i) => i.role === 'imagery' && ['pmtiles', 'xyz', 'cog'].includes(i.source);
 const build = (filter) => { const items = all.filter(filter); const ids = new Set(items.map((i) => i.id)); return { items, ladder: { domestic: LADDER.domestic.filter((id) => ids.has(id)), global: LADDER.global.filter((id) => ids.has(id)) }, as_of: TODAY }; };

@@ -1,0 +1,81 @@
+{
+ "last_round_at": "2026-10-14T14:16:48+09:00",
+ "note": "1회차(impl-32 chatgeo-loop · 새 판 1 · 2) 시각에서 시작",
+ "runs": [
+  {
+   "at": "2026-10-15T08:31:22+09:00",
+   "mode": "none",
+   "why": "해당 없음(새 후보 2건 · 3명 이상 물은 후보 0)",
+   "test": false,
+   "items": [],
+   "dir": "20261015-0831",
+   "plan": null
+  },
+  {
+   "at": "2026-10-15T08:32:11+09:00",
+   "mode": "small",
+   "why": "시험 실행 — 바로 고칠 수 있는 후보 하나",
+   "test": true,
+   "items": [
+    "ic_9f3f72a5a21c"
+   ],
+   "dir": "20261015-0832-test",
+   "release": "rel_fc5f578bfa62",
+   "release_no": null,
+   "state": "draft",
+   "before": {
+    "total": 15,
+    "답함": 13,
+    "안내함": 2,
+    "못 함": 0
+   },
+   "after": {
+    "total": 15,
+    "답함": 13,
+    "안내함": 2,
+    "못 함": 0
+   },
+   "better": 0,
+   "worse": 0,
+   "flaky": 0,
+   "tidy": [
+    {
+     "step": "revert",
+     "item": "ic_9f3f72a5a21c",
+     "status": 409
+    }
+   ],
+   "minutes": 0.8
+  },
+  {
+   "at": "2026-10-15T08:34:43+09:00",
+   "mode": "small",
+   "why": "시험 실행 — 바로 고칠 수 있는 후보 하나",
+   "test": true,
+   "items": [
+    "ic_9f3f72a5a21c"
+   ],
+   "dir": "20261015-0834-test",
+   "release": "rel_a43480b533c4",
+   "release_no": null,
+   "state": "closed",
+   "before": {
+    "total": 15,
+    "답함": 13,
+    "안내함": 2,
+    "못 함": 0
+   },
+   "after": {
+    "total": 15,
+    "답함": 13,
+    "안내함": 2,
+    "못 함": 0
+   },
+   "better": 0,
+   "worse": 0,
+   "flaky": 0,
+   "tidy": [],
+   "minutes": 0.8
+  }
+ ]
+}

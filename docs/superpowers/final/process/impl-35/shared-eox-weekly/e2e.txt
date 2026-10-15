@@ -1,0 +1,9 @@
+
+Running 5 tests using 1 worker
+
+[1/5] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[2/5] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+[3/5] tests\e2e\impl22-core.spec.mjs:10:3 › impl-22 · 핵심 코어 고리 › LX 직원 — 데이터하우스 없음(옛 주소 → 프로젝트 목록) · 학습 서식 기본 흐름 · 수정된 부분 선택지 · 평가 → 추론
+[4/5] tests\e2e\impl22-core.spec.mjs:46:3 › impl-22 · 핵심 코어 고리 › LX 관리자 — 배포 → XI 재학습 · 학습 서식
+[5/5] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+  5 passed (38.6s)

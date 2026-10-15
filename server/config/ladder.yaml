@@ -1,9 +1,11 @@
 # 외부 영상 사다리(F1-CONTRACT §4.1) — URL 은 계약 문구 그대로(2026-09-24 검증). 서버가 템플릿을 그대로 준다.
+# 10-15 EOx-모두교체 — 비상업 EOX Sentinel-2 cloudless(2025 · 2017) 두 층을 뺐다. 세계 낮은 줌 바탕은 서버에서 구운 판(NASA Blue Marble · 공공 ·
+# 데이터 폴더 tiles/world-bm) · 해외 나라 · 구역은 Sentinel-2 원 자료 판(tiles/overseas-s2) — 화면이 조각 폴더에서 바로 읽는다(카탈로그 밖).
 ladder:
   domestic: [gibs-viirs-truecolor, gibs-hls-s30, xdworld-satellite, ap25-namwon-2023, namwon-city-2504, namwon-city-2510,
              namwon-aoi-2504, namwon-aoi-2506, namwon-aoi-2508, namwon-aoi-2510,
              axis-iksan-hwangdeung]   # 원본 1.36cm — lx 빌드에만 남는다(public·tenant 는 항목 자체가 걸러져 빠진다)
-  global: [gibs-viirs-truecolor, eox-s2cloudless-2025, gibs-hls-s30, pc-s2-mosaic, pc-worldcover-2021, maxar-mm-meiktila]
+  global: [gibs-viirs-truecolor, gibs-hls-s30, pc-s2-mosaic, pc-worldcover-2021, maxar-mm-meiktila]
 external:
   - id: xdworld-satellite
     name: {ko: V-World 위성(키 없는 xdworld), en: V-World satellite}
@@ -55,41 +57,6 @@ external:
     security_review: cleared
     rights_holder: NASA
     ladder: {stage: both, from: 0, to: 9, order: 0}
-  - id: eox-s2cloudless-2025
-    name: {ko: "Sentinel-2 cloudless 2025(EOX · 비상업)", en: "Sentinel-2 cloudless 2025 (EOX · non-commercial)"}
-    kind: raster
-    role: imagery
-    tiles: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg"
-    params: {year: "2025"}
-    minzoom: 0
-    maxzoom: 15
-    bounds: [-180, -85, 180, 85]
-    gsd_m: 10
-    epoch: "2025"
-    license: "CC BY-NC-SA 4.0(비상업 · export 빌드 제외)"
-    attribution: "Sentinel-2 cloudless 2025 by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)"
-    export_policy: public
-    security_review: cleared
-    rights_holder: EOX
-    noncommercial: true
-    ladder: {stage: global, from: 0, to: 15, order: 15}
-  - id: eox-s2cloudless-2017
-    name: {ko: "Sentinel-2 cloudless 2017(EOX · CC BY)", en: "Sentinel-2 cloudless 2017 (EOX · CC BY)"}
-    kind: raster
-    role: imagery
-    tiles: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg"
-    params: {year: "2017"}
-    minzoom: 0
-    maxzoom: 15
-    bounds: [-180, -85, 180, 85]
-    gsd_m: 10
-    epoch: "2017"
-    license: CC BY 4.0
-    attribution: "Sentinel-2 cloudless 2017 by EOX IT Services GmbH"
-    export_policy: public
-    security_review: cleared
-    rights_holder: EOX
-    ladder: {stage: global, from: 0, to: 15, order: 16}
   - id: pc-worldcover-2021
     name: {ko: "ESA WorldCover 2021(Planetary Computer)", en: "ESA WorldCover 2021"}
     kind: raster

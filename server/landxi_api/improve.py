@@ -1571,6 +1571,8 @@ async def _rel_decide(request: Request, rid: str, action: str, by_system: bool =
         if not r:
             raise ApiError("not_found", "그 판을 찾지 못했습니다")
         want = {"approve": "pending", "reject": "pending", "revert": "approved"}[action]
+        if who == "system" and action == "reject" and r["state"] == "draft":
+            want = "draft"                            # 정기 개선 바퀴가 통과 기준을 못 넘은 판(만드는 중)을 스스로 거둔다 — 묶인 후보는 새로 옴으로(10-15 ChatGEO-매주)
         if r["state"] != want:
             raise ApiError("conflict", f"{REL_KO.get(r['state'], r['state'])} 상태의 판입니다", status=409)
         new = {"approve": "approved", "reject": "rejected", "revert": "reverted"}[action]

@@ -298,7 +298,7 @@ async function main() {
   // 흰 글로브 — 줌 3 이하는 흰 지구 + 나라 면 · 4 이상에서 위성 영상이 차오른다
   map.setProjection({ type: ['interpolate', ['linear'], ['zoom'], 3.6, 'vertical-perspective', 5.4, 'mercator'] });
   map.setPaintProperty('bg', 'background-color', '#FFFFFF');
-  if (map.getLayer('k-eox')) map.setPaintProperty('k-eox', 'raster-opacity', ['interpolate', ['linear'], ['zoom'], 2.8, 0, 4.2, 1]);
+  if (map.getLayer('k-world')) map.setPaintProperty('k-world', 'raster-opacity', ['interpolate', ['linear'], ['zoom'], 2.8, 0, 4.2, 1]);
   if (map.getLayer('k-vw')) map.setLayoutProperty('k-vw', 'visibility', 'none');
   const lxIso = new Set((lx?.countries || []).map((c) => c.iso3));
   const worldFc = { type: 'FeatureCollection', features: world.features.map((f) => ({ ...f, properties: { ...f.properties, lx: lxIso.has(f.properties.iso3) ? 1 : 0, mine: countries.has(f.properties.iso3) ? 1 : 0 } })) };
@@ -814,9 +814,9 @@ async function main() {
   const agentDone = (op, ok, reason) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, ...(reason ? { reason } : {}), by: 'global' } }));
   window.__glAgent = [];                        // 동작 기록(줌 · 기울기 · 중심 · 영상 층) — 화면에는 보이지 않는다(실증 기록용)
   const camNow = () => { const c = map.getCenter(); return { zoom: +map.getZoom().toFixed(2), pitch: +map.getPitch().toFixed(1), center: [+c.lng.toFixed(4), +c.lat.toFixed(4)],
-    imagery: map.getLayer('k-eox') ? (map.getLayoutProperty('k-eox', 'visibility') || 'visible') : 'none', district: S.district?.name || null, tab: STR.tabs[S.tab] }; };
+    imagery: map.getLayer('k-world') ? (map.getLayoutProperty('k-world', 'visibility') || 'visible') : 'none', district: S.district?.name || null, tab: STR.tabs[S.tab] }; };
   const settled = () => new Promise((r) => { if (!map.isMoving()) { requestAnimationFrame(() => (map.isMoving() ? map.once('moveend', () => r()) : r())); } else map.once('moveend', () => r()); setTimeout(r, 3000); });
-  const LAYER_IDS = { imagery: () => ['k-eox'], results: () => ['gl-ndvi', 'gl-change', 'gl-cells'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
+  const LAYER_IDS = { imagery: () => ['k-world', ...map.getStyle().layers.filter((l) => l.id.startsWith('k-s2-')).map((l) => l.id)], results: () => ['gl-ndvi', 'gl-change', 'gl-cells'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
   const LAYER_EN = { imagery: 'the imagery layer', results: 'the results layer', districts: 'the district boundaries', mismatch: 'the mismatched districts' };
   async function onAgentAction(a) {
     const before = camNow();

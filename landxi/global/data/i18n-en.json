@@ -29,7 +29,7 @@
     "list.point": "not a country",
     "list.noname": "project title not listed (2023 internal list)",
     "list.open": "open",
-    "ladder.eox2025": "EOX S2 cloudless 2025",
+    "ladder.base": "Sentinel-2 · NASA Blue Marble",
     "ladder.eox2017": "EOX S2 cloudless 2017",
     "ladder.gibs": "NASA GIBS VIIRS {date}",
     "ladder.pcmos": "PC S2 mosaic {month}",

@@ -12,14 +12,12 @@
 .sd-tbl td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:middle;white-space:nowrap}
 .sd-tbl td b{font-weight:500;white-space:normal;word-break:keep-all}
 .sd-c-im{width:72px}
-.sd-tbl:has(.sd-do) tbody tr{height:61px}   /* 고치기 · 지우기 단추가 있는 줄과 없는 줄이 같은 높이 */
+.sd-tbl tbody tr{height:57px}   /* 줄 높이 한 값(공개 단추가 있는 줄 · 없는 줄 같게) */
 .sd-im{display:block;width:64px;height:48px;border-radius:6px;overflow:hidden;background:var(--bg-0)}
 .sd-im img{width:100%;height:100%;object-fit:cover;display:block}
 .sd-vis{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:999px;background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
 .sd-vis[aria-pressed="true"]{border-color:#1B64DA;color:#1B64DA}
 .sd-vis:disabled{opacity:.6;cursor:default}
-.sd-do{text-align:right}
-.sd-do .t-btn{margin-left:6px}
 .sd-none{margin:0;padding:16px;border-radius:12px;background:var(--bg-0);font:400 14px/20px var(--font-body);color:var(--sub)}
 .sd-body{flex:1 1 0;min-height:0;overflow:auto}
 .sd-wait{height:100%;display:flex;align-items:center;justify-content:center}
@@ -56,3 +54,36 @@
 .sd-form .t-input{box-sizing:border-box;width:100%;max-width:100%}
 /* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
 @media (min-width:1600px){.sd-card{max-width:var(--wide-max)}}
+/* 줄을 누르면 오른쪽 상세 판(10-15 공유데이터-상세 · 원칙 255) — 판 폭 · 높이 고정(원칙 231) · 글자 본문 15px · 보조 13px 이상(원칙 257) */
+.sd-split{flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px}
+.sd-list{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+.sd-row{cursor:pointer}
+.sd-row:hover td{background:var(--bg-0)}
+.sd-row[aria-selected="true"] td{background:#EEF4FD}
+.sd-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sd-det{min-height:0;overflow:auto;padding:2px 2px 2px 24px;border-left:1px solid var(--rule)}
+.sd-d{display:flex;flex-direction:column;gap:14px}
+.sd-d-map{position:relative;flex:none;height:220px;border-radius:12px;overflow:hidden;background:var(--bg-0)}
+.sd-d-map .sd-map{position:absolute;inset:0}
+.sd-d-pics{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;height:220px}
+.sd-d-pic{width:100%;height:100%;border-radius:10px}
+.sd-im.is-blank{background:var(--bg-0)}
+.sd-d-t{margin:2px 0 0;font:700 18px/26px var(--font-display);letter-spacing:-.01em;color:var(--ink);word-break:keep-all}
+.sd-d-s{display:flex;align-items:baseline;justify-content:space-between;margin:6px 0 -4px;padding-top:12px;border-top:1px solid var(--rule);font:600 15px/22px var(--font-body);color:var(--ink)}
+.sd-d-s .num{font:500 15px/22px var(--font-body);color:var(--sub)}
+.sd-kv{display:grid;grid-template-columns:72px minmax(0,1fr) 72px minmax(0,1fr);gap:8px 12px;margin:0;align-items:center}   /* 두 짝씩 한 줄 — 판 높이 안에 관리 단추까지 */
+.sd-kv dt{font:500 14px/22px var(--font-body);color:var(--sub)}
+.sd-kv dd{margin:0;font:400 15px/22px var(--font-body);color:var(--ink);word-break:keep-all;min-width:0}
+.sd-kv dd .sd-vis{vertical-align:middle}
+.sd-d-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sd-d-list li{display:flex;justify-content:space-between;gap:12px;font:400 15px/22px var(--font-body);color:var(--ink)}
+.sd-d-list li span{min-width:0;word-break:keep-all}
+.sd-d-list li b{font-weight:500;white-space:nowrap}
+.sd-d-none{margin:0;font:400 15px/22px var(--font-body);color:var(--mute)}
+.sd-d-tw{overflow-x:auto;border:1px solid var(--rule);border-radius:10px}
+.sd-d-tbl{border-collapse:collapse;min-width:100%;font:400 14px/20px var(--font-body);color:var(--ink)}
+.sd-d-tbl th{padding:8px 10px;text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);background:var(--bg-0);white-space:nowrap}
+.sd-d-tbl td{padding:8px 10px;border-top:1px solid var(--rule);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.sd-d-act{display:flex;gap:8px;padding-top:4px}
+.sd-det .sd-wait{height:100%;min-height:240px}
+@media (max-width:960px){.sd-split{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 560px}.sd-det{padding:16px 0 0;border-left:0;border-top:1px solid var(--rule)}}

@@ -29,8 +29,8 @@ const sampler = () => page.evaluate(() => {
   const tick = () => {
     if (!S.rec) return;
     const m = S.map, w = S.win, p = m.project(pc);
-    try { const sc = m.style.sourceCaches['k-eox']; S.seen = S.seen || new Set(); for (const t of Object.values(sc._tiles)) { const c = t.tileID.canonical; S.seen.add(`${c.z}/${c.y}/${c.x}`); } } catch { }
-    let loaded = true; try { loaded = m.isSourceLoaded('k-eox'); } catch { }
+    try { const sc = m.style.sourceCaches['k-world']; S.seen = S.seen || new Set(); for (const t of Object.values(sc._tiles)) { const c = t.tileID.canonical; S.seen.add(`${c.z}/${c.y}/${c.x}`); } } catch { }
+    let loaded = true; try { loaded = m.isSourceLoaded('k-world'); } catch { }
     S.rec.push({ z: +m.getZoom().toFixed(2), px: Math.round(p.x), py: Math.round(p.y), in: !!w && p.x >= w.x && p.x <= w.x + w.w && p.y >= w.y && p.y <= w.y + w.h, loaded, veil: +S.veilO.toFixed(2), gap: +(S.gap || 0).toFixed(2), ax: S.active, tb: +window.__lxmT?.toFixed?.(2) || 0 });
     requestAnimationFrame(tick);
   };

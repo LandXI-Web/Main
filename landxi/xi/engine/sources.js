@@ -10,9 +10,9 @@ let BLANK = null;
 const blank = async () => (BLANK ||= await createImageBitmap(new ImageData(1, 1)));
 
 /* ── 서비스 워커 없는 방패(2차 판정): 첫 방문(컨트롤러 대기)·SW 차단·시크릿 창에서도 외부 타일 5xx/404 가 콘솔 오류가 되지 않게
-   외부 호스트(GIBS · V-World xdworld · EOX) 요청을 전용 Worker 의 fetch 로 받는다(Worker 안 fetch 의 실패 상태는 페이지 콘솔에 남지 않는다 · 실측).
+   외부 호스트(GIBS · V-World xdworld) 요청을 전용 Worker 의 fetch 로 받는다(Worker 안 fetch 의 실패 상태는 페이지 콘솔에 남지 않는다 · 실측).
    실패는 투명 1×1 + 결손 수(onMiss) — SW 방패(sw.js blank)와 같은 정직 표기. 모드는 xi.js 가 부팅 때 정한다(setExtMode). */
-const EXT_HOSTS = /^https:\/\/(gibs\.earthdata\.nasa\.gov|xdworld\.vworld\.kr|tiles\.maps\.eox\.at)\//;
+const EXT_HOSTS = /^https:\/\/(gibs\.earthdata\.nasa\.gov|xdworld\.vworld\.kr)\//;
 let EXT_MODE = 'sw', EW = null, ESEQ = 0; const EPEND = new Map();
 export const EXT_MISS = { n: 0, last: null, onMiss: null };
 export const EXT_OK = { n: 0 };   // 그려진 외부 바탕 타일 수(화면이 '바탕 영상 있음'을 판단 · 10-10)
@@ -20,7 +20,7 @@ export function setExtMode(m) { EXT_MODE = m === 'worker' ? 'worker' : 'sw'; ret
 export const extMode = () => EXT_MODE;
 function extWorker() {
   if (EW) return EW;
-  // 응답 없는 원천(외부 호스트가 멈춤 — 10-10 EOX 실측: 연결만 열고 답이 없음)은 EXT_WAIT 뒤 끊는다 — 지도 이미지 요청 칸(16)을 영원히 쥐지 않게
+  // 응답 없는 원천(외부 호스트가 멈춤 — 10-10 실측: 연결만 열고 답이 없음)은 EXT_WAIT 뒤 끊는다 — 지도 이미지 요청 칸(16)을 영원히 쥐지 않게
   const src = `onmessage = async (e) => { const { id, url, wait } = e.data; const ac = new AbortController(); const t = setTimeout(() => ac.abort(), wait); try { const r = await fetch(url, { mode: 'cors', signal: ac.signal }); const b = r.ok ? await r.arrayBuffer() : null; clearTimeout(t); postMessage({ id, ok: r.ok, status: r.status, b, ct: r.headers.get('content-type') || '' }, b ? [b] : []); } catch (x) { clearTimeout(t); postMessage({ id, ok: false, status: 0, late: ac.signal.aborted }); } };`;
   EW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
   EW.onmessage = (e) => { const f = EPEND.get(e.data.id); if (f) { EPEND.delete(e.data.id); f(e.data); } };

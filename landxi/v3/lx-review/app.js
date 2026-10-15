@@ -43,7 +43,7 @@ const hudLabel = hudEl.querySelector('.k-big-l');
 const loadEl = h('div.rv-load', { 'aria-hidden': 'true' });
 const loadDone = K.hold();
 stageEl.append(loadEl);
-/* 사진 타일 — 바탕(k-eox · k-vw) 타일이 몇 장 깔렸는가(줌 10 이상 · 회백 판 위에 HUD 를 올리지 않기 위한 기준). 카드는 V-World 줌 16 이상 */
+/* 사진 타일 — 바탕(k-world · k-vw) 타일이 몇 장 깔렸는가(줌 10 이상 · 회백 판 위에 HUD 를 올리지 않기 위한 기준). 카드는 V-World 줌 16 이상 */
 let painted = 0, paintedHi = 0, flying = 0;
 const fly = (b, o) => { if (!stage) return Promise.resolve(false); flying++; return stage.go(b, o).finally(() => { flying--; }); };
 
@@ -105,7 +105,7 @@ const drawQueue = () => stage.geo('q', fc(inRule()), 'ai');
 function bindMap() {
   const m = stage.map;
   m.on('data', (e) => {
-    if (e.dataType !== 'source' || !e.tile || !/^k-(eox|vw)$/.test(e.sourceId || '')) return;
+    if (e.dataType !== 'source' || !e.tile || !/^k-(world|vw)$/.test(e.sourceId || '')) return;
     const z = e.tile.tileID?.canonical?.z ?? 0;
     if (z >= 10) { painted++; if (painted === 1 || painted === 4) T['tile' + painted] = Math.round(performance.now()); }
     if (z >= 16 && e.sourceId === 'k-vw') paintedHi++;

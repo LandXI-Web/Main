@@ -7,12 +7,15 @@
    const st = createStage(el); await st.ready; st.go(region); st.geo('ai', featureCollection, 'ai'); st.pad({ right: 416 }) */
 import { createMap, loaded } from '../../xi/engine/lx-map.js';
 import { flyLadder, stopFlight } from '../../xi/engine/camera.js';
-import { registerPmtiles, setExtMode, onExtDown } from '../../xi/engine/sources.js';
+import { registerPmtiles, setExtMode } from '../../xi/engine/sources.js';
 import { gpuInfo } from '../../xi/engine/tier.js';
 import { bboxOf, RM } from './util.js';
 
 export const KOREA = [124.5, 33.0, 131.9, 38.7];
-const EOX = 'tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg';
+/* 세계 바탕(낮은 줌 · 지구본 · 국내 전국 축척) — NASA Blue Marble 로 구운 판(공공 · 상업 이용 가능 · z0–8 · 10-15 EOx-모두교체).
+   조각 폴더의 meta.json 이 없으면(정적 배포) 국내 바탕(V-World)을 범위 없이 세계 전체로 깐다(V-World 는 z0–7 세계를 그린다 · 실측). */
+const WORLD = new URL('../../data/tiles/world-bm/', import.meta.url).href;
+export const WORLD_V = '?v=2';   // 판을 다시 구우면 올린다(바깥 주소 앞단이 지도 조각을 하루 보관 · 주소가 바뀌어야 새 조각)
 const VW = 'xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
 /* 해외 바탕 — Copernicus Sentinel-2 L2A 원 자료로 만든 구름 없는 모자이크(10 m · 무료 · 상업 이용 가능 · 10-14 해외바탕-교체).
    판 목록(나라 판 낮은 줌 · 구역 판 고줌 · 범위)은 조각 폴더의 meta.json 이 정한다(지역 고정값 0) · 없으면(정적 배포) 그냥 건너뛴다. */
@@ -78,18 +81,19 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
     // 밑받침 — 아주 거친 한 장(z2 · 동아시아 전체를 타일 한두 장으로)이 늘 깔려, 입체로 기울이거나 돌릴 때 아직 안 온 타일 자리가 흰 바탕으로 비지 않는다(GPT2-1)
     //   under: true 인 화면만(XI맵 — 입체 보기가 있는 화면 · 지구본 · 영상 숨김 화면은 그대로)
     if (under) {
-      map.addSource('k-under', { type: 'raster', tiles: [url(EOX)], tileSize: 256, maxzoom: 2 });
+      map.addSource('k-under', { type: 'raster', tiles: [WORLD + '{z}/{x}/{y}.webp' + WORLD_V], tileSize: 256, maxzoom: 2 });
       map.addLayer({ id: 'k-under', type: 'raster', source: 'k-under', paint: { 'raster-fade-duration': 0 } }, 'slot-imagery');
     }
-    map.addSource('k-eox', { type: 'raster', tiles: [url(EOX)], tileSize: 256, maxzoom: 13 });
+    map.addSource('k-world', { type: 'raster', tiles: [WORLD + '{z}/{x}/{y}.webp' + WORLD_V], tileSize: 256, maxzoom: 8 });
     map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9] });
-    map.addLayer({ id: 'k-eox', type: 'raster', source: 'k-eox', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
+    map.addLayer({ id: 'k-world', type: 'raster', source: 'k-world', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
     map.addLayer({ id: 'k-vw', type: 'raster', source: 'k-vw', minzoom: 6.5, paint: { 'raster-fade-duration': 500, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6.5, 0, 7.4, 1] } }, 'slot-imagery');
-    overseas().catch(() => { /* 해외 바탕 조각 없음 — 기존 바탕 그대로 */ });
-    // 전국 바탕(EOX)이 멈추면 국내 바탕(V-World)을 전국 축척부터 바로 — 빈 바탕 지도 대신(10-10 고장 · EOX 무응답 실측)
+    const S2P = overseas().catch(() => []);   // 해외 바탕 조각 없음 — 기존 바탕 그대로
+    // 세계 바탕 판이 없으면(정적 배포) 국내 바탕(V-World)을 전국 축척부터 — 빈 바탕 지도 대신
     //   V-World 위성은 낮은 축척에서 세계 전체를 그려 준다(z0–7 실측) — 범위 없이 다시 올린다(층 순서는 그대로 · 자체 영상 아래 · 지구본 장면 포함)
-    onExtDown((host) => {
-      if (host !== 'tiles.maps.eox.at' || !map.getLayer('k-vw')) return;
+    fetch(WORLD + 'meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((m) => {
+      S2P.then((sets) => credits(sets, m));
+      if (m || !map.getLayer('k-vw')) return;
       const ls = map.getStyle().layers, next = ls[ls.findIndex((l) => l.id === 'k-vw') + 1]?.id;
       map.removeLayer('k-vw'); map.removeSource('k-vw');
       map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 0, maxzoom: 19 });
@@ -103,30 +107,38 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   function setMode(m) {
     mode = m; el.dataset.mode = m;
     const sat = m === 'ops' ? -0.4 : 0;     // raster-saturation −0.4 ≈ CSS saturate(.6)
-    for (const id of ['k-under', 'k-eox', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^(img-|k-s2-)/.test(l.id)).map((l) => l.id)])
+    for (const id of ['k-under', 'k-world', 'k-vw', ...(map.getStyle()?.layers || []).filter((l) => l.type === 'raster' && /^(img-|k-s2-)/.test(l.id)).map((l) => l.id)])
       if (map.getLayer(id)) map.setPaintProperty(id, 'raster-saturation', sat);
   }
 
-  /** 해외 바탕 판을 국내 바탕(k-vw) 바로 위에 — 자체 영상(img-*) · 결과 층 아래. 화면에 판이 보이면 지도 아래 출처 한 줄 */
+  /** 해외 바탕 판을 국내 바탕(k-vw) 바로 위에 — 자체 영상(img-*) · 결과 층 아래 → 판 목록(출처 한 줄이 쓴다) */
   async function overseas() {
     const r = await fetch(S2 + 'meta.json');
-    if (!r.ok) return;
+    if (!r.ok) return [];
     const meta = await r.json();
     const sets = Object.entries(meta.sets || {}).sort((a, b) => a[1].minzoom - b[1].minzoom);
-    if (!sets.length) return;
+    sets.attribution = meta.attribution;
+    if (!sets.length) return sets;
     const ls = map.getStyle().layers, next = ls[ls.findIndex((l) => l.id === 'k-vw') + 1]?.id;
     for (const [id, s] of sets) {
       map.addSource('k-s2-' + id, { type: 'raster', tiles: [S2 + id + '/{z}/{x}/{y}.webp'], tileSize: 256, bounds: s.bounds, minzoom: s.minzoom, maxzoom: s.maxzoom });
       map.addLayer({ id: 'k-s2-' + id, type: 'raster', source: 'k-s2-' + id, paint: { 'raster-fade-duration': 300, 'raster-saturation': mode === 'ops' ? -0.4 : 0 } }, next);
     }
+    return sets;
+  }
+  /** 지도 아래 출처 한 줄 — 해외 Sentinel-2 판이 보이면 그 출처, 세계 바탕(국내 바탕이 덮기 전 축척)이 보이면 NASA */
+  function credits(sets, world) {
     const cr = document.createElement('p');
-    cr.className = 'k-credit'; cr.hidden = true; cr.textContent = meta.attribution || 'Contains modified Copernicus Sentinel data';
-    cr.style.cssText = 'position:absolute;right:8px;bottom:3px;margin:0;font-size:10.5px;line-height:1.3;color:rgba(255,255,255,.92);text-shadow:0 0 3px rgba(0,0,0,.6);pointer-events:none;z-index:2;white-space:nowrap';
+    cr.className = 'k-credit'; cr.hidden = true;
+    cr.style.cssText = 'position:absolute;right:8px;bottom:3px;margin:0;font-size:12px;line-height:1.3;color:rgba(255,255,255,.92);text-shadow:0 0 3px rgba(0,0,0,.6);pointer-events:none;z-index:2;white-space:nowrap';
     el.append(cr);
     const upd = () => {
       const b = map.getBounds(), z = map.getZoom();
-      cr.hidden = !sets.some(([id, s]) => z >= s.minzoom && map.getLayoutProperty('k-s2-' + id, 'visibility') !== 'none'
+      const s2 = sets.some(([id, s]) => z >= s.minzoom && map.getLayoutProperty('k-s2-' + id, 'visibility') !== 'none'
         && !(s.bounds[2] < b.getWest() || s.bounds[0] > b.getEast() || s.bounds[3] < b.getSouth() || s.bounds[1] > b.getNorth()));
+      const wd = world && z < 7.4 && map.getLayoutProperty('k-world', 'visibility') !== 'none';
+      cr.textContent = s2 ? sets.attribution || 'Contains modified Copernicus Sentinel data' : wd ? world.attribution || 'NASA Blue Marble' : '';
+      cr.hidden = !cr.textContent;
     };
     map.on('moveend', upd); upd();
   }

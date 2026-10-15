@@ -46,92 +46,6 @@
    }
   },
   {
-   "id": "eox-s2cloudless-2025",
-   "name": {
-    "ko": "EOX Sentinel-2 cloudless 2025",
-    "en": "EOX Sentinel-2 cloudless 2025"
-   },
-   "kind": "raster",
-   "role": "imagery",
-   "source": "external",
-   "set": null,
-   "path": null,
-   "url": null,
-   "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
-   "scheme": "xyz",
-   "layer": null,
-   "promote_id": null,
-   "minzoom": 3,
-   "maxzoom": 14,
-   "bounds": [
-    -180,
-    -85,
-    180,
-    85
-   ],
-   "gsd_m": 10,
-   "epoch": "2025",
-   "crs": "EPSG:3857",
-   "tier": "tile",
-   "license": "CC BY-NC-SA 4.0",
-   "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)",
-   "export_policy": "public",
-   "security_review": "n/a",
-   "rights_holder": "EOX IT Services GmbH",
-   "ladder": {
-    "stage": "global",
-    "from": 5,
-    "to": 9,
-    "order": 20
-   },
-   "count": null,
-   "signed": false,
-   "note": "non-commercial — build=lx|tenant public demo only · excluded from build=export (2017 edition instead)"
-  },
-  {
-   "id": "eox-s2cloudless-2017",
-   "name": {
-    "ko": "EOX Sentinel-2 cloudless 2017",
-    "en": "EOX Sentinel-2 cloudless 2017"
-   },
-   "kind": "raster",
-   "role": "imagery",
-   "source": "external",
-   "set": null,
-   "path": null,
-   "url": null,
-   "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2017_3857/default/g/{z}/{y}/{x}.jpg",
-   "scheme": "xyz",
-   "layer": null,
-   "promote_id": null,
-   "minzoom": 3,
-   "maxzoom": 14,
-   "bounds": [
-    -180,
-    -85,
-    180,
-    85
-   ],
-   "gsd_m": 10,
-   "epoch": "2017",
-   "crs": "EPSG:3857",
-   "tier": "tile",
-   "license": "CC BY 4.0",
-   "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)",
-   "export_policy": "public",
-   "security_review": "n/a",
-   "rights_holder": "EOX IT Services GmbH",
-   "ladder": {
-    "stage": "global",
-    "from": 5,
-    "to": 9,
-    "order": 21
-   },
-   "count": null,
-   "signed": false,
-   "note": "verified blank (white tiles) over Kyrgyzstan 2026-09-24 — not used in KGZ scenes"
-  },
-  {
    "id": "gibs-hls-s30",
    "name": {
     "ko": "NASA GIBS HLS S30 30 m · 일자별",
@@ -612,7 +526,6 @@
  "ladder": {
   "global": [
    "gibs-viirs-truecolor",
-   "eox-s2cloudless-2025",
    "gibs-hls-s30",
    "pc-s2-mosaic",
    "pc-worldcover-2021",

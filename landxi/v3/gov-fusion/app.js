@@ -78,8 +78,8 @@ K.devDrawer({ stage, who });
 /* 바탕 층 — 바다색 · 이웃 육지 · 대한민국 육지(--bg-0 · 타일 오기 전) · 육지 마스크 위성(저줌 받침 z6–8 + 본 층 z9–19) */
 function mountBase(map) {
   map.setPaintProperty('bg', 'background-color', SEA);
-  for (const id of ['k-eox', 'k-vw']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
-  const before = map.getLayer('k-eox') ? 'k-eox' : 'slot-imagery';
+  for (const id of ['k-world', 'k-vw']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  const before = map.getLayer('k-world') ? 'k-world' : 'slot-imagery';
   map.addSource('gf-other', { type: 'geojson', data: new URL('./geo/neighbors.geojson', import.meta.url).href });
   map.addLayer({ id: 'gf-other', type: 'fill', source: 'gf-other', paint: { 'fill-color': OTHER, 'fill-antialias': true } }, before);
   map.addSource('gf-sgg', { type: 'vector', url: 'pmtiles://' + SGG_URL });

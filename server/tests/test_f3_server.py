@@ -505,7 +505,7 @@ def test_s11_global_tile_ladder(live, tok):
         pytest.skip("외부망 없음")
     if a.status_code == 502:
         pytest.skip("상류 전부 응답 없음(외부망)")
-    assert a.status_code == 200 and a.headers["content-type"].startswith("image/") and a.headers["x-lx-tile-source"] in ("eox", "pc", "vworld")
+    assert a.status_code == 200 and a.headers["content-type"].startswith("image/") and a.headers["x-lx-tile-source"] in ("world", "pc", "vworld")
     b = httpx.get(B + "/proxy/tiles/global/3/6/3", timeout=30)
     assert b.headers["x-lx-cache"] == "hit"
     w = httpx.post(B + "/proxy/tiles/warm", headers=H(tok["staff"]), json={"bbox": [74.2, 42.8, 74.5, 42.95], "zmin": 6, "zmax": 8}, timeout=30)

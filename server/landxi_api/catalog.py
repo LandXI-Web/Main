@@ -1,7 +1,7 @@
 """카탈로그(F1-CONTRACT §4.1) — imagery 표 + config/sets.yaml(layers) + config/ladder.yaml(외부 사다리) → LayerItem.
 
 관문(사용자 결정 2026-09-24 · 설계서 §10 X5 · R6):
-  build=public  영상 층 = 외부 위성(xdworld-satellite · gibs-* · eox-* · pc-*)만. 자체 영상(pmtiles|xyz|cog · role imagery) 0.
+  build=public  영상 층 = 외부 위성(xdworld-satellite · gibs-* · pc-*)만. 자체 영상(pmtiles|xyz|cog · role imagery) 0.
                 결과는 export_policy='public' 이면서 security_review='cleared' 만.
   build=tenant  그 기관 배포본 결과 + 참조 + 자체 영상 중 export_policy ∈ tenant|public. tier raw · cog 는 절대 없음.
   build=lx      전부(원본 COG 는 lx 만).
@@ -25,7 +25,7 @@ try:                                                    # 영상 표준(원칙 9
         router.include_router(_std_router)
 except Exception:  # noqa: BLE001
     pass
-PUBLIC_IMAGERY_PREFIX = ("xdworld-", "gibs-", "eox-", "pc-")
+PUBLIC_IMAGERY_PREFIX = ("xdworld-", "gibs-", "pc-")
 
 
 def allowed_build(p: Principal, requested: str | None) -> str:
@@ -758,6 +758,65 @@ async def imagery_delete(iid: str, request: Request):
     _share_cache.clear()
     _fresh()
     return {"ok": True, "id": iid, "as_of": now_iso()}
+
+
+@router.get("/shared/imagery/{iid}")
+async def imagery_detail(iid: str, request: Request):
+    """LX 관리자 '공유 데이터' 영상 줄을 누르면 — 범위(지도 미리보기) · 정보(이름 · 연도 · 해상도 · 크기 · 공개) · 쓰인 곳(분석 · 프로젝트 수).
+    (10-15 공유데이터-상세 · 원칙 255) 파일 경로는 내지 않는다. 크기 = 영상 표준본(없으면 원본) 바이트."""
+    _admin(request)
+    from .regions import regions_base
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow(
+            f"SELECT id, name, gsd_m, year, epoch, sgg_cd, staff_visible, "
+            f"ST_AsGeoJSON(ST_SimplifyPreserveTopology(footprint, 0.0002), 6) AS fp, "
+            f"ST_Area(footprint::geography) / 1e6 AS km2, "
+            f"ST_XMin(footprint) x0, ST_YMin(footprint) y0, ST_XMax(footprint) x1, ST_YMax(footprint) y1 FROM imagery WHERE id=$1 AND {SHARED_ROW}", iid)
+        if not r:
+            raise ApiError("not_found", "영상이 없습니다")
+        size = await conn.fetchval("SELECT coalesce(std_size, orig_size) FROM imagery_std WHERE source_kind='imagery' AND source_id=$1 "
+                                   "ORDER BY std_size IS NULL LIMIT 1", iid)
+        if not size:                                   # 표준본 기록이 없는 영상(예전 등록) — 원본 · 지도 조각 묶음 파일 크기(경로는 내지 않는다)
+            from pathlib import Path
+            pr = await conn.fetchrow("SELECT path_internal, pmtiles_set FROM imagery WHERE id=$1", iid)
+            cands = [Path(str(pr["path_internal"]))] if pr["path_internal"] else []
+            if pr["pmtiles_set"]:
+                stem = str(pr["pmtiles_set"]).split("/")[-1]
+                cands += [config.DATA_ROOT / "tiles" / "pmtiles" / f"{stem}.pmtiles", config.DATA_ROOT / f"{pr['pmtiles_set']}.pmtiles"]
+            for f in cands:
+                try:
+                    if f.is_file():
+                        size = f.stat().st_size
+                        break
+                except OSError:
+                    continue
+        n_job = int(await conn.fetchval("SELECT count(*) FROM jobs WHERE imagery_id=$1 AND kind <> 'tile'", iid) or 0)
+        n_prj = int(await conn.fetchval("SELECT count(DISTINCT l.project_id) FROM project_links l JOIN projects p ON p.id=l.project_id "
+                                        "WHERE l.kind='imagery' AND l.ref=$1 AND p.state='active'", iid) or 0)
+        n_org = int(await conn.fetchval("SELECT count(*) FROM imagery_shares WHERE imagery_id=$1", iid) or 0)
+    regs = {x["sgg_cd"]: x for x in regions_base()[0]}
+    nm = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+    if isinstance(nm, str) and nm.startswith("{"):
+        try:
+            nm = json.loads(nm).get("ko")
+        except Exception:  # noqa: BLE001
+            pass
+    ep = str(r["year"] or r["epoch"] or "")
+    g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
+    bbox = [round(float(v), 6) for v in (r["x0"], r["y0"], r["x1"], r["y1"])] if r["x0"] is not None else None
+    if not bbox and r["sgg_cd"] and regs.get(r["sgg_cd"], {}).get("bbox"):
+        bbox = regs[r["sgg_cd"]]["bbox"]
+    src = "LX 영상 등록 기록"
+    return {"id": iid, "name": nm or "영상", "region": (regs.get(r["sgg_cd"]) or {}).get("name"),
+            "year": int(ep[:4]) if ep[:4].isdigit() else None,
+            "gsd_cm": env(round(g * 100, 1) if g is not None else None, "cm", "recorded", src),
+            "bbox": bbox, "footprint": json.loads(r["fp"]) if r["fp"] else None,
+            "area_km2": env(round(float(r["km2"]), 1) if r["km2"] else None, "km2", "measured", "영상 범위 면적"),
+            "bytes": env(int(size) if size else None, "bytes", "measured", "영상 표준본 파일"),
+            "visible": bool(r["staff_visible"]),
+            "used": {"jobs": env(n_job, "count", "recorded", "이 영상으로 한 분석"), "projects": env(n_prj, "count", "recorded", "이 영상을 쓰는 프로젝트"),
+                     "orgs": env(n_org, "count", "recorded", "이 영상을 공유한 기관")},
+            "can_drop": n_job == 0, "as_of": now_iso()}
 
 
 # ── LX 영상 공유(확인 대장 5차 역할-4 ⓑ — LX 관리자가 기관마다 고른다) ─────────────────────────────

@@ -499,6 +499,86 @@ async def shared_train_data(request: Request):
     return {"items": items, "total": len(items), "as_of": now_iso()}
 
 
+def _label_classes(paths: list[tuple[str | None, list]]) -> dict[str, int]:
+    """테두리 파일들 → 클래스마다 그 클래스가 든 그림 수(장)."""
+    out: dict[str, int] = {}
+    for lbl, names in paths:
+        if not lbl:
+            continue
+        try:
+            seen = {int(float(line.split()[0])) for line in Path(lbl).read_text(encoding="utf-8", errors="replace").splitlines() if line.split()}
+        except (OSError, ValueError):
+            continue
+        for c in seen:
+            n = names[c] if 0 <= c < len(names) else str(c)
+            out[n] = out.get(n, 0) + 1
+    return out
+
+
+@router.get("/shared/train-data/{tid}")
+async def shared_train_detail(tid: str, request: Request):
+    """LX 관리자 '공유 데이터' 학습 데이터 줄을 누르면(10-15 공유데이터-상세 · 원칙 255) — 그림 몇 장(라벨 테두리 겹침) · 클래스별 장수 ·
+    출처 · 날짜 · 쓰인 학습. 그림 주소는 API 아래 경로(로그인 토큰으로 받는다). 폴더 경로는 내지 않는다."""
+    require(principal(request), admin=True)
+    src = "올린 학습 데이터 파일"
+    async with db(realm="lx") as conn:
+        if tid.startswith("edits:"):
+            from .core import project_cards
+            pid = tid[6:]
+            if not await conn.fetchval("SELECT 1 FROM projects WHERE id=$1", pid):
+                raise ApiError("not_found", "학습 데이터가 없습니다")
+            cards = await project_cards(conn, pid)
+            rows = await conn.fetch("SELECT id, lbl_path, names, made_at FROM train_tiles WHERE (card_id = ANY($1::text[]) OR (card_id IS NULL AND project_id=$2)) "
+                                    "AND state='made' AND NOT test ORDER BY made_at DESC LIMIT 3000", cards, pid)
+            pname = await conn.fetchval("SELECT name FROM projects WHERE id=$1", pid)
+            used = await conn.fetch("SELECT j.id, j.label, j.state, j.created_at FROM retrain_runs r JOIN jobs j ON j.id=r.job_id "
+                                    "WHERE r.card_id = ANY($1::text[]) AND NOT r.test ORDER BY j.created_at DESC LIMIT 20", cards)
+            nm = lambda v: json.loads(v) if isinstance(v, str) else list(v or [])
+            per = await run_in_threadpool(_label_classes, [(r["lbl_path"], nm(r["names"])) for r in rows])
+            out = {"id": tid, "source": "edits", "name": None, "project": {"id": pid, "name": pname},
+                   "images": env(len(rows), "count", "measured", "XI맵에서 고친 곳이 모인 학습 데이터"),
+                   "classes": [{"name": k, "images": env(v, "count", "measured", "테두리 파일")} for k, v in sorted(per.items(), key=lambda kv: -kv[1])],
+                   "previews": [f"/shared/train-tiles/{r['id']}/preview?size=360" for r in rows[:4]],
+                   "at": rows[0]["made_at"].isoformat(timespec="seconds") if rows and rows[0]["made_at"] else None, "edit": False, "shared": None}
+        else:
+            r = await _row(conn, tid)
+            pid = await conn.fetchval("SELECT l.project_id FROM project_links l WHERE l.kind='sample' AND l.ref=$1 ORDER BY l.at NULLS LAST LIMIT 1", tid)
+            pname = await conn.fetchval("SELECT name FROM projects WHERE id=$1", pid) if pid else None
+            used = await conn.fetch(
+                "SELECT j.id, j.label, j.state, j.created_at FROM jobs j WHERE j.kind='train' AND j.state <> 'cancelled' AND ("
+                "(jsonb_typeof(j.options->'samples')='array' AND j.options->'samples' ? $1) OR j.options->>'samples' = $1 "
+                "OR j.id IN (SELECT substr(m.id, 9) FROM models m WHERE m.sample_id=$1 AND m.id LIKE 'trained/%')) ORDER BY j.created_at DESC LIMIT 20", tid)
+            ex = set(int(i) for i in (r["excluded"] or []))
+            n = int(r["n_images"] or 0)
+            idx = [i for i in range(n) if i not in ex][:4]
+            ci = r["class_images"] or {}
+            ci = json.loads(ci) if isinstance(ci, str) else ci
+            out = {"id": tid, "source": "sample", "name": r["task_name"], "project": {"id": pid, "name": pname} if pid else None,
+                   "images": env(n, "count", "measured", src),
+                   "classes": [{"name": c, "images": env(int(ci.get(c, 0)), "count", "measured", src)} for c in (r["names"] or [])],
+                   "previews": [f"/training/samples/{tid}/preview/{i}?size=360" for i in idx],
+                   "at": r["created_at"].isoformat(timespec="seconds") if r["created_at"] else None,
+                   "edit": not pid, "shared": bool(r["staff_shared"])}
+    out["used"] = {"n": env(len(used), "count", "recorded", "이 학습 데이터로 한 학습"),
+                   "items": [{"name": u["label"] or "학습", "at": u["created_at"].isoformat(timespec="seconds") if u["created_at"] else None} for u in used[:5]]}
+    out["as_of"] = now_iso()
+    return out
+
+
+@router.get("/shared/train-tiles/{tid}/preview")
+async def shared_tile_preview(tid: str, request: Request, size: int = 360):
+    """XI맵에서 고친 곳 1장(학습 데이터 칸) — 그림 + 테두리 겹침 JPEG(관리자 공유 데이터 상세)."""
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        t = await conn.fetchrow("SELECT img_path, lbl_path, names FROM train_tiles WHERE id=$1 AND state='made'", tid)
+    if not t or not t["img_path"] or not Path(t["img_path"]).exists():
+        raise ApiError("not_found", "그림이 없습니다")
+    names = json.loads(t["names"]) if isinstance(t["names"], str) else list(t["names"] or [])
+    lbl = Path(t["lbl_path"]) if t["lbl_path"] else None
+    data = await run_in_threadpool(render_preview, Path(t["img_path"]), lbl, names, max(128, min(1024, size)))
+    return Response(data, media_type="image/jpeg", headers={"cache-control": "private, max-age=600"})
+
+
 @router.patch("/training/samples/{sid}")
 async def sample_share(sid: str, body: dict, request: Request):
     """LX 관리자 — 학습 데이터 공개 · 비공개(공개된 묶음은 학습 화면 '공유 데이터에서 고르기'에 나온다).

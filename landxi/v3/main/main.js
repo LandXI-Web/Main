@@ -6,6 +6,7 @@
 import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk, enter, bars } from '../kit/index.js';
 import { E_CAM, RM, h, esc } from '../kit/util.js';
 import { devlog } from '../kit/dev-drawer.js';
+import { WORLD_V } from '../kit/stage.js';
 import * as D from './data.js';
 import { loadSummary, itemFor, stageKey, scaleOf, userWords } from '../service-detail/summary.js';
 
@@ -269,7 +270,7 @@ function frame(now) {
       sweep(s1);
     } else if (x < a3) {
       // 필지로 파고드는 동안 이번 줌 위성 타일이 덜 찼으면 잠깐 머문다(흐린 부모 타일이 창을 채우지 않게)
-      S.gap = S.map && S.ready ? (S.map.getZoom() > 6.8 ? eoxGap('k-vw', 19) : eoxGap()) : 0;
+      S.gap = S.map && S.ready ? (S.map.getZoom() > 6.8 ? baseGap('k-vw', 19) : baseGap()) : 0;
       S.t2 = gated(S.t2, ease(seg(s2, 0, 0.32)));
       const tw = ease(seg(s2, 0, 0.24)), tc = S.t2;
       win = lerpRect(LY.full, LY.right, tw);
@@ -303,7 +304,7 @@ function frame(now) {
     chState($('#ch5'), band(s5, 0.02, 0.9));
     chState($('#ch6'), x < b1 ? 'pre' : band(s6, 0.3, 0.97));
     let lab = 0;
-    S.gap = eoxGap();
+    S.gap = baseGap();
     if (x < b1) {
       S.t6 = 0; S.t6d = 0; S.t7 = 0;
       win = LY.full; cam = C.nat2; bg = 'var(--bg-0)'; lab = seg(s5, 0.06, 0.2) * (1 - seg(s5, 0.92, 1));
@@ -344,7 +345,7 @@ function frame(now) {
   const so = S.active === 'B' && win ? (S.bFade ?? 1) : 1;
   if (so !== S.so) { S.so = so; stageEl.style.opacity = so >= 1 ? '' : so.toFixed(3); }
   if (!win && S.warm === 'no' && S.ready && T.B.rect.top < 3 * H) warmPath();
-  if (!S.live && S.ready) { try { if (S.map.isSourceLoaded('k-eox')) S.live = true; } catch { /* 층 없음 */ } }
+  if (!S.live && S.ready) { try { if (S.map.isSourceLoaded('k-world')) S.live = true; } catch { /* 층 없음 */ } }
   bd.classList.toggle('is-inv', !!(T.A.vis && inv && S.active === 'A'));
   applyWin(win, bg);
   applyCam(cam);
@@ -389,7 +390,8 @@ function placeOnWin(sel, w, top) {
    ① 곧바로: 경로 타일 목록을 Worker 로 받아 브라우저 캐시에(콘솔 오류 0 · 지도 무관)
    ② 무대가 숨어 있을 때(ch4): 지도 자체로 경로를 한 번 훑어 타일 캐시에
    ③ 그래도 비면: 이동 중 미적재 구간은 바탕색 막으로 가린다(frame 의 veil) */
-const EOX_T = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg';
+const WORLD_T = new URL('../../data/tiles/world-bm/', import.meta.url).href + '{z}/{x}/{y}.webp' + WORLD_V;   // 세계 바탕(NASA Blue Marble · z0–8 · 10-15 EOx-모두교체 · kit/stage.js k-world 와 같은 판)
+const WORLD_Z = 8;
 function pathSteps() {
   const C = S.cams || cams(), out = [];
   if (!S.data.kgz) return out;
@@ -423,20 +425,20 @@ function prefetchTiles(part) {
   if (S.pre[part] || !S.data.parcel) return; S.pre[part] = 1;
   const C = S.cams || cams(), set = new Set(), urls = [];
   const add = (u) => { if (!set.has(u)) { set.add(u); urls.push(u); } };
-  const eox = ([z, x, y]) => add(EOX_T.replace('{z}', z).replace('{y}', y).replace('{x}', x));
+  const world = ([z, x, y]) => add(WORLD_T.replace('{z}', z).replace('{y}', y).replace('{x}', x));
   const vw = ([z, x, y]) => add(VW_T.replace('{z}', z).replace('{x}', x).replace('{y}', y));
   if (part === 'A') {
     // ① ch1→ch2 필지로 파고드는 길
     const pr = { ...C.parcel, p: 0, b: 0 };
     for (let i = 0; i <= 14; i++) {
       const t = i / 14, cam = zoomCam(C.nat1, pr, t), win = lerpRect(LY.full, LY.right, clamp(t * 1.4));
-      tilesAt(cam, win, 1, 13, false).forEach(eox); if (cam.z > 6.2) tilesAt(cam, win, 7, 19, false).forEach(vw);
+      tilesAt(cam, win, 1, WORLD_Z, false).forEach(world); if (cam.z > 6.2) tilesAt(cam, win, 7, 19, false).forEach(vw);
     }
   } else {
     // ② ch5→ch6 · 마감(지구 곡면)
-    for (const { cam, win } of pathSteps()) tilesAt(cam, win, 1, 13, cam.z < 4.5).forEach(eox);
+    for (const { cam, win } of pathSteps()) tilesAt(cam, win, 1, WORLD_Z, cam.z < 4.5).forEach(world);
   }
-  S.preSet = new Set([...(S.preSet || []), ...urls.filter((u) => u.includes('eox')).map((u) => u.split('GoogleMapsCompatible/')[1].replace('.jpg', ''))]);
+  S.preSet = new Set([...(S.preSet || []), ...urls.filter((u) => u.includes('/world-bm/')).map((u) => { const [z, x, y] = u.split('/world-bm/')[1].replace(/\.webp.*$/, '').split('/'); return `${z}/${y}/${x}`; })]);
   const list = urls.slice(0, 1200); S.preN = part + ' run ' + list.length;
   try {
     const src = `onmessage=async(e)=>{const u=e.data;let i=0;const go=async()=>{while(i<u.length){const x=u[i++];try{const r=await fetch(x,{mode:'cors'});await r.arrayBuffer();}catch(_){}}};await Promise.all(Array.from({length:8},go));postMessage(u.length);}`;
@@ -455,7 +457,7 @@ async function warmPath() {
     S.warmN++;
     m.jumpTo({ center: cam.c, zoom: cam.z, pitch: cam.p || 0, bearing: cam.b || 0, padding: camPad(cam, win) });
     const t0 = performance.now();
-    await new Promise((r) => { const tick = () => { let ok = false; try { ok = m.isSourceLoaded('k-eox'); } catch { ok = true; } if ((ok && performance.now() - t0 > 60) || performance.now() - t0 > 1800) r(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+    await new Promise((r) => { const tick = () => { let ok = false; try { ok = m.isSourceLoaded('k-world'); } catch { ok = true; } if ((ok && performance.now() - t0 > 60) || performance.now() - t0 > 1800) r(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
   }
   S.warm = 'done'; S.last = '';
   S.warmMs = Math.round(performance.now() - S.warmMs);
@@ -473,7 +475,7 @@ function gated(cur, tgt) {
   return cur + clamp(d, -step, step);
 }
 /** 위성 층의 '이번 줌' 타일 중 아직 안 찬 비율(0–1) — 부모 타일로 흐리게 메워지는 칸 */
-function eoxGap(id = 'k-eox', zmax = 13) {
+function baseGap(id = 'k-world', zmax = WORLD_Z) {
   try {
     const sc = S.map.style.sourceCaches[id], tz = Math.min(zmax, Math.round(S.map.getZoom()) + 1);
     let n = 0, miss = 0;
@@ -498,7 +500,7 @@ function veil(on) {
 function fade(ms) {
   if (!S.ready || S.fadeMs === ms) return;
   S.fadeMs = ms;
-  for (const id of ['k-eox', 'k-vw']) if (S.map.getLayer(id)) S.map.setPaintProperty(id, 'raster-fade-duration', ms);
+  for (const id of ['k-world', 'k-vw']) if (S.map.getLayer(id)) S.map.setPaintProperty(id, 'raster-fade-duration', ms);
 }
 
 /* ── 장면별 ─────────────────────────────────────────── */

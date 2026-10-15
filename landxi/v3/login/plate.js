@@ -12,7 +12,7 @@
 import { sig } from '../kit/sig.js';
 import { nf } from '../kit/i18n.js';
 import { hasRoute, api, isEnvelope } from '../kit/util.js';
-import { KOREA } from '../kit/stage.js';
+import { KOREA, WORLD_V } from '../kit/stage.js';
 import { API } from '../../shared/api-v1.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -153,13 +153,26 @@ function centroid(geom) {
   let x = 0, y = 0; for (const p of c) { x += p[0]; y += p[1]; } return [x / c.length, y / c.length];
 }
 
+/* 해외 바탕 — Copernicus Sentinel-2 로 구운 나라 · 구역 판(kit/stage.js 와 같은 판 · meta.json 이 범위 · 줌을 정함 · 없으면 건너뜀) */
+async function overseas(map) {
+  // 세계 바탕 판이 없으면(정적 배포) V-World 위성(낮은 축척에서 세계 전체를 그림 · 실측)으로 — 빈 잉크 판 대신
+  fetch(ROOT.data + 'tiles/world-bm/meta.json').then((r) => r.ok).catch(() => false).then((ok) => { if (!ok) map.getSource('world')?.setTiles(['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg']); });
+  const base = ROOT.data + 'tiles/overseas-s2/';
+  const meta = await fetch(base + 'meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  for (const [id, m] of Object.entries(meta?.sets || {}).sort((a, b) => a[1].minzoom - b[1].minzoom)) {
+    if (map.getSource('s2-' + id)) continue;
+    map.addSource('s2-' + id, { type: 'raster', tiles: [base + id + '/{z}/{x}/{y}.webp'], tileSize: 256, bounds: m.bounds, minzoom: m.minzoom, maxzoom: m.maxzoom });
+    map.addLayer({ id: 's2-' + id, type: 'raster', source: 's2-' + id, paint: { 'raster-fade-duration': 500 } }, 'vw');
+  }
+}
+
 function style(rows) {
   const tiles = href(rows.find((r) => r.kind === 'findings' && r.tiles)?.tiles);
   const gridMin = rows.find((r) => r.kind === 'grid')?.min || 0;
   const st = {
     version: 8,
     sources: {
-      eox: { type: 'raster', tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg'], tileSize: 256, maxzoom: 14 },
+      world: { type: 'raster', tiles: [ROOT.data + 'tiles/world-bm/{z}/{x}/{y}.webp' + WORLD_V], tileSize: 256, maxzoom: 8 },   // 세계 바탕(NASA Blue Marble · 공공 · 10-15 EOx-모두교체)
       vw: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: KOREA },
       ...(tiles ? { ld: { type: 'vector', url: 'pmtiles://' + tiles } } : {}),
       pt: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
@@ -170,7 +183,7 @@ function style(rows) {
     layers: [
       /* 타일이 아직 안 온 자리 = 잉크. 카드 속에서 회백 빈 판 + 흰 글자가 드러나지 않게(카드 겉 바탕만 --bg-0) */
       { id: 'bg', type: 'background', paint: { 'background-color': INK } },
-      { id: 'eox', type: 'raster', source: 'eox', paint: { 'raster-fade-duration': 500 } },
+      { id: 'world', type: 'raster', source: 'world', paint: { 'raster-fade-duration': 500 } },
       { id: 'vw', type: 'raster', source: 'vw', minzoom: 6.5, paint: { 'raster-fade-duration': 500, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6.5, 0, 7.4, 1] } },   // K3 와 같은 넘김 — 전국 저줌에서 V-World 사각 경계가 드러나지 않게
       /* 대장 대조 — 대장(연속지적 필지선) 위에 AI와 어긋난 필지가 청록으로 선다 */
       { id: 'ld-parcel', type: 'line', source: 'ld', 'source-layer': 'parcels', minzoom: 13,
@@ -358,6 +371,7 @@ export function mountPlate({ el, ui, sweep, credit, pad = () => ({ top: 0, botto
 
     map.on('load', async () => {
       state.ready = true;
+      overseas(map);
       ui.res.classList.add('away');
       // 첫 장면을 먼저 세우고, 나머지는 뒤에서 불러온다(첫 페인트를 막지 않는다)
       const nat = await Promise.race([natP, wait(6000).then(() => null)]).catch(() => null);   // 스틸이 덮고 있는 동안 공개 전국 결과를 기다린다(최대 6 s)

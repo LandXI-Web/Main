@@ -303,7 +303,7 @@ export function coverTiles(cam, src) {
   return out;
 }
 const pulled = new Map();   // url → Promise<boolean>(진행 중 공유 · 멱등)
-const cacheable = (u) => /^lx[mc]:\/\//.test(u) || /^https:\/\/(tiles\.maps\.eox\.at|planetarycomputer\.microsoft\.com|xdworld\.vworld\.kr)\//.test(u);
+const cacheable = (u) => /^lx[mc]:\/\//.test(u) || /^https:\/\/(planetarycomputer\.microsoft\.com|xdworld\.vworld\.kr)\//.test(u);
 /** 궤적(또는 도착 카메라)에서 원천들이 요청할 타일 URL. specs = [id | {id, from, final} | {src:{tiles,minzoom,maxzoom,bounds,tileSize}, final}] */
 export function tilesFor(map, path, specs, { dwell = 1, endFirst = false, order = null } = {}) {
   const style = map.getStyle(), want = new Set(), zOf = new Map();
@@ -332,7 +332,7 @@ export function tilesFor(map, path, specs, { dwell = 1, endFirst = false, order 
 /** 원천(호스트)별 동시 요청 상한 — 여러 pull() 이 겹쳐도(하강 · 의도 · 배경) 합이 이 값을 넘지 않는다.
     EOX: 한 탭 24(판정 3차 재실측: 32 는 다리 767 장 중 205 거절 · 실측 2026-09-27 · 브라우저 h2 60 장: conc 6 = 16 장/s · 20 = 41 장/s · 40 = 89 장/s · 거절 0 — 두 워커 병렬 폭주 때만 CORS 없는 거절).
     prio — 0 = 지금 보일 것(후퇴 게이트 · 클릭한 하강) · 1 = 다음 하강(글로브→으슥아타) · 2 = 배경. 빈 슬롯은 낮은 숫자부터. */
-const HOST_MAX = { 'tiles.maps.eox.at': 24, 'gibs.earthdata.nasa.gov': 24, 'tiles.maps.eox.at#bg': 6 }, HOST_DEF = 16, inflight = {}, waiters = {};
+const HOST_MAX = { 'gibs.earthdata.nasa.gov': 24 }, HOST_DEF = 16, inflight = {}, waiters = {};
 const hostOf = (u) => u.replace(/^[a-z]+:\/\//, '').split('/')[0];
 /** 배경(prio 2 · 다음 다리)은 EOX 에서 배경 몫 6 과 호스트 몫 24 를 둘 다 쥔다 — 합이 24 를 넘지 않는다(2차 부하 봉투 그대로).
     판정 3차 실측: 배경을 호스트 몫 밖(+12)으로 두니 EOX 가 CORS 없는 거절 93 건/45 s · 호스트 몫을 16 으로 줄이면 하강 부족 1.6 s. */

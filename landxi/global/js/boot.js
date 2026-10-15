@@ -341,7 +341,7 @@ async function main() {
       const pulling = pull(urls, { conc: 20, prio: 0, onProgress: (a) => { pa = a; step(); } }).then((x) => ({ ...x, at: performance.now() }));
       stage.freeze = true;
       eoxKorea(false);
-      const W = ['eox-s2cloudless-2025', 'gibs-a', 'gibs-bm', 'gibs-cap'].filter((id) => map.getSource(id));
+      const W = ['lx-world', 'gibs-a', 'gibs-bm', 'gibs-cap'].filter((id) => map.getSource(id));
       let alive = true; cap.then(() => { alive = false; });
       for (const [i, cam] of camsR.entries()) { if (!alive) break; await warmInMap(map, [cam], W, D[1250]); ca = i + 1; step(); }
       const warmMs = Math.round(performance.now() - tr);
