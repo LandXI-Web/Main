@@ -204,6 +204,8 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
     opts = dict(body.get("options") or {})
     tenant = "lx"
     model = None
+    if kind == "train" and opts.get("trainer") == "train/s2unet":
+        return await _quote_train_s2(p, opts)
     if kind == "train":
         if not (p.is_lx and p.role in ("staff", "admin")):
             raise ApiError("forbidden", "학습은 LX 직원·관리자만")
@@ -251,6 +253,51 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
             "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": False,
             "power_budget": await power_budget() if pool != "cpu" else None,
             "_aoi": None, "_tenant": tenant, "_model": dict(model) if model else None, "_img": None, "_adapter": adapter, "_opts": opts}
+
+
+async def _quote_train_s2(p: Principal, opts: dict) -> dict:
+    """해외 학습(Sentinel-2 달별 합성 · 작은 U-Net · 원칙 256) 견적 — LX 직원 · 관리자만 · 판 파일은 02. 데이터/overseas 아래만.
+    같은 대기열 · 같은 전력 규칙(학습은 한 번에 하나 · 동시 고부하 GPU ≤ 1)."""
+    if not (p.is_lx and p.role in ("staff", "admin")):
+        raise ApiError("forbidden", "학습은 LX 직원·관리자만")
+    import importlib.util
+    import sys as _s
+    _s.path.insert(0, str(config.SERVER_ROOT))
+    spec = importlib.util.spec_from_file_location("lx_train_s2_probe", str(config.SERVER_ROOT / "adapters" / "global" / "adapter_train_s2unet.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    if not mod.dataset_path(opts.get("dataset")):
+        raise ApiError("not_found", "학습 데이터가 없습니다", {"dataset": opts.get("dataset")})
+    reasons: list[str] = []
+    async with db(realm="lx") as conn:
+        busy = await conn.fetchval("SELECT count(*) FROM jobs WHERE kind='train' AND state IN ('queued','running')")
+    if busy or int(opts.get("gpus", 1) or 1) > int((config.load_yaml("pools").get("power", {}) or {}).get("max_hot_gpus", 1)):
+        reasons.append("power_budget")
+    ep = int(opts.get("epochs", mod.EPOCHS) or mod.EPOCHS)
+    if ep > TRAIN_EPOCHS_MAX:
+        reasons.append("too_large")
+    o = {"trainer": "train/s2unet", "dataset": opts.get("dataset"), "country": str(opts.get("country") or "kgz"),
+         "epochs": min(ep, TRAIN_EPOCHS_MAX), "batch": int(opts.get("batch", 32) or 32),
+         "cw_max": min(3.0, max(1.0, float(opts.get("cw_max", 2.0) or 2.0)))}            # 분류 무게 상한(1 = 무게 없음)
+    return {"area_km2": env(None, "km2", "measured", "-", "학습 작업 — 면적 없음"), "shards": 1,
+            "shards_env": env(1, "count", "measured", "plan(train/s2unet)"),
+            "gpu_s": env(None, "gpu_s", "estimate", "해외 학습 실측 없음", "첫 학습 뒤 채워짐"),
+            "eta_s": env(None, "s", "estimate", "해외 학습 실측 없음", "첫 학습 뒤 채워짐"),
+            "quota": quota_mod.quote_block("lx"), "allowed": not reasons, "reasons": reasons, "pool": config.POOL, "kind": "train", "demo": False,
+            "power_budget": await power_budget(), "_aoi": None, "_tenant": "lx", "_model": None, "_img": None, "_adapter": "train/s2unet", "_opts": o}
+
+
+# 위성 영상(해상도 5 m 이상 · 해외 Sentinel-2 10 m 합성 등)의 범위 천장 — 화소 수가 항공 25 cm 천장과 같도록 해상도 제곱만큼 넓게(상한 3,000㎢).
+# 항공 · 드론(5 m 미만)은 지금 천장(INFER_MAX_KM2) 그대로.
+SAT_MAX_KM2 = 3000.0
+
+
+def infer_ceiling_km2(img) -> float:
+    try:
+        g = float((img["gsd_m"] if img is not None else 0) or 0)
+    except (KeyError, TypeError, ValueError):
+        g = 0.0
+    return min(SAT_MAX_KM2, INFER_MAX_KM2 * (g / 0.25) ** 2) if g >= 5 else INFER_MAX_KM2
 
 
 OUT_OF_SCOPE = "관할 밖 지역은 분석할 수 없습니다"
@@ -399,11 +446,11 @@ async def build_quote(p: Principal, body: dict) -> dict:
             if img["fp"] and not shape(img["fp"]).intersects(g):
                 reasons.append("aoi_outside_footprint")
             # 범위 천장: 클라이언트가 보낸 max_km2 와 서버 천장(INFER_MAX_KM2) 중 작은 값 — 클라이언트가 늘릴 수 없다
-            if kind == "infer" and area > min(float(opts.get("max_km2", 5)), INFER_MAX_KM2):
+            if kind == "infer" and area > min(float(opts.get("max_km2", 5)), infer_ceiling_km2(img)):
                 reasons.append("aoi_too_large")
         elif img["fp"]:
             area, area_src = aoi_area(img["fp"])
-            if kind == "infer" and area > INFER_MAX_KM2:
+            if kind == "infer" and area > infer_ceiling_km2(img):
                 reasons.append("aoi_too_large")         # 범위 없이 영상 전체 — 같은 천장
         from workers.tiling import shards as mk_shards
         if "aoi_outside_footprint" not in reasons and "aoi_too_large" not in reasons:

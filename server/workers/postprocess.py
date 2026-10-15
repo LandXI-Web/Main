@@ -200,8 +200,9 @@ def blank_counts(dsn: str | None = None) -> dict:
 
 
 def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: str | None = None, overlap_thr: float = 0.5,
-        min_area: float = 4.0, simplify_m: float = 0.3) -> tuple[list[dict], dict]:
-    """features: [{geom(shapely 4326), props{cls,cls_en,cid,conf,chip_edge,shard_id,fid}}] → (남은 것, 통계)."""
+        min_area: float = 4.0, simplify_m: float = 0.3, place: tuple | None = None) -> tuple[list[dict], dict]:
+    """features: [{geom(shapely 4326), props{cls,cls_en,cid,conf,chip_edge,shard_id,fid}}] → (남은 것, 통계).
+    place = (이름, 코드) — 해외 결과 자산(군 칸)처럼 읍면동이 없는 결과는 그 칸 이름을 그대로 붙이고 시군구 · 읍면동 찾기를 건너뛴다."""
     if not features:
         return [], {"in": 0, "out": 0}
     c = features[0]["geom"].centroid
@@ -243,6 +244,14 @@ def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: s
     kept = [(g, f) for k, (g, f) in enumerate(items) if k not in drop]
     out = []
     outside = 0
+    if place is not None:
+        for g, f in kept:
+            p = dict(f["props"])
+            p["area_m2"] = round(g.area, 1)
+            p["emd"], p["emd_cd"] = place
+            out.append({"geom": sh_transform(to_g, g), "props": p})
+        st.update(outside_emd=0, emd_pending=0, sgg_cd=None, emd_n=0, out=len(out), epsg=epsg, place=place[1])
+        return out, st
     sgg = resolve_sgg(features, sgg_cd, region)
     ix = emd_index_for(sgg)
     lb = _Labeler()

@@ -66,6 +66,7 @@ TRN_GPU = int(TRN.get("gpu", NAT_GPU))
 TRN_UTIL = float(TRN.get("util_max", NAT_UTIL))
 TRN_W = float(TRN.get("power_max_w", NAT_W))
 TRN_DUTY0 = float(TRN.get("duty", NAT_DUTY0))
+TRAINERS = ("train/yolo", "train/s2unet")                  # 학습 어댑터(작업 options.trainer · 없으면 train/yolo)
 lease = {"slot": None, "last_work": 0.0, "waiting": False}
 
 
@@ -558,7 +559,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     demo = jh.get("demo") == "1"
     tenant = jh.get("tenant_id")
     opts = json.loads(jh.get("options") or "{}")
-    national = bool(opts.get("national"))
+    national = bool(opts.get("national") or opts.get("overseas"))      # 해외 결과 자산(나라 전체)도 전국 작업과 같은 규칙(한 장 · 쉼 · 비킴)
     other_gpu_card = national and A.gpu != NAT_GPU      # 전국 작업은 정한 한 장에서만 — 다른 장 워커는 되돌려 놓는다
     if national and (other_gpu_card or other_job_waiting(job_id)):     # 다른 작업 칸이 기다리면 읽기 전에 통째로 뒤로(원칙 221)
         for _, f in entries:
@@ -590,10 +591,14 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         if not sgg:                                     # 시군구 전역(1만 칸 이상)은 shard.started 를 싣지 않는다 — 이벤트 스트림(1만 줄)을 결과(shard.done)에 쓴다
             emit(job_id, "shard.started", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "worker": WID, "at": now_iso(ms=True)})
     t0 = time.perf_counter()
-    futs = {s.id: pool_io.submit(read_window, path, s.window) for s in shards}
+    # 해외 작업(options.overseas)은 어댑터가 합성 파일(42 띠)을 스스로 열고 닫는다 — 여기서 열어 두면(스레드 캐시) 칸이 끝난 뒤 중간 파일을 지울 수 없다
+    ovs = bool(opts.get("overseas"))
+    futs = {} if ovs else {s.id: pool_io.submit(read_window, path, s.window) for s in shards}
     cache = {}
 
     def reader(s):
+        if ovs:
+            return None
         if s.id not in cache:
             cache[s.id] = futs[s.id].result()
         return cache[s.id]
@@ -661,7 +666,8 @@ def other_job_waiting(job_id: str) -> bool:
             if jid == job_id or jid in seen:
                 continue
             h = bus.job(jid) or {}
-            seen[jid] = h.get("state") in ("queued", "running") and '"national"' not in (h.get("options") or "")   # 끝난 작업의 남은 칸은 세지 않음
+            o = h.get("options") or ""
+            seen[jid] = h.get("state") in ("queued", "running") and '"national"' not in o and '"overseas"' not in o   # 끝난 작업의 남은 칸 · 전국 · 해외 작업은 세지 않음
             if seen[jid]:
                 return True
         return False
@@ -852,7 +858,8 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
     if not jh or jh.get("state") in ("cancelled", "failed", "done"):
         return
     from workers.registry_scan import adapter_module
-    mod = adapter_module("train/yolo")
+    trainer = str(json.loads(jh.get("options") or "{}").get("trainer") or "train/yolo")
+    mod = adapter_module(trainer if trainer in TRAINERS else "train/yolo")     # 해외 학습(train/s2unet) — 같은 대기열 · 같은 쉼 · 같은 전력 규칙
     # 학습은 이 워커의 VRAM 예산 안에서 돈다 — 상주·캐시 추론 모델을 먼저 내려 자리를 비운다(다음 추론 때 다시 적재)
     freed = []
     for mid in list(models.keys()):

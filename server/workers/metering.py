@@ -57,6 +57,10 @@ def analysis_area_km2(aoi: dict | None, opts: dict | None, footprint: dict | Non
             pass
     if g.is_empty:
         return 0.0
+    c = g.centroid
+    if not (124.0 <= c.x <= 132.0 and 33.0 <= c.y <= 39.0):        # 한국 밖(해외 결과 자산) — 5186 평면은 크게 틀린다 → 측지 넓이(jobs.aoi_area 와 같은 규칙)
+        from pyproj import Geod
+        return round(abs(Geod(ellps="GRS80").geometry_area_perimeter(g)[0]) / 1e6, 4)
     return round(area_km2(mapping(g)), 4)
 
 

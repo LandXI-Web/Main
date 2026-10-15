@@ -273,7 +273,8 @@ NAT_INFLIGHT = int(((_PCFG.get("power") or {}).get("national") or {}).get("infli
 def is_national(jh: dict) -> bool:
     """전국 결과 자산 작업(options.national · 원칙 221) — 스트림에 한 번에 NAT_INFLIGHT 칸까지만(사용자 작업이 오면 그 몇 칸 뒤에 바로 돈다)."""
     try:
-        return bool(json.loads(jh.get("options") or "{}").get("national"))
+        o = json.loads(jh.get("options") or "{}")
+        return bool(o.get("national") or o.get("overseas"))           # 해외 결과 자산도 같은 칸 수 제한
     except Exception:  # noqa: BLE001
         return False
 

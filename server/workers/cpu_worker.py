@@ -79,7 +79,9 @@ def finalize(job_id: str):
         min_area = max(0.0, float(opts.get("min_area_m2", 4.0)))
     except (TypeError, ValueError):
         min_area = 4.0
-    feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area)
+    ov = opts.get("overseas") or {}
+    place = (ov.get("name") or ov.get("cell"), ov.get("cell")) if ov.get("cell") else None     # 해외 결과 자산 — 군 칸 이름(읍면동 찾기 없음)
+    feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")
     counts: dict[str, int] = {}
