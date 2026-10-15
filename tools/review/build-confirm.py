@@ -251,10 +251,11 @@ def build():
                 f'<div class="im">{shots or "<p class=na>화면 없음 — 작업 방식 항목</p>"}</div></div>'
                 f'<footer><div class="op">{opts}</div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article>')
 
-    secs = ''.join(f'<section><h2>{esc(h)}</h2><p class="sub">{esc(d)}</p>{"".join(card(i) for i in items)}</section>' for h, d, items in SECTIONS)
+    secs = ''.join(f'<section id="g{k}"><div class="sh"><h2>{esc(h)}</h2><span class="ct">{len(items)}개</span></div><p class="sub">{esc(d)}</p>{"".join(card(i) for i in items)}</section>' for k, (h, d, items) in enumerate(SECTIONS))
+    nav = '<nav class="idx" aria-label="묶음">' + ''.join(f'<a href="#g{k}">{esc(h)}<span>{len(items)}</span></a>' for k, (h, d, items) in enumerate(SECTIONS)) + '</nav>'
     done = '' if not DONE else '<section><h2>이미 만든 것 — 구현 확인</h2><p class="sub">열어 보시고 완료 또는 다시를 골라 주세요.</p>' + ''.join(card(i, True) for i in DONE) + '</section>'
     n = sum(len(i) for _, _, i in SECTIONS) + len(DONE)
-    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__STAMP__', __import__('time').strftime('%Y%m%d%H%M%S')).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', os.environ.get('LX_CONFIRM_TITLE') or ('확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차'))
+    page = TPL.replace('__BODY__', nav + secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__STAMP__', __import__('time').strftime('%Y%m%d%H%M%S')).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', os.environ.get('LX_CONFIRM_TITLE') or ('확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차'))
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
     print('confirm page:', n, 'items,', len(os.listdir(os.path.join(OUT, 'img'))), 'images')
 
@@ -270,40 +271,43 @@ TPL = '''<!doctype html>
 <style>
 :root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
 a{color:var(--accent);text-decoration:none}
 .w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
 h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
-.lead{margin:0 0 6px;color:var(--ink2)}
-.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.lead{margin:0 0 6px;color:var(--ink2);font-size:17px;text-wrap:pretty}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:16px}
 .how b{color:var(--ink)}
-section{margin-top:40px}
-h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
-.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+section{margin-top:48px}
+nav.idx{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}nav.idx a{font:700 16px/1 Pretendard,sans-serif;background:#fff;border:1px solid var(--line);color:var(--ink);padding:11px 16px;border-radius:999px}nav.idx a span{color:var(--mute);font-weight:600;margin-left:6px}
+.sh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 20px;margin:0 0 6px;background:var(--ink);color:#fff;border-radius:16px}.sh h2{color:#fff;margin:0}.sh .ct{font:600 16px/1 Pretendard,sans-serif;color:#C9D1DA}
+h2{font:700 26px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:10px 2px 16px;color:var(--ink2);font-size:16px;text-wrap:pretty}
 .c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
 .c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
 .c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
 .c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
-.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
-h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.n{font:600 14px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 21px/1.4 Pretendard,sans-serif;text-wrap:balance}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
-.tb{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 4px}.tb th,.tb td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;text-wrap:pretty}.tb th{color:var(--mute);font-weight:600}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:14px 0 2px;font-size:15px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.tb{width:100%;border-collapse:collapse;font-size:15px;margin:6px 0 4px}.tb th,.tb td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;text-wrap:pretty}.tb th{color:var(--mute);font-weight:600}
 .wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
-.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:10px 14px;font-size:15px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:14px}
 .im{display:grid;gap:8px;align-content:start}
-.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
-.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 14px/1 Pretendard,sans-serif;padding:7px 10px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:15px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
 footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .op{display:flex;gap:6px;flex-wrap:wrap}
-.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button{font:600 16px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 .op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+footer input{flex:1;min-width:200px;font:16px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
 .bar b{font-weight:600}
 .bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
-.bar small{color:var(--mute)}
+.bar small{color:var(--mute);font-size:14px}
+.bar b{font-size:16px}
 @media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
 </style>
 </head>
