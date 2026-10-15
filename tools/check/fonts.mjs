@@ -3,34 +3,17 @@
      실패 ① 14px 미만 글(꼬리표 14 가 바닥) — 아래 '의도된 예외'만 뺀다.
      실패 ② 단계 밖 크기 — 단계 = 토큰 값(tokens-v2.2.css 의 --fs-* 를 그 화면에서 읽음 · 옛 이름 --fs-label · --fs-sub · --fs-h4 는 빼고).
    --widths 를 주면 같은 화면을 여러 폭으로 다시 재고, 칸 문제(가로 넘침 · 화면 밖 칸 · 제목 3줄 이상 · 한 단어만 남은 줄 · 글자 중간 끊김)도 적는다(경고 — 실패 아님).
-   사용: node tools/check/fonts.mjs [--widths 1280,1366,1440,1920,2560] [--only gov,app,admin] [--chat] [--shots 폴더] [--json 파일]
-         [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--tenant namwon]
+   사용: node tools/check/fonts.mjs [--widths 1280,1366,1440,1920,2560] [--only gov,abroad,app,admin] [--chat] [--shots 폴더] [--json 파일]
+         [--app https://app.land-xi.dev] [--admin https://admin.land-xi.dev] [--gov https://namwon.land-xi.dev] [--tenant namwon] [--abroad kgz-agri]
+   해외 기관(abroad · 10-15) — 해외 첫 화면(landxi/v3/global) 네 탭도 잰다. 세 검사기를 한 번에: node tools/check/all.mjs
    --chat: XI맵 융합 대시보드를 XI ChatGEO 질문 하나로 열어 함께 잰다(AI 답 한 번 — 게이트웨이 대기열).
    바깥 로그인 한도(10분 20번) — 이 검사는 역할마다 한 번(최대 3번)만 로그인한다.
    비밀번호는 env LX_PW / DEV_PASSWORD 또는 server/.env 의 DEV_PASSWORD(화면 · 출력에 적지 않는다). */
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createRequire } from 'node:module';
+import { arg, has, isMain, standalone, listen, abroadReady, abroadTab, ABROAD_TABS } from './common.mjs';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, '../..');
-const HW = process.env.LX_HW_BROWSERS || 'C:/Users/User/AppData/Local/ms-playwright';
-if (fs.existsSync(path.join(HW, 'chromium-1234'))) process.env.PLAYWRIGHT_BROWSERS_PATH = HW;
-if (!process.env.DEV_PASSWORD && !process.env.LX_PW) {
-  try { const m = fs.readFileSync(path.join(ROOT, 'server/.env'), 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m); if (m) process.env.DEV_PASSWORD = m[1]; } catch { /* 없음 */ }
-}
-process.env.LX_PW ||= process.env.DEV_PASSWORD || '';
-const { chromium } = createRequire(path.join(ROOT, 'package.json'))('playwright');
-const { frontDoor } = await import(pathToFileURL(path.join(ROOT, 'landxi/v3/kit/lint/forbidden.mjs')).href);
-
-const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const has = (k) => process.argv.includes(k);
-const HOST = { app: arg('--app', 'https://app.land-xi.dev'), admin: arg('--admin', 'https://admin.land-xi.dev'), gov: arg('--gov', 'https://namwon.land-xi.dev') };
-const TENANT = arg('--tenant', 'namwon');
-const PW = process.env.LX_PW;
 const WIDTHS = arg('--widths', '1440').split(',').map(Number).filter(Boolean);
-const ONLY = new Set(arg('--only', 'gov,app,admin').split(','));
 const SHOTS = arg('--shots');
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const HEIGHT = (w) => ({ 1280: 720, 1366: 768, 1440: 900, 1920: 1080, 2560: 1440 })[w] || Math.round(w * 0.5625);
@@ -109,22 +92,7 @@ function measure(except) {
 }
 
 const results = [];      // {screen, url, widths:[measure + errors]}
-const browser = await chromium.launch({ channel: 'chromium' }).catch(() => chromium.launch());
 
-async function session(base, login, tenant) {
-  const ctx = await browser.newContext({ viewport: { width: WIDTHS[0], height: HEIGHT(WIDTHS[0]) }, deviceScaleFactor: 1 });
-  const page = await ctx.newPage();
-  const st = { errors: [] };
-  page.on('console', (m) => { if (m.type() === 'error') st.errors.push(m.text().slice(0, 160)); });
-  page.on('pageerror', (e) => st.errors.push(String(e).slice(0, 160)));
-  await frontDoor(page, base, login, tenant ? { tenant, password: PW } : { password: PW });     // 로그인 한 번(다시 시도하지 않는다 — 바깥 로그인 한도)
-  await page.waitForURL((u) => !/\/login\/?$/.test(u.pathname), { timeout: 30000 }).catch(() => {});
-  if (/\/login\/?$/.test(new URL(page.url()).pathname)) {
-    const why = /시도가 너무 많습니다/.test(await page.innerText('body').catch(() => '')) ? ' — 로그인 시도가 너무 많습니다(10분 뒤 다시)' : '';
-    throw new Error(`로그인하지 못했습니다(${new URL(base).hostname})${why}`);
-  }
-  return { ctx, page, st };
-}
 const slug = (s) => s.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 60);
 /** 화면 하나 — 열고(필요하면 누르기) 폭마다 재기. url 이 없으면 지금 화면 그대로(앞 화면에서 이어 누르기) */
 async function screen(s, name, url, { wait, act, ms = 2500 } = {}) {
@@ -176,11 +144,27 @@ const openEdit = (center, re) => async (p) => {
   await p.waitForFunction(() => { const c = document.querySelector('.xe-card:not([hidden])'); return c && !/불러오는 중/.test(c.innerText); }, null, { timeout: 30000 });
 };
 
-try {
+/** 해외 첫 화면 — 네 탭 */
+async function abroad(s) {
+  const G = s.home + '/landxi/v3/global/';
+  for (const [i, t] of ABROAD_TABS.entries()) {
+    await screen(s, `해외 기관 · 해외 첫 화면(${t})`, i ? null : G, i ? { act: (p) => abroadTab(p, t) } : { ms: 1500, act: abroadReady });
+  }
+}
+
+/** 역할 하나 — 로그인한 세션(s = { page, home, abroad })으로 */
+export async function run(role, s0) {
+  const st = { errors: [] };
+  const s = { ...s0, st };
+  const off = listen(s.page, {
+    console: (m) => { if (m.type() === 'error') st.errors.push(m.text().slice(0, 160)); },
+    pageerror: (e) => st.errors.push(String(e).slice(0, 160)),
+  });
+  try {
+  if (role === 'abroad' || (role === 'gov' && s.abroad)) await abroad(s);
   /* ── 기관(남원 등) ── */
-  if (ONLY.has('gov')) {
-    const s = await session(HOST.gov, 'lxadmin@lx.or.kr', TENANT);
-    const G = HOST.gov + '/landxi/v3/';
+  else if (role === 'gov') {
+    const G = s.home + '/landxi/v3/';
     await screen(s, '기관 · 내 서비스', G + 'gov-select/?list=1', { wait: '.gs-page' });
     const c = await s.page.evaluate(() => [...document.querySelectorAll('a[href*="service="]')].map((a) => new URL(a.href).searchParams.get('service')).find(Boolean));
     if (c) {
@@ -191,12 +175,10 @@ try {
     }
     await screen(s, '기관 · 요청하기(분석 요청)', G + 'gov-request/', { wait: '.gq-grid' });
     await screen(s, '기관 · 요청하기(촬영 요청)', G + 'gov-request/?tab=shoot', { wait: '.gq-grid' });
-    await s.ctx.close();
   }
   /* ── LX 직원(app) ── */
-  if (ONLY.has('app')) {
-    const s = await session(HOST.app, 'test@lx.or.kr');
-    const A = HOST.app + '/landxi/v3/';
+  if (role === 'app') {
+    const A = s.home + '/landxi/v3/';
     await screen(s, 'LX 직원 · 대시보드', A + 'lx-console/', { wait: 'main' });
     await screen(s, 'LX 직원 · 분석하기', A + 'lx-analyze/', { wait: '.la-ac' });
     await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
@@ -221,20 +203,18 @@ try {
     await s.page.locator('.xv-sw button[data-v="now"]').click().catch(() => {});      // 시안 고른 것을 '지금'으로 되돌려 둔다
     await screen(s, 'LX 직원 · XI맵 고치기 칸', X, { ...xi, act: async (p) => { await xi.act(p); await openEdit([127.5345, 35.4335], '^xb-r-')(p); } });
     if (has('--chat')) {
-      await screen(s, 'LX 직원 · XI맵 융합 대시보드', X, { ...xi, act: async (p) => {
+      await screen(s, 'LX 직원 · XI맵 통계(지도 위)', X, { ...xi, act: async (p) => {
         await xi.act(p);
         const inp = p.locator('.k-chat-root[data-dock] .k-ck-i');
         await inp.click(); await inp.pressSequentially('남원시 현황 보여 줘', { delay: 25 }); await inp.press('Enter');
-        await p.waitForFunction(() => window.__xc.dash?.title && !document.querySelector('.xd').hidden, null, { timeout: 90000 });
+        await p.waitForFunction(() => window.__xc.dash?.title && (window.__xc.dash.fill === 'done' || !document.querySelector('.xd')?.hidden), null, { timeout: 90000 });   // 지도 위(기본 · 원칙 258) 또는 대시보드
         await settle(p); await p.waitForTimeout(1800);
       } });
     }
-    await s.ctx.close();
   }
   /* ── LX 관리자(admin) ── */
-  if (ONLY.has('admin')) {
-    const s = await session(HOST.admin, 'lxadmin@lx.or.kr');
-    const O = HOST.admin + '/landxi/v3/';
+  if (role === 'admin') {
+    const O = s.home + '/landxi/v3/';
     await screen(s, 'LX 관리자 · 대시보드', O + 'ops-core/', { wait: 'main' });
     await screen(s, 'LX 관리자 · 요청 관리', O + 'ops-core/#/approvals', { wait: 'main' });
     await screen(s, 'LX 관리자 · 인프라', O + 'ops-infra/', { wait: 'main' });
@@ -247,15 +227,17 @@ try {
       act: async (p) => { await p.locator('.sd-tabs button', { hasText: '학습 데이터' }).click(); await p.waitForSelector('.sd-body table, .sd-none', { timeout: 30000 }); } });
     await screen(s, 'LX 관리자 · 공유 데이터 → 행정 자료', null, {
       act: async (p) => { await p.locator('.sd-tabs button', { hasText: '행정 자료' }).click(); await p.waitForSelector('.sd-sub', { timeout: 30000 }); } });
-    await s.ctx.close();
   }
-} finally {
-  await browser.close();
+  } finally { off(); await s.page.setViewportSize({ width: 1440, height: 900 }).catch(() => {}); }
 }
 
+
 /* ── 표 ── */
+/** 결과 표 → { bad, text } (all.mjs 도 쓴다) */
+export function report(out = arg('--json')) {
 let bad = 0;
-const line = (s) => process.stdout.write(s + '\n');
+const lines = [];
+const line = (s) => lines.push(s);
 line(`글자 크기 검사 ${new Date().toISOString().slice(0, 16).replace('T', ' ')} · 화면 ${results.length}개 · 폭 ${WIDTHS.join(' · ')} · 바닥 14px · 단계 = 토큰 값(옛 이름 빼고)`);
 const all = {};
 for (const r of results) {
@@ -273,6 +255,13 @@ for (const r of results) {
 line(`쓰인 크기(px · 글 수): ${Object.entries(all).sort((a, b) => a[0] - b[0]).map(([k, v]) => `${k}×${v}`).join(' · ')}`);
 line(`의도된 예외: ${EXCEPT.map(([k]) => k).join(' · ')}`);
 line(bad ? `실패 — 14px 미만 · 단계 밖 크기 · 화면 오류가 있는 화면 ${bad}개` : '통과 — 14px 미만 0 · 단계 밖 크기 0 · 화면 오류 0');
-const out = arg('--json');
 if (out) fs.writeFileSync(out, JSON.stringify({ at: new Date().toISOString(), widths: WIDTHS, except: EXCEPT, results }, null, 1));
-process.exit(bad ? 1 : 0);
+return { bad, text: lines.join('\n') };
+}
+
+if (isMain(import.meta.url)) {
+  await standalone(run);
+  const r = report();
+  process.stdout.write(r.text + '\n');
+  process.exit(r.bad ? 1 : 0);
+}

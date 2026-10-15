@@ -1,0 +1,174 @@
+/* XI맵 통계 '지도 위' 표출(10-15 원칙 258) — 지도는 그대로 전체, 오른쪽 가장자리에 작은 떠 있는 판(접고 펼침) · 지도 위 숫자 꼬리표 · 뜻 확인 한 줄.
+   밝은 톤 · 흰 카드 16 · 그림자(지도 위 카드) · 글자는 토큰 단계만(꼬리표 14 · 보조 15 · 본문 16 · 제목 2 20 · 숫자 32). */
+[data-onmap="1"] > :is(.xb-hud,.xc-hud,.xb-stats,.xv-a,.xv-b,.xn-leg,.xn-hud){display:none!important}
+[data-onmap="1"] .xn-what{display:none}
+
+/* ── 판(오른쪽 · 도구 열 왼쪽 · 위 영상 단추 아래 · 아래 채팅 창 위) ── */
+.xo{position:absolute;z-index:21;right:96px;top:68px;bottom:96px;width:360px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px 2px 0}
+.xo[hidden]{display:none}
+.xo > *{pointer-events:auto;flex:none}
+@media (min-width:1600px){.xo{width:400px}}
+@media (min-width:2200px){.xo{width:440px;right:104px}}
+.xo-card{background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);padding:16px 18px;animation:xo-in .55s var(--e-cam) both}
+@keyframes xo-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.xo-ht{display:flex;align-items:flex-start;gap:8px}
+.xo-ht h2{flex:1;margin:0;font:700 var(--fs-t2,20px)/28px var(--font-display);letter-spacing:-.01em;color:var(--ink);text-wrap:balance;word-break:keep-all}
+.xo-x{flex:none;width:32px;height:32px;margin:-4px -8px 0 0;border:0;border-radius:var(--r-8);background:none;font:300 var(--fs-t1,28px)/1 var(--font-body);color:var(--sub);cursor:pointer}
+.xo-x:hover{background:var(--bg-0);color:var(--ink)}
+.xo-l{margin:10px 0 0;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--sub)}
+.xo-big{margin:2px 0 0;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.xo-big b{font:800 var(--fs-num,32px)/1.1 var(--font-display);letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums}
+.xo-big small{font:700 var(--fs-t2,20px)/1 var(--font-display);color:var(--ink)}
+.xo-kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px 12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.xo-kp div{min-width:0;display:grid;gap:2px}
+.xo-kp span{font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xo-kp b{font:700 var(--fs-aux,15px)/22px var(--font-num);color:var(--ink-2);white-space:nowrap}
+.xo-kp b small{margin-left:2px;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
+.xo-mp{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule);display:grid;gap:8px}
+.xo-mp .t{font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink-2)}
+.xo-scale{display:flex;align-items:center;gap:8px;font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--sub)}
+.xo-scale i{flex:1;height:8px;border-radius:4px}
+.xo-scale.is-step i{border-radius:0}
+.xo-scale.is-step i:nth-of-type(1){border-radius:4px 0 0 4px}.xo-scale.is-step i:nth-of-type(5){border-radius:0 4px 4px 0}
+.xo-scale small{font:400 var(--fs-tag,14px)/1 var(--font-body)}
+.xo-live{margin:10px 0 0;display:flex;align-items:center;gap:6px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink-2)}
+.xo-live i{width:7px;height:7px;border-radius:50%;background:var(--ai);animation:xo-pulse 1.6s ease-in-out infinite}
+@keyframes xo-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.xo-notice{margin:10px 0 0;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2)}
+.xo-say{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.xo-say p{margin:0;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);text-wrap:pretty;word-break:keep-all}
+.xo-say p + p{margin-top:4px}
+.xo-logo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--r-8);background:var(--ai);color:#fff;font:800 var(--fs-tag,14px)/1 var(--font-display)}
+.xo-act{display:flex;gap:8px;margin-top:14px}
+.xo-act button{height:38px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.xo-act button:hover{background:var(--bg-0)}
+.xo-tour{border-color:var(--ink)!important;background:var(--ink)!important;color:#fff!important}
+.xo-tour i{width:0;height:0;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.xo-tour .b,.xo-tour.is-run .a{display:none}.xo-tour.is-run .b{display:inline}
+.xo-tour.is-run i{width:10px;height:10px;border:0;border-radius:2px;background:#fff}
+
+/* 차트 카드 — 머리를 누르면 접고 펼침 */
+.xo-ph{display:flex;align-items:center;gap:8px;width:100%;margin:0;padding:0;border:0;background:none;text-align:left;font:700 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink);cursor:pointer}
+.xo-ph span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xo-ph small{font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
+.xo-ph i{flex:none;width:8px;height:8px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(-45deg);transition:transform .2s;margin-right:4px}
+.xo-p.open .xo-ph i{transform:rotate(45deg)}
+.xo-pb{display:none;margin-top:12px}
+.xo-p.open .xo-pb{display:block}
+.xo-p{padding:12px 18px}
+.xo-p.open{padding:14px 18px 16px}
+
+/* 줄 막대(막대 · 순위 · 누적) — 이름 · 값 한 줄, 막대 아래 · 올리면 지도 그 곳이 떠오름 */
+.xo-rows{display:grid;gap:8px}
+.xo-r{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"i n v e" "i bar bar bar";align-items:center;column-gap:8px;row-gap:4px;width:100%;margin:0;padding:4px 6px;border:0;border-radius:var(--r-8);background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;transition:background .15s}
+.xo-r .i{grid-area:i;display:none;width:20px;font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--sub);font-style:normal}
+.is-rank .xo-r .i{display:block}
+.xo-r .n{grid-area:n;font:400 var(--fs-aux,15px)/20px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xo-r .v{grid-area:v;font:600 var(--fs-aux,15px)/20px var(--font-num);color:var(--ink)}
+.xo-r .e{grid-area:e;font:400 var(--fs-tag,14px)/20px var(--font-num);color:var(--sub);white-space:nowrap}
+.xo-r .bar{grid-area:bar;height:8px;display:block}
+.xo-r .bar i{display:block;height:100%;min-width:3px;border-radius:4px;background:var(--xo-c3,#8DCDC5);transition:background .15s}
+.xo-r:first-child .bar i{background:var(--xo-c1,#1F7B73)}
+.xo-r .bar.is-st{display:flex;gap:2px;border-radius:4px;overflow:hidden;min-width:3px}
+.xo-r .bar.is-st i{min-width:2px;border-radius:0}
+.xo-r:hover,.xo-r.hv{background:var(--bg-0)}
+.xo-r:hover .bar i,.xo-r.hv .bar i,.xo-r.on .bar i{background:var(--xo-c0,#145953)}
+.xo-r.on{background:var(--bg-0)}
+.xo-r.on .n,.xo-r.hv .n{color:var(--ink);font-weight:600}
+.xo-r.more{display:none}.xo-rows.all .xo-r.more{display:grid}
+.xo-more{margin-top:8px;height:34px;padding:0 12px;border:0;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink-2);cursor:pointer}
+.xo-more:hover{background:var(--rule)}
+/* 면적 구간 */
+.xo-hist{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end;height:150px}
+.xo-hc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.xo-hc i{width:100%;max-width:34px;border-radius:5px 5px 2px 2px}
+.xo-hc .t{font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--ink-2)}
+.xo-hc .x{font:400 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub);text-align:center;word-break:keep-all;min-height:36px}
+/* 도넛 · 범례 */
+.xo-donut{display:grid;grid-template-columns:100px minmax(0,1fr);gap:14px;align-items:center}
+.xo-donut svg{width:100px;height:100px}
+.xo-donut circle{transition:opacity .18s}
+.xo-donut svg:hover circle{opacity:.5}.xo-donut svg circle:hover{opacity:1}
+.xo-leg{list-style:none;margin:0;padding:0;display:grid;gap:6px;min-width:0}
+.xo-leg li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink-2)}
+.xo-leg li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xo-leg li i{width:10px;height:10px;border-radius:50%}
+.xo-leg li b{font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--ink)}
+.xo-leg--row{display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:10px}
+.xo-leg--row li{display:inline-flex;gap:6px}
+/* 히트맵(작게 — 색만 · 올리면 숫자) */
+.xo-heat{display:grid;grid-template-columns:minmax(52px,max-content) repeat(var(--c),minmax(0,1fr));gap:3px}
+.xo-heat .ch{font:500 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:4px}
+.xo-heat .rh{margin:0;padding:0 8px 0 0;border:0;background:none;text-align:left;font:400 var(--fs-tag,14px)/1.2 var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.xo-heat .rh.on,.xo-heat .rh.hv{color:var(--ink);font-weight:600}
+.xo-heat .cell{height:24px;border-radius:4px}
+/* 선 · 산점 */
+.xo-line,.xo-sc{width:100%;height:auto;display:block;overflow:visible}
+.xo-line .g,.xo-sc .g{stroke:#EEF0F3;stroke-width:1}
+.xo-sc .avg{stroke:var(--mute);stroke-width:1.2;stroke-dasharray:3 4}
+.xo-line .ax,.xo-sc .ax{font:400 var(--fs-tag,14px)/1 var(--font-num);fill:var(--sub)}
+.xo-sc circle{cursor:pointer;transition:r .18s}
+.xo-sc circle:hover,.xo-sc circle.on,.xo-sc circle.hv{r:8;stroke:var(--ink)}
+.xo-note{margin:10px 0 0;font:400 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.xo-note .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.xo-note .dot.o{background:#D07A3A}.xo-note .dot.t{background:#2E9A90;margin-left:8px}
+/* 표 */
+.xo-tw{overflow-x:auto;margin:0 -6px}
+.xo-tb{border-collapse:collapse;min-width:100%}
+.xo-tb th{padding:6px 6px 8px;border-bottom:1px solid var(--rule);font:500 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub);text-align:left;white-space:nowrap}
+.xo-tb td{padding:8px 6px;border-bottom:1px solid #EEF0F3;font:400 var(--fs-aux,15px)/20px var(--font-body);color:var(--ink-2);white-space:nowrap}
+.xo-tb tr:last-child td{border-bottom:0}
+.xo-tb .num{text-align:right;font-family:var(--font-num)}
+.xo-dl{margin-top:10px;height:34px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink);cursor:pointer}
+.xo-dl:hover{background:var(--bg-0)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── 지도 위 숫자 꼬리표(값 큰 곳 다섯 · 올린 곳) — 떠오름 ── */
+.xo-mk{pointer-events:none}
+.xo-tag{position:relative;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 12px 6px;border-radius:12px;background:rgba(255,255,255,.97);box-shadow:var(--elev-map);cursor:pointer;transform-origin:50% 100%;animation:xo-rise .5s var(--e-cam) both;white-space:nowrap}
+.xo-tag::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px;box-shadow:2px 2px 4px rgba(28,31,37,.08)}
+@keyframes xo-rise{from{opacity:0;transform:translateY(14px) scale(.85)}to{opacity:1;transform:none}}
+.xo-tag .n{font:500 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub)}
+.xo-tag b{font:700 var(--fs-aux,15px)/20px var(--font-num);color:var(--ink);letter-spacing:-.01em}
+.xo-tag b small{margin-left:1px;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
+.xo-tag.is-1{background:var(--ink)}
+.xo-tag.is-1 .n,.xo-tag.is-1 b small{color:rgba(255,255,255,.72)}
+.xo-tag.is-1 b{color:#fff}
+.xo-tag.is-hover{box-shadow:0 0 0 2px var(--ai),var(--elev-map)}
+.xo-tag.is-hv,.xo-tag.is-on{transform:scale(1.08);box-shadow:0 0 0 2px var(--ai),var(--elev-map);z-index:2}
+.xo-mk:has(.xo-tag.is-on),.xo-mk:has(.xo-tag.is-hv){z-index:3}
+
+/* ── 뜻 확인 — 아래 채팅 창 위 한 줄(지역 · 업무 · 비교 → 융합 재료 ✓) ── */
+.xo-mean{position:absolute;z-index:31;left:50%;bottom:140px;transform:translate(-50%,8px);width:min(640px,calc(100% - 32px));padding:12px 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);display:grid;gap:8px;opacity:0;transition:opacity .25s,transform .25s var(--e-ui)}
+.xo-mean[hidden]{display:none}
+.xo-mean.in{opacity:1;transform:translate(-50%,0)}
+.xo-mean .a,.xo-mean .b{display:flex;flex-wrap:wrap;gap:6px}
+.xo-mean .a span{display:inline-flex;gap:6px;align-items:center;height:30px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink)}
+.xo-mean .a em{font-style:normal;color:var(--sub)}
+.xo-mean .b span{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:var(--r-8);border:1px solid var(--rule);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--mute);transition:all .2s}
+.xo-mean .b span.ok{border-color:var(--ai);color:var(--ink)}
+.xo-mean .b span.ok::before{content:"✓";color:var(--ai);font-weight:700}
+
+.xo-tip{position:fixed;z-index:90;pointer-events:none;padding:8px 12px;border-radius:8px;background:var(--ink);color:#fff;font:400 var(--fs-tag,14px)/1.4 var(--font-body);box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:300px}
+.xo-tip b{font-weight:600}
+.xo-tip[hidden]{display:none}
+
+/* 통계 표출 고르기 — 왼쪽 아래 결과 표시 시안 단추 옆 */
+.xo-sw{position:absolute;z-index:7;left:176px;bottom:52px;display:flex;align-items:center;gap:2px;padding:3px 3px 3px 10px;border-radius:var(--r-8);background:rgba(255,255,255,.94);box-shadow:var(--elev-map)}
+.xo-sw > span{margin-right:6px;font:600 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink)}
+.xo-sw button{height:30px;padding:0 10px;border:0;border-radius:6px;background:none;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.xo-sw button[aria-pressed="true"]{background:var(--ink);color:#fff}
+[data-dash="1"] .xo-sw{left:calc(var(--xd-gap) + 12px);bottom:calc(var(--xd-gap) + 12px);z-index:22}
+
+@media (max-width:900px){
+  .xo{right:16px;left:16px;top:auto;bottom:96px;width:auto;max-height:46%}
+  .xo-sw{display:none}
+}
+@media (prefers-reduced-motion:reduce){.xo-card,.xo-tag{animation:none}.xo-live i{animation:none}}
+
+/* 지도 위 통계 동안 아래 채팅 창은 판을 가리지 않게 — 판 왼쪽 공간의 가운데 */
+[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - 456px) / 2);width:min(680px,calc(100% - 488px))}
+@media (min-width:1600px){[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - 496px) / 2);width:min(680px,calc(100% - 528px))}}
+@media (max-width:900px){[data-onmap="1"] .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
+/* 지도 위 통계 동안 왼쪽 아래 단추 둘은 채팅 입력 줄 위로 */
+[data-onmap="1"] .xv-sw,[data-onmap="1"] .xo-sw{bottom:96px}

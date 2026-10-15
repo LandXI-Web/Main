@@ -28,7 +28,7 @@ CONFIRM: set[str] = set()
 CLIENT = {"ximap_dash"}
 NO_LLM = {"ximap_dash"}
 WHY = {"ximap_dash": "XI맵 융합 대시보드"}
-SAY = {"ximap_dash": "대시보드로 보기"}
+SAY = {"ximap_dash": "통계 보기"}   # 지도 위(기본) · 대시보드 어느 쪽이든 같은 말(원칙 258)
 HINT = "XI맵에서 지역 · 업무 통계 · 현황 · 비교 · 분포를 물으면 ximap_dash(대시보드)."
 
 
@@ -586,7 +586,9 @@ async def ximap_dash(args: dict, ctx) -> Out:
     out.env("n", m.get("label") or "결과", env(m.get("value") or 0, m.get("unit") or "개", "inferred", "XI맵 융합 집계 — 화면 대시보드 큰 숫자와 같은 값"))
     out.data = {"status": "ok", "제목": spec["title"], "수": "n"}
     lead = spec.get("note") or ""
-    out.answer = (f"{lead} " if lead else "") + f"{spec['title']} — 대시보드로 보여 드립니다. {m.get('label') or ''} {{{{n}}}}."
+    # 답은 짧게(10-15 원칙 258 — 지도 위에서 보여 주므로 '대시보드로' 말 없음) · 첫 해석 줄 하나만 덧붙임
+    first = (spec.get("say") or [""])[0]
+    out.answer = (f"{lead} " if lead else "") + f"{spec['title']} — {m.get('label') or ''} {{{{n}}}}." + (f" {first}" if first else "")
     return out
 
 

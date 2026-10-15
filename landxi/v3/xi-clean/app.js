@@ -21,6 +21,7 @@ import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';
 import { NCLS } from './national.js';                            // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게)
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 import { createDash } from './dash.js';                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
+import { createOnMap } from './onmap.js';                         // 같은 사양을 지도 위에서(10-15 원칙 258 — 기본 · '통계' 단추로 대시보드와 바꿔 볼 수 있다)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -144,7 +145,10 @@ const S = {
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null;
+/* 통계 표출(10-15 원칙 258): 'map' = 지도 위(기본) · 'dash' = 대시보드(되돌릴 수 있게 둠) — 이 브라우저에 기억 */
+let STATV = 'map';
+try { STATV = localStorage.getItem('xc_statv') === 'dash' ? 'dash' : 'map'; } catch { STATV = 'map'; }
 
 /* ═══ 부팅 ═══ */
 async function boot() {
@@ -262,6 +266,12 @@ async function boot() {
     onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },
     onShown: () => cmdk?.close({ force: true }),          // 대시보드가 서면 아래 채팅 창의 대화 칸을 접는다(입력 줄은 그대로 · 누르면 다시 펼침)
     onLeave: () => { BD?.show(true); HUDKEY = ''; paintBoardHud(); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
+  if (S.board) { OM = createOnMap({ map, stage, host: mainEl, h,                       // 지도 위 표출(원칙 258 · 기본) — 결과 층은 그대로 두고 그 위에 색칠 · 꼬리표 · 작은 판
+    sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
+    onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림)
+    onShown: () => cmdk?.close({ force: true }),          // 날아가기 시작하면 아래 채팅 창의 대화 칸을 접는다(답은 그때까지 읽힘 · 입력 줄은 그대로)
+    onLeave: () => { BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
+    mountStatSwitch(); }
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
@@ -1001,6 +1011,20 @@ function mountHudVariants() {
   mainEl.append(sa, sb, sw);
   XV = { a: sa, b: sb, sw };
 }
+/* 통계 표출 고르기(10-15 원칙 258) — '지도 위'(기본) ↔ '대시보드'. 열려 있는 통계는 같은 사양으로 다른 쪽에 다시 그린다 */
+let LASTSPEC = null;
+function mountStatSwitch() {
+  const btns = [['map', '지도 위'], ['dash', '대시보드']].map(([v, t]) => h('button', { type: 'button', dataset: { v }, 'aria-pressed': String(v === STATV), text: t,
+    onclick: () => {
+      if (STATV === v) return;
+      STATV = v; try { localStorage.setItem('xc_statv', v); } catch { /* 저장 못 해도 이 화면에서는 바뀜 */ }
+      btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+      const open = OM?.on || DS?.on;
+      if (!open || !LASTSPEC) return;
+      if (v === 'map') { DS?.leave(); OM?.show(LASTSPEC); } else { OM?.leave(); DS?.show(LASTSPEC); }
+    } }));
+  mainEl.append(h('div.xo-sw', { role: 'group', 'aria-label': '통계 표출' }, h('span', { text: '통계' }), ...btns));
+}
 /** 업무마다 하나(같은 업무 = 서비스 결과 + 전국 분석 합) — 전국 또는 지금 시군구 */
 function hudTaskRows() {
   const m = new Map();
@@ -1355,8 +1379,11 @@ async function regionFromAgent(a) {
     || (a.sgg_cd && await regionByCode(String(a.sgg_cd))) || (a.name && findRegion(a.name)) || null;
 }
 async function agentOp(a) {
-  if (a.op === 'ximap_dash') {                         // XI ChatGEO 대시보드 — 뜻 확인 → 융합 재료 → 화면이 대시보드로(지도는 왼쪽 작은 판)
-    if (!DS) return { ok: false, reason: '이 화면에서는 대시보드를 열 수 없습니다' };
+  if (a.op === 'ximap_dash') {                         // XI ChatGEO 통계 — 기본은 지도 위(원칙 258: 지도가 차오르고 → 꼬리표 → 날아가기 · 작은 판) · '대시보드'로 바꾸면 화면 전환(dash.js 그대로)
+    if (!DS && !OM) return { ok: false, reason: '이 화면에서는 통계를 열 수 없습니다' };
+    LASTSPEC = a.spec;
+    if (STATV === 'map' && OM) { if (DS?.on) DS.leave(); return OM.show(a.spec); }
+    if (OM?.on) OM.leave();
     return DS.show(a.spec);
   }
   if (a.op === 'map_task') {                           // XI ChatGEO 업무 거르기 — '○○만 보여 줘' · '원래대로'(말풍선 업무 줄과 같은 길)
