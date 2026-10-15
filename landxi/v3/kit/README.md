@@ -18,6 +18,7 @@
 | K3 | 지도 무대 | `createStage(el, { mode:'app'\|'ops', interactive, scale })` → `{map, ready, go(region\|bbox), home(), geo(id, fc, 'ai'\|'focus'\|'point'), clear, show, ladder(items, order), mode(), pad()}` | 전국 bounds 시작 · go = 2400 `--e-cam` |
 | K4 | 지역 선택 | `await regionPicker(el, { onPick, public })` · `loadRegions()` | `/regions`(S-3) 없으면 배포 지역으로 대신 |
 | K5 | 카드·서랍·시트 | `drawer({ title, body, host, slot, onClose })` → `{set, close}` · `card({ title, body, map })` | ≤3장 · 같은 slot 교체 · Esc |
+| K5-1 | 나뉜 칸 크기 조절(원칙 263) | `panes(paneEl, { edge:'right'\|'left'\|'bottom'\|'top', key, min, max, otherMin, cssVar, varHost, map, collapse, below })` → `{size, set, reset, collapse, expand, toggle, refresh, destroy}` (`panes.js` · CSS `panes.css` 는 kit.css 가 부름) | 끌기(마우스 · 터치) · 키보드 ←→/↑↓(Shift 64) · Home/End · Enter 접기 · 두 번 누르기 = 기본 크기 · 사람 · 화면 · 칸별로 브라우저에 기억(막혀도 동작) · 기본 크기 = 화면 CSS 그대로 · 그리드 화면은 `cssVar` 로 `var(--x, 기본)` 를 바꿈 · 지도 칸은 `map` 을 주면 resize · `below`(760) 미만은 손잡이 없음 |
 | K6 | 큰 숫자·기호 | `bignum(el, env, { label, unit, hud })` → `{set, loading, empty}` · `numHtml(env)` · `sig(env)` · `humanize(source)` | 봉투만 · `?dev=1` 에서 봉투 아님 = throw · 만든 직후 null/undefined·`set(undefined)` = `불러오는 중` · `set(null)`·봉투 value null = `아직 결과가 없습니다`(20초 안에 set 이 없으면 빈 값으로) |
 | K7 | 서비스 카드 | `serviceGrid(el, joinCards(cards, deploys), { map: r => ({ crop, where, href }) })` · `serviceCard({...})` | 상태 운영/시범/첫 결과 전 |
 | K8 | 스텝퍼 | `stepper(el, [{t, d}], { current, vertical, done, onPick })` → `{go, set}` | |

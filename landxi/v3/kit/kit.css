@@ -5,6 +5,7 @@
 @import url('./stage.css');
 @import url('./panel.css');
 @import url('./cmdk.css');
+@import url('./panes.css');
 
 /* ── 줄바꿈·줄맞춤(모든 화면 · 2026-09-30 사용자 기본 가이드) ─────────────
    한국어는 어절 단위로만 끊는다(글자 중간 끊김 0). 제목은 줄 길이를 고르게, 문단은 마지막 줄에 한 단어만 남지 않게.

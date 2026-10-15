@@ -6,6 +6,7 @@ export { gate, whoami, logout, landingFor, homeFromPath, ALLOW, FRONT } from './
 export { createStage, KOREA } from './stage.js';                                  // K3
 export { regionPicker, loadRegions, recent } from './region.js';                  // K4
 export { drawer, card, closeAll } from './panel.js';                             // K5
+export { panes } from './panes.js';                                              // K5-1 나뉜 칸 크기 조절(원칙 263)
 export { bignum, numHtml, ALLOWED, unitKo } from './bignum.js';                   // K6
 export { sig, sigEl, sigOf, humanize, why } from './sig.js';                      // K6
 export { serviceCard, serviceGrid, joinCards, stateOf } from './service-card.js'; // K7

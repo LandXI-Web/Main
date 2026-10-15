@@ -1,0 +1,43 @@
+/* panes.css — 나뉜 칸 크기 조절 손잡이(panes.js · 원칙 263). kit.css 가 함께 불러온다. */
+.pn-pane{min-width:0;min-height:0}
+.pn-h{position:absolute;z-index:6;display:flex;align-items:center;justify-content:center;touch-action:none;outline:none;-webkit-user-select:none;user-select:none}
+.pn-h[hidden]{display:none}
+.pn-h--x{cursor:col-resize}
+.pn-h--y{cursor:row-resize}
+.pn-line{position:absolute;background:transparent;transition:background var(--d-180,180ms) var(--e-ui,ease)}
+.pn-h--x .pn-line{top:0;bottom:0;left:50%;width:2px;margin-left:-1px}
+.pn-h--y .pn-line{left:0;right:0;top:50%;height:2px;margin-top:-1px}
+.pn-h:hover .pn-line,.pn-h.is-drag .pn-line{background:var(--rule,#D6DAE0)}
+.pn-h:focus-visible .pn-line{background:var(--accent,#3182F6)}
+.pn-h.is-drag .pn-line{background:var(--ink-2,#4E5968)}
+/* 접기 · 펼치기 — 작은 단추 하나(기존 꺾쇠 아이콘) */
+.pn-fold{position:relative;z-index:1;display:grid;place-items:center;width:20px;height:40px;padding:0;margin:0;border:1px solid var(--rule,#D6DAE0);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);color:var(--ink-2,#4E5968);cursor:pointer;opacity:0;transition:opacity var(--d-180,180ms) var(--e-ui,ease)}
+.pn-h--y .pn-fold{width:40px;height:20px}
+.pn-fold svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--d-180,180ms) var(--e-ui,ease)}
+.pn-h:hover .pn-fold,.pn-h:focus-within .pn-fold,.pn-h.is-folded .pn-fold,.pn-fold:focus-visible{opacity:1}
+.pn-fold:hover{color:var(--ink,#191F28);border-color:var(--ink-2,#4E5968)}
+.pn-fold:focus-visible{outline:2px solid var(--accent,#3182F6);outline-offset:2px}
+/* 꺾쇠 방향 = 누르면 칸 가장자리가 가는 쪽 */
+.pn-h--right .pn-fold svg{transform:rotate(180deg)}
+.pn-h--left .pn-fold svg{transform:none}
+.pn-h--bottom .pn-fold svg{transform:rotate(-90deg)}
+.pn-h--top .pn-fold svg{transform:rotate(90deg)}
+.pn-h--right.is-folded .pn-fold svg{transform:none}
+.pn-h--left.is-folded .pn-fold svg{transform:rotate(180deg)}
+.pn-h--bottom.is-folded .pn-fold svg{transform:rotate(90deg)}
+.pn-h--top.is-folded .pn-fold svg{transform:rotate(-90deg)}
+/* 접힌 칸 — 자리 0 · 내용 숨김(지도 · 나머지 칸이 그 자리를 씀) */
+.pn-collapsed{visibility:hidden!important;overflow:hidden!important}
+.pn-pane--x.pn-collapsed{min-width:0!important;padding-left:0!important;padding-right:0!important;border-left-width:0!important;border-right-width:0!important;margin-left:0!important;margin-right:0!important}
+.pn-pane--y.pn-collapsed{min-height:0!important;padding-top:0!important;padding-bottom:0!important;border-top-width:0!important;border-bottom-width:0!important;margin-top:0!important;margin-bottom:0!important}
+.pn-h--right.is-folded .pn-fold{transform:translateX(12px)}
+.pn-h--left.is-folded .pn-fold{transform:translateX(-12px)}
+.pn-h--bottom.is-folded .pn-fold{transform:translateY(12px)}
+.pn-h--top.is-folded .pn-fold{transform:translateY(-12px)}
+/* 끄는 동안 — 글 선택 · 지도 끌기 막음 */
+html.pn-dragging-x,html.pn-dragging-x *{cursor:col-resize!important}
+html.pn-dragging-y,html.pn-dragging-y *{cursor:row-resize!important}
+html.pn-dragging-x body,html.pn-dragging-y body{-webkit-user-select:none;user-select:none}
+html.pn-dragging-x iframe,html.pn-dragging-y iframe,html.pn-dragging-x canvas,html.pn-dragging-y canvas{pointer-events:none}
+@media (pointer:coarse){.pn-fold{opacity:1}.pn-h--x{width:20px!important;margin-left:-5px}.pn-h--y{height:20px!important;margin-top:-5px}}
+@media (prefers-reduced-motion:reduce){.pn-line,.pn-fold,.pn-fold svg{transition:none}}
