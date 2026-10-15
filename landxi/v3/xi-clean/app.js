@@ -8,8 +8,8 @@
    읍면동 경계 = GET /regions/{sgg}/emd(전국 · 그 시군구 것만) · 결과 층 = GET /regions/{sgg}/results(그 시군구에 결과가 있는 모든 세트 + 전역 분석 결과). */
 import * as K from '../kit/index.js';
 import { api, session } from '../kit/util.js';
-import { sse, API } from '../../shared/api-v1.js';
-import { sourceSpec, EXT_OK } from '../../xi/engine/sources.js';
+import { sse, API, tileUrl } from '../../shared/api-v1.js';
+import { sourceSpec, EXT_OK, warmPm } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
 import { analyzer } from './analyze.js';
 import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
@@ -207,18 +207,6 @@ async function boot() {
   loadEl.append(loadK.el);
   S.els = { stageEl, bEl, fx, hud, grip, loadEl, top };
 
-  // 모듈은 async 로 먼저 돈다(index.html) — 지도 엔진(maplibre · pmtiles · defer 스크립트)이 실행된 뒤 무대를 만든다(30초 넘게 오지 않으면 그대로 진행 → '열지 못했습니다')
-  if (!window.maplibregl || !window.pmtiles) await new Promise((ok) => { const t0 = performance.now(); const f = () => (window.maplibregl && window.pmtiles) || performance.now() - t0 > 30e3 ? ok() : setTimeout(f, 25); f(); });
-  stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
-  map = stage.map; X.map = map; X.stage = stage;
-  // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
-  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on) return; wait?.(); wait = K.untilDrawn(map); }); }
-  try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
-  // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
-  map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
-  K.devDrawer({ stage, who });
-  hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
-
   // 데이터(모듈 시작 때 이미 출발 · 관문 세션과 다르면 다시) — 카탈로그 · 읍면동/규칙 집계 · 전국 시군구 경계
   const build = S.lx ? 'lx' : 'tenant';
   const same = SESS && (SESS.realm === 'lx') === S.lx;
@@ -249,6 +237,21 @@ async function boot() {
   // 첫 지역이 정해지면 그 지역 자료(읍면동 경계 · 결과 목록)를 층 쌓기와 함께 미리 부르고, 카메라도 바로 그 자리에 둔다
   // — 날아가는 2.4초 · 날아간 뒤 두 번째 '불러오는 중'이 없다(바탕 · 결과 타일을 처음부터 그 자리에서 받는다 · impl-37 기관 XI맵 속도)
   if (r0 && !(S.tenant && !inScope(r0))) prefetchRegion(r0);
+  mark('region');
+  // 지도 엔진은 지역 · 지역 자료 요청을 낸 뒤에 기다린다(첫 화면 묶음 · 결과 층 머리가 엔진을 받는 동안 함께 온다 · impl-38 ximap-boot)
+  // 모듈은 async 로 먼저 돈다(index.html) — 지도 엔진(maplibre · pmtiles · defer 스크립트)이 실행된 뒤 무대를 만든다(30초 넘게 오지 않으면 그대로 진행 → '열지 못했습니다')
+  if (!window.maplibregl || !window.pmtiles) await new Promise((ok) => { const t0 = performance.now(); const f = () => (window.maplibregl && window.pmtiles) || performance.now() - t0 > 30e3 ? ok() : setTimeout(f, 25); f(); });
+  mark('engine');
+  stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
+  map = stage.map; X.map = map; X.stage = stage;
+  // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
+  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on) return; wait?.(); wait = K.untilDrawn(map); }); }
+  try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
+  // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
+  map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
+  K.devDrawer({ stage, who });
+  hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
+
   { const b0 = r0?.bbox || (S.tenant && S.scopeBox) || null; if (b0) stage.go(b0, { ms: 0, maxZoom: r0 ? 12.5 : 11 }); }
 
   const [cat] = await Promise.all([catP, stage.ready]);
@@ -299,7 +302,13 @@ async function boot() {
     // 지역 도착(기관 등) = 그 지역 결과 층까지 그려질 때를 기다려 한 번에 걷는다 — '불러오는 중'은 이 판 하나(걷힌 뒤 결과 때문에 다시 뜨지 않게 · 최대 3초 · impl-37)
     let rdOk = !S.rdP; S.rdP?.finally(() => { rdOk = true; });
     const drawn = () => { try { return !map.isMoving() && Object.keys(map.getStyle()?.sources || {}).filter((id) => !/^k-/.test(id)).every((id) => map.isSourceLoaded(id)); } catch { return true; } };
-    const poll = () => (S.board ? map.areTilesLoaded() || performance.now() - t0 > 450 : (rdOk && drawn()) || performance.now() - t0 > 3000) ? out() : setTimeout(poll, 60); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
+    // 결과 층이 보이면 바로 걷는다(impl-38 ximap-boot) — 켜진 결과 층 하나라도 그 축척 조각이 다 와서 화면에 결과가 그려진 순간.
+    // 나머지 결과 층 · 바탕 영상 · 필지 조각은 판이 걷힌 뒤 차오른다(카메라가 그대로라 '불러오는 중'이 다시 뜨지 않는다).
+    // 켜진 결과 층이 없거나 화면 안에 결과가 없으면 예전처럼 지도가 다 그려질 때(최대 3초)
+    const resOn = () => (S.res || []).filter((it) => aiOn() && S.resOn[it.id] && map.getSource(it.sid));
+    const resShown = () => { try { const on = resOn().filter((it) => map.isSourceLoaded(it.sid)); if (!on.length || map.isMoving()) return false;
+      const ids = on.flatMap((it) => it.ids).filter((l) => map.getLayer(l)); return ids.length > 0 && map.queryRenderedFeatures({ layers: ids }).length > 0; } catch { return false; } };
+    const poll = () => (S.board ? map.areTilesLoaded() || performance.now() - t0 > 450 : (rdOk && (resShown() || drawn())) || performance.now() - t0 > 3000) ? out() : setTimeout(poll, 60); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
@@ -558,7 +567,10 @@ const RDPRE = new Map();   // 첫 지역 자료 미리 받기(20초 안 · 한 �
 function prefetchRegion(r) {
   const c = encodeURIComponent(r.code), q = (p) => { const x = api(p); x.catch(() => {}); return x; };
   // 결과 목록은 탭 저장소 10분 보관(swr — 다시 오면 보관본으로 바로 층을 쌓고 뒤에서 새로 받는다 · 카탈로그 · 집계와 같은 방식)
-  RDPRE.set(r.code, { t: performance.now(), emd: q('/regions/' + c + '/emd'), res: S.board ? null : swr('/regions/' + c + '/results').catch(() => null) });
+  const res = S.board ? null : swr('/regions/' + c + '/results').catch(() => null);
+  RDPRE.set(r.code, { t: performance.now(), emd: q('/regions/' + c + '/emd'), res });
+  // 결과 층 머리(앞 32KB)도 지도 엔진을 기다리지 않고 받기 시작한다 — 지도가 서면 바로 조각을 부른다(impl-38 ximap-boot)
+  res?.then((j) => { for (const it of j?.items || []) if (it.kind === 'vector') tileUrl(it).then((u) => warmPm(String(u?.url || '').replace(/^pmtiles:\/\//, '')), () => {}); });
 }
 async function regionData(r) {
   const my = ++rdSeq;

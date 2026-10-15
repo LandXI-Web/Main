@@ -30,11 +30,13 @@ test('전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림
   await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
   let lastProg = null;
   page.on('response', (r) => { if (/\/national\/progress$/.test(new URL(r.url()).pathname)) r.json().then((j) => { lastProg = j; }).catch(() => {}); });
-  const prog = page.waitForResponse((r) => /\/national\/progress$/.test(new URL(r.url()).pathname));
-  const brd = page.waitForResponse((r) => /\/ximap\/board$/.test(new URL(r.url()).pathname));
+  // 첫 화면 자료는 첫 화면 묶음(GET /ximap/boot · 줄마다 경로 하나의 응답 · impl-38)으로 온다 — 화면이 쓴 진행 장부 · 전국 결과는 그 줄(__lxBoot.peek)
   await page.goto('v3/xi-clean/');
-  const pj = await (await prog).json();
-  const bd = await (await brd).json();
+  await page.waitForFunction(() => window.__xc?.boot?.shown, null, { timeout: 30000 });
+  // 묶음이 실패했으면 화면은 따로 불렀다 — 그때는 같은 경로를 다시 읽는다
+  const [pj, bd] = await page.evaluate(async () => Promise.all(['/national/progress', '/ximap/board'].map(async (p) => window.__lxBoot?.peek(p)?.b
+    ?? (await fetch('http://localhost:8700/api/v1' + p, { headers: { authorization: 'Bearer ' + JSON.parse(localStorage.getItem('lx_api_session')).token } })).json())));
+  expect(pj?.assets && bd).toBeTruthy();
   await page.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown && document.querySelector('.xb-hud .xb-big'), null, { timeout: 30000 });
 
   // 빛나는 밀도 0 · 빗금 0 · 자산마다 결과 면(판 번호 주소) — 자산 고르기 없음

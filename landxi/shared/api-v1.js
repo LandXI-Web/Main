@@ -80,9 +80,18 @@ const TRANSIENT = new Set([502, 503, 504]);
 /** 잠깐 끊긴 서버(502 · 503 · 504 · 연결 끊김) — 로그아웃하지 않고 '다시 시도'로 받을 실패인가 */
 export const isTransient = (e) => !!e && (e.status === 0 || TRANSIENT.has(e.status) || e.code === 'network');
 export class ApiError extends Error { constructor(code, message, detail, status) { super(message || code); this.code = code; this.detail = detail; this.status = status; } }
+/* 첫 화면 묶음(GET /ximap/boot · impl-38) — 화면 HTML 이 모듈보다 먼저 받기 시작한 한 요청(window.__lxBoot · xi-clean/index.html).
+   읽기 요청은 그 경로가 묶음에 오면 그 응답을 쓴다(경로마다 한 번 · 같은 세션). 오지 않거나 실패한 경로 · 그 뒤 요청은 예전처럼 따로 부른다
+   (묶음의 하나하나는 서버가 같은 API 를 같은 사람으로 부른 응답 — 숫자 한 출처). */
+async function bootHit(path, s) {
+  const B = typeof window !== 'undefined' ? window.__lxBoot : null;
+  if (!B?.get || !s || s.token !== B.tok) return undefined;
+  try { return await B.get(path); } catch { return undefined; }
+}
 export async function api(path, { method = 'GET', body, headers = {}, raw = false } = {}) {
   if (API.mode === 'off') throw new ApiError('offline', 'off 모드 — 픽스처를 쓰세요');
   const s = session.get();
+  if (method === 'GET' && !raw && body === undefined) { const b = await bootHit(path, s); if (b !== undefined) return b; }
   const h = { accept: 'application/json', ...headers };
   if (body !== undefined) h['content-type'] = 'application/json';
   if (s) h.authorization = 'Bearer ' + s.token;

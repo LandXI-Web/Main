@@ -1,0 +1,141 @@
+gov first 0 done 6967 ldN 1 ldMs 998 ld on @3610 지도+판 (지역 결과 요약+판 @3955) ld off @4460 boot {"gate":3,"region":7,"engine":850,"data":1087,"layers":1121,"canvas":1122,"ready":1141,"shown":1844} 
+     510 +1249 srv    7.1        0B /api/v1/ximap/boot?service=card-farm
+    2499 + 428 srv      -     3633B /api/v1/openapi.json
+    2517 + 475 srv    4.8    33283B /tiles/pmtiles/results/lx/namwon-change.pmtiles
+    2517 + 501 srv    3.8    33292B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    2517 + 539 srv    4.2    33295B /tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles
+    2517 + 784 srv    5.4    33291B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    2517 +1041 srv      2    33288B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    2518 +1371 srv    1.9    33284B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3589 + 412 srv      -      981B /landxi/data/tiles/world-bm/meta.json
+    3589 + 759 srv      -     9838B /landxi/data/tiles/overseas-s2/meta.json
+    3610 + 344 srv      -    10088B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    3654 + 692 srv    2.3    33287B /tiles/pmtiles/reference/parcels-namwon.pmtiles
+    3672 + 292 srv      -    12654B /landxi/data/tiles/world-bm/8/218/100.webp?v=2
+    3672 + 292 srv      -    12004B /landxi/data/tiles/world-bm/8/218/101.webp?v=2
+    3977 + 399 srv    1.8     1243B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    3986 + 406 srv     11     6246B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3986 + 421 srv   10.4    17788B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    3986 + 423 srv    8.5     1141B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    3986 + 434 srv    8.5    18024B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    3986 + 587 srv    9.8    10864B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3986 + 602 srv     10    17867B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3986 + 798 srv    9.2   112643B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3986 +1291 srv   12.9    64883B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    4359 + 467 srv    4.7    12295B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4359 + 718 srv      6     6653B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4359 + 728 srv    5.9    20385B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4359 + 950 srv    5.8   111491B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4359 +2394 srv    6.4    57066B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4699 + 268 srv    7.6      435B /tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)
+gov again 0 done 2206 ldN 0 ldMs 0  boot {"gate":2,"region":5,"engine":5,"data":57,"layers":90,"canvas":90,"ready":100,"shown":596} 
+     485 +1045 srv    7.6        0B /api/v1/ximap/boot?service=card-farm
+     488 + 668 srv      -     3630B /api/v1/openapi.json
+    1215 + 450 srv      -      482B /landxi/data/tiles/overseas-s2/meta.json
+    1215 + 988 srv      -      481B /landxi/data/tiles/world-bm/meta.json
+    1227 +  37 srv      -     -811B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    1238 +  31 srv      -     -804B /landxi/data/tiles/world-bm/8/218/101.webp?v=2
+    1238 +  31 srv      -     -806B /landxi/data/tiles/world-bm/8/218/100.webp?v=2
+    1657 +   8 srv    7.6     -620B /tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)
+gov MEDIAN {"first":6967,"again":2206,"nApiFirst":2,"nApiAgain":2,"boot":1844,"bootAgain":596,"ldNmax":1,"errs":0}
+staff first 0 done 22665 ldN 1 ldMs 649 ld on @14572 지역 경계와 분석 집계+판 (전국 결과 요약+판 @14825) ld off @15323 boot {"gate":5,"region":9376,"engine":10710,"data":10820,"layers":10859,"canvas":10862,"ready":10914,"shown":11374} 
+     500 +3355 srv    5.8        0B /api/v1/ximap/boot?
+    3871 + 773 srv      -     3632B /api/v1/openapi.json
+    3882 +4374 srv  367.7    60520B /api/v1/survey/stats?by=emd
+   14694 + 680 srv      -      982B /landxi/data/tiles/world-bm/meta.json
+   14694 +1857 srv      -     9790B /landxi/data/tiles/overseas-s2/meta.json
+   14707 +1538 srv      -    10084B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+   14715 +1704 srv      -    14215B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+   14716 + 505 srv      -     2589B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+   14716 + 515 srv      -     2271B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+   14716 + 531 srv      -     3204B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+   14716 + 541 srv      -     1291B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+   14716 + 608 srv      -     3126B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+   14716 + 657 srv      -     2602B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+   14716 +1002 srv      -     6077B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+   14716 +1061 srv      -     8129B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+   14716 +1454 srv      -    10498B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+   14716 +1774 srv      -    10280B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+   14716 +1896 srv      -    13919B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+   14717 + 817 srv      -     2359B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+   14717 + 832 srv      -     1155B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+   14717 +1881 srv      -    12513B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+   14822 +7412 srv   37.7   151193B /tiles/national/river/2025/6/54/25.pbf?v=643.1792056902
+   14822 +7596 srv   36.5   148651B /tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.3
+   14825 +2972 srv      5    33288B /tiles/pmtiles/reference/parcels-namwon.pmtiles
+   14825 +3470 srv    3.7    33282B /tiles/pmtiles/reference/sigungu.pmtiles
+   14833 +4494 srv   21.7    50287B /tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.3
+   14834 +1196 srv     34      493B /tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.3
+   14834 +1202 srv   22.8      491B /tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.3
+   14834 +1202 srv   18.1      486B /tiles/national/river/2025/6/53/25.pbf?v=643.1792056902
+   14834 +1206 srv   22.3      485B /tiles/national/river/2025/6/53/24.pbf?v=643.1792056902
+   14834 +4269 srv   40.5    50978B /tiles/national/river/2025/6/54/24.pbf?v=643.1792056902
+   14835 +1384 srv   22.7     1201B /tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.3
+   14835 +1542 srv   22.6     2505B /tiles/national/river/2025/6/55/25.pbf?v=643.1792056902
+   14835 +1757 srv   18.2     1225B /tiles/national/river/2025/6/55/24.pbf?v=643.1792056902
+   14835 +2062 srv   22.6     2675B /tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.3
+   14847 +1213 srv   15.8      491B /tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.3
+   14847 +1225 srv   12.4      492B /tiles/national/river/2025/6/56/24.pbf?v=643.1792056902
+   14847 +1225 srv   13.3      498B /tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.3
+   14847 +1231 srv   12.2      487B /tiles/national/river/2025/6/56/25.pbf?v=643.1792056902
+   15225 + 726 srv      -     4370B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+   15234 +1329 srv      -     8400B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+   15249 + 622 srv      -     3340B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+   15259 + 502 srv      -     2226B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+   15326 +1357 srv      -     9838B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+   15375 +1739 srv      -    11900B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+   15535 + 862 srv      -     4010B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+   15551 + 965 srv      -     4828B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+   15721 + 724 srv      -     2641B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+   18310 + 521 srv    1.6     1057B /tiles/pmtiles/reference/sigungu.pmtiles
+   18310 + 635 srv    2.1     1568B /tiles/pmtiles/reference/sigungu.pmtiles
+   18310 +1155 srv    1.9    14178B /tiles/pmtiles/reference/sigungu.pmtiles
+   18310 +1297 srv    2.9    18610B /tiles/pmtiles/reference/sigungu.pmtiles
+staff again 0 done 4801 ldN 1 ldMs 432 ld on @1835 +판 (전국 결과 요약+판 @1943) ld off @2266 boot {"gate":25,"region":30,"engine":30,"data":92,"layers":128,"canvas":129,"ready":1167,"shown":1167} 
+     537 +1587 srv    6.5        0B /api/v1/ximap/boot?
+     542 + 435 srv      -     3586B /api/v1/openapi.json
+    1050 + 676 srv      -      483B /landxi/data/tiles/overseas-s2/meta.json
+    1050 + 680 srv      -      475B /landxi/data/tiles/world-bm/meta.json
+    1060 +  30 srv      -     -797B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    1100 +   4 srv      -     -799B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+    1101 +   4 srv      -     -804B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+    1101 +   4 srv      -     -799B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+    1101 +   4 srv      -     -803B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+    1101 +   5 srv      -     -803B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+    1101 +   5 srv      -     -801B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+    1101 +   6 srv      -     -805B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+    1101 +   6 srv      -     -805B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+    1101 +   6 srv      -     -806B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+    1101 +   7 srv      -     -801B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+    1101 +   8 srv      -     -797B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+    1101 +   8 srv      -     -797B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+    1101 +   8 srv      -     -799B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+    1101 +   8 srv      -     -800B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+    1101 +   8 srv      -     -812B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+    1118 +  99 srv      -     -795B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+    1214 +  10 srv      -     -797B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+    1215 +  10 srv      -     -801B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+    1215 +  10 srv      -     -803B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+    1215 +  10 srv      -     -793B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+    1216 +   9 srv      -     -804B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+    1216 +   9 srv      -     -795B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+    1217 +   9 srv      -     -801B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+    1217 +   9 srv      -     -803B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+    2123 +2590 srv    372    60051B /api/v1/survey/stats?by=emd
+    2212 +   2 srv     34     -695B /tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.3
+    2213 +   4 srv   22.8     -697B /tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.3
+    2213 +  42 srv   13.3     -703B /tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.3
+    2213 +  45 srv   15.8     -697B /tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.3
+    2214 +   7 srv   36.5     -761B /tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.3
+    2215 +   5 srv   22.6     -761B /tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.3
+    2215 +   5 srv   22.7     -755B /tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.3
+    2215 +   5 srv   21.7     -757B /tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.3
+    2224 +   2 srv   22.6     -761B /tiles/national/river/2025/6/55/25.pbf?v=643.1792056902
+    2224 +   2 srv   18.1     -689B /tiles/national/river/2025/6/53/25.pbf?v=643.1792056902
+    2224 +   2 srv   22.3     -691B /tiles/national/river/2025/6/53/24.pbf?v=643.1792056902
+    2224 +   2 srv   18.2     -761B /tiles/national/river/2025/6/55/24.pbf?v=643.1792056902
+    2252 +   1 srv   40.5     -755B /tiles/national/river/2025/6/54/24.pbf?v=643.1792056902
+    2262 +   1 srv   12.4     -699B /tiles/national/river/2025/6/56/24.pbf?v=643.1792056902
+    2266 +   1 srv   12.2     -691B /tiles/national/river/2025/6/56/25.pbf?v=643.1792056902
+    2306 +   3 srv   37.7     -753B /tiles/national/river/2025/6/54/25.pbf?v=643.1792056902
+staff MEDIAN {"first":22665,"again":4801,"nApiFirst":3,"nApiAgain":3,"boot":11374,"bootAgain":1167,"ldNmax":1,"errs":0}

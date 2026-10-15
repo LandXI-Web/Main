@@ -102,7 +102,8 @@ class HeadSource {
   }
   async bytes(offset, length, signal, etag) {
     if (offset === 0 && length <= HEAD_BYTES && !this.head) {
-      this.head = this.src.getBytes(0, HEAD_BYTES, undefined, etag);   // 첫 조각은 끊지 않는다(같은 파일의 다른 층이 함께 기다린다)
+      const w = HEADW.get(this.url); HEADW.delete(this.url);          // 지도 엔진보다 먼저 받기 시작한 머리(warmPm) — 없거나 실패면 지금 받는다
+      this.head = w ? w.then((x) => x || this.src.getBytes(0, HEAD_BYTES, undefined, etag)) : this.src.getBytes(0, HEAD_BYTES, undefined, etag);   // 첫 조각은 끊지 않는다(같은 파일의 다른 층이 함께 기다린다)
       this.head.catch(() => { this.head = null; });
     }
     if (this.head && offset + length <= HEAD_BYTES) {
@@ -112,6 +113,19 @@ class HeadSource {
     }
     return this.src.getBytes(offset, length, signal, etag);
   }
+}
+/* 결과 층 머리 미리 받기(impl-38 ximap-boot) — 결과 목록이 오면 지도 엔진(maplibre)을 기다리지 않고 앞 32KB 를 받기 시작한다.
+   지도가 그 층을 처음 물을 때(HeadSource) 이 응답을 쓴다. 보관본(다시 오는 사람)이 있으면 받지 않는다. 받는 법은 pmtiles.js FetchSource 와 같다(범위 요청 · 약한 etag 버림) */
+const HEADW = new Map();
+export function warmPm(url) {
+  if (!url || HEADW.has(url) || typeof fetch === 'undefined') return;
+  HEADW.set(url, (async () => {
+    if (await pmGet(url, 0, 16384)) return null;
+    const r = await fetch(url, { cache: 'no-store', headers: { range: `bytes=0-${HEAD_BYTES - 1}` } });
+    if (r.status >= 300 || (r.status === 200 && !(+r.headers.get('content-length') <= HEAD_BYTES))) return null;
+    let et = r.headers.get('etag'); if (et && et.startsWith('W/')) et = null;
+    return { data: await r.arrayBuffer(), etag: et || undefined, cacheControl: r.headers.get('cache-control') || undefined, expires: r.headers.get('expires') || undefined };
+  })().catch(() => null));
 }
 const newPm = (u) => new window.pmtiles.PMTiles(window.pmtiles.FetchSource ? new HeadSource(u) : u);
 export function registerPmtiles() {

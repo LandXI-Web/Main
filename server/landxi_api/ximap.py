@@ -686,15 +686,18 @@ async def undo_edit(eid: str, request: Request):
 
 @router.get("/ximap/edits")
 async def live_edits(request: Request, response: Response, sets: str = "", bbox: str = ""):
-    """지도 위 '고친 자리' — 살아 있는 고치기(되돌린 것 뺌 · 묶음 20개까지). 객체마다 마지막 고치기 하나.
+    """지도 위 '고친 자리' — 살아 있는 고치기(되돌린 것 뺌 · 묶음 60개까지). 객체마다 마지막 고치기 하나.
     결과 조각은 1년 보관(판 번호 주소)이고 고치기는 조각을 바꾸지 않으므로, 이 층은 보관하지 않는다(no-store · 고친 즉시 새 모습)."""
     response.headers["Cache-Control"] = "no-store"
     p = require(principal(request), lx=True)
-    want = [s for s in sets.split(",") if s][:20]
+    want = [s for s in sets.split(",") if s][:60]                     # 화면 안 시군구 넷 × 서비스 여럿(20이면 뒤 묶음의 고친 자리가 빠진다 · 10-15)
     ids = []
+    name_of: dict[str, str] = {}                                  # job id → 화면이 부른 묶음 이름(결과 층 · 색 규칙 · 숨김이 그 이름으로 묶인다)
     for s in want:
         try:
-            ids.append((await _resolve(p, s))["job_id"])
+            jid = (await _resolve(p, s))["job_id"]
+            ids.append(jid)
+            name_of.setdefault(jid, s)
         except ApiError:
             continue
     box = None
@@ -716,7 +719,8 @@ async def live_edits(request: Request, response: Response, sets: str = "", bbox:
             "ORDER BY e.set_id, e.fid, e.at DESC", ids, box)
     feats = []
     for r in rows:
-        pr = {"edit": r["id"], "fid": r["fid"], "action": r["action"], "cls": r["cls_after"] or r["cls_before"], "test": r["test"]}
+        pr = {"edit": r["id"], "fid": r["fid"], "action": r["action"], "cls": r["cls_after"] or r["cls_before"], "test": r["test"],
+              "set": name_of.get(r["set_id"], r["set_id"])}
         if r["g"]:
             feats.append({"type": "Feature", "geometry": r["g"], "properties": {**pr, "part": "now"}})
         if r["action"] == "reshape" and r["g0"]:
@@ -770,3 +774,198 @@ async def memory_apply(request: Request, body: dict):
         await audit(conn, p, "ximap.memory", rs["job_id"], None, res)
     _invalidate()
     return {"result": {k: env(v, "count", "recorded", f"지운 자리 기억 {k}") if isinstance(v, int) else v for k, v in res.items()}, "as_of": now_iso()}
+
+
+# ── 첫 화면 묶음(impl-38 ximap-boot · 10-15 '기관XI맵-3초') ─────────────────────────────────────────────
+# XI맵 첫 화면이 따로 부르던 자료(로그인 확인 · 기관 · 관할 · 카탈로그 · 집계 · 지역 경계 · 결과 목록 · 지역 요약 · 영상 서명 · 판 번호 …)를
+# 한 요청으로. 묶음 안의 하나하나는 지금 API 를 같은 사람(같은 Authorization)으로 게이트웨이 안에서 그대로 부른 응답 — 숫자 · 권한 · 거르기가
+# 따로 부를 때와 같다(한 출처). 화면(api-v1.js)은 경로마다 한 번 이 응답을 쓰고, 없거나 실패한 것은 예전처럼 따로 부른다.
+_BOOT_HDR = {b"authorization", b"host", b"x-forwarded-for", b"x-forwarded-proto", b"x-forwarded-host", b"x-lx-site", b"cf-connecting-ip", b"user-agent"}
+_BOOT_SVC = __import__("re").compile(r"^[\w-]{1,64}$")
+_BOOT_SGG = __import__("re").compile(r"^\d{5}$")
+
+
+async def _inproc(request: Request, path: str) -> tuple[int, bytes | None]:
+    """게이트웨이 안에서 GET 한 번(같은 미들웨어 · 같은 로그인 확인) → (상태, JSON 본문 | None)."""
+    from urllib.parse import unquote
+    u = path if path.startswith(("/tiles", "/files")) else "/api/v1" + path
+    pth, _, qs = u.partition("?")
+    hdrs = [(k, v) for k, v in request.scope.get("headers", []) if k in _BOOT_HDR] + [(b"accept", b"application/json")]
+    scope = {k: v for k, v in request.scope.items() if k not in ("route", "endpoint", "path_params", "router", "state")}
+    scope.update(type="http", method="GET", path=unquote(pth), raw_path=pth.encode(), query_string=qs.encode(), headers=hdrs, state={})
+    out: dict = {"st": 500, "ct": b"", "body": []}
+    fin = asyncio.Event()
+    sent = False
+
+    async def receive():
+        nonlocal sent
+        if not sent:
+            sent = True
+            return {"type": "http.request", "body": b"", "more_body": False}
+        await fin.wait()
+        return {"type": "http.disconnect"}
+
+    async def send(m):
+        if m["type"] == "http.response.start":
+            out["st"] = m["status"]
+            out["ct"] = dict(m.get("headers") or []).get(b"content-type", b"")
+        elif m["type"] == "http.response.body":
+            out["body"].append(m.get("body", b""))
+    try:
+        await request.scope["app"](scope, receive, send)
+    finally:
+        fin.set()
+    body = b"".join(out["body"])
+    return out["st"], (body if b"json" in out["ct"] and body else None)
+
+
+def _home(regs: list[dict], tn: str, want: str | None) -> str | None:
+    """첫 지역 — 화면(app.js homeRegion)과 같은 판정: 주소의 지역 → 기관 이름이 시군구 하나 → 관할이 한 곳이면 그곳. 광역(여러 곳)은 없음(사용자가 고른다)."""
+    import re as _re
+    norm = lambda s: _re.sub(r"\s+", "", str(s or ""))   # noqa: E731
+    rs = [{"code": str(x.get("sgg_cd")), "name": x.get("name"), "full": x.get("full"), "sido": (str(x.get("full") or "").split() or [x.get("sido")])[0]}
+          for x in regs if x.get("geometry")]
+    if want and any(r["code"] == want for r in rs):
+        return want
+    n = norm(tn)
+    if n:
+        for r in rs:
+            if r["code"] == n or norm(r["full"]) == n or norm(r["name"]) == n:
+                return r["code"]
+        for r in rs:
+            if norm(r["name"]) and n.endswith(norm(r["name"])) and norm(r["sido"])[:2] in n:
+                return r["code"]
+    return rs[0]["code"] if len(rs) == 1 else None
+
+
+def _line(obj: dict, body: bytes | None = None) -> bytes:
+    """묶음 한 줄(줄 = JSON 하나). 본문은 받은 JSON 그대로 붙인다 — JSON 의 줄바꿈은 글자 밖에서만 나오므로 빼도 뜻이 같다."""
+    head = json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode()
+    if body is None:
+        return head + b"\n"
+    return head[:-1] + b',"b":' + body.replace(b"\r", b"").replace(b"\n", b"") + b"}\n"
+
+
+@router.get("/ximap/boot")
+async def boot(request: Request, service: str | None = None, region: str | None = None):
+    """XI맵 첫 화면 묶음 — 한 요청 · 다 된 것부터 한 줄씩 흘려 보낸다(application/x-ndjson).
+    줄: {"plan":[경로…],"final":참/거짓} 보낼 경로 · {"home":시군구} 첫 지역 · {"p":경로,"s":상태,"b":본문} 응답 하나 · {"took":{…}} 끝(증거용 시간).
+    LX = 로그인 확인 · 전국 결과 · 판 번호 · 밀도 · 영상 서명, 기관 = 로그인 확인 · 기관 · 관할 · 집계 · 첫 지역의 경계 · 결과 목록 · 요약 · 영상 서명."""
+    from urllib.parse import quote
+    from starlette.responses import StreamingResponse
+    p = require(principal(request))
+    lx = p.is_lx
+    build = "lx" if lx else "tenant"
+    cat = f"/catalog/layers?stage=domestic&build={build}&locale=ko"
+    paths = ["/me", "/survey/rules", "/survey/stats?by=rule", cat, "/regions?limit=400", "/reviews/notify", "/auth/session"]
+    if lx:      # LX 첫 화면(전국 결과)은 읍면동 집계(전국 · 큼)를 기다리지 않는다 — 따로 받는다
+        paths += ["/ximap/board", "/national/progress", "/approvals?state=pending", "/ximap/density?g=0"]
+    elif p.realm == "tenant" and p.tenant_id:
+        paths += ["/survey/stats?by=emd", "/auth/tenants", "/brand/" + quote(p.tenant_id, safe=""), "/regions?geom=1", "/regions"]
+        if service and _BOOT_SVC.match(service):
+            paths += ["/requests/services", "/requests/shared-imagery", "/spaces/me/guides/" + service]
+    want = region if region and _BOOT_SGG.match(region) else None
+    q: asyncio.Queue = asyncio.Queue()
+    sem = asyncio.Semaphore(16)
+    took: dict[str, list[int]] = {}               # 경로 → [묶음 시작부터 시작 · 걸린 시간](ms · 증거용 — 화면은 쓰지 않는다)
+    t0 = time.perf_counter()
+
+    async def one(pth: str):
+        async with sem:
+            a = time.perf_counter()
+            try:
+                r = await _inproc(request, pth)
+            except Exception:  # noqa: BLE001 — 하나가 실패해도 나머지는 그대로(화면이 그 하나만 따로 부른다)
+                r = (500, None)
+            took[pth] = [round((a - t0) * 1000), round((time.perf_counter() - a) * 1000)]
+        q.put_nowait(_line({"p": pth, "s": r[0]}, r[1]))
+        return r
+
+    # 먼저 = 첫 화면이 바로 기다리는 가벼운 것(로그인 확인 · 기관 · 관할 · 전국 결과). 나머지는 그 뒤에 — 한 게이트웨이 안에서 모두 한꺼번에 돌리면
+    # 가벼운 것도 무거운 것과 번갈아 돌아 늦게 나온다
+    FIRST = {"/me", "/auth/tenants", "/regions?geom=1", "/regions?limit=400", "/survey/rules", "/ximap/board"} | {x for x in paths if x.startswith("/brand/")}
+    gate1 = asyncio.Event()
+
+    async def later(pth: str):
+        await gate1.wait()
+        return await one(pth)
+    tasks = {pth: asyncio.create_task(one(pth) if pth in FIRST else later(pth)) for pth in paths}
+
+    async def first_wave():
+        await asyncio.gather(*(tasks[x] for x in paths if x in FIRST), return_exceptions=True)
+        gate1.set()
+    asyncio.get_running_loop().create_task(first_wave())
+
+    async def region_part():
+        home = None
+        try:
+            if p.realm == "tenant":
+                st, b = await tasks["/regions?geom=1"]
+                sd, bd = await tasks["/auth/tenants"]
+                regs = (json.loads(b).get("items") or []) if st == 200 and b else []
+                tn = ""
+                if sd == 200 and bd:
+                    t = next((x for x in json.loads(bd).get("items") or [] if x.get("id") == p.tenant_id), None) or {}
+                    tn = (t.get("name") or {}).get("ko") or (t.get("name") or {}).get("en") or ""
+                home = _home(regs, tn, want)
+            elif want:
+                home = want
+        except Exception:  # noqa: BLE001 — 첫 지역 판정이 어긋나도 공통 자료는 그대로(지역 자료는 화면이 따로 부른다)
+            home = None
+        more = []
+        if home:
+            c = quote(home, safe="")
+            more = [f"/regions/{c}/emd", f"/regions/{c}/results", "/summary?region=" + c]
+        q.put_nowait(_line({"home": home, "plan": more}))
+        sub = [asyncio.create_task(one(x)) for x in more]
+        signs: list[str] = []
+        try:
+            sc, bc = await tasks[cat]
+            if sc == 200 and bc:       # 원본 영상 서명(화면 cogLayers 와 같은 거르기 — 쓰지 않는 것은 화면이 버린다) — 서명 함수(GET /tiles/sign)를 이 요청 그대로 부른다
+                from .tiles import tiles_sign
+                a = time.perf_counter()
+                lines = []
+                for it in (json.loads(bc).get("items") or [])[:200]:
+                    if it.get("role") == "imagery" and it.get("tier") == "raw" and it.get("source") in ("cog", "pmtiles") and it.get("bounds") and it.get("tile_ready") is not False:
+                        st = "cog/" + str(it.get("id"))
+                        k = "/tiles/sign?set=" + quote(st, safe="")
+                        signs.append(k)
+                        try:
+                            lines.append(_line({"p": k, "s": 200}, json.dumps(await tiles_sign(st, request), ensure_ascii=False, separators=(",", ":")).encode()))
+                        except ApiError as e:
+                            lines.append(_line({"p": k, "s": e.status}))
+                q.put_nowait(_line({"plan": signs}))
+                for x in lines:
+                    q.put_nowait(x)
+                took["/tiles/sign"] = [round((a - t0) * 1000), round((time.perf_counter() - a) * 1000)]
+        except Exception:  # noqa: BLE001
+            pass
+        q.put_nowait(_line({"final": True}))
+        await asyncio.gather(*sub)
+
+    async def gen():
+        yield _line({"plan": paths})
+        rp = asyncio.create_task(region_part())
+        done = asyncio.gather(rp, *tasks.values(), return_exceptions=True)
+        while True:
+            if done.done() and q.empty():
+                break
+            g = asyncio.create_task(q.get())
+            await asyncio.wait({g, done}, return_when=asyncio.FIRST_COMPLETED)
+            if g.done():
+                yield g.result()
+            else:
+                g.cancel()
+        yield _line({"took": took, "as_of": now_iso()})
+
+    hd = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+    if "gzip" not in (request.headers.get("accept-encoding") or ""):
+        return StreamingResponse(gen(), media_type="application/x-ndjson", headers=hd)
+
+    async def gz():                # 줄마다 눌러 바로 내보낸다(동기 비우기 — 받는 쪽이 줄 단위로 풀 수 있다)
+        import zlib
+        z = zlib.compressobj(5, zlib.DEFLATED, 31)
+        async for ln in gen():
+            yield z.compress(ln) + z.flush(zlib.Z_SYNC_FLUSH)
+        yield z.flush()
+    return StreamingResponse(gz(), media_type="application/x-ndjson", headers={**hd, "Content-Encoding": "gzip", "Vary": "Accept-Encoding"})

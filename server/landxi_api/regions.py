@@ -984,11 +984,52 @@ def _box_hit(g_region, bounds) -> bool:
 LANDCOVER_CLASSES = {"건물", "주차장", "경작지", "비닐하우스"}
 
 
+"""결과 목록 미리 계산(impl-38 ximap-boot) — 같은 권한 범위(영역 · 기관 · 역할 · 부서 관할)의 같은 시군구는 한 번 센 목록을 다시 쓴다.
+결과가 바뀌면(끝난 작업 수 · 마지막 끝난 시각 · 등록 영상 수 = 결과 판) 그 자리에서 새로 센다. 공유 설정처럼 판에 안 잡히는 변화는 5분이면 새로."""
+_RES_CACHE: dict = {}
+_RES_TTL = 300.0
+_STAMP: dict = {"at": 0.0, "v": None}
+
+
+async def result_stamp() -> str:
+    """결과 판 — 끝난 작업(수 · 마지막 시각) + 등록 영상 수. 2초 보관(첫 화면 요청이 몰려도 한 번)."""
+    if _STAMP["v"] is not None and time.time() - _STAMP["at"] < 2.0:
+        return _STAMP["v"]
+    async with db(realm="lx") as conn:
+        v = await conn.fetchval(
+            "SELECT (SELECT count(*) FROM jobs WHERE state='done')::text || '/' || "
+            "coalesce((SELECT max(finished_at) FROM jobs WHERE state='done')::text, '') || '/' || (SELECT count(*) FROM imagery)::text")
+    _STAMP.update(at=time.time(), v=v)
+    return v
+
+
+def _res_key(p, sgg_cd: str) -> tuple:
+    return (sgg_cd, p.realm, p.tenant_id, p.role, tuple(p.sgg or ()))
+
+
 @router.get("/regions/{sgg_cd}/results")
 async def region_results(sgg_cd: str, request: Request):
     """그 시군구에 결과가 있는 모든 결과 층 — ① 카탈로그 결과 층(범위가 이 시군구와 겹치는 것 · 권한 관문 그대로)
-    ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(층 주소에만)."""
+    ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(층 주소에만).
+    같은 권한 범위 · 같은 결과 판이면 미리 센 목록(_RES_CACHE · 5분)."""
     p = require(principal(request))
+    try:
+        stamp = await result_stamp()
+    except Exception:  # noqa: BLE001
+        stamp = None
+    k = _res_key(p, sgg_cd)
+    hit = _RES_CACHE.get(k)
+    if stamp is not None and hit and hit[0] == stamp and time.time() - hit[1] < _RES_TTL:
+        return {**hit[2], "as_of": now_iso()}
+    out = await _region_results(sgg_cd, p)
+    if stamp is not None:
+        if len(_RES_CACHE) > 2000:
+            _RES_CACHE.clear()
+        _RES_CACHE[k] = (stamp, time.time(), out)
+    return out
+
+
+async def _region_results(sgg_cd: str, p) -> dict:
     _kick_emd_fill()
     r = region_of(sgg_cd)
     if not r:

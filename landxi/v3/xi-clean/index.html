@@ -3,6 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+/* 첫 화면 묶음(GET /ximap/boot · impl-38) — 화면 코드 · 지도 엔진을 받기 전에 첫 화면 자료를 한 요청으로 받기 시작한다.
+   서버는 다 된 것부터 한 줄씩 보낸다(줄 = 경로 하나의 응답). shared/api-v1.js 가 경로마다 한 번 __lxBoot.get(경로)로 쓴다 —
+   올 경로면 그 줄을 기다리고(시작 뒤 4초까지), 오지 않을 경로 · 실패한 줄 · 다 받은 뒤 20초가 지난 것은 undefined(화면이 예전처럼 따로 부른다) */
+(() => { try {
+  const L = (k) => localStorage.getItem(k);
+  const s = JSON.parse(L('lx_api_session') || 'null');
+  if (!s || !s.token || !(new Date(s.expires_at) > new Date())) return;
+  const h = location.hostname;
+  const base = L('lx_api_base') || (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(h) ? 'http://localhost:8700' : /\.github\.io$/i.test(h) ? 'https://app.land-xi.dev' : location.origin);
+  const q = new URLSearchParams(location.search), b = new URLSearchParams();
+  for (const k of ['service', 'region']) if (q.get(k)) b.set(k, q.get(k));
+  const E = new Map(), plan = new Set(), used = new Set(), wait = new Set(), t = performance.now();
+  let fin = false, end = 0;
+  const known = (k) => E.has(k) || end || (fin && !plan.has(k));
+  const take = (k) => { const e = E.get(k); if (!e || used.has(k) || e.s !== 200 || !('b' in e)) return undefined; used.add(k); return e.b; };
+  const tick = () => { for (const w of [...wait]) if (known(w.k)) { wait.delete(w); w.ok(take(w.k)); } };
+  const on = (x) => { if (x.plan) x.plan.forEach((k) => plan.add(k)); if (x.final) fin = true; if (x.p) E.set(x.p, x); };
+  window.__lxBoot = { tok: s.token, t, peek: (k) => E.get(k), get(k) {
+    const now = performance.now();
+    if (used.has(k) || (end ? now - end > 20e3 : now - t > 4e3)) return undefined;
+    if (known(k)) return take(k);
+    return new Promise((ok) => { const w = { k, ok }; wait.add(w); setTimeout(() => { if (wait.delete(w)) ok(undefined); }, Math.max(0, 4e3 - (now - t))); });
+  } };
+  fetch(base + '/api/v1/ximap/boot?' + b, { headers: { authorization: 'Bearer ' + s.token, accept: 'application/x-ndjson' } }).then(async (r) => {
+    if (!r.ok || !r.body) return;
+    const rd = r.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { value, done } = await rd.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf('\n')) >= 0) { const ln = buf.slice(0, i); buf = buf.slice(i + 1); if (ln) on(JSON.parse(ln)); }
+      tick();
+    }
+  }).catch(() => {}).finally(() => { end = performance.now(); tick(); });
+} catch { /* 저장 불가 창 — 화면이 따로 부른다 */ } })();
+</script>
 <title>XI맵 · Land-XI</title>
 <meta name="description" content="AI 분석 결과를 지도 위에서 바로.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">

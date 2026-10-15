@@ -1,0 +1,1363 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 5276,
+    "ldN": 1,
+    "ldMs": 801,
+    "tl": [
+     "ld on @3445 +판",
+     "(지역 결과 요약+판 @3739)",
+     "ld off @4141"
+    ],
+    "boot": {
+     "gate": 3,
+     "region": 9,
+     "engine": 656,
+     "data": 853,
+     "layers": 887,
+     "canvas": 887,
+     "ready": 905,
+     "shown": 1453
+    },
+    "errs": [],
+    "n": 29,
+    "nApi": 2,
+    "nApiBeforeDone": 2,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 506,
+      "ms": 1012,
+      "srv": 8.8,
+      "size": 78530,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 2569,
+      "ms": 473,
+      "srv": null,
+      "size": 3638,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2591,
+      "ms": 477,
+      "srv": 9.6,
+      "size": 33286,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2591,
+      "ms": 618,
+      "srv": 10.6,
+      "size": 33289,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-change.pmtiles",
+      "at": 2591,
+      "ms": 741,
+      "srv": 9.1,
+      "size": 33281,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2591,
+      "ms": 844,
+      "srv": 8.3,
+      "size": 33287,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2591,
+      "ms": 1697,
+      "srv": 10.6,
+      "size": 33289,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2591,
+      "ms": 1697,
+      "srv": 8,
+      "size": 33287,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 3426,
+      "ms": 600,
+      "srv": null,
+      "size": 983,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 3426,
+      "ms": 1192,
+      "srv": null,
+      "size": 9790,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 3445,
+      "ms": 846,
+      "srv": null,
+      "size": 10087,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 3501,
+      "ms": 272,
+      "srv": null,
+      "size": 12652,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 3501,
+      "ms": 276,
+      "srv": null,
+      "size": 11999,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 3506,
+      "ms": 1110,
+      "srv": 2.6,
+      "size": 33288,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3740,
+      "ms": 878,
+      "srv": 7.2,
+      "size": 64880,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3740,
+      "ms": 884,
+      "srv": 5.3,
+      "size": 6242,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3740,
+      "ms": 894,
+      "srv": 5,
+      "size": 112640,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3740,
+      "ms": 943,
+      "srv": 6.8,
+      "size": 17858,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3743,
+      "ms": 624,
+      "srv": 2.5,
+      "size": 12303,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3743,
+      "ms": 882,
+      "srv": 7.9,
+      "size": 6649,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3743,
+      "ms": 942,
+      "srv": 7.7,
+      "size": 111485,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 3743,
+      "ms": 1015,
+      "srv": 6.5,
+      "size": 10862,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3743,
+      "ms": 1248,
+      "srv": 6.1,
+      "size": 57065,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 3743,
+      "ms": 1253,
+      "srv": 8.9,
+      "size": 20381,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 4037,
+      "ms": 289,
+      "srv": 7.6,
+      "size": 438,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4297,
+      "ms": 694,
+      "srv": 4,
+      "size": 18024,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4299,
+      "ms": 692,
+      "srv": 3.3,
+      "size": 1146,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 4632,
+      "ms": 442,
+      "srv": 4.7,
+      "size": 1246,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 4632,
+      "ms": 451,
+      "srv": 4.1,
+      "size": 17785,
+      "st": 206,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 2538,
+    "ldN": 1,
+    "ldMs": 569,
+    "tl": [
+     "ld on @2312 지역 결과 요약+판",
+     "ld off @2430"
+    ],
+    "boot": {
+     "gate": 24,
+     "region": 68,
+     "engine": 68,
+     "data": 118,
+     "layers": 143,
+     "canvas": 144,
+     "ready": 772,
+     "shown": 936
+    },
+    "errs": [],
+    "n": 8,
+    "nApi": 2,
+    "nApiBeforeDone": 2,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 526,
+      "ms": 1204,
+      "srv": 6.4,
+      "size": 0,
+      "st": 200,
+      "fail": true
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 529,
+      "ms": 452,
+      "srv": null,
+      "size": 3631,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1066,
+      "ms": 676,
+      "srv": null,
+      "size": 480,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1066,
+      "ms": 676,
+      "srv": null,
+      "size": 480,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 1075,
+      "ms": 23,
+      "srv": null,
+      "size": -811,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/101.webp?v=2",
+      "at": 1082,
+      "ms": 20,
+      "srv": null,
+      "size": -798,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/8/218/100.webp?v=2",
+      "at": 1083,
+      "ms": 19,
+      "srv": null,
+      "size": -806,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 1787,
+      "ms": 4,
+      "srv": 7.6,
+      "size": -622,
+      "st": 204,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 5276,
+   "again": 2538,
+   "nApiFirst": 2,
+   "nApiAgain": 2,
+   "boot": 1453,
+   "bootAgain": 936,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 23,
+  "region": 28,
+  "engine": 28,
+  "data": 92,
+  "layers": 130,
+  "canvas": 131,
+  "ready": 471,
+  "shown": 981
+ },
+ "staff": {
+  "url": "/landxi/v3/xi-clean/",
+  "first": [
+   {
+    "done": 3750,
+    "ldN": 1,
+    "ldMs": 481,
+    "tl": [
+     "ld on @1953 +판",
+     "(지역 경계와 분석 집계+판 @2329)",
+     "ld off @2464"
+    ],
+    "boot": {
+     "gate": 5,
+     "region": 799,
+     "engine": 799,
+     "data": 993,
+     "layers": 1016,
+     "canvas": 1020,
+     "ready": 1065,
+     "shown": 1065
+    },
+    "errs": [],
+    "n": 52,
+    "nApi": 3,
+    "nApiBeforeDone": 3,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?",
+      "at": 475,
+      "ms": 720,
+      "srv": 16.2,
+      "size": 0,
+      "st": 200,
+      "fail": true
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 1325,
+      "ms": 299,
+      "srv": null,
+      "size": 3628,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1336,
+      "ms": 1065,
+      "srv": 351.4,
+      "size": 60517,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 2321,
+      "ms": 306,
+      "srv": null,
+      "size": 9730,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 2323,
+      "ms": 303,
+      "srv": null,
+      "size": 986,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 2424,
+      "ms": 189,
+      "srv": null,
+      "size": 10079,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.3",
+      "at": 2446,
+      "ms": 598,
+      "srv": 29.2,
+      "size": 50279,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.3",
+      "at": 2446,
+      "ms": 599,
+      "srv": 30,
+      "size": 490,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.3",
+      "at": 2446,
+      "ms": 609,
+      "srv": 26.9,
+      "size": 490,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.3",
+      "at": 2446,
+      "ms": 609,
+      "srv": 30.1,
+      "size": 1206,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/54/24.pbf?v=643.1792056902",
+      "at": 2446,
+      "ms": 629,
+      "srv": 27.4,
+      "size": 51225,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.3",
+      "at": 2446,
+      "ms": 740,
+      "srv": 29.6,
+      "size": 148459,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/53/25.pbf?v=643.1792056902",
+      "at": 2447,
+      "ms": 606,
+      "srv": 27.2,
+      "size": 482,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.3",
+      "at": 2447,
+      "ms": 607,
+      "srv": 26.9,
+      "size": 2668,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/53/24.pbf?v=643.1792056902",
+      "at": 2447,
+      "ms": 608,
+      "srv": 27.1,
+      "size": 488,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/55/24.pbf?v=643.1792056902",
+      "at": 2447,
+      "ms": 608,
+      "srv": 27.2,
+      "size": 1225,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/55/25.pbf?v=643.1792056902",
+      "at": 2447,
+      "ms": 615,
+      "srv": 27.5,
+      "size": 2501,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/54/25.pbf?v=643.1792056902",
+      "at": 2447,
+      "ms": 825,
+      "srv": 23,
+      "size": 151116,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 2448,
+      "ms": 165,
+      "srv": null,
+      "size": 3119,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 2448,
+      "ms": 165,
+      "srv": null,
+      "size": 13915,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 2448,
+      "ms": 166,
+      "srv": null,
+      "size": 2265,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 2448,
+      "ms": 166,
+      "srv": null,
+      "size": 2591,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 2448,
+      "ms": 166,
+      "srv": null,
+      "size": 3198,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 2448,
+      "ms": 169,
+      "srv": null,
+      "size": 6079,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 2448,
+      "ms": 169,
+      "srv": null,
+      "size": 14200,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 2449,
+      "ms": 165,
+      "srv": null,
+      "size": 1144,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 2449,
+      "ms": 166,
+      "srv": null,
+      "size": 12509,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 2449,
+      "ms": 166,
+      "srv": null,
+      "size": 8129,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 2449,
+      "ms": 166,
+      "srv": null,
+      "size": 1278,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 2449,
+      "ms": 167,
+      "srv": null,
+      "size": 10278,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 2449,
+      "ms": 167,
+      "srv": null,
+      "size": 2357,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 2449,
+      "ms": 168,
+      "srv": null,
+      "size": 2606,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 2449,
+      "ms": 168,
+      "srv": null,
+      "size": 10498,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.3",
+      "at": 2453,
+      "ms": 601,
+      "srv": 18.4,
+      "size": 491,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/56/24.pbf?v=643.1792056902",
+      "at": 2453,
+      "ms": 602,
+      "srv": 21.8,
+      "size": 487,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/56/25.pbf?v=643.1792056902",
+      "at": 2455,
+      "ms": 598,
+      "srv": 18.9,
+      "size": 492,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.3",
+      "at": 2455,
+      "ms": 598,
+      "srv": 18.9,
+      "size": 488,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/sigungu.pmtiles",
+      "at": 2456,
+      "ms": 582,
+      "srv": 11.8,
+      "size": 33280,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 2464,
+      "ms": 591,
+      "srv": 8.4,
+      "size": 33281,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 2629,
+      "ms": 149,
+      "srv": null,
+      "size": 8409,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 2629,
+      "ms": 149,
+      "srv": null,
+      "size": 4373,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 2629,
+      "ms": 149,
+      "srv": null,
+      "size": 3336,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 2630,
+      "ms": 151,
+      "srv": null,
+      "size": 2227,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 2630,
+      "ms": 151,
+      "srv": null,
+      "size": 11905,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 2630,
+      "ms": 151,
+      "srv": null,
+      "size": 9837,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 2630,
+      "ms": 153,
+      "srv": null,
+      "size": 4017,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 2631,
+      "ms": 153,
+      "srv": null,
+      "size": 2647,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 2631,
+      "ms": 166,
+      "srv": null,
+      "size": 4826,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/sigungu.pmtiles",
+      "at": 3065,
+      "ms": 458,
+      "srv": 20.2,
+      "size": 18601,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/sigungu.pmtiles",
+      "at": 3066,
+      "ms": 457,
+      "srv": 16.8,
+      "size": 1579,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/sigungu.pmtiles",
+      "at": 3066,
+      "ms": 457,
+      "srv": 17,
+      "size": 1066,
+      "st": 206,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/sigungu.pmtiles",
+      "at": 3077,
+      "ms": 446,
+      "srv": 10.1,
+      "size": 14179,
+      "st": 206,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 1944,
+    "ldN": 1,
+    "ldMs": 580,
+    "tl": [
+     "ld on @1723 전국 결과 요약+판",
+     "ld off @1836"
+    ],
+    "boot": {
+     "gate": 23,
+     "region": 28,
+     "engine": 28,
+     "data": 92,
+     "layers": 130,
+     "canvas": 131,
+     "ready": 471,
+     "shown": 981
+    },
+    "errs": [],
+    "n": 46,
+    "nApi": 3,
+    "nApiBeforeDone": 3,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?",
+      "at": 377,
+      "ms": 765,
+      "srv": 6.8,
+      "size": 46138,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/openapi.json",
+      "at": 379,
+      "ms": 285,
+      "srv": null,
+      "size": 3581,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 742,
+      "ms": 401,
+      "srv": null,
+      "size": 479,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 742,
+      "ms": 401,
+      "srv": null,
+      "size": 477,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/2/3/1.webp?v=2",
+      "at": 755,
+      "ms": 28,
+      "srv": null,
+      "size": -801,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/50.webp?v=2",
+      "at": 766,
+      "ms": 26,
+      "srv": null,
+      "size": -797,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/49.webp?v=2",
+      "at": 766,
+      "ms": 27,
+      "srv": null,
+      "size": -808,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/50.webp?v=2",
+      "at": 767,
+      "ms": 26,
+      "srv": null,
+      "size": -803,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/50.webp?v=2",
+      "at": 767,
+      "ms": 26,
+      "srv": null,
+      "size": -797,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/49.webp?v=2",
+      "at": 767,
+      "ms": 27,
+      "srv": null,
+      "size": -797,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/51.webp?v=2",
+      "at": 767,
+      "ms": 27,
+      "srv": null,
+      "size": -801,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/49.webp?v=2",
+      "at": 767,
+      "ms": 27,
+      "srv": null,
+      "size": -807,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/51.webp?v=2",
+      "at": 767,
+      "ms": 27,
+      "srv": null,
+      "size": -815,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/51.webp?v=2",
+      "at": 767,
+      "ms": 28,
+      "srv": null,
+      "size": -792,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/109/48.webp?v=2",
+      "at": 767,
+      "ms": 29,
+      "srv": null,
+      "size": -801,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/50.webp?v=2",
+      "at": 767,
+      "ms": 29,
+      "srv": null,
+      "size": -799,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/110/48.webp?v=2",
+      "at": 767,
+      "ms": 29,
+      "srv": null,
+      "size": -803,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/49.webp?v=2",
+      "at": 767,
+      "ms": 30,
+      "srv": null,
+      "size": -799,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/108/48.webp?v=2",
+      "at": 767,
+      "ms": 30,
+      "srv": null,
+      "size": -800,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/50.webp?v=2",
+      "at": 767,
+      "ms": 30,
+      "srv": null,
+      "size": -796,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/49.webp?v=2",
+      "at": 807,
+      "ms": 6,
+      "srv": null,
+      "size": -801,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/51.webp?v=2",
+      "at": 807,
+      "ms": 6,
+      "srv": null,
+      "size": -809,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/51.webp?v=2",
+      "at": 807,
+      "ms": 6,
+      "srv": null,
+      "size": -795,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/111/48.webp?v=2",
+      "at": 807,
+      "ms": 7,
+      "srv": null,
+      "size": -801,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/107/48.webp?v=2",
+      "at": 808,
+      "ms": 6,
+      "srv": null,
+      "size": -793,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/50.webp?v=2",
+      "at": 808,
+      "ms": 6,
+      "srv": null,
+      "size": -804,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/49.webp?v=2",
+      "at": 808,
+      "ms": 6,
+      "srv": null,
+      "size": -807,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/51.webp?v=2",
+      "at": 808,
+      "ms": 10,
+      "srv": null,
+      "size": -799,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/7/112/48.webp?v=2",
+      "at": 808,
+      "ms": 10,
+      "srv": null,
+      "size": -807,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1121,
+      "ms": 800,
+      "srv": 364.2,
+      "size": 60065,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.3",
+      "at": 1146,
+      "ms": 9,
+      "srv": 26.9,
+      "size": -691,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.3",
+      "at": 1146,
+      "ms": 10,
+      "srv": 29.2,
+      "size": -757,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 5,
+      "srv": 26.9,
+      "size": -757,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 8,
+      "srv": 30,
+      "size": -695,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/53/24.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 8,
+      "srv": 27.1,
+      "size": -695,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/54/24.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 8,
+      "srv": 27.4,
+      "size": -751,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 8,
+      "srv": 30.1,
+      "size": -761,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/55/24.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 9,
+      "srv": 27.2,
+      "size": -765,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/53/25.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 9,
+      "srv": 27.2,
+      "size": -685,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 10,
+      "srv": 29.6,
+      "size": -763,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/55/25.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 11,
+      "srv": 27.5,
+      "size": -753,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/54/25.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 12,
+      "srv": 23,
+      "size": -759,
+      "st": 200,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 42,
+      "srv": 18.9,
+      "size": -693,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/56/25.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 43,
+      "srv": 18.9,
+      "size": -697,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.3",
+      "at": 1147,
+      "ms": 46,
+      "srv": 18.4,
+      "size": -697,
+      "st": 204,
+      "fail": false
+     },
+     {
+      "u": "/tiles/national/river/2025/6/56/24.pbf?v=643.1792056902",
+      "at": 1147,
+      "ms": 47,
+      "srv": 21.8,
+      "size": -693,
+      "st": 204,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 3750,
+   "again": 1944,
+   "nApiFirst": 3,
+   "nApiAgain": 3,
+   "boot": 1065,
+   "bootAgain": 981,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ }
+}

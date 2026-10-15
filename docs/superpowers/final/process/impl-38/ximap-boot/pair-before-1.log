@@ -1,0 +1,383 @@
+gov first 0 done 5318 ldN 1 ldMs 2650 ld on @2672 지역 경계와 분석 집계+판 (지역 결과 요약+판 @3091) ld off @5318 boot {"gate":643,"data":1571,"layers":1580,"canvas":1580,"ready":2182,"shown":3492} 
+    1212 + 295 srv      -     3630B /api/v1/openapi.json
+    1216 + 305 srv   16.5      623B /api/v1/me
+    1216 + 326 srv   37.6     2506B /api/v1/regions?geom=1
+    1216 + 359 srv   62.7     2812B /api/v1/survey/rules
+    1216 + 367 srv   74.5     2410B /api/v1/survey/stats?by=rule
+    1216 + 422 srv   90.9     4372B /api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko
+    1216 + 638 srv  128.3    11486B /api/v1/survey/stats?by=emd
+    1509 + 346 srv   23.8     1012B /api/v1/regions
+    1522 + 334 srv    6.4      820B /api/v1/auth/tenants
+    1860 + 331 srv   20.6      538B /api/v1/reviews/notify
+    2152 + 401 srv   10.8      532B /api/v1/auth/session
+    2452 + 330 srv   25.8     1013B /api/v1/regions?limit=400
+    2551 + 538 srv      -     9849B /landxi/data/tiles/overseas-s2/meta.json
+    2551 + 539 srv      -      981B /landxi/data/tiles/world-bm/meta.json
+    2570 + 140 srv      -    10079B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    2571 + 520 srv   13.4     1308B /api/v1/brand/namwon
+    2584 + 140 srv      -    14205B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+    2585 + 135 srv      -     3130B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+    2585 + 139 srv      -     2591B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+    2585 + 139 srv      -    13915B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+    2585 + 139 srv      -     2273B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+    2585 + 139 srv      -     1285B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+    2585 + 140 srv      -    10495B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+    2585 + 140 srv      -     3204B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+    2585 + 140 srv      -     6074B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+    2586 + 138 srv      -     2362B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+    2586 + 139 srv      -     8134B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+    2586 + 140 srv      -     2604B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+    2586 + 140 srv      -     1149B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+    2586 + 140 srv      -    10275B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+    2586 + 146 srv      -    12511B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+    2714 + 105 srv      -        -B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+    2732 +  88 srv      -        -B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+    2734 +  86 srv      -        -B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+    2734 +  86 srv      -        -B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+    2734 +  86 srv      -        -B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+    2735 +  85 srv      -        -B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+    2735 +  85 srv      -        -B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+    2735 +  86 srv      -        -B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+    2735 +  86 srv      -        -B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+    2785 + 622 srv   15.2    51335B /api/v1/regions/52190/emd
+    2785 + 623 srv  257.4     1651B /api/v1/regions/52190/results
+    2798 + 514 srv   14.1      620B /tiles/sign?set=cog%2Fimg-52190-2020-aerial
+    2801 + 594 srv    7.8     1527B /api/v1/summary?region=52190
+    2819 + 272 srv      -    12651B /landxi/data/tiles/world-bm/8/218/100.webp?v=2
+    2819 + 272 srv      -    12003B /landxi/data/tiles/world-bm/8/218/101.webp?v=2
+    2827 + 564 srv      4    33283B /tiles/pmtiles/reference/parcels-namwon.pmtiles
+    3335 + 139 srv    7.6      435B /tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)
+    3432 + 308 srv    1.6    33285B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3438 + 326 srv    6.6    33289B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3438 + 431 srv    5.7    33285B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    3438 + 455 srv    6.2    33285B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    3438 + 478 srv    6.8    33280B /tiles/pmtiles/results/lx/namwon-change.pmtiles
+    3438 + 500 srv    7.2    33283B /tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles
+    3989 + 348 srv    4.6    17789B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    3989 + 348 srv    4.6     1247B /tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles
+    3989 + 348 srv    4.5    18025B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    3989 + 349 srv    3.5     1138B /tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles
+    3990 + 348 srv      8    10855B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3990 + 348 srv    7.4    17859B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3990 + 349 srv    8.5    64883B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3990 + 357 srv    9.9     6249B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3990 + 428 srv    9.1   112644B /tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles
+    3991 + 348 srv    5.8    12307B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3991 + 349 srv    8.6    57065B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3991 + 355 srv    3.4     6648B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3991 + 365 srv    7.7    20383B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    3991 + 434 srv    5.7   111487B /tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles
+    4642 + 322 srv   18.8     1083B /api/v1/requests/shared-imagery
+    4642 + 323 srv   12.6      847B /api/v1/requests/services
+    4642 + 343 srv   57.9     2060B /api/v1/spaces/me/guides/card-farm
+gov again 0 done 2787 ldN 1 ldMs 832 ld on @1949 +판 ld off @2787 boot {"gate":659,"data":997,"layers":1003,"canvas":1004,"ready":1308,"shown":2033} 
+     376 + 284 srv      -     3588B /api/v1/openapi.json
+     639 + 306 srv   18.8      627B /api/v1/me
+     639 + 388 srv   97.1     2731B /api/v1/survey/rules
+     639 + 389 srv   96.4     2515B /api/v1/regions?geom=1
+     639 + 654 srv  356.8     2411B /api/v1/survey/stats?by=rule
+     639 + 861 srv  358.3    11441B /api/v1/survey/stats?by=emd
+     639 + 870 srv  374.2     4369B /api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko
+     662 + 632 srv  262.9     1006B /api/v1/regions
+     946 + 349 srv   51.1      825B /api/v1/auth/tenants
+    1324 + 308 srv   24.6     1004B /api/v1/regions?limit=400
+    1324 + 336 srv   36.7      536B /api/v1/reviews/notify
+    1351 + 285 srv      -      495B /landxi/data/tiles/world-bm/meta.json
+    1351 + 294 srv      -      483B /landxi/data/tiles/overseas-s2/meta.json
+    1351 + 310 srv   12.1     1310B /api/v1/brand/namwon
+    1361 +  58 srv      -     -801B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    1407 + 431 srv    9.2      530B /api/v1/auth/session
+    1418 +   4 srv      -     -802B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+    1418 +   5 srv      -     -806B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+    1418 +   5 srv      -     -801B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+    1418 +   6 srv      -     -803B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+    1418 +   6 srv      -     -811B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+    1418 +   6 srv      -     -811B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+    1419 +   6 srv      -     -801B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+    1419 +   6 srv      -     -807B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+    1419 +   6 srv      -     -800B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+    1419 +   7 srv      -     -801B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+    1419 +   7 srv      -     -803B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+    1419 +   7 srv      -     -803B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+    1419 +   7 srv      -     -805B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+    1419 +   7 srv      -     -806B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+    1419 +   8 srv      -     -800B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+    1436 +  68 srv      -     -809B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+    1498 +  13 srv      -     -805B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+    1501 +  10 srv      -     -799B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+    1501 +  11 srv      -     -801B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+    1501 +  11 srv      -     -797B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+    1502 +  10 srv      -     -800B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+    1503 +   9 srv      -     -805B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+    1503 +  10 srv      -     -807B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+    1503 +  10 srv      -     -813B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+    1634 +  13 srv   15.2     -682B /api/v1/regions/52190/emd
+    1634 +1036 srv  116.7     1642B /api/v1/regions/52190/results
+    1643 + 304 srv     13      615B /tiles/sign?set=cog%2Fimg-52190-2020-aerial
+    1645 + 301 srv    5.4     1521B /api/v1/summary?region=52190
+    1694 +   1 srv      -     -802B /landxi/data/tiles/world-bm/8/218/101.webp?v=2
+    1695 +   0 srv      -     -802B /landxi/data/tiles/world-bm/8/218/100.webp?v=2
+    1949 + 722 srv   14.4      850B /api/v1/requests/services
+    1949 + 722 srv   37.2     2058B /api/v1/spaces/me/guides/card-farm
+    1949 + 723 srv   20.1     1079B /api/v1/requests/shared-imagery
+    2004 +   3 srv    7.6     -618B /tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)
+gov MEDIAN {"first":5318,"again":2787,"nApiFirst":19,"nApiAgain":19,"boot":3492,"bootAgain":2033,"ldNmax":1,"errs":0}
+staff first 0 done 11677 ldN 1 ldMs 705 ld on @6076 지도+판 (전국 결과 요약+판 @6180) ld off @6713 boot {"gate":929,"data":3489,"layers":3533,"canvas":3536,"ready":3552,"shown":4055} 
+    2569 + 453 srv      -     3626B /api/v1/openapi.json
+    2575 + 706 srv   45.4     2733B /api/v1/survey/rules
+    2575 + 745 srv   25.5     5511B /api/v1/ximap/board
+    2575 + 924 srv   24.5      606B /api/v1/me
+    2575 + 970 srv  429.7     1873B /api/v1/national/progress
+    2575 +1099 srv  241.3     2521B /api/v1/survey/stats?by=rule
+    2575 +1161 srv  224.5     9764B /api/v1/catalog/layers?stage=domestic&build=lx&locale=ko
+    2575 +2283 srv  478.2    60519B /api/v1/survey/stats?by=emd
+    3503 + 465 srv   17.1      649B /api/v1/approvals?state=pending
+    3503 + 755 srv   17.8      523B /api/v1/reviews/notify
+    4262 + 451 srv    7.8      529B /api/v1/auth/session
+    6037 +1538 srv   27.4    12420B /api/v1/regions?limit=400
+    6061 + 473 srv      -      982B /landxi/data/tiles/world-bm/meta.json
+    6061 +1719 srv      -     9776B /landxi/data/tiles/overseas-s2/meta.json
+    6075 +1332 srv      -    10084B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    6122 + 483 srv   17.7      609B /tiles/sign?set=cog%2Fimg-12740-2023-aerial
+    6123 + 463 srv   20.4      605B /tiles/sign?set=cog%2Fimg-12760-2023-aerial
+    6123 + 470 srv     13      609B /tiles/sign?set=cog%2Fimg-12130-2023-aerial
+    6123 + 482 srv   20.8      604B /tiles/sign?set=cog%2Fimg-44133-2023-aerial
+    6123 + 486 srv   21.2      617B /tiles/sign?set=cog%2Fimg-12800-2023-aerial
+    6123 + 493 srv   36.8      609B /tiles/sign?set=cog%2Fimg-12730-2023-aerial
+    6123 + 499 srv     38      609B /tiles/sign?set=cog%2Fimg-12710-2023-aerial
+    6123 + 508 srv   37.8      609B /tiles/sign?set=cog%2Fimg-43745-2023-aerial
+    6123 + 530 srv   48.8      611B /tiles/sign?set=cog%2Fimg-12720-2023-aerial
+    6123 + 541 srv   47.9      610B /tiles/sign?set=cog%2Fimg-12830-2023-aerial
+    6123 + 587 srv   38.5      618B /tiles/sign?set=cog%2Fimg-12850-2023-aerial
+    6123 + 811 srv   22.4      612B /tiles/sign?set=cog%2Fimg-41670-2023-aerial
+    6123 +1106 srv  190.2      611B /tiles/sign?set=cog%2Fimg-12860-2023-aerial
+    6124 + 489 srv   22.2      612B /tiles/sign?set=cog%2Fimg-41550-2023-aerial
+    6124 + 489 srv   37.4      608B /tiles/sign?set=cog%2Fimg-43730-2023-aerial
+    6124 + 524 srv   35.6      608B /tiles/sign?set=cog%2Fimg-12870-2023-aerial
+    6124 + 702 srv  200.3      614B /tiles/sign?set=cog%2Fimg-51130-2023-aerial
+    6124 + 702 srv   64.3      604B /tiles/sign?set=cog%2Fimg-47280-2023-aerial
+    6124 + 852 srv    213      609B /tiles/sign?set=cog%2Fimg-44825-2023-aerial
+    6124 + 868 srv  247.6      608B /tiles/sign?set=cog%2Fimg-47250-2023-aerial
+    6124 + 928 srv   44.9      607B /tiles/sign?set=cog%2Fimg-44210-2023-aerial
+    6124 + 934 srv     51      607B /tiles/sign?set=cog%2Fimg-44250-2023-aerial
+    6124 + 941 srv   55.6      616B /tiles/sign?set=cog%2Fimg-52740-2023-aerial
+    6124 +1044 srv  287.1      612B /tiles/sign?set=cog%2Fimg-43740-2023-aerial
+    6124 +1048 srv  203.3      611B /tiles/sign?set=cog%2Fimg-44180-2023-aerial
+    6124 +1103 srv   59.9      613B /tiles/sign?set=cog%2Fimg-48860-2023-aerial
+    6124 +1135 srv  320.2      611B /tiles/sign?set=cog%2Fimg-43760-2023-aerial
+    6124 +1372 srv  244.9      615B /tiles/sign?set=cog%2Fimg-44760-2023-aerial
+    6124 +1372 srv  237.5      607B /tiles/sign?set=cog%2Fimg-48880-2023-aerial
+    6126 + 715 srv  191.4      612B /tiles/sign?set=cog%2Fimg-48870-2023-aerial
+    6126 + 842 srv    201      615B /tiles/sign?set=cog%2Fimg-43750-2023-aerial
+    6126 + 842 srv  204.3      613B /tiles/sign?set=cog%2Fimg-12780-2023-aerial
+    6126 + 849 srv  215.3      614B /tiles/sign?set=cog%2Fimg-43720-2023-aerial
+    6126 + 857 srv  252.5      611B /tiles/sign?set=cog%2Fimg-52770-2023-aerial
+    6126 + 858 srv    272      608B /tiles/sign?set=cog%2Fimg-52720-2023-aerial
+    6126 + 865 srv  204.5      607B /tiles/sign?set=cog%2Fimg-44800-2023-aerial
+    6126 + 872 srv  259.9      614B /tiles/sign?set=cog%2Fimg-52800-2023-aerial
+    6126 + 873 srv   67.5      609B /tiles/sign?set=cog%2Fimg-52730-2023-aerial
+    6126 + 939 srv   55.6      611B /tiles/sign?set=cog%2Fimg-52130-2023-aerial
+    6126 + 962 srv  288.4      614B /tiles/sign?set=cog%2Fimg-12840-2023-aerial
+    6126 + 968 srv  261.8      615B /tiles/sign?set=cog%2Fimg-44710-2023-aerial
+    6126 + 975 srv    104      605B /tiles/sign?set=cog%2Fimg-12790-2023-aerial
+    6126 + 976 srv  234.2      611B /tiles/sign?set=cog%2Fimg-44150-2023-aerial
+    6126 + 982 srv   99.5      607B /tiles/sign?set=cog%2Fimg-12110-2023-aerial
+    6126 + 991 srv  125.3      608B /tiles/sign?set=cog%2Fimg-43150-2023-aerial
+    6126 +1011 srv   79.8      613B /tiles/sign?set=cog%2Fimg-43130-2023-aerial
+    6126 +1039 srv  220.9      610B /tiles/sign?set=cog%2Fimg-44131-2023-aerial
+    6126 +1039 srv  286.2      607B /tiles/sign?set=cog%2Fimg-52750-2023-aerial
+    6126 +1042 srv    261      613B /tiles/sign?set=cog%2Fimg-12170-2023-aerial
+    6126 +1052 srv  277.1      609B /tiles/sign?set=cog%2Fimg-52710-2023-aerial
+    6126 +1055 srv   62.5      613B /tiles/sign?set=cog%2Fimg-12810-2023-aerial
+    6126 +1055 srv  279.7      613B /tiles/sign?set=cog%2Fimg-52210-2023-aerial
+    6126 +1058 srv  267.3      610B /tiles/sign?set=cog%2Fimg-41500-2023-aerial
+    6126 +1061 srv  124.6      609B /tiles/sign?set=cog%2Fimg-48850-2023-aerial
+    6126 +1064 srv   62.3      608B /tiles/sign?set=cog%2Fimg-44270-2023-aerial
+    6126 +1067 srv    273      613B /tiles/sign?set=cog%2Fimg-44790-2023-aerial
+    6126 +1067 srv   81.1      609B /tiles/sign?set=cog%2Fimg-43770-2023-aerial
+    6126 +1072 srv   88.2      612B /tiles/sign?set=cog%2Fimg-44810-2023-aerial
+    6126 +1075 srv  110.4      618B /tiles/sign?set=cog%2Fimg-44770-2023-aerial
+    6126 +1111 srv   96.8      610B /tiles/sign?set=cog%2Fimg-52180-2023-aerial
+    6126 +1132 srv    203      613B /tiles/sign?set=cog%2Fimg-44200-2023-aerial
+    6126 +1133 srv   80.3      611B /tiles/sign?set=cog%2Fimg-12750-2023-aerial
+    6126 +1140 srv   95.1      612B /tiles/sign?set=cog%2Fimg-12770-2023-aerial
+    6126 +1140 srv   64.8      609B /tiles/sign?set=cog%2Fimg-12820-2023-aerial
+    6126 +1363 srv  201.1      616B /tiles/sign?set=cog%2Fimg-44230-2023-aerial
+    6127 + 990 srv   79.5      615B /tiles/sign?set=cog%2Faxis-iksan-hwangdeung
+    6127 + 999 srv   86.2      610B /tiles/sign?set=cog%2Fimg-52190-2020-aerial
+    6127 +1071 srv   82.5      608B /tiles/sign?set=cog%2Fimg-52190-2023-aerial
+    6127 +1289 srv   63.5      610B /tiles/sign?set=cog%2Fimg-52790-2023-aerial
+    6127 +2064 srv  193.4     9455B /api/v1/ximap/density?g=0
+    6146 + 644 srv      -     3200B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+    6146 +1147 srv      -     3121B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+    6146 +1204 srv      -     2591B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+    6146 +1543 srv      -    13910B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+    6146 +1887 srv      -    14204B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+    6147 + 569 srv      -     1142B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+    6147 + 629 srv      -     1283B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+    6147 + 711 srv      -     2270B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+    6147 + 730 srv      -     2360B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+    6147 + 739 srv      -     2600B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+    6147 +1092 srv      -     6074B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+    6147 +1234 srv      -     8134B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+    6147 +1647 srv      -    10269B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+    6147 +1751 srv      -    12509B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+    6147 +1875 srv      -    10485B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+    6149 +3016 srv   22.1    33287B /tiles/pmtiles/reference/parcels-namwon.pmtiles
+    6149 +3438 srv   22.1    33283B /tiles/pmtiles/reference/sigungu.pmtiles
+    6158 +1138 srv   44.6     2664B /tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.1
+    6158 +3480 srv   82.9    50286B /tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.1
+    6158 +5219 srv   41.5   148552B /tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.1
+    6159 +1036 srv     71      492B /tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.1
+    6159 +1170 srv    4.7      489B /tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.1
+    6159 +1176 srv    6.7      488B /tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.1
+    6159 +1180 srv    5.5      494B /tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.1
+    6159 +1194 srv   77.8     1204B /tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.1
+    6159 +1270 srv   39.6      489B /tiles/national/river/2025/6/53/24.pbf?v=643.1792056902
+    6159 +1274 srv   38.6      486B /tiles/national/river/2025/6/53/25.pbf?v=643.1792056902
+    6159 +1278 srv   40.6      487B /tiles/national/river/2025/6/56/25.pbf?v=643.1792056902
+    6159 +1339 srv   40.3     1222B /tiles/national/river/2025/6/55/24.pbf?v=643.1792056902
+    6159 +1382 srv   39.3     2505B /tiles/national/river/2025/6/55/25.pbf?v=643.1792056902
+    6159 +3765 srv    8.4    50972B /tiles/national/river/2025/6/54/24.pbf?v=643.1792056902
+    6159 +5217 srv   10.4   151048B /tiles/national/river/2025/6/54/25.pbf?v=643.1792056902
+    6160 +1278 srv   42.2      482B /tiles/national/river/2025/6/56/24.pbf?v=643.1792056902
+    6719 +1061 srv      -     4373B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+    6779 +1222 srv      -     8406B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+    6792 + 598 srv      -     3341B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+    6860 +1173 srv      -     2228B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+    6879 +1114 srv      -     9844B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+    6887 +1543 srv      -    11905B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+    7241 + 990 srv      -     4013B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+    7296 + 687 srv      -     4828B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+    7352 + 642 srv      -     2638B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+    9594 +1147 srv    5.3    18612B /tiles/pmtiles/reference/sigungu.pmtiles
+    9595 + 442 srv    6.4     1055B /tiles/pmtiles/reference/sigungu.pmtiles
+    9595 + 756 srv    5.5     1578B /tiles/pmtiles/reference/sigungu.pmtiles
+    9595 + 915 srv    6.2    14185B /tiles/pmtiles/reference/sigungu.pmtiles
+staff again 0 done 4168 ldN 1 ldMs 638 ld on @1921 +판 (전국 결과 요약+판 @2240) ld off @2556 boot {"gate":431,"data":492,"layers":532,"canvas":533,"ready":1498,"shown":1498} 
+     497 +1084 srv      -     3631B /api/v1/openapi.json
+     885 + 424 srv     17      600B /api/v1/me
+     885 + 487 srv   16.3     5349B /api/v1/ximap/board
+     885 + 498 srv   45.8     2729B /api/v1/survey/rules
+     885 + 920 srv   92.8     9666B /api/v1/catalog/layers?stage=domestic&build=lx&locale=ko
+     885 + 924 srv    134     2417B /api/v1/survey/stats?by=rule
+     885 +1483 srv  154.2     1866B /api/v1/national/progress
+     885 +2709 srv  379.6    59278B /api/v1/survey/stats?by=emd
+    1336 + 515 srv   29.7      662B /api/v1/approvals?state=pending
+    1336 +1001 srv   40.6      523B /api/v1/reviews/notify
+    1336 +1301 srv   27.1    12431B /api/v1/regions?limit=400
+    1371 + 485 srv      -      477B /landxi/data/tiles/overseas-s2/meta.json
+    1371 + 508 srv      -      482B /landxi/data/tiles/world-bm/meta.json
+    1382 +  37 srv      -     -805B /landxi/data/tiles/world-bm/2/3/1.webp?v=2
+    1382 + 960 srv    8.2      535B /api/v1/auth/session
+    1414 + 742 srv  112.5      616B /tiles/sign?set=cog%2Fimg-12740-2023-aerial
+    1415 + 508 srv   25.4      611B /tiles/sign?set=cog%2Fimg-12830-2023-aerial
+    1415 + 525 srv   40.2      611B /tiles/sign?set=cog%2Fimg-12800-2023-aerial
+    1415 + 562 srv   44.1      609B /tiles/sign?set=cog%2Fimg-12710-2023-aerial
+    1415 + 583 srv   60.4      613B /tiles/sign?set=cog%2Fimg-43745-2023-aerial
+    1415 + 586 srv   58.8      615B /tiles/sign?set=cog%2Fimg-41670-2023-aerial
+    1415 + 598 srv   62.9      609B /tiles/sign?set=cog%2Fimg-12850-2023-aerial
+    1415 + 633 srv   64.4      604B /tiles/sign?set=cog%2Fimg-43730-2023-aerial
+    1415 + 642 srv   74.6      606B /tiles/sign?set=cog%2Fimg-12720-2023-aerial
+    1415 + 677 srv   81.1      612B /tiles/sign?set=cog%2Fimg-43740-2023-aerial
+    1415 + 692 srv   93.1      613B /tiles/sign?set=cog%2Fimg-12130-2023-aerial
+    1415 + 745 srv  113.1      610B /tiles/sign?set=cog%2Fimg-12730-2023-aerial
+    1415 + 761 srv  114.6      611B /tiles/sign?set=cog%2Fimg-43760-2023-aerial
+    1415 + 783 srv  119.5      611B /tiles/sign?set=cog%2Fimg-12870-2023-aerial
+    1415 + 943 srv   60.3      613B /tiles/sign?set=cog%2Fimg-44133-2023-aerial
+    1415 + 948 srv   62.4      609B /tiles/sign?set=cog%2Fimg-12860-2023-aerial
+    1415 + 982 srv   69.2      611B /tiles/sign?set=cog%2Fimg-41550-2023-aerial
+    1415 + 982 srv   85.6      609B /tiles/sign?set=cog%2Fimg-12760-2023-aerial
+    1416 + 513 srv   30.7      611B /tiles/sign?set=cog%2Fimg-47250-2023-aerial
+    1416 + 519 srv   30.9      612B /tiles/sign?set=cog%2Fimg-44180-2023-aerial
+    1416 + 536 srv   31.1      622B /tiles/sign?set=cog%2Fimg-52720-2023-aerial
+    1416 + 622 srv   60.1      610B /tiles/sign?set=cog%2Fimg-44760-2023-aerial
+    1416 + 684 srv     83      619B /tiles/sign?set=cog%2Fimg-52740-2023-aerial
+    1416 + 698 srv   83.8      613B /tiles/sign?set=cog%2Fimg-44825-2023-aerial
+    1416 + 702 srv   83.5      611B /tiles/sign?set=cog%2Fimg-51130-2023-aerial
+    1416 + 785 srv  120.6      610B /tiles/sign?set=cog%2Fimg-44210-2023-aerial
+    1416 + 789 srv  119.2      612B /tiles/sign?set=cog%2Fimg-47280-2023-aerial
+    1416 + 795 srv  122.6      606B /tiles/sign?set=cog%2Fimg-48880-2023-aerial
+    1416 + 799 srv  120.9      610B /tiles/sign?set=cog%2Fimg-48860-2023-aerial
+    1416 + 960 srv     54      611B /tiles/sign?set=cog%2Fimg-52750-2023-aerial
+    1416 +1006 srv   83.9      611B /tiles/sign?set=cog%2Fimg-44250-2023-aerial
+    1416 +1017 srv   85.1      605B /tiles/sign?set=cog%2Fimg-52710-2023-aerial
+    1416 +1024 srv     96      609B /tiles/sign?set=cog%2Fimg-52130-2023-aerial
+    1416 +1551 srv   95.8      610B /tiles/sign?set=cog%2Fimg-48870-2023-aerial
+    1417 + 589 srv   54.6      616B /tiles/sign?set=cog%2Fimg-12780-2023-aerial
+    1417 + 613 srv   54.4      611B /tiles/sign?set=cog%2Fimg-43720-2023-aerial
+    1417 + 722 srv   85.6      612B /tiles/sign?set=cog%2Fimg-44131-2023-aerial
+    1417 + 804 srv  116.7      608B /tiles/sign?set=cog%2Fimg-52770-2023-aerial
+    1417 + 811 srv  119.4      618B /tiles/sign?set=cog%2Fimg-52800-2023-aerial
+    1417 + 816 srv  125.1      616B /tiles/sign?set=cog%2Fimg-12170-2023-aerial
+    1417 + 821 srv  120.5      609B /tiles/sign?set=cog%2Fimg-44200-2023-aerial
+    1417 + 825 srv  111.9      609B /tiles/sign?set=cog%2Fimg-52210-2023-aerial
+    1418 + 530 srv   32.1      609B /tiles/sign?set=cog%2Fimg-43750-2023-aerial
+    1418 + 541 srv     32      614B /tiles/sign?set=cog%2Fimg-44710-2023-aerial
+    1418 + 566 srv     31      612B /tiles/sign?set=cog%2Fimg-44790-2023-aerial
+    1418 + 573 srv   32.7      610B /tiles/sign?set=cog%2Fimg-12770-2023-aerial
+    1418 + 666 srv   71.4      610B /tiles/sign?set=cog%2Fimg-44800-2023-aerial
+    1418 + 733 srv   90.5      606B /tiles/sign?set=cog%2Fimg-12790-2023-aerial
+    1418 + 763 srv  104.6      612B /tiles/sign?set=cog%2Fimg-44150-2023-aerial
+    1418 + 828 srv  117.6      609B /tiles/sign?set=cog%2Fimg-41500-2023-aerial
+    1418 + 834 srv  110.7      611B /tiles/sign?set=cog%2Fimg-52730-2023-aerial
+    1418 + 839 srv  110.7      610B /tiles/sign?set=cog%2Fimg-12110-2023-aerial
+    1418 + 846 srv  116.8      607B /tiles/sign?set=cog%2Fimg-43130-2023-aerial
+    1418 + 851 srv  117.5      609B /tiles/sign?set=cog%2Fimg-43770-2023-aerial
+    1418 + 857 srv    6.5      609B /tiles/sign?set=cog%2Fimg-44270-2023-aerial
+    1418 + 863 srv    8.1      609B /tiles/sign?set=cog%2Fimg-12810-2023-aerial
+    1418 + 869 srv    7.9      610B /tiles/sign?set=cog%2Fimg-12820-2023-aerial
+    1418 + 876 srv    9.5      607B /tiles/sign?set=cog%2Fimg-52180-2023-aerial
+    1418 + 888 srv     10      611B /tiles/sign?set=cog%2Fimg-44810-2023-aerial
+    1418 + 893 srv   11.1      604B /tiles/sign?set=cog%2Fimg-52190-2020-aerial
+    1418 + 897 srv    6.4      608B /tiles/sign?set=cog%2Faxis-iksan-hwangdeung
+    1418 + 902 srv      6      614B /tiles/sign?set=cog%2Fimg-52190-2023-aerial
+    1418 + 964 srv   54.8      613B /tiles/sign?set=cog%2Fimg-12840-2023-aerial
+    1418 + 996 srv   69.7      611B /tiles/sign?set=cog%2Fimg-48850-2023-aerial
+    1418 +1027 srv   90.3      616B /tiles/sign?set=cog%2Fimg-44230-2023-aerial
+    1418 +1179 srv    7.2      608B /tiles/sign?set=cog%2Fimg-52790-2023-aerial
+    1418 +1183 srv    6.4      606B /tiles/sign?set=cog%2Fimg-44770-2023-aerial
+    1418 +1552 srv   30.6      606B /tiles/sign?set=cog%2Fimg-12750-2023-aerial
+    1418 +1553 srv   92.5      613B /tiles/sign?set=cog%2Fimg-43150-2023-aerial
+    1430 +  15 srv      -     -803B /landxi/data/tiles/world-bm/7/109/50.webp?v=2
+    1430 +  18 srv      -     -802B /landxi/data/tiles/world-bm/7/109/49.webp?v=2
+    1430 +  18 srv      -     -801B /landxi/data/tiles/world-bm/7/110/50.webp?v=2
+    1430 +  19 srv      -     -801B /landxi/data/tiles/world-bm/7/108/50.webp?v=2
+    1430 +  19 srv      -     -801B /landxi/data/tiles/world-bm/7/110/49.webp?v=2
+    1431 +  18 srv      -     -805B /landxi/data/tiles/world-bm/7/109/51.webp?v=2
+    1431 +  18 srv      -     -799B /landxi/data/tiles/world-bm/7/108/49.webp?v=2
+    1431 +  18 srv      -     -797B /landxi/data/tiles/world-bm/7/110/51.webp?v=2
+    1431 +  18 srv      -     -798B /landxi/data/tiles/world-bm/7/108/51.webp?v=2
+    1431 +  18 srv      -     -793B /landxi/data/tiles/world-bm/7/109/48.webp?v=2
+    1431 +  18 srv      -     -805B /landxi/data/tiles/world-bm/7/111/50.webp?v=2
+    1431 +  18 srv      -     -797B /landxi/data/tiles/world-bm/7/110/48.webp?v=2
+    1431 +  18 srv      -     -803B /landxi/data/tiles/world-bm/7/111/49.webp?v=2
+    1431 +  20 srv      -     -798B /landxi/data/tiles/world-bm/7/108/48.webp?v=2
+    1431 +  20 srv      -     -794B /landxi/data/tiles/world-bm/7/107/50.webp?v=2
+    1461 +   2 srv      -     -801B /landxi/data/tiles/world-bm/7/107/49.webp?v=2
+    1464 +  71 srv      -     -807B /landxi/data/tiles/world-bm/7/111/51.webp?v=2
+    1464 +  71 srv      -     -803B /landxi/data/tiles/world-bm/7/107/51.webp?v=2
+    1465 +  70 srv      -     -803B /landxi/data/tiles/world-bm/7/111/48.webp?v=2
+    1465 +  71 srv      -     -803B /landxi/data/tiles/world-bm/7/107/48.webp?v=2
+    1465 + 107 srv      -     -804B /landxi/data/tiles/world-bm/7/112/50.webp?v=2
+    1466 + 106 srv      -     -803B /landxi/data/tiles/world-bm/7/112/49.webp?v=2
+    1466 + 106 srv      -     -801B /landxi/data/tiles/world-bm/7/112/51.webp?v=2
+    1466 + 107 srv      -     -797B /landxi/data/tiles/world-bm/7/112/48.webp?v=2
+    2376 +1728 srv    7.9     9459B /api/v1/ximap/density?g=0
+    2538 +   5 srv    5.5     -698B /tiles/national/farm/2025/6/56/25.pbf?v=702.1792057756.1
+    2538 +   8 srv    4.7     -696B /tiles/national/farm/2025/6/53/24.pbf?v=702.1792057756.1
+    2538 +   8 srv   77.8     -759B /tiles/national/farm/2025/6/55/24.pbf?v=702.1792057756.1
+    2538 +   8 srv   44.6     -753B /tiles/national/farm/2025/6/55/25.pbf?v=702.1792057756.1
+    2538 +   8 srv   82.9     -757B /tiles/national/farm/2025/6/54/24.pbf?v=702.1792057756.1
+    2538 +   9 srv     71     -699B /tiles/national/farm/2025/6/53/25.pbf?v=702.1792057756.1
+    2538 +  10 srv   41.5     -761B /tiles/national/farm/2025/6/54/25.pbf?v=702.1792057756.1
+    2538 +  43 srv    6.7     -692B /tiles/national/farm/2025/6/56/24.pbf?v=702.1792057756.1
+    2543 +  13 srv   39.3     -759B /tiles/national/river/2025/6/55/25.pbf?v=643.1792056902
+    2543 +  36 srv    8.4     -758B /tiles/national/river/2025/6/54/24.pbf?v=643.1792056902
+    2543 +  90 srv   10.4     -753B /tiles/national/river/2025/6/54/25.pbf?v=643.1792056902
+    2544 +   3 srv   38.6     -689B /tiles/national/river/2025/6/53/25.pbf?v=643.1792056902
+    2544 +   4 srv   40.6     -693B /tiles/national/river/2025/6/56/25.pbf?v=643.1792056902
+    2544 +   5 srv   39.6     -695B /tiles/national/river/2025/6/53/24.pbf?v=643.1792056902
+    2544 +   7 srv   40.3     -761B /tiles/national/river/2025/6/55/24.pbf?v=643.1792056902
+    2591 +   1 srv   42.2     -687B /tiles/national/river/2025/6/56/24.pbf?v=643.1792056902
+staff MEDIAN {"first":11677,"again":4168,"nApiFirst":13,"nApiAgain":13,"boot":4055,"bootAgain":1498,"ldNmax":1,"errs":0}
