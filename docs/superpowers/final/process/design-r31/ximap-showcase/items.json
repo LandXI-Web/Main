@@ -1,0 +1,35 @@
+[
+ {
+  "id": "XI맵-결과표시",
+  "t": "XI맵 왼쪽 위 분석 결과 표시 — 콘셉트 셋: A 지도가 곧 계기판(막대 + 실제 자리에서 끌려 나오는 빛 줄기) · B 방금 찾은 것 흐름(방금 끝난 읍면동의 실제 객체 모양이 무대로 날아와 쌓임 · 오늘 수가 오름) · C 말을 거는 지도(결과 많은 곳마다 질문 말풍선 → 지도 위 통계로 답)",
+  "shots": [
+   "shots/now-national-1440-1502.png",
+   "shots/A-gauge-1440-1502.png",
+   "shots/A-hover-task-1440-1502.png",
+   "shots/B-fresh-1440-1502.png",
+   "shots/B-fly-to-1440-1502.png",
+   "shots/C-bubbles-1440-1502.png",
+   "shots/C-answer-onmap-1440-1502.png",
+   "shots/C-back-1440-1502.png"
+  ],
+  "videos": [
+   "ximap-A-15s.mp4",
+   "ximap-B-15s.mp4",
+   "ximap-C-15s.mp4"
+  ],
+  "opts": [
+   "A",
+   "B",
+   "C",
+   "다시"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "XI맵 (LX 직원)",
+    "왼쪽 아래 '시안 · 지금 · A · B · C' 단추 — 기본은 지금 모양"
+   ]
+  ],
+  "now": "세 콘셉트 모두 실제 자료로 움직입니다(숫자 = 지금 모양과 같은 장부 · 자리 = 시군구 가운데 · 끝난 읍면동 칸 · 객체 = 결과 묶음 지도 조각의 실제 도형). 추천은 A + B 합치기, 하나면 B. C 는 XI ChatGEO 입구로 따로 켜 두기를 권합니다. fps 61 · 콘솔 오류 0."
+ }
+]

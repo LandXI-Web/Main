@@ -1,0 +1,106 @@
+/* XI맵 결과 표시 콘셉트 셋(10-15 원칙 259 · showcase.js) — A 지도가 곧 계기판 · B 방금 찾은 것 흐름 · C 말을 거는 지도
+   밝은 톤 · 글자는 토큰 단계만(--fs-tag 14 바닥) · 지도 영역 안 · 지도 위 통계(onmap) · 대시보드 · 해외 장면이 열리면 숨는다 · 움직임 줄이기면 멈춤 */
+.xs{position:absolute;inset:0;z-index:7;pointer-events:none}
+.xs[hidden]{display:none}
+[data-onmap="1"] > .xs,[data-dash="1"] > .xs,.k-main[data-nation="kg"] > .xs,.k-main[data-busy="1"] > .xs{display:none!important}
+/* C 말풍선은 지도 표지(stage 안)라 따로 — 지도 위 통계 · 대시보드 · 해외 장면 · 분석 중에는 숨는다 */
+[data-onmap="1"] .xs-c-bub,[data-dash="1"] .xs-c-bub,.k-main[data-nation="kg"] .xs-c-bub,.k-main[data-busy="1"] .xs-c-bub{display:none!important}
+.xs > *{pointer-events:none}
+/* '시안' 단추가 넷(지금 · A · B · C)이라 넓어져 '통계' 단추와 겹친다 → '시안'을 한 줄 위에(지도 위 통계가 열리면 둘 다 한 줄 더 위) */
+.k-main .xv-sw{bottom:96px}
+.k-main[data-onmap="1"] .xv-sw{bottom:140px}
+
+/* ── A · 지도가 곧 계기판 — 왼쪽 가장자리 업무 막대 + 실제 자리에서 끌려 나오는 빛 줄기 ── */
+.xs-a{position:absolute;inset:0}
+.xs-a-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.xs-a-st .l{fill:none;stroke:var(--c);stroke-width:1;stroke-opacity:.24}
+/* 빛 구슬 = 색 띠(넓게 · 옅게) 위에 흰 심 — 필터 없이(60fps) */
+.xs-a-st .g,.xs-a-st .b{fill:none;stroke-linecap:round;stroke-dasharray:14 1600;stroke-dashoffset:1614;animation:xs-run 2.8s linear infinite;animation-delay:var(--dl,0s)}
+.xs-a-st .g{stroke:var(--c);stroke-width:6;stroke-opacity:.45}
+.xs-a-st .b{stroke:#fff;stroke-width:2}
+.xs-a-st .o{fill:var(--c);fill-opacity:.8;stroke:#fff;stroke-width:1.2;animation:xs-breathe 2.8s ease-in-out infinite;animation-delay:var(--dl,0s);transform-box:fill-box;transform-origin:center}
+.xs-a-st.is-hot .l{stroke-opacity:.38;stroke-width:1.2}
+.xs-a-st.is-hot .g,.xs-a-st.is-hot .b{animation-duration:1.8s}
+.xs-a-run .r1{fill:var(--ai);stroke:#fff;stroke-width:2}
+.xs-a-run .r2{fill:none;stroke:var(--ai);stroke-width:2;animation:xs-ring 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes xs-run{to{stroke-dashoffset:0}}
+@keyframes xs-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+@keyframes xs-ring{from{transform:scale(1);opacity:.9}to{transform:scale(4.5);opacity:0}}
+.xs-a-rail{position:absolute;left:16px;top:16px;width:min(300px,calc(100% - 140px));box-sizing:border-box;padding:16px 18px 14px;border-radius:var(--r-16);background:rgba(255,255,255,.94);box-shadow:var(--elev-map);pointer-events:auto}
+.xs-a-k{margin:0 0 10px;font:600 var(--fs-aux,15px)/var(--lh-aux,22px) var(--font-body);color:var(--sub);word-break:keep-all}
+.xs-a-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.xs-a-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n v" "bar bar";align-items:center;gap:4px 10px;width:100%;padding:8px 10px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;color:var(--ink);transition:background var(--d-200,.2s) var(--e-ui,ease),opacity var(--d-200,.2s) var(--e-ui,ease)}
+.xs-a-row:hover,.xs-a-row:focus-visible{background:var(--bg-0)}
+.xs-a-row[aria-pressed="true"]{background:var(--ink);color:#fff}
+.xs-a-row.is-dim{opacity:.42}
+.xs-a-n{grid-area:n;display:inline-flex;align-items:center;gap:8px;min-width:0;font:500 var(--fs-aux,15px)/1.2 var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xs-a-n i{flex:none;width:10px;height:10px;border-radius:50%}
+.xs-a-v{grid-area:v;font:700 var(--fs-t2,20px)/1 var(--font-num);letter-spacing:-.01em;white-space:nowrap}
+.xs-a-row[aria-pressed="true"] .xs-a-v{color:#fff}
+.xs-a-bar{grid-area:bar;display:block;height:6px;border-radius:3px;background:var(--rule);overflow:hidden}
+.xs-a-row[aria-pressed="true"] .xs-a-bar{background:rgba(255,255,255,.25)}
+.xs-a-bar i{display:block;height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.xs-a-p{margin:0;font:500 var(--fs-aux,15px)/var(--lh-aux,22px) var(--font-body);color:var(--sub)}
+.xs-a-live{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--rule);font:500 var(--fs-tag,14px)/var(--lh-tag,20px) var(--font-body);color:var(--sub);word-break:keep-all}
+.xs-a-live i,.xs-b-live i,.xs-c-live{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ai);box-shadow:0 0 0 0 rgba(15,169,160,.5);animation:xs-pulse 1.6s ease-out infinite}
+@keyframes xs-pulse{to{box-shadow:0 0 0 9px rgba(15,169,160,0)}}
+
+/* ── B · 방금 찾은 것 — 오른쪽 무대에 실제 객체 모양이 날아와 쌓임 ── */
+.xs-b-fx{position:absolute;inset:0;overflow:hidden}
+.xs-b-fly{position:absolute;left:0;top:0;width:36px;height:36px;will-change:transform,opacity}
+.xs-b-fly svg,.xs-b-g svg{display:block;width:36px;height:36px;fill:currentColor;fill-opacity:.32;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.xs-b-fly .xs-b-dot{display:block;width:14px;height:14px;margin:11px;border-radius:50%;border:2px solid #fff}
+.xs-b-rip{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:2px solid currentColor;animation:xs-rip 1.4s ease-out forwards}
+.xs-b-rip::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid currentColor;animation:xs-rip 1.4s .25s ease-out forwards}
+@keyframes xs-rip{from{transform:scale(.4);opacity:1}to{transform:scale(3.2);opacity:0}}
+.xs-b-run{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--ai);border:2px solid #fff;box-shadow:0 0 0 0 rgba(15,169,160,.55);animation:xs-pulse 1.6s ease-out infinite}
+.xs-b{position:absolute;right:16px;bottom:96px;width:min(320px,calc(100% - 32px));max-height:calc(100% - 140px);box-sizing:border-box;display:flex;flex-direction:column;padding:16px 18px 14px;pointer-events:auto}
+.xs-b-h{flex:none}
+.xs-b-t{margin:0;font:700 var(--fs-t2,20px)/var(--lh-t2,28px) var(--font-display);color:var(--ink)}
+.xs-b-big{margin:2px 0 0;display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.xs-b-big span{font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--sub)}
+.xs-b-big b{font:800 var(--fs-num,32px)/1.1 var(--font-display);letter-spacing:-.03em;color:var(--ink)}
+.xs-b-big small{font:700 var(--fs-body,16px)/1 var(--font-display);color:var(--ink)}
+.xs-b-big[hidden]{display:none}
+.xs-b-sub{margin:4px 0 0;font:500 var(--fs-tag,14px)/var(--lh-tag,20px) var(--font-body);color:var(--sub);word-break:keep-all}
+.xs-b[data-example="1"] .xs-b-sub{color:#B04A40}
+.xs-b-feed{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.xs-b-it{opacity:0;transform:translateY(-6px);transition:opacity var(--d-380,.38s) var(--e-ui,ease),transform var(--d-380,.38s) var(--e-ui,ease)}
+.xs-b-it.is-in{opacity:1;transform:none}
+.xs-b-it.is-wait .xs-b-g{visibility:hidden}
+.xs-b-it button{display:flex;align-items:center;gap:12px;width:100%;padding:8px 8px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;color:var(--ink)}
+.xs-b-it button:hover,.xs-b-it button:focus-visible{background:var(--bg-0)}
+.xs-b-g{flex:none;display:flex;gap:2px;min-width:36px}
+.xs-b-g .xs-b-dot{display:block;width:14px;height:14px;margin:11px;border-radius:50%;border:2px solid #fff}
+.xs-b-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.xs-b-tx b{display:flex;align-items:baseline;gap:8px;font:600 var(--fs-aux,15px)/1.3 var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xs-b-tx b time{margin-left:auto;font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--sub)}
+.xs-b-tx small{font:500 var(--fs-tag,14px)/var(--lh-tag,20px) var(--font-num);color:var(--sub);word-break:keep-all}
+.xs-b-live{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--rule);font:500 var(--fs-tag,14px)/var(--lh-tag,20px) var(--font-body);color:var(--sub);word-break:keep-all}
+.xs-b-live[hidden]{display:none}
+.k-main:has(.k-chat-root[data-dock][data-turns]:not([data-fold])) .xs-b{bottom:auto;top:120px;max-height:calc(50% - 60px)}
+
+/* ── C · 말을 거는 지도 — 결과가 많은 곳마다 말풍선 질문 ── */
+.xs-c-bub{display:inline-flex;align-items:center;gap:8px;max-width:300px;height:44px;padding:0 16px;border:0;border-radius:22px;background:rgba(255,255,255,.96);box-shadow:var(--elev-map);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap;pointer-events:auto;
+  animation:xs-pop var(--d-380,.38s) var(--e-ui,ease) both,xs-bob var(--bob,3s) var(--dl,0s) ease-in-out infinite;transition:scale var(--d-200,.2s) var(--e-ui,ease),opacity var(--d-200,.2s) var(--e-ui,ease),background var(--d-200,.2s)}
+/* 지도 표지(maplibre marker)는 transform 으로 자리를 잡는다 — 움직임은 translate · scale 로만(transform 을 건드리지 않는다) */
+.xs-c-bub::after{content:"";position:absolute;left:50%;bottom:-7px;width:14px;height:14px;margin-left:-7px;background:inherit;transform:rotate(45deg);border-radius:0 0 3px 0;box-shadow:3px 3px 4px rgba(0,0,0,.06)}
+.xs-c-bub i{flex:none;width:10px;height:10px;border-radius:50%}
+.xs-c-bub span{overflow:hidden;text-overflow:ellipsis}
+.xs-c-bub:hover,.xs-c-bub:focus-visible{animation-play-state:running,paused;translate:0 -4px;scale:1.04;background:#fff;z-index:2}
+.xs-c-bub.is-ask{background:var(--ink);color:#fff;animation-play-state:running,paused}
+.xs-c-bub.is-ask::after{background:var(--ink)}
+.xs-c-bub.is-dim{opacity:.35}
+.xs-c-bub.is-live{color:var(--ink)}
+.xs-c.is-moving ~ .maplibregl-marker .xs-c-bub{opacity:.5}
+@keyframes xs-pop{from{scale:.86;opacity:0}to{scale:1;opacity:1}}
+@keyframes xs-bob{0%,100%{translate:0 0}50%{translate:0 -5px}}
+
+@media (prefers-reduced-motion: reduce){
+  .xs-a-st .b,.xs-a-st .o,.xs-a-run .r2,.xs-a-live i,.xs-b-live i,.xs-c-live,.xs-b-run,.xs-c-bub{animation:none}
+  .xs-a-bar i,.xs-b-it,.xs-c-bub{transition:none}
+}
+@media (max-width:640px){
+  .xs-a-rail{top:112px;left:12px;width:calc(100% - 24px)}
+  .xs-b{right:12px;left:12px;width:auto;bottom:84px;max-height:46%}
+}

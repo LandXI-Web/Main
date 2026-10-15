@@ -299,6 +299,46 @@ async def region_summary(request: Request, codes: str = "", year: int | None = N
     return out
 
 
+@router.get("/national/recent")
+async def recent(request: Request, n: int = 12, year: int | None = None):
+    """방금 끝난 읍면동 — 전국 작업기가 최근에 마친 칸(끝난 시각 순)과 그 칸의 결과 묶음(객체 지도 조각 주소 · 판 번호).
+    XI맵 왼쪽 위 결과 표시 시안 B('방금 찾은 것')가 쓴다. 숫자는 진행 장부(national_cells)에서 센 값 한 출처 · 지어낸 값 0.
+    today = 오늘(KST) 끝난 칸 수 · 그 칸들의 결과 객체 합(자산마다 보이는 분류만 — XI맵 합계와 같은 셈)."""
+    require(principal(request), lx=True)
+    n = max(1, min(40, int(n)))
+    from .tiles import set_tile_ver
+    day0 = dt.datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0)
+    async with db(realm="lx") as conn:
+        if year is None:
+            year = int((await _settings(conn))[0]["year"])
+        rows = await conn.fetch(
+            "SELECT c.asset, c.cell_cd, c.name, c.sgg_name, c.sido, c.done_at, c.counts, "
+            "ST_X(ST_PointOnSurface(c.geom_s)) AS lng, ST_Y(ST_PointOnSurface(c.geom_s)) AS lat, "
+            "(SELECT j.result_set FROM national_jobs j WHERE j.asset=c.asset AND j.year=c.year AND j.cell_cd=c.cell_cd AND j.state='done' "
+            " AND j.result_set IS NOT NULL AND NOT j.test AND j.model_id IS NOT DISTINCT FROM c.model_id ORDER BY j.part LIMIT 1) AS result_set, "
+            "(SELECT j.bbox FROM national_jobs j WHERE j.asset=c.asset AND j.year=c.year AND j.cell_cd=c.cell_cd AND j.state='done' "
+            " AND j.result_set IS NOT NULL AND NOT j.test AND j.model_id IS NOT DISTINCT FROM c.model_id ORDER BY j.part LIMIT 1) AS bbox "
+            "FROM national_cells c WHERE c.year=$1 AND NOT c.test AND c.state='done' AND c.done_at IS NOT NULL ORDER BY c.done_at DESC LIMIT $2", year, n)
+        today = await conn.fetch(
+            "SELECT asset, k AS cls, sum((v->>'n')::bigint) AS n FROM national_cells, jsonb_each(counts) AS e(k, v) "
+            "WHERE year=$1 AND NOT test AND state='done' AND done_at >= $2 GROUP BY asset, k", year, day0)
+        tc = int(await conn.fetchval("SELECT count(DISTINCT cell_cd) FROM national_cells WHERE year=$1 AND NOT test AND state='done' AND done_at >= $2", year, day0) or 0)
+    vis = {"farm": ("경작지", "비닐하우스"), "river": ("건물",)}       # 자산마다 보이는 분류(XI맵 national.js NCLS 와 같은 규칙 — 겹쳐 세지 않게)
+    items = []
+    for r in rows:
+        cnt = _jv(r["counts"])
+        counts = {k: {"n": int((cnt.get(k) or {}).get("n") or 0), "unit": UNIT.get(k, "개")} for k in vis.get(r["asset"], ()) if int((cnt.get(k) or {}).get("n") or 0) > 0}
+        v = set_tile_ver(r["result_set"]) if r["result_set"] else None
+        items.append({"asset": r["asset"], "asset_name": ASSETS.get(r["asset"], r["asset"]), "cd": r["cell_cd"], "name": r["name"], "sgg": r["sgg_name"], "sido": r["sido"],
+                      "at": r["done_at"].astimezone(KST).isoformat(timespec="minutes") if r["done_at"] else None,
+                      "center": [round(float(r["lng"]), 5), round(float(r["lat"]), 5)] if r["lng"] is not None else None,
+                      "counts": counts, "set": r["result_set"] if v else None, "v": v, "bounds": list(r["bbox"]) if r["bbox"] else None})
+    tn = sum(int(t["n"] or 0) for t in today if t["cls"] in vis.get(t["asset"], ()))
+    return {"year": year, "as_of": now_iso(), "today": {"cells": env(tc, "count", "measured", "오늘(KST) 끝난 읍면동"),
+                                                         "n": env(tn, "count", "measured", "오늘 끝난 칸의 AI 분석 결과(자산마다 보이는 분류만)")},
+            "items": items, "source": "전국 분석 진행 장부"}
+
+
 @router.get("/national/sets")
 async def sets(request: Request, asset: str = "farm", bbox: str = "", year: int | None = None, test: int = 0):
     require(principal(request), lx=True)

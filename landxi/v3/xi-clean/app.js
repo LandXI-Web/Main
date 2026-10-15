@@ -22,6 +22,7 @@ import { NCLS } from './national.js';                            // 전국 분�
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 import { createDash } from './dash.js';                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
 import { createOnMap } from './onmap.js';                         // 같은 사양을 지도 위에서(10-15 원칙 258 — 기본 · '통계' 단추로 대시보드와 바꿔 볼 수 있다)
+import { createShowcase } from './showcase.js';                   // 왼쪽 위 결과 표시 콘셉트 셋 A · B · C(10-15 원칙 259 · 시안 단추 · 기본은 지금 모양)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -1013,7 +1014,9 @@ function paintBoardHud() {
     const br = boardRegion(r);
     X.hud = { label: r.name, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length };
   }
-  if (paintHudVariant()) hudBoard.hidden = true;        // 시안 ⓐ · ⓑ 를 보는 동안은 지금 모양을 걷는다
+  if (HUDV !== 'now' && !SC && BD?.data) showSC(HUDV);       // 이 브라우저가 기억한 시안은 결과 장부가 온 뒤 켠다
+  if (paintHudVariant() || SC?.on) hudBoard.hidden = true;   // 시안을 보는 동안은 지금 모양을 걷는다(A · B · C = showcase.js)
+  SC?.refresh();
   if (key === HUDKEY) return;
   HUDKEY = key;
   hudBoard.replaceChildren(...kids.filter(Boolean));
@@ -1021,13 +1024,20 @@ function paintBoardHud() {
 /* ═══ 왼쪽 위 결과 표시 — 시안 두 방향(10-15 원칙 253 '저렇게 보여주는게 최선인가..?') · 같은 숫자(서비스 결과 장부 + 전국 분석 진행 장부) ═══
    ⓐ 작은 판 = 숫자 하나 + 업무 색 점 줄(누르면 그 업무만) · ⓑ 아래 띠 = 채팅 창 위 얇은 띠에 업무별 수가 흐름(누르면 그 업무만).
    지도 영역 안(원칙 233) · 특정 업무 기본 없음(원칙 237) · 기본은 지금 모양 · 시안 단추는 LX 계정 XI맵에만(이 브라우저에 기억). */
-let HUDV = 'now', XV = null, VKEY = '';
+let HUDV = 'now', XV = null, VKEY = '', SC = null;
+/** 콘셉트 A · B · C 켜기 · 끄기(showcase.js) — 결과 장부가 온 뒤에만(숫자 · 자리가 모두 서버 값) */
+function showSC(v) {
+  if (!BD?.data) return;
+  if (!SC) SC = createShowcase({ map, host: mainEl, h, bd: () => BD, ask, applyTask, taskRows: hudTaskRows, region: () => S.region, onmapOpen: () => !!OM?.on });
+  SC.set(v === 'now' ? null : v);
+}
 function mountHudVariants() {
-  try { HUDV = ['a', 'b'].includes(localStorage.getItem('xc_hudv')) ? localStorage.getItem('xc_hudv') : 'now'; } catch { HUDV = 'now'; }
+  // 10-15 원칙 259: ⓐ · ⓑ 는 '다시' — 단추는 지금 · A · B · C(showcase.js). ⓐ · ⓑ 코드는 남겨 두되 단추에서 뺌(기억된 'a' · 'b' 는 '지금'으로)
+  try { HUDV = ['A', 'B', 'C'].includes(localStorage.getItem('xc_hudv')) ? localStorage.getItem('xc_hudv') : 'now'; } catch { HUDV = 'now'; }
   const sa = h('section.xv-a.t-card.t-card--map', { hidden: true, 'aria-live': 'polite', 'aria-label': 'AI 분석 결과' });
   const sb = h('section.xv-b', { hidden: true, 'aria-live': 'polite', 'aria-label': 'AI 분석 결과' });
-  const btns = [['now', '지금'], ['a', 'ⓐ'], ['b', 'ⓑ']].map(([v, t]) => h('button', { type: 'button', dataset: { v }, 'aria-pressed': String(v === HUDV), text: t,
-    onclick: () => { HUDV = v; try { localStorage.setItem('xc_hudv', v); } catch { /* 저장 못 해도 이 화면에서는 바뀜 */ } btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); VKEY = ''; HUDKEY = ''; paintBoardHud(); } }));
+  const btns = [['now', '지금'], ['A', 'A'], ['B', 'B'], ['C', 'C']].map(([v, t]) => h('button', { type: 'button', dataset: { v }, 'aria-pressed': String(v === HUDV), text: t,
+    onclick: () => { HUDV = v; try { localStorage.setItem('xc_hudv', v); } catch { /* 저장 못 해도 이 화면에서는 바뀜 */ } btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); showSC(v); VKEY = ''; HUDKEY = ''; paintBoardHud(); } }));
   const sw = h('div.xv-sw', { role: 'group', 'aria-label': '결과 표시 시안' }, h('span', { text: '시안' }), ...btns);
   mainEl.append(sa, sb, sw);
   XV = { a: sa, b: sb, sw };
@@ -1061,7 +1071,7 @@ function hudTaskRows() {
 }
 function paintHudVariant() {
   if (!XV) return false;
-  const on = HUDV !== 'now' && !!BD?.data && !(NAT?.id && NAT.id !== 'kr');
+  const on = ['a', 'b'].includes(HUDV) && !!BD?.data && !(NAT?.id && NAT.id !== 'kr');
   XV.a.hidden = !(on && HUDV === 'a'); XV.b.hidden = !(on && HUDV === 'b');
   if (!on) { VKEY = ''; return false; }
   const { title, rows, wait } = hudTaskRows(), task = BD?.task || null;

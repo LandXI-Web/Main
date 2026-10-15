@@ -197,8 +197,10 @@ export async function run(role, s0) {
     const xi = { wait: '.xc-stage', ms: 1000, act: async (p) => { await xiReady(p); await settle(p); await p.waitForTimeout(1500); } };
     await screen(s, 'LX 직원 · XI맵(전국)', X, xi);
     await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', null, { act: jump(127.45, 35.42, 10) });
-    for (const v of ['a', 'b']) {
-      await screen(s, `LX 직원 · XI맵 결과 표시 시안 ${v === 'a' ? 'ⓐ' : 'ⓑ'}`, X, { ...xi, act: async (p) => { await xi.act(p); await p.locator(`.xv-sw button[data-v="${v}"]`).click(); await p.waitForTimeout(900); } });
+    // 결과 표시 콘셉트 A · B · C(10-15 원칙 259 · showcase.js) — 단추를 누르고 움직임이 자리 잡은 뒤 잰다(B 는 카드가 둘 이상 쌓인 뒤)
+    for (const v of ['A', 'B', 'C']) {
+      await screen(s, `LX 직원 · XI맵 결과 표시 시안 ${v}`, X, { ...xi, act: async (p) => { await xi.act(p); await p.locator(`.xv-sw button[data-v="${v}"]`).click();
+        await p.waitForFunction((v) => window.__xc.showcase?.mode === v && (v !== 'B' || window.__xc.showcase.shown >= 2), v, { timeout: 40000 }).catch(() => {}); await p.waitForTimeout(1200); } });
     }
     await s.page.locator('.xv-sw button[data-v="now"]').click().catch(() => {});      // 시안 고른 것을 '지금'으로 되돌려 둔다
     await screen(s, 'LX 직원 · XI맵 고치기 칸', X, { ...xi, act: async (p) => { await xi.act(p); await openEdit([127.5345, 35.4335], '^xb-r-')(p); } });

@@ -1,0 +1,10 @@
+
+Running 6 tests using 4 workers
+
+[1/6] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[2/6] tests\e2e\impl7-no-fieldcheck.spec.mjs:38:5 › 현장 확인 빼기 · 1440 › 분석하기 · 카드 상세 · 대시보드 · XI맵 — 현장 확인 0 · 큰 숫자 = AI 분석 결과
+[3/6] tests\e2e\impl20-ximap-speed.spec.mjs:14:1 › 결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치기는 다시 열어도 새 모습
+[4/6] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+[5/6] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+[6/6] tests\e2e\impl7-no-fieldcheck.spec.mjs:38:5 › 현장 확인 빼기 · 390 › 분석하기 · 카드 상세 · 대시보드 · XI맵 — 현장 확인 0 · 큰 숫자 = AI 분석 결과
+  6 passed (37.4s)
