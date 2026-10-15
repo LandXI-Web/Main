@@ -69,7 +69,7 @@ export function retrainPane(root) {
         h('td', {}, modeSel),
         h('td', {}, h('span.rt-st', { dataset: { tone: x.tone || '' }, text: x.state }),
           vd && vd.value ? h('small', { text: `최근 다시 학습 ${pct(vd.value)} · 지금 판 ${pct(vd.base)}` }) : null,
-          vd?.memory ? h('small', { text: `지운 자리 ${nf(val(vd.memory.places))}곳 중 다시 잡은 곳 ${nf(val(vd.memory.again))}곳` }) : null),   // 원칙 243
+          vd?.memory ? h('small', { text: `삭제한 자리 ${nf(val(vd.memory.places))}곳 중 다시 잡은 곳 ${nf(val(vd.memory.again))}곳` }) : null),   // 원칙 243
         h('td.rt-do', {}, x.tone === 'ok' && x.project ? h('a.t-btn', { href: `/landxi/v3/lx-release/?project=${encodeURIComponent(x.project.id)}&stage=publish`, text: '배포 신청 보기' }) : now));
     });
     const svc = h('section.t-card.rv-card', {},

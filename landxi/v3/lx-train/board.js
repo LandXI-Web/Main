@@ -156,7 +156,7 @@ export async function trainBoard({ host, project: P }) {
   const add = h('div.tb-add', {}, h('span.tb-add-k', { text: '블록 더하기' }));
   const cv = h('div.tb-cv');
   const wires = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); wires.classList.add('tb-wires');
-  cv.append(wires, h('div.tb-how', {}, '출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요', h('b', { text: 'D' }), '복제', h('b', { text: 'Del' }), '지우기'));
+  cv.append(wires, h('div.tb-how', {}, '출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요', h('b', { text: 'D' }), '복제', h('b', { text: 'Del' }), '삭제'));
   const reset = h('button.tb-reset', { type: 'button', text: '기본 흐름으로 되돌리기', onclick: () => { defaultFlow(); render(); } });
   const board = h('section.tb-card.tb-board', { 'aria-label': '학습 작업 흐름' },
     h('div.tb-board-h', {}, h('h1', { text: '학습 · AI 모델 작업 흐름' }), hint, go), add, h('div.tb-cv-w', {}, cv),

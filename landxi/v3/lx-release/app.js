@@ -34,8 +34,8 @@ const two = (n) => String(n).padStart(2, '0');
 const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
 const mdhm = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${two(d.getHours())}:${two(d.getMinutes())}`; };
 const pct = (e) => (val(e) == null ? '—' : `${nf(val(e))}%`);
-/* 지운 자리 n곳 중 다시 잡은 곳 m곳(원칙 243 · 그 판의 새 결과에서 서버가 잰 값 · 없으면 줄 없음) */
-const memLine = (m) => (m ? `지운 자리 ${nf(val(m.places))}곳 중 다시 잡은 곳 ${nf(val(m.again))}곳` : '');
+/* 삭제한 자리 n곳 중 다시 잡은 곳 m곳(원칙 243 · 그 판의 새 결과에서 서버가 잰 값 · 없으면 줄 없음) */
+const memLine = (m) => (m ? `삭제한 자리 ${nf(val(m.places))}곳 중 다시 잡은 곳 ${nf(val(m.again))}곳` : '');
 const km2 = (e) => (val(e) == null || val(e) < 0.01 ? '' : `${nf(val(e), val(e) < 1 ? 2 : val(e) < 100 ? 1 : 0)}km²`);   // 관리자 화면과 같은 자릿수
 const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 const unitsEl = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rl-u', { text: u })); }); return el; };

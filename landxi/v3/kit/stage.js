@@ -130,7 +130,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   function credits(sets, world) {
     const cr = document.createElement('p');
     cr.className = 'k-credit'; cr.hidden = true;
-    cr.style.cssText = 'position:absolute;right:8px;bottom:3px;margin:0;font-size:12px;line-height:1.3;color:rgba(255,255,255,.92);text-shadow:0 0 3px rgba(0,0,0,.6);pointer-events:none;z-index:2;white-space:nowrap';
+    cr.style.cssText = 'position:absolute;right:8px;bottom:3px;margin:0;font-size:var(--fs-tag,14px);line-height:var(--lh-tag,20px);color:rgba(255,255,255,.92);text-shadow:0 0 3px rgba(0,0,0,.6);pointer-events:none;z-index:2;white-space:nowrap';
     el.append(cr);
     const upd = () => {
       const b = map.getBounds(), z = map.getZoom();

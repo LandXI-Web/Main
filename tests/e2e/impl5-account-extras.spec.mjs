@@ -70,9 +70,9 @@ test.describe('구현 5차 · 계정 · 프로젝트 셋 — 부서 고르기 ·
       await expect(card.locator('li[data-kind=memo]')).toContainText('e2e 잘못 올린 메모');
       await card.locator('li[data-kind=memo] .lxp-lg-rm').click();
       const md = page.locator('.k-md');
-      await expect(md.locator('.k-md-t')).toHaveText('메모 지우기');
+      await expect(md.locator('.k-md-t')).toHaveText('메모 삭제');
       await expect(md).toContainText('내용은 남지 않습니다');
-      await md.getByRole('button', { name: '지우기' }).click();
+      await md.getByRole('button', { name: '삭제' }).click();
       await expect(card.locator('li', { hasText: '메모를 지움' })).toBeVisible();
       await expect(card).not.toContainText('e2e 잘못 올린 메모');
     } finally {

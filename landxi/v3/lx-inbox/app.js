@@ -181,7 +181,7 @@ async function open(id, { push = true } = {}) {
   try { r = await api('/reviews/' + encodeURIComponent(id)); }
   catch (e) {
     if (seq !== convSeq) return;
-    if (e.status === 404) empty(w, { kind: 'first', title: '볼 수 없는 요청입니다', text: '다른 담당자의 요청이거나 지워진 요청입니다' });
+    if (e.status === 404) empty(w, { kind: 'first', title: '볼 수 없는 요청입니다', text: '다른 담당자의 요청이거나 삭제된 요청입니다' });
     else empty(w, { kind: 'error', onRetry: () => open(id, { push: false }) });
     return;
   }

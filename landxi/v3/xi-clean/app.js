@@ -1192,7 +1192,7 @@ function renderChips() {
   if (!emd && !rule) { chips.hidden = true; return; }
   if (emd) chips.append(h('span.t-chip.xc-chip', { text: emd.nm }));
   if (rule && ruleName(rule)) chips.append(h('span.t-chip.xc-chip', { text: ruleName(rule) }));
-  chips.append(h('button.xc-clear', { type: 'button', text: '조건 지우기', onclick: () => { const e = S.cond.emd; setCond({ emd: null, rule: null }); if (e && S.region) stage.go(S.region.bbox, { ms: 1600, maxZoom: 12.5 }); } }));
+  chips.append(h('button.xc-clear', { type: 'button', text: '조건 삭제', onclick: () => { const e = S.cond.emd; setCond({ emd: null, rule: null }); if (e && S.region) stage.go(S.region.bbox, { ms: 1600, maxZoom: 12.5 }); } }));
   chips.hidden = false;
   alignChips();
 }

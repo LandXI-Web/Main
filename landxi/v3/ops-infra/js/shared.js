@@ -59,14 +59,14 @@ function table(cols, rows) {
 }
 /* 확인 창(지우기 한 번) — 영상 · 학습 데이터 · 행정 자료 같은 모양 */
 function askDrop(title, name, run, done) {
-  const go = h('button.t-btn', { type: 'button', text: '지우기' });
+  const go = h('button.t-btn', { type: 'button', text: '삭제' });
   const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
   const err = h('p.sd-err', { role: 'alert' });
   const m = modal({ title, body: h('div.sd-form', {}, h('p.sd-del', { text: name }), err, h('div.sd-act', {}, no, go)) });
   no.addEventListener('click', () => m.close());
   go.addEventListener('click', async () => {
     go.disabled = true;
-    try { await run(); m.close(true); toast('지웠습니다'); done(); }
+    try { await run(); m.close(true); toast('삭제했습니다'); done(); }
     catch (e) { go.disabled = false; err.textContent = e?.message || '지우지 못했습니다'; }
   });
 }
@@ -74,7 +74,7 @@ function visBtn(on, label, onclick) {
   return h('button.sd-vis', { type: 'button', 'aria-pressed': String(on), text: on ? '공개' : '비공개', 'aria-label': `${label} ${on ? '공개' : '비공개'}`, onclick });
 }
 const doBtns = (edit, drop) => h('div.sd-d-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '정보 고치기', onclick: edit }),
-  h('button.t-btn.t-btn--2', { type: 'button', text: '지우기', onclick: drop }));
+  h('button.t-btn.t-btn--2', { type: 'button', text: '삭제', onclick: drop }));
 const bytes = (b) => (b == null ? '—' : b >= 1e9 ? `${nf(+(b / 1e9).toFixed(1))} GB` : `${nf(+(b / 1e6).toFixed(b < 1e7 ? 1 : 0))} MB`);
 const gsdText = (cm) => (cm == null ? '—' : cm < 100 ? `${nf(+cm.toFixed(cm < 10 ? 1 : 0))}cm` : `${nf(+(cm / 100).toFixed(1))}m`);
 const kv = (rows) => h('dl.sd-kv', {}, ...rows.filter(Boolean).flatMap(([k, v]) => [h('dt', { text: k }), h('dd', {}, v instanceof Node ? v : String(v ?? '—'))]));

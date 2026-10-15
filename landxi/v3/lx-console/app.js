@@ -202,7 +202,7 @@ async function drawMemos() {
     h('small.num', { text: mmdd(m.at) }),
     h('span.ld-ml-a', {},
       act(m.pinned ? '고정 풀기' : '고정', `메모 ${m.pinned ? '고정 풀기' : '고정'}`, () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/pin`, { method: 'POST', body: { pinned: !m.pinned } }))),
-      act('지우기', '메모 지우기', () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/remove`, { method: 'POST', body: {} }), '메모를 지웠습니다')))))) : null;
+      act('삭제', '메모 삭제', () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/remove`, { method: 'POST', body: {} }), '메모를 삭제했습니다')))))) : null;
   const inp = h('input.t-input.ld-ml-in', { type: 'text', maxlength: '200', placeholder: '메모 적기 — Enter 로 저장', 'aria-label': '메모 적기' });
   inp.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.isComposing) return;

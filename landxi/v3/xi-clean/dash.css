@@ -13,7 +13,7 @@
 .xd[hidden]{display:none}
 @keyframes xd-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .xd-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:6px 0 20px}
-.xd-h h2{margin:0;font:700 30px/38px var(--font-display);letter-spacing:-.02em;color:var(--ink);text-wrap:balance}
+.xd-h h2{margin:0;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:-.02em;color:var(--ink);text-wrap:balance}
 .xd-means{display:flex;flex-wrap:wrap;gap:6px}
 .xd-means span,.xd-mean-a span{display:inline-flex;gap:6px;align-items:center;height:32px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink)}
 .xd-means em,.xd-mean-a em{font-style:normal;color:var(--sub)}
@@ -26,10 +26,10 @@
 .xd-kpi{position:relative;padding:22px 24px;justify-content:flex-start;min-height:132px}
 .xd-l{margin:0 0 10px;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--sub)}
 .xd-v{margin:0;display:flex;align-items:baseline;gap:4px}
-.xd-v b{font:800 34px/1.05 var(--font-display);letter-spacing:-.03em;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.xd-kpi.is-main .xd-v b{font-size:52px;color:var(--ink)}
+.xd-v b{font:800 var(--fs-num)/1.05 var(--font-display);letter-spacing:-.03em;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.xd-kpi.is-main .xd-v b{font-size:var(--fs-h2);color:var(--ink)}
 .xd-v small{font:700 var(--fs-body,16px)/1 var(--font-display);color:var(--sub)}
-.xd-kpi.is-main .xd-v small{font-size:20px;color:var(--ink)}
+.xd-kpi.is-main .xd-v small{font-size:var(--fs-t2);color:var(--ink)}
 .xd-s{margin:10px 0 0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}
 .xd-spark{position:absolute;right:24px;top:24px;width:112px;height:32px}
 .xd-card h3{margin:0 0 18px;font:700 var(--fs-t2,20px)/26px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
@@ -80,7 +80,7 @@
 .xd-donut svg{width:128px;height:128px}
 .xd-donut circle{transition:opacity .18s}
 .xd-donut svg:hover circle{opacity:.55}.xd-donut svg circle:hover{opacity:1}
-.xd-dt{font:800 20px/1 var(--font-display);fill:var(--ink);font-variant-numeric:tabular-nums}
+.xd-dt{font:800 var(--fs-t2)/1 var(--font-display);fill:var(--ink);font-variant-numeric:tabular-nums}
 .xd-du{font:500 var(--fs-tag,14px)/1 var(--font-body);fill:var(--sub)}
 .xd-leg{list-style:none;margin:0;padding:0;display:grid;gap:8px;min-width:0}
 .xd-leg li{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:10px;font:400 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--ink-2)}
@@ -100,10 +100,10 @@
 .xd-sr .v{font:500 var(--fs-aux,15px)/1 var(--font-num);color:var(--ink);text-align:right}
 .xd-sr.on .n{color:var(--ink);font-weight:600}
 /* 히트맵 격자 */
-.xd-heat{display:grid;grid-template-columns:minmax(80px,16%) repeat(var(--c),minmax(0,1fr));gap:3px;font:500 var(--fs-tag,14px)/1 var(--font-num)}
-.xd-heat .ch{padding:0 2px 8px;font:500 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--sub);text-align:center;word-break:keep-all;align-self:end}
+.xd-heat{display:grid;grid-template-columns:minmax(56px,max-content) repeat(var(--c),minmax(min-content,1fr));gap:3px;overflow-x:auto;font:500 var(--fs-tag,14px)/1 var(--font-num)}
+.xd-heat .ch{padding:0 2px 8px;overflow-wrap:normal;letter-spacing:-.01em;font:500 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--sub);text-align:center;word-break:keep-all;align-self:end}
 .xd-heat .ch small{display:block;font:400 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--mute)}
-.xd-heat .rh{font:400 var(--fs-tag,14px)/1.2 var(--font-body);color:var(--ink-2);display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xd-heat .rh{font:400 var(--fs-tag,14px)/1.2 var(--font-body);color:var(--ink-2);display:flex;align-items:center;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xd-heat .rh.on{color:var(--ink);font-weight:600}
 .xd-heat .cell{height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-tag,14px)}
 /* 선 · 산점 */

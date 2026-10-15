@@ -191,7 +191,7 @@ function line(pr, x, onChange) {
   }
   what.append(h('i', { text: x.who }));
   if ((x.kind === 'memo' || x.kind === 'file') && x.can_remove && x.id) {
-    const rm = h('button.lxp-lg-rm', { type: 'button', text: '지우기', 'aria-label': `${x.kind === 'file' ? '파일' : '메모'} 지우기` });
+    const rm = h('button.lxp-lg-rm', { type: 'button', text: '삭제', 'aria-label': `${x.kind === 'file' ? '파일' : '메모'} 삭제` });
     rm.addEventListener('click', () => openRemove(pr, x, onChange));
     what.append(rm);
   }
@@ -202,15 +202,15 @@ function line(pr, x, onChange) {
 function openRemove(pr, x, onChange) {
   const file = x.kind === 'file';
   const what = file ? (x.file?.name || '파일') : x.text;
-  const go = h('button.t-btn.lxp-rm-go', { type: 'button', text: '지우기' });
+  const go = h('button.t-btn.lxp-rm-go', { type: 'button', text: '삭제' });
   const cancel = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '취소' });
   const body = h('div.lxp-sh', {},
     h('p.lxp-rm-what', {}, h('b', { text: file ? '파일 ' : '메모 ' }), what, file && x.file ? h('small.num', { text: ` · ${size(v(x.file.bytes))}` }) : null),
-    h('p.lxp-say', {}, '지우면 되돌릴 수 없습니다.', h('br'),
-      u(`기록에는 '${file ? '파일을' : '메모를'} 지움' 한 줄만 남고`), ' ', u('내용은 남지 않습니다.'),
+    h('p.lxp-say', {}, '삭제하면 되돌릴 수 없습니다.', h('br'),
+      u('기록에는 누가 삭제했는지 한 줄만 남고'), ' ', u('내용은 남지 않습니다.'),
       file ? h('br') : null, file ? u('파일 크기만큼 저장 공간이 줄어듭니다.') : null),
     h('div.lxp-act', {}, go, cancel));
-  const m = modal({ title: file ? '파일 지우기' : '메모 지우기', body });
+  const m = modal({ title: file ? '파일 삭제' : '메모 삭제', body });
   m.el.classList.add('lxp-md');
   cancel.addEventListener('click', () => m.close());
   go.addEventListener('click', async () => {
@@ -218,7 +218,7 @@ function openRemove(pr, x, onChange) {
     try {
       await api(`/projects/${pr.id}/notes/${encodeURIComponent(x.id)}`, { method: 'DELETE' });
       m.close(true);
-      toast(file ? '파일을 지웠습니다' : '메모를 지웠습니다');
+      toast(file ? '파일을 삭제했습니다' : '메모를 삭제했습니다');
       await onChange?.();
     } catch (e) { m.close(true); problem('지우지 못했습니다', e.message || '잠시 뒤 다시 해 주세요.'); }
   });

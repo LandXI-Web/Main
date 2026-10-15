@@ -92,7 +92,7 @@ export function mountRelease(root) {
       h('span', {}, h('em', { text: '이번 판' }), h('b', { text: pct(f.acc) }), bar(f.acc)),
       h('span', {}, h('em', { text: f.prev ? `지난 판 ${f.prev.version}` : '지난 판' }), h('b', { text: f.prev ? pct(f.prev.acc) : '—' }), bar(f.prev?.acc, true))),
     f.low ? h('p.rv-low', { role: 'note', text: `${f.low} — 막지 않습니다 · 보고 판단해 주세요` }) : null,   // 질문 9 ⓑ(직원 신청서와 같은 줄)
-    f.memory ? h('p.rv-mem', { text: `지운 자리 ${nf(val(f.memory.places))}곳 중 다시 잡은 곳 ${nf(val(f.memory.again))}곳` }) : null,   // 원칙 243 — 신청한 때 잰 값
+    f.memory ? h('p.rv-mem', { text: `삭제한 자리 ${nf(val(f.memory.places))}곳 중 다시 잡은 곳 ${nf(val(f.memory.again))}곳` }) : null,   // 원칙 243 — 신청한 때 잰 값
     h('small', { text: f.prev ? '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' : '첫 판입니다 — 비교할 지난 판이 없습니다' }));
     row('학습 데이터', f.sample ? units('b', join(`${nf(val(f.sample.images))}장`, `${md(f.sample.at)} 올림`)) : h('b.rv-warn', { text: f.model ? '프로젝트 학습 데이터와 연결 기록 없음' : '—' }));
     // 결과 확인 봤음 · 안 봄 줄은 원칙 203(10-12)으로 뺐다(예전 신청서에 남은 값도 보이지 않음)

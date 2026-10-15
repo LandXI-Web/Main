@@ -26,7 +26,7 @@ export function mountShoot(pane, { org, cards, onSent }) {
   const mapEl = h('div.gq-map');
   const cap = h('span.gq-cap', { hidden: true });
   const drawBtn = h('button.t-btn.t-btn--2.sq-draw', { type: 'button', text: '범위 그리기', 'aria-pressed': 'false' });
-  const clrBtn = h('button.t-btn.t-btn--2', { type: 'button', text: '지우기' });
+  const clrBtn = h('button.t-btn.t-btn--2', { type: 'button', text: '범위 삭제' });
   const sggSel = h('select.t-input.sq-sgg', { 'aria-label': '시·군·구' });
   const emdBox = h('div.sq-emd');
   const s1 = h('section.gq-stp.t-card', { dataset: { s: '1' } },
