@@ -31,6 +31,8 @@ def quota_back():
     keep = c.execute("SELECT storage_quota_gb FROM lx_users WHERE id=%s", (STAFF_ID,)).fetchone()[0]
     keep_def = c.execute("SELECT value FROM lx_settings WHERE key='storage.default_quota_gb'").fetchone()
     mark = _audit_mark()
+    # 시험의 시작 상태를 시험이 만든다 — test@ 의 사람별 할당을 비움(운영 데이터의 값은 위 keep 에 두었다가 끝에서 그대로 되돌림)
+    c.execute("UPDATE lx_users SET storage_quota_gb=NULL WHERE id=%s", (STAFF_ID,))
     c.close()
     yield
     c = pg()

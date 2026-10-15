@@ -135,6 +135,8 @@ function cropEl(c, kind, o = {}) {
   return fig;
 }
 
+/** 한 줄 설명 — 가운뎃점으로 이은 말('신축·소실·식생')은 한 덩어리(가운뎃점에서 꺾지 않음 · 법전 §2-1 · 낱말 사이에서만 줄바꿈) */
+const lineParts = (t) => String(t).split(/(\s+)/).filter(Boolean).map((x) => (x.includes('·') && !/\s/.test(x) ? h('span.k-sc-nw', { text: x }) : x));
 /** 카드 한 장 — c = 덱 항목(서버 GET /cards/deck), o = { kind, href, more, moreLabel, compact, pick } */
 export function svcCard(c, o = {}) {
   const kind = o.kind || 'analyze';
@@ -146,7 +148,7 @@ export function svcCard(c, o = {}) {
   const body = h('div.k-sc-b', {},
     whereRow(c, kind),
     h('h3.k-sc-t', { text: c.name || '' }),
-    c.line ? h('p.k-sc-line', { text: c.line }) : null,
+    c.line ? h('p.k-sc-line', {}, ...lineParts(c.line)) : null,
     kind === 'mine' && c.input ? h('p.k-sc-in', {}, h('b', { text: '입력' }), h('span', { text: c.input.text || '' }), c.input.note ? h('small', { text: c.input.note }) : null) : null,
     resultEl(c, kind));
   if (!(o.compact || pick)) {

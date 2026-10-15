@@ -1,0 +1,1064 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 7070,
+    "ldN": 1,
+    "ldMs": 4501,
+    "tl": [
+     "ld on @2585 지역 경계와 분석 집계+판",
+     "(지역 결과 요약+판 @3416)",
+     "ld off @7070"
+    ],
+    "boot": {
+     "gate": 325,
+     "data": 1638,
+     "layers": 1649,
+     "canvas": 1650,
+     "ready": 2197,
+     "shown": 5258
+    },
+    "errs": [],
+    "n": 204,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.css?v=dbbd825f9b",
+      "at": 420,
+      "ms": 775,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=dbbd825f9b",
+      "at": 422,
+      "ms": 811,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=dbbd825f9b",
+      "at": 428,
+      "ms": 971,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 428,
+      "ms": 2016,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1243,
+      "ms": 852,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 2566,
+      "ms": 850,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 2876,
+      "ms": 816,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52190-2020-aerial",
+      "at": 2892,
+      "ms": 717,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-change.pmtiles",
+      "at": 3723,
+      "ms": 2077,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4071,
+      "ms": 1735,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4071,
+      "ms": 1736,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4071,
+      "ms": 1736,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 4071,
+      "ms": 1736,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4075,
+      "ms": 1733,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 4075,
+      "ms": 1734,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 6653,
+    "ldN": 1,
+    "ldMs": 3690,
+    "tl": [
+     "ld on @3219 +판",
+     "(지역 결과 요약+판 @3327)",
+     "ld off @6653"
+    ],
+    "boot": {
+     "gate": 405,
+     "data": 882,
+     "layers": 889,
+     "canvas": 890,
+     "ready": 1412,
+     "shown": 4711
+    },
+    "errs": [],
+    "n": 206,
+    "reqs": [
+     {
+      "u": "/landxi/shared/api-v1.js?v=dbbd825f9b",
+      "at": 386,
+      "ms": 1439,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=dbbd825f9b",
+      "at": 387,
+      "ms": 716,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 387,
+      "ms": 856,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/brand/namwon",
+      "at": 1828,
+      "ms": 740,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1832,
+      "ms": 766,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 1832,
+      "ms": 805,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1832,
+      "ms": 867,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 4099,
+    "ldN": 1,
+    "ldMs": 2404,
+    "tl": [
+     "ld on @2007 +판",
+     "(지역 결과 요약+판 @2121)",
+     "ld off @4099"
+    ],
+    "boot": {
+     "gate": 367,
+     "data": 787,
+     "layers": 795,
+     "canvas": 795,
+     "ready": 1243,
+     "shown": 3141
+    },
+    "errs": [],
+    "n": 206,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 406,
+      "ms": 772,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/guide.js?v=dbbd825f9b",
+      "at": 2351,
+      "ms": 946,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2446,
+      "ms": 857,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2447,
+      "ms": 857,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2447,
+      "ms": 857,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2447,
+      "ms": 858,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2447,
+      "ms": 858,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-farmland-2025.pmtiles",
+      "at": 2447,
+      "ms": 859,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2448,
+      "ms": 856,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2448,
+      "ms": 856,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2448,
+      "ms": 857,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF.pmtiles",
+      "at": 2448,
+      "ms": 859,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2449,
+      "ms": 857,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2449,
+      "ms": 860,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2449,
+      "ms": 862,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 2743,
+    "ldN": 1,
+    "ldMs": 1334,
+    "tl": [
+     "ld on @1779 지역 결과 요약+판",
+     "ld off @2743"
+    ],
+    "boot": {
+     "gate": 42,
+     "data": 491,
+     "layers": 501,
+     "canvas": 502,
+     "ready": 1095,
+     "shown": 1865
+    },
+    "errs": [],
+    "n": 178,
+    "reqs": [
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 1816,
+      "ms": 730,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 1816,
+      "ms": 731,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 1816,
+      "ms": 816,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 1816,
+      "ms": 816,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 1816,
+      "ms": 816,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3043,
+    "ldN": 1,
+    "ldMs": 1701,
+    "tl": [
+     "ld on @1345 +판",
+     "(지역 결과 요약+판 @1702)",
+     "ld off @3043"
+    ],
+    "boot": {
+     "gate": 38,
+     "data": 914,
+     "layers": 932,
+     "canvas": 933,
+     "ready": 1341,
+     "shown": 2251
+    },
+    "errs": [],
+    "n": 178,
+    "reqs": [
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 689,
+      "ms": 903,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 689,
+      "ms": 903,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 689,
+      "ms": 903,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 689,
+      "ms": 903,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 689,
+      "ms": 906,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions",
+      "at": 715,
+      "ms": 880,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 756,
+      "ms": 839,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 757,
+      "ms": 838,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 807,
+      "ms": 785,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 2030,
+      "ms": 822,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 2031,
+      "ms": 820,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/services",
+      "at": 2031,
+      "ms": 906,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 2031,
+      "ms": 907,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 2031,
+      "ms": 907,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3358,
+    "ldN": 1,
+    "ldMs": 2039,
+    "tl": [
+     "ld on @1324 지역 결과 요약+판",
+     "ld off @3358"
+    ],
+    "boot": {
+     "gate": 43,
+     "data": 522,
+     "layers": 543,
+     "canvas": 543,
+     "ready": 1014,
+     "shown": 2548
+    },
+    "errs": [],
+    "n": 178,
+    "reqs": [
+     {
+      "u": "/api/v1/requests/services",
+      "at": 1735,
+      "ms": 777,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/requests/shared-imagery",
+      "at": 1735,
+      "ms": 777,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/spaces/me/guides/card-farm",
+      "at": 1735,
+      "ms": 777,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 6653,
+   "again": 3043,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 34,
+  "data": 107,
+  "layers": 158,
+  "canvas": 159,
+  "ready": 1310,
+  "shown": 1310
+ },
+ "staff": {
+  "url": "/landxi/v3/xi-clean/",
+  "first": [
+   {
+    "done": 4213,
+    "ldN": 1,
+    "ldMs": 674,
+    "tl": [
+     "ld on @2386 +판",
+     "(전국 결과 요약+판 @2508)",
+     "ld off @3052"
+    ],
+    "boot": {
+     "gate": 699,
+     "data": 1115,
+     "layers": 1147,
+     "canvas": 1150,
+     "ready": 1306,
+     "shown": 1806
+    },
+    "errs": [],
+    "n": 212,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=dbbd825f9b",
+      "at": 362,
+      "ms": 792,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 364,
+      "ms": 1069,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=dbbd825f9b",
+      "at": 364,
+      "ms": 1077,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/me",
+      "at": 1156,
+      "ms": 701,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 1166,
+      "ms": 867,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=lx&locale=ko",
+      "at": 1166,
+      "ms": 877,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/geo/sigungu.geojson",
+      "at": 1166,
+      "ms": 1102,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1166,
+      "ms": 1156,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 1166,
+      "ms": 1285,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1166,
+      "ms": 2250,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1914,
+      "ms": 1090,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 2170,
+      "ms": 746,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12760-2023-aerial",
+      "at": 2315,
+      "ms": 742,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12800-2023-aerial",
+      "at": 2315,
+      "ms": 747,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-43745-2023-aerial",
+      "at": 2315,
+      "ms": 829,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 4279,
+    "ldN": 1,
+    "ldMs": 739,
+    "tl": [
+     "ld on @2304 지도+판",
+     "(전국 결과 요약+판 @2419)",
+     "ld off @3427"
+    ],
+    "boot": {
+     "gate": 299,
+     "data": 1445,
+     "layers": 1496,
+     "canvas": 1498,
+     "ready": 1515,
+     "shown": 1975
+    },
+    "errs": [],
+    "n": 212,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=dbbd825f9b",
+      "at": 408,
+      "ms": 1638,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 408,
+      "ms": 1685,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 851,
+      "ms": 996,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 2389,
+      "ms": 1039,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3858,
+    "ldN": 1,
+    "ldMs": 636,
+    "tl": [
+     "ld on @2045 지역 경계와 분석 집계+판",
+     "(전국 결과 요약+판 @2368)",
+     "ld off @2782"
+    ],
+    "boot": {
+     "gate": 292,
+     "data": 1474,
+     "layers": 1518,
+     "canvas": 1519,
+     "ready": 1534,
+     "shown": 1986
+    },
+    "errs": [],
+    "n": 212,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=dbbd825f9b",
+      "at": 394,
+      "ms": 1598,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=dbbd825f9b",
+      "at": 394,
+      "ms": 1635,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 787,
+      "ms": 702,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 787,
+      "ms": 803,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 787,
+      "ms": 913,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 2863,
+    "ldN": 1,
+    "ldMs": 334,
+    "tl": [
+     "ld on @1747 전국 결과 요약+판",
+     "ld off @2108"
+    ],
+    "boot": {
+     "gate": 48,
+     "data": 128,
+     "layers": 176,
+     "canvas": 177,
+     "ready": 1363,
+     "shown": 1363
+    },
+    "errs": [],
+    "n": 206,
+    "reqs": [
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 689,
+      "ms": 1172,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 689,
+      "ms": 1283,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 689,
+      "ms": 1343,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 765,
+      "ms": 876,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/approvals?state=pending",
+      "at": 765,
+      "ms": 877,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 765,
+      "ms": 1188,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 813,
+      "ms": 829,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12740-2023-aerial",
+      "at": 861,
+      "ms": 781,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 861,
+      "ms": 1077,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12720-2023-aerial",
+      "at": 861,
+      "ms": 1096,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 861,
+      "ms": 1096,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12730-2023-aerial",
+      "at": 861,
+      "ms": 1096,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-41670-2023-aerial",
+      "at": 862,
+      "ms": 1063,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44133-2023-aerial",
+      "at": 862,
+      "ms": 1072,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12830-2023-aerial",
+      "at": 862,
+      "ms": 1074,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2883,
+    "ldN": 1,
+    "ldMs": 786,
+    "tl": [
+     "ld on @1771 +판",
+     "(전국 결과 요약+판 @1880)",
+     "ld off @2165"
+    ],
+    "boot": {
+     "gate": 32,
+     "data": 108,
+     "layers": 165,
+     "canvas": 166,
+     "ready": 1362,
+     "shown": 1362
+    },
+    "errs": [],
+    "n": 206,
+    "reqs": [
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=lx&locale=ko",
+      "at": 668,
+      "ms": 1099,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/board",
+      "at": 669,
+      "ms": 1097,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 669,
+      "ms": 1099,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 669,
+      "ms": 1110,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 669,
+      "ms": 1339,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 669,
+      "ms": 1469,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 726,
+      "ms": 1056,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/approvals?state=pending",
+      "at": 726,
+      "ms": 1282,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 726,
+      "ms": 1283,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 783,
+      "ms": 1181,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12740-2023-aerial",
+      "at": 829,
+      "ms": 941,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 829,
+      "ms": 1083,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12730-2023-aerial",
+      "at": 830,
+      "ms": 938,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12720-2023-aerial",
+      "at": 830,
+      "ms": 939,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12800-2023-aerial",
+      "at": 830,
+      "ms": 940,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3021,
+    "ldN": 1,
+    "ldMs": 222,
+    "tl": [
+     "ld on @1794 전국 결과 요약+판",
+     "ld off @2024"
+    ],
+    "boot": {
+     "gate": 34,
+     "data": 107,
+     "layers": 158,
+     "canvas": 159,
+     "ready": 1310,
+     "shown": 1310
+    },
+    "errs": [],
+    "n": 206,
+    "reqs": [
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 668,
+      "ms": 1008,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 668,
+      "ms": 1271,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 668,
+      "ms": 1290,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 725,
+      "ms": 948,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/approvals?state=pending",
+      "at": 725,
+      "ms": 949,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 725,
+      "ms": 952,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 780,
+      "ms": 899,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 822,
+      "ms": 852,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12740-2023-aerial",
+      "at": 822,
+      "ms": 852,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12760-2023-aerial",
+      "at": 823,
+      "ms": 851,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12730-2023-aerial",
+      "at": 823,
+      "ms": 854,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12830-2023-aerial",
+      "at": 823,
+      "ms": 855,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 823,
+      "ms": 1077,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12800-2023-aerial",
+      "at": 823,
+      "ms": 1077,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12720-2023-aerial",
+      "at": 823,
+      "ms": 1086,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 4213,
+   "again": 2883,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ }
+}

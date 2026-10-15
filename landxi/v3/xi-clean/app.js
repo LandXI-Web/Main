@@ -61,6 +61,8 @@ PRE.sum?.catch(() => {});
 /* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
 const scopeFC = (j) => ({ features: (j?.items || []).filter((it) => it.geometry).map((it) => ({ type: 'Feature', geometry: it.geometry,
   properties: { code: String(it.sgg_cd), prev: it.prev_cd ? String(it.prev_cd) : null, name: it.name, sido: String(it.full || '').split(/\s+/)[0] || it.sido } })) });
+/* 기관 관할 목록(/regions · 첫 지역 고르기)도 함께 출발 — 경계 · 집계를 받은 뒤 차례로 부르면 첫 도착이 그만큼 늦다(impl-37 기관 XI맵 속도) */
+PRE.regs = SESS?.realm === 'tenant' ? K.loadRegions().catch(() => []) : null;
 PRE.sgg = SESS?.realm === 'tenant'
   ? api('/regions?geom=1').then(scopeFC).catch(() => ({ features: [] }))
   : fetch('/landxi/assets/data/geo/sigungu.geojson').then((r) => r.json()).catch(() => ({ features: [] }));
@@ -204,6 +206,8 @@ async function boot() {
   loadEl.append(loadK.el);
   S.els = { stageEl, bEl, fx, hud, grip, loadEl, top };
 
+  // 모듈은 async 로 먼저 돈다(index.html) — 지도 엔진(maplibre · pmtiles · defer 스크립트)이 실행된 뒤 무대를 만든다(30초 넘게 오지 않으면 그대로 진행 → '열지 못했습니다')
+  if (!window.maplibregl || !window.pmtiles) await new Promise((ok) => { const t0 = performance.now(); const f = () => (window.maplibregl && window.pmtiles) || performance.now() - t0 > 30e3 ? ok() : setTimeout(f, 25); f(); });
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
@@ -241,6 +245,10 @@ async function boot() {
   const r0 = (want && (findRegion(want) || await regionByCode(want))) || S.home || null;
   if (S.fc && Q.get('rule') && (ALL_RULES.includes(Q.get('rule')) || S.ruleDefs[Q.get('rule')])) S.cond.rule = Q.get('rule');
   if (S.fc) { const q = hudQuery(r0, { emd: null, rule: S.cond.rule }); if (q.p && !(S.tenant && r0 && !inScope(r0))) prefetchFindings(q.p.toString()); }
+  // 첫 지역이 정해지면 그 지역 자료(읍면동 경계 · 결과 목록)를 층 쌓기와 함께 미리 부르고, 카메라도 바로 그 자리에 둔다
+  // — 날아가는 2.4초 · 날아간 뒤 두 번째 '불러오는 중'이 없다(바탕 · 결과 타일을 처음부터 그 자리에서 받는다 · impl-37 기관 XI맵 속도)
+  if (r0 && !(S.tenant && !inScope(r0))) prefetchRegion(r0);
+  { const b0 = r0?.bbox || (S.tenant && S.scopeBox) || null; if (b0) stage.go(b0, { ms: 0, maxZoom: r0 ? 12.5 : 11 }); }
 
   const [cat] = await Promise.all([catP, stage.ready]);
   S.cat = cat;
@@ -282,12 +290,15 @@ async function boot() {
   // 로딩 판은 도착 순간에 걷는다(덜 그려진 지도를 먼저 보이지 않게)
   await setRegion(r0, { first: true });
   hudBig.hidden = false;
-  loadK.set({ progress: 1 });
   mark('ready');
   // 판을 걷는 순간: 보이는 타일이 다 왔거나 0.9초(덜 찬 타일 · 흰 사각형을 먼저 보이지 않게)
   { const t0 = performance.now();
-    const out = () => { S.els.loadEl.classList.add('is-out'); setTimeout(() => S.els.loadEl.remove(), 600); X.boot.shown = Math.round(performance.now() - X.t0); };
-    const poll = () => (map.areTilesLoaded() || performance.now() - t0 > (S.board ? 450 : 900) ? out() : setTimeout(poll, 60)); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
+    // 가운데 '불러오는 중'은 판이 걷힐 때 함께 끝난다(빈 판만 남는 틈 없음 · impl-37)
+    const out = () => { loadK.set({ progress: 1 }); S.els.loadEl.classList.add('is-out'); setTimeout(() => S.els.loadEl.remove(), 600); X.boot.shown = Math.round(performance.now() - X.t0); };
+    // 지역 도착(기관 등) = 그 지역 결과 층까지 그려질 때를 기다려 한 번에 걷는다 — '불러오는 중'은 이 판 하나(걷힌 뒤 결과 때문에 다시 뜨지 않게 · 최대 3초 · impl-37)
+    let rdOk = !S.rdP; S.rdP?.finally(() => { rdOk = true; });
+    const drawn = () => { try { return !map.isMoving() && Object.keys(map.getStyle()?.sources || {}).filter((id) => !/^k-/.test(id)).every((id) => map.isSourceLoaded(id)); } catch { return true; } };
+    const poll = () => (S.board ? map.areTilesLoaded() || performance.now() - t0 > 450 : (rdOk && drawn()) || performance.now() - t0 > 3000) ? out() : setTimeout(poll, 60); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
@@ -499,11 +510,13 @@ function toRegion(x) {
 async function homeRegion() {
   const t = S.who.tenant, nm = t?.name?.ko || S.who.org || '';
   let rs = [];
-  try { rs = await K.loadRegions(); } catch { /* */ }
-  const scoped = rs.filter((x) => x.in_scope);
-  S.scope = scoped.length ? scoped : null;
+  const rsP = PRE.regs || K.loadRegions();
+  const useRs = (x) => { rs = x || []; const scoped = rs.filter((y) => y.in_scope); S.scope = scoped.length ? scoped : null; return scoped; };
+  // 기관 이름이 시군구 하나면 관할 목록(/regions)을 기다리지 않고 바로 그곳 — 관할 목록은 도착하면 채운다(첫 도착이 목록 한 번 늦지 않게 · impl-37)
   const r = findRegion(nm) || S.regions.find((x) => nm && norm(nm).endsWith(norm(x.name)) && norm(nm).includes(norm(x.sido).slice(0, 2)));
-  if (r) return r;
+  if (r) { rsP.then(useRs, () => {}); return r; }
+  let scoped = [];
+  try { scoped = useRs(await rsP); } catch { /* */ }
   if (S.regions.length > 1 || scoped.length > 1) return null;   // 광역 기관 = 관할 전체로 도착(시군구는 사용자가 고른다 · 화면이 고르지 않는다)
   if (S.regions.length === 1) return S.regions[0];
   try {
@@ -540,6 +553,12 @@ const regionEmds = () => (S.region ? S.emds.filter((e) => inRegion(e.cd, S.regio
 
 /* ═══ 지역 자료: 읍면동 경계 · 결과 층(전국 · 지역 문자열 0) ═══ */
 let rdSeq = 0;
+const RDPRE = new Map();   // 첫 지역 자료 미리 받기(20초 안 · 한 번만)
+function prefetchRegion(r) {
+  const c = encodeURIComponent(r.code), q = (p) => { const x = api(p); x.catch(() => {}); return x; };
+  // 결과 목록은 탭 저장소 10분 보관(swr — 다시 오면 보관본으로 바로 층을 쌓고 뒤에서 새로 받는다 · 카탈로그 · 집계와 같은 방식)
+  RDPRE.set(r.code, { t: performance.now(), emd: q('/regions/' + c + '/emd'), res: S.board ? null : swr('/regions/' + c + '/results').catch(() => null) });
+}
 async function regionData(r) {
   const my = ++rdSeq;
   S.remd = []; S.remdMeta = null; S.aiUser = false;
@@ -547,9 +566,11 @@ async function regionData(r) {
   map.getSource('xc-emd')?.setData({ type: 'FeatureCollection', features: [] });
   if (!S.board) clearResultLayers();                 // 전국 결과(바퀴 5) = 결과 층은 전국 결과가 화면 안 시군구만큼 불러 둔다(지역을 옮겨도 그대로)
   if (!r) return;
+  const pre = RDPRE.get(r.code); RDPRE.delete(r.code);
+  const fresh = pre && performance.now() - pre.t < 20e3 ? pre : null;
   const [emd, res] = await Promise.all([
-    api('/regions/' + encodeURIComponent(r.code) + '/emd').catch((e) => { K.devlog('emd', `${e.code || ''} ${e.status ?? 0}`); return null; }),
-    S.board ? null : api('/regions/' + encodeURIComponent(r.code) + '/results').catch((e) => { K.devlog('results', `${e.code || ''} ${e.status ?? 0}`); return null; }),
+    (fresh?.emd || api('/regions/' + encodeURIComponent(r.code) + '/emd')).catch((e) => { K.devlog('emd', `${e.code || ''} ${e.status ?? 0}`); return null; }),
+    S.board ? null : (fresh?.res || api('/regions/' + encodeURIComponent(r.code) + '/results')).catch((e) => { K.devlog('results', `${e.code || ''} ${e.status ?? 0}`); return null; }),
   ]);
   if (my !== rdSeq) return;
   if (emd) {
@@ -618,8 +639,8 @@ async function setRegion(r, { first = false, to = null, soft = false } = {}) {
   searchInput.value = r ? r.name : '';
   // to = 말로 한 읍면동 이동 — 시군구를 거치지 않고 한 번에 그 읍면동으로(동작 끝 신호가 늦지 않게)
   const fly = soft ? Promise.resolve(true)
-    : r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 })
-    : S.tenant && S.scopeBox ? goKeep(S.scopeBox, { ms: RM() ? 0 : 2400, maxZoom: 11 })      // 기관 '전체' = 관할 전체 범위
+    : r ? goKeep(to?.bbox || r.bbox, { ms: RM() || first ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 })   // 첫 도착 = 날지 않고 그 자리(impl-37)
+    : S.tenant && S.scopeBox ? goKeep(S.scopeBox, { ms: RM() || first ? 0 : 2400, maxZoom: 11 })      // 기관 '전체' = 관할 전체 범위
     : stage.home({ ms: first ? 0 : 1600 });
   if (!soft) { const k = (S.flyK = (S.flyK || 0) + 1); S.flying = true; Promise.resolve(fly).finally(() => setTimeout(() => { if (S.flyK === k) S.flying = false; }, 200)); }   // 지역 비행 중에는 손으로 들어온 시군구 판정을 쉰다
   if (S.outside) {

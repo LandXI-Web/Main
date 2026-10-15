@@ -61,9 +61,64 @@ export function extFetch(url, { signal } = {}) {
     signal?.addEventListener('abort', () => { if (EPEND.delete(id)) rej(new DOMException('aborted', 'AbortError')); }, { once: true });
   });
 }
+/* PMTiles 첫 조각 한 번에(impl-37 기관 XI맵 속도) — pmtiles.js 는 머리(앞 16KB)를 받은 뒤 같은 앞부분에 든 메타데이터 · 잎 목차를
+   다시 따로 요청한다(바깥 주소에서 요청 한 번 0.3초 이상 · 결과 층마다 두 번 더). 앞 32KB 를 한 번 받아 두고 그 안의 요청은 받아 둔 바이트로 답한다.
+   나머지(타일 · 먼 목차)는 그대로 원래 요청. 파일이 바뀌면 etag 가 달라 pmtiles.js 가 알아서 다시 받는다. */
+const HEAD_BYTES = 32768;
+/* 받은 조각 보관(탭을 닫아도 · 10분) — 크롬(윈도)에서 pmtiles.js 는 브라우저 보관을 끈다(no-store · 범위 요청 보관 고장 회피).
+   그래서 같은 화면을 다시 열면 머리 · 타일을 매번 바깥 주소로 다시 받았다. 조각(주소 · 위치 · 길이)마다 Cache Storage 에 두고 10분 안이면 그것으로 답한다.
+   파일이 바뀌면 etag 가 달라 보관본을 쓰지 않는다(머리는 10분 안 보관본 — 결과 목록 · 카탈로그의 10분 보관과 같은 기준). */
+const PM_CACHE = 'lx-pm-v1', PM_TTL = 10 * 60e3, PM_MAX = 1 << 20;
+let pmCache = null;
+const pmStore = () => (pmCache ||= (typeof caches !== 'undefined' ? caches.open(PM_CACHE).catch(() => null) : Promise.resolve(null)));
+const pmKey = (url, o, l) => location.origin + '/__pm/' + encodeURIComponent(url) + '/' + o + '-' + l;
+async function pmGet(url, o, l, etag) {
+  try {
+    const c = await pmStore(); if (!c) return null;
+    const r = await c.match(pmKey(url, o, l)); if (!r) return null;
+    const at = +r.headers.get('x-at') || 0, et = r.headers.get('x-etag') || undefined;
+    if (Date.now() - at > PM_TTL || (etag && et && etag !== et)) return null;
+    return { data: await r.arrayBuffer(), etag: et };
+  } catch { return null; }
+}
+function pmPut(url, o, l, r) {
+  if (!r?.data || r.data.byteLength > PM_MAX) return;
+  pmStore().then((c) => c?.put(pmKey(url, o, l), new Response(r.data.slice(0), { headers: { 'x-at': String(Date.now()), ...(r.etag ? { 'x-etag': r.etag } : {}) } }))).catch(() => {});
+}
+class HeadSource {
+  constructor(url) { this.src = new window.pmtiles.FetchSource(url); this.url = url; this.head = null; }
+  getKey() { return this.url; }
+  async getBytes(offset, length, signal, etag) {
+    const hit = this.fresh ? null : await pmGet(this.url, offset, length, etag);
+    if (hit) return hit;
+    let r;
+    try { r = await this.bytes(offset, length, signal, etag); }
+    catch (e) {   // 파일이 바뀜(etag 다름) — 이 주소의 보관본은 이제 쓰지 않는다(pmtiles.js 가 머리부터 다시 받는다)
+      if (window.pmtiles.EtagMismatch && e instanceof window.pmtiles.EtagMismatch) { this.fresh = true; this.head = null; }
+      throw e;
+    }
+    pmPut(this.url, offset, length, r);
+    return r;
+  }
+  async bytes(offset, length, signal, etag) {
+    if (offset === 0 && length <= HEAD_BYTES && !this.head) {
+      this.head = this.src.getBytes(0, HEAD_BYTES, undefined, etag);   // 첫 조각은 끊지 않는다(같은 파일의 다른 층이 함께 기다린다)
+      this.head.catch(() => { this.head = null; });
+    }
+    if (this.head && offset + length <= HEAD_BYTES) {
+      let r = null; try { r = await this.head; } catch { r = null; }
+      if (r && offset + length <= r.data.byteLength && (!etag || !r.etag || etag === r.etag)) return { ...r, data: r.data.slice(offset, offset + length) };
+      if (r && offset === 0 && r.data.byteLength < HEAD_BYTES) return { ...r, data: r.data.slice(0, Math.min(length, r.data.byteLength)) };   // 작은 파일 = 받은 만큼이 전부
+    }
+    return this.src.getBytes(offset, length, signal, etag);
+  }
+}
+const newPm = (u) => new window.pmtiles.PMTiles(window.pmtiles.FetchSource ? new HeadSource(u) : u);
 export function registerPmtiles() {
   if (protocol || !window.pmtiles || !window.maplibregl) return protocol;
   protocol = new window.pmtiles.Protocol({ metadata: true });
+  // 프로토콜이 주소마다 만드는 인스턴스도 첫 조각 한 번에(위 HeadSource) — 없는 주소를 물으면 여기서 만든다
+  if (protocol.tiles instanceof Map) protocol.tiles = new (class extends Map { get(k) { let v = super.get(k); if (!v && typeof k === 'string' && k) { v = newPm(k); super.set(k, v); } return v; } })(protocol.tiles);
   window.maplibregl.addProtocol('pmtiles', protocol.tile);
   /* 래스터 PMTiles 는 lxpm://<url>/{z}/{x}/{y} 로 — 성긴 타일셋의 빈 칸을 투명 비트맵으로 돌려준다
      (빈 바이트를 MapLibre 가 디코드하다 콘솔 오류를 내지 않게 · E0-S '요청' 1 과 같은 문제). */
@@ -186,7 +241,7 @@ export function pmtilesOf(url) {
   registerPmtiles();
   const u = url.replace(/^pmtiles:\/\//, '');
   let p = protocol.get(u);
-  if (!p) { p = new window.pmtiles.PMTiles(u); protocol.add(p); }
+  if (!p) { p = newPm(u); protocol.add(p); }
   return p;
 }
 

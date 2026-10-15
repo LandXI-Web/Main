@@ -1,0 +1,932 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 9189,
+    "ldN": 2,
+    "ldMs": 4135,
+    "tl": [
+     "ld on @3404",
+     "ld off @5691",
+     "ld on @6377",
+     "ld off @9189"
+    ],
+    "boot": {
+     "gate": 8,
+     "data": 1166,
+     "layers": 1181,
+     "canvas": 1182,
+     "ready": 1689,
+     "shown": 2074
+    },
+    "errs": [],
+    "n": 386,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=7885bb2096",
+      "at": 406,
+      "ms": 762,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=7885bb2096",
+      "at": 407,
+      "ms": 1271,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=7885bb2096",
+      "at": 407,
+      "ms": 1855,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 2607,
+      "ms": 810,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 2607,
+      "ms": 830,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 2608,
+      "ms": 812,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 2657,
+      "ms": 735,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 6448,
+      "ms": 724,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 6448,
+      "ms": 724,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 6448,
+      "ms": 725,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 6448,
+      "ms": 726,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 6448,
+      "ms": 726,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 7350,
+    "ldN": 2,
+    "ldMs": 3084,
+    "tl": [
+     "ld on @2062",
+     "ld off @3563",
+     "ld on @5749",
+     "ld off @7350"
+    ],
+    "boot": {
+     "gate": 7,
+     "data": 1127,
+     "layers": 1134,
+     "canvas": 1134,
+     "ready": 1521,
+     "shown": 1911
+    },
+    "errs": [],
+    "n": 417,
+    "reqs": [
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1291,
+      "ms": 769,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 1291,
+      "ms": 812,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1291,
+      "ms": 816,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 1292,
+      "ms": 702,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 1292,
+      "ms": 702,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1330,
+      "ms": 753,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1330,
+      "ms": 777,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 6404,
+    "ldN": 2,
+    "ldMs": 2290,
+    "tl": [
+     "ld on @2134",
+     "ld off @3646",
+     "ld on @5618",
+     "ld off @6404"
+    ],
+    "boot": {
+     "gate": 9,
+     "data": 826,
+     "layers": 834,
+     "canvas": 834,
+     "ready": 1305,
+     "shown": 1305
+    },
+    "errs": [],
+    "n": 409,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=7885bb2096",
+      "at": 390,
+      "ms": 778,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 6324,
+    "ldN": 2,
+    "ldMs": 2858,
+    "tl": [
+     "ld on @1557",
+     "ld off @2872",
+     "ld on @4905",
+     "ld off @6324"
+    ],
+    "boot": {
+     "gate": 14,
+     "data": 899,
+     "layers": 906,
+     "canvas": 906,
+     "ready": 1275,
+     "shown": 1276
+    },
+    "errs": [],
+    "n": 423,
+    "reqs": []
+   },
+   {
+    "done": 7108,
+    "ldN": 2,
+    "ldMs": 2755,
+    "tl": [
+     "ld on @1355",
+     "ld off @3219",
+     "ld on @5253",
+     "ld off @7108"
+    ],
+    "boot": {
+     "gate": 15,
+     "data": 1261,
+     "layers": 1268,
+     "canvas": 1268,
+     "ready": 1584,
+     "shown": 1584
+    },
+    "errs": [],
+    "n": 423,
+    "reqs": [
+     {
+      "u": "/api/v1/regions?geom=1",
+      "at": 710,
+      "ms": 922,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 710,
+      "ms": 924,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 710,
+      "ms": 924,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=tenant&locale=ko",
+      "at": 710,
+      "ms": 925,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 710,
+      "ms": 928,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 756,
+      "ms": 878,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 756,
+      "ms": 879,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 795,
+      "ms": 840,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 5489,
+    "ldN": 2,
+    "ldMs": 1775,
+    "tl": [
+     "ld on @1350",
+     "ld off @2554",
+     "ld on @4918",
+     "ld off @5489"
+    ],
+    "boot": {
+     "gate": 17,
+     "data": 927,
+     "layers": 934,
+     "canvas": 935,
+     "ready": 1257,
+     "shown": 1257
+    },
+    "errs": [],
+    "n": 418,
+    "reqs": [
+     {
+      "u": "/api/v1/regions/52190/results",
+      "at": 1637,
+      "ms": 783,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 7350,
+   "again": 6324,
+   "ldNmax": 2,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 9,
+  "data": 93,
+  "layers": 142,
+  "canvas": 143,
+  "ready": 1161,
+  "shown": 1162
+ },
+ "staff": {
+  "url": "/landxi/v3/xi-clean/",
+  "first": [
+   {
+    "done": 4456,
+    "ldN": 1,
+    "ldMs": 537,
+    "tl": [
+     "ld on @2404",
+     "ld off @2938"
+    ],
+    "boot": {
+     "gate": 6,
+     "data": 996,
+     "layers": 1020,
+     "canvas": 1023,
+     "ready": 1072,
+     "shown": 1072
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=7885bb2096",
+      "at": 345,
+      "ms": 800,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/xi-clean/edit.js?v=7885bb2096",
+      "at": 345,
+      "ms": 864,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=7885bb2096",
+      "at": 347,
+      "ms": 971,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=7885bb2096",
+      "at": 347,
+      "ms": 1075,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=lx&locale=ko",
+      "at": 1813,
+      "ms": 835,
+      "fail": false
+     },
+     {
+      "u": "/landxi/assets/data/geo/sigungu.geojson",
+      "at": 1813,
+      "ms": 928,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1813,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 1813,
+      "ms": 999,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1813,
+      "ms": 1154,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 1814,
+      "ms": 712,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 1814,
+      "ms": 713,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 1814,
+      "ms": 833,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1924,
+      "ms": 716,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3599,
+    "ldN": 0,
+    "ldMs": 0,
+    "tl": [],
+    "boot": {
+     "gate": 8,
+     "data": 362,
+     "layers": 382,
+     "canvas": 383,
+     "ready": 566,
+     "shown": 566
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=7885bb2096",
+      "at": 385,
+      "ms": 734,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1507,
+      "ms": 905,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 1810,
+      "ms": 708,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12830-2023-aerial",
+      "at": 1853,
+      "ms": 707,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 1853,
+      "ms": 981,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-41550-2023-aerial",
+      "at": 1854,
+      "ms": 980,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44133-2023-aerial",
+      "at": 1854,
+      "ms": 981,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12870-2023-aerial",
+      "at": 1854,
+      "ms": 981,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44825-2023-aerial",
+      "at": 1855,
+      "ms": 979,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52710-2023-aerial",
+      "at": 1856,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52750-2023-aerial",
+      "at": 1856,
+      "ms": 978,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-52210-2023-aerial",
+      "at": 1856,
+      "ms": 979,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44150-2023-aerial",
+      "at": 1858,
+      "ms": 976,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44810-2023-aerial",
+      "at": 1858,
+      "ms": 976,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12110-2023-aerial",
+      "at": 1858,
+      "ms": 977,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 4346,
+    "ldN": 1,
+    "ldMs": 317,
+    "tl": [
+     "ld on @2132",
+     "ld off @2465"
+    ],
+    "boot": {
+     "gate": 10,
+     "data": 370,
+     "layers": 392,
+     "canvas": 393,
+     "ready": 980,
+     "shown": 980
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=7885bb2096",
+      "at": 390,
+      "ms": 735,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 1469,
+      "ms": 850,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 1469,
+      "ms": 909,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 1469,
+      "ms": 960,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 3158,
+    "ldN": 1,
+    "ldMs": 976,
+    "tl": [
+     "ld on @1293",
+     "ld off @2264"
+    ],
+    "boot": {
+     "gate": 9,
+     "data": 110,
+     "layers": 169,
+     "canvas": 170,
+     "ready": 1381,
+     "shown": 1381
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=lx&locale=ko",
+      "at": 741,
+      "ms": 967,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/board",
+      "at": 742,
+      "ms": 966,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 742,
+      "ms": 966,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 742,
+      "ms": 987,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 742,
+      "ms": 1358,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 742,
+      "ms": 1876,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 775,
+      "ms": 935,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 775,
+      "ms": 987,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/approvals?state=pending",
+      "at": 775,
+      "ms": 1166,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 832,
+      "ms": 910,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12740-2023-aerial",
+      "at": 907,
+      "ms": 804,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 907,
+      "ms": 805,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12830-2023-aerial",
+      "at": 908,
+      "ms": 802,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12730-2023-aerial",
+      "at": 908,
+      "ms": 803,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 908,
+      "ms": 803,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3311,
+    "ldN": 1,
+    "ldMs": 773,
+    "tl": [
+     "ld on @1339",
+     "ld off @2144"
+    ],
+    "boot": {
+     "gate": 10,
+     "data": 94,
+     "layers": 146,
+     "canvas": 146,
+     "ready": 1281,
+     "shown": 1281
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/board",
+      "at": 742,
+      "ms": 1040,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/catalog/layers?stage=domestic&build=lx&locale=ko",
+      "at": 742,
+      "ms": 1041,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/rules",
+      "at": 742,
+      "ms": 1045,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 742,
+      "ms": 1262,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=rule",
+      "at": 742,
+      "ms": 1344,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 742,
+      "ms": 1369,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/approvals?state=pending",
+      "at": 776,
+      "ms": 1009,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/regions?limit=400",
+      "at": 776,
+      "ms": 1313,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/reviews/notify",
+      "at": 776,
+      "ms": 1313,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/auth/session",
+      "at": 820,
+      "ms": 968,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 882,
+      "ms": 901,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12740-2023-aerial",
+      "at": 882,
+      "ms": 901,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 883,
+      "ms": 900,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-43745-2023-aerial",
+      "at": 883,
+      "ms": 900,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44133-2023-aerial",
+      "at": 883,
+      "ms": 901,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2950,
+    "ldN": 1,
+    "ldMs": 508,
+    "tl": [
+     "ld on @1847",
+     "ld off @1955"
+    ],
+    "boot": {
+     "gate": 9,
+     "data": 93,
+     "layers": 142,
+     "canvas": 143,
+     "ready": 1161,
+     "shown": 1162
+    },
+    "errs": [],
+    "n": 214,
+    "reqs": [
+     {
+      "u": "/api/v1/survey/stats?by=emd",
+      "at": 731,
+      "ms": 1116,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/national/progress",
+      "at": 731,
+      "ms": 1118,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12800-2023-aerial",
+      "at": 870,
+      "ms": 963,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12830-2023-aerial",
+      "at": 870,
+      "ms": 963,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12130-2023-aerial",
+      "at": 870,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12760-2023-aerial",
+      "at": 870,
+      "ms": 978,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12710-2023-aerial",
+      "at": 870,
+      "ms": 978,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-43740-2023-aerial",
+      "at": 871,
+      "ms": 976,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44133-2023-aerial",
+      "at": 871,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12850-2023-aerial",
+      "at": 871,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-43730-2023-aerial",
+      "at": 871,
+      "ms": 977,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-43760-2023-aerial",
+      "at": 871,
+      "ms": 980,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-41550-2023-aerial",
+      "at": 871,
+      "ms": 982,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-12860-2023-aerial",
+      "at": 871,
+      "ms": 982,
+      "fail": false
+     },
+     {
+      "u": "/tiles/sign?set=cog%2Fimg-44180-2023-aerial",
+      "at": 871,
+      "ms": 983,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "median": {
+   "first": 4346,
+   "again": 3158,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ }
+}

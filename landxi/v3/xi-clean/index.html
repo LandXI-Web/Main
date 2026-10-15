@@ -32,9 +32,13 @@
 <link rel="modulepreload" href="../../xi/fx/arrive.js">
 <script defer src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
 <script defer src="../../xi/vendor/pmtiles/pmtiles.js"></script>
-<script type="module" src="app.js"></script>
+<!-- 글 사전(ko · en)은 화면 모듈이 뜨자마자 기다리는 첫 자료 — 지도 엔진과 함께 미리 받는다(기관 XI맵 속도 · impl-37) -->
+<link rel="preload" as="fetch" crossorigin href="../kit/i18n/ko.json">
+<link rel="preload" as="fetch" crossorigin href="../kit/i18n/en.json">
 </head>
 <body class="t">
 <noscript><p>XI맵은 자바스크립트가 필요합니다.</p></noscript>
+<!-- async = 지도 엔진(maplibre · 큰 파일)을 다 받기 전에 로그인 확인 · 자료 요청을 먼저 시작한다. 지도는 엔진이 온 뒤 만든다(app.js boot) -->
+<script type="module" async src="app.js"></script>
 </body>
 </html>
