@@ -794,6 +794,10 @@ async function main() {
   const ckStage = { get map() { return st.map; }, go: (b, o) => (inArea(b) ? st.go(b, o) : null), geo: (...a) => (ckRun.hit ? st.geo(...a) : null) };
   const ck = K.mountCmdk({
     stage: ckStage,
+    // 해외 화면은 영어 전용 — 한국어 질문은 보내지 않고 입력 줄 위 한 줄 'Please ask in English'(10-17 사용자 "응" · 질문 · 답이 'Can't answer right now' 로 보이던 것)
+    pre: (msg) => { if (!HANGUL.test(msg)) return false; const box = document.querySelector('.k-chat-in, .k-ck form'); let n = document.querySelector('.gl-ck-ko');
+      if (!n && box) { n = h('p.gl-ck-ko', { role: 'status', text: 'Please ask in English' }); box.before(n); }
+      if (n) { n.hidden = false; clearTimeout(n.__t); n.__t = setTimeout(() => { n.hidden = true; }, 5000); } return true; },
     // drop = 화면 큰 숫자(Crop condition drop)와 같은 값 — 묻는 답이 이 숫자를 그대로 쓴다(숫자 한 출처)
     context: () => {
       const c = S.district && S.season ? CH[S.district.id + '|' + S.season.key] : null;
@@ -1040,8 +1044,8 @@ function ckEnglish(box, { run, where } = {}) {
   // 같은 대상의 capture 수신자가 키트 수신자보다 먼저 돈다 — 키트가 값을 읽은 뒤 입력창을 되돌린다
   form?.addEventListener('submit', () => {
     const v = inp.value.trim(); if (!v) return;
-    live = true; if (run) run.hit = false;
     if (HANGUL.test(v)) return;
+    live = true; if (run) run.hit = false;
     const w = where?.() || [];
     inp.value = `${v}
 (${w.length ? `Current area: ${w.join(', ')}. ` : ''}Answer in English.)`;

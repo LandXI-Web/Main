@@ -76,3 +76,7 @@
 - 화면: `landxi/v3/xi-clean/app.js` · `onmap.js` · `onmap.css` · `nation.js`
 - 서버: `server/survey/nation.py` · `server/landxi_api/deps.py` · `ops.py` · `xreport.py` · `server/agent/tools/ext/global_.py` · `server/ops/gpu_poller.py` · 시험 `server/ops/tests/test_r3_ops.py`(가짜 Redis 범위 읽기)
 - 증거 도구: `check.mjs` · `time.mjs` · `table.mjs` · `r16.mjs` · `chain.sh` · `feat/*/` · 결과 `check.json/log` · `r16.json` · `time-*.json/log` · `time-table.md` · 그림 `shots/`(저장소 밖)
+
+## 6. 추가(10-17 사용자 "응")
+- **해외 첫 화면 한국어 질문** → 보내지 않고 입력 줄 위 한 줄 'Please ask in English'(5초). 예전엔 질문 · 답이 'Can't answer right now'로 보였고 빈 차례가 남았음. 키트 `pre`(보내기 전 화면이 먼저 봄)로 — 차례를 만들지 않음 · 서버 호출 0. 그림 `shots/r16/global-ask-korean-note.png` · 파일 `landxi/v3/global/app.js` · `global.css`.
+- **폴러 다시 켜기 — 하지 않음(멈추고 보고)**: `start-landxi.ps1 -Restart all` 을 읽어 보니 게이트웨이와 워커만 멈췄다 다시 켜고, 폴러의 부모인 관리 다리(:8702)는 '없을 때만' 띄움 → **-Restart all 로는 폴러가 새 코드로 바뀌지 않고 워커 · 전국 작업기만 괜히 멈춤**. Ollama · vLLM · Docker 는 건드리지 않는 길(스크립트 머리 주석 · 코드 확인)임은 맞음. 폴러를 바꾸는 길은 ⓐ 폴러 두 pid 만 멈추기(다리가 5초 뒤 새 코드로 다시 띄움) ⓑ 관리 다리 pid 를 멈추고 `start-landxi.ps1`(인자 없이 — 빠진 것만 띄움) — 둘 다 '-Restart 로만' 규칙 밖이라 결정 필요.

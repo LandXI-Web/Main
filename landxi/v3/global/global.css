@@ -129,3 +129,5 @@ html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}
 .gl-reg-note{color:var(--sub);font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
 .gl-reg-err{color:#F04452;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body)}
 .gl-reg-up{align-self:flex-start}
+.gl-ck-ko{margin:0;padding:0 16px 8px;background:var(--bg-1,#fff);font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--t-2,#4E5968)}
+.gl-ck-ko[hidden]{display:none}
