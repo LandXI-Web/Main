@@ -1,0 +1,535 @@
+{
+ "a-infra": {
+  "url": "/landxi/v3/ops-infra/#/infra",
+  "first": {
+   "tDom": 1822,
+   "done": null,
+   "ldFirst": 2901,
+   "ldLast": 4311,
+   "ldMs": 1517,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500&geom=0",
+     "ms": 4077,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3226,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3113,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3004,
+     "st": 200
+    },
+    {
+     "u": "/jobs?limit=500&geom=0",
+     "ms": 2957,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1244
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1244
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1244
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1244
+    },
+    {
+     "u": "/registry/models",
+     "ms": 1244
+    },
+    {
+     "u": "/tenants",
+     "ms": 1244
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1244
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1243
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1243
+    },
+    {
+     "u": "/registry/models",
+     "ms": 1243
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 907
+    },
+    {
+     "u": "/tenants",
+     "ms": 479
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 478
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 478
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 478
+    },
+    {
+     "u": "/registry/models",
+     "ms": 478
+    },
+    {
+     "u": "/tenants",
+     "ms": 458
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 458
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 458
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 458
+    },
+    {
+     "u": "/registry/models",
+     "ms": 458
+    }
+   ],
+   "n": 314,
+   "srvMax": 933.1,
+   "srvSum": 22713,
+   "srvTop": [
+    {
+     "u": "/ops/queues",
+     "ms": 933.1
+    },
+    {
+     "u": "/health",
+     "ms": 815.6
+    },
+    {
+     "u": "/ops/models",
+     "ms": 798.6
+    }
+   ],
+   "at": "/landxi/v3/ops-infra/#/infra",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 471,
+   "done": null,
+   "ldFirst": 1864,
+   "ldLast": 4137,
+   "ldMs": 2388,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6658,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6411,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6180,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6112,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6096,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6605
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6210
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 6159
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5735
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3896
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3896
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3574
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 3430
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 2924
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 2924
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 2924
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 2525
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1653
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1653
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1653
+    },
+    {
+     "u": "/tenants",
+     "ms": 1632
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1632
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1632
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1632
+    },
+    {
+     "u": "/registry/models",
+     "ms": 1632
+    },
+    {
+     "u": "/tenants",
+     "ms": 1362
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 1362
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1362
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 1362
+    },
+    {
+     "u": "/registry/models",
+     "ms": 1362
+    },
+    {
+     "u": "/tenants",
+     "ms": 871
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 871
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 871
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 871
+    },
+    {
+     "u": "/registry/models",
+     "ms": 871
+    },
+    {
+     "u": "/tenants",
+     "ms": 412
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 412
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 412
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 412
+    },
+    {
+     "u": "/registry/models",
+     "ms": 412
+    }
+   ],
+   "n": 405,
+   "srvMax": 1229.7,
+   "srvSum": 33405,
+   "srvTop": [
+    {
+     "u": "/ops/queues",
+     "ms": 1229.7
+    },
+    {
+     "u": "/ops/queues",
+     "ms": 1032.2
+    },
+    {
+     "u": "/health",
+     "ms": 999.7
+    }
+   ],
+   "at": "/landxi/v3/ops-infra/#/infra",
+   "err": null,
+   "pageErr": []
+  }
+ },
+ "a-dep-imp": {
+  "url": "/landxi/v3/ops-infra/#/deploys/improve",
+  "first": {
+   "tDom": 473,
+   "done": null,
+   "ldFirst": 1585,
+   "ldLast": 2136,
+   "ldMs": 720,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5449,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5421,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5333,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5293,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 5177,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1868
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1838
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1267
+    },
+    {
+     "u": "/tenants",
+     "ms": 922
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 922
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 922
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 922
+    },
+    {
+     "u": "/registry/models",
+     "ms": 922
+    },
+    {
+     "u": "/tenants",
+     "ms": 399
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 398
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 398
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 398
+    },
+    {
+     "u": "/registry/models",
+     "ms": 398
+    },
+    {
+     "u": "/tenants",
+     "ms": 111
+    },
+    {
+     "u": "/ops/tenants",
+     "ms": 111
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 111
+    },
+    {
+     "u": "/registry/cards",
+     "ms": 111
+    },
+    {
+     "u": "/registry/models",
+     "ms": 111
+    }
+   ],
+   "n": 355,
+   "srvMax": 894.6,
+   "srvSum": 16147,
+   "srvTop": [
+    {
+     "u": "/ops/queues",
+     "ms": 894.6
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 808.8
+    },
+    {
+     "u": "/health",
+     "ms": 778.1
+    }
+   ],
+   "at": "/landxi/v3/ops-infra/#/deploys/improve",
+   "err": null,
+   "pageErr": []
+  },
+  "again": {
+   "tDom": 710,
+   "done": 5477,
+   "ldFirst": 2141,
+   "ldLast": 2461,
+   "ldMs": 429,
+   "slowSeen": false,
+   "top": [
+    {
+     "u": "/jobs?limit=500&geom=0",
+     "ms": 1831,
+     "st": 200
+    },
+    {
+     "u": "/health",
+     "ms": 1378,
+     "st": 200
+    },
+    {
+     "u": "/ops/queues",
+     "ms": 1307,
+     "st": 200
+    },
+    {
+     "u": "/deploys?geom=bbox",
+     "ms": 1238,
+     "st": 200
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 1216,
+     "st": 200
+    }
+   ],
+   "bad": [],
+   "pending": [],
+   "n": 25,
+   "srvMax": 863.1,
+   "srvSum": 5124,
+   "srvTop": [
+    {
+     "u": "/ops/queues",
+     "ms": 863.1
+    },
+    {
+     "u": "/jobs?limit=500&geom=0",
+     "ms": 779.8
+    },
+    {
+     "u": "/ops/gpus",
+     "ms": 775.5
+    }
+   ],
+   "at": "/landxi/v3/ops-infra/#/deploys/improve",
+   "err": null,
+   "pageErr": []
+  }
+ }
+}
