@@ -143,7 +143,7 @@ def test_agent_findings_total_label_matches_emd(api, request, sgg, who):
     ta = next((lab, v) for k, lab, v in a.envelopes if k == "total")
     tb = next((lab, v) for k, lab, v in b.envelopes if k == "total")
     assert ta[1]["value"] == top["n"]["value"] and "의심 필지 전체" in ta[0]
-    assert tb[1]["value"] == r1 and "무허가 건축" in tb[0] and "전체" not in tb[0]
+    assert tb[1]["value"] == r1 and "농지 위 건물" in tb[0] and "전체" not in tb[0]
 
 
 def test_detections_emd_blank_zero():

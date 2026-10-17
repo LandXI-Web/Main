@@ -1,0 +1,114 @@
+first s-dash dom 430 done 2323 ld 768 srv 413.6 698  top 834 /projects?scope=mine   
+first s-projects dom 1180 done 3687 ld 1305 srv 1105.3 4509  top 1639 /projects?scope=mine   
+first s-project dom 472 done 2103 ld 0 srv 129.9 247  top 620 /projects/people   
+first s-ingest dom 1610 done 4105 ld 0 srv 194.8 1076  top 1125 /catalog/layers   
+first s-label dom 1563 done 5506 ld 0 srv 1193.3 10931  top 1552 /training/samples/smp_94f1ab120e/preview/5?size=384   
+first s-train dom 451 done 1758 ld 0 srv 128.6 196  top 509 /projects/prj_3fdba452d5   
+first s-infer dom 1580 done 3575 ld 0 srv 120 661  top 477 /release/projects/prj_3fdba452d5/infer   
+first s-review dom 1111 done 4696 ld 2601 srv 281.2 666  top 787 /reviews/notify   
+first s-publish dom 433 done 1663 ld 333 srv 166.8 340  top 542 /release/projects/prj_3fdba452d5/apply   
+first s-analyze dom 1132 done 2752 ld 651 srv 554.9 1969  top 1000 /cards/deck   
+first s-cards dom 1459 done 2662 ld 0 srv 40.2 97  top 424 /me   
+first s-mapsvc dom 890 done 4959 ld 3076 srv 331 755  top 766 /me/analyses   
+first s-ximap dom 1874 done 34020 ld 1837 srv 554.6 682  top 1383 /survey/stats?by=emd   
+first s-inbox dom 1152 done 34517 ld 0 srv 30008.6 30020  top 30671 /me BAD 401 /me  
+first s-help dom 1344 done 4384 ld 0 srv 1.4 3  top 630 /public/stats?set=river-occupy&by=sigungu&geom=1   
+again s-dash dom 918 done 2924 ld 0 srv 1.9 3  top 452 /public/stats?set=river-occupy&by=sigungu&geom=1   
+again s-projects dom 447 done 3143 ld 0 srv 1.7 4  top 448 /public/stats?set=river-occupy&by=sigungu&geom=1   
+again s-project dom 443 done 3891 ld 0 srv 1.3 3  top 835 /ops/public/findings?sgg=52190   
+again s-ingest dom 457 done null ld 0 srv 1.5 4  top 407 /public/stats?set=river-occupy&by=sigungu&geom=1  PEND /openapi.json 
+again s-label dom 454 done null ld 0 srv null 0  top 3996 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-train dom 449 done null ld 0 srv null 0  top 4006 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-infer dom 458 done null ld 0 srv null 0  top 3997 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-review dom 502 done null ld 0 srv null 0  top 4000 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-publish dom 464 done null ld 0 srv null 0  top 3998 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-analyze dom 500 done null ld 0 srv null 0  top 3996 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-cards dom 1257 done null ld 0 srv null 0  top 3997 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-mapsvc dom 468 done null ld 0 srv null 0  top 3999 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-ximap dom 475 done null ld 0 srv null 0  top 3999 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-inbox dom 945 done null ld 0 srv null 0  top 3997 /ops/public/findings?sgg=52190 BAD fail /ops/public/findings?sgg=52190 PEND /openapi.json | /openapi.json 
+again s-help dom 401 done null ld 0 srv 12.8 15  top 675 /public/stats?set=river-occupy&by=sigungu&geom=1  PEND /openapi.json 
+first a-dash dom 399 done 1685 ld 0 srv 309.6 1971  top 837 /ops/gpus   
+first a-req dom 455 done 2307 ld 0 srv 314.2 1567  top 877 /requests/manage   
+first a-req-approve dom 398 done 1927 ld 0 srv 266.9 1761  top 668 /national/progress   
+first a-req-api dom 442 done 1843 ld 0 srv 204.2 1286  top 744 /ops/gpus   
+first a-infra dom 1634 done 4918 ld 2085 srv 2103 8408  top 2444 /improve/items   
+first a-tenants dom 386 done 2238 ld 541 srv 174.8 849  top 1022 /deploys?geom=bbox   
+first a-tenant1 dom 861 done 5615 ld 1506 srv 1411.4 6568  top 1733 /tenants/namwon/page   
+first a-dep-req dom 395 done 4300 ld 551 srv 729 3558  top 1393 /ops/queues   
+first a-dep-share dom 402 done 2244 ld 810 srv 172.4 903  top 1096 /deploys?geom=bbox   
+first a-dep-usage dom 413 done 2407 ld 1105 srv 172.3 967  top 984 /deploys?geom=bbox   
+first a-dep-cat dom 361 done 1832 ld 708 srv 211.6 1086  top 1019 /deploys?geom=bbox   
+first a-dep-api dom 393 done 2236 ld 990 srv 261.4 1095  top 994 /deploys?geom=bbox   
+first a-dep-rt dom 404 done 2022 ld 968 srv 245.4 1281  top 969 /deploys?geom=bbox   
+first a-dep-tpl dom 375 done 5467 ld 708 srv 2169 6685  top 2535 /ops/gpus   
+first a-dep-imp dom 897 done 2913 ld 778 srv 213.8 905  top 1026 /deploys?geom=bbox   
+first a-shared-img dom 401 done 4737 ld 1776 srv 1202.8 6453  top 1525 /ops/queues   
+first a-shared-detail dom 396 done 6352 ld 661 srv 3144.4 8324  top 3508 /ops/storage   
+first a-shared-train dom 408 done 4211 ld 1194 srv 924.3 9098  top 1281 /ops/queues   
+first a-shared-admin dom 401 done 5349 ld 1834 srv 1944.5 8495  top 2302 /ops/storage   
+first a-accounts dom 1510 done 2712 ld 0 srv 29 116  top 396 /reviews/notify   
+again a-dash dom 462 done 1745 ld 0 srv 196 1198  top 712 /me   
+again a-req dom 358 done 1764 ld 0 srv 208.9 1565  top 539 /deploys?geom=bbox   
+again a-req-approve dom 375 done 1984 ld 0 srv 195.5 1193  top 548 /openapi.json   
+again a-req-api dom 410 done 1825 ld 0 srv 169.9 1003  top 500 /national/progress   
+again a-infra dom 365 done 2295 ld 792 srv 835.8 6109  top 1515 /deploys?geom=bbox   
+again a-tenants dom 367 done 2049 ld 440 srv 185.2 889  top 1075 /deploys?geom=bbox   
+again a-tenant1 dom 395 done 1747 ld 690 srv 172.1 1018  top 971 /deploys?geom=bbox   
+again a-dep-req dom 449 done 4091 ld 0 srv 711.3 4073  top 1297 /jobs?limit=500&geom=0   
+again a-dep-share dom 379 done 2083 ld 428 srv 180.8 951  top 1103 /deploys?geom=bbox   
+again a-dep-usage dom 412 done 2097 ld 738 srv 152.4 847  top 970 /deploys?geom=bbox   
+again a-dep-cat dom 429 done 5495 ld 0 srv 2247.6 6318  top 2589 /ops/gpus   
+again a-dep-api dom 437 done 1903 ld 0 srv 162.5 897  top 1029 /deploys?geom=bbox   
+again a-dep-rt dom 415 done 1787 ld 0 srv 158.5 953  top 949 /deploys?geom=bbox   
+again a-dep-tpl dom 436 done 2142 ld 778 srv 164.2 797  top 1207 /deploys?geom=bbox   
+again a-dep-imp dom 373 done 7235 ld 729 srv 4100.7 8647  top 4422 /ops/storage   
+again a-shared-img dom 451 done 5246 ld 1788 srv 1352.2 5903  top 1898 /jobs?limit=500&geom=0   
+again a-shared-detail dom 437 done 7720 ld 441 srv 4002.9 18138  top 4354 /ops/storage   
+again a-shared-train dom 438 done 7999 ld 1206 srv 4526.4 18969  top 5024 /ops/gpus   
+again a-shared-admin dom 459 done 6352 ld 1946 srv 847.8 8088  top 1499 /ops/queues   
+again a-accounts dom 393 done 1696 ld 0 srv 203.9 304  top 513 /inquiries   
+first g-list dom 420 done 1946 ld 0 srv 109.7 376  top 622 /auth/session   
+first g-dash dom 401 done 3451 ld 0 srv 750 2609  top 1322 /cards/deck   
+first g-hist dom 437 done 3043 ld 0 srv 146 498  top 919 /history?card=card-farm   
+first g-stats dom 456 done 5271 ld 0 srv 620.3 1875  top 1197 /history/stats?card=card-farm&period=all   
+first g-req dom 2018 done 3679 ld 0 srv 141.7 792  top 840 /requests   
+first g-shoot dom 514 done 3914 ld 0 srv 400.1 1178  top 1291 /regions/52190/emd?full=1   
+first g-sent dom 409 done 2064 ld 0 srv 151.3 487  top 774 /requests   
+first g-report dom 1265 done 4167 ld 0 srv 315.4 489  top 1689 /spaces/me/report/map.png?card=card-farm   
+first g-parcels dom 417 done 2813 ld 0 srv 1046.6 3369  top 1626 /brand/namwon   
+first g-fusion dom 1519 done 5005 ld 1623 srv 479.4 694  top 1258 /spaces/me/ledger/compare?card=card-farm&geom=1   
+first g-map dom 1418 done 5380 ld 1911 srv 9.1 9  top 2018 /ximap/boot?service=card-farm   
+first g-org dom 409 done 1273 ld 0 srv 71.8 186  top 462 /reviews/notify   
+first g-accounts dom 1114 done 2216 ld 0 srv 48.7 168  top 625 /me   
+again g-list dom 411 done 1818 ld 0 srv 169.5 487  top 541 /cards/deck   
+again g-dash dom 399 done 2915 ld 0 srv 162.4 710  top 923 /spaces/me/guides/card-farm   
+again g-hist dom 409 done 2365 ld 0 srv 126.5 424  top 645 /history?card=card-farm   
+again g-stats dom 882 done 4029 ld 0 srv 223.3 775  top 587 /history/stats?card=card-farm&period=all   
+again g-req dom 416 done 2299 ld 0 srv 69.6 423  top 1065 /requests   
+again g-shoot dom 404 done 2062 ld 0 srv 400.1 757  top 748 /requests   
+again g-sent dom 398 done 2251 ld 0 srv 127.8 419  top 970 /requests   
+again g-report dom 467 done 2137 ld 0 srv 353.6 1167  top 873 /spaces/me/report?card=card-farm   
+again g-parcels dom 407 done 2054 ld 0 srv 425.1 1064  top 824 /brand/namwon   
+again g-fusion dom 462 done 4502 ld 2207 srv 1331.9 1868  top 1788 /spaces/me/ledger/compare?card=card-farm&geom=1   
+again g-map dom 461 done 2885 ld 1641 srv 9.2 9  top 1173 /ximap/boot?service=card-farm   
+again g-org dom 438 done 1543 ld 0 srv 55.1 181  top 606 /auth/tenants   
+again g-accounts dom 438 done 1312 ld 0 srv 35.9 150  top 566 /openapi.json   
+first j-list dom 453 done 1976 ld 0 srv 329 1076  top 704 /cards/deck   
+first j-dash dom 409 done 2162 ld 0 srv 83.6 434  top 684 /reviews/notify   
+first j-hist dom 463 done 2746 ld 0 srv 95.1 350  top 767 /auth/tenants   
+first j-map dom 2499 done 3921 ld 1315 srv 11.5 20  top 1063 /ximap/boot?service=card-marine   
+first j-org dom 925 done 2015 ld 0 srv 58.5 195  top 620 /summary   
+again j-list dom 409 done 1839 ld 0 srv 89.7 332  top 667 /regions   
+again j-dash dom 401 done 2357 ld 0 srv 94.1 416  top 671 /regions   
+again j-hist dom 403 done 2670 ld 0 srv 90.8 337  top 654 /requests/services   
+again j-map dom 516 done 2034 ld 749 srv 8 15  top 1245 /ximap/boot?service=card-marine   
+again j-org dom 402 done 1501 ld 0 srv 60.3 203  top 646 /summary   
+first m-main dom 6760 done 9020 ld 0 srv 165.6 328  top 681 /public/stats?set=river-occupy&by=sigungu   
+first m-login dom 1334 done 1775 ld 0 srv null 0  top 373 /openapi.json   
+again m-main dom 413 done 1825 ld 0 srv 34.1 90  top 681 /registry/cards?public=1   
+again m-login dom 410 done 2653 ld 0 srv 8.8 14  top 1204 /public/stats?set=river-occupy&by=sigungu&geom=1   
+first m-govhome dom 1830 done 3633 ld 0 srv 12.3 24  top 397 /brand/namwon   
+again m-govhome dom 748 done 2056 ld 0 srv 11.8 21  top 562 /openapi.json   
+first x-global dom 547 done null ld 28426 srv 420 1591 SLOW top 3142 /results/job_01M4YHGA7EFC5A2JSAMEA54KV1/index?format=json   
+again x-global dom 497 done null ld 24631 srv 113.2 750 SLOW top 3385 /results/job_01M3H5W9N6KXQFRR7BRTTYNDJC/index?format=json   

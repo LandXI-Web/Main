@@ -87,11 +87,13 @@ addEventListener('hashchange', show);
 
 // 인프라 자료(작업 목록 500건 · 대기열 · 저장소)는 인프라 탭만 쓴다 — 다른 탭으로 열면 그 탭을 먼저 그리고 뒤에서 받는다
 // (작업 목록은 서버가 만드는 데 0.8초 남짓이라 같이 부르면 다른 요청이 모두 그만큼 밀린다 · 바퀴 14 재검수 · 속도)
+// GPU 표(/ops/gpus · 서버 1초 남짓)도 인프라 탭만 쓴다 — 다른 탭은 먼저 그리고 뒤에서 받는다 · 2.5초 조회 · 실시간 표본도 인프라 탭일 때만(바퀴 15 재검수 · 속도:
+// 배포 · 기관 · 공유 데이터 탭에서도 2초마다 GPU 표를 다시 받아 같은 게이트웨이의 다른 요청이 0.6초씩 밀렸다)
 const first = want() === 'infra';
-await Promise.all([loadGpus(), loadOrg(), first ? loadInfra() : null]);
+await Promise.all([first ? loadGpus() : null, loadOrg(), first ? loadInfra() : null]);
 boot.remove();
 show();
-if (!first) setTimeout(() => loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }), 1500);
+if (!first) setTimeout(() => Promise.all([loadGpus(), loadInfra()]).then(() => { if (cur === 'infra') { V.infra.paintGpus(); V.infra.paintRest(); } openStream(); }), 1500);
 Sh.fresh(new Date());
 if (deepDeploy) V.deploys.open(deepDeploy);
 const deepOrg = qs.get('tenant'); if (deepOrg && cur === 'tenants') V.tenants.open(deepOrg);
@@ -99,25 +101,31 @@ const deepOrg = qs.get('tenant'); if (deepOrg && cur === 'tenants') V.tenants.op
 /* ── 갱신 — 숫자만 바뀐다 ─────────────────────── */
 let live = false;
 async function tickGpu() {
-  if (live) return;
+  if (live || cur !== 'infra') return;
   if (await loadGpus()) { if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
 }
 setInterval(tickGpu, 2500);
 setInterval(async () => { if (cur !== 'infra' || document.hidden) return; await loadInfra(); if (cur === 'infra') V.infra.paintRest(); }, 15000);
-addEventListener('hashchange', () => { if (cur === 'infra') loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }); });   // 다른 탭에 있다가 인프라로 오면 새로
-setInterval(async () => { await loadOrg(); if (cur !== 'infra') paint(); }, 30000);
+addEventListener('hashchange', () => { if (cur === 'infra') { loadGpus().then((ok) => { if (ok && cur === 'infra') V.infra.paintGpus(); }); loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }); } });   // 다른 탭에 있다가 인프라로 오면 새로
+setInterval(async () => { await loadOrg(); if (cur !== 'infra') { paint(); Sh.fresh(new Date()); } }, 30000);
 
 /* 관제 스트림은 서버가 4173 을 허용한 뒤(S-9 = power_budget 이 응답에 있음)에만 연다 — 거절로 콘솔을 더럽히지 않게 */
+let streamOn = false;
+function openStream() {
+if (streamOn) return;
 if (S.gpus?.power_budget) {
+  streamOn = true;
   try {
     sse('/events/ops', {
       events: ['gpu.sample', 'deploy.changed', 'usage.delta'],
       on: async (ev, data) => {
-        if (ev === 'gpu.sample' && data?.gpus?.length) { live = true; await loadGpus(); if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
+        if (ev === 'gpu.sample' && data?.gpus?.length) { live = true; if (cur !== 'infra') return; await loadGpus(); if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
         else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') { V.deploys.paint(); if (!panes.deploys.contains(document.activeElement) || document.activeElement === document.body) REL.paint(); } }
         else if (ev === 'usage.delta') { await loadOrg(); if (cur === 'tenants') V.tenants.paint(); }
       },
       onState: (s) => { devlog('실시간 스트림', s); if (s !== 'open') live = false; },
     });
   } catch { live = false; }
-} else devlog('실시간 스트림', '서버 S-9 전 · 2.5초 조회');
+} else if (S.gpus) devlog('실시간 스트림', '서버 S-9 전 · 2.5초 조회');
+}
+openStream();

@@ -167,7 +167,8 @@ _ms_cache: tuple[float, str, dict] | None = None
 
 # 기관마다 이번 달 분석한 땅의 합집합 넓이(㎢) — 작업 범위(aoi) ∩ 영상 footprint, 범위 없는 작업은 적힌 amount
 AREA_UNION_SQL = (
-    "WITH ev AS (SELECT tenant_id AS t, job_id, sum(amount) AS amt FROM usage_events WHERE at >= $1 AND dim = 'area_km2' GROUP BY 1, 2), "
+    "WITH ev AS (SELECT tenant_id AS t, job_id, sum(amount) AS amt FROM usage_events WHERE at >= $1 AND dim = 'area_km2' "
+    "AND tenant_id = ANY($2::text[]) GROUP BY 1, 2), "
     "g AS (SELECT ev.t, ev.amt, CASE WHEN j.aoi IS NULL THEN NULL WHEN i.footprint IS NULL THEN ST_MakeValid(j.aoi) "
     "ELSE ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) END AS geom "
     "FROM ev LEFT JOIN jobs j ON j.id = ev.job_id LEFT JOIN imagery i ON i.id = j.imagery_id) "
@@ -179,10 +180,22 @@ async def _month_sums() -> dict:
     """이번 달 usage_events 합(기관 × dim) — 기록된 기관 그대로 센다(10s 캐시).
     계량(workers.metering.meter)이 쓸 때 이미 '분석을 요청한 기관'(정리 작업 10-01 · 장부 고장 ②)으로 적는다. 읽을 때 다시 귀속하지 않는다 —
     지난 기록은 그때 적힌 대로 두고(고치지 않음), 새 규칙으로 다시 세어 보는 것은 server/ops/recount_usage.py(보기만)."""
-    global _ms_cache
+    global _ms_cache, _ms_lock
     ms = _month_start()
     if _ms_cache and time.time() - _ms_cache[0] < 10 and _ms_cache[1] == ms.isoformat():
         return _ms_cache[2]
+    _ms_lock = _ms_lock or asyncio.Lock()
+    async with _ms_lock:                    # 여러 기관을 함께 물어도(관리자 기관 표) 한 번만 센다
+        if _ms_cache and time.time() - _ms_cache[0] < 10 and _ms_cache[1] == ms.isoformat():
+            return _ms_cache[2]
+        return await _month_sums_now(ms)
+
+
+_ms_lock: asyncio.Lock | None = None
+
+
+async def _month_sums_now(ms: dt.datetime) -> dict:
+    global _ms_cache
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
             "SELECT u.tenant_id AS t, u.dim, sum(u.amount) AS v FROM usage_events u "
@@ -190,13 +203,70 @@ async def _month_sums() -> dict:
     out = {(r["t"], r["dim"]): float(r["v"] or 0) for r in rows}
     # 분석한 면적(나중 1 ⓑ) = 겹치지 않는 실제 면적 — 같은 곳을 여러 번 분석해도 한 번. 작업 범위 ∩ 영상 자리(ST_Union) ·
     # 범위 기록이 없는 작업만 적힌 값을 더한다(지어내지 않는다). 기관 귀속은 적힌 기관 그대로.
-    async with db(realm="lx") as conn:
-        uni = await conn.fetch(AREA_UNION_SQL, ms)
+    uni = await _area_union(ms)
     for k in [k for k in out if k[1] == "area_km2"]:
         out[k] = 0.0
-    for r in uni:
-        out[(r["t"], "area_km2")] = float(r["v"] or 0)
+    for t, v in uni.items():
+        out[(t, "area_km2")] = v
     _ms_cache = (time.time(), ms.isoformat(), out)
+    return out
+
+
+# 합집합 넓이는 무겁다(10-17 재검수: 전국 작업기의 이번 달 8,761 작업(LX) → 한 번에 약 70초 · 10초마다 기관 수만큼 겹쳐 돌아 60초 제한에 걸려
+# /ops/tenants · /release/usage 가 500). 작업이 적은 기관은 전처럼 바로 센다(10초 보관). 작업이 많은 기관(HEAVY_JOBS 넘음)만
+# 한 번에 하나씩 뒤에서 세고 끝난 값을 기억해 바로 준다(AREA_TTL 마다 새로) — 화면 · 한도 판정 모두 같은 값(한 출처).
+# 기억은 Redis 에도 둬 게이트웨이를 다시 켜도 지난 값부터.
+HEAVY_JOBS = 400
+AREA_TTL = 300
+_area: dict = {}                  # (달 ISO, 기관) → (계산 시각, ㎢)
+_area_task: dict = {}             # (달 ISO, 기관) → 계산 중인 일
+
+
+async def _area_compute(ms: dt.datetime, t: str) -> float:
+    async with db(realm="lx") as conn:
+        uni = await conn.fetch(AREA_UNION_SQL, ms, [t], timeout=600)
+    v = float(uni[0]["v"] or 0) if uni else 0.0
+    _area[(ms.isoformat(), t)] = (time.time(), v)
+    try:
+        import json as _json
+        r = await redis()
+        await r.set(f"quota:area_union:{ms.isoformat()}:{t}", _json.dumps({"at": time.time(), "v": v}), ex=40 * 86400)
+    except Exception:  # noqa: BLE001 — 기억 못 해도 값은 준다
+        pass
+    return v
+
+
+async def _area_heavy(ms: dt.datetime, t: str) -> float:
+    key = (ms.isoformat(), t)
+    have = _area.get(key)
+    if have is None:
+        try:
+            import json as _json
+            r = await redis()
+            raw = await r.get(f"quota:area_union:{key[0]}:{t}")
+            if raw:
+                j = _json.loads(raw)
+                have = _area[key] = (float(j["at"]), float(j["v"]))
+        except Exception:  # noqa: BLE001
+            have = None
+    if have is not None and time.time() - have[0] < AREA_TTL:
+        return have[1]
+    tk = _area_task.get(key)
+    if tk is None or tk.done():
+        tk = _area_task[key] = asyncio.ensure_future(_area_compute(ms, t))
+    if have is not None:          # 지난 값을 바로 주고 뒤에서 새로(기다리지 않음)
+        return have[1]
+    return await asyncio.shield(tk)              # 그 달 처음 한 번(기억 없음)만 기다린다
+
+
+async def _area_union(ms: dt.datetime) -> dict:
+    async with db(realm="lx") as conn:
+        n = {r["t"]: int(r["n"]) for r in await conn.fetch(
+            "SELECT tenant_id AS t, count(DISTINCT job_id) AS n FROM usage_events WHERE at >= $1 AND dim = 'area_km2' GROUP BY 1", ms)}
+        light = [t for t, k in n.items() if k <= HEAVY_JOBS]
+        out = {r["t"]: float(r["v"] or 0) for r in (await conn.fetch(AREA_UNION_SQL, ms, light) if light else [])}
+    for t in [t for t, k in n.items() if k > HEAVY_JOBS]:
+        out[t] = await _area_heavy(ms, t)
     return out
 
 

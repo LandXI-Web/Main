@@ -9,6 +9,20 @@ const ENV = path.resolve('server/.env');
 const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, 'utf8')) || [])[1]?.trim() : null;
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
 
+/* 그려진 객체 위 한 점을 눌러 고치기 칸을 연다 — 꼭짓점 평균(오목한 면은 밖에 떨어짐)이 아니라 화면에서 실제로 객체가 있는 점(가운데에 가장 가까운 점) ·
+   겹친 객체면 고르기 목록(원칙 265)의 첫 줄을 고른다(바퀴 15 재검수) */
+async function clickObject(page, src) {
+  const pt = await page.evaluate((s) => { const m = window.__xc.map, ls = eval(s)(); const c = m.getCanvas(), W = c.clientWidth, H = c.clientHeight; let best = null;
+    for (let i = 1; i < 32; i++) for (let j = 1; j < 20; j++) { const x = (W * i) / 32, y = (H * j) / 20; if (m.queryRenderedFeatures([x, y], { layers: ls }).length) { const d = Math.hypot(x - W / 2, y - H / 2); if (!best || d < best.d) best = { x, y, d }; } }
+    return best; }, src);
+  if (!pt) return false;
+  const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
+  await page.mouse.click(box.x + pt.x, box.y + pt.y);
+  await page.locator('.xe-pick-r, .xe-card .xe-act').first().waitFor({ timeout: 15000 }).catch(() => {});
+  if (await page.locator('.xe-pick-r').count()) await page.locator('.xe-pick-r').first().click();
+  return true;
+}
+
 test.describe('XI맵 바퀴 5', () => {
   test.beforeEach(async ({ request }) => {
     test.skip(!PW, 'server/.env DEV_PASSWORD 없음');
@@ -49,7 +63,7 @@ test.describe('XI맵 바퀴 5', () => {
     const centers = await page.evaluate(() => window.__xc.board.centers || []);
     let pt = null;
     for (const c of centers.slice(0, 6)) {
-      await page.evaluate((cc) => window.__xc.map.jumpTo({ center: cc, zoom: 12.5 }), c);
+      await page.evaluate((cc) => { window.__xc.map.jumpTo({ center: cc, zoom: 12.5 }); }, c);
       for (let i = 0; i < 8 && !pt; i++) {
       await page.waitForTimeout(800);
       pt = await page.evaluate(() => { const m = window.__xc.map; const ls = (m.getStyle().layers || []).map((l) => l.id).filter((id) => /^xb-r-.*-fill$/.test(id) && m.getLayoutProperty(id, 'visibility') !== 'none');
@@ -60,8 +74,7 @@ test.describe('XI맵 바퀴 5', () => {
     }
     test.skip(!pt, '화면에 그려진 객체 없음');
     await page.waitForTimeout(2500);
-    const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await clickObject(page, `(() => { const m = window.__xc.map; return (m.getStyle().layers || []).map((l) => l.id).filter((id) => /^xb-r-.*-fill$/.test(id) && m.getLayoutProperty(id, 'visibility') !== 'none'); })`);
     await expect(page.locator('.xe-card .xe-act')).toBeVisible({ timeout: 15000 });
     for (const t of ['삭제', '클래스 바꾸기', '수정', '메모']) await expect(page.locator('.xe-act button', { hasText: new RegExp(`^${t}$`) })).toHaveCount(1);   // 10-15 원칙 252 — 동작 넷
     const before = await page.locator('.xe-h h3').innerText();

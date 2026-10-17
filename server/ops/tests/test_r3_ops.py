@@ -127,7 +127,9 @@ def test_ko_answer_regression():
     pb = {"max_hot": 1, "hot_now": 0, "ok": True, "hot": [], "per": [], "at": C.AT}
     out = run(T.ops_gpus({}, gpus_ctx(pb, "ko", IDLE)))
     assert out.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(최대 {{hot_max}})로 고부하인 GPU 없음 · 전력 예산 안입니다.")
-    assert "GPU 0은 부하 {{g0_load}}, 지금 전력 {{g0_w}}" in out.answer
+    # 확인 16차 규칙 ⑥(구현 4차) — 답은 두 문장(판정 · GPU 마다 하는 일), 부하 · 전력 숫자는 아래 표(같은 봉투)
+    assert "GPU 0 대기 중 · GPU 1 언어 모델 사용 중입니다(아래 표)." in out.answer
+    assert {"g0_load", "g0_w"} <= set(envs(out))
     for bad in ("A6000", "RTX", "NVIDIA", "vLLM", "관제", "AG-"):
         assert bad not in out.answer
 
@@ -257,7 +259,7 @@ def test_answer_yielded_gpu_ko_en_matches_screen():
     assert "Both GPUs under high load at once in the last 2 hours: {{overlap}}." in en.answer
     ko = run(T.ops_gpus({}, gpus_ctx(pb, "ko", busy)))
     assert ko.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(최대 {{hot_max}})로 GPU 1이 고부하 · 전력 예산 안입니다.")
-    assert "전력 규칙으로 잠시 멈춘 상태" in ko.answer and envs(ko)["overlap"]["value"] == 0
+    assert "GPU 0 분석 작업이 전력 규칙으로 잠시 멈춤" in ko.answer and envs(ko)["overlap"]["value"] == 0
     assert ko.data["GPU"]["GPU 0"]["고부하"] == "아니오"
 
 
@@ -362,7 +364,7 @@ def test_power_hot_gpu_says_recent_average_not_idle():
     assert "GPU 1: load {{g1_load}}, power now {{g1_w}}, in use, high load (recent average {{g1_avg}})." in en.answer
     assert "idle, high load" not in en.answer
     ko = run(T.ops_gpus({}, gpus_ctx(pb, "ko", quiet)))
-    assert "GPU 1은 부하 {{g1_load}}, 지금 전력 {{g1_w}}" in ko.answer and "사용 중, 최근 평균 전력 {{g1_avg}}로 고부하입니다." in ko.answer
+    assert "GPU 1 사용 중, 최근 평균 전력 {{g1_avg}}로 고부하입니다(아래 표)." in ko.answer and envs(ko)["g1_w"]["value"] == 86
 
 
 def test_infra_row_shows_judged_average_and_time():
@@ -475,6 +477,6 @@ def test_lease_hot_gpu_is_analysis_not_language_model():
     en = run(T.ops_gpus({}, gpus_ctx(pb, "en", g)))
     assert "GPU 0: load {{g0_load}}, power now {{g0_w}}, running an analysis job." in en.answer and "high load (a job" not in en.answer
     ko = run(T.ops_gpus({}, gpus_ctx(pb, "ko", g)))
-    assert "로 분석 작업 중입니다." in ko.answer and "고부하입니다" not in ko.answer.split("GPU 0은")[1].split("GPU 1은")[0]
+    assert "GPU 0 분석 작업 중 · " in ko.answer and "고부하" not in ko.answer.split("GPU 0 ")[1].split("GPU 1")[0]
     js = (SERVER.parent / "landxi" / "v3" / "ops-infra" / "js" / "data.js").read_text(encoding="utf-8")
     assert "why === 'held'" in js and "고부하 · 작업 중" in js

@@ -387,10 +387,23 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
 _PNG: dict[tuple, tuple[float, bytes]] = {}
 
 
+def _png_file(key):
+    """그린 그림의 디스크 사본 — 게이트웨이를 다시 켜도 첫 사람이 다시 그리기를 기다리지 않게(바퀴 15 재검수: 다시 켠 뒤 보고서 탭 처음 7.4초)."""
+    import hashlib
+    from . import config
+    return config.DATA_ROOT / "cache" / "report-map" / (hashlib.sha1(repr(key).encode()).hexdigest()[:20] + ".png")
+
+
 async def _png(p: Principal, card: str, emd: str | None, d: dict | None = None) -> bytes | None:
     svc, g, rows, body, sets, codes, only = await _svc(p, card)
     key = (p.tenant_id, card, emd or "", g["edition"], tuple(only or []))
     hit = _PNG.get(key)
+    if hit is None:
+        try:
+            f = _png_file(key)
+            hit = _PNG[key] = (f.stat().st_mtime, f.read_bytes())
+        except OSError:
+            hit = None
     if hit and time.time() - hit[0] < 600:
         return hit[1]
     if hit and not d:            # 10분 지난 그림 — 화면에는 바로 주고 뒤에서 새로 그린다(보고서 탭 처음 열 때 3~5초 기다리던 것 · 바퀴 14 재검수). 한글 문서(d 있음)는 늘 새로
@@ -422,6 +435,14 @@ async def _png_make(p: Principal, card: str, emd: str | None, d: dict | None, ke
     counts = {e["emd"]: e["n"] for e in d["emd_rows"] if e["emd"] != "읍면동 밖"}
     png = await asyncio.to_thread(_map_png, "", d["sgg"], geo, counts)
     _PNG[key] = (time.time(), png)
+    try:
+        f = _png_file(key)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        tmp = f.with_suffix(".tmp")
+        tmp.write_bytes(png)
+        tmp.replace(f)
+    except OSError:
+        pass
     while len(_PNG) > 48:
         _PNG.pop(next(iter(_PNG)))
     return png

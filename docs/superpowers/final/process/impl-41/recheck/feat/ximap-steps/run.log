@@ -1,0 +1,14 @@
+{
+ "errors": 0,
+ "bad": 0,
+ "local": 0,
+ "shots": 32,
+ "fps": {
+  "q1-fill-1440": 48,
+  "q2-fill-1440": 12,
+  "q3-fill-1440": 51,
+  "p1-fill-1440": 31,
+  "now-hover-big": 61,
+  "now-hover-row": 61
+ }
+}

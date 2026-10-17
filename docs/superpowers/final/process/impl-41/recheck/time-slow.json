@@ -1,0 +1,343 @@
+[
+ {
+  "id": "s-dash",
+  "name": "LX 직원 대시보드",
+  "prev": 1659,
+  "now": 2038,
+  "again": 1994,
+  "srv": 554.5,
+  "worse": false
+ },
+ {
+  "id": "s-projects",
+  "name": "프로젝트 목록",
+  "prev": 2299,
+  "now": 2630,
+  "again": 1727,
+  "srv": 609.7,
+  "worse": false
+ },
+ {
+  "id": "s-ingest",
+  "name": "데이터 올리기",
+  "prev": 3046,
+  "now": 2702,
+  "again": 2205,
+  "srv": 202.6,
+  "worse": false
+ },
+ {
+  "id": "s-label",
+  "name": "학습데이터 구축",
+  "prev": 3822,
+  "now": 3752,
+  "again": 2768,
+  "srv": 306.1,
+  "worse": false
+ },
+ {
+  "id": "s-train",
+  "name": "학습",
+  "prev": 2180,
+  "now": 2135,
+  "again": 1801,
+  "srv": 114.8,
+  "worse": false
+ },
+ {
+  "id": "s-infer",
+  "name": "추론",
+  "prev": 2734,
+  "now": 2329,
+  "again": 1100,
+  "srv": 114.3,
+  "worse": false
+ },
+ {
+  "id": "s-review",
+  "name": "결과 확인(지도)",
+  "prev": 4095,
+  "now": 4179,
+  "again": 2745,
+  "srv": 277.1,
+  "worse": false
+ },
+ {
+  "id": "s-cards",
+  "name": "서비스 카드",
+  "prev": 2108,
+  "now": 2021,
+  "again": 1374,
+  "srv": 37.3,
+  "worse": false
+ },
+ {
+  "id": "s-mapsvc",
+  "name": "지도 서비스",
+  "prev": 3593,
+  "now": 3416,
+  "again": 2817,
+  "srv": 115.9,
+  "worse": false
+ },
+ {
+  "id": "s-ximap",
+  "name": "XI맵(전국 · 지도 다 그려짐까지)",
+  "prev": 4714,
+  "now": 3554,
+  "again": 3249,
+  "srv": 387.6,
+  "worse": false
+ },
+ {
+  "id": "a-dash",
+  "name": "LX 관리자 대시보드",
+  "prev": 1396,
+  "now": 2132,
+  "again": 1631,
+  "srv": 140.9,
+  "worse": false
+ },
+ {
+  "id": "a-req",
+  "name": "요청 관리 — 분석 요청",
+  "prev": 1719,
+  "now": 2129,
+  "again": 1830,
+  "srv": 212.4,
+  "worse": false
+ },
+ {
+  "id": "a-infra",
+  "name": "인프라",
+  "prev": 3735,
+  "now": 3926,
+  "again": 2522,
+  "srv": 1455,
+  "worse": false
+ },
+ {
+  "id": "a-tenants",
+  "name": "기관 목록",
+  "prev": 3666,
+  "now": 2149,
+  "again": 2203,
+  "srv": 188.5,
+  "worse": false
+ },
+ {
+  "id": "a-tenant1",
+  "name": "기관 한 곳(남원)",
+  "prev": 4451,
+  "now": 2017,
+  "again": 2326,
+  "srv": 171.4,
+  "worse": false
+ },
+ {
+  "id": "a-dep-req",
+  "name": "배포 신청",
+  "prev": 1849,
+  "now": 2322,
+  "again": 2390,
+  "srv": 151.8,
+  "worse": false
+ },
+ {
+  "id": "a-dep-share",
+  "name": "기관 공유",
+  "prev": 4136,
+  "now": 2247,
+  "again": 1921,
+  "srv": 156.4,
+  "worse": false
+ },
+ {
+  "id": "a-dep-usage",
+  "name": "사용 현황",
+  "prev": 5284,
+  "now": 2476,
+  "again": 2668,
+  "srv": 163.9,
+  "worse": false
+ },
+ {
+  "id": "a-dep-api",
+  "name": "API",
+  "prev": 3364,
+  "now": 2171,
+  "again": 2238,
+  "srv": 164.5,
+  "worse": false
+ },
+ {
+  "id": "a-dep-rt",
+  "name": "XI 재학습",
+  "prev": 4892,
+  "now": 2172,
+  "again": 2192,
+  "srv": 154.7,
+  "worse": false
+ },
+ {
+  "id": "a-dep-tpl",
+  "name": "학습 서식",
+  "prev": 1732,
+  "now": 2045,
+  "again": 6091,
+  "srv": 169.7,
+  "worse": false
+ },
+ {
+  "id": "a-dep-imp",
+  "name": "개선 후보",
+  "prev": 2619,
+  "now": 2075,
+  "again": 2844,
+  "srv": 158,
+  "worse": false
+ },
+ {
+  "id": "a-shared-img",
+  "name": "공유 데이터 — 영상",
+  "prev": 5248,
+  "now": 4718,
+  "again": 4386,
+  "srv": 804.1,
+  "worse": false
+ },
+ {
+  "id": "a-shared-detail",
+  "name": "공유 데이터 — 영상 상세 판",
+  "prev": 5500,
+  "now": 4479,
+  "again": 5514,
+  "srv": 734.7,
+  "worse": false
+ },
+ {
+  "id": "a-shared-train",
+  "name": "공유 데이터 — 학습 데이터",
+  "prev": 4036,
+  "now": 6390,
+  "again": 4509,
+  "srv": 2044.6,
+  "worse": true
+ },
+ {
+  "id": "a-shared-admin",
+  "name": "공유 데이터 — 행정 자료",
+  "prev": 4843,
+  "now": 4682,
+  "again": 6142,
+  "srv": 766.6,
+  "worse": false
+ },
+ {
+  "id": "a-accounts",
+  "name": "계정(관리자)",
+  "prev": 1979,
+  "now": 2288,
+  "again": 1616,
+  "srv": 27.9,
+  "worse": false
+ },
+ {
+  "id": "g-stats",
+  "name": "남원 · 통계·보고서",
+  "prev": 3262,
+  "now": 3384,
+  "again": 3138,
+  "srv": 334.7,
+  "worse": false
+ },
+ {
+  "id": "g-req",
+  "name": "남원 · 요청하기 — 분석 요청",
+  "prev": 3042,
+  "now": 3254,
+  "again": 1760,
+  "srv": 79.2,
+  "worse": false
+ },
+ {
+  "id": "g-shoot",
+  "name": "남원 · 요청하기 — 촬영 요청",
+  "prev": 2472,
+  "now": 2599,
+  "again": 1827,
+  "srv": 85.3,
+  "worse": false
+ },
+ {
+  "id": "g-report",
+  "name": "남원 · 보고서",
+  "prev": 3043,
+  "now": 2981,
+  "again": 1598,
+  "srv": 316.3,
+  "worse": false
+ },
+ {
+  "id": "g-fusion",
+  "name": "남원 · 행정정보와 비교",
+  "prev": 3690,
+  "now": 3681,
+  "again": 2854,
+  "srv": 436.1,
+  "worse": false
+ },
+ {
+  "id": "g-map",
+  "name": "남원 · 지도(XI맵 · 다 그려짐까지)",
+  "prev": 7699,
+  "now": 3733,
+  "again": 2892,
+  "srv": 7.6,
+  "worse": false
+ },
+ {
+  "id": "j-map",
+  "name": "전남광주 · 지도(XI맵 · 다 그려짐까지)",
+  "now": 2717,
+  "again": 2125,
+  "srv": 12.2,
+  "worse": null
+ },
+ {
+  "id": "m-main",
+  "name": "메인",
+  "prev": 5041,
+  "now": 7424,
+  "again": 1761,
+  "srv": 230.4,
+  "worse": true
+ },
+ {
+  "id": "m-login",
+  "name": "로그인",
+  "prev": 3083,
+  "now": 4168,
+  "again": 2476,
+  "srv": 11.1,
+  "worse": true
+ },
+ {
+  "id": "m-govhome",
+  "name": "기관 메인",
+  "prev": 2416,
+  "now": 3212,
+  "again": 1508,
+  "srv": 21.1,
+  "worse": false
+ },
+ {
+  "id": "x-global",
+  "name": "해외 첫 화면(지역 착지 · 큰 숫자까지)",
+  "prev": 10032,
+  "now": 11591,
+  "again": 7026,
+  "srv": 92.7,
+  "worse": true
+ }
+]

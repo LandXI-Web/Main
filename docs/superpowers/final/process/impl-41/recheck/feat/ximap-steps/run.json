@@ -1,0 +1,1863 @@
+{
+ "at": "2026-10-17 13:16:07",
+ "app": "https://app.land-xi.dev",
+ "shots": {
+  "home-nowC-1440-1316.png": "2026-10-17 13:16:20",
+  "q1-s1-maponly-1440-1316.png": "2026-10-17 13:16:31",
+  "q1-s2-panel-1440-1316.png": "2026-10-17 13:16:33",
+  "q1-s3-dash-1440-1316.png": "2026-10-17 13:16:36",
+  "q1-s2-back-1440-1316.png": "2026-10-17 13:16:37",
+  "q1-s1-back-1440-1316.png": "2026-10-17 13:16:38",
+  "q1-s2-from-answer-1440-1316.png": "2026-10-17 13:16:42",
+  "q2-s1-maponly-1440-1316.png": "2026-10-17 13:16:52",
+  "q2-s2-panel-1440-1316.png": "2026-10-17 13:16:53",
+  "q2-s3-dash-1440-1316.png": "2026-10-17 13:16:56",
+  "q3-s1-maponly-1440-1317.png": "2026-10-17 13:17:11",
+  "q3-s2-panel-1440-1317.png": "2026-10-17 13:17:13",
+  "q3-s3-dash-1440-1317.png": "2026-10-17 13:17:16",
+  "pane-panel-before-1440-1318.png": "2026-10-17 13:18:00",
+  "pane-panel-after-1440-1318.png": "2026-10-17 13:18:02",
+  "pane-panel-folded-1440-1318.png": "2026-10-17 13:18:03",
+  "pane-dash-before-1440-1318.png": "2026-10-17 13:18:06",
+  "pane-dash-after-1440-1318.png": "2026-10-17 13:18:08",
+  "pane-dash-folded-1440-1318.png": "2026-10-17 13:18:09",
+  "q1-s2-panel-1920-1318.png": "2026-10-17 13:18:12",
+  "q1-s1-maponly-1920-1318.png": "2026-10-17 13:18:13",
+  "q1-s3-dash-1920-1318.png": "2026-10-17 13:18:16",
+  "now-hover-big-1440-1318.png": "2026-10-17 13:18:25",
+  "now-hover-row-1440-1318.png": "2026-10-17 13:18:28",
+  "obj-hover-pointer-1440-1318.png": "2026-10-17 13:18:38",
+  "obj-overlap-hover-1440-1318.png": "2026-10-17 13:18:39",
+  "obj-overlap-pick-1440-1318.png": "2026-10-17 13:18:40",
+  "obj-overlap-picked-1440-1318.png": "2026-10-17 13:18:41",
+  "obj-reclass-color-1440-1318.png": "2026-10-17 13:18:48",
+  "obj-reclass-undone-1440-1318.png": "2026-10-17 13:18:49",
+  "cls-panel-1440-1318.png": "2026-10-17 13:18:52",
+  "cls-off-map-1440-1318.png": "2026-10-17 13:18:54"
+ },
+ "errors": [],
+ "local": [],
+ "bad": [],
+ "steps": {
+  "q1": {
+   "q": "남원시 비닐하우스 현황 보여줘",
+   "at": "2026-10-17 13:16:31",
+   "t_ms": 10356,
+   "step1": {
+    "dash": {
+     "mode": "map",
+     "step": 1,
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "비닐하우스",
+       19855
+      ],
+      [
+       "결과가 있는 읍면동",
+       35
+      ],
+      [
+       "㎢당 가장 촘촘한 곳",
+       169.1
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "남원시 · 비닐하우스 19,855동 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 12.2
+   },
+   "step2": {
+    "dash": {
+     "mode": "map",
+     "step": 2,
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "비닐하우스",
+       19855
+      ],
+      [
+       "결과가 있는 읍면동",
+       35
+      ],
+      [
+       "㎢당 가장 촘촘한 곳",
+       169.1
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 12.2
+   },
+   "small2": [],
+   "step3": {
+    "dash": null,
+    "statStep": 3,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "true"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": true,
+    "mapW": 400,
+    "xdVar": "min(400px,30%)",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      true
+     ],
+     [
+      "pn-h pn-h--x pn-h--right",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 10.2
+   },
+   "back2": {
+    "dash": {
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     }
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 3,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 8.67
+   },
+   "back1": {
+    "dash": {
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     },
+     "step": 1
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "남원시 · 비닐하우스 19,855동 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 3,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 8.67
+   },
+   "sw3": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "false"
+    ],
+    [
+     "대시보드",
+     "true"
+    ]
+   ],
+   "sw2": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "true"
+    ],
+    [
+     "대시보드",
+     "false"
+    ]
+   ],
+   "nextBtns": [
+    "통계 보기",
+    "크게 보기"
+   ],
+   "nextClick": {
+    "ok": true,
+    "newTurn": 0
+   },
+   "closed": {
+    "dash": null,
+    "statStep": 0,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": true,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 8.67
+   }
+  },
+  "q2": {
+   "q": "남원시 현황 보여 줘",
+   "at": "2026-10-17 13:16:52",
+   "t_ms": 8664,
+   "step1": {
+    "dash": {
+     "mode": "map",
+     "step": 1,
+     "kind": "overview",
+     "title": "남원시 · AI 분석 결과",
+     "rule": [
+      "B1",
+      "H1",
+      "M1",
+      "R1"
+     ],
+     "panels": [
+      "bar",
+      "heat",
+      "rank",
+      "line"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 39
+     },
+     "main": {
+      "label": "AI 분석 결과",
+      "value": 272559,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "AI 분석 결과",
+       272559
+      ],
+      [
+       "토지피복",
+       132424
+      ],
+      [
+       "경작지(농지 전수)",
+       82852
+      ],
+      [
+       "건물(하천 · 계곡)",
+       34874
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "남원시 · AI 분석 결과 272,559개 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 10.53
+   },
+   "step2": {
+    "dash": {
+     "mode": "map",
+     "step": 2,
+     "kind": "overview",
+     "title": "남원시 · AI 분석 결과",
+     "rule": [
+      "B1",
+      "H1",
+      "M1",
+      "R1"
+     ],
+     "panels": [
+      "bar",
+      "heat",
+      "rank",
+      "line"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 39
+     },
+     "main": {
+      "label": "AI 분석 결과",
+      "value": 272559,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "AI 분석 결과",
+       272559
+      ],
+      [
+       "토지피복",
+       132424
+      ],
+      [
+       "경작지(농지 전수)",
+       82852
+      ],
+      [
+       "건물(하천 · 계곡)",
+       34874
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · AI 분석 결과272,559개통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 11.76
+   },
+   "small2": [],
+   "step3": {
+    "dash": null,
+    "statStep": 3,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "true"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · AI 분석 결과272,559개통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": true,
+    "mapW": 400,
+    "xdVar": "min(400px,30%)",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      true
+     ],
+     [
+      "pn-h pn-h--x pn-h--right",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 10.1
+   },
+   "back2": {
+    "dash": {
+     "mode": "map",
+     "step": 2,
+     "kind": "overview",
+     "title": "남원시 · AI 분석 결과",
+     "rule": [
+      "B1",
+      "H1",
+      "M1",
+      "R1"
+     ],
+     "panels": [
+      "bar",
+      "heat",
+      "rank",
+      "line"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 39
+     },
+     "main": {
+      "label": "AI 분석 결과",
+      "value": 272559,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "AI 분석 결과",
+       272559
+      ],
+      [
+       "토지피복",
+       132424
+      ],
+      [
+       "경작지(농지 전수)",
+       82852
+      ],
+      [
+       "건물(하천 · 계곡)",
+       34874
+      ]
+     ],
+     "fill": "done",
+     "tags": 2,
+     "tour": "skip"
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · AI 분석 결과272,559개통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 10.23
+   },
+   "back1": {
+    "dash": {
+     "mode": "map",
+     "step": 1,
+     "kind": "overview",
+     "title": "남원시 · AI 분석 결과",
+     "rule": [
+      "B1",
+      "H1",
+      "M1",
+      "R1"
+     ],
+     "panels": [
+      "bar",
+      "heat",
+      "rank",
+      "line"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 39
+     },
+     "main": {
+      "label": "AI 분석 결과",
+      "value": 272559,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "AI 분석 결과",
+       272559
+      ],
+      [
+       "토지피복",
+       132424
+      ],
+      [
+       "경작지(농지 전수)",
+       82852
+      ],
+      [
+       "건물(하천 · 계곡)",
+       34874
+      ]
+     ],
+     "fill": "done",
+     "tags": 2,
+     "tour": "skip"
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "남원시 · AI 분석 결과 272,559개 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 10.23
+   },
+   "sw3": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "false"
+    ],
+    [
+     "대시보드",
+     "true"
+    ]
+   ],
+   "sw2": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "true"
+    ],
+    [
+     "대시보드",
+     "false"
+    ]
+   ],
+   "closed": {
+    "dash": null,
+    "statStep": 0,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": true,
+    "mini": false,
+    "miniText": "남원시 · AI 분석 결과272,559개통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 8.66
+   }
+  },
+  "q3": {
+   "q": "전국 분석 얼마나 진행됐어?",
+   "at": "2026-10-17 13:17:11",
+   "t_ms": 7741,
+   "step1": {
+    "dash": {
+     "mode": "map",
+     "step": 1,
+     "kind": "time",
+     "title": "전국 · 전국 분석 흐름",
+     "rule": [
+      "L1",
+      "K1",
+      "B1",
+      "M6"
+     ],
+     "panels": [
+      "line",
+      "bar",
+      "rank"
+     ],
+     "map": {
+      "level": "sgg",
+      "scale": "seq",
+      "hue": "teal",
+      "meaning": "count",
+      "n": 43
+     },
+     "main": {
+      "label": "찾은 결과",
+      "value": 3232077,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "전국 분석 · 찾은 결과",
+       3232077
+      ],
+      [
+       "끝난 읍면동",
+       1647
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "전국 · 전국 분석 흐름 3,232,077개 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 7.46
+   },
+   "step2": {
+    "dash": {
+     "mode": "map",
+     "step": 2,
+     "kind": "time",
+     "title": "전국 · 전국 분석 흐름",
+     "rule": [
+      "L1",
+      "K1",
+      "B1",
+      "M6"
+     ],
+     "panels": [
+      "line",
+      "bar",
+      "rank"
+     ],
+     "map": {
+      "level": "sgg",
+      "scale": "seq",
+      "hue": "teal",
+      "meaning": "count",
+      "n": 43
+     },
+     "main": {
+      "label": "찾은 결과",
+      "value": 3232077,
+      "unit": "개"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "전국 분석 · 찾은 결과",
+       3232077
+      ],
+      [
+       "끝난 읍면동",
+       1647
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "전국 · 전국 분석 흐름3,232,077개통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 9.53
+   },
+   "small2": [],
+   "step3": {
+    "dash": null,
+    "statStep": 3,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "true"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "전국 · 전국 분석 흐름3,232,077개통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": true,
+    "mapW": 400,
+    "xdVar": "min(400px,30%)",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      true
+     ],
+     [
+      "pn-h pn-h--x pn-h--right",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 7.01
+   },
+   "back2": {
+    "dash": {
+     "kind": "time",
+     "title": "전국 · 전국 분석 흐름",
+     "rule": [
+      "L1",
+      "K1",
+      "B1",
+      "M6"
+     ],
+     "panels": [
+      "line",
+      "bar",
+      "rank"
+     ],
+     "map": {
+      "level": "sgg",
+      "scale": "seq",
+      "hue": "teal",
+      "meaning": "count",
+      "n": 43
+     },
+     "main": {
+      "label": "찾은 결과",
+      "value": 3232077,
+      "unit": "개"
+     }
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "전국 · 전국 분석 흐름3,232,077개통계 보기×",
+    "panelW": 362,
+    "panelCollapsed": false,
+    "xoVar": "",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 3,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 5.5
+   },
+   "back1": {
+    "dash": {
+     "kind": "time",
+     "title": "전국 · 전국 분석 흐름",
+     "rule": [
+      "L1",
+      "K1",
+      "B1",
+      "M6"
+     ],
+     "panels": [
+      "line",
+      "bar",
+      "rank"
+     ],
+     "map": {
+      "level": "sgg",
+      "scale": "seq",
+      "hue": "teal",
+      "meaning": "count",
+      "n": 43
+     },
+     "main": {
+      "label": "찾은 결과",
+      "value": 3232077,
+      "unit": "개"
+     },
+     "step": 1
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "전국 · 전국 분석 흐름 3,232,077개 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 3,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 5.5
+   },
+   "sw3": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "false"
+    ],
+    [
+     "대시보드",
+     "true"
+    ]
+   ],
+   "sw2": [
+    [
+     "지도만",
+     "false"
+    ],
+    [
+     "지도 위",
+     "true"
+    ],
+    [
+     "대시보드",
+     "false"
+    ]
+   ],
+   "closed": {
+    "dash": null,
+    "statStep": 0,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": true,
+    "mini": false,
+    "miniText": "전국 · 전국 분석 흐름3,232,077개통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      true
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 5.7
+   }
+  },
+  "p1": {
+   "q": "남원시 비닐하우스 현황 보여줘",
+   "at": "2026-10-17 13:17:59",
+   "t_ms": 6668,
+   "step1": {
+    "dash": {
+     "mode": "map",
+     "step": 1,
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "비닐하우스",
+       19855
+      ],
+      [
+       "결과가 있는 읍면동",
+       35
+      ],
+      [
+       "㎢당 가장 촘촘한 곳",
+       169.1
+      ]
+     ],
+     "fill": "done",
+     "tags": 5,
+     "tour": null
+    },
+    "statStep": 1,
+    "sw": [
+     [
+      "지도만",
+      "true"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": true,
+    "miniText": "남원시 · 비닐하우스 19,855동 통계 보기 ×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": false,
+    "mapW": 1360,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 11.22
+   }
+  },
+  "q1_1920": {
+   "step2": {
+    "dash": {
+     "mode": "map",
+     "step": 2,
+     "kind": "task",
+     "title": "남원시 · 비닐하우스",
+     "rule": [
+      "B1b",
+      "P1",
+      "A1",
+      "M3step"
+     ],
+     "panels": [
+      "bar",
+      "scatter",
+      "hist",
+      "donut",
+      "rank"
+     ],
+     "map": {
+      "level": "emd",
+      "scale": "step",
+      "hue": "orange",
+      "meaning": "density",
+      "n": 35
+     },
+     "main": {
+      "label": "비닐하우스",
+      "value": 19855,
+      "unit": "동"
+     },
+     "off": null,
+     "kpis": [
+      [
+       "비닐하우스",
+       19855
+      ],
+      [
+       "결과가 있는 읍면동",
+       35
+      ],
+      [
+       "㎢당 가장 촘촘한 곳",
+       169.1
+      ]
+     ],
+     "fill": "done",
+     "tags": 3,
+     "tour": "skip"
+    },
+    "statStep": 2,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "true"
+     ],
+     [
+      "대시보드",
+      "false"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 524,
+    "panelCollapsed": false,
+    "xoVar": "522px",
+    "dashOn": false,
+    "mapW": 1840,
+    "xdVar": "",
+    "tags": 5,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 9.92
+   },
+   "step3": {
+    "dash": null,
+    "statStep": 3,
+    "sw": [
+     [
+      "지도만",
+      "false"
+     ],
+     [
+      "지도 위",
+      "false"
+     ],
+     [
+      "대시보드",
+      "true"
+     ]
+    ],
+    "swHidden": false,
+    "mini": false,
+    "miniText": "남원시 · 비닐하우스19,855동통계 보기×",
+    "panelW": 0,
+    "panelCollapsed": true,
+    "xoVar": "0px",
+    "dashOn": true,
+    "mapW": 620,
+    "xdVar": "620px",
+    "tags": 0,
+    "handles": [
+     [
+      "pn-h pn-h--x pn-h--left is-folded",
+      true
+     ],
+     [
+      "pn-h pn-h--x pn-h--right",
+      false
+     ]
+    ],
+    "next": [
+     "통계 보기",
+     "크게 보기",
+     "통계 보기",
+     "크게 보기"
+    ],
+    "zoom": 9.69
+   }
+  }
+ },
+ "panes": {
+  "panel": {
+   "before": 362,
+   "after": 524,
+   "varBefore": "",
+   "varAfter": "522px",
+   "handle": true
+  },
+  "foldToStep1": 1,
+  "unfoldToStep2": 2,
+  "dash": {
+   "before": 400,
+   "after": 620,
+   "varBefore": "min(400px,30%)",
+   "varAfter": "620px",
+   "handle": true
+  },
+  "dashFolded": 0,
+  "remembered": 524
+ },
+ "now": {
+  "home": {
+   "showcase": {
+    "mode": "now",
+    "bubbles": [
+     "남원시 현황 보여 줘",
+     "보령시 곤포사일리지 어디가 많아?",
+     "강진군 현황 보여 줘"
+    ],
+    "hot": null,
+    "streaks": 0
+   },
+   "bubbles": [
+    "남원시 현황 보여 줘",
+    "보령시 곤포사일리지 어디가 많아?",
+    "강진군 현황 보여 줘"
+   ]
+  },
+  "hoverBig": {
+   "mode": "now",
+   "bubbles": [
+    "남원시 현황 보여 줘",
+    "보령시 곤포사일리지 어디가 많아?",
+    "강진군 현황 보여 줘"
+   ],
+   "hot": "*",
+   "streaks": 33,
+   "streakEls": 33
+  },
+  "hoverRow": {
+   "k": "토지피복",
+   "mode": "now",
+   "bubbles": [
+    "남원시 현황 보여 줘",
+    "남원시 토지피복 어디가 많아?",
+    "남원시 경작지 어디가 많아?",
+    "남원시 농지 이용 실태 어때?"
+   ],
+   "hot": "토지피복",
+   "streaks": 1,
+   "streakEls": 1
+  },
+  "afterLeave": {
+   "hot": null,
+   "streakEls": 0
+  }
+ },
+ "objects": {
+  "scan": {
+   "found": 5,
+   "one": [
+    {
+     "set": "results/lx/job_01M4TTFR203E1S7EN5JYVT0YN2",
+     "fid": "r004c012-1",
+     "cls": "경작지",
+     "area": 24919.5,
+     "live": false
+    }
+   ],
+   "many": [
+    {
+     "set": "results/lx/job_01M4TTJ6M6QRVBMNHVRJMG8R1H",
+     "fid": "r014c012-1",
+     "cls": "경작지",
+     "area": 1114.1,
+     "live": false
+    },
+    {
+     "set": "results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G",
+     "fid": "r060c117-9",
+     "cls": "경작지",
+     "area": 1299.4,
+     "live": false
+    },
+    {
+     "set": "results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G",
+     "fid": "r060c117-1",
+     "cls": "경작지",
+     "area": 3465.8,
+     "live": false
+    }
+   ]
+  },
+  "cursorEmpty": {
+   "canvas": "",
+   "computed": "grab"
+  },
+  "cursorObject": {
+   "canvas": "pointer",
+   "hover": {
+    "n": 1,
+    "top": {
+     "cls": "경작지",
+     "set": "results/lx/job_01M4TTFR203E1S7EN5JYVT0YN2"
+    },
+    "cursor": "pointer"
+   },
+   "badge": false
+  },
+  "overlapHover": {
+   "hover": {
+    "n": 3,
+    "top": {
+     "cls": "경작지",
+     "set": "results/lx/job_01M4TTJ6M6QRVBMNHVRJMG8R1H"
+    },
+    "cursor": "pointer"
+   },
+   "badge": "겹침 3",
+   "badgeShown": true
+  },
+  "picker": [
+   "경작지 1,114㎡",
+   "경작지 1,299㎡",
+   "경작지 3,466㎡"
+  ],
+  "pickedCard": "경작지",
+  "reclass": {
+   "before": "경작지",
+   "options": [
+    "건물",
+    "주차장",
+    "비닐하우스"
+   ],
+   "after": {
+    "cls": "건물",
+    "liveN": 1,
+    "col": "#3182F6",
+    "set": "job_01M4TTFR203E1S7EN5JYVT0YN2",
+    "renderedFill": 1,
+    "origShown": 0,
+    "hidden": true
+   },
+   "to": "건물",
+   "undone": {
+    "cls": "경작지",
+    "liveN": 1
+   }
+  }
+ },
+ "classes": {
+  "rows": [
+   [
+    "건물",
+    "true"
+   ],
+   [
+    "경작지",
+    "true"
+   ],
+   [
+    "비경작지",
+    "true"
+   ],
+   [
+    "비닐하우스",
+    "true"
+   ],
+   [
+    "주차장",
+    "true"
+   ],
+   [
+    "veg_gain",
+    "true"
+   ],
+   [
+    null,
+    "false"
+   ]
+  ],
+  "small": [],
+  "off": {
+   "cls": "건물",
+   "clsOff": [
+    "건물"
+   ],
+   "hudBefore": "남원시 토지피복 132,424개 경작지(농지 전수) 82,852곳 건물(하천 · 계곡) 34,874동 비닐하우스(농지 전수) 19,152동 경작·휴경 2,098곳 비닐하우스 703동",
+   "hudAfter": "남원시 토지피복 132,424개 경작지(농지 전수) 82,852곳 비닐하우스(농지 전수) 19,152동 경작·휴경 2,098곳 비닐하우스 703동 국토 변화 456곳 보이는 것 기준",
+   "rendered": {
+    "total": 45338,
+    "ofCls": 0
+   }
+  },
+  "on": {
+   "clsOff": [],
+   "hud": "남원시 토지피복 132,424개 경작지(농지 전수) 82,852곳 건물(하천 · 계곡) 34,874동 비닐하우스(농지 전수) 19,152동 경작·휴경 2,098곳 비닐하우스 703동"
+  }
+ },
+ "fps": {
+  "q1-fill-1440": 48,
+  "q2-fill-1440": 12,
+  "q3-fill-1440": 51,
+  "p1-fill-1440": 31,
+  "now-hover-big": 61,
+  "now-hover-row": 61
+ },
+ "runs": [
+  {
+   "at": "2026-10-17 13:16:07",
+   "only": [
+    "steps",
+    "panes",
+    "now",
+    "objects",
+    "classes"
+   ]
+  }
+ ],
+ "login_at": "2026-10-17 13:16:14",
+ "home": {
+  "showcase": {
+   "mode": "now",
+   "bubbles": [
+    "남원시 현황 보여 줘",
+    "보령시 곤포사일리지 어디가 많아?",
+    "강진군 현황 보여 줘"
+   ],
+   "hot": null,
+   "streaks": 0
+  },
+  "bubbles": 3,
+  "hudVariantSwitch": false,
+  "statSwitchHidden": true
+ },
+ "video_q1_at": 13.218,
+ "video_q3_end": 103.483,
+ "end": "2026-10-17 13:18:55"
+}

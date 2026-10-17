@@ -239,9 +239,14 @@ async def build_board(p) -> dict:
             "source": "서비스 결과 장부(지금 결과) + 시군구 전역 분석"}
 
 
-async def _rebuild(p):
+async def _rebuild(p, wait: bool = False):
+    """wait=True(fresh) — 이미 만드는 중이면 끝나기를 기다린 뒤 한 번 더 만든다. 그 판은 방금 고친 것보다 먼저 시작했을 수 있다
+    (10-17 재검수: 고친 직후 fresh 로 물어도 고치기 전 수가 나오던 일 — 객체 수가 한 걸음씩 늦음)."""
     if _BOARD.get("busy"):
-        return
+        if not wait:
+            return
+        while _BOARD.get("busy"):
+            await asyncio.sleep(0.05)
     _BOARD["busy"] = True
     try:
         _BOARD.update(v=await build_board(p), at=time.time())
@@ -323,7 +328,7 @@ async def board(request: Request, fresh: int | None = None):
     """한 번 호출 — 지난 값이 있으면 바로 돌려주고(열자마자 · 2초 안) 1분이 지났으면 뒤에서 새로 만든다. 고치기가 있으면 바로 새로."""
     p = require(principal(request), lx=True)
     if fresh or not _BOARD["v"]:
-        await _rebuild(p)
+        await _rebuild(p, wait=bool(fresh))
         while _BOARD["v"] is None and _BOARD.get("busy"):     # 다른 요청이 만드는 중이면 그 결과를 기다린다
             await asyncio.sleep(0.05)
     elif time.time() - _BOARD["at"] > BOARD_TTL:

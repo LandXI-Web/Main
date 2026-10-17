@@ -560,7 +560,7 @@ def find(q: str) -> list[dict]:
         stem = nm[:-1] if len(nm) > 2 and nm[-1] in "시군구" else nm
         if qs in (nm, full, stem) or (r["sido_short"] or "") + nm == qs or nm.startswith(qs) or (len(qs) >= 2 and qs in full):
             out.append(r)
-    if not out and " " in q:                               # '강원 원주' · '강원도 원주시' · '전라북도 남원' — 시도 + 시군구를 함께 친 것
+    if not out and " " in q:                               # '강원 원주' · '강원도 원주시' · '경상남도 함양' — 시도 + 시군구를 함께 친 것
         head, _, rest = q.partition(" ")
         out = [r for r in find(rest) if _sido_hit(head, r)]
     return out

@@ -1,0 +1,22 @@
+{
+ "national": {
+  "files": 7703,
+  "ok": 7703,
+  "errors": 0,
+  "far_before_mb": 579.7,
+  "far_after_mb": 151.3,
+  "cpu_s": 7160,
+  "note": "national_jobs(끝남 · 시험 아님 · 칸의 지금 판 모델) 결과 파일 중 lx_light 판 2 가 아닌 것 — 옛 가벼운 조각(10-15 · 판 1) 2,661 포함 · 그 전 조각(가벼운 조각 없음)도 함께"
+ },
+ "other": {
+  "files": 642,
+  "ok": 642,
+  "errors": 0,
+  "far_before_mb": 55.4,
+  "far_after_mb": 39.6,
+  "cpu_s": 1890,
+  "note": "결과 파일 중 전국 작업 아닌 것 701 → 서버 API GET /jobs/{id} 로 끝난 작업(시험 아님) 682 → 판 2 아닌 642"
+ },
+ "after_scan": "다시 굽기 뒤 전국: 판 2 7,850 · 판 2 아님 429(모두 새 판으로 바뀐 칸의 옛 결과 — 지도에 내주지 않음) · 새로 끝난 칸은 워커가 새 방식(판 2)으로 굽고 있음",
+ "backup": "02. 데이터/_tmp/zoomout-backup-national-1017/ · zoomout-backup-other-1017/"
+}

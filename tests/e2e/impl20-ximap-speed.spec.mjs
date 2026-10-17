@@ -11,6 +11,20 @@ const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, '
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
 const objLayers = () => { const m = window.__xc.map; return (m.getStyle().layers || []).map((l) => l.id).filter((id) => /^xb-r-.*-fill$/.test(id) && m.getLayoutProperty(id, 'visibility') !== 'none'); };
 
+/* 그려진 객체 위 한 점을 눌러 고치기 칸을 연다 — 꼭짓점 평균(오목한 면은 밖에 떨어짐)이 아니라 화면에서 실제로 객체가 있는 점(가운데에 가장 가까운 점) ·
+   겹친 객체면 고르기 목록(원칙 265)의 첫 줄을 고른다(바퀴 15 재검수) */
+async function clickObject(page, src) {
+  const pt = await page.evaluate((s) => { const m = window.__xc.map, ls = eval(s)(); const c = m.getCanvas(), W = c.clientWidth, H = c.clientHeight; let best = null;
+    for (let i = 1; i < 32; i++) for (let j = 1; j < 20; j++) { const x = (W * i) / 32, y = (H * j) / 20; if (m.queryRenderedFeatures([x, y], { layers: ls }).length) { const d = Math.hypot(x - W / 2, y - H / 2); if (!best || d < best.d) best = { x, y, d }; } }
+    return best; }, src);
+  if (!pt) return false;
+  const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
+  await page.mouse.click(box.x + pt.x, box.y + pt.y);
+  await page.locator('.xe-pick-r, .xe-card .xe-act').first().waitFor({ timeout: 15000 }).catch(() => {});
+  if (await page.locator('.xe-pick-r').count()) await page.locator('.xe-pick-r').first().click();
+  return true;
+}
+
 test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치기는 다시 열어도 새 모습', async ({ page, baseURL, request }) => {
   test.skip(!PW, 'server/.env DEV_PASSWORD 없음');
   test.skip(!(await up(request)), '게이트웨이 꺼짐');
@@ -25,7 +39,7 @@ test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치�
 
   // 결과 객체가 가장 많은 시군구로 확대 → 객체 하나의 가운데(자리 고정값 없음)
   const hot = await page.evaluate(() => window.__xc.board.hot);
-  await page.evaluate((c) => window.__xc.map.jumpTo({ center: c, zoom: 12.5 }), hot);
+  await page.evaluate((c) => { window.__xc.map.jumpTo({ center: c, zoom: 12.5 }); }, hot);
   let spot = null;
   for (let i = 0; i < 20 && !spot; i++) {
     await page.waitForTimeout(700);
@@ -40,11 +54,10 @@ test('결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치�
   for (const t of tpl) expect(t).toMatch(/\/tiles\/mvt\/.+\/\{z\}\/\{x\}\/\{y\}\.pbf\?v=[0-9a-f]{10}/);
 
   const open = async () => {
-    await page.evaluate((c) => window.__xc.map.jumpTo({ center: c, zoom: 18 }), spot);
+    await page.evaluate((c) => { window.__xc.map.jumpTo({ center: c, zoom: 18 }); }, spot);
     await page.waitForFunction((src) => { const m = window.__xc.map, ls = eval(src)(); return !m.isMoving() && ls.length && m.queryRenderedFeatures({ layers: ls }).length > 0; }, `(${objLayers})`, { timeout: 30000 });
     await page.waitForTimeout(800);
-    const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await clickObject(page, `(${objLayers})`);
     await expect(page.locator('.xe-card .xe-act')).toBeVisible({ timeout: 15000 });
     return page.locator('.xe-h h3').innerText();
   };

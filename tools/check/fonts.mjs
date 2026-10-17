@@ -119,10 +119,10 @@ async function screen(s, name, url, { wait, act, ms = 2500 } = {}) {
 /* XI맵 — 지도 · 결과 층이 다 그려질 때까지 */
 const xiReady = (p) => p.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown, null, { timeout: 60000, polling: 200 }).catch(() => {});
 const settle = (p) => p.waitForFunction(() => !window.__xc.map.isMoving() && window.__xc.map.areTilesLoaded(), null, { timeout: 25000 }).catch(() => {});
-const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => window.__xc.map.jumpTo({ center: [a, b], zoom: c }), [x, y, z]); await settle(p); await p.waitForTimeout(2500); };
+const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => { window.__xc.map.jumpTo({ center: [a, b], zoom: c }); }, [x, y, z]); await settle(p); await p.waitForTimeout(2500); };
 /** 지도 가운데에 가까운 결과 객체 하나를 눌러 그 자리 고치기 칸을 연다(삭제 · 고치기는 누르지 않음) */
 const openEdit = (center, re) => async (p) => {
-  await p.evaluate((c) => window.__xc.map.jumpTo({ center: c, zoom: 16.2 }), center);
+  await p.evaluate((c) => { window.__xc.map.jumpTo({ center: c, zoom: 16.2 }); }, center);
   await settle(p);
   await p.waitForFunction((src) => window.__xc.map.getStyle().layers.some((l) => new RegExp(src).test(l.id) && l.type === 'fill'), re, { timeout: 30000 }).catch(() => {});
   await settle(p); await p.waitForTimeout(2000);

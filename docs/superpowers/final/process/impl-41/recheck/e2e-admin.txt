@@ -1,0 +1,51 @@
+
+Running 23 tests using 1 worker
+
+[1/23] tests\e2e\impl1-admin.spec.mjs:27:3 › impl-1 LX 관리자 — 결재함 · GPU 판정 › 결재함 열기 — 로그인 직후 눌러도 3초 안에 목록(또는 없음 문구)
+[2/23] tests\e2e\impl1-admin.spec.mjs:38:3 › impl-1 LX 관리자 — 결재함 · GPU 판정 › 결재 한 건 — 바뀌는 것 · 거절는 사유 없이 보내지 않는다
+[3/23] tests\e2e\impl1-admin.spec.mjs:59:3 › impl-1 LX 관리자 — 결재함 · GPU 판정 › 인프라 — GPU 행 고부하 표시는 판정 표(서버 per)와 같다(쥐고만 있는 GPU 에 고부하 0)
+  1) tests\e2e\impl1-admin.spec.mjs:59:3 › impl-1 LX 관리자 — 결재함 · GPU 판정 › 인프라 — GPU 행 고부하 표시는 판정 표(서버 per)와 같다(쥐고만 있는 GPU 에 고부하 0) 
+
+    TimeoutError: page.waitForSelector: Timeout 20000ms exceeded.
+    Call log:
+      - waiting for locator('#gpu-t tbody tr') to be visible
+
+
+      60 |     await admin(page);
+      61 |     await page.goto('v3/ops-infra/#/infra');
+    > 62 |     await page.waitForSelector('#gpu-t tbody tr', { timeout: 20000 });
+         |                ^
+      63 |     const per = await page.evaluate(async () => {
+      64 |       const s = JSON.parse(localStorage.getItem('lx_api_session'));
+      65 |       const j = await (await fetch('http://localhost:8700/api/v1/ops/gpus', { headers: { authorization: 'Bearer ' + s.token } })).json();
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\impl1-admin.spec.mjs:62:16
+
+    Error Context: test-results\impl1-admin-impl-1-LX-관리자--4b909-er-와-같다-쥐고만-있는-GPU-에-고부하-0-\error-context.md
+
+
+[4/23] tests\e2e\impl9-deploy.spec.mjs:27:3 › 구현 9차 · 분석 서비스 배포 › 직원 — 프로젝트 안 추론 · 배포 신청
+[5/23] tests\e2e\impl9-deploy.spec.mjs:54:3 › 구현 9차 · 분석 서비스 배포 › 관리자 — 배포 세 탭 · 공유 체크 표 · 사용 현황 · 대시보드 요약
+[6/23] tests\e2e\v3-integration.spec.mjs:35:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › landxi 첫 주소 → 게스트 메인 → 로그인
+[7/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → LX 직원 첫 화면
+[8/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → LX 관리자 첫 화면
+[9/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → LX 영업 첫 화면
+[10/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → 지자체 공무원(기관 메인 로그인) 첫 화면
+[11/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → 해외 기관(기관 메인 로그인) 첫 화면
+[12/23] tests\e2e\v3-integration.spec.mjs:56:5 › v3 통합 — 로그인 · 첫 화면 · 이동 › 로그인 폼 → 관리자 계정 · 메인 입구 첫 화면
+[13/23] tests\e2e\v3-integration.spec.mjs:68:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 역할 탭 없음 — Land-XI 로그인은 LX 전용(app·admin = 아이디·비밀번호 · 기관 입구는 기관 메인으로)
+[14/23] tests\e2e\v3-integration.spec.mjs:84:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 관리자 입구에 관리자 아닌 계정 — 서버가 거절 · 세션 0
+[15/23] tests\e2e\v3-integration.spec.mjs:91:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 서버가 정본 — 입구별 문(realm) · 관리자 입구 확인
+[16/23] tests\e2e\v3-integration.spec.mjs:114:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 화면 코드가 늦게 올라와도 먼저 누른 로그인이 오류 화면(405)으로 가지 않는다
+[17/23] tests\e2e\v3-integration.spec.mjs:124:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 틀린 비밀번호 — 거절 · 세션 0
+[18/23] tests\e2e\v3-integration.spec.mjs:130:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 세션 없이 화면 주소 → 로그인 ?next=
+[19/23] tests\e2e\v3-integration.spec.mjs:135:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 오픈 리다이렉트 0 — 바깥 next 는 버리고 제 집으로
+[20/23] tests\e2e\v3-integration.spec.mjs:142:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 기관 세션은 LX 화면에 못 들어간다
+[21/23] tests\e2e\v3-integration.spec.mjs:149:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › LX 직원 — 화면 사이 이동(대시보드 → 데이터 올리기 → XI맵)
+[22/23] tests\e2e\v3-integration.spec.mjs:160:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 관리자 — LX 관리자 대시보드 → 인프라 이동
+[23/23] tests\e2e\v3-integration.spec.mjs:168:3 › v3 통합 — 로그인 · 첫 화면 · 이동 › 구 레일은 v3 집으로만 간다(구 proto 파일은 남김)
+  1 failed
+    tests\e2e\impl1-admin.spec.mjs:59:3 › impl-1 LX 관리자 — 결재함 · GPU 판정 › 인프라 — GPU 행 고부하 표시는 판정 표(서버 per)와 같다(쥐고만 있는 GPU 에 고부하 0) 
+  16 skipped
+  6 passed (1.5m)
+
+--- 위 실패 1건은 14:30~14:39 게이트웨이가 DB · Redis 에 못 붙던 동안(아래 README 2절). 되살린 뒤 다시: impl1-admin · impl9-deploy 5 passed (18.3s)

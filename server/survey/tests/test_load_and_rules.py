@@ -10,7 +10,7 @@ def test_load_counts_equal_readme(pg):
     E = S.README_COUNTS
     q = lambda sql: pg.execute(sql).fetchone()[0]  # noqa: E731
     C = "sgg_cd IN (SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon')"
-    F = f"rule LIKE 'R%' AND {C}"
+    F = f"rule LIKE 'R%' AND card_id IS NULL AND {C}"           # 정본(시군구 실태조사) 줄만 — 서비스 카드 판(card_id · 10-09 모델-표기 ⓐ)은 따로
     assert q("SELECT count(*) FROM survey_parcels WHERE src = 'canon'") == E["parcels"]
     assert round(q("SELECT sum(area_m2) FROM survey_parcels WHERE src = 'canon'") / 1e6, 2) == E["area_km2"]
     assert q(f"SELECT count(*) FROM survey_findings WHERE {F}") == E["suspects"]
@@ -38,7 +38,7 @@ def test_no_owner_name_column(pg):
 def test_sql_reevaluation_equals_canon(pg):
     rows = pg.execute(R.eval_sql(R.default_thresholds(), emd_cd=False)).fetchall()
     got = {(r[0], r[1]): round(r[5], 1) for r in rows}
-    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings WHERE rule LIKE 'R%%' AND sgg_cd IN "
+    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings WHERE rule LIKE 'R%%' AND card_id IS NULL AND sgg_cd IN "
                                                   "(SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon')").fetchall()}
     assert set(got) == set(canon)
     assert sum(got[k] == canon[k] for k in canon) == len(canon) == 20872

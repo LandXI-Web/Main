@@ -1,0 +1,75 @@
+
+Running 13 tests using 1 worker
+
+[1/13] tests\e2e\impl12-mapsvc.spec.mjs:30:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 지도 서비스 — 메뉴 칸 · 묶음 둘 켜기 · 도형 누르면 오른쪽 속성 · XI맵 요소 0 · 추론 결과 보기가 여기로
+[2/13] tests\e2e\impl12-mapsvc.spec.mjs:82:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 분석하기 상세 — 영상 고르기: 카드 두 열 · 범위 지도 · 맞음 표시 · 다른 영상을 고르면 오른쪽 칸이 따라온다 · 결과 안내는 지도 서비스
+[3/13] tests\e2e\impl14b-mapsvc.spec.mjs:18:3 › 구현 14차 b · 지도 서비스 › 슬림 왼쪽(접고 펴기 · 한 줄 높이 · 칸 안 스크롤) · 범례 오른쪽(글자 단추로 접힘) · 거르기 바로 반영 · 내려받기(동의 한 줄 · 기록)
+[4/13] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[5/13] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+  1) tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기 ────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.xe-card .xe-act')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('.xe-card .xe-act')
+
+
+      63 |     const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
+      64 |     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    > 65 |     await expect(page.locator('.xe-card .xe-act')).toBeVisible({ timeout: 15000 });
+         |                                                    ^
+      66 |     for (const t of ['삭제', '클래스 바꾸기', '수정', '메모']) await expect(page.locator('.xe-act button', { hasText: new RegExp(`^${t}$`) })).toHaveCount(1);   // 10-15 원칙 252 — 동작 넷
+      67 |     const before = await page.locator('.xe-h h3').innerText();
+      68 |     await page.locator('.xe-act button', { hasText: '클래스 바꾸기' }).click();
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\impl18-ximap.spec.mjs:65:52
+
+    Error Context: test-results\impl18-ximap-XI맵-바퀴-5-객체를-누르면-그-자리-고치기-—-분류-바꾸기-시험-→-되돌리기\error-context.md
+
+
+[6/13] tests\e2e\impl2-gov-branch.spec.mjs:44:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › gov 첫 주소 = 기관 고르기 목록(Land-XI 로그인 아님) → 기관 주소 · 옛 경로 · 없는 기관
+[7/13] tests\e2e\impl2-gov-branch.spec.mjs:64:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › 남원 메인 · 전남광주 메인 — 같은 틀, 다른 마크 · 이름 · 색 · 서비스
+[8/13] tests\e2e\impl2-gov-branch.spec.mjs:97:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › 남원 — 메인 로그인 → 서비스 선택 → 서비스 대시보드 → 기존 기관 화면(?service=)
+[9/13] tests\e2e\impl2-gov-branch.spec.mjs:151:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › 전남광주 — 서비스가 하나(해양쓰레기)라 로그인하면 그 서비스 대시보드로 · 광역 전체/시·군·구 한 칸
+[10/13] tests\e2e\impl2-gov-branch.spec.mjs:166:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › 기관 관리자 — 기관 정보에서 색 · 글 고치기 → 메인에 바로 반영(대비 검사 걸리면 저장 안 됨)
+[11/13] tests\e2e\impl2-gov-branch.spec.mjs:190:3 › 구현 2차 · 기관 분기 플랫폼(기관 주소) › LX 관리자 — 기관 한 곳 화면에서 같은 칸을 고친다 → 그 기관 메인에 반영
+[12/13] tests\e2e\impl20-ximap-speed.spec.mjs:14:1 › 결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치기는 다시 열어도 새 모습
+  2) tests\e2e\impl20-ximap-speed.spec.mjs:14:1 › 결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치기는 다시 열어도 새 모습 ──
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.xe-card .xe-act')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('.xe-card .xe-act')
+
+
+      46 |     const box = await page.locator('.k-stage-map canvas, canvas.maplibregl-canvas').first().boundingBox();
+      47 |     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    > 48 |     await expect(page.locator('.xe-card .xe-act')).toBeVisible({ timeout: 15000 });
+         |                                                    ^
+      49 |     return page.locator('.xe-h h3').innerText();
+      50 |   };
+      51 |   const reopen = async () => {
+        at open (E:\Land-XI 플랫폼\01. 디자인\tests\e2e\impl20-ximap-speed.spec.mjs:48:52)
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\impl20-ximap-speed.spec.mjs:55:18
+
+    Error Context: test-results\impl20-ximap-speed-결과-조각-판-dab8c--열면-보관에서-·-고치기는-다시-열어도-새-모습\error-context.md
+
+
+[13/13] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+  2 failed
+    tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기 ─────────
+    tests\e2e\impl20-ximap-speed.spec.mjs:14:1 › 결과 조각 = 판 번호 주소 · 다시 열면 보관에서 · 고치기는 다시 열어도 새 모습 ───
+  11 passed (2.7m)
+
+--- 다시(14:0x · e2e 두 곳 고친 뒤 · 객체 위 실제 점 누르기 + 겹침 고르기): impl18-ximap · impl20-ximap-speed 3 passed

@@ -1,0 +1,42 @@
+[
+ {
+  "id": "재검수-바퀴15",
+  "title": "모든 화면 기능 약 155개를 바깥 주소에서 다시 눌러 보았습니다 — 안 되던 것은 고쳤습니다",
+  "opts": [
+   "확인"
+  ],
+  "evidence": [
+   "check.json",
+   "feat/ximap-steps/run.json",
+   "feat/ximap-parcel/run.json",
+   "feat/ximap-colors/run.json",
+   "feat/map-colors/run.json",
+   "feat/zoomout/run-after.json",
+   "feat/panes/run.log",
+   "feat/abroad/run.log",
+   "run-edit-1440.json",
+   "checks/words-check.txt",
+   "checks/numbers-check.txt",
+   "checks/fonts-check.txt",
+   "rebake/summary.json"
+  ],
+  "where": "app · admin · namwon · gwangju-jeonnam · kgz-agri.land-xi.dev — 로그인 폼 · PC 1440",
+  "note": "LX 직원 · LX 관리자 · 남원 · 전남광주 · 해외 기관 · 메인과 이번 바퀴에 바뀐 곳(XI맵 지금+C · 단계 · 칸 조절 · 마우스 · 겹침 · 클래스 색/켜끄기 · 지적 · 필지 카드 · 색 바꾸기 · 줌 아웃 · 해외 결과 · 새 이름)이 모두 됩니다. 고친 것: 관리자 배포 · 기관 · 공유 데이터 탭이 비거나 멈추던 것(분석한 면적 계산이 전국 작업이 쌓여 70초 걸림 → 뒤에서 세고 바로 줌), 14:30~14:39 바깥 주소가 멈춘 것(Docker IPv6 길 막힘 → 127.0.0.1), XI맵 고친 직후 객체 수가 한 걸음 늦던 것. 이미 구운 결과 8,345개를 새 줌 아웃 방식으로 다시 구웠습니다(CPU · 0 실패). 서버 시험 10건은 기대값이 낡은 것이라 지금 규칙에 맞췄습니다."
+ },
+ {
+  "id": "속도-바퀴15",
+  "title": "느린 화면을 재서 줄였습니다 — 관리자 탭 · 기관 보고서",
+  "opts": [
+   "확인"
+  ],
+  "evidence": [
+   "time-table.md",
+   "time-before.json",
+   "time-after.json",
+   "time-after2.json",
+   "jump-cause.json"
+  ],
+  "where": "바깥 주소 · PC 1440 · 화면마다 처음 · 다시 + 서버 시간",
+  "note": "관리자 배포 신청 10.6초 → 2.3초, 배포 · 기관 탭 5~6초 → 2초 안팎(GPU 표를 인프라 탭에서만 받음 포함), 기관 보고서 7.4 → 3.0초(지도 그림 디스크 보관). 남원 기관 지도는 지난 7.7초 → 3.7초. 서버 시간은 대부분 0.5초 안 — 2초 넘는 나머지는 바깥 왕복 · 큰 파일 · 지도 움직임입니다. XI맵이 30초 넘게 걸린 일은 화면이 아니라 검사기가 지도 객체를 통째로 돌려받던 탓이었고 고쳤습니다. 남은 것: 관리자 인프라 · 공유 데이터 4~6초(GPU 표 · 탭마다 요청 20여 개)."
+ }
+]

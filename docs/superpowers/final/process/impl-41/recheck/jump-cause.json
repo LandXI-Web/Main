@@ -1,0 +1,18 @@
+{
+ "void": {
+  "evaluate": "ok",
+  "ms": 11,
+  "nextGoto": {
+   "r": "ok",
+   "ms": 613
+  }
+ },
+ "returnMap": {
+  "evaluate": "ok",
+  "ms": 2958,
+  "nextGoto": {
+   "r": "ok",
+   "ms": 2727
+  }
+ }
+}

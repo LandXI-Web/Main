@@ -138,7 +138,7 @@ export async function run(role, s0) {
       await screen(s, 'LX 직원 · 프로젝트', A + 'lx-project/', { wait: 'main' });                       // 10-13 — 메뉴에 데이터하우스 없음
       await screen(s, 'LX 직원 · 새 프로젝트 창', A + 'lx-project/?new=1', { wait: '.lxp-new--one' });
       /* XI맵 — 전국 · 결과 있는 시군구 · 결과 없는 시군구(카드 글에 값 없음 글자가 새지 않는지) */
-      const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => window.__xc.map.jumpTo({ center: [a, b], zoom: c }), [x, y, z]); await p.waitForTimeout(4000); };
+      const jump = (x, y, z) => async (p) => { await p.evaluate(([a, b, c]) => { window.__xc.map.jumpTo({ center: [a, b], zoom: c }); }, [x, y, z]); await p.waitForTimeout(4000); };
       await screen(s, 'LX 직원 · XI맵(전국)', A + 'xi-clean/', { wait: '.xb-hud', ms: 4000 });
       await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(127.39, 35.42, 11) });
       await screen(s, 'LX 직원 · XI맵(시군구 · 전주 · 구가 있는 시)', A + 'xi-clean/', { wait: '.xb-hud', ms: 3000, act: jump(127.13, 35.82, 11) });

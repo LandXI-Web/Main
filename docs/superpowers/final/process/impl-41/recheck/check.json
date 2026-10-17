@@ -1,0 +1,449 @@
+{
+ "s01": {
+  "label": "대시보드 — 공지 · 메모 적기(Enter) · 고정 · 삭제",
+  "ok": "됨",
+  "note": "공지 줄 1 · 메모 0 → 적기 → 고정 → 삭제(정리됨)",
+  "ms": 6299,
+  "shot": "shots/check/s01.png"
+ },
+ "s02": {
+  "label": "대시보드 — 내 정보 창 · 용량(보내지 않음)",
+  "ok": "됨",
+  "note": "용량 칸 '저장 용량 내 정보 개별 할당 100 GB · 프로젝트 7개 38.5 MB 사용 중 · 할당의 0.1% 프로젝트별 비닐하우스 2026 10.2 '",
+  "ms": 3290,
+  "shot": "shots/check/s02.png"
+ },
+ "s03": {
+  "label": "대시보드 — 단계 숫자 · 최근 프로젝트 카드 열기",
+  "ok": "됨",
+  "note": "단계 링크 8 · 카드 → /landxi/v3/lx-release/",
+  "ms": 6262,
+  "shot": "shots/check/s03.png"
+ },
+ "s04": {
+  "label": "프로젝트 목록 — 탭 다섯 · 찾기",
+  "ok": "됨",
+  "note": "탭 5 · 줄 4/0/0/0/0/찾기 비닐 1",
+  "ms": 8874,
+  "shot": "shots/check/s04.png"
+ },
+ "s05": {
+  "label": "새 프로젝트 한 창 — 공유 데이터에서 고르기 목록(만들지 않음)",
+  "ok": "됨",
+  "note": "창 1040×820 · 공유 데이터 84장 · 첫 쪽 그림 6",
+  "ms": 6503,
+  "shot": "shots/check/s05.png"
+ },
+ "s06": {
+  "label": "데이터 올리기 — 지역 카드 · 지도",
+  "ok": "됨",
+  "note": "지도 1",
+  "ms": 6446,
+  "shot": "shots/check/s06.png"
+ },
+ "s07": {
+  "label": "학습데이터 구축 — 라벨 그림 · 더 보기",
+  "ok": "됨",
+  "note": "그림 9 → 더 보기 18",
+  "ms": 10559,
+  "shot": "shots/check/s07.png"
+ },
+ "s08": {
+  "label": "학습 — 흐름 판 · 정확도 그래프 · 학습 이력(시작 안 누름)",
+  "ok": "됨",
+  "note": "학습 이력 5줄 · 그래프 3",
+  "ms": 3849,
+  "shot": "shots/check/s08.png"
+ },
+ "s09": {
+  "label": "추론 — 모델 · 영상 고르기(시작 안 누름)",
+  "ok": "됨",
+  "note": "고르는 칸 17",
+  "ms": 3223,
+  "shot": "shots/check/s09.png"
+ },
+ "s10": {
+  "label": "결과 확인 — 지도에서 결과 켜기 · 범례",
+  "ok": "됨",
+  "note": "켜진 결과 1",
+  "ms": 5513,
+  "shot": "shots/check/s10.png"
+ },
+ "s11": {
+  "label": "배포 신청 — 신청서 · 지난 판(보내지 않음)",
+  "ok": "됨",
+  "note": "신청서 줄 9",
+  "ms": 3163,
+  "shot": "shots/check/s11.png"
+ },
+ "s12": {
+  "label": "분석하기 — 카드 · 찾기('원주')",
+  "ok": "됨",
+  "note": "카드 4 · '원주' → 건축물 분석서비스",
+  "ms": 5199,
+  "shot": "shots/check/s12.png"
+ },
+ "s13": {
+  "label": "분석하기 자세히 — '어디' 원주시 → 영상 · 조건(시작 안 누름)",
+  "ok": "됨",
+  "note": "원주시 고름 → 영상 · 조건 2057ms",
+  "ms": 6176,
+  "shot": "shots/check/s13.png"
+ },
+ "s14": {
+  "label": "지도 서비스 — 결과 층 · 바탕 · 결과 목록 · 내려받기 GeoJSON",
+  "ok": "됨",
+  "note": "층 9 · 여주시_하거동_프로젝트_추론_—_주차장_2026_AI분석_20261010.geojson 2.8KB",
+  "ms": 7709,
+  "shot": "shots/check/s14.png"
+ },
+ "s15": {
+  "label": "요청함 — 숫자 · 탭",
+  "ok": "됨",
+  "note": "탭 2",
+  "ms": 6114,
+  "shot": "shots/check/s15.png"
+ },
+ "s16": {
+  "label": "지원 — 공지 · 자주 묻는 질문 · 문의",
+  "ok": "됨",
+  "note": "탭 5",
+  "ms": 6377,
+  "shot": "shots/check/s16.png"
+ },
+ "s17": {
+  "label": "서비스 카드 — 목록",
+  "ok": "됨",
+  "note": "카드 39",
+  "ms": 4038,
+  "shot": "shots/check/s17.png"
+ },
+ "a01": {
+  "label": "LX 관리자 대시보드",
+  "ok": "됨",
+  "note": "숫자 칸 15",
+  "ms": 3537,
+  "shot": "shots/check/a01.png"
+ },
+ "a02": {
+  "label": "요청 관리 — 분석 요청",
+  "ok": "됨",
+  "note": "줄 7",
+  "ms": 4366,
+  "shot": "shots/check/a02.png"
+ },
+ "a03": {
+  "label": "요청 관리 — 승인 요청",
+  "ok": "됨",
+  "note": "줄 5",
+  "ms": 4085,
+  "shot": "shots/check/a03.png"
+ },
+ "a04": {
+  "label": "요청 관리 — API 키 신청",
+  "ok": "됨",
+  "note": "줄 11",
+  "ms": 4480,
+  "shot": "shots/check/a04.png"
+ },
+ "a05": {
+  "label": "인프라 — 장비 표",
+  "ok": "됨",
+  "note": "표 행 19 · 행 보임 25ms(화면 열린 뒤) · 최근 24시간 작업 1,730",
+  "ms": 14869,
+  "shot": "shots/check/a05.png"
+ },
+ "a06": {
+  "label": "기관 목록",
+  "ok": "됨",
+  "note": "기관 32",
+  "ms": 3583,
+  "shot": "shots/check/a06.png"
+ },
+ "a07": {
+  "label": "기관 한 곳(남원)",
+  "ok": "됨",
+  "note": "칸 · 기록 10",
+  "ms": 4964,
+  "shot": "shots/check/a07.png"
+ },
+ "a08": {
+  "label": "배포 — 배포 신청(신청서 열기)",
+  "ok": "됨",
+  "note": "신청 5 · 신청서 열림",
+  "ms": 5668,
+  "shot": "shots/check/a08.png"
+ },
+ "a09": {
+  "label": "배포 — 기관 공유",
+  "ok": "됨",
+  "note": "체크 칸 48",
+  "ms": 3947,
+  "shot": "shots/check/a09.png"
+ },
+ "a10": {
+  "label": "배포 — 사용 현황",
+  "ok": "됨",
+  "note": "표 행 6",
+  "ms": 4506,
+  "shot": "shots/check/a10.png"
+ },
+ "a11": {
+  "label": "배포 — 분야",
+  "ok": "됨",
+  "note": "분야 6",
+  "ms": 3752,
+  "shot": "shots/check/a11.png"
+ },
+ "a12": {
+  "label": "배포 — 개선 후보",
+  "ok": "됨",
+  "note": "후보 17",
+  "ms": 3995,
+  "shot": "shots/check/a12.png"
+ },
+ "a13": {
+  "label": "배포 — API",
+  "ok": "됨",
+  "note": "키 수 · 키 만들기 단추",
+  "ms": 4951,
+  "shot": "shots/check/a13.png"
+ },
+ "a14": {
+  "label": "배포 — XI 재학습",
+  "ok": "됨",
+  "note": "칸 10",
+  "ms": 3837,
+  "shot": "shots/check/a14.png"
+ },
+ "a15": {
+  "label": "배포 — 학습 서식",
+  "ok": "됨",
+  "note": "칸 1",
+  "ms": 4418,
+  "shot": "shots/check/a15.png"
+ },
+ "a16": {
+  "label": "공유 데이터 — 영상",
+  "ok": "됨",
+  "note": "영상 29",
+  "ms": 7027,
+  "shot": "shots/check/a16.png"
+ },
+ "a16b": {
+  "label": "공유 데이터 — 영상 상세 판(10-14)",
+  "ok": "됨",
+  "note": "상세 31ms · '2025-04 2m · 남원 시가지 지역 남원시 촬영 연도 2025 해상도 2m 범위 1,248.4㎢ 크기 12 MB 공개 공개 쓰인 곳 분석 0건 프로젝트 0개'",
+  "ms": 6323,
+  "shot": "shots/check/a16b.png"
+ },
+ "a17": {
+  "label": "공유 데이터 — 학습 데이터",
+  "ok": "됨",
+  "note": "줄 47",
+  "ms": 6916,
+  "shot": "shots/check/a17.png"
+ },
+ "a18": {
+  "label": "공유 데이터 — 행정 자료 + 올리기 시험(올리고 삭제)",
+  "ok": "이상함",
+  "note": "행 38 · 올림 → 보임 → 상세 판 '삭제' → 확인 '삭제'(정리됨)",
+  "ms": 36384,
+  "pageErr": [
+   "console Failed to load resource: the server responded with a status of 500 ()"
+  ],
+  "apiBad": [
+   "500 /ops/gpus"
+  ],
+  "shot": "shots/check/a18.png"
+ },
+ "a19": {
+  "label": "계정",
+  "ok": "됨",
+  "note": "계정 6",
+  "ms": 5849,
+  "shot": "shots/check/a19.png"
+ },
+ "g01": {
+  "label": "내 서비스",
+  "ok": "됨",
+  "note": "서비스 카드 4",
+  "ms": 3657,
+  "shot": "shots/check/g01.png"
+ },
+ "g02": {
+  "label": "서비스 대시보드",
+  "ok": "됨",
+  "note": "큰 숫자(필지) 보임",
+  "ms": 4467,
+  "shot": "shots/check/g02.png"
+ },
+ "g03": {
+  "label": "이력",
+  "ok": "됨",
+  "note": "이력 66건",
+  "ms": 3712,
+  "shot": "shots/check/g03.png"
+ },
+ "g04": {
+  "label": "통계·보고서",
+  "ok": "됨",
+  "note": "숫자 · 그림 16",
+  "ms": 5282,
+  "shot": "shots/check/g04.png"
+ },
+ "g05": {
+  "label": "요청하기 — 분석 요청",
+  "ok": "됨",
+  "note": "입력 칸 13",
+  "ms": 7938,
+  "shot": "shots/check/g05.png"
+ },
+ "g06": {
+  "label": "요청하기 — 촬영 요청",
+  "ok": "됨",
+  "note": "입력 칸 25",
+  "ms": 5854,
+  "shot": "shots/check/g06.png"
+ },
+ "g07": {
+  "label": "요청하기 — 보낸 요청",
+  "ok": "됨",
+  "note": "줄 19",
+  "ms": 3812,
+  "shot": "shots/check/g07.png"
+ },
+ "g08": {
+  "label": "보고서 + 한글 문서 받기",
+  "ok": "됨",
+  "note": "남원시_경작_휴경_AI분석결과보고서_20261017.hwpx 264KB · 1603ms",
+  "ms": 9708,
+  "shot": "shots/check/g08.png"
+ },
+ "g09": {
+  "label": "필지 목록",
+  "ok": "됨",
+  "note": "필지 20",
+  "ms": 4128,
+  "shot": "shots/check/g09.png"
+ },
+ "g10": {
+  "label": "행정정보와 비교",
+  "ok": "됨",
+  "note": "줄 · 숫자 14",
+  "ms": 8655,
+  "shot": "shots/check/g10.png"
+ },
+ "g11": {
+  "label": "필지 카드",
+  "ok": "됨",
+  "note": "행 누름 → 필지 카드 열림",
+  "ms": 12775,
+  "shot": "shots/check/g11.png"
+ },
+ "g12": {
+  "label": "지도",
+  "ok": "됨",
+  "note": "지도 캔버스 1",
+  "ms": 8082,
+  "shot": "shots/check/g12.png"
+ },
+ "g13": {
+  "label": "기관 정보",
+  "ok": "됨",
+  "note": "칸 5",
+  "ms": 3101,
+  "shot": "shots/check/g13.png"
+ },
+ "g14": {
+  "label": "계정",
+  "ok": "됨",
+  "note": "계정 3",
+  "ms": 5096,
+  "shot": "shots/check/g14.png"
+ },
+ "j01": {
+  "label": "내 서비스 · 이름 전남광주특별시",
+  "ok": "됨",
+  "note": "서비스 카드 1",
+  "ms": 3720,
+  "shot": "shots/check/j01.png"
+ },
+ "j02": {
+  "label": "서비스 대시보드(해양쓰레기)",
+  "ok": "됨",
+  "note": "숫자 · 그림 3",
+  "ms": 3483,
+  "shot": "shots/check/j02.png"
+ },
+ "j03": {
+  "label": "이력",
+  "ok": "됨",
+  "note": "줄 10",
+  "ms": 3518,
+  "shot": "shots/check/j03.png"
+ },
+ "j04": {
+  "label": "지도(XI맵)",
+  "ok": "됨",
+  "note": "지도 캔버스 1",
+  "ms": 8313,
+  "shot": "shots/check/j04.png"
+ },
+ "j05": {
+  "label": "기관 정보",
+  "ok": "됨",
+  "note": "칸 5",
+  "ms": 2969,
+  "shot": "shots/check/j05.png"
+ },
+ "j06": {
+  "label": "요청하기",
+  "ok": "됨",
+  "note": "입력 칸 13",
+  "ms": 5199,
+  "shot": "shots/check/j06.png"
+ },
+ "m01": {
+  "label": "메인 — 장면 · 큰 숫자",
+  "ok": "됨",
+  "note": "장면 9 · 큰 숫자 '하천구역 안 건물 점유 · 전국 643,809 건'",
+  "ms": 11737,
+  "shot": "shots/check/m01.png"
+ },
+ "m02": {
+  "label": "메인 — 문의 창(보내지 않음)",
+  "ok": "됨",
+  "note": "문의 창 열림 · 입력 칸 1",
+  "ms": 6842,
+  "shot": "shots/check/m02.png"
+ },
+ "m03": {
+  "label": "API 안내",
+  "ok": "됨",
+  "note": "칸 86",
+  "ms": 3539,
+  "shot": "shots/check/m03.png"
+ },
+ "m04": {
+  "label": "로그인",
+  "ok": "됨",
+  "note": "비밀번호 칸 1",
+  "ms": 5081,
+  "shot": "shots/check/m04.png"
+ },
+ "m05": {
+  "label": "기관 메인(남원)",
+  "ok": "됨",
+  "note": "로그인 칸 2",
+  "ms": 5463,
+  "shot": "shots/check/m05.png"
+ },
+ "m06": {
+  "label": "기관 메인(전남광주) · 이름",
+  "ok": "됨",
+  "note": "로그인 칸 2",
+  "ms": 5271,
+  "shot": "shots/check/m06.png"
+ }
+}

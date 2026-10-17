@@ -25,6 +25,15 @@ def _envs(o, out=None):
     return out
 
 
+def _card_rows(pg) -> dict:
+    """정본 시군구 안 서비스 카드 판 줄(card_id · 10-09 모델-표기 ⓐ) — 지역 숫자는 그 시군구의 모든 줄(정본 + 카드 판)을 센다."""
+    out: dict = {}
+    for cd, rule, n in pg.execute("SELECT emd_cd, rule, count(*) FROM survey_findings WHERE card_id IS NOT NULL AND rule LIKE 'R%%' AND sgg_cd IN "
+                                  "(SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon') GROUP BY 1, 2").fetchall():
+        out[(cd, rule)] = int(n)
+    return out
+
+
 def test_guest_401(api):
     for p in ("/survey/findings", "/survey/findings/f_R1_5219045021110530012", "/survey/parcels/5219045021110530012",
               "/survey/stats", "/survey/rules", "/survey/reports/draft?emd_cd=52190450"):
@@ -41,7 +50,7 @@ def test_other_tenant_zero(api, h_gj):
     assert _get(api, "/survey/stats?by=rule&sgg=52190", h_gj).json()["total"]["value"] in (0, None)
 
 
-def test_findings_filter_sort_pager(api, h_nw):
+def test_findings_filter_sort_pager(api, h_nw, pg):
     j = _get(api, "/survey/findings?rule=R1&priority=A&limit=5", h_nw).json()
     assert j["total"]["value"] == 759 and len(j["items"]) == 5
     assert j["items"][0]["id"] == "f_R1_5219045021110530012"
@@ -59,8 +68,12 @@ def test_findings_filter_sort_pager(api, h_nw):
     assert _get(api, "/survey/findings?rule=R9", h_nw).status_code == 400
     assert _get(api, "/survey/findings?sort=bogus", h_nw).status_code == 400
     all_ = _get(api, "/survey/findings?limit=1&rule=R1,R2,R3,R4,R5,R6", h_nw).json()     # 대장 규칙(L-*) 행 제외
-    assert all_["total"]["value"] == 20872
-    assert {k: v["value"] for k, v in all_["by_rule"].items() if k.startswith("R")} == S.README_COUNTS["by_rule"]
+    cr = _card_rows(pg)
+    want = dict(S.README_COUNTS["by_rule"])
+    for (_, rule), n in cr.items():
+        want[rule] = want.get(rule, 0) + n
+    assert all_["total"]["value"] == 20872 + sum(cr.values())
+    assert {k: v["value"] for k, v in all_["by_rule"].items() if k.startswith("R")} == want
 
 
 def test_envelopes_everywhere(api, h_nw):
@@ -116,7 +129,7 @@ def test_finding_history_and_parcel_all(api, h_nw):
     assert "OWNER_NM" not in json.dumps(p, ensure_ascii=False)
 
 
-def test_stats_equal_summary(api, h_nw):
+def test_stats_equal_summary(api, h_nw, pg):
     summ = json.loads((S.SURVEY_DIR / "namwon-parcel-emd-summary.json").read_text(encoding="utf-8"))
     by_cd: dict = {}
     for v in summ["by_emd"].values():
@@ -127,6 +140,10 @@ def test_stats_equal_summary(api, h_nw):
             a["rule"][k] = a["rule"].get(k, 0) + x
         for k, x in v["priority"].items():
             a["prio"][k] = a["prio"].get(k, 0) + x
+    for (cd, rule), n in _card_rows(pg).items():                 # 카드 판 줄도 지역 숫자에 든다
+        a = by_cd[cd]
+        a["n"] += n
+        a["rule"][rule] = a["rule"].get(rule, 0) + n
     j = _get(api, "/survey/stats?by=emd", h_nw).json()
     assert len(j["items"]) == 39
     for it in j["items"]:
@@ -135,7 +152,10 @@ def test_stats_equal_summary(api, h_nw):
         assert {k: v["value"] for k, v in it["by_rule"].items()} == a["rule"]
         assert all(it["by_priority"][k]["value"] >= n for k, n in a["prio"].items())       # 대장 규칙(L-*) 행이 더해질 수 있다
     r = _get(api, "/survey/stats?by=rule", h_nw).json()
-    assert {i["key"]: i["n"]["value"] for i in r["items"] if i["key"].startswith("R")} == S.README_COUNTS["by_rule"]
+    want = dict(S.README_COUNTS["by_rule"])
+    for (_, rule), n in _card_rows(pg).items():
+        want[rule] = want.get(rule, 0) + n
+    assert {i["key"]: i["n"]["value"] for i in r["items"] if i["key"].startswith("R")} == want
     p = _get(api, "/survey/stats?by=priority", h_nw).json()
     # 대장 규칙(L-*) 행이 같은 표에 더해진다 — 정본 R 등급은 하한, 합계는 서로 같아야 한다(숫자 한 출처)
     assert all(i["n"]["value"] >= S.README_COUNTS["by_priority"][i["key"]] for i in p["items"])

@@ -70,7 +70,7 @@ def test_imagery_options_and_fit(live, tok):
     assert items and items[0]["pick"] and sum(1 for x in items if x["pick"]) == 1     # 서버가 고를 영상이 맨 앞 · 하나
     for x in items:
         assert x["fit"] in ("ok", "rough", "no") and x["fit_text"] and x["range"] and x["footprint"]["type"] in ("Polygon", "MultiPolygon")
-        assert x["gsd_word"] and x["when"]
+        assert x["gsd_word"] and (x["when"] or "-nd-" in x["id"])     # 촬영 날짜 없이 등록한 영상(이름 -nd-)은 날짜 칸이 비어 있다(지어내지 않음 · 10-17 재검수)
     assert "path" not in r.text and "cog/" not in r.text
     other = next((x for x in items if not x["pick"] and x["fit"] != "no"), None)
     if other:
