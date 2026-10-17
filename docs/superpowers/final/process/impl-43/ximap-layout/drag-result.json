@@ -1,0 +1,68 @@
+{
+ "at": "2026-10-17 23:10:30",
+ "ok": true,
+ "dock": {
+  "l": 982,
+  "t": 317,
+  "w": 362,
+  "h": 503,
+  "free": false
+ },
+ "tools": {
+  "l": 1276,
+  "t": 68,
+  "w": 68,
+  "h": 241,
+  "free": false
+ },
+ "layout": {
+  "tb": 317,
+  "xr": 386,
+  "cl": 493,
+  "cw": 680,
+  "open": false,
+  "obstacles": 1
+ },
+ "dragged": {
+  "l": 372,
+  "t": 487,
+  "w": 362,
+  "h": 335,
+  "free": true
+ },
+ "layoutDragged": {
+  "tb": 317,
+  "xr": 96,
+  "cl": 1045,
+  "cw": 582,
+  "open": false,
+  "obstacles": 1
+ },
+ "clamped": {
+  "l": 8,
+  "t": 716,
+  "w": 362,
+  "h": 162,
+  "free": true
+ },
+ "key": [
+  "lx.ximap.statpos.v1.u_mail_test./landxi/v3/xi-clean.1440x900"
+ ],
+ "ok2": true,
+ "reloaded": {
+  "l": 8,
+  "t": 716,
+  "w": 362,
+  "h": 162,
+  "free": true
+ },
+ "home": {
+  "l": 982,
+  "t": 317,
+  "w": 362,
+  "h": 503,
+  "free": false
+ },
+ "keyAfterHome": [],
+ "errs": []
+}

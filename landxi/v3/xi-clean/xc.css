@@ -38,7 +38,6 @@
 .xc-chips--row{position:absolute;z-index:40;top:calc(100% + 8px);left:16px;height:40px;padding:0 10px 0 6px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map);max-width:calc(100% - 32px);overflow-x:auto}
 /* 줄이 떠 있는 동안 판 윗부분(HUD · 팝오버)은 한 줄만큼 내려 앉는다 */
 .k-app:has(.xc-chips--row:not([hidden])) .xc-hud{top:72px}
-.k-app:has(.xc-chips--row:not([hidden])) .xc-pop{top:64px}
 
 /* HUD — 사진 위 흰 글자 · 큰 숫자 하나 · 규칙 막대 3 */
 .xc-hud{position:absolute;z-index:6;left:28px;top:24px;pointer-events:none;max-width:min(460px,calc(100% - 56px))}
@@ -64,7 +63,7 @@
 .xc-bar-v{font:500 var(--fs-tag,14px)/1 var(--font-num);text-align:right}
 
 /* 도구 팝오버(한 번에 하나) */
-.xc-pop{position:absolute;z-index:30;left:16px;top:16px;width:300px;padding:18px 18px 16px;animation:xc-in var(--d-380) var(--e-ui)}
+.xc-pop{position:absolute;z-index:30;left:16px;top:68px;width:300px;padding:18px 18px 16px;animation:xc-in var(--d-380) var(--e-ui)}
 .xc-pop[hidden]{display:none}
 .xc-pop-h,.xa-h{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .xc-pop-h h2,.xa-h h3{flex:1;margin:0;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
@@ -75,29 +74,31 @@
 .xc-rows-p{display:grid;gap:2px}
 /* 왼쪽 위 한 줄 누르면 — 시군구 → 제공 중인 서비스 목록(원칙 275) · 서랍 폭 고정 · 길면 서랍 안에서 스크롤 · 설명 글 0 */
 .xc-nb{white-space:nowrap}   /* 서랍 제목은 '·' 경계에서만 끊긴다 */
-/* 오른쪽 서랍이 열려 있는 동안 아래 채팅 창은 서랍을 가리지 않게 — 서랍 왼쪽 공간의 가운데(지도 위 통계 때와 같은 규칙) */
-.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:calc((100% - 416px) / 2);width:min(680px,calc(100% - 448px))}
-@media (max-width:900px){.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
+/* ═══ 지도 위 배치 원칙 하나(10-17 원칙 279 — "지도 위 지저분한걸 최소화 하고 깔끔해야") — 겹침 0 · 떠 있는 것 최소
+   오른쪽 = 도구 열이 기준(right 16 · top 68). 서랍(목록 · 필지) · 도구 판(층 · 규칙 · 보고서)은 도구 열 왼쪽(--xc-xr = 오른쪽에 자리 잡은 폭 · 기본 96).
+   통계 판 · 한 줄은 도구 열 아래(onmap.css · --xc-tb). 분석 요청 칸은 왼쪽 아래. 아래 채팅 창은 비어 있는 가장 넓은 자리(app.js layoutChat → --xc-cl 가운데 · --xc-cw 폭). */
+.k-main > .k-drawer.k-drawer--in{right:var(--xc-xr,96px);top:68px}
+.k-main > .k-chat-root[data-dock]{left:var(--xc-cl,50%);width:var(--xc-cw,min(680px,calc(100% - 32px)))}
+@media (max-width:640px){.k-main > .k-drawer.k-drawer--in{right:0;top:auto}}
+/* 답 칸은 입력 줄 위로만 · 낮은 창(노트북 768)에서는 답 칸 높이를 줄여 지도가 더 보이게(10-17 "채팅영역과 지도 화면 영역이 너무 겹쳐") */
+@media (max-height:820px){.k-main > .k-chat-root[data-dock] .k-chat-dlog .k-chat-b{max-height:min(36vh,300px)}}
 .xc-board-acts{display:flex;justify-content:flex-end;margin:0 0 4px}
 .xc-board-acts .xc-board-rep{height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}   /* 제목 아래 줄 오른쪽(제목은 한 줄) */
 /* 시도별 접고 펴기(원칙 277) — 머리줄(시도 · 시군구 수 · 꺾쇠) */
-.xc-board-sido-g{border-top:1px solid var(--rule)}
-.xc-board-sido-g:first-of-type{border-top:0}
-.xc-board-sido{display:flex;align-items:center;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:12px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
-.xc-board-sido b{font:700 var(--fs-body,16px)/22px var(--font-body)}
-.xc-board-sido span{font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--sub)}
-.xc-board-sido i{margin-left:auto;width:8px;height:8px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(-45deg);transition:transform var(--d-180,180ms) var(--e-ui,ease)}
-.xc-board-sido[aria-expanded="true"] i{transform:rotate(45deg)}
-.xc-board-sido:hover{background:var(--bg-0)}
-.xc-board-sido-b{padding:0 0 6px 10px}
-.xc-board-sido-b[hidden]{display:none}
-.xc-board-grp{padding:4px 0 8px}
-.xc-board-grp + .xc-board-grp{border-top:1px solid var(--rule)}
-.xc-board-sgg{display:flex;align-items:baseline;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:8px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
-.xc-board-sgg b{font:700 var(--fs-aux,15px)/22px var(--font-body)}
-.xc-board-sgg small{font:400 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
-.xc-board-sgg:hover,.xc-board-sgg[aria-current="true"]{background:var(--bg-0)}
-.xc-board-sgg:disabled{cursor:default;color:var(--sub)}
+/* 단계 목록(10-17 원칙 280 "시군별로 다 표기하기 말고 단계를 나눠야겠다") — 1 시도 → 2 시군구 → 3 서비스 · 길잡이 줄(앞 단계로) · 한 줄 = 이름 · 수 · 꺾쇠 */
+.xc-bc{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;margin:0 0 6px;padding:0 0 10px;border-bottom:1px solid var(--rule)}
+.xc-bc-b{margin:0;padding:4px 6px;border:0;border-radius:var(--r-8);background:none;font:500 var(--fs-aux,15px)/20px var(--font-body);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.xc-bc-b:hover{background:var(--bg-0);color:var(--ink)}
+.xc-bc-s{font:400 var(--fs-aux,15px)/20px var(--font-body);color:var(--mute)}
+.xc-bc-c{padding:4px 6px;font:700 var(--fs-aux,15px)/20px var(--font-body);color:var(--ink);white-space:nowrap}
+.xc-bl{display:flex;align-items:center;gap:10px;width:calc(100% + 16px);margin:0 -8px;padding:12px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
+.xc-bl + .xc-bl{border-top:1px solid var(--rule);border-radius:0 0 var(--r-8) var(--r-8)}
+.xc-bl b{flex:1;min-width:0;font:700 var(--fs-body,16px)/22px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc-bl span{font:500 var(--fs-aux,15px)/1 var(--font-num);color:var(--sub);white-space:nowrap}
+.xc-bl i{flex:none;width:8px;height:8px;margin-right:4px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(-45deg)}
+.xc-bl:hover{background:var(--bg-0)}
+.xc-bl[aria-current="true"] b{color:var(--ink)}
+.xc-bl:disabled{cursor:default;color:var(--sub)}
 .xc-board-svcs{list-style:none;margin:0 -8px;padding:0;display:grid;gap:2px}
 .xc-board-svc{display:flex;align-items:center;gap:10px;width:100%;padding:8px 8px 8px 12px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink)}
 .xc-board-svc i{flex:none;width:10px;height:10px;border-radius:3px}
@@ -350,7 +351,7 @@
 .xc-tool[aria-disabled="true"]:hover{background:none;color:var(--sub)}
 .xc-tool[data-busy="1"] svg{animation:xc-spin 1.6s linear infinite}
 /* 도구 팝오버 = 도구 줄 왼쪽 */
-@media (min-width:641px){ .xc-pop{left:auto;right:92px} }
+@media (min-width:641px){ .xc-pop{left:auto;right:var(--xc-xr,96px)} }   /* 도구 열 왼쪽 · 통계 판이 도구 열 아래 펼쳐져 있으면 그 왼쪽(--xc-xr) */
 /* 지도 안 왼쪽 위 글자(10-14 XI맵 3차 구조 · 원칙 233 · 237) — 칸 없이 지도 위 글자 · 업무 이름 고정 없음 · 범례 표 없음 */
 .xb-hud{position:absolute;z-index:6;left:24px;top:20px;max-width:min(460px,calc(100% - 140px));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 10px rgba(0,0,0,.45);pointer-events:none}
 .xb-hud[hidden]{display:none}

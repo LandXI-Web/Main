@@ -284,7 +284,7 @@ async function boot() {
     onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },
     onShown: () => cmdk?.close({ force: true }),          // 대시보드가 서면 아래 채팅 창의 대화 칸을 접는다(입력 줄은 그대로 · 누르면 다시 펼침)
     onBack: () => setStep(2),                              // '지도로 돌아가기' = 3단계 → 2단계(지도 위 통계 판)
-    onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
+    onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
   if (S.board) { OM = createOnMap({ map, stage, host: mainEl, h,                       // 지도 위 표출(원칙 258 · 기본) — 결과 층은 그대로 두고 그 위에 색칠 · 꼬리표 · 작은 판
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
     onEnter: () => { closePop(); ED?.close(); unpin(); closeDrawer(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림) · 오른쪽 서랍(필지 카드 · 목록)은 닫는다 — 통계 한 줄 · 판이 서랍 밑에 가려지던 것(바퀴 16 재검수)
@@ -292,8 +292,9 @@ async function boot() {
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
     onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
     clsColor: (k) => userCol(k) || baseCol(k),                                              // 꼬리표 색 점 = 그 클래스 색(사람이 고른 색 먼저 · 10-17)
-    onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
+    onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
     mountStatSwitch(); }
+  mountLayout();                                                                        // 지도 위 배치 하나(원칙 279) — 도구 열 아래 · 오른쪽 쌓임 폭 · 채팅 창 자리
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
@@ -1087,48 +1088,71 @@ function boardRegs() {
   return { region, regs: regs.filter((reg) => svcRows(reg).length), services, regions, svcRows };
 }
 const regOf = (reg) => findRegion(reg.sgg_cd) || (reg.prev_cd && findRegion(reg.prev_cd)) || findRegion(reg.name) || null;
+let BL = null;   // 목록 단계 { lvl: 1 시도 · 2 시군구 · 3 서비스, sido, sgg } — 서랍이 열려 있는 동안만(10-17 원칙 280 "시군별로 다 표기하기 말고 단계를 나눠야겠다")
 function openBoardList() {
   const B = boardRegs(); if (!B) return;
-  const parts = B.region ? [B.region.name, `${nf(B.services)} 서비스 제공중`] : [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`];
-  const title = parts.join(' · ');
-  const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer.title(title) : drawerOpen(title, () => { S.list = null; });
+  const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer : drawerOpen('', () => { S.list = null; BL = null; });
   d.__kind = 'board'; S.list = null; patchRail();
-  const tEl = d.el.querySelector('.k-dr-t');                                           // 줄바꿈은 '·' 경계에서만(구 중간 꺾임 0 · §3-9)
-  if (tEl) { tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] })); tEl.classList.add('xc-board-t'); }   // 한 줄(한 단계 작은 제목 글자)
-  d.el.querySelector('.k-dr-h .xc-board-rep')?.remove();                              // 제목은 한 줄(10-17 판정 뒤 · 제목 줄의 '보고서로'가 제목을 두 줄로 꺾던 것) — '보고서로'는 제목 아래 줄 오른쪽
+  if (!B.regs.length) { boardTitle(d, [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`]); const box = h('div.xc-list.xc-board'); K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
+  // 첫 단계: 시군구 안이면 그곳의 서비스(3) · 시도가 하나면 시군구(2) · 아니면 시도(1)
+  const cur = B.region ? B.regs.find((reg) => regOf(reg)?.code === B.region.code) : null;
+  const sidos = [...new Set(B.regs.map((reg) => reg.sido || '—'))];
+  if (!BL || (BL.sido && !sidos.includes(BL.sido))) BL = cur ? { lvl: 3, sido: cur.sido || '—', sgg: cur.sgg_cd } : sidos.length === 1 ? { lvl: 2, sido: sidos[0] } : { lvl: 1 };
+  else if (cur && BL.lvl === 3 && BL.sgg !== cur.sgg_cd) BL = { lvl: 3, sido: cur.sido || '—', sgg: cur.sgg_cd };
+  renderBoardList(d, B);
+}
+/** 서랍 제목 두 구 — 줄바꿈은 '·' 경계에서만(구 중간 꺾임 0 · §3-9) · 한 줄 */
+function boardTitle(d, parts) {
+  const tEl = d.el.querySelector('.k-dr-t'); if (!tEl) return;
+  tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] })); tEl.classList.add('xc-board-t');
+  d.el.setAttribute('aria-label', parts.join(' · '));
+}
+/** 단계 그리기 — 길잡이 줄(전국 › 시도 › 시군구 · 앞 단계를 누르면 돌아감) + 그 단계의 줄(이름 · 수 · 꺾쇠) · 설명 글 0 */
+function renderBoardList(d, B) {
+  const sidoOf = (reg) => reg.sido || '—';
+  const sidos = [...new Set(B.regs.map(sidoOf))];
+  const svcN = (regs) => new Set(regs.flatMap((reg) => B.svcRows(reg).map((it) => it.svc))).size;
+  if (BL.lvl === 3 && !B.regs.some((reg) => reg.sgg_cd === BL.sgg)) BL = { lvl: 2, sido: BL.sido };
+  const inSido = B.regs.filter((reg) => sidoOf(reg) === BL.sido);
+  const reg3 = BL.lvl === 3 ? B.regs.find((reg) => reg.sgg_cd === BL.sgg) : null;
   const box = h('div.xc-list.xc-board');
-  if (!B.regs.length) { K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
   box.append(h('div.xc-board-acts', {}, h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
-  // 시도별 묶음 — 지금 지도 범위와 겹치는 시도(또는 지금 지역의 시도)는 펼친 채, 나머지는 접힘
-  let vb = null; try { const b = map.getBounds(); vb = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch { /* 지도 전 */ }
-  const inView = (reg) => !!(vb && Array.isArray(reg.bbox) && reg.bbox[0] <= vb[2] && reg.bbox[2] >= vb[0] && reg.bbox[1] <= vb[3] && reg.bbox[3] >= vb[1]);
-  const bySido = new Map();
-  for (const reg of B.regs) { const k = reg.sido || '—'; (bySido.get(k) || bySido.set(k, []).get(k)).push(reg); }
-  const groups = [...bySido.entries()];
-  for (const [sido, regs] of groups) {
-    const open = groups.length === 1 || regs.some((reg) => inView(reg) || S.region?.code === regOf(reg)?.code);
-    const body = h('div.xc-board-sido-b', { hidden: !open });
-    const head = h('button.xc-board-sido', { type: 'button', 'aria-expanded': String(open), onclick: () => { const o = head.getAttribute('aria-expanded') !== 'true'; head.setAttribute('aria-expanded', String(o)); body.hidden = !o; } },
-      h('b', { text: sido }), h('span.num', { text: `${nf(regs.length)}곳` }), h('i'));
-    box.append(h('section.xc-board-sido-g', {}, head, body));
-    for (const reg of regs) body.append(boardGroup(reg));
+  const go = (st) => { BL = st; renderBoardList(d, B); };
+  const bc = h('nav.xc-bc', { 'aria-label': '단계' });
+  const crumb = (text, st, cur) => (cur ? h('span.xc-bc-c', { text }) : h('button.xc-bc-b', { type: 'button', text, onclick: () => go(st) }));
+  const sep = () => h('span.xc-bc-s', { text: '›' });
+  if (sidos.length > 1) bc.append(crumb('전국', { lvl: 1 }, BL.lvl === 1));
+  if (BL.lvl >= 2) { if (bc.childElementCount) bc.append(sep()); bc.append(crumb(BL.sido, { lvl: 2, sido: BL.sido }, BL.lvl === 2)); }
+  if (BL.lvl === 3 && reg3) bc.append(sep(), crumb(reg3.name, null, true));
+  if (BL.lvl > 1) box.append(bc);
+  if (BL.lvl === 1) {
+    boardTitle(d, [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`]);
+    for (const sd of sidos) {
+      const regs = B.regs.filter((reg) => sidoOf(reg) === sd);
+      box.append(h('button.xc-bl', { type: 'button', onclick: () => go({ lvl: 2, sido: sd }) }, h('b', { text: sd }), h('span.num', { text: `${nf(regs.length)}곳` }), h('span.num', { text: `${nf(svcN(regs))} 서비스` }), h('i')));
+    }
+  } else if (BL.lvl === 2) {
+    boardTitle(d, [BL.sido, `${nf(inSido.length)} 시군구 · ${nf(svcN(inSido))} 서비스`]);
+    for (const reg of inSido) {
+      const r = regOf(reg);
+      box.append(h('button.xc-bl', { type: 'button', 'aria-current': S.region?.code === r?.code ? 'true' : undefined,
+        onclick: () => { go({ lvl: 3, sido: BL.sido, sgg: reg.sgg_cd }); if (r && S.region?.code !== r.code) setRegion(r, { keepDrawer: true }); } },   // 시군구를 누르면 그곳으로 날아가며 서비스 단계로
+        h('b', { text: reg.name }), h('span.num', { text: `${nf(B.svcRows(reg).length)} 서비스` }), h('i')));
+    }
+  } else {
+    boardTitle(d, [reg3.name, `${nf(B.svcRows(reg3).length)} 서비스 제공중`]);
+    box.append(boardGroup(reg3, B));
   }
   d.set(box);
-  X.boardList = { regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-board-svc').length, sido: groups.length, open: [...box.querySelectorAll('.xc-board-sido[aria-expanded="true"] b')].map((b) => b.textContent) };
+  X.boardList = { regions: B.regs.length, services: B.services, level: BL.lvl, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-bl, .xc-board-svc').length, open: BL.lvl >= 2 ? [BL.sido] : [] };
 }
-/** 시군구 한 묶음 — 이름(누르면 이동) + 서비스 줄 */
-function boardGroup(reg) {
-  const B = boardRegs();
-  {
-    const r = regOf(reg);
-    const rows = B.svcRows(reg).map((it) => h('li', {}, h('button.xc-board-svc', { type: 'button', dataset: { svc: it.svc, sgg: reg.sgg_cd }, 'aria-current': S.region?.code === r?.code && BD?.task === taskOf(it.name) ? 'true' : undefined,
-      onclick: (e) => showBoardSvc(reg, it, e.currentTarget) },
-      h('i', { style: { background: BD?.colorOf?.(taskOf(it.name)) || baseCol(taskOf(it.name)) } }), h('span', { text: it.name }), h('b.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }))));
-    return h('section.xc-board-grp', {},
-      h('button.xc-board-sgg', { type: 'button', 'aria-current': S.region?.code === r?.code ? 'true' : undefined, disabled: !r, onclick: () => { if (r) setRegion(r, { keepDrawer: true }); } },
-        h('b', { text: reg.name })),
-      h('ul.xc-board-svcs', {}, ...rows));
-  }
+/** 시군구 하나의 서비스 줄(색 점 · 이름 · 결과 수) — 누르면 그 결과만 지도에 · 다시 누르면 원래대로 */
+function boardGroup(reg, B = boardRegs()) {
+  const r = regOf(reg);
+  const rows = B.svcRows(reg).map((it) => h('li', {}, h('button.xc-board-svc', { type: 'button', dataset: { svc: it.svc, sgg: reg.sgg_cd }, 'aria-current': S.region?.code === r?.code && BD?.task === taskOf(it.name) ? 'true' : undefined,
+    onclick: (e) => showBoardSvc(reg, it, e.currentTarget) },
+    h('i', { style: { background: BD?.colorOf?.(taskOf(it.name)) || baseCol(taskOf(it.name)) } }), h('span', { text: it.name }), h('b.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }))));
+  return h('section.xc-board-grp', {}, h('ul.xc-board-svcs', {}, ...rows));
 }
 /** 서비스 하나 → 그 시군구로 날아가 그 서비스 결과만 지도에(기존 결과 켜기 재사용: 전국 결과 화면 = 업무 거르기 · 기관 화면 = 그 결과 층만) */
 async function showBoardSvc(reg, it, btn) {
@@ -1236,7 +1260,8 @@ function mountHudVariants() {
 }
 /* '통계' 단추(10-15 원칙 262 "통계 대시보드는 눌러도 크게 뭐가 안변하네?") — 단계 셋이 단추에 그대로 보이고(지도만 · 지도 위 · 대시보드 · 지금 단계가 짙음), 누르면 그 단계로 바뀐다.
    통계가 없을 때는 숨김(누를 것이 없으니). 옛 '지도 위 ↔ 대시보드' 기억은 쓰지 않는다 */
-let LASTSPEC = null, SWB = null;
+let LASTSPEC = null, SWB = null, KEEPCAM = false;
+const DEV = Q.get('dev') === '1';
 const NARROW_W = 1400;   // 이 창 폭 이하 = 좁은 화면(1366 노트북 등) — 통계 판 기본 접힘(원칙 273)
 const STEPV = [['only', 1, '지도만'], ['map', 2, '지도 위'], ['dash', 3, '대시보드']];
 function mountStatSwitch() {
@@ -1253,7 +1278,7 @@ function mountStatSwitch() {
 }
 function paintStatSwitch() {
   if (!SWB) return;
-  SWB.hidden = !STEP || !LASTSPEC;
+  SWB.hidden = !DEV || !STEP || !LASTSPEC;   // 지도 위 떠 있는 것 최소(10-17 원칙 279) — 단계 단추는 ?dev=1 에만 · 단계는 한 줄 · 판 · 대시보드 단추로 오간다
   SWB.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.step) === STEP)));
   X.statStep = STEP;
 }
@@ -2013,9 +2038,63 @@ function hasAnswer() {
 /* ═══ 서랍: 목록 · 필지 ═══ */
 function closeDrawer() { if (S.drawer) { const d = S.drawer; S.drawer = null; d.close(true); } stage.geo('sel', null, 'focus'); stage.pad({}); }
 function drawerOpen(title, onClose) {
+  if (STEP) leaveStats(false);                                                            // 오른쪽 자리는 하나(원칙 279) — 서랍이 열리면 지도 위 통계는 걷는다(통계가 열릴 때 서랍을 닫는 것과 짝) · 카메라는 그대로
   const d = K.drawer({ title, host: mainEl, slot: 'right', onClose: () => { if (S.drawer === d) S.drawer = null; stage.geo('sel', null, 'focus'); stage.pad({}); onClose?.(); patchRail(); } });
-  S.drawer = d; stage.pad(MOBILE() ? { bottom: Math.round(innerHeight * 0.5) } : { right: 416 });
+  S.drawer = d; stage.pad(MOBILE() ? { bottom: Math.round(innerHeight * 0.5) } : { right: 496 });   // 서랍 392 + 도구 열 왼쪽(96) + 틈 8
   return d;
+}
+/** 지도 위 통계 걷기 — cam=false 면 카메라를 되돌리지 않는다(서랍이 자리를 차지할 때) */
+function leaveStats(cam = true) { KEEPCAM = !cam; try { setStep(0); } finally { KEEPCAM = false; } }
+
+/* ═══ 지도 위 배치 하나(10-17 원칙 279 "지도 위 지저분한걸 최소화 하고 깔끔해야 · 서로 겹치지 않게") ═══
+   도구 열(right 16 · top 68)이 기준. --xc-tb = 도구 열 아래(통계 판 · 한 줄의 기본 자리) · --xc-xr = 오른쪽에 자리 잡은 폭(도구 열 96 · 도구 열 아래 통계가 펼쳐져 있으면 그 폭 — 서랍 · 도구 판은 그 왼쪽)
+   --xc-cl · --xc-cw = 아래 채팅 창의 가운데 · 폭: 아래 띠(답 칸이 펼쳐질 수 있는 높이)에 떠 있는 것(서랍 · 분석 요청 칸 · 통계 판 · 도구 열 …) 사이 가장 넓은 빈 자리 · 폭 ≤ 680. 겹치는 것이 바뀔 때마다 다시 잰다(변화 감시 · 창 크기). */
+const LV = {};
+let LVC = false;
+function setVar(k, v) { if (LV[k] === v) return; LV[k] = v; LVC = true; mainEl.style.setProperty(k, v); }
+let layQ = 0, layT = 0;
+function layout() { cancelAnimationFrame(layQ); layQ = requestAnimationFrame(layoutNow); clearTimeout(layT); layT = setTimeout(layoutNow, 260); }   // 바로 한 번 + 움직임(180ms)이 끝난 뒤 한 번
+function layoutNow() {
+  if (!mainEl?.isConnected) return;
+  const hr = mainEl.getBoundingClientRect(), W = hr.width, H = hr.height;
+  const rect = (el) => { const r = el.getBoundingClientRect(); return { x0: r.left - hr.left, y0: r.top - hr.top, x1: r.right - hr.left, y1: r.bottom - hr.top, w: r.width, h: r.height }; };
+  const vis = (el) => { if (!el) return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  const tb = toolsEl && vis(toolsEl) ? rect(toolsEl).y1 + 8 : 68;
+  setVar('--xc-tb', Math.round(tb) + 'px');
+  let xr = 96;
+  for (const el of mainEl.querySelectorAll('.xo:not([hidden]):not(.pn-collapsed):not(.is-free), .xo-mini:not([hidden])')) if (vis(el)) xr = Math.max(xr, 16 + el.getBoundingClientRect().width + 8);
+  setVar('--xc-xr', Math.round(xr) + 'px');
+  const root = mainEl.querySelector('.k-chat-root[data-dock]');
+  if (!root) return;
+  if (W <= 900) { setVar('--xc-cl', '50%'); setVar('--xc-cw', 'calc(100% - 24px)'); return; }
+  const open = root.hasAttribute('data-turns') && !root.hasAttribute('data-fold');
+  const band = H - (open ? 600 : 140);
+  const iv = [];
+  for (const el of mainEl.querySelectorAll('.k-drawer.is-open, .xc-pop:not([hidden]), .xa-card:not([hidden]), .xo:not([hidden]):not(.pn-collapsed), .xo-mini:not([hidden]), .xc-tools, .xv-sw:not([hidden]), .xo-sw:not([hidden]), .xe-card:not([hidden]), .xn-hud:not([hidden]), .xc-cmp:not([hidden])')) {
+    if (!vis(el)) continue; const r = rect(el); if (r.w < 2 || r.h < 2 || r.y1 < band) continue;
+    iv.push([r.x0 - 12, r.x1 + 12]);
+  }
+  iv.sort((a, b) => a[0] - b[0]);
+  const gaps = []; let x = 16;
+  for (const [a, b] of iv) { if (a > x) gaps.push([x, a]); x = Math.max(x, b); }
+  if (W - 16 > x) gaps.push([x, W - 16]);
+  const g = gaps.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0] || [16, W - 16];
+  const cw = Math.max(280, Math.min(680, g[1] - g[0] - 16));
+  const cl = Math.min(Math.max((g[0] + g[1]) / 2, 16 + cw / 2), W - 16 - cw / 2);
+  setVar('--xc-cl', Math.round(cl) + 'px'); setVar('--xc-cw', Math.round(cw) + 'px');
+  X.layout = { tb: Math.round(tb), xr: Math.round(xr), cl: Math.round(cl), cw: Math.round(cw), open, obstacles: iv.length };
+  if (LVC) { LVC = false; mainEl.dispatchEvent(new CustomEvent('xc:layout', { detail: X.layout })); }   // 자리가 실제로 바뀐 때만 — 지도 위 꼬리표가 새 배치를 피해 다시 자리 잡게(onmap.js)
+}
+function mountLayout() {
+  X.relayout = layoutNow;   // 실증 기록용(화면엔 없음)
+  layoutNow();
+  const ro = new ResizeObserver(layout); ro.observe(mainEl);
+  for (const el of mainEl.querySelectorAll('.xo, .xo-mini, .xa-card, .xc-pop, .xc-tools')) ro.observe(el);   // 판 폭이 바뀌는 동안(끌기 · 펼침)도 따라 잰다
+  new MutationObserver((ms) => { if (ms.some((m) => m.target !== mainEl || m.attributeName !== 'style')) layout(); }).observe(mainEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-fold', 'data-turns', 'data-state'] });
+  document.addEventListener('kit:drawer', layout);
+  mainEl.addEventListener('transitionend', layout, true);                                // 판 폭 · 서랍 등장 움직임이 끝난 자리로
+  mainEl.addEventListener('panes:resize', layout);                                      // 손잡이로 폭을 끌 때
+  addEventListener('resize', layout);
 }
 function openList() {
   const n = S.need?.value;

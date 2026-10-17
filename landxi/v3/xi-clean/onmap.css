@@ -1,21 +1,27 @@
-/* XI맵 통계 '지도 위' 표출(10-15 원칙 258) — 지도는 그대로 전체, 오른쪽 가장자리에 작은 떠 있는 판(접고 펼침) · 지도 위 숫자 꼬리표 · 뜻 확인 한 줄.
-   밝은 톤 · 흰 카드 16 · 그림자(지도 위 카드) · 글자는 토큰 단계만(꼬리표 14 · 보조 15 · 본문 16 · 제목 2 20 · 숫자 32). */
+/* XI맵 통계 '지도 위' 표출(10-15 원칙 258) — 지도는 그대로 전체, 작은 떠 있는 판(접고 펼침) · 지도 위 숫자 꼬리표 · 뜻 확인 한 줄.
+   밝은 톤 · 흰 카드 16 · 그림자(지도 위 카드) · 글자는 토큰 단계만(꼬리표 14 · 보조 15 · 본문 16 · 제목 2 20 · 숫자 32).
+   10-17 원칙 279 · 280: 판 · 한 줄의 기본 자리 = 오른쪽 도구 열의 '분석' 아래(도구 열에 붙은 판 · right 16 · top = 도구 열 아래 --xc-tb) · 아래 끝 16.
+   판 머리를 끌면 자유롭게 옮겨지고(.is-free · --xo-l · --xo-t) 놓은 자리는 사람 · 창 크기별로 기억 · '제자리로' 하나 · 화면 밖으로 못 나감(onmap.js). */
 [data-onmap="1"] > :is(.xb-hud,.xc-hud,.xb-stats,.xv-a,.xv-b,.xn-leg,.xn-hud){display:none!important}
 [data-onmap="1"] .xn-what{display:none}
 
-/* ── 판(오른쪽 · 도구 열 왼쪽 · 위 영상 단추 아래 · 아래 채팅 창 위) ── */
-.xo{position:absolute;z-index:21;right:96px;top:68px;bottom:96px;width:var(--xo-w,360px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px 2px 0}
+/* ── 판(오른쪽 · 도구 열 아래 · 아래 끝 16) ── */
+.xo{position:absolute;z-index:21;right:16px;top:var(--xc-tb,324px);bottom:16px;width:var(--xo-w,360px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px 2px 0}
 .xo[hidden]{display:none}
 .xo > *{pointer-events:auto;flex:none}
 @media (min-width:1600px){.xo{width:var(--xo-w,400px)}}
-@media (min-width:2200px){.xo{width:var(--xo-w,440px);right:104px}}
+@media (min-width:2200px){.xo{width:var(--xo-w,440px)}}
+/* 끌어 옮긴 판 — 놓은 자리(판 안 좌표) · 아래는 화면 끝까지만 */
+.xo.is-free{right:auto;bottom:auto;left:var(--xo-l,16px);top:var(--xo-t,68px);max-height:var(--xo-mh,calc(100% - 84px))}
+.xo.is-drag,.xo.is-drag *{transition:none!important}
+.xo.is-drag .xo-card{animation:none}
 /* 판 폭 손잡이(공용 부품 panes · 판 왼쪽 가장자리) — 판 위에 · 접힘 = 1단계(한 줄만).
    10-17 칸조절 2: 접히면 손잡이를 숨긴다(한 줄의 '통계 보기'가 펼치기 — 손잡이 단추가 한 줄의 닫기 × 와 겹치던 것) · 판 폭은 부드럽게(끄는 동안은 바로) */
 .k-main > .pn-h{z-index:23}
 .k-main > .pn-h.is-folded{display:none}
 .xo.pn-pane{transition:width var(--d-180,180ms) var(--e-ui,ease)}
-/* ── 1단계 한 줄(지도에만 가시화 · 원칙 262) — 제목 · 큰 숫자 · '통계 보기' · 닫기 · 오른쪽 위 판 자리 ── */
-.xo-mini{position:absolute;z-index:21;right:96px;top:68px;display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100% - 300px));height:48px;padding:0 6px 0 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:xo-in .55s var(--e-cam) both}
+/* ── 1단계 한 줄(지도에만 가시화 · 원칙 262) — 제목 · 큰 숫자 · '통계 보기' · 닫기 · 판과 같은 자리(도구 열 아래) ── */
+.xo-mini{position:absolute;z-index:21;right:16px;top:var(--xc-tb,324px);display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100% - 300px));height:48px;padding:0 6px 0 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:xo-in .55s var(--e-cam) both}
 .xo-mini[hidden]{display:none}
 .xo-mini .t{font:600 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xo-mini .v{font:800 var(--fs-t2,20px)/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
@@ -23,10 +29,15 @@
 .xo-mini-b{height:36px;padding:0 14px;border:0;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 var(--fs-aux,15px)/1 var(--font-body);cursor:pointer;white-space:nowrap}
 .xo-mini-b:hover{background:var(--ink-2)}
 .xo-mini .xo-x{margin:0}
-@media (min-width:2200px){.xo-mini{right:104px}}
 .xo-card{background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);padding:16px 18px;animation:xo-in .55s var(--e-cam) both}
 @keyframes xo-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
-.xo-ht{display:flex;align-items:flex-start;gap:8px}
+.xo-ht{display:flex;align-items:flex-start;gap:8px;cursor:grab;-webkit-user-select:none;user-select:none;touch-action:none}
+.xo.is-drag .xo-ht{cursor:grabbing}
+.xo-ht button{cursor:pointer}
+/* '제자리로' — 끌어 옮긴 뒤에만(기본 자리 = 도구 열 아래) */
+.xo-home{display:none;flex:none;height:28px;margin-top:-2px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink-2);white-space:nowrap}
+.xo.is-free .xo-home{display:inline-flex;align-items:center}
+.xo-home:hover{background:var(--bg-0);color:var(--ink)}
 .xo-ht h2{flex:1;margin:0;font:700 var(--fs-t2,20px)/28px var(--font-display);letter-spacing:-.01em;color:var(--ink);text-wrap:balance;word-break:keep-all}
 .xo-x{flex:none;width:32px;height:32px;margin:-4px -8px 0 0;border:0;border-radius:var(--r-8);background:none;font:300 var(--fs-t1,28px)/1 var(--font-body);color:var(--sub);cursor:pointer}
 .xo-x:hover{background:var(--bg-0);color:var(--ink)}
@@ -162,7 +173,7 @@
 .xo-mk:has(.xo-tag.is-on),.xo-mk:has(.xo-tag.is-hv){z-index:3}
 
 /* ── 뜻 확인 — 아래 채팅 창 위 한 줄(지역 · 업무 · 비교 → 융합 재료 ✓) ── */
-.xo-mean{position:absolute;z-index:31;left:50%;bottom:140px;transform:translate(-50%,8px);width:min(640px,calc(100% - 32px));padding:12px 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);display:grid;gap:8px;opacity:0;transition:opacity .25s,transform .25s var(--e-ui)}
+.xo-mean{position:absolute;z-index:31;left:var(--xc-cl,50%);bottom:140px;transform:translate(-50%,8px);width:var(--xc-cw,min(640px,calc(100% - 32px)));padding:12px 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);display:grid;gap:8px;opacity:0;transition:opacity .25s,transform .25s var(--e-ui)}
 .xo-mean[hidden]{display:none}
 .xo-mean.in{opacity:1;transform:translate(-50%,0)}
 .xo-mean .a,.xo-mean .b{display:flex;flex-wrap:wrap;gap:6px}
@@ -189,21 +200,3 @@
   .xo-sw{display:none}
 }
 @media (prefers-reduced-motion:reduce){.xo-card,.xo-tag,.xo-mini{animation:none}.xo-live i{animation:none}}
-
-/* 지도 위 통계 동안 아래 채팅 창은 판을 가리지 않게 — 판 왼쪽 공간의 가운데 */
-[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - var(--xo-w,360px) - 96px) / 2);width:min(680px,calc(100% - var(--xo-w,360px) - 128px))}
-@media (min-width:1600px){[data-onmap="1"] .k-chat-root[data-dock]{left:calc((100% - var(--xo-w,400px) - 96px) / 2);width:min(680px,calc(100% - var(--xo-w,400px) - 128px))}}
-@media (max-width:900px){[data-onmap="1"] .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
-/* 왼쪽 아래 '통계' 단추(.xo-sw)가 떠 있으면 채팅 창(후보 칩 · 답 칸 포함)은 그 단추 오른쪽 공간에서 — 1366 에서 후보 칩 · 답 칸이 단추를 덮던 것(바퀴 16 재검수).
-   넓은 화면(가운데가 이미 단추 오른쪽)은 그대로 · 공간이 모자라면 판 쪽으로 붙이되 판은 가리지 않음(최소 280) */
-@media (min-width:901px){
-  [data-onmap="1"]:has(.xo-sw:not([hidden])) .k-chat-root[data-dock]{--xo-cw:max(280px,min(680px,calc(100% - var(--xo-w,360px) - 112px - var(--xo-swr,436px))));width:var(--xo-cw);
-    left:min(max(calc(var(--xo-swr,436px) + var(--xo-cw) / 2),calc((100% - var(--xo-w,360px) - 96px) / 2)),calc(100% - var(--xo-w,360px) - 112px - var(--xo-cw) / 2))}
-}
-@media (min-width:1600px){
-  [data-onmap="1"]:has(.xo-sw:not([hidden])) .k-chat-root[data-dock]{--xo-cw:max(280px,min(680px,calc(100% - var(--xo-w,400px) - 112px - var(--xo-swr,436px))));
-    left:min(max(calc(var(--xo-swr,436px) + var(--xo-cw) / 2),calc((100% - var(--xo-w,400px) - 96px) / 2)),calc(100% - var(--xo-w,400px) - 112px - var(--xo-cw) / 2))}
-}
-
-/* 지도 위 통계 동안 왼쪽 아래 단추 둘은 채팅 입력 줄 위로 */
-[data-onmap="1"] .xv-sw,[data-onmap="1"] .xo-sw{bottom:96px}
