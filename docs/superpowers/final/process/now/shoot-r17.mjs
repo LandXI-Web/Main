@@ -155,11 +155,15 @@ async function staff() {
   await scene('list', async () => {
     await p.setViewportSize({ width: 1440, height: 900 });
     await homeX(APP);
-    await p.locator('.xb-hud').click(); await sleep(2500);
+    await p.locator('.xb-hud').click(); await wf(() => document.querySelectorAll('.xc-bl').length > 0, null, 20000); await sleep(1200);
     await shot('now-xi-list-lvl1');
-    const g = p.locator('.xc-board-grp, .xc-board-sido, .xc-board-sgg').first();
-    if (await g.count()) { await g.click().catch(() => {}); await sleep(1500); }
+    LOG.lvl1 = await p.evaluate(() => document.querySelectorAll('.xc-bl').length);
+    await p.locator('.xc-bl').first().click(); await sleep(1800);
+    LOG.lvl2 = await p.evaluate(() => ({ crumb: !!document.querySelector('.xc-bc'), rows: document.querySelectorAll('.xc-bl').length, title: document.querySelector('.k-dr-t')?.innerText }));
     await shot('now-xi-list-lvl2');
+    await p.locator('.xc-bl').first().click(); await wf(() => document.querySelectorAll('.xc-board-svc').length > 0, null, 30000); await sleep(1500);
+    LOG.lvl3 = await p.evaluate(() => ({ svc: document.querySelectorAll('.xc-board-svc').length, title: document.querySelector('.k-dr-t')?.innerText }));
+    await shot('now-xi-list-lvl3');
   });
   await scene('chat', async () => {
     await homeX(APP);
@@ -217,6 +221,20 @@ async function ov() {
     await p.locator('.gl-tab', { hasText: 'Sprawl' }).click(); await sleep(2500);
     LOG.sprawl = await ST();
     await shot('now-ov-sprawl');
+  });
+  await scene('chips', async () => {
+    const t = Date.now();
+    await p.goto(`${OVS}${V}global/`, { waitUntil: 'domcontentloaded' });
+    await until((s) => s.big === 'ok' || s.big === 'none', 90000); LOG.coldSec = +((Date.now() - t) / 1000).toFixed(1); await sleep(1200);
+    await shot('now-ov-cold-first');
+    const askBtn = p.locator('.gl-ask:visible, button:has-text("XI ChatGEO"):visible, a:has-text("XI ChatGEO"):visible, [aria-label*="ChatGEO"]:visible').first();
+    if (!(await p.locator('.k-ck-i:visible').count()) && (await askBtn.count())) await askBtn.click();
+    await p.waitForSelector('.k-chat-chip', { state: 'visible', timeout: 15000 }).catch(() => null); await sleep(800);
+    LOG.chips = await p.locator('.k-chat-chip:visible').allInnerTexts().catch(() => []);
+    await shot('now-ov-chips');
+    await p.locator('.k-chat-chip:visible').first().click(); await sleep(2500);
+    await p.waitForFunction(() => document.querySelector('.k-chat')?.dataset.state !== 'busy', null, { timeout: 120000 }).catch(() => {}); await sleep(1500);
+    await shot('now-ov-chip-answer');
   });
 }
 

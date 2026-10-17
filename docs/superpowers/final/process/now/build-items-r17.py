@@ -85,8 +85,10 @@ A = []
 for it in load('decisions-r17'):
     if it['id'] == '배포이름-적용':
         continue
-    shots = [x for x in (ev('decisions-r17', s, 'dec-') for s in it['shots']) if x]
-    A.append(dict(id=it['id'], t=it['t'], shots=shots, opts=DONE, where=it['where'], what=it['what'] + when('decisions-r17', it['shots'])))
+    LD = {'해외-첫화면속도': ['now-ov-cold-first'], '해외군-추천질문-고침': ['now-ov-chips', 'now-ov-chip-answer']}
+    lv = [b for b in LD.get(it['id'], []) if has(b)]
+    shots = [S(b) for b in lv] + [x for x in (ev('decisions-r17', s, 'dec-') for s in it['shots']) if x]
+    A.append(dict(id=it['id'], t=it['t'], shots=shots, opts=DONE, where=it['where'], what=it['what'] + (' ' + T(*lv) + ' 앞쪽 그림은 오늘 바깥 주소에서 새 브라우저로 찍은 것입니다.' if lv else '') + when('decisions-r17', it['shots'])))
 # ── 이름 · 로고 · 모토 (brand-r17) — 이 폴더 항목에는 보는 곳 · 설명이 없어 여기서 채운다
 BR = {
     '로고-같게': ([[APP + '/landxi/v3/login/', '로그인 전', '왼쪽 위 글자'], [APP + '/landxi/v3/main/', '로그인 전', '왼쪽 위 글자']], '로그인과 메인 왼쪽 위 LAND-XI PLATFORM 글자 · 크기 · 자리를 같게 맞췄습니다. 전 · 후 그림으로 비교해 주세요.'),
@@ -114,7 +116,7 @@ SIAN = None
 for it in load('ximap-layout'):
     if it['id'].endswith('-시안'):
         SIAN = it; continue
-    live = Sopt('now-xi-list-lvl1') if it['id'] == '왼쪽위-단계' else []
+    live = Sopt('now-xi-list-lvl1') + Sopt('now-xi-list-lvl2') + Sopt('now-xi-list-lvl3') if it['id'] == '왼쪽위-단계' else []
     A.append(dict(id=it['id'], t=it['t'], shots=live + evlist('ximap-layout', it['evidence'], 'xl-'), opts=DONE,
                   where=[[XI, STAFF, '지도 위 · 아래 XI ChatGEO']], what=it['now'] + when('ximap-layout', it['evidence'])))
 _dec = {x['id'] for x in load('decisions-r17')}
@@ -137,6 +139,10 @@ Q.append(dict(id='해외-줄어듦빨강', t='해외 첫 화면의 작황 하락
               opts=['그대로', '되돌림'], where=[[OVS + '/', OV, 'Season 탭(작황 하락) · Sprawl 탭']],
               now='이전에는 줄어든 칸이 연한 색이라 멀리서 잘 안 보였습니다(첫 그림 옛 화면). 지금은 붉은 칸으로 또렷하게 보입니다(둘째 그림은 오늘 바깥 주소). 셋째는 Sprawl 탭입니다. ' + T('now-ov-crop-drop', 'now-ov-sprawl'),
               prop="그대로 쓰면 이 빨강을 유지하고, '되돌림'이면 이전 색으로 돌립니다."))
+Q.append(dict(id='해외-처음방문', t='해외 첫 화면 — 처음 방문 때 지구본에서 나라, 군으로 날아가는 장면을 어떻게 할까요', shots=Sopt('now-ov-cold-first'),
+              opts=['바로 군으로(지금)', '날아가는 장면 되살림', '짧게(1초)'], where=[[OVS + '/landxi/v3/global/', OV, '처음 여는 브라우저로 첫 화면']],
+              now='처음 방문 때 지구본에서 나라, 군으로 날아가는 장면(10-15 결정)을 빼고 바로 군으로 열면 숫자가 6초 빨리 보입니다. 지금은 바로 군으로 열립니다(그림). ' + T('now-ov-cold-first'),
+              prop='세 가지 중에 골라 주세요: 바로 군으로 열기(지금) · 날아가는 장면 되살리기(숫자가 6초 늦게 보임) · 날아가는 장면을 1초로 줄이기.'))
 Q.append(dict(id='제안-맞춤대시보드', t='제안: 맞춤 대시보드(칸 끌기 · 크기 · 달력)를 LX 관리자 · 기관 첫 화면에도', shots=Sopt('now-dash-staff') + Sopt('now-dash-admin') + Sopt('now-dash-gov'),
               opts=['둘 다', '관리자만', '기관만', '직원만 두기'], where=[[APP + '/landxi/v3/lx-console/', STAFF, 'LX 직원 대시보드'], [ADMIN + '/', ADM, 'LX 관리자 대시보드'], [ORG + '/', GOV, '기관 첫 화면']],
               now='칸 끌어 바꾸기 · 크기 조절 · 달력은 LX 직원 대시보드에만 있습니다(첫 그림). 관리자(둘째)와 기관(셋째)은 고정 배치입니다. ' + T('now-dash-staff', 'now-dash-admin', 'now-dash-gov'),
