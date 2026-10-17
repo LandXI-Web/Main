@@ -40,7 +40,7 @@ CLOUD_MAX = 70                               # 장면 전체 구름 %(STAC) — 
 MAX_ITEMS = 6                                # 달마다 · MGRS 칸마다 SCL 을 볼 장면 수 상한(구름 적은 순)
 BLOCK = 2048                                 # 읽기 조각(화소) — 조각마다 스레드 하나
 RES = 10
-READ_TRIES = 8
+READ_TRIES = 12
 
 
 @dataclass
@@ -201,7 +201,7 @@ def read_block(href: str, grid: Grid, r0: int, c0: int, h: int, w: int, nearest:
                 pass
             if k == READ_TRIES - 1:
                 raise
-            time.sleep(min(60, 4 * 2 ** k))         # 링크가 붐비면 열기 · 읽기가 끊긴다('does not exist' 로도 나옴) — 길게 기다렸다 다시
+            time.sleep(min(120, 4 * 2 ** k))         # 링크가 붐비면 열기 · 읽기가 끊긴다('does not exist' 로도 나옴) — 길게 기다렸다 다시
     return None
 
 
@@ -232,7 +232,6 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
     """그 달 합성 (6, H, W) uint16 — 0 = 맑은 화소 없음.
     ① 구름 적은 후보 장면들의 SCL 을 한꺼번에 읽고(작음 · 20 m) ② 메모리에서 장면을 고르고(화소마다 맑은 관측 최대 2개)
     ③ 고른 장면 × 띠 × 조각을 한꺼번에 읽어 더한다 — 원격 읽기는 대기 시간이 길어 한 장면씩 차례로 읽으면 느리다."""
-    import threading as _th
     from shapely.geometry import box
     blocks = blocks if blocks is not None else blocks_of(grid)
     st = stats if stats is not None else {}
@@ -294,21 +293,40 @@ def month_composite(grid: Grid, year: int, month: int, *, blocks=None, pool: Thr
                 log(f"  {year}-{month:02d} {it['id']} 구름 {it['properties'].get('eo:cloud_cover', 0):.0f}% · 2개 {full / max(1, need_total):.1%}")
         del scl
         acc = np.zeros((len(BANDS), grid.h, grid.w), np.float32)
-        locks = {(bi, bk): _th.Lock() for bi in range(len(BANDS)) for bk in blocks}
-
-        def add(href, bi, bk, ok):
-            a = read_block(href, grid, *bk, False)
-            if a is None:
-                return
-            r0, c0, h, w = bk
-            m = ok & (a > 0)
-            with locks[(bi, bk)]:
+        # 장면마다 띠 × 조각을 모두 받은 뒤에만 더한다 — 한 띠라도 끝내 못 받으면 그 장면은 빼고(고를 때 센 관측도 되돌림) 나머지로 합성
+        # (10-16 03:42 실측: 링크가 붐벼 장면 하나의 B11 을 못 받아 칸 합성 전체가 실패했다)
+        futs = [(ci, bi, bk, ok, pool.submit(read_block, it["assets"][band]["href"], grid, *bk, False))
+                for ci, (it, take) in enumerate(chosen) for bi, band in enumerate(BANDS) for bk, ok in take]
+        by_item: dict = {}
+        for f in futs:
+            by_item.setdefault(f[0], []).append(f)
+        dropped = []
+        for ci, lst in by_item.items():
+            got = []
+            bad = False
+            for _, bi, bk, ok, fu in lst:
+                try:
+                    got.append((bi, bk, ok, fu.result()))
+                except Exception:  # noqa: BLE001
+                    bad = True
+            if bad:
+                dropped.append(chosen[ci][0]["id"])
+                for bk, ok in chosen[ci][1]:
+                    r0, c0, h, w = bk
+                    cnt[r0:r0 + h, c0:c0 + w] -= ok.astype(np.uint8)
+                continue
+            for bi, bk, ok, a in got:
+                if a is None:
+                    continue
+                r0, c0, h, w = bk
+                m = ok & (a > 0)
                 sub = acc[bi, r0:r0 + h, c0:c0 + w]
                 sub[m] += a[m]
-        futs = [pool.submit(add, it["assets"][band]["href"], bi, bk, ok)
-                for it, take in chosen for bi, band in enumerate(BANDS) for bk, ok in take]
-        for fu in futs:
-            fu.result()
+        if dropped:
+            chosen = [x for x in chosen if x[0]["id"] not in dropped]
+            st.setdefault("dropped", []).extend(dropped)
+            if log:
+                log(f"  {year}-{month:02d} 끝내 못 받은 장면 뺌: {dropped}")
         out = np.zeros((len(BANDS), grid.h, grid.w), np.uint16)
 
         def fin(job):

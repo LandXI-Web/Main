@@ -151,6 +151,28 @@ def refetch(cd: str, months: list[int]):
         s2.BANDS = old
 
 
+def mosaic(files, out_path, res):
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.merge import merge
+    from rasterio.vrt import WarpedVRT
+    srcs = [rasterio.open(f) for f in files]
+    vrts = [WarpedVRT(s, crs="EPSG:4326", resampling=Resampling.bilinear, nodata=0) for s in srcs]
+    arr, tr = merge(vrts, res=res, nodata=0, method="first")
+    for v in vrts:
+        v.close()
+    for s in srcs:
+        s.close()
+    prof = {"driver": "GTiff", "dtype": "uint8", "count": 3, "width": arr.shape[2], "height": arr.shape[1], "crs": "EPSG:4326",
+            "transform": tr, "nodata": 0, "tiled": True, "blockxsize": 512, "blockysize": 512, "compress": "jpeg", "jpeg_quality": 88,
+            "photometric": "ycbcr", "BIGTIFF": "IF_SAFER"}
+    with rasterio.open(out_path, "w", **prof) as d:
+        d.write(arr)
+        d.write_mask(((arr > 0).any(0) * 255).astype(np.uint8))
+        d.build_overviews([2, 4, 8, 16, 32], Resampling.average)
+    return out_path
+
+
 def finish():
     import rasterio
     from rasterio.enums import Resampling
@@ -192,22 +214,6 @@ def finish():
     keep = []
     res_deg = 10 / 111_320
 
-    def mosaic(files, out_path, res):
-        srcs = [rasterio.open(f) for f in files]
-        vrts = [WarpedVRT(s, crs="EPSG:4326", resampling=Resampling.bilinear, nodata=0) for s in srcs]
-        arr, tr = merge(vrts, res=res, nodata=0, method="first")
-        for v in vrts:
-            v.close()
-        for s in srcs:
-            s.close()
-        prof = {"driver": "GTiff", "dtype": "uint8", "count": 3, "width": arr.shape[2], "height": arr.shape[1], "crs": "EPSG:4326",
-                "transform": tr, "nodata": 0, "tiled": True, "blockxsize": 512, "blockysize": 512, "compress": "jpeg", "jpeg_quality": 88,
-                "photometric": "ycbcr", "BIGTIFF": "IF_SAFER"}
-        with rasterio.open(out_path, "w", **prof) as d:
-            d.write(arr)
-            d.write_mask(((arr > 0).any(0) * 255).astype(np.uint8))
-            d.build_overviews([2, 4, 8, 16, 32], Resampling.average)
-        return out_path
     by_ob: dict = {}
     for cd, name, a1, img in cells:
         by_ob.setdefault(a1, []).append(cd)
@@ -259,13 +265,71 @@ def finish():
     return doc
 
 
+def patch(cds: list[str]):
+    """나라 정리 뒤에 끝난 칸 — 그 칸 참색 판을 이미 고른 달 모자이크(주 · 나라 전체 보기)에 덧붙이고 칸 판은 지운다."""
+    import shutil
+    import rasterio
+    from rasterio.enums import Resampling
+    from PIL import Image
+    from national.common import pg
+    doc = json.loads((kdir() / "keep.json").read_text(encoding="utf-8"))
+    with pg() as c:
+        a1 = {r[0]: r[1] for r in c.execute("SELECT cell_cd, adm1_name FROM overseas_cells WHERE country=%s AND year=%s AND cell_cd = ANY(%s)",
+                                             (COUNTRY, YEAR, cds)).fetchall()}
+    for cd in cds:
+        if not (kdir() / "cells" / cd / "stats.json").exists():
+            extract(cd)
+    for it in doc["keep"]:
+        m = it["month"]
+        add = [kdir() / "cells" / cd / f"{YEAR}-{m:02d}.tif" for cd in cds
+               if (it["kind"] != "주 대표" or a1.get(cd) == it["oblast"])]
+        add = [f for f in add if f.exists()]
+        if not add:
+            continue
+        cur = kdir() / it["file"]
+        old = cur.with_suffix(".old.tif")
+        os.replace(cur, old)
+        mosaic(add + [old], cur, (it["res_m"]) / 111_320)          # 새 칸이 먼저(그 칸 밖은 빈칸이라 옛 판이 채움)
+        old.unlink()
+        it["bytes"] = cur.stat().st_size
+        it.setdefault("added_cells", []).extend([f.parent.name for f in add])
+        with rasterio.open(cur) as d:
+            sc = max(d.width, d.height) / 900
+            a = d.read(out_shape=(3, max(1, int(d.height / sc)), max(1, int(d.width / sc))), resampling=Resampling.average)
+        Image.fromarray(np.moveaxis(np.where(a == 0, 255, a), 0, -1).astype(np.uint8)).save(kdir() / it["preview"], quality=82)
+    freed = 0
+    for cd in cds:
+        d = kdir() / "cells" / cd
+        if d.exists():
+            freed += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+            shutil.rmtree(d, ignore_errors=True)
+    for f in (root(COUNTRY, YEAR) / "work").glob("*.tif"):
+        try:
+            freed += f.stat().st_size
+            f.unlink()
+        except OSError:
+            pass
+    doc["kept_bytes"] = sum(k["bytes"] for k in doc["keep"])
+    doc["freed_bytes"] = doc.get("freed_bytes", 0) + freed
+    doc["patched_at"] = dt.datetime.now().isoformat(timespec="seconds")
+    (kdir() / "keep.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+    ev = Path(__file__).resolve().parents[2] / "docs" / "superpowers" / "final" / "process" / "impl-38" / "overseas-train" / "keep"
+    (ev / "preview").mkdir(parents=True, exist_ok=True)
+    (ev / "keep.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+    for it in doc["keep"]:
+        shutil.copy2(kdir() / it["preview"], ev / it["preview"])
+    print(json.dumps({"kept_bytes": doc["kept_bytes"], "freed_bytes": doc["freed_bytes"]}), flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["watch", "finish", "extract"])
+    ap.add_argument("cmd", choices=["watch", "finish", "extract", "patch"])
     ap.add_argument("--cell")
     a = ap.parse_args()
     if a.cmd == "watch":
         watch()
+    elif a.cmd == "patch":
+        patch(a.cell.split(","))
     elif a.cmd == "extract":
         print(extract(a.cell))
     else:

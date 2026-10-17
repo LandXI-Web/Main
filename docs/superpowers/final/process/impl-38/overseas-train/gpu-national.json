@@ -1,21 +1,41 @@
 {
- "해외 칸 분석(Kemin~Ysyk-Ata · 전국 작업기와 번갈아)": {
+ "나라 분석 1(10-15 17:29~10-16 03:43)": {
   "from": "2026-10-15T17:29:59",
-  "to": "2026-10-15T17:55:50",
-  "samples_s": 1543,
+  "to": "2026-10-16T03:43:30",
+  "samples_s": 36585,
   "gpu0": {
    "util_mean": 7.6,
    "util_max": 100.0,
-   "util_30s_max": 22.0,
-   "power_mean_w": 43.7,
-   "power_max_w": 123.58,
-   "power_30s_max_w": 79.8,
-   "s_util_over_70": 76,
+   "util_30s_max": 33.3,
+   "power_mean_w": 48.5,
+   "power_max_w": 129.69,
+   "power_30s_max_w": 81.6,
+   "s_util_over_70": 1851,
+   "s_power_over_140": 0
+  },
+  "gpu1": {
+   "util_mean": 0.2,
+   "power_max_w": 172.21
+  },
+  "both_over_100w_s": 1
+ },
+ "나라 분석 2(10-17 남은 두 군)": {
+  "from": "2026-10-17T10:08:52",
+  "to": "2026-10-17T10:44:21",
+  "samples_s": 2116,
+  "gpu0": {
+   "util_mean": 6.7,
+   "util_max": 100.0,
+   "util_30s_max": 18.9,
+   "power_mean_w": 43.4,
+   "power_max_w": 120.62,
+   "power_30s_max_w": 68.2,
+   "s_util_over_70": 93,
    "s_power_over_140": 0
   },
   "gpu1": {
    "util_mean": 0.1,
-   "power_max_w": 93.14
+   "power_max_w": 92.71
   },
   "both_over_100w_s": 0
  }

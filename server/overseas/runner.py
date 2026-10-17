@@ -498,6 +498,15 @@ def loop():
                 country, year = st["country"], int(st["year"])
                 nx = next_cells(c, country, year, model, n=2 + Prefetch.MAX_PREP)
                 if not nx:
+                    # 다시 할 차례를 기다리는 칸(실패 · next_try_at 이 아직)이 있으면 끝내지 않고 기다린다
+                    # (10-16 03:43 실측: 두 칸 합성이 실패해 10분 뒤 다시 할 차례였는데 '남은 칸 없음'으로 끝나 하루 넘게 멈춤)
+                    wait = c.execute("SELECT min(next_try_at) FROM overseas_cells WHERE country=%s AND year=%s AND NOT test "
+                                     "AND ((state IN ('todo','failed') AND tries < %s) OR (state='done' AND model_id IS DISTINCT FROM %s AND tries < %s))",
+                                     (country, year, TRIES, model, TRIES)).fetchone()[0]
+                    if wait is not None:
+                        status(state="wait_retry", until=wait.isoformat(timespec="seconds"))
+                        time.sleep(30)
+                        continue
                     status(state="all_done", country=country, year=year)
                     log("남은 칸 없음 — 끝")
                     return

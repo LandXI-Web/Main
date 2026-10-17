@@ -1,0 +1,202 @@
+{
+ "made_at": "2026-10-16T06:13:55",
+ "country": "kgz",
+ "year": 2025,
+ "chosen": {
+  "Chuy": [
+   8,
+   7
+  ],
+  "Talas": [
+   7,
+   9
+  ],
+  "Issyk-Kul": [
+   8,
+   9
+  ],
+  "Naryn": [
+   8,
+   9
+  ],
+  "Jalal-Abad": [
+   8,
+   9
+  ],
+  "Osh": [
+   9,
+   8
+  ],
+  "Batken": [
+   8,
+   7
+  ]
+ },
+ "overview_month": 8,
+ "rule": "(SCORE · 달마다 · 주 안 모든 군을 합쳐):\n  맑음   = 그 달 합성에서 맑은 화소가 있는 몫(SCL 로 구름 · 그림자를 거른 뒤) — 높을수록\n  고름   = 칸(MGRS)마다 쓴 장면 수가 적을수록(장면을 많이 섞으면 날짜마다 색이 달라 조각 무늬가 생김)\n  눈     = 밝은 흰 화소(눈) 몫이 적을수록(4 · 10월 높은 산)\n  철     = 6–9월(밭 · 초지가 초록 · 마른 밭이 갈려 보이는 철) 덤\n  점수 = 100 × 맑음 − 4 × (칸마다 장면 수 − 1) − 30 × 눈 + (6–9월이면 3)",
+ "keep": [
+  {
+   "kind": "주 대표",
+   "oblast": "Chuy",
+   "month": 8,
+   "file": "kgz-2025-08-chuy.tif",
+   "bytes": 119868140,
+   "score": 98.9,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-chuy.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Chuy",
+   "month": 7,
+   "file": "kgz-2025-07-chuy.tif",
+   "bytes": 128169171,
+   "score": 98.67,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-07-chuy.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Talas",
+   "month": 7,
+   "file": "kgz-2025-07-talas.tif",
+   "bytes": 70565549,
+   "score": 101.89,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-07-talas.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Talas",
+   "month": 9,
+   "file": "kgz-2025-09-talas.tif",
+   "bytes": 66267939,
+   "score": 101.7,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-09-talas.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Issyk-Kul",
+   "month": 8,
+   "file": "kgz-2025-08-issyk-kul.tif",
+   "bytes": 205516030,
+   "score": 101.61,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-issyk-kul.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Issyk-Kul",
+   "month": 9,
+   "file": "kgz-2025-09-issyk-kul.tif",
+   "bytes": 198133226,
+   "score": 98.99,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-09-issyk-kul.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Naryn",
+   "month": 8,
+   "file": "kgz-2025-08-naryn.tif",
+   "bytes": 263153645,
+   "score": 101.32,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-naryn.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Naryn",
+   "month": 9,
+   "file": "kgz-2025-09-naryn.tif",
+   "bytes": 264829030,
+   "score": 100.73,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-09-naryn.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Jalal-Abad",
+   "month": 8,
+   "file": "kgz-2025-08-jalal-abad.tif",
+   "bytes": 175084596,
+   "score": 102.15,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-jalal-abad.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Jalal-Abad",
+   "month": 9,
+   "file": "kgz-2025-09-jalal-abad.tif",
+   "bytes": 171668011,
+   "score": 101.99,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-09-jalal-abad.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Osh",
+   "month": 9,
+   "file": "kgz-2025-09-osh.tif",
+   "bytes": 167306979,
+   "score": 73.37,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-09-osh.jpg",
+   "added_cells": [
+    "92254566B65536554507768",
+    "92254566B4479421635169"
+   ]
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Osh",
+   "month": 8,
+   "file": "kgz-2025-08-osh.tif",
+   "bytes": 160670447,
+   "score": 73.32,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-osh.jpg",
+   "added_cells": [
+    "92254566B65536554507768",
+    "92254566B4479421635169"
+   ]
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Batken",
+   "month": 8,
+   "file": "kgz-2025-08-batken.tif",
+   "bytes": 113841771,
+   "score": 101.31,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-08-batken.jpg"
+  },
+  {
+   "kind": "주 대표",
+   "oblast": "Batken",
+   "month": 7,
+   "file": "kgz-2025-07-batken.tif",
+   "bytes": 111653352,
+   "score": 100.98,
+   "res_m": 10,
+   "preview": "preview/kgz-2025-07-batken.jpg"
+  },
+  {
+   "kind": "나라 전체 보기",
+   "month": 8,
+   "file": "kgz-2025-08-country-60m.tif",
+   "bytes": 38558757,
+   "res_m": 60,
+   "preview": "preview/kgz-2025-08-country-60m.jpg",
+   "added_cells": [
+    "92254566B65536554507768",
+    "92254566B4479421635169"
+   ]
+  }
+ ],
+ "kept_bytes": 2255286643,
+ "freed_bytes": 38541403811,
+ "patched_at": "2026-10-17T10:57:04"
+}
