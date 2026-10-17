@@ -290,6 +290,7 @@ async function boot() {
     onShown: () => cmdk?.close({ force: true }),          // 날아가기 시작하면 아래 채팅 창의 대화 칸을 접는다(답은 그때까지 읽힘 · 입력 줄은 그대로)
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
     onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
+    clsColor: (k) => userCol(k) || baseCol(k),                                              // 꼬리표 색 점 = 그 클래스 색(사람이 고른 색 먼저 · 10-17)
     onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
     mountStatSwitch(); }
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
@@ -1013,8 +1014,24 @@ function boardTotal(task = null) {
   }
   return n;
 }
-/* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237) — 업무 이름 고정 없음 · 범례 표 없음. 전국 = 모든 결과 합 · 시군구로 들어가면 그 시군구의 여러 업무 함께 ═══ */
+/* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237 → 10-17 원칙 271) — 흰 글씨 한 줄 'OO 시군구 · OO 서비스 제공중'.
+   시군구 = 지금 지도에 보이는, 결과가 있는 시군구 수(서비스 결과 장부 /ximap/board 의 regions · 지도 범위와 겹치는 것 · 아무것도 안 보이면 전국 전체) ·
+   서비스 = 그 시군구들에 제공 중인 서비스 가짓수(장부의 서비스 · 전역 분석은 세지 않음 — 메인 '서비스 n가지'와 같은 셈). 시군구로 들어가면 그 이름 · 그곳 서비스 수.
+   지어낸 숫자 0 · 지역 하드코딩 0 · 큰 숫자 · 업무 줄 · 설명 글 없음(원칙 230). 업무 거르기 중이면 그 아래 '원래대로' 칩 하나. ═══ */
 let HUDKEY = '';
+/** 서비스 결과 장부에서 — 지도 범위와 겹치는 시군구 · 그곳들의 서비스 가짓수(전역 분석 제외) */
+function hudCounts(d, region) {
+  const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
+  const svcOf = (regs) => { const s = new Set(); for (const r of regs) for (const it of r.items || []) if (!analysis.has(it.svc)) s.add(it.svc); return s.size; };
+  if (region) { const br = boardRegion(region); return { regions: 1, services: svcOf(br ? [br] : []) }; }
+  let regs = d.regions || [];
+  try {
+    const b = map.getBounds(), w = b.getWest(), s = b.getSouth(), e = b.getEast(), n = b.getNorth();
+    const vis = regs.filter((r) => Array.isArray(r.bbox) && r.bbox.length === 4 && r.bbox[0] <= e && r.bbox[2] >= w && r.bbox[1] <= n && r.bbox[3] >= s);
+    if (vis.length) regs = vis;
+  } catch { /* 지도 전 */ }
+  return { regions: regs.length, services: svcOf(regs) };
+}
 function paintBoardHud() {
   const d = BD?.data;
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
@@ -1024,34 +1041,24 @@ function paintBoardHud() {
     h('button.xb-reset', { type: 'button', text: '원래대로', onclick: () => applyTask(null) })) : null;
   let kids, key;
   if (!d) {
-    kids = [h('p.xb-k', { text: '전국 · AI 분석 결과' }), h('p.xb-p', { text: '결과를 불러오지 못했습니다' })];
-    key = 'fail'; X.hud = { label: '전국 · AI 분석 결과', n: null, from: 'board', state: 'fail' };
+    kids = [h('p.xb-k.xb-k--line', { text: '결과를 불러오지 못했습니다' })];
+    key = 'fail'; X.hud = { label: '결과를 불러오지 못했습니다', n: null, from: 'board', state: 'fail' };
   } else if (!S.region || map.getZoom() < 8.2) {
-    // 서비스 n가지 = 서비스 결과 장부의 서비스(메인 '서비스 n가지'와 같은 출처) · 토지피복 같은 전역 분석은 이름만 따로(GPT5-1 · 규칙 3)
-    const svcN = d.n_services ? ev(d.n_services) : d.services.filter((x) => x.kind !== 'analysis').length;
-    const extra = d.services.filter((x) => x.kind === 'analysis').map((x) => x.name);
+    const { regions, services } = hudCounts(d, null);
+    const label = `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
     const total = S.clsOff.size ? visRows(hudTaskRows().rows).filter((x) => !task || x.k === task).reduce((t, x) => t + x.n, 0) : boardTotal(task), unit = task ? BD.UNIT[task] || '개' : '개';
-    const run = BD.nat.running();
-    kids = [h('p.xb-k', { text: task ? `전국 · ${task}` : '전국 · AI 분석 결과' }),
-      h('p.xb-big', {}, h('b.num', { text: nf(total) }), h('small', { text: unit })),
-      h('p.xb-p', {}, '서비스 ', h('b', { text: `${nf(svcN)}가지` }), ...extra.map((x) => ` · ${x}`)),
-      S.clsOff.size ? h('p.xb-p.xb-vis', { text: '보이는 것 기준' }) : null,
-      reset,
-      run?.label ? h('p.xb-live', {}, h('i'), h('span', { text: `지금 분석 중 · ${run.label}` })) : null];
-    key = ['kr', total, task, run?.label, [...S.clsOff].join()].join('|');
-    X.hud = { label: '전국 · AI 분석 결과', n: total, unit, task, from: 'board' };
+    kids = [h('p.xb-k.xb-k--line', {}, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
+    key = ['kr', regions, services, task].join('|');
+    X.hud = { label, regions, services, n: total, unit, task, from: 'board' };
   } else {
     const r = S.region, { rows, wait } = regionRows(r);
     const shown = visRows(task ? rows.filter((x) => x.k === task) : rows);
-    const pinned = PIN?.code === r.code;                // 누른 자리 말풍선이 같은 숫자를 보이면 왼쪽 위는 이름만(같은 줄 두 번 0)
-    kids = [h('p.xb-k.xb-k--r', { text: r.name }),
-      pinned ? null : shown.length ? h('ul.xb-rows', {}, ...shown.slice(0, 6).map((x) => h('li', { dataset: { k: x.k } }, h('i', { style: { background: BD.colorOf(x.k) } }), h('span', { text: x.name }), h('b.num', { text: `${nf(x.n)}${x.unit}` }))))
-        : h('p.xb-p', { text: wait ? '불러오는 중' : '분석 예정' }),
-      S.clsOff.size && !pinned ? h('p.xb-p.xb-vis', { text: '보이는 것 기준' }) : null,
-      reset];
-    key = ['r', r.code, task, wait, pinned, [...S.clsOff].join(), JSON.stringify(shown.map((x) => [x.name, x.n]))].join('|');
+    const { services } = hudCounts(d, r);
+    const label = `${r.name} · ${nf(services)} 서비스 제공중`;
+    kids = [h('p.xb-k.xb-k--line', {}, h('span', { text: r.name }), ' · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
+    key = ['r', r.code, services, task].join('|');
     const br = boardRegion(r);
-    X.hud = { label: r.name, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length };
+    X.hud = { label, regions: 1, services, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length, wait };
   }
   if (!SC && BD?.data) showSC(HUDV);                       // 기본 '지금 + C'(원칙 262) — 결과 장부가 온 뒤 켠다(숫자 · 자리가 모두 서버 값)
   if (paintHudVariant() || SC?.on) hudBoard.hidden = true;   // 시안을 보는 동안은 지금 모양을 걷는다(A · B · C = showcase.js)

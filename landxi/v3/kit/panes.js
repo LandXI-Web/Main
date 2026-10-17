@@ -74,7 +74,7 @@ export function panes(pane, opts = {}) {
   if (fixed) el.style.position = 'fixed';
   if (o.z !== undefined) el.style.zIndex = String(o.z);
   else { const z = parseInt(getComputedStyle(pane).zIndex, 10); if (z >= 6) el.style.zIndex = String(z + 1); }   // 떠 있는 칸보다 위
-  el.innerHTML = '<i class="pn-line" aria-hidden="true"></i>';
+  el.innerHTML = '<i class="pn-line" aria-hidden="true"></i><i class="pn-grip" aria-hidden="true"></i>';   // 선(올리면) + 가운데 작은 손잡이(늘 보임 · 10-17 칸조절 2 — 끌 수 있는 자리가 보이게)
   let btn = null;
   if (o.collapse) {
     btn = document.createElement('button');

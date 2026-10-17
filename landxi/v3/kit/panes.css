@@ -11,10 +11,17 @@
 .pn-h:hover .pn-line,.pn-h.is-drag .pn-line{background:var(--rule,#D6DAE0)}
 .pn-h:focus-visible .pn-line{background:var(--accent,#3182F6)}
 .pn-h.is-drag .pn-line{background:var(--ink-2,#4E5968)}
-/* 접기 · 펼치기 — 작은 단추 하나(기존 꺾쇠 아이콘) */
-.pn-fold{position:relative;z-index:1;display:grid;place-items:center;width:20px;height:40px;padding:0;margin:0;border:1px solid var(--rule,#D6DAE0);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);color:var(--ink-2,#4E5968);cursor:pointer;opacity:0;transition:opacity var(--d-180,180ms) var(--e-ui,ease)}
+/* 가운데 작은 손잡이(10-17 칸조절 2) — 끌 수 있는 자리가 늘 보이게(옅게) · 올리면 짙게 · 끄는 동안 잉크 */
+.pn-grip{position:absolute;left:50%;top:50%;width:4px;height:36px;margin:-18px 0 0 -2px;border-radius:2px;background:var(--mute,#B0B8C1);opacity:.75;box-shadow:0 0 0 1px rgba(255,255,255,.9);transition:background var(--d-180,180ms) var(--e-ui,ease),opacity var(--d-180,180ms) var(--e-ui,ease),height var(--d-180,180ms) var(--e-ui,ease)}
+.pn-h--y .pn-grip{width:36px;height:4px;margin:-2px 0 0 -18px}
+.pn-h:hover .pn-grip,.pn-h:focus-visible .pn-grip{background:var(--ink-2,#4E5968);opacity:1;height:48px;margin-top:-24px}
+.pn-h--y:hover .pn-grip,.pn-h--y:focus-visible .pn-grip{height:4px;width:48px;margin:-2px 0 0 -24px}
+.pn-h.is-drag .pn-grip{background:var(--ink,#191F28);opacity:1}
+.pn-h.is-folded .pn-grip,.pn-h.is-short .pn-grip{display:none}
+/* 접기 · 펼치기 — 작은 단추 하나(기존 꺾쇠 아이콘) · 올리면 보임 · 접힌 상태에서는 늘 보임 */
+.pn-fold{position:relative;z-index:1;display:grid;place-items:center;width:22px;height:44px;padding:0;margin:0;border:1px solid var(--rule,#D6DAE0);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);color:var(--ink-2,#4E5968);cursor:pointer;opacity:0;box-shadow:var(--elev-map,0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12));transition:opacity var(--d-180,180ms) var(--e-ui,ease),transform var(--d-180,180ms) var(--e-ui,ease)}
 .pn-h--x .pn-fold{position:sticky;top:calc(var(--mast,64px) + 24px);margin-top:24px}   /* 긴 칸에서도 위쪽 같은 자리 */
-.pn-h--y .pn-fold{width:40px;height:20px}
+.pn-h--y .pn-fold{width:44px;height:22px}
 .pn-fold svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--d-180,180ms) var(--e-ui,ease)}
 .pn-h:hover .pn-fold,.pn-h:focus-within .pn-fold,.pn-h.is-folded .pn-fold,.pn-fold:focus-visible{opacity:1}
 .pn-h.is-short .pn-fold{display:none}

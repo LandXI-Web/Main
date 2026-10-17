@@ -37,7 +37,7 @@ test('전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림
   const [pj, bd] = await page.evaluate(async () => Promise.all(['/national/progress', '/ximap/board'].map(async (p) => window.__lxBoot?.peek(p)?.b
     ?? (await fetch('http://localhost:8700/api/v1' + p, { headers: { authorization: 'Bearer ' + JSON.parse(localStorage.getItem('lx_api_session')).token } })).json())));
   expect(pj?.assets && bd).toBeTruthy();
-  await page.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown && document.querySelector('.xb-hud .xb-big'), null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__xc?.board?.nat?.layers?.length > 0 && window.__xc.boot?.shown && document.querySelector('.xb-hud .xb-k'), null, { timeout: 30000 });
 
   // 빛나는 밀도 0 · 빗금 0 · 자산마다 결과 면(판 번호 주소) — 자산 고르기 없음
   const on = Object.entries(pj.assets).filter(([, a]) => a.on !== false).map(([k]) => k);
@@ -52,7 +52,7 @@ test('전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림
     expect(st.tiles[`xn-${a}`]).toContain('v=' + encodeURIComponent(pj.v[a]));
   }
   await expect(page.locator('.xna-card, .xb-leg, .xb-chip')).toHaveCount(0);   // 범례 · 자산 칸 없음
-  await expect(page.locator('.xb-hud .xb-k')).toHaveText('전국 · AI 분석 결과');
+  await expect(page.locator('.xb-hud .xb-k')).toHaveText(/^[\d,]+ 시군구 · [\d,]+ 서비스 제공중$/);   // 10-17 원칙 271 — 한 줄
 
   // 합계 = 서버(작업기가 도는 동안 진행 장부가 늘 수 있어 화면이 읽은 값과 다시 읽은 값 사이)
   const shown = await page.evaluate(() => window.__xc.hud.n);
@@ -60,7 +60,7 @@ test('전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림
   const lo = total(bd, pj), hi = pj2?.assets ? total(bd, pj2) : lo;
   expect(shown).toBeGreaterThanOrEqual(lo);
   expect(shown).toBeLessThanOrEqual(Math.max(lo, hi));
-  await expect(page.locator('.xb-hud .xb-big b')).toHaveText(shown.toLocaleString('ko-KR'));
+  // 10-17 원칙 271: 왼쪽 위에 큰 숫자는 없다 — 합계는 __xc.hud.n(말풍선 · 통계와 같은 셈)으로만 본다
 
   // 읍면동 줌 — 올리면 그 읍면동 말풍선(끝난 곳 = 장부 숫자 · 아직인 곳 = '분석 예정') → 누르면 날아감
   await page.evaluate(() => { window.__xc.map.jumpTo({ center: [127.2, 35.75], zoom: 9 }); });
@@ -95,14 +95,14 @@ test('전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림
   const done = page.evaluate(() => new Promise((res) => document.addEventListener('kit:agent-action-done', (e) => res(e.detail), { once: true })));
   await page.evaluate(() => document.dispatchEvent(new CustomEvent('kit:agent-action', { cancelable: true, detail: { op: 'map_task', task: '비닐하우스' } })));
   expect((await done).ok).toBe(true);
-  await expect(page.locator('.xb-hud .xb-k')).toHaveText('전국 · 비닐하우스');
+  await expect(page.locator('.xb-hud .xb-task span')).toHaveText('비닐하우스');   // 10-17: 거르기 중이면 한 줄 아래 업무 칩 + '원래대로'
   const nTask = await page.evaluate(() => window.__xc.hud.n);
   expect(nTask).toBeGreaterThanOrEqual(total(bd, pj, '비닐하우스'));
   const flt = await page.evaluate(() => JSON.stringify(window.__xc.map.getFilter('xn-farm-face')));
   expect(flt).toContain('비닐하우스');
   expect(flt).not.toContain('경작지');
   await page.locator('.xb-reset').click();
-  await expect(page.locator('.xb-hud .xb-k')).toHaveText('전국 · AI 분석 결과');
+  await expect(page.locator('.xb-hud .xb-task')).toHaveCount(0);
   expect(await page.evaluate(() => window.__xc.task)).toBeNull();
   expect(errs).toEqual([]);
 });

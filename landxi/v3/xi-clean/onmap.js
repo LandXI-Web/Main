@@ -107,7 +107,7 @@ function centroid(g) {
 const bboxOf = (fs) => { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); fs.forEach((f) => f.geometry && walk(f.geometry.coordinates)); return w < e ? [w, s, e, n] : null; };
 
 /* ═══ 지도 위 표출 ═══ */
-export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep, onColor = null, opacity = () => 1 }) {
+export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep, onColor = null, opacity = () => 1, clsColor = null }) {
   const O = { on: false, step: 1, sync: false, spec: null, fc: null, sel: null, hover: null, bb: null, feats: [], tags: new Map(), hoverTag: null, cand: [], run: 0, tour: null, CAT: [] };
   const panel = h('section.xo', { hidden: true, 'aria-label': '지도 위 통계' });
   const mini = h('div.xo-mini', { hidden: true, role: 'status', 'aria-label': '지도 위 결과' });   // 1단계 한 줄(제목 · 큰 숫자 · '통계 보기' · 닫기)
@@ -119,10 +119,15 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
   let pn = null;
   function ensurePane() {
     if (pn) return pn;
-    pn = panes(panel, { edge: 'left', key: 'ximap.stats', min: 300, max: 720, otherMin: 560, cssVar: '--xo-w', varHost: host, host, container: host, map, label: '통계 판 크기',
-      onChange: (_size, c) => { if (O.sync || !O.on) return; if (c && O.step === 2) setStep(1); else if (!c && O.step === 1) setStep(2); } });
+    pn = panes(panel, { edge: 'left', key: 'ximap.stats', min: 320, max: 720, otherMin: 560, cssVar: '--xo-w', varHost: host, host, container: host, map, label: '통계 판 크기',
+      onChange: (_size, c) => {
+        if (O.sync || !O.on) return;
+        if (c && O.step === 2) setStep(1); else if (!c && O.step === 1) setStep(2);
+        else if (O.step === 2) { clearTimeout(padT); padT = setTimeout(() => { if (O.on && O.step === 2) stage.pad({ right: padR() }); }, 160); }   // 끌어 넓히면 지도 가운데도 그만큼 왼쪽으로(10-17 칸조절 2)
+      } });
     return pn;
   }
+  let padT = 0;
   function paintMini(s) {
     const main = (s.kpis || [])[0] || s.main || {};
     mini.replaceChildren(h('b.t', { text: s.title || '' }), h('span.v.num', {}, document.createTextNode(nf(main.value, main.d || 0)), h('small', { text: main.unit || '' })),
@@ -175,6 +180,10 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
       const old = panel.querySelector('.xo-mp > div'); if (old) old.outerHTML = legend(m.scale, m.unit);
       panel.querySelector('.xo-cd')?.setAttribute('style', dotCss(m.scale));
     }
+    // 지도 위 꼬리표의 색 점도 바로(클래스 색 · 지도 색)
+    const paintDot = (t, k) => { const f = O.fc?.features.find((x) => x.properties.k === k); const i = t.getElement().querySelector('.xo-tag-c'); const c = f && tagDot(f); if (i && c) i.style.background = c; };
+    for (const [k, t] of O.tags) paintDot(t, k);
+    if (O.hoverTag && O.hover) paintDot(O.hoverTag, O.hover);
     const vars = (hue) => { const r = rampFor(hue); return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
     panel.querySelectorAll('.xo-p').forEach((el) => {
       const p = s.panels?.[Number(el.dataset.i)]; if (!p) return;
@@ -186,9 +195,13 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
 
   /* 꼬리표(HTML 마커) — 값 큰 곳 다섯(겹치지 않게 화면 거리 96px 이상 · 지도를 움직이면 다시 고름) + 올린 곳 하나.
      마커 요소(.xo-mk)는 지도가 자리를 잡고, 안쪽(.xo-tag)만 떠오름 · 강조 변형을 한다(지도 변형과 겹치지 않게) */
+  /** 꼬리표 색 점(10-17 꼬리표-색점 '넣음') — 한 업무(클래스) 통계면 그 클래스 색(사람이 고른 색 · kit/colors.js 상태), 모든 업무면 그 곳의 지도 색. 색을 바꾸면 recolor 가 바로 다시 칠한다 */
+  const tagCls = () => (O.spec?.kind === 'task' && O.spec.main?.label) || (O.spec?.means || []).find(([k, v]) => k === '업무' && v && v !== '모든 업무')?.[1] || null;
+  const tagDot = (f) => { const k = tagCls(); return (k && clsColor?.(k)) || f.properties.col || null; };
   function mkTag(f, cls) {
     const m = O.spec.map, v = f.properties.v;
-    const inner = h('div.xo-tag' + (cls ? '.' + cls : ''), { html: `<span class="n">${esc(f.properties.name)}</span><b class="num">${v == null ? '—' : `${nf(Number(v), m.scale?.kind === 'div' ? 1 : v % 1 ? 1 : 0)}<small>${esc(m.unit || '')}</small>`}</b>` });
+    const dot = tagDot(f);
+    const inner = h('div.xo-tag' + (cls ? '.' + cls : ''), { html: `<span class="n">${dot ? `<i class="xo-tag-c" style="background:${esc(dot)}"></i>` : ''}${esc(f.properties.name)}</span><b class="num">${v == null ? '—' : `${nf(Number(v), m.scale?.kind === 'div' ? 1 : v % 1 ? 1 : 0)}<small>${esc(m.unit || '')}</small>`}</b>` });
     inner.addEventListener('click', () => { stopTour(); pick(f.properties.k, true); });
     const c = centroid(f.geometry); if (!c) return null;
     return new maplibregl.Marker({ element: h('div.xo-mk', {}, inner), anchor: 'bottom', offset: [0, -6] }).setLngLat(c).addTo(map);

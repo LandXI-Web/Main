@@ -201,10 +201,10 @@ export async function run(role, s0) {
     const xi = { wait: '.xc-stage', ms: 1000, act: async (p) => { await xiReady(p); await settle(p); await p.waitForTimeout(1500); } };
     await screen(s, 'LX 직원 · XI맵(전국)', X, xi);
     await screen(s, 'LX 직원 · XI맵(시군구 · 남원)', null, { act: jump(127.45, 35.42, 10) });
-    // 결과 표시 = 지금 + C(10-15 원칙 262 · showcase.js) — 말풍선이 뜨고 큰 숫자에 올려 빛 줄기가 나온 뒤 잰다(시안 단추는 뺐다 · ?dev=1 에만)
+    // 결과 표시 = 지금 + C(10-15 원칙 262 · showcase.js → 10-17 원칙 271: 왼쪽 위 한 줄 · 움직이는 선 없음) — 말풍선이 뜬 뒤 잰다(시안 단추는 뺐다 · ?dev=1 에만)
     await screen(s, 'LX 직원 · XI맵 결과 표시(지금 + C)', X, { ...xi, act: async (p) => { await xi.act(p);
       await p.waitForFunction(() => window.__xc.showcase?.mode === 'now' && document.querySelectorAll('.xs-c-bub').length > 0, null, { timeout: 40000 }).catch(() => {});
-      await p.locator('.xb-hud .xb-big').hover().catch(() => {}); await p.waitForTimeout(1200); } });
+      await p.waitForTimeout(1200); } });
     await screen(s, 'LX 직원 · XI맵 고치기 칸', X, { ...xi, act: async (p) => { await xi.act(p); await openEdit([127.5345, 35.4335], '^xb-r-')(p); } });
     if (has('--chat')) {
       await screen(s, 'LX 직원 · XI맵 통계(지도 위)', X, { ...xi, act: async (p) => {

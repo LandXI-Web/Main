@@ -9,8 +9,11 @@
 .xo > *{pointer-events:auto;flex:none}
 @media (min-width:1600px){.xo{width:var(--xo-w,400px)}}
 @media (min-width:2200px){.xo{width:var(--xo-w,440px);right:104px}}
-/* 판 폭 손잡이(공용 부품 panes · 판 왼쪽 가장자리) — 판 위에 · 접힘 = 1단계(한 줄만) */
+/* 판 폭 손잡이(공용 부품 panes · 판 왼쪽 가장자리) — 판 위에 · 접힘 = 1단계(한 줄만).
+   10-17 칸조절 2: 접히면 손잡이를 숨긴다(한 줄의 '통계 보기'가 펼치기 — 손잡이 단추가 한 줄의 닫기 × 와 겹치던 것) · 판 폭은 부드럽게(끄는 동안은 바로) */
 .k-main > .pn-h{z-index:23}
+.k-main > .pn-h.is-folded{display:none}
+.xo.pn-pane{transition:width var(--d-180,180ms) var(--e-ui,ease)}
 /* ── 1단계 한 줄(지도에만 가시화 · 원칙 262) — 제목 · 큰 숫자 · '통계 보기' · 닫기 · 오른쪽 위 판 자리 ── */
 .xo-mini{position:absolute;z-index:21;right:96px;top:68px;display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100% - 300px));height:48px;padding:0 6px 0 16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:xo-in .55s var(--e-cam) both}
 .xo-mini[hidden]{display:none}
@@ -145,7 +148,10 @@
 .xo-tag{position:relative;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 12px 6px;border-radius:12px;background:rgba(255,255,255,.97);box-shadow:var(--elev-map);cursor:pointer;transform-origin:50% 100%;animation:xo-rise .5s var(--e-cam) both;white-space:nowrap}
 .xo-tag::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px;box-shadow:2px 2px 4px rgba(28,31,37,.08)}
 @keyframes xo-rise{from{opacity:0;transform:translateY(14px) scale(.85)}to{opacity:1;transform:none}}
-.xo-tag .n{font:500 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub)}
+.xo-tag .n{display:inline-flex;align-items:center;gap:5px;font:500 var(--fs-tag,14px)/18px var(--font-body);color:var(--sub)}
+/* 꼬리표 클래스 색 점(10-17) — 지도 서비스 층 줄 점과 같은 모양 · 사람이 고른 색이 바뀌면 바로 */
+.xo-tag-c{flex:none;width:9px;height:9px;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.xo-tag.is-1 .xo-tag-c{box-shadow:0 0 0 1px rgba(255,255,255,.35)}
 .xo-tag b{font:700 var(--fs-aux,15px)/20px var(--font-num);color:var(--ink);letter-spacing:-.01em}
 .xo-tag b small{margin-left:1px;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
 .xo-tag.is-1{background:var(--ink)}

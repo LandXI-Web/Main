@@ -142,47 +142,13 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
     return i;
   }
 
-  /* ═══════════ 지금 + C(기본 · 원칙 262) — 지금 모양 그대로 + C 말풍선 + A 의 끌려 나오는 빛 줄기(올렸을 때만) ═══════════
-     왼쪽 위 결과 표시(app.js .xb-hud)의 업무 줄에 올리면 그 업무만 지도에 남고(applyTask · 말풍선 업무 줄과 같은 길) 그 자리들에서 줄기가 그 줄로 끌려 나온다.
-     큰 숫자에 올리면 모든 업무의 자리에서 큰 숫자로. 내리면 원래대로(올리기 전 거르기). 눌러 고정은 없다(가볍게 · 장식 막대 없음). */
-  const N = { svg: null, hot: null, prev: undefined, raf: 0, el: null };
+  /* ═══════════ 지금 + C(기본 · 원칙 262 → 10-17 원칙 271) — 왼쪽 위 한 줄(app.js .xb-hud) + C 말풍선. 지도 위 움직이는 선(빛 줄기)은 없앴다
+     (10-17 사용자: "인터렉티브하게 움직이는 선은 없애고"). 왼쪽 위에 올려도 지도는 바뀌지 않는다. */
   function mountNow() {
     mountC();
-    N.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); N.svg.setAttribute('class', 'xs-a-svg xs-n-svg'); N.svg.setAttribute('aria-hidden', 'true');
-    root.append(N.svg);
-    const el = hud?.(); N.el = el || null;
-    if (el) {
-      const over = (e) => { const li = e.target.closest('[data-k]'); const k = li ? li.dataset.k : e.target.closest('.xb-big') ? '*' : null; if (k) hotN(k); };
-      const out = (e) => { if (!el.contains(e.relatedTarget)) hotN(null); };
-      el.addEventListener('mouseover', over); el.addEventListener('mouseout', out);
-      SC.subs.push(() => { el.removeEventListener('mouseover', over); el.removeEventListener('mouseout', out); });
-    }
-    on('move', scheduleN);
-    SC.subs.push(() => { hotN(null); N.svg?.remove(); N.svg = null; });
     X.showcase = { ...(X.showcase || {}), mode: 'now', hot: null, streaks: 0 };
   }
-  function hotN(k) {
-    if (N.hot === k) return;
-    const was = N.hot; N.hot = k;
-    if (k && was == null) N.prev = BD()?.task ?? null;                  // 올리기 전 거르기를 기억(큰 숫자 · 업무 줄 어느 쪽으로 들어왔든)
-    // 지도만 거른다(BD.setTask) — 왼쪽 위 줄 목록은 그대로 두어(다른 줄은 옅어짐) 손 아래에서 글이 바뀌지 않게
-    if (k && k !== '*') BD()?.setTask(k);
-    else if (N.prev !== undefined) { BD()?.setTask(N.prev); if (!k) N.prev = undefined; }
-    drawN();
-  }
-  function scheduleN() { if (!N.hot || N.raf) return; N.raf = requestAnimationFrame(() => { N.raf = 0; drawN(); }); }
-  function drawN() {
-    if (!N.svg) return;
-    if (!N.hot || !N.el || N.el.hidden) { N.svg.replaceChildren(); if (X.showcase) { X.showcase.hot = null; X.showcase.streaks = 0; } return; }
-    const hr = host.getBoundingClientRect(), ends = new Map();
-    const at = (r) => ({ x: r.right - hr.left + 4, y: r.top - hr.top + r.height / 2 });
-    if (N.hot === '*') { const b = N.el.querySelector('.xb-big'); if (b) ends.set('*', at(b.getBoundingClientRect())); }
-    else { const li = N.el.querySelector(`[data-k="${CSS.escape(N.hot)}"]`); if (li) ends.set(N.hot, at(li.getBoundingClientRect())); }
-    if (!ends.size) { N.svg.replaceChildren(); return; }
-    const hb = N.el.getBoundingClientRect();
-    const n = streaksInto(N.svg, ends, N.hot === '*' ? null : N.hot, { x: hb.right - hr.left, y: hb.bottom - hr.top }, false);
-    if (X.showcase) { X.showcase.hot = N.hot; X.showcase.streaks = n; }
-  }
+  function drawN() { if (X.showcase) { X.showcase.hot = null; X.showcase.streaks = 0; } }
 
   /* ═══════════ B · 방금 찾은 것 흐름 ═══════════ */
   const B = { el: null, fx: null, feed: null, big: null, q: [], shown: [], seen: new Set(), count: 0, target: 0, todayCells: 0, example: false, pollT: 0, glyphs: new Map(), last: null };
