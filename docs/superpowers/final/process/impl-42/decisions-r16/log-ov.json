@@ -1,5 +1,5 @@
 {
- "_logins": 1,
+ "_logins": 2,
  "_failed": [],
  "errors": [],
  "bad": [],
@@ -20,5 +20,7 @@
   "label": "Built area change · Ysyk-Ata",
   "why": "Land-XI analysis · Sentinel-2 2017–2025 · as of Oct 17, 2026"
  },
- "r16-ov-sprawl-1736.png": "2026-10-17 17:36:22"
+ "r16-ov-sprawl-1736.png": "2026-10-17 17:36:22",
+ "register": "District level — not parcels. kgz-agri-sample-register.csv Matched 5 of 6 rows to local districts · 83.3% District Declared AI Diff Ysyk-Ata 45,000 ha 64,763 ha +44% 4 rows outside your districts · not compared 1 row with no matching district name Upload another",
+ "r16-ov-register-1805.png": "2026-10-17 18:05:54"
 }

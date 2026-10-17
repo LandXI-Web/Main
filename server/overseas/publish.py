@@ -75,6 +75,35 @@ def burn(files: list[Path], bounds, shape_hw, cls: str = "경작지") -> np.ndar
     return rasterize(geoms, out_shape=(H, W), transform=tr, fill=0, dtype="uint8")
 
 
+def union_ha(c, model: str, cd: str, cls: str = "경작지") -> int | None:
+    """그 군 그 분류의 겹침 없는 넓이(ha) — 결과 조각이 서로 겹친 곳(칩 겹침 · 조각 경계)을 한 번만(10-17 원칙 274 '해외 경작지 겹치는 부분 없앤다').
+    군에 넣는 기준은 장부와 같음(면의 안쪽 한 점이 군 안). 넓이 = 타원체 넓이."""
+    from pyproj import Geod
+    from shapely import wkt
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+    from shapely.prepared import prep
+    row = c.execute("SELECT ST_AsText(geom) FROM overseas_cells WHERE country=%s AND year=%s AND cell_cd=%s", (COUNTRY, YEAR, cd)).fetchone()
+    files = job_files(c, model, [cd])
+    if not row or not files:
+        return None
+    cell = prep(wkt.loads(row[0]))
+    gs = []
+    for f in files:
+        for ft in json.loads(f.read_text(encoding="utf-8"))["features"]:
+            if (ft.get("properties") or {}).get("cls") != cls:
+                continue
+            g = shape(ft["geometry"])
+            if not g.is_valid:
+                g = g.buffer(0)
+            if cell.contains(g.representative_point()):
+                gs.append(g)
+    if not gs:
+        return 0
+    u = unary_union(gs)
+    return int(round(abs(Geod(ellps="WGS84").geometry_area_perimeter(u)[0]) / 1e4))
+
+
 def write4326(path: Path, arr: np.ndarray, bounds):
     import rasterio
     from rasterio.transform import from_bounds
@@ -119,7 +148,14 @@ def main():
                     return {"value": int(round(e * 100)), "unit": "ha", "basis": "estimate", "as_of": day, "source": esrc + " · " + label,
                             "note": f"public map used until retraining — Land-XI model {round(ours)} km2 > {RULE_X} x max(Esri 2025 {round(e)}, WorldCover 2021 {round(w)})",
                             "src": "public", "model_ha": ha(key)}
-                return {"value": ha(key), "unit": "ha", "basis": "estimate", "as_of": day, "source": src + " · " + label, "note": note, "src": "model"}
+                v = ha(key)
+                if key == "경작지":                     # 우리 모델 값 = 겹침 없는 넓이(원칙 274) · 공개 판정 고르기는 위 그대로(원칙 269 · 9군 유지)
+                    u = union_ha(c, model, cd, key)
+                    if u is not None:
+                        v = u
+                        note = note + " · overlaps between result tiles counted once"
+                return {"value": v, "unit": "ha", "basis": "estimate", "as_of": day, "source": src + " · " + label, "note": note, "src": "model",
+                        "sum_ha": ha(key)}
             crop = pick("경작지", "cropland", "AI result polygons whose centre lies in the district")
             water = pick("물", "water", "AI result polygons whose centre lies in the district")
             dists[cd] = {"name": name, "iso": "KGZ", "crop_ha": crop,

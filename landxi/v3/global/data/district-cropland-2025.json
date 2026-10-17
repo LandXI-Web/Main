@@ -8,7 +8,7 @@
  "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5",
  "model_name": "경작지 · 시가지 · 물 · 키르기스스탄(위성 10 m) 학습 2026.10.15",
  "px_target_m": 10,
- "fetched_at": "2026-10-17T11:15:37+09:00",
+ "fetched_at": "2026-10-17T18:02:15+09:00",
  "previous": "district-cropland-2025-esri.json",
  "rule": "per district and class: Land-XI model, unless it exceeds 1.5 x the larger of Esri 2025 / WorldCover 2021 by at least 20.0 km2 — then Esri 2025 (same year) until retraining",
  "public_used": {
@@ -39,13 +39,14 @@
    "name": "Toguz-Toro",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 9131,
+    "value": 7834,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 9131
    },
    "built_ha": {
     "value": 492,
@@ -62,7 +63,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1753
    },
    "src": "model",
    "valid_share": 1.0,
@@ -73,13 +75,14 @@
    "name": "Tup",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 43835,
+    "value": 37283,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 43835
    },
    "built_ha": {
     "value": 1501,
@@ -96,7 +99,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 8482
    },
    "src": "model",
    "valid_share": 1.0,
@@ -107,13 +111,14 @@
    "name": "Jeti-Oguz",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 30528,
+    "value": 27788,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 30528
    },
    "built_ha": {
     "value": 3135,
@@ -130,7 +135,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 21804
    },
    "src": "model",
    "valid_share": 1.0,
@@ -146,8 +152,9 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 174
    },
    "built_ha": {
     "value": 1788,
@@ -164,7 +171,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 11
    },
    "src": "model",
    "valid_share": 1.0,
@@ -175,13 +183,14 @@
    "name": "Naryn",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 28537,
+    "value": 26901,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 28537
    },
    "built_ha": {
     "value": 1741,
@@ -198,7 +207,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 4612
    },
    "src": "model",
    "valid_share": 1.0,
@@ -209,13 +219,14 @@
    "name": "Bakay-Ata",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 37415,
+    "value": 32757,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 37415
    },
    "built_ha": {
     "value": 2564,
@@ -232,7 +243,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 2944
    },
    "src": "model",
    "valid_share": 1.0,
@@ -243,13 +255,14 @@
    "name": "Jumgal",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 19294,
+    "value": 15884,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 19294
    },
    "built_ha": {
     "value": 932,
@@ -266,7 +279,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 15012
    },
    "src": "model",
    "valid_share": 1.0,
@@ -301,7 +315,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 3092
    },
    "src": "public",
    "valid_share": 1.0,
@@ -336,7 +351,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 30374
    },
    "src": "public",
    "valid_share": 1.0,
@@ -347,13 +363,14 @@
    "name": "Nookat",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 37251,
+    "value": 33421,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 37251
    },
    "built_ha": {
     "value": 10122,
@@ -382,13 +399,14 @@
    "name": "Uzgen",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 62468,
+    "value": 56895,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 62468
    },
    "built_ha": {
     "value": 6612,
@@ -405,7 +423,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 4406
    },
    "src": "model",
    "valid_share": 1.0,
@@ -440,7 +459,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 453
    },
    "src": "public",
    "valid_share": 1.0,
@@ -451,13 +471,14 @@
    "name": "Batken",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 11843,
+    "value": 9867,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 11843
    },
    "built_ha": {
     "value": 4649,
@@ -486,13 +507,14 @@
    "name": "Aravan",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 27430,
+    "value": 27420,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 27430
    },
    "built_ha": {
     "value": 4787,
@@ -509,7 +531,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 40
    },
    "src": "model",
    "valid_share": 1.0,
@@ -544,7 +567,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 20146
    },
    "src": "public",
    "valid_share": 1.0,
@@ -579,7 +603,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 10487
    },
    "src": "public",
    "valid_share": 1.0,
@@ -590,13 +615,14 @@
    "name": "Manas",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 20593,
+    "value": 20587,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 20593
    },
    "built_ha": {
     "value": 1300,
@@ -613,7 +639,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 121
    },
    "src": "model",
    "valid_share": 1.0,
@@ -624,13 +651,14 @@
    "name": "Ak-Talaa",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 18490,
+    "value": 14856,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 18490
    },
    "built_ha": {
     "value": 980,
@@ -647,7 +675,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 2662
    },
    "src": "model",
    "valid_share": 1.0,
@@ -682,7 +711,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 35300
    },
    "src": "public",
    "valid_share": 1.0,
@@ -717,7 +747,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 2087
    },
    "src": "public",
    "valid_share": 1.0,
@@ -728,13 +759,14 @@
    "name": "Kemin",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 18382,
+    "value": 11835,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 18382
    },
    "built_ha": {
     "value": 1559,
@@ -763,13 +795,14 @@
    "name": "Aksy",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 26458,
+    "value": 20944,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 26458
    },
    "built_ha": {
     "value": 5086,
@@ -786,7 +819,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 3256
    },
    "src": "model",
    "valid_share": 1.0,
@@ -797,13 +831,14 @@
    "name": "Chuy",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 43901,
+    "value": 42959,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 43901
    },
    "built_ha": {
     "value": 2708,
@@ -820,7 +855,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 316
    },
    "src": "model",
    "valid_share": 1.0,
@@ -831,13 +867,14 @@
    "name": "Sokuluk",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 87266,
+    "value": 79409,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 87266
    },
    "built_ha": {
     "value": 9713,
@@ -854,7 +891,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1254
    },
    "src": "model",
    "valid_share": 1.0,
@@ -865,13 +903,14 @@
    "name": "Ala-Buka",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 23269,
+    "value": 19208,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 23269
    },
    "built_ha": {
     "value": 4633,
@@ -888,7 +927,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 775
    },
    "src": "model",
    "valid_share": 1.0,
@@ -899,13 +939,14 @@
    "name": "Ysyk-Ata",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 71681,
+    "value": 64763,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 71681
    },
    "built_ha": {
     "value": 7182,
@@ -922,7 +963,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 854
    },
    "src": "model",
    "valid_share": 1.0,
@@ -933,13 +975,14 @@
    "name": "Suzak",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 75584,
+    "value": 70818,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 75584
    },
    "built_ha": {
     "value": 9550,
@@ -956,7 +999,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 395
    },
    "src": "model",
    "valid_share": 1.0,
@@ -967,13 +1011,14 @@
    "name": "Nooken",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 41045,
+    "value": 36646,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 41045
    },
    "built_ha": {
     "value": 6087,
@@ -990,7 +1035,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 264
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1025,7 +1071,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 3640
    },
    "src": "public",
    "valid_share": 1.0,
@@ -1036,13 +1083,14 @@
    "name": "Panfilov",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 60330,
+    "value": 53224,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 60330
    },
    "built_ha": {
     "value": 1951,
@@ -1059,7 +1107,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1552
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1070,13 +1119,14 @@
    "name": "Jayyl",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 73520,
+    "value": 69239,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 73520
    },
    "built_ha": {
     "value": 4024,
@@ -1093,7 +1143,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1104
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1128,7 +1179,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 4421
    },
    "src": "public",
    "valid_share": 1.0,
@@ -1139,13 +1191,14 @@
    "name": "Moskva",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 70295,
+    "value": 60747,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 70295
    },
    "built_ha": {
     "value": 4165,
@@ -1174,13 +1227,14 @@
    "name": "Kara-Suu",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 80078,
+    "value": 72909,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 80078
    },
    "built_ha": {
     "value": 17278,
@@ -1209,13 +1263,14 @@
    "name": "Alamudun",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 36689,
+    "value": 36717,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 36689
    },
    "built_ha": {
     "value": 6777,
@@ -1232,7 +1287,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 2367
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1243,13 +1299,14 @@
    "name": "Kadamjay",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 19554,
+    "value": 18994,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 19554
    },
    "built_ha": {
     "value": 7370,
@@ -1278,13 +1335,14 @@
    "name": "Leilek",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 29850,
+    "value": 26911,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 29850
    },
    "built_ha": {
     "value": 5557,
@@ -1301,7 +1359,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1528
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1312,13 +1371,14 @@
    "name": "Talas",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 35779,
+    "value": 27234,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 35779
    },
    "built_ha": {
     "value": 4514,
@@ -1335,7 +1395,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 1003
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1346,13 +1407,14 @@
    "name": "Kara-Buura",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 48443,
+    "value": 43570,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 48443
    },
    "built_ha": {
     "value": 2899,
@@ -1369,7 +1431,8 @@
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
     "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "src": "model",
+    "sum_ha": 2041
    },
    "src": "model",
    "valid_share": 1.0,
@@ -1380,13 +1443,14 @@
    "name": "Ak-Suu",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 52636,
+    "value": 45438,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 52636
    },
    "built_ha": {
     "value": 6276,
@@ -1415,13 +1479,14 @@
    "name": "Issyk Kul",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 18669,
+    "value": 16155,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district",
-    "src": "model"
+    "note": "AI result polygons whose centre lies in the district · overlaps between result tiles counted once",
+    "src": "model",
+    "sum_ha": 18669
    },
    "built_ha": {
     "value": 4320,

@@ -365,7 +365,27 @@ async def load(p: Principal, rid: str | None = None) -> tuple[dict | None, list[
     reg = dict(reg)
     if isinstance(reg.get("summary"), str):
         reg["summary"] = json.loads(reg["summary"])
-    return reg, [dict(r) for r in rows]
+    return _fresh(reg, [dict(r) for r in rows])
+
+
+def _fresh(reg: dict, rows: list[dict]) -> tuple[dict, list[dict]]:
+    """저장된 대조의 AI 값을 지금 장부(district-cropland 한 출처)로 다시 맞춘다 — 장부가 바뀌어도(10-17 원칙 274 겹침 없는 넓이 등)
+    예전에 올린 대장이 옛 AI 값을 보여 주지 않게. 신고 값 · 관할 판단 · 이름 맞춤은 저장된 그대로."""
+    th = float((reg.get("summary") or {}).get("threshold") or THRESHOLD)
+    for r in rows:
+        if r["status"] not in ("match", "mismatch", "no_ai") or not r.get("district_id") or not r.get("declared"):
+            continue
+        e = ai_value(r["district_id"])
+        if not e:
+            r.update(ai=None, diff_pct=None, status="no_ai")
+            continue
+        a, dec = float(e["value"]), float(r["declared"])
+        r["ai"], r["diff_pct"] = a, (a - dec) / dec * 100.0
+        r["status"] = "mismatch" if abs(r["diff_pct"]) > th else "match"
+    s = dict(reg.get("summary") or {})
+    s.update({k: v for k, v in summarize(rows, th).items() if k in ("compared", "mismatched", "no_ai")})
+    reg["summary"] = s
+    return reg, rows
 
 
 # ── 라우트 ──────────────────────────────────────────────────────────────────

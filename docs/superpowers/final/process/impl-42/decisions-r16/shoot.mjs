@@ -177,6 +177,18 @@ async function ov() {
     LOG.sprawl = await ST();
     await shot('r16-ov-sprawl');
   });
+  await scene('register', async () => {
+    if (!/\/global\//.test(p.url())) await p.goto(`${OVS}${V}global/`, { waitUntil: 'domcontentloaded' });
+    await until((s) => s.state === 'ready', 60000); await sleep(1500);
+    await p.locator('.gl-tab', { hasText: 'Register' }).click(); await sleep(1500);
+    if (!(await p.locator('.gl-reg table, .gl-reg [data-row], .gl-reg li').count())) {
+      await p.locator('.gl-reg input[type=file]').setInputFiles(path.join(ROOT, 'shots/r3/r3-global/kgz-agri-sample-register.csv'));
+      await wf(() => !/Comparing/.test(document.querySelector('.gl-reg-up')?.textContent || ''), null, 30000);
+    }
+    await sleep(2200);
+    LOG.register = await p.evaluate(() => document.querySelector('.gl-reg')?.innerText.replace(/\s+/g, ' ').slice(0, 1200));
+    await shot('r16-ov-register');
+  });
 }
 
 try {
