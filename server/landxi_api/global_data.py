@@ -597,3 +597,64 @@ async def crop_meta(request: Request):
         return {"ready": False}
     return {"ready": True, "model": meta.get("model"), "year": meta.get("year"), "z": meta.get("z"), "public_used": meta.get("public_used"), "country": meta.get("country"),
             "source": meta.get("source")}
+
+
+# ── 작황 하락 결과 보관(한 출처 · 바퀴 17 해외-첫화면속도) ───────────────────────────────────────────────
+# 해외 첫 화면 큰 숫자(작황 하락 km²)는 같은 작업 · 구역 · 계절 · 모자이크 · 바탕 모델이면 값이 같다(열쇠 = 그 묶음의 sha256).
+# 처음 잰 화면이 값 + 그림을 여기 한 번 두면, 다른 브라우저 · 다른 사람도 타일 120장을 다시 받지 않고 같은 값을 바로 쓴다.
+# 한 번 쓰면 덮어쓰지 않는다(값이 같아야 하는 열쇠 · 바뀌면 열쇠가 바뀐다).
+_DROP_DIR = config.DATA_ROOT / "global" / "drop-cache"
+_DROP_KEY = re.compile(r"^[0-9a-f]{64}$")
+_DROP_PNG_MAX = 6 * 1024 * 1024
+
+
+def _drop_paths(h: str) -> tuple[Path, Path]:
+    if not _DROP_KEY.match(h or ""):
+        raise ApiError("bad_request", "Bad key")
+    return _DROP_DIR / f"{h}.json", _DROP_DIR / f"{h}.png"
+
+
+@router.get("/global/drop/{h}")
+async def drop_get(h: str, request: Request):
+    """보관된 작황 하락 값 — 없으면 found: false(화면이 직접 잰다 · 콘솔 오류 없게 200)."""
+    _gate(principal(request))
+    j, p = _drop_paths(h)
+    if not (j.exists() and p.exists()):
+        return JSONResponse({"found": False}, headers={"Cache-Control": "no-store"})
+    m = json.loads(j.read_text(encoding="utf-8"))
+    return JSONResponse({"found": True, "km2": m["km2"], "cropKm2": m.get("cropKm2"), "coverage": m["coverage"]},
+                        headers={"Cache-Control": "private, max-age=600"})
+
+
+@router.get("/global/drop-png/{h}")
+async def drop_png(h: str, request: Request):
+    from fastapi.responses import Response
+    _gate(principal(request))
+    _, p = _drop_paths(h)
+    if not p.exists():
+        return Response(status_code=204, headers={"Cache-Control": "no-store"})
+    return Response(content=p.read_bytes(), media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@router.put("/global/drop/{h}")
+async def drop_put(h: str, request: Request):
+    """화면이 빠진 타일 없이 잰 값 + 그림(base64 PNG)을 한 번 둔다 · 이미 있으면 그대로(덮어쓰지 않음)."""
+    import base64
+    import math
+    _gate(principal(request))
+    j, p = _drop_paths(h)
+    if j.exists() and p.exists():
+        return {"ok": True, "kept": True}
+    body = await request.json()
+    try:
+        km2, cov = float(body["km2"]), float(body["coverage"])
+        crop = None if body.get("cropKm2") is None else float(body["cropKm2"])
+        png = base64.b64decode(str(body["png"]), validate=True)
+    except (KeyError, TypeError, ValueError):
+        raise ApiError("bad_request", "Bad drop result")
+    if not (math.isfinite(km2) and km2 >= 0 and 0 <= cov <= 1.0001) or len(png) > _DROP_PNG_MAX or not png.startswith(b"\x89PNG"):
+        raise ApiError("bad_request", "Bad drop result")
+    _DROP_DIR.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(png)
+    j.write_text(json.dumps({"km2": km2, "cropKm2": crop, "coverage": cov, "at": now_iso()}), encoding="utf-8")
+    return {"ok": True, "kept": False}

@@ -64,6 +64,26 @@ async function dropPut(k, r) {
   } catch { /* 보관 못 함 — 다음에 다시 잰다 */ }
 }
 
+/* ── 작황 하락 결과 서버 보관(한 출처 · 해외-첫화면속도) — 처음 잰 값 + 그림을 서버에 한 번 두고 모든 브라우저가 같은 값을 바로 쓴다 ── */
+const dropHash = async (k) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+const authH = () => { const s = session.get(); return s ? { authorization: 'Bearer ' + s.token } : {}; };
+async function dropSrvGet(k) {
+  try {
+    const hk = await dropHash(k);
+    const [r, b] = await Promise.all([fetch(API.prefix + '/global/drop/' + hk, { headers: authH() }), fetch(API.prefix + '/global/drop-png/' + hk, { headers: authH() })]);   // 값 · 그림 함께(없으면 found false · 204)
+    if (!r.ok || b.status !== 200) return null;
+    const m = await r.json(); if (!m?.found || !Number.isFinite(m.km2)) return null;
+    return { km2: m.km2, cropKm2: m.cropKm2, coverage: m.coverage, url: URL.createObjectURL(await b.blob()) };
+  } catch { return null; }
+}
+async function dropSrvPut(k, r) {
+  try {
+    const blob = await (await fetch(r.url)).blob();
+    const png = await new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = no; f.readAsDataURL(blob); });
+    await fetch(API.prefix + '/global/drop/' + await dropHash(k), { method: 'PUT', headers: { ...authH(), 'content-type': 'application/json' }, body: JSON.stringify({ km2: r.km2, cropKm2: r.cropKm2 ?? null, coverage: r.coverage, png }) });
+  } catch { /* 서버에 못 둠 — 이 브라우저 보관만 */ }
+}
+
 /* ── 기하 도우미 ── */
 function ringHas(r, x, y) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
 function geomHas(g, x, y) {
@@ -87,15 +107,37 @@ async function main() {
   // 글로브가 보이기 전(로그인 확인 · 배포 · 경계 받기 약 1.5–2.5초) — 키트 가운데 'Loading' 하나(원칙 212) · 글로브가 서면 놓는다
   const boot = K.hold();
   addEventListener('pagehide', boot, { once: true });
+  // 정적 자료(나라 · 경계 · 건물 격자 · 모자이크 목록)는 로그인 확인과 함께 받기 시작한다(첫 화면이 왕복마다 기다리지 않게 · 해외-첫화면속도)
+  const jget = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const PRE = { countries: jget(DATA + 'lx-countries.json'), ys: loadYsData().catch(() => ({})), sprawl: loadSprawl().catch(() => null),
+    sprawlYs: jget('data/kgz-sprawl-ysykata-2017-2025.json'), prevYr: jget('data/pc-mosaics-2024.json'), fxd: jget('/landxi/ops/data/fixtures/deploys.json'),
+    adm1: Object.fromEntries(Object.entries(ADM).filter(([, a]) => a.adm1).map(([iso, a]) => [iso, jget(DATA + a.adm1)])) };
   const who = await K.gate('global');
   // 첫 확인이 늦으면(느린 기기 · 게이트웨이 바쁨) off 로 굳지 않게 한 번 더 — 실패를 '배포 없음'으로 두지 않는다
   // /health 가 0.5–6 s 걸릴 때가 있다(실측) — 기본 1.5 s 에 끊기면 off 로 굳어 배포 0 처럼 보인다 → 이 화면은 8 s 까지 기다린다
   if (!(await probe()).ok) { API.probeMs = Math.max(API.probeMs || 0, 8000); await probe(true); }
   // 작황 하락 계산 타일은 서버 중계로(재시도 · 30일 보관 — 빠진 타일 때문에 숫자가 볼 때마다 달라지지 않게) · 길이 없으면 PC 직통
   const PC_DATA = 'https://planetarycomputer.microsoft.com/api/data/v1/';
-  const pcVia = await K.hasRoute('/proxy/pc/data/{path}');
+  const must = async (fn, what) => { for (let a = 0; a < 4; a++) { try { const v = await fn(); if (v) return v; } catch (e) { if (a === 3) console.warn('[global] load', what, e?.message || e); } if (a < 3) { await wait(800 * 2 ** a); if (API.mode === 'off') await probe(true); } } throw new Error('load ' + what); };
+  // 길 확인 · 경작지 바탕 정보 · 아래 본 자료 · 지도는 함께 받기 시작한다(차례로 받으면 첫 화면이 왕복마다 기다린다 · 해외-첫화면속도)
+  const pcViaP = K.hasRoute('/proxy/pc/data/{path}');
   // 작황 하락의 경작지 바탕 = 우리 해외 모델(10-17 바퀴 16 해외-큰숫자 · 원칙 269) — 고지대처럼 크게 부풀린 군은 서버가 공개 판정 값으로 채운다. 길이 없으면 WorldCover
-  const OC = (await K.hasRoute('/global/crop-tiles/{z}/{x}/{y}.png')) ? await api('/global/crop-tiles/meta').then((m) => (m?.ready ? { ...m, tiles: API.prefix + '/global/crop-tiles/{z}/{x}/{y}.png' } : null)).catch(() => null) : null;
+  const OCP = K.hasRoute('/global/crop-tiles/{z}/{x}/{y}.png').then((ok) => (ok ? api('/global/crop-tiles/meta').then((m) => (m?.ready ? { ...m, tiles: API.prefix + '/global/crop-tiles/{z}/{x}/{y}.png' } : null)).catch(() => null) : null));
+  const isLX0 = who.me.realm === 'lx';
+  const needJ = (u) => () => fetch(u).then((r) => (r.ok ? r.json() : null));
+  const fxdP = PRE.fxd;
+  let cP = PRE.countries;
+  const dataP = Promise.all([
+    must(() => api('/deploys?scope=global').then((j) => (Array.isArray(j?.items) ? j : null)), 'deploys'),
+    must(() => loadCatalog(isLX0 ? 'lx' : 'tenant', 'en').then((c) => (c?.by ? c : null)), 'catalog'),
+    must(() => { const x = cP; cP = null; return x || needJ(DATA + 'lx-countries.json')(); }, 'countries'), PRE.ys, PRE.sprawl,
+    PRE.sprawlYs,
+    api('/jobs?limit=50').catch(() => ({ items: [] })),
+    PRE.prevYr,
+  ]);
+  dataP.catch(() => null);
+  const tnP = who.me.tenant_id ? K.hasRoute('/auth/tenants').then((ok) => (ok ? api('/auth/tenants') : null)).catch(() => null) : null;   // 기관 이름도 함께
+  const [pcVia, OC] = await Promise.all([pcViaP, OCP]);
   if (pcVia || OC) NT.useFetch((u) => { const s = session.get(); return fetch(pcVia && u.startsWith(PC_DATA) ? API.prefix + '/proxy/pc/data/' + u.slice(PC_DATA.length) : u, s ? { headers: { authorization: 'Bearer ' + s.token } } : {}); });
   const isLX = who.me.realm === 'lx';
   const isLXsales = isLX && who.me.role === 'sales';   // 영업 계정은 읽기만(대장 올리기 0)
@@ -105,7 +147,7 @@ async function main() {
   let orgEn = '', orgShort = '';
   if (tenantId) {
     const pickName = (n) => { if (!orgEn && n?.en) { orgEn = n.en; orgShort = n.short_en || n.short || ''; } };
-    if (await K.hasRoute('/auth/tenants')) { try { const j = await api('/auth/tenants'); pickName((j.items || []).find((x) => x.id === tenantId)?.name); } catch { /* 아래로 */ } }
+    { const j = await tnP; if (j) pickName((j.items || []).find((x) => x.id === tenantId)?.name); }
     if (!orgEn) { try { const j = await (await fetch('/landxi/ops/data/fixtures/tenants.json')).json(); pickName(((j.items || j).find?.((x) => x.id === tenantId))?.name); } catch { /* 아래로 */ } }
     if (!orgEn) pickName(who.tenant?.name);
   }
@@ -133,22 +175,17 @@ async function main() {
   const sheet = K.card({ map: true, cls: 'gl-sheet' });
   main.append(stageEl, crumbs, hudEl, guard, tip, sheet);
   K.panes(sheet, { edge: 'left', key: 'sheet', cssVar: '--sheet', varHost: main, host: main, container: main, min: 340, max: 720, otherMin: 360, below: 961 });   // 오른쪽 칸 폭 끌어서 · 접기(원칙 263)
+  // 무대(바탕 지도 스타일 · 첫 타일)도 자료와 함께 받기 시작한다 — 판은 아래에서 다 선 뒤에 보인다
+  let st;
+  try { st = K.createStage(stageEl, { bounds: [-170, -58, 170, 75] }); } catch { st = null; }
 
   /* ── 데이터(병렬) ── */
   const fx = (f) => fetch(DATA + f).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   /** 꼭 있어야 하는 것(배포 · 나라 경계 · 카탈로그)은 세 번까지 받는다 — 실패를 '배포 없음'으로 두지 않는다 */
-  const must = async (fn, what) => { for (let a = 0; a < 4; a++) { try { const v = await fn(); if (v) return v; } catch (e) { if (a === 3) console.warn('[global] load', what, e?.message || e); } if (a < 3) { await wait(800 * 2 ** a); if (API.mode === 'off') await probe(true); } } throw new Error('load ' + what); };
-  const needJ = (u) => () => fetch(u).then((r) => (r.ok ? r.json() : null));
   let depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ, prevYr;
+  const adm1P = { ...PRE.adm1 };
   try {
-    [depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ, prevYr] = await Promise.all([
-      must(() => api('/deploys?scope=global').then((j) => (Array.isArray(j?.items) ? j : null)), 'deploys'),
-      must(() => loadCatalog(isLX ? 'lx' : 'tenant', 'en').then((c) => (c?.by ? c : null)), 'catalog'),
-      must(needJ(DATA + 'lx-countries.json'), 'countries'), loadYsData().catch(() => ({})), loadSprawl().catch(() => null),
-      fetch('data/kgz-sprawl-ysykata-2017-2025.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      api('/jobs?limit=50').catch(() => ({ items: [] })),
-      fetch('data/pc-mosaics-2024.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]);
+    [depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ, prevYr] = await dataP;
   } catch { return loadError(); }
   const JOBS = [...(jobsJ.items || [])];
   const kr = (b) => b[0] >= 124 && b[2] <= 132.5 && b[1] >= 32.5 && b[3] <= 39.5;
@@ -162,7 +199,7 @@ async function main() {
      그 범위를 기관 지역으로 쓴다(DB 정리 때 빠진 dp-kgz-land-change-26 · 결과 0). 결과는 지어내지 않는다 — HUD 는 서버 작업이 있어야만 선다.
      실행 견적·제출에는 deploy_id 를 싣지 않는다(서버에 없는 id). 서버에 배포가 돌아오면 이 분기는 저절로 꺼진다. */
   try {
-    const fxd = await fetch('/landxi/ops/data/fixtures/deploys.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const fxd = await fxdP;
     const has = new Set((depJ.items || []).map((d) => d.tenant_id));
     for (const d of fxd?.items || []) {
       const b = bboxOf(d.aoi); if (!b || kr(b) || has.has(d.tenant_id)) continue;
@@ -190,6 +227,7 @@ async function main() {
   async function districtsOf(C) {
     if (admCache[C.iso]) return admCache[C.iso];
     const A = ADM[C.iso];
+    if (A?.adm1) adm1P[C.iso] ||= fx(A.adm1);   // 시도 경계도 함께 받기 시작(아래에서 기다림)
     let fc = null;
     if (A) fc = C.iso === 'KGZ' && ys.adm2 ? ys.adm2 : await fx(A.adm2);
     // 경계 미확보 사각형(level 'bbox')은 지역이 아니다 — 착지·선택 후보에서 뺀다
@@ -210,7 +248,7 @@ async function main() {
         if (share >= 0.15 || feats.length === 1) { D0.mine = true; if (!D0.deploy || share > D0.share) { D0.deploy = d; D0.share = share; } }
       }
     }
-    const adm1 = A?.adm1 ? await fx(A.adm1) : null;
+    const adm1 = A?.adm1 ? await adm1P[C.iso] : null;
     return (admCache[C.iso] = { feats, adm1 });
   }
 
@@ -275,8 +313,11 @@ async function main() {
     // 같은 작업 · 지역 · 계절 · 모자이크면 값이 같다 — 한 번 잰 결과(값 · 그림)를 이 브라우저에 두고 다음부터 바로 쓴다
     const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, OC ? 'ovs:' + OC.model : (wc.params?.items || []).join(',')].join('|');   // 바탕 모델이 바뀌면 다시 잰다
     R0.p = (async () => {
+      const srvP = dropSrvGet(dk);        // 이 브라우저 보관 · 서버 보관을 함께 본다(차례로 보면 한 번 더 기다린다)
       const hit = await dropGet(dk);
       if (hit && hit.coverage >= COVER_MIN) return okOf(hit);
+      const srv = await srvP;   // 서버에 둔 같은 열쇠 값(다른 브라우저가 이미 잰 것) — 타일 120장 대신 요청 둘
+      if (srv && srv.coverage >= COVER_MIN) { dropPut(dk, srv); return okOf(srv); }
       const { grid, mask } = geoOf(D0);
       const [crop, A, B] = await Promise.all([
         OC ? NT.cropOf(OC.tiles, null, grid) : NT.cropOf(wc.tiles, wc.params?.items || [], grid),
@@ -286,7 +327,7 @@ async function main() {
       if (!crop) { Object.assign(R0, { state: 'low' }); return R0; }
       const r = await NT.dropOf(A, B, mask, crop, grid);
       if (r.coverage < COVER_MIN) { Object.assign(R0, { state: 'low', cover: r.coverage }); return R0; }
-      if (!crop.miss && ![...A, ...B].some((x) => x.miss)) dropPut(dk, r);   // 빠진 타일 없이 잰 값만 보관
+      if (!crop.miss && ![...A, ...B].some((x) => x.miss)) { dropPut(dk, r); dropSrvPut(dk, r); }   // 빠진 타일 없이 잰 값만 보관
       return okOf(r);
     })().catch(() => Object.assign(R0, { state: 'low' }));
     R0.p.then(() => { if (S.district === D0 && S.season === s) { hud(D0); if (S.tab === 0) renderSheet(); else dlCheck(D0); } });
@@ -328,8 +369,7 @@ async function main() {
   const early = want ? districtsOf(want).then((A) => { const p = pickOf(A); if (p) changeOf(p, S.season); return p; }).catch(() => null) : null;
 
   /* ── 무대 ── */
-  let st;
-  try { st = K.createStage(stageEl, { bounds: [-170, -58, 170, 75] }); } catch { return mapError(); }
+  if (!st) return mapError();
   const map = st.map;
   map.getCanvas().setAttribute('aria-label', 'Map');
   const failT = setTimeout(() => { if (!stageEl.classList.contains('is-ready')) mapError(); }, 20000);
@@ -440,7 +480,7 @@ async function main() {
   }
 
   async function toGlobe({ fly = true } = {}) {
-    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null);
+    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null); suggNow();
     map.getSource('gl-adm2').setData(EMPTY); map.getSource('gl-adm1').setData(EMPTY); map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
     const c = S.country ? center(S.country.bbox) : [60, 25];
     const cam = { center: [c[0] + (mobile() ? 0 : 18), Math.max(-30, Math.min(40, c[1] - 6))], zoom: mobile() ? 0.9 : 1.75, pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } };
@@ -449,7 +489,7 @@ async function main() {
   }
 
   async function toCountry(C, { fly = true } = {}) {
-    S.country = C; S.level = 'country'; S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url();
+    S.country = C; S.level = 'country'; S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url(); suggNow();
     const A = await districtsOf(C);
     map.getSource('gl-adm1').setData(A.adm1 || EMPTY);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: 0 }, geometry: d.feature.geometry })) });
@@ -459,10 +499,11 @@ async function main() {
     if (fly) await st.go(C.bbox, { maxZoom: 7.2 });
   }
 
+  const suggNow = () => { try { ck?.sugg?.(); } catch { /* 채팅이 아직 서기 전 — 열 때 그린다 */ } };
   async function toDistrict(D0, { fly = true, jump = false } = {}) {
     if (!D0.mine && !isLX) { flashGuard(); return; }
     const A = admCache[S.country.iso];
-    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null);
+    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null); suggNow();
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: d === D0 ? 1 : 0 }, geometry: d.feature.geometry })) });
     const g = D0.feature.geometry, holes = g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map((p) => p[0]) : [];
     map.getSource('gl-mask').setData({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring([-179.9, -85, 179.9, 85]), ...holes.map((r) => [...r].reverse())] } });
@@ -481,7 +522,7 @@ async function main() {
     hud(D0);
     renderSheet();
     quoteSoon();
-    warmSeasons(D0);
+    setTimeout(() => warmSeasons(D0), 4000);   // 다른 계절 미리 재기는 첫 화면(바탕 지도 타일)이 다 선 뒤에
   }
   /** 이 지역의 다른 계절 결과도 뒤에서 하나씩 미리 잰다(끝난 작업이 있는 계절만) — 계절을 바꾸면 바로 큰 숫자 */
   async function warmSeasons(D0) {
@@ -827,6 +868,8 @@ async function main() {
       return { locale: 'en', country: S.country?.name, region: S.district?.name, district: S.district?.name, season: S.season?.key, drop };
     },
     onAction: (a) => { if (inArea(actBox(a))) ckRun.hit = true; },
+    // 추천 질문 — 구역을 고르면 맨 앞에 '<구역> cropland area'(답 = 구역 경작지 장부 값 · 해외군-추천질문-고침)
+    sugg: () => (S.district ? [`${S.district.name} cropland area`, 'What results do we have here?', 'Show the imagery layer'] : ['What results do we have here?', 'Zoom in on the map', 'Show the imagery layer']),
   });
   SH.mast(h('button.k-mast-b.gl-ask', { type: 'button', onclick: () => ck.open() }, h('span', { text: STR.ask }), h('kbd', { text: T('cmdk.key') })));
   // LX 계정 — 해외 결과는 이제 XI맵 안에서 나라만 바꿔 본다(바퀴 4 · XI맵-해외). 이 화면(해외 기관용 · 달별 변화)은 그대로 두고 XI맵으로 잇는다
@@ -999,7 +1042,8 @@ async function main() {
     if (word && sn) word.append(h('span.gl-home-s', { title: orgEn || sn }, h('span.gl-home-n', { text: sn }), iso ? h('span', { text: ' · ' + iso }) : null));
   }
   early?.then((p) => p && quote(p));   // 견적도 비행과 겹쳐(화면 부품이 다 선 뒤 — 여기서)
-  const fast = revisit ? await early : null;   // 두 번째 방문 — 판이 서기 전에 지역 자리에 둔다(글로브 · 비행 없음)
+  // 첫 방문도 바로 지역(글로브 · 두 번 비행 약 6초가 첫 화면을 3초 넘게 막았다 · 해외-첫화면속도) — 판이 서기 전에 지역 자리에 둔다
+  const fast = await early;
   if (fast) { await toCountry(want, { fly: false }); await toDistrict(fast, { fly: false, jump: true }); }
   else await toGlobe({ fly: false });
   // 흰 글로브가 한 번 그려진 뒤에야 판을 보인다(기본 메르카토르 위성 · 투영 전환 프레임이 정문 뒤에 비치지 않게)
