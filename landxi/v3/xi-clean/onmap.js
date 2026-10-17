@@ -469,7 +469,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (map.getSource('xo-f')) map.getSource('xo-f').setData({ type: 'FeatureCollection', features: [] });
     const meaning = fast ? Promise.resolve() : confirmMeaning(s);
     O.spec = s; render(s); paintMini(s);
-    const applySaved = () => { const v = loadPos(); POS.cur = v ? { l: v.l, t: v.t } : null; if (v?.w > 0) ensurePane().set(v.w, false); applyPos(); cacheSet(v); };   // 사람이 끌어 둔 자리 · 폭(이 계정 · 이 창 크기) · 없으면 도구 열 아래
+    const applySaved = () => { const v = loadPos(); POS.cur = v ? { l: v.l, t: v.t } : null; if (v?.w > 0) ensurePane().set(v.w, true); applyPos(); cacheSet(v); };   // 폭은 손잡이 기억에도(keep) — 단계 바꿈의 기본 폭(preset)이 서버 폭을 덮지 않게   // 사람이 끌어 둔 자리 · 폭(이 계정 · 이 창 크기) · 없으면 도구 열 아래
     applySaved(); if (!PREF) prefLoad().then(() => { if (O.on && O.run === run) applySaved(); });   // 서버 값이 늦게 오면 그 값으로 다시
     setStep(step, { silent: true }); panel.hidden = false;                              // 단계(접힘/폭)를 먼저 정하고 보인다 — 펼친 판이 한 번 비쳤다 접히던 것(바퀴 16 재검수 · 1366)
     if (O.step === 2) stage.pad({ right: padR() });

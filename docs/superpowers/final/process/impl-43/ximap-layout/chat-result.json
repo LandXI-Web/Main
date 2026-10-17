@@ -1,0 +1,342 @@
+{
+ "at": "2026-10-18 08:00:51",
+ "w": {
+  "1366": {
+   "base": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": null,
+    "fold": true,
+    "all": false,
+    "prev": false,
+    "prevText": "이전 대화 0",
+    "msgs": 1,
+    "dup": 0,
+    "btnStats": 0,
+    "planStats": 0,
+    "say": [],
+    "lastWords": null,
+    "bubbles": 5,
+    "bubblesCovered": 0,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 643,
+     "cw": 680,
+     "open": false,
+     "obstacles": 0
+    },
+    "tidy": {
+     "prev": 0,
+     "all": false,
+     "fold": true
+    }
+   },
+   "chat1": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": {
+     "x": 263,
+     "y": 381,
+     "w": 680,
+     "h": 239
+    },
+    "fold": false,
+    "all": false,
+    "prev": false,
+    "prevText": "이전 대화 0",
+    "msgs": 2,
+    "dup": 0,
+    "btnStats": 0,
+    "planStats": 0,
+    "say": [],
+    "lastWords": null,
+    "bubbles": 5,
+    "bubblesCovered": 1,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 603,
+     "cw": 680,
+     "open": true,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 0,
+     "all": false,
+     "fold": false
+    }
+   },
+   "folded": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": {
+     "x": 263,
+     "y": 381,
+     "w": 680,
+     "h": 239
+    },
+    "fold": true,
+    "all": false,
+    "prev": false,
+    "prevText": "이전 대화 0",
+    "msgs": 2,
+    "dup": 0,
+    "btnStats": 0,
+    "planStats": 0,
+    "say": [],
+    "lastWords": null,
+    "bubbles": 2,
+    "bubblesCovered": 0,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 603,
+     "cw": 680,
+     "open": true,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 0,
+     "all": false,
+     "fold": false
+    }
+   },
+   "chat2": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": {
+     "x": 263,
+     "y": 367,
+     "w": 680,
+     "h": 253
+    },
+    "fold": false,
+    "all": false,
+    "prev": true,
+    "prevText": "이전 대화 1",
+    "msgs": 2,
+    "dup": 0,
+    "btnStats": 0,
+    "planStats": 0,
+    "say": [],
+    "lastWords": null,
+    "bubbles": 1,
+    "bubblesCovered": 0,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 603,
+     "cw": 680,
+     "open": true,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 1,
+     "all": false,
+     "fold": false
+    }
+   },
+   "all": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": {
+     "x": 263,
+     "y": 205,
+     "w": 680,
+     "h": 415
+    },
+    "fold": false,
+    "all": true,
+    "prev": true,
+    "prevText": "최근 답만",
+    "msgs": 4,
+    "dup": 0,
+    "btnStats": 0,
+    "planStats": 0,
+    "say": [],
+    "lastWords": null,
+    "bubbles": 2,
+    "bubblesCovered": 2,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 603,
+     "cw": 680,
+     "open": true,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 1,
+     "all": true,
+     "fold": false
+    }
+   },
+   "stats": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": null,
+    "fold": true,
+    "all": false,
+    "prev": true,
+    "prevText": "이전 대화 2",
+    "msgs": 2,
+    "dup": 1,
+    "btnStats": 1,
+    "planStats": 0,
+    "say": [
+     {
+      "text": "경작지는 운봉읍 9,879곳 · 송동면 6,059 · 보절면 5,927 순으로 많습니다.",
+      "lines": 2
+     },
+     {
+      "text": "위 세 곳이 남원시 경작지의 26%를 차지합니다.",
+      "lines": 2
+     }
+    ],
+    "lastWords": {
+     "lines": 2,
+     "lastLine": "26%를 차지합니다."
+    },
+    "bubbles": 1,
+    "bubblesCovered": 0,
+    "tags": 5,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 346,
+     "cl": 476,
+     "cw": 680,
+     "open": false,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 2,
+     "all": false,
+     "fold": false
+    }
+   },
+   "statsChat": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": {
+     "x": 136,
+     "y": 393,
+     "w": 680,
+     "h": 239
+    },
+    "fold": false,
+    "all": false,
+    "prev": true,
+    "prevText": "이전 대화 2",
+    "msgs": 2,
+    "dup": 1,
+    "btnStats": 1,
+    "planStats": 0,
+    "say": [
+     {
+      "text": "경작지는 운봉읍 9,879곳 · 송동면 6,059 · 보절면 5,927 순으로 많습니다.",
+      "lines": 2
+     },
+     {
+      "text": "위 세 곳이 남원시 경작지의 26%를 차지합니다.",
+      "lines": 2
+     }
+    ],
+    "lastWords": {
+     "lines": 2,
+     "lastLine": "26%를 차지합니다."
+    },
+    "bubbles": 1,
+    "bubblesCovered": 0,
+    "tags": 4,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 346,
+     "cl": 476,
+     "cw": 680,
+     "open": false,
+     "obstacles": 1
+    },
+    "tidy": {
+     "prev": 2,
+     "all": false,
+     "fold": false
+    }
+   },
+   "afterClose": {
+    "main": {
+     "w": 1286,
+     "h": 704
+    },
+    "dlog": null,
+    "fold": true,
+    "all": false,
+    "prev": true,
+    "prevText": "이전 대화 2",
+    "msgs": 2,
+    "dup": 1,
+    "btnStats": 1,
+    "planStats": 0,
+    "say": [
+     {
+      "text": "경작지는 운봉읍 9,879곳 · 송동면 6,059 · 보절면 5,927 순으로 많습니다.",
+      "lines": 0
+     },
+     {
+      "text": "위 세 곳이 남원시 경작지의 26%를 차지합니다.",
+      "lines": 0
+     }
+    ],
+    "lastWords": {
+     "lines": 1,
+     "lastLine": "위 세 곳이 남원시 경작지의 26%를 차지합니다."
+    },
+    "bubbles": 5,
+    "bubblesCovered": 0,
+    "tags": 0,
+    "tagsCovered": 0,
+    "layout": {
+     "tb": 317,
+     "xr": 96,
+     "cl": 643,
+     "cw": 680,
+     "open": false,
+     "obstacles": 0
+    },
+    "tidy": {
+     "prev": 2,
+     "all": false,
+     "fold": false
+    }
+   }
+  }
+ },
+ "errs": [],
+ "foldedAfterMs": 8153
+}

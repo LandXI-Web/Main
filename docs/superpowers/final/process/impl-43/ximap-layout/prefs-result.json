@@ -1,0 +1,43 @@
+{
+ "at": "2026-10-18 08:03:19",
+ "before": null,
+ "dock": {
+  "l": 982,
+  "t": 317,
+  "w": 362,
+  "free": false
+ },
+ "dragged": {
+  "l": 412,
+  "t": 427,
+  "w": 449,
+  "free": true
+ },
+ "server1": {
+  "1440x900": {
+   "l": 412,
+   "t": 427,
+   "w": 449
+  }
+ },
+ "cache1": [
+  "lx.ximap.statpos.v1.u_mail_test./landxi/v3/xi-clean.1440x900"
+ ],
+ "cache2before": [],
+ "relogin": {
+  "l": 412,
+  "t": 427,
+  "w": 451,
+  "free": true
+ },
+ "home": {
+  "l": 982,
+  "t": 317,
+  "w": 362,
+  "free": false
+ },
+ "server2": null,
+ "cache2": [],
+ "ok": true,
+ "errs": []
+}
