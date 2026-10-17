@@ -99,7 +99,8 @@ async def _db_findings(ctx, reg, rule, priority, emd_cds, limit=2000) -> dict | 
         from landxi_api.survey import FCOLS, X
     except Exception:
         return None
-    w, a = ["substr(pnu,1,5) = ANY($1::text[])"], [reg["codes"]]
+    from survey.db import once_sql
+    w, a = ["substr(pnu,1,5) = ANY($1::text[])", once_sql()], [reg["codes"]]   # 같은 필지 · 같은 규칙 한 줄(바퀴 16)
     # 규칙을 말하지 않으면 R1–R6(의심 필지 한 출처와 같은 범위 · 대장 규칙 L-* 는 ledger_findings)
     for col, val in (("rule", [rule] if rule else list(RULE_NM)), ("priority", [priority] if priority else None), ("emd_cd", emd_cds)):
         if val:
@@ -121,8 +122,9 @@ async def _db_stats(ctx, reg, emd_cds) -> dict | None:
         from landxi_api.survey import survey_counts
     except Exception:
         return None
+    from survey.db import once_sql
     rules = list(RULE_NM)
-    w, a = ["substr(pnu,1,5) = ANY($1::text[])", "rule = ANY($2::text[])"], [reg["codes"], rules]
+    w, a = ["substr(pnu,1,5) = ANY($1::text[])", "rule = ANY($2::text[])", once_sql()], [reg["codes"], rules]   # 같은 필지 · 같은 규칙 한 번(바퀴 16)
     if emd_cds:
         a.append(emd_cds)
         w.append("emd_cd = ANY($3::text[])")

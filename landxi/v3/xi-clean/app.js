@@ -147,7 +147,7 @@ const ICO = {
 const S = {
   who: null, key: '', lx: false, sales: false, tenant: false, canAnalyze: false,
   region: null, home: null, outside: false, regions: [], emds: [], ruleDefs: {}, asOf: null,
-  cond: { emd: null, rule: null }, last: null, need: null, layers: { img: true, sus: true, ai: false, parcel: true, emd: true, lxmap: false },
+  cond: { emd: null, rule: null }, last: null, need: null, layers: { img: true, sus: true, ai: false, parcel: false, emd: true, lxmap: false },
   remd: [], remdMeta: null, res: [], resOn: {},
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
   clsOff: new Set(),                                 // 끈 클래스(XI맵 '층' 판 체크박스 · 10-15) — 지도 · 왼쪽 위 숫자 · 말풍선 숫자에서 빠짐('보이는 것 기준')
@@ -394,7 +394,7 @@ async function buildLayers(cat) {
     const sid = 'xc-pc-' + it.id;
     map.addSource(sid, await spec(it));
     map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': it.layer, minzoom: 14, layout: { 'line-join': 'round' },
-      paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.4, 18, 1], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 15, 0.4] } }, 'slot-overlay');
+      paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.4, 18, 1], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 15, 0.4, 16.5, 0.4, 17, 0] } }, 'slot-overlay');   // '지적' 한 줄(10-17): 14~17 = 필지 경계 선 · 17~ = 편집지적도만(두 지적 선이 겹쳐 어긋나 보이지 않게)
     map.addLayer({ id: sid + '-s', type: 'fill', source: sid, 'source-layer': it.layer, minzoom: 12.5, filter: ['in', ['to-string', ['get', 'pnu']], ['literal', []]],
       paint: { 'fill-color': AMBER, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13.5, 0.5, 17, 0.28] } }, 'slot-overlay');
     map.addLayer({ id: sid + '-sl', type: 'line', source: sid, 'source-layer': it.layer, minzoom: 12.5, filter: ['in', ['to-string', ['get', 'pnu']], ['literal', []]],
@@ -442,7 +442,7 @@ function lxmapLayer() {
 }
 /** 지적(LX맵) 켜고 끄기(층 판 '지적' · 기관 필지 카드 '이 자리 LX맵 겹쳐 보기' 같은 값) — 멀리 있으면 층 판 '지적' 줄이 흐려질 뿐(새 문구 없음 · 10-15) */
 function setLxmap(on, { near = null } = {}) {
-  S.layers.lxmap = !!on; applyLayers(); paintCadRow();
+  S.layers.lxmap = S.layers.parcel = !!on; applyLayers(); paintCadRow();   // '지적선' · '지적' 한 줄(10-17 지적선-합치기 · 원칙 272) — 필지 경계 선(14~) + 편집지적도(17~) 함께
   if (!on) { PC?.close(); return; }
   if (near) map.easeTo({ center: near, zoom: Math.max(map.getZoom(), LXMAP_Z + 0.5), duration: 900 });
 }
@@ -453,7 +453,7 @@ function paintCadRow() {
   const r = pop?.querySelector('[data-cad]');
   if (!r) return;
   r.setAttribute('aria-checked', String(!!S.layers.lxmap));
-  r.classList.toggle('is-far', map.getZoom() < LXMAP_Z);
+  r.classList.toggle('is-far', map.getZoom() < (S.parcelLayers?.length ? 14 : LXMAP_Z));   // 필지 경계 선(14~)도 없으면 흐리게
 }
 const susSet = () => [...S.susLayers, 'xc-pts', 'xc-pts-glow'];
 
@@ -1697,7 +1697,7 @@ async function agentOp(a) {
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
     if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
-    const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
+    const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length + (map.getLayer('xc-lxmap') ? 1 : 0) }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
     if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
     const want = a.on !== false;
     if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
@@ -1716,6 +1716,7 @@ async function agentOp(a) {
       return { ok: true, same: same0 };
     }
     const same = (k === 'ai' ? aiOn() : S.layers[k]) === want && (k !== 'ai' || !want || (S.res || []).every((it) => S.resOn[it.id]));
+    if (k === 'parcel') { setLxmap(want); if (S.tool === 'layers') renderLayers(); return { ok: true, same }; }   // 지적 = 한 줄(지적선 + 편집지적도 · 10-17)
     S.layers[k] = want;
     if (k === 'ai') { S.aiUser = true; S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
     applyLayers();
@@ -1965,7 +1966,7 @@ function showPop(title, ...kids) {
   else pop.style.top = '';
 }
 function renderLayers() {
-  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · LX맵(편집지적도) = 아래 '지적' 한 줄(10-15 원칙 266)
+  const L = [['img', '영상'], ...(S.fc ? [['sus', '현장 확인 필요']] : []), ['ai', 'AI 분석'], ['emd', '읍면동 경계']];   // LX 화면 = 실태조사 층 없음(원칙 135) · 지적선 + LX맵(편집지적도) = 아래 '지적' 한 줄(10-17 합침 · 원칙 272)
   const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(k === 'ai' ? aiOn() : S.layers[k]), onclick: (e) => { if (k === 'lxmap') { setLxmap(!S.layers.lxmap); e.currentTarget.setAttribute('aria-pressed', String(S.layers.lxmap)); return; } if (k === 'ai') { S.layers.ai = !aiOn(); S.aiUser = true; S.aiByRegion = false; } else S.layers[k] = !S.layers[k]; e.currentTarget.setAttribute('aria-pressed', String(k === 'ai' ? aiOn() : S.layers[k])); applyLayers(); if (k === 'ai') renderLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   // AI 분석 아래: 이 지역에 결과가 있는 세트(이름 = 카탈로그 · 전역 분석 결과)
   const sub = (S.res || []).map((it) => h('button.xc-row.xc-row--sub', { type: 'button', 'aria-pressed': String(!!(aiOn() && S.resOn[it.id])), 'data-res': it.id,

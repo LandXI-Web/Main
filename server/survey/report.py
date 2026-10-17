@@ -16,7 +16,7 @@ import re
 
 from . import rules as R
 from .db import (AI_DRAFT, AS_OF, AUTO_DRAFT, FIXED_PHRASE, IMG23, IMG25, LEDGER, REPORT_SRC, RULE_IDS, STATE_SRC, STATES,
-                 imagery_label)
+                 imagery_label, once_sql)
 from .explain import env
 
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -155,7 +155,7 @@ def collect(code: str, rule: str | None = None, top: int = 20, realm: str = "lx"
         org = c.execute("SELECT name->>'ko' AS ko FROM tenants WHERE id=%s", ((sg or {}).get("tenant_id") or e["tenant_id"],)).fetchone()
         w = f"{col}=%s" + (" AND f.rule=%s" if rule else " AND f.rule = ANY(%s)")
         a = (code, rule) if rule else (code, list(RULE_IDS))
-        agg = c.execute(f"SELECT f.rule, f.priority, f.state, count(*) n FROM survey_findings f WHERE {w} GROUP BY 1,2,3", a).fetchall()
+        agg = c.execute(f"SELECT f.rule, f.priority, f.state, count(*) n FROM survey_findings f WHERE {w} AND {once_sql('f')} GROUP BY 1,2,3", a).fetchall()   # 같은 필지 · 같은 규칙 한 번(바퀴 16)
         # 같은 필지는 한 줄(점수가 가장 높은 행) · 해당 규칙은 그 필지의 규칙 전부
         rows = c.execute(f"SELECT * FROM (SELECT DISTINCT ON (f.pnu) f.*, p.jibun, p.ri, "
                          f"(SELECT array_agg(DISTINCT g.rule ORDER BY g.rule) FROM survey_findings g WHERE g.pnu = f.pnu AND g.rule = ANY(%s)) AS rules_all, "

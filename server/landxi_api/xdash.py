@@ -34,6 +34,17 @@ JIMOK = {"답": "답", "전": "전", "과": "과수원", "임": "임야", "구":
          "창": "창고용지", "장": "공장용지", "학": "학교용지", "목": "목장용지", "광": "광천지", "염": "염전", "주": "주유소용지", "차": "주차장", "철": "철도용지",
          "수": "수도용지", "공": "공원", "체": "체육용지", "원": "유원지", "종": "종교용지", "사": "사적지", "묘": "묘지", "양": "양어장"}
 RULES = ("R1", "R2", "R3", "R4", "R5", "R6")
+
+
+def once_sql(a: str = "survey_findings") -> str:
+    """같은 필지 · 같은 규칙 한 번(바퀴 16) — survey.db.once_sql 한 곳(경로를 넣고 읽는다)."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from survey.db import once_sql as f
+    return f(a)
+
+
 AREA_BINS = [(0, 50), (50, 100), (100, 300), (300, 1000), (1000, 3000), (3000, None)]
 _C: dict = {}
 TTL = 60.0
@@ -198,7 +209,7 @@ async def agg_emd(sgg: str) -> dict:
         sc = list(codes)
         try:
             for s in await conn.fetch(
-                    "SELECT emd_cd, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) GROUP BY 1", sc, list(RULES)):
+                    "SELECT emd_cd, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + once_sql() + " GROUP BY 1", sc, list(RULES)):
                 row(s["emd_cd"])["suspects"] = int(s["n"])
             for s in await conn.fetch("SELECT emd_cd, name, parcels FROM survey_emd WHERE sgg_cd = ANY($1::text[])", sc):
                 r = row(s["emd_cd"], s["name"])
@@ -311,7 +322,7 @@ async def agg_rule(sgg: str) -> dict:
         defs = {}
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
-            "SELECT emd_cd, max(emd) AS emd, rule, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) GROUP BY 1, 3",
+            "SELECT emd_cd, max(emd) AS emd, rule, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + once_sql() + " GROUP BY 1, 3",
             codes, list(RULES))
         fc = await conn.fetchval(
             "SELECT count(DISTINCT pnu) FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND priority='A' AND state IN ('open','assigned')",

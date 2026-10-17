@@ -24,7 +24,7 @@ import urllib.request
 from pathlib import Path
 
 from . import rules as R
-from .db import IMG23, RULE_IDS, lx_tx, pg
+from .db import IMG23, RULE_IDS, lx_tx, once_sql, pg
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -593,7 +593,7 @@ def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: s
 
 def union_items(conn, sgg: str) -> list[dict]:
     """그 시군구의 모든 필지 대조 의심(시군구 실태조사 + 카드 판 · R1–R6) — 읍면동 요약(survey_emd)은 시군구 숫자와 같은 범위로 센다."""
-    cur = conn.execute("SELECT emd_cd, pnu, rule, priority, addr, rank, evid_m2, score FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s)",
+    cur = conn.execute("SELECT emd_cd, pnu, rule, priority, addr, rank, evid_m2, score FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) AND " + once_sql(),
                        (sgg, list(RULE_IDS)))
     cols = [d.name for d in cur.description]
     return [dict(zip(cols, r)) for r in cur.fetchall()]
@@ -603,7 +603,7 @@ def refresh_sgg(conn, sgg: str) -> dict:
     """survey_sgg 의 의심 합(findings · by_rule · by_priority) = 그 시군구 모든 필지 대조 행(시군구 숫자 한 출처 — counts_sql 과 같은 범위)."""
     by = {r: 0 for r in RULE_IDS}
     pr = {"A": 0, "B": 0, "C": 0}
-    for rule, prio, n in conn.execute("SELECT rule, priority, count(*) FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) GROUP BY 1, 2",
+    for rule, prio, n in conn.execute("SELECT rule, priority, count(*) FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) AND " + once_sql() + " GROUP BY 1, 2",
                                       (sgg, list(RULE_IDS))).fetchall():
         by[rule] = by.get(rule, 0) + int(n)
         if prio in pr:
@@ -858,7 +858,7 @@ _CNT = ("(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f
         "AND f.priority = 'A' AND f.state IN ('open','assigned')) AS field_check, "
         "(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}){scope} "
         "AND f.priority = 'A' AND f.state = 'open') AS review_pending ")
-COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope="") +
+COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope=" AND " + once_sql("f")) +   # 시군구 전체 = 같은 필지 · 같은 규칙 한 번(바퀴 16)
               "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")
 BASE_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope=" AND f.card_id IS NULL") +
             "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")

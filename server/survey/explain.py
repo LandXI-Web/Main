@@ -122,7 +122,7 @@ def score_parts(rule: str, p: dict) -> tuple[list[dict], float]:
     if rule == "R3" and p["a23_gh_in_m2"] > 0 and p["a25_gh_in_m2"] > 0:
         parts.append({"label": "보강: 2023·2025 모두 비닐하우스", "points": 8})
     if rule in ("R1", "R6") and (p.get("chg_built_new_m2") or 0) > 0:
-        parts.append({"label": "보강: 2025 신축 변화(built_new)", "points": 10})
+        parts.append({"label": "보강: 2025 새 건물", "points": 10})
     if rule in ("R1", "R4", "R6") and (p["a23_bld_n"] or 0) + (p["a23_park_n"] or 0) >= 3:
         parts.append({"label": "객체 3개 이상", "points": 3})
     raw = base + min(25.0, 8 * math.log10(max(a, 1))) + 15 * (c if c else 0.5) + sum(x["points"] for x in parts[3:])

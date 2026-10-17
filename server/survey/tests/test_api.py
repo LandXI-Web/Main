@@ -26,10 +26,12 @@ def _envs(o, out=None):
 
 
 def _card_rows(pg) -> dict:
-    """정본 시군구 안 서비스 카드 판 줄(card_id · 10-09 모델-표기 ⓐ) — 지역 숫자는 그 시군구의 모든 줄(정본 + 카드 판)을 센다."""
+    """정본 시군구 안 서비스 카드 판 줄(card_id · 10-09 모델-표기 ⓐ) — 지역 숫자는 그 시군구의 모든 줄(정본 + 카드 판)을 센다.
+    다만 같은 필지 · 같은 규칙은 한 번(10-17 바퀴 16 중복-세기 '한 번만 셈') — 정본에 같은 필지 · 같은 규칙 줄이 있는 카드 줄은 더하지 않는다."""
     out: dict = {}
-    for cd, rule, n in pg.execute("SELECT emd_cd, rule, count(*) FROM survey_findings WHERE card_id IS NOT NULL AND rule LIKE 'R%%' AND sgg_cd IN "
-                                  "(SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon') GROUP BY 1, 2").fetchall():
+    for cd, rule, n in pg.execute("SELECT emd_cd, rule, count(*) FROM survey_findings f WHERE card_id IS NOT NULL AND rule LIKE 'R%%' AND sgg_cd IN "
+                                  "(SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon') AND NOT EXISTS (SELECT 1 FROM survey_findings b "
+                                  "WHERE b.pnu = f.pnu AND b.rule = f.rule AND b.card_id IS NULL) GROUP BY 1, 2").fetchall():
         out[(cd, rule)] = int(n)
     return out
 
@@ -150,7 +152,8 @@ def test_stats_equal_summary(api, h_nw, pg):
         a = by_cd[it["cd"]]
         assert it["parcels"]["value"] == a["parcels"] and sum(v["value"] for v in it["by_rule"].values()) == a["n"]
         assert {k: v["value"] for k, v in it["by_rule"].items()} == a["rule"]
-        assert all(it["by_priority"][k]["value"] >= n for k, n in a["prio"].items())       # 대장 규칙(L-*) 행이 더해질 수 있다
+        # 대장 규칙(L-*) 행이 더해질 수 있다 · 같은 필지 · 같은 규칙 두 줄은 우선순위 높은 줄 하나(바퀴 16) → A 는 하한, 합은 칸 합 이상
+        assert it["by_priority"]["A"]["value"] >= a["prio"].get("A", 0) and sum(v["value"] for v in it["by_priority"].values()) >= a["n"]
     r = _get(api, "/survey/stats?by=rule", h_nw).json()
     want = dict(S.README_COUNTS["by_rule"])
     for (_, rule), n in _card_rows(pg).items():
@@ -158,7 +161,7 @@ def test_stats_equal_summary(api, h_nw, pg):
     assert {i["key"]: i["n"]["value"] for i in r["items"] if i["key"].startswith("R")} == want
     p = _get(api, "/survey/stats?by=priority", h_nw).json()
     # 대장 규칙(L-*) 행이 같은 표에 더해진다 — 정본 R 등급은 하한, 합계는 서로 같아야 한다(숫자 한 출처)
-    assert all(i["n"]["value"] >= S.README_COUNTS["by_priority"][i["key"]] for i in p["items"])
+    assert {i["key"]: i["n"]["value"] for i in p["items"]}["A"] >= S.README_COUNTS["by_priority"]["A"]
     s = _get(api, "/survey/stats?by=state", h_nw).json()
     assert sum(i["n"]["value"] for i in s["items"]) == sum(i["n"]["value"] for i in p["items"]) == r["total"]["value"]
 

@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from survey import explain as X  # noqa: E402
 from survey import rules as RL  # noqa: E402
 from survey import nation as NT  # noqa: E402
-from survey.db import AS_OF, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, STATES  # noqa: E402
+from survey.db import AS_OF, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, STATES, once_sql  # noqa: E402
 
 router = APIRouter()
 
@@ -188,6 +188,8 @@ def _filters(q: dict, *, skip: str | None = None) -> tuple[list[str], list]:
         add("pnu IN (SELECT pnu FROM registry_snapshots WHERE import_id = ANY(?::text[]) AND pnu IS NOT NULL)", q["ledger"])
     if q.get("scope"):
         add(SCOPE_SQL, *q["scope"])
+    else:
+        w.append(once_sql())                      # 지역 범위 = 같은 필지 · 같은 규칙 한 줄(바퀴 16 · 카드 범위는 그 카드 줄 그대로)
     return w, a
 
 
@@ -464,6 +466,8 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
     fa = [sg] if sg else []
     rw = (" AND " if sg else " WHERE ") + f"rule = ANY(${len(fa) + 1}::text[])"      # survey_findings: R1–R6 만
     ra = fa + [list(RULE_IDS)]
+    if not card:
+        rw += " AND " + once_sql()                 # 지역 숫자 = 같은 필지 · 같은 규칙 한 번(바퀴 16 · survey_counts 와 같은 식)
     if card:                                       # 그 서비스의 필지 대조 행만(카드 숫자 · 서비스 대시보드와 같은 범위 · 모델-표기 ⓐ)
         sc = await card_scope(card, sg or None)
         k = len(ra)

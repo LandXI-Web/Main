@@ -66,6 +66,14 @@ README_COUNTS = {
     "ai2023_objects": 129420,
 }
 RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6"]
+
+
+def once_sql(a: str = "survey_findings") -> str:
+    """같은 필지 · 같은 규칙은 지역 숫자에서 한 번만 센다(10-17 바퀴 16 중복-세기 '한 번만 셈' · 원칙 272).
+    시군구 실태조사 장부 줄과 서비스 카드 판 줄이 같은 필지 · 같은 규칙이면 남기는 줄 = 우선순위 높은 줄 → 같으면 장부 줄 → id.
+    카드 판 숫자(카드 범위)와 판정 기록은 그대로 — 카드 · 장부 범위를 고르지 않은 지역 숫자에만 붙인다. a = 바깥 표 이름(별칭)."""
+    return (f"NOT EXISTS (SELECT 1 FROM survey_findings d1 WHERE d1.pnu = {a}.pnu AND d1.rule = {a}.rule "
+            f"AND (d1.priority, d1.card_id IS NOT NULL, d1.id) < ({a}.priority, {a}.card_id IS NOT NULL, {a}.id))")
 STATES = ["open", "assigned", "inspected", "closed", "dismissed"]
 
 
