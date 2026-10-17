@@ -1,0 +1,10 @@
+[
+ {
+  "id": "줌아웃-보이게",
+  "t": "멀리서(시군구 전체 · 줌 아웃)도 AI 분석 결과가 보이게 — 면은 면 그대로(점으로 바꾸지 않음). 지도 서비스 · XI맵(서비스 결과 · 시군구 결과 · 전국 결과 객체) 같은 규칙: 멀리서는 테두리를 화면 기준 최소 굵기(비닐하우스 · 건물 · 주차장 같은 작은 객체 2px · 경작지 같은 넓은 면 1px) + 작은 객체는 흰 바깥 테두리 + 채움 진하게, 가까이(줌 14.5~)는 원래 모양 그대로. 결과 조각은 먼 줌에서도 작은 면을 버리지 않고(같은 화면 칸 · 같은 분류만 하나로) 줌 8 부터 있음. 색 바꾸기 · 결과 수 · 누르기 · 겹침 고르기 · 클래스 켜끄기는 그대로",
+  "shots": ["shots/before-map-namwon-greenhouse-z9-1440-1051.png", "shots/after-map-namwon-greenhouse-z9-1440-1225.png", "shots/before-map-namwon-greenhouse-z11-1440-1051.png", "shots/after-map-namwon-greenhouse-z11-1440-1225.png", "shots/before-map-building-z11-1440-1052.png", "shots/after-map-building-z11-1440-1226.png", "shots/before-map-hamyang-z11-1440-1051.png", "shots/after-map-hamyang-z11-1440-1226.png", "shots/before-map-parking-z11-1440-1117.png", "shots/after-map-parking-z11-1440-1226.png", "shots/before-xi-service-z11-1440-1105.png", "shots/after-xi-service-z11-1440-1227.png", "shots/before-xi-national-z11-1440-1118.png", "shots/after-xi-national-z11-1440-1227.png", "shots/before-map-namwon-greenhouse-z15-1440-1051.png", "shots/after-map-namwon-greenhouse-z15-1440-1226.png"],
+  "opts": ["완료", "다시"],
+  "where": [["https://app.land-xi.dev/landxi/v3/lx-map/", "지도 서비스 (LX 직원)", "비닐하우스 분석서비스 · 남원시 703건 켜기 → 시군구 전체로 줌 아웃"], ["https://app.land-xi.dev/landxi/v3/xi-clean/", "XI맵 (LX 직원)", "남원시 · 익산시로 줌 10 ~ 13"]],
+  "now": "남원 비닐하우스 703건: 줌 9 전 0 → 후 410곳 보임 · 줌 11 전 260 → 후 457 · 원주 건물 5,011건 줌 11 전 672 → 후 2,311 · 여주 주차장 71건 줌 11 전 11 → 후 40 · XI맵 남원 줌 11 서비스 비닐하우스 338 → 670 · 건물 5,345 → 13,413 (화면 가운데) · 줌 15 모양 같음 · 결과 수 숫자 그대로 · 콘솔 오류 0"
+ }
+]

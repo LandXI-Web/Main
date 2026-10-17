@@ -1,0 +1,15 @@
+
+Running 6 tests using 4 workers
+
+[1/6] tests\e2e\impl14b-mapsvc.spec.mjs:18:3 › 구현 14차 b · 지도 서비스 › 슬림 왼쪽(접고 펴기 · 한 줄 높이 · 칸 안 스크롤) · 범례 오른쪽(글자 단추로 접힘) · 거르기 바로 반영 · 내려받기(동의 한 줄 · 기록)
+[2/6] tests\e2e\impl22-national.spec.mjs:22:1 › 전국 분석 결과 — 모든 결과 함께 · 합계 = 서버 · 올림 · 누름 · 업무 거르기
+[3/6] tests\e2e\impl12-mapsvc.spec.mjs:30:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 지도 서비스 — 메뉴 칸 · 묶음 둘 켜기 · 도형 누르면 오른쪽 속성 · XI맵 요소 0 · 추론 결과 보기가 여기로
+[4/6] tests\e2e\impl18-ximap.spec.mjs:18:3 › XI맵 바퀴 5 › 열자마자 전국 결과 · 직원 메뉴 그대로 · 도구 오른쪽
+[5/6] tests\e2e\impl18-ximap.spec.mjs:42:3 › XI맵 바퀴 5 › 객체를 누르면 그 자리 고치기 — 분류 바꾸기(시험) → 되돌리기
+[6/6] tests\e2e\impl12-mapsvc.spec.mjs:82:3 › 구현 12차 · 지도 서비스 · 영상 고르기 › 분석하기 상세 — 영상 고르기: 카드 두 열 · 범위 지도 · 맞음 표시 · 다른 영상을 고르면 오른쪽 칸이 따라온다 · 결과 안내는 지도 서비스
+  6 passed (24.3s)
+npm notice
+npm notice New major version of npm available! 10.9.4 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

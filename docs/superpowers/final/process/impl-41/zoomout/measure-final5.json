@@ -1,0 +1,433 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 4310,
+    "ldN": 1,
+    "ldMs": 1448,
+    "tl": [
+     "ld on @1780 지역 결과 요약+판",
+     "ld off @3220"
+    ],
+    "boot": {
+     "gate": 3,
+     "region": 7,
+     "engine": 395,
+     "data": 679,
+     "layers": 723,
+     "canvas": 724,
+     "ready": 745,
+     "shown": 2131
+    },
+    "errs": [],
+    "n": 170,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=8b77e43e3c",
+      "at": 372,
+      "ms": 867,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=8b77e43e3c",
+      "at": 372,
+      "ms": 967,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/world-bm/meta.json",
+      "at": 1652,
+      "ms": 763,
+      "fail": false
+     },
+     {
+      "u": "/landxi/data/tiles/overseas-s2/meta.json",
+      "at": 1652,
+      "ms": 764,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2184,
+      "ms": 923,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2184,
+      "ms": 924,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2184,
+      "ms": 924,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2185,
+      "ms": 923,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2185,
+      "ms": 923,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B.pmtiles",
+      "at": 2185,
+      "ms": 924,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 2414,
+      "ms": 709,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-greenhouse-2025.pmtiles",
+      "at": 2414,
+      "ms": 712,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3323,
+    "ldN": 1,
+    "ldMs": 693,
+    "tl": [
+     "ld on @1809 지역 결과 요약+판",
+     "ld off @3095"
+    ],
+    "boot": {
+     "gate": 2,
+     "region": 4,
+     "engine": 407,
+     "data": 509,
+     "layers": 530,
+     "canvas": 530,
+     "ready": 550,
+     "shown": 1253
+    },
+    "errs": [],
+    "n": 171,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=8b77e43e3c",
+      "at": 366,
+      "ms": 892,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=8b77e43e3c",
+      "at": 366,
+      "ms": 974,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 369,
+      "ms": 935,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-space/gov-space.css",
+      "at": 2224,
+      "ms": 717,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.css",
+      "at": 2224,
+      "ms": 717,
+      "fail": false
+     },
+     {
+      "u": "/tiles/cog/img-52190-2020-aerial/12/3496/1617.webp?(서명)",
+      "at": 2246,
+      "ms": 849,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3408,
+    "ldN": 1,
+    "ldMs": 442,
+    "tl": [
+     "ld on @2336 +판",
+     "ld off @2975"
+    ],
+    "boot": {
+     "gate": 3,
+     "region": 6,
+     "engine": 199,
+     "data": 297,
+     "layers": 346,
+     "canvas": 347,
+     "ready": 359,
+     "shown": 1197
+    },
+    "errs": [],
+    "n": 171,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=8b77e43e3c",
+      "at": 347,
+      "ms": 858,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=8b77e43e3c",
+      "at": 349,
+      "ms": 953,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=8b77e43e3c",
+      "at": 349,
+      "ms": 1036,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 352,
+      "ms": 825,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 1941,
+      "ms": 1003,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3323,
+    "ldN": 1,
+    "ldMs": 884,
+    "tl": [
+     "ld on @1608 +판",
+     "(지역 결과 요약+판 @1712)",
+     "ld off @2485"
+    ],
+    "boot": {
+     "gate": 2,
+     "region": 52,
+     "engine": 775,
+     "data": 873,
+     "layers": 891,
+     "canvas": 891,
+     "ready": 909,
+     "shown": 1652
+    },
+    "errs": [],
+    "n": 169,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=8b77e43e3c",
+      "at": 369,
+      "ms": 1031,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=8b77e43e3c",
+      "at": 369,
+      "ms": 1116,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3191,
+    "ldN": 1,
+    "ldMs": 706,
+    "tl": [
+     "ld on @1416 지역 결과 요약+판",
+     "ld off @2539"
+    ],
+    "boot": {
+     "gate": 2,
+     "region": 4,
+     "engine": 385,
+     "data": 505,
+     "layers": 555,
+     "canvas": 556,
+     "ready": 566,
+     "shown": 1232
+    },
+    "errs": [],
+    "n": 171,
+    "reqs": [
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=8b77e43e3c",
+      "at": 361,
+      "ms": 741,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 365,
+      "ms": 928,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles",
+      "at": 1582,
+      "ms": 941,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 2627,
+    "ldN": 1,
+    "ldMs": 1229,
+    "tl": [
+     "ld on @2523 지역 결과 요약+판",
+     "ld off @2627"
+    ],
+    "boot": {
+     "gate": 36,
+     "region": 62,
+     "engine": 62,
+     "data": 125,
+     "layers": 164,
+     "canvas": 165,
+     "ready": 177,
+     "shown": 1535
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 403,
+      "ms": 732,
+      "fail": true
+     }
+    ]
+   },
+   {
+    "done": 2650,
+    "ldN": 1,
+    "ldMs": 713,
+    "tl": [
+     "ld on @1975 지역 결과 요약+판",
+     "ld off @2546"
+    ],
+    "boot": {
+     "gate": 21,
+     "region": 76,
+     "engine": 76,
+     "data": 137,
+     "layers": 178,
+     "canvas": 179,
+     "ready": 192,
+     "shown": 1877
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 388,
+      "ms": 852,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2608,
+    "ldN": 1,
+    "ldMs": 1119,
+    "tl": [
+     "ld on @2394 지역 결과 요약+판",
+     "ld off @2498"
+    ],
+    "boot": {
+     "gate": 49,
+     "region": 79,
+     "engine": 79,
+     "data": 157,
+     "layers": 183,
+     "canvas": 183,
+     "ready": 203,
+     "shown": 1415
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": []
+   },
+   {
+    "done": 2484,
+    "ldN": 1,
+    "ldMs": 1131,
+    "tl": [
+     "ld on @2376 지역 결과 요약+판",
+     "ld off @2484"
+    ],
+    "boot": {
+     "gate": 49,
+     "region": 77,
+     "engine": 77,
+     "data": 137,
+     "layers": 177,
+     "canvas": 178,
+     "ready": 188,
+     "shown": 1709
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": []
+   },
+   {
+    "done": 2274,
+    "ldN": 1,
+    "ldMs": 903,
+    "tl": [
+     "ld on @2164 지역 결과 요약+판",
+     "ld off @2274"
+    ],
+    "boot": {
+     "gate": 58,
+     "region": 86,
+     "engine": 86,
+     "data": 153,
+     "layers": 180,
+     "canvas": 180,
+     "ready": 200,
+     "shown": 1271
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": []
+   }
+  ],
+  "median": {
+   "first": 3323,
+   "again": 2608,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 58,
+  "region": 86,
+  "engine": 86,
+  "data": 153,
+  "layers": 180,
+  "canvas": 180,
+  "ready": 200,
+  "shown": 1271
+ }
+}

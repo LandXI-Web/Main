@@ -1,0 +1,249 @@
+{
+ "gov": {
+  "url": "/landxi/v3/xi-clean/?service=card-farm",
+  "first": [
+   {
+    "done": 4120,
+    "ldN": 1,
+    "ldMs": 1300,
+    "tl": [
+     "ld on @2109 +판",
+     "(지역 결과 요약+판 @2232)",
+     "ld off @3321"
+    ],
+    "boot": {
+     "gate": 3,
+     "region": 261,
+     "engine": 748,
+     "data": 936,
+     "layers": 986,
+     "canvas": 987,
+     "ready": 1000,
+     "shown": 2045
+    },
+    "errs": [],
+    "n": 163,
+    "reqs": [
+     {
+      "u": "/landxi/v3/xi-clean/app.js?v=da597a9ee3",
+      "at": 387,
+      "ms": 766,
+      "fail": false
+     },
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=da597a9ee3",
+      "at": 390,
+      "ms": 1274,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=da597a9ee3",
+      "at": 390,
+      "ms": 1498,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 395,
+      "ms": 1213,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 3802,
+    "ldN": 1,
+    "ldMs": 942,
+    "tl": [
+     "ld on @2436 지역 경계와 분석 집계+판",
+     "(지도+판 @2606)",
+     "(지역 결과 요약+판 @2861)",
+     "ld off @3365"
+    ],
+    "boot": {
+     "gate": 4,
+     "region": 7,
+     "engine": 1155,
+     "data": 1367,
+     "layers": 1423,
+     "canvas": 1424,
+     "ready": 1434,
+     "shown": 2086
+    },
+    "errs": [],
+    "n": 163,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=da597a9ee3",
+      "at": 327,
+      "ms": 961,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=da597a9ee3",
+      "at": 327,
+      "ms": 1974,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/kit/cmdk.js?v=da597a9ee3",
+      "at": 329,
+      "ms": 831,
+      "fail": false
+     },
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 330,
+      "ms": 801,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2902,
+    "ldN": 1,
+    "ldMs": 766,
+    "tl": [
+     "ld on @1859 지역 결과 요약+판",
+     "ld off @2416"
+    ],
+    "boot": {
+     "gate": 4,
+     "region": 7,
+     "engine": 371,
+     "data": 532,
+     "layers": 562,
+     "canvas": 563,
+     "ready": 579,
+     "shown": 1306
+    },
+    "errs": [],
+    "n": 165,
+    "reqs": [
+     {
+      "u": "/landxi/xi/vendor/pmtiles/pmtiles.js?v=da597a9ee3",
+      "at": 324,
+      "ms": 884,
+      "fail": false
+     },
+     {
+      "u": "/landxi/proto/vendor/maplibre/maplibre-gl.js?v=da597a9ee3",
+      "at": 324,
+      "ms": 1025,
+      "fail": false
+     },
+     {
+      "u": "/landxi/v3/gov-select/map-extras.js?v=da597a9ee3",
+      "at": 1579,
+      "ms": 704,
+      "fail": false
+     },
+     {
+      "u": "/tiles/pmtiles/reference/parcels-namwon.pmtiles",
+      "at": 1597,
+      "ms": 703,
+      "fail": false
+     }
+    ]
+   }
+  ],
+  "again": [
+   {
+    "done": 2292,
+    "ldN": 1,
+    "ldMs": 402,
+    "tl": [
+     "ld on @1571 지역 결과 요약+판",
+     "ld off @2173"
+    ],
+    "boot": {
+     "gate": 31,
+     "region": 80,
+     "engine": 80,
+     "data": 146,
+     "layers": 183,
+     "canvas": 183,
+     "ready": 194,
+     "shown": 1032
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 358,
+      "ms": 735,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2268,
+    "ldN": 1,
+    "ldMs": 865,
+    "tl": [
+     "ld on @2149 +판",
+     "ld off @2268"
+    ],
+    "boot": {
+     "gate": 74,
+     "region": 82,
+     "engine": 82,
+     "data": 167,
+     "layers": 200,
+     "canvas": 201,
+     "ready": 217,
+     "shown": 1438
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": [
+     {
+      "u": "/api/v1/ximap/boot?service=card-farm",
+      "at": 412,
+      "ms": 915,
+      "fail": false
+     }
+    ]
+   },
+   {
+    "done": 2021,
+    "ldN": 1,
+    "ldMs": 528,
+    "tl": [
+     "ld on @1803 지역 결과 요약+판",
+     "ld off @1909"
+    ],
+    "boot": {
+     "gate": 82,
+     "region": 92,
+     "engine": 92,
+     "data": 179,
+     "layers": 220,
+     "canvas": 221,
+     "ready": 231,
+     "shown": 1034
+    },
+    "errs": [],
+    "n": 143,
+    "reqs": []
+   }
+  ],
+  "median": {
+   "first": 3802,
+   "again": 2268,
+   "ldNmax": 1,
+   "errs": 0
+  }
+ },
+ "__boot": {
+  "gate": 82,
+  "region": 92,
+  "engine": 92,
+  "data": 179,
+  "layers": 220,
+  "canvas": 221,
+  "ready": 231,
+  "shown": 1034
+ }
+}

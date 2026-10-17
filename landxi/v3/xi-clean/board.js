@@ -6,7 +6,7 @@
 import { api } from '../kit/util.js';
 import { sourceSpec, tilesFor } from '../../xi/engine/sources.js';
 import { API, signSet } from '../../shared/api-v1.js';
-import { addResultLayers } from '../../xi/fx/arrive.js';
+import { addResultLayers, farPaint, FAR_MIN_Z } from '../../xi/fx/arrive.js';
 import { createNational, nationalPromise, NCOLOR, NCLS } from './national.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
@@ -19,8 +19,8 @@ const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* 서비스 색 — 화면 색일 뿐(자료 아님). 이름이 표에 없으면 남는 색을 차례로 */
 const NAMED = { '경작·휴경': '#2E9E5B', 비닐하우스: '#F59F00', 건축물: '#3182F6', 주차장: '#8B5CF6', 곤포사일리지: '#B07A3A', 해양쓰레기: '#0FA9A0', 토지피복: '#5C8DA8' };
 const SPARE = ['#E8590C', '#D6336C', '#1098AD', '#5C7CFA', '#74B816', '#AE3EC9'];
-/* 객체(서비스 결과 조각)는 10(결과 조각이 오는 줌)부터 11.4까지 서서히 진해진다 */
-const FADE = { o0: 10, o1: 11.4 };
+/* 객체(서비스 결과 조각)는 칸 지도가 걷히는 9.5 부터 10 까지 서서히 진해진다(원칙 267 — 멀리서도 객체 · 전에는 10 ~ 11.4) */
+const FADE = { o0: 9.5, o1: 10 };
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
 
 /* 결과 지도 조각 — 서버가 조각 하나를 한 요청으로(GET /tiles/mvt/{set}/{z}/{x}/{y}.pbf?v=판) 내준다. 판 = 결과 파일 지문(board 가 줌) —
@@ -33,7 +33,7 @@ async function objSpec(L) {
     const u = new URL(await signSet(L.set));
     tpl = `${u.origin}/tiles/mvt/${L.set}/{z}/{x}/{y}.pbf?v=${L.v}&exp=${u.searchParams.get('exp')}&sig=${u.searchParams.get('sig')}`;
   }
-  return { type: 'vector', tiles: [tpl], minzoom: L.minzoom ?? 10, maxzoom: L.maxzoom ?? 17, ...(L.bounds ? { bounds: L.bounds } : {}),
+  return { type: 'vector', tiles: [tpl], minzoom: Math.min(L.minzoom ?? 10, FAR_MIN_Z), maxzoom: L.maxzoom ?? 17, ...(L.bounds ? { bounds: L.bounds } : {}),
     ...(L.promote_id ? { promoteId: L.promote_id } : {}), attribution: L.attribution || '' };
 }
 
@@ -62,22 +62,25 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   /* ── 객체 — 밀도와 같은 서비스 색 · 줌에 따라 서서히 진해짐 ── */
   function objectPaint(ids, c, landcover) {
     const set = (id, k, v) => { if (map.getLayer(id)) map.setPaintProperty(id, k, v); };
+    // 멀리서도 보이게(원칙 267) — 공용 그리기 규칙(arrive.js farPaint) · 색은 밀도와 같은 서비스 색 · 칸 지도(줌 9.6 까지)에서 객체로 바로 넘어온다
+    // 가까이(줌 14~)는 원래 모양: 토지피복은 분류마다 진하기만 다르게(넓은 경작지 면이 지도를 덮지 않게)
+    const base = landcover ? ['match', ['get', 'cls'], '건물', 0.42, '비닐하우스', 0.42, '주차장', 0.3, 0.09] : 0.34;
+    const lo = landcover ? ['match', ['get', 'cls'], '경작지', 0.22, 0.85] : 0.95;
+    const P = farPaint(landcover ? 'landcover' : 'result', { color: c, haloColor: rgba(c, 0.28), fade: [FADE.o0, FADE.o1],
+      near: { fill: [15, ['case', FS_HOVER, 0.5, base], 17, ['case', FS_HOVER, 0.5, ['*', 0.6, base]]], lineOp: [14, lo, 16, ['*', 0.85, lo]], haloOp: [14, 0.9, 15, 0.6] } });
     for (const id of ids) {
       if (id.endsWith('-fill')) {
-        // 토지피복은 분류마다 진하기만 다르게(넓은 경작지 면이 지도를 덮지 않게) · 색은 밀도와 같은 서비스 색
-        const base = landcover ? ['match', ['get', 'cls'], '건물', 0.42, '비닐하우스', 0.42, '주차장', 0.3, 0.09] : 0.34;
         set(id, 'fill-color', c);
-        set(id, 'fill-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0, 0, FADE.o1, ['case', FS_HOVER, 0.5, base], 15, ['case', FS_HOVER, 0.5, base], 17, ['case', FS_HOVER, 0.5, ['*', 0.6, base]]]);
+        set(id, 'fill-opacity', P.fill['fill-opacity']);
       } else if (id.endsWith('-halo')) {
-        set(id, 'line-color', rgba(c, 0.28));
-        set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0, 0, FADE.o1, 0.9, 15, 0.6]);
+        for (const [k, v] of Object.entries(P.halo)) set(id, k, v);
       } else if (id.endsWith('-pt')) {
         set(id, 'circle-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, 1]);
         set(id, 'circle-stroke-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, 1]);
       } else {
         set(id, 'line-color', c);
-        const lo = landcover ? ['match', ['get', 'cls'], '경작지', 0.22, 0.85] : 0.95;
-        set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0, 0, FADE.o1, lo, 16, ['*', 0.85, lo]]);
+        set(id, 'line-width', P.line['line-width']);
+        set(id, 'line-opacity', P.line['line-opacity']);
       }
     }
   }

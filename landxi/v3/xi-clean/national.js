@@ -7,6 +7,7 @@
 import { api } from '../kit/util.js';
 import { API } from '../../shared/api-v1.js';
 import { tilesFor } from '../../xi/engine/sources.js';
+import { farPaint } from '../../xi/fx/arrive.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -88,11 +89,13 @@ export function createNational({ map, before = 'slot-result' }) {
       map.addSource(sid, { type: 'vector', tiles: [objTpl(o)], minzoom: 10, maxzoom: 17, bounds: o.bounds, promoteId: 'id' });
       const vis = N.hidden ? 'none' : 'visible';
       const ob = { ids: [sid + '-f', sid + '-l'], asset, set: o.set, tpl: objTpl(o), bounds: o.bounds };
+      // 멀리서도 보이게(원칙 267) — 공용 그리기 규칙(arrive.js farPaint): 객체가 오는 줌(11)부터 작은 객체 2px 테두리 · 진한 채움 · 가까이(14~)는 원래 모양
+      const P = farPaint('result', { color: clsColor, fade: [OBJ_Z - 0.5, OBJ_Z + 0.5],
+        near: { fill: [14, ['case', FS_HOVER, 0.55, 0.28]], width: [15, 1.4], lineOp: [14, 0.95] } });
       map.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
-        paint: { 'fill-color': clsColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, ['case', FS_HOVER, 0.55, 0.28]] } }, B);   // 올리면 떠오름(손가락 · 10-15)
+        paint: P.fill }, B);   // 올리면 떠오름(손가락 · 10-15)
       map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
-        paint: { 'line-color': clsColor, 'line-width': ['interpolate', ['linear'], ['zoom'], OBJ_Z, 0.6, 15, 1.4],
-          'line-opacity': ['interpolate', ['linear'], ['zoom'], OBJ_Z - 0.5, 0, OBJ_Z + 0.5, 0.95] } }, B);
+        paint: P.line }, B);
       OBJ.set(sid, ob);
     }
   }

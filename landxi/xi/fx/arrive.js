@@ -13,26 +13,65 @@ import { registerResult } from './result-filter.js';
 export const TEAL = '#0FA9A0', TEAL_DEEP = '#07706A', INK = '#010102', SLATE = '#8F99A8';
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
 
-/** 결과 층 스타일(역할색 · 청록 = AI 결과 · 앰버 없음). kind: 'landcover' | 'farmland' | 'greenhouse' | 'change' | 'shard' */
-export function resultPaint(kind) {
-  if (kind === 'landcover') {
-    const fillColor = ['match', ['get', 'cls'], '경작지', TEAL, '비닐하우스', TEAL_DEEP, '건물', INK, '주차장', SLATE, TEAL];
-    const fillOp = ['match', ['get', 'cls'], '건물', 0.35, '주차장', 0.3, '비닐하우스', 0.42, 0.18];
-    // 도시 축척(z < 14)에서는 면을 옅게 · 선을 가늘게 — 청록 분량 ≤ 3 %(법전 §2) · 가까이 가면 법전 값(.18 · 1.2px + 4px 헤일로)
-    return {
-      fill: { 'fill-color': fillColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['case', FS_HOVER, 0.42, ['*', 0.3, fillOp]], 14, ['case', FS_HOVER, 0.42, fillOp], 16, ['case', FS_HOVER, 0.42, ['*', 0.45, fillOp]]] },
-      halo: { 'line-color': ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.18)', '주차장', 'rgba(143,153,168,.25)', 'rgba(15,169,160,.25)'], 'line-width': 4, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, 1, 15.5, 0] },
-      line: { 'line-color': ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.5)', '주차장', SLATE, '비닐하우스', TEAL, TEAL], 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.35, 13, 0.7, 14.5, 1.2, 17, 1.6],
-        'line-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', ['get', 'cls'], '건물', 0.25, 0.75], 14, 1, 16, 0.5] },
-    };
-  }
-  if (kind === 'change') return { line: { 'line-color': '#FFFFFF', 'line-width': 1.2, 'line-dasharray': [2, 1.5] }, halo: { 'line-color': 'rgba(1,1,2,.28)', 'line-width': 3 } };
+/* ── 멀리서도 보이게(원칙 267 · 10-17 "줌 아웃 상태에서는 전혀 모른다") — 모든 결과 층의 공용 그리기 규칙 한 곳 ──
+   지도 서비스 · XI맵(서비스 결과 · 시군구 결과 · 전국 결과 객체)이 같은 규칙. 면은 면 그대로(점으로 바꾸지 않는다).
+   멀리(줌 ≤ 12.5): 테두리 = 화면 기준 최소 굵기(작은 객체 2px · 큰 면 1px) · 작은 객체는 흰 바깥 테두리(바탕 영상 대비 — 작은 면도 몇 px 크기로) · 채움 진하게.
+   13 ~ 14.5 에서 원래 가까운 모양으로 서서히 · 가까이(줌 14.5~)는 원래 모양 그대로. 색은 원래 색 · 사람이 고른 색(kit/colors paintLayers)을 그대로 따른다.
+   작은 객체 = 넓은 면 분류(LARGE_CLS)가 아닌 것 — 비닐하우스 · 건물 · 주차장 · 곤포 · 차량 … (분류가 없는 결과도 작은 객체로 본다).
+   결과 조각(server/pipelines/pmtiles_light.py)은 먼 줌에서도 작은 면을 버리지 않는다 — 줌 8 부터. */
+/** 결과 조각의 가장 먼 줌(pmtiles_light FAR_MIN_Z 와 같은 값) */
+export const FAR_MIN_Z = 8;
+export const LARGE_CLS = ['경작지', '비경작지', '농지', '논', '밭', '과수원', '산림', '초지', '나지', '수역', '토지피복', '식생 늘어남', '식생 줄어듦'];
+const SMALL = ['!', ['in', ['to-string', ['coalesce', ['get', 'cls'], '']], ['literal', LARGE_CLS]]];
+const bySize = (s, l) => (s === l ? s : ['case', SMALL, s, l]);
+const hov = (h, v) => (h == null ? v : ['case', FS_HOVER, h, v]);
+/** 멀리 줌의 값(줌 8 · 12.5) — 작은 객체 / 큰 면 */
+export const FAR = {
+  z: [8, 12.5],
+  fill: [[0.8, 0.3], [0.7, 0.26]],          // 채움 진하기
+  width: [[2.2, 1.1], [1.9, 1]],            // 테두리 굵기(px)
+  lineOp: [[1, 0.9], [1, 0.85]],            // 테두리 진하기
+  casing: [[4.6, 0], [4, 0]],               // 흰 바깥 테두리 굵기(px · 테두리 아래 · 큰 면은 없음)
+  casingOp: [0.95, 0.85],
+  white: 'rgba(255,255,255,1)',
+};
+/** 줌 식 — 멀리 값(FAR) → 가까운 원래 모양(near = [줌, 값, …] · 줌 ≥ 13.5). fade = [줌0, 줌1]: 줌0 에서 0 으로(XI맵 객체가 칸 지도에서 넘어올 때) */
+function farZoom(far, near, { fade, hover } = {}) {
+  const pick = (i) => hov(hover, bySize(far[i][0], far[i][1]));
+  let stops = [FAR.z[0], pick(0), FAR.z[1], pick(1)];
+  if (fade) stops = [fade[0], 0, fade[1], pick(fade[1] < FAR.z[1] ? 0 : 1), ...(fade[1] < FAR.z[1] ? [FAR.z[1], pick(1)] : [])];
+  return ['interpolate', ['linear'], ['zoom'], ...stops, ...near];
+}
+/** 결과 층 셋(fill · halo · line)의 칠 — color 를 주면 한 색(XI맵 서비스 색), 아니면 분류 색(지도 서비스 · 결과 확인).
+    o = { color, fade, near: { fill: [줌, 값 …], line, lineOp, halo } } — near 를 주지 않으면 화면 원래 값 */
+export function farPaint(kind, o = {}) {
+  const c = o.color;
+  const lc = kind === 'landcover';
   const deep = kind === 'greenhouse';
+  const fillOp = lc ? ['match', ['get', 'cls'], '건물', 0.35, '주차장', 0.3, '비닐하우스', 0.42, 0.18] : deep ? 0.42 : 0.18;
+  const nearDef = lc
+    ? { fill: [14, hov(0.42, fillOp), 16, hov(0.42, ['*', 0.45, fillOp])], width: [14.5, 1.2, 17, 1.6], lineOp: [14, 1, 16, 0.5],
+        haloW: [14, 4], haloOp: [14.5, 1, 15.5, 0] }
+    : { fill: [14, hov(0.42, fillOp)], width: [15, 1.2, 18, 1.8], lineOp: [14, 1], haloW: [14, 3, 15, 4], haloOp: [14, 1] };
+  const N = { ...nearDef, ...(o.near || {}) };
+  const fillColor = c || (lc ? ['match', ['get', 'cls'], '경작지', TEAL, '비닐하우스', TEAL_DEEP, '건물', INK, '주차장', SLATE, TEAL] : deep ? TEAL_DEEP : TEAL);
+  const lineColor = c || (lc ? ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.5)', '주차장', SLATE, '비닐하우스', TEAL, TEAL] : deep ? TEAL_DEEP : TEAL);
+  const haloNear = o.haloColor || (lc ? ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.18)', '주차장', 'rgba(143,153,168,.25)', 'rgba(15,169,160,.25)'] : 'rgba(15,169,160,.25)');
+  const F = { fade: o.fade };
   return {
-    fill: { 'fill-color': deep ? TEAL_DEEP : TEAL, 'fill-opacity': ['case', FS_HOVER, 0.42, deep ? 0.42 : 0.18] },
-    halo: { 'line-color': 'rgba(15,169,160,.25)', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 15, 4] },
-    line: { 'line-color': deep ? TEAL_DEEP : TEAL, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 15, 1.2, 18, 1.8] },
+    fill: { 'fill-color': fillColor, 'fill-opacity': farZoom(FAR.fill, N.fill, { ...F, hover: 0.9 }) },
+    halo: { 'line-color': ['interpolate', ['linear'], ['zoom'], 12.5, FAR.white, 14, haloNear],
+      'line-width': farZoom(FAR.casing, N.haloW),
+      'line-opacity': o.fade ? ['interpolate', ['linear'], ['zoom'], o.fade[0], 0, o.fade[1], FAR.casingOp[0], FAR.z[1], FAR.casingOp[1], ...N.haloOp]
+        : ['interpolate', ['linear'], ['zoom'], FAR.z[0], FAR.casingOp[0], FAR.z[1], FAR.casingOp[1], ...N.haloOp] },
+    line: { 'line-color': lineColor, 'line-width': farZoom(FAR.width, N.width), 'line-opacity': farZoom(FAR.lineOp, N.lineOp, F) },
   };
+}
+/** 결과 층 스타일(역할색 · 청록 = AI 결과 · 앰버 없음). kind: 'landcover' | 'farmland' | 'greenhouse' | 'change' | 'shard'
+    멀리서도 보이게(원칙 267) — farPaint(위) 한 규칙. 가까이(줌 14.5~)는 원래 모양(법전 값 .18 · 1.2px + 4px 헤일로) 그대로. */
+export function resultPaint(kind) {
+  if (kind === 'change') return { line: { 'line-color': '#FFFFFF', 'line-width': 1.2, 'line-dasharray': [2, 1.5] }, halo: { 'line-color': 'rgba(1,1,2,.28)', 'line-width': 3 } };
+  return farPaint(kind);
 }
 /** 결과 층 셋(fill · halo · line)을 한 지도에 올린다. 반환 층 id 목록. */
 export function addResultLayers(map, key, source, { kind, sourceLayer, before = 'slot-result', visible = true, filter } = {}) {

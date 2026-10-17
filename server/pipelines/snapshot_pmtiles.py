@@ -14,7 +14,7 @@ from landxi_api import config  # noqa: E402
 
 
 def build(src: Path, dst: Path, minzoom: int = 10, maxzoom: int = 18, layer: str = "results", name: str = "", light: bool = True) -> dict:
-    """light = 먼 축척(≤ 12) 가벼운 조각을 함께(도형 단순화 · 속성 id · cls 만 — pmtiles_light · 10-15 기관XI맵-가벼운타일)."""
+    """light = 먼 축척(≤ 12) 조각을 다시 굽는다(pmtiles_light — 10-15 가벼운 조각 · 10-17 줌아웃-보이게: 줌 13 조각에서 모아 작은 면을 버리지 않음 · 줌 8 부터 · 속성 id · cls 만)."""
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_name(dst.stem + ".tmp.pmtiles")
     if tmp.exists():
