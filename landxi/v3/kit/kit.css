@@ -198,3 +198,7 @@ button.t-step{cursor:pointer}
 /* '이 화면은?' — 세 화면(분석하기 · 지도 서비스 · XI맵) 첫 화면의 작은 글자 링크 → 지원 '세 화면'(바퀴 4 · 세 화면 경계) */
 .k-what{font:500 var(--fs-aux)/23px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .k-what:hover{color:var(--ink)}
+
+/* 로고 글자 'LAND-XI PLATFORM' — 메인 · 로그인 왼쪽 위 같은 부품(바퀴 17) */
+.k-word{display:block;font:700 var(--fs-t1)/1 var(--font-display);letter-spacing:-0.01em;color:var(--ink);white-space:nowrap;text-decoration:none}
+@media (max-width:640px){.k-word{font-size:var(--fs-t2)}}

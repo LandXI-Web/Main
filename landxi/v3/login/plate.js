@@ -242,7 +242,7 @@ export function mountPlate({ el, ui, sweep, credit, pad = () => ({ top: 0, botto
   let axisNow = null;
   const setAxis = (s, anim = true) => {
     const same = axisNow === s.axis; axisNow = s.axis;
-    credit.textContent = s.credit || ''; if (ui.credit2) ui.credit2.textContent = s.credit || '';
+    credit.textContent = ''; if (ui.credit2) ui.credit2.textContent = '';   /* 로그인 화면 바탕 출처 글 없음(바퀴 17) */
     for (const li of ui.ix.children) { li.classList.remove('on'); if (li.dataset.r === s.axis) { void li.offsetWidth; li.classList.add('on'); } }
     if (same) return;                                   // 같은 축의 보조 장면 — 제목은 그대로 둔다
     ui.title.textContent = s.title; ui.line.textContent = s.line;

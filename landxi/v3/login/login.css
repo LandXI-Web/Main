@@ -29,9 +29,9 @@ body.t { overflow: hidden; }
 
 /* ══ 문 카드 ═══════════════════════════════════════════════════════ */
 .door { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 40px; overflow: auto; }
-.door__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 16px; }
+.door__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 28px; }
 .door__mark { display: block; height: 16px; width: auto; }
-.door__home { display: block; line-height: 0; border-radius: 4px; }
+.door__home { border-radius: 4px; }
 .door__home:focus-visible { outline: 2px solid var(--accent, #00A39A); outline-offset: 4px; }
 /* 입구 표기 — 관리자 · 기관 입구만(메인 입구는 표기 없음). 라벨 14 · 보조 잉크 · 한 줄 */
 .door__site { font: 500 var(--fs-aux)/1 var(--font-body); color: var(--sub); white-space: nowrap; }
@@ -147,7 +147,7 @@ body.t { overflow: hidden; }
 
 /* ══ 들어가기 — 문 카드가 비켜서고 히어로 카드가 화면 전체가 된다 ═══ */
 .gate.leaving .door { opacity: 0; transform: translateX(-24px); transition: opacity var(--d-380) var(--e-ui), transform var(--d-750) var(--e-cam); }
-.gate.leaving .hero { position: fixed; z-index: 2; margin: 0; transition: top var(--d-750) var(--e-cam), left var(--d-750) var(--e-cam), width var(--d-750) var(--e-cam), height var(--d-750) var(--e-cam), border-radius var(--d-750) var(--e-cam); }
+.gate.leaving .hero { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
 .gate.leaving .axis, .gate.leaving .res, .gate.leaving .hero__credit { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
 
 /* ══ 중간 폭 ═════════════════════════════════════════════════════ */
@@ -204,7 +204,6 @@ body.t { overflow: hidden; }
   .res__where { grid-column: 1 / -1; }
   .res__cr { display: block; margin: 0; font: 400 var(--fs-aux)/var(--lh-aux) var(--font-body); color: var(--sub); white-space: nowrap; }
   .ask { top: auto; bottom: 96px; }
-  .gate.leaving .hero { position: relative; }
 }
 
 @media (prefers-reduced-motion: reduce) {

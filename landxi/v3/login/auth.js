@@ -138,16 +138,11 @@ async function homeOf(s) {
 async function enter(s) {
   const url = await homeOf(s);
   document.documentElement.dataset.dest = url.replace(/#.*$/, '');
+  /* 로그인 성공 뒤: 지도 카드를 화면 전체로 키우지 않는다(바퀴 17 — 첫 화면 전 지도가 번쩍이던 것). 문·카드가 옅어지며 밝은 바탕으로 */
   if (!REDUCE) {
-    if (innerWidth > 960) {
-      const r = hero.getBoundingClientRect();
-      Object.assign(hero.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
-      gate.classList.add('leaving');
-      void hero.offsetWidth;
-      Object.assign(hero.style, { top: '0px', left: '0px', width: innerWidth + 'px', height: innerHeight + 'px', borderRadius: '0px' });
-    } else gate.classList.add('leaving');
+    gate.classList.add('leaving');
     plate?.release?.();
-    await wait(760);
+    await wait(300);
   }
   location.assign(url);
 }
