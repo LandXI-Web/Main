@@ -413,3 +413,53 @@ async def one(rid: str, request: Request):
     if not reg:
         raise ApiError("not_found", "No such register for this organization")
     return view(reg, rows)
+
+
+# ── 작황 하락 경작지 바탕(우리 해외 모델 · 10-17 바퀴 16 해외-큰숫자 · 원칙 269) ─────────────────────────────
+# overseas/croptiles.py 가 구운 z11 조각(경작지 = 값 40 · 그 밖 투명). 나라 범위 안 빈 조각 = 투명 한 장 · 밖 = 204.
+_EMPTY_PNG: bytes | None = None
+
+
+def _crop_meta():
+    from overseas.runner import DEF, root               # 경로 = overseas/croptiles.tiles_dir 와 같은 곳(publish/crop-z11)
+    d = root(DEF["country"], DEF["year"]) / "publish" / "crop-z11"
+    try:
+        return d, json.loads((d / "meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return d, None
+
+
+@router.get("/global/crop-tiles/{z}/{x}/{y}.png")
+async def crop_tile(z: int, x: int, y: int, request: Request):
+    """해외 첫 화면 작황 하락 계산의 경작지 바탕 — 로그인 필요(해외 기관 · LX). 머리 X-LX-Model(지금 판 모델 · 화면 보관 열쇠)."""
+    global _EMPTY_PNG
+    from fastapi.responses import Response
+    _gate(principal(request))
+    d, meta = _crop_meta()
+    if not meta or z != meta["z"]:
+        return Response(status_code=204, headers={"Cache-Control": "no-store"})
+    hdr = {"Cache-Control": "private, max-age=86400", "X-LX-Model": str(meta.get("model") or ""), "Access-Control-Expose-Headers": "X-LX-Model"}
+    tx0, ty0, tx1, ty1 = meta["tiles"]
+    if not (tx0 <= x <= tx1 and ty0 <= y <= ty1):
+        return Response(status_code=204, headers=hdr)
+    p = d / str(x) / f"{y}.png"
+    if p.exists():
+        return Response(content=p.read_bytes(), media_type="image/png", headers=hdr)
+    if _EMPTY_PNG is None:
+        import io as _io
+        from PIL import Image
+        b = _io.BytesIO()
+        Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(b, "PNG", optimize=True)
+        _EMPTY_PNG = b.getvalue()
+    return Response(content=_EMPTY_PNG, media_type="image/png", headers=hdr)
+
+
+@router.get("/global/crop-tiles/meta")
+async def crop_meta(request: Request):
+    """경작지 바탕 정보(모델 · 연도 · 공개 판정 군) — 화면 호버 한 줄과 보관 열쇠."""
+    _gate(principal(request))
+    _, meta = _crop_meta()
+    if not meta:
+        return {"ready": False}
+    return {"ready": True, "model": meta.get("model"), "year": meta.get("year"), "z": meta.get("z"), "public_used": meta.get("public_used"),
+            "source": meta.get("source")}

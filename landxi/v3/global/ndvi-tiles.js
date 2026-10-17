@@ -1,6 +1,6 @@
 /* v3 global — 월별 NDVI 타일(값 그대로 · 회색조)을 지역 한 장으로 모은다.
    - 표시: RdYlGn 으로 칠하고 지역 폴리곤 밖은 투명(사각형 번짐 0) → MapLibre image 소스
-   - 작황 하락(HUD): 경작지(ESA WorldCover 2021 class 40) 중 이번 계절 평균 NDVI 가 전년 같은 계절 평균보다 DROP 이상 낮은 화소 면적
+   - 작황 하락(HUD): 경작지(우리 해외 모델 경작지 바탕 · 없으면 ESA WorldCover 2021 class 40 — 10-17 바퀴 16) 중 이번 계절 평균 NDVI 가 전년 같은 계절 평균보다 DROP 이상 낮은 화소 면적
      (지역 안 · 두 해 모두 유효한 달이 1개 이상인 화소만 · 계절 안 녹화/갈변 같은 계절 변동은 세지 않는다)
    타일 = 카탈로그 pc-ndvi-mosaic 템플릿에서 색표만 뺀 것(rescale −0.2…0.8 → 0…255 · nodata 투명). */
 const TS = 256, RAD = Math.PI / 180, EARTH = 2 * Math.PI * 6378137;
@@ -103,17 +103,19 @@ export async function paintNdvi(month, mask, grid) {
   return toUrl(c);
 }
 
-/** 경작지 마스크(1 = WorldCover class 40) — 원값 타일(색표 없음) · 항목 범위와 겹치는 타일만 받는다(404 0) */
+/** 경작지 마스크(1 = 값 40) — 원값 타일(색표 없음) · 항목 범위와 겹치는 타일만 받는다(404 0).
+ *  items = null 이면 격자 안 타일 전부(우리 해외 모델 경작지 바탕 /global/crop-tiles · 경작지 = 40 · 그 밖 투명) */
 const cropCache = new Map();
 export function cropOf(template, items, grid) {
   if (cropCache.has(grid.key)) return cropCache.get(grid.key);
   const p = (async () => {
     const base = template.replace(/&colormap_name=[^&]*/, '');
     const c = new OffscreenCanvas(grid.W, grid.H), g = c.getContext('2d', { willReadFrequently: true });
-    const boxes = items.map((it) => { const m = /N(\d+)E(\d+)/.exec(it); return m ? { it, b: [+m[2], +m[1], +m[2] + 3, +m[1] + 3] } : null; }).filter(Boolean);
+    const boxes = (items || []).map((it) => { const m = /N(\d+)E(\d+)/.exec(it); return m ? { it, b: [+m[2], +m[1], +m[2] + 3, +m[1] + 3] } : null; }).filter(Boolean);
     const jobs = [];
     for (let ty = grid.ty0; ty <= grid.ty1; ty++) for (let tx = grid.tx0; tx <= grid.tx1; tx++) {
       const tb = [x2lon(tx * TS, grid.z), y2lat((ty + 1) * TS, grid.z), x2lon((tx + 1) * TS, grid.z), y2lat(ty * TS, grid.z)];
+      if (!items) { jobs.push([tx, ty, '']); continue; }
       for (const { it, b } of boxes) if (tb[0] < b[2] && tb[2] > b[0] && tb[1] < b[3] && tb[3] > b[1]) jobs.push([tx, ty, it]);
     }
     let i = 0, got = 0;
@@ -130,8 +132,9 @@ export function cropOf(template, items, grid) {
     let miss = 0;
     await Promise.all(Array.from({ length: 6 }, one));
     if (!got) return null;
-    const d = g.getImageData(0, 0, grid.W, grid.H).data, n = grid.W * grid.H, m = new Uint8Array(n);
-    for (let k = 0; k < n; k++) m[k] = d[k * 4 + 3] > 127 && d[k * 4] === 40 ? 1 : 0;
+    const d = g.getImageData(0, 0, grid.W, grid.H).data, n = grid.W * grid.H, m = items ? new Uint8Array(n) : new Float32Array(n);
+    // 우리 모델 바탕(items = null)은 G = 화소 안 경작지 비율(1–255) — 면적을 비율만큼 센다 · WorldCover 는 0/1
+    for (let k = 0; k < n; k++) m[k] = d[k * 4 + 3] > 127 && d[k * 4] === 40 ? (items ? 1 : d[k * 4 + 1] / 255) : 0;
     m.miss = miss;   // 못 받은 타일 수(0 이어야 보관)
     return m;
   })();
@@ -159,10 +162,11 @@ export async function dropOf(cur, prev, mask, crop, grid, drop = DROP) {
     for (let x = 0; x < grid.W; x++) {
       const k = y * grid.W + x;
       if (!mask[k] || !crop[k]) continue;
-      inN++; cropM2 += pa;
+      const w = crop[k];   // 1(WorldCover) 또는 화소 안 경작지 비율(우리 모델 바탕)
+      inN += w; cropM2 += pa * w;
       if (!A.n[k] || !B.n[k]) continue;
-      okN++;
-      if (B.sum[k] / B.n[k] - A.sum[k] / A.n[k] >= lim) { m2 += pa; d[k * 4] = 15; d[k * 4 + 1] = 169; d[k * 4 + 2] = 160; d[k * 4 + 3] = 230; }
+      okN += w;
+      if (B.sum[k] / B.n[k] - A.sum[k] / A.n[k] >= lim) { m2 += pa * w; d[k * 4] = 15; d[k * 4 + 1] = 169; d[k * 4 + 2] = 160; d[k * 4 + 3] = 230; }
     }
   }
   g.putImageData(img, 0, 0);

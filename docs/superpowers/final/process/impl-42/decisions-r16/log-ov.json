@@ -1,0 +1,24 @@
+{
+ "_logins": 1,
+ "_failed": [],
+ "errors": [],
+ "bad": [],
+ "crop": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "147.5",
+  "label": "Crop condition drop · Ysyk-Ata",
+  "why": "Cropland where NDVI fell 0.1 or more vs Autumn 2024 · Sep–Oct 2025 · as of Oct 17, 2026"
+ },
+ "r16-ov-crop-drop-1736.png": "2026-10-17 17:36:19",
+ "sprawl": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "15.3",
+  "label": "Built area change · Ysyk-Ata",
+  "why": "Land-XI analysis · Sentinel-2 2017–2025 · as of Oct 17, 2026"
+ },
+ "r16-ov-sprawl-1736.png": "2026-10-17 17:36:22"
+}

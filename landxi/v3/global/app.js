@@ -92,7 +92,10 @@ async function main() {
   if (!(await probe()).ok) { API.probeMs = Math.max(API.probeMs || 0, 8000); await probe(true); }
   // 작황 하락 계산 타일은 서버 중계로(재시도 · 30일 보관 — 빠진 타일 때문에 숫자가 볼 때마다 달라지지 않게) · 길이 없으면 PC 직통
   const PC_DATA = 'https://planetarycomputer.microsoft.com/api/data/v1/';
-  if (await K.hasRoute('/proxy/pc/data/{path}')) NT.useFetch((u) => { const s = session.get(); return fetch(u.startsWith(PC_DATA) ? API.prefix + '/proxy/pc/data/' + u.slice(PC_DATA.length) : u, s ? { headers: { authorization: 'Bearer ' + s.token } } : {}); });
+  const pcVia = await K.hasRoute('/proxy/pc/data/{path}');
+  // 작황 하락의 경작지 바탕 = 우리 해외 모델(10-17 바퀴 16 해외-큰숫자 · 원칙 269) — 고지대처럼 크게 부풀린 군은 서버가 공개 판정 값으로 채운다. 길이 없으면 WorldCover
+  const OC = (await K.hasRoute('/global/crop-tiles/{z}/{x}/{y}.png')) ? await api('/global/crop-tiles/meta').then((m) => (m?.ready ? { ...m, tiles: API.prefix + '/global/crop-tiles/{z}/{x}/{y}.png' } : null)).catch(() => null) : null;
+  if (pcVia || OC) NT.useFetch((u) => { const s = session.get(); return fetch(pcVia && u.startsWith(PC_DATA) ? API.prefix + '/proxy/pc/data/' + u.slice(PC_DATA.length) : u, s ? { headers: { authorization: 'Bearer ' + s.token } } : {}); });
   const isLX = who.me.realm === 'lx';
   const isLXsales = isLX && who.me.role === 'sales';   // 영업 계정은 읽기만(대장 올리기 0)
 
@@ -255,27 +258,27 @@ async function main() {
   const prevOf = (m) => { const p = `${+m.slice(0, 4) - 1}${m.slice(4)}`; return { m: p, sid: prevYr?.months?.[p] || null }; };
   const wc = cat?.by?.['pc-worldcover-2021'];
   /* Crop condition drop(HUD) — 이번 계절 실행 결과에 묶는다.
-     이 지역·이 계절의 끝난 index 작업이 있을 때만: 경작지(WorldCover class 40) 중 이번 계절 평균 NDVI 가
+     이 지역·이 계절의 끝난 index 작업이 있을 때만: 경작지(우리 해외 모델 바탕 OC · 없으면 WorldCover class 40) 중 이번 계절 평균 NDVI 가
      전년 같은 계절 평균보다 0.1 이상 낮은 화소 면적(km²). 계절 안 녹화·갈변(첫 달↔마지막 달)은 세지 않는다. */
   function changeOf(D0, s) {
     const key = D0.id + '|' + s.key;
     if (CH[key]) return CH[key];
     const job = seasonJob(D0, s);
     const cur = s.months.filter(sidOf), prev = s.months.map(prevOf).filter((x) => x.sid);
-    if (!job || !ndm || !wc || !cur.length || !prev.length) return (CH[key] = { state: 'none' });
+    if (!job || !ndm || !(OC || wc) || !cur.length || !prev.length) return (CH[key] = { state: 'none' });
     const R0 = (CH[key] = { state: 'calc' });
     const y0 = s.key.replace(/\d{4}$/, (y) => String(+y - 1));
     const span = `${MON(s.months[0])}–${MONY(s.months[s.months.length - 1])}`;
     const okOf = (r) => Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2,
       env: envOf(r1(r.km2), 'km2', 'estimate', DROP_WHAT(span, y0), job.finished_at) });
     // 같은 작업 · 지역 · 계절 · 모자이크면 값이 같다 — 한 번 잰 결과(값 · 그림)를 이 브라우저에 두고 다음부터 바로 쓴다
-    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, (wc.params?.items || []).join(',')].join('|');
+    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, OC ? 'ovs:' + OC.model : (wc.params?.items || []).join(',')].join('|');   // 바탕 모델이 바뀌면 다시 잰다
     R0.p = (async () => {
       const hit = await dropGet(dk);
       if (hit && hit.coverage >= COVER_MIN) return okOf(hit);
       const { grid, mask } = geoOf(D0);
       const [crop, A, B] = await Promise.all([
-        NT.cropOf(wc.tiles, wc.params?.items || [], grid),
+        OC ? NT.cropOf(OC.tiles, null, grid) : NT.cropOf(wc.tiles, wc.params?.items || [], grid),
         Promise.all(cur.map((m) => NT.monthOf(ndm.tiles, sidOf(m), grid))),
         Promise.all(prev.map((x) => NT.monthOf(ndm.tiles, x.sid, grid))),
       ]);
@@ -516,7 +519,7 @@ async function main() {
   function enSig(root, e) {
     const s = root.querySelector('.k-sig'); if (!s || !isEnvelope(e)) return;
     const src = String(e.source || '');
-    const what = /^(Sentinel-2 NDVI |Cropland )/.test(src) ? src : /land ?cover|LULC|Esri/i.test(src) ? 'Sentinel-2 land cover 2017–2025' : /S2|Sentinel|NDVI|B04/i.test(src) ? 'Sentinel-2 imagery' : 'Land-XI analysis';
+    const what = /^(Sentinel-2 NDVI |Cropland )/.test(src) ? src : /^Land-XI overseas model/.test(src) ? (/2017/.test(src) ? 'Land-XI analysis · Sentinel-2 2017–2025' : 'Land-XI analysis · Sentinel-2') : /land ?cover|LULC|Esri/i.test(src) ? 'Sentinel-2 land cover 2017–2025' : /S2|Sentinel|NDVI|B04/i.test(src) ? 'Sentinel-2 imagery' : 'Land-XI analysis';
     s.dataset.why = `${what} · as of ${K.df(e.as_of)}`;
   }
 

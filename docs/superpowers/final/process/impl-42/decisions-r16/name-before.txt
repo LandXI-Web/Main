@@ -1,0 +1,5 @@
+['id', 'tenant_id', 'name', 'region_name']
+('dp-12730-farm-26', 'gwangju-jeonnam', '전남광주통합특별시 구례군 · 적용', '{"en": "Gurye-gun", "ko": "전남광주통합특별시 구례군"}')
+('dp-12130-farm-26', 'gwangju-jeonnam', '전남광주통합특별시 여수시 · 적용', '{"en": "Yeosu-si", "ko": "전남광주통합특별시 여수시"}')
+('dp-12110-farm-26', 'gwangju-jeonnam', '전남광주통합특별시 목포시 · 적용', '{"en": "Mokpo-si", "ko": "전남광주통합특별시 목포시"}')
+('dp-12780-farm-26', 'gwangju-jeonnam', '전남광주통합특별시 강진군 · 적용', '{"en": "Gangjin-gun", "ko": "전남광주통합특별시 강진군"}')

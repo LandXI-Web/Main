@@ -149,7 +149,7 @@
     "sk.pre.model.noadapter": "no runnable adapter registered",
     "sk.pre.img": "Imagery pair",
     "sk.pre.img.no": "{n} gateway imagery over Sokuluk · PC Sentinel-2 is external, not registered",
-    "sk.ext": "Esri/IO LULC external statistics · not LX analysis",
+    "sk.ext": "Land-XI overseas model · 2017 vs 2025",
     "mk.tg.swipe": "Swipe pre ↔ post",
     "tenant.guest": "Guest · public build",
     "lic.vworld": "V-World · KOGL",
