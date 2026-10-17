@@ -23,6 +23,7 @@ const hueOf = (s) => s.map?.scale?.hue || (s.panels || []).find((p) => p.scale?.
 const tipAttr = (label, val) => `data-tip="${esc(`<b>${esc(label)}</b> ${val}`)}"`;
 
 /* ── 작은 판 차트(판 폭 328 기준 · 값 글자는 잉크 · 색은 표시에만) ── */
+const NARROW_W = 1400, NARROW_PX = 320;   // 좁은 화면(창 폭 1400 이하)에서 판 기본 폭(원칙 274)
 const MAXR = 6;                                                     // 판에서 먼저 보이는 줄 수 · 나머지는 '더 보기'
 function rowsBar(rows, p, opt = {}) {
   const mx = Math.max(1, ...rows.map((r) => r.v || 0));
@@ -138,7 +139,11 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (n === 3) { onStep?.(3); return; }
     O.step = n === 2 ? 2 : 1;
     O.sync = true;
-    try { const p = ensurePane(); if (O.step === 2) p.expand(false); else p.collapse(false); } finally { O.sync = false; }   // 단계 바꿈은 기억으로 남기지 않음 — 기억 = 사람이 손잡이로 끌거나 접고 편 것(원칙 273)
+    try {
+      const p = ensurePane();
+      if (O.step === 2) { if (!(p.remembered()?.px > 0)) p.preset(innerWidth <= NARROW_W ? NARROW_PX : null); p.expand(false); }   // 좁은 화면 기본 폭 320 · 사람이 끌어 둔 폭이 있으면 그대로(원칙 274)
+      else p.collapse(false);
+    } finally { O.sync = false; }   // 단계 바꿈은 기억으로 남기지 않음 — 기억 = 사람이 손잡이로 끌거나 접고 편 것(원칙 273)
     mini.hidden = O.step !== 1;
     stage.pad(O.step === 2 ? { right: padR() } : {});
     if (window.__xc?.dash) window.__xc.dash.step = O.step;

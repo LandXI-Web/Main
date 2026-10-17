@@ -225,7 +225,8 @@ export function panes(pane, opts = {}) {
   const api = {
     el, pane,
     size: () => (st.c ? 0 : Math.round(cur())),
-    set: (px) => setPx(px),
+    set: (px, keep = true) => setPx(px, keep),
+    preset(px) { st = { ...st, c: false }; if (px) st.px = clamp(px); else delete st.px; apply(); },   // 화면이 정하는 기본 폭(기억으로 남기지 않음 · null = 화면 CSS 기본) — 좁은 화면 기본 320(원칙 274)
     reset() { st = {}; save(o.key, null); apply(); },
     // keep=false → 화면이 단계를 바꾸며 접고 펴는 것(사람의 기억으로 남기지 않음) · 손잡이 단추 · 끌기 · 키보드는 늘 기억
     collapse(keep = true) { if (!o.collapse) return; st = { ...st, c: true }; if (keep) save(o.key, st); apply(); },

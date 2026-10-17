@@ -250,7 +250,7 @@ async function boot() {
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
-  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on) return; wait?.(); wait = K.untilDrawn(map); }); }
+  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map); }); }   // 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
   try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
@@ -1040,7 +1040,15 @@ function boardSpec() {
   const { regions, services, regs, svcs } = hudCounts(d, region);
   const tot = regs.reduce((t, r) => t + ev(r.n), 0);
   const title = region ? `${region.name} · ${nf(services)} 서비스 제공중` : `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
-  const panels = [{ type: 'bar', title: '서비스별', unit: '개', rows: [...svcs.values()].sort((a, b) => b.n - a.n).map((s) => ({ k: s.id, label: s.name, v: s.n })) }];
+  const svcList = [...svcs.values()].sort((a, b) => b.n - a.n);
+  const lastOf = (id) => { let t = ''; for (const r of regs) for (const it of r.items || []) if (it.svc === id && (it.finished_at || '') > t) t = it.finished_at; return t ? t.slice(0, 10) : '—'; };
+  const regsOf = (id) => regs.filter((r) => (r.items || []).some((it) => it.svc === id)).length;
+  // 판 · 보고서(.hwpx) 표 제목은 그대로 쓰이므로 분명하게(원칙 274)
+  const panels = [{ type: 'bar', title: '서비스별 서비스 결과 수', unit: '개', rows: svcList.map((s) => ({ k: s.id, label: s.name, v: s.n })) },
+    { type: 'table', title: region ? `${region.name} 제공 중인 서비스` : '제공 중인 서비스', cols: region ? ['서비스', '서비스 결과', '마지막 분석'] : ['서비스', '시군구', '서비스 결과', '마지막 분석'], num: region ? [1] : [1, 2],
+      rows: svcList.map((s) => (region ? [s.name, s.n, lastOf(s.id)] : [s.name, regsOf(s.id), s.n, lastOf(s.id)])) }];
+  const say = region ? [`${region.name}에 제공 중인 서비스는 ${nf(services)}가지, 서비스 결과는 ${nf(tot)}개입니다.`]
+    : [`지금 지도에 보이는 시군구 ${nf(regions)}곳에 서비스 ${nf(services)}가지를 제공 중입니다.`, ...(regs.length ? [`서비스 결과가 가장 많은 곳은 ${[...regs].sort((a, b) => ev(b.n) - ev(a.n))[0].name} ${nf(ev([...regs].sort((a, b) => ev(b.n) - ev(a.n))[0].n))}개입니다.`] : [])];
   // 숫자 이름: '서비스 결과'(서비스 결과 장부의 객체 수) — 왼쪽 위 옛 큰 숫자 'AI 분석 결과'(전국 분석까지 합)와 다른 셈이라 같은 이름을 쓰지 않는다(규칙 3)
   const kpis = [{ label: '서비스 결과', value: tot, unit: '개' }, ...(region ? [] : [{ label: '시군구', value: regions, unit: '곳' }]), { label: '서비스', value: services, unit: '가지' }];
   let mp = null;
@@ -1048,10 +1056,10 @@ function boardSpec() {
     const values = {}, labels = {};
     for (const r of regs) { values[r.sgg_cd] = ev(r.n); labels[r.sgg_cd] = r.name; }
     mp = { level: 'sgg', values, labels, title: '서비스 결과', unit: '개', scale: { kind: 'seq', hue: 'teal', min: 0, max: Math.max(1, ...Object.values(values)) }, meaning: '시군구마다 서비스 결과 수' };
-    panels.unshift({ type: 'rank', title: '시군구 순위', unit: '개', rows: regs.map((r) => ({ k: r.sgg_cd, label: r.name, v: ev(r.n) })).sort((a, b) => b.v - a.v) });
+    panels.unshift({ type: 'rank', title: '제공 중인 시군구 — 서비스 결과 수', unit: '개', rows: regs.map((r) => ({ k: r.sgg_cd, label: r.name, v: ev(r.n) })).sort((a, b) => b.v - a.v) });
   }
   return { kind: 'board', rule: [], title, means: [['지역', region ? region.name : '전국'], ['업무', '모든 업무'], ['비교', region ? '서비스' : '서비스 · 시군구']], fuse: ['서비스 결과 장부'],
-    kpis, panels, map: mp, say: [], sgg: region ? codesOf(region)[0] : null, main: { label: '서비스 결과', value: tot, unit: '개' } };
+    kpis, panels, map: mp, say, sgg: region ? codesOf(region)[0] : null, main: { label: '서비스 결과', value: tot, unit: '개' } };
 }
 function openBoardStats() { const s = boardSpec(); if (!s || !OM) return; LASTSPEC = s; setStep(1, { fresh: true }); }
 X.boardSpec = () => boardSpec();   // 실증 기록용(화면엔 없음)
