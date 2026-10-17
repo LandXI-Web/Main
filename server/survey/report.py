@@ -97,7 +97,7 @@ def sido_label(sgg_cd: str | None, sido: str | None = None) -> str | None:
                 return v
     except Exception:  # noqa: BLE001
         pass
-    return {"전남광주통합특별시": "광주전남특별시"}.get(sido or "", sido)
+    return {"전남광주통합특별시": "전남광주특별시"}.get(sido or "", sido)
 
 
 def _counts(c, sgg_cd: str) -> dict | None:

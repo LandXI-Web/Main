@@ -253,7 +253,7 @@ def test_tenant_manager_scope(live, tok):
         assert r.status_code == 404
     assert get("/accounts/summary", tok["admin"]).json()["counts"]["signup_view"] == 0                               # 기관 신청 수도 세지 않는다
     assert post(f"/accounts/signup/{nid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 200   # 자기 기관 = 그 기관 관리자가 승인
-    assert post(f"/accounts/signup/{gid}/decide", {"decision": "reject", "reason": "시험 반려"}, token=tok["gj"]).status_code == 200   # 광주전남 관리자가 반려
+    assert post(f"/accounts/signup/{gid}/decide", {"decision": "reject", "reason": "시험 반려"}, token=tok["gj"]).status_code == 200   # 전남광주 관리자가 반려
     s = login(mn, pw, site="gov", tenant="namwon")
     assert s.status_code == 200 and s.json()["role"] == "viewer"               # 기관 신청 = 부서 사용자
     assert login(mn, pw, site="gov", tenant="gwangju-jeonnam").status_code == 401

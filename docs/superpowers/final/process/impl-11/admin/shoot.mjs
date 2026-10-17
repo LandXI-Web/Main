@@ -100,7 +100,7 @@ async function n13() {
   await page.locator('.rv-sgg').first().click();
   await page.waitForSelector('.rv-sg-g label');
   await page.waitForTimeout(800);
-  await shot(page, 'n13-share-sgg-1440.png', "배포 → 기관 공유 — 광주전남(광역) 칸 '시군구 27 / 27' → 소속 시군구 고르기 · 공유 거두기");
+  await shot(page, 'n13-share-sgg-1440.png', "배포 → 기관 공유 — 전남광주(광역) 칸 '시군구 27 / 27' → 소속 시군구 고르기 · 공유 거두기");
   console.log(JSON.stringify({ part: 'n13', boxes: await page.locator('.rv-sg-g input').count(), errs }));
   await ctx.close();
 }
@@ -115,7 +115,7 @@ async function n16() {
   await page.waitForFunction(() => [...document.querySelectorAll('.ds-t select')].some((s) => s.value && s.options[s.selectedIndex].text === '순천시'));
   await page.waitForTimeout(1500);
   await page.locator('.ds').scrollIntoViewIfNeeded();
-  await shot(page, 'n16-dept-scope-1440.png', '광주전남 기관 관리자 → 계정 — 부서별 관할(순천시 농정과 → 순천시만)');
+  await shot(page, 'n16-dept-scope-1440.png', '전남광주 기관 관리자 → 계정 — 부서별 관할(순천시 농정과 → 순천시만)');
   await ctx.close();
   // 그 부서 사용자 — 지역이 순천시 하나만
   const u = await open('shot11@gj.go.kr#gwangju-jeonnam', ADMIN, 'gov');

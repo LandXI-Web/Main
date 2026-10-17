@@ -84,7 +84,7 @@ layers:
      layer: results, promote_id: id, name: {ko: 남원 비닐하우스 2023(Vinyl_house 도메인 이식), en: Namwon greenhouses 2023 (domain transfer)},
      export_policy: tenant, security_review: pending, license: LX 산출(검수 전), attribution: 도메인 이식(드론 → 항공 25cm) · 검수 전,
      basis: inferred, ladder: {stage: domestic, from: 10, to: 17, order: 540}, count_unit: 동}
-  # 광주전남 해양쓰레기(dp-gj-marine-25 스냅샷 = aliases 의 이 세트) — 결과 파일·detections 1,857행이 실제로 있는데 목록에 없어
+  # 전남광주 해양쓰레기(dp-gj-marine-25 스냅샷 = aliases 의 이 세트) — 결과 파일·detections 1,857행이 실제로 있는데 목록에 없어
   # XI맵 기관 화면이 '결과 없음'으로 그리던 것을 맞춘다(fix-server-summary · 데이터 정합). 원본 항공영상은 카탈로그에 아직 없다.
   - {id: yeosu-marine-2025-aerial, set: results/lx/yeosu-marine-2025-aerial, manifest: yeosu-marine-2025-aerial.pmtiles, kind: vector, role: result,
      layer: yeosu_marine_2025_aerial, promote_id: id, name: {ko: 해양쓰레기 2025(항공 AI 탐지), en: Marine debris 2025 (aerial AI)},

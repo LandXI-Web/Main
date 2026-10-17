@@ -19,7 +19,7 @@
 | 역할 | 시군구 | 시도 | 이유 |
 |---|---|---|---|
 | 기준(이미 준비된 곳) | 남원시 `52190` | 전북 | 기존 동작 회귀 확인용 |
-| **새 지역(미리 준비 없음)** | 여수시 `46130`(새 코드 `12130` 도 같은 곳) | 전남 | 25cm 2023 원천 영상이 로컬에 있음 · 기관 계정(광주전남 `gj-manager@<기관 id>`) 있음 · 토지피복 추론·필지·실태조사는 **아무것도 준비돼 있지 않음** |
+| **새 지역(미리 준비 없음)** | 여수시 `46130`(새 코드 `12130` 도 같은 곳) | 전남 | 25cm 2023 원천 영상이 로컬에 있음 · 기관 계정(전남광주 `gj-manager@<기관 id>`) 있음 · 토지피복 추론·필지·실태조사는 **아무것도 준비돼 있지 않음** |
 | 정직성 확인(선택) | 충청 1곳 + 경기 또는 경상 1곳 | 충청·경기/경상 | 충청 = 25cm 원천 있음, 경기·경상 = 로컬 영상 없음 → V-World 경로 또는 `영상 등록 필요` |
 
 완료 조건의 "서로 다른 시도 2곳" = **남원(전북) + 여수(전남)**, 둘 다 **로그인 폼부터**. 여수는 남원과 **같은 코드 경로**로 돌아야 한다(여수 전용 분기 금지). 여수 대신 다른 전남·충청 시군구를 골라도 되지만, 그 경우 보고서에 이유를 적는다.
@@ -29,7 +29,7 @@
 - **25cm 2023 항공 정사(비도시)** `D:/2023_정사영상_비도시_25/{전남비도시(2,117장), 전북비도시, 충청비도시}` — GeoTIFF+TFW, CRS 태그 없음(EPSG:5186 부여). 남원은 `02. 데이터/_work/namwon_ap25_2023.vrt` 로 이미 쓰는 중. 도엽 색인 `02. 데이터/_work/c01_jeonbuk_index.gpkg`(전북만).
 - **연속지적 전국(2022-02)** `D:/SSD1/Mobility Convergence/01_LX국토정보기본도및기본공간정보/4. 연속지적도_전국_20220209/LSMD_CONT_LDREG_{시도}` (SHP) + 국토정보기본도 2.0(2021-12). V-World `LP_PA_CBND_BUBUN` 는 최신 확인·보완용(일일 쿼터 보호 — 한 번에 대량 호출 금지, 디스크 캐시).
 - **모델** `aerial25/best`(건물·주차장·경작지·비닐하우스, 25cm) = 전국 25cm 영상에 쓰는 기본 모델. `namwon/*` 모델은 이름만 남원일 뿐 지역에 묶지 말 것(표시 이름은 기존 카탈로그 그대로).
-- **PostGIS**: `survey_parcels`(namwon 332,084행만) · `detections`(tenant lx) · `imagery`(남원·제주·국산리·익산 행) · `ledger_imports`(남원·광주전남). 게이트웨이 :8700 · 워커(GPU 1 · CPU 2) · vLLM :8000.
+- **PostGIS**: `survey_parcels`(namwon 332,084행만) · `detections`(tenant lx) · `imagery`(남원·제주·국산리·익산 행) · `ledger_imports`(남원·전남광주). 게이트웨이 :8700 · 워커(GPU 1 · CPU 2) · vLLM :8000.
 - 자산 대장: `docs/superpowers/recon-0924/ASSET-LEDGER.md`.
 
 ## 규칙
@@ -39,7 +39,7 @@
 - **소유 파일만 수정.** 남의 파일은 읽기·import·API 호출만. 공용 계약(아래 각 브리프 `계약` 절)을 바꿔야 하면 상대 브리프 소유자에게 `요청`.
 - **마이그레이션 번호 예약:** core-survey `0005_*` · core-imagery `0006_*` · core-flow `0007_*` · core-xi `0008_*` · core-fusion `0009_*`. 기존 표를 지우거나 열 이름을 바꾸지 않는다(추가만).
 - **GPU:** 추론은 게이트웨이 작업 대기열로만, 동시 고부하 GPU ≤ 1(워커 1장). 다른 작업의 확인 추론과 겹치면 대기열에서 기다린다 — 워커를 더 띄우지 말 것. **Ollama·vLLM 종료 금지.** 긴 전역 작업은 확인 시간대를 보고서에 남겨 다른 작업이 알 수 있게 한다.
-- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`(게이트웨이만 다시 띄울 땐 `-Restart gateway`). **확인은 로그인 폼으로만**(세션 주입 금지). 계정: `lx-staff` · `lx-admin` · `namwon-manager@namwon` · 광주전남 `gj-manager@<기관 id>`(기관 id 는 `GET /api/v1/auth/tenants`). 비밀번호 env `LX_PW`.
+- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`(게이트웨이만 다시 띄울 땐 `-Restart gateway`). **확인은 로그인 폼으로만**(세션 주입 금지). 계정: `lx-staff` · `lx-admin` · `namwon-manager@namwon` · 전남광주 `gj-manager@<기관 id>`(기관 id 는 `GET /api/v1/auth/tenants`). 비밀번호 env `LX_PW`.
 - **git:** commit·reset·checkout·restore·stash 금지(Ship 단계만). 임시 스크립트는 스크래치 폴더에만.
 - **용어:** `CLAUDE.md` §2 용어표만. 보이는 글자 검사 `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` → 지어낸 용어 0.
 - **숫자 한 출처:** 대표 수치는 `GET /api/v1/summary` 에서만. 화면에 ms·GPU명·작업 id·좌표·파일 경로 노출 0(실측은 보고서와 `?dev=1` 에만).

@@ -29,7 +29,7 @@ const body = document.body;
 const TENANT = body.dataset.tenant || 'namwon';
 const SVC = body.dataset.svc || '';
 /* 이 화면이 **새 골격**인가 — 생성기가 찍은 것에만 data-gen="rows" 가 붙는다.
-   광주전남 두 배포본은 옛 골격으로 이미 커밋돼 있고(판을 그리드로 덮어 쓰는 인라인 CSS +
+   전남광주 두 배포본은 옛 골격으로 이미 커밋돼 있고(판을 그리드로 덮어 쓰는 인라인 CSS +
    슬롯을 제 손으로 채우는 인라인 모듈) 같은 이 파일을 쓴다. 그 화면에서는
    **한 번만 그리고 다시 그리지 않는다** — 다시 그리면 그 인라인 모듈이 채운 것을 지운다.
    지도도 세우지 않는다(그쪽은 제 지도를 따로 세운다). */
@@ -135,7 +135,7 @@ const empty = (head, why) => `<p class="pt-empty"><b>${esc(head)}</b>${why ? esc
  */
 function fitRows(host, rowH, min = 2) {
   // 판이 없으면 잴 것도 없다. 비동기로 그리는 칸은 기다리는 사이에 바깥 코드가
-  // 그 자리를 통째로 갈아 끼울 수 있다(광주전남 배포본의 인라인 모듈이 그렇게 한다).
+  // 그 자리를 통째로 갈아 끼울 수 있다(전남광주 배포본의 인라인 모듈이 그렇게 한다).
   if (!host) return min;
   const h = host.clientHeight || host.parentElement?.clientHeight || 0;
   return Math.max(min, Math.floor(h / rowH));

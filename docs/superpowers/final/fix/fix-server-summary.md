@@ -1,6 +1,6 @@
 # fix-server-summary — 대표 수치 단일 요약 API(숫자 한 출처의 서버 쪽)
 
-**배경(Opus 독립 평가 P0):** 광주전남 해양쓰레기가 화면마다 다름(게스트 메인·영업 '운영 1,857건' / 학습 '첫 학습 전' / 광주전남 첫 화면 '영상 등록 필요' / XI맵 여수 '아직 결과가 없습니다' / 직원 에이전트 '확인되지 않습니다'). 남원 대표 숫자 1,101(LX 직원 대시보드 확인 대기)·1,079(XI맵·서비스 상세 현장 확인 필요)·745(결과 확인 무허가)·2,098(영업 카드)·9,593→70,474(탐지)로 흩어짐. 기관 신고 24(대시보드) vs 16+6=22(서비스 관리).
+**배경(Opus 독립 평가 P0):** 전남광주 해양쓰레기가 화면마다 다름(게스트 메인·영업 '운영 1,857건' / 학습 '첫 학습 전' / 전남광주 첫 화면 '영상 등록 필요' / XI맵 여수 '아직 결과가 없습니다' / 직원 에이전트 '확인되지 않습니다'). 남원 대표 숫자 1,101(LX 직원 대시보드 확인 대기)·1,079(XI맵·서비스 상세 현장 확인 필요)·745(결과 확인 무허가)·2,098(영업 카드)·9,593→70,474(탐지)로 흩어짐. 기관 신고 24(대시보드) vs 16+6=22(서비스 관리).
 
 ## 소유 파일
 - **신설** `server/landxi_api/summary.py`
@@ -31,13 +31,13 @@
 
 ## 할 일
 1. 현재 각 숫자의 출처를 전수 조사: `survey.py`(stats·findings), `deploys.py`, `registry.py`(카드 결과 수), `public.py`, `regions.py`(n_findings), `results.py`, `feedback.py`(신고). 1,101 / 1,079 / 745 / 2,098 / 9,593 / 70,474 / 24 / 22 / 1,857 각각이 어떤 쿼리·파일에서 나오는지 표로 보고서에 남긴다.
-2. 광주전남 해양쓰레기: `config/sets.yaml` 의 `results/lx/yeosu-marine-2025-aerial`·`dp-gj-marine-25` 등 **실제 보유 결과**를 확인하고 한 가지 상태로 확정(실결과 수 = pmtiles/피처 실측). 1,857 이 실측이 아니면 쓰지 않는다.
+2. 전남광주 해양쓰레기: `config/sets.yaml` 의 `results/lx/yeosu-marine-2025-aerial`·`dp-gj-marine-25` 등 **실제 보유 결과**를 확인하고 한 가지 상태로 확정(실결과 수 = pmtiles/피처 실측). 1,857 이 실측이 아니면 쓰지 않는다.
 3. 기존 API 중 같은 이름을 다른 값으로 내던 곳(예: regions `n_findings`, registry 카드 결과 수)은 **summary.build 를 호출해 같은 값**을 내도록 고친다 — 단 그 파일들이 이 작업 소유가 아니므로, 고칠 곳 목록을 보고서 `요청`에 쓰고 필요한 공용 함수만 summary.py 에 둔다. (regions.py·registry.py 수정은 Ship 전 통합 단계에서 적용)
 4. 성능: 응답 ≤ 300ms(캐시 60s 허용, 봉투 as_of 로 표시).
 
 ## 완료 조건
-- `GET /api/v1/summary` · `?region=` · `?card=` · 게스트/남원/광주전남/LX 직원 세션별 응답이 계약 형식, RLS 로 타 기관 항목 0.
-- 광주전남 해양쓰레기 항목이 실제 자료 기준 한 가지 stage·한 가지 수.
+- `GET /api/v1/summary` · `?region=` · `?card=` · 게스트/남원/전남광주/LX 직원 세션별 응답이 계약 형식, RLS 로 타 기관 항목 0.
+- 전남광주 해양쓰레기 항목이 실제 자료 기준 한 가지 stage·한 가지 수.
 - 출처 대조표(위 1)와 '같은 label 같은 값' 자체 검사 결과를 보고서에.
 - `server/tests` 전부 통과 + `test_summary.py` 신규 통과. 게이트웨이 재기동 후 기존 화면 오류 0.
 
@@ -51,5 +51,5 @@
 - **숫자 한 출처:** 대표 수치는 `GET /api/v1/summary`(계약: `fix-server-summary.md` §계약) 에서만 읽는다. 화면에 숫자를 적어 넣지 않는다. 같은 이름 = 같은 값, 다른 값이면 다른 이름.
 - **지역 하드코딩 금지**(namwon·yeosu 등 문자열을 js/html 에 새로 넣지 말 것). 남원은 예시 지역.
 - **GPU:** 추론은 게이트웨이 작업 대기열로만, 동시 고부하 GPU ≤ 1. Ollama·vLLM 종료 금지.
-- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 광주전남 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
+- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 전남광주 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
 - **보고서:** `docs/superpowers/final/fix/<id>-report.md` — 바꾼 파일, 전/후 스크린샷(1440·390) 경로, forbidden 결과, 남은 것, `Fable 에게 넘길 것`, `요청`.

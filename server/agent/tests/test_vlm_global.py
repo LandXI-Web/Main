@@ -121,7 +121,7 @@ def test_vlm_scope_blocks_other_tenant():
     assert e.value.code == "tool_forbidden"
     ctx = Ctx(GJ)
     with pytest.raises(ToolError) as e:
-        asyncio.run(V.resolve_pnu({"pnu": "5219045021110530012"}, ctx))      # 남원 필지 ← 광주전남 기관
+        asyncio.run(V.resolve_pnu({"pnu": "5219045021110530012"}, ctx))      # 남원 필지 ← 전남광주 기관
     assert e.value.code == "tool_forbidden"
     assert asyncio.run(V.resolve_pnu({"pnu": "5219045021110530012"}, Ctx(NW))) == "5219045021110530012"
     assert asyncio.run(V.resolve_pnu({"pnu": "1213034028104230000"}, Ctx(ST))) == "1213034028104230000"

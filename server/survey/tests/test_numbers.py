@@ -14,7 +14,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))       # server/
 from survey import nation as NT  # noqa: E402
 
-TWO = [("52190", "h_nw"), ("12130", "h_gj")]          # 전북 남원 · 광주전남 여수(서로 다른 시도)
+TWO = [("52190", "h_nw"), ("12130", "h_gj")]          # 전북 남원 · 전남광주 여수(서로 다른 시도)
 
 
 def _get(api, path, h):
@@ -42,12 +42,12 @@ def test_counts_sql_both_styles():
 
 def test_sido_label_one_name():
     from landxi_api import regions as RG
-    assert RG.sido_label("전남광주통합특별시") == RG.sido_label("12130") == RG.sido_label("12") == "광주전남특별시"
+    assert RG.sido_label("전남광주통합특별시") == RG.sido_label("12130") == RG.sido_label("12") == "전남광주특별시"
     assert RG.sido_label("52190") == "전북특별자치도"
-    assert RG.full_label("전남광주통합특별시 여수시 돌산읍") == "광주전남특별시 여수시 돌산읍"
+    assert RG.full_label("전남광주통합특별시 여수시 돌산읍") == "전남광주특별시 여수시 돌산읍"
     assert [r["sgg_cd"] for r in RG.find("전남광주통합특별시 여수시")] == ["12130"]
     r = RG.region_of("12130")
-    assert r["sido"] == r["sido_short"] == "광주전남특별시" and r["full"].startswith("광주전남특별시 ")
+    assert r["sido"] == r["sido_short"] == "전남광주특별시" and r["full"].startswith("전남광주특별시 ")
     assert not [x for x in RG.regions_base()[0] if "전남광주통합특별시" in (x.get("full") or "") + (x.get("sido") or "")]
 
 
@@ -171,7 +171,7 @@ def test_no_second_sido_name_in_loaded_text(pg):
 
 def test_regions_list_keeps_prev_cd(api, h_gj):
     """/regions 항목에 옛 코드(prev_cd)가 있어야 XI맵이 시군구 경계(옛 46xxx)와 새 코드(12xxx)를 잇는다
-    (없으면 광주전남 기관이 목포 12110 을 열어도 46110 으로 바뀌어 '관할 밖'이 된다 · 2차 실증에서 찾음)."""
+    (없으면 전남광주 기관이 목포 12110 을 열어도 46110 으로 바뀌어 '관할 밖'이 된다 · 2차 실증에서 찾음)."""
     items = _get(api, "/regions?limit=400", h_gj)["items"]
     mok = next(x for x in items if x["sgg_cd"] == "12110")
     assert mok.get("prev_cd") == "46110" and mok.get("in_scope") is True

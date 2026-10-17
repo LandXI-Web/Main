@@ -32,7 +32,7 @@ JOBS = [
     (MOCK, '08-admin.html', 'new-admin.png', (1440, 900), False),
 ]
 
-# 나란히(두 장): 남원 · 광주전남 메인 위쪽 900px — 틀은 같고 마크·이름·색·서비스만 다른 것이 한눈에
+# 나란히(두 장): 남원 · 전남광주 메인 위쪽 900px — 틀은 같고 마크·이름·색·서비스만 다른 것이 한눈에
 PAIRS = [
     (['new-main-namwon.png', 'new-main-gwangju.png'], 'new-main-two.png', 900),
     (['new-login.png', 'new-login-join.png'], 'new-login-two.png', 900),

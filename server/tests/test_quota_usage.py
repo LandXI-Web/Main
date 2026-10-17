@@ -69,7 +69,7 @@ def test_lx_job_near_tenant_stays_lx():
     if not rows:
         pytest.skip("대상 작업 없음")
     assert all(o == "lx" for _, o, _ in rows)
-    # 예전 규칙이 이웃 기관 몫으로 옮기던 작업이 실제로 있었다(남원 · 하동 → 광주전남 같은 것) — 새 규칙은 옮기지 않는다
+    # 예전 규칙이 이웃 기관 몫으로 옮기던 작업이 실제로 있었다(남원 · 하동 → 전남광주 같은 것) — 새 규칙은 옮기지 않는다
     moved = [(j, legacy) for j, o, legacy in rows if legacy != "lx"]
     assert moved, "예전 규칙으로도 옮겨지는 작업이 없음 — 재현 자리 없음"
 

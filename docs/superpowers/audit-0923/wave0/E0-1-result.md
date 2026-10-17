@@ -43,7 +43,7 @@ Running 116 tests using 3 workers
 ### 바뀐 것 요약
 - `landxi/assets/data/storage-keys.js`(신설): `KEYS` 표(owner · life · **store**(실제 저장소를 grep 으로 확인한 값) · reset) · `SESSION_KEYS` · `ALL_SESSION_KEYS`.
 - `roles.js`: 기관 단을 넣지 않았다는 주석을 달았습니다(Q1). `SCREEN_MENU` 에 `report-standard-issue` · `map-drift` → map, `notice/faq/contact/manual` → support 를 더했고, `ai-publish-create` 는 publish 에서 **project** 로 바꿨습니다.
-- `portal.js TENANTS`: namwon 과 gwangju-jeonnam 의 `menus: ['portal']` · `home`(광주전남 = `portal-dp-gj-marine-25.html`, 임시) · `login`. 다른 export 는 손대지 않았습니다.
+- `portal.js TENANTS`: namwon 과 gwangju-jeonnam 의 `menus: ['portal']` · `home`(전남광주 = `portal-dp-gj-marine-25.html`, 임시) · `login`. 다른 export 는 손대지 않았습니다.
 - `shell-gate.js`: §7.2 판정표 전체(손상 → 세 키 삭제 + `login.html` · 포털 화면 `data-login` 판정 · 기관 세션은 LX 화면에서 기관 홈 `?denied` · admin 일 때 `data-site=admin`). 미러 표는 `MENU` · `MENUS` · `HOME` · `TENANT_HOME` 네 개입니다.
 - `shell.js`: `TENANT` · `gate(base, portal)`(같은 표를 미러) · `signOut`/`logout` 별칭 · `deniedLine` · `takeDenied` · `mountShell({tenant})` 기관 레일(내 서비스 + 로그아웃, MY 없음) · `data-site=admin` · `applyCustomSymbol()` · FAMILY 가 로그인 문을 가리키게 변경. `bindRail` 은 MY 가 없는 레일에서도 동작합니다.
 - `portal-ui.js`: `mountShell({tenant: t, active:'portal'})` · 레일 거르기 코드와 `svcNav` 개조 코드 삭제 · 마크 href = `t.home` · denied 안내(LX 화면 / 다른 기관). 블록 렌더 함수는 손대지 않았습니다.
@@ -72,7 +72,7 @@ Running 116 tests using 3 workers
 
 | 파일:줄 | 바꿀 값 | 이유 | 받는 곳 |
 |---|---|---|---|
-| `tests/e2e/proto-drift.spec.mjs:31-33` `boot` | `DRIFT`(map-drift.html) → `bootAs(page,url,'staff')`, `P25`·`P27`(광주전남 포털) → `bootTenant(page,url,'gwangju-jeonnam')` | `lx_logged_in` 만 심으면 DEFAULT admin 이 됩니다. 그러면 ① `map-drift.html` 은 이제 `map` 관문이라 `admin-home?denied` 로 튕기고 ② 포털은 LX 세션이라 기관 문으로 튕깁니다(§7.2 대로 동작한 것). **통합 e2e 에서 실패가 예상됩니다** | 통합 · E0-3(픽스처) |
+| `tests/e2e/proto-drift.spec.mjs:31-33` `boot` | `DRIFT`(map-drift.html) → `bootAs(page,url,'staff')`, `P25`·`P27`(전남광주 포털) → `bootTenant(page,url,'gwangju-jeonnam')` | `lx_logged_in` 만 심으면 DEFAULT admin 이 됩니다. 그러면 ① `map-drift.html` 은 이제 `map` 관문이라 `admin-home?denied` 로 튕기고 ② 포털은 LX 세션이라 기관 문으로 튕깁니다(§7.2 대로 동작한 것). **통합 e2e 에서 실패가 예상됩니다** | 통합 · E0-3(픽스처) |
 | `tests/e2e/proto-mypage.spec.mjs:310` | `waitForURL(/scrub\/index\.html/)` → `/login\.html/` · `:311` 에 `lx_role` 까지 null 단언 | 탈퇴는 `logout('')` = `signOut` 입니다. 착지가 R-S2 에 따라 `login.html` 이 됐습니다 | 통합 · E1-6 |
 | `tests/e2e/proto-mypage.spec.mjs:19,32` · `proto-admin.spec.mjs:19,58` · `palette/tokens/shell.spec.mjs` | `bootAs(page,url,'admin')` | 지금은 DEFAULT admin 덕분에 통과합니다. 뒤에 `DEFAULT_ROLE` 을 거두려면 명시적인 역할이 필요합니다 | E0-3 · 통합 |
 | `landxi/proto/dashboard.js:57` · `dataset.js:72` | 자체 로그아웃 → `import { signOut } from './shell.js'` | `lx_logged_in` 만 지우고 `scrub/index.html` 로 가서 C-09 가 남아 있습니다(`lx_role` 잔존). 이 두 화면은 셸 레일을 쓰지 않아 제 코드가 닿지 않습니다 | E0-6 · E0-7 |
@@ -83,7 +83,7 @@ Running 116 tests using 3 workers
 
 - **`DEFAULT_ROLE = 'admin'` 은 그대로 두었습니다.** `lx_logged_in` 만 있고 `lx_role` 이 없으면 여전히 관리자로 판정됩니다. 기관 로그인 경로는 이제 LX 키를 세우지 않아 P0-1 은 해소됐지만, 다른 스펙 20여 개가 `lx_logged_in` 만 심고 있어 W0 중에는 바꾸지 않았습니다. 통합 단계에서 `bootAs` 로 이관한 뒤 "역할 없음 = 세션 없음" 으로 바꾸기를 권합니다(`roles.js DEFAULT_ROLE` · `shell-gate.js` 의 `'admin'` 폴백 2곳).
 - **관리자 착지는 `login.html`** 입니다(W0 규칙). E1-6 이 `admin-login.html` 을 세우면 `shell.js signOut` 1줄을 바꿔야 합니다.
-- **광주전남 홈은 임시**(`portal-dp-gj-marine-25.html`)입니다. E1-2 가 `portal-gwangju-jeonnam.html` 을 만들면 `portal.js TENANTS[].home` · `shell-gate.js TENANT_HOME` · `shell.js TENANT_HOME` 세 곳을 함께 고쳐야 합니다(미러 2개).
+- **전남광주 홈은 임시**(`portal-dp-gj-marine-25.html`)입니다. E1-2 가 `portal-gwangju-jeonnam.html` 을 만들면 `portal.js TENANTS[].home` · `shell-gate.js TENANT_HOME` · `shell.js TENANT_HOME` 세 곳을 함께 고쳐야 합니다(미러 2개).
 - **`applyCustomSymbol()` 을 모든 LX 셸 화면에서 부릅니다.** 심볼 이미지 모양 CSS 는 `account.css`(마이페이지)에만 있어서, 저장된 심볼이 있으면 다른 화면 레일 마크에서는 인라인 폭만 적용됩니다. 모양 CSS 를 셸로 옮기는 일은 E1-6 몫입니다.
 - ~~기관 문의 `로그인` 단추 테두리가 보이지 않음~~ → 재판정에서 고쳤습니다(⓪). **기존부터 있던 문제(이번 변경과 무관):** 1280×720 포털 홈의 영농관리 카드에서 연도 줄과 제목이 겹칩니다(`07-denied-toast-tenant-1280.png` · 블록 렌더는 이 에픽 소유가 아님).
 - 보고서 경로: 하네스 지시문은 `E0-1-report.md` 를 적었지만, 새 파일 허용 목록과 00-COMMON 이 `E0-1-result.md` 여서 이 파일로 썼습니다.

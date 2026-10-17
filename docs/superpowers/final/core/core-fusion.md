@@ -3,7 +3,7 @@
 **먼저:** `_common.md` 전체 + core-survey 가 올리는 `contract-parcel-ai.md`(없으면 1–2단계부터 하고 기다린다). 사용자 원칙(09-27): vLLM 지도 제어·분석은 일반 API 가 아니라 **기관이 올린 행정 데이터 × AI 결과** 융합이다.
 
 ## 왜
-대장 올리기·결합은 두 기관(남원·광주전남)에서 돌지만, 결합 뒤 규칙 평가(`ledger.evaluate_rules`)는 `survey_parcels`(남원만)의 `a23_*` 열을 읽어 **광주전남(여수 화양면 786필지)은 'AI 분석 전'으로 끝난다.** AI 도우미 도구도 남원에 묶여 있다: `agent/tools/survey.py` `OWNER_TENANT="namwon"`(다른 기관은 403), `survey_local.py` 는 남원 파일 경로, `registry.py`·`results.py` 기본 세트 `results/lx/namwon-landcover-2023`, `jobs.py` 모델 선호 목록, 설명문 '남원 39개 법정동', `map_on` 세트 `survey/namwon-parcel-survey` 고정.
+대장 올리기·결합은 두 기관(남원·전남광주)에서 돌지만, 결합 뒤 규칙 평가(`ledger.evaluate_rules`)는 `survey_parcels`(남원만)의 `a23_*` 열을 읽어 **전남광주(여수 화양면 786필지)은 'AI 분석 전'으로 끝난다.** AI 도우미 도구도 남원에 묶여 있다: `agent/tools/survey.py` `OWNER_TENANT="namwon"`(다른 기관은 403), `survey_local.py` 는 남원 파일 경로, `registry.py`·`results.py` 기본 세트 `results/lx/namwon-landcover-2023`, `jobs.py` 모델 선호 목록, 설명문 '남원 39개 법정동', `map_on` 세트 `survey/namwon-parcel-survey` 고정.
 
 ## 소유 파일
 - `server/landxi_api/ledger.py` · `server/landxi_api/agent.py`
@@ -23,7 +23,7 @@
 - 제공: 도구 `ui_actions` 형식(기존) + `sgg_cd` 필드. 바꾸면 core-xi 에 알림.
 
 ## 완료 조건
-- **광주전남 담당자(로그인 폼) · 여수:** gov-fusion 에서 대장 파일(기존 `화양면_농지목록` 또는 새 파일) 올리기 → 열 확인 → 결합 → **AI 결과와 어긋난 필지 수가 숫자로** 나온다(`AI 분석 전` 아님 — core-xi 여수 추론·core-survey 적재 뒤) → 한 문장 질문 → 지도 채색 + 표 + 집계. 녹화(20–40초, vLLM 실연결 · 리플레이 0).
+- **전남광주 담당자(로그인 폼) · 여수:** gov-fusion 에서 대장 파일(기존 `화양면_농지목록` 또는 새 파일) 올리기 → 열 확인 → 결합 → **AI 결과와 어긋난 필지 수가 숫자로** 나온다(`AI 분석 전` 아님 — core-xi 여수 추론·core-survey 적재 뒤) → 한 문장 질문 → 지도 채색 + 표 + 집계. 녹화(20–40초, vLLM 실연결 · 리플레이 0).
 - **남원 담당자(로그인 폼):** 같은 흐름 회귀(기존 431필지 등 값이 바뀌면 사유).
-- LX 직원 세션에서 `여수 …` / `남원 …` 질문이 각 지역 데이터로 답한다. 광주전남 세션에서 남원 질문 → 권한 밖 한 줄(도구 403 가드).
+- LX 직원 세션에서 `여수 …` / `남원 …` 질문이 각 지역 데이터로 답한다. 전남광주 세션에서 남원 질문 → 권한 밖 한 줄(도구 403 가드).
 - 도구·설명문·기본값에 지역 문자열 0(grep 결과 보고서에) · forbidden(gj-manager·namwon-manager, 1440·390) 0 · 콘솔 오류 0 · `server/agent/tests`·`server/tests` 통과.

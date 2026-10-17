@@ -20,7 +20,7 @@
 
 1. **[P1] 레일이 역할을 무시하고 원본 9메뉴를 그대로 보여준다** — `dashboard.html`·`dataset.html`. "위계를 세운다"(9/21, `cd03cb9`)의 취지가 이 두 화면에서 비어 있다.
 2. **[P1] 로그인 화면 워드마크가 여전히 구 스파이크 `dive.html`로 간다** — 9/20 감사 L3가 안 닫혔다. 그 페이지는 외부 CDN 6종 + 외부 지도 타일에 의존해 "인터넷을 끊어도 선다"(9/20, `07193e3`)와 정면으로 어긋난다.
-3. **[P1] 지도가 들어간 화면 전부가 기본 상태에서 외부 인터넷에 의존한다** — XI맵·지도 속성 관리·통계·보고서·표류 예측·광주전남 포털. `VWORLD_KEY`가 없으면 `xdworld.vworld.kr`·`tiles.openfreemap.org`로 무조건 나간다. "인터넷을 끊어도 화면이 선다" 커밋은 **영상·폰트·지도 라이브러리 본체**는 내렸지만 **지도 배경 타일**은 내리지 못했다.
+3. **[P1] 지도가 들어간 화면 전부가 기본 상태에서 외부 인터넷에 의존한다** — XI맵·지도 속성 관리·통계·보고서·표류 예측·전남광주 포털. `VWORLD_KEY`가 없으면 `xdworld.vworld.kr`·`tiles.openfreemap.org`로 무조건 나간다. "인터넷을 끊어도 화면이 선다" 커밋은 **영상·폰트·지도 라이브러리 본체**는 내렸지만 **지도 배경 타일**은 내리지 못했다.
 4. **[P2] 고아 레거시 화면 `dashboard-128/dashboard.html`이 게이트 없이 살아 있다** — 관리자 전용 운영 데이터가 영업용 계정에도 그대로 열리고, 9/20 감사가 지적했던 문제(개발용 URL 노출 `?status=대기`·`?open=…`, 14px 미만 126곳)가 그 안에 화석처럼 남아 있다. 실사용 동선에서 링크되진 않지만 URL을 알면 누구나 연다.
 
 ---
@@ -47,7 +47,7 @@
 | `admin-map.html`(서비스 관리 · 지도 속성 관리) | `xdworld.vworld.kr` | `landxi/proto/admin-map.js:143,147` |
 | `stats-standard.html` · `report-standard.html` · `report-standard-issue.html` | `xdworld.vworld.kr` | 셋 다 `map.js` 재사용 — 같은 배경 로직 |
 | `map-drift.html`(표류 예측 지도) | `tiles.openfreemap.org` | `landxi/proto/drift-map.js:111`(스타일 URL이 통째로 외부) |
-| `portal-dp-gj-marine-25.html`(광주전남 포털 · 해양쓰레기 25) | `tiles.openfreemap.org` | `landxi/proto/portal-dp-gj-marine-25.html:228` |
+| `portal-dp-gj-marine-25.html`(전남광주 포털 · 해양쓰레기 25) | `tiles.openfreemap.org` | `landxi/proto/portal-dp-gj-marine-25.html:228` |
 | `workflow.html`(레거시 스파이크) | `xdworld.vworld.kr` | 참고용(scope 안이지만 어디서도 링크되지 않음) |
 
 MapLibre 라이브러리 본체는 `vendor/maplibre/`로 이미 내려받아 있다(확인) — **엔진은 로컬, 배경 그림은 여전히 인터넷**인 상태다. 증거: `shots/audit-0923/integrity/evidence-ximap-external-tiles.png`, `raw.json`의 `results.*.*.externalReq`.

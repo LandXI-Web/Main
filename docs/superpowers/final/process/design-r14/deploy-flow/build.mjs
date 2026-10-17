@@ -1,6 +1,6 @@
 /* 설계 14차 · 분석 서비스 — 배포 신청 · 승인 · 기관 공유 (페블 · 원칙 152 · 확인 대장 서비스카드-2) — 정적 시안 만들기.
    v3 셸(마스트 · 왼쪽 메뉴)은 design-r14/lx-staff-board 와 같은 마크업, kit.css · console.css 를 그대로 읽고 판만 새로 짠다.
-   숫자 · 이름 = 10-09 12:03 서버 응답(values.json · README §3). 서버에 없는 것(2.1판 신청 한 건 · 거절 사유 · 광주전남 공유)은 '예시' 표.
+   숫자 · 이름 = 10-09 12:03 서버 응답(values.json · README §3). 서버에 없는 것(2.1판 신청 한 건 · 거절 사유 · 전남광주 공유)은 '예시' 표.
    사용: node build.mjs → 이 폴더(docs) 와 landxi/proto/review/deploy-flow/ 두 곳에 같은 화면(경로만 다름). v3 코드 수정 0 · 서버 쓰기 0. */
 import fs from 'node:fs';
 import path from 'node:path';

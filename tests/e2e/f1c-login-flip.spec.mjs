@@ -52,7 +52,7 @@ test('로그인 → 반전 1600±60 · 전환 프레임 12장 상이 쌍 ≥ 8 �
   expect(await page.evaluate(() => window.__faceCanvas === document.querySelector('.ov-slot canvas.maplibregl-canvas'))).toBe(true);   // 같은 지도(점프 0)
   expect(await page.getAttribute('body', 'data-stage')).toBe('ops');
   await expect(page.locator('.og-mark')).toHaveText('LX/관리자');
-  expect(await page.locator('.dm-pt').count()).toBeGreaterThanOrEqual(7);   // 국내 배포 점(남원 무리 + 광주전남) + 글로브 인셋(해외)
+  expect(await page.locator('.dm-pt').count()).toBeGreaterThanOrEqual(7);   // 국내 배포 점(남원 무리 + 전남광주) + 글로브 인셋(해외)
   expect(await page.evaluate(() => document.documentElement.dataset.cam)).toBe('dense');   // F2-C: 전국 → 배포 밀집(호남) 초점
   await expect(page.locator('[data-k="inset"]')).toBeVisible();   // 전국 인셋
   await expect(page.locator('.ov-a100')).toHaveCount(2);

@@ -293,7 +293,7 @@ portal-login-kgz-agri.html?locale=en  얼굴판 = 으슥아타 군 경계(geoBou
 - 결정적 장면 A-1(§3.4). 인터랙션: 큐 행 → 노드 카드 리더선(S2) · GPU 링 값 40ms 현상 · 경보 = 빨강 글자만(법전 warn 자리) · 향후 노드 등록 = 폼(호스트 · GPU 수 · 모델 · 토큰) → `POST /api/infra/nodes`.
 
 #### 5.9.3 기관·할당 `admin-tenants.html`(신설 · = 사용자 관리 '기관' 패싯 + produce 포털 생산 승격)
-- 좌 기관 목록(TENANTS: 남원 · 광주전남 · +해외) · 우 열람 판: **쿼터 링 4**(저장 GB · GPU·h/월 · 분석 면적 km²/년 · 동시 작업 수) — 사용량 실측(`/api/tenants/:id/usage`) vs 할당(`PUT /api/tenants/:id/quota`) · 초과 정책(대기 · 차단 · 알림) · **데이터 격리 표시**(기관 디렉터리 `data/tenants/<id>/` · 결과 GeoJSON/타일 접근 토큰 · "LX 원본 보관 · 타일만 공유" 등급) · 배포본 목록 · 포털 CI 라이브 미리보기(`cssVars` · `brandGuard`) · 화면 요구(REQUESTS) 타임라인.
+- 좌 기관 목록(TENANTS: 남원 · 전남광주 · +해외) · 우 열람 판: **쿼터 링 4**(저장 GB · GPU·h/월 · 분석 면적 km²/년 · 동시 작업 수) — 사용량 실측(`/api/tenants/:id/usage`) vs 할당(`PUT /api/tenants/:id/quota`) · 초과 정책(대기 · 차단 · 알림) · **데이터 격리 표시**(기관 디렉터리 `data/tenants/<id>/` · 결과 GeoJSON/타일 접근 토큰 · "LX 원본 보관 · 타일만 공유" 등급) · 배포본 목록 · 포털 CI 라이브 미리보기(`cssVars` · `brandGuard`) · 화면 요구(REQUESTS) 타임라인.
 - 결정적 장면 T-1 "쿼터를 돌리면 링이 따라온다": 할당 슬라이더를 끌면 링의 여유 구간이 500ms로 자라고, 초과 예상 월이 `[추정]` 점선 고스트로 뜬다.
 
 #### 5.9.4 배포 제어 `admin-deploys.html`(신설 · = produce 매칭·능동 운영·개발 관리 승격)
@@ -305,7 +305,7 @@ portal-login-kgz-agri.html?locale=en  얼굴판 = 으슥아타 군 경계(geoBou
 
 #### 5.9.5 카드 발행 관리 · 서비스 관리 · 데이터 관리(공유) · MY — 인벤토리 §8 · §9 · §10 원본 기능 그대로, 잉크 반전 골격. 검토 데스크 승인 = 증거판 `frame` 1250 → 청록 폴리곤 숨 한 번 + 앰버 380 → 카드 clip-path 1s 현상 → '진열대에서 보기 ›' '기관 홈에 놓기 ›' + 기관 카드 덱 미리보기(`deck-card.js` 부품).
 
-### 5.10 ④ 기관 포털(남원 GeoVision · 광주전남 AI) — 생성기 산출
+### 5.10 ④ 기관 포털(남원 GeoVision · 전남광주 AI) — 생성기 산출
 
 - 골격 한 벌(레일 72 · 마스트 64 · 카드 덱 · 작업공간 5탭 · 지도 · 보고서 서식 · 로그인 · 서비스 지원 · MY) + CI 한 벌(`CI_KEYS` 9). `LOCKED` 유지.
 - 카드 덱 얼굴 = 정적 미니맵(결과 청록 · 호버 4px + 1단 줌) · KPI 밴드 → 덱 필터 · 운영-결과없음 = 사유 한 줄(Q2).

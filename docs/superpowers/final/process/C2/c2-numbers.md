@@ -18,7 +18,7 @@
 3. **차트 블록**: `survey_stats(by=emd)` 결과에 `chart` 블록(plan 3.3)을 붙인다. 값은 봉투 id 로만 쓴다.
 4. **읍면동 빈칸**: 최근 전역 분석 결과의 emd 가 전량 빈칸인 원인(읍면동 색인 없음·좌표계·범위)을 `postprocess.py` 에서 고친다. 새 결과의 빈칸은 0 이어야 한다. 기존 detections 67,141건은 서버 관리 작업(CPU)으로 채운다. 경계 밖은 `emd=null` 대신 '관할 밖' 표지를 단다.
 5. **여수 93필지**: 여수(12130·46130) 필지 가운데 경계 +3km 밖 93개의 원인(좌표계·코드 중복)을 찾아 바로잡거나 적재에서 뺀다. 의심 필지 영향 0 을 유지한다.
-6. **시도 이름 하나**: `regions.py` 에 `sido_label(code)` 를 두고 한 가지(plan 4절: 광주전남특별시)만 내보낸다. 보고서(c2-report-law)·요약·에이전트가 이 함수를 쓴다.
+6. **시도 이름 하나**: `regions.py` 에 `sido_label(code)` 를 두고 한 가지(plan 4절: 전남광주특별시)만 내보낸다. 보고서(c2-report-law)·요약·에이전트가 이 함수를 쓴다.
 7. 다른 작업이 부를 수 있게 `survey_counts`·`sido_label` 사용법을 이 파일 끝에 한 줄씩 덧붙인다.
 
 ## 완료 기준 (측정 가능 · 화면만으로 · 두 시도 이상)
@@ -31,5 +31,5 @@
 ## 사용법 (다른 작업이 부를 때 · c2-numbers 가 덧붙임 2026-09-30)
 - 숫자 한 출처(비동기 · 게이트웨이): `from landxi_api.survey import survey_counts, counts_env` → `c = await survey_counts(conn, "12130")` → `c["suspect"]`(의심 필지) · `c["field_check"]`(현장 확인 필요) · `c["state"]`('building' 이면 두 값 None = '집계 중') · 봉투는 `counts_env(c, "suspect")`.
 - 숫자 한 출처(동기 · 보고서·파이프라인): `from survey.nation import counts_sync` → `counts_sync(psycopg_conn, "52190")`(같은 식 · 같은 값).
-- 시도 이름 하나: `from landxi_api.regions import sido_label, full_label` → `sido_label("12130") == "광주전남특별시"` · `full_label("전남광주통합특별시 여수시 …")` 는 머리 시도만 바꾼다.
+- 시도 이름 하나: `from landxi_api.regions import sido_label, full_label` → `sido_label("12130") == "전남광주특별시"` · `full_label("전남광주통합특별시 여수시 …")` 는 머리 시도만 바꾼다.
 - 화면이 읽을 자리: `GET /summary` 항목 `metrics.suspect`(label '의심 필지') · `metrics.field_check`(현장 확인 필요) · 적재 중이면 `survey_state:'building'` + note '집계 중'. `GET /survey/stats?sgg=` 의 `total`(= 의심 필지) · `field_check` · `state`. 읍면동 칸 합 = total.

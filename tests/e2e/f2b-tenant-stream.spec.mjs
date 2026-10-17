@@ -1,4 +1,4 @@
-// F2-B v1.1-16 기관 스트림 GET /api/v1/events/tenant — 관리자 배포 쓰기 → 남원 스트림 deploy.changed ≤ 1 s · 광주전남 0건 ·
+// F2-B v1.1-16 기관 스트림 GET /api/v1/events/tenant — 관리자 배포 쓰기 → 남원 스트림 deploy.changed ≤ 1 s · 전남광주 0건 ·
 // 24h 재생 · 게스트 401 · 교차 기관 403. LX_API=on 전용. finding.state 는 공유 데이터(F2-S 필지 상태)를 바꾸지 않도록 pytest(bus.tenant_event 헬퍼)와
 // F2-S 자기 e2e(f2sapi-*)가 맡는다.
 import { test, expect } from '@playwright/test';
@@ -37,7 +37,7 @@ test('관문 — 게스트 401 · 다른 기관 tenant= 403', async ({ request }
   expect((await request.get(`${API}/api/v1/events/tenant?access_token=${gj}&tenant=namwon`)).status()).toBe(403);
 });
 
-test('배포 쓰기 → deploy.changed ≤ 1 s(남원) · 광주전남 0건 · 24h 재생', async ({ request }) => {
+test('배포 쓰기 → deploy.changed ≤ 1 s(남원) · 전남광주 0건 · 24h 재생', async ({ request }) => {
   test.setTimeout(60000);
   const nw = await login(request, { realm: 'tenant', tenant_id: 'namwon', login: 'lxadmin@lx.or.kr', site: 'gov' });
   const gj = await login(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'lxadmin@lx.or.kr', site: 'gov' });

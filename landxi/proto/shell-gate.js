@@ -35,7 +35,7 @@
   var HOME = { admin:'admin-home.html', staff:'ai-project.html', sales:'../xi/index.html' };   // F2-R: 영업 첫 화면 = 새 XI맵
   /* roles.js SCREEN_DEEP 미러 — 이 인자를 달고 오면 또 하나의 메뉴로도 열린다(카드 계보 열람 · v1.1-29) */
   var DEEP = { 'ai-card.html': { param:'card', menu:'project' } };
-  /* portal.js TENANTS[].home 미러(R-S3 · 광주전남은 임시 — E1-2 가 교체) */
+  /* portal.js TENANTS[].home 미러(R-S3 · 전남광주은 임시 — E1-2 가 교체) */
   var TENANT_HOME = { 'namwon':'portal.html', 'gwangju-jeonnam':'portal-dp-gj-marine-25.html' };
 
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };

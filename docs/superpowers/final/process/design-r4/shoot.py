@@ -63,7 +63,7 @@ NOW = [
     (os.path.join(UX, 'S1-09-model-card.jpg'), 'now-L1-train-label-link.png'),
 ]
 
-# 나란히(세 장): Land-XI 직원 화면(지금 캡처) · 남원 · 광주전남
+# 나란히(세 장): Land-XI 직원 화면(지금 캡처) · 남원 · 전남광주
 TRIO = [
     (['now-1-landxi-staff.png', 'new-1-a-namwon.png', 'new-1-a-gwangju.png'], 'new-1-a-three.png'),
     (['now-1-landxi-staff.png', 'new-1-b-namwon.png', 'new-1-b-gwangju.png'], 'new-1-b-three.png'),

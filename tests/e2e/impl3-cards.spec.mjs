@@ -109,7 +109,7 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
         expect(c.uses).toBeUndefined();                                                  // LX 안쪽 값(쓰이는 곳 · 걸리는 시간) 0
         expect(c.time).toBeUndefined();
       }
-      if (org === 'gwangju-jeonnam') expect(deck.items.find((c) => c.id === 'card-farm')?.scene ?? null).toBeNull();   // 남원 장면은 광주전남에 0
+      if (org === 'gwangju-jeonnam') expect(deck.items.find((c) => c.id === 'card-farm')?.scene ?? null).toBeNull();   // 남원 장면은 전남광주에 0
       if (org === 'namwon') expect(deck.items.find((c) => c.id === 'card-5e85a9')?.example ?? null).toBeNull();          // 분석 칸 도형 수(132,310) 0
       expect((await call(page, '/cards/card-farm')).status).toBe(403);                   // 카드 상세 · 고치기는 LX 만
       await ctx.close();

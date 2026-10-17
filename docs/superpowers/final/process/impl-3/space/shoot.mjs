@@ -73,7 +73,7 @@ async function signed(base, login, opts) {
   return { page, mpage, errs, close: async () => { await pc.close(); await mob.close(); } };
 }
 
-/* 기관(남원시 · 광주전남) — 전: 내 서비스(왼쪽 메뉴에 '우리 공간' 없음) / 후: 우리 공간 */
+/* 기관(남원시 · 전남광주) — 전: 내 서비스(왼쪽 메뉴에 '우리 공간' 없음) / 후: 우리 공간 */
 async function gov(tenant, key) {
   const origin = PUBLIC ? `https://${tenant}.land-xi.dev` : BASE;
   const S = await signed(BASE, 'lxadmin@lx.or.kr', { tenant });

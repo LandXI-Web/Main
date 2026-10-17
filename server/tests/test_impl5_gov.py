@@ -121,7 +121,7 @@ def test_deck_scenes_in_scope_and_latest_is_result_date(T):
     gj = get("/cards/deck", H(_login({"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "lxadmin@lx.or.kr",
                                       "password": config.DEV_PASSWORD, "site": "gov"}))).json()
     for c in gj["items"]:
-        assert all("namwon" not in s["src"] for s in c.get("scenes", []))      # 남원 장면은 광주전남에 0
+        assert all("namwon" not in s["src"] for s in c.get("scenes", []))      # 남원 장면은 전남광주에 0
 
 
 # ── 기관-5 이름 ────────────────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@
 | **analysis** 분석 서비스 · 발행 카드 목록 | 68% | 3/10 | 잘 정리된 업무 화면 | 완료 탭 다운로드 ReferenceError(F1 P0 — 영업 계정의 유일한 권한). 영업이 실행·편집·취소·이식 가능(caps 누수), 새 실행 결과 없음, 저장소 정사영상 타일 63MB를 한 장도 안 쓰고 V-World 위 점만 |
 | **publish-produce** 카드 발행 관리 · 생산 관리 | 60% | 3.5/10 | 결재 폼 + 회의 자료 | 직원 요청이 다른 저장소에 써져 큐에 도착 못 함(PP-1 P0), 승인해도 카드가 안 생김(PP-2 P0). 생산 관리 6탭 SVG 0, 'CI 가드 0/2 미달'·'능동 비율 140%' 계산 버그 노출 |
 | **map** XI맵 · 통계 · 보고서 · 표류 예측 | 68% | 4/10 | 진짜 데이터 위의 대장 | 1440×900 정보 판 열면 지도 268×369px(콘텐츠의 9%)로 붕괴(M-01 P0). 내려받기 3곳 토스트뿐, 시연 기준에 '다시 계산' 거짓, e2e 66건 역할 미설정으로 전부 실패 |
-| **portal** 기관 포털 × 2 | 55% | 4/10 | LX 안의 남원 이름표 | 기관 로그인이 LX **관리자** 권한을 줌(P0-1 — lx_role 미저장 → DEFAULT_ROLE admin), 광주전남 홈 없음·링크가 LX 관리자 화면으로 새어 나감(P0-2·P0-3), 두 기관 골격이 다른 제품, 가짜 컨트롤(재생·격자 50/100/200) |
+| **portal** 기관 포털 × 2 | 55% | 4/10 | LX 안의 남원 이름표 | 기관 로그인이 LX **관리자** 권한을 줌(P0-1 — lx_role 미저장 → DEFAULT_ROLE admin), 전남광주 홈 없음·링크가 LX 관리자 화면으로 새어 나감(P0-2·P0-3), 두 기관 골격이 다른 제품, 가짜 컨트롤(재생·격자 50/100/200) |
 | **admin** 관리자 사이트 6메뉴 | 68% | 3/10 | 문 하나만 색 다른 사무실 | 결재 대기 숫자가 상수(2/1/6), 관리한 공지·FAQ가 사용자 화면에 닿지 않음, '완전히 다른 사이트'가 첫 화면 한 장뿐, 데이터 관리 레일에서 직원 메뉴 되살아남 |
 | **support** 서비스 지원 5탭 | 62% | 3/10 | 그룹웨어 게시판 | 지도·영상·AI 결과가 한 픽셀도 없는 유일한 화면군. 관리자 공지·FAQ 별채, 기관 사용자는 LX 셸로 이탈, 영업이 문의 폼까지 열림, FAQ 1번이 '남원시가 운영하는 플랫폼'이라고 자기소개 |
 | **tests** | 383/573 e2e 통과 · 113/115 unit | — | 픽스처 낡음 | 189 실패 중 186건이 한 원인 — `boot()`가 `lx_role`을 안 세워 admin으로 관문에 튕김(`cd03cb9` 이후 5 스펙 미갱신). 화면 회귀 의심 3건(로그인 카드·액센트 4곳) |
@@ -89,8 +89,8 @@ Wave 0 는 **"전부 병렬"** 이다 — 단 세 곳에 약한 순서가 있다
 #### E1-2 기관 포털 — 생성기 · 두 번째 기관 · 가짜 컨트롤 걷기
 - **목표**: P0-2 · P0-3 · P1-2 · P1-5 · P1-6 · Q2(②) · 기관 서비스 지원 · 기관 MY(C-14) — 전부 **포털 안에서**(Q1 완전 별도).
 - **파일**: `tools/gen/portal-gen.mjs` · `assets/data/portal.js` · `assets/data/brand.js`(CI_KEYS platform — PP-4 여기서 수정) · `assets/data/studio.js`(grade · touchpoint · drift 블록 승격) · `portal-ui.js`(레일 제외 나머지) · `portal.css` · `portal-*.html`(전부 재생성) · `portal-login-*.html`.
-- **할 일**: 생성기가 `TENANTS`를 돌며 `portal-<tenant>.html`을 찍고 입구·브레드크럼·레일 마크가 그 홈을 가리킴. 광주전남 2장을 새 골격으로 재생성(인라인 CSS·OpenFreeMap·warn 테두리 제거, 지도 526px·로컬 타일). LX 화면으로 새는 링크 3개 → 포털 탭. 자산 없는 자리의 재생/탐지 상자/격자 버튼 **걷기**(자산 있는 자리는 E2-8에서 실데이터로). 생산 문구 `data-audience=lx` 격리 + REQUESTS 파생 표식 시연. 운영-결과없음 카드 사유 한 줄(Q2 ②) — 덱과 작업공간 같은 말. 기관 서비스 지원(공지 · FAQ · 문의)과 기관 MY(비밀번호 찾기 · 아이디 저장 포함, C-14)는 **포털 안의 화면**으로 생성기가 찍는다(`portal-support-<tenant>.html` · `portal-my-<tenant>.html`) — 기관 세션은 LX `notice/faq/contact/mypage.html` 에 들어가지 않는다(Q1 완전 별도 · §7.2). 공지 · FAQ 의 데이터는 E1-8 이 세우는 `lx-admin-v1:*` 저장소를 **읽기만** 한다(기관 대상 공지 필드 `audience:'tenant'`). 두 기관 홈은 E0-1 의 임시 홈 표(§7.1 R-S3)를 `portal-<tenant>.html` 로 교체하고 `portal.js TENANTS[].home` · `shell-gate.js` 미러를 함께 갱신(E0-1 소유자와 값 PR).
-- **완료 기준**: `portal-gen.json`에 두 기관 홈 + 배포본 7 전부 기록 · 광주전남 로그인 → `portal-gwangju-jeonnam.html` · 기관 세션에서 LX 화면 링크 0(`journeys.mjs`) · 가짜 컨트롤 0(`aria-pressed`만 바꾸는 버튼 grep 0) · `brandGuard` 2/2 통과. `proto-portal.spec.mjs` 확장(기관 2 × 홈 · 덱 · 탭 딥링크). 스크린샷 두 기관 홈 · 작업공간 · 390.
+- **할 일**: 생성기가 `TENANTS`를 돌며 `portal-<tenant>.html`을 찍고 입구·브레드크럼·레일 마크가 그 홈을 가리킴. 전남광주 2장을 새 골격으로 재생성(인라인 CSS·OpenFreeMap·warn 테두리 제거, 지도 526px·로컬 타일). LX 화면으로 새는 링크 3개 → 포털 탭. 자산 없는 자리의 재생/탐지 상자/격자 버튼 **걷기**(자산 있는 자리는 E2-8에서 실데이터로). 생산 문구 `data-audience=lx` 격리 + REQUESTS 파생 표식 시연. 운영-결과없음 카드 사유 한 줄(Q2 ②) — 덱과 작업공간 같은 말. 기관 서비스 지원(공지 · FAQ · 문의)과 기관 MY(비밀번호 찾기 · 아이디 저장 포함, C-14)는 **포털 안의 화면**으로 생성기가 찍는다(`portal-support-<tenant>.html` · `portal-my-<tenant>.html`) — 기관 세션은 LX `notice/faq/contact/mypage.html` 에 들어가지 않는다(Q1 완전 별도 · §7.2). 공지 · FAQ 의 데이터는 E1-8 이 세우는 `lx-admin-v1:*` 저장소를 **읽기만** 한다(기관 대상 공지 필드 `audience:'tenant'`). 두 기관 홈은 E0-1 의 임시 홈 표(§7.1 R-S3)를 `portal-<tenant>.html` 로 교체하고 `portal.js TENANTS[].home` · `shell-gate.js` 미러를 함께 갱신(E0-1 소유자와 값 PR).
+- **완료 기준**: `portal-gen.json`에 두 기관 홈 + 배포본 7 전부 기록 · 전남광주 로그인 → `portal-gwangju-jeonnam.html` · 기관 세션에서 LX 화면 링크 0(`journeys.mjs`) · 가짜 컨트롤 0(`aria-pressed`만 바꾸는 버튼 grep 0) · `brandGuard` 2/2 통과. `proto-portal.spec.mjs` 확장(기관 2 × 홈 · 덱 · 탭 딥링크). 스크린샷 두 기관 홈 · 작업공간 · 390.
 - **의존**: E0-1(기관 세션 · 관문 판정표 §7.2). **난이도** L. **모델** Opus 5.5(골격 한 벌 R8·R9 판단).
 
 #### E1-3 카드 대장 통일 — 승인이 카드를 낳는다
@@ -362,7 +362,7 @@ Wave 3  (인계·폐쇄망·반응형·봉인 · 약 2주)
 | # | 심각도 | 발견 | 근거 | 처방 |
 |---|---|---|---|---|
 | C-09 | **P0** | **계정 전환·로그아웃 설계가 없다.** 세션은 전부 `localStorage`(탭 사이 공유)에 있고, `login.js:29` 로그아웃은 `lx_logged_in`만 지운다. 그래서 `lx_role`이 남는다. E0-1이 `lx_tenant`를 더하면 **LX 로그인 뒤에도 `lx_tenant`가 남아** 반대 방향으로 샌다(포털 로그인 → LX 직원 로그인 → 기관 CI · 기관 레일). 계획 전체에 '로그아웃'이 한 번도 나오지 않는다 | `login.js:29,46,114-119` · `portal-login.js:72` · `shell-gate.js:23` | E0-1에 넣을 것: **세션 계약 표**(키 · 쓰는 곳 · 지우는 곳), `signIn(role, tenant?)`/`signOut()` 단일 함수, 역할별 로그아웃 착지(LX → `login.html` · 관리자 → `admin-login.html` · 기관 → `portal-login-<tenant>.html`), e2e 4×4 전환 매트릭스(이전 세션 → 다음 로그인 16칸 모두 누출 0) |
-| C-10 | **P1** | **기관 사용자가 LX 화면(분석 서비스 · XI맵)에 들어가면 무엇을 보는지 정해지지 않았다.** E0-1은 데이터 `TENANTS.menus`를 그대로 따라 tenant `menus`에 `analysis · map`을 넣는다. 그런데 CI 교체는 E1-8(서비스 지원)만 한다. 그러면 남원 담당자가 LX 셸, LX 전체 카드 진열대, 광주전남 배포본 결과까지 본다. 기관 간 데이터가 새고, "나만의 AI 시스템"이 무너진다. strategy Q1 원안은 menus에서 analysis를 뺐다 | `strategy.md` Q1 · §2.5 · `portal.js:30` | Q1에 하위 질문을 더한다: "기관의 분석·지도는 포털 작업공간 탭으로만(추천) vs LX 화면을 기관 범위로 걸러 CI를 입힘". 추천안이면 E0-1은 tenant menus를 `portal · support · my`로 좁힌다. 후자면 E1-9 · E2-2에 `cardsOfScope(tenant)` 필터 + `cssVars(tenant)` 장착을 더한다 |
+| C-10 | **P1** | **기관 사용자가 LX 화면(분석 서비스 · XI맵)에 들어가면 무엇을 보는지 정해지지 않았다.** E0-1은 데이터 `TENANTS.menus`를 그대로 따라 tenant `menus`에 `analysis · map`을 넣는다. 그런데 CI 교체는 E1-8(서비스 지원)만 한다. 그러면 남원 담당자가 LX 셸, LX 전체 카드 진열대, 전남광주 배포본 결과까지 본다. 기관 간 데이터가 새고, "나만의 AI 시스템"이 무너진다. strategy Q1 원안은 menus에서 analysis를 뺐다 | `strategy.md` Q1 · §2.5 · `portal.js:30` | Q1에 하위 질문을 더한다: "기관의 분석·지도는 포털 작업공간 탭으로만(추천) vs LX 화면을 기관 범위로 걸러 CI를 입힘". 추천안이면 E0-1은 tenant menus를 `portal · support · my`로 좁힌다. 후자면 E1-9 · E2-2에 `cardsOfScope(tenant)` 필터 + `cssVars(tenant)` 장착을 더한다 |
 | C-11 | P1 | **관리자로 들어가는 문이 둘이 된다.** E0-2는 LX 로그인에 계정 종류 3칸(관리자 포함) 세그먼트를 세우고, E1-6은 `admin-login.html` 전용 입구를 만든다. "관리자는 별도 사이트"(사용자 원문 · F9)라면 LX 로그인의 관리자 칸은 빠지거나 전용 입구로 넘겨야 한다. 어느 에픽도 이를 정하지 않았다 | E0-2 · E1-6 · `61e321f` | §4에 Q7로 추가(추천: LX 로그인은 직원 · 영업 2칸, 관리자 칸 자리에는 '관리자 사이트 ›' 링크). E0-2 세그먼트 칸 수가 이 답에 달렸다 |
 | C-12 | P1 | **가입 → 승인 → 첫 로그인** 고리가 끝까지 이어진 곳이 없다. E1-1(가입 폼)과 E1-6(승인 뒤 홈 숫자 감소)까지는 있다. 그러나 승인된 계정으로 실제 로그인해 부여된 역할로 착지하는 e2e가 없다. `account-data.js`에 새 계정이 들어가는지도 정하지 않았다 | 인벤토리 §9·§11 | E1-6 완료 기준에 "가입 → 관리자 승인 → 그 아이디로 로그인 → 신청 역할 HOME" 연쇄 1건 |
 | C-13 | P1 | **게스트 문의가 도착지에 닿지 않는다.** E1-1은 게스트 문의를 `sessionStorage`(탭을 닫으면 사라짐)에 쓰고, 관리자 문의 관리는 그것을 읽지 않는다(C-03). strategy §2.1이 이미 "어디에 쌓이는가"를 물었는데 답이 없다 | `strategy.md:147` | 게스트 문의 = `localStorage` 문의 저장소 한 벌(유형 '게스트') · 관리자 문의 관리 패싯에 표시 · 시연 표기 |
@@ -503,7 +503,7 @@ export const switchTo = (page, role) => page.evaluate((r) => {
 ③ 기관(남원) → portal-login-namwon.html → portal.html → 주소창 ximap.html → portal.html?denied=ximap.html + 토스트 → 레일 로그아웃 → portal-login-namwon.html (세 키 0)
 ④ 기관(남원) 세션에서 login.html 로 LX 직원 로그인 → lx_tenant_session 제거됨 → ai-project.html 레일 7 · 기관 CI 0
 ⑤ LX 관리자 → 푸터 Family Site '남원시' → portal-login-namwon.html (작업공간 아님) → 기관 아이디로 로그인 → lx_logged_in · lx_role 제거됨 → portal.html
-⑥ 기관(남원) → 주소창 portal-dp-gj-marine-25.html(광주전남) → portal.html?denied=portal-dp-gj-marine-25.html
+⑥ 기관(남원) → 주소창 portal-dp-gj-marine-25.html(전남광주) → portal.html?denied=portal-dp-gj-marine-25.html
 ```
 
 ---

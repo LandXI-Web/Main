@@ -57,7 +57,7 @@ def node_dump() -> dict:
 TENANTS = [
     ("lx", {"ko": "LX 한국국토정보공사", "en": "LX Korea Land and Geospatial InformatiX Corporation"}, "maker", "local", "EPSG:5186", "ko", None),
     ("namwon", {"ko": "전북특별자치도 남원시", "en": "Namwon-si"}, "user", "local", "EPSG:5186", "ko", "namwon"),
-    ("gwangju-jeonnam", {"ko": "광주전남특별시", "en": "Gwangju-Jeonnam"}, "user", "local", "EPSG:5186", "ko", "gwangju-jeonnam"),
+    ("gwangju-jeonnam", {"ko": "전남광주특별시", "en": "Jeonnam-Gwangju"}, "user", "local", "EPSG:5186", "ko", "gwangju-jeonnam"),
     ("kgz-agri", {"ko": "키르기스 농업부(으슥아타)", "en": "Kyrgyz Ministry of Agriculture (Ysyk-Ata)"}, "user", "global", "EPSG:32643", "en", "kgz-ysykata"),
     ("kgz-land", {"ko": "키르기스 토지자원청(소쿨룩·비슈케크)", "en": "Kyrgyz State Agency on Land Resources (Sokuluk · Bishkek)"}, "user", "global", "EPSG:32643", "en", "kgz-sokuluk"),
     ("lx-demo", {"ko": "LX 영업 시연(계량 전용)", "en": "LX sales demo (metering only)"}, "maker", "local", "EPSG:5186", "ko", None),
@@ -151,8 +151,8 @@ def seed_core(conn, dump):
                         tenant, d["cardId"], cv, prev, prof, profiles[prof]["name"], aoi, STAGE[d["status"]], ext_of.get(d["cardId"]), cur_s, prev_s,
                         d["year"], d["status"], SCALE.get(d["id"]), d.get("note")))
     names = {"dp-nw-living-23": "남원 생활환경 2023", "dp-nw-farm-25": "남원 영농관리 2025", "dp-nw-road-26": "남원 도로안전 2026",
-             "dp-nw-crowd-27": "남원 인파관리 2027", "dp-nw-change": "남원 국토변화(국산리) 2025", "dp-gj-marine-25": "광주전남 해양쓰레기 2025",
-             "dp-gj-marine-27": "광주전남 해양쓰레기 2027"}
+             "dp-nw-crowd-27": "남원 인파관리 2027", "dp-nw-change": "남원 국토변화(국산리) 2025", "dp-gj-marine-25": "전남광주 해양쓰레기 2025",
+             "dp-gj-marine-27": "전남광주 해양쓰레기 2027"}
     deploys.append(("dp-kgz-agri-farm-26", "Ysyk-Ata farmland NDVI 2026", "kgz-agri", "card-global-farm", "card-global-farm@0.1", None,
                     "kgz-ysykata", profiles["kgz-ysykata"]["name"], bbox_mp([74.70, 42.75, 75.20, 43.00]), "canary", "farm", None, None, 2026,
                     "시범", None, "geoBoundaries Ysyk-Ata 북부 평원"))

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// 표류 예측 지도 + 광주전남 해양쓰레기 두 배포본
+// 표류 예측 지도 + 전남광주 해양쓰레기 두 배포본
 //   landxi/proto/map-drift.html · drift-map.js · drift-core.js · drift.css
 //   landxi/proto/portal-dp-gj-marine-25.html(2025 운영) · portal-dp-gj-marine-27.html(2027 고도화)
 //   계약 landxi/assets/data/sim.js(표류체 패치 표준 · 모의 속도장) · views.js(요구 화면 선언)
@@ -30,7 +30,7 @@ function watch(page) {
 
 async function boot(page, url) {
   // Wave 0(E0-1 · Q1): map-drift.html 은 LX 관문 키 'map'(직원 · 영업) → LX 직원 세션.
-  // 기관 배포본(portal-dp-*)은 기관 완전 별도 → 광주전남 기관 세션(lx_tenant_session). 두 세션은 서로의 화면에 못 들어간다.
+  // 기관 배포본(portal-dp-*)은 기관 완전 별도 → 전남광주 기관 세션(lx_tenant_session). 두 세션은 서로의 화면에 못 들어간다.
   const tenant = /portal-dp-gj-/.test(url);
   await page.addInitScript((t) => {
     if (sessionStorage.getItem('lx_e2e_boot')) return;

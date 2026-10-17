@@ -212,7 +212,7 @@ ops_alerts(id, rule, severity, subject, value jsonb, fired_at, acked_by, resolve
 audit_log(id, actor, realm, action, subject, detail jsonb, at)
 ```
 
-**격리 장치**: `detections` · `jobs` · `feedback` · `usage_events`에 RLS를 건다. `USING (tenant_id = current_setting('app.tenant_id') OR current_setting('app.realm') = 'lx')`. 게이트웨이는 요청마다 트랜잭션 시작 시 `SET LOCAL app.tenant_id / app.realm`을 넣는다. 기관 A의 세션으로 기관 B의 행을 볼 수 있는 경로는 SQL 수준에서 0이다. MASTER-PLAN §2.5가 짚은 "Family Site 링크로 광주전남 작업공간이 열린다"는 누출을 브라우저가 아니라 DB가 막는다.
+**격리 장치**: `detections` · `jobs` · `feedback` · `usage_events`에 RLS를 건다. `USING (tenant_id = current_setting('app.tenant_id') OR current_setting('app.realm') = 'lx')`. 게이트웨이는 요청마다 트랜잭션 시작 시 `SET LOCAL app.tenant_id / app.realm`을 넣는다. 기관 A의 세션으로 기관 B의 행을 볼 수 있는 경로는 SQL 수준에서 0이다. MASTER-PLAN §2.5가 짚은 "Family Site 링크로 전남광주 작업공간이 열린다"는 누출을 브라우저가 아니라 DB가 막는다.
 
 **왜 PostGIS와 PMTiles를 둘 다 쓰나**: 결과는 **편집된다**(LX가 수정·삭제한다, two-tier §3 "품질 책임"). 편집에는 트랜잭션 저장소가 필요하므로 정본은 PostGIS에 둔다. 지도 전달은 **불변 스냅샷**이 빠르고 캐시가 쉬우므로 job이 끝나거나 편집이 확정될 때마다 PMTiles를 새로 굽는다(`ogr2ogr -f PMTiles`, `env.md` [실측] 동작). 보관·교환용은 GeoParquet다(`pipelines/export_parquet.py`). 기관에 "다운로드"로 내주는 것은 GeoJSON/GPKG다.
 
@@ -561,7 +561,7 @@ E:/landxi-data/
 | R7 | 백엔드 도입이 기존 정적 프로토(e2e 573건)를 깨뜨림 | 회귀 | `api.js` 폴백으로 서버 없이도 기존 동작 유지 · e2e는 `LX_API=off`(기존)와 `on`(신규) 두 프로젝트로 |
 | R8 | 드라이버 522.06 · CUDA 11.8 고정 | 최신 torch · WSL CUDA 12 불가 | Phase 1 드라이버 갱신은 **사용자 승인 후**(다른 업무 영향) |
 | D1 | 관리자 origin을 포트로 가를지 호스트명으로 가를지 | – | Phase 0 포트(:8702), Phase 1 `ops.` 호스트명 + 터널 |
-| D2 | 시연 기관 계정(남원 · 광주전남)의 할당 초기값 | 관제 화면 숫자 | `infra.js resourcesOf()` 견적의 1.5배로 시작하고 `[추정 기반 초기값]`으로 표기 |
+| D2 | 시연 기관 계정(남원 · 전남광주)의 할당 초기값 | 관제 화면 숫자 | `infra.js resourcesOf()` 견적의 1.5배로 시작하고 `[추정 기반 초기값]`으로 표기 |
 | D3 | 결과 정본을 PostGIS로 옮길 때 기존 `results.js` 수치(2,098 · 1,674 등)와의 일치 | 콘티 정합 | 시드 스크립트가 GeoJSON을 그대로 적재하고 `countCheck()`를 서버 unit 테스트로 이식 — 건수가 1건이라도 다르면 실패 |
 
 ---

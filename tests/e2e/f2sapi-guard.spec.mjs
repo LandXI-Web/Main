@@ -25,7 +25,7 @@ test('게스트 — 실태조사 라우트 전부 401', async ({ request }) => {
 
 test('다른 기관(광주·전남) — 남원 실태조사 0건 · 단건 404', async ({ request }) => {
   const h = await tok(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'lxadmin@lx.or.kr', site: 'gov', password: PW });
-  // 광주전남은 제 시군구(여수·목포 등) 실태조사를 가진다 — 남원 것은 0건이어야 한다
+  // 전남광주은 제 시군구(여수·목포 등) 실태조사를 가진다 — 남원 것은 0건이어야 한다
   const j = await (await request.get(API + '/survey/findings?limit=50&sgg=52190', { headers: h })).json();
   expect(j.total.value).toBe(0);
   expect(j.items).toEqual([]);

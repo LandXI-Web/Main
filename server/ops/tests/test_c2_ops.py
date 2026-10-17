@@ -51,7 +51,7 @@ FIX = {
         for t, v, s, h in [("gwangju-jeonnam", 97225, 1.2e6, 1.8e6), ("kgz-agri", 41194, None, None), ("kgz-land", 2724, None, None), ("lx", 1599304, None, None),
                            ("lx-demo", 10, 3e5, 4e5), ("namwon", 856313, 2e6, 3e6)]], "as_of": AT},
     "/tenants": {"items": [
-        {"id": "gwangju-jeonnam", "kind": "user", "name": {"ko": "광주전남특별시", "en": "Gwangju-Jeonnam"}},
+        {"id": "gwangju-jeonnam", "kind": "user", "name": {"ko": "전남광주특별시", "en": "Jeonnam-Gwangju"}},
         {"id": "kgz-agri", "kind": "user", "name": {"ko": "키르기스 농업부(이식아타)", "en": "Kyrgyz Ministry of Agriculture (Ysyk-Ata)"}},
         {"id": "kgz-land", "kind": "user", "name": {"ko": "키르기스 토지자원청(소쿨룩·비슈케크)", "en": "Kyrgyz State Agency on Land Resources (Sokuluk · Bishkek)"}},
         {"id": "lx", "kind": "maker", "name": {"ko": "LX 한국국토정보공사", "en": "LX Korea Land and Geospatial InformatiX Corporation"}},
@@ -193,7 +193,7 @@ def test_usage_llm_tokens_four_tenants():
     assert e["kgz_agri_u"]["value"] == 41194 and e["lx_u"]["value"] == 1599304
     assert "lx_demo_u" not in e                                             # 영업 계량 제외
     assert e["namwon_u"]["unit"] == "tokens"     # 칩 단위 키 — 화면 i18n 이 ko '토큰' · en 'tokens'
-    assert set(out.data["기관"]) == {"남원시", "광주전남특별시", "키르기스 농업부", "키르기스 토지자원청", "LX"}
+    assert set(out.data["기관"]) == {"남원시", "전남광주특별시", "키르기스 농업부", "키르기스 토지자원청", "LX"}
     # 사용을 막는 값은 없다(원칙 83 · 11차 — 기관 · LX 직원 모두) — 답에 '한도' 칸 · 봉투가 없다
     assert not any(k.endswith("_h") for k in e) and all("한도" not in row for row in out.data["기관"].values())
     assert e["sum"]["value"] == 856313 + 97225 + 41194 + 2724 + 1599304
@@ -322,7 +322,7 @@ def test_usage_one_named_agency_only():
     assert "농업부" not in out.answer and "합계" not in out.answer
     for w in ["kgz-land", "토지자원청", "Kyrgyz State Agency on Land Resources"]:
         assert list(run(T.ops_usage({"tenant": w}, Ctx(ADMIN))).data["기관"]) == ["키르기스 토지자원청"], w
-    for w, nm in [("남원시는 토큰 얼마나 썼어", "남원시"), ("광주전남의 AI 도우미 사용량", "광주전남특별시"), ("LX 사용량", "LX")]:
+    for w, nm in [("남원시는 토큰 얼마나 썼어", "남원시"), ("전남광주의 AI 도우미 사용량", "전남광주특별시"), ("LX 사용량", "LX")]:
         r = T.ROUTE(w, Ctx(ADMIN))
         assert list(run(T.ops_usage(r["args"], Ctx(ADMIN))).data["기관"]) == [nm], w
 

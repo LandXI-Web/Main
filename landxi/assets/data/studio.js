@@ -69,11 +69,11 @@ export const REQUESTS = [
     want: '필지 표에서 대장 불일치만 먼저 보고 싶다', op: 'opt', at: 'map/parcel', val: { filter: 'mismatch' }, state: '배포' },
   { id: 'rq-02', deployId: 'dp-nw-living-23', from: '남원시 환경과', got: '2026-07-19', done: '2026-07-22',
     want: '현황에 읍·면별 건수 막대를 넣어 달라', op: 'add', at: 'dash', val: 'chart', state: '배포' },
-  { id: 'rq-03', deployId: 'dp-gj-marine-25', from: '광주전남특별시 해양항만과', got: '2026-09-04', done: '2026-09-05',
+  { id: 'rq-03', deployId: 'dp-gj-marine-25', from: '전남광주특별시 해양항만과', got: '2026-09-04', done: '2026-09-05',
     want: '해안선 구간 등급을 지도 첫 화면에 바로', op: 'order', at: 'map', val: ['grade', 'map'], state: '배포' },
   { id: 'rq-04', deployId: 'dp-nw-road-26', from: '남원시 건설과', got: '2026-09-15', done: null,
     want: "'분석 결과'를 '점검 대상'으로 부르고 싶다", op: 'label', at: 'result', val: '점검 대상', state: '반영' },
-  { id: 'rq-05', deployId: 'dp-gj-marine-25', from: '광주전남특별시 해양항만과', got: '2026-09-18', done: null,
+  { id: 'rq-05', deployId: 'dp-gj-marine-25', from: '전남광주특별시 해양항만과', got: '2026-09-18', done: null,
     want: '수거 계획 표를 보고서에 붙여 달라', op: 'add', at: 'report', val: 'table', state: '접수' },
 ];
 

@@ -1,0 +1,52 @@
+{
+ "at": "2026-10-17T02:19:42.308Z",
+ "hosts": {
+  "app": "https://app.land-xi.dev",
+  "admin": "https://admin.land-xi.dev",
+  "gov": "https://namwon.land-xi.dev"
+ },
+ "result": [
+  {
+   "name": "건물 면적 변화 · Ysyk-Ata",
+   "verdict": "한 화면",
+   "rows": [
+    {
+     "screen": "해외 첫 화면 큰 숫자(Sprawl)",
+     "value": "17.2km²",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "작황 하락 · Ysyk-Ata · ",
+   "verdict": "같음",
+   "rows": [
+    {
+     "screen": "해외 첫 화면 큰 숫자",
+     "value": "117.8km²",
+     "note": ""
+    },
+    {
+     "screen": "해외 XI ChatGEO 답",
+     "value": "117.8km²",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "AI 분석 결과 · 경작·휴경 분석서비스 · 남원시",
+   "verdict": "한 화면",
+   "rows": [
+    {
+     "screen": "기관 내 서비스(namwon)",
+     "value": "2,098",
+     "note": ""
+    }
+   ]
+  }
+ ],
+ "localCalls": [],
+ "left203": [],
+ "warns": [],
+ "fail": false
+}

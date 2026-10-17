@@ -61,7 +61,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     expect(cross.status()).toBe(400);                                                         // 남원 주소에서 다른 기관 계정 0
   });
 
-  test('남원 메인 · 광주전남 메인 — 같은 틀, 다른 마크 · 이름 · 색 · 서비스', async ({ page }) => {
+  test('남원 메인 · 전남광주 메인 — 같은 틀, 다른 마크 · 이름 · 색 · 서비스', async ({ page }) => {
     test.setTimeout(90000);
     const seen = {};
     for (const org of ['namwon', 'gwangju-jeonnam']) {
@@ -148,7 +148,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     expect(errs).toEqual([]);
   });
 
-  test('광주전남 — 서비스가 하나(해양쓰레기)라 로그인하면 그 서비스 대시보드로 · 광역 전체/시·군·구 한 칸', async ({ page }) => {
+  test('전남광주 — 서비스가 하나(해양쓰레기)라 로그인하면 그 서비스 대시보드로 · 광역 전체/시·군·구 한 칸', async ({ page }) => {
     test.setTimeout(120000);
     await signInAtMain(page, 'gwangju-jeonnam', 'lxadmin@lx.or.kr');
     await page.waitForURL((u) => u.searchParams.get('service') === 'card-marine', { timeout: 30000 });

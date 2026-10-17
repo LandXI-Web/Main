@@ -44,14 +44,14 @@
 
 ## 5. (권장 · 데이터) 기관 표기 통일 → 화면 쪽 반영 + 서버 요청
 - 드롭다운 표시는 '키르기즈'를 '키르기스'로 통일하고 괄호 앞 공백을 없앴다(`auth.js orgName`).
-- 현재 목록: 전북특별자치도 남원시 · 광주전남특별시 · 키르기스 농업부(으슥아타) · 키르기스 토지자원청(소쿨룩·비슈케크).
+- 현재 목록: 전북특별자치도 남원시 · 전남광주특별시 · 키르기스 농업부(으슥아타) · 키르기스 토지자원청(소쿨룩·비슈케크).
 - **요청(서버 · 소유 밖)**
   - (a) 로그인 전 공개 `GET /api/v1/auth/tenants` → `[{id, name:{ko}}]`(active · kind=user · lx-demo 제외). 이것이 생기면 정문은 픽스처 `ops/data/fixtures/tenants.json` 대신 이 엔드포인트를 읽게 바꾼다(한 줄).
   - (b) 원문 `kgz-land.name.ko` 를 '키르기스 토지자원청(소쿨룩·비슈케크)' 으로 정정.
 
 ## 6. 이전 판정 must_fix(gate:login) — 유지 확인
 - 기관 id 를 접두어로 추론하는 방식은 없다. 기관 칸 선택이 우선이고, 디렉터리 id 와 가장 길게 일치할 때만 미리 맞춘다.
-- `gj-manager` + 광주전남특별시 → 200 → `/landxi/v3/gov-fusion/` 이다.
+- `gj-manager` + 전남광주특별시 → 200 → `/landxi/v3/gov-fusion/` 이다.
 - 정문 e2e(`tools/review/_f3b-login-e2e.mjs`) **10/10 통과** · pageerror 0
 
 | 경우 | 결과 |
@@ -61,13 +61,13 @@
 | 기관 미선택 | '기관을 선택하세요' |
 | 틀린 기관 | '기관 · 아이디 · 비밀번호를 확인하세요' |
 | lx-staff / lx-admin / lx-sales | `/v3/lx-console/` · `/v3/ops-core/` · `/v3/sales/` |
-| gj-manager(광주전남) · namwon-manager · kgz-land-manager | `/v3/gov-fusion/` |
+| gj-manager(전남광주) · namwon-manager · kgz-land-manager | `/v3/gov-fusion/` |
 
 ## 7. 증거 — `shots/f3b/login/`
 - `01-first-paint-0.6s-1440.png`: 0.6 s, 스틸 + 3축(빈 판 0)
 - `02-performance-1440.png` · `04-solution-1440.png` · `05-geoai-1440.png`: 장면 3개 도착
 - `03-transition-cover-1440.png`: 전환 중 덮개(이전 장면 프레임 · 이전 제목 유지)
-- `06-tenant-org-1440.png`: 기관 문 + 광주전남 선택
+- `06-tenant-org-1440.png`: 기관 문 + 전남광주 선택
 - `07-performance-1280x720.png`: 제목 한 줄
 - `08-first-paint-390.png` · `09-performance-390.png` · `10-solution-390-full.png`: 모바일
 - `login-f3b.mp4`(19.8 s): 첫 페인트 → 장면 1 → 기관 문 입력 → 덮개 전환 → 남원 → 로그인 → gov-fusion 착지

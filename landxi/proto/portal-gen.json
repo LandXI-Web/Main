@@ -393,7 +393,7 @@
     {
       "id": "dp-gj-marine-25",
       "name": "해양쓰레기 실태조사 서비스",
-      "region": "광주전남특별시",
+      "region": "전남광주특별시",
       "tabs": [
         {
           "id": "dash",
@@ -471,7 +471,7 @@
     {
       "id": "dp-gj-marine-27",
       "name": "해양쓰레기 실태조사 서비스",
-      "region": "광주전남특별시",
+      "region": "전남광주특별시",
       "tabs": [
         {
           "id": "dash",

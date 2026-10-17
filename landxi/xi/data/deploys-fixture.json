@@ -373,15 +373,15 @@
    "status_history": "구축"
   },
   {
-   "name": "광주전남 해양쓰레기 2025",
+   "name": "전남광주 해양쓰레기 2025",
    "tenant_id": "gwangju-jeonnam",
    "card_version_id": "card-marine@1.2",
    "version": "v1.2",
    "prev_card_version_id": null,
    "region_profile": "gwangju-jeonnam",
    "region_name": {
-    "ko": "광주전남특별시",
-    "en": "Gwangju-Jeonnam"
+    "ko": "전남광주특별시",
+    "en": "Jeonnam-Gwangju"
    },
    "aoi": {
     "type": "MultiPolygon",
@@ -442,15 +442,15 @@
    "status_history": "운영"
   },
   {
-   "name": "광주전남 해양쓰레기 2027",
+   "name": "전남광주 해양쓰레기 2027",
    "tenant_id": "gwangju-jeonnam",
    "card_version_id": null,
    "version": null,
    "prev_card_version_id": null,
    "region_profile": "gwangju-jeonnam",
    "region_name": {
-    "ko": "광주전남특별시",
-    "en": "Gwangju-Jeonnam"
+    "ko": "전남광주특별시",
+    "en": "Jeonnam-Gwangju"
    },
    "aoi": {
     "type": "MultiPolygon",

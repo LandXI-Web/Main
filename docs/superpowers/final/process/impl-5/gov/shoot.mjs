@@ -120,7 +120,7 @@ async function mainPage(tenant, key) {
   await pc.close(); await mob.close();
 }
 
-/* ── 기관(남원시 · 광주전남) — 내 서비스 · 서비스 대시보드 · 분석 요청 · 행정정보와 비교 · 필지 목록 화면의 메뉴 ── */
+/* ── 기관(남원시 · 전남광주) — 내 서비스 · 서비스 대시보드 · 분석 요청 · 행정정보와 비교 · 필지 목록 화면의 메뉴 ── */
 async function gov(tenant, key, svc) {
   const origin = orgOrigin(tenant);
   const S = await signed(BASE, 'lxadmin@lx.or.kr', { tenant });

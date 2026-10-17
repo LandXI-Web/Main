@@ -5,7 +5,7 @@ import { mountShell, esc, nf } from './shell.js';
 import { PATCHES, DENSITY, COAST, FIELD, RUN, SIMS, LX_ROLE, LX_LINE, VERIFY, DRIFT_SCHEMA, sample } from '../assets/data/sim.js';
 import { run, probGrid, eta } from './drift-core.js';
 
-/* 어느 배포본에서 들어왔나 — 27년 광주전남 작업공간의 지도 탭이 여기로 넘긴다.
+/* 어느 배포본에서 들어왔나 — 27년 전남광주 작업공간의 지도 탭이 여기로 넘긴다.
    들어온 길을 빵부스러기에 남겨야 되돌아갈 수 있다(개발용 URL 은 화면에 적지 않는다). */
 const SVC = new URLSearchParams(location.search).get('svc') || '';
 const BACK = /^dp-[a-z0-9-]+$/.test(SVC) ? `portal-${SVC}.html` : '';

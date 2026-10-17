@@ -188,8 +188,8 @@ TEST_USERS = {"a": ("u_r3ftest_a", "r3f-test-a"), "b": ("u_r3ftest_b", "r3f-test
 
 @pytest.fixture(scope="module")
 def testers(gw):
-    """시험 전용 기관 담당자 두 명(광주전남) — 시험 동안만 있고 끝나면 계정 · 세션 · 기억 · 남은 대장을 걷는다.
-    실제 담당자 계정(광주전남 lxadmin@lx.or.kr)의 기억은 건드리지 않는다. 기관 최근 대장(latest) 표시는 시험 대장을 뺀 가장 최근 결합 대장으로 되돌린다."""
+    """시험 전용 기관 담당자 두 명(전남광주) — 시험 동안만 있고 끝나면 계정 · 세션 · 기억 · 남은 대장을 걷는다.
+    실제 담당자 계정(전남광주 lxadmin@lx.or.kr)의 기억은 건드리지 않는다. 기관 최근 대장(latest) 표시는 시험 대장을 뺀 가장 최근 결합 대장으로 되돌린다."""
     import secrets
     from argon2 import PasswordHasher
     pw = "r3f-" + secrets.token_urlsafe(12)
@@ -268,7 +268,7 @@ def _delete(h, iid):
 
 def test_colleague_upload_does_not_take_over_my_ledger(gw, testers):
     """같은 기관 다른 담당자(시험 B)가 나중에 올려도 시험 A 의 이어 열기는 자기 대장 · B 는 자기 대장.
-    광주전남 담당자(lxadmin@lx.or.kr · 실제 계정)의 이어 열기는 시험 전후가 같다(읽기만)."""
+    전남광주 담당자(lxadmin@lx.or.kr · 실제 계정)의 이어 열기는 시험 전후가 같다(읽기만)."""
     real_before = _recent(gw["gj"])
     pn = _free_pnus(6)
     if len(pn) < 6:
@@ -426,7 +426,7 @@ def test_fusion_route_and_answer_keep_jimok(no_geom):
 
 
 def test_live_jimok_split_matches_server_results(gw):
-    """실제 대장(광주전남 두 담당자가 이어 여는 대장): 논(답)으로 거른 수 = 서버 규칙 결과 중 대장 지목 답의 수 · 세 지목 합 = 전체."""
+    """실제 대장(전남광주 두 담당자가 이어 여는 대장): 논(답)으로 거른 수 = 서버 규칙 결과 중 대장 지목 답의 수 · 세 지목 합 = 전체."""
     heads = [gw["gj"]]                       # 옛 두 담당자 아이디(gj-manager · 별칭)의 대장은 메일 계정으로 옮겼다(원칙 77)
     seen = 0
     for h in heads:

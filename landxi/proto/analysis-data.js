@@ -124,7 +124,7 @@ export const roleName = (id) => SHARE_ORGS.flatMap((o) => o.roles).find((r) => r
 const REGION_CROP = [
   [/국산리/, 'kuksan-change', 0, '국산리 드론 정사영상'],
   [/남원/, 'namwon-epoch', 2, '남원 농경지 정사영상'],
-  [/광주전남|여수|전남/, 'yeosu-marine-2025-aerial', 3, '해안 항공영상'],
+  [/전남광주|여수|전남/, 'yeosu-marine-2025-aerial', 3, '해안 항공영상'],
 ];
 export function cardCrop(card) {
   if (card.status === '준비 중') return null;                 // 준비 중 = 무채 + 점선(원판 B7-Analysis-List)

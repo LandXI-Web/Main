@@ -1,6 +1,6 @@
 # fix-public-screens — 게스트 메인 · 영업 · 서비스 상세 · 로그인 · 도움말: 용어 · 숫자 · 버그
 
-**배경(평가 P0/P1/P2):** 게스트 메인·영업 카탈로그가 광주전남 해양쓰레기를 '운영 1,857건'으로 표기(다른 화면과 모순). 영업 카드 남원 2,098(설명 없음). 서비스 상세 `?card=card-change` 결과 지도 캡션에 'null'. 영업 카탈로그 한가운데 '첫 결과 전 — 첫 결과가 생기면 여기에 카드가 생깁니다' 빈 카드 노출. 게스트 메인 네트워크 정지까지 28.5s(메인 필름 지연 로드 미완 — 9/26 결정: CSS 마스크·지연 로드 착수).
+**배경(평가 P0/P1/P2):** 게스트 메인·영업 카탈로그가 전남광주 해양쓰레기를 '운영 1,857건'으로 표기(다른 화면과 모순). 영업 카드 남원 2,098(설명 없음). 서비스 상세 `?card=card-change` 결과 지도 캡션에 'null'. 영업 카탈로그 한가운데 '첫 결과 전 — 첫 결과가 생기면 여기에 카드가 생깁니다' 빈 카드 노출. 게스트 메인 네트워크 정지까지 28.5s(메인 필름 지연 로드 미완 — 9/26 결정: CSS 마스크·지연 로드 착수).
 
 ## 소유 파일
 - `landxi/v3/main/**` · `landxi/v3/sales/**` · `landxi/v3/service-detail/**` · `landxi/v3/login/**` · `landxi/v3/help-my/**`
@@ -15,7 +15,7 @@
 
 ## 완료 조건
 - `forbidden.mjs`(게스트, `lx-sales`) main·sales·service-detail(카드 전 종류)·login·help-my '지어낸 용어' 0 · 콘솔 오류 0.
-- 광주전남 해양쓰레기 상태·수가 메인·영업·서비스 상세에서 summary 와 동일.
+- 전남광주 해양쓰레기 상태·수가 메인·영업·서비스 상세에서 summary 와 동일.
 - 'null' 문자열 검색(전 카드 innerText) 0.
 - 영업 첫 화면 왼쪽 빈 공간은 구성 판단이므로 `Fable 에게 넘길 것`. 해외 기관 로그인이 한국어뿐인 문제는 명세 K15(global 만 en) 밖이라 고치지 말고 보고서 `사용자 결정 필요`에 적는다.
 
@@ -29,5 +29,5 @@
 - **숫자 한 출처:** 대표 수치는 `GET /api/v1/summary`(계약: `fix-server-summary.md` §계약) 에서만 읽는다. 화면에 숫자를 적어 넣지 않는다. 같은 이름 = 같은 값, 다른 값이면 다른 이름.
 - **지역 하드코딩 금지**(namwon·yeosu 등 문자열을 js/html 에 새로 넣지 말 것). 남원은 예시 지역.
 - **GPU:** 추론은 게이트웨이 작업 대기열로만, 동시 고부하 GPU ≤ 1. Ollama·vLLM 종료 금지.
-- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 광주전남 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
+- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 전남광주 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
 - **보고서:** `docs/superpowers/final/fix/<id>-report.md` — 바꾼 파일, 전/후 스크린샷(1440·390) 경로, forbidden 결과, 남은 것, `Fable 에게 넘길 것`, `요청`.

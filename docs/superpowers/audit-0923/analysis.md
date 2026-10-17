@@ -88,7 +88,7 @@ DOM 위의 법전 준수(§1–§2)는 깨끗하다. 문제는 규칙 위반이 
 | F10 | P2 | incomplete | 영상·과제 지역을 맞춰 보지 않고, 과제는 카드의 첫 모델로 고정된다 | 해양쓰레기(여수) 과제에서도 남원·국산리·제주 정사영상 11장을 고를 수 있다(`analysis-kind.js:21 ortho:()=>true`). 과제 '변경' 은 진열대로 돌아가는 링크일 뿐. 영농 카드의 모델 4종 중 첫 번째만 쓴다(`analysis-run.js:29`) | `29-run-marine.png` · `a2.json marine` |
 | F11 | P2 | ux | 1280 폭에서 완료 탭 표 헤더가 겹치고 글자 21곳이 잘린다 | '탐지 클래스' 와 '면적 m²' 가 겹친다. 본번과 클래스가 '3…', '경…' 으로 잘린다. 신뢰도 히스토그램 축이 푸터 버튼에 가린다. 1440 에서도 잘린 글자 13곳 | `64-done-1280.png` · `a3.json m_1280 clipped 21` |
 | F12 | P2 | ux | 390 모바일에서 두 화면 모두 가로로 넘친다 | `analysis-ai` 가로 넘침 137 px + 마스트헤드 글자 겹침. `ai-card` 562 px | `10-shelf-390.png` · `85-aicard-390.png` · `a4.json aicard_390` |
-| F13 | P2 | data-honesty | 이식 프로파일에 자리 값(12345 km², 52130-xx)이 노출된다 | 이식 마법사에 '광주전남특별시 29 · 12345 km²'. 국산리 코드 '52130-xx'. 실측 표기도 [추정] 표기도 없다 | `registry.js:101-104` · `07-transplant.png` |
+| F13 | P2 | data-honesty | 이식 프로파일에 자리 값(12345 km², 52130-xx)이 노출된다 | 이식 마법사에 '전남광주특별시 29 · 12345 km²'. 국산리 코드 '52130-xx'. 실측 표기도 [추정] 표기도 없다 | `registry.js:101-104` · `07-transplant.png` |
 | F14 | P2 | data-honesty | 기준일이 세 가지로 갈린다(지난 감사 C7 미해소) | 마스트헤드 2026.08.27(`analysis.js:47`) · 실행 대장 `AS_OF` 2026-06-08(`analysis-data.js:13`) · ai-card 마스트헤드 2026.06.08 | `01-shelf-1440.png` · `80-aicard-1440.png` |
 | F15 | P2 | data-honesty | 카드 편집 화면에 담당자명 '김○○' 가 있고, 지도 캡션 대비가 부족하다 | '발행자 김○○ · 수정자 김○○' 는 법전 §5 담당자명 금지. 지도 하단 캡션은 영상 위 회색 글자라 거의 읽히지 않는다 | `83-aicard-edit-view.png` · `a4.json editText` |
 | F16 | P3 | ux | 해양쓰레기 클래스명이 영문 원문 그대로다 | styrofoam, buoy_bottle, other_debris 등 8종 미번역 | `51-done-3-yeosu-marine-2026-drone.png` |

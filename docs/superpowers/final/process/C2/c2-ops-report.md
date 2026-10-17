@@ -7,8 +7,8 @@
 | 완료 기준 | 결과 | 증거(`shots/c2/c2-ops/`) |
 |---|---|---|
 | K13: LX 관리자가 Ctrl K 로 네 가지를 묻고 모두 숫자 칩으로 답을 받는다. 수치는 `/ops/*` 와 같아야 한다 | **합격.** "GPU 상태" · "대기열 요약" · "경보 있어?" · "기관별 AI 도우미 사용량" 네 질문 모두 done 이고, 각각 1.5초 안팎에 답했다. 모델 앞 직행으로 처리했으므로 LLM 호출은 0회다. 답의 봉투 값을 같은 시각의 `/ops/gpus`·`/ops/queues`·`/ops/alerts`·`/ops/tenants` 와 대조했고 모두 같았다 | `k13-admin-1..4.png`, `k13-admin.json`, `k13-compare.json` |
-| 기관 사용량의 'AI 도우미 사용량'이 `usage_events` llm_tokens 합계와 같다(4기관) | **합격.** 앞뒤 DB 값이 같은 순간에 대조했다. 남원 967,648 · 광주전남 161,840 · kgz-agri 54,077 · LX 1,784,747 로, 화면과 DB 가 모두 같았다 | `usage-compare.json`, `llm-usage-table.png` |
-| 관리자가 아닌 계정(남원·광주전남)의 운영 질문에 "LX 관리자 화면에서 확인할 수 있습니다." 한 줄로 답한다. 관제·AG- 는 0건 | **합격.** 남원 4문, 광주전남 4문, LX 직원 2문(추가 확인)이 모두 그 한 줄로 끝났다. LLM 호출 0회, 금지어 0건 | `nonadmin-nw*.png/json`, `nonadmin-gj*`, `nonadmin-staff*` |
+| 기관 사용량의 'AI 도우미 사용량'이 `usage_events` llm_tokens 합계와 같다(4기관) | **합격.** 앞뒤 DB 값이 같은 순간에 대조했다. 남원 967,648 · 전남광주 161,840 · kgz-agri 54,077 · LX 1,784,747 로, 화면과 DB 가 모두 같았다 | `usage-compare.json`, `llm-usage-table.png` |
+| 관리자가 아닌 계정(남원·전남광주)의 운영 질문에 "LX 관리자 화면에서 확인할 수 있습니다." 한 줄로 답한다. 관제·AG- 는 0건 | **합격.** 남원 4문, 전남광주 4문, LX 직원 2문(추가 확인)이 모두 그 한 줄로 끝났다. LLM 호출 0회, 금지어 0건 | `nonadmin-nw*.png/json`, `nonadmin-gj*`, `nonadmin-staff*` |
 | 언어 모델 상태 3줄과 국산 모델 '연결 전'이 보인다. 켜진 동안 '켜기'는 잠겨 있다. 모의 테스트는 녹색 | **합격.** 두뇌 Gemma 4 · 라우터 HyperCLOVA X SEED · 예비 Qwen3 세 줄에 켜짐/꺼짐과 GPU 순번이 보인다. 국산 모델 연결은 "연결 전"이다. 켜진 동안 '켜기' 버튼 2개는 disabled 이고, 서버도 409 "이미 켜져 있습니다."로 거절한다 | `llm-card.png`, `screens.json` |
 | ops 화면에 GPU 제품명·포트·경로 0건 | **합격.** 현황·인프라·기관·배포 4화면 본문을 검사했다(A6000·RTX·NVIDIA·:8000·:8001·:11434·127.0.0.1·/api/·.ps1·.py·E:\\·관제·AG-). 걸린 것은 0건이다. 인프라 표에 있던 GPU 제품명 작은 글씨도 없앴다 | `screens.json` `pages[].bad = []` |
 | 테스트 | `server/ops/tests/test_c2_ops.py` 31개 녹색. `server/agent/tests` 227개 녹색(ext 모듈을 불러온 상태) | — |
@@ -21,7 +21,7 @@
   - 조치는 '~를 검토하세요' 제안까지만 낸다. 언어 모델을 끄자는 제안은 만들지 않는다(테스트로 검사).
   - `ROUTE` 는 관리자의 짧은 운영 질문을 도구 하나로 바로 보낸다. `Out.answer` 에 봉투 자리표를 넣은 한국어 문장을 담는다(영어 질문이면 영어 문장). 기관별 사용량 답에는 막대 차트 블록을 붙인다.
   - `ops_admin_only` 는 관리자가 아닌 계정(기관·LX 직원·영업)이 운영을 물으면 한 줄로 답한다. 라우터 분류에만 맡기면 "경보 있어?"가 LLM 으로 새어 "등록된 경보 정보가 없습니다"라는 지어낸 답이 나왔다. 그래서 모델 앞에서 막는다.
-- `server/landxi_api/quota.py`: 사용량 항목에 `llm_tokens_month`(AI 도우미 사용량 · 토큰 · 이번 달)를 더했다. 값은 `usage_events` dim='llm_tokens' 합계다. 한도는 기존 quotas 표 값을 쓴다(남원 3,000,000 · 광주전남 1,800,000 · [추정 기반 초기값]). 한도가 없는 기관은 '한도 미설정'으로 둔다.
+- `server/landxi_api/quota.py`: 사용량 항목에 `llm_tokens_month`(AI 도우미 사용량 · 토큰 · 이번 달)를 더했다. 값은 `usage_events` dim='llm_tokens' 합계다. 한도는 기존 quotas 표 값을 쓴다(남원 3,000,000 · 전남광주 1,800,000 · [추정 기반 초기값]). 한도가 없는 기관은 '한도 미설정'으로 둔다.
 - `server/landxi_api/ops.py`: 두 경로를 추가했다.
   - `GET /ops/llm/models` 는 언어 모델 줄(역할·이름·켜짐·GPU 순번)과 국산 모델 연결 자리(`config.BACKENDS['dokpamo']` → '연결 전')를 낸다. 포트·주소는 싣지 않는다.
   - `POST /ops/llm/start {slot}` 는 꺼진 두뇌나 라우터만 켠다. 켜져 있으면 409 로 거절한다.
@@ -70,7 +70,7 @@
 | ② '키르기스 토지자원청 AI 도우미 사용량'에 농업부가 섞이고, 합계가 그 기관 값처럼 읽혔다 | 기관 이름을 고정 낱말 목록('키르기스')으로 앞말만 맞췄다 | 질문에서 기관을 가리키는 말만 남긴 뒤 `/tenants` 의 이름(한국어·영어·id·'남원' 같은 줄임)과 맞춘다. 이름이 통째로 들어 있으면 가장 긴 이름의 기관 하나만 고른다. 지역 하드코딩 목록은 없앴다. 기관을 말한 질문에는 합계와 차트를 붙이지 않는다 | 답은 "…키르기스 토지자원청 2,724토큰입니다." 한 기관뿐이다. 농업부 0, 합계 0(`a-q1.png`). '키르기스'만 말하면 두 기관을 합계 없이 보인다(테스트) |
 | ③ 관리자 영어 질문이 LLM 으로 넘어가(13,823 토큰) 한국어 기관명과 '토큰 tokens'가 섞였다 | 운영 직행 규칙이 한국어 낱말뿐이었다. 칩 단위가 '토큰' 글자로 고정돼 있었다 | 영어 운영 말(AI assistant usage·tokens·usage·alerts·queue·language model)을 직행에 더했다. 영어 답은 영어 기관명(괄호 설명 제외)과 영어 문장으로 낸다. 토큰 칩 단위는 `tokens` 키로 바꿨다(화면이 ko '토큰', en 'tokens'로 표기). GPU·대기열·경보·언어 모델 영어 답의 단위도 영어로 냈다 | "AI assistant usage this month: LX 2,051,591 tokens, Namwon-si 967,648 tokens, … Total: 3,394,472 tokens." 한글 0, 단위 한 번, 영어 막대 차트, direct·LLM 0(`a-q2.png`). 'How many tokens has Namwon used?'는 남원 한 기관만 답했다(`a-q3.png`) |
 
-- 숫자 한 출처: 영어 답과 한국어 답은 같은 `/ops/tenants` 봉투를 쓴다. 같은 시각의 DB `usage_events` 합계와 같다(`fix1.json`.db_now: 남원 967,648 · kgz-agri 65,860 · kgz-land 2,724 · LX 2,051,591). 광주전남은 다른 작업이 토큰을 쌓는 중이라 읽은 시각마다 값이 다르다.
+- 숫자 한 출처: 영어 답과 한국어 답은 같은 `/ops/tenants` 봉투를 쓴다. 같은 시각의 DB `usage_events` 합계와 같다(`fix1.json`.db_now: 남원 967,648 · kgz-agri 65,860 · kgz-land 2,724 · LX 2,051,591). 전남광주은 다른 작업이 토큰을 쌓는 중이라 읽은 시각마다 값이 다르다.
 - 국내 기관 회귀: 남원 'GPU 상태'는 한국어 한 줄, 'Show GPU status'는 영어 한 줄이다(`nw-ops*.png`).
 - 테스트: `server/ops/tests/test_c2_ops.py` 는 31개에서 54개로 늘었고 모두 녹색이다. 새 테스트는 해외 기관 8문, 직행 순서(ops 가 global_ 앞), 일반 질문 비간섭, 기관 하나만, 모호한 이름, 영어 사용량·영어 GPU/경보/대기열/언어 모델 답의 한글 0을 확인한다. `server/agent/tests` 238개도 녹색이다.
 - 바꾼 파일은 `server/agent/tools/ext/ops.py` 와 그 테스트다. 소유 밖 파일은 고치지 않았다.

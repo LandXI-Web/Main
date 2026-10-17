@@ -1,5 +1,5 @@
 """설계 7차 · 기관 분기 공간 — 그림(fig/*.html)은 1440 폭 전체로, 시안(mock/*.html)은 1440×900 으로,
-지금 화면 두 장(광주전남 서비스 선택 · LX 관리자 기관 칸)은 로그인 폼으로 들어가 찍어 shots/ 에 둔다.
+지금 화면 두 장(전남광주 서비스 선택 · LX 관리자 기관 칸)은 로그인 폼으로 들어가 찍어 shots/ 에 둔다.
 사용: python docs/superpowers/final/process/design-r7/branch-space/shoot.py [이름 일부...] [--no-now] [--bg]
   --bg  예측 지도 시안의 바탕(여수 해안 25cm 항공을 약 2.7m 로 줄인 그림)을 shots/_bg/ 에 만든다(GDAL 필요 · GPU 안 씀).
 shots/ 는 gitignore — 확인 요청 페이지 생성 때 복사한다. 바탕 그림도 shots/_bg/ 에만 둔다(이 영상은 밖으로 내보내지 않는 영상이라 저장소에 넣지 않는다).
@@ -97,7 +97,7 @@ def shoot_now(b, only):
     if want('now-gj-select.png'):
         ctx = b.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
         pg = ctx.new_page()
-        pg.goto(BASE + '/landxi/v3/gov-home/?org=gwangju-jeonnam')     # 광주전남 메인(그 기관 모습의 로그인)
+        pg.goto(BASE + '/landxi/v3/gov-home/?org=gwangju-jeonnam')     # 전남광주 메인(그 기관 모습의 로그인)
         pg.wait_for_selector('.gh-form input[type=text]', timeout=60000)
         pg.fill('.gh-form input[type=text]', LOGIN_ID)
         pg.fill('.gh-form input[type=password]', pw)

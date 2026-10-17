@@ -55,8 +55,8 @@
   ],
   "pending_other": 3,
   "services": [
-    { "name": "경작·휴경 분석서비스", "v": "2.1", "state": "운영", "on": ["남원시", "광주전남특별시"], "sub": "목포시 · 여수시 · 구례군 · 강진군" },
-    { "name": "해양쓰레기 실태조사 서비스", "v": "1.2", "state": "운영", "on": ["광주전남특별시"] },
+    { "name": "경작·휴경 분석서비스", "v": "2.1", "state": "운영", "on": ["남원시", "전남광주특별시"], "sub": "목포시 · 여수시 · 구례군 · 강진군" },
+    { "name": "해양쓰레기 실태조사 서비스", "v": "1.2", "state": "운영", "on": ["전남광주특별시"] },
     { "name": "국토 변화 탐지 서비스", "v": "1.0", "state": "시범", "on": ["남원시"] },
     { "name": "비닐하우스 분석서비스", "v": "2.0", "state": "시범", "on": ["남원시"] },
     { "name": "건축물 분석서비스", "v": "2.0", "state": "시범", "on": [] },
@@ -65,7 +65,7 @@
   ],
   "orgs": [
     { "name": "남원시", "kind": "시군구" },
-    { "name": "광주전남특별시", "kind": "광역 · 소속 시군구 27", "wide": true },
+    { "name": "전남광주특별시", "kind": "광역 · 소속 시군구 27", "wide": true },
     { "name": "키르기스 농업부", "kind": "해외" },
     { "name": "키르기스 토지자원청", "kind": "해외" }
   ],
@@ -73,12 +73,12 @@
     { "org": "남원시", "svc": "비닐하우스 분석서비스", "since": "9.30", "lx_runs": 2, "lx_last": "10.7", "area": "750km²", "org_runs": 0, "org_last": "", "req": "", "chat": "" },
     { "org": "남원시", "svc": "경작·휴경 분석서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 1, "org_last": "10.9", "req": "올린 영상으로 1회", "chat": "" },
     { "org": "남원시", "svc": "국토 변화 탐지 서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 0, "org_last": "", "req": "", "chat": "" },
-    { "org": "광주전남특별시", "svc": "경작·휴경 분석서비스", "since": "9.29", "lx_runs": 4, "lx_last": "9.29", "area": "1,031km²", "org_runs": 0, "org_last": "", "req": "분석 요청 1건 · 10.1 · 승인 대기", "chat": "" },
-    { "org": "광주전남특별시", "svc": "해양쓰레기 실태조사 서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 0, "org_last": "", "req": "", "chat": "" }
+    { "org": "전남광주특별시", "svc": "경작·휴경 분석서비스", "since": "9.29", "lx_runs": 4, "lx_last": "9.29", "area": "1,031km²", "org_runs": 0, "org_last": "", "req": "분석 요청 1건 · 10.1 · 승인 대기", "chat": "" },
+    { "org": "전남광주특별시", "svc": "해양쓰레기 실태조사 서비스", "since": "2025", "lx_runs": 0, "lx_last": "", "area": "", "org_runs": 0, "org_last": "", "req": "", "chat": "" }
   ],
   "org_totals": [
     { "org": "남원시", "svcs": 3, "runs": 3, "last": "10.9", "chat": 121, "storage": "2.3GB" },
-    { "org": "광주전남특별시", "svcs": 2, "runs": 4, "last": "10.1", "chat": 0, "storage": "6.9GB" },
+    { "org": "전남광주특별시", "svcs": 2, "runs": 4, "last": "10.1", "chat": 0, "storage": "6.9GB" },
     { "org": "키르기스 농업부", "svcs": 0, "runs": 0, "last": "", "chat": 0, "storage": "0GB" },
     { "org": "키르기스 토지자원청", "svcs": 0, "runs": 0, "last": "", "chat": 0, "storage": "0GB" }
   ],

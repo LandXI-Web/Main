@@ -9,8 +9,8 @@
 | 조건 | 결과 | 근거 |
 |---|---|---|
 | forbidden(게스트 · `lx-sales`) main · sales · service-detail 9종 · login · help-my: '지어낸 용어' 0 · 콘솔 오류 0 | **통과** — 게스트 12개 주소, lx-sales 12개 주소 모두 `forbidden: 0` · `console_errors: []`(1440). 390도 같은 결과 | `shots/fix/fix-public-screens/forbidden-guest.json` · `forbidden-lx-sales.json` · `forbidden-guest-390.json` · `forbidden-lx-sales-390.json` |
-| 광주전남 해양쓰레기 상태·수가 메인·영업·서비스 상세에서 summary 와 같음 · 출처 불명 고정값(1,857 · 2,098) 0 | **통과** — summary: `card-marine · 운영 · AI 탐지 1,857건`. 메인 카드 `여수시 · 운영 · 1,857건`, 영업 카드 `여수시 · 운영 · 1,857건`, 서비스 상세 히어로 칩 `운영` · 관련 카드 `운영 · 1,857건` · 서비스 지역 표 `운영`. 광주전남 담당자 세션도 `운영`. 이제 세 화면 모두 숫자는 summary 에서만 읽는다. 배포 기록의 `scale` 과 메인 공개 사본(`public-deploys.json`)의 숫자는 숫자 자리에 쓰지 않는다 | `scan-*.json`(`nums` 칸) · `after/guest-main-cards-*.png` · `after/sales-grid-*.png` · `after/gj-marine-hero-1440.png` · `after/gj-marine-end-1440.png` |
-| 모든 카드 service-detail innerText 에 'null' · 'undefined' · 'NaN' 0 | **통과** — 9종 × 5세션(게스트 · lx-sales · lx-staff · 광주전남 담당자 · 남원 담당자), 끝까지 스크롤한 뒤 검사: 0건. 전에는 `card-change` 결과 지도에 `null` 이 떴다 | `scan-guest.json` · `scan-lx-sales.json` · `scan-lx-staff.json` · `scan-gj-manager.json` · `scan-namwon-manager.json` |
+| 전남광주 해양쓰레기 상태·수가 메인·영업·서비스 상세에서 summary 와 같음 · 출처 불명 고정값(1,857 · 2,098) 0 | **통과** — summary: `card-marine · 운영 · AI 탐지 1,857건`. 메인 카드 `여수시 · 운영 · 1,857건`, 영업 카드 `여수시 · 운영 · 1,857건`, 서비스 상세 히어로 칩 `운영` · 관련 카드 `운영 · 1,857건` · 서비스 지역 표 `운영`. 전남광주 담당자 세션도 `운영`. 이제 세 화면 모두 숫자는 summary 에서만 읽는다. 배포 기록의 `scale` 과 메인 공개 사본(`public-deploys.json`)의 숫자는 숫자 자리에 쓰지 않는다 | `scan-*.json`(`nums` 칸) · `after/guest-main-cards-*.png` · `after/sales-grid-*.png` · `after/gj-marine-hero-1440.png` · `after/gj-marine-end-1440.png` |
+| 모든 카드 service-detail innerText 에 'null' · 'undefined' · 'NaN' 0 | **통과** — 9종 × 5세션(게스트 · lx-sales · lx-staff · 전남광주 담당자 · 남원 담당자), 끝까지 스크롤한 뒤 검사: 0건. 전에는 `card-change` 결과 지도에 `null` 이 떴다 | `scan-guest.json` · `scan-lx-sales.json` · `scan-lx-staff.json` · `scan-gj-manager.json` · `scan-namwon-manager.json` |
 | 영업 카탈로그에 '첫 결과 전' 빈 카드 0(`?public=1` 필터) | **통과** — 카드 3장(영농 · 해양쓰레기 · 국토 변화)만 나온다. 빈 카드 0 | `after/sales-grid-1440.png` · `after/sales-grid-390.png` |
 | 게스트 메인 네트워크 정지 ≤ 8s — 전/후 실측 | **통과** — 전 **29.1–31.7s**(요청 1,302 · 18.4MB) → 후 **3.9–5.5s**(요청 100 · 3.9MB). LCP 1.5–2.1s → 1.8–2.1s(변화 없음) | 아래 '실측' 칸 |
 | 영업 빈 첫 화면은 Fable, 해외 로그인 다국어는 사용자 결정 | 아래 두 칸에 적었다 | — |
@@ -51,7 +51,7 @@ login · help-my 의 보이는 글자에는 지어낸 용어가 없었다. 남�
 
 ## 남은 것
 
-- 서비스 상세 해양쓰레기 히어로에는 큰 숫자가 없다. summary `field_check`(현장 확인 필요)가 광주전남 항목에서 null 이기 때문이다. 탐지 총수(AI 탐지)는 5차 결정대로 큰 숫자 자리에 싣지 않았다. 상태 칩 `운영` 은 summary 와 같다.
+- 서비스 상세 해양쓰레기 히어로에는 큰 숫자가 없다. summary `field_check`(현장 확인 필요)가 전남광주 항목에서 null 이기 때문이다. 탐지 총수(AI 탐지)는 5차 결정대로 큰 숫자 자리에 싣지 않았다. 상태 칩 `운영` 은 summary 와 같다.
 - 로그인 히어로 장면 2(여수 · `건 드론 탐지`)는 드론 결과 파일의 점 수로 세운 숫자다. 이름이 summary `AI 탐지` 와 달라서 '같은 이름 = 같은 값' 규칙에는 걸리지 않는다. 다만 summary 에 드론 지표 key 가 생기면 그쪽으로 옮기는 게 맞다.
 - summary 를 읽지 못하면(경로 없음·오류) 세 화면은 숫자 없이 상태만 보인다. 이는 의도한 동작이다.
 - `hasRoute` 가 openapi 를 `force-cache` 로 읽는다. 그래서 summary 가 생기기 전에 연 브라우저는 캐시가 풀릴 때까지 숫자 없이 보일 수 있다(키트 동작).
@@ -70,5 +70,5 @@ login · help-my 의 보이는 글자에는 지어낸 용어가 없었다. 남�
 
 - **kit:** `service-detail/summary.js` 를 키트(`landxi/v3/kit/summary.js`)로 옮겨 모든 화면이 한 모듈을 쓰게 해 주세요. 옮기면 세 화면은 import 경로만 바꿉니다.
 - **카드 원천 · 서버 등록부:** 카드 이름 `재해 피해 판독 (해외)` 에 '판독'이 있습니다(`landxi/assets/data/cards.js` · 서버 `registry/cards`). 이 화면들은 보일 때만 바꿔서 표시하고 있으니, 원천 이름을 용어표 말로 바꿔 주세요.
-- **서버(summary · 배포 기록):** 광주전남 배포본의 지역 이름이 `광주전남특별시`(deploys)와 `전남광주통합특별시 여수시`(summary)로 서로 다릅니다. 화면은 summary 이름을 우선하지만, 원천 하나로 맞춰 주세요. `dp-gj-marine-27`(draft)처럼 자기 결과가 없는 배포본은 화면에서 `첫 결과 전` 으로 표시합니다. summary 에 배포본 id(`deploy_id`)가 들어오면 배포본과 항목을 추측 없이 이을 수 있습니다.
+- **서버(summary · 배포 기록):** 전남광주 배포본의 지역 이름이 `전남광주특별시`(deploys)와 `전남광주통합특별시 여수시`(summary)로 서로 다릅니다. 화면은 summary 이름을 우선하지만, 원천 하나로 맞춰 주세요. `dp-gj-marine-27`(draft)처럼 자기 결과가 없는 배포본은 화면에서 `첫 결과 전` 으로 표시합니다. summary 에 배포본 id(`deploy_id`)가 들어오면 배포본과 항목을 추측 없이 이을 수 있습니다.
 - **kit K7(service-card):** `stateOf` 는 카드 `status` 문자열(`운영`)로 판정하지만, `/registry/cards?public=1` 은 `status: ops|pilot` 을 줍니다. summary 가 없을 때의 대체 판정이 어긋날 수 있습니다.

@@ -195,7 +195,7 @@ def test_report_sgg_level_two_sido_region_cited_no_dev_words():
         assert j["citations"][1]["value"]["value"] == want                                            # 의심 건수 한 출처
         txt = report.doc_text(report.build_draft(cd, None, 10, fmt="hwpx"))
         assert report.dev_words(txt) == [], (cd, report.dev_words(txt))
-        names = ["광주전남특별시", "전남광주통합특별시", "전라남도", "광주광역시", "전북특별자치도", "전라북도", "충청북도", "충청남도", "경기도",
+        names = ["전남광주특별시", "전남광주통합특별시", "전라남도", "광주광역시", "전북특별자치도", "전라북도", "충청북도", "충청남도", "경기도",
                  "강원특별자치도", "경상북도", "경상남도", "제주특별자치도", "서울특별시", "부산광역시"]
         sidos = {x for x in names if x in txt}
         assert len(sidos) == 1, sidos                                                                  # 시도 이름 한 가지

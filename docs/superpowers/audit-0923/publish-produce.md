@@ -53,7 +53,7 @@
 ### P1
 **PP-3 9/20 스펙 필드가 없다.** `card-architecture.md §3` "발행 폼에 `대상 사업`·`전용 모듈`·`이식 가능` 필드", `platform-roles.md:50` "목록에 분기 필터·배지". `publish*.js`에서 `scope|대상 사업|전용 모듈|이식|글로벌` grep 결과 0건. 발행 폼은 원본 도커 필드(`mdlNm`·`dockerImage`·`tileSz`…)뿐이다(`ce-01-new.png`). 공통 7 + 전용 n 모듈 선택, 배포 지역, 이식 조건, 버전 규칙(major/minor/patch), `healthCheck()` 게이트가 발행 흐름 어디에도 없다.
 
-**PP-4 생산 관리 · 포털 생산: `CI 가드 0/2 통과`, 두 기관 모두 `미달`(빨강).** 대비는 6.12·6.57로 기준을 넘는다. 그런데 `THEMES`에 있는 `platform` 키가 `CI_KEYS`에 없어서 `brandGuard()`가 "허용 토큰이 아니다"로 실패한다(`assets/data/brand.js:95`, node 실측 `bad:[{key:'platform'}]`). 스펙 `production.md §3`의 "남원 6.12 · 광주전남 6.57 — 통과"와 화면이 반대로 말한다(`pd-brand-1440.png`, `produce.js:407,422`).
+**PP-4 생산 관리 · 포털 생산: `CI 가드 0/2 통과`, 두 기관 모두 `미달`(빨강).** 대비는 6.12·6.57로 기준을 넘는다. 그런데 `THEMES`에 있는 `platform` 키가 `CI_KEYS`에 없어서 `brandGuard()`가 "허용 토큰이 아니다"로 실패한다(`assets/data/brand.js:95`, node 실측 `bad:[{key:'platform'}]`). 스펙 `production.md §3`의 "남원 6.12 · 전남광주 6.57 — 통과"와 화면이 반대로 말한다(`pd-brand-1440.png`, `produce.js:407,422`).
 
 **PP-5 `능동 비율 140%`.** `(retrain 4 + verify 3) / watched 5`로 계산해 한 배포본을 두 번 센다(`assets/data/ops.js:117`, `pd-ops-1440.png`). 100%를 넘는 비율이 KPI로 노출된다.
 

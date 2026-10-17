@@ -5,16 +5,16 @@
 2026-09-29 · Opus 5.5 · 소유 파일만 수정 · git 조작 없음 · 증거 `shots/core/core-fusion/`
 
 ## 한 줄 결과
-광주전남 담당자가 **여수(새 지역)** 농지대장을 올리면, 서버가 그 시군구 필지를 자동으로 적재(core-survey `POST /survey/build`)하고 **AI 분석 결과와 대조해 어긋난 필지 수를 숫자로** 보여 준다(화양면 안포리 2,814필지 → **대장은 농지 · AI는 건물 67필지**). 남원은 같은 코드 경로로 **431필지 그대로**(회귀 0). AI 도우미는 기관 관할 · LX 는 지역 인자로 답하고, 다른 기관 시군구는 `이 기관의 데이터가 아닙니다` 한 줄로 막는다.
+전남광주 담당자가 **여수(새 지역)** 농지대장을 올리면, 서버가 그 시군구 필지를 자동으로 적재(core-survey `POST /survey/build`)하고 **AI 분석 결과와 대조해 어긋난 필지 수를 숫자로** 보여 준다(화양면 안포리 2,814필지 → **대장은 농지 · AI는 건물 67필지**). 남원은 같은 코드 경로로 **431필지 그대로**(회귀 0). AI 도우미는 기관 관할 · LX 는 지역 인자로 답하고, 다른 기관 시군구는 `이 기관의 데이터가 아닙니다` 한 줄로 막는다.
 
 ## 완료 조건 대조
 | 조건 | 결과 | 증거 |
 |---|---|---|
-| 광주전남(로그인 폼) · 여수: 대장 올리기 → 열 확인 → 결합 → 어긋난 필지 수 숫자 → 한 문장 → 지도 채색 + 표 + 집계 · vLLM 실연결 | **충족.** `화양면_안포리_농지목록.xlsx` 2,814행 → 결합 100.0% → **67필지**(작은 칩: 주차장 0 · 경작 흔적 없음 374) → `대장상 전인데 AI가 건물로 본 필지` → **53필지** · 지도 빨강 채색 · 표 2행. 질문은 게이트웨이 `/agent/runs` → **vLLM `gemma-4-12b-it`**(agent_runs.model.backend = vllm, 리플레이 0) | `gj-yeosu-1440.mp4`(19.5초) · `gj-yeosu-1440-1…5.png` · `gj-yeosu-390-1…5.png` · `gj-yeosu-1440-log.json`(agent_runs backend vllm) · `measure-db.log` |
+| 전남광주(로그인 폼) · 여수: 대장 올리기 → 열 확인 → 결합 → 어긋난 필지 수 숫자 → 한 문장 → 지도 채색 + 표 + 집계 · vLLM 실연결 | **충족.** `화양면_안포리_농지목록.xlsx` 2,814행 → 결합 100.0% → **67필지**(작은 칩: 주차장 0 · 경작 흔적 없음 374) → `대장상 전인데 AI가 건물로 본 필지` → **53필지** · 지도 빨강 채색 · 표 2행. 질문은 게이트웨이 `/agent/runs` → **vLLM `gemma-4-12b-it`**(agent_runs.model.backend = vllm, 리플레이 0) | `gj-yeosu-1440.mp4`(19.5초) · `gj-yeosu-1440-1…5.png` · `gj-yeosu-390-1…5.png` · `gj-yeosu-1440-log.json`(agent_runs backend vllm) · `measure-db.log` |
 | 원래 파일 `화양면_농지목록`(이목리 786필지) | 결합 **38.2% → 100.0%**(V-World 상한 대신 적재된 연속지적 지번 해석 · 3.2초). 이목리는 2023 25cm 영상 범위 밖(786 중 1필지만 안) → **0필지가 아니라 `영상 범위 밖 785필지는 AI 분석 전`**(정직). 그래서 판정용 여수 대장은 영상 범위 안 화양면 안포리로 만들었다(기본값 1) | `measure-db.log`(imp_…BVVV · ai.sgg.outside 785) |
 | 남원 담당자(로그인 폼) 같은 흐름 회귀 | **변동 0.** 운봉읍 13,866행 · 결합 100.0% · **431필지** · 주차장 2 · 경작 흔적 없음 1,309 · 질문 `대장상 답인데 AI가 건물로 본 필지` → 183필지 · 리별 막대(권포리 23 · 산덕리 16 · 매요리 14) | `nw-namwon-1440.mp4`(19.5초) · `nw-namwon-1440-*.png` · `nw-namwon-390-*.png` |
 | LX 직원 세션 여수/남원 질문 → 각 지역 데이터 | **충족.** XI맵 Ctrl K(로그인 폼): `여수시 대장상 농지인데…` → 여수 화양면 67건 · 상위 10필지 지도 도착 · `남원시 …` → 431건 · `여수시 의심 필지 전체 몇 건` → 10,499필지. ui_actions 에 `sgg_cd`(12130 · 52190) · `import_id` 실림 | `lx-staff-xi-1440-q1…q3.png` · `lx-staff-xi-1440-log.json` · `agent-runs-api.log` |
-| 광주전남 세션의 남원 질문 → 권한 밖 한 줄(403 가드) | **충족.** gov-fusion Ctrl K `남원시 대장상 농지인데…` · `전주시 농지대장이랑…` → `이 기관의 데이터가 아닙니다`. 반대로 남원 세션의 `여수시 화양면 …` 도 같은 한 줄. 도구 단 가드(scope.region_of) = 403 `tool_forbidden` | `gj-guard-1440-q1…q3.png` · `nw-guard-1440-q1.png` · `agent-runs-api.log` |
+| 전남광주 세션의 남원 질문 → 권한 밖 한 줄(403 가드) | **충족.** gov-fusion Ctrl K `남원시 대장상 농지인데…` · `전주시 농지대장이랑…` → `이 기관의 데이터가 아닙니다`. 반대로 남원 세션의 `여수시 화양면 …` 도 같은 한 줄. 도구 단 가드(scope.region_of) = 403 `tool_forbidden` | `gj-guard-1440-q1…q3.png` · `nw-guard-1440-q1.png` · `agent-runs-api.log` |
 | 도구 · 설명문 · 기본값 지역 문자열 0 | **충족.** 소유 파일 grep: 도구·라우터·대장·화면 0건. 남은 줄은 벤치 문항(`bench.py`)과 회귀 시험 주체(`runner.redteam_eval` 의 시험 계정) 뿐 | `grep-region-strings.txt` · `server/tests/test_fusion_nation.py::test_tool_specs_have_no_region_names` · `::test_tool_sources_have_no_fixed_region` |
 | forbidden(gj-manager · namwon-manager × 1440 · 390) 0 · 콘솔 오류 0 | **0 / 0**(4회) · 흐름 녹화 · 질문 스크린샷 모두 콘솔 오류 0 | `forbidden.txt` · 각 `*-log.json` |
 | `server/agent/tests` · `server/tests` 통과 | agent/tests + test_fusion_nation **150 passed**. server 전체 332 passed / 12 failed → 실패는 다른 작업의 게이트웨이 재기동(ConnectError) · GPU 전력 게이트 · 요약 수(core-xi 여수 새 결과) 쪽이고, 대장 관련(`test_f3_server -k s2` 3개) · 계약(`test_contract`) · `test_f2b_api` 는 다시 돌려 **57 passed** | 아래 '시험' |
@@ -75,9 +75,9 @@
 ## Fable 에게 넘길 것
 - 영상 범위 밖 필지 표기(지금은 결과 시트 한 줄 `영상 범위 밖 n필지는 AI 분석 전`) — 위치 · 위계 · '영상 등록 요청' 행동을 붙일지.
 - 서버 필지 색인 관할(새 시군구)의 지도 채색이 정적 필지 층과 같은 색 규칙을 쓴다 — 줌별 불투명도 · 필지 경계선 검토.
-- 광주전남 첫 화면 좌하단 서비스 카드(해양쓰레기 · 영농관리)와 대장 결과 카드의 관계(대장을 올리면 숨김).
+- 전남광주 첫 화면 좌하단 서비스 카드(해양쓰레기 · 영농관리)와 대장 결과 카드의 관계(대장을 올리면 숨김).
 
 ## 요청
 - **core-xi**: `xi-clean/app.js onAgent` 의 `map_on` 이 `a.filter.emd_cd` 로만 지역을 바꾼다 → 이제 실리는 `a.sgg_cd`(시군구) · `a.import_id` 로 지역 전환 · 머리글(지금 '전국'으로 남음)을 맞춰 주세요. `map_arrive` 는 그대로 동작(폴리곤 · 도착 확인).
 - **core-survey**: 첫 적재 실패 `IndeterminateDatatype $5` 는 이미 고쳐진 것으로 보임(재적재 성공). `survey_parcels` 새 시군구의 용도지역 · 농업진흥 보강(V-World)이 되면 대장 표 · 필지 카드가 채워진다.
-- **core-flow / 요약**: `tests/test_summary.py::test_values_match_source_tables` 가 광주전남 card-farm 12130(17,612)에서 실패 — 여수 전역 분석 결과의 요약 대조 기준 갱신 필요(내 소유 아님).
+- **core-flow / 요약**: `tests/test_summary.py::test_values_match_source_tables` 가 전남광주 card-farm 12130(17,612)에서 실패 — 여수 전역 분석 결과의 요약 대조 기준 갱신 필요(내 소유 아님).

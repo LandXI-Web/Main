@@ -11,7 +11,7 @@
 | 로그인 폼(gj-manager) 기관 화면 여수 의심 필지 목록·지도 | 완료 | `shots/core/core-survey/yeosu-1440-01-suspects.png` · `yeosu-1440-02-detail.png` · `yeosu-390-01-suspects.png` · 녹화 `yeosu-flow.webm`(16.3초) |
 | lx-staff 결과 확인 1건 | 완료(남면 화태리 423 · '맞음' · "판정을 저장했습니다") | `yeosu-1440-04-review.png` · `yeosu-1440-05-reviewed.png` · `yeosu-390-04-review.png` |
 | 기관 조치 기록 | 완료(현장 확인 배정 → 판정 위반 → 조치 시정명령 · 농지법 제42조 · 2026.10.31) | `yeosu-1440-03-todo.png` · `yeosu-1440-06-action-form.png` · `yeosu-1440-07-action-saved.png` · `yeosu-390-02-todo.png` |
-| 보고서 docx(기관·시군구·읍면동 이름이 여수 것) | 완료 — 머리 "광주전남특별시 · 여수시 남면", 대상 "전남광주통합특별시 여수시 남면", 문서 안 '남원' 0회 | `yeosu-실태조사_초안_12130340.docx` · `yeosu-1440-08-report.png` |
+| 보고서 docx(기관·시군구·읍면동 이름이 여수 것) | 완료 — 머리 "전남광주특별시 · 여수시 남면", 대상 "전남광주통합특별시 여수시 남면", 문서 안 '남원' 0회 | `yeosu-실태조사_초안_12130340.docx` · `yeosu-1440-08-report.png` |
 | 남원(전북 · 기준) 같은 흐름 | 완료(namwon-manager: 의심 필지 → 배정 → lx-staff 결과 확인 → 판정·조치 → docx "남원시 금지면") | `namwon-*.png` · `namwon-실태조사_초안_남원시_금지면_20260929.docx` · `namwon-flow.log` |
 | 규칙 일반화 전후 의심 수 회귀표 | 아래 표(차이 사유 기록) | `tests/test_survey_nation.py` |
 | `GET /results/{set}/parcels` 첫 응답 ≤ 3초(두 지역) | 남원 **1.56초**(전 21.5초) · 여수 **0.54초**(전 3.9초) | 아래 실측 |
@@ -78,12 +78,12 @@
 
 ## Fable 에게 넘길 것
 - 기관 첫 화면에서 `의심 필지 · 할 일 · 보고서` 세 탭의 위계와 첫 탭 선택(지금은 할 일이 비면 의심 필지로 연다).
-- 시군구 여러 곳(광주전남) 고르기 위치 · 지도 점 밀도(수천 점) 표현.
+- 시군구 여러 곳(전남광주) 고르기 위치 · 지도 점 밀도(수천 점) 표현.
 - 보고서 탭의 'AI 초안'과 '문서 내려받기' 두 버튼 관계.
 
 ## 요청
 - **core-xi**: 여수 전역 작업이 `lx` 소유라 gj-manager 가 `/results/{job}/parcels`·지도 층을 읽으면 403(다른 기관의 결과). 관할 기관 배포본 별칭(published_sets) 또는 작업 tenant 를 관할 기관으로.
 - **main.py 소유자**: CORS expose 에 `x-lx-report-name` 추가(지금은 화면이 파일 이름을 자료로 다시 만든다).
-- **core-fusion**: L-* 평가에 `survey.nation.ai_operands(conn, pnus)` 사용(옛 a23_* 이름으로 채워 줌 · 계약 §2.2). 광주전남 L1 행이 이미 생겼다.
+- **core-fusion**: L-* 평가에 `survey.nation.ai_operands(conn, pnus)` 사용(옛 a23_* 이름으로 채워 줌 · 계약 §2.2). 전남광주 L1 행이 이미 생겼다.
 - **8705 개발 게이트웨이**(`survey/devapp.py` 로 띄운 옛 프로세스)가 옛 코드로 떠 있어 `survey/tests` 가 기본으로 그쪽을 친다 — 띄운 쪽이 내리거나 `LX_SURVEY_API=http://127.0.0.1:8700` 로 시험(이번 결과는 8700 기준).
 - **test_f2b_api.py 소유자**: `survey` 견적 시험에 시군구 인자 추가한 1줄 확인.

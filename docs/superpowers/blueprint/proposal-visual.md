@@ -294,7 +294,7 @@ XI맵 = **전국·해외 위성/항공/드론 정사영상을 실시간 분석�
 | 증설 계산 | `infra.js costOfNewRegion()` — **[계산·추정]** 표기 유지, 실측 옆에 따로 둔다 | 현행 |
 
 **5.3.2 기관 저장소·할당 (`produce.html?tab=tenants`)**
-- 행 = 기관(`portal.js TENANTS`: 남원 · 광주전남 · 키르기스 준비). 열 = 저장 공간(사용/할당 막대) · GPU 시간(월) · 분석 면적(km²) · 동시 작업 · 초과 정책(대기/차단/과금 표기). 데이터 격리 = 기관 폴더 `E:\Land-XI 플랫폼\02. 데이터\tenants\<id>\` 실측 `du` + 원본은 LX `raw/` 에만(ASSET_TIERS R7). 신설 `landxi/assets/data/quota.js`(할당) → 후속 DB.
+- 행 = 기관(`portal.js TENANTS`: 남원 · 전남광주 · 키르기스 준비). 열 = 저장 공간(사용/할당 막대) · GPU 시간(월) · 분석 면적(km²) · 동시 작업 · 초과 정책(대기/차단/과금 표기). 데이터 격리 = 기관 폴더 `E:\Land-XI 플랫폼\02. 데이터\tenants\<id>\` 실측 `du` + 원본은 LX `raw/` 에만(ASSET_TIERS R7). 신설 `landxi/assets/data/quota.js`(할당) → 후속 DB.
 - 기관 포털 MY 에 같은 부품(자기 사용량만)을 종이 무대로 재사용.
 
 **5.3.3 모듈형 AI 서비스 배포 제어 (`produce.html?tab=deploy`)**

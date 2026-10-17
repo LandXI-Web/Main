@@ -521,7 +521,7 @@ LX 정밀도 보드(§4.7)는 이 네 원인의 비율을 규칙·읍면동별�
 | S2-C 포털 5탭 블록 | 현황 밴드 · 결과 큐 전폭 + 배정 패널 · 지도 임베드 · 통계 · 보고서 서식 3(CSV · PDF는 3차) |
 | S2-D 대장 확장 | 건축HUB 프록시(사용자 키) → R-BLDG-01 · V-World 용도지역·GB·임상도 레이어 [미검증 → 실호출 검증] → R-GB-01 · 반입 인터페이스(farm_ledger · dev_permit · public_asset · river_permit) → R-DEV · R-PUB · R-RIV · B02 하천 점유 후보 결속 |
 | S2-E 오탐 고리 | verdict=match → 원인 코드 → `feedback` 자동 · 라벨링 큐 · `rule_stats` · LX 정밀도 보드 · `recalibrate` 제안(확인 ≥ 100건 뒤) · approvals |
-| S2-F 이식 | `mod-survey` 공통 승격 · 규칙 팩이 카드 버전에 실려 `POST /deploys` 이식 시 함께 감 · `region_profile`별 임계 오버라이드 · 광주전남 해양(구간 축 — 현장·이력 부품만) |
+| S2-F 이식 | `mod-survey` 공통 승격 · 규칙 팩이 카드 버전에 실려 `POST /deploys` 이식 시 함께 감 · `region_profile`별 임계 오버라이드 · 전남광주 해양(구간 축 — 현장·이력 부품만) |
 | S2-G 시점 확장 | J2b 비닐하우스 재추론 · 2025 드론 전역(A03) 결과가 들어오면 facts epoch 추가 → 같은 pnu 재평가 → `reopened`/`superseded` 이력 |
 
 3차(운영화)에서: 공문 서식 PDF · 새올 연계(민원 `civil-link`) · 동선 최적화(`patrol-route`) · 접근성 KWCAG · 행정망 접속 · 개인정보 영향평가.

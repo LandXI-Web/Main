@@ -6,7 +6,7 @@
 ## 항목별 한 줄 요지(확인 요청 항목 9개 · `confirm-items.json`)
 | # | 어느 화면 | 질문 한 줄 | 근거 |
 |---|---|---|---|
-| G1 | 기관 분기 | 남원 GeoVision · 전남광주 AI 플랫폼을 Land-XI 와 어떻게 다르게 할까 — ⓐ 마크·이름·색만 / ⓑ 첫 화면부터 '내 서비스' 카드 | 옛 포털 `proto/portal-login-namwon.html` `portal.html` · `brand.js`(CI 한 벌 규칙) · 남원 실제 서비스 4개(`portal-dp-nw-*.html`: 2023 생활환경 · 2025 영농관리 · 2026 도로안전 · 2027 인파관리) · 광주전남 해양쓰레기(`portal-dp-gj-marine-*.html`) · 원칙 38·48 |
+| G1 | 기관 분기 | 남원 GeoVision · 전남광주 AI 플랫폼을 Land-XI 와 어떻게 다르게 할까 — ⓐ 마크·이름·색만 / ⓑ 첫 화면부터 '내 서비스' 카드 | 옛 포털 `proto/portal-login-namwon.html` `portal.html` · `brand.js`(CI 한 벌 규칙) · 남원 실제 서비스 4개(`portal-dp-nw-*.html`: 2023 생활환경 · 2025 영농관리 · 2026 도로안전 · 2027 인파관리) · 전남광주 해양쓰레기(`portal-dp-gj-marine-*.html`) · 원칙 38·48 |
 | U1 | Land-XI | 영상 올리기 — 파일만 끌어 놓으면 해상도·촬영·범위·좌표계는 파일에서 읽고 확인만 | 3차 답 "tif 올리면 알아서 판독" · 원칙 49 · D1 확인(2차) |
 | U2 | 기관 분기 | 기관의 영상 올리기 · LX 공유 영상 불러오기 — 직원 화면과 같은 모양 | 2차 D1-갈림길 ⓑ "기관 영상 허용 + LX 공유 영상 불러오기" · 원칙 43 |
 | A1 | Land-XI | 결재 한 건 = 누가·무엇을·기준 표시, 누를 것은 승인/반려(+사유 한 줄) | 2차 D2-갈림길 ⓐ · 3차 R-D2-갈림길 ⓑ(표시만) · 원칙 46·49 · 옛 `old-D2-publish-admin` |
@@ -20,7 +20,7 @@
 | 경로 | 내용 |
 |---|---|
 | `mock/mock.css` | 시안 공통(키트 import · 앱 틀 · 지도 바탕 · 설명 번호표 · 기관 CI 변수) |
-| `mock/01a-*.html` `01b-*.html` | G1 — ⓐ 남원·광주전남 / ⓑ 남원·광주전남 |
+| `mock/01a-*.html` `01b-*.html` | G1 — ⓐ 남원·전남광주 / ⓑ 남원·전남광주 |
 | `mock/02-staff-upload.html` `02-gov-upload.html` | U1 · U2 |
 | `mock/03-admin-approve.html` (`?reject`) | A1 — 기본 / 반려 사유 칸 열림 |
 | `mock/04-now.html` `04-wait.html` `04-empty.html` `04-error.html` | S1 — 지금 모음 / 기다리는 중 / 비었을 때 / 문제 |
@@ -31,7 +31,7 @@
 | `confirm-items.json` | 확인 요청 항목 9개(형식은 design-r3 과 같음 · t 앞에 [Land-XI]/[기관 분기]/[둘 다]) |
 
 ## 시안 이름 규칙
-- `shots/now-…png` = 지금(기존 캡처를 그대로 복사 · `now-4-various` `now-L1-three` 는 기존 캡처를 모은 것) · `shots/new-…png` = 바뀐 뒤(시안) · `…-three.png` = 세 장 나란히(Land-XI · 남원 · 광주전남).
+- `shots/now-…png` = 지금(기존 캡처를 그대로 복사 · `now-4-various` `now-L1-three` 는 기존 캡처를 모은 것) · `shots/new-…png` = 바뀐 뒤(시안) · `…-three.png` = 세 장 나란히(Land-XI · 남원 · 전남광주).
 - 시안 안 노란 번호표는 설명용이며 실제 화면에는 없다. 왼쪽 아래 검은 도장이 어느 플랫폼 화면인지 말한다.
 
 ## 확인 못 한 것(정직)

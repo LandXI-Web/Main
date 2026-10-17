@@ -90,7 +90,7 @@ const workspaceSkeleton = (spec) => {
 /* ── 찍는다 ────────────────────────────────────────────────────────── */
 const onlyQueue = process.argv.includes('--queue');
 /* --only=<조각> : 그 조각이 든 배포본만 다시 찍는다.
-   광주전남 두 배포본은 생성기가 찍은 뒤 **손으로 넓혀 커밋**돼 있다(인라인 CSS·모듈).
+   전남광주 두 배포본은 생성기가 찍은 뒤 **손으로 넓혀 커밋**돼 있다(인라인 CSS·모듈).
    전부 다시 찍으면 그 작업이 지워지므로, 남원만 찍을 때 `--only=dp-nw-` 를 쓴다.
    장기적으로는 그 자리가 studio.js 의 블록 종류로 올라가야 하고, 그때 이 옵션은 필요 없다. */
 const onlyArg = (process.argv.find((a) => a.startsWith('--only=')) || '').slice(7);

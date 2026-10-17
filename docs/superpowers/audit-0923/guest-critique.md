@@ -132,7 +132,7 @@
 ### 3.9 활용 서비스 얼굴 판 → 실측이 보이는 기관 카드 — **M**
 - **무엇**: `site/platform.html` 기관 카드의 검은 사각형 자리에 **그 기관의 배포본 실측 줄**(`serviceCards(tenant)` → `measures[]` "비닐하우스 9,664동 · 2025-10") 과 **기관 경계 미니 지도**(`sigungu.geojson` / `namwon-emd.geojson` 을 MapLibre 또는 SVG 패스로, 채움 `--tint-1`, 결과 있는 읍면동만 청록 점). 칩 중복(전남광주 `해양쓰레기 · 2025 / · 2027`)은 배포본 연도 병기(`2025–2027`)로 한 칩.
 - **묶인 기존 기능**: `portal.js serviceCards()` · `brand.js themeOf()` · `emblems.js` · `geo/sigungu.geojson` · `namwon-emd.geojson`.
-- **왜 GeoAI**: 기관 입구가 "어디에 무엇이 깔렸나"를 지도로 말하면 이식(카드 구조 §1)이 화면에서 보인다. 남원 3읍면에 점이 있고 광주전남 해안에 점이 있으면 손님은 두 층을 이해한다.
+- **왜 GeoAI**: 기관 입구가 "어디에 무엇이 깔렸나"를 지도로 말하면 이식(카드 구조 §1)이 화면에서 보인다. 남원 3읍면에 점이 있고 전남광주 해안에 점이 있으면 손님은 두 층을 이해한다.
 
 ### 3.10 사례 읽기 화면에 증거 쌍 — **M**
 - **무엇**: `site/usecase.html` 읽기 상단에 **EVIDENCE-PAIR**(법전 §3 명명 레이아웃) — 좌 `crops.js` 실크롭 2장(`clean` vs 탐지 오버레이, 캡션 conf · cls · gsd), 우 `results.js stats`(count · classes · confMean, 단위 · 기준시점 필수). 시드 KPI(75 % · 8.4→3.1일)에는 `시연` 칩을 붙이거나 걷는다.

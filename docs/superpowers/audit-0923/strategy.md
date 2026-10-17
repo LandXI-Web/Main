@@ -140,12 +140,12 @@
    → 아이디 · 비밀번호(채웠는지만) → portal.html 내 서비스: 밴드 4(5 · 2 · 3 · 1) + 카드 덱 5(2023 → 2027)
    → 이 서비스 펴기 → portal-dp-nw-<svc>.html 작업공간: 현황 · 분석 결과 · 지도 · 통계 · 보고서 (같은 파일 안 탭)
    레일: MY · 로그아웃  ← 둘뿐
-   푸터 Family Site → 광주전남특별시 → portal-dp-gj-marine-25.html (다른 기관 작업공간이 그대로 열림)
+   푸터 Family Site → 전남광주특별시 → portal-dp-gj-marine-25.html (다른 기관 작업공간이 그대로 열림)
 ```
 - 링크 10 + 5 전부 200. 작업공간 안에 LX 화면 링크 0(경계 ✔).
 - ✕ **P0 — 세션에 기관 · 역할이 없다.** `portal-login.js:72` 는 `lx_logged_in=1`만 저장. `shell.js ROLE` 은 `lx_role` 없음 → `DEFAULT_ROLE='admin'`. 그래서 기관 사용자가 `ximap.html` · `analysis-ai.html` · `dashboard.html` 을 치면 관문이 **LX 관리자 운영 현황**으로 보낸다(`11-portal-user-on-ximap.png` — 남원 담당자가 LX 결재 대기 · 인프라 · 카드 발행 관리 레일을 본다). "지자체에서는 나만의 AI 시스템인 것처럼"이 주소 한 줄에 무너진다.
 - ✕ **기관 레일이 비었다.** `mountShell`이 LX admin 역할로 레일을 그린 뒤 `portal-ui.js:79`가 `TENANTS.menus`(portal · analysis · map · support)로 걸러낸다 — admin 레일에는 analysis · map · support가 없으므로 남는 것이 MY · 로그아웃뿐. `'내 서비스'`로 바꿔 세우려던 항목(`svcNav`)도 없어서 안 선다. 작업공간 안에서 홈으로 돌아가는 길은 마스트 경로(`내 서비스 /`)와 레일 마크뿐.
-- ✕ **기관 간 누출** — 셸 푸터 `FAMILY`(`shell.js:70`)가 `portal-dp-gj-marine-25.html`을 직접 가리키고, 그 파일의 관문은 `lx_logged_in`만 본다 → 남원 로그인으로 광주전남 작업공간이 열린다.
+- ✕ **기관 간 누출** — 셸 푸터 `FAMILY`(`shell.js:70`)가 `portal-dp-gj-marine-25.html`을 직접 가리키고, 그 파일의 관문은 `lx_logged_in`만 본다 → 남원 로그인으로 전남광주 작업공간이 열린다.
 - △ 첫 서비스(생활환경 2023 · 운영)의 작업공간 현황이 "판독 결과 — 분석 실행 전입니다 · 분포를 그릴 결과가 없습니다"(`10-portal-workspace.png`). 정직하지만 **운영 중 서비스의 첫 탭이 빈 판**이다. 카드 덱은 '운영 · 시 전역 752 km²'라 했다. 운영인데 결과가 없다는 모순은 데이터(`DEPLOYS.status`)와 `evidenceOf()`가 서로 말이 다른 것 — 결정 Q2.
 - △ 포털 지도 탭 · 분석 결과 탭은 LX XI맵과 다른 축소판(portal-ui 블록 12종). "기관 포털은 골격 한 벌"(F7)이라 맞지만, **지도 위 결과 표현 문법이 LX 화면과 다르다** — 같은 판독 결과가 LX에서는 청록 폴리곤, 포털에서는 표와 막대로 보인다(§4 S1).
 
@@ -160,7 +160,7 @@
 | **① 게스트 공개** | `scrub/index.html` | 메인 마스트(`system.css`), 레일 없음 | 4 | `scrub/index.html` · `site/platform.html` · `site/notice.html(?id=)` · `site/usecase.html(?id=)` |
 | **② LX 직원 플랫폼** | `login.html`(staff) → `ai-project.html` | `shell.js` 레일 7 | 22 | 대시보드 1 · 데이터 관리 1(4탭) · 프로젝트 3(`ai-project` `-create` `-label`) · 분석 서비스 1(4탭) · 지도 서비스 4(`ximap` `map-drift` `stats-standard` `report-standard`) · 서비스 지원 5 · MY 1 · 인증 6(`login` `signup` `find-id` `find-id-result` `find-password` `-result`) |
 | **③ LX 관리자 사이트** | `login.html`(admin) → `admin-home.html` | 같은 `shell.js`, `data-site=admin`, 레일 6 | 12 | 운영 현황 1 · 데이터 관리(공유) · 카드 발행 4(`admin-publish` `ai-card` `ai-card-edit` `ai-publish-create`) · 생산 관리 1(6탭) · 서비스 관리 5 · MY(공유) |
-| **④ 기관 포털 × n** (지금 2) | `portal-login-<기관>.html` → `portal.html` | 같은 골격 + CI 교체, 레일은 `TENANTS.menus` | 남원 7 · 광주전남 3 | 남원: `portal-login-namwon` · `portal(홈)` · `portal-dp-nw-{living-23, farm-25, road-26, crowd-27, change}` / 광주전남: `portal-login-gwangju-jeonnam` · `portal-dp-gj-marine-{25, 27}`(옛 골격) |
+| **④ 기관 포털 × n** (지금 2) | `portal-login-<기관>.html` → `portal.html` | 같은 골격 + CI 교체, 레일은 `TENANTS.menus` | 남원 7 · 전남광주 3 | 남원: `portal-login-namwon` · `portal(홈)` · `portal-dp-nw-{living-23, farm-25, road-26, crowd-27, change}` / 전남광주: `portal-login-gwangju-jeonnam` · `portal-dp-gj-marine-{25, 27}`(옛 골격) |
 | ⑤ 검토 허브(내부) | `review/index.html` | 자체 | 4 + 갤러리 186장 | 발주자 결정용 · 제품 아님 |
 
 영업용 계정은 ②의 부분집합(레일 4)이라 사이트를 따로 세지 않았다 — 그러나 **첫 화면 · 채움 CTA · 서비스 지원 노출**이 다르므로 §4 · Q5 에서 "영업용 시연 모드"로 다룬다.
@@ -216,7 +216,7 @@ scrub ──로그인──▶ login ──┬─ staff ─▶ ai-project ─▶
 - **근거**: redesign-design §6.7 타임 스크럽 · Palantir P4 · Roboflow 슬라이더 동기 · scroll-craft 엔진 계약(lerp 0.12 · deadband).
 
 ### S4 · 인계(Handoff) — 한 대의 카메라가 게스트에서 기관까지 내려간다
-- **무엇**: 메인 필름은 남원 인계 판에서 이미 MapLibre 판을 마운트한다(`_scrub.json` maps 1→2). 이 카메라를 **끊지 않는다**: 필름 뒤 3칸의 '활용 서비스' 카드 호버 → 판이 그 기관(남원 · 광주전남)으로 flyTo · 그 기관의 실측 결과가 S1으로 도착 → 클릭 → `portal-login-<기관>.html`의 얼굴판이 **같은 카메라 프레임**으로 이어진다(지금은 엠블럼 SVG) → 로그인 → 카드 덱 호버 시 판이 그 배포본 범위로 → 지도 탭. 로그인은 "컷"이 아니라 "착지"가 된다.
+- **무엇**: 메인 필름은 남원 인계 판에서 이미 MapLibre 판을 마운트한다(`_scrub.json` maps 1→2). 이 카메라를 **끊지 않는다**: 필름 뒤 3칸의 '활용 서비스' 카드 호버 → 판이 그 기관(남원 · 전남광주)으로 flyTo · 그 기관의 실측 결과가 S1으로 도착 → 클릭 → `portal-login-<기관>.html`의 얼굴판이 **같은 카메라 프레임**으로 이어진다(지금은 엠블럼 SVG) → 로그인 → 카드 덱 호버 시 판이 그 배포본 범위로 → 지도 탭. 로그인은 "컷"이 아니라 "착지"가 된다.
 - **어디에**: `scrub-tail.js`(3칸) · `site/platform.html` · `portal-login.js` 얼굴판 · `portal.html` 카드 덱 · LX 로그인 인셋(Leg 01 루프 → 고른 계정의 집으로 카메라가 내려가는 240ms) · 대시보드 판.
 - **데이터**: `PROFILES` 지역 경계 · `DEPLOYS.region` · `evidenceOf()` · `js/camera.js`(dive 스파이크의 카메라 모듈 재사용).
 - **근거**: taste-profile §5-4("화면 전환이 같은 지도의 카메라 이동인가") · Awwwards M03/M08("Web3GL feel의 90%") · 사용자 원문 "지도는 한 번만 만들고 페이지 전환 대신 카메라가 이동".

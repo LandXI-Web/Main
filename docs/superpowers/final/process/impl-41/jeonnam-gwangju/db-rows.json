@@ -1,0 +1,135 @@
+[
+ {
+  "table": "tenants",
+  "column": "name",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "tenant_users",
+  "column": "name",
+  "rows_matching": 2,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 2
+ },
+ {
+  "table": "deploys",
+  "column": "name",
+  "rows_matching": 2,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 2
+ },
+ {
+  "table": "deploys",
+  "column": "region_name",
+  "rows_matching": 2,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 2
+ },
+ {
+  "table": "jobs",
+  "column": "label",
+  "rows_matching": 3,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 3
+ },
+ {
+  "table": "feedback",
+  "column": "note",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "tenant_brand",
+  "column": "short",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "tenant_brand",
+  "column": "intro",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "approvals",
+  "column": "payload",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "analysis_requests",
+  "column": "meta",
+  "rows_matching": 1,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1
+ },
+ {
+  "table": "agent_runs",
+  "column": "answer_md",
+  "rows_matching": 112,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 112
+ },
+ {
+  "table": "agent_tool_calls",
+  "column": "args",
+  "rows_matching": 3,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 3
+ },
+ {
+  "table": "agent_confirms",
+  "column": "args",
+  "rows_matching": 41,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 41
+ },
+ {
+  "table": "survey_emd",
+  "column": "top5",
+  "rows_matching": 26,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 26
+ },
+ {
+  "table": "survey_sgg",
+  "column": "sido",
+  "rows_matching": 4,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 4
+ },
+ {
+  "table": "survey_findings",
+  "column": "addr",
+  "rows_matching": 35933,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 35933
+ },
+ {
+  "table": "survey_parcels",
+  "column": "addr",
+  "rows_matching": 748041,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 748041
+ },
+ {
+  "table": "national_cells_river_old",
+  "column": "sido",
+  "rows_matching": 623,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 623
+ },
+ {
+  "table": "national_cells",
+  "column": "sido",
+  "rows_matching": 1246,
+  "rows_with_preexisting_new_name": 0,
+  "rows_updated": 1246
+ }
+]

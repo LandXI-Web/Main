@@ -68,7 +68,7 @@
 - 치수: 레일 72px · 마스트헤드 64px · 푸터 36px · 레일 라벨 14px. 법전 §3과 맞다(`result.json pages.shellMetrics`).
 - 법전: 셸을 쓰는 표본 화면(운영 현황 · 프로젝트 · XI맵 · 마이페이지)에서 그림자 0, 라운드 0, 그라디언트 0, 유리 0, 14px 미만 0.
 - MY 플라이아웃: `role="group"`, 호버·포커스로 열리고 ↓→ 방향키로 들어가 Esc로 닫힌다(`shell.js:243-267`). 로그아웃하면 `scrub/index.html` 로 간다(`result.json my.staff.afterLogout`).
-- Family Site: `<details>` 에 실제 링크 3개(Land-XI 소개 · 남원시 · 광주전남)가 있다(`shell-family-open.png`). 원본 7링크 가운데 외부 4개가 빠졌지만 스펙("실제로 갈 수 있는 곳만", `shell.js:66-74`)과는 맞다.
+- Family Site: `<details>` 에 실제 링크 3개(Land-XI 소개 · 남원시 · 전남광주)가 있다(`shell-family-open.png`). 원본 7링크 가운데 외부 4개가 빠졌지만 스펙("실제로 갈 수 있는 곳만", `shell.js:66-74`)과는 맞다.
 
 | ID | 등급 | 내용 | 증거 |
 |---|---|---|---|

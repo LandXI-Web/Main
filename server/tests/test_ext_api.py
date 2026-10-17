@@ -192,7 +192,7 @@ def test_scope_counts_match_ledger_and_org(tok, keys):
     assert lx["imagery"] and lx["imagery"][0]["attribution"]
     for bad in BAD:
         assert bad not in json.dumps(feats[:50], ensure_ascii=False) and bad not in json.dumps(lx, ensure_ascii=False)
-    # 범위 밖 = 404(광주전남 · 밖 bbox · 밖 도형)
+    # 범위 밖 = 404(전남광주 · 밖 bbox · 밖 도형)
     assert httpx.get(X + "/services/farm/results", headers=K(jb), params={"region": "12110"}, timeout=T).status_code == 404
     assert httpx.get(X + "/services/farm/results", headers=K(jb), params={"bbox": "126.9,34.9,127.0,35.0"}, timeout=T).status_code == 404
     poly = {"type": "Polygon", "coordinates": [[[126.9, 34.9], [127.0, 34.9], [127.0, 35.0], [126.9, 35.0], [126.9, 34.9]]]}
@@ -208,7 +208,7 @@ def test_scope_counts_match_ledger_and_org(tok, keys):
     assert old.status_code == 200 and all(f["properties"]["year"] == 2023 for f in old.json()["features"])
     cov = httpx.get(X + "/services/farm/coverage", headers=K(jb), timeout=T).json()
     assert {x["year"] for x in cov["items"]} >= {2023, 2025} and all(x["region"]["code"].startswith("52") for x in cov["items"])
-    # 다른 시도 한 곳 — 광주전남 해양쓰레기(여수) = 기관 화면과 같은 수
+    # 다른 시도 한 곳 — 전남광주 해양쓰레기(여수) = 기관 화면과 같은 수
     gk, _ = keys(card="card-marine", scope={"codes": ["12"]}, sources=["lx"])
     gf, glx, _p = _all(gk, "marine")
     gorg = _org_download(tok, "gj", "card-marine")

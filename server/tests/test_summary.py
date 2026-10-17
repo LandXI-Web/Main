@@ -119,7 +119,7 @@ def test_values_match_source_tables(live, tok):
 
 
 def test_gwangju_marine_single_state(live, tok):
-    """광주전남 해양쓰레기 = 한 항목 · 한 단계 · 한 수(실결과 행 수) — LX · 기관 · 게스트 · 거르기 모두 같다."""
+    """전남광주 해양쓰레기 = 한 항목 · 한 단계 · 한 수(실결과 행 수) — LX · 기관 · 게스트 · 거르기 모두 같다."""
     with adm() as c:
         n = c.execute("SELECT count(*) FROM detections WHERE job_id='results/lx/yeosu-marine-2025-aerial'").fetchone()[0]
     seen = []

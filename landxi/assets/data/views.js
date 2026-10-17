@@ -112,9 +112,9 @@ export const VIEWS = {
   ],
   'dp-gj-marine-25': [
     { id: 'v-marine-class', tab: 'stats', title: '쓰레기 종류별 건수',
-      src: 'result', by: 'class', measure: 'count', viz: 'bar', from: '광주전남특별시 해양항만과' },
+      src: 'result', by: 'class', measure: 'count', viz: 'bar', from: '전남광주특별시 해양항만과' },
     { id: 'v-marine-time', tab: 'stats', title: '연도별 수거 대상 추이',
-      src: 'result', by: 'time', measure: 'count', viz: 'line', from: '광주전남특별시 해양항만과' },
+      src: 'result', by: 'time', measure: 'count', viz: 'line', from: '전남광주특별시 해양항만과' },
   ],
 
   /* ── 27년 고도화 — Geo-AI 와 다른 요소들 ─────────────────────────

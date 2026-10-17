@@ -3,7 +3,7 @@
 확인 대장 13차 분기-2(1차 결과는 '결과 설명서'에서 확인) · 분기-3 ⓒ의 1단(모든 기관의 가벼운 칸) · 8차 API-형식 ⓐ(GeoJSON · 필지 엑셀 · 요약) ·
 원칙 38(부서는 자기 서비스만) · 39(계정 범위 밖 0 — 서버가 자른다) · 59(내려받기는 동의 · 범위 · 기록) · 72(LX 관리자는 보고 돕는다).
 실행: python -m pytest server/tests/test_impl3_spaces.py -q   (게이트웨이 :8700 이 떠 있어야 한다 — 판 생성 논리 시험은 게이트웨이 없이도 돈다)
-운영 DB 를 쓰므로 시험이 만든 것(임시 부서 사용자 · 배정 · 동의 · 내려받기 기록 · 시험 판)은 끝나면 지운다. 지역 고정값 대신 두 기관(남원 · 광주전남)을 같이 본다.
+운영 DB 를 쓰므로 시험이 만든 것(임시 부서 사용자 · 배정 · 동의 · 내려받기 기록 · 시험 판)은 끝나면 지운다. 지역 고정값 대신 두 기관(남원 · 전남광주)을 같이 본다.
 """
 import asyncio
 import datetime as dt
@@ -172,7 +172,7 @@ def test_scope_clip_points():
     """모양으로 판정하는 결과(읍면동 · 필지 번호 없음 — 바다 등): 관할 안만 남는다."""
     from landxi_api import spaces as SP
     pts = [{"id": 1, "x": 127.39, "y": 35.41},    # 남원시 안
-           {"id": 2, "x": 127.70, "y": 34.73},    # 여수 앞바다(광주전남 연안)
+           {"id": 2, "x": 127.70, "y": 34.73},    # 여수 앞바다(전남광주 연안)
            {"id": 3, "x": 126.98, "y": 37.56}]    # 서울(둘 다 관할 밖)
     assert SP._keep_points("namwon", pts) == [1]
     assert SP._keep_points("gwangju-jeonnam", pts) == [2]
@@ -181,7 +181,7 @@ def test_scope_clip_points():
 
 
 def test_other_tenant_guide_and_download_are_absent(tok):
-    """남원은 광주전남의 해양쓰레기를 · 광주전남은 남원의 영농을 열 수도 받을 수도 없다(없는 서비스 = 404)."""
+    """남원은 전남광주의 해양쓰레기를 · 전남광주은 남원의 영농을 열 수도 받을 수도 없다(없는 서비스 = 404)."""
     _consent(tok["namwon"])
     _consent(tok["gj"])
     for key, card in (("namwon", "card-marine"), ("gj", "card-farm"), ("gj", "card-living")):
@@ -208,7 +208,7 @@ def test_geojson_only_inside_scope(tok):
         assert not any(k in p for p in props for k in ("job_id", "shard_id", "chip_edge"))      # 내부 값 0
         if code:
             assert all((p["parcel"] or code).startswith(code) for p in props)
-    # 남원 결과 번호는 광주전남 파일에 하나도 없다(서로의 결과 0)
+    # 남원 결과 번호는 전남광주 파일에 하나도 없다(서로의 결과 0)
     nw = {f["id"] for f in httpx.get(B + "/spaces/me/guides/card-farm/download?fmt=geojson", headers=H(tok["namwon"]), timeout=300).json()["features"]}
     gj = {f["id"] for f in httpx.get(B + "/spaces/me/guides/card-marine/download?fmt=geojson", headers=H(tok["gj"]), timeout=300).json()["features"]}
     assert nw and gj and not (nw & gj)

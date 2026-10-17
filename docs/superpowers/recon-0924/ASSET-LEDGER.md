@@ -245,7 +245,7 @@
 | `portal-dp-nw-road-26` 남원 도로 | OBB 포트홀 클래스(B11), 맨홀·hole 학습셋(D08) — **좌표 없음** | 갤러리·모델 카드만 가능. 지도 결과는 없음 |
 | `portal-dp-nw-living-23` 남원 생활 현안 | OBB 6클래스(B11: 폐가·소각장·석면·쓰레기), 대구경북 6클래스(D05) — EXIF 확인 필요 | B11 EXIF가 있으면 포인트 가능 |
 | `portal-dp-nw-crowd-27` 인파 | **실데이터 없음**(AI Hub 71368도 좌표 없음) | "예시" 표기 또는 제외 |
-| `portal-dp-gj-marine-25·27` 광주전남 해양 | A06·A07·B13(집하장 2025.4, 수심) | 충분 |
+| `portal-dp-gj-marine-25·27` 전남광주 해양 | A06·A07·B13(집하장 2025.4, 수심) | 충분 |
 | 하천(cleanriver 연계) | A05·B02 | 충분, 운영 중 서비스와 동일 데이터 |
 | `portal-login-namwon`, `-gwangju-jeonnam` | 기관 CI | – |
 

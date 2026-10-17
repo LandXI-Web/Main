@@ -78,7 +78,7 @@ def test_public_read_namwon(live):
 
 def test_public_read_gwangju_and_unknown(live):
     j = httpx.get(B + "/brand/gwangju-jeonnam", timeout=30).json()
-    assert [s["card"] for s in j["services"]] == ["card-marine"]                       # 광주전남: 해양쓰레기
+    assert [s["card"] for s in j["services"]] == ["card-marine"]                       # 전남광주: 해양쓰레기
     assert j["services"][0]["year"] == 2025
     for t in ("lx-demo", "lx", "nope-org", "UPPER"):
         assert httpx.get(B + f"/brand/{t}", timeout=30).status_code == 404

@@ -218,7 +218,7 @@ ${head('LX 관리자', '배포', adminTabs(1, '사용 현황'))}
 <section class="t-card ld-card" aria-label="기관 공유">
 <div class="ld-h"><h2>기관 공유<small class="ld-sub">승인된 서비스 ${V.services.length} · 기관 ${V.orgs.length}</small></h2><span class="df-ver">체크를 바꾸면 바로 그 기관 '서비스 선택'에 나타나거나 사라집니다</span></div>
 <table class="df-tbl df-tbl--matrix"><thead><tr><th>서비스</th>${cols}<th></th></tr></thead><tbody>${rows}</tbody></table>
-<p class="df-note"><span>광역 기관은 체크하면 소속 시군구 중 기관 계정이 있는 곳까지 함께 보입니다(광주전남 · 경작·휴경은 지금 4곳).</span> <span>공유를 거두면 기관 화면에서 사라지고 결과 · 이력은 LX가 보관합니다.</span> <span>기관 계정이 없는 지역의 결과(증평군 · 함양군 등)는 계정이 생기면 여기서 체크합니다.</span></p>
+<p class="df-note"><span>광역 기관은 체크하면 소속 시군구 중 기관 계정이 있는 곳까지 함께 보입니다(전남광주 · 경작·휴경은 지금 4곳).</span> <span>공유를 거두면 기관 화면에서 사라지고 결과 · 이력은 LX가 보관합니다.</span> <span>기관 계정이 없는 지역의 결과(증평군 · 함양군 등)는 계정이 생기면 여기서 체크합니다.</span></p>
 </section>`;
   return shell(o, { title: 'LX 관리자 · 기관 공유(2차)', desc: '배포-5 기관 공유 = 서비스별 기관 체크 한 표 · 공유 상태 표 없음 · 사용 현황으로 잇기', role: 'admin', menu: ADMIN_MENU, current: '배포', body });
 }

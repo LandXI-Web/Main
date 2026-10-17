@@ -162,7 +162,7 @@ test.describe('안내 문구(S8)', () => {
     await expect(page.locator('#say')).toContainText('portal-dp-gj-marine-25.html은 다른 기관의 작업공간입니다');
     await expect(page).toHaveURL(/portal\.html$/);
   });
-  test('광주전남 세션이 남원 홈을 두드리면 광주전남 홈으로(타 기관 누출 0 — 반대 방향)', async ({ page }) => {
+  test('전남광주 세션이 남원 홈을 두드리면 전남광주 홈으로(타 기관 누출 0 — 반대 방향)', async ({ page }) => {
     const urls = navLog(page);
     await bootTenant(page, 'proto/portal.html', 'gwangju-jeonnam');
     expect(fileOf(page.url())).toBe(TENANT_HOME['gwangju-jeonnam']);

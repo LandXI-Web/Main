@@ -1,6 +1,6 @@
 # fix-xi-live — XI맵 실시간 소범위 추론(압축 재생이 아닌 실제 경로)
 
-**배경(평가 P1):** XI맵 '이 범위 분석'은 '실제 18분 · 12초로 압축' 재생이지 실시간이 아니다. Hyper Performance 는 '전역 추론이 지도에 차오르는 체감'으로 증명해야 한다(메모리 vision-motto). 또 XI맵 여수(광주전남)는 '아직 결과가 없습니다'로 실제 보유 결과와 어긋난다.
+**배경(평가 P1):** XI맵 '이 범위 분석'은 '실제 18분 · 12초로 압축' 재생이지 실시간이 아니다. Hyper Performance 는 '전역 추론이 지도에 차오르는 체감'으로 증명해야 한다(메모리 vision-motto). 또 XI맵 여수(전남광주)는 '아직 결과가 없습니다'로 실제 보유 결과와 어긋난다.
 
 ## 소유 파일
 - `server/landxi_api/jobs.py` · `server/workers/scheduler.py` · `server/workers/gpu_worker.py` · `server/workers/tiling.py` · `server/workers/postprocess.py` · **신설** `server/tests/test_live_infer.py`
@@ -19,8 +19,8 @@
 ## 완료 조건
 - 로그인 폼(`lx-staff`) → XI맵 → 읍면동 선택 → 실추론 시작 → 결과가 지도에 차오르는 20s 이하 영상(GPU 한 장, `nvidia-smi` 로그 동봉).
 - 같은 작업 id 가 LX 관리자 화면 작업 목록에 보임(일원화 확인 — 화면에 id 노출은 금지).
-- 광주전남 담당자·직원으로 XI맵 여수 대표 수치 = summary 값.
-- `forbidden.mjs` xi-clean(직원·광주전남) '지어낸 용어' 0 · 콘솔 오류 0 · `server/tests` 통과.
+- 전남광주 담당자·직원으로 XI맵 여수 대표 수치 = summary 값.
+- `forbidden.mjs` xi-clean(직원·전남광주) '지어낸 용어' 0 · 콘솔 오류 0 · `server/tests` 통과.
 
 ## 공통 규칙 (모든 정비 작업)
 - **시작 전:** `E:/Land-XI 플랫폼/CLAUDE.md` 전체 + §5 기록(메모리 `landxi-quality-bar.md`·`landxi-open-items.md`·`landxi-gpu-power.md`, 최종 명세 `docs/superpowers/final/LANDXI-FINAL-SPEC.md` §3·§4·§5)을 읽는다. 보고 첫 줄 = `브리핑 확인: (이 작업에 걸리는 규칙 3개)`.
@@ -32,5 +32,5 @@
 - **숫자 한 출처:** 대표 수치는 `GET /api/v1/summary`(계약: `fix-server-summary.md` §계약) 에서만 읽는다. 화면에 숫자를 적어 넣지 않는다. 같은 이름 = 같은 값, 다른 값이면 다른 이름.
 - **지역 하드코딩 금지**(namwon·yeosu 등 문자열을 js/html 에 새로 넣지 말 것). 남원은 예시 지역.
 - **GPU:** 추론은 게이트웨이 작업 대기열로만, 동시 고부하 GPU ≤ 1. Ollama·vLLM 종료 금지.
-- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 광주전남 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
+- **기동·확인:** `powershell -File "E:/Land-XI 플랫폼/01. 디자인/server/start-landxi.ps1"`. 확인은 로그인 폼으로만(세션 주입 금지). 용어 검사: `node "E:/Land-XI 플랫폼/01. 디자인/landxi/v3/kit/lint/forbidden.mjs" --login <계정> <url…>` (계정: `lx-staff` · `lx-admin` · `lx-sales` · `namwon-manager@namwon` · 전남광주 담당자 `gj-manager@<기관 id>` · 해외 기관 계정은 `GET /api/v1/auth/tenants` 로 확인, 게스트는 `--login` 없이). 비밀번호는 env `LX_PW`(기본 서버 .env).
 - **보고서:** `docs/superpowers/final/fix/<id>-report.md` — 바꾼 파일, 전/후 스크린샷(1440·390) 경로, forbidden 결과, 남은 것, `Fable 에게 넘길 것`, `요청`.

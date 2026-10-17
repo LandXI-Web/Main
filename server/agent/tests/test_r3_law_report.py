@@ -245,7 +245,7 @@ def _ctx(p, lang="ko"):
 
 @pytest.fixture()
 def visible(monkeypatch):
-    """실태조사 결과가 있는 시군구 = 광주전남 강진·여수 · 전북 남원(관할 안 해남·나주·담양·순창은 결과 없음)."""
+    """실태조사 결과가 있는 시군구 = 전남광주 강진·여수 · 전북 남원(관할 안 해남·나주·담양·순창은 결과 없음)."""
     rows = {"gwangju-jeonnam": [{"sgg_cd": KANGJIN, "name": "강진군"}, {"sgg_cd": "12130", "name": "여수시"}],
             "namwon": [{"sgg_cd": NAMWON, "name": "남원시"}]}
 

@@ -10,7 +10,7 @@
 |---|---|---|
 | 기관 목록 | https://gov.land-xi.dev/ | 기관 카드 → 그 기관 주소로 |
 | 남원 메인 · 로그인 | https://namwon.land-xi.dev/ | 오른쪽 로그인(기존 아이디 · 비밀번호는 대화로) → 서비스 선택 → 영농관리 → 결과 보기 |
-| 광주전남 메인 · 로그인 | https://gwangju-jeonnam.land-xi.dev/ | 로그인하면 해양쓰레기 대시보드로 바로(서비스 하나) · 시·군·구 고르기 |
+| 전남광주 메인 · 로그인 | https://gwangju-jeonnam.land-xi.dev/ | 로그인하면 해양쓰레기 대시보드로 바로(서비스 하나) · 시·군·구 고르기 |
 | 기관 정보 고치기(기관 관리자) | 로그인 뒤 왼쪽 메뉴 '기관 정보' | 색 · 머리 글 바꾸고 저장 → '메인 열기' |
 | 기관 정보 고치기(LX 관리자) | https://admin.land-xi.dev/ → 기관 | 기관 카드의 '기관 정보' |
 | 옛 모양 주소 | https://gov.land-xi.dev/namwon/ | 남원 주소로 넘어간다 |
@@ -25,25 +25,25 @@
 | | 지금(바뀌기 전) | 바뀐 뒤 |
 |---|---|---|
 | 기관 첫 주소 | ![](img/before-gov-first-login-1440.png) Land-XI 로그인 + 기관 고르기 | ![](img/after-gov-list-1440.png) 기관 목록 → 기관 주소 |
-| 로그인 직후 첫 화면(남원 · 광주전남 나란히) | ![](img/pair-before-first-1440.png) 기관마다 다른 지도 화면 · 머리 'LAND-XI' | ![](img/pair-after-dash-1440.png) 같은 틀의 서비스 대시보드 · 머리에 기관 마크 |
-| 기관 메인(남원 · 광주전남 나란히) | 없음(로그인 전 소개 없음) | ![](img/pair-after-main-1440.png) ![](img/pair-after-main-390.png) |
+| 로그인 직후 첫 화면(남원 · 전남광주 나란히) | ![](img/pair-before-first-1440.png) 기관마다 다른 지도 화면 · 머리 'LAND-XI' | ![](img/pair-after-dash-1440.png) 같은 틀의 서비스 대시보드 · 머리에 기관 마크 |
+| 기관 메인(남원 · 전남광주 나란히) | 없음(로그인 전 소개 없음) | ![](img/pair-after-main-1440.png) ![](img/pair-after-main-390.png) |
 | 서비스 선택(남원) | 없음 | ![](img/after-select-namwon-1440.png) ![](img/after-select-namwon-390.png) · 내가 보낸 요청 ![](img/after-select-sent-1440.png) |
 | 기관 로그인의 계정 찾기 · 신청 | Land-XI 로그인에만 | ![](img/after-main-account-help-1440.png) |
-| 서비스 대시보드 | 없음 | 영농관리 ![](img/after-dash-namwon-1440.png) · 첫 결과 전(도로안전) ![](img/after-dash-namwon-road-1440.png) · 광주전남 휴대폰 ![](img/after-dash-gj-390.png) |
+| 서비스 대시보드 | 없음 | 영농관리 ![](img/after-dash-namwon-1440.png) · 첫 결과 전(도로안전) ![](img/after-dash-namwon-road-1440.png) · 전남광주 휴대폰 ![](img/after-dash-gj-390.png) |
 | 대시보드 → 기존 기관 화면 | 머리 'LAND-XI · 남원시' | ![](img/after-fusion-from-dash-1440.png) 머리에 기관 마크 · 이름 |
 | 기관 정보(기관 관리자) | 없음 | ![](img/after-org-info-1440.png) 대비 검사 걸림 ![](img/after-org-contrast-fail-1440.png) 저장 ![](img/after-org-saved-1440.png) |
 | 고친 뒤 메인 반영(전 · 후) | ![](img/before-edit-main-namwon-1440.png) | ![](img/after-edit-main-namwon-1440.png) ![](img/after-edit-main-namwon-390.png) |
-| LX 관리자 기관 서랍 | 한도 조정만 | ![](img/after-admin-drawer-1440.png) → 광주전남 메인 반영 ![](img/after-admin-reflected-gj-1440.png) |
+| LX 관리자 기관 서랍 | 한도 조정만 | ![](img/after-admin-drawer-1440.png) → 전남광주 메인 반영 ![](img/after-admin-reflected-gj-1440.png) |
 
 (시험으로 바꾼 색 · 글은 캡처 뒤 처음 값으로 되돌렸다.)
 
 ## 시험
 - 서버: `python -m pytest server/tests/test_impl2_brand.py` — 12개 통과(공개 읽기 · 없는 기관 404 · 게스트 · LX 직원 · LX 영업 · 열람 계정 · 다른 기관 관리자 거절 · 그 기관 관리자 · LX 관리자 고치기 · 서비스 목록은 LX 관리자만 · 대비 검사 네 경우 · 머리 두 줄 · 마크 그림 형식 · 크기 · 다른 기관 · 지우기 · 관할 밖 0).
-- 화면(바깥 주소): `npx playwright test tests/e2e/impl2-gov-branch.spec.mjs` — 6개 통과(기관 목록 → 기관 주소 · 옛 주소 넘김 · 없는 기관 404 · 기관 주소에서 다른 기관 계정 로그인 거절 · 두 기관 같은 틀 · 남원 메인 → 로그인 → 서비스 선택 → 대시보드(큰 숫자 = 요약 값) → 결과 보기 · 광주전남 바로 대시보드 · 시·군·구 고르기 · 기관 관리자 고치기 → 메인 반영 · LX 관리자 고치기 → 메인 반영).
+- 화면(바깥 주소): `npx playwright test tests/e2e/impl2-gov-branch.spec.mjs` — 6개 통과(기관 목록 → 기관 주소 · 옛 주소 넘김 · 없는 기관 404 · 기관 주소에서 다른 기관 계정 로그인 거절 · 두 기관 같은 틀 · 남원 메인 → 로그인 → 서비스 선택 → 대시보드(큰 숫자 = 요약 값) → 결과 보기 · 전남광주 바로 대시보드 · 시·군·구 고르기 · 기관 관리자 고치기 → 메인 반영 · LX 관리자 고치기 → 메인 반영).
 - 첫 화면이 바뀐 것에 맞춰 통합 시험의 기관 첫 화면 기대값을 서비스 선택으로 고쳤다(13 통과 · 7 건너뜀).
 
 ## 남은 것(정직하게)
 - 기존 기관 화면(지도 · 할 일 · 보고서)은 아직 서비스를 가려 보여 주지 않는다 — 넘겨준 서비스 표시를 읽어 그 서비스만 보이게 하는 것은 그 화면 갈래에서. 지도 화면 왼쪽 목록에는 LX 가 돌린 다른 서비스(비닐하우스 · 국토 변화)도 보인다.
-- 기관 서비스 목록(남원 넷 · 광주전남 하나)은 처음 값으로 넣었다. LX 관리자 화면에서 목록을 바꾸는 칸은 아직 없음(서버는 LX 관리자만 받는다).
+- 기관 서비스 목록(남원 넷 · 전남광주 하나)은 처음 값으로 넣었다. LX 관리자 화면에서 목록을 바꾸는 칸은 아직 없음(서버는 LX 관리자만 받는다).
 - 자체 도메인(요청 기관만)은 설정 칸만 있다(연결 · 인증서는 나중).
 - 해외 기관 메인은 영어 틀로 열리지만 소개 글은 비어 있다(기관이 채운다).
