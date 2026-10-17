@@ -61,9 +61,45 @@
 .dg-mi{display:block;width:100%;padding:8px 12px;border:0;border-radius:var(--r-8);background:transparent;text-align:left;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
 .dg-mi:hover{background:var(--bg-0)}
 .dg-mi.is-none{color:var(--sub);cursor:default}
+/* 테마 목록(10-18 원칙 287) — 작은 견본 · 이름 · 한 줄 설명 · '지금 테마'. 손을 올리면 대시보드에 바로 입혀진다(미리 보기) */
+.dg-menu--theme{min-width:280px}
+.dg-mi--theme{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 10px}
+.dg-mi--theme[aria-checked="true"]{background:var(--bg-0)}
+.dg-mi-t{display:flex;flex-direction:column;gap:0;min-width:0}
+.dg-mi-t b{font:600 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.dg-mi-t small{font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dg-mi-now{font:500 var(--fs-tag)/18px var(--font-body);color:var(--accent);white-space:nowrap}
+.dg-sw{display:flex;flex-direction:column;gap:3px;width:40px;height:30px;padding:4px;box-sizing:border-box;border-radius:6px;background:var(--bg-0)}
+.dg-sw i{display:block;height:5px;border-radius:3px;background:var(--bg-1);box-shadow:0 0 0 1px var(--rule) inset}
+.dg-sw[data-theme="soft"]{background:#EEF3FA}.dg-sw[data-theme="soft"] i{border-radius:5px;background:linear-gradient(90deg,#fff,#F3F7FD);box-shadow:none}
+.dg-sw[data-theme="sharp"] i{border-radius:1px;box-shadow:0 0 0 1px var(--sub-2) inset}
+.dg-sw[data-theme="dense"]{gap:2px;padding:3px}.dg-sw[data-theme="dense"] i{height:4px}
 .dg-gap .dg-menu--gap{top:50%;right:auto;left:50%;transform:translate(-50%,24px);z-index:8;max-height:220px;overflow:auto}   /* 빈 자리의 칸 더하기 목록 — 그 자리 가운데 단추 아래로 */
 /* 좁은 화면 — 한 줄로 쌓기 · 수정 없음 */
 .dg.is-stack{display:flex;flex-direction:column;gap:12px;height:auto!important}
 .dg.is-stack .dg-item.t-card{position:static;width:auto!important;left:auto!important;top:auto!important;transition:none}
 .dg.is-stack .dg-ph,.dg.is-stack .dg-gap,.dg.is-stack .dg-limit{display:none}
 @media (prefers-reduced-motion:reduce){.dg-item.t-card,.dg-ph{transition:none}.dg-item.is-new{opacity:1;transform:none}}
+
+/* ═══ 테마(10-18 원칙 287 "테마나 디자인을 조금 여러개 해서 선택") — 네 가지 · 모두 밝은 톤(규칙 3-4 · 검정 톤 없음) · 글자 바닥 14 그대로 ═══
+   기본(basic) = 위 그대로 — 회백 바탕 위 흰 카드 16 · 그림자 0.
+   부드러운(soft) = 카드 24 · 흰색에서 옅은 하늘빛으로 아주 조금 물든 면 · 숫자 칸에 옅은 바탕 · 머리 글자 조금 가볍게.
+   또렷한(sharp) = 1px 선 · 모서리 8 · 머리 아래 선 · 제목 800 · 보조 글자 진하게(대비 높임).
+   촘촘한(dense) = 안쪽 여백 12/16 · 머리 24 · 줄 간격 좁게 — 같은 칸에 더 많은 줄. 칸 안 내용의 줄 수는 화면 CSS(console.css)가 [data-theme] 로 맞춘다. */
+.dg[data-theme="soft"] .dg-item.t-card{border-radius:var(--r-24);background:linear-gradient(180deg,#FFFFFF 0%,#F6F9FE 100%);padding:18px 22px}
+.dg[data-theme="soft"] .dg-t{font-weight:600}
+.dg[data-theme="soft"] .dg-ph,.dg[data-theme="soft"] .dg-gap{border-radius:var(--r-24)}
+.dg[data-theme="soft"] .dg-v[aria-pressed="true"]{border-radius:8px}
+.dg[data-theme="sharp"]{--sub:#5B6069;--sub-2:#3A3F47;--mute:#9AA3AD}
+.dg[data-theme="sharp"] .dg-item.t-card{border-radius:var(--r-8);border:1px solid var(--rule);padding:14px 18px 16px}
+.dg[data-theme="sharp"] .dg-hd{padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.dg[data-theme="sharp"] .dg-t{font-weight:800;letter-spacing:-.025em}
+.dg[data-theme="sharp"] .dg-ph,.dg[data-theme="sharp"] .dg-gap,.dg[data-theme="sharp"] .dg-menu{border-radius:var(--r-8)}
+.dg[data-theme="sharp"] .dg-more{color:var(--ink);background-size:100% 1px}
+.dg[data-theme="dense"] .dg-item.t-card{padding:12px 16px;gap:4px}
+.dg[data-theme="dense"] .dg-hd{min-height:24px;gap:4px 8px}
+.dg[data-theme="dense"] .dg-t{font-size:var(--fs-body);line-height:24px}
+.dg[data-theme="dense"] .dg-sub{line-height:18px}
+.dg[data-theme="dense"] .dg-more{margin-top:1px;line-height:22px}
+.dg[data-theme="dense"] .dg-grip{height:24px}
+.dg[data-theme="dense"] .dg-rm{width:24px;height:24px}

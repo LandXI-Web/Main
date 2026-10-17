@@ -220,3 +220,39 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-cal-rest{margin:2px 0 0}
 /* 수정 모드 · 좁은 칸 — 보기 방식 칩이 한 줄 차지하므로 키운 숫자는 보통 크기로(두 번째 줄이 잘리지 않게) */
 .dg.is-edit .is-narrow .ld-pf.is-big b,.dg.is-edit .is-narrow .ld-cells.is-big b{font-size:var(--fs-num);line-height:40px}
+
+/* 주말 빨강(10-18 사용자 "주말은 빨간색 표시") — 토 · 일 글자만 --warn 을 잉크 쪽으로 조금 눌러 차분하게 · 오늘은 액센트 동그라미(현재 위치)가 우선 · 다른 달 날은 흐림 그대로 */
+.ld-cal{--cal-off:color-mix(in srgb,var(--warn) 82%,var(--ink))}
+.ld-cal-dow .is-sun,.ld-cal-dow .is-sat{color:var(--cal-off)}
+.ld-cal-d.is-sun:not(.is-today) .ld-cal-dn,.ld-cal-d.is-sat:not(.is-today) .ld-cal-dn{color:var(--cal-off)}
+.ld-cal-list li.is-sun:not(.is-today) .ld-cal-ld b,.ld-cal-list li.is-sat:not(.is-today) .ld-cal-ld b,
+.ld-cal-list li.is-sun .ld-cal-ld span,.ld-cal-list li.is-sat .ld-cal-ld span,
+.ld-cal-next li.is-sun:not(.is-today) .ld-cal-ld b,.ld-cal-next li.is-sat:not(.is-today) .ld-cal-ld b{color:var(--cal-off)}
+
+/* 숫자 칸 표시 방식 '숫자 + 막대'(10-18 원칙 287) — 숫자 아래 가는 막대 · 가장 큰 값이 100 · 0 은 빈 막대 */
+.ld-cell-bar{display:block;height:4px;margin-top:6px;border-radius:2px;background:var(--bg-0);overflow:hidden}
+.ld-cell-bar b{display:block;height:100%;border-radius:2px;background:var(--ink);transition:width var(--d-500) var(--e-cam)}
+.ld-cell.is-zero .ld-cell-bar b{background:var(--mute)}
+.ld-cell.is-run .ld-cell-bar b{background:var(--ai)}
+.ld-cells.has-bars .ld-cell{padding-bottom:4px}
+
+/* 테마별 칸 안 내용(kit/dashgrid.css 가 카드 · 머리를 입히고, 여기는 칸 안 줄 수 · 숫자 칸만) */
+.dg[data-theme="soft"] .ld-cell{background:#F1F5FB;padding:8px 10px 10px;margin:0;border-radius:12px}
+.dg[data-theme="soft"] .ld-cells{gap:8px}
+.dg[data-theme="soft"] .ld-cell-bar{background:#fff}
+.dg[data-theme="soft"] .ld-cal-c{border-radius:10px}
+.dg[data-theme="soft"] .ld-cal-d,.dg[data-theme="soft"] .ld-pf a,.dg[data-theme="soft"] .ld-rows li a,.dg[data-theme="soft"] .ld-ntc button{border-radius:10px}
+.dg[data-theme="sharp"] .ld-cell b,.dg[data-theme="sharp"] .ld-pf b{color:var(--ink)}
+.dg[data-theme="sharp"] .ld-cell > span,.dg[data-theme="sharp"] .ld-pf span{color:var(--ink-2)}
+.dg[data-theme="sharp"] .ld-inbox-s,.dg[data-theme="sharp"] .ld-store-h,.dg[data-theme="sharp"] .ld-inbox-b .ld-rows{border-top-color:var(--ink-2)}
+.dg[data-theme="sharp"] .ld-cal-c{background:#fff;box-shadow:0 0 0 1px var(--rule) inset}
+.dg[data-theme="sharp"] .ld-cal-c.is-mine{background:var(--ink);box-shadow:none}
+.dg[data-theme="dense"] .ld-rows li a,.dg[data-theme="dense"] .ld-ntc button,.dg[data-theme="dense"] .ld-ml li{line-height:21px;padding-top:1px;padding-bottom:1px}
+.dg[data-theme="dense"] .ld-foot-none{line-height:21px}
+.dg[data-theme="dense"] .ld-cells.is-big b,.dg[data-theme="dense"] .ld-pf.is-big b{font-size:var(--fs-num);line-height:40px}
+.dg[data-theme="dense"] .ld-inbox-b{gap:6px}
+.dg[data-theme="dense"] .ld-inbox-s{padding-top:6px}
+.dg[data-theme="dense"] .ld-cal{gap:4px}
+.dg[data-theme="dense"] .ld-cal-cells{grid-template-rows:repeat(var(--weeks,5),minmax(40px,1fr))}
+.dg[data-theme="dense"] .ld-rgrid.la-acg{gap:12px}
+.dg[data-theme="dense"] .ld-memo-b .ld-ml-in.t-input{height:28px;min-height:28px}

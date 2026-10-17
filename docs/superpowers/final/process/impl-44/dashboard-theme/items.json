@@ -1,0 +1,16 @@
+[
+  {
+    "id": "대시보드-주말빨강",
+    "t": "달력 — 토요일 · 일요일 글자 빨강(월 · 주 · 다음 일 모두)",
+    "now": "달력의 요일 머리와 날짜 숫자에서 토요일 · 일요일이 빨간 글자로 보입니다 — 월 달력(점 · 글 칩), 주(일곱 줄 · 일곱 열), 다음 일 목록, 작은 칸의 다음 일 셋까지 같은 색입니다. 색은 조치 필요 글자에 쓰는 빨강을 조금 차분하게 눌렀고 바탕 칠은 없습니다. 오늘이 주말이면 오늘 표시(파란 동그라미)가 우선입니다. 공휴일은 믿을 만한 출처가 아직 서버에 없어 넣지 않았습니다(지어내지 않음 · 공공데이터 '특일 정보' 연결은 제안).",
+    "evidence": ["README.md", "shots/calendar-month-1440.png", "shots/calendar-month-wide-1440.png", "shots/calendar-week-1440.png", "shots/calendar-week-wide-1440.png", "shots/calendar-list-1440.png"],
+    "opts": ["완료", "다시"]
+  },
+  {
+    "id": "대시보드-테마",
+    "t": "대시보드 테마 넷(기본 · 부드러운 · 또렷한 · 촘촘한) + 칸마다 표시 방식 — 사람마다 저장",
+    "now": "수정 중 '모양 고르기' 옆에 '테마'가 생겼습니다. 기본(흰 카드 · 선 없음) · 부드러운(둥근 카드 · 옅게 물든 면) · 또렷한(가는 선 · 진한 제목) · 촘촘한(여백 적게 · 한 칸에 더 많이) 넷이고 모두 밝은 톤입니다. 목록 위에 손을 올리면 대시보드에 바로 입혀져 미리 볼 수 있고, 누르면 저장되어 다시 로그인해도 · 다른 PC 에서도 같습니다('처음 모양으로'는 기본 테마로). 요청함 · 전국 분석 · 지도 서비스 숫자 칸은 '숫자만' · '숫자 + 막대' 중 고를 수 있습니다(막대는 그 칸의 가장 큰 값을 100 으로 한 실제 비율). 숫자는 모두 지금과 같은 서버 값입니다.",
+    "evidence": ["README.md", "shots/theme-menu-1440.png", "shots/theme-preview-soft-1440.png", "shots/theme-basic-1440.png", "shots/theme-soft-1440.png", "shots/theme-sharp-1440.png", "shots/theme-dense-1440.png", "shots/style-national-bars-1440-edit.png", "shots/style-national-bars-1440.png", "shots/style-inbox-bars-1440.png"],
+    "opts": ["완료", "다시"]
+  }
+]

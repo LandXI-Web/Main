@@ -19,7 +19,10 @@
    수정 모드(edit) — 머리를 끌어 자리 바꾸기(빈자리면 놓고 · 한 칸과 겹치면 서로 바꾸고 · 그 밖엔 겹친 칸만 아래로) · 오른쪽 아래 모서리로 크기(다른 칸은 고정 · 막히면 거기까지) · × 로 빼기 · 머리의 보기 방식 칩.
      빈 공간은 점선 자리로 보이고 '칸 더하기'(그 크기에 맞는 칸만) · '옆 칸 늘리기'(붙은 칸을 그만큼 늘림). 평소에는 손잡이 · 빈 자리가 보이지 않는다.
    좁은 화면(760 미만)은 한 줄로 쌓고 수정 모드 없음(PC 에서 고른 순서 그대로).
-   저장 모양 { v: 1, items: [{ id, x, y, w, h, view }] } — 모르는 칸은 버리고, 크기는 min · max · 열 수 안으로 맞춘다. */
+   10-18 원칙 287 "똑같은 기능이여도 테마나 디자인을 조금 여러개 해서 선택할 수 있도록":
+     · themes: [{ id, label, desc }] — 대시보드 전체 테마(모두 밝은 톤 · 검정 톤 없음 · 규칙 3-4). 수정 중 '테마' 단추 → 목록 위에 손을 올리면 바로 미리 보기, 누르면 저장. .dg[data-theme=id] 로 CSS 가 입힌다 · 칸은 ctx.theme 으로 안다.
+     · widgets[id].styles: [{ id, label }] — 칸마다 표시 방식(예: 숫자만 · 숫자 + 막대). 수정 중 머리의 칩 · ctx.style 로 받는다 · 바뀌면 다시 그린다.
+   저장 모양 { v: 1, theme, items: [{ id, x, y, w, h, view, style }] } — 모르는 칸 · 모르는 테마는 버리고, 크기는 min · max · 열 수 안으로 맞춘다. */
 import { h, api, LS } from './util.js';
 import { toast } from './toast.js';
 
@@ -41,18 +44,32 @@ function who() {
 }
 const collides = (a, b) => a !== b && !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
 
-export function dashgrid(host, { screen, widgets, defaults = [], presets = [], cols = 12, rowH = 64, gap = 12, stackBelow = 760, words = {} } = {}) {
+export function dashgrid(host, { screen, widgets, defaults = [], presets = [], themes = [], cols = 12, rowH = 64, gap = 12, stackBelow = 760, words = {} } = {}) {
   sheet();
   const W = { edit: '대시보드 수정하기', done: '완료', add: '칸 더하기', none: '더할 칸이 없습니다', reset: '처음 모양으로', remove: '이 칸 빼기', move: '끌어서 자리 바꾸기',
-    resize: '모서리를 끌어 크기 바꾸기', view: '보기 방식', saved: '대시보드를 저장했습니다', save_fail: '배치를 저장하지 못했습니다', reset_ok: '처음 모양으로 돌렸습니다',
+    resize: '모서리를 끌어 크기 바꾸기', view: '보기 방식', style: '표시 방식', saved: '대시보드를 저장했습니다', save_fail: '배치를 저장하지 못했습니다', reset_ok: '처음 모양으로 돌렸습니다',
     limit: '다른 칸이 있어 여기까지 늘릴 수 있습니다', gap: '빈 자리', gap_add: '칸 더하기', gap_grow: '옆 칸 늘리기', gap_none: '여기에 맞는 칸이 없습니다', gap_nogrow: '늘릴 옆 칸이 없습니다',
-    presets: '모양 고르기', preset_ok: '모양을 바꿨습니다', ...words };
+    presets: '모양 고르기', preset_ok: '모양을 바꿨습니다', theme: '테마', theme_ok: '테마를 바꿨습니다', theme_now: '지금 테마', ...words };
   const KEY = 'dash.' + screen, LSK = `lx.dash.v1.${who()}.${screen}`;
   const el = h('div.dg', { role: 'list' });
   host.append(el);
   const ph = h('div.dg-ph', { hidden: true });
-  const items = new Map();          // id → { it(배치), node, body, ctx, cleanup, drawn: {w,h,view,size} }
+  const items = new Map();          // id → { it(배치), node, body, ctx, cleanup, drawn: {w,h,view,style,size,theme} }
   let layout = [], editing = false, saveT = 0, raf = 0, stack = false, cellW = 0, dragging = false;
+  /* 테마 — 목록의 첫 것이 기본 · 모르는 값은 기본으로 */
+  const THEME0 = themes[0]?.id || null;
+  const themeOk = (t) => (themes.some((x) => x.id === t) ? t : THEME0);
+  let theme = THEME0;
+  function paintTheme(t) {                       // 화면에만 입힌다(미리 보기에도 씀) — 저장은 setTheme
+    if (t) { el.dataset.theme = t; host.dataset.dgTheme = t; } else { delete el.dataset.theme; delete host.dataset.dgTheme; }
+  }
+  function setTheme(t, { quiet = false } = {}) {
+    const next = themeOk(t);
+    const changed = next !== theme;
+    theme = next; paintTheme(theme);
+    if (changed) for (const it of layout) draw(it, true);   // 테마마다 칸 안 여백 · 줄 수가 달라 다시 그린다
+    if (!quiet) { save(); if (changed) toast(W.theme_ok); }
+  }
 
   /* ── 배치 ─────────────────────────────────────────────── */
   const clampItem = (it) => {
@@ -62,7 +79,8 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
     const hh = Math.max(mh, Math.min(xh, Math.round(+it.h || d.def?.[1] || mh)));
     const x = Math.max(0, Math.min(cols - w, Math.round(+it.x || 0)));
     const view = d.views?.some((v) => v.id === it.view) ? it.view : (d.views?.[0]?.id || null);
-    return { id: it.id, x, y: Math.max(0, Math.round(+it.y || 0)), w, h: hh, view };
+    const style = d.styles?.some((v) => v.id === it.style) ? it.style : (d.styles?.[0]?.id || null);
+    return { id: it.id, x, y: Math.max(0, Math.round(+it.y || 0)), w, h: hh, view, style };
   };
   const sanitize = (arr) => {
     const seen = new Set(), out = [];
@@ -157,21 +175,22 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
   }
   function ctxOf(it, rec) {
     const p = px(it);
-    return { id: it.id, w: it.w, h: it.h, view: it.view, size: sizeWord(it), px: { w: p.width, h: p.height },
+    return { id: it.id, w: it.w, h: it.h, view: it.view, style: it.style, theme, size: sizeWord(it), px: { w: p.width, h: p.height },
       sub(x) { rec.sub.replaceChildren(...(x === null || x === undefined ? [] : [typeof x === 'string' ? document.createTextNode(x) : x])); rec.sub.hidden = !rec.sub.childNodes.length; },
       refresh: () => draw(it, true) };
   }
   function draw(it, force = false) {
     const rec = items.get(it.id); if (!rec) return;
     const d = rec.drawn, size = sizeWord(it);
-    if (!force && d && d.w === it.w && d.h === it.h && d.view === it.view && d.size === size) return;
+    if (!force && d && d.w === it.w && d.h === it.h && d.view === it.view && d.style === it.style && d.size === size && d.theme === theme) return;
     if (typeof rec.cleanup === 'function') { try { rec.cleanup(); } catch { /* */ } }
     rec.cleanup = null;
-    rec.drawn = { w: it.w, h: it.h, view: it.view, size };
-    rec.node.dataset.w = it.w; rec.node.dataset.h = it.h; rec.node.dataset.size = size; rec.node.dataset.view = it.view || '';
+    rec.drawn = { w: it.w, h: it.h, view: it.view, style: it.style, size, theme };
+    rec.node.dataset.w = it.w; rec.node.dataset.h = it.h; rec.node.dataset.size = size; rec.node.dataset.view = it.view || ''; rec.node.dataset.style = it.style || '';
     rec.node.classList.toggle('is-narrow', px(it).width < 520);
     rec.body.className = 'dg-body'; rec.body.replaceChildren();
     for (const b of rec.views.children) b.setAttribute('aria-pressed', b.dataset.v === it.view ? 'true' : 'false');
+    for (const b of rec.styles.children) b.setAttribute('aria-pressed', b.dataset.v === it.style ? 'true' : 'false');
     const def = widgets[it.id];
     const tok = rec.drawn;
     try {
@@ -187,18 +206,21 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
       : h('button.dg-more', { type: 'button', text: def.more.text, onclick: def.more.onClick }));
     const views = h('div.dg-views', { role: 'group', 'aria-label': W.view }, ...(def.views || []).map((v) => h('button.dg-v', { type: 'button', text: v.label, dataset: { v: v.id }, 'aria-pressed': 'false',
       onclick: () => { it.view = v.id; draw(it); save(); } })));
+    /* 표시 방식(칸마다 · 10-18 원칙 287) — 같은 기능을 다른 모양으로(예: 숫자만 · 숫자 + 막대) */
+    const styles = h('div.dg-views.dg-styles', { role: 'group', 'aria-label': W.style }, ...(def.styles || []).map((v) => h('button.dg-v', { type: 'button', text: v.label, dataset: { v: v.id }, 'aria-pressed': 'false',
+      onclick: () => { it.style = v.id; draw(it); save(); } })));
     const sub = h('small.dg-sub', { hidden: true });
     const body = h('div.dg-body');
     const node = h('section.dg-item.t-card', { role: 'listitem', dataset: { id: it.id }, 'aria-label': def.title },
       h('div.dg-hd', {},
         h('span.dg-grip', { html: GRIP, title: W.move, 'aria-hidden': 'true' }),
         h('div.dg-hd-t', {}, h('h2.dg-t', { text: def.title }), sub),
-        more || null, (def.views || []).length > 1 ? views : null,
+        more || null, (def.views || []).length > 1 ? views : null, (def.styles || []).length > 1 ? styles : null,
         h('button.dg-rm', { type: 'button', html: X, title: W.remove, 'aria-label': `${def.title} · ${W.remove}`, onclick: () => remove(it.id) })),
       body,
       h('span.dg-rs', { title: W.resize, 'aria-hidden': 'true' }),
       h('span.dg-limit', { text: W.limit, 'aria-hidden': 'true' }));
-    items.set(it.id, { it, node, body, sub, views, cleanup: null, drawn: null });
+    items.set(it.id, { it, node, body, sub, views, styles, cleanup: null, drawn: null });
     el.append(node);
     if (!RM()) { node.classList.add('is-new'); requestAnimationFrame(() => requestAnimationFrame(() => node.classList.remove('is-new'))); }
   }
@@ -210,7 +232,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
   }
 
   /* ── 저장(서버 사용자 설정 + 브라우저 사본) ─────────────────────── */
-  const snapshot = () => ({ v: 1, items: layout.map((it) => ({ id: it.id, x: it.x, y: it.y, w: it.w, h: it.h, view: it.view })) });
+  const snapshot = () => ({ v: 1, theme, items: layout.map((it) => ({ id: it.id, x: it.x, y: it.y, w: it.w, h: it.h, view: it.view, style: it.style })) });
   async function push() {
     const s = snapshot();
     LS.set(LSK, s);
@@ -227,13 +249,16 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
     const local = LS.get(LSK);
     layout = sanitize(local?.items);
     if (!layout.length && !local) layout = sanitize(defaults);
+    theme = themeOk(local?.theme); paintTheme(theme);
     settle(); render();
     try {
       const j = await api('/me/prefs/' + encodeURIComponent(KEY));
       const srv = j?.options;
       if (srv && Array.isArray(srv.items)) {
-        const next = sanitize(srv.items);
+        const next = sanitize(srv.items), nextTheme = themeOk(srv.theme), reTheme = nextTheme !== theme;
+        if (reTheme) { theme = nextTheme; paintTheme(theme); }
         if (JSON.stringify(next) !== JSON.stringify(layout)) { layout = next; settle(); render(); }
+        else if (reTheme) for (const it of layout) draw(it);   // 테마만 달라졌으면 칸만 다시(drawn.theme 비교)
         LS.set(LSK, snapshot());
       } else if (srv === null && local) {         // 서버엔 없고 브라우저에만 — 서버로 올린다(다른 PC 에서도 같은 모양)
         push();
@@ -253,11 +278,26 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
   const bDone = h('button.t-btn.dg-b.dg-b--done', { type: 'button', text: W.done, onclick: () => edit(false) });
   const addWrap = h('span.dg-addw', {}, bAdd, addMenu);
   const preWrap = h('span.dg-addw', { hidden: !presets.length }, bPre, preMenu);
-  bar.append(bEdit, addWrap, preWrap, bReset, bDone);
+  /* 테마 — '모양 고르기' 옆 · 목록 위에 손을 올리면(또는 초점) 그 테마가 바로 입혀져 미리 보고 · 누르면 저장 · 벗어나면 지금 테마로 */
+  const thMenu = h('div.dg-menu.dg-menu--theme', { hidden: true, role: 'menu', onmouseleave: () => paintTheme(theme) });
+  const bTheme = h('button.t-btn.t-btn--2.dg-b.dg-b--theme', { type: 'button', text: W.theme, 'aria-haspopup': 'true', 'aria-expanded': 'false', hidden: themes.length < 2, onclick: () => toggleTheme() });
+  const thWrap = h('span.dg-addw', { hidden: themes.length < 2 }, bTheme, thMenu);
+  bar.append(bEdit, addWrap, preWrap, thWrap, bReset, bDone);
+  function toggleTheme(on = thMenu.hidden) {
+    if (on) thMenu.replaceChildren(...themes.map((t) => h('button.dg-mi.dg-mi--theme', { type: 'button', role: 'menuitemradio', 'aria-checked': t.id === theme ? 'true' : 'false', dataset: { theme: t.id },
+      onmouseenter: () => paintTheme(t.id), onfocus: () => paintTheme(t.id), onblur: () => paintTheme(theme),
+      onclick: () => { setTheme(t.id); toggleTheme(false); } },
+      h('span.dg-sw', { 'aria-hidden': 'true', dataset: { theme: t.id } }, h('i'), h('i'), h('i')),
+      h('span.dg-mi-t', {}, h('b', { text: t.label }), t.desc ? h('small', { text: t.desc }) : null),
+      t.id === theme ? h('span.dg-mi-now', { text: W.theme_now }) : null)));
+    else paintTheme(theme);
+    thMenu.hidden = !on; bTheme.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
   function closeMenus() {
     for (const n of gapNodes) { const m = n.querySelector('.dg-menu'); if (m) m.hidden = true; n.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false'); }
     if (!addMenu.hidden) toggleMenu(false);
     if (!preMenu.hidden) togglePre(false);
+    if (!thMenu.hidden) toggleTheme(false);
   }
   function toggleMenu(on = addMenu.hidden) {
     if (on) {
@@ -309,7 +349,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
     layout = sanitize(p.items); settle(); render(); save(); toast(W.preset_ok);
   }
   async function reset() {
-    layout = sanitize(defaults); settle(); render();
+    layout = sanitize(defaults); theme = THEME0; paintTheme(theme); settle(); render();   // render 가 테마 달라진 칸도 다시 그린다
     LS.set(LSK, null);
     try { localStorage.removeItem(LSK); } catch { /* */ }
     try { await api('/me/prefs/' + encodeURIComponent(KEY), { method: 'DELETE' }); toast(W.reset_ok); } catch { toast(W.save_fail); }
@@ -388,6 +428,8 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], c
     setLayout(items) { layout = sanitize(items); settle(); render(); save(); },
     refresh: (id) => { const it = layout.find((x) => x.id === id); if (it) draw(it, true); },
     setView: (id, v) => { const it = layout.find((x) => x.id === id); if (it) { it.view = v; draw(it); save(); } },
+    setStyle: (id, v) => { const it = layout.find((x) => x.id === id); if (it) { it.style = v; draw(it); save(); } },
+    theme: () => theme, setTheme, themes: () => themes.map((t) => ({ ...t })),
     ready: () => el.dataset.ready === '1',
     destroy() { ro.disconnect(); for (const r of items.values()) { if (typeof r.cleanup === 'function') { try { r.cleanup(); } catch { /* */ } } } el.remove(); bar.remove(); },
   };
