@@ -20,6 +20,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, RM() ? 0 : ms));
 const ease = (t) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
 const catFor = (hue) => { const r = RAMP[hue] || RAMP.teal, acc = hue === 'orange' ? RAMP.teal[4] : RAMP.orange[4]; return [r[5], r[3], acc, '#6B7684', r[1], '#9AA4B0', '#C4CAD2', '#DDE1E6']; };
 const hueOf = (s) => s.map?.scale?.hue || (s.panels || []).find((p) => p.scale?.hue)?.scale.hue || 'teal';
+const nb = (t) => esc(t).replace(/(\S*\d[\d,.%]*\S*)/g, '<span class="nb">$1</span>');   // 숫자 · 단위 · 조사를 한 덩이로(줄 끝에서 '26%' / '를' 로 갈라지지 않게 · §3-9)
 const tipAttr = (label, val) => `data-tip="${esc(`<b>${esc(label)}</b> ${val}`)}"`;
 
 /* ── 작은 판 차트(판 폭 328 기준 · 값 글자는 잉크 · 색은 표시에만) ── */
@@ -118,13 +119,30 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
   const padR = () => (O.step === 2 && !POS.cur ? (panel.offsetWidth || 360) + 32 : 0);   // 2단계 · 기본 자리(도구 열 아래): 판 폭 + 양옆 16 만큼 지도 카메라를 왼쪽으로 · 1단계 · 끌어 옮긴 판: 지도 전체
 
   /* ── 판 끌어 옮기기(10-17 원칙 280 "마우스로 끌어서 배치를 자유롭게 이동 … 개인별로 그 위치에 표시") ──
-     머리(.xo-ht)를 끌면 판이 자유롭게 옮겨진다(.is-free). 놓은 자리는 사람 · 이 화면 · 창 크기(20px 단위)별로 브라우저 저장소에(서버 사용자 설정은 없음 — 생기면 그쪽).
+     머리(.xo-ht)를 끌면 판이 자유롭게 옮겨진다(.is-free). 놓은 자리 · 폭은 계정별 서버 사용자 설정(GET|PUT|DELETE /me/prefs/xi-clean.stats · 값 = { '창폭x높이': { l, t, w } } · 창 크기 20px 단위)에 —
+     다시 로그인해도 · 다른 기기에서도 그대로. 브라우저 저장소(사람 키)는 서버 응답 전 첫 그림용 사본일 뿐 · 계정이 다르면 키가 달라 섞이지 않는다.
      기본 자리 = 도구 열 아래(right 16 · --xc-tb). '제자리로' 하나로 되돌림. 창이 바뀌거나 판 폭이 바뀌면 화면 안으로 다시 맞춘다(밖으로 못 나감). */
   const POS = { cur: null };   // { l, t } = 판 왼쪽 위(지도 영역 안 px)
   const who = () => { try { const s = JSON.parse(localStorage.getItem('lx_api_session') || 'null'); if (s) return String(s.user_id || s.username || s.user?.id || s.login || [s.realm, s.tenant_id || s.role].filter(Boolean).join('.') || 'me'); } catch { /* */ } return 'me'; };
   const posKey = () => `lx.ximap.statpos.v1.${who()}.${location.pathname.replace(/\/index\.html$/, '/').replace(/\/+$/, '')}.${Math.round(innerWidth / 20) * 20}x${Math.round(innerHeight / 20) * 20}`;
-  const loadPos = () => { try { const v = localStorage.getItem(posKey()); return v ? JSON.parse(v) : null; } catch { return null; } };
-  const savePos = (v) => { try { if (v) localStorage.setItem(posKey(), JSON.stringify(v)); else localStorage.removeItem(posKey()); } catch { /* 저장 불가 창 — 이번 방문 동안만 */ } };
+  const PREF_SCREEN = 'xi-clean.stats';
+  const sizeKey = () => `${Math.round(innerWidth / 20) * 20}x${Math.round(innerHeight / 20) * 20}`;
+  let PREF = null, prefP = null;   // 서버 사용자 설정 { 창크기: { l, t, w } } · null = 아직 안 옴
+  const cacheGet = () => { try { const v = localStorage.getItem(posKey()); return v ? JSON.parse(v) : null; } catch { return null; } };
+  const cacheSet = (v) => { try { if (v) localStorage.setItem(posKey(), JSON.stringify(v)); else localStorage.removeItem(posKey()); } catch { /* 저장 불가 창 */ } };
+  function prefLoad() {
+    if (prefP) return prefP;
+    prefP = api('/me/prefs/' + PREF_SCREEN).then((j) => { PREF = j && j.options && typeof j.options === 'object' && !Array.isArray(j.options) ? j.options : {}; return PREF; }, () => { PREF = PREF || {}; return PREF; });
+    return prefP;
+  }
+  let prefT = 0;
+  function prefSave() {   // 묶어서 한 번(끌기 끝 · 폭 끌기 끝이 잇달아 올 때)
+    clearTimeout(prefT);
+    prefT = setTimeout(() => { if (!PREF) return; const empty = !Object.keys(PREF).length; (empty ? api('/me/prefs/' + PREF_SCREEN, { method: 'DELETE' }) : api('/me/prefs/' + PREF_SCREEN, { method: 'PUT', body: PREF })).then(() => { if (window.__xc) window.__xc.statPref = { saved: sizeKey(), v: PREF[sizeKey()] || null }; }, () => {}); }, 250);
+  }
+  const loadPos = () => (PREF ? PREF[sizeKey()] || null : cacheGet());   // 서버 값이 왔으면 그것 · 아직이면 브라우저 사본(첫 그림)
+  const savePos = (v) => { cacheSet(v); PREF = PREF || {}; if (v) PREF[sizeKey()] = v; else delete PREF[sizeKey()]; prefSave(); };
+  prefLoad();   // 화면이 뜰 때 미리 — 통계를 열 때쯤이면 와 있다
   const clampN = (v, a, b) => Math.round(Math.min(Math.max(a, b), Math.max(a, v)));
   function applyPos() {
     if (!POS.cur) { panel.classList.remove('is-free'); for (const k of ['--xo-l', '--xo-t', '--xo-mh']) panel.style.removeProperty(k); return; }
@@ -133,7 +151,12 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     panel.style.setProperty('--xo-l', l + 'px'); panel.style.setProperty('--xo-t', t + 'px'); panel.style.setProperty('--xo-mh', Math.max(160, hr.height - t - 16) + 'px');
     panel.classList.add('is-free');
   }
-  function setPos(v, keep = true) { POS.cur = v; applyPos(); if (keep) savePos(v); if (O.on && O.step === 2) stage.pad({ right: padR() }); }
+  function setPos(v, keep = true) {
+    POS.cur = v ? { l: v.l, t: v.t } : null; applyPos();
+    if (keep) savePos(v ? { ...POS.cur, w: Math.round(panel.offsetWidth) } : null);   // 자리와 폭을 한 열쇠에(제안 1) — 새로 열면 둘 다 그대로
+    if (!v) pn?.reset();                                                               // '제자리로' = 자리 · 폭 기억 모두 기본으로
+    if (O.on && O.step === 2) stage.pad({ right: padR() });
+  }
   let dg = null;
   panel.addEventListener('pointerdown', (e) => {
     const hd = e.target.closest('.xo-ht'); if (!hd || e.target.closest('button') || e.button > 0) return;
@@ -151,8 +174,8 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
   });
   const dgEnd = (e) => { if (!dg || (e && e.pointerId !== dg.id)) return; const moved = dg.moved; dg = null; panel.classList.remove('is-drag'); if (moved) setPos(POS.cur); };
   panel.addEventListener('pointerup', dgEnd); panel.addEventListener('pointercancel', dgEnd); panel.addEventListener('lostpointercapture', dgEnd);
-  addEventListener('resize', () => { if (!O.on) return; const v = loadPos(); if (JSON.stringify(v) !== JSON.stringify(POS.cur)) POS.cur = v; applyPos(); });   // 창 크기마다 따로 기억
-  panel.addEventListener('panes:resize', () => { if (POS.cur) applyPos(); });   // 폭을 끌어 바꾸면 오른쪽 끝이 화면 안에 있게
+  addEventListener('resize', () => { if (!O.on) return; const v = loadPos(); POS.cur = v ? { l: v.l, t: v.t } : null; applyPos(); });   // 창 크기마다 따로 기억
+  panel.addEventListener('panes:resize', () => { if (POS.cur) { applyPos(); if (!O.sync) savePos({ ...POS.cur, w: Math.round(panel.offsetWidth) }); } });   // 폭을 끌어 바꾸면 오른쪽 끝이 화면 안에 · 폭도 같은 열쇠에
   /* 판 폭 끌기 · 접기(공용 부품 panes · 사람 · 화면별 기억) — 접으면 1단계(한 줄) · 펼치면 2단계. 프로그램이 바꿀 때(sync)는 되돌이 없음 */
   let pn = null;
   function ensurePane() {
@@ -389,8 +412,8 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
       ${kr.length ? `<div class="xo-kp">${kr.slice(0, 3).map((k) => `<div><span>${esc(k.label)}</span><b class="num">${nf(k.value, k.d || 0)}<small>${esc(k.unit || '')}</small></b></div>`).join('')}</div>` : ''}
       ${m ? `<div class="xo-mp"><span class="t">${onColor ? `<button type="button" class="xo-cd" aria-haspopup="dialog" aria-expanded="false" aria-label="지도 색" title="색" style="${dotCss(m.scale)}"></button>` : ''}지도 색 · ${esc(m.title)}</span>${legend(m.scale, m.unit)}</div>` : ''}
       ${s.live ? `<p class="xo-live"><i></i>지금 분석 중 · ${esc(s.live)}</p>` : ''}
-      ${s.note ? `<p class="xo-notice">${esc(s.note)}</p>` : ''}
-      ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${esc(l)}</p>`).join('')}</div></div>` : ''}
+      ${s.note ? `<p class="xo-notice">${nb(s.note)}</p>` : ''}
+      ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${nb(l)}</p>`).join('')}</div></div>` : ''}
       <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서로</button><button type="button" class="xo-big2">크게 보기</button><button type="button" class="xo-only">지도만</button></div></div>`;
     const vars = (hue) => { const r = rampFor(hue); return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
     const cards = (s.panels || []).map((p, i) => `<div class="xo-card xo-p xo-p--${p.type}${i < 2 ? ' open' : ''}" data-i="${i}" style="animation-delay:${RM() ? 0 : 80 + i * 70}ms;${vars(p.scale?.hue || hueOf(s))}"><button type="button" class="xo-ph" aria-expanded="${i < 2}"><span>${esc(p.title)}</span>${p.unit ? `<small>${esc(p.unit)}</small>` : ''}<i></i></button><div class="xo-pb">${(DRAW[p.type] || (() => ''))(p, O.CAT)}</div></div>`);
@@ -446,7 +469,8 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (map.getSource('xo-f')) map.getSource('xo-f').setData({ type: 'FeatureCollection', features: [] });
     const meaning = fast ? Promise.resolve() : confirmMeaning(s);
     O.spec = s; render(s); paintMini(s);
-    POS.cur = loadPos(); applyPos();                                                     // 사람이 끌어 둔 자리(이 화면 · 이 창 크기) · 없으면 도구 열 아래
+    const applySaved = () => { const v = loadPos(); POS.cur = v ? { l: v.l, t: v.t } : null; if (v?.w > 0) ensurePane().set(v.w, false); applyPos(); cacheSet(v); };   // 사람이 끌어 둔 자리 · 폭(이 계정 · 이 창 크기) · 없으면 도구 열 아래
+    applySaved(); if (!PREF) prefLoad().then(() => { if (O.on && O.run === run) applySaved(); });   // 서버 값이 늦게 오면 그 값으로 다시
     setStep(step, { silent: true }); panel.hidden = false;                              // 단계(접힘/폭)를 먼저 정하고 보인다 — 펼친 판이 한 번 비쳤다 접히던 것(바퀴 16 재검수 · 1366)
     if (O.step === 2) stage.pad({ right: padR() });
     const painted = paintMap(s.map);

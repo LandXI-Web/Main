@@ -295,6 +295,7 @@ async function boot() {
     onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
     mountStatSwitch(); }
   mountLayout();                                                                        // 지도 위 배치 하나(원칙 279) — 도구 열 아래 · 오른쪽 쌓임 폭 · 채팅 창 자리
+  mountChatTidy();                                                                      // 아래 채팅 답 칸 정돈 — 최근 답 하나 · 이전 대화 손잡이 · 같은 말 줄 숨김 · 8초 뒤 접힘
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
@@ -2046,6 +2047,59 @@ function drawerOpen(title, onClose) {
 }
 /** 지도 위 통계 걷기 — cam=false 면 카메라를 되돌리지 않는다(서랍이 자리를 차지할 때) */
 function leaveStats(cam = true) { KEEPCAM = !cam; try { setStep(0); } finally { KEEPCAM = false; } }
+
+/* ═══ 아래 채팅 답 칸 정돈(10-17 사용자 "채팅영역과 지도 화면 영역이 너무 겹쳐져") ═══
+   답 칸은 최근 답 하나만(xc.css) · 위 손잡이 '이전 대화 n'을 누르거나 위로 끌면 지난 대화까지 펼침(data-all) · 답이 끝나고 8초 동안 손을 대지 않으면 입력 한 줄로 접힘
+   · 같은 답 안에서 지도 동작 줄(✓ 통계 보기)과 단추(통계 보기)가 같은 말이면 줄을 숨긴다(두 번 보이던 것). 공용 kit 는 그대로 — XI맵 화면이 밖에서 덧붙인다. */
+const TIDY_MS = 8000;
+function mountChatTidy() {
+  const root = mainEl.querySelector('.k-chat-root[data-dock]'), box = cmdk?.el; if (!root || !box) return;
+  const dlog = root.querySelector('.k-chat-dlog'); if (!dlog) return;
+  const prev = h('button.xc-prev', { type: 'button', 'aria-label': '이전 대화', onclick: () => { root.toggleAttribute('data-all'); countPrev(); } });
+  dlog.prepend(prev);
+  // 위로 끌어 펼치기 · 아래로 끌어 접기
+  let pd = null;
+  prev.addEventListener('pointerdown', (e) => { pd = { y: e.clientY, id: e.pointerId }; try { prev.setPointerCapture(e.pointerId); } catch { /* */ } });
+  prev.addEventListener('pointermove', (e) => { if (!pd || e.pointerId !== pd.id) return; const d = e.clientY - pd.y; if (d < -24 && !root.hasAttribute('data-all')) { root.setAttribute('data-all', '1'); pd.done = true; countPrev(); } else if (d > 24 && root.hasAttribute('data-all')) { root.removeAttribute('data-all'); pd.done = true; countPrev(); } });
+  const pu = (e) => { if (!pd || (e && e.pointerId !== pd.id)) return; if (pd.done) { const stop = (ev) => { ev.stopPropagation(); ev.preventDefault(); prev.removeEventListener('click', stop, true); }; prev.addEventListener('click', stop, true); setTimeout(() => prev.removeEventListener('click', stop, true), 0); } pd = null; };
+  prev.addEventListener('pointerup', pu); prev.addEventListener('pointercancel', pu);
+  function countPrev() {   // 바뀐 것만 쓴다 — 손잡이 글을 매번 다시 쓰면 아래 변화 감시가 스스로를 깨워 멈추지 않는 고리가 된다(10-18 새벽 멈춤의 원인)
+    const n = Math.max(0, root.querySelectorAll('.k-chat-b > .k-chat-msg.me').length - 1);
+    const t = root.hasAttribute('data-all') ? '최근 답만' : `이전 대화 ${nf(n)}`;
+    if (prev.textContent !== t) prev.textContent = t;
+    if (root.hasAttribute('data-prev') !== n > 0) root.toggleAttribute('data-prev', n > 0);
+    if (!n && root.hasAttribute('data-all')) root.removeAttribute('data-all');
+    X.chatTidy = { prev: n, all: root.hasAttribute('data-all'), fold: root.hasAttribute('data-fold') };
+  }
+  // 같은 말 줄 숨김 — 답이 끝날 때
+  function dedupe() {
+    for (const bub of root.querySelectorAll('.k-chat-msg.ai .k-chat-bub')) {
+      const btns = new Set([...bub.querySelectorAll('.k-chat-btn[data-q], .k-chat-chip[data-q]')].map((b) => b.textContent.trim()));
+      for (const ul of bub.querySelectorAll('.k-chat-plan, .k-ck-plan')) {
+        let left = 0;
+        for (const li of ul.querySelectorAll('li')) { const dup = btns.has(li.textContent.trim()); li.classList.toggle('xc-dup', dup); if (!dup) left++; }
+        ul.classList.toggle('xc-empty', left === 0);
+      }
+    }
+  }
+  // 답이 끝나고 8초 — 손이 답 칸에 있거나 입력 중이면 미룬다
+  let tidyT = 0;
+  const arm = () => { clearTimeout(tidyT); tidyT = setTimeout(() => {
+    if (root.hasAttribute('data-fold') || box.dataset.state === 'busy') return;
+    if (dlog.matches(':hover') || root.contains(document.activeElement) && document.activeElement !== document.body) { arm(); return; }
+    cmdk?.close({ force: true }); countPrev();
+  }, TIDY_MS); };
+  let was = box.dataset.state;
+  let tq = 0;
+  new MutationObserver((ms) => {
+    if (ms.every((m) => prev.contains(m.target))) return;                              // 손잡이 자신의 변화는 무시
+    const st = box.dataset.state;
+    if (st !== was) { was = st; if (st && st !== 'busy') { dedupe(); arm(); } }
+    cancelAnimationFrame(tq); tq = requestAnimationFrame(countPrev);                   // 한 프레임에 한 번
+  }).observe(box, { attributes: true, attributeFilter: ['data-state'], childList: true, subtree: true });
+  new MutationObserver(() => { if (!root.hasAttribute('data-fold')) { dedupe(); countPrev(); } }).observe(root, { attributes: true, attributeFilter: ['data-fold', 'data-turns'] });
+  countPrev(); dedupe();
+}
 
 /* ═══ 지도 위 배치 하나(10-17 원칙 279 "지도 위 지저분한걸 최소화 하고 깔끔해야 · 서로 겹치지 않게") ═══
    도구 열(right 16 · top 68)이 기준. --xc-tb = 도구 열 아래(통계 판 · 한 줄의 기본 자리) · --xc-xr = 오른쪽에 자리 잡은 폭(도구 열 96 · 도구 열 아래 통계가 펼쳐져 있으면 그 폭 — 서랍 · 도구 판은 그 왼쪽)

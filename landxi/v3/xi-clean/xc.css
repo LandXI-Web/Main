@@ -80,8 +80,20 @@
 .k-main > .k-drawer.k-drawer--in{right:var(--xc-xr,96px);top:68px}
 .k-main > .k-chat-root[data-dock]{left:var(--xc-cl,50%);width:var(--xc-cw,min(680px,calc(100% - 32px)))}
 @media (max-width:640px){.k-main > .k-drawer.k-drawer--in{right:0;top:auto}}
-/* 답 칸은 입력 줄 위로만 · 낮은 창(노트북 768)에서는 답 칸 높이를 줄여 지도가 더 보이게(10-17 "채팅영역과 지도 화면 영역이 너무 겹쳐") */
-@media (max-height:820px){.k-main > .k-chat-root[data-dock] .k-chat-dlog .k-chat-b{max-height:min(36vh,300px)}}
+/* 답 칸(10-17 "채팅영역과 지도 화면 영역이 너무 겹쳐") — 최근 답 하나만 · 지난 대화는 접힘(위 손잡이 '이전 대화 n' 누르거나 위로 끌어 펼침) · 높이 상한 낮게 · 답이 끝나면 8초 뒤 입력 한 줄로(app.js chatTidy) */
+.k-main > .k-chat-root[data-dock]:not([data-all]) .k-chat-dlog .k-chat-b > .k-chat-msg:not(:nth-last-child(-n+2)){display:none}
+.k-main > .k-chat-root[data-dock] .k-chat-dlog .k-chat-b{max-height:min(30vh,280px)}
+.k-main > .k-chat-root[data-dock][data-all] .k-chat-dlog .k-chat-b{max-height:min(52vh,520px)}
+@media (max-height:820px){.k-main > .k-chat-root[data-dock] .k-chat-dlog .k-chat-b{max-height:min(27vh,210px)}.k-main > .k-chat-root[data-dock][data-all] .k-chat-dlog .k-chat-b{max-height:min(48vh,380px)}}
+.xc-prev{display:none;position:absolute;left:50%;top:0;z-index:3;transform:translateX(-50%);height:24px;padding:0 12px 0 10px;border:0;border-radius:0 0 var(--r-8) var(--r-8);background:var(--bg-1);box-shadow:0 1px 0 rgba(28,31,37,.06);font:500 var(--fs-tag,14px)/24px var(--font-body);color:var(--sub);cursor:pointer;touch-action:none;white-space:nowrap}
+.xc-prev::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;border-left:1.5px solid currentColor;border-top:1.5px solid currentColor;transform:rotate(45deg)}
+.k-main > .k-chat-root[data-dock][data-all] .xc-prev::before{transform:rotate(225deg);margin-bottom:-1px}
+.k-main > .k-chat-root[data-dock][data-prev] .xc-prev{display:inline-flex;align-items:center}
+.k-main > .k-chat-root[data-dock][data-prev] .k-chat-dlog .k-chat-b{padding-top:30px}
+.xc-prev:hover{color:var(--ink)}
+/* 같은 답 안에서 지도 동작 줄(✓ 통계 보기)과 단추(통계 보기)가 같은 말이면 줄은 숨긴다(app.js chatTidy) */
+.k-chat-plan li.xc-dup,.k-ck-plan li.xc-dup{display:none}
+.k-chat-plan.xc-empty,.k-ck-plan.xc-empty{display:none}
 .xc-board-acts{display:flex;justify-content:flex-end;margin:0 0 4px}
 .xc-board-acts .xc-board-rep{height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}   /* 제목 아래 줄 오른쪽(제목은 한 줄) */
 /* 시도별 접고 펴기(원칙 277) — 머리줄(시도 · 시군구 수 · 꺾쇠) */

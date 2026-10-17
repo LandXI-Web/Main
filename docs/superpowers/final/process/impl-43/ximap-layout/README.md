@@ -84,6 +84,15 @@
 - 그림(전 → 후): `before-1366-list-chat.png` → `after-1366-list-chat.png`(서랍이 도구 열 왼쪽 · 채팅은 서랍 왼쪽 빈자리) · `before-1366-analyze-chat.png` → `after-1366-analyze-chat.png`(분석 요청 칸 왼쪽 아래 · 채팅은 그 오른쪽) · `before-1366-stats-2-chat.png` → `after-1366-stats-2-chat.png`(통계 판은 도구 열 아래 · 왼쪽 아래 단추 없음 · 답 칸 300 이하) · `after-1920-stats-2.png` · `after-1440-gov-list-chat.png`.
 - 1366×768 에서 도구 열 아래 판 높이는 371(도구 열 끝 ~317 → 아래 16) — 안에서 스크롤. 더 길게 보려면 끌어 올리면 된다(끌어 옮긴 자리는 기억).
 
+## 4-2. 보완(오케스트레이터 지적 · 10-17 늦은 밤)
+| 지적 | 고친 것 | 증거 |
+|---|---|---|
+| 1366 채팅 답 칸이 지도 가운데 절반을 덮음 | 답 칸은 **최근 답 하나만**(지난 대화는 접힘 · 위 손잡이 '이전 대화 n'을 누르거나 위로 끌면 펼침 · '최근 답만'으로 되돌림) · 높이 상한 280(노트북 768 은 210) · **답이 끝나고 8초** 손을 대지 않으면 입력 한 줄로 접힘 | `after2-1366-chat-latest.png` · `-chat-folded.png` · `-chat-all.png` · `chat-result.json` |
+| 같은 답 안에 '통계 보기' 두 번(✓ 줄 + 단추) | 지도 동작 줄과 단추가 같은 말이면 줄을 숨김(단추 하나만) | `after2-1366-stats-2-chat.png` · `chat-result.json` statsChat.planStats=0 |
+| 판 문장 '를 차지합니다.' 한 단어 줄 | 숫자 · 단위 · 조사(26%를 · 9,879곳)를 한 덩이(nowrap) · 문단은 `text-wrap:balance` → 구 경계에서만 끊김 | `after2-*-stats-2.png` · `chat-result.json` lastWords |
+| 자리 기억이 브라우저 저장 | **서버 사용자 설정**(`/me/prefs/xi-clean.stats` · 커밋 55db820a)으로 옮김 — 값 `{ '창폭x높이': { l, t, w } }` · 자리와 폭 한 열쇠(제안 1) · 브라우저 사본은 서버 응답 전 첫 그림용(사람 키 · 계정 다르면 안 섞임) · '제자리로' = 서버 값 지움 | `prefs-result.json`(끌어 놓기 → 새 브라우저 재로그인 → 같은 자리 · 폭 → 제자리로 → 서버 값 없음) · `after2-1440-prefs-*.png` |
+| 말풍선(제안 2) | 지도 위 말풍선도 꼬리표와 같은 규칙 — 서랍 · 판 · 채팅 · 도구 열 밑은 피함 · 배치가 바뀌면 다시 | `chat-result.json` bubblesCovered=0 |
+
 ## 5. 공용 부품(kit) — 바꾸지 않음
 `kit/panes` · `kit/cmdk` · `kit/panel` 은 손대지 않았다. 서랍 자리 · 채팅 창 자리는 XI맵 CSS(`xc.css`)에서 `.k-main >` 로만 덮어썼으므로 지도 서비스 · 다른 화면은 그대로다(아래 채팅 창 `dock:'bottom'` 을 쓰는 화면은 XI맵 하나 — `grep "dock: 'bottom'"`).
 
@@ -93,4 +102,4 @@
 - 기관(남원) XI맵은 한 줄 → 바로 3단계(전북 › 남원시 · 서비스 3) · 채팅 창 있음 · 콘솔 오류 0. 진단 자동 실행 중 한 번 잡힌 `reading 'map'` 오류는 다시 열어 재현되지 않았다(같은 시각 다른 에이전트가 같은 화면 파일을 고치고 있어 원인 분리 불가 · 기록만).
 
 ## 바꾼 파일
-`landxi/v3/xi-clean/xc.css`(오른쪽 쌓임 · 채팅 자리 변수 · 도구 판 위치 · 답 칸 높이 · 단계 목록 모양) · `onmap.css`(판 · 한 줄 기본 자리 · 끌기 · 제자리로 · 뜻 확인 줄) · `onmap.js`(끌어 옮기기 · 기억 · 꼬리표 피하기 · 카메라 여백) · `app.js`(배치 변수 `layoutNow` · 서랍 열면 통계 걷기 · 통계 단추 dev 전용 · 단계 목록 `renderBoardList`)
+`landxi/v3/xi-clean/showcase.js`(말풍선 피하기) · `xc.css`(오른쪽 쌓임 · 답 칸 최근 하나 · 이전 대화 손잡이 · 채팅 자리 변수 · 도구 판 위치 · 답 칸 높이 · 단계 목록 모양) · `onmap.css`(판 · 한 줄 기본 자리 · 끌기 · 제자리로 · 뜻 확인 줄) · `onmap.js`(끌어 옮기기 · 기억 · 꼬리표 피하기 · 카메라 여백) · `app.js`(배치 변수 `layoutNow` · 채팅 정돈 `mountChatTidy` · 서랍 열면 통계 걷기 · 통계 단추 dev 전용 · 단계 목록 `renderBoardList`)

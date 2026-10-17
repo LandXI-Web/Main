@@ -327,10 +327,20 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
     }
     return out;
   }
+  /** 떠 있는 것(서랍 · 도구 판 · 통계 판 · 한 줄 · 분석 요청 칸 · 채팅 · 도구 열 · 왼쪽 위 한 줄) 자리 — 말풍선이 그 밑에 깔리지 않게(10-17 원칙 279 · 꼬리표와 같은 규칙) */
+  function blockers() {
+    const hr = host.getBoundingClientRect(), out = [];
+    for (const el of host.querySelectorAll('.xo:not([hidden]):not(.pn-collapsed), .xo-mini:not([hidden]), .k-drawer.is-open, .xc-tools, .xc-top, .xb-hud:not([hidden]), .xa-card:not([hidden]), .xc-pop:not([hidden]), .k-chat-root[data-dock] .k-chat-in, .k-chat-root[data-dock]:not([data-fold]) .k-chat-dlog, .k-chat-root[data-dock] .k-chat-sugg')) {
+      const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
+      out.push({ x0: r.left - hr.left - 8, y0: r.top - hr.top - 8, x1: r.right - hr.left + 8, y1: r.bottom - hr.top + 8 });
+    }
+    return out;
+  }
+  const covered = (B, s) => B.some((b) => s.x > b.x0 - 150 && s.x < b.x1 + 150 && s.y > b.y0 && s.y < b.y1 + 62);   // 말풍선 상자(폭 ≤ 300 · 높이 ~58 · 점 위)
   function paintC() {
     if (!C.el) return;
-    const W = host.clientWidth, H = host.clientHeight;
-    const cs = candidates().map((c) => ({ ...c, s: proj(c.lngLat) })).filter((c) => c.s.x > 120 && c.s.x < W - 130 && c.s.y > 110 && c.s.y < H - 150).sort((a, b) => b.w - a.w);
+    const W = host.clientWidth, H = host.clientHeight, B = blockers();
+    const cs = candidates().map((c) => ({ ...c, s: proj(c.lngLat) })).filter((c) => c.s.x > 120 && c.s.x < W - 130 && c.s.y > 110 && c.s.y < H - 150 && !covered(B, c.s)).sort((a, b) => b.w - a.w);
     const keep = [];
     for (const c of cs) { if (keep.length >= 5) break; if (keep.some((k) => Math.abs(k.s.x - c.s.x) < 220 && Math.abs(k.s.y - c.s.y) < 56)) continue; keep.push(c); }
     const key = keep.map((c) => c.id + c.q).join('|');
@@ -372,6 +382,7 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
   let refT = 0;
   function refresh() { if (!SC.mode || refT) return; refT = requestAnimationFrame(() => { refT = 0; if (SC.mode === 'A') { A.key = ''; paintA(); } else if (SC.mode === 'B') paintLive(); else if (SC.mode === 'C') { C.key = ''; paintC(); } else if (SC.mode === 'now') { C.key = ''; paintC(); drawN(); } }); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  host.addEventListener('xc:layout', refresh);   // 지도 위 배치가 바뀌면(서랍 · 통계 판 · 채팅 답) 말풍선 자리 다시(app.js layoutNow)
   // on = 지금 모양을 걷는 시안(A · B · C 단독)인가 — '지금 + C'(기본)는 지금 모양 위에 얹으므로 false
   return { set, refresh, get on() { return !!SC.mode && SC.mode !== 'now'; }, get mode() { return SC.mode; } };
 }

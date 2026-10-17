@@ -65,9 +65,10 @@
 .xo-live{margin:10px 0 0;display:flex;align-items:center;gap:6px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink-2)}
 .xo-live i{width:7px;height:7px;border-radius:50%;background:var(--ai);animation:xo-pulse 1.6s ease-in-out infinite}
 @keyframes xo-pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.xo-notice{margin:10px 0 0;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2)}
+.xo-notice{margin:10px 0 0;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);text-wrap:balance;word-break:keep-all}
 .xo-say{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
-.xo-say p{margin:0;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);text-wrap:pretty;word-break:keep-all}
+.xo-say p{margin:0;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink-2);text-wrap:balance;word-break:keep-all}
+.xo-say .nb,.xo-notice .nb{white-space:nowrap}   /* 숫자 · 단위 · 조사(26%를 · 9,879곳)는 한 덩이 — 글자 중간 끊김 0(§3-9) */
 .xo-say p + p{margin-top:4px}
 .xo-logo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--r-8);background:var(--ai);color:#fff;font:800 var(--fs-tag,14px)/1 var(--font-display)}
 .xo-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
