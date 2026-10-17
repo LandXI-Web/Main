@@ -1078,12 +1078,14 @@ function boardRegs() {
 const regOf = (reg) => findRegion(reg.sgg_cd) || (reg.prev_cd && findRegion(reg.prev_cd)) || findRegion(reg.name) || null;
 function openBoardList() {
   const B = boardRegs(); if (!B) return;
-  const title = B.region ? `${B.region.name} · ${nf(B.services)} 서비스 제공중` : `${nf(B.regions)} 시군구 · ${nf(B.services)} 서비스 제공중`;
+  const parts = B.region ? [B.region.name, `${nf(B.services)} 서비스 제공중`] : [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`];
+  const title = parts.join(' · ');
   const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer.title(title) : drawerOpen(title, () => { S.list = null; });
   d.__kind = 'board'; S.list = null; patchRail();
+  const tEl = d.el.querySelector('.k-dr-t');                                           // 줄바꿈은 '·' 경계에서만(구 중간 꺾임 0 · §3-9)
+  if (tEl) tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] }));
+  if (!d.el.querySelector('.xc-board-rep')) d.el.querySelector('.k-dr-x')?.before(h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) }));   // 제목 줄 오른쪽 · 닫기 × 옆
   const box = h('div.xc-list.xc-board');
-  const rep = h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) });
-  box.append(h('div.xc-board-act', {}, rep));
   if (!B.regs.length) { K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
   for (const reg of B.regs) {
     const r = regOf(reg);
@@ -1101,20 +1103,23 @@ function openBoardList() {
 /** 서비스 하나 → 그 시군구로 날아가 그 서비스 결과만 지도에(기존 결과 켜기 재사용: 전국 결과 화면 = 업무 거르기 · 기관 화면 = 그 결과 층만) */
 async function showBoardSvc(reg, it, btn) {
   const r = regOf(reg); if (!r) return;
+  const wasOn = btn?.getAttribute('aria-current') === 'true', moved = S.region?.code !== r.code;
   btn?.closest('.xc-board')?.querySelectorAll('[aria-current]').forEach((b) => b.removeAttribute('aria-current'));
   btn?.setAttribute('aria-current', 'true'); btn?.closest('.xc-board-grp')?.querySelector('.xc-board-sgg')?.setAttribute('aria-current', 'true');
-  if (S.region?.code !== r.code) await setRegion(r, { keepDrawer: true });
+  if (moved) await setRegion(r, { keepDrawer: true });
   if (S.region?.code !== r.code) return;
   const task = taskOf(it.name);
-  if (S.board) { applyTask(task); }                                                   // 전국 결과 화면: 그 업무만 남긴다(왼쪽 위 '원래대로' 칩으로 되돌림)
-  else {                                                                                // 기관 화면: 그 서비스 결과 층만 켠다(map_layer only 와 같은 길)
+  const same = !moved && wasOn;                                                        // 이미 눌려 있던 줄을 다시 누름 → 원래대로(토글)
+  if (S.board) { applyTask(same ? null : task); }                                      // 전국 결과 화면: 그 업무만 남긴다 · 다시 누르면 원래대로(왼쪽 위 칩과 같은 동작)
+  else {                                                                                // 기관 화면: 그 서비스 결과 층만 켠다(map_layer only 와 같은 길) · 다시 누르면 모두
     await S.rdP?.catch(() => {});
     const w = norm(it.name), hit = (S.res || []).filter((x) => x.set === it.layer?.set || x.id === it.layer?.id || norm(x.name?.ko || x.id).includes(w));
     if (!hit.length) { K.toast(`이 지역에는 ${it.name} 결과가 없습니다`); return; }
-    for (const x of S.res || []) S.resOn[x.id] = hit.includes(x);
+    for (const x of S.res || []) S.resOn[x.id] = same ? true : hit.includes(x);
     S.layers.ai = true; S.aiUser = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
   }
-  X.boardPick = { sgg: reg.sgg_cd, svc: it.svc, task: S.board ? BD?.task : null };
+  if (same) btn?.removeAttribute('aria-current');
+  X.boardPick = { sgg: reg.sgg_cd, svc: it.svc, task: S.board ? BD?.task : null, same };
 }
 /** 목록과 같은 내용의 한 장(.hwpx) — 시군구 · 서비스 · 서비스 결과 · 마지막 분석(원칙 274 (a) · 275 기준) */
 function boardListSpec() {
