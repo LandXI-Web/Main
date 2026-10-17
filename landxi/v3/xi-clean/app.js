@@ -2086,7 +2086,8 @@ function mountChatTidy() {
   let tidyT = 0;
   const arm = () => { clearTimeout(tidyT); tidyT = setTimeout(() => {
     if (root.hasAttribute('data-fold') || box.dataset.state === 'busy') return;
-    if (dlog.matches(':hover') || root.contains(document.activeElement) && document.activeElement !== document.body) { arm(); return; }
+    const ae = document.activeElement, typing = ae && root.contains(ae) && !(ae.classList.contains('k-ck-i') && !ae.value.trim());   // 입력 칸에 초점만 있고 비어 있으면 '쓰는 중'이 아니다
+    if (dlog.matches(':hover') || typing) { arm(); return; }
     cmdk?.close({ force: true }); countPrev();
   }, TIDY_MS); };
   let was = box.dataset.state;
