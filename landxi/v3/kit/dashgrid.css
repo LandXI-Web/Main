@@ -8,7 +8,7 @@
 .dg-item.is-drag{cursor:grabbing}
 .dg-ph{position:absolute;box-sizing:border-box;border-radius:var(--r-16);background:var(--bg-0);border:1px dashed var(--mute);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui)}
 /* 머리 — 제목 · (보조 한 줄) · 더 보기 · (수정) 보기 방식 · 빼기 */
-.dg-hd{display:flex;align-items:flex-start;gap:10px;flex:none;min-width:0;min-height:28px}
+.dg-hd{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 10px;flex:none;min-width:0;min-height:28px}
 .dg-hd-t{display:flex;flex-direction:column;gap:0;min-width:0;flex:1 1 auto}
 .dg-t{margin:0;font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dg-sub{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);word-break:keep-all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -18,6 +18,7 @@
 .dg-more:hover{background-size:100% 1px}
 .dg-grip,.dg-rm,.dg-views,.dg-rs{display:none}
 .dg-body{flex:1 1 0;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.dg-body.is-empty{justify-content:center;align-items:center;text-align:center}
 /* 수정 모드 */
 .dg.is-edit .dg-item.t-card{outline:1px dashed var(--mute);outline-offset:-1px}
 .dg.is-edit .dg-hd{cursor:grab}
@@ -27,6 +28,8 @@
 .dg-rm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .dg.is-edit .dg-rm:hover{background:var(--ink);color:#fff}
 .dg.is-edit .dg-views{display:inline-flex;flex:none;gap:2px;padding:2px;border-radius:var(--r-8);background:var(--bg-0)}
+.dg.is-edit .dg-item.is-narrow .dg-views{flex-basis:100%;order:9;justify-content:flex-start;margin-top:-2px}   /* 좁은 칸은 보기 방식 칩을 아랫줄로(부제가 잘리지 않게) */
+.dg.is-edit .dg-more{display:none}
 .dg-v{height:24px;padding:0 10px;border:0;border-radius:6px;background:transparent;font:500 var(--fs-tag)/24px var(--font-body);color:var(--sub-2);cursor:pointer;white-space:nowrap}
 .dg-v[aria-pressed="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 0 rgba(28,31,37,.06)}
 .dg.is-edit .dg-rs{display:block;position:absolute;right:4px;bottom:4px;width:22px;height:22px;cursor:nwse-resize;border-radius:4px;

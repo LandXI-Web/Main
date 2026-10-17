@@ -1,59 +1,41 @@
-[23시 37분 36초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
-[23시 37분 40초] 1920 첫 열기 ready 2.8s
+[23시 49분 16초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
+[23시 49분 20초] 1920 첫 열기 ready 3.1s
   shot after-1920-default.png
   글자: 본 176 · 14px 미만 0 · 단계 밖 0  
-[23시 37분 57초] 1440 ready 8.6s
-  1440 열기→준비 11.5s
+[23시 49분 36초] 1440 ready 3.2s
+  1440 열기→준비 5.5s
   shot after-1440-default.png
-[23시 38분 5초] 1366 ready 3.7s
-  1366 열기→준비 6.6s
+[23시 49분 43초] 1366 ready 2.8s
+  1366 열기→준비 6.7s
   shot after-1366-default.png
   1366 글자: 14px 미만 0 · 단계 밖 0  
-[23시 38분 12초] 390 ready 2.6s
-  390 열기→준비 6.6s
+[23시 49분 48초] 390 ready 3.0s
+  390 열기→준비 4.8s
   shot after-390-default.png
-[23시 38분 17초] 1440 수정 ready 3.0s
+[23시 49분 53초] 1440 수정 ready 3.1s
   처음 배치 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
   shot after-1440-edit-mode.png
-  끌기 뒤 메모 {"id":"memo","x":0,"y":0,"w":4,"h":3,"view":null} 공지 {"id":"notice","x":0,"y":3,"w":8,"h":3,"view":"list"}
+  끌기 뒤 메모 {"id":"memo","x":0,"y":0,"w":4,"h":3,"view":null} 공지 {"id":"notice","x":0,"y":4,"w":8,"h":3,"view":"list"}
   shot after-1440-drag.png
-  크기 뒤 진행 현황 {"id":"board","x":0,"y":6,"w":8,"h":5,"view":"numbers"}
+  크기 뒤 진행 현황 {"id":"board","x":0,"y":7,"w":8,"h":5,"view":"numbers"}
   shot after-1440-resize.png
   shot after-1440-views.png
   shot after-1440-add-menu.png
   shot after-1440-added.png
   shot after-1440-calendar-week.png
   shot after-1440-custom-done.png
-  저장 배치 ["notice:0,3,8x3/list","memo:0,0,4x3/null","board:0,6,8x5/numbers","inbox:5,11,3x4/numbers","store:8,0,4x4/numbers","calendar:0,11,4x7/auto","recent:4,15,8x7/cards","national:4,0,4x3/numbers","mapsvc:8,4,4x3/numbers"]
+  저장 배치 ["notice:0,4,8x3/list","memo:0,0,4x3/null","board:0,7,8x5/numbers","inbox:0,12,3x4/numbers","store:4,0,4x4/numbers","calendar:0,19,4x7/auto","recent:3,12,8x7/cards","national:8,0,4x3/numbers","mapsvc:8,3,4x3/numbers"]
   shot after-1440-calendar-day-modal.png
   shot after-1440-calendar-day-saved.png
   shot after-1440-calendar-month-event.png
-  서버 내 일정 []
-[23시 38분 38초] 1440 다시 열기 ready 2.6s
+  서버 내 일정 ["시험 일정 · 대시보드 확인 2026-10-17 14:00"]
+[23시 50분 25초] 1440 다시 열기 ready 3.4s
   다시 열기 배치 같음? true
   shot after-1440-reload-kept.png
-[23시 38분 47초] 로그인 2회(다시 로그인 시험)
-[23시 38분 50초] 다시 로그인 ready 2.5s
+[23시 50분 37초] 로그인 2회(다시 로그인 시험)
+[23시 50분 41초] 다시 로그인 ready 2.6s
   다시 로그인 배치 같음? true
   shot after-1440-relogin-kept.png
-[23시 38분 54초] 1920 맞춤 ready 2.7s
+[23시 50분 51초] 1920 맞춤 ready 3.0s
   shot after-1920-custom.png
-  정리: 시험 일정 지움 · 처음 모양으로
-
-[23시 40분 14초] 로그인 1회
-  shot after-1440-calendar-day-saved.png
-  하루 창 내 일정 줄: 1
-  shot after-1440-calendar-month-event.png
-  서버 내 일정 ["시험 일정 · 대시보드 확인 2026-10-17 14:00 달력 칸 시험"]
-  shot after-1440-calendar-month-wide.png
-  shot after-1440-calendar-week.png
-  shot after-1440-calendar-list.png
-  정리: 시험 일정 지움 · 처음 모양으로
-
-[23시 41분 44초] 로그인 1회
-  shot after-1440-calendar-week.png
-  rs {"x":507.328125,"y":842,"width":22,"height":22}
-  달력 {"id":"calendar","x":0,"y":7,"w":8,"h":7,"view":"week"}
-  shot after-1440-calendar-week-wide.png
-  shot after-1440-calendar-month-wide.png
   정리: 시험 일정 지움 · 처음 모양으로

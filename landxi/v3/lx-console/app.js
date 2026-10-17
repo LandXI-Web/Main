@@ -30,6 +30,10 @@ const ymdDot = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '
 const hm = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${two(d.getHours())}:${two(d.getMinutes())}`; };
 const when = (s) => { const d = new Date(s || ''); if (Number.isNaN(+d)) return ''; return d.toDateString() === new Date().toDateString() ? hm(s) : mmdd(s); };
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+/* 빈 상태 한 줄 — 칸 가운데에 */
+const none = (body, text) => { body.classList.add('is-empty'); body.replaceChildren(h('p.ld-foot-none', { text })); };
+/* 칸 몸통 높이(머리 · 부제 · 안쪽 여백 뺀 값) — 내용이 적으면 숫자를 키운다 */
+const bodyH = (ctx) => ctx.px.h - 88;
 const nf = (n, d = 0) => Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const isoDay = (d) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 const dayOf = (s) => { const [y, m, d] = String(s).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
@@ -80,7 +84,7 @@ const WIDGETS = {
       try { j = await once('notice', () => api('/announcements?limit=12')); } catch { fail(body, () => { drop('notice'); ctx.refresh(); }); return; }
       const items = j.items || [];
       ctx.sub(j.total ? `${j.total}건` : null);
-      if (!items.length) { body.replaceChildren(h('p.ld-foot-none', { text: '새 공지가 없습니다' })); return; }
+      if (!items.length) { none(body, '새 공지가 없습니다'); return; }
       const open = (a) => modal({ title: a.title, body: h('div.ld-ntc-md', {}, h('p.ld-ntc-by', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body ? h('p.ld-ntc-tx', { text: a.body }) : null) });
       if (ctx.view === 'one') {
         const a = items[0];
@@ -108,7 +112,7 @@ const WIDGETS = {
         h('small.num', { text: mmdd(m.at) }),
         h('span.ld-ml-a', {},
           act(m.pinned ? '고정 풀기' : '고정', `메모 ${m.pinned ? '고정 풀기' : '고정'}`, () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/pin`, { method: 'POST', body: { pinned: !m.pinned } }))),
-          act('삭제', '메모 삭제', () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/remove`, { method: 'POST', body: {} }), '메모를 삭제했습니다')))))) : h('p.ld-foot-none', { text: '적은 메모가 없습니다' });
+          act('삭제', '메모 삭제', () => run(() => api(`/me/memos/${encodeURIComponent(m.id)}/remove`, { method: 'POST', body: {} }), '메모를 삭제했습니다')))))) : h('p.ld-foot-none.ld-ml-none', { text: '적은 메모가 없습니다' });
       const inp = h('input.t-input.ld-ml-in', { type: 'text', maxlength: '200', placeholder: '메모 적기 — Enter 로 저장', 'aria-label': '메모 적기' });
       inp.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' || e.isComposing) return;
@@ -146,7 +150,8 @@ const WIDGETS = {
         })));
         return;
       }
-      const ol = h('ol.ld-pf', { 'aria-label': '프로젝트 단계', class: ctx.w >= 8 ? 'is-row' : '' }, ...GROUPS.map((g, i) => {
+      const row = ctx.w >= 8, big = (row ? 1 : 2) * 84 <= bodyH(ctx);
+      const ol = h('ol.ld-pf', { 'aria-label': '프로젝트 단계', class: [row ? 'is-row' : '', big ? 'is-big' : ''].filter(Boolean).join(' ') }, ...GROUPS.map((g, i) => {
         const n = by[i].length, warn = by[i].filter((p) => kick(p)?.kind === 'warn').length;
         return h('li', { dataset: { n: String(n), key: g.key } },
           h('a', { href: stageListHref(g.key), 'aria-label': `${g.label} ${n}개${warn ? ` · 남은 일 있는 ${warn}` : ''}` },
@@ -165,21 +170,21 @@ const WIDGETS = {
       wait(body);
       const c = await requestCounts().catch(() => null);
       if (!c || c.total === null) { fail(body, () => { wait(body); requestCounts({ force: true }); ctx.refresh(); }); return; }
-      const none = !c.review && !c.request && !c.approval;
+      const isNone = !c.review && !c.request && !c.approval;
       if (ctx.view === 'list') {
         const rows = [
           ...(c.requests || []).map((r) => ({ t: r.title || '분석 요청', k: '분석 요청', at: r.at, href: STAFF_HREF.inbox + '#requests' })),
           ...(c.approvals || []).map((a) => ({ t: a.title || a.kind_label || '승인 요청', k: '보낸 요청', at: a.at, href: STAFF_HREF.inbox + '#approvals' })),
         ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
-        body.replaceChildren(rows.length ? h('ul.ld-rows', {}, ...rows.map((r) => h('li', {}, h('a', { href: r.href },
-          h('b', { text: r.t }), h('span.ld-k', { text: r.k }), h('small.num', { text: when(r.at) })))))
-          : h('p.ld-foot-none', { text: none ? '지금은 기다리는 요청이 없습니다' : `검토 요청 ${c.review || 0}건은 요청함에서 봅니다` }));
+        if (!rows.length) { none(body, isNone ? '지금은 기다리는 요청이 없습니다' : `검토 요청 ${c.review || 0}건은 요청함에서 봅니다`); return; }
+        body.replaceChildren(h('ul.ld-rows', {}, ...rows.map((r) => h('li', {}, h('a', { href: r.href },
+          h('b', { text: r.t }), h('span.ld-k', { text: r.k }), h('small.num', { text: when(r.at) }))))));
         return;
       }
       const cell = (v, label, hash) => h('a.ld-cell', { href: STAFF_HREF.inbox + hash, class: v ? '' : 'is-zero', 'aria-label': `${label} ${v ?? '—'}건` },
         v === null ? h('b.num', { text: '—' }) : num('b.num', v), h('span', { text: label }));
-      const cells = h('div.ld-cells', {}, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells, h('p.ld-inbox-s', { text: none ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' })));
+      const cells = h('div.ld-cells', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' }, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
+      body.replaceChildren(h('div.ld-inbox-b', {}, cells, h('p.ld-inbox-s', { text: isNone ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' })));
       countUp(cells, 'inbox');
     },
   },
@@ -196,9 +201,9 @@ const WIDGETS = {
       const again = () => { drop('storage'); ctx.refresh(); };
       if (ctx.view === 'projects') {
         const max = Math.max(1, ...ps.map((p) => p.bytes || 0));
-        body.replaceChildren(ps.length ? h('ol.ld-pb.ld-pb--store', {}, ...ps.map((p) => h('li', {}, h('span', { text: p.name, title: p.name }),
-          h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) }))))
-          : h('p.ld-foot-none', { text: '내가 프로젝트장인 프로젝트가 없습니다' }));
+        if (!ps.length) { none(body, '내가 프로젝트장인 프로젝트가 없습니다'); return; }
+        body.replaceChildren(h('ol.ld-pb.ld-pb--store', {}, ...ps.map((p) => h('li', {}, h('span', { text: p.name, title: p.name }),
+          h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) })))));
         return;
       }
       const pw = pctWord(used, q);
@@ -239,7 +244,7 @@ const WIDGETS = {
       let j;
       try { j = await projects(); } catch { fail(body, () => { drop('projects'); ctx.refresh(); }); return; }
       const items = j.items || [];
-      if (!items.length) { body.replaceChildren(h('p.ld-foot-none', { text: '진행 중인 프로젝트가 없습니다' })); return; }
+      if (!items.length) { none(body, '진행 중인 프로젝트가 없습니다'); return; }
       const t = (p) => +new Date(p.last_at || p.updated_at || 0) || 0;
       const sorted = items.slice().sort((a, b) => t(b) - t(a));
       if (ctx.view === 'list') {
@@ -264,16 +269,16 @@ const WIDGETS = {
       wait(body);
       let j;
       try { j = await once('national', async () => ((await hasRoute('/national/recent')) ? api('/national/recent?n=12') : null)); } catch { fail(body, () => { drop('national'); ctx.refresh(); }); return; }
-      if (!j) { body.replaceChildren(h('p.ld-foot-none', { text: '전국 분석 기록이 없습니다' })); return; }
+      if (!j) { none(body, '전국 분석 기록이 없습니다'); return; }
       ctx.sub(j.year ? `${j.year}년 영상` : null);
       const items = j.items || [];
       if (ctx.view === 'list') {
-        body.replaceChildren(items.length ? h('ul.ld-rows', {}, ...items.map((x) => h('li', {}, h('a', { href: STAFF_HREF.ximap },
-          h('b', { text: [x.sgg, x.name].filter(Boolean).join(' ') }), h('span.ld-k', { text: x.asset_name }), h('small.num', { text: when(x.at) })))))
-          : h('p.ld-foot-none', { text: '끝난 읍면동이 없습니다' }));
+        if (!items.length) { none(body, '끝난 읍면동이 없습니다'); return; }
+        body.replaceChildren(h('ul.ld-rows', {}, ...items.map((x) => h('li', {}, h('a', { href: STAFF_HREF.ximap },
+          h('b', { text: [x.sgg, x.name].filter(Boolean).join(' ') }), h('span.ld-k', { text: x.asset_name }), h('small.num', { text: when(x.at) }))))));
         return;
       }
-      const cells = h('div.ld-cells.ld-cells--2', {},
+      const cells = h('div.ld-cells.ld-cells--2', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
         h('div.ld-cell.ld-cell--ro', {}, num('b.num', Number(ev(j.today?.cells)) || 0), h('span', { text: '오늘 끝난 읍면동' })),
         h('div.ld-cell.ld-cell--ro', {}, num('b.num', Number(ev(j.today?.n)) || 0), h('span', { text: '오늘 AI 분석 결과' })));
       const last = items[0];
@@ -292,12 +297,12 @@ const WIDGETS = {
       ctx.sub(groups.length ? `서비스 · 프로젝트 ${groups.length}개` : null);
       if (ctx.view === 'list') {
         const rows = groups.flatMap((g) => g.items.slice(0, 3).map((x) => ({ g, x }))).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || ''))).slice(0, 30);
-        body.replaceChildren(rows.length ? h('ul.ld-rows', {}, ...rows.map(({ g, x }) => h('li', {}, h('a', { href: STAFF_HREF.mapsvc + '?job=' + encodeURIComponent(x.job) },
-          h('b', { text: g.name }), h('span.ld-k', { text: [x.region, x.imagery?.word].filter((s) => s && s !== '—').join(' · ') }), h('small.num', { text: when(x.finished_at) })))))
-          : h('p.ld-foot-none', { text: '분석 결과가 없습니다' }));
+        if (!rows.length) { none(body, '분석 결과가 없습니다'); return; }
+        body.replaceChildren(h('ul.ld-rows', {}, ...rows.map(({ g, x }) => h('li', {}, h('a', { href: STAFF_HREF.mapsvc + '?job=' + encodeURIComponent(x.job) },
+          h('b', { text: g.name }), h('span.ld-k', { text: [x.region, x.imagery?.word].filter((s) => s && s !== '—').join(' · ') }), h('small.num', { text: when(x.finished_at) }))))));
         return;
       }
-      const cells = h('div.ld-cells.ld-cells--2', {},
+      const cells = h('div.ld-cells.ld-cells--2', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
         h('a.ld-cell', { href: STAFF_HREF.mapsvc, class: j.total ? '' : 'is-zero' }, num('b.num', Number(j.total) || 0), h('span', { text: '분석 결과' })),
         h('div.ld-cell.ld-cell--ro', { class: running.length ? 'is-run' : 'is-zero' }, num('b.num', running.length), h('span', { text: '분석 중' })));
       const last = groups.map((g) => ({ g, x: g.items[0] })).filter((r) => r.x).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || '')))[0];
@@ -446,6 +451,8 @@ async function calendar(body, ctx) {
   try { a = await agenda(first, last); } catch { grid.append(h('p.ld-foot-none.ld-cal-err', { text: '일정을 불러오지 못했습니다' })); return; }
   if (a.failed === 'plat') ctx.sub('플랫폼 일은 불러오지 못했습니다'); else ctx.sub(null);
   requestAnimationFrame(() => {
+    const wrap = grid.querySelector('.ld-cal-cells'), tc = cells.find((c) => c.classList.contains('is-today'));
+    if (wrap && tc && wrap.scrollHeight > wrap.clientHeight + 2) wrap.scrollTop = Math.max(0, tc.offsetTop - (wrap.clientHeight - tc.offsetHeight) / 2);
     const cellH = cells[0]?.clientHeight || 0;
     const fit = narrow ? 0 : Math.max(1, Math.floor((cellH - 26) / 22));
     for (const c of cells) {

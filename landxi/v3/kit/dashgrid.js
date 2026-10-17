@@ -63,13 +63,19 @@ export function dashgrid(host, { screen, widgets, defaults = [], cols = 12, rowH
     for (const it of Array.isArray(arr) ? arr : []) { if (!it || seen.has(it.id)) continue; const c = clampItem(it); if (c) { seen.add(c.id); out.push(c); } }
     return out;
   };
-  /** 겹침 풀기 — fixed(끌고 있는 칸)는 그대로, 나머지는 위에서부터 겹치지 않는 가장 위 줄로 */
+  /** 겹침 풀기 · 빈자리 메우기 — fixed(끌고 있는 칸)는 그대로, 나머지는 위에서부터 겹치지 않는 가장 위 줄 · 가장 왼쪽으로(구멍 0) */
   function compact(fixed = null) {
     const placed = fixed ? [fixed] : [];
     const rest = layout.filter((it) => it !== fixed).sort((a, b) => a.y - b.y || a.x - b.x);
+    const hit = (it) => placed.some((o) => collides(o, it));
     for (const it of rest) {
-      while (placed.some((o) => collides(o, it))) it.y++;
-      while (it.y > 0) { it.y--; if (placed.some((o) => collides(o, it))) { it.y++; break; } }
+      while (hit(it)) it.y++;
+      for (let k = 0; k < 8; k++) {                 // 위로 · 왼쪽으로 번갈아 당긴다(둘 다 더 못 가면 끝)
+        let moved = false;
+        while (it.y > 0) { it.y--; if (hit(it)) { it.y++; break; } moved = true; }
+        while (it.x > 0) { it.x--; if (hit(it)) { it.x++; break; } moved = true; }
+        if (!moved) break;
+      }
       placed.push(it);
     }
   }
@@ -113,7 +119,8 @@ export function dashgrid(host, { screen, widgets, defaults = [], cols = 12, rowH
     rec.cleanup = null;
     rec.drawn = { w: it.w, h: it.h, view: it.view };
     rec.node.dataset.w = it.w; rec.node.dataset.h = it.h; rec.node.dataset.size = sizeWord(it); rec.node.dataset.view = it.view || '';
-    rec.body.replaceChildren();
+    rec.node.classList.toggle('is-narrow', it.w <= 5);
+    rec.body.className = 'dg-body'; rec.body.replaceChildren();
     for (const b of rec.views.children) b.setAttribute('aria-pressed', b.dataset.v === it.view ? 'true' : 'false');
     const def = widgets[it.id];
     const tok = rec.drawn;

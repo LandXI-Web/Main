@@ -12,7 +12,8 @@
 .ld-warn{color:var(--warn)}
 
 /* 진행 현황 — 숫자(3×2 · 넓으면 한 줄 6) · 막대 */
-.ld-pf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;align-content:start}
+.ld-pf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;align-content:space-evenly;flex:1 1 auto}
+.ld-pf.is-big b{font-size:var(--fs-h2);line-height:60px}
 .ld-pf.is-row{grid-template-columns:repeat(6,minmax(0,1fr))}
 .ld-pf li{position:relative;min-width:0}
 .ld-pf a{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
@@ -36,7 +37,8 @@
 .ld-pb--store li{grid-template-columns:minmax(0,40%) minmax(0,1fr) auto;padding:2px 0}
 
 /* 숫자 칸(요청함 · 저장 용량 · 전국 분석 · 지도 서비스) */
-.ld-inbox-b{display:flex;flex-direction:column;gap:10px;min-height:0}
+.ld-inbox-b{display:flex;flex-direction:column;justify-content:space-evenly;gap:10px;min-height:0;flex:1 1 auto}
+.ld-cells.is-big b{font-size:var(--fs-h2);line-height:60px}
 .ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ld-cell{position:relative;display:flex;flex-direction:column;gap:0;min-width:0;padding:2px 6px;margin:-2px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
@@ -58,7 +60,7 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-rows em{font-style:normal;font-size:var(--fs-tag);color:var(--warn);white-space:nowrap}
 .ld-rows small{font-size:var(--fs-tag);color:var(--sub);white-space:nowrap}
 /* 저장 용량 — 쓴 양(큰 숫자) | 막대 · 프로젝트별 · 증량 신청 */
-.ld-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.ld-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;align-content:center;flex:1 1 auto}
 .ld-store-b.is-col{grid-template-columns:1fr;gap:8px}
 .ld-store-r{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ld-bar-q.k-me-bar{height:6px;background:var(--bg-0)}
@@ -102,7 +104,8 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
 /* 메모 — 줄마다 글 · 날짜 · (가리키면) 고정 · 지우기 · 아래 적기 한 줄 */
 .ld-memo-b{display:flex;flex-direction:column;gap:6px;flex:1 1 0;min-height:0}
-.ld-ml-w{flex:1 1 0;min-height:0;overflow:auto}
+.ld-ml-w{flex:1 1 0;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.ld-ml-none{margin:auto;text-align:center}
 .ld-ml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
 .ld-ml li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;min-width:0;padding:1px 6px;margin:0 -6px;border-radius:6px;font:400 var(--fs-aux)/23px var(--font-body);color:var(--ink-2)}
 .ld-ml li:hover,.ld-ml li:focus-within{background:var(--bg-0)}
@@ -128,7 +131,8 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-cal-g{display:flex;flex-direction:column;flex:1 1 0;min-height:0}
 .ld-cal-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));flex:none}
 .ld-cal-dow span{font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub);text-align:center}
-.ld-cal-cells{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(var(--weeks,5),minmax(0,1fr));gap:2px;flex:1 1 0;min-height:0}
+.ld-cal-cells{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(var(--weeks,5),minmax(48px,1fr));gap:2px;flex:1 1 0;min-height:0;overflow:auto;scrollbar-width:none}
+.ld-cal-cells::-webkit-scrollbar{display:none}
 .ld-cal-d{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;padding:3px 4px;border-radius:var(--r-8);cursor:pointer;overflow:hidden;transition:background var(--d-180) var(--e-ui)}
 .ld-cal-d:hover,.ld-cal-d:focus-visible{background:var(--bg-0);outline:0}
 .ld-cal-d.is-out{opacity:.45}
@@ -177,3 +181,5 @@ a.ld-cell:hover{background:var(--bg-0)}
 
 @media (prefers-reduced-motion:reduce){.ld-grid{opacity:1;transform:none;transition:none}}
 @media (max-width:760px){.ld{padding:12px 16px 24px}.ld-bar{display:none}.ld-cal-fr{grid-template-columns:1fr}}
+/* 수정 모드 · 좁은 칸 — 보기 방식 칩이 한 줄 차지하므로 키운 숫자는 보통 크기로(두 번째 줄이 잘리지 않게) */
+.dg.is-edit .is-narrow .ld-pf.is-big b,.dg.is-edit .is-narrow .ld-cells.is-big b{font-size:var(--fs-num);line-height:40px}
