@@ -24,7 +24,8 @@ from shapely.geometry import Polygon, mapping, shape
 ROOT = Path(__file__).resolve().parents[3]          # landxi/
 RAW = Path(os.environ.get("LX_DATA_ROOT", str(ROOT.parents[1] / "02. 데이터"))) / "global" / "raw"
 OSM = RAW / "osm-farmland-chuy-2026-10-11.json"
-TIF = RAW / "esri-lulc-2025.tif"
+OURS = Path(os.environ.get("LX_DATA_ROOT", str(ROOT.parents[1] / "02. 데이터"))) / "overseas" / "kgz" / "2025" / "publish" / "crop-blocks.tif"
+TIF = OURS if OURS.exists() else RAW / "esri-lulc-2025.tif"          # 10-17(원칙 269): 우리 해외 모델 결과(같은 격자 · 경작지 = 5)가 있으면 그것
 ADM2 = ROOT / "global" / "data" / "kgz-adm2.geojson"
 OUT = ROOT / "v3" / "main" / "data" / "kgz-blocks-2025.json"
 geod = Geod(ellps="WGS84")
@@ -76,8 +77,11 @@ for e in osm["elements"]:
     tot_crop += crop_ha
     tot_area += area_ha
 cell_m = round((abs(T.a) * 111320 * np.cos(np.radians((src.bounds.top + src.bounds.bottom) / 2)) * abs(T.e) * 110574) ** 0.5, 1)
-out = {"year": 2025, "basis": "inferred", "as_of": "2026-10-11",
-       "source": "구획 = OpenStreetMap 농경지 면(© OpenStreetMap 기여자 · ODbL) · 판정 = Sentinel-2 10 m AI 토지피복 2025 경작지(Esri/Impact Observatory · CC BY 4.0)",
+JUDGE = ("Land-XI 해외 모델(Sentinel-2 달별 합성 2025 · 10 m) 경작지" if TIF == OURS else
+         "Sentinel-2 10 m AI 토지피복 2025 경작지(Esri/Impact Observatory · CC BY 4.0)")
+import datetime as _dt
+out = {"year": 2025, "basis": "inferred", "as_of": _dt.date.today().isoformat() if TIF == OURS else "2026-10-11",
+       "source": "구획 = OpenStreetMap 농경지 면(© OpenStreetMap 기여자 · ODbL) · 판정 = " + JUDGE,
        "note": "필지(지적) 경계가 아니라 OSM 에 그려진 농경지 구획. 경작지 = 구획 안 AI 경작지 화소 비율 × 구획 면적.",
        "cell_m": cell_m, "bbox": [round(v, 4) for v in src.bounds], "n": len(feats), "area_ha": round(tot_area), "crop_ha": round(tot_crop),
        "geojson": {"type": "FeatureCollection", "features": feats}}
