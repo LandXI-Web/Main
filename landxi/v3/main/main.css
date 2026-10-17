@@ -245,8 +245,9 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 /* 휴대폰(≤ 640) — 2배는 넘쳐 줄 수 있는 만큼만(표기 · 메뉴 한 줄 · 설명 세 줄) */
 @media (max-width:640px){
   .m{--mast:64px}
-  .m-nav{gap:14px}
-  .m-nav a{font-size:var(--fs-body);padding:6px 0}
+  .m-mast{padding:0 16px}
+  .m-nav{gap:10px;margin-left:auto;padding-left:12px}   /* 바퀴 17: 로고와 메뉴 사이를 벌린다(390) */
+  .m-nav a{font-size:14px;padding:6px 0}
   .m-hero .m-lead{font-size:var(--fs-aux);line-height:24px}
 }
 @media (max-width:1100px) and (min-width:641px){

@@ -1,6 +1,82 @@
 [
- {"id":"로고-같게","title":"메인 · 로그인 왼쪽 위 'LAND-XI PLATFORM' 같은 글자 · 크기 · 자리","opts":["완료","다시"],"shots":["before-login-pc.png","after-login-pc.png","before-main-top-pc.png","after-main-top-pc.png","after-login-m.png","after-main-top-m.png"]},
- {"id":"로그인-출처뺌","title":"로그인 화면 오른쪽 위 'NASA · © V-World' 글 뺌 (다른 지도 화면 출처는 그대로)","opts":["완료","다시"],"shots":["before-login-pc.png","after-login-pc.png"]},
- {"id":"모토-Hyper한번","title":"메인 아래 모토 'Hyper Performance · Solution · GeoAI'","opts":["완료","다시"],"shots":["before-main-motto-pc.png","after-main-motto-pc.png","after-main-motto-m.png"]},
- {"id":"로그인뒤-지도깜빡임","title":"로그인 단추 뒤 첫 화면 전 지도가 화면 가득 번쩍이던 것 없앰","opts":["완료","다시"],"shots":["flash-before-admin.png","flash-after-admin.png","flash-before-staff.png","flash-after-staff.png","flash-before-sales.png","flash-after-sales.png"]}
+ {
+  "id": "로고-같게",
+  "title": "메인 · 로그인 왼쪽 위 'LAND-XI PLATFORM' 같은 글자 · 크기 · 자리",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "before-login-pc.png",
+   "after-login-pc.png",
+   "before-main-top-pc.png",
+   "after-main-top-pc.png",
+   "after-login-m.png",
+   "after-main-top-m.png"
+  ]
+ },
+ {
+  "id": "로그인-출처뺌",
+  "title": "로그인 화면 오른쪽 위 'NASA · © V-World' 글 뺌 (다른 지도 화면 출처는 그대로)",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "before-login-pc.png",
+   "after-login-pc.png"
+  ]
+ },
+ {
+  "id": "모토-Hyper한번",
+  "title": "메인 아래 모토 'Hyper Performance · Solution · GeoAI'",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "before-main-motto-pc.png",
+   "after-main-motto-pc.png",
+   "after-main-motto-m.png"
+  ]
+ },
+ {
+  "id": "로그인뒤-지도깜빡임",
+  "title": "로그인 단추 뒤 첫 화면 전 지도가 화면 가득 번쩍이던 것 없앰",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "flash-before-admin.png",
+   "flash-after-admin.png",
+   "flash-before-staff.png",
+   "flash-after-staff.png",
+   "flash-before-sales.png",
+   "flash-after-sales.png"
+  ]
+ },
+ {
+  "id": "모토-다른화면",
+  "title": "서비스 상세 · 영업 아래 줄 모토도 'Hyper Performance · Solution · GeoAI' (Hyper 한 번)",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": []
+ },
+ {
+  "id": "모바일-로고간격",
+  "title": "모바일(390) 메인 위쪽 로고와 메뉴 사이 간격을 벌림(다른 폭 그대로)",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "before-main-top-m.png",
+   "after-mast-m.png",
+   "before-main-top-pc.png",
+   "after-mast-pc.png"
+  ]
+ }
 ]

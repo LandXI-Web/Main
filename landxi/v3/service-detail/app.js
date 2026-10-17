@@ -120,7 +120,7 @@ async function boot() {
     related(rows, id),
     closing(),
     sources(),
-    h('footer.sd-foot', {}, h('span', { text: 'Land-XI' }), h('span', { text: 'Hyper Performance · Hyper Solution · Hyper GeoAI' })),
+    h('footer.sd-foot', {}, h('span', { text: 'Land-XI' }), h('span', { text: 'Hyper Performance · Solution · GeoAI' })),
   );
   enter(S.main);
   document.body.dataset.state = 'ready';
