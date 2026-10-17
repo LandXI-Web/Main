@@ -10,6 +10,7 @@ import { loadYsData } from '../../global/js/ndvi-theater.js';
 import { loadSprawl } from '../../global/js/sprawl.js';
 import { D } from '../../global/js/globe-stage.js';
 import * as NT from './ndvi-tiles.js';
+import { addCropView } from '../kit/ov-crop.js';   // 나라 보기의 경작지 면(우리 해외 모델 · 바퀴 17 원칙 281)
 
 const q = new URLSearchParams(location.search);
 const DATA = '/landxi/global/data/';
@@ -358,7 +359,9 @@ async function main() {
   map.addSource('gl-reg', { type: 'geojson', data: EMPTY });
   map.addLayer({ id: 'gl-reg-f', type: 'fill', source: 'gl-reg', paint: { 'fill-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'fill-opacity': ['case', ['==', ['get', 'status'], 'mismatch'], 0.38, 0.16] } }, 'slot-reference');
   map.addLayer({ id: 'gl-reg-l', type: 'line', source: 'gl-reg', paint: { 'line-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'line-width': 2 } }, 'slot-reference');
-  map.addLayer({ id: 'gl-cells', type: 'fill', source: 'gl-cells', paint: { 'fill-color': '#FFB331', 'fill-opacity': ['*', ['min', 1, ['/', ['abs', ['get', 'd']], 30]], ['case', ['==', ['get', 'on'], 1], 0.85, 0]], 'fill-opacity-transition': { duration: D[500] } } }, 'slot-result');
+  // 건물 면적 변화 칸(500 m) — 3%p 넘게 바뀐 칸은 바닥 진하기 0.45(예전 d/30 이라 작은 변화가 거의 투명) · 칸 테두리(멀리 · 가까이 모두 면이 읽히게 · 바퀴 17 원칙 281)
+  map.addLayer({ id: 'gl-cells', type: 'fill', source: 'gl-cells', paint: { 'fill-color': '#FFB331', 'fill-opacity': ['*', ['interpolate', ['linear'], ['abs', ['get', 'd']], 2.99, 0, 3, 0.45, 30, 0.9], ['case', ['==', ['get', 'on'], 1], 1, 0]], 'fill-opacity-transition': { duration: D[500] } } }, 'slot-result');
+  map.addLayer({ id: 'gl-cells-l', type: 'line', source: 'gl-cells', paint: { 'line-color': '#B86E00', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.3, 13, 1.2], 'line-opacity': ['case', ['all', ['==', ['get', 'on'], 1], ['>=', ['abs', ['get', 'd']], 3]], 0.85, 0] } }, 'slot-result');
   /* 지역 한 장(image 소스) — NDVI 는 지역 폴리곤 안만 칠해 사각형이 보이지 않는다 · 변화 화소도 같은 방식 */
   const imgLayer = (id, before, opacity) => {
     // 같은 그림이면 다시 싣지 않고, 싣는 중이면 끝난 뒤 마지막 요청만 싣는다(중간 취소 = 콘솔 오류 0)
@@ -368,7 +371,7 @@ async function main() {
       cur = url; busy = true;
       const src = map.getSource(id);
       if (src) src.updateImage({ url, coordinates: coords });
-      else { map.addSource(id, { type: 'image', url, coordinates: coords }); map.addLayer({ id, type: 'raster', source: id, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: D[500] }, 'raster-fade-duration': 0 } }, before); }
+      else { map.addSource(id, { type: 'image', url, coordinates: coords }); map.addLayer({ id, type: 'raster', source: id, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: D[500] }, 'raster-fade-duration': 0, ...(id === 'gl-change' ? { 'raster-resampling': 'nearest' } : {}) } }, before); }   // 하락 칸은 키워도 또렷하게(바퀴 17)
       const fin = () => { map.off('sourcedata', on); clearTimeout(tm); busy = false; if (next) { const n = next; next = null; if (n.url !== cur) load(n.url, n.coords); } };
       const on = (e) => { if (e.sourceId === id && map.isSourceLoaded(id)) fin(); };
       const tm = setTimeout(fin, 4000);
@@ -381,6 +384,13 @@ async function main() {
   };
   const ndviImg = imgLayer('gl-ndvi', 'gl-mask', 0.9);
   const chImg = imgLayer('gl-change', 'gl-cells', 0.95);
+  /* 나라 보기 = 우리 해외 모델 경작지 면(멀리서도 결과가 보이게 · 바퀴 17 원칙 281) — 경작지 바탕 조각이 있는 나라만(서버 meta.country) · 지역에 들어가면 하락 칸만 */
+  const CV = OC?.country && (await K.hasRoute('/global/crop-view/{z}/{x}/{y}.png')) ? String(OC.country).toLowerCase() : null;
+  const cropOn = (C) => {
+    const on = !!(CV && C && String(C.iso).toLowerCase() === CV && S.level === 'country');
+    if (on && !map.getLayer('gl-crop')) addCropView(map, { id: 'gl-crop', before: 'gl-adm2-f' });
+    if (map.getLayer('gl-crop')) map.setLayoutProperty('gl-crop', 'visibility', on ? 'visible' : 'none');
+  };
   let ndviWant = null;
   /** 이 지역의 m 월 NDVI 를 켠다(null = 끔) · 늦게 도착한 그림은 버린다 */
   async function ndviShow(m) {
@@ -396,10 +406,21 @@ async function main() {
       ndviImg.set(url, grid.coords);
     } catch { if (ndviWant === want) ndviImg.off(); }
   }
-  function changeShow(on) {
+  // 작황 하락 화소 = 줌에 맞는 한 장(멀리선 칸을 묶어 · 가까이는 키워 흰 경계 — 바퀴 17 원칙 281) · 줌이 단계를 넘을 때만 바꿔 싣는다
+  let chOn = false, chSeq = 0;
+  async function changeShow(on) {
+    chOn = !!on;
     const c = on && S.district && CH[S.district.id + '|' + S.season.key];
-    if (c?.state === 'ok' && c.url) chImg.set(c.url, geoOf(S.district).grid.coords); else chImg.off();
+    if (!(c?.state === 'ok' && c.url)) { chSeq++; chImg.off(); return; }
+    const seq = ++chSeq, D0 = S.district;
+    if (!c.lv || c.lvUrl !== c.url) { c.lv = NT.levelsOf(c.url); c.lvUrl = c.url; }
+    try {
+      const u = await c.lv.url(c.lv.level(map.getZoom()));
+      if (seq === chSeq && S.district === D0) chImg.set(u, geoOf(D0).grid.coords);
+    } catch { if (seq === chSeq) chImg.set(c.url, geoOf(D0).grid.coords); }
   }
+  let chLv = null;
+  map.on('zoomend', () => { if (!chOn) return; const c = S.district && CH[S.district.id + '|' + S.season.key]; const k = c?.lv?.level(map.getZoom()); if (k != null && k !== chLv) { chLv = k; changeShow(true); } });
 
   /* ── 흐름: 글로브 → 나라 → 지역 ── */
   const url = () => { const u = new URL(location.href); u.searchParams.set('country', S.country?.iso || ''); if (S.district) u.searchParams.set('district', S.district.id); else u.searchParams.delete('district'); u.searchParams.set('tab', STR.tabs[S.tab].toLowerCase()); u.searchParams.set('season', S.season.key); history.replaceState(null, '', u); };
@@ -419,7 +440,7 @@ async function main() {
   }
 
   async function toGlobe({ fly = true } = {}) {
-    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null);
+    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null);
     map.getSource('gl-adm2').setData(EMPTY); map.getSource('gl-adm1').setData(EMPTY); map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
     const c = S.country ? center(S.country.bbox) : [60, 25];
     const cam = { center: [c[0] + (mobile() ? 0 : 18), Math.max(-30, Math.min(40, c[1] - 6))], zoom: mobile() ? 0.9 : 1.75, pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } };
@@ -433,6 +454,7 @@ async function main() {
     map.getSource('gl-adm1').setData(A.adm1 || EMPTY);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: 0 }, geometry: d.feature.geometry })) });
     map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
+    cropOn(C);
     renderSheet();
     if (fly) await st.go(C.bbox, { maxZoom: 7.2 });
   }
@@ -440,7 +462,7 @@ async function main() {
   async function toDistrict(D0, { fly = true, jump = false } = {}) {
     if (!D0.mine && !isLX) { flashGuard(); return; }
     const A = admCache[S.country.iso];
-    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url();
+    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: d === D0 ? 1 : 0 }, geometry: d.feature.geometry })) });
     const g = D0.feature.geometry, holes = g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map((p) => p[0]) : [];
     map.getSource('gl-mask').setData({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring([-179.9, -85, 179.9, 85]), ...holes.map((r) => [...r].reverse())] } });
@@ -890,7 +912,7 @@ async function main() {
   const camNow = () => { const c = map.getCenter(); return { zoom: +map.getZoom().toFixed(2), pitch: +map.getPitch().toFixed(1), center: [+c.lng.toFixed(4), +c.lat.toFixed(4)],
     imagery: map.getLayer('k-world') ? (map.getLayoutProperty('k-world', 'visibility') || 'visible') : 'none', district: S.district?.name || null, tab: STR.tabs[S.tab] }; };
   const settled = () => new Promise((r) => { if (!map.isMoving()) { requestAnimationFrame(() => (map.isMoving() ? map.once('moveend', () => r()) : r())); } else map.once('moveend', () => r()); setTimeout(r, 3000); });
-  const LAYER_IDS = { imagery: () => ['k-world', ...map.getStyle().layers.filter((l) => l.id.startsWith('k-s2-')).map((l) => l.id)], results: () => ['gl-ndvi', 'gl-change', 'gl-cells'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
+  const LAYER_IDS = { imagery: () => ['k-world', ...map.getStyle().layers.filter((l) => l.id.startsWith('k-s2-')).map((l) => l.id)], results: () => ['gl-ndvi', 'gl-change', 'gl-cells', 'gl-cells-l'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
   const LAYER_EN = { imagery: 'the imagery layer', results: 'the results layer', districts: 'the district boundaries', mismatch: 'the mismatched districts' };
   async function onAgentAction(a) {
     const before = camNow();

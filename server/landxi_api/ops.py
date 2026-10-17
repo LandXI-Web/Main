@@ -73,6 +73,36 @@ async def _worker_self_mib(r, worker: str) -> float | None:
 
 
 POLLER_STALE_S = 30.0     # 폴러 표본(2 s 간격)이 이보다 오래되면 직접 읽기
+STORAGE_STALE_S = 300.0   # 저장 폴러(60 s 간격) 값이 이보다 오래되면 '측정 멈춤'
+
+
+def measure_stale(gpu_last: str | None, storage_at: str | None, now: dt.datetime | None = None) -> dict | None:
+    """장비 측정(GPU 폴러 · 저장 폴러)이 멈췄거나 값이 오래됐는가 — 관리자 화면 장비 줄 '측정 멈춤 · HH:MM 값' 한 출처(바퀴 17 결정).
+    정상이면 None(줄 없음). at = 멈춘 측정 중 가장 오래된 값의 시각."""
+    now = now or dt.datetime.now(KST)
+    out = []
+    for what, at, lim in (("gpu", gpu_last, POLLER_STALE_S), ("storage", storage_at, STORAGE_STALE_S)):
+        if not at:
+            continue
+        try:
+            t = dt.datetime.fromisoformat(at)
+            if t.tzinfo is None:
+                t = t.replace(tzinfo=KST)
+        except (ValueError, TypeError):
+            continue
+        if (now - t).total_seconds() > lim:
+            out.append((t, what))
+    if not out:
+        return None
+    t, _ = min(out)
+    return {"at": t.isoformat(timespec="seconds"), "what": [w for _, w in sorted(out)]}
+
+
+async def _storage_at(r) -> str | None:
+    try:
+        return await r.hget("ops:storage", "at")
+    except Exception:  # noqa: BLE001
+        return None
 _SMI: dict = {"at": 0.0, "v": None}
 _SMI_LOCK = asyncio.Lock()
 
@@ -105,7 +135,8 @@ async def gpus(request: Request):
             gl.append(g)
         at = max((g.get("at") or "" for g in gl), default=None) if gl and isinstance(gl[0], dict) else None
         return {"node": config.NODE_ID, "at": at or now_iso(), "gpus": gl, "source": "ops:gpu (F1-C 폴러)",
-                "power_budget": await power_budget_now([g for g in gl if isinstance(g, dict)])}
+                "power_budget": await power_budget_now([g for g in gl if isinstance(g, dict)]),
+                "measure_stale": measure_stale(at, await _storage_at(r))}
     async with _SMI_LOCK:                                     # 직접 읽기는 2초에 한 번(관리자 화면 여럿 · 표본 2초 간격과 같게)
         if _SMI["v"] is None or time.time() - _SMI["at"] >= 2.0:
             _SMI.update(v=await run_in_threadpool(nvidia_smi_sample), at=time.time())
@@ -121,6 +152,7 @@ async def gpus(request: Request):
     s["note"] = (f"F1-C 폴러 표본이 오래됨({stale}) — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)" if stale
                  else "F1-C 폴러 미기동 — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)")
     s["power_budget"] = await power_budget_now(s["gpus"])
+    s["measure_stale"] = measure_stale(stale, await _storage_at(r))   # 폴러가 멈춘 시각(직접 읽은 GPU 값은 지금 값이지만 기록 · 전력 판정 표본이 멈춤)
     return s
 
 
@@ -501,6 +533,7 @@ async def storage(request: Request):
     if cached.get("json"):
         d = json.loads(cached["json"])
         d.setdefault("source", "ops:storage (F1-C storage_poller)")
+        d["measure_stale"] = measure_stale(None, cached.get("at") or d.get("as_of"))
         return d
     at = now_iso()
     vols = []

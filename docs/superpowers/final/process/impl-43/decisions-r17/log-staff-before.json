@@ -1,0 +1,23 @@
+{
+ "_failed": [],
+ "errors": [],
+ "bad": [],
+ "login_at": "2026-10-17 22:29:41",
+ "main-kgz-country-before-2230.png": "2026-10-17 22:30:04",
+ "mainFar": {
+  "t6": 0.9994451873282849,
+  "t6d": 0,
+  "kph": 1
+ },
+ "main-kgz-district-before-2230.png": "2026-10-17 22:30:11",
+ "mainNear": {
+  "t6": 1,
+  "t6d": 1,
+  "kph": 2
+ },
+ "xi-kg-country-before-2230.png": "2026-10-17 22:30:17",
+ "xi-kg-z9-before-2230.png": "2026-10-17 22:30:23",
+ "xi-kg-z11-before-2230.png": "2026-10-17 22:30:29",
+ "xi-kg-z13-before-2230.png": "2026-10-17 22:30:36",
+ "xi-kg-sokuluk-z13-before-2230.png": "2026-10-17 22:30:43"
+}

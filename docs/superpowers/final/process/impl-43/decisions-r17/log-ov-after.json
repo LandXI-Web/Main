@@ -1,0 +1,23 @@
+{
+ "_failed": [],
+ "errors": [],
+ "bad": [],
+ "login_at": "2026-10-17 22:56:56",
+ "crop": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "147.5"
+ },
+ "ov-crop-after-2257.png": "2026-10-17 22:57:11",
+ "ov-crop-near-after-2257.png": "2026-10-17 22:57:17",
+ "ov-crop-nearer-after-2257.png": "2026-10-17 22:57:22",
+ "sprawl": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "15.3"
+ },
+ "ov-sprawl-after-2257.png": "2026-10-17 22:57:32",
+ "ov-sprawl-near-after-2257.png": "2026-10-17 22:57:38"
+}

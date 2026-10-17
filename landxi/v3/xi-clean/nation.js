@@ -5,6 +5,7 @@
    구획 단위(바퀴 5 · '필지 단위로 디테일하게'): 이 PC 에 키르기스스탄 지적(필지) 경계는 없어, 공개 구획 경계(OpenStreetMap 농경지 면 · 추이 주 평야 696곳)마다
    AI 경작지 판정 화소(약 15 m)를 묶어 '구획 · 경작지 판정 비율'로 보인다(main/tools/build-kgz-blocks.py). 확대(9.5↑)하면 구획이 보이고 누르면 그 구획 한 칸. LX 계정만(기관 계정은 관할만 보므로 나라 고르기 없음). */
 import * as K from '../kit/index.js';
+import { addCropView } from '../kit/ov-crop.js';   // 우리 해외 모델 경작지 보기 층(멀리 · 가까이 모두 · 바퀴 17 원칙 281)
 
 const { h } = K;
 const nf = (n) => Number(n).toLocaleString('ko-KR');
@@ -17,9 +18,8 @@ const NATIONS = [
   { id: 'kr', name: '대한민국' },
   { id: 'kg', name: '키르기스스탄', file: 'kgz-crop-2025.json', blocks: 'kgz-blocks-2025.json', box: [69.2, 39.1, 80.3, 43.3] },
 ];
-const GREEN = '#2E9E5B';
 
-export function mountNation({ map, host, onEnter, onLeave }) {
+export function mountNation({ map, host, onEnter, onLeave, onPick }) {
   const st = { id: 'kr', data: null, sel: null, blk: null };
   const btns = NATIONS.map((n) => h('button.xn-b', { type: 'button', 'aria-pressed': String(n.id === 'kr'), onclick: () => go(n.id) }, n.name));
   const bar = h('div.xn-bar', { role: 'group', 'aria-label': '사업 나라' }, ...btns);
@@ -40,15 +40,12 @@ export function mountNation({ map, host, onEnter, onLeave }) {
   function layers(d) {
     if (map.getSource('xn-kg')) return;
     map.addSource('xn-kg', { type: 'geojson', data: d.geojson, promoteId: 'name' });
-    map.addLayer({ id: 'xn-kg-f', type: 'fill', source: 'xn-kg', maxzoom: 10.5,
-      paint: { 'fill-color': GREEN, 'fill-opacity': ['interpolate', ['linear'], ['get', 'share'], 0, 0.1, 0.45, 0.82] } }, 'slot-overlay');
+    // 군 면 = 누르는 자리(거의 투명 · 고른 군만 옅은 흰 칠) — 보이는 결과는 아래 경작지 보기 층(군 칠 비율이 낮은 군 · 줌 10.5 넘어 사라지던 것 · 바퀴 17)
+    map.addLayer({ id: 'xn-kg-f', type: 'fill', source: 'xn-kg',
+      paint: { 'fill-color': '#FFFFFF', 'fill-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 0.1, 0.01] } }, 'slot-overlay');
     map.addLayer({ id: 'xn-kg-l', type: 'line', source: 'xn-kg', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2.6, 0.9], 'line-opacity': 0.9 } }, 'slot-overlay');
-    const f = d.focus;
-    if (f?.png && f.bbox) {
-      const [w, s, e, n] = f.bbox;
-      map.addSource('xn-px', { type: 'image', url: new URL(f.png, DATA).href, coordinates: [[w, n], [e, n], [e, s], [w, s]] });
-      map.addLayer({ id: 'xn-px', type: 'raster', source: 'xn-px', minzoom: 8.5, paint: { 'raster-opacity': 0.88, 'raster-resampling': 'nearest' } }, 'xn-kg-l');
-    }
+    // 경작지 보기 층 — 우리 해외 모델 결과(공개 판정 군은 다시 학습 전까지 · 군별 숫자와 같은 출처) · 멀리서도 면 · 가까이는 칸 경계 흰 선 · 줌 인 계속 보임
+    addCropView(map, { id: 'xn-crop', before: 'xn-kg-f', bounds: NATIONS.find((x) => x.id === 'kg').box });
     map.on('click', 'xn-kg-f', (e) => { const p = e.features?.[0]; if (map.getLayer('xn-blk-f') && map.queryRenderedFeatures(e.point, { layers: ['xn-blk-f'] }).length) return; if (p && st.id !== 'kr') pick(p); });
     map.on('mouseenter', 'xn-kg-f', () => { if (st.id !== 'kr') map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'xn-kg-f', () => { map.getCanvas().style.cursor = ''; });
@@ -62,8 +59,8 @@ export function mountNation({ map, host, onEnter, onLeave }) {
     if (map.getSource('xn-blk')) return;
     map.addSource('xn-blk', { type: 'geojson', data: st.blk.geojson, promoteId: 'id' });
     map.addLayer({ id: 'xn-blk-f', type: 'fill', source: 'xn-blk', minzoom: 9.5,
-      paint: { 'fill-color': ['interpolate', ['linear'], ['get', 'share'], 0, '#E8590C', 0.5, '#FFB633', 0.8, '#7CC08F', 1, '#2E9E5B'], 'fill-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 0.75, 0.5] } }, 'xn-kg-l');
-    map.addLayer({ id: 'xn-blk-l', type: 'line', source: 'xn-blk', minzoom: 9.5, paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2.6, 0.8], 'line-opacity': 0.95 } }, 'xn-kg-l');
+      paint: { 'fill-color': '#FFFFFF', 'fill-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 0.22, 0.01] } }, 'xn-kg-l');   // 구획 = 흰 선 + 누르는 자리(경작지 칠은 아래 보기 층 하나로 — 두 색이 겹쳐 흐려지지 않게 · 바퀴 17)
+    map.addLayer({ id: 'xn-blk-l', type: 'line', source: 'xn-blk', minzoom: 9.5, paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2.6, 0.8], 'line-opacity': 0.8 } }, 'xn-kg-l');
     map.on('click', 'xn-blk-f', (e) => { const f = e.features?.[0]; if (f && st.id !== 'kr') block(f); });
     map.on('mouseenter', 'xn-blk-f', () => { if (st.id !== 'kr') map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'xn-blk-f', () => { map.getCanvas().style.cursor = ''; });
@@ -83,29 +80,25 @@ export function mountNation({ map, host, onEnter, onLeave }) {
       more);
     hud.hidden = false;
   }
-  const vis = (on) => { for (const id of ['xn-kg-f', 'xn-kg-l', 'xn-px', 'xn-blk-f', 'xn-blk-l']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); };
+  const vis = (on) => { for (const id of ['xn-kg-f', 'xn-kg-l', 'xn-crop', 'xn-blk-f', 'xn-blk-l']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); };
   const bboxOf = (g) => { const b = [180, 90, -180, -90]; const walk = (c) => (typeof c[0] === 'number' ? (b[0] = Math.min(b[0], c[0]), b[1] = Math.min(b[1], c[1]), b[2] = Math.max(b[2], c[0]), b[3] = Math.max(b[3], c[1])) : c.forEach(walk)); walk(g.coordinates); return b; };
 
   function card(d, f) {
     const n = NATIONS.find((x) => x.id === st.id);
-    const foc = d.focus && f && f.name === d.focus.name;
     hud.replaceChildren(
       h('p.xn-k', { text: f ? `${n.name} · ${f.name} 군` : `${n.name} · 사업 나라` }),
       h('h2.xn-h', { text: f ? '경작지 판정' : '군별 경작지' }),
       f ? h('p.xn-p', {}, h('span', {}, '경작지 ', h('b', { text: `${km2(f.crop_ha)}㎢` }), ` · 군 면적의 ${Math.round(f.share * 100)}%`),
-        h('span', { text: foc ? '청록 칸 = AI가 경작지로 판정한 곳(약 40 m 칸)' : '판정 칸 그림은 아직 이 군에 없습니다' }),
+        h('span', { text: '청록 = AI가 경작지로 판정한 곳' }),
         h('span', { text: f.src === 'public' ? '출처: 공개 판정(Esri 2025) · 다시 학습 전까지' : '출처: Land-XI AI 판정' }))   // 10-17 'ⓐ' — 군마다 출처
         : h('p.xn-p', {}, h('span', {}, `군 ${nf(d.n || d.geojson.features.length)}곳 · 경작지 `, h('b', { text: `${km2(d.total_ha)}㎢` })),
           h('span', { text: `${d.year}년 Sentinel-2 위성 영상(10 m)에서 AI가 경작지를 판정했습니다` }),
-          h('span', { text: '군을 누르면 확대되고, 확대하면 구획마다 경작지 판정이 보입니다' })),
+          h('span', { text: '군을 누르면 그 군으로 확대됩니다' })),
       more);
     more.hidden = false;
   }
   function legend() {
-    const z = map.getZoom(), px = st.data?.focus && z >= 8.5;
-    if (st.blk && z >= 9.5) { leg.replaceChildren(h('span', { text: '구획 · 경작지 판정 비율' }), h('i.xn-ramp.xn-ramp--blk'), h('span', { text: '높음' })); leg.hidden = false; return; }
-    leg.replaceChildren(...(px ? [h('i.xn-sw', { style: 'background:#0FA9A0' }), h('span', { text: 'AI가 경작지로 판정한 칸' })]
-      : [h('span', { text: '경작지 비율' }), h('i.xn-ramp'), h('span', { text: '높음' })]));
+    leg.replaceChildren(h('i.xn-sw', { style: 'background:#0FA9A0' }), h('span', { text: 'AI가 경작지로 판정한 곳' }));   // 멀리 · 가까이 같은 한 줄(바퀴 17)
     leg.hidden = false;
   }
   /** 판정 칸 그림에서 경작지가 모인 범위(그림의 칠한 칸이 몰린 줄 · 열) — 확대할 곳을 자료가 정한다(지역 고정값 없음) */
@@ -129,9 +122,9 @@ export function mountNation({ map, host, onEnter, onLeave }) {
     const p = feat.properties || {};
     if (st.sel != null) map.setFeatureState({ source: 'xn-kg', id: st.sel }, { sel: false });
     st.sel = p.name; map.setFeatureState({ source: 'xn-kg', id: p.name }, { sel: true });
+    onPick?.(p.name);                                      // 아래 채팅 창 추천 질문 = 이 군(바퀴 17)
     const full = st.data.geojson.features.find((x) => x.properties.name === p.name) || feat;
     const f = st.data.focus, foc = f && f.name === p.name;
-    map.setFilter('xn-kg-f', foc ? ['!=', ['get', 'name'], p.name] : null);   // 판정 칸이 있는 군은 칠을 걷고 실제 판정을 보인다
     card(st.data, { name: p.name, crop_ha: +p.crop_ha, share: +p.share, src: p.src });
     const v = foc ? await cropView(f) : null;
     map.fitBounds(v || bboxOf(full.geometry), { padding: { top: 80, bottom: 220, left: 60, right: 60 }, maxZoom: v ? 12 : 11, duration: RM() ? 0 : 1400 });
@@ -148,8 +141,7 @@ export function mountNation({ map, host, onEnter, onLeave }) {
     history.replaceState(null, '', u);
     if (n.id === 'kr') {
       vis(false); hud.hidden = true; leg.hidden = true;
-      if (st.sel != null) { map.setFeatureState({ source: 'xn-kg', id: st.sel }, { sel: false }); st.sel = null; }
-      if (map.getLayer('xn-kg-f')) map.setFilter('xn-kg-f', null);
+      if (st.sel != null) { map.setFeatureState({ source: 'xn-kg', id: st.sel }, { sel: false }); st.sel = null; onPick?.(null); }
       if (!quiet) onLeave?.();
       return;
     }

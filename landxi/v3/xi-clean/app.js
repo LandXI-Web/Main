@@ -324,7 +324,7 @@ async function boot() {
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
   if (S.lx) {
-    NAT = mountNation({ map, host: mainEl, onEnter: () => { closePop(); closeDrawer(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
+    NAT = mountNation({ map, host: mainEl, onPick: () => cmdk?.sugg?.(), onEnter: () => { closePop(); closeDrawer(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
       onLeave: () => { BD?.show(true); if (searchInput) searchInput.value = S.cond.emd?.nm || S.region?.name || ''; if (!S.region) paintBoardHud(); return S.region ? goKeep(S.region.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }) : stage.home({ ms: RM() ? 0 : 1600 }); } });
     const nb = mainEl.querySelector('.xn-bar'); if (nb) S.els.top.append(nb);   // 사업 나라 = 오른쪽 위 한 줄 안
     if (Q.get('nation') && Q.get('nation') !== 'kr') NAT.go(Q.get('nation'), { first: true });
@@ -1801,8 +1801,9 @@ async function placeQuery(q) {
   if (list.length > 1) return { choices: list };
   return false;
 }
-/** XI ChatGEO 추천 질문(아래 채팅 창) — 없음(10-15 원칙 253 '위에 가이드도 일단 없앤다'). 빈 목록 = 키트 기본 추천도 그리지 않는다 */
-function xiSugg() { return []; }
+/** XI ChatGEO 추천 질문(아래 채팅 창) — 없음(10-15 원칙 253 '위에 가이드도 일단 없앤다'). 빈 목록 = 키트 기본 추천도 그리지 않는다.
+ *  해외에서 군을 고르면 그 군 이름으로 한 줄('OO 군 경작지 넓이' · 바퀴 17 결정 — 답은 화면 · 대장과 같은 장부) */
+function xiSugg() { return NAT && NAT.id !== 'kr' && NAT.sel ? [`${NAT.sel} 군 경작지 넓이`] : []; }
 function ask(q) {
   cmdk.open(q);
   requestAnimationFrame(() => cmdk.el.querySelector('form')?.requestSubmit());

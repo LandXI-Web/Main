@@ -577,11 +577,38 @@ function askScene(s3) {
 function kgzScene(o, zf = 0) {
   // zf: 군 하나로 다가간 정도(0 → 1) — 군별 색칠은 걷히고 그 군의 실제 판정 칸 · 군 경계가 영상 위에 남는다
   want('k-kgz-l', 'line-opacity', 0.95 * o * (1 - zf)); want('k-kgz-f', 'fill-opacity', S.data.kgzc ? 0 : 0.12 * o);
-  want('k-kgzf-r', 'raster-opacity', 0.95 * zf); want('k-kgzd-l', 'line-opacity', 0.95 * zf);
+  want('k-kgzf-r', 'raster-opacity', zf); want('k-kgzd-l', 'line-opacity', 0.95 * zf);
   // 군별 농경지 비율(0 ~ 44%) → 옅은 청록 ~ 짙은 청록. 분석 결과는 군 경계보다 조금 늦게 차오른다
-  const c = seg(o, 0.35, 1) * (1 - zf);
-  want('k-kgzc-f', 'fill-opacity', c <= 0 ? 0 : ['*', c, ['interpolate', ['linear'], ['get', 'share'], 0, 0.04, 0.03, 0.16, 0.1, 0.5, 0.3, 0.9]]);
+  // 바퀴 17(원칙 281 '메인에도 잘 안 보여'): 경작지가 적은 군도 면이 보이게 바닥 진하기를 올리고 조금 일찍 차오른다
+  const c = seg(o, 0.2, 0.7) * (1 - zf);
+  if (zf > 0 && !S.kgzfPool) { S.kgzfPool = 1; poolFocus(S.data.kgzc?.focus); }
+  want('k-kgzc-f', 'fill-opacity', c <= 0 ? 0 : ['*', c, ['interpolate', ['linear'], ['get', 'share'], 0, 0.18, 0.03, 0.38, 0.1, 0.62, 0.3, 0.9]]);
   want('k-kgzc-l', 'line-opacity', 0.45 * c);
+}
+
+/* 확대 장면 판정 칸 그림 — 도착 줌에서는 화면 1 화소에 칸(약 40 m) 여럿이 겹쳐 옅게 흩어졌다(바퀴 17 원칙 281).
+   도착 줌에 맞게 칸을 묶어(하나라도 있으면 칠 · 진하기는 묶음 안 비율) 한 번 다시 싣는다 — 값 · 범위는 그대로, 그림만 */
+async function poolFocus(fo) {
+  try {
+    const z = S.cams?.kd?.z, src = S.map?.getSource('k-kgzf');
+    if (!z || !fo?.cell_m || !src) return;
+    const lat = (fo.bbox[1] + fo.bbox[3]) / 2, mpp = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** z / (window.devicePixelRatio || 1);
+    const k = Math.max(1, Math.min(8, Math.floor(mpp / fo.cell_m)));
+    const bm = await createImageBitmap(await (await fetch(new URL('./data/' + fo.png, import.meta.url))).blob());
+    const W = bm.width, H = bm.height, c0 = new OffscreenCanvas(W, H), g0 = c0.getContext('2d'); g0.drawImage(bm, 0, 0);
+    const d = g0.getImageData(0, 0, W, H).data, w = Math.ceil(W / k), hh = Math.ceil(H / k);
+    const c = new OffscreenCanvas(w, hh), g = c.getContext('2d'), img = g.createImageData(w, hh), o = img.data;
+    for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+      let n = 0, t = 0;
+      for (let j = 0; j < k && y * k + j < H; j++) for (let i = 0; i < k && x * k + i < W; i++) { t++; if (d[((y * k + j) * W + x * k + i) * 4 + 3] > 20) n++; }
+      if (!n) continue;
+      const q = (y * w + x) * 4; o[q] = 15; o[q + 1] = 169; o[q + 2] = 160; o[q + 3] = Math.round(165 + 75 * (n / t));
+    }
+    g.putImageData(img, 0, 0);
+    const url = URL.createObjectURL(await c.convertToBlob({ type: 'image/png' }));
+    const [wx, so, e, n] = fo.bbox;
+    src.updateImage({ url, coordinates: [[wx, n], [e, n], [e, so], [wx, so]] });
+  } catch { /* 원래 그림 그대로 */ }
 }
 
 /* 배포 점 라벨(DOM · 지도 좌표를 따라) */

@@ -78,6 +78,8 @@ function drawOverview() {
     rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
     const p = power();
     rows.push(equipRow(p));                        // 학습 장비 줄(원칙 270 · 두 장 사용 시험 — 안전 감시가 한 장으로 돌리면 까닭 · 시각)
+    const ms = D.gpus?.measure_stale;               // 장비 측정(GPU · 저장 폴러)이 멈췄거나 값이 오래됨 — 정상이면 줄 없음(바퀴 17 결정 · GET /ops/gpus 한 출처)
+    if (ms?.at) { const d = new Date(ms.at); if (!Number.isNaN(+d)) rows.push({ t: `측정 멈춤 · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 값`, lv: 'warn', dot: 'lock', href: INFRA }); }
   }
   /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));

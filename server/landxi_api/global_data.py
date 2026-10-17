@@ -474,6 +474,120 @@ async def crop_tile(z: int, x: int, y: int, request: Request):
     return Response(content=_EMPTY_PNG, media_type="image/png", headers=hdr)
 
 
+# ── 경작지 보기 조각(멀리서 · 가까이 모두 보이게 · 바퀴 17 원칙 281) ──────────────────────────────────────────
+# 계산용 z11 조각(G = 화소 안 경작지 비율)을 화면용으로 칠한다 — 멀리(z5–10)는 아래 조각을 묶되 작은 경작지도 사라지지 않게(가장 큰 값으로
+# '있음'을 남기고 진하기는 평균) · 가까이(z12–14)는 z11 화소를 그대로 키워 칸 경계에 흰 선(국내 결과 면과 같은 읽힘 · 원칙 267). 14 넘게는 지도가 키운다.
+CV_ZMIN, CV_ZMAX = 5, 14
+CV_FILL = (15, 169, 160)                                   # 경작지 분류 색(청록 · XI맵 · 지도 서비스와 같은 값)
+_CV_LVL: dict = {}                                         # (모델, z, x, y) → (평균, 최대) uint8 256×256 — z<11 만 보관
+_CV_PNG: dict = {}                                         # (모델, z, x, y) → 보기 조각 PNG(가벼운 보관)
+
+
+def _cv_base(d: Path, x: int, y: int):
+    import numpy as np
+    from PIL import Image
+    f = d / str(x) / f"{y}.png"
+    if not f.exists():
+        return None
+    a = np.asarray(Image.open(f).convert("RGBA"))
+    g = np.where(a[..., 3] > 0, a[..., 1], 0).astype(np.uint8)
+    return g, g
+
+
+def _cv_level(d: Path, meta: dict, z: int, x: int, y: int):
+    """z 조각의 (평균 비율, 최대 비율) — z11 은 파일 그대로, 더 멀리는 아래 네 조각을 2×2 로 묶는다."""
+    import numpy as np
+    bz = int(meta["z"])
+    if z == bz:
+        tx0, ty0, tx1, ty1 = meta["tiles"]
+        return _cv_base(d, x, y) if tx0 <= x <= tx1 and ty0 <= y <= ty1 else None
+    key = (meta.get("model"), z, x, y)
+    if key in _CV_LVL:
+        return _CV_LVL[key]
+    mean = np.zeros((256, 256), np.float32)
+    mx = np.zeros((256, 256), np.uint8)
+    hit = False
+    for dy in (0, 1):
+        for dx in (0, 1):
+            c = _cv_level(d, meta, z + 1, 2 * x + dx, 2 * y + dy)
+            if c is None:
+                continue
+            hit = True
+            m4 = c[0].astype(np.float32).reshape(128, 2, 128, 2).mean(axis=(1, 3))
+            x4 = c[1].reshape(128, 2, 128, 2).max(axis=(1, 3))
+            mean[dy * 128:(dy + 1) * 128, dx * 128:(dx + 1) * 128] = m4
+            mx[dy * 128:(dy + 1) * 128, dx * 128:(dx + 1) * 128] = x4
+    out = (mean.round().astype(np.uint8), mx) if hit else None
+    if len(_CV_LVL) > 1500:
+        _CV_LVL.clear()
+    _CV_LVL[key] = out
+    return out
+
+
+def _cv_png(d: Path, meta: dict, z: int, x: int, y: int) -> bytes | None:
+    import numpy as np
+    from PIL import Image
+    bz = int(meta["z"])
+    if z <= bz:
+        lv = _cv_level(d, meta, z, x, y)
+        if lv is None:
+            return None
+        mean, mx = lv
+    else:
+        f = 2 ** (z - bz)
+        base = _cv_level(d, meta, bz, x // f, y // f)
+        if base is None:
+            return None
+        n = 256 // f
+        ox, oy = (x % f) * n, (y % f) * n
+        sub = base[0][oy:oy + n, ox:ox + n]
+        mean = mx = np.repeat(np.repeat(sub, f, axis=0), f, axis=1)
+    on = mx > 12                                           # 화소 안 경작지 약 5% 넘으면 '있음'
+    if not on.any():
+        return None
+    # 진하기: 멀리(≤10) 있으면 최소 0.62 · 빽빽할수록 0.92(면이 읽히게) · z11 0.55–0.8 · 가까이(≥12) 0.5–0.62 + 흰 경계(위성 바탕의 밭이 비치게)
+    lo, hi = (158, 235) if z <= bz - 1 else (140, 205) if z == bz else (128, 158)
+    alpha = np.where(on, np.clip(lo + (mean.astype(np.int32) * (hi - lo)) // 255, lo, hi), 0).astype(np.uint8)
+    rgba = np.zeros((256, 256, 4), np.uint8)
+    rgba[..., 0], rgba[..., 1], rgba[..., 2] = CV_FILL
+    rgba[..., 3] = alpha
+    if z > bz:                                             # 가까이: 칸 경계 흰 선(1화소)
+        pad = np.pad(on, 1, mode="edge")
+        inner = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
+        edge = on & ~inner
+        rgba[edge] = (255, 255, 255, 235)
+    b = io.BytesIO()
+    Image.fromarray(rgba, "RGBA").save(b, "PNG", optimize=False, compress_level=6)
+    return b.getvalue()
+
+
+@router.get("/global/crop-view/{z}/{x}/{y}.png")
+async def crop_view(z: int, x: int, y: int, request: Request):
+    """XI맵 · 메인 해외 장면의 경작지 보기 조각(우리 해외 모델 · 공개 판정 군은 다시 학습 전까지 · 계산 바탕과 같은 파일) — 로그인 필요."""
+    global _EMPTY_PNG
+    from fastapi.responses import Response
+    _gate(principal(request))
+    d, meta = _crop_meta()
+    if not meta or not (CV_ZMIN <= z <= CV_ZMAX):
+        return Response(status_code=204, headers={"Cache-Control": "no-store"})
+    hdr = {"Cache-Control": "private, max-age=86400", "X-LX-Model": str(meta.get("model") or ""), "Access-Control-Expose-Headers": "X-LX-Model"}
+    key = (meta.get("model"), z, x, y)
+    png = _CV_PNG.get(key)
+    if png is None:
+        png = await run_in_threadpool(_cv_png, d, meta, z, x, y) or b""
+        if len(_CV_PNG) > 3000:
+            _CV_PNG.clear()
+        _CV_PNG[key] = png
+    if not png:
+        if _EMPTY_PNG is None:
+            from PIL import Image
+            b = io.BytesIO()
+            Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(b, "PNG", optimize=True)
+            _EMPTY_PNG = b.getvalue()
+        return Response(content=_EMPTY_PNG, media_type="image/png", headers=hdr)
+    return Response(content=png, media_type="image/png", headers=hdr)
+
+
 @router.get("/global/crop-tiles/meta")
 async def crop_meta(request: Request):
     """경작지 바탕 정보(모델 · 연도 · 공개 판정 군) — 화면 호버 한 줄과 보관 열쇠."""
@@ -481,5 +595,5 @@ async def crop_meta(request: Request):
     _, meta = _crop_meta()
     if not meta:
         return {"ready": False}
-    return {"ready": True, "model": meta.get("model"), "year": meta.get("year"), "z": meta.get("z"), "public_used": meta.get("public_used"),
+    return {"ready": True, "model": meta.get("model"), "year": meta.get("year"), "z": meta.get("z"), "public_used": meta.get("public_used"), "country": meta.get("country"),
             "source": meta.get("source")}

@@ -32,9 +32,8 @@ const LXMAP_Z = 18, CAD_Z = 15;
 const left = h('aside.lm-left', { 'aria-label': '내 분석 결과' });
 const stageEl = h('div.lm-stage');
 const cap = h('div.lm-cap', { hidden: true });
-const hint = h('p.lm-hint', { text: '도형을 누르면 오른쪽에 속성이 펼쳐집니다' });
 const props = h('aside.lm-props', { 'aria-label': '속성', hidden: true });
-const mapEl = h('div.lm-map', {}, stageEl, cap, hint, props);
+const mapEl = h('div.lm-map', {}, stageEl, cap, props);
 const page = h('div.lm-page', {}, left, mapEl);
 S.main.append(page);
 
@@ -253,8 +252,7 @@ function drawLeft() {
     clsBlock(on),
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
       SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
-        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null,
-      h('p.lm-bn', { text: '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다' })));
+        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null));   // 설명 글 지움(10-17 원칙 281)
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
 }

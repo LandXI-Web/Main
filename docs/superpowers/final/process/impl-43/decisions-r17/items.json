@@ -1,0 +1,138 @@
+[
+ {
+  "id": "해외-잘보이게",
+  "t": "해외 결과(경작지 · 작황 하락 · 건물 면적 변화)가 멀리서도, 계속 확대해도 보이게 했습니다",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "xi-kg-country-before-2230.png",
+   "xi-kg-country-after-2251.png",
+   "xi-kg-z11-before-2230.png",
+   "xi-kg-z11-after-2251.png",
+   "xi-kg-z13-after-2251.png",
+   "ov-crop-before-2229.png",
+   "ov-crop-after-2257.png",
+   "ov-crop-nearer-after-2257.png",
+   "ov-sprawl-before-2230.png",
+   "ov-sprawl-after-2257.png",
+   "main-kgz-country-after-2258.png",
+   "main-kgz-district-after-2258.png"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+    "아이디 test@lx.or.kr · 임시 비밀번호",
+    "키르기스스탄 → 확대해 보기"
+   ],
+   [
+    "https://kgz-agri.land-xi.dev/landxi/v3/global/",
+    "해외 기관 계정",
+    "Season · Sprawl 탭에서 확대"
+   ],
+   [
+    "https://app.land-xi.dev/landxi/v3/main/",
+    "LX 직원",
+    "아래로 내려 키르기스스탄 장면"
+   ]
+  ],
+  "what": "XI맵은 군 41곳 모두 AI가 경작지로 판정한 곳을 면으로 칠합니다. 멀리서는 작은 밭도 묶어서 보이고, 가까이 가면 칸 경계에 흰 선이 생깁니다. 줌 10.5에서 꺼지던 것과 한 군만 보이던 것을 고쳤습니다. 해외 기관 첫 화면에서 작황 하락은 붉은 칸으로 바꿔 멀리서도 또렷하게 했고, 건물 면적 변화 칸은 진하게 하고 테두리를 넣었습니다. 메인 장면의 나라 칠과 군 확대 그림도 진하게 했습니다. (그림 10월 17일 22:29~22:58 · 전후)"
+ },
+ {
+  "id": "측정멈춤",
+  "t": "장비 측정이 멈추면 관리자 화면 장비 줄 아래에 '측정 멈춤 · HH:MM 값' 한 줄",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "admin-measure-stale-after-2256.png",
+   "admin-measure-normal-after-2256.png"
+  ],
+  "where": [
+   [
+    "https://admin.land-xi.dev/landxi/v3/ops-core/",
+    "아이디 lxadmin@lx.or.kr",
+    "오른쪽 할 일 줄"
+   ]
+  ],
+  "what": "GPU 측정은 30초, 저장 공간 측정은 5분보다 오래되면 빨간 한 줄이 생기고, 정상이면 사라집니다. 첫 그림은 40분 전 값을 흉내 낸 것('측정 멈춤 · 22:16 값')이고, 둘째 그림은 정상일 때라 줄이 없습니다."
+ },
+ {
+  "id": "지도서비스-설명글지움",
+  "t": "지도 서비스의 설명 글 두 줄을 지웠습니다",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "lxmap-after-2250.png"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/lx-map/",
+    "LX 직원",
+    "결과 층 켜기"
+   ]
+  ],
+  "what": "'도형을 누르면 오른쪽에 속성이 펼쳐집니다'와 '영상끼리 만나는 경계는 촬영 시기가 다른 곳입니다'를 지웠습니다. 기관 화면에는 같은 글이 없었습니다."
+ },
+ {
+  "id": "해외군-추천질문",
+  "t": "XI맵 키르기스스탄에서 군을 누르면 추천 질문 'OO 군 경작지 넓이'",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [
+   "xi-kg-sugg-after-2251.png",
+   "xi-kg-sugg-answer-after-2251.png"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/?nation=kg",
+    "LX 직원",
+    "군 누르기 → 아래 채팅 칸"
+   ]
+  ],
+  "what": "Sokuluk 군을 누르면 'Sokuluk 군 경작지 넓이'가 추천 질문에 뜹니다. 누르면 79,409ha(794.1㎢)로 답하고, 군 카드의 794㎢와 같은 장부 값입니다. Alay, Ysyk-Ata 도 카드와 같은 값으로 답했습니다."
+ },
+ {
+  "id": "서비스수-안정",
+  "t": "XI맵 왼쪽 위 '서비스 n'이 7→6처럼 출렁이지 않게",
+  "opts": [
+   "완료",
+   "다시"
+  ],
+  "shots": [],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "LX 직원",
+    "왼쪽 위 한 줄"
+   ]
+  ],
+  "what": "장부를 만드는 순간 결과 층을 못 찾으면 바로 전 값을 씁니다. 결과 층 목록이 한 번 비어 오는 경우를 흉내 낸 시험에서 예전에는 서비스가 7에서 5로 줄었고, 이제는 7이 그대로입니다."
+ },
+ {
+  "id": "배포이름-적용",
+  "t": "배포 기록 이름 끝 '· 적용'을 '· 기관에 공유'로 바꿀까요?",
+  "opts": [
+   "바꿈",
+   "그대로"
+  ],
+  "shots": [
+   "deploy-name-now-2314.png",
+   "deploy-name-draft-2314.png"
+  ],
+  "where": [
+   [
+    "https://admin.land-xi.dev/landxi/v3/ops-infra/?view=deploys",
+    "아이디 lxadmin@lx.or.kr",
+    "배포 → 기관 공유"
+   ]
+  ],
+  "what": "이 이름은 지금 어느 화면에도 글자로 나오지 않습니다. 저장된 배포 기록 12건과 서버가 새 기록을 만들 때 쓰는 이름입니다. 그래서 두 그림의 흰 상자는 실제 기록 이름 6건을 '기관 공유' 화면 위에 예시로 얹은 것입니다. 첫 그림은 지금 이름이고, 둘째 그림은 바꾼 시안입니다. '바꿈'을 고르면 새로 만드는 이름 규칙과 저장된 12건을 함께 바꿉니다."
+ }
+]

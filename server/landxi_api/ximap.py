@@ -36,6 +36,7 @@ BOARD_TTL = 60.0
 _SID: dict[str, str] = {}                                   # 결과 층 주소(set) → detections.job_id
 _DENS: dict = {"cells": {}, "out": {}}                      # (묶음, 격자) → (수, 칸 목록) · 격자 → (전국 결과 시각, 응답)
 GRID = {0: 0.02, 1: 0.004}                                  # 멀리(약 2km 칸) · 가까이(약 400m 칸)
+_PREV: dict[tuple, dict] = {}                               # (시군구, 서비스) → 직전 판의 칸(결과 층 · 수) — 장부 순간에 층을 못 찾아도 서비스 수가 출렁이지 않게(바퀴 17)
 
 
 def _iso(t) -> str | None:
@@ -105,6 +106,19 @@ async def _edit_delta(conn, sets: list[str]) -> dict[str, int]:
     return {r["set_id"]: int(r["d"] or 0) for r in rows}
 
 
+_HELD: set = set()
+
+
+def _fallback(sgg, svc):
+    """장부를 만드는 순간 결과 층 주소를 못 찾은 칸(새 결과의 조각이 아직 덜 만들어짐 · 카탈로그 한 번 비어 옴 등) —
+    직전 판의 같은 칸을 쓴다(1시간까지). 서비스 수가 7→6→7 처럼 출렁이지 않게(바퀴 16 보고 · 바퀴 17 고침)."""
+    o = _PREV.get((sgg, svc))
+    if not o or time.time() - o["at"] > 3600:
+        return None
+    _HELD.add((sgg, svc))
+    return o["c"], o["n"], o["layer"]
+
+
 async def build_board(p) -> dict:
     from . import regions as R
     from . import catalog as C
@@ -171,10 +185,17 @@ async def build_board(p) -> dict:
     from shapely.geometry import shape
     for (sgg, svc), c in cells.items():
         s = c["set_id"]
+        layer = None
         if s.startswith("job_"):
             j = jobs.get(s)
             if not j or not j["snapshot_ready"]:
-                continue
+                layer = _fallback(sgg, svc)
+                if layer is None:
+                    continue
+        if layer is not None:                                    # 직전 판의 같은 칸(층 · 수 · 결과 묶음)을 그대로 — 새 결과가 다 만들어지면 다음 판에서 바뀐다
+            c, n, layer = layer
+            s = c["set_id"]
+        elif s.startswith("job_"):
             counts = _jl(j["counts"])
             n = sum(int(v) for v in counts.values() if isinstance(v, (int, float))) if counts else 0
             try:
@@ -187,9 +208,17 @@ async def build_board(p) -> dict:
         else:
             it = cat_items.get(s)
             if not it or not it.get("url") and not it.get("path"):
-                continue
-            n = sn.get(s, 0)
-            layer = {k: it.get(k) for k in ("id", "set", "path", "layer", "source", "kind", "role", "promote_id", "minzoom", "maxzoom", "bounds", "signed", "attribution", "url")}
+                fb = _fallback(sgg, svc)
+                if fb is None:
+                    continue
+                c, n, layer = fb
+                s = c["set_id"]
+            else:
+                n = sn.get(s, 0)
+                layer = {k: it.get(k) for k in ("id", "set", "path", "layer", "source", "kind", "role", "promote_id", "minzoom", "maxzoom", "bounds", "signed", "attribution", "url")}
+        if layer is not None and (sgg, svc) not in _HELD:
+            _PREV[(sgg, svc)] = {"c": dict(c), "n": n, "layer": layer, "at": time.time()}
+        _HELD.discard((sgg, svc))
         n = max(0, n + delta.get(s, 0))
         _SID[layer["set"]] = s                                   # 결과 층 → 결과 묶음(밀도 격자가 같은 묶음을 센다 · 바깥에 내지 않음)
         reg = R.region_of(sgg)

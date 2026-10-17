@@ -1,0 +1,18 @@
+{
+ "_failed": [],
+ "errors": [],
+ "bad": [],
+ "login_at": "2026-10-17 22:57:58",
+ "mainFar": {
+  "t6": 0.9994926275856162,
+  "t6d": 0,
+  "kph": 1
+ },
+ "main-kgz-country-after-2258.png": "2026-10-17 22:58:22",
+ "main-kgz-district-after-2258.png": "2026-10-17 22:58:28",
+ "mainNear": {
+  "t6": 1,
+  "t6d": 1,
+  "kph": 2
+ }
+}
