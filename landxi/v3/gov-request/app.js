@@ -192,6 +192,13 @@ function drawCards() {
   $('#ok-2').textContent = on ? `${(on.querySelector('.k-sc-t')?.textContent || '').replace(/\s*(행정서비스|서비스)$/, '')} 선택 ✓` : '';
 }
 
+/* 희망 완료일 — 오늘(플랫폼 날짜) 이전은 고를 수 없다 */
+const dueWord = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}월 ${+m[2]}일` : ''; };
+{
+  const t = new Date(), ymdLocal = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  $('#due').min = ymdLocal;
+  $('#due').addEventListener('change', () => { if ($('#due').value && $('#due').value < ymdLocal) { $('#due').value = ''; toast('희망 완료일은 오늘 이후로 골라 주세요'); } });
+}
 /* ═════════ ③ 요청하기 ═════════ */
 function ready() {
   const p = S.pick;
@@ -208,11 +215,12 @@ $('#go').addEventListener('click', async () => {
   go.disabled = true;
   const body = { service_id: S.svc, source: 'shared', imagery_id: p.imagery.id };
   body.memo = $('#memo').value.trim() || undefined;
+  body.due_date = $('#due').value || undefined;
   try {
     const rq = await api('/requests', { method: 'POST', body });
     toast('분석 요청을 보냈습니다 · 확인되면 알려 드립니다');
     refreshSent();
-    $('#memo').value = '';
+    $('#memo').value = ''; $('#due').value = '';
     S.pick = null; shownImg = null;
     clearMap(); drawShared(); drawPicked();
     await loadMine();
@@ -274,7 +282,7 @@ async function openReq(id, { keepMap = false } = {}) {
     lines.push(['', `새 시점: ${x.result?.timepoint || ''}`]);
   }
   det.innerHTML = `<div class="gq-det-h"><b>${esc(title(x))}</b><span class="t-chip" data-lv="${STATE_LV[x.state] ?? ''}">${esc(x.state_word)}</span></div>
-    <dl class="gq-kv">${row('보낸 날', ymd(x.created_at))}${x.place ? row('범위', `${x.place}${x.area_km2 ? ' · ' + km2(x.area_km2) : ''}`) : ''}${x.memo ? row('메모', x.memo) : ''}</dl>
+    <dl class="gq-kv">${row('보낸 날', ymd(x.created_at))}${x.place ? row('범위', `${x.place}${x.area_km2 ? ' · ' + km2(x.area_km2) : ''}`) : ''}${x.due_date ? row('희망 완료일', dueWord(x.due_date)) : ''}${x.memo ? row('메모', x.memo) : ''}</dl>
     ${lines.map(([lv, t]) => `<p class="gq-line"${lv ? ` data-lv="${lv}"` : ''}>${esc(t)}</p>`).join('')}
     ${x.state === 'done' ? '<button type="button" class="t-btn t-btn--2 gq-small" id="det-map">지도에서 보기</button>' : ''}`;
   $('#det-map')?.addEventListener('click', () => showResult(x));

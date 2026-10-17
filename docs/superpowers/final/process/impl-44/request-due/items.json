@@ -1,0 +1,20 @@
+{
+ "items": [
+  {
+   "id": "희망완료일",
+   "title": "분석 요청 희망 완료일(선택 · 오늘 이후 날짜 · 3일 안이면 차분한 강조)",
+   "confirm": "제안-희망완료일 = 넣음 (10-18)",
+   "evidence": [
+    "after-agency-form.png",
+    "after-agency-sent.png",
+    "after-agency-detail.png",
+    "after-lx-list.png",
+    "after-lx-detail.png",
+    "before-agency-sent.png",
+    "before-lx-list.png",
+    "before-lx-detail.png"
+   ],
+   "note": "검증용 임시 요청 1건을 넣고 삭제함 · 기존 요청의 날짜는 확인 뒤 비움 · 서버 시험 server/tests/test_impl44_request_due.py 통과"
+  }
+ ]
+}

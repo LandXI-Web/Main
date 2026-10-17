@@ -19,7 +19,7 @@ export async function loadSent() {
   const [rq, sh, rv] = await Promise.all([api('/requests').catch(() => null), api('/shoots').catch(() => null), api('/reviews?box=all&limit=100').catch(() => null)]);
   const rows = [];
   for (const x of rq?.items || []) if (x.mine) rows.push({ kind: 'request', kind_ko: '분석 요청', id: x.id, at: x.decided_at || x.created_at, svc: x.service?.id,
-    t: `${x.label || '영상'} → ${short(x.service?.name)}`, sub: [x.state_word, x.state === 'done' ? `${md(x.decided_at || x.created_at)} 결과 도착` : `${md(x.created_at)} 보냄`].join(' · '), word: x.state_word, lv: LV[x.state] });
+    t: `${x.label || '영상'} → ${short(x.service?.name)}`, sub: [x.state_word, x.due_date ? `희망 ${+x.due_date.slice(5, 7)}월 ${+x.due_date.slice(8, 10)}일` : null, x.state === 'done' ? `${md(x.decided_at || x.created_at)} 결과 도착` : `${md(x.created_at)} 보냄`].filter(Boolean).join(' · '), word: x.state_word, lv: LV[x.state] });
   for (const x of sh?.items || []) if (x.mine) rows.push({ kind: 'shoot', kind_ko: '촬영 요청', id: x.id, at: x.updated_at || x.created_at, x,
     t: `${x.place || '그린 범위'} ${Number(x.area_km2?.value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}㎢`,
     sub: x.answer && ['answered', 'accepted'].includes(x.state) ? `LX 답 — ${x.answer.timing || ''} · 확정 ${nf(x.answer.amount?.value)}원${x.state === 'answered' ? ' · 진행 여부를 정해 주세요' : ''}`

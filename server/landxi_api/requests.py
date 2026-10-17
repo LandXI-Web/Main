@@ -1183,6 +1183,16 @@ async def create(body: dict, request: Request):
     sid = str(body.get("service_id") or "")
     src = body.get("source")
     memo = (str(body.get("memo") or "").strip()[:200]) or None
+    due = None
+    if body.get("due_date"):                                    # 희망 완료일(선택 · 오늘 이후)
+        try:
+            due = dt.date.fromisoformat(str(body["due_date"])[:10])
+        except ValueError:
+            raise ApiError("bad_request", "희망 완료일을 날짜로 적어 주세요")
+        if due < dt.datetime.now(KST).date():
+            raise ApiError("bad_request", "희망 완료일은 오늘 이후로 골라 주세요")
+        if due > dt.datetime.now(KST).date() + dt.timedelta(days=730):
+            raise ApiError("bad_request", "희망 완료일이 너무 멀리 있습니다")
     if src not in ("shared", "upload"):
         raise ApiError("bad_request", "영상을 먼저 골라 주세요")
     if src == "upload" and not tenant_upload_open():
@@ -1256,9 +1266,9 @@ async def create(body: dict, request: Request):
         lead = await helpdesk_of(conn, p.tenant_id, d["card_id"]) or await _card_lead(conn, d["card_id"], d["card_version_id"])   # 기관 × 서비스 헬프데스크 담당 먼저(질문 17 ⓑ)
         rid, aid = "rq_" + secrets.token_hex(6), "ap_" + secrets.token_hex(6)
         await conn.execute(
-            "INSERT INTO analysis_requests(id, tenant_id, requested_by, deploy_id, source, imagery_id, draft_id, meta, aoi, memo, state, approval_id, lead_user) "
-            "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,ST_SetSRID(ST_GeomFromGeoJSON($9),4326),$10,'pending',$11,$12)",
-            rid, p.tenant_id, p.user_id, sid, src, imagery_id, draft, meta, json.dumps(mapping(inside)), memo, aid, lead)
+            "INSERT INTO analysis_requests(id, tenant_id, requested_by, deploy_id, source, imagery_id, draft_id, meta, aoi, memo, state, approval_id, lead_user, due_date) "
+            "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,ST_SetSRID(ST_GeomFromGeoJSON($9),4326),$10,'pending',$11,$12,$13)",
+            rid, p.tenant_id, p.user_id, sid, src, imagery_id, draft, meta, json.dumps(mapping(inside)), memo, aid, lead, due)
         if draft:
             await conn.execute("UPDATE request_uploads SET request_id=$2, updated_at=now() WHERE draft_id=$1 AND state='done'", draft, rid)
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
@@ -1283,7 +1293,7 @@ def _view(r, p: Principal | None = None, org: str | None = None) -> dict:
          "source": r["source"], "label": m.get("label"), "place": m.get("place"), "date": m.get("date"), "date_word": _date_word(m.get("date")),
          "gsd_word": m.get("gsd_word"), "kind_word": KIND_WORD.get(m.get("kind") or "", ""),
          "area_km2": env(m.get("area_km2"), "km2", "measured", "분석 범위(영상 범위 ∩ 관할)") if m.get("area_km2") is not None else None,
-         "memo": r["memo"], "reason": r["reason"] if r["state"] in ("rejected", "failed") else (r.get("held_reason") if r["state"] == "held" else None),
+         "due_date": (r.get("due_date").isoformat() if r.get("due_date") else None), "memo": r["memo"], "reason": r["reason"] if r["state"] in ("rejected", "failed") else (r.get("held_reason") if r["state"] == "held" else None),
          "created_at": _iso(r["created_at"]), "decided_at": _iso(r["decided_at"]),
          "mine": bool(p and r["requested_by"] == p.user_id)}
     if r["state"] == "done":
@@ -1584,7 +1594,7 @@ async def manage_list(request: Request):
                       "urgent": bool(r["urgent"]), "held_reason": r["held_reason"] if r["state"] == "held" else None,
                       "assignee": {"id": r["lead_user"], "name": staff_name.get(r["lead_user"]) or who.get(r["lead_user"])} if r["lead_user"] else None,
                       "eta": eta, "approval_id": r["approval_id"], "requested_by_name": who.get(r["requested_by"]),
-                      "memo": r["memo"], "running": run, "can_decide": r["state"] in ("pending", "held")})
+                      "due_date": (r.get("due_date").isoformat() if r.get("due_date") else None), "memo": r["memo"], "running": run, "can_decide": r["state"] in ("pending", "held")})
     log = []
     for lg in logs:
         rid = rq_of.get(lg["subject"], lg["subject"])

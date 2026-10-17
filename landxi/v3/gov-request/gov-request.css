@@ -170,3 +170,8 @@ body.gq-boot .k-app{visibility:hidden}
 /* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
 @media (min-width:1600px){ .gq-cards{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (min-width:2200px){ .gq-grid{grid-template-columns:minmax(0,1fr) 480px} .gq-cards{grid-template-columns:repeat(5,minmax(0,1fr))} }
+
+/* 희망 완료일(10-18) */
+.gq-due{display:flex;align-items:center;gap:12px;margin:10px 0 0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.gq-due small{color:var(--sub);margin-left:4px}
+.gq-due .t-input{width:180px}

@@ -136,3 +136,8 @@ button.ib-cell:hover{background:var(--rule)}
 .ib-sh-kv > div,.ib-sh-ans .ib-facts > div{grid-template-columns:88px minmax(0,1fr)}
 @media (max-width:640px){.ib-facts.ib-file > div{grid-template-columns:1fr;gap:2px}}
 .ib-sh .t-input{width:100%;box-sizing:border-box;min-width:0}
+
+/* 희망 완료일(10-18) */
+.ib-xl-due{display:block;font-size:var(--fs-aux,13px);color:var(--sub)}
+.ib-xl-due[data-lv="soon"]{color:var(--ci,var(--ink));font-weight:600}
+.ib-xl-due[data-lv="late"]{color:var(--warn);font-weight:600}

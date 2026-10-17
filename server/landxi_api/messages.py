@@ -451,12 +451,13 @@ async def _extra(p: Principal) -> list[dict]:
     async with db(realm="lx") as conn:
         if p.realm == "lx" and p.role in ("admin", "staff"):
             rows = await conn.fetch(
-                "SELECT q.id, q.tenant_id, q.created_at, q.meta->>'service' AS svc, t.name AS tname FROM analysis_requests q "
+                "SELECT q.id, q.tenant_id, q.created_at, q.due_date, q.meta->>'service' AS svc, t.name AS tname FROM analysis_requests q "
                 "LEFT JOIN tenants t ON t.id = q.tenant_id WHERE q.state='pending'" + ("" if p.is_admin else " AND q.lead_user=$1")
                 + " ORDER BY q.created_at DESC LIMIT 20", *([] if p.is_admin else [p.user_id]))
             if rows:
                 out.append({"kind": "request", "n": len(rows), "href": "/landxi/v3/ops-core/#/approvals" if p.is_admin else None,
-                            "items": [{"id": r["id"], "title": " · ".join(x for x in (_short_org(r["tname"]), r["svc"]) if x), "at": _iso(r["created_at"])}
+                            "items": [{"id": r["id"], "title": " · ".join(x for x in (_short_org(r["tname"]), r["svc"]) if x), "at": _iso(r["created_at"]),
+                                       "due_date": r["due_date"].isoformat() if r["due_date"] else None}
                                       for r in rows[:3]]})
         mgr = p.realm == "tenant" and p.role == "manager" and p.tenant_id != "lx-demo"
         if p.is_admin or mgr:

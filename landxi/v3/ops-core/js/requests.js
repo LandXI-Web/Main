@@ -1,6 +1,7 @@
 /* 요청 관리 · 분석 요청 탭(now 페이지 질문 16 ⓐ · 원칙 122 '결재가 아니라 관리') —
    맨 위 띠(지금 분석 중 · 기다리는 분석 · 동시에 도는 분석 · 최근 기다린 시간) → 순번 목록(▲▼ · 급함) → 한 건 서랍(영상 · 관리 칸 · 무엇을 · 누가 왜 · 보류 · 거절 · 승인).
    값은 서버 한 곳(GET /requests/manage · POST /requests/{id}/manage · 승인 · 거절 = POST /approvals/{id}/decide). 조정은 모두 처리 기록에 남는다. */
+import { dueOf } from '../../kit/due.js';
 import { drawer, toast, devlog, empty } from '../../kit/index.js';
 import { h, esc, api } from '../../kit/util.js';
 
@@ -59,7 +60,7 @@ export function mountRequests(root, { host, onChanged }) {
     const el = h('div.rq-row', { role: 'listitem', tabindex: '0', dataset: { id: x.id, st: x.state }, 'aria-label': `${x.n}번 ${x.org} ${x.service}` },
       h('b.rq-n.num', { text: String(x.n) }),
       thumb(x),
-      h('span.rq-who', {}, h('b', { text: x.org || '기관' }), h('small', { text: `${x.service} · ${md(x.created_at)}` })),
+      h('span.rq-who', {}, h('b', { text: x.org || '기관' }), h('small', { text: `${x.service} · ${md(x.created_at)}` }), dueOf(x.due_date) ? h('small.rq-due', { dataset: { lv: dueOf(x.due_date).lv }, text: dueOf(x.due_date).text.replace('희망 완료일', '희망') }) : null),
       h('span.rq-where', {}, h('span', { text: x.place || '범위' }), h('small', { text: [x.area_word, x.image_word].filter(Boolean).join(' · ') })),
       h('span.rq-st', {}, h('span.t-chip', { dataset: { lv: ST_LV[x.state] || '' }, text: x.state_word })),
       h('span.rq-as', {}, h('span', { text: x.assignee?.name || '담당 없음' }), h('small', { text: x.assignee ? 'LX 담당' : 'LX 관리자가 봄' })),
@@ -148,6 +149,8 @@ export function mountRequests(root, { host, onChanged }) {
     body.append(h('p.t-label', { text: '누가 · 왜' }), who);
     const wput = (k, v) => { if (v) who.append(h('dt', { text: k }), h('dd', { text: v })); };
     wput('요청한 사람', `${x.requested_by_name || x.org} · ${md(x.created_at)} ${hm(x.created_at)}`);
+    const du = dueOf(x.due_date);
+    if (du) who.append(h('dt', { text: '희망 완료일' }), h('dd.rq-due', { dataset: { lv: du.lv }, text: du.text.replace('희망 완료일 ', '') + (du.note ? ` · ${du.note}` : '') }));
     wput('메모', x.memo);
     api(`/requests/${encodeURIComponent(x.id)}`).then((d) => {   // 판단 근거(서버 basis — 예상 시간 · 분석 모델 · 이 기관 이번 달 사용)
       const B = Object.fromEntries(d.basis || []);

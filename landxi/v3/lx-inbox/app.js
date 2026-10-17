@@ -4,6 +4,7 @@
    판정: 맞음 · AI 오류 · 모름(선택). 'AI 오류'는 서버가 재학습 표본으로 이어 쓴다. 주소 ?id= 로 그 대화를 바로 연다(알림 칸에서 온 길).
    LX 직원 = 왼쪽 메뉴 '요청함'(10차 메뉴-1 ⓐ — 기관에서 온 검토 요청 · 분석 의뢰 · 내가 올린 결재 · 알림). 머리 아래 숫자 셋은 대시보드 '요청함' 칸 · 메뉴 숫자와
    같은 한 곳(kit/lx-menu.js requestCounts) — 분석 의뢰 · 내 결재는 눌러 목록(#requests · #approvals 로 바로 연다). */
+import { dueOf } from '../kit/due.js';
 import { gate, shell, createStage, panes, empty, toast, devDrawer, devlog, numHtml, drawer } from '../kit/index.js';
 import { h, api, bboxOf } from '../kit/util.js';
 import { msg, when } from '../kit/notify.js';
@@ -110,6 +111,7 @@ function openList(kind, c) {
       h('ul.ib-xl-l', {}, ...items.map((it) => h('li', {},
         h('b', { text: it.title || it.kind_label || title }),
         h('span', { text: [kind === 'approvals' ? it.kind_label : null, when(it.at)].filter(Boolean).join(' · ') }),
+        kind === 'requests' && dueOf(it.due_date) ? h('span.ib-xl-due', { dataset: { lv: dueOf(it.due_date).lv }, text: [dueOf(it.due_date).text, dueOf(it.due_date).note].filter(Boolean).join(' · ') }) : null,
         kind === 'requests' ? h('span.ib-xl-who', { dataset: { rid: it.id } }) : null))));
     if (kind === 'requests') loadSenders('requests', items.map((it) => it.id)).then(() => {   // 보낸 사람 — 이름 · 기관 부서(· 연락처)
       for (const el of body.querySelectorAll('.ib-xl-who')) { const s = SENDERS.requests[el.dataset.rid]; if (s?.name) el.textContent = `보낸 사람 ${[s.org, s.dept, s.name].filter(Boolean).join(' ')}${s.contact ? ` · 연락처 ${s.contact}` : ''}`; }
