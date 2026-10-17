@@ -138,7 +138,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (n === 3) { onStep?.(3); return; }
     O.step = n === 2 ? 2 : 1;
     O.sync = true;
-    try { const p = ensurePane(); if (O.step === 2) p.expand(); else p.collapse(); } finally { O.sync = false; }
+    try { const p = ensurePane(); if (O.step === 2) p.expand(false); else p.collapse(false); } finally { O.sync = false; }   // 단계 바꿈은 기억으로 남기지 않음 — 기억 = 사람이 손잡이로 끌거나 접고 편 것(원칙 273)
     mini.hidden = O.step !== 1;
     stage.pad(O.step === 2 ? { right: padR() } : {});
     if (window.__xc?.dash) window.__xc.dash.step = O.step;
@@ -417,5 +417,6 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (window.__xc) window.__xc.dash = null;
     if (!quiet) onLeave?.();
   }
-  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)) };
+  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)),
+    get remembered() { return ensurePane().remembered(); } };   // 사람이 판을 직접 끌거나 펴 둔 기억(좁은 화면 기본 접힘보다 먼저 · 원칙 273)
 }

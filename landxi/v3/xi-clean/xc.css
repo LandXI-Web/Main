@@ -330,6 +330,10 @@
 /* 10-17 원칙 271 — 흰 글씨 한 줄 'OO 시군구 · OO 서비스 제공중'(큰 숫자 · 업무 줄 없음) · 위성 바탕 위에서 읽히게 그림자만 · 줄 높이 고정(내용으로 출렁이지 않음) */
 .xb-k--line{height:var(--lh-t1,36px);font:700 var(--fs-t1,28px)/var(--lh-t1,36px) var(--font-display);letter-spacing:-.02em;color:#fff;opacity:1;text-shadow:0 1px 2px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xb-k--line b{font:inherit;font-weight:800;font-variant-numeric:tabular-nums}
+/* 누를 수 있다(원칙 273 · 지도 위 통계 1단계로) — 손 모양 · 은은한 밑줄만, 설명 글 없음 */
+button.xb-k--line{display:block;max-width:100%;padding:0;margin:0;border:0;background:none;text-align:left;pointer-events:auto;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-decoration-thickness:2px;text-underline-offset:6px;transition:text-decoration-color var(--d-180,180ms) var(--e-ui,ease)}
+button.xb-k--line:hover,button.xb-k--line:focus-visible{text-decoration-color:rgba(255,255,255,.85);outline:none}
+button.xb-k--line:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:4px}
 .xb-hud[data-base="plain"] .xb-k--line{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.5)}   /* 바탕이 무엇이든 흰 글씨(10-17 사용자 "흰색으로") */
 .xb-big{margin:2px 0 0;font:800 var(--fs-big)/var(--lh-big) var(--font-display);letter-spacing:-.03em;white-space:nowrap}
 .xb-big b{font:inherit;font-variant-numeric:tabular-nums}

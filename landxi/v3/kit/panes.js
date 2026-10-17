@@ -227,10 +227,12 @@ export function panes(pane, opts = {}) {
     size: () => (st.c ? 0 : Math.round(cur())),
     set: (px) => setPx(px),
     reset() { st = {}; save(o.key, null); apply(); },
-    collapse() { if (!o.collapse) return; st = { ...st, c: true }; save(o.key, st); apply(); },
-    expand() { st = { ...st, c: false }; save(o.key, st); apply(); },
+    // keep=false → 화면이 단계를 바꾸며 접고 펴는 것(사람의 기억으로 남기지 않음) · 손잡이 단추 · 끌기 · 키보드는 늘 기억
+    collapse(keep = true) { if (!o.collapse) return; st = { ...st, c: true }; if (keep) save(o.key, st); apply(); },
+    expand(keep = true) { st = { ...st, c: false }; if (keep) save(o.key, st); apply(); },
     toggle() { st.c ? api.expand() : api.collapse(); },
     collapsed: () => !!st.c,
+    remembered: () => load(o.key),   // 사람이 직접 끌거나 접고 편 기억({ px, c }) · 없으면 null — 화면이 기본 배치를 정할 때 기억이 먼저(10-17 원칙 273)
     refresh: () => apply(),
     destroy() { ro?.disconnect(); removeEventListener('resize', onWin); pane.removeEventListener('transitionend', onTr); host.removeEventListener('scroll', onSc); document.removeEventListener('scroll', onSc, { capture: true }); el.remove(); put(null); pane.classList.remove('pn-pane', 'pn-pane--x', 'pn-pane--y', 'pn-collapsed'); },
   };

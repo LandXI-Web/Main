@@ -1022,16 +1022,39 @@ let HUDKEY = '';
 /** 서비스 결과 장부에서 — 지도 범위와 겹치는 시군구 · 그곳들의 서비스 가짓수(전역 분석 제외) */
 function hudCounts(d, region) {
   const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
-  const svcOf = (regs) => { const s = new Set(); for (const r of regs) for (const it of r.items || []) if (!analysis.has(it.svc)) s.add(it.svc); return s.size; };
-  if (region) { const br = boardRegion(region); return { regions: 1, services: svcOf(br ? [br] : []) }; }
+  const svcOf = (regs) => { const m = new Map(); for (const r of regs) for (const it of r.items || []) { if (analysis.has(it.svc)) continue; const s = m.get(it.svc) || { id: it.svc, name: it.name, n: 0 }; s.n += ev(it.n); m.set(it.svc, s); } return m; };
+  if (region) { const br = boardRegion(region); const regs = br ? [br] : [], svcs = svcOf(regs); return { regions: 1, services: svcs.size, regs, svcs }; }
   let regs = d.regions || [];
   try {
     const b = map.getBounds(), w = b.getWest(), s = b.getSouth(), e = b.getEast(), n = b.getNorth();
     const vis = regs.filter((r) => Array.isArray(r.bbox) && r.bbox.length === 4 && r.bbox[0] <= e && r.bbox[2] >= w && r.bbox[1] <= n && r.bbox[3] >= s);
     if (vis.length) regs = vis;
   } catch { /* 지도 전 */ }
-  return { regions: regs.length, services: svcOf(regs) };
+  const svcs = svcOf(regs);
+  return { regions: regs.length, services: svcs.size, regs, svcs };
 }
+/** 왼쪽 위 한 줄을 누르면(10-17 원칙 273) — 같은 장부 값(/ximap/board)으로 지도 위 통계 1단계 사양을 만든다: 시군구 순위(지도 색) · 서비스별 수. 전국이면 시군구 면이 차오르고, 시군구 안이면 서비스별만 */
+function boardSpec() {
+  const d = BD?.data; if (!d) return null;
+  const region = S.region && map.getZoom() >= 8.2 ? S.region : null;
+  const { regions, services, regs, svcs } = hudCounts(d, region);
+  const tot = regs.reduce((t, r) => t + ev(r.n), 0);
+  const title = region ? `${region.name} · ${nf(services)} 서비스 제공중` : `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
+  const panels = [{ type: 'bar', title: '서비스별', unit: '개', rows: [...svcs.values()].sort((a, b) => b.n - a.n).map((s) => ({ k: s.id, label: s.name, v: s.n })) }];
+  // 숫자 이름: '서비스 결과'(서비스 결과 장부의 객체 수) — 왼쪽 위 옛 큰 숫자 'AI 분석 결과'(전국 분석까지 합)와 다른 셈이라 같은 이름을 쓰지 않는다(규칙 3)
+  const kpis = [{ label: '서비스 결과', value: tot, unit: '개' }, ...(region ? [] : [{ label: '시군구', value: regions, unit: '곳' }]), { label: '서비스', value: services, unit: '가지' }];
+  let mp = null;
+  if (!region) {
+    const values = {}, labels = {};
+    for (const r of regs) { values[r.sgg_cd] = ev(r.n); labels[r.sgg_cd] = r.name; }
+    mp = { level: 'sgg', values, labels, title: '서비스 결과', unit: '개', scale: { kind: 'seq', hue: 'teal', min: 0, max: Math.max(1, ...Object.values(values)) }, meaning: '시군구마다 서비스 결과 수' };
+    panels.unshift({ type: 'rank', title: '시군구 순위', unit: '개', rows: regs.map((r) => ({ k: r.sgg_cd, label: r.name, v: ev(r.n) })).sort((a, b) => b.v - a.v) });
+  }
+  return { kind: 'board', rule: [], title, means: [['지역', region ? region.name : '전국'], ['업무', '모든 업무'], ['비교', region ? '서비스' : '서비스 · 시군구']], fuse: ['서비스 결과 장부'],
+    kpis, panels, map: mp, say: [], sgg: region ? codesOf(region)[0] : null, main: { label: '서비스 결과', value: tot, unit: '개' } };
+}
+function openBoardStats() { const s = boardSpec(); if (!s || !OM) return; LASTSPEC = s; setStep(1, { fresh: true }); }
+X.boardSpec = () => boardSpec();   // 실증 기록용(화면엔 없음)
 function paintBoardHud() {
   const d = BD?.data;
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
@@ -1047,7 +1070,7 @@ function paintBoardHud() {
     const { regions, services } = hudCounts(d, null);
     const label = `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
     const total = S.clsOff.size ? visRows(hudTaskRows().rows).filter((x) => !task || x.k === task).reduce((t, x) => t + x.n, 0) : boardTotal(task), unit = task ? BD.UNIT[task] || '개' : '개';
-    kids = [h('p.xb-k.xb-k--line', {}, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
+    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardStats }, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];   // 누르면 지도 위 통계 1단계(원칙 273)
     key = ['kr', regions, services, task].join('|');
     X.hud = { label, regions, services, n: total, unit, task, from: 'board' };
   } else {
@@ -1055,7 +1078,7 @@ function paintBoardHud() {
     const shown = visRows(task ? rows.filter((x) => x.k === task) : rows);
     const { services } = hudCounts(d, r);
     const label = `${r.name} · ${nf(services)} 서비스 제공중`;
-    kids = [h('p.xb-k.xb-k--line', {}, h('span', { text: r.name }), ' · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
+    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardStats }, h('span', { text: r.name }), ' · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
     key = ['r', r.code, services, task].join('|');
     const br = boardRegion(r);
     X.hud = { label, regions: 1, services, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length, wait };
@@ -1092,6 +1115,7 @@ function mountHudVariants() {
 /* '통계' 단추(10-15 원칙 262 "통계 대시보드는 눌러도 크게 뭐가 안변하네?") — 단계 셋이 단추에 그대로 보이고(지도만 · 지도 위 · 대시보드 · 지금 단계가 짙음), 누르면 그 단계로 바뀐다.
    통계가 없을 때는 숨김(누를 것이 없으니). 옛 '지도 위 ↔ 대시보드' 기억은 쓰지 않는다 */
 let LASTSPEC = null, SWB = null;
+const NARROW_W = 1400;   // 이 창 폭 이하 = 좁은 화면(1366 노트북 등) — 통계 판 기본 접힘(원칙 273)
 const STEPV = [['only', 1, '지도만'], ['map', 2, '지도 위'], ['dash', 3, '대시보드']];
 function mountStatSwitch() {
   const btns = STEPV.map(([v, n, t]) => h('button', { type: 'button', dataset: { v, step: String(n) }, 'aria-pressed': 'false', text: t, onclick: () => { if (LASTSPEC && STEP !== n) setStep(n); } }));
@@ -1114,6 +1138,8 @@ function paintStatSwitch() {
 /** 단계 바꾸기 — 0 닫기 · 1 지도에만(한 줄) · 2 지도 위 판 · 3 대시보드. fresh = 새 질문(차오름부터 다시) · 3 → 2 는 바로(fast) */
 function setStep(n, { fresh = false } = {}) {
   if (!LASTSPEC || (!OM && !DS)) return { ok: false, reason: '이 화면에서는 통계를 열 수 없습니다' };
+  // 좁은 화면(1400 이하 — 판이 지도를 크게 가림)에서 새 통계는 접힌 채(한 줄 · '통계 보기')로 연다. 사람이 판을 직접 펴거나 끌어 둔 기억이 있으면 그 기억이 먼저(10-17 원칙 273)
+  if (fresh && n === 2 && OM && innerWidth <= NARROW_W && !OM.remembered) n = 1;
   const was = STEP; STEP = n;
   let r = true;
   if (n === 0) { DS?.leave(); OM?.leave(); STEP = 0; }
