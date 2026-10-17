@@ -7,6 +7,19 @@
 .dg-item.is-drag,.dg-item.is-resize{transition:none;z-index:6;box-shadow:var(--elev-map)}
 .dg-item.is-drag{cursor:grabbing}
 .dg-ph{position:absolute;box-sizing:border-box;border-radius:var(--r-16);background:var(--bg-0);border:1px dashed var(--mute);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui)}
+/* 크기 한계 — 다른 칸에 막혀 더 못 늘릴 때(다른 칸은 고정 · 원칙 285): 점선이 잉크색으로 · 아래에 한 줄 */
+.dg-ph.is-limit{border-color:var(--ink);border-style:solid}
+.dg-limit{display:none;position:absolute;left:12px;right:40px;bottom:8px;font:500 var(--fs-tag)/18px var(--font-body);color:var(--ink);background:var(--bg-1);padding:2px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dg-item.is-limit .dg-limit{display:block}
+.dg-item.is-limit{outline:2px solid var(--ink)!important;outline-offset:-2px}
+/* 빈 자리(수정 중에만) — 점선 · 가운데 단추 둘('칸 더하기' · '옆 칸 늘리기') */
+.dg-gap{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:var(--r-16);border:1px dashed var(--mute);background:transparent;z-index:1}
+.dg-gap-in{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;max-width:100%}
+.dg-gap-b{height:30px;padding:0 12px;border:0;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/30px var(--font-body);white-space:nowrap;cursor:pointer;box-shadow:0 1px 0 rgba(28,31,37,.06)}
+.dg-gap-b:hover:not(:disabled){background:var(--ink);color:#fff}
+.dg-gap-b:disabled{color:var(--mute);cursor:default}
+.dg-gap.is-tiny .dg-gap-in{flex-direction:column;gap:4px;padding:4px}
+.dg-gap.is-tiny .dg-gap-b{height:26px;line-height:26px;padding:0 8px;font-size:var(--fs-tag)}
 /* 머리 — 제목 · (보조 한 줄) · 더 보기 · (수정) 보기 방식 · 빼기 */
 .dg-hd{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 10px;flex:none;min-width:0;min-height:28px}
 .dg-hd-t{display:flex;flex-direction:column;gap:0;min-width:0;flex:1 1 auto}
@@ -41,15 +54,16 @@
 .dg-bar .dg-b{height:36px;padding:0 14px;font-size:var(--fs-aux);line-height:34px;white-space:nowrap}
 .dg-bar .dg-addw,.dg-bar .dg-b--reset,.dg-bar .dg-b--done{display:none}
 .dg-bar.is-edit .dg-b--edit{display:none}
-.dg-bar.is-edit .dg-addw,.dg-bar.is-edit .dg-b--reset,.dg-bar.is-edit .dg-b--done{display:inline-flex}
+.dg-bar.is-edit .dg-addw:not([hidden]),.dg-bar.is-edit .dg-b--reset,.dg-bar.is-edit .dg-b--done{display:inline-flex}
 .dg-addw{position:relative;display:inline-flex}
 .dg-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:200px;padding:6px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);display:flex;flex-direction:column;gap:2px}
 .dg-menu[hidden]{display:none}
 .dg-mi{display:block;width:100%;padding:8px 12px;border:0;border-radius:var(--r-8);background:transparent;text-align:left;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
 .dg-mi:hover{background:var(--bg-0)}
 .dg-mi.is-none{color:var(--sub);cursor:default}
+.dg-gap .dg-menu--gap{top:50%;right:auto;left:50%;transform:translate(-50%,24px);z-index:8;max-height:220px;overflow:auto}   /* 빈 자리의 칸 더하기 목록 — 그 자리 가운데 단추 아래로 */
 /* 좁은 화면 — 한 줄로 쌓기 · 수정 없음 */
 .dg.is-stack{display:flex;flex-direction:column;gap:12px;height:auto!important}
 .dg.is-stack .dg-item.t-card{position:static;width:auto!important;left:auto!important;top:auto!important;transition:none}
-.dg.is-stack .dg-ph{display:none}
+.dg.is-stack .dg-ph,.dg.is-stack .dg-gap,.dg.is-stack .dg-limit{display:none}
 @media (prefers-reduced-motion:reduce){.dg-item.t-card,.dg-ph{transition:none}.dg-item.is-new{opacity:1;transform:none}}

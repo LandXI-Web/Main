@@ -39,3 +39,99 @@
 [23시 50분 51초] 1920 맞춤 ready 3.0s
   shot after-1920-custom.png
   정리: 시험 일정 지움 · 처음 모양으로
+
+# 10-18 원칙 285 (v2)
+[8시 11분 18초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
+[8시 11분 21초] 1440 열기→준비 2.9s
+[8시 11분 23초] 처음 배치 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+[8시 11분 23초] 크기 등급 notice=s(871x204) memo=s(429x204) board=s(540x276) inbox=s(319x276) store=s(429x276) calendar=m(429x492) recent=l(871x492)
+[8시 11분 25초] 최근 프로젝트 -4칸 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+[8시 11분 25초] shot v2-1440-resize-before
+[8시 11분 26초] 저장 용량 +3줄 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"] 다른 칸 움직임 0
+[8시 11분 26초] shot v2-1440-resize-after
+[8시 11분 27초] 진행 현황 가로 +4 시도 → 한계 표시 {"limit":true,"text":"다른 칸이 있어 여기까지 늘릴 수 있습니다"}
+[8시 11분 27초] shot v2-1440-resize-limit
+[8시 11분 27초] 한계 뒤 배치 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+[8시 11분 30초] 공지 -2칸 뒤 빈 자리 [{"w":209,"h":204,"btns":["칸 더하기(안 됨)","옆 칸 늘리기"]}]
+[8시 11분 30초] shot v2-1440-gap
+[8시 11분 31초] 옆 칸 늘리기 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"] 빈 자리 0
+[8시 11분 31초] shot v2-1440-gap-grow
+[8시 11분 32초] 메모 빼기 뒤 빈 자리 [{"w":429,"h":204}]
+[8시 11분 32초] 빈 자리 칸 더하기 목록(맞는 칸만) ["메모","전국 분석","지도 서비스"]
+[8시 11분 32초] shot v2-1440-gap-add-menu
+[8시 11분 33초] 전국 분석 더한 뒤 ["notice:0,0,8x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7","national:8,0,4x3"]
+[8시 11분 33초] shot v2-1440-gap-added
+[8시 11분 34초] 완료(평소 모습) 빈 자리 표시 0
+[8시 11분 35초] 모양 고르기 목록 ["처음 모양","공지 · 달력 · 저장 용량 한 줄","달력 크게"]
+[8시 11분 38초] 한 줄 모양 ["notice:0,0,4x4","calendar:4,0,4x4","store:8,0,4x4","board:0,4,5x4","inbox:5,4,3x4","memo:8,4,4x4","recent:0,8,12x7"] | notice=s(429x276) board=s(540x276) inbox=s(319x276) store=s(429x276) calendar=s(429x276) recent=l(1312x492) memo=s(429x276)
+[8시 11분 38초] shot v2-1440-row3
+[8시 11분 39초] 1920 크기 등급 notice=s(579x276) board=s(726x276) inbox=s(431x276) store=s(579x276) calendar=s(579x276) recent=l(1760x492) memo=s(579x276)
+[8시 11분 39초] shot v2-1920-row3
+[8시 11분 41초] 1366 크기 등급 notice=s(405x276) board=s(509x276) inbox=s(301x276) store=s(405x276) calendar=s(405x276) recent=l(1238x492) memo=s(405x276)
+[8시 11분 41초] shot v2-1366-row3
+[8시 11분 43초] s 배치 크기 등급 notice=s(429x276) store=s(429x276) calendar=s(429x276) | 달력 모양 list
+[8시 11분 43초] shot v2-{calendar,store,notice}-s
+[8시 11분 45초] m 배치 크기 등급 notice=m(650x348) store=m(650x420) calendar=m(650x420) | 달력 모양 week
+[8시 11분 45초] shot v2-{calendar,store,notice}-m
+[8시 11분 46초] l 배치 크기 등급 notice=l(871x420) store=l(871x564) calendar=l(871x636) | 달력 모양 month
+[8시 11분 47초] shot v2-{calendar,store,notice}-l
+[8시 11분 47초] l 배치 몸통 넘침 ["notice:맞음","store:맞음","calendar:맞음"]
+[8시 11분 51초] 390 열기→준비 3.0s
+[8시 11분 51초] 390 쌓기 true 수정 단추 보임 false
+[8시 11분 51초] shot v2-390-stack
+[8시 11분 56초] 다시 로그인(2회째 · 새 창)
+[8시 11분 59초] 다시 로그인 배치 같음 true ["notice:0,0,4x4","calendar:4,0,4x4","store:8,0,4x4","board:0,4,5x4","inbox:5,4,3x4","memo:8,4,4x4","recent:0,8,12x7"]
+[8시 11분 59초] shot v2-1440-relogin-kept
+[8시 12분 2초] 처음 모양으로 돌림 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+
+# 10-18 원칙 285 (v2 · 크기 고정 다시 — 모서리를 화면에 보이게 스크롤한 뒤 끌기)
+[8시 12분 55초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
+[8시 12분 58초] 1440 열기→준비 2.9s
+[8시 12분 59초] 처음 배치 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+[8시 12분 59초] 크기 등급 notice=s(871x204) memo=s(429x204) board=s(540x276) inbox=s(319x276) store=s(429x276) calendar=m(429x492) recent=l(871x492)
+[8시 13분 1초] 최근 프로젝트 -4칸 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,4x7"]
+[8시 13분 2초] shot v2-1440-resize-before
+[8시 13분 3초] 저장 용량 +3줄 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x7","calendar:0,7,4x7","recent:4,7,4x7"] 다른 칸 움직임 0
+[8시 13분 4초] shot v2-1440-resize-after
+[8시 13분 5초] 진행 현황 가로 +4 시도 → 한계 표시 {"limit":true,"text":"다른 칸이 있어 여기까지 늘릴 수 있습니다"}
+[8시 13분 5초] shot v2-1440-resize-limit
+[8시 13분 6초] 한계 뒤 배치 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x7","calendar:0,7,4x7","recent:4,7,4x7"]
+[8시 13분 7초] 처음 모양으로 돌림
+
+# 10-18 원칙 285 (v2 · 다듬은 뒤 다시 — null 글자 · 작은 칸 막대 · 좁은 주 일곱 줄)
+[8시 14분 9초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
+[8시 14분 12초] 1440 열기→준비 3.1s
+[8시 14분 13초] 모양 고르기 목록 ["처음 모양","공지 · 달력 · 저장 용량 한 줄","달력 크게"]
+[8시 14분 15초] 한 줄 모양 ["notice:0,0,4x4","calendar:4,0,4x4","store:8,0,4x4","board:0,4,5x4","inbox:5,4,3x4","memo:8,4,4x4","recent:0,8,12x7"] | notice=s(429x276) memo=s(429x276) board=s(540x276) inbox=s(319x276) store=s(429x276) calendar=s(429x276) recent=l(1312x492)
+[8시 14분 15초] shot v2-1440-row3
+[8시 14분 17초] 1920 크기 등급 notice=s(579x276) memo=s(579x276) board=s(726x276) inbox=s(431x276) store=s(579x276) calendar=s(579x276) recent=l(1760x492)
+[8시 14분 17초] shot v2-1920-row3
+[8시 14분 19초] 1366 크기 등급 notice=s(405x276) memo=s(405x276) board=s(509x276) inbox=s(301x276) store=s(405x276) calendar=s(405x276) recent=l(1238x492)
+[8시 14분 19초] shot v2-1366-row3
+[8시 14분 21초] s 배치 크기 등급 notice=s(429x276) store=s(429x276) calendar=s(429x276) | 달력 모양 list
+[8시 14분 21초] shot v2-{calendar,store,notice}-s
+[8시 14분 23초] m 배치 크기 등급 notice=m(650x348) store=m(650x420) calendar=m(650x420) | 달력 모양 week
+[8시 14분 23초] shot v2-{calendar,store,notice}-m
+[8시 14분 24초] l 배치 크기 등급 notice=l(871x420) store=l(871x564) calendar=l(871x636) | 달력 모양 month
+[8시 14분 25초] shot v2-{calendar,store,notice}-l
+[8시 14분 25초] l 배치 몸통 넘침 ["notice:맞음","store:맞음","calendar:맞음"]
+[8시 14분 30초] 390 열기→준비 3.4s
+[8시 14분 30초] 390 쌓기 true 수정 단추 보임 false null 글자 false
+[8시 14분 30초] shot v2-390-stack
+[8시 14분 31초] 처음 모양으로 돌림 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]
+
+# 10-18 원칙 285 (v2 · 빈 자리 다시 — 칸 더하기 목록 자리 고침)
+[8시 15분 15초] 로그인 1회(바깥 주소) → https://app.land-xi.dev
+[8시 15분 19초] 1440 열기→준비 3.6s
+[8시 15분 22초] 공지 -2칸 뒤 빈 자리 [{"w":209,"h":204,"btns":["칸 더하기(안 됨)","옆 칸 늘리기"]}]
+[8시 15분 22초] shot v2-1440-gap
+[8시 15분 23초] 옆 칸 늘리기 뒤 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"] 빈 자리 0
+[8시 15분 23초] shot v2-1440-gap-grow
+[8시 15분 24초] 메모 빼기 뒤 빈 자리 [{"w":429,"h":204}]
+[8시 15분 24초] 빈 자리 칸 더하기 목록(맞는 칸만) ["메모","전국 분석","지도 서비스"]
+[8시 15분 24초] shot v2-1440-gap-add-menu
+[8시 15분 26초] 전국 분석 더한 뒤 ["notice:0,0,8x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7","national:8,0,4x3"]
+[8시 15분 26초] shot v2-1440-gap-added
+[8시 15분 27초] 완료(평소 모습) 빈 자리 표시 0
+[8시 15분 27초] shot v2-1440-gap-added-done
+[8시 15분 28초] 처음 모양으로 돌림 ["notice:0,0,8x3","memo:8,0,4x3","board:0,3,5x4","inbox:5,3,3x4","store:8,3,4x4","calendar:0,7,4x7","recent:4,7,8x7"]

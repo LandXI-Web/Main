@@ -32,6 +32,8 @@ const when = (s) => { const d = new Date(s || ''); if (Number.isNaN(+d)) return 
 const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 /* 빈 상태 한 줄 — 칸 가운데에 */
 const none = (body, text) => { body.classList.add('is-empty'); body.replaceChildren(h('p.ld-foot-none', { text })); };
+/* 여러 조각을 넣되 없는 것(null)은 빼고 — replaceChildren(null) 은 'null' 글자를 넣는다 */
+const put = (el, ...kids) => el.replaceChildren(...kids.filter((k) => k !== null && k !== undefined && k !== false));
 /* 칸 몸통 높이(머리 · 부제 · 안쪽 여백 뺀 값) — 내용이 적으면 숫자를 키운다 */
 const bodyH = (ctx) => ctx.px.h - 88;
 const nf = (n, d = 0) => Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -86,14 +88,19 @@ const WIDGETS = {
       ctx.sub(j.total ? `${j.total}건` : null);
       if (!items.length) { none(body, '새 공지가 없습니다'); return; }
       const open = (a) => modal({ title: a.title, body: h('div.ld-ntc-md', {}, h('p.ld-ntc-by', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body ? h('p.ld-ntc-tx', { text: a.body }) : null) });
-      if (ctx.view === 'one') {
+      /* 크기별 — 작으면 최근 하나(제목 · 날짜) · 보통은 들어가는 만큼(최소 3) 제목 · 날짜 · 크면 전체 목록에 날짜 · 쓴 사람까지 */
+      if (ctx.view === 'one' || ctx.size === 's') {
         const a = items[0];
-        body.replaceChildren(h('button.ld-ntc-one', { type: 'button', onclick: () => open(a) },
-          h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body ? h('p', { text: a.body }) : null));
+        const lines = Math.max(0, Math.floor((bodyH(ctx) - 52) / 24));
+        put(body, h('button.ld-ntc-one', { type: 'button', class: ctx.size === 's' ? 'is-s' : '', onclick: () => open(a) },
+          h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body && lines >= 1 ? h('p', { text: a.body, style: `-webkit-line-clamp:${Math.min(6, lines)}` }) : null),
+        items.length > 1 && ctx.size === 's' ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - 1}건` }) : null);
         return;
       }
-      body.replaceChildren(h('ul.ld-ntc', {}, ...items.map((a) => h('li', {}, h('button', { type: 'button', title: a.title, onclick: () => open(a) },
-        h('b', { text: a.title }), h('small.num', { text: when(a.at) }))))));
+      const show = ctx.size === 'l' ? items : items.slice(0, Math.max(3, Math.floor(bodyH(ctx) / 23)));
+      put(body, h('ul.ld-ntc', { class: ctx.size === 'l' ? 'is-l' : '' }, ...show.map((a) => h('li', {}, h('button', { type: 'button', title: a.title, onclick: () => open(a) },
+        h('b', { text: a.title }), ctx.size === 'l' ? h('span.ld-k', { text: a.by_name }) : null, h('small.num', { text: ctx.size === 'l' ? ymdDot(a.at) : when(a.at) }))))),
+      show.length < items.length ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - show.length}건` }) : null);
     },
   },
   /* 메모 — 나만 보는 짧은 글(GET · POST /me/memos) · 고정은 위 · 적기 한 줄(Enter) */
@@ -150,12 +157,13 @@ const WIDGETS = {
         })));
         return;
       }
-      const row = ctx.w >= 8, big = (row ? 1 : 2) * 84 <= bodyH(ctx);
-      const ol = h('ol.ld-pf', { 'aria-label': '프로젝트 단계', class: [row ? 'is-row' : '', big ? 'is-big' : ''].filter(Boolean).join(' ') }, ...GROUPS.map((g, i) => {
+      /* 크기별 — 작으면 3×2 작은 숫자 · 보통은 3×2 큰 숫자 · 넓으면(620px 이상) 여섯 단계 한 줄 */
+      const row = ctx.px.w >= 620, big = ctx.size !== 's' && (row ? 1 : 2) * 84 <= bodyH(ctx);
+      const ol = h('ol.ld-pf', { 'aria-label': '프로젝트 단계', class: [row ? 'is-row' : '', big ? 'is-big' : '', ctx.size === 's' ? 'is-s' : ''].filter(Boolean).join(' ') }, ...GROUPS.map((g, i) => {
         const n = by[i].length, warn = by[i].filter((p) => kick(p)?.kind === 'warn').length;
         return h('li', { dataset: { n: String(n), key: g.key } },
           h('a', { href: stageListHref(g.key), 'aria-label': `${g.label} ${n}개${warn ? ` · 남은 일 있는 ${warn}` : ''}` },
-            num('b.num', n), h('span', { text: g.label }), warn ? h('em', { text: `남은 일 ${warn}` }) : null));
+            num('b.num', n), h('span', { text: g.label }), warn && ctx.size !== 's' ? h('em', { text: `남은 일 ${warn}` }) : null));
       }));
       body.replaceChildren(ol);
       countUp(ol, 'board');
@@ -171,20 +179,25 @@ const WIDGETS = {
       const c = await requestCounts().catch(() => null);
       if (!c || c.total === null) { fail(body, () => { wait(body); requestCounts({ force: true }); ctx.refresh(); }); return; }
       const isNone = !c.review && !c.request && !c.approval;
+      const rows = [
+        ...(c.requests || []).map((r) => ({ t: r.title || '분석 요청', k: '분석 요청', at: r.at, href: STAFF_HREF.inbox + '#requests' })),
+        ...(c.approvals || []).map((a) => ({ t: a.title || a.kind_label || '승인 요청', k: '보낸 요청', at: a.at, href: STAFF_HREF.inbox + '#approvals' })),
+      ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+      const list = (n) => h('ul.ld-rows', {}, ...rows.slice(0, n).map((r) => h('li', {}, h('a', { href: r.href },
+        h('b', { text: r.t }), h('span.ld-k', { text: r.k }), h('small.num', { text: when(r.at) })))));
       if (ctx.view === 'list') {
-        const rows = [
-          ...(c.requests || []).map((r) => ({ t: r.title || '분석 요청', k: '분석 요청', at: r.at, href: STAFF_HREF.inbox + '#requests' })),
-          ...(c.approvals || []).map((a) => ({ t: a.title || a.kind_label || '승인 요청', k: '보낸 요청', at: a.at, href: STAFF_HREF.inbox + '#approvals' })),
-        ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
         if (!rows.length) { none(body, isNone ? '지금은 기다리는 요청이 없습니다' : `검토 요청 ${c.review || 0}건은 요청함에서 봅니다`); return; }
-        body.replaceChildren(h('ul.ld-rows', {}, ...rows.map((r) => h('li', {}, h('a', { href: r.href },
-          h('b', { text: r.t }), h('span.ld-k', { text: r.k }), h('small.num', { text: when(r.at) }))))));
+        body.replaceChildren(list(rows.length));
         return;
       }
+      /* 크기별 — 작으면 숫자 셋만 · 보통은 + 한 줄 · 크면 + 최근 요청 목록(들어가는 만큼) */
       const cell = (v, label, hash) => h('a.ld-cell', { href: STAFF_HREF.inbox + hash, class: v ? '' : 'is-zero', 'aria-label': `${label} ${v ?? '—'}건` },
         v === null ? h('b.num', { text: '—' }) : num('b.num', v), h('span', { text: label }));
-      const cells = h('div.ld-cells', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' }, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells, h('p.ld-inbox-s', { text: isNone ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' })));
+      const cells = h('div.ld-cells', { class: ctx.size !== 's' && 84 + 36 <= bodyH(ctx) ? 'is-big' : '' }, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
+      const fit = Math.floor((bodyH(ctx) - 150) / 29);
+      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
+        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: isNone ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' }),
+        ctx.size === 'l' && rows.length && fit >= 1 ? list(fit) : null));
       countUp(cells, 'inbox');
     },
   },
@@ -206,25 +219,42 @@ const WIDGETS = {
           h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) })))));
         return;
       }
+      /* 크기별 — 작으면 큰 % + 막대 · 보통은 + 프로젝트별 요약 · 증량 신청 · 크면 + 프로젝트별 막대 · 할당 변경 기록(모두 GET /me/storage 한 출처 · 지어낸 수 0) */
       const pw = pctWord(used, q);
       const [sv, su] = size(used).split(' ');
-      const big = h('div.ld-cell.ld-cell--ro', {}, h('b.num', {}, num('span', Number(sv), sv.includes('.') ? 1 : 0), ' ', h('small', { text: su })),
-        h('span', { text: pw !== null ? `사용 중 · 할당의 ${pw}%` : '사용 중' }));
-      const right = h('div.ld-store-r');
-      if (pw !== null) {
-        const w = Math.min(100, Math.max(used > 0 ? 1 : 0, Number(pw)));
-        right.append(h('div.k-me-bar.ld-bar-q', { class: st.warn ? 'is-warn' : '', role: 'img', 'aria-label': `할당의 ${pw}% 사용` }, h('i', { style: `width:${w}%` })));
+      const bar = pw !== null ? h('div.k-me-bar.ld-bar-q', { class: st.warn ? 'is-warn' : '', role: 'img', 'aria-label': `할당의 ${pw}% 사용` }, h('i', { style: `width:${Math.min(100, Math.max(used > 0 ? 1 : 0, Number(pw)))}%` })) : null;
+      const big = pw !== null
+        ? h('div.ld-cell.ld-cell--ro', {}, h('b.num', {}, num('span', Number(pw)), h('small', { text: '%' })), h('span', { text: `${size(used)} 사용 · 할당 ${gb(q)}` }))
+        : h('div.ld-cell.ld-cell--ro', {}, h('b.num', {}, num('span', Number(sv), sv.includes('.') ? 1 : 0), ' ', h('small', { text: su })), h('span', { text: '사용 중 · 할당 없음' }));
+      if (ctx.size === 's') {
+        put(body, h('div.ld-store-b.is-col.is-s', {}, big, bar));
+        countUp(big, 'store'); return;
       }
+      const right = h('div.ld-store-r');
+      if (bar) right.append(bar);
       const pend = (j.requests || []).find((r) => r.state === 'pending');
-      right.append(h('p.ld-store-s', {}, ps.length ? h('span.ld-k', { text: '프로젝트별' }) : null,
-        ...ps.slice(0, ctx.w >= 6 ? 4 : 2).map((p) => h('span', { title: p.name }, h('span.ld-pn', { text: p.name }), ' ', h('b.num', { text: size(p.bytes) }))),
-        ps.length > (ctx.w >= 6 ? 4 : 2) ? h('span', { text: `외 ${ps.length - (ctx.w >= 6 ? 4 : 2)}개` }) : null));
+      const nShow = ctx.px.w >= 520 ? 4 : 2;
+      if (ctx.size === 'm') right.append(h('p.ld-store-s', {}, ps.length ? h('span.ld-k', { text: '프로젝트별' }) : null,
+        ...ps.slice(0, nShow).map((p) => h('span', { title: p.name }, h('span.ld-pn', { text: p.name }), ' ', h('b.num', { text: size(p.bytes) }))),
+        ps.length > nShow ? h('span', { text: `외 ${ps.length - nShow}개` }) : null));
       const act = h('p.ld-store-a');
       if (st.warn) act.append(h('span.ld-warn', { text: `할당의 ${ev(st.pct)}%를 썼습니다` }));
       if (pend) act.append(h('span.ld-store-p', { text: `증량 신청 중 ${gb(ev(pend.want_gb))} · LX 관리자 확인 전` }));
       else if (has) act.append(h('button.k-me-ask', { type: 'button', text: '용량 증량 신청', onclick: () => openMe({ ask: true, onStorage: again, onSaved: again }) }));
       if (act.childNodes.length) right.append(act);
-      body.replaceChildren(h('div.ld-store-b', { class: ctx.w <= 3 ? 'is-col' : '' }, big, right));
+      const wrap = h('div.ld-store-b', { class: ctx.px.w < 400 ? 'is-col' : '' }, big, right);
+      if (ctx.size !== 'l') { body.replaceChildren(wrap); countUp(big, 'store'); return; }
+      /* 크게 — 아래에 프로젝트별 막대(들어가는 만큼) + 할당 변경 기록(승인 · 거절 · 대기) */
+      const max = Math.max(1, ...ps.map((p) => p.bytes || 0));
+      const fitN = Math.max(2, Math.floor((bodyH(ctx) - 120 - 60) / 30));
+      const STATE_KO = { pending: '확인 전', approved: '승인', rejected: '거절' };
+      const hist = (j.requests || []).slice(0, 3);
+      body.replaceChildren(h('div.ld-store-l', {}, wrap,
+        ps.length ? h('div.ld-store-sec', {}, h('p.ld-store-h', { text: '프로젝트별' }), h('ol.ld-pb.ld-pb--store', {}, ...ps.slice(0, fitN).map((p) => h('li', {}, h('span', { text: p.name, title: p.name }),
+          h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) }))),
+        ps.length > fitN ? h('li.ld-pb-rest', {}, h('span', { text: `외 ${ps.length - fitN}개` })) : null)) : null,
+        hist.length ? h('div.ld-store-sec', {}, h('p.ld-store-h', { text: '할당 변경 기록' }), h('ul.ld-rows', {}, ...hist.map((r) => h('li', {}, h('span.ld-store-hr', {},
+          h('b', { text: `${gb(ev(r.from_gb))} → ${gb(ev(r.want_gb))}` }), h('span.ld-k', { text: STATE_KO[r.state] || r.state }), h('small.num', { text: ymdDot(r.decided_at || r.at) })))))) : null));
       countUp(big, 'store');
     },
   },
@@ -247,13 +277,13 @@ const WIDGETS = {
       if (!items.length) { none(body, '진행 중인 프로젝트가 없습니다'); return; }
       const t = (p) => +new Date(p.last_at || p.updated_at || 0) || 0;
       const sorted = items.slice().sort((a, b) => t(b) - t(a));
-      if (ctx.view === 'list') {
+      if (ctx.view === 'list' || ctx.size === 's') {           // 작은 칸은 카드가 들어가지 않아 목록으로
         body.replaceChildren(h('ul.ld-rows.ld-rows--proj', {}, ...sorted.map((p) => h('li', {}, h('a', { href: projectHref(p.id) },
           h('b', { text: p.name }), h('span.ld-k', { text: GROUPS[groupOf(p)].label }), kick(p)?.kind === 'warn' ? h('em', { text: kick(p).text }) : null, h('small', { text: ago(p.last_at || p.updated_at) }))))));
         return;
       }
       const cols = Math.max(1, Math.min(6, Math.floor((ctx.px.w + 16) / (236 + 16))));
-      const rows = ctx.h >= 13 ? 2 : 1;
+      const rows = bodyH(ctx) >= 2 * 300 ? 2 : 1;
       const top = sorted.slice(0, cols * rows);
       ctx.sub(`마지막 활동 순 · 전체 ${items.length}`);
       const d = await dk;
@@ -272,17 +302,21 @@ const WIDGETS = {
       if (!j) { none(body, '전국 분석 기록이 없습니다'); return; }
       ctx.sub(j.year ? `${j.year}년 영상` : null);
       const items = j.items || [];
+      const list = (n) => h('ul.ld-rows', {}, ...items.slice(0, n).map((x) => h('li', {}, h('a', { href: STAFF_HREF.ximap },
+        h('b', { text: [x.sgg, x.name].filter(Boolean).join(' ') }), h('span.ld-k', { text: x.asset_name }), h('small.num', { text: when(x.at) })))));
       if (ctx.view === 'list') {
         if (!items.length) { none(body, '끝난 읍면동이 없습니다'); return; }
-        body.replaceChildren(h('ul.ld-rows', {}, ...items.map((x) => h('li', {}, h('a', { href: STAFF_HREF.ximap },
-          h('b', { text: [x.sgg, x.name].filter(Boolean).join(' ') }), h('span.ld-k', { text: x.asset_name }), h('small.num', { text: when(x.at) }))))));
+        body.replaceChildren(list(items.length));
         return;
       }
-      const cells = h('div.ld-cells.ld-cells--2', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
+      /* 크기별 — 작으면 숫자 둘 · 보통은 + 방금 끝난 곳 한 줄 · 크면 + 목록 */
+      const cells = h('div.ld-cells.ld-cells--2', { class: ctx.size !== 's' && 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
         h('div.ld-cell.ld-cell--ro', {}, num('b.num', Number(ev(j.today?.cells)) || 0), h('span', { text: '오늘 끝난 읍면동' })),
         h('div.ld-cell.ld-cell--ro', {}, num('b.num', Number(ev(j.today?.n)) || 0), h('span', { text: '오늘 AI 분석 결과' })));
-      const last = items[0];
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells, h('p.ld-inbox-s', { text: last ? `방금 끝난 곳 · ${[last.sgg, last.name].filter(Boolean).join(' ')} · ${when(last.at)}` : '오늘 끝난 읍면동이 없습니다' })));
+      const last = items[0], fit = Math.floor((bodyH(ctx) - 150) / 29);
+      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
+        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: last ? `방금 끝난 곳 · ${[last.sgg, last.name].filter(Boolean).join(' ')} · ${when(last.at)}` : '오늘 끝난 읍면동이 없습니다' }),
+        ctx.size === 'l' && items.length && fit >= 1 ? list(fit) : null));
       countUp(cells, 'national');
     },
   },
@@ -295,18 +329,23 @@ const WIDGETS = {
       try { j = await once('analyses', () => api('/me/analyses')); } catch { fail(body, () => { drop('analyses'); ctx.refresh(); }); return; }
       const groups = j.groups || [], running = j.running || [];
       ctx.sub(groups.length ? `서비스 · 프로젝트 ${groups.length}개` : null);
+      const rows = groups.flatMap((g) => g.items.slice(0, 3).map((x) => ({ g, x }))).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || ''))).slice(0, 30);
+      const list = (n) => h('ul.ld-rows', {}, ...rows.slice(0, n).map(({ g, x }) => h('li', {}, h('a', { href: STAFF_HREF.mapsvc + '?job=' + encodeURIComponent(x.job) },
+        h('b', { text: g.name }), h('span.ld-k', { text: [x.region, x.imagery?.word].filter((s) => s && s !== '—').join(' · ') }), h('small.num', { text: when(x.finished_at) })))));
       if (ctx.view === 'list') {
-        const rows = groups.flatMap((g) => g.items.slice(0, 3).map((x) => ({ g, x }))).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || ''))).slice(0, 30);
         if (!rows.length) { none(body, '분석 결과가 없습니다'); return; }
-        body.replaceChildren(h('ul.ld-rows', {}, ...rows.map(({ g, x }) => h('li', {}, h('a', { href: STAFF_HREF.mapsvc + '?job=' + encodeURIComponent(x.job) },
-          h('b', { text: g.name }), h('span.ld-k', { text: [x.region, x.imagery?.word].filter((s) => s && s !== '—').join(' · ') }), h('small.num', { text: when(x.finished_at) }))))));
+        body.replaceChildren(list(rows.length));
         return;
       }
-      const cells = h('div.ld-cells.ld-cells--2', { class: 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
+      /* 크기별 — 작으면 숫자 둘 · 보통은 + 마지막 분석 한 줄 · 크면 + 목록 */
+      const cells = h('div.ld-cells.ld-cells--2', { class: ctx.size !== 's' && 84 + 36 <= bodyH(ctx) ? 'is-big' : '' },
         h('a.ld-cell', { href: STAFF_HREF.mapsvc, class: j.total ? '' : 'is-zero' }, num('b.num', Number(j.total) || 0), h('span', { text: '분석 결과' })),
         h('div.ld-cell.ld-cell--ro', { class: running.length ? 'is-run' : 'is-zero' }, num('b.num', running.length), h('span', { text: '분석 중' })));
       const last = groups.map((g) => ({ g, x: g.items[0] })).filter((r) => r.x).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || '')))[0];
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells, h('p.ld-inbox-s', { text: last ? `마지막 분석 · ${last.g.name} · ${when(last.x.finished_at)}` : '아직 분석 결과가 없습니다' })));
+      const fit = Math.floor((bodyH(ctx) - 150) / 29);
+      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
+        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: last ? `마지막 분석 · ${last.g.name} · ${when(last.x.finished_at)}` : '아직 분석 결과가 없습니다' }),
+        ctx.size === 'l' && rows.length && fit >= 1 ? list(fit) : null));
       countUp(cells, 'mapsvc');
     },
   },
@@ -382,7 +421,13 @@ function dayModal(d, redraw) {
 
 async function calendar(body, ctx) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const mode = ctx.view === 'auto' || !ctx.view ? (ctx.h >= 4 ? 'month' : ctx.w >= 6 && ctx.h >= 3 ? 'week' : 'list') : ctx.view;
+  /* 크기별(실제 px) — 작으면 오늘 + 다음 일 셋 · 보통은 주 · 크면 월. 직접 고른 보기 방식도 들어가지 않으면 한 단계 작게(월→주→다음 일) */
+  const bh = bodyH(ctx) - 34;                                           // 머리줄(‹ 달 › · 오늘 · 일정 적기)을 뺀 높이
+  const fitsMonth = bh >= 5 * 40 + 20, fitsWeek = ctx.px.w / 7 >= 96 ? bh >= 96 : bh >= 200;   // 주 = 일곱 열(넓을 때) · 일곱 줄(좁을 때 — 줄마다 28px)
+  let mode = ctx.view === 'auto' || !ctx.view ? (ctx.size === 'l' ? 'month' : ctx.size === 'm' ? 'week' : 'list') : ctx.view;
+  if (mode === 'month' && !fitsMonth) mode = 'week';
+  if (mode === 'week' && !fitsWeek) mode = 'list';
+  const small = ctx.size === 's';
   const redraw = () => ctx.refresh();
   /* 머리 — ‹ 2026.10 › · 오늘 · 일정 적기 */
   const label = h('b.ld-cal-l.num');
@@ -408,6 +453,16 @@ async function calendar(body, ctx) {
     try { a = await agenda(today, to); } catch { fail(grid, redraw); return; }
     const days = [...a.by.keys()].filter((k) => k >= isoDay(today)).sort();
     if (!days.length) { grid.replaceChildren(h('p.ld-foot-none', { text: '앞으로 30일 안에 일이 없습니다' })); return; }
+    if (small) {                                                        // 작은 칸 — 오늘 + 다음 일 셋(한 줄씩 · 날짜 · 제목)
+      const flat = days.flatMap((k) => (a.by.get(k) || []).map((it) => ({ k, it })));
+      const n = Math.max(1, Math.min(3, Math.floor((bh - 4) / 28)));
+      const show = flat.slice(0, n);
+      put(grid, h('ul.ld-cal-next', {}, ...show.map(({ k, it }) => { const d = dayOf(k); return h('li', { class: it.kind === 'mine' ? 'is-mine' : '' },
+        h('button.ld-cal-ld', { type: 'button', onclick: () => dayModal(d, redraw) }, h('b.num', { text: sameDay(d, today) ? '오늘' : `${d.getMonth() + 1}.${d.getDate()}` })),
+        h('span.ld-cal-nt', { title: it.title }, it.time ? h('span.num', { text: it.time + ' ' }) : null, it.title)); })),
+      flat.length > show.length ? h('p.ld-cal-more.ld-cal-rest', { text: `그 밖 ${flat.length - show.length}건` }) : null);
+      return;
+    }
     grid.replaceChildren(h('ul.ld-cal-list', {}, ...days.map((k) => { const d = dayOf(k); return h('li', { class: sameDay(d, today) ? 'is-today' : '' },
       h('button.ld-cal-ld', { type: 'button', onclick: () => dayModal(d, redraw) }, h('b.num', { text: `${d.getMonth() + 1}.${d.getDate()}` }), h('span', { text: sameDay(d, today) ? '오늘' : DOW[d.getDay()] })),
       h('div.ld-cal-li', {}, ...(a.by.get(k) || []).map(chip))); })));
@@ -472,7 +527,21 @@ const DEFAULTS = [
   { id: 'board', x: 0, y: 3, w: 5, h: 4, view: 'numbers' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 4, view: 'numbers' }, { id: 'store', x: 8, y: 3, w: 4, h: 4, view: 'numbers' },
   { id: 'calendar', x: 0, y: 7, w: 4, h: 7, view: 'auto' }, { id: 'recent', x: 4, y: 7, w: 8, h: 7, view: 'cards' },
 ];
-const G = dashgrid(gridHost, { screen: 'lx-console', widgets: WIDGETS, defaults: DEFAULTS, cols: 12, rowH: 60, gap: 12 });
+/* 고를 수 있는 모양(10-18 원칙 285 "공지사항 · 달력 · 저장 용량을 한 줄에") — '모양 고르기'에서 */
+const PRESETS = [
+  { id: 'default', label: '처음 모양', items: DEFAULTS },
+  { id: 'row3', label: '공지 · 달력 · 저장 용량 한 줄', items: [
+    { id: 'notice', x: 0, y: 0, w: 4, h: 4, view: 'list' }, { id: 'calendar', x: 4, y: 0, w: 4, h: 4, view: 'auto' }, { id: 'store', x: 8, y: 0, w: 4, h: 4, view: 'numbers' },
+    { id: 'board', x: 0, y: 4, w: 5, h: 4, view: 'numbers' }, { id: 'inbox', x: 5, y: 4, w: 3, h: 4, view: 'numbers' }, { id: 'memo', x: 8, y: 4, w: 4, h: 4 },
+    { id: 'recent', x: 0, y: 8, w: 12, h: 7, view: 'cards' },
+  ] },
+  { id: 'wide', label: '달력 크게', items: [
+    { id: 'notice', x: 0, y: 0, w: 4, h: 3, view: 'list' }, { id: 'store', x: 4, y: 0, w: 4, h: 3, view: 'numbers' }, { id: 'inbox', x: 8, y: 0, w: 4, h: 3, view: 'numbers' },
+    { id: 'calendar', x: 0, y: 3, w: 8, h: 8, view: 'auto' }, { id: 'board', x: 8, y: 3, w: 4, h: 4, view: 'numbers' }, { id: 'memo', x: 8, y: 7, w: 4, h: 4 },
+    { id: 'recent', x: 0, y: 11, w: 12, h: 7, view: 'cards' },
+  ] },
+];
+const G = dashgrid(gridHost, { screen: 'lx-console', widgets: WIDGETS, defaults: DEFAULTS, presets: PRESETS, cols: 12, rowH: 60, gap: 12 });
 bar.append(G.toolbar);
 
 /* e2e 관측(읽기 전용) — 처음 칸들이 그려지면 */

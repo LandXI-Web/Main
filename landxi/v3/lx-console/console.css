@@ -153,6 +153,15 @@ a.ld-cell:hover{background:var(--bg-0)}
 .is-week .ld-cal-d{padding:4px 6px}
 .is-week .ld-cal-dn{min-width:26px;height:26px;font-size:var(--fs-aux)}
 .is-week .ld-cal-c{height:auto;min-height:24px;max-height:44px;align-items:flex-start;padding:2px 6px;font-size:var(--fs-aux);line-height:20px;white-space:normal}
+/* 주 — 좁은 칸은 일곱 줄(날짜 · 요일 한 줄 + 칩) · 줄 높이 26px 안팎 */
+.is-weekrows .ld-cal-list{gap:2px}
+.is-weekrows .ld-cal-list li{grid-template-columns:72px minmax(0,1fr);align-items:start}
+.is-weekrows .ld-cal-ld{flex-direction:row;align-items:baseline;gap:4px;padding:1px 6px}
+.is-weekrows .ld-cal-ld b{font-size:var(--fs-aux);line-height:24px}
+.is-weekrows .ld-cal-ld span{line-height:24px}
+.is-weekrows .ld-cal-li{gap:2px;padding-top:1px}
+.is-weekrows .ld-cal-li .ld-cal-c{min-height:22px;padding:1px 6px;line-height:20px}
+.is-weekrows .ld-cal-more{line-height:24px}
 /* 다음 일 목록 */
 .ld-cal-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;overflow:auto;flex:1 1 0;min-height:0}
 .ld-cal-list li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:start}
@@ -181,5 +190,33 @@ a.ld-cell:hover{background:var(--bg-0)}
 
 @media (prefers-reduced-motion:reduce){.ld-grid{opacity:1;transform:none;transition:none}}
 @media (max-width:760px){.ld{padding:12px 16px 24px}.ld-bar{display:none}.ld-cal-fr{grid-template-columns:1fr}}
+/* 크기별 화면(10-18 원칙 285 — s · m · l 은 실제 px 로 정함) */
+.ld-pf.is-s{gap:2px 6px}
+.ld-pf.is-s b{font-size:var(--fs-t2);line-height:28px}
+.ld-ntc-rest{margin:4px 0 0;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+.ld-ntc.is-l button{grid-template-columns:minmax(0,1fr) auto auto;font-size:var(--fs-body);line-height:28px}
+.ld-ntc.is-l .ld-k{white-space:nowrap;font-size:var(--fs-aux)}
+.ld-ntc-one.is-s b{font-size:var(--fs-body);line-height:24px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.ld-ntc-one p{-webkit-line-clamp:var(--lines,6)}
+.ld-store-b.is-s{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:10px}
+.ld-store-b.is-s .ld-bar-q{width:100%}
+.ld-store-b.is-s .ld-cell b{font-size:var(--fs-h2);line-height:52px}
+.ld-store-l{display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0}
+.ld-store-l .ld-store-b{flex:none}
+.ld-store-sec{display:flex;flex-direction:column;gap:4px;min-height:0}
+.ld-store-h{margin:0;padding-top:8px;border-top:1px solid var(--rule);font:500 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+.ld-pb-rest span{color:var(--sub);grid-column:1/-1}
+.ld-store-hr{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:baseline;gap:10px;padding:3px 0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--ink)}
+.ld-store-hr b{font-weight:500;font-family:var(--font-num)}
+.ld-store-hr small{font-size:var(--fs-tag);color:var(--sub)}
+.ld-inbox-b .ld-rows{border-top:1px solid var(--rule);padding-top:6px;overflow:hidden}
+.ld-cal-next{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 0;min-height:0;overflow:hidden}
+.ld-cal-next li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:center}
+.ld-cal-next .ld-cal-ld b{font:600 var(--fs-aux)/24px var(--font-num);color:var(--ink)}
+.ld-cal-next li:first-child .ld-cal-ld b{color:var(--accent)}
+.ld-cal-nt{min-width:0;font:400 var(--fs-aux)/24px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-cal-next li.is-mine .ld-cal-nt{font-weight:500;color:var(--ink)}
+.ld-cal-nt .num{color:var(--sub)}
+.ld-cal-rest{margin:2px 0 0}
 /* 수정 모드 · 좁은 칸 — 보기 방식 칩이 한 줄 차지하므로 키운 숫자는 보통 크기로(두 번째 줄이 잘리지 않게) */
 .dg.is-edit .is-narrow .ld-pf.is-big b,.dg.is-edit .is-narrow .ld-cells.is-big b{font-size:var(--fs-num);line-height:40px}
