@@ -281,7 +281,8 @@ async def compare(p: Principal, card: str, import_id: str | None = None, emd: st
                       "ai_cls": top, "ai_m2": round(e["m2"], 1) if e else None, "parcel_m2": round(float(a["area_m2"]), 1) if a.get("area_m2") else None,
                       "area": {"ai": env(round(e["m2"], 1) if e else None, "m2", "measured", SRC_CMP),
                                "parcel": env(round(float(a["area_m2"]), 1) if a.get("area_m2") else None, "m2", "recorded", "연속지적 필지 면적")},
-                      "k": "diff" if why else ("ai" if e else "none"), "why": why})
+                      "k": "diff" if why else ("ai" if e else "none"), "why": why,
+                      "_by": {x: round(m, 1) for x, m in e["by"].items()} if e else {}})
     diff = [x for x in items if x["k"] == "diff"]
     diff.sort(key=lambda x: (-(x["ai_m2"] or 0), x["where"]))
     has_ai = sum(1 for x in items if x["k"] != "none")
@@ -312,7 +313,7 @@ async def compare(p: Principal, card: str, import_id: str | None = None, emd: st
 
 def _clean(items: list[dict]) -> list[dict]:
     """응답용 — 숫자는 봉투(area)로만(속 계산용 날 숫자 ai_m2 · parcel_m2 는 뺀다)."""
-    return [{k: v for k, v in x.items() if k not in ("ai_m2", "parcel_m2")} for x in items]
+    return [{k: v for k, v in x.items() if k not in ("ai_m2", "parcel_m2", "_by")} for x in items]
 
 
 def _public(o: dict) -> dict:
@@ -554,18 +555,27 @@ async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = 
         wb = Workbook()
         ws = wb.active
         ws.title = "필지"
-        ws.append(["필지 번호", "지번", "읍면동", "대장", "AI 분석", "AI 결과 면적(㎡)", "필지 면적(㎡)", "견준 결과"])
+        # 종류별 AI 결과 면적 칸(10-18 원칙 286 — 운영 중인 영농관리 화면의 'AI 분석 면적' 종류별 칸) · 넓은 종류부터 · 대장 행마다 같은 필지의 AI 결과
+        tot: dict[str, float] = {}
+        for x in rows:
+            for k, m in (x.get("_by") or {}).items():
+                tot[k] = tot.get(k, 0.0) + m
+        kinds = [k for k, _ in sorted(tot.items(), key=lambda kv: -kv[1])]
+        ws.append(["필지 번호", "지번", "읍면동", "대장", "AI 분석", "AI 결과 면적(㎡)", "필지 면적(㎡)", "견준 결과", "AI 결과 유무"]
+                  + [f"AI {k} 면적(㎡)" for k in kinds])
         for cell in ws[1]:
             cell.font = Font(bold=True)
             cell.fill = PatternFill("solid", fgColor="F2F4F6")
         for x in rows:
             ws.append([x["pnu"], x["where"], x["emd"], x["ledger"], x["ai"] or "", x["ai_m2"], x["parcel_m2"],
-                       why.get(x["why"], "") if x["k"] == "diff" else ("AI 결과 있음" if x["k"] == "ai" else c["no_ai_label"])])
+                       why.get(x["why"], "") if x["k"] == "diff" else ("AI 결과 있음" if x["k"] == "ai" else c["no_ai_label"]),
+                       "유" if x["k"] != "none" else "무"] + [(x.get("_by") or {}).get(k, 0) if x["k"] != "none" else None for k in kinds])
         for row in ws.iter_rows(min_row=2, min_col=1, max_col=1):
             for cell in row:
                 cell.number_format = "@"
-        for i, w in enumerate([22, 20, 12, 10, 26, 16, 14, 34]):
-            ws.column_dimensions[chr(65 + i)].width = w
+        from openpyxl.utils import get_column_letter
+        for i, w in enumerate([22, 20, 12, 10, 26, 16, 14, 34, 12] + [18] * len(kinds)):
+            ws.column_dimensions[get_column_letter(i + 1)].width = w
         i = wb.create_sheet("안내")
         for k, v in [("서비스", c["service"]["name"]), ("올린 대장", c["ledger"]["name"]), ("대장 필지", c["ledger"]["parcels"]["value"]),
                      ("대장과 AI 결과가 다른 필지", c["diff"]["value"]), ("AI 결과가 있는 필지", c["with_ai"]["value"]),

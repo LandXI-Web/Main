@@ -306,7 +306,7 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
   .gy-row{grid-template-columns:minmax(0,1fr);gap:4px}
   .gy-who{white-space:normal}
   .gs-num b .k-num{font-size:var(--fs-num)}
-  .gs-tbl th:nth-child(3),.gs-tbl td:nth-child(3){display:none}
+  .gs-emd .gs-tbl th:nth-child(3),.gs-emd .gs-tbl td:nth-child(3),.gs-cls-sum th:nth-child(4),.gs-cls-sum td:nth-child(4){display:none}
 }
 .gy-more{margin:8px 0 4px 120px}
 @media (max-width:640px){.gy-more{margin-left:0}}
@@ -314,3 +314,10 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 .gs-mbar.is-zero b{color:var(--sub)}
 /* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
 @media (min-width:2200px){ .gd-grid{grid-template-columns:minmax(0,1fr) 480px} }
+
+/* 종류별 · 읍면동별(10-18 원칙 286) */
+.gs-cls .gs-cls-unit{display:flex;gap:8px;margin:4px 0 12px}
+.gs-cls .gs-cls-sum{margin-bottom:18px}
+.gs-cls .gs-pct{color:var(--sub);width:56px}
+.gs-cls .gs-cls-emd .gs-tbl td:first-child,.gs-cls .gs-cls-emd .gs-tbl th:first-child{position:sticky;left:0;background:var(--surface,#fff)}
+.gs-cls .gs-cls-csv{margin-left:8px}

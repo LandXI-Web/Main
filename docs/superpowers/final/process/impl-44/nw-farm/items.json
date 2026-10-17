@@ -1,0 +1,52 @@
+{
+  "round": "영농관리 고도화(원칙 286 · 286-1) · 10-18",
+  "verified": "https://namwon.land-xi.dev 로그인 폼 한 번 · 기관 계정 · PC 1440 · 모바일 390",
+  "items": [
+    {
+      "id": "farm-class-stats",
+      "title": "통계 탭에 '종류별 · 읍면동별' 표 — 종류마다 넓이와 필지 수, 읍면동마다 종류별 넓이 · 필지 수, 엑셀로 내려받기",
+      "where": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+      "before": "shots/before-class-stats-1440.png",
+      "after": "shots/after-class-stats-1440.png",
+      "more": ["shots/after-class-stats-count.png", "shots/after-class-stats-390.png", "shots/after-stats-top-1440.png"],
+      "check": "합계 2,098필지 = 대시보드 'AI 분석 결과' 2,098필지 = 결과 설명서 종류별 합(경작지 1,291 · 비경작지 807) · 넓이도 결과 설명서와 같음(숫자 한 출처) · 열기 약 5초"
+    },
+    {
+      "id": "farm-compare-class-cols",
+      "title": "대장과 AI 결과 엑셀에 'AI 결과 유무'와 종류별 'AI ○○ 면적' 칸을 더함 — 대장 한 줄마다 AI가 무엇을 얼마나 찾았는지 칸으로",
+      "where": "/landxi/v3/gov-fusion/?service=card-farm → 엑셀로 내려받기",
+      "before": "shots/before-compare-xlsx.png",
+      "after": "shots/after-compare-xlsx.png",
+      "check": "남원시 농지대장 1,743필지 · 실제 내려받은 파일 11칸(전 8칸) · 그림은 필지 번호 · 지번 칸을 뺐음"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1-feedcrop",
+      "title": "사료작물 재배 신청 대장과 세 시점 AI 결과(생육기 · 생산기 · 곤포사일리지)를 견줄까요?",
+      "options": ["ⓐ 필지마다 견주기만", "ⓑ 경영체(신청 단위)로 묶어 합계 넓이까지", "ⓒ 지금은 만들지 않음"],
+      "why": "축산과가 조사료 재배 지원 이행을 현장 나가기 전에 가림 — 운영 사이트의 핵심 업무",
+      "sian": "shots/sian-q1-feedcrop-compare.png"
+    },
+    {
+      "id": "q2-bale-yield",
+      "title": "곤포사일리지 개수에 '생산량(kg)'을 붙일까요? 운영 사이트는 개수 × 정해진 무게로 셉니다.",
+      "options": ["ⓐ 개수만", "ⓑ 기관이 1개당 무게를 넣으면 생산량도", "ⓒ 지금은 만들지 않음"]
+    },
+    {
+      "id": "q3-download-purpose",
+      "title": "내려받기 전에 사용 목적 · 활용 기간을 적게 할까요? (운영 사이트 '보안 서약서')",
+      "options": ["ⓐ 지금처럼 처음 한 번 이용 약속", "ⓑ 대장이 든 파일만 매번 목적 적기", "ⓒ 모든 내려받기 매번"]
+    },
+    {
+      "id": "q4-multi-report",
+      "title": "여러 시점을 묶은 보고서(생육기 + 생산기 + 곤포 / 상반기 + 하반기)와 발급 목록(요청자 · 내려받은 횟수)을 보고서 탭에 넣을까요?",
+      "options": ["ⓐ 둘 다", "ⓑ 발급 목록만", "ⓒ 지금은 만들지 않음"]
+    },
+    {
+      "id": "q5-home-kpi",
+      "title": "기관 첫 화면에 '이번 달 AI 분석 · 지난달 대비'와 대장 건수 변화를 둘까요?",
+      "options": ["ⓐ 둘다", "ⓑ 지난달 대비만", "ⓒ 지금처럼"]
+    }
+  ]
+}

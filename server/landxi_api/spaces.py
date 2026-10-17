@@ -1036,6 +1036,54 @@ async def space_parcels(card: str, request: Request, limit: int = 300, emd: str 
             "by_emd": [{"emd": k, "parcels": env(v, "필지", "inferred", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
             "items": items, "limit": len(items), "as_of": now_iso()}
 
+@router.get("/spaces/me/guides/{card}/class-stats")
+async def space_class_stats(card: str, request: Request):
+    """종류별 · 읍면동별 통계(10-18 원칙 286 영농관리 고도화) — 운영 중인 영농관리 화면의 '지역별 통계 · 클래스별 통계'.
+    결과 설명서와 같은 결과(sets) · 같은 관할 규칙(_scope_sql · 지운 결과 제외) — 종류 합계 = 결과 설명서 '무엇이'의 종류별 넓이 · 개수(숫자 한 출처).
+    개수는 업무 결과(biz_sets)일 때만 — 분석 칸 조각 수는 싣지 않는다(FRAG_NOTE). 어느 지역이든 같은 길(지역 이름을 코드에 두지 않음)."""
+    p = _me(request)
+    svc, g, _rows = await _guide_or_404(p, card)
+    sets = g["body"].get("sets") or []
+    biz = biz_sets(sets)
+    unit = summary._unit_of(sets[0]) if sets else "건"      # 결과 셈 단위(필지 · 동 · 건) — 결과 설명서 '무엇이'와 같은 표
+    out = {"service": {"card": card, "name": svc["name"]}, "count": biz, "unit": unit, "classes": [], "emds": [], "as_of": now_iso(),
+           "note": None if biz else FRAG_NOTE}
+    if not sets:
+        return out
+    only = await _only(p, card)
+    codes = _scope_codes(p.tenant_id, only)
+    if codes is not None and not codes:
+        return out
+    keep = (await _keep_ids(p.tenant_id, sets) if only is None else []) if codes is not None else []
+    cond, args = _scope_sql(codes, 2)
+    a = [sets] + args + ([keep] if codes is not None else [])
+    async with db(realm="lx") as c:
+        await c.execute("SET LOCAL jit = off")
+        rows = [dict(r) for r in await c.fetch(
+            "SELECT CASE WHEN d.emd IS NULL OR d.emd = ANY($%d::text[]) THEN NULL ELSE d.emd END emd, d.cls, d.cls_en, count(*) n, "
+            "coalesce(sum(d.area_m2), 0) a FROM detections d WHERE d.job_id = ANY($1::text[]) AND d.edit_state <> 'deleted' AND %s "
+            "GROUP BY 1, 2, 3" % (len(a) + 1, cond), *a, list(NO_EMD))]
+    src = SRC_DET
+    tot: dict[str, dict] = {}
+    by: dict[str, dict] = {}
+    for r in rows:
+        k = class_ko(r["cls"], r["cls_en"])
+        t = tot.setdefault(k, {"name": k, "n": 0, "a": 0.0})
+        t["n"] += int(r["n"]); t["a"] += float(r["a"] or 0)
+        e = by.setdefault(r["emd"] or "", {"emd": r["emd"] or "읍면동 밖", "out": not r["emd"], "n": 0, "a": 0.0, "by": {}})
+        e["n"] += int(r["n"]); e["a"] += float(r["a"] or 0)
+        x = e["by"].setdefault(k, {"n": 0, "a": 0.0})
+        x["n"] += int(r["n"]); x["a"] += float(r["a"] or 0)
+    m2 = lambda v: env(round(v, 1), "m2", "measured", src)            # noqa: E731
+    cnt = lambda v: env(int(v), unit, "measured", src) if biz else None  # noqa: E731
+    out["classes"] = [{"name": t["name"], "area": m2(t["a"]), "n": cnt(t["n"])} for t in sorted(tot.values(), key=lambda t: -t["a"])]
+    out["emds"] = [{"emd": e["emd"], "out": e["out"], "area": m2(e["a"]), "n": cnt(e["n"]),
+                    "by": {k: {"area": m2(v["a"]), "n": cnt(v["n"])} for k, v in e["by"].items()}}
+                   for e in sorted(by.values(), key=lambda e: (e["out"], -e["a"]))]
+    out["total"] = {"area": m2(sum(t["a"] for t in tot.values())), "n": cnt(sum(t["n"] for t in tot.values()))}
+    return out
+
+
 async def _result_parcel_rows(t: str, sets: list[str], only: list[str] | None = None) -> list[dict]:
     """결과 하나 = 필지 하나인 서비스의 필지 목록 — 결과마다 한 줄(관할 · 부서 범위는 _parcel_rows 와 같은 규칙)."""
     if not sets:

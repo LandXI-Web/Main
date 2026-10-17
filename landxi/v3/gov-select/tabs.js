@@ -71,8 +71,9 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   const table = h('section.t-card.gd-box.gs-emd', { 'aria-label': '읍면별' });
   const month = h('section.t-card.gd-box.gs-month', { 'aria-label': '월별 확인 기록' });
   const files = h('section.t-card.gd-box.gs-files', { 'aria-label': '보고서 · 자료 내려받기' });
+  const cls = h('section.t-card.gd-box.gs-cls', { 'aria-label': '종류별 · 읍면동별' });
   (pre || main).append(top, nums);
-  main.append(table);
+  main.append(table, cls);
   side.append(month, files);
   let survey = false;
   const draw = async () => {
@@ -131,6 +132,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
       h('p.gd-note', { text: `확인 기록 ${nf(val(j.checks))}건 · 필지 카드에서 적은 메모 · 다음 확인 날짜가 쌓입니다` }));
   };
   await draw();
+  await renderClassStats(cls, { s, B });
   /* 보고서 · 자료 내려받기 — 내려받기는 이 탭 한 곳(N-1 ⓐ) · 분기 공간 1단 서버 그대로(관할 안만 · 처음 한 번 이용 약속 · 기록) */
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
   let me = null, g = null;
@@ -144,4 +146,61 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     files.append(h('div.gs-file', { class: f.ok ? '' : 'is-off' }, h('span.gs-file-t', {}, h('b', { text: f.label }), h('small', { text: f.ok ? (USE[f.fmt] || f.kind || '') : (f.why || '받을 수 없습니다') })), btn));
   }
   files.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만. 처음 받을 때 이용 약속에 한 번 동의하고, 누가 무엇을 받았는지 이력에 남습니다.` }));
+}
+
+/* ═════════ 종류별 · 읍면동별(10-18 원칙 286 영농관리 고도화) ═════════
+   운영 중인 영농관리 화면의 '클래스별 통계 · 지역별 통계'를 우리 말로 — 종류(예: 옥수수 · 수단그라스 · 경작지 · 비닐하우스 단동)마다 넓이 · 개수,
+   읍면동마다 종류별 넓이 · 개수 · 엑셀(CSV). 서버 GET /spaces/me/guides/{서비스}/class-stats — 결과 설명서와 같은 결과 · 같은 관할(숫자 한 출처).
+   개수는 서버가 주는 서비스만(분석 칸 조각 수는 싣지 않는다). 지역 이름은 서버 값 그대로 — 어느 지역이든 같은 화면. */
+export async function renderClassStats(box, { s, B }) {
+  let j;
+  try { j = await api(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats`); }
+  catch { box.hidden = true; return; }
+  const classes = j.classes || [], emds = j.emds || [];
+  if (!classes.length) { box.hidden = true; return; }
+  let unit = 'area', all = false;
+  const fmt = (e) => (e && e.value != null ? Number(e.value).toLocaleString('ko-KR', { maximumFractionDigits: 0 }) : '–');
+  const pick = (o) => (o ? o[unit] : null);
+  const head = h('div.gd-box-h', {}, h('h2', { text: '종류별 · 읍면동별' }), h('span.gd-small', { text: unit === 'area' ? '넓이 ㎡' : '개수' }));
+  const chips = h('div.gs-period.gs-cls-unit', { role: 'group', 'aria-label': '단위' });
+  const sumT = h('tbody'), embT = h('tbody'), embH = h('tr');
+  const more = h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button' });
+  const csv = h('button.t-btn.t-btn--text.gd-more.gs-cls-csv', { type: 'button', text: '엑셀로 내려받기' });
+  const names = classes.map((c) => c.name);
+  const nw = j.unit === '필지' ? '필지 수' : '개수';     // 결과 셈 단위(서버) — 결과 설명서 · 대시보드 큰 숫자와 같은 단위
+  const draw = () => {
+    head.lastChild.textContent = unit === 'area' ? '넓이 ㎡ · 이 서비스 AI 분석 결과' : `${nw} · 이 서비스 AI 분석 결과`;
+    chips.replaceChildren(...[['area', '넓이'], ...(j.count ? [['n', nw]] : [])].map(([k, t]) =>
+      h('button.gy-chip', { type: 'button', 'aria-pressed': String(unit === k), onclick: () => { unit = k; draw(); } }, t)));
+    const tv = Number(pick(j.total)?.value || 0) || 1;
+    const max = Math.max(1, ...classes.map((c) => Number(pick(c)?.value || 0)));
+    sumT.replaceChildren(...classes.map((c) => h('tr', {}, h('td', { text: c.name }), h('td.num', { text: fmt(pick(c)) }),
+      h('td.num.gs-pct', { text: `${Math.round((Number(pick(c)?.value || 0) / tv) * 100)}%` }),
+      h('td.gs-bar-c', {}, h('i', { style: `--w:${Math.max(2, Math.round((Number(pick(c)?.value || 0) / max) * 100))}%` })))),
+      h('tr.is-total', {}, h('td', { text: '합계' }), h('td.num', { text: fmt(pick(j.total)) }), h('td.num', { text: '100%' }), h('td.gs-bar-c')));
+    embH.replaceChildren(h('th', { text: '읍면동' }), h('th.num', { text: '합계' }), ...names.map((n) => h('th.num', { text: n })));
+    const ord = [...emds].sort((x, y) => (x.out - y.out) || (Number(pick(y)?.value || 0) - Number(pick(x)?.value || 0)));   // 고른 단위로 많은 곳부터 · 읍면동 밖은 끝
+    const show = all ? ord : ord.slice(0, 12);
+    embT.replaceChildren(...show.map((e) => h('tr', { class: e.out ? 'is-rest' : '' }, h('td', { text: e.emd }), h('td.num', { text: fmt(pick(e)) }),
+      ...names.map((n) => h('td.num', { text: fmt(pick(e.by?.[n])) })))),
+      h('tr.is-total', {}, h('td', { text: `${B.short || ''} 전체`.trim() }), h('td.num', { text: fmt(pick(j.total)) }), ...classes.map((c) => h('td.num', { text: fmt(pick(c)) }))));
+    more.hidden = emds.length <= 12;
+    more.textContent = all ? '줄이기' : `${emds.length}곳 모두 펼치기`;
+  };
+  more.addEventListener('click', () => { all = !all; draw(); });
+  csv.addEventListener('click', () => {
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const v = (e) => (e && e.value != null ? Math.round(Number(e.value) * 10) / 10 : '');
+    const cols = ['읍면동', '합계 넓이(㎡)', ...(j.count ? [`합계 ${nw}`] : []), ...names.flatMap((n) => [`${n} 넓이(㎡)`, ...(j.count ? [`${n} ${nw}`] : [])])];
+    const line = (name, tot, by) => [name, v(tot?.area), ...(j.count ? [v(tot?.n)] : []), ...names.flatMap((n) => [v(by(n)?.area), ...(j.count ? [v(by(n)?.n)] : [])])].map(q).join(',');
+    const body = [cols.map(q).join(','), ...emds.map((e) => line(e.emd, e, (n) => e.by?.[n])),
+      line(`${B.short || ''} 전체`.trim(), j.total, (n) => classes.find((c) => c.name === n))].join('\r\n');
+    const a = h('a', { href: URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv;charset=utf-8' })), download: `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_종류별_읍면동별.csv` });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  });
+  box.replaceChildren(head, chips,
+    h('div.gs-tbl-w', {}, h('table.gs-tbl.gs-cls-sum', {}, h('thead', {}, h('tr', {}, h('th', { text: '종류' }), h('th.num', { text: '합계' }), h('th.num', { text: '비율' }), h('th', { text: '' }))), sumT)),
+    h('div.gs-tbl-w.gs-cls-emd', {}, h('table.gs-tbl', {}, h('thead', {}, embH), embT)), more, csv,
+    j.note ? h('p.gd-note', { text: '이 서비스는 분석 칸마다 나눈 결과라 넓이만 보여 드립니다.' }) : null);
+  draw();
 }
