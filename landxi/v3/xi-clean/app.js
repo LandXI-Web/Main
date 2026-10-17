@@ -250,7 +250,7 @@ async function boot() {
   stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
-  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map); }); }   // 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
+  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map, { skip: /^(k-|xc-(pc|img|lxmap|emd|rline|rmask|sgg|pts|rgrid)|xo-)/, max: 4000 }); }); }   // 결과 원천만 기다린다(바탕 · 지적 · 경계 원천은 제외) · 4초 넘으면 놓는다(10-17 원칙 274 — 가운데 카드가 남지 않게) · 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
   try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
@@ -655,11 +655,11 @@ async function addResultList(items, my) {
 }
 
 /** soft = 사용자가 지도를 직접 확대 · 이동해 들어온 시군구(XI맵 전국 결과 · 바퀴 5) — 카메라는 그대로 두고 지역만 바꾼다(회백 베일 없음 · 경계선만) */
-async function setRegion(r, { first = false, to = null, soft = false } = {}) {
+async function setRegion(r, { first = false, to = null, soft = false, keepDrawer = false } = {}) {
   queueMicrotask(() => cmdk?.sugg?.());                 // 아래 채팅 창 추천 질문 = 지금 지역
   if (NAT && NAT.id !== 'kr') { NAT.go('kr', { quiet: true }); BD?.show(true); }   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
   S.region = r; S.cond.emd = null; S.sel = null;
-  if (!soft) { closeDrawer(); closePop(); ED?.close(); }
+  if (!soft) { if (!keepDrawer) closeDrawer(); closePop(); ED?.close(); }   // keepDrawer = 시군구 · 서비스 목록(원칙 275)에서 고른 이동 — 목록은 열어 둔다
   renderChips();                        // 이전 지역의 읍면동 칩을 바로 지운다(관할 밖 포함)
   if (AN?.running) { AN.detach(); S.tool = null; }      // 진행 중 전역 분석 — 서버 작업은 계속, 화면만 떼어 낸다(돌아오면 이어 보기)
   else if (AN?.active) AN.stop();
@@ -1030,6 +1030,7 @@ function hudCounts(d, region) {
     const vis = regs.filter((r) => Array.isArray(r.bbox) && r.bbox.length === 4 && r.bbox[0] <= e && r.bbox[2] >= w && r.bbox[1] <= n && r.bbox[3] >= s);
     if (vis.length) regs = vis;
   } catch { /* 지도 전 */ }
+  regs = regs.filter((r) => (r.items || []).some((it) => !analysis.has(it.svc)));   // '서비스 제공중'인 시군구만(전역 분석만 있는 곳은 세지 않음 — 목록(원칙 275)과 같은 수)
   const svcs = svcOf(regs);
   return { regions: regs.length, services: svcs.size, regs, svcs };
 }
@@ -1063,6 +1064,83 @@ function boardSpec() {
 }
 function openBoardStats() { const s = boardSpec(); if (!s || !OM) return; LASTSPEC = s; setStep(1, { fresh: true }); }
 X.boardSpec = () => boardSpec();   // 실증 기록용(화면엔 없음)
+/* ═══ 왼쪽 위 한 줄 누르기(10-17 원칙 275 — "시군구/행정서비스가 무엇이 있는지를 아는게 중요하겠지 그걸 클릭하면 결과가 표출") ═══
+   오른쪽 서랍에 '시군구 → 제공 중인 서비스' 목록(지금 지도 범위 · 한 줄 숫자와 같은 /ximap/board). 서비스를 누르면 그 시군구로 날아가 그 서비스 결과만 지도에(업무 거르기 · 기관 화면은 그 결과 층만 켬).
+   시군구 이름을 누르면 그곳으로. 설명 글 0 · 서랍 폭 고정(길면 서랍 안에서 스크롤). 순위 · 숫자 통계는 기존 '통계' 단계 그대로(여기 기본 동작 아님). */
+function boardRegs() {
+  const d = BD?.data; if (!d) return null;
+  const region = S.region && map.getZoom() >= 8.2 ? S.region : null;
+  const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
+  const { regs, services, regions } = hudCounts(d, region);
+  const svcRows = (reg) => (reg.items || []).filter((it) => !analysis.has(it.svc));
+  return { region, regs: regs.filter((reg) => svcRows(reg).length), services, regions, svcRows };
+}
+const regOf = (reg) => findRegion(reg.sgg_cd) || (reg.prev_cd && findRegion(reg.prev_cd)) || findRegion(reg.name) || null;
+function openBoardList() {
+  const B = boardRegs(); if (!B) return;
+  const title = B.region ? `${B.region.name} · ${nf(B.services)} 서비스 제공중` : `${nf(B.regions)} 시군구 · ${nf(B.services)} 서비스 제공중`;
+  const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer.title(title) : drawerOpen(title, () => { S.list = null; });
+  d.__kind = 'board'; S.list = null; patchRail();
+  const box = h('div.xc-list.xc-board');
+  const rep = h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) });
+  box.append(h('div.xc-board-act', {}, rep));
+  if (!B.regs.length) { K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
+  for (const reg of B.regs) {
+    const r = regOf(reg);
+    const rows = B.svcRows(reg).map((it) => h('li', {}, h('button.xc-board-svc', { type: 'button', dataset: { svc: it.svc, sgg: reg.sgg_cd }, 'aria-current': S.region?.code === r?.code && BD?.task === taskOf(it.name) ? 'true' : undefined,
+      onclick: (e) => showBoardSvc(reg, it, e.currentTarget) },
+      h('i', { style: { background: BD.colorOf(taskOf(it.name)) } }), h('span', { text: it.name }), h('b.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }))));
+    box.append(h('section.xc-board-grp', {},
+      h('button.xc-board-sgg', { type: 'button', 'aria-current': S.region?.code === r?.code ? 'true' : undefined, disabled: !r, onclick: () => { if (r) setRegion(r, { keepDrawer: true }); } },
+        h('b', { text: reg.name }), reg.sido ? h('small', { text: reg.sido }) : null),
+      h('ul.xc-board-svcs', {}, ...rows)));
+  }
+  d.set(box);
+  X.boardList = { regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-board-svc').length };
+}
+/** 서비스 하나 → 그 시군구로 날아가 그 서비스 결과만 지도에(기존 결과 켜기 재사용: 전국 결과 화면 = 업무 거르기 · 기관 화면 = 그 결과 층만) */
+async function showBoardSvc(reg, it, btn) {
+  const r = regOf(reg); if (!r) return;
+  btn?.closest('.xc-board')?.querySelectorAll('[aria-current]').forEach((b) => b.removeAttribute('aria-current'));
+  btn?.setAttribute('aria-current', 'true'); btn?.closest('.xc-board-grp')?.querySelector('.xc-board-sgg')?.setAttribute('aria-current', 'true');
+  if (S.region?.code !== r.code) await setRegion(r, { keepDrawer: true });
+  if (S.region?.code !== r.code) return;
+  const task = taskOf(it.name);
+  if (S.board) { applyTask(task); }                                                   // 전국 결과 화면: 그 업무만 남긴다(왼쪽 위 '원래대로' 칩으로 되돌림)
+  else {                                                                                // 기관 화면: 그 서비스 결과 층만 켠다(map_layer only 와 같은 길)
+    await S.rdP?.catch(() => {});
+    const w = norm(it.name), hit = (S.res || []).filter((x) => x.set === it.layer?.set || x.id === it.layer?.id || norm(x.name?.ko || x.id).includes(w));
+    if (!hit.length) { K.toast(`이 지역에는 ${it.name} 결과가 없습니다`); return; }
+    for (const x of S.res || []) S.resOn[x.id] = hit.includes(x);
+    S.layers.ai = true; S.aiUser = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
+  }
+  X.boardPick = { sgg: reg.sgg_cd, svc: it.svc, task: S.board ? BD?.task : null };
+}
+/** 목록과 같은 내용의 한 장(.hwpx) — 시군구 · 서비스 · 서비스 결과 · 마지막 분석(원칙 274 (a) · 275 기준) */
+function boardListSpec() {
+  const B = boardRegs(); if (!B) return null;
+  const rows = [], tot = B.regs.reduce((t, r) => t + ev(r.n), 0);
+  for (const reg of B.regs) for (const it of B.svcRows(reg)) rows.push([reg.name, it.name, ev(it.n), it.finished_at ? String(it.finished_at).slice(0, 10) : '—']);
+  const title = B.region ? `${B.region.name} 제공 중인 서비스` : '제공 중인 시군구 · 서비스';
+  return { kind: 'board', rule: [], title, means: [['지역', B.region ? B.region.name : '지금 지도에 보이는 시군구'], ['업무', '모든 업무'], ['비교', '시군구 · 서비스']], fuse: ['서비스 결과 장부'],
+    kpis: [{ label: '시군구', value: B.regions, unit: '곳' }, { label: '서비스', value: B.services, unit: '가지' }, { label: '서비스 결과', value: tot, unit: '개' }],
+    panels: [{ type: 'table', title: '제공 중인 시군구 · 서비스', cols: ['시군구', '서비스', '서비스 결과', '마지막 분석'], num: [2], rows }], say: [], main: { label: '서비스 결과', value: tot, unit: '개' } };
+}
+async function downloadHwpx(spec, b) {
+  if (!spec || !b || b.disabled) return;
+  const t0 = b.textContent; b.disabled = true; b.textContent = '만드는 중';
+  try {
+    const r = await api('/ximap/report.hwpx', { method: 'POST', body: { spec }, raw: true });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const cd = r.headers.get('content-disposition') || '', mm = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+    const name = mm ? decodeURIComponent(mm[1]) : `${String(spec.title).replace(/[\/:*?"<>|\s·—]+/g, '_')}_보고서.hwpx`;
+    const u = URL.createObjectURL(await r.blob());
+    const a = document.createElement('a'); a.href = u; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+    b.textContent = '내려받았습니다';
+  } catch { b.textContent = '내려받지 못했습니다'; }
+  setTimeout(() => { b.textContent = t0; b.disabled = false; }, 1600);
+}
 function paintBoardHud() {
   const d = BD?.data;
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
@@ -1078,7 +1156,7 @@ function paintBoardHud() {
     const { regions, services } = hudCounts(d, null);
     const label = `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
     const total = S.clsOff.size ? visRows(hudTaskRows().rows).filter((x) => !task || x.k === task).reduce((t, x) => t + x.n, 0) : boardTotal(task), unit = task ? BD.UNIT[task] || '개' : '개';
-    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardStats }, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];   // 누르면 지도 위 통계 1단계(원칙 273)
+    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardList }, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];   // 누르면 지도 위 통계 1단계(원칙 273)
     key = ['kr', regions, services, task].join('|');
     X.hud = { label, regions, services, n: total, unit, task, from: 'board' };
   } else {
@@ -1086,7 +1164,7 @@ function paintBoardHud() {
     const shown = visRows(task ? rows.filter((x) => x.k === task) : rows);
     const { services } = hudCounts(d, r);
     const label = `${r.name} · ${nf(services)} 서비스 제공중`;
-    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardStats }, h('span', { text: r.name }), ' · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
+    kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardList }, h('span', { text: r.name }), ' · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];
     key = ['r', r.code, services, task].join('|');
     const br = boardRegion(r);
     X.hud = { label, regions: 1, services, n: shown.reduce((t, x) => t + x.n, 0), board: br ? ev(br.n) : 0, task, from: 'board', rows: shown.length, wait };

@@ -73,6 +73,27 @@
 .xa-x svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round}
 .xc-pop-l{margin:0 0 14px}
 .xc-rows-p{display:grid;gap:2px}
+/* 왼쪽 위 한 줄 누르면 — 시군구 → 제공 중인 서비스 목록(원칙 275) · 서랍 폭 고정 · 길면 서랍 안에서 스크롤 · 설명 글 0 */
+.xc-board-act{display:flex;justify-content:flex-end;margin:4px 0 8px}
+/* 오른쪽 서랍이 열려 있는 동안 아래 채팅 창은 서랍을 가리지 않게 — 서랍 왼쪽 공간의 가운데(지도 위 통계 때와 같은 규칙) */
+.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:calc((100% - 416px) / 2);width:min(680px,calc(100% - 448px))}
+@media (max-width:900px){.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
+.xc-board-rep{height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}
+.xc-board-grp{padding:6px 0 10px;border-top:1px solid var(--rule)}
+.xc-board-grp:first-of-type{border-top:0}
+.xc-board-sgg{display:flex;align-items:baseline;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:8px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
+.xc-board-sgg b{font:700 var(--fs-t2,20px)/28px var(--font-display);letter-spacing:-.01em}
+.xc-board-sgg small{font:400 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
+.xc-board-sgg:hover,.xc-board-sgg[aria-current="true"]{background:var(--bg-0)}
+.xc-board-sgg:disabled{cursor:default;color:var(--sub)}
+.xc-board-svcs{list-style:none;margin:0 -8px;padding:0;display:grid;gap:2px}
+.xc-board-svc{display:flex;align-items:center;gap:10px;width:100%;padding:8px 8px 8px 12px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink)}
+.xc-board-svc i{flex:none;width:10px;height:10px;border-radius:3px}
+.xc-board-svc span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc-board-svc b{font:600 var(--fs-aux,15px)/22px var(--font-num);color:var(--ink-2)}
+.xc-board-svc:hover{background:var(--bg-0)}
+.xc-board-svc[aria-current="true"]{background:var(--ink);color:#fff}
+.xc-board-svc[aria-current="true"] b{color:#fff}
 .xc-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border:0;border-radius:var(--r-8);background:none;font:500 var(--fs-body)/1.2 var(--font-body);color:var(--ink);cursor:pointer;text-align:left}
 .xc-row:hover{background:var(--bg-0)}
 .xc-row span{flex:1}
