@@ -93,7 +93,8 @@ export function mountNation({ map, host, onEnter, onLeave }) {
       h('p.xn-k', { text: f ? `${n.name} · ${f.name} 군` : `${n.name} · 사업 나라` }),
       h('h2.xn-h', { text: f ? '경작지 판정' : '군별 경작지' }),
       f ? h('p.xn-p', {}, h('span', {}, '경작지 ', h('b', { text: `${km2(f.crop_ha)}㎢` }), ` · 군 면적의 ${Math.round(f.share * 100)}%`),
-        h('span', { text: foc ? '청록 칸 = AI가 경작지로 판정한 곳(약 40 m 칸)' : '판정 칸 그림은 아직 이 군에 없습니다' }))
+        h('span', { text: foc ? '청록 칸 = AI가 경작지로 판정한 곳(약 40 m 칸)' : '판정 칸 그림은 아직 이 군에 없습니다' }),
+        h('span', { text: f.src === 'public' ? '출처: 공개 판정(Esri 2025) · 다시 학습 전까지' : '출처: Land-XI AI 판정' }))   // 10-17 'ⓐ' — 군마다 출처
         : h('p.xn-p', {}, h('span', {}, `군 ${nf(d.n || d.geojson.features.length)}곳 · 경작지 `, h('b', { text: `${km2(d.total_ha)}㎢` })),
           h('span', { text: `${d.year}년 Sentinel-2 위성 영상(10 m)에서 AI가 경작지를 판정했습니다` }),
           h('span', { text: '군을 누르면 확대되고, 확대하면 구획마다 경작지 판정이 보입니다' })),
@@ -131,7 +132,7 @@ export function mountNation({ map, host, onEnter, onLeave }) {
     const full = st.data.geojson.features.find((x) => x.properties.name === p.name) || feat;
     const f = st.data.focus, foc = f && f.name === p.name;
     map.setFilter('xn-kg-f', foc ? ['!=', ['get', 'name'], p.name] : null);   // 판정 칸이 있는 군은 칠을 걷고 실제 판정을 보인다
-    card(st.data, { name: p.name, crop_ha: +p.crop_ha, share: +p.share });
+    card(st.data, { name: p.name, crop_ha: +p.crop_ha, share: +p.share, src: p.src });
     const v = foc ? await cropView(f) : null;
     map.fitBounds(v || bboxOf(full.geometry), { padding: { top: 80, bottom: 220, left: 60, right: 60 }, maxZoom: v ? 12 : 11, duration: RM() ? 0 : 1400 });
   }

@@ -721,7 +721,7 @@ function fillKgz(k) {
   S.kph = 0; kgzPhase(1);
   const ch6 = $('#ch6');
   const env = { value: Math.round(k.total_ha / 100), unit: 'km2',   // ha → ㎢(같은 값 · 큰 숫자가 카드 한 줄에)
-    basis: k.basis || 'estimate', as_of: k.as_of, source: k.model ? `${k.year} Sentinel-2 달별 합성(10 m) · Land-XI 해외 AI 모델 · 경작지` : `${k.year} Sentinel-2 10 m AI 토지피복(Esri · Impact Observatory · CC BY 4.0) · 경작지` };   // 10-17 원칙 269 — 우리 해외 모델 결과
+    basis: k.basis || 'estimate', as_of: k.as_of, source: k.model ? `${k.year} Sentinel-2 달별 합성(10 m) · Land-XI 해외 AI 모델 · 경작지${k.public_used?.length ? ` · ${k.public_used.length}개 군은 공개 판정(Esri 2025)` : ''}` : `${k.year} Sentinel-2 10 m AI 토지피복(Esri · Impact Observatory · CC BY 4.0) · 경작지` };   // 10-17 원칙 269 — 우리 해외 모델 결과
   const mk = () => { if (!S.bn6) S.bn6 = bignum($('#ch6-big'), env, { label: `경작지 · ${k.n}개 군 합계` }); };
   if (ch6.classList.contains('is-in')) mk(); else ch6.addEventListener('ch:in', mk, { once: true });
 }

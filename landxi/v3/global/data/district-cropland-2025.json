@@ -8,8 +8,32 @@
  "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5",
  "model_name": "경작지 · 시가지 · 물 · 키르기스스탄(위성 10 m) 학습 2026.10.15",
  "px_target_m": 10,
- "fetched_at": "2026-10-17T11:01:24+09:00",
+ "fetched_at": "2026-10-17T11:15:37+09:00",
  "previous": "district-cropland-2025-esri.json",
+ "rule": "per district and class: Land-XI model, unless it exceeds 1.5 x the larger of Esri 2025 / WorldCover 2021 by at least 20.0 km2 — then Esri 2025 (same year) until retraining",
+ "public_used": {
+  "경작지": [
+   "Chong-Alay",
+   "At-Bashy",
+   "Bazar-Korgon",
+   "Kochkor",
+   "Tong",
+   "Toktogul",
+   "Chatkal",
+   "Alay",
+   "Kara-Kulja"
+  ],
+  "물": [
+   "Nookat",
+   "Batken",
+   "Kemin",
+   "Moskva",
+   "Kara-Suu",
+   "Kadamjay",
+   "Ak-Suu",
+   "Issyk Kul"
+  ]
+ },
  "districts": {
   "92254566B7375851562443": {
    "name": "Toguz-Toro",
@@ -20,22 +44,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 492,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1753,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -49,22 +78,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1501,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 8482,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -78,22 +112,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 3135,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 21804,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -107,22 +146,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1788,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 11,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -136,22 +180,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1741,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 4612,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -165,22 +214,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 2564,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 2944,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -194,22 +248,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 932,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 15012,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -218,27 +277,33 @@
    "name": "Chong-Alay",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 19430,
+    "value": 10876,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 194 km2 > 1.5 x max(Esri 2025 109, WorldCover 2021 42)",
+    "src": "public",
+    "model_ha": 19430
    },
    "built_ha": {
     "value": 512,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 3092,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -247,27 +312,33 @@
    "name": "At-Bashy",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 92514,
+    "value": 23258,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 925 km2 > 1.5 x max(Esri 2025 233, WorldCover 2021 130)",
+    "src": "public",
+    "model_ha": 92514
    },
    "built_ha": {
     "value": 1260,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 30374,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -281,22 +352,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 10122,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 3239,
+    "value": 445,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 32 km2 > 1.5 x max(Esri 2025 4, WorldCover 2021 12)",
+    "src": "public",
+    "model_ha": 3239
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -310,22 +387,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 6612,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 4406,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -334,27 +416,33 @@
    "name": "Bazar-Korgon",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 41723,
+    "value": 20544,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 417 km2 > 1.5 x max(Esri 2025 205, WorldCover 2021 269)",
+    "src": "public",
+    "model_ha": 41723
    },
    "built_ha": {
     "value": 3642,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 453,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -368,22 +456,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4649,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 12268,
+    "value": 1016,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 123 km2 > 1.5 x max(Esri 2025 10, WorldCover 2021 38)",
+    "src": "public",
+    "model_ha": 12268
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -397,22 +491,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4787,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 40,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -421,27 +520,33 @@
    "name": "Kochkor",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 46612,
+    "value": 22596,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 466 km2 > 1.5 x max(Esri 2025 226, WorldCover 2021 305)",
+    "src": "public",
+    "model_ha": 46612
    },
    "built_ha": {
     "value": 2044,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 20146,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -450,27 +555,33 @@
    "name": "Tong",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 37661,
+    "value": 15966,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 377 km2 > 1.5 x max(Esri 2025 160, WorldCover 2021 218)",
+    "src": "public",
+    "model_ha": 37661
    },
    "built_ha": {
     "value": 2406,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 10487,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -484,22 +595,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1300,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 121,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -513,22 +629,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 980,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 2662,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -537,27 +658,33 @@
    "name": "Toktogul",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 35497,
+    "value": 18981,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 355 km2 > 1.5 x max(Esri 2025 190, WorldCover 2021 189)",
+    "src": "public",
+    "model_ha": 35497
    },
    "built_ha": {
     "value": 2945,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 35300,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -566,27 +693,33 @@
    "name": "Chatkal",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 26952,
+    "value": 5068,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 270 km2 > 1.5 x max(Esri 2025 51, WorldCover 2021 49)",
+    "src": "public",
+    "model_ha": 26952
    },
    "built_ha": {
     "value": 457,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 2087,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -600,22 +733,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1559,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 3550,
+    "value": 644,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 36 km2 > 1.5 x max(Esri 2025 6, WorldCover 2021 8)",
+    "src": "public",
+    "model_ha": 3550
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -629,22 +768,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 5086,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 3256,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -658,22 +802,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 2708,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 316,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -687,22 +836,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 9713,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1254,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -716,22 +870,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4633,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 775,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -745,22 +904,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 7182,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 854,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -774,22 +938,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 9550,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 395,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -803,22 +972,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 6087,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 264,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -827,27 +1001,33 @@
    "name": "Alay",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 6336,
+    "value": 2664,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 63 km2 > 1.5 x max(Esri 2025 27, WorldCover 2021 31)",
+    "src": "public",
+    "model_ha": 6336
    },
    "built_ha": {
     "value": 813,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 3640,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -861,22 +1041,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 1951,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1552,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -890,22 +1075,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4024,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1104,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -914,27 +1104,33 @@
    "name": "Kara-Kulja",
    "iso": "KGZ",
    "crop_ha": {
-    "value": 23623,
+    "value": 4280,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · cropland",
+    "note": "public map used until retraining — Land-XI model 236 km2 > 1.5 x max(Esri 2025 43, WorldCover 2021 88)",
+    "src": "public",
+    "model_ha": 23623
    },
    "built_ha": {
     "value": 837,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 4421,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "public",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -948,22 +1144,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4165,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 4687,
+    "value": 990,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 47 km2 > 1.5 x max(Esri 2025 10, WorldCover 2021 9)",
+    "src": "public",
+    "model_ha": 4687
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -977,22 +1179,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 17278,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 5111,
+    "value": 1635,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 51 km2 > 1.5 x max(Esri 2025 16, WorldCover 2021 20)",
+    "src": "public",
+    "model_ha": 5111
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1006,22 +1214,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 6777,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 2367,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1035,22 +1248,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 7370,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 5247,
+    "value": 510,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 52 km2 > 1.5 x max(Esri 2025 5, WorldCover 2021 17)",
+    "src": "public",
+    "model_ha": 5247
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1064,22 +1283,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 5557,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1528,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1093,22 +1317,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4514,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 1003,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1122,22 +1351,27 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 2899,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
     "value": 2041,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water",
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1151,22 +1385,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 6276,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 43707,
+    "value": 3662,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 437 km2 > 1.5 x max(Esri 2025 37, WorldCover 2021 125)",
+    "src": "public",
+    "model_ha": 43707
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"
@@ -1180,22 +1420,28 @@
     "basis": "estimate",
     "as_of": "2026-10-17",
     "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland",
-    "note": "AI result polygons whose centre lies in the district"
+    "note": "AI result polygons whose centre lies in the district",
+    "src": "model"
    },
    "built_ha": {
     "value": 4320,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up"
+    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · built-up",
+    "src": "model"
    },
    "water_ha": {
-    "value": 22106,
+    "value": 9966,
     "unit": "ha",
     "basis": "estimate",
     "as_of": "2026-10-17",
-    "source": "Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · water"
+    "source": "Sentinel-2 10 m AI land cover 2025 (Esri/Impact Observatory · CC BY 4.0) · district polygon · about 37 m sample · water",
+    "note": "public map used until retraining — Land-XI model 221 km2 > 1.5 x max(Esri 2025 100, WorldCover 2021 103)",
+    "src": "public",
+    "model_ha": 22106
    },
+   "src": "model",
    "valid_share": 1.0,
    "px_m": 10,
    "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5"

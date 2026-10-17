@@ -48,10 +48,11 @@ for f in adm["features"]:
     area_ha = abs(geod.geometry_area_perimeter(shape(f["geometry"]))[0]) / 1e4
     ha = d["crop_ha"]["value"]
     total += ha
-    if not best or ha > best[1]:
+    src = d.get("src") or d["crop_ha"].get("src") or "model"
+    if src == "model" and (not best or ha > best[1]):                   # 확대 장면은 우리 모델 군에서만(공개 판정으로 둔 군은 고르지 않음 · 10-17 'ⓐ')
         best = (f, ha, code, area_ha)
     as_of = as_of or d["crop_ha"].get("as_of")
-    feats.append({"type": "Feature", "properties": {"name": f["properties"]["name"], "crop_ha": ha, "share": round(ha / area_ha, 4) if area_ha else 0},
+    feats.append({"type": "Feature", "properties": {"name": f["properties"]["name"], "crop_ha": ha, "share": round(ha / area_ha, 4) if area_ha else 0, "src": src},
                   "geometry": {"type": f["geometry"]["type"], "coordinates": rnd(f["geometry"]["coordinates"])}})
 
 
@@ -82,7 +83,7 @@ def focus_png(f, code, year):
 
 
 out = {"year": crop.get("year"), "as_of": as_of, "basis": "estimate", "license": crop.get("license"),
-       "source": crop.get("source") or "Sentinel-2 10 m AI land cover · cropland class · district polygon", "model": crop.get("model"),
+       "source": crop.get("source") or "Sentinel-2 10 m AI land cover · cropland class · district polygon", "model": crop.get("model"), "public_used": (crop.get("public_used") or {}).get("경작지"),
        "total_ha": total, "n": len(feats), "geojson": {"type": "FeatureCollection", "features": feats}}
 if best:
     f, ha, code, area_ha = best

@@ -25,6 +25,12 @@ try {
   await p.waitForFunction(() => window.__xc?.map && window.__xc.boot?.shown, null, { timeout: 60000, polling: 100 });
   await p.waitForTimeout(7000); await shot(p, 'ximap-kg');
   run.text.ximap = await p.evaluate(() => document.querySelector('.xn-hud')?.innerText || '');
+  const clickAt = async (lng, lat) => { const pt = await p.evaluate(([x, y]) => { const q = window.__xc.map.project([x, y]); const r = window.__xc.map.getCanvas().getBoundingClientRect(); return [r.left + q.x, r.top + q.y]; }, [lng, lat]); await p.mouse.click(pt[0], pt[1]); };
+  await clickAt(76.6, 40.85); await p.waitForTimeout(4000); await shot(p, 'ximap-public-district');
+  run.text.public = await p.evaluate(() => document.querySelector('.xn-hud')?.innerText || '');
+  await p.evaluate(() => window.__xc.map.jumpTo({ center: [74.6, 42.0], zoom: 6.6 })); await p.waitForTimeout(2500);
+  await clickAt(74.35, 42.95); await p.waitForTimeout(5000); await shot(p, 'ximap-model-district');
+  run.text.model = await p.evaluate(() => document.querySelector('.xn-hud')?.innerText || '');
   await p.evaluate(() => window.__xc.map.jumpTo({ center: [74.45, 42.85], zoom: 10.6 }));
   await p.waitForTimeout(7000); await shot(p, 'ximap-chuy-blocks');
   await c.close();
