@@ -1,0 +1,356 @@
+{
+ "body": "{\"message\":\"What is the AI cropland area of Ysyk-Ata?(Current area: Ysyk-Ata, Autumn 2025. Answer in English.)\",\"mode\":\"map\",\"context\":{\"locale\":\"en\",\"country\":\"Kyrgyzstan\",\"region\":\"Ysyk-Ata\",\"district\":\"Ysyk-Ata\",\"season\":\"Autumn 2025\",\"drop\":{\"district\":\"Ysyk-Ata\",\"season\":\"Autumn 2025\",\"value\":147.6,\"unit\":\"km2\",\"as_of\":\"2026-10-17T13:26:53+09:00\"},\"has_map\":true,\"page\":\"global\",\"bbox\":[74.17323010097903,42.20725698609738,76.23489298554603,43.087604509090596],\"zoom\":8.939897744785382}}",
+ "st": 202,
+ "ev": [
+  [
+   "agent.route",
+   "{\"run_id\":\"run_261017203837370226\",\"intent\":\"map\",\"ms\":0,\"backend\":\"runtime\",\"model\":\"직행 · global_\",\"pii\":[],\"lang\":\"en\",\"at\":\"2026-10-17T20:38:37.062+09:00\"}"
+  ],
+  [
+   "agent.plan",
+   "{\"run_id\":\"run_261017203837370226\",\"steps\":[{\"i\":1,\"tool\":\"global_summary\",\"args\":{\"region\":\"Ysyk-Ata\",\"metric\":\"cropland\"},\"why\":\"해외 결과 요약(NDVI · 계절 · 시가지 변화)\",\"say\":null,\"by\":\"runtime\"}],\"round\":1,\"route\":{\"intent\":\"map\",\"ms\":0,\"backend\":\"runtime\",\"model\":\"직행 · global_\"},\"model\":{\"id\":\"런타임\",\"backend\":\"runtime\"},\"at\":\"2026-10-17T20:38:37.085+09:00\"}"
+  ],
+  [
+   "agent.tool.call",
+   "{\"run_id\":\"run_261017203837370226\",\"i\":1,\"tool\":\"global_summary\",\"args\":{\"region\":\"Ysyk-Ata\",\"metric\":\"cropland\"},\"by\":\"runtime\",\"at\":\"2026-10-17T20:38:37.087+09:00\"}"
+  ],
+  [
+   "agent.tool.result",
+   "{\"run_id\":\"run_261017203837370226\",\"i\":1,\"tool\":\"global_summary\",\"ok\":true,\"ms\":25.6,\"source\":\"Land-XI global results (Sentinel-2 NDVI · land cover)\",\"note\":\"\",\"summary\":{\"e1\":{\"value\":64763,\"unit\":\"ha\",\"basis\":\"estimate\",\"as_of\":\"2026-10-17\",\"source\":\"Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland\",\"note\":\"AI result polygons whose cen"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"The\",\"at\":\"2026-10-17T20:38:37.538+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" AI\",\"at\":\"2026-10-17T20:38:37.550+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" cropland\",\"at\":\"2026-10-17T20:38:37.567+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" area\",\"at\":\"2026-10-17T20:38:37.585+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" of\",\"at\":\"2026-10-17T20:38:37.603+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" Y\",\"at\":\"2026-10-17T20:38:37.620+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"sy\",\"at\":\"2026-10-17T20:38:37.638+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"k\",\"at\":\"2026-10-17T20:38:37.655+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"-\",\"at\":\"2026-10-17T20:38:37.672+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"A\",\"at\":\"2026-10-17T20:38:37.691+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"ta\",\"at\":\"2026-10-17T20:38:37.709+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" is\",\"at\":\"2026-10-17T20:38:37.726+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" {{\",\"at\":\"2026-10-17T20:38:37.745+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"env\",\"at\":\"2026-10-17T20:38:37.763+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\":\",\"at\":\"2026-10-17T20:38:37.780+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"e\",\"at\":\"2026-10-17T20:38:37.801+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"1\",\"at\":\"2026-10-17T20:38:37.817+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"}}\",\"at\":\"2026-10-17T20:38:37.835+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" ha\",\"at\":\"2026-10-17T20:38:37.854+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\".\",\"at\":\"2026-10-17T20:38:37.871+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" This\",\"at\":\"2026-10-17T20:38:37.889+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" corresponds\",\"at\":\"2026-10-17T20:38:37.905+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" to\",\"at\":\"2026-10-17T20:38:37.923+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" an\",\"at\":\"2026-10-17T20:38:37.941+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" estimated\",\"at\":\"2026-10-17T20:38:37.961+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" area\",\"at\":\"2026-10-17T20:38:37.977+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" of\",\"at\":\"2026-10-17T20:38:37.994+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" {{\",\"at\":\"2026-10-17T20:38:38.014+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"env\",\"at\":\"2026-10-17T20:38:38.030+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\":\",\"at\":\"2026-10-17T20:38:38.049+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"e\",\"at\":\"2026-10-17T20:38:38.067+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"2\",\"at\":\"2026-10-17T20:38:38.084+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"}}\",\"at\":\"2026-10-17T20:38:38.102+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\" km\",\"at\":\"2026-10-17T20:38:38.120+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\"2\",\"at\":\"2026-10-17T20:38:38.138+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_261017203837370226\",\"delta\":\".\",\"at\":\"2026-10-17T20:38:38.155+09:00\"}"
+  ],
+  [
+   "agent.done",
+   "{\"run_id\":\"run_261017203837370226\",\"answer_md\":\"The AI cropland area of Ysyk-Ata is {{env:e1}}. This corresponds to an estimated area of {{env:e2}}.\",\"envelopes\":{\"e1\":{\"value\":64763,\"unit\":\"ha\",\"basis\":\"estimate\",\"as_of\":\"2026-10-17\",\"source\":\"Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland\",\"note\":\"AI result polygons whose centre lies"
+  ]
+ ]
+}
+{
+ "body": "{\"message\":\"이식아타 AI 경작지 넓이는 얼마야?\",\"mode\":\"map\",\"context\":{\"locale\":\"en\",\"country\":\"Kyrgyzstan\",\"region\":\"Ysyk-Ata\",\"district\":\"Ysyk-Ata\",\"season\":\"Autumn 2025\",\"drop\":{\"district\":\"Ysyk-Ata\",\"season\":\"Autumn 2025\",\"value\":147.6,\"unit\":\"km2\",\"as_of\":\"2026-10-17T13:26:53+09:00\"},\"has_map\":true,\"page\":\"global\",\"prev_run\":\"run_261017203837370226\",\"bbox\":[74.17323010097903,42.20725698609738,76.23489298554603,43.087604509090596],\"zoom\":8.939897744785382}}",
+ "st": 202,
+ "ev": [
+  [
+   "agent.route",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"intent\":\"map\",\"ms\":0,\"backend\":\"runtime\",\"model\":\"직행 · global_\",\"pii\":[],\"lang\":\"ko\",\"at\":\"2026-10-17T20:38:40.216+09:00\"}"
+  ],
+  [
+   "agent.plan",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"steps\":[{\"i\":1,\"tool\":\"global_summary\",\"args\":{\"metric\":\"cropland\"},\"why\":\"해외 결과 요약(NDVI · 계절 · 시가지 변화)\",\"say\":null,\"by\":\"runtime\"}],\"round\":1,\"route\":{\"intent\":\"map\",\"ms\":0,\"backend\":\"runtime\",\"model\":\"직행 · global_\"},\"model\":{\"id\":\"런타임\",\"backend\":\"runtime\"},\"at\":\"2026-10-17T20:38:40.225+09:00\"}"
+  ],
+  [
+   "agent.tool.call",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"i\":1,\"tool\":\"global_summary\",\"args\":{\"metric\":\"cropland\"},\"by\":\"runtime\",\"at\":\"2026-10-17T20:38:40.227+09:00\"}"
+  ],
+  [
+   "agent.tool.result",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"i\":1,\"tool\":\"global_summary\",\"ok\":true,\"ms\":25.4,\"source\":\"Land-XI global results (Sentinel-2 NDVI · land cover)\",\"note\":\"\",\"summary\":{\"e1\":{\"value\":64763,\"unit\":\"ha\",\"basis\":\"estimate\",\"as_of\":\"2026-10-17\",\"source\":\"Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland\",\"note\":\"AI result polygons whose cen"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"이\",\"at\":\"2026-10-17T20:38:40.390+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"식\",\"at\":\"2026-10-17T20:38:40.417+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"아\",\"at\":\"2026-10-17T20:38:40.449+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"타\",\"at\":\"2026-10-17T20:38:40.479+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" 지역\",\"at\":\"2026-10-17T20:38:40.511+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"의\",\"at\":\"2026-10-17T20:38:40.529+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" AI\",\"at\":\"2026-10-17T20:38:40.548+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" 경\",\"at\":\"2026-10-17T20:38:40.566+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"작\",\"at\":\"2026-10-17T20:38:40.584+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"지\",\"at\":\"2026-10-17T20:38:40.601+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" 넓\",\"at\":\"2026-10-17T20:38:40.619+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"이는\",\"at\":\"2026-10-17T20:38:40.638+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" {{\",\"at\":\"2026-10-17T20:38:40.656+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"env\",\"at\":\"2026-10-17T20:38:40.673+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\":\",\"at\":\"2026-10-17T20:38:40.692+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"e\",\"at\":\"2026-10-17T20:38:40.710+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"1\",\"at\":\"2026-10-17T20:38:40.727+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"}}\",\"at\":\"2026-10-17T20:38:40.746+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"ha\",\"at\":\"2026-10-17T20:38:40.763+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"입니다\",\"at\":\"2026-10-17T20:38:40.782+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\".\",\"at\":\"2026-10-17T20:38:40.800+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"\\n\",\"at\":\"2026-10-17T20:38:40.818+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"해\",\"at\":\"2026-10-17T20:38:40.836+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"당\",\"at\":\"2026-10-17T20:38:40.853+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" 수\",\"at\":\"2026-10-17T20:38:40.872+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"치는\",\"at\":\"2026-10-17T20:38:40.889+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" {{\",\"at\":\"2026-10-17T20:38:40.907+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"env\",\"at\":\"2026-10-17T20:38:40.926+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\":\",\"at\":\"2026-10-17T20:38:40.945+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"e\",\"at\":\"2026-10-17T20:38:40.962+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"2\",\"at\":\"2026-10-17T20:38:40.981+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"}}\",\"at\":\"2026-10-17T20:38:40.999+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"km\",\"at\":\"2026-10-17T20:38:41.016+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"2\",\"at\":\"2026-10-17T20:38:41.036+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"로\",\"at\":\"2026-10-17T20:38:41.053+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"도\",\"at\":\"2026-10-17T20:38:41.071+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\" 표시\",\"at\":\"2026-10-17T20:38:41.089+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\"됩니다\",\"at\":\"2026-10-17T20:38:41.107+09:00\"}"
+  ],
+  [
+   "agent.token",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"delta\":\".\",\"at\":\"2026-10-17T20:38:41.126+09:00\"}"
+  ],
+  [
+   "agent.done",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"answer_md\":\"이식아타 지역의 AI 경작지 넓이는 {{env:e1}}입니다.\\n해당 수치는 {{env:e2}}km2로도 표시됩니다.\",\"envelopes\":{\"e1\":{\"value\":64763,\"unit\":\"ha\",\"basis\":\"estimate\",\"as_of\":\"2026-10-17\",\"source\":\"Land-XI overseas model (Sentinel-2 monthly composite 2025 · 10 m · U-Net) · district result ledger · cropland\",\"note\":\"AI result polygons whose centre lies in the district · overlaps between"
+  ],
+  [
+   "agent.acts",
+   "{\"run_id\":\"run_2610172038408f24c5\",\"acts_sent\":1,\"acts_done\":1,\"acts_ok\":1,\"acts_verdict\":\"ok\",\"acts\":[{\"op\":\"map_region\",\"ok\":true,\"done\":true}],\"acts_source\":\"browser\",\"acts_at\":\"2026-10-17T20:38:43+09:00\"}"
+  ]
+ ]
+}

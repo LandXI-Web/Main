@@ -1,0 +1,54 @@
+[
+ {
+  "id": "재검수-바퀴16",
+  "t": "바퀴 16 재검수 — 지난 기능 63개 · 이번 바퀴 새 기능 42개를 다시 눌렀고, 안 되던 9가지를 고쳤습니다",
+  "opts": [
+   "확인",
+   "다시"
+  ],
+  "shots": [
+   "shots/r16/q-choices-1366-2027.png",
+   "shots/r16/stats-open-1366-2026.png",
+   "shots/r16/g-report-1440-2032.png",
+   "shots/r16/x-chat-en-1440-2037.png",
+   "shots/r16/xi-kg-chatgeo.png"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/xi-clean/",
+    "아이디 test@lx.or.kr · 임시 비밀번호",
+    "1366 폭에서 질문 → 통계 단추가 뜬 뒤 '고성' 입력 → 후보 칩이 단추를 덮지 않음"
+   ],
+   [
+    "https://namwon.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+    "남원 기관 계정",
+    "왼쪽 위 한 줄 → 목록 → 보고서로"
+   ],
+   [
+    "https://kgz-agri.land-xi.dev/landxi/v3/global/",
+    "해외 기관 계정",
+    "XI ChatGEO: What is the AI cropland area of Ysyk-Ata?"
+   ]
+  ],
+  "what": "고친 것: 1366 후보 칩 · 답 칸과 통계 단추 겹침 · 좁은 화면 판이 한 번 비쳤다 접힘 · 서랍에 가려진 통계 · 도착 뒤 왼쪽 위 한 줄 늦음 · 읍면동 두 번 비행 · 기관 보고서로 안 됨 · XI ChatGEO 해외 경작지 넓이(64,763ha = 647.6㎢ · 화면 값과 같음) · XI맵 키르기스스탄 질문이 국내로 답함 · 관리자 GPU 표가 14:25 값에 멈춤. 남은 화면은 Haiku 재검수로 이어 갑니다."
+ },
+ {
+  "id": "속도-바퀴16",
+  "t": "느린 곳을 재서 줄였습니다 — XI맵 집계 1.3→0.9초 · 관리자 GPU 표 최대 5.6→0.5초",
+  "opts": [
+   "확인",
+   "다시"
+  ],
+  "shots": [
+   "shots/r16/q-sgg-1920-2025.png"
+  ],
+  "where": [
+   [
+    "https://app.land-xi.dev/landxi/v3/ops-infra/#/deploys/improve",
+    "관리자 계정",
+    "배포 — 개선 후보 다시 열기 10.8→2.0초"
+   ]
+  ],
+  "what": "XI맵 첫 열기 집계(같은 필지 한 번 세기) 1.2~1.3→0.8~0.9초 · 규칙 집계 0.77→0.4초 · 관리자 GPU 표 1.2~5.6→0.1~0.5초 · 개선 후보 다시 열기 10.8→2.0초 · 인프라 다시 열기 9.9→2.9초. 숫자는 그대로(30가지 조합 대조 같음). 남은 것: 인프라 처음 열기 38초(저장 폴러 멈춤 — 폴러 다시 켜기 결정 필요)."
+ }
+]

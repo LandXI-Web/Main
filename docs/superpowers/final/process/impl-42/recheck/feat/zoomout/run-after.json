@@ -1,0 +1,421 @@
+{
+ "phase": "after",
+ "at": "2026-10-17 20:59:00",
+ "app": "https://app.land-xi.dev",
+ "shots": {
+  "after-map-namwon-greenhouse-z9-1440-2059.png": "2026-10-17 20:59:19",
+  "after-map-namwon-greenhouse-z11-1440-2059.png": "2026-10-17 20:59:22",
+  "after-map-namwon-greenhouse-z13-1440-2059.png": "2026-10-17 20:59:25",
+  "after-map-namwon-greenhouse-z15-1440-2059.png": "2026-10-17 20:59:28",
+  "after-map-hamyang-z9-1440-2059.png": "2026-10-17 20:59:32",
+  "after-map-hamyang-z11-1440-2059.png": "2026-10-17 20:59:35",
+  "after-map-hamyang-z13-1440-2059.png": "2026-10-17 20:59:39",
+  "after-map-hamyang-z15-1440-2059.png": "2026-10-17 20:59:42",
+  "after-map-parking-z9-1440-2059.png": "2026-10-17 20:59:46",
+  "after-map-parking-z11-1440-2059.png": "2026-10-17 20:59:49",
+  "after-map-parking-z13-1440-2059.png": "2026-10-17 20:59:52",
+  "after-map-parking-z15-1440-2059.png": "2026-10-17 20:59:56",
+  "after-map-building-z9-1440-2059.png": "2026-10-17 21:00:00",
+  "after-map-building-z11-1440-2100.png": "2026-10-17 21:00:03",
+  "after-map-building-z13-1440-2100.png": "2026-10-17 21:00:06",
+  "after-map-building-z15-1440-2100.png": "2026-10-17 21:00:09",
+  "after-xi-service-z9-1440-2100.png": "2026-10-17 21:00:26",
+  "after-xi-service-z11-1440-2100.png": "2026-10-17 21:00:35",
+  "after-xi-service-z13-1440-2100.png": "2026-10-17 21:00:41",
+  "after-xi-service-z15-1440-2100.png": "2026-10-17 21:00:46",
+  "after-xi-national-z9-1440-2100.png": "2026-10-17 21:00:50",
+  "after-xi-national-z11-1440-2100.png": "2026-10-17 21:00:59",
+  "after-xi-national-z13-1440-2101.png": "2026-10-17 21:01:03",
+  "after-xi-national-z15-1440-2101.png": "2026-10-17 21:01:07"
+ },
+ "map": {
+  "targets": [
+   {
+    "k": "namwon-greenhouse",
+    "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+    "group": "비닐하우스 분석서비스",
+    "region": "남원시",
+    "n": 703
+   },
+   {
+    "k": "hamyang",
+    "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+    "group": "비닐하우스 분석서비스",
+    "region": "함양군",
+    "n": 235
+   },
+   {
+    "k": "parking",
+    "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+    "group": "주차장 분석서비스",
+    "region": "여주시",
+    "n": 71
+   },
+   {
+    "k": "building",
+    "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+    "group": "건축물 분석서비스",
+    "region": "원주시",
+    "n": 5011
+   }
+  ],
+  "namwon-greenhouse": {
+   "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+   "n": 703,
+   "z": {
+    "9": {
+     "zoom": 9,
+     "drawn": 410,
+     "byCls": {
+      "비닐하우스": 410
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "11": {
+     "zoom": 11,
+     "drawn": 457,
+     "byCls": {
+      "비닐하우스": 457
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "13": {
+     "zoom": 13,
+     "drawn": 32,
+     "byCls": {
+      "비닐하우스": 32
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "15": {
+     "zoom": 15,
+     "drawn": 1,
+     "byCls": {
+      "비닐하우스": 1
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    }
+   }
+  },
+  "hamyang": {
+   "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+   "n": 235,
+   "z": {
+    "9": {
+     "zoom": 9,
+     "drawn": 150,
+     "byCls": {
+      "비닐하우스": 150
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "11": {
+     "zoom": 11,
+     "drawn": 145,
+     "byCls": {
+      "비닐하우스": 145
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "13": {
+     "zoom": 13,
+     "drawn": 26,
+     "byCls": {
+      "비닐하우스": 26
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "15": {
+     "zoom": 15,
+     "drawn": 1,
+     "byCls": {
+      "비닐하우스": 1
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    }
+   }
+  },
+  "parking": {
+   "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+   "n": 71,
+   "z": {
+    "9": {
+     "zoom": 9,
+     "drawn": 31,
+     "byCls": {
+      "주차장": 31
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "11": {
+     "zoom": 11,
+     "drawn": 40,
+     "byCls": {
+      "주차장": 40
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "13": {
+     "zoom": 13,
+     "drawn": 34,
+     "byCls": {
+      "주차장": 34
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "15": {
+     "zoom": 15,
+     "drawn": 0,
+     "byCls": {},
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    }
+   }
+  },
+  "building": {
+   "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+   "n": 5011,
+   "z": {
+    "9": {
+     "zoom": 9,
+     "drawn": 697,
+     "byCls": {
+      "건물": 697
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "11": {
+     "zoom": 11,
+     "drawn": 2311,
+     "byCls": {
+      "건물": 2311
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "13": {
+     "zoom": 13,
+     "drawn": 1826,
+     "byCls": {
+      "건물": 1826
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    },
+    "15": {
+     "zoom": 15,
+     "drawn": 91,
+     "byCls": {
+      "건물": 91
+     },
+     "minzoom": 8,
+     "lineWidth": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"case\",[\"!\",[\"in\",[\"to-string\",[\"coalesce\""
+    }
+   }
+  }
+ },
+ "xi": {
+  "national": {
+   "c": [
+    127.01431274414062,
+    36.11290787851728
+   ],
+   "z": {
+    "9": {
+     "zoom": 9,
+     "box": "가운데 960×600",
+     "byCls": {},
+     "drawn": 0
+    },
+    "11": {
+     "zoom": 11,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 3313,
+      "전국 경작지": 4722,
+      "전국 비닐하우스": 6434
+     },
+     "drawn": 14469
+    },
+    "13": {
+     "zoom": 13,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 908,
+      "전국 비닐하우스": 3745,
+      "전국 경작지": 4899
+     },
+     "drawn": 9552
+    },
+    "15": {
+     "zoom": 15,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 67,
+      "전국 비닐하우스": 307,
+      "전국 경작지": 596
+     },
+     "drawn": 970
+    }
+   }
+  },
+  "service": {
+   "c": [
+    127.428988,
+    35.4316395
+   ],
+   "z": {
+    "9": {
+     "zoom": 9,
+     "box": "가운데 960×600",
+     "byCls": {},
+     "drawn": 0
+    },
+    "11": {
+     "zoom": 11,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 7355,
+      "전국 경작지": 5305,
+      "전국 비닐하우스": 5202,
+      "서비스 건물": 13413,
+      "서비스 주차장": 1207,
+      "서비스 경작지": 14164,
+      "서비스 비닐하우스": 670,
+      "서비스 비경작지": 371
+     },
+     "drawn": 47687
+    },
+    "13": {
+     "zoom": 13,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 3585,
+      "전국 경작지": 3522,
+      "전국 비닐하우스": 765,
+      "서비스 비닐하우스": 45,
+      "서비스 경작지": 4867,
+      "서비스 비경작지": 27,
+      "서비스 건물": 4763,
+      "서비스 주차장": 566
+     },
+     "drawn": 18140
+    },
+    "15": {
+     "zoom": 15,
+     "box": "가운데 960×600",
+     "byCls": {
+      "전국 건물": 309,
+      "전국 경작지": 620,
+      "전국 비닐하우스": 95,
+      "서비스 경작지": 473,
+      "서비스 비경작지": 1,
+      "서비스 건물": 436,
+      "서비스 주차장": 5
+     },
+     "drawn": 1939
+    }
+   }
+  }
+ },
+ "errors": [],
+ "bad": [],
+ "local": [],
+ "login_at": "2026-10-17 20:59:07",
+ "mapItems": [
+  {
+   "job": "job_01M4JX13YPQ4M50XGZCTQPFYVN",
+   "group": "프로젝트 추론 — 주차장 2026",
+   "region": "여주시 하거동",
+   "n": 2,
+   "cls": "주차장 2",
+   "set": "results/lx/job_01M4JX13YPQ4M50XGZCTQPFYVN",
+   "empty": false
+  },
+  {
+   "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+   "group": "프로젝트 추론 — 비닐하우스 2026",
+   "region": "남원시 덕과면",
+   "n": 144,
+   "cls": "경작지 91 · 건물 28 · 비닐하우스 25",
+   "set": "results/lx/job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+   "empty": false
+  },
+  {
+   "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+   "group": "비닐하우스 분석서비스",
+   "region": "남원시",
+   "n": 703,
+   "cls": "비닐하우스 703",
+   "set": "results/lx/job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+   "empty": false
+  },
+  {
+   "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+   "group": "비닐하우스 분석서비스",
+   "region": "함양군",
+   "n": 235,
+   "cls": "비닐하우스 235",
+   "set": "results/lx/job_01M4ASGEKFA2M21AMVYFB6FPN7",
+   "empty": false
+  },
+  {
+   "job": "job_01M4ASF5KJMRFX3SHNQT8SWXEQ",
+   "group": "비닐하우스 분석서비스",
+   "region": "증평군",
+   "n": 84,
+   "cls": "비닐하우스 84",
+   "set": "results/lx/job_01M4ASF5KJMRFX3SHNQT8SWXEQ",
+   "empty": false
+  },
+  {
+   "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+   "group": "건축물 분석서비스",
+   "region": "원주시",
+   "n": 5011,
+   "cls": "건물 5011",
+   "set": "results/lx/job_01M4ARMQDXBZKXVQKBVBYSKV59",
+   "empty": false
+  },
+  {
+   "job": "job_01M3TPFBAA9CTQSZTDDS2CGYMD",
+   "group": "건축물 분석서비스",
+   "region": "천안시 서북구",
+   "n": 1158,
+   "cls": "건물 1158",
+   "set": "results/lx/job_01M3TPFBAA9CTQSZTDDS2CGYMD",
+   "empty": false
+  },
+  {
+   "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+   "group": "주차장 분석서비스",
+   "region": "여주시",
+   "n": 71,
+   "cls": "주차장 71",
+   "set": "results/lx/job_01M4ARJ76ARDGB04EAF8QP591P",
+   "empty": false
+  },
+  {
+   "job": "job_01M4ARGYES7RGXQXVQCXG5WP9W",
+   "group": "주차장 분석서비스",
+   "region": "천안시 서북구",
+   "n": 93,
+   "cls": "주차장 93",
+   "set": "results/lx/job_01M4ARGYES7RGXQXVQCXG5WP9W",
+   "empty": false
+  }
+ ],
+ "done": "2026-10-17 21:01:07"
+}

@@ -1,0 +1,14 @@
+OK  첫 표시(가운데 Loading 또는 글로브) 882 Loading
+OK  로그인 → 해외 첫 화면 6357 /landxi/v3/global/
+OK  글로브 그려짐 1854 
+OK  나라 → 지역 자동 착지 10945 Crop condition drop · Ysyk-Ata
+OK  'Checking…' 사라지고 'Run this season' 켜짐 10952 
+OK  큰 숫자(작황 하락) 11285 147.6 km² · 착지 뒤 333 ms
+OK  글자 14px 미만 0(지역 화면)  
+OK  계절 바꾸기(Summer 2025) 1543 181.4 km² · Run 켜짐
+OK  계절 되돌리기(Autumn 2025) 897 147.6 km²
+OK  NDVI 탭(달별 선 · 지도 NDVI) 178 0.25
+OK  Sprawl 탭(건물 면적 2017 · 2025) 863 2017 50.7 km² 2025 66 km² · 큰 숫자 15.3
+OK  Register 탭(구역 대장 올리기 → 대조) 1559 Matched 5 of 6 rows to local districts · 83.3% · 1줄 · 큰 숫자 1
+OK  대장 표 줄 누르기 → 그 구역으로 2554 Districts that don't match · Ysyk-Ata → Districts that don't match · Ysyk-Ata
+OK  Download(CSV) 613 ysyk-ata-changes.csv · 11줄

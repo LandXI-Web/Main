@@ -44,7 +44,7 @@ SPECS = {
         "description": "해외(글로벌) 결과 요약 — NDVI 월평균 · 계절 평균 · 시가지(건물 면적) 변화. 해외 지역·NDVI·season·crop·sprawl·built area 질문과 "
                        "'Show/Zoom to <district>' 는 이것으로 답한다(지도를 그 지역으로 옮긴다). Overseas results: NDVI, season, built-area change.",
         "properties": {"region": REGION,
-                       "metric": {"type": "string", "enum": ["all", "ndvi", "season", "sprawl", "drop"], "description": "보고 싶은 값(기본 all) — drop = 작황 하락 면적(Crop condition drop · 화면 큰 숫자)"},
+                       "metric": {"type": "string", "enum": ["all", "ndvi", "season", "sprawl", "drop", "cropland"], "description": "보고 싶은 값(기본 all) — drop = 작황 하락 면적(Crop condition drop · 화면 큰 숫자) · cropland = 구역 AI 경작지 넓이(구역 대장 대조의 AI 값과 같은 값)"},
                        "month": {"type": "string", "description": "달(YYYY-MM 또는 영어 달 이름, 예: June) — NDVI 달"}}},
     "global_parcels": {
         "description": "해외 지역 경작지 중 식생이 낮은 곳(NDVI 기준 미만) 비율·면적 — 'How many fields show low vegetation?' 같은 질문. "
@@ -320,7 +320,8 @@ class Elsewhere(Exception):
         self.text = text
 
 
-KR_PLACE = re.compile(r"[가-힣]|\b(namwon|jeonbuk|jeonnam|jeolla\w*|jeonju|korea\w*|seoul|busan|jeju|gyeong\w*|chungcheong\w*|gangwon\w*|incheon|daegu|"
+# 한글이면 무조건 국내 지명으로 보던 것을 행정 이름 꼴 · 국내 지명으로 좁힘 — 해외 기관이 한국어로 물으면 늘 '이 기관의 데이터가 아닙니다'였다(바퀴 16 재검수)
+KR_PLACE = re.compile(r"[가-힣]{2,}(?:특별자치도|특별자치시|특별시|광역시|도|시|군|구|읍|면|동|리)(?![가-힣])|대한민국|한국|남원|전북|전남|광주|서울|부산|제주|경기|강원|충북|충남|경북|경남|인천|대구|대전|울산|세종|여수|목포|순천|구례|강진|산청|함양|\b(namwon|jeonbuk|jeonnam|jeolla\w*|jeonju|korea\w*|seoul|busan|jeju|gyeong\w*|chungcheong\w*|gangwon\w*|incheon|daegu|"
                       r"daejeon|gwangju|ulsan|sejong|yeosu|mokpo|suncheon|gurye|gangjin|sancheong|hamyang)\b|\b[a-z]+-(si|gun|gu|myeon|eup|dong)\b", re.I)
 
 
@@ -381,6 +382,9 @@ async def global_summary(args: dict, ctx) -> Out:
     if metric == "drop":                # 작황 하락 면적 — 화면 큰 숫자(Crop condition drop)와 같은 값(숫자 한 출처)
         out.data = drop_data(d, out, ctx)
         return out
+    if metric == "cropland":            # 구역 AI 경작지 넓이 — 구역 대장 대조 화면의 AI 값과 같은 장부(global_data.ai_value 한 출처 · 바퀴 16 재검수)
+        out.data = {"district": d["name"], "country": d["iso"], **crop_data(d, out)}
+        return out
     nd = await ndvi_months(d, ctx.principal)
     months = list(nd)
     data: dict = {"district": d["name"], "country": d["iso"]}
@@ -408,6 +412,8 @@ async def global_summary(args: dict, ctx) -> Out:
         out.ui_actions.append({"op": "map_on", "set": "ndvi", "month": on, "label": f"NDVI {on}"})
     elif metric in ("all", "ndvi", "season"):
         data["ndvi_mean"] = "No NDVI result yet for this district"
+    if metric == "all":
+        data.update(crop_data(d, out))
     if metric in ("all", "sprawl"):
         sp = sprawl(d)
         if sp:
@@ -422,6 +428,18 @@ async def global_summary(args: dict, ctx) -> Out:
     return out
 
 
+def crop_data(d: dict, out: Out) -> dict:
+    """구역 AI 경작지 넓이(ha · ㎢) — 구역 대장 대조의 AI 값과 같은 장부(district-cropland · 결과 면 겹침은 한 번). 없으면 값 없음."""
+    from landxi_api import global_data as GD
+    e = GD.ai_value(d["id"])
+    if not e:
+        return {"ai_cropland": "No AI cropland result for this district yet"}
+    ha = float(e["value"])
+    src, note = e.get("source") or "Land-XI overseas model · district result ledger", e.get("note")
+    return {"ai_cropland": {"ha": out.env("crop_ha", f"AI cropland area · {d['name']}", env(round(ha), "ha", e.get("basis") or "estimate", src, e.get("as_of"), note)),
+                            "km2": out.env("crop_area_km2", f"AI cropland area · {d['name']}", env(round(ha / 100.0, 1), "km2", e.get("basis") or "estimate", src, e.get("as_of"), note))}}
+
+
 def drop_data(d: dict, out: Out, ctx) -> dict:
     """작황 하락(Crop condition drop) — 해외 화면이 이 지역 · 이 계절에 잰 값(화면 큰 숫자)을 문맥으로 보낸다.
     값은 화면이 PC 위성 원값 타일로 잰 것 하나뿐이라 서버가 다시 재지 않고 그 값을 그대로 쓴다. 다른 지역 · 아직 안 잰 계절이면 값 없음."""
@@ -432,7 +450,7 @@ def drop_data(d: dict, out: Out, ctx) -> dict:
     ok = (isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 <= v < 1e6
           and norm(str(c.get("district") or "")) == norm(d["name"]))
     if ok:
-        src = "Sentinel-2 NDVI · cropland (WorldCover) · this season vs the same season last year"
+        src = "Sentinel-2 NDVI · AI cropland (Land-XI overseas model) · this season vs the same season last year"
         data["crop_condition_drop"] = out.env("drop", f"Crop condition drop · {d['name']} · {c.get('season') or season}",
                                               env(round(float(v), 1), "km2", "estimate", src, c.get("as_of"),
                                                   "cropland where season-mean NDVI fell 0.1 or more"))
@@ -491,7 +509,8 @@ HANDLERS.update({"global_summary": global_summary, "global_parcels": global_parc
 # ── 직행(ROUTE · plan 3.1) — 해외 기관(또는 해외 화면의 LX)의 질문을 모델 앞에서 해외 결과 도구로 ──
 LOW_VEG = re.compile(r"low\s+(vegetation|ndvi|greenness)|poor\s+(crop|growth|vegetation)|stress|bare|how many (fields|parcels|plots)|낮은\s*식생|식생이?\s*낮", re.I)
 GLOBAL_ASK = re.compile(r"ndvi|vegetation|crop|season|sprawl|built|urban|construction|report|summary|summar|zoom|show|go to|move|fly|district|"
-                        r"식생|작황|계절|시가지|건물 면적|보고서|요약|이동|보여", re.I)
+                        r"식생|작황|계절|시가지|건물 면적|경작지|보고서|요약|이동|보여", re.I)
+CROP_ASK = re.compile(r"cropland\s+(area|size|extent)|area\s+of\s+(the\s+)?cropland|how\s+(much|big|large)\s+(is\s+)?(the\s+)?(ai\s+)?cropland(?!\s+(dropped|fell|declin|decreas|was\s+lost))|경작지\s*(넓이|면적|규모)", re.I)   # 구역 AI 경작지 넓이
 SPRAWL_ASK = re.compile(r"sprawl|built|urban|construction|building|시가지|건물", re.I)
 SEASON_ASK = re.compile(r"season|crop condition|계절|작황", re.I)
 DROP_ASK = re.compile(r"\bdrop|declin|decreas|\bfell\b|\bfall(en)?\b|\blost\b|\bloss\b|작황\s*하락|하락", re.I)   # 작황 하락 면적(화면 큰 숫자)
@@ -934,6 +953,8 @@ def ROUTE(msg: str, ctx):
         args["metric"] = "sprawl"
     elif DROP_ASK.search(q) and not re.search(r"ndvi", q, re.I):
         args["metric"] = "drop"
+    elif CROP_ASK.search(q):
+        args["metric"] = "cropland"
     elif m or re.search(r"ndvi", q, re.I):
         args["metric"] = "ndvi"
     elif SEASON_ASK.search(q):

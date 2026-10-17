@@ -46,7 +46,8 @@ async def _init_conn(conn):
 async def pool() -> asyncpg.Pool:
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(config.PG_DSN, min_size=2, max_size=16, init=_init_conn, command_timeout=60)
+        _pool = await asyncpg.create_pool(config.PG_DSN, min_size=2, max_size=16, init=_init_conn, command_timeout=60,
+                                          server_settings={"jit": "off"})   # JIT 끔(바퀴 16 재검수 — 짧은 질의에 컴파일 1초가 붙음)
     return _pool
 
 
@@ -58,7 +59,8 @@ async def pool_sys() -> asyncpg.Pool:
     호출자가 관문(resolve · tenant 필터)을 SQL 에 직접 넣어야 한다(v1.1-21 /results/{set}/parcels)."""
     global _pool_sys
     if _pool_sys is None:
-        _pool_sys = await asyncpg.create_pool(config.PG_WORKER_DSN, min_size=1, max_size=4, init=_init_conn, command_timeout=120)
+        _pool_sys = await asyncpg.create_pool(config.PG_WORKER_DSN, min_size=1, max_size=4, init=_init_conn, command_timeout=120,
+                                              server_settings={"jit": "off"})
     return _pool_sys
 
 

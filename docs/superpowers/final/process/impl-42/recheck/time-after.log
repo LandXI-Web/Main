@@ -1,0 +1,10 @@
+first s-ximap dom 1224 done 5487 ld 908 srv 995 1026  top 1709 /survey/stats?by=emd   
+again s-ximap dom 427 done 4369 ld 2091 srv 1110.6 1258  top 2446 /ximap/boot?   
+first a-infra dom 1110 done null ld 38010 srv 1977.8 16718 SLOW top 2381 /deploys?geom=bbox  PEND /ops/storage 
+first a-dep-req dom 415 done 2305 ld 1027 srv 539.4 2299  top 1289 /deploys?geom=bbox   
+first a-dep-imp dom 339 done 1968 ld 518 srv 238.2 1532  top 1037 /deploys?geom=bbox   
+first a-shared-img dom 393 done 4455 ld 990 srv 1370 6747  top 1663 /ops/gpus   
+again a-infra dom 338 done 2938 ld 1628 srv 1657 11157  top 1948 /ops/queues   
+again a-dep-req dom 342 done 1924 ld 0 srv 190.1 905  top 965 /deploys?geom=bbox   
+again a-dep-imp dom 338 done 1966 ld 422 srv 226.9 1060  top 969 /deploys?geom=bbox   
+again a-shared-img dom 341 done 4918 ld 981 srv 1947.4 10059  top 2238 /ops/gpus   

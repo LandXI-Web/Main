@@ -283,7 +283,7 @@ class Resp:
     def __init__(self, url: str, timeout: float = 0.5):
         u = url.replace("redis://", "")
         host, _, port = u.partition(":")
-        self.addr = (host or "localhost", int((port or "6379").split("/")[0]))
+        self.addr = (host if host and host != "localhost" else "127.0.0.1", int((port or "6379").split("/")[0]))   # localhost = ::1 먼저 — 이 PC 의 Docker IPv6 길이 막혀 Redis 연결이 끊긴 뒤 다시 붙지 못했다(10-17 14:25 · 바퀴 16 재검수)
         self.timeout = timeout
         self.sock = None
         self.buf = b""

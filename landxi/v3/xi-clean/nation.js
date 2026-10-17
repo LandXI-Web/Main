@@ -163,5 +163,5 @@ export function mountNation({ map, host, onEnter, onLeave }) {
       hud.replaceChildren(h('p.xn-p', { text: e.message || '해외 결과를 불러오지 못했습니다' })); hud.hidden = false;
     }
   }
-  return { go, get id() { return st.id; } };
+  return { go, get id() { return st.id; }, get sel() { return st.sel; } };   // sel = 고른 군 이름(XI ChatGEO 문맥 · 바퀴 16 재검수)
 }

@@ -450,7 +450,7 @@ def hwpx_response(blob: bytes, name: str) -> Response:
 
 @router.post("/ximap/report.hwpx")
 async def report_hwpx(request: Request):
-    require(principal(request), lx=True)
+    require(principal(request))   # 받은 사양(화면에 보인 글 · 숫자)만 문서로 짓는다(자료를 읽지 않음) — 기관 XI맵 목록 '보고서로'도(원칙 277 · 바퀴 16 재검수: 기관은 403 이던 것)
     try:
         body = await request.json()
     except Exception:

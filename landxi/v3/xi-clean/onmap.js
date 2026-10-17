@@ -390,8 +390,9 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     host.dataset.onmap = '1';
     if (map.getSource('xo-f')) map.getSource('xo-f').setData({ type: 'FeatureCollection', features: [] });
     const meaning = fast ? Promise.resolve() : confirmMeaning(s);
-    O.spec = s; render(s); paintMini(s); panel.hidden = false;
-    setStep(step, { silent: true });
+    O.spec = s; render(s); paintMini(s);
+    setStep(step, { silent: true }); panel.hidden = false;                              // 단계(접힘/폭)를 먼저 정하고 보인다 — 펼친 판이 한 번 비쳤다 접히던 것(바퀴 16 재검수 · 1366)
+    if (O.step === 2) stage.pad({ right: padR() });
     const painted = paintMap(s.map);
     await Promise.all([meaning, painted]);
     if (run !== O.run) return true;

@@ -72,15 +72,28 @@ async def _worker_self_mib(r, worker: str) -> float | None:
     return float(h["used_mib"]) if h.get("used_mib") else None
 
 
+POLLER_STALE_S = 30.0     # 폴러 표본(2 s 간격)이 이보다 오래되면 직접 읽기
+_SMI: dict = {"at": 0.0, "v": None}
+_SMI_LOCK = asyncio.Lock()
+
+
 @router.get("/ops/gpus")
 async def gpus(request: Request):
     require(principal(request), admin=True)
     r = await redis()
     keys = sorted([k async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*", count=2000)])
-    if keys:
+    hs = [await r.hgetall(k) for k in keys]
+    # 폴러 표본이 오래됐으면(폴러가 Redis 에 못 쓰는 동안 — 10-17 14:25 IPv6 길 막힘 뒤 5시간 옛 값이 '지금'으로 보였다) 게이트웨이가 직접 읽는다
+    stale = None
+    try:
+        last = max(dt.datetime.fromisoformat(h["at"]) for h in hs if h.get("at")) if hs else None
+        if last is not None and (dt.datetime.now(KST) - last).total_seconds() > POLLER_STALE_S:
+            stale = last.isoformat(timespec="seconds")
+    except (ValueError, TypeError):
+        stale = None
+    if keys and not stale:
         gl = []
-        for k in keys:
-            h = await r.hgetall(k)
+        for h in hs:
             g = json.loads(h["json"]) if "json" in h else {kk: (json.loads(vv) if vv.startswith("{") else vv) for kk, vv in h.items()}
             # 폴러(드라이버 597 · PDH)가 프로세스별 VRAM 을 맨 숫자로 줄 때 — 계약 §0 봉투 규칙에 맞춰 감싼다(값은 그대로)
             for e in (g.get("external") or []) if isinstance(g, dict) else []:
@@ -93,7 +106,10 @@ async def gpus(request: Request):
         at = max((g.get("at") or "" for g in gl), default=None) if gl and isinstance(gl[0], dict) else None
         return {"node": config.NODE_ID, "at": at or now_iso(), "gpus": gl, "source": "ops:gpu (F1-C 폴러)",
                 "power_budget": await power_budget_now([g for g in gl if isinstance(g, dict)])}
-    s = await run_in_threadpool(nvidia_smi_sample)
+    async with _SMI_LOCK:                                     # 직접 읽기는 2초에 한 번(관리자 화면 여럿 · 표본 2초 간격과 같게)
+        if _SMI["v"] is None or time.time() - _SMI["at"] >= 2.0:
+            _SMI.update(v=await run_in_threadpool(nvidia_smi_sample), at=time.time())
+        s = json.loads(json.dumps(_SMI["v"]))
     for g in s["gpus"]:
         w = await _worker_self_mib(r, g["worker"])
         used = g["mem_used_mib"]["value"]
@@ -102,7 +118,8 @@ async def gpus(request: Request):
                                      "워커 미기동 시 = memory.used" if not w else f"워커 {w:.0f} MiB 제외", as_of=s["at"])
         g["job_id"] = await r.hget(f"worker:{g['worker']}:hb", "job_id") or None
         _v11_fields(g, s["at"], "게이트웨이 직접(폴러 미기동)")
-    s["note"] = "F1-C 폴러 미기동 — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)"
+    s["note"] = (f"F1-C 폴러 표본이 오래됨({stale}) — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)" if stale
+                 else "F1-C 폴러 미기동 — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)")
     s["power_budget"] = await power_budget_now(s["gpus"])
     return s
 
@@ -177,19 +194,52 @@ def count_overlap(samples: list[dict], th: float) -> dict:
     return {"n": n, "last_at": last, "samples": len(samples)}
 
 
+_OV: dict = {"th": None, "last": None, "rows": []}   # 이미 읽은 표본(스트림 id · 시각 · 두 장 동시 고부하?) — 새 표본만 더 읽는다
+
+
+def _sid(s: str) -> tuple:
+    a, _, b = str(s).partition("-")
+    return (int(a), int(b or 0))
+
+
+def _overlap_rows(xs, th: float) -> list:
+    out = []
+    for _id, f in xs:
+        try:
+            j = json.loads(f.get("json") or "{}")
+        except Exception:  # noqa: BLE001
+            continue
+        out.append((_sid(_id), j.get("at"), count_overlap([j], th)["n"] == 1))
+    return out
+
+
 async def _overlap_recent(r, th: float) -> dict:
     """최근 2시간(폴러 스트림 전체 · MAXLEN ~3600 × 2 s) 동시 고부하 표본 수 · 30 s 캐시."""
     if OVERLAP_CACHE["v"] is not None and time.time() - OVERLAP_CACHE["at"] < 30:
         return OVERLAP_CACHE["v"]
-    # 한 번에 한 계산만(impl-34 no-502) — 캐시가 끝난 순간 GPU 칸 요청이 몰리면 요청마다 3,600 표본을 루프 위에서 다시 읽어 루프가 막혔다.
-    # 표본 읽기 · 세기는 스레드에서. 기다린 요청은 방금 계산한 값을 쓴다.
+    # 한 번에 한 계산만(impl-34 no-502). 바퀴 16 재검수(속도): 30초마다 스트림 전체(3,600 표본 · 약 70MB)를 다시 읽어
+    # GPU 표 요청이 1~5초 걸리고 같은 게이트웨이의 다른 요청도 밀렸다 → 처음 한 번만 전체, 그 뒤엔 새 표본만 읽고
+    # 스트림 앞에서 잘려 나간 표본은 뺀다(같은 창 · 같은 수).
     async with _OVERLAP_LOCK:
         if OVERLAP_CACHE["v"] is not None and time.time() - OVERLAP_CACHE["at"] < 30:
             return OVERLAP_CACHE["v"]
         out = {"n": None, "last_at": None, "samples": 0}
         try:
-            xs = await r.xrange("ops:gpu")
-            out = await asyncio.to_thread(_overlap_from, xs or [], th)
+            if _OV["th"] != th:
+                _OV.update(th=th, last=None, rows=[])
+            last = _OV["last"]
+            xs = await r.xrange("ops:gpu", min=last or "-", max="+")
+            if last:
+                xs = [x for x in xs or [] if x[0] != last]
+            if xs:
+                _OV["rows"].extend(await asyncio.to_thread(_overlap_rows, xs, th))
+                _OV["last"] = xs[-1][0]
+            head = await r.xrange("ops:gpu", min="-", max="+", count=1)
+            lo = _sid(head[0][0]) if head else None
+            rows = _OV["rows"] = [x for x in _OV["rows"] if lo is not None and x[0] >= lo]
+            hits = [x for x in rows if x[2]]
+            out = {"n": len(hits), "last_at": next((x[1] for x in reversed(hits) if x[1]), None), "samples": len(rows),
+                   "since": rows[0][1] if rows else None}
         except Exception:  # noqa: BLE001
             pass
         OVERLAP_CACHE.update(at=time.time(), v=out)

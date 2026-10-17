@@ -1,0 +1,375 @@
+{
+ "at": "2026-10-17 20:55:15",
+ "app": "https://app.land-xi.dev",
+ "shots": {
+  "staff-cad-far-1440-2055.png": "2026-10-17 20:55:31",
+  "staff-namwon-cad-on-1440-2055.png": "2026-10-17 20:55:37",
+  "staff-namwon-parcel-card-1440-2055.png": "2026-10-17 20:55:39",
+  "staff-namwon-object-parcel-1440-2055.png": "2026-10-17 20:55:42",
+  "staff-hamyang-cad-on-1440-2055.png": "2026-10-17 20:55:47",
+  "staff-hamyang-parcel-card-1440-2055.png": "2026-10-17 20:55:50",
+  "staff-hamyang-object-parcel-1440-2055.png": "2026-10-17 20:55:53",
+  "staff-jeju-cad-on-1440-2055.png": "2026-10-17 20:55:58",
+  "staff-jeju-parcel-card-1440-2056.png": "2026-10-17 20:56:02",
+  "staff-miss-object-1440-2056.png": "2026-10-17 20:56:09",
+  "staff-miss-card-1440-2056.png": "2026-10-17 20:56:10",
+  "staff-class-names-1440-2056.png": "2026-10-17 20:56:14",
+  "staff-stat-all-1440-2056.png": "2026-10-17 20:56:29",
+  "staff-stat-off-1440-2056.png": "2026-10-17 20:56:42",
+  "gov-namwon-cad-on-1440-2056.png": "2026-10-17 20:56:57",
+  "gov-namwon-parcel-card-1440-2057.png": "2026-10-17 20:57:01",
+  "gov-namwon-drawer-1440-2057.png": "2026-10-17 20:57:04"
+ },
+ "staff": {
+  "far": {
+   "checked": "true",
+   "far": false,
+   "cbOpacity": "1",
+   "text": "지적",
+   "zoom": 15.2,
+   "lxmapVis": "visible",
+   "font": 16
+  },
+  "namwon": {
+   "place": "남원",
+   "center": [
+    127.3786,
+    35.4153
+   ],
+   "scan": {
+    "objs": 3,
+    "empty": 3
+   },
+   "cursorEmptyBefore": "(지도 기본)",
+   "cadOn": {
+    "checked": "true",
+    "far": false,
+    "cbOpacity": "1",
+    "text": "지적",
+    "zoom": 17.6,
+    "lxmapVis": "visible",
+    "font": 16
+   },
+   "lxmapTiles": 15,
+   "cursorEmptyCadOn": "pointer",
+   "card": {
+    "text": "향교동 768 지목 답 면적 1,502.9㎡ 공시지가 179,900원/㎡2025년 1월 AI 분석 —",
+    "parcel": {
+     "pnu": "5219011100107680000",
+     "jibun": "768답",
+     "jimok": "답",
+     "jimok_cd": "답",
+     "area_m2": 1502.9,
+     "jiga": 179900,
+     "jiga_as_of": "2025-01",
+     "source": "survey_parcels · 연속지적(적재 정본)",
+     "place": "향교동 768",
+     "ai": [],
+     "miss": []
+    },
+    "small": []
+   },
+   "sameParcelRecallCalls": 0,
+   "cursorObject": "pointer",
+   "object": {
+    "line": "향교동 755 · 답 · 1,131.6㎡",
+    "first": "xe-pcl",
+    "head": "경작지",
+    "lineFont": 15,
+    "cls": "경작지"
+   }
+  },
+  "hamyang": {
+   "place": "함양",
+   "center": [
+    127.7253,
+    35.5205
+   ],
+   "scan": {
+    "objs": 3,
+    "empty": 3
+   },
+   "cursorEmptyBefore": "pointer",
+   "cadOn": {
+    "checked": "true",
+    "far": false,
+    "cbOpacity": "1",
+    "text": "지적",
+    "zoom": 17.6,
+    "lxmapVis": "visible",
+    "font": 16
+   },
+   "lxmapTiles": 15,
+   "cursorEmptyCadOn": "pointer",
+   "card": {
+    "text": "운림리 31-2 함양읍 지목 대지 면적 14,688.5㎡ 공시지가 552,000원/㎡2025년 1월 AI 분석 건물 2동 3,027㎡ 주차장 5곳 1,197㎡",
+    "parcel": {
+     "pnu": "4887025021100310002",
+     "jibun": "31-2 대",
+     "jimok": "대지",
+     "jimok_cd": "대",
+     "area_m2": 14688.5,
+     "jiga": 552000,
+     "jiga_as_of": "2025-01",
+     "source": "survey_parcels · 연속지적(전국)",
+     "place": "운림리 31-2",
+     "ai": [
+      {
+       "cls": "건물",
+       "n": 2,
+       "m2": 3027
+      },
+      {
+       "cls": "주차장",
+       "n": 5,
+       "m2": 1197
+      }
+     ],
+     "miss": []
+    },
+    "small": []
+   },
+   "sameParcelRecallCalls": 0,
+   "cursorObject": "pointer",
+   "object": {
+    "line": "운림리 31-2 · 대지 · 14,688.5㎡",
+    "first": "xe-pcl",
+    "head": "건물",
+    "lineFont": 15,
+    "cls": "건물"
+   }
+  },
+  "jeju": {
+   "place": "제주",
+   "center": [
+    126.5312,
+    33.4996
+   ],
+   "scan": {
+    "objs": 0,
+    "empty": 3
+   },
+   "cursorEmptyBefore": "pointer",
+   "cadOn": {
+    "checked": "true",
+    "far": false,
+    "cbOpacity": "1",
+    "text": "지적",
+    "zoom": 17.6,
+    "lxmapVis": "visible",
+    "font": 16
+   },
+   "lxmapTiles": 12,
+   "cursorEmptyCadOn": "pointer",
+   "card": {
+    "text": "이도이동 1176-1 지목 대지 면적 15,469.1㎡ 공시지가 4,083,000원/㎡2025년 1월 AI 분석 —",
+    "parcel": {
+     "pnu": "5011010400111760001",
+     "jibun": "1176-1대",
+     "jimok": "대지",
+     "jimok_cd": "대",
+     "area_m2": 15469.1,
+     "jiga": 4083000,
+     "jiga_as_of": "2025-01",
+     "source": "V-World 연속지적(LP_PA_CBND_BUBUN)",
+     "place": "이도이동 1176-1",
+     "ai": [],
+     "miss": []
+    },
+    "small": []
+   },
+   "sameParcelRecallCalls": 0
+  },
+  "miss": {
+   "tried": [
+    "죽항동 1-3 · 도로 · 9,907.4㎡ → [\"공공용지 점유 의심\"]"
+   ],
+   "card": {
+    "text": "죽항동 1-3 지목 도로 면적 9,907.4㎡ 공시지가 158,100원/㎡2025년 1월 AI 분석 건물 18동 6,788㎡ 공공용지 점유 의심",
+    "parcel": {
+     "pnu": "5219010300100010003",
+     "jibun": "1-3 도",
+     "jimok": "도로",
+     "jimok_cd": "도",
+     "area_m2": 9907.4,
+     "jiga": 158100,
+     "jiga_as_of": "2025-01",
+     "source": "survey_parcels · 연속지적(적재 정본)",
+     "place": "죽항동 1-3",
+     "ai": [
+      {
+       "cls": "건물",
+       "n": 18,
+       "m2": 6788
+      }
+     ],
+     "miss": [
+      "공공용지 점유 의심"
+     ]
+    },
+    "small": []
+   }
+  },
+  "classes": [
+   [
+    "건물",
+    "건물"
+   ],
+   [
+    "경작지",
+    "경작지"
+   ],
+   [
+    "비경작지",
+    "비경작지"
+   ],
+   [
+    "비닐하우스",
+    "비닐하우스"
+   ],
+   [
+    "주차장",
+    "주차장"
+   ],
+   [
+    "built_new",
+    "새 건물"
+   ],
+   [
+    "other",
+    "기타 변화"
+   ],
+   [
+    "veg_gain",
+    "식생 늘어남"
+   ],
+   [
+    "veg_loss",
+    "식생 줄어듦"
+   ]
+  ],
+  "statAll": {
+   "mode": "map",
+   "title": "남원시 · AI 분석 결과",
+   "main": {
+    "label": "AI 분석 결과",
+    "value": 272559,
+    "unit": "개"
+   },
+   "off": null,
+   "kpis": [
+    [
+     "AI 분석 결과",
+     272559
+    ],
+    [
+     "토지피복",
+     132424
+    ],
+    [
+     "경작지(농지 전수)",
+     82852
+    ],
+    [
+     "건물(하천 · 계곡)",
+     34874
+    ]
+   ]
+  },
+  "offClass": "건물",
+  "statOff": {
+   "mode": "map",
+   "title": "남원시 · AI 분석 결과",
+   "main": {
+    "label": "AI 분석 결과",
+    "value": 237685,
+    "unit": "개"
+   },
+   "off": [
+    "건물"
+   ],
+   "kpis": [
+    [
+     "AI 분석 결과",
+     237685
+    ],
+    [
+     "토지피복",
+     132424
+    ],
+    [
+     "경작지(농지 전수)",
+     82852
+    ],
+    [
+     "비닐하우스(농지 전수)",
+     19152
+    ]
+   ]
+  },
+  "visLabel": false
+ },
+ "gov": {
+  "url": "https://namwon.land-xi.dev/landxi/v3/xi-clean/",
+  "namwon": {
+   "place": "남원",
+   "center": [
+    127.3786,
+    35.4153
+   ],
+   "scan": {
+    "objs": 0,
+    "empty": 3
+   },
+   "cursorEmptyBefore": "(지도 기본)",
+   "cadOn": {
+    "checked": "true",
+    "far": false,
+    "cbOpacity": "1",
+    "text": "지적",
+    "zoom": 17.6,
+    "lxmapVis": "visible",
+    "font": 16
+   },
+   "lxmapTiles": 15,
+   "cursorEmptyCadOn": "pointer",
+   "card": {
+    "text": "향교동 753 지목 답 면적 3,231.1㎡ 공시지가 113,500원/㎡2025년 1월 AI 분석 경작지 3곳 6,211㎡ 자세히",
+    "parcel": {
+     "pnu": "5219011100107530000",
+     "jibun": "753답",
+     "jimok": "답",
+     "jimok_cd": "답",
+     "area_m2": 3231.1,
+     "jiga": 113500,
+     "jiga_as_of": "2025-01",
+     "source": "survey_parcels · 연속지적(적재 정본)",
+     "place": "향교동 753",
+     "ai": [
+      {
+       "cls": "경작지",
+       "n": 3,
+       "m2": 6211
+      }
+     ],
+     "miss": []
+    },
+    "small": []
+   },
+   "sameParcelRecallCalls": 0
+  },
+  "drawer": {
+   "주소": "전북특별자치도 남원시 향교동 753",
+   "지목": "답",
+   "면적": "3,231.1 m²",
+   "공시지가": "113,500원/m² 2025년 1월 고시",
+   "용도지역": "제2종일반주거지역",
+   "읍면 · 리": "향교동",
+   "필지 번호": "5219011100107530000"
+  }
+ },
+ "errors": [],
+ "bad": [],
+ "local": [],
+ "fatal": null
+}

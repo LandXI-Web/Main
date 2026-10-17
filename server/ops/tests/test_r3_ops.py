@@ -382,8 +382,10 @@ class FakeR:
     async def xrevrange(self, key, count=None):
         return list(reversed(self.stream))[:count]
 
-    async def xrange(self, key):
-        return list(self.stream)
+    async def xrange(self, key, min="-", max="+", count=None):
+        k = lambda i: tuple(int(x) for x in str(i).split("-"))  # noqa: E731
+        xs = [x for x in self.stream if min in ("-", None) or k(x[0]) >= k(min)]
+        return xs[:count] if count else xs
 
     async def get(self, k):
         return self.kv.get(k)

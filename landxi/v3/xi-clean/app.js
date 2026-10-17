@@ -275,7 +275,8 @@ async function boot() {
     pick: pickEmd, regionInfo: () => ({ emds: S.remd, meta: S.remdMeta }) }) : null;
 
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
-    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set), cls_off: [...S.clsOff] }),   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
+    sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set), cls_off: [...S.clsOff],
+      ...(NAT && NAT.id !== 'kr' ? { country: NAT.id === 'kg' ? 'Kyrgyzstan' : NAT.id, district: NAT.sel || null } : {}) }),   // 해외(나라 바꿈)면 나라 · 고른 군 — XI ChatGEO 가 해외 결과 도구로 답한다(원칙 260 · 국내 서비스 요약으로 새던 것 · 바퀴 16 재검수)   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
     // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
     dock: 'bottom', dockHost: mainEl, sugg: xiSugg, pre: placeQuery, ph: '시군구 · 지번 또는 질문' });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193) · pre = 시군구 · 지번이면 바로 이동(원칙 276)
   if (S.board) DS = createDash({ map, stage, host: mainEl, h,
@@ -286,7 +287,7 @@ async function boot() {
     onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
   if (S.board) { OM = createOnMap({ map, stage, host: mainEl, h,                       // 지도 위 표출(원칙 258 · 기본) — 결과 층은 그대로 두고 그 위에 색칠 · 꼬리표 · 작은 판
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
-    onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림)
+    onEnter: () => { closePop(); ED?.close(); unpin(); closeDrawer(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림) · 오른쪽 서랍(필지 카드 · 목록)은 닫는다 — 통계 한 줄 · 판이 서랍 밑에 가려지던 것(바퀴 16 재검수)
     onShown: () => cmdk?.close({ force: true }),          // 날아가기 시작하면 아래 채팅 창의 대화 칸을 접는다(답은 그때까지 읽힘 · 입력 줄은 그대로)
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
     onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
@@ -697,6 +698,7 @@ async function setRegion(r, { first = false, to = null, soft = false, keepDrawer
   const resumeAfter = () => rd.then(() => (S.region === r && AN && !AN.running ? AN.resume(r) : false)).then((ok) => { if (ok) { S.tool = 'analyze'; patchRail(); } });
   if (first) { X.fly = fly; await refresh(); resumeAfter(); return; }   // 첫 도착: 비행은 뒤에서 계속
   await Promise.all([fly, refresh()]);
+  if (S.region === r) paintBoardHud();                 // 도착하면 바로 왼쪽 위 한 줄을 그 시군구로(비행 중 moveend 는 쉬어 2~3초 늦게 바뀌던 것 · 바퀴 16 재검수)
   resumeAfter();
 }
 
@@ -1706,7 +1708,12 @@ function goEmd(e, here = null) {
     if (AN?.active && !AN.running) emdFrame(e).then((f) => AN.active && !AN.running && AN.start(S.region, f));   // 분석 중 검색 = 그 읍면동으로 프레임
     else return goKeep(e.bbox, { ms: 1600, maxZoom: 14 });
   };
-  if (r && S.region?.code !== r.code) return setRegion(r).then(go); return go();
+  if (r && S.region?.code !== r.code) {
+    if (AN?.active && !AN.running) return setRegion(r).then(go);
+    // 다른 시군구의 읍면동 = 한 번에 그 읍면동으로(시군구로 날았다가 다시 읍면동으로 두 번 날던 것 · 말로 한 이동과 같은 길 · 바퀴 16 재검수)
+    return setRegion(r, { to: { bbox: e.bbox, ms: 1600, maxZoom: 14 } }).then(() => { if (S.region?.code === r.code) { setCond({ emd: e }); searchInput.value = e.nm; } });
+  }
+  return go();
 }
 /* ═══ 분석 프레임 = 읍면동 경계(GET /regions/{sgg}/emd · 한 면 그대로) ═══ */
 function emdParts(cd) {
