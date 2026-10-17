@@ -244,13 +244,15 @@ def model_of(st: dict) -> str:
     return str(st.get("model") or MODEL)
 
 
-def next_cell(c, year: int, assets, model: str = MODEL) -> tuple | None:
-    """다음 칸 — 아직인 칸 · 다시 할 실패 칸 · **다른 판으로 끝난 칸(새 판으로 다시 · redo)**. 순번(ord)대로라 먼저 끝난 칸부터 다시 한다."""
+def next_cell(c, year: int, assets, model: str = MODEL, exclude: list[str] | None = None) -> tuple | None:
+    """다음 칸 — 아직인 칸 · 다시 할 실패 칸 · **다른 판으로 끝난 칸(새 판으로 다시 · redo)**. 순번(ord)대로라 먼저 끝난 칸부터 다시 한다.
+    exclude = 흐름 방식에서 이미 돌고 있는 칸('asset:cell_cd' · 새 판으로 다시 하는 칸은 '끝' 그대로라 따로 뺀다)."""
     return c.execute(
         "SELECT asset, cell_cd, sgg_name, name, tries, state='done' AS redo FROM national_cells WHERE year=%s AND asset = ANY(%s) AND NOT test "
         "AND (state='todo' OR (state='failed' AND tries < %s AND coalesce(next_try_at, now()) <= now()) "
         "     OR (state='done' AND model_id IS DISTINCT FROM %s AND tries < %s)) "
-        "AND coalesce(next_try_at, now() - interval '1 s') <= now() ORDER BY ord, asset LIMIT 1", (year, list(assets), TRIES, model, TRIES)).fetchone()
+        "AND coalesce(next_try_at, now() - interval '1 s') <= now() AND NOT (asset || ':' || cell_cd = ANY(%s)) ORDER BY ord, asset LIMIT 1",
+        (year, list(assets), TRIES, model, TRIES, list(exclude or []))).fetchone()
 
 
 def split_parts(geom):
@@ -432,8 +434,211 @@ def wait_turn(c, g: Gate, asset: str | None = None, cd: str | None = None):
         return
 
 
+def pipeline_depth() -> int:
+    """동시에 넣어 두는 조각 수(impl-41 · 칸마다 고정 시간 줄이기) — pools.yaml power.national.pipeline(1–4 · 기본 1 = 예전 방식).
+    조각마다 작업 · 칩 계획 · 결과 묶음이 그대로라 결과는 같다(칸을 합치지 않는다 — 칸 격자가 바뀌면 결과가 달라진다)."""
+    try:
+        n = int(((config.load_yaml("pools").get("power") or {}).get("national") or {}).get("pipeline", 1))
+    except Exception:  # noqa: BLE001
+        n = 1
+    return max(1, min(4, n))
+
+
+def turn_ok(c, g: Gate) -> bool:
+    """wait_turn 의 기다리지 않는 판 — 지금 다음 조각을 넣어도 되나(멈춤이면 Pause)."""
+    if not settings(c).get("enabled", True):
+        raise Pause("멈춤")
+    busy = other_gpu(c)
+    if busy:
+        if any(x.startswith("train") for x in busy):
+            _turn["train_seen"] = time.time()
+        status(state="yield", why="다른 학습 장비 작업", busy=busy)
+        return False
+    if not g.h:
+        g.login()
+    if time.time() - _turn.get("retrain_at", 0.0) > 30:          # 재학습 차례 확인은 30초에 한 번(게이트웨이 호출)
+        _turn["retrain_at"] = time.time()
+        _turn["retrain"] = retrain_waiting(g) and time.time() - _turn["train_seen"] > 3600
+    if _turn.get("retrain"):
+        if not _turn["yield_retrain_at"]:
+            _turn["yield_retrain_at"] = time.time()
+        if time.time() - _turn["yield_retrain_at"] < YIELD_TRAIN_S:
+            status(state="yield", why="재학습 차례")
+            return False
+    _turn["yield_retrain_at"] = 0.0
+    return True
+
+
+class CellRun:
+    """흐름 방식(pipeline)에서 도는 칸 하나 — 조각을 차례로 넣고, 다 끝나면 finish_cell(예전 run_cell 과 같은 작업 · 같은 마무리)."""
+
+    def __init__(self, c, asset: str, year: int, cd: str, iid: str, model: str, redo: bool):
+        from shapely import wkt
+        row = c.execute("SELECT ST_AsText(target), name, sgg_name, target_km2 FROM national_cells WHERE asset=%s AND year=%s AND cell_cd=%s",
+                        (asset, year, cd)).fetchone()
+        if not row or not row[0]:
+            raise RuntimeError("칸 범위 없음")
+        self.asset, self.year, self.cd, self.iid, self.model, self.redo = asset, year, cd, iid, model, redo
+        self.name = f"{row[2]} {row[1]}"
+        self.parts = split_parts(wkt.loads(row[0]))
+        self.jobs: dict[int, str] = {}
+        self.done: set[int] = set()
+        self.next_k = 0
+        self.t0 = time.time()
+        if not redo:
+            c.execute("UPDATE national_cells SET state='running', started_at=now(), err=NULL WHERE asset=%s AND year=%s AND cell_cd=%s", (asset, year, cd))
+
+    def submit(self, c, g: Gate) -> tuple[int, str]:
+        from shapely.geometry import mapping
+        k, p = self.next_k, self.parts[self.next_k]
+        body = {"kind": "infer", "model_id": self.model, "imagery_id": self.iid, "aoi": mapping(p), "priority": PRIORITY, "test": False,
+                "label": f"national/{self.asset}/{self.year}/{self.cd}/{k}",
+                "options": {"max_km2": 150, "national": {"asset": self.asset, "year": self.year, "cell": self.cd}}}
+        prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
+                         "AND j.state IN ('queued','running','done') AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
+                         (self.asset, self.year, self.cd, k, self.model)).fetchone()   # 끊겼다 다시 — 같은 판의 같은 조각 작업이 있으면 그것(예전과 같음)
+        if prev:
+            jid = prev[0]
+        else:
+            r = g.call("POST", "/jobs", json=body)
+            if r.status_code >= 300:
+                raise RuntimeError(f"작업 넣기 실패 {r.status_code} {r.text[:200]}")
+            jid = r.json()["job"]["id"]
+        c.execute("INSERT INTO national_jobs(job_id, asset, year, cell_cd, part, test, model_id) VALUES (%s,%s,%s,%s,%s,false,%s) ON CONFLICT DO NOTHING",
+                  (jid, self.asset, self.year, self.cd, k, self.model))
+        self.jobs[k] = jid
+        self.next_k += 1
+        log(f"  조각 {k + 1}/{len(self.parts)} 넣음 {jid} · {round(p.area * 1e4, 2)} · {self.asset} {self.cd}")
+        return k, jid
+
+    def all_in(self) -> bool:
+        return self.next_k >= len(self.parts)
+
+    def finished(self) -> bool:
+        return self.all_in() and len(self.done) == len(self.parts)
+
+
+def loop_pipeline(depth: int):
+    """흐름 방식 — 조각을 depth 개까지 동시에 넣어 둔다(칸 경계를 넘어 다음 칸 조각도). 칸 하나가 다 끝나면 예전과 같은 finish_cell.
+    학습 장비 작업 대기열 규칙은 그대로(우선순위 3 · 다른 작업이 있으면 새 조각을 넣지 않음 · 워커가 칩 묶음 사이에서 비킴)."""
+    g = Gate()
+    with pg() as c:
+        c.execute("UPDATE national_cells SET state='todo' WHERE state='running'")
+        active: list[CellRun] = []
+        inflight: dict[str, tuple[CellRun, int]] = {}
+        api_seen = 0.0
+        while True:
+            try:
+                st = settings(c)
+                if not st.get("enabled", True):
+                    raise Pause("멈춤")
+                year, model = int(st["year"]), model_of(st)
+                iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
+                # 1) 돌던 조각 확인(2초마다)
+                for jid, (cell, k) in list(inflight.items()):
+                    v = g.call("GET", f"/jobs/{jid}").json()
+                    v = v.get("job", v)
+                    stt = v.get("state")
+                    if stt not in ("done", "failed", "cancelled"):
+                        continue
+                    c.execute("UPDATE national_jobs SET state=%s, done_at=now() WHERE job_id=%s", (stt, jid))
+                    inflight.pop(jid)
+                    err = None
+                    if stt != "done":
+                        err = f"작업 {stt}: {str(v.get('error') or '')[:200]}"
+                    elif int(v.get("shards_failed") or 0) > 0:
+                        err = f"작업 칩 {v.get('shards_failed')}개 실패 — 칸을 다시"
+                    if err:
+                        _drop_cell(c, cell, active, inflight, year, err)
+                        continue
+                    cell.done.add(k)
+                # 2) 다 끝난 칸 마무리(넣은 순서대로)
+                for cell in [x for x in active if x.finished()]:
+                    res = finish_cell(c, cell.asset, year, cell.cd, [cell.jobs[k] for k in sorted(cell.jobs)], model=cell.model, t0=cell.t0)
+                    res["sec"] = round(time.time() - cell.t0)
+                    active.remove(cell)
+                    log(f"칸 {cell.asset} {cell.cd} 끝 {res}")
+                    status(state="cell_done", asset=cell.asset, cell=cell.cd, last_done=dt.datetime.now(KST).isoformat(timespec="seconds"))
+                # 3) 빈자리에 다음 조각(지금 칸의 남은 조각 → 없으면 다음 칸)
+                while len(inflight) < depth and turn_ok(c, g):
+                    cell = next((x for x in active if not x.all_in()), None)
+                    if cell is None:
+                        if time.time() - api_seen > 60:
+                            wait_api(year)
+                            api_seen = time.time()
+                        ex = [f"{x.asset}:{x.cd}" for x in active]
+                        nxt = next_cell(c, year, st["assets"], model, exclude=ex)
+                        if not nxt:
+                            break
+                        asset, cd, sgg_name, name, tries, redo = nxt
+                        log(f"칸 {asset} {cd} {sgg_name} {name} 시작" + (f" · 새 판으로 다시({model})" if redo else "") + f" · 흐름 {depth}")
+                        try:
+                            cell = CellRun(c, asset, year, cd, iid, model, bool(redo))
+                        except Exception as e:  # noqa: BLE001
+                            fail_cell(c, asset, year, cd, repr(e), redo=bool(redo))
+                            continue
+                        active.append(cell)
+                        if not cell.parts:
+                            continue
+                    try:
+                        k, jid = cell.submit(c, g)
+                        inflight[jid] = (cell, k)
+                    except Exception as e:  # noqa: BLE001
+                        _drop_cell(c, cell, active, inflight, year, repr(e))
+                if not active and not inflight:
+                    nxt = next_cell(c, year, st["assets"], model)
+                    if not nxt:
+                        status(state="all_done", year=year)
+                        log("남은 칸 없음 — 끝")
+                        return
+                cur = active[0] if active else None
+                if cur and inflight:
+                    status(state="running", asset=cur.asset, cell=cur.cd, name=cur.name, parts=len(cur.parts), part=len(cur.done) + 1,
+                           inflight=len(inflight), depth=depth, test=False)
+                time.sleep(2)
+            except Pause as e:
+                for cell in active:
+                    c.execute("UPDATE national_cells SET state=%s WHERE asset=%s AND year=%s AND cell_cd=%s",
+                              ("done" if cell.redo else "todo", cell.asset, year, cell.cd))
+                    log(f"칸 {cell.asset} {cell.cd} 멈춤({e}) — 다시 켜면 이어서")
+                active.clear()
+                inflight.clear()
+                status(state="paused")
+                log("멈춤 설정 — 끝")
+                return
+            except Exception as e:  # noqa: BLE001 — 게이트웨이 재시작 · 잠깐 끊김 — 돌던 조각 · 칸은 그대로 두고 잠시 뒤 이어서
+                log(f"흐름 방식 잠시 멈춤(이어서 함): {repr(e)[:200]}")
+                if c.closed:
+                    raise                          # 데이터베이스 연결이 끊김 — 작업기를 끝낸다(예약 작업이 15분 안에 다시 켠다 · 끊긴 칸은 이어 씀)
+                time.sleep(20)
+
+
+def _drop_cell(c, cell: "CellRun", active: list, inflight: dict, year: int, err: str):
+    """칸 실패 — 영상 API 장애면 실패로 세지 않고 차례로 되돌린다(예전과 같음). 돌던 다른 조각은 그대로 끝나게 두고(다음에 이어 씀) 기다리지 않는다."""
+    for jid in [j for j, (cc, _) in inflight.items() if cc is cell]:
+        inflight.pop(jid)
+    if cell in active:
+        active.remove(cell)
+    if not api_ok(year):
+        c.execute("UPDATE national_cells SET state=%s WHERE asset=%s AND year=%s AND cell_cd=%s", ("done" if cell.redo else "todo", cell.asset, year, cell.cd))
+        log(f"칸 {cell.asset} {cell.cd} 영상 API 장애로 멈춤 — 돌아오면 이어서: {err[:160]}")
+        return
+    fail_cell(c, cell.asset, year, cell.cd, err, redo=cell.redo)
+
+
 def loop(force_window: bool = False):
     """학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). force_window 는 예전 --now 호환(같은 동작)."""
+    depth = pipeline_depth()
+    if depth > 1:
+        if not take_lock():
+            print("이미 돌고 있음")
+            return
+        try:
+            log(f"흐름 방식 — 조각 {depth}개까지 동시에(impl-41)")
+            loop_pipeline(depth)
+        finally:
+            drop_lock()
+        return
     if not take_lock():
         print("이미 돌고 있음")
         return

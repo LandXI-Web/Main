@@ -32,6 +32,8 @@ def _own_llm_req_key(monkeypatch):
     실키를 지우지 않는다(지우면 실워커가 LLM 과 동시에 GPU 를 올릴 수 있다 · 전력 규칙). 동시 LLM 활동이 있어도 결과가 같다."""
     key = f"power:llm_request:pytest:{time.time_ns()}"
     monkeypatch.setattr(bus, "LLM_REQ", key)
+    from workers import pair_guard                      # 이 파일은 한 장 모드 규칙(두 장 동시 고부하 금지)을 본다 — 두 장 모드(원칙 270)는 test_impl41_two_gpu
+    monkeypatch.setattr(pair_guard, "two_on", lambda *a, **k: False)
     yield
     bus.r().delete(key)
 

@@ -3,9 +3,13 @@
 # 전력 규칙(2026-09-26): GPU 2장 동시 풀로드 금지 → 기본은 GPU0 한 장. 두 장을 띄워도 power:hot 임대(pools.yaml power.max_hot_gpus=1)가 한 장만 돌린다.
 # S-12: PID 잠금 — .workers.lock 을 다른 살아 있는 프로세스가 쥐고 있으면(동시 기동) 새로 띄우지 않는다. 띄운 PID 는 .workers.pids.
 # Ollama llama-server · vLLM 은 절대 건드리지 않는다 — 여기서 멈추는 것은 이 스크립트가 띄운 PID(server/.workers.pids)뿐.
-param([switch]$Stop, [switch]$Tail, [int[]]$Gpus = @(0), [switch]$NoWait)
+param([switch]$Stop, [switch]$Tail, [int[]]$Gpus = @(), [switch]$NoWait)
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ($Gpus.Count -eq 0) {     # 기본값 = config/pools.yaml power.start_gpus(10-17 원칙 270 두 장 시험) · 없으면 0 한 장
+  $Gpus = @(0)
+  try { $yy = Get-Content (Join-Path $here "config\pools.yaml") -Encoding utf8 -Raw; if ($yy -match "(?m)^\s*start_gpus:\s*\[([\d,\s]+)\]") { $Gpus = @($Matches[1].Split(",") | ForEach-Object { [int]$_.Trim() }) } } catch {}
+}
 Set-Location $here
 $pidFile = Join-Path $here ".workers.pids"
 $lockFile = Join-Path $here ".workers.lock"

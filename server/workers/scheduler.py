@@ -268,13 +268,26 @@ def admit(pool: str):
 
 
 NAT_INFLIGHT = int(((_PCFG.get("power") or {}).get("national") or {}).get("inflight", 8))
+NAT_INFLIGHT_TWO = int(((_PCFG.get("power") or {}).get("national") or {}).get("inflight_two", 2 * NAT_INFLIGHT))   # 두 장 모드(원칙 270) — 장마다 8칸
+
+
+def nat_cap(j: dict) -> int:
+    """이 전국 작업이 스트림에 둘 수 있는 칸 수 — 국내 전국 작업은 두 장 모드면 NAT_INFLIGHT_TWO(두 장이 함께 받게), 해외 · 한 장 모드는 NAT_INFLIGHT."""
+    if j.get("nat") == "national":
+        try:
+            from workers import pair_guard
+            if pair_guard.two_on():
+                return NAT_INFLIGHT_TWO
+        except Exception:  # noqa: BLE001
+            pass
+    return NAT_INFLIGHT
 
 
 def is_national(jh: dict) -> bool:
     """전국 결과 자산 작업(options.national · 원칙 221) — 스트림에 한 번에 NAT_INFLIGHT 칸까지만(사용자 작업이 오면 그 몇 칸 뒤에 바로 돈다)."""
     try:
         o = json.loads(jh.get("options") or "{}")
-        return bool(o.get("national") or o.get("overseas"))           # 해외 결과 자산도 같은 칸 수 제한
+        return "national" if o.get("national") else "overseas" if o.get("overseas") else False   # 해외 결과 자산도 같은 칸 수 제한(참 값)
     except Exception:  # noqa: BLE001
         return False
 
@@ -330,7 +343,7 @@ def pick(pool: str, only_new: bool = False) -> str | None:
             continue
         if j.get("slow") and j["cursor"] - int(jh.get("shards_done") or 0) - int(jh.get("shards_failed") or 0) >= 1:
             continue            # 느린 shard 작업(원격 지수 등 · 중앙값 ≥ slow_shard_ms)은 한 번에 1 shard — 다른 cpu 워커가 빠른 작업(실태조사 39칸)을 굶지 않게
-        if j.get("nat") and j["cursor"] - int(jh.get("shards_done") or 0) - int(jh.get("shards_failed") or 0) >= NAT_INFLIGHT:
+        if j.get("nat") and j["cursor"] - int(jh.get("shards_done") or 0) - int(jh.get("shards_failed") or 0) >= nat_cap(j):
             continue            # 전국 작업 — 스트림에 NAT_INFLIGHT 칸까지만(낮에 돌아도 사용자 작업이 그 뒤에 오래 줄 서지 않게)
         j["priority"] = int(jh.get("priority", j["priority"]))
         # (1) 우선순위 (2) 아직 시작 안 한 작업의 첫 묶음 선점(v1.1-17 · 동시 3건 첫 shard ≤ 8s) (3) 기관 deficit
@@ -348,7 +361,7 @@ def _dispatch(pool: str, jid: str, n: int) -> int:
         n = 1
     if j.get("nat"):
         jh0 = bus.job(jid)
-        n = max(0, min(n, NAT_INFLIGHT - (j["cursor"] - int(jh0.get("shards_done") or 0) - int(jh0.get("shards_failed") or 0))))
+        n = max(0, min(n, nat_cap(j) - (j["cursor"] - int(jh0.get("shards_done") or 0) - int(jh0.get("shards_failed") or 0))))
         if not n:
             return 0
     stream = f"shards:{pool}"
@@ -627,10 +640,7 @@ def clean_tick() -> None:
     """진행 중 분석마다 걸러 센다 — 밀린 칸이 적은 작업(막 시작한 · 화면에서 보고 있는 작업)부터, 차례 몫(CLEAN_TICK_S) 안에서.
     오래 밀린 큰 작업(재기동 뒤 따라잡기)은 남는 몫으로 따라잡는다."""
     live = []
-    for k in r().scan_iter(match="job:job_*", count=2000):
-        if k.count(":") != 1:
-            continue
-        jid = k.split(":")[1]
+    for jid in _job_ids(lambda st, ss: st == "running"):
         h = bus.job(jid)
         if not h or h.get("state") != "running" or h.get("kind") not in ("infer", "reinfer") or h.get("pool") == "cpu":
             continue
@@ -666,9 +676,26 @@ def clean_loop() -> None:
         time.sleep(max(0.5, CLEAN_S - (time.time() - t0)))
 
 
+def _job_ids(want) -> list[str]:
+    """job:* 해시 중 want(state, synced_state) 가 참인 것만 — 상태 두 칸을 파이프라인 한 번으로 먼저 읽는다(impl-41).
+    예전에는 끝난 작업(1만 개 가까이 · 만료 없음)까지 하나씩 HGETALL 해 주 고리가 2초마다 5–6초 멈췄다 →
+    전국 작업이 8칩을 끝낸 뒤 다음 8칩을 받기까지 약 6초 · 새 작업 접수도 약 6초 늦음(실측 10-17)."""
+    keys = [k for k in r().scan_iter(match="job:job_*", count=5000) if k.count(":") == 1]
+    out = []
+    for i in range(0, len(keys), 2000):
+        part = keys[i:i + 2000]
+        p = r().pipeline(transaction=False)
+        for k in part:
+            p.hmget(k, "state", "synced_state")
+        for k, (st, ss) in zip(part, p.execute()):
+            if want(st, ss):
+                out.append(k.split(":", 1)[1])
+    return out
+
+
 def sync_db():
     """Redis 미러 → jobs 표(2s)."""
-    ids = [k.split(":")[1] for k in r().scan_iter(match="job:job_*", count=2000) if k.count(":") == 1]
+    ids = _job_ids(lambda st, ss: st is not None and ss != "final" and not (ss == st == "done"))
     if not ids:
         return
     with bus.pg() as conn:

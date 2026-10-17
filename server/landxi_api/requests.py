@@ -1547,7 +1547,12 @@ async def manage_list(request: Request):
             [rq_of.get(lg["subject"], lg["subject"]) for lg in logs])} if logs else {}
     try:
         pb = await power_budget()
-        conc = {"hot_now": int(pb.get("hot_now") or 0), "max_hot_gpus": int(pb.get("max_hot_gpus") or 1)}
+        # 두 장 모드(원칙 270)에서도 사용자 분석은 첫 장에서 한 번에 한 건 — 두 번째 장(전국 작업만)의 임대는 세지 않는다
+        _pw = config.load_yaml("pools").get("power", {}) or {}
+        _ng = (_pw.get("national") or {}).get("gpu", 0)
+        _sec = {f"{config.POOL}-{g}" for g in (_ng[1:] if isinstance(_ng, (list, tuple)) else [])}
+        _held = [x for x in pb.get("leases") or [] if x.get("holder") and x.get("holder") not in _sec]
+        conc = {"hot_now": len(_held), "max_hot_gpus": int(_pw.get("job_max_gpus", pb.get("max_hot_gpus") or 1))}
     except Exception:  # noqa: BLE001
         conc = None
     staff_name = {s["id"]: s["name"] for s in staff}

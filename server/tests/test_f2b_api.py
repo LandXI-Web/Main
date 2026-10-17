@@ -95,7 +95,8 @@ def test_quote_korea_keeps_5186(live, tok):
                          "options": {"chip": 1024, "overlap": 0.125}}).json()
     assert q["area_km2"]["source"] == "shapely area(EPSG:5186)"
     pb = q["power_budget"]
-    assert pb["max_hot_gpus"] == 1 and len(pb["leases"]) == 1 and pb["hold_reason"] in (None, "power_budget")
+    # 10-17 원칙 270: 두 장 사용 시험 — 임대 칸은 max_hot_gpus(≤ 2)만큼 · 한 작업이 쓰는 장은 여전히 1(job_max_gpus)
+    assert pb["max_hot_gpus"] in (1, 2) and len(pb["leases"]) == pb["max_hot_gpus"] and pb["hold_reason"] in (None, "power_budget")
 
 
 # ── D0 plan 훅 ─────────────────────────────────────────────────────────────────

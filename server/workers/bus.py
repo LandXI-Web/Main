@@ -161,11 +161,22 @@ def llm_power_request(holder: str = "llm", llm_gpu: int = 1, ttl_s: int = 30, wa
     r().set(LLM_REQ, holder, ex=max(1, int(until - now)))  # 예고는 도는 호출 중 가장 늦은 만료까지
     t0 = time.time()
     other = {}
+    two = False
     try:
-        from workers import nvml_power
+        from workers import pair_guard
+        two = pair_guard.two_on(r())
+        if two:
+            # 두 장 모드(원칙 270 · 10-17): 다른 장(GPU0)의 전국 작업은 기다리지 않는다(장마다 쉼 조절 + 합 전력 안전 감시).
+            # 대신 이 장(LLM 장)에서 돌던 전국 칩 묶음이 비킬 때까지만(최대 3초 · 칩 묶음 하나 ≈ 1초) 기다린다.
+            while r().exists(f"power:nat_busy:{llm_gpu}") and time.time() - t0 < 3.0:
+                time.sleep(0.05)
+    except Exception:
+        two = False
+    try:
+        from workers import nvml_power, pair_guard as _pg
         while True:
             v = nvml_power.read_avg()
-            other = {i: w for i, w in v.items() if i != llm_gpu}
+            other = {i: w for i, w in v.items() if i != llm_gpu and not (two and _pg.nat_heat(r(), i, 30))}
             if not other or max(other.values()) < limit_w or time.time() - t0 >= wait_max_s:
                 break
             time.sleep(0.1)
@@ -265,8 +276,10 @@ def ensure_group(stream: str, group: str):
 
 
 def pg():
+    """워커 · 스케줄러 데이터베이스 연결 — 'localhost' 는 127.0.0.1 로(impl-41 실측 10-17: localhost 가 ::1 을 먼저 고르고
+    ::1:5433 은 wslrelay 가 잡고 있어 연결마다 30초 멈춤 → 스케줄러 주 고리(2초마다 연결) · 워커 기록이 30초씩 멈췄다)."""
     import psycopg
-    return psycopg.connect(config.PG_WORKER_DSN, autocommit=False)
+    return psycopg.connect(config.PG_WORKER_DSN.replace("@localhost:", "@127.0.0.1:"), autocommit=False)
 
 
 def lx_tx(conn):

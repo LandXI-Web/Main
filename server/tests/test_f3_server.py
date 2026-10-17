@@ -430,7 +430,8 @@ def test_s9_ops_unified(live, tok):
     ad = H(tok["admin"])
     g = httpx.get(B + "/ops/gpus", headers=ad, timeout=30).json()
     pb = g["power_budget"]
-    assert set(pb) >= {"max_hot", "hot_now", "ok"} and pb["max_hot"] == 1 and isinstance(pb["ok"], bool)
+    # 10-17 원칙 270: 두 장 모드면 max_hot 2 · 안전 감시가 한 장으로 돌렸거나 한 장 설정이면 1
+    assert set(pb) >= {"max_hot", "hot_now", "ok", "pair"} and pb["max_hot"] == (2 if pb["pair"]["mode"] == "two" else 1) and isinstance(pb["ok"], bool)
     # 브라우저 스트림은 스트림 전용 호스트 이름으로(c2-xi 3차 · API 호스트 이름이면 204)
     with httpx.stream("GET", B + "/events/ops", headers={**ad, "origin": "http://localhost:4173", "host": "s1.localhost:8700"}, timeout=10) as r:
         assert r.status_code == 200

@@ -25,11 +25,12 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--gpu", type=int, default=0)
 ap.add_argument("--pool", default=None)
 A = ap.parse_args()
+os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")    # CUDA 장 번호 = nvidia-smi 순번(두 장 모드에서 GPU1 워커가 XI ChatGEO 장을 정확히 가리키게)
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", str(A.gpu))
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
-from workers import bus, vram  # noqa: E402
+from workers import bus, pair_guard, vram  # noqa: E402
 from workers.bus import emit, env, log, now_iso, ops_event, r  # noqa: E402
 from workers.metering import meter  # noqa: E402
 from workers.registry_scan import load_adapter, scan_adapters  # noqa: E402
@@ -53,7 +54,13 @@ QUIET_S = float(PWR.get("other_quiet_s", 20))               # 다른 GPU 가 내
 IDLE_RELEASE = float(PWR.get("idle_release_s", 3))
 # 전국 결과 자산(작업 options.national) — 한 장만 · 풀로드 금지(원칙 221 · 10-12). 작은 묶음 + 묶음 사이 쉼(이 GPU 사용률 · 전력을 재며 조절).
 NAT = PWR.get("national", {}) or {}
-NAT_GPU = int(NAT.get("gpu", 0))                            # 전국 작업은 이 장에서만(다른 장 = vLLM 등 · 건드리지 않음)
+NAT_GPUS = pair_guard.nat_gpus(PWR)                         # 전국 작업을 돌리는 장들 — 두 장 모드(원칙 270 · 10-17 시험)면 [0, 1], 아니면 첫 장만
+NAT_GPU = NAT_GPUS[0]                                       # 첫 장(한 장 모드 · 해외 결과 자산 · 예전 규칙)
+SECONDARY = A.gpu != NAT_GPU and A.gpu in NAT_GPUS          # 두 장 모드에서 전국 칩만 받는 장(GPU1 = XI ChatGEO 장 · 사용자 분석은 받지 않음)
+SEC_MEM_MIB = int(NAT.get("secondary_mem_mib", 5120))       # 그 장에서 이 워커가 쓰는 메모리 상한(XI ChatGEO vLLM · Ollama 자리를 남긴다)
+NAT_READ = max(1, int(NAT.get("read", 8)))                  # 두 장 모드에서 전국 칩을 한 번에 읽는 수(한 워커가 칩을 다 가져가지 않게)
+LLM_QUIET_S = float(NAT.get("llm_quiet_s", 5))              # XI ChatGEO 호출이 끝난 뒤 그 장의 전국 작업이 다시 들기까지(질문이 이어서 올 때 끼어들지 않게)
+LRU_MAX = 1 if SECONDARY else int(PCFG.get("lru_max", 3))
 NAT_CHUNK = max(1, int(NAT.get("chunk", 4)))                # 한 번에 돌리는 칩 수(묶음 크기)
 NAT_UTIL = float(NAT.get("util_max", 70))                   # 사용률 상한(%) — 이동평균이 넘으면 쉼을 늘린다
 NAT_W = float(NAT.get("power_max_w", 140))                  # 전력 상한(W) — 장당 상한 200 W 의 70%
@@ -62,7 +69,7 @@ nat = {"duty": NAT_DUTY0, "slept": 0.0}
 # 학습(kind train) — 전국 작업과 같은 상한(10-12 구현 25 · 원칙 221): 한 장만 · 풀로드 금지. 시스템 전력 상한은 바꾸지 않고
 # 배치 뒤 쉼으로 조절(이 장의 30초 평균 사용률 · 전력을 재며 일하는 몫을 줄이고 늘림). 설정 power.train(없으면 power.national 값).
 TRN = {**NAT, **(PWR.get("train", {}) or {})}
-TRN_GPU = int(TRN.get("gpu", NAT_GPU))
+TRN_GPU = int(TRN["gpu"]) if isinstance(TRN.get("gpu"), int) else NAT_GPU
 TRN_UTIL = float(TRN.get("util_max", NAT_UTIL))
 TRN_W = float(TRN.get("power_max_w", NAT_W))
 TRN_DUTY0 = float(TRN.get("duty", NAT_DUTY0))
@@ -119,12 +126,96 @@ def nvml_loop():
                 # 쉬는 동안에도 다른 GPU 고부하를 기억한다(히스테리시스 QUIET_S) — 예전에는 게이트를 부를 때만 기억해,
                 # vLLM 생성 중 한 순간 100 W 아래로 내려간 틈에 새 작업 첫 묶음이 시작돼 두 장이 함께 100 W 를 넘었다(r3-xi 2차 · 16:05:06)
                 for i, w in v.items():
-                    if i != A.gpu and w and float(w) > OTHER_HOT_W:
+                    if i != A.gpu and w and float(w) > OTHER_HOT_W and not own_heat(i):
                         state["other_last_hot"], state["other_last"] = time.time(), (i, round(float(w), 1))
         except Exception as e:
             log(WHO, "nvml error", repr(e))
             time.sleep(2)
         time.sleep(FAST_POLL_S)
+
+
+def own_heat(i: int) -> bool:
+    """두 장 모드(원칙 270)에서 i 장의 열이 우리 전국 작업 몫인가 — 그렇다면 '다른 GPU 고부하'로 세지 않는다.
+    (그 장은 사용자 작업 칸이 오면 칩 묶음 사이에서 비키고, 두 장 합 전력 · 온도는 안전 감시 pair_guard 가 본다.)"""
+    try:
+        return pair_guard.two_on() and pair_guard.nat_heat(r(), i, QUIET_S)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+READ_AHEAD = bool(NAT.get("read_ahead", False))             # 전국 칩: 마지막 묶음을 추론하는 동안 다음 묶음 영상을 미리 받기(impl-41 (a) · pools.yaml)
+ahead: dict = {"entries": [], "futs": {}}
+
+
+def read_ahead():
+    """다음 전국 칩 묶음을 이 워커 몫으로 미리 받고(XREADGROUP — 다른 워커와 겹쳐 받지 않음) 영상 창 읽기를 시작해 둔다.
+    loop_once 가 다음 차례에 이 칸들을 그대로 쓴다. 다음 칸이 전국 칩이 아니면(사용자 분석 등) 받지 않는다."""
+    if ahead["entries"]:
+        return
+    if len(ahead["futs"]) > 64:          # 미리 읽었다가 비키며 되돌린 칸의 남은 읽기(쓰이지 않음) — 쌓이지 않게
+        ahead["futs"].clear()
+    try:
+        if SECONDARY and (not pair_guard.two_on() or llm_wanted()):
+            return
+        if next_kind() != "national":
+            return
+        res = r().xreadgroup(GROUP, WID, {STREAM: ">"}, count=NAT_READ)
+    except Exception:  # noqa: BLE001
+        return
+    es = res[0][1] if res else []
+    ahead["entries"] = es
+    for _, f in es:
+        try:
+            jid = f.get("job_id", "")
+            if next_kind_of(jid) != "national" or not f.get("window"):
+                continue
+            img = r().hget(f"job:{jid}", "imagery_id")
+            ahead["futs"][(jid, f["shard_id"])] = pool_io.submit(read_window, imagery_path(img), json.loads(f["window"]))
+        except Exception:  # noqa: BLE001
+            continue
+
+
+def next_kind_of(jid: str) -> str:
+    k = _kind_cache.get(jid)
+    if k is None:
+        o = r().hget(f"job:{jid}", "options") or ""
+        k = _kind_cache[jid] = "national" if '"national"' in o else "overseas" if '"overseas"' in o else "other"
+    return k
+
+
+def llm_wanted() -> bool:
+    """XI ChatGEO(이 장의 vLLM) 호출 예고가 있거나 끝난 지 LLM_QUIET_S 가 안 됐나 — 두 번째 장의 전국 작업은 비킨다(원칙 270)."""
+    try:
+        if r().get(bus.LLM_REQ):
+            state["llm_seen"] = time.time()
+            return True
+    except Exception:  # noqa: BLE001
+        return False
+    return time.time() - float(state.get("llm_seen") or 0) < LLM_QUIET_S
+
+
+_kind_cache: "OrderedDict[str, str]" = OrderedDict()
+
+
+def next_kind() -> str | None:
+    """스트림에서 다음에 받을 칸(아직 아무도 안 받은 첫 칸)의 작업 종류 — 'national' | 'overseas' | 'other' | None(없음)."""
+    try:
+        g = next((x for x in r().xinfo_groups(STREAM) if x.get("name") == GROUP), None)
+        last = (g or {}).get("last-delivered-id") or "0-0"
+        es = r().xrange(STREAM, min="(" + last, count=1)
+    except Exception:  # noqa: BLE001
+        return None
+    if not es:
+        return None
+    jid = es[0][1].get("job_id", "")
+    k = _kind_cache.get(jid)
+    if k is None:
+        o = r().hget(f"job:{jid}", "options") or ""
+        k = "national" if '"national"' in o else "overseas" if '"overseas"' in o else "other"
+        _kind_cache[jid] = k
+        while len(_kind_cache) > 256:
+            _kind_cache.popitem(last=False)
+    return k
 
 
 def other_gpu_hot():
@@ -134,7 +225,7 @@ def other_gpu_hot():
     fresh = time.time() - float(smi.get("pfast_at") or 0) < 0.5
     idx = set(fast) | set((smi.get("pring") or {}).keys())
     for i in sorted(idx):
-        if i == A.gpu:
+        if i == A.gpu or own_heat(i):
             continue
         ring = list((smi.get("pring") or {}).get(i) or [])
         cand = []
@@ -309,7 +400,7 @@ def ensure_model(mid: str):
     if mid in models:
         models.move_to_end(mid)
         return models[mid]
-    while len(models) >= int(PCFG.get("lru_max", 3)):
+    while len(models) >= LRU_MAX:
         old, (ad, _, _) = models.popitem(last=False)
         ad.unload()
         torch.cuda.empty_cache()
@@ -396,6 +487,48 @@ def _pdh_loop():
         time.sleep(15)
 
 
+_JOB: dict = {}
+
+
+def _die_with_me(p) -> bool:
+    """Windows: 자식(nvidia-smi 스트림)을 이 워커와 함께 끝나게 — 작업 개체(KILL_ON_JOB_CLOSE)에 넣는다.
+    (impl-41 실측 10-17: 워커를 다시 켤 때마다 옛 nvidia-smi -lms 500 스트림이 부모 없이 남아 29개가 돌고 있었다 —
+     정리하자 쉬는 동안 GPU0 전력이 약 100 W → 약 20 W 로 내려갔다.)"""
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        k32.OpenProcess.restype = wintypes.HANDLE
+        k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        k32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        k32.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+        k32.CloseHandle.argtypes = [wintypes.HANDLE]
+        if "h" not in _JOB:
+            class _Basic(ctypes.Structure):
+                _fields_ = [("a", ctypes.c_int64), ("b", ctypes.c_int64), ("LimitFlags", wintypes.DWORD), ("c", ctypes.c_size_t),
+                            ("d", ctypes.c_size_t), ("e", wintypes.DWORD), ("f", ctypes.c_size_t), ("g", wintypes.DWORD), ("h", wintypes.DWORD)]
+
+            class _Ext(ctypes.Structure):
+                _fields_ = [("Basic", _Basic), ("Io", ctypes.c_ulonglong * 6), ("m1", ctypes.c_size_t), ("m2", ctypes.c_size_t),
+                            ("m3", ctypes.c_size_t), ("m4", ctypes.c_size_t)]
+            job = k32.CreateJobObjectW(None, None)
+            info = _Ext()
+            info.Basic.LimitFlags = 0x2000                 # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            if not k32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info)):
+                return False
+            _JOB["h"] = job                                 # 핸들은 닫지 않는다 — 워커가 끝나면 OS 가 닫고 자식도 끝난다
+        h = k32.OpenProcess(0x0100 | 0x0001, False, p.pid)  # PROCESS_SET_QUOTA | PROCESS_TERMINATE
+        ok = bool(h) and bool(k32.AssignProcessToJobObject(_JOB["h"], h))
+        if h:
+            k32.CloseHandle(h)
+        return ok
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def smi_sampler():
     """nvidia-smi -lms 500 스트림(DriverStore 최신 · LX_NVSMI 우선) → GPU 별 링버퍼 5 → util 이동평균 · power_w(v1.1-7 · v1.1-18)."""
     import subprocess
@@ -406,6 +539,8 @@ def smi_sampler():
         try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            if not _die_with_me(p):
+                log(WHO, "nvidia-smi 스트림을 워커와 묶지 못함 — 워커를 다시 켜면 옛 스트림이 남을 수 있음")
             for line in p.stdout:
                 v = [x.strip() for x in line.split(",")]
                 if len(v) < 5:
@@ -560,14 +695,16 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     tenant = jh.get("tenant_id")
     opts = json.loads(jh.get("options") or "{}")
     national = bool(opts.get("national") or opts.get("overseas"))      # 해외 결과 자산(나라 전체)도 전국 작업과 같은 규칙(한 장 · 쉼 · 비킴)
-    other_gpu_card = national and A.gpu != NAT_GPU      # 전국 작업은 정한 한 장에서만 — 다른 장 워커는 되돌려 놓는다
-    if national and (other_gpu_card or other_job_waiting(job_id)):     # 다른 작업 칸이 기다리면 읽기 전에 통째로 뒤로(원칙 221)
-        for _, f in entries:
+    two = bool(opts.get("national")) and pair_guard.two_on()            # 두 장 모드(원칙 270) — 국내 전국 작업만 두 장에서(해외는 첫 장 그대로)
+    # 정한 장 밖이면 되돌려 놓는다 — 두 번째 장(XI ChatGEO 장)은 두 장 모드의 국내 전국 칩만 받는다
+    other_gpu_card = (national and A.gpu not in (NAT_GPUS if two else [NAT_GPU])) or (SECONDARY and not two)
+    if other_gpu_card or (national and other_job_waiting(job_id)) or (two and SECONDARY and llm_wanted()):
+        for _, f in entries:            # 다른 작업 칸이 기다리면 · XI ChatGEO 질문이 오면(두 번째 장) 읽기 전에 통째로 뒤로(원칙 221 · 270)
             r().xadd(STREAM, f)
         r().xack(STREAM, GROUP, *ids)
         r().xdel(STREAM, *ids)
         if other_gpu_card:
-            time.sleep(2)
+            time.sleep(0.2 if SECONDARY else 2)
         return
     mid = jh.get("model_id")
     ad, meta, _ = ensure_model(mid)
@@ -593,7 +730,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     t0 = time.perf_counter()
     # 해외 작업(options.overseas)은 어댑터가 합성 파일(42 띠)을 스스로 열고 닫는다 — 여기서 열어 두면(스레드 캐시) 칸이 끝난 뒤 중간 파일을 지울 수 없다
     ovs = bool(opts.get("overseas"))
-    futs = {} if ovs else {s.id: pool_io.submit(read_window, path, s.window) for s in shards}
+    futs = {} if ovs else {s.id: (ahead["futs"].pop((job_id, s.id), None) or pool_io.submit(read_window, path, s.window)) for s in shards}
     cache = {}
 
     def reader(s):
@@ -617,13 +754,19 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
                 bus.inflight_end(POOL, job_id, s.id)    # 멈춘 작업 — 남은 칸은 돌리지 않는다(GPU 를 바로 놓는다)
             log(WHO, f"job {job_id} 멈춤 — 묶음의 남은 {len(shards) - c0}칸 건너뜀")
             break
-        if national and c0 and other_job_waiting(job_id):
-            for (_, f), s in zip(entries[c0:], shards[c0:]):     # 전국 작업 — 다른 작업 칸이 기다리면 남은 칸을 스트림 끝으로 돌려 비킨다(원칙 221)
+        llm = two and SECONDARY and llm_wanted()
+        if national and c0 and (llm or other_job_waiting(job_id)):
+            for (_, f), s in zip(entries[c0:], shards[c0:]):     # 전국 작업 — 다른 작업 칸이 기다리면 · XI ChatGEO 질문이 오면 남은 칸을 스트림 끝으로(원칙 221 · 270)
                 bus.inflight_end(POOL, job_id, s.id)
                 r().xadd(STREAM, f)
-            log(WHO, f"전국 작업 {len(shards) - c0}칸 뒤로 — 다른 작업 먼저")
+            log(WHO, f"전국 작업 {len(shards) - c0}칸 뒤로 — " + ("XI ChatGEO 질문 먼저(이 장)" if llm else "다른 작업 먼저"))
             break
-        held = hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
+        # 두 장 모드의 전국 작업은 다른 장의 열을 기다리지 않는다(장마다 쉼 조절 + 두 장 합 전력 · 온도 안전 감시 · 원칙 270)
+        held = 0.0 if two else hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
+        if two:
+            pair_guard.mark_busy(r(), A.gpu, job_id)
+        if national and READ_AHEAD and not ovs and c0 + step >= len(shards):
+            read_ahead()            # 마지막 묶음 — 다음 칩들을 이 워커 몫으로 미리 받아 영상 읽기를 시작(추론하는 동안 받기 · impl-41 (a))
         tp = time.perf_counter()
         for s in part:
             reader(s)
@@ -642,6 +785,8 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         _commit_part(job_id, tenant, demo, meta, sdir, part, results, attempts, t_part, held)
         if national:
             log(WHO, f"전국 묶음 시간 · 영상 읽기 대기 {tg - tp:.2f}s · 추론+쉼 {tc - tg:.2f}s · 기록 {time.perf_counter() - tc:.2f}s")
+    if two:
+        pair_guard.clear_busy(r(), A.gpu)
     r().xack(STREAM, GROUP, *ids)
     r().xdel(STREAM, *ids)
     jh = bus.job(job_id)
@@ -1049,6 +1194,8 @@ def control():
         for eid, f in entries:
             r().hset(f"worker:{WID}:ctl", "last", eid)
             try:
+                if SECONDARY and f.get("action") == "load":
+                    continue                              # 두 번째 장(XI ChatGEO 장)은 사용자 분석 모델을 미리 올리지 않는다(메모리 · 원칙 270)
                 if f["action"] == "load" and f.get("model_id") in models:
                     models.move_to_end(f["model_id"])
                 elif f["action"] == "load" and gate_block():
@@ -1071,6 +1218,8 @@ def main():
     g = vram.query(A.gpu)[0]
     allp = [p for x in vram.query() for p in x.external_procs]      # WDDM: GPU 별 귀속이 불안정 — 노드 전체 외부 프로세스로 표기
     budget = vram.budget_mib(g.total_mib, g.used_mib)
+    if SECONDARY:
+        budget = min(budget, SEC_MEM_MIB)                            # XI ChatGEO 장 — 작은 상한(vLLM · Ollama 자리를 남긴다 · 원칙 270)
     state["budget"], state["external"] = budget, g.used_mib
     torch.cuda.set_per_process_memory_fraction(max(0.05, budget / g.total_mib), 0)
     log(WHO, f"{g.name} {g.mode} · free {vram.fmt(g.total_mib - g.used_mib)} MiB · vram budget {vram.fmt(budget)} MiB(free − "
@@ -1079,13 +1228,22 @@ def main():
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
     for t in (heartbeat, vram_reporter, smi_sampler, nvml_loop):
         threading.Thread(target=t, daemon=True).start()
+    threading.Thread(target=pair_guard.guard_loop, args=(WHO, log), daemon=True, name="pair-guard").start()   # 두 장 합 전력 · 온도 1초 감시(잠금 쥔 하나만)
+    if bool(NAT.get("tile_share", False)) and A.gpu in NAT_GPUS:
+        # 영상 나눠 받기(impl-41 (c)) — 첫 장 워커가 문지기(127.0.0.1), 두 번째 장 워커는 손님. 영상 서버 호출은 문지기 한 곳에서만(상한 그대로)
+        from workers import imagery_src as _im
+        port = int(NAT.get("tile_share_port", 8706))
+        _im.TILE_ROLE = os.environ["LX_TILE_ROLE"] = "client" if SECONDARY else "serve"
+        _im.TILE_PROXY = f"http://127.0.0.1:{port}"
+        if not SECONDARY:
+            threading.Thread(target=_im.serve_tiles, args=(port, lambda *a: log(WHO, *a)), daemon=True, name="tile-share").start()
     # 기동 때 상주 모델 적재(더미 추론 포함)도 전력 규칙을 따른다 — 다른 GPU 가 고부하(vLLM 생성 중)면 조용해질 때까지 최대 60초 기다리고,
     # 그래도 고부하면 미리 적재를 건너뛴다(첫 작업 때 적재). 예전에는 기동 직후 적재가 게이트 밖이라 두 장이 함께 100 W 를 넘었다(r3-xi 2차 · 16:06:49)
     time.sleep(0.5)                                                  # NVML 첫 표본
     t_gate = time.time()
     while gate_block() and time.time() - t_gate < 60:
         time.sleep(0.5)
-    residents = [] if gate_block() else PCFG.get("resident", [])
+    residents = [] if (gate_block() or SECONDARY) else PCFG.get("resident", [])
     if not residents and PCFG.get("resident"):
         log(WHO, "상주 모델 미리 적재 건너뜀 — 다른 GPU 고부하(전력 규칙) · 첫 작업 때 적재")
     for mid in residents:
@@ -1112,7 +1270,28 @@ def loop_once(last_claim: float) -> float:
         if lease["slot"] is None and r().xlen(STREAM) == 0:
             time.sleep(0.3)          # 일이 없으면 임대를 잡지 않는다(유휴 GPU 는 전력 슬롯을 비워 둔다)
             return last_claim
-        n_batch = power_gate()
+        if ahead["entries"]:                     # 앞 묶음이 미리 받아 둔 다음 칸(영상 읽기 이미 시작) — 전력 임대 · 게이트는 처리 안에서 그대로
+            entries, ahead["entries"] = ahead["entries"], []
+            if power_acquire():
+                lease["last_work"] = time.time()
+                return _run_entries(entries, last_claim)
+            ahead["entries"] = entries
+            time.sleep(0.5)
+            return last_claim
+        two = pair_guard.two_on()
+        if SECONDARY:
+            # 두 번째 장(원칙 270): 두 장 모드 · XI ChatGEO 질문 없음 · 다음 칸이 국내 전국 칩일 때만 읽는다(사용자 분석 · 해외는 첫 장)
+            if not two or llm_wanted() or next_kind() != "national":
+                if lease["slot"] is not None and time.time() - lease["last_work"] > IDLE_RELEASE:
+                    power_release("idle")
+                time.sleep(0.2)
+                return last_claim
+            n_batch = NAT_READ
+        elif two and next_kind() == "national":
+            _gate_clear()
+            n_batch = NAT_READ       # 두 장 모드 — 한 워커가 전국 칩을 다 가져가지 않게
+        else:
+            n_batch = power_gate()
         if n_batch == 0:
             time.sleep(0.5)
             return last_claim
@@ -1121,7 +1300,7 @@ def loop_once(last_claim: float) -> float:
             return last_claim
         res = r().xreadgroup(GROUP, WID, {STREAM: ">"}, count=n_batch, block=1000)
         entries = res[0][1] if res else []
-        if not entries and time.time() - last_claim > 5:
+        if not entries and not SECONDARY and time.time() - last_claim > 5:
             last_claim = time.time()
             try:
                 _, claimed, *_ = r().xautoclaim(STREAM, GROUP, WID, min_idle_time=30000, start_id="0-0", count=BATCH)
@@ -1135,6 +1314,13 @@ def loop_once(last_claim: float) -> float:
                 power_release("idle")
             return last_claim
         lease["last_work"] = time.time()
+        return _run_entries(entries, last_claim)
+    return last_claim
+
+
+def _run_entries(entries, last_claim: float) -> float:
+    import torch
+    if True:
         byjob: dict[str, list] = {}
         for eid, f in entries:
             byjob.setdefault(f["job_id"], []).append((eid, f))

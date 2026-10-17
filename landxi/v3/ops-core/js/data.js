@@ -176,7 +176,7 @@ const DIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '
 export const openAlerts = () => (D.alerts?.items || []).filter((a) => !a.closed_at && !/^vram_/.test(a.rule));
 export function power() {
   const pb = D.gpus?.power_budget;
-  if (pb && pb.max_hot != null) return { hot: +pb.hot_now || 0, max: +pb.max_hot, ok: pb.ok !== false };
+  if (pb && pb.max_hot != null) return { hot: +pb.hot_now || 0, max: +pb.max_hot, ok: pb.ok !== false, pair: pb.pair || null };
   const g = D.gpus?.gpus || [];
   const hot = g.filter((x) => (x.util_ma5?.value ?? 0) >= 50).length;
   return { hot, max: 1, ok: hot <= 1 };           // 전력 규칙: 동시 고부하 ≤ 1장

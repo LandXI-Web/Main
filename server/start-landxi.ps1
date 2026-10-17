@@ -9,10 +9,15 @@
 # S-12: 워커 PID 잠금(.workers.lock · 이중 기동 0) · 전력 규칙 검사(장당 상한 · max_hot_gpus · 고부하 GPU 수) · 헬스 대기 순서
 #       (Redis·PG → 마이그레이션 → 게이트웨이 헬스 → 워커 하트비트 → 관제) · 게이트웨이 감시 · 관제에 가동 시간(GET /ops/uptime).
 # 절대 하지 않는 것: Ollama llama-server 종료 · vLLM 컨테이너 조작 · 4173 serve.mjs 종료 · cleanriver 컨테이너 조작(docker 는 -p landxi 로만).
-param([switch]$Status, [switch]$Stop, [switch]$NoMock, [int[]]$Gpus = @(0), [ValidateSet("", "gateway", "workers", "all")][string]$Restart = "",
+param([switch]$Status, [switch]$Stop, [switch]$NoMock, [int[]]$Gpus = @(), [ValidateSet("", "gateway", "workers", "all")][string]$Restart = "",
       [switch]$Watch, [switch]$NoWatch)
 $ErrorActionPreference = "Continue"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+# 워커 GPU 목록 기본값 = config/pools.yaml power.start_gpus(10-17 원칙 270 두 장 시험: [0, 1]) · 없으면 0 한 장
+if ($Gpus.Count -eq 0) {
+  $Gpus = @(0)
+  try { $yy = Get-Content (Join-Path $here "config\pools.yaml") -Encoding utf8 -Raw; if ($yy -match "(?m)^\s*start_gpus:\s*\[([\d,\s]+)\]") { $Gpus = @($Matches[1].Split(",") | ForEach-Object { [int]$_.Trim() }) } } catch {}
+}
 $repo = Split-Path -Parent $here
 $logs = "E:\Land-XI 플랫폼\02. 데이터\_logs"
 $pidFile = Join-Path $here ".start-landxi.pids"
@@ -240,7 +245,8 @@ if (Lock-Held) {
     $hasS = [bool](ProcLike "workers/scheduler\.py"); $hasC = [bool](ProcLike "cpu_worker\.py(?!.*--id cpu-1)"); $hasC1 = [bool](ProcLike "cpu_worker\.py --id cpu-1")
     $missingG = @($Gpus | Where-Object { -not (ProcLike "workers/gpu_worker\.py --gpu $_") })
     if (-not $hasS -and -not $hasC -and $missingG.Count -eq $Gpus.Count) {
-      & powershell -NoProfile -File (Join-Path $here "run-workers.ps1") -Gpus $Gpus -NoWait
+      # -File 로는 배열이 한 값만 넘어간다(두 장이면 1 이 빠짐 · impl-41 실측) — 목록을 한 줄 명령으로 넘긴다
+      & powershell -NoProfile -Command "& '$(Join-Path $here 'run-workers.ps1')' -Gpus $($Gpus -join ',') -NoWait"
     } else {
       if (-not $hasS) { & powershell -NoProfile -File (Join-Path $here "run-one-worker.ps1") -Name scheduler }
       if (-not $hasC) { & powershell -NoProfile -File (Join-Path $here "run-one-worker.ps1") -Name cpu-0 }

@@ -77,7 +77,7 @@ function drawOverview() {
     const al = openAlerts();
     rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
     const p = power();
-    rows.push({ t: `전력 예산 ${p.hot}/${p.max} GPU 고부하`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA });
+    rows.push(equipRow(p));                        // 학습 장비 줄(원칙 270 · 두 장 사용 시험 — 안전 감시가 한 장으로 돌리면 까닭 · 시각)
   }
   /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
@@ -87,6 +87,16 @@ function drawOverview() {
   rows.push({ t: annN === null ? '공지 쓰기' : `공지 ${annN}건 · 쓰기`, lv: '', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();
+}
+
+/* 학습 장비 줄 — GET /ops/gpus power_budget(.pair) 한 출처. 두 장 사용(시험) · 한 장으로 돌아감(까닭 · 시각) · 한 장 사용 */
+const PAIR_WHY = { sum_w: '두 장 합 전력 높음', temp: '온도 높음', driver: '장비 응답 오류' };
+function equipRow(p) {
+  const pr = p.pair || {};
+  const hm = (x) => { const d = new Date(x || ''); return Number.isNaN(+d) ? '' : ` ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  if (pr.mode === 'two') return { t: `학습 장비 두 장 사용 · 고부하 ${p.hot}/${p.max}장`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA };
+  if (pr.configured === 'two' && pr.reason) return { t: `학습 장비 한 장으로 돌아감 · ${PAIR_WHY[pr.reason] || '안전 확인'}${hm(pr.since)}`, lv: 'warn', dot: 'lock', href: INFRA };
+  return { t: `학습 장비 한 장 사용 · 고부하 ${p.hot}/${p.max}장`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA };
 }
 
 async function drawUse() {

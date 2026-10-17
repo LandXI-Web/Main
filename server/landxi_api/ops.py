@@ -242,6 +242,36 @@ async def _recent_sample(r) -> dict:
     return {"avg": {i: sum(v) / len(v) for i, v in acc.items() if v}, "sid": sid, "at": at_s, "gpus": latest}
 
 
+async def pair_status(r, pw: dict | None = None) -> dict:
+    """학습 장비 두 장 사용 상태(원칙 270 · workers/pair_guard.py 와 같은 키) — 관리자 대시보드 '학습 장비' 줄의 한 출처.
+    mode = two(두 장 사용) | single(한 장 — 설정이 한 장이거나 안전 감시가 되돌림) · reason = 되돌린 까닭(sum_w · temp · driver)."""
+    pw = pw if pw is not None else (config.load_yaml("pools").get("power", {}) or {})
+    g = (pw.get("national") or {}).get("gpu", 0)
+    configured = int(pw.get("max_hot_gpus", 1)) >= 2 and isinstance(g, (list, tuple)) and len(g) >= 2
+    try:
+        s = await r.get("power:single")
+        h = await r.hgetall("power:pair") or {}
+        ttl = await r.ttl("power:single") if s else None
+    except Exception:  # noqa: BLE001
+        s, h, ttl = None, {}, None
+    single = json.loads(s) if s else None
+    fresh = False
+    try:
+        fresh = time.time() - float(h.get("ts") or 0) < 10
+    except ValueError:
+        pass
+    return {"configured": "two" if configured else "single", "mode": "two" if configured and not single else "single",
+            "reason": (single or {}).get("reason"), "since": (single or {}).get("at"), "until_s": ttl,
+            "watch": fresh, "sum_w": _fnum(h.get("sum_w")), "temp_max": _fnum(h.get("temp_max"))}
+
+
+def _fnum(v):
+    try:
+        return None if v in (None, "") else float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 JUDGE_KEY = "ops:power:judge:"   # + 표본 id · 표본 하나에 판정 하나(먼저 부른 쪽이 정하고 나머지는 같은 값을 읽는다)
 JUDGE_TTL_S = 30
 
@@ -273,6 +303,9 @@ async def power_budget_now(gl: list[dict]) -> dict:
                 if h.get("power_gate"):           # 작업기가 전력 규칙으로 멈춰 있다(gpu_worker _gate_note · 해제 때 지운다)
                     yield_gpu.append(int(gi))
     mx = int(pb["max_hot_gpus"])
+    pair = await pair_status(r, pw)
+    if pair["mode"] != "two":
+        mx = min(mx, 1)                       # 한 장 모드(설정 또는 안전 감시가 되돌림 · 원칙 270) — 예전 규칙 '동시 고부하 1장'
     if rs["sid"] and rs["gpus"]:
         gl = rs["gpus"]                       # 판정은 그 표본의 GPU 목록으로 — 부른 쪽이 준 목록과 무관하게 표본 하나 = 판정 하나
     j = judge_power(gl, th, mx, lease_gpu, rs["avg"], yield_gpu)
@@ -286,7 +319,7 @@ async def power_budget_now(gl: list[dict]) -> dict:
     out = {"max_hot": mx, **j, "threshold_w": th, "window_s": POWER_WINDOW * 2,
            "overlap": {"n": env(ov.get("n"), "count", "measured", "GPU 전력 표본(2 s) 중 두 장이 함께 기준을 넘은 수", as_of=at),
                        "last_at": ov.get("last_at"), "since": ov.get("since")},
-           "power_limit_w": pb.get("power_limit_w"), "leases": pb["leases"], "at": at, "sample": rs["sid"],
+           "power_limit_w": pb.get("power_limit_w"), "leases": pb["leases"], "at": at, "sample": rs["sid"], "pair": pair,
            "source": "nvidia-smi power.draw(장별 · 최근 평균) + power:hot 임대", "unit": "GPU"}
     if rs["sid"]:
         try:

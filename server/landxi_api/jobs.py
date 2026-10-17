@@ -229,7 +229,7 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
             raise ApiError("not_found", "학습 데이터가 없습니다", {"samples": samples, "allowed": list(mod.DATASETS)})
         gpus = int(opts.get("gpus", 1) or 1)
         pw = config.load_yaml("pools").get("power", {}) or {}
-        if gpus > int(pw.get("max_hot_gpus", 1)) or busy:
+        if gpus > int(pw.get("job_max_gpus", pw.get("max_hot_gpus", 1))) or busy:     # 한 작업이 쓰는 장 수 상한(두 장 모드에서도 1 · 원칙 270)
             reasons.append("power_budget")          # 동시 고부하 GPU ≤ max_hot(1) — 두 번째 학습·다중 GPU 학습은 거절
         ep = int(opts.get("epochs", 10))
         if ep > TRAIN_EPOCHS_MAX:
@@ -271,7 +271,7 @@ async def _quote_train_s2(p: Principal, opts: dict) -> dict:
     reasons: list[str] = []
     async with db(realm="lx") as conn:
         busy = await conn.fetchval("SELECT count(*) FROM jobs WHERE kind='train' AND state IN ('queued','running')")
-    if busy or int(opts.get("gpus", 1) or 1) > int((config.load_yaml("pools").get("power", {}) or {}).get("max_hot_gpus", 1)):
+    if busy or int(opts.get("gpus", 1) or 1) > _job_max_gpus():
         reasons.append("power_budget")
     ep = int(opts.get("epochs", mod.EPOCHS) or mod.EPOCHS)
     if ep > TRAIN_EPOCHS_MAX:
@@ -493,7 +493,7 @@ async def build_quote(p: Principal, body: dict) -> dict:
     # 기관 · LX 직원 사용 한도로는 거절하지 않는다(원칙 83 · 11차 "GPU 는 무상 정책") — 막는 것은 크기 천장 · 전력 규칙(장비 보호)뿐
     if shards_n > SHARD_CAP.get(kind, 10 ** 9):
         reasons.append("too_large")                 # 서버측 shard 계획 상한(S-8) — AOI 를 나눠 다시
-    if int(opts.get("gpus", 1) or 1) > int((config.load_yaml("pools").get("power", {}) or {}).get("max_hot_gpus", 1)):
+    if int(opts.get("gpus", 1) or 1) > _job_max_gpus():
         reasons.append("power_budget")              # 동시 고부하 GPU 상한(전력 예산 · 1급 제약)
     area_env = env(round(area, 4) if area is not None else None, "km2", "measured", area_src,
                    None if area is not None else ("AOI 없음(읍면동 목록 · 규칙 재평가)" if kind in ("survey", "join") else None))
@@ -604,6 +604,12 @@ async def eta_estimate(key: str, shards_n: int) -> dict:
     med = statistics.median(vals)
     return env(round(med * shards_n / 1000, 1), "s", "estimate", f"{src} {med:.0f} ms × {shards_n} shard",
                "순수 shard 시간(cpu 워커 1 · 순차) — 큐 대기·finalize(전역 집계·기록) 제외 · 실측 elapsed 는 이보다 길다")
+
+
+def _job_max_gpus() -> int:
+    """한 작업(학습 · 분석)이 쓸 수 있는 장 수 — 두 장 모드(원칙 270 · 전국 작업만 두 장)에서도 1(pools.yaml power.job_max_gpus)."""
+    pw = config.load_yaml("pools").get("power", {}) or {}
+    return int(pw.get("job_max_gpus", pw.get("max_hot_gpus", 1)))
 
 
 async def power_budget() -> dict:

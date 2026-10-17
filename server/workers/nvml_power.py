@@ -93,6 +93,27 @@ def read() -> dict[int, float]:
         return out
 
 
+class _Util(ctypes.Structure):
+    _fields_ = [("gpu", ctypes.c_uint), ("memory", ctypes.c_uint)]
+
+
+def read_all() -> dict:
+    """두 장 안전 감시(impl-41 · 원칙 270)용 — {index: {w, temp, util, err}} · w = 드라이버 평균 전력(nvidia-smi power.draw 와 같은 값).
+    err = 그 장에서 실패한 NVML 호출 코드(0 = 정상). NVML 을 못 열면 {}."""
+    with _lock:
+        if not _open():
+            return {}
+        lib, out = _st["lib"], {}
+        for i, h in enumerate(_st["handles"]):
+            mw, t, u = ctypes.c_uint(), ctypes.c_uint(), _Util()
+            e1 = lib.nvmlDeviceGetPowerUsage(h, ctypes.byref(mw))
+            e2 = lib.nvmlDeviceGetTemperature(h, 0, ctypes.byref(t))          # NVML_TEMPERATURE_GPU
+            e3 = lib.nvmlDeviceGetUtilizationRates(h, ctypes.byref(u))
+            out[i] = {"w": round(mw.value / 1000.0, 1) if e1 == 0 else None, "temp": int(t.value) if e2 == 0 else None,
+                      "util": int(u.gpu) if e3 == 0 else None, "err": next((e for e in (e1, e2, e3) if e), 0)}
+        return out
+
+
 if __name__ == "__main__":
     import time
     t = time.perf_counter()

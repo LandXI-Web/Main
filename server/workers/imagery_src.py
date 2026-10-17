@@ -27,20 +27,27 @@ class ImageryUnavailable(RuntimeError):
     pass
 
 
+def _dsn() -> str:
+    """워커 DSN — 'localhost' 는 127.0.0.1 로(impl-41 실측 10-17: 이 PC 의 localhost 는 ::1 을 먼저 고르는데 ::1:5433 은 wslrelay 가 잡고 있어
+    연결이 30초 멈춘 뒤 IPv4 로 넘어간다 → 영상 읽기 · 상한 다시 읽기가 30초씩 멈췄다)."""
+    return config.PG_WORKER_DSN.replace("@localhost:", "@127.0.0.1:")
+
+
 def _resolve(p: str) -> str:
     return p if (":" in p[:3] or os.path.isabs(p)) else str(config.DATA_ROOT / p)
 
 
 def _row(imagery_id: str):
     import psycopg
-    with psycopg.connect(config.PG_WORKER_DSN) as c:
+    with psycopg.connect(_dsn()) as c:
         return c.execute("SELECT path_internal, layer FROM imagery WHERE id=%s", (imagery_id,)).fetchone()
 
 
+_GPATH: dict = {}            # 프로세스 공용(문지기의 요청 스레드는 요청마다 새 스레드 — 스레드별 캐시면 요청마다 데이터베이스에 붙었다 · impl-41 실측)
+
+
 def imagery_path(imagery_id: str) -> str:
-    c = getattr(_local, "path", None)
-    if c is None:
-        c = _local.path = {}
+    c = _GPATH
     if imagery_id not in c:
         row = _row(imagery_id)
         if not row:
@@ -82,6 +89,15 @@ FETCH_STABLE_S = 1800        # 이만큼 안정이면 한 단계 올림
 FETCH_OUTAGE_RATE = 0.5      # 한 창의 오류율이 이만큼이면 서비스 장애로 보고
 FETCH_OUTAGE_REST_S = 300    # 장애 때 쉼(5분)
 TILE_CACHE = 768             # 타일 캐시(이웃 칩이 겹치는 타일 · 약 150MB)
+# impl-41(10-17 · 원칙 270 두 장): 워커 둘이 같은 영상 서버를 부른다 — 관리자 상한 fetch_max 는 **두 워커 합**으로 지킨다(정중한 호출).
+#   지난 90초 안에 타일을 부른 워커 수 n 으로 나눠 워커마다 ceil(fetch_max / n). 자동 조절 장치는 워커마다 그 아래에서 그대로 오르내린다.
+FETCH_PROC_TTL_S = 90
+# 나눠 받기(impl-41 (c)): 첫 장 워커가 127.0.0.1 문지기(serve_tiles)를 열고, 두 번째 장 워커는 타일을 그 문지기에게서 받는다 —
+#   같은 타일을 두 워커가 따로 받지 않고(칩 겹침 · 칸 경계 · 농지 → 하천 같은 자리), 영상 서버로 가는 동시 호출은 문지기 한 곳(상한 그대로)에서만.
+TILE_ROLE = os.environ.get("LX_TILE_ROLE", "")        # serve | client | ''(예전처럼 혼자 받기)
+TILE_PROXY = os.environ.get("LX_TILE_PROXY", "http://127.0.0.1:8706")
+RAW_CACHE = int(os.environ.get("LX_TILE_RAW_CACHE", "20000"))     # 원 바이트 캐시 칸 수(약 220MB)
+DUP_BUCKET_S = 600           # 중복 받기 측정 — 10분 칸마다 받은 타일 수 · 서로 다른 타일 수(HyperLogLog · 두 워커 합)
 
 
 def _now() -> float:
@@ -273,7 +289,7 @@ def _xml_conf(path: str) -> dict:
 def _cap_setting(default: int) -> int:
     """관리자 설정(lx_settings 'national.run'.fetch_max · PUT /national/settings) — 없으면 설명 파일 값."""
     import psycopg
-    with psycopg.connect(config.PG_WORKER_DSN) as c:
+    with psycopg.connect(_dsn()) as c:
         row = c.execute("SELECT value->>'fetch_max' FROM lx_settings WHERE key='national.run'").fetchone()
     return int(row[0]) if row and row[0] else int(default)
 
@@ -310,6 +326,12 @@ class ApiDataset:
         self._pool = ThreadPoolExecutor(max_workers=FETCH_HARD_MAX * 2, thread_name_prefix="tile")
         self._cache: OrderedDict = OrderedDict()
         self._pending: dict = {}
+        self._raw: OrderedDict = OrderedDict()          # 원 바이트(JPEG · 약 11KB) — 칸 경계 · 농지 → 하천 같은 자리를 다시 받지 않게(impl-41 (c))
+        self._raw_pending: dict = {}
+        self.raw_hits = 0
+        self.iid = None
+        self._proxy = requests.Session()
+        self._proxy_dead_until = 0.0
         self._clock = threading.Lock()
 
     def window_transform(self, win):
@@ -318,12 +340,15 @@ class ApiDataset:
     def _refresh(self):
         """관리자 설정 national.run.fetch_max 를 1분마다 다시 읽어 상한을 맞춘다 — 워커 · 작업기를 다시 켜지 않아도 된다. 30초마다 상태 파일."""
         now = _now()
-        if now - self._conf_at >= 60:
+        if now - self._conf_at >= 30:
             self._conf_at = now
-            try:
-                self.gov.set_cap(_cap_setting(self.conf["conn"]))
-            except Exception:  # noqa: BLE001
-                pass
+
+            def _cap():                 # 읽는 스레드를 멈추지 않게 뒤에서(데이터베이스 · Redis)
+                try:
+                    self.gov.set_cap(self._share(_cap_setting(self.conf["conn"])))
+                except Exception:  # noqa: BLE001
+                    pass
+            threading.Thread(target=_cap, daemon=True, name="fetch-cap").start()
         if now - self._stats_at >= 30:
             self._stats_at = now
             try:
@@ -334,11 +359,114 @@ class ApiDataset:
             except OSError:
                 pass
 
+    def _share(self, cap: int) -> int:
+        """관리자 상한을 지금 타일을 부르는 워커 수로 나눈 몫(두 워커 합 ≤ 상한) — Redis 가 없으면 상한 그대로."""
+        import math
+        try:
+            from workers.bus import r as _r
+            rr = _r()
+            calls = self.gov.total["calls"]
+            if calls != getattr(self, "_calls_seen", None):
+                self._calls_seen = calls
+                rr.set(f"fetch:proc:{os.getpid()}", "1", ex=FETCH_PROC_TTL_S)
+            n = max(1, sum(1 for _ in rr.scan_iter(match="fetch:proc:*", count=100)))
+            self.procs = n
+            return max(1, math.ceil(int(cap) / n))
+        except Exception:  # noqa: BLE001
+            return int(cap)
+
+    def _dup_note(self, x: int, y: int):
+        """받은 타일 기록(두 워커 합) — 10분 칸마다 받은 수(fetch:net) · 서로 다른 타일 수(fetch:hll)."""
+        try:
+            from workers.bus import r as _r
+            b = int(_now() // DUP_BUCKET_S)
+            p = _r().pipeline(transaction=False)
+            p.pfadd(f"fetch:hll:{b}", f"{self.conf['z']}/{x}/{y}")
+            p.incr(f"fetch:net:{b}")
+            p.expire(f"fetch:hll:{b}", 2 * 86400)
+            p.expire(f"fetch:net:{b}", 2 * 86400)
+            p.execute()
+        except Exception:  # noqa: BLE001
+            pass
+
+    def prefetch(self, window) -> int:
+        """다음 칩 창의 타일을 미리 부른다(기다리지 않음 · 캐시에 남음) — 지금 칩을 추론하는 동안 다음 칩 영상을 받는다(impl-41 (a))."""
+        bx, by = self.conf["bx"], self.conf["by"]
+        c0, r0, w, h = int(window["col_off"]), int(window["row_off"]), int(window["width"]), int(window["height"])
+        if c0 + w <= 0 or r0 + h <= 0 or c0 >= self.width or r0 >= self.height:
+            return 0
+        n = 0
+        for y in range(max(r0, 0) // by, (min(r0 + h, self.height) - 1) // by + 1):
+            for x in range(max(c0, 0) // bx, (min(c0 + w, self.width) - 1) // bx + 1):
+                self._tile(x, y)
+                n += 1
+        return n
+
     def _fetch(self, x: int, y: int):
-        """타일 하나 → (밴드, by, bx) uint8 · 영상 없음(204 · 404)이면 None. 실패하면 지수 대기 뒤 다시."""
+        """타일 하나 → (밴드, by, bx) uint8 · 영상 없음(204 · 404)이면 None. 받는 길: 나눠 받기 손님이면 첫 장 워커(같은 PC)에게,
+        아니면 원 바이트 캐시(_raw_get · 두 워커 · 칸 경계 공유) → 영상 서버."""
+        import io
+        import numpy as np
+        from PIL import Image
+        raw = self._raw_client(x, y) if TILE_ROLE == "client" else self._raw_get(x, y)
+        if raw is None:
+            return None
+        a = np.asarray(Image.open(io.BytesIO(raw)).convert("RGB"), dtype=np.uint8)
+        if a.shape[0] != self.conf["by"] or a.shape[1] != self.conf["bx"]:
+            raise ImageryUnavailable(f"타일 크기 {a.shape}")
+        return a.transpose(2, 0, 1)
+
+    def _raw_get(self, x: int, y: int):
+        """원 바이트(JPEG) 캐시 · 같은 타일을 동시에 부르면 하나만 받는다 → bytes | None(영상 없음). 나눠 받기 문지기도 이것을 쓴다."""
+        from concurrent.futures import Future
+        key = (x, y)
+        with self._clock:
+            if key in self._raw:
+                self._raw.move_to_end(key)
+                self.raw_hits += 1
+                return self._raw[key]
+            f = self._raw_pending.get(key)
+            mine = f is None
+            if mine:
+                f = self._raw_pending[key] = Future()
+        if not mine:
+            return f.result()
+        try:
+            v = self._fetch_raw(x, y)
+        except BaseException as e:
+            with self._clock:
+                self._raw_pending.pop(key, None)
+            f.set_exception(e)
+            raise
+        with self._clock:
+            self._raw_pending.pop(key, None)
+            self._raw[key] = v
+            while len(self._raw) > RAW_CACHE:
+                self._raw.popitem(last=False)
+        f.set_result(v)
+        return v
+
+    def _raw_client(self, x: int, y: int):
+        """나눠 받기 손님(두 번째 장 워커) — 첫 장 워커의 문지기(127.0.0.1)에게 받는다. 문지기가 없으면 30초 동안 직접 받는다."""
+        if _now() > self._proxy_dead_until:
+            try:
+                r = self._proxy.get(f"{TILE_PROXY}/t/{self.iid}/{x}/{y}", timeout=(2, 180))
+                if r.status_code == 200:
+                    return r.content
+                if r.status_code == 204:
+                    return None
+                if r.status_code == 503:
+                    raise ImageryUnavailable(r.text[:200] or "영상 API 읽기 실패(문지기)")
+            except ImageryUnavailable:
+                raise
+            except Exception:  # noqa: BLE001 — 문지기 꺼짐(첫 장 워커 재시작 등)
+                self._proxy_dead_until = _now() + 30
+        return self._raw_get(x, y)
+
+    def _fetch_raw(self, x: int, y: int):
+        """영상 서버에서 타일 하나(JPEG 바이트) · 영상 없음(204 · 404)이면 None. 실패하면 지수 대기 뒤 다시."""
         import io
         import time as _t
-        import numpy as np
         from PIL import Image
         c = self.conf
         url = c["url"].replace("${z}", str(c["z"])).replace("${x}", str(x)).replace("${y}", str(y))
@@ -368,11 +496,13 @@ class ApiDataset:
                     self.gov.record(False, sec, len(r.content), retry=k > 0, kind=f"HTTP {r.status_code}")
                     last = f"HTTP {r.status_code}"
                     continue
-                a = np.asarray(Image.open(io.BytesIO(r.content)).convert("RGB"), dtype=np.uint8)
-                if a.shape[0] != c["by"] or a.shape[1] != c["bx"]:
-                    raise ValueError(f"타일 크기 {a.shape}")
+                im = Image.open(io.BytesIO(r.content))
+                if im.size != (c["bx"], c["by"]):
+                    raise ValueError(f"타일 크기 {im.size}")
+                im.load()                                   # 깨진 그림이면 여기서(다시 받기)
                 self.gov.record(True, sec, len(r.content), retry=k > 0)
-                return a.transpose(2, 0, 1)
+                self._dup_note(x, y)
+                return r.content
             except Exception as e:  # noqa: BLE001 — 연결 끊김 · 시간 초과 · 깨진 그림
                 self.gov.record(False, _t.perf_counter() - t0, retry=k > 0, kind=type(e).__name__)
                 last = repr(e)
@@ -474,6 +604,7 @@ def open_imagery(imagery_id: str):
             if d is None:
                 os.environ.setdefault("GDAL_HTTP_TIMEOUT", "30")
                 d = _API[p] = ApiDataset(p)
+                d.iid = imagery_id
         return d
     c = getattr(_local, "ds", None)
     if c is None:
@@ -600,6 +731,54 @@ def best_imagery_sync(sgg_cd: str | None, geom_4326: dict | None = None) -> dict
     t = target_geom(sgg_cd, geom_4326)
     if t is None or t.is_empty:
         return result(None, False)
-    with psycopg.connect(config.PG_WORKER_DSN, row_factory=dict_row) as c:
+    with psycopg.connect(_dsn(), row_factory=dict_row) as c:
         recs = c.execute(SQL_ROWS).fetchall()
     return result(choose(rows_from(recs), t), True)
+
+
+_SERVE_DS: dict = {}
+
+
+def serve_tiles(port: int, log=print):
+    """나눠 받기 문지기(첫 장 워커 안 스레드 · 127.0.0.1 만) — GET /t/{imagery_id}/{x}/{y} → 200 JPEG · 204 영상 없음 · 503 받기 실패."""
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def do_GET(self):
+            try:
+                _, t, iid, x, y = self.path.split("/")
+                ds = _SERVE_DS.get(iid)
+                if ds is None:
+                    if t != "t" or not _is_api(iid):
+                        raise ValueError(self.path)
+                    ds = _SERVE_DS[iid] = open_imagery(iid)      # 영상 하나에 한 번만 연다(요청마다 데이터베이스에 붙지 않게)
+                v = ds._raw_get(int(x), int(y))
+            except ImageryUnavailable as e:
+                b = str(e).encode("utf-8")[:300]
+                self.send_response(503)
+                self.send_header("Content-Length", str(len(b)))
+                self.end_headers()
+                self.wfile.write(b)
+                return
+            except Exception:  # noqa: BLE001
+                self.send_response(400)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if v is None:
+                self.send_response(204)
+                self.end_headers()
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(v)))
+            self.end_headers()
+            self.wfile.write(v)
+
+    srv = ThreadingHTTPServer(("127.0.0.1", int(port)), H)
+    srv.daemon_threads = True
+    log("영상 나눠 받기 문지기", f"127.0.0.1:{port}")
+    srv.serve_forever()

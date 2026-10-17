@@ -3,7 +3,19 @@
 #   gpu_worker 는 shard 를 읽기 전에 Redis 임대 power:hot:{slot}(SET NX EX)을 잡아야 한다 — 슬롯 수 = max_hot_gpus.
 #   임대가 없으면 shard 를 가져가지 않는다(대기). 유휴 idle_release_s 뒤 반납. vLLM 등 다른 GPU 고부하 작업도 같은 키를 존중한다.
 power:
-  max_hot_gpus: 1
+  # 10-17 사용자(원칙 270): "GPU 1도 상한선 200w가 있으니깐. 둘다 사용하는 걸로 일단 제약을 풀어보자." — 두 장 사용 시험.
+  #   임대 칸 2(전국 작업이 두 장에서) · 한 작업이 쓰는 장은 1(job_max_gpus · 학습 · 사용자 분석은 그대로 한 장) · 장당 상한 200 W 그대로.
+  #   두 장 합 전력 · 온도 1초 감시(pair) — 이상이면 바로 한 장으로(power:single · single_cool_s 뒤 저절로 다시 두 장).
+  max_hot_gpus: 2
+  job_max_gpus: 1
+  start_gpus: [0, 1]         # start-landxi.ps1 · run-workers.ps1 의 워커 GPU 기본 목록
+  pair:
+    sum_max_w: 300           # 두 장 합 전력(드라이버 평균)이 이보다 높게
+    sum_over_s: 10           #   이만큼 넘게 이어지면 한 장으로
+    temp_max_c: 85           # 어느 장이든 이 온도 이상이면 바로 한 장으로
+    driver_err_s: 3          # 장비 응답 오류(NVML 실패 · 장이 사라짐)가 이만큼 이어지면 한 장으로
+    single_cool_s: 1800      # 한 장으로 돌아간 뒤 쉬는 시간(30분) — 지나면 다시 두 장
+    log_days: 7              # 1초 기록(02. 데이터/_logs/gpu-pair-YYYYMMDD.csv) 보관 날 수
   lease_ttl_s: 20
   idle_release_s: 3
   # 임대 밖 부하(vLLM · Ollama — WSL/Docker 라 power:hot 을 잡지 않는다)도 전력 규칙에 넣는다(2026-09-27 F2-B 녹화 중 GPU1 vLLM 171 W 와 겹침 실측 → 추가)
@@ -17,7 +29,15 @@ power:
   # 전국 결과 자산 작업(options.national) — 한 장만 · 풀로드 금지(원칙 221 · 10-12). 시스템 전력 상한은 바꾸지 않고 코드 안에서 조절:
   # 작은 묶음(chunk 칩) + 묶음 사이 쉼(이 장 사용률 · 전력 이동평균을 재며 duty 조절). 다른 장(vLLM 등)은 쓰지 않음.
   national:
-    gpu: 0
+    gpu: [0, 1]              # 두 장 모드(원칙 270) — 첫 장 = 전국 · 해외 · 사용자 분석 / 두 번째 장(XI ChatGEO 장) = 국내 전국 칩만 · XI ChatGEO 질문이 오면 비킴
+    secondary_mem_mib: 5120  # 두 번째 장에서 워커가 쓰는 메모리 상한(vLLM · Ollama 약 38GB 사용 · 남은 약 10GB 중 일부만)
+    read: 8                  # 두 장 모드에서 워커가 전국 칩을 한 번에 받는 수(한 워커가 다 가져가지 않게)
+    inflight_two: 16         # 두 장 모드에서 전국 작업 하나가 스트림에 두는 칩 수(장마다 8)
+    llm_quiet_s: 5           # XI ChatGEO 호출이 끝난 뒤 두 번째 장이 전국 칩을 다시 받기까지(초)
+    tile_share: true         # 영상 나눠 받기(impl-41) — 첫 장 워커가 127.0.0.1 문지기 · 두 번째 장은 거기서 받음(같은 타일 두 번 받기 없앰 · 영상 서버 호출은 한 곳 · 상한 그대로)
+    tile_share_port: 8706
+    pipeline: 2              # 작업기가 동시에 넣어 두는 조각 수(칸 경계를 넘어 다음 칸 조각도 · 조각 · 칩 격자는 그대로라 결과 같음 · impl-41)
+    read_ahead: true         # 마지막 칩 묶음을 추론하는 동안 다음 칩 묶음을 이 워커 몫으로 받아 영상 읽기 시작(impl-41)
     chunk: 4
     util_max: 70             # 사용률 평균 상한(%)
     power_max_w: 140         # 전력 상한(W) — 장당 상한 200 W 의 70%

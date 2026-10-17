@@ -148,7 +148,7 @@ def test_idle_anytime_and_gpu_cap():
     assert runner.MAX_PART_KM2 <= 15                             # 조각이 작아 몇 분 안에 비킨다
     nat = cfg.load_yaml("pools")["power"]["national"]
     lim = cfg.load_yaml("pools")["power"]["power_limit_w"]
-    assert nat["gpu"] == 0 and nat["util_max"] <= 70 and nat["power_max_w"] <= 0.7 * lim and nat["chunk"] <= 8
+    assert nat["gpu"] in (0, [0], [0, 1]) and nat["util_max"] <= 70 and nat["power_max_w"] <= 0.7 * lim and nat["chunk"] <= 8
 
 
 def test_fetch_governor_auto():
