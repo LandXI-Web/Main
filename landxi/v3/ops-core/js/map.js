@@ -22,7 +22,7 @@ export function mountMap(host) {
   map.on('moveend', () => requestAnimationFrame(unclash));
 
   /* 같은 기관이 가까운 두 지역에 배포본을 가지면 이름표가 두 번 겹쳐 보였다(GPT5-6 · 옛 UX-9) — 같은 이름 · 가까운 점(1° 안)은 한 이름표로,
-     대표 = 가장 높은 단계(운영 > 시범 > 검증 > 적용 요청)의 점. 지도 점 자료(data.js points)는 그대로 두고 그리는 쪽에서만 묶는다. */
+     대표 = 가장 높은 단계(운영 > 시범 > 검증 > 기관에 공유)의 점. 지도 점 자료(data.js points)는 그대로 두고 그리는 쪽에서만 묶는다. */
   const RANK = { ga: 4, pilot: 3, verify: 2, port: 1 };
   function merged() {
     const out = [];

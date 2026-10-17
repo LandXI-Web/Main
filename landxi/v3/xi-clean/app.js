@@ -1094,10 +1094,11 @@ function openBoardList() {
   const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer.title(title) : drawerOpen(title, () => { S.list = null; });
   d.__kind = 'board'; S.list = null; patchRail();
   const tEl = d.el.querySelector('.k-dr-t');                                           // 줄바꿈은 '·' 경계에서만(구 중간 꺾임 0 · §3-9)
-  if (tEl) tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] }));
-  if (!d.el.querySelector('.xc-board-rep')) d.el.querySelector('.k-dr-x')?.before(h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) }));   // 제목 줄 오른쪽 · 닫기 × 옆
+  if (tEl) { tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] })); tEl.classList.add('xc-board-t'); }   // 한 줄(한 단계 작은 제목 글자)
+  d.el.querySelector('.k-dr-h .xc-board-rep')?.remove();                              // 제목은 한 줄(10-17 판정 뒤 · 제목 줄의 '보고서로'가 제목을 두 줄로 꺾던 것) — '보고서로'는 제목 아래 줄 오른쪽
   const box = h('div.xc-list.xc-board');
   if (!B.regs.length) { K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
+  box.append(h('div.xc-board-acts', {}, h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
   // 시도별 묶음 — 지금 지도 범위와 겹치는 시도(또는 지금 지역의 시도)는 펼친 채, 나머지는 접힘
   let vb = null; try { const b = map.getBounds(); vb = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch { /* 지도 전 */ }
   const inView = (reg) => !!(vb && Array.isArray(reg.bbox) && reg.bbox[0] <= vb[2] && reg.bbox[2] >= vb[0] && reg.bbox[1] <= vb[3] && reg.bbox[3] >= vb[1]);

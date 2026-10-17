@@ -78,7 +78,8 @@
 /* 오른쪽 서랍이 열려 있는 동안 아래 채팅 창은 서랍을 가리지 않게 — 서랍 왼쪽 공간의 가운데(지도 위 통계 때와 같은 규칙) */
 .k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:calc((100% - 416px) / 2);width:min(680px,calc(100% - 448px))}
 @media (max-width:900px){.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
-.k-dr-h .xc-board-rep{flex:none;height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}   /* 제목 줄 오른쪽 · 닫기 × 옆 */
+.xc-board-acts{display:flex;justify-content:flex-end;margin:0 0 4px}
+.xc-board-acts .xc-board-rep{height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}   /* 제목 아래 줄 오른쪽(제목은 한 줄) */
 /* 시도별 접고 펴기(원칙 277) — 머리줄(시도 · 시군구 수 · 꺾쇠) */
 .xc-board-sido-g{border-top:1px solid var(--rule)}
 .xc-board-sido-g:first-of-type{border-top:0}
@@ -564,3 +565,4 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 /* 층 판이 길어지면(결과 세트 · 클래스 · 지적) 아래 채팅 창 뒤로 숨지 않게 판 안에서 넘김 */
 .xc-pop:not([hidden]){display:flex;flex-direction:column;max-height:calc(100% - 132px);box-sizing:border-box}
 .xc-pop > .xc-rows-p{overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.k-dr-h .k-dr-t.xc-board-t{font-size:var(--fs-t2,20px);line-height:var(--lh-t2,28px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 목록 서랍 제목은 한 줄(10-17 판정 뒤) */

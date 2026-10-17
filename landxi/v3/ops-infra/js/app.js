@@ -107,7 +107,16 @@ async function tickGpu() {
 setInterval(tickGpu, 2500);
 setInterval(async () => { if (cur !== 'infra' || document.hidden) return; await loadInfra(); if (cur === 'infra') V.infra.paintRest(); }, 15000);
 addEventListener('hashchange', () => { if (cur === 'infra') { loadGpus().then((ok) => { if (ok && cur === 'infra') V.infra.paintGpus(); }); loadInfra().then(() => { if (cur === 'infra') V.infra.paintRest(); }); } });   // 다른 탭에 있다가 인프라로 오면 새로
-setInterval(async () => { await loadOrg(); if (cur !== 'infra') { paint(); Sh.fresh(new Date()); } }, 30000);
+setInterval(async () => { if (cur === 'infra' || document.hidden) return; await loadOrg(); if (cur !== 'infra') { paint(); Sh.fresh(new Date()); } }, 30000);   // 인프라 탭은 기관 · 배포 자료를 쓰지 않는다
+/* 실시간 사건(배포 바뀜 · 사용량)은 사건마다 기관 · 배포 자료 전체를 다시 받던 것을 10초에 한 번으로 묶고, 인프라 탭에서는 받지 않는다
+   (전국 작업이 돌면 사용량 사건이 끊임없이 와 배포 경계 요청이 쉬지 않았다 · 바퀴 16 재검수) — 다른 탭으로 가면 그때 받는다 */
+let orgT = 0, orgAt = 0, orgCb = [];
+function orgSoon(cb) {
+  orgCb.push(cb); if (orgT) return;
+  orgT = setTimeout(async () => { orgT = 0; if (cur === 'infra' || document.hidden) { orgCb = []; orgStale = true; return; } orgAt = Date.now(); await loadOrg(); const cbs = orgCb; orgCb = []; cbs.forEach((f) => f()); }, Math.max(0, 10000 - (Date.now() - orgAt)));
+}
+let orgStale = false;
+addEventListener('hashchange', () => { if (orgStale && cur !== 'infra') { orgStale = false; orgSoon(() => { paint(); Sh.fresh(new Date()); }); } });
 
 /* 관제 스트림은 서버가 4173 을 허용한 뒤(S-9 = power_budget 이 응답에 있음)에만 연다 — 거절로 콘솔을 더럽히지 않게 */
 let streamOn = false;
@@ -120,8 +129,8 @@ if (S.gpus?.power_budget) {
       events: ['gpu.sample', 'deploy.changed', 'usage.delta'],
       on: async (ev, data) => {
         if (ev === 'gpu.sample' && data?.gpus?.length) { live = true; if (cur !== 'infra') return; await loadGpus(); if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
-        else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') { V.deploys.paint(); if (!panes.deploys.contains(document.activeElement) || document.activeElement === document.body) REL.paint(); } }
-        else if (ev === 'usage.delta') { await loadOrg(); if (cur === 'tenants') V.tenants.paint(); }
+        else if (ev === 'deploy.changed') orgSoon(() => { if (cur === 'deploys') { V.deploys.paint(); if (!panes.deploys.contains(document.activeElement) || document.activeElement === document.body) REL.paint(); } });
+        else if (ev === 'usage.delta') orgSoon(() => { if (cur === 'tenants') V.tenants.paint(); });
       },
       onState: (s) => { devlog('실시간 스트림', s); if (s !== 'open') live = false; },
     });
