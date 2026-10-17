@@ -1,74 +1,78 @@
-/* console.css — LX 직원 대시보드(구현 26차 · 8차 시안 배치 · 원칙 214 위아래 · 216 컴팩트 · 226). PC 만(원칙 139).
-   위에서 아래로: ① 프로젝트 진행 현황 · 요청함 · 저장 용량(숫자 칸 한 줄 · 진행 현황이 옛 '내가 돌린 작업' 자리 · 같은 크기) → ③ 최근 진행한 프로젝트(프로젝트 카드 4장)
-   (맨 위에 공지사항 가로 2칸 + 메모 1칸 한 줄 · 전국 AI 현황 칸은 삭제). 회백 바탕 위 흰 카드 · 그림자 0 · 새 아이콘 0 · 토큰 · 부품은 키트(kit.css · me.css · 카드 = service-card.css · analyze.css · project.css). */
+/* console.css — LX 직원 대시보드(10-17 원칙 283 개인별 맞춤 · 214 위아래 · 216 컴팩트 · 226 · 257 글자 크기). PC 기본(좁은 화면은 한 줄 쌓기).
+   칸 격자 · 수정 모드 · 손잡이는 공용 kit/dashgrid.css. 여기는 칸 안 내용만 — 회백 바탕 위 흰 카드 · 그림자 0 · 토큰(--fs-*) · 바닥 14. */
 .ld{height:100%;overflow:auto;box-sizing:border-box;padding:20px 24px 32px}
 .ld-in{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:var(--wide-max)}
 .ld-in > .lxp-ntcs:empty{display:none}
-.ld-card{display:flex;flex-direction:column;gap:10px;min-width:0;box-sizing:border-box}
-.ld-card.t-card{padding:16px 20px}
-.ld-hd{display:flex;flex-direction:column;gap:0}
-.ld-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.ld-h h2{margin:0;font:700 var(--fs-t2)/27px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-.ld-sub{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);letter-spacing:0;word-break:keep-all}
-.ld-sub span{display:inline-block}
-.ld-more{flex:none;font:500 var(--fs-body)/22px var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;transition:background-size var(--d-380) var(--e-ui)}
-.ld-more::after{content:" →"}
-.ld-more:hover{background-size:100% 1px}
-button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
+.ld-bar{display:flex;justify-content:flex-end;min-height:36px}
+.ld-grid{opacity:0;transform:translateY(8px)}
+.ld.is-in .ld-grid{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
 .ld-k{color:var(--sub-2);font-weight:500}
 .ld-foot-s{margin:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub);word-break:keep-all}
+.ld-foot-none{margin:0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
+.ld-warn{color:var(--warn)}
 
-/* 처음 한 번 떠오름(원칙 201 · 줄마다 한 박자씩) */
-.ld-in > .ld-card,.ld-nums > .ld-card,.ld-top > .ld-card{opacity:0;transform:translateY(8px)}
-.ld.is-in .ld-in > .ld-card,.ld.is-in .ld-nums > .ld-card,.ld.is-in .ld-top > .ld-card{opacity:1;transform:none;transition:opacity var(--d-500) var(--e-cam),transform var(--d-500) var(--e-cam)}
-.ld.is-in .ld-nums > .ld-card{transition-delay:80ms}
-.ld.is-in .ld-recent{transition-delay:140ms}
-
-/* ① 프로젝트 진행 현황 — 작은 칸(옛 '내가 돌린 작업' 자리 · 같은 크기): 여섯 단계를 3×2 로, 단계마다 숫자(위) + 이름(아래) · 이름은 한 줄(잘림 0) · 일이 있는 단계는 숫자가 진하게 */
-.ld-flow{min-width:0}
-.ld-pf{list-style:none;margin:0;padding:0;position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px}
+/* 진행 현황 — 숫자(3×2 · 넓으면 한 줄 6) · 막대 */
+.ld-pf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;align-content:start}
+.ld-pf.is-row{grid-template-columns:repeat(6,minmax(0,1fr))}
 .ld-pf li{position:relative;min-width:0}
 .ld-pf a{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
 .ld-pf a:hover{background:var(--bg-0)}
 .ld-pf b{font:800 var(--fs-num)/40px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
-.ld-pf span{font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink-2);white-space:nowrap;max-width:100%}
+.ld-pf span{font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink-2);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .ld-pf em{font:500 var(--fs-tag)/20px var(--font-body);font-style:normal;color:var(--warn);white-space:nowrap}
 .ld-pf li[data-n="0"] b{color:var(--mute)}
 .ld-pf li[data-n="0"] span{color:var(--sub)}
+.ld-pb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.ld-pb li a,.ld-pb li{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;text-decoration:none;color:var(--ink)}
+.ld-pb li{padding:0}
+.ld-pb li a{padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);transition:background var(--d-180) var(--e-ui)}
+.ld-pb li a:hover{background:var(--bg-0)}
+.ld-pb span{font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-pb i{display:block;height:8px;border-radius:4px;background:var(--bg-0);overflow:hidden}
+.ld-pb i b{display:block;height:100%;background:var(--ink);border-radius:4px;transition:width var(--d-500) var(--e-cam)}
+.ld-pb li[data-n="0"] span{color:var(--sub)}
+.ld-pb li[data-n="0"] em{color:var(--mute)}
+.ld-pb em{font:600 var(--fs-body)/22px var(--font-num);font-style:normal;color:var(--ink);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+.ld-pb--store li{grid-template-columns:minmax(0,40%) minmax(0,1fr) auto;padding:2px 0}
 
-/* ① 숫자 칸 한 줄 — 프로젝트 진행 현황 · 요청함 · 저장 용량 */
-.ld-nums{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
+/* 숫자 칸(요청함 · 저장 용량 · 전국 분석 · 지도 서비스) */
+.ld-inbox-b{display:flex;flex-direction:column;gap:10px;min-height:0}
 .ld-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ld-cell{position:relative;display:flex;flex-direction:column;gap:0;min-width:0;padding:2px 6px;margin:-2px -6px;border-radius:var(--r-8);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
-.ld-cell:hover{background:var(--bg-0)}
+a.ld-cell:hover{background:var(--bg-0)}
 .ld-cell b{font:800 var(--fs-num)/40px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
 .ld-cell b small{font:600 var(--fs-body)/20px var(--font-body);color:var(--sub);letter-spacing:0}
-.ld-cell > span{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.ld-cell > span{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ld-cell.is-zero b{color:var(--mute)}
 .ld-cell.is-warn b{color:var(--warn)}
 .ld-cell.is-run b{color:var(--ai)}
-.ld-cell--ro:hover{background:none}
-.ld-inbox-b{display:flex;flex-direction:column;gap:10px}
-.ld-inbox-s{margin:0;border-top:1px solid var(--rule);padding-top:8px;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
+.ld-inbox-s{margin:0;border-top:1px solid var(--rule);padding-top:8px;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 줄 목록(요청함 목록 · 최근 프로젝트 목록 · 전국 분석 목록 · 지도 서비스 목록) */
+.ld-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;overflow:auto}
+.ld-rows li a{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:baseline;gap:10px;padding:3px 6px;margin:0 -6px;border-radius:6px;text-decoration:none;color:var(--ink);font:400 var(--fs-aux)/23px var(--font-body)}
+.ld-rows--proj li a{grid-template-columns:minmax(0,1fr) auto auto auto}
+.ld-rows li a:hover{background:var(--bg-0)}
+.ld-rows b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ld-rows .ld-k{white-space:nowrap}
+.ld-rows em{font-style:normal;font-size:var(--fs-tag);color:var(--warn);white-space:nowrap}
+.ld-rows small{font-size:var(--fs-tag);color:var(--sub);white-space:nowrap}
 /* 저장 용량 — 쓴 양(큰 숫자) | 막대 · 프로젝트별 · 증량 신청 */
 .ld-store-b{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.ld-store-b.is-col{grid-template-columns:1fr;gap:8px}
 .ld-store-r{display:flex;flex-direction:column;gap:6px;min-width:0}
-.ld-bar.k-me-bar{height:6px;background:var(--bg-0)}
-.ld-bar.k-me-bar i{min-width:6px;transition:width var(--d-500) var(--e-cam)}
-.ld-store-s{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
+.ld-bar-q.k-me-bar{height:6px;background:var(--bg-0)}
+.ld-bar-q.k-me-bar i{min-width:6px;transition:width var(--d-500) var(--e-cam)}
+.ld-store-s{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin:0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub);max-height:40px;overflow:hidden}
 .ld-store-s > span{display:inline-flex;align-items:baseline;gap:4px;min-width:0;max-width:100%;white-space:nowrap}
 .ld-pn{overflow:hidden;text-overflow:ellipsis;max-width:150px}
 .ld-store-s b{font:500 var(--fs-aux)/20px var(--font-num);color:var(--ink-2)}
 .ld-store-a{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:2px 0 0;font:500 var(--fs-aux)/20px var(--font-body)}
 .ld-store-a .k-me-ask{margin-left:auto;font-size:var(--fs-aux)}
 .ld-store-p{color:var(--ink-2)}
-.ld-warn{color:var(--warn)}
 
-/* ③ 최근 진행한 프로젝트 — 프로젝트 목록 카드(lx-project/card.js · compact) 4장 한 줄 · 그림은 낮게(2.6:1) */
-.ld-rgrid.la-acg{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:2px}
-/* 넓은 화면 = 한 줄 장 수가 늘어난다(원칙 248 — 1600 이상 5 · 2200 이상 6 · app.js recentN 과 같은 경계) */
-@media (min-width:1600px){.ld-rgrid.la-acg{grid-template-columns:repeat(5,minmax(0,1fr))}}
-@media (min-width:2200px){.ld-rgrid.la-acg{grid-template-columns:repeat(6,minmax(0,1fr))}}
+/* 최근 진행한 프로젝트 — 프로젝트 목록 카드(lx-project/card.js · compact) · 장 수 = 칸 폭 */
+.ld-rgrid.la-acg{gap:16px;margin-top:2px;align-content:start;overflow:hidden}
 .ld-rgrid .k-sc.la-ac{box-shadow:none;border:1px solid var(--rule)}
 .ld-rgrid .la-ac-pic{aspect-ratio:2.6/1}
 .ld-rgrid .k-sc-b.la-ac-b{padding:12px 14px 14px;gap:8px}
@@ -79,33 +83,26 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-rgrid .la-ac-hero b i{font-style:normal;font-size:var(--fs-body);margin-left:2px;color:var(--sub-2)}
 .ld-rgrid .la-ac-hero small{font-size:var(--fs-aux)}
 .ld-rgrid .la-ac-where{font-size:var(--fs-body);line-height:22px}
-.ld-rgrid .k-sc-acts{margin-top:auto}   /* 한 줄 카드의 단추 줄을 아래에 맞춘다(칸 높이 들쭉날쭉 0 · 원칙 248) */
+.ld-rgrid .k-sc-acts{margin-top:auto}
 .ld-rgrid .k-sc-acts .t-btn{height:36px;line-height:34px;padding:0 16px}
 
-/* 맨 위 한 줄 — 공지사항(가로 2칸) | 메모(1칸) · 열 폭은 아래 숫자 줄과 같은 3칸 · 높이 고정(원칙 231) · 많으면 안쪽 스크롤 */
-.ld-top{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,3.2fr) minmax(0,3.8fr);gap:12px;align-items:stretch}
-.ld-top-n{grid-column:1 / 3}
-.ld-top-m{grid-column:3}
-.ld-top > .ld-card.t-card{height:148px;padding:12px 20px;gap:6px;overflow:hidden}
-.ld-top-c h2{display:flex;align-items:center;gap:8px;flex:none;margin:0;font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
-.ld-top-c h2 .ld-more{margin-left:auto;font-size:var(--fs-aux)}
-.ld-ntc-b,.ld-memo-b{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:4px}
-.ld-ntc-b{overflow:auto}
-.ld-ntc-b > .ld-ntc{flex:none}
-.ld-memo-b > .ld-ml{flex:1 1 0;min-height:0;overflow:auto}
-.ld-memo-b > .ld-ml-in,.ld-memo-b > .ld-foot-s{flex:none}
-.ld-foot-k{font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
-.ld-foot-none{margin:0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub)}
-.ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ld-ntc button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:calc(100% + 12px);padding:1px 6px;margin:0 -6px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left;font:400 var(--fs-aux)/23px var(--font-body);color:var(--ink)}
+/* 공지 — 목록 · 최근 하나 · 본문 창 */
+.ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;overflow:auto}
+.ld-ntc button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:calc(100% + 12px);padding:2px 6px;margin:0 -6px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left;font:400 var(--fs-aux)/23px var(--font-body);color:var(--ink)}
 .ld-ntc button:hover{background:var(--bg-0)}
 .ld-ntc b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ld-ntc small{font-size:var(--fs-tag);color:var(--sub)}
+.ld-ntc-one{display:flex;flex-direction:column;gap:4px;min-height:0;padding:4px 6px;margin:0 -6px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;color:var(--ink);overflow:hidden}
+.ld-ntc-one:hover{background:var(--bg-0)}
+.ld-ntc-one b{font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.01em;word-break:keep-all}
+.ld-ntc-one small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.ld-ntc-one p{margin:0;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6}
 .ld-ntc-md{display:flex;flex-direction:column;gap:12px;padding-bottom:8px}
 .ld-ntc-by{margin:0;font:400 var(--fs-body)/22px var(--font-body);color:var(--sub)}
 .ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
-/* 메모 — 줄마다 글 · 날짜 · (가리키면) 고정 · 지우기 */
-.ld-memo-b{display:flex;flex-direction:column;gap:4px}
+/* 메모 — 줄마다 글 · 날짜 · (가리키면) 고정 · 지우기 · 아래 적기 한 줄 */
+.ld-memo-b{display:flex;flex-direction:column;gap:6px;flex:1 1 0;min-height:0}
+.ld-ml-w{flex:1 1 0;min-height:0;overflow:auto}
 .ld-ml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
 .ld-ml li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;min-width:0;padding:1px 6px;margin:0 -6px;border-radius:6px;font:400 var(--fs-aux)/23px var(--font-body);color:var(--ink-2)}
 .ld-ml li:hover,.ld-ml li:focus-within{background:var(--bg-0)}
@@ -118,12 +115,65 @@ button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
 .ld-ml li:hover .ld-ml-a,.ld-ml li:focus-within .ld-ml-a{opacity:1}
 .ld-ml-b{border:0;padding:0;background:none;cursor:pointer;font:500 var(--fs-tag)/23px var(--font-body);color:var(--sub-2);white-space:nowrap}
 .ld-ml-b:hover{color:var(--ink);text-decoration:underline}
-.ld-memo-b .ld-ml-in.t-input{width:100%;max-width:100%;box-sizing:border-box;height:28px;min-height:28px;padding:0 10px;font-size:var(--fs-aux);border-radius:6px}
+.ld-memo-b .ld-ml-in.t-input{flex:none;width:100%;max-width:100%;box-sizing:border-box;height:32px;min-height:32px;padding:0 10px;font-size:var(--fs-aux);border-radius:6px}
 
-@media (prefers-reduced-motion:reduce){
-  .ld-in > .ld-card,.ld-nums > .ld-card,.ld-top > .ld-card{opacity:1;transform:none;transition:none}
-}
+/* 달력 — 머리(‹ 달 › · 오늘 · 일정 적기) · 월/주 격자 · 다음 일 목록. 색은 잉크 농도 · 오늘만 액센트(현재 위치) · 내 일정은 잉크 진하게 */
+.ld-cal{display:flex;flex-direction:column;gap:6px;flex:1 1 0;min-height:0}
+.ld-cal-h{display:flex;align-items:center;gap:4px;flex:none}
+.ld-cal-h .sp{flex:1}
+.ld-cal-l{font:700 var(--fs-body)/28px var(--font-display);color:var(--ink);letter-spacing:-.01em;padding:0 4px;white-space:nowrap}
+.ld-cal-n{width:28px;height:28px;border:0;border-radius:var(--r-8);background:none;color:var(--ink-2);font:500 var(--fs-t2)/28px var(--font-body);cursor:pointer}
+.ld-cal-n:hover,.ld-cal-t:hover{background:var(--bg-0)}
+.ld-cal-t{height:28px;padding:0 10px;border:0;border-radius:var(--r-8);background:none;color:var(--ink);font:500 var(--fs-aux)/28px var(--font-body);cursor:pointer;white-space:nowrap}
+.ld-cal-g{display:flex;flex-direction:column;flex:1 1 0;min-height:0}
+.ld-cal-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));flex:none}
+.ld-cal-dow span{font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub);text-align:center}
+.ld-cal-cells{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(var(--weeks,5),minmax(0,1fr));gap:2px;flex:1 1 0;min-height:0}
+.ld-cal-d{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;padding:3px 4px;border-radius:var(--r-8);cursor:pointer;overflow:hidden;transition:background var(--d-180) var(--e-ui)}
+.ld-cal-d:hover,.ld-cal-d:focus-visible{background:var(--bg-0);outline:0}
+.ld-cal-d.is-out{opacity:.45}
+.ld-cal-dn{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 4px;border-radius:11px;font:500 var(--fs-tag)/22px var(--font-num);color:var(--ink-2);align-self:flex-start}
+.ld-cal-d.is-today .ld-cal-dn{background:var(--accent);color:#fff;font-weight:600}
+.ld-cal-ev{display:flex;flex-direction:column;gap:1px;min-height:0;overflow:hidden}
+.is-narrow .ld-cal-ev{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:3px;padding:0 2px;overflow:hidden}
+.ld-cal-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--sub)}
+.ld-cal-dot.is-mine{background:var(--ink)}
+.ld-cal-c{display:flex;align-items:center;gap:4px;min-width:0;height:20px;padding:0 5px;border:0;border-radius:4px;background:var(--bg-0);text-align:left;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub-2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-cal-c .num{flex:none;font-weight:500;color:var(--sub)}
+.ld-cal-c.is-mine{background:var(--ink);color:#fff;font-weight:500}
+.ld-cal-c.is-mine .num{color:rgba(255,255,255,.75)}
+.ld-cal-c:hover{filter:brightness(.95)}
+.ld-cal-more{flex:none;font:500 var(--fs-tag)/18px var(--font-body);color:var(--sub);padding:0 2px;white-space:nowrap}
+.ld-cal-err{padding-top:8px}
+.is-week .ld-cal-cells{grid-template-rows:1fr}
+.is-week .ld-cal-d{padding:4px 6px}
+.is-week .ld-cal-dn{min-width:26px;height:26px;font-size:var(--fs-aux)}
+.is-week .ld-cal-c{height:auto;min-height:24px;max-height:44px;align-items:flex-start;padding:2px 6px;font-size:var(--fs-aux);line-height:20px;white-space:normal}
+/* 다음 일 목록 */
+.ld-cal-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;overflow:auto;flex:1 1 0;min-height:0}
+.ld-cal-list li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:start}
+.ld-cal-ld{display:flex;flex-direction:column;align-items:flex-start;gap:0;border:0;padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left}
+.ld-cal-ld:hover{background:var(--bg-0)}
+.ld-cal-ld b{font:600 var(--fs-body)/22px var(--font-num);color:var(--ink)}
+.ld-cal-ld span{font:500 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+.ld-cal-list li.is-today .ld-cal-ld b{color:var(--accent)}
+.ld-cal-li{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ld-cal-li .ld-cal-c{height:auto;min-height:24px;padding:2px 8px;font-size:var(--fs-aux);line-height:20px;white-space:normal}
+/* 하루 창 */
+.ld-cal-md{display:flex;flex-direction:column;gap:14px}
+.ld-cal-dl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow:auto}
+.ld-cal-dl li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:6px 10px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2)}
+.ld-cal-dl li.is-mine{color:var(--ink)}
+.ld-cal-dl li.is-mine b,.ld-cal-dl li a{font-weight:500;color:var(--ink)}
+.ld-cal-dl b{font-weight:500}
+.ld-cal-dl a{text-decoration:none;background:linear-gradient(var(--ink),var(--ink)) 0 100%/100% 1px no-repeat}
+.ld-cal-dt{min-width:3ch;font-weight:500;color:var(--sub)}
+.ld-cal-dl small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.ld-cal-da{margin-left:auto;display:inline-flex;gap:10px}
+.ld-cal-form{display:flex;flex-direction:column;gap:8px}
+.ld-cal-fr{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:8px}
+.ld-cal-form .t-input{width:100%;box-sizing:border-box;font-size:var(--fs-body)}
+.ld-cal-fa{display:flex;gap:8px;justify-content:flex-end;margin-top:2px}
 
-/* 좁은 PC */
-@media (max-width:1180px){.ld-nums,.ld-top{grid-template-columns:1fr 1fr}.ld-top-n,.ld-top-m{grid-column:auto}.ld-rgrid.la-acg{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){.ld-nums,.ld-top{grid-template-columns:1fr}.ld-rgrid.la-acg{grid-template-columns:1fr}.ld-pf{row-gap:8px}}
+@media (prefers-reduced-motion:reduce){.ld-grid{opacity:1;transform:none;transition:none}}
+@media (max-width:760px){.ld{padding:12px 16px 24px}.ld-bar{display:none}.ld-cal-fr{grid-template-columns:1fr}}

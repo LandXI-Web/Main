@@ -1,0 +1,52 @@
+/* dashgrid.css — 개인별 맞춤 대시보드 칸 격자(kit/dashgrid.js). 회백 바탕 위 흰 카드 16 · 그림자 0 · 평소엔 손잡이 0 · 수정 모드에만 점선 · 손잡이.
+   글자는 토큰(--fs-*)만 · 바닥 14. 색은 잉크 농도(액센트는 현재 보기 방식 칩 하나). */
+.dg{position:relative;min-height:64px}
+.dg-item.t-card{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;min-width:0;padding:16px 20px;
+  background:var(--bg-1);border-radius:var(--r-16);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui),opacity var(--d-380) var(--e-cam),transform var(--d-380) var(--e-cam)}
+.dg-item.is-new{opacity:0;transform:translateY(8px)}
+.dg-item.is-drag,.dg-item.is-resize{transition:none;z-index:6;box-shadow:var(--elev-map)}
+.dg-item.is-drag{cursor:grabbing}
+.dg-ph{position:absolute;box-sizing:border-box;border-radius:var(--r-16);background:var(--bg-0);border:1px dashed var(--mute);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui)}
+/* 머리 — 제목 · (보조 한 줄) · 더 보기 · (수정) 보기 방식 · 빼기 */
+.dg-hd{display:flex;align-items:flex-start;gap:10px;flex:none;min-width:0;min-height:28px}
+.dg-hd-t{display:flex;flex-direction:column;gap:0;min-width:0;flex:1 1 auto}
+.dg-t{margin:0;font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dg-sub{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);word-break:keep-all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dg-sub[hidden]{display:none}
+.dg-more{flex:none;align-self:flex-start;margin-top:3px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink);text-decoration:none;white-space:nowrap;border:0;padding:0;background:linear-gradient(var(--ink),var(--ink)) 0 100%/0 1px no-repeat;background-color:transparent;cursor:pointer;transition:background-size var(--d-380) var(--e-ui)}
+.dg-more::after{content:" →"}
+.dg-more:hover{background-size:100% 1px}
+.dg-grip,.dg-rm,.dg-views,.dg-rs{display:none}
+.dg-body{flex:1 1 0;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+/* 수정 모드 */
+.dg.is-edit .dg-item.t-card{outline:1px dashed var(--mute);outline-offset:-1px}
+.dg.is-edit .dg-hd{cursor:grab}
+.dg.is-edit .dg-grip{display:inline-flex;flex:none;width:20px;height:28px;align-items:center;color:var(--mute)}
+.dg-grip svg{width:20px;height:20px;fill:currentColor}
+.dg.is-edit .dg-rm{display:inline-flex;flex:none;align-items:center;justify-content:center;width:28px;height:28px;border:0;border-radius:var(--r-8);background:var(--bg-0);color:var(--sub-2);cursor:pointer}
+.dg-rm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.dg.is-edit .dg-rm:hover{background:var(--ink);color:#fff}
+.dg.is-edit .dg-views{display:inline-flex;flex:none;gap:2px;padding:2px;border-radius:var(--r-8);background:var(--bg-0)}
+.dg-v{height:24px;padding:0 10px;border:0;border-radius:6px;background:transparent;font:500 var(--fs-tag)/24px var(--font-body);color:var(--sub-2);cursor:pointer;white-space:nowrap}
+.dg-v[aria-pressed="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 0 rgba(28,31,37,.06)}
+.dg.is-edit .dg-rs{display:block;position:absolute;right:4px;bottom:4px;width:22px;height:22px;cursor:nwse-resize;border-radius:4px;
+  background:linear-gradient(135deg,transparent 0 55%,var(--mute) 55% 62%,transparent 62% 72%,var(--mute) 72% 79%,transparent 79%)}
+.dg.is-edit .dg-rs:hover{background:linear-gradient(135deg,transparent 0 55%,var(--ink) 55% 62%,transparent 62% 72%,var(--ink) 72% 79%,transparent 79%)}
+.dg.is-edit .dg-body{pointer-events:none;user-select:none}
+/* 도구 줄 — 평소 단추 하나 · 수정 중엔 셋 */
+.dg-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;position:relative;z-index:7}
+.dg-bar .dg-b{height:36px;padding:0 14px;font-size:var(--fs-aux);line-height:34px;white-space:nowrap}
+.dg-bar .dg-addw,.dg-bar .dg-b--reset,.dg-bar .dg-b--done{display:none}
+.dg-bar.is-edit .dg-b--edit{display:none}
+.dg-bar.is-edit .dg-addw,.dg-bar.is-edit .dg-b--reset,.dg-bar.is-edit .dg-b--done{display:inline-flex}
+.dg-addw{position:relative;display:inline-flex}
+.dg-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:200px;padding:6px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);display:flex;flex-direction:column;gap:2px}
+.dg-menu[hidden]{display:none}
+.dg-mi{display:block;width:100%;padding:8px 12px;border:0;border-radius:var(--r-8);background:transparent;text-align:left;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
+.dg-mi:hover{background:var(--bg-0)}
+.dg-mi.is-none{color:var(--sub);cursor:default}
+/* 좁은 화면 — 한 줄로 쌓기 · 수정 없음 */
+.dg.is-stack{display:flex;flex-direction:column;gap:12px;height:auto!important}
+.dg.is-stack .dg-item.t-card{position:static;width:auto!important;left:auto!important;top:auto!important;transition:none}
+.dg.is-stack .dg-ph{display:none}
+@media (prefers-reduced-motion:reduce){.dg-item.t-card,.dg-ph{transition:none}.dg-item.is-new{opacity:1;transform:none}}
