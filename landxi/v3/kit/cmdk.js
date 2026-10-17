@@ -201,7 +201,7 @@ export function mountCmdk(opts = {}) {
 }
 
 function create(opts) {
-  const cfg = { stage: null, guest: false, context: () => ({}), onAction: null, who: null, home: '', dock: null, dockHost: null, sugg: null };
+  const cfg = { stage: null, guest: false, context: () => ({}), onAction: null, who: null, home: '', dock: null, dockHost: null, sugg: null, pre: null, ph: null };
   const configure = (o = {}) => {
     if (o.stage) cfg.stage = o.stage;
     if (typeof o.context === 'function') cfg.context = o.context;
@@ -212,6 +212,8 @@ function create(opts) {
     if (o.dock !== undefined) cfg.dock = o.dock;           // 'bottom' = 지도 아래 가운데 채팅 창(XI맵 · 10-14 원칙 244) · 없으면 오른쪽 아래 버튼 → 창
     if (o.dockHost) cfg.dockHost = o.dockHost;
     if (o.sugg !== undefined) cfg.sugg = o.sugg;           // 화면이 주는 추천 질문(함수 · 배열)
+    if (o.pre !== undefined) cfg.pre = typeof o.pre === 'function' ? o.pre : null;   // 보내기 전 화면이 먼저 본다(XI맵: 시군구 · 지번이면 언어 모델 없이 바로 이동 · 10-17 원칙 276) → true = 끝 · { choices } = 후보 목록 · false = 질문으로
+    if (o.ph !== undefined) cfg.ph = o.ph;                 // 아래 채팅 창 안내 글(화면이 정함)
     applyGuest(); drawSugg(); bindStore(); applyDock();
   };
 
@@ -266,7 +268,25 @@ function create(opts) {
     const c = ctxNow();
     return (c.region || c.region_name) && key !== 'lx/sales' ? SUGG.staffHere : SUGG.staff;
   }
+  /** 장소 이동으로 끝난 입력 — 보내기 전에 미리 세운 차례(내 말 · 빈 답 칸)를 거둔다(대화에 남지 않게 · 기다림 상태도 푼다) */
+  function dropFresh() {
+    if (!live?.fresh) return;
+    live.me?.remove(); live.msg?.remove();
+    const i = store.data.turns.indexOf(live.rec); if (i >= 0) store.data.turns.splice(i, 1);
+    live = null;
+    box.dataset.state = 'done'; delete box.dataset.busy; box.setAttribute('aria-busy', 'false'); faces('idle');
+    if (!log.querySelector('.k-chat-msg.me')) intro.hidden = false;
+    save(); syncDock();
+  }
+  /** 후보 목록(입력 줄 위 작은 칩 · 원칙 276) — 누르면 그곳으로 · 빈 목록이면 추천 질문으로 되돌림 */
+  function picks(list) {
+    if (!list.length) { if (sugg.querySelector('.k-chat-pick')) { sugg.innerHTML = ''; drawSugg(); } return; }
+    sugg.innerHTML = '';
+    for (const c of list) sugg.append(h('button.k-chat-chip.k-chat-pick', { type: 'button', onclick: () => { picks([]); input.value = ''; try { c.go?.(); } catch { /* */ } } }, h('b', { text: c.t }), c.s ? h('small', { text: ' ' + c.s }) : null));
+    sugg.hidden = false;
+  }
   function drawSugg() {
+    if (sugg.querySelector('.k-chat-pick')) return;                 // 후보 목록(원칙 276)이 떠 있으면 그대로 둔다 — 고르거나 다음 입력 때 걷힌다
     const list = suggestions();
     sugg.innerHTML = '';
     for (const q of list) sugg.append(h('button.k-chat-chip', { type: 'button', 'data-q': q, text: q }));
@@ -294,7 +314,7 @@ function create(opts) {
       root.dataset.dock = 'bottom'; root.dataset.fold = '1';
       if (cfg.dockHost && root.parentElement !== cfg.dockHost) cfg.dockHost.append(root);
       box.hidden = false; tag.hidden = true;
-      input.placeholder = S.title; input.setAttribute('aria-label', S.title);
+      input.placeholder = cfg.ph || S.title; input.setAttribute('aria-label', cfg.ph || S.title);
       input.addEventListener('focus', () => { if (root.dataset.dock) delete root.dataset.fold; });
     } else {
       delete root.dataset.dock; delete root.dataset.fold;
@@ -650,6 +670,12 @@ function create(opts) {
     e.preventDefault();
     if (cfg.guest) return;
     const msg = input.value.trim(); if (!msg) return;
+    if (cfg.pre) {                                                  // 장소(시군구 · 지번)면 모델을 거치지 않고 화면이 바로 움직인다(원칙 276)
+      let pr = null; try { pr = await cfg.pre(msg); } catch { pr = null; }
+      if (pr === true) { dropFresh(); input.value = ''; picks([]); return; }
+      if (pr && Array.isArray(pr.choices) && pr.choices.length) { dropFresh(); picks(pr.choices); return; }
+    }
+    picks([]);
     if (!live?.fresh) newTurn(msg, { reuse: false });
     live.fresh = false;
     const turn = live;

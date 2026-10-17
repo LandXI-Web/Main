@@ -326,14 +326,56 @@ async def density(request: Request, g: int = 0):
 @router.get("/ximap/board")
 async def board(request: Request, fresh: int | None = None):
     """한 번 호출 — 지난 값이 있으면 바로 돌려주고(열자마자 · 2초 안) 1분이 지났으면 뒤에서 새로 만든다. 고치기가 있으면 바로 새로."""
-    p = require(principal(request), lx=True)
+    p = principal(request)
+    if p.realm != "tenant":
+        require(p, lx=True)                                  # LX 는 전국 그대로 · 기관은 아래에서 관할만(원칙 277)
+    else:
+        require(p)
     if fresh or not _BOARD["v"]:
         await _rebuild(p, wait=bool(fresh))
         while _BOARD["v"] is None and _BOARD.get("busy"):     # 다른 요청이 만드는 중이면 그 결과를 기다린다
             await asyncio.sleep(0.05)
     elif time.time() - _BOARD["at"] > BOARD_TTL:
         asyncio.get_running_loop().create_task(_rebuild(p))
+    if p.realm == "tenant":
+        return _scoped(_BOARD["v"], p)
     return _stamp(_BOARD["v"])
+
+
+def _scoped(bd: dict | None, p) -> dict | None:
+    """기관 계정 — 관할 시군구만 · 결과 층은 이름표(id · set)만(주소 · 경로 없음) · 밀도 없이(다른 기관 · 다른 지역 0). 서비스 목록 · 수는 관할 안에서 다시 센다(숫자 한 출처)."""
+    if not bd:
+        return bd
+    from . import regions as R
+    allowed: set[str] = set()
+    for r in R.scope_regions(p):
+        allowed.add(str(r["sgg_cd"]))
+        if r.get("prev_cd"):
+            allowed.add(str(r["prev_cd"]))
+    regs = []
+    for r in bd.get("regions") or []:
+        if str(r.get("sgg_cd")) not in allowed and str(r.get("prev_cd")) not in allowed:
+            continue
+        rr = {k: v for k, v in r.items() if k != "density"}
+        rr["items"] = [{**{k: v for k, v in it.items() if k != "layer"}, "layer": {k: (it.get("layer") or {}).get(k) for k in ("id", "set")}} for it in r.get("items") or []]   # 이름표만(id · set) — 화면이 자기 결과 층과 짝짓는 열쇠
+        regs.append(rr)
+    svcs: dict[str, dict] = {}
+    kinds = {s["id"]: s.get("kind", "service") for s in bd.get("services") or []}
+    for r in regs:
+        for it in r["items"]:
+            sv = svcs.setdefault(it["svc"], {"id": it["svc"], "name": it["name"], "n_regions": 0, "n": 0})
+            sv["n_regions"] += 1
+            sv["n"] += int((it.get("n") or {}).get("value") or 0)
+    last = max((r.get("last_at") or "" for r in regs), default="") or None
+    services = [{"id": s["id"], "name": s["name"], "n_regions": env(s["n_regions"], "count", "recorded", "결과가 있는 관할 시군구"),
+                 "n": env(s["n"], "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=last),
+                 "kind": kinds.get(s["id"], "service")} for s in sorted(svcs.values(), key=lambda s: -s["n_regions"])]
+    n_svc = sum(1 for x in services if x["kind"] == "service")
+    return {"regions": regs, "services": services,
+            "n_services": env(n_svc, "가지", "recorded", "관할 시군구에 제공 중인 서비스(전역 분석 제외)"),
+            "n_regions": env(len(regs), "count", "recorded", "결과가 있는 관할 시군구", as_of=last),
+            "years": bd.get("years"), "last_at": last, "as_of": bd.get("as_of"), "class_ko": bd.get("class_ko"),
+            "source": "서비스 결과 장부(관할 시군구만)"}
 
 
 def _stamp(bd: dict | None) -> dict | None:

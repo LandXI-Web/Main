@@ -79,10 +79,21 @@
 .k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:calc((100% - 416px) / 2);width:min(680px,calc(100% - 448px))}
 @media (max-width:900px){.k-main:has(> .k-drawer[data-slot="right"].is-open) .k-chat-root[data-dock]{left:50%;width:calc(100% - 24px)}}
 .k-dr-h .xc-board-rep{flex:none;height:36px;padding:0 14px;font:500 var(--fs-aux,15px)/1 var(--font-body)}   /* 제목 줄 오른쪽 · 닫기 × 옆 */
-.xc-board-grp{padding:6px 0 10px;border-top:1px solid var(--rule)}
-.xc-board-grp:first-of-type{border-top:0}
+/* 시도별 접고 펴기(원칙 277) — 머리줄(시도 · 시군구 수 · 꺾쇠) */
+.xc-board-sido-g{border-top:1px solid var(--rule)}
+.xc-board-sido-g:first-of-type{border-top:0}
+.xc-board-sido{display:flex;align-items:center;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:12px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
+.xc-board-sido b{font:700 var(--fs-body,16px)/22px var(--font-body)}
+.xc-board-sido span{font:500 var(--fs-tag,14px)/1 var(--font-num);color:var(--sub)}
+.xc-board-sido i{margin-left:auto;width:8px;height:8px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(-45deg);transition:transform var(--d-180,180ms) var(--e-ui,ease)}
+.xc-board-sido[aria-expanded="true"] i{transform:rotate(45deg)}
+.xc-board-sido:hover{background:var(--bg-0)}
+.xc-board-sido-b{padding:0 0 6px 10px}
+.xc-board-sido-b[hidden]{display:none}
+.xc-board-grp{padding:4px 0 8px}
+.xc-board-grp + .xc-board-grp{border-top:1px solid var(--rule)}
 .xc-board-sgg{display:flex;align-items:baseline;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:8px 8px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink)}
-.xc-board-sgg b{font:700 var(--fs-t2,20px)/28px var(--font-display);letter-spacing:-.01em}
+.xc-board-sgg b{font:700 var(--fs-aux,15px)/22px var(--font-body)}
 .xc-board-sgg small{font:400 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}
 .xc-board-sgg:hover,.xc-board-sgg[aria-current="true"]{background:var(--bg-0)}
 .xc-board-sgg:disabled{cursor:default;color:var(--sub)}

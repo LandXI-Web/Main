@@ -185,8 +185,8 @@ async function boot() {
     h('span', { 'aria-hidden': 'true', html: `<svg viewBox="0 0 20 20">${ICO[id] || ''}</svg>` }), h('span.xc-tool-l', { text: label }))));
   patchRail();
 
-  // 마스트: 검색 하나(시군구 · 지번 · 문장) + 조건 칩
-  SH.mast(buildSearch());
+  // 마스트: 위쪽 검색창 없음(10-17 원칙 276 "아래 XI ChatGEO 하나로") — 검색 요소는 만들되 붙이지 않는다(지역 · 읍면동 이름 동기화 코드가 그대로 쓰도록) · 조건 칩만 마스트에
+  buildSearch();
   chips = h('div.xc-chips', { hidden: true });
   placeChips(); matchMedia(NARROW).addEventListener('change', placeChips);
 
@@ -277,7 +277,7 @@ async function boot() {
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null,
     sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set), cls_off: [...S.clsOff] }),   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
     // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
-    dock: 'bottom', dockHost: mainEl, sugg: xiSugg });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193)
+    dock: 'bottom', dockHost: mainEl, sugg: xiSugg, pre: placeQuery, ph: '시군구 · 지번 또는 질문' });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193) · pre = 시군구 · 지번이면 바로 이동(원칙 276)
   if (S.board) DS = createDash({ map, stage, host: mainEl, h,
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
     onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },
@@ -675,7 +675,7 @@ async function setRegion(r, { first = false, to = null, soft = false, keepDrawer
   const cw = (ring) => { let a = 0; for (let i = 0; i < ring.length - 1; i++) a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return a < 0 ? ring : [...ring].reverse(); };
   map.getSource('xc-rmask')?.setData(g && !soft && !S.board ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
   map.getSource('xc-rline')?.setData(g ? { type: 'Feature', properties: {}, geometry: g } : { type: 'FeatureCollection', features: [] });
-  S.els.hud.hidden = S.outside;
+  S.els.hud.hidden = S.outside || !!GB?.data;
   patchRail();
   searchInput.value = r ? r.name : '';
   // to = 말로 한 읍면동 이동 — 시군구를 거치지 않고 한 번에 그 읍면동으로(동작 끝 신호가 늦지 않게)
@@ -850,8 +850,9 @@ async function refresh() {
     결과 확인 · 분석하기 카드와 같은 출처). 셈 단위는 서버 값 그대로(필지 · 동 · 건) · 다른 단위끼리 더하지 않는다. 아래 한 줄 = 그 숫자의 서비스 이름 */
 async function refreshAI(my) {
   if (S.board) return refreshBoard(my);   // 전국 결과(바퀴 5) — 큰 숫자 없이 지도 위 결과 + 한 칸(전국 · 지금 시군구)
-  if (hudBoard) hudBoard.hidden = true;
-  S.els.hud.hidden = false;
+  loadGovBoard();
+  if (GB?.data) { HUDKEY = ''; paintBoardHud(); S.els.hud.hidden = true; }   // 기관(원칙 277): 관할 장부가 있으면 LX 와 같은 한 줄 'OO · n 서비스 제공중'(큰 숫자 'AI 분석 결과'는 걷는다 — 같은 이름 숫자가 두 곳에 있지 않게)
+  else { if (hudBoard) hudBoard.hidden = true; S.els.hud.hidden = false; }
   const where = S.region ? S.region.name : '전국';
   const scope = S.region?.code || 'KR';
   S.els.hud.dataset.scope = scope;
@@ -887,11 +888,11 @@ async function refreshAI(my) {
     const svc = r.names[0] ? r.names[0] + (n > 1 ? ` 외 ${n - 1}개 서비스` : '') : '';
     if (svc) hudSus.append(h('span', { text: svc }));
     hudSus.hidden = !svc;
-    X.hud = { label: `${AI_LABEL} · ${where}`, n: r.env.value, unit: r.unit, total: r.env.value, from: 'summary' };
+    if (!(GB?.data && !S.board)) X.hud = { label: `${AI_LABEL} · ${where}`, n: r.env.value, unit: r.unit, total: r.env.value, from: 'summary' };
     K.devlog('hud', `${scope} → ${AI_LABEL} ${r.env.value}${r.unit} (${r.names.join(', ')})`);
   } else {
     hudState(big, 'empty'); hudSus.hidden = true;
-    X.hud = { label: `${AI_LABEL} · ${where}`, n: 0, total: 0, from: 'summary' };
+    if (!(GB?.data && !S.board)) X.hud = { label: `${AI_LABEL} · ${where}`, n: 0, total: 0, from: 'summary' };
   }
   hudBig.dataset.shown = scope;
   SH.fresh(j ? new Date() : null);
@@ -962,7 +963,7 @@ function mountBoard() {
   });
 }
 /** 지금 시군구의 전국 결과 줄(없으면 null) — 지도 경계(옛 코드)와 결과 장부(지금 코드)를 별칭으로 잇는다 */
-const boardRegion = (r) => (r && BD?.data ? BD.data.regions.find((x) => codesOf(r).includes(x.sgg_cd) || (x.prev_cd && codesOf(r).includes(x.prev_cd)) || (lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox))) || null : null);
+const boardRegion = (r) => (r && boardData() ? boardData().regions.find((x) => codesOf(r).includes(x.sgg_cd) || (x.prev_cd && codesOf(r).includes(x.prev_cd)) || (lastName(x.name) === lastName(r.name) && near(x.bbox, r.bbox))) || null : null);
 async function refreshBoard(my) {
   hudBig.hidden = true; hudSus.hidden = true; S.els.hud.hidden = true;
   if (!S.board) return;
@@ -1019,6 +1020,14 @@ function boardTotal(task = null) {
    서비스 = 그 시군구들에 제공 중인 서비스 가짓수(장부의 서비스 · 전역 분석은 세지 않음 — 메인 '서비스 n가지'와 같은 셈). 시군구로 들어가면 그 이름 · 그곳 서비스 수.
    지어낸 숫자 0 · 지역 하드코딩 0 · 큰 숫자 · 업무 줄 · 설명 글 없음(원칙 230). 업무 거르기 중이면 그 아래 '원래대로' 칩 하나. ═══ */
 let HUDKEY = '';
+let GB = null;   // 기관 계정의 서비스 결과 장부(GET /ximap/board · 서버가 관할 시군구만 · 결과 층 주소 없이 내준다 · 원칙 277) — LX 는 BD.data
+const boardData = () => BD?.data || GB?.data || null;
+function loadGovBoard() {
+  if (S.board || !S.tenant || GB) return;
+  GB = { data: null };
+  api('/ximap/board').then((j) => { GB = { data: j?.regions ? j : null }; X.govBoard = j ? { regions: (j.regions || []).map((r) => r.name), services: (j.services || []).length, layerLeak: (j.regions || []).some((r) => (r.items || []).some((it) => it.layer)) } : null; HUDKEY = ''; paintBoardHud(); if (GB.data && S.els?.hud) S.els.hud.hidden = true; })
+    .catch(() => { GB = { data: null }; });
+}
 /** 서비스 결과 장부에서 — 지도 범위와 겹치는 시군구 · 그곳들의 서비스 가짓수(전역 분석 제외) */
 function hudCounts(d, region) {
   const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
@@ -1036,7 +1045,7 @@ function hudCounts(d, region) {
 }
 /** 왼쪽 위 한 줄을 누르면(10-17 원칙 273) — 같은 장부 값(/ximap/board)으로 지도 위 통계 1단계 사양을 만든다: 시군구 순위(지도 색) · 서비스별 수. 전국이면 시군구 면이 차오르고, 시군구 안이면 서비스별만 */
 function boardSpec() {
-  const d = BD?.data; if (!d) return null;
+  const d = boardData(); if (!d) return null;
   const region = S.region && map.getZoom() >= 8.2 ? S.region : null;
   const { regions, services, regs, svcs } = hudCounts(d, region);
   const tot = regs.reduce((t, r) => t + ev(r.n), 0);
@@ -1068,7 +1077,7 @@ X.boardSpec = () => boardSpec();   // 실증 기록용(화면엔 없음)
    오른쪽 서랍에 '시군구 → 제공 중인 서비스' 목록(지금 지도 범위 · 한 줄 숫자와 같은 /ximap/board). 서비스를 누르면 그 시군구로 날아가 그 서비스 결과만 지도에(업무 거르기 · 기관 화면은 그 결과 층만 켬).
    시군구 이름을 누르면 그곳으로. 설명 글 0 · 서랍 폭 고정(길면 서랍 안에서 스크롤). 순위 · 숫자 통계는 기존 '통계' 단계 그대로(여기 기본 동작 아님). */
 function boardRegs() {
-  const d = BD?.data; if (!d) return null;
+  const d = boardData(); if (!d) return null;
   const region = S.region && map.getZoom() >= 8.2 ? S.region : null;
   const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
   const { regs, services, regions } = hudCounts(d, region);
@@ -1087,18 +1096,36 @@ function openBoardList() {
   if (!d.el.querySelector('.xc-board-rep')) d.el.querySelector('.k-dr-x')?.before(h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) }));   // 제목 줄 오른쪽 · 닫기 × 옆
   const box = h('div.xc-list.xc-board');
   if (!B.regs.length) { K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
-  for (const reg of B.regs) {
+  // 시도별 묶음 — 지금 지도 범위와 겹치는 시도(또는 지금 지역의 시도)는 펼친 채, 나머지는 접힘
+  let vb = null; try { const b = map.getBounds(); vb = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; } catch { /* 지도 전 */ }
+  const inView = (reg) => !!(vb && Array.isArray(reg.bbox) && reg.bbox[0] <= vb[2] && reg.bbox[2] >= vb[0] && reg.bbox[1] <= vb[3] && reg.bbox[3] >= vb[1]);
+  const bySido = new Map();
+  for (const reg of B.regs) { const k = reg.sido || '—'; (bySido.get(k) || bySido.set(k, []).get(k)).push(reg); }
+  const groups = [...bySido.entries()];
+  for (const [sido, regs] of groups) {
+    const open = groups.length === 1 || regs.some((reg) => inView(reg) || S.region?.code === regOf(reg)?.code);
+    const body = h('div.xc-board-sido-b', { hidden: !open });
+    const head = h('button.xc-board-sido', { type: 'button', 'aria-expanded': String(open), onclick: () => { const o = head.getAttribute('aria-expanded') !== 'true'; head.setAttribute('aria-expanded', String(o)); body.hidden = !o; } },
+      h('b', { text: sido }), h('span.num', { text: `${nf(regs.length)}곳` }), h('i'));
+    box.append(h('section.xc-board-sido-g', {}, head, body));
+    for (const reg of regs) body.append(boardGroup(reg));
+  }
+  d.set(box);
+  X.boardList = { regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-board-svc').length, sido: groups.length, open: [...box.querySelectorAll('.xc-board-sido[aria-expanded="true"] b')].map((b) => b.textContent) };
+}
+/** 시군구 한 묶음 — 이름(누르면 이동) + 서비스 줄 */
+function boardGroup(reg) {
+  const B = boardRegs();
+  {
     const r = regOf(reg);
     const rows = B.svcRows(reg).map((it) => h('li', {}, h('button.xc-board-svc', { type: 'button', dataset: { svc: it.svc, sgg: reg.sgg_cd }, 'aria-current': S.region?.code === r?.code && BD?.task === taskOf(it.name) ? 'true' : undefined,
       onclick: (e) => showBoardSvc(reg, it, e.currentTarget) },
-      h('i', { style: { background: BD.colorOf(taskOf(it.name)) } }), h('span', { text: it.name }), h('b.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }))));
-    box.append(h('section.xc-board-grp', {},
+      h('i', { style: { background: BD?.colorOf?.(taskOf(it.name)) || baseCol(taskOf(it.name)) } }), h('span', { text: it.name }), h('b.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }))));
+    return h('section.xc-board-grp', {},
       h('button.xc-board-sgg', { type: 'button', 'aria-current': S.region?.code === r?.code ? 'true' : undefined, disabled: !r, onclick: () => { if (r) setRegion(r, { keepDrawer: true }); } },
-        h('b', { text: reg.name }), reg.sido ? h('small', { text: reg.sido }) : null),
-      h('ul.xc-board-svcs', {}, ...rows)));
+        h('b', { text: reg.name })),
+      h('ul.xc-board-svcs', {}, ...rows));
   }
-  d.set(box);
-  X.boardList = { regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-board-svc').length };
 }
 /** 서비스 하나 → 그 시군구로 날아가 그 서비스 결과만 지도에(기존 결과 켜기 재사용: 전국 결과 화면 = 업무 거르기 · 기관 화면 = 그 결과 층만) */
 async function showBoardSvc(reg, it, btn) {
@@ -1119,7 +1146,7 @@ async function showBoardSvc(reg, it, btn) {
     S.layers.ai = true; S.aiUser = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
   }
   if (same) btn?.removeAttribute('aria-current');
-  X.boardPick = { sgg: reg.sgg_cd, svc: it.svc, task: S.board ? BD?.task : null, same };
+  X.boardPick = { sgg: reg.sgg_cd, svc: it.svc, task: S.board ? BD?.task : null, same, on: S.board ? null : (S.res || []).filter((x) => S.resOn[x.id]).map((x) => x.name?.ko || x.id) };
 }
 /** 목록과 같은 내용의 한 장(.hwpx) — 시군구 · 서비스 · 서비스 결과 · 마지막 분석(원칙 274 (a) · 275 기준) */
 function boardListSpec() {
@@ -1147,25 +1174,26 @@ async function downloadHwpx(spec, b) {
   setTimeout(() => { b.textContent = t0; b.disabled = false; }, 1600);
 }
 function paintBoardHud() {
-  const d = BD?.data;
+  const d = boardData();
   if (!hudBoard || NAT?.id && NAT.id !== 'kr') return;
+  if (!S.board && !d) { hudBoard.hidden = true; return; }   // 기관 화면: 장부가 오기 전에는 큰 숫자 그대로
   hudBoard.hidden = false;
   const task = BD?.task || null;
-  const reset = task ? h('p.xb-task', {}, h('i', { style: { background: BD.colorOf(task) } }), h('span', { text: task }),
+  const reset = task ? h('p.xb-task', {}, h('i', { style: { background: BD?.colorOf?.(task) || baseCol(task) } }), h('span', { text: task }),
     h('button.xb-reset', { type: 'button', text: '원래대로', onclick: () => applyTask(null) })) : null;
   let kids, key;
   if (!d) {
     kids = [h('p.xb-k.xb-k--line', { text: '결과를 불러오지 못했습니다' })];
     key = 'fail'; X.hud = { label: '결과를 불러오지 못했습니다', n: null, from: 'board', state: 'fail' };
   } else if (!S.region || map.getZoom() < 8.2) {
-    const { regions, services } = hudCounts(d, null);
+    const { regions, services, regs } = hudCounts(d, null);
     const label = `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
-    const total = S.clsOff.size ? visRows(hudTaskRows().rows).filter((x) => !task || x.k === task).reduce((t, x) => t + x.n, 0) : boardTotal(task), unit = task ? BD.UNIT[task] || '개' : '개';
+    const total = !S.board ? regs.reduce((t, x) => t + ev(x.n), 0) : S.clsOff.size ? visRows(hudTaskRows().rows).filter((x) => !task || x.k === task).reduce((t, x) => t + x.n, 0) : boardTotal(task), unit = task ? BD?.UNIT?.[task] || '개' : '개';
     kids = [h('button.xb-k.xb-k--line', { type: 'button', onclick: openBoardList }, h('b.num', { text: nf(regions) }), ' 시군구 · ', h('b.num', { text: nf(services) }), ' 서비스 제공중'), reset];   // 누르면 지도 위 통계 1단계(원칙 273)
     key = ['kr', regions, services, task].join('|');
     X.hud = { label, regions, services, n: total, unit, task, from: 'board' };
   } else {
-    const r = S.region, { rows, wait } = regionRows(r);
+    const r = S.region, { rows, wait } = S.board ? regionRows(r) : { rows: [], wait: false };   // 기관 화면은 전국 분석 장부를 부르지 않는다
     const shown = visRows(task ? rows.filter((x) => x.k === task) : rows);
     const { services } = hudCounts(d, r);
     const label = `${r.name} · ${nf(services)} 서비스 제공중`;
@@ -1707,6 +1735,38 @@ async function pickEmd(ll) {
   if (!e) return null;
   S.cond.emd = e; renderChips(); searchInput.value = e.nm; refresh();
   return emdFrame(e);
+}
+/* ═══ 아래 채팅 창 하나(10-17 원칙 276) — 시군구 이름 · 읍면동 · 지번만 치면 언어 모델을 거치지 않고 바로 그곳으로(위 검색창이 쓰던 길 그대로: 지도 경계 이름 · 읍면동 · /survey/findings 지번 → 필지 카드).
+   후보가 여럿이면 채팅창 위 작은 후보 목록. 장소가 아니면 false → 질문으로. 걸린 시간은 X.place(실증용). ═══ */
+async function placeQuery(q) {
+  const n = norm(q); if (!n) return false;
+  const t0 = performance.now();
+  const c = [];
+  const exactR = S.regions.find((r) => norm(r.name) === n || norm(r.full) === n);
+  if (exactR) c.push({ t: exactR.name, s: exactR.sido || '', go: () => setRegion(exactR) });
+  else {
+    for (const r of S.regions.filter((r) => norm(r.full).includes(n) || norm(r.name).includes(n)).slice(0, 5)) c.push({ t: r.name, s: r.sido || '', go: () => setRegion(r) });
+    const seenE = new Set();
+    for (const e of [...S.remd, ...S.emds].filter((e) => norm(e.nm).includes(n))) {
+      if (seenE.has(e.cd) || seenE.size >= 4) continue; seenE.add(e.cd);
+      const inHere = S.remd.some((x) => x.cd === e.cd), r = inHere ? S.region : byCode(e.cd);
+      c.push({ t: e.nm, s: r?.name || '', go: () => goEmd(e, inHere ? S.region : null) });
+    }
+    if (/\d/.test(q)) {
+      try {
+        const j = await api('/survey/findings?' + new URLSearchParams({ q, limit: '5', sort: 'score' }));
+        const seen = new Set();
+        for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); c.push({ t: jibun(f.addr), s: String(f.addr || '').split(' ').slice(0, -2).join(' '), go: () => openParcel(f.pnu, { fly: true }) }); }
+      } catch { /* 지번 찾기 실패 — 질문으로 */ }
+    }
+  }
+  const dup = new Map(); for (const o of c) if (!dup.has(o.t + '|' + o.s)) dup.set(o.t + '|' + o.s, o);
+  let list = [...dup.values()];
+  const exact = list.filter((o) => norm(o.t) === n); if (exact.length === 1) list = exact;   // 친 글과 똑같은 것이 하나면 그곳으로
+  X.place = { q, n: list.length, ms: Math.round(performance.now() - t0), kind: list.length === 1 ? 'go' : list.length ? 'choices' : 'ask' };
+  if (list.length === 1) { Promise.resolve(list[0].go()).then(() => { X.place.flyMs = Math.round(performance.now() - t0); }); return true; }
+  if (list.length > 1) return { choices: list };
+  return false;
 }
 /** XI ChatGEO 추천 질문(아래 채팅 창) — 없음(10-15 원칙 253 '위에 가이드도 일단 없앤다'). 빈 목록 = 키트 기본 추천도 그리지 않는다 */
 function xiSugg() { return []; }

@@ -205,6 +205,7 @@ a.k-ck-file{text-decoration:none}
 .k-chat-root[data-dock] .k-chat-sugg{justify-content:center;padding:0;background:none;border:0;gap:8px}
 .k-chat-root[data-dock] .k-chat-sugg .k-chat-chip{background:var(--bg-1);box-shadow:var(--elev-map);min-height:34px;padding:6px 14px;font-size:var(--fs-aux)}
 .k-chat-root[data-dock] .k-chat-sugg .k-chat-chip:hover{background:var(--bg-0)}
+.k-chat-pick small{margin-left:6px;font:400 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub)}   /* 후보 칩의 어디(시도 · 읍면) · 원칙 276 */
 .k-chat-root[data-dock] .k-chat-note{border-radius:var(--r-16);box-shadow:var(--elev-map)}
 .k-chat-root[data-dock] .k-chat-in{height:56px;padding:0 6px 0 12px;gap:12px;background:var(--bg-1);border:0!important;border-radius:var(--r-16);box-shadow:var(--elev-map)}
 .k-chat-root[data-dock] .k-chat-dlogo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--r-8);background:var(--ai);color:#fff;font:800 var(--fs-tag)/1 var(--font-display);letter-spacing:-.02em}
