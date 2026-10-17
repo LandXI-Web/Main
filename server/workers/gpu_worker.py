@@ -1160,6 +1160,15 @@ def fail(job_id: str, entries, err: str):
     ids = [e[0] for e in entries]
     r().xack(STREAM, GROUP, *ids)
     r().xdel(STREAM, *ids)
+    # 마지막 칸이 실패로 끝나도 마감 레인에 넣는다 — 없으면 작업이 '진행 중'에 영영 남는다(10-18 영상 API 장애 · 전국 분석 5시간 멈춤)
+    jh = bus.job(job_id)
+    done = int(jh.get("shards_done") or 0)
+    failed = int(jh.get("shards_failed") or 0)
+    total = int(jh.get("shards_total") or 0)
+    if total and done + failed >= total and r().set(f"job:{job_id}:finalize", WID, nx=True):
+        lane = "finalize:cpu:small" if total <= 16 else "finalize:cpu"
+        r().xadd(lane, {"job_id": job_id, "by": WID, "at": now_iso()})
+        log(WHO, f"job {job_id} 전 shard 끝(실패 {failed}) → {lane}")
 
 
 def control_init():
