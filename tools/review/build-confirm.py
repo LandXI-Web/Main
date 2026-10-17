@@ -246,7 +246,7 @@ def build():
         if it.get('table'):
             tr = it['table']
             tbl = '<table class="tb"><thead><tr>' + ''.join(f'<th>{esc(x)}</th>' for x in tr[0]) + '</tr></thead><tbody>' + ''.join('<tr>' + ''.join(f'<td>{esc(x)}</td>' for x in r) + '</tr>' for r in tr[1:]) + '</tbody></table>'
-        return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"{" data-multi=1" if it.get("multi") else ""}><header><span class="n">{esc(it["id"])}</span><h3>{esc(it["t"])}</h3></header>'
+        return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"{" data-multi=1" if it.get("multi") else ""}><header><span class="n">{esc(it.get("badge", it["id"]))}</span><h3>{esc(it["t"])}</h3></header>'
                 f'<div class="g"><div class="tx">{body}{tbl}<p class="k">보는 곳</p><ul class="wh">{where}</ul></div>'
                 f'<div class="im">{shots or "<p class=na>화면 없음 — 작업 방식 항목</p>"}</div></div>'
                 f'<footer><div class="op">{opts}</div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article>')
