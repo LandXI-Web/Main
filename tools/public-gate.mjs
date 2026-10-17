@@ -108,7 +108,9 @@ const BLANK = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQ
 const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'x-frame-options': 'SAMEORIGIN' };
 
 /* 로그인 시도 제한 — 접속 주소(Cloudflare 가 붙이는 CF-Connecting-IP)마다 */
-const WINDOW = 10 * 60 * 1000, MAX_LOGIN = 20, tries = new Map();
+// 개발 중(server/.env LX_DEV=1)에는 한도를 넉넉히 — 검수 에이전트 · 사용자가 같은 접속 주소를 나눠 써 서로 막히던 것(10-18 원칙 288). 아이디별 5번 틀림 잠금은 그대로.
+const DEV_GATE = (() => { try { return /^\s*LX_DEV\s*=\s*1\s*$/m.test(fs.readFileSync(path.join(ROOT, 'server', '.env'), 'utf8')); } catch { return false; } })();
+const WINDOW = 10 * 60 * 1000, MAX_LOGIN = Number(process.env.LX_GATE_LOGIN_MAX) || (DEV_GATE ? 1000 : 20), tries = new Map();
 function loginAllowed(ip) {
   const now = Date.now(), a = (tries.get(ip) || []).filter((t) => now - t < WINDOW);
   a.push(now); tries.set(ip, a);

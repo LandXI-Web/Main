@@ -246,7 +246,7 @@ function drawLeft() {
     h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
   left.replaceChildren(
-    h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }),   // 세 화면 경계(바퀴 4)
+    h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),   // '이 화면은?' 도움말 링크 뺌(10-18 사용자)
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
     clsBlock(on),

@@ -314,7 +314,7 @@ async def port(body: dict, request: Request):
             "INSERT INTO deploys(id, name, tenant_id, card_id, card_version_id, prev_card_version_id, region_profile, region_name, aoi, stage, "
             "pinned, gpu_pool, from_deploy_id, modules, year, status_history, scale, basis, sgg_cd, ci, test, flow) VALUES ($1,$2,$3,$4,$5,NULL,$6,$7,"
             "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($8),4326)),'draft',false,$9,$10,$11,$12,NULL,NULL,'measured',$13,$14,$15,$16)",
-            did, body.get("name") or ((region_name or {}).get("ko", "") + " · 적용").strip(" ·"), tenant, card_id, cv,
+            did, body.get("name") or ((region_name or {}).get("ko", "") + " · 기관에 공유").strip(" ·"), tenant, card_id, cv,
             body.get("region_profile"), region_name, json.dumps(aoi), body.get("gpu_pool") or (src["gpu_pool"] if src else config.POOL), src_id,
             modules, year, sgg, ci, test, flow)
         aid = "ap_" + secrets.token_hex(6)
