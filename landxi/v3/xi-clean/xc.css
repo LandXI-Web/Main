@@ -599,3 +599,24 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 .xc-pop:not([hidden]){display:flex;flex-direction:column;max-height:calc(100% - 132px);box-sizing:border-box}
 .xc-pop > .xc-rows-p{overflow-y:auto;min-height:0;overscroll-behavior:contain}
 .k-dr-h .k-dr-t.xc-board-t{font-size:var(--fs-t2,20px);line-height:var(--lh-t2,28px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 목록 서랍 제목은 한 줄(10-17 판정 뒤) */
+
+/* 목록: 마지막 분석 날짜(시군구 칩 오른쪽 아래 작은 글) · 서비스로 보기 */
+.xc-sgn{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+.xc-sgd{font:500 13px/1 var(--font-num);color:var(--mute);white-space:nowrap}
+.xc-board-acts{display:flex;align-items:center;gap:8px}
+.xc-board-flip{margin:0 auto 0 0;padding:0 12px;height:36px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:600 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.xc-board-flip:hover{background:var(--bg-0)}
+.xc-board-flip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.xc-svrs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.xc-svr{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-12,12px);background:var(--bg-1);text-align:left;cursor:pointer;color:var(--ink)}
+.xc-svr:hover{background:var(--bg-0)}
+.xc-svr .xc-svr-d{flex:none;width:10px;height:10px;border-radius:3px}
+.xc-svr b{flex:1;min-width:0;font:700 var(--fs-body,16px)/22px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc-svr .num{font:500 var(--fs-aux,15px)/1 var(--font-num);color:var(--sub);white-space:nowrap}
+.xc-svr .xc-svr-c{flex:none;width:7px;height:7px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(45deg);margin:-3px 2px 0}
+.xc-svr[aria-expanded="true"] .xc-svr-c{margin:2px 2px 0;transform:rotate(225deg)}
+.xc-svrs li.is-open{border:1.5px solid var(--ink);border-radius:var(--r-12,12px);padding-bottom:8px}
+.xc-svrs li.is-open .xc-svr{border:0;background:none}
+.xc-sggs--svc{padding:0 8px}
+.xc-sggs--svc .xc-sgc[aria-current="true"]{background:var(--ink);color:#fff}
+.xc-sggs--svc .xc-sgc[aria-current="true"] .num,.xc-sggs--svc .xc-sgc[aria-current="true"] .xc-sgd{color:rgba(255,255,255,.75)}

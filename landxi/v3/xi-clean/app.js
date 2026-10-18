@@ -247,7 +247,7 @@ async function boot() {
   // 모듈은 async 로 먼저 돈다(index.html) — 지도 엔진(maplibre · pmtiles · defer 스크립트)이 실행된 뒤 무대를 만든다(30초 넘게 오지 않으면 그대로 진행 → '열지 못했습니다')
   if (!window.maplibregl || !window.pmtiles) await new Promise((ok) => { const t0 = performance.now(); const f = () => (window.maplibregl && window.pmtiles) || performance.now() - t0 > 30e3 ? ok() : setTimeout(f, 25); f(); });
   mark('engine');
-  stage = K.createStage(stageEl, { under: true });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
+  stage = K.createStage(stageEl, { under: true, worldCredit: false });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
   { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map, { skip: /^(k-|xc-(pc|img|lxmap|emd|rline|rmask|sgg|pts|rgrid)|xo-)/, max: 4000 }); }); }   // 결과 원천만 기다린다(바탕 · 지적 · 경계 원천은 제외) · 4초 넘으면 놓는다(10-17 원칙 274 — 가운데 카드가 남지 않게) · 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
@@ -1098,8 +1098,19 @@ function defaultSido(B, sidos) {
   for (const sd of sidos) { const k = B.regs.filter((reg) => (reg.sido || '—') === sd).length; if (k > n) { best = sd; n = k; } }
   return best;
 }
+/* 목록 보는 순서(10-18 '서비스로 보기') — 'region' 지역 먼저(시도 → 시군구 → 서비스) · 'svc' 서비스 먼저(서비스 → 그 서비스가 있는 시군구) · 계정별 서버 사용자 설정 GET|PUT /me/prefs/xi-clean.list */
+let BMODE = 'region', BSVC = null, bmodeP = null;
+const dMD = (iso) => (iso && /^\d{4}-\d{2}-\d{2}/.test(String(iso)) ? String(iso).slice(5, 10).replace('-', '.') : '');   // '10.12' — 기록에 있는 날짜만(없으면 빈 글)
+const lastAt = (items) => { let t = ''; for (const it of items) if ((it.finished_at || '') > t) t = it.finished_at; return t; };   // 서비스 줄들 중 가장 늦은 분석 끝난 시각
+function bmodeLoad() {
+  if (bmodeP) return bmodeP;
+  bmodeP = api('/me/prefs/xi-clean.list').then((j) => { const m = j?.options?.mode; if (m === 'svc' || m === 'region') BMODE = m; }, () => {});
+  return bmodeP;
+}
+function bmodeSave() { api('/me/prefs/xi-clean.list', { method: 'PUT', body: { mode: BMODE } }).then(() => { X.boardMode = { saved: BMODE }; }, () => {}); }
 function openBoardList() {
   const B = boardRegs(); if (!B) return;
+  bmodeLoad().then(() => { if (BMODE === 'svc' && S.drawer && S.drawer.__kind === 'board' && BL) renderBoardList(S.drawer, boardRegs() || B); });
   const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer : drawerOpen('', () => { S.list = null; BL = null; });
   d.__kind = 'board'; S.list = null; patchRail();
   if (!B.regs.length) { boardTitle(d, [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`]); const box = h('div.xc-list.xc-board'); K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
@@ -1128,7 +1139,9 @@ function renderBoardList(d, B) {
   if (BL.sgg && !reg3) BL = { sido: BL.sido, sgg: null };
   boardTitle(d, sidos.length > 1 ? [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`] : [BL.sido, `${nf(inSido.length)} 시군구 · ${nf(svcN(inSido))} 서비스`]);
   const box = h('div.xc-list.xc-board.xc-board--2');
-  box.append(h('div.xc-board-acts', {}, h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
+  const flip = () => { BMODE = BMODE === 'svc' ? 'region' : 'svc'; bmodeSave(); BSVC = null; renderBoardList(d, B); };
+  box.append(h('div.xc-board-acts', {}, h('button.xc-board-flip', { type: 'button', text: '서비스로 보기', 'aria-pressed': BMODE === 'svc' ? 'true' : 'false', onclick: flip }), h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
+  if (BMODE === 'svc') { box.append(svcFirst(d, B)); d.set(box); X.boardList = { mode: 'svc', regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-svr, .xc-sgc').length, open: BSVC }; return; }
   const go = (st) => { BL = st; renderBoardList(d, B); };
   // 길잡이 줄 — 전국(기본 시도로 · 접기) › 시도(펼친 시군구 접기) › 시군구(지금)
   const bc = h('nav.xc-bc', { 'aria-label': '단계' });
@@ -1155,12 +1168,36 @@ function renderBoardList(d, B) {
     const r = regOf(reg), open = reg3 === reg;
     const chip = h('button.xc-sgc', { type: 'button', 'aria-expanded': open ? 'true' : 'false', 'aria-current': S.region?.code === r?.code ? 'true' : undefined,
       onclick: () => { if (open) { go({ sido: BL.sido, sgg: null }); return; } go({ sido: BL.sido, sgg: reg.sgg_cd }); if (r && S.region?.code !== r.code) setRegion(r, { keepDrawer: true }); } },   // 시군구를 누르면 그 자리에서 펼치며 그곳으로 · 다시 누르면 접음
-      h('b', { text: reg.name }), h('span.num', { text: `${nf(B.svcRows(reg).length)} 서비스` }), h('i'));
+      h('b', { text: reg.name }), h('span.xc-sgn', {}, h('span.num', { text: `${nf(B.svcRows(reg).length)} 서비스` }), dMD(lastAt(B.svcRows(reg))) ? h('span.xc-sgd', { text: dMD(lastAt(B.svcRows(reg))) }) : null), h('i'));
     grid.append(open ? h('section.xc-sgw', {}, chip, boardGroup(reg, B)) : chip);
   }
   box.append(grid);
   d.set(box);
   X.boardList = { regions: B.regs.length, services: B.services, level: reg3 ? 3 : 2, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-sgc, .xc-board-svc').length, open: [BL.sido], chips: sidos.length > 1 ? sidos.length : 0, grid: inSido.length };
+}
+/** 서비스 먼저(10-18 '서비스로 보기') — 서비스 줄(색 점 · 이름 · 시군구 수) → 누르면 그 서비스가 있는 시군구 칩(마지막 분석 날짜) → 칩을 누르면 그곳으로 날아가 그 결과만 */
+function svcFirst(d, B) {
+  const by = new Map();
+  for (const reg of B.regs) for (const it of B.svcRows(reg)) { if (!by.has(it.svc)) by.set(it.svc, { svc: it.svc, name: it.name, rows: [] }); by.get(it.svc).rows.push({ reg, it }); }
+  const multi = new Set(B.regs.map((r) => r.sido || '—')).size > 1;
+  const wrap = h('ul.xc-svrs');
+  for (const g of [...by.values()].sort((a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name, 'ko'))) {
+    const open = BSVC === g.svc, task = taskOf(g.name);
+    const head = h('button.xc-svr', { type: 'button', 'aria-expanded': open ? 'true' : 'false', onclick: () => { BSVC = open ? null : g.svc; renderBoardList(d, B); } },
+      h('i.xc-svr-d', { style: { background: BD?.colorOf?.(task) || baseCol(task) } }), h('b', { text: g.name }), h('span.num', { text: `${nf(g.rows.length)} 시군구` }), h('i.xc-svr-c'));
+    const li = h('li', { class: open ? 'is-open' : '' }, head);
+    if (open) {
+      const grid = h('div.xc-sggs.xc-sggs--svc');
+      for (const { reg, it } of g.rows.sort((a, b) => (b.it.finished_at || '').localeCompare(a.it.finished_at || '') || a.reg.name.localeCompare(b.reg.name, 'ko'))) {
+        const r = regOf(reg), md = dMD(it.finished_at);
+        grid.append(h('button.xc-sgc', { type: 'button', dataset: { svc: it.svc, sgg: reg.sgg_cd }, 'aria-current': S.region?.code === r?.code && BD?.task === task ? 'true' : undefined, onclick: (e) => showBoardSvc(reg, it, e.currentTarget) },
+          h('b', { text: multi && reg.sido ? `${reg.sido} ${reg.name}` : reg.name }), h('span.xc-sgn', {}, h('span.num', { text: `${nf(ev(it.n))}${it.unit || '개'}` }), md ? h('span.xc-sgd', { text: md }) : null)));
+      }
+      li.append(grid);
+    }
+    wrap.append(li);
+  }
+  return wrap;
 }
 /** 시군구 하나의 서비스 줄(색 점 · 이름 · 결과 수) — 누르면 그 결과만 지도에 · 다시 누르면 원래대로 */
 function boardGroup(reg, B = boardRegs()) {

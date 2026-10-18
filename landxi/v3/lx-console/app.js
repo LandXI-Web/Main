@@ -48,7 +48,11 @@ const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() ==
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 /* 주말(토 · 일)은 달력 어디서나 빨간 글자(10-18 사용자 "주말은 빨간색 표시" · 색은 console.css --cal-off = --warn 을 차분하게). 공휴일은 믿을 수 있는 출처가 저장소 · 서버에 없어 넣지 않았다(지어내지 않음) */
-const dowCls = (d) => (d.getDay() === 0 ? 'is-sun' : d.getDay() === 6 ? 'is-sat' : '');
+/* 공휴일(GET /holidays?year= — 키가 있으면 공공데이터포털 특일 정보 · 없으면 내장 표) — 주말처럼 빨갛게 + 이름은 마우스를 올리면 · 하루 창에 */
+const HOL = new Map(), HOLY = new Map();
+const holLoad = (years) => Promise.all([...new Set(years)].map((y) => HOLY.get(y) || (HOLY.set(y, api('/holidays?year=' + y).then((j) => { for (const it of j?.items || []) HOL.set(it.day, it.name); }, () => { HOLY.delete(y); })), HOLY.get(y))));
+const holName = (d) => HOL.get(isoDay(d)) || '';
+const dowCls = (d) => (HOL.has(isoDay(d)) ? 'is-sun is-hol' : d.getDay() === 0 ? 'is-sun' : d.getDay() === 6 ? 'is-sat' : '');
 
 /* 숫자 차오름 — 그 칸이 처음 그려질 때 한 번(0.6초) */
 const counted = new Set();
@@ -390,6 +394,7 @@ const calDrop = () => CAL.cache.clear();
 function dayModal(d, redraw) {
   const title = `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;
   const box = h('div.ld-cal-md');
+  const hol = holName(d);
   const m = modal({ title, body: box, size: 'md' });
   const form = (it = null) => {
     const ti = h('input.t-input', { type: 'text', maxlength: '80', placeholder: '일정 이름', 'aria-label': '일정 이름', value: it?.title || '' });
@@ -423,7 +428,7 @@ function dayModal(d, redraw) {
         h('button.ld-ml-b', { type: 'button', text: '고치기', onclick: () => { box.replaceChildren(list, form(it)); } }),
         h('button.ld-ml-b', { type: 'button', text: '지우기', onclick: async () => { try { await api(`/me/events/${encodeURIComponent(it.id)}`, { method: 'DELETE' }); calDrop(); await draw(); redraw(); K.toast('일정을 지웠습니다'); } catch (e) { K.toast(e?.message || '지우지 못했습니다'); } } })) : null)))
       : h('p.ld-foot-none', { text: '이 날의 일이 없습니다' });
-    box.replaceChildren(list, form());
+    box.replaceChildren(...(hol ? [h('p.ld-cal-hol', { text: hol })] : []), list, form());
     box.querySelector('input')?.focus();
   }
   draw();
@@ -432,6 +437,7 @@ function dayModal(d, redraw) {
 
 async function calendar(body, ctx) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  await holLoad([today, CAL.anchor, addDays(today, 40), addDays(CAL.anchor, 45), addDays(CAL.anchor, -10)].map((d) => d.getFullYear()));
   /* 크기별(실제 px) — 작으면 오늘 + 다음 일 셋 · 보통은 주 · 크면 월. 직접 고른 보기 방식도 들어가지 않으면 한 단계 작게(월→주→다음 일) */
   const bh = bodyH(ctx) - 34;                                           // 머리줄(‹ 달 › · 오늘 · 일정 적기)을 뺀 높이
   const fitsMonth = bh >= 5 * 40 + 20, fitsWeek = ctx.px.w / 7 >= 96 ? bh >= 96 : bh >= 200;   // 주 = 일곱 열(넓을 때) · 일곱 줄(좁을 때 — 줄마다 28px)
@@ -507,7 +513,7 @@ async function calendar(body, ctx) {
   for (let i = 0; i < weeks * 7; i++) {
     const d = addDays(first, i), k = isoDay(d);
     const out = mode === 'month' && d.getMonth() !== a0.getMonth();
-    const c = h('div.ld-cal-d', { class: [out ? 'is-out' : '', sameDay(d, today) ? 'is-today' : '', dowCls(d)].filter(Boolean).join(' '), dataset: { day: k }, role: 'button', tabindex: '0', 'aria-label': `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`,
+    const c = h('div.ld-cal-d', { class: [out ? 'is-out' : '', sameDay(d, today) ? 'is-today' : '', dowCls(d)].filter(Boolean).join(' '), dataset: { day: k }, role: 'button', tabindex: '0', title: holName(d) || undefined, 'aria-label': `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})${holName(d) ? ' ' + holName(d) : ''}`,
       onclick: () => dayModal(d, redraw), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dayModal(d, redraw); } } },
       h('span.ld-cal-dn.num', { text: mode === 'week' ? `${d.getDate()}` : (d.getDate() === 1 && i > 0 ? `${d.getMonth() + 1}.1` : `${d.getDate()}`) }), h('div.ld-cal-ev'));
     cells.push(c);

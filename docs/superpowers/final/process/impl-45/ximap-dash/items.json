@@ -1,0 +1,6 @@
+[
+ {"id":"XI맵-출처뺌","title":"XI 맵 지도 오른쪽 아래 나사 · 브이월드 표기 뺌","before":"지도 오른쪽 아래에 'NASA Blue Marble' 출처 글","after":"XI맵(직원 · 기관 같은 화면)에는 그 글이 없다","evidence":"shots/map-1440.png · result.json credit"},
+ {"id":"제안-XI맵-마지막분석","title":"시군구 칩에 마지막 분석 날짜","before":"칩 = 이름 · 서비스 수","after":"칩 오른쪽 아래에 '09.29' 처럼 그 시군구 서비스 중 가장 늦은 분석 날짜(기록에 있는 것만 · 없으면 빈 칸)","evidence":"shots/list-region-1440.png · list-region-390.png"},
+ {"id":"제안-XI맵-서비스로보기","title":"서비스로 보기","before":"지역 먼저(시도 → 시군구 → 서비스)만","after":"'서비스로 보기' 단추 — 서비스 → 그 서비스가 있는 시군구(결과 수 · 날짜) · 고른 순서는 계정별로 저장(다시 열어도 그대로)","evidence":"shots/list-svc-1440.png · list-svc-390.png · result.json persist"},
+ {"id":"제안-공휴일빨강","title":"달력 공휴일 빨강","before":"토 · 일만 빨강","after":"공휴일(대체공휴일 포함)도 빨강 · 이름은 칸에 올리면 · 하루 창 맨 위에 · 키가 없으면 내장 표(2026 · 2027)","evidence":"shots/cal-1440.png (10.5 대체공휴일 빨강)"}
+]

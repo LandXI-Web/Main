@@ -62,7 +62,7 @@ function tileRetry(map) {
   });
 }
 
-export function createStage(el, { mode = 'app', bounds = KOREA, interactive = true, scale = true, padding, under = false } = {}) {
+export function createStage(el, { mode = 'app', bounds = KOREA, interactive = true, scale = true, padding, under = false, worldCredit = true } = {}) {
   if (!window.maplibregl) throw new Error('[kit/stage] maplibre-gl.js 를 먼저 싣는다');
   el.classList.add('k-stage');
   const wrap = document.createElement('div'); wrap.className = 'k-stage-map'; el.prepend(wrap);
@@ -137,7 +137,7 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
       const s2 = sets.some(([id, s]) => z >= s.minzoom && map.getLayoutProperty('k-s2-' + id, 'visibility') !== 'none'
         && !(s.bounds[2] < b.getWest() || s.bounds[0] > b.getEast() || s.bounds[3] < b.getSouth() || s.bounds[1] > b.getNorth()));
       const wd = world && z < 7.4 && map.getLayoutProperty('k-world', 'visibility') !== 'none';
-      cr.textContent = s2 ? sets.attribution || 'Contains modified Copernicus Sentinel data' : wd ? world.attribution || 'NASA Blue Marble' : '';
+      cr.textContent = s2 ? sets.attribution || 'Contains modified Copernicus Sentinel data' : wd && worldCredit ? world.attribution || 'NASA Blue Marble' : '';
       cr.hidden = !cr.textContent;
     };
     map.on('moveend', upd); upd();
