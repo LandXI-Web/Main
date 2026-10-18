@@ -1,6 +1,6 @@
 /* v3 global — 서비스 사용자 집 · 해외(명세 §2.15). UI en.
    질문 하나: "Where did my district change this season?"
-   글로브(흰) → 대상국 → 지역 · HUD Crop condition drop · 시트 392(Season · NDVI · Sprawl) · Run this season(kind index · CPU 작업 큐).
+   글로브(흰) → 대상국 → 지역 · HUD Cropland(군 경작지 장부 · 10-18 원칙 289) · 시트 392(Season · NDVI · Sprawl) · Run this season(kind index · CPU 작업 큐).
    부품 K1 K2 K3 K5 K6 K9 K10 K12 K15 · 데이터 landxi/global/data/* · 지역은 변수(URL ?country=&district= 또는 기관 배포 범위). */
 import * as K from '../kit/index.js';
 import { api, API, isEnvelope, bboxOf, h, esc, LS, RM, session } from '../kit/util.js';
@@ -16,7 +16,7 @@ const q = new URLSearchParams(location.search);
 const DATA = '/landxi/global/data/';
 const T = (k, v) => K.t(k, v);
 const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데이터(나라·지역·달 이름)뿐
-  ask: 'Ask', exit: 'Sign out', hud: 'Crop condition drop · {district}', km2: 'km²',
+  ask: 'Ask', exit: 'Sign out', hud: 'Cropland · {district}', km2: 'km²',
   hudSprawl: 'Built area change · {district}',   // 명세 §4-7 허용 라벨 밖 — 내려받기 표의 'Built area' 말 그대로(보고서 '사용자 결정 필요')
   tabs: ['Season', 'NDVI', 'Sprawl', 'Register'], run: 'Run this season', dl: 'Download',
   // 구역 대장 × AI(r3-global · C4·C3 최소) — 필지가 아닌 구역 단위
@@ -33,10 +33,8 @@ const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데�
   helpLines: ['Pick a district on the map to see what changed this season.', 'Run this season updates the result with the latest satellite images.', '~ marks an estimate. Hover it to see what was measured and when.'],
   contact: 'Contact', mail: 'landxi@lx.or.kr', tel: '+82 63-713-1218',
 };
-/** 호버 한 줄(what · 기간) — HUD 정의와 같은 말 */
-const DROP_WHAT = (s, prev) => `AI estimate · cropland less green than ${prev} in most months of ${s} (NDVI ${NT.DROP} or more lower and a quarter or more less green)`;
-/** 지도 범례 한 줄(10-18 해외-보이기 · 빨강이 무엇인지 쉬운 말로) */
-const DROP_KEY = 'Red: fields less green than';   // 뒤에 기간(한 덩어리) · ' · AI estimate'(한 덩어리) — 줄은 덩어리 사이에서만 바뀐다
+/** 지도 범례 한 줄 — 경작지 하나(10-18 원칙 289 · 빨강 없음) */
+const CROP_KEY = 'Cropland';
 const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
 /** 나라 → 경계 파일(예시 데이터 파일 이름 · 지역 문자열 하드코딩 아님). 없으면 배포 범위 자체가 지역이 된다. */
 const ADM = {
@@ -48,43 +46,6 @@ const MON = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-US', { mo
 const MONY = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 const HANGUL = /[ㄱ-ㆎ가-힣]/;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/* ── 작황 하락 결과 보관(브라우저 Cache Storage · 값 + 그림) — 못 쓰는 환경이면 조용히 매번 잰다 ── */
-const DROP_CACHE = 'gl-drop-v1';
-const dropReq = (k) => new Request(location.origin + '/__gl-drop/' + encodeURIComponent(k));
-async function dropGet(k) {
-  try {
-    const r = await (await caches.open(DROP_CACHE)).match(dropReq(k)); if (!r) return null;
-    const m = JSON.parse(r.headers.get('x-meta') || 'null'); if (!m || !Number.isFinite(m.km2)) return null;
-    return { ...m, url: URL.createObjectURL(await r.blob()) };
-  } catch { return null; }
-}
-async function dropPut(k, r) {
-  try {
-    const blob = await (await fetch(r.url)).blob();
-    await (await caches.open(DROP_CACHE)).put(dropReq(k), new Response(blob, { headers: { 'content-type': 'image/png', 'x-meta': JSON.stringify({ km2: r.km2, cropKm2: r.cropKm2, coverage: r.coverage }) } }));
-  } catch { /* 보관 못 함 — 다음에 다시 잰다 */ }
-}
-
-/* ── 작황 하락 결과 서버 보관(한 출처 · 해외-첫화면속도) — 처음 잰 값 + 그림을 서버에 한 번 두고 모든 브라우저가 같은 값을 바로 쓴다 ── */
-const dropHash = async (k) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k)))].map((b) => b.toString(16).padStart(2, '0')).join('');
-const authH = () => { const s = session.get(); return s ? { authorization: 'Bearer ' + s.token } : {}; };
-async function dropSrvGet(k) {
-  try {
-    const hk = await dropHash(k);
-    const [r, b] = await Promise.all([fetch(API.prefix + '/global/drop/' + hk, { headers: authH() }), fetch(API.prefix + '/global/drop-png/' + hk, { headers: authH() })]);   // 값 · 그림 함께(없으면 found false · 204)
-    if (!r.ok || b.status !== 200) return null;
-    const m = await r.json(); if (!m?.found || !Number.isFinite(m.km2)) return null;
-    return { km2: m.km2, cropKm2: m.cropKm2, coverage: m.coverage, url: URL.createObjectURL(await b.blob()) };
-  } catch { return null; }
-}
-async function dropSrvPut(k, r) {
-  try {
-    const blob = await (await fetch(r.url)).blob();
-    const png = await new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = no; f.readAsDataURL(blob); });
-    await fetch(API.prefix + '/global/drop/' + await dropHash(k), { method: 'PUT', headers: { ...authH(), 'content-type': 'application/json' }, body: JSON.stringify({ km2: r.km2, cropKm2: r.cropKm2 ?? null, coverage: r.coverage, png }) });
-  } catch { /* 서버에 못 둠 — 이 브라우저 보관만 */ }
-}
 
 /* ── 기하 도우미 ── */
 function ringHas(r, x, y) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
@@ -112,7 +73,7 @@ async function main() {
   // 정적 자료(나라 · 경계 · 건물 격자 · 모자이크 목록)는 로그인 확인과 함께 받기 시작한다(첫 화면이 왕복마다 기다리지 않게 · 해외-첫화면속도)
   const jget = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const PRE = { countries: jget(DATA + 'lx-countries.json'), ys: loadYsData().catch(() => ({})), sprawl: loadSprawl().catch(() => null),
-    sprawlYs: jget('data/kgz-sprawl-ysykata-2017-2025.json'), prevYr: jget('data/pc-mosaics-2024.json'), fxd: jget('/landxi/ops/data/fixtures/deploys.json'),
+    sprawlYs: jget('data/kgz-sprawl-ysykata-2017-2025.json'), fxd: jget('/landxi/ops/data/fixtures/deploys.json'),
     adm1: Object.fromEntries(Object.entries(ADM).filter(([, a]) => a.adm1).map(([iso, a]) => [iso, jget(DATA + a.adm1)])) };
   const who = await K.gate('global');
   // 첫 확인이 늦으면(느린 기기 · 게이트웨이 바쁨) off 로 굳지 않게 한 번 더 — 실패를 '배포 없음'으로 두지 않는다
@@ -125,6 +86,8 @@ async function main() {
   const pcViaP = K.hasRoute('/proxy/pc/data/{path}');
   // 작황 하락의 경작지 바탕 = 우리 해외 모델(10-17 바퀴 16 해외-큰숫자 · 원칙 269) — 고지대처럼 크게 부풀린 군은 서버가 공개 판정 값으로 채운다. 길이 없으면 WorldCover
   const OCP = K.hasRoute('/global/crop-tiles/{z}/{x}/{y}.png').then((ok) => (ok ? api('/global/crop-tiles/meta').then((m) => (m?.ready ? { ...m, tiles: API.prefix + '/global/crop-tiles/{z}/{x}/{y}.png' } : null)).catch(() => null) : null));
+  // 경작지 장부(군별 · 한 출처) — 큰 숫자 · 내려받기 · XI ChatGEO · 구역 대장 대조가 같은 파일(overseas.publish 가 쓴다)
+  const LGP = OCP.then((m) => jget(`data/district-cropland-${m?.year || 2025}.json`));
   const isLX0 = who.me.realm === 'lx';
   const needJ = (u) => () => fetch(u).then((r) => (r.ok ? r.json() : null));
   const fxdP = PRE.fxd;
@@ -135,7 +98,6 @@ async function main() {
     must(() => { const x = cP; cP = null; return x || needJ(DATA + 'lx-countries.json')(); }, 'countries'), PRE.ys, PRE.sprawl,
     PRE.sprawlYs,
     api('/jobs?limit=50').catch(() => ({ items: [] })),
-    PRE.prevYr,
   ]);
   dataP.catch(() => null);
   const tnP = who.me.tenant_id ? K.hasRoute('/auth/tenants').then((ok) => (ok ? api('/auth/tenants') : null)).catch(() => null) : null;   // 기관 이름도 함께
@@ -172,7 +134,7 @@ async function main() {
   const stageEl = h('div.gl-stage');
   const crumbs = h('nav.gl-crumbs', { 'aria-label': 'Location' });
   const hudEl = h('div.gl-hud', { 'aria-live': 'polite' });
-  const keyEl = h('p.gl-key', { hidden: true }, h('i.gl-key-sw', { 'aria-hidden': 'true' }), h('span', {}, h('span', { text: DROP_KEY }), ' ', h('span.gl-key-t'), ' ', h('span.gl-key-ai', { text: 'AI estimate' })));
+  const keyEl = h('p.gl-key', { hidden: true }, h('i.gl-key-sw', { 'aria-hidden': 'true' }), h('span', {}, h('span', { text: CROP_KEY }), ' ', h('span.gl-key-t'), ' ', h('span.gl-key-ai', { text: '· AI estimate' })));
   const guard = h('div.gl-guard', { role: 'status', hidden: true, text: STR.guard });
   const tip = h('div.gl-tip', { hidden: true });
   const sheet = K.card({ map: true, cls: 'gl-sheet' });
@@ -185,10 +147,10 @@ async function main() {
   /* ── 데이터(병렬) ── */
   const fx = (f) => fetch(DATA + f).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   /** 꼭 있어야 하는 것(배포 · 나라 경계 · 카탈로그)은 세 번까지 받는다 — 실패를 '배포 없음'으로 두지 않는다 */
-  let depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ, prevYr;
+  let depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ;
   const adm1P = { ...PRE.adm1 };
   try {
-    [depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ, prevYr] = await dataP;
+    [depJ, cat, lx, ys, sprawl, sprawlYs, jobsJ] = await dataP;
   } catch { return loadError(); }
   const JOBS = [...(jobsJ.items || [])];
   const kr = (b) => b[0] >= 124 && b[2] <= 132.5 && b[1] >= 32.5 && b[3] <= 39.5;
@@ -282,13 +244,6 @@ async function main() {
     return { cells: inCells, cover: best.cov, b17: envOf(r1(a17), 'km2', 'estimate', g.src, g.as_of), b25: envOf(r1(a25), 'km2', 'estimate', g.src, g.as_of) };
   }
 
-  /* HUD 결과 캐시(지역|계절) — 정의는 아래 changeOf · 작업이 없거나 경작지 화소의 90% 미만만 두 해 값이 있으면 'No result yet'. */
-  const CH = {};
-  if (q.get('dev') === '1') window.__glCH = CH;   // ?dev=1 서랍 전용(정의 검증)
-  const sameMonths = (a = [], b = []) => a.length === b.length && a.every((x, i) => x === b[i]);
-  const jobIn = (j, D0) => { const b = j.aoi && bboxOf(j.aoi); return !!b && geomHas(D0.feature.geometry, ...center(b)); };
-  const seasonJob = (D0, s) => JOBS.filter((j) => j.kind === 'index' && j.state === 'done' && sameMonths(j.options?.months, s.months) && jobIn(j, D0))
-    .sort((a, b) => String(b.finished_at).localeCompare(String(a.finished_at)))[0] || null;
   const tiles = { grid: {}, mask: {}, paint: {} };
   function geoOf(D0) {
     tiles.grid[D0.id] ||= NT.gridOf(D0.bbox);
@@ -296,47 +251,15 @@ async function main() {
     return { grid: tiles.grid[D0.id], mask: tiles.mask[D0.id] };
   }
   const sidOf = (m) => ndm?.params?.months?.[m] || null;
-  /** 전년 같은 달 모자이크(같은 등록 규칙 · data/pc-mosaics-2024.json) */
-  const prevOf = (m) => { const p = `${+m.slice(0, 4) - 1}${m.slice(4)}`; return { m: p, sid: prevYr?.months?.[p] || null }; };
-  const wc = cat?.by?.['pc-worldcover-2021'];
-  /* Crop condition drop(HUD) — 이번 계절 실행 결과에 묶는다.
-     이 지역·이 계절의 끝난 index 작업이 있을 때만: 경작지(우리 해외 모델 바탕 OC · 없으면 WorldCover class 40) 중 이번 계절 평균 NDVI 가
-     전년 같은 계절 평균보다 0.1 이상 낮은 화소 면적(km²). 계절 안 녹화·갈변(첫 달↔마지막 달)은 세지 않는다. */
-  function changeOf(D0, s) {
-    const key = D0.id + '|' + s.key;
-    if (CH[key]) return CH[key];
-    const job = seasonJob(D0, s);
-    const cur = s.months.filter(sidOf), prev = s.months.map(prevOf).filter((x) => x.sid);
-    if (!job || !ndm || !(OC || wc) || !cur.length || !prev.length) return (CH[key] = { state: 'none' });
-    const R0 = (CH[key] = { state: 'calc' });
-    const y0 = s.key.replace(/\d{4}$/, (y) => String(+y - 1));
-    const span = `${MON(s.months[0])}–${MONY(s.months[s.months.length - 1])}`;
-    const prevSpan = `${MON(s.months[0])}–${MONY(prevOf(s.months[s.months.length - 1]).m)}`;
-    const okOf = (r) => Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2, prevSpan,
-      env: envOf(r1(r.km2), 'km2', 'estimate', DROP_WHAT(span, y0), job.finished_at) });
-    // 같은 작업 · 지역 · 계절 · 모자이크면 값이 같다 — 한 번 잰 결과(값 · 그림)를 이 브라우저에 두고 다음부터 바로 쓴다
-    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, NT.RULE, OC ? 'ovs:' + OC.model : (wc.params?.items || []).join(',')].join('|');   // 바탕 모델이 바뀌면 다시 잰다
-    R0.p = (async () => {
-      const srvP = dropSrvGet(dk);        // 이 브라우저 보관 · 서버 보관을 함께 본다(차례로 보면 한 번 더 기다린다)
-      const hit = await dropGet(dk);
-      if (hit && hit.coverage >= COVER_MIN) return okOf(hit);
-      const srv = await srvP;   // 서버에 둔 같은 열쇠 값(다른 브라우저가 이미 잰 것) — 타일 120장 대신 요청 둘
-      if (srv && srv.coverage >= COVER_MIN) { dropPut(dk, srv); return okOf(srv); }
-      const { grid, mask } = geoOf(D0);
-      const [crop, A, B] = await Promise.all([
-        OC ? NT.cropOf(OC.tiles, null, grid) : NT.cropOf(wc.tiles, wc.params?.items || [], grid),
-        Promise.all(cur.map((m) => NT.monthOf(ndm.tiles, sidOf(m), grid))),
-        Promise.all(prev.map((x) => NT.monthOf(ndm.tiles, x.sid, grid))),
-      ]);
-      if (!crop) { Object.assign(R0, { state: 'low' }); return R0; }
-      const aligned = cur.length === prev.length && cur.every((m, i) => prev[i].m === prevOf(m).m);   // 달끼리 맞댈 수 있을 때만 '달마다' 조건
-      const r = await NT.dropOf(A, B, mask, crop, grid, NT.DROP, aligned);
-      if (r.coverage < COVER_MIN) { Object.assign(R0, { state: 'low', cover: r.coverage }); return R0; }
-      if (!crop.miss && ![...A, ...B].some((x) => x.miss)) { dropPut(dk, r); dropSrvPut(dk, r); }   // 빠진 타일 없이 잰 값만 보관
-      return okOf(r);
-    })().catch(() => Object.assign(R0, { state: 'low' }));
-    R0.p.then(() => { if (S.district === D0 && S.season === s) { hud(D0); if (S.tab === 0) renderSheet(); else dlCheck(D0); } });
-    return R0;
+  /* 경작지(HUD 큰 숫자) — 군 경작지 장부(district-cropland · 한 출처) 값 그대로. 나라 = 그 나라 군 합.
+     10-18 원칙 289: 작황 하락(빨강)은 화면에서 뺐다(값은 서버 보관 그대로 · 보이지 않음). */
+  const LG = await LGP;
+  const cropHa = (id) => { const e = LG?.districts?.[id]?.crop_ha; return e && Number.isFinite(+e.value) ? e : null; };
+  function cropEnv(D0) {
+    if (D0) { const e = cropHa(D0.id); return e ? envOf(r1(+e.value / 100), 'km2', e.basis || 'estimate', e.source, e.as_of) : null; }
+    const all = Object.entries(LG?.districts || {}).filter(([, d]) => !S.country || d.iso === S.country.iso).map(([id]) => cropHa(id)).filter(Boolean);
+    if (!all.length) return null;
+    return envOf(Math.round(all.reduce((a, e) => a + +e.value, 0) / 100), 'km2', 'estimate', all[0].source, all[0].as_of);
   }
 
   /* NDVI — 이 지역의 마지막 계산(작업 결과) → 없으면 기록 파일(같은 지역일 때만) */
@@ -371,7 +294,7 @@ async function main() {
   const revisit = !!(want && last && last.iso === want.iso && last.d);
   const lastOf = (A) => (revisit && !q.get('district') ? A.feats.find((d) => d.id === last.d && (d.mine || isLX)) : null);
   const pickOf = (A) => A.feats.find((d) => d.id === q.get('district')) || lastOf(A) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
-  const early = want ? districtsOf(want).then((A) => { const p = pickOf(A); if (p) changeOf(p, S.season); return p; }).catch(() => null) : null;
+  const early = want ? districtsOf(want).then((A) => pickOf(A)).catch(() => null) : null;
 
   /* ── 무대 ── */
   if (!st) return mapError();
@@ -428,13 +351,14 @@ async function main() {
     };
   };
   const ndviImg = imgLayer('gl-ndvi', 'gl-mask', 0.9);
-  const chImg = imgLayer('gl-change', 'gl-cells', 0.95);
-  /* 나라 보기 = 우리 해외 모델 경작지 면(멀리서도 결과가 보이게 · 바퀴 17 원칙 281) — 경작지 바탕 조각이 있는 나라만(서버 meta.country) · 지역에 들어가면 하락 칸만 */
+  /* 경작지 면 = 우리 해외 모델(나라 보기 · 군 Season 탭 — 10-18 원칙 289 경작지가 주인공) — 경작지 보기 조각이 있는 나라만(서버 meta.country) */
   const CV = OC?.country && (await K.hasRoute('/global/crop-view/{z}/{x}/{y}.png')) ? String(OC.country).toLowerCase() : null;
-  const cropOn = (C) => {
-    const on = !!(CV && C && String(C.iso).toLowerCase() === CV && S.level === 'country');
+  const cropOn = (on0) => {
+    const C = S.country;
+    const on = !!(on0 && CV && C && String(C.iso).toLowerCase() === CV && (S.level === 'country' || (S.level === 'district' && S.tab === 0)));
     if (on && !map.getLayer('gl-crop')) addCropView(map, { id: 'gl-crop', before: 'gl-adm2-f' });
     if (map.getLayer('gl-crop')) map.setLayoutProperty('gl-crop', 'visibility', on ? 'visible' : 'none');
+    return on;
   };
   let ndviWant = null;
   /** 이 지역의 m 월 NDVI 를 켠다(null = 끔) · 늦게 도착한 그림은 버린다 */
@@ -451,22 +375,6 @@ async function main() {
       ndviImg.set(url, grid.coords);
     } catch { if (ndviWant === want) ndviImg.off(); }
   }
-  // 작황 하락 화소 = 줌에 맞는 한 장(멀리선 칸을 묶어 · 가까이는 키워 흰 경계 — 바퀴 17 원칙 281) · 줌이 단계를 넘을 때만 바꿔 싣는다
-  let chOn = false, chSeq = 0;
-  async function changeShow(on) {
-    chOn = !!on;
-    const c = on && S.district && CH[S.district.id + '|' + S.season.key];
-    if (!(c?.state === 'ok' && c.url)) { chSeq++; chImg.off(); return; }
-    const seq = ++chSeq, D0 = S.district;
-    if (!c.lv || c.lvUrl !== c.url) { c.lv = NT.levelsOf(c.url); c.lvUrl = c.url; }
-    try {
-      const u = await c.lv.url(c.lv.level(map.getZoom()));
-      if (seq === chSeq && S.district === D0) chImg.set(u, geoOf(D0).grid.coords);
-    } catch { if (seq === chSeq) chImg.set(c.url, geoOf(D0).grid.coords); }
-  }
-  let chLv = null;
-  map.on('zoomend', () => { if (!chOn) return; const c = S.district && CH[S.district.id + '|' + S.season.key]; const k = c?.lv?.level(map.getZoom()); if (k != null && k !== chLv) { chLv = k; changeShow(true); } });
-
   /* ── 흐름: 글로브 → 나라 → 지역 ── */
   const url = () => { const u = new URL(location.href); u.searchParams.set('country', S.country?.iso || ''); if (S.district) u.searchParams.set('district', S.district.id); else u.searchParams.delete('district'); u.searchParams.set('tab', STR.tabs[S.tab].toLowerCase()); u.searchParams.set('season', S.season.key); history.replaceState(null, '', u); };
 
@@ -484,15 +392,9 @@ async function main() {
     }
   }
 
-  /* 지역에 들어가면 위성 바탕의 채도만 낮춘다(밝기 그대로 · 딤 아님) — 빨간 하락 칸 · 주황 건물 칸이 밭 · 산 색과 섞이지 않게(10-18 해외-보이기) */
-  //   해외 위성 판(k-s2-*)은 무대가 늦게 싣기도 해서 — 새 층이 붙으면(styledata) 같은 값을 다시 맞춘다(값이 같으면 건드리지 않음)
-  let muteOn = false;
-  const muteApply = () => { for (const l of map.getStyle()?.layers || []) if (l.type === 'raster' && /^(k-under|k-world|k-s2-|img-)/.test(l.id)) { const v = muteOn ? -0.55 : 0; if ((map.getPaintProperty(l.id, 'raster-saturation') ?? 0) !== v) map.setPaintProperty(l.id, 'raster-saturation', v); } };
-  const muteImagery = (on) => { muteOn = !!on; muteApply(); };
-  map.on('styledata', () => { if (muteOn) muteApply(); });
   async function toGlobe({ fly = true } = {}) {
-    S.level = 'globe'; muteImagery(false); S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null); suggNow();
-    map.getSource('gl-adm2').setData(EMPTY); map.getSource('gl-adm1').setData(EMPTY); map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
+    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(false); suggNow();
+    map.getSource('gl-adm2').setData(EMPTY); map.getSource('gl-adm1').setData(EMPTY); map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null);
     const c = S.country ? center(S.country.bbox) : [60, 25];
     const cam = { center: [c[0] + (mobile() ? 0 : 18), Math.max(-30, Math.min(40, c[1] - 6))], zoom: mobile() ? 0.9 : 1.75, pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } };
     if (!fly || RM()) map.jumpTo(cam); else map.easeTo({ ...cam, duration: D[2400] });
@@ -500,12 +402,12 @@ async function main() {
   }
 
   async function toCountry(C, { fly = true } = {}) {
-    S.country = C; S.level = 'country'; muteImagery(false); S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url(); suggNow();
+    S.country = C; S.level = 'country'; S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url(); suggNow();
     const A = await districtsOf(C);
     map.getSource('gl-adm1').setData(A.adm1 || EMPTY);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: 0 }, geometry: d.feature.geometry })) });
-    map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
-    cropOn(C);
+    map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null);
+    cropOn(true);
     renderSheet();
     if (fly) await st.go(C.bbox, { maxZoom: 7.2 });
   }
@@ -514,7 +416,7 @@ async function main() {
   async function toDistrict(D0, { fly = true, jump = false } = {}) {
     if (!D0.mine && !isLX) { flashGuard(); return; }
     const A = admCache[S.country.iso];
-    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null); suggNow(); muteImagery(true);
+    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); suggNow();
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: d === D0 ? 1 : 0 }, geometry: d.feature.geometry })) });
     const g = D0.feature.geometry, holes = g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map((p) => p[0]) : [];
     map.getSource('gl-mask').setData({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring([-179.9, -85, 179.9, 85]), ...holes.map((r) => [...r].reverse())] } });
@@ -524,24 +426,13 @@ async function main() {
     map.getSource('gl-cells').setData(cellFc);
     hud(null, true);
     renderSheet();
-    changeOf(D0, S.season);   // 비행과 함께 계절 결과 그림을 미리 받는다(도착 즉시 큰 숫자)
     quote(D0);                // 견적도 비행과 함께(도착 즉시 Run)
     if (fly || jump) await st.go(D0.bbox, { maxZoom: 11.2, ...(jump ? { ms: 0 } : {}) });
     LS.set(LAST_K, { iso: S.country.iso, d: D0.id });   // 다음 방문은 여기로 바로
-    // 도착 — 이번 계절 결과가 있으면 변화 화소가 차오르고 큰 숫자가 선다 · 없으면 'No result yet'(견적은 착지를 막지 않는다 · 뒤에서)
-    changeOf(D0, S.season);
+    // 도착 — 경작지 면 · 큰 숫자(장부)는 바로 · 견적은 착지를 막지 않는다(뒤에서)
     hud(D0);
     renderSheet();
     quoteSoon();
-    setTimeout(() => warmSeasons(D0), 4000);   // 다른 계절 미리 재기는 첫 화면(바탕 지도 타일)이 다 선 뒤에
-  }
-  /** 이 지역의 다른 계절 결과도 뒤에서 하나씩 미리 잰다(끝난 작업이 있는 계절만) — 계절을 바꾸면 바로 큰 숫자 */
-  async function warmSeasons(D0) {
-    for (const s of [S.season, ...[...seasons].reverse().filter((x) => x !== S.season)]) {
-      if (S.district !== D0) return;
-      const c = changeOf(D0, s);
-      if (c.p) await c.p.catch(() => null);
-    }
   }
   let cellFc = EMPTY;
   const cellsOn = (on) => { cellFc.features.forEach((f) => { f.properties.on = on ? 1 : 0; }); map.getSource('gl-cells').setData(cellFc); };
@@ -549,20 +440,21 @@ async function main() {
   /* HUD — Crop condition drop · {district} {n} km² ~ */
   let big = null;
   function hud(D0, wait = false) {
-    if (!D0 && !wait) { hudEl.hidden = true; return; }
+    const countryLv = !D0 && !wait && S.level === 'country' && !!S.country;
+    if (!D0 && !wait && !countryLv) { hudEl.hidden = true; return; }
     hudEl.hidden = false;
     if (!big) big = K.bignum(h('div'), null, { label: '', unit: STR.km2, hud: true, digits: 1 });
     if (!big.el.isConnected) hudEl.append(big.el, keyEl);
     keyEl.hidden = true;
-    const name = (D0 || S.district)?.name || '';
-    const sprawlTab = S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 작황 하락(NDVI 기준) · Register = 어긋난 구역 수
-    const regTab = S.tab === 3;
+    const name = countryLv ? S.country.name : (D0 || S.district)?.name || '';
+    const sprawlTab = !countryLv && S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 경작지(장부) · Register = 어긋난 구역 수
+    const regTab = !countryLv && S.tab === 3;
     big.label(fill(regTab ? STR.hudReg : sprawlTab ? STR.hudSprawl : STR.hud, { district: name }).replace(/ · $/, ''));
-    big.el.dataset.metric = regTab ? "Districts that don't match" : sprawlTab ? 'Built area change' : 'Crop condition drop';
+    big.el.dataset.metric = regTab ? "Districts that don't match" : sprawlTab ? 'Built area change' : 'Cropland';
     big.el.classList.toggle('is-wait', wait);
     if (wait) { big.set(null); big.el.querySelector('.k-big-none').hidden = true; return; }
+    big.el.classList.remove('is-wait');
     if (regTab) {
-      big.el.classList.remove('is-wait');
       const e = REG.v?.summary?.mismatched || null;
       big.set(e, { unit: '', digits: 0 });
       big.el.classList.toggle('is-none', !e);
@@ -571,7 +463,6 @@ async function main() {
       return;
     }
     if (sprawlTab) {
-      big.el.classList.remove('is-wait');
       const s = D0 && D0.sprawl;
       const e = s ? envOf(r1(V(s.b25) - V(s.b17)), 'km2', 'estimate', s.b25.source, s.b25.as_of) : null;
       big.set(e, { unit: STR.km2, digits: 1 });
@@ -580,15 +471,12 @@ async function main() {
       enSig(big.el, e);
       return;
     }
-    const c = changeOf(D0, S.season);
-    // 결과 그림을 받는 중 — 키트 '불러오는 중'(화면 가운데 하나 · 원칙 212) · 값 자리는 비운 채
-    if (c.state === 'calc') { big.el.classList.add('is-wait'); big.set(undefined); return; }
-    const e = c.state === 'ok' ? c.env : null;
-    big.set(e, { unit: STR.km2, digits: 1 });
-    if (e && S.tab === 0 && c.prevSpan) { keyEl.querySelector('.gl-key-t').textContent = c.prevSpan; keyEl.hidden = false; }
+    // 경작지 — 장부 값(군 = 그 군 · 나라 = 군 합) · 범례 한 줄은 경작지 면이 지도에 있을 때만
+    const e = cropEnv(countryLv ? null : D0);
+    big.set(e, { unit: STR.km2, digits: countryLv ? 0 : 1 });
+    if (e && (countryLv || S.tab === 0)) { keyEl.querySelector('.gl-key-t').textContent = String(LG?.year || ''); keyEl.hidden = false; }
     big.el.classList.toggle('is-none', !e);
-    // 빈 상태 한 줄 — 시트와 같은 말(영상 없음은 영상이 정말 없을 때만)
-    if (!e) big.el.querySelector('.k-big-none').textContent = covered(D0) ? STR.noresult : STR.none;
+    if (!e) big.el.querySelector('.k-big-none').textContent = STR.noresult;
     enSig(big.el, e);
   }
   /** 호버 한 줄을 영문으로(키트 sig.humanize 는 국문 — 키트 요청) */
@@ -646,9 +534,9 @@ async function main() {
     [...tabs.children].forEach((b, i) => b.setAttribute('aria-selected', String(i === S.tab)));
     regPaint();   // 대장 칠은 대장(Register) 탭에서만(10-15 해외-대장칠)
     const D0 = S.level === 'district' ? S.district : null;
-    // 지도 층은 탭마다 하나: Season = 이번 계절 변화 화소(결과 전·실행 중엔 그 달 NDVI) · NDVI = 최근 달 NDVI · Sprawl = 건물 변화 칸
-    const lay = { ndvi: null, change: false, cells: false };
-    const apply = () => { if (seq !== renderSeq) return; ndviShow(lay.ndvi); changeShow(lay.change); cellsOn(lay.cells); runState(); };
+    // 지도 층은 탭마다 하나: Season = 경작지 면(10-18 원칙 289 · 빨강 없음) · NDVI = 최근 달 NDVI · Sprawl = 건물 변화 칸 · 나라 보기 = 경작지 면
+    const lay = { ndvi: null, crop: S.level === 'country', cells: false };
+    const apply = () => { if (seq !== renderSeq) return; ndviShow(lay.ndvi); cropOn(lay.crop); cellsOn(lay.cells); runState(); };
     /* 빈 상태 — 영상이 정말 없을 때만 'No imagery…'(covered()=false) · 영상은 있는데 결과가 없으면 'No result yet' + 'Run this season'(행동 1 · 아래 Run 버튼은 숨김) */
     const noResult = (why) => {
       const e = h('div'); body.append(e);
@@ -661,7 +549,8 @@ async function main() {
     const frag = [];
     const push = (el) => frag.push(el);
     if (S.tab === 0) {
-      push(h('select.t-input.gl-season', { 'aria-label': 'Season', onchange: (ev) => { S.season = seasons.find((s) => s.key === ev.target.value); url(); changeOf(D0, S.season); hud(D0); renderSheet(); quoteSoon(); } },
+      lay.crop = true;
+      push(h('select.t-input.gl-season', { 'aria-label': 'Season', onchange: (ev) => { S.season = seasons.find((s) => s.key === ev.target.value); url(); hud(D0); renderSheet(); quoteSoon(); } },
         ...seasons.map((s) => h('option', { value: s.key, selected: s === S.season ? 'selected' : null, text: `${s.key} · ${MON(s.months[0])}–${MON(s.months[s.months.length - 1])}` }))));
       if (!covered(D0)) { body.replaceChildren(...frag); noResult('img'); return apply(); }
       const nd = await ndviOf(D0); if (seq !== renderSeq) return;
@@ -670,11 +559,6 @@ async function main() {
       const items = S.season.months.map((m) => ({ label: MON(m), value: nd[m] ?? 0, env: nd[m] }));
       K.bars(bx, { items, ai: true, max: 0.6 });
       bx.querySelectorAll('.k-bar-v').forEach((v, i) => { if (!items[i].env) v.textContent = '—'; else { v.textContent = K.nf(V(items[i].env), 2); v.insertAdjacentHTML('beforeend', K.sig(items[i].env)); enSig(v, items[i].env); } });
-      const running = S.run && !S.run.done && S.run.key === D0.id + '|' + S.season.key;
-      const c = CH[D0.id + '|' + S.season.key];
-      if (!running && c?.state === 'ok') lay.change = true;
-      else if (!running && c?.state === 'calc') lay.ndvi = null;   // 결과 그림을 받는 중 — 다른 그림을 잠깐 비추지 않는다
-      else lay.ndvi = running ? (S.run.lastMonth || null) : ([...S.season.months].reverse().find((m) => nd[m]) || null);
     } else if (S.tab === 1) {
       const nd = await ndviOf(D0); if (seq !== renderSeq) return;
       const pts = MONTHS.filter((m) => nd[m]).map((m) => ({ label: MON(m), value: nd[m] }));
@@ -808,16 +692,13 @@ async function main() {
           if (S.district === D0 && S.tab === 0) renderSheet();
         }
         if (name === 'job.done') {
-          // 이번 계절 결과가 생겼다 → 목록에 넣고 Crop condition drop 를 이 결과로 다시 잰다
+          // 이번 계절 결과가 생겼다 → 목록에 넣는다(달별 NDVI 막대는 위 index.month 로 이미 채움)
           const j0 = JOBS.find((x) => x.id === jobId);
           const done = { ...(j0 || R0.job || {}), id: jobId, kind: 'index', state: 'done', finished_at: d.at || new Date().toISOString() };
           if (!done.aoi) done.aoi = runAoi(D0);
           if (!done.options?.months) done.options = { ...(done.options || {}), months: R0.months };
           if (j0) Object.assign(j0, done); else JOBS.unshift(done);
-          const key = D0.id + '|' + R0.seasonKey; delete CH[key];
           R0.finish(true);
-          const s0 = seasons.find((x) => x.key === R0.seasonKey);
-          if (s0) changeOf(D0, s0);
           if (S.district === D0) hud(D0);
         }
         if (name === 'job.failed' || name === 'job.cancelled') R0.finish(false);
@@ -841,8 +722,8 @@ async function main() {
   function rowsOf(D0, nd) {
     const s = D0.sprawl;
     const rows = [['district', 'metric', 'period', 'value', 'unit', 'as_of']];
-    const c = CH[D0.id + '|' + S.season.key];
-    if (c?.state === 'ok') rows.push([D0.name, 'Crop condition drop', S.season.key, c.env.value, 'km2', c.env.as_of]);
+    const e = cropEnv(D0);
+    if (e) rows.push([D0.name, 'Cropland', String(LG?.year || ''), e.value, 'km2', e.as_of]);
     if (s) rows.push([D0.name, 'Built area', '2017', s.b17.value, 'km2', s.b17.as_of], [D0.name, 'Built area', '2025', s.b25.value, 'km2', s.b25.as_of]);
     for (const m of MONTHS) if (nd[m]) rows.push([D0.name, 'NDVI mean', m, nd[m].value, 'ndvi', nd[m].as_of]);
     return rows;
@@ -874,12 +755,8 @@ async function main() {
     pre: (msg) => { if (!HANGUL.test(msg)) return false; const box = document.querySelector('.k-chat-in, .k-ck form'); let n = document.querySelector('.gl-ck-ko');
       if (!n && box) { n = h('p.gl-ck-ko', { role: 'status', text: 'Please ask in English' }); box.before(n); }
       if (n) { n.hidden = false; clearTimeout(n.__t); n.__t = setTimeout(() => { n.hidden = true; }, 5000); } return true; },
-    // drop = 화면 큰 숫자(Crop condition drop)와 같은 값 — 묻는 답이 이 숫자를 그대로 쓴다(숫자 한 출처)
-    context: () => {
-      const c = S.district && S.season ? CH[S.district.id + '|' + S.season.key] : null;
-      const drop = c?.state === 'ok' && c.env ? { district: S.district.name, season: S.season.key, value: c.env.value, unit: c.env.unit, as_of: c.env.as_of } : undefined;
-      return { locale: 'en', country: S.country?.name, region: S.district?.name, district: S.district?.name, season: S.season?.key, drop };
-    },
+    // 화면 큰 숫자 = 경작지 장부 — XI ChatGEO 도 같은 장부를 읽는다(숫자 한 출처 · 작황 하락은 10-18 원칙 289 로 화면에서 뺌)
+    context: () => ({ locale: 'en', country: S.country?.name, region: S.district?.name, district: S.district?.name, season: S.season?.key }),
     onAction: (a) => { if (inArea(actBox(a))) ckRun.hit = true; },
     // 추천 질문 — 구역을 고르면 맨 앞에 '<구역> cropland area'(답 = 구역 경작지 장부 값 · 해외군-추천질문-고침)
     sugg: () => (S.district ? [`${S.district.name} cropland area`, 'What results do we have here?', 'Show the imagery layer'] : ['What results do we have here?', 'Zoom in on the map', 'Show the imagery layer']),
@@ -968,7 +845,7 @@ async function main() {
   const camNow = () => { const c = map.getCenter(); return { zoom: +map.getZoom().toFixed(2), pitch: +map.getPitch().toFixed(1), center: [+c.lng.toFixed(4), +c.lat.toFixed(4)],
     imagery: map.getLayer('k-world') ? (map.getLayoutProperty('k-world', 'visibility') || 'visible') : 'none', district: S.district?.name || null, tab: STR.tabs[S.tab] }; };
   const settled = () => new Promise((r) => { if (!map.isMoving()) { requestAnimationFrame(() => (map.isMoving() ? map.once('moveend', () => r()) : r())); } else map.once('moveend', () => r()); setTimeout(r, 3000); });
-  const LAYER_IDS = { imagery: () => ['k-world', ...map.getStyle().layers.filter((l) => l.id.startsWith('k-s2-')).map((l) => l.id)], results: () => ['gl-ndvi', 'gl-change', 'gl-cells', 'gl-cells-l'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
+  const LAYER_IDS = { imagery: () => ['k-world', ...map.getStyle().layers.filter((l) => l.id.startsWith('k-s2-')).map((l) => l.id)], results: () => ['gl-ndvi', 'gl-crop', 'gl-cells', 'gl-cells-l'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
   const LAYER_EN = { imagery: 'the imagery layer', results: 'the results layer', districts: 'the district boundaries', mismatch: 'the mismatched districts' };
   async function onAgentAction(a) {
     const before = camNow();
@@ -1074,7 +951,6 @@ async function main() {
   await toCountry(want, { fly: true });
   regLoad();   // 이 사람의 최근 대장 대조(있으면 지도에 칠하고 대장 탭에 목록) — 착지를 막지 않는다
   const pick = (await early) || pickOf(admCache[want.iso]);
-  if (pick) changeOf(pick, S.season);
   if (pick) { await wait(RM() ? 0 : 350); await toDistrict(pick, { fly: true }); }
   document.body.dataset.state = 'ready';
 

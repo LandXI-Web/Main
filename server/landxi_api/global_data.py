@@ -479,6 +479,8 @@ async def crop_tile(z: int, x: int, y: int, request: Request):
 # '있음'을 남기고 진하기는 평균) · 가까이(z12–14)는 z11 화소를 그대로 키워 칸 경계에 흰 선(국내 결과 면과 같은 읽힘 · 원칙 267). 14 넘게는 지도가 키운다.
 CV_ZMIN, CV_ZMAX = 5, 14
 CV_FINE = 13                                               # 보기용 고운 조각 줌(overseas.croptiles --z 13)
+CV_NEAR = 10                                               # 이 줌부터 고운 조각으로 그린다(군 첫 화면 줌 10–11 · 10-18 해외-보이기 다시)
+CV_VER = "v4"                                              # 그리는 규칙 판(바뀌면 보관 조각을 다시 그린다)
 CV_FILL = (15, 169, 160)                                   # 경작지 분류 색(청록 · XI맵 · 지도 서비스와 같은 값)
 _CV_LVL: dict = {}                                         # (모델, z, x, y) → (평균, 최대) uint8 256×256 — z<11 만 보관
 _CV_PNG: dict = {}                                         # (모델, z, x, y) → 보기 조각 PNG(가벼운 보관)
@@ -526,14 +528,20 @@ def _cv_level(d: Path, meta: dict, z: int, x: int, y: int):
 
 
 def _cv_png(d: Path, meta: dict, z: int, x: int, y: int) -> bytes | None:
+    """보기 조각 — 10-18 해외-보이기 다시(원칙 289 · 경작지가 주인공):
+    · 가까이(줌 10–14)는 고운 조각(z13 · 약 14 m)을 줌에 맞게 평균 내어 '그 자리 넓이의 절반 이상이 경작지'일 때만 칠한다
+      (예전: z11 화소 안 5%만 있어도 칠해 마을 · 비탈까지 덮였다) + 덩어리 바깥 흰 1화소 선.
+    · 멀리(줌 5–10)는 계산용 z11 조각을 묶되 화소 넓이의 15% 이상일 때만(나라 보기에서 밭 골짜기가 또렷하게).
+    · 색 = 경작지 분류 청록 한 가지 · 채움 진하기 0.6–0.86(위성 바탕이 비치되 면이 읽히게) · 위성 바탕은 손대지 않는다."""
     import numpy as np
     from PIL import Image
     bz = int(meta["z"])
+    fine = bz > 11
     if z <= bz:
         lv = _cv_level(d, meta, z, x, y)
         if lv is None:
             return None
-        mean, mx = lv
+        mean = lv[0]
     else:
         f = 2 ** (z - bz)
         base = _cv_level(d, meta, bz, x // f, y // f)
@@ -542,23 +550,20 @@ def _cv_png(d: Path, meta: dict, z: int, x: int, y: int) -> bytes | None:
         n = 256 // f
         ox, oy = (x % f) * n, (y % f) * n
         sub = base[0][oy:oy + n, ox:ox + n]
-        mean = mx = np.repeat(np.repeat(sub, f, axis=0), f, axis=1)
-    fine = bz > 11                                         # 보기용 고운 조각(z13 · 약 14 m)으로 그리는 가까운 줌(12–14)
-    # 멀리: 화소 안 경작지 약 5% 넘으면 '있음'(작은 밭도 사라지지 않게) · 가까이(고운 칸): 칸의 절반 이상이 경작지일 때만(자신 없는 가장자리 칸은 숨김 · 10-18 정확도)
-    on = mean >= 128 if fine else mx > 12
+        mean = np.repeat(np.repeat(sub, f, axis=0), f, axis=1)
+    on = mean >= 128 if fine else mean >= 38
     if not on.any():
         return None
-    # 진하기: 멀리(≤10) 있으면 최소 0.62 · 빽빽할수록 0.92(면이 읽히게) · z11 0.55–0.8 · 가까이(≥12) 0.5–0.62 + 흰 경계(위성 바탕의 밭이 비치게)
-    lo, hi = (128, 158) if fine or z > bz else (158, 235) if z <= bz - 1 else (140, 205)
+    # 진하기: 멀리(나라) 0.65–0.86 · 군 첫 화면(10–11) 0.6 · 가까이(12) 0.52 · 아주 가까이(13–14) 0.42 — 가까울수록 밭 줄이 비치게
+    lo, hi = (165, 220) if not fine else (150, 160) if z <= 11 else (130, 136) if z == 12 else (105, 110)
     alpha = np.where(on, np.clip(lo + (mean.astype(np.int32) * (hi - lo)) // 255, lo, hi), 0).astype(np.uint8)
     rgba = np.zeros((256, 256, 4), np.uint8)
     rgba[..., 0], rgba[..., 1], rgba[..., 2] = CV_FILL
     rgba[..., 3] = alpha
-    if z > bz or fine:                                     # 가까이: 경작지 덩어리 바깥 선(흰 1화소)
+    if fine and z >= 12:                                   # 가까이: 경작지 덩어리 바깥 선(흰 1화소) — 밭 모양이 바탕 위에서 읽히게
         pad = np.pad(on, 1, mode="edge")
         inner = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
-        edge = on & ~inner
-        rgba[edge] = (255, 255, 255, 235)
+        rgba[on & ~inner] = (255, 255, 255, 225)
     b = io.BytesIO()
     Image.fromarray(rgba, "RGBA").save(b, "PNG", optimize=False, compress_level=6)
     return b.getvalue()
@@ -574,11 +579,11 @@ async def crop_view(z: int, x: int, y: int, request: Request):
     if not meta or not (CV_ZMIN <= z <= CV_ZMAX):
         return Response(status_code=204, headers={"Cache-Control": "no-store"})
     hdr = {"Cache-Control": "private, max-age=86400", "X-LX-Model": str(meta.get("model") or ""), "Access-Control-Expose-Headers": "X-LX-Model"}
-    if z > int(meta["z"]):                                 # 가까이(12–14)는 보기용 고운 조각이 같은 모델로 있으면 그것으로(z11 칸 약 57 m → 약 14 m)
+    if z >= CV_NEAR:                                       # 가까이(11–14)는 보기용 고운 조각이 같은 모델로 있으면 그것으로(z11 칸 약 57 m → 약 14 m)
         d2, m2 = _crop_meta(CV_FINE)
         if m2 and m2.get("model") == meta.get("model"):
             d, meta = d2, m2
-    key = (meta.get("model"), meta["z"], z, x, y)
+    key = (CV_VER, meta.get("model"), meta["z"], z, x, y)
     png = _CV_PNG.get(key)
     if png is None:
         png = await run_in_threadpool(_cv_png, d, meta, z, x, y) or b""

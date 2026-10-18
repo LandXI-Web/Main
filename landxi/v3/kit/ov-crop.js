@@ -13,7 +13,7 @@ function register() {
     if (!m) return { data: await blank() };
     const tok = session.get()?.token;
     try {
-      const r = await fetch(`${API.prefix}/global/crop-view/${m[1]}/${m[2]}/${m[3]}.png?v=fine13`, { headers: tok ? { authorization: 'Bearer ' + tok } : {}, signal: ac.signal });
+      const r = await fetch(`${API.prefix}/global/crop-view/${m[1]}/${m[2]}/${m[3]}.png?v=crop4`, { headers: tok ? { authorization: 'Bearer ' + tok } : {}, signal: ac.signal });
       if (!r.ok || r.status === 204) return { data: await blank() };
       return { data: await createImageBitmap(await r.blob()) };
     } catch { return { data: await blank() }; }
