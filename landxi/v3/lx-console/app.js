@@ -1,8 +1,8 @@
 /* app.js — LX 직원 대시보드 = 개인별 맞춤 대시보드(10-17 원칙 283 · 280 · 263 — "달력 기능까지 만들고 단위 기능들을 배치를 서로 바꾸고 사이즈를 늘렸다 줄였다 커스텀").
-   칸(위젯) 격자 = 공용 kit/dashgrid.js: 끌어서 자리 바꾸기 · 모서리로 크기(격자 단위) · 칸 빼기 · '칸 더하기' · '처음 모양으로' · 칸마다 보기 방식.
+   칸(위젯) 격자 = 공용 kit/dashgrid.js: 끌어서 자리 바꾸기 · 모서리로 크기(격자 단위) · 칸 빼기 · '기능 추가하기' · '처음 모양으로' · 칸마다 보기 방식.
    배치는 사람마다 서버 사용자 설정(PUT /me/prefs/dash.lx-console)에 — 다시 로그인해도 · 다른 PC 에서도 같은 모양.
    처음 모양(원칙 214 · 216 · 226 · 234 · 236 그대로): 맨 위 공지사항(가로 8 · 3줄) · 메모(4) → 진행 현황(5 · 4줄) · 요청함(3) · 저장 용량(4) → 달력(4 · 7줄) · 최근 진행한 프로젝트(8).
-   더할 수 있는 칸('칸 더하기'): 전국 분석 · 지도 서비스(내 분석 결과) — 실제 기록이 있는 것만.
+   더할 수 있는 칸('기능 추가하기'): 전국 분석 · 지도 서비스(내 분석 결과) — 실제 기록이 있는 것만.
    숫자는 모두 서버(GET /projects?scope=mine · /me/storage · 요청함 숫자 · /announcements · /me/memos · /me/events · /me/agenda · /national/recent · /me/analyses) — 지어낸 값 0 · 내부 지표 0.
    한 자료는 한 번만 받아 여러 칸이 같이 쓴다(진행 현황 = 최근 프로젝트 = 같은 GET /projects — 숫자 한 출처). */
 import * as K from '../kit/index.js';
@@ -565,7 +565,7 @@ const THEMES = [
   { id: 'sharp', label: '또렷한', desc: '가는 선 · 진한 제목' },
   { id: 'dense', label: '촘촘한', desc: '여백 적게 · 한 칸에 더 많이' },
 ];
-const G = dashgrid(gridHost, { screen: 'lx-console', widgets: WIDGETS, defaults: DEFAULTS, presets: PRESETS, themes: THEMES, cols: 12, rowH: 60, gap: 12 });
+const G = dashgrid(gridHost, { screen: 'lx-console', widgets: WIDGETS, defaults: DEFAULTS, themes: THEMES, cols: 12, rowH: 60, gap: 12 });
 bar.append(G.toolbar);
 
 /* e2e 관측(읽기 전용) — 처음 칸들이 그려지면 */

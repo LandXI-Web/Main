@@ -12,7 +12,7 @@
 .dg-limit{display:none;position:absolute;left:12px;right:40px;bottom:8px;font:500 var(--fs-tag)/18px var(--font-body);color:var(--ink);background:var(--bg-1);padding:2px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dg-item.is-limit .dg-limit{display:block}
 .dg-item.is-limit{outline:2px solid var(--ink)!important;outline-offset:-2px}
-/* 빈 자리(수정 중에만) — 점선 · 가운데 단추 둘('칸 더하기' · '옆 칸 늘리기') */
+/* 빈 자리(수정 중에만) — 점선 · 가운데 단추 둘('기능 추가하기' · '옆 칸 늘리기') */
 .dg-gap{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:var(--r-16);border:1px dashed var(--mute);background:transparent;z-index:1}
 .dg-gap-in{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;max-width:100%}
 .dg-gap-b{height:30px;padding:0 12px;border:0;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/30px var(--font-body);white-space:nowrap;cursor:pointer;box-shadow:0 1px 0 rgba(28,31,37,.06)}
@@ -45,9 +45,25 @@
 .dg.is-edit .dg-more{display:none}
 .dg-v{height:24px;padding:0 10px;border:0;border-radius:6px;background:transparent;font:500 var(--fs-tag)/24px var(--font-body);color:var(--sub-2);cursor:pointer;white-space:nowrap}
 .dg-v[aria-pressed="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 0 rgba(28,31,37,.06)}
-.dg.is-edit .dg-rs{display:block;position:absolute;right:4px;bottom:4px;width:22px;height:22px;cursor:nwse-resize;border-radius:4px;
-  background:linear-gradient(135deg,transparent 0 55%,var(--mute) 55% 62%,transparent 62% 72%,var(--mute) 72% 79%,transparent 79%)}
-.dg.is-edit .dg-rs:hover{background:linear-gradient(135deg,transparent 0 55%,var(--ink) 55% 62%,transparent 62% 72%,var(--ink) 72% 79%,transparent 79%)}
+.dg.is-edit .dg-rs{display:block;position:absolute;z-index:3;touch-action:none;border-radius:4px;background:transparent}
+.dg.is-edit .dg-rs[data-dir="n"],.dg.is-edit .dg-rs[data-dir="s"]{left:22px;right:22px;height:14px;cursor:ns-resize}
+.dg.is-edit .dg-rs[data-dir="e"],.dg.is-edit .dg-rs[data-dir="w"]{top:22px;bottom:22px;width:14px;cursor:ew-resize}
+.dg.is-edit .dg-rs[data-dir="n"]{top:0}.dg.is-edit .dg-rs[data-dir="s"]{bottom:0}
+.dg.is-edit .dg-rs[data-dir="e"]{right:0}.dg.is-edit .dg-rs[data-dir="w"]{left:0}
+.dg.is-edit .dg-rs[data-dir="ne"],.dg.is-edit .dg-rs[data-dir="nw"],.dg.is-edit .dg-rs[data-dir="se"],.dg.is-edit .dg-rs[data-dir="sw"]{width:22px;height:22px}
+.dg.is-edit .dg-rs[data-dir="ne"]{top:0;right:0;cursor:nesw-resize}.dg.is-edit .dg-rs[data-dir="sw"]{bottom:0;left:0;cursor:nesw-resize}
+.dg.is-edit .dg-rs[data-dir="nw"]{top:0;left:0;cursor:nwse-resize}.dg.is-edit .dg-rs[data-dir="se"]{bottom:0;right:0;cursor:nwse-resize}
+/* 변 손잡이는 가운데에 짧은 막대, 모서리는 ㄴ자 — 평소엔 옅게 · 손을 올리면 잉크색 */
+.dg.is-edit .dg-rs::after{content:"";position:absolute;background:var(--mute);border-radius:2px;opacity:.7}
+.dg.is-edit .dg-rs[data-dir="n"]::after,.dg.is-edit .dg-rs[data-dir="s"]::after{left:50%;width:28px;height:4px;margin-left:-14px;top:5px}
+.dg.is-edit .dg-rs[data-dir="e"]::after,.dg.is-edit .dg-rs[data-dir="w"]::after{top:50%;height:28px;width:4px;margin-top:-14px;left:5px}
+.dg.is-edit .dg-rs[data-dir="ne"]::after,.dg.is-edit .dg-rs[data-dir="nw"]::after,.dg.is-edit .dg-rs[data-dir="se"]::after,.dg.is-edit .dg-rs[data-dir="sw"]::after{width:10px;height:10px;background:none;border:solid var(--mute);border-width:0}
+.dg.is-edit .dg-rs[data-dir="se"]::after{right:4px;bottom:4px;border-width:0 3px 3px 0}.dg.is-edit .dg-rs[data-dir="sw"]::after{left:4px;bottom:4px;border-width:0 0 3px 3px}
+.dg.is-edit .dg-rs[data-dir="ne"]::after{right:4px;top:4px;border-width:3px 3px 0 0}.dg.is-edit .dg-rs[data-dir="nw"]::after{left:4px;top:4px;border-width:3px 0 0 3px}
+.dg.is-edit .dg-rs:hover::after{opacity:1;border-color:var(--ink)}
+.dg.is-edit .dg-rs:hover:not([data-dir$="e"]):not([data-dir$="w"])::after,.dg.is-edit .dg-rs[data-dir="e"]:hover::after,.dg.is-edit .dg-rs[data-dir="w"]:hover::after{background-color:var(--ink)}
+.dg.is-edit .dg-rs[data-dir="ne"]:hover::after,.dg.is-edit .dg-rs[data-dir="nw"]:hover::after,.dg.is-edit .dg-rs[data-dir="se"]:hover::after,.dg.is-edit .dg-rs[data-dir="sw"]:hover::after{background:none}
+@media (pointer:coarse){.dg.is-edit .dg-rs[data-dir="n"],.dg.is-edit .dg-rs[data-dir="s"]{height:20px}.dg.is-edit .dg-rs[data-dir="e"],.dg.is-edit .dg-rs[data-dir="w"]{width:20px}.dg.is-edit .dg-rs[data-dir="ne"],.dg.is-edit .dg-rs[data-dir="nw"],.dg.is-edit .dg-rs[data-dir="se"],.dg.is-edit .dg-rs[data-dir="sw"]{width:28px;height:28px}}
 .dg.is-edit .dg-body{pointer-events:none;user-select:none}
 /* 도구 줄 — 평소 단추 하나 · 수정 중엔 셋 */
 .dg-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;position:relative;z-index:7}
@@ -74,7 +90,7 @@
 .dg-sw[data-theme="soft"]{background:#EEF3FA}.dg-sw[data-theme="soft"] i{border-radius:5px;background:linear-gradient(90deg,#fff,#F3F7FD);box-shadow:none}
 .dg-sw[data-theme="sharp"] i{border-radius:1px;box-shadow:0 0 0 1px var(--sub-2) inset}
 .dg-sw[data-theme="dense"]{gap:2px;padding:3px}.dg-sw[data-theme="dense"] i{height:4px}
-.dg-gap .dg-menu--gap{top:50%;right:auto;left:50%;transform:translate(-50%,24px);z-index:8;max-height:220px;overflow:auto}   /* 빈 자리의 칸 더하기 목록 — 그 자리 가운데 단추 아래로 */
+.dg-gap .dg-menu--gap{top:50%;right:auto;left:50%;transform:translate(-50%,24px);z-index:8;max-height:220px;overflow:auto}   /* 빈 자리의 기능 추가하기 목록 — 그 자리 가운데 단추 아래로 */
 /* 좁은 화면 — 한 줄로 쌓기 · 수정 없음 */
 .dg.is-stack{display:flex;flex-direction:column;gap:12px;height:auto!important}
 .dg.is-stack .dg-item.t-card{position:static;width:auto!important;left:auto!important;top:auto!important;transition:none}

@@ -1,5 +1,5 @@
 /* K18 dashgrid.js — 개인별 맞춤 대시보드 칸 격자(10-17 원칙 280 · 283 · 263 — "단위 기능들을 배치를 서로 바꾸고 사이즈를 늘렸다 줄였다 커스텀").
-   10-18 원칙 285: 크기를 바꿀 때 다른 칸은 고정(따라 움직이지 않음 · 막히면 거기까지) · 남은 빈 공간은 수정 중에 점선 자리로 보여 '칸 더하기' · '옆 칸 늘리기' 중 고르게 ·
+   10-18 원칙 285: 크기를 바꿀 때 다른 칸은 고정(따라 움직이지 않음 · 막히면 거기까지) · 남은 빈 공간은 수정 중에 점선 자리로 보여 '기능 추가하기' · '옆 칸 늘리기' 중 고르게 ·
    칸의 크기 등급(s · m · l)은 실제 px 크기로 정해 칸마다 그 크기에 맞는 화면을 그린다 · 미리 만든 모양(presets) 고르기.
    LX 직원 대시보드가 먼저 쓰고, LX 관리자 · 기관 첫 화면도 같은 부품을 쓸 수 있다(공용 kit · CSS 는 kit/dashgrid.css · 처음 쓸 때 스스로 붙인다).
 
@@ -11,13 +11,13 @@
        presets: [{ id, label, items }],            // 고를 수 있는 다른 모양(선택)
        cols: 12, rowH: 60, gap: 12,                // 격자(열 12 · 줄 높이 · 틈) — 칸 크기는 격자 단위로만 바뀐다(내용 때문에 출렁이지 않는다 · 원칙 231)
      });
-     g.toolbar  → 화면이 원하는 자리에 둔다('대시보드 수정하기' 단추 하나 · 수정 중엔 '칸 더하기' · '모양 고르기' · '처음 모양으로' · '완료')
+     g.toolbar  → 화면이 원하는 자리에 둔다('대시보드 수정하기' 단추 하나 · 수정 중엔 '기능 추가하기' · '모양 고르기' · '처음 모양으로' · '완료')
 
    render(body, ctx) — 칸 몸통을 그린다. ctx = { id, w, h, view, size('s'|'m'|'l' — 실제 px 로 정함), px: {w, h}, sub(node|text), refresh() }
      · 칸 크기(w · h · 크기 등급) 또는 보기 방식(view)이 바뀌면 다시 부른다(끌어 옮기기만 한 경우는 부르지 않는다).
      · 돌려주는 함수가 있으면 다음 그리기 전에 부른다(정리).
-   수정 모드(edit) — 머리를 끌어 자리 바꾸기(빈자리면 놓고 · 한 칸과 겹치면 서로 바꾸고 · 그 밖엔 겹친 칸만 아래로) · 오른쪽 아래 모서리로 크기(다른 칸은 고정 · 막히면 거기까지) · × 로 빼기 · 머리의 보기 방식 칩.
-     빈 공간은 점선 자리로 보이고 '칸 더하기'(그 크기에 맞는 칸만) · '옆 칸 늘리기'(붙은 칸을 그만큼 늘림). 평소에는 손잡이 · 빈 자리가 보이지 않는다.
+   수정 모드(edit) — 머리를 끌어 자리 바꾸기(빈자리면 놓고 · 한 칸과 겹치면 서로 바꾸고 · 그 밖엔 겹친 칸만 아래로) · 네 변 · 네 모서리 어디서든 끌어 크기(10-18 원칙 294 · 반대쪽 변은 고정 · 다른 칸은 고정 · 막히면 거기까지) · × 로 빼기 · 머리의 보기 방식 칩.
+     빈 공간은 점선 자리로 보이고 '기능 추가하기'(그 크기에 맞는 칸만) · '옆 칸 늘리기'(붙은 칸을 그만큼 늘림). 평소에는 손잡이 · 빈 자리가 보이지 않는다.
    좁은 화면(760 미만)은 한 줄로 쌓고 수정 모드 없음(PC 에서 고른 순서 그대로).
    10-18 원칙 287 "똑같은 기능이여도 테마나 디자인을 조금 여러개 해서 선택할 수 있도록":
      · themes: [{ id, label, desc }] — 대시보드 전체 테마(모두 밝은 톤 · 검정 톤 없음 · 규칙 3-4). 수정 중 '테마' 단추 → 목록 위에 손을 올리면 바로 미리 보기, 누르면 저장. .dg[data-theme=id] 로 CSS 가 입힌다 · 칸은 ctx.theme 으로 안다.
@@ -46,9 +46,9 @@ const collides = (a, b) => a !== b && !(a.x + a.w <= b.x || b.x + b.w <= a.x || 
 
 export function dashgrid(host, { screen, widgets, defaults = [], presets = [], themes = [], cols = 12, rowH = 64, gap = 12, stackBelow = 760, words = {} } = {}) {
   sheet();
-  const W = { edit: '대시보드 수정하기', done: '완료', add: '칸 더하기', none: '더할 칸이 없습니다', reset: '처음 모양으로', remove: '이 칸 빼기', move: '끌어서 자리 바꾸기',
-    resize: '모서리를 끌어 크기 바꾸기', view: '보기 방식', style: '표시 방식', saved: '대시보드를 저장했습니다', save_fail: '배치를 저장하지 못했습니다', reset_ok: '처음 모양으로 돌렸습니다',
-    limit: '다른 칸이 있어 여기까지 늘릴 수 있습니다', gap: '빈 자리', gap_add: '칸 더하기', gap_grow: '옆 칸 늘리기', gap_none: '여기에 맞는 칸이 없습니다', gap_nogrow: '늘릴 옆 칸이 없습니다',
+  const W = { edit: '대시보드 수정하기', done: '완료', add: '기능 추가하기', none: '더할 칸이 없습니다', reset: '처음 모양으로', remove: '이 칸 빼기', move: '끌어서 자리 바꾸기',
+    resize: '가장자리 · 모서리를 끌어 크기 바꾸기', view: '보기 방식', style: '표시 방식', saved: '대시보드를 저장했습니다', save_fail: '배치를 저장하지 못했습니다', reset_ok: '처음 모양으로 돌렸습니다',
+    limit: '다른 칸이 있어 여기까지 늘릴 수 있습니다', gap: '빈 자리', gap_add: '기능 추가하기', gap_grow: '옆 칸 늘리기', gap_none: '여기에 맞는 칸이 없습니다', gap_nogrow: '늘릴 옆 칸이 없습니다',
     presets: '모양 고르기', preset_ok: '모양을 바꿨습니다', theme: '테마', theme_ok: '테마를 바꿨습니다', theme_now: '지금 테마', ...words };
   const KEY = 'dash.' + screen, LSK = `lx.dash.v1.${who()}.${screen}`;
   const el = h('div.dg', { role: 'list' });
@@ -218,7 +218,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
         more || null, (def.views || []).length > 1 ? views : null, (def.styles || []).length > 1 ? styles : null,
         h('button.dg-rm', { type: 'button', html: X, title: W.remove, 'aria-label': `${def.title} · ${W.remove}`, onclick: () => remove(it.id) })),
       body,
-      h('span.dg-rs', { title: W.resize, 'aria-hidden': 'true' }),
+      ...['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map((d) => h('span.dg-rs', { dataset: { dir: d }, title: W.resize, 'aria-hidden': 'true' })),
       h('span.dg-limit', { text: W.limit, 'aria-hidden': 'true' }));
     items.set(it.id, { it, node, body, sub, views, styles, cleanup: null, drawn: null });
     el.append(node);
@@ -336,7 +336,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
     layout.push(c); render(); save();
     items.get(id)?.node.scrollIntoView({ block: 'nearest', behavior: RM() ? 'auto' : 'smooth' });
   }
-  /** 빈 자리에 칸 더하기 — 그 자리 크기까지(기본 크기보다 작게 들어갈 수 있다 · 최소는 지킨다) */
+  /** 빈 자리에 기능 추가하기 — 그 자리 크기까지(기본 크기보다 작게 들어갈 수 있다 · 최소는 지킨다) */
   function addAt(id, g) {
     const d = widgets[id]; if (!d || layout.some((it) => it.id === id)) return;
     const c = clampItem({ id, w: Math.min(g.w, d.def?.[0] || g.w), h: Math.min(g.h, d.def?.[1] || g.h), view: d.views?.[0]?.id });
@@ -359,7 +359,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
   el.addEventListener('pointerdown', (e) => {
     if (!editing || stack || e.button !== 0) return;
     const node = e.target.closest('.dg-item'); if (!node) return;
-    const rs = e.target.closest('.dg-rs'), hd = e.target.closest('.dg-hd');
+    const rs = e.target.closest('.dg-rs'), dir = rs?.dataset.dir || '', hd = e.target.closest('.dg-hd');
     if (!rs && (!hd || e.target.closest('a,button,input,select,textarea'))) return;
     const it = layout.find((x) => x.id === node.dataset.id); if (!it) return;
     e.preventDefault();
@@ -380,16 +380,26 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
       const dx = ev.clientX - start.x, dy = ev.clientY - start.y;
       if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
       if (rs) {
-        const wpx = Math.max(mw * (cellW + gap) - gap, p0.width + dx), hpx = Math.max(mh * (rowH + gap) - gap, p0.height + dy);
-        node.style.width = wpx + 'px'; node.style.height = hpx + 'px';
-        const wantW = Math.max(mw, Math.min(xw, cols - it.x, Math.round((wpx + gap) / (cellW + gap))));
-        const wantH = Math.max(mh, Math.min(xh, Math.round((hpx + gap) / (rowH + gap))));
-        /* 다른 칸은 고정 — 막히면 거기까지(가로 먼저 · 그다음 세로) */
-        let nw = wantW; while (nw > mw && hitAny({ x: it.x, y: it.y, w: nw, h: Math.min(it.h, wantH) })) nw--;
-        let nh = wantH; while (nh > mh && hitAny({ x: it.x, y: it.y, w: nw, h: nh })) nh--;
-        const limited = nw < wantW || nh < wantH;
+        /* 네 변 · 네 모서리 어디서든 — 끄는 쪽 변만 움직이고 반대쪽 변은 고정. 다른 칸은 고정 · 막히면 거기까지(가로 먼저 · 그다음 세로) */
+        const cw = cellW + gap, rh = rowH + gap;
+        const ox0 = start.it.x, ox1 = start.it.x + start.it.w, oy0 = start.it.y, oy1 = start.it.y + start.it.h;
+        const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+        let x0 = ox0, x1 = ox1, y0 = oy0, y1 = oy1;
+        if (dir.includes('w')) x0 = cl(Math.round((p0.left + dx) / cw), Math.max(0, ox1 - xw), ox1 - mw);
+        if (dir.includes('e')) x1 = cl(Math.round((p0.left + p0.width + dx + gap) / cw), ox0 + mw, Math.min(cols, ox0 + xw));
+        if (dir.includes('n')) y0 = cl(Math.round((p0.top + dy) / rh), Math.max(0, oy1 - xh), oy1 - mh);
+        if (dir.includes('s')) y1 = cl(Math.round((p0.top + p0.height + dy + gap) / rh), oy0 + mh, oy0 + xh);
+        const wx0 = x0, wx1 = x1, wy0 = y0, wy1 = y1;
+        const T = () => ({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+        const yLo = Math.max(oy0, wy0), yHi = Math.min(oy1, wy1);
+        while (x0 < ox0 && hitAny({ x: x0, y: yLo, w: ox1 - x0, h: Math.max(1, yHi - yLo) })) x0++;
+        while (x1 > ox1 && hitAny({ x: ox0, y: yLo, w: x1 - ox0, h: Math.max(1, yHi - yLo) })) x1--;
+        while (y0 < oy0 && hitAny({ x: x0, y: y0, w: x1 - x0, h: oy1 - y0 })) y0++;
+        while (y1 > oy1 && hitAny({ x: x0, y: oy0, w: x1 - x0, h: y1 - oy0 })) y1--;
+        const limited = x0 !== wx0 || x1 !== wx1 || y0 !== wy0 || y1 !== wy1;
         node.classList.toggle('is-limit', limited); ph.classList.toggle('is-limit', limited);
-        if (nw !== it.w || nh !== it.h) { it.w = nw; it.h = nh; place(); putPh(); }
+        const t = T();
+        if (t.x !== it.x || t.y !== it.y || t.w !== it.w || t.h !== it.h) { it.x = t.x; it.y = t.y; it.w = t.w; it.h = t.h; place(); putPh(); }
       } else {
         node.style.left = p0.left + dx + 'px'; node.style.top = p0.top + dy + 'px';
         const nx = Math.max(0, Math.min(cols - it.w, Math.round((p0.left + dx) / (cellW + gap))));

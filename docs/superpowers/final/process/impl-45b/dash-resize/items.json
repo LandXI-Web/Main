@@ -1,0 +1,285 @@
+[
+ {
+  "step": "handles",
+  "hasHandles": [
+   {
+    "d": "n",
+    "w": 827,
+    "h": 14,
+    "cur": "ns-resize"
+   },
+   {
+    "d": "s",
+    "w": 827,
+    "h": 14,
+    "cur": "ns-resize"
+   },
+   {
+    "d": "e",
+    "w": 14,
+    "h": 160,
+    "cur": "ew-resize"
+   },
+   {
+    "d": "w",
+    "w": 14,
+    "h": 160,
+    "cur": "ew-resize"
+   },
+   {
+    "d": "ne",
+    "w": 22,
+    "h": 22,
+    "cur": "nesw-resize"
+   },
+   {
+    "d": "nw",
+    "w": 22,
+    "h": 22,
+    "cur": "nwse-resize"
+   },
+   {
+    "d": "se",
+    "w": 22,
+    "h": 22,
+    "cur": "nwse-resize"
+   },
+   {
+    "d": "sw",
+    "w": 22,
+    "h": 22,
+    "cur": "nesw-resize"
+   }
+  ]
+ },
+ {
+  "step": "target",
+  "id": "notice",
+  "before": {
+   "id": "notice",
+   "w": 8,
+   "h": 3,
+   "l": 104,
+   "t": 132,
+   "r": 975,
+   "b": 336
+  }
+ },
+ {
+  "step": "drag w 180,0",
+  "from": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   6,
+   3,
+   325,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag w -180,0",
+  "from": [
+   6,
+   3,
+   325,
+   132
+  ],
+  "to": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag e -180,0",
+  "from": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   6,
+   3,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag e 180,0",
+  "from": [
+   6,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag n 0,152",
+  "from": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   8,
+   2,
+   104,
+   204
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag n 0,-152",
+  "from": [
+   8,
+   2,
+   104,
+   204
+  ],
+  "to": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag s 0,-152",
+  "from": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   8,
+   2,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag s 0,152",
+  "from": [
+   8,
+   2,
+   104,
+   132
+  ],
+  "to": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag nw 90,76",
+  "from": [
+   8,
+   3,
+   104,
+   132
+  ],
+  "to": [
+   7,
+   2,
+   214,
+   204
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag ne -90,76",
+  "from": [
+   7,
+   2,
+   214,
+   204
+  ],
+  "to": [
+   6,
+   2,
+   214,
+   204
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag sw 90,-76",
+  "from": [
+   6,
+   2,
+   214,
+   204
+  ],
+  "to": [
+   5,
+   2,
+   325,
+   204
+  ],
+  "changed": true
+ },
+ {
+  "step": "drag se -90,-76",
+  "from": [
+   5,
+   2,
+   325,
+   204
+  ],
+  "to": [
+   4,
+   2,
+   325,
+   204
+  ],
+  "changed": true
+ },
+ {
+  "step": "reload persisted",
+  "saved": [
+   4,
+   2,
+   325,
+   204
+  ],
+  "reloaded": [
+   4,
+   2,
+   325,
+   204
+  ],
+  "ok": true
+ },
+ {
+  "step": "mobile",
+  "overflowX": false,
+  "editBtn": false
+ },
+ {
+  "step": "console errors",
+  "errs": []
+ }
+]
