@@ -199,7 +199,7 @@ def _pub(r, extra: dict | None = None) -> dict:
     ci = r["class_images"] or {}
     ex = list(r["excluded"] or [])
     out = {"id": r["id"], "task_name": r["task_name"], "sgg_cd": r["sgg_cd"], "region_name": r["region_name"], "org": r["org"],
-           "names": r["names"], "label_kind": r["label_kind"], "status": r["status"],
+           "names": r["names"], "label_kind": r["label_kind"], "status": r["status"], "source": dict(r).get("source") or "upload",
            "images": env(r["n_images"], "count", "measured", src), "train": env(r["n_train"], "count", "measured", src),
            "val": env(r["n_val"], "count", "measured", src), "excluded": [{"index": i} for i in ex], "excluded_n": env(len(ex), "count", "measured", "빼기 기록"),
            "classes": [{"name": n, "objects": env(cc.get(n, 0), "count", "measured", src), "images": env(ci.get(n, 0), "count", "measured", src)}
@@ -445,7 +445,8 @@ async def list_samples(request: Request, project: str | None = None, shared: int
             rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' AND staff_shared ORDER BY created_at DESC LIMIT 50")
         elif project:                                        # 프로젝트 학습데이터만(프로젝트 맥락의 '이전에 올린 표본')
             rows = await conn.fetch("SELECT s.* FROM train_samples s JOIN project_links l ON l.kind='sample' AND l.ref=s.id AND l.project_id=$1 "
-                                    "WHERE s.status <> 'removed' ORDER BY s.created_at DESC LIMIT 50", project)
+                                    "WHERE s.status <> 'removed' AND (s.n_images > 0 OR coalesce(s.source,'') <> 'manual') "   # 직접 그린 묶음은 라벨 완료 1장부터
+                                    "ORDER BY s.created_at DESC LIMIT 50", project)
         elif p.role == "admin":
             rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC LIMIT 50")
         else:                                                # 직원 — 공유 데이터의 비공개 묶음(프로젝트 없음 · 남이 올림)은 빼고(10-14 원칙 246)

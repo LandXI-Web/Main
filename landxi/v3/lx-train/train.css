@@ -34,7 +34,6 @@
 .tr-none{margin:0;font:500 var(--fs-t2)/1 var(--font-num);color:var(--mute)}
 .tr-act{display:flex;gap:8px}
 .tr-act .t-btn{flex:1}
-.tr-label{align-self:flex-start;margin-top:-8px}
 .tr-run{display:flex;flex-direction:column;gap:8px}
 .tr-run .tr-q{margin:0;min-height:20px;color:var(--ink-2)}
 .tr-run.is-fail .t-progress{display:none}
@@ -75,16 +74,13 @@
 .tr-big.k-big[data-v=""] .t-big{color:var(--mute);font-weight:700}
 .tr-big.k-big[data-v=""] .t-big{font-size:var(--fs-h2);line-height:60px}
 
-/* 판정 1차 반영 — 결손 접기 · 곡선 높이 · 라벨 도구 연결 전 */
+/* 판정 1차 반영 — 결손 접기 · 곡선 높이 */
 .tr-dr [hidden]{display:none!important}
 .tr-fc{display:block;margin:-18px 0 0;font-family:var(--font-ui, inherit);color:var(--sub)}
 .tr-hint{margin:0;padding:12px 0;color:var(--sub)}
 .tr-fc[hidden],.tr-hint[hidden],.tr-sheet select[hidden]{display:none}
 .tr-curve .k-line svg{height:112px}
 .tr-curve .k-line-x{margin-top:-22px}
-.tr-off{color:var(--mute);cursor:default}
-.tr-off.tr-label{align-self:flex-start;margin-top:-8px}
-.k-empty-b .tr-off{display:block;margin-top:12px}
 
 /* 판정 2차 반영 — 크롭 없는 '쓸 수 있음' 자리(밝은 타일 + 클래스 명사) · 확대 크롭 · 결손 카드 */
 .tr-card .k-svc-crop.is-ph{display:flex;align-items:center;justify-content:center;background-color:var(--bg-0);

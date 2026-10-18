@@ -66,18 +66,25 @@ if (PRJ && STAGE === 'train') {
 const grid = h('div.tr-grid', { role: 'list' });
 /* 프로젝트 안(10-10 질문 10 확인) — 단계마다 그 단계 내용만: 학습데이터 구축 = 이 프로젝트 학습데이터(올리기 · 라벨 확인) · 학습 = 이 프로젝트 모델 */
 const IS_LABEL = !!PRJ && STAGE === 'label';
-const newBtn = h('button.t-btn.tr-new', { type: 'button', text: !PRJ ? '새 모델 만들기' : IS_LABEL ? '학습데이터 올리기' : '학습 실행' });
+const newBtn = h(IS_LABEL ? 'button.t-btn.t-btn--2.tr-new' : 'button.t-btn.tr-new', { type: 'button', text: !PRJ ? '새 모델 만들기' : IS_LABEL ? '학습데이터 올리기' : '학습 실행' });
 const samplesBox = h('div.tr-grid.tr-samples', { role: 'list', hidden: !IS_LABEL });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : IS_LABEL ? '학습데이터 구축' : '학습' }), newBtn), IS_LABEL ? samplesBox : grid);
+/* 학습데이터 구축(10-18 · 원칙 55 · 74 · 확인 L-1 · 라벨-1) = 플랫폼 안 수동 라벨링 칸(label.js) 위 + 만든 라벨 묶음 올리기(zip) 아래 */
+const labHost = IS_LABEL ? h('section.lb-host', { 'aria-label': '라벨링' }) : null;
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : IS_LABEL ? '학습데이터 구축' : '학습' }), IS_LABEL ? null : newBtn),
+  labHost, IS_LABEL ? h('div.tr-subh', {}, h('h2', { text: '올린 학습데이터' }), newBtn) : null, IS_LABEL ? samplesBox : grid);
 S.main.append(pane);
-if (IS_LABEL) drawSamples();
+if (IS_LABEL) {
+  document.head.append(h('link', { rel: 'stylesheet', href: new URL('./label.css', import.meta.url).href }));
+  import('./label.js').then(({ labelWork }) => labelWork({ host: labHost, project: PRJ }));
+  drawSamples();
+}
 async function drawSamples() {
   let j = null;
   try { j = await api('/training/samples?project=' + encodeURIComponent(PRJ.id)); } catch { /* 아래 빈 안내 */ }
-  const items = j?.items || [];
+  const items = (j?.items || []).filter((x) => x.source !== 'manual');   // 직접 그린 라벨은 위 라벨링 칸에서
   if (!items.length) {
     const e = h('div'); samplesBox.replaceChildren(e);
-    empty(e, { kind: 'first', title: j ? '아직 올린 학습데이터가 없습니다' : '학습데이터를 불러오지 못했습니다', text: j ? '학습 데이터 묶음(zip)을 올리면 여기에 보입니다' : '', compact: true });
+    empty(e, { kind: 'first', title: j ? '아직 올린 학습데이터가 없습니다' : '학습데이터를 불러오지 못했습니다', text: j ? '다른 곳에서 만든 라벨 묶음(zip)을 올리면 여기에 보입니다' : '', compact: true });
     return;
   }
   const day = (s) => String(s || '').slice(0, 10).replace(/-/g, '.');
@@ -139,31 +146,6 @@ if (modelsJ === null || fbJ === null) {
   await new Promise(() => {});
 }
 
-/* 라벨 도구(AXIS-Label · 외부 새 창) — 서버 설정(/me label_url)이 정본. 없으면 tasks.json 대체 주소.
-   어느 쪽이든 실제로 열려 있을 때만 링크를 그린다(죽은 링크 0). 닫혀 있으면 `라벨 도구 연결 전` 한 줄. */
-const LABEL = PID ? Promise.resolve(null) : (async () => {   // 프로젝트 안에서는 라벨 도구 칸을 두지 않으므로 확인하지 않는다(바깥 주소에서 이 PC 주소를 두드리지 않게)
-  const me = await get('/me');
-  const url = me?.label_url || me?.links?.label || CFG.labelUrl || '';
-  if (!url) return null;
-  /* 바깥 주소에서는 이 PC 주소(localhost · 127.0.0.1)를 두드리지 않는다 — 바깥 사용자 브라우저에서는 그 주소가 자기 PC 다(fix9) */
-  const LOOP = /^(localhost|127\.0\.0\.1|\[::1\])$/i;
-  try { if (LOOP.test(new URL(url, location.href).hostname) && !LOOP.test(location.hostname)) return null; } catch { return null; }
-  const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 2500);
-  try { await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ac.signal }); return url; }
-  catch { devlog('label', 'label tool closed'); return null; }
-  finally { clearTimeout(to); }
-})();
-const OFF = '라벨 도구 연결 전';
-/** 라벨 열기 자리 — 열려 있으면 새 창 링크, 아니면 비활성 한 줄 */
-function labelSlot(host, cls = 'tr-label') {
-  if (PID) return;                 // 프로젝트 안 = 지금 할 수 있는 일만(라벨 묶음 올리기 · 라벨 확인은 원스톱 서랍) — 연결 전 안내 줄을 두지 않는다
-  const off = h(`span.t-label.tr-off.${cls}`, { text: OFF, hidden: true });
-  host.append(off);
-  LABEL.then((u) => {
-    if (!u) { off.hidden = false; return; }
-    off.replaceWith(h(`a.t-btn.t-btn--text.${cls}`, { href: u, target: '_blank', rel: 'noopener', text: '라벨 열기' }));
-  });
-}
 const MODELS = (modelsJ?.items || []).filter((m) => ['seg', 'obb', 'det'].includes(m.task));
 const FB = fbJ?.items || [];
 devlog('models', `${MODELS.length} trainable / ${(modelsJ?.items || []).length}`);
@@ -285,13 +267,11 @@ function openDrawer(r) {
   if (!r.m && r.state === 'nomodel') {
     const e = h('div'); body.append(e);
     empty(e, { kind: 'first', title: '학습 기록 없음', text: '이 업무의 AI 결과는 있지만 모델 학습 기록이 아직 등록되지 않았습니다' });
-    labelSlot(e.querySelector('.k-empty-b'), 'k-empty-a');
     return;
   }
   if (!r.m) {
     const e = h('div'); body.append(e);
     empty(e, { kind: 'first', title: '첫 학습 전', text: '라벨을 만들면 이 업무의 첫 모델을 학습할 수 있습니다' });
-    labelSlot(e.querySelector('.k-empty-b'), 'k-empty-a');
     return;
   }
   /* 원칙 135(10-09): 현장 판정 기준 정밀도 큰 숫자와 그 건수 줄은 뺐다 — 정밀도는 아래 학습 검증 영상 기준 한 줄(추정치 ~) */
@@ -319,7 +299,6 @@ function openDrawer(r) {
   body.append(h('div.tr-act', {}, copy, again));
   /* 프로젝트 안: 학습 시작은 프로젝트장 · 구성원만(공개된 서비스의 재학습 — 역할-3 ⓑ · 서버도 거절) */
   PROJ.then((P) => { if (P && !P.can?.train) again.remove(); });
-  labelSlot(body);
   body.append(run);
   copy.addEventListener('click', () => openSheet(r));
   again.addEventListener('click', () => start({ kind: 'train', base_model: r.m.id }, { btn: again, run, chart }));

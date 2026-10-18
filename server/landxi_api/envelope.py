@@ -36,7 +36,8 @@ STRUCT_KEYS = {
 STRUCT_SUBTREES = {"coordinates", "bbox", "bounds", "geometry", "aoi", "footprint", "counts", "params", "options", "detail",
                    "properties", "infer_shape", "aoi_centroid", "center", "classes", "window", "items_raw", "compose",
                    "gpu_indices", "gpus_measured", "dims_raw", "ladder", "lnglat",
-                   "recovered_at_boot", "power_budget", "power_gate", "hist", "recovery", "last_sweep"}          # v1.1(F2-B) 구조 블록
+                   "recovered_at_boot", "power_budget", "power_gate", "hist", "recovery", "last_sweep",
+                   "shapes"}   # shapes = 라벨링 그림 안 모양 자리(0–1 · 클래스 번호 · labeling.py)          # v1.1(F2-B) 구조 블록
 
 
 def now_iso() -> str:

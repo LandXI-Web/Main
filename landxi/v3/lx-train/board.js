@@ -148,7 +148,7 @@ export async function trainBoard({ host, project: P }) {
 
   /* 고를 수 있는 것 — 학습 데이터(이 프로젝트 학습데이터 + 지난 학습에 쓴 데이터) · 기반 모델(원판 + 이 프로젝트가 만든 모델) */
   const DATA = [];
-  for (const s of smp?.items || []) DATA.push({ ref: s.id, name: s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at) });
+  for (const s of smp?.items || []) DATA.push({ ref: s.id, name: s.source === 'manual' ? `${s.task_name} 라벨링` : s.task_name, images: v(s.images), kind: 'sample', day: md(s.created_at), manual: s.source === 'manual' });   // 직접 그린 라벨(학습데이터 구축 라벨링 칸)
   for (const r of runs) { const d = dataOf(r); if (d?.ref && !DATA.some((x) => x.ref === d.ref)) DATA.push(d); }
   /* 수정된 부분 — 이 프로젝트가 만든 분석서비스의 결과를 XI맵에서 고친 곳 n장(서비스가 있을 때만) · 학습은 XI 재학습으로 */
   if (XU?.cards?.length) DATA.push({ ref: 'xi-edits', name: '수정된 부분', images: v(XU.tiles) ?? 0, kind: 'edits' });
@@ -500,10 +500,10 @@ export async function trainBoard({ host, project: P }) {
     const back = () => render();
     if (n.kind === 'data') {
       out.push(h('p.tb-lab', { text: '학습 데이터' }));
-      if (!DATA.length) out.push(h('p', { text: '아직 이 프로젝트 학습데이터가 없습니다 · 학습데이터 구축에서 올려 주세요' }), h('a.tb-dbtn', { href: stageHref(P, 'label'), text: '학습데이터 구축' }));
+      if (!DATA.length) out.push(h('p', { text: '아직 이 프로젝트 학습데이터가 없습니다 · 학습데이터 구축에서 라벨링하거나 올려 주세요' }), h('a.tb-dbtn', { href: stageHref(P, 'label'), text: '학습데이터 구축' }));
       for (const d of DATA) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터',
         d.kind === 'edits' ? ''
-          : d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.day ? `${d.day} 올림` : '',
+          : d.kind === 'asset' && d.with != null ? `있는 칸 ${nf(d.with)}${d.without ? ` + 없는 칸 ${nf(d.without)}` : ''}` : d.manual ? '라벨 완료한 그림' : d.day ? `${d.day} 올림` : '',
         d.images != null ? `${nf(d.images)}장` : '', () => { n.data = d; back(); }));
       if (SHARED.length) out.push(h('p.tb-lab', { text: '공유 데이터에서 고르기' }));
       for (const d of SHARED) out.push(opt(n.data?.ref === d.ref, d.name || '학습 데이터', d.day ? `${d.day} 올림` : '',

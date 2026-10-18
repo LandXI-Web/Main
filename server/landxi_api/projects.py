@@ -291,7 +291,8 @@ async def _facts(conn, r) -> dict:
             n = len(dv["img"].get(g["code"], []))
         have[g["code"]] = int(n or 0)
     samples = await conn.fetch("SELECT s.id, s.task_name, s.n_images, s.created_at, l.round FROM project_links l JOIN train_samples s ON s.id=l.ref "
-                               "WHERE l.project_id=$1 AND l.kind='sample' AND s.status <> 'removed' ORDER BY s.created_at DESC", pid)
+                               "WHERE l.project_id=$1 AND l.kind='sample' AND s.status <> 'removed' "
+                               "AND (s.n_images > 0 OR coalesce(s.source,'') <> 'manual') ORDER BY s.created_at DESC", pid)   # 직접 그린 묶음은 라벨 완료 1장부터
     sids = [s["id"] for s in samples]
     jobs = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='train' AND created_at >= $2 AND "
                             "(options->>'project_id' = $1 OR (options->'samples') ?| $3::text[]) ORDER BY created_at DESC",
