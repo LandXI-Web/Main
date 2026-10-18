@@ -17,7 +17,7 @@
     관리자 상한 fetch_max(1–16) 아래에서 오류율 · 응답 시간으로 자동 조절 · 지수 대기).
   · 칸이 끝나면: 칸 숫자(객체 중심이 칸 안인 것만) · 낮은 줌 면(격자) → 결과 객체 줄은 데이터베이스에서 지움(C: 디스크에 쌓지 않음 ·
     객체는 E: 결과 묶음 파일 = 지도 조각 · GeoJSON 에 남음) → 중간 칩 파일 바로 지움 → 장부 done(판 번호가 바뀜).
-  · 실패하면 다시(10 · 20 · 40분 뒤) — 3번 넘게 실패하면 failed(관리자가 다시).
+  · 실패하면 다시(10 · 20 · 40분 뒤) — 3번 실패하면 failed, 그 뒤에도 80 · 160 · 320분 뒤 3번 더(TRIES_MAX · 영상 API 장애 칸이 저절로 다시).
   · 모델 = 설정 'national.run'.model(10-13 경작지v2-처리 ⓐ — 전국 분석은 API 영상 + 경작지 새 판 · 기관 영상 분석은 지금 모델 그대로).
     칸마다 결과를 만든 판을 장부(national_cells.model_id · national_jobs.model_id)에 남긴다. 끝난 칸의 판이 설정과 다르면 그 칸을 새 판으로
     처음부터 다시 분석한다 — 그동안 옛 결과는 '끝'으로 그대로 보이고(진행 · XI맵 · 관리자 숫자 그대로), 새 판 결과가 나오면 한 번에 바꿔 끼운다.
@@ -43,6 +43,7 @@ MODEL = DEF["model"]                    # 경작지 새 판(항공 · API 영상
 PRIORITY = 3                            # 가장 낮음 — 기관 · 직원 분석이 언제나 먼저
 MAX_PART_KM2 = 10.0                     # 조각을 작게 — 사용자 작업이 오면 몇 분 안에 비키게(원칙 221 · 게이트웨이 천장 150㎢ 보다 훨씬 작게)
 TRIES = 3
+TRIES_MAX = 6                           # 3번 실패(failed) 뒤에도 긴 간격(80 · 160 · 320분)으로 3번 더 — 영상 API 장애(접속 지연 안내)로 실패한 칸이 저절로 다시 돈다(10-18)
 LOCK = OUT / "runner.lock"
 STATUS = OUT / "runner.json"
 LOGF = OUT / "runner.log"
@@ -252,7 +253,7 @@ def next_cell(c, year: int, assets, model: str = MODEL, exclude: list[str] | Non
         "AND (state='todo' OR (state='failed' AND tries < %s AND coalesce(next_try_at, now()) <= now()) "
         "     OR (state='done' AND model_id IS DISTINCT FROM %s AND tries < %s)) "
         "AND coalesce(next_try_at, now() - interval '1 s') <= now() AND NOT (asset || ':' || cell_cd = ANY(%s)) ORDER BY ord, asset LIMIT 1",
-        (year, list(assets), TRIES, model, TRIES, list(exclude or []))).fetchone()
+        (year, list(assets), TRIES_MAX, model, TRIES, list(exclude or []))).fetchone()
 
 
 def split_parts(geom):
@@ -299,7 +300,7 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
         body = {"kind": "infer", "model_id": model, "imagery_id": iid, "aoi": mapping(p), "priority": PRIORITY, "test": test,
                 "label": f"{'test/' if test else ''}national/{asset}/{year}/{cd}/{k}", "options": {"max_km2": 150, "national": {"asset": asset, "year": year, "cell": cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
-                         "AND j.state IN ('queued','running','done') AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
+                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
                          (asset, year, key, k, model)).fetchone()   # 같은 판 작업만 이어 쓴다(옛 판 조각을 새 판 결과로 쓰지 않음)
         if prev:                                 # 끊겼다 다시 이어 하기 — 같은 조각의 작업이 아직 살아 있거나 끝났으면 그것을 쓴다
             jid = prev[0]
@@ -444,6 +445,16 @@ def pipeline_depth() -> int:
     return max(1, min(4, n))
 
 
+def fin_backlog() -> int:
+    """GPU 칩은 다 끝나고 결과 정리(CPU · 전역 NMS · 지도 조각)만 남은 조각을 몇 개까지 더 둘까 — pools.yaml power.national.fin_backlog(0–8 · 기본 4).
+    예전에는 결과 정리가 끝나야(작업 '끝') 흐름 자리가 비어, 정리 20–30초 동안 두 장이 놀았다(10-18 실측 · 장마다 한 시간에 약 15분)."""
+    try:
+        n = int(((config.load_yaml("pools").get("power") or {}).get("national") or {}).get("fin_backlog", 4))
+    except Exception:  # noqa: BLE001
+        n = 4
+    return max(0, min(8, n))
+
+
 def turn_ok(c, g: Gate) -> bool:
     """wait_turn 의 기다리지 않는 판 — 지금 다음 조각을 넣어도 되나(멈춤이면 Pause)."""
     if not settings(c).get("enabled", True):
@@ -495,7 +506,7 @@ class CellRun:
                 "label": f"national/{self.asset}/{self.year}/{self.cd}/{k}",
                 "options": {"max_km2": 150, "national": {"asset": self.asset, "year": self.year, "cell": self.cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
-                         "AND j.state IN ('queued','running','done') AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
+                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
                          (self.asset, self.year, self.cd, k, self.model)).fetchone()   # 끊겼다 다시 — 같은 판의 같은 조각 작업이 있으면 그것(예전과 같음)
         if prev:
             jid = prev[0]
@@ -526,6 +537,8 @@ def loop_pipeline(depth: int):
         c.execute("UPDATE national_cells SET state='todo' WHERE state='running'")
         active: list[CellRun] = []
         inflight: dict[str, tuple[CellRun, int]] = {}
+        gpu_done: set[str] = set()               # 칩은 다 끝나고 결과 정리만 남은 조각 — 흐름 자리를 차지하지 않는다
+        backlog = fin_backlog()
         api_seen = 0.0
         while True:
             try:
@@ -536,13 +549,19 @@ def loop_pipeline(depth: int):
                 iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
                 # 1) 돌던 조각 확인(2초마다)
                 for jid, (cell, k) in list(inflight.items()):
+                    if jid not in inflight:              # 같은 칸의 다른 조각이 실패해 칸째 빠짐(_drop_cell) — 예전엔 KeyError 로 20초 멈춤
+                        continue
                     v = g.call("GET", f"/jobs/{jid}").json()
                     v = v.get("job", v)
                     stt = v.get("state")
                     if stt not in ("done", "failed", "cancelled"):
+                        tot = int(v.get("shards_total") or 0)
+                        if tot and int(v.get("shards_done") or 0) + int(v.get("shards_failed") or 0) >= tot:
+                            gpu_done.add(jid)
                         continue
                     c.execute("UPDATE national_jobs SET state=%s, done_at=now() WHERE job_id=%s", (stt, jid))
                     inflight.pop(jid)
+                    gpu_done.discard(jid)
                     err = None
                     if stt != "done":
                         err = f"작업 {stt}: {str(v.get('error') or '')[:200]}"
@@ -560,7 +579,8 @@ def loop_pipeline(depth: int):
                     log(f"칸 {cell.asset} {cell.cd} 끝 {res}")
                     status(state="cell_done", asset=cell.asset, cell=cell.cd, last_done=dt.datetime.now(KST).isoformat(timespec="seconds"))
                 # 3) 빈자리에 다음 조각(지금 칸의 남은 조각 → 없으면 다음 칸)
-                while len(inflight) < depth and turn_ok(c, g):
+                gpu_done &= set(inflight)
+                while len(inflight) - len(gpu_done) < depth and len(inflight) < depth + backlog and turn_ok(c, g):
                     cell = next((x for x in active if not x.all_in()), None)
                     if cell is None:
                         if time.time() - api_seen > 60:
@@ -594,7 +614,7 @@ def loop_pipeline(depth: int):
                 cur = active[0] if active else None
                 if cur and inflight:
                     status(state="running", asset=cur.asset, cell=cur.cd, name=cur.name, parts=len(cur.parts), part=len(cur.done) + 1,
-                           inflight=len(inflight), depth=depth, test=False)
+                           inflight=len(inflight), finishing=len(gpu_done), depth=depth, test=False)
                 time.sleep(2)
             except Pause as e:
                 for cell in active:
@@ -634,7 +654,7 @@ def loop(force_window: bool = False):
             print("이미 돌고 있음")
             return
         try:
-            log(f"흐름 방식 — 조각 {depth}개까지 동시에(impl-41)")
+            log(f"흐름 방식 — 조각 {depth}개까지 동시에(impl-41) · 결과 정리만 남은 조각 {fin_backlog()}개까지 더")
             loop_pipeline(depth)
         finally:
             drop_lock()

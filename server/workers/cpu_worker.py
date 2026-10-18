@@ -497,8 +497,9 @@ def main():
     bus.ensure_group(SHARDS, GROUP)
     if FINALIZE:
         threading.Thread(target=fin_loop, args=(FIN_SMALL,), daemon=True, name="finalize-small").start()
-        threading.Thread(target=fin_loop, args=(FIN,), daemon=True, name="finalize").start()
-        log(WHO, "ready · finalize:cpu:small(≤16 shard 우선 레인) · finalize:cpu(전용 스레드) · shards:cpu")
+        for i in range(FIN_THREADS):
+            threading.Thread(target=fin_loop, args=(FIN, i), daemon=True, name=f"finalize-{i}").start()
+        log(WHO, f"ready · finalize:cpu:small(≤16 shard 우선 레인) · finalize:cpu(전용 스레드 {FIN_THREADS}개) · shards:cpu")
     else:
         log(WHO, "ready · shards:cpu 전용(추가 cpu 워커 · finalize 는 cpu-0)")
     while True:
@@ -508,12 +509,17 @@ def main():
             bus.redis_hiccup(WHO, e)
 
 
-def fin_loop(stream: str = FIN):
+# 큰 작업 결과 정리(finalize:cpu) 스레드 수 — pools.yaml pools.cpu.finalize_threads(1–4 · 기본 1). 작업마다 따로라 서로 기다리지 않는다.
+# 10-18 실측: 전국 분석 조각(250–390칩) 정리 20–30초가 한 줄로 서서 한 시간에 약 22분 — 두 장 GPU 가 그동안 다음 조각을 못 받았다.
+FIN_THREADS = max(1, min(4, int((config.load_yaml("pools")["pools"].get("cpu") or {}).get("finalize_threads", 1))))
+
+
+def fin_loop(stream: str = FIN, idx: int = 0):
     """finalize 는 자기 스레드에서 — 느린 index shard(PC 원격 · 수십 초)가 GPU 작업의 스냅샷을 막지 않게(2026-09-26 실측: 막히면 +280s).
     레인 둘: finalize:cpu:small(≤ 16 shard · 대화형 시연) 과 finalize:cpu(대량) — 큰 작업의 전역 NMS 뒤에 작은 작업이 줄 서지 않는다."""
     while True:
         try:
-            fin_once(stream)
+            fin_once(stream, idx)
         except bus.REDIS_ERRORS as e:
             bus.redis_hiccup(WHO, e)
         except Exception as e:  # pragma: no cover
@@ -521,8 +527,9 @@ def fin_loop(stream: str = FIN):
             time.sleep(1)
 
 
-def fin_once(stream: str = FIN):
-    res = r().xreadgroup("g:cpu", WID + (":fin-s" if stream == FIN_SMALL else ":fin"), {stream: ">"}, count=1, block=500)
+def fin_once(stream: str = FIN, idx: int = 0):
+    who = WID + (":fin-s" if stream == FIN_SMALL else ":fin") + (f"{idx + 1}" if idx else "")     # 첫 스레드는 예전 이름 그대로(남은 대기 항목 이어 받기)
+    res = r().xreadgroup("g:cpu", who, {stream: ">"}, count=1, block=500)
     for _, entries in res or []:
         for eid, f in entries:
             try:

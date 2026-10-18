@@ -36,7 +36,8 @@ power:
     llm_quiet_s: 5           # XI ChatGEO 호출이 끝난 뒤 두 번째 장이 전국 칩을 다시 받기까지(초)
     tile_share: true         # 영상 나눠 받기(impl-41) — 첫 장 워커가 127.0.0.1 문지기 · 두 번째 장은 거기서 받음(같은 타일 두 번 받기 없앰 · 영상 서버 호출은 한 곳 · 상한 그대로)
     tile_share_port: 8706
-    pipeline: 2              # 작업기가 동시에 넣어 두는 조각 수(칸 경계를 넘어 다음 칸 조각도 · 조각 · 칩 격자는 그대로라 결과 같음 · impl-41)
+    pipeline: 3              # 작업기가 동시에 넣어 두는 조각 수(칸 경계를 넘어 다음 칸 조각도 · 조각 · 칩 격자는 그대로라 결과 같음 · impl-41) · 10-18 2→3(해외 멈춤 · 두 장이 국내만)
+    fin_backlog: 4           # 칩은 다 끝나고 결과 정리(CPU)만 남은 조각은 흐름 자리를 차지하지 않게 — 이만큼까지 더 둔다(10-18 · 정리 동안 두 장이 놀던 것 없앰)
     read_ahead: true         # 마지막 칩 묶음을 추론하는 동안 다음 칩 묶음을 이 워커 몫으로 받아 영상 읽기 시작(impl-41)
     chunk: 4
     util_max: 70             # 사용률 평균 상한(%)
@@ -75,6 +76,7 @@ pools:
   cpu:
     device: cpu
     workers: [cpu-0, cpu-1]   # cpu-0 = shard + finalize · cpu-1 = shard 전용(2026-09-27: 원격 NDVI 8칸 321 s 가 실태조사 39칸을 200 s+ 굶긴 실측 → 추가)
+    finalize_threads: 2       # cpu-0 의 큰 작업 결과 정리 스레드 수(10-18 · 전국 조각 정리 20–30초가 한 줄로 서던 것 → 둘이 나눠)
     low_watermark: 4
     fill_chunk: 8
     slow_shard_ms: 5000       # 중앙값이 이보다 긴 어댑터 작업은 한 번에 1 shard(나머지 cpu 워커는 빠른 작업)

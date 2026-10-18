@@ -70,7 +70,7 @@ def imagery_path(imagery_id: str) -> str:
 #   상한 = 관리자 설정 fetch_max(lx_settings national.run · 1–16 · 1분마다 다시 읽음). 실제 쓰는 값은 그 아래에서 자동:
 #   최근 200회 창마다 오류(429 · 5xx · 연결 끊김 · 시간 초과) 비율 > 1% 또는 응답 시간 p50 > 기준 × 2(기준 = 최근 3시간 지난 창 p50 중앙값 ·
 #   더 낮은 동시 수에서 잰 창이 있으면 그것 — 올려도 응답만 늘고 처리량이 그대로면 내려온다)
-#   → 한 단계 내림(1 · 2 · 4 · 8 · 16) + 30초 쉼. 30분 동안 내림이 없으면 상한까지 한 단계 올림.
+#   → 한 단계 내림(1 · 2 · 4 · 8 · 16) + 30초 쉼. 10분 동안 내림이 없으면 상한까지 한 단계 올림(10-18 · 예전 30분).
 # 실패한 타일은 2 · 4 · 8 · 16 초 기다렸다 다시(지수 대기) · 그래도 안 되면 칸 실패(작업기가 칸을 다시 넣는다). 404 · 204(바다 등 영상 없음)만 빈 칸.
 # 요청 머리에는 브라우저 이름 · 출처 페이지만(메일 · 계정 · 키 없음).
 _API: dict = {}
@@ -85,7 +85,7 @@ FETCH_SLOW_MIN_S = 0.25      # 기준보다 이만큼(초) 넘게 늘었을 때�
 FETCH_BASE_MIN = 3           # 기준을 세우는 데 필요한 지난 창 수
 FETCH_BASE_AGE_S = 3 * 3600  # 기준에 쓰는 지난 창의 나이(낮 · 밤 서버 속도 변화를 따라감)
 FETCH_REST_S = 30            # 내린 뒤 쉼
-FETCH_STABLE_S = 1800        # 이만큼 안정이면 한 단계 올림
+FETCH_STABLE_S = 600         # 이만큼 안정이면 한 단계 올림 — 10-18 1800→600: 몇 분짜리 '접속 지연' 안내 뒤 1→8 회복에 90분 걸려 전국 분석이 느려짐(내림 · 쉼 · 상한은 그대로)
 FETCH_OUTAGE_RATE = 0.5      # 한 창의 오류율이 이만큼이면 서비스 장애로 보고
 FETCH_OUTAGE_REST_S = 300    # 장애 때 쉼(5분)
 TILE_CACHE = 768             # 타일 캐시(이웃 칩이 겹치는 타일 · 약 150MB)
@@ -333,6 +333,9 @@ class ApiDataset:
         self._proxy = requests.Session()
         self._proxy_dead_until = 0.0
         self._clock = threading.Lock()
+        self.holes = 0                                  # 그 해 층에 타일이 없는 자리(안내 페이지 404 · 기준 타일은 그림) — 빈 칸으로(10-18)
+        self._probe = (0.0, False)
+        self._probe_lock = threading.Lock()
 
     def window_transform(self, win):
         return self._ds.window_transform(win)
@@ -463,6 +466,31 @@ class ApiDataset:
                 self._proxy_dead_until = _now() + 30
         return self._raw_get(x, y)
 
+    def _service_ok(self) -> bool:
+        """같은 층의 기준 타일(전주 · 서울 · 대전 · 25cm 층)이 그림을 주나 — 30초 캐시. 영상 서버 전체 장애(모든 타일이 안내 페이지)와
+        그 해 층의 빈 자리(그 타일만 안내 페이지 404 · 다른 해 층엔 있음)를 가른다. 10-18 실측: 경북 북부(의성 · 청송 · 영덕 · 안동 · 포항)
+        2025 층의 일부 타일이 늘 안내 페이지 404 — 장애로 세어 칩마다 30초 다시 받기 · 호출 수 1로 내림 · 칸 실패가 이어졌다."""
+        now = _now()
+        with self._probe_lock:
+            at, ok = self._probe
+            if now - at < 30:
+                return ok
+            c = self.conf
+            res = 17112760.32 / (256 * 2 ** c["z"])
+            ok = False
+            for ex, ny in ((965000, 1745000), (953000, 1952000), (990000, 1817000)):
+                tx, ty = int((ex + 200000) / res / c["bx"]), int((4000000 - ny) / res / c["by"])
+                url = c["url"].replace("${z}", str(c["z"])).replace("${x}", str(tx)).replace("${y}", str(ty))
+                try:
+                    r = self._http.get(url, headers={"User-Agent": c["ua"], **({"Referer": c["referer"]} if c["referer"] else {})}, timeout=(10, 20))
+                    if r.status_code == 200 and (r.headers.get("content-type") or "").startswith("image/"):
+                        ok = True
+                        break
+                except Exception:  # noqa: BLE001
+                    continue
+            self._probe = (_now(), ok)
+            return ok
+
     def _fetch_raw(self, x: int, y: int):
         """영상 서버에서 타일 하나(JPEG 바이트) · 영상 없음(204 · 404)이면 None. 실패하면 지수 대기 뒤 다시."""
         import io
@@ -486,6 +514,17 @@ class ApiDataset:
                 html = "html" in (r.headers.get("content-type") or "").lower()
                 if r.status_code in c["zero"] and not html:
                     self.gov.record(True, sec, len(r.content), empty=True, retry=k > 0)
+                    return None
+                if r.status_code in c["zero"] and self._service_ok():
+                    # 10-18: 기준 타일은 그림을 준다 → 이 자리만 그 해 층에 영상이 없음. 한 번 더(2초 뒤) 안내 페이지면 빈 칸(바다 · 204 와 같게)
+                    if k == 0:
+                        last = f"HTTP {r.status_code} 안내 페이지(이 자리만)"
+                        continue
+                    self.gov.record(True, sec, len(r.content), empty=True, retry=True)
+                    self.holes += 1
+                    if self.holes in (1, 10) or self.holes % 100 == 0:
+                        self.gov._write("fetch-events.jsonl", {"at": _now(), "holes": self.holes, "why": "그 해 층에 영상이 없는 타일(안내 페이지 404 · 기준 타일은 정상) — 빈 칸으로",
+                                                               "tile": [x, y]})
                     return None
                 if r.status_code in c["zero"]:
                     # 10-13 실측: 국토지리정보원이 '접속 지연' 안내 페이지(html)를 404 로 준다 — 영상 없음(바다)이 아니라 오류. 빈 칸으로 세면 결과 0 칸이 '끝'이 된다
