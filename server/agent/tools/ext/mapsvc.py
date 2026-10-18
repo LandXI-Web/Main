@@ -292,7 +292,8 @@ async def _jobs_on(ctx) -> list[str]:
     async with db(realm="lx") as c:
         rows = await c.fetch("SELECT id, tenant_id FROM jobs WHERE id = ANY($1::text[]) AND kind IN ('infer','reinfer') AND state='done'", ids)
     ok = {r["id"] for r in rows if getattr(p, "realm", None) == "lx" or r["tenant_id"] in (getattr(p, "tenant_id", None), "lx")}
-    return [x for x in ids if x in ok][:12]
+    from landxi_api import result_scope as RSC
+    return (await RSC.latest_only([x for x in ids if x in ok]))[:12]      # 같은 서비스 × 지역은 최신 분석 하나(옛 분석은 시점 비교용 — 더하지 않는다)
 
 
 def _nf(v: float) -> str:

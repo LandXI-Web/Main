@@ -104,6 +104,30 @@ def drop(cond: dict, keys) -> dict:
     return out
 
 
+async def latest_only(jobs: list[str]) -> list[str]:
+    """같은 서비스 × 같은 지역(프로젝트면 같은 범위)의 분석이 여럿 켜져 있으면 가장 늦게 끝난 것 하나만(10-18 · 숫자 한 출처).
+    이전 분석은 시점 비교용이라 통계 · 보고서 · 거르기 숫자에 더하지 않는다. 입력 순서는 지킨다."""
+    if len(jobs) < 2:
+        return list(jobs)
+    from .deps import db
+    async with db(realm="lx") as c:
+        rows = await c.fetch("SELECT id, card_id, options, finished_at FROM jobs WHERE id = ANY($1::text[])", jobs)
+    by = {}
+    for r in rows:
+        o = r["options"] if isinstance(r["options"], dict) else json.loads(r["options"] or "{}")
+        key = (r["card_id"], str(o.get("sgg_cd") or ""), str(o.get("range_name") or "") if o.get("project_infer") else "", str(o.get("project_id") or "") if o.get("project_infer") else "")
+        by[r["id"]] = (key, r["finished_at"])
+    best: dict = {}
+    for j in jobs:
+        if j not in by:
+            continue
+        k, at = by[j]
+        if k not in best or (at is not None and (by[best[k]][1] is None or at > by[best[k]][1])):
+            best[k] = j
+    keep = set(best.values())
+    return [j for j in jobs if j not in by or j in keep]
+
+
 async def layer_names(jobs: list[str]) -> list[dict]:
     """작업 → {job, name, region, sgg} — 지도 서비스 목록 줄과 같은 재료(카드 이름 · 프로젝트 이름 · 지역 이름 · 범위 이름)."""
     if not jobs:

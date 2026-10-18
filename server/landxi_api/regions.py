@@ -1104,4 +1104,16 @@ async def _region_results(sgg_cd: str, p) -> dict:
                     "from": "job", "style": "landcover" if lc else "result", "finished_at": fin,
                     # 전역(영상이 시군구를 덮음)인지 · 서비스 카드 분석의 대상 — XI ChatGEO 가 '그 지역 결과'를 고를 때 작은 부분 분석보다 전역 분석을(QA-통계 · 10-11)
                     "full": bool(_opts.get("scope_full")), "card_id": x["card_id"], "classes": _opts.get("classes") or None})
+    _byc: dict = {}
+    for o in out:
+        if o.get("from") == "job" and o.get("card_id"):
+            _byc.setdefault(o["card_id"], []).append(o)
+    for _l in _byc.values():                              # 같은 서비스의 분석이 여럿이면 분석한 날로 구분(최신이 앞 · 옛 분석은 시점 비교용)
+        if len(_l) > 1:
+            for o in _l:
+                try:
+                    d = dt.datetime.fromisoformat(o["finished_at"])
+                    o["name"] = {k: f"{v}({d.month}월 {d.day}일 분석)" for k, v in o["name"].items()}
+                except Exception:  # noqa: BLE001
+                    pass
     return {"sgg_cd": r["sgg_cd"], "name": r["name"], "items": out, "as_of": now_iso()}
