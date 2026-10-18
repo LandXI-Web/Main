@@ -3,6 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* 학습데이터 구축(라벨링 · 10-18) — 화면 코드를 받기 전에 라벨링 자료(지도 보기 · 그림 보기)를 받기 시작한다(준비 2초 안).
+   shared/api-v1.js 가 같은 경로를 처음 부를 때 이 응답을 한 번 쓴다(__lxBoot · XI맵 첫 화면 묶음과 같은 길) · 실패하면 화면이 따로 부른다. */
+(() => { try {
+  const q = new URLSearchParams(location.search), pid = q.get('project');
+  if (q.get('stage') !== 'label' || !pid) return;
+  const L = (k) => localStorage.getItem(k);
+  const chip = (q.get('view') || L('lx-label-view')) === 'chip';   // 그림 보기면 그림 목록 자료
+  const s = JSON.parse(L('lx_api_session') || 'null');
+  if (!s || !s.token || !(new Date(s.expires_at) > new Date())) return;
+  const h = location.hostname;
+  const base = L('lx_api_base') || (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(h) ? 'http://localhost:8700' : /\.github\.io$/i.test(h) ? 'https://app.land-xi.dev' : location.origin);
+  const k = '/projects/' + encodeURIComponent(pid) + (chip ? '/labeling' : '/labeling/map'), t = performance.now();
+  const pr = fetch(base + '/api/v1' + k, { headers: { authorization: 'Bearer ' + s.token, accept: 'application/json' } }).then((r) => (r.ok ? r.json() : undefined)).catch(() => undefined);
+  let used = false;
+  window.__lxBoot = { tok: s.token, t, get(x) { if (x !== k || used || performance.now() - t > 30e3) return undefined; used = true; return pr; } };
+} catch { /* 저장 불가 창 — 화면이 따로 부른다 */ } })();
+</script>
 <title>Land-XI 학습</title>
 <meta name="description" content="업무별 모델이 쓸 만한지 보고, 다른 지역 사본 미세조정을 겁니다">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">

@@ -22,20 +22,22 @@ async function imgUrl(src) {
   return p;
 }
 
-export async function labelWork({ host, project }) {
+export async function labelWork({ host, project, toggle }) {
   const P = project;
   const L = { set: null, images: [], imagery: [], can: false, i: -1, filter: 'all', tool: 'select', cls: 0, sel: -1, dirty: false, at: null, hist: [], redo: [] };
   const wait = h('div.lb-wait'); host.replaceChildren(wait);
   empty(wait, { kind: 'loading' });
   try { Object.assign(L, pick(await api(`/projects/${encodeURIComponent(P.id)}/labeling`))); }
-  catch { wait.replaceChildren(); empty(wait, { kind: 'error', title: '라벨링 목록을 불러오지 못했습니다', onRetry: () => labelWork({ host, project }) }); return; }
+  catch { wait.replaceChildren(); empty(wait, { kind: 'error', title: '라벨링 목록을 불러오지 못했습니다', onRetry: () => labelWork({ host, project, toggle }) }); return; }
+  /* 지도에서 라벨 완료한 그림(area)은 여기서는 보기만 — 고치기는 지도에서(한 자리 한 출처) */
+  const ed = () => L.can && !L.images[L.i]?.area;
   function pick(j) { return { set: j.set, images: j.images || [], imagery: j.imagery || [], can: !!j.can_edit, start: j.start_classes || [], addMax: j.params?.add_max || 20, maxImages: j.params?.max_images || 200 }; }
 
   /* ── 뼈대 ── */
   const prog = h('div.lb-prog');
   const addBtn = h('button.t-btn.t-btn--2.lb-add', { type: 'button', text: '그림 더하기' });
   const toTrain = h('a.t-btn.t-btn--2.lb-totrain', { href: stageHref(P, 'train'), text: '학습으로' });
-  const top = h('div.lb-top', {}, prog, h('div.lb-top-act', {}, toTrain, addBtn));
+  const top = h('div.lb-top', {}, prog, h('div.lb-top-act', {}, toggle || '', toTrain, addBtn));
   const tabs = h('div.lb-tabs', { role: 'tablist', 'aria-label': '그림 거르기' });
   const list = h('ol.lb-list', { 'aria-label': '라벨링할 그림' });
   const left = h('aside.lb-left', {}, tabs, list);
@@ -82,7 +84,7 @@ export async function labelWork({ host, project }) {
     list.replaceChildren(...rows.map(([x, i]) => {
       const im = h('img', { alt: '', dataset: { src: `${x.src}?size=112` } });
       const li = h('li', {}, h('button.lb-row', { type: 'button', 'aria-current': i === L.i ? 'true' : null, dataset: { st: x.state }, onclick: () => go(i) },
-        im, h('span.lb-row-t', {}, h('b', { text: x.shapes?.length ? `${x.seq}번 · ${x.shapes.length}개` : `${x.seq}번` }), h('small', { text: WORD[x.state] }))));
+        im, h('span.lb-row-t', {}, h('b', { text: x.shapes?.length ? `${x.seq}번 · ${x.shapes.length}개` : `${x.seq}번` }), h('small', { text: x.area ? '라벨 완료 · 지도' : WORD[x.state] }))));
       if (io) io.observe(im); else thumb(im);
       return li;
     }));
@@ -132,7 +134,7 @@ export async function labelWork({ host, project }) {
     if (i < 0 || i >= classes().length) return;
     L.cls = i;
     const cur = L.images[L.i];
-    if (cur && L.sel >= 0 && L.can && cur.shapes[L.sel].c !== i) { push(); cur.shapes[L.sel].c = i; changed(); }
+    if (cur && L.sel >= 0 && ed() && cur.shapes[L.sel].c !== i) { push(); cur.shapes[L.sel].c = i; changed(); }
     drawCls(); paint();
   }
 
@@ -144,14 +146,15 @@ export async function labelWork({ host, project }) {
     const db = h('button.lb-tool', { type: 'button', title: '삭제 (Delete)', disabled: L.sel < 0, onclick: delSel, text: '삭제' });
     const fit = h('button.lb-tool', { type: 'button', title: '맞춤 (F)', onclick: () => { fitView(); paint(); }, text: '맞춤' });
     const close = D.pts.length >= 3 ? h('button.lb-tool.lb-close', { type: 'button', onclick: finishPoly, text: '다각형 닫기' }) : '';
-    toolbar.replaceChildren(...(L.can ? [...TOOLS.map(([k, w, key]) => b(k, w, key)), h('i.lb-sep'), ub, rb, db, close] : []), h('i.lb-sp'), fit);
-    const tip = !L.can ? '보기만 할 수 있습니다 · 라벨링은 프로젝트장 · 구성원이 합니다'
+    toolbar.replaceChildren(...(ed() ? [...TOOLS.map(([k, w, key]) => b(k, w, key)), h('i.lb-sep'), ub, rb, db, close] : []), h('i.lb-sp'), fit);
+    const tip = L.can && L.images[L.i]?.area ? '지도에서 라벨 완료한 그림입니다 · 고치기는 지도에서 합니다'
+      : !ed() ? '보기만 할 수 있습니다 · 라벨링은 프로젝트장 · 구성원이 합니다'
       : L.tool === 'poly' ? '눌러 꼭짓점을 찍고, 첫 점 · 두 번 누르기 · Enter 로 닫습니다'
       : L.tool === 'box' ? '끌어서 사각형을 그립니다'
       : '모양을 눌러 고르고 꼭짓점을 끕니다 · 변 가운데 점 = 꼭짓점 더하기 · 두 번 누르기 = 빼기';
-    hint.replaceChildren(h('span', { text: tip }), h('span.lb-keys', { text: L.can ? '← → 그림 넘기기 · D 라벨 완료 · 1–9 클래스 · Ctrl+Z 되돌리기' : '← → 그림 넘기기 · 휠 확대' }));
+    hint.replaceChildren(h('span', { text: tip }), h('span.lb-keys', { text: ed() ? '← → 그림 넘기기 · D 라벨 완료 · 1–9 클래스 · Ctrl+Z 되돌리기' : '← → 그림 넘기기 · 휠 확대' }));
   }
-  function setTool(k) { if (!L.can) return; cancelPoly(); L.tool = k; if (k !== 'select') L.sel = -1; drawTools(); paint(); }
+  function setTool(k) { if (!ed()) return; cancelPoly(); L.tool = k; if (k !== 'select') L.sel = -1; drawTools(); paint(); }
 
   /* ── 판(캔버스) ── */
   const ctx = cv.getContext('2d');
@@ -190,7 +193,7 @@ export async function labelWork({ host, project }) {
       ctx.globalAlpha = i === L.sel ? 0.34 : 0.22; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1;
       if (i === L.sel) { ctx.lineWidth = 4; ctx.strokeStyle = '#FFFFFF'; ctx.stroke(); }
       ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke();
-      if (i === L.sel && L.can) {
+      if (i === L.sel && ed()) {
         if (s.k !== 'box') for (const m of mids(pts)) { ctx.beginPath(); ctx.arc(m[0], m[1], 4, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = col; ctx.stroke(); }
         for (const [x, y] of pts) { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x - 4.5, y - 4.5, 9, 9); ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.strokeRect(x - 4.5, y - 4.5, 9, 9); }
       }
@@ -251,7 +254,7 @@ export async function labelWork({ host, project }) {
     const cur = L.images[L.i];
     if (!cur || !IMG) return;
     const panKey = e.button === 1 || e.button === 2 || space;
-    if (panKey || !L.can) { drag = { kind: 'pan', x: xy[0], y: xy[1], ox: V.ox, oy: V.oy }; return; }
+    if (panKey || !ed()) { drag = { kind: 'pan', x: xy[0], y: xy[1], ox: V.ox, oy: V.oy }; return; }
     if (L.tool === 'poly') {
       const u = toU(...xy);
       if (D.pts.length >= 3 && near(xy, toS(D.pts[0]), 12)) { finishPoly(); return; }
@@ -282,10 +285,10 @@ export async function labelWork({ host, project }) {
     const cur = L.images[L.i];
     if (L.tool === 'poly' && D.pts.length && !drag) { D.hover = clamp01(toU(...xy)); paint(); return; }
     if (!drag) {
-      if (L.can && L.tool === 'select' && cur && L.sel >= 0) {
+      if (ed() && L.tool === 'select' && cur && L.sel >= 0) {
         const pts = cur.shapes[L.sel].p.map(toS);
         cv.style.cursor = pts.some((p) => near(p, xy)) || mids(pts).some((p) => near(p, xy)) ? 'crosshair' : hitShape(xy) >= 0 ? 'move' : 'grab';
-      } else cv.style.cursor = L.tool === 'select' || !L.can ? 'grab' : 'crosshair';
+      } else cv.style.cursor = L.tool === 'select' || !ed() ? 'grab' : 'crosshair';
       return;
     }
     if (drag.kind === 'pan') { V.ox = drag.ox + xy[0] - drag.x; V.oy = drag.oy + xy[1] - drag.y; paint(); return; }
@@ -331,7 +334,7 @@ export async function labelWork({ host, project }) {
   cv.addEventListener('contextmenu', (e) => e.preventDefault());
   cv.addEventListener('dblclick', (e) => {
     const cur = L.images[L.i];
-    if (!cur || !L.can) return;
+    if (!cur || !ed()) return;
     const xy = pos(e);
     if (L.tool === 'poly') {                      // 두 번 누르기 = 닫기(두 번째 누름이 찍은 같은 자리 점은 뺀다)
       const last = D.pts[D.pts.length - 1], prev = D.pts[D.pts.length - 2];
@@ -367,14 +370,14 @@ export async function labelWork({ host, project }) {
     if (k === 'Enter' && D.pts.length) { e.preventDefault(); finishPoly(); return; }
     if (k === 'Escape') { if (D.pts.length) cancelPoly(); else if (L.sel >= 0) { L.sel = -1; drawTools(); paint(); } return; }
     if (k === 'Backspace' && D.pts.length) { e.preventDefault(); D.pts.pop(); drawTools(); paint(); return; }
-    if ((k === 'Delete' || k === 'Backspace') && L.sel >= 0 && L.can) { e.preventDefault(); delSel(); return; }
+    if ((k === 'Delete' || k === 'Backspace') && L.sel >= 0 && ed()) { e.preventDefault(); delSel(); return; }
     if (k === 'ArrowRight' || k === 'n' || k === 'N') { e.preventDefault(); step(1); return; }
     if (k === 'ArrowLeft' || k === 'b' || k === 'B') { e.preventDefault(); step(-1); return; }
     if (k === 'f' || k === 'F' || k === '0') { fitView(); paint(); return; }
     if (k === 'v' || k === 'V') return setTool('select');
     if (k === 'p' || k === 'P') return setTool('poly');
     if (k === 'r' || k === 'R') return setTool('box');
-    if ((k === 'd' || k === 'D') && L.can) { e.preventDefault(); mark('done', true); return; }
+    if ((k === 'd' || k === 'D') && ed()) { e.preventDefault(); mark('done', true); return; }
     if (/^[1-9]$/.test(k)) setCls(+k - 1);
   }
   addEventListener('keydown', onKey);
@@ -388,7 +391,7 @@ export async function labelWork({ host, project }) {
     clearTimeout(timer);
     if (saving) await saving.catch(() => {});
     const cur = L.images[L.i];
-    if (!cur || !L.dirty || !L.can) { if (say && cur) toast('저장했습니다'); return; }
+    if (!cur || !L.dirty || !ed()) { if (say && cur) toast('저장했습니다'); return; }
     return save(cur, cur.state, say);
   }
   async function save(cur, state, say = false) {
@@ -406,7 +409,7 @@ export async function labelWork({ host, project }) {
       L.dirty = true;
       saveMsg.textContent = '저장하지 못함';
       toast(e?.status === 409 ? '다른 사람이 먼저 이 그림을 고쳤습니다 — 다시 불러옵니다' : (e?.message || '저장하지 못했습니다'));
-      if (e?.status === 409) setTimeout(() => labelWork({ host, project }), 1200);
+      if (e?.status === 409) setTimeout(() => labelWork({ host, project, toggle }), 1200);
       return false;
     } finally { saving = null; }
   }
@@ -420,7 +423,7 @@ export async function labelWork({ host, project }) {
   }
   async function mark(state, next = false) {
     const cur = L.images[L.i];
-    if (!cur || !L.can) return;
+    if (!cur || !ed()) return;
     if (D.pts.length >= 3) finishPoly();
     clearTimeout(timer);
     if (saving) await saving.catch(() => {});
@@ -438,7 +441,7 @@ export async function labelWork({ host, project }) {
     cancelPoly();
     L.i = i; L.sel = -1; L.hist = []; L.redo = []; L.dirty = false; drag = null;
     const cur = L.images[i];
-    IMG = null; delete cv.dataset.ready; paint(); drawList(); drawTools(); drawCls(); who();
+    IMG = null; delete cv.dataset.ready; paint(); drawList(); drawTools(); drawCls(); who(); foot.hidden = !ed();
     try {
       const u = await imgUrl(cur.src);
       const im = new Image(); im.src = u; await im.decode();
@@ -511,4 +514,43 @@ export async function labelWork({ host, project }) {
   addEventListener('beforeunload', () => { if (L.dirty) flush(); });
   start();
   document.documentElement.dataset.labelReady = '1';
+  return { flush };
+}
+
+/* ── 학습데이터 구축 칸 — 지도 | 그림 두 보기(10-18 사용자 "왼쪽에 실제 지도에 라벨링 하는 영상이 보여야" · 원칙 223 단추 하나) ──
+   영상이 있는 프로젝트는 지도가 먼저(지도 위에 그리고 '이 화면 라벨 완료' → 서버가 그림으로 잘라 같은 묶음에). 그림 보기는 512 화소 조각을 한 장씩.
+   고른 보기는 주소(?view=)와 이 브라우저에 남긴다. pre = 화면이 열릴 때 미리 받기 시작한 자료 · 모듈(app.js). */
+const VIEW_KEY = 'lx-label-view';
+export async function labelStage({ host, pid, pre = {} }) {
+  const q = new URLSearchParams(location.search).get('view');
+  let saved = null;
+  try { saved = localStorage.getItem(VIEW_KEY); } catch { /* 보관함 없음 */ }
+  let view = q === 'chip' || q === 'map' ? q : saved === 'chip' ? 'chip' : 'map';
+  let mapData = pre.map || null, handle = null, noMap = false;
+  const toggle = (now) => noMap ? '' : h('div.lb-view', { role: 'tablist', 'aria-label': '라벨링 보기' },
+    ...[['map', '지도'], ['chip', '그림']].map(([v, w]) => h('button.lb-view-b', { type: 'button', role: 'tab', 'aria-selected': String(now === v), text: w,
+      onclick: () => { if (v !== view) mount(v, true); } })));
+  async function mount(v, keep = false) {
+    try { await handle?.flush?.(); } catch { /* 저장은 각 보기가 알린다 */ }
+    try { handle?.destroy?.(); } catch { /* 이미 닫힘 */ }
+    handle = null; view = v;
+    if (keep) {
+      try { localStorage.setItem(VIEW_KEY, v); } catch { /* 보관함 없음 */ }
+      const u = new URL(location.href); u.searchParams.set('view', v); history.replaceState(history.state, '', u);
+    }
+    if (v === 'map') {
+      const wait = h('div.lb-wait'); host.replaceChildren(wait);
+      empty(wait, { kind: 'loading' });
+      let d = null;
+      try { d = await (mapData || api(`/projects/${encodeURIComponent(pid)}/labeling/map`)); } catch { d = null; }
+      mapData = null;
+      if (!d) { wait.replaceChildren(); empty(wait, { kind: 'error', title: '라벨링 지도를 불러오지 못했습니다', onRetry: () => mount('map') }); return; }
+      if (!d.imagery?.length) { noMap = true; return mount('chip'); }      // 지도에 펼칠 영상이 없는 프로젝트 = 그림 보기(영상 등록 안내)
+      const { labelMap } = await (pre.mod || import('./label-map.js'));
+      handle = await labelMap({ host, pid, data: d, toggle: toggle('map'), onReload: () => mount('map') });
+      return;
+    }
+    handle = await labelWork({ host, project: { id: pid }, toggle: toggle('chip') });
+  }
+  await mount(view);
 }

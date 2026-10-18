@@ -206,6 +206,8 @@ function directSse(path, { on, events = JOB_EVENTS, lastEventId = null, onState 
 
 /* ── 타일 URL 해석(F1-CONTRACT §8) ────────────────────────────────────── */
 const signed = new Map();   // set → { url, expires_at }
+/** 서버가 다른 응답에 같이 실어 준 서명(/tiles/sign 과 같은 모양) — 같은 보관에 넣어 지도가 다시 묻지 않게(라벨링 지도 · 10-18) */
+export function primeSign(j) { if (j && j.set && j.url && j.expires_at) signed.set(j.set, j); }
 export async function signSet(set) {
   const c = signed.get(set);
   if (c && new Date(c.expires_at) - Date.now() > 30 * 60 * 1000) return c.url;

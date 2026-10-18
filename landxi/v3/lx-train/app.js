@@ -3,6 +3,7 @@
    숫자 출처: /registry/models · /registry/models/{mid} 카드(학습 기록) · /feedback(오탐 신고)
    학습: POST /jobs/quote → POST /jobs {kind:'train', base_model, region, samples}(S-8 · 게이트웨이 작업 큐 · 전력 예산은 서버가 판정).
    지역은 변수(지역 문자열 하드코딩 0 · 크롭 경로는 tasks.json 예시 데이터 파일). 개발 정보는 ?dev=1 서랍만. */
+import { LB_PRE } from './label-pre.js';   // 학습데이터 구축 — 라벨링 자료 · 지도 엔진을 가장 먼저 받기 시작(다른 모듈 기다림 없이 · 10-18)
 import { shell } from '../kit/shell.js';
 import { gate, FRONT } from '../kit/auth-gate.js';
 import { drawer } from '../kit/panel.js';
@@ -21,8 +22,8 @@ import { PID, projectRail, attachProject, projectModel } from '../lx-project/con
 import { staffMenu } from '../kit/lx-menu.js';
 import { accOf, accColumn, serviceAcc } from '../kit/acc.js';   // AI 모델 정확도 = 공개 서비스 모델 값(분석하기 카드와 같은 값 · 10-10 확인 9 ⓐ)
 
+const CFGP = fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
 const who = await gate('lx-train');
-const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
 const CROP = '/landxi/assets/proto/crops/';
 const q0 = new URLSearchParams(location.search);
 const REGION = q0.get('region') || '';
@@ -38,9 +39,19 @@ const PR = projectRail(STAGE);
 const S = shell({ who, home: 'lx-train', rail: PR || staffMenu('projects') });
 const PROJ = PR ? attachProject(S, PR, STAGE) : Promise.resolve(null);
 devDrawer({ who });
+/* 학습데이터 구축 — 라벨링 칸은 프로젝트 정보를 기다리지 않고 바로 연다(라벨링 자료는 위 LB_PRE 가 이미 받는 중) */
+const EARLY_LABEL = !!PID && STAGE === 'label';
+const labHost = EARLY_LABEL ? h('section.lb-host', { 'aria-label': '라벨링' }) : null;
+const labPane = EARLY_LABEL ? h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '학습데이터 구축' })), labHost) : null;
+if (EARLY_LABEL) {
+  document.head.append(h('link', { rel: 'stylesheet', href: new URL('./label.css', import.meta.url).href }));
+  S.main.append(labPane);
+  (LB_PRE?.work || import('./label.js')).then(({ labelStage }) => labelStage({ host: labHost, pid: PID, pre: LB_PRE || {} }));
+}
 /* 프로젝트 안(J-1) — 판에는 그 프로젝트의 업무 · 모델 한 장만(다른 업무 · 다른 프로젝트 모델 0). 프로젝트 밖(메뉴)은 업무 10 전부.
    업무가 정해진 프로젝트 = 그 업무 카드(모델은 이 프로젝트 모델) · 직접 입력한 업무 = 프로젝트 이름의 한 장(모델 · 서비스 카드는 프로젝트 것) */
 const PRJ = PID ? await PROJ : null;
+const CFG = await CFGP;   // 업무 목록 — 라벨링 칸은 이것을 기다리지 않고 위에서 먼저 연다
 const TASKS = !PRJ ? CFG.tasks : (() => {
   const base = PRJ.task_id ? CFG.tasks.find((t) => t.id === PRJ.task_id) : null;
   const model = projectModel(PRJ);
@@ -68,16 +79,12 @@ const grid = h('div.tr-grid', { role: 'list' });
 const IS_LABEL = !!PRJ && STAGE === 'label';
 const newBtn = h(IS_LABEL ? 'button.t-btn.t-btn--2.tr-new' : 'button.t-btn.tr-new', { type: 'button', text: !PRJ ? '새 모델 만들기' : IS_LABEL ? '학습데이터 올리기' : '학습 실행' });
 const samplesBox = h('div.tr-grid.tr-samples', { role: 'list', hidden: !IS_LABEL });
-/* 학습데이터 구축(10-18 · 원칙 55 · 74 · 확인 L-1 · 라벨-1) = 플랫폼 안 수동 라벨링 칸(label.js) 위 + 만든 라벨 묶음 올리기(zip) 아래 */
-const labHost = IS_LABEL ? h('section.lb-host', { 'aria-label': '라벨링' }) : null;
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : IS_LABEL ? '학습데이터 구축' : '학습' }), IS_LABEL ? null : newBtn),
-  labHost, IS_LABEL ? h('div.tr-subh', {}, h('h2', { text: '올린 학습데이터' }), newBtn) : null, IS_LABEL ? samplesBox : grid);
-S.main.append(pane);
+/* 학습데이터 구축(10-18 · 원칙 55 · 74 · 확인 L-1 · 라벨-1) = 플랫폼 안 수동 라벨링 칸(지도 | 그림 · 위에서 먼저 연 labPane) + 만든 라벨 묶음 올리기(zip) 아래 */
+const pane = IS_LABEL ? labPane : h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : '학습' }), newBtn), grid);
 if (IS_LABEL) {
-  document.head.append(h('link', { rel: 'stylesheet', href: new URL('./label.css', import.meta.url).href }));
-  import('./label.js').then(({ labelWork }) => labelWork({ host: labHost, project: PRJ }));
+  pane.append(h('div.tr-subh', {}, h('h2', { text: '올린 학습데이터' }), newBtn), samplesBox);
   drawSamples();
-}
+} else S.main.append(pane);
 async function drawSamples() {
   let j = null;
   try { j = await api('/training/samples?project=' + encodeURIComponent(PRJ.id)); } catch { /* 아래 빈 안내 */ }

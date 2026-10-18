@@ -91,6 +91,54 @@
 .lb-addf-r .lb-n{width:96px;flex:none}
 .lb-addf-r .t-btn{flex:1}
 
+/* 보기 바꾸기(지도 | 그림 · 10-18) */
+.lb-top-act{align-items:center}
+.lb-view{display:inline-flex;gap:2px;padding:3px;border-radius:var(--r-8);background:var(--bg-0)}
+.lb-view-b{height:34px;padding:0 16px;border:0;border-radius:6px;background:none;font:500 var(--fs-aux)/1 var(--font-body);color:var(--sub);cursor:pointer}
+.lb-view-b[aria-selected="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 2px rgba(28,31,37,.1)}
+
+/* 지도 라벨링(label-map.js) — 왼쪽 지도 · 오른쪽 클래스 · 모양 · 라벨 완료한 곳 */
+.lm-body{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;min-height:0}
+.lm-stage{position:relative;height:calc(100vh - 384px);min-height:460px;border-radius:var(--r-8);overflow:hidden;background:var(--bg-0)}
+.lm-map{position:absolute;inset:0}
+.lm-tools{position:absolute;left:12px;top:12px;right:64px;z-index:3;display:flex;flex-wrap:wrap;align-items:center;gap:4px;pointer-events:none}
+.lm-tools > *{pointer-events:auto}
+.lm-tools .lb-tool{border-color:transparent;box-shadow:var(--elev-map)}
+.lm-tools .lb-tool[aria-pressed="true"]{border-color:var(--ink)}
+.lm-tools .lb-sep{width:6px;background:none}
+.lm-zoom{position:absolute;right:12px;top:12px;z-index:3;display:flex;flex-direction:column;gap:4px}
+.lm-z{width:36px;height:36px;border:0;border-radius:var(--r-8);background:var(--bg-1);box-shadow:var(--elev-map);font:500 var(--fs-t2)/1 var(--font-body);color:var(--ink);cursor:pointer}
+.lm-z:hover{background:var(--bg-0)}
+.lm-wait{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);margin:0;padding:8px 14px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:var(--elev-map);font:500 var(--fs-tag)/1.4 var(--font-body);color:var(--sub)}
+.lm-right{gap:24px}
+.lm-h{display:flex;align-items:baseline;gap:6px;margin:0 0 8px;font:700 var(--fs-t2)/var(--lh-t2) var(--font-display);color:var(--ink)}
+.lm-h small{font:400 var(--fs-tag)/1 var(--font-num);color:var(--sub)}
+.lm-img .t-input{width:100%;height:40px}
+.lm-imgname{margin:0;font:500 var(--fs-aux)/1.4 var(--font-body);color:var(--ink-2)}
+.lm-rows{list-style:none;margin:0;padding:0 4px 0 0;display:flex;flex-direction:column;gap:2px;max-height:216px;overflow:auto}
+.lm-row{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:6px 10px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;color:var(--ink);font:500 var(--fs-aux)/1.3 var(--font-body)}
+.lm-row:hover{background:var(--bg-0)}
+.lm-row[aria-current="true"]{background:var(--bg-0);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.lm-row > i{width:12px;height:12px;flex:none;border-radius:3px}
+.lm-row > span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lm-row b{font-weight:500}
+.lm-row small{font:400 var(--fs-tag)/1.3 var(--font-body);color:var(--sub)}
+.lm-ar{display:flex;align-items:center;gap:8px}
+.lm-ar .lm-row{flex:1;min-width:0}
+.lm-ar-i{border:1.5px dashed var(--ink-2);border-radius:2px!important;background:none}
+.lm-center .lb-foot{min-height:40px}
+@media (max-width:1180px){
+  .lm-body{grid-template-columns:minmax(0,1fr)}
+  .lm-right{flex-direction:row;flex-wrap:wrap}
+  .lm-right > *{flex:1;min-width:240px}
+}
+@media (max-width:760px){
+  .lm-stage{height:62vh;min-height:360px}
+  .lm-tools{right:56px}
+  .lm-right{flex-direction:column}
+  .lb-top-act{flex-wrap:wrap}
+}
+
 /* 올린 학습데이터(아래 칸) */
 .tr-subh{display:flex;align-items:center;gap:16px;max-width:var(--wide-max);margin:0 auto 16px}
 .tr-subh h2{margin:0;font:700 var(--fs-t2)/var(--lh-t2) var(--font-display);color:var(--ink)}
