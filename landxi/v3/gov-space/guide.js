@@ -93,7 +93,7 @@ export function sixCells(g) {
     cell('어떤 형식', format(b)), cell('믿을 만한 정도', trust(b)), cell('버전', version(g, b)));
 }
 
-/* ── 내려받기 — 처음 한 번 이용 약속 · 관할 안만 · 기록 ───────────────────────── */
+/* ── 내려받기 — 관할 안만 · 기록(개인정보가 없는 파일은 바로 · 10-18 영농-q3) ───────────────────────── */
 /** 이용 약속 창 → 동의하면 true. me = GET /spaces/me 결과(consent 칸을 고쳐 둔다) */
 export function consent(me) {
   return new Promise((resolve) => {
@@ -115,7 +115,7 @@ export function consent(me) {
 /** 파일 하나 내려받기 — g = 결과 설명서 · f = 받기 칸(fmt · label · ok) · btn = 누른 단추 · me = GET /spaces/me · onDone(라벨) */
 export async function download(g, f, btn, me, { onDone } = {}) {
   if (!f.ok) return;
-  if (!me?.consent?.done && !(await consent(me))) return;
+  // 지도 파일 · 필지 엑셀 · 요약 = 개인정보가 없는 파일 → 바로 받는다(10-18 영농-q3 · 서버도 묻지 않음). 개인정보가 든 파일은 kit/pledge.js
   btn.disabled = true;
   const label = btn.innerHTML;
   btn.textContent = '받는 중';

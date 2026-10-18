@@ -974,10 +974,9 @@ async def space_download(card: str, request: Request, fmt: str = "geojson"):
         raise ApiError("bad_request", "형식은 geojson · parcels · summary 가운데 하나")
     svc, g, _rows = await _guide_or_404(p, card)
     async with db(p) as c:
-        cons = await c.fetchrow("SELECT ver FROM space_consents WHERE tenant_id=$1 AND user_id=$2", p.tenant_id, p.user_id)
         org = await _tenant_name(c, p.tenant_id)
-    if not cons or cons["ver"] < CONSENT_VER:
-        raise ApiError("conflict", "내려받기 전에 이용 약속에 동의해 주세요", {"need": "consent", "lines": CONSENT_LINES}, 409)
+    # 지도 파일 · 필지 엑셀 · 요약 = 개인정보가 없는 파일 → 바로 받는다(10-18 영농-q3 "아닌건 그냥 받고" · 누가 받았는지는 그대로 기록).
+    # 개인정보가 든 파일(올린 대장의 필지별 내용)만 이용 약속 · 확인 — farm_admin.need_personal(대장과 AI 결과 · 사료작물 견주기 · 대장이 든 보고서).
     body = g["body"]
     files = {f["fmt"]: f for f in (body.get("format") or {}).get("files") or []}
     if not files.get(fmt, {}).get("ok"):
@@ -1076,11 +1075,17 @@ async def space_class_stats(card: str, request: Request):
         x["n"] += int(r["n"]); x["a"] += float(r["a"] or 0)
     m2 = lambda v: env(round(v, 1), "m2", "measured", src)            # noqa: E731
     cnt = lambda v: env(int(v), unit, "measured", src) if biz else None  # noqa: E731
-    out["classes"] = [{"name": t["name"], "area": m2(t["a"]), "n": cnt(t["n"])} for t in sorted(tot.values(), key=lambda t: -t["a"])]
+    # 곤포사일리지 생산량(kg) = 개수 × 기관이 넣은 1개당 무게(10-18 영농-q2 ⓑ) — 무게가 없으면 개수만 · 개수를 싣는 서비스(biz)만
+    from .farm_admin import bale_kg, is_bale, yield_env
+    bale = biz and any(is_bale(k) for k in tot)
+    kg = await bale_kg(p.tenant_id) if bale else None
+    yv = lambda k, n: ({"yield": yield_env(int(n), kg)} if kg and is_bale(k) else {})   # noqa: E731
+    out["classes"] = [{"name": t["name"], "area": m2(t["a"]), "n": cnt(t["n"]), **yv(t["name"], t["n"])} for t in sorted(tot.values(), key=lambda t: -t["a"])]
     out["emds"] = [{"emd": e["emd"], "out": e["out"], "area": m2(e["a"]), "n": cnt(e["n"]),
-                    "by": {k: {"area": m2(v["a"]), "n": cnt(v["n"])} for k, v in e["by"].items()}}
+                    "by": {k: {"area": m2(v["a"]), "n": cnt(v["n"]), **yv(k, v["n"])} for k, v in e["by"].items()}}
                    for e in sorted(by.values(), key=lambda e: (e["out"], -e["a"]))]
     out["total"] = {"area": m2(sum(t["a"] for t in tot.values())), "n": cnt(sum(t["n"] for t in tot.values()))}
+    out["bale"] = {"has": bale, "kg": env(kg, "kg", "recorded", "기관이 넣은 곤포사일리지 1개당 무게") if kg else None, "can_edit": p.role == "manager"} if bale else None
     return out
 
 
@@ -1459,7 +1464,8 @@ async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
 
 # 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·
 # 서비스 이력 · 통계 · 필지 메모(landxi_api/gov_history.py). 공간 라우터에 붙여 main.py 를 고치지 않는다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
-for _sub in ("shoots", "gov_history", "gov_report"):   # gov_report = 기관 AI 분석 결과 보고서 · 행정정보와 비교(서비스 기준) · 공개 실적(10-11 gov-보고서 · gov-비교 · QA-Q2 · Q3)
+for _sub in ("shoots", "gov_history", "gov_report", "farm_admin"):   # farm_admin = 영농관리 결정(10-18 원칙 291 — 사료작물 견주기 · 곤포 생산량 · 이용 약속 · 행정정보 목록)
+    # gov_report = 기관 AI 분석 결과 보고서 · 행정정보와 비교(서비스 기준) · 공개 실적(10-11 gov-보고서 · gov-비교 · QA-Q2 · Q3)
     try:
         import importlib as _il
         router.include_router(_il.import_module(f"landxi_api.{_sub}").router)

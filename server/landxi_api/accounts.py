@@ -101,7 +101,7 @@ ACTION_KO = {
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
     "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 증량 신청",
     "account.storage.approve": "저장 용량 증량 승인", "account.storage.reject": "저장 용량 증량 거절", "account.depts": "부서 목록 바꿈",
-    "account.contact": "문의 연락처 바꿈",
+    "account.contact": "문의 연락처 바꿈", "account.position": "직위 바꿈",
 }
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
@@ -586,7 +586,7 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
                      "depts": env(len(set(keys.values())), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)")}
         if realm in (None, "", "tenant") and not p.is_admin:     # 기관 계정 = 그 기관 관리자만(원칙 177 — LX 관리자 화면에 섞지 않는다)
             tid = p.tenant_id
-            rows = await conn.fetch("SELECT id, tenant_id, login, role, status, name, dept, must_change, created_at, lock_until FROM tenant_users "
+            rows = await conn.fetch("SELECT id, tenant_id, login, role, status, name, dept, position, must_change, created_at, lock_until FROM tenant_users "
                                     "WHERE ($1::text IS NULL OR tenant_id=$1) ORDER BY tenant_id, (status = 'disabled'), login", tid)
             for u in rows:
                 if u["tenant_id"] == "lx-demo" and not p.is_admin:
@@ -604,7 +604,8 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
 
 def _user(u, realm: str) -> dict:
     held = bool(u["lock_until"] and u["lock_until"] > dt.datetime.now(dt.timezone.utc))      # 비밀번호 5번 틀려 잠시 잠김
-    return {"id": u["id"], "login": u["login"], "name": u["name"], "dept": u["dept"], "role": u["role"], "role_ko": ROLE_KO.get((realm, u["role"]), u["role"]),
+    return {"id": u["id"], "login": u["login"], "name": u["name"], "dept": u["dept"], "position": u["position"] if "position" in u.keys() else None,
+            "role": u["role"], "role_ko": ROLE_KO.get((realm, u["role"]), u["role"]),
             "status": u["status"], "temp_locked": held, "lock_until": _iso(u["lock_until"]) if held else None,
             "must_change": bool(u["must_change"]), "created_at": _iso(u["created_at"])}
 
@@ -664,6 +665,28 @@ async def set_role(realm: str, uid: str, body: dict, request: Request):
         await _log(conn, p.user_id, p.realm, "account.role", u["login"],
                    {"realm": realm, "tenant_id": u["tenant_id"], "name": u["name"], "from": ROLE_KO.get((realm, u["role"])), "to": ROLE_KO.get((realm, role))})
     return {"ok": True, "role": role, "at": now_iso()}
+
+
+@router.post("/accounts/users/{realm}/{uid}/position")
+async def set_position(realm: str, uid: str, body: dict, request: Request):
+    """직위(10-18 영농-직위칸 넣음 — 운영 중인 영농관리 사용자 관리의 '직위' 칸) — 기관 관리자가 자기 기관 계정에 적는다(내 계정도 · 비우면 지움 · 40자)."""
+    p = _who(request)
+    if realm != "tenant":
+        raise ApiError("not_found", "계정이 없습니다")
+    pos = " ".join(str((body or {}).get("position") or "").split())
+    if len(pos) > 40:
+        raise ApiError("bad_request", "직위는 40자까지입니다", {"field": "position"})
+    async with db(realm="lx") as conn:
+        u = await conn.fetchrow("SELECT id, login, name, tenant_id, position, status FROM tenant_users WHERE id=$1 FOR UPDATE", uid)
+        if not u or not _in_scope(p, realm, u["tenant_id"]):
+            raise ApiError("not_found", "계정이 없습니다")
+        if u["status"] == "disabled":
+            raise ApiError("disabled_account", "사용 중지된 계정입니다", status=409)
+        if (u["position"] or "") != pos:
+            await conn.execute("UPDATE tenant_users SET position=$2 WHERE id=$1", uid, pos or None)
+            await _log(conn, p.user_id, p.realm, "account.position", u["login"],
+                       {"realm": realm, "tenant_id": u["tenant_id"], "name": u["name"], "from": u["position"], "to": pos or None})
+    return {"ok": True, "position": pos or None, "at": now_iso()}
 
 
 @router.post("/accounts/users/{realm}/{uid}/temp-password")

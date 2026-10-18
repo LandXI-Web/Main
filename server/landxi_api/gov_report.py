@@ -190,13 +190,14 @@ async def _import_of(p: Principal, import_id: str | None) -> dict | None:
             return dict(r)
         if p.user_id and await c.fetchval("SELECT to_regclass('ledger_recent') IS NOT NULL"):
             r = await c.fetchrow("SELECT i.* FROM ledger_recent l JOIN ledger_imports i ON i.id=l.import_id AND i.tenant_id=l.tenant_id "
-                                 "WHERE l.tenant_id=$1 AND l.user_id=$2 AND i.state='matched' ORDER BY (l.sgg_cd='*') DESC, l.at DESC LIMIT 1",
+                                 "WHERE l.tenant_id=$1 AND l.user_id=$2 AND i.state='matched' AND i.kind <> 'feedcrop' ORDER BY (l.sgg_cd='*') DESC, l.at DESC LIMIT 1",
                                  p.tenant_id, p.user_id)
             if r:
                 return dict(r)
-        r = await c.fetchrow("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND state='matched' AND created_by=$2 ORDER BY created_at DESC LIMIT 1",
+        # 사료작물 재배 신청 대장(feedcrop)은 세 시점 견주기 화면이 따로 연다(10-18 영농-q1) — 서비스 하나와 맞추는 이 비교 · 보고서의 '최근 대장'에서는 뺀다
+        r = await c.fetchrow("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND state='matched' AND kind <> 'feedcrop' AND created_by=$2 ORDER BY created_at DESC LIMIT 1",
                              p.tenant_id, p.user_id) if p.user_id else None
-        r = r or await c.fetchrow("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND state='matched' ORDER BY latest DESC, created_at DESC LIMIT 1",
+        r = r or await c.fetchrow("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND state='matched' AND kind <> 'feedcrop' ORDER BY latest DESC, created_at DESC LIMIT 1",
                                   p.tenant_id)
     return dict(r) if r else None
 
@@ -291,10 +292,10 @@ async def compare(p: Principal, card: str, import_id: str | None = None, emd: st
     as_of = (imp["confirmed_at"] or imp["created_at"]).astimezone(KST).isoformat(timespec="seconds") if (imp["confirmed_at"] or imp["created_at"]) else now_iso()
     out = {
         "service": {"card": card, "name": svc["name"], "shot": next((r.get("shot") for r in (body.get("when") or {}).get("rounds") or [] if r.get("shot")), None)},
-        "ledger": {"import_id": imp["id"], "name": re.sub(r"\.(xlsx|xls)\.csv$", r".\1", imp["filename"] or "") or kind, "kind": kind, "rows": env(int(imp["rows"] or 0), "count", "recorded", "올린 대장 행", as_of=as_of),
+        "ledger": {"import_id": imp["id"], "name": re.sub(r"\.(xlsx|xls)\.csv$", r".\1", imp["filename"] or "") or kind, "kind": kind, "kind_code": imp["kind"], "rows": env(int(imp["rows"] or 0), "count", "recorded", "올린 대장 행", as_of=as_of),
                    "parcels": env(len(items), "필지", "measured", "올린 대장 × 연속지적(필지 번호)", as_of=as_of),
                    "loose": env(loose, "행", "measured", "필지와 잇지 못한 대장 행", as_of=as_of) if loose else None,
-                   "uploader": up, "date": _ymd(as_of)},
+                   "uploader": up, "date": _ymd(as_of), "base_date": _ymd(imp["base_date"].isoformat()) if imp.get("base_date") else None},
         "lines": [{**x, "n": env(cnt.get(x["key"], 0), "필지", "inferred", SRC_CMP)} for x in lines],
         "diff": env(len(diff) if lines else None, "필지", "inferred", SRC_CMP, None if lines else "이 서비스는 대장과 견줄 분류가 없습니다"),
         "with_ai": env(has_ai, "필지", "inferred", SRC_CMP),
@@ -350,7 +351,10 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
     tot_ha = round(tot_m2 / 1e4, 1)                              # 합계 = 반올림 전 면적의 합을 한 번 반올림
     cls_l = sorted(cls.items(), key=lambda kv: -kv[1][0])
     cls_ha = split_round([v[1] / 1e4 for _, v in cls_l], 1, tot_ha)   # 분류 칸도 합이 합계와 같게(최대 나머지 · GPT5-3)
-    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC)}
+    from .farm_admin import bale_kg, is_bale, yield_env
+    kg = await bale_kg(p.tenant_id) if any(is_bale(k) for k, _ in cls_l) else None       # 곤포사일리지 생산량 = 개수 × 기관이 넣은 1개당 무게(10-18 영농-q2 ⓑ)
+    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC),
+                **({"yield": yield_env(v[0], kg)} if kg and is_bale(k) else {})}
                for i, (k, v) in enumerate(cls_l)]
     by: dict[str, dict] = {}
     for r in rs:
@@ -463,7 +467,8 @@ def _hwpx(d: dict, png: bytes | None) -> tuple[bytes, str]:
     doc.heading("결과 개요")
     rows = [["항목", "개수", "면적(ha)"], ["AI 분석 결과 합계", f"{d['total']['value']:,}{unit}", f"{d['area_ha']['value']:,.1f}"]]
     for c in d["classes"]:
-        rows.append([c["name"], f"{c['n']['value']:,}{unit}", f"{c['ha']['value']:,.1f}"])
+        y = (c.get("yield") or {}).get("value")
+        rows.append([c["name"] + (f" (생산량 {y:,.0f}kg)" if y else ""), f"{c['n']['value']:,}{unit}", f"{c['ha']['value']:,.1f}"])
     doc.table(rows, [44, 28, 28], aligns=["l", "r", "r"])
     if png:
         doc.heading("지도")
@@ -517,17 +522,19 @@ async def gov_report_map(request: Request, card: str, emd: str | None = None):
 
 
 @router.get("/spaces/me/report.hwpx")
-async def gov_report_hwpx(request: Request, card: str, emd: str | None = None):
+async def gov_report_hwpx(request: Request, card: str, emd: str | None = None, ok: str | None = None):
+    from .farm_admin import need_personal
     from .xreport import hwpx_response
     p = _me(request)
     emd = (emd or "").strip() or None
     d = await report_data(p, card, emd)
+    pl = await need_personal(p, ok) if d.get("ledger") else None     # '우리 대장과 다른 필지'(지번 · 대장 값)가 든 문서 = 개인정보가 든 파일(10-18 영농-q3)
     png = await _png(p, card, emd, d)
     blob, name = await run_in_threadpool(_hwpx, d, png)
     async with db(p) as c:
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
                         p.tenant_id, card, f"{p.name or '담당자'} — {d['service']['name']} AI 분석 결과 보고서 내려받기({d['region']})", p.user_id,
-                        {"fmt": "report", "emd": emd, "rows": d["total"]["value"]})
+                        {"fmt": "report", "emd": emd, "rows": d["total"]["value"], **({"pledge": pl["id"], "personal": True} if pl else {})})
         await audit(c, p, "space.report", f"{p.tenant_id}/{card}", None, {"emd": emd})
     return hwpx_response(blob, name)
 
@@ -541,10 +548,12 @@ async def gov_compare(request: Request, card: str, import_id: str | None = None,
 
 
 @router.get("/spaces/me/ledger/compare.xlsx")
-async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = None):
+async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = None, ok: str | None = None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
+    from .farm_admin import need_personal
     p = _me(request)
+    pl = await need_personal(p, ok)                  # 대장 필지마다 지번 · 대장 값이 든 파일 = 개인정보가 든 파일(10-18 영농-q3 — 이용 약속 · 받을 때마다 확인)
     c = await compare(p, card, import_id)
     if not c.get("ledger"):
         raise ApiError("not_found", "올린 대장이 없습니다")
@@ -591,7 +600,7 @@ async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = 
     async with db(p) as cn:
         await cn.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
                          p.tenant_id, card, f"{p.name or '담당자'} — {c['service']['name']} 대장과 AI 결과 내려받기", p.user_id,
-                         {"fmt": "ledger_compare", "rows": len(rows), "import_id": c["ledger"]["import_id"]})
+                         {"fmt": "ledger_compare", "rows": len(rows), "import_id": c["ledger"]["import_id"], "pledge": pl["id"], "personal": True})
     return Response(blob, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"content-disposition": f"attachment; filename=\"compare.xlsx\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store"})
 

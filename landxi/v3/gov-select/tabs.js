@@ -7,7 +7,8 @@ import * as K from '../kit/index.js';
 import { api } from '../../shared/api-v1.js';
 import { h } from '../kit/util.js';
 import { download as fetchFile, val } from '../gov-space/guide.js';
-import { summary, aiResult } from '../lx-console/summary.js';   // AI 분석 결과 — LX 화면과 같은 출처 · 같은 계산
+import { summary, aiResult } from '../lx-console/summary.js';
+import { baleBox } from '../kit/bale.js';   // 곤포사일리지 생산량(10-18 영농-q2 ⓑ)   // AI 분석 결과 — LX 화면과 같은 출처 · 같은 계산
 
 const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
 const md = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
@@ -76,6 +77,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   main.append(table, cls);
   side.append(month, files);
   let survey = false;
+  const filesP = Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]).catch(() => [null, null]);   // 내려받기 칸 자료를 먼저 물어 둔다(차례로 기다리지 않게 · 원칙 251)
   const draw = async () => {
     let j;
     try { j = await api('/history/stats?' + new URLSearchParams({ card: s.card, period })); }
@@ -131,12 +133,11 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
         h('span', { text: `${Number(m.month.slice(5))}월` })))) : h('p.gs-none', { text: '이 기간에 적은 확인 기록이 없습니다' }),
       h('p.gd-note', { text: `확인 기록 ${nf(val(j.checks))}건 · 필지 카드에서 적은 메모 · 다음 확인 날짜가 쌓입니다` }));
   };
-  await draw();
-  await renderClassStats(cls, { s, B });
+  await Promise.all([draw(), renderClassStats(cls, { s, B })]);
   /* 보고서 · 자료 내려받기 — 내려받기는 이 탭 한 곳(N-1 ⓐ) · 분기 공간 1단 서버 그대로(관할 안만 · 처음 한 번 이용 약속 · 기록) */
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
   let me = null, g = null;
-  try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); } catch { /* 결과 설명서가 없는 서비스 */ }
+  [me, g] = await filesP;   // 결과 설명서가 없는 서비스면 [null, null]
   /* AI 분석 결과 보고서(10-11 gov-보고서) — 결과가 있는 서비스면 모두(실태조사 여부와 무관) · 읍면동별 표 · 지도 그림 · 한글 문서 */
   if (g?.body?.what?.total?.value) files.append(h('div.gs-file', {}, h('span.gs-file-t', {}, h('b', { text: 'AI 분석 결과 보고서' }), h('small', { text: '읍면동별 개수 · 면적 · 지도 그림' })),
     h('a.t-btn.gd-ci', { href: rep('report'), text: '만들기' })));
@@ -145,7 +146,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     btn.addEventListener('click', () => fetchFile(g, f, btn, me));
     files.append(h('div.gs-file', { class: f.ok ? '' : 'is-off' }, h('span.gs-file-t', {}, h('b', { text: f.label }), h('small', { text: f.ok ? (USE[f.fmt] || f.kind || '') : (f.why || '받을 수 없습니다') })), btn));
   }
-  files.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만. 처음 받을 때 이용 약속에 한 번 동의하고, 누가 무엇을 받았는지 이력에 남습니다.` }));
+  files.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만 바로 받습니다. 누가 무엇을 받았는지 이력에 남습니다. 올린 대장이 든 파일은 이용 약속 뒤 받을 때마다 확인합니다.` }));
 }
 
 /* ═════════ 종류별 · 읍면동별(10-18 원칙 286 영농관리 고도화) ═════════
@@ -191,8 +192,9 @@ export async function renderClassStats(box, { s, B }) {
   csv.addEventListener('click', () => {
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const v = (e) => (e && e.value != null ? Math.round(Number(e.value) * 10) / 10 : '');
-    const cols = ['읍면동', '합계 넓이(㎡)', ...(j.count ? [`합계 ${nw}`] : []), ...names.flatMap((n) => [`${n} 넓이(㎡)`, ...(j.count ? [`${n} ${nw}`] : [])])];
-    const line = (name, tot, by) => [name, v(tot?.area), ...(j.count ? [v(tot?.n)] : []), ...names.flatMap((n) => [v(by(n)?.area), ...(j.count ? [v(by(n)?.n)] : [])])].map(q).join(',');
+    const yk = (n) => !!classes.find((c) => c.name === n)?.yield;      // 곤포사일리지 생산량 칸(기관이 1개당 무게를 넣었을 때만 · 10-18 영농-q2 ⓑ)
+    const cols = ['읍면동', '합계 넓이(㎡)', ...(j.count ? [`합계 ${nw}`] : []), ...names.flatMap((n) => [`${n} 넓이(㎡)`, ...(j.count ? [`${n} ${nw}`] : []), ...(yk(n) ? [`${n} 생산량(kg)`] : [])])];
+    const line = (name, tot, by) => [name, v(tot?.area), ...(j.count ? [v(tot?.n)] : []), ...names.flatMap((n) => [v(by(n)?.area), ...(j.count ? [v(by(n)?.n)] : []), ...(yk(n) ? [v(by(n)?.yield)] : [])])].map(q).join(',');
     const body = [cols.map(q).join(','), ...emds.map((e) => line(e.emd, e, (n) => e.by?.[n])),
       line(`${B.short || ''} 전체`.trim(), j.total, (n) => classes.find((c) => c.name === n))].join('\r\n');
     const a = h('a', { href: URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv;charset=utf-8' })), download: `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_종류별_읍면동별.csv` });
@@ -200,7 +202,9 @@ export async function renderClassStats(box, { s, B }) {
   });
   box.replaceChildren(head, chips,
     h('div.gs-tbl-w', {}, h('table.gs-tbl.gs-cls-sum', {}, h('thead', {}, h('tr', {}, h('th', { text: '종류' }), h('th.num', { text: '합계' }), h('th.num', { text: '비율' }), h('th', { text: '' }))), sumT)),
+    j.bale ? baleBox(j, classes, () => renderClassStats(box, { s, B })) : null,
     h('div.gs-tbl-w.gs-cls-emd', {}, h('table.gs-tbl', {}, h('thead', {}, embH), embT)), more, csv,
     j.note ? h('p.gd-note', { text: '이 서비스는 분석 칸마다 나눈 결과라 넓이만 보여 드립니다.' }) : null);
   draw();
 }
+

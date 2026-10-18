@@ -1,0 +1,84 @@
+/* 보고서 시안 공용 배치 — 토큰 · 서체는 kit.css(tokens-v2.2) 그대로 */
+html,body{margin:0;background:var(--bg-0);color:var(--ink);font:400 var(--fs-body)/var(--lh-body,26px) var(--font-body)}
+*{box-sizing:border-box}
+.sx{max-width:1360px;margin:0 auto;padding:24px 24px 48px}
+.sx-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.sx-badge{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--ink);color:#fff;font:600 var(--fs-aux)/1 var(--font-body)}
+.sx-title{margin:0;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:-0.02em}
+.sx-sub{margin:0;color:var(--sub);font:400 var(--fs-aux)/22px var(--font-body)}
+.sx-tabs{display:flex;gap:24px;padding:0 4px;border-bottom:1px solid var(--rule);background:var(--bg-1);border-radius:var(--r-16) var(--r-16) 0 0}
+.sx-tabs span{position:relative;height:52px;display:inline-flex;align-items:center;padding:0 2px;margin-left:16px;font:500 var(--fs-t2)/1 var(--font-body);color:var(--sub)}
+.sx-tabs span.on{color:var(--ink)}
+.sx-tabs span.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent)}
+.sx-board{background:var(--bg-1);border-radius:0 0 var(--r-16) var(--r-16);padding:20px 24px 28px}
+.sx-grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start}
+.sx-grid>*{min-width:0}
+.sx-card{background:var(--bg-1);border:1px solid var(--rule);border-radius:var(--r-16);padding:18px 20px}
+.sx-h{margin:0 0 4px;font:700 var(--fs-t2)/var(--lh-t2) var(--font-display)}
+.sx-help{margin:0 0 12px;color:var(--sub);font:400 var(--fs-aux)/22px var(--font-body)}
+.sx-grp{margin:14px 0 6px;color:var(--sub);font:500 var(--fs-tag)/20px var(--font-body)}
+.sx-pick{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r-8);margin-bottom:8px;cursor:pointer;font:500 var(--fs-aux)/22px var(--font-body)}
+.sx-pick input{width:18px;height:18px;accent-color:var(--ink);flex:none}
+.sx-pick em{margin-left:auto;font-style:normal;color:var(--sub);font:400 var(--fs-tag)/20px var(--font-num);white-space:nowrap}
+.sx-pick.on{border-color:var(--ink)}
+.sx-sel{width:100%;height:44px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux)/1 var(--font-body);color:var(--ink)}
+.sx-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sx-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:var(--r-8);border:1px solid var(--ink);background:var(--ink);color:#fff;font:600 var(--fs-aux)/1 var(--font-body);cursor:pointer;white-space:nowrap}
+.sx-btn.two{background:var(--bg-1);color:var(--ink);border-color:var(--rule)}
+.sx-btn.sm{height:34px;padding:0 12px}
+.sx-doc{background:var(--bg-0);border-radius:var(--r-16);padding:28px 32px}
+.sx-doc-in{max-width:760px;margin:0 auto}
+.sx-k{margin:0 0 6px;color:var(--accent);font:600 var(--fs-aux)/21px var(--font-body)}
+.sx-dt{margin:0;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:-0.02em}
+.sx-dm{margin:4px 0 0;color:var(--sub);font:400 var(--fs-aux)/22px var(--font-body)}
+.sx-doc h3{margin:26px 0 10px;font:700 var(--fs-t2)/var(--lh-t2) var(--font-display)}
+.sx-auto{display:inline-flex;align-items:center;height:22px;padding:0 8px;margin-left:8px;border-radius:999px;background:var(--tint);color:var(--accent);font:500 var(--fs-tag)/1 var(--font-body);vertical-align:3px}
+.sx-ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sx-ov div{padding:12px 14px;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);min-width:0}
+.sx-ov small{display:block;color:var(--sub);font:500 var(--fs-tag)/20px var(--font-body)}
+.sx-ov b{display:block;margin-top:4px;font:700 var(--fs-t2)/1.3 var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.sx-ov b i{font-style:normal;font:500 var(--fs-tag)/1 var(--font-body);color:var(--sub);margin-left:2px}
+.sx-tb-w{overflow-x:auto;border-radius:var(--r-8)}
+.sx-tb{width:100%;border-collapse:collapse;background:var(--bg-1);font:400 var(--fs-aux)/22px var(--font-body)}
+.sx-tb th{padding:9px 12px;text-align:left;font-weight:500;color:var(--sub);border-bottom:1px solid var(--rule);white-space:nowrap}
+.sx-tb td{padding:9px 12px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.sx-tb .n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.sx-tb tr.sum td{font-weight:600;background:#F8F9FA;border-bottom:0}
+.sx-tb .up{color:var(--ink)} .sx-tb .dn{color:var(--warn)}
+.sx-map{height:200px;border-radius:var(--r-8);border:1px solid var(--rule);background:
+  radial-gradient(circle at 30% 40%,rgba(15,169,160,.35) 0 18px,transparent 19px),
+  radial-gradient(circle at 62% 58%,rgba(15,169,160,.30) 0 26px,transparent 27px),
+  radial-gradient(circle at 78% 30%,rgba(15,169,160,.25) 0 14px,transparent 15px),
+  linear-gradient(135deg,#EEF1F3,#F7F8F9);display:grid;place-items:center;color:var(--sub);font:500 var(--fs-tag)/1 var(--font-body)}
+.sx-note{margin:10px 0 0;color:var(--sub-2);font:400 var(--fs-aux)/22px var(--font-body)}
+.sx-list{margin-top:20px}
+.sx-why{margin-top:24px;padding:16px 20px;border-radius:var(--r-16);background:var(--bg-1);border:1px dashed var(--mute)}
+.sx-why h4{margin:0 0 6px;font:700 var(--fs-aux)/22px var(--font-body)}
+.sx-why ul{margin:0;padding-left:18px;color:var(--sub-2);font:400 var(--fs-aux)/24px var(--font-body)}
+@media (max-width:900px){
+  .sx{padding:16px 16px 40px}
+  .sx-grid{grid-template-columns:minmax(0,1fr)}
+  .sx-board{padding:16px}
+  .sx-doc{padding:20px 16px}
+  .sx-tabs span{margin-left:12px}
+  .sx-ov{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* 시안 B — 블록 */
+.sx-tpl{display:flex;flex-direction:column;gap:8px}
+.sx-tpl button{display:flex;align-items:center;justify-content:space-between;gap:8px;height:44px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux)/1 var(--font-body);color:var(--ink);cursor:pointer;text-align:left}
+.sx-tpl button.on{border-color:var(--ink)}
+.sx-tpl button em{font-style:normal;color:var(--sub);font:400 var(--fs-tag)/1 var(--font-body);white-space:nowrap}
+.sx-add{display:flex;flex-wrap:wrap;gap:8px}
+.sx-add button{height:36px;padding:0 12px;border:1px dashed var(--mute);border-radius:999px;background:var(--bg-1);font:500 var(--fs-aux)/1 var(--font-body);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.sx-add button::before{content:"+ ";color:var(--sub)}
+.sx-blocks{display:flex;flex-direction:column;gap:12px}
+.sx-blk{background:var(--bg-1);border:1px solid var(--rule);border-radius:var(--r-16);padding:14px 18px 16px}
+.sx-blk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.sx-grip{width:20px;height:20px;flex:none;color:var(--mute);cursor:grab}
+.sx-blk-t{margin:0;font:700 var(--fs-t2)/var(--lh-t2) var(--font-display)}
+.sx-blk-src{height:34px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag)/1 var(--font-body);color:var(--ink-2)}
+.sx-blk-ops{margin-left:auto;display:flex;gap:4px}
+.sx-ic{display:inline-grid;place-items:center;width:34px;height:34px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer}
+.sx-memo{width:100%;min-height:72px;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r-8);font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink-2);resize:vertical}
+.sx-blk.ghost{border-style:dashed;background:transparent;display:grid;place-items:center;height:56px;padding:0;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body)}
+@media (max-width:900px){.sx-blk-ops{margin-left:0}}

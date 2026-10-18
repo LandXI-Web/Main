@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>보고서 시안 A · 고르면 바로 만들어지는 보고서</title>
+<link rel="stylesheet" href="../../../../../../../landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="sian.css">
+</head>
+<body class="t">
+<main class="sx">
+  <div class="sx-top">
+    <span class="sx-badge">시안 A</span>
+    <h1 class="sx-title">고르면 바로 만들어지는 보고서</h1>
+  </div>
+  <p class="sx-sub" style="margin:-8px 0 16px">결과를 고르는 순간 보고서가 채워집니다.<br>
+    적어 넣을 칸은 없습니다 · 숫자는 예시입니다.</p>
+
+  <nav class="sx-tabs" aria-label="탭"><span>통계</span><span>이력</span><span class="on">보고서</span></nav>
+  <div class="sx-board">
+    <div class="sx-grid">
+      <!-- 고르기 -->
+      <section class="sx-card" aria-label="넣을 결과 고르기">
+        <h2 class="sx-h">넣을 결과</h2>
+        <p class="sx-help">하나만 골라도, 여러 시점을 골라도 됩니다.</p>
+
+        <p class="sx-grp">사료작물 · 곤포사일리지</p>
+        <label class="sx-pick on"><input type="checkbox" checked>생육기<em>2026.04.12</em></label>
+        <label class="sx-pick on"><input type="checkbox" checked>생산기<em>2026.05.20</em></label>
+        <label class="sx-pick on"><input type="checkbox" checked>곤포사일리지<em>2026.06.03</em></label>
+
+        <p class="sx-grp">농지 활용</p>
+        <label class="sx-pick"><input type="checkbox">상반기<em>2026.05.02</em></label>
+        <label class="sx-pick"><input type="checkbox">하반기<em>2025.10.18</em></label>
+
+        <p class="sx-grp">비닐하우스</p>
+        <label class="sx-pick"><input type="checkbox">비닐하우스<em>2026.03.27</em></label>
+
+        <p class="sx-grp">대장(넣지 않아도 됩니다)</p>
+        <select class="sx-sel" aria-label="대장 고르기">
+          <option>사료작물 재배 신청 대장 · 2026.03.31</option>
+          <option>넣지 않음</option>
+        </select>
+        <p class="sx-grp">범위</p>
+        <select class="sx-sel" aria-label="읍면동"><option>관할 전체</option><option>○○면</option></select>
+
+        <div class="sx-btns">
+          <button class="sx-btn" type="button">한글 문서 내려받기</button>
+          <button class="sx-btn two" type="button">엑셀</button>
+        </div>
+      </section>
+
+      <!-- 바로 만들어진 보고서 -->
+      <article class="sx-doc" aria-label="보고서 미리 보기">
+        <div class="sx-doc-in">
+          <p class="sx-k">AI 분석 결과 보고서</p>
+          <h2 class="sx-dt">○○시 사료작물 세 시점 결과</h2>
+          <p class="sx-dm">생육기 · 생산기 · 곤포사일리지 · 관할 전체 · <span style="white-space:nowrap">만든 날 2026.10.18</span></p>
+
+          <h3>개요<span class="sx-auto">자동</span></h3>
+          <div class="sx-ov">
+            <div><small>지역</small><b>○○시</b></div>
+            <div><small>영상</small><b>항공 25cm</b></div>
+            <div><small>분석한 날</small><b>3회</b></div>
+            <div><small>신청 필지</small><b>1,240<i>필지</i></b></div>
+          </div>
+
+          <h3>시점 비교<span class="sx-auto">자동</span></h3>
+          <div class="sx-tb-w"><table class="sx-tb">
+            <thead><tr><th>시점</th><th>분석한 날</th><th class="n">AI 결과 있음</th><th class="n">넓이(ha)</th><th class="n">곤포</th></tr></thead>
+            <tbody>
+              <tr><td>생육기</td><td>2026.04.12</td><td class="n">1,102필지</td><td class="n">612.4</td><td class="n">—</td></tr>
+              <tr><td>생산기</td><td>2026.05.20</td><td class="n">1,058필지</td><td class="n">598.1</td><td class="n">—</td></tr>
+              <tr><td>곤포사일리지</td><td>2026.06.03</td><td class="n">—</td><td class="n">—</td><td class="n">8,420개</td></tr>
+            </tbody>
+          </table></div>
+
+          <h3>종류별<span class="sx-auto">자동</span></h3>
+          <div class="sx-tb-w"><table class="sx-tb">
+            <thead><tr><th>종류</th><th class="n">생육기(ha)</th><th class="n">생산기(ha)</th><th class="n">차이</th></tr></thead>
+            <tbody>
+              <tr><td>IRG</td><td class="n">402.3</td><td class="n">395.0</td><td class="n dn">−7.3</td></tr>
+              <tr><td>호밀</td><td class="n">121.8</td><td class="n">118.6</td><td class="n dn">−3.2</td></tr>
+              <tr><td>옥수수</td><td class="n">88.3</td><td class="n">84.5</td><td class="n dn">−3.8</td></tr>
+              <tr class="sum"><td>합계</td><td class="n">612.4</td><td class="n">598.1</td><td class="n">−14.3</td></tr>
+            </tbody>
+          </table></div>
+
+          <h3>읍면동별<span class="sx-auto">자동</span></h3>
+          <div class="sx-tb-w"><table class="sx-tb">
+            <thead><tr><th>읍면동</th><th class="n">생육기</th><th class="n">생산기</th><th class="n">곤포</th></tr></thead>
+            <tbody>
+              <tr><td>○○면</td><td class="n">212</td><td class="n">205</td><td class="n">1,640</td></tr>
+              <tr><td>△△면</td><td class="n">188</td><td class="n">181</td><td class="n">1,310</td></tr>
+              <tr><td>□□읍</td><td class="n">143</td><td class="n">139</td><td class="n">1,020</td></tr>
+              <tr class="sum"><td>합계(예시 3곳)</td><td class="n">543</td><td class="n">525</td><td class="n">3,970</td></tr>
+            </tbody>
+          </table></div>
+
+          <h3>대장과 견준 결과<span class="sx-auto">자동</span></h3>
+          <div class="sx-ov">
+            <div><small>세 시점 모두 맞음</small><b>1,012<i>필지</i></b></div>
+            <div><small>한 시점 이상 다름</small><b>146<i>필지</i></b></div>
+            <div><small>AI 분석 전</small><b>82<i>필지</i></b></div>
+          </div>
+          <p class="sx-note">AI 분석 결과는 참고자료입니다.<br>처분은 담당자가 정합니다.</p>
+        </div>
+      </article>
+    </div>
+
+    <!-- 발급 목록 -->
+    <section class="sx-list" aria-label="발급 목록">
+      <h2 class="sx-h">발급 목록</h2>
+      <p class="sx-help">내려받은 보고서는 여기에 남습니다.<br>같은 고르기로 다시 받을 수 있습니다.</p>
+      <div class="sx-tb-w"><table class="sx-tb">
+        <thead><tr><th>발급 일시</th><th>넣은 결과</th><th>요청자</th><th class="n">내려받은 횟수</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>2026.10.18 10:20</td><td>생육기 · 생산기 · 곤포사일리지</td><td>축산과 담당</td><td class="n">3</td><td><button class="sx-btn two sm" type="button">다시 받기</button></td></tr>
+          <tr><td>2026.10.02 15:41</td><td>농지 활용 상반기 · 하반기</td><td>농정과 담당</td><td class="n">1</td><td><button class="sx-btn two sm" type="button">다시 받기</button></td></tr>
+          <tr><td>2026.09.24 09:05</td><td>비닐하우스</td><td>농업기술센터</td><td class="n">2</td><td><button class="sx-btn two sm" type="button">다시 받기</button></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <aside class="sx-why">
+    <h4>이 안의 뜻</h4>
+    <ul>
+      <li>고르기 → 바로 보고서. 따로 적어 넣는 칸이 없습니다.</li>
+      <li>한 시점만 골라도 되고, 고른 시점이 둘 이상이면 시점 비교 표가 생깁니다.</li>
+      <li>대장은 넣고 싶을 때만 — 넣으면 '대장과 견준 결과'가 붙습니다.</li>
+    </ul>
+  </aside>
+</main>
+</body>
+</html>

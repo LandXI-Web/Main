@@ -4,6 +4,7 @@
    숫자 한 출처 = GET /spaces/me/report(결과 설명서 결과 세트 × 관할 — 대시보드 큰 숫자 · 필지 목록과 같은 행). 지도 그림 · 한글 문서도 같은 서버 함수. */
 import { api, h } from '../kit/util.js';
 import { toast, devlog } from '../kit/index.js';
+import { personalFile } from '../kit/pledge.js';   // 대장이 든 보고서 = 개인정보가 든 파일(10-18 영농-q3 · 이용 약속 · 받을 때마다 확인)
 
 const $ = (s, r = document) => r.querySelector(s);
 const nf = (v, d = 0) => (v === null || v === undefined ? '—' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -60,7 +61,7 @@ export function svcReport({ svc, stage, onAuth, fusionHref }) {
     const meta = [String(d.region || ''), `작성 ${d.made}`, d.imagery ? `영상 ${d.imagery}` : null, d.analyzed ? `분석 ${d.analyzed}` : null].filter(Boolean).join(' · ');
     const ov = h('div.gr-ov');
     ov.append(box('AI 분석 결과', d.total, unit));
-    for (const c of d.classes || []) ov.append(box(c.name, c.n, unit, `${unit} · ${nf(val(c.ha), 1)}ha`));
+    for (const c of d.classes || []) ov.append(box(c.name, c.n, unit, `${unit} · ${nf(val(c.ha), 1)}ha` + (val(c.yield) ? ` · 생산량 ${nf(val(c.yield))}kg` : '')));   // 곤포사일리지 생산량 = 개수 × 기관이 넣은 1개당 무게(10-18 영농-q2 ⓑ)
     ov.append(box('AI 모델 정확도', d.acc, '%'));
     const nE = val(d.emd_n);
     const line = `${d.imagery ? d.imagery + jo(d.imagery, '을 ', '를 ') : ''}${d.service.name}${jo(d.service.name, '으로', '로')} 분석한 결과입니다. `
@@ -131,6 +132,12 @@ export function svcReport({ svc, stage, onAuth, fusionHref }) {
 
   async function download() {
     dl.disabled = true;
+    if (S.data?.ledger) {                // '우리 대장과 다른 필지'(지번 · 대장 값)가 든 문서
+      try { await personalFile('/spaces/me/report.hwpx?' + new URLSearchParams({ card: S.card, ...(S.emd ? { emd: S.emd } : {}) }), { name: 'AI분석결과보고서.hwpx', label: '이 보고서' }); }
+      catch (e) { devlog('report hwpx', e.message); if (e.status === 401 || e.status === 403) return onAuth?.(); toast('내려받지 못했습니다'); }
+      finally { dl.disabled = false; }
+      return;
+    }
     try {
       const r = await api('/spaces/me/report.hwpx?' + new URLSearchParams({ card: S.card, ...(S.emd ? { emd: S.emd } : {}) }), { raw: true });
       if (!r.ok) throw Object.assign(new Error('http ' + r.status), { status: r.status });

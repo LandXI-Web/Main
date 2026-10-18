@@ -30,6 +30,17 @@ def v(e):
 
 
 @pytest.fixture(scope="module")
+def pledged(tok):
+    """개인정보가 든 파일(대장이 든 엑셀 · 보고서)은 이용 약속 뒤 ok=1 로 받는다(10-18 영농-q3 · impl-45). 시험이 적은 약속은 끝에 지운다."""
+    r = httpx.post(B + "/spaces/me/pledge", json={"purpose": "시험 — 대장과 AI 결과 확인", "until": time.strftime("%Y-%m-%d"), "agree": True},
+                   headers=H(tok["namwon"]), timeout=60)
+    assert r.status_code == 200, r.text[:200]
+    yield r.json()["active"]["id"]
+    with pg() as c:
+        c.execute("DELETE FROM download_pledges WHERE id=%s", (r.json()["active"]["id"],))
+
+
+@pytest.fixture(scope="module")
 def rep(tok):
     r = httpx.get(B + "/spaces/me/report", params={"card": CARD}, headers=H(tok["namwon"]), timeout=180)
     if r.status_code == 404:
@@ -55,7 +66,7 @@ def test_report_same_numbers(rep, tok):
     assert not any(w in words for w in ("의심", "현장 확인", "소견", "조치 제안"))
 
 
-def test_report_emd_and_hwpx(rep, tok):
+def test_report_emd_and_hwpx(rep, tok, pledged):
     t = tok["namwon"]
     emd = rep["emd_rows"][0]["emd"]
     e = httpx.get(B + "/spaces/me/report", params={"card": CARD, "emd": emd}, headers=H(t), timeout=120).json()
@@ -63,7 +74,7 @@ def test_report_emd_and_hwpx(rep, tok):
     assert httpx.get(B + "/spaces/me/report", params={"card": CARD, "emd": "없는읍"}, headers=H(t), timeout=60).status_code == 404
     png = httpx.get(B + "/spaces/me/report/map.png", params={"card": CARD}, headers=H(t), timeout=180)
     assert png.status_code == 200 and png.content[:4] == b"\x89PNG"
-    d = httpx.get(B + "/spaces/me/report.hwpx", params={"card": CARD}, headers=H(t), timeout=180)
+    d = httpx.get(B + "/spaces/me/report.hwpx", params={"card": CARD, "ok": 1}, headers=H(t), timeout=180)
     assert d.status_code == 200 and d.headers["content-type"].startswith("application/hwp+zip")
     from landxi_api import hwpx as HX
     assert HX.check(d.content) == [] and "BinData/image1.png" in zipfile.ZipFile(io.BytesIO(d.content)).namelist()   # 지도 그림 1장
@@ -79,7 +90,7 @@ def test_report_emd_and_hwpx(rep, tok):
     assert httpx.get(B + "/spaces/me/report", params={"card": CARD}, headers=H(tok["staff"]), timeout=60).status_code in (401, 403)
 
 
-def test_compare_facts(tok):
+def test_compare_facts(tok, pledged):
     t = tok["namwon"]
     c = httpx.get(B + "/spaces/me/ledger/compare", params={"card": CARD, "geom": 1}, headers=H(t), timeout=180).json()
     if not c.get("ledger"):
@@ -95,7 +106,8 @@ def test_compare_facts(tok):
     # 보고서 ④ 칸과 같은 값
     r = httpx.get(B + "/spaces/me/report", params={"card": CARD}, headers=H(t), timeout=180).json()
     assert r["ledger"] and v(r["ledger"]["diff"]) == v(c["diff"]) and v(r["ledger"]["with_ai"]) == v(c["with_ai"])
-    x = httpx.get(B + "/spaces/me/ledger/compare.xlsx", params={"card": CARD}, headers=H(t), timeout=180)
+    assert httpx.get(B + "/spaces/me/ledger/compare.xlsx", params={"card": CARD}, headers=H(t), timeout=180).status_code == 409   # 받을 때마다 확인
+    x = httpx.get(B + "/spaces/me/ledger/compare.xlsx", params={"card": CARD, "ok": 1}, headers=H(t), timeout=180)
     assert x.status_code == 200 and x.content[:2] == b"PK"
     from openpyxl import load_workbook
     ws = load_workbook(io.BytesIO(x.content), read_only=True)["필지"]

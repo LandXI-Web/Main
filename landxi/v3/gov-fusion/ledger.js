@@ -2,7 +2,7 @@
    XLSX = zip(deflate) · DecompressionStream('deflate-raw') 로 풀고 sharedStrings + 첫 시트만 읽는다.
    성명 열은 읽지 않는다(열 이름에 성명·소유자·주민이 들어가면 버린다). */
 
-const DROP_COLS = /성명|소유자\s*명|주민|전화|연락처/;
+const DROP_COLS = /성명|소유자\s*명|주민|전화|연락처|생년|이메일|경영체\s*명|경영\s*대표|작업단\s*대표|재배자|경영체\s*번호/;   // 사료작물 재배 신청 대장의 사람 칸(10-18) — 읽지 않는다
 
 export async function readLedger(file) {
   const buf = await file.arrayBuffer();
@@ -118,7 +118,7 @@ async function inflate(u8, e) {
 /* ── 열 뜻(명세 §2.9 · 5종) ──
    pnu = 필지 번호(PNU) · jibun = 지번(소재지 열과 지번 열이 둘 다 '지번' 이면 앞뒤로 이어 읽는다) · state = 상태(대장상 지목·허가 구분)
    date = 날짜 · skip = 사용 안 함 */
-export const ROLES = [['pnu', '필지 번호(PNU)'], ['jibun', '지번'], ['state', '상태'], ['date', '날짜'], ['skip', '사용 안 함']];
+export const ROLES = [['pnu', '필지 번호(PNU)'], ['jibun', '지번'], ['state', '상태'], ['date', '날짜'], ['crop', '신청 작물'], ['area', '신청 면적'], ['skip', '사용 안 함']];   // 신청 작물 · 신청 면적 = 사료작물 재배 신청 대장(10-18 영농-q1)
 export const JIMOK = ['전', '답', '과수원', '목장용지', '임야', '광천지', '염전', '대', '공장용지', '학교용지', '주차장', '주유소용지', '창고용지', '도로', '철도용지', '제방', '하천', '구거', '유지', '양어장', '수도용지', '공원', '체육용지', '유원지', '종교용지', '사적지', '묘지', '잡종지', '과'];
 export const FARM = ['전', '답', '과수원', '과'];
 
@@ -137,12 +137,15 @@ export function isSerial(h, vals) {
 export function guessColumns(headers, rows) {
   const sample = rows.slice(0, 400);
   const frac = (h, re) => { let n = 0, m = 0; for (const r of sample) { const v = String(r[h] ?? '').trim(); if (!v) continue; m++; if (re.test(v)) n++; } return m ? n / m : 0; };
-  let state = false, pnu = false, date = false;
+  let state = false, pnu = false, date = false, crop = false, area = false;
   return headers.map((h) => {
     const vals = sample.map((r) => String(r[h] ?? '').trim()).filter(Boolean);
     let role = 'skip';
     if (isSerial(h, vals)) role = 'skip';                 // 일련번호 · 연번 — 값이 1, 2, 3 … 처럼 이어지는 번호 열은 지번이 아니다
     else if (!pnu && (frac(h, /^\d{19}$/) > 0.8 || /PNU|고유번호|필지번호/i.test(h))) { role = 'pnu'; pnu = true; }
+    // 신청 작물 · 신청 면적(사료작물 재배 신청 대장 · 10-18) — 숫자만 든 면적 열이 지번으로 잡히지 않게 지번보다 먼저 본다
+    else if (!crop && /작물|품목|작목/.test(h)) { role = 'crop'; crop = true; }
+    else if (!area && /면적/.test(h) && !/필지\s*면적|지적\s*면적/.test(h)) { role = 'area'; area = true; }
     else if (/소재|주소|위치/.test(h) || frac(h, /[가-힣]+(읍|면|동|리|가)(\s|$)/) > 0.8) role = 'jibun';
     else if (/지번/.test(h) || frac(h, /^(산\s*)?\d+(-\d+)?$/) > 0.9) role = 'jibun';
     else if (!state && (/지목|상태|구분|허가\s*종류|용도/.test(h) && !/용도지역/.test(h) || (vals.length && vals.filter((v) => JIMOK.includes(v)).length / vals.length > 0.9))) { role = 'state'; state = true; }

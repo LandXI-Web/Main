@@ -24,13 +24,14 @@ async function tx(mode, fn) {
 }
 const uid = () => 'imp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 /* 대장 종류 — 서버 kind ↔ 화면 말(명세 §2.9 문구) */
-export const KIND_LABEL = { farm_ledger: '농지대장', dev_permit: '개발행위허가 대장', public_asset: '공유재산 대장', river_permit: '점용허가 대장', greenhouse: '시설 신고 대장' };
+export const KIND_LABEL = { farm_ledger: '농지대장', dev_permit: '개발행위허가 대장', public_asset: '공유재산 대장', river_permit: '점용허가 대장', greenhouse: '시설 신고 대장', feedcrop: '사료작물 재배 신청 대장' };
 const KIND_CODE = Object.fromEntries(Object.entries(KIND_LABEL).map(([k, v]) => [v, k]));
 const KIND_BY_CARD = { 'card-farm': 'farm_ledger', 'card-change': 'dev_permit', 'card-road': 'river_permit', 'card-marine': 'river_permit', 'card-living': 'greenhouse', 'card-crowd': 'public_asset' };
 const KIND_ORDER = Object.keys(KIND_LABEL);
 /** 올린 파일의 대장 종류 — 파일 이름 · 열 이름에서(없으면 null → 기관 카드 종류) */
 export function kindOfFile(name, headers) {
   const s = String(name || '') + ' ' + (headers || []).join(' ');
+  if (/사료\s*작물|조사료|재배\s*신청|신청\s*재배|사일리지/.test(s)) return 'feedcrop';   // 10-18 영농-q1
   if (/농지|경작|자경|임차/.test(s)) return 'farm_ledger';
   if (/점용|하천|공유수면/.test(s)) return 'river_permit';
   if (/개발\s*행위|허가/.test(s)) return 'dev_permit';
@@ -91,7 +92,7 @@ export async function ledgerStore(who) {
       onProg?.(0.8);
       const cols = guessColumns(L.headers, L.rows);
       rec.cur = { import_id: uid(), kind: KIND_LABEL[kindOfFile(L.name, L.headers)] || kind, name: L.name, headers: L.headers, rows: L.rows, columns_guess: cols, mapping: null, matched: null, unmatched: [], as_of: new Date().toISOString() };
-      return { import_id: rec.cur.import_id, rows: L.rows.length, columns_guess: cols };
+      return { import_id: rec.cur.import_id, rows: L.rows.length, columns_guess: cols, name: L.name };
     },
     /** confirm{mapping} — 필지 잇기(matcher) → 계약 모양 */
     async confirm(id, mapping, matcher) {
@@ -114,11 +115,13 @@ export async function ledgerStore(who) {
       const q = (v) => { const s = String(v ?? ''); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
       // 지번 뜻 열이 여럿(소재지 + 지번)이면 이어 붙여 한 칸으로 — 서버가 '○○면 ○○리 123' 을 그대로 해석한다
       const jcols = cols.filter((c) => c.role === 'jibun').map((c) => c.col);
-      const pick = { jibun: jcols.length ? jcols : null, status: cols.find((c) => c.role === 'state')?.col, date: cols.find((c) => c.role === 'date')?.col };
-      const heads = ['PNU', ...(pick.jibun ? ['지번'] : []), ...(pick.status ? ['상태'] : []), ...(pick.date ? ['날짜'] : [])];
+      const pick = { jibun: jcols.length ? jcols : null, status: cols.find((c) => c.role === 'state')?.col, date: cols.find((c) => c.role === 'date')?.col,
+        crop: cols.find((c) => c.role === 'crop')?.col, area: cols.find((c) => c.role === 'area')?.col };
+      const heads = ['PNU', ...(pick.jibun ? ['지번'] : []), ...(pick.status ? ['상태'] : []), ...(pick.date ? ['날짜'] : []), ...(pick.crop ? ['작물'] : []), ...(pick.area ? ['면적'] : [])];
       const lines = [heads.join(',')];
       const jb = (row) => pick.jibun.map((c) => String(row[c] ?? '').trim()).filter(Boolean).join(' ');
-      r.rows.forEach((row, i) => { lines.push([r.match[i] || '', ...(pick.jibun ? [jb(row)] : []), ...(pick.status ? [row[pick.status]] : []), ...(pick.date ? [row[pick.date]] : [])].map(q).join(',')); });
+      r.rows.forEach((row, i) => { lines.push([r.match[i] || '', ...(pick.jibun ? [jb(row)] : []), ...(pick.status ? [row[pick.status]] : []), ...(pick.date ? [row[pick.date]] : []),
+        ...(pick.crop ? [row[pick.crop]] : []), ...(pick.area ? [row[pick.area]] : [])].map(q).join(',')); });
       const fd = new FormData();
       fd.append('kind', kind);
       fd.append('file', new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), String(r.name || '대장.csv').replace(/\.csv$/i, '') + '.csv');   // 원래 이름을 남긴다(○○_농지목록.xlsx.csv → 화면은 .xlsx)
@@ -126,7 +129,7 @@ export async function ledgerStore(who) {
       const res = await fetch(API.prefix + base + '/import', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
       if (!res.ok) throw new Error('import ' + res.status);
       const j = await res.json();
-      const mp = { pnu: 'PNU' }; if (pick.jibun) mp.jibun = '지번'; if (pick.status) mp.status = '상태'; if (pick.date) mp.date = '날짜';
+      const mp = { pnu: 'PNU' }; if (pick.jibun) mp.jibun = '지번'; if (pick.status) mp.status = '상태'; if (pick.date) mp.date = '날짜'; if (pick.crop) mp.use = '작물'; if (pick.area) mp.area = '면적';
       await api(`${base}/${encodeURIComponent(j.import_id)}/confirm`, { method: 'POST', body: { mapping: mp } });
       r.server_id = j.import_id;
       await this.save(r);

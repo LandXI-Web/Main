@@ -83,7 +83,8 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     reset: [{ key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v || '—')}</b>` }, { key: 'login', label: '메일 주소', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
       { key: 'orgd', label: '소속' }, { key: 'created_at', label: '요청일', fmt: (v) => `<span class="num">${esc(ymd(v))}</span>` }],
     users: [{ key: 'name', label: '이름', fmt: (v) => `<b class="acc-b">${esc(v || '—')}</b>` }, { key: 'login', label: '아이디', fmt: (v) => `<span class="acc-m">${esc(v)}</span>` },
-      { key: 'orgd', label: '소속' }, { key: 'role_ko', label: '역할', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
+      { key: 'orgd', label: '소속' }, ...(LX ? [] : [{ key: 'position', label: '직위', fmt: (v) => esc(v || '—') }]),   // 직위(10-18 영농-직위칸 · 기관 계정만)
+      { key: 'role_ko', label: '역할', fmt: (v) => `<span class="t-chip">${esc(v)}</span>` },
       { key: 'st', label: '상태', fmt: (v, r) => `<span class="t-chip" data-lv="${r.stLv}">${esc(v)}</span>` },
       ...(LX ? [{ key: 'stor', label: '저장 용량', fmt: (v, r) => (r.storage ? `<span class="acc-q${r.storage.warn ? ' is-warn' : ''}">${esc(shortStorage(r.storage))}</span>` : '<span class="acc-q">—</span>') }] : [])],
     /* 로그인 기록(나중 17) — 들어온 입구(Land-XI · LX 관리자 · 기관) + 주소 이름 작게 */
@@ -203,9 +204,10 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       }
     } else if (cur === 'users') {
       const [st] = stateOf(item);
-      body.append(dl([['아이디', item.login], ['소속', item.org], ['부서', item.dept], ['역할', item.role_ko], ['상태', st],
+      body.append(dl([['아이디', item.login], ['소속', item.org], ['부서', item.dept], ['직위', item.position], ['역할', item.role_ko], ['상태', st],
         ['최근 로그인', item.last_login ? when(item.last_login) + (item.last_login_where && item.last_login_where !== '—' ? ` · ${item.last_login_where}` : '') : '없음'], ['만든 날', item.created_at ? ymd(item.created_at) : '']]));
       if (item.dept_listed === false) body.append(h('p.acc-help', {}, h('span', { text: '부서 이름이 부서 목록에 없습니다(지사 등).' }), ' ', h('span', { text: '본인이 내 정보에서 고릅니다.' })));
+      if (!LX && item.realm === 'tenant' && item.status !== 'disabled') body.append(positionBox(item));   // 직위 — 기관 관리자가 적는다(내 계정도)
       if (item.status === 'disabled') body.append(h('p.acc-mine', { text: '사용 중지된 계정입니다. 메일 아이디 계정으로 옮겼습니다.' }));
       else if (item.mine) {
         body.append(h('p.acc-mine', { text: '내 계정은 다른 관리자가 바꿉니다.' }));
@@ -213,6 +215,19 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       } else body.append(userActs(item, body));
     }
     sheet = drawer({ title, body, host, slot: 'account', onClose: () => { openKey = null; mark(); } });
+  }
+
+  /* 직위(10-18 영농-직위칸) — 한 칸 · 저장. 비우면 지운다 */
+  function positionBox(u) {
+    const inp = h('input.t-input', { type: 'text', maxlength: '40', value: u.position || '', placeholder: '예: 주무관', 'aria-label': '직위', autocomplete: 'off' });
+    const save = h('button.t-btn.t-btn--2', { type: 'button', text: '직위 저장' });
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try { await api(`/accounts/users/tenant/${encodeURIComponent(u.id)}/position`, { method: 'POST', body: { position: inp.value.trim() } }); await done('직위를 저장했습니다'); }
+      catch (e) { toast(e.message || '지금은 처리할 수 없습니다'); save.disabled = false; }
+    });
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') save.click(); });
+    return h('div.acc-row.acc-pos', {}, h('span.t-label', { text: '직위' }), h('div.acc-inline', {}, inp, save));
   }
 
   function userActs(u, body) {

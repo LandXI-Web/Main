@@ -36,3 +36,28 @@
   .gf-big--svc{display:none}
   .gf-sheet--svc{top:auto;bottom:0;left:0;right:0;width:auto;max-height:62%;border-radius:var(--r-16) var(--r-16) 0 0}
 }
+/* 영농관리 결정(10-18 원칙 291) — 사료작물 견주기 · 행정정보 목록 · 열 확인의 종류 · 기준일 */
+.gf-two{display:flex;flex-direction:column;gap:10px}
+.gf-two .t-input{width:100%;box-sizing:border-box;min-width:0}
+.gf-slots{display:flex;flex-direction:column;gap:8px}
+.gf-slots .gf-fld{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px}
+.gf-slots .gf-sel{min-width:0;width:100%}
+.gf-tbw{overflow-x:auto;max-width:100%}
+.gf-tb--feed td.is-miss{color:var(--warn);font-weight:600}
+.gf-up{display:block;margin-top:2px;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub-2)}
+.gf-nm{font-weight:600;color:var(--ink);word-break:keep-all}
+.gf-day{width:140px;height:36px;padding:0 8px}
+.gf-lst{display:flex;flex-direction:column;gap:6px}
+.gf-lst-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.gf-lst-h h4{margin:0;font:600 var(--fs-body)/24px var(--font-body);color:var(--ink)}
+.gf-lst-h span{font:500 var(--fs-aux)/1 var(--font-num);color:var(--sub)}
+.gf-list-b{align-self:flex-start;padding:0}
+.gf-li{margin:0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+.gf-li li{padding:10px 4px;border-bottom:1px solid var(--rule);cursor:pointer}
+.gf-li li:hover{background:#F8F9FA}
+.gf-li li:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.gf-li-1{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.gf-li-1 .num{flex:none;font:600 var(--fs-aux)/1 var(--font-num);color:var(--ink)}
+.gf-li-2{margin:2px 0 0;font:400 var(--fs-aux)/20px var(--font-body);color:var(--sub)}
+.gf-bd{padding:0;height:auto;min-height:0;font-size:var(--fs-aux)}
+.gf-pane .gf-list-b{flex:none}

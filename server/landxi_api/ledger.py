@@ -40,7 +40,7 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 KINDS = {"farm_ledger": "농지대장", "dev_permit": "개발행위 허가", "public_asset": "공유재산", "river_permit": "하천 점용 허가",
-         "greenhouse": "시설원예 등록"}
+         "greenhouse": "시설원예 등록", "feedcrop": "사료작물 재배 신청"}   # feedcrop = 10-18 영농-q1(신청 작물 · 신청 면적 × 세 시점 결과 · 0110)
 MAX_BYTES = 20 * 1024 * 1024
 EXTS = {"xlsx", "csv", "shp", "zip", "gpkg", "geojson", "json"}
 RULES_DIR = config.SERVER_ROOT / "survey" / "rules"
@@ -65,7 +65,8 @@ ROLES = [  # (role, 키워드 · 앞이 우선)
     ("lon", ["경도", "lon", "lng", "x좌표"]),
     ("lat", ["위도", "lat", "y좌표"]),
 ]
-PII = ["성명", "이름", "소유자", "소유주", "대표자", "신청인", "연락처", "전화", "휴대", "주민", "생년", "이메일", "email", "name", "phone", "owner"]
+PII = ["성명", "이름", "소유자", "소유주", "대표자", "신청인", "연락처", "전화", "휴대", "주민", "생년", "이메일", "email", "name", "phone", "owner",
+       "경영체명", "경영대표", "작업단대표", "재배자", "농업경영체번호", "경영체번호"]   # 사료작물 재배 신청 대장의 사람 칸(10-18) — 이름만 기록 · 값 저장 0
 
 
 def _norm(s: str) -> str:

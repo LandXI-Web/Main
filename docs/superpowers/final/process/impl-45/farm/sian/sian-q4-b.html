@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>보고서 시안 B · 블록 보고서</title>
+<link rel="stylesheet" href="../../../../../../../landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="sian.css">
+</head>
+<body class="t">
+<main class="sx">
+  <div class="sx-top">
+    <span class="sx-badge">시안 B</span>
+    <h1 class="sx-title">블록 보고서</h1>
+  </div>
+  <p class="sx-sub" style="margin:-8px 0 16px">필요한 칸만 더하고, 빼고, 순서를 바꿉니다.<br>
+    한 번 짠 모양은 '보고서 틀'로 남겨 다시 씁니다 · 숫자는 예시입니다.</p>
+
+  <nav class="sx-tabs" aria-label="탭"><span>통계</span><span>이력</span><span class="on">보고서</span></nav>
+  <div class="sx-board">
+    <div class="sx-grid">
+      <section class="sx-card" aria-label="보고서 틀과 블록">
+        <h2 class="sx-h">내 보고서 틀</h2>
+        <p class="sx-help">사람마다 저장됩니다.</p>
+        <div class="sx-tpl">
+          <button type="button" class="on">조사료 이행 점검<em>블록 5</em></button>
+          <button type="button">농지 활용 반기 보고<em>블록 4</em></button>
+          <button type="button">빈 보고서에서 시작<em>블록 0</em></button>
+        </div>
+
+        <p class="sx-grp" style="margin-top:20px">블록 더하기</p>
+        <div class="sx-add">
+          <button type="button">개요</button><button type="button">지도</button>
+          <button type="button">종류별 표</button><button type="button">읍면동별 표</button>
+          <button type="button">시점 비교</button><button type="button">대장과 다른 필지</button>
+          <button type="button">메모</button>
+        </div>
+
+        <div class="sx-btns">
+          <button class="sx-btn" type="button">한글 문서 내려받기</button>
+          <button class="sx-btn two" type="button">틀 저장</button>
+        </div>
+      </section>
+
+      <div>
+        <div class="sx-blocks" aria-label="보고서 블록">
+          <article class="sx-blk">
+            <div class="sx-blk-h">
+              <svg class="sx-grip" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg>
+              <h3 class="sx-blk-t">개요</h3>
+              <select class="sx-blk-src" aria-label="이 블록의 결과"><option>생육기 · 생산기 · 곤포</option></select>
+              <div class="sx-blk-ops"><button class="sx-ic" aria-label="위로">↑</button><button class="sx-ic" aria-label="아래로">↓</button><button class="sx-ic" aria-label="빼기">×</button></div>
+            </div>
+            <div class="sx-ov">
+              <div><small>지역</small><b>○○시</b></div>
+              <div><small>영상</small><b>항공 25cm</b></div>
+              <div><small>분석한 날</small><b>3회</b></div>
+              <div><small>신청 필지</small><b>1,240<i>필지</i></b></div>
+            </div>
+          </article>
+
+          <article class="sx-blk">
+            <div class="sx-blk-h">
+              <svg class="sx-grip" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg>
+              <h3 class="sx-blk-t">지도</h3>
+              <select class="sx-blk-src" aria-label="이 블록의 결과"><option>생산기 · 2026.05.20</option></select>
+              <div class="sx-blk-ops"><button class="sx-ic" aria-label="위로">↑</button><button class="sx-ic" aria-label="아래로">↓</button><button class="sx-ic" aria-label="빼기">×</button></div>
+            </div>
+            <div class="sx-map">읍면동 경계 위 AI 분석 결과(예시 그림)</div>
+          </article>
+
+          <article class="sx-blk">
+            <div class="sx-blk-h">
+              <svg class="sx-grip" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg>
+              <h3 class="sx-blk-t">시점 비교</h3>
+              <select class="sx-blk-src" aria-label="이 블록의 결과"><option>생육기 + 생산기</option></select>
+              <div class="sx-blk-ops"><button class="sx-ic" aria-label="위로">↑</button><button class="sx-ic" aria-label="아래로">↓</button><button class="sx-ic" aria-label="빼기">×</button></div>
+            </div>
+            <div class="sx-tb-w"><table class="sx-tb">
+              <thead><tr><th>종류</th><th class="n">생육기(ha)</th><th class="n">생산기(ha)</th><th class="n">차이</th></tr></thead>
+              <tbody>
+                <tr><td>IRG</td><td class="n">402.3</td><td class="n">395.0</td><td class="n dn">−7.3</td></tr>
+                <tr><td>호밀</td><td class="n">121.8</td><td class="n">118.6</td><td class="n dn">−3.2</td></tr>
+                <tr class="sum"><td>합계</td><td class="n">524.1</td><td class="n">513.6</td><td class="n">−10.5</td></tr>
+              </tbody>
+            </table></div>
+          </article>
+
+          <article class="sx-blk">
+            <div class="sx-blk-h">
+              <svg class="sx-grip" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg>
+              <h3 class="sx-blk-t">대장과 다른 필지</h3>
+              <select class="sx-blk-src" aria-label="이 블록의 대장"><option>사료작물 재배 신청 대장</option></select>
+              <div class="sx-blk-ops"><button class="sx-ic" aria-label="위로">↑</button><button class="sx-ic" aria-label="아래로">↓</button><button class="sx-ic" aria-label="빼기">×</button></div>
+            </div>
+            <div class="sx-ov">
+              <div><small>세 시점 모두 맞음</small><b>1,012<i>필지</i></b></div>
+              <div><small>한 시점 이상 다름</small><b>146<i>필지</i></b></div>
+              <div><small>AI 분석 전</small><b>82<i>필지</i></b></div>
+            </div>
+          </article>
+
+          <article class="sx-blk">
+            <div class="sx-blk-h">
+              <svg class="sx-grip" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg>
+              <h3 class="sx-blk-t">메모</h3>
+              <div class="sx-blk-ops"><button class="sx-ic" aria-label="위로">↑</button><button class="sx-ic" aria-label="아래로">↓</button><button class="sx-ic" aria-label="빼기">×</button></div>
+            </div>
+            <textarea class="sx-memo" aria-label="메모">다음 달 생산기 결과가 나오면 같은 틀로 다시 받습니다.</textarea>
+          </article>
+
+          <div class="sx-blk ghost">여기로 블록을 끌어 놓습니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="sx-why">
+    <h4>이 안의 뜻</h4>
+    <ul>
+      <li>필요한 블록만 — 빈 칸을 모두 채워야 하는 양식이 없습니다.</li>
+      <li>블록마다 결과를 따로 고릅니다(지도는 생산기, 표는 두 시점 등).</li>
+      <li>짠 모양은 '내 보고서 틀'로 저장 — 다음 달에는 틀만 고르면 새 결과로 채워집니다.</li>
+    </ul>
+  </aside>
+</main>
+</body>
+</html>

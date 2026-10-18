@@ -269,8 +269,8 @@ def test_viewer_sees_only_assigned(tok, viewer):
     assert all(n["card"] == "card-farm" for n in me["notices"])
     assert httpx.get(B + "/spaces/me/guides/card-farm", headers=H(vt), timeout=60).status_code == 200
     assert httpx.get(B + "/spaces/me/guides/card-road", headers=H(vt), timeout=60).status_code == 404
-    # 동의 전 내려받기 = 409 → 동의 뒤 200
-    assert httpx.get(B + "/spaces/me/guides/card-farm/download?fmt=summary", headers=H(vt), timeout=60).status_code == 409
+    # 개인정보가 없는 파일(요약)은 동의 없이 바로 받는다(10-18 영농-q3 "아닌건 그냥 받고") — 개인정보가 든 파일만 이용 약속 · 확인(test_impl45_farm)
+    assert httpx.get(B + "/spaces/me/guides/card-farm/download?fmt=summary", headers=H(vt), timeout=60).status_code == 200
     httpx.post(B + "/spaces/me/consent", json={"agree": True}, headers=H(vt), timeout=30)
     assert httpx.get(B + "/spaces/me/guides/card-farm/download?fmt=summary", headers=H(vt), timeout=60).status_code == 200
     # 받지 않은 서비스 · 다른 기관 사람은 정할 수 없다 · 부서 사용자는 기록을 못 본다
