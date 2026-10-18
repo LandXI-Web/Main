@@ -200,11 +200,11 @@ export async function renderClassStats(box, { s, B }) {
     const a = h('a', { href: URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv;charset=utf-8' })), download: `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_종류별_읍면동별.csv` });
     document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   });
-  box.replaceChildren(head, chips,
+  box.replaceChildren(...[head, chips,
     h('div.gs-tbl-w', {}, h('table.gs-tbl.gs-cls-sum', {}, h('thead', {}, h('tr', {}, h('th', { text: '종류' }), h('th.num', { text: '합계' }), h('th.num', { text: '비율' }), h('th', { text: '' }))), sumT)),
     j.bale ? baleBox(j, classes, () => renderClassStats(box, { s, B })) : null,
     h('div.gs-tbl-w.gs-cls-emd', {}, h('table.gs-tbl', {}, h('thead', {}, embH), embT)), more, csv,
-    j.note ? h('p.gd-note', { text: '이 서비스는 분석 칸마다 나눈 결과라 넓이만 보여 드립니다.' }) : null);
+    j.note ? h('p.gd-note', { text: '이 서비스는 분석 칸마다 나눈 결과라 넓이만 보여 드립니다.' }) : null].filter(Boolean));   // 없는 칸(null)을 넣으면 화면에 'null' 글자가 찍힌다
   draw();
 }
 
