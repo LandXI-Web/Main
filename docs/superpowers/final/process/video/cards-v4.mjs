@@ -1,0 +1,99 @@
+/* 소개 영상 4판 판 그림(2판과 같은 틀 · 끝 장면 두 안) — 사이트 글꼴(Pretendard · Paperlogy)로 브라우저가 그린다.
+   node cards-v4.mjs   → <OUT4>/cards/frame.png(바탕 + 화면 자리 둥근 구멍 + 그림자) · cap-XX.png(아래 띠 자막 · 투명) · <OUT4>/raw/e1-end.mp4(마지막 컷 — 흰 바탕 · LX 한국국토정보공사 CI + Land-XI 플랫폼만)
+   자막: 띠 안 두 줄(큰 줄 Paperlogy 38 · 작은 줄 Pretendard 27) · 화면 왼쪽 선과 같은 선 · 오른쪽엔 장 이름 한 줄(작게). 넘치면 멈춘다. */
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { chromium, Rec, ROOT, sleep } from './lib.mjs';
+import { SHOTS, SCREEN, BAND, BG, CHAPTERS } from './story-v4.mjs';
+
+const OUT2 = process.env.LX_VIDEO_OUT4 || 'E:/Land-XI 플랫폼/02. 데이터/_video/intro-2026-10-18-v4';
+const CARDS = path.join(OUT2, 'cards'); fs.mkdirSync(CARDS, { recursive: true }); fs.mkdirSync(path.join(OUT2, 'raw'), { recursive: true });
+const F = (n) => pathToFileURL(path.join(ROOT, 'landxi/assets/fonts', n)).href;
+const FONTS = `@font-face{font-family:P;src:url('${F('Pretendard-Regular.woff2')}');font-weight:400}
+@font-face{font-family:P;src:url('${F('Pretendard-Medium.woff2')}');font-weight:600}
+@font-face{font-family:PL;src:url('${F('Paperlogy-7Bold.woff2')}');font-weight:700}
+@font-face{font-family:PL;src:url('${F('Paperlogy-8ExtraBold.woff2')}');font-weight:800}`;
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+const b = await chromium.launch({ channel: 'chrome', headless: true });
+const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+const p = await ctx.newPage();
+
+/* 1) 틀 — 바탕색 전체 + 화면 자리 그림자 + 둥근 구멍(투명) + 가는 테두리 */
+await p.setContent(`<canvas id=c width=1920 height=1080></canvas><style>html,body{margin:0;background:transparent}</style>`);
+await p.evaluate(({ S, BG }) => {
+  const c = document.getElementById('c').getContext('2d'); const r = 14;
+  const rr = () => { c.beginPath(); c.roundRect(S.x, S.y, S.w, S.h, r); };
+  c.fillStyle = BG; c.fillRect(0, 0, 1920, 1080);
+  c.save(); c.shadowColor = 'rgba(28,31,37,.16)'; c.shadowBlur = 36; c.shadowOffsetY = 8; c.fillStyle = '#fff'; rr(); c.fill(); c.restore();
+  c.globalCompositeOperation = 'destination-out'; rr(); c.fill();
+  c.globalCompositeOperation = 'source-over'; c.strokeStyle = 'rgba(28,31,37,.08)'; c.lineWidth = 1; c.beginPath(); c.roundRect(S.x - 0.5, S.y - 0.5, S.w + 1, S.h + 1, r + 0.5); c.stroke();
+}, { S: SCREEN, BG });
+await p.locator('#c').screenshot({ path: path.join(CARDS, 'frame.png'), omitBackground: true });
+
+/* 2) 자막 — 아래 띠(BAND) 안 · 왼쪽 선 = 화면 왼쪽 선 */
+const report = [];
+for (const [i, s] of SHOTS.entries()) {
+  if (!s.cap) continue;
+  const [t, sub] = s.cap;
+  const html = `<!doctype html><meta charset=utf-8><style>${FONTS}
+  html,body{margin:0;background:transparent;width:1920px;height:1080px;overflow:hidden}
+  .band{position:absolute;left:${SCREEN.x}px;right:${1920 - SCREEN.x - SCREEN.w}px;top:${BAND.y}px;height:${BAND.h}px;display:flex;align-items:center;justify-content:space-between;gap:48px}
+  .tx{min-width:0}
+  .t{font:700 38px/1.22 PL;color:#191F28;margin:0;letter-spacing:-.6px;white-space:nowrap}
+  .s{font:400 27px/1.38 P;color:#4E5968;margin:4px 0 0;letter-spacing:-.3px;white-space:nowrap}
+  .ch{font:600 21px/1.2 P;color:#8B95A1;white-space:nowrap;letter-spacing:-.2px}
+  .ch b{color:#3182F6;font-weight:600;margin-right:10px}
+  </style><div class=band><div class=tx><p class=t>${esc(t)}</p>${sub ? `<p class=s>${esc(sub)}</p>` : ''}</div><div class=ch><b>${s.ch}</b>${esc(CHAPTERS[s.ch] || '')}</div></div>`;
+  const hf = path.join(CARDS, '_cap.html'); fs.writeFileSync(hf, html);   // file:// 로 열어야 글꼴(file://)이 실림(setContent 는 about:blank 라 글꼴이 막힘)
+  await p.goto(pathToFileURL(hf).href); await p.evaluate(() => document.fonts.ready); await sleep(120);
+  const fam = await p.evaluate(() => [document.fonts.check('700 38px PL'), document.fonts.check('400 27px P'), [...document.fonts].filter((f) => f.status === 'loaded').length]);
+  if (!fam[0] || !fam[1] || fam[2] < 2) throw new Error('글꼴 안 실림 ' + JSON.stringify(fam));
+  const m = await p.evaluate(() => { const r = (q) => document.querySelector(q)?.getBoundingClientRect(); const t = r('.t'), s = r('.s'), ch = r('.ch'), band = r('.band'); return { t, s, ch, band, right: Math.max(t.right, s ? s.right : 0) }; });
+  if (m.right > m.ch.left - 32) throw new Error(`자막이 장 이름과 겹침 ${s.id}`);
+  const bottom = (m.s || m.t).bottom;
+  if (m.t.top < BAND.y || bottom > BAND.y + BAND.h || bottom > 1080) throw new Error(`자막이 띠 밖 ${s.id}`);
+  report.push({ id: s.id, top: Math.round(m.t.top), bottom: Math.round(bottom), right: Math.round(m.right), chLeft: Math.round(m.ch.left) });
+  await p.screenshot({ path: path.join(CARDS, `cap-${String(i + 1).padStart(2, '0')}.png`), omitBackground: true });
+}
+fs.writeFileSync(path.join(CARDS, 'cap-fit.json'), JSON.stringify(report, null, 1));
+console.log('자막', report.length);
+
+/* 3) 마지막 컷 — 흰 바탕(10-18 "마지막 컷은 흰 바탕으로 해라.") · 두 안(3판 피드백 ⑥ "이전에 Land-XI 플랫폼 CI가 훨 나은거 같은데. 아니면 국토를 읽는 AI, Land‑XI 플랫폼 으로 하던지..?")
+   A = 사이트 머리의 'LAND-XI PLATFORM' 글자 CI(2판 끝과 같은 모양 · 크게) + LX 한국국토정보공사 로고 · B = '국토를 읽는 AI' 한 줄 위 'Land‑XI 플랫폼' + LX 로고.
+   영상에는 END_VARIANT(기본 A) — 두 안 모두 cards/end-A.png · end-B.png 로 남겨 사용자가 고른다. */
+const lock = pathToFileURL(path.join(ROOT, 'landxi/assets/brand/vector/lx-lockup.svg')).href;
+const BASE = `${FONTS}
+html,body{margin:0;height:100%;background:#FFFFFF;overflow:hidden}
+.w{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.a{opacity:0;transform:translateY(28px);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
+.l{width:72px;height:2px;background:#E5E8EB;margin:46px 0 42px;animation-delay:.25s}
+img{height:58px;animation-delay:.4s}
+@keyframes up{to{opacity:1;transform:none}}
+.still .a{animation:none;opacity:1;transform:none}`;
+const ENDS = {
+  A: `<!doctype html><meta charset=utf-8><style>${BASE}
+.n{font:700 104px/1 PL;color:#191F28;letter-spacing:-1px;margin:0;white-space:nowrap}
+</style><body><div class=w><p class="a n">LAND-XI PLATFORM</p><div class="a l"></div><img class=a src="${lock}" alt="LX 한국국토정보공사"></div>`,
+  B: `<!doctype html><meta charset=utf-8><style>${BASE}
+.k{font:600 40px/1.2 P;color:#4E5968;letter-spacing:-.6px;margin:0 0 22px}
+.n{font:800 96px/1.1 PL;color:#191F28;letter-spacing:-2px;margin:0;white-space:nowrap}
+</style><body><div class=w><p class="a k">국토를 읽는 AI</p><p class="a n" style="animation-delay:.1s">Land‑XI 플랫폼</p><div class="a l"></div><img class=a src="${lock}" alt="LX 한국국토정보공사"></div>`,
+};
+for (const [k, html] of Object.entries(ENDS)) {   // 고르는 그림(움직임 없이 끝 모습)
+  const f = path.join(CARDS, `end-${k}.html`); fs.writeFileSync(f, html.replace('<body>', '<body class=still>'));
+  await p.goto(pathToFileURL(f).href); await p.evaluate(() => document.fonts.ready); await sleep(400);
+  const ok = await p.evaluate(() => { const n = document.querySelector('.n').getBoundingClientRect(); return n.left > 40 && n.right < 1880; });
+  if (!ok) throw new Error('끝 글자가 넘침 ' + k);
+  await p.screenshot({ path: path.join(CARDS, `end-${k}.png`) });
+}
+const V = process.env.END_VARIANT || 'A';
+const f = path.join(CARDS, 'end.html'); fs.writeFileSync(f, ENDS[V]);
+await p.goto('about:blank'); await p.setContent(`<body style="margin:0;background:#FFFFFF"></body>`);
+const r = new Rec(p, path.join(process.env.TEMP || OUT2, 'lx-video-frames-v4', 'end'));
+await r.start(); await sleep(300);
+await p.goto(pathToFileURL(f).href); await p.evaluate(() => document.fonts.ready);
+await sleep(6500);
+console.log('끝', V, await r.stop(path.join(OUT2, 'raw', 'e1-end.mp4')));
+await b.close();
