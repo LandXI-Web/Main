@@ -1,0 +1,146 @@
+[
+ {
+  "who": "inst",
+  "size": "w1440",
+  "q": "남원시 경작지 현황 보여 줘",
+  "answerMs": 2012,
+  "readyMs": 2290,
+  "map": [
+   1360,
+   836
+  ],
+  "box": [
+   680,
+   212
+  ],
+  "pct": 12.7,
+  "band": "XI\n\n전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,038건 · 기관 신고",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "w1440",
+  "q": "임실군 경작지 현황 보여 줘",
+  "answerMs": 17,
+  "readyMs": 2290,
+  "map": [
+   1360,
+   836
+  ],
+  "box": [
+   680,
+   156
+  ],
+  "pct": 9.3,
+  "band": "XI\n\n임실군은 이 기관 계정에서 볼 수 없습니다.\n\n남원시 결과 요약 보기\n남원시 AI 분석 결과 몇 건\n대화 2\n×",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "w1440",
+  "drawer": {
+   "drawer": true,
+   "msgs": 5
+  }
+ },
+ {
+  "who": "inst",
+  "size": "w1920",
+  "q": "남원시 경작지 현황 보여 줘",
+  "answerMs": 5167,
+  "readyMs": 2469,
+  "map": [
+   1840,
+   1016
+  ],
+  "box": [
+   680,
+   212
+  ],
+  "pct": 7.7,
+  "band": "XI\n\n전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,038건 · 기관 신고",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "w1920",
+  "q": "임실군 경작지 현황 보여 줘",
+  "answerMs": 14,
+  "readyMs": 2469,
+  "map": [
+   1840,
+   1016
+  ],
+  "box": [
+   680,
+   156
+  ],
+  "pct": 5.7,
+  "band": "XI\n\n임실군은 이 기관 계정에서 볼 수 없습니다.\n\n남원시 결과 요약 보기\n남원시 AI 분석 결과 몇 건\n대화 2\n×",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "w1920",
+  "drawer": {
+   "drawer": true,
+   "msgs": 5
+  }
+ },
+ {
+  "who": "inst",
+  "size": "m390",
+  "q": "남원시 경작지 현황 보여 줘",
+  "answerMs": 2129,
+  "readyMs": 2049,
+  "map": [
+   390,
+   724
+  ],
+  "box": [
+   366,
+   235
+  ],
+  "pct": 30.5,
+  "band": "XI\n\n전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,038건 · 기관 신고",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "m390",
+  "q": "임실군 경작지 현황 보여 줘",
+  "answerMs": 745,
+  "readyMs": 2049,
+  "map": [
+   390,
+   724
+  ],
+  "box": [
+   366,
+   196
+  ],
+  "pct": 25.4,
+  "band": "XI\n\n임실군은 이 기관 계정에서 볼 수 없습니다.\n\n남원시 결과 요약 보기\n남원시 AI 분석 결과 몇 건\n대화 2\n×",
+  "dlogVisible": false,
+  "dots": 0,
+  "errs": []
+ },
+ {
+  "who": "inst",
+  "size": "m390",
+  "drawer": {
+   "drawer": true,
+   "msgs": 5
+  }
+ }
+]

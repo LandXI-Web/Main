@@ -1,0 +1,35 @@
+/* XI ChatGEO 자리 — 입력 한 줄 + 답 띠(두 줄) · 대화 전체는 오른쪽 서랍(10-18 원칙 290 "깔끔한건 일단 1안이다" → 기본)
+   지도 위에는 입력 한 줄과 답 띠 한 장만. 답의 숫자 · 자리는 지도 위 꼬리표 · 한 줄 통계가 맡는다. 토큰 · 흰 카드 16 · 글자 단계만 사용. */
+/* ═══ d1 — 지도가 답한다 ═══ */
+.k-main > .k-chat-root[data-dock] .k-chat-dlog{display:none!important}           /* 긴 대화 칸은 지도 위에 두지 않는다 */
+.k-main > .k-chat-root[data-dock][data-turns] .k-chat-sugg{display:none}         /* 답이 있으면 추천 질문 칩 대신 답 띠 */
+/* 답 띠 — 입력 줄 바로 위 · 글 두 줄까지 · 단추는 답에서 그대로 */
+.xk-ans{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:12px;align-items:start;padding:12px 10px 12px 14px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:k-chat-in var(--d-380) var(--e-ui)}
+.xk-ans[hidden]{display:none}
+.xk-ans-i{flex:none;width:28px;height:28px;margin-top:1px;border-radius:var(--r-8);background:var(--ai);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:800 var(--fs-tag,14px)/1 var(--font-display);letter-spacing:-.02em}
+.xk-ans-m{min-width:0;display:grid;gap:8px}
+.xk-ans-t{margin:0;font:400 var(--fs-body,16px)/24px var(--font-body);color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:pretty;word-break:keep-all}
+.xk-ans-t b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.xk-ans.is-busy .xk-ans-t{color:var(--sub)}
+.xk-ans-bar{height:3px;width:120px;border-radius:2px;background:var(--rule);overflow:hidden;position:relative}
+.xk-ans-bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--accent);border-radius:2px;animation:xk-bar 1.2s ease-in-out infinite}
+@keyframes xk-bar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.xk-ans-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.xk-ans-a button{height:36px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer}
+.xk-ans-a button:hover{background:var(--bg-0)}
+.xk-ans-a button.is-1{border-color:var(--ink);background:var(--ink);color:#fff}
+.xk-ans-a button.is-1:hover{background:var(--ink-2)}
+.xk-ans-a .xk-more{margin-left:auto;height:36px;padding:0 4px;border:0;background:none;font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.xk-ans-a .xk-more::after{content:"→"}
+.xk-ans-a .xk-more:hover{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.xk-ans-x{flex:none;width:32px;height:32px;margin:-4px -2px 0 0;border:0;border-radius:var(--r-8);background:none;font:300 var(--fs-t1,28px)/1 var(--font-body);color:var(--sub);cursor:pointer}
+.xk-ans-x:hover{background:var(--bg-0);color:var(--ink)}
+/* 대화 서랍(오른쪽 · 공용 서랍) — 대화 칸이 그대로 옮겨 온다 */
+.k-drawer .k-dr-b.xk-dlog{padding:0;display:flex;flex-direction:column}
+.k-drawer .k-dr-b.xk-dlog .k-chat-b{flex:1;min-height:0;padding:16px 20px 24px;background:var(--bg-0)}
+.k-drawer .k-dr-b.xk-dlog .k-chat-msg{display:flex}                                     /* 서랍 안에서는 지난 대화 전부 */
+
+/* d1 휴대폰 · 좁은 화면 — 통계 판은 답 띠 위로(겹침 0) */
+@media (max-width:900px){.k-main:has(.xk-ans:not([hidden])) .xo{bottom:calc(96px + var(--xk-ah,0px))}}
+@media (max-width:640px){.xk-ans{padding:10px 8px 10px 12px}}
+@media (prefers-reduced-motion:reduce){.xk-ans{animation:none}}
