@@ -1089,17 +1089,25 @@ function boardRegs() {
   return { region, regs: regs.filter((reg) => svcRows(reg).length), services, regions, svcRows };
 }
 const regOf = (reg) => findRegion(reg.sgg_cd) || (reg.prev_cd && findRegion(reg.prev_cd)) || findRegion(reg.name) || null;
-let BL = null;   // 목록 단계 { lvl: 1 시도 · 2 시군구 · 3 서비스, sido, sgg } — 서랍이 열려 있는 동안만(10-17 원칙 280 "시군별로 다 표기하기 말고 단계를 나눠야겠다")
+let BL = null;   // 목록 상태 { sido: 고른 시도, sgg: 펼친 시군구 코드 | null } — 서랍이 열려 있는 동안만(10-17 원칙 280 "단계를 나눠야겠다" → 10-18 '이 안' = 한 화면 2단)
+/** 기본 시도 — 지금 시군구 안이면 그 시도 · 아니면 시군구가 가장 많은 시도(같으면 앞) */
+function defaultSido(B, sidos) {
+  const cur = B.region ? B.regs.find((reg) => regOf(reg)?.code === B.region.code) : null;
+  if (cur) return cur.sido || '—';
+  let best = sidos[0], n = -1;
+  for (const sd of sidos) { const k = B.regs.filter((reg) => (reg.sido || '—') === sd).length; if (k > n) { best = sd; n = k; } }
+  return best;
+}
 function openBoardList() {
   const B = boardRegs(); if (!B) return;
   const d = S.drawer && S.drawer.__kind === 'board' ? S.drawer : drawerOpen('', () => { S.list = null; BL = null; });
   d.__kind = 'board'; S.list = null; patchRail();
   if (!B.regs.length) { boardTitle(d, [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`]); const box = h('div.xc-list.xc-board'); K.empty(box, { kind: 'first', text: '이 범위에 제공 중인 서비스가 없습니다' }); d.set(box); return; }
-  // 첫 단계: 시군구 안이면 그곳의 서비스(3) · 시도가 하나면 시군구(2) · 아니면 시도(1)
+  // 처음: 시군구 안이면 그 시도 · 그 시군구가 펼쳐진 채 · 시군구가 하나뿐인 시도(기관 화면)도 바로 펼침
   const cur = B.region ? B.regs.find((reg) => regOf(reg)?.code === B.region.code) : null;
   const sidos = [...new Set(B.regs.map((reg) => reg.sido || '—'))];
-  if (!BL || (BL.sido && !sidos.includes(BL.sido))) BL = cur ? { lvl: 3, sido: cur.sido || '—', sgg: cur.sgg_cd } : sidos.length === 1 ? { lvl: 2, sido: sidos[0] } : { lvl: 1 };
-  else if (cur && BL.lvl === 3 && BL.sgg !== cur.sgg_cd) BL = { lvl: 3, sido: cur.sido || '—', sgg: cur.sgg_cd };
+  if (!BL || !sidos.includes(BL.sido)) { const sido = defaultSido(B, sidos); const inS = B.regs.filter((reg) => (reg.sido || '—') === sido); BL = { sido, sgg: cur ? cur.sgg_cd : inS.length === 1 ? inS[0].sgg_cd : null }; }
+  else if (cur && BL.sgg && BL.sgg !== cur.sgg_cd) BL = { sido: cur.sido || '—', sgg: cur.sgg_cd };
   renderBoardList(d, B);
 }
 /** 서랍 제목 두 구 — 줄바꿈은 '·' 경계에서만(구 중간 꺾임 0 · §3-9) · 한 줄 */
@@ -1108,44 +1116,51 @@ function boardTitle(d, parts) {
   tEl.replaceChildren(h('span.xc-nb', { text: parts[0] }), ' · ', h('span.xc-nb', { text: parts[1] })); tEl.classList.add('xc-board-t');
   d.el.setAttribute('aria-label', parts.join(' · '));
 }
-/** 단계 그리기 — 길잡이 줄(전국 › 시도 › 시군구 · 앞 단계를 누르면 돌아감) + 그 단계의 줄(이름 · 수 · 꺾쇠) · 설명 글 0 */
+/** 한 화면 2단(10-18 사용자 '이 안') — 길잡이 줄(전국 › 시도 › 시군구) · 위 시도 칩 줄(이름 · 시군구 수 · 옆으로 밀기 · 시도가 하나면 없음 = 기관 화면은 관할만) ·
+    아래 고른 시도의 시군구 칩 격자(이름 · 서비스 수) · 시군구 칩을 누르면 그 자리에서 서비스 줄이 펼쳐지고(그곳으로 날아감) · 서비스를 누르면 그 결과만 지도에. 단계를 넘기지 않는다 · 설명 글 0 */
 function renderBoardList(d, B) {
   const sidoOf = (reg) => reg.sido || '—';
   const sidos = [...new Set(B.regs.map(sidoOf))];
   const svcN = (regs) => new Set(regs.flatMap((reg) => B.svcRows(reg).map((it) => it.svc))).size;
-  if (BL.lvl === 3 && !B.regs.some((reg) => reg.sgg_cd === BL.sgg)) BL = { lvl: 2, sido: BL.sido };
+  if (!sidos.includes(BL.sido)) BL = { sido: defaultSido(B, sidos), sgg: null };
   const inSido = B.regs.filter((reg) => sidoOf(reg) === BL.sido);
-  const reg3 = BL.lvl === 3 ? B.regs.find((reg) => reg.sgg_cd === BL.sgg) : null;
-  const box = h('div.xc-list.xc-board');
+  const reg3 = BL.sgg ? inSido.find((reg) => reg.sgg_cd === BL.sgg) : null;
+  if (BL.sgg && !reg3) BL = { sido: BL.sido, sgg: null };
+  boardTitle(d, sidos.length > 1 ? [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`] : [BL.sido, `${nf(inSido.length)} 시군구 · ${nf(svcN(inSido))} 서비스`]);
+  const box = h('div.xc-list.xc-board.xc-board--2');
   box.append(h('div.xc-board-acts', {}, h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
   const go = (st) => { BL = st; renderBoardList(d, B); };
+  // 길잡이 줄 — 전국(기본 시도로 · 접기) › 시도(펼친 시군구 접기) › 시군구(지금)
   const bc = h('nav.xc-bc', { 'aria-label': '단계' });
   const crumb = (text, st, cur) => (cur ? h('span.xc-bc-c', { text }) : h('button.xc-bc-b', { type: 'button', text, onclick: () => go(st) }));
   const sep = () => h('span.xc-bc-s', { text: '›' });
-  if (sidos.length > 1) bc.append(crumb('전국', { lvl: 1 }, BL.lvl === 1));
-  if (BL.lvl >= 2) { if (bc.childElementCount) bc.append(sep()); bc.append(crumb(BL.sido, { lvl: 2, sido: BL.sido }, BL.lvl === 2)); }
-  if (BL.lvl === 3 && reg3) bc.append(sep(), crumb(reg3.name, null, true));
-  if (BL.lvl > 1) box.append(bc);
-  if (BL.lvl === 1) {
-    boardTitle(d, [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`]);
+  if (sidos.length > 1) bc.append(crumb('전국', { sido: defaultSido(B, sidos), sgg: null }, false), sep());
+  bc.append(crumb(BL.sido, { sido: BL.sido, sgg: null }, !reg3));
+  if (reg3) bc.append(sep(), crumb(reg3.name, null, true));
+  box.append(bc);
+  // 1단 — 시도 칩 줄(시도가 둘 이상일 때만)
+  if (sidos.length > 1) {
+    const row = h('div.xc-sdcs', { role: 'tablist', 'aria-label': '시도' });
     for (const sd of sidos) {
       const regs = B.regs.filter((reg) => sidoOf(reg) === sd);
-      box.append(h('button.xc-bl', { type: 'button', onclick: () => go({ lvl: 2, sido: sd }) }, h('b', { text: sd }), h('span.num', { text: `${nf(regs.length)}곳` }), h('span.num', { text: `${nf(svcN(regs))} 서비스` }), h('i')));
+      row.append(h('button.xc-sdc', { type: 'button', role: 'tab', 'aria-pressed': sd === BL.sido ? 'true' : 'false', 'aria-selected': sd === BL.sido ? 'true' : 'false',
+        onclick: () => go({ sido: sd, sgg: regs.length === 1 ? regs[0].sgg_cd : null }) }, h('span', { text: sd }), h('span.num', { text: nf(regs.length) })));
     }
-  } else if (BL.lvl === 2) {
-    boardTitle(d, [BL.sido, `${nf(inSido.length)} 시군구 · ${nf(svcN(inSido))} 서비스`]);
-    for (const reg of inSido) {
-      const r = regOf(reg);
-      box.append(h('button.xc-bl', { type: 'button', 'aria-current': S.region?.code === r?.code ? 'true' : undefined,
-        onclick: () => { go({ lvl: 3, sido: BL.sido, sgg: reg.sgg_cd }); if (r && S.region?.code !== r.code) setRegion(r, { keepDrawer: true }); } },   // 시군구를 누르면 그곳으로 날아가며 서비스 단계로
-        h('b', { text: reg.name }), h('span.num', { text: `${nf(B.svcRows(reg).length)} 서비스` }), h('i')));
-    }
-  } else {
-    boardTitle(d, [reg3.name, `${nf(B.svcRows(reg3).length)} 서비스 제공중`]);
-    box.append(boardGroup(reg3, B));
+    box.append(row);
+    requestAnimationFrame(() => row.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
   }
+  // 2단 — 시군구 칩 격자 · 펼친 칩은 한 줄 전체를 차지하고 그 아래 서비스 줄
+  const grid = h('div.xc-sggs');
+  for (const reg of inSido) {
+    const r = regOf(reg), open = reg3 === reg;
+    const chip = h('button.xc-sgc', { type: 'button', 'aria-expanded': open ? 'true' : 'false', 'aria-current': S.region?.code === r?.code ? 'true' : undefined,
+      onclick: () => { if (open) { go({ sido: BL.sido, sgg: null }); return; } go({ sido: BL.sido, sgg: reg.sgg_cd }); if (r && S.region?.code !== r.code) setRegion(r, { keepDrawer: true }); } },   // 시군구를 누르면 그 자리에서 펼치며 그곳으로 · 다시 누르면 접음
+      h('b', { text: reg.name }), h('span.num', { text: `${nf(B.svcRows(reg).length)} 서비스` }), h('i'));
+    grid.append(open ? h('section.xc-sgw', {}, chip, boardGroup(reg, B)) : chip);
+  }
+  box.append(grid);
   d.set(box);
-  X.boardList = { regions: B.regs.length, services: B.services, level: BL.lvl, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-bl, .xc-board-svc').length, open: BL.lvl >= 2 ? [BL.sido] : [] };
+  X.boardList = { regions: B.regs.length, services: B.services, level: reg3 ? 3 : 2, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-sgc, .xc-board-svc').length, open: [BL.sido], chips: sidos.length > 1 ? sidos.length : 0, grid: inSido.length };
 }
 /** 시군구 하나의 서비스 줄(색 점 · 이름 · 결과 수) — 누르면 그 결과만 지도에 · 다시 누르면 원래대로 */
 function boardGroup(reg, B = boardRegs()) {

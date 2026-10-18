@@ -1,0 +1,228 @@
+{
+ "at": "2026-10-18T00:01:07.003Z",
+ "words": [
+  "결재",
+  "반려",
+  "현장 확인",
+  "시연",
+  "데모",
+  "준비 중",
+  "검증 정확도",
+  "무허가 건축 의심",
+  "표본 n장",
+  "개발 요청",
+  "봤음 기록",
+  "null · undefined · NaN",
+  "데이터하우스",
+  "평가(→ 추론)",
+  "추론 시험",
+  "검증 묶음",
+  "자체 검증",
+  "고친 곳 · 모인 학습 데이터",
+  "고친 것 n건",
+  "학습 자료로 쌓임",
+  "학습 자리",
+  ".docx · Word",
+  "광주전남특별시(→ 전남광주특별시)"
+ ],
+ "results": [
+  {
+   "screen": "LX 직원 · 대시보드",
+   "url": "/landxi/v3/lx-console/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기",
+   "url": "/landxi/v3/lx-analyze/",
+   "hits": [],
+   "resp": [],
+   "errors": [
+    "Failed to load resource: the server responded with a status of 502 ()"
+   ]
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(경작·휴경 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-farm",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-farm"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(비닐하우스 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-5e85a9",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-5e85a9"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(건축물 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-45424f",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-45424f"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 분석하기 자세히(곤포사일리지 분석서비스)",
+   "url": "/landxi/v3/lx-analyze/?card=card-d8fc01",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "label",
+     "text": "현장 확인 필요",
+     "url": "/api/v1/cards/card-d8fc01"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 지도 서비스",
+   "url": "/landxi/v3/lx-map/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 요청함",
+   "url": "/landxi/v3/lx-inbox/",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트",
+   "url": "/landxi/v3/lx-project/?scope=mine",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 새 프로젝트 창",
+   "url": "/landxi/v3/lx-project/?new=1&scope=mine",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · XI맵(전국)",
+   "url": "/landxi/v3/xi-clean/",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/survey/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · XI맵(시군구 · 남원)",
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/survey/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · XI맵(시군구 · 전주 · 구가 있는 시)",
+   "url": "/landxi/v3/xi-clean/?region=52110",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/survey/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · XI맵(시군구 · 종로)",
+   "url": "/landxi/v3/xi-clean/?region=11110",
+   "hits": [],
+   "resp": [
+    {
+     "word": "현장 확인",
+     "key": "note",
+     "text": "현장 확인 전",
+     "url": "/api/v1/survey/stats"
+    }
+   ],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(건축물)",
+   "url": "/landxi/v3/lx-train/?project=prj_da0a2adc45&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(경작지 v2 — 항공 · API 영상)",
+   "url": "/landxi/v3/lx-train/?project=prj_aa6c836803&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(테스트)",
+   "url": "/landxi/v3/lx-train/?project=prj_59c4d26a64&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(주차장 2026)",
+   "url": "/landxi/v3/lx-train/?project=prj_b2fa593a12&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(비닐하우스 2026)",
+   "url": "/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  },
+  {
+   "screen": "LX 직원 · 프로젝트 학습(건축물 2026)",
+   "url": "/landxi/v3/lx-train/?project=prj_15e3127d72&stage=train",
+   "hits": [],
+   "resp": [],
+   "errors": []
+  }
+ ]
+}
