@@ -137,3 +137,13 @@ html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}
 .gl-key-sw{flex:none;width:12px;height:12px;border-radius:3px;background:rgba(15,169,160,.72);box-shadow:inset 0 0 0 1.5px #fff,0 0 0 1px rgba(15,169,160,.9)}
 .gl-key-t,.gl-key-ai{white-space:nowrap}
 .gl-key-ai{color:var(--sub)}
+
+/* 공식 통계 나란히(10-18 제안-해외공식통계대조) */
+.gl-off{display:flex;flex-direction:column;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)}
+.gl-off p,.gl-off h3{margin:0}
+.gl-off-h{color:var(--ink);font:600 var(--fs-body)/var(--lh-body) var(--font-body)}
+.gl-off-sub{color:var(--sub);font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
+.gl-off-wrap{max-height:320px;overflow:auto}
+.gl-off-t th{position:sticky;top:0;background:var(--bg-1,#fff)}
+.gl-off-t tr[data-cur="1"] td{background:var(--bg-0);font-weight:600}
+.gl-off-line{margin:12px 0 0;color:var(--sub);font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}

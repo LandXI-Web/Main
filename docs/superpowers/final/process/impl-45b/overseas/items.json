@@ -1,0 +1,20 @@
+{
+ "made_at": "2026-10-18",
+ "task": "제안-해외공식통계대조 (원칙 293)",
+ "shots": "shots/ (이 PC 에만 · 공개 저장소에 올리지 않음) — 바깥 주소 로그인 폼 · PC 1440 · 모바일 390 · 파일 끝 네 자리 = 찍은 시각",
+ "items": [
+  {
+   "id": "제안-해외공식통계대조",
+   "after": "해외 기관 화면 Register 탭 아래 '공식 통계와 견줌' 표(군 · AI 경작지 ha · 공식 ha · 차이 %) + Season 탭 한 줄. LX 계정은 40개 군 전체, 기관 계정은 자기 군만(범위 밖 0). AI 값은 군 경작지 장부(district-cropland-2025.json)에서 읽어 장부가 바뀌면 새로 열 때 따라옴.",
+   "official": "키르기스스탄 국가통계위원회 '2025 수확 면적'(표 1–17 합 · 수확 면적 · 모든 작물+사료) · 군(raion)별 공식 '파종 면적'은 2013년 뒤로 공개 없음(주 단위만 2024) → 수확 면적 합으로 대체하고 화면에 정확히 표기. 검산: 나라 합 1,249,758 ha vs 공식 파종 2024 1,246,700 ha(0.3%).",
+   "data": "E:/Land-XI 플랫폼/02. 데이터/overseas/kgz/official/ (raw · cleaned CSV · 이름 대응표 · SOURCES.txt)",
+   "shots_list": [
+    "ov-register-off-pc-after-1600.png",
+    "ov-register-off-mobile-after-1600.png",
+    "ov-register-off-pc-lx-1601.png",
+    "ov-register-off-mobile-lx-1601.png",
+    "ov-season-pc-after-1600.png"
+   ]
+  }
+ ]
+}

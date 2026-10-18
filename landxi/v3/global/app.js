@@ -26,6 +26,11 @@ const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데�
   regMatched: 'Matched {m} of {n} rows to local districts', regCols: ['District', 'Declared', 'AI', 'Diff'],
   regMis: "Don't match", regOk: 'Match', regOutside: '{n} outside your districts · not compared', regUnmatched: '{n} with no matching district name',
   regNone: 'No register yet', regNoAi: 'no AI value',
+  // 공식 통계 나란히(10-18 제안-해외공식통계대조 · 원칙 293) — 키르기스스탄 국가통계위원회 2025 수확 면적 표
+  offTitle: 'Against official statistics', offCols: ['District', 'AI cropland (ha)', 'Official (ha)', 'Diff'],
+  offHead: 'Official = harvested area of all field crops and fodder, {y} (National Statistical Committee)',
+  offNote: 'AI = cropland visible in 2025 imagery. Official = reported harvested area. The two measure different things.',
+  offLine: 'Official {y}: {v} ha harvested · AI {d}', offNone: 'No official district figure',
   computing: 'Computing · about {n}s', none: 'No imagery for this season yet', req: 'Request imagery',
   noresult: 'No result yet', checking: 'Checking…',
   guard: 'Outside your districts', maperr: 'Could not load the map', retry: 'Try again',
@@ -87,6 +92,7 @@ async function main() {
   // 작황 하락의 경작지 바탕 = 우리 해외 모델(10-17 바퀴 16 해외-큰숫자 · 원칙 269) — 고지대처럼 크게 부풀린 군은 서버가 공개 판정 값으로 채운다. 길이 없으면 WorldCover
   const OCP = K.hasRoute('/global/crop-tiles/{z}/{x}/{y}.png').then((ok) => (ok ? api('/global/crop-tiles/meta').then((m) => (m?.ready ? { ...m, tiles: API.prefix + '/global/crop-tiles/{z}/{x}/{y}.png' } : null)).catch(() => null) : null));
   // 경작지 장부(군별 · 한 출처) — 큰 숫자 · 내려받기 · XI ChatGEO · 구역 대장 대조가 같은 파일(overseas.publish 가 쓴다)
+  const OFFP = jget('data/official-stats-kgz.json');   // 국가통계위원회 2025 수확 면적(군별 · 원자료 02. 데이터/overseas/kgz/official)
   const LGP = OCP.then((m) => jget(`data/district-cropland-${m?.year || 2025}.json`));
   const isLX0 = who.me.realm === 'lx';
   const needJ = (u) => () => fetch(u).then((r) => (r.ok ? r.json() : null));
@@ -254,6 +260,7 @@ async function main() {
   /* 경작지(HUD 큰 숫자) — 군 경작지 장부(district-cropland · 한 출처) 값 그대로. 나라 = 그 나라 군 합.
      10-18 원칙 289: 작황 하락(빨강)은 화면에서 뺐다(값은 서버 보관 그대로 · 보이지 않음). */
   const LG = await LGP;
+  const OFF = await OFFP;
   const cropHa = (id) => { const e = LG?.districts?.[id]?.crop_ha; return e && Number.isFinite(+e.value) ? e : null; };
   function cropEnv(D0) {
     if (D0) { const e = cropHa(D0.id); return e ? envOf(r1(+e.value / 100), 'km2', e.basis || 'estimate', e.source, e.as_of) : null; }
@@ -559,6 +566,7 @@ async function main() {
       const items = S.season.months.map((m) => ({ label: MON(m), value: nd[m] ?? 0, env: nd[m] }));
       K.bars(bx, { items, ai: true, max: 0.6 });
       bx.querySelectorAll('.k-bar-v').forEach((v, i) => { if (!items[i].env) v.textContent = '—'; else { v.textContent = K.nf(V(items[i].env), 2); v.insertAdjacentHTML('beforeend', K.sig(items[i].env)); enSig(v, items[i].env); } });
+      const ol = offLine(D0); if (ol) body.append(ol);   // 공식 통계 한 줄(차이 %) — 자세한 표는 Register 탭
     } else if (S.tab === 1) {
       const nd = await ndviOf(D0); if (seq !== renderSeq) return;
       const pts = MONTHS.filter((m) => nd[m]).map((m) => ({ label: MON(m), value: nd[m] }));
@@ -795,8 +803,39 @@ async function main() {
     if (S.district) hud(S.district);
     if (S.tab === 3) renderSheet();
   }
+  /* 공식 통계 나란히 — 군 · AI 경작지(장부 한 출처) · 공식(수확 면적) · 차이 %. AI 는 장부가 바뀌면 다시 열 때 그대로 따라온다. */
+  const offOf = (id) => (OFF?.districts?.[id] && S.country && OFF.country === S.country.iso ? OFF.districts[id] : null);
+  const diffTxt = (ai, off) => { const d = (ai - off) / off * 100, r = Math.round(Math.abs(d)); return `${r && d > 0 ? '+' : r ? '−' : ''}${K.nf(r, 0)}%`; };
+  function offLine(D0) {
+    const o = offOf(D0.id), e = cropHa(D0.id);
+    if (!o || !e || !(o.official_ha > 0)) return null;
+    return h('p.gl-off-line', { title: STR.offNote, text: fill(STR.offLine, { y: OFF.year, v: K.nf(o.official_ha, 0), d: diffTxt(+e.value, o.official_ha) }) });
+  }
+  function offBlock() {
+    const A = S.country && admCache[S.country.iso];
+    if (!OFF || !A || OFF.country !== S.country.iso) return null;
+    const rows = A.feats.filter((d) => (d.mine || isLX) && offOf(d.id) && cropHa(d.id)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const box = h('div.gl-off');
+    box.append(h('h3.gl-off-h', { text: STR.offTitle }), h('p.gl-off-sub', { text: fill(STR.offHead, { y: OFF.year }) }));
+    if (!rows.length) { box.append(h('p.gl-reg-note', { text: STR.offNone })); return box; }
+    const tb = h('table.gl-reg-t.gl-off-t');
+    tb.append(h('thead', {}, h('tr', {}, ...STR.offCols.map((c) => h('th', { text: c })))));
+    const tbody = h('tbody');
+    for (const d of rows) {
+      const e = cropHa(d.id), o = offOf(d.id);
+      const tr = h('tr', { 'data-cur': d === S.district ? '1' : null });
+      const ai = h('td.gl-num'); ai.innerHTML = `${esc(K.nf(+e.value, 0))}${K.sig(e)}`;
+      tr.append(h('td', { text: d.name }), ai, h('td.gl-num', { text: K.nf(o.official_ha, 0) }), h('td.gl-num', { text: diffTxt(+e.value, o.official_ha) }));
+      tr.addEventListener('click', () => { if (d !== S.district) toDistrict(d); });
+      tbody.append(tr);
+    }
+    tb.append(tbody);
+    box.append(h('div.gl-off-wrap', {}, tb), h('p.gl-reg-note', { text: STR.offNote }));
+    return box;
+  }
   /** 대장 탭 본문 — 한 줄(구역 단위) · 맞춘 비율 · 표(어긋남 먼저) · 관할 밖·못 맞춘 행 수 · 올리기 버튼 */
-  function regBody() {
+  function regBody() { const b = regBody0(), o = offBlock(); if (o) b.append(o); return b; }
+  function regBody0() {
     const box = h('div.gl-reg');
     const file = h('input', { type: 'file', accept: '.csv,.xlsx', hidden: true, 'aria-label': STR.regUp, onchange: (e) => { const f = e.target.files?.[0]; if (f) regUpload(f); e.target.value = ''; } });
     const up = h('button.t-btn.t-btn--2.gl-reg-up', { type: 'button', text: REG.busy ? STR.regBusy : REG.v ? STR.regAgain : STR.regUp, onclick: () => file.click() });
