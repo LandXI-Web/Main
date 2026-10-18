@@ -305,7 +305,7 @@ async function boot() {
       go: (b, o = {}) => goKeep(b, { ms: RM() ? 0 : 1200, maxZoom: o.maxZoom ?? 12.5 }),
       focus: hlFocus,
       om: () => ({ on: !!OM?.on, sgg: OM?.spec?.map?.level === 'emd' ? String(OM.spec.map.sgg || '') : null }) });
-    document.addEventListener('kit:agent-done', (e) => { const d = e.detail; if (d?.refs && !d.replay) HL.show({ ...d.refs, run: d.run }); });
+    document.addEventListener('kit:agent-done', (e) => { const d = e.detail; if (d?.replay) return; if (d?.refs) HL.show({ ...d.refs, run: d.run }); else if (HL.cur && (d?.rejected || HL.cur.src !== 'dash')) HL.clear(); });   // 새 답이 가리키는 곳이 없으면(관할 밖 · 일반 답) 앞 답의 강조를 걷는다 — 남은 강조가 이 답처럼 보이지 않게
   }
   mountChatAnswer({ host: mainEl, cmdk, hl: HL });                                      // XI ChatGEO 자리(원칙 290 · 10-18 '1안') — 입력 한 줄 + 답 띠 · 대화 전체는 오른쪽 서랍
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)

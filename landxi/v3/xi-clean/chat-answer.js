@@ -58,6 +58,7 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
     requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
     setTimeout(() => window.__xc?.relayout?.(), 420);   // 서랍이 선 자리를 피해 입력 줄 · 답 띠가 비켜 선다
   }
+  document.addEventListener('xk:hl-shown', () => { cancelAnimationFrame(q); q = requestAnimationFrame(paint); });
   let q = 0;
   new MutationObserver((ms) => { if (ms.every((m) => card.contains(m.target))) return; cancelAnimationFrame(q); q = requestAnimationFrame(paint); }).observe(box, { attributes: true, attributeFilter: ['data-state'], childList: true, subtree: true });
   new ResizeObserver(() => host.style.setProperty('--xk-ah', (card.hidden ? 0 : card.offsetHeight + 8) + 'px')).observe(card);   // 좁은 화면 — 통계 판이 답 띠 위로 올라서는 높이

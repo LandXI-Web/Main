@@ -1,0 +1,12 @@
+{
+ "made_at": "2026-10-18",
+ "task": "바퀴 19 재검수 판정 (Haiku 모음 + 직접 재현)",
+ "items": [
+  {
+   "id": "notice-recheck-20",
+   "result": "진짜 고장 4 · 고침 4 · 측정 오류 7 · 정상 2",
+   "fixed": ["크게 보기 앞/다음 정보 미리 받기 + 로딩 상한", "첫 질문 강조 · 이름 잇기 보강", "관할 밖 답 뒤 앞 강조 걷기", "같은 이름 층 날짜로 구분"],
+   "verdict": "docs/superpowers/final/process/impl-45b/recheck-hk/VERDICT.md"
+  }
+ ]
+}

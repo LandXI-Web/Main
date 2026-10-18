@@ -111,7 +111,7 @@ async def layer_names(jobs: list[str]) -> list[dict]:
     from .deps import db
     from .regions import region_of
     async with db(realm="lx") as c:
-        rows = await c.fetch("SELECT j.id, j.options, c.name->>'ko' AS cname, pr.name AS pname FROM jobs j LEFT JOIN cards c ON c.id=j.card_id "
+        rows = await c.fetch("SELECT j.id, j.options, j.finished_at, c.name->>'ko' AS cname, pr.name AS pname FROM jobs j LEFT JOIN cards c ON c.id=j.card_id "
                              "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' WHERE j.id = ANY($1::text[])", jobs)
     by = {r["id"]: r for r in rows}
     out = []
@@ -124,7 +124,25 @@ async def layer_names(jobs: list[str]) -> list[dict]:
         rg = region_of(o.get("sgg_cd")) if o.get("sgg_cd") else None
         reg = " ".join(x for x in ((rg or {}).get("name") or "", (o.get("range_name") or "") if proj else "") if x)
         svc = f"프로젝트 {r['pname']}" if proj and r["pname"] else re.sub(r"\s*분석\s*서비스$", "", r["cname"] or "분석 서비스")
-        out.append({"job": j, "name": " ".join(x for x in (reg, svc) if x), "region": reg, "sgg": (rg or {}).get("sgg_cd") or o.get("sgg_cd")})
+        out.append({"job": j, "name": " ".join(x for x in (reg, svc) if x), "region": reg, "sgg": (rg or {}).get("sgg_cd") or o.get("sgg_cd"), "_at": r["finished_at"]})
+    # 같은 이름의 층이 둘 이상 켜져 있으면 분석한 날로 구분한다('남원시 비닐하우스 · 남원시 비닐하우스' 처럼 같은 말이 겹치지 않게)
+    cnt: dict[str, int] = {}
+    for x in out:
+        cnt[x["name"]] = cnt.get(x["name"], 0) + 1
+    for x in out:
+        at = x.pop("_at", None)
+        if cnt[x["name"]] > 1 and at:
+            x["name"] = f"{x['name']}({at.month}월 {at.day}일 분석)"
+    if len({x["name"] for x in out}) < len(out):           # 날까지 같으면 번호
+        total: dict[str, int] = {}
+        for x in out:
+            total[x["name"]] = total.get(x["name"], 0) + 1
+        seen: dict[str, int] = {}
+        for x in out:
+            n0 = x["name"]
+            seen[n0] = seen.get(n0, 0) + 1
+            if total[n0] > 1:
+                x["name"] = f"{n0} {seen[n0]}"
     return out
 
 

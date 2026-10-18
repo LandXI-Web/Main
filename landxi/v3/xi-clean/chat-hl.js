@@ -63,12 +63,16 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
   }
   /** map_refs 를 지도에 */
   async function show(refs) {
-    if (!refs?.items?.length) return false;
+    if (!refs?.items?.length) { if (HL.cur && HL.cur.src !== 'dash') clear(); return false; }
     const my = ++HL.seq; stopPulse();
     const only = refs.mode === 'only';
     const want = new Set(only ? refs.items.map((it) => it.k) : (refs.named?.length ? refs.named : []));
     let all = [];
-    if (refs.level === 'emd' && refs.sgg) all = (await emds(String(refs.sgg)).catch(() => [])).map((e) => ({ k: e.cd, name: e.nm, geometry: e.geometry }));
+    if (refs.level === 'emd' && refs.sgg) {
+      let rows = await emds(String(refs.sgg)).catch(() => []);
+      if (!rows?.length && my === HL.seq) { await new Promise((r) => setTimeout(r, 700)); rows = await emds(String(refs.sgg)).catch(() => []); }   // 첫 질문에서 경계가 늦으면 한 번 더
+      all = (rows || []).map((e) => ({ k: e.cd, name: e.nm, geometry: e.geometry }));
+    }
     else if (refs.level === 'sgg') all = refs.items.map((it) => { const g = sgg(it.k); return g ? { k: it.k, name: g.name || it.name, geometry: g.geometry } : null; }).filter(Boolean);
     if (my !== HL.seq) return false;
     all = all.filter((f) => f.geometry);
@@ -86,6 +90,7 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
     map.getSource('xk-hl-o').setData(refs.level === 'emd' && on.length ? { type: 'FeatureCollection', features: all.filter((f) => !want.has(f.k)).map((f) => ({ type: 'Feature', properties: { a: dimA }, geometry: f.geometry })) } : EMPTY);
     if (window.__xc) window.__xc.hl = { level: refs.level, mode: refs.mode, n: on.length, keys: on.map((f) => f.k), names: on.map((f) => f.name), linked: items.length };
     flash(on.map((f) => f.k));
+    document.dispatchEvent(new CustomEvent('xk:hl-shown', { detail: { run: refs.run } }));   // 답 띠 · 서랍의 이름 잇기를 다시(강조가 답보다 늦게 끝난 경우)
     // 카메라 — 고른 곳 하나 = 그 곳으로 + 조건(누름과 같은 길) · 여럿 = 그 곳들이 다 보이게. 통계 색칠이 같은 시군구를 그리는 중이면 그쪽이 카메라를 잡는다
     if (only && refs.focus && HL.feats.has(refs.focus)) focusK(refs.focus);
     else if (!dash && on.length && refs.level === 'emd') { const b = bboxOf(on.map((f) => f.geometry)); if (b) go(b, { maxZoom: on.length === 1 ? 13 : 12 }); }

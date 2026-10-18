@@ -96,6 +96,7 @@ function viewerBody(root, { onInfo }) {
       map.fitBounds(d.bounds, { padding: 56, duration: 0 });
       cur = d;
       onInfo?.(d);
+      setTimeout(done, 1200);   // 조각은 오는 대로 그려지므로 '불러오는 중'은 길어도 1.2초까지만
       // 영상 조각이 처음 도착할 때까지 — 걸린 시간을 남긴다(점검용)
       await new Promise((ok) => {   // 첫 그리기로 조각을 부른 뒤, 영상 조각이 다 도착하면
         let armed = false;
@@ -164,6 +165,7 @@ export function openImageryViewer({ items = [], index = 0, onPick, picked } = {}
     const on = !!picked?.(it);
     pick.textContent = on ? '고른 영상입니다 · 닫기' : '이 영상 고르기';
     V.show(it);
+    for (const j of [i + 1, i - 1]) if (items[j]) warmImageryViewer([items[j].id]);   // 앞 · 다음 영상 정보 미리 받기
   };
   const close = () => {
     removeEventListener('keydown', key, true);

@@ -797,6 +797,7 @@ function create(opts) {
         // 거절도 이유 한 줄 + 대신 할 수 있는 버튼(확인 16차 규칙 ②)
         shown = { run, md: d?.message || '', envs: {}, lang: d?.lang || lang, claims: [], v: null, expired: true, next: Array.isArray(d?.next) ? d.next.slice(0, 3) : [], alt: null, hint: d?.hint || null };
         drawTail();
+        document.dispatchEvent(new CustomEvent('kit:agent-done', { detail: { run, refs: null, replay, rejected: true } }));   // 관할 밖 · 거절 답 — 받는 화면이 앞 답의 강조를 걷는다
       }
       if (name === 'agent.failed') fail(`failed · ${d?.error || ''}`);
     }
