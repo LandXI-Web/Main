@@ -192,6 +192,10 @@ def prepare(country: str, year: int, cd: str) -> dict:
     log(f"합성 시작 {cd} {row[1]} · 격자 {grid.w}×{grid.h} · 조각 {len(blocks)}")
     stack, st = s2.composite(grid, year, blocks=blocks, log=lambda m: print(time.strftime('%H:%M:%S'), m, flush=True), threads=48,
                                max_obs=OBS)
+    if year != 2025:                                # 옛 해(2017)는 같은 칸 2025 분위수에 맞춘다(처리 기준 차이 · 10-18 해외-2017건물 · overseas.extras)
+        from overseas import extras
+        st["harmonize"] = extras.harmonize(stack, country, cd)
+        log(f"맞춤 {cd} {json.dumps(st['harmonize'], ensure_ascii=False)}")
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(".tmp.tif")
     s2.write_tif(tmp, stack, grid, {"country": country, "year": year, "cell": cd, "months": st["months"]})
@@ -412,9 +416,20 @@ def run_cell(c, g, country: str, year: int, cd: str, model: str, pf: Prefetch, n
             status(state="running", cell=cd, name=row[1], part=k + 1, parts=len(parts), done=v.get("shards_done"), total=v.get("shards_total"))
     with c.transaction():
         out = finish_cell(c, country, year, cd, jobs, model, t0, info)
+    keep_extras(country, year, cd, info)
     drop_stack(country, year, cd)
     out["sec"] = round(time.time() - t0)
     return out
+
+
+def keep_extras(country: str, year: int, cd: str, info: dict):
+    """합성을 지우기 전 덧일(10-18 원칙 289 · overseas.extras): 2025 띠 분위수(2017 맞추기 기준) · 9 · 10월 NDVI(작황 하락 10 m)."""
+    from overseas import extras
+    for fn in (extras.keep_ref, extras.keep_ndvi):
+        try:
+            fn(country, year, cd, Path(info["path"]))
+        except Exception as e:  # noqa: BLE001
+            log(f"  덧일 {fn.__name__} 실패(칸은 그대로 끝): {repr(e)[:200]}")
 
 
 def finish_cell(c, country: str, year: int, cd: str, jobs: list[str], model: str, t0: float, info: dict) -> dict:

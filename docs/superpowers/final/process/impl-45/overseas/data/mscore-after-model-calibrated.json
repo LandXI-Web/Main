@@ -1,0 +1,16 @@
+{
+ "tag": "after-model-calibrated",
+ "weights": "job_01M56EQQ54ZZDGBKNJ0BYQAVZ7",
+ "input": "Sentinel-2 2025 monthly composite, 1 clear obs (same as national run), 960 m window per point",
+ "metrics": {
+  "n": 255,
+  "accuracy": 0.89,
+  "iou": 0.834,
+  "precision": 0.898,
+  "recall": 0.922,
+  "tp": 141,
+  "fp": 16,
+  "fn": 12,
+  "tn": 86
+ }
+}

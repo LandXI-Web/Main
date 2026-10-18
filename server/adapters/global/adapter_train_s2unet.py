@@ -209,6 +209,12 @@ class Adapter:
         conf = {"cin": int(feats.shape[1]), "classes": C, "width": 32, "names": NAMES, "names_en": NAMES_EN, "targets": list(TARGET_IDX),
                 "months": list(s2.MONTHS), "bands": list(s2.BANDS), "chip": 64, "dataset": str(dpath), "year_trained": 2021,
                 "country": p.get("country") or "kgz", "label": "ESA WorldCover 2021 · 2020 과 같은 화소만 학습"}
+        try:                                                                          # 판 설명(3판부터 — 정답 규칙 · 해)
+            dj = json.loads(dpath.with_suffix(".json").read_text(encoding="utf-8"))
+            if int(dj.get("version") or 0) >= 3:
+                conf.update(label=dj.get("label") or conf["label"], year_trained=dj.get("years") or conf["year_trained"])
+        except (OSError, ValueError):
+            pass
         torch.save({"state": best_state, "mu": mu.tolist(), "sd": sd.tolist(), "cfg": conf}, wpath)
         np.save(out_dir / "test_pred.npy", pte.astype(np.uint8))
         ms = int((time.perf_counter() - t0) * 1000)

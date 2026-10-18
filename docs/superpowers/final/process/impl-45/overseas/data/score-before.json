@@ -1,0 +1,75 @@
+{
+ "tag": "before",
+ "model": "overseas/job_01M4ZAKM9WN18KXRE0FGYVAFG5",
+ "labelled": 255,
+ "unsure": 45,
+ "crop_share": 0.6,
+ "maps": {
+  "ours": {
+   "n": 255,
+   "accuracy": 0.706,
+   "iou": 0.639,
+   "precision": 0.707,
+   "recall": 0.869,
+   "tp": 133,
+   "fp": 55,
+   "fn": 20,
+   "tn": 47
+  },
+  "shown": {
+   "n": 255,
+   "accuracy": 0.816,
+   "iou": 0.736,
+   "precision": 0.84,
+   "recall": 0.856,
+   "tp": 131,
+   "fp": 25,
+   "fn": 22,
+   "tn": 77
+  },
+  "glad2019": {
+   "n": 255,
+   "accuracy": 0.741,
+   "iou": 0.675,
+   "precision": 0.733,
+   "recall": 0.895,
+   "tp": 137,
+   "fp": 50,
+   "fn": 16,
+   "tn": 52
+  },
+  "wc2021": {
+   "n": 255,
+   "accuracy": 0.796,
+   "iou": 0.726,
+   "precision": 0.789,
+   "recall": 0.902,
+   "tp": 138,
+   "fp": 37,
+   "fn": 15,
+   "tn": 65
+  },
+  "esri2025": {
+   "n": 255,
+   "accuracy": 0.843,
+   "iou": 0.756,
+   "precision": 0.919,
+   "recall": 0.81,
+   "tp": 124,
+   "fp": 11,
+   "fn": 29,
+   "tn": 91
+  },
+  "consensus_2of3": {
+   "n": 255,
+   "accuracy": 0.835,
+   "iou": 0.767,
+   "precision": 0.836,
+   "recall": 0.902,
+   "tp": 138,
+   "fp": 27,
+   "fn": 15,
+   "tn": 75
+  }
+ }
+}

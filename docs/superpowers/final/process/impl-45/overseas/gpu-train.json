@@ -1,0 +1,17 @@
+{
+ "gpu0": {
+  "samples_10s": 67,
+  "max_30s_W": 172.6,
+  "max_30s_util": 93.7,
+  "max_temp_C": 79,
+  "minutes_over_140W_30s": 2.5
+ },
+ "gpu1": {
+  "samples_10s": 67,
+  "max_30s_W": 90.7,
+  "max_30s_util": 24.7,
+  "max_temp_C": 65,
+  "minutes_over_140W_30s": 0.0
+ },
+ "note": "학습 작업(job_01M56EQQ54ZZDGBKNJ0BYQAVZ7 · 11:51–12:02) 동안 nvidia-smi 10초마다 · 학습은 GPU 0 한 장(작업 장비 규칙) · 전력 상한 200 W 안 · 그러나 30초 평균 140 W · 70 % 규칙을 약 2분 넘음(11:55–11:57 · 최고 173 W) — 작업 장비 쉼 규칙 보완 필요"
+}
