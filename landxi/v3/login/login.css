@@ -216,3 +216,16 @@ body.t { overflow: hidden; }
 }
 .door__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .door__api { font-size:var(--fs-aux); line-height:19px; color: var(--sub, #727780); text-decoration: underline; text-underline-offset: 3px; }   /* 바닥 'API 안내'(외부 연동 API 3차) */
+
+/* 패밀리 사이트 — 기관 사이트 바로가기(원칙 294) · 바닥에서 위로 펼침 */
+.fam{position:relative;font:500 var(--fs-aux)/var(--lh-aux, 19px) var(--font-body);color:var(--sub)}
+.fam>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.fam>summary::-webkit-details-marker{display:none}
+.fam>summary::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(1px) rotate(-135deg);transition:transform .18s}
+.fam[open]>summary::after{transform:translateY(-2px) rotate(45deg)}
+.fam>summary:hover,.fam[open]>summary{color:var(--ink)}
+.fam ul{position:absolute;left:0;bottom:calc(100% + 8px);z-index:20;margin:0;padding:6px;list-style:none;min-width:190px;background:var(--bg-1, #fff);border:1px solid var(--rule, #e5e8eb);border-radius:var(--r-8, 8px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.fam a{display:block;padding:9px 12px;border-radius:6px;color:var(--ink);text-decoration:none;white-space:nowrap}
+.fam a:hover,.fam a:focus-visible{background:var(--bg-0, #f2f4f6)}
+.door__links{display:flex;align-items:center;gap:16px}
+.door__foot .fam ul{left:auto;right:0}
