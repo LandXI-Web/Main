@@ -1,0 +1,157 @@
+[
+ {
+  "run": 0,
+  "mode": "cold",
+  "readyMs": 5156,
+  "htmlMs": 844,
+  "codeEndMs": 4871,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 7,
+   "region": 984,
+   "engine": 984,
+   "data": 1861,
+   "layers": 1977,
+   "canvas": 1988,
+   "ready": 2079,
+   "shown": 2530
+  },
+  "mapEngine": {
+   "start": 852,
+   "ms": 2450
+  },
+  "app": {
+   "start": 851,
+   "ms": 973
+  },
+  "firstBundle": {
+   "start": 860,
+   "ms": 1951
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 1,
+  "mode": "cold",
+  "readyMs": 3540,
+  "htmlMs": 909,
+  "codeEndMs": 3675,
+  "requests": 119,
+  "afterModuleStart": {
+   "gate": 7,
+   "region": 719,
+   "engine": 719,
+   "data": 903,
+   "layers": 961,
+   "canvas": 978,
+   "ready": 1066,
+   "shown": 1066
+  },
+  "mapEngine": {
+   "start": 916,
+   "ms": 1964
+  },
+  "app": {
+   "start": 915,
+   "ms": 960
+  },
+  "firstBundle": {
+   "start": 923,
+   "ms": 1473
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 2,
+  "mode": "cold",
+  "readyMs": 3884,
+  "htmlMs": 554,
+  "codeEndMs": 3057,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 6,
+   "region": 1132,
+   "engine": 1132,
+   "data": 1370,
+   "layers": 1472,
+   "canvas": 1488,
+   "ready": 1573,
+   "shown": 2460
+  },
+  "mapEngine": {
+   "start": 562,
+   "ms": 859
+  },
+  "app": {
+   "start": 560,
+   "ms": 562
+  },
+  "firstBundle": {
+   "start": 569,
+   "ms": 947
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 3,
+  "mode": "cold",
+  "readyMs": 5368,
+  "htmlMs": 583,
+  "codeEndMs": 5016,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 10,
+   "region": 1306,
+   "engine": 1442,
+   "data": 1684,
+   "layers": 1808,
+   "canvas": 1820,
+   "ready": 1910,
+   "shown": 2377
+  },
+  "mapEngine": {
+   "start": 591,
+   "ms": 3718
+  },
+  "app": {
+   "start": 590,
+   "ms": 1185
+  },
+  "firstBundle": {
+   "start": 598,
+   "ms": 2305
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 4,
+  "mode": "cold",
+  "readyMs": 3509,
+  "htmlMs": 409,
+  "codeEndMs": 2869,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 8,
+   "region": 959,
+   "engine": 959,
+   "data": 1203,
+   "layers": 1252,
+   "canvas": 1262,
+   "ready": 1331,
+   "shown": 2209
+  },
+  "mapEngine": {
+   "start": 416,
+   "ms": 1013
+  },
+  "app": {
+   "start": 415,
+   "ms": 601
+  },
+  "firstBundle": {
+   "start": 424,
+   "ms": 989
+  },
+  "consoleErrors": 0
+ }
+]

@@ -198,6 +198,7 @@
 @media (max-width:900px){
   .xo{right:16px;left:16px;top:auto;bottom:96px;width:auto;max-height:46%}
   .xo-mini{right:16px;left:16px;max-width:none}
+  [data-onmap] .xo-mini:not([hidden]) ~ .xo, [data-onmap]:has(.xo-mini:not([hidden])) .xo{display:none}   /* 1단계(한 줄)에서는 판을 접어 둔다 — 좁은 화면에서 판이 펼친 채 지도를 덮던 것(10-18 답 ↔ 지도 강조 점검) */
   .xo-sw{display:none}
 }
 @media (prefers-reduced-motion:reduce){.xo-card,.xo-tag,.xo-mini{animation:none}.xo-live i{animation:none}}

@@ -7,14 +7,14 @@ import * as K from '../kit/index.js';
 const { h } = K;
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 
-export function mountChatAnswer({ host, cmdk }) {
+export function mountChatAnswer({ host, cmdk, hl = null }) {
   const box = cmdk?.el; if (!host || !box) return null;
   const root = host.querySelector('.k-chat-root[data-dock]'); if (!root) return null;
   const log = root.querySelector('.k-chat-b'), sugg = box.querySelector('.k-chat-sugg'); if (!log) return null;
   const txt = h('p.xk-ans-t'), acts = h('div.xk-ans-a'), more = h('button.xk-more', { type: 'button', text: '대화', onclick: () => openDrawer() });
-  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, txt, acts), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; } }));
+  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, txt, acts), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; hl?.clear(); } }));   // 답 띠를 닫으면 지도 강조도 걷는다(원칙 292)
   (sugg || box.querySelector('.k-chat-in')).before(card);
-  let drawer = null, home = null;
+  let drawer = null, home = null;   // 서랍이 열려 있는 동안 답 띠는 숨긴다(10-18 제안-서랍열면답띠숨김 '넣음' — 같은 답이 두 곳에 보이지 않게)
   const turns = () => log.querySelectorAll('.k-chat-msg.me').length;
   function dedupe() {
     for (const bub of log.querySelectorAll('.k-chat-msg.ai .k-chat-bub')) {
@@ -29,6 +29,7 @@ export function mountChatAnswer({ host, cmdk }) {
   function paint() {
     const st = box.dataset.state;
     const last = [...log.querySelectorAll('.k-chat-msg.ai')].pop();
+    if (drawer) { card.hidden = true; linkDrawer(); return; }
     if (st === 'busy') { card.hidden = false; card.classList.add('is-busy'); txt.textContent = '답을 찾는 중'; acts.replaceChildren(h('span.xk-ans-bar')); return; }
     dedupe();
     if (!last || last.classList.contains('k-chat-intro')) { card.hidden = true; return; }
@@ -40,12 +41,20 @@ export function mountChatAnswer({ host, cmdk }) {
     more.textContent = `대화 ${nf(turns())}`;
     acts.replaceChildren(...btns, more);
     card.hidden = false;
+    if (hl && hl.cur?.run && hl.cur.run === box.dataset.run) { hl.link(txt); if (a) hl.link(a); }   // 답의 이름 · 숫자 ↔ 지도(원칙 292) — 이 답이 보낸 곳만
+  }
+  /** 서랍 안 대화 — 지금 강조를 보낸 답의 글도 지도와 잇는다 */
+  function linkDrawer() {
+    if (!hl?.cur?.run) return;
+    const last = [...log.querySelectorAll('.k-chat-msg.ai')].pop();
+    if (last && hl.cur.run === box.dataset.run) hl.link(last.querySelector('.k-chat-a, .k-ck-a') || last.querySelector('.k-chat-bub'));
   }
   function openDrawer() {
     if (drawer) { drawer.close(); return; }
     home = log.parentElement;
-    drawer = K.drawer({ title: 'XI ChatGEO · 대화', host, slot: 'right', onClose: () => { drawer = null; if (home) home.append(log); log.querySelectorAll('.k-chat-msg').forEach((m) => { m.style.display = ''; }); } });
+    drawer = K.drawer({ title: 'XI ChatGEO · 대화', host, slot: 'right', onClose: () => { drawer = null; if (home) home.append(log); log.querySelectorAll('.k-chat-msg').forEach((m) => { m.style.display = ''; }); paint(); setTimeout(() => window.__xc?.relayout?.(), 60); } });
     drawer.body.classList.add('xk-dlog'); drawer.body.append(log);
+    card.hidden = true; linkDrawer();                                                   // 서랍이 열리면 답 띠는 숨김 · 닫으면 paint 가 되돌린다
     requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
     setTimeout(() => window.__xc?.relayout?.(), 420);   // 서랍이 선 자리를 피해 입력 줄 · 답 띠가 비켜 선다
   }

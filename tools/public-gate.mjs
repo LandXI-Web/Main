@@ -14,7 +14,7 @@
        판 번호 = 화면 코드 폴더(BUILD_ROOTS) 파일들의 이름 · 크기 · 고친 시각 지문 — 파일 하나라도 고치면 번호가 바뀌어 HTML(매번 새로)이 새 주소를 부른다.
        판 번호 없는 주소(코드가 import.meta.url 로 만든 스타일 등)는 예전처럼 매번 확인(ETag).
    사용: node tools/public-gate.mjs   (server/start-public.ps1 이 숨김으로 띄운다) */
-import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { fileURLToPath } from 'node:url';
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import zlib from 'node:zlib'; import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
@@ -77,8 +77,7 @@ function serveGovHome(res) {
   const f = path.join(ROOT, 'landxi', 'v3', 'gov-home', 'index.html');
   let html; try { html = htmlWithPreload(GOV_HOME + 'index.html', f); } catch { return send(res, 404, '404'); }
   const body = Buffer.from(html.replace(/<head>/i, `<head><base href="${GOV_HOME}">`));
-  res.writeHead(200, { ...SEC, 'content-type': 'text/html; charset=utf-8', 'content-length': body.length, 'cache-control': 'private, no-cache' });
-  res.end(body);
+  sendBody(res.req, res, 200, { ...SEC, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'private, no-cache' }, body, 'govhome');
 }
 const BRAND_FILE = /^\/files\/brand\/[a-z0-9][a-z0-9-]{1,40}\/mark-[0-9a-f]{12}\.png$/;
 
@@ -127,6 +126,54 @@ function envJs() {
 
 function send(res, code, body = '', headers = {}) { res.writeHead(code, { ...SEC, 'content-type': 'text/plain; charset=utf-8', ...headers }); res.end(body); }
 
+/* ── 줄여 보내기(10-18 제안-첫방문묶어받기 '넣음') — 바깥 주소는 요청마다 터널을 지난다. 관문 → 터널 구간을 줄인 글로 보낸다.
+   화면 코드 · 글 파일(.js .css .json .html .svg .geojson)은 한 번 줄인 것을 기억해 다시 쓴다(같은 파일 · 같은 고친 시각 · 같은 판 번호).
+   API 응답은 글(JSON · 줄 JSON · GeoJSON)만 그 자리에서 줄인다(실시간 스트림 · 그림 · 지도 조각(pmtiles) · 이미 줄인 것은 그대로). */
+const ZTYPE = /^(application\/(json|x-ndjson|geo\+json|javascript)|text\/(css|javascript|html|plain|csv)|image\/svg\+xml)/i;
+function encOf(req) {
+  const ae = String(req.headers['accept-encoding'] || '');
+  return /\bbr\b/.test(ae) ? 'br' : /\bgzip\b/.test(ae) ? 'gzip' : null;
+}
+const addVary = (v) => (v ? (/accept-encoding/i.test(v) ? v : v + ', Accept-Encoding') : 'Accept-Encoding');
+function apiEnc(req, r) {
+  if (req.method === 'HEAD' || r.headers['content-encoding'] || !r.statusCode || r.statusCode === 204 || r.statusCode === 304 || r.statusCode === 206) return null;
+  const ct = String(r.headers['content-type'] || '');
+  if (!ZTYPE.test(ct) || /event-stream/i.test(ct)) return null;
+  const n = Number(r.headers['content-length']);
+  if (Number.isFinite(n) && n < 1024) return null;                // 작은 답은 그대로(줄여도 이득 없음)
+  return encOf(req);
+}
+const ZCACHE = new Map(); let ZBYTES = 0;
+/** 기억한 줄인 글 — key = 파일 · 판 · 방식. 넘치면 오래된 것부터 버린다(합계 192MB) */
+function zipped(key, buf, enc) {
+  const k = key + '|' + enc, c = ZCACHE.get(k);
+  if (c && c.src === buf) return c.z;
+  const z = enc === 'br' ? zlib.brotliCompressSync(buf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: buf.length > 65536 ? 9 : 10, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: buf.length } })
+    : zlib.gzipSync(buf, { level: 9 });
+  if (c) ZBYTES -= c.z.length;
+  ZCACHE.set(k, { src: buf, z }); ZBYTES += z.length;
+  while (ZBYTES > 192 * 1024 * 1024 && ZCACHE.size > 1) { const [fk, fv] = ZCACHE.entries().next().value; ZCACHE.delete(fk); ZBYTES -= fv.z.length; }
+  return z;
+}
+/** 글 본문 하나 보내기 — 받는 쪽이 줄인 글을 받으면 줄여서(1KB 미만은 그대로) */
+function sendBody(req, res, code, headers, body, key) {
+  const enc = body.length >= 1024 ? encOf(req) : null;
+  if (!enc) { res.writeHead(code, { ...headers, 'content-length': body.length, vary: 'Accept-Encoding' }); return res.end(req.method === 'HEAD' ? undefined : body); }
+  const z = zipped(key, body, enc);
+  res.writeHead(code, { ...headers, 'content-encoding': enc, 'content-length': z.length, vary: 'Accept-Encoding' });
+  return res.end(req.method === 'HEAD' ? undefined : z);
+}
+const FILE_BUF = new Map();
+/** 글 파일(코드 폴더 밖 .json · .svg · .geojson 등) 본문 — 고친 시각 · 크기가 같으면 기억한 것 */
+function fileBuf(f, st) {
+  const c = FILE_BUF.get(f);
+  if (c && c.m === st.mtimeMs && c.s === st.size) return c.b;
+  const b = fs.readFileSync(f);
+  if (FILE_BUF.size > 2000) FILE_BUF.clear();
+  FILE_BUF.set(f, { m: st.mtimeMs, s: st.size, b });
+  return b;
+}
+
 function proxy(req, res, body = null) {
   const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '');
   const isLogin = req.method === 'POST' && /^\/api\/v1\/auth\/login\/?$/.test(req.url.split('?')[0]);
@@ -163,6 +210,17 @@ function proxy(req, res, body = null) {
     const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
       const ms = Date.now() - t0;
       if (ms > 5000) console.error(`${new Date().toISOString()} slow ${ms}ms ${req.method} ${req.url.split('?')[0].slice(0, 90)} ${r.statusCode}${up.reusedSocket ? ' reused' : ''}`);   // 게이트웨이 응답이 늦은 것(관문 · 터널 쪽과 가르기)
+      const enc = apiEnc(req, r);
+      if (enc) {                                                    // 글 응답(JSON · 줄 JSON)은 관문에서 줄여 보낸다 — 터널을 지나는 크기가 1/4~1/6(10-18 첫방문묶어받기)
+        const hd = { ...r.headers, 'x-content-type-options': 'nosniff', 'content-encoding': enc, vary: addVary(r.headers.vary) };
+        delete hd['content-length'];
+        res.writeHead(r.statusCode || 502, hd);
+        const z = enc === 'br' ? zlib.createBrotliCompress({ flush: zlib.constants.BROTLI_OPERATION_FLUSH, params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } })
+          : zlib.createGzip({ flush: zlib.constants.Z_SYNC_FLUSH, level: 5 });   // 받은 만큼 바로 내보낸다(첫 화면 묶음 /ximap/boot 는 다 된 줄부터 화면이 쓴다)
+        z.on('error', () => res.destroy());
+        r.pipe(z).pipe(res);
+        return;
+      }
       res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
       if (/text\/event-stream/.test(r.headers['content-type'] || '')) res.flushHeaders?.();
       r.pipe(res);
@@ -219,6 +277,27 @@ function buildId() {
   return BUILD.v;
 }
 const inBuild = (f) => BUILD_ROOTS.some((r) => f.startsWith(r + path.sep));
+const JS_SPEC = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])([^'"\n]+)\2/g;
+const CSS_SPEC = /(@import\s+(?:url\()?\s*)(['"]?)([^'")\s]+)\2/g;
+/* 파일마다 판 번호(10-18 첫방문묶어받기) — 예전에는 화면 코드 전체가 번호 하나라, 어느 화면 파일 하나만 고쳐도 지도 엔진(1MB)까지 모든 주소가 바뀌어
+   첫 방문처럼 다시 받았다. 이제 번호 = 그 파일 글 + 그 파일이 부르는 파일들의 번호(사슬) 지문 — 고친 파일과 그것을 부르는 파일만 새 주소가 된다.
+   전체 지문(buildId)이 바뀔 때만 다시 잰다(1.5초마다 고친 시각 확인 · 파일을 읽어 지문 — 부른 것만 · 기억). */
+const FV = { gen: '', m: new Map() };
+function fileVer(f, url, stack = new Set()) {
+  const g = buildId(); if (FV.gen !== g) { FV.gen = g; FV.m.clear(); }
+  const c = FV.m.get(f); if (c) return c;
+  if (stack.has(f)) return 'cyc';                                   // 서로 부르는 모듈 — 사슬을 끊는다(같은 판 안에서는 늘 같은 값)
+  let t; try { t = fs.readFileSync(f, 'utf8'); } catch { return ''; }
+  stack.add(f);
+  const h = crypto.createHash('sha1').update(t);
+  for (const m of t.matchAll(/\.css$/.test(f) ? CSS_SPEC : JS_SPEC)) {
+    if (/[?#]/.test(m[3])) continue;
+    const u = resolveUrl(m[3], url); if (!u || !CODE_EXT.test(u)) continue;
+    const cf = urlToFile(u); if (cf && inBuild(cf) && fs.existsSync(cf)) h.update('|' + u + '=' + fileVer(cf, u, stack));
+  }
+  stack.delete(f);
+  const v = h.digest('hex').slice(0, 10); FV.m.set(f, v); return v;
+}
 /** 주소 하나에 판 번호 — 화면 코드 폴더 안의 있는 .js · .mjs · .css 만(밖 · 외부 · 데이터는 그대로) */
 function withV(spec, baseUrl, v, html = false) {
   if (!v || /[?#]/.test(spec)) return spec;
@@ -226,10 +305,8 @@ function withV(spec, baseUrl, v, html = false) {
   if (!u || !CODE_EXT.test(u)) return spec;
   const f = urlToFile(u);
   if (!f || !inBuild(f) || !fs.existsSync(f)) return spec;
-  return spec + '?v=' + v;
+  return spec + '?v=' + fileVer(f, u);
 }
-const JS_SPEC = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])([^'"\n]+)\2/g;
-const CSS_SPEC = /(@import\s+(?:url\()?\s*)(['"]?)([^'")\s]+)\2/g;
 /** 모듈 · 스타일 글 안의 주소에 판 번호 */
 function versionCode(text, url, v, css = false) {
   return css ? text.replace(CSS_SPEC, (m, a, q, sp) => a + q + withV(sp, url, v) + q)
@@ -242,16 +319,26 @@ function versionHtml(html, url, v) {
     .replace(/(<script[^>]*type=["']module["'][^>]*>)([\s\S]*?)(<\/script>)/g, (m, a, body, b) => a + versionCode(body, url, v) + b)
     .replace(/(<link[^>]*rel=["'](?:stylesheet|modulepreload|preload)["'][^>]*href=["'])([^"']+)(["'])/g, (m, a, sp, b) => a + withV(sp, url, v, true) + b);
 }
+/* XI맵의 큰 파일(지도 엔진 · 지도 조각 읽개)은 다른 화면(로그인 · 기관 메인 · 서비스 고르기 · 대시보드)에서 남는 시간에 미리 받아 둔다(prefetch · 낮은 순위).
+   사람은 늘 로그인 → 첫 화면을 거쳐 XI맵에 오므로, 처음 오는 사람도 XI맵을 열 때 지도 엔진(줄여서 약 220KB · 바깥 길에서 1~5초)을 기다리지 않는다(10-18 첫방문묶어받기).
+   같은 판 번호 주소라 XI맵이 부르는 주소와 똑같다(브라우저 보관에서 바로). XI맵 화면 자신에는 넣지 않는다(그 화면은 바로 받는다). */
+const XI_HEAVY = ['/landxi/proto/vendor/maplibre/maplibre-gl.js', '/landxi/proto/vendor/maplibre/maplibre-gl.css', '/landxi/xi/vendor/pmtiles/pmtiles.js'];
+function prefetchXi(p) {
+  if (/^\/landxi\/v3\/xi-clean\//.test(p)) return '';
+  return XI_HEAVY.map((u) => { const v = withV(u, '/', 1); return v === u ? '' : `<link rel="prefetch" href="${v}">`; }).join('');
+}
 function htmlWithPreload(p, f) {
   const html = fs.readFileSync(f, 'utf8'); const c = PRE.get(p);
   let links; if (c && c.html === html && Date.now() - c.at < 30000) links = c.links; else { links = graph(p, html); PRE.set(p, { html, links, at: Date.now() }); }
   const out = links && html.includes('</head>') ? html.replace('</head>', links + '</head>') : html;
-  return versionHtml(out, p, buildId());
+  const done = versionHtml(out, p, buildId());
+  const pf = prefetchXi(p);
+  return pf && done.includes('</head>') ? done.replace('</head>', pf + '</head>') : done;
 }
 /** 모듈 · 스타일 파일을 판 번호 주소로 바꿔 내줄 글(같은 파일 · 같은 고친 시각 · 같은 번호면 다시 쓰지 않는다) */
 const CODE_CACHE = new Map();
 function codeBody(p, f, st, v) {
-  const k = `${p}|${v}`, c = CODE_CACHE.get(k);
+  const k = `${p}|${fileVer(f, p)}`, c = CODE_CACHE.get(k);
   if (c && c.m === st.mtimeMs && c.s === st.size) return c.b;
   const b = Buffer.from(versionCode(fs.readFileSync(f, 'utf8'), p, v, /\.css$/.test(f)));
   if (CODE_CACHE.size > 3000) CODE_CACHE.clear();
@@ -274,25 +361,31 @@ function serveFile(req, res, p) {
      'private' = Cloudflare 가 가장자리에 보관하거나 브라우저 보관 시간(4시간)으로 덮지 않게
      (2026-09-30 r3-train: 'no-cache' 만 보내면 .js 가 max-age=14400 으로 바뀌어 고친 화면이 바깥 주소에서 4시간 늦게 반영됐다) */
   if (CODE_EXT.test(f) && inBuild(f) && (req.method === 'GET' || req.method === 'HEAD')) {
-    const qv = /[?&]v=([0-9a-f]{6,16})(&|$)/.exec(req.url)?.[1] || null;
-    const v = qv || buildId();
+    const qv0 = /[?&]v=([0-9a-f]{6,16})(&|$)/.exec(req.url)?.[1] || null;
+    const v = fileVer(f, p);
+    const qv = qv0 && qv0 === v ? qv0 : null;                       // 지금 글과 맞는 번호일 때만 오래 보관(고치기 전 화면이 부른 옛 번호 = 매번 확인)
     let body; try { body = codeBody(p, f, st, v); } catch { body = null; }
     if (body) {
-      const cache = qv ? 'private, max-age=31536000, immutable' : 'private, no-cache';
+      /* 판 번호가 붙은 주소 = 내용이 바뀌지 않는 주소 — 브라우저뿐 아니라 Cloudflare 가장자리도 1년 보관(public · 10-18 첫방문묶어받기).
+         처음 오는 사람도 가까운 가장자리에서 받는다(터널 왕복 0). 화면 코드는 공개 저장소와 같은 글이라 함께 보관해도 된다(비밀 0 — 지도 키는 env.js · 보관 안 함). */
+      const cache = qv ? 'public, max-age=31536000, immutable' : 'private, no-cache';
       const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}-${v}"`;
-      if (!qv && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
-      res.writeHead(200, { ...SEC, 'content-type': type, 'content-length': body.length, 'cache-control': cache, etag });
-      return res.end(req.method === 'HEAD' ? undefined : body);
+      if (!qv && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache, vary: 'Accept-Encoding' }); return res.end(); }
+      return sendBody(req, res, 200, { ...SEC, 'content-type': type, 'cache-control': cache, etag }, body, `${p}|${v}|${st.mtimeMs}`);
     }
   }
   if (/\.html$/.test(f) && req.method === 'GET') {   // HTML 은 미리 받기 목록을 붙여 내준다(매번 새로)
     let body; try { body = Buffer.from(htmlWithPreload(p, f)); } catch { body = null; }
-    if (body) { res.writeHead(200, { ...SEC, 'content-type': type, 'content-length': body.length, 'cache-control': 'private, no-cache' }); return res.end(body); }
+    if (body) return sendBody(req, res, 200, { ...SEC, 'content-type': type, 'cache-control': 'private, no-cache' }, body, 'html:' + p);
   }
   const code = /\.(html|js|mjs|css|json)$/.test(f);
   const cache = code ? 'private, no-cache' : 'public, max-age=86400';
   const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
   if (code && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
+  if (!req.headers.range && st.size >= 1024 && st.size <= 8 * 1024 * 1024 && ZTYPE.test(type) && encOf(req)) {   // 글 파일(.json · .svg · .geojson …) — 줄여서
+    let buf; try { buf = fileBuf(f, st); } catch { buf = null; }
+    if (buf) return sendBody(req, res, 200, { ...SEC, 'content-type': type, 'cache-control': cache, ...(code ? { etag } : {}) }, buf, `${p}|${st.mtimeMs}`);
+  }
   const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
   if (range && st.size) {
     let start = range[1] === '' ? null : Number(range[1]), end = range[2] === '' ? null : Number(range[2]);

@@ -26,6 +26,7 @@ import { colors as colorPanel, colorState, paintLayers, RAMPS } from '../kit/col
 import { createOnMap } from './onmap.js';                         // 같은 사양을 지도 위에서(10-15 원칙 258 — 기본 · '통계' 단추로 대시보드와 바꿔 볼 수 있다)
 import { createShowcase } from './showcase.js';
 import { mountChatAnswer } from './chat-answer.js';   // XI ChatGEO 답 띠 + 대화 서랍(원칙 290)
+import { createChatHL } from './chat-hl.js';           // XI ChatGEO 답 ↔ 지도 강조(원칙 292)
 import { createParcels } from './parcel.js';                      // 지적 층 · 필지 카드 · 객체 소속 필지(10-15 원칙 266 · 123)                   // 왼쪽 위 결과 표시 콘셉트 셋 A · B · C(10-15 원칙 259 · 시안 단추 · 기본은 지금 모양)
 
 const { h, esc } = K;
@@ -153,7 +154,7 @@ const S = {
   tool: null, swipe: false, tilt: false, sel: null, busy: false, list: null, cat: null,
   clsOff: new Set(),                                 // 끈 클래스(XI맵 '층' 판 체크박스 · 10-15) — 지도 · 왼쪽 위 숫자 · 말풍선 숫자에서 빠짐('보이는 것 기준')
 };
-let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null, PC = null;
+let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null, PC = null, HL = null;
 /* 통계 표출 단계(10-15 원칙 262 — "대시보드를 원치 않을 수 있고. 지도에 가시화되어서 보기만 하고 싶어할수도"): 0 = 없음 · 1 = 지도에만(한 줄) · 2 = 지도 위 통계 판 · 3 = 대시보드.
    질문하면 늘 1단계부터(이미 2 · 3단계를 보고 있으면 그 단계에 새 사양). '통계' 단추 · 답 끝 '통계 보기' · '크게 보기' · 판의 '지도만' · 대시보드 '지도로 돌아가기'로 오간다.
    옛 'xc_statv'(지도 위 ↔ 대시보드 기억)는 쓰지 않는다 — 단계가 대신한다 */
@@ -293,10 +294,20 @@ async function boot() {
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
     onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
     clsColor: (k) => userCol(k) || baseCol(k),                                              // 꼬리표 색 점 = 그 클래스 색(사람이 고른 색 먼저 · 10-17)
-    onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
+    onLeave: () => { if (HL?.cur?.src === 'dash') HL.clear(); STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
     mountStatSwitch(); }
   mountLayout();                                                                        // 지도 위 배치 하나(원칙 279) — 도구 열 아래 · 오른쪽 쌓임 폭 · 채팅 창 자리
-  mountChatAnswer({ host: mainEl, cmdk });                                              // XI ChatGEO 자리(원칙 290 · 10-18 '1안') — 입력 한 줄 + 답 띠 · 대화 전체는 오른쪽 서랍
+  // XI ChatGEO 답 ↔ 지도 강조(10-18 원칙 292 "지도와 동적으로 움직이는게 맞다") — 서버 map_refs(도구 결과 · 관할 안)만 그린다 · 끄기 = ?hl=0
+  if (new URLSearchParams(location.search).get('hl') !== '0') {
+    HL = createChatHL({ map,
+      emds: async (sgg) => (S.remd.length && S.region && (S.region.code === sgg || codesOf(S.region).includes(sgg) || S.remdMeta?.sgg_cd === sgg) ? S.remd : hlEmds(sgg)),
+      sgg: (k) => { const r = byCode(k); return r?.geometry ? { geometry: r.geometry, name: r.name } : null; },
+      go: (b, o = {}) => goKeep(b, { ms: RM() ? 0 : 1200, maxZoom: o.maxZoom ?? 12.5 }),
+      focus: hlFocus,
+      om: () => ({ on: !!OM?.on, sgg: OM?.spec?.map?.level === 'emd' ? String(OM.spec.map.sgg || '') : null }) });
+    document.addEventListener('kit:agent-done', (e) => { const d = e.detail; if (d?.refs && !d.replay) HL.show({ ...d.refs, run: d.run }); });
+  }
+  mountChatAnswer({ host: mainEl, cmdk, hl: HL });                                      // XI ChatGEO 자리(원칙 290 · 10-18 '1안') — 입력 한 줄 + 답 띠 · 대화 전체는 오른쪽 서랍
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
@@ -663,6 +674,7 @@ async function setRegion(r, { first = false, to = null, soft = false, keepDrawer
   queueMicrotask(() => cmdk?.sugg?.());                 // 아래 채팅 창 추천 질문 = 지금 지역
   if (NAT && NAT.id !== 'kr') { NAT.go('kr', { quiet: true }); BD?.show(true); }   // 국내 지역으로 가면 나라도 대한민국으로(비행은 아래 한 번)
   S.region = r; S.cond.emd = null; S.sel = null;
+  hlKeep(r);                                            // 답 ↔ 지도 강조 — 다른 지역으로 가면 걷는다(원칙 292)
   if (!soft) { if (!keepDrawer) closeDrawer(); closePop(); ED?.close(); }   // keepDrawer = 시군구 · 서비스 목록(원칙 275)에서 고른 이동 — 목록은 열어 둔다
   renderChips();                        // 이전 지역의 읍면동 칩을 바로 지운다(관할 밖 포함)
   if (AN?.running) { AN.detach(); S.tool = null; }      // 진행 중 전역 분석 — 서버 작업은 계속, 화면만 떼어 낸다(돌아오면 이어 보기)
@@ -1857,6 +1869,28 @@ async function placeQuery(q) {
 }
 /** XI ChatGEO 추천 질문(아래 채팅 창) — 없음(10-15 원칙 253 '위에 가이드도 일단 없앤다'). 빈 목록 = 키트 기본 추천도 그리지 않는다.
  *  해외에서 군을 고르면 그 군 이름으로 한 줄('OO 군 경작지 넓이' · 바퀴 17 결정 — 답은 화면 · 대장과 같은 장부) */
+/* ═══ 답 ↔ 지도 강조의 화면 쪽(chat-hl.js) — 다른 시군구 읍면동 경계 · 누름(그 곳으로 + 조건) ═══ */
+const EMDC = new Map();
+function hlEmds(sgg) {
+  if (!EMDC.has(sgg)) EMDC.set(sgg, api('/regions/' + encodeURIComponent(sgg) + '/emd').then((fc) => (fc?.features || []).map((f) => ({ cd: String(f.properties.emd_cd), nm: f.properties.name, bbox: f.properties.bbox, geometry: f.geometry })), () => { EMDC.delete(sgg); return []; }));
+  return EMDC.get(sgg);
+}
+/** 답 글의 이름을 눌렀을 때 — 시군구 = 그 지역으로 · 읍면동 = 통계 색칠 중이면 그 판에서 고름, 아니면 그 읍면동 조건 + 그곳으로. 화면이 처리했으면 true */
+function hlFocus(ref, it) {
+  if (ref.level === 'sgg') { const r = byCode(it.k); if (!r) return false; if (S.region?.code !== r.code) setRegion(r); else goKeep(r.bbox, { ms: RM() ? 0 : 1200, maxZoom: 12.5 }); return true; }
+  if (OM?.on && OM.spec?.map?.level === 'emd' && String(OM.spec.map.sgg || '') === String(ref.sgg)) { OM.pick(it.k, true); return true; }
+  const here = S.region && (S.region.code === String(ref.sgg) || codesOf(S.region).includes(String(ref.sgg)));
+  const e = here && S.remd.find((x) => x.cd === it.k);
+  if (e) { setCond({ emd: e }); goKeep(e.bbox, { ms: RM() ? 0 : 1200, maxZoom: 13.5 }); return true; }
+  return false;
+}
+/** 지역을 옮기면 — 강조가 가리키던 곳이 새 지역 밖이면 걷는다 */
+function hlKeep(r) {
+  const c = HL?.cur; if (!c) return;
+  const codes = r ? [r.code, ...codesOf(r)] : [];
+  const keep = c.level === 'sgg' ? c.items.some((it) => codes.includes(it.k)) : codes.includes(String(c.sgg));
+  if (!keep) HL.clear();
+}
 function xiSugg() { return NAT && NAT.id !== 'kr' && NAT.sel ? [`${NAT.sel} 군 경작지 넓이`] : []; }
 function ask(q) {
   cmdk.open(q);

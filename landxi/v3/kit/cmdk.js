@@ -784,6 +784,8 @@ function create(opts) {
         const pending = acts.items.some((x) => TRACK.has(x.op) && x.state === 'sent');
         settle('done'); ans.hidden = !md; ans.innerHTML = answerHtml(pending ? wip(md, shown.claims, lg) : md, d?.envelopes, lg);
         renderBlocks(d?.blocks || [], d?.envelopes || {}, lg);
+        // 답이 가리키는 곳(서버 map_refs · 도구 결과에서) — 지도 화면이 강조 · 답 글과 잇는다(XI맵 chat-hl.js · 원칙 292). 받는 화면이 없으면 아무 일 없음
+        document.dispatchEvent(new CustomEvent('kit:agent-done', { detail: { run, refs: d?.map_refs || null, replay } }));
         drawTail();
         settleActs(false);
         if (DEADEND.test(md) && !shown.next.length && !shown.alt) nextSteps({ lang: lg, deadend: true });   // 서버가 버튼을 주지 않은 막다른 말만 대비책

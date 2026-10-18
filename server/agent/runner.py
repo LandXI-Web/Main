@@ -151,6 +151,9 @@ def tenant_of(p) -> str:
     return "lx-demo" if p.role == "sales" else "lx"
 
 
+HL_OPS = {"ximap_dash", "map_on", "map_flyto", "map_region", "map_filter"}   # 답 ↔ 지도 강조가 읽는 지도 동작(ext/hl.py)
+
+
 # ── 컨텍스트 ────────────────────────────────────────────────────────────
 @dataclass
 class Ctx:
@@ -471,6 +474,7 @@ async def run_tool(ctx: Ctx, i: int, name: str, args: dict, by: str = "model") -
         ui = [a for a in ui if not (isinstance(a, dict) and a.get("op") in ("map_flyto", "map_region"))]   # 지도 없는 화면 — 묻지 않은 이동은 보내지 않는다(못 그렸다는 말 0)
     ctx.tools_ok.append(name)
     ctx.ui_ops.extend(a.get("op") for a in ui if isinstance(a, dict) and a.get("op"))
+    ctx.state.setdefault("ui_acts", []).extend(a for a in ui if isinstance(a, dict) and a.get("op") in HL_OPS)   # 답 ↔ 지도 강조(원칙 292 · ext/hl.collect)
     step["result_ref"] = out.source
     await emit(ctx, "agent.tool.result", {"i": i, "tool": name, "ok": True, "ms": ms, "source": out.source, "note": out.note,
                                           "summary": summary_of(ctx, reg["ids"]), "meta": {eid: ctx.env_meta[eid] for eid in reg["ids"].values()},
@@ -1766,6 +1770,13 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
         data["artifact"] = artifact
     if extra:
         data.update(extra)
+    try:                                                   # 답이 가리키는 곳(읍면동 · 시군구) — 화면이 지도에서 강조 · 답 글의 이름과 잇는다(원칙 292)
+        from .tools.ext import hl as _hl
+        refs = await _hl.collect(ctx, blocks, lr.answer_md)
+        if refs:
+            data["map_refs"] = refs
+    except Exception as e:  # noqa: BLE001
+        ctx.state.setdefault("route_errors", []).append(f"hl: {type(e).__name__}")
     await emit(ctx, "agent.done", data)
     await persist_state(ctx, state="done", answer_md=lr.answer_md, envelopes=ctx.envs, unverified=lr.unverified, citations=ctx.citations,
                         model=model, perf=perf_out, tokens_in=ctx.tokens_in, tokens_out=ctx.tokens_out, artifact=artifact,

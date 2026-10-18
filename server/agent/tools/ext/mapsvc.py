@@ -260,6 +260,10 @@ def _route_front():
     ROUTES[:] = [r for r in ROUTES if r[0] not in ("mapsvc", "mapsvc_first")]
     at = 1 if ROUTES and ROUTES[0][0] == "ops" else 0
     ROUTES.insert(at, ("mapsvc_first", ROUTE_FIRST))
+    hl = [r for r in ROUTES if r[0] == "hl"]          # 답 ↔ 지도 이어 묻기(hl.py · 원칙 292 '그중 송동면만')는 그보다 앞 — 앞 답에 고를 목록이 있을 때만 잡는다
+    if hl:
+        ROUTES.remove(hl[0])
+        ROUTES.insert(at, hl[0])
 
 
 # ── 켜진 층 ───────────────────────────────────────────────────────────────────

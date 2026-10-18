@@ -1,0 +1,95 @@
+[
+ {
+  "run": 0,
+  "mode": "cold",
+  "readyMs": 8050,
+  "htmlMs": 1095,
+  "codeEndMs": 7394,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 8,
+   "region": 2133,
+   "engine": 2172,
+   "data": 2459,
+   "layers": 2535,
+   "canvas": 2551,
+   "ready": 2641,
+   "shown": 3119
+  },
+  "mapEngine": {
+   "start": 1102,
+   "ms": 5357
+  },
+  "app": {
+   "start": 1101,
+   "ms": 1584
+  },
+  "firstBundle": {
+   "start": 1111,
+   "ms": 3219
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 1,
+  "mode": "cold",
+  "readyMs": 4338,
+  "htmlMs": 794,
+  "codeEndMs": 5025,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 7,
+   "region": 2194,
+   "engine": 2231,
+   "data": 2485,
+   "layers": 2535,
+   "canvas": 2548,
+   "ready": 2641,
+   "shown": 2641
+  },
+  "mapEngine": {
+   "start": 802,
+   "ms": 3007
+  },
+  "app": {
+   "start": 801,
+   "ms": 737
+  },
+  "firstBundle": {
+   "start": 810,
+   "ms": 927
+  },
+  "consoleErrors": 0
+ },
+ {
+  "run": 2,
+  "mode": "cold",
+  "readyMs": 6506,
+  "htmlMs": 904,
+  "codeEndMs": 6687,
+  "requests": 120,
+  "afterModuleStart": {
+   "gate": 9,
+   "region": 1988,
+   "engine": 2027,
+   "data": 2274,
+   "layers": 2330,
+   "canvas": 2344,
+   "ready": 2433,
+   "shown": 2936
+  },
+  "mapEngine": {
+   "start": 912,
+   "ms": 4561
+  },
+  "app": {
+   "start": 911,
+   "ms": 1801
+  },
+  "firstBundle": {
+   "start": 923,
+   "ms": 2575
+  },
+  "consoleErrors": 0
+ }
+]

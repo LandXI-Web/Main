@@ -33,3 +33,11 @@
 @media (max-width:900px){.k-main:has(.xk-ans:not([hidden])) .xo{bottom:calc(96px + var(--xk-ah,0px))}}
 @media (max-width:640px){.xk-ans{padding:10px 8px 10px 12px}}
 @media (prefers-reduced-motion:reduce){.xk-ans{animation:none}}
+/* 답 ↔ 지도(원칙 292) — 답 글의 이름 · 숫자에 올리면 지도 그 곳이 빛나고, 누르면 그 곳으로(chat-hl.js) */
+.xk-ref,.xk-ref-n{cursor:pointer;border-radius:4px;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--ai) 55%,transparent);text-decoration-thickness:2px;text-underline-offset:4px;transition:background var(--d-120,120ms) var(--e-ui,ease)}
+.xk-ref{color:var(--ink);font-weight:600;white-space:nowrap}
+.xk-ref:hover,.xk-ref:focus-visible,.xk-ref.is-hv,.xk-ref-n:hover,.xk-ref-n.is-hv{background:color-mix(in srgb,var(--ai) 14%,transparent);text-decoration-color:var(--ai);outline:none}
+.xk-ref:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+/* XI맵 알림 한 줄(조건을 걸었습니다 등)은 위쪽에 — 아래 가운데는 질문 칸 자리(알림이 질문 칸을 덮어 누를 수 없던 것 · 10-18 점검) */
+.k-toast{top:80px;bottom:auto;width:max-content;transform:translate(-50%,-16px)}
+@media (max-width:960px){.k-toast{top:72px;bottom:auto}}

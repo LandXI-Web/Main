@@ -503,6 +503,6 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (window.__xc) window.__xc.dash = null;
     if (!quiet) onLeave?.();
   }
-  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick, tour: () => tour(topOf(3)),
+  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick: (k, fromMap) => { stopTour(); pick(k, fromMap); }, tour: () => tour(topOf(3)),   // 밖에서 고름(답 글의 이름 누름 · 원칙 292) = 돌아보기를 멈추고 그 곳
     get remembered() { return ensurePane().remembered(); } };   // 사람이 판을 직접 끌거나 펴 둔 기억(좁은 화면 기본 접힘보다 먼저 · 원칙 273)
 }

@@ -1,0 +1,100 @@
+[
+ {
+  "who": "staff",
+  "size": "m390",
+  "loadMs": 2583,
+  "steps": [
+   {
+    "q": "남원시 경작지 현황 보여 줘",
+    "ansMs": 1238,
+    "hl": {
+     "level": "emd",
+     "mode": "mark",
+     "n": 3,
+     "keys": [
+      "52190250",
+      "52190330",
+      "52190400"
+     ],
+     "names": [
+      "운봉읍",
+      "송동면",
+      "보절면"
+     ],
+     "linked": 16
+    },
+    "band": "남원시 · 경작지 — 경작지 84,950곳. 경작지는 운봉읍 9,879곳 · 송동면 6,059 · 보절면 5,927 순으로 많습니다.",
+    "refs": [
+     "운봉읍 9,879곳",
+     "송동면 6,059",
+     "보절면 5,927"
+    ],
+    "chips": 0,
+    "layer": true,
+    "click": {
+     "focus": "52190250",
+     "chip": [],
+     "zoom": null
+    }
+   },
+   {
+    "q": "그중 가장 큰 곳은?",
+    "ansMs": 853,
+    "hl": {
+     "level": "emd",
+     "mode": "only",
+     "n": 1,
+     "keys": [
+      "52190250"
+     ],
+     "names": [
+      "운봉읍"
+     ],
+     "linked": 1,
+     "focus": "52190250"
+    },
+    "band": "그중 가장 많은 곳은 운봉읍입니다 — 경작지 9,879곳.",
+    "refs": [
+     "운봉읍"
+    ],
+    "chips": 0,
+    "layer": true
+   },
+   {
+    "q": "송동면만",
+    "ansMs": 814,
+    "hl": {
+     "level": "emd",
+     "mode": "only",
+     "n": 1,
+     "keys": [
+      "52190330"
+     ],
+     "names": [
+      "송동면"
+     ],
+     "linked": 1,
+     "focus": "52190330"
+    },
+    "band": "송동면만 지도에 남겼습니다 — 경작지 6,059곳.",
+    "refs": [
+     "송동면"
+    ],
+    "chips": 0,
+    "layer": true
+   }
+  ],
+  "drawer": {
+   "open": {
+    "drawer": true,
+    "bandHidden": true,
+    "refsInDrawer": 5
+   },
+   "closed": {
+    "bandHidden": true,
+    "after": false
+   }
+  },
+  "errs": []
+ }
+]
