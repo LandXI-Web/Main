@@ -249,7 +249,7 @@ function drawLeft() {
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),   // '이 화면은?' 도움말 링크 뺌(10-18 사용자)
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
-    clsBlock(on),
+    ...[clsBlock(on)].filter(Boolean),   // 켜진 층이 없으면 클래스 칸 없음(replaceChildren 은 null 을 글자 'null'로 넣는다)
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
       SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
         h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null));   // 설명 글 지움(10-17 원칙 281)

@@ -223,7 +223,7 @@ async def build(args: dict, off: list[str] | None = None) -> dict:
     if kind == "year":
         return await _year(XD, sgg)
     if task:
-        return await _task(XD, sgg, task)
+        return await _task(XD, sgg, task, args.get("emd") or None)
     return await _overview(XD, sgg)
 
 
@@ -312,7 +312,8 @@ def _line(tm, title):
     return {"type": "line", "title": title, "unit": "개", "points": pts, "grain": tm["unit"]}
 
 
-async def _task(XD, sgg, task) -> dict:
+async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
+    """only = 읍면동 이름들('그중 송동면만' 뒤 보고서 · 10-18) — 같은 집계 줄에서 그 읍면동만 남긴다(숫자 한 출처 · 시군구 전체 줄과 같은 값)."""
     t, e = await XD.agg_task(sgg), await XD.agg_emd(sgg)
     name = t["name"]
     trows = [r for r in t["rows"] if r["k"] == task]
@@ -322,6 +323,11 @@ async def _task(XD, sgg, task) -> dict:
     unit = trows[0]["unit"]
     tot = sum(r["n"] for r in trows)
     emd = [r for r in _density(_emd_series(e, cols), "farm_km2" if any(c.endswith("(농지 전수)") for c in cols) else "km2") if r["v"]]
+    if only:
+        emd = [r for r in emd if r["label"] in only]
+        if not emd:
+            return await _overview(XD, sgg) | {"note": f"{name} {' · '.join(only)}에는 {task} 결과가 아직 없습니다."}
+        return _task_only(name, sgg, task, unit, emd)
     kp = [{"label": f"{task}", "value": tot, "unit": unit, "sub": " · ".join(f"{r['name']} {_nf(r['n'])}" for r in trows) if len(trows) > 1 else None},
           {"label": "결과가 있는 읍면동", "value": len(emd), "unit": "곳"}]
     dens = [r["d"] for r in emd if r["d"] is not None]
@@ -356,6 +362,25 @@ async def _task(XD, sgg, task) -> dict:
                                      "M3" + mp["scale"]["kind"]],
             "title": f"{name} · {task}", "means": [["지역", name], ["업무", task], ["비교", "읍면동 · 면적"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],
             "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "main": {"label": task, "value": tot, "unit": unit}}
+
+
+def _task_only(name, sgg, task, unit, emd) -> dict:
+    """고른 읍면동만 — 시군구 대시보드와 같은 줄(같은 값)에서 그 읍면동 줄만 · 면적 구간 · 출처별(시군구 전체로만 세는 것)은 싣지 않는다."""
+    s = sorted(emd, key=lambda r: -r["v"])
+    tot = sum(r["v"] for r in s)
+    where = " · ".join(r["label"] for r in s)
+    kp = [{"label": f"{task}", "value": tot, "unit": unit}, {"label": "고른 읍면동", "value": len(s), "unit": "곳"}]
+    dens = [r["d"] for r in s if r["d"] is not None]
+    if dens:
+        kp.append({"label": "㎢당", "value": max(dens), "unit": f"{unit}/㎢", "sub": max(s, key=lambda r: r["d"] or 0)["label"], "d": 1})
+    panels = [{"type": "bar", "title": f"읍면동별 {task}", "unit": unit, "rows": s, "pick": "emd", "scale": scale_for([r["v"] for r in s], "count")},
+              {"type": "rank", "title": "읍면동 순위", "unit": unit, "rows": s[:10], "pick": "emd", "extra": {"key": "d", "label": "㎢당"}}]
+    mp = _map_panel("emd", sgg, s, "d" if dens else "v", "density" if dens else "count", f"㎢당 {task}" if dens else f"{task} 수", f"{unit}/㎢" if dens else unit)
+    say = [f"{where} {task} {_nf(tot)}{unit}입니다."]
+    return {"kind": "task", "rule": ["B1b", "M3" + mp["scale"]["kind"]], "title": f"{name} {where} · {task}",
+            "means": [["지역", f"{name} {where}"], ["업무", task], ["비교", "읍면동"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],
+            "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "emd": [r["label"] for r in s],
+            "main": {"label": task, "value": tot, "unit": unit}}
 
 
 async def _survey(XD, sgg) -> dict:

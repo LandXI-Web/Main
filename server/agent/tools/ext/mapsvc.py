@@ -54,8 +54,10 @@ HINT = ("켜진 결과 층을 분류 · 면적 · 읍면동으로 거르는 말(
 
 def allowed(name: str, p) -> bool:
     realm = getattr(p, "realm", None)
-    if name in ("ai_report", "map_task"):
+    if name == "map_task":
         return realm == "lx"
+    if name == "ai_report":                       # 기관: 지도 위 결과 층 보고서(통계 답과 같은 대상 · 10-18) — 관할 밖은 범위 가드 · 층 소유 검사가 막는다
+        return realm in ("lx", "tenant")
     return realm in ("lx", "tenant")
 
 
@@ -223,6 +225,11 @@ def ROUTE(msg: str, ctx):
     c = getattr(ctx, "context", None) or {}
     if getattr(p, "realm", None) == "lx" and len(t) <= 120 and REPORT_ASK.search(t) and REPORT_DO.search(t) \
             and not re.search(r"법령|조문|근거\s*조", t) and not re.search(r"실태\s*조사|의심", t):
+        return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
+    if getattr(p, "realm", None) == "tenant" and c.get("page") in ("xi-clean", "lx-map") and len(t) <= 120 and REPORT_ASK.search(t) and REPORT_DO.search(t) \
+            and (STATS_RX.search(t) or any(re.search(rx, t) for rx, _ in CLS_WORDS)) \
+            and not re.search(r"법령|조문|근거\s*조|실태\s*조사|의심|필지|공문|협조\s*요청|시행문", t):
+        # 기관 지도 화면의 '○○ 통계 보고서' = 지도 위 결과 층 보고서(통계 답과 같은 대상 · 같은 행) — 실태조사(의심 필지) 보고서는 그 말을 할 때만(10-18)
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
     if c.get("page") == "xi-clean" and getattr(p, "realm", None) == "lx":
         try:                                             # XI맵 통계 · 현황 · 비교 질문 = 융합 대시보드(dash.py · 10-14 11:02) — 지도 서비스 통계(map_stats)보다 먼저
@@ -432,6 +439,27 @@ async def map_filter(args: dict, ctx) -> Out:
     return out
 
 
+async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], dict]:
+    """통계 · 보고서가 함께 쓰는 대상 — 고른 층 + 지도에 걸린 조건 + 질문의 분류(그 분류가 있는 층만) · 읍면동(10-18 · 숫자 한 출처).
+    '남원시 경작지 통계 보고서'가 켜진 비닐하우스 층까지 싣지 않게: 질문이 분류를 말하면 그 분류가 있는 층 · 그 분류 행만."""
+    from landxi_api import result_scope as RSC
+    cond = RSC.clean((getattr(ctx, "context", None) or {}).get("filter")) if why == "켜진 층" else {}
+    classes, emds = await _avail(jobs)
+    cw = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
+    if cw:
+        w, _m = _want_cls(cw, classes)
+        if w:
+            cond = {**cond, "cls": w}
+            have = await _jobs_with(jobs, w)
+            jobs = [j for j in jobs if j in have] or jobs
+    em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP and x != "읍면동"]
+    if em:
+        w = [x for x in emds if x == em[0] or x.startswith(em[0])]
+        if w:
+            cond = {**cond, "emd": w}
+    return jobs, cond
+
+
 async def _jobs_with(jobs: list[str], cls: list[str]) -> set[str]:
     from landxi_api.deps import db
     async with db(realm="lx") as c:
@@ -460,21 +488,8 @@ async def map_stats(args: dict, ctx) -> Out:
         out.data = {"status": "none"}
         out.answer = "지금 지도에 켜진 결과 층이 없습니다. 왼쪽에서 층을 켠 뒤 다시 말씀해 주세요."
         return out
-    cond = RSC.clean((getattr(ctx, "context", None) or {}).get("filter")) if why == "켜진 층" else {}
-    classes, emds = await _avail(jobs)
-    cw = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
-    if cw:
-        w, _m = _want_cls(cw, classes)
-        if w:
-            cond = {**cond, "cls": w}
-            have = await _jobs_with(jobs, w)
-            jobs = [j for j in jobs if j in have] or jobs
+    jobs, cond = await _subject(ctx, t, jobs, why)
     names = await RSC.layer_names(jobs)
-    em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP and x != "읍면동"]
-    if em:
-        w = [x for x in emds if x == em[0] or x.startswith(em[0])]
-        if w:
-            cond = {**cond, "emd": w}
     a: list = [jobs]
     w_ = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a)
     async with db(realm="lx") as c:
@@ -595,8 +610,8 @@ def _map_png(job: str, sgg: str | None, rows_geo: list, counts: dict | None = No
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.collections import PatchCollection
-    from matplotlib.patches import Polygon as MP
+    from matplotlib.collections import PolyCollection
+    import numpy as np
     from shapely import wkb
     from shapely.geometry import shape
     from matplotlib import font_manager
@@ -640,9 +655,9 @@ def _map_png(job: str, sgg: str | None, rows_geo: list, counts: dict | None = No
             pts.setdefault(k, []).append((c.x, c.y))
             continue
         for poly in getattr(g, "geoms", [g]):
-            by.setdefault(k, []).append(MP(list(poly.exterior.coords), closed=True))
+            by.setdefault(k, []).append(np.asarray(poly.exterior.coords)[:, :2])   # 꼭짓점 배열(PolyCollection — 패치 객체 없이 · 15천 개 5초 → 1초대)
     for k, ps in by.items():
-        ax.add_collection(PatchCollection(ps, facecolor=CLS_COLOR[k], edgecolor=CLS_COLOR[k], linewidth=0.9, alpha=0.9, zorder=3))
+        ax.add_collection(PolyCollection(ps, closed=True, facecolor=CLS_COLOR[k], edgecolor=CLS_COLOR[k], linewidth=0.9, alpha=0.9, zorder=3))
     for k, ps in pts.items():
         xs, ys = zip(*ps)
         ax.scatter(xs, ys, s=0.6, c=CLS_COLOR[k], zorder=3, linewidths=0)
@@ -737,6 +752,11 @@ async def ai_report(args: dict, ctx) -> Out:
     from ... import config
     from ...report import file_href
     t = re.sub(r"\s+", " ", args.get("request") or ctx.state.get("msg") or "").strip()
+    c0 = getattr(ctx, "context", None) or {}
+    if c0.get("page") == "xi-clean" and getattr(ctx.principal, "realm", None) == "lx" and getattr(ctx, "lang", "ko") == "ko":
+        o = await _dash_report(ctx, t)                          # XI맵: '통계 보기' 판 · '보고서로'와 같은 사양 · 같은 문서(10-18)
+        if o is not None:
+            return o
     out = Out(source="AI 분석 결과(지도 서비스와 같은 행)")
     try:
         jobs, why = await _target_jobs(ctx, t)
@@ -755,14 +775,8 @@ async def ai_report(args: dict, ctx) -> Out:
         out.answer = NEED
         return out
     from landxi_api import result_scope as RSC
-    cond = RSC.clean((ctx.context or {}).get("filter")) if why == "켜진 층" else {}   # 지도에 걸린 조건 그대로(통계 · 거르기와 같은 범위)
-    em = next((m for m in EMD_RX.findall(t) if m not in EMD_SKIP and m != "읍면동"), None)
-    if em:
-        av = (await _avail(jobs))[1]
-        w = [x for x in av if x == em or x.startswith(em)]
-        if w:
-            cond = {**cond, "emd": w}
-    parts = [d for d in [await _job_data(j, cond) for j in jobs] if d and d["rows"]]
+    jobs, cond = await _subject(ctx, t, jobs, why)            # 통계 답(map_stats)과 같은 대상 · 같은 조건 — 질문의 분류 · 읍면동까지
+    parts = [d for d in await asyncio.gather(*(_job_data(j, cond) for j in jobs)) if d and d["rows"]]   # 층마다 동시에(층 둘 · 보고서 시간 줄이기)
     if not parts:
         out.data = {"status": "no_data", "text": "해당 지역 데이터가 없습니다"}
         out.answer = RSC.scope_line(await RSC.layer_names(jobs), cond, why) + "\n고른 대상에 맞는 결과가 없어(0건) 보고서를 만들지 않았습니다."
@@ -795,7 +809,7 @@ async def ai_report(args: dict, ctx) -> Out:
     if pngs and pngs[0]:
         (d0 / "ai-report-map.png").write_bytes(pngs[0])
     tot = sum(int(r["n"]) for d in parts for r in d["rows"])
-    n_emd = len({(d["job"], r["emd"]) for d in parts for r in d["rows"] if r["emd"]})
+    n_emd = len({r["emd"] for d in parts for r in d["rows"] if r["emd"]})       # 읍면동 이름 수(층이 둘이어도 한 번 · 통계 답과 같은 셈)
     out.env("total", "보고서의 AI 분석 결과 수(지도 서비스 결과 층과 같은 행 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "보고서에 실린 읍면동 수", env(n_emd, "곳", "inferred", "detections"))
     out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
@@ -805,8 +819,122 @@ async def ai_report(args: dict, ctx) -> Out:
                              "place": parts[0]["region"]}
     out.data = {"보고서": name, "대상": [f"{d['region']} {d['service']}" for d in parts], "고른 곳": why}
     names = await RSC.layer_names(jobs)                     # 대상 = 고른 레이어 전부(조건에 0건인 레이어도 — 통계 첫 줄과 같은 대상)
+    top = _top_emd(parts)
+    _hl_counts(ctx, parts, top)                              # 지도 강조(원칙 292) — 보고서의 많은 곳을 지도에서도
+    out.whitelist |= {e for e, _n in top}
     out.answer = (RSC.scope_line(names, cond, why) + " — 결과 {{total}}건 · 읍면동 {{emds}}곳\n"
-                  "AI 분석 결과 보고서 초안을 만들었습니다 — 지도 그림 · 영상 시점 · AI 모델 정확도를 함께 실었습니다.")
+                  "AI 분석 결과 보고서 초안을 만들었습니다" + (f"(많은 곳: {' · '.join(e for e, _n in top)})." if top else "."))
+    return out
+
+
+def _top_emd(parts: list[dict], k: int = 3) -> list[tuple[str, int]]:
+    by: dict[str, int] = {}
+    for d in parts:
+        for r in d["rows"]:
+            if r["emd"]:
+                by[r["emd"]] = by.get(r["emd"], 0) + int(r["n"])
+    return sorted(by.items(), key=lambda x: (-x[1], x[0]))[:k]
+
+
+def _hl_counts(ctx, parts: list[dict], top: list) -> None:
+    """보고서 읍면동별 개수 → 지도 강조 목록(한 시군구일 때만 · 값 = 보고서 표와 같은 값)."""
+    sggs = {d.get("sgg") for d in parts if d.get("sgg")}
+    if len(sggs) != 1:
+        return
+    try:
+        from landxi_api.regions import emd_index, region_of
+        from . import hl as HL
+        r = region_of(next(iter(sggs)))
+        ix = emd_index(r["sgg_cd"]) if r else None
+        if not ix:
+            return
+        code = {str(n): str(c) for n, c in zip(ix.names, ix.codes) if n}
+        by: dict[str, int] = {}
+        for d in parts:
+            for row in d["rows"]:
+                if row["emd"] in code:
+                    by[row["emd"]] = by.get(row["emd"], 0) + int(row["n"])
+        items = [{"k": code[e], "name": e, "v": float(n)} for e, n in sorted(by.items(), key=lambda x: -x[1])]
+        refs = HL._scoped(ctx, {"level": "emd", "sgg": r["sgg_cd"], "unit": "", "what": "AI 분석 결과", "items": items, "src": "report"})
+        if refs:
+            ctx.state["map_refs"] = refs
+            ctx.state["map_refs_base"] = refs
+    except Exception:  # noqa: BLE001
+        return
+
+
+REP_WORDS = re.compile(r"보고서|리포트|초안|만들어\s*(?:줘|주세요|줄래)?|써\s*(?:줘|주세요)|작성(?:해\s*(?:줘|주세요))?|뽑아\s*(?:줘|주세요)?")
+
+
+async def _dash_report(ctx, t: str) -> Out | None:
+    """XI맵(LX)의 '○○ 통계 보고서 만들어 줘' — 대상 = 질문의 업무(없으면 앞 답의 업무) · 지역(질문 → 앞 답 → 화면) · 읍면동(질문 → 앞 답에서 고른 곳 → 지도 조건).
+    사양 = 통계 도구(dash.build)가 '통계 보기' 판에 주는 그것 · 문서 = 판의 '보고서로'와 같은 함수(xreport.build_hwpx) — 숫자 한 출처.
+    업무를 알 수 없으면 None(켜진 층 보고서 길)."""
+    from landxi_api import result_scope as RSC
+    from landxi_api import xreport as XR
+    from landxi_api.envelope import env
+    from ... import config, talk
+    from ...report import file_href
+    from . import dash as D
+    from . import hl as HL
+    c = getattr(ctx, "context", None) or {}
+    base = await HL._base(ctx) or {}
+    tasks = list(dict.fromkeys(k for rx, k in D.TASK_WORDS if re.search(rx, t)))
+    task = tasks[0] if len(tasks) == 1 else (None if tasks else base.get("task"))
+    if not task:
+        return None
+    q = REP_WORDS.sub(" ", t)
+    named = bool([g for g in talk.regions_in(t) if g])
+    a = D.parse(f"{q} {task} 통계", None if named else c.get("region")) or {}
+    reg = (a.get("region") or "").split(",")[0]
+    if not reg and not named:
+        reg = (base.get("sgg") if base.get("src") == "dash" else None) or str(c.get("region") or "")
+    if not reg:
+        return None
+    em = [x for x in EMD_RX.findall(q) if x not in EMD_SKIP and x != "읍면동"]
+    same = not named or str(base.get("sgg") or "") == reg
+    only = em or (list(base.get("sel") or []) if same else []) or (list(RSC.clean(c.get("filter")).get("emd") or []) if same else [])
+    args = {"request": t, "region": reg, "task": task, "kind": "task", **({"emd": only} if only else {})}
+    off = D.off_classes(ctx)
+    spec = await D.build(args, off)
+    out = Out(source="XI맵 통계('통계 보기' 판과 같은 집계)")
+    if spec.get("note") and str(spec.get("note")).endswith("결과가 아직 없습니다."):
+        ctx.state["cannot"] = {"kind": "nodata"}
+        out.data = {"status": "no_data", "text": spec["note"]}
+        out.answer = spec["note"] + " 보고서를 만들지 않았습니다."
+        return out
+    now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
+    blob, name = await asyncio.to_thread(XR.build_hwpx, spec, now)
+    d0 = config.ARTIFACT_DIR / ctx.run_id
+    d0.mkdir(parents=True, exist_ok=True)
+    (d0 / name).write_bytes(blob)
+    (d0 / "draft.hwpx").write_bytes(blob)
+    m = spec.get("main") or {}
+    emds = next((k.get("value") for k in spec.get("kpis") or [] if k.get("label") in ("결과가 있는 읍면동", "고른 읍면동")), None)
+    out.env("n", f"{spec['title']} {m.get('label') or ''}".strip(), env(m.get("value") or 0, m.get("unit") or "개", "inferred", "XI맵 통계 — '통계 보기' 판 큰 숫자와 같은 값"))
+    if emds is not None:
+        out.env("emds", "보고서에 실린 읍면동 수", env(emds, "곳", "inferred", "XI맵 통계"))
+    out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
+    ctx.state["artifact"] = {"file_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.hwpx", "href": file_href(ctx.run_id, name), "filename": name,
+                             "place": dict(spec.get("means") or []).get("지역") or spec["title"]}
+    # 지도 강조(원칙 292) — 보고서가 다룬 곳을 지도에서도(고른 읍면동이면 그곳만)
+    try:
+        full = spec if not spec.get("emd") else await D.build({**args, "emd": None}, off)
+        refs = HL._scoped(ctx, HL._from_dash(full))
+        if refs:
+            ctx.state["map_refs_base"] = refs
+            sel = [it for it in refs["items"] if it["name"] in (spec.get("emd") or [])]
+            ctx.state["map_refs"] = {**refs, "items": sel, "mode": "only", "focus": sel[0]["k"] if len(sel) == 1 else None} if sel else refs
+    except Exception:  # noqa: BLE001
+        pass
+    out.data = {"status": "ok", "보고서": name, "대상": spec["title"], "수": "n"}
+    bar = next((p for p in spec.get("panels") or [] if p.get("pick") == "emd" and p.get("type") in ("bar", "rank")), None)
+    top = [str(r.get("label")) for r in sorted((bar or {}).get("rows") or [], key=lambda r: -(r.get("v") or 0))[:3] if r.get("label")]
+    if spec.get("emd"):
+        top = []                                              # 고른 읍면동은 제목에 이미 있음
+    out.whitelist |= set(top)
+    out.answer = (f"{spec['title']} 통계 보고서를 만들었습니다 — {m.get('label') or ''} {{{{n}}}}"
+                  + (" · 읍면동 {{emds}}곳" if emds is not None else "") + (f"(많은 곳: {' · '.join(top)})." if top else "."))
     return out
 
 

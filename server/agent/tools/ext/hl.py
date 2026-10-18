@@ -64,8 +64,10 @@ def _from_dash(spec: dict) -> dict | None:
         return None
     items = [{"k": str(r.get("k")), "name": str(r.get("label") or ""), "v": _num(r.get("v"))} for r in p.get("rows") or [] if r.get("k") and r.get("label")]
     main = spec.get("main") or {}
+    task = dict((str(a), str(b)) for a, b in (spec.get("means") or []) if a).get("업무")
     return {"level": lvl, "sgg": str(sgg) if sgg else None, "unit": _unit(p.get("unit") or main.get("unit")),
-            "what": str(main.get("label") or ""), "items": items, "src": "dash"}
+            "what": str(main.get("label") or ""), "items": items, "src": "dash",
+            **({"task": task} if task and task != "모든 업무" else {})}
 
 
 def _region_cd(ctx) -> str | None:
@@ -194,8 +196,10 @@ async def collect(ctx, blocks: list, answer_md: str) -> dict | None:
     r = getattr(ctx, "r", None)
     if r is not None and base:
         try:
-            keep = {k: base.get(k) for k in ("level", "sgg", "unit", "what", "src")}
+            keep = {k: base.get(k) for k in ("level", "sgg", "unit", "what", "src", "task")}
             keep["items"] = [{k: it.get(k) for k in ("k", "name", "v")} for it in base["items"][:MAX_ITEMS]]
+            if out["mode"] == "only" and len(refs["items"]) < len(base["items"]):     # '그중 송동면만' — 다음 질문(보고서 등)이 고른 곳을 이어받는다
+                keep["sel"] = [it.get("name") for it in refs["items"][:24] if it.get("name")]
             await r.set(_key(ctx.run_id), json.dumps(keep, ensure_ascii=False), ex=TTL)
         except Exception:  # noqa: BLE001
             pass
@@ -324,7 +328,7 @@ async def map_hl(args: dict, ctx) -> Out:
     if not sel:
         raise ToolError("not_found", "앞 답에 값이 있는 곳이 없습니다")
     ks = {it["k"] for it in sel}
-    ctx.state["map_refs"] = {**{k: base.get(k) for k in ("level", "sgg", "unit", "what", "src")}, "items": sel if mode == "only" else items,
+    ctx.state["map_refs"] = {**{k: base.get(k) for k in ("level", "sgg", "unit", "what", "src", "task")}, "items": sel if mode == "only" else items,
                              "mode": mode, "focus": sel[0]["k"] if len(sel) == 1 else None, "all": pick == "all"}
     ctx.state["map_refs_base"] = base                      # 다음 이어 묻기도 같은 목록에서(고른 것만이 아니라 전체)
     out.data = {"status": "ok", "고른 곳": [it["name"] for it in sel][:10]}
