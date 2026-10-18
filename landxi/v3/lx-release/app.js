@@ -87,8 +87,14 @@ async function drawInfer() {
         h('input', { type: 'radio', name: 'img', value: it.id, checked: on, onchange: () => { st.img = it.id; st.emd = ''; drawImgs(); loadRanges(); } }),
         h('span.rl-thumb', {}, im),
         h('span.rl-i-l', {}, h('b', { text: it.name }), unitsEl('span', join(it.gsd_word, it.when ? `${it.when}년` : '', it.where, km2(it.area))),
-          fits(it) ? null : h('em', { text: '모델이 배운 해상도와 다릅니다' }))));
-    li._img = im; li._id = it.id;
+          fits(it) ? null : h('em', { text: '모델이 배운 해상도와 다릅니다' }))),
+      /* 크게 보기(원칙 295) — 보이는 영상 목록 안에서 앞 · 다음 */
+      h('button.rl-big', { type: 'button', 'aria-label': `${it.name} 크게 보기`, title: '크게 보기', onclick: () => {
+        const list = [...iProj.children, ...iShared.children].map((l) => l._it).filter(Boolean);
+        import('../kit/imagery-viewer.js').then((m) => m.openImageryViewer({ items: list.map((v) => ({ id: v.id, name: v.name, region: v.where })), index: Math.max(0, list.indexOf(it)),
+          picked: (v) => st.img === v.id, onPick: (v) => { st.img = v.id; st.emd = ''; drawImgs(); loadRanges(); } })).catch(() => null);
+      } }, h('span', { 'aria-hidden': 'true', text: '⤢' })));
+    li._img = im; li._id = it.id; li._it = it;
     return li;
   }
   function drawImgs() {
@@ -102,6 +108,7 @@ async function drawInfer() {
     iShared.replaceChildren(...list.map(imgRow), ...(all.length > list.length ? [h('li.rl-more', { text: `외 ${nf(all.length - list.length)}개 — 지역 이름으로 찾아 주세요` })] : []),
       ...(all.length ? [] : [h('li.rl-none', { text: '찾는 영상이 없습니다' })]));
     for (const li of [...iProj.children, ...iShared.children]) if (li._img) thumb(li._img, li._id);
+    import('../kit/imagery-viewer.js').then((m) => m.warmImageryViewer()).catch(() => null);
   }
   find.addEventListener('input', drawImgs);
 

@@ -81,6 +81,7 @@ export function openNewProject({ onMade } = {}) {
     pickGrid.replaceChildren(h('p.lxp-pk-w', { text: '불러오는 중' }));
     try { pickAll = (await api('/projects/imagery')).items || []; } catch { pickAll = null; pickGrid.replaceChildren(h('p.lxp-pk-w', {}, '영상 목록을 불러오지 못했습니다 ', h('button.lxp-link', { type: 'button', text: '다시 시도', onclick: () => loadPick() }))); return; }
     drawPick();
+    import('../kit/imagery-viewer.js').then((m) => m.warmImageryViewer(pickAll.slice(0, 2).map((x) => x.id))).catch(() => null);   // 크게 보기 미리 준비
   }
   function drawPick() {
     const s = pickQ.value.replace(/\s+/g, '');
@@ -94,13 +95,16 @@ export function openNewProject({ onMade } = {}) {
       const b = h('button.lxp-pk-c', { type: 'button', 'aria-pressed': String(picked.has(x.id)), title: x.name },
         im, h('b', { text: x.name }), h('small', { text: [x.region, x.year, x.kind].filter(Boolean).join(' · ') }));
       b.addEventListener('click', () => { if (picked.has(x.id)) picked.delete(x.id); else picked.set(x.id, x); b.setAttribute('aria-pressed', String(picked.has(x.id))); drawWhere(); ready(); });
-      return b;
+      /* 크게 보기(원칙 295) — 카드 왼쪽 위 돋보기 · 그림을 두 번 누르기 · 지금 걸러진 목록 안에서 앞 · 다음 */
+      const big = () => import('../kit/imagery-viewer.js').then((m) => m.openImageryViewer({ items: rows, index: rows.indexOf(x), picked: (it) => picked.has(it.id), onPick: (it) => { const r = pickAll.find((v) => v.id === it.id); if (r && !picked.has(r.id)) { picked.set(r.id, r); drawPick(); drawWhere(); ready(); } } })).catch(() => toast('크게 보기를 열지 못했습니다'));
+      im.addEventListener('dblclick', (e) => { e.preventDefault(); big(); });
+      return h('div.lxp-pk-cw', {}, b, h('button.lxp-pk-big', { type: 'button', 'aria-label': `${x.name} 크게 보기`, title: '크게 보기', onclick: big }, h('span', { 'aria-hidden': 'true', text: '⤢' })));
     }) : [h('p.lxp-pk-w', { text: '맞는 영상이 없습니다' })]));
     pickNav.replaceChildren(h('span', { text: picked.size ? `${picked.size}장 고름` : `${rows.length}장` }),
       pages > 1 ? h('span.lxp-pk-pg', {},
         h('button.lxp-link', { type: 'button', text: '‹ 앞', disabled: pickPage <= 1 || undefined, onclick: () => { pickPage--; drawPick(); } }),
         h('small.num', { text: `${pickPage} / ${pages}` }),
-        h('button.lxp-link', { type: 'button', text: '다음 ›', disabled: pickPage >= pages || undefined, onclick: () => { pickPage++; drawPick(); } })) : null);
+        h('button.lxp-link', { type: 'button', text: '다음 ›', disabled: pickPage >= pages || undefined, onclick: () => { pickPage++; drawPick(); } })) : '');
   }
 
   /* ── 대상지 — 영상이 있으면 영상 자리에서 · 없을 때만 고른다 ── */
@@ -237,7 +241,7 @@ export function openNewProject({ onMade } = {}) {
     dim.remove(); box.remove(); open = null;
     back?.focus?.();
   }
-  function esc(e) { if (e.key === 'Escape' && !e.target.closest?.('.k-region, .lxp-mem')) { e.preventDefault(); close(); } }
+  function esc(e) { if (e.key === 'Escape' && !document.querySelector('.k-iv') && !e.target.closest?.('.k-region, .lxp-mem')) { e.preventDefault(); close(); } }
   addEventListener('keydown', esc, true);
   cancel.addEventListener('click', close);
   dim.addEventListener('click', close);

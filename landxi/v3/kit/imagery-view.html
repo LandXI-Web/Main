@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>영상 크게 보기 · Land-XI</title>
+<link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="kit.css">
+<script defer src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
+<script defer src="../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="t">
+<div id="iv"></div>
+<script type="module">
+import { gate } from './auth-gate.js';
+import { mountImageryPage } from './imagery-viewer.js';
+await gate('lx-console');
+const id = new URLSearchParams(location.search).get('id');
+if (id) mountImageryPage(document.getElementById('iv'), id);
+else document.getElementById('iv').textContent = '볼 영상을 고르지 않았습니다';
+</script>
+</body>
+</html>

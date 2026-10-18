@@ -335,6 +335,7 @@ function imageryCard(c) {
       mapBox.hidden = true; note.hidden = true; more.hidden = true; return;
     }
     const ordered = cur ? [cur, ...items.filter((x) => x.id !== cur.id)] : items;
+    import('../kit/imagery-viewer.js').then((m) => m.warmImageryViewer(ordered.slice(0, 2).map((v) => v.id))).catch(() => null);   // 크게 보기 미리 준비
     const list = all ? ordered : ordered.slice(0, 6);
     more.hidden = ordered.length <= 6;
     more.textContent = all ? '접기' : `영상 ${ordered.length - 6}개 더 보기`;
@@ -346,9 +347,13 @@ function imageryCard(c) {
       // 영상은 하나만(원칙 185) — 라디오 하나 묶음 · 맞지 않는 영상은 고를 수 없음
       const rd = h('input.la-im-rd', { type: 'radio', name: `la-im-${c.id}`, value: x.id, checked: !!on || undefined, disabled: x.fit === 'no' || undefined,
         'aria-label': x.name, onchange: () => { if (x.fit === 'no') return; onPick(x); show(regions, sgg, x.pick ? null : x.id, onPick, onTab); } });
+      /* 크게 보기(원칙 295) — 이 지역을 덮는 영상 안에서 앞 · 다음 · 맞는 영상이면 바로 고르기 */
+      const big = (e) => { e?.preventDefault(); e?.stopPropagation(); import('../kit/imagery-viewer.js').then((m) => m.openImageryViewer({ items: ordered.map((v) => ({ ...v, region: d.name })), index: ordered.indexOf(x),
+        picked: (it) => cur && it.id === cur.id, onPick: (it) => { if (it.fit === 'no') { K.toast('이 영상은 고를 수 없습니다 — ' + (it.fit_text || '범위가 맞지 않습니다')); return; } onPick(it); show(regions, sgg, it.pick ? null : it.id, onPick, onTab); } })).catch(() => K.toast('크게 보기를 열지 못했습니다')); };
+      pic.addEventListener('dblclick', big);
       const peek = (v) => { if (!stage || on) return; stage.geo('hover', fc(v ? [x] : []), 'focus').then(() => dash()).catch(() => {}); };
       return h('label.la-im-c', { dataset: { on: on ? '1' : '0', no: x.fit === 'no' ? '1' : '0' }, title: x.fit === 'no' ? x.fit_text : undefined, onmouseenter: () => peek(true), onmouseleave: () => peek(false) },
-        rd, pic, h('div.la-im-b', {}, h('p.la-im-n', { text: x.name }),
+        rd, pic, h('button.la-im-big', { type: 'button', 'aria-label': `${x.name} 크게 보기`, title: '크게 보기', onclick: big }, h('span', { 'aria-hidden': 'true', text: '⤢' })), h('div.la-im-b', {}, h('p.la-im-n', { text: x.name }),
           h('dl', {}, h('dt', { text: '해상도' }), h('dd.num', { text: x.gsd_word || '—' }), h('dt', { text: '촬영 시기' }), h('dd.num', { text: x.when || '—' }),
             h('dt', { text: '범위' }), h('dd', { text: x.range || '—' })),
           h('span.la-fit', { dataset: { fit: x.fit }, text: x.fit_text })));

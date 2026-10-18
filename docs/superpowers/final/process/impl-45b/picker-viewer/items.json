@@ -1,0 +1,70 @@
+[
+ {
+  "tag": "pc",
+  "listMs": 843,
+  "drone": {
+   "nm": "2025-04 드론 1cm급 · 남원 AOI",
+   "openMs": 3052,
+   "timing": {
+    "ms": 3052,
+    "detail": 654,
+    "map": 2074,
+    "at": 1792308030153
+   },
+   "info": "2025년 4월 촬영\n·\n1.5cm급\n·\n남원시\n·\n드론",
+   "title": "2025-04 드론 1cm급 · 남원 AOI"
+  },
+  "escClosedViewerKeepsDialog": true,
+  "sat": {
+   "nm": "2025-04 2m · 남원 시가지",
+   "openMs": 834,
+   "timing": {
+    "ms": 834,
+    "detail": 22,
+    "map": 44,
+    "at": 1792308038210
+   },
+   "info": "2025년 4월 촬영\n·\n2m급\n·\n남원시\n·\n위성",
+   "title": "2025-04 2m · 남원 시가지"
+  },
+  "picked": 1,
+  "viewerGone": true,
+  "dbl": true,
+  "outsideClose": true,
+  "errors": []
+ },
+ {
+  "tag": "mobile",
+  "listMs": 819,
+  "drone": {
+   "nm": "2025-04 드론 1cm급 · 남원 AOI",
+   "openMs": 567,
+   "timing": {
+    "ms": 567,
+    "detail": 0,
+    "map": 86,
+    "at": 1792308051039
+   },
+   "info": "2025년 4월 촬영\n·\n1.5cm급\n·\n남원시\n·\n드론",
+   "title": "2025-04 드론 1cm급 · 남원 AOI"
+  },
+  "escClosedViewerKeepsDialog": true,
+  "sat": {
+   "nm": "2025-04 2m · 남원 시가지",
+   "openMs": 87,
+   "timing": {
+    "ms": 87,
+    "detail": 18,
+    "map": 42,
+    "at": 1792308057734
+   },
+   "info": "2025년 4월 촬영\n·\n2m급\n·\n남원시\n·\n위성",
+   "title": "2025-04 2m · 남원 시가지"
+  },
+  "picked": 1,
+  "viewerGone": true,
+  "dbl": true,
+  "outsideClose": false,
+  "errors": []
+ }
+]

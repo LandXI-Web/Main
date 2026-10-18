@@ -1,0 +1,45 @@
+/* imagery-viewer.css — 영상 크게 보기(imagery-viewer.js). 고르는 창(z 80~81) 위에 덮는다. */
+.k-iv{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(25,31,40,.55);opacity:0;transition:opacity var(--d-180,.18s) var(--e-ui,ease)}
+.k-iv.is-in{opacity:1}
+.k-iv-p{display:flex;flex-direction:column;width:100%;height:100%;max-width:1680px;background:var(--bg-1,#fff);border-radius:var(--r-12,12px);box-shadow:var(--elev-map,0 8px 32px rgba(0,0,0,.2));overflow:hidden;min-height:0}
+.k-iv-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 12px 20px;border-bottom:1px solid var(--rule,#e5e8eb)}
+.k-iv-hh{min-width:0}
+.k-iv-t{margin:0;font:600 var(--fs-body,17px)/26px var(--font-body);color:var(--ink,#191f28);word-break:keep-all;text-wrap:balance;overflow-wrap:anywhere}
+.k-iv-i{margin:2px 0 0;display:flex;flex-wrap:wrap;gap:0 8px;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--sub,#4e5968)}
+.k-iv-i i{font-style:normal;color:var(--mute,#8b95a1)}
+.k-iv-i span{white-space:nowrap}
+.k-iv-x{flex:none;width:40px;height:40px;padding:0;border:0;border-radius:var(--r-8,8px);background:none;color:var(--sub,#4e5968);font:400 28px/40px var(--font-body);cursor:pointer}
+.k-iv-x:hover{background:var(--bg-0,#f2f4f6)}
+.k-iv-body{position:relative;flex:1;min-height:0;background:var(--bg-0,#f2f4f6)}
+.k-iv-map{position:absolute;inset:0}
+.k-iv-map.k-stage{position:absolute}
+.k-iv-wait,.k-iv-warn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:10px 16px;border-radius:var(--r-8,8px);background:rgba(255,255,255,.94);box-shadow:var(--elev-map,0 2px 12px rgba(0,0,0,.15));font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink,#191f28);z-index:3;pointer-events:none;text-align:center;max-width:calc(100% - 32px);word-break:keep-all}
+.k-iv-wait[hidden],.k-iv-warn[hidden]{display:none}
+.k-iv-f{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 16px 14px 20px;border-top:1px solid var(--rule,#e5e8eb)}
+.k-iv-fn,.k-iv-fb{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.k-iv-n{min-width:56px;text-align:center;font:500 var(--fs-aux,15px)/22px var(--font-num,var(--font-body));color:var(--sub,#4e5968)}
+.k-iv-nav,.k-iv-b,.k-iv-go{min-height:40px;padding:0 14px;border-radius:var(--r-8,8px);font:500 var(--fs-aux,15px)/22px var(--font-body);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap;box-sizing:border-box}
+.k-iv-nav,.k-iv-b{border:1px solid var(--rule,#e5e8eb);background:var(--bg-1,#fff);color:var(--ink,#191f28)}
+.k-iv-nav:hover:not(:disabled),.k-iv-b:hover{border-color:var(--ink-2,#4e5968)}
+.k-iv-nav:disabled{color:var(--mute,#8b95a1);cursor:default}
+.k-iv-nav[hidden],.k-iv-n[hidden]{display:none}
+.k-iv-go{border:0;background:var(--ink,#191f28);color:#fff;padding:0 20px}
+.k-iv :is(button,a):focus-visible{outline:2px solid var(--accent,#0fa9a0);outline-offset:2px}
+.k-iv--page{position:fixed;padding:0;background:var(--bg-1,#fff);opacity:1}
+.k-iv--page .k-iv-p{max-width:none;border-radius:0;box-shadow:none}
+@media (max-width:640px){
+  .k-iv{padding:0}
+  .k-iv-p{border-radius:0}
+  .k-iv-f{padding:10px 12px calc(12px + env(safe-area-inset-bottom));gap:8px}
+  .k-iv-fn{width:100%;justify-content:space-between}
+  .k-iv-fb{width:100%}
+  .k-iv-fb .k-iv-go{flex:1 1 100%;order:-1}
+  .k-iv-fb .k-iv-b{flex:1 1 0;padding:0 8px}
+  .k-iv-h{padding:10px 8px 10px 14px}
+}
+@media (prefers-reduced-motion:reduce){.k-iv{transition:none}}
+/* 지도 안 손잡이 — 이 화면은 확대 · 축소 단추를 보이고, 축척은 어두운 글씨로 */
+.k-iv-map.k-stage .maplibregl-ctrl-group{display:block!important;border-radius:var(--r-8,8px);box-shadow:var(--elev-map,0 2px 8px rgba(0,0,0,.2))}
+.k-iv-map.k-stage .maplibregl-ctrl-top-right{top:12px;right:12px}
+.k-iv-map.k-stage .maplibregl-ctrl-scale{border-color:var(--ink,#191f28);color:var(--ink,#191f28);text-shadow:none;background:rgba(255,255,255,.7)}
+.k-iv-map .k-stage-map{position:absolute;inset:0}   /* 지도 엔진 스타일(position:relative)이 나중에 실려도 칸을 가득 채운다 */
