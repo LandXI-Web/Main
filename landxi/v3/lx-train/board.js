@@ -2,6 +2,10 @@
    시안 landxi/proto/review/mock/train-flow-3 를 실제 화면으로 옮김 — 세로 한 줄기:
    ① 흐름 판 — 블록(학습 데이터 · 기반 모델 · 학습 설정 · 학습 · 추론 · 배포 신청 — 10-13 '평가'→'추론' · '추론 시험'은 '추론'과 같은 것이라 하나로)을 위 칩에서 끌어다 놓거나 눌러 더하고,
       출구 ○ → 다음 블록으로 잇는다. 같은 블록 여러 개 · D 복제 · Delete 지우기 · 선 누르면 끊기 · 블록 누르면 오른쪽 서랍.
+      끌어 놓기(10-18 사용자 "학습 부분은 드래그앤 드랍으로 이어서 학습이 돌아가는 액션이 필요할 것 같다") — 포인터 사건(마우스 · 손가락 같은 길):
+      칩을 판 위로 끌어 놓기 · 블록 끌어 옮기기 · 출구 ○ 를 끌어 다음 블록에 놓아 잇기(따라오는 선 · 놓을 수 있는 블록은 테두리 · 안 되는 블록은 짧은 말).
+      누르고 누르는 잇기도 그대로. 키보드 = 고른 블록 화살표로 옮기기 · 서랍 '잇기'에서 잇기 · 끊기. 판 모양은 프로젝트마다 이 브라우저에 남는다.
+      학습 블록에 데이터 · 모델 · 설정이 다 이어지면 블록 안 '학습 시작' — 같은 대기열 길(/jobs/quote → /jobs)로 넣고, 새로 고치지 않고 그 자리에서 대기 → 학습 중 → 반복마다 그래프.
       처음 판 = 학습 서식('기본' 하나 · GET /train-templates · 결정 ⓑ 블록까지 바꿈 · 10-12 12:45 · 10-13 기본 하나) —
       블록 자리는 서식, 값은 이 프로젝트의 가장 최근 학습. 직원은 블록 넣기 · 빼기 · 잇기를 바꾸고 '기본 흐름으로 되돌리기'로 처음 모양.
       학습 데이터 블록 선택지에 '수정된 부분 n장'(10-13 저절로-문구 · 사용자 말 그대로)(GET /train-data/xi — 이 프로젝트가 만든 분석서비스에서 고친 곳이 모인 학습 데이터 · 10-13 데이터-개념 ⓐ)
@@ -96,8 +100,8 @@ export async function trainBoard({ host, project: P }) {
     const r = byModel.get(id);
     return r ? { short: nameOf.get(r.job), long: nameOf.get(r.job) } : { short: '기반 모델', long: '기반 모델' };
   };
-  const cur = runs[0] || null;
-  const live = cur && LIVE.has(cur.state);
+  let cur = runs[0] || null;                                   // 시작하면 그 자리에서 새 학습으로 바뀐다(새로 고침 없이)
+  let live = !!(cur && LIVE.has(cur.state));
   const canRun = !!P.can?.train;
 
   /* 상태 말(이력 · 핵심 수치) */
@@ -117,6 +121,10 @@ export async function trainBoard({ host, project: P }) {
   const nodes = {};
   const links = [];
   let picked = null, from = null, seq = 100;
+  let quiet = 0;                                               // 끌기 뒤 따라오는 누름(click)은 무시(끌어 옮긴 블록이 서랍을 열지 않게)
+  const hush = () => { quiet = performance.now(); };
+  const hushed = () => performance.now() - quiet < 250;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const dataOf = (r) => (r?.data ? { ref: r.data.ref, name: r.data.name, images: v(r.data.images), val: v(r.data.val), kind: r.data.kind,
     with: v(r.data.with), without: v(r.data.without) } : null);
   const tpl = TPL?.items?.['기본'] || { blocks: ['data', 'base', 'cfg', 'train', 'eval', 'deploy'], params: { epochs: 3, imgsz: 640, batch: 4 } };
@@ -137,7 +145,6 @@ export async function trainBoard({ host, project: P }) {
     if (has('deploy') && has('eval')) { put('deploy1', 'deploy', C3, R[1], { run: cur || null }); links.push({ a: 'eval1', b: 'deploy1' }); }
     picked = null; from = null;
   }
-  defaultFlow();
 
   /* 고를 수 있는 것 — 학습 데이터(이 프로젝트 학습데이터 + 지난 학습에 쓴 데이터) · 기반 모델(원판 + 이 프로젝트가 만든 모델) */
   const DATA = [];
@@ -152,14 +159,47 @@ export async function trainBoard({ host, project: P }) {
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
 
+  /* 판 모양 — 프로젝트마다 이 브라우저에 남김(블록 자리 · 고른 값 · 잇기). 못 읽으면 기본 흐름 */
+  const LKEY = `lx-train.board.${P.id}`;
+  function save() {
+    try {
+      localStorage.setItem(LKEY, JSON.stringify({ v: 1,
+        nodes: Object.values(nodes).map((n) => ({ id: n.id, kind: n.kind, x: Math.round(n.x), y: Math.round(n.y), cfg: n.cfg || null,
+          data: n.data?.ref || null, base: n.base || null, job: n.run?.job || null })),
+        links: links.filter((l) => !l.c).map((l) => ({ a: l.a, b: l.b })) }));
+    } catch { /* 저장 못 해도 판은 그대로 */ }
+  }
+  function restore() {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(LKEY) || 'null'); } catch { return false; }
+    if (!s || s.v !== 1 || !Array.isArray(s.nodes) || !s.nodes.length) return false;
+    const pool = [...DATA, ...SHARED];
+    for (const k of Object.keys(nodes)) delete nodes[k];
+    links.length = 0;
+    for (const o of s.nodes) {
+      if (!KIND[o.kind] || !o.id) continue;
+      const n = { id: String(o.id), kind: o.kind, x: clamp(+o.x || 0, 4, 2000), y: clamp(+o.y || 0, 4, 280) };
+      if (o.kind === 'cfg') n.cfg = o.cfg && o.cfg.epochs ? { epochs: +o.cfg.epochs, imgsz: +o.cfg.imgsz || 640, batch: +o.cfg.batch || 4 } : { ...tplCfg };
+      if (o.kind === 'data') n.data = (o.data && pool.find((d) => d.ref === o.data)) || null;
+      if (o.kind === 'base') n.base = o.base || null;
+      if (['train', 'eval', 'deploy'].includes(o.kind)) n.run = (o.job && runs.find((r) => r.job === o.job)) || null;
+      nodes[n.id] = n;
+      const m = /(\d+)$/.exec(n.id); if (m) seq = Math.max(seq, +m[1] + 1);
+    }
+    for (const l of s.links || []) if (nodes[l.a] && nodes[l.b] && !whyNot(l.a, l.b)) links.push({ a: l.a, b: l.b });
+    return Object.keys(nodes).length > 0;
+  }
+  if (!restore()) defaultFlow();
+
   /* ── 화면 틀 ── */
   const go = h('button.tb-go', { type: 'button' });
   const hint = h('p');
   const add = h('div.tb-add', {}, h('span.tb-add-k', { text: '블록 더하기' }));
   const cv = h('div.tb-cv');
   const wires = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); wires.classList.add('tb-wires');
-  cv.append(wires, h('div.tb-how', {}, '출구 ○ 를 누른 뒤 다음 블록을 눌러 이어요 · 선을 누르면 끊어요', h('b', { text: 'D' }), '복제', h('b', { text: 'Del' }), '삭제'));
-  const reset = h('button.tb-reset', { type: 'button', text: '기본 흐름으로 되돌리기', onclick: () => { defaultFlow(); render(); } });
+  const drag = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); drag.classList.add('tb-wires', 'tb-drag'); drag.setAttribute('aria-hidden', 'true');
+  cv.append(wires, drag, h('div.tb-how', {}, '블록은 끌어 옮기고 · 출구 ○ 를 끌어 다음 블록에 놓아 이어요 · 선을 누르면 끊어요', h('b', { text: 'D' }), '복제', h('b', { text: 'Del' }), '삭제'));
+  const reset = h('button.tb-reset', { type: 'button', text: '기본 흐름으로 되돌리기', onclick: () => { defaultFlow(); render(); } });   // 남긴 판 모양도 기본으로(render 가 다시 남김)
   const board = h('section.tb-card.tb-board', { 'aria-label': '학습 작업 흐름' },
     h('div.tb-board-h', {}, h('h1', { text: '학습 · AI 모델 작업 흐름' }), hint, go), add, h('div.tb-cv-w', {}, cv),
     h('div.tb-lock', {}, reset));
@@ -169,30 +209,52 @@ export async function trainBoard({ host, project: P }) {
   col.append(board, h('div.tb-cur', {}, perf, keys), hist);
   panes(keys, { edge: 'left', key: 'keys', cssVar: '--tb-keys', min: 300, max: 640, otherMin: 420, below: 961 });   // 칸 크기 조절(원칙 263)
 
-  if (!cur) hint.textContent = '아직 학습 기록이 없습니다 · 블록을 눌러 학습 데이터와 기반 모델을 고른 뒤 학습을 시작하세요';
-  else if (live) hint.textContent = cur.state === 'queued' ? '학습이 대기열에서 차례를 기다리는 중입니다' : '학습 중입니다 · 반복마다 정확도가 아래 그래프에 차오릅니다';
-  else hint.textContent = `${md(cur.finished_at)} 에 끝난 학습 · 같은 설정으로 다시 돌리거나 블록을 바꿔 새로 돌릴 수 있어요`;
-  go.textContent = live ? '멈추기' : cur ? '다시 돌리기' : '학습 시작';
-  go.disabled = !canRun;
-  if (!canRun) go.title = P.published ? '공개된 서비스의 다시 학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장 · 구성원이 시작합니다';
+  const NO_RUN = P.published ? '공개된 서비스의 다시 학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장 · 구성원이 시작합니다';
+  /** 머리 한 줄 · 단추 — 지금 학습 상태와 판(다 이어진 새 학습 블록이 있으면 '학습 시작') */
+  function head() {
+    const fresh = Object.values(nodes).some((n) => n.kind === 'train' && !n.run && !need(n));
+    if (!cur) hint.textContent = fresh ? '다 이어졌습니다 · 학습 시작을 누르면 대기열에 들어갑니다' : '아직 학습 기록이 없습니다 · 블록을 눌러 학습 데이터와 기반 모델을 고른 뒤 학습을 시작하세요';
+    else if (live) hint.textContent = cur.state === 'queued' ? '학습이 대기열에서 차례를 기다리는 중입니다' : '학습 중입니다 · 반복마다 정확도가 아래 그래프에 차오릅니다';
+    else if (fresh) hint.textContent = '새 학습 블록이 다 이어졌습니다 · 학습 시작을 누르면 대기열에 들어갑니다';
+    else hint.textContent = `${md(cur.finished_at)} 에 끝난 학습 · 같은 설정으로 다시 돌리거나 블록을 바꿔 새로 돌릴 수 있어요`;
+    go.textContent = live ? '멈추기' : fresh || !cur ? '학습 시작' : '다시 돌리기';
+    go.disabled = !canRun;
+    if (!canRun) go.title = NO_RUN;
+  }
   go.addEventListener('click', () => (live ? stop() : start()));
 
-  /* 블록 더하기 칩 */
+  /* 블록 더하기 칩 — 눌러 더하기 · 판 위로 끌어 놓기(포인터 사건 · 손가락도 같은 길) */
   for (const k of Object.keys(KIND)) {
-    const c = h('button.tb-chip', { type: 'button', draggable: 'true', dataset: { k }, text: KIND[k] });
-    c.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', k); c.classList.add('is-drag'); });
-    c.addEventListener('dragend', () => c.classList.remove('is-drag'));
-    c.addEventListener('click', () => { const [x, y] = freeSpot(); addNode(k, x, y); });
+    const c = h('button.tb-chip', { type: 'button', dataset: { k }, text: KIND[k], title: '판 위로 끌어 놓거나 눌러 더해요' });
+    c.addEventListener('click', () => { if (hushed()) return; const [x, y] = freeSpot(); addNode(k, x, y); });
+    c.addEventListener('pointerdown', (e) => chipDrag(e, c, k));
     add.append(c);
   }
-  cv.addEventListener('dragover', (e) => { e.preventDefault(); cv.classList.add('is-over'); });
-  cv.addEventListener('dragleave', () => cv.classList.remove('is-over'));
-  cv.addEventListener('drop', (e) => {
-    e.preventDefault(); cv.classList.remove('is-over');
-    const k = e.dataTransfer.getData('text/plain'); if (!KIND[k]) return;
-    const r = cv.getBoundingClientRect();
-    addNode(k, Math.max(8, Math.min(e.clientX - r.left - W / 2, cv.clientWidth - W - 8)), Math.max(8, Math.min(e.clientY - r.top - 24, cv.clientHeight - 70)));
-  });
+  function chipDrag(e, c, k) {
+    if (e.button > 0) return;
+    const sx = e.clientX, sy = e.clientY;
+    let ghost = null;
+    try { c.setPointerCapture(e.pointerId); } catch { /* */ }
+    const inCv = (ev) => { const r = cv.getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom; };
+    const mv = (ev) => {
+      if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+      if (!ghost) {
+        ghost = h('div.tb-ghost', { 'aria-hidden': 'true' }, h('b', { text: KIND[k] }), h('small', { text: '판 위에 놓아요' }));
+        document.body.append(ghost); c.classList.add('is-drag');
+      }
+      ghost.style.transform = `translate(${ev.clientX - W / 2}px,${ev.clientY - 22}px)`;
+      const over = inCv(ev); cv.classList.toggle('is-over', over); ghost.classList.toggle('is-out', !over);
+    };
+    const up = (ev) => {
+      c.removeEventListener('pointermove', mv); c.removeEventListener('pointerup', up); c.removeEventListener('pointercancel', up);
+      if (!ghost) return;
+      ghost.remove(); c.classList.remove('is-drag'); cv.classList.remove('is-over'); hush();
+      if (ev.type === 'pointercancel' || !inCv(ev)) return;
+      const r = cv.getBoundingClientRect();
+      addNode(k, clamp(ev.clientX - r.left - W / 2, 4, cv.clientWidth - W - 4), clamp(ev.clientY - r.top - 22, 4, cv.clientHeight - 74));
+    };
+    c.addEventListener('pointermove', mv); c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  }
   /** 눌러 더한 블록의 자리 — 다른 블록과 겹치지 않는 첫 칸(아래 줄부터 · 없으면 비켜 놓기) */
   function freeSpot() {
     const xs = [C1, C2, C3, C3 + 196, C0], ys = [R[2], R[0], R[1]];
@@ -207,13 +269,24 @@ export async function trainBoard({ host, project: P }) {
     if (k === 'data') n.data = src?.data || null;
     if (k === 'base') n.base = src?.base || null;
     if (['train', 'eval', 'deploy'].includes(k)) n.run = null;      // 새로 놓은 학습 = 아직 돌지 않은 학습
-    nodes[id] = n; picked = id; render(); return id;
+    nodes[id] = n; picked = id; render();
+    const el = cv.querySelector(`.tb-node[data-id="${id}"]`);   // 놓은 블록이 판 밖으로 나가지 않게(블록 높이를 재서)
+    if (el) { const y2 = clamp(n.y, 4, cv.clientHeight - el.offsetHeight - 4), x2 = clamp(n.x, 4, cv.clientWidth - el.offsetWidth - 4); if (y2 !== n.y || x2 !== n.x) { n.x = x2; n.y = y2; render(); } }
+    return id;
   }
   const onKey = (e) => {
     if (!pane.isConnected) { document.removeEventListener('keydown', onKey); return; }
     if (e.target.closest?.('input,textarea,select,[contenteditable]')) return;
     if (e.key === 'Escape') { picked = null; from = null; render(); return; }
     if (!picked || !nodes[picked]) return;
+    const AR = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (AR && e.target.closest?.('.tb-node')) {           // 키보드로 옮기기 — 고른 블록에 초점이 있을 때만(Shift = 크게)
+      e.preventDefault();
+      const n = nodes[picked], el = cv.querySelector(`.tb-node[data-id="${n.id}"]`), st = e.shiftKey ? 32 : 8;
+      n.x = clamp(n.x + AR[0] * st, 4, cv.clientWidth - (el?.offsetWidth || W) - 4); n.y = clamp(n.y + AR[1] * st, 4, cv.clientHeight - (el?.offsetHeight || 60) - 4);
+      if (el) { el.style.left = `${n.x}px`; el.style.top = `${n.y}px`; }
+      drawWires(); save(); return;
+    }
     if (e.key === 'd' || e.key === 'D') { const n = nodes[picked]; addNode(n.kind, Math.min(n.x + 24, cv.clientWidth - W - 8), Math.min(n.y + 40, cv.clientHeight - 70), n); }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       for (let i = links.length - 1; i >= 0; i--) if (links[i].a === picked || links[i].b === picked) links.splice(i, 1);
@@ -244,9 +317,9 @@ export async function trainBoard({ host, project: P }) {
       o.line = `반복 ${n.cfg.epochs}회 · 크기 ${n.cfg.imgsz} · 한 번에 ${n.cfg.batch}장`;   // 뜻 덩어리 안에서 꺾이지 않게(규칙 9)
     } else if (n.kind === 'train') {
       const r = n.run;
-      if (!r) { o.line = '시작 전 · 대기열'; o.cls = 'need'; }
-      else if (r.state === 'running') { const k = liveEp(); o.line = `학습 중 · ${k} / ${v(r.epochs)}회`; o.bar = Math.round((k / Math.max(1, v(r.epochs))) * 100); o.cls = 'live'; o.tag = [`${mdhm(r.started_at)} 시작`, '']; }
-      else if (r.state === 'queued') { o.line = '대기열에서 차례를 기다리는 중'; o.cls = 'live'; }
+      if (!r) { const m = need(n); o.line = m ? '세 블록을 이어요' : '다 이어졌어요'; o.cls = m ? 'need' : 'ready'; }
+      else if (r.state === 'running') { const k = liveEp(r); o.line = `학습 중 · ${k} / ${v(r.epochs)}회`; o.bar = Math.round((k / Math.max(1, v(r.epochs))) * 100); o.cls = 'live'; if (r.started_at) o.tag = [`${mdhm(r.started_at)} 시작`, '']; }
+      else if (r.state === 'queued') { o.line = '대기열에서 기다리는 중'; o.cls = 'live'; o.bar = -1; }
       else { o.num = r.acc ? `학습 끝 검증 ${pct(v(r.acc))}` : ''; o.line = `끝남 · ${mdhm(r.finished_at)} · ${v(r.epochs)}회`; }
     } else if (n.kind === 'eval') {
       const r = (upTrain(n) || {}).run;
@@ -268,59 +341,145 @@ export async function trainBoard({ host, project: P }) {
   }
 
   /* ── 판 그리기 ── */
+  const curve = (x1, y1, x2, y2) => { const dx = Math.max(40, Math.abs(x2 - x1) / 2); return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`; };
+  const nameText = (n) => { const b = label(n); const em = b.querySelector('em'); return em ? `${KIND[n.kind]} ${em.textContent}` : KIND[n.kind]; };
   function render() {
+    const back = document.activeElement?.closest?.('.tb-node')?.dataset.id;   // 키보드로 고른 블록은 다시 그려도 초점 그대로
     cv.querySelectorAll('.tb-node,.tb-say').forEach((x) => x.remove());
     for (const n of Object.values(nodes)) {
       const f = face(n);
       const el = h('div.tb-node', { role: 'button', tabindex: '0', dataset: { id: n.id, kind: n.kind }, style: `left:${n.x}px;top:${n.y}px`,
-        class: [f.cls, picked === n.id ? 'on' : ''].filter(Boolean).join(' ') });
+        'aria-label': `${nameText(n)} · ${f.line}`, class: [f.cls, picked === n.id ? 'on' : ''].filter(Boolean).join(' ') });
       if (IN[n.kind]) el.append(h('i.tb-port.in', { 'aria-hidden': 'true' }));
       el.append(label(n));
       if (f.num) el.append(h('small.num', { text: f.num }));
       el.append(h('small', { text: f.line }));
-      if (f.bar != null) el.append(h('div.tb-bar', {}, h('i', { style: `width:${f.bar}%` })));
+      if (f.bar === -1) el.append(h('div.tb-bar.is-wait', {}, h('i')));
+      else if (f.bar != null) el.append(h('div.tb-bar', {}, h('i', { style: `width:${f.bar}%` })));
       if (f.tag && f.tag[0]) el.append(h('span.tb-tag', { class: f.tag[1] || '', text: f.tag[0] }));
-      if (n.kind !== 'deploy') el.append(h('i.tb-port', { class: from === n.id ? 'is-from' : '', 'aria-hidden': 'true', title: '이어 갈 블록 고르기' }));
+      if (n.kind === 'train' && !n.run && !need(n)) {           // 다 이어진 새 학습 블록 — 그 자리에서 '학습 시작'
+        const run = h('button.tb-run', { type: 'button', text: '학습 시작', disabled: !canRun, title: canRun ? '이 블록에 이은 데이터 · 모델 · 설정으로 학습을 시작해요' : NO_RUN });
+        run.addEventListener('click', (e) => { e.stopPropagation(); if (!hushed()) start([n]); });
+        run.addEventListener('pointerdown', (e) => e.stopPropagation());
+        run.addEventListener('keydown', (e) => e.stopPropagation());
+        el.append(run);
+      }
+      if (n.kind !== 'deploy') {
+        const port = h('i.tb-port', { class: from === n.id ? 'is-from' : '', 'aria-hidden': 'true', title: '끌어서 다음 블록에 놓거나, 누른 뒤 다음 블록을 눌러 이어요' });
+        port.addEventListener('pointerdown', (e) => portDrag(e, n, port));
+        el.append(port);
+      }
+      el.addEventListener('pointerdown', (e) => nodeDrag(e, n, el));
       el.addEventListener('click', (e) => {
+        if (hushed()) return;
         if (e.target.classList.contains('tb-port') && !e.target.classList.contains('in')) { from = from === n.id ? null : n.id; render(); return; }
         if (from && from !== n.id) { connect(from, n.id); from = null; return; }
         if (from === n.id) { from = null; render(); say(n, '같은 블록끼리는 이을 수 없어요', true); return; }
         picked = picked === n.id ? null : n.id; render();
       });
-      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+      el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); el.click(); } });
       cv.append(el);
     }
-    drawWires(); drawSide();
+    drawWires(); drawSide(); head(); save();
+    if (back && nodes[back]) cv.querySelector(`.tb-node[data-id="${back}"]`)?.focus({ preventScroll: true });
+  }
+  /** 블록 끌어 옮기기 — 5px 넘게 움직이면 끌기(그보다 적으면 누름 그대로) */
+  function nodeDrag(e, n, el) {
+    if (e.button > 0 || e.target.closest('.tb-port:not(.in),.tb-run')) return;
+    const sx = e.clientX, sy = e.clientY, ox = n.x, oy = n.y;
+    let moved = false;
+    try { el.setPointerCapture(e.pointerId); } catch { /* */ }
+    const mv = (ev) => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 5) return;
+      if (!moved) { moved = true; el.classList.add('is-moving'); cv.classList.add('is-moving'); }
+      n.x = clamp(ox + dx, 4, cv.clientWidth - el.offsetWidth - 4); n.y = clamp(oy + dy, 4, cv.clientHeight - el.offsetHeight - 4);
+      el.style.left = `${n.x}px`; el.style.top = `${n.y}px`; drawWires();
+    };
+    const up = () => {
+      el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      if (!moved) return;
+      el.classList.remove('is-moving'); cv.classList.remove('is-moving'); hush(); drawWires(); save();
+    };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  /** 출구 ○ 끌어 잇기 — 따라오는 선 · 놓을 수 있는 블록은 테두리(입구에 붙음) · 안 되는 블록은 빨간 테두리, 놓으면 짧은 말 */
+  function portDrag(e, n, port) {
+    if (e.button > 0) return;
+    e.stopPropagation(); e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    let moved = false, tgt = null;
+    try { port.setPointerCapture(e.pointerId); } catch { /* */ }
+    const a = box(n.id), x1 = a.x + a.w, y1 = a.y + a.h / 2;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const mark = (id) => {
+      if (id === tgt) return;
+      cv.querySelectorAll('.tb-node.is-snap,.tb-node.is-no').forEach((x) => x.classList.remove('is-snap', 'is-no'));
+      tgt = id;
+      if (id) cv.querySelector(`.tb-node[data-id="${id}"]`)?.classList.add(whyNot(n.id, id) ? 'is-no' : 'is-snap');
+    };
+    const mv = (ev) => {
+      if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+      if (!moved) { moved = true; from = null; drag.append(line); cv.classList.add('is-wiring'); port.classList.add('is-from'); }
+      const r = cv.getBoundingClientRect();
+      let x2 = ev.clientX - r.left, y2 = ev.clientY - r.top;
+      const hit = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.('.tb-node');
+      mark(hit && cv.contains(hit) && hit.dataset.id !== n.id ? hit.dataset.id : null);
+      const ok = tgt && !whyNot(n.id, tgt);
+      if (ok) { const b = box(tgt); x2 = b.x; y2 = b.y + b.h / 2; }   // 놓을 수 있으면 입구에 붙는다
+      line.setAttribute('d', curve(x1, y1, x2, y2));
+      line.setAttribute('class', tgt ? (ok ? 'ok' : 'bad') : '');
+    };
+    const up = (ev) => {
+      port.removeEventListener('pointermove', mv); port.removeEventListener('pointerup', up); port.removeEventListener('pointercancel', up);
+      if (!moved) return;                                       // 움직이지 않았으면 누름 — 누르고 누르는 잇기(click)
+      const t = tgt; mark(null); line.remove(); cv.classList.remove('is-wiring'); hush();
+      if (ev.type !== 'pointercancel' && t) connect(n.id, t); else render();
+    };
+    port.addEventListener('pointermove', mv); port.addEventListener('pointerup', up); port.addEventListener('pointercancel', up);
   }
   function box(id) { const el = cv.querySelector(`.tb-node[data-id="${id}"]`); return { x: nodes[id].x, y: nodes[id].y, w: el ? el.offsetWidth : W, h: el ? el.offsetHeight : 60 }; }
   function drawWires() {
     wires.innerHTML = links.filter((l) => nodes[l.a] && nodes[l.b]).map((l) => {
-      const a = box(l.a), b = box(l.b); const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2; const dx = Math.max(40, (x2 - x1) / 2);
-      const run = nodes[l.b].kind === 'eval' ? nodes[l.a].run : null;
+      const a = box(l.a), b = box(l.b);
+      const run = nodes[l.b].kind === 'eval' ? nodes[l.a].run : nodes[l.b].kind === 'train' ? nodes[l.b].run : null;
       const cls = l.c || (run && LIVE.has(run.state) ? 'live' : nodes[l.b].kind === 'deploy' && face(nodes[l.b]).cls === 'off' ? 'off' : '');
-      return `<path class="${cls}" data-i="${links.indexOf(l)}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}"/>`;
+      const d = curve(a.x + a.w, a.y + a.h / 2, b.x, b.y + b.h / 2);
+      return `<g data-i="${links.indexOf(l)}"><title>선을 누르면 끊어요</title><path class="hit" d="${d}"/><path class="${cls}" d="${d}"/></g>`;
     }).join('');
-    wires.querySelectorAll('path').forEach((p) => p.addEventListener('click', () => { links.splice(+p.dataset.i, 1); render(); }));
+    wires.querySelectorAll('g').forEach((g) => g.addEventListener('click', () => {
+      if (hushed()) return;
+      const L = links[+g.dataset.i]; if (!L || L.c) return;
+      links.splice(+g.dataset.i, 1); render(); say(nodes[L.b], '끊었어요');
+    }));
+  }
+  /** 이을 수 없는 까닭(되면 null) — 끌 때 테두리 · 놓을 때 말 · 서랍 '잇기'가 같은 규칙 */
+  function whyNot(a, b) {
+    const A = nodes[a], B = nodes[b];
+    if (!A || !B) return '이을 블록이 없어요';
+    if (a === b || A.kind === B.kind) return '같은 블록끼리는 이을 수 없어요';
+    if (links.some((l) => l.a === a && l.b === b && !l.c)) return '이미 이어져 있어요';
+    if (!(IN[B.kind] || []).includes(A.kind)) return WHY[B.kind];
+    if ((ONE[B.kind] || []).includes(A.kind) && links.some((l) => l.b === b && !l.c && nodes[l.a]?.kind === A.kind)) return ONE_WHY[A.kind];
+    return null;
   }
   function connect(a, b) {
-    const A = nodes[a], B = nodes[b];
-    if (links.some((l) => l.a === a && l.b === b)) { render(); say(B, '이미 이어져 있어요'); return; }
-    let why = null;
-    if (A.kind === B.kind) why = '같은 블록끼리는 이을 수 없어요';
-    else if (!(IN[B.kind] || []).includes(A.kind)) why = WHY[B.kind];
-    else if ((ONE[B.kind] || []).includes(A.kind) && links.some((l) => l.b === b && nodes[l.a]?.kind === A.kind)) why = ONE_WHY[A.kind];
+    const B = nodes[b];
+    const why = whyNot(a, b);
+    if (why === '이미 이어져 있어요') { render(); say(B, why); return; }
     if (why) {
       const L = { a, b, c: 'bad' }; links.push(L); B.bad = true; render(); cv.querySelector(`.tb-node[data-id="${b}"]`)?.classList.add('bad'); say(B, why, true);
       setTimeout(() => { const i = links.indexOf(L); if (i >= 0) links.splice(i, 1); delete B.bad; render(); }, 2800);
       return;
     }
     links.push({ a, b }); render();
+    if (B.kind === 'train' && !B.run && !need(B)) say(B, '다 이어졌어요 · 블록 안 학습 시작을 누르면 돌아요');
   }
   function say(n, text, bad = false) {
     cv.querySelectorAll('.tb-say').forEach((s) => s.remove());
-    if (!nodes[n.id]) return;
+    if (!n || !nodes[n.id]) return;
     const b = box(n.id);
-    const el = h('div.tb-say', { class: bad ? 'bad' : '', role: 'status', text, style: `left:${Math.min(n.x, cv.clientWidth - 300)}px;top:${Math.min(n.y + b.h + 8, cv.clientHeight - 44)}px` });
+    const el = h('div.tb-say', { class: bad ? 'bad' : '', role: 'status', text, style: `left:${Math.max(4, Math.min(n.x, cv.clientWidth - 300))}px;top:${Math.min(n.y + b.h + 8, cv.clientHeight - 44)}px` });
     cv.append(el); setTimeout(() => el.remove(), 2800);
   }
 
@@ -367,8 +526,11 @@ export async function trainBoard({ host, project: P }) {
         h('p', { style: 'margin-top:10px', text: '다른 설정으로 한 번 더 보려면 학습 설정 블록을 하나 더 놓고(D) 다른 학습에 이어요.' }));
     } else if (n.kind === 'train') {
       const r = n.run;
-      if (!r) out.push(h('span.tb-verdict', { text: '시작 전' }), h('p', { style: 'margin-top:10px', text: '위 \'다시 돌리기\'를 누르면 이 블록에 이은 학습 데이터 · 기반 모델 · 학습 설정으로 대기열에 들어가요.' }));
-      else if (LIVE.has(r.state)) out.push(h('span.tb-verdict', { text: r.state === 'queued' ? '대기열에서 기다리는 중' : `학습 중 · ${v(r.epochs)}회 중 ${liveEp()}회째` }),
+      const m = !r ? need(n) : null;
+      if (!r) {
+        out.push(h('span.tb-verdict', { class: m ? '' : 'ok', text: m ? '시작 전' : '다 이어졌어요' }), h('p', { style: 'margin-top:10px', text: m || '이 블록에 이은 학습 데이터 · 기반 모델 · 학습 설정으로 대기열에 들어가요.' }));
+        if (!m) { const b = h('button.tb-dbtn.tb-dgo', { type: 'button', text: '학습 시작', disabled: !canRun, title: canRun ? '' : NO_RUN }); b.addEventListener('click', () => start([n])); out.push(b); }
+      } else if (LIVE.has(r.state)) out.push(h('span.tb-verdict', { text: r.state === 'queued' ? '대기열에서 기다리는 중' : `학습 중 · ${v(r.epochs)}회 중 ${liveEp(r)}회째` }),
         kv([['시작', mdhm(r.started_at || r.created_at), true], ['반복', `${v(r.epochs)}회`, true]]));
       else out.push(h('span.tb-verdict.ok', { text: `끝남 · ${mdhm(r.finished_at)}` }),
         kv([r.data?.images ? ['학습 데이터', `${nf(v(r.data.images))}장`, true] : null, ['기반 모델', baseWord(r.base?.id).long], ['설정', `반복 ${v(r.epochs)}회 · 크기 ${r.imgsz} · 한 번에 ${r.batch}장`],
@@ -389,15 +551,37 @@ export async function trainBoard({ host, project: P }) {
       out.push(h('span.tb-verdict', { class: k === 'ok' ? 'ok' : k === 'down' ? 'down' : '', text: !r || LIVE.has(r.state) ? '추론이 끝나면 켜져요' : k === 'ok' ? '이 판이 서비스 중이에요' : k === 'down' ? '원판보다 낮아 꺼져 있어요' : '배포 신청할 수 있어요' }),
         h('p', { style: 'margin-top:10px', text: '배포 신청은 프로젝트 마지막 단계에서 해요. LX 관리자가 비교 값을 보고 승인해요.' }), h('a.tb-dbtn', { href: stageHref(P, 'publish'), text: '배포 신청 열기' }));
     }
+    out.push(...wireRows(n));
     side.replaceChildren(...out);
+  }
+  /** 서랍 '잇기' — 키보드로도 잇고 끊는다(끌어 잇기와 같은 규칙 whyNot) */
+  function wireRows(n) {
+    const rows = [];
+    const mine = links.filter((l) => !l.c && (l.a === n.id || l.b === n.id) && nodes[l.a] && nodes[l.b]);
+    const can = n.kind === 'deploy' ? [] : Object.values(nodes).filter((m) => m.id !== n.id && !whyNot(n.id, m.id));
+    if (!mine.length && !can.length) return rows;
+    rows.push(h('p.tb-lab', { text: '잇기' }));
+    for (const l of mine) {
+      const other = nodes[l.a === n.id ? l.b : l.a];
+      const t = l.a === n.id ? `${nameText(other)}(으)로 이어짐` : `${nameText(other)}에서 들어옴`;
+      const b = h('button.tb-opt.tb-wire', { type: 'button' }, h('span', {}, t), h('span.n', { text: '끊기' }));
+      b.addEventListener('click', () => { const i = links.indexOf(l); if (i >= 0) links.splice(i, 1); render(); say(nodes[l.b], '끊었어요'); });
+      rows.push(b);
+    }
+    for (const m of can) {
+      const b = h('button.tb-opt.tb-wire', { type: 'button' }, h('span', {}, `${nameText(m)}에 잇기`), h('span.n', { text: '잇기' }));
+      b.addEventListener('click', () => connect(n.id, m.id));
+      rows.push(b);
+    }
+    return rows;
   }
 
   /* ── ② 이번 학습 — 반복마다 정확도(학습 기록) + 핵심 수치 ── */
-  let liveLog = cur && cur.log ? [...v(cur.log)] : [];
-  function liveEp() { return liveLog.length; }
+  const logOf = (r) => { if (!r) return []; if (!r._log) r._log = Array.isArray(v(r.log)) ? [...v(r.log)] : []; return r._log; };
+  function liveEp(r) { return logOf(r).length; }
   function drawPerf() {
     const r = cur;
-    const vals = (r ? liveLog : []).map((x) => x * 100);
+    const vals = logOf(r).map((x) => x * 100);
     const N = r ? v(r.epochs) : 0;
     const head = h('div.tb-ph', {}, h('h2', { text: '이번 학습 · 반복마다 정확도' }));
     if (r) head.append(h('p', { text: [r.started_at ? `${mdhm(r.started_at)}${r.finished_at ? ` → ${mdhm(r.finished_at)}` : ''}` : '', `반복 ${N}회`].filter(Boolean).join(' · ') }));
@@ -448,7 +632,7 @@ export async function trainBoard({ host, project: P }) {
       ['학습 데이터', r.data?.images ? `${nf(v(r.data.images))}장` : '—', 'num'],
       ['기반 모델', baseWord(r.base?.id).long, 'txt'],
       ['반복 · 크기 · 한 번에', `${v(r.epochs)}회 · ${r.imgsz} · ${r.batch}장`, 'num'],
-      [r.state === 'done' ? '학습 끝 검증' : '지금까지', r.state === 'done' ? pct(v(r.acc)) : liveLog.length ? pct(liveLog[liveLog.length - 1] * 100) : '—', 'num'],
+      [r.state === 'done' ? '학습 끝 검증' : '지금까지', r.state === 'done' ? pct(v(r.acc)) : logOf(r).length ? pct(logOf(r)[logOf(r).length - 1] * 100) : '—', 'num'],
       ['추론', s ? `${pct(v(s.value))}${b ? ` (원판 ${pct(v(b.value))})` : ''}` : r.state === 'done' ? '—' : '끝나면', `num${s && b && v(s.value) < v(b.value) ? ' down' : ''}`],
       [r.state === 'done' ? '걸린 시간' : '시작', r.state === 'done' ? (r.took ? dur(v(r.took)) : '—') : mdhm(r.started_at || r.created_at), 'num'],
     ];
@@ -477,21 +661,26 @@ export async function trainBoard({ host, project: P }) {
   }
 
   /* ── 시작 · 멈추기 ── */
-  function plan() {
-    const trains = Object.values(nodes).filter((n) => n.kind === 'train');
+  /** 학습 블록 하나에 빠진 것(다 이어졌으면 null) */
+  function need(t) {
+    const d = inputs(t.id, 'data')[0], b = inputs(t.id, 'base')[0], c = inputs(t.id, 'cfg')[0];
+    return !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요'
+      : d.data.kind === 'edits' ? '수정된 부분은 XI 재학습에서 학습합니다' : !b ? '기반 모델 블록을 이어 주세요'
+      : !b.base ? '기반 모델 블록에서 모델을 골라 주세요' : !c ? '학습 설정 블록을 이어 주세요' : null;
+  }
+  function plan(only) {
+    const trains = only || Object.values(nodes).filter((n) => n.kind === 'train');
     const out = [], bad = [];
     for (const t of trains) {
       if (t.run && LIVE.has(t.run.state)) continue;
-      const d = inputs(t.id, 'data')[0], b = inputs(t.id, 'base')[0], c = inputs(t.id, 'cfg')[0];
-      const miss = !d ? '학습 데이터 블록을 이어 주세요' : !d.data ? '학습 데이터 블록에서 데이터를 골라 주세요'
-        : d.data.kind === 'edits' ? '수정된 부분은 XI 재학습에서 학습합니다' : !b ? '기반 모델 블록을 이어 주세요'
-        : !b.base ? '기반 모델 블록에서 모델을 골라 주세요' : !c ? '학습 설정 블록을 이어 주세요' : null;
-      if (miss) bad.push([t, miss]); else out.push({ t, d: d.data, b: b.base, c: c.cfg });
+      const miss = need(t);
+      if (miss) bad.push([t, miss]); else out.push({ t, d: inputs(t.id, 'data')[0].data, b: inputs(t.id, 'base')[0].base, c: inputs(t.id, 'cfg')[0].cfg });
     }
     return { out, bad };
   }
-  function start() {
-    const { out, bad } = plan();
+  function start(only) {
+    if (!canRun) { toast(NO_RUN); return; }
+    const { out, bad } = plan(only);
     if (bad.length) { picked = null; render(); say(bad[0][0], bad[0][1], true); return; }
     if (!out.length) { toast('돌릴 학습 블록이 없습니다'); return; }
     const okB = h('button.t-btn', { type: 'button', text: out.length > 1 ? `학습 ${out.length}건 시작` : '학습 시작' });
@@ -506,17 +695,19 @@ export async function trainBoard({ host, project: P }) {
     okB.addEventListener('click', async () => {
       okB.disabled = true;
       let n = 0, why = '';
+      const got = [];
       for (const x of out) {
         const req = { kind: 'train', base_model: x.b, samples: [x.d.ref], options: { epochs: x.c.epochs, imgsz: x.c.imgsz, batch: x.c.batch, project_id: P.id, task_name: P.task || undefined },
           label: `학습 · ${P.task || P.name}` };
         try {
           const q = await api('/jobs/quote', { method: 'POST', body: req });
           if (q && q.allowed === false) { why = (q.reasons || []).some((r) => (r?.code || r) === 'power_budget') ? '지금 다른 학습이 돌고 있어 시작할 수 없습니다 · 끝난 뒤 다시 해 주세요' : '지금은 학습을 시작할 수 없습니다'; break; }
-          await api('/jobs', { method: 'POST', body: req }); n++;
+          const res = await api('/jobs', { method: 'POST', body: req }); n++;
+          got.push([x, res]);
         } catch (e) { why = e?.message || '지금은 학습을 시작할 수 없습니다'; break; }
       }
       m.close(true);
-      if (n) { toast(n > 1 ? `학습 ${n}건을 대기열에 넣었습니다` : '학습을 대기열에 넣었습니다'); setTimeout(() => location.reload(), 900); }
+      if (n) { toast(n > 1 ? `학습 ${n}건을 대기열에 넣었습니다` : '학습을 대기열에 넣었습니다'); began(got); }
       if (why) toast(why, { ms: 8000 });
     });
   }
@@ -532,21 +723,40 @@ export async function trainBoard({ host, project: P }) {
     });
   }
 
+  /** 넣은 학습을 판에 바로 — 그 학습 블록이 대기 → 학습 중으로 바뀌고, 이번 학습 그래프 · 핵심 수치 · 이력 맨 위가 새 학습 */
+  function began(got) {
+    const now = new Date().toISOString();
+    for (const [x, res] of got) {
+      const j = res?.job || {};
+      if (!j.id) continue;
+      const r = { job: j.id, state: j.state === 'running' ? 'running' : 'queued', created_at: now, started_at: null, finished_at: null,
+        epochs: x.c.epochs, imgsz: x.c.imgsz, batch: x.c.batch, data: { ref: x.d.ref, name: x.d.name, images: x.d.images, kind: x.d.kind },
+        base: { id: x.b }, model: null, acc: null, log: [], same: null };
+      x.t.run = r;
+      nameOf.set(r.job, ordName(runs.length)); runs.unshift(r);
+      watch(r, `/events/jobs/${encodeURIComponent(j.id)}`);
+    }
+    if (!runs[0] || runs[0] === cur) return;
+    cur = runs[0]; live = true;
+    render(); drawPerf(); drawKeys(); drawHist();
+  }
   /* 도는 학습 — 반복마다 값이 오면 그래프가 차오른다(작업 사건 흐름) */
-  if (live && cur.events_url) {
-    const s = sse(cur.events_url, {
+  function watch(r, url) {
+    const s = sse(url, {
       events: [...JOB_EVENTS, 'train.epoch'],                 // 반복마다 값(train.epoch)은 기본 작업 사건 목록에 없다 — 따로 듣는다
       on: (name, d) => {
-        if (name === 'job.started' && cur.state === 'queued') { cur.state = 'running'; render(); drawKeys(); }
+        if (!pane.isConnected) { s.close(); return; }
+        if (name === 'job.started' && r.state === 'queued') { r.state = 'running'; r.started_at = r.started_at || new Date().toISOString(); render(); if (r === cur) { drawPerf(); drawKeys(); drawHist(); } }
         if (name === 'train.epoch' && d && d.epoch > 0 && d.map50 != null) {
-          cur.state = 'running';
-          liveLog[d.epoch - 1] = +d.map50; liveLog = liveLog.filter((x) => x != null);
-          render(); drawPerf(); drawKeys();
+          if (r.state !== 'running') { r.state = 'running'; r.started_at = r.started_at || new Date().toISOString(); }
+          const L = logOf(r); L[d.epoch - 1] = +d.map50; r._log = L.filter((x) => x != null);
+          render(); if (r === cur) { drawPerf(); drawKeys(); }
         }
         if (name === 'job.done' || name === 'job.failed' || name === 'job.cancelled') { s.close(); setTimeout(() => location.reload(), 800); }
       },
     });
   }
+  if (live && cur.events_url) watch(cur, cur.events_url);
 
   render(); drawPerf(); drawKeys(); drawHist();
   /* 판 글꼴 · 스타일이 늦게 붙으면 블록 크기가 바뀐다 — 선을 다시 긋는다(블록 자리는 그대로) */
