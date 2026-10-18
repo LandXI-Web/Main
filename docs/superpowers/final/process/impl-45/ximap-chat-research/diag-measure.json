@@ -1,0 +1,377 @@
+[
+ {
+  "tag": "1440-idle",
+  "viewport": [
+   1440,
+   900
+  ],
+  "map": {
+   "w": 1360,
+   "h": 836
+  },
+  "attrs": {
+   "fold": true,
+   "turns": false,
+   "all": false
+  },
+  "dlog": null,
+  "input": {
+   "x": 340,
+   "y": 760,
+   "w": 680,
+   "h": 56
+  },
+  "sugg": null,
+  "sheet": null,
+  "ans": null,
+  "union": {
+   "x": 340,
+   "y": 760,
+   "w": 680,
+   "h": 56
+  },
+  "pctUnion": 3.3,
+  "pctDlog": 0,
+  "mapLeftAbove": 760,
+  "mapLeftPct": 90.9,
+  "others": {
+   "tools": {
+    "x": 1276,
+    "y": 68,
+    "w": 68,
+    "h": 241
+   },
+   "ask": null,
+   "stats": null,
+   "statsLine": null,
+   "hud": null,
+   "drawer": null,
+   "tags": null
+  },
+  "hidden": [],
+  "tags": 0,
+  "tagsHidden": 0,
+  "layout": {
+   "tb": 317,
+   "xr": 96,
+   "cl": 680,
+   "cw": 680,
+   "open": false,
+   "obstacles": 0
+  },
+  "tidy": {
+   "prev": 0,
+   "all": false,
+   "fold": true
+  }
+ },
+ {
+  "tag": "1440-answer",
+  "viewport": [
+   1440,
+   900
+  ],
+  "map": {
+   "w": 1360,
+   "h": 836
+  },
+  "attrs": {
+   "fold": false,
+   "turns": true,
+   "all": false
+  },
+  "dlog": {
+   "x": 160,
+   "y": 527,
+   "w": 680,
+   "h": 225
+  },
+  "input": {
+   "x": 160,
+   "y": 760,
+   "w": 680,
+   "h": 56
+  },
+  "sugg": null,
+  "sheet": null,
+  "ans": null,
+  "union": {
+   "x": 160,
+   "y": 527,
+   "w": 680,
+   "h": 289
+  },
+  "pctUnion": 17.3,
+  "pctDlog": 13.5,
+  "mapLeftAbove": 527,
+  "mapLeftPct": 63,
+  "others": {
+   "tools": {
+    "x": 1276,
+    "y": 68,
+    "w": 68,
+    "h": 241
+   },
+   "ask": null,
+   "stats": null,
+   "statsLine": {
+    "x": 997,
+    "y": 317,
+    "w": 347,
+    "h": 48
+   },
+   "hud": null,
+   "drawer": null,
+   "tags": null
+  },
+  "hidden": [],
+  "tags": 0,
+  "tagsHidden": 0,
+  "layout": {
+   "tb": 317,
+   "xr": 371,
+   "cl": 500,
+   "cw": 680,
+   "open": true,
+   "obstacles": 2
+  },
+  "tidy": {
+   "prev": 0,
+   "all": false,
+   "fold": false
+  }
+ },
+ {
+  "tag": "1920-answer",
+  "viewport": [
+   1920,
+   1080
+  ],
+  "map": {
+   "w": 1840,
+   "h": 1016
+  },
+  "attrs": {
+   "fold": true,
+   "turns": true,
+   "all": false
+  },
+  "dlog": null,
+  "input": {
+   "x": 580,
+   "y": 940,
+   "w": 680,
+   "h": 56
+  },
+  "sugg": null,
+  "sheet": null,
+  "ans": null,
+  "union": {
+   "x": 580,
+   "y": 940,
+   "w": 680,
+   "h": 56
+  },
+  "pctUnion": 2,
+  "pctDlog": 0,
+  "mapLeftAbove": 940,
+  "mapLeftPct": 92.5,
+  "others": {
+   "tools": {
+    "x": 1756,
+    "y": 68,
+    "w": 68,
+    "h": 241
+   },
+   "ask": null,
+   "stats": null,
+   "statsLine": {
+    "x": 1477,
+    "y": 317,
+    "w": 347,
+    "h": 48
+   },
+   "hud": null,
+   "drawer": null,
+   "tags": {
+    "x": 1304,
+    "y": 635,
+    "w": 109,
+    "h": 52
+   }
+  },
+  "hidden": [],
+  "tags": 5,
+  "tagsHidden": 0,
+  "layout": {
+   "tb": 317,
+   "xr": 371,
+   "cl": 920,
+   "cw": 680,
+   "open": false,
+   "obstacles": 0
+  },
+  "tidy": {
+   "prev": 0,
+   "all": false,
+   "fold": false
+  }
+ },
+ {
+  "tag": "1366-answer",
+  "viewport": [
+   1366,
+   768
+  ],
+  "map": {
+   "w": 1286,
+   "h": 704
+  },
+  "attrs": {
+   "fold": true,
+   "turns": true,
+   "all": false
+  },
+  "dlog": null,
+  "input": {
+   "x": 303,
+   "y": 628,
+   "w": 680,
+   "h": 56
+  },
+  "sugg": null,
+  "sheet": null,
+  "ans": null,
+  "union": {
+   "x": 303,
+   "y": 628,
+   "w": 680,
+   "h": 56
+  },
+  "pctUnion": 4.2,
+  "pctDlog": 0,
+  "mapLeftAbove": 628,
+  "mapLeftPct": 89.2,
+  "others": {
+   "tools": {
+    "x": 1202,
+    "y": 68,
+    "w": 68,
+    "h": 241
+   },
+   "ask": null,
+   "stats": null,
+   "statsLine": {
+    "x": 923,
+    "y": 317,
+    "w": 347,
+    "h": 48
+   },
+   "hud": null,
+   "drawer": null,
+   "tags": {
+    "x": 1027,
+    "y": 479,
+    "w": 109,
+    "h": 52
+   }
+  },
+  "hidden": [],
+  "tags": 5,
+  "tagsHidden": 0,
+  "layout": {
+   "tb": 317,
+   "xr": 371,
+   "cl": 643,
+   "cw": 680,
+   "open": false,
+   "obstacles": 0
+  },
+  "tidy": {
+   "prev": 0,
+   "all": false,
+   "fold": false
+  }
+ },
+ {
+  "tag": "390-answer",
+  "viewport": [
+   390,
+   844
+  ],
+  "map": {
+   "w": 390,
+   "h": 724
+  },
+  "attrs": {
+   "fold": true,
+   "turns": true,
+   "all": false
+  },
+  "dlog": null,
+  "input": {
+   "x": 12,
+   "y": 656,
+   "w": 366,
+   "h": 56
+  },
+  "sugg": null,
+  "sheet": null,
+  "ans": null,
+  "union": {
+   "x": 12,
+   "y": 656,
+   "w": 366,
+   "h": 56
+  },
+  "pctUnion": 7.3,
+  "pctDlog": 0,
+  "mapLeftAbove": 656,
+  "mapLeftPct": 90.6,
+  "others": {
+   "tools": {
+    "x": 176,
+    "y": 56,
+    "w": 206,
+    "h": 60
+   },
+   "ask": null,
+   "stats": {
+    "x": 16,
+    "y": 293,
+    "w": 358,
+    "h": 335
+   },
+   "statsLine": {
+    "x": 16,
+    "y": 124,
+    "w": 358,
+    "h": 48
+   },
+   "hud": null,
+   "drawer": null,
+   "tags": {
+    "x": 579,
+    "y": 489,
+    "w": 109,
+    "h": 52
+   }
+  },
+  "hidden": [],
+  "tags": 5,
+  "tagsHidden": 0,
+  "layout": {
+   "tb": 317,
+   "xr": 371,
+   "cl": 643,
+   "cw": 680,
+   "open": false,
+   "obstacles": 0
+  },
+  "tidy": {
+   "prev": 0,
+   "all": false,
+   "fold": false
+  }
+ }
+]

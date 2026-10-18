@@ -1,0 +1,84 @@
+/* XI ChatGEO 자리 — 시안 둘(10-18 원칙 290 "A나 C가 낫긴한데 … 이게 최선인가" · 주소 ?chat=d1 | ?chat=d2 에서만 · 기본 화면은 그대로)
+   d1 '지도가 답한다' — 입력 한 줄만 지도 위에 · 답은 지도 위 꼬리표 · 한 줄 통계로, 글은 두 줄 띠 하나 · 지난 대화는 오른쪽 서랍
+   d2 '아래 시트 · 세 높이' — 지도 아래 전체 폭 시트(접기 · 답 · 전체 자석) · 끌어서 높이 · 지도 · 떠 있는 칸이 시트 위로 올라선다 · 높이는 사람마다 기억
+   토큰 · 흰 카드 16 · 글자 단계(꼬리표 14 · 보조 15 · 본문 16)만 쓴다. */
+
+/* ── '시안' 표시(두 시안 공통 · 왼쪽 위) ── */
+.xs-badge{position:absolute;z-index:40;left:16px;top:68px;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:var(--elev-map);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink-2);white-space:nowrap;pointer-events:none}
+.xs-badge b{display:inline-flex;align-items:center;height:26px;padding:0 8px;border-radius:6px;background:var(--lock);color:var(--ink);font:700 var(--fs-tag,14px)/1 var(--font-body)}
+.k-main:has(.xc-mini-line) .xs-badge{top:116px}
+
+/* ═══ d1 — 지도가 답한다 ═══ */
+[data-chat="d1"] .k-chat-root[data-dock] .k-chat-dlog{display:none!important}           /* 긴 대화 칸은 지도 위에 두지 않는다 */
+[data-chat="d1"] .k-chat-root[data-dock][data-turns] .k-chat-sugg{display:none}         /* 답이 있으면 추천 질문 칩 대신 답 띠 */
+/* 답 띠 — 입력 줄 바로 위 · 글 두 줄까지 · 단추는 답에서 그대로 */
+.xs-ans{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:12px;align-items:start;padding:12px 10px 12px 14px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map);animation:k-chat-in var(--d-380) var(--e-ui)}
+.xs-ans[hidden]{display:none}
+.xs-ans-i{flex:none;width:28px;height:28px;margin-top:1px;border-radius:var(--r-8);background:var(--ai);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:800 var(--fs-tag,14px)/1 var(--font-display);letter-spacing:-.02em}
+.xs-ans-m{min-width:0;display:grid;gap:8px}
+.xs-ans-t{margin:0;font:400 var(--fs-body,16px)/24px var(--font-body);color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:pretty;word-break:keep-all}
+.xs-ans-t b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.xs-ans.is-busy .xs-ans-t{color:var(--sub)}
+.xs-ans-bar{height:3px;width:120px;border-radius:2px;background:var(--rule);overflow:hidden;position:relative}
+.xs-ans-bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--accent);border-radius:2px;animation:xs-bar 1.2s ease-in-out infinite}
+@keyframes xs-bar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.xs-ans-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.xs-ans-a button{height:36px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer}
+.xs-ans-a button:hover{background:var(--bg-0)}
+.xs-ans-a button.is-1{border-color:var(--ink);background:var(--ink);color:#fff}
+.xs-ans-a button.is-1:hover{background:var(--ink-2)}
+.xs-ans-a .xs-more{margin-left:auto;height:36px;padding:0 4px;border:0;background:none;font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.xs-ans-a .xs-more::after{content:"→"}
+.xs-ans-a .xs-more:hover{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.xs-ans-x{flex:none;width:32px;height:32px;margin:-4px -2px 0 0;border:0;border-radius:var(--r-8);background:none;font:300 var(--fs-t1,28px)/1 var(--font-body);color:var(--sub);cursor:pointer}
+.xs-ans-x:hover{background:var(--bg-0);color:var(--ink)}
+/* 대화 서랍(오른쪽 · 공용 서랍) — 대화 칸이 그대로 옮겨 온다 */
+.k-drawer .k-dr-b.xs-dlog{padding:0;display:flex;flex-direction:column}
+.k-drawer .k-dr-b.xs-dlog .k-chat-b{flex:1;min-height:0;padding:16px 20px 24px;background:var(--bg-0)}
+.k-drawer .k-dr-b.xs-dlog .k-chat-msg{display:flex}                                     /* 서랍 안에서는 지난 대화 전부 */
+
+/* ═══ d2 — 아래 시트 · 세 높이 ═══ */
+[data-chat="d2"]{--xs-sh:72px}
+[data-chat="d2"] .k-chat-root[data-dock]{left:0;right:0;bottom:0;width:auto;transform:none;z-index:32;pointer-events:none}
+[data-chat="d2"] .k-chat-root[data-dock] .k-ck.k-chat{position:relative;inset:auto;width:auto;max-width:none;height:var(--xs-sh);box-sizing:border-box;gap:0;padding:0 0 10px;background:var(--bg-1);border-radius:var(--r-16) var(--r-16) 0 0;box-shadow:0 -1px 0 rgba(28,31,37,.04),0 -8px 24px rgba(28,31,37,.10);overflow:hidden;transition:height var(--d-380) var(--e-ui)}
+[data-chat="d2"] .k-chat-root[data-dock].is-drag .k-ck.k-chat{transition:none}
+/* 손잡이 줄 — 끌어서 높이 · 세 자석(접기 · 답 · 전체) */
+.xs-grip{flex:none;position:relative;height:24px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;-webkit-user-select:none;user-select:none}
+.xs-grip::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--mute)}
+.xs-snap{position:absolute;right:12px;top:4px;display:flex;gap:2px;padding:2px;border-radius:var(--r-8);background:var(--bg-0)}
+.xs-snap button{height:26px;padding:0 10px;border:0;border-radius:6px;background:none;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.xs-snap button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.xs-snap button:not([aria-pressed="true"]):hover{color:var(--ink)}
+/* 대화 칸 — 늘 보인다(접힘 · 8초 접기 무시) · 가운데 760 · 지난 대화 전부 · 남는 높이를 채운다 */
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-dlog{display:flex!important;flex:1;min-height:0;flex-direction:column;background:none;box-shadow:none;border-radius:0;animation:none;width:min(760px,calc(100% - 32px));margin:0 auto}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-dlog .k-chat-b{flex:1;min-height:0;max-height:none!important;padding:4px 8px 8px;background:none}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-dlog .k-chat-b > .k-chat-msg{display:flex!important}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-dlog .k-chat-x,[data-chat="d2"] .k-chat-root[data-dock] .xc-prev{display:none!important}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-msg.ai .k-chat-bub{box-shadow:0 1px 0 rgba(28,31,37,.04);border:1px solid var(--rule)}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-sugg{flex:none;width:min(760px,calc(100% - 32px));margin:6px auto 0;justify-content:flex-start}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-sugg .k-chat-chip{box-shadow:none;background:var(--bg-0)}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-in{flex:none;width:min(760px,calc(100% - 32px));margin:8px auto 0;box-shadow:none;border:1px solid var(--rule)!important}
+[data-chat="d2"] .k-chat-root[data-dock] .k-chat-in:focus-within{box-shadow:0 0 0 2px rgba(0,109,247,.35)}
+[data-chat="d2"] .k-chat-root[data-dock][data-h="fold"] .k-chat-dlog,[data-chat="d2"] .k-chat-root[data-dock][data-h="fold"] .k-chat-sugg{visibility:hidden;flex:none;height:0;margin:0;overflow:hidden}
+[data-chat="d2"] .k-chat-root[data-dock][data-h="fold"] .k-ck.k-chat{padding-bottom:8px}
+[data-chat="d2"] .k-chat-root[data-dock][data-h="fold"] .k-chat-in{margin-top:0}
+/* 지도 위 떠 있는 칸은 시트 위로 — 왼쪽 아래 분석 요청 칸 · 통계 판 · 표출 고르기 · 축척 · 가르기 · 뜻 확인 */
+[data-chat="d2"] .xa-card,[data-chat="d2"] .xn-hud{bottom:calc(var(--xs-sh) + 16px)}
+[data-chat="d2"] .xo{bottom:calc(var(--xs-sh) + 16px)}
+[data-chat="d2"] .xo-sw,[data-chat="d2"] .k-main .xv-sw{bottom:calc(var(--xs-sh) + 16px)}
+[data-chat="d2"] .xc-cmp,[data-chat="d2"] .xe-bar{bottom:calc(var(--xs-sh) + 12px)}
+[data-chat="d2"] .xo-mean{bottom:calc(var(--xs-sh) + 12px)}
+[data-chat="d2"] .maplibregl-ctrl-bottom-left,[data-chat="d2"] .maplibregl-ctrl-bottom-right{bottom:var(--xs-sh)}
+[data-chat="d2"] .xs-b{bottom:calc(var(--xs-sh) + 16px)}
+@media (max-width:640px){
+  [data-chat="d2"] .k-chat-root[data-dock]{bottom:0;width:auto}
+  [data-chat="d2"] .k-chat-root[data-dock] .k-chat-dlog,[data-chat="d2"] .k-chat-root[data-dock] .k-chat-sugg,[data-chat="d2"] .k-chat-root[data-dock] .k-chat-in{width:calc(100% - 24px)}
+  [data-chat="d2"] .xa-card{bottom:calc(var(--xs-sh) + 8px)}
+  .xs-snap{right:8px}
+  .xs-badge,.k-main:has(.xc-mini-line) .xs-badge{top:52px;left:12px;height:30px;padding:0 4px}   /* 휴대폰 — 영상 칩 줄 아래 · 도구 줄 왼쪽 빈자리 · '시안' 표만 */
+  .xs-badge span{display:none}
+  .xs-ans{padding:10px 8px 10px 12px}
+}
+/* d1 휴대폰 · 좁은 화면 — 통계 판은 답 띠 위로(겹침 0) */
+@media (max-width:900px){[data-chat="d1"]:has(.xs-ans:not([hidden])) .xo{bottom:calc(96px + var(--xs-ah,0px))}}
+@media (prefers-reduced-motion:reduce){[data-chat="d2"] .k-chat-root[data-dock] .k-ck.k-chat{transition:none}.xs-ans{animation:none}}

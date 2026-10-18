@@ -296,6 +296,7 @@ async function boot() {
     mountStatSwitch(); }
   mountLayout();                                                                        // 지도 위 배치 하나(원칙 279) — 도구 열 아래 · 오른쪽 쌓임 폭 · 채팅 창 자리
   mountChatTidy();                                                                      // 아래 채팅 답 칸 정돈 — 최근 답 하나 · 이전 대화 손잡이 · 같은 말 줄 숨김 · 8초 뒤 접힘
+  if (Q.get('chat') === 'd1' || Q.get('chat') === 'd2') import('./chat-sian.js').then((m) => m.mountChatSian({ mode: Q.get('chat'), host: mainEl, cmdk, stage, map, who: who?.me?.login || who?.me?.email || who?.key || '' })).catch((e) => K.devlog('chat-sian', String(e?.message || e)));   // XI ChatGEO 자리 시안 둘(10-18 원칙 290 · 주소 ?chat=d1|d2 에서만 · 기본은 그대로)
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
