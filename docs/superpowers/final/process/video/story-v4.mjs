@@ -5,7 +5,7 @@
    (아래 3판 설명은 기록으로 남김)
    - 2판과 같은 틀: 커서 없음 · 화면은 자르지 않고 통째로 줄여 위(SCREEN) · 자막은 아래 띠에만 · 확대(줌) 없음
    - 바뀐 것: 전국 지도 차오름 끝까지 · 직원 대시보드 잘림 없음(큰 창) · 영업 → 활용 사례 · 영농관리 결과 지도 + 드론 촬영 요청 ·
-     학습 = 블록 끌어 놓고 이어 학습 시작 · 지도 서비스 = 원주 건축물 결과(남원 비닐하우스 X) · XI ChatGEO(LLM) 한 흐름(물음 → 지도 → 통계 → 보고서) ·
+     학습 = 블록 끌어 놓고 이어 학습 시작 · 지도 서비스 = 원주 건축물 결과(남원 비닐하우스 X) · XI ChatGEO 한 흐름(물음 → 지도 → 통계 → 보고서) ·
      해외 한 컷 · 끝 = 흰 바탕에 LX 한국국토정보공사 CI + Land-XI 플랫폼만(마지막 컷)
    SHOTS: 자막 한 장 = 나레이션 한 줄 = 한 컷. pieces = 원본 녹화 구간(raw/<clip>.mp4, 초) · speed 빠르기 · blur 가림(원본 1920×1080 좌표) · keep = 그림 길이 그대로.
    raw 의 p1-list · p2-label · p4-models · k1-kg 는 2판 원본 그대로(바뀐 것 없음). */
@@ -61,8 +61,9 @@ export const SHOTS = [
     narr: '지도 서비스에서는 분석서비스 결과를 켜고, 도형을 누르면 분류와 면적, 필지 정보까지 봅니다.', keep: true,
     pieces: [{ clip: 'q1-map', from: 2.6, to: 9.5, speed: 2.0 }, { clip: 'q1-map', from: 18.6, to: 24.0, speed: 2.2 }, { clip: 'q1-map', from: 29.9, to: 34.6 }] },
 
-  { id: 'chat', ch: 5, cap: ['LLM 기반 XI ChatGEO', '말로 묻고, 지도로 분석하고, 통계 보고까지'],
-    narr: 'XI맵의 XI ChatGEO는 LLM 기반 지도 분석 서비스입니다. 말로 물으면, 지도가 그곳을 분석해 보여 줍니다.', keep: true,
+  // 10-18 사용자: "LLM 기반 XI ChatGEO 부분 LLM 기반은 삭제하자. 그냥 XI ChatGEO 서비스 개발 로 하자."
+  { id: 'chat', ch: 5, cap: ['XI ChatGEO 서비스 개발', '말로 묻고, 지도로 분석하고, 통계 보고까지'],
+    narr: 'XI맵의 XI ChatGEO는 대화로 쓰는 지도 분석 서비스입니다. 말로 물으면, 지도가 그곳을 분석해 보여 줍니다.', keep: true,
     pieces: [{ clip: 'x1-chat', from: 1.8, to: 6.7, speed: 1.6 }, { clip: 'x1-chat', from: 6.7, to: 14.8 }] },
   { id: 'chat-stats', ch: 5, cap: ['통계 보기', '읍면동별 통계가 지도와 함께'],
     narr: '통계를 열면 읍면동별 경작지 통계가 지도와 함께 펼쳐집니다.', keep: true,

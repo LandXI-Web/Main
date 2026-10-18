@@ -21,7 +21,11 @@ function sapi(text, wav) {
 
 let engine = null;
 const times = [];
+// LX_TTS_ONLY=id,id — 그 줄만 다시 만들고 나머지 줄은 그대로(같은 목소리 · 이미 만든 파일 · times.json 값)
+const ONLY = (process.env.LX_TTS_ONLY || '').split(',').filter(Boolean);
+const OLD = ONLY.length ? JSON.parse(fs.readFileSync(path.join(DIR, 'times.json'), 'utf8')) : null;
 for (const [i, s] of SHOTS.entries()) {
+  if (ONLY.length && !ONLY.includes(s.id)) { const o = OLD.lines.find((l) => l.id === s.id); if (!o) throw new Error('예전 줄 없음 ' + s.id); times.push({ ...o, i, text: s.narr }); engine = OLD.engine; continue; }
   const base = path.join(DIR, `line-${String(i + 1).padStart(2, '0')}`);
   const t = say(s.narr);
   let src = null;
