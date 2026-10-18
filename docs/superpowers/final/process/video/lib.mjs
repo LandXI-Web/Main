@@ -1,5 +1,5 @@
 /* 소개 영상(원칙 297) 공용 — 바깥 주소 · 로그인 폼(frontDoor) · 비밀번호는 server/.env 에서만(출력 안 함).
-   녹화는 rec.mjs(CDP 화면 프레임 → 30fps mp4). 저장 데이터를 바꾸지 않게 GET 아닌 API 요청은 가짜 성공으로 돌려준다(로그인 · XI ChatGEO 질문 · 비용 견적(읽기 전용)만 통과). */
+   녹화는 rec.mjs(CDP 화면 프레임 → 30fps mp4). 저장 데이터를 바꾸지 않게 GET 아닌 API 요청은 가짜 성공으로 돌려준다(로그인 · XI ChatGEO 질문 · 비용 견적(분석 · 촬영 — 읽기 전용)만 통과). */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -19,15 +19,15 @@ import { CURSOR } from './rec.mjs';
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const W = 1920, H = 1080;
 
-/** 새 창 — 1920×1080 · 화면 배율 1 · 쓰기 막기. 커서 점은 넣지 않는다(10-18 사용자: "화면에 마우스 포인트가 없었으면") — opts.cursor 로만 켬 */
+/** 새 창 — 1920×1080(opts.vw · vh 로 더 큰 창 — 녹화는 1920×1080 으로 줄여 담김) · 화면 배율 1 · 쓰기 막기. 커서 점은 넣지 않는다(10-18 사용자: "화면에 마우스 포인트가 없었으면") — opts.cursor 로만 켬 */
 export async function newCtx(browser, log, opts = {}) {
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, locale: 'ko-KR' });
+  const ctx = await browser.newContext({ viewport: { width: opts.vw || W, height: opts.vh || H }, deviceScaleFactor: 1, locale: 'ko-KR' });
   if (opts.cursor) await ctx.addInitScript(CURSOR);
   await ctx.addInitScript("try { sessionStorage.setItem('lx.chat.test', '1') } catch (e) {}");   // XI ChatGEO 시험 표시
   await ctx.addInitScript(() => { const s = document.createElement('style'); s.textContent = '::-webkit-scrollbar{width:0;height:0}'; (document.head || document.documentElement).appendChild(s); });
   await ctx.route('**/api/**', (r) => {
     const m = r.request().method(), u = r.request().url();
-    if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS' || /\/auth\/login|\/agent\/|\/jobs\/quote$/.test(u)) return r.continue();
+    if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS' || /\/auth\/login|\/agent\/|\/jobs\/quote$|\/shoots\/quote$/.test(u)) return r.continue();   // 견적 둘 = 읽기 전용(셈만)
     log?.push(`막음 ${m} ${u.replace(/\?.*/, '').replace(/^https?:\/\/[^/]+/, '')}`);
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
   });
