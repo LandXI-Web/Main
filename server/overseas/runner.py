@@ -24,6 +24,7 @@ import json
 import math
 import os
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -416,20 +417,37 @@ def run_cell(c, g, country: str, year: int, cd: str, model: str, pf: Prefetch, n
             status(state="running", cell=cd, name=row[1], part=k + 1, parts=len(parts), done=v.get("shards_done"), total=v.get("shards_total"))
     with c.transaction():
         out = finish_cell(c, country, year, cd, jobs, model, t0, info)
-    keep_extras(country, year, cd, info)
-    drop_stack(country, year, cd)
+    try:
+        keep_extras(country, year, cd, info)
+        drop_stack(country, year, cd)
+    except _KeepTimeout:
+        pass                                                       # 합성을 남겨 두면 나중에 python -m overseas.extras keep 로 다시 남길 수 있다
     out["sec"] = round(time.time() - t0)
     return out
 
 
+KEEP_TIMEOUT_S = 1800
+
+
 def keep_extras(country: str, year: int, cd: str, info: dict):
-    """합성을 지우기 전 덧일(10-18 원칙 289 · overseas.extras): 2025 띠 분위수(2017 맞추기 기준) · 9 · 10월 NDVI(작황 하락 10 m)."""
-    from overseas import extras
-    for fn in (extras.keep_ref, extras.keep_ndvi):
-        try:
-            fn(country, year, cd, Path(info["path"]))
-        except Exception as e:  # noqa: BLE001
-            log(f"  덧일 {fn.__name__} 실패(칸은 그대로 끝): {repr(e)[:200]}")
+    """합성을 지우기 전 남김(10-18 원칙 289 · overseas.extras): 2025 띠 분위수(2017 맞추기 기준) · 9 · 10월 NDVI(작황 하락 10 m).
+    따로 띄우고 시간 제한(KEEP_TIMEOUT_S) — 10-18 15:32 이 단계가 같은 프로세스 안에서 80분 소리 없이 멈췄다(남김은 칸 결과와 따로라 넘겨도 된다)."""
+    t = time.time()
+    try:
+        r = subprocess.run([sys.executable, "-m", "overseas.extras", "keep", "--country", country, "--year", str(year), "--cell", cd,
+                            "--stack", str(info["path"])], cwd=str(Path(__file__).resolve().parents[1]),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=KEEP_TIMEOUT_S)
+        if r.returncode:
+            log(f"  남김 실패(칸은 그대로 끝): {(r.stderr or r.stdout)[-300:]}")
+        else:
+            log(f"  남김 {round(time.time() - t)}s · {' · '.join(r.stdout.split(chr(10)))[:120]}")
+    except subprocess.TimeoutExpired:
+        log(f"  남김 {KEEP_TIMEOUT_S}s 넘어 그만(칸은 그대로 끝 · 합성은 지우지 않음)")
+        raise _KeepTimeout()
+
+
+class _KeepTimeout(Exception):
+    pass
 
 
 def finish_cell(c, country: str, year: int, cd: str, jobs: list[str], model: str, t0: float, info: dict) -> dict:

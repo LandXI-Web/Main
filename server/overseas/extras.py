@@ -42,11 +42,9 @@ def keep_ref(country: str, year: int, cd: str, stack_tif: Path):
     """2025 칸 합성 → 띠마다 분위수(8 화소마다 하나 표본)."""
     if year != REF_YEAR:
         return
-    import rasterio
-    from rasterio.enums import Resampling
-    with rasterio.open(stack_tif) as ds:
-        h, w = max(1, ds.height // 8), max(1, ds.width // 8)
-        a = ds.read(out_shape=(ds.count, h, w), resampling=Resampling.nearest)
+    # 10-18 15:32 멈춤: ds.read(out_shape=…) 는 42 밴드 · 화소 섞임(pixel interleave) · deflate 7.7 GB 칸에서
+    # 밴드마다 같은 조각을 다시 풀어 80분 동안 253 GB 를 읽었다 → 조각(512²)마다 모든 밴드를 한 번에 읽고 8칸 건너 뽑는다.
+    a = _strided(stack_tif, 8)
     q = []
     for b in a:
         v = b[b > 0]
@@ -101,17 +99,36 @@ def keep_ndvi(country: str, year: int, cd: str, stack_tif: Path):
     from overseas import s2
     nb = len(s2.BANDS)
     out = d10(country) / f"ndvi25-{cd}.tif"
+    idx = [k * nb + j for k in (s2.MONTHS.index(m) for m in DROP_MONTHS) for j in (3, 4)]   # (red, nir) 달마다
+    tmp = out.with_suffix(".tmp.tif")
     with rasterio.open(stack_tif) as ds:
         prof = ds.profile
-        bands = []
-        for m in DROP_MONTHS:
-            k = s2.MONTHS.index(m)
-            red, nir = ds.read(k * nb + 3).astype(np.float32), ds.read(k * nb + 4).astype(np.float32)
-            nd = np.where((nir > 0) & (red > 0), (nir - red) / (nir + red + 1e-6), np.nan)
-            bands.append(np.where(np.isnan(nd), 255, np.clip(np.round((nd + 0.25) * 200), 0, 250)).astype(np.uint8))
-    prof.update(count=2, dtype="uint8", nodata=255, predictor=1)
-    with rasterio.open(out, "w", **prof) as dst:
-        dst.write(np.stack(bands))
+        prof.update(count=len(DROP_MONTHS), dtype="uint8", nodata=255, predictor=1)
+        with rasterio.open(tmp, "w", **prof) as dst:
+            for _, win in ds.block_windows(1):                     # 조각마다 한 번 풀기(밴드마다 다시 풀지 않게)
+                a = ds.read(idx, window=win).astype(np.float32)
+                bands = []
+                for k in range(len(DROP_MONTHS)):
+                    red, nir = a[2 * k], a[2 * k + 1]
+                    nd = np.where((nir > 0) & (red > 0), (nir - red) / (nir + red + 1e-6), np.nan)
+                    bands.append(np.where(np.isnan(nd), 255, np.clip(np.round((nd + 0.25) * 200), 0, 250)).astype(np.uint8))
+                dst.write(np.stack(bands), window=win)
+    tmp.replace(out)
+
+
+def _strided(stack_tif: Path, step: int) -> np.ndarray:
+    """모든 밴드를 step 칸 건너 뽑은 배열 — 조각(블록)마다 한 번만 읽는다(블록 시작이 step 배수라 전역 격자와 같다)."""
+    import rasterio
+    with rasterio.open(stack_tif) as ds:
+        H, W = -(-ds.height // step), -(-ds.width // step)
+        a = np.zeros((ds.count, H, W), dtype=ds.dtypes[0])
+        for _, win in ds.block_windows(1):
+            r0, c0 = int(win.row_off), int(win.col_off)
+            if r0 % step or c0 % step:
+                raise ValueError("block offset not a multiple of step")
+            b = ds.read(window=win)[:, ::step, ::step]
+            a[:, r0 // step:r0 // step + b.shape[1], c0 // step:c0 // step + b.shape[2]] = b
+    return a
 
 
 def _nd(u8: np.ndarray) -> np.ndarray:
@@ -183,6 +200,9 @@ def drop_loop(country: str = "kgz"):
     while True:
         with pg() as c:
             st = settings(c)
+            if not st.get("enabled", True):                        # 끄기(overseas.run.enabled=false · 10-18 사용자 "해외는 당분간 하지 않는다")
+                print(time.strftime("%m-%d %H:%M:%S"), "멈춤 설정 — 끝", flush=True)
+                return
             model = st["model"]
             rows = c.execute("SELECT cell_cd, name FROM overseas_cells WHERE country=%s AND year=%s AND state='done' AND model_id=%s AND NOT test ORDER BY ord",
                              (country, REF_YEAR, model)).fetchall()
@@ -205,10 +225,20 @@ def drop_loop(country: str = "kgz"):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["drop"])
+    ap.add_argument("what", choices=["drop", "keep"])
+    ap.add_argument("--country", default="kgz")
+    ap.add_argument("--year", type=int, default=REF_YEAR)
+    ap.add_argument("--cell")
+    ap.add_argument("--stack")
     ap.add_argument("--loop", action="store_true")
     ap.add_argument("--status", action="store_true")
     a = ap.parse_args()
+    if a.what == "keep":                                           # 작업기가 시간 제한을 걸고 따로 띄운다(runner.keep_extras)
+        for fn in (keep_ref, keep_ndvi):
+            t = time.time()
+            fn(a.country, a.year, a.cell, Path(a.stack))
+            print(fn.__name__, round(time.time() - t), "s", flush=True)
+        return
     if a.status:
         j = d10("kgz") / "drop.json"
         doc = json.loads(j.read_text(encoding="utf-8")) if j.exists() else {"cells": {}}

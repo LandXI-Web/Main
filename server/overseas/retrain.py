@@ -87,7 +87,13 @@ def chain():
     model = _settings()["model"]
     log("기다림 — 2025 나라 작업", model)
     while _left(2025, model):
+        if not _settings().get("enabled", True):                   # 끄기(overseas.run.enabled=false) — 장부 · 조각을 반쯤 다시 쓰지 않게 그냥 끝
+            log("멈춤 설정 — 이어 하지 않고 끝")
+            return
         time.sleep(300)
+    if not _settings().get("enabled", True):
+        log("멈춤 설정 — 이어 하지 않고 끝")
+        return
     _run("overseas.publish")
     _run("overseas.croptiles")
     _run("overseas.croptiles", "--z", "13")
