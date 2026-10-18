@@ -80,6 +80,8 @@
 .k-main > .k-drawer.k-drawer--in{right:var(--xc-xr,96px);top:68px}
 .k-main > .k-chat-root[data-dock]{left:var(--xc-cl,50%);width:var(--xc-cw,min(680px,calc(100% - 32px)))}
 @media (max-width:640px){.k-main > .k-drawer.k-drawer--in{right:0;top:auto}}
+/* 휴대폰 — 목록 서랍이 열려 있어도 아래 질문 칸은 서랍 위에 보이고 눌린다(재검수 10-18: 서랍이 질문 칸을 덮어 입력이 막힘). 서랍 안 글은 질문 칸 높이만큼 더 올라온다 */
+@media (max-width:640px){.k-main:has(> .k-drawer:not(.is-closing)) > .k-chat-root[data-dock]{z-index:45}.k-main:has(> .k-drawer:not(.is-closing)) .k-drawer .k-dr-b{padding-bottom:92px}}
 /* 같은 답 안에서 지도 동작 줄(✓ 통계 보기)과 단추(통계 보기)가 같은 말이면 줄은 숨긴다(chat-answer.js) */
 .k-chat-plan li.xc-dup,.k-ck-plan li.xc-dup{display:none}
 .k-chat-plan.xc-empty,.k-ck-plan.xc-empty{display:none}

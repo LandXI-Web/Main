@@ -30,7 +30,7 @@ export async function renderHistory(main, side, { s, B }) {
   let on = 'all';
   const chips = h('div.gy-chips', { role: 'tablist', 'aria-label': '거르기' });
   const list = h('div.gy-days');
-  const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '엑셀로 내려받기' });
+  const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: 'CSV 파일로 내려받기', title: '엑셀에서 바로 열립니다' });
   box.append(h('div.gd-box-h', {}, h('h2', { text: '이력' }), h('span.gd-small', { text: '이 서비스에서 일어난 일 · 시간순' })), chips, csv, list);
   const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).filter(([k]) => k !== 'check').map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
   const draw = () => {
@@ -166,7 +166,7 @@ export async function renderClassStats(box, { s, B }) {
   const chips = h('div.gs-period.gs-cls-unit', { role: 'group', 'aria-label': '단위' });
   const sumT = h('tbody'), embT = h('tbody'), embH = h('tr');
   const more = h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button' });
-  const csv = h('button.t-btn.t-btn--text.gd-more.gs-cls-csv', { type: 'button', text: '엑셀로 내려받기' });
+  const csv = h('button.t-btn.t-btn--text.gd-more.gs-cls-csv', { type: 'button', text: 'CSV 파일로 내려받기', title: '엑셀에서 바로 열립니다' });
   const names = classes.map((c) => c.name);
   const nw = j.unit === '필지' ? '필지 수' : '개수';     // 결과 셈 단위(서버) — 결과 설명서 · 대시보드 큰 숫자와 같은 단위
   const draw = () => {
