@@ -167,6 +167,73 @@ if (WHO === 'chat') {
   });
 }
 
+/* ── 학습데이터 구축 · 지도 위 라벨링(16b5b5ee) — AI 결과 자리로 → 다각형(비닐하우스) → 꼭짓점 고치기 → 사각형 → 클래스 바꾸기 → '이 화면 라벨 완료' ──
+   저장(PUT 모양) · 라벨 완료(POST 자리)는 모두 가로채 가짜 성공(실제 학습데이터 0) — 답 모양은 server/landxi_api/labeling.py _map_out · map_area 그대로 흉내:
+   {set, maps, areas, chips, as_of} (+ added · skipped). 그림 칸 = 512 화소 × 영상 해상도 격자 중 화면 안에 다 들어오는 칸, 칸마다 그 안 모양 수. */
+if (WHO === 'label') {
+  const PRJ = process.env.LX_VIDEO_PRJ || '비닐하우스 2026';
+  const F = { base: null, maps: {}, areas: [], chips: [], added: 0 };
+  const env = (v, unit = 'count') => ({ value: v, unit, kind: 'measured' });
+  const out = () => {
+    const b = F.base || {}; const set = { ...(b.set || {}) };
+    const add = (k) => { const v = set[k]; set[k] = v && typeof v === 'object' ? { ...v, value: (v.value || 0) + F.added } : env((v || 0) + F.added); };
+    if (F.added) { add('done'); add('total'); }
+    return { set, maps: { ...(b.maps || {}), ...F.maps }, areas: [...(b.areas || []), ...F.areas], chips: [...(b.chips || []), ...F.chips], as_of: new Date().toISOString() };
+  };
+  await p.route(/\/api\/v1\/projects\/[^/]+\/labeling\/map(\?|$)/, async (rt) => { const res = await rt.fetch(); const j = await res.json(); F.base = j; F.gsd = Object.fromEntries((j.imagery || []).map((x) => [x.id, x.gsd_m || 0.25])); await rt.fulfill({ response: res, json: j }); });
+  await p.route(/\/api\/v1\/projects\/[^/]+\/labeling\/map\/[^/?]+(\?.*)?$/, async (rt) => {
+    const q = rt.request(); if (q.method() !== 'PUT') return rt.fallback();
+    const iid = decodeURIComponent(new URL(q.url()).pathname.split('/').pop()); const body = q.postDataJSON() || {};
+    F.maps[iid] = { shapes: body.shapes || [], n: (body.shapes || []).length, by: 'LX 직원', at: new Date().toISOString() };
+    blocked.push('가로챔 PUT 라벨 모양 저장(가짜 성공)');
+    await rt.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(out()) });
+  });
+  await p.route(/\/api\/v1\/projects\/[^/]+\/labeling\/map\/[^/]+\/areas(\?|$)/, async (rt) => {
+    const q = rt.request(); if (q.method() !== 'POST') return rt.fallback();
+    const iid = decodeURIComponent(new URL(q.url()).pathname.split('/').slice(-2)[0]); const [w, so, e, n] = q.postDataJSON().bbox;
+    const lat = (so + n) / 2, mx = 111320 * Math.cos(lat * Math.PI / 180), my = 110540, size = 512 * (F.gsd?.[iid] || 0.25);
+    const dx = size / mx, dy = size / my, aid = 'la_video' + (F.areas.length + 1), shapes = F.maps[iid]?.shapes || [];
+    const made = [];
+    for (let y1 = n; y1 - dy >= so; y1 -= dy) for (let x0 = w; x0 + dx <= e; x0 += dx) {
+      const ring = [[x0, y1], [x0 + dx, y1], [x0 + dx, y1 - dy], [x0, y1 - dy], [x0, y1]];
+      const k = shapes.filter((sh) => sh.g.some(([a, b]) => a >= x0 && a <= x0 + dx && b <= y1 && b >= y1 - dy)).length;
+      made.push({ id: 'li_video' + made.length, imagery_id: iid, state: 'done', area: aid, seq: made.length + 1, n: k, ring });
+    }
+    F.chips.push(...made); F.areas.push({ id: aid, imagery_id: iid, n: made.length, by: 'LX 직원', at: new Date().toISOString() }); F.added += made.length;
+    blocked.push(`가로챔 POST 이 화면 라벨 완료(가짜 성공 · 그림 ${made.length}장)`);
+    await rt.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ ...out(), added: env(made.length), skipped: env(0) }) });
+  });
+  await p.route(/\/api\/v1\/projects\/[^/]+\/labeling\/classes/, (rt) => (rt.request().method() === 'GET' ? rt.fallback() : rt.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await frontDoor(p, APP, 'test@lx.or.kr'); await sleep(2000);
+  const href = await p.evaluate(async (nm) => { const { api } = await import('/landxi/shared/api-v1.js'); const it = (await api('/projects?scope=all')).items || []; const x = it.find((q) => q.name === nm); return x ? `/landxi/v3/lx-train/?project=${encodeURIComponent(x.id)}&stage=label` : null; }, PRJ);
+  const open = async () => { await p.goto(APP + href, { waitUntil: 'domcontentloaded' }); await noLoading(p); await p.locator('.lm-map').waitFor({ timeout: 60000 }); await sleep(6000); };
+  await open(); await p.locator('button', { hasText: '다음 AI 결과 자리' }).first().click(); await sleep(6000);   // 데우기(첫 자리 영상)
+  const cls = (nm) => p.locator('button.lb-cls-r', { hasText: nm }).first();
+  const tool = (nm) => p.locator('button.lb-tool', { hasText: nm }).first();
+  const click = async (x, y) => { await place(p, x, y); await sleep(140); await p.mouse.down(); await sleep(70); await p.mouse.up(); await sleep(260); };
+  const { glide } = await import('./lib.mjs');
+  await scene('p2-label', async (r) => {
+    await open();
+    await place(p, 1900, 640);
+    await r.start(); r.mark('start'); await sleep(2000);
+    await tap(p, p.locator('button', { hasText: '다음 AI 결과 자리' }).first(), 250); r.mark('spot');
+    await place(p, 1900, 640); await sleep(4200);
+    // 다각형 · 비닐하우스 — 줄무늬 하우스 네 모서리(이 자리 화면 좌표 · 1920×1080) · 오른쪽 모서리는 일부러 조금 벗어나게 찍고 다음에 끌어 고침
+    await tap(p, cls('비닐하우스'), 200); await tap(p, tool('다각형'), 200); r.mark('poly');
+    for (const [x, y] of [[945, 791], [1052, 858], [981, 928], [898, 836]]) await click(x, y);
+    await click(945, 791); r.mark('closed'); await sleep(900);
+    await tap(p, tool('선택'), 200); await place(p, 1052, 858); await sleep(250); await p.mouse.down(); await glide(p, 1030, 875, 700); await p.mouse.up(); r.mark('vtx'); await sleep(1200);
+    // 사각형 — 위쪽 파란 지붕 건물 → 클래스 '건물'로 바꾸기(고른 모양의 클래스가 바뀜)
+    await tap(p, tool('사각형'), 200); r.mark('box');
+    await place(p, 822, 324); await sleep(150); await p.mouse.down(); await glide(p, 860, 368, 700); await p.mouse.up(); await sleep(700);
+    await tap(p, cls('건물'), 250); r.mark('cls'); await place(p, 1900, 640); await sleep(1800);
+    await tap(p, p.locator('button', { hasText: '이 화면 라벨 완료' }).first(), 250); r.mark('done');
+    await place(p, 1900, 640); await sleep(5000);
+    r.extra = { toast: await p.evaluate(() => [...document.querySelectorAll('.t-toast, [role=status]')].map((x) => x.textContent.trim()).filter(Boolean).join(' | ').slice(0, 160)), shapes: Object.values(F.maps).map((m) => m.shapes.map((s) => [s.k, s.c])), added: F.added };
+    r.mark('end');
+  });
+}
+
 LOG['blocked-' + WHO] = blocked; LOG['errors-' + WHO] = errs; save();
 console.log(JSON.stringify({ blocked, errs: errs.length }));
 await browser.close();
