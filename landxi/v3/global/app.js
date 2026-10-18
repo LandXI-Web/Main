@@ -332,8 +332,8 @@ async function main() {
   map.addLayer({ id: 'gl-adm2-l', type: 'line', source: 'gl-adm2', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ['==', ['get', 'cur'], 1], 2.4, ['==', ['get', 'mine'], 1], 1.4, 0.6], 'line-opacity': ['case', ['==', ['get', 'cur'], 1], 1, ['==', ['get', 'mine'], 1], 0.9, 0.45] } }, 'slot-overlay');
   // 구역 대장 대조 — 어긋난 구역(빨강) · 맞는 구역(청록) · 비교한 구역만(관할 밖·못 맞춘 행은 칠하지 않는다)
   map.addSource('gl-reg', { type: 'geojson', data: EMPTY });
-  map.addLayer({ id: 'gl-reg-f', type: 'fill', source: 'gl-reg', paint: { 'fill-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'fill-opacity': ['case', ['==', ['get', 'status'], 'mismatch'], 0.38, 0.16] } }, 'slot-reference');
-  map.addLayer({ id: 'gl-reg-l', type: 'line', source: 'gl-reg', paint: { 'line-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'line-width': 2 } }, 'slot-reference');
+  map.addLayer({ id: 'gl-reg-f', type: 'fill', source: 'gl-reg', paint: { 'fill-color': '#0FA9A0', 'fill-opacity': ['case', ['==', ['get', 'status'], 'mismatch'], 0.1, 0] } }, 'slot-reference');
+  map.addLayer({ id: 'gl-reg-l', type: 'line', source: 'gl-reg', paint: { 'line-color': '#0FA9A0', 'line-width': ['case', ['==', ['get', 'status'], 'mismatch'], 2.6, 1.2] } }, 'slot-reference');
   // 건물 면적 변화 칸(500 m) — 3%p 넘게 바뀐 칸은 바닥 진하기 0.45(예전 d/30 이라 작은 변화가 거의 투명) · 칸 테두리(멀리 · 가까이 모두 면이 읽히게 · 바퀴 17 원칙 281)
   map.addLayer({ id: 'gl-cells', type: 'fill', source: 'gl-cells', paint: { 'fill-color': '#FFB331', 'fill-opacity': ['*', ['interpolate', ['linear'], ['abs', ['get', 'd']], 2.99, 0, 3, 0.45, 30, 0.9], ['case', ['==', ['get', 'on'], 1], 1, 0]], 'fill-opacity-transition': { duration: D[500] } } }, 'slot-result');
   map.addLayer({ id: 'gl-cells-l', type: 'line', source: 'gl-cells', paint: { 'line-color': '#B86E00', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.3, 13, 1.2], 'line-opacity': ['case', ['all', ['==', ['get', 'on'], 1], ['>=', ['abs', ['get', 'd']], 3]], 0.85, 0] } }, 'slot-result');
@@ -851,7 +851,7 @@ async function main() {
     const n = (e, d = 0) => K.nf(V(e), d);
     const head = h('p.gl-reg-m');
     head.innerHTML = `${esc(fill(STR.regMatched, { m: n(s.matched), n: n(s.rows) }))} · <b>${esc(n(s.match_pct, 1))}%</b>${K.sig(s.match_pct)}`;
-    box.append(h('p.gl-reg-file', { text: REG.v.register.filename }), head);
+    box.append(h('p.gl-reg-file', { text: /sample/i.test(REG.v.register.filename || '') ? 'Sample register' : 'Your register' }), head);
     const rows = (REG.v.items || []).filter((it) => it.status === 'mismatch' || it.status === 'match');
     if (rows.length) {
       const tb = h('table.gl-reg-t');

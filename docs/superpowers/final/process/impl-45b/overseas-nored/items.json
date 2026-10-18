@@ -1,0 +1,76 @@
+[
+ {
+  "vw": "pc",
+  "t": "Season",
+  "shot": "pc-Season.png",
+  "redEls": [],
+  "text": "Spring 2025 · Mar–May Summer 2025 · Jun–Aug Autumn 2025 · Sep–Oct Sep 0.33 Oct 0.25 Official 2025: 60,648 ha harvested · AI +7%",
+  "rawcsv": false
+ },
+ {
+  "vw": "pc",
+  "t": "NDVI",
+  "shot": "pc-NDVI.png",
+  "redEls": [],
+  "text": "0.25 Mar Oct",
+  "rawcsv": false
+ },
+ {
+  "vw": "pc",
+  "t": "Sprawl",
+  "shot": "pc-Sprawl.png",
+  "redEls": [],
+  "text": "2017 50.7 km² 2025 66 km²",
+  "rawcsv": false
+ },
+ {
+  "vw": "pc",
+  "t": "Register",
+  "shot": "pc-Register.png",
+  "redEls": [],
+  "file": "Sample register",
+  "text": "District level — not parcels. Sample register Matched 5 of 6 rows to local districts · 83.3% District Declared AI Diff Ysyk-Ata 45,000 ha 64,763 ha +44% 4 rows outside your districts · not compared 1 ",
+  "rawcsv": false
+ },
+ {
+  "vw": "pc",
+  "consoleErrors": []
+ },
+ {
+  "vw": "m",
+  "t": "Season",
+  "shot": "m-Season.png",
+  "redEls": [],
+  "text": "Spring 2025 · Mar–May Summer 2025 · Jun–Aug Autumn 2025 · Sep–Oct Sep 0.33 Oct 0.25 Official 2025: 60,648 ha harvested · AI +7%",
+  "rawcsv": false
+ },
+ {
+  "vw": "m",
+  "t": "NDVI",
+  "shot": "m-NDVI.png",
+  "redEls": [],
+  "text": "0.25 Mar Oct",
+  "rawcsv": false
+ },
+ {
+  "vw": "m",
+  "t": "Sprawl",
+  "shot": "m-Sprawl.png",
+  "redEls": [],
+  "text": "2017 50.7 km² 2025 66 km²",
+  "rawcsv": false
+ },
+ {
+  "vw": "m",
+  "t": "Register",
+  "shot": "m-Register.png",
+  "redEls": [],
+  "file": "Sample register",
+  "text": "District level — not parcels. Sample register Matched 5 of 6 rows to local districts · 83.3% District Declared AI Diff Ysyk-Ata 45,000 ha 64,763 ha +44% 4 rows outside your districts · not compared 1 ",
+  "rawcsv": false
+ },
+ {
+  "vw": "m",
+  "consoleErrors": []
+ }
+]
