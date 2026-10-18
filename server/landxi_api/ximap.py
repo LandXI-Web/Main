@@ -26,6 +26,7 @@ from starlette.concurrency import run_in_threadpool
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
 from .spaces import CLASS_KO
+from .svc_rules import SQL_NOT_EXCLUDED
 
 router = APIRouter()
 
@@ -130,7 +131,7 @@ async def build_board(p) -> dict:
     async with db(realm="lx") as conn:
         led = await conn.fetch(
             "SELECT s.card_id, s.set_id, s.sgg_cd, s.year, s.service_version, s.imagery_id, s.analyzed_at, s.origin, c.name AS cname "
-            "FROM service_results s LEFT JOIN cards c ON c.id = s.card_id WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')")
+            "FROM service_results s LEFT JOIN cards c ON c.id = s.card_id WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')" + SQL_NOT_EXCLUDED)   # 보이기 규칙(원칙 293)
         bare = await conn.fetch(
             "SELECT j.id, j.options->>'sgg_cd' AS sgg_cd, j.imagery_id, j.model_id, j.options->'classes' AS ocls, j.finished_at, m.classes, i.year FROM jobs j "
             "LEFT JOIN models m ON m.id = j.model_id LEFT JOIN imagery i ON i.id = j.imagery_id "

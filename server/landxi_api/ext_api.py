@@ -52,6 +52,7 @@ from starlette.concurrency import run_in_threadpool
 from . import config
 from . import spaces as S
 from .deps import ApiError, Principal, audit, db, principal, redis, require
+from .svc_rules import SQL_NOT_EXCLUDED  # 서비스 × 시군구 보이기 규칙(원칙 293)
 from .envelope import KST, RawJSON, env, now_iso
 
 router = APIRouter()          # 화면용(/api/v1) — LX 관리자 · 기관 관리자 · 공개 신청 창
@@ -301,7 +302,7 @@ def _card_name(n) -> str:
 async def _services(c, only_with_results: bool = True) -> list[dict]:
     rows = await c.fetch("SELECT c.id, c.api_id, c.name, c.api_sources, c.domain, i.line FROM cards c LEFT JOIN card_info i ON i.card_id = c.id "
                          "WHERE c.api_id IS NOT NULL ORDER BY c.id")
-    have = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM service_results WHERE replaced_at IS NULL")}
+    have = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM service_results s WHERE replaced_at IS NULL" + SQL_NOT_EXCLUDED)}
     out = []
     for r in rows:
         if only_with_results and r["id"] not in have:
@@ -1086,7 +1087,7 @@ async def _pick(ctx: Ctx, region: str | None, bbox: str | None, source: str | No
         if sgeo is not None and not sgeo.intersects(g):
             raise ApiError("not_found", "없는 결과입니다")
     async with db(realm="lx") as c:
-        rows = [dict(r) for r in await c.fetch("SELECT * FROM service_results WHERE card_id=$1 AND replaced_at IS NULL", k["card_id"])]
+        rows = [dict(r) for r in await c.fetch("SELECT * FROM service_results s WHERE card_id=$1 AND replaced_at IS NULL" + SQL_NOT_EXCLUDED, k["card_id"])]
     cells = []
     for r in rows:
         if r["source"] not in keysrc:
@@ -1245,7 +1246,7 @@ async def x_me(request: Request):
         except Exception:  # noqa: BLE001
             used_d = None
         async with db(realm="lx") as c:
-            vers = [r["service_version"] for r in await c.fetch("SELECT DISTINCT service_version FROM service_results WHERE card_id=$1 AND replaced_at IS NULL "
+            vers = [r["service_version"] for r in await c.fetch("SELECT DISTINCT service_version FROM service_results s WHERE card_id=$1 AND replaced_at IS NULL " + SQL_NOT_EXCLUDED + " "
                                                                   "AND service_version IS NOT NULL", k["card_id"])]
         ar = _area_view(k)
         sc = k.get("scope") or {"all": True}
@@ -1270,7 +1271,7 @@ def _svc_doc(ctx: Ctx, kinds: list[dict], vers: list[str]) -> dict:
 
 async def _kinds(ctx: Ctx) -> tuple[list[dict], list[str]]:
     async with db(realm="lx") as c:
-        cells = [dict(r) for r in await c.fetch("SELECT set_id, service_version FROM service_results WHERE card_id=$1 AND replaced_at IS NULL "
+        cells = [dict(r) for r in await c.fetch("SELECT set_id, service_version FROM service_results s WHERE card_id=$1 AND replaced_at IS NULL " + SQL_NOT_EXCLUDED + " "
                                                  "AND source = ANY($2::text[])", ctx.k["card_id"], list(ctx.k.get("sources") or []))]
         ks = await c.fetch("SELECT DISTINCT cls, cls_en FROM detections WHERE job_id = ANY($1::text[]) AND edit_state <> 'deleted' LIMIT 50",
                            [x["set_id"] for x in cells]) if cells else []
@@ -1322,7 +1323,7 @@ async def x_coverage(service: str, request: Request, region: str | None = None, 
 async def _pick_all_years(ctx: Ctx, region, bbox, source) -> Pick:
     """연도마다 모두(coverage 용) — _pick 은 연도가 없으면 곳마다 가장 최근만 남긴다."""
     async with db(realm="lx") as c:
-        years = sorted({r["year"] for r in await c.fetch("SELECT DISTINCT year FROM service_results WHERE card_id=$1 AND replaced_at IS NULL", ctx.k["card_id"])},
+        years = sorted({r["year"] for r in await c.fetch("SELECT DISTINCT year FROM service_results s WHERE card_id=$1 AND replaced_at IS NULL" + SQL_NOT_EXCLUDED, ctx.k["card_id"])},
                        key=lambda y: (y is None, y))
     cells, area = [], None
     for y in years:

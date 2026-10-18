@@ -629,9 +629,11 @@ async def result_sggs() -> list[str]:
     """AI 분석 결과가 있는 시군구 — 시군구 전역 분석(scope sgg)이 끝난 작업(시험 · 시연용 제외 · 결과 장부 준비됨).
     /regions/{시군구}/results ②와 같은 거르기(그 시군구 결과 레이어가 열리는 곳)."""
     async with db(realm="lx") as c:
-        rows = await c.fetch("SELECT DISTINCT options->>'sgg_cd' AS cd FROM jobs WHERE kind='infer' AND state='done' AND NOT demo "
+        rows = await c.fetch("SELECT DISTINCT options->>'sgg_cd' AS cd, card_id FROM jobs WHERE kind='infer' AND state='done' AND NOT demo "
                              "AND NOT coalesce(test,false) AND snapshot_ready AND options->>'scope'='sgg' AND options->>'sgg_cd' IS NOT NULL")
-    return sorted({r["cd"] for r in rows if r["cd"]})
+    from .svc_rules import excluded, hit
+    ex = await excluded()                                        # 서비스 × 시군구 보이기 규칙(원칙 293) — 시군구 결과 층과 같은 거르기
+    return sorted({r["cd"] for r in rows if r["cd"] and not hit(ex, r["card_id"], r["cd"])})
 
 
 async def record() -> dict:
@@ -640,6 +642,7 @@ async def record() -> dict:
     from .cards import _name as card_name
     from .regions import region_of
     from .spaces import _short_org
+    from .svc_rules import SQL_NOT_EXCLUDED
     sgg = await result_sggs()
     places = []
     for cd in sgg:
@@ -648,8 +651,8 @@ async def record() -> dict:
             places.append({"sgg_cd": r["sgg_cd"], "name": r.get("name"), "center": r["center"]})
     async with db(realm="lx") as c:
         sv = await c.fetch("SELECT s.card_id, c.name, count(*) n FROM service_results s JOIN cards c ON c.id = s.card_id "
-                           "WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job') GROUP BY 1, 2 ORDER BY 3 DESC, 1")   # XI맵 전국 결과(ximap.build_board)와 같은 줄 — '서비스 n가지' 한 출처(GPT5-1)
-        cards = await c.fetch("SELECT c.id, c.name, c.scope, (SELECT count(*) FROM service_results s WHERE s.card_id=c.id AND s.replaced_at IS NULL) n, "
+                           "WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')" + SQL_NOT_EXCLUDED + " GROUP BY 1, 2 ORDER BY 3 DESC, 1")   # XI맵 전국 결과(ximap.build_board)와 같은 줄 — '서비스 n가지' 한 출처(GPT5-1)
+        cards = await c.fetch("SELECT c.id, c.name, c.scope, (SELECT count(*) FROM service_results s WHERE s.card_id=c.id AND s.replaced_at IS NULL" + SQL_NOT_EXCLUDED + ") n, "
                               "EXISTS(SELECT 1 FROM deploys d WHERE d.card_id=c.id AND NOT coalesce(d.test,false) AND d.stage <> 'draft') dp FROM cards c")
         og = await c.fetch("SELECT DISTINCT ON (g.tenant_id) g.tenant_id, t.name, d.sgg_cd FROM space_guides g JOIN tenants t ON t.id=g.tenant_id "
                            "LEFT JOIN deploys d ON d.tenant_id=g.tenant_id AND d.card_id=g.card_id AND NOT coalesce(d.test,false) "

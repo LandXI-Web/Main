@@ -377,6 +377,16 @@ async def feedcrop(p: Principal, import_id: str | None, given: dict[str, str | N
             row["bales"] = env(bn, "개", "inferred", SRC_FEED)
             row["yield"] = yield_env(bn, kg)
         per_slot.append(row)
+    # 읍면동 묶음(10-18 제안-견주기읍면동묶음 넣음) — 읍면동마다 신청 필지 · 맞음 · 다름 · 시점별 AI 결과 없음(현장 나갈 순서 · 다른 필지 많은 곳부터)
+    emd_m: dict[str, dict] = {}
+    for x in items:
+        e = emd_m.setdefault(x["emd"] or "읍면동 밖", {"emd": x["emd"] or "읍면동 밖", "n": 0, "ok": 0, "diff": 0, "miss": {}})
+        e["n"] += 1
+        if x["k"] in ("ok", "diff"):
+            e[x["k"]] += 1
+        for m in x["miss"]:
+            e["miss"][m] = e["miss"].get(m, 0) + 1
+    by_emd = sorted(emd_m.values(), key=lambda e: (e["emd"] == "읍면동 밖", -e["diff"], -e["n"], e["emd"]))
     from .ledger import _uploader
     async with db(realm="lx") as c:
         up = await _uploader(c, imp)
@@ -387,11 +397,14 @@ async def feedcrop(p: Principal, import_id: str | None, given: dict[str, str | N
                       "parcels": env(len(items), "필지", "measured", "올린 대장 × 연속지적(필지 번호)", as_of=as_of),
                       "loose": env(loose, "행", "measured", "필지와 잇지 못한 대장 행", as_of=as_of) if loose else None},
            "ok": env(cnt["ok"], "필지", "inferred", SRC_FEED), "diff": env(cnt["diff"], "필지", "inferred", SRC_FEED),
-           "per_slot": per_slot, "items": [_pub(x) for x in items[:400]], "more": env(max(0, len(items) - 400), "필지", "recorded", "표에 싣지 않은 필지(엑셀에 모두)")}
+           "per_slot": per_slot,
+           "by_emd": [{"emd": e["emd"], "n": env(e["n"], "필지", "measured", SRC_FEED), "ok": env(e["ok"], "필지", "inferred", SRC_FEED),
+                       "diff": env(e["diff"], "필지", "inferred", SRC_FEED), "miss": {k: env(v, "필지", "inferred", SRC_FEED) for k, v in e["miss"].items()}} for e in by_emd],
+           "items": [_pub(x) for x in items[:400]], "more": env(max(0, len(items) - 400), "필지", "recorded", "표에 싣지 않은 필지(엑셀에 모두)")}
     if geom:
         out["geojson"] = {"type": "FeatureCollection", "features": [
             {"type": "Feature", "id": x["pnu"], "geometry": json.loads(gj[x["pnu"]]),
-             "properties": {"pnu": x["pnu"], "k": x["k"], "where": x["where"], "crop": x["crop"], "miss": " · ".join(x["miss"])}}
+             "properties": {"pnu": x["pnu"], "k": x["k"], "where": x["where"], "crop": x["crop"], "miss": " · ".join(x["miss"]), "emd": x["emd"] or "읍면동 밖"}}
             for x in items if gj.get(x["pnu"])]}
     out["_all"] = items
     return out
@@ -472,6 +485,21 @@ async def feedcrop_xlsx(request: Request, import_id: str | None = None, growth: 
                 cell.number_format = "@"
         for i in range(len(head)):
             ws.column_dimensions[get_column_letter(i + 1)].width = 22 if i in (0, 1) else 16
+        # 읍면동별 묶음(제안-견주기읍면동묶음) — 다른 필지 많은 곳부터 · 숫자는 숫자
+        we = wb.create_sheet("읍면동별")
+        lbs = [s["label"] for s in slots]
+        we.append(["읍면동", "신청 필지", "맞음", "다름"] + [f"{lb} AI 결과 없음" for lb in lbs])
+        for cell in we[1]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill("solid", fgColor="F2F4F6")
+        for e in c["by_emd"]:
+            we.append([e["emd"], e["n"]["value"], e["ok"]["value"], e["diff"]["value"]] + [(e["miss"].get(lb) or {}).get("value", 0) for lb in lbs])
+        we.append(["합계", len(c["_all"]), c["ok"]["value"], c["diff"]["value"]] + [sum((e["miss"].get(lb) or {}).get("value", 0) for e in c["by_emd"]) for lb in lbs])
+        for cell in we[we.max_row]:
+            cell.font = Font(bold=True)
+        we.freeze_panes = "A2"
+        for i in range(4 + len(lbs)):
+            we.column_dimensions[get_column_letter(i + 1)].width = 16 if i else 18
         info = wb.create_sheet("안내")
         L = c["ledger"]
         rows = [("올린 대장", L["name"]), ("기준일", L.get("base_date") or "—"), ("대장 필지", L["parcels"]["value"]),

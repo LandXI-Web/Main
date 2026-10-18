@@ -24,7 +24,8 @@ KIND_KO = {"publish": "결과 공개", "analysis": "AI 분석", "check": "확인
            "shoot": "촬영 요청", "download": "내려받기"}
 ORDER = list(KIND_KO)
 RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
-FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약"}
+FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",   # farm_more.FMT_KO 와 같은 이름표
+          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 견주기 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
 
 
 def _iso(v):

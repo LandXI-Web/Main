@@ -190,6 +190,8 @@ async def _items(conn, tenant: str | None) -> list[dict]:
     _, _, by, _ = _regions()
 
     # 1) 배포본 → 지역: sgg_cd → 결과 중심 → AOI 가 한 시군구에만 걸릴 때 → 없음(광역·해외)
+    from .svc_rules import excluded, hit
+    ex = await excluded()                         # 서비스 × 시군구 보이기 규칙(원칙 293 — 예: 곤포사일리지는 남원만 · 배포 기록은 그대로)
     rows = []
     for d in dps:
         rs = canonical(d["snapshot_current"])
@@ -200,6 +202,8 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         if not sgg:
             hits = {h for h in facts["dp_hits"].get(d["id"], set()) if h in by}
             sgg = next(iter(hits)) if len(hits) == 1 else None
+        if hit(ex, d["card_id"], sgg or d["sgg_cd"]):
+            continue
         rows.append({"d": d, "set": rs, "n": (f or {}).get("n", 0), "sgg": sgg})
 
     # 2) 묶기: (기관, 카드, 지역). 지역 없는 초안(결과 0)은 같은 기관·카드의 결과 있는 항목에 접는다(다음 해 계획 — 상태가 둘로 갈리지 않게)

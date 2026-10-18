@@ -1,6 +1,7 @@
 /* 행정정보와 비교 — 영농관리 결정 두 칸(10-18 원칙 291 · 확인 대장 바퀴 18 now 답).
    ① 사료작물 재배 신청 대장 × 세 시점(생육기 · 생산기 · 곤포사일리지) — "ⓐ 필지마다 견주기만"
       시점마다 서비스를 고르면(고르지 않음 가능) 필지마다 AI 결과 있음 · 없음 → 맞음 · 다름(어느 시점이 없는지). 표 · 지도 칠 · 엑셀.
+      읍면동별 묶음(10-18 제안-견주기읍면동묶음) — 읍면동마다 신청 · 맞음 · 다름 · 누르면 지도 · 표가 그 읍면동만 · 엑셀 '읍면동별' 시트.
       경영체로 묶기 · 합계 넓이 · 이행 판정 같은 덧붙인 판단은 하지 않는다. 서버 GET /spaces/me/ledger/feedcrop(숫자 한 출처).
       곤포사일리지 시점에는 개수 — 기관이 1개당 무게를 넣으면 생산량(kg)도(영농-q2 ⓑ).
    ② 행정정보 주제별 목록 — 주제(대장 종류)마다 기준일 · 건수 · 등록자. 줄을 누르면 그 대장으로 맞춤. 서버 GET /spaces/me/ledgers.
@@ -53,15 +54,38 @@ function paint(c, ctx) {
     lines.append(h('li.dim', {}, h('span', { text: y ? '곤포사일리지 · 생산량' : '곤포사일리지' }), h('b.num', { text: `${nf(val(ps.bale.bales))}개${y ? ` · ${nf(y)}kg` : ''}` })));
   }
   if (L.loose && val(L.loose)) lines.append(h('li.dim', {}, h('span', { text: '필지와 잇지 못한 대장 행' }), h('b.num', { text: nf(val(L.loose)) })));
-  /* 표 — 다른 필지 먼저 여덟 줄 */
-  const top = c.items.filter((x) => x.k === 'diff').slice(0, 8);
+  /* 표 — 다른 필지 먼저 여덟 줄(읍면동을 고르면 그 읍면동만) */
   const cell = (x, k) => { const v = x.slots[k]; if (!v) return '—'; return v.found ? (k === 'bale' && v.n ? `${nf(v.n)}개` : '있음') : '없음'; };
-  const tb = h('table.gf-tb.gf-tb--feed', {}, h('thead', {}, h('tr', {}, h('th', { text: '지번' }), h('th', { text: '신청 작물' }),
-    ...picked.map((s) => h('th', { text: SHORT[s.key] })))),
-    h('tbody', {}, ...top.map((x) => h('tr', { tabindex: '0', onclick: () => ctx.fly(x.pnu), onkeydown: (e) => { if (e.key === 'Enter') ctx.fly(x.pnu); } },
-      h('td', { text: x.where }), h('td', { text: x.crop }), ...picked.map((s) => h('td', { class: x.slots[s.key]?.found ? '' : 'is-miss', text: cell(x, s.key) }))))));
+  const tbw = h('div.gf-tbw');
+  const drawTable = () => {
+    const top = c.items.filter((x) => x.k === 'diff' && (!ctx.emdOn || (x.emd || '읍면동 밖') === ctx.emdOn)).slice(0, 8);
+    tbw.hidden = !top.length;
+    tbw.replaceChildren(h('table.gf-tb.gf-tb--feed', {}, h('thead', {}, h('tr', {}, h('th', { text: '지번' }), h('th', { text: '신청 작물' }),
+      ...picked.map((s) => h('th', { text: SHORT[s.key] })))),
+      h('tbody', {}, ...top.map((x) => h('tr', { tabindex: '0', onclick: () => ctx.fly(x.pnu), onkeydown: (e) => { if (e.key === 'Enter') ctx.fly(x.pnu); } },
+        h('td', { text: x.where }), h('td', { text: x.crop }), ...picked.map((s) => h('td', { class: x.slots[s.key]?.found ? '' : 'is-miss', text: cell(x, s.key) })))))));
+  };
   const dn = val(c.diff);
   const more = !picked.length ? '견줄 시점을 하나 이상 골라 주세요' : dn ? `다른 필지 ${nf(dn)}곳 모두 지도에 · 목록은 엑셀로` : '고른 시점 모두 AI 결과가 있습니다';
+  /* 읍면동별 묶음(10-18 제안-견주기읍면동묶음 넣음) — 읍면동마다 신청 · 맞음 · 다름. 누르면 지도 · 표가 그 읍면동만, 다시 누르면 전체 */
+  const emdBox = h('section.gf-emd', { 'aria-label': '읍면동별' });
+  const drawEmd = () => {
+    const rows = c.by_emd || [];
+    if (!picked.length || rows.length < 1) { emdBox.hidden = true; return; }
+    emdBox.hidden = false;
+    const tr = (e) => h('tr', { tabindex: '0', role: 'button', 'aria-pressed': String(ctx.emdOn === e.emd), class: ctx.emdOn === e.emd ? 'is-on' : '',
+      onclick: () => setEmd(ctx.emdOn === e.emd ? null : e.emd), onkeydown: (ev) => { if (ev.key === 'Enter') setEmd(ctx.emdOn === e.emd ? null : e.emd); } },
+    h('td', { text: e.emd }), h('td.n', { text: nf(val(e.n)) }), h('td.n', { text: nf(val(e.ok)) }), h('td.n.is-d', { text: nf(val(e.diff)) }));
+    emdBox.replaceChildren(h('div.gf-emd-h', {}, h('h4', { text: '읍면동별' }),
+      ctx.emdOn ? h('button.t-btn.t-btn--text.gf-list-b', { type: 'button', text: '전체 보기', onclick: () => setEmd(null) }) : h('span', { text: '누르면 지도 · 표가 그 읍면동만' })),
+    h('div.gf-tbw', {}, h('table.gf-tb.gf-tb--emd', {}, h('thead', {}, h('tr', {}, h('th', { text: '읍면동' }), h('th.n', { text: '신청' }), h('th.n', { text: '맞음' }), h('th.n', { text: '다름' }))),
+      h('tbody', {}, ...rows.map(tr)))));
+  };
+  const setEmd = (e) => {
+    ctx.emdOn = e; drawEmd(); drawTable();
+    const all = c.geojson;
+    ctx.paintMap(all ? { geojson: e ? { ...all, features: all.features.filter((f) => f.properties.emd === e) } : all } : null);
+  };
   const bDl = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기', title: '올린 대장이 든 파일 — 이용 약속 뒤 받을 때마다 확인합니다' });
   const bNew = h('button.t-btn.t-btn--2', { type: 'button', text: '다른 파일' });
   bDl.addEventListener('click', async () => {
@@ -81,7 +105,7 @@ function paint(c, ctx) {
       ctx.canEdit ? h('br') : null, ctx.canEdit ? baseDateEdit(L.import_id, L.base_date, () => ctx.onPick({ ...ctx.pick })) : null)),
     sels,
     h('p.gf-big1', { dataset: { metric: '다름', v: String(dn ?? '') } }, h('span', { text: 'AI 결과가 없는 시점이 있는 신청 필지' }), h('b', { text: nf(dn) }), h('i', { text: '필지' })),
-    lines, top.length ? h('div.gf-tbw', {}, tb) : null, h('p.gf-note', { text: more }), bale,
+    lines, emdBox, tbw, h('p.gf-note', { text: more }), bale,
     h('div.gf-acts', {}, bDl, bNew), listBtn(ctx.onList));
   bigCard.replaceChildren(h('small', { text: '사료작물 신청 필지 · 다름' }), h('p.gf-bign', {}, h('b', { text: nf(dn) }), h('i', { text: '필지' })),
     h('div.gf-chips', {}, ...picked.map((s) => h('span', {}, `${s.label} 없음 `, h('b', { text: nf(val(ps[s.key]?.missing)) })))));
@@ -89,7 +113,9 @@ function paint(c, ctx) {
   /* 지도 — 맞음 = 청록 · 다름 = 붉은 칠 · 고른 시점 없음 = 흰 선(같은 층 · k 값만 맞춤) */
   const fc = c.geojson ? { ...c.geojson, features: c.geojson.features.map((f) => ({ ...f, properties: { ...f.properties, k: f.properties.k === 'ok' ? 'ai' : f.properties.k } })) } : null;
   c.geojson = fc;
-  ctx.paintMap(fc ? { geojson: fc } : null);
+  if (ctx.emdOn && !(c.by_emd || []).some((e) => e.emd === ctx.emdOn)) ctx.emdOn = null;   // 고른 읍면동이 이 대장에 없으면 전체로
+  drawEmd(); drawTable();
+  ctx.paintMap(fc ? { geojson: ctx.emdOn ? { ...fc, features: fc.features.filter((f) => f.properties.emd === ctx.emdOn) } : fc } : null);
   requestAnimationFrame(ctx.padStage);
 }
 

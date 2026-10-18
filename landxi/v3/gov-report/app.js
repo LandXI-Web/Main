@@ -395,7 +395,7 @@ function tab(k) {
   for (const b of document.querySelectorAll('.gr-tabs button')) b.setAttribute('aria-selected', b.dataset.tab === k ? 'true' : 'false');
   for (const p of document.querySelectorAll('.gr-pane')) p.hidden = p.dataset.pane !== k;
   if (document.body.dataset.big === '1') bigMap(false);
-  if (k === 'report') { document.body.dataset.sheet = '0'; if (SVC) openSvcReport(); else initReport(); }
+  if (k === 'report') { document.body.dataset.sheet = '0'; openSvcReport(); }   // 보고서 = 고르면 바로 만들어지는 보고서(10-18 영농-보고서 시안 A) — 서비스 안 · 밖 모두
   if (k === 'sus') loadSus();
   if (k === 'todo') mapPoints();
   const q = new URLSearchParams();
@@ -408,11 +408,12 @@ function tab(k) {
 for (const b of document.querySelectorAll('.gr-tabs button')) b.addEventListener('click', () => tab(b.dataset.tab));
 
 /* ═════════ 보고서 ═════════ */
-/* 서비스 안(?service=) = AI 분석 결과 보고서 — 서비스 · 읍면동만 고름(규칙 · 소견 · 조치 제안 없음 · svc-report.js) */
+/* 보고서 탭 = 고르면 바로 만들어지는 보고서(svc-report.js · 10-18 영농-보고서 시안 A) — 넣을 결과 체크 · 대장(선택) · 범위 → 바로 채움 · 발급 목록.
+   아래 initReport(규칙 · 읍면동 · 세 문단 초안)는 더 부르지 않는다(되돌릴 때를 위해 남김). */
 let svcRp = null;
 function openSvcReport() {
   if (svcRp) return;
-  svcRp = svcReport({ svc: SVC, stage: S.stage, onAuth: toFront, fusionHref: () => '../gov-fusion/?' + new URLSearchParams({ service: SVC }) });
+  svcRp = svcReport({ svc: SVC, stage: S.stage, onAuth: toFront, fusionHref: () => '../gov-fusion/' + (SVC ? '?' + new URLSearchParams({ service: SVC }) : '') });
 }
 let rpReady = null;
 function initReport() {
@@ -737,7 +738,7 @@ function setRegion(cd) {
   paintHead();
   S.sel = null; $('#det').hidden = true;             // 오른쪽 상세도 새 시군구 기준(옛 시군구 필지를 남기지 않는다)
   load({ keep: false });                              // 할 일 표 = 고른 시군구 필지만
-  if (S.tab === 'sus') loadSus(); if (S.tab === 'report') initReport();
+  if (S.tab === 'sus') loadSus();
   tab(S.tab);
 }
 $('#sus-rgn').addEventListener('change', (e) => setRegion(e.target.value));

@@ -1072,8 +1072,12 @@ async def _region_results(sgg_cd: str, p) -> dict:
             "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready "
             "AND j.options->>'scope'='sgg' AND j.options->>'sgg_cd' = ANY($1::text[]) ORDER BY j.finished_at DESC LIMIT 20", codes)
     seen = set()
+    from .svc_rules import excluded, hit
+    ex = await excluded()                                 # 서비스 × 시군구 보이기 규칙(원칙 293 — 예: 곤포사일리지는 남원만)
     for x in rows:
         if not (p.is_lx or x["tenant_id"] == p.tenant_id or (x["tenant_id"] == "lx" and lx_ok)):
+            continue
+        if hit(ex, x["card_id"], r["sgg_cd"]):
             continue
         k = (x["model_id"], x["imagery_id"])
         if k in seen:

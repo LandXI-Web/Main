@@ -18,6 +18,7 @@ import { h, esc, ymd, api, API, session } from '../kit/util.js';
 import { size, gb } from '../kit/me.js';
 import { mountStorage } from './storage.js';
 import { mountInquiries } from './inquiries.js';
+import { mountPledges } from './pledges.js';   // 이용 약속 기록(10-18 제안-이용약속기록화면 · 보기만)
 
 const TABS = [
   { id: 'signup', label: '가입 신청', count: 'signup' },
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'logins', label: '로그인 기록' },
   { id: 'fails', label: '로그인 실패' },
   { id: 'log', label: '처리 기록' },
+  { id: 'pledges', label: '이용 약속 기록' },   // 개인정보가 든 파일 이용 약속(10-18 제안-이용약속기록화면) — LX 관리자 = 모든 기관 · 기관 관리자 = 자기 기관 · 보기만
   { id: 'session', label: '자동 로그아웃' },   // 로그인 유지 시간(원칙 188) — LX 관리자 = LX 계정 · 기관 관리자 = 자기 기관(원칙 177)
   { id: 'ops', label: '운영 정보', lx: true },   // 문의 연락처(원칙 170) — 메인 · 도움말 · 로그인 창이 이 값을 읽는다
   { id: 'inquiries', label: '문의', count: 'inquiries', lx: true },   // 문의하기 창으로 들어온 문의(10-11 메인 지시 3) — 새 문의 수
@@ -112,6 +114,7 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     if (tab === 'ops') { await loadOps(mine); return; }
     if (tab === 'session') { await loadSession(mine); return; }
     if (tab === 'inquiries') { await mountInquiries(card, { mine: () => cur === mine, onChange: counts }); return; }
+    if (tab === 'pledges') { await mountPledges(card, { mine: () => cur === mine, lx: LX }); return; }
     let rows = [];
     try {
       if (tab === 'signup' || tab === 'reset') rows = (await api(`/accounts/requests?kind=${tab}`)).items || [];

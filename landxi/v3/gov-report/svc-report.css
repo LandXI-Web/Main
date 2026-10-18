@@ -1,37 +1,80 @@
-/* 기관 'AI 분석 결과 보고서'(서비스 기준 · 10-11 gov-보고서) — svc-report.js 칸 배치만. */
-.gr-form--svc{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto}
-@media (max-width:1365px){.gr-form--svc{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}   /* 1280 — 글자 표준 단계(원칙 257)로 고르기 칸이 좁아져 단추는 다음 줄 */
-.gr-form--svc .gr-field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 20px) 19px,calc(100% - 15px) 19px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px;cursor:pointer}
-.gr-doc--svc{padding:28px 36px}
+/* 기관 '보고서' 탭 — 고르면 바로 만들어지는 보고서(10-18 영농-보고서 시안 A · svc-report.js) 칸 배치만.
+   보고서 탭은 판 전체(오른쪽 지도 칸 없음) · 왼쪽 고르기 카드 + 오른쪽 보고서 · 아래 발급 목록. */
+body[data-tab="report"][data-rp="multi"] .gr.gr{grid-template-columns:minmax(0,1fr)}
+body[data-tab="report"][data-rp="multi"] .gr-side{display:none}
+.rp{flex:1;min-height:0;overflow:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:20px}
+.rp-grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+.rp-pick,.rp-list{padding:20px;border:1px solid var(--rule);border-radius:var(--r-12, 12px);background:var(--bg-1);min-width:0}
+.rp-pick{position:sticky;top:0;display:flex;flex-direction:column;gap:8px}
+.rp-h{margin:0;font:700 var(--fs-t2)/1.4 var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.rp-help{margin:0 0 4px;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub);word-break:keep-all}
+.rp-grp{margin:12px 0 0;font:600 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+.rp-picks{display:flex;flex-direction:column;gap:6px}
+.rp-ck{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r-8);cursor:pointer;transition:border-color var(--d-180) var(--e-ui),background var(--d-180) var(--e-ui)}
+.rp-ck input{margin:3px 0 0;flex:none;width:16px;height:16px;accent-color:var(--accent)}
+.rp-ck.on{border-color:var(--accent);background:var(--tint)}
+.rp-ck:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.rp-ck-t{display:flex;flex-direction:column;min-width:0}
+.rp-ck-t b{font:600 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink);word-break:keep-all}
+.rp-ck-t small{font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub);word-break:keep-all}
+.rp-sel{width:100%;min-width:0;box-sizing:border-box}
+.rp-btns{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.rp-btns .t-btn{width:100%}
+.rp-doc{min-width:0;padding:28px 32px;border:1px solid var(--rule);border-radius:var(--r-12, 12px);background:var(--bg-1);transition:opacity var(--d-180) var(--e-ui)}
+.rp-doc.is-busy{opacity:.55}
+.rp-doc .gr-rdoc{max-width:none}
+.rp-auto{margin-left:8px;padding:2px 7px;border-radius:999px;background:var(--bg-0);font:500 var(--fs-tag)/16px var(--font-body);color:var(--sub);vertical-align:2px}
+.rp-txt{font:600 var(--fs-t2)/1.3 var(--font-body)!important;word-break:keep-all}
+.rp-tw{overflow-x:auto;border-radius:var(--r-8)}
+.rp-tw .gr-rtb{min-width:420px}
+.rp-maps{display:grid;gap:12px}
+.rp-maps.two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rp-note{margin:24px 0 0;padding:12px 14px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub-2)}
+.rp-list{display:flex;flex-direction:column;gap:6px}
+.rp-iss td{vertical-align:middle}
+.rp-iss .rp-act{text-align:right;white-space:nowrap}
+.rp-sm{height:32px;padding:0 12px}
+.rp-none{margin:6px 0 0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
+
+/* 옛 보고서 문서 꾸밈(같은 부품 — 개요 칸 · 표 · 지도 그림) */
 .gr-wait,.gr-err{margin:24px 0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
 .gr-rdoc{max-width:760px;margin:0 auto}
 .gr-rdoc-k{margin:0 0 6px;font:600 var(--fs-aux)/21px var(--font-body);color:var(--accent)}
 .gr-rdoc-t{margin:0;font:700 var(--fs-h3)/1.35 var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);word-break:keep-all}
 .gr-rdoc-m{margin:4px 0 0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
-.gr-rdoc h3{margin:28px 0 10px;font:700 var(--fs-t1)/var(--lh-t1) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.gr-rdoc h3{margin:28px 0 10px;font:700 var(--fs-t2)/1.4 var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
 .gr-rdoc-p{margin:10px 0 0;font:400 var(--fs-aux)/24px var(--font-body);color:var(--sub-2);word-break:keep-all}
 .gr-ov,.gr-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .gr-ov-i,.gr-cmp>div{padding:14px 16px;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);min-width:0}
-.gr-ov-i small,.gr-cmp small{display:block;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.gr-ov-i small,.gr-cmp small{display:block;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);word-break:keep-all}
 .gr-ov-i b,.gr-cmp b{display:flex;align-items:baseline;gap:4px;margin-top:6px;font:700 var(--fs-num)/1.1 var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
 .gr-ov-i b i,.gr-cmp b i{font:500 var(--fs-tag)/1 var(--font-body);font-style:normal;color:var(--sub);white-space:nowrap}
 .gr-ov-i b{font-size:var(--fs-num);flex-wrap:wrap;row-gap:2px}
-.gr-ov{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-.gr-cmp .gr-cmp-n{font:600 var(--fs-aux)/var(--lh-aux) var(--font-body)}
+.gr-ov{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.gr-cmp .gr-cmp-n{font:600 var(--fs-aux)/var(--lh-aux) var(--font-body);word-break:keep-all}
 .gr-map-fig{margin:0}
 .gr-map-img{min-height:220px;border-radius:var(--r-8);background:var(--bg-1);border:1px solid var(--rule);overflow:hidden;display:grid;place-items:center}
 .gr-map-img[data-state="loading"]{background:linear-gradient(90deg,var(--bg-1),#EEF0F2,var(--bg-1));background-size:200% 100%;animation:gr-shim 1.2s linear infinite}
 .gr-map-img img{display:block;width:100%;height:auto}
 .gr-map-fig figcaption{margin-top:6px;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .gr-rtb{width:100%;border-collapse:collapse;background:var(--bg-1);border-radius:var(--r-8);overflow:hidden;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
-.gr-rtb th{padding:9px 14px;text-align:left;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule)}
-.gr-rtb td{padding:9px 14px;border-bottom:1px solid var(--rule);color:var(--ink)}
-.gr-rtb .n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.gr-rtb th{padding:9px 14px;text-align:left;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);border-bottom:1px solid var(--rule);white-space:nowrap}
+.gr-rtb td{padding:9px 14px;border-bottom:1px solid var(--rule);color:var(--ink);word-break:keep-all}
+.gr-rtb .n,.gr-rtb th.n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
 .gr-rtb tr.dim td{color:var(--sub)}
 .gr-rtb tr.sum td{font-weight:600;background:#F8F9FA;border-bottom:0}
 .gr-a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
-@media (max-width:760px){.gr-form--svc{grid-template-columns:1fr 1fr}.gr-doc--svc{padding:20px 16px}}
+
+@media (max-width:1100px){.rp-grid{grid-template-columns:240px minmax(0,1fr)}.rp-doc{padding:24px}}
+@media (max-width:760px){
+  .rp{padding:16px 12px 24px;gap:16px}
+  .rp-grid{grid-template-columns:1fr}
+  .rp-pick{position:static}
+  .rp-btns{flex-direction:row}
+  .rp-doc{padding:20px 16px}
+  .rp-iss th:nth-child(3),.rp-iss td:nth-child(3){display:none}
+}
 
 /* 서버 문장 끝 한 단어 줄 막기(10-14 재검수 · 원칙 9 줄바꿈) */
 .gr p,.gr li{text-wrap:pretty}
-.gr small{text-wrap:balance}   /* 짧은 설명 줄 — 마지막 줄에 한 단어만 남지 않게(1280 · 원칙 257) */
+.gr small{text-wrap:balance}

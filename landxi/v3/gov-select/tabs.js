@@ -1,5 +1,5 @@
 /* 서비스 대시보드의 '이력' · '통계·보고서' 탭(구현 5차 2묶음 · 확인 대장 18차 N-1 ⓐ 묶음 · 기관-9 ⓑ · 시안 design-r9/gov-2 dash.html?tab=history|stats).
-   이력 = 그 서비스에서 일어난 일 한 줄기(결과 공개 · AI 분석 · 확인 기록 · 검토 요청 · 분석 요청 · 촬영 요청 · 내려받기) — 서버 GET /history · 거르기 칩 · 날짜별 · 엑셀(CSV).
+   이력 = 그 서비스에서 일어난 일 한 줄기(결과 공개 · AI 분석 · 확인 기록 · 검토 요청 · 분석 요청 · 촬영 요청 · 내려받기) — 서버 GET /history · 거르기 칩 · 날짜별 · 엑셀(.xlsx · GET /history.xlsx).
    통계·보고서 = 숫자 둘(AI 분석 결과 · 오탐) · 읍면별 표 · 보고서 만들기 · 자료 내려받기(내려받기는 이 탭 한 곳).
    원칙 135 기관까지(10-10 확인 8 ⓐ): 현장 확인 필요 · 확인 끝 · 확인 예정 · 월별 확인 기록 · 이력의 확인 기록은 화면에서 쓰지 않는다(서버 기록은 그대로).
    숫자는 서버 값 그대로(GET /history/stats · 결과 설명서) · 지어내지 않는다 · 필지 대조가 없는 서비스는 '필지 대조가 없는 서비스' 한 줄과 내려받기만. */
@@ -30,7 +30,7 @@ export async function renderHistory(main, side, { s, B }) {
   let on = 'all';
   const chips = h('div.gy-chips', { role: 'tablist', 'aria-label': '거르기' });
   const list = h('div.gy-days');
-  const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: 'CSV 파일로 내려받기', title: '엑셀에서 바로 열립니다' });
+  const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '엑셀로 내려받기', title: '고른 종류의 이력을 엑셀(.xlsx)로 받습니다' });
   box.append(h('div.gd-box-h', {}, h('h2', { text: '이력' }), h('span.gd-small', { text: '이 서비스에서 일어난 일 · 시간순' })), chips, csv, list);
   const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).filter(([k]) => k !== 'check').map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
   const draw = () => {
@@ -54,13 +54,21 @@ export async function renderHistory(main, side, { s, B }) {
     }));
   };
   draw();
-  csv.addEventListener('click', () => {
-    const rows = items.filter((x) => on === 'all' || x.kind === on);
-    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const body = ['날짜,종류,내용,덧붙임,누가', ...rows.map((x) => [String(x.at || '').slice(0, 10), x.kind_ko, x.title, x.sub, x.who].map(q).join(','))].join('\r\n');
-    const a = h('a', { href: URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' })), download: `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_이력.csv` });
+  /* 진짜 엑셀(.xlsx · 10-18 CSV-이름 '진짜 엑셀로 바꾸기') — 서버가 같은 이력 줄로 만든다(날짜는 날짜 칸 · 고른 종류만) */
+  csv.addEventListener('click', () => xlsx('/history.xlsx?' + new URLSearchParams({ card: s.card, kind: on }), `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_이력.xlsx`, csv));
+}
+/** 서버가 만든 엑셀 파일 받기 — 파일 이름은 서버 이름(없으면 fallback) · 받는 동안 단추를 잠근다 */
+async function xlsx(path, fallback, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const r = await api(path, { raw: true });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
+    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : fallback });
     document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-  });
+    K.toast('내려받았습니다');
+  } catch (e) { K.devlog('xlsx', e.message); K.toast('내려받지 못했습니다'); }
+  finally { if (btn) btn.disabled = false; }
 }
 const KO = { publish: '결과 공개', analysis: 'AI 분석', check: '확인 기록', review: '검토 요청', request: '분석 요청', shoot: '촬영 요청', download: '내려받기' };
 
@@ -151,7 +159,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
 
 /* ═════════ 종류별 · 읍면동별(10-18 원칙 286 영농관리 고도화) ═════════
    운영 중인 영농관리 화면의 '클래스별 통계 · 지역별 통계'를 우리 말로 — 종류(예: 옥수수 · 수단그라스 · 경작지 · 비닐하우스 단동)마다 넓이 · 개수,
-   읍면동마다 종류별 넓이 · 개수 · 엑셀(CSV). 서버 GET /spaces/me/guides/{서비스}/class-stats — 결과 설명서와 같은 결과 · 같은 관할(숫자 한 출처).
+   읍면동마다 종류별 넓이 · 개수 · 엑셀(.xlsx · GET …/class-stats.xlsx). 서버 GET /spaces/me/guides/{서비스}/class-stats — 결과 설명서와 같은 결과 · 같은 관할(숫자 한 출처).
    개수는 서버가 주는 서비스만(분석 칸 조각 수는 싣지 않는다). 지역 이름은 서버 값 그대로 — 어느 지역이든 같은 화면. */
 export async function renderClassStats(box, { s, B }) {
   let j;
@@ -166,7 +174,7 @@ export async function renderClassStats(box, { s, B }) {
   const chips = h('div.gs-period.gs-cls-unit', { role: 'group', 'aria-label': '단위' });
   const sumT = h('tbody'), embT = h('tbody'), embH = h('tr');
   const more = h('button.t-btn.t-btn--text.gd-more.gs-all', { type: 'button' });
-  const csv = h('button.t-btn.t-btn--text.gd-more.gs-cls-csv', { type: 'button', text: 'CSV 파일로 내려받기', title: '엑셀에서 바로 열립니다' });
+  const csv = h('button.t-btn.t-btn--text.gd-more.gs-cls-csv', { type: 'button', text: '엑셀로 내려받기', title: '종류별 · 읍면동별 두 시트(.xlsx)' });
   const names = classes.map((c) => c.name);
   const nw = j.unit === '필지' ? '필지 수' : '개수';     // 결과 셈 단위(서버) — 결과 설명서 · 대시보드 큰 숫자와 같은 단위
   const draw = () => {
@@ -189,17 +197,8 @@ export async function renderClassStats(box, { s, B }) {
     more.textContent = all ? '줄이기' : `${emds.length}곳 모두 펼치기`;
   };
   more.addEventListener('click', () => { all = !all; draw(); });
-  csv.addEventListener('click', () => {
-    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const v = (e) => (e && e.value != null ? Math.round(Number(e.value) * 10) / 10 : '');
-    const yk = (n) => !!classes.find((c) => c.name === n)?.yield;      // 곤포사일리지 생산량 칸(기관이 1개당 무게를 넣었을 때만 · 10-18 영농-q2 ⓑ)
-    const cols = ['읍면동', '합계 넓이(㎡)', ...(j.count ? [`합계 ${nw}`] : []), ...names.flatMap((n) => [`${n} 넓이(㎡)`, ...(j.count ? [`${n} ${nw}`] : []), ...(yk(n) ? [`${n} 생산량(kg)`] : [])])];
-    const line = (name, tot, by) => [name, v(tot?.area), ...(j.count ? [v(tot?.n)] : []), ...names.flatMap((n) => [v(by(n)?.area), ...(j.count ? [v(by(n)?.n)] : []), ...(yk(n) ? [v(by(n)?.yield)] : [])])].map(q).join(',');
-    const body = [cols.map(q).join(','), ...emds.map((e) => line(e.emd, e, (n) => e.by?.[n])),
-      line(`${B.short || ''} 전체`.trim(), j.total, (n) => classes.find((c) => c.name === n))].join('\r\n');
-    const a = h('a', { href: URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv;charset=utf-8' })), download: `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_종류별_읍면동별.csv` });
-    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-  });
+  /* 진짜 엑셀(.xlsx · 10-18 CSV-이름) — 종류별 · 읍면동별 두 시트 · 숫자는 숫자 · 생산량 칸(무게를 넣었을 때) · 서버가 화면과 같은 값으로 만든다 */
+  csv.addEventListener('click', () => xlsx(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats.xlsx`, `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}_종류별_읍면동별.xlsx`, csv));
   box.replaceChildren(...[head, chips,
     h('div.gs-tbl-w', {}, h('table.gs-tbl.gs-cls-sum', {}, h('thead', {}, h('tr', {}, h('th', { text: '종류' }), h('th.num', { text: '합계' }), h('th.num', { text: '비율' }), h('th', { text: '' }))), sumT)),
     j.bale ? baleBox(j, classes, () => renderClassStats(box, { s, B })) : null,
