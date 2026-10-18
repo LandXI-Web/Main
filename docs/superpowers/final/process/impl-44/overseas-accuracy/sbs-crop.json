@@ -1,0 +1,30 @@
+[
+ {
+  "district": "Ysyk-Ata",
+  "z": 13,
+  "x0": 5797,
+  "y0": 3019,
+  "file": "crop-ysyk-ata-z13.png"
+ },
+ {
+  "district": "Suzak",
+  "z": 13,
+  "x0": 5764,
+  "y0": 3072,
+  "file": "crop-suzak-z13.png"
+ },
+ {
+  "district": "Toguz-Toro",
+  "z": 13,
+  "x0": 5776,
+  "y0": 3059,
+  "file": "crop-toguz-toro-z13.png"
+ },
+ {
+  "district": "At-Bashy",
+  "z": 13,
+  "x0": 5835,
+  "y0": 3062,
+  "file": "crop-at-bashy-z13.png"
+ }
+]

@@ -6,6 +6,11 @@
 const TS = 256, RAD = Math.PI / 180, EARTH = 2 * Math.PI * 6378137;
 export const Z = 11;
 export const DROP = 0.1;
+/* 10-18 정확도 점검(원칙 287) — 예전 규칙(계절 평균만 0.1 낮으면 하락)은 이식아타 147.5㎢ 중 74%가 두 달 중 한 달만 낮은 칸(수확 시기 차이)이었다.
+   지금 규칙(RULE r2): ① 계절 평균이 DROP 이상 낮고 ② 계절 달 대부분(2달이면 둘 다 · 3달이면 둘 이상)에서 같은 달 전년보다 DROP 이상 낮고
+   ③ 전년 같은 계절에 푸르렀던 밭(NDVI ≥ 0.3)이 ④ 25% 이상 덜 푸르고 ⑤ 이웃 칸과 함께(외톨이 한 칸은 세지 않음). 같은 영상 · 같은 바탕이면 값이 같다. */
+export const RULE = 'r2';
+const PREV_MIN = 0.3, REL_MIN = 0.25;
 const SPAN = 1.0;   // rescale −0.2…0.8
 const lon2x = (lon, z) => ((lon + 180) / 360) * 2 ** z * TS;
 const lat2y = (lat, z) => ((1 - Math.asinh(Math.tan(lat * RAD)) / Math.PI) / 2) * 2 ** z * TS;
@@ -150,24 +155,44 @@ function seasonMean(months, N) {
   return { sum, n };
 }
 
-/** 작황 하락 — 경작지 중 (전년 같은 계절 평균 − 이번 계절 평균) ≥ DROP 인 화소 면적(km²)
- *  coverage = 지역 안 경작지 화소 중 두 해 모두 값이 있는 비율 · url = 하락 화소만 칠한 그림 */
-export async function dropOf(cur, prev, mask, crop, grid, drop = DROP) {
+/** 작황 하락 — 경작지 중 전년 같은 계절보다 덜 푸른 화소 면적(km² · 규칙 RULE 위 주석)
+ *  cur · prev = 같은 차례의 달(이번 해 · 전년) · coverage = 지역 안 경작지 화소 중 두 해 모두 값이 있는 비율 · url = 하락 화소만 칠한 그림 */
+export async function dropOf(cur, prev, mask, crop, grid, drop = DROP, aligned = true) {
   const N = grid.W * grid.H, A = seasonMean(cur, N), B = seasonMean(prev, N);
-  const c = new OffscreenCanvas(grid.W, grid.H), g = c.getContext('2d'), img = g.createImageData(grid.W, grid.H), d = img.data;
+  const W = grid.W, c = new OffscreenCanvas(grid.W, grid.H), g = c.getContext('2d'), img = g.createImageData(grid.W, grid.H), d = img.data;
   let inN = 0, okN = 0, m2 = 0, cropM2 = 0;
-  const lim = (drop / SPAN) * 255;
+  const lim = (drop / SPAN) * 255, base = (0.2 / SPAN) * 255, prevMin = ((PREV_MIN + 0.2) / SPAN) * 255;
+  const pairs = aligned && cur.length === prev.length ? cur.map((a, i) => [a, prev[i]]) : [];
+  const hit = new Uint8Array(N), area = new Float32Array(N);
   for (let y = 0; y < grid.H; y++) {
     const lat = y2lat(grid.Y0 + y + 0.5, grid.z), px = (EARTH * Math.cos(lat * RAD)) / (2 ** grid.z * TS), pa = px * px;
-    for (let x = 0; x < grid.W; x++) {
-      const k = y * grid.W + x;
+    for (let x = 0; x < W; x++) {
+      const k = y * W + x;
       if (!mask[k] || !crop[k]) continue;
       const w = crop[k];   // 1(WorldCover) 또는 화소 안 경작지 비율(우리 모델 바탕)
       inN += w; cropM2 += pa * w;
       if (!A.n[k] || !B.n[k]) continue;
       okN += w;
-      if (B.sum[k] / B.n[k] - A.sum[k] / A.n[k] >= lim) { m2 += pa * w; d[k * 4] = 15; d[k * 4 + 1] = 169; d[k * 4 + 2] = 160; d[k * 4 + 3] = 230; }
+      const a = A.sum[k] / A.n[k], b = B.sum[k] / B.n[k];
+      if (b - a < lim || b < prevMin || (b - a) / (b - base) < REL_MIN) continue;
+      let n = 0, down = 0;
+      for (const [ma, mb] of pairs) if (ma.ok[k] && mb.ok[k]) { n++; if (mb.v[k] - ma.v[k] >= lim) down++; }
+      if (n && down < Math.max(1, Math.ceil((2 * n) / 3))) continue;
+      hit[k] = 1; area[k] = pa * w;
     }
+  }
+  // 외톨이 한 칸은 빼고(이웃 8칸 중 하나라도 하락이면 남김) 센다 · 칠한다
+  for (let y = 0; y < grid.H; y++) for (let x = 0; x < W; x++) {
+    const k = y * W + x;
+    if (!hit[k]) continue;
+    let nb = 0;
+    for (let dy = -1; dy <= 1 && !nb; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const yy = y + dy, xx = x + dx;
+      if (yy >= 0 && xx >= 0 && yy < grid.H && xx < W && hit[yy * W + xx]) { nb = 1; break; }
+    }
+    if (!nb) continue;
+    m2 += area[k]; d[k * 4] = 15; d[k * 4 + 1] = 169; d[k * 4 + 2] = 160; d[k * 4 + 3] = 230;
   }
   g.putImageData(img, 0, 0);
   return { km2: m2 / 1e6, cropKm2: cropM2 / 1e6, coverage: inN ? okN / inN : 0, url: await toUrl(c) };
@@ -175,7 +200,7 @@ export async function dropOf(cur, prev, mask, crop, grid, drop = DROP) {
 
 /* ── 작황 하락 화소를 줌에 맞는 한 장으로(바퀴 17 원칙 281 — 멀리서도 · 줌 인을 계속해도 보이게) ──
    결과 한 장은 z11 격자(지도 z11 에서 1 화소 = 1 화면 화소). 그보다 멀면 화면 1 화소에 여러 칸이 겹쳐 흩어진 칸이 지워졌다(흐릿) —
-   멀리선 2 · 4칸을 묶어 하나라도 있으면 칠(진하기는 묶음 안 비율), 가까이(z11.5↑)는 두 배로 키워 칸 경계에 흰 선. 값(면적)은 그대로 — 그림만.
+   멀리선 2 · 4칸을 묶어 하나라도 있으면 칠(진하기는 묶음 안 비율), 가까이(z11.5↑)는 두 배로 키워 한 빨강(10-18: 경계 선 없앰 — 좁은 밭에서 선이 칸을 덮었다). 값(면적)은 그대로 — 그림만.
    색 = 하락(붉은색 · 경작지 청록과 구별). 보관해 둔 예전 그림(청록)도 알파만 읽어 같은 색으로 다시 칠한다. */
 export const DROP_RGB = [240, 68, 82];
 export function levelsOf(url, base = Z) {
@@ -202,11 +227,10 @@ export function levelsOf(url, base = Z) {
       g.putImageData(img, 0, 0); return toUrl(c);
     }
     const f = k === 1 ? 1 : -k, w = W * f, hh = H * f, c = new OffscreenCanvas(w, hh), g = c.getContext('2d'), img = g.createImageData(w, hh), o = img.data;
-    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= hh ? 1 : on[Math.floor(y / f) * W + Math.floor(x / f)]);   // 격자 밖은 '있음'으로(가장자리 선 없음)
     for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
       if (!on[Math.floor(y / f) * W + Math.floor(x / f)]) continue;
-      const q = (y * w + x) * 4, edge = f > 1 && !(at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1));
-      if (edge) { o[q] = 255; o[q + 1] = 255; o[q + 2] = 255; o[q + 3] = 235; } else { o[q] = R; o[q + 1] = G; o[q + 2] = B; o[q + 3] = f > 1 ? 170 : 225; }
+      const q = (y * w + x) * 4;
+      o[q] = R; o[q + 1] = G; o[q + 2] = B; o[q + 3] = 225;   // 10-18: 가장자리 선 없음(흰 · 진한 선 모두 좁은 밭에서 칸을 다 덮어 어수선) — 한 빨강
     }
     g.putImageData(img, 0, 0); return toUrl(c);
   }

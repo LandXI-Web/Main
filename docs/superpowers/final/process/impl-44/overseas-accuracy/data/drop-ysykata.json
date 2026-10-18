@@ -1,0 +1,44 @@
+{
+ "district": "Ysyk-Ata",
+ "tiles": {
+  "hit": 96
+ },
+ "grid": [
+  1024,
+  1536
+ ],
+ "crop_km2": 634.3,
+ "coverage": 1.0,
+ "current_rule_km2": 147.5,
+ "share_isolated": 0.033,
+ "share_low_crop_frac(<0.5)": 0.008,
+ "share_prev_low_ndvi(<0.3)": 0.251,
+ "share_one_month_only": 0.738,
+ "mean_prev_ndvi_on_drop": 0.361,
+ "mean_cur_ndvi_on_drop": 0.191,
+ "variants_km2": {
+  "thr0.15": 77.0,
+  "thr0.1+both_months": 38.6,
+  "thr0.1+prev>=0.3+rel>=25%": 106.4,
+  "both_months+prev>=0.3+rel>=25%": 35.5,
+  "strict+min2px": 31.5,
+  "strict+min2px+cropfrac>=0.5": 31.3
+ },
+ "histogram_diff_on_crop": {
+  "-0.30": 2.7,
+  "-0.25": 6.6,
+  "-0.20": 12.0,
+  "-0.15": 22.3,
+  "-0.10": 49.1,
+  "-0.05": 123.9,
+  "-0.00": 171.6,
+  "0.05": 97.6,
+  "0.10": 69.3,
+  "0.15": 39.7,
+  "0.20": 20.7,
+  "0.25": 8.8,
+  "0.30": 4.5,
+  "0.35": 2.1,
+  "0.40": 0.8
+ }
+}

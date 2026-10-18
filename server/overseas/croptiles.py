@@ -6,6 +6,10 @@
 '공개 판정 값'으로 둔 군(public_used.경작지 · 우리 모델이 크게 부풀린 고지대 군)은 다시 학습할 때까지 같은 해 공개 판정(Esri 2025 · 값 5)으로.
 화소 = 경작지가 있으면 (40, 비율×255, 0, 255) — 화면 계산기(global/ndvi-tiles.js cropOf)가 값 40 + 비율로 읽는다(면적 = 화소 면적 × 비율). 없으면 투명.
 빈 조각은 파일을 만들지 않는다(게이트웨이가 나라 범위 안이면 투명 한 장 · 밖이면 204). 지역 고정값 없음 — 나라 · 연도 · 모델은 설정과 칸 장부에서.
+
+  python -m overseas.croptiles --z 13     보기용 고운 조각(약 14 m 화소 · 10 m 결과에 가까움) → publish/crop-z13 — 가까이(줌 12–14) 보기만 쓴다(계산은 z11 그대로)
+10-18 정확도 점검(원칙 287): 공개 판정 군의 Esri 값을 나라 한 장(raw/esri-lulc-{연도}.tif — 사실은 비슈케크 둘레만 덮음)에서 읽어
+9군이 지도에서 통째로 비어 있었다 → 군마다 받아 둔 파일(raw/esri-lulc-{연도}-{군 코드}-*.tif)에서 읽는다.
 """
 from __future__ import annotations
 
@@ -28,8 +32,8 @@ R = 20037508.342789244
 RES = 2 * R / (2 ** Z * TS)
 
 
-def tiles_dir(country: str, year: int) -> Path:
-    return root(country, year) / "publish" / f"crop-z{Z}"
+def tiles_dir(country: str, year: int, z: int | None = None) -> Path:
+    return root(country, year) / "publish" / f"crop-z{z or Z}"
 
 
 def lon2px(lon):
@@ -39,6 +43,15 @@ def lon2px(lon):
 def lat2px(lat):
     la = math.radians(lat)
     return (1 - math.asinh(math.tan(la)) / math.pi) / 2 * 2 ** Z * TS
+
+
+def esri_files(year: int, cell_cds) -> list[Path]:
+    """공개 판정 군의 Esri 토지피복 파일 — 군마다 받아 둔 것(raw/esri-lulc-{연도}-{군 코드}-WxH.tif)."""
+    raw = config.DATA_ROOT / "global" / "raw"
+    out = []
+    for cd in cell_cds:
+        out += sorted(raw.glob(f"esri-lulc-{year}-{cd}-*.tif"))
+    return out
 
 
 def main():
@@ -52,6 +65,11 @@ def main():
     from shapely.ops import transform as sh_tr
     from PIL import Image
 
+    global Z, SS, RES
+    if "--z" in sys.argv:
+        Z = int(sys.argv[sys.argv.index("--z") + 1])
+        SS = 4 if Z <= 11 else 2
+        RES = 2 * R / (2 ** Z * TS)
     with pg() as c:
         st = settings(c)
         country, year, model = st["country"], int(st["year"]), st["model"]
@@ -78,10 +96,11 @@ def main():
                 geoms.append(sh_tr(to3857, shape(ft["geometry"])))
     tree = STRtree(geoms)
     pub = [sh_tr(to3857, wkt.loads(g)) for cd, nm, g in cells if nm in pub_names]
-    esri_src = rasterio.open(config.DATA_ROOT / "global" / "raw" / f"esri-lulc-{year}.tif") if pub else None
+    esri_srcs = [rasterio.open(f) for f in esri_files(year, [cd for cd, nm, g in cells if nm in pub_names])]
+    print(f"공개 판정 Esri 파일 {len(esri_srcs)}", flush=True)
     print(f"우리 모델 경작지 면 {len(geoms)} · 공개 판정 군 {len(pub)} — {sorted(pub_names)}", flush=True)
     # 조각 줄마다 4배 촘촘히 그린 뒤 화소마다 경작지 비율(0–1) — 작은 밭도 면적만큼 센다(가운데 한 점 규칙이면 약 18% 덜 셈 · 10-17 실측)
-    out = tiles_dir(country, year)
+    out = tiles_dir(country, year, Z)
     tmp = out.with_name(out.name + ".tmp")
     shutil.rmtree(tmp, ignore_errors=True)
     n, tot = 0, 0.0
@@ -97,7 +116,13 @@ def main():
             if pb:
                 inpub = rasterize([(g, 1) for g in pb], out_shape=(bh, bw), transform=trb, fill=0, dtype="uint8")
                 es = np.zeros((bh, bw), np.uint8)
-                reproject(rasterio.band(esri_src, 1), es, dst_transform=trb, dst_crs="EPSG:3857", resampling=Resampling.nearest)
+                for src in esri_srcs:              # 군 파일마다(겹치면 경작지 하나라도 있으면 경작지)
+                    sb = src.bounds
+                    if not box(*to3857(sb.left, sb.bottom), *to3857(sb.right, sb.top)).intersects(band):
+                        continue
+                    one = np.zeros((bh, bw), np.uint8)
+                    reproject(rasterio.band(src, 1), one, dst_transform=trb, dst_crs="EPSG:3857", resampling=Resampling.nearest)
+                    es = np.where(one == 5, 5, es)
                 hi = np.where(inpub == 1, (es == 5).astype(np.uint8), hi)
         frac = hi.reshape(TS, SS, W, SS).sum(axis=(1, 3), dtype=np.uint16) / (SS * SS)
         lat = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * (ty + 0.5) / 2 ** Z))))

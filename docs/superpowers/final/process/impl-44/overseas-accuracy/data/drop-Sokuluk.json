@@ -1,0 +1,45 @@
+{
+ "district": "Sokuluk",
+ "tiles": {
+  "net": 92,
+  "hit": 20
+ },
+ "grid": [
+  1024,
+  1792
+ ],
+ "crop_km2": 785.1,
+ "coverage": 1.0,
+ "current_rule_km2": 169.9,
+ "share_isolated": 0.031,
+ "share_low_crop_frac(<0.5)": 0.011,
+ "share_prev_low_ndvi(<0.3)": 0.245,
+ "share_one_month_only": 0.645,
+ "mean_prev_ndvi_on_drop": 0.374,
+ "mean_cur_ndvi_on_drop": 0.192,
+ "variants_km2": {
+  "thr0.15": 98.7,
+  "thr0.1+both_months": 60.3,
+  "thr0.1+prev>=0.3+rel>=25%": 122.0,
+  "both_months+prev>=0.3+rel>=25%": 53.4,
+  "strict+min2px": 49.1,
+  "strict+min2px+cropfrac>=0.5": 48.8
+ },
+ "histogram_diff_on_crop": {
+  "-0.30": 4.6,
+  "-0.25": 8.2,
+  "-0.20": 12.8,
+  "-0.15": 23.0,
+  "-0.10": 46.2,
+  "-0.05": 122.5,
+  "-0.00": 283.7,
+  "0.05": 108.3,
+  "0.10": 69.8,
+  "0.15": 45.4,
+  "0.20": 26.3,
+  "0.25": 13.1,
+  "0.30": 7.2,
+  "0.35": 3.4,
+  "0.40": 2.0
+ }
+}

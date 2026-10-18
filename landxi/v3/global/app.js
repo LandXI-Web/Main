@@ -34,7 +34,9 @@ const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데�
   contact: 'Contact', mail: 'landxi@lx.or.kr', tel: '+82 63-713-1218',
 };
 /** 호버 한 줄(what · 기간) — HUD 정의와 같은 말 */
-const DROP_WHAT = (s, prev) => `Cropland where NDVI fell ${NT.DROP} or more vs ${prev} · ${s}`;
+const DROP_WHAT = (s, prev) => `AI estimate · cropland less green than ${prev} in most months of ${s} (NDVI ${NT.DROP} or more lower and a quarter or more less green)`;
+/** 지도 범례 한 줄(10-18 해외-보이기 · 빨강이 무엇인지 쉬운 말로) */
+const DROP_KEY = 'Red: fields less green than';   // 뒤에 기간(한 덩어리) · ' · AI estimate'(한 덩어리) — 줄은 덩어리 사이에서만 바뀐다
 const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
 /** 나라 → 경계 파일(예시 데이터 파일 이름 · 지역 문자열 하드코딩 아님). 없으면 배포 범위 자체가 지역이 된다. */
 const ADM = {
@@ -170,6 +172,7 @@ async function main() {
   const stageEl = h('div.gl-stage');
   const crumbs = h('nav.gl-crumbs', { 'aria-label': 'Location' });
   const hudEl = h('div.gl-hud', { 'aria-live': 'polite' });
+  const keyEl = h('p.gl-key', { hidden: true }, h('i.gl-key-sw', { 'aria-hidden': 'true' }), h('span', {}, h('span', { text: DROP_KEY }), ' ', h('span.gl-key-t'), ' ', h('span.gl-key-ai', { text: 'AI estimate' })));
   const guard = h('div.gl-guard', { role: 'status', hidden: true, text: STR.guard });
   const tip = h('div.gl-tip', { hidden: true });
   const sheet = K.card({ map: true, cls: 'gl-sheet' });
@@ -308,10 +311,11 @@ async function main() {
     const R0 = (CH[key] = { state: 'calc' });
     const y0 = s.key.replace(/\d{4}$/, (y) => String(+y - 1));
     const span = `${MON(s.months[0])}–${MONY(s.months[s.months.length - 1])}`;
-    const okOf = (r) => Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2,
+    const prevSpan = `${MON(s.months[0])}–${MONY(prevOf(s.months[s.months.length - 1]).m)}`;
+    const okOf = (r) => Object.assign(R0, { state: 'ok', cover: r.coverage, url: r.url, cropKm2: r.cropKm2, prevSpan,
       env: envOf(r1(r.km2), 'km2', 'estimate', DROP_WHAT(span, y0), job.finished_at) });
     // 같은 작업 · 지역 · 계절 · 모자이크면 값이 같다 — 한 번 잰 결과(값 · 그림)를 이 브라우저에 두고 다음부터 바로 쓴다
-    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, OC ? 'ovs:' + OC.model : (wc.params?.items || []).join(',')].join('|');   // 바탕 모델이 바뀌면 다시 잰다
+    const dk = [job.id, D0.id, s.key, cur.map(sidOf).join(','), prev.map((x) => x.sid).join(','), NT.Z, NT.DROP, NT.RULE, OC ? 'ovs:' + OC.model : (wc.params?.items || []).join(',')].join('|');   // 바탕 모델이 바뀌면 다시 잰다
     R0.p = (async () => {
       const srvP = dropSrvGet(dk);        // 이 브라우저 보관 · 서버 보관을 함께 본다(차례로 보면 한 번 더 기다린다)
       const hit = await dropGet(dk);
@@ -325,7 +329,8 @@ async function main() {
         Promise.all(prev.map((x) => NT.monthOf(ndm.tiles, x.sid, grid))),
       ]);
       if (!crop) { Object.assign(R0, { state: 'low' }); return R0; }
-      const r = await NT.dropOf(A, B, mask, crop, grid);
+      const aligned = cur.length === prev.length && cur.every((m, i) => prev[i].m === prevOf(m).m);   // 달끼리 맞댈 수 있을 때만 '달마다' 조건
+      const r = await NT.dropOf(A, B, mask, crop, grid, NT.DROP, aligned);
       if (r.coverage < COVER_MIN) { Object.assign(R0, { state: 'low', cover: r.coverage }); return R0; }
       if (!crop.miss && ![...A, ...B].some((x) => x.miss)) { dropPut(dk, r); dropSrvPut(dk, r); }   // 빠진 타일 없이 잰 값만 보관
       return okOf(r);
@@ -479,8 +484,14 @@ async function main() {
     }
   }
 
+  /* 지역에 들어가면 위성 바탕의 채도만 낮춘다(밝기 그대로 · 딤 아님) — 빨간 하락 칸 · 주황 건물 칸이 밭 · 산 색과 섞이지 않게(10-18 해외-보이기) */
+  //   해외 위성 판(k-s2-*)은 무대가 늦게 싣기도 해서 — 새 층이 붙으면(styledata) 같은 값을 다시 맞춘다(값이 같으면 건드리지 않음)
+  let muteOn = false;
+  const muteApply = () => { for (const l of map.getStyle()?.layers || []) if (l.type === 'raster' && /^(k-under|k-world|k-s2-|img-)/.test(l.id)) { const v = muteOn ? -0.55 : 0; if ((map.getPaintProperty(l.id, 'raster-saturation') ?? 0) !== v) map.setPaintProperty(l.id, 'raster-saturation', v); } };
+  const muteImagery = (on) => { muteOn = !!on; muteApply(); };
+  map.on('styledata', () => { if (muteOn) muteApply(); });
   async function toGlobe({ fly = true } = {}) {
-    S.level = 'globe'; S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null); suggNow();
+    S.level = 'globe'; muteImagery(false); S.district = null; main.dataset.level = 'globe'; drawCrumbs(); hud(null); cropOn(null); suggNow();
     map.getSource('gl-adm2').setData(EMPTY); map.getSource('gl-adm1').setData(EMPTY); map.getSource('gl-cells').setData(EMPTY); map.setPaintProperty('gl-mask', 'fill-opacity', 0); ndviShow(null); changeShow(false);
     const c = S.country ? center(S.country.bbox) : [60, 25];
     const cam = { center: [c[0] + (mobile() ? 0 : 18), Math.max(-30, Math.min(40, c[1] - 6))], zoom: mobile() ? 0.9 : 1.75, pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } };
@@ -489,7 +500,7 @@ async function main() {
   }
 
   async function toCountry(C, { fly = true } = {}) {
-    S.country = C; S.level = 'country'; S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url(); suggNow();
+    S.country = C; S.level = 'country'; muteImagery(false); S.district = null; main.dataset.level = 'country'; drawCrumbs(); hud(null); url(); suggNow();
     const A = await districtsOf(C);
     map.getSource('gl-adm1').setData(A.adm1 || EMPTY);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: 0 }, geometry: d.feature.geometry })) });
@@ -503,7 +514,7 @@ async function main() {
   async function toDistrict(D0, { fly = true, jump = false } = {}) {
     if (!D0.mine && !isLX) { flashGuard(); return; }
     const A = admCache[S.country.iso];
-    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null); suggNow();
+    S.district = D0; S.level = 'district'; main.dataset.level = 'district'; drawCrumbs(); url(); cropOn(null); suggNow(); muteImagery(true);
     map.getSource('gl-adm2').setData({ type: 'FeatureCollection', features: A.feats.map((d, i) => ({ type: 'Feature', id: i, properties: { i, mine: d.mine ? 1 : 0, cur: d === D0 ? 1 : 0 }, geometry: d.feature.geometry })) });
     const g = D0.feature.geometry, holes = g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map((p) => p[0]) : [];
     map.getSource('gl-mask').setData({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring([-179.9, -85, 179.9, 85]), ...holes.map((r) => [...r].reverse())] } });
@@ -541,7 +552,8 @@ async function main() {
     if (!D0 && !wait) { hudEl.hidden = true; return; }
     hudEl.hidden = false;
     if (!big) big = K.bignum(h('div'), null, { label: '', unit: STR.km2, hud: true, digits: 1 });
-    if (!big.el.isConnected) hudEl.append(big.el);
+    if (!big.el.isConnected) hudEl.append(big.el, keyEl);
+    keyEl.hidden = true;
     const name = (D0 || S.district)?.name || '';
     const sprawlTab = S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 작황 하락(NDVI 기준) · Register = 어긋난 구역 수
     const regTab = S.tab === 3;
@@ -573,6 +585,7 @@ async function main() {
     if (c.state === 'calc') { big.el.classList.add('is-wait'); big.set(undefined); return; }
     const e = c.state === 'ok' ? c.env : null;
     big.set(e, { unit: STR.km2, digits: 1 });
+    if (e && S.tab === 0 && c.prevSpan) { keyEl.querySelector('.gl-key-t').textContent = c.prevSpan; keyEl.hidden = false; }
     big.el.classList.toggle('is-none', !e);
     // 빈 상태 한 줄 — 시트와 같은 말(영상 없음은 영상이 정말 없을 때만)
     if (!e) big.el.querySelector('.k-big-none').textContent = covered(D0) ? STR.noresult : STR.none;

@@ -131,3 +131,9 @@ html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}
 .gl-reg-up{align-self:flex-start}
 .gl-ck-ko{margin:0;padding:0 16px 8px;background:var(--bg-1,#fff);font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--t-2,#4E5968)}
 .gl-ck-ko[hidden]{display:none}
+/* 지도 범례 한 줄(10-18 해외-보이기) — 큰 숫자 아래 흰 칩 · 빨강이 무엇인지 */
+.gl-key{display:inline-flex;align-items:center;gap:8px;margin:12px 0 0;padding:6px 12px;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);box-shadow:var(--elev-map);font:500 var(--fs-aux)/20px var(--font-body);max-width:100%}
+.gl-key[hidden]{display:none}
+.gl-key-sw{flex:none;width:12px;height:12px;border-radius:3px;background:rgb(240,68,82);box-shadow:inset 0 0 0 1.5px rgb(150,20,32)}
+.gl-key-t,.gl-key-ai{white-space:nowrap}
+.gl-key-ai{color:var(--sub)}

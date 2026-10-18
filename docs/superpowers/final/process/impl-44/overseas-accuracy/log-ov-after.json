@@ -1,0 +1,30 @@
+{
+ "_failed": [],
+ "errors": [],
+ "bad": [],
+ "login_at": "2026-10-18 09:00:24",
+ "first_ms": 2426,
+ "first": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "31.5",
+  "text": "Crop condition drop · Ysyk-Ata 31.5 km²",
+  "key": "Red: fields less green than Sep–Oct 2024 AI estimate"
+ },
+ "ov-first-after-0900.png": "2026-10-18 09:00:30",
+ "ov-near-after-0900.png": "2026-10-18 09:00:36",
+ "ov-nearer-after-0900.png": "2026-10-18 09:00:42",
+ "chat": "The cropland drop in Ysyk-Ata for the Autumn 2025 season is estimated at 31.5 km². This figure represents the estimated crop condition drop for the specified area.",
+ "ov-chat-after-0900.png": "2026-10-18 09:00:46",
+ "ov-country-after-0900.png": "2026-10-18 09:00:54",
+ "mobile": {
+  "level": "district",
+  "state": "ready",
+  "big": "ok",
+  "v": "31.5",
+  "text": "Crop condition drop · Ysyk-Ata 31.5 km²",
+  "key": "Red: fields less green than Sep–Oct 2024 AI estimate"
+ },
+ "ov-mobile-after-0900.png": "2026-10-18 09:00:59"
+}

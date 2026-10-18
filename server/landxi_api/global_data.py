@@ -440,9 +440,9 @@ async def one(rid: str, request: Request):
 _EMPTY_PNG: bytes | None = None
 
 
-def _crop_meta():
-    from overseas.runner import DEF, root               # 경로 = overseas/croptiles.tiles_dir 와 같은 곳(publish/crop-z11)
-    d = root(DEF["country"], DEF["year"]) / "publish" / "crop-z11"
+def _crop_meta(z: int = 11):
+    from overseas.runner import DEF, root               # 경로 = overseas/croptiles.tiles_dir 와 같은 곳(publish/crop-z11 · 보기용 고운 조각 crop-z13)
+    d = root(DEF["country"], DEF["year"]) / "publish" / f"crop-z{z}"
     try:
         return d, json.loads((d / "meta.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -478,6 +478,7 @@ async def crop_tile(z: int, x: int, y: int, request: Request):
 # 계산용 z11 조각(G = 화소 안 경작지 비율)을 화면용으로 칠한다 — 멀리(z5–10)는 아래 조각을 묶되 작은 경작지도 사라지지 않게(가장 큰 값으로
 # '있음'을 남기고 진하기는 평균) · 가까이(z12–14)는 z11 화소를 그대로 키워 칸 경계에 흰 선(국내 결과 면과 같은 읽힘 · 원칙 267). 14 넘게는 지도가 키운다.
 CV_ZMIN, CV_ZMAX = 5, 14
+CV_FINE = 13                                               # 보기용 고운 조각 줌(overseas.croptiles --z 13)
 CV_FILL = (15, 169, 160)                                   # 경작지 분류 색(청록 · XI맵 · 지도 서비스와 같은 값)
 _CV_LVL: dict = {}                                         # (모델, z, x, y) → (평균, 최대) uint8 256×256 — z<11 만 보관
 _CV_PNG: dict = {}                                         # (모델, z, x, y) → 보기 조각 PNG(가벼운 보관)
@@ -501,7 +502,7 @@ def _cv_level(d: Path, meta: dict, z: int, x: int, y: int):
     if z == bz:
         tx0, ty0, tx1, ty1 = meta["tiles"]
         return _cv_base(d, x, y) if tx0 <= x <= tx1 and ty0 <= y <= ty1 else None
-    key = (meta.get("model"), z, x, y)
+    key = (meta.get("model"), bz, z, x, y)
     if key in _CV_LVL:
         return _CV_LVL[key]
     mean = np.zeros((256, 256), np.float32)
@@ -542,16 +543,18 @@ def _cv_png(d: Path, meta: dict, z: int, x: int, y: int) -> bytes | None:
         ox, oy = (x % f) * n, (y % f) * n
         sub = base[0][oy:oy + n, ox:ox + n]
         mean = mx = np.repeat(np.repeat(sub, f, axis=0), f, axis=1)
-    on = mx > 12                                           # 화소 안 경작지 약 5% 넘으면 '있음'
+    fine = bz > 11                                         # 보기용 고운 조각(z13 · 약 14 m)으로 그리는 가까운 줌(12–14)
+    # 멀리: 화소 안 경작지 약 5% 넘으면 '있음'(작은 밭도 사라지지 않게) · 가까이(고운 칸): 칸의 절반 이상이 경작지일 때만(자신 없는 가장자리 칸은 숨김 · 10-18 정확도)
+    on = mean >= 128 if fine else mx > 12
     if not on.any():
         return None
     # 진하기: 멀리(≤10) 있으면 최소 0.62 · 빽빽할수록 0.92(면이 읽히게) · z11 0.55–0.8 · 가까이(≥12) 0.5–0.62 + 흰 경계(위성 바탕의 밭이 비치게)
-    lo, hi = (158, 235) if z <= bz - 1 else (140, 205) if z == bz else (128, 158)
+    lo, hi = (128, 158) if fine or z > bz else (158, 235) if z <= bz - 1 else (140, 205)
     alpha = np.where(on, np.clip(lo + (mean.astype(np.int32) * (hi - lo)) // 255, lo, hi), 0).astype(np.uint8)
     rgba = np.zeros((256, 256, 4), np.uint8)
     rgba[..., 0], rgba[..., 1], rgba[..., 2] = CV_FILL
     rgba[..., 3] = alpha
-    if z > bz:                                             # 가까이: 칸 경계 흰 선(1화소)
+    if z > bz or fine:                                     # 가까이: 경작지 덩어리 바깥 선(흰 1화소)
         pad = np.pad(on, 1, mode="edge")
         inner = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
         edge = on & ~inner
@@ -571,7 +574,11 @@ async def crop_view(z: int, x: int, y: int, request: Request):
     if not meta or not (CV_ZMIN <= z <= CV_ZMAX):
         return Response(status_code=204, headers={"Cache-Control": "no-store"})
     hdr = {"Cache-Control": "private, max-age=86400", "X-LX-Model": str(meta.get("model") or ""), "Access-Control-Expose-Headers": "X-LX-Model"}
-    key = (meta.get("model"), z, x, y)
+    if z > int(meta["z"]):                                 # 가까이(12–14)는 보기용 고운 조각이 같은 모델로 있으면 그것으로(z11 칸 약 57 m → 약 14 m)
+        d2, m2 = _crop_meta(CV_FINE)
+        if m2 and m2.get("model") == meta.get("model"):
+            d, meta = d2, m2
+    key = (meta.get("model"), meta["z"], z, x, y)
     png = _CV_PNG.get(key)
     if png is None:
         png = await run_in_threadpool(_cv_png, d, meta, z, x, y) or b""
