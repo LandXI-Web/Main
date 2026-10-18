@@ -215,7 +215,7 @@ body.t { overflow: hidden; }
   .axis .t-in, .msg.t-in, .ask__c, .form.nudge { animation: none; }
 }
 .door__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.door__api { font-size:var(--fs-aux); line-height:19px; color: var(--sub, #727780); text-decoration: underline; text-underline-offset: 3px; }   /* 바닥 'API 안내'(외부 연동 API 3차) */
+.door__api { white-space: nowrap; font-size:var(--fs-aux); line-height:19px; color: var(--sub, #727780); text-decoration: underline; text-underline-offset: 3px; }   /* 바닥 'API 안내'(외부 연동 API 3차) */
 
 /* 패밀리 사이트 — 기관 사이트 바로가기(원칙 294) · 바닥에서 위로 펼침 */
 .fam{position:relative;font:500 var(--fs-aux)/var(--lh-aux, 19px) var(--font-body);color:var(--sub)}

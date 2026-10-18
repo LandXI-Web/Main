@@ -52,7 +52,12 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
   function openDrawer() {
     if (drawer) { drawer.close(); return; }
     home = log.parentElement;
-    drawer = K.drawer({ title: 'XI ChatGEO · 대화', host, slot: 'right', onClose: () => { drawer = null; if (home) home.append(log); log.querySelectorAll('.k-chat-msg').forEach((m) => { m.style.display = ''; }); paint(); setTimeout(() => window.__xc?.relayout?.(), 60); } });
+    const closed = () => { if (!drawer) return; drawer = null; if (home) home.append(log); log.querySelectorAll('.k-chat-msg').forEach((m) => { m.style.display = ''; }); paint(); setTimeout(() => window.__xc?.relayout?.(), 60); };
+    drawer = K.drawer({ title: 'XI ChatGEO · 대화', host, slot: 'right', onClose: closed });
+    // Esc · 다른 서랍이 조용히 닫아도(onClose 없음) 답 띠가 돌아오게
+    const mine = drawer;
+    const watch = () => { if (drawer !== mine) { document.removeEventListener('kit:drawer', watch); return; } if (mine.el.classList.contains('is-closing') || !mine.el.isConnected) { document.removeEventListener('kit:drawer', watch); closed(); } };
+    document.addEventListener('kit:drawer', watch);
     drawer.body.classList.add('xk-dlog'); drawer.body.append(log);
     card.hidden = true; linkDrawer();                                                   // 서랍이 열리면 답 띠는 숨김 · 닫으면 paint 가 되돌린다
     requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
