@@ -19,10 +19,10 @@ import { CURSOR } from './rec.mjs';
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const W = 1920, H = 1080;
 
-/** 새 창 — 1920×1080 · 화면 배율 1 · 부드러운 커서 점 · 쓰기 막기 */
-export async function newCtx(browser, log) {
+/** 새 창 — 1920×1080 · 화면 배율 1 · 쓰기 막기. 커서 점은 넣지 않는다(10-18 사용자: "화면에 마우스 포인트가 없었으면") — opts.cursor 로만 켬 */
+export async function newCtx(browser, log, opts = {}) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, locale: 'ko-KR' });
-  await ctx.addInitScript(CURSOR);
+  if (opts.cursor) await ctx.addInitScript(CURSOR);
   await ctx.addInitScript("try { sessionStorage.setItem('lx.chat.test', '1') } catch (e) {}");   // XI ChatGEO 시험 표시
   await ctx.addInitScript(() => { const s = document.createElement('style'); s.textContent = '::-webkit-scrollbar{width:0;height:0}'; (document.head || document.documentElement).appendChild(s); });
   await ctx.route('**/api/**', (r) => {
