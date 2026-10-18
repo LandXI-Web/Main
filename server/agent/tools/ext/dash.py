@@ -358,6 +358,12 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     if ar["n"] >= 20:
         b = max(ar["bins"], key=lambda b: b["n"])
         say.append(f"면적은 {J(b['label'], '이', '가')} {_nf(b['n'])}{J(unit, '으로', '로')} 가장 많습니다.")
+    # 같은 곳을 서비스 결과가 센 전국 분석(overlap.py) — 더하지 않고 LX 화면에만 참고로 · 차이가 크면 결과 확인이 필요하다고
+    for d in [d for d in (t.get("dup") or []) if d["k"] == task]:
+        svc_n = sum(r["n"] for r in trows if r.get("src") == "service")
+        gap = svc_n and (d["n"] >= 2 * svc_n or d["n"] * 2 <= svc_n)
+        say.insert(min(1, len(say)), f"같은 곳의 전국 분석({d['year']}년 영상) {_nf(d['n'])}{unit}은 더하지 않았습니다"
+                   + (" — 서비스 결과와 차이가 커 결과 확인이 필요합니다." if gap else "."))   # 지도 위 판은 두 줄까지 — 둘째 줄에
     return {"kind": "task", "rule": [panels[0]["type"] == "donut" and "B1d" or "B1b", "P1" if any(p["type"] == "scatter" for p in panels) else "-", "A1" if ar["n"] >= 20 else "-",
                                      "M3" + mp["scale"]["kind"]],
             "title": f"{name} · {task}", "means": [["지역", name], ["업무", task], ["비교", "읍면동 · 면적"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],

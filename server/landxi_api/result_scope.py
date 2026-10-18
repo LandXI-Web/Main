@@ -104,28 +104,60 @@ def drop(cond: dict, keys) -> dict:
     return out
 
 
+_CLIP: dict[str, list[str]] = {}          # 옛 분석 → 그보다 늦은 같은 서비스 × 지역 분석(옛 분석은 늦은 분석이 덮지 않은 곳만 센다)
+
+
 async def latest_only(jobs: list[str]) -> list[str]:
-    """같은 서비스 × 같은 지역(프로젝트면 같은 범위)의 분석이 여럿 켜져 있으면 가장 늦게 끝난 것 하나만(10-18 · 숫자 한 출처).
-    이전 분석은 시점 비교용이라 통계 · 보고서 · 거르기 숫자에 더하지 않는다. 입력 순서는 지킨다."""
+    """같은 서비스 × 같은 지역(프로젝트면 같은 범위)의 분석이 여럿 켜져 있으면 곳마다 가장 늦게 끝난 분석 하나로 센다(10-18 · 숫자 한 출처).
+    늦은 분석이 옛 분석의 범위를 다 덮으면 옛 분석은 빠진다(시점 비교용 — 통계 · 보고서 · 거르기 숫자에 더하지 않음).
+    늦은 분석이 일부만 다시 했으면 옛 분석은 남고, 늦은 분석이 덮은 곳의 옛 객체만 뺀다(clip_sql) — 덮인 곳을 조용히 버리지 않는다.
+    끝나지 않은 · 빈 분석은 여기 오지 않는다(_jobs_on 이 끝난 작업만). 입력 순서는 지킨다."""
     if len(jobs) < 2:
         return list(jobs)
     from .deps import db
     async with db(realm="lx") as c:
         rows = await c.fetch("SELECT id, card_id, options, finished_at FROM jobs WHERE id = ANY($1::text[])", jobs)
-    by = {}
-    for r in rows:
-        o = r["options"] if isinstance(r["options"], dict) else json.loads(r["options"] or "{}")
-        key = (r["card_id"], str(o.get("sgg_cd") or ""), str(o.get("range_name") or "") if o.get("project_infer") else "", str(o.get("project_id") or "") if o.get("project_infer") else "")
-        by[r["id"]] = (key, r["finished_at"])
-    best: dict = {}
-    for j in jobs:
-        if j not in by:
+        by = {}
+        for r in rows:
+            o = r["options"] if isinstance(r["options"], dict) else json.loads(r["options"] or "{}")
+            key = (r["card_id"], str(o.get("sgg_cd") or ""), str(o.get("range_name") or "") if o.get("project_infer") else "", str(o.get("project_id") or "") if o.get("project_infer") else "")
+            by[r["id"]] = (key, r["finished_at"])
+        groups: dict = {}
+        for j in jobs:
+            if j in by:
+                groups.setdefault(by[j][0], []).append(j)
+        drop: set = set()
+        for g in groups.values():
+            if len(g) < 2:
+                continue
+            g = sorted(g, key=lambda j: by[j][1].timestamp() if by[j][1] else 0, reverse=True)
+            for i, old in enumerate(g[1:], 1):
+                newer = g[:i]
+                # 옛 분석 범위 가운데 늦은 분석들이 덮지 않은 넓이 비율(작업 범위 = 영상 범위)
+                left = await c.fetchval(
+                    "SELECT CASE WHEN ST_Area(o.aoi) > 0 THEN ST_Area(ST_Difference(o.aoi, (SELECT ST_Union(n.aoi) FROM jobs n WHERE n.id = ANY($2::text[])))) / ST_Area(o.aoi) END "
+                    "FROM jobs o WHERE o.id = $1 AND o.aoi IS NOT NULL", old, newer)
+                if left is None or float(left) < 0.02:
+                    drop.add(old)
+                    _CLIP.pop(old, None)
+                else:
+                    _CLIP[old] = [n for n in newer if n not in drop]
+    return [j for j in jobs if j not in drop]
+
+
+def clip_sql(jobs, args: list, col: str = "") -> list[str]:
+    """latest_only 가 남긴 옛 분석(늦은 분석이 일부만 다시 한 경우)의 객체 중 늦은 분석 범위 안의 것을 빼는 SQL 조각 — 겹친 곳 한 번."""
+    p = f"{col}." if col else ""
+    out = []
+    for old in ([jobs] if isinstance(jobs, str) else list(jobs or [])):
+        nw = _CLIP.get(old)
+        if not nw:
             continue
-        k, at = by[j]
-        if k not in best or (at is not None and (by[best[k]][1] is None or at > by[best[k]][1])):
-            best[k] = j
-    keep = set(best.values())
-    return [j for j in jobs if j not in by or j in keep]
+        args.append(old)
+        a = len(args)
+        args.append(list(nw))
+        out.append(f"NOT ({p}job_id = ${a} AND EXISTS (SELECT 1 FROM jobs nj WHERE nj.id = ANY(${a + 1}::text[]) AND ST_Intersects(nj.aoi, ST_PointOnSurface({p}geom))))")
+    return out
 
 
 async def layer_names(jobs: list[str]) -> list[dict]:

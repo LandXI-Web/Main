@@ -145,12 +145,20 @@ async def agg_task(sgg: str | None = None) -> dict:
         sums = await conn.fetch(
             "SELECT asset, k AS cls, sum((v->>'n')::bigint) AS n FROM national_cells, jsonb_each(counts) AS e(k, v) "
             f"WHERE year=$1 AND NOT test AND state='done'{where} GROUP BY asset, k", *args)
+    from . import overlap as OV
+    dup = []
     for s in sums:
         if s["cls"] in NCLS.get(s["asset"], ()) and int(s["n"] or 0) > 0:
-            rows.append({"k": s["cls"], "name": f"{s['cls']}({NAT_NAME[s['asset']]})", "n": int(s["n"]), "unit": UNIT.get(s["cls"], "개"), "src": "national", "year": year})
+            # 같은 업무의 서비스 결과가 덮은 읍면동은 서비스 결과로 센다(겹친 곳 한 번 · overlap.py) — 남는 곳만 전국 분석 숫자
+            hn, _ = await OV.hidden_sum(s["asset"], s["cls"], args[1] if sgg else None)
+            n = int(s["n"]) - hn
+            if hn > 0:
+                dup.append({"k": s["cls"], "name": f"{s['cls']}({NAT_NAME[s['asset']]})", "n": hn, "unit": UNIT.get(s["cls"], "개"), "year": year})
+            if n > 0:
+                rows.append({"k": s["cls"], "name": f"{s['cls']}({NAT_NAME[s['asset']]})", "n": n, "unit": UNIT.get(s["cls"], "개"), "src": "national", "year": year})
     rows.sort(key=lambda r: -r["n"])
-    return _put(key, {"by": "task", "sgg": sgg, "name": region_name(sgg), "rows": rows, "as_of": now_iso(),
-                      "source": "서비스 결과 장부 + 전국 분석 진행 장부(끝난 읍면동)"})
+    return _put(key, {"by": "task", "sgg": sgg, "name": region_name(sgg), "rows": rows, "dup": dup, "as_of": now_iso(),
+                      "source": "서비스 결과 장부 + 전국 분석 진행 장부(끝난 읍면동 · 같은 업무의 서비스 결과가 덮은 읍면동은 빼고)"})
 
 
 # ── 읍면동별(그 시군구) ──────────────────────────────────────────────────────────
@@ -175,6 +183,8 @@ async def agg_emd(sgg: str) -> dict:
         if name and not r["name"]:
             r["name"] = name
         return r
+    from . import overlap as OV
+    cov = await OV.covered()
     async with db(realm="lx") as conn:
         year = await _nat_year(conn)
         cells = await conn.fetch(
@@ -189,6 +199,8 @@ async def agg_emd(sgg: str) -> dict:
             if c["state"] == "done":
                 cnt = _jv(c["counts"])
                 for cls in NCLS.get(c["asset"], ()):
+                    if cls in cov.get((c["asset"], c["cell_cd"]), ()):
+                        continue                         # 그 읍면동은 같은 업무의 서비스 결과가 센다(overlap.py)
                     n = int((cnt.get(cls) or {}).get("n") or 0)
                     nm = f"{cls}({NAT_NAME[c['asset']]})"
                     r["vals"][nm] = r["vals"].get(nm, 0) + n
@@ -250,12 +262,17 @@ async def agg_region() -> dict:
             "SELECT asset, sgg_cd, max(sgg_name) AS sgg_name, max(sido) AS sido, k AS cls, sum((v->>'n')::bigint) AS n "
             "FROM national_cells, jsonb_each(counts) AS e(k, v) WHERE year=$1 AND NOT test AND state='done' GROUP BY asset, sgg_cd, k", year)
         km = await conn.fetch("SELECT sgg_cd, sum(emd_km2) AS km2 FROM national_cells WHERE year=$1 AND NOT test AND asset='farm' GROUP BY 1", year)
+    from . import overlap as OV
+    hid = await OV.hidden_by_sgg()
     for s in rows:
         if s["cls"] not in NCLS.get(s["asset"], ()):
             continue
+        n = int(s["n"] or 0) - hid.get((s["asset"], s["cls"], s["sgg_cd"]), (0, 0))[0]   # 서비스 결과가 덮은 읍면동은 빼고(overlap.py)
+        if n <= 0:
+            continue
         r = row(s["sgg_cd"], s["sgg_name"], s["sido"])
         nm = f"{s['cls']}({NAT_NAME[s['asset']]})"
-        r["vals"][nm] = r["vals"].get(nm, 0) + int(s["n"] or 0)
+        r["vals"][nm] = r["vals"].get(nm, 0) + n
     kmap = {k["sgg_cd"]: float(k["km2"] or 0) for k in km}
     for r in regs.values():
         v = kmap.get(r["cd"]) or sum(v for c, v in kmap.items() if c.startswith(_pre(r["cd"])) and c != r["cd"] and r["cd"].endswith("0"))

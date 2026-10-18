@@ -1014,7 +1014,7 @@ function regionRows(r) {
   if (nr && nr !== 'wait') for (const [a, A] of Object.entries(nr.assets || {})) {
     if (!(ev(A.done) > 0)) continue;
     for (const cls of NCLS[a] || []) {
-      const c = A.counts?.[cls], n = ev(c?.n); if (!(n > 0)) continue;
+      const c = A.counts?.[cls], n = natN(c); if (!(n > 0)) continue;
       rows.push({ k: cls, name: `${cls}(${A.name})`, n, unit: c.unit || BD.UNIT[cls] || '개' });
     }
   }
@@ -1028,10 +1028,12 @@ function boardTotal(task = null) {
   for (const s of d?.services || []) if (!task || taskOf(s.name) === task) n += ev(s.n);
   for (const [a, A] of Object.entries(nd?.assets || {})) {
     if (A.on === false) continue;
-    for (const cls of NCLS[a] || []) if (!task || cls === task) n += ev(A.counts?.[cls]?.n);
+    for (const cls of NCLS[a] || []) if (!task || cls === task) n += natN(A.counts?.[cls]);
   }
   return n;
 }
+/** 전국 분석 수 — 같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수(서버 net · 겹친 곳 한 번) · 없으면 찾은 수 그대로 */
+function natN(c) { return c?.net ? ev(c.net) : ev(c?.n); }
 /* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237 → 10-17 원칙 271) — 흰 글씨 한 줄 'OO 시군구 · OO 서비스 제공중'.
    시군구 = 지금 지도에 보이는, 결과가 있는 시군구 수(서비스 결과 장부 /ximap/board 의 regions · 지도 범위와 겹치는 것 · 아무것도 안 보이면 전국 전체) ·
    서비스 = 그 시군구들에 제공 중인 서비스 가짓수(장부의 서비스 · 전역 분석은 세지 않음 — 메인 '서비스 n가지'와 같은 셈). 시군구로 들어가면 그 이름 · 그곳 서비스 수.
@@ -1371,7 +1373,7 @@ function hudTaskRows() {
   const add = (k, n, unit) => { if (!(n > 0)) return; const x = m.get(k) || { k, n: 0, unit }; x.n += n; m.set(k, x); };
   if (!S.region || map.getZoom() < 8.2) {
     for (const s of BD?.data?.services || []) add(taskOf(s.name), ev(s.n), BD.UNIT[taskOf(s.name)] || '개');
-    for (const [a, A] of Object.entries(BD?.nat?.data?.assets || {})) { if (A.on === false) continue; for (const cls of NCLS[a] || []) add(cls, ev(A.counts?.[cls]?.n), BD.UNIT[cls] || '개'); }
+    for (const [a, A] of Object.entries(BD?.nat?.data?.assets || {})) { if (A.on === false) continue; for (const cls of NCLS[a] || []) add(cls, natN(A.counts?.[cls]), BD.UNIT[cls] || '개'); }
     return { title: '전국', rows: visRows([...m.values()].sort((p, q) => q.n - p.n)), wait: false };
   }
   const { rows, wait } = regionRows(S.region);

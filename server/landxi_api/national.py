@@ -95,6 +95,19 @@ async def versions(conn, year: int) -> dict:
     return out
 
 
+async def _net(cnt: dict, asset: str, pre) -> None:
+    """같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수(net) — XI맵 업무 합계 · 시군구 말풍선이 쓴다(겹친 곳 한 번 · overlap.py).
+    n 은 전국 분석이 찾은 그대로(진행 화면). 뺄 것이 없으면 net 을 싣지 않는다."""
+    try:
+        from .overlap import hidden_sum
+        for cls, v in cnt.items():
+            hn, _ = await hidden_sum(asset, cls, pre)
+            if hn > 0:
+                v["net"] = env(max(0, int(v["n"]["value"] or 0) - hn), "count", "measured", "끝난 칸 AI 분석 결과 가운데 같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수")
+    except Exception:  # noqa: BLE001 — 못 세면 싣지 않는다(화면은 n 그대로)
+        pass
+
+
 @router.get("/national/progress")
 async def progress(request: Request):
     require(principal(request), lx=True)
@@ -143,6 +156,7 @@ async def progress(request: Request):
         pct = round(100.0 * dk / tot, 1) if tot else 0.0
         cnt = {s["cls"]: {"n": env(int(s["n"] or 0), "count", "measured", "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"),
                           "km2": env(round(float(s["km2"] or 0), 2), "km2", "measured", "끝난 칸 AI 분석 결과 넓이")} for s in sums if s["asset"] == a}
+        await _net(cnt, a, None)
         n = next((x for x in nxt if x["asset"] == a), None)
         rd = next((x for x in redo if x["asset"] == a), None)
         out["assets"][a] = {
@@ -293,6 +307,7 @@ async def region_summary(request: Request, codes: str = "", year: int | None = N
         cnt = {s["cls"]: {"n": env(int(s["n"] or 0), "count", "measured", "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"),
                           "km2": env(round(float(s["km2"] or 0), 2), "km2", "measured", "끝난 칸 AI 분석 결과 넓이"), "unit": UNIT.get(s["cls"], "개")}
                for s in sums if s["asset"] == a}
+        await _net(cnt, a, pre)
         out["assets"][a] = {"name": name, "cells": env(int(r["cells"]) if r else 0, "count", "measured", "분석할 범위가 있는 읍면동"),
                             "done": env(int(r["done"]) if r else 0, "count", "measured", "끝난 읍면동"),
                             "last_at": r["last"].astimezone(KST).isoformat(timespec="minutes") if r and r["last"] else None, "counts": cnt}

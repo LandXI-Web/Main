@@ -248,7 +248,14 @@ def ROUTE(msg: str, ctx):
             return {"tool": "map_filter", "args": a, "intent": "map"}
         if c.get("sets") and len(t) <= 80 and STATS_RX.search(t) and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고", t):
             return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
+        # 기관 지도: '남원시 비닐하우스 현황 보여 줘' = 통계 답(직원 XI맵 '현황'이 통계 판인 것과 같게 · 10-18) — 분류 낱말이 있을 때만(서비스 운영 요약은 그대로)
+        if getattr(p, "realm", None) == "tenant" and c.get("sets") and len(t) <= 80 and STATUS_RX.search(t) and any(re.search(rx, t) for rx, _ in CLS_WORDS) \
+                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|요청|진행|처리", t):
+            return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
     return None
+
+
+STATUS_RX = re.compile(r"현황|분포|어디(?:가|에|서)?\s*(?:제일|가장)?\s*많|많은\s*곳|얼마나\s*있")
 
 
 STATS_RX = re.compile(r"통계|집계|읍면동\s*(?:별|마다)|(?:개수|면적)\s*(?:별로|나눠|나누어)|별로\s*(?:개수|면적|세어|나눠)")
@@ -311,7 +318,7 @@ async def _count(jobs: list[str], cond: dict) -> tuple[int, float]:
     from landxi_api import result_scope as RSC
     from landxi_api.deps import db
     a: list = [jobs]
-    w = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a)
+    w = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a) + RSC.clip_sql(jobs, a)
     async with db(realm="lx") as c:
         r = await c.fetchrow(f"SELECT count(*) AS n, coalesce(sum(area_m2), 0) AS m2 FROM detections WHERE {' AND '.join(w)}", *a)
     return int(r["n"]), float(r["m2"] or 0)
@@ -492,7 +499,7 @@ async def map_stats(args: dict, ctx) -> Out:
     jobs, cond = await _subject(ctx, t, jobs, why)
     names = await RSC.layer_names(jobs)
     a: list = [jobs]
-    w_ = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a)
+    w_ = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a) + RSC.clip_sql(jobs, a)
     async with db(realm="lx") as c:
         rows = await c.fetch(f"SELECT coalesce(nullif(emd, ''), '읍면동 밖') AS emd, job_id, count(*) AS n, coalesce(sum(area_m2), 0) AS m2 FROM detections "
                              f"WHERE {' AND '.join(w_)} GROUP BY 1, 2", *a)
@@ -578,7 +585,7 @@ async def _job_data(job: str, cond: dict | None = None) -> dict | None:
             return None
         from landxi_api import result_scope as RSC
         ca: list = [job]
-        cw = RSC.sql(cond or {}, ca)                              # 지금 걸린 조건(켜진 층 보고서 · 지도 서비스와 같은 범위)
+        cw = RSC.sql(cond or {}, ca) + RSC.clip_sql(job, ca)       # 지금 걸린 조건(켜진 층 보고서 · 지도 서비스와 같은 범위)
         rows = await c.fetch("SELECT coalesce(nullif(emd, ''), '') AS emd, cls, count(*) AS n, coalesce(sum(area_m2), 0) AS m2 FROM detections "
                              "WHERE job_id=$1 AND edit_state <> 'deleted'" + "".join(" AND " + x for x in cw) + " GROUP BY 1, 2", *ca)
     o = j["options"] if isinstance(j["options"], dict) else json.loads(j["options"] or "{}")
@@ -791,7 +798,7 @@ async def ai_report(args: dict, ctx) -> Out:
     async with db(realm="lx") as c:
         for d in parts:
             ga: list = [d["job"]]
-            gw = RSC.sql(cond, ga)
+            gw = RSC.sql(cond, ga) + RSC.clip_sql(d["job"], ga)
             q = "SELECT cls, ST_AsBinary(ST_SimplifyPreserveTopology(geom, 0.000005)) AS b FROM detections WHERE job_id=$1 AND edit_state <> 'deleted'"
             rows = await c.fetch(q + "".join(" AND " + x for x in gw) + " LIMIT 60000", *ga)
             geos.append([(r["cls"], r["b"]) for r in rows])
