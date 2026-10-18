@@ -840,6 +840,20 @@ def nat_rest(t_gpu: float, job_id: str, shard_ids: list):
         for sid in shard_ids:
             bus.inflight_touch(POOL, job_id, sid)
     nat["slept"] += rest
+    try:                                                # 30초 평균이 목표(125 W · 62 %)를 넘으면 내려갈 때까지 멈춘다 · 20초 넘게 상한 초과면 하드 정지(10-18)
+        if "thr" not in nat:
+            from workers.power_throttle import PowerThrottle, nvml_window
+            nat["thr"] = PowerThrottle(nvml_window(A.gpu), limit_w=NAT_W, limit_util=NAT_UTIL, target_w=float(NAT.get("target_w", NAT_W * 0.89)),
+                                       target_util=float(NAT.get("target_util", NAT_UTIL * 0.89)), log=lambda m: log(WHO, f"전국 작업: {m}"))
+
+        def _touch():
+            for sid in shard_ids:
+                bus.inflight_touch(POOL, job_id, sid)
+            if lease["slot"] is not None:
+                r().expire(f"power:hot:{lease['slot']}", LEASE_TTL)
+        rest += nat["thr"].guard(_touch, "전국 작업")
+    except Exception as e:  # noqa: BLE001
+        log(WHO, "전국 작업 전력 가드 오류", repr(e))
     log(WHO, f"전국 묶음 {len(shard_ids)}칸 남음 · 추론 {t_gpu:.2f}s · 쉼 {rest:.2f}s · duty {d:.2f} · 30초 평균 {u:.0f}% {w:.0f}W")
     return rest
 
@@ -1039,32 +1053,38 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
     def ev(name, data):
         emit(job_id, name, {"job_id": job_id, **data, "at": now_iso(ms=True)})
 
+    from workers.power_throttle import PowerThrottle, nvml_window
+    last_cx = {"t": 0.0}
+
+    def on_wait():
+        """쉬는 동안: 임대 TTL · 하트비트 유지 + 취소를 5초마다 본다(쉬는 학습이 취소를 놓치지 않게)."""
+        if lease["slot"] is not None:
+            r().expire(f"power:hot:{lease['slot']}", LEASE_TTL)
+        if time.time() - last_cx["t"] > 5:
+            last_cx["t"] = time.time()
+            r().hset(f"worker:{WID}:hb", mapping={"ts": time.time(), "job_id": job_id})
+            if (bus.job(job_id) or {}).get("state") == "cancelled":
+                raise RuntimeError("cancelled")
+
+    # 30초 평균을 NVML 로 직접 재서 강제(10-18): 목표 = 상한의 약 89 % / 88 %(125 W · 62 %), 상한 140 W · 70 % 를 20초 넘게 넘으면 하드 정지
+    thr = PowerThrottle(nvml_window(A.gpu), limit_w=TRN_W, limit_util=TRN_UTIL, target_w=float(TRN.get("target_w", TRN_W * 0.89)),
+                        target_util=float(TRN.get("target_util", TRN_UTIL * 0.89)), hard_s=float(TRN.get("hard_s", 20)),
+                        temp_max=float(TRN.get("temp_max_c", 83)), duty0=min(TRN_DUTY0, 0.35), log=lambda m: log(WHO, f"train {job_id}: {m}"), event=ev)
+
     def train_rest():
-        """배치 뒤 쉼 — 풀로드 금지(전국 작업과 같은 상한). 쉼 = 배치 시간 × (1 − duty) ÷ duty.
-        30초 평균 사용률이 상한 − 5 또는 전력이 상한을 넘으면 duty × 0.85, 넉넉하면 × 1.03(0.1–0.9)."""
-        now = time.perf_counter()
-        t_b = max(0.0, now - held["t_last"])
-        ring = list((smi.get("ring30") or {}).get(A.gpu) or [])
-        pring = list((smi.get("pring30") or {}).get(A.gpu) or [])
-        u = sum(ring) / len(ring) if ring else 0.0
-        w = sum(pring) / len(pring) if pring else 0.0
-        d = held["duty"]
-        if time.time() - held.get("adj_at", 0.0) >= 10 and len(ring) >= 10:      # 10초에 한 번만 고친다(30초 평균이 늦게 따라오므로 과하게 줄지 않게)
-            held["adj_at"] = time.time()
-            if u > TRN_UTIL - 5 or w > TRN_W:
-                d *= 0.85
-            elif u < TRN_UTIL - 15 and w < TRN_W - 20:
-                d *= 1.08
-            held["duty"] = d = max(0.1, min(0.9, d))
-        rest = min(10.0, t_b * (1 - d) / d)
-        if rest > 0:
-            time.sleep(rest)
-        held["rest"] += rest
-        held["n"] += 1
+        """스텝/배치 훅 — 쉼 + 30초 평균 강제(workers/power_throttle.py). 로그는 60초에 한 번."""
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()            # 일한 시간을 정확히(비동기 큐가 안 비면 쉼이 짧아진다)
+        except Exception:  # noqa: BLE001
+            pass
+        thr(on_wait)
+        held["rest"], held["n"] = thr.stats["rest_s"] + thr.stats["pause_s"], held["n"] + 1
         if time.time() - held["log_at"] > 60:
             held["log_at"] = time.time()
-            log(WHO, f"학습 배치 {held['n']} · 배치 {t_b:.2f}s · 쉼 {rest:.2f}s · duty {d:.2f} · 30초 평균 {u:.0f}% {w:.0f}W")
-        held["t_last"] = time.perf_counter()
+            w, u, tmp, n, _ = thr.win.avg()
+            log(WHO, f"학습 훅 {held['n']} · duty {thr.duty:.2f} · 쉼 {thr.stats['rest_s']:.0f}s 멈춤 {thr.stats['pause_s']:.0f}s 하드정지 {thr.stats['hard_stops']}회 · 30초 평균 {w:.0f}W {u:.0f}% {tmp:.0f}℃")
 
     def gate_batch(_tr=None):
         train_rest()
@@ -1080,11 +1100,11 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
             time.sleep(0.5)
             if bus.job(job_id).get("state") == "cancelled":
                 raise RuntimeError("cancelled")
+        thr.reset_clock()                                    # 다른 GPU 대기는 일한 시간이 아니다
         if held["note"]:
             held["note"] = False
             held["s"] += time.time() - t0
             ev("train.resume", {})
-        held["t_last"] = time.perf_counter()
     f0 = entries[0][1]
     shard = Shard(f0["shard_id"], job_id, (0, 0, 0, 0), None, json.loads(f0.get("params") or "null"))
     ev("shard.started", {"shard_id": shard.id, "bbox": [0, 0, 0, 0], "worker": WID})

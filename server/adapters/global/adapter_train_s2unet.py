@@ -18,7 +18,7 @@ from adapters.base import ShardResult
 ADAPTER = {"id": "train/s2unet", "kinds": ["train"], "device": "gpu", "input": "s2-monthly-npz", "output": "model", "hidden": True}
 EPOCHS = 40
 TARGET_IDX = (2, 3, 4)
-REST_EXTRA_S = 2.0
+REST_EXTRA_S = 0.0
 
 
 def _cfg():
@@ -141,7 +141,7 @@ class Adapter:
         def tick(force=False):
             """쉼 · 전력 규칙 — 배치가 몇십 ms 라 배치마다 쉬면 장비가 쉬지 못한다(전력이 그대로). 약 1초 일한 뒤 한 번씩 쉰다
             (gpu_worker 의 쉼 = 지난 쉼 뒤 일한 시간 × (1 − duty) ÷ duty · 30초 평균 사용률 70 % · 전력 140 W 를 넘으면 duty 를 줄임)."""
-            if callable(gate) and (force or time.perf_counter() - last["t"] >= 1.0):
+            if callable(gate) and (force or time.perf_counter() - last["t"] >= 0.5):
                 if dev.type == "cuda":
                     torch.cuda.synchronize()
                 gate()

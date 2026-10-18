@@ -49,7 +49,11 @@ power:
     gpu: 0
     util_max: 70             # 사용률 평균 상한(%)
     power_max_w: 140         # 전력 상한(W) — 장당 상한 200 W 의 70%
-    duty: 0.5
+    duty: 0.35               # 시작 duty(제어기가 30초 평균을 보며 조절 · workers/power_throttle.py)
+    target_w: 125            # 30초 평균이 이를 넘으면 (목표 − 여유) 아래로 내려갈 때까지 멈춘다
+    target_util: 62
+    hard_s: 20               # 30초 평균이 상한(140 W · 70 %)을 이만큼 넘게 넘으면 하드 정지(식을 때까지 멈춤 · 로그)
+    temp_max_c: 83
 # 새 작업의 첫 묶음 선점(v1.1-17) — 깊이와 상관없이 바로 넣는 shard 수
 first_chunk: 16
 # shard 고아 감시(v1.1-14) — shard.started 뒤 max(floor_s, 5×중앙값 ms) 안에 done/failed 없으면 timeout → 1회 재배정
