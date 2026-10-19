@@ -1,0 +1,157 @@
+{
+ "note": "실제 브라우저 3대(Playwright · 로그인 폼) — 20명 부하 중(run2)과 부하 전(rec0) 화면 시간(ms)",
+ "runs": {
+  "부하 전": [
+   {
+    "login_ms": 6763,
+    "gov_login_ms": 5999,
+    "pages": {
+     "staff-home": {
+      "ready_ms": 2429,
+      "loading_gone_ms": 2433,
+      "requests": 96,
+      "failed": []
+     },
+     "ximap": {
+      "ready_ms": 3841,
+      "loading_gone_ms": 3845,
+      "requests": 147,
+      "failed": []
+     },
+     "gov-main": {
+      "ready_ms": 2385,
+      "loading_gone_ms": 2389,
+      "requests": 87,
+      "failed": []
+     },
+     "gov-farm": {
+      "ready_ms": 2547,
+      "loading_gone_ms": 2550,
+      "requests": 91,
+      "failed": []
+     },
+     "gov-ximap": {
+      "ready_ms": 5255,
+      "loading_gone_ms": 5889,
+      "requests": 170,
+      "failed": []
+     }
+    }
+   }
+  ],
+  "20명 부하 중": [
+   {
+    "login_ms": 6747,
+    "gov_login_ms": 5467,
+    "pages": {
+     "staff-home": {
+      "ready_ms": 3870,
+      "loading_gone_ms": 3874,
+      "requests": 96,
+      "failed": []
+     },
+     "ximap": {
+      "ready_ms": 4807,
+      "loading_gone_ms": 4877,
+      "requests": 147,
+      "failed": []
+     },
+     "gov-main": {
+      "ready_ms": 3556,
+      "loading_gone_ms": 3560,
+      "requests": 87,
+      "failed": []
+     },
+     "gov-farm": {
+      "ready_ms": 2519,
+      "loading_gone_ms": 2523,
+      "requests": 91,
+      "failed": []
+     },
+     "gov-ximap": {
+      "ready_ms": 4329,
+      "loading_gone_ms": 5394,
+      "requests": 170,
+      "failed": []
+     }
+    }
+   },
+   {
+    "login_ms": 6396,
+    "gov_login_ms": 5685,
+    "pages": {
+     "staff-home": {
+      "ready_ms": 4219,
+      "loading_gone_ms": 4223,
+      "requests": 96,
+      "failed": []
+     },
+     "ximap": {
+      "ready_ms": 4664,
+      "loading_gone_ms": 4668,
+      "requests": 147,
+      "failed": []
+     },
+     "gov-main": {
+      "ready_ms": 3450,
+      "loading_gone_ms": 3454,
+      "requests": 87,
+      "failed": []
+     },
+     "gov-farm": {
+      "ready_ms": 2609,
+      "loading_gone_ms": 2613,
+      "requests": 91,
+      "failed": []
+     },
+     "gov-ximap": {
+      "ready_ms": 5664,
+      "loading_gone_ms": 5735,
+      "requests": 170,
+      "failed": [
+       "namwon.land-xi.dev/api/v1/ximap/boot"
+      ]
+     }
+    }
+   },
+   {
+    "login_ms": 6802,
+    "gov_login_ms": 5306,
+    "pages": {
+     "staff-home": {
+      "ready_ms": 4550,
+      "loading_gone_ms": 4555,
+      "requests": 96,
+      "failed": []
+     },
+     "ximap": {
+      "ready_ms": 4742,
+      "loading_gone_ms": 4746,
+      "requests": 147,
+      "failed": []
+     },
+     "gov-main": {
+      "ready_ms": 4209,
+      "loading_gone_ms": 4214,
+      "requests": 87,
+      "failed": []
+     },
+     "gov-farm": {
+      "ready_ms": 2654,
+      "loading_gone_ms": 2658,
+      "requests": 91,
+      "failed": []
+     },
+     "gov-ximap": {
+      "ready_ms": 4256,
+      "loading_gone_ms": 5152,
+      "requests": 170,
+      "failed": [
+       "namwon.land-xi.dev/api/v1/ximap/boot"
+      ]
+     }
+    }
+   }
+  ]
+ }
+}
