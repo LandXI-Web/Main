@@ -127,6 +127,8 @@ export function mountInfra(root) {
     } else T.set(rs);
     powerChart($('#chart'));
   }
+  /* C: 여유가 30GB 아래면 그 통 아래 한 줄(C: 가 차면 데이터베이스 · Redis · 언어 모델이 멈춘다 · 10-19) — 경보 규칙 disk_c_free_lt_30gb 와 같은 선 */
+  const cLow = (v) => /^C/i.test(v.mount || '') && val(v.free_gb) != null && val(v.free_gb) < 30;
   function paintRest() {
     const P = Object.values(S.queues?.pools || {});
     $('#q-wait').textContent = nf(P.reduce((s, p) => s + (p.queued || 0), 0));
@@ -137,7 +139,7 @@ export function mountInfra(root) {
     if (V.length) {
       const used = V.reduce((s, v) => s + (val(v.used_gb) || 0), 0), tot = V.reduce((s, v) => s + (val(v.total_gb) || 0), 0);
       $('#disk-n').innerHTML = `${nf(used / 1024, 1)}<small> / ${nf(tot / 1024, 1)} TB</small>`;
-      $('#vols').innerHTML = V.map((v) => { const u = val(v.used_gb), t = val(v.total_gb), p = pct(u, t); return `<div class="tank"><span class="tb"><i style="height:${p.toFixed(1)}%"></i>${p >= 90 ? '<em class="tick"></em>' : ''}</span><b class="num">${nf(u / 1024, 1)}</b><small class="num">/ ${nf(t / 1024, 1)} TB</small></div>`; }).join('');
+      $('#vols').innerHTML = V.map((v) => { const u = val(v.used_gb), t = val(v.total_gb), p = pct(u, t); return `<div class="tank"><span class="tb"><i style="height:${p.toFixed(1)}%"></i>${p >= 90 ? '<em class="tick"></em>' : ''}</span><b class="num">${nf(u / 1024, 1)}</b><small class="num">/ ${nf(t / 1024, 1)} TB</small>${cLow(v) ? `<small class="warn">C 여유 ${nf(val(v.free_gb))}GB</small>` : ''}</div>`; }).join('');
     }
     paintLlm();
     const boot = S.health?.boot_at;

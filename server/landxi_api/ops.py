@@ -753,6 +753,9 @@ async def evaluate_alerts_once():
     f, _ = await run_in_threadpool(_statfs, "E:")
     if f is not None:
         metrics.setdefault("storage.E.free_gb", []).append((config.NODE_ID, None, f))
+    fc, _ = await run_in_threadpool(_statfs, "C:")       # C: 가 차면 Docker(데이터베이스 · Redis · vLLM)가 멈춘다(10-19 09:12 실측)
+    if fc is not None:
+        metrics.setdefault("storage.C.free_gb", []).append((config.NODE_ID, None, fc))
     async with db(realm="lx") as conn:
         fr = await conn.fetchrow("SELECT count(*) FILTER (WHERE state='failed') f, count(*) n FROM jobs WHERE created_at > now() - interval '1 hour'")
         if fr["n"]:

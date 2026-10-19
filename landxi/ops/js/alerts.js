@@ -3,7 +3,7 @@ import { h, hhmmss, setText, goal } from './boot.js';
 
 const RULE_KO = {
   gpu_temp_gt_85_5m: 'GPU 온도 > 85°C 5분', vram_gt_95_5m: 'VRAM > 95% 5분', worker_heartbeat_miss_30s: '워커 하트비트 30s 누락',
-  queue_p95_gt_600s: '큐 대기 p95 > 10분', disk_e_free_lt_200gb: 'E: 여유 < 200GB', vworld_calls_day_80pct: 'V-World 일일 80%',
+  queue_p95_gt_600s: '큐 대기 p95 > 10분', disk_e_free_lt_200gb: 'E: 여유 < 200GB', disk_c_free_lt_30gb: 'C: 여유 < 30GB',vworld_calls_day_80pct: 'V-World 일일 80%',
   gpu_power_concurrency: '동시 고부하 GPU > 1(전력 규칙)',
 };
 export const ruleKo = (r) => RULE_KO[r] || r;
