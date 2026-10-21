@@ -245,7 +245,8 @@ def judge(row: dict, rec: dict) -> dict:
     if ex.get("law") or ex.get("law_ok") is not None:
         cites = law_cites(txt)
         allow = ex.get("law_ok")
-        nf = bool(re.search(r"찾지 못|없습니다", txt))
+        nf = bool(re.search(r"찾지 못|없습니다|색인된 법령에 없|인용하지 않", txt))
+        cites = [c for c in cites if c[1] or not nf]     # 조 번호 없이 '「○○법」은 색인에 없어 인용하지 않음' — 없다고 밝힌 법 이름은 인용이 아니다(10-22)
         if allow is not None:
             good = [c for c in cites if any(a in c[0] and (not b or c[1] == b) for a, b in allow)]
             if cites and not good:

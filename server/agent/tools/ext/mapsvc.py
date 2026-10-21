@@ -310,6 +310,10 @@ def ROUTE(msg: str, ctx):
             return {"tool": "map_filter", "args": a, "intent": "map"}
         if c.get("sets") and len(t) <= 80 and STATS_RX.search(t) and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고", t):
             return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
+        # '주천면 논 중에 제일 큰 거 어디야' · '면적 최대 필지' — 켜진 층 통계(같은 행)로 정해진 답(모델이 '데이터 없음'으로 바꿔 쓰지 않게 · 10-22 C12 334)
+        if getattr(p, "realm", None) == "tenant" and c.get("sets") and len(t) <= 80 and EXTREME_RX.search(t) and any(re.search(rx, t) for rx, _ in CLS_WORDS) \
+                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|요청|늘어|줄어|작년|증감|추이", t):
+            return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
         # 기관 지도: '남원시 비닐하우스 현황 보여 줘' = 통계 답(직원 XI맵 '현황'이 통계 판인 것과 같게 · 10-18) — 분류 낱말이 있을 때만(서비스 운영 요약은 그대로)
         if getattr(p, "realm", None) == "tenant" and c.get("sets") and len(t) <= 80 and STATUS_RX.search(t) and any(re.search(rx, t) for rx, _ in CLS_WORDS) \
                 and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|요청|진행|처리", t):
@@ -322,6 +326,7 @@ CHANGE_RULE = [(r"비닐|하우스|온실", "R3"), (r"주차장", "R4"), (r"휴�
 STATUS_RX = re.compile(r"현황|분포|어디(?:가|에|서)?\s*(?:제일|가장)?\s*많|많은\s*(?:곳|동네)|얼마나\s*있|몇\s*(?:곳|개|동|채|군데)|건수|순위|면적|넓이|크기|합치면")   # '몇 곳' = 통계 답(10-21)
 
 
+EXTREME_RX = re.compile(r"(?:제일|가장)\s*(?:큰|작은|넓은|좁은)|면적\s*(?:이\s*)?(?:최대|최소)|(?:최대|최소)\s*(?:면적|필지)")
 STATS_RX = re.compile(r"통계|집계|읍면동\s*(?:별|마다)|(?:개수|면적)\s*(?:별로|나눠|나누어)|별로\s*(?:개수|면적|세어|나눠)")
 
 
@@ -425,7 +430,11 @@ async def map_filter(args: dict, ctx) -> Out:
     jobs = await _jobs_on(ctx)
     cond, new_note = None, ""
     req = str(args.get("request") or ctx.state.get("msg") or "")
+    if args.get("clear") and args.get("cls") and not CLEAR_RX.search(str(ctx.state.get("msg") or req)):
+        args = {k: v for k, v in args.items() if k not in ("clear", "clear_only")}   # '축사 안 보이게'를 모델이 '조건 풀기'로 부름(10-22 C13 53) — 사용자가 풀라고 하지 않았으면 분류 거르기로
     named = await _named_regions(ctx, req)
+    if not named and str(ctx.state.get("msg") or "") != req:      # 모델이 request 를 줄여 지역을 뺐어도 사용자 질문의 지역으로(10-22 C02 151)
+        named = await _named_regions(ctx, str(ctx.state.get("msg") or ""))
     if named and jobs and not args.get("clear"):          # 지역을 말했으면 켜진 층 가운데 그 지역 층만(WP-6 ① · P2) — 없으면 거르지 않고 '결과 없음'
         mine = [x["job"] for x in await RSC.layer_names(jobs) if str(x.get("sgg") or "") in named["codes"]]
         if not mine:
@@ -434,6 +443,7 @@ async def map_filter(args: dict, ctx) -> Out:
             what = " · ".join(nm for _rx, nm in CLS_WORDS if re.search(_rx, req))[:20]
             out.answer = (f"{named['name']}에는 켜진 결과 층이 없어 거르지 않았습니다"
                           + (f" — {named['name']} {what} 결과는 지도 위 층으로 켜야 셀 수 있습니다." if what else "."))
+            out.data = {"status": "not_found", "text": out.answer, "missing": [named["name"]]}     # 모델 경로에서도 이 문장 그대로(가드 · 지역 바꿔 쓰기 0)
             return out
         jobs = mine
     if args.get("clear"):
@@ -623,8 +633,8 @@ async def map_stats(args: dict, ctx) -> Out:
     names = await RSC.layer_names(jobs)
     if (miss := ctx.state.pop("subject_miss", None)):
         ctx.state["cannot"] = {"kind": "nodata"}
-        out.data = {"status": "missing", "missing": [miss]}
         out.answer = RSC.scope_line(names, {}, why) + f"\n켜진 층에는 {miss}. 물으신 분류의 결과 층을 켠 뒤 다시 말씀해 주세요."
+        out.data = {"status": "not_found", "text": out.answer, "missing": [miss]}     # 모델 경로에서도 이 문장 그대로(가드 · 10-22 흔들림 0)
         return out
     a: list = [jobs]
     w_ = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a) + RSC.clip_sql(jobs, a)

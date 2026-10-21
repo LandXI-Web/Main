@@ -130,6 +130,24 @@ USAGE_ASK = re.compile(r"어떻게|어디(?:서|에|야|있)?|려면|방법|수\
 DATA_WORDS = re.compile(r"몇\s*(?:건|곳|개|동|필지|군데)|건수|면적|필지|지번|통계|순위|현황(?!은\s*어디)|보고서|엑셀|이동|확대|축소|층\s*(?:켜|꺼)|\d")
 
 
+# AI 분석 결과를 믿어도 되나(10-22 C24 358) — 모델이 문장을 바꿔 쓰지 않게 정해진 틀 + 현지 조사 근거 조문 원문(색인에서 · 지어내기 0)
+TRUST_RX = re.compile(r"(?:판독|AI|인공\s*지능|분석\s*결과|영상|위성|항공\s*사진|드론)[^.?!]{0,24}(?:믿어도|믿을\s*(?:수|만)|신뢰(?:해|할|도|성)|정확(?:해|한가|한지|도|성)|틀릴|맞는\s*거야)")
+
+
+def _trust() -> dict | None:
+    try:
+        from .rag import index as LAW
+        a = LAW.article("농지법", "제54조", 1)
+    except Exception:  # noqa: BLE001
+        a = None
+    lead = "AI 분석 결과는 현장조사 대상 후보입니다(결과 확인 전 · 위법 판정 아님). 실태는 담당 공무원의 현지 조사로 확인합니다."
+    nxt = [talk.btn("실태조사 근거 조문 더 보기", q="농지 이용 실태조사 근거 조문 알려 줘")]
+    if not a:
+        return {"kind": "talk", "text": lead, "next": nxt}
+    body = re.split(r"\s*<개정|\n", a["text"])[0].strip()
+    return {"kind": "talk", "text": lead + "\n\n근거: " + a["ref"]["label"] + "\n“" + body + "”", "next": nxt}
+
+
 def early(ctx, msg: str) -> dict | None:
     """모델 · 도구 앞에서 끝내는 질문 — 권한 밖 · 범위 밖 · 사용법. 데이터 · 지도 질문은 건드리지 않는다."""
     if getattr(ctx, "lang", "ko") != "ko":
@@ -143,6 +161,8 @@ def early(ctx, msg: str) -> dict | None:
     for rx, what in OOS:
         if re.search(rx, t, re.I) and not re.search(r"필지|지번|분석|결과|보고서", t):
             return {"kind": "oos", "text": refuse("oos", what), "next": [talk.btn("ChatGEO로 뭘 할 수 있어?")] + _home_btns(ctx)[:1]}
+    if TRUST_RX.search(t) and not DATA_WORDS.search(t):
+        return _trust()
     if re.search(r"다른\s*기관[^.?!]{0,6}사용(?:량|현황)", t) and not (talk.realm(ctx) == "lx" and talk.role(ctx) == "admin"):
         return {"kind": "scope", "text": refuse("scope", "다른 기관 사용량 보기"), "next": _home_btns(ctx)}
     if USAGE_ASK.search(t) and not DATA_WORDS.search(re.sub(r"분석\s*요청|촬영\s*요청|배포\s*신청|데이터\s*올리기", "", t)):

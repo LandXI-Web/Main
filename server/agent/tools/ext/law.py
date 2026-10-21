@@ -35,15 +35,25 @@ ACTQ = re.compile(r"([가-힣]{2,20}법)(률)?\s*(상|에서|에\s*따르면|위
 NOT_ACT = {"방법", "문법", "해법", "기법", "용법", "사용법", "작성법", "계산법", "분석법"}
 NOT_LAW = re.compile(r"보고서\s*초안|공문\s*초안|분석\s*(실행|해)|지도|차트|몇\s*건|건수|목록|몇\s*(곳|개|필지)|상위|순위|현황|통계|엑셀|그래프|보여\s*줘")
 
+# 지도 · 통계 질문 말(10-22 C02 298 '해남군 하천구역 안 의심 시설 동네별로 얼마나 돼?') — 주제어(하천구역 · 농막 …)가 서비스 · 층 이름 안에 있어도
+# 나눠 세기 · 고르기 · 넓이 · 의심 시설을 묻는 말이면 법 길이 아니다(법 낱말 '조문 · 법령 · 제n조'가 있으면 그대로 법 길).
+MAP_STAT = re.compile(r"(?:동네|읍면동|읍\s*면|마을|리|시군구?|지역|구역|분류|종류)\s*별|별로\s|의심\s*(?:시설|필지|건물|건축물|농막|축사|창고)|"
+                      r"골라|겹치는|겹친\s|합치면|다\s*합|면적이?\s*(?:얼마|합)|넓이|얼마나\s*(?:많|넓|있)|칠해|색칠|표시해|"
+                      r"몇\s*(?:곳|개|동|필지|건)|순으로|큰\s*(?:곳|거|것)|작은\s*(?:곳|거|것)")
+
+
+def map_question(t: str) -> bool:
+    """법 주제어가 있어도 지도 · 통계를 묻는 질문인가(법 낱말이 없을 때만)."""
+    return bool(MAP_STAT.search(t or "")) and not LAWQ.search(t or "")
 
 # ── 법령 낱말 없이 묻는 법 질문(WP-3 · 묶음 16) — 주제어 + 묻는 꼴이면 법 길로(지도 · 숫자 말이 함께 있으면 비켜 간다) ─────────
 TOPIC_RX = re.compile(r"농지\s*전용|산지\s*전용|전용\s*(허가|신고)|행위\s*제한|농업\s*진흥\s*(구역|지역)|농업\s*보호\s*구역|농막|"
                       r"건축\s*허가|가설\s*건축물|축조\s*신고|처분\s*(명령|의무|통지)|이행\s*강제금|원상\s*회복|임대차|사용대차|"
                       r"취득\s*자격|자격\s*증명|자경|경자유전|대리\s*경작|위탁\s*경영|체험\s*영농|소유\s*(상한|제한)|휴경.{0,6}(허용|기간|사유)|"
                       r"개발\s*행위\s*허가|용도\s*변경|지적\s*재조사|지적\s*불부합|직불금|직불제|부정\s*수급|점용\s*허가|변상금|"
-                      r"하천\s*(구역|부지|점용)|개발\s*제한\s*구역|그린벨트|농업\s*경영체|증거\s*(로|능력|자료)|"
+                      r"농지\s*원부|농지\s*대장\s*(?:이란|이\s*뭐|은\s*뭐|발급|열람|등본|어디)|하천\s*(구역|부지|점용)|개발\s*제한\s*구역|그린벨트|농업\s*경영체|증거\s*(로|능력|자료)|"
                       r"(불법|무단)\s*(전용|점용|건축|형질)|허가\s*없이|신고\s*없이|실태\s*조사.{0,8}(기한|주기|절차|근거|대상|언제)|농지.{0,6}태양광.{0,6}(설치|허가)")
-QFORM = re.compile(r"어떻게|요건|기준|가능|되나|돼\s*\??$|되요|됩니까|해도|처벌|벌금|과태료|기한|기간|자격|대상|절차|누가|언제|뭐야|뭔지|무엇|"
+QFORM = re.compile(r"어떻게|뭐고|어디서|요건|기준|가능|되나|돼\s*\??$|되요|됩니까|해도|처벌|벌금|과태료|기한|기간|자격|대상|절차|누가|언제|뭐야|뭔지|무엇|"
                    r"이란|란\s*\??$|있나|있어\s*\??$|필요|해야|받아야|경우|근거|원칙|제도|정리해|처분|못\s*하는|할\s*수|쓸\s*수|방법|산정")
 # 법적 판단을 묻는 말(괜찮아? · 문제 없어? · 합법이야?) — 판단은 하지 않고 관련 조문 찾기로(원칙 P7 · 묶음 20)
 JUDGE_RX = re.compile(r"(개인정보|저작권|초상권|법적으로|법률\s*상|법상|소송).{0,24}(문제\s*(는|가)?\s*(없|안\s*되|되)|괜찮|돼\s*\??$|되나|맞아|아니야)|"
@@ -54,7 +64,7 @@ LAW_SITE = "https://www.law.go.kr/lsSc.do?menuId=1&query="
 def topic_question(t: str) -> bool:
     """법령 이름 · '조문' 낱말 없이 묻는 법 질문('농지전용허가 없이 비닐하우스를 세우면 어떻게 돼')."""
     t = t or ""
-    return bool(JUDGE_RX.search(t) or (TOPIC_RX.search(t) and QFORM.search(t)))
+    return bool(JUDGE_RX.search(t) or (TOPIC_RX.search(t) and QFORM.search(t) and not map_question(t)))
 
 
 def site_btn(term: str):
@@ -78,7 +88,7 @@ def is_law_question(t: str) -> bool:
 
 def ROUTE(msg: str, ctx):
     t = re.sub(r"\s+", " ", msg or "").strip()
-    if not t or len(t) > 160 or NOT_LAW.search(t) or not is_law_question(t):
+    if not t or len(t) > 160 or NOT_LAW.search(t) or map_question(t) or not is_law_question(t):
         return None
     if JUDGE_RX.search(t) and not LAWQ.search(t):
         return {"tool": "law_search", "args": {"query": t, "judge": True}}
@@ -113,6 +123,9 @@ def _en_ref(ref: dict) -> str:
 async def law_search(args: dict, ctx) -> Out:
     from ...rag import index as LAW
     q = str(args.get("query") or "").strip()
+    old_name = bool(re.search(r"농지\s*원부", q))
+    if old_name:                                                              # 옛 이름(농지원부 → 농지대장) — 지금 조문 이름으로 찾는다
+        q = "농지대장 발급" if re.search(r"떼|발급|등본|열람|어디서", q) else "농지대장"
     acts = [a for a in (args.get("acts") or []) if isinstance(a, str) and a.strip()] or None
     en = getattr(ctx, "lang", "ko") == "en" or not re.search(r"[가-힣]", q)
     if args.get("judge") and not en:
@@ -189,9 +202,11 @@ async def law_search(args: dict, ctx) -> Out:
         tail = ("함께 볼 조문: " + " · ".join(more)) if more else ""
         note = ("금액 · 기준은 조례와 고시에 따라 달라 여기서 계산하지 않으며, 적용 여부는 담당자가 판단합니다." if loose and re.search(r"얼마|금액|몇\s*원", q)
                 else "조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.")
-        if more_h:
-            from ... import talk
-            talk.set_next(ctx, [talk.btn(f"{_short_ref(h['ref'])} 원문", q=f"{_short_ref(h['ref'])} 조문 알려 줘") for h in more_h[:2]])
+        if old_name:
+            lead = "농지원부는 지금 이름이 농지대장입니다. " + lead
+        from ... import talk
+        talk.set_next(ctx, [talk.btn(f"{_short_ref(h['ref'])} 원문", q=f"{_short_ref(h['ref'])} 조문 알려 줘") for h in more_h[:2]]
+                      + [site_btn(_short_ref(top["ref"]).split(" ")[0])])      # 원문 출처(국가법령정보센터)도 늘 — 막다른 말 0
     out.answer = (NL + NL).join(x for x in [lead, *lines, tail, note] if x)
     return out
 
