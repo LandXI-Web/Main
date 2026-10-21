@@ -115,7 +115,7 @@ export function createParcels({ map, host, h, K, objLayers, clsName, colorOf, un
     layers();
     const seq = ++C.seq;
     C.at = ll; card.hidden = false;
-    card.replaceChildren(h('p.xe-wait', { text: '불러오는 중' })); place();
+    card.replaceChildren(h('p.xe-wait', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')))); place();
     let d;
     try { d = await at(ll); } catch (e) {
       if (seq !== C.seq) return;

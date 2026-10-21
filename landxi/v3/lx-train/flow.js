@@ -79,7 +79,7 @@ export function openFlow({ host, who, project = null, step = null }) {
   const s5 = sec(5, '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
-  if (MODE === 'train') dataLine.textContent = '학습데이터를 불러오는 중';
+  if (MODE === 'train') dataLine.textContent = '학습데이터 …';   // 첫인상-3: 칸 로딩 글자 0(가운데 하나)
 
   let sample = null, model = null, card = null;
 

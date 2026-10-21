@@ -94,7 +94,7 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
           onclick: () => pick(x.k), onmouseenter: () => hover(x.k), onmouseleave: () => hover(null), onfocus: () => hover(x.k), onblur: () => hover(null) },
         h('span.xs-a-n', {}, h('i', { style: { background: colorOf(x.k) } }), h('span', { text: x.k })),
         h('b.xs-a-v.num', { text: `${nf(x.n)}${x.unit}` }),
-        h('span.xs-a-bar', {}, h('i', { style: { width: `${Math.max(3, (100 * x.n) / max)}%`, background: colorOf(x.k) } })))))) : h('p.xs-a-p', { text: wait ? '불러오는 중' : '분석 예정' }),
+        h('span.xs-a-bar', {}, h('i', { style: { width: `${Math.max(3, (100 * x.n) / max)}%`, background: colorOf(x.k) } })))))) : (wait ? h('p.xs-a-p', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i'))) : h('p.xs-a-p', { text: '분석 예정' })),
         run?.label ? h('p.xs-a-live', {}, h('i'), h('span', { text: `지금 분석 중 · ${run.label}` })) : null);
       if (first && !RM()) { A.rail.querySelectorAll('.xs-a-bar i').forEach((b) => { const w = b.style.width; b.style.width = '0%'; requestAnimationFrame(() => { b.style.width = w; }); }); }
       A.rows = new Map([...A.rail.querySelectorAll('.xs-a-row')].map((b) => [b.dataset.k, b]));

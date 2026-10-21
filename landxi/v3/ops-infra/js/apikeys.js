@@ -145,7 +145,7 @@ export function apiKeysPane(pane) {
         };
         acts.push(why, rv);
       }
-      const calls = h('div.ak-calls', {}, h('p.t-label', { text: '최근 호출 기록' }), h('p.rv-empty', { text: '불러오는 중' }));
+      const calls = h('div.ak-calls', {}, h('p.t-label', { text: '최근 호출 기록' }), h('p.rv-empty', { text: '…', 'aria-busy': 'true' }));
       box.replaceChildren(...[dl, acts.length ? h('div.ak-acts.ak-acts--row', {}, ...acts) : null, note, calls].filter(Boolean));
       try {
         const c = await api(`/apikeys/${encodeURIComponent(key.id)}/calls?limit=30`);

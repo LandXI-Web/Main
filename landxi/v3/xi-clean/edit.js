@@ -103,7 +103,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
       const mine = (E.pclSeq = (E.pclSeq || 0) + 1);
       Promise.resolve(parcelLine(at)).then((t) => { if (mine !== E.pclSeq) return; E.pcl = t || ''; if (E.pclEl) { E.pclEl.textContent = E.pcl; E.pclEl.hidden = !E.pcl; place(); } }, () => {});
     }
-    card.hidden = false; card.replaceChildren(h('p.xe-wait', { text: '불러오는 중' })); place();
+    card.hidden = false; card.replaceChildren(h('p.xe-wait', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')))); place();
     let f;
     try { f = await api('/ximap/feature?' + new URLSearchParams({ set: L.set, fid })); }
     catch { card.replaceChildren(h('p.xe-wait', { text: '이 객체를 불러오지 못했습니다' })); return; }
@@ -263,7 +263,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
   const doneWord = (c, added) => (added ? `'${c.name}' 클래스를 더해 바꿨습니다` : `${c.name}(으)로 클래스를 바꿨습니다`);
   async function pickClass() {
     const now = E.sel.properties.cls;
-    render(h('p.xe-wait', { text: '불러오는 중' }));
+    render(h('p.xe-wait', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i'))));
     const box = await classPicker((c, added) => send({ fid: E.sel.id, action: 'reclass', cls_id: c.id, cls: c.name }, doneWord(c, added)), () => render(), { except: now });
     render(box);
   }
@@ -363,7 +363,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
       if (E.sel) render(); else close();
     }, (e) => K.toast(e?.message && /[가-힣]/.test(e.message) ? e.message : '그리지 못했습니다'));
     const cancel = () => { src('xe-shape').setData(EMPTY); if (E.sel) render(); else close(); };
-    const wait = h('p.xe-wait', { text: '불러오는 중' });
+    const wait = h('p.xe-wait', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')));
     card.replaceChildren(h('header.xe-h', {}, h('div', {}, h('h3', { text: '새로 그린 객체' }), h('p.xe-sub', { text: E.L?.item?.name || '' }))), wait);
     place();
     classPicker((c) => pick(c), cancel).then((box) => { wait.replaceWith(box); place(); });

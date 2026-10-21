@@ -55,7 +55,7 @@ const whenWord = (e) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(e || '')
 /** 영상 한 장을 큰 지도에 — 지도를 만들어 그 안에서 영상을 바꿔 보여 주는 손잡이를 돌려준다 */
 function viewerBody(root, { onInfo }) {
   const mapEl = h('div.k-iv-map');
-  const wait = h('p.k-iv-wait', { role: 'status', hidden: true, text: '불러오는 중' });
+  const wait = h('p.k-iv-wait', { role: 'status', 'aria-busy': 'true', hidden: true }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')))   // 첫인상-3: 글 없이 점 셋;
   const warn = h('p.k-iv-warn', { role: 'status', hidden: true });
   root.append(mapEl, wait, warn);
   let stage = null, map = null, seq = 0, cur = null;

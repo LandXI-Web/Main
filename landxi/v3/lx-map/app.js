@@ -535,7 +535,7 @@ async function openProps(f, x, lngLat) {
   const area = p.area_m2 != null ? Number(p.area_m2) : null;
   const conf = p.conf != null ? Math.round(Number(p.conf) * 100) : null;
   const row = (k, ...v) => h('div', {}, h('dt', { text: k }), h('dd', {}, ...v));
-  const parcel = h('dl.lm-kv', {}, row('지번', h('span.lm-none', { text: '불러오는 중' })));
+  const parcel = h('dl.lm-kv', {}, row('지번', h('span.lm-none', { text: '…', 'aria-busy': 'true' })));
   const near = [lngLat.lng, lngLat.lat];
   props.replaceChildren(
     ST.list === x.job ? h('button.lm-tbtn.lm-back', { type: 'button', text: '← 목록으로', onclick: () => openList(x, true) }) : '',
@@ -586,12 +586,12 @@ async function openList(x, keep = false, more = false) {
   const ol = h('ol.lm-rows', { 'aria-label': `${x.region} 결과 목록` });
   const head = h('header.lm-ph', {}, h('div', {}, h('h2', { text: '결과 목록' }), h('small', { text: `${x.g.name} · ${x.region}` })),
     h('button.lm-x', { type: 'button', 'aria-label': '목록 닫기', text: '×', onclick: closeProps }));
-  const sub = h('p.lm-rsub', { text: '불러오는 중' });
+  const sub = h('p.lm-rsub', { text: '' });   // 첫인상-3: 칸 글 대신 가운데 하나(아래 during)
   props.replaceChildren(head, sub, ol);
   drawLeft();
   try {
     const q = new URLSearchParams({ offset: String(L.items.length), limit: String(LIST_N), ...(cond ? { cond: JSON.stringify(cond) } : {}), ...(ST.clsOff.size ? { off: JSON.stringify([...ST.clsOff]) } : {}) });
-    const r = await api(`/me/analyses/${encodeURIComponent(x.job)}/rows?${q}`);
+    const r = await K.during(api(`/me/analyses/${encodeURIComponent(x.job)}/rows?${q}`));
     if (ST.list !== x.job) return;
     x.rows = { n: r.n, items: [...L.items, ...(r.items || [])], label: r.label };
   } catch (e) {

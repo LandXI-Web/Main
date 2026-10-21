@@ -32,6 +32,8 @@ export const WORDS = [
   ['.docx · Word', /\bdocx\b|\bWord\b|워드\s?(문서|파일)/i],
   // 10-17 원칙 268 — 실제 이름은 '전남광주특별시'. '광주전남특별시'는 잘못된 표기(기관 · 지역 이름 어디에도 쓰지 않는다)
   ['광주전남특별시(→ 전남광주특별시)', /광주\s?전남\s?특별시/],
+  // 10-21 첫인상-3(원칙 161 · 212 · 251) — 기다림은 가운데 하나(kit/loader.js .k-ld). 칸 안에 남은 '불러오는 중' 글 = 칸 로딩 글자(가운데 표시는 세지 않는다)
+  ['칸 불러오는 중', /불러오는\s?중/],
 ];
 const hitWords = (s) => WORDS.filter(([, re]) => re.test(s)).map(([k]) => k);
 /** 서버 응답에서 사람이 읽는 칸 */
@@ -50,7 +52,7 @@ function scanPage(words) {
   while ((n = tw.nextNode())) {
     const el = n.parentElement; if (!el || el.closest(skip) || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(el.tagName) || !vis(el)) continue;
     const s = n.nodeValue.trim(); if (!s) continue;
-    for (const [k, re] of res) if (re.test(s)) out.push({ word: k, where: 'text', text: s.slice(0, 90) });
+    for (const [k, re] of res) if (re.test(s) && !(k === '칸 불러오는 중' && el.closest('.k-ld'))) out.push({ word: k, where: 'text', text: s.slice(0, 90) });
   }
   for (const el of document.querySelectorAll('[title],[aria-label],[placeholder],img[alt]')) {
     if (el.closest(skip)) continue;

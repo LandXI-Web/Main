@@ -115,6 +115,16 @@ button.t-step{cursor:pointer}
 .k-ld.is-rm .k-ld-dots i{animation:k-ld-rm 2.4s ease-in-out infinite both}
 @keyframes k-ld-rm{0%,100%{opacity:.35}50%{opacity:.9}}
 @media (prefers-reduced-motion:reduce){.k-ld-dots i{animation:k-ld-rm 2.4s ease-in-out infinite both;transform:none}}
+/* 첫인상-3: 화면 모듈이 도착하기 전(몸통에 아직 아무것도 없을 때) — 흰 화면 대신 가운데 '불러오는 중' 하나(loader 와 같은 모양 · 0.4초 뒤에만).
+   셸 · 화면이 무엇이든 몸통에 붙이는 순간 사라진다(그 뒤 기다림은 loader.js 가 맡는다) */
+body.t:not(:has(> :not(script)))::after{content:'불러오는 중';position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:46px 30px 18px;border-radius:var(--r-16,16px);background:var(--bg-1) radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px) 50% 22px/19px 12px no-repeat;background-image:radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px);background-position:calc(50% - 19px) 22px,50% 22px,calc(50% + 19px) 22px;background-size:12px 12px;background-repeat:no-repeat;box-shadow:0 1px 2px rgba(28,31,37,.06),0 8px 28px rgba(28,31,37,.08);font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);opacity:0;animation:k-boot-in .2s .4s forwards,k-boot-p 1.2s .6s ease-in-out infinite}
+@keyframes k-boot-in{to{opacity:1}}
+/* 작은 칸(지도 위 카드 등) 안 기다림 — 글 없이 점 셋만(가운데 loader 와 같은 움직임 · 첫인상-3 '칸마다 불러오는 중 0') */
+.k-dots{display:inline-flex;gap:7px;height:12px;align-items:center;vertical-align:middle}
+.k-dots i{display:block;width:8px;height:8px;border-radius:50%;background:var(--ai,#0FA9A0);animation:k-ld 1.2s cubic-bezier(.45,0,.55,1) infinite both}
+.k-dots i:nth-child(2){animation-delay:.16s}
+.k-dots i:nth-child(3){animation-delay:.32s}
+@keyframes k-boot-p{0%,100%{background-position:calc(50% - 19px) 22px,50% 22px,calc(50% + 19px) 22px}50%{background-position:calc(50% - 19px) 19px,50% 22px,calc(50% + 19px) 19px}}
 
 /* ── K11 드롭존 ─────────────────────────── */
 .k-drop{min-height:200px;align-items:center;justify-content:center;text-align:center;cursor:pointer;outline-offset:4px;border:1.5px dashed transparent;transition:border-color var(--d-180) var(--e-ui),background var(--d-180) var(--e-ui)}

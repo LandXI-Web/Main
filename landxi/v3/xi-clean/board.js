@@ -216,7 +216,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   function tipRegion(pt, f) {
     const { rows, wait } = regionRows(f.properties.code);
     tip.replaceChildren(...[h('p.xb-tc-k', {}, h('b', { text: f.properties.name })),
-      rows.length ? rowEls(rows) : null, wait ? h('p.xb-tc-p', { text: '불러오는 중' }) : !rows.length ? h('p.xb-tc-p', { text: '분석 예정' }) : null].filter(Boolean));
+      rows.length ? rowEls(rows) : null, wait ? h('p.xb-tc-p', { 'aria-busy': 'true' }, h('span.k-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i'))) : !rows.length ? h('p.xb-tc-p', { text: '분석 예정' }) : null].filter(Boolean));
     tip.dataset.done = rows.length ? '1' : '0';
     tip.hidden = false; placeTip(pt);
   }

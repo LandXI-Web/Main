@@ -11,6 +11,7 @@
 import { h, api, API, session } from '../kit/util.js';
 import { regionPicker } from '../kit/region.js';
 import { toast } from '../kit/toast.js';
+import { empty } from '../kit/empty.js';
 import { uploadQueue } from '../kit/dropzone.js';
 import { panes } from '../kit/panes.js';
 import { stageHref, ensureCss } from './context.js';
@@ -78,7 +79,7 @@ export function openNewProject({ onMade } = {}) {
   pickQ.addEventListener('input', () => { pickPage = 1; drawPick(); });
   async function loadPick() {
     if (pickAll) return;
-    pickGrid.replaceChildren(h('p.lxp-pk-w', { text: '불러오는 중' }));
+    { const w = h('div'); pickGrid.replaceChildren(w); empty(w, { kind: 'loading', compact: true }); }   // 첫인상-3: 칸 글 대신 가운데 하나
     try { pickAll = (await api('/projects/imagery')).items || []; } catch { pickAll = null; pickGrid.replaceChildren(h('p.lxp-pk-w', {}, '영상 목록을 불러오지 못했습니다 ', h('button.lxp-link', { type: 'button', text: '다시 시도', onclick: () => loadPick() }))); return; }
     drawPick();
     import('../kit/imagery-viewer.js').then((m) => m.warmImageryViewer(pickAll.slice(0, 2).map((x) => x.id))).catch(() => null);   // 크게 보기 미리 준비
