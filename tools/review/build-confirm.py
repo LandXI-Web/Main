@@ -241,7 +241,9 @@ def build():
         where = ''.join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener">{esc("설계 문서 열기" if "github.com" in u else u.replace("https://", ""))}</a><span>{esc(acc)}</span><em>{esc(tap)}</em></li>' for u, acc, tap in it['where'])
         ops = list(it['opts']) + ([] if any(x in it['opts'] for x in ('검토 필요', '보류')) or done else ['검토 필요'])   # 원칙 80 — 고르기만이 아니라 '검토 필요'도
         opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in ops)
-        body = (f'<p class="k">지금</p><p>{esc(it["now"])}</p><p class="k">제안</p><p>{esc(it["prop"])}</p>' if not done else f'<p class="k">만든 것</p><p>{esc(it["what"])}</p>')
+        def paras(t):   # 글 안의 줄바꿈 기호마다 문단을 나눈다(바퀴 21 — 긴 글을 덩어리로 읽게)
+            return ''.join(f'<p>{esc(x)}</p>' for x in str(t).split(chr(10)) if x.strip())
+        body = (f'<p class="k">지금</p>{paras(it["now"])}<p class="k">제안</p>{paras(it["prop"])}' if not done else f'<p class="k">만든 것</p>{paras(it["what"])}')
         tbl = ''
         if it.get('table'):
             tr = it['table']
@@ -286,7 +288,7 @@ h2{font:700 26px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:ba
 .c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
 .c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
 .c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
-.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.c header{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;margin-bottom:10px}
 .n{font:600 14px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
 h3{margin:0;font:700 21px/1.4 Pretendard,sans-serif;text-wrap:balance}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
