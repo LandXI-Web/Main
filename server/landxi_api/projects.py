@@ -329,8 +329,11 @@ async def _facts(conn, r) -> dict:
             "AND s.sgg_cd = ANY($1::text[]) AND s.updated_at >= $2", codes, rnd_at) or 0
     # 결과 확인 '확인했음' 기록(project_links review_seen)은 원칙 203(10-12)으로 판정에 쓰지 않는다 — 기록 · 경로는 남김
     # 추론(배포-1) — 이 프로젝트 모델로 돌린 분석(추론 탭 · 분석 작업 대기열 · options.project_id) · 이번 회차 것
-    infers = await conn.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
-                              "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
+    # (행 보안 아래서는 options->>'project_id' 가 색인을 못 타 3.5만 줄을 훑는다 → 시스템 읽기 경로 · 프로젝트 id 로만 거른다 · migrations/0115)
+    from .deps import pool_sys
+    async with (await pool_sys()).acquire() as sc:
+        infers = await sc.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
+                                "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
     last = [r["updated_at"], *(s["created_at"] for s in samples[:1]), *(j["created_at"] for j in jobs[:1]), *(j["created_at"] for j in infers[:1])]
     ap_last = await conn.fetchval("SELECT max(coalesce(a.decided_at, a.at)) FROM approvals a JOIN project_links l ON l.ref=a.subject_id "
                                   "AND l.kind='card_version' AND a.subject_type='card' WHERE l.project_id=$1", pid)

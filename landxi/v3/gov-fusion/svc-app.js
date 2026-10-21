@@ -352,6 +352,6 @@ function openList() {
 
 /* ═════════ 시작 — 올린 대장이 있으면 곧바로 결과 ═════════ */
 pane('result');
-panes.result.replaceChildren(h('p.gf-note', { role: 'status', text: '불러오는 중' }));
-await loadServices();
+panes.result.replaceChildren(h('p.gf-note', { role: 'status', 'aria-busy': 'true', text: '' }));   // 첫인상-3: 칸 글 대신 가운데 하나
+await K.during(loadServices());
 if (S.card) await show(); else pane('drop');

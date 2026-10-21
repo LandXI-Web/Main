@@ -6,7 +6,7 @@
    숫자 한 출처 = 결과 설명서 결과 세트 × 관할(대시보드 큰 숫자 · 필지 목록 · 행정정보와 비교와 같은 행). 대장 칸은 건수만(지번 없음 → 바로 받음).
    어느 지역이든 같은 화면(지역 이름 · 코드 고정값 0 — 관할 = 로그인한 기관). */
 import { api, h } from '../kit/util.js';
-import { toast, devlog } from '../kit/index.js';
+import { toast, devlog, during } from '../kit/index.js';
 import { farmDash } from '../kit/farm-dash.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -45,9 +45,9 @@ export function svcReport({ svc, onAuth, fusionHref }) {
 
   /* 처음 — 고를 것(결과 · 대장 · 발급 목록)을 한 번에 */
   async function boot() {
-    wait('불러오는 중');
+    wait('');   // 첫인상-3: 칸 글 대신 가운데 하나(during)
     let j;
-    try { j = await api('/spaces/me/report/pick'); }
+    try { j = await during(api('/spaces/me/report/pick')); }
     catch (e) { devlog('report pick', e.message); if (e.status === 401 || e.status === 403) return onAuth?.(); doc.replaceChildren(h('p.gr-err', { role: 'status', text: '불러오지 못했습니다' })); return; }
     S.avail = j.services || [];
     if (!S.avail.length) { doc.replaceChildren(h('p.gr-err', { role: 'status', text: '아직 보고서로 만들 결과가 없습니다' })); lockDl(true); return; }

@@ -173,7 +173,7 @@ export async function run(role, s0) {
     const c = await s.page.evaluate(() => [...document.querySelectorAll('a[href*="service="]')].map((a) => new URL(a.href).searchParams.get('service')).find(Boolean));
     if (c) {
       await screen(s, '기관 · 서비스 대시보드', G + `gov-select/?service=${encodeURIComponent(c)}`, { wait: '.gs-page' });
-      await screen(s, '기관 · 보고서', G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '#rp-form', ms: 3500 });
+      await screen(s, '기관 · 보고서', G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '.rp-grid, #rp-form', ms: 3500 });
       await screen(s, '기관 · 필지 목록 + 상세', G + `gov-report/?service=${encodeURIComponent(c)}&tab=sus`, { wait: '.gr-board', ms: 3500,
         act: async (p) => { const r = p.locator('#sus-table tbody tr').first(); if (await r.count()) await r.click(); } });
     }

@@ -247,6 +247,32 @@ def _owner(m: dict, cid: str, card) -> dict:
     return {"id": oid, "name": m["owner_names"].get(oid) if oid else None, "project": None}
 
 
+def _board_example(cid: str, items: list[dict]) -> dict | None:
+    """결과 예시 — 다듬은 결과 세트의 업무 숫자가 없을 때(칸 도형 수는 큰 숫자로 못 씀 · 규칙 2) XI맵 통계와 같은 한 출처:
+    XI맵 결과판(ximap.build_board)의 이 서비스 객체 수(겹침 정리 · 고친 것 반영 · 분류 제한 적용)를 이 항목들의 시군구만 더한다.
+    여러 곳이면 '남원시 외 2곳' · 합은 XI맵 전국 통계와 같은 값(예: 비닐하우스 14,792 + 235 + 84)."""
+    from . import ximap
+    bd = ximap._BOARD.get("v")
+    if not bd:
+        return None
+    want = [str(it.get("sgg_cd")) for it in items if it.get("sgg_cd")]
+    hit = []
+    for r in bd.get("regions") or []:
+        if str(r.get("sgg_cd")) not in want and str(r.get("prev_cd")) not in want:
+            continue
+        for x in r.get("items") or []:
+            v = (x.get("n") or {}).get("value")
+            if x.get("svc") == cid and v:
+                hit.append((r, x, int(v)))
+    if not hit:
+        return None
+    hit.sort(key=lambda t: (-t[2], t[0].get("name") or ""))
+    first = hit[0][0].get("name") or ""
+    return {"value": sum(t[2] for t in hit), "unit": "개", "basis": "inferred", "as_of": max(str(t[1].get("finished_at") or "") for t in hit)[:10],
+            "source": "XI맵 통계(AI 분석 결과 객체 · 겹침 정리 후 · 검수 전)", "label": "AI 분석 결과", "word": "AI 분석 결과",
+            "region": first + (f" 외 {len(hit) - 1}곳" if len(hit) > 1 else ""), "sgg": hit[0][0].get("sgg_cd") if len(hit) == 1 else None}
+
+
 def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None) -> dict:
     """카드 한 장의 여덟 칸 — items = 이 카드의 요약 항목(기관 세션이면 그 기관 것만)."""
     cid = card["id"]
@@ -278,6 +304,8 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         example = {"value": use["value"], "unit": use.get("unit") or "", "basis": use.get("basis") or "estimate", "as_of": str(use.get("as_of") or "")[:10],
                    "source": use.get("source") or "", "label": use.get("label") or "", "word": word,
                    "region": _short(it.get("region_name"), it.get("sgg_cd")), "sgg": it.get("sgg_cd")}
+    if example is None:
+        example = _board_example(cid, items)
 
     # 업무 결과 숫자가 없을 때의 '어디' — 결과가 있는 지역(운영 먼저 · 대시보드 '우리 서비스'와 같은 'n 외 n곳' 말)
     rnames = []
@@ -522,7 +550,8 @@ async def _deck_tenant(p) -> dict:
                                "as_of": max(str(b[0].get("as_of") or "") for b in use_l)[:10], "source": e0.get("source") or "", "label": e0.get("label") or "",
                                "word": word, "place": short}
         else:
-            core["example"] = None
+            ex = _board_example(c["id"], mine)           # 업무 숫자가 없으면 XI맵 통계와 같은 한 출처(우리 관할 시군구만)
+            core["example"] = {**ex, "place": short} if ex else None
         # 최근 결과 = 다듬은 결과 세트의 분석한 날만 — 현장 확인 필요(필지 대조)의 기준일은 '지금 센 때'라 결과 날짜가 아니고,
         # 분석 칸 도형 결과(작업 결과)의 기준일도 센 때다(둘 다 쓰면 '최근 결과'가 늘 오늘이 된다 · 지어내지 않는다 → 없으면 비움)
         dates = [str((_metric(it, "detected") or {}).get("as_of") or "")[:10] for it in mine if _metric(it, "detected") and not _raw_ai(it)]

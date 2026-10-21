@@ -19,11 +19,11 @@ const SHORT = { growth: '생육기', harvest: '생산기', bale: '곤포' };
 /** 사료작물 견주기 — ctx = { pane, bigCard, paintMap, fly, pick(저장된 고르기), onPick(고르기 저장), onList, onNew, padStage } */
 export async function showFeed(importId, ctx) {
   const { pane } = ctx;
-  pane.replaceChildren(h('p.gf-note', { role: 'status', text: '불러오는 중' }));
+  pane.replaceChildren(h('p.gf-note', { role: 'status', 'aria-busy': 'true', text: '' }));   // 첫인상-3: 칸 글 대신 가운데 하나(K.during)
   const q = { import_id: importId, geom: '1' };
   for (const k of ['growth', 'harvest', 'bale']) if (ctx.pick[k]) q[k] = ctx.pick[k];
   let c;
-  try { c = await api('/spaces/me/ledger/feedcrop?' + new URLSearchParams(q)); }
+  try { c = await K.during(api('/spaces/me/ledger/feedcrop?' + new URLSearchParams(q))); }
   catch (e) { K.devlog('feedcrop', e.message); pane.replaceChildren(h('p.gf-note', { role: 'status', text: '불러오지 못했습니다' })); return null; }
   paint(c, ctx);
   return c;
@@ -128,9 +128,9 @@ export function listBtn(onClick) {
 /** 행정정보 주제별 목록 — ctx = { pane, onOpen(import_id), onBack }. 주제(대장 종류)마다 최근 올린 것부터 · 기준일 · 건수 · 등록자 */
 export async function showList(ctx) {
   const { pane } = ctx;
-  pane.replaceChildren(h('h3.gf-h', { text: '행정정보 목록' }), h('p.gf-note', { role: 'status', text: '불러오는 중' }));
+  pane.replaceChildren(h('h3.gf-h', { text: '행정정보 목록' }), h('p.gf-note', { role: 'status', 'aria-busy': 'true', text: '' }));
   let j;
-  try { j = await api('/spaces/me/ledgers'); }
+  try { j = await K.during(api('/spaces/me/ledgers')); }
   catch (e) { K.devlog('ledgers', e.message); pane.replaceChildren(h('h3.gf-h', { text: '행정정보 목록' }), h('p.gf-note', { role: 'status', text: '불러오지 못했습니다' })); return; }
   const back = h('button.t-btn.t-btn--2', { type: 'button', text: '돌아가기' });
   back.addEventListener('click', () => ctx.onBack());

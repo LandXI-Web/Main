@@ -122,7 +122,7 @@ export async function run(role, s0) {
       for (const c of cards.slice(0, 6)) {
         await screen(s, `기관 · 서비스 대시보드(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}`, { wait: '.gs-page' });
         await screen(s, `기관 · 통계·보고서(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}&tab=stats`, { wait: '.gs-page' });
-        await screen(s, `기관 · 보고서(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '#rp-form', ms: 3500 });   // 10-14 원칙 250 — 한글 문서 단추
+        await screen(s, `기관 · 보고서(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '.rp-grid, #rp-form', ms: 3500 });   // 10-14 원칙 250 — 한글 문서 단추
         await screen(s, `기관 · 필지 목록 + 상세(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=sus`, { wait: '.gr-board', ms: 3500,
           act: async (p) => { const r = p.locator('#sus-table tbody tr').first(); if (await r.count()) await r.click(); } });
       }
