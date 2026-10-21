@@ -392,8 +392,9 @@ function create(opts) {
   xBtn.addEventListener('click', hide);
   addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') { if (cfg.guest) return; e.preventDefault(); root.dataset.dock || box.hidden ? open() : hide(); }
+    // 열린 서랍이 있으면 Esc 는 서랍이 먼저(최상단 서랍 닫기 · 10-21) — 채팅 창이 가로채지 않는다
     // 아래 채팅 창이 이미 접혀 있으면 Esc 를 삼키지 않는다 — XI맵 그 자리 고치기 칸 · 말풍선이 Esc 로 닫히게(impl-34 재검수)
-    else if (e.key === 'Escape' && !box.hidden && !e.defaultPrevented && !document.querySelector('.k-md-bg') && !(root.dataset.dock && root.dataset.fold)) { e.stopPropagation(); hide(); }
+    else if (e.key === 'Escape' && !box.hidden && !e.defaultPrevented && !document.querySelector('.k-md-bg') && !document.querySelector('.k-drawer.is-open') && !(root.dataset.dock && root.dataset.fold)) { e.stopPropagation(); hide(); }
     else if (!box.hidden && !cfg.guest && !root.dataset.dock && e.target !== input && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing
       && (e.target === document.body || box.contains(e.target) || e.target === fab)
       && !(e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)))) {

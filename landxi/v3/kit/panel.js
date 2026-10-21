@@ -13,7 +13,7 @@ const MAX = 3;
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape' || !STACK.length) return;
   const ae = document.activeElement;
-  if (ae && /input|textarea|select/i.test(ae.tagName) && ae.value) return;   // 입력 중 Esc 는 입력이 먼저
+  if (ae && /input|textarea|select/i.test(ae.tagName) && ae.value && ae.closest('.k-drawer')) return;   // 서랍 안에서 입력 중 Esc 는 입력이 먼저 · 밖(아래 채팅 칸)은 서랍을 닫는다
   e.preventDefault(); STACK[STACK.length - 1].close();
 });
 

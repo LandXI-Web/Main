@@ -1,0 +1,23 @@
+import fs from 'node:fs'; import path from 'node:path'; import { createRequire } from 'node:module'; import { pathToFileURL, fileURLToPath } from 'node:url';
+const ROOT='E:/Land-XI 플랫폼/01. 디자인', HERE=path.dirname(fileURLToPath(import.meta.url)), tag=process.argv[2]||'before';
+const HW='C:/Users/User/AppData/Local/ms-playwright'; if (fs.existsSync(HW)) process.env.PLAYWRIGHT_BROWSERS_PATH=HW;
+if (!process.env.DEV_PASSWORD) { const m=fs.readFileSync(path.join(ROOT,'server/.env'),'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m); if (m) process.env.DEV_PASSWORD=m[1].replace(/^"|"$/g,''); }
+process.env.LX_PW ||= process.env.DEV_PASSWORD;
+const { chromium } = createRequire(path.join(ROOT,'package.json'))('playwright');
+const { frontDoor } = await import(pathToFileURL(path.join(ROOT,'landxi/v3/kit/lint/forbidden.mjs')).href);
+const b = await chromium.launch({ channel:'chrome', headless:true });
+const p = await (await b.newContext({ viewport:{width:1440,height:900}, locale:'ko-KR' })).newPage();
+await frontDoor(p,'https://app.land-xi.dev','test@lx.or.kr','app');
+await p.goto('https://app.land-xi.dev/landxi/v3/xi-clean/',{waitUntil:'domcontentloaded'}); await p.waitForTimeout(6000);
+const st = () => p.evaluate(()=>({drawer:!!document.querySelector('.k-drawer.is-open'), card:!!document.querySelector('.xk-ans-t')&&!document.querySelector('.xk-ans-t').closest('[hidden]'), ae:document.activeElement?.tagName, val:document.activeElement?.value||''}));
+const openD = async () => { const m=p.locator('.xk-more'); if (!(await m.count())||!(await m.first().isVisible())) { const i=p.locator('input.k-ck-i').first(); await i.fill('남원시 요약'); await i.press('Enter'); await p.waitForTimeout(9000);} await p.locator('.xk-more').first().click({timeout:20000}); await p.waitForTimeout(700); };
+const res={};
+await openD(); res.opened=await st();
+await p.screenshot({path:path.join(HERE,`${tag}-esc-1open.png`)});
+await p.keyboard.press('Escape'); await p.waitForTimeout(700); res.escPlain=await st(); console.log(JSON.stringify(res));
+await p.screenshot({path:path.join(HERE,`${tag}-esc-2plain.png`)});
+console.log("pre",JSON.stringify(res)); await openD().catch(e=>{console.log("openD fail")});
+const inp=p.locator('input.k-ck-i').first(); await inp.click(); await inp.fill('다른 질문'); res.typing=await st();
+await p.keyboard.press('Escape'); await p.waitForTimeout(700); res.escTyping=await st();
+await p.screenshot({path:path.join(HERE,`${tag}-esc-3typing.png`)});
+console.log(JSON.stringify(res)); await b.close();

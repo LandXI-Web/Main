@@ -229,3 +229,5 @@ body.t { overflow: hidden; }
 .fam a:hover,.fam a:focus-visible{background:var(--bg-0, #f2f4f6)}
 .door__links{display:flex;align-items:center;gap:16px}
 .door__foot .fam ul{left:auto;right:0}
+/* 좁은 화면 — 패밀리 목록은 로그인 버튼 위로 덮지 않고 바닥 아래로 펼친다 */
+@media (max-width: 960px) { .fam ul { bottom: auto; top: calc(100% + 8px); } }
