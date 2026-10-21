@@ -12,13 +12,18 @@ function Gate { Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-
 function Tunnel { Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" | Where-Object { $_.CommandLine -like "*landxi.yml*" } }
 
 if ($Status) { "gate: " + [bool](Gate); "tunnel: " + [bool](Tunnel); exit 0 }
+
+# 기록 파일 돌려 쓰기(10-21 원칙 303) — 띄울 때 20MB 를 넘은 기록은 .prev 로 한 판만 남긴다(끝없이 커지지 않게 · 지난 판은 덮어씀)
+function Roll([string]$f) { if ((Test-Path $f) -and (Get-Item $f).Length -gt 20MB) { Move-Item -Force $f "$f.prev" -ErrorAction SilentlyContinue } }
 if ($Stop) { Gate | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }; Tunnel | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }; "stopped"; exit 0 }
 
 if (-not (Gate)) {
+  Roll "$logs\public-gate.log"; Roll "$logs\public-gate.err"
   Start-Process -WindowStyle Hidden -FilePath "node" -ArgumentList @("`"$repo\tools\public-gate.mjs`"") -WorkingDirectory $repo `
     -RedirectStandardOutput "$logs\public-gate.log" -RedirectStandardError "$logs\public-gate.err"
 }
 if (-not (Tunnel)) {
+  Roll "$logs\tunnel.log"; Roll "$logs\tunnel.err"
   Start-Process -WindowStyle Hidden -FilePath $cf -ArgumentList @("--no-autoupdate", "--protocol", "http2", "--config", "`"$cfg`"", "tunnel", "run") `
     -RedirectStandardOutput "$logs\tunnel.log" -RedirectStandardError "$logs\tunnel.err"
 }

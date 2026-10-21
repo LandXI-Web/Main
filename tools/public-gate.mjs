@@ -128,8 +128,9 @@ function send(res, code, body = '', headers = {}) { res.writeHead(code, { ...SEC
 
 /* ── 줄여 보내기(10-18 제안-첫방문묶어받기 '넣음') — 바깥 주소는 요청마다 터널을 지난다. 관문 → 터널 구간을 줄인 글로 보낸다.
    화면 코드 · 글 파일(.js .css .json .html .svg .geojson)은 한 번 줄인 것을 기억해 다시 쓴다(같은 파일 · 같은 고친 시각 · 같은 판 번호).
-   API 응답은 글(JSON · 줄 JSON · GeoJSON)만 그 자리에서 줄인다(실시간 스트림 · 그림 · 지도 조각(pmtiles) · 이미 줄인 것은 그대로). */
-const ZTYPE = /^(application\/(json|x-ndjson|geo\+json|javascript)|text\/(css|javascript|html|plain|csv)|image\/svg\+xml)/i;
+   API 응답은 글(JSON · 줄 JSON · GeoJSON)과 결과 지도 조각(.pbf · MVT)을 그 자리에서 줄인다(실시간 스트림 · 그림 · 지도 조각 묶음(pmtiles 범위 받기) · 이미 줄인 것은 그대로).
+   결과 지도 조각(10-21 원칙 303 인프라 경량화): 게이트웨이가 줄이지 않은 채 내주어 터널을 그대로 지나던 것 — 전국 결과 z6 한 장 855KB → 줄이면 약 350KB(실측). */
+const ZTYPE = /^(application\/(json|x-ndjson|geo\+json|javascript|x-protobuf|vnd\.mapbox-vector-tile)|text\/(css|javascript|html|plain|csv)|image\/svg\+xml)/i;
 function encOf(req) {
   const ae = String(req.headers['accept-encoding'] || '');
   return /\bbr\b/.test(ae) ? 'br' : /\bgzip\b/.test(ae) ? 'gzip' : null;
@@ -379,7 +380,8 @@ function serveFile(req, res, p) {
     if (body) return sendBody(req, res, 200, { ...SEC, 'content-type': type, 'cache-control': 'private, no-cache' }, body, 'html:' + p);
   }
   const code = /\.(html|js|mjs|css|json)$/.test(f);
-  const cache = code ? 'private, no-cache' : 'public, max-age=86400';
+  /* 글꼴(.woff2 등)은 이름이 바뀌지 않는 파일 — 30일 보관(10-21 원칙 303: 첫 방문 전송의 약 60%(1.85MB)가 글꼴이라 하루 지나 다시 받던 것). 나머지는 하루 */
+  const cache = code ? 'private, no-cache' : /\.(woff2?|ttf)$/i.test(f) ? 'public, max-age=2592000' : 'public, max-age=86400';
   const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
   if (code && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
   if (!req.headers.range && st.size >= 1024 && st.size <= 8 * 1024 * 1024 && ZTYPE.test(type) && encOf(req)) {   // 글 파일(.json · .svg · .geojson …) — 줄여서
