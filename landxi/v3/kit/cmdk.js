@@ -1126,6 +1126,7 @@ function create(opts) {
   function dock(el, mr) {
     for (let n = el; n && n !== document.body; n = n.parentElement) {
       if (n.matches('.k-main, .k-app, .k-stage, .k-stage-map')) return null;
+      if (n.matches('.dg-item, .dg-ph, .dg-gap')) continue;   // 맞춤 대시보드 칸(자리 잡기용 absolute)은 서랍이 아니다 — 버튼이 달력 위 화면 가운데로 뛰던 것(첫인상-5)
       const p = getComputedStyle(n).position;
       if (p !== 'fixed' && p !== 'absolute' && p !== 'sticky') continue;
       const r = n.getBoundingClientRect();

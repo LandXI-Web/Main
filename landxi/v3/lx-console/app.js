@@ -415,7 +415,7 @@ function dayModal(d, redraw) {
     return f;
   };
   async function draw() {
-    box.replaceChildren(h('p.ld-foot-none', { text: '불러오는 중' }));
+    { const w = h('div.ld-wait'); box.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }); }   // 첫인상-3: 칸마다 '불러오는 중' 0 — 가운데 하나
     let a;
     try { a = await agenda(d, d); } catch { box.replaceChildren(h('p.ld-foot-none', { text: '불러오지 못했습니다' })); return; }
     const items = a.by.get(isoDay(d)) || [];
@@ -465,7 +465,7 @@ async function calendar(body, ctx) {
   if (mode === 'list') {
     label.textContent = `${today.getMonth() + 1}월 ${today.getDate()}일 (${DOW[today.getDay()]})`;
     const to = addDays(today, 30);
-    grid.replaceChildren(h('p.ld-foot-none', { text: '불러오는 중' }));
+    { const w = h('div.ld-wait'); grid.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }); }
     let a;
     try { a = await agenda(today, to); } catch { fail(grid, redraw); return; }
     const days = [...a.by.keys()].filter((k) => k >= isoDay(today)).sort();
@@ -490,7 +490,7 @@ async function calendar(body, ctx) {
     const first = addDays(CAL.anchor, -CAL.anchor.getDay()); first.setHours(0, 0, 0, 0);
     const l = addDays(first, 6); label.textContent = `${first.getMonth() + 1}.${first.getDate()} – ${l.getMonth() + 1}.${l.getDate()}`;
     grid.className = 'ld-cal-g is-weekrows';
-    grid.replaceChildren(h('p.ld-foot-none', { text: '불러오는 중' }));
+    { const w = h('div.ld-wait'); grid.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }); }
     let a;
     try { a = await agenda(first, l); } catch { fail(grid, redraw); return; }
     grid.replaceChildren(h('ul.ld-cal-list', {}, ...Array.from({ length: 7 }, (_, i) => { const d = addDays(first, i), items = a.by.get(isoDay(d)) || [];
@@ -539,10 +539,11 @@ async function calendar(body, ctx) {
 }
 
 /* ═══════════════ 격자 ═══════════════ */
+/* 처음 모양 — 1440×900 첫 뷰 한 화면 안(스크롤 0 · 첫인상-5 · 원칙 194 · 216). 열 줄(60 × 10 + 사이 12 × 9 = 708) */
 const DEFAULTS = [
-  { id: 'notice', x: 0, y: 0, w: 8, h: 3, view: 'list' }, { id: 'memo', x: 8, y: 0, w: 4, h: 3 },
-  { id: 'board', x: 0, y: 3, w: 5, h: 4, view: 'numbers' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 4, view: 'numbers' }, { id: 'store', x: 8, y: 3, w: 4, h: 4, view: 'numbers' },
-  { id: 'calendar', x: 0, y: 7, w: 4, h: 7, view: 'auto' }, { id: 'recent', x: 4, y: 7, w: 8, h: 7, view: 'cards' },
+  { id: 'notice', x: 0, y: 0, w: 5, h: 3, view: 'list' }, { id: 'memo', x: 5, y: 0, w: 3, h: 3 }, { id: 'store', x: 8, y: 0, w: 4, h: 3, view: 'numbers' },
+  { id: 'board', x: 0, y: 3, w: 5, h: 3, view: 'numbers' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 3, view: 'numbers' }, { id: 'calendar', x: 8, y: 3, w: 4, h: 7, view: 'auto' },
+  { id: 'recent', x: 0, y: 6, w: 8, h: 4, view: 'cards' },
 ];
 /* 고를 수 있는 모양(10-18 원칙 285 "공지사항 · 달력 · 저장 용량을 한 줄에") — '모양 고르기'에서 */
 const PRESETS = [
