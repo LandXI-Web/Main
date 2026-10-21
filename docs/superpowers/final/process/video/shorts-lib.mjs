@@ -57,3 +57,35 @@ export class RecV {
     return { frames: F.length, dur: +tEnd.toFixed(2), fps: +(F.length / Math.max(tEnd, 0.1)).toFixed(1) };
   }
 }
+
+/* ── 2판(10-21 사용자 "왜 영상이 모바일 버젼이지?" → PC 화면) ── */
+export const DW = 1920, DH = 1080, DDSF = 1.5;          // PC 화면(긴 영상과 같은 1920×1080) · 배율 1.5 → 2880×1620 그림(확대해도 글이 또렷)
+/** 로딩 표시 감시(10-21 사용자 "로딩중이 계속 뜨는데 이런게 뜨면 안된다") — 0.1초마다 화면에 보이는 로딩 글 · 도는 표시 · 덜 그린 지도 타일을 시각과 함께 적는다 */
+export const LOADWATCH = `(() => { if (window.__ldOn) return; window.__ldOn = 1; window.__ld = [];
+  const vis = (e) => { if (!e.getClientRects().length) return false; const s = getComputedStyle(e); return s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0.05; };
+  let last = Date.now();
+  setInterval(() => { try {
+    const now = Date.now(); if (now - last > 300) window.__ld.push([last, 'gap:' + (now - last) + 'ms', now]); last = now;   // 화면 일이 막혀 감시가 못 본 사이 = 알 수 없음(쓰지 않음)
+    const why = []; const tx = document.body?.innerText || '';
+    if (/불러오는 중|찾는 중|로딩 중|기다려 주세요/.test(tx)) why.push('text:' + (tx.match(/.{0,12}(불러오는 중|찾는 중|로딩 중|기다려 주세요).{0,6}/) || [''])[0]);
+    const busy = [...document.querySelectorAll('[aria-busy="true"], .is-busy, .is-loading, [class*="spinner"], [class*="skeleton"], [class*="skel-"]')].filter(vis);
+    if (busy.length) why.push('busy:' + busy.slice(0, 3).map((e) => (e.className && e.className.baseVal === undefined ? e.className : e.tagName)).join('|').slice(0, 80));
+    for (const k of ['__xc', '__lm', '__main']) { const m = window[k]?.map; if (m && m.areTilesLoaded && !m.areTilesLoaded()) why.push('tiles:' + k); }
+    if (why.length) window.__ld.push([Date.now(), why.join(' · ')]);
+  } catch (e) {} }, 100); })();`;
+/** PC 창 — 1920×1080 · 배율 1.5 · 쓰기 막기 · 로딩 감시 */
+export async function newDesk(browser, log) {
+  const ctx = await browser.newContext({ viewport: { width: DW, height: DH }, deviceScaleFactor: DDSF, locale: 'ko-KR' });
+  await ctx.addInitScript("try { sessionStorage.setItem('lx.chat.test', '1') } catch (e) {}");
+  await ctx.addInitScript(() => { const go = () => { const s = document.createElement('style'); s.textContent = '::-webkit-scrollbar{width:0;height:0}'; (document.head || document.documentElement).appendChild(s); }; if (document.documentElement) go(); else document.addEventListener('DOMContentLoaded', go); });
+  await ctx.addInitScript(LOADWATCH);
+  await ctx.route('**/api/**', (r) => {
+    const m = r.request().method(), u = r.request().url();
+    if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS' || /\/auth\/login|\/agent\//.test(u)) return r.continue();
+    log?.push(`막음 ${m} ${u.replace(/\?.*/, '').replace(/^https?:\/\/[^/]+/, '')}`);
+    return r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+  });
+  const p = await ctx.newPage();
+  p.setDefaultTimeout(60000);
+  return { ctx, p };
+}
