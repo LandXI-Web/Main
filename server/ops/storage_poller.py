@@ -35,7 +35,7 @@ def tenants() -> list[str]:
     """기관 목록 = tenants 표(고정 목록 0 · 새 기관도 자동) — DB 를 못 읽으면 결과 폴더 이름."""
     try:
         import psycopg
-        dsn = os.environ.get("PG_WORKER_DSN", "postgresql://landxi_worker:landxi-dev-worker@localhost:5433/landxi")
+        dsn = os.environ.get("PG_WORKER_DSN", "postgresql://landxi_worker:landxi-dev-worker@127.0.0.1:5433/landxi")
         with psycopg.connect(dsn, connect_timeout=3) as c:
             return [r[0] for r in c.execute("SELECT id FROM tenants ORDER BY id").fetchall()]
     except Exception:
