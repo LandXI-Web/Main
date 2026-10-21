@@ -1,0 +1,53 @@
+{
+ "staff": {
+  "region": "52190",
+  "region_name": "전북특별자치도 남원시",
+  "emd_cd": null,
+  "rule": null,
+  "sets": [
+   "results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G",
+   "results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B",
+   "results/lx/namwon-farmland-2025",
+   "results/lx/namwon-change",
+   "results/lx/job_01M3PSCWE2D0X1NZ1J1E4T9GBC",
+   "results/lx/job_01M3Q8K4H4YXVHHDAEBMRY1RN7",
+   "results/lx/job_01M4ASGEKFA2M21AMVYFB6FPN7",
+   "results/lx/job_01M3RP4XBVH36MTYQZQQYW06EW"
+  ],
+  "cls_off": [],
+  "has_map": true,
+  "page": "xi-clean",
+  "test": true,
+  "bbox": [
+   127.10658947099881,
+   35.27537222076246,
+   127.74890612726142,
+   35.59706837420387
+  ],
+  "zoom": 10.539887419113102
+ },
+ "namwon": {
+  "region": "52190",
+  "region_name": "전북특별자치도 남원시",
+  "emd_cd": null,
+  "rule": null,
+  "sets": [
+   "results/lx/namwon-landcover-2023",
+   "results/lx/namwon-farmland-2025",
+   "results/lx/namwon-greenhouse-2025",
+   "results/lx/namwon-change",
+   "results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B"
+  ],
+  "cls_off": [],
+  "has_map": true,
+  "page": "xi-clean",
+  "test": true,
+  "bbox": [
+   127.10658947099881,
+   35.27537222076246,
+   127.74890612726142,
+   35.59706837420387
+  ],
+  "zoom": 10.539887419113102
+ }
+}
