@@ -60,6 +60,8 @@ export function meiktilaScene(stage, ctx) {
   async function imagery() {
     const cat = ctx.ladder.cat;
     const pre = cat.by['maxar-mm-meiktila-pre'], post = cat.by['maxar-mm-meiktila'];
+    // 해외 원천 조각(/landxi/data/global)은 바깥 주소에서 닫았다(10-22 옆문 닫기) — 닿지 않으면 공개 위성(S2) 전후로
+    if (S.maxar) S.maxar = await fetch('/landxi/data/global/tiles/maxar_meiktila.json', { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok).catch(() => false);
     let A, B;
     if (S.maxar) {
       A = { tiles: [`/landxi/data/${pre.path}`], bounds: pre.bounds, minzoom: 12, maxzoom: 17, attribution: pre.attribution };

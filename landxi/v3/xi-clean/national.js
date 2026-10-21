@@ -26,7 +26,9 @@ export function createNational({ map, before = 'slot-result' }) {
   const N = { assets: [], data: null, v: {}, year: null, task: null, hidden: false, onData: null, off: new Set(), hide: new Map() };   // off = 끈 클래스 · hide = 묶음 → 고친 자리가 대신 그리는 객체 id
   const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
   const FID = ['case', ['has', 'id'], ['to-string', ['get', 'id']], ['to-string', ['id']]];
-  const tpl = (a, v) => `${API.base}/tiles/national/${a}/${N.year}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v || '0')}${TEST ? '&test=1' : ''}`;
+  // 서명(진행 장부가 준 exp · sig — 6시간 칸이라 다시 읽어도 같은 주소 · 10-22 옆문 닫기: 로그인 없이 받아지던 조각을 LX 세션 뒤로)
+  const sigQ = () => (N.sig ? `&exp=${N.sig.exp}&sig=${N.sig.sig}` : '');
+  const tpl = (a, v) => `${API.base}/tiles/national/${a}/${N.year}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v || '0')}${sigQ()}${TEST ? '&test=1' : ''}`;
   const src = (a) => 'xn-' + a;
   const clsColor = ['match', ['get', 'cls'], '경작지', NCOLOR.경작지, '비닐하우스', NCOLOR.비닐하우스, '건물', NCOLOR.건물, '#5C7CFA'];
   /** 업무 거르기 — 자산의 분류 중 그 업무만(없으면 그 자산은 비움) */
@@ -102,7 +104,7 @@ export function createNational({ map, before = 'slot-result' }) {
 
   /* ── 진행 장부 다시 읽기 — 판이 바뀐 자산만 새 주소 ── */
   function take(j) {
-    N.data = j; N.v = j.v || {}; N.year = j.year;
+    N.data = j; N.v = j.v || {}; N.year = j.year; N.sigOld = N.sig; N.sig = j.tile_sig || null;
     N.assets = Object.entries(j.assets || {}).filter(([, a]) => a && a.on !== false).map(([k]) => k);
   }
   async function refresh() {
@@ -110,7 +112,8 @@ export function createNational({ map, before = 'slot-result' }) {
     if (!j?.assets) return;
     const old = N.v;
     take(j);
-    for (const a of N.assets) if (j.v?.[a] !== old[a] && map.getSource(src(a))) map.getSource(src(a)).setTiles([tpl(a, N.v[a])]);   // 칸이 끝나 판이 바뀌면 새 주소로
+    const resign = N.sig?.exp !== N.sigOld?.exp;      // 서명 칸이 넘어가면(6시간) 모든 자산 새 주소
+    for (const a of N.assets) if ((resign || j.v?.[a] !== old[a]) && map.getSource(src(a))) map.getSource(src(a)).setTiles([tpl(a, N.v[a])]);   // 칸이 끝나 판이 바뀌면 새 주소로
     N.onData?.(j);
   }
   let pollT = 0;

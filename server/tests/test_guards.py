@@ -64,8 +64,12 @@ def test_unsigned_tenant_result_set_403_and_signed_206(live, tok):
 def test_public_set_unsigned_206_and_xyz_204(live):
     r = httpx.get(BASE + "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles", headers={"range": "bytes=0-126"}, timeout=30)
     assert r.status_code == 206
-    r = httpx.get(BASE + "/tiles/xyz/namwon_ap25_2023/3/0/0.webp", timeout=30)
+    r = httpx.get(BASE + "/tiles/xyz/no-such-folder/3/0/0.webp", timeout=30)
     assert r.status_code == 204
+    # 10-22 옆문 닫기 — 공개 아닌 이름 있는 세트(기관 서비스와 같은 파일 · 영상 조각)는 results/lx · imagery 이름으로도 서명 없이 403
+    for u in ("/tiles/pmtiles/results/lx/yeosu-marine-2025-aerial.pmtiles", "/tiles/pmtiles/imagery/namwon_2504.pmtiles",
+              "/tiles/xyz/namwon_ap25_2023/3/0/0.webp"):
+        assert httpx.get(BASE + u, headers={"range": "bytes=0-99"}, timeout=30).status_code == 403, u
 
 
 def test_envelope_missing_500_dev(live):

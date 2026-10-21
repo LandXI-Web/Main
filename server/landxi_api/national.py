@@ -192,6 +192,10 @@ async def progress(request: Request):
              "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
              "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)")}
     out["schedule"] = sched
+    # 전국 결과 지도 조각 서명(10-22 옆문 닫기 — 로그인 없이 받아지던 /tiles/national 을 LX 세션 뒤로). 6시간 칸이라 30초 다시 읽기에도 주소가 같다
+    from .tiles import sign, sign_exp
+    exp = sign_exp()
+    out["tile_sig"] = {"exp": exp, "sig": sign(f"national/{year}", exp)}
     out["tonight"] = {**sched, "quiet": {**q, "now": _quiet(q, now)}, "est_km2": sched["est_km2_day"]}   # 예전 이름(호환) — 같은 값
     return out
 
@@ -382,9 +386,13 @@ async def sets(request: Request, asset: str = "farm", bbox: str = "", year: int 
 
 
 @tiles_router.get("/tiles/national/{asset}/{year}/{z}/{x}/{y}.pbf")
-async def national_tile(asset: str, year: int, z: int, x: int, y: int, v: str | None = None, test: int = 0):
+async def national_tile(asset: str, year: int, z: int, x: int, y: int, v: str | None = None, test: int = 0,
+                        exp: str | None = None, sig: str | None = None):
     if asset not in ASSETS or not (0 <= z <= 16):
         raise ApiError("not_found", "결과 자산 없음")
+    from .tiles import verify
+    if not verify(f"national/{year}", exp, sig):            # LX 세션이 받은 진행 장부의 서명만(10-22 옆문 닫기)
+        raise ApiError("forbidden", "서명 없는 전국 결과 조각")
     async with db(realm="lx") as conn:
         ver = (await versions(conn, year)).get(asset, "0")
     t = bool(test)

@@ -915,8 +915,15 @@ async def ledger_schema(tenant: str, request: Request):
         if k and k not in kinds:
             kinds.append(k)
     tiles = config.DATA_ROOT / "survey" / f"{tenant}-parcel-survey.pmtiles"      # 정적 필지 층(있는 관할만) — 없으면 서버 필지(…/parcels)
+    url = None
+    if tiles.exists():
+        # 서명 주소(10-22 옆문 닫기) — 정적 길(/landxi/data/survey/…)은 바깥 주소에서 닫았다. 이 기관(_gate 통과) 몫만 서명한다
+        from .catalog import base_of, pm_url, rebase
+        from .tiles import sign, sign_exp
+        sid, exp = f"results/{tenant}/parcel-survey", sign_exp()
+        url = rebase(f"{pm_url(sid)}?exp={exp}&sig={sign(sid, exp)}", base_of(request))
     return {"items": items, "kinds": kinds, "labels": {k: KINDS.get(k) for k in kinds},
-            "parcel_tiles": f"/landxi/data/survey/{tenant}-parcel-survey.pmtiles" if tiles.exists() else None, "as_of": now_iso()}
+            "parcel_tiles": url, "as_of": now_iso()}
 
 
 @router.get("/t/{tenant}/survey/registry/{import_id}/parcels")

@@ -79,12 +79,14 @@ def test_tile_version_cache(tok):
     j = get(tok["staff"], "/national/progress")
     v = j["v"]["farm"]
     u = f"{ROOT}/tiles/national/farm/{j['year']}/6/54/25.pbf"
-    r = httpx.get(u + f"?v={v}", timeout=60)
+    q = f"&exp={j['tile_sig']['exp']}&sig={j['tile_sig']['sig']}"         # 서명(10-22 옆문 닫기 — 로그인 없는 요청은 403)
+    assert httpx.get(u + f"?v={v}", timeout=60).status_code == 403
+    r = httpx.get(u + f"?v={v}" + q, timeout=60)
     assert r.status_code == 200 and r.headers["x-lx-ver"] == v
     assert "immutable" in r.headers["cache-control"]
     data = gzip.decompress(r.content) if r.content[:2] == b"\x1f\x8b" else r.content
     assert b"cells" in data                                              # 칸(분석 예정 · 끝남) 층
-    old = httpx.get(u + "?v=old", timeout=60)
+    old = httpx.get(u + "?v=old" + q, timeout=60)
     assert old.headers["cache-control"] == "no-cache"                     # 옛 판 = 보관 안 함(작업기가 칸을 마치면 주소가 바뀐다)
 
 

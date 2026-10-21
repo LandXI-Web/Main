@@ -24,7 +24,7 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .catalog import base_of, canonical_set, layer_items, pm_url, rebase, resolve_set_path, set_tenant
+from .catalog import base_of, canonical_set, layer_items, pm_url, rebase, resolve_set_path, restricted_set, set_tenant
 from .deps import ApiError, db, principal, require
 from .envelope import KST
 
@@ -53,8 +53,15 @@ def lx_only_set(set_id: str) -> bool:
 
 
 def needs_signature(set_id: str) -> bool:
+    # 공개 아닌 이름 있는 세트(restricted_set — 기관 서비스 결과와 같은 파일 · 영상 조각 · 필지)도 서명(10-22 옆문 닫기:
+    # 기관 별칭은 403 인데 같은 파일의 results/lx/* 이름으로는 서명 없이 받아지던 것)
     t = set_tenant(set_id)
-    return (t is not None and t != "lx") or set_id.startswith("demo/") or lx_only_set(set_id)
+    return (t is not None and t != "lx") or set_id.startswith("demo/") or lx_only_set(set_id) or restricted_set(set_id)
+
+
+def sign_exp() -> int:
+    # 만료를 6시간 칸에 맞춘다(12~18시간) — 같은 칸 안에서는 서명 주소가 같아 브라우저 보관이 이어진다(impl-20 ximap-speed)
+    return (int(time.time()) + SIGN_TTL) // 21600 * 21600 + 21600
 
 
 def _range_response(path: Path, request: Request, content_type: str) -> Response:
@@ -359,9 +366,11 @@ async def mvt(set_path: str, z: int, x: int, y: int, v: str | None = None, exp: 
 
 
 @router.get("/tiles/xyz/{folder}/{z}/{x}/{y}.webp")
-async def xyz(folder: str, z: int, x: int, y: int):
+async def xyz(folder: str, z: int, x: int, y: int, exp: str | None = None, sig: str | None = None):
     if "/" in folder or ".." in folder:
         raise ApiError("not_found")
+    if needs_signature(f"imagery/{folder}") and not verify(f"imagery/{folder}", exp, sig):   # 공개 아닌 영상 낱장(10-22 옆문 닫기)
+        raise ApiError("forbidden", "서명 없는 영상 조각", {"set": f"imagery/{folder}"})
     p = config.DATA_ROOT / "tiles" / folder / str(z) / str(x) / f"{y}.webp"
     if not p.exists():
         return Response(status_code=204)
@@ -421,8 +430,12 @@ async def tiles_sign(set: str, request: Request):
         raise ApiError("forbidden", "다른 기관의 결과 세트")
     if set_id.startswith("demo/") and not p.is_lx:
         raise ApiError("forbidden")
-    # 만료를 6시간 칸에 맞춘다(12~18시간) — 같은 칸 안에서는 서명 주소가 같아 브라우저 보관이 이어진다(impl-20 ximap-speed)
-    exp = (int(time.time()) + SIGN_TTL) // 21600 * 21600 + 21600
+    if not p.is_lx and t in (None, "lx") and not set_id.startswith("cog/") and restricted_set(set_id):
+        # 공개 아닌 이름 있는 세트 — 기관은 그 기관 카탈로그(배포본 결과 · 공유된 영상 · 참조)에 있는 것만(10-22 옆문 닫기)
+        _, mine = await layer_items(p, "tenant")
+        if not any(i.get("set") == set_id for i in mine):
+            raise ApiError("forbidden", "이 기관에 공유되지 않은 세트", {"set": set_id})
+    exp = sign_exp()
     s = sign(set_id, exp)
     if set_id.startswith("cog/"):
         url = f"{config.PUBLIC_BASE}/tiles/cog/{set_id[4:]}/{{z}}/{{x}}/{{y}}.webp?exp={exp}&sig={s}"

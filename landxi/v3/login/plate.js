@@ -19,6 +19,7 @@ const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROOT = {
   data: new URL('../../data/', import.meta.url).href,                  // /landxi/data/ (junction)
   geo: new URL('../../assets/data/geo/results/', import.meta.url).href,
+  global: new URL('../../global/data/', import.meta.url).href,         // 해외 공개 요약(화면 코드 폴더 · 10-22 옆문 닫기로 /landxi/data/global 대신)
 };
 const SCENES_URL = new URL('scenes.json', import.meta.url).href;
 const AI = '#0FA9A0';
@@ -44,8 +45,12 @@ const AX = {
 };
 const AXES = Object.keys(AX);
 const UNIT = { findings: 'parcels', points: 'count', grid: 'km2' };
-/* 'data:…' → /landxi/data/… · 'geo:…' → 결과 GeoJSON 폴더 */
-const href = (ref) => { const m = /^(data|geo):(.+)$/.exec(ref || ''); return m ? new URL(m[2], ROOT[m[1]]).href : null; };
+/* 'data:…' → /landxi/data/…(공용 기준 지도만 열림) · 'geo:…' → 결과 GeoJSON 폴더 · 'api:…' → 게이트웨이(공개 판 · 10-22 옆문 닫기) */
+const href = (ref) => {
+  const m = /^(data|geo|global|api):(.+)$/.exec(ref || '');
+  if (!m) return null;
+  return m[1] === 'api' ? new URL(API.base + m[2], location.href).href : new URL(m[2], ROOT[m[1]]).href;
+};
 /* 'a.b.c' 경로로 값을 꺼낸다. 값이 {value, as_of} 모양이면 그대로 돌려준다 */
 const pick = (o, path) => String(path || '').split('.').reduce((x, k) => (x == null ? x : x[k]), o);
 

@@ -7,6 +7,7 @@ import { findingsDrawer } from './drawer-findings.js';
 import { parcelCardV2, planCard, obstacles } from './parcel-card-v2.js';
 import { renderSurveyTab, modeSwitch } from './survey-panel.js';
 import { setPhase, clearLocks, bboxOf } from '../fx/arrive.js';
+import { signSet } from '../../shared/api-v1.js';
 import { D } from '../fx/glass.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -24,7 +25,9 @@ export function createSurvey(ctx) {
   async function setup() {
     const [emd, R] = await Promise.all([loadEmd(), loadRules()]);
     S.rows = emd?.rows || []; S.totals = emd?.totals || null; S.rules = R?.items || []; S.emdVia = SV.via.emd;
-    layers = surveyLayers(A, { url: 'pmtiles://' + location.origin + '/landxi/data/survey/namwon-parcel-survey.pmtiles', emd: ctx.emdFeatures });
+    // 필지 조사 층 = 서명 주소(이 기관 · LX 만 · 10-22 옆문 닫기 — 정적 길은 바깥 주소에서 닫았다). 서명을 못 받으면 옛 길(개발 서버에서만 열림)
+    const svUrl = await signSet('results/namwon/parcel-survey').catch(() => location.origin + '/landxi/data/survey/namwon-parcel-survey.pmtiles');
+    layers = surveyLayers(A, { url: 'pmtiles://' + svUrl, emd: ctx.emdFeatures });
     // 판독 모드: 필지 조회용 투명 면만(z14+) — 카드 v2 가 PNU 를 찾는다
     A.setLayoutProperty('sv-parcel-hit', 'visibility', 'visible');
     for (const id of ['sv-hl-line', 'sv-hl-halo']) A.setLayoutProperty(id, 'visibility', 'visible');

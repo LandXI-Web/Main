@@ -8,7 +8,7 @@
    바탕 = 육지 마스크 위성(land.js) · 바다는 단일 바다색 · 타일 없는 육지는 --bg-0. */
 import * as K from '../kit/index.js';
 import { api, esc, h, bboxOf, hasRoute, RM, E_CAM } from '../kit/util.js';
-import { env, sse, API } from '../../shared/api-v1.js';
+import { env, sse, API, signSet } from '../../shared/api-v1.js';
 import { pmtilesOf, tilesFor } from '../../xi/engine/sources.js';
 import { ROLES } from './ledger.js';
 import { AiIndex } from './aiindex.js';
@@ -1472,8 +1472,11 @@ async function openLast(p) {
   const R = S.region;
   const lastP = resumeSafe();
   if (R.hasFindings && inVW(R.bbox) && S.tiles !== null) {   // 서버가 '정적 필지 층 없음'(null)이라 하면 두드리지 않는다 — 새 시군구는 서버 필지 색인
-    const u = S.tiles || `/landxi/data/survey/${encodeURIComponent(who.me.tenant_id)}-parcel-survey.pmtiles`;
-    try { const r = await fetch(u, { method: 'HEAD', cache: 'no-store' }); if (r.ok) R.ai = u; } catch { /* AI 분석 전 관할 */ }
+    // 서명 주소(서버가 준 것 · 없으면 이 기관 세트로 서명) — 정적 길(/landxi/data/survey)은 바깥 주소에서 닫았다(10-22 옆문 닫기)
+    try {
+      const u = S.tiles || await signSet(`results/${who.me.tenant_id}/parcel-survey`);
+      const r = await fetch(u, { method: 'HEAD', cache: 'no-store' }); if (r.ok) R.ai = u;
+    } catch { /* AI 분석 전 관할 */ }
   }
   tm('head'); await mountLayers(); tm('layers');
   S.sum = await sumP; tm('summary');

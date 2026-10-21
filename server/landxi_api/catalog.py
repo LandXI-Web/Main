@@ -68,6 +68,8 @@ def resolve_set_path(set_id: str) -> str | None:
     if set_id in s["sets"]:
         return s["sets"][set_id]
     parts = set_id.split("/")
+    if len(parts) == 3 and parts[0] == "results" and parts[2] == "parcel-survey":   # 그 기관 관할 필지 조사 층(서명 · 10-22 옆문 닫기)
+        return f"survey/{parts[1]}-parcel-survey.pmtiles"
     if len(parts) == 3 and parts[0] == "results":
         return f"results/{parts[1]}/{parts[2]}.pmtiles"
     if len(parts) == 2 and parts[0] == "public":            # 공개 타일 폴더(S-4 · 서명 면제)
@@ -122,6 +124,27 @@ def set_tenant(set_id: str) -> str | None:
     return parts[1] if parts[0] == "results" and len(parts) >= 3 else None
 
 
+_POLICY: dict = {"mt": None, "m": {}}
+
+
+def restricted_set(set_id: str) -> bool:
+    """이름 있는 세트(sets.yaml layers · imagery) 중 공개가 아닌 것 = 서명 필요(10-22 옆문 닫기).
+    공개 = export_policy public (결과는 security_review cleared 까지). 그 밖(tenant · never · 검수 전 결과)은 같은 파일이
+    서명 없이 받아지지 않게 한다. sets.yaml 에 없는 세트(작업 결과 ULID 등)는 기존 규칙(set_tenant · demo · signed_sets)을 따른다."""
+    s = config.load_yaml("sets")
+    if _POLICY["mt"] is not s:
+        m = {}
+        for L in (s.get("layers") or []) + (s.get("imagery") or []):
+            if L.get("set"):
+                m[L["set"]] = (L.get("export_policy"), L.get("security_review"), L.get("role", "imagery"))
+        _POLICY.update(mt=s, m=m)
+    e = _POLICY["m"].get(set_id)
+    if not e:
+        return False
+    pol, rev, role = e
+    return pol != "public" or (role == "result" and rev != "cleared")
+
+
 def pm_url(set_id: str) -> str:
     return f"{config.PUBLIC_BASE}/tiles/pmtiles/{set_id}.pmtiles"
 
@@ -169,7 +192,7 @@ def _layer_items(stage: str | None) -> list[dict]:
                           bounds=m.get("bounds"), gsd_m=None, epoch=m.get("as_of"), crs="EPSG:3857", tier="result" if L["role"] == "result" else "tile",
                           license=L.get("license"), attribution=L.get("attribution"), export_policy=L["export_policy"],
                           security_review=L["security_review"], rights_holder=L.get("rights_holder", "LX"), ladder=L["ladder"],
-                          count=_count_env(m, L.get("count_unit", "count"), L.get("manifest", "")), signed=L["set"] in s.get("signed_sets", []),
+                          count=_count_env(m, L.get("count_unit", "count"), L.get("manifest", "")), signed=L["set"] in s.get("signed_sets", []) or restricted_set(L["set"]),
                           note=L.get("note") if exists else "파일 없음 — 산출 전(프론트 결손 표시)", basis=L.get("basis"))
         item["_lx_only"] = bool(L.get("lx_only"))
         item["_exists"] = exists
@@ -210,6 +233,7 @@ async def _imagery_items(stage: str | None) -> list[dict]:
             source, set_id = "pmtiles", r["pmtiles_set"]
             path = s["sets"].get(set_id)
             tiles, url = None, pm_url(set_id) if path else None
+            signed = bool(set_id) and restricted_set(set_id)      # 공개 아닌 영상 조각 = 서명 주소로만(10-22 옆문 닫기)
         bb = [round(float(v), 6) for v in r["bb"]] if r["bb"] else m.get("bounds")
         role = meta.get("role", "terrain" if r["kind"] == "terrain" else "imagery")
         out.append(_item_base(

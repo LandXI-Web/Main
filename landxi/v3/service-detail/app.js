@@ -11,6 +11,7 @@ import {
   h, enter, t, df,
 } from '../kit/index.js';
 import { isEnvelope, isDev, RM, session, esc } from '../kit/util.js';
+import { tileUrl } from '../../shared/api-v1.js';
 import { loadCards, loadDetail, loadDeploys, cropUrl, deployOfSet, buildBlocks, liveLayer, landingOf, focusOf, regionOfSet } from './adapter.js';
 import { loadSummary, itemFor, stageKey, scaleOf, userWords, aiOf, AI_LABEL } from './summary.js';
 
@@ -287,7 +288,7 @@ function liveMap(fig, b) {
       await st.ready;
       const map = st.map;
       map.resize();
-      map.addSource('sd-r', { type: 'vector', url: 'pmtiles://' + it.url });
+      map.addSource('sd-r', { type: 'vector', ...(await tileUrl(it)) });   // 서명 필요한 결과는 서명 주소로(10-22 옆문 닫기)
       map.addLayer({ id: 'sd-r-f', type: 'fill', source: 'sd-r', 'source-layer': it.layer, paint: { 'fill-color': '#0FA9A0', 'fill-opacity': 0.34 } }, 'slot-overlay');
       map.addLayer({ id: 'sd-r-h', type: 'line', source: 'sd-r', 'source-layer': it.layer, paint: { 'line-color': 'rgba(255,255,255,.85)', 'line-width': 3 } }, 'slot-overlay');
       map.addLayer({ id: 'sd-r-l', type: 'line', source: 'sd-r', 'source-layer': it.layer, paint: { 'line-color': '#0FA9A0', 'line-width': 1.6 } }, 'slot-overlay');

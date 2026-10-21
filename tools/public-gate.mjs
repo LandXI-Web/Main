@@ -96,8 +96,12 @@ function slimOpenapi(res) {
 /* 로그인한 사람만 — 필지 조회·지도 원천 중계(서버 열쇠로 부르는 길)를 누구나 쓰지 못하게(원칙 39 · 설계 4차 API 평가에서 발견) */
 const NEED_LOGIN = /^\/api\/v1\/(parcels|proxy\/(vworld|pc))(\/|\?|$)/;
 const hasLogin = (req) => !!req.headers.authorization || /[?&]access_token=/.test(req.url);
-/* 화면이 읽는 곳만. landxi/data(원본 데이터 연결)는 화면이 직접 읽는 지도 조각만 연다 */
-const ALLOW = /^\/landxi\/(v3|shared|assets|agent|xi|global|ops|proto)\/|^\/landxi\/data\/(tiles|vector|global)\/|^\/landxi\/data\/survey\/[\w.-]+\.pmtiles$|^\/landxi\/data\/manifest\.json$/;
+/* 화면이 읽는 곳만. landxi/data(원본 데이터 연결)는 공용 기준 지도만 연다(10-22 옆문 닫기 · recon-1022/SIDE-DOOR-FIX.md):
+   세계 바탕(NASA Blue Marble) · 해외 Sentinel-2 바탕 · 행정경계(시도 · 시군구 · 국토 윤곽 · 읍면동).
+   기관 결과 · 영상 조각 · 필지 조사 · 해외 원천 · 파일 목록(manifest)은 정적으로 내주지 않는다 — 게이트웨이 서명 길(/tiles/pmtiles · /tiles/mvt · /tiles/sign)로만 */
+const ALLOW = /^\/landxi\/(v3|shared|assets|agent|xi|global|ops|proto)\/|^\/landxi\/data\/tiles\/(world-bm|overseas-s2)\/|^\/landxi\/data\/vector\/pmtiles\/(sido|sigungu|korea-outline|namwon-emd)\.pmtiles$/;
+/* 화면 코드 폴더 안의 결과 사본 중 공개가 아닌 것(기관 서비스 결과와 같은 내용 — 옛 화면 자료) */
+const DENY_COPY = /^\/landxi\/assets\/data\/geo\/(results\/yeosu-marine-2025-aerial|namwon-change)[\w.-]*\.geojson$/;
 const DENY = /(^|\/)\.|(^|\/)(node_modules|server|tools|docs|tests|shots|_[a-z]+)(\/|$)|\.(py|ps1|md|env|log|pid|yml|yaml|sqlite|db)$/i;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json', '.geojson': 'application/geo+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
@@ -349,7 +353,7 @@ function codeBody(p, f, st, v) {
 
 function serveFile(req, res, p) {
   if (p.endsWith('/')) p += 'index.html';
-  if (!ALLOW.test(p) || DENY.test(p)) return send(res, 404, '404');
+  if (!ALLOW.test(p) || DENY.test(p) || DENY_COPY.test(p)) return send(res, 404, '404');
   const f = path.join(ROOT, p);
   if (!f.startsWith(path.join(ROOT, 'landxi') + path.sep)) return send(res, 404, '404');
   let st; try { st = fs.statSync(f); } catch { st = null; }
