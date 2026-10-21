@@ -6,5 +6,7 @@ rules:
   - {id: queue_wait_p95_gt_10m, level: caution, metric: queue.p95_wait_s, op: ">", threshold: 600, for_s: 0, unit: "s"}
   - {id: disk_e_free_lt_200gb, level: caution, metric: storage.E.free_gb, op: "<", threshold: 200, for_s: 0, unit: "GB"}
   - {id: disk_c_free_lt_30gb, level: caution, metric: storage.C.free_gb, op: "<", threshold: 30, for_s: 0, unit: "GB"}
+  - {id: db_backup_failed, level: fault, metric: backup.db.failed, op: ">", threshold: 0, for_s: 0, unit: ""}
+  - {id: db_backup_older_30h, level: caution, metric: backup.db.age_h, op: ">", threshold: 30, for_s: 0, unit: "h"}
   - {id: vworld_calls_80pct, level: caution, metric: vworld.calls_day_pct, op: ">", threshold: 80, for_s: 0, unit: "%"}
   - {id: job_fail_rate_gt_5pct_1h, level: caution, metric: jobs.fail_rate_1h_pct, op: ">", threshold: 5, for_s: 0, unit: "%"}

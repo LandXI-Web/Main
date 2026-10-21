@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import json
 import secrets
 from dataclasses import dataclass, field
@@ -43,10 +44,14 @@ async def _init_conn(conn):
     await conn.set_type_codec("json", encoder=lambda v: json.dumps(v, ensure_ascii=False), decoder=json.loads, schema="pg_catalog")
 
 
+# 게이트웨이 프로세스마다 연결 묶음 — 여러 프로세스(--workers N)면 PostgreSQL max_connections(100)를 넘지 않게 줄인다(impl-46 ops)
+_POOL_MAX = int(os.environ.get("LX_PG_POOL_MAX") or (16 if int(os.environ.get("LX_GATEWAY_WORKERS") or 1) <= 1 else 14))
+
+
 async def pool() -> asyncpg.Pool:
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(config.PG_DSN, min_size=2, max_size=16, init=_init_conn, command_timeout=60,
+        _pool = await asyncpg.create_pool(config.PG_DSN, min_size=2, max_size=_POOL_MAX, init=_init_conn, command_timeout=60,
                                           server_settings={"jit": "off"})   # JIT 끔(바퀴 16 재검수 — 짧은 질의에 컴파일 1초가 붙음)
     return _pool
 
@@ -157,3 +162,37 @@ async def db(p: Principal | None = None, *, realm: str | None = None, tenant: st
 async def audit(conn, p: Principal, action: str, subject: str, before=None, after=None):
     await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, before, after) VALUES ($1,$2,$3,$4,$5,$6)",
                        p.user_id or "system", p.realm or "system", action, subject, before, after)
+
+
+# ── 적은 수의 키 목록(워커 하트비트 · 레인 · GPU 해시) — Redis 전체를 훑지 않게(impl-46 ops) ─────────────────
+# Redis 에는 작업 기록 키가 수십만 개라 scan_iter(match="worker:*:hb") 한 번이 0.4~0.8 s 였다(/health · 인프라 · 공유 데이터 화면).
+# 패턴마다 10 s 에 한 번만 훑고(모든 게이트웨이 프로세스를 통틀어 · Redis 잠금) 목록을 Redis 에 둔다. 값(hgetall)은 늘 지금 것을 읽고,
+# 목록에 있는데 값이 비면(워커가 멈춰 키가 사라짐) 호출하는 쪽이 빈 해시로 본다 — 새 워커는 길어야 10 s 뒤에 보인다.
+_KEYS_MEM: dict[str, tuple[float, list[str]]] = {}
+KEYS_TTL_S = 10
+
+
+async def keys_like(pattern: str, ttl: float = KEYS_TTL_S) -> list[str]:
+    import time as _t
+    now = _t.time()
+    hit = _KEYS_MEM.get(pattern)
+    if hit and now - hit[0] < ttl:
+        return hit[1]
+    r = await redis()
+    ck = f"lx:keyidx:{pattern}"
+    raw = await r.get(ck)
+    if raw is None and await r.set(ck + ":lock", "1", nx=True, ex=30):
+        try:
+            keys = sorted({k async for k in r.scan_iter(match=pattern, count=5000)})
+            await r.set(ck, json.dumps(keys), ex=max(1, int(ttl)))
+            raw = json.dumps(keys)
+        finally:
+            await r.delete(ck + ":lock")
+    if raw is None:                       # 다른 프로세스가 훑는 중 — 지난 목록 · 없으면 직접
+        if hit:
+            return hit[1]
+        keys = sorted({k async for k in r.scan_iter(match=pattern, count=5000)})
+    else:
+        keys = json.loads(raw)
+    _KEYS_MEM[pattern] = (now, keys)
+    return keys

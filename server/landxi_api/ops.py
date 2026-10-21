@@ -18,7 +18,7 @@ from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .deps import ApiError, audit, db, principal, redis, require
+from .deps import ApiError, audit, db, keys_like, principal, redis, require
 from .envelope import KST, env, now_iso
 from .quota import du_gb, usage_of
 
@@ -111,8 +111,8 @@ _SMI_LOCK = asyncio.Lock()
 async def gpus(request: Request):
     require(principal(request), admin=True)
     r = await redis()
-    keys = sorted([k async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*", count=2000)])
-    hs = [await r.hgetall(k) for k in keys]
+    keys = sorted([k for k in await keys_like(f"ops:gpu:{config.NODE_ID}:*")])
+    hs = [h for h in [await r.hgetall(k) for k in keys] if h]
     # 폴러 표본이 오래됐으면(폴러가 Redis 에 못 쓰는 동안 — 10-17 14:25 IPv6 길 막힘 뒤 5시간 옛 값이 '지금'으로 보였다) 게이트웨이가 직접 읽는다
     stale = None
     try:
@@ -454,8 +454,10 @@ async def queues_snapshot() -> dict:
                                  "FROM jobs WHERE started_at IS NOT NULL AND created_at > now() - interval '24 hours' GROUP BY 1")
     wmap = {w["pool"]: w["p95"] for w in waits}
     hb = {}
-    async for k in r.scan_iter(match="worker:*:hb", count=2000):
+    for k in await keys_like("worker:*:hb"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         hb.setdefault(h.get("pool"), []).append(h)
     for name, pl in pools.items():
         if pl.get("state") == "pending":
@@ -472,7 +474,7 @@ async def queues_snapshot() -> dict:
                                        None if p95 is not None else "시작된 작업 없음"),
                      "shards_backlog": env(depth, "count", "measured", f"XLEN shards:{name}")}
     lanes = []
-    async for k in r.scan_iter(match="lane:*", count=2000):
+    for k in await keys_like("lane:*"):
         w = k.split(":", 1)[1]
         blocks = [json.loads(b) for b in await r.lrange(k, 0, 49)]
         lanes.append({"worker": w, "blocks": blocks})
@@ -572,8 +574,10 @@ async def ops_models(request: Request):
     r = await redis()
     resident: dict[str, list[str]] = {}
     vram: dict[str, float] = {}
-    async for k in r.scan_iter(match="worker:*:vram", count=2000):
+    for k in await keys_like("worker:*:vram"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         w = k.split(":")[1]
         for mid in json.loads(h.get("models", "[]")):
             resident.setdefault(mid, []).append(w)
@@ -590,6 +594,7 @@ async def ops_models(request: Request):
 
 
 _ten_cache: dict = {"at": 0.0, "out": None, "task": None}
+TEN_KEY = "lx:ops:tenants_usage"
 TEN_FRESH_S = 60          # 이보다 새 값은 그대로 · 넘으면 지난 값을 바로 주고 뒤에서 다시 센다(저장 공간 du · 행 크기 합이 수십 초 — 10-14 재검수)
 
 
@@ -603,13 +608,18 @@ async def _ten_compute() -> dict:
             return await usage_of(t)
     items = await asyncio.gather(*(one(t) for t in ts))
     out = {"items": list(items), "total": len(ts), "as_of": now_iso()}
-    _ten_cache.update(at=time.time(), out=out)
+    _ten_cache.update(at=time.time(), out=out, shared_off=False)
+    try:                                       # 다른 게이트웨이 프로세스가 첫 요청에 수십 초 다시 세지 않게(impl-46 ops)
+        await (await redis()).set(TEN_KEY, json.dumps({"at": _ten_cache["at"], "out": out}, ensure_ascii=False, default=str), ex=3600)
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
 def tenants_usage_stale() -> None:
     """한도가 바뀌면 다음 요청은 새로 센 값을 기다린다."""
     _ten_cache["out"] = None
+    _ten_cache["shared_off"] = True            # 한도가 바뀐 뒤에는 Redis 의 지난 값도 쓰지 않는다(다음 계산이 덮을 때까지)
 
 
 def _ten_refresh() -> asyncio.Task:
@@ -623,6 +633,14 @@ def _ten_refresh() -> asyncio.Task:
 
 async def tenants_usage() -> dict:
     out = _ten_cache.get("out")
+    if out is None and not _ten_cache.get("shared_off"):
+        try:
+            v = json.loads(await (await redis()).get(TEN_KEY) or "null")
+            if v:
+                _ten_cache.update(at=float(v["at"]), out=v["out"])
+                out = v["out"]
+        except Exception:  # noqa: BLE001
+            pass
     if out is not None:
         if time.time() - _ten_cache["at"] > TEN_FRESH_S:
             _ten_refresh()
@@ -725,19 +743,41 @@ async def unload(mid: str, body: dict, request: Request):
 
 
 # ── 경보 평가(60s) ────────────────────────────────────────────────────────────
+BACKUP_STATUS = config.DATA_ROOT / "_backup" / "db" / "status.json"
+
+
+def _backup_status() -> dict | None:
+    """DB 백업 상태 파일 → {failed: 0|1, age_h: 마지막 성공 뒤 시간}. 백업을 한 번도 안 돌린 곳(파일 없음)은 None(경보 없음)."""
+    try:
+        st = json.loads(BACKUP_STATUS.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    age = 9999.0
+    if st.get("last_ok_at"):
+        try:
+            age = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(st["last_ok_at"])).total_seconds() / 3600
+        except Exception:  # noqa: BLE001
+            pass
+    return {"failed": 0 if st.get("ok") or st.get("running") else 1, "age_h": round(age, 1)}
+
+
 async def evaluate_alerts_once():
     rules = config.load_yaml("alerts")["rules"]
     r = await redis()
     now = time.time()
     metrics: dict[str, list[tuple[str, int | None, float]]] = {}
     # 워커 하트비트
-    async for k in r.scan_iter(match="worker:*:hb", count=2000):
+    for k in await keys_like("worker:*:hb"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         age = now - float(h.get("ts", now))
         metrics.setdefault("worker.heartbeat_age_s", []).append((h.get("id"), None, age))
     # 폴러 GPU 해시(없으면 건너뜀)
-    async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*", count=2000):
+    for k in await keys_like(f"ops:gpu:{config.NODE_ID}:*"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         try:
             g = json.loads(h["json"]) if "json" in h else None
             if g:
@@ -756,6 +796,10 @@ async def evaluate_alerts_once():
     fc, _ = await run_in_threadpool(_statfs, "C:")       # C: 가 차면 Docker(데이터베이스 · Redis · vLLM)가 멈춘다(10-19 09:12 실측)
     if fc is not None:
         metrics.setdefault("storage.C.free_gb", []).append((config.NODE_ID, None, fc))
+    bk = _backup_status()                                 # 매일 DB 백업(server/ops/db_backup.py · 6-2) — 실패 · 30시간 넘게 성공 없음
+    if bk is not None:
+        metrics.setdefault("backup.db.failed", []).append((config.NODE_ID, None, bk["failed"]))
+        metrics.setdefault("backup.db.age_h", []).append((config.NODE_ID, None, bk["age_h"]))
     async with db(realm="lx") as conn:
         fr = await conn.fetchrow("SELECT count(*) FILTER (WHERE state='failed') f, count(*) n FROM jobs WHERE created_at > now() - interval '1 hour'")
         if fr["n"]:
@@ -844,8 +888,10 @@ async def ops_uptime(request: Request):
         gw = None
     items.append({"name": "gateway", "boot_at": BOOT.get("boot_at"), "uptime_s": up(gw), "state": "up"})
     r = await redis()
-    async for k in r.scan_iter(match="worker:*:hb", count=2000):
+    for k in await keys_like("worker:*:hb"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         pid = h.get("pid")
         ct = None
         try:

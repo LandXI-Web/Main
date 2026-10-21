@@ -25,6 +25,12 @@ $lockFile = Join-Path $here ".workers.lock"
 $watchPid = Join-Path $here ".watch.pid"
 New-Item -ItemType Directory -Force $logs | Out-Null
 $t0 = Get-Date
+# 게이트웨이 프로세스 수(impl-46 ops · 20명에 한 프로세스가 코어 하나를 다 씀) — server/.env LX_GATEWAY_WORKERS(없으면 4).
+# 여러 프로세스여도 한 번만 도는 일(경보 · 배포 흐름 · 재학습 · 기관 공간 · 복구)은 대표 하나만(landxi_api/procs.py · 파일 잠금).
+$gwWorkers = 4
+try { $ev = Get-Content (Join-Path $here ".env") -Encoding utf8 -ErrorAction Stop | Where-Object { $_ -match "^\s*LX_GATEWAY_WORKERS\s*=\s*(\d+)" } | Select-Object -First 1; if ($ev -match "=\s*(\d+)") { $gwWorkers = [int]$Matches[1] } } catch {}
+if ($gwWorkers -lt 1) { $gwWorkers = 1 }
+$env:LX_GATEWAY_WORKERS = "$gwWorkers"
 function Step([string]$msg) { Write-Host ("[{0,5:n1}s] {1}" -f ((Get-Date) - $t0).TotalSeconds, $msg) }
 
 $script:listenCache = $null
@@ -111,7 +117,7 @@ function Show-Status {
     @{ n = "정적 프론트 :4173"; ok = (Listening 4173); d = "http://localhost:4173/landxi/v3/login/" },
     @{ n = "Redis :6380"; ok = (Listening 6380); d = "docker landxi-redis" },
     @{ n = "PostGIS :5433"; ok = (Listening 5433); d = "docker landxi-postgis" },
-    @{ n = "게이트웨이 :8700"; ok = ((Http "http://127.0.0.1:8700/api/v1/health") -eq 200); d = (Health-Line) },
+    @{ n = "게이트웨이 :8700"; ok = ((Http "http://127.0.0.1:8700/api/v1/health") -eq 200); d = ("프로세스 {0} · " -f $gwWorkers) + (Health-Line) },
     @{ n = "목 게이트웨이 :8701"; ok = (Listening 8701); d = "계약 픽스처·리플레이" },
     @{ n = "관제 :8702"; ok = (Listening 8702); d = "http://localhost:8702/landxi/ops/" },
     @{ n = "vLLM :8000/:8001"; ok = ((Listening 8000) -and (Listening 8001)); d = "게이트웨이 /agent/runs 경유만" },
@@ -130,19 +136,39 @@ if ($Status) { Show-Status; return }
 $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONUTF8 = "1"; $env:PYTHONPATH = $here; $env:PYTHONUNBUFFERED = "1"
 $env:LX_DATA_ROOT = "E:/Land-XI 플랫폼/02. 데이터"
 
+
 function Start-Gateway {
-  $p = Start-Hidden "python" @("-m", "uvicorn", "landxi_api.main:app", "--host", "127.0.0.1", "--port", "8700", "--timeout-graceful-shutdown", "3", "--timeout-keep-alive", "75") `
-    $here "$logs\f1b-gateway.log" "$logs\f1b-gateway.err"
-  for ($i = 0; $i -lt 60 -and (Http "http://127.0.0.1:8700/api/v1/health") -ne 200; $i++) { Start-Sleep -Milliseconds 500 }
+  $argv = @("-m", "uvicorn", "landxi_api.main:app", "--host", "127.0.0.1", "--port", "8700", "--timeout-graceful-shutdown", "3", "--timeout-keep-alive", "75")
+  if ($gwWorkers -gt 1) { $argv += @("--workers", "$gwWorkers") }
+  $p = Start-Hidden "python" $argv $here "$logs\f1b-gateway.log" "$logs\f1b-gateway.err"
+  for ($i = 0; $i -lt 90 -and (Http "http://127.0.0.1:8700/api/v1/health") -ne 200; $i++) { Start-Sleep -Milliseconds 500 }
   return $p
 }
 
-function Stop-Gateway {
+# 게이트웨이 프로세스 묶음의 맨 위(uvicorn 감독) PID — 듣는 소켓은 자식이 쥐고 있을 수도 있어 위로 올라간다. 이름으로 죽이지 않고 PID 로만.
+function Gateway-Roots {
+  $all = @{}; foreach ($x in @(Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue)) { $all[[int]$x.ProcessId] = $x }
+  $roots = @{}
   foreach ($c in (Get-NetTCPConnection -State Listen -LocalPort 8700 -ErrorAction SilentlyContinue)) {
-    $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
-    if ($proc -and $proc.ProcessName -eq "python") { Stop-Process -Id $proc.Id -Force; Write-Host "[restart] gateway :8700 pid $($proc.Id) 멈춤" }
+    $id = [int]$c.OwningProcess
+    if (-not $all.ContainsKey($id)) { continue }
+    for ($k = 0; $k -lt 4; $k++) {
+      $pp = [int]$all[$id].ParentProcessId
+      if ($all.ContainsKey($pp) -and $all[$pp].CommandLine -match "uvicorn\s+landxi_api\.main:app") { $id = $pp } else { break }
+    }
+    $roots[$id] = 1
   }
-  for ($i = 0; $i -lt 20 -and [bool](Get-NetTCPConnection -State Listen -LocalPort 8700 -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 250 }
+  # 감독 프로세스가 아직 듣기 전(기동 중)이어도 — 명령줄이 :8700 게이트웨이인 python
+  foreach ($x in $all.Values) { if ($x.CommandLine -match "uvicorn\s+landxi_api\.main:app.*--port\s+8700(\s|$)") { $roots[[int]$x.ProcessId] = 1 } }
+  return @($roots.Keys)
+}
+
+function Stop-Gateway {
+  foreach ($id in (Gateway-Roots)) {
+    & taskkill.exe /PID $id /T /F 2>&1 | Out-Null
+    Write-Host "[restart] gateway :8700 pid $id (+자식 프로세스) 멈춤"
+  }
+  for ($i = 0; $i -lt 40 -and [bool](Get-NetTCPConnection -State Listen -LocalPort 8700 -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 250 }
 }
 
 # ── 게이트웨이 감시(-Watch) ─────────────────────────────────────────────────
@@ -153,9 +179,12 @@ if ($Watch) {
     Start-Sleep -Seconds 15
     # 감시는 "죽었을 때"만 살린다 — 바쁜 게이트웨이(무거운 요청 · 동시 로그인)를 죽이지 않게 응답 대기 20 s · 연속 3회(≈ 2분) 실패일 때만
     if ((Http "http://127.0.0.1:8700/api/v1/health" 20) -eq 200) { $fail = 0; continue }
+    # 여러 프로세스(impl-46)면 죽은 자식은 uvicorn 감독이 다시 띄운다 — 바쁜(느린) 게이트웨이를 감시가 죽이면 그 틈이 502 가 된다(impl-46 20명 시험 실측).
+    # 듣는 소켓이 없으면(정말 죽음) 3회 · 듣고는 있는데 느리면 여러 프로세스일 때 8회(≈ 4~5분) 연속일 때만 다시 띄운다.
+    $need = 3; if ($gwWorkers -gt 1 -and (Listening 8700)) { $need = 8 }
     $fail++
-    Add-Content "$logs\gateway-watch.log" ("{0} health 실패 {1}/3" -f (Get-Date -Format s), $fail) -Encoding utf8
-    if ($fail -ge 3) {
+    Add-Content "$logs\gateway-watch.log" ("{0} health 실패 {1}/{2}" -f (Get-Date -Format s), $fail, $need) -Encoding utf8
+    if ($fail -ge $need) {
       Stop-Gateway
       $p = Start-Gateway
       Add-Content "$logs\gateway-watch.log" ("{0} 게이트웨이 재기동 pid {1} · health {2}" -f (Get-Date -Format s), $p.Id, (Http "http://127.0.0.1:8700/api/v1/health")) -Encoding utf8
@@ -201,9 +230,14 @@ $junction = Join-Path $repo "landxi\data"
 if (-not (Test-Path $junction)) { New-Item -ItemType Junction $junction -Target "E:\Land-XI 플랫폼\02. 데이터" | Out-Null; Write-Host "[data] landxi/data junction 생성" }
 
 # 1) Redis · PostGIS (compose 프로젝트 landxi 로 한정)
+# 재부팅 직후 로그온 작업(LandXI-Server)은 Docker Desktop 보다 먼저 돌 수 있다 — Docker 엔진이 답할 때까지 최대 5분 기다린다(6-3).
+# 컨테이너는 restart: unless-stopped 라 엔진이 뜨면 저절로 올라온다(compose up 은 빠진 것만).
+if (-not ((Listening 6380) -and (Listening 5433))) {
+  for ($i = 0; $i -lt 60; $i++) { docker info --format "{{.ServerVersion}}" 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { break }; if ($i -eq 0) { Step "[docker] 엔진 기다림(최대 5분)" }; Start-Sleep -Seconds 5 }
+}
 if (-not ((Listening 6380) -and (Listening 5433))) {
   docker compose -p landxi -f (Join-Path $here "docker-compose.phase0.yml") up -d redis postgis 2>&1 | Out-Host
-  for ($i = 0; $i -lt 30 -and -not ((Listening 6380) -and (Listening 5433)); $i++) { Start-Sleep -Seconds 1 }
+  for ($i = 0; $i -lt 90 -and -not ((Listening 6380) -and (Listening 5433)); $i++) { Start-Sleep -Seconds 1 }
 }
 Step "[1] Redis·PostGIS"
 

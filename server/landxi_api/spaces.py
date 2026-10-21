@@ -641,6 +641,9 @@ async def sync(tenant: str | None = None, *, force: bool = False):
 
 def _ensure_loop():
     """게이트웨이 안 60초 주기(처음 부를 때 시작) — 아무도 화면을 열지 않아도 새 회차 공개가 판 · 알림이 된다."""
+    from . import procs
+    if not procs.is_primary():                 # 여러 프로세스면 대표 하나만(impl-46 ops)
+        return
     task = _LOOP.get("task")
     if task is not None and not task.done():
         return

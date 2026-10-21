@@ -17,7 +17,7 @@ from shapely.geometry import mapping, shape
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .deps import ApiError, Principal, audit, db, principal, redis, require
+from .deps import ApiError, Principal, audit, db, keys_like, principal, redis, require
 from .envelope import KST, env, now_iso
 from . import quota as quota_mod
 
@@ -83,8 +83,10 @@ def pool_of(model) -> str:
 async def active_workers(pool: str) -> list[str]:
     r = await redis()
     out = []
-    async for k in r.scan_iter(match="worker:*:hb", count=2000):
+    for k in await keys_like("worker:*:hb"):
         h = await r.hgetall(k)
+        if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+            continue
         if h.get("pool") == pool:
             out.append(h.get("id"))
     return sorted(w for w in out if w)

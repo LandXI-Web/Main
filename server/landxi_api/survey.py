@@ -1120,9 +1120,13 @@ async def report_draft(request: Request, emd_cd: str, rule: str | None = None, t
 EMD_SWEEP_S = 30
 _sweep = {"task": None, "last": None, "runs": 0}
 _maint: dict = {"running": None, "last": {}}
+MAINT_KEY = "lx:survey:maint"
 
 
 def _kick_emd_sweep():
+    from . import procs
+    if not procs.is_primary():                 # 여러 프로세스면 대표 하나만(impl-46 ops)
+        return
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -1139,6 +1143,10 @@ async def _emd_sweep_loop():
             while True:
                 r = await run_in_threadpool(PP.fill_blank, 20000)
                 _sweep.update(last={**r, "at": now_iso()}, runs=_sweep["runs"] + 1)
+                try:
+                    await (await redis()).set(MAINT_KEY + ":sweep", json.dumps({"last": _sweep["last"], "runs": _sweep["runs"]}, default=str), ex=3600)
+                except Exception:  # noqa: BLE001
+                    pass
                 if r["filled"] + r["outside"] < 20000 or r["filled"] + r["outside"] == 0:
                     break
         except Exception as e:  # noqa: BLE001 — 다음 주기에 다시
@@ -1186,8 +1194,9 @@ async def maintenance(body: dict, request: Request):
     sgg = (body or {}).get("sgg_cd")
     if sgg and not re.match(r"^\d{5}$", str(sgg)):
         raise ApiError("bad_request", "sgg_cd = 시군구 코드 5자리")
-    if _maint["running"]:
-        raise ApiError("conflict", "관리 작업이 이미 돌고 있습니다", {"task": _maint["running"]}, 409)
+    rd = await redis()                         # 여러 게이트웨이 프로세스에서도 한 번에 하나 · 상태 공유(impl-46 ops)
+    if _maint["running"] or not await rd.set(MAINT_KEY + ":running", task, nx=True, ex=6 * 3600):
+        raise ApiError("conflict", "관리 작업이 이미 돌고 있습니다", {"task": _maint["running"] or await rd.get(MAINT_KEY + ":running")}, 409)
     _maint["running"] = task
 
     async def go():
@@ -1197,6 +1206,11 @@ async def maintenance(body: dict, request: Request):
             r = {"task": task, "error": f"{type(e).__name__}: {str(e)[:300]}"}
         _maint["last"][task] = {**r, "at": now_iso()}
         _maint["running"] = None
+        try:
+            await rd.hset(MAINT_KEY + ":last", task, json.dumps(_maint["last"][task], ensure_ascii=False, default=str))
+            await rd.delete(MAINT_KEY + ":running")
+        except Exception:  # noqa: BLE001
+            pass
         try:
             from . import summary as SM
             SM.invalidate()
@@ -1211,5 +1225,15 @@ async def maintenance(body: dict, request: Request):
 async def maintenance_state(request: Request):
     require(principal(request), admin=True)
     # 관리 기록은 화면 숫자가 아니다 — 봉투 검사 밖 구조 블록(detail)에 싣는다
-    return {"running": _maint["running"], "detail": {"last": _maint["last"], "emd_sweep": _sweep["last"], "emd_sweep_runs": _sweep["runs"]},
+    running, last, sweep = _maint["running"], dict(_maint["last"]), {"last": _sweep["last"], "runs": _sweep["runs"]}
+    try:                                       # 다른 게이트웨이 프로세스가 돌린 것도(impl-46 ops)
+        rd = await redis()
+        running = running or await rd.get(MAINT_KEY + ":running")
+        for k, v in (await rd.hgetall(MAINT_KEY + ":last")).items():
+            last.setdefault(k, json.loads(v))
+        if sweep["last"] is None:
+            sweep = json.loads(await rd.get(MAINT_KEY + ":sweep") or "null") or sweep
+    except Exception:  # noqa: BLE001
+        pass
+    return {"running": running, "detail": {"last": last, "emd_sweep": sweep["last"], "emd_sweep_runs": sweep["runs"]},
             "as_of": now_iso()}

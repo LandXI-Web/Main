@@ -1,0 +1,1228 @@
+{
+ "stages": [
+  {
+   "vus": 1,
+   "start": 0.3,
+   "dur": 30
+  },
+  {
+   "vus": 5,
+   "start": 31.5,
+   "dur": 45
+  },
+  {
+   "vus": 10,
+   "start": 78.1,
+   "dur": 60
+  },
+  {
+   "vus": 20,
+   "start": 141.1,
+   "dur": 240
+  }
+ ],
+ "per_stage": {
+  "1": {
+   "requests": 199,
+   "errors": 1,
+   "error_rate": 0.5,
+   "status": {
+    "200": 198,
+    "416": 1
+   },
+   "endpoints": {
+    "API /api/v1/announcements": {
+     "n": 1,
+     "p50": 305,
+     "p95": 305,
+     "max": 305
+    },
+    "API /api/v1/approvals": {
+     "n": 2,
+     "p50": 315,
+     "p95": 315,
+     "max": 315
+    },
+    "API /api/v1/auth/login": {
+     "n": 2,
+     "p50": 1142,
+     "p95": 1142,
+     "max": 1142
+    },
+    "API /api/v1/auth/session": {
+     "n": 2,
+     "p50": 634,
+     "p95": 634,
+     "max": 634
+    },
+    "API /api/v1/cards/deck": {
+     "n": 1,
+     "p50": 369,
+     "p95": 369,
+     "max": 369
+    },
+    "API /api/v1/catalog/imagery/*/thumb": {
+     "n": 2,
+     "p50": 382,
+     "p95": 382,
+     "max": 382
+    },
+    "API /api/v1/catalog/layers": {
+     "n": 1,
+     "p50": 603,
+     "p95": 603,
+     "max": 603
+    },
+    "API /api/v1/holidays": {
+     "n": 2,
+     "p50": 581,
+     "p95": 581,
+     "max": 581
+    },
+    "API /api/v1/me": {
+     "n": 3,
+     "p50": 310,
+     "p95": 622,
+     "max": 622
+    },
+    "API /api/v1/me/agenda": {
+     "n": 1,
+     "p50": 408,
+     "p95": 408,
+     "max": 408
+    },
+    "API /api/v1/me/analyses": {
+     "n": 1,
+     "p50": 482,
+     "p95": 482,
+     "max": 482
+    },
+    "API /api/v1/me/events": {
+     "n": 1,
+     "p50": 330,
+     "p95": 330,
+     "max": 330
+    },
+    "API /api/v1/me/memos": {
+     "n": 1,
+     "p50": 322,
+     "p95": 322,
+     "max": 322
+    },
+    "API /api/v1/me/prefs/dash.lx-console": {
+     "n": 1,
+     "p50": 368,
+     "p95": 368,
+     "max": 368
+    },
+    "API /api/v1/me/storage": {
+     "n": 1,
+     "p50": 669,
+     "p95": 669,
+     "max": 669
+    },
+    "API /api/v1/openapi.json": {
+     "n": 2,
+     "p50": 292,
+     "p95": 292,
+     "max": 292
+    },
+    "API /api/v1/projects": {
+     "n": 1,
+     "p50": 2140,
+     "p95": 2140,
+     "max": 2140
+    },
+    "API /api/v1/projects/notices": {
+     "n": 2,
+     "p50": 619,
+     "p95": 619,
+     "max": 619
+    },
+    "API /api/v1/reviews/notify": {
+     "n": 2,
+     "p50": 596,
+     "p95": 596,
+     "max": 596
+    },
+    "API /api/v1/shared/layers": {
+     "n": 1,
+     "p50": 309,
+     "p95": 309,
+     "max": 309
+    },
+    "HTML /landxi/v3/login/": {
+     "n": 2,
+     "p50": 834,
+     "p95": 834,
+     "max": 834
+    },
+    "HTML /landxi/v3/lx-console/": {
+     "n": 1,
+     "p50": 1196,
+     "p95": 1196,
+     "max": 1196
+    },
+    "HTML /landxi/v3/lx-map/": {
+     "n": 1,
+     "p50": 645,
+     "p95": 645,
+     "max": 645
+    },
+    "PAGE staff-home first": {
+     "n": 1,
+     "p50": 8542,
+     "p95": 8542,
+     "max": 8542
+    },
+    "PAGE ximap first": {
+     "n": 1,
+     "p50": 6610,
+     "p95": 6610,
+     "max": 6610
+    },
+    "STATIC": {
+     "n": 137,
+     "p50": 316,
+     "p95": 963,
+     "max": 3379
+    },
+    "TILE /cog": {
+     "n": 24,
+     "p50": 309,
+     "p95": 1209,
+     "max": 1712
+    },
+    "TILE /pmtiles": {
+     "n": 1,
+     "p50": 292,
+     "p95": 292,
+     "max": 292
+    },
+    "TILE /sign": {
+     "n": 1,
+     "p50": 293,
+     "p95": 293,
+     "max": 293
+    }
+   }
+  },
+  "5": {
+   "requests": 1257,
+   "errors": 4,
+   "error_rate": 0.32,
+   "status": {
+    "200": 1234,
+    "416": 4,
+    "206": 17,
+    "204": 2
+   },
+   "endpoints": {
+    "API /api/v1/announcements": {
+     "n": 7,
+     "p50": 320,
+     "p95": 372,
+     "max": 372
+    },
+    "API /api/v1/approvals": {
+     "n": 14,
+     "p50": 385,
+     "p95": 1218,
+     "max": 1218
+    },
+    "API /api/v1/auth/login": {
+     "n": 5,
+     "p50": 452,
+     "p95": 1456,
+     "max": 1456
+    },
+    "API /api/v1/auth/session": {
+     "n": 20,
+     "p50": 369,
+     "p95": 1062,
+     "max": 1062
+    },
+    "API /api/v1/auth/tenants": {
+     "n": 6,
+     "p50": 384,
+     "p95": 745,
+     "max": 745
+    },
+    "API /api/v1/brand/namwon": {
+     "n": 6,
+     "p50": 622,
+     "p95": 1691,
+     "max": 1691
+    },
+    "API /api/v1/cards/deck": {
+     "n": 13,
+     "p50": 406,
+     "p95": 2023,
+     "max": 2023
+    },
+    "API /api/v1/catalog/imagery/*/thumb": {
+     "n": 14,
+     "p50": 361,
+     "p95": 416,
+     "max": 416
+    },
+    "API /api/v1/catalog/layers": {
+     "n": 7,
+     "p50": 1152,
+     "p95": 1787,
+     "max": 1787
+    },
+    "API /api/v1/holidays": {
+     "n": 7,
+     "p50": 342,
+     "p95": 738,
+     "max": 738
+    },
+    "API /api/v1/me": {
+     "n": 20,
+     "p50": 414,
+     "p95": 764,
+     "max": 764
+    },
+    "API /api/v1/me/agenda": {
+     "n": 7,
+     "p50": 436,
+     "p95": 489,
+     "max": 489
+    },
+    "API /api/v1/me/analyses": {
+     "n": 7,
+     "p50": 509,
+     "p95": 714,
+     "max": 714
+    },
+    "API /api/v1/me/events": {
+     "n": 7,
+     "p50": 303,
+     "p95": 373,
+     "max": 373
+    },
+    "API /api/v1/me/memos": {
+     "n": 7,
+     "p50": 370,
+     "p95": 1223,
+     "max": 1223
+    },
+    "API /api/v1/me/prefs/dash.lx-console": {
+     "n": 8,
+     "p50": 399,
+     "p95": 789,
+     "max": 789
+    },
+    "API /api/v1/me/storage": {
+     "n": 7,
+     "p50": 377,
+     "p95": 453,
+     "max": 453
+    },
+    "API /api/v1/openapi.json": {
+     "n": 23,
+     "p50": 380,
+     "p95": 774,
+     "max": 1181
+    },
+    "API /api/v1/projects": {
+     "n": 7,
+     "p50": 2457,
+     "p95": 2680,
+     "max": 2680
+    },
+    "API /api/v1/projects/notices": {
+     "n": 7,
+     "p50": 415,
+     "p95": 751,
+     "max": 751
+    },
+    "API /api/v1/regions": {
+     "n": 6,
+     "p50": 366,
+     "p95": 403,
+     "max": 403
+    },
+    "API /api/v1/requests": {
+     "n": 6,
+     "p50": 375,
+     "p95": 447,
+     "max": 447
+    },
+    "API /api/v1/requests/services": {
+     "n": 3,
+     "p50": 390,
+     "p95": 675,
+     "max": 675
+    },
+    "API /api/v1/reviews": {
+     "n": 6,
+     "p50": 319,
+     "p95": 381,
+     "max": 381
+    },
+    "API /api/v1/reviews/notify": {
+     "n": 20,
+     "p50": 390,
+     "p95": 1000,
+     "max": 1000
+    },
+    "API /api/v1/shared/layers": {
+     "n": 7,
+     "p50": 750,
+     "p95": 1025,
+     "max": 1025
+    },
+    "API /api/v1/shoots": {
+     "n": 3,
+     "p50": 392,
+     "p95": 908,
+     "max": 908
+    },
+    "API /api/v1/spaces/me": {
+     "n": 3,
+     "p50": 408,
+     "p95": 1831,
+     "max": 1831
+    },
+    "API /api/v1/spaces/me/guides/card-farm": {
+     "n": 3,
+     "p50": 458,
+     "p95": 1932,
+     "max": 1932
+    },
+    "API /api/v1/summary": {
+     "n": 6,
+     "p50": 304,
+     "p95": 1721,
+     "max": 1721
+    },
+    "API /api/v1/ximap/board": {
+     "n": 2,
+     "p50": 615,
+     "p95": 615,
+     "max": 615
+    },
+    "API /api/v1/ximap/boot": {
+     "n": 2,
+     "p50": 1039,
+     "p95": 1039,
+     "max": 1039
+    },
+    "HTML /": {
+     "n": 2,
+     "p50": 1814,
+     "p95": 1814,
+     "max": 1814
+    },
+    "HTML /landxi/v3/gov-select/": {
+     "n": 6,
+     "p50": 715,
+     "p95": 1050,
+     "max": 1050
+    },
+    "HTML /landxi/v3/login/": {
+     "n": 3,
+     "p50": 715,
+     "p95": 727,
+     "max": 727
+    },
+    "HTML /landxi/v3/lx-console/": {
+     "n": 9,
+     "p50": 420,
+     "p95": 1880,
+     "max": 1880
+    },
+    "HTML /landxi/v3/lx-map/": {
+     "n": 7,
+     "p50": 678,
+     "p95": 778,
+     "max": 778
+    },
+    "HTML /landxi/v3/xi-clean/": {
+     "n": 2,
+     "p50": 645,
+     "p95": 645,
+     "max": 645
+    },
+    "PAGE gov-farm": {
+     "n": 1,
+     "p50": 3104,
+     "p95": 3104,
+     "max": 3104
+    },
+    "PAGE gov-farm first": {
+     "n": 2,
+     "p50": 18718,
+     "p95": 18718,
+     "max": 18718
+    },
+    "PAGE gov-main": {
+     "n": 1,
+     "p50": 1766,
+     "p95": 1766,
+     "max": 1766
+    },
+    "PAGE gov-main first": {
+     "n": 2,
+     "p50": 8884,
+     "p95": 8884,
+     "max": 8884
+    },
+    "PAGE gov-ximap first": {
+     "n": 1,
+     "p50": 6897,
+     "p95": 6897,
+     "max": 6897
+    },
+    "PAGE staff-home": {
+     "n": 5,
+     "p50": 3249,
+     "p95": 3823,
+     "max": 3823
+    },
+    "PAGE staff-home first": {
+     "n": 2,
+     "p50": 7026,
+     "p95": 7026,
+     "max": 7026
+    },
+    "PAGE ximap": {
+     "n": 5,
+     "p50": 2818,
+     "p95": 9537,
+     "max": 9537
+    },
+    "PAGE ximap first": {
+     "n": 2,
+     "p50": 7655,
+     "p95": 7655,
+     "max": 7655
+    },
+    "STATIC": {
+     "n": 743,
+     "p50": 225,
+     "p95": 1033,
+     "max": 14255
+    },
+    "TILE /cog": {
+     "n": 170,
+     "p50": 364,
+     "p95": 724,
+     "max": 7740
+    },
+    "TILE /pmtiles": {
+     "n": 21,
+     "p50": 381,
+     "p95": 768,
+     "max": 2325
+    },
+    "TILE /sign": {
+     "n": 7,
+     "p50": 362,
+     "p95": 376,
+     "max": 376
+    }
+   }
+  },
+  "10": {
+   "requests": 2019,
+   "errors": 60,
+   "error_rate": 2.97,
+   "status": {
+    "200": 1906,
+    "206": 46,
+    "204": 7,
+    "416": 8,
+    "502": 52
+   },
+   "endpoints": {
+    "API /api/v1/announcements": {
+     "n": 18,
+     "p50": 383,
+     "p95": 1139,
+     "max": 1139
+    },
+    "API /api/v1/approvals": {
+     "n": 34,
+     "p50": 392,
+     "p95": 12797,
+     "max": 12813
+    },
+    "API /api/v1/auth/login": {
+     "n": 11,
+     "p50": 361,
+     "p95": 473,
+     "max": 473
+    },
+    "API /api/v1/auth/session": {
+     "n": 48,
+     "p50": 375,
+     "p95": 12833,
+     "max": 13400
+    },
+    "API /api/v1/auth/tenants": {
+     "n": 16,
+     "p50": 753,
+     "p95": 12959,
+     "max": 12959
+    },
+    "API /api/v1/brand/namwon": {
+     "n": 16,
+     "p50": 626,
+     "p95": 12889,
+     "max": 12889
+    },
+    "API /api/v1/cards/deck": {
+     "n": 33,
+     "p50": 446,
+     "p95": 2591,
+     "max": 13135
+    },
+    "API /api/v1/catalog/imagery/*/thumb": {
+     "n": 36,
+     "p50": 376,
+     "p95": 1435,
+     "max": 1839
+    },
+    "API /api/v1/catalog/layers": {
+     "n": 16,
+     "p50": 808,
+     "p95": 13616,
+     "max": 13616
+    },
+    "API /api/v1/holidays": {
+     "n": 17,
+     "p50": 608,
+     "p95": 1505,
+     "max": 1505
+    },
+    "API /api/v1/me": {
+     "n": 49,
+     "p50": 589,
+     "p95": 12765,
+     "max": 12966
+    },
+    "API /api/v1/me/agenda": {
+     "n": 18,
+     "p50": 454,
+     "p95": 1275,
+     "max": 1275
+    },
+    "API /api/v1/me/analyses": {
+     "n": 13,
+     "p50": 510,
+     "p95": 13415,
+     "max": 13415
+    },
+    "API /api/v1/me/events": {
+     "n": 18,
+     "p50": 372,
+     "p95": 1137,
+     "max": 1137
+    },
+    "API /api/v1/me/memos": {
+     "n": 18,
+     "p50": 383,
+     "p95": 1150,
+     "max": 1150
+    },
+    "API /api/v1/me/prefs/dash.lx-console": {
+     "n": 17,
+     "p50": 604,
+     "p95": 1148,
+     "max": 1148
+    },
+    "API /api/v1/me/storage": {
+     "n": 18,
+     "p50": 401,
+     "p95": 919,
+     "max": 919
+    },
+    "API /api/v1/openapi.json": {
+     "n": 59,
+     "p50": 575,
+     "p95": 1589,
+     "max": 1907
+    },
+    "API /api/v1/projects": {
+     "n": 18,
+     "p50": 2654,
+     "p95": 12604,
+     "max": 12604
+    },
+    "API /api/v1/projects/notices": {
+     "n": 17,
+     "p50": 605,
+     "p95": 1047,
+     "max": 1047
+    },
+    "API /api/v1/regions": {
+     "n": 15,
+     "p50": 397,
+     "p95": 12544,
+     "max": 12544
+    },
+    "API /api/v1/requests": {
+     "n": 14,
+     "p50": 382,
+     "p95": 916,
+     "max": 916
+    },
+    "API /api/v1/requests/services": {
+     "n": 6,
+     "p50": 397,
+     "p95": 496,
+     "max": 496
+    },
+    "API /api/v1/reviews": {
+     "n": 14,
+     "p50": 378,
+     "p95": 964,
+     "max": 964
+    },
+    "API /api/v1/reviews/notify": {
+     "n": 48,
+     "p50": 405,
+     "p95": 12562,
+     "max": 12664
+    },
+    "API /api/v1/shared/layers": {
+     "n": 16,
+     "p50": 750,
+     "p95": 12940,
+     "max": 12940
+    },
+    "API /api/v1/shoots": {
+     "n": 8,
+     "p50": 370,
+     "p95": 393,
+     "max": 393
+    },
+    "API /api/v1/spaces/me": {
+     "n": 6,
+     "p50": 435,
+     "p95": 972,
+     "max": 972
+    },
+    "API /api/v1/spaces/me/guides/card-farm": {
+     "n": 6,
+     "p50": 436,
+     "p95": 483,
+     "max": 483
+    },
+    "API /api/v1/summary": {
+     "n": 16,
+     "p50": 366,
+     "p95": 12682,
+     "max": 12682
+    },
+    "API /api/v1/ximap/board": {
+     "n": 7,
+     "p50": 1136,
+     "p95": 12675,
+     "max": 12675
+    },
+    "API /api/v1/ximap/boot": {
+     "n": 7,
+     "p50": 1383,
+     "p95": 12750,
+     "max": 12750
+    },
+    "HTML /": {
+     "n": 5,
+     "p50": 689,
+     "p95": 1411,
+     "max": 1411
+    },
+    "HTML /landxi/v3/gov-select/": {
+     "n": 17,
+     "p50": 724,
+     "p95": 1117,
+     "max": 1117
+    },
+    "HTML /landxi/v3/login/": {
+     "n": 6,
+     "p50": 733,
+     "p95": 1234,
+     "max": 1234
+    },
+    "HTML /landxi/v3/lx-console/": {
+     "n": 16,
+     "p50": 635,
+     "p95": 748,
+     "max": 748
+    },
+    "HTML /landxi/v3/lx-map/": {
+     "n": 18,
+     "p50": 668,
+     "p95": 3692,
+     "max": 3692
+    },
+    "HTML /landxi/v3/xi-clean/": {
+     "n": 7,
+     "p50": 797,
+     "p95": 1880,
+     "max": 1880
+    },
+    "PAGE gov-farm": {
+     "n": 4,
+     "p50": 1891,
+     "p95": 2233,
+     "max": 2233
+    },
+    "PAGE gov-farm first": {
+     "n": 2,
+     "p50": 6664,
+     "p95": 6664,
+     "max": 6664
+    },
+    "PAGE gov-main": {
+     "n": 6,
+     "p50": 1458,
+     "p95": 2436,
+     "max": 2436
+    },
+    "PAGE gov-main first": {
+     "n": 2,
+     "p50": 8900,
+     "p95": 8900,
+     "max": 8900
+    },
+    "PAGE gov-ximap": {
+     "n": 4,
+     "p50": 1674,
+     "p95": 2003,
+     "max": 2003
+    },
+    "PAGE gov-ximap first": {
+     "n": 3,
+     "p50": 8487,
+     "p95": 13774,
+     "max": 13774
+    },
+    "PAGE staff-home": {
+     "n": 15,
+     "p50": 3846,
+     "p95": 13684,
+     "max": 13684
+    },
+    "PAGE staff-home first": {
+     "n": 3,
+     "p50": 7811,
+     "p95": 10124,
+     "max": 10124
+    },
+    "PAGE ximap": {
+     "n": 9,
+     "p50": 3208,
+     "p95": 4332,
+     "max": 4332
+    },
+    "PAGE ximap first": {
+     "n": 3,
+     "p50": 6684,
+     "p95": 7034,
+     "max": 7034
+    },
+    "STATIC": {
+     "n": 878,
+     "p50": 226,
+     "p95": 1260,
+     "max": 10263
+    },
+    "TILE /cog": {
+     "n": 296,
+     "p50": 329,
+     "p95": 833,
+     "max": 13275
+    },
+    "TILE /pmtiles": {
+     "n": 59,
+     "p50": 426,
+     "p95": 12652,
+     "max": 12740
+    },
+    "TILE /sign": {
+     "n": 13,
+     "p50": 312,
+     "p95": 12651,
+     "max": 12651
+    }
+   }
+  },
+  "20": {
+   "requests": 4036,
+   "errors": 263,
+   "error_rate": 6.52,
+   "status": {
+    "502": 214,
+    "200": 3536,
+    "204": 31,
+    "206": 206,
+    "416": 48,
+    "-1": 1
+   },
+   "endpoints": {
+    "API /api/v1/announcements": {
+     "n": 48,
+     "p50": 331,
+     "p95": 788,
+     "max": 979
+    },
+    "API /api/v1/approvals": {
+     "n": 95,
+     "p50": 649,
+     "p95": 1351,
+     "max": 13012
+    },
+    "API /api/v1/auth/login": {
+     "n": 3,
+     "p50": 359,
+     "p95": 369,
+     "max": 369
+    },
+    "API /api/v1/auth/session": {
+     "n": 157,
+     "p50": 364,
+     "p95": 4786,
+     "max": 14881
+    },
+    "API /api/v1/auth/tenants": {
+     "n": 60,
+     "p50": 730,
+     "p95": 12760,
+     "max": 13819
+    },
+    "API /api/v1/brand/namwon": {
+     "n": 60,
+     "p50": 740,
+     "p95": 12778,
+     "max": 13933
+    },
+    "API /api/v1/cards/deck": {
+     "n": 109,
+     "p50": 567,
+     "p95": 2509,
+     "max": 12903
+    },
+    "API /api/v1/catalog/imagery/*/thumb": {
+     "n": 96,
+     "p50": 388,
+     "p95": 1029,
+     "max": 1900
+    },
+    "API /api/v1/catalog/layers": {
+     "n": 47,
+     "p50": 931,
+     "p95": 2536,
+     "max": 13872
+    },
+    "API /api/v1/holidays": {
+     "n": 48,
+     "p50": 679,
+     "p95": 1454,
+     "max": 1931
+    },
+    "API /api/v1/me": {
+     "n": 155,
+     "p50": 711,
+     "p95": 2202,
+     "max": 13101
+    },
+    "API /api/v1/me/agenda": {
+     "n": 48,
+     "p50": 509,
+     "p95": 821,
+     "max": 1290
+    },
+    "API /api/v1/me/analyses": {
+     "n": 50,
+     "p50": 562,
+     "p95": 12583,
+     "max": 12601
+    },
+    "API /api/v1/me/events": {
+     "n": 48,
+     "p50": 373,
+     "p95": 865,
+     "max": 1414
+    },
+    "API /api/v1/me/memos": {
+     "n": 48,
+     "p50": 391,
+     "p95": 867,
+     "max": 904
+    },
+    "API /api/v1/me/prefs/dash.lx-console": {
+     "n": 48,
+     "p50": 772,
+     "p95": 1694,
+     "max": 1746
+    },
+    "API /api/v1/me/storage": {
+     "n": 48,
+     "p50": 378,
+     "p95": 539,
+     "max": 586
+    },
+    "API /api/v1/openapi.json": {
+     "n": 183,
+     "p50": 603,
+     "p95": 1445,
+     "max": 2806
+    },
+    "API /api/v1/projects": {
+     "n": 48,
+     "p50": 3158,
+     "p95": 4040,
+     "max": 5333
+    },
+    "API /api/v1/projects/notices": {
+     "n": 48,
+     "p50": 738,
+     "p95": 1634,
+     "max": 25247
+    },
+    "API /api/v1/regions": {
+     "n": 61,
+     "p50": 385,
+     "p95": 12607,
+     "max": 12725
+    },
+    "API /api/v1/requests": {
+     "n": 62,
+     "p50": 398,
+     "p95": 12703,
+     "max": 12914
+    },
+    "API /api/v1/requests/services": {
+     "n": 32,
+     "p50": 386,
+     "p95": 12597,
+     "max": 12601
+    },
+    "API /api/v1/reviews": {
+     "n": 62,
+     "p50": 386,
+     "p95": 12654,
+     "max": 13184
+    },
+    "API /api/v1/reviews/notify": {
+     "n": 157,
+     "p50": 404,
+     "p95": 1244,
+     "max": 12703
+    },
+    "API /api/v1/shared/layers": {
+     "n": 47,
+     "p50": 793,
+     "p95": 1289,
+     "max": 12926
+    },
+    "API /api/v1/shoots": {
+     "n": 30,
+     "p50": 375,
+     "p95": 12562,
+     "max": 12745
+    },
+    "API /api/v1/spaces/me": {
+     "n": 32,
+     "p50": 513,
+     "p95": 12562,
+     "max": 17712
+    },
+    "API /api/v1/spaces/me/guides/card-farm": {
+     "n": 32,
+     "p50": 558,
+     "p95": 12671,
+     "max": 12812
+    },
+    "API /api/v1/summary": {
+     "n": 60,
+     "p50": 592,
+     "p95": 12547,
+     "max": 13117
+    },
+    "API /api/v1/ximap/board": {
+     "n": 31,
+     "p50": 735,
+     "p95": 13020,
+     "max": 13211
+    },
+    "API /api/v1/ximap/boot": {
+     "n": 31,
+     "p50": 1467,
+     "p95": 12962,
+     "max": 13220
+    },
+    "HTML /": {
+     "n": 1,
+     "p50": 1393,
+     "p95": 1393,
+     "max": 1393
+    },
+    "HTML /landxi/v3/gov-select/": {
+     "n": 59,
+     "p50": 656,
+     "p95": 1651,
+     "max": 1765
+    },
+    "HTML /landxi/v3/login/": {
+     "n": 1,
+     "p50": 1201,
+     "p95": 1201,
+     "max": 1201
+    },
+    "HTML /landxi/v3/lx-console/": {
+     "n": 48,
+     "p50": 736,
+     "p95": 1697,
+     "max": 1816
+    },
+    "HTML /landxi/v3/lx-map/": {
+     "n": 45,
+     "p50": 684,
+     "p95": 826,
+     "max": 1746
+    },
+    "HTML /landxi/v3/xi-clean/": {
+     "n": 31,
+     "p50": 639,
+     "p95": 879,
+     "max": 1199
+    },
+    "PAGE gov-farm": {
+     "n": 32,
+     "p50": 1901,
+     "p95": 38117,
+     "max": 43090
+    },
+    "PAGE gov-main": {
+     "n": 30,
+     "p50": 1618,
+     "p95": 25944,
+     "max": 26412
+    },
+    "PAGE gov-ximap": {
+     "n": 32,
+     "p50": 1672,
+     "p95": 25348,
+     "max": 26813
+    },
+    "PAGE staff-home": {
+     "n": 48,
+     "p50": 4411,
+     "p95": 6047,
+     "max": 25256
+    },
+    "PAGE ximap": {
+     "n": 51,
+     "p50": 3160,
+     "p95": 65960,
+     "max": 69808
+    },
+    "TILE /cog": {
+     "n": 1254,
+     "p50": 371,
+     "p95": 12623,
+     "max": 14756
+    },
+    "TILE /pmtiles": {
+     "n": 270,
+     "p50": 521,
+     "p95": 12627,
+     "max": 13782
+    },
+    "TILE /sign": {
+     "n": 50,
+     "p50": 356,
+     "p95": 12600,
+     "max": 13316
+    }
+   }
+  }
+ },
+ "chat": {
+  "solo|runtime": {
+   "n": 3,
+   "done": 3,
+   "events": {
+    "agent.done": 3
+   },
+   "p50_s": 4.1,
+   "p95_s": 4.2,
+   "max_s": 4.2
+  },
+  "solo|vllm": {
+   "n": 1,
+   "done": 1,
+   "events": {
+    "agent.done": 1
+   },
+   "p50_s": 6.1,
+   "p95_s": 6.1,
+   "max_s": 6.1
+  },
+  "load|None": {
+   "n": 4,
+   "done": 0,
+   "events": {
+    "http_error": 4
+   },
+   "p50_s": 0.6,
+   "p95_s": 1.0,
+   "max_s": 1.0
+  },
+  "load|runtime": {
+   "n": 64,
+   "done": 64,
+   "events": {
+    "agent.done": 64
+   },
+   "p50_s": 4.1,
+   "p95_s": 6.3,
+   "max_s": 10.2
+  },
+  "load|router+rules": {
+   "n": 26,
+   "done": 26,
+   "events": {
+    "agent.done": 26
+   },
+   "p50_s": 3.0,
+   "p95_s": 6.1,
+   "max_s": 6.9
+  },
+  "max_overlap": 5
+ },
+ "monitor": {
+  "samples": 205,
+  "gw_tree_cpu_max": 312.5,
+  "gw_tree_cpu_p95": 116.4,
+  "gw_procs": 1,
+  "gw_cpu_max": 156.6,
+  "gw_cpu_p95": 81.7,
+  "gw_rss_max_mb": 393,
+  "gate_cpu_max": 25.2,
+  "gate_rss_max_mb": 298,
+  "pg_conn_max": 26,
+  "pg_active_max": 14,
+  "sys_cpu_max": 100.0,
+  "gpu": {
+   "0": {
+    "power_max_w": 105.89,
+    "power_30s_avg_max_w": 65.1,
+    "util_30s_avg_max": 1.3,
+    "temp_max": 55.0
+   },
+   "1": {
+    "power_max_w": 197.6,
+    "power_30s_avg_max_w": 119.6,
+    "util_30s_avg_max": 34.3,
+    "temp_max": 77.0
+   }
+  }
+ }
+}

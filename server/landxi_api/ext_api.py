@@ -221,6 +221,12 @@ async def ledger_sync(force: bool = False) -> int:
     if not force and time.time() - _LEDGER["at"] < 60:
         return 0
     _LEDGER["at"] = time.time()
+    if not force:                              # 게이트웨이 여러 프로세스 — 1분에 한 번은 모든 프로세스를 통틀어(impl-46 ops)
+        try:
+            if not await (await redis()).set("lx:ledger_sync", str(time.time()), nx=True, ex=55):
+                return 0
+        except Exception:  # noqa: BLE001
+            pass
     from . import regions as R
     from .summary import canonical
     async with db(realm="lx") as c:

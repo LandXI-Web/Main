@@ -18,6 +18,7 @@ server/.env
 server/**/__pycache__/
 server/.*.pids
 server/.*.pid
+server/.gateway-primary.lock
 server/ops/.pollers.pids
 server/.setup-smoke.json
 server/logs/

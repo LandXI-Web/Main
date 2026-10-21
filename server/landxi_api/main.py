@@ -23,7 +23,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import approvals, auth, catalog, config, deploys, events, feedback, jobs, ledger, ops, parcels, proxy, public, quota, regions, registry, results, tiles
 from . import summary          # fix-server-summary · 대표 수치 단일 요약(숫자 한 출처)
-from .deps import ApiError, close, pool, redis
+from .deps import ApiError, close, keys_like, pool, redis
 from .envelope import LXJSON, dumps, now_iso
 
 
@@ -49,21 +49,29 @@ async def _boot_recovery():
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
+    from . import procs                    # 여러 프로세스(--workers) — 한 번만 도는 일은 대표만 · 캐시 비우기 알림(impl-46 ops)
+    procs.install()
+    primary = procs.elect()
     await pool()
     await redis()
     BOOT["boot_at"] = now_iso()
-    await _boot_recovery()
+    BOOT["proc"] = procs.status()
+    if primary:
+        await _boot_recovery()
+    else:
+        BOOT["recovered_at_boot"] = {"resumed": 0, "requeued": 0, "failed": 0, "skipped": True, "held_by": "대표 프로세스", "at": now_iso()}
     try:                                   # 전국 시군구 뼈대를 스레드에서 미리 읽는다(첫 /regions 요청이 이벤트 루프를 막지 않게)
         from starlette.concurrency import run_in_threadpool
         await run_in_threadpool(regions.regions_base)
     except Exception as e:  # noqa: BLE001
         print(f"[gateway] regions warm 실패: {e!r}", flush=True)
-    try:                                   # 재기동으로 끊긴 대장 매칭 이어 돌리기(S-2 · S-12)
-        BOOT["ledger_resume"] = await ledger.resume_stuck_imports()
-        if BOOT["ledger_resume"]["resumed"] or BOOT["ledger_resume"]["failed"]:
-            print(f"[gateway] ledger resume: {BOOT['ledger_resume']}", flush=True)
-    except Exception as e:  # noqa: BLE001
-        print(f"[gateway] ledger resume 실패: {e!r}", flush=True)
+    if primary:
+        try:                               # 재기동으로 끊긴 대장 매칭 이어 돌리기(S-2 · S-12)
+            BOOT["ledger_resume"] = await ledger.resume_stuck_imports()
+            if BOOT["ledger_resume"]["resumed"] or BOOT["ledger_resume"]["failed"]:
+                print(f"[gateway] ledger resume: {BOOT['ledger_resume']}", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[gateway] ledger resume 실패: {e!r}", flush=True)
     try:                                   # AI 도우미 도구 확장(tools/ext · C2 plan 3.1)을 기동 때 불러 둔다 — 모듈 실패는 경고만
         from agent import runner as _runner  # noqa: F401
         from agent.tools import ext as _ext
@@ -82,17 +90,41 @@ async def lifespan(app: FastAPI):
         except Exception as e:  # noqa: BLE001
             print(f"[gateway] warm 실패: {e!r}", flush=True)
     warm_task = asyncio.create_task(_warm())
-    task = asyncio.create_task(ops.alert_loop())
-    try:                                   # XI 재학습 스케줄러(원칙 213 · 쉬는 시간 · 기준 닿은 서비스만 · 학습 장비 한 장 대기열로)
-        from . import core as _core
-        rt_task = asyncio.create_task(_core.loop())
-    except Exception as e:  # noqa: BLE001
-        rt_task = None
-        print(f"[gateway] retrain loop 건너뜀: {e!r}", flush=True)
+    singles: list = []
+
+    def _singletons():                     # 대표 프로세스에서만(지금 · 또는 대표가 죽어 이어받을 때) — 경보 · 배포 흐름 · 재학습 · 기관 공간 · 읍면동 빈칸
+        singles.append(asyncio.create_task(ops.alert_loop()))
+        try:                               # XI 재학습 스케줄러(원칙 213 · 쉬는 시간 · 기준 닿은 서비스만 · 학습 장비 한 장 대기열로)
+            from . import core as _core
+            singles.append(asyncio.create_task(_core.loop()))
+        except Exception as e:  # noqa: BLE001
+            print(f"[gateway] retrain loop 건너뜀: {e!r}", flush=True)
+        if procs.multi():                  # 한 프로세스일 때는 예전처럼 첫 요청 때 시작(같은 동작)
+            try:
+                from . import spaces as _sp, survey as _sv
+                _sp._ensure_loop()
+                _sv._kick_emd_sweep()
+            except Exception as e:  # noqa: BLE001
+                print(f"[gateway] 주기 일 시작 실패: {e!r}", flush=True)
+    async def _redis_expiry_loop():       # 오래 끝난 작업의 Redis 부속 키 만료(impl-46 ops · 27만 키 → 훑기 0.6 s) — 1시간마다
+        from starlette.concurrency import run_in_threadpool
+        await asyncio.sleep(120)
+        while True:
+            try:
+                from ops.redis_expiry import run as _rx
+                out = await run_in_threadpool(_rx)
+                if out.get("keys_expire_set"):
+                    print(f"[gateway] redis expiry: {out}", flush=True)
+            except Exception as e:  # noqa: BLE001
+                print(f"[gateway] redis expiry 실패: {e!r}", flush=True)
+            await asyncio.sleep(3600)
+
+    procs.on_primary(_singletons)
+    procs.on_primary(lambda: singles.append(asyncio.create_task(_redis_expiry_loop())))
+    side = procs.start()
     yield
-    task.cancel()
-    if rt_task:
-        rt_task.cancel()
+    for t in singles + side:
+        t.cancel()
     await close()
 
 
@@ -234,8 +266,10 @@ async def health():
     gpu = cpu = 0
     now = time.time()
     try:
-        async for k in r.scan_iter(match="worker:*:hb", count=2000):
+        for k in await keys_like("worker:*:hb"):
             h = await r.hgetall(k)
+            if not h:                    # 목록 뒤 사라진 키(워커 멈춤)
+                continue
             if now - float(h.get("ts", 0)) < 30:
                 if h.get("device") == "cpu":
                     cpu += 1

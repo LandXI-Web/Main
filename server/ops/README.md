@@ -95,3 +95,53 @@ json {"index": 0, "name": "NVIDIA RTX A6000", "util_pct": {"value": 0, "unit": "
 - **LLM 띠**: `external[]` 에 `{name:'vLLM · gemma-4-12b-it', mem_mib:null, llm:{backend, model, role, endpoint, tps, prompt_tps, reqs_active, reqs_waiting, kv_cache_pct, gen_tokens_total, note:'WSL 프로세스 VRAM 미노출'}}` — 외부 점유(프로세스)와 합치지 않는다.
 - **전력 예산**: `power_budget{max_hot(pools.yaml), leases[](Redis power:hot:*), leases_n, hot_now(이동평균 ≥ 50%)}` → 화면 칩 `고부하 GPU n/1 · 임대 n/1`.
 - 게이트웨이 봉투 검사(맨 숫자 금지)를 통과하도록 새 숫자는 전부 봉투 안(원표본은 `util_ma5.samples`).
+
+---
+
+# 운영 — 백업 · 재부팅 뒤 복귀 · 게이트웨이 여러 프로세스 (impl-46 · 오픈 전 필수 6-1 · 6-2 · 6-3 · 원칙 300)
+
+## 매일 DB 백업(6-2)
+
+| 무엇 | 어디 |
+|---|---|
+| 스크립트 | `server/ops/db_backup.py` — 컨테이너 `landxi-postgis` 안에서 `pg_dump -Fc` → 표준 출력으로 받아 E: 에 바로 쓴다(C: 임시 파일 0 · 비밀번호 안 씀) |
+| 둘 곳 | `E:/Land-XI 플랫폼/02. 데이터/_backup/db/daily/landxi-YYYYMMDD-HHMM.dump`(+ `-globals.sql` 역할) · `weekly/landxi-YYYY-Www.dump`(하드링크) |
+| 보관 | 매일 7개 · 매주 4개(그보다 오래된 것은 지움) |
+| 시험 | 매번 `pg_restore -l`(목차를 끝까지 읽음 · 표 데이터 항목 > 0) · 일요일은 임시 DB `landxi_restore_check` 에 실제로 되살려 표 수를 맞춰 보고 지운다(`--restore-test`) |
+| 예약 | `powershell -File server/ops/register-backup.ps1` → `LandXI-DB-Backup`(월~토 03:30) · `LandXI-DB-Backup-RestoreTest`(일 03:30) · `-RunNow` 지금 한 번 |
+| 기록 | `_backup/db/backup.log`(한 줄씩) · `status.json`(마지막 성공 · 실패 · 크기 · 걸린 시간 · 되살리기 시험) · `python server/ops/db_backup.py --status` |
+| 경보 | 게이트웨이 경보(60초 · `ops.evaluate_alerts_once`)가 status.json 을 읽는다 — `db_backup_failed`(실패 · 고장) · `db_backup_older_30h`(30시간 넘게 성공 없음 · 주의). C: 여유 30GB 경보와 같은 길(ops_alerts → LX 관리자 대시보드 '경보 n' → 인프라 화면) |
+
+되살리기(실제 사고 때): `docker exec -i landxi-postgis pg_restore -U postgres -d landxi --clean --if-exists < 덤프파일` — 먼저 게이트웨이 · 워커를 멈추고(`start-landxi.ps1 -Stop`), 역할이 없어졌으면 `-globals.sql` 을 `psql -U postgres` 로 먼저.
+
+## 재부팅 · Docker 정지 뒤 저절로 복귀(6-3)
+
+| 층 | 어떻게 돌아오나 |
+|---|---|
+| 컨테이너(landxi-postgis · landxi-redis · landxi-vllm-gemma · landxi-vllm-router) | 재시작 정책 `unless-stopped`(2026-10-21 `docker inspect` 확인 · compose 에도 같음) — Docker 엔진이 뜨면 저절로 |
+| Docker Desktop | 로그온 때 자동 실행(HKCU Run `Docker Desktop`) |
+| 게이트웨이 · 워커 · 정적 · 관제 · 감시 | 예약 작업 `LandXI-Server`(로그온 + 1분 30초 · `start-landxi.ps1`) — 이제 Docker 엔진이 답할 때까지 최대 5분 기다린 뒤 PostGIS · Redis 를 기다리고(90초) 마이그레이션 → 게이트웨이 → 워커 순서 |
+| 게이트웨이가 죽으면 | 감시(`-Watch` · 15초 간격)가 연속 3회 실패 때 다시 띄운다 · 여러 프로세스 중 하나가 죽으면 uvicorn 감독이 그 프로세스만 다시 띄운다 |
+| 바깥 주소 | 예약 작업 `LandXI-Public`(로그온 · 터널 + 공개 관문) |
+| GPU 전력 상한 | 예약 작업 `LandXI-GPU-PowerLimit-200W`(부팅) |
+
+**남은 빈틈(사용자 결정):** 모두 '로그온' 때 돈다 — PC 가 다시 켜진 뒤 누군가 로그인하기 전까지는 서비스가 멈춘다. 자동 로그온(Windows `netplwiz`) 또는 '로그온 여부와 관계없이 실행' 예약 작업으로 바꾸는 것은 계정 비밀번호가 필요해 사용자가 정한다. 재부팅 실측은 아직 없다(운영 중이라 일부러 끄지 않음).
+
+## 게이트웨이 여러 프로세스(6-1)
+
+- `start-landxi.ps1` 이 `uvicorn --workers N` 으로 띄운다. N = `server/.env` 의 `LX_GATEWAY_WORKERS`(없으면 4 · 1 이면 예전처럼 한 프로세스). Windows 에서도 `--workers` 동작 확인(감독 1 + 자식 N · 듣는 소켓 공유).
+- 멈추기 · 다시 띄우기(`-Restart gateway` · 감시)는 :8700 을 듣는 프로세스에서 uvicorn 감독까지 올라가 그 **PID 묶음**만 `taskkill /T` 한다(이름으로 죽이지 않음 · 공개 관문 · cloudflared 는 건드리지 않음).
+- 프로세스 안 상태 점검(`landxi_api/procs.py` 머리말):
+  - 원래 공유되던 것 — 세션(sessions 표) · 로그인 실패 수 · 계정 잠금(Redis · DB) · SSE · 작업 진행(Redis 스트림) · 작업 대기열(Redis/DB) · 경보(ops_alerts).
+  - 한 번만 돌아야 하는 것 → **대표 프로세스 하나만**(파일 잠금 `server/.gateway-primary.lock` · 죽으면 15초 안에 다른 프로세스가 이어받음): 기동 복구 sweep · 대장 매칭 잇기 · 경보 · 배포 흐름(`ops.alert_loop` → `deploys.flow_loop`) · XI 재학습 스케줄러(`core.loop`) · 기관 공간 60초 주기(`spaces`) · 읍면동 빈칸 채우기(`survey`).
+  - 여러 프로세스가 동시에 하면 안 되는 것 → Redis 로: 장부 채우기(`ext_api.ledger_sync` · 1분에 한 번은 전체 통틀어) · 관리 작업 '한 번에 하나'와 상태(`survey` maintenance) · 기관 사용 현황 계산 결과(`ops` · 다른 프로세스가 수십 초 다시 세지 않게).
+  - 쓰기 뒤 '바로 같은 값' 캐시 → 비운 프로세스가 Redis 채널 `lx:gw:inval` 로 알리고 다른 프로세스도 비운다: 요약(summary) · 공유 목록 · 지역 파생 · 저장 공간 · 기관 사용 현황 · 서비스 보이기 규칙 · XI맵 판 · 필지 색인.
+  - 프로세스마다 따로여도 되는 것 — 읽기 캐시(시간 제한 · 크기 제한) · 지도 조각 보관 · 좌표 변환기.
+- DB 연결 묶음: 프로세스마다 14(한 프로세스면 16 · 4 프로세스 × (14 + 시스템 4) = 72) — `LX_PG_POOL_MAX` 로 바꿈. PostgreSQL max_connections 100 안.
+- 알려진 작은 차이: 배포 흐름 '준비' 2분 넘음 재시작 판단(`deploys.flow_tick`)은 대표 프로세스의 배경 일만 본다 — 다른 프로세스가 막 시작한 흐름은 수 초 안에 '분석 중'으로 넘어가므로 2분 문턱에 걸리지 않는다.
+
+## Redis 키 훑기 · 오래된 작업 키(impl-46)
+
+- 게이트웨이는 `worker:*:hb` · `worker:*:vram` · `lane:*` · `ops:gpu:*` 를 직접 훑지 않고 `deps.keys_like()`(10초 목록 · 모든 프로세스가 같이 씀)를 쓴다 — 키가 27만 개일 때 훑기 한 번이 0.6초였다.
+- `server/ops/redis_expiry.py`(게이트웨이 대표 프로세스가 1시간마다 · `--dry` 로 세기만): 끝난 지 24시간 넘은 작업의 `job:{id}:*` 부속 키 1시간 뒤 만료 · `jobshards:{id}` · `events:{id}` 는 하루로 줄임. 진행 중 · 대기 · 최근 작업 · 본 해시 `job:{id}` 는 그대로.
+- 감시(`-Watch`)는 여러 프로세스 + 소켓이 살아 있으면 8회 연속 실패 때만 다시 띄운다(바쁜 게이트웨이를 죽여 502 를 만들지 않게).
