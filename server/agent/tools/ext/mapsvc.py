@@ -308,9 +308,13 @@ def _nf(v: float) -> str:
 
 
 async def _avail(jobs: list[str]) -> tuple[list[str], list[str]]:
+    from landxi_api import result_scope as RSC
     from landxi_api.deps import db
+    await RSC.only_cls()
+    a: list = [jobs]
+    w = "".join(" AND " + x for x in RSC.only_sql(jobs, a))    # 서비스 분류만 보이는 층은 그 분류만 '있는 분류'(통계 · 보고서와 같은 범위 · 10-21 재검수 D)
     async with db(realm="lx") as c:
-        av = await c.fetch("SELECT cls, coalesce(emd, '') AS emd, count(*) AS n FROM detections WHERE job_id = ANY($1::text[]) AND edit_state <> 'deleted' GROUP BY 1, 2", jobs)
+        av = await c.fetch("SELECT cls, coalesce(emd, '') AS emd, count(*) AS n FROM detections WHERE job_id = ANY($1::text[]) AND edit_state <> 'deleted'" + w + " GROUP BY 1, 2", *a)
     return sorted({r["cls"] for r in av if r["cls"]}), sorted({r["emd"] for r in av if r["emd"]})
 
 
@@ -472,8 +476,12 @@ async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], d
 
 async def _jobs_with(jobs: list[str], cls: list[str]) -> set[str]:
     from landxi_api.deps import db
+    from landxi_api import result_scope as RSC
+    await RSC.only_cls()
+    a: list = [jobs, cls]
+    w = "".join(" AND " + x for x in RSC.only_sql(jobs, a))
     async with db(realm="lx") as c:
-        rows = await c.fetch("SELECT DISTINCT job_id FROM detections WHERE job_id = ANY($1::text[]) AND cls = ANY($2::text[]) AND edit_state <> 'deleted'", jobs, cls)
+        rows = await c.fetch("SELECT DISTINCT job_id FROM detections WHERE job_id = ANY($1::text[]) AND cls = ANY($2::text[]) AND edit_state <> 'deleted'" + w, *a)
     return {r["job_id"] for r in rows}
 
 
