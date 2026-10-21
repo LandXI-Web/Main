@@ -22,3 +22,15 @@ server/.gateway-primary.lock
 server/ops/.pollers.pids
 server/.setup-smoke.json
 server/logs/
+
+# 저장 체계 점검 (2026-10-22) — 데이터 · 실행 부산물이 저장소(공개)에 섞이지 않게
+**/__pycache__/
+*.pyc
+.pytest_cache/
+*.npz
+*.pt
+*.pth
+*.stackdump
+server/runs/
+server/p.out
+dbg2/
