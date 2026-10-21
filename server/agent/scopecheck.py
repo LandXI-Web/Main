@@ -363,6 +363,11 @@ def _notes(ctx, md: str, asked: dict) -> str:
         miss = [n for n in names if n not in out and (n[:-1] if n[-1] in "시군구" else n) not in out]
         if miss and len(miss) < len(names):
             out = out.rstrip() + f" 부분 답 — {' · '.join(miss)}{_josa(miss[-1], '은', '는')} 이 답에 싣지 않았습니다."
+    kids = [nm for _rx, nm, parent in _classes() if parent and nm in asked.get("cls", set())]
+    if kids and ENV_RX.search(out) and "나누지 않" not in out:   # 논 · 밭 · 과수원 — 숫자는 위 분류(경작지) 전체(이름표 바뀜 막기)
+        ids = ENV_RX.findall(out)
+        if all(not (env_scope(ctx, e).get("cls") or set()) & set(kids) for e in ids):
+            out = out.rstrip() + f" {kids[0]}{_josa(kids[0], '은', '는')} 따로 나누지 않습니다 — 이 숫자는 경작지 전체입니다."
     if asked.get("cls") and "change" in asked.get("metric", set()):
         ids = ENV_RX.findall(out)
         kinds = {env_scope(ctx, e).get("kind") for e in ids}

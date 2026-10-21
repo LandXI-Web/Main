@@ -491,6 +491,8 @@ async def map_filter(args: dict, ctx) -> Out:
             out.data = {"status": "missing", "missing": miss, "classes": classes[:8]}
             out.answer = (RSC.scope_line(names, prev) + "\n켜진 층에는 " + " · ".join(miss) + ". 지도는 그대로 두었습니다."
                           + (f" 지금 결과의 분류: {have}." if have else ""))
+            # 모델 경로에서도 이 문장 그대로(가드 · M10) — 없는 분류를 껐다 · 켰다고 바꿔 쓰지 않게
+            out.data = {"status": "not_found", "text": out.answer, "missing": miss, "classes": classes[:8]}
             return out
         # 쌓기 — 같은 종류는 바꿔 끼우고(면적은 위 · 아래를 한 조건으로), 다른 종류는 더한다
         kinds_new = {("area" if k.startswith("area") else k) for k in add}
