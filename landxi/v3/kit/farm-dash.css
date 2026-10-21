@@ -1,0 +1,18 @@
+/* farm-dash — 기관 통계 · 보고서 대시보드(영농-6). 칸 부품은 xi-clean/dash.css 그대로. 390 에서 세로 한 줄. */
+.fd{--xd-gap:16px;--xd-grid:#EEF0F3;--xd-hi:#D07A3A;--xd-lo:#2E9A90;display:flex;flex-direction:column;gap:16px;min-width:0}
+.fd .xd-kpis{margin-bottom:0}
+.fd-row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}
+.fd-row > :only-child{grid-column:1 / -1}
+.fd button.xd-hr{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:default}
+.fd.is-pick button.xd-hr{cursor:pointer}
+.fd.is-pick button.xd-hr:hover .n{color:var(--ink);text-decoration:underline}
+.fd-more{align-self:flex-start;margin-top:16px;height:40px;padding:0 14px;border:1px solid var(--rule,#E5E8EB);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink);cursor:pointer}
+.fd-more:hover{background:var(--bg-0)}
+.fd-yields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.fd .xd-donut{grid-template-columns:minmax(0,1fr);justify-items:center;gap:16px}
+.fd .xd-leg{width:100%}
+@media (max-width:960px){
+  .fd-row{grid-template-columns:minmax(0,1fr)}
+  .fd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .fd-kpis .xd-kpi.is-main{grid-column:1 / -1}
+}

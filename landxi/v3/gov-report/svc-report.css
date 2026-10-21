@@ -20,7 +20,7 @@ body[data-tab="report"][data-rp="multi"] .gr-side{display:none}
 .rp-sel{width:100%;min-width:0;box-sizing:border-box}
 .rp-btns{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .rp-btns .t-btn{width:100%}
-.rp-doc{min-width:0;padding:28px 32px;border:1px solid var(--rule);border-radius:var(--r-12, 12px);background:var(--bg-1);transition:opacity var(--d-180) var(--e-ui)}
+.rp-doc{min-width:0;padding:28px 32px;border:1px solid var(--rule);border-radius:var(--r-12, 12px);background:var(--bg-0);transition:opacity var(--d-180) var(--e-ui)}
 .rp-doc.is-busy{opacity:.55}
 .rp-doc .gr-rdoc{max-width:none}
 .rp-auto{margin-left:8px;padding:2px 7px;border-radius:999px;background:var(--bg-0);font:500 var(--fs-tag)/16px var(--font-body);color:var(--sub);vertical-align:2px}
@@ -78,3 +78,10 @@ body[data-tab="report"][data-rp="multi"] .gr-side{display:none}
 /* 서버 문장 끝 한 단어 줄 막기(10-14 재검수 · 원칙 9 줄바꿈) */
 .gr p,.gr li{text-wrap:pretty}
 .gr small{text-wrap:balance}
+
+/* 대시보드 칸(영농-6) — 회백 바탕 위 흰 카드 */
+.rp-dash{margin:16px 0 8px}
+.rp-doc .gr-rtb,.rp-doc .gr-ov,.rp-doc .gr-cmp,.rp-doc .gr-map-img{background:var(--bg-1)}
+.rp-doc .gr-rtb{border-radius:var(--r-12,12px)}
+
+@media (max-width:960px){.rp-btns{flex-wrap:wrap}.rp-btns .rp-zip{flex:1 1 100%}}

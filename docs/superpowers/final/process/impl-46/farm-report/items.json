@@ -1,0 +1,88 @@
+{
+ "at": "2026-10-21 19:37:24",
+ "runs": [
+  {
+   "vp": "pc",
+   "errors": [
+    "Failed to load resource: the server responded with a status of 409 ()"
+   ],
+   "bad": [
+    "409 https://namwon.land-xi.dev/api/v1/spaces/me/report.hwpx"
+   ],
+   "steps": {
+    "statsMs": 3754,
+    "stats": {
+     "cards": 5,
+     "donut": true,
+     "bars": 10,
+     "kpi": [
+      "AI 분석 결과2,098필지",
+      "넓이315.9ha",
+      "오탐 · AI가 잘못 봄16필지"
+     ],
+     "hscroll": false,
+     "loadingText": false
+    },
+    "dl_stats.xlsx": "남원시_경작_휴경_종류별_읍면동별_20261021.xlsx",
+    "dl_stats.hwpx": "none",
+    "reportMs": 2504,
+    "report": {
+     "cards": 5,
+     "bars": 10,
+     "hscroll": false,
+     "zip": true,
+     "picks": 1
+    },
+    "zip": "남원시_경작·휴경_AI분석결과_20261021_첨부묶음.zip",
+    "issueRows": 3,
+    "issueTop": "2026.10.18 16:09경작·휴경담당자 주무관5회다시 받기",
+    "sent": {
+     "rows": 0,
+     "prog": []
+    },
+    "tpl": true,
+    "template": "농지대장_올리기양식.xlsx",
+    "fit": "맞춘 열 4",
+    "fitRoles": [
+     "jibun",
+     "pnu",
+     "state",
+     "date"
+    ]
+   }
+  },
+  {
+   "vp": "mob",
+   "errors": [],
+   "bad": [],
+   "steps": {
+    "statsMs": 4834,
+    "stats": {
+     "cards": 5,
+     "donut": true,
+     "bars": 10,
+     "kpi": [
+      "AI 분석 결과2,098필지",
+      "넓이315.9ha",
+      "오탐 · AI가 잘못 봄16필지"
+     ],
+     "hscroll": false,
+     "loadingText": false
+    },
+    "reportMs": 4344,
+    "report": {
+     "cards": 5,
+     "bars": 10,
+     "hscroll": false,
+     "zip": true,
+     "picks": 1
+    },
+    "sent": {
+     "rows": 0,
+     "prog": []
+    },
+    "tpl": false
+   }
+  }
+ ]
+}

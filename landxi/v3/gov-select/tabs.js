@@ -8,6 +8,8 @@ import { api } from '../../shared/api-v1.js';
 import { h } from '../kit/util.js';
 import { download as fetchFile, val } from '../gov-space/guide.js';
 import { summary, aiResult } from '../lx-console/summary.js';
+import { farmDash } from '../kit/farm-dash.js';
+import { personalFile } from '../kit/pledge.js';
 import { baleBox } from '../kit/bale.js';   // 곤포사일리지 생산량(10-18 영농-q2 ⓑ)   // AI 분석 결과 — LX 화면과 같은 출처 · 같은 계산
 
 const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
@@ -84,7 +86,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
   (pre || main).append(top, nums);
   main.append(table, cls);
   side.append(month, files);
-  let survey = false;
+  let survey = false, n0 = null;
   const filesP = Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]).catch(() => [null, null]);   // 내려받기 칸 자료를 먼저 물어 둔다(차례로 기다리지 않게 · 원칙 251)
   const draw = async () => {
     let j;
@@ -100,6 +102,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
       return;
     }
     const n = { ...(j.numbers || {}) };
+    n0 = n;
     /* AI 분석 결과 = 요약 한 출처(대시보드 큰 숫자 · LX 화면과 같은 값) — 없으면 그 칸을 접는다 */
     const ai = aiResult(await summary().catch(() => null), (i) => i.card === s.card);
     if (ai) n.ai = ai.env;
@@ -141,7 +144,10 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
         h('span', { text: `${Number(m.month.slice(5))}월` })))) : h('p.gs-none', { text: '이 기간에 적은 확인 기록이 없습니다' }),
       h('p.gd-note', { text: `확인 기록 ${nf(val(j.checks))}건 · 필지 카드에서 적은 메모 · 다음 확인 날짜가 쌓입니다` }));
   };
-  await Promise.all([draw(), renderClassStats(cls, { s, B })]);
+  const drawP = draw();
+  const dashed = (await Promise.all([drawP, renderStatsDash(cls, { s, B, rep, getNums: () => drawP.then(() => n0) })]))[1];
+  if (dashed) { table.hidden = true; nums.hidden = true; }
+  else await renderClassStats(cls, { s, B });
   /* 보고서 · 자료 내려받기 — 내려받기는 이 탭 한 곳(N-1 ⓐ) · 분기 공간 1단 서버 그대로(관할 안만 · 처음 한 번 이용 약속 · 기록) */
   files.append(h('div.gd-box-h', {}, h('h2', { text: '보고서 · 자료 내려받기' })));
   let me = null, g = null;
@@ -207,3 +213,52 @@ export async function renderClassStats(box, { s, B }) {
   draw();
 }
 
+
+/* ═════════ 통계 대시보드(영농-6 · 원칙 299) ═════════
+   XI ChatGEO 통계 보고서 보기와 같은 칸 부품(kit/farm-dash.js → xi-clean/dash.js). 숫자 = class-stats 서버 값(종류 합계 = 결과 설명서 · 한글 문서 · 엑셀과 한 출처).
+   오른쪽 위 '엑셀 · 한글 문서' 두 단추 · 결과가 없거나 종류가 없으면 false(옛 표로). */
+async function renderStatsDash(box, { s, B, rep, getNums }) {
+  let j;
+  try { j = await api(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats`); }
+  catch { return false; }
+  const classes = j.classes || [];
+  if (!classes.length) return false;
+  const v = (e) => (e && e.value != null ? Number(e.value) : null);
+  const useN = !!j.count;
+  const pickV = (o) => (useN ? v(o?.n) : v(o?.area));
+  const unit = useN ? (j.unit || '건') : '㎡';
+  const ha = v(j.total?.area) != null ? v(j.total.area) / 1e4 : null;
+  const fp = (await getNums())?.fp;
+  const kpis = [useN ? { label: 'AI 분석 결과', value: v(j.total?.n), unit: j.unit || '건' } : { label: 'AI 분석 결과 넓이', value: ha, unit: 'ha', d: 1 },
+    ...(useN && ha != null ? [{ label: '넓이', value: ha, unit: 'ha', d: 1 }] : []),
+    ...(fp && val(fp) ? [{ label: '오탐 · AI가 잘못 봄', value: val(fp), unit: j.unit || '건' }] : [])];
+  const emds = (j.emds || []).filter((e) => !e.out);
+  const nm = `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}`;
+  const bx = h('button.fd-dlb.fd-dlb--x', { type: 'button', text: '엑셀' });
+  const bh = h('button.fd-dlb', { type: 'button', text: '한글 문서' });
+  bx.addEventListener('click', () => xlsx(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats.xlsx`, `${nm}_종류별_읍면동별.xlsx`, bx));
+  bh.addEventListener('click', async () => {
+    bh.disabled = true;
+    try {
+      const r = await api('/spaces/me/report.hwpx?' + new URLSearchParams({ card: s.card }), { raw: true });
+      if (!r.ok) throw new Error('http ' + r.status);
+      const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
+      const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : `${nm}_보고서.hwpx` });
+      document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      K.toast('내려받았습니다');
+    } catch {                                           // 대장이 든 문서 = 이용 약속 뒤 받음(받을 때마다 확인)
+      try { await personalFile('/spaces/me/report.hwpx?' + new URLSearchParams({ card: s.card }), { name: `${nm}_보고서.hwpx`, label: 'AI 분석 결과 보고서' }); }
+      catch (e) { K.devlog('hwpx', String(e?.message || e)); K.toast('내려받지 못했습니다'); }
+    }
+    finally { bh.disabled = false; }
+  });
+  const el = await farmDash({
+    kpis, classes: classes.map((c) => ({ label: c.name, v: pickV(c) })), classTitle: '종류별', classUnit: unit,
+    emds: emds.map((e) => ({ label: e.emd, v: pickV(e), k: e.emd })), emdTitle: '읍면동별', emdUnit: unit,
+    yields: classes.filter((c) => val(c.yield)).map((c) => ({ label: `${c.name} 생산량`, value: val(c.yield), unit: 'kg', sub: useN && c.n ? `${nf(val(c.n))}개` : '' })),
+  });
+  box.className = 'gs-dash';
+  box.replaceChildren(h('div.gs-dash-h', {}, h('h2', { text: '통계 · 보고서' }), h('span.gd-small', { text: 'AI 분석 결과 · 지금 상태' }), h('div.gs-dash-act', {}, bx, bh)), el,
+    h('a.t-btn.t-btn--text.gd-more', { href: rep('report'), text: '시점을 골라 보고서 만들기' }));
+  return true;
+}

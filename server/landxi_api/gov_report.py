@@ -140,6 +140,9 @@ async def _rows(p: Principal, sets: list[str], codes: list[str] | None, emd: str
     if emd:
         a.append(emd)
         ew = f" AND d.emd = ${len(a)}"
+    from .result_scope import only_cls, only_sql
+    await only_cls()
+    ew += "".join(" AND " + x for x in only_sql(sets, a, "d"))         # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
     async with db(realm="lx") as c:
         await c.execute("SET LOCAL jit = off")
         rows = await c.fetch("SELECT coalesce(nullif(d.emd, ''), '') AS emd, d.cls, count(*) AS n, coalesce(sum(d.area_m2), 0) AS m2 FROM detections d "
@@ -160,6 +163,9 @@ async def _geo(p: Principal, sets: list[str], codes: list[str] | None, emd: str 
     if emd:
         a.append(emd)
         ew = f" AND d.emd = ${len(a)}"
+    from .result_scope import only_cls, only_sql
+    await only_cls()
+    ew += "".join(" AND " + x for x in only_sql(sets, a, "d"))
     async with db(realm="lx") as c:
         rows = await c.fetch("SELECT d.cls, ST_AsBinary(ST_SimplifyPreserveTopology(d.geom, 0.000005)) AS b FROM detections d "
                              f"WHERE d.job_id = ANY($1::text[]) AND d.edit_state <> 'deleted' AND {cond}{ew} LIMIT 60000", *a)
@@ -682,3 +688,107 @@ async def record() -> dict:
 async def public_record(request: Request):
     principal(request)
     return await record()
+
+
+_SAFE = re.compile(r"[\\/:*?\"<>|\s]+")
+
+
+@router.get("/spaces/me/report/bundle.zip")
+async def gov_report_bundle(request: Request, cards: str | None = None, emd: str | None = None, import_id: str | None = None):
+    """보고에 붙일 첨부 한 번에(영농-7) — 한글 문서(.hwpx) + 엑셀(.xlsx) + 지도 그림(.png) 한 묶음.
+    같은 고르기의 multi.hwpx · multi.xlsx 와 같은 빌더(같은 숫자 · 같은 관할) · 발급 목록에는 한 줄(묶음 1회 = 1회)."""
+    import zipfile
+    from . import farm_more as FM
+    p = _me(request)
+    d = await FM.multi_data(p, cards, emd, import_id, with_avail=False)
+    pngs: list[tuple[str, bytes | None]] = []
+    for s in d["picked"][:4]:
+        try:
+            pngs.append((s["short"], await _png(p, s["card"], d["emd"])))
+        except ApiError:
+            pngs.append((s["short"], None))
+    hw, hname = await run_in_threadpool(FM._hwpx_multi, d, pngs)
+    xl = await run_in_threadpool(FM._xlsx_multi, d)
+    base = _SAFE.sub("_", f"{d['region']}_{'_'.join(s['short'] for s in d['picked'])}_AI분석결과_{FM._today()}")
+
+    def _zip() -> bytes:
+        bio = io.BytesIO()
+        with zipfile.ZipFile(bio, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr(f"{base}_보고서.hwpx", hw)
+            z.writestr(f"{base}_표.xlsx", xl)
+            ok = [(n, b) for n, b in pngs if b]
+            for i, (n, b) in enumerate(ok):
+                suf = "" if len(ok) == 1 else "_" + _SAFE.sub("_", n)
+                z.writestr(f"{base}_지도{suf}.png", b)
+        return bio.getvalue()
+
+    blob = await run_in_threadpool(_zip)
+    await FM._issue(p, d, (import_id or "").strip() or None, "zip")
+    name = f"{base}_첨부묶음.zip"
+    return Response(blob, media_type="application/zip",
+                    headers={"content-disposition": f"attachment; filename=\"bundle.zip\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store",
+                             "access-control-expose-headers": "Content-Disposition"})
+
+
+# ── 대장 올리기 양식(영농-8) ────────────────────────────────────────────────
+# 머리 줄만(값 0줄) — 열 이름은 올리기 화면의 열 자동 인식(gov-fusion/ledger.js guessColumns)이 그대로 맞추는 말.
+# 성명 · 연락처 · 경영체 이름 열은 양식에 두지 않는다(읽지 않음).
+_TPL_BASE = [("소재지", "지번 주소 — 읍면동 · 리 · 지번까지(예: ○○읍 ○○리 123-4)", True),
+             ("필지고유번호", "19자리 필지고유번호(PNU) — 있으면 지번보다 먼저 맞춥니다", False)]
+_TPL = {
+    "farm_ledger": ("농지대장", _TPL_BASE + [("지목", "전 · 답 · 과수원 등 대장의 지목", False), ("기준일자", "대장 기준일(예: 2025-06-30)", False)]),
+    "feedcrop": ("사료작물 재배 신청 대장", _TPL_BASE + [("신청 작물", "신청한 작물 이름(예: 옥수수 · 수단그라스)", True), ("신청 면적(㎡)", "신청 면적 숫자만", False),
+                                                       ("신청일자", "신청한 날(예: 2025-04-15)", False)]),
+    "greenhouse": ("시설 신고 대장", _TPL_BASE + [("시설 구분", "시설 종류(예: 비닐하우스 · 유리온실)", False), ("신고일자", "신고한 날", False)]),
+    "dev_permit": ("개발행위허가 대장", _TPL_BASE + [("허가 종류", "허가 종류", False), ("허가일자", "허가한 날", False)]),
+    "public_asset": ("공유재산 대장", _TPL_BASE + [("용도", "재산 용도", False), ("기준일자", "대장 기준일", False)]),
+    "river_permit": ("점용허가 대장", _TPL_BASE + [("허가 종류", "점용 허가 종류", False), ("허가일자", "허가한 날", False)]),
+}
+
+
+def _template_xlsx(kind: str) -> tuple[bytes, str]:
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    label, cols = _TPL[kind]
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "대장"
+    for i, (name, _d, _r) in enumerate(cols, 1):
+        c = ws.cell(row=1, column=i, value=name)
+        c.font = Font(bold=True)
+        c.fill = PatternFill("solid", fgColor="EEF2F7")
+        ws.column_dimensions[c.column_letter].width = max(16, len(name) * 3)
+    ws.freeze_panes = "A2"
+    g = wb.create_sheet("설명")
+    g.column_dimensions["A"].width = 22
+    g.column_dimensions["B"].width = 64
+    g.column_dimensions["C"].width = 10
+    rows = [(f"{label} 올리기 양식", "", ""), ("", "", ""), ("열 이름", "채우는 내용", "필요")]
+    rows += [(n, d, "권장" if r else "선택") for n, d, r in cols]
+    rows += [("", "", ""),
+             ("안내", "첫 시트 '대장'의 첫 줄을 머리로 읽습니다. 값은 둘째 줄부터 채워 주세요.", ""),
+             ("", "필지고유번호와 소재지 중 하나만 있어도 필지를 맞춥니다.", ""),
+             ("", "성명 · 연락처 · 경영체 이름 열은 올려도 읽지 않습니다. 양식에도 없습니다.", ""),
+             ("", "농림사업정보시스템 등에서 내려받은 엑셀을 그대로 올려도 열을 자동으로 맞춥니다. 이 양식은 선택입니다.", "")]
+    for r in rows:
+        g.append(list(r))
+    g["A1"].font = Font(bold=True, size=14)
+    for c in g[3]:
+        c.font = Font(bold=True)
+    for row in g.iter_rows(min_row=1):
+        for c in row:
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+    bio = io.BytesIO()
+    wb.save(bio)
+    return bio.getvalue(), f"{label}_올리기양식.xlsx"
+
+
+@router.get("/spaces/me/ledger/template/{kind}.xlsx")
+async def ledger_template(request: Request, kind: str):
+    _me(request)
+    if kind not in _TPL:
+        raise ApiError("not_found", "그 대장 종류의 양식이 없습니다")
+    blob, name = await run_in_threadpool(_template_xlsx, kind)
+    return Response(blob, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"content-disposition": f"attachment; filename=\"template.xlsx\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store",
+                             "access-control-expose-headers": "Content-Disposition"})

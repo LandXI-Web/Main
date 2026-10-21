@@ -175,3 +175,9 @@ body.gq-boot .k-app{visibility:hidden}
 .gq-due{display:flex;align-items:center;gap:12px;margin:10px 0 0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 .gq-due small{color:var(--sub);margin-left:4px}
 .gq-due .t-input{width:180px}
+
+/* 분석 요청 진행 표시(영농-7) */
+.sq-prog{display:flex;align-items:center;gap:10px;margin-top:6px;min-width:0}
+.sq-prog em{font:500 var(--fs-tag,14px)/1.4 var(--font-body);font-style:normal;color:var(--ink-2)}
+.sq-prog-b{display:block;flex:0 0 120px;height:6px;border-radius:3px;background:var(--bg-0,#F2F4F6);overflow:hidden}
+.sq-prog-b u{display:block;height:100%;border-radius:3px;background:var(--accent,#006DF7);transition:width .4s ease}

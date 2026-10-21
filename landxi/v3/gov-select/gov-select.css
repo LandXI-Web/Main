@@ -321,3 +321,13 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 .gs-cls .gs-pct{color:var(--sub);width:56px}
 .gs-cls .gs-cls-emd .gs-tbl td:first-child,.gs-cls .gs-cls-emd .gs-tbl th:first-child{position:sticky;left:0;background:var(--surface,#fff)}
 .gs-cls .gs-cls-csv{margin-left:8px}
+
+/* 통계 대시보드(영농-6) — 회백 바탕 위 흰 카드(칸 부품은 kit/farm-dash.css) */
+.gs-dash{display:flex;flex-direction:column;gap:16px;min-width:0}
+.gs-dash-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.gs-dash-h h2{margin:0;font:700 var(--fs-t2,20px)/1.3 var(--font-display);color:var(--ink)}
+.gs-dash-act{display:flex;gap:8px;margin-left:auto}
+.fd-dlb{height:40px;padding:0 16px;border:1px solid var(--rule,#E5E8EB);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap}
+.fd-dlb:hover{background:var(--bg-0)}
+.fd-dlb:disabled{opacity:.6;cursor:progress}
+@media (max-width:640px){.gs-dash-act{margin-left:0;width:100%}.fd-dlb{flex:1}}

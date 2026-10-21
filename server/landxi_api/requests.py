@@ -1348,6 +1348,43 @@ async def _sync(rows: list) -> list:
     return out
 
 
+async def _progress(rows: list) -> dict[str, dict]:
+    """진행 표시(영농-7) — 승인됐거나 분석 중인 요청의 대기 순번 · 분석 중 %. LX 작업 화면과 같은 값(작업 표 shards · 대기열)이고 없는 값은 싣지 않는다."""
+    live_rows = [r for r in rows if r["state"] in ("approved", "analyzing")]
+    if not live_rows:
+        return {}
+    from .deps import redis
+    out: dict[str, dict] = {}
+    try:
+        r_ = await redis()
+    except Exception:  # noqa: BLE001
+        r_ = None
+    async with db(realm="lx") as conn:
+        for r in live_rows:
+            if not r["job_id"]:
+                out[r["id"]] = {"phase": "wait", "word": "곧 시작합니다", "pct": None, "ahead": None}
+                continue
+            j = await conn.fetchrow("SELECT state, shards_total, shards_done, created_at, pool, priority FROM jobs WHERE id=$1", r["job_id"])
+            if not j:
+                continue
+            live = {}
+            if r_ is not None:
+                try:
+                    live = await r_.hgetall(f"job:{r['job_id']}") or {}
+                except Exception:  # noqa: BLE001
+                    live = {}
+            st = live.get("state") or j["state"]
+            tot = int(live.get("shards_total", j["shards_total"] or 0))
+            dn = int(live.get("shards_done", j["shards_done"] or 0))
+            if st == "running":
+                out[r["id"]] = {"phase": "run", "word": "분석 중", "pct": min(99, int(dn * 100 / tot)) if tot else None, "ahead": 0}
+            elif st == "queued":
+                ahead = await conn.fetchval("SELECT count(*) FROM jobs WHERE pool=$1 AND state IN ('queued','running') AND id<>$2 AND created_at < $3 AND priority<=$4",
+                                            j["pool"], r["job_id"], j["created_at"], j["priority"])
+                out[r["id"]] = {"phase": "wait", "word": "차례를 기다립니다", "pct": None, "ahead": int(ahead or 0)}
+    return out
+
+
 @router.get("/requests")
 async def list_requests(request: Request, tenant_id: str | None = None, service: str | None = None):
     p = require(principal(request))
@@ -1363,6 +1400,10 @@ async def list_requests(request: Request, tenant_id: str | None = None, service:
                                 tid, service)
     rows = await _sync(rows)
     items = [_view(r, p) for r in rows]
+    prog = await _progress(rows)
+    for it in items:
+        if it["id"] in prog:
+            it["progress"] = prog[it["id"]]
     return {"items": items, "total": len(items),
             "pending": env(sum(1 for i in items if i["state"] == "pending"), "count", "recorded", "analysis_requests(state pending)"),
             "as_of": now_iso()}

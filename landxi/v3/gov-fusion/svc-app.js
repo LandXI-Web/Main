@@ -99,9 +99,29 @@ const dz = K.dropzone(dzEl, {
 const emptyEl = h('div'); dzEl.prepend(emptyEl);
 const jo = (w, a, b) => { const c = String(w || '').charCodeAt(String(w || '').length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 ? a : b; };
 K.empty(emptyEl, { kind: 'first', title: '행정정보와 비교', char: 'satellite', text: `${S.kind}${jo(S.kind, '을', '를')} 올리면 서비스 결과와 필지 번호로 맞춰 대장과 AI 결과가 다른 필지를 보여 줍니다.`, action: { label: '대장 올리기', onClick: () => {} } });
-dzEl.append(h('div.gf-acts', {}, listB(() => openList())));
+const tplBtn = h('button.t-btn.t-btn--text.gf-tpl', { type: 'button', text: '양식 내려받기(선택)', title: '머리 줄만 있는 엑셀 — 이대로 채워 올리면 열이 모두 자동으로 맞습니다' });
+tplBtn.addEventListener('click', async () => {
+  const code = Object.keys(KIND_LABEL).find((k) => KIND_LABEL[k] === S.kind || KIND_LABEL[k].startsWith(S.kind)) || 'farm_ledger';
+  tplBtn.disabled = true;
+  try {
+    const r = await api(`/spaces/me/ledger/template/${code}.xlsx`, { raw: true });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
+    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : '올리기양식.xlsx' });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    K.toast('양식을 내려받았습니다');
+  } catch (e) { K.devlog('template', String(e?.message || e)); K.toast('내려받지 못했습니다'); }
+  finally { tplBtn.disabled = false; }
+});
+dzEl.append(h('div.gf-acts', {}, listB(() => openList()), tplBtn));
 
 /* ═════════ 2 · 열 확인 ═════════ */
+/** 올린 뒤 한 줄 — 맞춘 열 n · 읽지 않은 열 n(성명 · 연락처 …). 숫자는 이 파일 그대로 */
+function fitLine(out, cols) {
+  const fit = cols.filter((c) => c.role && c.role !== 'skip').length, skip = (out.dropped || []).length;
+  return `맞춘 열 ${fit}${skip ? ` · 읽지 않은 열 ${skip}(성명 · 연락처 등 사람 정보)` : ''}`;
+}
+
 function toCols(out) {
   S.rec = { import_id: out.import_id };
   S.cols = out.columns_guess.map((c) => ({ ...c }));
@@ -117,7 +137,7 @@ function toCols(out) {
   day.addEventListener('change', () => { S.baseDate = day.value; });
   panes.cols.append(h('h3.gf-h', { text: '열 확인' }),
     h('div.gf-two', {}, h('label.gf-fld', {}, h('span.t-label', { text: '대장 종류' }), kindSel), h('label.gf-fld', {}, h('span.t-label', { text: '기준일(선택)' }), day)),
-    tbl, h('p.gf-note', { text: '성명 · 연락처 · 경영체 이름 열은 읽지 않습니다' }), h('div.gf-acts', {}, ok));
+    tbl, h('p.gf-note.gf-fit', { text: fitLine(out, S.cols) }), h('p.gf-note', { text: '성명 · 연락처 · 경영체 이름 열은 읽지 않습니다' }), h('div.gf-acts', {}, ok));
   const opt = (v) => ROLES.map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('');
   K.table(tbl, {
     cols: [

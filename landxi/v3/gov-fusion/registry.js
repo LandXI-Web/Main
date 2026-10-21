@@ -92,7 +92,7 @@ export async function ledgerStore(who) {
       onProg?.(0.8);
       const cols = guessColumns(L.headers, L.rows);
       rec.cur = { import_id: uid(), kind: KIND_LABEL[kindOfFile(L.name, L.headers)] || kind, name: L.name, headers: L.headers, rows: L.rows, columns_guess: cols, mapping: null, matched: null, unmatched: [], as_of: new Date().toISOString() };
-      return { import_id: rec.cur.import_id, rows: L.rows.length, columns_guess: cols, name: L.name };
+      return { import_id: rec.cur.import_id, rows: L.rows.length, columns_guess: cols, name: L.name, dropped: L.dropped || [] };
     },
     /** confirm{mapping} — 필지 잇기(matcher) → 계약 모양 */
     async confirm(id, mapping, matcher) {

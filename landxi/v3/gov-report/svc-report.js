@@ -7,6 +7,7 @@
    어느 지역이든 같은 화면(지역 이름 · 코드 고정값 0 — 관할 = 로그인한 기관). */
 import { api, h } from '../kit/util.js';
 import { toast, devlog } from '../kit/index.js';
+import { farmDash } from '../kit/farm-dash.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const nf = (v, d = 0) => (v === null || v === undefined ? '—' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -25,13 +26,14 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   const emdSel = h('select.t-input.rp-sel', { 'aria-label': '범위' });
   const bH = h('button.t-btn', { type: 'button', text: '한글 문서 내려받기' });
   const bX = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기' });
+  const bZ = h('button.t-btn.t-btn--2.rp-zip', { type: 'button', text: '첨부 묶음 받기', title: '한글 문서 · 엑셀 · 지도 그림을 한 번에(.zip)' });
   const doc = h('article.rp-doc', { 'aria-label': '보고서 미리 보기', 'aria-live': 'polite' });
   const list = h('div.rp-list-b');
   const pick = h('section.rp-pick', { 'aria-label': '넣을 결과 고르기' },
     h('h2.rp-h', { text: '넣을 결과' }), h('p.rp-help', { text: '하나만 골라도, 여러 시점을 골라도 됩니다.' }), picks,
     h('p.rp-grp', { text: '대장(넣지 않아도 됩니다)' }), ledSel,
     h('p.rp-grp', { text: '범위' }), emdSel,
-    h('div.rp-btns', {}, bH, bX));
+    h('div.rp-btns', {}, bH, bX, bZ), h('p.rp-help', {}, '첨부 묶음은 한글 · 엑셀 ·', h('br'), '지도 그림을 한 번에 받습니다.'));
   const root = h('div.rp', {},
     h('div.rp-grid', {}, pick, doc),
     h('section.rp-list', { 'aria-label': '발급 목록' }, h('h2.rp-h', { text: '발급 목록' }),
@@ -39,7 +41,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   pane.replaceChildren(root);
 
   const wait = (t) => doc.replaceChildren(h('p.gr-wait', { role: 'status', text: t }));
-  const lockDl = (on) => { bH.disabled = on; bX.disabled = on; };
+  const lockDl = (on) => { bH.disabled = on; bX.disabled = on; bZ.disabled = on; };
 
   /* 처음 — 고를 것(결과 · 대장 · 발급 목록)을 한 번에 */
   async function boot() {
@@ -108,37 +110,25 @@ export function svcReport({ svc, onAuth, fusionHref }) {
     const meta = [P.map((s) => s.short).join(' · '), d.emd || `${d.place || '관할'} 전체`, `만든 날 ${d.made}`].join(' · ');
     const art = h('div.gr-rdoc', { dataset: { metric: 'AI 분석 결과', v: one ? String(val(P[0].total) ?? '') : '' } },
       h('p.gr-rdoc-k', { text: 'AI 분석 결과 보고서' }), h('h2.gr-rdoc-t', { text: title }), h('p.gr-rdoc-m', { text: meta }));
-    /* 개요 */
-    const ov = h('div.gr-ov');
-    ov.append(box('지역', d.region), box('영상', d.shots.length > 1 ? `${d.shots.length}가지` : (d.shots[0] || '—')),
-      box('분석한 날', d.days.length > 1 ? `${d.days.length}회` : (d.days[0] || '—')));
-    if (one) ov.append(num('AI 분석 결과', P[0].total, P[0].unit), ...(val(P[0].acc) !== null && val(P[0].acc) !== undefined ? [num('AI 모델 정확도', P[0].acc, '%')] : []));
-    if (d.ledger) ov.append(num('대장 필지', d.ledger.parcels, '필지'));
-    art.append(sec('개요'), ov);
-    /* 시점 비교 — 둘 이상 */
+    /* 대시보드(영농-6 · 원칙 299) — 큰 숫자 · 종류별 도넛 · 읍면동별 막대 · 시점 비교 선(둘 이상) · 곤포 생산량(값 있을 때만). XI ChatGEO 보고서 보기와 같은 칸 부품 */
+    const byDate = [...P].sort((x, y) => String(x.analyzed || '').localeCompare(String(y.analyzed || '')));
+    const L = byDate[byDate.length - 1];
+    const sameUnit = P.every((s) => s.unit === L.unit);
+    const kpis = [{ label: one ? 'AI 분석 결과' : `AI 분석 결과 · ${L.short}`, value: val(L.total), unit: L.unit },
+      { label: '넓이', value: val(L.area_ha), unit: 'ha', d: 1 },
+      ...(val(L.acc) != null ? [{ label: 'AI 모델 정확도', value: val(L.acc), unit: '%', d: 1 }] : []),
+      ...(d.ledger ? [{ label: '올린 대장 필지', value: val(d.ledger.parcels), unit: '필지' }] : [])];
+    const holder = h('div.rp-dash', { dataset: { metric: 'AI 분석 결과', v: String(val(L.total) ?? '') } });
+    art.append(holder);
+    farmDash({
+      kpis, classes: L.classes.map((c) => ({ label: c.name, v: val(c.n) })), classTitle: `종류별${one ? '' : ` · ${L.short}`}`, classUnit: L.unit,
+      emds: (L.emd_rows || []).map((r) => ({ label: r.emd, v: r.n, k: r.emd })), emdTitle: `읍면동별${one ? '' : ` · ${L.short}`}`, emdUnit: L.unit,
+      trend: !one && sameUnit ? byDate.filter((s) => s.analyzed).map((s) => ({ t: dot(s.analyzed).slice(2), v: val(s.total) })) : [], trendTitle: '시점 비교', trendUnit: L.unit,
+      yields: L.classes.filter((c) => val(c.yield)).map((c) => ({ label: `${c.name} 생산량`, value: val(c.yield), unit: 'kg', sub: `${nf(val(c.n))}개` })),
+      onEmd: d.emd ? null : (k) => { if ((d.emds || []).includes(k)) { S.emd = k; emdSel.value = k; load(); } },
+    }).then((el) => { if (holder.isConnected) holder.replaceChildren(el); }).catch((e) => devlog('farm dash', e.message));
     if (!one) {
-      const bale = d.bale;
-      art.append(sec('시점 비교'), tbl(['결과', '분석한 날', 'AI 분석 결과', '넓이(ha)', ...(bale ? ['곤포'] : [])],
-        P.map((s) => {
-          const b = s.classes.find((c) => c.bale);
-          return [s.short, s.analyzed || '—', `${nf(val(s.total))}${s.unit}`, nf(val(s.area_ha), 1),
-            ...(bale ? [b ? `${nf(val(b.n))}개${val(b.yield) ? ` · ${nf(val(b.yield))}kg` : ''}` : '—'] : [])];
-        }), [0, 1], null));
-    }
-    /* 종류별 */
-    art.append(sec('종류별'));
-    if (one) {
-      const s = P[0];
-      art.append(tbl(['종류', '개수', '넓이(ha)'], [...s.classes.map((c) => [c.name + (val(c.yield) ? ` · 생산량 ${nf(val(c.yield))}kg` : ''), `${nf(val(c.n))}${s.unit}`, nf(val(c.ha), 1)]),
-        ['합계', `${nf(val(s.total))}${s.unit}`, nf(val(s.area_ha), 1)]], [0], 'sum'));
-    } else {
-      const names = [...new Set(P.flatMap((s) => s.classes.map((c) => c.name)))];
-      const two = P.length === 2;
-      const ha = (s, n) => val(s.classes.find((c) => c.name === n)?.ha);
-      const diff = (a, b) => { const x = (b ?? 0) - (a ?? 0); return `${x > 0 ? '+' : x < 0 ? '−' : ''}${nf(Math.abs(Math.round(x * 10) / 10), 1)}`; };
-      art.append(tbl(['종류', ...P.map((s) => `${s.short}(ha)`), ...(two ? ['차이'] : [])],
-        [...names.map((n) => [n, ...P.map((s) => (ha(s, n) === undefined ? '—' : nf(ha(s, n), 1))), ...(two ? [diff(ha(P[0], n), ha(P[1], n))] : [])]),
-          ['합계', ...P.map((s) => nf(val(s.area_ha), 1)), ...(two ? [diff(val(P[0].area_ha), val(P[1].area_ha))] : [])]], [0], 'sum'));
+      art.append(sec('시점 비교'), tbl(['결과', '분석한 날', 'AI 분석 결과', '넓이(ha)'], byDate.map((s) => [s.short, s.analyzed || '—', `${nf(val(s.total))}${s.unit}`, nf(val(s.area_ha), 1)]), [0, 1], null));
     }
     /* 지도 — 고른 결과마다(넷까지) */
     art.append(sec('지도'));
@@ -150,7 +140,6 @@ export function svcReport({ svc, onAuth, fusionHref }) {
     }
     art.append(maps);
     /* 읍면동별 */
-    art.append(sec('읍면동별'), one ? emdOne(P[0]) : emdMany(P));
     /* 대장과 견준 결과 */
     if (d.ledger) art.append(...ledgerSec(d.ledger, P));
     art.append(h('p.rp-note', {}, 'AI 분석 결과는 참고자료입니다.', h('br'), '처분은 담당자가 정합니다.'));
@@ -169,32 +158,6 @@ export function svcReport({ svc, onAuth, fusionHref }) {
     const L = new Set(left);
     return h('div.rp-tw', {}, h('table.gr-rtb', {}, h('thead', {}, h('tr', {}, ...cols.map((c, i) => h(L.has(i) ? 'th' : 'th.n', { text: c })))),
       h('tbody', {}, ...rows.map((r, ri) => h('tr', { class: last && ri === rows.length - 1 ? last : '' }, ...r.map((c, i) => h(L.has(i) ? 'td' : 'td.n', { text: c })))))));
-  }
-  function emdOne(s) {
-    const cls = s.classes.map((c) => c.name), many = cls.length > 1;
-    const rows = s.emd_rows || [], show = rows.slice(0, TOP), rest = rows.slice(TOP);
-    const cnt = (r, k) => (r.by || []).find((b) => b.cls === k)?.n || 0;
-    const body = show.map((r) => [r.emd, ...(many ? cls.map((k) => nf(cnt(r, k))) : []), nf(r.n), nf(val(r.ha), 1)]);
-    if (rest.length) {
-      const sum = (f) => rest.reduce((a, r) => a + f(r), 0);
-      body.push([`그 밖 ${rest.length}곳`, ...(many ? cls.map((k) => nf(sum((r) => cnt(r, k)))) : []), nf(sum((r) => r.n)), nf(Math.round(sum((r) => val(r.ha) || 0) * 10) / 10, 1)]);
-    }
-    body.push(['합계', ...(many ? s.classes.map((c) => nf(val(c.n))) : []), nf(val(s.total)), nf(val(s.area_ha), 1)]);
-    const t = tbl(['읍면동', ...(many ? cls : []), '계', '넓이(ha)'], body, [0], 'sum');
-    if (rest.length) t.querySelectorAll('tbody tr')[show.length].classList.add('dim');
-    return t;
-  }
-  function emdMany(P) {
-    const names = [...new Set(P.flatMap((s) => s.emd_rows.map((e) => e.emd)))];
-    const n = (s, x) => s.emd_rows.find((e) => e.emd === x)?.n || 0;
-    names.sort((a, b) => (a === '읍면동 밖') - (b === '읍면동 밖') || P.reduce((t, s) => t + n(s, b) - n(s, a), 0));
-    const show = names.slice(0, TOP), rest = names.slice(TOP);
-    const body = show.map((x) => [x, ...P.map((s) => nf(n(s, x)))]);
-    if (rest.length) body.push([`그 밖 ${rest.length}곳`, ...P.map((s) => nf(rest.reduce((t, x) => t + n(s, x), 0)))]);
-    body.push(['합계', ...P.map((s) => nf(val(s.total)))]);
-    const t = tbl(['읍면동', ...P.map((s) => `${s.short}(${s.unit})`)], body, [0], 'sum');
-    if (rest.length) t.querySelectorAll('tbody tr')[show.length].classList.add('dim');
-    return t;
   }
   function ledgerSec(L, P) {
     const one = P.length === 1, lb = L.labels || {};
@@ -227,7 +190,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   async function download(fmt, qs = q()) {
     lockDl(true);
     try {
-      const r = await api(`/spaces/me/report/multi.${fmt}?` + qs, { raw: true });
+      const r = await api(fmt === 'zip' ? '/spaces/me/report/bundle.zip?' + qs : `/spaces/me/report/multi.${fmt}?` + qs, { raw: true });
       if (!r.ok) throw Object.assign(new Error('http ' + r.status), { status: r.status });
       const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
       const name = m ? decodeURIComponent(m[1]) : `AI분석결과보고서.${fmt}`;
@@ -249,7 +212,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
         if (!known.length) { toast('이 결과는 지금 받을 수 없습니다'); return; }
         S.picks = new Set(known); S.emd = x.emd || ''; S.led = x.import_id || '';
         ledSel.value = S.led; paintPicks(); await load();
-        await download(x.fmt === 'xlsx' ? 'xlsx' : 'hwpx');
+        await download(x.fmt === 'xlsx' ? 'xlsx' : x.fmt === 'zip' ? 'zip' : 'hwpx');
       });
       return h('tr', {}, h('td.num', { text: `${dot(x.at)} ${hm(x.at)}` }), h('td', { text: x.title || '—' }), h('td', { text: x.who }),
         h('td.n', { text: `${nf(val(x.downloads))}회` }), h('td.rp-act', {}, again));
@@ -262,6 +225,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   emdSel.addEventListener('change', () => { S.emd = emdSel.value; load(); });
   bH.addEventListener('click', () => download('hwpx'));
   bX.addEventListener('click', () => download('xlsx'));
+  bZ.addEventListener('click', () => download('zip'));
   boot();
   return { reload: load };
 }

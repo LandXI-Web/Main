@@ -19,7 +19,7 @@ export async function loadSent() {
   const [rq, sh, rv] = await Promise.all([api('/requests').catch(() => null), api('/shoots').catch(() => null), api('/reviews?box=all&limit=100').catch(() => null)]);
   const rows = [];
   for (const x of rq?.items || []) if (x.mine) rows.push({ kind: 'request', kind_ko: '분석 요청', id: x.id, at: x.decided_at || x.created_at, svc: x.service?.id,
-    t: `${x.label || '영상'} → ${short(x.service?.name)}`, sub: [x.state_word, x.due_date ? `희망 ${+x.due_date.slice(5, 7)}월 ${+x.due_date.slice(8, 10)}일` : null, x.state === 'done' ? `${md(x.decided_at || x.created_at)} 결과 도착` : `${md(x.created_at)} 보냄`].filter(Boolean).join(' · '), word: x.state_word, lv: LV[x.state] });
+    t: `${x.label || '영상'} → ${short(x.service?.name)}`, sub: [x.state_word, x.due_date ? `희망 ${+x.due_date.slice(5, 7)}월 ${+x.due_date.slice(8, 10)}일` : null, x.state === 'done' ? `${md(x.decided_at || x.created_at)} 결과 도착` : `${md(x.created_at)} 보냄`].filter(Boolean).join(' · '), word: x.state_word, lv: LV[x.state], prog: x.progress || null, due: x.due_date || null });
   for (const x of sh?.items || []) if (x.mine) rows.push({ kind: 'shoot', kind_ko: '촬영 요청', id: x.id, at: x.updated_at || x.created_at, x,
     t: `${x.place || '그린 범위'} ${Number(x.area_km2?.value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}㎢`,
     sub: x.answer && ['answered', 'accepted'].includes(x.state) ? `LX 답 — ${x.answer.timing || ''} · 확정 ${nf(x.answer.amount?.value)}원${x.state === 'answered' ? ' · 진행 여부를 정해 주세요' : ''}`
@@ -38,8 +38,23 @@ export function drawSent(host, rows, { compact = false, onRequest } = {}) {
   host.replaceChildren(h('ul.sq-sent', {}, ...(compact ? rows.slice(0, 3) : rows).map((r) => h('li', {},
     h('button.sq-sent-r', { type: 'button', dataset: { k: r.kind }, onclick: () => openRow(r, { onRequest, host, rows }) },
       h('span.t-chip.sq-k', { text: r.kind_ko }),
-      h('span.sq-sent-t', {}, h('b', { text: r.t }), h('small', { text: r.sub })),
+      h('span.sq-sent-t', {}, h('b', { text: r.t }), h('small', { text: r.sub }), progBar(r)),
       h('span.t-chip', { text: r.word, dataset: r.lv ? { lv: r.lv } : {} }))))));
+}
+
+/** 분석 요청 진행 표시(영농-7) — 대기 순번 · 분석 중 % · 희망 완료일까지 남은 날(서버 값 · 없으면 그리지 않는다) */
+function progBar(r) {
+  const g = r.prog;
+  if (!g) return null;
+  let due = '';
+  if (r.due) {
+    const n = Math.round((new Date(r.due + 'T00:00:00') - new Date(new Date().toDateString())) / 864e5);
+    due = n > 0 ? ` · 희망일까지 ${n}일` : n === 0 ? ' · 오늘이 희망일' : ' · 희망일이 지났습니다';
+  }
+  const word = g.phase === 'run' ? (g.pct != null ? `분석 중 ${g.pct}%` : '분석 중') : g.ahead ? `앞에 ${g.ahead}건 · 차례를 기다립니다` : (g.word || '곧 시작합니다');
+  return h('span.sq-prog', { dataset: { phase: g.phase } },
+    g.phase === 'run' && g.pct != null ? h('i.sq-prog-b', {}, h('u', { style: `width:${Math.max(4, g.pct)}%` })) : null,
+    h('em', { text: word + due }));
 }
 
 function openRow(r, { onRequest }) {
