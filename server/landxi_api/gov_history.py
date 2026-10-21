@@ -16,7 +16,7 @@ import secrets
 from fastapi import APIRouter, Request
 
 from . import summary
-from .deps import ApiError, Principal, audit, db, principal, require
+from .deps import ApiError, Principal, audit, db, pool_sys, principal, require
 from .envelope import KST, env, now_iso
 
 router = APIRouter()
@@ -472,6 +472,9 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
             addr = pa["addr"] if pa else None
             spa = await c.fetch("SELECT job_id, cls_ko, sum(hit1_m2) m2 FROM survey_parcel_ai WHERE pnu=$1 AND job_id = ANY($2::text[]) AND n1 > 0 GROUP BY 1, 2",
                                 pnu, sets)
+        # 결과 면 × 필지 공간 결합 = 시스템 읽기 경로(pool_sys) — RLS 보안 장벽이 공간 인덱스(&&)를 막아 결과 세트 전체(13만 줄)를 훑던 것(0.38초 → 수 ms · impl-46 속도).
+        # 읽는 범위는 위에서 정한 그대로(볼 수 있는 서비스의 결과 세트 · 관할 안 필지) — 위 연결도 realm lx 라 RLS 로 거르던 것이 없다
+        async with (await pool_sys()).acquire() as c:
             det = await c.fetch(
                 "WITH pg AS (SELECT geom FROM survey_parcels WHERE pnu=$1) "
                 "SELECT d.job_id, d.cls, d.cls_en, (d.pnu IS NOT NULL) tagged, "

@@ -27,7 +27,13 @@ export function filterBar({ host, state, onChange }) {
   const cDiff = chip('대장과 다름만', 'diff'), cNote = chip('메모 없음만', 'nonote');
   const row = h('div.sp-bar', { role: 'group', 'aria-label': '거르기' }, emd, ri, cls, cDiff, cNote, sort);
   const fBtn = h('button.t-btn.t-btn--2.sp-fbtn', { type: 'button', text: '거르기' });
-  const wrap = h('div.sp-bar-w', {}, row, fBtn);
+  /* 지번 찾기(REMAINING 5-2) — '동천리 123-4' · '123-4' · 서버가 관할 안 같은 행에서 찾는다 · Enter 에 한 필지면 그 필지 카드 */
+  const find = h('input.t-input.sp-find', { type: 'search', enterkeyhint: 'search', maxlength: '60', placeholder: '지번 찾기 — 예: 동천리 123-4', 'aria-label': '지번 찾기', autocomplete: 'off' });
+  let ft = 0;
+  const go = (open) => { clearTimeout(ft); const v = find.value.trim(); if (v === (state.q || '') && !open) return; state.q = v; state.open = !!open && !!v; onChange(); };
+  find.addEventListener('input', () => { clearTimeout(ft); ft = setTimeout(() => go(false), 350); });
+  find.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(true); } });
+  const wrap = h('div.sp-bar-w', {}, find, row, fBtn);
   host.before(wrap);
   let facets = null;
   function paintChips() {

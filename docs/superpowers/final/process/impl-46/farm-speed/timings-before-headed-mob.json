@@ -1,0 +1,274 @@
+{
+ "label": "before-headed-mob",
+ "at": "2026-10-21 20:21:39",
+ "site": "https://namwon.land-xi.dev",
+ "headed": true,
+ "runs": {
+  "mob": {
+   "compare": [
+    {
+     "i": 0,
+     "band": 2990,
+     "grip": 2867,
+     "boot": {
+      "t0": 746,
+      "gate": 37,
+      "region": 554,
+      "engine": 554,
+      "data": 599,
+      "layers": 634,
+      "canvas": 641,
+      "ready": 660,
+      "shown": 2751
+     },
+     "loading": [
+      2740
+     ],
+     "marks": [
+      [
+       "create",
+       1307
+      ],
+      [
+       "load",
+       1340
+      ],
+      [
+       "fullLoad",
+       1341
+      ],
+      [
+       "create",
+       1413
+      ],
+      [
+       "load",
+       1587
+      ],
+      [
+       "fullLoad",
+       1587
+      ]
+     ],
+     "waterfall": [
+      "  462→  738 /landxi/v3/kit/i18n/ko.json",
+      "  462→  738 /landxi/v3/kit/i18n/en.json",
+      "  475→ 1320 /api/v1/ximap/boot",
+      "  671→  969 /api/v1/openapi.json",
+      "  674→  815 /cdn-cgi/rum",
+      "  740→ 1021 /landxi/v3/kit/service-card.css",
+      "  746→  883 /landxi/v3/gov-select/map-extras.js",
+      "  782→  782 /landxi/v3/gov-select/brand.js",
+      "  784→  784 /landxi/v3/kit/session-clock.js",
+      "  785→ 1065 /landxi/v3/kit/notify.css",
+      "  788→  788 /landxi/assets/brand/vector/lx-lockup.svg",
+      "  792→  792 /landxi/assets/data/emblems.js",
+      "  800→ 1080 /landxi/v3/gov-select/brand.css",
+      "  885→  885 /landxi/v3/gov-space/guide.js",
+      "  886→ 1169 /landxi/v3/gov-select/map-extras.css",
+      "  886→ 1169 /landxi/v3/gov-space/gov-space.css",
+      " 1205→ 1899 /api/v1/spaces/me/parcels/5219045031101190001/history",
+      " 1396→ 1684 /api/v1/ximap/board",
+      " 1434→ 1838 /api/v1/survey/parcels/5219045031101190001"
+     ]
+    },
+    {
+     "i": 1,
+     "band": 2618,
+     "grip": 1766,
+     "boot": {
+      "t0": 694,
+      "gate": 42,
+      "region": 186,
+      "engine": 186,
+      "data": 232,
+      "layers": 265,
+      "canvas": 270,
+      "ready": 284,
+      "shown": 617
+     },
+     "loading": [
+      260,
+      1435
+     ],
+     "marks": [
+      [
+       "create",
+       887
+      ],
+      [
+       "load",
+       921
+      ],
+      [
+       "fullLoad",
+       921
+      ],
+      [
+       "create",
+       983
+      ],
+      [
+       "load",
+       1053
+      ],
+      [
+       "fullLoad",
+       1053
+      ]
+     ],
+     "waterfall": [
+      "  412→  690 /landxi/v3/kit/i18n/ko.json",
+      "  412→  690 /landxi/v3/kit/i18n/en.json",
+      "  429→ 1136 /api/v1/ximap/boot",
+      "  439→  715 /api/v1/openapi.json",
+      "  693→  970 /landxi/v3/kit/service-card.css",
+      "  694→  694 /landxi/v3/gov-select/map-extras.js",
+      "  697→  697 /landxi/v3/gov-space/guide.js",
+      "  697→  979 /landxi/v3/gov-select/map-extras.css",
+      "  697→  978 /landxi/v3/gov-space/gov-space.css",
+      "  735→  735 /landxi/v3/gov-select/brand.js",
+      "  736→  736 /landxi/v3/kit/session-clock.js",
+      "  737→ 1016 /landxi/v3/kit/notify.css",
+      "  737→  737 /landxi/assets/brand/vector/lx-lockup.svg",
+      "  739→  739 /landxi/assets/data/emblems.js",
+      "  746→ 1024 /landxi/v3/gov-select/brand.css",
+      " 1058→ 1771 /api/v1/spaces/me/parcels/5219045031105540001/history",
+      " 1058→ 1345 /api/v1/ximap/board",
+      " 1058→ 1360 /api/v1/survey/parcels/5219045031105540001"
+     ]
+    },
+    {
+     "i": 2,
+     "band": 3066,
+     "grip": 2238,
+     "boot": {
+      "t0": 698,
+      "gate": 532,
+      "region": 536,
+      "engine": 536,
+      "data": 595,
+      "layers": 642,
+      "canvas": 645,
+      "ready": 651,
+      "shown": 983
+     },
+     "loading": [
+      1679
+     ],
+     "marks": [
+      [
+       "create",
+       1242
+      ],
+      [
+       "load",
+       1289
+      ],
+      [
+       "fullLoad",
+       1289
+      ],
+      [
+       "create",
+       1355
+      ],
+      [
+       "load",
+       1426
+      ],
+      [
+       "fullLoad",
+       1426
+      ]
+     ],
+     "waterfall": [
+      "  414→  695 /landxi/v3/kit/i18n/ko.json",
+      "  414→  695 /landxi/v3/kit/i18n/en.json",
+      "  432→ 1507 /api/v1/ximap/boot",
+      "  440→  724 /api/v1/openapi.json",
+      "  697→  981 /landxi/v3/kit/service-card.css",
+      "  698→  698 /landxi/v3/gov-select/map-extras.js",
+      "  700→  700 /landxi/v3/gov-space/guide.js",
+      "  701→  983 /landxi/v3/gov-select/map-extras.css",
+      "  701→  983 /landxi/v3/gov-space/gov-space.css",
+      " 1230→ 1230 /landxi/v3/gov-select/brand.js",
+      " 1231→ 1231 /landxi/v3/kit/session-clock.js",
+      " 1231→ 1511 /landxi/v3/kit/notify.css",
+      " 1232→ 1232 /landxi/assets/brand/vector/lx-lockup.svg",
+      " 1274→ 1274 /landxi/assets/data/emblems.js",
+      " 1295→ 1574 /landxi/v3/gov-select/brand.css",
+      " 1410→ 2179 /api/v1/spaces/me/parcels/5219040023106350001/history",
+      " 1410→ 1696 /api/v1/ximap/board",
+      " 1410→ 1709 /api/v1/survey/parcels/5219040023106350001"
+     ]
+    }
+   ],
+   "plain": [
+    {
+     "i": 0,
+     "shown": 2461,
+     "boot": {
+      "t0": 614,
+      "gate": 49,
+      "region": 124,
+      "engine": 124,
+      "data": 171,
+      "layers": 215,
+      "canvas": 218,
+      "ready": 230,
+      "shown": 1837
+     },
+     "loading": [
+      1656
+     ]
+    },
+    {
+     "i": 1,
+     "shown": 1112,
+     "boot": {
+      "t0": 665,
+      "gate": 39,
+      "region": 122,
+      "engine": 122,
+      "data": 167,
+      "layers": 210,
+      "canvas": 214,
+      "ready": 226,
+      "shown": 438
+     },
+     "loading": [
+      1155
+     ]
+    },
+    {
+     "i": 2,
+     "shown": 1416,
+     "boot": {
+      "t0": 668,
+      "gate": 391,
+      "region": 403,
+      "engine": 403,
+      "data": 453,
+      "layers": 494,
+      "canvas": 496,
+      "ready": 507,
+      "shown": 738
+     },
+     "loading": [
+      1156
+     ]
+    }
+   ],
+   "errors": []
+  }
+ },
+ "summary": {
+  "mob": {
+   "band_med": 2990,
+   "grip_med": 2238,
+   "loading_max_med": 1679,
+   "plain_shown_med": 1416
+  }
+ }
+}

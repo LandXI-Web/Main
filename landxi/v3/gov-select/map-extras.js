@@ -113,9 +113,9 @@ export function historyFor(pnu, card) {
   if (!HIST.has(k)) HIST.set(k, api(`/spaces/me/parcels/${encodeURIComponent(pnu)}/history?` + new URLSearchParams({ card, geom: '1', limit: '1' })).catch(() => null));
   return HIST.get(k);
 }
-export async function parcelCompare({ host, pnu, card, epochs, compare, left, right, aiOn, closeCard }) {
+export async function parcelCompare({ host, pnu, card, hist = null, epochs, compare, left, right, aiOn, closeCard }) {
   if (!host || !pnu || !card) return false;
-  const j = await historyFor(pnu, card);
+  const j = (hist && await hist) || await historyFor(pnu, card);   // hist = XI맵이 부팅 때 미리 받은 같은 이력
   const res = j?.results || [];
   const z = res[res.length - 1] || null, a = res.length > 1 ? res[res.length - 2] : null;
   const eps = epochs() || [];
@@ -125,15 +125,16 @@ export async function parcelCompare({ host, pnu, card, epochs, compare, left, ri
   const ay = a?.year || null;
   const L = (ay && eps.find((e) => yr(e) === ay && e !== R)) || [...eps].reverse().find((e) => R && yr(e) < yr(R)) || null;
   if (!R || !L) { toast('이 필지는 견줄 다른 시점 영상이 없습니다'); return false; }
+  /* 위 띠는 두 시점이 정해지는 즉시(가르기가 서는 동안 · 영상이 차오르기 전에 무엇을 견주는지 먼저 — impl-46 속도) */
+  const line = j?.change?.line || (z ? `${zy || z.shot} ${z.cls}` : '');
+  host.querySelector('.gx-cmp-t')?.remove();
+  if (line) host.append(h('p.gx-cmp-t', { role: 'status' }, h('span.gx-cmp-y', { text: `${L.label} · ${R.label}` }), h('b', { text: line })));
   await compare(L.it.id, R.it.id);
   aiOn?.();
   const sh = j?.shapes || [];
   const fz = sh.find((s) => s.year === zy) || sh[sh.length - 1];
   const fa = sh.find((s) => s.year === ay && s !== fz) || null;
-  try { if (fz) await right()?.geo('pcmp', fz.fc, 'ai'); if (fa) await left()?.geo('pcmp', fa.fc, 'ai'); } catch { /* 면 없음 */ }
-  const line = j?.change?.line || (z ? `${zy || z.shot} ${z.cls}` : '');
-  host.querySelector('.gx-cmp-t')?.remove();
-  if (line) host.append(h('p.gx-cmp-t', { role: 'status' }, h('span.gx-cmp-y', { text: `${L.label} · ${R.label}` }), h('b', { text: line })));
+  await Promise.all([fz && right()?.geo('pcmp', fz.fc, 'ai'), fa && left()?.geo('pcmp', fa.fc, 'ai')].map((p) => Promise.resolve(p).catch(() => {})));   // 면 없음은 넘어간다
   /* 휴대폰 — 필지 카드(아래 시트)가 두 영상을 가리므로 걷는다(카드는 지도에서 필지를 누르면 다시 열린다) */
   if (closeCard && matchMedia('(max-width: 640px)').matches) {
     for (let i = 0; i < 30 && !document.querySelector('.k-drawer.is-open'); i++) await new Promise((r) => setTimeout(r, 100));

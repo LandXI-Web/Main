@@ -1,0 +1,64 @@
+{
+ "what": "기관 필지 카드 → 시점 비교(XI맵 가르기) · 바깥 기관 주소 · 로그인 폼 · 중앙값(초 아님 ms)",
+ "note": "before = 8c125b93 화면 파일(HEAD) · after = 이번 고침. headed = 실제 Chrome 창(GPU) · headless = swiftshader(그림 그리기가 CPU라 느림). before 의 band 는 도구가 단추를 누르기 시작한 때부터(390 은 약 0.4초 더 김) · after 는 click 사건부터.",
+ "target": {
+  "band": 2000,
+  "loading": 1500
+ },
+ "pc": {
+  "before_headed": {
+   "band_med": 2795,
+   "grip_med": 1428,
+   "loading_max_med": 2003,
+   "plain_shown_med": 1555
+  },
+  "after_headed": {
+   "band_med": 1946,
+   "grip_med": 1913,
+   "loading_max_med": 928,
+   "plain_shown_med": 1687
+  },
+  "before_headless": {
+   "band_med": 4042,
+   "grip_med": 2409,
+   "loading_max_med": 3980,
+   "plain_shown_med": 3903
+  },
+  "after_headless": {
+   "band_med": 3411,
+   "grip_med": 2061,
+   "loading_max_med": 1101,
+   "plain_shown_med": 3150
+  }
+ },
+ "mob": {
+  "before_headed": {
+   "band_med": 2990,
+   "grip_med": 2238,
+   "loading_max_med": 1679,
+   "plain_shown_med": 1416
+  },
+  "after_headed": {
+   "band_med": 1348,
+   "grip_med": 1341,
+   "loading_max_med": 484,
+   "plain_shown_med": 1263
+  },
+  "after_headless": {
+   "band_med": 1395,
+   "grip_med": 1381,
+   "loading_max_med": 849,
+   "plain_shown_med": 1545
+  }
+ },
+ "changes": [
+  "첫 화면 묶음(GET /ximap/boot)에 ?pnu= 필지 카드 · 필지 이력(결과 면)을 함께 · 바로 출발",
+  "읍면동 집계도 첫 물결을 기다리지 않음",
+  "필지 이력 공간 결합 = 시스템 읽기 경로(RLS 보안 장벽이 공간 인덱스를 막아 13만 줄을 훑던 것 · 0.44초 → 0.06초)",
+  "카메라를 처음부터 그 필지에(시군구 → 날기 1.25초 · 날기 뒤 두 번째 불러오는 중 없음)",
+  "왼쪽 지도 · 시점 영상 주소를 부팅 중에 미리 · 두 쪽 영상 함께",
+  "가르기를 지역 도착(요약 · 결과 목록)을 기다리지 않고 바로",
+  "위 띠는 두 시점이 정해지는 즉시",
+  "필지로 연 화면은 가운데 판을 0.6초(시점 비교) · 1.2초(필지)까지만"
+ ]
+}

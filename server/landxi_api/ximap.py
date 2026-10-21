@@ -878,6 +878,7 @@ async def memory_apply(request: Request, body: dict):
 _BOOT_HDR = {b"authorization", b"host", b"x-forwarded-for", b"x-forwarded-proto", b"x-forwarded-host", b"x-lx-site", b"cf-connecting-ip", b"user-agent"}
 _BOOT_SVC = __import__("re").compile(r"^[\w-]{1,64}$")
 _BOOT_SGG = __import__("re").compile(r"^\d{5}$")
+_BOOT_PNU = __import__("re").compile(r"^\d{19}$")
 
 
 async def _inproc(request: Request, path: str) -> tuple[int, bytes | None]:
@@ -942,7 +943,7 @@ def _line(obj: dict, body: bytes | None = None) -> bytes:
 
 
 @router.get("/ximap/boot")
-async def boot(request: Request, service: str | None = None, region: str | None = None):
+async def boot(request: Request, service: str | None = None, region: str | None = None, pnu: str | None = None):
     """XI맵 첫 화면 묶음 — 한 요청 · 다 된 것부터 한 줄씩 흘려 보낸다(application/x-ndjson).
     줄: {"plan":[경로…],"final":참/거짓} 보낼 경로 · {"home":시군구} 첫 지역 · {"p":경로,"s":상태,"b":본문} 응답 하나 · {"took":{…}} 끝(증거용 시간).
     LX = 로그인 확인 · 전국 결과 · 판 번호 · 밀도 · 영상 서명, 기관 = 로그인 확인 · 기관 · 관할 · 집계 · 첫 지역의 경계 · 결과 목록 · 요약 · 영상 서명."""
@@ -959,6 +960,11 @@ async def boot(request: Request, service: str | None = None, region: str | None 
         paths += ["/survey/stats?by=emd", "/auth/tenants", "/brand/" + quote(p.tenant_id, safe=""), "/regions?geom=1", "/regions"]
         if service and _BOOT_SVC.match(service):
             paths += ["/requests/services", "/requests/shared-imagery", "/spaces/me/guides/" + service]
+        # 필지로 연 XI맵(기관 필지 카드 '시점 비교' · 영농-2 속도) — 그 필지 카드 · 이력(결과 면)도 같은 묶음으로(따로 부르면 화면 코드를 받은 뒤에야 출발)
+        if pnu and _BOOT_PNU.match(pnu):
+            paths.append(f"/survey/parcels/{pnu}?with=facts,findings,geom")
+            if service and _BOOT_SVC.match(service):
+                paths.append(f"/spaces/me/parcels/{pnu}/history?card={quote(service, safe='')}&geom=1&limit=1")
     want = region if region and _BOOT_SGG.match(region) else None
     q: asyncio.Queue = asyncio.Queue()
     sem = asyncio.Semaphore(16)
@@ -984,7 +990,9 @@ async def boot(request: Request, service: str | None = None, region: str | None 
     async def later(pth: str):
         await gate1.wait()
         return await one(pth)
-    tasks = {pth: asyncio.create_task(one(pth) if pth in FIRST else later(pth)) for pth in paths}
+    # 바로 출발(첫 물결을 기다리게 하지 않음) = 필지 카드 · 이력 + 기관 화면이 첫 지역 전에 기다리는 읍면동 집계(impl-46 속도)
+    EARLY = {x for x in paths if x.startswith(("/survey/parcels/", "/spaces/me/parcels/"))} | ({"/survey/stats?by=emd"} if not lx else set())
+    tasks = {pth: asyncio.create_task(one(pth) if pth in FIRST or pth in EARLY else later(pth)) for pth in paths}
 
     async def first_wave():
         await asyncio.gather(*(tasks[x] for x in paths if x in FIRST), return_exceptions=True)

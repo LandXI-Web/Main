@@ -844,6 +844,7 @@ async function loadSvcParcels() {
   if (F.diff) q.set('diff', bar.ledger()?.import_id || '1');
   if (F.nonote) q.set('note', 'no');
   if (F.sort && F.sort !== 'area') q.set('sort', F.sort);
+  if (F.q) q.set('q', F.q);
   const slow = setTimeout(() => { if (my === svcSeq) $('#sus-table').classList.add('is-busy'); }, 250);
   let j;
   try { j = await api(`/spaces/me/guides/${encodeURIComponent(SVC)}/parcels?${q}`); }
@@ -865,12 +866,13 @@ async function loadSvcParcels() {
   const lab = $('#sus-big .k-big-l'); if (lab) lab.textContent = j.filtered ? '거른 필지' : 'AI 분석 결과 필지';
   const has = S.sus.length > 0;
   $('#sus-table').hidden = !has; box.hidden = has;
-  if (!has) empty(box, { kind: 'first', text: j.filtered ? '거른 조건에 맞는 필지가 없습니다' : 'AI 분석 결과가 걸친 필지가 없습니다' });
+  if (!has) empty(box, F.q ? { kind: 'first', title: '찾는 지번 없음', text: '이 서비스 결과에 없는 지번입니다' } : { kind: 'first', text: j.filtered ? '거른 조건에 맞는 필지가 없습니다' : 'AI 분석 결과가 걸친 필지가 없습니다' });
   susTbl.set(S.sus);
   decorate();
+  if (F.open) { F.open = false; if (S.sus.length === 1) { if (MOBILE()) document.body.dataset.sheet = '1'; pick(S.sus[0]); } }   // 지번 찾기 Enter — 한 필지면 바로 그 필지 카드
   let note = $('#sus-note');
   if (!note) { note = h('p.gr-note', { id: 'sus-note' }); $('#sus-table').after(note); }
-  const tot = val0(j.total), n = val0(j.n), order = F.sort === 'jibun' ? '지번 순' : '넓은 순';
+  const tot = val0(j.total), n = val0(j.n), order = F.sort === 'jibun' || F.q ? '지번 순' : '넓은 순';
   note.textContent = !has ? '' : [j.filtered ? `전체 ${tot.toLocaleString('ko-KR')}필지 중` : '',
     n > S.sus.length ? `${order} ${S.sus.length.toLocaleString('ko-KR')}필지까지 보입니다` : order,
     F.diff && bar.ledger() ? `${bar.ledger().name} 기준` : ''].filter(Boolean).join(' · ');

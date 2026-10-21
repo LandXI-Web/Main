@@ -1039,13 +1039,43 @@ async def latest_notes(p: Principal, card: str, pnus: list[str]) -> dict[str, di
     return {r["pnu"]: {"note": r["note"], "at": r["at"].astimezone(KST).isoformat(timespec="seconds")} for r in rows}
 
 
+_JB_RE = re.compile(r"^(?:(.*?)\s+)?(산\s*)?(\d{1,5})(?:\s*-\s*(\d{1,5}))?(?:\s*번지)?$")
+
+
+def jibun_match(q: str | None):
+    """지번 찾기(10-21 영농-1 · REMAINING 5-2) — '운봉읍 동천리 123-4' · '동천리 123' · '123-4' · '산 12'.
+    끝 번호 = 본번(-부번) · 부번이 없으면 그 본번의 모든 부번 · 앞 낱말은 모두 주소 안에 있어야(띄어쓰기 무시). 번호가 없으면 주소 낱말만.
+    판정 함수(행 → 참/거짓)를 돌려준다 · 빈 찾기 = None(거르지 않음)."""
+    q = re.sub(r"(^|\s)산\s+(?=\d)", r"\g<1>산", re.sub(r"\s+", " ", str(q or "")).strip()[:60])   # '산 12' = '산12'(산 번지)
+    if not q:
+        return None
+    m = _JB_RE.match(q)
+    words = (m.group(1) if m else q) or ""
+    toks = [re.sub(r"\s+", "", w) for w in words.split(" ") if w.strip()]
+    san, bon, bu = (bool(m.group(2)), int(m.group(3)), m.group(4)) if m else (False, None, None)
+
+    def ok(r: dict) -> bool:
+        a = str(r.get("addr") or "")
+        flat = re.sub(r"\s+", "", a)
+        if any(t not in flat for t in toks):
+            return False
+        if bon is None:
+            return True
+        e = re.search(r"(산\s*)?(\d+)(?:-(\d+))?\s*$", a)
+        if not e or bool(e.group(1)) != san or int(e.group(2)) != bon:
+            return False
+        return bu is None or int(e.group(3) or 0) == int(bu)
+    return ok
+
+
 @router.get("/spaces/me/guides/{card}/parcels")
 async def space_parcels(card: str, request: Request, limit: int = 300, emd: str | None = None, ri: str | None = None, cls: str | None = None,
-                        diff: str | None = None, note: str | None = None, sort: str | None = None, offset: int = 0):
+                        diff: str | None = None, note: str | None = None, sort: str | None = None, offset: int = 0, q: str | None = None):
     """서비스 필지 목록(GPT3-2 · 원칙 135 · 10-21 영농-1 '오늘 볼 필지') — 그 서비스의 AI 분석 결과가 걸친 필지만(다른 서비스 · 실태조사 규칙 목록 섞지 않음).
     '필지 엑셀' 내려받기와 같은 행(service_parcel_rows · 관할 · 부서 범위 그대로) — 숫자 한 출처. 내려받기 기록은 남기지 않는다(보기만).
     거르기: emd(읍면동) · ri(리) · cls(AI 분석 결과 종류) · diff(대장과 다름만 — 1 = 이 사람의 최근 대장 · imp_… = 그 대장 · 행정정보와 비교와 같은 판정) ·
-    note(yes = 메모 있음 · no = 메모 없음) · sort(area = 넓은 순 · jibun = 지번 순). n = 거른 필지 수 · total = 전체(대시보드 큰 숫자와 같은 값)."""
+    note(yes = 메모 있음 · no = 메모 없음) · sort(area = 넓은 순 · jibun = 지번 순) · q(지번 찾기 — jibun_match · 관할 · 부서 범위의 같은 행 안에서만).
+    n = 거른 필지 수 · total = 전체(대시보드 큰 숫자와 같은 값)."""
     p = _me(request)
     svc, g, rows, _per = await service_parcel_rows(p, card)
     by: dict[str, int] = {}
@@ -1098,7 +1128,10 @@ async def space_parcels(card: str, request: Request, limit: int = 300, emd: str 
         pick = [r for r in pick if str(r["pnu"]) in diff_of]
     if note in ("yes", "no"):
         pick = [r for r in pick if (str(r["pnu"]) in notes) == (note == "yes")]
-    if sort == "jibun":
+    jm = jibun_match(q)
+    if jm:
+        pick = [r for r in pick if jm(r)]
+    if sort == "jibun" or jm:                                  # 찾은 지번은 지번 순(같은 본번의 부번이 차례로)
         pick = sorted(pick, key=lambda r: _jibun_key(r, ri_of))
     all_pnus = list(dict.fromkeys(str(r["pnu"]) for r in pick))
     off = max(0, int(offset or 0))
@@ -1115,7 +1148,7 @@ async def space_parcels(card: str, request: Request, limit: int = 300, emd: str 
               "parcel_m2": m2(r.get("parcel_m2")), "hit_m2": m2(r.get("hit")), "n": int(r["n"] or 0),
               "classes": kos(r), "lnglat": pts.get(str(r["pnu"])), "note": notes.get(str(r["pnu"])), "diff": diff_of.get(str(r["pnu"]))}
              for i, r in enumerate(page)]
-    filt = bool(emd or ri or cls or diff or note in ("yes", "no"))
+    filt = bool(emd or ri or cls or diff or note in ("yes", "no") or jm)
     return {"service": {"card": card, "name": svc["name"]}, "total": env(len(rows), "필지", "inferred", src, "AI 분석 결과가 걸친 필지(관할 안)"),
             "n": env(len(pick), "필지", "inferred", src, "거른 필지" if filt else "AI 분석 결과가 걸친 필지(관할 안)"), "filtered": filt,
             "by_emd": [{"emd": k, "parcels": env(v, "필지", "inferred", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],

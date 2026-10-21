@@ -32,7 +32,7 @@ import { createParcels } from './parcel.js';                      // 지적 층 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
 // 기관 필지 '시점 비교'(영농-2) — 지도가 서는 동안 그 필지 이력을 미리 받아 둔다(가르기 화면까지 기다림 줄이기)
-const PCMP = Q.get('compare') === 'auto' && Q.get('pnu') && Q.get('service') ? import('../gov-select/map-extras.js').then((m) => { m.historyFor(Q.get('pnu'), Q.get('service')); return m; }) : null;
+const PCMP = Q.get('compare') === 'auto' && Q.get('pnu') && Q.get('service') ? import('../gov-select/map-extras.js') : null;
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOBILE = () => matchMedia('(max-width: 640px)').matches;
@@ -66,6 +66,12 @@ const PRE = SESS ? {
   nat: nationalPromise(SESS.realm === 'lx'),        // 전국 결과 자산 진행 · 판 번호(실제 결과 면 · 분석 예정)도 함께 출발
 } : {};
 PRE.sum?.catch(() => {});
+/* 필지로 연 XI맵(?pnu= · 기관 필지 카드 '시점 비교' 영농-2) — 필지 카드 · 이력(결과 면)을 첫 화면 묶음과 함께 바로 받는다(impl-46 속도).
+   필지 자리를 먼저 알면 카메라를 처음부터 그 필지에 둔다(시군구에 섰다가 날아가는 1.25초 · 날아간 뒤 두 번째 '불러오는 중'이 없다) */
+const PNU = /^\d{19}$/.test(Q.get('pnu') || '') ? Q.get('pnu') : null;
+const CMP = !!(PNU && Q.get('compare') === 'auto' && Q.get('service'));
+PRE.par = SESS && PNU ? api(`/survey/parcels/${encodeURIComponent(PNU)}?with=facts,findings,geom`).catch(() => null) : null;
+PRE.hist = SESS && CMP ? api(`/spaces/me/parcels/${encodeURIComponent(PNU)}/history?` + new URLSearchParams({ card: Q.get('service'), geom: '1', limit: '1' })).catch(() => null) : null;
 /* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
 const scopeFC = (j) => ({ features: (j?.items || []).filter((it) => it.geometry).map((it) => ({ type: 'Feature', geometry: it.geometry,
   properties: { code: String(it.sgg_cd), prev: it.prev_cd ? String(it.prev_cd) : null, name: it.name, sido: String(it.full || '').split(/\s+/)[0] || it.sido } })) });
@@ -264,9 +270,14 @@ async function boot() {
   hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
 
   { const b0 = r0?.bbox || (S.tenant && S.scopeBox) || null; if (b0) stage.go(b0, { ms: 0, maxZoom: r0 ? 12.5 : 11 }); }
+  // 필지로 열었으면 그 필지 자리(필지 카드 응답은 첫 화면 묶음에 함께 온다 · 0.9초까지만 기다림 — 그동안 지도 엔진 · 카탈로그는 따로 차오른다 · 늦으면 예전처럼 도착 뒤 날아간다)
+  const pd = PRE.par ? await Promise.race([PRE.par, new Promise((ok) => setTimeout(ok, 900))]) : null;
+  const pBox = pd?.geometry ? K.bboxOf(pd.geometry) : null;
+  if (pBox) { stage.go(pBox, { ms: 0, maxZoom: 17.5 }); X.boot.parcelCam = 1; }
 
   const [cat] = await Promise.all([catP, stage.ready]);
   S.cat = cat;
+  if (CMP && r0) for (const e of regionEpochs(r0)) epochSpec(e.it.id).catch(() => {});   // 시점 비교 — 그 지역 시점 영상 주소를 미리
   mark('data'); loadK.set({ progress: 0.45, what: (X.waitFor = '지도') });
 
   await buildLayers(cat);
@@ -285,6 +296,7 @@ async function boot() {
       ...(NAT && NAT.id !== 'kr' ? { country: NAT.id === 'kg' ? 'Kyrgyzstan' : NAT.id, district: NAT.sel || null } : {}) }),   // 해외(나라 바꿈)면 나라 · 고른 군 — XI ChatGEO 가 해외 결과 도구로 답한다(원칙 260 · 국내 서비스 요약으로 새던 것 · 바퀴 16 재검수)   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
     // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
     dock: 'bottom', dockHost: mainEl, sugg: xiSugg, pre: placeQuery, ph: '시군구 · 지번 또는 질문' });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193) · pre = 시군구 · 지번이면 바로 이동(원칙 276)
+  if (CMP) ensureB().catch(() => {});                  // 시점 비교 — 왼쪽 지도를 결과 층 · 지역 도착과 함께 세운다(도착 뒤 차례로 세우면 그만큼 늦다)
   if (S.board) DS = createDash({ map, stage, host: mainEl, h,
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
     onEnter: () => { closePop(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; },
@@ -320,7 +332,9 @@ async function boot() {
   mark('canvas');
   // 도착 = HUD 숫자 + 지도(지역 베일 · 점)가 그려진 순간. 관할로 날아가는 카메라(2.4초)는 기다리지 않는다
   // 로딩 판은 도착 순간에 걷는다(덜 그려진 지도를 먼저 보이지 않게)
-  await setRegion(r0, { first: true });
+  const srP = setRegion(r0, { first: true, ...(pBox ? { to: { bbox: pBox, ms: 0, maxZoom: 17.5 } } : {}) });
+  if (CMP && S.tenant && PCMP) startCompare();          // 지역 도착(요약 · 결과 목록)을 기다리지 않고 바로 가르기(S.region 은 위에서 이미 정해짐)
+  await srP;
   hudBig.hidden = false;
   mark('ready');
   // 판을 걷는 순간: 보이는 타일이 다 왔거나 0.9초(덜 찬 타일 · 흰 사각형을 먼저 보이지 않게)
@@ -336,9 +350,10 @@ async function boot() {
     const resOn = () => (S.res || []).filter((it) => aiOn() && S.resOn[it.id] && map.getSource(it.sid));
     const resShown = () => { try { const on = resOn().filter((it) => map.isSourceLoaded(it.sid)); if (!on.length || map.isMoving()) return false;
       const ids = on.flatMap((it) => it.ids).filter((l) => map.getLayer(l)); return ids.length > 0 && map.queryRenderedFeatures({ layers: ids }).length > 0; } catch { return false; } };
-    const poll = () => (S.board ? map.areTilesLoaded() || performance.now() - t0 > 450 : (rdOk && (resShown() || drawn())) || performance.now() - t0 > 3000) ? out() : setTimeout(poll, 60); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
+    const cap = CMP ? 600 : PNU ? 1200 : 3000;      // 필지로 연 화면 = 그 필지 자리가 이미 그려지는 중 — 판을 오래 두지 않는다(시점 비교는 두 영상이 곧 덮는다 · impl-46 속도)
+    const poll = () => (S.board ? map.areTilesLoaded() || performance.now() - t0 > 450 : (rdOk && (resShown() || drawn())) || performance.now() - t0 > cap) ? out() : setTimeout(poll, 60); poll(); }   // 전국 결과는 칠이 이미 그려져 있다 — 바탕 타일을 오래 기다리지 않는다
 
-  if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
+  if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: !pBox, pre: PRE.par });   // 카메라가 이미 그 필지면 날지 않는다(moveend 뒤 '불러오는 중'이 다시 뜨지 않게)
   // 사업 나라(대한민국 · 키르기스스탄) — LX 계정만. 나라를 바꾸면 같은 지도가 그 나라 실제 결과로(XI맵-해외 · 원칙 190 · 191)
   if (S.lx) {
     NAT = mountNation({ map, host: mainEl, onPick: () => cmdk?.sugg?.(), onEnter: () => { closePop(); closeDrawer(); ED?.close(); unpin(); BD?.show(false); hudBoard.hidden = true; if (searchInput) { searchInput.value = ''; sugg.hidden = true; } },   // 나라를 바꾸면 검색 칸도 비운다(지도와 검색이 어긋나지 않게 · GPT5-4)
@@ -351,8 +366,7 @@ async function boot() {
     center: () => { const c = map.getCenter(); return [c.lng, c.lat]; } })).catch((e) => K.devlog('map-card', String(e?.message || e)));
   { const cq = (Q.get('compare') || '').split(',').filter(Boolean);
     // 기관 필지 '시점 비교'(10-21 영농-2) — 그 필지의 최근 두 결과 해 영상을 갈라 보고 두 쪽에 이 필지 결과 면(gov-select/map-extras.js parcelCompare)
-    if (cq[0] === 'auto' && S.tenant && PCMP) { if (!S.swipe) toggleSwipe().catch(() => {}); PCMP.then((m) => m.parcelCompare({ host: mainEl, pnu: Q.get('pnu'), card: Q.get('service'),
-      epochs: regionEpochs, compare: compareOn, left: () => B, right: () => stage, aiOn: () => { S.layers.ai = true; S.aiAuto = false; applyLayers(); }, closeCard: closeDrawer })).catch((e) => K.devlog('compare', String(e?.message || e))); }
+    if (cq[0] === 'auto' && S.tenant && PCMP) { /* 위에서 이미 시작(startCompare) */ }
     else if (cq.length === 2) compareOn(cq[0], cq[1]).catch((e) => K.devlog('compare', String(e?.message || e))); }
   if (Q.get('tool') === 'analyze' && AN) tool('analyze');
   if (Q.get('job') && AN) { S.tool = 'analyze'; patchRail(); AN.replayJob(Q.get('job'), { label: S.region?.name, bbox: S.region?.bbox }); }
@@ -2239,11 +2253,11 @@ function openList() {
   box.append(ul, more); draw();
   d.set(box);
 }
-async function openParcel(pnu, { fly = false } = {}) {
+async function openParcel(pnu, { fly = false, pre = null } = {}) {
   if (!pnu) return;
   S.sel = pnu;
   let d;
-  try { d = await api(`/survey/parcels/${encodeURIComponent(pnu)}?with=facts,findings,geom`); } catch { K.toast('필지를 불러오지 못했습니다'); return; }
+  try { d = (pre && await pre) || await api(`/survey/parcels/${encodeURIComponent(pnu)}?with=facts,findings,geom`); } catch { K.toast('필지를 불러오지 못했습니다'); return; }   // pre = 부팅 때 미리 받은 같은 응답
   if (S.sel !== pnu) return;
   const f = (d.findings || []).find((x) => ['open', 'assigned'].includes(x.state)) || d.findings?.[0] || null;
   const L = d.facts?.ledger || {};
@@ -2488,8 +2502,31 @@ function bracket(b) {
   el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], { duration: 1250, easing: 'linear' }).finished.then(() => el.remove(), () => el.remove());
 }
 
+/* 기관 필지 '시점 비교'(10-21 영농-2) — 그 필지의 최근 두 결과 해 영상을 갈라 보고 두 쪽에 이 필지 결과 면(gov-select/map-extras.js parcelCompare) */
+function startCompare() {
+  X.boot.cmp0 = Math.round(performance.now() - X.t0);
+  if (!S.swipe) toggleSwipe().catch(() => {});
+  PCMP.then((m) => m.parcelCompare({ host: mainEl, pnu: PNU, card: Q.get('service'), hist: PRE.hist,
+    epochs: regionEpochs, compare: compareOn, left: () => B, right: () => stage, aiOn: () => { S.layers.ai = true; S.aiAuto = false; applyLayers(); }, closeCard: closeDrawer }))
+    .then(() => { X.boot.cmp = Math.round(performance.now() - X.t0); })
+    .catch((e) => K.devlog('compare', String(e?.message || e)));
+}
+
 /* 가르기 — 왼쪽 = 원본 영상 · 오른쪽 = 영상 + AI 판독(같은 카메라). 확인 16차 대화-2 ⓑ — 위쪽 고르기로 왼쪽 · 오른쪽에 다른 시점 영상을 놓는다 */
-let B = null;
+let B = null, BP = null;
+/** 왼쪽 지도(B) 한 번만 세우기 — 시점 비교로 열면 부팅 중에 미리(바탕 영상 사다리까지) */
+function ensureB() {
+  if (BP) return BP;
+  const { bEl } = S.els;
+  B = K.createStage(bEl, { interactive: false, scale: false });
+  BP = (async () => {
+    await B.ready;
+    const items = S.cat.items || [], own = items.filter((i) => i.role === 'imagery' && i.source === 'pmtiles').map((i) => i.id);
+    try { await B.ladder(items, (S.cat.ladder?.domestic || []).filter((id) => own.includes(id))); } catch { /* */ }
+    return B;
+  })();
+  return BP;
+}
 async function toggleSwipe() {
   S.swipe = !S.swipe; patchRail();
   const { bEl, grip } = S.els;
@@ -2497,11 +2534,8 @@ async function toggleSwipe() {
   if (!S.layers.ai) { S.layers.ai = true; S.aiAuto = true; applyLayers(); }
   mainEl.style.setProperty('--sw', '50%');
   bEl.hidden = false; grip.hidden = false;
-  if (!B) {
-    B = K.createStage(bEl, { interactive: false, scale: false });
-    await B.ready;
-    const items = S.cat.items || [], own = items.filter((i) => i.role === 'imagery' && i.source === 'pmtiles').map((i) => i.id);
-    try { await B.ladder(items, (S.cat.ladder?.domestic || []).filter((id) => own.includes(id))); } catch { /* */ }
+  if (!B?.__wired) {
+    await ensureB(); B.__wired = true;
     const sync = () => { if (S.swipe) B.map.jumpTo({ center: map.getCenter(), zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() }); };
     map.on('move', sync);
     let drag = false;
@@ -2518,8 +2552,8 @@ async function toggleSwipe() {
 
 /* ── 두 시점 고르기(가르기 위쪽 한 줄) — 그 지역을 덮는 등록 영상의 시점(카탈로그 그대로 · 지역 고정값 0) ── */
 const epochLabel = (it) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(it?.epoch || '')); return m ? `${m[1]}년${m[2] ? ` ${+m[2]}월` : ''}` : (it?.name?.ko || it?.id || ''); };
-function regionEpochs() {
-  const b = S.region?.bbox; if (!b) return [];
+function regionEpochs(r = S.region) {
+  const b = r?.bbox; if (!b) return [];
   const area = Math.max(1e-12, (b[2] - b[0]) * (b[3] - b[1]));
   const rows = [];
   for (const it of S.cat?.items || []) {
@@ -2533,7 +2567,15 @@ function regionEpochs() {
   for (const x of rows.sort((p, q) => q.cov - p.cov || String(q.it.epoch).localeCompare(String(p.it.epoch)))) if (!best.has(x.label.slice(0, 4))) best.set(x.label.slice(0, 4), x);
   return [...best.values()].sort((p, q) => String(p.it.epoch).localeCompare(String(q.it.epoch)));
 }
-async function epochSpec(id) {
+const ESP = new Map();                                 // 시점 영상 주소 — 부팅 때 미리 받은 것을 1분 동안 그대로(서명 왕복 한 번 줄이기)
+function epochSpec(id) {
+  const c = ESP.get(id);
+  if (c && performance.now() - c.t < 60e3) return c.p;
+  const p = epochSpec0(id); p.catch(() => ESP.delete(id));
+  ESP.set(id, { t: performance.now(), p });
+  return p;
+}
+async function epochSpec0(id) {
   const it = (S.cat?.items || []).find((x) => x.id === id); if (!it) return null;
   if (it.tier === 'raw' && it.source === 'cog') {
     const j = await api('/tiles/sign?' + new URLSearchParams({ set: 'cog/' + it.id }));
@@ -2561,9 +2603,9 @@ function cmpOff() {
 async function compareOn(leftId, rightId) {
   if (!S.swipe) await toggleSwipe();
   if (!B) return false;
-  await B.ready;
+  await ensureB();                                     // 바탕 사다리까지 선 뒤에 시점 영상을 얹는다(순서가 뒤집히지 않게)
   if (S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); }
-  const okL = await cmpLayer(B.map, 'l', leftId), okR = await cmpLayer(map, 'r', rightId);
+  const [okL, okR] = await Promise.all([cmpLayer(B.map, 'l', leftId), cmpLayer(map, 'r', rightId)]);   // 두 쪽 영상 주소를 함께 받는다
   S.cmp = { left: leftId, right: rightId };
   cmpBar();
   return okL && okR;

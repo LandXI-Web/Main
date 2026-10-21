@@ -1,0 +1,350 @@
+{
+ "label": "before",
+ "at": "2026-10-21 20:10:34",
+ "site": "https://namwon.land-xi.dev",
+ "headed": false,
+ "runs": {
+  "pc": {
+   "compare": [
+    {
+     "i": 0,
+     "band": 3225,
+     "grip": 2774,
+     "boot": {
+      "gate": 3,
+      "region": 974,
+      "engine": 974,
+      "data": 1220,
+      "layers": 1245,
+      "canvas": 1254,
+      "ready": 1278,
+      "shown": 4710
+     },
+     "loading": [
+      4198
+     ],
+     "marks": [
+      [
+       "create",
+       2104
+      ],
+      [
+       "load",
+       2281
+      ],
+      [
+       "fullLoad",
+       2281
+      ],
+      [
+       "create",
+       2372
+      ],
+      [
+       "load",
+       2690
+      ],
+      [
+       "fullLoad",
+       2690
+      ]
+     ],
+     "waterfall": [
+      "  593→  594 /landxi/proto/vendor/maplibre/maplibre-gl.css",
+      "  593→  593 /landxi/v3/kit/kit.css",
+      "  593→ 1046 /landxi/v3/xi-clean/xc.css",
+      "  593→  814 /landxi/v3/xi-clean/dash.css",
+      "  593→ 1049 /landxi/v3/xi-clean/chat-answer.css",
+      "  593→ 1267 /landxi/v3/xi-clean/onmap.css",
+      "  593→  824 /landxi/v3/xi-clean/app.js",
+      "  593→  825 /landxi/v3/xi-clean/showcase.css",
+      "  594→  824 /landxi/v3/xi-clean/analyze.js",
+      "  594→ 1046 /landxi/v3/xi-clean/board.js",
+      "  594→ 1050 /landxi/v3/xi-clean/edit.js",
+      "  594→ 1048 /landxi/v3/xi-clean/nation.js",
+      "  594→ 1047 /landxi/v3/xi-clean/dash.js",
+      "  594→ 1048 /landxi/v3/xi-clean/onmap.js",
+      "  594→ 1048 /landxi/v3/xi-clean/parcel.js",
+      "  594→ 1049 /landxi/v3/xi-clean/showcase.js",
+      "  594→ 1048 /landxi/v3/xi-clean/chat-answer.js",
+      "  594→ 1050 /landxi/v3/xi-clean/chat-hl.js",
+      "  594→  594 /landxi/v3/kit/index.js",
+      "  594→  594 /landxi/v3/kit/util.js",
+      "  595→  595 /landxi/v3/kit/i18n.js",
+      "  595→  595 /landxi/v3/kit/stage.js",
+      "  595→  595 /landxi/v3/kit/shell.js",
+      "  595→  595 /landxi/v3/kit/auth-gate.js",
+      "  595→  595 /landxi/shared/api-v1.js",
+      "  595→  595 /landxi/xi/engine/sources.js",
+      "  595→  595 /landxi/xi/engine/lx-map.js",
+      "  595→  835 /landxi/xi/engine/ladder.js",
+      "  595→  595 /landxi/xi/engine/camera.js",
+      "  595→ 1049 /landxi/xi/fx/arrive.js",
+      "  596→  625 /landxi/proto/vendor/maplibre/maplibre-gl.js",
+      "  596→  626 /landxi/xi/vendor/pmtiles/pmtiles.js",
+      "  596→  960 /landxi/v3/kit/i18n/ko.json",
+      "  596→  960 /landxi/v3/kit/i18n/en.json",
+      "  596→  596 /landxi/xi/fx/result-filter.js",
+      "  596→  596 /landxi/v3/kit/notify.js",
+      "  596→  596 /landxi/v3/lx-console/summary.js",
+      "  596→  596 /landxi/v3/kit/lx-menu.js",
+      "  596→  596 /landxi/v3/gov-select/menu.js",
+      "  596→  835 /landxi/v3/xi-clean/national.js",
+      "  597→  597 /landxi/v3/kit/colors.js",
+      "  597→  597 /landxi/v3/kit/bignum.js",
+      "  597→  597 /landxi/v3/kit/region.js",
+      "  597→  597 /landxi/v3/kit/panel.js",
+      "  597→  597 /landxi/v3/kit/panes.js"
+     ]
+    },
+    {
+     "i": 1,
+     "band": 4042,
+     "grip": 2409,
+     "boot": {
+      "gate": 33,
+      "region": 120,
+      "engine": 120,
+      "data": 187,
+      "layers": 210,
+      "canvas": 215,
+      "ready": 1201,
+      "shown": 2669
+     },
+     "loading": [
+      2356,
+      1259
+     ],
+     "marks": [
+      [
+       "create",
+       942
+      ],
+      [
+       "load",
+       995
+      ],
+      [
+       "fullLoad",
+       995
+      ],
+      [
+       "create",
+       2096
+      ],
+      [
+       "load",
+       2352
+      ],
+      [
+       "fullLoad",
+       2352
+      ]
+     ],
+     "waterfall": [
+      "  427→  428 /landxi/proto/vendor/maplibre/maplibre-gl.css",
+      "  427→  427 /landxi/v3/kit/kit.css",
+      "  427→  427 /landxi/v3/xi-clean/xc.css",
+      "  428→  428 /landxi/v3/xi-clean/chat-answer.css",
+      "  428→  428 /landxi/v3/xi-clean/dash.css",
+      "  428→  428 /landxi/v3/xi-clean/onmap.css",
+      "  428→  428 /landxi/v3/xi-clean/showcase.css",
+      "  428→  428 /landxi/v3/xi-clean/app.js",
+      "  428→  428 /landxi/v3/xi-clean/analyze.js",
+      "  428→  428 /landxi/v3/xi-clean/board.js",
+      "  428→  428 /landxi/v3/xi-clean/edit.js",
+      "  428→  428 /landxi/v3/xi-clean/dash.js",
+      "  428→  428 /landxi/v3/xi-clean/onmap.js",
+      "  428→  428 /landxi/v3/xi-clean/nation.js",
+      "  429→  429 /landxi/v3/xi-clean/showcase.js",
+      "  429→  429 /landxi/v3/xi-clean/parcel.js",
+      "  429→  429 /landxi/v3/xi-clean/chat-answer.js",
+      "  429→  429 /landxi/v3/xi-clean/chat-hl.js",
+      "  429→  429 /landxi/v3/kit/index.js",
+      "  429→  429 /landxi/v3/kit/util.js",
+      "  429→  429 /landxi/v3/kit/i18n.js",
+      "  429→  429 /landxi/v3/kit/stage.js",
+      "  429→  429 /landxi/v3/kit/shell.js",
+      "  429→  429 /landxi/v3/kit/auth-gate.js",
+      "  429→  429 /landxi/shared/api-v1.js",
+      "  430→  430 /landxi/xi/engine/sources.js",
+      "  430→  430 /landxi/xi/engine/ladder.js",
+      "  430→  430 /landxi/xi/engine/lx-map.js",
+      "  430→  430 /landxi/xi/engine/camera.js",
+      "  430→  430 /landxi/xi/fx/arrive.js",
+      "  430→  434 /landxi/proto/vendor/maplibre/maplibre-gl.js",
+      "  430→  809 /landxi/xi/vendor/pmtiles/pmtiles.js",
+      "  430→  808 /landxi/v3/kit/i18n/ko.json",
+      "  430→  808 /landxi/v3/kit/i18n/en.json",
+      "  430→  430 /landxi/xi/fx/result-filter.js",
+      "  431→  431 /landxi/v3/kit/notify.js",
+      "  431→  431 /landxi/v3/lx-console/summary.js",
+      "  431→  431 /landxi/v3/kit/lx-menu.js",
+      "  431→  431 /landxi/v3/gov-select/menu.js",
+      "  431→  431 /landxi/v3/xi-clean/national.js",
+      "  431→  431 /landxi/v3/kit/colors.js",
+      "  431→  431 /landxi/v3/kit/bignum.js",
+      "  431→  431 /landxi/v3/kit/region.js",
+      "  431→  431 /landxi/v3/kit/panel.js",
+      "  431→  431 /landxi/v3/kit/panes.js"
+     ]
+    },
+    {
+     "i": 2,
+     "band": 5609,
+     "grip": 1644,
+     "boot": {
+      "gate": 73,
+      "region": 113,
+      "engine": 113,
+      "data": 189,
+      "layers": 212,
+      "canvas": 217,
+      "ready": 273,
+      "shown": 3441
+     },
+     "loading": [
+      3980,
+      650
+     ],
+     "marks": [
+      [
+       "create",
+       1027
+      ],
+      [
+       "load",
+       1083
+      ],
+      [
+       "fullLoad",
+       1083
+      ],
+      [
+       "create",
+       1288
+      ],
+      [
+       "load",
+       1598
+      ],
+      [
+       "fullLoad",
+       1598
+      ]
+     ],
+     "waterfall": [
+      "  528→  529 /landxi/proto/vendor/maplibre/maplibre-gl.css",
+      "  528→  528 /landxi/v3/kit/kit.css",
+      "  529→  529 /landxi/v3/xi-clean/xc.css",
+      "  529→  529 /landxi/v3/xi-clean/chat-answer.css",
+      "  529→  529 /landxi/v3/xi-clean/dash.css",
+      "  529→  529 /landxi/v3/xi-clean/onmap.css",
+      "  529→  529 /landxi/v3/xi-clean/showcase.css",
+      "  529→  529 /landxi/v3/xi-clean/app.js",
+      "  529→  529 /landxi/v3/xi-clean/analyze.js",
+      "  529→  529 /landxi/v3/xi-clean/board.js",
+      "  529→  529 /landxi/v3/xi-clean/edit.js",
+      "  530→  530 /landxi/v3/xi-clean/dash.js",
+      "  530→  530 /landxi/v3/xi-clean/onmap.js",
+      "  530→  530 /landxi/v3/xi-clean/nation.js",
+      "  530→  530 /landxi/v3/xi-clean/showcase.js",
+      "  530→  530 /landxi/v3/xi-clean/parcel.js",
+      "  530→  530 /landxi/v3/xi-clean/chat-answer.js",
+      "  530→  530 /landxi/v3/xi-clean/chat-hl.js",
+      "  530→  530 /landxi/v3/kit/index.js",
+      "  530→  530 /landxi/v3/kit/util.js",
+      "  530→  530 /landxi/v3/kit/i18n.js",
+      "  530→  530 /landxi/v3/kit/stage.js",
+      "  531→  531 /landxi/v3/kit/shell.js",
+      "  531→  531 /landxi/v3/kit/auth-gate.js",
+      "  531→  531 /landxi/shared/api-v1.js",
+      "  531→  531 /landxi/xi/engine/sources.js",
+      "  531→  531 /landxi/xi/engine/ladder.js",
+      "  531→  531 /landxi/xi/engine/lx-map.js",
+      "  531→  531 /landxi/xi/engine/camera.js",
+      "  531→  531 /landxi/xi/fx/arrive.js",
+      "  531→  535 /landxi/proto/vendor/maplibre/maplibre-gl.js",
+      "  531→  895 /landxi/xi/vendor/pmtiles/pmtiles.js",
+      "  531→  892 /landxi/v3/kit/i18n/en.json",
+      "  531→  895 /landxi/v3/kit/i18n/ko.json",
+      "  532→  532 /landxi/xi/fx/result-filter.js",
+      "  532→  532 /landxi/v3/kit/notify.js",
+      "  532→  532 /landxi/v3/lx-console/summary.js",
+      "  532→  532 /landxi/v3/kit/lx-menu.js",
+      "  532→  532 /landxi/v3/gov-select/menu.js",
+      "  532→  532 /landxi/v3/xi-clean/national.js",
+      "  532→  532 /landxi/v3/kit/colors.js",
+      "  532→  532 /landxi/v3/kit/bignum.js",
+      "  532→  532 /landxi/v3/kit/region.js",
+      "  532→  532 /landxi/v3/kit/panel.js",
+      "  532→  532 /landxi/v3/kit/panes.js"
+     ]
+    }
+   ],
+   "plain": [
+    {
+     "i": 0,
+     "shown": 4425,
+     "boot": {
+      "gate": 186,
+      "region": 191,
+      "engine": 191,
+      "data": 271,
+      "layers": 326,
+      "canvas": 330,
+      "ready": 413,
+      "shown": 3070
+     },
+     "loading": [
+      2422
+     ]
+    },
+    {
+     "i": 1,
+     "shown": 3903,
+     "boot": {
+      "gate": 276,
+      "region": 530,
+      "engine": 530,
+      "data": 595,
+      "layers": 632,
+      "canvas": 637,
+      "ready": 652,
+      "shown": 2550
+     },
+     "loading": [
+      2043
+     ]
+    },
+    {
+     "i": 2,
+     "shown": 3215,
+     "boot": {
+      "gate": 101,
+      "region": 158,
+      "engine": 158,
+      "data": 226,
+      "layers": 267,
+      "canvas": 271,
+      "ready": 285,
+      "shown": 2388
+     },
+     "loading": [
+      2008,
+      737
+     ]
+    }
+   ],
+   "errors": []
+  }
+ },
+ "summary": {
+  "pc": {
+   "band_med": 4042,
+   "grip_med": 2409,
+   "loading_max_med": 3980,
+   "plain_shown_med": 3903
+  }
+ }
+}

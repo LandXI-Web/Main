@@ -14,7 +14,7 @@
   const h = location.hostname;
   const base = L('lx_api_base') || (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(h) ? 'http://localhost:8700' : /\.github\.io$/i.test(h) ? 'https://app.land-xi.dev' : location.origin);
   const q = new URLSearchParams(location.search), b = new URLSearchParams();
-  for (const k of ['service', 'region']) if (q.get(k)) b.set(k, q.get(k));
+  for (const k of ['service', 'region', 'pnu']) if (q.get(k)) b.set(k, q.get(k));
   const E = new Map(), plan = new Set(), used = new Set(), wait = new Set(), t = performance.now();
   let fin = false, end = 0;
   const known = (k) => E.has(k) || end || (fin && !plan.has(k));

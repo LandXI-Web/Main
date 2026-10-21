@@ -1,0 +1,494 @@
+{
+ "label": "after-headed-pc",
+ "at": "2026-10-21 20:48:34",
+ "site": "https://namwon.land-xi.dev",
+ "headed": true,
+ "runs": {
+  "pc": {
+   "compare": [
+    {
+     "i": 0,
+     "band": 2424,
+     "grip": 2398,
+     "navAt": 39,
+     "boot": {
+      "t0": 877,
+      "gate": 57,
+      "region": 1093,
+      "engine": 1093,
+      "parcelCam": 1,
+      "data": 1144,
+      "layers": 1191,
+      "canvas": 1211,
+      "cmp0": 1215,
+      "ready": 1230,
+      "cmp": 1360,
+      "shown": 1848
+     },
+     "loading": [
+      1490
+     ],
+     "marks": [
+      [
+       "create",
+       1979
+      ],
+      [
+       "load",
+       2013
+      ],
+      [
+       "fullLoad",
+       2014
+      ],
+      [
+       "create",
+       2075
+      ],
+      [
+       "load",
+       2194
+      ],
+      [
+       "fullLoad",
+       2194
+      ]
+     ],
+     "waterfall": [
+      "  482→  871 /landxi/v3/kit/i18n/ko.json",
+      "  482→  865 /landxi/v3/kit/i18n/en.json",
+      "  499→ 2000 /api/v1/ximap/boot",
+      "  816→ 1209 /api/v1/openapi.json",
+      "  818→ 1047 /cdn-cgi/rum",
+      "  873→ 1317 /landxi/v3/kit/service-card.css",
+      "  877→ 1118 /landxi/v3/gov-select/map-extras.js",
+      "  935→  935 /landxi/v3/gov-select/brand.js",
+      "  936→  936 /landxi/v3/kit/session-clock.js",
+      "  937→ 1327 /landxi/v3/kit/notify.css",
+      "  937→  937 /landxi/assets/brand/vector/lx-lockup.svg",
+      "  941→  941 /landxi/assets/data/emblems.js",
+      "  948→ 1745 /landxi/v3/gov-select/brand.css",
+      " 1120→ 1120 /landxi/v3/gov-space/guide.js",
+      " 1122→ 1506 /landxi/v3/gov-select/map-extras.css",
+      " 1122→ 1511 /landxi/v3/gov-space/gov-space.css",
+      " 2098→ 2486 /api/v1/ximap/board"
+     ]
+    },
+    {
+     "i": 1,
+     "band": 1489,
+     "grip": 1445,
+     "navAt": 36,
+     "boot": {
+      "t0": 882,
+      "gate": 39,
+      "region": 359,
+      "engine": 359,
+      "parcelCam": 1,
+      "data": 407,
+      "layers": 427,
+      "canvas": 453,
+      "cmp0": 455,
+      "ready": 475,
+      "cmp": 604,
+      "shown": 1096
+     },
+     "loading": [
+      842
+     ],
+     "marks": [
+      [
+       "create",
+       1247
+      ],
+      [
+       "load",
+       1283
+      ],
+      [
+       "fullLoad",
+       1283
+      ],
+      [
+       "create",
+       1319
+      ],
+      [
+       "load",
+       1435
+      ],
+      [
+       "fullLoad",
+       1435
+      ]
+     ],
+     "waterfall": [
+      "  499→  872 /landxi/v3/kit/i18n/ko.json",
+      "  499→  880 /landxi/v3/kit/i18n/en.json",
+      "  516→ 1362 /api/v1/ximap/boot",
+      "  523→  905 /api/v1/openapi.json",
+      "  881→ 1260 /landxi/v3/kit/service-card.css",
+      "  882→  882 /landxi/v3/gov-select/map-extras.js",
+      "  885→  885 /landxi/v3/gov-space/guide.js",
+      "  886→ 1264 /landxi/v3/gov-select/map-extras.css",
+      "  886→ 1268 /landxi/v3/gov-space/gov-space.css",
+      "  921→  921 /landxi/v3/gov-select/brand.js",
+      "  921→  921 /landxi/v3/kit/session-clock.js",
+      "  922→ 1308 /landxi/v3/kit/notify.css",
+      "  922→  922 /landxi/assets/brand/vector/lx-lockup.svg",
+      "  924→  924 /landxi/assets/data/emblems.js",
+      "  930→ 1316 /landxi/v3/gov-select/brand.css",
+      " 1410→ 2264 /api/v1/ximap/board"
+     ]
+    },
+    {
+     "i": 2,
+     "band": 1946,
+     "grip": 1913,
+     "navAt": 46,
+     "boot": {
+      "t0": 872,
+      "gate": 327,
+      "region": 662,
+      "engine": 662,
+      "parcelCam": 1,
+      "data": 725,
+      "layers": 785,
+      "canvas": 807,
+      "cmp0": 809,
+      "ready": 821,
+      "cmp": 968,
+      "shown": 1467
+     },
+     "loading": [
+      928
+     ],
+     "marks": [
+      [
+       "create",
+       1543
+      ],
+      [
+       "load",
+       1588
+      ],
+      [
+       "fullLoad",
+       1588
+      ],
+      [
+       "create",
+       1664
+      ],
+      [
+       "load",
+       1776
+      ],
+      [
+       "fullLoad",
+       1776
+      ]
+     ],
+     "waterfall": [
+      "  468→  868 /landxi/v3/kit/i18n/en.json",
+      "  468→  868 /landxi/v3/kit/i18n/ko.json",
+      "  486→ 1561 /api/v1/ximap/boot",
+      "  496→  901 /api/v1/openapi.json",
+      "  872→ 1331 /landxi/v3/kit/service-card.css",
+      "  872→  872 /landxi/v3/gov-select/map-extras.js",
+      "  879→  879 /landxi/v3/gov-space/guide.js",
+      "  880→ 1331 /landxi/v3/gov-select/map-extras.css",
+      "  880→ 1332 /landxi/v3/gov-space/gov-space.css",
+      " 1199→ 1199 /landxi/v3/gov-select/brand.js",
+      " 1200→ 1200 /landxi/v3/kit/session-clock.js",
+      " 1200→ 1582 /landxi/v3/kit/notify.css",
+      " 1201→ 1201 /landxi/assets/brand/vector/lx-lockup.svg",
+      " 1208→ 1208 /landxi/assets/data/emblems.js",
+      " 1211→ 1600 /landxi/v3/gov-select/brand.css",
+      " 1649→ 1869 /cdn-cgi/rum",
+      " 1686→ 2087 /api/v1/ximap/board"
+     ]
+    },
+    {
+     "i": 3,
+     "band": 1880,
+     "grip": 1873,
+     "navAt": 35,
+     "boot": {
+      "t0": 899,
+      "gate": 102,
+      "region": 111,
+      "engine": 111,
+      "parcelCam": 1,
+      "data": 457,
+      "layers": 468,
+      "canvas": 497,
+      "cmp0": 498,
+      "ready": 509,
+      "cmp": 658,
+      "shown": 1136
+     },
+     "loading": [
+      842
+     ],
+     "marks": [
+      [
+       "create",
+       1022
+      ],
+      [
+       "load",
+       1061
+      ],
+      [
+       "fullLoad",
+       1061
+      ],
+      [
+       "create",
+       1375
+      ],
+      [
+       "load",
+       1493
+      ],
+      [
+       "fullLoad",
+       1493
+      ]
+     ],
+     "waterfall": [
+      "  501→  895 /landxi/v3/kit/i18n/ko.json",
+      "  501→  897 /landxi/v3/kit/i18n/en.json",
+      "  521→ 2103 /api/v1/ximap/boot",
+      "  529→  921 /api/v1/openapi.json",
+      "  899→ 1288 /landxi/v3/kit/service-card.css",
+      "  899→  899 /landxi/v3/gov-select/map-extras.js",
+      "  905→  905 /landxi/v3/gov-space/guide.js",
+      "  906→ 1293 /landxi/v3/gov-select/map-extras.css",
+      "  906→ 1295 /landxi/v3/gov-space/gov-space.css",
+      " 1002→ 1002 /landxi/v3/gov-select/brand.js",
+      " 1002→ 1002 /landxi/v3/kit/session-clock.js",
+      " 1003→ 1388 /landxi/v3/kit/notify.css",
+      " 1003→ 1003 /landxi/assets/brand/vector/lx-lockup.svg",
+      " 1005→ 1005 /landxi/assets/data/emblems.js",
+      " 1041→ 2104 /landxi/v3/gov-select/brand.css",
+      " 2144→ 2548 /api/v1/ximap/board",
+      " 2166→ 2400 /cdn-cgi/rum"
+     ]
+    },
+    {
+     "i": 4,
+     "band": 2437,
+     "grip": 2389,
+     "navAt": 52,
+     "boot": {
+      "t0": 1352,
+      "gate": 95,
+      "region": 616,
+      "engine": 616,
+      "parcelCam": 1,
+      "data": 851,
+      "layers": 871,
+      "canvas": 895,
+      "cmp0": 897,
+      "ready": 909,
+      "cmp": 1059,
+      "shown": 1537
+     },
+     "loading": [
+      1127
+     ],
+     "marks": [
+      [
+       "create",
+       1976
+      ],
+      [
+       "load",
+       2014
+      ],
+      [
+       "fullLoad",
+       2014
+      ],
+      [
+       "create",
+       2231
+      ],
+      [
+       "load",
+       2344
+      ],
+      [
+       "fullLoad",
+       2344
+      ]
+     ],
+     "waterfall": [
+      "  961→  963 /landxi/proto/vendor/maplibre/maplibre-gl.css",
+      "  962→  962 /landxi/v3/kit/kit.css",
+      "  962→  962 /landxi/v3/xi-clean/xc.css",
+      "  962→  962 /landxi/v3/xi-clean/chat-answer.css",
+      "  962→  962 /landxi/v3/xi-clean/dash.css",
+      "  962→  962 /landxi/v3/xi-clean/onmap.css",
+      "  962→  962 /landxi/v3/xi-clean/showcase.css",
+      "  962→  962 /landxi/v3/xi-clean/app.js",
+      "  963→  963 /landxi/v3/xi-clean/analyze.js",
+      "  963→  963 /landxi/v3/xi-clean/board.js",
+      "  963→  963 /landxi/v3/xi-clean/edit.js",
+      "  963→  963 /landxi/v3/xi-clean/dash.js",
+      "  963→  963 /landxi/v3/xi-clean/onmap.js",
+      "  963→  963 /landxi/v3/xi-clean/nation.js",
+      "  963→  963 /landxi/v3/xi-clean/showcase.js",
+      "  963→  963 /landxi/v3/xi-clean/parcel.js",
+      "  964→  964 /landxi/v3/xi-clean/chat-answer.js",
+      "  964→  964 /landxi/v3/xi-clean/chat-hl.js",
+      "  964→  964 /landxi/v3/kit/index.js",
+      "  964→  964 /landxi/v3/kit/util.js",
+      "  964→  964 /landxi/v3/kit/i18n.js",
+      "  964→  964 /landxi/v3/kit/stage.js",
+      "  964→  964 /landxi/v3/kit/shell.js",
+      "  964→  964 /landxi/v3/kit/auth-gate.js",
+      "  964→  964 /landxi/shared/api-v1.js",
+      "  964→  964 /landxi/xi/engine/sources.js",
+      "  964→  964 /landxi/xi/engine/ladder.js",
+      "  964→  964 /landxi/xi/engine/lx-map.js",
+      "  965→  965 /landxi/xi/engine/camera.js",
+      "  965→  965 /landxi/xi/fx/arrive.js",
+      "  965→  969 /landxi/proto/vendor/maplibre/maplibre-gl.js",
+      "  965→ 1349 /landxi/xi/vendor/pmtiles/pmtiles.js",
+      "  965→ 1345 /landxi/v3/kit/i18n/en.json",
+      "  965→ 1349 /landxi/v3/kit/i18n/ko.json",
+      "  965→  965 /landxi/xi/fx/result-filter.js",
+      "  965→  965 /landxi/v3/kit/notify.js",
+      "  965→  965 /landxi/v3/lx-console/summary.js",
+      "  965→  965 /landxi/v3/kit/lx-menu.js",
+      "  965→  965 /landxi/v3/gov-select/menu.js",
+      "  965→  965 /landxi/v3/xi-clean/national.js",
+      "  966→  966 /landxi/v3/kit/colors.js",
+      "  966→  966 /landxi/v3/kit/bignum.js",
+      "  966→  966 /landxi/v3/kit/region.js",
+      "  966→  966 /landxi/v3/kit/panel.js",
+      "  966→  966 /landxi/v3/kit/panes.js",
+      "  966→  966 /landxi/v3/kit/sig.js",
+      "  966→  966 /landxi/v3/kit/service-card.js",
+      "  966→  966 /landxi/v3/kit/stepper.js",
+      "  966→  966 /landxi/v3/kit/empty.js",
+      "  966→  966 /landxi/v3/kit/loader.js",
+      "  967→  967 /landxi/v3/kit/cmdk.js",
+      "  967→  967 /landxi/v3/kit/dropzone.js",
+      "  967→  967 /landxi/v3/kit/table.js",
+      "  967→  967 /landxi/v3/kit/chart.js",
+      "  967→  967 /landxi/v3/kit/toast.js",
+      "  967→  967 /landxi/v3/kit/dev-drawer.js",
+      "  967→  967 /landxi/xi/fx/glass.js",
+      "  967→  967 /landxi/xi/fx/provenance.js",
+      "  967→  967 /landxi/v3/kit/ov-crop.js",
+      "  967→  967 /landxi/v3/kit/sites.js"
+     ]
+    }
+   ],
+   "plain": [
+    {
+     "i": 0,
+     "shown": 1687,
+     "boot": {
+      "t0": 851,
+      "gate": 284,
+      "region": 344,
+      "engine": 344,
+      "parcelCam": 1,
+      "data": 401,
+      "layers": 434,
+      "canvas": 441,
+      "ready": 646,
+      "shown": 827
+     },
+     "loading": []
+    },
+    {
+     "i": 1,
+     "shown": 1689,
+     "boot": {
+      "t0": 872,
+      "gate": 191,
+      "region": 275,
+      "engine": 275,
+      "parcelCam": 1,
+      "data": 330,
+      "layers": 378,
+      "canvas": 382,
+      "ready": 577,
+      "shown": 807
+     },
+     "loading": [
+      342
+     ]
+    },
+    {
+     "i": 2,
+     "shown": 2175,
+     "boot": {
+      "t0": 876,
+      "gate": 916,
+      "region": 920,
+      "engine": 920,
+      "parcelCam": 1,
+      "data": 978,
+      "layers": 1016,
+      "canvas": 1020,
+      "ready": 1031,
+      "shown": 1288
+     },
+     "loading": []
+    },
+    {
+     "i": 3,
+     "shown": 1388,
+     "boot": {
+      "t0": 887,
+      "gate": 135,
+      "region": 180,
+      "engine": 180,
+      "parcelCam": 1,
+      "data": 229,
+      "layers": 263,
+      "canvas": 267,
+      "ready": 279,
+      "shown": 489
+     },
+     "loading": []
+    },
+    {
+     "i": 4,
+     "shown": 1513,
+     "boot": {
+      "t0": 870,
+      "gate": 69,
+      "region": 170,
+      "engine": 170,
+      "parcelCam": 1,
+      "data": 218,
+      "layers": 257,
+      "canvas": 261,
+      "ready": 272,
+      "shown": 635
+     },
+     "loading": [
+      235
+     ]
+    }
+   ],
+   "errors": []
+  }
+ },
+ "summary": {
+  "pc": {
+   "band_med": 1946,
+   "grip_med": 1913,
+   "loading_max_med": 928,
+   "plain_shown_med": 1687
+  }
+ }
+}

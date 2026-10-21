@@ -1,0 +1,106 @@
+{
+ "at": "2026-10-21 20:28:46",
+ "site": "https://namwon.land-xi.dev",
+ "runs": {
+  "pc": {
+   "steps": [
+    {
+     "id": "f0-box",
+     "name": "지번 찾기 칸",
+     "ok": true,
+     "ms": 20,
+     "note": "칸 '지번 찾기 — 예: 동천리 123-4' · 폭 320px · 첫 줄 '아영면 두락리 119-1'",
+     "hscroll": 0,
+     "shot": "pc-f0-box.png"
+    },
+    {
+     "id": "f1-full",
+     "name": "전체 지번 Enter",
+     "ok": true,
+     "ms": 1951,
+     "note": "'두락리 119-1' → 줄 1 · 큰 숫자 1 · 필지 카드 '아영면 두락리 119-1' · 시점 비교 단추 1",
+     "hscroll": 0,
+     "shot": "pc-f1-full.png"
+    },
+    {
+     "id": "f2-num",
+     "name": "번호만",
+     "ok": true,
+     "ms": 1473,
+     "note": "'119-1' → 줄 1 · 안내 '전체 2,098필지 중 · 지번 순'",
+     "hscroll": 0,
+     "shot": "pc-f2-num.png"
+    },
+    {
+     "id": "f3-none",
+     "name": "없는 지번",
+     "ok": true,
+     "ms": 1471,
+     "note": "'99999-9' → 줄 0 · '찾는 지번 없음이 서비스 결과에 없는 지번입니다'",
+     "hscroll": 0,
+     "shot": "pc-f3-none.png"
+    },
+    {
+     "id": "f4-clear",
+     "name": "지우기 → 전체",
+     "ok": true,
+     "ms": 1548,
+     "note": "줄 20 · 큰 숫자 2,095",
+     "hscroll": 0,
+     "shot": "pc-f4-clear.png"
+    }
+   ],
+   "errors": []
+  },
+  "mob": {
+   "steps": [
+    {
+     "id": "f0-box",
+     "name": "지번 찾기 칸",
+     "ok": true,
+     "ms": 16,
+     "note": "칸 '지번 찾기 — 예: 동천리 123-4' · 폭 269px · 첫 줄 '아영면 두락리 119-1'",
+     "hscroll": 0,
+     "shot": "mob-f0-box.png"
+    },
+    {
+     "id": "f1-full",
+     "name": "전체 지번 Enter",
+     "ok": true,
+     "ms": 1915,
+     "note": "'두락리 119-1' → 줄 1 · 큰 숫자 1 · 필지 카드 '아영면 두락리 119-1' · 시점 비교 단추 1",
+     "hscroll": 0,
+     "shot": "mob-f1-full.png"
+    },
+    {
+     "id": "f2-num",
+     "name": "번호만",
+     "ok": true,
+     "ms": 1445,
+     "note": "'119-1' → 줄 1 · 안내 '전체 2,098필지 중 · 지번 순'",
+     "hscroll": 0,
+     "shot": "mob-f2-num.png"
+    },
+    {
+     "id": "f3-none",
+     "name": "없는 지번",
+     "ok": true,
+     "ms": 1439,
+     "note": "'99999-9' → 줄 0 · '찾는 지번 없음이 서비스 결과에 없는 지번입니다'",
+     "hscroll": 0,
+     "shot": "mob-f3-none.png"
+    },
+    {
+     "id": "f4-clear",
+     "name": "지우기 → 전체",
+     "ok": true,
+     "ms": 1489,
+     "note": "줄 20 · 큰 숫자 2,096",
+     "hscroll": 0,
+     "shot": "mob-f4-clear.png"
+    }
+   ],
+   "errors": []
+  }
+ }
+}
