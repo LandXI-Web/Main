@@ -27,6 +27,10 @@ body[data-state="boot"] #page{visibility:hidden}
 /* 히어로 지도 — 타일이 다 앉기 전엔 카드 바탕(--bg-0)만, idle 뒤 380ms 한 번에 */
 #heroMap{opacity:0;transition:opacity var(--d-380) var(--e-ui)}
 #heroMap.is-on{opacity:1}
+/* 재검수 제안 2 · 첫인상-3: 지도가 드러나기 전 2~3초 빈 회색 대신 카드 가운데 옅은 점 셋 + '불러오는 중'(0.4초 뒤에만 · 드러나면 사라짐) */
+.sl-hero__map::before{content:'불러오는 중';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding-top:26px;background-image:radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px);background-position:calc(50% - 19px) 0,50% 0,calc(50% + 19px) 0;background-size:12px 12px;background-repeat:no-repeat;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);white-space:nowrap;opacity:0;animation:sl-wait-in .2s .4s forwards;transition:opacity var(--d-180) var(--e-ui);pointer-events:none}
+.sl-hero__map:has(#heroMap.is-on)::before{animation:none;opacity:0}
+@keyframes sl-wait-in{to{opacity:.75}}
 @media (max-width:960px){
   .sl-hero{grid-template-columns:1fr;gap:28px;min-height:0;padding:40px 0 0}
   .sl-hero__map{height:62vw;min-height:320px}

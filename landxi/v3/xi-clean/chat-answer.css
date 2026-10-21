@@ -19,6 +19,7 @@
 .xk-ans-a button:hover{background:var(--bg-0)}
 .xk-ans-a button.is-1{border-color:var(--ink);background:var(--ink);color:#fff}
 .xk-ans-a button.is-1:hover{background:var(--ink-2)}
+.xk-ans-a .xk-rep{display:inline-flex;width:auto;min-height:0;gap:0}   /* 답 띠의 '보고서 보기' — 다른 단추와 같은 높이(공용 보고서 단추 모양을 덮는다) */
 .xk-ans-a .xk-more{margin-left:auto;height:36px;padding:0 4px;border:0;background:none;font:500 var(--fs-aux,15px)/1 var(--font-body);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .xk-ans-a .xk-more::after{content:"→"}
 .xk-ans-a .xk-more:hover{color:var(--ink);text-decoration:underline;text-underline-offset:4px}

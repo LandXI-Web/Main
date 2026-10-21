@@ -37,9 +37,13 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
     const a = last.querySelector('.k-chat-a, .k-ck-a') || last.querySelector('.k-chat-bub p') || last.querySelector('.k-chat-bub');
     txt.innerHTML = a ? a.innerHTML : '';
     for (const el of txt.querySelectorAll('br')) el.replaceWith(' ');
-    const btns = [...last.querySelectorAll('.k-chat-btn[data-q], .k-chat-chip[data-q]')].slice(0, 2).map((b, i) => h(`button.k-chat-btn${i === 0 ? '.is-1' : ''}`, { type: 'button', 'data-q': b.dataset.q, text: b.textContent.trim() }));   // 같은 data-q → 공용 kit 가 처리
+    /* 보고서를 만든 답이면 답 띠에서 바로 '보고서 보기'(재검수 제안 1 · 첫인상-8 — 대화 서랍을 열지 않고 한 번에 대시보드 모양 보고서로).
+       같은 data-report → 공용 kit(cmdk)의 보고서 보기 처리 그대로 */
+    const rep = last.querySelector('button.k-ck-rep[data-report]');
+    const repBtn = rep ? h('button.k-ck-rep.xk-rep.is-1', { type: 'button', 'data-report': rep.dataset.report, text: '보고서 보기' }) : null;
+    const btns = [...last.querySelectorAll('.k-chat-btn[data-q], .k-chat-chip[data-q]')].slice(0, repBtn ? 1 : 2).map((b, i) => h(`button.k-chat-btn${i === 0 && !repBtn ? '.is-1' : ''}`, { type: 'button', 'data-q': b.dataset.q, text: b.textContent.trim() }));   // 같은 data-q → 공용 kit 가 처리
     more.textContent = `대화 ${nf(turns())}`;
-    acts.replaceChildren(...btns, more);
+    acts.replaceChildren(...(repBtn ? [repBtn] : []), ...btns, more);
     card.hidden = false;
     if (hl && hl.cur?.run && hl.cur.run === box.dataset.run) { hl.link(txt); if (a) hl.link(a); }   // 답의 이름 · 숫자 ↔ 지도(원칙 292) — 이 답이 보낸 곳만
   }
