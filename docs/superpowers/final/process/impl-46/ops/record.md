@@ -42,7 +42,7 @@
 ## 매일 백업(6-2)
 
 - 첫 실행(19:57): `landxi-20261021-1957.dump` 2,542 MB · 덤프 260초 · `pg_restore -l` 목차 1,132 · 표 데이터 148 · 매주 `landxi-2026-W43.dump`(하드링크).
-- 되살리기 시험(임시 DB) 결과는 아래에 덧붙인다.
+- 되살리기 시험(20:16 · 임시 DB `landxi_restore_check` → 지움): **389초 · 표 180/180** · jobs 35,587 = 35,587 · detections 1,568,556 = 1,568,556 · deploys 23 = 23 (sessions · audit_log 는 덤프 뒤 새로 쌓인 만큼만 다름).
 - 예약: `LandXI-DB-Backup`(월~토 03:30) · `LandXI-DB-Backup-RestoreTest`(일 03:30 · 되살리기 시험까지).
 
 ## 자동 복귀(6-3)
