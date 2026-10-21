@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:-landxi-dev-admin}
       TZ: Asia/Seoul
       PGTZ: Asia/Seoul
-    ports: ["5433:5432"]
+    ports: ["127.0.0.1:5433:5432"]   # 이 PC 안에서만(DB-FIX 10-22) — 같은 망 다른 PC 에서 DB 로 바로 들어오지 못하게
     volumes: ["landxi-pg:/var/lib/postgresql/data"]
     shm_size: 512mb
     restart: unless-stopped
