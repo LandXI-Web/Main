@@ -1,6 +1,6 @@
 /* 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3) — 앱 셸(마스트 64 · 레일 72) 안 한 판, 세로 스크롤은 판 안에서만(법전 §3).
    모든 기관 같은 틀(사용자 구현 확인 I-4). 기관색(--ci)은 마크 · 현재 위치(탭 밑줄 · 레일) · 서비스 얼굴 판에만. */
-.gs .k-word .gs-plat{font:700 var(--fs-body)/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+.gs .k-word .gs-plat{font:700 var(--fs-t2)/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
 .gs-page :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
 .gs-scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain}
 .gs-page{max-width:var(--wide-max);margin:0 auto;padding:32px 48px 0;box-sizing:border-box;min-height:100%;display:flex;flex-direction:column;gap:24px}

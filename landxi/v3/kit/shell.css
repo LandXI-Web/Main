@@ -7,6 +7,8 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
 .k-main{grid-row:2;grid-column:-2/-1;position:relative;min-width:0;min-height:0;overflow:hidden}
 
 .k-word{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+/* 첫인상-4: 메인 · 로그인 로고 부품(kit.css .k-word display:block)이 머리줄 글자 묶음을 덮지 않게 — 기관 마크와 이름이 한 줄 가운데 · 사이 10 */
+.k-mast .k-word{display:inline-flex;align-items:center;gap:10px}
 .k-mast-slot{display:inline-flex;align-items:center;gap:12px;min-width:0}
 .k-mast-slot:empty{display:none}
 .k-mast-b{height:36px;min-width:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
