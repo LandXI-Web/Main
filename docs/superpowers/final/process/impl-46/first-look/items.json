@@ -1,0 +1,145 @@
+{
+ "title": "첫인상-1~10 (원칙 300 · FABLE-PLAN §B) — 구현 · 시안 분리",
+ "date": "2026-10-21",
+ "evidence": "바깥 주소 로그인 폼(frontDoor) · shots/before · shots/after (1440 · 390) · before.json · after.json · check-before · check-after(tools/check/all.mjs)",
+ "items": [
+  {
+   "id": "첫인상-3 화면 도착 전 빈 화면",
+   "state": "구현 확인 대기",
+   "what": "화면 모듈이 오기 전(몸통이 비어 있을 때) 흰 화면 대신 가운데 '불러오는 중' 하나 — 가운데 표시와 같은 점 셋 · 0.4초 뒤에만 · 셸이 붙으면 사라짐(18개 화면)",
+   "files": [
+    "landxi/v3/kit/kit.css"
+   ],
+   "shots": []
+  },
+  {
+   "id": "첫인상-3 칸마다 '불러오는 중' 0",
+   "state": "구현 확인 대기",
+   "what": "직원 대시보드 달력 · 지도 서비스 결과 목록 · 새 프로젝트 영상 고르기는 칸 글 대신 옅은 빈 틀 + 가운데 하나. 지도 위 작은 카드(XI맵 고치기 · 필지 · 통계 판 · 방금 찾은 것) · 영상 크게 보기는 글 없이 점 셋. 검사기 words.mjs 에 '칸 불러오는 중'(가운데 표시는 뺌) 추가",
+   "files": [
+    "landxi/v3/lx-console/app.js",
+    "landxi/v3/lx-map/app.js",
+    "landxi/v3/lx-project/new.js",
+    "landxi/v3/lx-train/flow.js",
+    "landxi/v3/ops-infra/js/apikeys.js",
+    "landxi/v3/xi-clean/board.js",
+    "landxi/v3/xi-clean/edit.js",
+    "landxi/v3/xi-clean/parcel.js",
+    "landxi/v3/xi-clean/showcase.js",
+    "landxi/v3/kit/imagery-viewer.js",
+    "tools/check/words.mjs"
+   ]
+  },
+  {
+   "id": "첫인상-10 배포 목록 빈 판",
+   "state": "구현 확인 대기",
+   "what": "관리자 '배포' — 기관 · 배포본 묶음을 기다리지 않고 바로 그리기 · 분야 이름과 신청서를 함께 부르기 · 첫 도착 전 가운데 표시. 빈 판(2.4초 아무것도 없음) → 표 3.1초 안(잰 값: 0.7초 화면 도착 전 표시 → 2.4초 가운데 표시 → 3.1초 표)",
+   "files": [
+    "landxi/v3/ops-infra/js/app.js",
+    "landxi/v3/ops-infra/js/release.js"
+   ],
+   "shots": [
+    "shots/before/admin-deploys-1440.png",
+    "shots/after/admin-deploys-1440.png"
+   ]
+  },
+  {
+   "id": "첫인상-5 직원 대시보드 처음 모양 한 화면",
+   "state": "구현 확인 대기",
+   "what": "처음 모양(저장한 모양이 없는 사람)을 열 줄로 — 공지 · 메모 · 저장 용량 / 프로젝트 진행 · 요청함 · 달력 / 최근 프로젝트. 1440×900 첫 뷰 아래 끝 840(스크롤 0). 이미 맞춘 사람의 모양은 그대로",
+   "files": [
+    "landxi/v3/lx-console/app.js"
+   ],
+   "shots": [
+    "shots/after/console-default-layout-1440.png"
+   ]
+  },
+  {
+   "id": "첫인상-5 XI ChatGEO 버튼이 대시보드 가운데로 뛰던 것",
+   "state": "구현 확인 대기",
+   "what": "맞춤 대시보드 칸(자리 잡기용)을 서랍으로 잘못 알아 버튼이 달력 위 화면 가운데로 가던 것 → 오른쪽 아래 자리",
+   "files": [
+    "landxi/v3/kit/cmdk.js"
+   ],
+   "shots": [
+    "shots/before/app-console-1440.png",
+    "shots/after/app-console-1440.png"
+   ]
+  },
+  {
+   "id": "첫인상-8 · 재검수 제안 1 답 띠에서 보고서 바로 열기",
+   "state": "구현 확인 대기",
+   "what": "XI ChatGEO 가 보고서를 만든 답이면 지도 아래 답 띠에 '보고서 보기' — 대화 서랍을 열지 않고 한 번에 대시보드 모양 보고서. 잰 값: 질문 → 단추 7.0초(답 만들기 포함) · 누름 → 보고서 0.85초",
+   "files": [
+    "landxi/v3/xi-clean/chat-answer.js",
+    "landxi/v3/xi-clean/chat-answer.css"
+   ],
+   "shots": [
+    "shots/after/gov-ximap-answer-report-btn-1440.png",
+    "shots/after/gov-report-view-1440.png"
+   ]
+  },
+  {
+   "id": "재검수 제안 2 영업 지도 자리 표시",
+   "state": "구현 확인 대기",
+   "what": "영업 첫 화면 지도 카드가 드러나기 전 2~3초 빈 회색 → 카드 가운데 옅은 점 셋 + '불러오는 중'(드러나면 사라짐)",
+   "files": [
+    "landxi/v3/sales/sales.css"
+   ],
+   "shots": [
+    "shots/after/sales-map-wait-1440.png"
+   ]
+  },
+  {
+   "id": "첫인상-9 · 4 기관 머리줄 마크 겹침",
+   "state": "구현 확인 대기",
+   "what": "기관 화면 왼쪽 위 '남원 GV' 마크와 플랫폼 이름이 붙어 '남원남원시'처럼 보이던 것(메인 로고 부품이 머리줄 묶음을 덮음) → 마크 · 이름 한 줄 가운데 · 사이 10 · 내 서비스와 요청하기 이름 크기 같게",
+   "files": [
+    "landxi/v3/kit/shell.css",
+    "landxi/v3/gov-select/gov-select.css"
+   ],
+   "shots": [
+    "shots/before/gov-list-1440.png",
+    "shots/after/gov-list-1440.png"
+   ]
+  },
+  {
+   "id": "첫인상-6 · 7 · 2(일부)",
+   "state": "이미 됨(바꾸지 않음)",
+   "what": "지도 서비스: 열자마자 결과 있는 최신 층 1개 · 왼쪽 층 접기 · 범례 오른쪽 작게. XI맵: 왼쪽 위 한 줄 · ChatGEO 1안 · 색칠 끄기(65481f83) · 나사 · 브이월드 글자 0. 로그인: 왼쪽 위 표기 메인과 같음 · 출처 글 0 · 패밀리 사이트 · 로그인 뒤 지도 깜빡임 0(잰 값 mapFlash false)"
+  },
+  {
+   "id": "첫인상-1 메인 첫 뷰 · 챕터 7 → 5",
+   "state": "now 21 시안",
+   "why": "메인 첫 화면('LAND-XI PLATFORM' 글자 · 지구본)은 메인-1 '지금 그대로', 마지막 장면은 메인-3 ⓐ 로 사용자가 정함 — 바꾸면 결정을 뒤집음",
+   "directions": [
+    "ⓐ 첫 화면은 그대로 두고 스크롤 첫 장면을 '전국 결과 지도 한 장'(경작지 · 하천)으로 바꾸고 챕터를 5로 줄임",
+    "ⓑ 첫 화면 오른쪽 지구본 자리에 전국 결과 지도를 넣고(모토 한 줄 그대로) 챕터 구성은 지금대로"
+   ]
+  },
+  {
+   "id": "첫인상-2 로그인 폼 가운데 한 장",
+   "state": "now 21 시안",
+   "why": "10-17 사용자 '로그인 화면에 지도를 없애라고 하는게 아니라' — 지금 모양(왼쪽 폼 · 오른쪽 결과 지도)이 확인된 모양",
+   "directions": [
+    "ⓐ 지금 모양 그대로(오른쪽 지도 카드 아래 설명 카드만 줄임)",
+    "ⓑ 결과 지도를 화면 전체 바탕으로 깔고 그 위 가운데 폼 한 장"
+   ]
+  },
+  {
+   "id": "첫인상-10 관리자 현황 첫 뷰 = 요약 네 칸 + 표",
+   "state": "now 21 시안",
+   "why": "원칙 167 '현황이 왜 지도인가부터 다시 본다' — 어떤 모양으로 바꿀지는 방향 선택",
+   "directions": [
+    "ⓐ 지도를 빼고 요약 네 칸(승인 대기 · 돌고 있는 분석 · 장비 · 기관 사용) + 할 일 표, 기관 위치는 작은 칸",
+    "ⓑ 지도는 오른쪽 작은 칸으로 줄이고 왼쪽 넓게 요약 네 칸 + 표"
+   ]
+  }
+ ],
+ "hooks_for_owners": [
+  "server/landxi_api/projects.py list_projects — GET /projects?scope=mine 2.1~2.2초(서버 안에서 view() 를 프로젝트마다 차례로) → 직원 대시보드 가운데 표시 2초 넘음. 한 번에 모아 읽거나 몇 초 캐시",
+  "xi-clean/app.js 1411 · 1444 줄 '불러오는 중' 칸 글(통계 판 · 핀 카드) → h('span.k-dots') 점 셋으로(다른 에이전트가 고치는 중이라 손대지 않음)",
+  "gov-fusion/feed.js 22 · 131 · svc-app.js 355 · gov-report/svc-report.js 48 '불러오는 중' 칸 글 → 가운데 하나(영농 담당)",
+  "server cards.py 423 — 여러 지역 배포(비닐하우스 '증평군 외 2곳')는 큰 숫자 없이 'AI 분석 결과 있음'만 → 분석하기 카드 한 장만 숫자 빈칸"
+ ]
+}

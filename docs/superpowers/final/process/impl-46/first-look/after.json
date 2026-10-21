@@ -1,0 +1,462 @@
+[
+ {
+  "role": "guest",
+  "name": "main",
+  "url": "https://app.land-xi.dev/",
+  "domMs": 4294,
+  "settleMs": 91,
+  "loading": [],
+  "firstPaintMs": 4385,
+  "pc": {
+   "hScroll": 0,
+   "docH": 25748,
+   "viewH": 900,
+   "clip": [],
+   "chars": 407,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 25203,
+   "viewH": 844,
+   "clip": [],
+   "chars": 407,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "guest",
+  "name": "login",
+  "url": "https://app.land-xi.dev/landxi/v3/login/",
+  "domMs": 643,
+  "settleMs": 85,
+  "loading": [],
+  "firstPaintMs": 728,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 158,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 897,
+   "viewH": 844,
+   "clip": [],
+   "chars": 158,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "guest",
+  "name": "gov-home",
+  "url": "https://namwon.land-xi.dev/",
+  "domMs": 942,
+  "settleMs": 109,
+  "loading": [],
+  "firstPaintMs": 1051,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 0,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 0,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "login",
+  "name": "test",
+  "loginMs": 12476,
+  "landed": "https://app.land-xi.dev/landxi/v3/lx-console/",
+  "mapFlash": false
+ },
+ {
+  "role": "app",
+  "name": "console",
+  "url": "null",
+  "domMs": 0,
+  "settleMs": 3786,
+  "loading": [
+   [
+    998,
+    3693
+   ]
+  ],
+  "firstPaintMs": 3786,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 764,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 383,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "app",
+  "name": "cards",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-cards/",
+  "domMs": 2005,
+  "settleMs": 96,
+  "loading": [],
+  "firstPaintMs": 2101,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 1396,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:첫 결과 전7",
+    "밖:7",
+    "밖:기관 검토 요청 있음1",
+    "밖:1"
+   ],
+   "chars": 1343,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "app",
+  "name": "map",
+  "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+  "domMs": 886,
+  "settleMs": 4347,
+  "loading": [
+   [
+    974,
+    4255
+   ]
+  ],
+  "firstPaintMs": 5233,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 255,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:200 m"
+   ],
+   "chars": 202,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "app",
+  "name": "ximap",
+  "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+  "domMs": 1143,
+  "settleMs": 3028,
+  "loading": [
+   [
+    1106,
+    3026
+   ]
+  ],
+  "firstPaintMs": 4171,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 156,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 110,
+   "loadingWords": 1
+  }
+ },
+ {
+  "role": "login",
+  "name": "lxadmin",
+  "loginMs": 7045,
+  "landed": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "mapFlash": false
+ },
+ {
+  "role": "admin",
+  "name": "overview",
+  "url": "null",
+  "domMs": 0,
+  "settleMs": 299,
+  "loading": [
+   [
+    3,
+    225
+   ]
+  ],
+  "firstPaintMs": 299,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 242,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:계정 관리",
+    "밖:공유 데이터"
+   ],
+   "chars": 195,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "admin",
+  "name": "deploys",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/",
+  "domMs": 1175,
+  "settleMs": 95,
+  "loading": [],
+  "firstPaintMs": 1270,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 396,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:계정 관리",
+    "밖:공유 데이터",
+    "밖:개선 후보",
+    "밖:28",
+    "밖:API",
+    "밖:XI 재학습",
+    "밖:학습 서식"
+   ],
+   "chars": 355,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "admin",
+  "name": "tenants",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-infra/",
+  "domMs": 515,
+  "settleMs": 1496,
+  "loading": [
+   [
+    989,
+    1420
+   ]
+  ],
+  "firstPaintMs": 2011,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 298,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:계정 관리",
+    "밖:공유 데이터"
+   ],
+   "chars": 255,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "admin",
+  "name": "approvals",
+  "url": "https://admin.land-xi.dev/landxi/v3/ops-core/",
+  "domMs": 423,
+  "settleMs": 12,
+  "loading": [],
+  "firstPaintMs": 435,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 354,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [
+    "밖:계정 관리",
+    "밖:공유 데이터",
+    "밖:어디 · 넓이 · 영상",
+    "밖:상태",
+    "밖:담당",
+    "밖:예상 시작",
+    "밖:순천시 와룡동·상사면 등 3곳",
+    "밖:약 3.92㎢ · 1.9cm 드론 · 드론",
+    "밖:확인 대기",
+    "밖:담당 없음",
+    "밖:LX 관리자가 봄",
+    "밖:승인하면 바로"
+   ],
+   "chars": 311,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "login",
+  "name": "lxadmin#namwon",
+  "loginMs": 4470,
+  "landed": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "mapFlash": false
+ },
+ {
+  "role": "gov",
+  "name": "list",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "domMs": 1064,
+  "settleMs": 76,
+  "loading": [],
+  "firstPaintMs": 1140,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 482,
+   "loadingWords": 1
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 485,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "gov",
+  "name": "service",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-select/",
+  "domMs": 485,
+  "settleMs": 82,
+  "loading": [],
+  "firstPaintMs": 567,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 77,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 300,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "gov",
+  "name": "request",
+  "url": "https://namwon.land-xi.dev/landxi/v3/gov-request/",
+  "domMs": 2135,
+  "settleMs": 48,
+  "loading": [],
+  "firstPaintMs": 2183,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 577,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 514,
+   "loadingWords": 0
+  }
+ },
+ {
+  "role": "gov",
+  "name": "ximap",
+  "url": "https://namwon.land-xi.dev/landxi/v3/xi-clean/",
+  "domMs": 867,
+  "settleMs": 2522,
+  "loading": [
+   [
+    550,
+    2440
+   ]
+  ],
+  "firstPaintMs": 3389,
+  "pc": {
+   "hScroll": 0,
+   "docH": 900,
+   "viewH": 900,
+   "clip": [],
+   "chars": 93,
+   "loadingWords": 0
+  },
+  "mo": {
+   "hScroll": 0,
+   "docH": 844,
+   "viewH": 844,
+   "clip": [],
+   "chars": 38,
+   "loadingWords": 0
+  }
+ }
+]
