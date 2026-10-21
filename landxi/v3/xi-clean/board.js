@@ -153,7 +153,7 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
     }
     map.addSource('xb-grid', { type: 'geojson', data: { type: 'FeatureCollection', features: fs }, maxzoom: 9 });
     const col = ['match', ['get', 'svc'], ...Object.entries(B.color).flat(), '#5C7CFA'];
-    map.addLayer({ id: 'xb-grid', type: 'fill', source: 'xb-grid', maxzoom: 9.6, ...(gridFilter() ? { filter: gridFilter() } : {}), layout: { visibility: B.hidden ? 'none' : 'visible' },
+    map.addLayer({ id: 'xb-grid', type: 'fill', source: 'xb-grid', maxzoom: 9.6, ...(gridFilter() ? { filter: gridFilter() } : {}), layout: { visibility: B.hidden || B.tint === false ? 'none' : 'visible' },
       paint: { 'fill-color': col, 'fill-antialias': false,
         'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, ['case', ['==', ['get', 'lc'], 1], 0.35, 0.85], 7.5, ['case', ['==', ['get', 'lc'], 1], 0.3, 0.75], 8.6, ['case', ['==', ['get', 'lc'], 1], 0.12, 0.35], 9.5, 0] } },
     map.getLayer('slot-result') ? 'slot-result' : undefined);
@@ -317,9 +317,12 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   const bySource = (sid) => B.loaded.get(sid) || null;
   function show(on) {
     B.hidden = !on; NAT.show(on); if (!on) { hideTip(); setHot(null); }
-    if (map.getLayer('xb-grid')) map.setLayoutProperty('xb-grid', 'visibility', on ? 'visible' : 'none');
+    gridVis();
   }
-  return { load, reload, near, bySource, show, color: (svc) => B.color[svc], colorOf, baseColorOf, set userColor(f) { userColor = f; }, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
+  /** 멀리서 밀도 칸 — 보이기(show) 와 색칠 켜고 끄기(10-21 원칙 298)가 모두 켜졌을 때만 */
+  const gridVis = () => { if (map.getLayer('xb-grid')) map.setLayoutProperty('xb-grid', 'visibility', !B.hidden && B.tint !== false ? 'visible' : 'none'); };
+  function setTint(on) { B.tint = !!on; gridVis(); }
+  return { load, reload, near, bySource, show, setTint, get hasGrid() { return !!map.getLayer('xb-grid'); }, color: (svc) => B.color[svc], colorOf, baseColorOf, set userColor(f) { userColor = f; }, UNIT, get data() { return B.data; }, region: (cd) => B.data?.regions.find((r) => r.sgg_cd === cd) || null, NEAR_Z, CELL_Z,
     set busy(f) { B.isBusy = f; }, nat: NAT, hot, setTask, setOffCls, tasks, get task() { return B.task; }, get offCls() { return [...B.offCls]; }, rehover: () => { if (!tip.hidden && lastPt) hover(lastPt); },
     setLayers: (set) => [...B.loaded.values()].find((x) => x.set === set) || null,
     get natInfo() { return { layers: NAT.layers.filter((l) => map.getLayer(l)), at: B.natAt, assets: NAT.assets }; } };

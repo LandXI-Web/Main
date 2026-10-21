@@ -155,6 +155,8 @@ const S = {
   clsOff: new Set(),                                 // 끈 클래스(XI맵 '층' 판 체크박스 · 10-15) — 지도 · 왼쪽 위 숫자 · 말풍선 숫자에서 빠짐('보이는 것 기준')
 };
 let SH, stage, map, hudBig, hudSus, bars, chips, pop, cmdk, AN, loadK, mainEl, NAT = null, BD = null, ED = null, toolsEl = null, hudBoard = null, DS = null, OM = null, PC = null, HL = null;
+/** 분석 결과 색칠(시군구 · 읍면동 통계 색 · 멀리서 밀도 칸) 켜고 끄기 + 진하기 — 사람마다 서버에 기억(GET|PUT /me/prefs/xi-clean.tint · 10-21 원칙 298) */
+const TINT = { on: true, k: 1 };
 /* 통계 표출 단계(10-15 원칙 262 — "대시보드를 원치 않을 수 있고. 지도에 가시화되어서 보기만 하고 싶어할수도"): 0 = 없음 · 1 = 지도에만(한 줄) · 2 = 지도 위 통계 판 · 3 = 대시보드.
    질문하면 늘 1단계부터(이미 2 · 3단계를 보고 있으면 그 단계에 새 사양). '통계' 단추 · 답 끝 '통계 보기' · '크게 보기' · 판의 '지도만' · 대시보드 '지도로 돌아가기'로 오간다.
    옛 'xc_statv'(지도 위 ↔ 대시보드 기억)는 쓰지 않는다 — 단계가 대신한다 */
@@ -289,13 +291,13 @@ async function boot() {
     onLeave: () => { STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
   if (S.board) { OM = createOnMap({ map, stage, host: mainEl, h,                       // 지도 위 표출(원칙 258 · 기본) — 결과 층은 그대로 두고 그 위에 색칠 · 꼬리표 · 작은 판
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
-    onEnter: () => { closePop(); ED?.close(); unpin(); closeDrawer(); BD?.show(false); hudBoard.hidden = true; },   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림) · 오른쪽 서랍(필지 카드 · 목록)은 닫는다 — 통계 한 줄 · 판이 서랍 밑에 가려지던 것(바퀴 16 재검수)
+    onEnter: () => { closePop(); ED?.close(); unpin(); closeDrawer(); BD?.show(false); if (!TINT.on) BD?.nat?.show(true); hudBoard.hidden = true; },   // 색칠을 끈 채면 결과 객체는 그대로 보인다(원칙 298)   // 결과 층은 잠시 걷어 색칠이 읽히게(닫으면 되돌림) · 오른쪽 서랍(필지 카드 · 목록)은 닫는다 — 통계 한 줄 · 판이 서랍 밑에 가려지던 것(바퀴 16 재검수)
     onShown: () => cmdk?.close({ force: true }),          // 날아가기 시작하면 아래 채팅 창의 대화 칸을 접는다(답은 그때까지 읽힘 · 입력 줄은 그대로)
     onStep: (n) => setStep(n),                             // 한 줄 '통계 보기'(2) · 판 '크게 보기'(3) · '지도만'(1) · 판 접기 · 펼치기(1 ↔ 2)
-    onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1),   // 판 '지도 색' 점 → 색 띠(원칙 264)
+    onColor: (btn, m) => openStatColors(btn, m), opacity: () => (SST.custom ? SST.op : 1), tint: () => TINT, onTint: (p) => setTint(p),   // 판 '지도 색' 점 → 색 띠(원칙 264)
     clsColor: (k) => userCol(k) || baseCol(k),                                              // 꼬리표 색 점 = 그 클래스 색(사람이 고른 색 먼저 · 10-17)
     onLeave: () => { if (HL?.cur?.src === 'dash') HL.clear(); STEP = 0; paintStatSwitch(); BD?.show(true); HUDKEY = ''; paintBoardHud(); stage.pad({}); if (KEEPCAM) { /* 서랍이 자리를 차지해 통계만 걷음 — 카메라 그대로 */ } else if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 }); else stage.home({ ms: RM() ? 0 : 1400 }); } });
-    mountStatSwitch(); }
+    mountStatSwitch(); tintLoad(); }
   mountLayout();                                                                        // 지도 위 배치 하나(원칙 279) — 도구 열 아래 · 오른쪽 쌓임 폭 · 채팅 창 자리
   // XI ChatGEO 답 ↔ 지도 강조(10-18 원칙 292 "지도와 동적으로 움직이는게 맞다") — 서버 map_refs(도구 결과 · 관할 안)만 그린다 · 끄기 = ?hl=0
   if (new URLSearchParams(location.search).get('hl') !== '0') {
@@ -1589,6 +1591,23 @@ function colorsChanged() {
   ED?.live();
   OM?.recolor?.();
 }
+let tintP = null, tintT = 0;
+function tintApply() { BD?.setTint?.(TINT.on); if (OM?.on) BD?.nat?.show(!TINT.on); OM?.tintApply?.(); document.querySelectorAll('[data-tint-row]').forEach((b) => b.setAttribute('aria-pressed', String(TINT.on))); X.tint = { on: TINT.on, k: TINT.k }; }
+function tintLoad() {
+  if (tintP) return tintP;
+  tintP = api('/me/prefs/xi-clean.tint').then((j) => { const o = j?.options || {}; if (typeof o.on === 'boolean') TINT.on = o.on; if (Number.isFinite(o.k)) TINT.k = Math.min(1, Math.max(0.2, o.k)); tintApply(); }, () => {});
+  return tintP;
+}
+function setTint(p) {
+  if (typeof p.on === 'boolean') TINT.on = p.on;
+  if (Number.isFinite(p.k)) TINT.k = Math.min(1, Math.max(0.2, Math.round(p.k * 20) / 20));
+  tintApply();
+  if (S.tool === 'layers') renderLayers();
+  clearTimeout(tintT);
+  tintT = setTimeout(() => { api('/me/prefs/xi-clean.tint', { method: 'PUT', body: { on: TINT.on, k: TINT.k } }).then(() => { X.tint = { on: TINT.on, k: TINT.k, saved: true }; }, () => {}); }, 300);
+}
+/** 층 판의 '분석 결과 색칠' 줄이 필요한가 — 지도 위 통계 색이 있거나 멀리서 밀도 칸이 있을 때 */
+const tintRowNeeded = () => !!(OM?.on && OM.spec?.map) || !!BD?.hasGrid;
 X.colorFor = (set, cls) => colorFor(set, cls);   // 실증 기록용(화면엔 없음)
 function openClsColors(btn, c) {
   const cls = visibleClasses();
@@ -2338,7 +2357,8 @@ function renderLayers() {
   // 지적(LX맵 편집지적도 · 10-15 원칙 266) — 클래스 체크박스 옆 한 줄 · 기본 꺼짐 · 보이지 않는 축척이면 체크박스만 흐리게
   const cad = map.getLayer('xc-lxmap') ? h('button.xc-row.xc-row--cls.xc-row--cad', { type: 'button', role: 'checkbox', 'aria-checked': String(!!S.layers.lxmap), 'data-cad': '1',
     onclick: () => setLxmap(!S.layers.lxmap) }, h('i.xc-cb'), h('span', { text: '지적' })) : null;
-  rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []), ...(cad ? [cad] : []));
+  const tintRow = tintRowNeeded() ? h('button.xc-row', { type: 'button', 'data-tint-row': '1', 'aria-pressed': String(TINT.on), onclick: () => setTint({ on: !TINT.on }) }, h('i.xc-sw'), h('span', { text: '분석 결과 색칠' })) : null;
+  rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []), ...(cad ? [cad] : []), ...(tintRow ? [tintRow] : []));
   showPop('층', h('div.xc-rows-p', {}, ...rows));
   paintCadRow();
 }

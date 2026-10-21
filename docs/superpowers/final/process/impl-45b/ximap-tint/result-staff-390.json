@@ -1,0 +1,130 @@
+{
+ "host": "https://app.land-xi.dev",
+ "w": 390,
+ "steps": {
+  "on-open": {
+   "z": 12.1,
+   "tint": {
+    "on": true,
+    "k": 1
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 4
+  },
+  "mini-off": {
+   "z": 12.2,
+   "tint": {
+    "on": false,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "false",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 71
+  },
+  "mini-on": {
+   "z": 9,
+   "tint": {
+    "on": true,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 6
+  },
+  "off": {
+   "z": 9,
+   "tint": {
+    "on": false,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "false",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 236
+  },
+  "layers-row": {
+   "pressed": "false",
+   "text": "분석 결과 색칠"
+  },
+  "off-zoom15": {
+   "z": 15.5,
+   "tint": {
+    "on": false,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "false",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 236
+  },
+  "on-zoom15": {
+   "z": 15.5,
+   "tint": {
+    "on": true,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": true,
+   "dnVisible": true,
+   "natVis": 6
+  },
+  "k40": {
+   "z": 11,
+   "tint": {
+    "on": true,
+    "k": 0.4,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": true,
+   "dnVisible": true,
+   "natVis": 6
+  },
+  "reload-tint": {
+   "on": true,
+   "k": 0.4
+  },
+  "reload-open": {
+   "z": 12.2,
+   "tint": {
+    "on": true,
+    "k": 0.4
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 4
+  },
+  "restored": {
+   "z": 12.2,
+   "tint": {
+    "on": true,
+    "k": 1,
+    "saved": true
+   },
+   "fillZero": "[\"interpolate\",[\"linear\"],[\"zoom\"],8,[\"*\",[\"coalesce\",[\"feat",
+   "sw": "true",
+   "scaleVisible": false,
+   "dnVisible": false,
+   "natVis": 6
+  }
+ },
+ "errs": []
+}

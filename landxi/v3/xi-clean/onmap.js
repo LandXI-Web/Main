@@ -90,7 +90,8 @@ const legend = (sc, unit) => scaleHtml(sc, unit, 'xo');
 /** 지도 위 통계 면 진하기 — 차오름 t × 줌(원래 식) × 사람이 고른 진하기 k */
 function fillOp(k = 1) {
   const T = ['coalesce', ['feature-state', 't'], 0], ON = ['boolean', ['feature-state', 'on'], false], r = (x) => +(x * k).toFixed(3);
-  return ['interpolate', ['linear'], ['zoom'], 8, ['*', T, ['case', ON, r(0.95), r(0.84)]], 12.5, ['*', T, ['case', ON, r(0.7), r(0.46)]]];
+  // 객체가 읽히는 줌(14 ~)에서는 색칠이 스스로 옅어진다(10-21 원칙 298) — 끄기 단추는 따로 늘 있다
+  return ['interpolate', ['linear'], ['zoom'], 8, ['*', T, ['case', ON, r(0.95), r(0.84)]], 12.5, ['*', T, ['case', ON, r(0.7), r(0.46)]], 14, ['*', T, ['case', ON, r(0.2), r(0.12)]], 15.5, 0];
 }
 /** 색 점(지도 색 띠의 색 다섯 · 바꾸면 바로) */
 const dotCss = (sc) => { const r = rampFor(sc?.hue), cs = [r[2], r[4], r[6]]; return `background:conic-gradient(${cs.map((c, i) => `${c} ${i * 120}deg ${(i + 1) * 120}deg`).join(', ')})`; };
@@ -109,7 +110,7 @@ function centroid(g) {
 const bboxOf = (fs) => { let w = 180, s = 90, e = -180, n = -90; const walk = (c) => (typeof c[0] === 'number' ? (w = Math.min(w, c[0]), e = Math.max(e, c[0]), s = Math.min(s, c[1]), n = Math.max(n, c[1])) : c.forEach(walk)); fs.forEach((f) => f.geometry && walk(f.geometry.coordinates)); return w < e ? [w, s, e, n] : null; };
 
 /* ═══ 지도 위 표출 ═══ */
-export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep, onColor = null, opacity = () => 1, clsColor = null }) {
+export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onStep, onColor = null, opacity = () => 1, clsColor = null, tint = () => ({ on: true, k: 1 }), onTint = null }) {
   const O = { on: false, step: 1, sync: false, spec: null, fc: null, sel: null, hover: null, bb: null, feats: [], tags: new Map(), hoverTag: null, cand: [], run: 0, tour: null, CAT: [] };
   const panel = h('section.xo', { hidden: true, 'aria-label': '지도 위 통계' });
   const mini = h('div.xo-mini', { hidden: true, role: 'status', 'aria-label': '지도 위 결과' });   // 1단계 한 줄(제목 · 큰 숫자 · '통계 보기' · 닫기)
@@ -192,6 +193,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
   function paintMini(s) {
     const main = (s.kpis || [])[0] || s.main || {};
     mini.replaceChildren(h('b.t', { text: s.title || '' }), h('span.v.num', {}, document.createTextNode(nf(main.value, main.d || 0)), h('small', { text: main.unit || '' })),
+      ...(onTint && s.map ? [h('button.xo-tint.xo-tint--mini', { type: 'button', role: 'switch', 'aria-checked': String(tint().on), 'aria-label': '지도 색칠 켜고 끄기', title: '색칠 켜고 끄기', onclick: () => onTint({ on: !tint().on }) }, h('i'), h('span', { text: '색칠' }))] : []),
       h('button.xo-mini-b', { type: 'button', text: '통계 보기', onclick: () => setStep(2) }), h('button.xo-x', { type: 'button', 'aria-label': '닫기', text: '×', onclick: () => leave() }));
   }
   /** 1 ↔ 2 단계 — 1 = 판 접힘 + 한 줄 · 2 = 판 펼침. 3(대시보드)은 app.js 가 맡는다(onStep) */
@@ -224,25 +226,37 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (map.getSource('xo-f')) return;
     map.addSource('xo-f', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'k' });
     const T = ['coalesce', ['feature-state', 't'], 0], ON = ['boolean', ['feature-state', 'on'], false];
-    const k = opacity();                                                    // 사람이 고른 투명도(색 바꾸기 · 원칙 264 — 1 = 원래)
+    const k = tintK();                                                      // 사람이 고른 투명도(색 바꾸기 · 원칙 264) × 색칠 진하기 · 끄면 0 (원칙 298)
     map.addLayer({ id: 'xo-fill', type: 'fill', source: 'xo-f', paint: { 'fill-color': ['coalesce', ['get', 'col'], '#E5E8EB'],
       'fill-opacity': fillOp(k) } });   // zoom 은 맨 바깥(스타일 규칙) · 차오름 t × 가까이 갈수록 옅게(결과가 비침)
     map.addLayer({ id: 'xo-glow', type: 'line', source: 'xo-f', paint: { 'line-color': ['coalesce', ['get', 'col'], '#2E9A90'], 'line-width': 12, 'line-blur': 8, 'line-opacity': ['coalesce', ['feature-state', 'g'], 0] } });
-    map.addLayer({ id: 'xo-line', type: 'line', source: 'xo-f', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ON, 3, 1], 'line-opacity': ['*', T, 0.95] } });
+    map.addLayer({ id: 'xo-line', type: 'line', source: 'xo-f', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ON, 3, 1], 'line-opacity': ['*', T, tint().on ? 0.95 : 0.4] } });
     map.on('click', 'xo-fill', (e) => { if (!O.on) return; const k = e.features?.[0]?.properties?.k; if (k) { stopTour(); pick(k, true); } });
     map.on('mousemove', 'xo-fill', (e) => { if (!O.on) return; map.getCanvas().style.cursor = 'pointer'; const k = e.features?.[0]?.properties?.k; if (k) hover(k, 'map'); });
     map.on('mouseleave', 'xo-fill', () => { map.getCanvas().style.cursor = ''; hover(null, 'map'); });
     for (const ev of ['mousedown', 'wheel', 'touchstart']) map.on(ev, () => stopTour());
   }
   /** 사람이 바꾼 지도 색 다시 칠하기 — 면 · 척도 띠 · 판 카드(막대 색 · 범주 점) · 색 점. 판을 새로 그리지 않는다(열린 색 칸이 붙어 있게) */
+  const tintK = () => (tint().on ? opacity() * tint().k : 0);
+  /** 색칠 켜기 · 끄기 · 진하기 — 면과 경계선 · 척도 띠 · 판의 단추 (결과 객체 · 위성 영상은 건드리지 않는다) */
+  function tintApply() {
+    if (map.getLayer('xo-fill')) map.setPaintProperty('xo-fill', 'fill-opacity', fillOp(tintK()));
+    if (map.getLayer('xo-line')) map.setPaintProperty('xo-line', 'line-opacity', ['*', ['coalesce', ['feature-state', 't'], 0], tint().on ? 0.95 : 0.4]);
+    const t = tint();
+    for (const sw of host.querySelectorAll('.xo-tint')) sw.setAttribute('aria-checked', String(t.on));
+    const mp = panel.querySelector('.xo-mp'); if (!mp) return;
+    mp.classList.toggle('is-off', !t.on);
+    const rg = mp.querySelector('.xo-dn input'); if (rg && document.activeElement !== rg) rg.value = String(Math.round(t.k * 100));
+    const pv = mp.querySelector('.xo-dn b'); if (pv) pv.textContent = Math.round(t.k * 100) + '%';
+  }
   function recolor() {
-    if (map.getLayer('xo-fill')) map.setPaintProperty('xo-fill', 'fill-opacity', fillOp(opacity()));
+    tintApply();
     const s = O.spec; if (!O.on || !s) return;
     const m = s.map;
     if (m) {
       for (const f of O.feats) f.properties.col = f.properties.v == null ? '#E5E8EB' : colorOf(m.scale, f.properties.v);
       map.getSource('xo-f')?.setData(O.fc);
-      const old = panel.querySelector('.xo-mp > div'); if (old) old.outerHTML = legend(m.scale, m.unit);
+      const old = panel.querySelector('.xo-mp > .xo-scale'); if (old) old.outerHTML = legend(m.scale, m.unit);
       panel.querySelector('.xo-cd')?.setAttribute('style', dotCss(m.scale));
     }
     // 지도 위 꼬리표의 색 점도 바로(클래스 색 · 지도 색)
@@ -410,7 +424,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     const head = `<div class="xo-card xo-head"><div class="xo-ht"><h2>${esc(s.title)}</h2><button type="button" class="xo-home">제자리로</button><button type="button" class="xo-x" aria-label="닫기">×</button></div>
       <p class="xo-l">${esc(main.label || '')}</p><p class="xo-big"><b class="num">${nf(main.value, main.d || 0)}</b><small>${esc(main.unit || '')}</small></p>
       ${kr.length ? `<div class="xo-kp">${kr.slice(0, 3).map((k) => `<div><span>${esc(k.label)}</span><b class="num">${nf(k.value, k.d || 0)}<small>${esc(k.unit || '')}</small></b></div>`).join('')}</div>` : ''}
-      ${m ? `<div class="xo-mp"><span class="t">${onColor ? `<button type="button" class="xo-cd" aria-haspopup="dialog" aria-expanded="false" aria-label="지도 색" title="색" style="${dotCss(m.scale)}"></button>` : ''}지도 색 · ${esc(m.title)}</span>${legend(m.scale, m.unit)}</div>` : ''}
+      ${m ? `<div class="xo-mp"><span class="t">${onColor ? `<button type="button" class="xo-cd" aria-haspopup="dialog" aria-expanded="false" aria-label="지도 색" title="색" style="${dotCss(m.scale)}"></button>` : ''}<span class="xo-tt">지도 색 · ${esc(m.title)}</span>${onTint ? `<button type="button" class="xo-tint" role="switch" aria-checked="${tint().on}" aria-label="지도 색칠 켜고 끄기" title="색칠 켜고 끄기"><i></i><span>색칠</span></button>` : ''}</span>${legend(m.scale, m.unit)}${onTint ? `<label class="xo-dn"><span>진하기</span><input type="range" min="20" max="100" step="5" value="${Math.round(tint().k * 100)}" aria-label="색칠 진하기"><b class="num">${Math.round(tint().k * 100)}%</b></label>` : ''}</div>` : ''}
       ${s.live ? `<p class="xo-live"><i></i>지금 분석 중 · ${esc(s.live)}</p>` : ''}
       ${s.note ? `<p class="xo-notice">${nb(s.note)}</p>` : ''}
       ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${nb(l)}</p>`).join('')}</div></div>` : ''}
@@ -421,6 +435,9 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     panel.querySelector('.xo-x').onclick = () => leave();
     panel.querySelector('.xo-home').onclick = () => setPos(null);
     panel.querySelector('.xo-cd')?.addEventListener('click', (e) => onColor?.(e.currentTarget, m));
+    panel.querySelector('.xo-tint')?.addEventListener('click', () => onTint?.({ on: !tint().on }));
+    panel.querySelector('.xo-dn input')?.addEventListener('input', (e) => onTint?.({ k: Number(e.currentTarget.value) / 100 }));
+    tintApply();
     panel.querySelector('.xo-tour')?.addEventListener('click', () => (O.tour ? stopTour() : tour(topOf(3))));
     panel.querySelector('.xo-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
     panel.querySelector('.xo-big2')?.addEventListener('click', () => setStep(3));
@@ -503,6 +520,6 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     if (window.__xc) window.__xc.dash = null;
     if (!quiet) onLeave?.();
   }
-  return { show, leave, setStep, recolor, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick: (k, fromMap) => { stopTour(); pick(k, fromMap); }, tour: () => tour(topOf(3)),   // 밖에서 고름(답 글의 이름 누름 · 원칙 292) = 돌아보기를 멈추고 그 곳
+  return { show, leave, setStep, recolor, tintApply, get step() { return O.on ? O.step : 0; }, get on() { return O.on; }, get spec() { return O.spec; }, pick: (k, fromMap) => { stopTour(); pick(k, fromMap); }, tour: () => tour(topOf(3)),   // 밖에서 고름(답 글의 이름 누름 · 원칙 292) = 돌아보기를 멈추고 그 곳
     get remembered() { return ensurePane().remembered(); } };   // 사람이 판을 직접 끌거나 펴 둔 기억(좁은 화면 기본 접힘보다 먼저 · 원칙 273)
 }

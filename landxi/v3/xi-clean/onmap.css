@@ -202,3 +202,20 @@
   .xo-sw{display:none}
 }
 @media (prefers-reduced-motion:reduce){.xo-card,.xo-tag,.xo-mini{animation:none}.xo-live i{animation:none}}
+
+/* 색칠 켜고 끄기 · 진하기(10-21 원칙 298) — 지도 색 줄 오른쪽 스위치 + 척도 아래 진하기 */
+.xo-mp .t:has(.xo-tint){display:flex;align-items:center;gap:8px}
+.xo-tt{flex:1;min-width:0}
+.xo-tint{flex:none;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 2px 0 8px;border:0;background:none;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink-2);cursor:pointer;border-radius:14px}
+.xo-tint i{width:32px;height:18px;border-radius:9px;background:var(--rule);position:relative;transition:background var(--d-180,.18s)}
+.xo-tint i::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(78,89,104,.25);transition:transform var(--d-180,.18s)}
+.xo-tint[aria-checked="true"] i{background:var(--ink)}
+.xo-tint[aria-checked="true"] i::after{transform:translateX(14px)}
+.xo-tint:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.xo-dn{display:flex;align-items:center;gap:10px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}
+.xo-dn input{flex:1;min-width:0;height:20px;margin:0;accent-color:var(--ink);cursor:pointer}
+.xo-dn b{flex:none;min-width:40px;text-align:right;font-weight:500;color:var(--ink-2)}
+.xo-mp.is-off .xo-scale,.xo-mp.is-off .xo-dn{display:none}
+.xo-mp.is-off .xo-cd{opacity:.4}
+.xo-tint--mini{padding:0 0 0 4px;flex:none}
+@media (max-width:600px){.xo-mini .xo-tint--mini span{display:none}.xo-mini{gap:8px}.xo-mini .t{min-width:3.5em}}

@@ -1,0 +1,16 @@
+{
+  "id": "원칙 298",
+  "title": "XI맵 분석 결과 색칠 끄고 켜기 · 진하기 · 가까이 가면 옅어짐",
+  "where": ["landxi/v3/xi-clean/onmap.js", "onmap.css", "app.js", "board.js"],
+  "result": {
+    "stats_panel": "지도 색 줄에 '색칠' 스위치 + 척도 아래 '진하기' 슬라이더(20~100%) — 끄면 색 척도·진하기 줄이 사라짐",
+    "mini_line": "접힌 한 줄(통계 보기 옆)에도 '색칠' 스위치(모바일은 스위치만)",
+    "layers_panel": "층 판에 '분석 결과 색칠' 줄 (지도 위 통계 색이 있거나 멀리서 밀도 칸이 있을 때만)",
+    "off": "시군구 색면·멀리서 밀도 칸이 걷히고, 위성 영상과 전국 결과 객체(면·객체)는 그대로 보임",
+    "auto_fade": "줌 12.5 이후 서서히 옅어져 15.5에서 0 — 스위치는 그대로 명시적 조절",
+    "memory": "GET|PUT /me/prefs/xi-clean.tint { on, k } — 사람별 서버 기억, 새로고침 뒤에도 유지(진하기 40% 확인)",
+    "institution": "기관 XI맵(namwon)에는 지도 위 통계 색·밀도 칸이 없어(LX 계정만) 단추도 나오지 않음 — 콘솔 오류 0"
+  },
+  "evidence": ["result-staff-1440.json", "result-staff-390.json", "shots (로컬 전용 · 저장소에 올리지 않음)"],
+  "console_errors": 0
+}
