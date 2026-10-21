@@ -530,3 +530,86 @@ async def report_screen(request: Request):
         raise ApiError("bad_request", "문서 내용이 필요합니다")
     blob, name = await run_in_threadpool(build_screen, doc)
     return hwpx_response(blob, name)
+
+
+# ── 보고서 보기(대시보드 모양 · 10-21 사용자 "통계 보고서는 대시보드 형태로 보여주는걸로 하자" · 원칙 299) ─────────────
+#   XI ChatGEO '○○ 통계 보고서 만들어 줘' · 통계 판 '보고서 보기'가 같은 사양을 화면(kit/report-view.js)에 그린다 — 숫자는 사양 값 그대로.
+#   엑셀 = 같은 사양의 주요 숫자 · 읍면동별 줄(다시 세지 않음).
+_VIEW_KEYS = ("kind", "title", "means", "fuse", "kpis", "panels", "map", "say", "note", "emd", "emd_rows", "main", "sgg", "live", "src")
+
+
+def view_doc(spec: dict, now: dt.datetime | None = None, files: dict | None = None) -> dict:
+    """보고서 보기 화면이 읽는 한 벌(사양 + 기준일 + 내려받을 파일 주소). 내부 규칙 이름(rule)은 뺀다."""
+    now = now or dt.datetime.now(KST)
+    return {"v": 1, "spec": {k: spec[k] for k in _VIEW_KEYS if k in spec}, "made": now.strftime("%Y. %m. %d."),
+            "made_t": now.strftime("%Y. %m. %d. %H:%M"), "files": files or {}}
+
+
+def _emd_list(spec: dict) -> tuple[list[dict], str]:
+    rows = spec.get("emd_rows")
+    if not rows:
+        bar = next((p for p in spec.get("panels") or [] if p.get("pick") == "emd" and p.get("type") in ("bar", "rank")), None)
+        rows = sorted((bar or {}).get("rows") or [], key=lambda r: -(r.get("v") or 0))
+    unit = str((spec.get("main") or {}).get("unit") or "")
+    return list(rows), unit
+
+
+def build_xlsx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
+    from .farm_more import _book, _info, _save, _sheet
+    now = now or dt.datetime.now(KST)
+    title = str(spec.get("title") or "통계")
+    means = dict((str(a), str(b)) for a, b in (spec.get("means") or []) if a)
+    wb = _book()
+    rows, unit = _emd_list(spec)
+    if rows:
+        tot = sum(float(r.get("v") or 0) for r in rows) or 0
+        has_d = any(r.get("d") is not None for r in rows)
+        has_m2 = any(r.get("m2") is not None for r in rows)
+        head = ["순위", "읍면동", f"수({unit})" if unit else "수", "비율(%)"] + (["면적(㎡)"] if has_m2 else []) + ([f"㎢당({unit}/㎢)"] if has_d else [])
+        body = []
+        for i, r in enumerate(rows):
+            v = r.get("v") or 0
+            row = [i + 1, str(r.get("label") or ""), v, round(v / tot * 100, 1) if tot else None]
+            if has_m2:
+                row.append(round(float(r.get("m2") or 0)))
+            if has_d:
+                row.append(r.get("d"))
+            body.append(row)
+        body.append(["", "합계", sum(r.get("v") or 0 for r in rows), 100.0 if tot else None] + ([round(sum(float(r.get("m2") or 0) for r in rows))] if has_m2 else []) + ([None] if has_d else []))
+        num = {2: "#,##0", 3: "0.0"}
+        if has_m2:
+            num[4] = "#,##0"
+        if has_d:
+            num[len(head) - 1] = "#,##0.0"
+        _sheet(wb, "읍면동별", head, body, num=num, widths=[8, 18, 14, 10, 14, 14], total_last=True)
+    kp = spec.get("kpis") or []
+    if kp:
+        _sheet(wb, "주요 숫자", ["항목", "값", "단위", "참고"], [[str(k.get("label") or ""), k.get("value"), str(k.get("unit") or ""), str(k.get("sub") or "")] for k in kp],
+               num={1: "#,##0.##"}, widths=[24, 14, 10, 40])
+    info = [("제목", title), ("지역", means.get("지역", "")), ("업무", means.get("업무", "")), ("기준일", now.strftime("%Y. %m. %d. %H:%M")),
+            ("자료", " · ".join(spec.get("fuse") or []) or "AI 분석 결과")]
+    for i, s in enumerate(spec.get("say") or [], 1):
+        info.append((f"요약 {i}", _say_clean(s)))
+    info.append(("안내", "숫자는 XI맵 통계 판 · 한글 보고서와 같은 값입니다."))
+    _info(wb, info)
+    name = H.safe_name(f"{title}_통계_{now:%Y%m%d}").replace(".hwpx", "")
+    name = re.sub(r"\.(hwpx|xlsx)$", "", name) + ".xlsx"
+    return _save(wb), name
+
+
+@router.post("/ximap/report.xlsx")
+async def report_xlsx(request: Request):
+    """통계 판 '보고서 보기' 안의 엑셀 — 받은 사양(화면 숫자)만 짓는다(자료를 읽지 않음 · 계정 범위 밖 0)."""
+    require(principal(request))
+    try:
+        body = await request.json()
+    except Exception:
+        raise ApiError("bad_request", "대시보드 사양이 필요합니다")
+    spec = (body or {}).get("spec") if isinstance(body, dict) else None
+    if not isinstance(spec, dict) or not spec.get("title"):
+        raise ApiError("bad_request", "대시보드 사양이 필요합니다")
+    blob, name = await run_in_threadpool(build_xlsx, spec)
+    return Response(blob, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"content-disposition": f"attachment; filename=\"report.xlsx\"; filename*=UTF-8''{quote(name)}",
+                             "x-lx-report-name": quote(name), "cache-control": "no-store",
+                             "access-control-expose-headers": "Content-Disposition, X-LX-Report-Name"})

@@ -64,7 +64,7 @@ def run_dir(run_id: str) -> Path:
     return d
 
 
-RUN_FILE = re.compile(r"^[\w가-힣.() -]{1,100}\.(hwpx|png|jpg|jpeg|webp|csv|pdf|xlsx)$")
+RUN_FILE = re.compile(r"^[\w가-힣.() -]{1,100}\.(hwpx|png|jpg|jpeg|webp|csv|pdf|xlsx|json)$")
 
 
 def run_href(run_id: str, name: str) -> str:

@@ -348,6 +348,10 @@ def register(ctx: Ctx, i: int, out: Out) -> dict:
             if not rows:
                 continue
             b = {"type": "table", "title": b.get("title") or "", "rows": rows[:12]}
+        elif b.get("type") == "report":                  # 보고서 보기(대시보드 모양 · 10-21 원칙 299) — 이름 · run 파일 주소만(숫자는 파일 안 사양)
+            if not str(b.get("href") or "").startswith("/api/v1/agent/runs/"):
+                continue
+            b = {"type": "report", "label": str(b.get("label") or ""), "href": b["href"]}
         elif b.get("type") not in ("file", "image"):
             continue
         b["step"] = i

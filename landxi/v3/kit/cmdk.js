@@ -1002,6 +1002,13 @@ function create(opts) {
         const rest = rows.length - 5;
         blk.append(h('div.k-ck-blk.k-ck-blk--table', { 'data-kind': 'table' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null, tb,
           rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest).replace('곳', '줄') }) : null));
+      } else if (b?.type === 'report' && b.href) {
+        // 보고서 보기(대시보드 모양 · 10-21 원칙 299) — 답의 첫 동작 · 내려받기 줄은 그 아래 그대로
+        const btn = h('button.k-ck-rep', { type: 'button', 'data-report': b.href },
+          h('span.k-ck-rep-t', {}, h('b', { text: '보고서 보기' }), h('small', { text: b.label || '' })),
+          h('span.k-ck-rep-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M3 4.5h14v11H3zM6.5 12.5v-3M10 12.5v-5M13.5 12.5v-2"/></svg>' }));
+        blk.append(h('div.k-ck-blk.k-ck-blk--report', { 'data-kind': 'report' }, btn));
+        import('./report-view.js').then((m) => m.preload()).catch(() => {});
       } else if (b?.type === 'file' && b.href) {
         const btn = h('button.k-ck-file', { type: 'button', 'data-href': b.href, 'data-label': b.label || '', 'data-lang': lg },
           h('span.k-ck-file-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12"/></svg>' }),
@@ -1018,7 +1025,11 @@ function create(opts) {
     blk.hidden = !blk.children.length;
   }
   /* 창 안 누르기(지난 차례도 같은 처리) — 내려받기 · 다시 시도 · 추천 질문 */
-  box.addEventListener('click', async (e) => {
+  // 대화 칸(log)은 화면이 서랍으로 옮겨 갈 수 있다(XI맵 '대화 n' 서랍) — 옮겨 가도 단추가 듣게 log 에도 같은 처리(한 번만)
+  const onClick = async (e) => {
+    if (e.__kck) return; e.__kck = 1;
+    const rep = e.target.closest('button.k-ck-rep[data-report]');
+    if (rep) { import('./report-view.js').then((m) => m.openReport({ href: rep.dataset.report, from: rep })).catch((err) => devlog('report view', String(err?.message || err))); return; }
     const file = e.target.closest('button.k-ck-file[data-href]');
     if (file) {
       const lg = file.dataset.lang || lang;
@@ -1045,7 +1056,9 @@ function create(opts) {
     if (more) { more.closest('.k-ck-blk')?.classList.add('is-all'); more.remove(); return; }
     const q = e.target.closest('.k-chat-retry[data-q], .k-chat-chip[data-q], .k-chat-btn[data-q]')?.dataset.q;
     if (q && !cfg.guest && box.dataset.state !== 'busy') { input.value = q; form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); }
-  });
+  };
+  box.addEventListener('click', onClick);
+  log.addEventListener('click', onClick);
   const keepDown = () => { const near = log.scrollHeight - log.scrollTop - log.clientHeight < 160; if (near) requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); };
   /** 답이 끝나면 내 말부터 답 머리까지 보이게(긴 답도 첫 줄부터 읽는다) */
   const reveal = () => requestAnimationFrame(() => { if (live?.me?.isConnected) log.scrollTop = Math.max(0, live.me.offsetTop - 12); });

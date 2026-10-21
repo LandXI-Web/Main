@@ -182,6 +182,18 @@ function pack(items) {
 
 const legend = (sc, unit) => scaleHtml(sc, unit, 'xd');
 
+/* 보고서 보기(kit/report-view.js · 10-21 원칙 299)가 같은 그리기를 쓴다 — 통계 판과 같은 차트 · 같은 숫자 */
+export function drawPanel(p, hue) { CAT = catFor(hue || p?.scale?.hue || 'teal'); return (DRAW[p?.type] || (() => ''))(p); }
+export const kpiHtml = (k, main, hue) => kpi(k, main, (RAMP[hue] || RAMP.teal)[4]);
+export const panelVars = (hue) => varsFor(hue);
+/** 차트 위 말풍선 — root 안의 [data-tip] */
+export function bindTips(root) {
+  if (!TIP) { TIP = document.createElement('div'); TIP.className = 'xd-tip'; TIP.hidden = true; TIP.setAttribute('role', 'tooltip'); document.body.append(TIP); }
+  root.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
+  root.addEventListener('mouseleave', () => tip(null, null));
+  return () => tip(null, null);
+}
+
 /* ═══ 대시보드 ═══ */
 export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onBack }) {
   const D = { on: false, spec: null, sel: null, fc: null, pn: null };
@@ -189,8 +201,8 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
   const back = h('button.xd-back', { type: 'button', text: '지도로 돌아가기', hidden: true });
   const cap = h('div.xd-cap', { hidden: true });
   const mean = h('div.xd-mean', { hidden: true, role: 'status' });
-  TIP = h('div.xd-tip', { hidden: true, role: 'tooltip' });
-  host.append(panel, back, cap, mean); document.body.append(TIP);
+  if (!TIP) { TIP = h('div.xd-tip', { hidden: true, role: 'tooltip' }); document.body.append(TIP); }
+  host.append(panel, back, cap, mean);
   back.onclick = () => (onBack ? onBack() : leave());   // 3단계 → 2단계(지도 위 통계)로 되돌아감(app.js) · 없으면 닫기
   panel.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
   panel.addEventListener('mouseleave', () => tip(null, null));
@@ -255,7 +267,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
       return `<div class="xd-card xd-p xd-p--${p.type}" style="grid-column:span ${w};${varsFor(p.scale?.hue || hue)}" data-i="${x.i}">${(DRAW[p.type] || (() => ''))(p)}</div>`; });
     if ((s.say || []).length) cards.unshift(`<div class="xd-card xd-say" style="grid-column:span 12">${say}</div>`);
     const nk = Math.min(4, (s.kpis || []).length || 1);
-    panel.innerHTML = `<header class="xd-h"><h2>${esc(s.title)}</h2><div class="xd-means">${means}</div><button type="button" class="xd-dl xd-rep" style="margin-left:auto">보고서로</button></header>
+    panel.innerHTML = `<header class="xd-h"><h2>${esc(s.title)}</h2><div class="xd-means">${means}</div><button type="button" class="xd-dl xd-rep" style="margin-left:auto">보고서 보기</button></header>
       ${s.note ? `<p class="xd-notice">${esc(s.note)}</p>` : ''}
       <div class="xd-kpis" style="grid-template-columns:${nk > 1 ? `minmax(0,1.5fr) repeat(${nk - 1},minmax(0,1fr))` : 'minmax(0,1fr)'}">${kp}</div>
       <div class="xd-grid">${cards.join('')}</div>`;
@@ -264,7 +276,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
       if (p?.pick) el.querySelectorAll('[data-k]').forEach((b) => { b.classList.add('pk'); b.addEventListener('click', () => pick(b.dataset.k)); });
       if (p?.type === 'table' && p.dl) el.querySelector('.xd-dl')?.addEventListener('click', () => csv(p.dl, p.cols, p.rows));
     });
-    panel.querySelector('.xd-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
+    panel.querySelector('.xd-rep')?.addEventListener('click', (e) => import('../kit/report-view.js').then((m) => m.openReport({ spec: s, from: e.currentTarget })));   // 대시보드 모양 보고서(원칙 299)
     panel.scrollTop = 0;
   }
   /** '보고서로' — 지금 화면의 대시보드(같은 사양 · 같은 숫자)를 한글 문서(.hwpx)로 내려받기(10-14 원칙 247) */

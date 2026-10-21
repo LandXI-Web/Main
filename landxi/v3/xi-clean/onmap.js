@@ -428,7 +428,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
       ${s.live ? `<p class="xo-live"><i></i>지금 분석 중 · ${esc(s.live)}</p>` : ''}
       ${s.note ? `<p class="xo-notice">${nb(s.note)}</p>` : ''}
       ${(s.say || []).length ? `<div class="xo-say"><span class="xo-logo">XI</span><div>${s.say.slice(0, 2).map((l) => `<p>${nb(l)}</p>`).join('')}</div></div>` : ''}
-      <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서로</button><button type="button" class="xo-big2">크게 보기</button><button type="button" class="xo-only">지도만</button></div></div>`;
+      <div class="xo-act">${m ? '<button type="button" class="xo-tour"><i></i><span class="a">순위 돌아보기</span><span class="b">멈추기</span></button>' : ''}<button type="button" class="xo-rep">보고서 보기</button><button type="button" class="xo-big2">크게 보기</button><button type="button" class="xo-only">지도만</button></div></div>`;
     const vars = (hue) => { const r = rampFor(hue); return `--xo-c0:${r[6]};--xo-c1:${r[5]};--xo-c3:${r[3]}`; };
     const cards = (s.panels || []).map((p, i) => `<div class="xo-card xo-p xo-p--${p.type}${i < 2 ? ' open' : ''}" data-i="${i}" style="animation-delay:${RM() ? 0 : 80 + i * 70}ms;${vars(p.scale?.hue || hueOf(s))}"><button type="button" class="xo-ph" aria-expanded="${i < 2}"><span>${esc(p.title)}</span>${p.unit ? `<small>${esc(p.unit)}</small>` : ''}<i></i></button><div class="xo-pb">${(DRAW[p.type] || (() => ''))(p, O.CAT)}</div></div>`);
     panel.innerHTML = head + cards.join('');
@@ -439,7 +439,8 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
     panel.querySelector('.xo-dn input')?.addEventListener('input', (e) => onTint?.({ k: Number(e.currentTarget.value) / 100 }));
     tintApply();
     panel.querySelector('.xo-tour')?.addEventListener('click', () => (O.tour ? stopTour() : tour(topOf(3))));
-    panel.querySelector('.xo-rep')?.addEventListener('click', (e) => report(s, e.currentTarget));
+    import('../kit/report-view.js').then((m) => m.preload()).catch(() => {});   // '보고서 보기'를 누르면 바로 열리게
+    panel.querySelector('.xo-rep')?.addEventListener('click', (e) => import('../kit/report-view.js').then((m) => m.openReport({ spec: s, from: e.currentTarget })));   // 대시보드 모양 보고서(원칙 299) · 한글 문서 · 엑셀은 그 안에서
     panel.querySelector('.xo-big2')?.addEventListener('click', () => setStep(3));
     panel.querySelector('.xo-only')?.addEventListener('click', () => setStep(1));
     panel.querySelectorAll('.xo-p').forEach((el) => { const p = s.panels[Number(el.dataset.i)]; if (p?.type === 'table' && p.dl) el.querySelector('.xo-dl')?.addEventListener('click', () => csv(p.dl, p.cols, p.rows)); });

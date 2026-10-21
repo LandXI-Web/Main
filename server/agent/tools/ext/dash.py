@@ -367,7 +367,13 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     return {"kind": "task", "rule": [panels[0]["type"] == "donut" and "B1d" or "B1b", "P1" if any(p["type"] == "scatter" for p in panels) else "-", "A1" if ar["n"] >= 20 else "-",
                                      "M3" + mp["scale"]["kind"]],
             "title": f"{name} · {task}", "means": [["지역", name], ["업무", task], ["비교", "읍면동 · 면적"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],
-            "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "main": {"label": task, "value": tot, "unit": unit}}
+            "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "main": {"label": task, "value": tot, "unit": unit},
+            "emd_rows": _rows_all(emd)}
+
+
+def _rows_all(emd: list[dict]) -> list[dict]:
+    """읍면동 전부(많은 순) — 보고서 보기 화면의 '더 보기' · 엑셀(막대는 16 · 순위는 10곳까지라서 · 같은 줄 같은 값 · 10-21 원칙 299)."""
+    return [{"k": r["k"], "label": r["label"], "v": r["v"], "d": r.get("d")} for r in sorted(emd, key=lambda r: -r["v"])]
 
 
 def _task_only(name, sgg, task, unit, emd) -> dict:
@@ -386,7 +392,7 @@ def _task_only(name, sgg, task, unit, emd) -> dict:
     return {"kind": "task", "rule": ["B1b", "M3" + mp["scale"]["kind"]], "title": f"{name} {where} · {task}",
             "means": [["지역", f"{name} {where}"], ["업무", task], ["비교", "읍면동"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],
             "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "emd": [r["label"] for r in s],
-            "main": {"label": task, "value": tot, "unit": unit}}
+            "main": {"label": task, "value": tot, "unit": unit}, "emd_rows": _rows_all(s)}
 
 
 async def _survey(XD, sgg) -> dict:

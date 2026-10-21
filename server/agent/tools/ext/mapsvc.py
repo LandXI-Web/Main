@@ -820,6 +820,12 @@ async def ai_report(args: dict, ctx) -> Out:
     n_emd = len({r["emd"] for d in parts for r in d["rows"] if r["emd"]})       # 읍면동 이름 수(층이 둘이어도 한 번 · 통계 답과 같은 셈)
     out.env("total", "보고서의 AI 분석 결과 수(지도 서비스 결과 층과 같은 행 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "보고서에 실린 읍면동 수", env(n_emd, "곳", "inferred", "detections"))
+    try:
+        rb = await asyncio.to_thread(_write_view, ctx, _parts_spec(parts, why), now, name)   # 보고서 보기(원칙 299) — 문서 표와 같은 행
+    except Exception:  # noqa: BLE001
+        rb = None
+    if rb:
+        out.blocks.append(rb)
     out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
     if pngs and pngs[0]:
         out.blocks.append({"type": "image", "src": file_href(ctx.run_id, "ai-report-map.png"), "caption": "보고서 지도 그림", "tag": "AI 분석 결과"})
@@ -833,6 +839,85 @@ async def ai_report(args: dict, ctx) -> Out:
     out.answer = (RSC.scope_line(names, cond, why) + " — 결과 {{total}}건 · 읍면동 {{emds}}곳\n"
                   "AI 분석 결과 보고서 초안을 만들었습니다" + (f"(많은 곳: {' · '.join(e for e, _n in top)})." if top else "."))
     return out
+
+
+def _write_view(ctx, spec: dict, now: dt.datetime, hwpx_name: str) -> dict | None:
+    """보고서 보기 한 벌(report.json) + 엑셀(같은 사양) — run 폴더에. 돌려주는 것 = 채팅 '보고서 보기' 블록(10-21 원칙 299)."""
+    from landxi_api import xreport as XR
+    from ... import config
+    from ...report import file_href
+    try:
+        d0 = config.ARTIFACT_DIR / ctx.run_id
+        d0.mkdir(parents=True, exist_ok=True)
+        files = {"hwpx": {"href": file_href(ctx.run_id, hwpx_name), "name": hwpx_name}}
+        try:
+            xb, xn = XR.build_xlsx(spec, now)
+            (d0 / xn).write_bytes(xb)
+            files["xlsx"] = {"href": file_href(ctx.run_id, xn), "name": xn}
+        except Exception:  # noqa: BLE001 — 엑셀이 안 되면 엑셀만 빼고
+            pass
+        (d0 / "report.json").write_text(json.dumps(XR.view_doc(spec, now, files), ensure_ascii=False, default=str), encoding="utf-8")
+        return {"type": "report", "label": str(spec.get("title") or "통계 보고서"), "href": file_href(ctx.run_id, "report.json")}
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _parts_spec(parts: list[dict], why: str = "") -> dict:
+    """켜진 결과 층 보고서(기관 · 지도 서비스) → 보고서 보기 사양 — 한글 문서의 '읍면동별 개수 · 면적' 표와 같은 행(다시 세지 않음)."""
+    from . import dash as D
+    head = parts[0]
+    svc = re.sub(r"\s*(?:AI\s*)?분석\s*서비스$", "", head["service"]).strip() or head["service"]
+    by: dict[str, list] = {}
+    for d in parts:
+        for r in d["rows"]:
+            e = by.setdefault(r["emd"] or "읍면동 밖", [0, 0.0])
+            e[0] += int(r["n"])
+            e[1] += float(r["m2"])
+    el = sorted(by.items(), key=lambda x: (-x[1][0], x[0]))
+    tot = sum(v[0] for _, v in el)
+    m2 = sum(v[1] for _, v in el)
+    code: dict[str, str] = {}
+    sggs = {d.get("sgg") for d in parts if d.get("sgg")}
+    sgg = next(iter(sggs)) if len(sggs) == 1 else None
+    if sgg:
+        try:
+            from landxi_api.regions import emd_index, region_of
+            rg = region_of(sgg)
+            ix = emd_index(rg["sgg_cd"]) if rg else None
+            if ix:
+                code = {str(n): str(c) for n, c in zip(ix.names, ix.codes) if n}
+                sgg = rg["sgg_cd"]
+        except Exception:  # noqa: BLE001
+            code = {}
+    rows = [{"k": code.get(e) or e, "label": e, "v": v[0], "m2": round(v[1])} for e, v in el]
+    named = [r for r in rows if r["label"] != "읍면동 밖"]
+    region = head["region"] if len(parts) == 1 or len({d["region"] for d in parts}) == 1 else "결과 층 여러 곳"
+    unit = "건"
+    kp = [{"label": svc, "value": tot, "unit": unit}, {"label": "결과가 있는 읍면동", "value": len(named), "unit": "곳"},
+          {"label": "면적 합", "value": round(m2 / 1e4, 1), "unit": "ha", "d": 1}]
+    panels = [{"type": "bar", "title": f"읍면동별 {svc}", "unit": unit, "rows": named[:16], "pick": "emd", "scale": D.scale_for([r["v"] for r in named[:16]], "count")}]
+    if len(parts) > 1:
+        panels.append({"type": "donut", "title": "결과 층별", "unit": unit,
+                       "rows": [{"k": str(i), "label": f"{d['service']}" + (f" · {d['imagery']['year']}" if d["imagery"].get("year") else ""), "v": sum(int(r["n"]) for r in d["rows"])} for i, d in enumerate(parts)]})
+    panels.append({"type": "rank", "title": "읍면동 순위", "unit": unit, "rows": named[:10], "pick": "emd"})
+    mp = None
+    if sgg and code:
+        vals = {r["k"]: r["v"] for r in named if r["k"] in code.values()}
+        mp = {"level": "emd", "sgg": sgg, "title": f"{svc} 수", "unit": unit, "values": vals, "labels": {r["k"]: r["label"] for r in named},
+              "scale": D.scale_for(list(vals.values()), "count"), "meaning": "count"}
+    say = []
+    if named:
+        top = named[:3]
+        say.append(f"{D.J(svc, '은', '는')} " + " · ".join(f"{r['label']} {r['v']:,}{unit}" for r in top) + " 순으로 많습니다.")
+        if tot and len(named) > 3:
+            say.append(f"위 세 곳이 전체의 {round(sum(r['v'] for r in top) / tot * 100)}%를 차지합니다.")
+    fin = max((d["finished"] for d in parts if d.get("finished")), default=None)
+    im = head["imagery"]
+    img = im.get("name") if im.get("word") and im["word"] in (im.get("name") or "") else " · ".join(x for x in (im.get("word"), im.get("name")) if x)   # 한글 문서 개요와 같은 말
+    means = [["지역", region], ["업무", svc]] + ([["영상", img]] if img else []) + ([["분석한 날", fin.astimezone(dt.timezone(dt.timedelta(hours=9))).strftime("%Y. %m. %d.")]] if fin else [])
+    return {"kind": "layer", "title": f"{region} · {svc}", "means": means, "fuse": ["AI 분석 결과"], "kpis": kp, "panels": panels, "map": mp, "say": say,
+            "sgg": sgg, "main": {"label": svc, "value": tot, "unit": unit}, "emd_rows": rows,
+            **({"emd": [r["label"] for r in named]} if (parts[0].get("cond") and len(named) <= 3) else {})}
 
 
 def _top_emd(parts: list[dict], k: int = 3) -> list[tuple[str, int]]:
@@ -917,11 +1002,14 @@ async def _dash_report(ctx, t: str) -> Out | None:
     d0.mkdir(parents=True, exist_ok=True)
     (d0 / name).write_bytes(blob)
     (d0 / "draft.hwpx").write_bytes(blob)
+    rb = await asyncio.to_thread(_write_view, ctx, spec, now, name)       # 보고서 보기(대시보드 모양 · 원칙 299) — 같은 사양 · 같은 숫자
     m = spec.get("main") or {}
     emds = next((k.get("value") for k in spec.get("kpis") or [] if k.get("label") in ("결과가 있는 읍면동", "고른 읍면동")), None)
     out.env("n", f"{spec['title']} {m.get('label') or ''}".strip(), env(m.get("value") or 0, m.get("unit") or "개", "inferred", "XI맵 통계 — '통계 보기' 판 큰 숫자와 같은 값"))
     if emds is not None:
         out.env("emds", "보고서에 실린 읍면동 수", env(emds, "곳", "inferred", "XI맵 통계"))
+    if rb:
+        out.blocks.append(rb)
     out.blocks.append({"type": "file", "label": name, "href": file_href(ctx.run_id, name)})
     ctx.state["artifact"] = {"file_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.hwpx", "href": file_href(ctx.run_id, name), "filename": name,
                              "place": dict(spec.get("means") or []).get("지역") or spec["title"]}

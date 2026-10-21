@@ -362,7 +362,7 @@ async def models(request: Request):
 
 FILE_TYPES = {"hwpx": "application/hwp+zip", "png": "image/png", "jpg": "image/jpeg",
               "jpeg": "image/jpeg", "webp": "image/webp", "csv": "text/csv; charset=utf-8", "pdf": "application/pdf",
-              "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+              "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "json": "application/json; charset=utf-8"}
 
 
 @router.get("/agent/runs/{run_id}/files/{name}")
@@ -381,7 +381,7 @@ async def run_file(run_id: str, name: str, request: Request):
     art = row["artifact"] or {}
     shown = art.get("filename") if (ext == "hwpx" and name == "draft.hwpx") else name
     return FileResponse(str(f), media_type=FILE_TYPES.get(ext, "application/octet-stream"),
-                        headers={"Content-Disposition": f"{'inline' if ext in ('png', 'jpg', 'jpeg', 'webp') else 'attachment'}; filename=\"file.{ext}\"; filename*=UTF-8''{urlquote(shown or name)}",
+                        headers={"Content-Disposition": f"{'inline' if ext in ('png', 'jpg', 'jpeg', 'webp', 'json') else 'attachment'}; filename=\"file.{ext}\"; filename*=UTF-8''{urlquote(shown or name)}",
                                  "Cache-Control": "private, max-age=600", "Access-Control-Expose-Headers": "Content-Disposition"})
 
 
