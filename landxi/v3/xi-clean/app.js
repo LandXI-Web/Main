@@ -2270,11 +2270,32 @@ async function openParcel(pnu, { fly = false, pre = null } = {}) {
   const seen = f ? (cls[f.rule] || ruleName(f.rule) || f.rule_nm || '—') : '—';
   const m2 = (e) => (e && e.value != null ? `${nf(Math.round(e.value))}㎡${K.sig(e)}` : '—');
   const pct = f?.evid_pct?.value;
+  /* 규칙 결과(예: 휴경·전용 = 2023 영상에서 경작 흔적 없음)에 더 최신 영상의 반증이 있으면, 카드의 AI 분석은 서비스 필지 목록과 같은 최신 결과를 먼저 보인다
+     (같은 필지가 목록에선 '경작지 29,572㎡', 카드에선 '경작 흔적 없음'으로 갈리던 것 · 숫자 한 출처). 옛 영상 결과는 밑에 연도와 함께 한 줄. */
+  let latest = null;
+  const card = Q.get('service');
+  if (f && (f.corroboration || []).length) {
+    if (card && S.tenant) {
+      try {
+        const q = String(d.addr || '').trim().split(/\s+/).slice(-2).join(' ');
+        const r = await api(`/spaces/me/guides/${encodeURIComponent(card)}/parcels?` + new URLSearchParams({ q, limit: '50' }));
+        const row = (r.items || []).find((x) => String(x.pnu) === String(d.pnu || pnu));
+        if (row && row.hit_m2 && (row.classes || []).length) latest = { name: row.classes.join(' · '), m2: row.hit_m2 };
+      } catch { /* 목록을 못 받으면 아래 영상 기록으로 */ }
+    }
+    if (!latest) {
+      const cur = d.facts?.current || {};
+      const yr = Object.keys(cur).filter((k) => /^\d{4}$/.test(k)).sort().pop();
+      const c = yr && cur[yr]?.crop?.m2;
+      if (c && c.value > 0) latest = { name: '경작지', m2: c };
+    }
+    if (latest) latest.year = (String(f.img_date || '').match(/\d{4}/) || [''])[0];
+  }
   const body = h('div.xc-parcel', {},
     h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전', 'data-lv': reviewed ? undefined : 'wait' }), f && (ruleName(f.rule) || f.rule_nm) ? h('span.t-chip', { text: ruleName(f.rule) || f.rule_nm }) : null),
     h('dl.xc-pair', {},
       h('div', {}, h('dt', { text: '연속지적 대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
-      h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
+      h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: latest ? `<b>${esc(latest.name)}</b> ${m2(latest.m2)}${latest.year ? `<small class="xc-old">${esc(latest.year)} 영상에서는 ${esc(seen)}</small>` : ''}` : f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
   );
   const act = h('div.xc-act');
   if (f && S.lx && S.key !== 'lx/sales' && ['open', 'assigned'].includes(f.state)) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '오탐', onclick: (e) => setState(f, 'dismissed', e.currentTarget) }));

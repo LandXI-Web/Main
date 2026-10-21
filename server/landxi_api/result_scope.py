@@ -274,4 +274,4 @@ def scope_line(names: list[dict], cond: dict | None = None, why: str = "켜진 �
     shown = " · ".join(nm[:3]) + (f" 외 {len(nm) - 3}개" if len(nm) > 3 else "")
     head = f"대상: {why} {len(nm)}개({shown})" if why == "켜진 층" else f"대상: {shown}({why})"
     lb = label(cond or {})
-    return f"{head} · 조건: {lb or '없음'}"
+    return f"{head} · 조건: {lb}" if lb else head     # 조건이 없으면 조건 줄을 달지 않는다

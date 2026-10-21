@@ -192,6 +192,7 @@
 .xc-pair > div{padding:14px;border-radius:var(--r-8);background:var(--bg-0)}
 .xc-pair > div.ai{background:var(--tint)}
 .xc-pair dt{margin:0 0 8px;font:500 var(--fs-aux)/1 var(--font-body);color:var(--sub)}
+.xc-pair .xc-old{display:block;margin-top:6px;font:400 var(--fs-aux)/1.4 var(--font-body);color:var(--sub)}
 .xc-pair dd{margin:0;font:400 var(--fs-body)/1.45 var(--font-body);color:var(--ink-2)}
 .xc-pair dd b{display:block;font:700 var(--fs-t1)/1.2 var(--font-display);color:var(--ink);margin-bottom:2px}
 .xc-key[data-k="lxmap"]{background:var(--bg-0);border:2px solid #1F4FB5}

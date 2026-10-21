@@ -61,7 +61,7 @@ def test_stack_swap_drop():
     a4 = o4.ui_actions[0]
     assert "area_min" not in a4 and a4["emd"] == ["운봉읍"] and a4["n"] == _n("job_id=%s AND emd='운봉읍'", (NAMWON_GH,))
     o5 = arun(M.map_filter({"clear": True}, _ctx({**base, "filter": prev2}, "조건 풀어 줘")))
-    assert o5.ui_actions == [{"op": "map_filter", "clear": True}] and "조건: 없음" in o5.answer
+    assert o5.ui_actions == [{"op": "map_filter", "clear": True}] and "조건:" not in o5.answer.split(chr(10))[0] and "조건을 모두 풀었습니다" in o5.answer
     o6 = arun(M.map_filter({"clear": True, "clear_only": "cls"}, _ctx({**base, "filter": prev2}, "분류 조건만 풀어 줘")))
     assert not o6.ui_actions and "걸려 있지 않습니다" in o6.answer
 
@@ -71,7 +71,7 @@ def test_same_scope_stats_report_filter():
     ctxv = {"page": "lx-map", "sets": SETS, "region": "41670"}
     want = _n("job_id = ANY(%s)", (SETS and [NAMWON_GH, PARK],))
     st = arun(M.map_stats({"request": "읍면동 통계 보여 줘"}, _ctx(ctxv, "읍면동 통계 보여 줘")))
-    assert _env(st, "total") == want and st.answer.startswith("대상: 켜진 층 2개(") and "조건: 없음" in st.answer
+    assert _env(st, "total") == want and st.answer.startswith("대상: 켜진 층 2개(") and "조건:" not in st.answer.split(chr(10))[0]
     assert "층별:" in st.answer and any(b["type"] == "chart" for b in st.blocks)
     rp = arun(M.ai_report({"request": "보고서 초안 만들어 줘"}, _ctx(ctxv, "보고서 초안 만들어 줘")))
     assert _env(rp, "total") == want and rp.answer.startswith("대상: 켜진 층 2개(")       # 통계와 같은 범위 · 같은 수(원칙 3)

@@ -234,6 +234,7 @@ def build():
             if re.search(r'(^|[-_])after([-_.]|$)', f) or f.startswith('after-'): return '바뀐 뒤'
             if f.startswith('land-'): return '로그인 뒤 도착'
             if f.startswith('outside-'): return '바깥 주소에서'
+            if f.startswith('fixed-'): return '고침 반영'
             if f.startswith(('new-', 'mock-')): return '시안'
             if f.startswith('old-'): return '옛 화면'
             return ''
