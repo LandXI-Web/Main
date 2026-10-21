@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 
-from . import audit, backends, config, lint, talk
+from . import audit, backends, config, frames, lint, talk
 from .tools import Out, ToolError, from_contract, registry
 from .tools import jobs as jobs_tool
 from .tools import ext
@@ -168,6 +168,7 @@ class Ctx:
     steps: list[dict] = field(default_factory=list)
     envs: dict = field(default_factory=dict)          # eN → Envelope
     env_meta: dict = field(default_factory=dict)      # eN → 한 줄 뜻
+    env_scope: dict = field(default_factory=dict)     # eN → 범위(지역 · 읍면동 · 분류 · 지표 — WP-1 범위 검사기)
     keymap: dict = field(default_factory=dict)        # (step i, key) → eN
     raws: dict = field(default_factory=dict)          # step i → raw
     citations: list[dict] = field(default_factory=list)
@@ -297,6 +298,8 @@ def register(ctx: Ctx, i: int, out: Out) -> dict:
         eid = f"e{len(ctx.envs) + 1}"
         ctx.envs[eid] = e
         ctx.env_meta[eid] = meaning
+        if out.scope or out.scopes.get(key):
+            ctx.env_scope[eid] = {**(out.scope or {}), **(out.scopes.get(key) or {})}
         ctx.keymap[(i, key)] = eid
         ids[key] = eid
     local_to_global = {}
@@ -803,7 +806,7 @@ def in_tenant(ctx: Ctx, sgg_cd: str) -> bool:
 # 기관이 화면에서 실제로 할 수 있는 다음 할 일(AI 분석 실행은 LX 전용 · 기관 화면엔 실행 버튼이 없다) — 도움말(?) → '문의'
 TENANT_NEXT = {"ko": "다음 할 일: 화면 위 도움말(?)의 '문의'로 LX에 {name} AI 분석을 요청해 주세요.",
                "en": "Next: ask LX to run AI analysis for {name} via Help (?) → Contact."}
-TENANT_NO_RESULT = {"ko": "{name}에는 아직 AI 분석 결과가 없습니다. AI 분석은 LX가 실행합니다.",
+TENANT_NO_RESULT = {"ko": "{name}에는 AI 분석 결과가 없습니다. AI 분석은 LX가 실행합니다.",
                     "en": "{name} has no AI analysis results yet. AI analysis is run by LX."}
 TENANT_PARTIAL = {"ko": "{name} AI 분석이 중간에 멈춰 아직 결과가 없습니다. AI 분석은 LX가 실행합니다.",
                   "en": "AI analysis of {name} stopped partway, so there are no results yet. AI analysis is run by LX."}
@@ -936,6 +939,10 @@ async def execute(ctx: Ctx, message: str):
         await audit.log(p, "agent.tool_forbidden", ctx.run_id, {"category": rj["category"], "message": msg[:300]})
         await reject(ctx, rj["category"], rj["message"], scr, event_error=rj["code"])
         return
+    fr = await frames.route(ctx, msg)                 # WP-10 거절 · 안내 틀(권한 밖 · 범위 밖 · 사용법 — 화면 이름 표만 · LLM 0)
+    if fr:
+        await frames.answer(ctx, fr, started, scr)
+        return
     xr = await ext_route(ctx, msg)                    # 확장 직행이 잡은 질문은 '자료 없음' 가드를 건너뛴다(도구가 지역을 판정 · 관할 밖 가드는 그대로)
     t_ = stage(ctx, "ext_route", t_)
     sg = await scope_guard(ctx, msg, data_check=not xr)
@@ -943,6 +950,10 @@ async def execute(ctx: Ctx, message: str):
     if sg:
         await audit.log(p, "agent.out_of_scope", ctx.run_id, {"category": sg["category"], "message": msg[:300], "region": sg.get("region")})
         await reject(ctx, sg["category"], sg["message"], scr, region=sg.get("region"))
+        return
+    ts = frames.timeseries(ctx, msg, xr)               # 시점 비교 숫자 — TIMESERIES 결정 전까지 기능 없음 틀 + '지금 숫자' 단추
+    if ts:
+        await frames.answer(ctx, ts, started, scr)
         return
     if xr:
         await answer_direct(ctx, msg, xr, started, scr)
@@ -1157,25 +1168,13 @@ async def scope_guard(ctx: Ctx, msg: str, data_check: bool = True) -> dict | Non
     except Exception:
         return None
     text = re.sub(r"\s+", " ", msg or "")
-    regs, _, _ = regions_base()
-    hits = []
-    for r in regs:
-        nm = r["name"] or ""
-        city = nm.split(" ")[0]            # '전주시 완산구' → '전주시'(구가 있는 시는 시 이름으로도 부른다)
-        for key in {nm, city}:
-            stem = key[:-1] if len(key) >= 3 and key[-1] in "시군" else None
-            # '○○' '○○시' '○○에서' — 이름 또는 어간이 단어 앞머리에 오는 경우만(부분 문자열 오탐 방지: '서구' 같은 구 이름은 어간 없음)
-            if re.search(r"(^|[\s·,(])" + re.escape(key), text) or (stem and re.search(r"(^|[\s·,(])" + re.escape(stem) + r"(?![가-힣]{2,}[시군구])", text)):
-                hits.append({**r, "_key": key})
-                break
-    if not hits:
+    # 지역 풀이는 talk.regions_in 한 곳(시도 줄임 + 구 · 한 시의 여러 구 · 어간 — WP-8 ④). 같은 이름이 여러 시도에 있으면 가드하지 않는다(모호 → 모델이 되묻는다)
+    found = talk.regions_in(text)
+    if not found:
         return None
-    # 같은 이름(중구·동구 등)이 여러 시도에 있으면 가드하지 않는다(모호 → 모델이 되묻는다) · 한 시의 여러 구는 한 이름으로 본다
-    by_key: dict = {}
-    for h in hits:
-        by_key.setdefault(h["_key"], set()).add(h["full"].split(" ")[0])
-    if any(len(v) > 1 for v in by_key.values()):
+    if any(len({(c.get("full") or "").split(" ")[0] for c in g}) > 1 for g in found):
         return None
+    hits = [{**c, "_key": (g[0].get("name") or "").split(" ")[0]} for g in found for c in g]
     p = ctx.principal
     dv = await derived()
     groups: dict = {}
@@ -1186,9 +1185,10 @@ async def scope_guard(ctx: Ctx, msg: str, data_check: bool = True) -> dict | Non
         if p.realm == "tenant" and not any(in_scope(h["sgg_cd"], sc) for h in hs):
             return {"category": "cross_tenant_region", "message": "이 기관의 데이터가 아닙니다", "region": hs[0]["full"].rsplit(" ", 1)[0] if len(hs) > 1 else hs[0]["full"]}
         has = any(h["sgg_cd"] in dv["parcels"] or bool([d for d in dv["dp"].get(h["sgg_cd"], []) if not d["_test"] and d["stage"] in ("ga", "canary")])
+                  or (p.realm == "lx" and h["sgg_cd"] in (dv.get("national") or {}))      # WP-8 — 전국 분석이 끝난 시군구(XI맵 통계 판과 같은 판정)
                   for h in hs)
         if data_check and not has and not any(rx.search(text) for rx in ext.GUARD_PASS):   # 확장 GUARD_PASS(이동·분석 실행 등)는 결과가 없어도 통과
-            return {"category": "no_region_data", "message": "해당 지역 데이터가 없습니다", "region": hs[0]["full"]}
+            return {"category": "no_region_data", "message": "해당 지역 데이터가 없습니다", "region": hs[0]["full"].rsplit(" ", 1)[0] if len(hs) > 1 else hs[0]["full"]}
     return None
 
 
@@ -1703,6 +1703,12 @@ async def answer_summary(ctx: Ctx, msg: str, sr: dict, started: float, scr: dict
         await persist_state(ctx, state="failed", error="summary_error", finished_at=dt.datetime.now(KST))
         return
     items = (r1.get("raw") or {}).get("items") or []
+    if not items and (r1.get("out") is not None and getattr(r1["out"], "answer", "")):   # LX — 요약이 없는 시군구는 XI맵 통계 답(WP-8)
+        ctx.state["rounds"] = 0
+        ids = r1.get("ids") or {}
+        text = re.sub(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}", lambda m: "{{env:%s}}" % ids[m.group(1)] if m.group(1) in ids else m.group(0), r1["out"].answer)
+        await finish(ctx, text, None, started, route, {}, lint_on=False)
+        return
     if not items:
         await audit.log(ctx.principal, "agent.out_of_scope", ctx.run_id, {"category": "no_region_data", "message": msg[:300], "region": sr.get("region_name")})
         await emit(ctx, "agent.rejected", {"error": "out_of_scope", "category": "no_region_data", "message": "해당 지역 데이터가 없습니다",
@@ -1734,6 +1740,7 @@ async def answer_summary(ctx: Ctx, msg: str, sr: dict, started: float, scr: dict
 
 async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: dict, artifact: dict | None = None, extra: dict | None = None,
                  lint_on: bool = True, scope: "lint.Scope | None" = None, lint_result: "lint.LintResult | None" = None):
+    answer = frames.no_toolcall(ctx, answer, res)       # WP-9 ④ — 도구 부르는 글 · 빈 답이 답으로 나가지 않게
     answer = dedupe_units(audit.scrub_answer(answer))
     answer, bad_cites = lint.fix_cites(answer, {c["n"] for c in ctx.citations})
     if lint_result is not None:
@@ -1755,6 +1762,14 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
         md, act_flags = lint.action_check(md, set(ctx.ui_ops) | set(ctx.tools_ok), ctx.lang)
         if act_flags:
             extra = {**(extra or {}), "action_flags": act_flags}
+    scope_d = None
+    try:                                               # 범위 검사기(WP-1) — 질문과 다른 지역 · 읍면동 · 분류의 숫자 · 파일은 빼고, 남는 것이 없으면 '결과 없음 — 있는 것은'
+        from . import scopecheck as _sc
+        md, ctx.blocks, scope_d = await _sc.check(ctx, md, ctx.blocks)
+        if scope_d and scope_d.get("dropped"):
+            extra = {**(extra or {}), "scope_flags": scope_d["dropped"]}
+    except Exception as e:  # noqa: BLE001
+        ctx.state.setdefault("route_errors", []).append(f"scope: {type(e).__name__}: {str(e)[:80]}")
     md = lint.scrub_terms(lint.render_unverified(md, ctx.lang), ctx.lang)
     if ctx.lang == "ko":
         md = fix_josa(md, ctx.envs)                    # R3: 숫자·단위 뒤 조사를 받침에 맞춘다('10필지를' · '3건을')
@@ -1792,6 +1807,8 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
         data["alt"] = ctx.state["alt"]                     # 꼬리 '다른 뜻이면 ○○'
     if ctx.state.get("cannot"):
         data["cannot"] = ctx.state["cannot"]               # 개선 고리(improve.classify)가 읽는 막힘 분류
+    if scope_d:
+        data["scope"] = scope_d                            # 답 띠 범위 줄(§4)이 읽는 구조 — 지역 · 읍면동 · 분류 · 뺀 숫자
     if artifact:
         data["artifact"] = artifact
     if extra:

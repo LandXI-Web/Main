@@ -299,6 +299,10 @@ def lint(answer: str, envelopes: dict[str, dict], whitelist: set[str] | None = N
                     re.search(r"(?:상위|하위|top|bottom|first|last|줌|zoom|레벨|level)\s?(?:을|를|은|는)?\s?$", masked[max(0, nm.start() - 8):nm.start()], re.I)
                     or re.match(r"\s?(?:곳|위|번째|번|등(?![급록]))", masked[nm.end():nm.end() + 4])):
                 why = "asked"
+            if not why and nm.group("num") in asked and not nm.group("pct") and (
+                    re.match(r"\s?(?:㎡|m²|m2|제곱미터|m(?![a-zA-Z가-힣])|미터|ha|㏊|헥타르|평|년|번지|-\d)", masked[nm.end():nm.end() + 5])
+                    or re.search(r"(?:[가-힣](?:리|동|가)|산)\s?$|\d-$", masked[max(0, nm.start() - 6):nm.start()])):
+                why = "asked_ref"                         # 사용자가 말한 지번 · 조건 수(WP-6 ③) — 데이터 값처럼 쓴 숫자(건 · 곳 뒤)는 여전히 가드
             if why:
                 res.whitelisted.append(f"{nm.group(0).strip()}:{why}")
                 continue
@@ -579,8 +583,32 @@ def banned_hits(text: str) -> list[str]:
     return sorted({name for name, rx, _ in BANNED if rx.search(text or "")})
 
 
+def _tool_names() -> dict:
+    """도구 이름 → 사용자 말(registry.SPECS · ext.SAY) — 답 글에 도구 이름이 나가지 않게(WP-9 ③ · 규칙 2)."""
+    try:
+        from .tools import ext, registry
+        return {n: (ext.SAY.get(n) or "") for n in registry.SPECS}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+TOOLISH = re.compile(r"`?\b([a-z][a-z0-9]*_[a-z0-9_]*)\b`?(?:\s*\([^()\n]{0,80}\))?(?:\s*도구(?:를|로)?(?:\s*통해)?)?")
+
+
+def scrub_tools(text: str) -> str:
+    names = _tool_names()
+
+    def rep(m):
+        n = m.group(1)
+        if n in names:
+            return names[n] or "해당 기능"
+        return "" if "_" in n else m.group(0)
+    s = TOOLISH.sub(rep, text or "")
+    return re.sub(r"[ 	]{2,}", " ", s)
+
+
 def scrub_terms(text: str, lang: str = "ko") -> str:
-    s = text or ""
+    s = scrub_tools(text or "")
     for _name, rx, rep in BANNED:
         s = rx.sub(rep.get(lang, rep["ko"]), s)
     s = re.sub(r"\(\s*\)", "", s)

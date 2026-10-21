@@ -301,6 +301,8 @@ async def _derived_build() -> dict:
                                "ST_AsGeoJSON(ST_SimplifyPreserveTopology(aoi, 0.001))::json AS aoi FROM deploys")
         led = await conn.fetch("SELECT tenant_id, kind, id, rows, stats, created_at FROM ledger_imports WHERE latest AND state='matched'")
         par = await conn.fetch("SELECT substr(pnu,1,5) sgg, count(*) n FROM survey_parcels GROUP BY 1")
+        # 전국 분석이 끝난 시군구(CHATGEO-DEV-ORDER WP-8) — XI맵 통계 판이 숫자를 내는 곳은 '결과 없음'으로 미리 거절하지 않는다(LX 계정)
+        nat = await conn.fetch("SELECT sgg_cd, count(*) n FROM national_cells WHERE state='done' AND NOT test GROUP BY 1")
 
     def work():
         img_by: dict[str, list] = {}
@@ -324,7 +326,8 @@ async def _derived_build() -> dict:
         return img_by, dp_by
 
     img_by, dp_by = await run_in_threadpool(work)
-    data = {"img": img_by, "dp": dp_by, "ledger": [dict(x) for x in led], "parcels": _alias({x["sgg"]: int(x["n"]) for x in par}), "at": now_iso()}
+    data = {"img": img_by, "dp": dp_by, "ledger": [dict(x) for x in led], "parcels": _alias({x["sgg"]: int(x["n"]) for x in par}),
+            "national": _alias({x["sgg_cd"]: int(x["n"]) for x in nat}), "at": now_iso()}
     _derived.update(t=time.time(), data=data)
     return data
 

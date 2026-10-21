@@ -190,6 +190,22 @@ def regions_in(text: str) -> list[list[dict]]:
             if re.search(r"(^|[\s·,(])" + re.escape(key), t) or (stem and re.search(r"(^|[\s·,(])" + re.escape(stem) + r"(?![가-힣]{2,}[시군구])", t)):
                 by.setdefault(key, []).append(r)
                 break
+    # 시도 줄임 + 구('광주 북구' · '부산 해운대구') — 앞말이 시도 이름 안에 있으면 그 시도의 구만, 그 앞말이 맞춘 다른 도의 시('광주' → 경기 광주시)는 뺀다(WP-8 ④ · 지역 표에서 · 고정값 0)
+    for k in list(by):
+        cands = by.get(k) or []
+        if len({(c.get("full") or "").split(" ")[0] for c in cands}) < 2:
+            continue
+        m = re.search(r"([가-힣]{2,8})\s*" + re.escape(k), t)
+        if not m:
+            continue
+        head = m.group(1)
+        head_s = re.sub(r"(?:특별자치시|특별자치도|특별시|광역시|도|시)$", "", head) or head
+        mine = [c for c in cands if head_s and head_s in (c.get("full") or "").split(" ")[0]]
+        if mine:
+            by[k] = mine
+            for k2 in list(by):
+                if k2 != k and (k2 == head or k2[:-1] == head_s) and not any(head_s in (c.get("full") or "").split(" ")[0] for c in by[k2]):
+                    by.pop(k2, None)
     # 긴 이름이 짧은 이름을 품으면(예: '고성' ⊂ '고성군') 긴 쪽만
     keys = sorted(by, key=len, reverse=True)
     out, used = [], set()
@@ -206,7 +222,7 @@ def _has_data_sync(sgg: str) -> bool:
     try:
         from landxi_api.regions import _derived
         dv = _derived.get("data") or {}
-        return sgg in (dv.get("parcels") or {}) or any(not d.get("_test") and d.get("stage") in ("ga", "canary") for d in (dv.get("dp") or {}).get(sgg, []))
+        return sgg in (dv.get("parcels") or {}) or sgg in (dv.get("national") or {}) or any(not d.get("_test") and d.get("stage") in ("ga", "canary") for d in (dv.get("dp") or {}).get(sgg, []))
     except Exception:  # noqa: BLE001
         return False
 
@@ -363,7 +379,7 @@ def cannot_text(ctx, r: dict | None = None) -> tuple[str, list[dict]]:
         nxt += [btn("어느 지역에 어떤 결과가 있어?")]
     else:
         nxt += [btn(q) for q in CAN_MAP]
-    return "말씀하신 지도 동작은 아직 없는 기능입니다. 지도에서 할 수 있는 일을 아래에 두었습니다.", nxt
+    return "말씀하신 지도 동작은 ChatGEO 가 하지 않습니다. 지도에서 할 수 있는 일을 아래에 두었습니다.", nxt
 
 
 def fill_cannot(ctx, md: str, r: dict | None = None) -> str:
@@ -431,7 +447,7 @@ def no_data_next(ctx, region_name: str | None, sgg: str | None = None) -> list[d
 
 def no_data_text(region_name: str | None) -> str:
     nm = (region_name or "").split(" ")[-1] if region_name else ""
-    return f"{nm}{josa(nm, ('은', '는'))} 아직 AI 분석 결과가 없습니다." if nm else "이 지역은 아직 AI 분석 결과가 없습니다."
+    return f"{nm}{josa(nm, ('은', '는'))} AI 분석 결과가 없습니다." if nm else "이 지역은 AI 분석 결과가 없습니다."
 
 
 def outside_text(region_name: str | None) -> str:

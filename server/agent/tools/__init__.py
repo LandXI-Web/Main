@@ -29,7 +29,13 @@ class Out:
     # chart 값은 봉투 key 로만(runner 가 eN 으로 바꾼다 · 숫자 직접 금지). href·src 는 게이트웨이 경로(/agent/runs/{run}/files/{name}).
     blocks: list[dict] = field(default_factory=list)
     answer: str = ""                  # 런타임 답(ext ROUTE 직행 때만 · 봉투 key 자리표 {{key}} 허용 → runner 가 {{env:eN}} 으로)
+    # 범위(CHATGEO-DEV-ORDER WP-1) — 이 도구 봉투의 지역 · 읍면동 · 분류 · 지표: {sgg: [코드] | "nation", emd: [이름] | None(시 전체), cls: [분류] | None, kind}
+    # scope = 봉투 전체에 · scopes[key] = 그 봉투만(덧씀). 범위 검사기(agent/scopecheck.py)가 질문 범위와 맞춘다.
+    scope: dict | None = None
+    scopes: dict = field(default_factory=dict)
 
-    def env(self, key: str, meaning: str, e: dict):
+    def env(self, key: str, meaning: str, e: dict, scope: dict | None = None):
         self.envelopes.append((key, meaning, e))
+        if scope is not None:
+            self.scopes[key] = scope
         return key

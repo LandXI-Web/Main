@@ -19,6 +19,38 @@ import time
 
 KEYS = ("cls", "emd", "area_min", "area_op_min", "area_max", "area_op_max")
 
+# 분류 낱말 한 표(CHATGEO-DEV-ORDER WP-5) — (말 정규식, 분류 이름, 위 분류). XI ChatGEO 의 거르기(mapsvc) · 통계(dash) · 범위 검사기(agent/scopecheck)가
+# 같은 표를 읽는다. 논 · 밭 · 과수원은 경작지의 아래 분류(결과에 따로 없으면 '경작지 안에서 나누지 않습니다'). 위에서 아래로 먼저 맞는 것.
+CLASS_WORDS: list[tuple[str, str, str | None]] = [
+    (r"비닐\s*하우스|온실|하우스", "비닐하우스", None),
+    (r"건물|건축물", "건물", None),
+    (r"경작지|농경지|논밭|경작(?![·ㆍ]?\s*휴경)", "경작지", None),
+    (r"휴경지|휴경|농사\s*(?:안|않|못)\s*(?:짓|지은|하는)", "휴경지", None),
+    (r"(?<![가-힣])논(?=[이을은의에만과와도로]|\s|,|\?|$)", "논", "경작지"),
+    (r"(?<![가-힣])밭(?=[이을은의에만과와도]|\s|,|\?|$)", "밭", "경작지"),
+    (r"과수원", "과수원", "경작지"),
+    (r"주차장", "주차장", None),
+    (r"축사", "축사", None),
+    (r"창고", "창고", None),
+    (r"농막", "농막", None),
+    (r"태양광", "태양광", None),
+    (r"나대지", "나대지", None),
+    (r"곤포|사일리지", "곤포사일리지", None),
+    (r"토지\s*피복", "토지피복", None),
+    (r"해양\s*쓰레기|해안\s*쓰레기|바다\s*쓰레기", "해양쓰레기", None),
+    (r"차량|자동차", "차량", None),
+    (r"스티로폼", "스티로폼", None),
+]
+
+
+def class_names(text: str) -> list[str]:
+    """글 안 분류 이름(한 표 · 나온 순)."""
+    out = []
+    for rx, name, _p in CLASS_WORDS:
+        if re.search(rx, text or "") and name not in out:
+            out.append(name)
+    return out
+
 
 def _nf(v: float) -> str:
     return f"{int(round(v)):,}" if abs(v - round(v)) < 0.05 else f"{v:,.1f}"
