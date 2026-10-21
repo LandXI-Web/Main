@@ -11,7 +11,8 @@ const T = JSON.parse(fs.readFileSync(path.join(V4, 'story-times.json'), 'utf8'))
 const at = (id) => T.shots.find((s) => s.id === id).start;
 // [컷, 컷 안 시작, 컷 안 끝]
 const PICK = [['main', 0.35, 4.35], ['main-map', 0.67, 6.67], ['chat', 0.93, 3.13], ['chat', 4.83, 10.33], ['chat-stats', 0.63, 5.43],
-  ['chat-report', 6.3, 16.3],            // 지도 위 답 → 대화 서랍(답 + 한글 문서 줄 · 천천히 가까이)
+  ['chat-report', 4.0, 11.2],            // 물음 → 지도 위 답 → 대화 서랍(답 · 보고서 보기 · 한글 문서 줄 · 천천히 가까이)
+  ['chat-dash', 0.2, 10.8],              // 보고서 보기 = 대시보드 보고서(10-21 원칙 299)
   ['end', 0.57, 4.07]];                   // 흰 바탕 LAND-XI PLATFORM + LX CI 3.5초
 const XF = 0.2, ENC = ['-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', '-r', '30'];
 const TMP = path.join(OUT, '_cut'); fs.mkdirSync(TMP, { recursive: true });

@@ -242,6 +242,7 @@ if (WHO === 'report') {
   const ansT = () => p.evaluate(() => document.querySelector('.xk-ans .xk-ans-t')?.textContent || '');
   await frontDoor(p, APP, 'test@lx.or.kr'); await sleep(2000);
   await p.goto(APP + V + 'xi-clean/', { waitUntil: 'domcontentloaded' }); await xiReady(); await sleep(3000);
+  // (보고서 미리 열기는 하지 않음 — 같은 창 대화 기록에 남아 서랍에 두 번 보임 · 편집에서 작은 지도가 그려진 뒤부터 씀)
   // 마우스는 머리 빈 곳(지도 위에 두면 그 읍면 정보 칸이 뜸)
   await scene('x2-report', async (r) => {
     await p.goto(APP + V + 'xi-clean/', { waitUntil: 'domcontentloaded' }); await xiReady();
@@ -263,7 +264,19 @@ if (WHO === 'report') {
     { const dl = p.locator('.xk-ans a, .xk-ans button', { hasText: '대화' }).first(), bx = await dl.boundingBox(); await place(p, bx.x + bx.width / 2, bx.y + bx.height / 2); await tap(p, dl, 100); } r.mark('drawer');
     await place(p, 1000, 22);
     await p.waitForFunction(() => !!document.querySelector('.k-ck-file-l') && !/불러오는 중|만드는 중/.test(document.body.innerText), null, { timeout: 30000, polling: 100 }).catch(() => {}); r.mark('drawerReady');
-    await sleep(11000);
+    await sleep(5000); r.mark('hold');
+    // 보고서 보기(대시보드 모양 · 89526271) — 열리고 작은 지도까지 그려진 뒤 천천히 아래로(큰 숫자 · 요약 → 막대 → 지도 → 순위 표)
+    { const rb = p.locator('button.k-ck-rep').last(), bx = await rb.boundingBox(); await place(p, bx.x + bx.width / 2, bx.y + bx.height / 2); await tap(p, rb, 120); }
+    r.mark('report'); await place(p, 1000, 22);
+    await p.waitForFunction(() => window.__rv?.open && (window.__rv.mapMs || !document.querySelector('.rv [data-map]')) && !/여는 중|불러오는 중/.test(document.querySelector('.rv')?.innerText || ''), null, { timeout: 30000, polling: 100 }).catch(() => {});
+    r.mark('reportReady'); await sleep(3200);
+    const H = await p.evaluate(() => { const e = document.querySelector('.rv'); return [e.scrollHeight, e.clientHeight]; });
+    const go = (y, ms) => p.evaluate(([y, ms]) => new Promise((done) => { const el = document.querySelector('.rv'); el.style.scrollBehavior = 'auto'; const y0 = el.scrollTop, t0 = performance.now(); const f = (n) => { const t = Math.min(1, (n - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; el.scrollTop = y0 + (y - y0) * e; if (t < 1) requestAnimationFrame(f); else done(); }; requestAnimationFrame(f); }), [y, ms]);
+    const ys = await p.evaluate(() => { const rv = document.querySelector('.rv'), top = rv.getBoundingClientRect().top; const y = (q) => { const el = rv.querySelector(q); return el ? el.getBoundingClientRect().top - top + rv.scrollTop - 90 : null; }; return { map: y('[data-map]'), rank: y('table') }; });
+    const max = H[0] - H[1];
+    r.mark('scroll1'); if (max > 10) { await go(Math.min(max, Math.max(0, ys.map ?? max * 0.5)), 3200); await sleep(2600); r.mark('scroll2'); await go(max, 3000); await sleep(3000); }
+    else await sleep(6000);
+    r.extra = { ...(r.extra || {}), rv: await p.evaluate(() => window.__rv), H, ys };
     const box = await p.evaluate(() => { const d = document.querySelector('.k-ck-file-l')?.closest('aside, section, [role=dialog], .k-chat, .k-ck-drawer') || document.querySelector('.k-ck-file-l'); const b = d?.getBoundingClientRect(); return b ? [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)] : null; });
     r.extra = { ...r.extra, drawer: box, answer: await ansT(), file: await p.evaluate(() => document.querySelector('.k-ck-file-l')?.textContent || null) };
     r.mark('end');
