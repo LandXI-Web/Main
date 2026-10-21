@@ -209,6 +209,9 @@ def no_toolcall(ctx, answer: str, res) -> str:
     if res is None and a.strip():
         return a
     ghost = bool(re.search(r"\{\{\s*env:", a)) and not getattr(ctx, "envs", None)   # 도구 없이 쓴 숫자 자리표(지어낸 값) — 못 답함으로
+    msg = str((getattr(ctx, "state", None) or {}).get("msg") or "")
+    if not getattr(ctx, "steps", None) and re.search(r"(?:[가-힣]+(?:리|동|가)|산)\s?\d+(?:-\d+)?", msg) and re.search(r"확인했습니다|조회했습니다|호출|찾았습니다", a):
+        ghost = True                                   # 지번 질문에 도구 없이 '확인했습니다'(한 일 없음) — 못 답함으로(P4)
     if not (m or ghost or not a.strip()):
         return a
     talk.set_next(ctx, _home_btns(ctx) + [talk.btn("질문 예시 보기", q="ChatGEO로 뭘 할 수 있어?")])

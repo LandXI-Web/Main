@@ -287,7 +287,9 @@ def ROUTE(msg: str, ctx):
             r0 = talk.pick(ctx, g[0])[0]
             if r0:
                 a["region"] = r0["sgg_cd"]
-        em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP]
+        from ...scopecheck import _emd_names
+        known = _emd_names(a.get("region") or (talk.here(ctx) or {}).get("sgg_cd"))
+        em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP and x in known]
         if em:
             a["emd"] = em[0]
         return {"tool": "survey_findings", "args": a, "intent": "map"}

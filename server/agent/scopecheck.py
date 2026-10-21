@@ -173,7 +173,7 @@ def _drop_why(asked: dict, sc: dict) -> str | None:
     k = sc.get("kind")
     if k == "suspect" and "change" in asked["metric"]:
         return None                                   # '농지가 ○○로 바뀐 곳' = 실태조사 의심 필지(용도 바뀜 규칙) — 답에 그 이름을 밝힌다(note_kind)
-    if asked["cls"]:
+    if asked["cls"] and "change" not in asked["metric"]:   # '○○로 바뀐 곳'은 의심 필지 규칙 결과로 답한다(분류 결과가 아님 — _notes 가 밝힘)
         c = sc.get("cls")
         if c and not (family(set(c)) & family(asked["cls"])):
             return "cls"
@@ -228,6 +228,16 @@ async def have_line(ctx, asked: dict) -> str:
             if jobs:
                 cls, _ = await asyncio.wait_for(MS._avail(jobs), 4)
                 names = [MS._ko(c) for c in cls]
+            try:                                       # 기관 — 지도 위 층 + 우리 서비스(결과가 있는 카드) 이름
+                from landxi_api.deps import db
+                from .tools import summary_lookup as SL
+                async with db(ctx.principal) as conn:
+                    res = await asyncio.wait_for(SL.build(conn, SL.tenant_arg(ctx.principal), region=sgg), 4)
+                for it in res.get("items") or []:
+                    if it.get("stage") != "첫 결과 전":
+                        names.append(re.sub(r"\s*분석\s*서비스$", "", str(it.get("card_name") or "")))
+            except Exception:  # noqa: BLE001
+                pass
     except Exception:  # noqa: BLE001
         names = []
     seen = []
@@ -341,7 +351,7 @@ def _ask_words(msg: str) -> list[str]:
     for rx, name, _p in _classes():
         m = re.search(rx, msg or "")
         if m and name not in out:
-            out.append(m.group(0).replace(" ", "") if len(m.group(0)) <= 6 else name)
+            out.append(m.group(0) if (len(m.group(0)) <= 6 and " " not in m.group(0)) else name)
     return out
 
 
@@ -371,8 +381,19 @@ async def _p3(ctx, msg: str, asked: dict, blocks) -> str:
     from . import talk
     ctx.state["cannot"] = {"kind": "nodata"}
     if JIBUN_RX.search(msg or ""):
+        nm = (asked["names"] or [""])[0]
+        has_parcels = False
+        try:
+            from landxi_api.regions import _derived
+            pc = (_derived.get("data") or {}).get("parcels") or {}
+            has_parcels = any(c in pc for c in asked["sgg"])
+        except Exception:  # noqa: BLE001
+            pass
+        if nm and not has_parcels:
+            talk.set_next(ctx, [talk.btn(f"{nm} 결과 요약", q=f"{nm} 현황 보여 줘")])
+            return f"{nm}에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — {nm} AI 분석 결과는 볼 수 있습니다."
         talk.set_next(ctx, [talk.btn("지번 찾는 법", q="ChatGEO로 뭘 할 수 있어?")])
-        return "그 지번의 필지를 찾지 못했습니다 — 시군구 · 읍면동 · 지번을 함께 말씀해 주세요."
+        return (f"{nm}에서 " if nm else "") + "그 지번의 필지를 찾지 못했습니다 — 시군구 · 읍면동 · 지번을 함께 말씀해 주세요."
     where = " ".join(x for x in (" · ".join(n for n in asked["names"] if n), " · ".join(asked["emd"])) if x)
     if not where:
         where = (talk.here(ctx) or {}).get("name") or ""

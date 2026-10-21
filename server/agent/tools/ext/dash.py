@@ -58,6 +58,8 @@ def parse(t: str, ctx_region: str | None = None) -> dict | None:
     t = re.sub(r"\s+", " ", t or "").strip()
     if not t or len(t) > 120 or NOT_RX.search(t) or not DASH_RX.search(t):
         return None
+    if re.search(r"(?:[가-힣]+(?:리|동|가)|산)\s?\d+(?:-\d+)?", t):
+        return None                                      # 지번 질문은 필지 길(통계 판 숫자를 붙이지 않는다 · WP-8 ⑤)
     try:
         from ..summary_lookup import match_regions
         hits = match_regions(t)

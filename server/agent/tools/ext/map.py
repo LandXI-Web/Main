@@ -473,7 +473,7 @@ async def route_map(msg: str, ctx) -> dict | None:
     elif VIEW_TOP.search(t):
         cand.append({"tool": "map_view", "args": {"preset": "top"}})
     cw = _class_layer(t)
-    if cw and ON_RX.search(t) and not OFF_RX.search(t) and not cand:   # '건물 층 켜 줘' · '휴경지 보이게' — 그 분류 결과 층(WP-9 ①)
+    if cw and (ON_RX.search(t) or re.search(r"칠|눈에\s*띄게", t)) and not OFF_RX.search(t) and not cand:   # '건물 층 켜 줘' · '휴경지 보이게' — 그 분류 결과 층(WP-9 ①)
         return _with_place(t, groups, [{"tool": "map_layer", "args": {"layer": "results", "on": True, "only": cw}}], ctx)
     if ON_RX.search(t) or OFF_RX.search(t):
         for layer, rx in LAYER_RX.items():
