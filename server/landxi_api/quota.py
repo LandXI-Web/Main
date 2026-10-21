@@ -217,14 +217,45 @@ async def _month_sums_now(ms: dt.datetime) -> dict:
 # 한 번에 하나씩 뒤에서 세고 끝난 값을 기억해 바로 준다(AREA_TTL 마다 새로) — 화면 · 한도 판정 모두 같은 값(한 출처).
 # 기억은 Redis 에도 둬 게이트웨이를 다시 켜도 지난 값부터.
 HEAVY_JOBS = 400
-AREA_TTL = 300
+AREA_TTL = 1800                   # 30분(이번 달 누적 넓이 · 5분마다 5~7분짜리 계산이 겹쳐 DB CPU 474% — 10-21 impl-46)
+LIGHT_TTL = 60                    # 작업이 적은 기관(가벼움) — 1분 기억
+AREA_LOCK_S = 1200                # 게이트웨이 여러 프로세스를 통틀어 한 번에 하나(Redis 잠금 · 계산이 죽어도 20분 뒤 풀림)
 _area: dict = {}                  # (달 ISO, 기관) → (계산 시각, ㎢)
 _area_task: dict = {}             # (달 ISO, 기관) → 계산 중인 일
 
 
-async def _area_compute(ms: dt.datetime, t: str) -> float:
-    async with db(realm="lx") as conn:
-        uni = await conn.fetch(AREA_UNION_SQL, ms, [t], timeout=600)
+async def _area_compute(ms: dt.datetime, t: str, ttl: float = AREA_TTL) -> float | None:
+    """모든 게이트웨이 프로세스를 통틀어 한 번만(Redis 잠금). 다른 프로세스가 세는 중이면 계산하지 않고 그 결과(Redis)를 기다린다."""
+    import json as _json
+    lock = f"quota:area_union:lock:{ms.isoformat()}:{t}"
+    rkey = f"quota:area_union:{ms.isoformat()}:{t}"
+    try:
+        r = await redis()
+        got = await r.set(lock, str(time.time()), nx=True, ex=AREA_LOCK_S)
+    except Exception:  # noqa: BLE001 — Redis 가 없으면 예전처럼 직접
+        r, got = None, True
+    if not got:
+        t0 = time.time()
+        while time.time() - t0 < AREA_LOCK_S:
+            await asyncio.sleep(5)
+            raw = await r.get(rkey)
+            if raw:
+                j = _json.loads(raw)
+                if time.time() - float(j["at"]) < ttl:
+                    _area[(ms.isoformat(), t)] = (float(j["at"]), float(j["v"]))
+                    return float(j["v"])
+            if not await r.exists(lock):
+                break
+        return None
+    try:
+        async with db(realm="lx") as conn:
+            uni = await conn.fetch(AREA_UNION_SQL, ms, [t], timeout=600)
+    finally:
+        if r is not None:
+            try:
+                await r.delete(lock)
+            except Exception:  # noqa: BLE001
+                pass
     v = float(uni[0]["v"] or 0) if uni else 0.0
     _area[(ms.isoformat(), t)] = (time.time(), v)
     try:
@@ -236,7 +267,7 @@ async def _area_compute(ms: dt.datetime, t: str) -> float:
     return v
 
 
-async def _area_heavy(ms: dt.datetime, t: str) -> float:
+async def _area_heavy(ms: dt.datetime, t: str, ttl: float = AREA_TTL) -> float:
     key = (ms.isoformat(), t)
     have = _area.get(key)
     if have is None:
@@ -249,24 +280,37 @@ async def _area_heavy(ms: dt.datetime, t: str) -> float:
                 have = _area[key] = (float(j["at"]), float(j["v"]))
         except Exception:  # noqa: BLE001
             have = None
-    if have is not None and time.time() - have[0] < AREA_TTL:
+    if have is not None and time.time() - have[0] < ttl:
         return have[1]
+    if have is not None:          # 내 기억이 낡았으면 다른 프로세스가 새로 센 값(Redis)부터 본다
+        try:
+            import json as _json
+            raw = await (await redis()).get(f"quota:area_union:{key[0]}:{t}")
+            if raw:
+                j = _json.loads(raw)
+                if time.time() - float(j["at"]) < ttl:
+                    _area[key] = (float(j["at"]), float(j["v"]))
+                    return float(j["v"])
+        except Exception:  # noqa: BLE001
+            pass
     tk = _area_task.get(key)
     if tk is None or tk.done():
-        tk = _area_task[key] = asyncio.ensure_future(_area_compute(ms, t))
+        tk = _area_task[key] = asyncio.ensure_future(_area_compute(ms, t, ttl))
     if have is not None:          # 지난 값을 바로 주고 뒤에서 새로(기다리지 않음)
         return have[1]
-    return await asyncio.shield(tk)              # 그 달 처음 한 번(기억 없음)만 기다린다
+    v = await asyncio.shield(tk)                 # 그 달 처음 한 번(기억 없음)만 기다린다
+    return v if v is not None else 0.0
 
 
 async def _area_union(ms: dt.datetime) -> dict:
     async with db(realm="lx") as conn:
         n = {r["t"]: int(r["n"]) for r in await conn.fetch(
             "SELECT tenant_id AS t, count(DISTINCT job_id) AS n FROM usage_events WHERE at >= $1 AND dim = 'area_km2' GROUP BY 1", ms)}
-        light = [t for t, k in n.items() if k <= HEAVY_JOBS]
-        out = {r["t"]: float(r["v"] or 0) for r in (await conn.fetch(AREA_UNION_SQL, ms, light) if light else [])}
-    for t in [t for t, k in n.items() if k > HEAVY_JOBS]:
-        out[t] = await _area_heavy(ms, t)
+    # 작업이 적은 기관도 같은 길(한 기관 한 번 · 모든 프로세스 통틀어 · 60초 기억) — 예전에는 프로세스마다 10초마다 다시 세어
+    # 같은 합집합 질의가 겹쳐 돌았다(10-21 impl-46 · DB CPU 474%)
+    out = {}
+    for t, k in n.items():
+        out[t] = await _area_heavy(ms, t, AREA_TTL if k > HEAVY_JOBS else LIGHT_TTL)
     return out
 
 

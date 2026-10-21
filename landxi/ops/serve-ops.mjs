@@ -613,12 +613,15 @@ async function gwFetch(p, { method = 'GET', body: b } = {}) {
     clearTimeout(t); const j = await r.json().catch(() => null); return { status: r.status, j };
   } catch { return { status: 0, j: null }; }
 }
+/* 로그인 실패 뒤에는 30분 동안 다시 묻지 않는다 — 옛 계정(lx-admin)이 꺼진 뒤 5초마다 다시 로그인해 하루 8천 번 넘게 '꺼진 계정' 실패가 쌓였다(10-21 impl-46 ops).
+   계정은 LX_OPS_LOGIN(없으면 lx-admin) — 비밀번호는 devPassword()(server/.env) 그대로. */
 async function gwLogin() {
   if (GW.token && Date.now() - GW.at < 30 * 60e3) return GW.token;
+  if (GW.failAt && Date.now() - GW.failAt < 30 * 60e3) return null;
   const pw = devPassword(); if (!pw) return null;
-  const { status, j } = await gwFetch('/auth/login', { method: 'POST', body: { realm: 'lx', login: 'lx-admin', password: pw } });
-  if (status === 200 && j?.token) { GW.token = j.token; GW.at = Date.now(); return j.token; }
-  GW.token = null; return null;
+  const { status, j } = await gwFetch('/auth/login', { method: 'POST', body: { realm: 'lx', login: process.env.LX_OPS_LOGIN || 'lx-admin', password: pw } });
+  if (status === 200 && j?.token) { GW.token = j.token; GW.at = Date.now(); GW.failAt = 0; return j.token; }
+  GW.token = null; if (status && status !== 0) { GW.failAt = Date.now(); log(`게이트웨이 로그인 실패 ${status} — 30분 뒤 다시`); } return null;
 }
 const GW_NEEDS = ['/ops/nodes', '/ops/gpus', '/ops/queues', '/ops/storage', '/ops/alerts', '/ops/models', '/ops/tenants', '/ops/bench', '/deploys', '/tenants', '/registry/models', '/registry/cards', '/jobs?limit=1'];
 // 선택 경로(v1.1 — 다른 에픽이 올리는 중): 있으면 화면이 쓰고, 없으면 부르지 않는다(브라우저 404 콘솔 0)
