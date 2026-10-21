@@ -234,6 +234,42 @@ if (WHO === 'label') {
   });
 }
 
+/* ── XI ChatGEO 보고서 한 장면만(10-21 사용자 "대화형 보고서 만들기 옆에 기존 통계 등 차트 바가 그대로 있으니 별로 마음에 안든다. 이 부분은 조금은 더 길더라도 잘 보여야 한다")
+   녹화 전: 남원시 경작지 물음 → 지도 하이라이트만 남기고 통계 판 · 지도 위 한 줄은 닫음(통계 보기는 누르지 않음) → 녹화: 보고서 물음 → (기다림은 편집에서 잘라 냄) → 대화 서랍(답 + 한글 문서 줄)에 머묾 */
+if (WHO === 'report') {
+  const xiReady = async () => { await p.waitForFunction(() => !!window.__xc?.map && !!document.querySelector('.k-ck-i'), null, { timeout: 90000 }).catch(() => {}); await noLoading(p); await sleep(2500); };
+  const waitAns = (prev) => p.waitForFunction((pv) => { const a = document.querySelector('.xk-ans:not([hidden]):not(.is-busy)'); return a && a.querySelector('.xk-ans-t') && a.querySelector('.xk-ans-t').textContent !== pv && !/답을 찾는 중/.test(a.textContent); }, prev, { timeout: 90000, polling: 50 }).catch(() => {});
+  const ansT = () => p.evaluate(() => document.querySelector('.xk-ans .xk-ans-t')?.textContent || '');
+  await frontDoor(p, APP, 'test@lx.or.kr'); await sleep(2000);
+  await p.goto(APP + V + 'xi-clean/', { waitUntil: 'domcontentloaded' }); await xiReady(); await sleep(3000);
+  // 마우스는 머리 빈 곳(지도 위에 두면 그 읍면 정보 칸이 뜸)
+  await scene('x2-report', async (r) => {
+    await p.goto(APP + V + 'xi-clean/', { waitUntil: 'domcontentloaded' }); await xiReady();
+    if (await p.locator('.xc-board').count()) { await p.keyboard.press('Escape'); await sleep(600); }
+    let prev = await ansT();
+    await p.locator('.k-ck-i').first().fill('남원시 경작지 현황 보여 줘'); await p.keyboard.press('Enter'); await waitAns(prev); await sleep(6000);
+    // 통계 판 · 지도 위 한 줄(통계 보기) 닫기 — 지도 하이라이트만
+    for (const q of ['.xo-mini button[aria-label*="닫"]', '.xo-mini .xo-x', '.xo-panel button[aria-label*="닫"]']) { const l = p.locator(q).first(); if (await l.count() && await l.isVisible().catch(() => false)) { await l.click().catch(() => {}); await sleep(600); } }
+    r.extra = { left: await p.evaluate(() => [...document.querySelectorAll('.xo-mini:not([hidden]), .xo-panel, .xd-board')].filter((e) => e.offsetParent).map((e) => e.className).join(' | ')) };
+    await noLoading(p); await sleep(2500);
+    await place(p, 1000, 22);
+    await r.start(); r.mark('start'); await sleep(1800);
+    prev = await ansT();
+    { const bx = await p.locator('.k-ck-i').first().boundingBox(); await place(p, bx.x + 40, bx.y + bx.height / 2); }   // 마우스를 입력 칸으로 바로(지도를 지나가면 읍면 정보 칸이 뜸)
+    await typeIn(p, '.k-ck-i', '남원시 경작지 통계 보고서 만들어 줘', 90); await sleep(400); r.mark('ask'); await p.keyboard.press('Enter');
+    await place(p, 1000, 22); await waitAns(prev); r.mark('ans');
+    await p.waitForFunction(() => !/불러오는 중|답을 찾는 중|만드는 중/.test(document.body.innerText), null, { timeout: 30000, polling: 100 }).catch(() => {}); r.mark('settled');
+    await sleep(2500);
+    { const dl = p.locator('.xk-ans a, .xk-ans button', { hasText: '대화' }).first(), bx = await dl.boundingBox(); await place(p, bx.x + bx.width / 2, bx.y + bx.height / 2); await tap(p, dl, 100); } r.mark('drawer');
+    await place(p, 1000, 22);
+    await p.waitForFunction(() => !!document.querySelector('.k-ck-file-l') && !/불러오는 중|만드는 중/.test(document.body.innerText), null, { timeout: 30000, polling: 100 }).catch(() => {}); r.mark('drawerReady');
+    await sleep(11000);
+    const box = await p.evaluate(() => { const d = document.querySelector('.k-ck-file-l')?.closest('aside, section, [role=dialog], .k-chat, .k-ck-drawer') || document.querySelector('.k-ck-file-l'); const b = d?.getBoundingClientRect(); return b ? [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)] : null; });
+    r.extra = { ...r.extra, drawer: box, answer: await ansT(), file: await p.evaluate(() => document.querySelector('.k-ck-file-l')?.textContent || null) };
+    r.mark('end');
+  });
+}
+
 LOG['blocked-' + WHO] = blocked; LOG['errors-' + WHO] = errs; save();
 console.log(JSON.stringify({ blocked, errs: errs.length }));
 await browser.close();

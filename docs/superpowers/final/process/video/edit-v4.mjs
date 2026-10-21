@@ -26,6 +26,10 @@ for (const [i, s] of SHOTS.entries()) {
   const parts = s.pieces.map((pc, k) => {
     const out = path.join(TMP, `p-${N2(i)}-${k}.mp4`), sp = pc.speed || 1;
     let vf = `trim=start=${pc.from}:end=${pc.to},setpts=(PTS-STARTPTS)/${sp},fps=30`;
+    if (pc.zoom) {   // 천천히 가까이(부드러운 시작 · 끝) — 2배로 키운 뒤 zoompan(정수 자리 떨림 줄임) · 중심이 화면 밖이면 가장자리에 붙임
+      const { z, cx, cy, ramp } = pc.zoom, T = `min(in/${(ramp * 30).toFixed(0)},1)`, Zx = `(1+${z - 1}*(3*pow(${T},2)-2*pow(${T},3)))`;
+      vf = `${vf},scale=3840:2160:flags=lanczos,zoompan=z='${Zx}':x='max(0,min(iw-iw/zoom,${cx * 2}-iw/zoom/2))':y='max(0,min(ih-ih/zoom,${cy * 2}-ih/zoom/2))':d=1:s=1920x1080:fps=30`;
+    }
     if (pc.blur) { const [x, y, w, h] = pc.blur; vf = `${vf},split[a][b];[b]crop=${w}:${h}:${x}:${y},boxblur=luma_radius=12:luma_power=2:chroma_radius=10:chroma_power=2[bl];[a][bl]overlay=${x}:${y}`; }
     ff(['-i', path.join(RAW, pc.clip + '.mp4'), '-filter_complex', `[0:v]${vf},format=yuv420p[v]`, '-map', '[v]', '-an', ...ENC, out]);
     return { file: out, dur: probe(out) };
