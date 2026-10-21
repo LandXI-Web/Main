@@ -626,6 +626,12 @@ def law_ask(msg: str) -> bool:
     w = LAW_WEAK.search(t)
     if not w or LAW_DATA.search(t):
         return False
+    try:                                              # WP-3: 법령 낱말 없이 묻는 법 질문(주제어 + 묻는 꼴 · 법적 판단) — 자료 질문 말이 없을 때만
+        from .tools.ext import law as _law
+        if _law.topic_question(t) and not LAW_DATA.search(t) and not _law.NOT_LAW.search(t):
+            return True
+    except Exception:  # noqa: BLE001
+        pass
     return not LAW_NOT_ACT.fullmatch(w.group(0)) and not LAW_NOT_ACT.search(t[max(0, w.start() - 3):w.end()])
 
 

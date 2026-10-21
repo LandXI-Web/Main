@@ -16,7 +16,8 @@ SPECS = {
         "description": "법령·지침 조문 찾기(농지법·건축법·국토계획법·산지관리법·농지 이용실태조사 요령 등 색인된 공개 원문). "
                        "'근거 조문은?' · '○○법 제n조' · '실태조사 요령에서 ~'. 조문 원문과 조·항·시행일을 돌려준다.",
         "properties": {"query": {"type": "string", "description": "사용자 질문 원문"},
-                       "acts": {"type": "array", "items": {"type": "string"}, "description": "법령 이름(질문에 있을 때만)"}},
+                       "acts": {"type": "array", "items": {"type": "string"}, "description": "법령 이름(질문에 있을 때만)"},
+                       "judge": {"type": "boolean", "description": "법적 판단(괜찮아? · 문제 없어?)을 묻는 질문 — 판단 없이 조문 찾기 안내"}},
         "required": ["query"]},
 }
 WRITE: set[str] = set()
@@ -32,7 +33,36 @@ NOT_FOUND = "법령 데이터에 없습니다"
 LAWQ = re.compile(r"조문|법령|근거\s*(법|조)|제\s*\d+\s*조|시행령|시행규칙|실태조사\s*요령|업무처리\s*요령|지침|statute|article|provision|legal\s+basis|\blaw\b", re.I)
 ACTQ = re.compile(r"([가-힣]{2,20}법)(률)?\s*(상|에서|에\s*따르면|위반|에서는|의\s*(규정|조항))")
 NOT_ACT = {"방법", "문법", "해법", "기법", "용법", "사용법", "작성법", "계산법", "분석법"}
-NOT_LAW = re.compile(r"보고서\s*초안|공문\s*초안|분석\s*(실행|해)|지도|차트|몇\s*건|건수")
+NOT_LAW = re.compile(r"보고서\s*초안|공문\s*초안|분석\s*(실행|해)|지도|차트|몇\s*건|건수|목록|몇\s*(곳|개|필지)|상위|순위|현황|통계|엑셀|그래프|보여\s*줘")
+
+
+# ── 법령 낱말 없이 묻는 법 질문(WP-3 · 묶음 16) — 주제어 + 묻는 꼴이면 법 길로(지도 · 숫자 말이 함께 있으면 비켜 간다) ─────────
+TOPIC_RX = re.compile(r"농지\s*전용|산지\s*전용|전용\s*(허가|신고)|행위\s*제한|농업\s*진흥\s*(구역|지역)|농업\s*보호\s*구역|농막|"
+                      r"건축\s*허가|가설\s*건축물|축조\s*신고|처분\s*(명령|의무|통지)|이행\s*강제금|원상\s*회복|임대차|사용대차|"
+                      r"취득\s*자격|자격\s*증명|자경|경자유전|대리\s*경작|위탁\s*경영|체험\s*영농|소유\s*(상한|제한)|휴경.{0,6}(허용|기간|사유)|"
+                      r"개발\s*행위\s*허가|용도\s*변경|지적\s*재조사|지적\s*불부합|직불금|직불제|부정\s*수급|점용\s*허가|변상금|"
+                      r"하천\s*(구역|부지|점용)|개발\s*제한\s*구역|그린벨트|농업\s*경영체|증거\s*(로|능력|자료)|"
+                      r"(불법|무단)\s*(전용|점용|건축|형질)|허가\s*없이|신고\s*없이|실태\s*조사.{0,8}(기한|주기|절차|근거|대상|언제)|농지.{0,6}태양광.{0,6}(설치|허가)")
+QFORM = re.compile(r"어떻게|요건|기준|가능|되나|돼\s*\??$|되요|됩니까|해도|처벌|벌금|과태료|기한|기간|자격|대상|절차|누가|언제|뭐야|뭔지|무엇|"
+                   r"이란|란\s*\??$|있나|있어\s*\??$|필요|해야|받아야|경우|근거|원칙|제도|정리해|처분|못\s*하는|할\s*수|쓸\s*수|방법|산정")
+# 법적 판단을 묻는 말(괜찮아? · 문제 없어? · 합법이야?) — 판단은 하지 않고 관련 조문 찾기로(원칙 P7 · 묶음 20)
+JUDGE_RX = re.compile(r"(개인정보|저작권|초상권|법적으로|법률\s*상|법상|소송).{0,24}(문제\s*(는|가)?\s*(없|안\s*되|되)|괜찮|돼\s*\??$|되나|맞아|아니야)|"
+                      r"합법(이야|인가|인지|이에요|일까)|위법(이야|인가|인지|이에요|일까)|불법(이야|인가|인지|이에요|일까)")
+LAW_SITE = "https://www.law.go.kr/lsSc.do?menuId=1&query="
+
+
+def topic_question(t: str) -> bool:
+    """법령 이름 · '조문' 낱말 없이 묻는 법 질문('농지전용허가 없이 비닐하우스를 세우면 어떻게 돼')."""
+    t = t or ""
+    return bool(JUDGE_RX.search(t) or (TOPIC_RX.search(t) and QFORM.search(t)))
+
+
+def site_btn(term: str):
+    """국가법령정보센터 검색 단추(막다른 말 0 · 원칙 97) — 찾을 말 그대로."""
+    from urllib.parse import quote
+    from ... import talk
+    term = (term or "").strip()[:40] or "농지법"
+    return talk.btn("국가법령정보센터에서 찾기", href=LAW_SITE + quote(term))
 
 
 def allowed(name: str, p) -> bool:
@@ -40,7 +70,7 @@ def allowed(name: str, p) -> bool:
 
 
 def is_law_question(t: str) -> bool:
-    if LAWQ.search(t):
+    if LAWQ.search(t) or topic_question(t):
         return True
     m = ACTQ.search(t)
     return bool(m and m.group(1) not in NOT_ACT and not any(m.group(1).endswith(x) for x in NOT_ACT))
@@ -50,6 +80,8 @@ def ROUTE(msg: str, ctx):
     t = re.sub(r"\s+", " ", msg or "").strip()
     if not t or len(t) > 160 or NOT_LAW.search(t) or not is_law_question(t):
         return None
+    if JUDGE_RX.search(t) and not LAWQ.search(t):
+        return {"tool": "law_search", "args": {"query": t, "judge": True}}
     return {"tool": "law_search", "args": {"query": t}}
 
 
@@ -83,6 +115,16 @@ async def law_search(args: dict, ctx) -> Out:
     q = str(args.get("query") or "").strip()
     acts = [a for a in (args.get("acts") or []) if isinstance(a, str) and a.strip()] or None
     en = getattr(ctx, "lang", "ko") == "en" or not re.search(r"[가-힣]", q)
+    if args.get("judge") and not en:
+        # 법적 판단(괜찮아? · 문제 없어?)은 하지 않는다 — 판단은 담당자 · 법무, 여기서는 관련 조문만 찾아 준다(묶음 20 · 근거 없는 안심 0)
+        from ... import talk
+        out = Out(source="법령 원문(국가법령정보센터 공개 원문 · 로컬 색인)")
+        out.data = {"결과": "법적 판단 안 함"}
+        out.answer = "적용 여부는 담당자 · 법무 판단입니다. 관련 조문은 찾아 드립니다."
+        subj = " ".join(LAW.key_nouns(q)[:2]) or q
+        talk.set_next(ctx, [talk.btn("관련 조문 찾기", q=f"{subj} 관련 조문 알려 줘"), site_btn(subj)])
+        ctx.state["cannot"] = {"kind": "law_judge"}
+        return out
     qk = LAW.ko_query(q) if en else q                                       # 영어 질문 → 로컬 용어 표로 한국어 검색어(번역 모델 없음)
     r = await asyncio.to_thread(LAW.search, qk, acts, 3) if qk else {"found": False, "hits": [], "reason": "no_term"}
     out = Out(source="법령 원문(국가법령정보센터 공개 원문 · 로컬 색인)")
@@ -90,22 +132,33 @@ async def law_search(args: dict, ctx) -> Out:
     if not r["found"] and not en and not r.get("missing"):
         # 확인 16차 규칙 ② — 풀어 쓴 질문('허가 없이 지은 건물에 물리는 이행강제금은 얼마야?')은 질문 그대로는 못 찾는다.
         # 막다른 '법령 데이터에 없습니다' 대신, 법령 낱말 하나로 다시 찾아 가장 가까운 조문을 원문 그대로 보인다(지어내기 0 · 무엇으로 찾았는지 밝힘).
-        terms = loose_terms(q)
-        tries = ([" ".join(terms[:2])] if len(terms) >= 2 else []) + terms
-        for term in tries:
+        # WP-3: 다시 찾는 낱말은 질문의 대상 말(조사 · 서술 뗀 것) 가운데 넓은 말(농지 · 사업 · 지역 …)이 아닌 것만,
+        # 찾은 조문의 제목이 그 낱말 자체일 때만 받는다('이행강제금' ↔ 제80조(이행강제금) · '원상회복' ↔ 제42조(원상회복 등)) — 곁가지 조문 0.
+        terms = sorted([w for w in LAW.key_nouns(LAW.plain_query(q)) if w not in LAW.BROAD and w not in LAW.GENERIC and len(w) >= 2],
+                       key=len, reverse=True)[:3]
+        for term in terms:
             r2 = await asyncio.to_thread(LAW.search, term, acts, 3)
             top = (r2.get("hits") or [None])[0]
-            body = ((top or {}).get("text") or "") + " " + (((top or {}).get("ref") or {}).get("label") or "")
-            if r2.get("found") and any(w in body for w in term.split()):      # 찾은 조문에 그 낱말이 실제로 있을 때만(엉뚱한 조문 0)
-                r, loose = r2, term.split()[0]
+            if r2.get("found") and top and _title_is(top, term):
+                r, loose = r2, term
                 break
     if not r["found"]:
-        out.data = {"결과": NOT_FOUND, "없는 법령": r.get("missing") or []}
-        out.answer = "Not in the law data." if en else "그 말로는 색인된 법령에서 맞는 조문을 찾지 못했습니다. 법령 이름이나 조문 낱말로 물으면 원문을 찾습니다."
-        if not en:
-            from ... import talk
-            talk.set_next(ctx, [talk.btn("농지 전용 근거 조문 알려 줘"), talk.btn("건축법 이행강제금 조문 알려 줘")])
-            ctx.state["cannot"] = {"kind": "law"}
+        tm = [m for m in LAW.topic_acts(LAW.plain_query(q)) if not LAW.resolve_act(m)]
+        missing = tm or [m for m in (r.get("missing") or []) if re.search(r"(법|법률|령|규칙|요령|지침|고시)$", m) and " " not in m.strip()]
+        out.data = {"결과": NOT_FOUND, "없는 법령": missing}
+        if en:
+            out.answer = "Not in the law data."
+            return out
+        from ... import talk
+        subj = " ".join(LAW.key_nouns(LAW.plain_query(q))[:2])
+        if missing:                                       # 색인에 없는 법령(하천법 · 공익직불법 …) — 솔직히 없다고 + 찾을 곳(묶음 24)
+            out.answer = f"「{missing[0]}」은 색인된 법령에 없어 조문을 인용하지 않습니다. 국가법령정보센터에서 확인해 주세요."
+            talk.set_next(ctx, [site_btn(missing[0]), talk.btn("농지 전용 근거 조문 알려 줘")])
+        else:                                             # 대상 말과 맞는 조문이 없다 — 곁가지 조문을 대신 내지 않는다(P7)
+            out.answer = (f"질문의 말과 맞는 조문을 찾지 못했습니다. 국가법령정보센터에서 '{subj}'{'으로' if _batchim(subj) not in (0, 8) else '로'} 확인해 주세요." if subj
+                          else "질문의 말과 맞는 조문을 찾지 못했습니다. 국가법령정보센터에서 확인해 주세요.")
+            talk.set_next(ctx, [site_btn(subj or q), talk.btn("농지 전용 근거 조문 알려 줘")])
+        ctx.state["cannot"] = {"kind": "law"}
         return out
     hits = r["hits"]
     top = hits[0]
@@ -160,6 +213,16 @@ def loose_terms(q: str) -> list[str]:
         if len(w) >= 2 and not _LOOSE_STOP.match(w) and w not in words:
             words.append(w)
     return sorted(words, key=len, reverse=True)[:4]
+
+
+def _title_is(hit: dict, term: str) -> bool:
+    """찾은 조문 제목의 주제가 그 낱말 자체인가 — '이행강제금' = '이행강제금' · '원상회복 등' · '휴경, 임대(사용대), …'(쉼표 · 가운뎃점 · 및 · 과/와 로 나눈 조각)."""
+    from ...rag import index as LAW
+    t = str(hit.get("article_title") or (hit.get("ref") or {}).get("title") or "")
+    t = re.sub(r"^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s*\d*\.?\s*", "", t)
+    parts = re.split(r"[,ㆍ·()]|\s+(?:및|또는)\s+|(?<=[가-힣])(?:과|와)\s+", t)
+    want = LAW.norm_ko(term)
+    return any(re.sub(r"등$", "", LAW.norm_ko(x)) == want for x in parts if x.strip())
 
 
 def _short_ref(ref: dict) -> str:

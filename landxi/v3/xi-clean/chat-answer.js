@@ -41,7 +41,9 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
        같은 data-report → 공용 kit(cmdk)의 보고서 보기 처리 그대로 */
     const rep = last.querySelector('button.k-ck-rep[data-report]');
     const repBtn = rep ? h('button.k-ck-rep.xk-rep.is-1', { type: 'button', 'data-report': rep.dataset.report, text: '보고서 보기' }) : null;
-    const btns = [...last.querySelectorAll('.k-chat-btn[data-q], .k-chat-chip[data-q]')].slice(0, repBtn ? 1 : 2).map((b, i) => h(`button.k-chat-btn${i === 0 && !repBtn ? '.is-1' : ''}`, { type: 'button', 'data-q': b.dataset.q, text: b.textContent.trim() }));   // 같은 data-q → 공용 kit 가 처리
+    const btns = [...last.querySelectorAll('.k-chat-btn[data-q], .k-chat-chip[data-q], a.k-chat-btn[href]')].slice(0, repBtn ? 1 : 2).map((b, i) => (b.dataset.q != null
+      ? h(`button.k-chat-btn${i === 0 && !repBtn ? '.is-1' : ''}`, { type: 'button', 'data-q': b.dataset.q, text: b.textContent.trim() })   // 같은 data-q → 공용 kit 가 처리
+      : h(`a.k-chat-btn${i === 0 && !repBtn ? '.is-1' : ''}`, { href: b.href, ...(b.target ? { target: b.target, rel: 'noopener' } : {}), text: b.textContent.trim() })));   // 주소 단추(국가법령정보센터 등)
     more.textContent = `대화 ${nf(turns())}`;
     acts.replaceChildren(...(repBtn ? [repBtn] : []), ...btns, more);
     card.hidden = false;
