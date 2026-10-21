@@ -2,12 +2,19 @@
 # 항상 프로젝트 이름을 붙여 조작한다: docker compose -p landxi -f server/docker-compose.phase0.yml up -d
 # (같은 데몬에 cleanriver 스택이 있다 — down/prune 류 명령은 반드시 -p landxi 로 한정)
 name: landxi
+# 컨테이너 기록 크기 한도(SECRET-FIX 10-22) — 느린 질의 기록 등이 디스크를 먹지 않게 50MB × 5개
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
 services:
   redis:
     image: redis:7-alpine
     container_name: landxi-redis
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
-    ports: ["6380:6379"]
+    ports: ["127.0.0.1:6380:6379"]   # 이 PC 안에서만(SECRET-FIX 10-22) — 같은 망 다른 PC 에서 작업 대기열로 바로 들어오지 못하게
+    logging: *logging
     volumes: ["landxi-redis:/data"]
     restart: unless-stopped
     healthcheck:
@@ -21,11 +28,13 @@ services:
     environment:
       POSTGRES_DB: landxi
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:-landxi-dev-admin}
+      # 비밀번호는 server/.env 에만(저장소에 적지 않음) — 볼륨이 처음 만들어질 때만 쓰인다. 바꿀 때는 ALTER USER(SECRET-FIX 10-22)
+      POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:?server/.env 에 PG_ADMIN_PASSWORD 를 넣으세요}
       TZ: Asia/Seoul
       PGTZ: Asia/Seoul
     ports: ["127.0.0.1:5433:5432"]   # 이 PC 안에서만(DB-FIX 10-22) — 같은 망 다른 PC 에서 DB 로 바로 들어오지 못하게
     volumes: ["landxi-pg:/var/lib/postgresql/data"]
+    logging: *logging
     shm_size: 512mb
     restart: unless-stopped
     healthcheck:

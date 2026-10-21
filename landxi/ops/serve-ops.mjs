@@ -730,7 +730,8 @@ const server = http.createServer(async (req, res) => {
     return serveStatic(req, res, p);
   } catch (e) { log('오류', e); if (!res.headersSent) fail(res, 'internal', 500, String(e.message)); }
 });
-server.listen(PORT, () => {
+// 이 PC 안에서만 듣는다(SECRET-FIX 10-22) — 옛 관리 연결을 같은 망 다른 PC 에 열지 않는다. 없앨지는 now 결정.
+server.listen(PORT, process.env.OPS_HOST || '127.0.0.1', () => {
   log(`LX/OPS http://localhost:${PORT}/landxi/ops/  (root ${ROOT} · data ${fs.existsSync(path.join(ROOT, 'landxi', 'data')) ? 'junction' : DATA_ROOT})`);
   if (!NO_POLLERS) {
     startPoller('gpu', ['server/ops/gpu_poller.py', '--stdout', '--interval', '2', '--lms', '100', '--worker-vram-url', `http://127.0.0.1:${PORT}/landxi/ops/bridge/worker/vram`, '--llm-url', `http://127.0.0.1:${PORT}/landxi/ops/bridge/worker/llm`]);

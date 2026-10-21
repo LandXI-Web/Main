@@ -32,12 +32,16 @@ def log(*a):
     print(time.strftime("%H:%M:%S"), *a, flush=True)
 
 
+def _need(key: str) -> str:
+    raise SystemExit(f"server/.env 에 {key} 를 넣으세요(DB 역할 비밀번호 · 저장소에 적지 않음)")
+
+
 def migrate(conn):
     ddl = (config.SERVER_ROOT / "migrations" / "0001_init.sql").read_text(encoding="utf-8")
     with conn.cursor() as cur:
         cur.execute(ddl)
-        cur.execute("ALTER ROLE landxi_app PASSWORD %s" % sql.Literal(config.get("PG_APP_PASSWORD", "landxi-dev-app")).as_string(conn))
-        cur.execute("ALTER ROLE landxi_worker PASSWORD %s" % sql.Literal(config.get("PG_WORKER_PASSWORD", "landxi-dev-worker")).as_string(conn))
+        cur.execute("ALTER ROLE landxi_app PASSWORD %s" % sql.Literal(config.get("PG_APP_PASSWORD") or _need("PG_APP_PASSWORD")).as_string(conn))
+        cur.execute("ALTER ROLE landxi_worker PASSWORD %s" % sql.Literal(config.get("PG_WORKER_PASSWORD") or _need("PG_WORKER_PASSWORD")).as_string(conn))
     conn.commit()
     log("migrate ok")
 

@@ -31,11 +31,25 @@ gpu_poller.TAG = "storage_poller"
 DATA_ROOT = os.environ.get("LX_DATA_ROOT", r"E:/Land-XI 플랫폼/02. 데이터")
 
 
+def _env_file(key: str) -> str | None:
+    """server/.env 의 한 값(폴러는 관제 :8702 가 띄워 환경변수에 DSN 이 없다)."""
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+    try:
+        for line in open(p, encoding="utf-8"):
+            if line.strip().startswith(key + "="):
+                return line.split("=", 1)[1].strip()
+    except OSError:
+        pass
+    return None
+
+
 def tenants() -> list[str]:
     """기관 목록 = tenants 표(고정 목록 0 · 새 기관도 자동) — DB 를 못 읽으면 결과 폴더 이름."""
     try:
         import psycopg
-        dsn = os.environ.get("PG_WORKER_DSN", "postgresql://landxi_worker:landxi-dev-worker@127.0.0.1:5433/landxi")
+        dsn = os.environ.get("PG_WORKER_DSN") or _env_file("PG_WORKER_DSN")   # 비밀번호는 server/.env 에만(SECRET-FIX 10-22)
+        if not dsn:
+            raise RuntimeError("PG_WORKER_DSN 없음")
         with psycopg.connect(dsn, connect_timeout=3) as c:
             return [r[0] for r in c.execute("SELECT id FROM tenants ORDER BY id").fetchall()]
     except Exception:
@@ -136,7 +150,7 @@ def main():
     ap.add_argument("--interval", type=float, default=60.0)
     ap.add_argument("--root", default=DATA_ROOT)
     ap.add_argument("--mounts", default="E:,D:,C:")
-    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://localhost:6380"))
+    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://127.0.0.1:6380"))
     ap.add_argument("--stdout", action="store_true")
     ap.add_argument("--once", action="store_true")
     a = ap.parse_args()

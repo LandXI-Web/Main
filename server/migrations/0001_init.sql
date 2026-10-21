@@ -6,12 +6,12 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'landxi_app') THEN
-    CREATE ROLE landxi_app LOGIN PASSWORD 'landxi-dev-app' NOSUPERUSER NOBYPASSRLS;
+    CREATE ROLE landxi_app LOGIN NOSUPERUSER NOBYPASSRLS;   -- 비밀번호는 seed 가 server/.env 의 PG_APP_PASSWORD 로 넣는다(SECRET-FIX 10-22)
   END IF;
   -- 워커(시스템 작업 · 신뢰 프로세스): COPY detections 는 RLS 표에 허용되지 않으므로 BYPASSRLS 역할로 쓴다.
   -- 게이트웨이(사용자 요청 경로)는 landxi_app 만 쓴다 — 기관 격리는 여기서 SQL 수준으로 보장된다.
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'landxi_worker') THEN
-    CREATE ROLE landxi_worker LOGIN PASSWORD 'landxi-dev-worker' NOSUPERUSER BYPASSRLS;
+    CREATE ROLE landxi_worker LOGIN NOSUPERUSER BYPASSRLS;   -- 비밀번호는 seed 가 server/.env 의 PG_WORKER_PASSWORD 로 넣는다
   END IF;
 END $$;
 

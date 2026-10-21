@@ -27,7 +27,7 @@ def dsn() -> str:
                 return line.split("=", 1)[1].strip()
     except OSError:
         pass
-    return "postgresql://postgres:landxi-dev-admin@localhost:5433/landxi"
+    raise SystemExit("server/.env 에 PG_ADMIN_DSN 이 없습니다(비밀번호는 저장소에 적지 않음)")
 
 
 def jsonable(v):

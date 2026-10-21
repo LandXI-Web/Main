@@ -737,7 +737,7 @@ def main():
     ap = argparse.ArgumentParser(description="LX/OPS GPU 폴러 (F1-C)")
     ap.add_argument("--node", default=os.environ.get("LX_NODE_ID", "node-tr3995wx"))
     ap.add_argument("--interval", type=float, default=2.0)
-    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://localhost:6380"),
+    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://127.0.0.1:6380"),
                     help="'' 이면 Redis 를 쓰지 않는다")
     ap.add_argument("--stdout", action="store_true", help="GpuSample 한 줄 JSON 을 표준출력으로")
     ap.add_argument("--once", action="store_true")
