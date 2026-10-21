@@ -300,6 +300,36 @@ async def map_view(args: dict, ctx) -> Out:
     return out
 
 
+def _class_layer(t: str) -> str | None:
+    """'○○ 층 · ○○ 보이게' 의 분류 이름(한 표) — 영상 · 지적 · 결과 층 말이 있으면 None."""
+    if any(rx.search(t) for k, rx in LAYER_RX.items() if k != "results") or re.search(r"결과\s*(?:층|레이어)", t):
+        return None
+    try:
+        from landxi_api.result_scope import CLASS_WORDS
+    except Exception:  # noqa: BLE001
+        return None
+    for rx, nm, _p in CLASS_WORDS:
+        m = re.search(rx, t)
+        if m and re.search(re.escape(m.group(0)) + r"\s*(?:층|레이어|결과)?\s*(?:을|를|만|도)?\s*(?:켜|보이게|표시|띄워|칠|색칠|눈에\s*띄게)", t):
+            return m.group(0).replace(" ", "")
+    return None
+
+
+async def _class_known(ctx, word: str) -> bool | None:
+    """켜진 결과 층에 그 분류가 있나 — 켜진 층을 모두 알 때만 참 · 거짓(이름 붙은 세트가 섞이면 None = 화면이 판정)."""
+    sets = (getattr(ctx, "context", None) or {}).get("sets") or []
+    from .mapsvc import _SET, _jobs_on, _avail, _want_cls, CLS_WORDS
+    if not sets or not all(_SET.match(str(x)) for x in sets):
+        return None
+    jobs = await _jobs_on(ctx)
+    if not jobs:
+        return False
+    classes, _ = await _avail(jobs)
+    base = next((nm for rx, nm in CLS_WORDS if re.search(rx, word)), word)
+    w, miss = _want_cls(base, classes)
+    return bool(w) and not miss
+
+
 async def map_layer(args: dict, ctx) -> Out:
     layer = args.get("layer")
     if layer not in LAYER_KO:
@@ -311,6 +341,16 @@ async def map_layer(args: dict, ctx) -> Out:
     only = args.get("only")
     if only not in (None, "", False):
         a["only"] = True if only in (True, "true", "1") else str(only)[:20]
+    if on and isinstance(a.get("only"), str) and layer == "results":
+        try:
+            known = await _class_known(ctx, a["only"])
+        except Exception:  # noqa: BLE001
+            known = None
+        if known is False:                             # 켤 수 없는 층을 켰다고 하지 않는다(WP-9 ① · P4)
+            ctx.state["cannot"] = {"kind": "nodata"}
+            out.data = {"층": a["only"], "켜기": True, "실행": "안 됨 — 켜진 결과에 그 분류가 없다"}
+            out.answer = f"{a['only']} 층을 켤 수 없습니다 — 지금 켜진 결과에 {a['only']} 결과가 없습니다."
+            return out
     out.ui_actions.append(a)
     out.data = {"층": LAYER_KO[layer], "켜기": on, "실행": "됨"}
     return out
@@ -432,6 +472,9 @@ async def route_map(msg: str, ctx) -> dict | None:
         cand.append({"tool": "map_view", "args": {"preset": "3d"}})
     elif VIEW_TOP.search(t):
         cand.append({"tool": "map_view", "args": {"preset": "top"}})
+    cw = _class_layer(t)
+    if cw and ON_RX.search(t) and not OFF_RX.search(t) and not cand:   # '건물 층 켜 줘' · '휴경지 보이게' — 그 분류 결과 층(WP-9 ①)
+        return _with_place(t, groups, [{"tool": "map_layer", "args": {"layer": "results", "on": True, "only": cw}}], ctx)
     if ON_RX.search(t) or OFF_RX.search(t):
         for layer, rx in LAYER_RX.items():
             if rx.search(t):
@@ -485,7 +528,7 @@ async def _has_data(sgg_cd: str) -> bool:
     try:
         from landxi_api.regions import derived
         dv = await derived()
-        return sgg_cd in (dv.get("parcels") or {}) or any(not d.get("_test") and d.get("stage") in ("ga", "canary") for d in (dv.get("dp") or {}).get(sgg_cd, []))
+        return sgg_cd in (dv.get("parcels") or {}) or sgg_cd in (dv.get("national") or {})             or any(not d.get("_test") and d.get("stage") in ("ga", "canary") for d in (dv.get("dp") or {}).get(sgg_cd, []))
     except Exception:
         return False
 

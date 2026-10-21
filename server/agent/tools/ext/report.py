@@ -102,6 +102,9 @@ async def report_draft(args: dict, ctx) -> Out:
     if tgt.get("error") == "forbidden":
         return guard("outside", lang)
     if tgt.get("error") == "no_data":
+        if getattr(ctx.principal, "realm", None) == "lx" and not re.search(r"실태\s*조사|의심|현장", str(args.get("request") or "")):
+            from .mapsvc import ai_report                  # 실태조사가 없는 시군구의 '○○ 보고서'(LX) = XI맵 통계 보고서(WP-4 · 전국 분석 결과)
+            return await ai_report({"request": args.get("request") or ""}, ctx)
         return guard("no_data", lang, tgt.get("region"))
     if tgt.get("error"):
         raise ToolError("bad_request", tgt["message"], 400)

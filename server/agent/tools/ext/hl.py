@@ -22,7 +22,7 @@ from .. import Out
 SPECS = {
     "map_hl": {
         "description": "앞 답이 가리킨 곳들 가운데 고르기(가장 큰 곳 · 가장 적은 곳 · 상위 n곳 · 이름 하나 · 전체) — 지도 강조만 바꾼다.",
-        "properties": {"pick": {"type": "string", "description": "top | low | topn | name | all"},
+        "properties": {"pick": {"type": "string", "description": "top | low | topn | bottomn | name | all"},
                        "n": {"type": "integer"}, "name": {"type": "string"}},
     },
 }
@@ -209,6 +209,7 @@ async def collect(ctx, blocks: list, answer_md: str) -> dict | None:
 # ── 이어 묻기(앞 답 목록 안에서 고르기) ──────────────────────────────────────────────────────
 TOP_RX = re.compile(r"(?:가장|제일)\s*(?:큰|많은|높은|넓은|촘촘한)|1\s*위|최대")
 LOW_RX = re.compile(r"(?:가장|제일)\s*(?:작은|적은|낮은|좁은|드문)|꼴찌|최소")
+BOTTOMN_RX = re.compile(r"(?:하위|아래에서|적은\s*순(?:서)?\s*(?:으로)?|작은\s*순(?:서)?\s*(?:으로)?|꼴찌)\s*(\d{1,2})\s*(?:곳|개|군데)?")   # WP-7 '하위 3곳'
 TOPN_RX = re.compile(r"(?:상위|위에서|큰\s*순(?:서)?\s*(?:으로)?|많은\s*순(?:서)?\s*(?:으로)?)\s*(\d{1,2})\s*(?:곳|개|군데)?|(\d{1,2})\s*(?:곳|군데)\s*만")
 ALL_RX = re.compile(r"^(?:그\s*)?(?:전체|전부|모두|다)\s*(?:다시)?\s*(?:보여\s*(?:줘|주세요)|보기|표시)?\s*[?.!]?$|^다시\s*(?:전체|전부|모두|다)\s*(?:보여\s*(?:줘|주세요)|보기)?\s*[?.!]?$")
 REF_RX = re.compile(r"그\s*중|그중|거기서|여기서|이\s*중|이중|앞\s*답|방금")
@@ -248,6 +249,11 @@ def _parse(msg: str, base: dict) -> dict | None:
             return {"pick": "name", "name": nm}
     if ALL_RX.search(body):
         return {"pick": "all"}
+    mb = BOTTOMN_RX.search(t)
+    if mb and (REF_RX.search(t) or len(t) <= 14):
+        n = int(mb.group(1))
+        if 1 <= n <= 20:
+            return {"pick": "bottomn", "n": n}
     m = TOPN_RX.search(t)
     if m and (REF_RX.search(t) or len(t) <= 14):
         n = int(m.group(1) or m.group(2))
@@ -312,6 +318,14 @@ async def map_hl(args: dict, ctx) -> Out:
             out.env(f"v{i}", it["name"], env(it["v"], unit or "count", "inferred", "앞 답의 도구 값"))
             parts.append(f"{it['name']} {{{{v{i}}}}}")
         out.answer = f"{(what + ' ') if what else ''}많은 {len(sel)}곳은 " + " · ".join(parts) + "입니다."
+    elif pick == "bottomn" and valued:                    # 같은 표의 끝 셋(적은 순 · WP-7)
+        n = max(1, min(20, int(args.get("n") or 3)))
+        sel = list(reversed(valued[-n:]))
+        parts = []
+        for i, it in enumerate(sel):
+            out.env(f"v{i}", it["name"], env(it["v"], unit or "count", "inferred", "앞 답의 도구 값"))
+            parts.append(f"{it['name']} {{{{v{i}}}}}")
+        out.answer = f"{(what + ' ') if what else ''}적은 {len(sel)}곳은 " + " · ".join(parts) + "입니다."
     elif pick == "name":
         nm = str(args.get("name") or "")
         sel = [it for it in items if it.get("name") == nm][:1]

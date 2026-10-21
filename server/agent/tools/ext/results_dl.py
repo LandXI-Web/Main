@@ -78,22 +78,38 @@ def _pick(items: list[dict], text: str, ctx) -> dict | None:
         names = [h[0] for h in hits if h]
     except Exception:  # noqa: BLE001
         names = []
-    for g in names:                                   # 질문의 지역
+    want = []
+    try:                                              # 질문의 분류(한 표 · WP-4) — 결과 이름(서비스 · 프로젝트)과 맞춘다
+        from landxi_api.result_scope import CLASS_WORDS
+        for rx, nm_, parent in CLASS_WORDS:
+            if re.search(rx, text or ""):
+                want += [nm_] + ([parent] if parent else [])
+    except Exception:  # noqa: BLE001
+        want = []
+
+    def fits(x):
+        if not want:
+            return True
+        g = f"{x.get('group') or ''} {x.get('region') or ''}"
+        return any(w in g or (w in ("경작지", "휴경지") and "경작" in g) for w in want)
+    for g in names:                                   # 질문의 지역 — 그 지역 결과가 없으면 다른 지역 파일을 내지 않는다(WP-4)
         codes = {str(g.get("sgg_cd") or g.get("code") or "")[:5]}
         nm = str(g.get("name") or g.get("full") or "")
         got = [x for x in items if not x["empty"] and ((x.get("sgg_cd") or "")[:5] in codes or (nm and nm.split()[-1] in x["region"]))]
+        got = [x for x in got if fits(x)]
         if got:
             return got[0]
+        return {"_miss": True, "where": (nm.split(" ")[0] if " " in nm and len(hits[0]) > 1 else nm.split(" ")[-1]), "what": " · ".join(dict.fromkeys(want[:1]))}
     c = getattr(ctx, "context", None) or {}
     jobs = [str(s).rsplit("/", 1)[-1] for s in (c.get("sets") or []) if isinstance(s, str)]
-    got = [x for x in items if x["job"] in jobs and not x["empty"]]
+    got = [x for x in items if x["job"] in jobs and not x["empty"] and fits(x)]
     if got:
         return got[0]
     sgg = str(c.get("region") or "")[:5]
-    got = [x for x in items if sgg and (x.get("sgg_cd") or "")[:5] == sgg and not x["empty"]]
+    got = [x for x in items if sgg and (x.get("sgg_cd") or "")[:5] == sgg and not x["empty"] and fits(x)]
     if got:
         return got[0]
-    return next((x for x in items if not x["empty"]), None)
+    return None                                       # '가장 최근 아무 결과'로 떨어지지 않는다(WP-4 · P3)
 
 
 async def result_files(args: dict, ctx) -> Out:
@@ -103,6 +119,15 @@ async def result_files(args: dict, ctx) -> Out:
     out = Out(source="지도 서비스 결과 목록(GET /me/analyses) · 내려받기(GET /me/analyses/{job}/download)")
     fmt = args.get("fmt") if args.get("fmt") in FMT_KO else "geojson"
     x = _pick(await _mine(p), str(args.get("request") or ""), ctx)
+    if x and x.get("_miss"):                          # 물은 지역 · 분류의 결과 파일이 없다 — 다른 지역 파일 대신 '없음 — 통계 보고서'(엑셀 포함 · 원칙 299)
+        ctx.state["cannot"] = {"kind": "nodata"}
+        where, what = x["where"], x["what"]
+        out.data = {"status": "missing"}
+        out.answer = f"{where} {what + ' ' if what else ''}결과 파일이 없습니다 — XI맵 통계로 보고서(엑셀 포함)를 만들 수 있습니다."
+        from ... import talk
+        talk.set_next(ctx, [talk.btn(f"{where} {what} 통계 보고서".replace("  ", " "), q=f"{where} {what} 통계 보고서 만들어 줘".replace("  ", " ")),
+                            talk.btn(f"{where} 결과 요약", q=f"{where} 현황 보여 줘")])
+        return out
     if not x:
         ctx.state["cannot"] = {"kind": "nodata"}
         out.data = {"status": "none"}

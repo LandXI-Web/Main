@@ -277,6 +277,10 @@ async def client_acts(run_id: str, body: dict, request: Request):
     acts = {"acts_sent": sent, "acts_done": done, "acts_ok": ok, "acts_verdict": verdict, "acts": items, "acts_source": "browser", "acts_at": now_iso()}
     async with db(p) as conn:
         n = await conn.execute("UPDATE agent_runs SET perf = coalesce(perf, '{}'::jsonb) || $2::jsonb WHERE id=$1", run_id, acts)
+        if verdict == "failed":                       # 기록의 답 글도 화면과 같게(WP-9 ② — 화면은 이미 실패 문장으로 바꿔 보인다)
+            why = next((x.get("reason") for x in items if not x["ok"] and x.get("reason")), None)
+            await conn.execute("UPDATE agent_runs SET answer_md=$2 WHERE id=$1", run_id,
+                               "지도에 반영하지 못했습니다" + (f" — {why}" if why else "") + ".")
     r = await redis()
     await r.xadd(f"agent:runs:{run_id}", {"event": "agent.acts", "data": json.dumps({"run_id": run_id, **acts}, ensure_ascii=False)},
                  maxlen=2000, approximate=True)

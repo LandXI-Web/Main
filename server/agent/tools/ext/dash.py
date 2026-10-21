@@ -20,7 +20,9 @@ SPECS = {
         "description": "XI맵 융합 대시보드 — 지역 · 업무 · 비교를 확인하고 AI 분석 결과 × 지적(필지 · 지목 · 공시지가) × 지금 도는 분석을 집계해 화면을 대시보드로 바꾼다.",
         "properties": {"request": {"type": "string", "description": "사용자 문장 원문"},
                        "region": {"type": "string", "description": "시군구 코드(쉼표 · 없으면 화면 지역 또는 전국)"},
-                       "task": {"type": "string"}, "kind": {"type": "string"}},
+                       "task": {"type": "string"}, "kind": {"type": "string"},
+                       "want": {"type": "string", "description": "업무가 아닌 분류(결과 없음 답)"}, "sub": {"type": "string", "description": "업무 아래 분류(논 · 밭)"},
+                       "low": {"type": "boolean", "description": "적은 곳 순"}},
     },
 }
 WRITE: set[str] = set()
@@ -47,7 +49,8 @@ YEAR_RX = re.compile(r"해마다|연도\s*별|년도\s*별|연도")
 CMP_RX = re.compile(r"비교|견줘|차이|대비|어디가\s*더|순위|랭킹")
 DASH_RX = re.compile(r"대시\s*보드|통계|현황|실태|분포|어디(?:가|에|서)?\s*(?:제일|가장)?\s*많|많은\s*곳|비교|추이|흐름|면적\s*별|지목\s*별|읍면동\s*별|시군구\s*별|"
                      r"순위|어때|어떤가|어떻게\s*돼|얼마나\s*(?:됐|되었|진행|있)|한눈에|정리해|집계|해마다|연도\s*별|진행\s*상황|요약해\s*줘\s*대시|"
-                     r"몇\s*(?:곳|개|동|채)")             # '○○시 비닐하우스 몇 곳이야' = 그 지역 통계 답(10-21 · 화면마다 같은 숫자)
+                     r"몇\s*(?:곳|개|동|채|군데)|"             # '○○시 비닐하우스 몇 곳이야' = 그 지역 통계 답(10-21 · 화면마다 같은 숫자)
+                     r"많은\s*(?:동네|읍면동|읍|면|동)|상위|하위|적은\s*곳|세\s*곳|\d+\s*곳만|동네\s*별|건수|얼마나\s*넓|다\s*합치면|총\s*면적|평균\s*(?:면적|크기)|하나당")   # WP-7 순위 · 크기 말
 NOT_RX = re.compile(r"보고서|초안|법령|조문|근거|만\s*(?:보여|남겨|펼쳐|켜)|원래대로|조건\s*(?:풀|없애)|분석\s*(?:실행|돌려)|내려\s*받|으로\s*(?:가|이동)|이동해")
 
 
@@ -69,9 +72,23 @@ def parse(t: str, ctx_region: str | None = None) -> dict | None:
     nation = bool(re.search(r"전국|우리\s*나라|대한민국", t))
     tasks = [k for rx, k in TASK_WORDS if re.search(rx, t)]
     task = tasks[0] if len(set(tasks)) == 1 else None
+    want, sub = None, None
+    try:                                                 # 분류 낱말 한 표(WP-5) — 업무가 아닌 분류(창고 · 축사 · 농막 · 논 · 밭 …)
+        from landxi_api.result_scope import CLASS_WORDS
+        for rx, nm, parent in CLASS_WORDS:
+            if not re.search(rx, t) or nm in ("휴경지",):
+                continue
+            if parent and not task:
+                task, sub = parent, nm                   # 논 · 밭 · 과수원 → 경작지(결과에 따로 없으면 '나누지 않습니다')
+            elif not parent and nm not in [k for _rx, k in TASK_WORDS] and not task and not want:
+                want = nm
+            break
+    except Exception:  # noqa: BLE001
+        pass
+    emd_rank = bool(re.search(r"읍면동|동네|읍\s*면|면\s*별", t))     # 읍면동 순위 · 동네 — 전국 비교가 아니라 그 시군구 안(WP-7)
     if SURVEY_RX.search(t):
         kind = "survey"
-    elif len(regs) >= 2 or (CMP_RX.search(t) and (nation or not regs)):
+    elif len(regs) >= 2 or (CMP_RX.search(t) and (nation or not regs) and not emd_rank):
         kind = "compare"
     elif TIME_RX.search(t):
         kind = "time"
@@ -92,7 +109,14 @@ def parse(t: str, ctx_region: str | None = None) -> dict | None:
         regs = [((region_of(r) or {}).get("sgg_cd") or r) for r in regs]
     except Exception:  # noqa: BLE001
         pass
-    return {"request": t, "region": ",".join(regs), "task": task or "", "kind": kind}
+    out = {"request": t, "region": ",".join(regs), "task": task or "", "kind": kind}
+    if want:
+        out["want"] = want
+    if sub:
+        out["sub"] = sub
+    if re.search(r"하위|적은\s*곳|작은\s*곳|꼴찌", t):
+        out["low"] = True
+    return out
 
 
 # ── 색 척도 고르기(값의 뜻 · 퍼짐에 따라 — README '가시화 규칙표') ─────────────────────────
@@ -213,6 +237,9 @@ async def build(args: dict, off: list[str] | None = None) -> dict:
             return await _time(XD, None)
         return await _national(XD, task, kind)
     sgg = regs[0]
+    if args.get("want"):                                 # 업무가 아닌 분류(창고 · 축사 …) — 다른 숫자로 대신 답하지 않는다(WP-5 · WP-8 ②)
+        t0 = await XD.agg_task(sgg)
+        return await _overview(XD, sgg) | {"note": f"{t0['name']}에는 {args['want']} 결과가 없습니다.", "missing": True}
     if kind == "survey":
         return await _survey(XD, sgg)
     if kind == "jimok":
@@ -319,7 +346,7 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     name = t["name"]
     trows = [r for r in t["rows"] if r["k"] == task]
     if not trows:
-        return await _overview(XD, sgg) | {"note": f"{name}에는 {task} 결과가 아직 없습니다."}
+        return await _overview(XD, sgg) | {"note": f"{name}에는 {task} 결과가 없습니다.", "missing": True}
     cols = [r["name"] for r in trows]
     unit = trows[0]["unit"]
     tot = sum(r["n"] for r in trows)
@@ -327,7 +354,7 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     if only:
         emd = [r for r in emd if r["label"] in only]
         if not emd:
-            return await _overview(XD, sgg) | {"note": f"{name} {' · '.join(only)}에는 {task} 결과가 아직 없습니다."}
+            return await _overview(XD, sgg) | {"note": f"{name} {' · '.join(only)}에는 {task} 결과가 없습니다.", "missing": True}
         return _task_only(name, sgg, task, unit, emd)
     kp = [{"label": f"{task}", "value": tot, "unit": unit, "sub": " · ".join(f"{r['name']} {_nf(r['n'])}" for r in trows) if len(trows) > 1 else None},
           {"label": "결과가 있는 읍면동", "value": len(emd), "unit": "곳"}]
@@ -400,7 +427,7 @@ async def _survey(XD, sgg) -> dict:
     ru, jm, t, e = await XD.agg_rule(sgg), await XD.agg_jimok(sgg), await XD.agg_task(sgg), await XD.agg_emd(sgg)
     name = ru["name"]
     if not ru["total"]:
-        return await _overview(XD, sgg) | {"note": f"{name}에는 실태조사 의심 필지가 아직 없습니다."}
+        return await _overview(XD, sgg) | {"note": f"{name}에는 실태조사 의심 필지가 없습니다.", "missing": True}
     farm = next((r for r in t["rows"] if r["k"] == "경작지"), None)
     r2 = next((c for c in ru["cols"] if c["k"] == "R2"), None)
     ru = {**ru, "cols": [{**c, "name": RULE_NAME.get(c["k"], c["name"])} for c in ru["cols"]]}   # 집계 보관본은 그대로(복사해서 이름만)
@@ -449,7 +476,7 @@ async def _jimok(XD, sgg, task) -> dict:
     name = jm["name"]
     rows = jm["rows"]
     if not rows:
-        return await _overview(XD, sgg) | {"note": f"{name}에는 연속지적 필지가 아직 없습니다."}
+        return await _overview(XD, sgg) | {"note": f"{name}에는 연속지적 필지가 없습니다.", "missing": True}
     parcels = sum(r["parcels"] for r in rows)
     clsset = sorted({c for r in rows for c in r["ai"]}, key=lambda c: -sum(r["ai"].get(c, 0) for r in rows))
     want = [task] if task and task in clsset else clsset
@@ -671,6 +698,33 @@ async def ximap_dash(args: dict, ctx) -> Out:
         spec["off"] = off                         # 끈 클래스를 뺀 숫자(화면 왼쪽 위 '보이는 것 기준'과 같은 기준)
     m = spec.get("main") or {}
     out.ui_actions.append({"op": "ximap_dash", "spec": spec})
+    sgg0 = spec.get("sgg")
+    out.scope = {"sgg": [sgg0] if sgg0 else ("nation" if spec.get("kind") in ("national", "time") else None),
+                 "cls": [args["task"]] if args.get("task") else None, "emd": spec.get("emd"),
+                 "kind": "suspect" if spec.get("kind") == "survey" else ("parcels" if spec.get("kind") == "jimok" else "det")}
+    if out.scope["sgg"] is None:
+        out.scope.pop("sgg")
+    try:
+        from .mapsvc import unapplied as _unapplied
+        miss_c = _unapplied(args.get("request") or "", applied=("cls",) if args.get("task") or args.get("want") else ())
+    except Exception:  # noqa: BLE001
+        miss_c = []
+    tail = f" 걸지 못한 조건: {' · '.join(miss_c)}." if miss_c else ""
+    if spec.get("missing"):                       # P3 — 물은 분류 · 자료가 없으면 다른 숫자를 붙이지 않고 '있는 것'만(WP-8 ② ⑤)
+        ctx.state["cannot"] = {"kind": "nodata"}
+        have = []
+        try:
+            from landxi_api import xdash as XD
+            if sgg0:
+                have = [r["k"] for r in (await XD.agg_task(sgg0)).get("rows") or [] if r.get("n")]
+        except Exception:  # noqa: BLE001
+            have = []
+        hv = " · ".join(dict.fromkeys(re.sub(r"\s*\(.*?\)$", "", h) for h in have[:5]))
+        nm = str(spec.get("title") or "").split(" · ")[0]
+        ctx.state["next"] = [{"label": f"{nm} 결과 보기", "q": f"{nm} 현황 보여 줘"}] if nm else [{"label": "통계 보기", "q": "통계 보기"}]
+        out.data = {"status": "missing", "제목": spec["title"]}
+        out.answer = str(spec["note"]).rstrip(".") + (f" — 있는 것은 {hv}." if hv else ".") + tail
+        return out
     # 답 끝 다음 단계(10-15 원칙 262 — 먼저 지도에만 가시화 · 통계는 원할 때 한 단계 더): 화면이 눌림을 받아 2 · 3단계로(새 질문 아님)
     ctx.state["next"] = [{"label": "통계 보기", "q": "통계 보기"}, {"label": "크게 보기", "q": "크게 보기"}]
     out.env("n", m.get("label") or "결과", env(m.get("value") or 0, m.get("unit") or "개", "inferred", "XI맵 융합 집계 — 화면 대시보드 큰 숫자와 같은 값"))
@@ -678,7 +732,13 @@ async def ximap_dash(args: dict, ctx) -> Out:
     lead = spec.get("note") or ""
     # 답은 짧게(10-15 원칙 258 — 지도 위에서 보여 주므로 '대시보드로' 말 없음) · 첫 해석 줄 하나만 덧붙임
     first = (spec.get("say") or [""])[0]
-    out.answer = (f"{lead} " if lead else "") + f"{spec['title']} — {m.get('label') or ''} {{{{n}}}}." + (f" {first}" if first else "")
+    if args.get("low") and spec.get("emd_rows"):  # '하위 3곳' — 같은 표(읍면동 순위)의 끝 셋(WP-7)
+        lo = list(reversed(spec["emd_rows"][-3:]))
+        unit = m.get("unit") or ""
+        first = "적은 곳은 " + " · ".join(f"{r['label']} {_nf(r['v'])}{unit if i == 0 else ''}" for i, r in enumerate(lo)) + " 순입니다."
+    if args.get("sub"):
+        lead = (f"{lead} " if lead else "") + f"{args['sub']}만 따로 나누지 않아 {args.get('task') or '경작지'}로 셌습니다."
+    out.answer = (f"{lead} " if lead else "") + f"{spec['title']} — {m.get('label') or ''} {{{{n}}}}." + (f" {first}" if first else "") + tail
     return out
 
 

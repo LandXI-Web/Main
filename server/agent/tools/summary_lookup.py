@@ -159,27 +159,12 @@ async def build_fallback(conn, tenant: str | None, region: str | None = None, ca
 
 # ── 질문 → 지역 · 서비스 ────────────────────────────────────────────────
 def match_regions(text: str) -> list[dict]:
-    """문장 속 시군구(이름 · 어간) — runner.scope_guard 와 같은 규칙. 같은 이름이 여러 시도에 있으면 []."""
-    from landxi_api.regions import regions_base
-    t = re.sub(r"\s+", " ", text or "")
-    regs, _, _ = regions_base()
-    hits = []
-    for r in regs:
-        nm = r["name"] or ""
-        city = nm.split(" ")[0]
-        for key in {nm, city}:
-            if not key:
-                continue
-            stem = key[:-1] if len(key) >= 3 and key[-1] in "시군" else None
-            if re.search(r"(^|[\s·,(])" + re.escape(key), t) or (stem and re.search(r"(^|[\s·,(])" + re.escape(stem) + r"(?![가-힣]{2,}[시군구])", t)):
-                hits.append({**r, "_key": key})
-                break
-    by_key: dict = {}
-    for h in hits:
-        by_key.setdefault(h["_key"], set()).add((h["full"] or "").split(" ")[0])
-    if any(len(v) > 1 for v in by_key.values()):
+    """문장 속 시군구(이름 · 어간) — runner.scope_guard 와 같은 풀이(talk.regions_in 한 곳 · 시도 줄임 + 구). 같은 이름이 여러 시도에 있으면 []."""
+    from .. import talk
+    found = talk.regions_in(text or "")
+    if any(len({(c.get("full") or "").split(" ")[0] for c in g}) > 1 for g in found):
         return []
-    return hits
+    return [{**c, "_key": (g[0].get("name") or "").split(" ")[0] if len(g) > 1 else (c.get("name") or "")} for g in found for c in g]
 
 
 def card_words(cards: list[dict]) -> dict[str, str]:
@@ -227,14 +212,30 @@ async def summary_lookup(args: dict, ctx) -> Out:
             m = match_regions(region if region.endswith(("시", "군", "구")) or " " in region else region + " ")
             m = m or match_regions(region)
             if not m:
-                raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
-            sgg = m[0]["sgg_cd"]
+                try:                                   # 읍면동 이름이 지역 칸에 온 것(관할 · 화면 시군구의 읍면동) — 그 시군구로(WP-5 ② · '지역 데이터 없음'은 지역이 정말 없을 때만)
+                    from .scope import region_of as _sreg
+                    rr = await _sreg(ctx, {"region": region})
+                    sgg = rr.get("sgg")
+                except ToolError:
+                    sgg = None
+                if not sgg:
+                    raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
+            else:
+                sgg = m[0]["sgg_cd"]
     async with db(p) as conn:
         cards = await _cards(conn)
         if card and card not in {c["id"] for c in cards}:
             card = match_card(str(card), cards)
         res = await build(conn, tenant_arg(p), region=sgg, card=card)
     items = [it for it in (res.get("items") or [])]
+    if not items and sgg and getattr(p, "realm", None) == "lx":   # 서비스 요약이 없는 시군구(LX) — XI맵 통계(전국 분석 결과)로(WP-8 · 미리 '없음' 0)
+        try:
+            from .ext import dash as D
+            a = D.parse(str(ctx.state.get("msg") or "") + " 현황", sgg) or {"request": "", "region": sgg, "kind": "overview", "task": ""}
+            a["region"] = a.get("region") or sgg
+            return await D.ximap_dash(a, ctx)
+        except Exception:  # noqa: BLE001
+            pass
     out = Out(source="요약(서비스 · 지역 · 상태)")
     rows = []
     lx = True                                           # 원칙 135 — 답은 '현장 확인 필요' 없이 AI 분석 결과(화면과 같은 값 · LX 10-09 · 기관 10-10)
@@ -250,7 +251,9 @@ async def summary_lookup(args: dict, ctx) -> Out:
                         continue
                     lab = AI_LABEL
                 env = {x: e[x] for x in ("value", "unit", "basis", "as_of", "source", "note") if x in e}
-                mk[key] = out.env(f"i{k}_{key}", f"{it.get('region_name') or ''} {it.get('card_name') or ''} · {lab}".strip(), env)
+                kind = {"detected": "det", "suspect": "suspect", "field_check": "suspect", "review_pending": "review", "reports": "report"}.get(key)
+                mk[key] = out.env(f"i{k}_{key}", f"{it.get('region_name') or ''} {it.get('card_name') or ''} · {lab}".strip(), env,
+                                  scope={**({"sgg": [it["sgg_cd"]]} if it.get("sgg_cd") else {}), "emd": None, **({"kind": kind} if kind else {})})
                 mk[key + "_label"] = lab
         rows.append({"서비스": it.get("card_name"), "지역": it.get("region_name"), "상태": it.get("stage"),
                      "영상": (it.get("imagery") or {}).get("label") if (it.get("imagery") or {}).get("has") else "없음", "수치": mk})

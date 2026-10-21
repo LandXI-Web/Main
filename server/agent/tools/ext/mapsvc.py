@@ -62,8 +62,43 @@ def allowed(name: str, p) -> bool:
 
 
 # ── 말 → 조건 ─────────────────────────────────────────────────────────────────────
-CLS_WORDS = [(r"비닐\s*하우스|온실|하우스", "비닐하우스"), (r"건물|건축물", "건물"), (r"경작지|농경지|논밭", "경작지"), (r"주차장", "주차장"),
-             (r"차량|자동차", "차량"), (r"스티로폼", "스티로폼")]
+def _cls_words() -> list[tuple[str, str]]:
+    """분류 낱말 한 표(landxi_api.result_scope.CLASS_WORDS · WP-5) — (말, 분류 이름). 표를 못 읽으면 예전 여섯 가지."""
+    try:
+        from landxi_api.result_scope import CLASS_WORDS
+        return [(rx, nm) for rx, nm, _p in CLASS_WORDS if nm not in ("토지피복", "곤포사일리지", "해양쓰레기")]
+    except Exception:  # noqa: BLE001
+        return [(r"비닐\s*하우스|온실|하우스", "비닐하우스"), (r"건물|건축물", "건물"), (r"경작지|농경지|논밭", "경작지"), (r"주차장", "주차장"),
+                (r"차량|자동차", "차량"), (r"스티로폼", "스티로폼")]
+
+
+CLS_WORDS = _cls_words()
+CLS_PARENT = {"논": "경작지", "밭": "경작지", "과수원": "경작지"}
+NEAR_RX = re.compile(r"([가-힣\s]{1,12}?)\s*(?:근처|주변|인근|가까이)\s*(\d[\d,]*)\s*(m|미터|km|킬로)\s*(?:안|이내|내)?")
+BOTH_RX = re.compile(r"([가-힣]{1,8})\s*이면서\s*")
+
+
+def unapplied(t: str, applied=("cls", "area_min", "area_max", "emd")) -> list[str]:
+    """거르기 · 통계가 알아듣지 못한 조건 조각(WP-6 · P4) — '주차장 근처 100m' · 둘째 분류 · 상한 면적. applied = 이 도구가 건 조건 종류."""
+    t = re.sub(r"\s+", " ", t or "")
+    out = []
+    near = []
+    for m in NEAR_RX.finditer(t):
+        w = re.sub(r".*이면서\s*", "", m.group(1).strip()).split()
+        what = " ".join(w[-2:]) if w and w[-1] in ("시설", "곳", "땅") else (w[-1] if w else "")
+        near.append(what)
+        out.append(f"{what} 근처 {m.group(2)}{'m' if m.group(3) in ('m', '미터') else 'km'}".strip())
+    names = [nm for rx, nm in CLS_WORDS if re.search(rx, t)]
+    if "cls" in applied and len(names) >= 2 and BOTH_RX.search(t) and not any(names[1] in x or x in names[1] for x in near):
+        out.append(f"둘째 분류({names[1]})")
+    elif "cls" not in applied and names:
+        out.append(f"분류({' · '.join(names[:2])})")
+    areas = list(AREA_RX.finditer(t))
+    for m in areas:
+        v, side, op = _area(m)
+        if f"area_{side}" not in applied:
+            out.append(f"{_nf(v)}㎡ {'이상' if side == 'min' else '이하'}")
+    return out
 SUB_WORDS = [(r"단동", "단동"), (r"연동|다동", "다동")]
 SUB_KO = {"단동": "단동", "다동": "연동"}
 UNIT = r"(㎡|m2|m²|제곱\s*미터|평방\s*미터|평|ha|헥타르)"
@@ -116,10 +151,11 @@ def parse_filter(t: str) -> dict | None:
     if not (ONLY_RX.search(t) or (m and m.group(4))):
         return None
     a: dict = {}
-    if m:
-        v, side, op = _area(m)
-        a[f"area_{side}"] = round(v, 1)
-        a[f"area_op_{side}"] = op
+    for mm in AREA_RX.finditer(t):                     # '500㎡ 이상 3,000㎡ 이하' — 아래 · 위 둘 다(WP-6)
+        v, side, op = _area(mm)
+        if f"area_{side}" not in a:
+            a[f"area_{side}"] = round(v, 1)
+            a[f"area_op_{side}"] = op
     sub = next((k for rx, k in SUB_WORDS if re.search(rx, t)), None)
     base = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
     if sub:
@@ -153,6 +189,12 @@ def parse_task(t: str) -> dict | None:
         return None if _clear_keys(t) else {"clear": True, "request": t}
     if not ONLY_RX.search(t) or AREA_RX.search(t) or any(re.search(rx, t) for rx, _ in SUB_WORDS):
         return None
+    try:                                               # 지역 이름이 있는 질문은 전국 업무 거르기가 아니다(WP-7 · P2)
+        from ... import talk
+        if talk.regions_in(t):
+            return None
+    except Exception:  # noqa: BLE001
+        pass
     hits = [k for rx, k in TASK_WORDS if re.search(rx, t)]
     rest = t
     for rx, _ in TASK_WORDS:
@@ -214,7 +256,10 @@ async def map_task(args: dict, ctx) -> Out:
 
 
 REPORT_ASK = re.compile(r"보고서|리포트|report", re.I)
-REPORT_DO = re.compile(r"초안|써\s*줘|써줘|작성|만들어|뽑아|draft|write", re.I)
+REPORT_DO = re.compile(r"초안|써\s*줘|써줘|작성|만들어|뽑아|요약|한\s*장|draft|write", re.I)
+# 기관 지도 화면의 '○○ 현황 문서 · 한글로 · 엑셀로 내려받기'(WP-4) — 분류 · 통계 말이 있으면 실태조사 초안이 아니라 지도 위 결과 층 보고서
+DOC_ASK = re.compile(r"문서|한글\s*(?:로|파일|문서)|hwpx|엑셀|xlsx|pdf", re.I)
+DOC_DO = re.compile(r"내려\s*받|뽑아|만들|줘|싶어", re.I)
 
 
 def ROUTE(msg: str, ctx):
@@ -223,14 +268,29 @@ def ROUTE(msg: str, ctx):
         return None
     p = getattr(ctx, "principal", None)
     c = getattr(ctx, "context", None) or {}
-    if getattr(p, "realm", None) == "lx" and len(t) <= 120 and REPORT_ASK.search(t) and REPORT_DO.search(t) \
+    if getattr(p, "realm", None) == "lx" and len(t) <= 120 and (REPORT_ASK.search(t) or DOC_ASK.search(t)) and (REPORT_DO.search(t) or DOC_DO.search(t)) \
             and not re.search(r"법령|조문|근거\s*조", t) and not re.search(r"실태\s*조사|의심", t):
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
-    if getattr(p, "realm", None) == "tenant" and c.get("page") in ("xi-clean", "lx-map") and len(t) <= 120 and REPORT_ASK.search(t) and REPORT_DO.search(t) \
-            and (STATS_RX.search(t) or any(re.search(rx, t) for rx, _ in CLS_WORDS)) \
+    if getattr(p, "realm", None) == "tenant" and c.get("page") in ("xi-clean", "lx-map") and len(t) <= 120 and (REPORT_ASK.search(t) or DOC_ASK.search(t)) \
+            and (REPORT_DO.search(t) or DOC_DO.search(t)) \
+            and (STATS_RX.search(t) or STATUS_RX.search(t) or DOC_ASK.search(t) or any(re.search(rx, t) for rx, _ in CLS_WORDS)) \
             and not re.search(r"법령|조문|근거\s*조|실태\s*조사|의심|필지|공문|협조\s*요청|시행문", t):
         # 기관 지도 화면의 '○○ 통계 보고서' = 지도 위 결과 층 보고서(통계 답과 같은 대상 · 같은 행) — 실태조사(의심 필지) 보고서는 그 말을 할 때만(10-18)
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}
+    ch = CHANGE_RX.search(t)
+    if ch and len(t) <= 60 and not REPORT_ASK.search(t):   # '농지가 ○○로 바뀐 곳' = 실태조사 의심 필지 상위(WP-12 · 답에 '○○ 분류 결과가 아니라' 한 줄)
+        from ... import talk
+        rule = next((r for rx, r in CHANGE_RULE if re.search(rx, ch.group(1))), "R1")
+        g = talk.regions_in(t)
+        a = {"rule": rule, "top": 5}
+        if g:
+            r0 = talk.pick(ctx, g[0])[0]
+            if r0:
+                a["region"] = r0["sgg_cd"]
+        em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP]
+        if em:
+            a["emd"] = em[0]
+        return {"tool": "survey_findings", "args": a, "intent": "map"}
     if c.get("page") == "xi-clean" and getattr(p, "realm", None) == "lx":
         try:                                             # XI맵 통계 · 현황 · 비교 질문 = 융합 대시보드(dash.py · 10-14 11:02) — 지도 서비스 통계(map_stats)보다 먼저
             from .dash import ROUTE as _dash
@@ -255,7 +315,9 @@ def ROUTE(msg: str, ctx):
     return None
 
 
-STATUS_RX = re.compile(r"현황|분포|어디(?:가|에|서)?\s*(?:제일|가장)?\s*많|많은\s*곳|얼마나\s*있|몇\s*(?:곳|개|동|채)")   # '몇 곳' = 통계 답(10-21)
+CHANGE_RX = re.compile(r"(?:농지|논|밭|경작지|땅)[가이]?\s*([가-힣\s]{1,10}?)(?:으로|로)\s*바뀐\s*(?:곳|데|필지)")
+CHANGE_RULE = [(r"비닐|하우스|온실", "R3"), (r"주차장", "R4"), (r"휴경|묵", "R2"), (r"산지|임야", "R5")]
+STATUS_RX = re.compile(r"현황|분포|어디(?:가|에|서)?\s*(?:제일|가장)?\s*많|많은\s*(?:곳|동네)|얼마나\s*있|몇\s*(?:곳|개|동|채|군데)|건수|순위|면적|넓이|크기|합치면")   # '몇 곳' = 통계 답(10-21)
 
 
 STATS_RX = re.compile(r"통계|집계|읍면동\s*(?:별|마다)|(?:개수|면적)\s*(?:별로|나눠|나누어)|별로\s*(?:개수|면적|세어|나눠)")
@@ -330,6 +392,13 @@ async def _count(jobs: list[str], cond: dict) -> tuple[int, float]:
 
 def _want_cls(word: str, classes: list[str]) -> tuple[list[str], str | None]:
     base, _, sub = str(word).partition(" ")
+    if not sub and base in CLS_PARENT:                 # 논 · 밭 · 과수원 — 결과에 따로 없으면 위 분류(경작지)로(답에 '나누지 않습니다' 한 줄)
+        w = [c for c in classes if c == base or c.startswith(base + "_")]
+        if w:
+            return w, None
+        par = CLS_PARENT[base]
+        w = [c for c in classes if c == par or c.startswith(par + "_")]
+        return w, (None if w else f"{base} 결과가 없습니다")
     if sub:
         w = [c for c in classes if c.startswith(base) and sub in c]
         if not w:
@@ -353,6 +422,18 @@ async def map_filter(args: dict, ctx) -> Out:
     prev = RSC.clean((getattr(ctx, "context", None) or {}).get("filter"))
     jobs = await _jobs_on(ctx)
     cond, new_note = None, ""
+    req = str(args.get("request") or ctx.state.get("msg") or "")
+    named = await _named_regions(ctx, req)
+    if named and jobs and not args.get("clear"):          # 지역을 말했으면 켜진 층 가운데 그 지역 층만(WP-6 ① · P2) — 없으면 거르지 않고 '결과 없음'
+        mine = [x["job"] for x in await RSC.layer_names(jobs) if str(x.get("sgg") or "") in named["codes"]]
+        if not mine:
+            ctx.state["cannot"] = {"kind": "nodata"}
+            out.data = {"status": "missing", "missing": [named["name"]]}
+            what = " · ".join(nm for _rx, nm in CLS_WORDS if re.search(_rx, req))[:20]
+            out.answer = (f"{named['name']}에는 켜진 결과 층이 없어 거르지 않았습니다"
+                          + (f" — {named['name']} {what} 결과는 지도 위 층으로 켜야 셀 수 있습니다." if what else "."))
+            return out
+        jobs = mine
     if args.get("clear"):
         keys = [k for k in str(args.get("clear_only") or "").split(",") if k in KIND_KO]
         gone = [k for k in keys if any(c["k"] == k for c in RSC.chips(prev))]
@@ -440,7 +521,15 @@ async def map_filter(args: dict, ctx) -> Out:
     n, m2 = await _count(jobs, cond)
     chips = RSC.chips(cond)
     label = RSC.label(cond)
-    act = {"op": "map_filter", "label": label, "n": n, "chips": chips, **{k: v for k, v in cond.items() if k in RSC.KEYS}}
+    out.scope = {"sgg": [str(x.get("sgg") or "") for x in names if x.get("sgg")], "emd": list(cond.get("emd") or []) or None,
+                 "cls": [_ko(c) for c in (cond.get("cls") or classes)] or None, "kind": "det"}
+    if not out.scope["sgg"]:
+        out.scope.pop("sgg")
+    miss_c = unapplied(req, applied=tuple(k for k in ("cls", "emd", "area_min", "area_max") if args.get(k) is not None or (k in ("cls", "emd") and cond.get(k))))
+    if miss_c:                                         # 걸지 못한 조건은 늘 말한다(WP-6 ② · P4) — '조건을 걸었습니다'만 남기지 않게
+        new_note = (new_note + " " if new_note else "") + f"걸지 못한 조건: {' · '.join(miss_c)}."
+    act = {"op": "map_filter", "label": label, "n": n, "chips": chips, **{k: v for k, v in cond.items() if k in RSC.KEYS},
+           **({"unapplied": miss_c} if miss_c else {})}
     out.ui_actions.append(act)
     out.env("n", f"조건({label or '없음'})에 맞는 AI 분석 결과", env(n, "count", "inferred", "켜진 결과 층(지운 결과 제외)"))
     out.env("m2", f"조건({label or '없음'})에 맞는 결과 면적 합", env(round(m2), "m2", "inferred", "켜진 결과 층(지운 결과 제외)"))
@@ -449,6 +538,26 @@ async def map_filter(args: dict, ctx) -> Out:
     out.answer = (RSC.scope_line(names, cond) + (" — {{n}}건" if n else " — 0건") + "\n" + new_note
                   + (" 맞는 결과가 없어 지도에는 아무것도 남지 않습니다." if not n else "") + tail)
     return out
+
+
+async def _named_regions(ctx, t: str) -> dict | None:
+    """질문의 시군구 → {name, codes}(한 시의 여러 구 · 옛 코드 포함). 없으면 None."""
+    try:
+        from ... import talk
+        from landxi_api.regions import city_children
+        g = talk.regions_in(t)
+        if not g:
+            return None
+        r, _ = talk.pick(ctx, g[0])
+        if not r:
+            return None
+        codes = {str(c["sgg_cd"]) for c in g[0]} | {str(r["sgg_cd"])} | {str(c.get("prev_cd")) for c in g[0] if c.get("prev_cd")}
+        for c in list(codes):
+            codes |= {x["sgg_cd"] for x in city_children(c)}
+        nm = (r.get("name") or "").split(" ")[0] if len(g[0]) > 1 else (r.get("name") or "")
+        return {"name": nm, "codes": codes}
+    except Exception:  # noqa: BLE001
+        return None
 
 
 async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], dict]:
@@ -526,12 +635,17 @@ async def map_stats(args: dict, ctx) -> Out:
         e[1] += float(r["m2"])
         per[r["job_id"]] = per.get(r["job_id"], 0) + int(r["n"])
     tot = sum(v[0] for v in by.values())
+    cls_av, _e = await _avail(jobs)
+    out.scope = {"sgg": [str(x.get("sgg") or "") for x in names if x.get("sgg")] or None, "emd": list(cond.get("emd") or []) or None,
+                 "cls": [_ko(c) for c in (cond.get("cls") or cls_av)] or None, "kind": "det"}
+    if not out.scope["sgg"]:
+        out.scope.pop("sgg")
     out.env("total", "대상 층의 AI 분석 결과 수(지금 조건 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "결과가 있는 읍면동 수", env(len([k for k in by if k != "읍면동 밖"]), "곳", "inferred", "detections"))
     top = sorted(by.items(), key=lambda x: (-x[1][0], x[0]))
     rows_c = []
     for i, (e, v) in enumerate(top[:12]):
-        out.env(f"e{i}", f"{e} AI 분석 결과 수", env(v[0], "count", "inferred", "detections"))
+        out.env(f"e{i}", f"{e} AI 분석 결과 수", env(v[0], "count", "inferred", "detections"), scope={"emd": [e]})
         rows_c.append({"label": e, "env": f"e{i}"})
     if rows_c:
         out.blocks.append({"type": "chart", "kind": "bar", "title": "읍면동별 개수", "rows": rows_c})
@@ -838,6 +952,10 @@ async def ai_report(args: dict, ctx) -> Out:
         (d0 / "ai-report-map.png").write_bytes(pngs[0])
     tot = sum(int(r["n"]) for d in parts for r in d["rows"])
     n_emd = len({r["emd"] for d in parts for r in d["rows"] if r["emd"]})       # 읍면동 이름 수(층이 둘이어도 한 번 · 통계 답과 같은 셈)
+    out.scope = {"sgg": [str(d.get("sgg") or "") for d in parts if d.get("sgg")] or None, "emd": list(cond.get("emd") or []) or None,
+                 "cls": sorted({_ko(r["cls"]) for d in parts for r in d["rows"] if r.get("cls")}) or None, "kind": "det"}
+    if not out.scope["sgg"]:
+        out.scope.pop("sgg")
     out.env("total", "보고서의 AI 분석 결과 수(지도 서비스 결과 층과 같은 행 · 지운 결과 제외)", env(tot, "count", "inferred", "detections"))
     out.env("emds", "보고서에 실린 읍면동 수", env(n_emd, "곳", "inferred", "detections"))
     try:
@@ -993,11 +1111,34 @@ async def _dash_report(ctx, t: str) -> Out | None:
     c = getattr(ctx, "context", None) or {}
     base = await HL._base(ctx) or {}
     tasks = list(dict.fromkeys(k for rx, k in D.TASK_WORDS if re.search(rx, t)))
+    sub = None
+    if not tasks:                                      # 분류 낱말 한 표(WP-5) — 논 · 밭 · 과수원 = 경작지 · 업무가 아닌 분류(창고 · 축사 …)는 '결과 없음'
+        for rx, nm, parent in RSC.CLASS_WORDS:
+            if re.search(rx, t):
+                if parent:
+                    tasks, sub = [parent], nm
+                elif nm not in [k for _rx, k in D.TASK_WORDS]:
+                    g = talk.regions_in(t)
+                    r0 = talk.pick(ctx, g[0])[0] if g else talk.here(ctx)
+                    if r0:
+                        from landxi_api import xdash as XD
+                        have = [x["k"] for x in (await XD.agg_task(r0["sgg_cd"])).get("rows") or [] if x.get("n")]
+                        nm0 = (r0.get("name") or "").split(" ")[0] if g and len(g[0]) > 1 else r0.get("name")
+                        o = Out(source="XI맵 통계")
+                        ctx.state["cannot"] = {"kind": "nodata"}
+                        o.data = {"status": "missing"}
+                        hv = " · ".join(dict.fromkeys(re.sub(r"\s*\(.*?\)$", "", h) for h in have[:5]))
+                        o.answer = f"{nm0}에는 {nm} 결과가 없습니다" + (f" — 있는 것은 {hv}." if hv else ".") + " 보고서를 만들지 않았습니다."
+                        return o
+                break
     task = tasks[0] if len(tasks) == 1 else (None if tasks else base.get("task"))
     if not task:
         return None
-    q = REP_WORDS.sub(" ", t)
-    named = bool([g for g in talk.regions_in(t) if g])
+    q = re.sub(r"내려\s*받\S*|다운\s*로드\S*|엑셀\S*|한글\s*(?:로|파일)\S*|hwpx\S*|xlsx|csv\S*|pdf\S*|파일\S*", " ", REP_WORDS.sub(" ", t), flags=re.I)
+    gg = [g for g in talk.regions_in(t) if g]
+    named = bool(gg)
+    if len(q) > 60:                                    # 긴 문장(조건 · 동작 여럿)은 지역 이름 + 업무로만 묻는다(통계 말 120자 제한)
+        q = " ".join(((g[0].get("full") or "").split(" ", 1)[-1] if len(g) == 1 else (g[0].get("name") or "").split(" ")[0]) for g in gg)
     a = D.parse(f"{q} {task} 통계", None if named else c.get("region")) or {}
     reg = (a.get("region") or "").split(",")[0]
     if not reg and not named:
@@ -1011,7 +1152,7 @@ async def _dash_report(ctx, t: str) -> Out | None:
     off = D.off_classes(ctx)
     spec = await D.build(args, off)
     out = Out(source="XI맵 통계('통계 보기' 판과 같은 집계)")
-    if spec.get("note") and str(spec.get("note")).endswith("결과가 아직 없습니다."):
+    if spec.get("missing") or (spec.get("note") and str(spec.get("note")).endswith("결과가 아직 없습니다.")):
         ctx.state["cannot"] = {"kind": "nodata"}
         out.data = {"status": "no_data", "text": spec["note"]}
         out.answer = spec["note"] + " 보고서를 만들지 않았습니다."

@@ -37,7 +37,8 @@ async def parcel_lookup(args: dict, ctx) -> Out:
     if not pnu:
         got, why = ix.from_jibun(parse_jibun(jibun))
         if not got:
-            raise ToolError("not_found", "해당 지역 데이터가 없습니다" if "관할" in (why or "") else f"필지를 찾지 못했습니다({why})", 404)
+            raise ToolError("no_data", "그 지번의 필지를 이 계정 관할 안에서 찾지 못했습니다 — 시군구 · 읍면동과 함께 말씀해 주세요" if "관할" in (why or "")
+                            else f"필지를 찾지 못했습니다({why})", 404)
         pnu = got
     if len(pnu) != 19:
         raise ToolError("bad_request", "PNU 는 19자리")
@@ -45,7 +46,7 @@ async def parcel_lookup(args: dict, ctx) -> Out:
         raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
     res = await ctx.http.get(f"/survey/parcels/{pnu}", params={"with": "facts,findings,history,ledger"})
     if res.status_code == 404:
-        raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
+        raise ToolError("no_data", "그 필지를 찾지 못했습니다 — 지번을 다시 확인해 주세요", 404)
     if res.status_code == 403:
         raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
     if res.status_code >= 400:
