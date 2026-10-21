@@ -156,7 +156,7 @@ async function addImagery(id) {
 async function addSet(x) {
   if (x.ids) return;
   if (x.empty) { x.ids = []; return; }   // 찾은 것 0건 — 그릴 결과 층이 없다(범위로만 간다 · QA-결과없음)
-  const item = { id: 'lm-' + x.job, kind: 'vector', set: x.set, layer: 'results', promote_id: 'id', signed: false, source: 'pmtiles' };
+  const item = { id: 'lm-' + x.job, kind: 'vector', set: x.set, layer: 'results', promote_id: 'id', signed: true, source: 'pmtiles' };   // 작업 결과 = 서명 주소로만(10-22 옆문 닫기 2차)
   const sid = 'lm-r-' + x.job;
   try { map.addSource(sid, await sourceSpec(item)); } catch (e) { K.devlog('result', `${e?.message || e}`); x.ids = []; return; }
   x.ids = addResultLayers(map, sid, sid, { kind: 'landcover', sourceLayer: 'results', visible: false });

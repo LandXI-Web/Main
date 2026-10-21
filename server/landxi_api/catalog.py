@@ -127,10 +127,7 @@ def set_tenant(set_id: str) -> str | None:
 _POLICY: dict = {"mt": None, "m": {}}
 
 
-def restricted_set(set_id: str) -> bool:
-    """이름 있는 세트(sets.yaml layers · imagery) 중 공개가 아닌 것 = 서명 필요(10-22 옆문 닫기).
-    공개 = export_policy public (결과는 security_review cleared 까지). 그 밖(tenant · never · 검수 전 결과)은 같은 파일이
-    서명 없이 받아지지 않게 한다. sets.yaml 에 없는 세트(작업 결과 ULID 등)는 기존 규칙(set_tenant · demo · signed_sets)을 따른다."""
+def _policy() -> dict:
     s = config.load_yaml("sets")
     if _POLICY["mt"] is not s:
         m = {}
@@ -138,11 +135,33 @@ def restricted_set(set_id: str) -> bool:
             if L.get("set"):
                 m[L["set"]] = (L.get("export_policy"), L.get("security_review"), L.get("role", "imagery"))
         _POLICY.update(mt=s, m=m)
-    e = _POLICY["m"].get(set_id)
+    return _POLICY["m"]
+
+
+def set_public(set_id: str) -> bool:
+    """서명 없이 받아도 되는 세트 — '모르면 닫힘'(10-22 옆문 닫기 2차). 공개 발췌 폴더(public/*)와, sets.yaml layers · imagery 에
+    공개 규칙(export_policy public · 결과는 security_review cleared 까지)이 적힌 세트만. 규칙이 없는 세트(해양쓰레기 · 여수 2026 드론 ·
+    작업 결과 · 기관 별칭 · 새로 올린 결과)는 모두 서명이 있어야 받는다."""
+    if set_id.startswith("public/"):
+        return True
+    e = _policy().get(set_id)
     if not e:
         return False
     pol, rev, role = e
-    return pol != "public" or (role == "result" and rev != "cleared")
+    return pol == "public" and (role != "result" or rev == "cleared")
+
+
+def restricted_set(set_id: str) -> bool:
+    """이름 있는 세트(sets.yaml layers · imagery) 중 공개가 아닌 것(10-22 옆문 닫기). 이름 없는 세트는 set_public 이 닫는다."""
+    return set_id in _policy() and not set_public(set_id)
+
+
+def set_jurisdiction(set_id: str) -> str | None:
+    """이름 있는 세트의 관할 시군구(sets.yaml layers 의 sgg_cd · 필지 · 조사처럼 한 지역 자료) — 없으면 None(지역 거르기 없음)."""
+    for L in config.load_yaml("sets").get("layers") or []:
+        if L.get("set") == set_id:
+            return str(L["sgg_cd"]) if L.get("sgg_cd") else None
+    return None
 
 
 def pm_url(set_id: str) -> str:
@@ -196,6 +215,7 @@ def _layer_items(stage: str | None) -> list[dict]:
                           note=L.get("note") if exists else "파일 없음 — 산출 전(프론트 결손 표시)", basis=L.get("basis"))
         item["_lx_only"] = bool(L.get("lx_only"))
         item["_exists"] = exists
+        item["_sgg"] = str(L["sgg_cd"]) if L.get("sgg_cd") else None      # 한 지역 자료(필지 · 조사) — 기관 카탈로그는 관할 안만(10-22 2차)
         out.append(item)
     return out
 
@@ -233,7 +253,7 @@ async def _imagery_items(stage: str | None) -> list[dict]:
             source, set_id = "pmtiles", r["pmtiles_set"]
             path = s["sets"].get(set_id)
             tiles, url = None, pm_url(set_id) if path else None
-            signed = bool(set_id) and restricted_set(set_id)      # 공개 아닌 영상 조각 = 서명 주소로만(10-22 옆문 닫기)
+            signed = bool(set_id) and not set_public(set_id)      # 공개 아닌 영상 조각 = 서명 주소로만(10-22 옆문 닫기 · 2차 모르면 닫힘)
         bb = [round(float(v), 6) for v in r["bb"]] if r["bb"] else m.get("bounds")
         role = meta.get("role", "terrain" if r["kind"] == "terrain" else "imagery")
         out.append(_item_base(
@@ -344,6 +364,9 @@ async def layer_items(p: Principal, build: str | None, stage: str | None = None,
         kept = [i for i in kept if not (i.get("_lx_imagery") and i.get("role") == "imagery") or i["id"] in sh]
         # 공유된 원본 영상(타일 없음)도 그 기관 지도에(10-01 사용자 결정) — 서명 동적 타일
         kept += tenant_cog_items(items, p.tenant_id, {i["id"] for i in kept}, sh)
+        # 한 지역 자료(필지 · 조사 — sets.yaml sgg_cd)는 그 관할 기관만(10-22 옆문 닫기 2차 · 계정 범위 밖 0). 서명(/tiles/sign)도 이 목록을 본다
+        from .regions import region_allowed
+        kept = [i for i in kept if not i.get("_sgg") or region_allowed(p, i["_sgg"])]
     items = [i for i in kept if _bbox_hit(i, bbox)]
     # 기관 결과 세트는 서명 필요 표시(on 모드 url 은 /tiles/sign 으로)
     for i in items:

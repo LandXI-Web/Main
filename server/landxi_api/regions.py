@@ -1120,7 +1120,7 @@ async def _region_results(sgg_cd: str, p) -> dict:
         fin = x["finished_at"].isoformat(timespec="seconds") if x["finished_at"] else None
         out.append({"id": x["result_set"].replace("/", "-"), "name": {"ko": nm, "en": nm}, "kind": "vector", "role": "result", "source": "pmtiles",
                     "set": x["result_set"], "path": x["result_set"] + ".pmtiles", "layer": "results", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
-                    "signed": x["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", "basis": "inferred",
+                    "signed": True, "attribution": "Land-XI AI 분석 · 검수 전", "basis": "inferred",      # 작업 결과 = 서명 주소로만(10-22 옆문 닫기 2차)
                     "count": env(on.get(x["id"], 0) if x["id"] in only else sum(counts.values()) if counts else None, "count", "inferred", "전역 분석 결과(겹침 정리 후)", as_of=fin),
                     "from": "job", "style": "landcover" if lc else "result", "finished_at": fin,
                     # 전역(영상이 시군구를 덮음)인지 · 서비스 카드 분석의 대상 — XI ChatGEO 가 '그 지역 결과'를 고를 때 작은 부분 분석보다 전역 분석을(QA-통계 · 10-11)

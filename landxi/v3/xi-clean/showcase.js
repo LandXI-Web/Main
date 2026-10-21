@@ -271,7 +271,7 @@ export function createShowcase({ map, host, h, bd, ask, applyTask, taskRows, reg
     const tries = [[13, it.center], it.bounds ? [12, [(it.bounds[0] + it.bounds[2]) / 2, (it.bounds[1] + it.bounds[3]) / 2]] : null].filter(Boolean);
     for (const [z, [lng, lat]] of tries) {
       const n2 = 2 ** z, tx = Math.floor(((lng + 180) / 360) * n2), ty = Math.floor(((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) * n2);
-      const r = await fetch(`${API.base}/tiles/mvt/${it.set}/${z}/${tx}/${ty}.pbf?v=${it.v}`, { credentials: 'same-origin' });
+      const r = await fetch(`${API.base}/tiles/mvt/${it.set}/${z}/${tx}/${ty}.pbf?v=${it.v}${it.q ? '&' + it.q : ''}`, { credentials: 'same-origin' });   // q = 묶음 서명(10-22 2차)
       if (!r.ok || r.status === 204) continue;
       const rings = mvtRings(new Uint8Array(await r.arrayBuffer()), 'results', (p) => !p.cls || want.has(p.cls));
       rings.sort((a, b) => b.area - a.area);

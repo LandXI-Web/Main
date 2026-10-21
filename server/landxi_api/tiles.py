@@ -24,7 +24,7 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .catalog import base_of, canonical_set, layer_items, pm_url, rebase, resolve_set_path, restricted_set, set_tenant
+from .catalog import base_of, canonical_set, layer_items, pm_url, rebase, resolve_set_path, restricted_set, set_public, set_tenant
 from .deps import ApiError, db, principal, require
 from .envelope import KST
 
@@ -53,10 +53,42 @@ def lx_only_set(set_id: str) -> bool:
 
 
 def needs_signature(set_id: str) -> bool:
-    # 공개 아닌 이름 있는 세트(restricted_set — 기관 서비스 결과와 같은 파일 · 영상 조각 · 필지)도 서명(10-22 옆문 닫기:
-    # 기관 별칭은 403 인데 같은 파일의 results/lx/* 이름으로는 서명 없이 받아지던 것)
-    t = set_tenant(set_id)
-    return (t is not None and t != "lx") or set_id.startswith("demo/") or lx_only_set(set_id) or restricted_set(set_id)
+    # 모르면 닫힘(10-22 옆문 닫기 2차): sets.yaml 에 공개 규칙이 적힌 세트 · 공개 발췌(public/*)만 서명 없이. 그 밖 — 기관 결과 · 별칭 ·
+    # 공개 아닌 이름 있는 세트 · 규칙 없는 세트(해양쓰레기 · 여수 2026 드론) · 작업 결과(results/lx/job_*) · demo — 는 모두 서명
+    return not set_public(set_id) or lx_only_set(set_id)
+
+
+def _job_of(set_id: str) -> str | None:
+    """작업 결과 세트 → 작업 id. results/{기관}/job_* 이름이거나, sets.yaml 이름이 아닌 게시 이름(published_sets)."""
+    last = set_id.rsplit("/", 1)[-1]
+    if last.startswith("job_"):
+        return last
+    return None
+
+
+async def job_set_allowed(p, set_id: str) -> bool:
+    """작업 결과 서명(10-22 옆문 닫기 2차) — LX · 작업 주인 · 같은 기관. LX 가 돌린 지역 분석(그 작업의 시군구가 있음)은
+    그 시군구가 관할인 기관도(지역 결과 목록 /regions 가 그 기관에 보여 주는 결과와 같은 판정 · regions.region_allowed)."""
+    if p.is_lx:
+        return True
+    jid = _job_of(set_id)
+    if not jid:
+        from .results import published_job
+        jid = await published_job(set_id)
+    if not jid:
+        return False
+    from .deps import db
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT j.tenant_id, j.submitted_by, j.demo, coalesce(j.options->>'sgg_cd', i.sgg_cd) AS sgg "
+                                "FROM jobs j LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id=$1", jid)
+    if not r or r["demo"]:
+        return False
+    if p.tenant_id and r["tenant_id"] == p.tenant_id:          # 같은 기관(기관 사용자가 맡긴 작업의 주인도 여기)
+        return True
+    if r["tenant_id"] == "lx" and r["sgg"] and p.realm == "tenant":
+        from .regions import region_allowed
+        return region_allowed(p, r["sgg"])
+    return False
 
 
 def sign_exp() -> int:
@@ -430,11 +462,17 @@ async def tiles_sign(set: str, request: Request):
         raise ApiError("forbidden", "다른 기관의 결과 세트")
     if set_id.startswith("demo/") and not p.is_lx:
         raise ApiError("forbidden")
-    if not p.is_lx and t in (None, "lx") and not set_id.startswith("cog/") and restricted_set(set_id):
-        # 공개 아닌 이름 있는 세트 — 기관은 그 기관 카탈로그(배포본 결과 · 공유된 영상 · 참조)에 있는 것만(10-22 옆문 닫기)
-        _, mine = await layer_items(p, "tenant")
-        if not any(i.get("set") == set_id for i in mine):
-            raise ApiError("forbidden", "이 기관에 공유되지 않은 세트", {"set": set_id})
+    named = set_id in (config.load_yaml("sets").get("sets") or {}) or restricted_set(set_id)
+    if not p.is_lx and not set_id.startswith("cog/") and needs_signature(set_id):
+        if not named and set_id.startswith("results/") and (_job_of(set_id) or t in (None, "lx")) and set_id.rsplit("/", 1)[-1] != "parcel-survey":
+            # 작업 결과 — 작업 주인 · 같은 기관 · LX(+ LX 지역 분석은 그 관할 기관)만(10-22 옆문 닫기 2차)
+            if not await job_set_allowed(p, set_id):
+                raise ApiError("forbidden", "이 계정의 작업 결과가 아닙니다", {"set": set_id})
+        elif t in (None, "lx"):
+            # 이름 있는 세트 · 규칙 없는 세트 — 기관은 그 기관 카탈로그(배포본 결과 · 공유된 영상 · 관할 안 참조)에 있는 것만(10-22 옆문 닫기)
+            _, mine = await layer_items(p, "tenant")
+            if not any(i.get("set") == set_id for i in mine):
+                raise ApiError("forbidden", "이 기관에 공유되지 않은 세트", {"set": set_id})
     exp = sign_exp()
     s = sign(set_id, exp)
     if set_id.startswith("cog/"):

@@ -72,7 +72,7 @@ export function createNational({ map, before = 'slot-result' }) {
   /* ── 객체(줌 11부터) — 화면 안 끝난 칸의 결과 묶음 지도 조각(판 번호 주소)을 붙인다 ── */
   const OBJ = new Map();
   let objT = 0, objSeq = 0;
-  const objTpl = (o) => `${API.base}/tiles/mvt/${o.set}/{z}/{x}/{y}.pbf?v=${o.v}`;
+  const objTpl = (o) => `${API.base}/tiles/mvt/${o.set}/{z}/{x}/{y}.pbf?v=${o.v}${o.q ? '&' + o.q : ''}`;   // q = 묶음 서명(10-22 옆문 닫기 2차)
   async function objects(at, to) {
     if (!N.assets.length || !map.getSource(src(N.assets[0]))) return;
     const z = to ?? map.getZoom();

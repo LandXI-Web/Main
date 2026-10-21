@@ -47,6 +47,9 @@ aliases:
   results/gwangju-jeonnam/dp-gj-marine-25@1.2: results/lx/yeosu-marine-2025-aerial
 
 # 결과·참조 카탈로그 항목(영상은 imagery 표 — 아래 imagery: 절에서 시드)
+# 모르면 닫힘(10-22 옆문 닫기 2차): 여기(layers · imagery)에 export_policy public(결과는 security_review cleared 까지)으로 적힌 세트만
+# 서명 없이 받는다. 위 sets: 에만 있고 여기 없는 세트(해양쓰레기 · 여수 2026 드론 · 남원 건물)와 작업 결과(results/*/job_*)는 서명이 있어야 한다.
+# sgg_cd = 한 지역 자료(필지 · 조사)의 관할 시군구 — 기관 카탈로그 · 서명은 그 시군구가 관할인 기관과 LX 만.
 layers:
   - {id: sido, set: reference/sido, manifest: sido.pmtiles, kind: vector, role: reference, layer: sido, promote_id: code,
      name: {ko: 시도 경계, en: Provinces}, export_policy: public, security_review: n/a, license: 공공누리(행정경계 · vuski/admdongkor 2021-04),
@@ -60,7 +63,7 @@ layers:
   - {id: korea-outline, set: reference/korea-outline, manifest: korea-outline.pmtiles, kind: vector, role: reference, layer: korea_outline,
      name: {ko: 국토 윤곽, en: Korea outline}, export_policy: public, security_review: n/a, license: 공공누리, attribution: 행정경계,
      ladder: {stage: domestic, from: 3, to: 9, order: 890}, count_unit: count}
-  - {id: parcels-namwon, set: reference/parcels-namwon, manifest: namwon-parcels.pmtiles, kind: vector, role: reference, layer: parcels, promote_id: pnu,
+  - {id: parcels-namwon, set: reference/parcels-namwon, manifest: namwon-parcels.pmtiles, kind: vector, role: reference, layer: parcels, promote_id: pnu, sgg_cd: "52190",
      name: {ko: 남원 필지(2021-12), en: Namwon parcels (2021-12)}, export_policy: tenant, security_review: pending,
      license: 국토정보기본도 2.0(LX 내부 · 이용 범위 확인 중), attribution: 국토정보기본도 2.0 · 2021-12 기준, rights_holder: 확인 중(C04 Mobility Convergence 사업 자료),
      ladder: {stage: domestic, from: 12, to: 17, order: 930}, count_unit: 필지, note: V-World 연속지적 권한 반영 전 대체 소스}
@@ -68,6 +71,8 @@ layers:
      layer: landcover, promote_id: id, name: {ko: 남원 토지피복 4클래스 2023(AI 재추론), en: Namwon land cover 2023 (AI)},
      export_policy: public, security_review: cleared, license: LX 산출(검수 전), attribution: C01 2023 25cm × aerial25/best · 검수 전,
      basis: inferred, ladder: {stage: domestic, from: 10, to: 17, order: 500}, count_unit: polygons}
+  # now 질문(공개 / 남원만) 답 기다림 — '남원만'이면 바로 아래 줄의 export_policy: public 을 export_policy: tenant 로 한 줄만 바꾼다
+  # (서명 필요 · 기관은 이 세트를 배포받은 남원만 · 공개 첫 화면 public-deploys 의 이 결과는 함께 점검)
   - {id: namwon-farmland-2025, set: results/lx/namwon-farmland-2025, manifest: namwon-farmland-2025.pmtiles, kind: vector, role: result,
      layer: namwon_farmland_2025, promote_id: id, name: {ko: 남원 농경지 2025, en: Namwon farmland 2025}, export_policy: public, security_review: cleared,
      license: LX 산출, attribution: A02 2025 드론 AI 판독, basis: inferred, ladder: {stage: domestic, from: 10, to: 16, order: 510}, count_unit: 필지}

@@ -325,7 +325,8 @@ async def recent(request: Request, n: int = 12, year: int | None = None):
     today = 오늘(KST) 끝난 칸 수 · 그 칸들의 결과 객체 합(자산마다 보이는 분류만 — XI맵 합계와 같은 셈)."""
     require(principal(request), lx=True)
     n = max(1, min(40, int(n)))
-    from .tiles import set_tile_ver
+    from .tiles import set_tile_ver, sign, sign_exp
+    exp = sign_exp()
     day0 = dt.datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0)
     async with db(realm="lx") as conn:
         if year is None:
@@ -348,10 +349,11 @@ async def recent(request: Request, n: int = 12, year: int | None = None):
         cnt = _jv(r["counts"])
         counts = {k: {"n": int((cnt.get(k) or {}).get("n") or 0), "unit": UNIT.get(k, "개")} for k in vis.get(r["asset"], ()) if int((cnt.get(k) or {}).get("n") or 0) > 0}
         v = set_tile_ver(r["result_set"]) if r["result_set"] else None
+        q = f"exp={exp}&sig={sign(r['result_set'], exp)}" if v else None     # 결과 묶음 서명(10-22 옆문 닫기 2차 · LX 전용 목록)
         items.append({"asset": r["asset"], "asset_name": ASSETS.get(r["asset"], r["asset"]), "cd": r["cell_cd"], "name": r["name"], "sgg": r["sgg_name"], "sido": r["sido"],
                       "at": r["done_at"].astimezone(KST).isoformat(timespec="minutes") if r["done_at"] else None,
                       "center": [round(float(r["lng"]), 5), round(float(r["lat"]), 5)] if r["lng"] is not None else None,
-                      "counts": counts, "set": r["result_set"] if v else None, "v": v, "bounds": list(r["bbox"]) if r["bbox"] else None})
+                      "counts": counts, "set": r["result_set"] if v else None, "v": v, "q": q, "bounds": list(r["bbox"]) if r["bbox"] else None})
     tn = sum(int(t["n"] or 0) for t in today if t["cls"] in vis.get(t["asset"], ()))
     return {"year": year, "as_of": now_iso(), "today": {"cells": env(tc, "count", "measured", "오늘(KST) 끝난 읍면동"),
                                                          "n": env(tn, "count", "measured", "오늘 끝난 칸의 AI 분석 결과(자산마다 보이는 분류만)")},
@@ -378,10 +380,12 @@ async def sets(request: Request, asset: str = "farm", bbox: str = "", year: int 
             "     AND n.model_id IS NOT DISTINCT FROM c.model_id) END) "          # 칸의 지금 판 결과 묶음만(새 판으로 바꿔 끼운 칸의 옛 묶음은 내주지 않음)
             "LIMIT 200", asset, year, w, so, e, n, bool(test))
     out = []
+    from .tiles import sign, sign_exp
+    exp = sign_exp()
     for r in rows:
         v = set_tile_ver(r["result_set"])
-        if v:
-            out.append({"set": r["result_set"], "v": v, "bounds": list(r["bbox"])})
+        if v:      # 작업 결과 묶음 = 서명 주소로만(10-22 옆문 닫기 2차) — LX 전용 목록이라 묶음마다 서명을 함께 준다(조각마다 /tiles/sign 을 부르지 않게)
+            out.append({"set": r["result_set"], "v": v, "bounds": list(r["bbox"]), "q": f"exp={exp}&sig={sign(r['result_set'], exp)}"})
     return {"asset": asset, "year": year, "sets": out}
 
 

@@ -65,11 +65,92 @@ def test_public_set_unsigned_206_and_xyz_204(live):
     r = httpx.get(BASE + "/tiles/pmtiles/results/lx/namwon-landcover-2023.pmtiles", headers={"range": "bytes=0-126"}, timeout=30)
     assert r.status_code == 206
     r = httpx.get(BASE + "/tiles/xyz/no-such-folder/3/0/0.webp", timeout=30)
-    assert r.status_code == 204
+    assert r.status_code == 403          # 모르면 닫힘(10-22 2차) — 공개 규칙이 없는 영상 낱장 폴더는 서명 없이 열리지 않는다(전: 204)
     # 10-22 옆문 닫기 — 공개 아닌 이름 있는 세트(기관 서비스와 같은 파일 · 영상 조각)는 results/lx · imagery 이름으로도 서명 없이 403
     for u in ("/tiles/pmtiles/results/lx/yeosu-marine-2025-aerial.pmtiles", "/tiles/pmtiles/imagery/namwon_2504.pmtiles",
               "/tiles/xyz/namwon_ap25_2023/3/0/0.webp"):
         assert httpx.get(BASE + u, headers={"range": "bytes=0-99"}, timeout=30).status_code == 403, u
+
+
+def _pg(sql, *args):
+    import psycopg
+    from landxi_api import config
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        return c.execute(sql, args).fetchone()
+
+
+def _job_set(where, *args):
+    """파일이 있는 끝난 작업 결과 세트 하나(조건) — 없으면 None."""
+    from landxi_api import config
+    import psycopg
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        rows = c.execute("SELECT j.result_set FROM jobs j LEFT JOIN imagery i ON i.id=j.imagery_id WHERE j.state='done' AND NOT j.demo "
+                         "AND NOT coalesce(j.test,false) AND j.result_set LIKE 'results/%%/job_%%' AND " + where + " ORDER BY j.finished_at DESC LIMIT 40", args).fetchall()
+    for (rs,) in rows:
+        if (config.DATA_ROOT / f"{rs}.pmtiles").exists():
+            return rs
+    return None
+
+
+def _sign(tok, set_id):
+    return httpx.get(BASE + "/tiles/sign", params={"set": set_id}, headers=H(tok), timeout=60)
+
+
+def test_unruled_sets_closed_by_default(live, tok):
+    """10-22 옆문 닫기 2차 — sets.yaml 에 공개 규칙이 없는 세트는 기본으로 닫힘(서명 없이 403). 공개 규칙이 적힌 세트 · 공개 발췌는 그대로 206."""
+    rng = {"range": "bytes=0-99"}
+    for sid in ("results/lx/marine-debris", "results/lx/yeosu-marine-2026-drone", "reference/namwon-buildings", "reference/parcels-namwon"):
+        assert httpx.get(BASE + f"/tiles/pmtiles/{sid}.pmtiles", headers=rng, timeout=30).status_code == 403, sid
+        assert httpx.get(BASE + f"/tiles/mvt/{sid}/12/3500/1600.pbf", timeout=30).status_code == 403, sid
+    for sid in ("results/lx/namwon-landcover-2023", "results/lx/namwon-farmland-2025", "reference/sigungu", "public/login-ledger"):
+        assert httpx.get(BASE + f"/tiles/pmtiles/{sid}.pmtiles", headers=rng, timeout=30).status_code == 206, sid
+    # 규칙 없는 결과도 LX 는 서명을 받아 열고, 기관(배포받지 않음)은 서명을 받지 못한다
+    s = _sign(tok["staff"], "results/lx/marine-debris")
+    assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206
+    for k in ("namwon", "gj"):
+        assert _sign(tok[k], "results/lx/marine-debris").status_code == 403, k
+        assert _sign(tok[k], "results/lx/yeosu-marine-2026-drone").status_code == 403, k
+
+
+def test_job_result_sets_owner_tenant_lx_only(live, tok):
+    """작업 결과(results/*/job_*) — 서명 없이 403. 서명은 LX · 같은 기관 · (LX 가 돌린 지역 분석이면) 그 시군구 관할 기관만."""
+    rng = {"range": "bytes=0-99"}
+    lx_nw = _job_set("j.tenant_id='lx' AND coalesce(j.options->>'sgg_cd', i.sgg_cd) = %s", "52190")
+    lx_none = _job_set("j.tenant_id='lx' AND coalesce(j.options->>'sgg_cd', i.sgg_cd) IS NULL")
+    nw_own = _job_set("j.tenant_id='namwon'")
+    assert lx_nw or lx_none or nw_own, "파일이 있는 작업 결과가 없음"
+    for rs in (x for x in (lx_nw, lx_none, nw_own) if x):
+        assert httpx.get(BASE + f"/tiles/pmtiles/{rs}.pmtiles", headers=rng, timeout=30).status_code == 403, rs
+        s = _sign(tok["staff"], rs)
+        assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206, rs
+        assert _sign(tok["gj"], rs).status_code == 403, rs                      # 광주전남은 남원 · 지역 없는 LX 작업 결과를 받지 못한다
+    if lx_nw:
+        s = _sign(tok["namwon"], lx_nw)                                       # LX 가 돌린 남원 지역 분석 = 남원 관할
+        assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206
+    if lx_none:
+        assert _sign(tok["namwon"], lx_none).status_code == 403               # 지역 없는 LX 작업(전국 등) = LX 만
+    if nw_own:
+        assert _sign(tok["namwon"], nw_own).status_code == 200                # 같은 기관
+    assert _sign(tok["namwon"], "results/lx/job_NOSUCHJOB").status_code == 403
+
+
+def test_parcel_sets_jurisdiction_only(live, tok):
+    """필지 · 조사 세트 — 그 관할 기관(sets.yaml sgg_cd · 기관 관할 시군구)과 LX 만 서명. 다른 기관은 카탈로그에도 없다."""
+    rng = {"range": "bytes=0-99"}
+    for k, ok in (("staff", True), ("namwon", True), ("gj", False)):
+        s = _sign(tok[k], "reference/parcels-namwon")
+        assert (s.status_code == 200) == ok, (k, s.status_code)
+        if ok:
+            assert httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206
+    for k, has in (("namwon", True), ("gj", False)):
+        items = httpx.get(B + "/catalog/layers", headers=H(tok[k]), timeout=60).json()["items"]
+        assert any(i["set"] == "reference/parcels-namwon" for i in items) == has, k
+    # 남원 필지 조사(기관 이름 길) — 남원 · LX 만
+    assert httpx.get(BASE + "/tiles/pmtiles/results/namwon/parcel-survey.pmtiles", headers=rng, timeout=30).status_code == 403
+    assert _sign(tok["gj"], "results/namwon/parcel-survey").status_code == 403
+    for k in ("namwon", "staff"):
+        s = _sign(tok[k], "results/namwon/parcel-survey")
+        assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206, k
 
 
 def test_envelope_missing_500_dev(live):

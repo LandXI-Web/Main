@@ -112,15 +112,19 @@ def test_rebake_changes_version(tok):
         v1 = tiles.set_tile_ver(set_id)
         x, y = tile_of(127.4236, 35.4325, 14)                      # 사본의 범위 가운데(원본 머리 center)
         u = f"{ROOT}/tiles/mvt/{set_id}/14/{x}/{y}.pbf"
-        r1 = httpx.get(u + "?v=" + v1, timeout=60)
+        # 규칙 없는 결과 세트 = 모르면 닫힘(10-22 옆문 닫기 2차) — 서명 없이 403, LX 서명으로 연다
+        assert httpx.get(u + "?v=" + v1, timeout=60).status_code == 403
+        sg = httpx.get(f"{ROOT}/tiles/sign", params={"set": set_id}, headers=H(tok["staff"]), timeout=60).json()["url"]
+        q = "&" + sg.split("?", 1)[1]
+        r1 = httpx.get(u + "?v=" + v1 + q, timeout=60)
         assert r1.headers["x-lx-ver"] == v1 and "immutable" in r1.headers["cache-control"]
         t = time.time() + 5
         os.utime(dst, (t, t))                                      # 다시 구운 것과 같음(고친 시각이 바뀜)
         v2 = tiles.set_tile_ver(set_id)
         assert v2 != v1
-        r2 = httpx.get(u + "?v=" + v1, timeout=60)
+        r2 = httpx.get(u + "?v=" + v1 + q, timeout=60)
         assert r2.headers["x-lx-ver"] == v2 and r2.headers["cache-control"] == "no-cache"
-        assert "immutable" in httpx.get(u + "?v=" + v2, timeout=60).headers["cache-control"]
+        assert "immutable" in httpx.get(u + "?v=" + v2 + q, timeout=60).headers["cache-control"]
     finally:
         dst.unlink(missing_ok=True)
         for d in (config.DATA_ROOT / "cache" / "mvt").glob("*"):

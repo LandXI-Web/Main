@@ -213,7 +213,7 @@ async def build_board(p) -> dict:
                 b = None
             layer = {"id": j["result_set"].replace("/", "-"), "set": j["result_set"], "path": j["result_set"] + ".pmtiles", "layer": "results",
                      "source": "pmtiles", "kind": "vector", "role": "result", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
-                     "signed": j["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", **({"only_cls": only[s]} if s in only else {})}
+                     "signed": True, "attribution": "Land-XI AI 분석 · 검수 전", **({"only_cls": only[s]} if s in only else {})}   # 작업 결과 = 서명 주소로만(10-22 옆문 닫기 2차)
         else:
             it = cat_items.get(s)
             if not it or not it.get("url") and not it.get("path"):
