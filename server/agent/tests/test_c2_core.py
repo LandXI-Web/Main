@@ -206,7 +206,7 @@ def _finish(ctx, answer, res=_Res(), artifact=None):
 def test_finish_replaces_fabricated_action_and_scrubs():
     d = _finish(_ctx(), "구례군 결과입니다. 확대하여 보여드리겠습니다. 관제 화면(AG-6)에서 보세요.")
     # 확인 16차 대화-1 규칙 ② — 지운 동작 문장 자리에 이유 한 줄(아직 없는 기능) + 할 수 있는 것 버튼 · 막힘 분류(개선 고리)
-    assert "확대하여" not in d["answer_md"] and "아직 없는 기능입니다" in d["answer_md"] and "할 수 없습니다" not in d["answer_md"]
+    assert "확대하여" not in d["answer_md"] and "ChatGEO 가 하지 않습니다" in d["answer_md"] and "할 수 없습니다" not in d["answer_md"]
     assert lint.banned_hits(d["answer_md"]) == [] and d["action_flags"] and d["next"] and d["cannot"] == {"kind": "action"}
 
 

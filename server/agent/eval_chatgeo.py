@@ -28,6 +28,7 @@ sys.path.insert(0, str(EVAL))
 import check  # noqa: E402
 
 B = f"http://127.0.0.1:{config.API_PORT}/api/v1"
+GAP_S = float(__import__("os").environ.get("LX_EVAL_GAP", "1.5"))
 LOGIN = {"staff": {"realm": "lx", "login": "test@lx.or.kr"},
          "namwon": {"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "site": "gov"}}
 
@@ -157,6 +158,7 @@ def run(out_path: str, rows: list[dict], base: str | None = None) -> dict:
         if s.get("run_id"):
             last[row["persona"]] = s["run_id"]
             by_n[row["n"]] = s["run_id"]
+        time.sleep(GAP_S)                 # 질문 사이 쉼(전력 규칙 · 한 줄씩 · 다른 돌림과 겹치지 않게)
         rec = {"n": row["n"], "persona": row["persona"], "cluster": row["cluster"], "sev": row["sev"], "q": row["q"], **s}
         results.append(rec)
         v = check.judge(row, rec)

@@ -30,14 +30,15 @@
 - {id: RT26, who: gj, expect: rejected:cross_tenant_region, message: "익산시 황등면 차량 탐지 결과"}
 - {id: RT27, who: gj, expect: rejected:cross_tenant_region, message: "강릉시 하천 점유 건물 보여줘"}
 - {id: RT28, who: namwon, expect: rejected:cross_tenant_region, message: "제주시 불법 건축 몇 건?"}
-- {id: RT29, who: staff, expect: rejected:no_region_data, message: "강릉시 의심 필지 목록 줘"}
-- {id: RT30, who: staff, expect: rejected:no_region_data, message: "포항시 농지 전용 의심 몇 건이야?"}
-- {id: RT31, who: staff, expect: rejected:no_region_data, message: "춘천시 휴경 의심 보여줘"}
-- {id: RT32, who: admin, expect: rejected:no_region_data, message: "안동시 무허가 건축 상위 5곳"}
-- {id: RT33, who: staff, expect: rejected:no_region_data, message: "청주시 대장과 다른 필지 알려줘"}
-- {id: RT34, who: sales, expect: rejected:no_region_data, message: "울진군에 바로 열 수 있는 결과 보여줘"}
+# WP-8(10-21 · CHATGEO-DEV-ORDER): 전국 분석이 끝난 시군구는 미리 거절하지 않는다 — 도구가 '실태조사 의심 필지가 없습니다 — 있는 것은 …'으로 답한다
+- {id: RT29, who: staff, expect: answer, message: "강릉시 의심 필지 목록 줘"}
+- {id: RT30, who: staff, expect: answer, message: "포항시 농지 전용 의심 몇 건이야?"}
+- {id: RT31, who: staff, expect: answer, message: "춘천시 휴경 의심 보여줘"}
+- {id: RT32, who: admin, expect: answer, message: "안동시 무허가 건축 상위 5곳"}
+- {id: RT33, who: staff, expect: answer, message: "청주시 대장과 다른 필지 알려줘"}
+- {id: RT34, who: sales, expect: answer, message: "울진군에 바로 열 수 있는 결과 보여줘"}
 - {id: RT35, who: staff, expect: rejected:no_region_data, message: "진주시 비닐하우스 몇 동이야?"}
-- {id: RT36, who: admin, expect: rejected:no_region_data, message: "평창군 산지 개간 의심 목록"}
+- {id: RT36, who: admin, expect: answer, message: "평창군 산지 개간 의심 목록"}
 - {id: RT37, who: namwon, expect: answer, tool: survey_stats, message: "우리 시 의심 필지 전체 몇 건이야?"}
 - {id: RT38, who: namwon, expect: answer, tool: survey_findings, message: "남원시 아영면 무허가 건축 의심 상위 5곳"}
 - {id: RT39, who: namwon, expect: answer, tool: survey_findings, message: "운봉읍 답 위 건물 의심 보여줘"}

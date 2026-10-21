@@ -261,7 +261,7 @@ def test_m10_no_data_tool_error_is_verbatim_with_next(monkeypatch, restore_ext, 
     md = d["answer_md"]
     # 확인 16차 대화-1 규칙 ② — 지역 이름을 넣은 이유 한 줄 + 다음 할 일은 문장이 아니라 버튼(기관 = 분석 요청)
     nm = q.split()[0]
-    assert md == f"{nm}{'은' if nm.endswith('군') else '는'} 아직 AI 분석 결과가 없습니다." and "다음 할 일" not in md
+    assert md == f"{nm}{'은' if nm.endswith('군') else '는'} AI 분석 결과가 없습니다." and "다음 할 일" not in md
     assert "이 기관" not in md and "아닙니다" not in md and d["next"][0]["label"] == "분석 요청 보내기"
 
 
@@ -271,7 +271,7 @@ def test_m10_status_contract_text_and_next_verbatim(monkeypatch, restore_ext):
     ctx = _ctx(STAFF, "순창군 보고서 초안 써 줘")          # LX 직원은 XI맵에서 AI 분석을 실행할 수 있다 → 도구가 준 다음 할 일 그대로
     asyncio.run(runner.answer_direct(ctx, ctx.state["msg"], {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
     d = _done(ctx)                                         # 확인 16차 — 이유 한 줄 + LX 직원이 할 수 있는 일은 버튼(그 지역 전역 분석 · 영상 등록)
-    assert d["answer_md"] == "순창군은 아직 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "순창군 전역 분석 실행해 줘"
+    assert d["answer_md"] == "순창군은 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "순창군 전역 분석 실행해 줘"
 
 
 def test_m10_outside_is_verbatim_without_next(monkeypatch, restore_ext):
@@ -535,7 +535,7 @@ def test_fix1_tenant_next_is_what_tenant_can_do(monkeypatch, restore_ext, name):
     d = _done(ctx)
     md = d["answer_md"]
     # 확인 16차 — 기관이 할 수 있는 일(분석 요청 · 원칙 113)은 버튼으로 · 문장으로 떠넘기지 않는다
-    assert md == f"{name}은 아직 AI 분석 결과가 없습니다." and d["next"][0]["label"] == "분석 요청 보내기"
+    assert md == f"{name}은 AI 분석 결과가 없습니다." and d["next"][0]["label"] == "분석 요청 보내기"
     assert "XI맵에서" not in md and "실행하세요" not in md and "이 기관" not in md
 
 
@@ -554,7 +554,7 @@ def test_fix1_lx_next_kept_and_ends_with_period(monkeypatch, restore_ext):
     ctx = _ctx(STAFF, "고창군 보고서 초안 써 줘")
     asyncio.run(runner.answer_direct(ctx, ctx.state["msg"], {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
     d = _done(ctx)
-    assert d["answer_md"] == "고창군은 아직 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "고창군 전역 분석 실행해 줘"
+    assert d["answer_md"] == "고창군은 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "고창군 전역 분석 실행해 줘"
 
 
 def _checks(done=None, running=None, partial=None, survey=None):
@@ -576,7 +576,7 @@ def test_fix1_tenant_run_without_ai_results_has_no_card(monkeypatch, q):
     asyncio.run(runner.answer_direct(ctx, q, hit, 0.0, {"pii": []}))
     md = _done(ctx)["answer_md"]
     name = q.split(" ")[0]
-    assert md == (f"{name}에는 아직 AI 분석 결과가 없습니다. AI 분석은 LX가 실행합니다.\n\n"
+    assert md == (f"{name}에는 AI 분석 결과가 없습니다. AI 분석은 LX가 실행합니다.\n\n"
                   f"다음 할 일: 화면 위 도움말(?)의 '문의'로 LX에 {name} AI 분석을 요청해 주세요.")
     assert not [e for _t, e, _d in ctx.events if e in ("agent.confirm", "agent.tool.call")]      # 확인 카드 0 · 도구 0
 

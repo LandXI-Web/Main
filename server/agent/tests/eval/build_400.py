@@ -53,7 +53,7 @@ EXPECT: dict[str, dict] = {
     "C36": {"refuse": True, "no_text": [r"아직 없는 기능", r"법령 데이터에 없습니다", NO_DATA_WRONG], "buttons_min": 1},
     "C29": {"no_text": [r"아직 없는 기능", r"법령 데이터에 없습니다"]},
     "C26": {"need_any": [r"law\.go\.kr|국가법령정보센터"]},
-    "C17": {"no_text": [r"아직 없는 기능", r"아직 AI 분석 결과가 없습니다"]},
+    "C17": {"no_text": [r"아직 없는 기능", NO_DATA_WRONG]},
     "C37": {},
     "C31": {"no_counts": True, "no_text": [r"요약 정보가 없습니다"]},
     "C43": {"nonempty": True},

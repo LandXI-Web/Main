@@ -265,8 +265,8 @@ def test_m10_in_jurisdiction_no_result_is_no_data(visible, name):
 
 
 def test_m10_jeonbuk_no_result_for_lx(visible):
-    """전북 결과 없는 시군구(순창) — 전국 관할 LX 계정에서도 no_data + 다음 할 일."""
-    out = asyncio.run(RT.report_draft({"request": "순창군 보고서 초안 써 줘"}, _ctx(ADMIN)))
+    """전북 결과 없는 시군구(순창) — 전국 관할 LX 계정에서도 no_data + 다음 할 일."""  # WP-4 · 8(10-21): 실태조사 말이 없으면 XI맵 통계 보고서로 간다
+    out = asyncio.run(RT.report_draft({"request": "순창군 실태조사 보고서 초안 써 줘"}, _ctx(ADMIN)))
     assert out.data["status"] == "no_data" and "순창군" in out.data["next"]
 
 

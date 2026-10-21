@@ -116,8 +116,8 @@ def regions_in(text: str, asked: bool = False) -> set[str]:
 
 
 def children_ok(asked: set[str], found: set[str]) -> set[str]:
-    """물은 시의 구(전주시 → 전주시 완산구 · 완산구)는 같은 곳으로 본다."""
-    ok = set(asked)
+    """물은 시의 구(전주시 → 전주시 완산구 · 완산구)는 같은 곳으로 본다 · 광역시 구는 짧은 이름(서울특별시 강남구 → 강남구)도."""
+    ok = set(asked) | {a.split(" ")[-1] for a in asked if " " in a}
     for r in regions():
         nm = r.get("name") or ""
         if " " in nm and nm.split(" ")[0] in asked:
@@ -219,7 +219,7 @@ def judge(row: dict, rec: dict) -> dict:
         extra |= {f for f in regions_in(file_labels) if f not in ok}
         if extra:
             why.append("다른 지역 " + ",".join(sorted(extra)[:3]))
-    if ex.get("need_region") and asked and not (found & children_ok(asked, found)):
+    if ex.get("need_region") and asked and not (found & children_ok(asked, found)) and not any(a.split(" ")[-1] in txt for a in asked):
         why.append("물은 지역 이름 없음")
     if ex.get("relabel"):
         h = relabel_hits(rec)

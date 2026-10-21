@@ -772,6 +772,8 @@ def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
 
     if kind == "server":
         return dev(HOW["server"], "답 서버가 응답하지 않음", TAG_OF_KIND["server"])
+    if it.get("n_block") is not None and not int(it.get("n_block") or 0) and int(it.get("n_reask") or 0):
+        return dev(HOW.get(kind) or HOW["other"], "다시 물음만 있음 — 답은 나갔음(막힘 신호 없음)", TAG_OF_KIND.get(kind))
     # ① 결과에 없는 세부 분류(단동 · 연동) — 모아 두기 + '분석 모델에 클래스 필요'(LLM 으로는 풀리지 않음)
     for rx, key, word in SUB_MODS:
         if rx.search(t_all):
@@ -801,8 +803,15 @@ def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
             tr = s if clean(s) else None
             return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": tr, "how": f"답에 '{txt}' 붙이기",
                     "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · 이미 있는 '{TOOL_SAY[tool]}'{ro(TOOL_SAY[tool])} 답할 수 있는 말 — 결과 층이 없던 자리"}
-    # ④ 질문 뜻 연결 — 이미 있는 도구로 답할 수 있는데 못 알아들은 말
+    # ④ 답은 맞고 다음 할 일이 없음 — 권한 밖 · 화면 밖 · 업무 밖 → 답 문구
+    for k, rx, txt, tr in PHRASE_RULES:
+        if kind == k and rx.search(t_all + " " + str(it.get("note") or "")):
+            return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": tr, "how": f"답에 '{txt}' 붙이기",
+                    "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · " + ("이미 있는 기능 — 어디서 하는지 안내가 없음" if k in ("action", "other") else "거절은 맞음 — 다음 할 일 안내가 없음")}
+    # ⑤ 질문 뜻 연결 — 이미 있는 도구로 답할 수 있는데 못 알아들은 말
     for s in texts:
+        if any(_is_place(t) for t in tokens(_normalize(s))):
+            continue                                   # 지명 든 질문은 뜻 연결로 바꾸면 지역이 빠진다(TRIAGE 공통 ②)
         for tool, rx, tpl in INTENT_WIDE:
             if not rx.search(s):
                 continue
@@ -814,11 +823,6 @@ def suggest(it: dict, V: dict, rules: list[dict] | None = None) -> dict:
                 continue
             return {"mode": "intent", "quick": True, "src": s, "dst": dst, "how": f"'{s}' → '{dst}'{ro(dst)} 알아듣기",
                     "line": f"이 질문을 '{dst}'{ro(dst)} 알아듣게 합니다", "why": f"{cnt} · 이미 있는 '{TOOL_SAY[tool]}'{ro(TOOL_SAY[tool])} 답할 수 있음"}
-    # ⑤ 답은 맞고 다음 할 일이 없음 — 권한 밖 · 화면 밖 · 업무 밖 → 답 문구
-    for k, rx, txt, tr in PHRASE_RULES:
-        if kind == k and rx.search(t_all + " " + str(it.get("note") or "")):
-            return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": tr, "how": f"답에 '{txt}' 붙이기",
-                    "line": f"답에 \"{txt}\" 한 줄을 붙입니다", "why": f"{cnt} · " + ("이미 있는 기능 — 어디서 하는지 안내가 없음" if k in ("action", "other") else "거절은 맞음 — 다음 할 일 안내가 없음")}
     if kind == "law" and not LAW_WORDS.search(t_all):
         txt = "Land-XI 는 국토 · 실태조사 업무와 법령 질문에 답합니다"
         return {"mode": "phrase", "quick": True, "src": g, "text": txt, "try": None, "how": f"답에 '{txt}' 붙이기",
@@ -892,6 +896,11 @@ def same_meaning(a: tuple, b: tuple) -> bool:
 async def _store_run(p, run_id, msg: str, sigs: list[tuple[str, str]], context: dict) -> None:
     try:
         await ensure_names(wait=True)
+        try:                                           # 해외 화면이 붙이는 문맥 꼬리('(Current area …)')를 떼고 요지로(TRIAGE 공통 ③)
+            from agent.tools.ext.global_ import question_only
+            msg = question_only(msg) or msg
+        except Exception:  # noqa: BLE001
+            pass
         g = gist(msg)
         toks = tokens(g)
         scr = screen_of(context)
@@ -936,6 +945,33 @@ async def _reask(p, run_id, g: str, hashes: tuple, sigs, meta: dict, item_id: st
         pass
 
 
+_CHECK: dict = {"t": 0.0, "ids": set()}
+
+
+async def _is_check_account(conn, asker) -> bool:
+    """점검 · 재검수 계정(server/.env LX_CHECK_LOGINS · 쉼표) 의 신호는 따로 센다(improve_signals.test · TRIAGE 공통 ①) — 실제 사용자 아픔과 섞이지 않게."""
+    import os
+    logins = [x.strip() for x in (os.environ.get("LX_CHECK_LOGINS") or _cfg_check()).split(",") if x.strip()]
+    if not logins:
+        return False
+    if time.time() - _CHECK["t"] > 300:
+        try:
+            ids = {r["id"] for r in await conn.fetch("SELECT id FROM lx_users WHERE login = ANY($1::text[])", logins)}
+            ids |= {r["id"] for r in await conn.fetch("SELECT id FROM tenant_users WHERE login = ANY($1::text[])", logins)}
+        except Exception:  # noqa: BLE001
+            ids = set()
+        _CHECK.update(t=time.time(), ids=ids)
+    return str(getattr(asker, "user_id", "") or "") in _CHECK["ids"]
+
+
+def _cfg_check() -> str:
+    try:
+        from . import config as _c
+        return str(_c.get("LX_CHECK_LOGINS", "") or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 async def save_signal(sig: str, kind: str, g: str, toks: set[str], meta: dict, run_id: str | None = None, asker=None,
                       item_id: str | None = None, source: str = "auto", at: dt.datetime | None = None, note: str | None = None,
                       item_key: str | None = None, item_gist: str | None = None) -> str | None:
@@ -970,10 +1006,11 @@ async def save_signal(sig: str, kind: str, g: str, toks: set[str], meta: dict, r
             await conn.execute("INSERT INTO improve_items(id, key, kind, gist, note, source, first_at, last_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$7) "
                                "ON CONFLICT (key) DO NOTHING", iid, key, kind, item_gist or g or KINDS[kind], note, source, when)
             iid = await conn.fetchval("SELECT id FROM improve_items WHERE key=$1", key) or iid
-        await conn.execute("INSERT INTO improve_signals(item_id, sig, kind, gist, role, screen, tenant_id, card_id, sgg_cd, run_id, source, at) "
-                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT DO NOTHING",
+        chk = bool(asker is not None and await _is_check_account(conn, asker))
+        await conn.execute("INSERT INTO improve_signals(item_id, sig, kind, gist, role, screen, tenant_id, card_id, sgg_cd, run_id, source, at, test) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT DO NOTHING",
                            iid, sig, kind, g, meta.get("role"), meta.get("screen"), meta.get("tenant") or "lx", meta.get("card"), meta.get("sgg"),
-                           run_id, source, when)
+                           run_id, source, when, chk)
         if asker is not None and getattr(asker, "user_id", None):
             await conn.execute("INSERT INTO improve_askers(item_id, realm, user_id, tenant_id, at) VALUES ($1,$2,$3,$4,now()) "
                                "ON CONFLICT (item_id, realm, user_id) DO UPDATE SET at=now(), tenant_id=EXCLUDED.tenant_id",
@@ -1212,7 +1249,8 @@ def _item(r, p: Principal, who: dict, V: dict | None = None, rules: list | None 
     if V is not None and (st in ("new", "held") or collected):
         n_sum = int(r["n_block"] or 0) + int(r["n_reask"] or 0) + int(r["n_nh"] or 0) + int(r["n_cancel"] or 0)
         sg = suggest({"kind": r["kind"], "gist": r["gist"], "examples": [x for x in (r["gists"] or []) if x and x != r["gist"]],
-                      "note": r["note"], "n_sum": n_sum, "test_only": not r["n_real"]}, V, rules)
+                      "note": r["note"], "n_sum": n_sum, "test_only": not r["n_real"],
+                      "n_block": int(r["n_block"] or 0), "n_reask": int(r["n_reask"] or 0)}, V, rules)
         if collected:
             d["adopt"]["tag"] = sg.get("tag")
         else:
