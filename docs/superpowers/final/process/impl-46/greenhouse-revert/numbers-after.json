@@ -1,0 +1,150 @@
+{
+ "at": "2026-10-21 19:45:02",
+ "tag": "after",
+ "screens": [
+  {
+   "name": "gov-select",
+   "url": "/landxi/v3/gov-select/",
+   "ms": 9552,
+   "text": [
+    "농지이용 경작·비경작 · 비닐하우스 · 사료작물"
+   ],
+   "api": [
+    {
+     "url": "/api/v1/brand/namwon",
+     "hits": [
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"card-road\":\"포트홀 · 도로시설 파손\",\"card-crowd\":\"교통혼잡 · 인파혼잡\",\"card-living\":\"방치쓰레기 · 불법소각장 · 방치폐가\"",
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"year\":2025,\"status\":\"운영\",\"open\":true"
+     ]
+    },
+    {
+     "url": "/api/v1/cards/deck",
+     "hits": [
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"scene\":",
+      "\"비닐하우스 분석서비스\",\"scope\":\"local\",\"group\":\"농지·시설\",\"groups\":[\"농지·시설\"],\"imagery_kinds\":[\"드론\",\"항공\"],\"state\":\"pilot\",\"state_label\":\"시범\",\"line\":\"단동·다동 비닐하우스를 찾습니다\",\"scene\":",
+      "\"남원시 · 2025 정사영상 · 비닐하우스\",\"ex\":false"
+     ]
+    },
+    {
+     "url": "/api/v1/summary",
+     "hits": [
+      "\"비닐하우스 분석서비스\",\"sgg_cd\":\"52190\",\"detected_counted\":false,\"region_name\":\"전북특별자치도 남원시\",\"tenant\":\"namwon\",\"stage\":\"시범\",\"survey_state\":\"done\",\"imagery\":"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "gov-space",
+   "url": "/landxi/v3/gov-space/?card=card-5e85a9",
+   "ms": 12921,
+   "text": [],
+   "api": [
+    {
+     "url": "/api/v1/brand/namwon",
+     "hits": [
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"card-road\":\"포트홀 · 도로시설 파손\",\"card-crowd\":\"교통혼잡 · 인파혼잡\",\"card-living\":\"방치쓰레기 · 불법소각장 · 방치폐가\"",
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"year\":2025,\"status\":\"운영\",\"open\":true"
+     ]
+    },
+    {
+     "url": "/api/v1/summary",
+     "hits": [
+      "\"비닐하우스 분석서비스\",\"sgg_cd\":\"52190\",\"detected_counted\":false,\"region_name\":\"전북특별자치도 남원시\",\"tenant\":\"namwon\",\"stage\":\"시범\",\"survey_state\":\"done\",\"imagery\":"
+     ]
+    },
+    {
+     "url": "/api/v1/cards/deck",
+     "hits": [
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"scene\":",
+      "\"비닐하우스 분석서비스\",\"scope\":\"local\",\"group\":\"농지·시설\",\"groups\":[\"농지·시설\"],\"imagery_kinds\":[\"드론\",\"항공\"],\"state\":\"pilot\",\"state_label\":\"시범\",\"line\":\"단동·다동 비닐하우스를 찾습니다\",\"scene\":",
+      "\"남원시 · 2025 정사영상 · 비닐하우스\",\"ex\":false"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "gov-report",
+   "url": "/landxi/v3/gov-report/?service=card-5e85a9",
+   "ms": 12675,
+   "text": [],
+   "api": [
+    {
+     "url": "/api/v1/brand/namwon",
+     "hits": [
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"card-road\":\"포트홀 · 도로시설 파손\",\"card-crowd\":\"교통혼잡 · 인파혼잡\",\"card-living\":\"방치쓰레기 · 불법소각장 · 방치폐가\"",
+      "\"농지이용 경작·비경작 · 비닐하우스 · 사료작물\",\"year\":2025,\"status\":\"운영\",\"open\":true"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "gov-ximap",
+   "url": "/landxi/v3/xi-clean/",
+   "ms": 15977,
+   "text": [],
+   "api": [
+    {
+     "url": "/api/v1/ximap/board",
+     "hits": [
+      "\"비닐하우스\",\"n\":",
+      "\"비닐하우스\",\"n_regions\":",
+      "\"비닐하우스\",\"parking\":\"주차장\",\"vehicle\":\"차량\",\"veg_gain\":\"식생 늘어남\",\"veg_loss\":\"식생 줄어듦\",\"built_new\":\"새 건물\",\"built_gain\":\"건물 늘어남\",\"built_loss\":\"건물 줄어듦\",\"other\":\"기타 변화\""
+     ]
+    }
+   ]
+  },
+  {
+   "name": "staff-home",
+   "url": "/landxi/v3/lx-console/",
+   "ms": 12454,
+   "text": [
+    "비닐하우스 2026",
+    "건물 · 주차장 · 경작지 · 비닐하우스"
+   ],
+   "api": [
+    {
+     "url": "/api/v1/me/storage",
+     "hits": [
+      "\"비닐하우스 2026\",\"archived\":false,\"bytes\":10205899"
+     ]
+    },
+    {
+     "url": "/api/v1/cards/deck",
+     "hits": [
+      "\"경작지 · 비경작지 · 비닐하우스\",\"compare\":\"지목(기본) · 농지 대장 양식\",\"time\":",
+      "\"비닐하우스 분석서비스\",\"scope\":\"local\",\"group\":\"농지·시설\",\"groups\":[\"농지·시설\"],\"imagery_kinds\":[\"드론\",\"항공\"],\"state\":\"pilot\",\"state_label\":\"시범\",\"line\":\"단동·다동 비닐하우스를 찾습니다\",\"scene\":",
+      "\"남원시 · 2025 정사영상 · 비닐하우스\",\"ex\":false",
+      "\"비닐하우스\",\"compare\":\"필지 대조 · 용도 불일치(비농지 위 비닐하우스)\",\"time\":",
+      "\"비닐하우스 2026\""
+     ]
+    },
+    {
+     "url": "/api/v1/projects?scope=mine",
+     "hits": [
+      "\"비닐하우스 2026\",\"task\":\"비닐하우스\",\"task_id\":\"greenhouse\",\"regions\":[",
+      "\"비닐하우스\"],\"card\":\"card-5e85a9\",\"pic\":\"/catalog/imagery/img-43745-2023-aerial/thumb\",\"train_n\":"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "staff-ximap",
+   "url": "/landxi/v3/xi-clean/?sgg=52190",
+   "ms": 15891,
+   "text": [],
+   "api": []
+  }
+ ],
+ "chat": [
+  {
+   "name": "gov-chat",
+   "q": "남원시 비닐하우스 몇 곳이야",
+   "answer": "대상: 켜진 층 1개(남원시 비닐하우스) · 조건: 비닐하우스 — 결과 14,792건 · 읍면동 39곳 많은 곳: 운봉읍 2,104건 · 금지면 1,784건 · 아영면 1,464건 · 송동면 884건 · 인월면 873건"
+  },
+  {
+   "name": "staff-chat",
+   "q": "남원시 비닐하우스 몇 곳이야",
+   "answer": "남원시 · 비닐하우스 — 비닐하우스 14,792동. 비닐하우스는 운봉읍 2,104동 · 금지면 1,784 · 아영면 1,464 순으로 많습니다."
+  }
+ ]
+}

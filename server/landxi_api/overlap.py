@@ -3,7 +3,7 @@
   규칙: 한 시군구에서 같은 업무(예: 비닐하우스)의 서비스 결과가 있으면, 그 서비스가 분석한 범위가 절반 이상 덮은 읍면동은
         서비스 결과로 센다(기관과 같은 숫자). 서비스 범위 밖 읍면동만 전국 분석 숫자를 더한다 — 덮인 곳을 버리지 않고, 겹친 곳을 두 번 세지 않는다.
   서비스 범위 = 그 분석의 영상 범위(작업 aoi).
-  대상 = 그 업무 한 분류만 내는 서비스 결과(분석 작업 · 결과 분류 하나 — 예: 비닐하우스 서비스). 여러 분류를 한 숫자로 내는 결과(경작·휴경 4분류 합)
+  대상 = 그 업무 한 분류만 내는 서비스 결과(분석 작업 · 결과 분류 하나 — 예: 비닐하우스 서비스 · 여러 분류를 찾았어도 서비스가 그 한 분류만 보이는 결과 포함). 여러 분류를 한 숫자로 내는 결과(경작·휴경 4분류 합)
         · 미리 올린 결과 묶음(분석 범위 기록 없음 · 표본일 수 있음)은 같은 셈이 아니어서 대신 세지 않는다(전국 분석 숫자를 버리지 않음).
 
   covered()          {(asset, cell_cd): {업무, ..}} + 숨긴 전국 분석 수 — 60초 기억
@@ -43,8 +43,12 @@ async def _compute() -> dict:
         one = {r["id"] for r in await conn.fetch(
             "SELECT id FROM jobs WHERE id = ANY($1::text[]) AND aoi IS NOT NULL AND (SELECT count(*) FROM jsonb_object_keys(coalesce(counts, '{}'::jsonb))) = 1",
             [w[0] for w in want])}
+        # 여러 분류를 찾은 결과라도 서비스가 그 업무 한 분류만 보이면(옛 판으로 되돌린 결과 등 · result_scope.only_cls) 같은 셈
+        from .result_scope import only_cls
+        only = await only_cls(conn)
+        ok_aoi = {r["id"] for r in await conn.fetch("SELECT id FROM jobs WHERE id = ANY($1::text[]) AND aoi IS NOT NULL", [w[0] for w in want])}
         for sid, k, pre in want:
-            if sid not in one:
+            if sid not in one and not (sid in ok_aoi and only.get(sid) == [k]):
                 continue
             assets = [a for a, cs in XD.NCLS.items() if k in cs]
             rows = await conn.fetch(

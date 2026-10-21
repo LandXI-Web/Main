@@ -11,7 +11,7 @@ import { api, session } from '../kit/util.js';
 import { sse, API, tileUrl } from '../../shared/api-v1.js';
 import { sourceSpec, EXT_OK, warmPm } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis, TEAL, TEAL_DEEP, INK, SLATE } from '../../xi/fx/arrive.js';
-import { excludeClasses, hideResults } from '../../xi/fx/result-filter.js';   // 클래스 켜기/끄기 · 고친 자리가 대신 그리는 원래 객체 숨김(10-15)
+import { excludeClasses, hideResults, onlyFilter } from '../../xi/fx/result-filter.js';   // 클래스 켜기/끄기 · 고친 자리가 대신 그리는 원래 객체 숨김(10-15)
 import { analyzer } from './analyze.js';
 import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
@@ -655,9 +655,10 @@ async function addResultList(items, my) {
     try { spec = await sourceSpec(it); } catch (e) { K.devlog('result src', String(e?.message || e)); continue; }
     if (my !== rdSeq) return;
     map.addSource(sid, spec);
-    const ids = addResultLayers(map, sid, sid, { kind: it.style === 'landcover' ? 'landcover' : 'result', sourceLayer: it.layer, visible: false });
+    const only = onlyFilter(it.only_cls);                 // 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
+    const ids = addResultLayers(map, sid, sid, { kind: it.style === 'landcover' ? 'landcover' : 'result', sourceLayer: it.layer, visible: false, filter: only });
     // 점 결과(해양쓰레기 등 · 면 층에 그려지지 않는 것)
-    map.addLayer({ id: sid + '-pt', type: 'circle', source: sid, 'source-layer': it.layer, filter: ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
+    map.addLayer({ id: sid + '-pt', type: 'circle', source: sid, 'source-layer': it.layer, filter: only ? ['all', ['==', ['geometry-type'], 'Point'], only] : ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
       paint: { 'circle-color': '#0FA9A0', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1 } }, 'slot-result');
     ids.push(sid + '-pt');
     out.push({ ...it, sid, ids });

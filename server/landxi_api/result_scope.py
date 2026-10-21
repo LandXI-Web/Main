@@ -9,11 +9,13 @@
   label(cond)         칩 글을 ' · ' 로
   layer_names(jobs)   작업 → 사람이 읽는 레이어 이름('남원시 비닐하우스' · '여주시 하거동 프로젝트 ○○') — 목록 줄과 같은 재료
   scope_line(...)     답 첫 줄 '대상: 켜진 층 n개(이름) · 조건: …'
+  only_cls()          {작업: [분류]} — 서비스가 보이는 분류보다 많은 분류를 가진 결과(옛 판으로 되돌린 결과 등) · only_sql 이 그 분류만 남긴다
 """
 from __future__ import annotations
 
 import json
 import re
+import time
 
 KEYS = ("cls", "emd", "area_min", "area_op_min", "area_max", "area_op_max")
 
@@ -108,15 +110,19 @@ _CLIP: dict[str, list[str]] = {}          # 옛 분석 → 그보다 늦은 같�
 
 
 async def latest_only(jobs: list[str]) -> list[str]:
-    """같은 서비스 × 같은 지역(프로젝트면 같은 범위)의 분석이 여럿 켜져 있으면 곳마다 가장 늦게 끝난 분석 하나로 센다(10-18 · 숫자 한 출처).
+    """같은 서비스 × 같은 지역(프로젝트면 같은 범위)의 분석이 여럿 켜져 있으면 곳마다 하나로 센다 — 서비스로 내보내는 '지금' 결과가 먼저,
+    그다음 가장 늦게 끝난 분석(10-18 · 숫자 한 출처 · 10-21 되돌림).
     늦은 분석이 옛 분석의 범위를 다 덮으면 옛 분석은 빠진다(시점 비교용 — 통계 · 보고서 · 거르기 숫자에 더하지 않음).
     늦은 분석이 일부만 다시 했으면 옛 분석은 남고, 늦은 분석이 덮은 곳의 옛 객체만 뺀다(clip_sql) — 덮인 곳을 조용히 버리지 않는다.
     끝나지 않은 · 빈 분석은 여기 오지 않는다(_jobs_on 이 끝난 작업만). 입력 순서는 지킨다."""
+    await only_cls()                                   # clip_sql 이 서비스 분류만 남길 결과(1분 기억)
     if len(jobs) < 2:
         return list(jobs)
     from .deps import db
     async with db(realm="lx") as c:
         rows = await c.fetch("SELECT id, card_id, options, finished_at FROM jobs WHERE id = ANY($1::text[])", jobs)
+        # 서비스 결과 장부의 '지금' 결과(기관에 공유된 판 · 되돌림 반영)가 먼저 — 그다음 늦게 끝난 분석(10-21 비닐하우스 1.0 되돌림)
+        cur = {r["set_id"] for r in await c.fetch("SELECT set_id FROM service_results WHERE set_id = ANY($1::text[]) AND replaced_at IS NULL", jobs)}
         by = {}
         for r in rows:
             o = r["options"] if isinstance(r["options"], dict) else json.loads(r["options"] or "{}")
@@ -130,7 +136,7 @@ async def latest_only(jobs: list[str]) -> list[str]:
         for g in groups.values():
             if len(g) < 2:
                 continue
-            g = sorted(g, key=lambda j: by[j][1].timestamp() if by[j][1] else 0, reverse=True)
+            g = sorted(g, key=lambda j: (j in cur, by[j][1].timestamp() if by[j][1] else 0), reverse=True)
             for i, old in enumerate(g[1:], 1):
                 newer = g[:i]
                 # 옛 분석 범위 가운데 늦은 분석들이 덮지 않은 넓이 비율(작업 범위 = 영상 범위)
@@ -145,10 +151,70 @@ async def latest_only(jobs: list[str]) -> list[str]:
     return [j for j in jobs if j not in drop]
 
 
-def clip_sql(jobs, args: list, col: str = "") -> list[str]:
-    """latest_only 가 남긴 옛 분석(늦은 분석이 일부만 다시 한 경우)의 객체 중 늦은 분석 범위 안의 것을 빼는 SQL 조각 — 겹친 곳 한 번."""
+_ONLY: dict = {"t": 0.0, "v": {}}
+_ONLY_TTL = 60.0
+
+
+async def only_cls(conn=None) -> dict[str, list[str]]:
+    """{작업 id: [보이는 분류]} — 기관에 공유된 서비스(배포본)가 지금 내보내는 결과가 그 서비스가 보이는 분류(배포본 흐름의 모델 분류)보다
+    많은 분류를 가진 경우만(예: 서비스를 옛 판 결과로 되돌림 — 옛 판은 건물 · 경작지 등도 함께 찾았다 · 10-21 사용자 "되돌리자 그럼").
+    그 결과는 서비스 분류만 센다 · 그린다 · 답한다(다른 분류 객체는 지우지 않고 보관). 분석할 때 이미 분류를 고른 결과 · 분류가 같은 결과는 그대로.
+    어느 서비스 · 어느 지역이든 같은 규칙(배포 기록이 정본 · 지역 · 서비스 id 를 코드에 두지 않음). 60초 기억."""
+    if time.time() - _ONLY["t"] < _ONLY_TTL:
+        return _ONLY["v"]
+    from .deps import db
+    from .summary import canonical
+
+    async def run(c):
+        out: dict[str, list[str]] = {}
+        rows = await c.fetch("SELECT snapshot_current, flow->'model'->'classes' AS cls FROM deploys WHERE stage <> 'draft' AND NOT coalesce(test, false) "
+                             "AND snapshot_current IS NOT NULL AND jsonb_typeof(flow->'model'->'classes') = 'array' "
+                             "AND jsonb_array_length(flow->'model'->'classes') > 0")
+        for r in rows:
+            jid = canonical(r["snapshot_current"])
+            want = r["cls"] if isinstance(r["cls"], list) else json.loads(r["cls"] or "[]")
+            want = [str(x) for x in want if x]
+            if not jid or not jid.startswith("job_") or not want:
+                continue
+            oc = await c.fetchval("SELECT options->'classes' FROM jobs WHERE id=$1", jid)
+            if oc and (oc if isinstance(oc, list) else json.loads(oc)):
+                continue                                   # 분석할 때 이미 서비스 분류만 찾음
+            have = {x["cls"] for x in await c.fetch("SELECT DISTINCT cls FROM detections WHERE job_id=$1 AND cls IS NOT NULL", jid)}
+            if have & set(want) and have - set(want):
+                out[jid] = sorted(set(out.get(jid, [])) | (have & set(want)))
+        return out
+    try:
+        if conn is None:
+            async with db(realm="lx") as c:
+                v = await run(c)
+        else:
+            v = await run(conn)
+        _ONLY.update(t=time.time(), v=v)
+    except Exception:  # noqa: BLE001 — 못 읽으면 직전 값(처음이면 거르지 않음)
+        _ONLY.update(t=time.time())
+    return _ONLY["v"]
+
+
+def only_sql(jobs, args: list, col: str = "") -> list[str]:
+    """only_cls 가 정한 결과는 서비스 분류 객체만 — SQL 조각(detections 열 그대로 · 먼저 only_cls() 를 한 번 불러 둔다)."""
     p = f"{col}." if col else ""
     out = []
+    for j in ([jobs] if isinstance(jobs, str) else list(jobs or [])):
+        keep = _ONLY["v"].get(j)
+        if not keep:
+            continue
+        args.append(j)
+        a = len(args)
+        args.append(list(keep))
+        out.append(f"NOT ({p}job_id = ${a} AND coalesce({p}cls, '') <> ALL(${a + 1}::text[]))")
+    return out
+
+
+def clip_sql(jobs, args: list, col: str = "") -> list[str]:
+    """latest_only 가 남긴 옛 분석(늦은 분석이 일부만 다시 한 경우)의 객체 중 늦은 분석 범위 안의 것을 빼는 SQL 조각 — 겹친 곳 한 번.
+    + 서비스 분류만 보이는 결과(only_sql)도 같은 조각에 — 거르기 · 통계 · 보고서가 같은 수."""
+    p = f"{col}." if col else ""
+    out = only_sql(jobs, args, col)
     for old in ([jobs] if isinstance(jobs, str) else list(jobs or [])):
         nw = _CLIP.get(old)
         if not nw:

@@ -133,6 +133,9 @@ async def features(set_path: str, request: Request, bbox: str | None = None, cls
     if min_conf is not None:
         args.append(min_conf)
         where.append(f"conf >= ${len(args)}")
+    from .result_scope import only_cls, only_sql
+    await only_cls()
+    where += only_sql(rs["job_id"], args)                 # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
     w = " AND ".join(where)
     async with db(realm="lx") as conn:
         total = await conn.fetchval(f"SELECT count(*) FROM detections WHERE {w}", *args)
@@ -201,9 +204,13 @@ async def stats(set_path: str, request: Request, by: str = "emd"):
                                           "area_ha": env(round(ta, 2), "ha", "inferred", src, as_of="2026-09-24")},
                 "source": src, "as_of": now_iso()}
     key = "emd" if by == "emd" else "cls"
+    from .result_scope import only_cls, only_sql
     async with db(realm="lx") as conn:
+        await only_cls(conn)
+        sa = [rs["job_id"]]
+        ow = "".join(" AND " + x for x in only_sql(rs["job_id"], sa))     # 서비스 분류만 보이는 결과
         rows = await conn.fetch(f"SELECT {key} AS k, max(emd_cd) AS cd, count(*) AS n, sum(area_m2)/1e4 AS ha, avg(conf) AS c "
-                                f"FROM detections WHERE job_id=$1 AND edit_state<>'deleted' GROUP BY {key} ORDER BY n DESC", rs["job_id"])
+                                f"FROM detections WHERE job_id=$1 AND edit_state<>'deleted'{ow} GROUP BY {key} ORDER BY n DESC", *sa)
     basis = "demo" if rs["demo"] else "inferred"
     src = f"detections(job_id={rs['job_id']}) GROUP BY {key}"
     items = [{"key": r["k"], "cd": r["cd"] if by == "emd" else None, "n": env(int(r["n"]), "count", basis, src),

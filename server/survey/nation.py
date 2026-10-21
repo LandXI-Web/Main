@@ -367,7 +367,7 @@ def load_parcels(conn, rg: dict, tenant: str, progress=None) -> dict:
 # ─────────────────────────── ② AI × 필지 결합 ───────────────────────────
 PAIR_SQL = """
 WITH e AS (SELECT ST_SetSRID(ST_Extent(geom)::geometry, 4326) env FROM survey_parcels WHERE sgg_cd = %(sgg)s AND emd_cd = %(emd)s),
-d AS MATERIALIZED (SELECT coalesce(d.fid, d.id::text) fid, d.cls, d.cls_en, d.conf, v.g geom, ST_Transform(v.g, 5186) g5
+d AS MATERIALIZED (SELECT coalesce(d.fid, d.id::text) fid, d.cls, d.cls_en, d.conf, v.g geom, ST_MakeValid(ST_Transform(v.g, 5186)) g5
       FROM detections d CROSS JOIN e CROSS JOIN LATERAL (SELECT ST_MakeValid(d.geom) g) v
       WHERE d.job_id = %(job)s AND d.edit_state <> 'deleted' AND d.geom && e.env)
 SELECT p.pnu, d.fid, d.cls, d.cls_en, d.conf, ST_Area(d.g5) oarea,

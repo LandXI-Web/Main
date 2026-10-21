@@ -1,6 +1,7 @@
 """배포(F1-CONTRACT §4.7 · §9) — 단계 배포 · 롤백 · 승인 · 고정 · 모듈 · 모델 · GPU 풀 · 다른 지역에 적용(POST /deploys).
 
-상태기계: draft → shadow → canary → ga(순방향 한 칸씩 · 건너뛰기 없음) · canary|ga → rolled_back · rolled_back → shadow|canary|ga.
+상태기계: draft → shadow → canary → ga(순방향 한 칸씩 · 건너뛰기 없음) · canary|ga → rolled_back · rolled_back → shadow|canary|ga
+          · shadow 롤백 = 단계 그대로 판 · 결과만 직전으로.
 ga 는 approve ≥ APPROVALS_REQUIRED(기본 1) — 마지막 롤백·적용 이후의 승인만 센다. 모든 쓰기 = audit_log + deploy.changed.
 
 한 흐름(core-flow · 코어 ④ · 2026-09-29) — '적용 = 실행':
@@ -383,21 +384,36 @@ async def rollout(did: str, body: dict, request: Request):
 
 @router.post("/deploys/{did}/rollback")
 async def rollback(did: str, request: Request, body: dict | None = None):
+    """직전 판으로 되돌림 — 판(card_version) · 결과(snapshot)를 서로 바꾼다(지금 결과는 지우지 않고 '직전'으로 보관).
+    canary|ga → rolled_back. 시범(shadow · 기관에 공유된 채 시범 중)은 단계를 그대로 두고 판 · 결과만 되돌린다(10-21 비닐하우스 1.0 되돌림).
+    흐름 기록(flow.job_id · result_set)도 되돌린 결과를 가리키게 맞춘다 — 결과 확인 · 실태조사 다시 하기가 같은 결과를 본다."""
     p = require(principal(request), admin=True)
     async with db(realm="lx") as conn:
         r = await _get(conn, did)
-        if r["stage"] not in ("canary", "ga"):
-            raise ApiError("invalid_stage_transition", f"{r['stage']} 에서는 롤백 불가(canary|ga 만)", {"from": r["stage"], "to": "rolled_back"})
-        if not r["prev_card_version_id"]:
+        if r["stage"] not in ("shadow", "canary", "ga"):
+            raise ApiError("invalid_stage_transition", f"{r['stage']} 에서는 롤백 불가(shadow|canary|ga 만)", {"from": r["stage"], "to": "rolled_back"})
+        if not r["prev_card_version_id"] or not r["snapshot_prev"]:
             raise ApiError("invalid_stage_transition", "직전 버전 없음", {"from": r["stage"]})
-        await conn.execute("UPDATE deploys SET stage='rolled_back', card_version_id=prev_card_version_id, prev_card_version_id=card_version_id, "
-                           "snapshot_current=snapshot_prev, snapshot_prev=snapshot_current, updated_at=now() WHERE id=$1", did)
+        to = r["stage"] if r["stage"] == "shadow" else "rolled_back"
+        await conn.execute("UPDATE deploys SET stage=$2, card_version_id=prev_card_version_id, prev_card_version_id=card_version_id, "
+                           "snapshot_current=snapshot_prev, snapshot_prev=snapshot_current, updated_at=now() WHERE id=$1", did, to)
+        fl = r["flow"] if isinstance(r["flow"], dict) else None
+        from .summary import canonical
+        back = canonical(r["snapshot_prev"])
+        if fl and back and back.startswith("job_"):
+            await conn.execute("UPDATE deploys SET flow = flow || jsonb_build_object('job_id', $2::text, 'result_set', $3::text) WHERE id=$1",
+                               did, back, r["snapshot_prev"])
         row = await _get(conn, did)
         await audit(conn, p, "deploy.rollback", did,
                     {"stage": r["stage"], "card_version_id": r["card_version_id"], "snapshot_current": r["snapshot_current"]},
-                    {"stage": "rolled_back", "card_version_id": row["card_version_id"], "snapshot_current": row["snapshot_current"]})
+                    {"stage": to, "card_version_id": row["card_version_id"], "snapshot_current": row["snapshot_current"]})
         out = await deploy_dict(conn, row)
     await _changed(p, did, "rollback", row)
+    try:
+        from .ext_api import ledger_sync
+        await ledger_sync(force=True)                    # 결과 장부 '지금' 줄을 바로 바꾼다(1분 기다리지 않음)
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 

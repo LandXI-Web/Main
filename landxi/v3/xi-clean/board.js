@@ -6,7 +6,7 @@
 import { api } from '../kit/util.js';
 import { sourceSpec, tilesFor } from '../../xi/engine/sources.js';
 import { API, signSet } from '../../shared/api-v1.js';
-import { addResultLayers, farPaint, FAR_MIN_Z } from '../../xi/fx/arrive.js';
+import { addResultLayers, farPaint, FAR_MIN_Z, onlyFilter } from '../../xi/fx/arrive.js';
 import { createNational, nationalPromise, NCOLOR, NCLS } from './national.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
@@ -109,8 +109,9 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
       if (!spec || B.loaded.has(id) || map.getSource(id)) continue;
       map.addSource(id, spec);
       const c = B.color[it.svc] || '#0FA9A0', lc = it.style === 'landcover';
-      const ids = addResultLayers(map, id, id, { kind: lc ? 'landcover' : 'result', sourceLayer: L.layer, visible: false });
-      map.addLayer({ id: id + '-pt', type: 'circle', source: id, 'source-layer': L.layer, filter: ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
+      const only = onlyFilter(L.only_cls);                // 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
+      const ids = addResultLayers(map, id, id, { kind: lc ? 'landcover' : 'result', sourceLayer: L.layer, visible: false, filter: only });
+      map.addLayer({ id: id + '-pt', type: 'circle', source: id, 'source-layer': L.layer, filter: only ? ['all', ['==', ['geometry-type'], 'Point'], only] : ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
         paint: { 'circle-color': c, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1 } }, 'slot-result');
       ids.push(id + '-pt');
       objectPaint(ids, c, lc);

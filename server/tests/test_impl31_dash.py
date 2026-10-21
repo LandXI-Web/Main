@@ -104,7 +104,9 @@ def test_emd_sums(sgg):
 
     async def direct():
         async with db(realm="lx") as c:
-            return await c.fetchval("SELECT count(*) FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[])", XD._codes(sgg), list(XD.RULES))
+            # 같은 필지 · 같은 규칙 한 번(원칙 272 — 장부 줄과 카드 판 줄이 겹치면 한 줄) — 지역 숫자와 같은 셈
+            return await c.fetchval("SELECT count(*) FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + XD.once_sql(),
+                                    XD._codes(sgg), list(XD.RULES))
     assert sum(r["suspects"] or 0 for r in e["rows"]) == run(direct())
 
 
@@ -113,7 +115,8 @@ def test_jimok_rule_area_time(sgg):
         async with db(realm="lx") as c:
             par = {r["jimok"] or "—": int(r["n"]) for r in await c.fetch("SELECT jimok, count(*) n FROM survey_parcels WHERE sgg_cd = ANY($1::text[]) GROUP BY 1", XD._codes(sgg))}
             rule = {r["rule"]: int(r["n"]) for r in await c.fetch(
-                "SELECT rule, count(*) n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) GROUP BY 1", XD._codes(sgg), list(XD.RULES))}
+                "SELECT rule, count(*) n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + XD.once_sql() + " GROUP BY 1",
+                XD._codes(sgg), list(XD.RULES))}                                     # 같은 필지 · 같은 규칙 한 번(원칙 272)
             done = await c.fetchval("SELECT count(*) FROM national_cells WHERE NOT test AND state='done' AND done_at IS NOT NULL AND year=(SELECT coalesce((value->>'year')::int, 2025) FROM lx_settings WHERE key='national.run' UNION ALL SELECT 2025 LIMIT 1)")
             return par, rule, done
     par, rule, done = run(direct())

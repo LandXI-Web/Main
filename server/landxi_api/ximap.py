@@ -171,6 +171,12 @@ async def build_board(p) -> dict:
             "FROM jobs j WHERE j.id = ANY($1::text[])", [s for s in sets if s.startswith("job_")])}
         static = [s for s in sets if not s.startswith("job_")]
         sn = await _static_counts(conn, static) if static else {}
+        # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등 · result_scope.only_cls) — 그 분류 객체 수만 센다
+        from .result_scope import only_cls
+        only = {k: v for k, v in (await only_cls(conn)).items() if k in jobs}
+        on = {r["job_id"]: int(r["n"]) for r in await conn.fetch(
+            "SELECT job_id, count(*) AS n FROM detections WHERE job_id = ANY($1::text[]) AND cls = ANY($2::text[]) GROUP BY 1",
+            list(only), sorted({c for v in only.values() for c in v}))} if only else {}
         delta = await _edit_delta(conn, sets)
         imgs = {r["id"]: dict(r) for r in await conn.fetch(
             "SELECT id, name, year, epoch, gsd_m, layer FROM imagery WHERE id = ANY($1::text[])",
@@ -199,13 +205,15 @@ async def build_board(p) -> dict:
         elif s.startswith("job_"):
             counts = _jl(j["counts"])
             n = sum(int(v) for v in counts.values() if isinstance(v, (int, float))) if counts else 0
+            if s in only:
+                n = on.get(s, 0)
             try:
                 b = [round(v, 6) for v in shape(j["env"]).bounds] if j["env"] else None
             except Exception:  # noqa: BLE001
                 b = None
             layer = {"id": j["result_set"].replace("/", "-"), "set": j["result_set"], "path": j["result_set"] + ".pmtiles", "layer": "results",
                      "source": "pmtiles", "kind": "vector", "role": "result", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
-                     "signed": j["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전"}
+                     "signed": j["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", **({"only_cls": only[s]} if s in only else {})}
         else:
             it = cat_items.get(s)
             if not it or not it.get("url") and not it.get("path"):
@@ -316,11 +324,15 @@ async def build_density(g: int) -> dict:
             if not c or c[0] != n:
                 todo.append(sid)
     if todo:
+        from .result_scope import only_cls, only_sql
         async with db(realm="lx") as conn:
+            await only_cls(conn)
+            da = [todo, size]
+            ow = "".join(" AND " + x for x in only_sql(todo, da))           # 서비스 분류만 보이는 결과는 그 분류만 칠한다
             rows = await conn.fetch(
                 "SELECT job_id, floor(((ST_XMin(geom) + ST_XMax(geom)) / 2) / $2)::int AS gx, floor(((ST_YMin(geom) + ST_YMax(geom)) / 2) / $2)::int AS gy, "
                 "count(*)::int AS n FROM detections WHERE job_id = ANY($1::text[]) AND coalesce(edit_state, 'raw') <> 'deleted' AND geom IS NOT NULL "
-                "GROUP BY 1, 2, 3", todo, size)
+                f"{ow} GROUP BY 1, 2, 3", *da)
         got: dict[str, list] = {s: [] for s in todo}
         for r in rows:
             got[r["job_id"]].append((r["gx"], r["gy"], r["n"]))
@@ -465,6 +477,9 @@ async def _meta(conn, job_id: str) -> dict:
         out["imagery"] = f"{led['year']}년 영상"
     if not out["classes"]:
         out["classes"] = [r["cls"] for r in await conn.fetch("SELECT DISTINCT cls FROM detections WHERE job_id=$1 AND cls IS NOT NULL LIMIT 12", job_id)]
+    from .result_scope import only_cls
+    if oc := (await only_cls(conn)).get(job_id):              # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
+        out["classes"] = oc
     return out
 
 

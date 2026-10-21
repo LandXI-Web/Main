@@ -1074,6 +1074,21 @@ async def _region_results(sgg_cd: str, p) -> dict:
     seen = set()
     from .svc_rules import excluded, hit
     ex = await excluded()                                 # 서비스 × 시군구 보이기 규칙(원칙 293 — 예: 곤포사일리지는 남원만)
+    from .result_scope import only_cls
+    only = {k: v for k, v in (await only_cls()).items() if k in {x["id"] for x in rows}}   # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
+    on: dict = {}
+    async with db(realm="lx") as conn:
+        if only:
+            on = {r["job_id"]: int(r["n"]) for r in await conn.fetch(
+                "SELECT job_id, count(*) AS n FROM detections WHERE job_id = ANY($1::text[]) AND cls = ANY($2::text[]) GROUP BY 1",
+                list(only), sorted({c for v in only.values() for c in v}))}
+        # 기관 화면: 서비스 결과 장부에서 '지금' 결과로 바뀐 옛 결과(되돌림 · 다시 분석으로 대신한 것)는 보이지 않는다 — LX 에만 보관 · 시점 비교용
+        live = {r["set_id"] for r in await conn.fetch("SELECT set_id FROM service_results WHERE set_id = ANY($1::text[]) AND replaced_at IS NULL",
+                                                      [x["id"] for x in rows])}
+        gone = {r["set_id"] for r in await conn.fetch(
+            "SELECT s.set_id FROM service_results s WHERE s.set_id = ANY($1::text[]) AND s.replaced_at IS NOT NULL "
+            "AND NOT EXISTS (SELECT 1 FROM service_results c WHERE c.set_id = s.set_id AND c.replaced_at IS NULL)",
+            [x["id"] for x in rows])} if p.realm == "tenant" else set()
     for x in rows:
         if not (p.is_lx or x["tenant_id"] == p.tenant_id or (x["tenant_id"] == "lx" and lx_ok)):
             continue
@@ -1083,6 +1098,8 @@ async def _region_results(sgg_cd: str, p) -> dict:
         if k in seen:
             continue
         seen.add(k)
+        if x["id"] in gone:                                 # 자리(같은 모델 · 영상)는 지키되 기관에는 내지 않는다
+            continue
         yr = x["year"] or (str(x["epoch"])[:4] if x["epoch"] else "")
         lc = bool(x["classes"]) and set(x["classes"]) <= LANDCOVER_CLASSES
         nm = f"{r['name']} 토지피복 {yr}(AI 분석)" if lc else f"{r['name']} AI 분석 {yr}".strip()
@@ -1100,10 +1117,15 @@ async def _region_results(sgg_cd: str, p) -> dict:
         out.append({"id": x["result_set"].replace("/", "-"), "name": {"ko": nm, "en": nm}, "kind": "vector", "role": "result", "source": "pmtiles",
                     "set": x["result_set"], "path": x["result_set"] + ".pmtiles", "layer": "results", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
                     "signed": x["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", "basis": "inferred",
-                    "count": env(sum(counts.values()) if counts else None, "count", "inferred", "전역 분석 결과(겹침 정리 후)", as_of=fin),
+                    "count": env(on.get(x["id"], 0) if x["id"] in only else sum(counts.values()) if counts else None, "count", "inferred", "전역 분석 결과(겹침 정리 후)", as_of=fin),
                     "from": "job", "style": "landcover" if lc else "result", "finished_at": fin,
                     # 전역(영상이 시군구를 덮음)인지 · 서비스 카드 분석의 대상 — XI ChatGEO 가 '그 지역 결과'를 고를 때 작은 부분 분석보다 전역 분석을(QA-통계 · 10-11)
-                    "full": bool(_opts.get("scope_full")), "card_id": x["card_id"], "classes": _opts.get("classes") or None})
+                    "full": bool(_opts.get("scope_full")), "card_id": x["card_id"], "classes": _opts.get("classes") or only.get(x["id"]) or None,
+                    **({"only_cls": only[x["id"]]} if x["id"] in only else {})})
+    # 같은 서비스의 분석이 여럿이면 서비스로 내보내는 '지금' 결과(결과 장부)를 앞에 — 지역 결과를 고르는 곳(XI ChatGEO 등)이 같은 결과를 집는다
+    jb = [o for o in out if o.get("from") == "job"]
+    jb.sort(key=lambda o: not (o.get("card_id") and str(o.get("set", "")).rsplit("/", 1)[-1] in live))
+    out = [o for o in out if o.get("from") != "job"] + jb
     _byc: dict = {}
     for o in out:
         if o.get("from") == "job" and o.get("card_id"):

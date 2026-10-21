@@ -91,7 +91,7 @@ export function addResultLayers(map, key, source, { kind, sourceLayer, before = 
   return ids;
 }
 
-export { filterResults, resultFilter, matchCond } from './result-filter.js';
+export { filterResults, resultFilter, matchCond, onlyFilter } from './result-filter.js';
 export const setVis = (map, ids, on) => ids.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none'));
 
 /* ── 단계 기록(테스트·HUD) ── */

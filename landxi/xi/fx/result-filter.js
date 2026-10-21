@@ -39,6 +39,8 @@ export function excludeClasses(map, list) {
   return n;
 }
 export const excludedClasses = (map) => OFF.get(map) || [];
+/** 서비스 분류만 보이는 결과(서버가 층에 only_cls 를 실어 보냄 — 옛 판으로 되돌린 결과 등 · 10-21) — 층의 원래 거르기로 건다. 없으면 undefined */
+export const onlyFilter = (cls) => (Array.isArray(cls) && cls.length ? ['in', ['to-string', ['get', 'cls']], ['literal', cls.map(String)]] : undefined);
 /** 원래 객체 숨김 — 고친 자리 층(xe-live)이 새 클래스 색으로 대신 그리는 객체(클래스 바꿈 · 수정). fids 빈 목록 = 다시 보임 */
 export function hideResults(map, ids, fids) {
   const m = HIDE.get(map) || new Map(); HIDE.set(map, m);

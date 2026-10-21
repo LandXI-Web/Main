@@ -205,15 +205,21 @@ async def agg_emd(sgg: str) -> dict:
                     nm = f"{cls}({NAT_NAME[c['asset']]})"
                     r["vals"][nm] = r["vals"].get(nm, 0) + n
         if sets:
+            from .result_scope import only_cls, only_sql
+            await only_cls(conn)
+            da = [list(sets)]
+            ow = "".join(" AND " + x for x in only_sql(list(sets), da))      # 서비스 분류만 보이는 결과
             det = await conn.fetch(
                 "SELECT job_id, emd_cd, max(emd) AS emd, count(*)::int AS n FROM detections WHERE job_id = ANY($1::text[]) "
-                "AND coalesce(edit_state,'raw') <> 'deleted' AND emd_cd IS NOT NULL GROUP BY 1, 2", list(sets))
+                f"AND coalesce(edit_state,'raw') <> 'deleted' AND emd_cd IS NOT NULL{ow} GROUP BY 1, 2", *da)
             # 읍면동이 비어 있는 결과(일부 묶음) — 객체 가운데가 든 읍면동 칸(전국 분석 장부의 읍면동 경계)으로
+            ma = [list(sets), year]
+            mw = "".join(" AND " + x for x in only_sql(list(sets), ma, "d"))
             miss = await conn.fetch(
                 "SELECT d.job_id, c.cell_cd AS emd_cd, max(c.name) AS emd, count(*)::int AS n FROM detections d "
                 "JOIN national_cells c ON c.asset='farm' AND c.year=$2 AND NOT c.test AND ST_Intersects(c.geom_s, ST_PointOnSurface(d.geom)) "
-                "WHERE d.job_id = ANY($1::text[]) AND coalesce(d.edit_state,'raw') <> 'deleted' AND d.emd_cd IS NULL AND d.geom IS NOT NULL GROUP BY 1, 2",
-                list(sets), year)
+                f"WHERE d.job_id = ANY($1::text[]) AND coalesce(d.edit_state,'raw') <> 'deleted' AND d.emd_cd IS NULL AND d.geom IS NOT NULL{mw} GROUP BY 1, 2",
+                *ma)
             for d in [*det, *miss]:
                 r = row(d["emd_cd"], d["emd"])
                 nm = sets[d["job_id"]]
@@ -409,12 +415,16 @@ async def agg_area(sgg: str | None, task: str) -> dict:
         lc = []
     cls_names = [task] + [k for k, v in TASK_OF.items() if v == task]
     cases = " ".join(f"WHEN area_m2 >= {a}{f' AND area_m2 < {b}' if b else ''} THEN {i}" for i, (a, b) in enumerate(AREA_BINS))
+    from .result_scope import only_cls, only_sql
     async with db(realm="lx") as conn:
+        await only_cls(conn)
+        aa = [sets_all, sets_cls, cls_names]
+        ow = "".join(" AND " + x for x in only_sql(sets_all, aa))          # 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
         rows = await conn.fetch(
             f"SELECT CASE {cases} END AS b, count(*)::int AS n, sum(area_m2) AS m2 FROM detections "
             "WHERE coalesce(edit_state,'raw') <> 'deleted' AND area_m2 IS NOT NULL AND "
-            "(job_id = ANY($1::text[]) OR (job_id = ANY($2::text[]) AND cls = ANY($3::text[]))) GROUP BY 1",
-            sets_all, sets_cls, cls_names) if (sets_all or sets_cls) else []
+            f"(job_id = ANY($1::text[]) OR (job_id = ANY($2::text[]) AND cls = ANY($3::text[]))){ow} GROUP BY 1",
+            *aa) if (sets_all or sets_cls) else []
     got = {r["b"]: r for r in rows}
     bins = [{"label": _bin_label(a, b), "lo": a, "hi": b, "n": int((got.get(i) or {}).get("n") or 0),
              "km2": round(float((got.get(i) or {}).get("m2") or 0) / 1e6, 4)} for i, (a, b) in enumerate(AREA_BINS)]
