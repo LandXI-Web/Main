@@ -129,3 +129,5 @@
 .rv-cover span{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
 /* 화면 최적화(10-14 원칙 248) — 1600 이상은 직원 화면과 같은 내용 최대 폭(shell.css --wide-max · 1600 미만 그대로) */
 @media (min-width:1600px){.rv-grid{max-width:var(--wide-max)}}
+/* 좁은 화면 — 목록 · 상세를 옆으로 나란히 두지 않고 위아래로(10-21 재검수 A · 배포 폰 가로 넘침) */
+@media (max-width:900px){.rv-grid--req,.rv-grid--cat{grid-template-columns:minmax(0,1fr)}}

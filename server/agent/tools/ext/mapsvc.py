@@ -460,6 +460,8 @@ async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], d
             cond = {**cond, "cls": w}
             have = await _jobs_with(jobs, w)
             jobs = [j for j in jobs if j in have] or jobs
+        elif why == "켜진 층":
+            ctx.state["subject_miss"] = _m or f"{cw} 결과가 없습니다"     # 물은 분류가 켜진 층에 없다 — 다른 층(비닐하우스) 숫자로 대신 답하지 않는다(10-21 재검수 B)
     em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP and x != "읍면동"]
     if em:
         w = [x for x in emds if x == em[0] or x.startswith(em[0])]
@@ -498,6 +500,11 @@ async def map_stats(args: dict, ctx) -> Out:
         return out
     jobs, cond = await _subject(ctx, t, jobs, why)
     names = await RSC.layer_names(jobs)
+    if (miss := ctx.state.pop("subject_miss", None)):
+        ctx.state["cannot"] = {"kind": "nodata"}
+        out.data = {"status": "missing", "missing": [miss]}
+        out.answer = RSC.scope_line(names, {}, why) + f"\n켜진 층에는 {miss}. 물으신 분류의 결과 층을 켠 뒤 다시 말씀해 주세요."
+        return out
     a: list = [jobs]
     w_ = ["job_id = ANY($1::text[])", "edit_state <> 'deleted'"] + RSC.sql(cond, a) + RSC.clip_sql(jobs, a)
     async with db(realm="lx") as c:
@@ -784,6 +791,11 @@ async def ai_report(args: dict, ctx) -> Out:
         return out
     from landxi_api import result_scope as RSC
     jobs, cond = await _subject(ctx, t, jobs, why)            # 통계 답(map_stats)과 같은 대상 · 같은 조건 — 질문의 분류 · 읍면동까지
+    if (miss := ctx.state.pop("subject_miss", None)):
+        ctx.state["cannot"] = {"kind": "nodata"}
+        out.data = {"status": "missing", "missing": [miss]}
+        out.answer = RSC.scope_line(await RSC.layer_names(jobs), {}, why) + f"\n켜진 층에는 {miss} — 다른 분류 숫자로 보고서를 만들지 않았습니다. 물으신 분류의 결과 층을 켠 뒤 다시 말씀해 주세요."
+        return out
     parts = [d for d in await asyncio.gather(*(_job_data(j, cond) for j in jobs)) if d and d["rows"]]   # 층마다 동시에(층 둘 · 보고서 시간 줄이기)
     if not parts:
         out.data = {"status": "no_data", "text": "해당 지역 데이터가 없습니다"}

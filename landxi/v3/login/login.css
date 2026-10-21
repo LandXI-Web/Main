@@ -231,3 +231,9 @@ body.t { overflow: hidden; }
 .door__foot .fam ul{left:auto;right:0}
 /* 좁은 화면 — 패밀리 목록은 로그인 버튼 위로 덮지 않고 바닥 아래로 펼친다 */
 @media (max-width: 960px) { .fam ul { bottom: auto; top: calc(100% + 8px); } }
+/* 좁은 폰 — 바닥 한 줄(로고 · 패밀리 사이트 · API 안내)이 카드 폭을 넘지 않게(10-21 재검수 A) */
+@media (max-width: 430px) {
+  .door__foot { gap: 10px; }
+  .door__links { gap: 10px; flex-shrink: 0; }
+  .door__foot img { min-width: 0; flex: 0 1 auto; object-fit: contain; object-position: left center; }
+}

@@ -387,9 +387,19 @@ export async function trainBoard({ host, project: P }) {
   function nodeDrag(e, n, el) {
     if (e.button > 0 || e.target.closest('.tb-port:not(.in),.tb-run')) return;
     const sx = e.clientX, sy = e.clientY, ox = n.x, oy = n.y;
-    let moved = false;
+    let moved = false, off = false;
     try { el.setPointerCapture(e.pointerId); } catch { /* */ }
+    const esc = (ev) => {       // 끄는 중 Esc = 취소 — 놓기 전 자리로 돌아가고 저장하지 않는다(10-21 재검수 C)
+      if (ev.key !== 'Escape' || off) return;
+      off = true; document.removeEventListener('keydown', esc, true);
+      el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      try { el.releasePointerCapture(e.pointerId); } catch { /* */ }
+      n.x = ox; n.y = oy; el.style.left = `${ox}px`; el.style.top = `${oy}px`;
+      el.classList.remove('is-moving'); cv.classList.remove('is-moving'); drawWires();
+    };
+    document.addEventListener('keydown', esc, true);
     const mv = (ev) => {
+      if (off) return;
       const dx = ev.clientX - sx, dy = ev.clientY - sy;
       if (!moved && Math.hypot(dx, dy) < 5) return;
       if (!moved) { moved = true; el.classList.add('is-moving'); cv.classList.add('is-moving'); }
@@ -397,6 +407,7 @@ export async function trainBoard({ host, project: P }) {
       el.style.left = `${n.x}px`; el.style.top = `${n.y}px`; drawWires();
     };
     const up = () => {
+      document.removeEventListener('keydown', esc, true);
       el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       if (!moved) return;
       el.classList.remove('is-moving'); cv.classList.remove('is-moving'); hush(); drawWires(); save();

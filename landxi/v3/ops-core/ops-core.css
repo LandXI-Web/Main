@@ -245,3 +245,12 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
 .rq-due{display:block}
 .rq-due[data-lv="soon"],.rq-sheet .rq-due[data-lv="soon"]{color:var(--ci,var(--ink));font-weight:600}
 .rq-due[data-lv="late"]{color:var(--warn);font-weight:600}
+/* 좁은 화면 — 요청 관리: 제목 · 탭을 위아래로, 숫자 칸 2열, 목록은 카드 안에서만 옆으로 밀기(10-21 재검수 A) */
+@media (max-width:720px){
+  .oc-ih{flex-direction:column;align-items:stretch;gap:12px}
+  .oc-tabs{max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .oc-tabs button{white-space:nowrap}
+  .rq-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rq-list{overflow-x:auto}
+  .rq-row{min-width:860px}
+}

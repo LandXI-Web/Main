@@ -1,0 +1,751 @@
+{
+ "run_at": "2026-10-21 19:24:24",
+ "script": "capture-C-zone.mjs",
+ "logins": [
+  {
+   "vp": "pc",
+   "login_ms": 89137,
+   "err": null,
+   "landed": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  },
+  {
+   "vp": "mo",
+   "login_ms": 88882,
+   "err": null,
+   "landed": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  }
+ ],
+ "steps": [
+  {
+   "id": "c1-train-list",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/",
+   "total_ms": 6800,
+   "go": {
+    "ready": true,
+    "ms_ready": 2948
+   },
+   "project_found": true,
+   "controls": [
+    "LAND-XILX 직원 대시보드",
+    "자동 로그아웃 내일 19:25 · 남은 24시간",
+    "LX 직원",
+    "?",
+    "나가기",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "지도 서비스",
+    "XI XI맵",
+    "요청함",
+    "새 모델 만들기",
+    "2026 학습 다시 학습 필요 농지이용 AI 모델 정확도 95%",
+    "2026 학습 쓸 수 있음 비닐하우스 AI 모델 정확도 89%",
+    "2026 학습 쓸 수 있음 무허가 건축물 AI 모델 정확도 89%",
+    "형질변경 첫 학습 전 개발제한구역",
+    "주차장 2026 학습 쓸 수 있음 지목 불부합 AI 모델 정확도 89%",
+    "허가 부지 첫 학습 전 개발행위 사후관리",
+    "2026 학습 쓸 수 있음 공유재산 AI 모델 정확도 89%",
+    "2026 학습 쓸 수 있음 하천구역 점용 AI 모델 정확도 89%",
+    "폐기물 첫 학습 전 방치폐기물·소각",
+    "학습 기록 없음 해양쓰레기"
+   ],
+   "text_head": "LAND-XILX 직원 대시보드 19:25 자동 로그아웃 내일 19:25 · 남은 24시간 LX 직원 ? 나가기 대시보드 프로젝트 분석하기 지도 서비스 XI XI맵 요청함 학습 · 업무별 모델 새 모델 만들기 2026 학습 다시 학습 필요 농지이용 AI 모델 정확도 95% 2026 학습 쓸 수 있음 비닐하우스 AI 모델 정확도 89% 2026 학습 쓸 수 있음 무허가 건축물 AI 모델 정확도 89% 형질변경 첫 학습 전 개발제한구역 주차장 2026 학습 쓸 수 있음 지목 불부합 AI 모델 정확도 89% 허가 부지 첫 학습 전 개발행",
+   "shot": "shots/c1-train-list-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c2-label-entry",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=label",
+   "total_ms": 3164,
+   "go": {
+    "ready": true,
+    "ms_ready": 1891
+   },
+   "map_canvas": 1,
+   "image_canvas": 0,
+   "view_tabs": [
+    "지도",
+    "그림"
+   ],
+   "controls": [
+    "LAND-XILX 직원 대시보드",
+    "자동 로그아웃 내일 19:25 · 남은 24시간",
+    "LX 직원",
+    "?",
+    "나가기",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "지도 서비스",
+    "XI XI맵",
+    "요청함",
+    "프로젝트 비닐하우스 2026",
+    "데이터 올리기",
+    "학습데이터 구축",
+    "학습",
+    "추론",
+    "결과 확인",
+    "배포 신청",
+    "지도",
+    "그림",
+    "선택 V",
+    "다각형 P",
+    "사각형 R",
+    "되돌리기",
+    "다시 하기",
+    "삭제",
+    "영상 전체",
+    "+",
+    "−",
+    "다음 AI 결과 자리 · 144곳",
+    "이 화면 라벨 완료",
+    "고치기",
+    "건물 1개 1",
+    "주차장 2",
+    "경작지 3",
+    "비닐하우스 4",
+    "건물 · 다각형",
+    "학습데이터 올리기",
+    "비닐하우스 2026.09.30 올림 200 장"
+   ],
+   "text_head": "LAND-XILX 직원 대시보드 19:26 자동 로그아웃 내일 19:25 · 남은 24시간 LX 직원 ? 나가기 대시보드 프로젝트 분석하기 지도 서비스 XI XI맵 요청함 프로젝트 비닐하우스 2026 데이터 올리기 학습데이터 구축 학습 추론 결과 확인 배포 신청 다음 할 일 배포 승인됨 학습데이터 구축 0 / 0장 라벨 완료 · 지도에 그린 모양 1개 지도 그림 50 m 선택 V 다각형 P 사각형 R 되돌리기 다시 하기 삭제 영상 전체 + − 지도를 여는 중 저장됨 10-19 12:52 · LX 직원 다음 AI 결과 자리 · 144",
+   "shot": "shots/c2-label-entry-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 1400,
+     "dur_ms": 396
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c2-label-image-view",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=label&view=chip",
+   "total_ms": 16465,
+   "clicked": true,
+   "ready": false,
+   "ms_to_image": 15161,
+   "progress": "0 / 0장 라벨 완료",
+   "rows": 0,
+   "shot": "shots/c2-label-image-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c2-label-map-view",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=label&view=map",
+   "total_ms": 3187,
+   "clicked": true,
+   "ready": true,
+   "ms_to_map": 946,
+   "map_rows": 1,
+   "shot": "shots/c2-label-map-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 564,
+     "dur_ms": 601
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c3-train-board",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+   "total_ms": 4614,
+   "go": {
+    "ready": true,
+    "ms_ready": 3448
+   },
+   "nodes": 6,
+   "node_kinds": [
+    "data",
+    "base",
+    "cfg",
+    "train",
+    "eval",
+    "deploy"
+   ],
+   "controls": [
+    "LAND-XILX 직원 대시보드",
+    "자동 로그아웃 내일 19:25 · 남은 24시간",
+    "LX 직원",
+    "?",
+    "나가기",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "지도 서비스",
+    "XI XI맵",
+    "요청함",
+    "프로젝트 비닐하우스 2026",
+    "데이터 올리기",
+    "학습데이터 구축",
+    "학습",
+    "추론",
+    "결과 확인",
+    "배포 신청",
+    "다시 돌리기",
+    "학습 데이터",
+    "기반 모델",
+    "학습 설정",
+    "학습",
+    "추론",
+    "배포 신청",
+    "학습 데이터 비닐하우스 25cm · 35,247장",
+    "기반 모델 원판 · 4종 모델",
+    "학습 설정 반복 20회 · 크기 1280 · 한 번에 8장",
+    "학습 학습 끝 검증 90% 끝남 · 10-08 19:11 · 20회",
+    "추론 87% 원판 91%보다 낮음",
+    "배포 신청 원판보다 낮아 꺼짐",
+    "기본 흐름으로 되돌리기"
+   ],
+   "shot": "shots/c3-train-board-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c3-train-drag-cancel",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_3fdba452d5&stage=train",
+   "total_ms": 1750,
+   "start": [
+    237,
+    324
+   ],
+   "moved_px_after_cancel": 370,
+   "start_training_buttons_present": 0,
+   "shot_mid": "shots/c3-train-drag-mid-pc.png",
+   "shot_after": "shots/c3-train-drag-after-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c4-lx-map",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+   "total_ms": 6233,
+   "go": {
+    "ready": true,
+    "ms_ready": 4913
+   },
+   "controls": [
+    "LAND-XILX 직원 대시보드",
+    "자동 로그아웃 내일 19:25 · 남은 24시간",
+    "LX 직원",
+    "?",
+    "나가기",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "지도 서비스",
+    "XI XI맵",
+    "요청함",
+    "접기",
+    "− 프로젝트 추론 — 주차장 2026 1 / 1",
+    "이 묶음만 보기",
+    "여주시 하거동 · 2026.10.10",
+    "+ 프로젝트 추론 — 비닐하우스 2026 1",
+    "+ 비닐하우스 분석서비스 3",
+    "+ 건축물 분석서비스 2",
+    "+ 주차장 분석서비스 2",
+    "주차장 2",
+    "영상",
+    "LX맵",
+    "연속지적",
+    "범례 접기"
+   ],
+   "text_head": "LAND-XILX 직원 대시보드 19:26 자동 로그아웃 내일 19:25 · 남은 24시간 LX 직원 ? 나가기 대시보드 프로젝트 분석하기 지도 서비스 XI XI맵 요청함 지도 서비스 접기 2건 켜진 결과 · 묶음 1개 9건 전체 · 묶음 5개 − 프로젝트 추론 — 주차장 2026 1 / 1 이 묶음만 보기 여주시 하거동 · 2026.10.10 2건 + 프로젝트 추론 — 비닐하우스 2026 1 + 비닐하우스 분석서비스 3 + 건축물 분석서비스 2 + 주차장 분석서비스 2 클래스 주차장 2 바탕 영상 LX맵 연속지적 200 m 프로젝",
+   "shot": "shots/c4-lx-map-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 1784,
+     "dur_ms": 3006
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c5-ximap-open",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+   "total_ms": 4136,
+   "go": {
+    "ready": true,
+    "ms_ready": 2394
+   },
+   "date_like_texts": [],
+   "controls": [
+    "LAND-XIXI맵",
+    "자동 로그아웃 내일 19:25 · 남은 24시간",
+    "LX 직원",
+    "?",
+    "나가기",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "지도 서비스",
+    "XI XI맵",
+    "요청함",
+    "남원시 현황 보여 줘",
+    "강진군 경작지 어디가 많아?",
+    "무주군 현황 보여 줘",
+    "이천시 토지피복 어디가 많아?",
+    "10 시군구 · 6 서비스 제공중",
+    "최신 영상",
+    "분석한 영상",
+    "대한민국",
+    "키르기스스탄",
+    "층",
+    "가르기",
+    "보고서",
+    "분석"
+   ],
+   "text_head": "LAND-XIXI맵 19:26 자동 로그아웃 내일 19:25 · 남은 24시간 LX 직원 ? 나가기 대시보드 프로젝트 분석하기 지도 서비스 XI XI맵 요청함 남원시 현황 보여 줘 강진군 경작지 어디가 많아? 무주군 현황 보여 줘 이천시 토지피복 어디가 많아? 50 km 10 시군구 · 6 서비스 제공중 최신 영상 분석한 영상 대한민국 키르기스스탄 층 가르기 보고서 분석 XI",
+   "shot": "shots/c5-ximap-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 1506,
+     "dur_ms": 737
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c5-ximap-tint-toggle",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+   "total_ms": 15006,
+   "bubble_clicked": "남원시 현황 보여 줘",
+   "stats_panel_ready": true,
+   "selector": ".xo-mini .xo-tint",
+   "off_shot": "shots/c5-ximap-tint-off-pc.png",
+   "on_shot": "shots/c5-ximap-tint-on-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 110,
+     "dur_ms": 2021
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [
+     "남원시 · AI 분석 결과",
+     "×",
+     "AI 분석 결과",
+     "404,166",
+     "개",
+     "토지피복",
+     "개",
+     "비닐하우스"
+    ],
+    "clipped": [
+     "경작지(농지 전수)",
+     "업무별",
+     "토지피복",
+     "비닐하우스",
+     "경작지(농지 전수)",
+     "건물(하천 · 계곡)",
+     "비닐하우스(농지 전수)",
+     "경작·휴경"
+    ]
+   },
+   "console_error_count": 1,
+   "console_errors": [
+    "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+   ],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": [
+    "net::ERR_ABORTED https://app.land-xi.dev/api/v1/events/agent/run_261021192640a64eba",
+    "net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/218/98.webp?v=2",
+    "net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/219/98.webp?v=2",
+    "net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/221/100.webp?v=2",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/110/51.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/109/51.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/108/51.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/109/51.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/110/51.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/108/51.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/216/99.webp?v=2",
+    "net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/216/102.webp?v=2",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/pmtiles/reference/sigungu.pmtiles",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/109/49.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/108/49.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/110/49.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/110/49.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/109/49.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/7/108/49.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/7/109/50.pbf?v=3855.1792522456.3"
+   ]
+  },
+  {
+   "id": "c5-ximap-tint-slider",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+   "total_ms": 3542,
+   "shot_40": "shots/c5-ximap-tint-40-pc.png",
+   "shot_100": "shots/c5-ximap-tint-100-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [
+     "남원시 · AI 분석 결과",
+     "×",
+     "AI 분석 결과",
+     "404,166",
+     "개",
+     "토지피복",
+     "개",
+     "비닐하우스"
+    ],
+    "clipped": [
+     "경작지(농지 전수)",
+     "업무별",
+     "토지피복",
+     "비닐하우스",
+     "경작지(농지 전수)",
+     "건물(하천 · 계곡)",
+     "비닐하우스(농지 전수)",
+     "경작·휴경"
+    ]
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": [
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/farm/2025/10/875/403.pbf?v=3855.1792522456.3",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/10/875/403.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G/11/1750/809.pbf?v=a6087ae632",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/namwon-farmland-2025/11/1750/809.pbf?v=caf2b87002",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3Q8K4H4YXVHHDAEBMRY1RN7/11/1750/808.pbf?v=3c1f5a1761",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3RP4XBVH36MTYQZQQYW06EW/11/1749/809.pbf?v=6c2205285a",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B/11/1750/808.pbf?v=af3e8fee9f",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B/11/1747/809.pbf?v=af3e8fee9f",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PSCWE2D0X1NZ1J1E4T9GBC/11/1750/809.pbf?v=4c4018080e",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M4ASGEKFA2M21AMVYFB6FPN7/11/1750/807.pbf?v=5eef91dc55",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G/11/1750/807.pbf?v=a6087ae632",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3RCYK4CWJWSXYNEXH3CWZ2B/11/1749/809.pbf?v=af3e8fee9f",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PSCWE2D0X1NZ1J1E4T9GBC/11/1749/809.pbf?v=4c4018080e",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M4ASGEKFA2M21AMVYFB6FPN7/11/1750/808.pbf?v=5eef91dc55",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/national/river/2025/10/875/404.pbf?v=3853.1792568288",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G/11/1747/809.pbf?v=a6087ae632",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/namwon-farmland-2025/11/1747/809.pbf?v=caf2b87002",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PSCWE2D0X1NZ1J1E4T9GBC/11/1750/808.pbf?v=4c4018080e",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M4ASGEKFA2M21AMVYFB6FPN7/11/1750/809.pbf?v=5eef91dc55",
+    "net::ERR_ABORTED https://app.land-xi.dev/tiles/mvt/results/lx/job_01M3PHP0GQAP0NV87VFWHPP77G/11/1750/808.pbf?v=a6087ae632"
+   ]
+  },
+  {
+   "id": "c5-ximap-layers",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+   "total_ms": 1480,
+   "rows": 1,
+   "shot": "shots/c5-ximap-layers-pc.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [
+     "남원시 · AI 분석 결과",
+     "×",
+     "AI 분석 결과",
+     "404,166",
+     "개",
+     "토지피복",
+     "개",
+     "비닐하우스"
+    ],
+    "clipped": [
+     "경작지(농지 전수)",
+     "업무별",
+     "토지피복",
+     "비닐하우스",
+     "경작지(농지 전수)",
+     "건물(하천 · 계곡)",
+     "비닐하우스(농지 전수)",
+     "경작·휴경"
+    ]
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  },
+  {
+   "id": "c6-chatgeo-q1-report",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+   "total_ms": 116885,
+   "ask": {
+    "thinkingSeen": true,
+    "answered": true,
+    "ms_answer": 1588,
+    "answer": "XI 남원시 · 경작지 통계 보고서를 만들었습니다 — 경작지 84,950곳 · 읍면동 35곳(많은 곳: 운봉읍 · 송동면 · 보절면). 대화 2 ×"
+   },
+   "source_lines_answer": [],
+   "shot_answer": "shots/c6-chat-q1-answer-pc.png",
+   "shot_drawer": "shots/c6-chat-q1-drawer-pc.png",
+   "click_err": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button",
+   "report_opened": false,
+   "ms_to_dashboard": 100309,
+   "dashboard_source_lines": null,
+   "shot_dashboard": "shots/c6-report-dash-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 1499,
+     "dur_ms": 355
+    },
+    {
+     "from_ms": 2254,
+     "dur_ms": 1230
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": [
+    "net::ERR_ABORTED https://app.land-xi.dev/api/v1/ximap/boot?region=52190",
+    "net::ERR_ABORTED https://app.land-xi.dev/api/v1/events/agent/run_2610211927031b6c0c"
+   ]
+  },
+  {
+   "id": "c7-chatgeo-q2-highlight",
+   "vp": "pc",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190",
+   "total_ms": 52842,
+   "ask": {
+    "thinkingSeen": true,
+    "answered": true,
+    "ms_answer": 45972,
+    "answer": "XI 지금은 답할 수 없습니다다시 시도 대화 3 ×"
+   },
+   "map_hash_before": "2655ce8b700e",
+   "map_hash_after": "35af63ea3e47",
+   "map_changed": true,
+   "source_lines_answer": [],
+   "shot_answer": "shots/c7-chat-q2-answer-pc.png",
+   "shot_map": "shots/c7-chat-q2-map-pc.png",
+   "loading_spans": [
+    {
+     "from_ms": 2327,
+     "dur_ms": 597
+    },
+    {
+     "from_ms": 3529,
+     "dur_ms": 45796
+    }
+   ],
+   "layout": {
+    "docScrollW": 1440,
+    "innerW": 1440,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 3,
+   "console_errors": [
+    "Failed to load resource: the server responded with a status of 502 ()"
+   ],
+   "bad_count": 3,
+   "bad_responses": [
+    "502 GET https://app.land-xi.dev/api/v1/events/agent/run_261021192901d0e3a7&last_event_id=1792578541217-0",
+    "502 GET https://app.land-xi.dev/api/v1/national/progress"
+   ],
+   "failed_requests": [
+    "net::ERR_ABORTED https://app.land-xi.dev/api/v1/events/agent/run_261021192901d0e3a7&last_event_id=1792578541217-0"
+   ]
+  },
+  {
+   "id": "c8-ximap-mo-open",
+   "vp": "mo",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+   "total_ms": 62733,
+   "go": {
+    "ready": false,
+    "ms_ready": 61065
+   },
+   "chat_input_box": {
+    "x": 66,
+    "y": 718,
+    "width": 250,
+    "height": 44
+   },
+   "layer_tool_box": {
+    "x": 180,
+    "y": 116,
+    "width": 48,
+    "height": 51.796875
+   },
+   "layer_tool_overlaps_chat_input": false,
+   "controls": [
+    "LAND-XI",
+    "LX 직원",
+    "?",
+    "대시보드",
+    "프로젝트",
+    "분석하기",
+    "요청함",
+    "메뉴",
+    "전국 분석 얼마나 진행됐어?",
+    "남원시 강진군 비교해 줘",
+    "10 시군구 · 6 서비스 제공중",
+    "최신 영상",
+    "분석한 영상",
+    "대한민국",
+    "키르기스스탄",
+    "층",
+    "가르기",
+    "보고서",
+    "분석"
+   ],
+   "shot": "shots/c8-ximap-mo-pc-open.png",
+   "loading_spans": [
+    {
+     "from_ms": 2198,
+     "dur_ms": 1001
+    }
+   ],
+   "layout": {
+    "docScrollW": 390,
+    "innerW": 390,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": [
+    "net::ERR_ABORTED https://app.land-xi.dev/api/v1/ximap/boot?"
+   ]
+  },
+  {
+   "id": "c8-ximap-mo-layers",
+   "vp": "mo",
+   "url": "https://app.land-xi.dev/landxi/v3/xi-clean/",
+   "total_ms": 1169,
+   "layer_rows_visible": 1,
+   "layer_rows_overlapping_chat_input": 0,
+   "chat_input_y": 718,
+   "rows": [
+    {
+     "y": 678,
+     "bottom": 716,
+     "x": 26
+    }
+   ],
+   "shot": "shots/c8-ximap-mo-layers-open.png",
+   "loading_spans": [],
+   "layout": {
+    "docScrollW": 390,
+    "innerW": 390,
+    "overflowRight": [],
+    "clipped": []
+   },
+   "console_error_count": 0,
+   "console_errors": [],
+   "bad_count": 0,
+   "bad_responses": [],
+   "failed_requests": []
+  }
+ ],
+ "notes": [],
+ "finished_at": "2026-10-21 19:32:23"
+}

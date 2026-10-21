@@ -1,0 +1,1224 @@
+{
+ "logins": {
+  "count": 2,
+  "attempts": [
+   {
+    "role": "staff",
+    "id_kind": "test",
+    "site": "app",
+    "loginMs": 4131,
+    "landedUrl": "https://app.land-xi.dev/landxi/v3/lx-console/",
+    "stillOnLoginPage": false,
+    "error": null,
+    "limitMessages": []
+   },
+   {
+    "role": "admin",
+    "id_kind": "lxadmin",
+    "site": "lx",
+    "loginMs": 4547,
+    "landedUrl": "https://app.land-xi.dev/landxi/v3/ops-core/",
+    "stillOnLoginPage": false,
+    "error": null,
+    "limitMessages": []
+   }
+  ],
+  "responses429": []
+ },
+ "steps": [
+  {
+   "screen": "guest-main-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/main/",
+   "shot": "shots/guest-main-pc.png",
+   "gotoMs": 2178,
+   "settleMs": 1053,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "details.fam sw204/cw94 \"패밀리 사이트 전북특별자치도 남원시 전남광주특별시\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [
+    "끝까지 스크롤: scrollY 24848 / 높이 25748",
+    "패밀리 사이트 링크 2개: [{\"text\":\"전북특별자치도 남원시\",\"href\":\"https://namwon.land-xi.dev/\"},{\"text\":\"전남광주특별시\",\"href\":\"https://gwangju-jeonnam.land-xi.dev/\"}]",
+    "HEAD https://namwon.land-xi.dev/ → 200",
+    "HEAD https://gwangju-jeonnam.land-xi.dev/ → 200"
+   ],
+   "consoleErrors": [],
+   "failedRequests": [
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/2/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/14.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/25/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/14.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/29/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/14.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/25/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/27.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/55/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/56/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/55/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/55/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/56/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/55/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/56/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/52/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/109/52.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/110/52.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/108/52.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/51/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/52/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/52/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/52/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/51/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/52/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/53/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/51/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/51/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/46/28.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/51/21.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/44/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/40/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/40/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/38/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/39/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/43/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/18/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/18/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/36/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/38/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/40/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/39/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/38/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/39/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/40/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/40/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/23.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/14.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/22.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/41/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/24.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/26.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/43/25.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/42/27.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/179/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/179/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/723/376.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/723/377.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/724/376.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/724/377.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/722/376.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/722/377.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/723/375.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/723/378.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/724/375.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/724/378.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/725/376.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/10/725/377.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/180/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/184/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/366/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/367/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/368/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/366/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/366/190.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/367/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/367/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/367/190.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/367/191.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/366/191.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/368/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/368/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/368/190.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/369/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/369/190.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/369/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/368/191.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/369/191.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/370/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/370/190.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/370/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/370/191.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/185/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/185/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/185/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/185/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/186/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/186/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/186/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/187/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/187/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/187/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/191/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/191/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/96/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/97/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/96/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/97/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/96/49.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/95/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/97/49.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/95/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/95/49.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/98/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/98/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/98/49.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/94/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/94/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/94/49.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/7/99/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/mm/6/49/27.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/22/16.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/29/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/29/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/29/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/20/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/18/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/19/14.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/0/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/mm/5/24/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/10/4.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/14/9.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/13/9.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/12/9.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/11/9.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/9/6.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/9/5.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/9/7.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/1/6.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/1/5.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/0/6.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/0/5.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/0/7.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/8/5.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/0/8.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/0/4.webp"
+   ]
+  },
+  {
+   "screen": "guest-login-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/login/",
+   "shot": "shots/guest-login-pc.png",
+   "gotoMs": 561,
+   "settleMs": 1011,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "details.fam sw96/cw94 \"패밀리 사이트\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "sales-cases-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/login/",
+   "shot": "shots/sales-cases-pc.png",
+   "gotoMs": 475,
+   "settleMs": 1041,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "details.fam sw96/cw94 \"패밀리 사이트\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "guest-main-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/main/",
+   "shot": "shots/guest-main-mo.png",
+   "gotoMs": 414,
+   "settleMs": 1045,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "details.fam sw204/cw94 \"패밀리 사이트 전북특별자치도 남원시 전남광주특별시\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [
+    "끝까지 스크롤: scrollY 24359 / 높이 25203",
+    "패밀리 사이트 링크 2개: [{\"text\":\"전북특별자치도 남원시\",\"href\":\"https://namwon.land-xi.dev/\"},{\"text\":\"전남광주특별시\",\"href\":\"https://gwangju-jeonnam.land-xi.dev/\"}]",
+    "HEAD https://namwon.land-xi.dev/ → 200",
+    "HEAD https://gwangju-jeonnam.land-xi.dev/ → 200"
+   ],
+   "consoleErrors": [],
+   "failedRequests": [
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/3/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/4/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/5/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/6/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/7/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/1/2.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/2/2.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/1/3.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/4/1.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/3/2.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/3/1.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/2/1.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/2/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/1/1.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/3/1/0.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/12.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/13.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/11.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/27/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/26/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/5/28/10.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/6/54/21.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/218/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/217/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/219/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/90/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/89/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/91/48.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/90/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/90/46.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/89/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/91/47.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/89/46.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/7/91/46.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/179/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/179/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/179/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/179/92.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/180/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/181/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/180/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/181/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/180/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/181/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/180/92.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/181/92.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/361/185.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/185.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/360/185.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/361/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/361/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/361/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/360/188.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/360/187.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/360/189.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/361/186.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/362/186.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/9/360/186.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/183/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/183/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/183/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/183/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/183/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/184/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/184/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/184/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/kg/8/184/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/95.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/96.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/94.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/97.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/188/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/190/93.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/8/189/92.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/mm/6/49/27.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/overseas-s2/mm/5/24/15.webp",
+    "ERR net::ERR_ABORTED https://app.land-xi.dev/landxi/data/tiles/world-bm/4/12/9.webp"
+   ]
+  },
+  {
+   "screen": "guest-login-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/login/",
+   "shot": "shots/guest-login-mo.png",
+   "gotoMs": 396,
+   "settleMs": 1013,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "footer.door__foot e sw312/cw302 \"패밀리 사이트 API 안내\"",
+     "details.fam sw96/cw94 \"패밀리 사이트\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "sales-cases-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/login/",
+   "shot": "shots/sales-cases-mo.png",
+   "gotoMs": 398,
+   "settleMs": 1098,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "footer.door__foot e sw312/cw302 \"패밀리 사이트 API 안내\"",
+     "details.fam sw96/cw94 \"패밀리 사이트\"",
+     "summary. sw96/cw94 \"패밀리 사이트\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-pc.png",
+   "gotoMs": 428,
+   "settleMs": 4141,
+   "loadingSpansMs": [
+    2347
+   ],
+   "longLoadingMs": [
+    2347
+   ],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "div.dg-body sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "ol.ld-pf is-s sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "li. sw169/cw163 \"2 데이터 올리기\"",
+     "li. sw169/cw163 \"0 학습데이터 구축\"",
+     "li. sw169/cw163 \"0 학습\"",
+     "li. sw169/cw163 \"1 추론\"",
+     "li. sw169/cw163 \"0 결과 확인\"",
+     "li. sw169/cw163 \"4 배포 신청\"",
+     "div.dg-body sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-inbox-b sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-cells sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.dg-body sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.ld-store-b is-col is-s sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.la-ac-hero sw238/cw236 \"35,247장 학습 데이터 89% AI 모델 정확도\"",
+     "div. sw86/cw72 \"89% AI 모델 정확도\"",
+     "small. sw86/cw72 \"AI 모델 정확도\"",
+     "p.k-sc-line la-ac-line sw666/cw236 \"프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 \""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-edit-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-edit-pc.png",
+   "notes": [
+    "수정 중 모습",
+    "수정 중 보이는 단추: [\"기능 추가하기\",\"테마\",\"처음 모양으로\",\"완료\"]",
+    "'기능 추가하기' 단추 글: 기능 추가하기",
+    "대상 칸 원래 상자: {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-n-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-n-pc.png",
+   "notes": [
+    "n 끌기 0,-50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":132,\"width\":870.65625,\"height\":204} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-s-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-s-pc.png",
+   "notes": [
+    "s 끌기 0,50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-e-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-e-pc.png",
+   "notes": [
+    "e 끌기 50,0: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-w-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-w-pc.png",
+   "notes": [
+    "w 끌기 -50,0: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-ne-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-ne-pc.png",
+   "notes": [
+    "ne 끌기 50,-50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":132,\"width\":870.65625,\"height\":204} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-nw-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-nw-pc.png",
+   "notes": [
+    "nw 끌기 -50,-50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":132,\"width\":870.65625,\"height\":204} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-se-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-se-pc.png",
+   "notes": [
+    "se 끌기 50,50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-resize-sw-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-resize-sw-pc.png",
+   "notes": [
+    "sw 끌기 -50,50: 전 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} → 후 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 되돌린 뒤 {\"x\":104,\"y\":204,\"width\":870.65625,\"height\":132} · 원래와 차이 {\"x\":0,\"y\":0,\"w\":0,\"h\":0}"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-after-resize-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-after-resize-pc.png",
+   "gotoMs": 445,
+   "settleMs": 4241,
+   "loadingSpansMs": [
+    2398
+   ],
+   "longLoadingMs": [
+    2398
+   ],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "div.dg-body sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "ol.ld-pf is-s sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "li. sw169/cw163 \"2 데이터 올리기\"",
+     "li. sw169/cw163 \"0 학습데이터 구축\"",
+     "li. sw169/cw163 \"0 학습\"",
+     "li. sw169/cw163 \"1 추론\"",
+     "li. sw169/cw163 \"0 결과 확인\"",
+     "li. sw169/cw163 \"4 배포 신청\"",
+     "div.dg-body sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-inbox-b sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-cells sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.dg-body sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.ld-store-b is-col is-s sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.la-ac-hero sw238/cw236 \"35,247장 학습 데이터 89% AI 모델 정확도\"",
+     "div. sw86/cw72 \"89% AI 모델 정확도\"",
+     "small. sw86/cw72 \"AI 모델 정확도\"",
+     "p.k-sc-line la-ac-line sw666/cw236 \"프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 \""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-add-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-add-pc.png",
+   "settleMs": 1005,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "div.dg-body sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "ol.ld-pf is-s sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "li. sw169/cw163 \"2 데이터 올리기\"",
+     "li. sw169/cw163 \"0 학습데이터 구축\"",
+     "li. sw169/cw163 \"0 학습\"",
+     "li. sw169/cw163 \"1 추론\"",
+     "li. sw169/cw163 \"0 결과 확인\"",
+     "li. sw169/cw163 \"4 배포 신청\"",
+     "div.dg-hd sw283/cw279 \"요청함 기관의 요청과 내가 보낸 요청 숫자 목록 숫자만 숫자 + 막대\"",
+     "div.dg-body sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-inbox-b sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-cells sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.dg-hd sw393/cw389 \"저장 용량 개별 할당 100 GB · 프로젝트 7개 숫자 프로젝트별\"",
+     "div.dg-body sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.ld-store-b is-col is-s sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.dg-hd sw393/cw389 \"달력 자동 월 주 다음 일\"",
+     "div.la-ac-hero sw238/cw236 \"35,247장 학습 데이터 89% AI 모델 정확도\"",
+     "div. sw86/cw72 \"89% AI 모델 정확도\"",
+     "small. sw86/cw72 \"AI 모델 정확도\"",
+     "p.k-sc-line la-ac-line sw666/cw236 \"프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 \""
+    ]
+   },
+   "notes": [
+    "기능 추가하기 누른 뒤 (추가 확정 안 함)"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-reloaded-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-reloaded-pc.png",
+   "gotoMs": 505,
+   "settleMs": 4003,
+   "loadingSpansMs": [
+    1997
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "div.dg-body sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "ol.ld-pf is-s sw506/cw500 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "li. sw169/cw163 \"2 데이터 올리기\"",
+     "li. sw169/cw163 \"0 학습데이터 구축\"",
+     "li. sw169/cw163 \"0 학습\"",
+     "li. sw169/cw163 \"1 추론\"",
+     "li. sw169/cw163 \"0 결과 확인\"",
+     "li. sw169/cw163 \"4 배포 신청\"",
+     "div.dg-body sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-inbox-b sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-cells sw285/cw279 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.dg-body sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.ld-store-b is-col is-s sw395/cw389 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.la-ac-hero sw238/cw236 \"35,247장 학습 데이터 89% AI 모델 정확도\"",
+     "div. sw86/cw72 \"89% AI 모델 정확도\"",
+     "small. sw86/cw72 \"AI 모델 정확도\"",
+     "p.k-sc-line la-ac-line sw666/cw236 \"프로젝트 하나 = 모델 하나. 지금 경작지 모델을 지리원 API 영상(압축 영상)에도 강하게 다시 학습하는 \""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "staff-dash-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "shot": "shots/staff-dash-mo.png",
+   "gotoMs": 394,
+   "settleMs": 4096,
+   "loadingSpansMs": [
+    2294
+   ],
+   "longLoadingMs": [
+    2294
+   ],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "div.dg-body sw324/cw318 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "ol.ld-pf is-s sw324/cw318 \"2 데이터 올리기 0 학습데이터 구축 0 학습 1 추론 0 결과 확인 4 배포 신청\"",
+     "li. sw108/cw102 \"2 데이터 올리기\"",
+     "li. sw108/cw102 \"0 학습데이터 구축\"",
+     "li. sw108/cw102 \"0 학습\"",
+     "li. sw108/cw102 \"1 추론\"",
+     "li. sw108/cw102 \"0 결과 확인\"",
+     "li. sw108/cw102 \"4 배포 신청\"",
+     "div.dg-body sw324/cw318 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-inbox-b sw324/cw318 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.ld-cells sw324/cw318 \"0 검토 요청 0 분석 요청 0 보낸 요청\"",
+     "div.dg-body sw324/cw318 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "div.ld-store-b is-col is-s sw324/cw318 \"0% 38.5 MB 사용 · 할당 100 GB\"",
+     "li. sw324/cw318 \"비닐하우스 2026 배포 신청 2일 전\"",
+     "li. sw324/cw318 \"건축물 추론 4일 전\"",
+     "li. sw324/cw318 \"경작지 v2 — 항공 · API 영상 데이터 올리기 9일 전\"",
+     "li. sw324/cw318 \"테스트 데이터 올리기 9일 전\"",
+     "li. sw324/cw318 \"주차장 2026 배포 신청 11일 전\"",
+     "li. sw324/cw318 \"건축물 2026 배포 신청 14일 전\"",
+     "li. sw324/cw318 \"곤포사일리지 2026 배포 신청 20일 전\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-home-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-home-pc.png",
+   "gotoMs": 960,
+   "settleMs": 1044,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\"",
+     "span. sw343/cw318 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "sales-cases-as-admin-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/sales/",
+   "shot": "shots/sales-cases-as-admin-pc.png",
+   "gotoMs": 493,
+   "settleMs": 1029,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": []
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-home-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-home-pc.png",
+   "gotoMs": 717,
+   "settleMs": 1025,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\"",
+     "span. sw343/cw318 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-menu-list-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": null,
+   "notes": [
+    "왼쪽 메뉴 항목(보이는 것): [{\"i\":0,\"text\":\"현황\",\"href\":null},{\"i\":1,\"text\":\"인프라\",\"href\":\"/landxi/v3/ops-infra/\"},{\"i\":2,\"text\":\"기관\",\"href\":\"/landxi/v3/ops-infra/?view=tenants\"},{\"i\":3,\"text\":\"배포\",\"href\":\"/landxi/v3/ops-infra/?view=deploys\"},{\"i\":4,\"text\":\"요청 관리\",\"href\":null},{\"i\":5,\"text\":\"검토 요청\",\"href\":\"/landxi/v3/lx-inbox/\"},{\"i\":6,\"text\":\"계정 관리\",\"href\":\"/landxi/v3/ops-accounts/\"},{\"i\":7,\"text\":\"공유 데이터\",\"href\":\"/landxi/v3/ops-infra/?view=shared\"}]"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-현황-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-현황-pc.png",
+   "clickToSettleMs": 2916,
+   "settleMs": 1024,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\"",
+     "span. sw343/cw318 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-인프라-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-인프라-pc.png",
+   "clickToSettleMs": 6443,
+   "settleMs": 4300,
+   "loadingSpansMs": [
+    2531
+   ],
+   "longLoadingMs": [
+    2531
+   ],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\"",
+     "div.chart sw315/cw259 \"고부하 GPU 0 GPU 1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-기관-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-기관-pc.png",
+   "clickToSettleMs": 3646,
+   "settleMs": 1550,
+   "loadingSpansMs": [
+    521
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-배포-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-배포-pc.png",
+   "clickToSettleMs": 3726,
+   "settleMs": 1633,
+   "loadingSpansMs": [
+    386
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-요청 관리-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-요청 관리-pc.png",
+   "clickToSettleMs": 2765,
+   "settleMs": 1015,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-검토 요청-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/",
+   "shot": "shots/lx-admin-검토 요청-pc.png",
+   "clickToSettleMs": 3140,
+   "settleMs": 1038,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-계정 관리-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-accounts/",
+   "shot": "shots/lx-admin-계정 관리-pc.png",
+   "clickToSettleMs": 3165,
+   "settleMs": 1032,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-공유 데이터-pc",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-공유 데이터-pc.png",
+   "clickToSettleMs": 5309,
+   "settleMs": 3142,
+   "loadingSpansMs": [
+    1967
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "span.k-bell-slot sw38/cw36 \"1\"",
+     "button.k-mast-b k-bell sw38/cw36 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-home-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-home-mo.png",
+   "gotoMs": 714,
+   "settleMs": 1021,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "span. sw322/cw276 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "sales-cases-as-admin-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/sales/",
+   "shot": "shots/sales-cases-as-admin-mo.png",
+   "gotoMs": 416,
+   "settleMs": 1053,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": []
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-home-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-home-mo.png",
+   "gotoMs": 1019,
+   "settleMs": 1126,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "span. sw322/cw276 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-menu-list-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": null,
+   "notes": [
+    "왼쪽 메뉴 항목(보이는 것): [{\"i\":0,\"text\":\"현황\",\"href\":null},{\"i\":1,\"text\":\"인프라\",\"href\":\"/landxi/v3/ops-infra/\"},{\"i\":2,\"text\":\"기관\",\"href\":\"/landxi/v3/ops-infra/?view=tenants\"},{\"i\":3,\"text\":\"배포\",\"href\":\"/landxi/v3/ops-infra/?view=deploys\"},{\"i\":4,\"text\":\"요청 관리\",\"href\":null},{\"i\":5,\"text\":\"검토 요청\",\"href\":\"/landxi/v3/lx-inbox/\"},{\"i\":6,\"text\":\"계정 관리\",\"href\":\"/landxi/v3/ops-accounts/\"},{\"i\":7,\"text\":\"공유 데이터\",\"href\":\"/landxi/v3/ops-infra/?view=shared\"}]"
+   ],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-현황-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-현황-mo.png",
+   "clickToSettleMs": 2718,
+   "settleMs": 1015,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "span. sw322/cw276 \"전국 농지 99% · 하천 99% · 마지막 칸 10-21 16:38\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-인프라-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-인프라-mo.png",
+   "clickToSettleMs": 5476,
+   "settleMs": 3348,
+   "loadingSpansMs": [
+    2330
+   ],
+   "longLoadingMs": [
+    2330
+   ],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "div.chart sw310/cw254 \"고부하 GPU 0 GPU 1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-기관-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-기관-mo.png",
+   "clickToSettleMs": 3081,
+   "settleMs": 1013,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-배포-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-배포-mo.png",
+   "clickToSettleMs": 3715,
+   "settleMs": 1562,
+   "loadingSpansMs": [
+    386
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "div.im-head sw652/cw390 \"배포 신청 기관 공유 사용 현황 분야 개선 후보 24 API XI 재학습 학습 서식\"",
+     "nav.im-tabs sw636/cw358 \"배포 신청 기관 공유 사용 현황 분야 개선 후보 24 API XI 재학습 학습 서식\"",
+     "div.rv-grid rv-grid--req sw366/cw342 \"배포 신청 검토 중 0 · 처리함 3 서비스 판 신청한 사람 신청일 상태 주차장 분석서비스 주차장 2026 \"",
+     "section.t-card rv-card sw366/cw136 \"배포 신청 검토 중 0 · 처리함 3 서비스 판 신청한 사람 신청일 상태 주차장 분석서비스 주차장 2026 \"",
+     "section.t-card rv-card rv-detail sw208/cw190 \"주차장 분석서비스 2.0판 신청 신청 LX 직원 · 프로젝트 주차장 2026 · 10.7 17:38 모델 —\"",
+     "header.rv-h sw156/cw142 \"주차장 분석서비스 2.0판 신청\"",
+     "dl.rv-dl sw184/cw142 \"모델 — 신청서 이 신청에는 모델 기록이 남아 있지 않습니다 — 예전 방식으로 낸 신청\"",
+     "div. sw130/cw110 \"모델 —\"",
+     "div. sw168/cw110 \"신청서 이 신청에는 모델 기록이 남아 있지 않습니다 — 예전 방식으로 낸 신청\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-요청 관리-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/",
+   "shot": "shots/lx-admin-요청 관리-mo.png",
+   "clickToSettleMs": 2727,
+   "settleMs": 1044,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\"",
+     "div.oc-inbox-w sw940/cw390 \"요청 관리 분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 거절합니다 분석 요청\"",
+     "header.oc-ih sw433/cw358 \"요청 관리 분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 거절합니다 분석 요청\"",
+     "div.oc-pa sw924/cw358 \"지금 분석 중 없음 기다리는 분석 0건 동시에 도는 분석 0 / 1건 전력 규칙 — 한 번에 한 건 최근 기\"",
+     "div.rq-strip sw395/cw358 \"지금 분석 중 없음 기다리는 분석 0건 동시에 도는 분석 0 / 1건 전력 규칙 — 한 번에 한 건 최근 기\"",
+     "div.rq-list sw924/cw358 \"순번 영상 기관 · 서비스 · 요청일 어디 · 넓이 · 영상 상태 담당 예상 시작 1 전남광주특별시 영농관리\"",
+     "div.rq-row rq-h sw772/cw334 \"순번 영상 기관 · 서비스 · 요청일 어디 · 넓이 · 영상 상태 담당 예상 시작\"",
+     "div.rq-row sw912/cw334 \"1 전남광주특별시 영농관리 행정서비스 · 10.01 순천시 와룡동·상사면 등 3곳 약 3.92㎢ · 1.9c\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-검토 요청-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-inbox/",
+   "shot": "shots/lx-admin-검토 요청-mo.png",
+   "clickToSettleMs": 3200,
+   "settleMs": 1047,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw59 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-계정 관리-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-accounts/",
+   "shot": "shots/lx-admin-계정 관리-mo.png",
+   "clickToSettleMs": 3172,
+   "settleMs": 1010,
+   "loadingSpansMs": [],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw59 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  },
+  {
+   "screen": "lx-admin-공유 데이터-mo",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-infra/",
+   "shot": "shots/lx-admin-공유 데이터-mo.png",
+   "clickToSettleMs": 4418,
+   "settleMs": 2318,
+   "loadingSpansMs": [
+    1165
+   ],
+   "longLoadingMs": [],
+   "overflow": {
+    "pageHorizontalOverflowPx": 0,
+    "elements": [
+     "button.t-role k-role k-me-b sw101/cw41 \"LX 관리자\"",
+     "span.k-bell-slot sw34/cw32 \"1\"",
+     "button.k-mast-b k-bell sw34/cw32 \"1\""
+    ]
+   },
+   "notes": [],
+   "consoleErrors": [],
+   "failedRequests": []
+  }
+ ]
+}
