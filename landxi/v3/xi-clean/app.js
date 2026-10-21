@@ -31,6 +31,8 @@ import { createParcels } from './parcel.js';                      // 지적 층 
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
+// 기관 필지 '시점 비교'(영농-2) — 지도가 서는 동안 그 필지 이력을 미리 받아 둔다(가르기 화면까지 기다림 줄이기)
+const PCMP = Q.get('compare') === 'auto' && Q.get('pnu') && Q.get('service') ? import('../gov-select/map-extras.js').then((m) => { m.historyFor(Q.get('pnu'), Q.get('service')); return m; }) : null;
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOBILE = () => matchMedia('(max-width: 640px)').matches;
@@ -254,7 +256,7 @@ async function boot() {
   stage = K.createStage(stageEl, { under: true, worldCredit: false });   // 거친 밑받침 — 입체로 기울일 때 흰 빈자리 0(GPT2-1)
   map = stage.map; X.map = map; X.stage = stage;
   // 날아간 뒤 결과가 아직이면 가운데 '불러오는 중'(원칙 212) — 화면이 옮긴 것만(손으로 끈 것 제외) · 첫 판이 걷힌 뒤 · 0.4초 안에 다 그려지면 보이지 않는다
-  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map, { skip: /^(k-|xc-(pc|img|lxmap|emd|rline|rmask|sgg|pts|rgrid)|xo-)/, max: 4000 }); }); }   // 결과 원천만 기다린다(바탕 · 지적 · 경계 원천은 제외) · 4초 넘으면 놓는다(10-17 원칙 274 — 가운데 카드가 남지 않게) · 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
+  { let wait = null; map.on('moveend', (e) => { if (e.originalEvent || !X.boot.ready || DS?.on || OM?.on) return; wait?.(); wait = K.untilDrawn(map, { skip: /^(k-|xc-(pc|img|cmp|lxmap|emd|rline|rmask|sgg|pts|rgrid)|xo-)/, max: 4000 }); }); }   // 결과 원천만 기다린다(바탕 · 가르기 시점 영상 · 지적 · 경계 원천은 제외) · 4초 넘으면 놓는다(10-17 원칙 274 — 가운데 카드가 남지 않게) · 지도 위 통계 중(OM.on)에는 결과 층이 걷혀 있어 기다릴 것이 없다 — 순위 돌아보기 때 '불러오는 중'이 남던 것(10-17 원칙 274)
   try { map.setMaxPitch(0); map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation?.(); } catch { /* 지도 전 */ }   // 입체 없음(원칙 196)
   // 바탕 영상이 하나도 그려지지 않았으면(외부 바탕 원천이 모두 멈춤) 큰 숫자를 진한 글자로 — 밝은 빈 바탕 위 흰 글자가 흐리지 않게(10-10 고장)
   map.on('idle', () => { hud.dataset.base = hudBoard.dataset.base = EXT_OK.n > 0 ? 'img' : 'plain'; });
@@ -327,7 +329,7 @@ async function boot() {
     const out = () => { loadK.set({ progress: 1 }); S.els.loadEl.classList.add('is-out'); setTimeout(() => S.els.loadEl.remove(), 600); X.boot.shown = Math.round(performance.now() - X.t0); };
     // 지역 도착(기관 등) = 그 지역 결과 층까지 그려질 때를 기다려 한 번에 걷는다 — '불러오는 중'은 이 판 하나(걷힌 뒤 결과 때문에 다시 뜨지 않게 · 최대 3초 · impl-37)
     let rdOk = !S.rdP; S.rdP?.finally(() => { rdOk = true; });
-    const drawn = () => { try { return !map.isMoving() && Object.keys(map.getStyle()?.sources || {}).filter((id) => !/^k-/.test(id)).every((id) => map.isSourceLoaded(id)); } catch { return true; } };
+    const drawn = () => { try { return !map.isMoving() && Object.keys(map.getStyle()?.sources || {}).filter((id) => !/^(k-|xc-cmp)/.test(id)).every((id) => map.isSourceLoaded(id)); } catch { return true; } };   // 가르기 시점 영상은 기다리지 않는다(필지 시점 비교 · 영농-2)
     // 결과 층이 보이면 바로 걷는다(impl-38 ximap-boot) — 켜진 결과 층 하나라도 그 축척 조각이 다 와서 화면에 결과가 그려진 순간.
     // 나머지 결과 층 · 바탕 영상 · 필지 조각은 판이 걷힌 뒤 차오른다(카메라가 그대로라 '불러오는 중'이 다시 뜨지 않는다).
     // 켜진 결과 층이 없거나 화면 안에 결과가 없으면 예전처럼 지도가 다 그려질 때(최대 3초)
@@ -347,7 +349,11 @@ async function boot() {
   // 기관 — 서비스 대시보드의 '결과 지도' 탭에서 왔으면 '보고 있는 결과' 카드 · '이 영상으로 분석 요청'(18차 N-1 ⓐ · 촬영-1 ⓑ · gov-select/map-extras.js)
   if (canRequest(who) && Q.get('service')) import('../gov-select/map-extras.js').then((m) => m.mapCard({ host: mainEl, card: Q.get('service'), region: () => S.region,
     center: () => { const c = map.getCenter(); return [c.lng, c.lat]; } })).catch((e) => K.devlog('map-card', String(e?.message || e)));
-  { const cq = (Q.get('compare') || '').split(',').filter(Boolean); if (cq.length === 2) compareOn(cq[0], cq[1]).catch((e) => K.devlog('compare', String(e?.message || e))); }
+  { const cq = (Q.get('compare') || '').split(',').filter(Boolean);
+    // 기관 필지 '시점 비교'(10-21 영농-2) — 그 필지의 최근 두 결과 해 영상을 갈라 보고 두 쪽에 이 필지 결과 면(gov-select/map-extras.js parcelCompare)
+    if (cq[0] === 'auto' && S.tenant && PCMP) { if (!S.swipe) toggleSwipe().catch(() => {}); PCMP.then((m) => m.parcelCompare({ host: mainEl, pnu: Q.get('pnu'), card: Q.get('service'),
+      epochs: regionEpochs, compare: compareOn, left: () => B, right: () => stage, aiOn: () => { S.layers.ai = true; S.aiAuto = false; applyLayers(); }, closeCard: closeDrawer })).catch((e) => K.devlog('compare', String(e?.message || e))); }
+    else if (cq.length === 2) compareOn(cq[0], cq[1]).catch((e) => K.devlog('compare', String(e?.message || e))); }
   if (Q.get('tool') === 'analyze' && AN) tool('analyze');
   if (Q.get('job') && AN) { S.tool = 'analyze'; patchRail(); AN.replayJob(Q.get('job'), { label: S.region?.name, bbox: S.region?.bbox }); }
   // 기준일이 30일을 넘으면 도착 때 한 번 대조(세션당 1회)

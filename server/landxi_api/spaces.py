@@ -1004,39 +1004,149 @@ async def space_download(card: str, request: Request, fmt: str = "geojson"):
 
 
 
-@router.get("/spaces/me/guides/{card}/parcels")
-async def space_parcels(card: str, request: Request, limit: int = 300, emd: str | None = None):
-    """서비스 필지 목록(GPT3-2 · 원칙 135) — 그 서비스의 AI 분석 결과가 걸친 필지만(다른 서비스 · 실태조사 규칙 목록 섞지 않음).
-    '필지 엑셀' 내려받기와 같은 행(_parcel_rows · 관할 · 부서 범위 그대로) — 숫자 한 출처. 내려받기 기록은 남기지 않는다(보기만)."""
-    p = _me(request)
+async def service_parcel_rows(p: Principal, card: str) -> tuple[dict, dict, list[dict], bool]:
+    """서비스 필지 목록의 행(관할 · 부서 범위 · 지운 결과 제외) — 필지 목록 · 필지 메모 범위 확인이 같은 행을 쓴다(숫자 한 출처).
+    결과 하나 = 필지 하나로 센 서비스(결과 설명서 단위 '필지' — 경작·휴경 등)는 결과마다 한 줄 → 대시보드 'AI 분석 결과 n필지'와 같은 수.
+    물체를 찾는 서비스(비닐하우스 등)는 결과가 걸친 필지로 묶는다('필지 엑셀'과 같은 행)."""
     svc, g, _rows = await _guide_or_404(p, card)
     sets = g["body"].get("sets") or []
     only = await _only(p, card)
-    # 결과 하나 = 필지 하나로 센 서비스(결과 설명서 단위 '필지' — 경작·휴경 등)는 결과마다 한 줄 → 대시보드 'AI 분석 결과 n필지'와 같은 수.
-    # 물체를 찾는 서비스(비닐하우스 등)는 결과가 걸친 필지로 묶는다('필지 엑셀'과 같은 행).
     per_result = ((g["body"].get("what") or {}).get("total") or {}).get("unit") == "필지"
     if per_result:
         rows = await _result_parcel_rows(p.tenant_id, sets, only)
     else:
         rows, _how = await _parcel_rows(p.tenant_id, sets, await _parcel_src(p.tenant_id, sets), only)
+    return svc, g, rows, per_result
+
+
+def _jibun_key(r: dict, ri: dict) -> tuple:
+    """지번 순 — 읍면동 · 리 · 본번 · 부번(산 번지는 뒤)."""
+    a = ri.get(str(r["pnu"])) or {}
+    m = re.search(r"(산\s*)?(\d+)(?:-(\d+))?\s*$", str(r.get("addr") or ""))
+    return (r.get("emd") or "", a.get("ri") or "", 1 if m and m.group(1) else 0, int(m.group(2)) if m else 0,
+            int(m.group(3) or 0) if m else 0, str(r["pnu"]))
+
+
+async def latest_notes(p: Principal, card: str, pnus: list[str]) -> dict[str, dict]:
+    """필지마다 지금 메모(메모 칸 하나 = 가장 최근 줄 · parcel_notes · 영농-D1 ⓐ) — 기관 세션 연결(RLS · 관할 밖 0)."""
+    if not pnus:
+        return {}
+    async with db(p) as c:
+        if not await c.fetchval("SELECT to_regclass('public.parcel_notes') IS NOT NULL"):
+            return {}
+        rows = await c.fetch("SELECT DISTINCT ON (pnu) pnu, note, at FROM parcel_notes WHERE tenant_id=$1 AND card_id=$2 AND pnu = ANY($3::text[]) "
+                             "ORDER BY pnu, at DESC", p.tenant_id, card, pnus)
+    return {r["pnu"]: {"note": r["note"], "at": r["at"].astimezone(KST).isoformat(timespec="seconds")} for r in rows}
+
+
+@router.get("/spaces/me/guides/{card}/parcels")
+async def space_parcels(card: str, request: Request, limit: int = 300, emd: str | None = None, ri: str | None = None, cls: str | None = None,
+                        diff: str | None = None, note: str | None = None, sort: str | None = None, offset: int = 0):
+    """서비스 필지 목록(GPT3-2 · 원칙 135 · 10-21 영농-1 '오늘 볼 필지') — 그 서비스의 AI 분석 결과가 걸친 필지만(다른 서비스 · 실태조사 규칙 목록 섞지 않음).
+    '필지 엑셀' 내려받기와 같은 행(service_parcel_rows · 관할 · 부서 범위 그대로) — 숫자 한 출처. 내려받기 기록은 남기지 않는다(보기만).
+    거르기: emd(읍면동) · ri(리) · cls(AI 분석 결과 종류) · diff(대장과 다름만 — 1 = 이 사람의 최근 대장 · imp_… = 그 대장 · 행정정보와 비교와 같은 판정) ·
+    note(yes = 메모 있음 · no = 메모 없음) · sort(area = 넓은 순 · jibun = 지번 순). n = 거른 필지 수 · total = 전체(대시보드 큰 숫자와 같은 값)."""
+    p = _me(request)
+    svc, g, rows, _per = await service_parcel_rows(p, card)
     by: dict[str, int] = {}
     for r in rows:
         by[r.get("emd") or "읍면동 모름"] = by.get(r.get("emd") or "읍면동 모름", 0) + 1
-    pick = [r for r in rows if not emd or r.get("emd") == emd][:max(1, min(int(limit or 300), 2000))]
+    pn_all = list({str(r["pnu"]) for r in rows})
+    ri_of: dict[str, dict] = {}
+    if pn_all:
+        async with db(realm="lx") as c:
+            ri_of = {a["pnu"]: {"ri": a["ri"] or ""} for a in await c.fetch("SELECT pnu, ri FROM survey_parcels WHERE pnu = ANY($1::text[])", pn_all)}
+    notes = await latest_notes(p, card, pn_all)
+    # 대장과 다름 — 행정정보와 비교(gov_report.compare)와 같은 행 · 같은 판정. 대장이 없으면 거르기 칸을 내지 않는다
+    from .gov_report import IMP_RE, _import_of, compare
+    led = await _import_of(p, diff if diff and IMP_RE.match(diff) else None)
+    led_info = None
+    diff_of: dict[str, str] = {}
+    if led:
+        from .ledger import KINDS
+        led_info = {"import_id": led["id"], "kind": KINDS.get(led["kind"]) or "대장",
+                    "name": re.sub(r"\.(xlsx|xls)\.csv$", r".\1", led.get("filename") or "") or (KINDS.get(led["kind"]) or "대장")}
+        if diff:
+            cm = await compare(p, card, led["id"])
+            short = {x["key"]: x.get("short") or x["label"] for x in cm.get("lines") or []}
+            diff_of = {x["pnu"]: short.get(x["why"], "대장과 다름") for x in cm.get("_all") or [] if x["k"] == "diff"}
+    kos = lambda r: sorted({class_ko(x) for x in (r.get("classes") or []) if x})   # noqa: E731
+    # 거르기 칸(전체 행 기준 — 고른 거르기와 상관없이 같은 목록)
+    fe: dict[str, dict] = {}
+    fc: dict[str, int] = {}
+    for r in rows:
+        e = fe.setdefault(r.get("emd") or "", {"emd": r.get("emd") or "", "n": 0, "ris": {}})
+        e["n"] += 1
+        rv = (ri_of.get(str(r["pnu"])) or {}).get("ri") or ""
+        if rv:
+            e["ris"][rv] = e["ris"].get(rv, 0) + 1
+        for k in kos(r):
+            fc[k] = fc.get(k, 0) + 1
+    src = "이 서비스의 AI 분석 결과 · 연속지적 필지"
+    facets = {"emds": [{"emd": e["emd"], "n": env(e["n"], "필지", "inferred", src), "ris": [{"ri": k, "n": v} for k, v in sorted(e["ris"].items())]}
+                       for e in sorted(fe.values(), key=lambda e: e["emd"]) if e["emd"]],
+              "classes": [{"name": k, "n": env(v, "필지", "inferred", src)} for k, v in sorted(fc.items(), key=lambda kv: -kv[1])],
+              "ledger": led_info}
+    pick = rows
+    if emd:
+        pick = [r for r in pick if r.get("emd") == emd]
+    if ri:
+        pick = [r for r in pick if (ri_of.get(str(r["pnu"])) or {}).get("ri") == ri]
+    if cls:
+        pick = [r for r in pick if cls in kos(r)]
+    if diff:
+        pick = [r for r in pick if str(r["pnu"]) in diff_of]
+    if note in ("yes", "no"):
+        pick = [r for r in pick if (str(r["pnu"]) in notes) == (note == "yes")]
+    if sort == "jibun":
+        pick = sorted(pick, key=lambda r: _jibun_key(r, ri_of))
+    all_pnus = list(dict.fromkeys(str(r["pnu"]) for r in pick))
+    off = max(0, int(offset or 0))
+    page = pick[off:off + max(1, min(int(limit or 300), 2000))]
     pts = {}
-    if pick:
+    if page:
         async with db(realm="lx") as c:
             for a in await c.fetch("SELECT pnu, ST_X(ST_PointOnSurface(geom)) x, ST_Y(ST_PointOnSurface(geom)) y FROM survey_parcels WHERE pnu = ANY($1::text[])",
-                                   [str(r["pnu"]) for r in pick]):
+                                   [str(r["pnu"]) for r in page]):
                 pts[a["pnu"]] = [round(float(a["x"]), 6), round(float(a["y"]), 6)]
-    src = "이 서비스의 AI 분석 결과 · 연속지적 필지"
     m2 = lambda v: env(round(float(v), 1), "m2", "inferred", src) if v is not None else None   # noqa: E731
-    items = [{"id": f"{r['pnu']}:{i}", "pnu": str(r["pnu"]), "addr": r.get("addr") or "", "emd": r.get("emd") or "", "jimok": r.get("jimok") or "",
+    items = [{"id": f"{r['pnu']}:{off + i}", "pnu": str(r["pnu"]), "addr": r.get("addr") or "", "emd": r.get("emd") or "",
+              "ri": (ri_of.get(str(r["pnu"])) or {}).get("ri") or "", "jimok": r.get("jimok") or "",
               "parcel_m2": m2(r.get("parcel_m2")), "hit_m2": m2(r.get("hit")), "n": int(r["n"] or 0),
-              "classes": sorted({class_ko(x) for x in (r.get("classes") or []) if x}), "lnglat": pts.get(str(r["pnu"]))} for i, r in enumerate(pick)]
+              "classes": kos(r), "lnglat": pts.get(str(r["pnu"])), "note": notes.get(str(r["pnu"])), "diff": diff_of.get(str(r["pnu"]))}
+             for i, r in enumerate(page)]
+    filt = bool(emd or ri or cls or diff or note in ("yes", "no"))
     return {"service": {"card": card, "name": svc["name"]}, "total": env(len(rows), "필지", "inferred", src, "AI 분석 결과가 걸친 필지(관할 안)"),
+            "n": env(len(pick), "필지", "inferred", src, "거른 필지" if filt else "AI 분석 결과가 걸친 필지(관할 안)"), "filtered": filt,
             "by_emd": [{"emd": k, "parcels": env(v, "필지", "inferred", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
-            "items": items, "limit": len(items), "as_of": now_iso()}
+            "facets": facets, "pnus": all_pnus if len(all_pnus) <= 3000 else None,
+            "items": items, "offset": off, "limit": len(items), "as_of": now_iso()}
+
+
+@router.post("/spaces/me/guides/{card}/parcels.xlsx")
+async def space_parcels_pick_xlsx(card: str, request: Request, body: dict | None = None):
+    """고른 필지만 엑셀(10-21 영농-1) — '필지 엑셀'과 같은 열 · 같은 행에서 고른 필지만. 개인정보가 없는 파일 → 바로 받는다(이용 약속 규칙 그대로) ·
+    받은 기록은 남긴다(공간 기록 · 감사 기록)."""
+    p = _me(request)
+    want = {str(x) for x in ((body or {}).get("pnus") or []) if re.fullmatch(r"\d{19}", str(x))}
+    if not want:
+        raise ApiError("bad_request", "필지를 하나 이상 골라 주세요", {"field": "pnus"})
+    if len(want) > 5000:
+        raise ApiError("bad_request", "한 번에 5,000필지까지 받습니다", {"field": "pnus"})
+    svc, g, _rows = await _guide_or_404(p, card)
+    sets = g["body"].get("sets") or []
+    rows, how = await _parcel_rows(p.tenant_id, sets, await _parcel_src(p.tenant_id, sets), await _only(p, card))
+    rows = [r for r in rows if str(r["pnu"]) in want]          # 관할 · 부서 범위 밖 필지는 행 자체가 없다(보낸 번호를 그대로 믿지 않는다)
+    if not rows:
+        raise ApiError("not_found", "고른 필지가 이 서비스 결과에 없습니다")
+    async with db(p) as c:
+        org = await _tenant_name(c, p.tenant_id)
+    data = await run_in_threadpool(_xlsx, org, svc, g, rows, how)
+    await _log_download(p, card, g, "parcels", len(rows), svc["name"])
+    name = _fname(org, svc["name"], g["edition"], "xlsx").replace(".xlsx", f"_고른필지{len(rows)}.xlsx")
+    return Response(data, media_type=FMT["parcels"][3], headers={"content-disposition": _disposition(name), "cache-control": "no-store",
+                                                                 "access-control-expose-headers": "Content-Disposition"})
+
 
 @router.get("/spaces/me/guides/{card}/class-stats")
 async def space_class_stats(card: str, request: Request):

@@ -1,0 +1,278 @@
+{
+ "generatedAt": "2026-10-21 20:06:37",
+ "site": "https://namwon.land-xi.dev",
+ "login": "로그인 폼(기관 메인 로그인 카드)",
+ "runs": {
+  "pc": {
+   "vp": "pc",
+   "steps": [
+    {
+     "id": "01-list",
+     "name": "필지 목록(영농-1) 처음",
+     "ok": true,
+     "ms": 2646,
+     "note": "줄 20 · 큰 숫자 2098",
+     "hscroll": 0,
+     "shot": "pc-01-list.png"
+    },
+    {
+     "id": "02-filter",
+     "name": "읍면동 · 종류 · 메모 없음 거르기",
+     "ok": true,
+     "ms": 2608,
+     "note": "금지면 · 비경작지 · 메모 없음 → 큰 숫자 '거른 필지 86' · 줄 20 · 안내 '전체 2,098필지 중 · 넓은 순'",
+     "hscroll": 0,
+     "shot": "pc-02-filter.png"
+    },
+    {
+     "id": "03-diff",
+     "name": "대장과 다름만",
+     "ok": true,
+     "ms": 3626,
+     "note": "큰 숫자 249 · 줄 6 · '전체 2,098필지 중 · 넓은 순 · 주생면_도산낙동_농지대장.xlsx 기준'",
+     "hscroll": 0,
+     "shot": "pc-03-diff.png"
+    },
+    {
+     "id": "03b-sort",
+     "name": "지번 순 · 리 거르기",
+     "ok": true,
+     "ms": 3548,
+     "note": "리 귀석리 · 지번 순 첫 줄 금지면 귀석리 98-7 · 줄 8",
+     "hscroll": 0,
+     "shot": "pc-03b-sort.png"
+    },
+    {
+     "id": "04-band",
+     "name": "여러 필지 고르기 → 띠",
+     "ok": true,
+     "ms": 2900,
+     "note": "20필지 고름 · 띠 높이 56px",
+     "hscroll": 0,
+     "shot": "pc-04-band.png"
+    },
+    {
+     "id": "04b-xlsx",
+     "name": "고른 필지 엑셀",
+     "ok": true,
+     "ms": 1156,
+     "note": "남원시_경작·휴경_분석서비스_결과설명서2판_고른필지20.xlsx · 8927 bytes",
+     "hscroll": 0,
+     "shot": "pc-04b-xlsx.png"
+    },
+    {
+     "id": "05-memo",
+     "name": "메모 쓰기 창(고른 필지 전부)",
+     "ok": true,
+     "ms": 73,
+     "note": "고른 20필지에 같은 메모를 남깁니다.",
+     "hscroll": 0,
+     "shot": "pc-05-memo.png"
+    },
+    {
+     "id": "05b-saved",
+     "name": "메모 저장 → 목록 갱신",
+     "ok": true,
+     "ms": 1535,
+     "note": "메모 있음 표시 20줄 · 띠 닫힘",
+     "hscroll": 0,
+     "shot": "pc-05b-saved.png"
+    },
+    {
+     "id": "06-card",
+     "name": "필지 카드 · 이력(영농-3)",
+     "ok": true,
+     "ms": 2397,
+     "note": "바뀜 '바뀜2023 건물 → 2025 비경작지' · 이력 3줄: 2026.10.21메모 '기능 확인용 메모'여러 필지 함께 · 담당자 주무관 | 2026.06.08AI 분석 · 비경작지2025년 드론영상 · 14㎡ | 2023년AI 분석 · 건물2023년 항공영상 · 19㎡",
+     "hscroll": 0,
+     "shot": "pc-06-card.png"
+    },
+    {
+     "id": "07-compare",
+     "name": "시점 비교(영농-2) — 가르기 · 두 시점 · 바뀜 한 줄",
+     "ok": true,
+     "ms": 10874,
+     "note": "위 띠 8290ms '2023년 · 2025년 10월2023 건물 → 2025 비경작지' (바뀜 19자) · 왼쪽/오른쪽 2023년 영상 / 2025년 10월 영상 · 오른쪽 결과 면 1",
+     "hscroll": 0,
+     "shot": "pc-07-compare.png"
+    },
+    {
+     "id": "07b-grip",
+     "name": "가르기 손잡이 끌기",
+     "ok": true,
+     "ms": 305,
+     "note": "--sw 33.82352941176471%",
+     "hscroll": 0,
+     "shot": "pc-07b-grip.png"
+    },
+    {
+     "id": "08-report",
+     "name": "보고서 탭 — 결과 하나면 필지 전이 블록 없음",
+     "ok": true,
+     "ms": 3261,
+     "note": "고를 수 있는 결과 1 · 고름 1 · 필지 전이 블록 0개",
+     "hscroll": 0,
+     "shot": "pc-08-report.png"
+    }
+   ],
+   "errors": [],
+   "failed": [],
+   "loading": [
+    {
+     "phase": "07-compare",
+     "ms": 3602,
+     "over": true
+    },
+    {
+     "phase": "07-compare",
+     "ms": 2065.300000190735,
+     "still": true,
+     "over": true
+    },
+    {
+     "phase": "07b-grip",
+     "ms": 2402,
+     "over": true
+    },
+    {
+     "phase": "08-report",
+     "ms": 1167,
+     "over": false
+    }
+   ]
+  },
+  "mob": {
+   "vp": "mob",
+   "steps": [
+    {
+     "id": "01-list",
+     "name": "필지 목록(영농-1) 처음",
+     "ok": true,
+     "ms": 2057,
+     "note": "줄 20 · 큰 숫자 2098",
+     "hscroll": 0,
+     "shot": "mob-01-list.png"
+    },
+    {
+     "id": "04-band",
+     "name": "여러 필지 고르기 → 띠",
+     "ok": true,
+     "ms": 1106,
+     "note": "20필지 고름 · 띠 높이 79px",
+     "hscroll": 0,
+     "shot": "mob-04-band.png"
+    },
+    {
+     "id": "06-card",
+     "name": "필지 카드 · 이력(영농-3)",
+     "ok": true,
+     "ms": 1808,
+     "note": "바뀜 '바뀜 없음2023 · 2025 모두 경작지' · 이력 2줄: 2026.06.08AI 분석 · 경작지2025년 드론영상 · 29,572㎡ | 2023년AI 분석 · 경작지2023년 항공영상 · 96㎡",
+     "hscroll": 0,
+     "shot": "mob-06-card.png"
+    },
+    {
+     "id": "06b-filter-sheet",
+     "name": "거르기 단추 → 창(390)",
+     "ok": true,
+     "ms": 1200,
+     "note": "창 안 칸 5",
+     "hscroll": 0,
+     "shot": "mob-06b-filter-sheet.png"
+    },
+    {
+     "id": "07-compare",
+     "name": "시점 비교(영농-2) — 가르기 · 두 시점 · 바뀜 한 줄",
+     "ok": true,
+     "ms": 14832,
+     "note": "위 띠 9843ms '2023년 · 2025년 10월2023 · 2025 모두 경작지' (바뀜 18자) · 왼쪽/오른쪽 2023년 영상 / 2025년 10월 영상 · 오른쪽 결과 면 1",
+     "hscroll": 0,
+     "shot": "mob-07-compare.png"
+    },
+    {
+     "id": "08-report",
+     "name": "보고서 탭 — 결과 하나면 필지 전이 블록 없음",
+     "ok": true,
+     "ms": 3267,
+     "note": "고를 수 있는 결과 1 · 고름 1 · 필지 전이 블록 0개",
+     "hscroll": 0,
+     "shot": "mob-08-report.png"
+    }
+   ],
+   "errors": [],
+   "failed": [],
+   "loading": [
+    {
+     "phase": "07-compare",
+     "ms": 4611,
+     "over": true
+    },
+    {
+     "phase": "08-report",
+     "ms": 827,
+     "over": false
+    }
+   ]
+  }
+ },
+ "items": [
+  {
+   "id": "영농-1",
+   "title": "필지 목록 = 오늘 볼 필지",
+   "state": "구현 확인 대기",
+   "what": "읍면동→리 · 종류 · 대장과 다름만 · 메모 없음만 · 정렬(넓은 순·지번 순) 거르기 한 줄 · 큰 숫자 = 거른 필지(서버 n) · 줄마다 고르기 · 모두 고르기 · 띠(메모 쓰기 · 엑셀로 내려받기 · 고르기 풀기) · 390 = 거르기 단추→창, 표는 카드 줄",
+   "shots": [
+    "pc-01-list.png",
+    "pc-02-filter.png",
+    "pc-03-diff.png",
+    "pc-03b-sort.png",
+    "pc-04-band.png",
+    "mob-01-list.png",
+    "mob-04-band.png",
+    "mob-06b-filter-sheet.png"
+   ]
+  },
+  {
+   "id": "영농-2",
+   "title": "필지 카드 시점 비교",
+   "state": "구현 확인 대기",
+   "what": "필지 카드 '시점 비교' → XI맵 가르기(왼쪽 이전 해 영상 · 오른쪽 최신 영상) · 두 쪽에 그 필지 AI 결과 면 · 위 띠 한 줄(서버 바뀜) · 390은 카드를 걷고 두 영상",
+   "shots": [
+    "pc-07-compare.png",
+    "pc-07b-grip.png",
+    "mob-07-compare.png"
+   ]
+  },
+  {
+   "id": "영농-3",
+   "title": "필지 이력",
+   "state": "구현 확인 대기",
+   "what": "결과 설명서 판마다 결과(2023 항공 · 2025 드론) · 올린 대장 값 · 메모 · 검토 요청을 새것 먼저 · 맨 위 바뀜 한 줄 · 결과 없는 해는 줄 없음 · 10줄 + 더 보기",
+   "shots": [
+    "pc-06-card.png",
+    "mob-06-card.png"
+   ]
+  },
+  {
+   "id": "영농-4",
+   "title": "메모 칸 하나 · 일괄 · 부서 담당자 쓰기",
+   "state": "구현 확인 대기",
+   "what": "필지마다 메모 칸 하나(영농-D1 ⓐ · 기관 화면만 · 담당 · 상태 · 날짜 칸 없음) · 여러 필지 같은 메모 1회 = 필지마다 이력 한 줄(20필지 시험 → 20줄 확인 뒤 시험 줄 지움) · 쓰기 = 기관 관리자 + 그 서비스를 받은 부서 담당자 · 관할 밖 · 다른 기관 필지는 막힘(시험: not_found)",
+   "shots": [
+    "pc-05-memo.png",
+    "pc-05b-saved.png",
+    "pc-06-card.png"
+   ]
+  },
+  {
+   "id": "영농-5",
+   "title": "해 바뀜 비교(필지 전이표)",
+   "state": "구현 확인 대기(남원은 결과 하나 → 블록 없음)",
+   "what": "같은 종류 이름을 쓰는 결과를 둘 이상 고르면 보고서 탭 · 한글 문서 · 엑셀에 전이표 + 바뀐 필지 10 · 결과 하나면 블록 없음(화면 확인 0개) · 서버 함수는 2023 토지피복 × 2025 경작·휴경으로 계산 시험(합계 = 나중 결과 필지 수 2,077 · 0.16초)",
+   "shots": [
+    "pc-08-report.png",
+    "mob-08-report.png"
+   ]
+  }
+ ]
+}

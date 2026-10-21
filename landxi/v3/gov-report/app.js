@@ -12,6 +12,8 @@ import { sse } from '../../shared/api-v1.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
 import { govRail } from '../gov-select/menu.js';
 import { svcReport } from './svc-report.js';   // 서비스 안 '보고서' = AI 분석 결과 보고서(10-11 gov-보고서)   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
+import { filterBar, pickBand, noteBox, parcelExtras } from './svc-parcels.js';   // 필지 목록 = 오늘 볼 필지 · 필지 카드 시점 비교 · 이력 · 메모(10-21 영농-1~4)
+import { watchTransit } from './svc-transit.js';   // 보고서 '필지 전이'(10-21 영농-5)
 
 const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
@@ -53,7 +55,8 @@ function staleCard() {
 let retry = 0;
 
 const S = { who: null, key: '', rows: [], pend: null, sel: null, stage: null, s2: false, emd: [], rules: [], tab: 'todo', seen: new Set(), run: null,
-  regions: [], region: null, sus: [] };
+  regions: [], region: null, sus: [],
+  fl: { emd: '', ri: '', cls: '', diff: false, nonote: false, sort: 'area' }, pick: new Set(), all: [] };   // 서비스 필지 목록 거르기 · 고른 필지
 
 /* ═════════ 관문 · 셸 ═════════ */
 const who = await gate('gov-report');
@@ -225,6 +228,9 @@ async function showSvcDetail(r, { fly }) {
     det.querySelectorAll('.k-rv-b, .k-rv').forEach((x) => x.remove());
     S.rvFor = r.id;
     reviewAction($('.gr-det-act'), { who: S.who, pnu: f.pnu, lnglat: f.lnglat, card: SVC, from: 'gov-report', before: $('#b-map') });
+    /* 필지 카드 아래 — 시점 비교 · 메모 칸 하나(기관 화면 전용 · 영농-D1 ⓐ) · 이력(10-21 영농-2 · 3 · 4) */
+    let xs = $('#det-x'); if (!xs) { xs = h('div.sp-x', { id: 'det-x' }); $('#det-m').after(xs); }
+    parcelExtras(xs, { card: SVC, pnu: f.pnu, onSaved: () => { S.susLoaded = undefined; loadSvcParcels(); } });
   }
   if (!fly) return;
   try {
@@ -414,6 +420,7 @@ let svcRp = null;
 function openSvcReport() {
   if (svcRp) return;
   svcRp = svcReport({ svc: SVC, stage: S.stage, onAuth: toFront, fusionHref: () => '../gov-fusion/' + (SVC ? '?' + new URLSearchParams({ service: SVC }) : '') });
+  watchTransit($('.gr-pane[data-pane="report"]'));   // 결과 둘 이상 = 필지 전이 블록(영농-5)
 }
 let rpReady = null;
 function initReport() {
@@ -749,7 +756,8 @@ const susBig = bignum($('#sus-big'), null, SVC ? { label: 'AI 분석 결과 필�
 const PRI = { A: '우선', B: '보통', C: '참고' };
 const susTbl = table($('#sus-table'), {
   cols: SVC ? [
-    { key: 'where', label: '지번', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
+    { key: 'ck', label: '', width: '44px', fmt: (v, r) => `<input type="checkbox" class="sp-ck" data-pnu="${esc(r.pnu)}"${S.pick.has(r.pnu) ? ' checked' : ''} aria-label="${esc(r.where)} 고르기">` },
+    { key: 'where', label: '지번', fmt: (v, r) => `<span class="gr-j">${esc(v)}${r.diff || r.note ? `<small>${esc([r.diff, r.note && '메모 있음'].filter(Boolean).join(' · '))}</small>` : ''}</span>` },
     { key: 'emd', label: '읍면동' },
     { key: 'jimok', label: '지목', fmt: (v) => esc(JIMOK[v] || v || '—') },
     { key: 'what', label: 'AI 분석 결과' },
@@ -790,28 +798,82 @@ async function loadSusAll() {
   const bb = unionBox(S.regions);
   if (bb && S.stage) S.stage.go(bb, { ms: 1600, maxZoom: 11 });
 }
-/* 서비스 필지 목록 — 큰 숫자 = 그 서비스의 AI 분석 결과 필지(서버 total) · 표 = AI 분석 넓은 순 */
+/* 서비스 필지 목록 = 오늘 볼 필지(10-21 영농-1) — 큰 숫자 = 거른 필지(서버 n · 거르지 않으면 서비스 전체 = 대시보드와 같은 값) ·
+   거르기 한 줄(읍면동 → 리 · 종류 · 대장과 다름만 · 메모 없음만 · 정렬) · 줄마다 고르기 → 아래 띠(메모 쓰기 · 엑셀로 내려받기). 지도는 거른 필지만 */
+let bar = null, band = null, svcSeq = 0;
+function paintPick() {
+  band?.set([...S.pick]);
+  for (const c of document.querySelectorAll('#sus-table .sp-ck')) c.checked = S.pick.has(c.dataset.pnu);
+  const all = document.querySelector('#sus-table .sp-all');
+  if (all) { const n = S.all.filter((p) => S.pick.has(p)).length; all.checked = n > 0 && n === S.all.length; all.indeterminate = n > 0 && n < S.all.length; }
+}
+function decorate() {
+  const th = document.querySelector('#sus-table thead th');
+  if (th && !th.querySelector('.sp-all')) th.replaceChildren(h('input.sp-all', { type: 'checkbox', 'aria-label': '거른 필지 모두 고르기' }));
+  paintPick();
+}
+function mountSvcBar() {
+  if (bar) return;
+  bar = filterBar({ host: $('#sus-table'), state: S.fl, onChange: () => { S.susLoaded = undefined; loadSvcParcels(); } });
+  band = pickBand({ host: $('.gr-pane[data-pane="sus"]'), card: SVC,
+    onNote: (pnus) => noteBox({ card: SVC, pnus, onSaved: () => { S.pick.clear(); paintPick(); S.susLoaded = undefined; loadSvcParcels(); } }),
+    onClear: () => { S.pick.clear(); paintPick(); } });
+  /* 고르기 칸 — 줄 누르기(필지 카드 열기)와 따로(잡기 단계에서 먼저 받는다) */
+  $('#sus-table').addEventListener('click', (e) => {
+    const c = e.target.closest('.sp-ck, .sp-all');
+    if (!c) { if (e.target.closest('.k-more')) requestAnimationFrame(decorate); return; }
+    e.stopPropagation();
+    if (c.classList.contains('sp-all')) { if (c.checked) S.all.forEach((p) => S.pick.add(p)); else S.all.forEach((p) => S.pick.delete(p)); }
+    else if (c.checked) S.pick.add(c.dataset.pnu); else S.pick.delete(c.dataset.pnu);
+    paintPick();
+  }, true);
+  $('#sus-table').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.sp-ck, .sp-all')) e.stopPropagation(); }, true);
+}
+const val0 = (e) => +((e && e.value) || 0);
 async function loadSvcParcels() {
   const box = $('#sus-empty');
   $('#sus-rgn-f').hidden = true; $('#sus-sgg').hidden = true;
+  mountSvcBar();
   if (S.susLoaded === 'svc') { susPoints(); return; }
+  const my = ++svcSeq;
+  const F = S.fl;
+  const q = new URLSearchParams({ limit: '500' });
+  if (F.emd) q.set('emd', F.emd);
+  if (F.ri) q.set('ri', F.ri);
+  if (F.cls) q.set('cls', F.cls);
+  if (F.diff) q.set('diff', bar.ledger()?.import_id || '1');
+  if (F.nonote) q.set('note', 'no');
+  if (F.sort && F.sort !== 'area') q.set('sort', F.sort);
+  const slow = setTimeout(() => { if (my === svcSeq) $('#sus-table').classList.add('is-busy'); }, 250);
   let j;
-  try { j = await api(`/spaces/me/guides/${encodeURIComponent(SVC)}/parcels?limit=500`); }
-  catch (e) { devlog('svc parcels', e.message); if (failLine(e)) return; box.hidden = false; empty(box, { kind: 'first', text: '이 서비스 결과는 필지와 잇지 않습니다' }); return; }
+  try { j = await api(`/spaces/me/guides/${encodeURIComponent(SVC)}/parcels?${q}`); }
+  catch (e) {
+    clearTimeout(slow); $('#sus-table').classList.remove('is-busy'); devlog('svc parcels', e.message);
+    if (failLine(e)) return;
+    box.hidden = false; empty(box, { kind: 'first', text: '이 서비스 결과는 필지와 잇지 않습니다' }); return;
+  }
+  clearTimeout(slow); $('#sus-table').classList.remove('is-busy');
+  if (my !== svcSeq) return;                      // 늦게 온 옛 거르기 응답은 버린다
   S.susLoaded = 'svc';
+  bar.set(j.facets || {});
+  S.all = j.pnus || [...new Set((j.items || []).map((x) => x.pnu))];
   S.sus = (j.items || []).map((x) => ({ id: x.id || x.pnu, pnu: x.pnu, svc: true, where: shortAddr(x.addr) || x.pnu, emd: x.emd, jimok: x.jimok,
-    what: (x.classes || []).join(' · ') || '—', hit: x.hit_m2 || null,
+    what: (x.classes || []).join(' · ') || '—', hit: x.hit_m2 || null, note: x.note || null, diff: x.diff || null,
     f: { pnu: x.pnu, lnglat: x.lnglat, jimok: x.jimok, evid_m2: x.hit_m2 || null, parcel_m2: x.parcel_m2 || null, classes: x.classes || [] } }));
   $('#sus-big').hidden = false;
-  susBig.set(j.total || null);
+  susBig.set(j.n || j.total || null);
+  const lab = $('#sus-big .k-big-l'); if (lab) lab.textContent = j.filtered ? '거른 필지' : 'AI 분석 결과 필지';
   const has = S.sus.length > 0;
   $('#sus-table').hidden = !has; box.hidden = has;
-  if (!has) empty(box, { kind: 'first', text: 'AI 분석 결과가 걸친 필지가 없습니다' });
+  if (!has) empty(box, { kind: 'first', text: j.filtered ? '거른 조건에 맞는 필지가 없습니다' : 'AI 분석 결과가 걸친 필지가 없습니다' });
   susTbl.set(S.sus);
+  decorate();
   let note = $('#sus-note');
   if (!note) { note = h('p.gr-note', { id: 'sus-note' }); $('#sus-table').after(note); }
-  const tot = j.total?.value || 0;
-  note.textContent = has ? (tot > S.sus.length ? `넓은 순 ${S.sus.length.toLocaleString('ko-KR')}필지 · 전체는 통계·보고서의 필지 엑셀로 받습니다` : '넓은 순') : '';
+  const tot = val0(j.total), n = val0(j.n), order = F.sort === 'jibun' ? '지번 순' : '넓은 순';
+  note.textContent = !has ? '' : [j.filtered ? `전체 ${tot.toLocaleString('ko-KR')}필지 중` : '',
+    n > S.sus.length ? `${order} ${S.sus.length.toLocaleString('ko-KR')}필지까지 보입니다` : order,
+    F.diff && bar.ledger() ? `${bar.ledger().name} 기준` : ''].filter(Boolean).join(' · ');
   susPoints();
   const pts = S.sus.filter((r) => r.f.lnglat).map((r) => r.f.lnglat);
   if (pts.length && S.stage) S.stage.go(bboxOf({ type: 'MultiPoint', coordinates: pts }), { ms: 1600, maxZoom: 13 });

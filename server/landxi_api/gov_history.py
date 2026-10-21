@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 import secrets
 
@@ -171,14 +172,30 @@ async def history(request: Request, card: str, limit: int = 200):
             "survey": bool(sggs), "as_of": now_iso()}
 
 
+async def _note_scope(request: Request, card: str, fid: str) -> None:
+    """부서 담당자의 메모 쓰기 범위 — 정해 받은 서비스(_gate)의 필지 대조 행(card_scope)에 든 필지 기록만. 밖이면 쓰기 막음."""
+    if not CARD_RE.match(card or ""):
+        raise ApiError("forbidden", "기관 관리자나 서비스 담당자만 메모를 적을 수 있습니다")
+    p = await _gate(request, card)
+    sggs = await survey_sggs(p.tenant_id, card)
+    if not sggs:
+        raise ApiError("forbidden", "기관 관리자나 서비스 담당자만 메모를 적을 수 있습니다")
+    sw, sa = await card_scope(card, sggs, 2)
+    async with db(p) as c:
+        ok = await c.fetchval(f"SELECT 1 FROM survey_findings f WHERE f.id=$1 AND {sw}", fid, *sa)
+    if not ok:
+        raise ApiError("forbidden", "기관 관리자나 서비스 담당자만 메모를 적을 수 있습니다")
+
+
 @router.post("/survey/findings/{fid}/note")
 async def finding_note(fid: str, body: dict, request: Request):
     """필지 메모 한 줄 + 다음 확인 날짜(확인 대장 18차 기관-9 ⓑ — 판정 버튼 없이). 상태는 그대로 두고 기록 한 줄만 남긴다:
     survey_finding_events(from = to = 지금 상태 · note · planned_for) + survey_findings.note · planned_for. 이력 탭 '확인 기록'에 쌓인다.
-    쓰기 = 기관 담당자(manager)만(상태 쓰기와 같은 규칙) · 기관 세션 연결(RLS — 관할 밖 0). 날짜를 비우면 다음 확인 날짜를 지운다."""
+    쓰기 = 기관 관리자 + 그 서비스를 정해 받은 부서 담당자(10-21 영농-4 · 원칙 117 — body.card 의 필지 대조 범위 안 필지만) ·
+    기관 세션 연결(RLS — 관할 밖 0). 날짜를 비우면 다음 확인 날짜를 지운다."""
     p = require(principal(request), realm="tenant")
     if p.role != "manager":
-        raise ApiError("forbidden", "기관 관리자만 메모를 적을 수 있습니다")
+        await _note_scope(request, str((body or {}).get("card") or ""), fid)
     note = " ".join(re.sub(r"[\x00-\x1f\x7f<>]", "", str(body.get("note") or "")).split())[:200] or None
     raw = str(body.get("planned_for") or "").strip()
     pdate = None
@@ -210,8 +227,16 @@ async def finding_note(fid: str, body: dict, request: Request):
             "at": now.isoformat(timespec="seconds")}
 
 
+async def _can_note(request: Request, card: str, fid: str) -> bool:
+    try:
+        await _note_scope(request, card, fid)
+        return True
+    except ApiError:
+        return False
+
+
 @router.get("/survey/findings/{fid}/notes")
-async def finding_notes(fid: str, request: Request, limit: int = 5):
+async def finding_notes(fid: str, request: Request, limit: int = 5, card: str | None = None):
     """그 필지에 적은 메모 · 다음 확인 날짜(최근 순) — 필지 카드 아래 몇 줄. 기관 세션(관할 밖 0)."""
     p = require(principal(request), realm="tenant")
     async with db(p) as conn:
@@ -222,7 +247,7 @@ async def finding_notes(fid: str, request: Request, limit: int = 5):
     who = lambda uid: " ".join(x for x in ((users.get(uid) or {}).get("dept") or "", (users.get(uid) or {}).get("name") or "") if x)  # noqa: E731
     return {"items": [{"at": _iso(r["at"]), "note": r["note"], "planned_for": r["planned_for"].isoformat() if r["planned_for"] else None,
                        "who": (r["assignee"] or who(r["by"]) or "").strip()} for r in rows],
-            "can_write": p.role == "manager", "as_of": now_iso()}
+            "can_write": p.role == "manager" or bool(card and await _can_note(request, card, fid)), "as_of": now_iso()}
 
 
 def _months(rows, now: dt.datetime, period: str) -> list[dict]:
@@ -331,4 +356,202 @@ async def bell_extra(p: Principal) -> list[dict]:
                     out.append({"kind": "result", "n": len(rows),
                                 "href": "/landxi/v3/gov-select/?" + (f"service={rows[0]['card_id']}" if one else "list=1"),
                                 "items": [{"title": str(r["line"] or "") if r["kind"] == "version" else str(r["line"] or "").split(" — ")[0], "at": _iso(r["at"])} for r in rows[:3]]})   # 새 판 알림은 달라진 점 한 줄까지(나중 19)
+    return out
+
+
+# ── 서비스 필지 메모 · 필지 이력(10-21 원칙 300 · 영농-3 · 영농-4) ─────────────────────────────────
+PNU_RE = re.compile(r"^\d{19}$")
+NEG_CLS = ("비경작지", "휴경")          # '찾지 못함'과 같은 뜻 — 바뀜 한 줄에서 그대로 이름으로 쓴다(지어내지 않음)
+
+
+def _person(u) -> str:
+    """기록에 누가 — 부서 · 이름 직위(있는 것만)."""
+    if not u:
+        return ""
+    nm = " ".join(x for x in ((u.get("name") or "").strip(), (u.get("position") or "").strip()) if x)
+    return " · ".join(x for x in ((u.get("dept") or "").strip(), nm) if x)
+
+
+async def _users(c, tenant: str) -> dict:
+    try:
+        rows = await c.fetch("SELECT id, name, dept, position FROM tenant_users WHERE tenant_id=$1", tenant)
+    except Exception:  # noqa: BLE001 — 직위 칸이 없는 DB
+        rows = await c.fetch("SELECT id, name, dept, NULL::text AS position FROM tenant_users WHERE tenant_id=$1", tenant)
+    return {r["id"]: dict(r) for r in rows}
+
+
+def _clean_note(v) -> str | None:
+    return " ".join(re.sub(r"[\x00-\x1f\x7f<>]", "", str(v or "")).split())[:200] or None
+
+
+@router.post("/spaces/me/guides/{card}/parcels/notes")
+async def parcel_notes_batch(card: str, request: Request, body: dict | None = None):
+    """필지 메모 — 필지마다 메모 칸 하나(10-21 영농-D1 ⓐ · 기관 화면 전용 · 담당 · 상태 · 날짜 칸 없음). 한 필지도 여러 필지도 한 번에(영농-4) —
+    필지마다 한 줄씩 남고(같은 묶음 번호) 가장 최근 줄이 그 필지의 지금 메모 · 이전 줄은 필지 이력에 보인다.
+    쓰기 = 그 서비스를 볼 수 있는 기관 사용자(기관 관리자 + 서비스를 정해 받은 부서 담당자 · 원칙 117 · 38).
+    고른 필지 번호는 그 서비스 결과 행(관할 · 부서 범위)에 있는 것만 받는다 — 범위 밖 번호는 한 줄도 남기지 않는다(원칙 39)."""
+    from .spaces import _me, service_parcel_rows
+    p = _me(request)
+    b = body or {}
+    note = _clean_note(b.get("note"))
+    if not note:
+        raise ApiError("bad_request", "메모를 적어 주세요", {"field": "note"})
+    want = list(dict.fromkeys(str(x) for x in (b.get("pnus") or []) if PNU_RE.match(str(x))))
+    if not want:
+        raise ApiError("bad_request", "필지를 하나 이상 골라 주세요", {"field": "pnus"})
+    if len(want) > 2000:
+        raise ApiError("bad_request", "한 번에 2,000필지까지 적습니다", {"field": "pnus"})
+    _svc, _g, rows, _per = await service_parcel_rows(p, card)      # 볼 수 없는 서비스 = 404(있다는 것도 알리지 않는다)
+    inside = {str(r["pnu"]) for r in rows}
+    ok = [x for x in want if x in inside]
+    if not ok:
+        raise ApiError("not_found", "고른 필지가 이 서비스 결과에 없습니다")
+    now = dt.datetime.now(KST)
+    batch = "pb_" + secrets.token_hex(8) if len(ok) > 1 else None
+    async with db(p) as c:
+        await c.executemany("INSERT INTO parcel_notes(id, tenant_id, card_id, pnu, note, batch_id, by_user, at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                            [("pn_" + secrets.token_hex(8), p.tenant_id, card, x, note, batch, p.user_id or "", now) for x in ok])
+        await audit(c, p, "parcel.note", f"{p.tenant_id}/{card}", None, {"parcels": len(ok), "batch": batch})
+        who = _person((await _users(c, p.tenant_id)).get(p.user_id))
+    return {"card": card, "saved": env(len(ok), "필지", "recorded", "필지 메모"), "skipped": env(len(want) - len(ok), "필지", "recorded", "이 서비스 결과에 없는 필지"), "batch": batch,
+            "at": now.isoformat(timespec="seconds"), "who": who}
+
+
+def _year(shot: str | None, analyzed: str | None) -> str | None:
+    m = re.search(r"(19|20)\d{2}", str(shot or "")) or re.search(r"(19|20)\d{2}", str(analyzed or ""))
+    return m.group(0) if m else None
+
+
+@router.get("/spaces/me/parcels/{pnu}/history")
+async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, limit: int = 10):
+    """필지 이력(영농-3) — 그 서비스의 결과(판마다 · 영상 시점마다)가 이 필지에서 본 것 · 올린 대장의 값 · 메모 · 다음 확인 날짜 · 검토 요청을 한 줄기로(새것 먼저).
+    맨 위 '바뀜' 한 줄 = 가장 최근 두 결과의 주된 종류(넓이가 큰 종류). 결과가 없는 해는 줄을 만들지 않는다(지어내지 않음).
+    숫자: 결과 필지 번호가 붙은 결과 = 필지 목록과 같은 결과 넓이 · 필지 번호가 없는 결과 = 필지와 겹친 넓이(필지 엑셀과 같은 저장 값 · 없으면 겹친 면 넓이).
+    geom=1 → 가장 최근 두 결과의 이 필지 결과 면(시점 비교 화면이 두 쪽에 겹친다). 기관 세션 · 볼 수 있는 서비스 · 관할 안 필지만."""
+    from .spaces import _guide_or_404, _me, _only, _scope_codes, class_ko
+    p = _me(request)
+    if not PNU_RE.match(pnu or ""):
+        raise ApiError("not_found", "필지가 없습니다")
+    svc, g, _rows = await _guide_or_404(p, card)
+    codes = _scope_codes(p.tenant_id, await _only(p, card))
+    if codes is not None and pnu[:5] not in codes:
+        raise ApiError("not_found", "필지가 없습니다")
+    limit = max(1, min(int(limit or 10), 50))
+    async with db(p) as c:
+        eds = await c.fetch("SELECT edition, body, published_at, created_at FROM space_guides WHERE tenant_id=$1 AND card_id=$2 ORDER BY edition", p.tenant_id, card)
+        users = await _users(c, p.tenant_id)
+        pnotes = await c.fetch("SELECT note, by_user, at, batch_id FROM parcel_notes WHERE tenant_id=$1 AND card_id=$2 AND pnu=$3 ORDER BY at DESC LIMIT 50",
+                               p.tenant_id, card, pnu)
+        fnotes = await c.fetch("SELECT e.at, e.note, e.planned_for, e.by, e.assignee FROM survey_finding_events e JOIN survey_findings f ON f.id = e.finding_id "
+                               "WHERE f.pnu=$1 AND e.tenant_id=$2 AND NOT coalesce(e.demo,false) AND (e.note IS NOT NULL OR e.planned_for IS NOT NULL) "
+                               "ORDER BY e.at DESC LIMIT 20", pnu, p.tenant_id)
+        revs = await c.fetch("SELECT f.at, f.status, f.sender_id, (SELECT body FROM review_messages m WHERE m.request_id=f.id ORDER BY at LIMIT 1) AS first "
+                             "FROM feedback f WHERE f.kind='review' AND f.tenant_id=$1 AND f.pnu=$2 ORDER BY f.at DESC LIMIT 20", p.tenant_id, pnu)
+        leds = await c.fetch("SELECT DISTINCT ON (i.kind) i.kind, i.filename, i.name, i.base_date, i.created_at, r.payload FROM registry_snapshots r "
+                             "JOIN ledger_imports i ON i.id = r.import_id AND i.tenant_id = r.tenant_id "
+                             "WHERE r.tenant_id=$1 AND r.pnu=$2 AND i.state='matched' ORDER BY i.kind, i.created_at DESC, r.row_no", p.tenant_id, pnu)
+    # 결과 — 판마다 결과 세트(같은 세트는 처음 나온 판으로 한 번)
+    rounds, seen = [], set()
+    for e in eds:
+        b = e["body"] or {}
+        rd = ((b.get("when") or {}).get("rounds") or [{}])[0]
+        for s in b.get("sets") or []:
+            if s in seen:
+                continue
+            seen.add(s)
+            rounds.append({"set": s, "edition": e["edition"], "shot": rd.get("shot"), "analyzed": rd.get("analyzed"),
+                           "year": _year(rd.get("shot"), rd.get("analyzed"))})
+    sets = [r["set"] for r in rounds]
+    found: dict[str, dict] = {}
+    shapes: dict[str, list] = {}
+    addr = None
+    if sets:
+        async with db(realm="lx") as c:
+            await c.execute("SET LOCAL jit = off")
+            pa = await c.fetchrow("SELECT addr FROM survey_parcels WHERE pnu=$1", pnu)
+            addr = pa["addr"] if pa else None
+            spa = await c.fetch("SELECT job_id, cls_ko, sum(hit1_m2) m2 FROM survey_parcel_ai WHERE pnu=$1 AND job_id = ANY($2::text[]) AND n1 > 0 GROUP BY 1, 2",
+                                pnu, sets)
+            det = await c.fetch(
+                "WITH pg AS (SELECT geom FROM survey_parcels WHERE pnu=$1) "
+                "SELECT d.job_id, d.cls, d.cls_en, (d.pnu IS NOT NULL) tagged, "
+                "CASE WHEN d.pnu IS NOT NULL THEN d.area_m2 ELSE ST_Area(ST_Intersection(d.geom, pg.geom)::geography) END m2"
+                + (", ST_AsGeoJSON(ST_SimplifyPreserveTopology(CASE WHEN d.pnu IS NOT NULL THEN d.geom ELSE ST_Intersection(d.geom, pg.geom) END, 0.000003), 6) g "
+                   if geom else " ")
+                + "FROM detections d, pg WHERE d.job_id = ANY($2::text[]) AND d.edit_state <> 'deleted' AND d.geom && pg.geom "
+                "AND (d.pnu = $1 OR (d.pnu IS NULL AND ST_Intersects(d.geom, pg.geom)))", pnu, sets)
+        stored = {}
+        for r in spa:
+            stored.setdefault(r["job_id"], {})[r["cls_ko"]] = float(r["m2"] or 0)
+        live: dict[str, dict] = {}
+        for r in det:
+            k = class_ko(r["cls"], r["cls_en"])
+            m2 = float(r["m2"] or 0)
+            if not r["tagged"] and m2 < 1:                         # 경계에 스친 면은 이 필지 결과가 아니다
+                continue
+            live.setdefault(r["job_id"], {}).setdefault("by", {})
+            live[r["job_id"]]["by"][k] = live[r["job_id"]]["by"].get(k, 0.0) + m2
+            live[r["job_id"]]["tagged"] = live[r["job_id"]].get("tagged") or r["tagged"]
+            if geom and r.get("g"):
+                shapes.setdefault(r["job_id"], []).append({"type": "Feature", "properties": {"cls": k}, "geometry": json.loads(r["g"])})
+        for s in sets:
+            lv = live.get(s) or {}
+            by = lv["by"] if lv.get("tagged") else (stored.get(s) or lv.get("by") or {})   # 필지 번호가 붙은 결과 = 그 결과 · 아니면 저장된 겹친 넓이
+            if not lv.get("tagged") and stored.get(s):
+                shapes[s] = [f for f in shapes.get(s, []) if f["properties"]["cls"] in stored[s]]
+            by = {k: v for k, v in by.items() if v >= 1}
+            if by:
+                found[s] = by
+    src = "이 서비스의 AI 분석 결과 × 연속지적 필지"
+    results = []
+    for r in rounds:
+        by = found.get(r["set"])
+        if not by:
+            continue                                                # 결과 없는 해는 줄을 만들지 않는다
+        top = max(by.items(), key=lambda kv: kv[1])[0]
+        results.append({"edition": f"{r['edition']}판", "_ed": r["edition"], "shot": r["shot"], "year": r["year"], "analyzed": str(r["analyzed"])[:10] if r["analyzed"] else None,
+                        "cls": top, "classes": [{"name": k, "area": env(round(v, 1), "m2", "measured", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
+                        "_set": r["set"]})
+    results.sort(key=lambda x: (x["year"] or "", x["analyzed"] or "", x["_ed"]))
+    change = None
+    if len(results) >= 2:
+        a, z = results[-2], results[-1]
+        change = {"from": {"year": a["year"], "cls": a["cls"]}, "to": {"year": z["year"], "cls": z["cls"]}, "same": a["cls"] == z["cls"],
+                  "line": (f"{a['year'] or a['shot']} · {z['year'] or z['shot']} 모두 {z['cls']}" if a["cls"] == z["cls"]
+                           else f"{a['year'] or a['shot']} {a['cls']} → {z['year'] or z['shot']} {z['cls']}")}
+    items = []
+    for r in results:
+        items.append({"kind": "result", "at": r["analyzed"], "_k": r["analyzed"] or r["year"] or "", "year": r["year"],
+                      "title": f"AI 분석 · {r['cls']}", "sub": " · ".join(x for x in (r["shot"], f"{r['classes'][0]['area']['value']:,.0f}㎡") if x),
+                      "area": r["classes"][0]["area"]})
+    from .ledger import KINDS
+    for L in leds:
+        pl = L["payload"] or {}
+        v = str(pl.get("status") or pl.get("use") or "").strip()
+        d0 = L["base_date"] or (L["created_at"].astimezone(KST).date() if L["created_at"] else None)
+        items.append({"kind": "ledger", "at": d0.isoformat() if d0 else None, "title": f"{KINDS.get(L['kind']) or '대장'}" + (f" · {v}" if v else ""),
+                      "sub": ("기준일 " if L["base_date"] else "올린 날 ") + (d0.strftime("%Y.%m.%d") if d0 else "")})
+    for n in pnotes:
+        items.append({"kind": "note", "at": _iso(n["at"]), "title": f"메모 '{n['note']}'", "sub": "여러 필지 함께" if n["batch_id"] else "",
+                      "who": _person(users.get(n["by_user"]))})
+    for n in fnotes:
+        items.append({"kind": "note", "at": _iso(n["at"]), "title": f"메모 '{n['note']}'" if n["note"] else "다음 확인 날짜",
+                      "sub": f"다음 확인 {n['planned_for'].month}.{n['planned_for'].day:02d}" if n["planned_for"] else "",
+                      "who": (n["assignee"] or _person(users.get(n["by"])) or "").strip()})
+    for f in revs:
+        items.append({"kind": "review", "at": _iso(f["at"]), "title": "검토 요청" + (f" '{f['first']}'" if f["first"] else ""),
+                      "sub": {"answered": "LX 답 도착", "seen": "LX 확인 중"}.get(f["status"] or "", "보냄"), "who": _person(users.get(f["sender_id"]))})
+    items.sort(key=lambda x: str(x.get("_k") or x["at"] or ""), reverse=True)    # 분석한 날을 모르는 결과는 그 해(영상 해)로 줄 세움 — 날짜를 지어내지 않는다
+    KO = {"result": "AI 분석", "ledger": "대장", "note": "메모", "review": "검토 요청"}
+    for x in items:
+        x.pop("_k", None)
+        x["kind_ko"] = KO[x["kind"]]
+    out = {"pnu": pnu, "addr": _short(addr) if addr else None, "card": card, "service": svc["name"], "change": change,
+           "results": [{k: v for k, v in r.items() if not k.startswith("_")} for r in results],
+           "items": items[:limit], "more": env(max(0, len(items) - limit), "줄", "recorded", "필지 이력"), "total": len(items),
+           "memo": ({"note": pnotes[0]["note"], "at": _iso(pnotes[0]["at"]), "who": _person(users.get(pnotes[0]["by_user"]))} if pnotes else None),
+           "can_write": True, "as_of": now_iso()}
+    if geom:
+        out["shapes"] = [{"year": r["year"], "shot": r["shot"], "cls": r["cls"],
+                          "fc": {"type": "FeatureCollection", "features": shapes.get(r["_set"], [])}} for r in results[-2:]]
     return out

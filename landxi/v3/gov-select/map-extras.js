@@ -101,3 +101,44 @@ export async function parcelNote(host, { finding }) {
   }
   box.append(list);
 }
+
+/** 필지 시점 비교(10-21 영농-2 · AI 판정 근거) — 필지 목록 · 필지 카드의 '시점 비교'에서 온 XI맵(?service=&pnu=&compare=auto).
+    필지 이력(GET /spaces/me/parcels/{pnu}/history?geom=1)의 가장 최근 두 결과 해 → 그 해 영상 둘을 가르기 왼쪽(이전) · 오른쪽(최신)에 놓고,
+    두 쪽 모두 이 필지의 AI 결과 면을 겹친다. 위 띠 한 줄 = 서버의 바뀜 한 줄(예: '2023 경작지 → 2025 비경작지').
+    epochs() = 그 지역을 덮는 시점 영상(XI맵 가르기 고르기와 같은 목록) · compare(왼쪽, 오른쪽) = XI맵 가르기 켜기 · left() · right() = 두 지도 stage. */
+const HIST = new Map();
+/** 필지 이력(결과 면 포함) 한 번만 받기 — XI맵이 서는 동안 미리 부른다 */
+export function historyFor(pnu, card) {
+  const k = `${card}|${pnu}`;
+  if (!HIST.has(k)) HIST.set(k, api(`/spaces/me/parcels/${encodeURIComponent(pnu)}/history?` + new URLSearchParams({ card, geom: '1', limit: '1' })).catch(() => null));
+  return HIST.get(k);
+}
+export async function parcelCompare({ host, pnu, card, epochs, compare, left, right, aiOn, closeCard }) {
+  if (!host || !pnu || !card) return false;
+  const j = await historyFor(pnu, card);
+  const res = j?.results || [];
+  const z = res[res.length - 1] || null, a = res.length > 1 ? res[res.length - 2] : null;
+  const eps = epochs() || [];
+  const yr = (e) => String(e?.it?.epoch || '').slice(0, 4);
+  const zy = z?.year || null;
+  const R = (zy && eps.filter((e) => yr(e) === zy).pop()) || eps[eps.length - 1] || null;
+  const ay = a?.year || null;
+  const L = (ay && eps.find((e) => yr(e) === ay && e !== R)) || [...eps].reverse().find((e) => R && yr(e) < yr(R)) || null;
+  if (!R || !L) { toast('이 필지는 견줄 다른 시점 영상이 없습니다'); return false; }
+  await compare(L.it.id, R.it.id);
+  aiOn?.();
+  const sh = j?.shapes || [];
+  const fz = sh.find((s) => s.year === zy) || sh[sh.length - 1];
+  const fa = sh.find((s) => s.year === ay && s !== fz) || null;
+  try { if (fz) await right()?.geo('pcmp', fz.fc, 'ai'); if (fa) await left()?.geo('pcmp', fa.fc, 'ai'); } catch { /* 면 없음 */ }
+  const line = j?.change?.line || (z ? `${zy || z.shot} ${z.cls}` : '');
+  host.querySelector('.gx-cmp-t')?.remove();
+  if (line) host.append(h('p.gx-cmp-t', { role: 'status' }, h('span.gx-cmp-y', { text: `${L.label} · ${R.label}` }), h('b', { text: line })));
+  /* 휴대폰 — 필지 카드(아래 시트)가 두 영상을 가리므로 걷는다(카드는 지도에서 필지를 누르면 다시 열린다) */
+  if (closeCard && matchMedia('(max-width: 640px)').matches) {
+    for (let i = 0; i < 30 && !document.querySelector('.k-drawer.is-open'); i++) await new Promise((r) => setTimeout(r, 100));
+    closeCard();
+    try { if (fz) await right()?.geo('pcmp', fz.fc, 'ai'); } catch { /* */ }
+  }
+  return true;
+}

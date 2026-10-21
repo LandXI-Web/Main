@@ -246,6 +246,100 @@ async def _ledger_cmp(p: Principal, import_id: str, emd: str | None, picks: list
     return out
 
 
+# ── 해 바뀜 비교(영농-5 · 필지 전이표) ─────────────────────────────────────────
+NONE_CLS = "결과 없음"
+
+
+async def _parcel_cls(c, s: dict, only: list[str] | None) -> dict[str, tuple[str, float]]:
+    """결과 하나 → 필지마다 (주된 종류, 넓이) — 필지 번호가 붙은 결과(필지 목록과 같은 행)가 있으면 그것, 없으면 필지와 겹친 저장 넓이(필지 엑셀과 같은 값)."""
+    from .spaces import class_ko
+    sets, codes = s["_sets"], s["_codes"]
+    if not sets:
+        return {}
+    args = [sets] + ([codes] if codes is not None else []) + ([only] if only is not None else [])
+    sc = (" AND left(d.pnu, 5) = ANY($2::text[])" if codes is not None else "") + (f" AND d.pnu = ANY(${len(args)}::text[])" if only is not None else "")
+    rows = await c.fetch("SELECT d.pnu, d.cls, d.cls_en, coalesce(sum(d.area_m2), 0) m2 FROM detections d WHERE d.job_id = ANY($1::text[]) "
+                         f"AND d.edit_state <> 'deleted' AND d.pnu IS NOT NULL{sc} GROUP BY 1, 2, 3", *args)
+    by: dict[str, dict] = {}
+    for r in rows:
+        k = class_ko(r["cls"], r["cls_en"])
+        e = by.setdefault(r["pnu"], {})
+        e[k] = e.get(k, 0.0) + float(r["m2"])
+    if not by and await c.fetchval("SELECT to_regclass('public.survey_parcel_ai') IS NOT NULL"):
+        sc2 = sc.replace("d.pnu", "x.pnu")
+        for r in await c.fetch("SELECT x.pnu, x.cls_ko, sum(x.hit1_m2) m2 FROM survey_parcel_ai x WHERE x.job_id = ANY($1::text[]) AND x.n1 > 0"
+                               f"{sc2} GROUP BY 1, 2", *args):
+            e = by.setdefault(r["pnu"], {})
+            e[r["cls_ko"]] = e.get(r["cls_ko"], 0.0) + float(r["m2"] or 0)
+    out = {}
+    for k, e in by.items():
+        top = max(e.items(), key=lambda kv: kv[1])
+        out[k] = (top[0], sum(e.values()))
+    return out
+
+
+async def _transitions(p: Principal, picks: list[dict], emd: str | None) -> dict | None:
+    """고른 결과 가운데 같은 종류 이름을 쓰는 두 결과(가장 이른 것 · 가장 늦은 것)를 필지 번호로 맞춰 '이전 종류 → 이후 종류' 표.
+    대상 = 나중 결과의 필지(합계 = 나중 결과의 필지 수) · 이전 결과에 없던 필지는 '결과 없음'에서 온 줄.
+    두 결과가 없거나 필지로 이어지지 않으면 None(화면 · 문서에 블록 없음 — 지어내지 않는다)."""
+    if len(picks) < 2:
+        return None
+    order = sorted(picks, key=lambda s: (s.get("analyzed") or "", s.get("shot") or ""))
+    async with db(realm="lx") as c:
+        await c.execute("SET LOCAL jit = off")
+        cls_of: dict[str, dict] = {}
+        z, Zm = None, {}
+        for s in reversed(order):                                  # 나중 결과(필지로 이어지는 것)부터
+            Zm = await _parcel_cls(c, s, None)
+            if Zm:
+                z = s
+                break
+        if not z:
+            return None
+        cls_of[z["card"]] = Zm
+        for s in order:
+            if s is not z and (s.get("analyzed") or "", s.get("shot") or "") <= (z.get("analyzed") or "", z.get("shot") or ""):
+                cls_of[s["card"]] = await _parcel_cls(c, s, list(Zm))
+        cands = [s for s in order if cls_of.get(s["card"]) and s is not z] + [z]
+        if len(cands) < 2:
+            return None
+        zc = {v[0] for v in cls_of[z["card"]].values()}
+        a = next((s for s in cands[:-1] if {v[0] for v in cls_of[s["card"]].values()} & zc), None)
+        if not a:
+            return None
+        A, Z = cls_of[a["card"]], cls_of[z["card"]]
+        keys = set(Z)
+        attrs = {r["pnu"]: dict(r) for r in await c.fetch("SELECT pnu, addr, emd FROM survey_parcels WHERE pnu = ANY($1::text[])", list(keys))} if keys else {}
+    if emd:
+        keys = {k for k in keys if (attrs.get(k) or {}).get("emd") == emd}
+    if not (set(A) & set(Z) & keys):
+        return None
+    cell: dict[tuple, list] = {}
+    moved = []
+    for k in keys:
+        fa = A[k][0] if k in A else NONE_CLS
+        fz = Z[k][0] if k in Z else NONE_CLS
+        m2 = (Z.get(k) or A.get(k))[1]
+        e = cell.setdefault((fa, fz), [0, 0.0])
+        e[0] += 1
+        e[1] += m2
+        if fa != fz and k in A and k in Z:
+            at = attrs.get(k) or {}
+            from .gov_report import _addr_short
+            moved.append({"pnu": k, "where": _addr_short(at.get("addr")) or k, "emd": at.get("emd") or "", "from": fa, "to": fz,
+                          "area": env(round(m2, 1), "m2", "measured", SRC)})
+    moved.sort(key=lambda x: -x["area"]["value"])
+    rows = sorted(cell.items(), key=lambda kv: (kv[0][0] == kv[0][1], kv[0][0] == NONE_CLS or kv[0][1] == NONE_CLS, -kv[1][0]))
+    ch = sum(v[0] for (fa, fz), v in cell.items() if fa != fz and NONE_CLS not in (fa, fz))
+    src = "두 결과 × 필지 번호(한 필지 = 넓이가 큰 종류)"
+    return {"from": {"card": a["card"], "short": a["short"], "shot": a["shot"], "analyzed": a["analyzed"]},
+            "to": {"card": z["card"], "short": z["short"], "shot": z["shot"], "analyzed": z["analyzed"]},
+            "rows": [{"from": fa, "to": fz, "n": env(v[0], "필지", "inferred", src), "ha": env(round(v[1] / 1e4, 2), "ha", "measured", src),
+                      "changed": fa != fz} for (fa, fz), v in rows],
+            "changed": env(ch, "필지", "inferred", src, "두 결과 모두 있는 필지 가운데 종류가 바뀐 필지"),
+            "parcels": env(len(keys), "필지", "inferred", src), "top": moved[:10], "none_label": NONE_CLS}
+
+
 def _cards_of(cards: str | None) -> list[str]:
     out = []
     for c in str(cards or "").split(","):
@@ -282,7 +376,7 @@ async def multi_data(p: Principal, cards: str | None, emd: str | None, import_id
     return {"region": f"{place} {emd}".strip() if emd else (place or "—"), "place": place, "emd": emd, "emds": emds,
             "made": dt.datetime.now(KST).strftime("%Y.%m.%d"), "shots": shots, "days": days,
             "bale": any(c["bale"] for s in picks for c in s["classes"]),
-            "picked": picks, "ledger": ld, "services": avail, "as_of": now_iso()}
+            "picked": picks, "ledger": ld, "transitions": await _transitions(p, picks, emd), "services": avail, "as_of": now_iso()}
 
 
 def _pub(d: dict) -> dict:
@@ -297,6 +391,20 @@ def _title(d: dict) -> str:
 async def report_multi(request: Request, cards: str | None = None, emd: str | None = None, import_id: str | None = None):
     p = _me(request)
     return _pub(await multi_data(p, cards, emd, import_id))
+
+
+@router.get("/spaces/me/report/transitions")
+async def report_transitions(request: Request, cards: str | None = None, emd: str | None = None):
+    """필지 전이표만(영농-5) — 보고서 탭이 고른 결과가 둘 이상일 때 부른다. 같은 종류 이름을 쓰는 두 결과가 없으면 transitions = null(블록 없음)."""
+    p = _me(request)
+    emd = (emd or "").strip() or None
+    picks = []
+    for c in _cards_of(cards):
+        try:
+            picks.append(await _one(p, c, emd))
+        except ApiError:
+            continue
+    return {"transitions": await _transitions(p, picks, emd) if len(picks) >= 2 else None, "as_of": now_iso()}
 
 
 @router.get("/spaces/me/report/pick")
@@ -391,6 +499,17 @@ def _hwpx_multi(d: dict, pngs: list[tuple[str, bytes | None]]) -> tuple[bytes, s
         tv = [s["area_ha"]["value"] for s in P]
         rows.append(["합계", *[f"{v:,.1f}" for v in tv], *([f"{tv[1] - tv[0]:+,.1f}"] if two else [])])
         doc.table(rows, [3] + [2] * (len(rows[0]) - 1), aligns=["l"] + ["r"] * (len(rows[0]) - 1), total_row=True, small=len(rows[0]) > 6)
+    tr = d.get("transitions")
+    if tr:
+        doc.heading("필지 전이")
+        rows = [[f"{tr['from']['short']}", f"{tr['to']['short']}", "필지", "넓이(ha)"]]
+        rows += [[x["from"], x["to"], f"{x['n']['value']:,}", f"{x['ha']['value']:,.2f}"] for x in tr["rows"]]
+        rows.append(["합계", "", f"{tr['parcels']['value']:,}", f"{sum(x['ha']['value'] for x in tr['rows']):,.2f}"])
+        doc.table(rows, [30, 30, 20, 20], aligns=["l", "l", "r", "r"], total_row=True,
+                  caption=f"필지 번호로 맞춤 · 한 필지 = 넓이가 큰 종류 · 종류가 바뀐 필지 {tr['changed']['value']:,}필지")
+        if tr["top"]:
+            rows = [["소재지", "읍면동", "바뀜", "넓이(㎡)"]] + [[x["where"], x["emd"], f"{x['from']} → {x['to']}", f"{x['area']['value']:,.0f}"] for x in tr["top"]]
+            doc.table(rows, [40, 16, 28, 16], aligns=["l", "l", "l", "r"], caption="바뀐 필지(넓은 순 10)")
     for name, png in pngs:
         if png:
             doc.heading(f"지도 — {name}")
@@ -490,6 +609,16 @@ def _xlsx_multi(d: dict) -> bytes:
     rows = [[x] + [v for s in P for v in ((em[s["card"]].get(x) or {}).get("n"), ((em[s["card"]].get(x) or {}).get("ha") or {}).get("value"))] for x in emds]
     rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_ha"]["value"])])
     _sheet(wb, "읍면동별", head, rows, num={i: ("#,##0" if i % 2 else "#,##0.0") for i in range(1, len(head))}, total_last=True)
+    tr = d.get("transitions")
+    if tr:
+        rows = [[x["from"], x["to"], x["n"]["value"], x["ha"]["value"]] for x in tr["rows"]]
+        rows.append(["합계", "", tr["parcels"]["value"], round(sum(x["ha"]["value"] for x in tr["rows"]), 2)])
+        _sheet(wb, "필지 전이", [tr["from"]["short"], tr["to"]["short"], "필지", "넓이(ha)"], rows, num={2: "#,##0", 3: "#,##0.00"}, widths=[20, 20, 12, 12],
+               total_last=True)
+        if tr["top"]:
+            _sheet(wb, "바뀐 필지", ["필지 번호", "소재지", "읍면동", "이전", "이후", "넓이(㎡)"],
+                   [[x["pnu"], x["where"], x["emd"], x["from"], x["to"], x["area"]["value"]] for x in tr["top"]], num={5: "#,##0"}, text_cols=(0,),
+                   widths=[22, 30, 12, 14, 14, 12])
     ld = d.get("ledger")
     if ld:
         rows = [["올린 대장 필지", ld["parcels"]["value"]]]
