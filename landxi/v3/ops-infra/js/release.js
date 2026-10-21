@@ -50,8 +50,12 @@ export function mountRelease(root) {
   /* ── 배포 신청 ─────────────────────────── */
   let R = null, pick = null, catName = {};
   async function paintReq() {
-    try { catName = Object.fromEntries(((await api('/categories')).items || []).map((g) => [g.id, g.name])); } catch { /* 분야 이름 없이도 신청서는 보인다 */ }
-    try { R = await api('/release/requests'); } catch (e) { panes.req.replaceChildren(h('p.rv-empty', { text: e.message || '배포 신청을 불러오지 못했습니다' })); return; }
+    /* 첫인상-3: 첫 도착 전엔 가운데 '불러오는 중' 하나(빈 판 0) · 분야 이름과 신청서를 함께 부른다(차례로 부르면 두 번 기다림) */
+    if (!R) { const x = h('div'); panes.req.replaceChildren(x); empty(x, { kind: 'loading', compact: true }); }
+    const catP = api('/categories').catch(() => null);
+    const reqP = during(api('/release/requests'));
+    { const c = await catP; if (c) catName = Object.fromEntries((c.items || []).map((g) => [g.id, g.name])); }   // 분야 이름 없이도 신청서는 보인다
+    try { R = await reqP; } catch (e) { panes.req.replaceChildren(h('p.rv-empty', { text: e.message || '배포 신청을 불러오지 못했습니다' })); return; }
     nBadge.textContent = val(R.pending) ? nf(val(R.pending)) : '';
     const items = R.items || [];
     if (!pick || !items.some((x) => x.id === pick)) pick = (items.find((x) => x.state === 'pending') || items[0])?.id || null;

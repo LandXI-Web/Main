@@ -90,9 +90,16 @@ addEventListener('hashchange', show);
 // GPU 표(/ops/gpus · 서버 1초 남짓)도 인프라 탭만 쓴다 — 다른 탭은 먼저 그리고 뒤에서 받는다 · 2.5초 조회 · 실시간 표본도 인프라 탭일 때만(바퀴 15 재검수 · 속도:
 // 배포 · 기관 · 공유 데이터 탭에서도 2초마다 GPU 표를 다시 받아 같은 게이트웨이의 다른 요청이 0.6초씩 밀렸다)
 const first = want() === 'infra';
-await Promise.all([first ? loadGpus() : null, loadOrg(), first ? loadInfra() : null]);
-boot.remove();
-show();
+/* 첫인상-10 · 3: 배포 · 공유 데이터 탭은 기관 · 배포본 묶음(loadOrg)을 기다리지 않고 바로 그린다(배포 탭은 자기 자료를 따로 부른다) — 묶음이 오면 다시 그린다 */
+if (want() === 'deploys' || want() === 'shared') {
+  const orgP = loadOrg();
+  boot.remove(); show();
+  await orgP; paint();
+} else {
+  await Promise.all([first ? loadGpus() : null, loadOrg(), first ? loadInfra() : null]);
+  boot.remove();
+  show();
+}
 if (!first) setTimeout(() => Promise.all([loadGpus(), loadInfra()]).then(() => { if (cur === 'infra') { V.infra.paintGpus(); V.infra.paintRest(); } openStream(); }), 1500);
 Sh.fresh(new Date());
 if (deepDeploy) V.deploys.open(deepDeploy);
