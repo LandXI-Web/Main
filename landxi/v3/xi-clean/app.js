@@ -1879,6 +1879,8 @@ async function pickEmd(ll) {
 }
 /* ═══ 아래 채팅 창 하나(10-17 원칙 276) — 시군구 이름 · 읍면동 · 지번만 치면 언어 모델을 거치지 않고 바로 그곳으로(위 검색창이 쓰던 길 그대로: 지도 경계 이름 · 읍면동 · /survey/findings 지번 → 필지 카드).
    후보가 여럿이면 채팅창 위 작은 후보 목록. 장소가 아니면 false → 질문으로. 걸린 시간은 X.place(실증용). ═══ */
+/** '남원시로' · '송동면으로' — 받침(ㄹ 빼고) 있으면 '으로' */
+function roJosa(w) { const c = String(w || '').trim().slice(-1).charCodeAt(0) - 0xAC00; if (!(c >= 0 && c < 11172)) return '로'; const j = c % 28; return j === 0 || j === 8 ? '로' : '으로'; }
 async function placeQuery(q) {
   const n = norm(q); if (!n) return false;
   const t0 = performance.now();
@@ -1897,7 +1899,7 @@ async function placeQuery(q) {
       try {
         const j = await api('/survey/findings?' + new URLSearchParams({ q, limit: '5', sort: 'score' }));
         const seen = new Set();
-        for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); c.push({ t: jibun(f.addr), s: String(f.addr || '').split(' ').slice(0, -2).join(' '), go: () => openParcel(f.pnu, { fly: true }) }); }
+        for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); c.push({ t: jibun(f.addr), s: String(f.addr || '').split(' ').slice(0, -2).join(' '), said: `${jibun(f.addr)} 필지를 열었습니다.`, go: () => openParcel(f.pnu, { fly: true }) }); }
       } catch { /* 지번 찾기 실패 — 질문으로 */ }
     }
   }
@@ -1905,7 +1907,7 @@ async function placeQuery(q) {
   let list = [...dup.values()];
   const exact = list.filter((o) => norm(o.t) === n); if (exact.length === 1) list = exact;   // 친 글과 똑같은 것이 하나면 그곳으로
   X.place = { q, n: list.length, ms: Math.round(performance.now() - t0), kind: list.length === 1 ? 'go' : list.length ? 'choices' : 'ask' };
-  if (list.length === 1) { Promise.resolve(list[0].go()).then(() => { X.place.flyMs = Math.round(performance.now() - t0); }); return true; }
+  if (list.length === 1) { Promise.resolve(list[0].go()).then(() => { X.place.flyMs = Math.round(performance.now() - t0); }); return { said: list[0].said || `${list[0].t}${roJosa(list[0].t)} 이동했습니다.` }; }   // 답 띠에 한 줄(앞 답 · '답을 찾는 중'이 남지 않게 · WP-11)
   if (list.length > 1) return { choices: list };
   return false;
 }

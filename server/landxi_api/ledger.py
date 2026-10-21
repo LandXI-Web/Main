@@ -284,6 +284,25 @@ class ParcelIndex:
         c = cls._c.get(key)
         if c and time.time() - c[0] < 600:
             return c[1]
+        if c and time.time() - c[0] < 6 * 3600:          # 낡은 색인은 그대로 쓰고 뒤에서 다시 읽는다(전국 색인 한 번 15초 — 지번 질문이 기다리지 않게 · WP-11)
+            if key not in cls._busy:
+                cls._busy.add(key)
+
+                async def _bg():
+                    try:
+                        await cls._load(prefixes, key)
+                    except Exception:  # noqa: BLE001
+                        pass
+                    finally:
+                        cls._busy.discard(key)
+                asyncio.get_running_loop().create_task(_bg())
+            return c[1]
+        return await cls._load(prefixes, key)
+
+    _busy: set = set()
+
+    @classmethod
+    async def _load(cls, prefixes: list[str] | None, key: str) -> "ParcelIndex":
         async with db(realm="lx") as conn:
             if prefixes:
                 pat = [p + "%" for p in prefixes]

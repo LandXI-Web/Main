@@ -917,6 +917,7 @@ async def execute(ctx: Ctx, message: str):
     scr = audit.screen(message, p)
     msg = scr["message"]
     ctx.lang = lang_of(message)
+    t_ = started
     await persist_start(ctx, msg)
     ctx.state["msg_asked"] = msg                      # 사용자가 쓴 말 그대로(개선 고리가 모으는 말)
     try:                                              # 개선 후보 '채택 — 바로 반영'(원칙 197): 다른 이름 · 질문 뜻 연결 → 다음 질문부터 알아듣는다
@@ -930,6 +931,7 @@ async def execute(ctx: Ctx, message: str):
     if scr["pii"]:
         await audit.log(p, "agent.pii_masked", ctx.run_id, {"kinds": scr["pii"]})
     if scr["reject"]:
+    t_ = stage(ctx, "pre", t_)
         rj = scr["reject"]
         await audit.log(p, "agent.tool_forbidden", ctx.run_id, {"category": rj["category"], "message": msg[:300]})
         await reject(ctx, rj["category"], rj["message"], scr, event_error=rj["code"])
@@ -942,7 +944,9 @@ async def execute(ctx: Ctx, message: str):
         return
     if xr:
         await answer_direct(ctx, msg, xr, started, scr)
+    t_ = stage(ctx, "ext_route", t_)
         return
+    t_ = stage(ctx, "guard", t_)
     if ctx.lang == "ko" and not law_ask(msg):         # 요약·대장 직행의 고정 문장은 한국어 — 영어 질문은 모델 경로(같은 도구) · 법령 질문은 건너뛴다(M2)
         la = list_route(ctx, msg)
         if la:
@@ -956,10 +960,12 @@ async def execute(ctx: Ctx, message: str):
         if lg:
             await answer_ledger(ctx, msg, lg, started, scr)
             return
+        t_ = stage(ctx, "list_route", t_)
     route = await backends.classify(msg, ctx.r)
     await emit(ctx, "agent.route", {"intent": route["intent"], "ms": route["ms"], "backend": route["backend"], "model": route["model"],
                                     "pii": scr["pii"], "lang": ctx.lang})
     await persist_state(ctx, intent=route["intent"])
+        t_ = stage(ctx, "summary_route", t_)
     if route["intent"] == "ops" and not is_admin(p) and not ops_close(msg):
         # M1: 라우터가 ops 라고 해도 운영 말(OPS_ASK)이 글자로 없거나 지도·분석 실행 말이 있으면 도구 경로(모델)로 간다
         ctx.state["route_override"] = "ops→map"
@@ -967,6 +973,7 @@ async def execute(ctx: Ctx, message: str):
     if route["intent"] == "ops" and not is_admin(p):
         # 운영 질문은 LX 관리자만(ops 도구 = c2-ops · 관리자에게만 허용). 그 밖엔 한 줄 — 런타임 문장(LLM 호출 0)
         await emit(ctx, "agent.plan", {"steps": [], "route": route})
+    t_ = stage(ctx, "ledger_route", t_)
         await finish(ctx, say(ctx, "admin_only"), None, started, route, {}, lint_on=False)
         return
     small = route["intent"] == "smalltalk" and backends.rule_classify(msg) == "smalltalk" and not (ctx.lang == "en" and MAPWORD_EN.search(msg))
@@ -989,8 +996,9 @@ async def execute(ctx: Ctx, message: str):
     try:
         for rnd in range(config.MAX_ROUNDS):
             await persist_state(ctx, state="planning" if rnd == 0 else "tool")
-            res = await backends.chat_stream(messages, tools=tools, max_tokens=config.MAX_TOKENS_ANSWER, on_delta=on_delta, r=ctx.r,
-                                             on_fallback=on_fb)
+            # WP-11: 마지막 바퀴는 도구 없이 — 도구를 거듭 부르다 빈 답 · 긴 사슬로 끝나지 않게 지금 결과로 답을 쓴다
+            res = await backends.chat_stream(messages, tools=None if rnd == config.MAX_ROUNDS - 1 else tools, max_tokens=config.MAX_TOKENS_ANSWER,
+                                             on_delta=on_delta, r=ctx.r, on_fallback=on_fb)
             last_res = res
             ctx.state["rounds"] = rnd + 1
             ctx.tokens_in += int(res.usage.get("prompt_tokens") or 0)
@@ -998,6 +1006,7 @@ async def execute(ctx: Ctx, message: str):
             if first_ms is None:
                 first_ms = res.first_token_ms
             if not res.tool_calls:
+        seen_calls: set = set()
                 break
             calls = [(c["name"], _parse_args(c["arguments"]), c["id"]) for c in res.tool_calls]
             planned = [{"i": i + k + 1, "tool": n, "args": _args_public(a), "why": WHY.get(n, ""), "by": "model"} for k, (n, a, _) in enumerate(calls)]
@@ -1021,6 +1030,11 @@ async def execute(ctx: Ctx, message: str):
             if planned and planned[-1]["by"] == "runtime":
                 i += 1
                 r2 = await run_tool(ctx, i, "map_arrive", {}, by="runtime")
+                ck = (n, json.dumps(a, ensure_ascii=False, sort_keys=True))
+                if ck in seen_calls:                      # WP-11: 같은 도구 · 같은 인자를 또 부르면 다시 돌리지 않는다(헤맴 · 시간 0)
+                    messages.append({"role": "tool", "tool_call_id": cid, "content": "[런타임] 같은 도구를 같은 인자로 이미 불렀다 — 앞 결과로 답을 쓴다(도구 더 부르지 말 것)."})
+                    continue
+                seen_calls.add(ck)
                 messages.append({"role": "user", "content": "[런타임] map_arrive 실행됨 — " + ("도착" if r2["ok"] else "실패") + ". 이제 답을 쓴다(도구 더 부르지 말 것)."})
             # 프레임 분석 요청인데 모델이 견적에서 멈추면: 런타임이 jobs_submit(확인 카드)을 잇는다 — 실행은 여전히 사람 승인 뒤
             names = [n for n, _, _ in calls]
@@ -1773,6 +1787,8 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
     if ctx.state.get("next"):
         data["next"] = ctx.state["next"][:3]               # 확인 16차 — 다음 버튼 2–3(첫 버튼 = 가장 가까운 일)
     if ctx.state.get("alt"):
+    if ctx.state.get("stage_ms"):
+        perf_out["stages"] = ctx.state["stage_ms"]         # 단계별 ms(WP-11 시간 재기)
         data["alt"] = ctx.state["alt"]                     # 꼬리 '다른 뜻이면 ○○'
     if ctx.state.get("cannot"):
         data["cannot"] = ctx.state["cannot"]               # 개선 고리(improve.classify)가 읽는 막힘 분류
@@ -1791,6 +1807,7 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
     await persist_state(ctx, state="done", answer_md=lr.answer_md, envelopes=ctx.envs, unverified=lr.unverified, citations=ctx.citations,
                         model=model, perf=perf_out, tokens_in=ctx.tokens_in, tokens_out=ctx.tokens_out, artifact=artifact,
                         finished_at=dt.datetime.now(KST))
+    t_hl = time.perf_counter()
     await meter(ctx, backend)
 
 
@@ -1798,6 +1815,7 @@ def start(ctx: Ctx, coro):
     async def wrap():
         try:
             await coro
+    perf_out.setdefault("stages", ctx.state.setdefault("stage_ms", {}))["hl"] = round((time.perf_counter() - t_hl) * 1000, 1)
         except Exception as e:  # noqa: BLE001 — 어떤 실패도 SSE 로 드러낸다(무한 대기 0)
             await emit(ctx, "agent.failed", {"error": "agent_error", "message": f"{type(e).__name__}: {str(e)[:200]}"})
             await persist_state(ctx, state="failed", error=type(e).__name__)
@@ -1821,6 +1839,13 @@ RT_ENVS = {"e1": {"value": 20872, "unit": "count", "basis": "inferred", "as_of":
 
 async def redteam_case(c: dict, p) -> str:
     """회귀 한 문항 → 결과 문자열(expect 와 같으면 정답). LLM 호출 0 · 기록 0(DB 는 읽기만)."""
+def stage(ctx: Ctx, name: str, t0: float) -> float:
+    """단계별 걸린 시간(원칙 251 시간 재기 · WP-11) — perf.stages 에 ms 로 남기고 지금 시각을 돌려준다."""
+    now = time.perf_counter()
+    ctx.state.setdefault("stage_ms", {})[name] = round((now - t0) * 1000, 1)
+    return now
+
+
     exp = c["expect"]
     if exp == "lint":
         r = lint.lint(c["answer"], RT_ENVS)

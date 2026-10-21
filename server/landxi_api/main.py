@@ -87,6 +87,8 @@ async def lifespan(app: FastAPI):
             await _sm.warm()
             from . import ximap as _xm     # XI맵 전국 결과(열자마자 · 바퀴 5)
             await _xm.warm()                # + 빛나는 밀도 격자(원칙 204)
+            from . import xdash as _xd     # XI맵 통계 판 · ChatGEO 통계 답의 무거운 집계(WP-11)
+            await _xd.warm()
         except Exception as e:  # noqa: BLE001
             print(f"[gateway] warm 실패: {e!r}", flush=True)
     warm_task = asyncio.create_task(_warm())

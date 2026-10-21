@@ -15,6 +15,8 @@ GET /api/v1/ximap/agg?by=&sgg=&task=     LX 계정
 """
 from __future__ import annotations
 
+import asyncio
+import contextvars
 import datetime as dt
 import json
 import time
@@ -64,9 +66,58 @@ def task_of(name: str) -> str:
     return TASK_OF.get(name, name)
 
 
+# 오래된 집계는 그대로 내주고 뒤에서 새로 센다(WP-11 · 원칙 251) — 지목 집계 한 번 6초 · 읍면동 1초를 질문마다 기다리지 않게.
+# STALE_MAX 안에서만(그 뒤는 새로 셀 때까지 기다린다). 같은 함수 · 같은 값이라 통계 판과 ChatGEO 답의 숫자는 그대로 한 출처.
+STALE_MAX = 7200.0
+_SWR = {"task": "agg_task", "emd": "agg_emd", "region": "agg_region", "jimok": "agg_jimok", "rule": "agg_rule", "area": "agg_area"}
+_FORCE = contextvars.ContextVar("xdash_force", default=False)
+_BUSY: set = set()
+
+
 def _cache(key, ttl=TTL):
     v = _C.get(key)
-    return v[1] if v and time.time() - v[0] < ttl else None
+    if not v or _FORCE.get():
+        return None
+    age = time.time() - v[0]
+    if age < ttl:
+        return v[1]
+    if age < STALE_MAX and key[0] in _SWR:
+        _kick(key)
+        return v[1]
+    return None
+
+
+async def warm(limit: int = 16):
+    """게이트웨이 기동 때 실태조사 결과가 있는 시군구의 무거운 집계(지목 · 의심 종류 · 읍면동)를 미리 센다 — 첫 질문이 9초를 기다리지 않게."""
+    async with db(realm="lx") as conn:
+        sggs = [r["sgg_cd"] for r in await conn.fetch(
+            "SELECT sgg_cd FROM survey_sgg WHERE state='done' AND coalesce(findings,0) > 0 ORDER BY findings DESC LIMIT $1", limit)]
+    for sgg in sggs:
+        for f in (agg_rule, agg_jimok, agg_emd):
+            try:
+                await f(sgg)
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def _kick(key):
+    if key in _BUSY:
+        return
+    _BUSY.add(key)
+
+    async def go():
+        tok = _FORCE.set(True)
+        try:
+            await globals()[_SWR[key[0]]](*key[1:])
+        except Exception:  # noqa: BLE001 — 새로 세기 실패면 다음 질문이 다시 시도(오래된 값은 STALE_MAX 까지)
+            pass
+        finally:
+            _FORCE.reset(tok)
+            _BUSY.discard(key)
+    try:
+        asyncio.get_running_loop().create_task(go())
+    except RuntimeError:
+        _BUSY.discard(key)
 
 
 def _put(key, val):

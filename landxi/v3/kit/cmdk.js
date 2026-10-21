@@ -594,7 +594,7 @@ function create(opts) {
     const L = STR[shown.lang] || S;
     const el = h('div.k-chat-tail', { 'data-kind': 'next' });
     const btn = (b, main) => (b.href
-      ? h(`a.k-chat-btn${main ? '.is-main' : ''}`, { href: new URL(b.href, location.href).href, text: b.label })
+      ? h(`a.k-chat-btn${main ? '.is-main' : ''}`, { href: new URL(b.href, location.href).href, ...(new URL(b.href, location.href).origin !== location.origin ? { target: '_blank', rel: 'noopener' } : {}), text: b.label })   // 바깥 사이트(국가법령정보센터)는 새 창
       : h(`button.k-chat-btn${main ? '.is-main' : ''}`, { type: 'button', 'data-q': b.q || b.label, text: b.label }));
     const nx = (shown.next || []).filter((b) => b && b.label).slice(0, 3);
     if (nx.length) el.append(h('div.k-chat-acts', {}, ...nx.map((b, i) => btn(b, i === 0))));
@@ -672,8 +672,12 @@ function create(opts) {
     if (cfg.guest) return;
     const msg = input.value.trim(); if (!msg) return;
     if (cfg.pre) {                                                  // 장소(시군구 · 지번)면 모델을 거치지 않고 화면이 바로 움직인다(원칙 276)
-      let pr = null; try { pr = await cfg.pre(msg); } catch { pr = null; }
-      if (pr === true) { dropFresh(); input.value = ''; picks([]); return; }
+      let pr = null; try { pr = await Promise.race([cfg.pre(msg), new Promise((ok) => setTimeout(() => ok(null), 4000))]); } catch { pr = null; }   // 장소 찾기가 늦으면(4초) 질문으로 넘긴다 — '답을 찾는 중'에 멈추지 않게
+      if (pr && typeof pr === 'object' && typeof pr.said === 'string' && live?.fresh) {   // 화면이 처리하고 한 줄로 답한다(예: '남원시로 옮겼습니다') — '답을 찾는 중'이나 앞 답이 남지 않게(WP-11)
+        live.fresh = false; live.bub.querySelector('.k-chat-think')?.remove();
+        settle('done', pr.said); input.value = ''; picks([]); return;
+      }
+      if (pr === true || (pr && pr.said != null)) { dropFresh(); input.value = ''; picks([]); return; }
       if (pr && Array.isArray(pr.choices) && pr.choices.length) { dropFresh(); picks(pr.choices); return; }
     }
     picks([]);

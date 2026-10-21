@@ -171,7 +171,8 @@ async def build(conn, tenant: str | None, region: str | None = None, card: str |
     realm_now, tid_now = await conn.fetchrow("SELECT current_setting('app.realm', true), current_setting('app.tenant_id', true)")
     if tenant not in (None, LX_ALL) and realm_now != "lx" and (tid_now or "") != tenant:
         return {"as_of": today(), "items": []}           # 남의 기관 연결 — 0 을 지어내지 않고 항목 0
-    items = await _items(conn, tenant)
+    # 화면(/summary)과 같은 LX 전체 계산본(cached_all · 60 s · 낡으면 뒤에서 다시 셈)을 거른다 — 숫자 한 출처 · 질문마다 1.2초 계산 0(WP-11)
+    items, _ = await cached_all()
     return {"as_of": today(), "items": _filter(items, tenant, region, card)}
 
 
