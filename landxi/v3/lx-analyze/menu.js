@@ -10,7 +10,7 @@ export async function staffRail(current) {
   const items = [
     { id: 'home', label: '대시보드', icon: 'home', href: at('../lx-console/') },
     { id: 'projects', label: '프로젝트', icon: 'folder', href: at('../lx-project/') },
-    { id: 'analyze', label: '분석하기', icon: 'scan', href: at('../lx-analyze/') },
+    { id: 'analyze', label: '분석 서비스', icon: 'scan', href: at('../lx-analyze/') },
     { id: 'mapsvc', label: '지도 서비스', icon: 'map', href: at('../lx-map/') },
     { id: 'ximap', label: 'XI맵', glyph: 'XI', href: at('../xi-clean/') },
     { id: 'inbox', label: '요청함', icon: 'inbox', href: at('../lx-inbox/'), sep: true },

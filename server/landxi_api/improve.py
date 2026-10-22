@@ -78,7 +78,7 @@ SOURCE_KO = {"check-1001": "10-01 점검"}
 # 화면 이름(사용자 말) — 화면이 context.home 을 주면 그대로, 아니면 context 모양으로 알아본다
 HOME_KO = {
     "lx-console": "첫 화면", "xi-clean": "XI맵", "global": "XI맵(해외)", "lx-review": "결과 확인", "lx-ingest": "데이터 올리기",
-    "lx-train": "학습", "lx-deploy": "서비스 관리", "lx-project": "프로젝트", "lx-analyze": "분석하기", "lx-cards": "서비스 카드",
+    "lx-train": "학습", "lx-deploy": "서비스 관리", "lx-project": "프로젝트", "lx-analyze": "분석 서비스", "lx-cards": "서비스 카드",
     "lx-inbox": "요청함", "ops-core": "LX 관리자 대시보드", "ops-infra": "LX 관리자 대시보드", "ops-accounts": "계정 관리",
     "gov-select": "내 서비스", "gov-report": "할 일·보고서", "gov-fusion": "내 대장 × AI", "gov-request": "분석 요청",
     "gov-space": "우리 공간", "gov-accounts": "계정", "help-my": "지원", "sales": "서비스 카탈로그", "service-detail": "서비스",

@@ -16,7 +16,7 @@ export const STAFF_HREF = {
 export const STAFF_MENU = [
   { id: 'home', label: '대시보드', icon: 'home' },
   { id: 'projects', label: '프로젝트', icon: 'folder' },
-  { id: 'analyze', label: '분석하기', icon: 'scan' },
+  { id: 'analyze', label: '분석 서비스', icon: 'scan' },
   { id: 'mapsvc', label: '지도 서비스', icon: 'map', more: true },
   { id: 'ximap', label: 'XI맵', glyph: 'XI', more: true },
   { id: 'inbox', label: '요청함', icon: 'inbox', sep: true },

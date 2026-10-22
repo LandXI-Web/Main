@@ -147,9 +147,9 @@ export async function run(role, s0) {
     if (role === 'app') {
       const A = s.home + '/landxi/v3/';
       await screen(s, 'LX 직원 · 대시보드', A + 'lx-console/', { wait: 'main' });
-      await screen(s, 'LX 직원 · 분석하기', A + 'lx-analyze/', { wait: '.la-ac' });
+      await screen(s, 'LX 직원 · 분석 서비스', A + 'lx-analyze/', { wait: '.la-ac' });
       const more = await s.page.evaluate(() => [...document.querySelectorAll('.la-ac')].map((a) => ({ n: a.querySelector('h3')?.innerText.trim(), h: a.querySelector('a.k-sc-more')?.href })).filter((x) => x.h));
-      for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석하기 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
+      for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석 서비스 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
       await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
       await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
       await screen(s, 'LX 직원 · 프로젝트', A + 'lx-project/', { wait: 'main' });                       // 10-13 — 메뉴에 데이터하우스 없음

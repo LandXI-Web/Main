@@ -268,7 +268,7 @@ async function drawPublish() {
   const desc = h('input.t-input', { type: 'text', maxlength: '60', value: CT.desc || '', placeholder: '예: 필지별 경작 · 휴경 유무와 면적을 분석할 수 있는 서비스입니다', 'aria-label': '서비스 설명' });
   const kindBox = h('div.rl-cks', { role: 'group', 'aria-label': '쓸 수 있는 영상' }, ...CT.kinds.map((k) => ck('kind', k, CT.picked_kinds.includes(k), k)));
   row('분야', grpBox, newGrp, h('small', { text: (CT.asked || []).length ? `요청한 새 분야 ${CT.asked.join(' · ')} — LX 관리자가 만들면 목록에 나타납니다` : '여러 개 고를 수 있습니다 · 분석하기 거르기와 서비스 카드에 보입니다 · 새 분야는 LX 관리자가 만듭니다' }));
-  row('서비스 설명', desc, h('small', { text: '분석하기 카드에 이 글이 그대로 보입니다 — 무엇을 분석해 무엇을 알 수 있는지 한 문장' }));
+  row('서비스 설명', desc, h('small', { text: '분석 서비스 카드에 이 글이 그대로 보입니다 — 무엇을 분석해 무엇을 알 수 있는지 한 문장' }));
   /* 대표 그림(필수 · 10-11 GPT2-5 · 원칙 186) — 정식 배포 서비스라 신청 때 꼭 올린다 · 승인되면 분석하기 카드 그림이 된다. 없으면 신청 못 함 */
   const coverPic = h('div.rl-cover-pic');
   const coverFile = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true, 'aria-label': '대표 그림 파일' });
@@ -286,13 +286,13 @@ async function drawPublish() {
       const r = await fetch(API.prefix + base + '/cover', { method: 'POST', body: fd, headers: { authorization: 'Bearer ' + (session.get()?.token || '') } });
       const j = await r.json().catch(() => null);
       if (!r.ok) throw new Error(j?.error?.message || '올리지 못했습니다');
-      st.cover = j.name; paintCover(j.src); coverMsg.textContent = '올렸습니다 — 승인되면 분석하기 카드 그림이 됩니다';
+      st.cover = j.name; paintCover(j.src); coverMsg.textContent = '올렸습니다 — 승인되면 분석 서비스 카드 그림이 됩니다';
     } catch (e) { coverMsg.textContent = e.message; coverMsg.dataset.lv = 'warn'; }
     coverBtn.disabled = false; coverFile.value = '';
   });
   row('대표 그림', h('div.rl-cover', {}, coverPic, h('div.rl-cover-r', {}, coverBtn, coverFile, coverMsg)),
-    h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석하기 카드 그림이 됩니다(PNG · JPG · WebP)' }));
-  row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석하기의 영상별 거르기에 쓰입니다' }));
+    h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석 서비스 카드 그림이 됩니다(PNG · JPG · WebP)' }));
+  row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석 서비스의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
   row('AI 모델 정확도', accEl, lowEl, memEl, h('small', { text: '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' }));
   row('학습 데이터', dataEl);
@@ -305,7 +305,7 @@ async function drawPublish() {
   const msg = h('p.rl-msg', { role: 'status' });
   go.addEventListener('click', async () => {
     msg.textContent = '';
-    if (!st.cover) { msg.textContent = '대표 그림을 올려 주세요 — 승인되면 분석하기 카드 그림이 됩니다'; coverBtn.focus(); return; }
+    if (!st.cover) { msg.textContent = '대표 그림을 올려 주세요 — 승인되면 분석 서비스 카드 그림이 됩니다'; coverBtn.focus(); return; }
     go.disabled = true;
     try {
       const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined, cover: st.cover,

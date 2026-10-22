@@ -234,7 +234,7 @@
   },
   {
    "name": "a3-analyze",
-   "label": "분석하기",
+   "label": "분석 서비스",
    "url": "/landxi/v3/lx-analyze/",
    "wait": ".k-main",
    "settle": 2500

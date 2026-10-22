@@ -428,7 +428,7 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
 async def create_run(body: dict, request: Request):
     p = require(principal(request))
     out = await start_run(request, p, str(body.get("range_id") or ""), int(body.get("year_a") or 0), int(body.get("year_b") or 0),
-                          bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석하기" if body.get("via") == "analyze" else "화면")
+                          bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석 서비스" if body.get("via") == "analyze" else "화면")
     if body.get("later") and out.get("state") in ("queued", "running"):     # 배치로 — 끝나면 요청함 알림(F3 · F5)
         from .deps import redis
         await (await redis()).hset(f"job:{out['job_id']}", "chg_notify", p.user_id or "")

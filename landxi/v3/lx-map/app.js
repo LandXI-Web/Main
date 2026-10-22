@@ -668,7 +668,7 @@ function pickRow(x, it) {
 if (!ST.items.size) {
   const box = h('div');
   left.replaceChildren(h('div.lm-top', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('p.lm-sub', { text: '내가 돌린 분석 결과가 분석서비스별로 쌓입니다.' })), box);
-  K.empty(box, { kind: 'first', title: '아직 돌린 분석이 없습니다', text: '분석하기에서 서비스를 골라 분석하면 결과가 여기에 쌓입니다', action: { label: '분석하기', href: '../lx-analyze/' }, compact: true });
+  K.empty(box, { kind: 'first', title: '아직 돌린 분석이 없습니다', text: '분석 서비스에서 서비스를 골라 분석하면 결과가 여기에 쌓입니다', action: { label: '분석 서비스', href: '../lx-analyze/' }, compact: true });
 } else {
   if (ST.fold) fold(true);
   await apply();

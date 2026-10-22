@@ -103,7 +103,7 @@ export function mountRelease(root) {
     // 대표 그림(필수 · 원칙 186) — 승인하면 분석하기 카드 그림이 된다 · 없던 때 신청은 '그림 없음'
     const cvSrc = f.cover?.src ? (String(f.cover.src).startsWith('/api/') ? API.base + f.cover.src : f.cover.src) : null;
     row('대표 그림', h('div.rv-cover', {}, cvSrc ? h('img', { src: cvSrc, alt: '대표 그림', loading: 'lazy' }) : h('span', { text: '그림 없음' })),
-      h('small', { text: f.cover?.keep ? '지금 카드 그림 그대로' : cvSrc ? '승인하면 분석하기 카드 그림이 됩니다' : '이 신청에는 대표 그림이 없습니다' }));
+      h('small', { text: f.cover?.keep ? '지금 카드 그림 그대로' : cvSrc ? '승인하면 분석 서비스 카드 그림이 됩니다' : '이 신청에는 대표 그림이 없습니다' }));
     const sc = f.scene;
     row('결과 장면', sc ? h('b', { text: join(sc.imagery, sc.range) }) : h('b', { text: '고르지 않음' }),
       sc ? units('small', join(val(sc.found) == null ? '' : `${nf(val(sc.found))}건`, km2(sc.area), md(sc.at))) : null,
@@ -273,7 +273,7 @@ export function mountRelease(root) {
       const ids = items.map((g) => g.id); const j = i + dir;
       if (j < 0 || j >= ids.length) return;
       [ids[i], ids[j]] = [ids[j], ids[i]];
-      try { await api('/categories/order', { method: 'PUT', body: { ids } }); toast('순서를 바꿨습니다 — 분석하기 거르기 · 기관 공유에 바로 반영됩니다'); paintCat(); }
+      try { await api('/categories/order', { method: 'PUT', body: { ids } }); toast('순서를 바꿨습니다 — 분석 서비스 거르기 · 기관 공유에 바로 반영됩니다'); paintCat(); }
       catch (e) { toast(e.message || '순서를 바꾸지 못했습니다'); }
     };
     const rename = (g, td) => {
@@ -315,9 +315,9 @@ export function mountRelease(root) {
       catch (e) { toast(e.message || '닫지 못했습니다'); }
     };
     const left = h('section.t-card.rv-card', {},
-      h('header.rv-h', {}, h('h2', { text: '분야 목록' }), h('span.rv-sub', { text: '분석하기 거르기 · 서비스 카드 · 기관 공유가 이 순서를 따릅니다' })),
+      h('header.rv-h', {}, h('h2', { text: '분야 목록' }), h('span.rv-sub', { text: '분석 서비스 거르기 · 서비스 카드 · 기관 공유가 이 순서를 따릅니다' })),
       h('table.rv-tbl.rv-tbl--cat', {}, h('thead', {}, h('tr', {}, ...['순서', '분야', '서비스', '수', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)),
-      h('div.rv-cat-new', {}, nm, mk, h('p.rv-note', { text: '서비스가 하나도 없는 분야는 분석하기에 나오지 않습니다' })));
+      h('div.rv-cat-new', {}, nm, mk, h('p.rv-note', { text: '서비스가 하나도 없는 분야는 분석 서비스에 나오지 않습니다' })));
     const right = h('div.rv-cat-side', {},
       h('section.t-card.rv-card', {}, h('header.rv-h', {}, h('h2', { text: '직원이 요청한 새 분야' }), h('span.rv-sub', { text: '배포 신청서에서' })),
         reqs.length ? h('ul.rv-hist', {}, ...reqs.map((r) => h('li', {}, h('small.num', { text: md(r.at) }),

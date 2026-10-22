@@ -709,7 +709,7 @@ async def apply(pid: str, body: dict, request: Request):
             nm = cv_in.rsplit("/", 1)[-1]
             cover = {"name": nm, "src": f"/api/v1/release/files/{pid}/{nm}", "project": pid}
         else:
-            raise ApiError("bad_request", "대표 그림을 올려 주세요 — 승인되면 분석하기 카드 그림이 됩니다", {"field": "cover"})
+            raise ApiError("bad_request", "대표 그림을 올려 주세요 — 승인되면 분석 서비스 카드 그림이 됩니다", {"field": "cover"})
         prev = next((v for v in versions if v["state"] == "approved"), None)
         pend = next((v for v in versions if v["state"] == "pending"), None)
         if pend:

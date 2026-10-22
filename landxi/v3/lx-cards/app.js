@@ -68,7 +68,7 @@ async function edit(cid) {
   const prev = h('div.lc-prev');
   const form = h('form.lc-form', { novalidate: true });
   const facts = h('section.t-card.la-box.lc-facts', { 'aria-label': '서버 값' });
-  const lcLeft = h('div.lc-left', {}, h('p.t-label.lc-k', { text: '분석하기에 보이는 카드' }), prev, facts);
+  const lcLeft = h('div.lc-left', {}, h('p.t-label.lc-k', { text: '분석 서비스에 보이는 카드' }), prev, facts);
   page.append(crumb, h('div.lc-grid', {}, lcLeft, form));
   K.panes(lcLeft, { edge: 'right', key: 'left', cssVar: '--lc-left', min: 280, max: 560, otherMin: 480, below: 1100 });   // 칸 크기 조절(원칙 263)
 
@@ -136,7 +136,7 @@ async function edit(cid) {
   const mine = new Set(c.groups || []);
   const grp = h('div.lc-grps', { role: 'group', 'aria-label': '분야' }, ...(c.all_groups || []).map((g) => h('label.lc-grp', {},
     h('input', { type: 'checkbox', value: g, checked: mine.has(g) || undefined, disabled: ro || undefined }), h('span', { text: g }))));
-  const grpField = h('div.lc-f', {}, h('span.lc-l', { text: '분야' }), grp, h('span.lc-h', { text: '여러 개 고를 수 있습니다 — 분석하기 거르기 칩 · 기관 공유 묶음. 새 분야는 LX 관리자가 만듭니다' }));
+  const grpField = h('div.lc-f', {}, h('span.lc-l', { text: '분야' }), grp, h('span.lc-h', { text: '여러 개 고를 수 있습니다 — 분석 서비스 거르기 칩 · 기관 공유 묶음. 새 분야는 LX 관리자가 만듭니다' }));
 
   /* ③ 결과 예시 — 어느 지역 값을 보일지 · 말(AI 분석 결과 · 원칙 135: 다듬은 결과의 AI 탐지 수만 · 서버가 도형 조각 수는 비워 준다) */
   const withVal = (c.regions || []).filter((r) => r.detected && r.detected.value);
@@ -169,8 +169,8 @@ async function edit(cid) {
     };
     try {
       cur = await api(`/cards/${encodeURIComponent(cid)}`, { method: 'PUT', body });
-      paint(); msg.textContent = '저장했습니다 — 분석하기 · 기관 화면 카드에 바로 보입니다';
-      K.toast('저장했습니다', { action: { label: '분석하기에서 보기', href: `../lx-analyze/?card=${encodeURIComponent(cid)}` } });
+      paint(); msg.textContent = '저장했습니다 — 분석 서비스 · 기관 화면 카드에 바로 보입니다';
+      K.toast('저장했습니다', { action: { label: '분석 서비스에서 보기', href: `../lx-analyze/?card=${encodeURIComponent(cid)}` } });
     } catch (err) { msg.textContent = err.message || '저장하지 못했습니다'; msg.dataset.lv = 'warn'; }
     save.disabled = false;
   });

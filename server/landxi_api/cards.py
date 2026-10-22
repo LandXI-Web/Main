@@ -783,18 +783,26 @@ def _when(r: dict) -> str:
     return f"{m.group(1)}.{m.group(2)}" if m else (str(r.get("year") or "") or e[:4])
 
 
-async def _img_candidates(sgg: str) -> tuple[object, list[dict], dict | None]:
-    """(시군구 경계, 후보 [{…, coverage, inter}], 서버가 고를 영상) — 후보는 서버 순위(choose)대로."""
+# 내 영상(10-23 사용자 "넣어라~" — 분석 서비스 카드 안 '내 영상 올려서 분석') — 올린 사람만 보고 쓰는 영상 한 줄(layer.role 'own' · layer.owner = 올린 사람).
+# 공유 데이터 · 영상 목록 · 서버 자동 고르기에는 나오지 않는다(SQL_ROWS 는 role 'imagery' 만). 파일 자리 = imagery/own/{주인}/{연-월}/{묶음}/.
+OWN_ROWS = ("SELECT id, name, gsd_m, year, epoch, sgg_cd, path_internal, layer, ST_AsGeoJSON(footprint) AS fp FROM imagery "
+            "WHERE footprint IS NOT NULL AND layer->>'role'='own' AND layer->>'owner'=$1")
+
+
+async def _img_candidates(sgg: str, owner: str | None = None) -> tuple[object, list[dict], dict | None]:
+    """(시군구 경계, 후보 [{…, coverage, inter, own}], 서버가 고를 영상) — 후보는 서버 순위(choose)대로 · owner 를 주면 그 사람의 내 영상도(맨 앞 · 서버가 고르지는 않음)."""
     from workers import imagery_src as isrc
     t = await run_in_threadpool(isrc.target_geom, sgg, None)
     if t is None or t.is_empty:
         return t, [], None
     async with db(realm="lx") as conn:
         recs = await conn.fetch(isrc.SQL_ROWS)
+        mine = await conn.fetch(OWN_ROWS, owner) if owner else []
     rows = await run_in_threadpool(isrc.rows_from, recs)
+    own_rows = [{**r, "own": True} for r in await run_in_threadpool(isrc.rows_from, mine)] if mine else []
     ta = max(t.area, 1e-12)
     out = []
-    for r in rows:
+    for r in rows + own_rows:
         if not r.get("readable") or r.get("fp") is None:
             continue
         try:
@@ -807,7 +815,7 @@ async def _img_candidates(sgg: str) -> tuple[object, list[dict], dict | None]:
         out.append({**r, "coverage": round(min(cov, 1.0), 6), "inter": inter})
     best = isrc.choose(rows, t)
     g = lambda r: float(r["gsd_m"]) if r.get("gsd_m") is not None else 99.0  # noqa: E731
-    out.sort(key=lambda r: (0 if best and r["id"] == best["id"] else 1, 0 if r["coverage"] >= 0.5 else 1,
+    out.sort(key=lambda r: (0 if r.get("own") else 1, 0 if best and r["id"] == best["id"] else 1, 0 if r["coverage"] >= 0.5 else 1,
                             0 if g(r) <= 0.1 else 1 if g(r) <= 0.5 else 2 if g(r) <= 2 else 3, -isrc._year(r), -r["coverage"]))
     return t, out, best
 
@@ -830,7 +838,7 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
     sgg = rg["sgg_cd"]
     want = None
     if imagery:
-        _, cands, _ = await _img_candidates(sgg)
+        _, cands, _ = await _img_candidates(sgg, p.user_id)
         hit = next((r for r in cands if r["id"] == imagery), None)
         if not hit:
             raise ApiError("bad_request", "이 지역에서 고를 수 있는 영상이 아닙니다", {"imagery": imagery})
@@ -853,17 +861,20 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
                         "coverage": env(round(float(cov) * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}}
 
 
+def _own_id(pl: dict) -> str | None:
+    iid = pl.get("imagery_id") or ""
+    return iid if iid.startswith("own-") else None
+
+
 def _job_body(cid: str, name: str, pl: dict) -> dict:
-    return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석하기 · {name}"[:60],
+    return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석 서비스 · {name}"[:60],
             "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": 0.25}}
 
 
 @router.get("/cards/{cid}/imagery")
 async def imagery_options(cid: str, region: str, request: Request):
-    """영상 고르기 — 그 시군구를 덮는 공유 영상 후보 + 이 서비스에 맞나(분석 판정과 한 출처) + 서버가 고를 영상(pick)."""
-    import math
+    """영상 고르기 — 그 시군구를 덮는 공유 영상 후보 + 내 영상(올린 사람만 · own) + 이 서비스에 맞나(분석 판정과 한 출처) + 서버가 고를 영상(pick)."""
     from shapely.geometry import mapping
-    from .deploys import plan_analysis
     from .regions import regions_base
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
@@ -873,42 +884,153 @@ async def imagery_options(cid: str, region: str, request: Request):
     if not rg:
         raise ApiError("not_found", "해당 지역이 없습니다", {"region": region})
     sgg = rg["sgg_cd"]
-    t, cands, best = await _img_candidates(sgg)
+    t, cands, best = await _img_candidates(sgg, p.user_id)
     items = []
     async with db(realm="lx") as conn:
-        cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
-        if not cv:
-            raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+        cv = await _cv(conn, cid)
         aoi = mapping(geoms[sgg]) if sgg in geoms else None
-        hidden = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE NOT staff_visible")}   # 관리자 '공유 데이터' 비공개(10-13)
+        hidden = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE NOT staff_visible AND coalesce(layer->>'role','imagery')='imagery'")}   # 관리자 '공유 데이터' 비공개(10-13)
         for r in [c for c in cands if c["id"] not in hidden][:24]:
-            want = _img_dict(r)
-            pl = await plan_analysis(conn, None, cid, cv, sgg, aoi, img=want)
-            own = (pl.get("pick") or {}).get("own") or {}
-            ok = bool(pl["fits"]) and (pl["img"] or {}).get("imagery_id") == want["imagery_id"]
-            mg = own.get("gsd_m") or None
-            ratio = abs(math.log(float(r["gsd_m"]) / float(mg))) if ok and mg and r.get("gsd_m") else 0.0
-            km2 = _km2(r["inter"])
-            fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
-            small = fit != "no" and km2 < 0.01                                    # 1 ha 미만 — 분석 범위(읍면동 ∩ 영상 1 ha)에 들지 않아 고를 수 없다(QA-영상)
-            if small:
-                fit = "no"
-            pct = round(r["coverage"] * 100)
-            rng = (f"{rg['name']} 전역" if r["coverage"] >= 0.95 else f"약 {km2:,.0f}㎢ · {rg['name']}의 {pct}%" if pct >= 1
-                   else f"일부 · 약 {km2:,.2f}㎢" if km2 < 1 else f"일부 · 약 {km2:,.1f}㎢")
-            try:
-                fp = mapping(r["fp"].simplify(0.0005, preserve_topology=True))
-            except Exception:  # noqa: BLE001
-                fp = None
-            items.append({"id": r["id"], "name": r.get("name") or "", "gsd": env(float(r["gsd_m"]) if r.get("gsd_m") is not None else None, "m", "recorded", "영상 해상도"),
-                          "gsd_word": f"{float(r['gsd_m']) * 100:g}cm" if r.get("gsd_m") is not None and float(r["gsd_m"]) < 1 else (f"{float(r['gsd_m']):g}m" if r.get("gsd_m") is not None else ""),
-                          "when": _when(r), "range": rng, "coverage": env(pct, "%", "measured", "영상 범위 ∩ 시군구 면적"),
-                          "bounds": [round(v, 6) for v in r["fp"].bounds], "footprint": fp,
-                          "fit": fit, "fit_text": {"ok": "이 서비스에 맞음", "rough": "해상도 차이가 커 결과가 거칠 수 있음"}.get(fit)
-                          or ("이 지역과 겹치는 곳이 너무 작음" if small else "이 서비스 모델과 해상도가 맞지 않음"),
-                          "pick": bool(best and r["id"] == best["id"])})
+            items.append(await _fit_item(conn, cid, cv, sgg, aoi, rg, r, best))
     rb = [round(v, 6) for v in t.bounds] if t is not None and not t.is_empty else None
     return {"region": sgg, "name": rg["name"], "bounds": rb, "items": items, "as_of": now_iso()}
+
+
+async def _cv(conn, cid: str) -> str:
+    cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
+    if not cv:
+        raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+    return cv
+
+
+async def _fit_item(conn, cid: str, cv: str, sgg: str, aoi, rg: dict, r: dict, best) -> dict:
+    """영상 한 장 → 카드 한 장(맞음 / 거칠 수 있음 / 맞지 않음) — 공유 영상 · 내 영상 같은 규칙(분석 판정 plan_analysis 한 출처)."""
+    import math
+    from shapely.geometry import mapping
+    from .deploys import plan_analysis
+    want = _img_dict(r)
+    pl = await plan_analysis(conn, None, cid, cv, sgg, aoi, img=want)
+    own = (pl.get("pick") or {}).get("own") or {}
+    ok = bool(pl["fits"]) and (pl["img"] or {}).get("imagery_id") == want["imagery_id"]
+    mg = own.get("gsd_m") or None
+    ratio = abs(math.log(float(r["gsd_m"]) / float(mg))) if ok and mg and r.get("gsd_m") else 0.0
+    km2 = _km2(r["inter"])
+    fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
+    small = fit != "no" and km2 < 0.01                                    # 1 ha 미만 — 분석 범위(읍면동 ∩ 영상 1 ha)에 들지 않아 고를 수 없다(QA-영상)
+    if small:
+        fit = "no"
+    pct = round(r["coverage"] * 100)
+    rng = (f"{rg['name']} 전역" if r["coverage"] >= 0.95 else f"약 {km2:,.0f}㎢ · {rg['name']}의 {pct}%" if pct >= 1
+           else f"일부 · 약 {km2:,.2f}㎢" if km2 < 1 else f"일부 · 약 {km2:,.1f}㎢")
+    try:
+        fp = mapping(r["fp"].simplify(0.0005 if not r.get("own") else 0.00002, preserve_topology=True))
+    except Exception:  # noqa: BLE001
+        fp = None
+    return {"id": r["id"], "name": r.get("name") or "", "own": bool(r.get("own")),
+            "gsd": env(float(r["gsd_m"]) if r.get("gsd_m") is not None else None, "m", "recorded", "영상 해상도"),
+            "gsd_word": f"{float(r['gsd_m']) * 100:g}cm" if r.get("gsd_m") is not None and float(r["gsd_m"]) < 1 else (f"{float(r['gsd_m']):g}m" if r.get("gsd_m") is not None else ""),
+            "when": _when(r), "range": rng, "coverage": env(pct, "%", "measured", "영상 범위 ∩ 시군구 면적"),
+            "bounds": [round(v, 6) for v in r["fp"].bounds], "footprint": fp,
+            "fit": fit, "fit_text": {"ok": "이 서비스에 맞음", "rough": "해상도 차이가 커 결과가 거칠 수 있음"}.get(fit)
+            or ("이 지역과 겹치는 곳이 너무 작음" if small else "이 서비스 모델과 해상도가 맞지 않음"),
+            "pick": bool(best and r["id"] == best["id"])}
+
+
+# ── 내 영상 올려서 분석(10-23 사용자 "넣어라~") ─────────────────────────────
+#   POST /cards/{카드}/my-imagery {draft_id}  — 조각 올리기(/catalog/imagery/uploads · 64MB 조각 · 이어 올리기)로 다 올린 묶음(영상 한 장) →
+#   좌표계 · 범위 · 해상도를 파일에서 읽고(데이터 올리기와 같은 read_each) → 내 영상 한 줄(올린 사람만 · 공유 데이터에 넣지 않음) →
+#   이 카드 조건에 맞나(공유 영상과 같은 규칙 _fit_item)를 돌려준다. 분석은 같은 POST /cards/{카드}/analyze {region, imagery}.
+@router.post("/cards/{cid}/my-imagery", status_code=201)
+async def my_imagery(cid: str, body: dict, request: Request):
+    import datetime as dt
+    import json
+    import os
+    from shapely.geometry import mapping
+    from . import requests as RQ
+    from .regions import regions_base
+    w = RQ.lx_who(request)
+    p = w.p
+    if cid == "card-change":
+        raise ApiError("bad_request", "국토 변화 분석서비스는 대상지와 두 해로 분석합니다 — 영상을 올리지 않습니다")
+    did = str(body.get("draft_id") or "")
+    if not re.fullmatch(r"dr_[0-9a-f]{12}", did):
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+            raise ApiError("not_found", "카드가 없습니다")
+        rows = await conn.fetch("SELECT * FROM request_uploads WHERE draft_id=$1 AND tenant_id=$2 AND state IN ('uploading','done') ORDER BY created_at",
+                                did, RQ.LX_OWNER)
+    if not rows:
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    if any(r["user_id"] != p.user_id for r in rows):
+        raise ApiError("forbidden", "다른 사람의 묶음입니다")
+    if any(r["state"] == "uploading" for r in rows):
+        raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
+    if any(r["request_id"] for r in rows):
+        raise ApiError("conflict", "이미 등록한 묶음입니다 — 새로 올려 주세요", None, 409)
+    raster = RQ.settings()["raster_ext"]
+    names = [r["filename"] for r in rows]
+    if sum(1 for n in names if RQ._ext(n) in raster) > 1:
+        raise ApiError("bad_request", "분석은 한 번에 영상 하나만 합니다 — 영상 파일 하나만 올려 주세요", {"files": names}, 400)
+    folder = config.DATA_ROOT / RQ.LX_ROOT / "drafts" / did
+    rd = await run_in_threadpool(RQ.read_each, p, folder, names, None)
+    if not rd.get("ok"):
+        raise ApiError(rd["code"], rd["why"], {"files": rd.get("files") or [], "reasons": rd.get("reasons") or {}}, 400)
+    it = rd["items"][0]
+    if it.get("crs_guessed"):          # 좌표계가 파일에 없으면 분석이 원본을 그대로 읽을 수 없다 — 지어내지 않고 알린다
+        raise ApiError("no_crs", "좌표계 정보가 없는 영상입니다 — 좌표계가 든 GeoTIFF(또는 PRJ 파일과 함께)를 올려 주세요", {"files": [it["name"]]}, 400)
+    if not it.get("gsd_m"):
+        raise ApiError("bad_request", "영상 해상도를 읽을 수 없습니다 — 다른 파일을 올려 주세요", {"files": [it["name"]]}, 400)
+    # 파일 자리 — 올린 사람의 칸(imagery/own/{주인}/{연-월}/{묶음}/) · 같은 디스크 안 이름 바꾸기(복사 없음)
+    owner = re.sub(r"[^\w.@-]", "_", str(p.user_id or "lx"))[:80]
+    month = dt.datetime.now(KST).strftime("%Y-%m")
+    rel_dir = f"imagery/own/{owner}/{month}/{did}"
+    dest = config.DATA_ROOT / rel_dir
+
+    def _move():
+        dest.mkdir(parents=True, exist_ok=True)
+        for r in rows:
+            src = config.DATA_ROOT / r["rel_path"]
+            if src.exists():
+                os.replace(src, dest / r["filename"])
+        for extra in folder.glob("*"):            # 읽기 때 남긴 곁 기록(_읽은값.json 등)
+            try:
+                os.replace(extra, dest / extra.name)
+            except OSError:
+                pass
+        try:
+            folder.rmdir()
+        except OSError:
+            pass
+    await run_in_threadpool(_move)
+    rel_path = f"{rel_dir}/{it['name']}"
+    regs = {x["sgg_cd"]: x for x in regions_base()[0]}
+    rg = regs.get(it["sgg_cd"]) or {"sgg_cd": it["sgg_cd"], "name": it["place"].split(" ")[0]}
+    year = int(it["date"][:4]) if it.get("date") else None
+    stem = it["name"].rsplit(".", 1)[0]
+    iid = f"own-{did[3:]}"
+    async with db(realm="lx") as conn:
+        await conn.execute(
+            "INSERT INTO imagery(id, name, tier, gsd_m, epoch, crs, footprint, path_internal, license, attribution, export_policy, security_review, "
+            "rights_holder, ladder, kind, layer, sgg_cd, year, registered_by, registered_at, staff_visible) VALUES ($1,$2,'raw',$3,$4,$5,"
+            "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($6),4326)),$7,'직원이 올린 영상(올린 사람만)','LX','never','pending','LX',$8,'ortho',$9,$10,$11,$12,now(),false)",
+            iid, {"ko": stem, "en": stem}, it["gsd_m"], it.get("date") or None, f"EPSG:{it['epsg']}", json.dumps(it["footprint"]), rel_path,
+            {"stage": "own", "from": 12, "to": 22, "order": 999},
+            {"role": "own", "owner": p.user_id, "cog_path": rel_path, "source_kind": it["kind"], "upload_draft": did, "card": cid, "date_src": it.get("date_src")},
+            it["sgg_cd"], year, p.user_id)
+        for r in rows:
+            await conn.execute("UPDATE request_uploads SET request_id=$2, rel_path=$3, updated_at=now() WHERE id=$1", r["id"], iid, f"{rel_dir}/{r['filename']}")
+        await audit(conn, p, "imagery.own_register", iid, None, {"card": cid, "sgg_cd": it["sgg_cd"], "year": year, "gsd": it["gsd_m"], "draft_id": did})
+    # 이 카드에 맞나 — 공유 영상과 같은 판정
+    _, cands, best = await _img_candidates(rg["sgg_cd"], p.user_id)
+    hit = next((c for c in cands if c["id"] == iid), None)
+    item = None
+    if hit:
+        _, geoms, _ = regions_base()
+        async with db(realm="lx") as conn:
+            cv = await _cv(conn, cid)
+            item = await _fit_item(conn, cid, cv, rg["sgg_cd"], mapping(geoms[rg["sgg_cd"]]) if rg["sgg_cd"] in geoms else None, rg, hit, best)
+    return {"imagery": item, "id": iid, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "place": it.get("place"), "as_of": now_iso()}
 
 
 @router.get("/cards/{cid}/fit")
@@ -925,7 +1047,8 @@ async def fit(cid: str, region: str, request: Request, imagery: str | None = Non
         async with db(realm="lx") as conn:
             name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
             out["running"] = bool(await conn.fetchval(
-                "SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' AND options->>'sgg_cd'=$2 LIMIT 1", cid, pl["sgg"]))
+                "SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' AND options->>'sgg_cd'=$2 "
+                "AND ($3::text IS NULL OR imagery_id=$3) LIMIT 1", cid, pl["sgg"], _own_id(pl)))   # 내 영상은 그 영상 작업만(다른 사람의 같은 지역 분석과 따로)
         try:
             q = await build_quote(p, _job_body(cid, name, pl))
         except ApiError as e:
@@ -968,7 +1091,7 @@ async def analyze(cid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
         busy = await conn.fetchval("SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' "
-                                   "AND options->>'sgg_cd'=$2 LIMIT 1", cid, pl["sgg"])
+                                   "AND options->>'sgg_cd'=$2 AND ($3::text IS NULL OR imagery_id=$3) LIMIT 1", cid, pl["sgg"], _own_id(pl))
     xi = f"/landxi/v3/xi-clean/?region={pl['sgg']}"
     mapsvc = "/landxi/v3/lx-map/"                                                 # 결과는 지도 서비스(원칙 149 · 163) — XI맵은 전국 · 해외 실시간 분석
     if busy:

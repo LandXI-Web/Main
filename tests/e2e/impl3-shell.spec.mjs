@@ -8,7 +8,7 @@ import { frontDoor } from '../../landxi/v3/kit/lint/forbidden.mjs';
 const ENV = path.resolve('server/.env');
 const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, 'utf8')) || [])[1]?.trim() : null;
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
-const MENU = ['대시보드', '프로젝트', '분석하기', '지도 서비스', 'XI맵', '요청함'];   // 데이터하우스 없앰(10-13 데이터-개념 ⓐ)   // lx-menu.js 기준(원칙 149 — 서비스 카드 칸 없음)
+const MENU = ['대시보드', '프로젝트', '분석 서비스', '지도 서비스', 'XI맵', '요청함'];   // 데이터하우스 없앰(10-13 데이터-개념 ⓐ)   // lx-menu.js 기준(원칙 149 — 서비스 카드 칸 없음)
 
 test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 안 단계', () => {
   test.beforeEach(async ({ request }) => {
@@ -25,7 +25,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     const base = await hrefs();
     expect(base).toEqual(['/landxi/v3/lx-console/', '/landxi/v3/lx-project/', '/landxi/v3/lx-analyze/', '/landxi/v3/lx-map/', '/landxi/v3/xi-clean/', '/landxi/v3/lx-inbox/']);
     for (const [url, on] of [['v3/lx-console/', '대시보드'], ['v3/lx-project/', '프로젝트'], ['v3/lx-ingest/', '프로젝트'], ['v3/lx-train/', '프로젝트'],
-      ['v3/lx-review/', '프로젝트'], ['v3/lx-deploy/', '프로젝트'], ['v3/lx-inbox/', '요청함'], ['v3/lx-analyze/', '분석하기'], ['v3/lx-map/', '지도 서비스']]) {
+      ['v3/lx-review/', '프로젝트'], ['v3/lx-deploy/', '프로젝트'], ['v3/lx-inbox/', '요청함'], ['v3/lx-analyze/', '분석 서비스'], ['v3/lx-map/', '지도 서비스']]) {
       await page.goto(url);
       await expect(page.locator('.k-rail a.k-rail-i > span:last-child')).toHaveText(MENU, { timeout: 20000 });   // 이름(요청함 숫자 배지 제외)
       expect(await hrefs(), url).toEqual(base);
@@ -152,7 +152,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     const tabs = await page.locator('.k-rail .k-rail-i').evaluateAll((els) => els.filter((e) => getComputedStyle(e).display !== 'none').map((e) => e.querySelector('span:last-child').textContent.trim()));
-    expect(tabs).toEqual(['대시보드', '프로젝트', '분석하기', '요청함', '메뉴']);
+    expect(tabs).toEqual(['대시보드', '프로젝트', '분석 서비스', '요청함', '메뉴']);
     await page.locator('.k-rail-more').click();
     await expect(page.locator('.k-more .k-more-i')).toHaveText(['지도 서비스', 'XI맵', '도움말', '나가기']);
     await ctx.close();

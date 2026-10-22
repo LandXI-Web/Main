@@ -146,7 +146,7 @@ async function me(el, whoIn) {
 
 /* ── 탭 · 세 화면(LX 계정) — 같은 LX 직원 메뉴에서 열리는 세 화면을 실제 그림 + 한 줄씩(그림은 지금 화면에서 새로 찍음 · data/screens/at.json 에 찍은 때) ── */
 const SCREENS = [
-  ['analyze', '분석하기', '정식 분석서비스를 골라 내 영상 하나를 분석에 맡깁니다.', '../lx-analyze/'],
+  ['analyze', '분석 서비스', '정식 분석서비스를 골라 내 영상 하나를 분석에 맡깁니다.', '../lx-analyze/'],
   ['mapsvc', '지도 서비스', '내가 돌린 결과를 층으로 켜서 보고 내려받습니다.', '../lx-map/'],
   ['ximap', 'XI맵', ['전국에 쌓인 AI 분석 결과를 지도 한 장에서 봅니다.', '사업 나라(키르기스스탄)도 같은 지도에서 봅니다.'], '../xi-clean/'],
 ];
@@ -158,7 +158,7 @@ async function screens(el) {
     h('div.hm-sc-row', {}, ...SCREENS.map(([k, name, line, href]) => h('article.hm-sc', {},
       h('a.hm-sc-img', { href: new URL(href, BASE).href, target: top, 'aria-label': name + ' 열기' }, h('img', { src: new URL(`data/screens/${k}.jpg`, BASE).href, alt: name + ' 화면' })),
       h('h3', { text: name }), h('p', {}, ...[].concat(line).map((t) => h('span', { text: t }))), at[k] ? h('small', { text: at[k] }) : null))),
-    h('p.hm-sc-flow', {}, h('b', { text: '분석하기' }), '에서 만든 결과 → ', h('b', { text: '지도 서비스' }), '에서 보고 내려받기 → 전국에 쌓인 결과는 ', h('b', { text: 'XI맵' }), '에서 한눈에'));
+    h('p.hm-sc-flow', {}, h('b', { text: '분석 서비스' }), '에서 만든 결과 → ', h('b', { text: '지도 서비스' }), '에서 보고 내려받기 → 전국에 쌓인 결과는 ', h('b', { text: 'XI맵' }), '에서 한눈에'));
 }
 
 const PANES = { notice, faq, screens, contact, me };

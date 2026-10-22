@@ -94,7 +94,7 @@ function whereRow(c, kind) {
 /** ⑧ 1차 버튼 + 자세히 — 할 수 없는 일은 버튼을 흐리게 두지 않고 글 한 줄로(죽은 버튼 0) */
 function actions(c, kind, o) {
   const more = o.more ? o.more(c) : kind === 'manage' ? DETAIL(c) : kind === 'analyze' ? DETAIL(c) : null;
-  const moreLabel = o.moreLabel || (kind === 'gov' ? '보고서' : kind === 'mine' ? '설명서' : kind === 'manage' ? '분석하기에서 보기' : '자세히');
+  const moreLabel = o.moreLabel || (kind === 'gov' ? '보고서' : kind === 'mine' ? '설명서' : kind === 'manage' ? '분석 서비스에서 보기' : '자세히');
   const href = o.href ? o.href(c) : null;
   let main = null;
   if (kind === 'analyze') {
