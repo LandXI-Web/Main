@@ -312,16 +312,22 @@ AREA_FILL_SQL = (
     "FROM ev LEFT JOIN jobs j ON j.id = ev.job_id LEFT JOIN imagery i ON i.id = j.imagery_id), "
     "agg AS (SELECT ST_Union(geom) FILTER (WHERE geom IS NOT NULL) AS u, coalesce(sum(amt) FILTER (WHERE geom IS NULL), 0) AS extra, "
     "array_agg(job_id) AS ids FROM g), "
-    "up AS (INSERT INTO tenant_area_month(tenant_id, month, geom, extra_km2, area_km2, jobs, updated_at) "
-    "SELECT $2, $3, u, extra, coalesce(ST_Area(u::geography) / 1e6, 0) + extra, coalesce(array_length(ids, 1), 0), now() FROM agg "
-    "ON CONFLICT (tenant_id, month) DO UPDATE SET geom = EXCLUDED.geom, extra_km2 = EXCLUDED.extra_km2, area_km2 = EXCLUDED.area_km2, "
-    "jobs = EXCLUDED.jobs, updated_at = now() RETURNING area_km2), "
+    "del AS (DELETE FROM tenant_area_parts WHERE tenant_id = $2 AND month = $3), "
+    "parts AS (INSERT INTO tenant_area_parts(tenant_id, month, geom, area_km2) SELECT $2, $3, d.geom, ST_Area(d.geom::geography) / 1e6 "
+    "FROM agg, ST_Dump(ST_CollectionExtract(ST_MakeValid(agg.u), 3)) d WHERE agg.u IS NOT NULL AND NOT ST_IsEmpty(d.geom) RETURNING area_km2), "
     "jj AS (INSERT INTO tenant_area_jobs(tenant_id, month, job_id) SELECT $2, $3, x FROM agg, unnest(agg.ids) x WHERE x IS NOT NULL "
-    "ON CONFLICT DO NOTHING) "
-    "SELECT area_km2 FROM up")
+    "ON CONFLICT DO NOTHING RETURNING 1) "
+    "INSERT INTO tenant_area_month(tenant_id, month, geom, extra_km2, area_km2, jobs, updated_at) "
+    "SELECT $2, $3, NULL, extra, (SELECT coalesce(sum(area_km2), 0) FROM parts) + extra, coalesce(array_length(ids, 1), 0), now() FROM agg "
+    "ON CONFLICT (tenant_id, month) DO UPDATE SET geom = NULL, extra_km2 = EXCLUDED.extra_km2, area_km2 = EXCLUDED.area_km2, "
+    "jobs = EXCLUDED.jobs, updated_at = now() RETURNING area_km2")
+# 표에 빠진 작업(작업기가 더하다 실패 · 표를 만들기 전 작업) — 같은 함수로 하나씩 더한다(겹치는 조각만 · 빠름)
+MISSING_SQL = ("SELECT u.job_id, sum(u.amount) AS amt FROM usage_events u WHERE u.at >= $1 AND u.dim = 'area_km2' AND u.tenant_id = $2 "
+               "AND NOT EXISTS (SELECT 1 FROM tenant_area_jobs a WHERE a.tenant_id = $2 AND a.month = $3 AND a.job_id = u.job_id) GROUP BY 1")
 
 
-async def _area_fill(ms: dt.datetime, t: str) -> float | None:
+async def _area_fill(ms: dt.datetime, t: str, full: bool) -> float | None:
+    """full = 그 달 처음(표에 줄이 없음) — 합집합을 처음부터 한 번 · 아니면 빠진 작업만 하나씩."""
     lock = f"quota:area_fill:lock:{ms.isoformat()}:{t}"
     try:
         r = await redis()
@@ -332,7 +338,12 @@ async def _area_fill(ms: dt.datetime, t: str) -> float | None:
         return None                                   # 다른 프로세스가 채우는 중 — 이번에는 지난 값(없으면 0)
     try:
         async with db(realm="lx") as conn:
-            v = await conn.fetchval(AREA_FILL_SQL, ms, t, ms.date(), timeout=900)
+            if full:
+                v = await conn.fetchval(AREA_FILL_SQL, ms, t, ms.date(), timeout=1800)
+            else:
+                for m in await conn.fetch(MISSING_SQL, ms, t, ms.date()):
+                    await conn.execute("SELECT tenant_area_add($1, $2, $3, $4)", t, ms.date(), m["job_id"], float(m["amt"] or 0), timeout=300)
+                v = await conn.fetchval("SELECT area_km2 FROM tenant_area_month WHERE tenant_id=$1 AND month=$2", t, ms.date())
         return float(v or 0)
     finally:
         if r is not None:
@@ -358,11 +369,15 @@ async def _area_union(ms: dt.datetime) -> dict:
             if h and h[1] >= k:
                 out[t] = h[0]                         # 작업 끝에 적어 둔 값 — 계산 없음
                 continue
-            tk = _area_task.get(("fill", ms.isoformat(), t))
+            key = ("fill", ms.isoformat(), t)
+            tk = _area_task.get(key)
             if tk is None or tk.done():
-                tk = _area_task[("fill", ms.isoformat(), t)] = asyncio.ensure_future(_area_fill(ms, t))
-            if h:                                     # 지난 값을 바로 주고 뒤에서 채운다
+                tk = _area_task[key] = asyncio.ensure_future(_area_fill(ms, t, full=not h))
+            if h and k - h[1] > 20:                   # 빠진 작업이 많으면 지난 값을 바로 주고 뒤에서
                 out[t] = h[0]
+            elif h:                                   # 몇 개뿐이면(한 개 약 0.4초) 채운 값을 준다
+                v = await asyncio.shield(tk)
+                out[t] = v if v is not None else h[0]
             else:
                 v = await asyncio.shield(tk)
                 out[t] = v if v is not None else 0.0

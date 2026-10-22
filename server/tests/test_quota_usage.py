@@ -116,6 +116,7 @@ def test_month_sums_read_recorded_tenant(live, tok):
         assert abs(after - before - 123.456) < 0.01, (before, after)       # 작업은 LX 것이지만 기록된 기관(tid) 몫으로 — 다시 귀속 0
     finally:
         c.execute("DELETE FROM usage_events WHERE id=%s", (row,))
+        _forget_area(c, tid)
         c.commit()
         time.sleep(10.5)                                # 시험 행이 게이트웨이 보관(10 s)에서 빠질 때까지 — 뒤 시험이 지운 행을 보지 않게
 
@@ -288,5 +289,16 @@ def test_area_month_union_counts_overlap_once(live, tok):
     finally:
         for r in rows:
             c.execute("DELETE FROM usage_events WHERE id=%s", (r,))
+        _forget_area(c, tid)
         c.commit()
         time.sleep(10.5)
+
+
+def _forget_area(c, tid):
+    """시험이 지운 사용량 줄을 그 달 면적 표(0117 · 작업 끝에 한 번 더해 둔 값)에서도 빼게 — 그 기관 그 달을 비우면 다음 읽기가 처음부터 다시 센다."""
+    m = "date_trunc('month', now() AT TIME ZONE 'Asia/Seoul')::date"
+    for tb in ("tenant_area_parts", "tenant_area_jobs", "tenant_area_month"):
+        try:
+            c.execute(f"DELETE FROM {tb} WHERE tenant_id=%s AND month={m}", (tid,))
+        except Exception:  # noqa: BLE001 — 표가 없는 DB
+            c.rollback()

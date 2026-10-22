@@ -102,28 +102,12 @@ def meter(conn, *, tenant: str, demo: bool, job_id: str, dim: str, amount: float
 
 
 def add_area(conn, tenant: str, job_id: str, amount: float) -> None:
-    """작업이 끝날 때 한 번(10-22 now21 제안-면적작업끝한번) — 이 작업 범위(작업 범위 ∩ 영상 자리)를 그 기관 그 달 '분석한 면적' 합집합에 더한다.
-    겹친 곳은 한 번 · 범위가 없는 작업은 적힌 값을 더한다. 같은 작업은 두 번 더하지 않는다(tenant_area_jobs). 실패해도 사용량 기록은 그대로
-    (화면이 빠진 작업을 보면 그 달을 한 번 다시 센다 — landxi_api.quota._area_fill)."""
+    """작업이 끝날 때 한 번(10-22 now21 제안-면적작업끝한번) — 이 작업 범위(작업 범위 ∩ 영상 자리)를 그 기관 그 달 '분석한 면적'에 더한다.
+    겹치는 조각만 꺼내 합친다(DB 함수 tenant_area_add · 0117) · 같은 작업은 두 번 더하지 않는다. 실패해도 사용량 기록은 그대로
+    (화면이 빠진 작업을 보면 같은 함수로 채운다 — landxi_api.quota._area_catchup)."""
     try:
         with conn.transaction():
-            m = "date_trunc('month', now() AT TIME ZONE 'Asia/Seoul')::date"
-            new = conn.execute(f"INSERT INTO tenant_area_jobs(tenant_id, month, job_id) VALUES (%s, {m}, %s) ON CONFLICT DO NOTHING RETURNING 1",
-                               (tenant, job_id)).fetchone()
-            if not new:
-                return
-            conn.execute(
-                "WITH g AS (SELECT CASE WHEN j.aoi IS NULL THEN NULL WHEN i.footprint IS NULL THEN ST_MakeValid(j.aoi) "
-                "ELSE ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) END AS geom "
-                "FROM jobs j LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id = %s) "
-                f"INSERT INTO tenant_area_month(tenant_id, month, geom, extra_km2, jobs, updated_at) "
-                f"SELECT %s, {m}, (SELECT geom FROM g), CASE WHEN (SELECT geom FROM g) IS NULL THEN %s ELSE 0 END, 1, now() "
-                "ON CONFLICT (tenant_id, month) DO UPDATE SET "
-                "geom = CASE WHEN EXCLUDED.geom IS NULL THEN tenant_area_month.geom WHEN tenant_area_month.geom IS NULL THEN EXCLUDED.geom "
-                "ELSE ST_Union(tenant_area_month.geom, EXCLUDED.geom) END, "
-                "extra_km2 = tenant_area_month.extra_km2 + EXCLUDED.extra_km2, jobs = tenant_area_month.jobs + 1, updated_at = now()",
-                (job_id, tenant, float(amount or 0)))
-            conn.execute(f"UPDATE tenant_area_month SET area_km2 = coalesce(ST_Area(geom::geography) / 1e6, 0) + extra_km2 "
-                         f"WHERE tenant_id = %s AND month = {m}", (tenant,))
-    except Exception:  # noqa: BLE001 — 표가 없거나 도형 오류: 사용량 기록은 그대로 두고 넘어간다
+            conn.execute("SELECT tenant_area_add(%s, date_trunc('month', now() AT TIME ZONE 'Asia/Seoul')::date, %s, %s)",
+                         (tenant, job_id, float(amount or 0)))
+    except Exception:  # noqa: BLE001 — 함수가 없거나 도형 오류: 사용량 기록은 그대로 두고 넘어간다
         pass
