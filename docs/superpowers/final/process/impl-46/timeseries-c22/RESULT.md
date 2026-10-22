@@ -82,7 +82,10 @@
 ## 7. 검사
 
 - 봉투 시험: `python -m pytest tests/test_p6_timeseries.py` 3개 통과(13:1x).
-- 겹침 검사 · 모든 검사(`tools/check/all.mjs`): 아래 '검사 결과'.
+- 모든 검사(`tools/check/all.mjs` · 12:55~13:10 · 바깥 주소 · 로그인 4번): 낱말 · 숫자 · 글꼴 통과. 겹침은 72개 상태 중 2개에서 실패했습니다.
+  - `app 390 XI맵 + 층 판`: 층 판이 '전국 분석 연도' 줄만큼 길어져 휴대폰 도구 줄과 겹쳤습니다. 내 탓입니다. 휴대폰 층 판 높이를 도구 줄 아래까지로 줄이고, 넘치면 판 안에서 내리게 고쳤습니다(xc.css 끝). 다시 검사해 겹침 0입니다.
+  - `gov(namwon) 390 결과 지도(처음)`: 도구 열과 HUD가 겹쳤습니다. 다시 검사하니 겹침 0이었습니다(다른 에이전트의 첫인상 작업 중 바뀐 것으로 보입니다).
+- 검사 문(`tools/check/gate.mjs`): 화면 파일을 커밋하기 전에 돌립니다(결과는 보고에).
 
 ## 이런 것도 필요하지 않을까요?
 
@@ -99,3 +102,7 @@
 - 영상 빈 자리 조사: `python -m national.imgcover --year 2025 --fill 2024`(168칸 · 점 96,411개 · 821초 · 오류 0). 2024 칸은 `--year 2024 --fill 2023 --copy-none 2025`로 같은 칸만 다시 물으면 됩니다(아직 안 함).
 - 진행 응답 새 칸: `years[{year, pct, complete}]` · `base.year` · `running_year.year` · `run{year, pct, done, cells, days_left}` · `ngii[{id, year}]` · `assets.*.noimg` · `assets.*.fill` · `tile_sigs`. 지도 조각에 `nodata` 층이 생겼고, 칸에는 `noimg` · `fill` 속성이 붙었습니다.
 - 필지 이력 새 칸: `national[{year, cls, classes, noimg, fill_year}]` · `national_change` · 줄 종류 `national`(전국 분석).
+
+## 커밋
+- `81229599` 서버 · 문서 · 시험 · `55fa47c2` 화면(national.js · board.js · svc-parcels.js) — plan1-foundation에 올림. 검사 문(gate.mjs) 72개 상태 겹침 0 · 낱말 · 숫자 · 글꼴 모두 통과(13:2x).
+- **아직 안 올린 것**: `landxi/v3/xi-clean/app.js`(해 고르기 줄 · 지난 해 숫자 · 영상 비교 국토지리정보원 목록 — 7곳)와 `xc.css`(끝의 연도 고르기 · 범례 · 휴대폰 층 판 높이). 두 파일에 다른 에이전트(첫인상)가 아직 올리지 않은 변경이 함께 있습니다. 검사 문은 파일 통째 지문만 받아서 내 몫만 따로 올릴 수 없습니다. 바깥 화면에는 이미 반영되어 있습니다. 그 에이전트가 두 파일을 올릴 때 함께 올라가거나, 그 뒤 제가 올립니다.
