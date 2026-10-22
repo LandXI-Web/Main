@@ -84,6 +84,18 @@ def finalize(job_id: str):
     feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")
+    # 겹침 정리 1단(10-22 now21 겹침-붙은경계 · 원본보관 ⓐ) — 칸 경계에서 잘린 것 붙이기 · 전국 분석 조각은 조각 몫만 · 농지 · 하천 한 층.
+    # AI 가 낸 원래 결과(NMS 뒤)는 {작업}.raw.fgb 로 남기고, 화면 · 숫자 · 내려받기는 정리 결과({작업}.fgb · DB 결과 줄)를 읽는다.
+    raw_feats, tidy_rec = feats, None
+    try:
+        from national.tidy import finalize_clean
+        feats, tidy_rec = finalize_clean(feats, task=task, label=jh.get("label"), aoi=json.loads(jh["aoi"]) if jh.get("aoi") else None,
+                                         national=opts.get("national"), epsg=st.get("epsg"))
+        st["tidy"] = {k: tidy_rec.get(k) for k in ("in", "out", "dropped")} | {"merged": (tidy_rec.get("seam") or {}).get("merged_into", 0),
+                                                                            "candidates": len(tidy_rec.get("candidates") or [])}
+    except Exception as e:  # noqa: BLE001 — 정리를 못 해도 결과는 그대로 낸다
+        log(WHO, "tidy error", job_id, repr(e))
+        feats, tidy_rec = raw_feats, None
     counts: dict[str, int] = {}
     for f in feats:
         counts[f["props"]["cls_en"]] = counts.get(f["props"]["cls_en"], 0) + 1
@@ -93,7 +105,18 @@ def finalize(job_id: str):
     from landxi_api import result_store
     keys = ("id", "cls", "cls_en", "cid", "conf", "area_m2", "emd", "emd_cd", "edit_state", "job_id", "shard_id", "chip_edge")
     gj = jdir.parent / f"{job_id}.fgb"
+    if tidy_rec is not None and tidy_rec.get("changed"):
+        keys = keys + ("merged_from",)
+        raw_f = jdir.parent / f"{job_id}.raw.fgb"
+        result_store.write_fgb(raw_f, [f["geom"] for f in raw_feats], [{k: f["props"].get(k) for k in keys} for f in raw_feats], keys)
     result_store.write_fgb(gj, [f["geom"] for f in feats], [{k: f["props"].get(k) for k in keys} for f in feats], keys)
+    if tidy_rec is not None:
+        try:
+            from national.tidy import VERSION as TIDY_V, tidy_path
+            rec = {**tidy_rec, "v": TIDY_V, "raw": (f"{job_id}.raw.fgb" if tidy_rec.get("changed") else gj.name), "clean": gj.name, "at": now_iso()}
+            tidy_path(jdir.parent / job_id).write_text(json.dumps(rec, ensure_ascii=False, indent=0), encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            log(WHO, "tidy record error", job_id, repr(e))
     # 전역 NMS 결과로 detections 교체(demo 는 0행 유지)
     if not demo:
         with bus.pg() as conn:

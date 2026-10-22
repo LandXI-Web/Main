@@ -24,7 +24,9 @@ from . import config
 PRECISION = 7                                   # 좌표 소수 자리(경위도 1e-7° ≈ 1cm)
 INT_FIELDS = {"cid", "n", "fid_n"}              # 빈 값이 섞여 실수로 적힌 정수 열 — 읽을 때 정수로
 VECTOR_EXT = (".fgb", ".geojson", ".geojson.gz")
-SIDE_EXT = VECTOR_EXT + (".pmtiles", "-summary.json")
+# 겹침 정리(national/tidy · 10-22 now21 원본보관 ⓐ): AI 가 낸 원래 결과 .raw.fgb · 빈 결과로 바뀐 옛 지도 조각 .raw.pmtiles · 정리 기록 -tidy.json
+RAW_EXT = (".raw.fgb", ".raw.pmtiles", "-tidy.json")
+SIDE_EXT = VECTOR_EXT + (".pmtiles", "-summary.json") + RAW_EXT
 _CROCK = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 _KST = dt.timezone(dt.timedelta(hours=9))
 

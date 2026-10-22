@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
 from landxi_api import result_store as R  # noqa: E402
 
-JOB_RX = re.compile(r"^(job_[0-9A-Z]{20,32})(\.fgb|\.geojson|\.geojson\.gz|\.pmtiles)?$")
+JOB_RX = re.compile(r"^(job_[0-9A-Z]{20,32})(\.raw\.fgb|\.raw\.pmtiles|-tidy\.json|\.fgb|\.geojson|\.geojson\.gz|\.pmtiles)?$")
 KST = dt.timezone(dt.timedelta(hours=9))
 SAMPLE = 20
 

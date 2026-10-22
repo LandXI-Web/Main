@@ -234,3 +234,70 @@ async def parcels(lng: float, lat: float, request: Request, geom: int = 0):
         out.update(geometry=f.get("geometry"), jimok_cd=_jimok_cd(jb), no=_jibun_no(jb), place=ri or emd, rules=mismatch_rules(),
                    jimok=_jimok_name(out["jimok"]))
     return out
+
+
+# ── 필지 한 장의 AI 분석 결과 묶음(10-22 now21 겹침-필지묶음 ⓐ · 1단 ⓒ) ──────────────────────────────────
+# 한 필지 안의 여러 경계를 필지 하나로 묶어 '경작지 2곳 · 2,690㎡ · 필지의 69%' 한 줄로. 경계 수는 큰 숫자가 아니라 필지 카드 안에서만.
+# 소속 = 경계 넓이의 절반 이상이 필지 안(실태조사 결합 · 겹침 진단과 같은 기준) · 넓이 = 그 경계들의 합집합 ∩ 필지(겹치지 않게).
+# 읽는 결과 = 전국 분석 정리 결과(national/tidy · 지도에 그려지는 것과 같은 파일) — 자산마다 지도에 보이는 분류만(XI맵 national.js NCLS 와 같은 표).
+PART_CLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물",)}
+PART_UNIT = {"경작지": "곳", "비닐하우스": "동", "건물": "동"}
+
+
+def _parts_calc(pg: bytes, files: list[tuple[str, str]]) -> dict:
+    import numpy as np
+    import shapely
+    from national.tidy import to_metric
+    from .result_store import read_features
+    P = shapely.from_wkb(pg)
+    PM = to_metric([P])[0]
+    pa = float(PM.area) or 1.0
+    bb = P.bounds
+    by: dict[str, list] = {}
+    for asset, path in files:
+        want = PART_CLS.get(asset, ())
+        for f in read_features(path, bbox=bb):
+            pr = f.get("properties") or {}
+            if pr.get("cls") not in want or pr.get("edit_state") == "deleted" or not f.get("geometry"):
+                continue
+            by.setdefault(pr["cls"], []).append(shapely.from_geojson(json.dumps(f["geometry"])))
+    out = []
+    for cls, gs in by.items():
+        gm = to_metric(gs)
+        gm = np.asarray([g if g.is_valid else shapely.make_valid(g) for g in gm], dtype=object)
+        inter = shapely.area(shapely.intersection(gm, PM))
+        home = gm[(inter / np.maximum(shapely.area(gm), 1e-9)) >= 0.5]
+        if not len(home):
+            continue
+        m2 = float(shapely.area(shapely.intersection(shapely.union_all(home), PM)))
+        out.append({"cls": cls, "n": int(len(home)), "unit": PART_UNIT.get(cls, "개"), "m2": round(m2, 1), "pct": round(m2 / pa * 100, 1)})
+    out.sort(key=lambda x: -x["m2"])
+    return {"parts": out, "parcel_m2": round(pa, 1)}
+
+
+@router.get("/parcels/{pnu}/parts")
+async def parcel_parts(pnu: str, request: Request):
+    """필지 하나에 든 AI 분석 결과(전국 분석 · 최신 해) — 분류마다 경계 수 · 넓이(겹치지 않게) · 필지 대비 비율. LX 전용(전국 분석은 LX 화면만)."""
+    require(principal(request), lx=True)
+    if not re.fullmatch(r"\d{19}", pnu or ""):
+        raise ApiError("bad_request", "필지 번호")
+    from .result_store import base, vector_of_base
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT ST_AsBinary(geom) AS g, ST_XMin(geom) x0, ST_YMin(geom) y0, ST_XMax(geom) x1, ST_YMax(geom) y1 "
+                                "FROM survey_parcels WHERE pnu=$1", pnu)
+        if not r:
+            raise ApiError("not_found", NO_PARCEL)
+        from .national import DEF as NAT_DEF
+        year = await conn.fetchval("SELECT (value->>'year')::int FROM lx_settings WHERE key='national.run'") or int(NAT_DEF["year"])
+        jobs = await conn.fetch(
+            "SELECT n.asset, n.job_id FROM national_jobs n JOIN national_cells c ON c.asset=n.asset AND c.year=n.year AND c.cell_cd=n.cell_cd "
+            "WHERE n.year=$1 AND NOT n.test AND n.state='done' AND c.state='done' AND n.model_id IS NOT DISTINCT FROM c.model_id AND n.bbox IS NOT NULL "
+            "AND n.bbox[1] <= $4 AND n.bbox[3] >= $2 AND n.bbox[2] <= $5 AND n.bbox[4] >= $3", year, r["x0"], r["y0"], r["x1"], r["y1"])
+    files = [(j["asset"], str(p)) for j in jobs if (p := vector_of_base(base("lx", j["job_id"])))]
+    d = await run_in_threadpool(_parts_calc, bytes(r["g"]), files) if files else {"parts": [], "parcel_m2": None}
+    src = "전국 분석 결과(겹침 정리 후) · 연속지적 필지"
+    return {"pnu": pnu, "year": year,
+            "parts": [{**x, "n": env(x["n"], x["unit"], "inferred", src, "경계 넓이의 절반 이상이 필지 안"),
+                       "m2": env(x["m2"], "m2", "inferred", src, "겹치지 않는 넓이 ∩ 필지"),
+                       "pct": env(x["pct"], "percent", "inferred", src, "필지 넓이 대비")} for x in d["parts"]],
+            "source": src}

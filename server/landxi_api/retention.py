@@ -21,7 +21,7 @@ from . import config
 
 DEFAULTS = {"failed_cancelled_days": 30, "training_bundle_days": 30, "login_ip_days": 90, "dry_run": False,
             "training_roots": ["training/retrain", "training/retrain-auto", "training/farm-v2", "training/xi-tiles"]}
-RESULT_EXT = (".geojson", ".geojson.gz", ".pmtiles", ".fgb", "-summary.json")
+RESULT_EXT = (".geojson", ".geojson.gz", ".pmtiles", ".fgb", "-summary.json", ".raw.fgb", ".raw.pmtiles", "-tidy.json")   # 원래 결과 · 정리 기록도 결과와 같이
 BUNDLE_DATA = ("images", "labels")
 
 
