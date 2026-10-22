@@ -24,7 +24,7 @@ import urllib.request
 from pathlib import Path
 
 from . import rules as R
-from .db import IMG23, RULE_IDS, lx_tx, once_sql, pg
+from .db import COUNT_RULE_IDS, IMG23, RULE_IDS, lx_tx, once_sql, pg
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -594,17 +594,17 @@ def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: s
 def union_items(conn, sgg: str) -> list[dict]:
     """그 시군구의 모든 필지 대조 의심(시군구 실태조사 + 카드 판 · R1–R6) — 읍면동 요약(survey_emd)은 시군구 숫자와 같은 범위로 센다."""
     cur = conn.execute("SELECT emd_cd, pnu, rule, priority, addr, rank, evid_m2, score FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) AND " + once_sql(),
-                       (sgg, list(RULE_IDS)))
+                       (sgg, COUNT_RULES))
     cols = [d.name for d in cur.description]
     return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
 def refresh_sgg(conn, sgg: str) -> dict:
     """survey_sgg 의 의심 합(findings · by_rule · by_priority) = 그 시군구 모든 필지 대조 행(시군구 숫자 한 출처 — counts_sql 과 같은 범위)."""
-    by = {r: 0 for r in RULE_IDS}
+    by = {r: 0 for r in COUNT_RULES}
     pr = {"A": 0, "B": 0, "C": 0}
     for rule, prio, n in conn.execute("SELECT rule, priority, count(*) FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) AND " + once_sql() + " GROUP BY 1, 2",
-                                      (sgg, list(RULE_IDS))).fetchall():
+                                      (sgg, COUNT_RULES)).fetchall():
         by[rule] = by.get(rule, 0) + int(n)
         if prio in pr:
             pr[prio] += int(n)
@@ -612,6 +612,30 @@ def refresh_sgg(conn, sgg: str) -> dict:
     conn.execute("UPDATE survey_sgg SET findings = %s, by_rule = %s, by_priority = %s WHERE sgg_cd = %s",
                  (tot, json.dumps(by), json.dumps(pr), sgg))
     return {"findings": tot, "by_rule": by, "by_priority": pr}
+
+
+def refresh_counts(conn, sgg: str) -> dict:
+    """요약표 다시 세기(시군구 survey_sgg + 읍면동 survey_emd) — 대장 대조 반입 · 철회처럼 AI 적재 밖에서 의심 행이 바뀐 뒤(10-22 현장확인숫자 ⓐ)."""
+    row = conn.execute("SELECT tenant_id, job_id FROM survey_sgg WHERE sgg_cd = %s", (sgg,)).fetchone()
+    if not row:
+        return {}
+    out = refresh_sgg(conn, sgg)
+    if row[1]:
+        emd_summary(conn, sgg, row[0], row[1], union_items(conn, sgg))
+    return out
+
+
+def refresh_counts_all(sggs: list[str] | None = None) -> dict:
+    """여러 시군구 요약표를 한 번에(작업 계정 · 한 시군구마다 커밋)."""
+    out = {}
+    with pg() as conn:
+        lx_tx(conn)
+        cs = sggs or [r[0] for r in conn.execute("SELECT sgg_cd FROM survey_sgg WHERE state = 'done' ORDER BY 1").fetchall()]
+        for sgg in cs:
+            out[sgg] = refresh_counts(conn, sgg).get("findings")
+            conn.commit()
+            lx_tx(conn)
+    return out
 
 
 def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
@@ -635,7 +659,7 @@ def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
         by.setdefault(x["emd_cd"], []).append(x)
     for cd, nm, n, ha, farm, x0, y0, x1, y1 in base:
         xs = by.get(cd, [])
-        sus = {r: sum(1 for x in xs if x["rule"] == r) for r in RULE_IDS}
+        sus = {r: sum(1 for x in xs if x["rule"] == r) for r in COUNT_RULES}
         pr = {k: sum(1 for x in xs if x["priority"] == k) for k in "ABC"}
         top = [{"pnu": x["pnu"], "addr": x["addr"], "rank": x["rank"], "rule": x["rule"], "evid_m2": x["evid_m2"], "priority": x["priority"]}
                for x in sorted(xs, key=lambda x: (-(x.get("score") or 0), x["rank"] or 0))[:5]]
@@ -847,7 +871,7 @@ def ai_operands(conn, pnus: list[str], sgg_cd: str | None = None) -> dict[str, d
 #   적재 중(survey_sgg.state = 'building')에는 두 값 모두 None + '집계 중'(숫자를 섞어 내지 않는다).
 # 옛 값이 갈린 원인: 남원 20,852 = 의심 필지 중복 제거(한 필지가 두 규칙에 걸린 20필지) · 20,872 = survey_sgg.findings(R1–R6 행)
 #   · 21,303 = survey_findings 전체(대장 규칙 L-* 431행 포함). 여수 10,499 = 중복 제거 · 10,504 = R1–R6 행.
-COUNT_RULES = list(RULE_IDS)
+COUNT_RULES = list(COUNT_RULE_IDS)          # R1–R6 + 대장 대조 L-*(10-22 현장확인숫자 ⓐ · survey.db)
 COUNTING = "집계 중"
 # 판(모델-표기 ⓐ · 2026-10-09): 필지 대조 행은 카드마다 따로(survey_findings.card_id · survey_card). 같은 이름 · 같은 식, 범위만 다르다.
 #   시군구(sgg)  = 그 시군구의 모든 필지 대조 행(시군구 실태조사 + 카드 판) — 지역을 묻는 화면 · XI ChatGEO 지역 질문 · 보고서.

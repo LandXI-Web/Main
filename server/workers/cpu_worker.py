@@ -476,11 +476,26 @@ def improve_retention_loop():
         time.sleep(3600)
 
 
+def keep_days_loop():
+    """보관 기한 정리(10-22 now21 인프라-취소실패정리 ⓐ · 접속주소90일) — 취소 · 실패 작업 결과 30일 · 지난 학습 묶음 30일 · 로그인 실패 기록 90일.
+    하루 한 번 · 작업기 여럿 중 하나만(Redis 표시) · GPU 0. 값은 config/retention.yaml."""
+    while True:
+        try:
+            day = time.strftime("%Y-%m-%d")
+            if r().set(f"retention:purge:{day}", WID, nx=True, ex=2 * 86400):
+                from landxi_api import retention
+                retention.purge(log=lambda m: log(WHO, m))
+        except Exception as e:  # noqa: BLE001
+            log(WHO, "보관 기한 정리 오류", repr(e))
+        time.sleep(3600)
+
+
 def main():
     threading.Thread(target=heartbeat, daemon=True).start()
     if FINALIZE:
         threading.Thread(target=std_retention_loop, daemon=True, name="std-retention").start()
         threading.Thread(target=improve_retention_loop, daemon=True, name="improve-retention").start()
+        threading.Thread(target=keep_days_loop, daemon=True, name="keep-days").start()
     ads = scan_adapters()
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
     if FINALIZE:

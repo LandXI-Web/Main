@@ -279,9 +279,33 @@ def run_csv(nvsmi: str, args: list[str]) -> list[list[str]]:
 
 
 # ── 최소 RESP 클라이언트(redis-py 가 없을 때) ────────────────────────────
+def redis_url_default() -> str:
+    """작업 대기열 주소 — 환경값(LX_REDIS_URL · REDIS_URL) → server/.env 의 REDIS_URL(비밀번호 포함 · 10-22 대기열 비밀번호) → 기본."""
+    v = os.environ.get("LX_REDIS_URL") or os.environ.get("REDIS_URL")
+    if v:
+        return v
+    try:
+        for line in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"), encoding="utf-8"):
+            if line.strip().startswith("REDIS_URL="):
+                return line.split("=", 1)[1].strip()
+    except OSError:
+        pass
+    return "redis://127.0.0.1:6380"
+
+
+def masked(url: str | None) -> str:
+    """기록에 비밀번호를 남기지 않는다."""
+    import re as _re
+    return _re.sub(r"//([^@/]*)@", "//***@", url or "")
+
+
 class Resp:
     def __init__(self, url: str, timeout: float = 0.5):
         u = url.replace("redis://", "")
+        self.pw = None
+        if "@" in u:                                   # redis://:비밀번호@주소:포트/0
+            auth, _, u = u.rpartition("@")
+            self.pw = auth.split(":", 1)[-1] or None
         host, _, port = u.partition(":")
         self.addr = (host if host and host != "localhost" else "127.0.0.1", int((port or "6379").split("/")[0]))   # localhost = ::1 먼저 — 이 PC 의 Docker IPv6 길이 막혀 Redis 연결이 끊긴 뒤 다시 붙지 못했다(10-17 14:25 · 바퀴 16 재검수)
         self.timeout = timeout
@@ -292,6 +316,8 @@ class Resp:
         self.sock = socket.create_connection(self.addr, timeout=self.timeout)
         self.sock.settimeout(2.0)
         self.buf = b""
+        if self.pw:
+            self.cmd("AUTH", self.pw)
 
     def close(self):
         try:
@@ -362,12 +388,12 @@ class Store:
             r.connect()
             r.cmd("PING")
             self.r, self.state = r, "up"
-            log(f"redis 연결 {self.url}")
+            log(f"redis 연결 {masked(self.url)}")
             return True
-        except OSError as e:
+        except (OSError, ConnectionError, RuntimeError) as e:
             self.next_try = time.time() + 30
             if self.state != "down-logged":
-                log(f"redis 없음 {self.url} ({e.__class__.__name__}) — 30s 뒤 재시도, 표준출력만")
+                log(f"redis 없음 {masked(self.url)} ({e.__class__.__name__}) — 30s 뒤 재시도, 표준출력만")
                 self.state = "down-logged"
             return False
 
@@ -737,7 +763,7 @@ def main():
     ap = argparse.ArgumentParser(description="LX/OPS GPU 폴러 (F1-C)")
     ap.add_argument("--node", default=os.environ.get("LX_NODE_ID", "node-tr3995wx"))
     ap.add_argument("--interval", type=float, default=2.0)
-    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://127.0.0.1:6380"),
+    ap.add_argument("--redis", default=redis_url_default(),
                     help="'' 이면 Redis 를 쓰지 않는다")
     ap.add_argument("--stdout", action="store_true", help="GpuSample 한 줄 JSON 을 표준출력으로")
     ap.add_argument("--once", action="store_true")

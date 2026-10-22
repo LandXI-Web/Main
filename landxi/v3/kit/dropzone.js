@@ -229,6 +229,23 @@ export async function quickFingerprint(file) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/* 올리는 동안 로그인 유지 — 수백 GB 는 자동 로그아웃 시간보다 오래 걸릴 수 있다. 올리기가 이어지는 것 자체가 사용 중이므로 15분마다 연장한다.
+   머리줄 남은 시간(kit/session-clock.js)은 'lx:session-extended' 로 새 끝 시각을 받는다. */
+let lastKeep = Date.now();
+function keepLogin() {
+  if (Date.now() - lastKeep < 15 * 60 * 1000 || !session.get()) return;
+  lastKeep = Date.now();
+  api('/auth/extend', { method: 'POST' }).then((j) => {
+    const s = session.get(); if (s && j?.expires_at) { s.expires_at = j.expires_at; session.set(s); dispatchEvent(new CustomEvent('lx:session-extended', { detail: { expires_at: j.expires_at } })); }
+  }).catch(() => {});
+}
+const queues = new Set();
+let unloadOn = false;
+function guardUnload() {                                 // 올리는 중에 창을 닫으려 하면 브라우저가 한 번 묻는다(닫아도 다시 고르면 받은 자리부터)
+  if (unloadOn) return; unloadOn = true;
+  addEventListener('beforeunload', (e) => { if ([...queues].some((q) => q.busy())) { e.preventDefault(); e.returnValue = ''; } });
+}
+
 export function uploadQueue(el, { base, fields = () => ({}), allow = null, max = Infinity, title = '파일을 끌어 놓거나 눌러 고르세요', kinds = '',
   onStart, onDone, onError, onChange } = {}) {
   uqStyle();
@@ -324,10 +341,11 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       onStart?.(st, it);
     } catch (e) { return fail(it, e, true); }
     const maxC = st.chunk?.max?.size || 8 * 1048576;
-    let chunk = Math.min(maxC, st.chunk?.size || 1048576), fails = 0;
+    let chunk = Math.min(maxC, st.chunk?.size || 1048576), fails = 0, failSince = 0;
     const t0 = performance.now(), b0 = it.bytes;
     while (it.bytes < it.file.size) {
       if (it.state !== 'up') return;                                    // 멈춤 · 취소
+      keepLogin();
       const end = Math.min(it.file.size, it.bytes + chunk);
       it.ac = new AbortController();
       const timer = setTimeout(() => it.ac.abort(), 95000);
@@ -344,15 +362,19 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       if (r && r.ok && j) {
         const sec = Math.max(0.2, (performance.now() - ts) / 1000);
         chunk = Math.max(256 * 1024, Math.min(maxC, Math.round(((j.bytes - it.bytes) / sec) * 30)));   // 다음 조각 ≈ 30초 분량
-        it.bytes = j.bytes; fails = 0;
+        it.bytes = j.bytes; fails = 0; failSince = 0;
       } else if (r && r.status === 409 && j?.error?.detail?.bytes != null) {
         it.bytes = j.error.detail.bytes;                                                         // 서버가 받은 자리부터
-      } else if (r && [400, 401, 403, 404, 413].includes(r.status)) {
+      } else if (r && [400, 401, 403, 404, 409, 413].includes(r.status)) {
         return fail(it, Object.assign(new Error(j?.error?.message || 'upload'), { code: j?.error?.code, status: r.status }));
       } else {
-        fails++; chunk = Math.max(256 * 1024, Math.round(chunk / 2));
-        if (fails > 5) { it.state = 'paused'; paint(it, `연결이 여러 번 끊겨 멈췄습니다 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림. 이어 올리기를 누르면 이어서 올립니다`); return; }
-        await sleep(1500 * fails);
+        /* 연결이 끊김 · 서버가 잠깐 답하지 못함(다시 켜지는 중 등) — 저절로 다시 잇는다(수백 GB 는 몇 시간 걸려 그사이 끊김이 생긴다 · 10-22).
+           30분 넘게 계속 안 되면 멈추고 '이어 올리기'를 기다린다. 서버가 받은 자리부터 이어 가므로 두 번 붙지 않는다. */
+        fails++; failSince ||= Date.now(); chunk = Math.max(256 * 1024, Math.round(chunk / 2));
+        if (Date.now() - failSince > 30 * 60 * 1000) { it.state = 'paused'; paint(it, `연결이 30분 넘게 끊겨 멈췄습니다 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림. 이어 올리기를 누르면 이어서 올립니다`); return; }
+        paint(it, `연결이 끊겨 다시 잇는 중 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림`);
+        await sleep(Math.min(30000, 1500 * 2 ** Math.min(fails - 1, 5)));
+        continue;
       }
       const bps = (it.bytes - b0) / Math.max(0.5, (performance.now() - t0) / 1000);
       paint(it, `올리는 중 ${MBf(it.bytes)} / ${MBf(it.file.size)}${leftWord(bps > 0 ? (it.file.size - it.bytes) / bps : null)}`);
@@ -406,9 +428,11 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
   zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('is-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('is-over'));
   zone.addEventListener('drop', (e) => { e.preventDefault(); zone.classList.remove('is-over'); add([...(e.dataTransfer?.files || [])]); });
-  return {
+  const api_ = {
     el, add, input, items: () => items.slice(),
     busy: () => items.some((x) => ['check', 'wait', 'up'].includes(x.state)),
     clear() { for (const it of items.slice()) { it.state = 'cancel'; it.ac?.abort(); it.el.remove(); } items.length = 0; changed(); },
   };
+  queues.add(api_); guardUnload();
+  return api_;
 }

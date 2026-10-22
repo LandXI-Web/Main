@@ -1,4 +1,4 @@
-﻿# Land-XI 한 번에 기동 (F1-∑ 통합 · F3 §3 S-12 기동 안정) — Redis·PostGIS · 게이트웨이 :8700 · 목 :8701 · 워커(scheduler·cpu-0·cpu-1·a6000-0) · 관제 :8702 · 정적 :4173
+﻿# Land-XI 한 번에 기동 (F1-∑ 통합 · F3 §3 S-12 기동 안정) — Redis·PostGIS · 게이트웨이 :8700 · 목 :8701 · 워커(scheduler·cpu-0·cpu-1·a6000-0) · 상태 폴러 3개(GPU · 저장 · LLM) · 정적 :4173
 # 사용:
 #   powershell -File server/start-landxi.ps1            # 빠진 것만 띄운다(이미 LISTEN/실행 중이면 건너뜀 · 멱등)
 #   powershell -File server/start-landxi.ps1 -Status    # 상태 표만
@@ -7,7 +7,9 @@
 #   -Restart gateway|workers|all   해당 프로세스만 멈췄다가 다시. gateway 는 '짧게'(마이그레이션 → 게이트웨이 → 헬스 대기만 · 수 초)
 #   -Watch   게이트웨이 감시(15 s 간격 헬스 · 응답 대기 20 s × 연속 3회 실패면 게이트웨이만 재기동) — 기본 기동이 숨은 창으로 하나 띄운다(-NoWatch 로 끔)
 # S-12: 워커 PID 잠금(.workers.lock · 이중 기동 0) · 전력 규칙 검사(장당 상한 · max_hot_gpus · 고부하 GPU 수) · 헬스 대기 순서
-#       (Redis·PG → 마이그레이션 → 게이트웨이 헬스 → 워커 하트비트 → 관제) · 게이트웨이 감시 · 관제에 가동 시간(GET /ops/uptime).
+#       (Redis·PG → 마이그레이션 → 게이트웨이 헬스 → 워커 하트비트 → 상태 폴러) · 게이트웨이 감시.
+# 10-22 now21 '옛관리상태판' ⓐ: 옛 관리 상태판 :8702(landxi/ops/serve-ops.mjs — 꺼 둔 계정으로 로그인을 되풀이하던 것)을 없앴다.
+#   그 서버가 자식으로 띄우던 폴러 3개(ops:gpu · ops:storage · ops:llm — 게이트웨이 전력 규칙 · 관리자 화면이 읽음)만 여기서 바로 띄운다.
 # 절대 하지 않는 것: Ollama llama-server 종료 · vLLM 컨테이너 조작 · 4173 serve.mjs 종료 · cleanriver 컨테이너 조작(docker 는 -p landxi 로만).
 param([switch]$Status, [switch]$Stop, [switch]$NoMock, [int[]]$Gpus = @(), [ValidateSet("", "gateway", "workers", "all")][string]$Restart = "",
       [switch]$Watch, [switch]$NoWatch)
@@ -119,7 +121,7 @@ function Show-Status {
     @{ n = "PostGIS :5433"; ok = (Listening 5433); d = "docker landxi-postgis" },
     @{ n = "게이트웨이 :8700"; ok = ((Http "http://127.0.0.1:8700/api/v1/health") -eq 200); d = ("프로세스 {0} · " -f $gwWorkers) + (Health-Line) },
     @{ n = "목 게이트웨이 :8701"; ok = (Listening 8701); d = "계약 픽스처·리플레이" },
-    @{ n = "관제 :8702"; ok = (Listening 8702); d = "http://localhost:8702/landxi/ops/" },
+    @{ n = "상태 폴러"; ok = ([bool](ProcLike "ops[\/]gpu_poller\.py") -and [bool](ProcLike "ops[\/]storage_poller\.py") -and [bool](ProcLike "ops[\/]llm_poller\.py")); d = "GPU · 저장 · LLM → Redis(ops:*)" },
     @{ n = "vLLM :8000/:8001"; ok = ((Listening 8000) -and (Listening 8001)); d = "게이트웨이 /agent/runs 경유만" },
     @{ n = "scheduler"; ok = [bool](ProcLike "workers/scheduler\.py"); d = "" },
     @{ n = "cpu-0"; ok = [bool](ProcLike "cpu_worker\.py(?!.*--id cpu-1)"); d = "shard + finalize" },
@@ -298,10 +300,18 @@ if (Lock-Held) {
   } finally { Lock-Free }
 }
 
-# 6) 관제 :8702 (폴러 2개를 스스로 자식으로 띄운다 · 레일에서는 빠졌지만 폴러가 ops:gpu 를 쓴다)
-if (-not (Listening 8702)) {
-  $p = Start-Hidden "node" @("landxi/ops/serve-ops.mjs") $repo "$logs\f1c-ops.log" "$logs\f1c-ops.err"
-  $started += $p.Id; Step "[ops] :8702 pid $($p.Id)"
+# 6) 상태 폴러 3개(GPU · 저장 · LLM → Redis ops:*) — 옛 관리 상태판 :8702 없이 바로(10-22 now21 옛관리상태판 ⓐ). 읽기 전용 · GPU 위 프로세스는 건드리지 않는다.
+Refresh-Procs
+$polls = @(
+  @{ n = "gpu"; pat = "ops[\/]gpu_poller\.py"; argv = @("server/ops/gpu_poller.py", "--interval", "2", "--lms", "100") },
+  @{ n = "storage"; pat = "ops[\/]storage_poller\.py"; argv = @("server/ops/storage_poller.py", "--interval", "60") },
+  @{ n = "llm"; pat = "ops[\/]llm_poller\.py"; argv = @("server/ops/llm_poller.py", "--interval", "3") }
+)
+foreach ($q in $polls) {
+  if (-not (ProcLike $q.pat)) {
+    $p = Start-Hidden "python" $q.argv $repo "$logs\poller-$($q.n).log" "$logs\poller-$($q.n).err"
+    $started += $p.Id; Step "[poller] $($q.n) pid $($p.Id)"
+  }
 }
 
 # 7) 게이트웨이 감시 — 없으면 하나(숨은 창)
@@ -319,4 +329,4 @@ Write-Host ""
 if ($Restart) { Write-Host ("[OK] " + (Health-Line)); return }
 Show-Status
 Write-Host ""
-Write-Host "입구: 정문 http://localhost:4173/landxi/v3/login/ · 관제(레일 밖) http://localhost:8702/landxi/ops/"
+Write-Host "입구: 로그인 http://localhost:4173/landxi/v3/login/"

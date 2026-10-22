@@ -29,3 +29,6 @@ if (-not (Tunnel)) {
 }
 Start-Sleep -Seconds 3
 "gate: " + [bool](Gate); "tunnel: " + [bool](Tunnel)
+
+# 바깥에 열 때마다 '로그인 없이 받아지는 파일' 점검(10-22 now21 공개파일자동점검) — 뒤에서 한 번 · 결과 02. 데이터/_logs/open-files-check.json · 걸리면 관리자 경보
+Start-Process -WindowStyle Hidden -FilePath "python" -ArgumentList @("-X", "utf8", "`"$repo\tools\check\open_files.py`"", "--quiet", "--wait", "30") -WorkingDirectory $repo

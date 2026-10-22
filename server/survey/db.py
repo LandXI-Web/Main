@@ -66,6 +66,10 @@ README_COUNTS = {
     "ai2023_objects": 129420,
 }
 RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6"]
+# 대장 대조 규칙(L-* · survey/rules/L*.yaml) — 10-22 now21 '현장확인숫자' ⓐ: 지역 숫자(의심 필지 · 현장 확인 필요)에 대장 대조 건까지 넣고
+# 같은 필지 · 같은 규칙 겹침은 한 번만 센다(once_sql). 요약표(survey_sgg · survey_emd)와 목록이 같은 값.
+LEDGER_RULE_IDS = sorted(p.stem for p in RULES_DIR.glob("L*.yaml"))
+COUNT_RULE_IDS = RULE_IDS + LEDGER_RULE_IDS
 
 
 def once_sql(a: str = "survey_findings") -> str:

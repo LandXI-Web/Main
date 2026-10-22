@@ -1,0 +1,4 @@
+#!/bin/sh
+# 커밋 전 비밀값 검사(10-22 now21 저장보안-제안-비밀값검사) — tools/check/secrets.mjs 가 올리려는 줄에서 비밀번호 · 열쇠를 찾으면 커밋을 멈춘다.
+# 이 고리를 쓰려면 한 번: git config core.hooksPath .githooks
+exec node "$(git rev-parse --show-toplevel)/tools/check/secrets.mjs" --staged

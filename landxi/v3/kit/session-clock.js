@@ -42,6 +42,7 @@ export function mountClock(el) {
   el.addEventListener('click', extend);
   el.title = '누르면 로그인 시간을 연장합니다';
   api('/auth/session').then((j) => { if (j?.expires_at) save(j.expires_at); }).catch(() => {});
+  addEventListener('lx:session-extended', (e) => { if (e.detail?.expires_at) { exp = new Date(e.detail.expires_at).getTime(); warned = exp - Date.now() <= WARN_MS; paint(); } });   // 올리는 동안 연장(kit/dropzone.js)
   addEventListener('storage', (e) => { if (e.key === session.key) { const s = session.get(); if (s) { exp = new Date(s.expires_at).getTime(); warned = exp - Date.now() <= WARN_MS; paint(); } } });   // 다른 탭에서 연장
   const tick = () => {
     const ms = exp - Date.now();

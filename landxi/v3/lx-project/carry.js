@@ -75,20 +75,30 @@ export async function resumeCarry(host, pr, { onDone } = {}) {
         say(`영상 파일 올리는 중 · ${i}/${n}`, pctOf());
         const st = await api(BASE, { method: 'POST', body: { draft_id: rec.draft || undefined, filename: f.name, size: f.size } });
         if (st.draft_id && st.draft_id !== rec.draft) { rec.draft = st.draft_id; await save(rec); }
-        let at = st.bytes || 0, chunk = Math.min(st.chunk?.max?.size || 8 * 1048576, st.chunk?.size || 1048576), fails = 0;
+        const maxC = st.chunk?.max?.size || 8 * 1048576;
+        let at = st.bytes || 0, chunk = Math.min(maxC, st.chunk?.size || 1048576), fails = 0, failSince = 0;
         sent += at;
         while (at < f.size) {
           const end = Math.min(f.size, at + chunk);
           let r = null, j = null;
+          const ts = performance.now();
           try {
             r = await fetch(API.prefix + `${BASE}/${encodeURIComponent(st.id)}?offset=${at}`, { method: 'PUT', body: f.file.slice(at, end),
               headers: { 'content-type': 'application/octet-stream', ...(tok() ? { authorization: 'Bearer ' + tok() } : {}) } });
             j = await r.json().catch(() => null);
           } catch { r = null; }
-          if (r && r.ok && j) { sent += j.bytes - at; at = j.bytes; fails = 0; }
+          if (r && r.ok && j) {                                    // 다음 조각 ≈ 30초 분량(kit/dropzone.js 와 같은 규칙)
+            const sec = Math.max(0.2, (performance.now() - ts) / 1000);
+            chunk = Math.max(256 * 1024, Math.min(maxC, Math.round(((j.bytes - at) / sec) * 30)));
+            sent += j.bytes - at; at = j.bytes; fails = 0; failSince = 0;
+          }
           else if (r && r.status === 409 && j?.error?.detail?.bytes != null) { sent += j.error.detail.bytes - at; at = j.error.detail.bytes; }
-          else if (r && [400, 401, 403, 404, 413].includes(r.status)) throw Object.assign(new Error(j?.error?.message || '올리지 못했습니다'), { hard: true });
-          else { if (++fails > 5) throw new Error('연결이 여러 번 끊겼습니다'); await sleep(1500 * fails); }
+          else if (r && [400, 401, 403, 404, 409, 413].includes(r.status)) throw Object.assign(new Error(j?.error?.message || '올리지 못했습니다'), { hard: true });
+          else {                                                   // 끊기면 저절로 다시 잇는다 — 30분 넘게 안 되면 멈춤('다시 시도')
+            fails++; failSince ||= Date.now(); chunk = Math.max(256 * 1024, Math.round(chunk / 2));
+            if (Date.now() - failSince > 30 * 60 * 1000) throw new Error('연결이 30분 넘게 끊겼습니다');
+            await sleep(Math.min(30000, 1500 * 2 ** Math.min(fails - 1, 5)));
+          }
           say(`영상 파일 올리는 중 · ${i}/${n}`, pctOf());
         }
         await api(`${BASE}/${encodeURIComponent(st.id)}/finish`, { method: 'POST', body: {} });

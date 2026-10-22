@@ -76,6 +76,12 @@ function drawOverview() {
   if (D.restAt) {                                  // 경보 · GPU 는 뒤에서 오는 값 — 오기 전에는 줄을 만들지 않는다(값을 지어내지 않게)
     const al = openAlerts();
     rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
+    /* 남은 디스크 50GB 아래(10-22 now21 제안-디스크알림) — 디스크마다 한 줄 · 경보 규칙 disk_*_free_lt_50gb 한 출처 */
+    for (const a of al.filter((x) => /^disk_[a-z]_free_lt_50gb$/.test(x.rule))) {
+      const dv = a.rule.split('_')[1].toUpperCase(), gb = Math.max(0, Math.floor(Number(a.value?.value ?? a.value) || 0));
+      rows.push({ t: `저장 공간 부족 · ${dv}: 남은 ${gb}GB`, lv: 'warn', dot: 'lock', href: INFRA });
+    }
+    if (dbLine) rows.push(dbLine);                 // DB 상태 한 줄(now21 저장보안-제안-DB상태) — GET /ops/db-status 한 출처
     const p = power();
     rows.push(equipRow(p));                        // 학습 장비 줄(원칙 270 · 두 장 사용 시험 — 안전 감시가 한 장으로 돌리면 까닭 · 시각)
     const ms = D.gpus?.measure_stale;               // 장비 측정(GPU · 저장 폴러)이 멈췄거나 값이 오래됨 — 정상이면 줄 없음(바퀴 17 결정 · GET /ops/gpus 한 출처)
@@ -90,6 +96,21 @@ function drawOverview() {
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();
 }
+
+/* DB 상태 — 백업 시각 · 되살리기 시험 · 느린 질의(있을 때만). 백업이 30시간 넘었거나 실패 · 시험 실패면 주의 */
+let dbLine = null;
+async function drawDb() {
+  let j;
+  try { j = await api('/ops/db-status'); } catch { return; }
+  const at = new Date(j.backup?.at || '');
+  const when = Number.isNaN(+at) ? '백업 기록 없음' : `백업 ${at.getMonth() + 1}.${at.getDate()} ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+  const rt = j.restore_test?.ok === true ? '되살리기 시험 통과' : j.restore_test?.ok === false ? '되살리기 시험 실패' : '';
+  const slow = Number(j.slow_queries?.value) || 0;
+  dbLine = { t: ['DB', when, rt, slow ? `느린 질의 ${slow}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', href: INFRA };
+  drawOverview();
+}
+drawDb();
+setInterval(drawDb, 300000);
 
 /* 학습 장비 줄 — GET /ops/gpus power_budget(.pair) 한 출처. 두 장 사용(시험) · 한 장으로 돌아감(까닭 · 시각) · 한 장 사용 */
 const PAIR_WHY = { sum_w: '두 장 합 전력 높음', temp: '온도 높음', driver: '장비 응답 오류' };

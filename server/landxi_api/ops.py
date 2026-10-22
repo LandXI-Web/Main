@@ -746,6 +746,41 @@ async def unload(mid: str, body: dict, request: Request):
 BACKUP_STATUS = config.DATA_ROOT / "_backup" / "db" / "status.json"
 
 
+@router.get("/ops/db-status")
+async def db_status(request: Request):
+    """LX 관리자 대시보드 'DB 상태' 한 줄(10-22 now21 저장보안-제안-DB상태 채택) — 백업 시각 · 되살리기 시험 · 느린 질의 · 디스크로 넘친 계산.
+    값은 백업 상태 파일(server/ops/db_backup.py)과 DB 통계(pg_stat_database · pg_stat_statements)에서만. 화면은 업무 말 한 줄만 쓴다."""
+    require(principal(request), admin=True)
+    try:
+        st = json.loads(BACKUP_STATUS.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        st = {}
+    bk = _backup_status()
+    rt = st.get("restore_test") or {}
+    slow = spill = hit = None
+    async with db(realm="lx") as conn:
+        try:
+            row = await conn.fetchrow("SELECT temp_bytes, blks_hit, blks_read, stats_reset FROM pg_stat_database WHERE datname = current_database()")
+            spill = round(float(row["temp_bytes"] or 0) / 1e9, 1)
+            tot = float(row["blks_hit"] or 0) + float(row["blks_read"] or 0)
+            hit = round(100 * float(row["blks_hit"] or 0) / tot, 1) if tot else None
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            slow = int(await conn.fetchval("SELECT count(*) FROM pg_stat_statements WHERE mean_exec_time > 1000"))
+        except Exception:  # noqa: BLE001 — 질의 기록 장치가 아직 없는 DB
+            slow = None
+    ok = bool(bk) and not bk["failed"] and bk["age_h"] <= 30
+    return {"ok": ok and rt.get("ok") is not False,
+            "backup": {"ok": bool(st.get("ok")), "at": st.get("last_ok_at"), "age_h": env(bk["age_h"] if bk else None, "h", "measured", "DB 백업 상태 파일(마지막 성공 뒤)"),
+                       "size": env(st.get("size_mb"), "MB", "measured", "DB 백업 상태 파일")},
+            "restore_test": {"ok": rt.get("ok"), "at": rt.get("at")},
+            "slow_queries": env(slow, "count", "measured", "pg_stat_statements(평균 1초 넘는 질의 종류)"),
+            "temp_spill": env(spill, "GB", "measured", "pg_stat_database temp_bytes(통계 초기화 뒤)"),
+            "cache_hit": env(hit, "%", "measured", "pg_stat_database blks_hit"),
+            "as_of": now_iso()}
+
+
 def _backup_status() -> dict | None:
     """DB 백업 상태 파일 → {failed: 0|1, age_h: 마지막 성공 뒤 시간}. 백업을 한 번도 안 돌린 곳(파일 없음)은 None(경보 없음)."""
     try:
@@ -796,6 +831,9 @@ async def evaluate_alerts_once():
     fc, _ = await run_in_threadpool(_statfs, "C:")       # C: 가 차면 Docker(데이터베이스 · Redis · vLLM)가 멈춘다(10-19 09:12 실측)
     if fc is not None:
         metrics.setdefault("storage.C.free_gb", []).append((config.NODE_ID, None, fc))
+    fd, _ = await run_in_threadpool(_statfs, "D:")       # D: (전국 영상 원본 등 · 10-22 96%) — 50GB 아래 알림(now21 제안-디스크알림)
+    if fd is not None:
+        metrics.setdefault("storage.D.free_gb", []).append((config.NODE_ID, None, fd))
     bk = _backup_status()                                 # 매일 DB 백업(server/ops/db_backup.py · 6-2) — 실패 · 30시간 넘게 성공 없음
     if bk is not None:
         metrics.setdefault("backup.db.failed", []).append((config.NODE_ID, None, bk["failed"]))

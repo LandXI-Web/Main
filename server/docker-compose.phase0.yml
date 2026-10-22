@@ -12,7 +12,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: landxi-redis
-    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    # 작업 대기열 비밀번호(10-22 now21 저장보안-제안-대기열비번 채택) — 값은 server/.env REDIS_PASSWORD 에만. 앱 · 작업기는 REDIS_URL(비밀번호 포함)로 붙는다
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000", "--requirepass", "${REDIS_PASSWORD:?server/.env 에 REDIS_PASSWORD 를 넣으세요}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?server/.env 에 REDIS_PASSWORD 를 넣으세요}
     ports: ["127.0.0.1:6380:6379"]   # 이 PC 안에서만(SECRET-FIX 10-22) — 같은 망 다른 PC 에서 작업 대기열로 바로 들어오지 못하게
     logging: *logging
     volumes: ["landxi-redis:/data"]

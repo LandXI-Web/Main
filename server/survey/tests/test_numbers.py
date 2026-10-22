@@ -71,7 +71,7 @@ def test_one_source_everywhere(api, request, sgg, hname, pg):
     for by in ("rule", "priority", "state"):
         j = _get(api, f"/survey/stats?by={by}&sgg={sgg}", h)
         assert j["total"]["value"] == ref["suspect"]
-        assert sum(i["n"]["value"] for i in j["items"] if not str(i["key"]).startswith("L")) == ref["suspect"], by
+        assert sum(i["n"]["value"] for i in j["items"]) == ref["suspect"], by      # 대장 대조(L-*) 칸까지 합 = 합계(10-22 현장확인숫자 ⓐ)
     # 카드 항목 = 그 카드 판의 값(모델-표기 ⓐ · 카드마다 따로) — 같은 식(counts_sync card=)으로 낸 값과 같다
     sm = _get(api, f"/summary?region={sgg}", h)
     got = [it for it in sm["items"] if (it["metrics"].get("suspect") or {}).get("value") is not None]

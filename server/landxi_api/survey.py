@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from survey import explain as X  # noqa: E402
 from survey import rules as RL  # noqa: E402
 from survey import nation as NT  # noqa: E402
-from survey.db import AS_OF, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, STATES, once_sql  # noqa: E402
+from survey.db import AS_OF, COUNT_RULE_IDS, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, STATES, once_sql  # noqa: E402
 
 router = APIRouter()
 
@@ -464,8 +464,8 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
     sg = sgg_codes(sgg or region)
     fw = " WHERE sgg_cd = ANY($1::text[])" if sg else ""        # survey_emd 공통
     fa = [sg] if sg else []
-    rw = (" AND " if sg else " WHERE ") + f"rule = ANY(${len(fa) + 1}::text[])"      # survey_findings: R1–R6 만
-    ra = fa + [list(RULE_IDS)]
+    rw = (" AND " if sg else " WHERE ") + f"rule = ANY(${len(fa) + 1}::text[])"      # survey_findings: R1–R6 + 대장 대조 L-*(10-22 현장확인숫자 ⓐ)
+    ra = fa + [list(COUNT_RULE_IDS)]
     if not card:
         rw += " AND " + once_sql()                 # 지역 숫자 = 같은 필지 · 같은 규칙 한 번(바퀴 16 · survey_counts 와 같은 식)
     if card:                                       # 그 서비스의 필지 대조 행만(카드 숫자 · 서비스 대시보드와 같은 범위 · 모델-표기 ⓐ)
@@ -506,7 +506,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
                                   "area_ha": X.env(e["area_ha"], "ha", "measured", SRC_SUMMARY),
                                   "n": E(a["n"]), "suspect_parcels": X.env(int(e["suspect_parcels"] or 0), "필지", "inferred", "survey_emd(적재 검증 = 요약 json)", "검수 전"),
                                   "field_check": X.env(fcm.get(e["emd_cd"], 0), "필지", "inferred", NT.FIELD_SRC, "현장 확인 전"),
-                                  "by_rule": {r: E(a["rule"].get(r, 0)) for r in RULE_IDS},
+                                  "by_rule": {r: E(a["rule"].get(r, 0)) for r in COUNT_RULE_IDS},
                                   "by_priority": {k: E(a["prio"].get(k, 0)) for k in "ABC"},
                                   "by_state": {s: X.env(int(a["state"].get(s, 0)), "count", "recorded", "survey_findings.state") for s in STATES},
                                   "top5": [{"pnu": t["pnu"], "rule": t["rule"], "priority": t["priority"], "addr": RG.full_label(t["addr"]),
@@ -533,14 +533,15 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
                 items = [{"key": rid, "name": defs[rid]["name"], "condition": RL.condition_text(rid),
                           "n": E(sum(a.get(rid, {}).values())), "by_priority": {k: E(a.get(rid, {}).get(k, 0)) for k in "ABC"},
                           "note": defs[rid].get("note")} for rid in RULE_IDS]
-                lrows = await conn.fetch(f"SELECT rule, priority, count(*) n FROM survey_findings WHERE rule LIKE 'L%'{' AND sgg_cd = ANY($1::text[])' if sg else ''} GROUP BY 1,2", *fa)
+                lrows = await conn.fetch(f"SELECT rule, priority, count(*) n FROM survey_findings WHERE rule LIKE 'L%'{' AND sgg_cd = ANY($1::text[])' if sg else ''} "
+                                         f"AND {once_sql()} GROUP BY 1,2", *fa)
                 la: dict = {}
                 for r in lrows:
                     la.setdefault(r["rule"], {})[r["priority"]] = r["n"]
                 lsrc = "대장 규칙 L-* · 검수 전"
                 for rid, d in LG.ledger_rules().items():
                     items.append({"key": rid, "name": d["name"], "condition": LG.condition_text(d), "requires": d.get("requires") or [],
-                                  "n": X.env(int(sum(la.get(rid, {}).values())), "count", "inferred", lsrc, "검수 전 · 의심 필지 합계에 넣지 않음"),
+                                  "n": X.env(int(sum(la.get(rid, {}).values())), "count", "inferred", lsrc, "검수 전"),
                                   "by_priority": {k: X.env(int(la.get(rid, {}).get(k, 0)), "count", "inferred", lsrc, "검수 전") for k in "ABC"},
                                   "note": d.get("note")})
             elif by == "priority":

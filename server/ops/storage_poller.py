@@ -150,7 +150,7 @@ def main():
     ap.add_argument("--interval", type=float, default=60.0)
     ap.add_argument("--root", default=DATA_ROOT)
     ap.add_argument("--mounts", default="E:,D:,C:")
-    ap.add_argument("--redis", default=os.environ.get("LX_REDIS_URL", "redis://127.0.0.1:6380"))
+    ap.add_argument("--redis", default=gpu_poller.redis_url_default())
     ap.add_argument("--stdout", action="store_true")
     ap.add_argument("--once", action="store_true")
     a = ap.parse_args()

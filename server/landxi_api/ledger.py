@@ -1385,7 +1385,37 @@ async def _ai_operands(conn, pnus: list[str], sgg: str, job: str) -> dict | None
     return out or None
 
 
+async def _import_sggs(iid: str) -> list[str]:
+    async with db(realm="lx") as conn:
+        return [r[0] for r in await conn.fetch("SELECT DISTINCT substr(pnu,1,5) FROM registry_snapshots WHERE import_id=$1 AND pnu IS NOT NULL", iid)]
+
+
+async def refresh_region_counts(sggs) -> None:
+    """대장 대조 건이 바뀐 시군구의 요약표(시군구 · 읍면동)를 다시 센다 — 지역 숫자에 대장 대조 건이 들어가므로(10-22 현장확인숫자 ⓐ)."""
+    cs = sorted({str(x)[:5] for x in sggs or [] if x})
+    if not cs:
+        return
+    try:
+        import sys
+        sys.path.insert(0, str(config.SERVER_ROOT))
+        from survey import nation as NT
+        async with db(realm="lx") as conn:
+            have = [r[0] for r in await conn.fetch("SELECT sgg_cd FROM survey_sgg WHERE sgg_cd = ANY($1::text[]) AND state='done'", cs)]
+        if have:
+            await run_in_threadpool(NT.refresh_counts_all, have)
+        from .regions import _derived
+        _derived["t"] = 0
+    except Exception:  # noqa: BLE001 — 요약표는 다음 적재 때 다시 센다
+        pass
+
+
 async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | None = None, th_override: dict | None = None) -> dict:
+    out = await _evaluate_rules(tenant, iid, kind, rules, th_override)
+    await refresh_region_counts(await _import_sggs(iid))
+    return out
+
+
+async def _evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | None = None, th_override: dict | None = None) -> dict:
     """규칙 L-*(requires ⊂ 이 기관의 최신 대장) → survey_findings(rule L*, import_id). 대장 없으면 skipped(의심 0 · 정직).
     필지 AI 값 = ai_parcels(대장이 가리키는 시군구의 survey_parcel_ai) — AI 가 없는 필지는 판정하지 않고 ai.has=false 로 알린다."""
     defs = ledger_rules()
@@ -1530,6 +1560,7 @@ async def delete_import(tenant: str, import_id: str, request: Request):
     """반입 철회 — 이 반입의 대장 행 · 사람이 손대지 않은(open · demo 아님) 규칙 L-* 의심을 지운다. 판정·조치가 붙은 의심은 남긴다(기록 보존)."""
     p = _gate(principal(request), tenant, write=True)
     r = await _get_import(p, tenant, import_id)
+    touched = await _import_sggs(import_id)
     async with db(realm="lx") as conn:
         nf = await conn.fetchval("WITH d AS (DELETE FROM survey_findings WHERE import_id=$1 AND state='open' AND NOT demo "
                                  "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL) RETURNING 1) SELECT count(*) FROM d", import_id)
@@ -1553,6 +1584,7 @@ async def delete_import(tenant: str, import_id: str, request: Request):
         await audit(conn, p, "ledger.delete", import_id, {"rows": r["rows"]}, {"findings_removed": int(nf), "rows_removed": int(ns), "restored": back})
     if back:                                     # 최신 반입을 지우면 이전 최신 반입의 의심을 다시 판정(대장 행은 남아 있다)
         await evaluate_rules(tenant, back, r["kind"])          # 수는 survey_findings 실시간 집계라 stats 갱신 불필요
+    await refresh_region_counts(touched)
     _tmp_path(import_id).unlink(missing_ok=True)
     try:
         from .regions import _derived

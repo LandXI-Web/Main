@@ -1,0 +1,15 @@
+# 보관 기한 정리(10-22 now21 인프라-취소실패정리 ⓐ · 저장보안-제안-접속주소90일 채택) — 값은 여기 한 곳(server/landxi_api/retention.py).
+# CPU 작업기(cpu-0)가 하루 한 번 돈다. 지운 수는 감사 기록 'retention.purge' 한 줄.
+
+# 취소 · 실패한 분석 작업의 결과 파일 · DB 결과 줄 — 끝난 지 이 날 수가 지나면(작업 기록 줄은 남김 · 서비스 결과 · 공개 판 · 배포본이 가리키면 건드리지 않음)
+failed_cancelled_days: 30
+
+# 지난 학습 묶음의 그림 · 라벨(images/ · labels/)만 — 마지막으로 바뀐 지 이 날 수가 지나면(설명 · 기록 · 가중치는 남김 · 사람이 올린 학습 표본은 대상 아님)
+training_bundle_days: 30
+training_roots: [training/retrain, training/retrain-auto, training/farm-v2, training/xi-tiles]
+
+# 로그인 실패 기록(접속 주소 포함) — 이 날 수가 지난 줄은 지운다(개인정보 보관 기한)
+login_ip_days: 90
+
+# true = 대상만 세고 지우지 않는다
+dry_run: false

@@ -71,10 +71,9 @@ layers:
      layer: landcover, promote_id: id, name: {ko: 남원 토지피복 4클래스 2023(AI 재추론), en: Namwon land cover 2023 (AI)},
      export_policy: public, security_review: cleared, license: LX 산출(검수 전), attribution: C01 2023 25cm × aerial25/best · 검수 전,
      basis: inferred, ladder: {stage: domestic, from: 10, to: 17, order: 500}, count_unit: polygons}
-  # now 질문(공개 / 남원만) 답 기다림 — '남원만'이면 바로 아래 줄의 export_policy: public 을 export_policy: tenant 로 한 줄만 바꾼다
-  # (서명 필요 · 기관은 이 세트를 배포받은 남원만 · 공개 첫 화면 public-deploys 의 이 결과는 함께 점검)
+  # now21 '남원농지공개' ⓐ 남원만(10-22 사용자 확인) — 공개 → tenant(서명 필요 · 기관은 이 세트를 배포받은 남원만)
   - {id: namwon-farmland-2025, set: results/lx/namwon-farmland-2025, manifest: namwon-farmland-2025.pmtiles, kind: vector, role: result,
-     layer: namwon_farmland_2025, promote_id: id, name: {ko: 남원 농경지 2025, en: Namwon farmland 2025}, export_policy: public, security_review: cleared,
+     layer: namwon_farmland_2025, promote_id: id, name: {ko: 남원 농경지 2025, en: Namwon farmland 2025}, export_policy: tenant, security_review: cleared,
      license: LX 산출, attribution: A02 2025 드론 AI 판독, basis: inferred, ladder: {stage: domestic, from: 10, to: 16, order: 510}, count_unit: 필지}
   - {id: namwon-greenhouse-2025, set: results/lx/namwon-greenhouse-2025, manifest: namwon-greenhouse-2025.pmtiles, kind: vector, role: result,
      layer: namwon_greenhouse_2025, promote_id: id, name: {ko: 남원 비닐하우스 2025, en: Namwon greenhouses 2025}, export_policy: public, security_review: cleared,

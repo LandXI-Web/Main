@@ -74,6 +74,7 @@ def settings() -> dict:
     s = dict(config.load_yaml("requests") or {})
     s.setdefault("storage_root", "tenants/{tenant}/requests")
     s.setdefault("max_file_gb", 20)
+    s.setdefault("lx_max_file_gb", 2000)
     s.setdefault("chunk_mb", {"start": 1, "max": 8})
     s.setdefault("disk_reserve_gb", 200)
     s.setdefault("partial_ttl_days", 7)
@@ -94,8 +95,10 @@ def _chunk() -> tuple[int, int]:
     return int(float(c.get("start", 1)) * (1 << 20)), int(float(c.get("max", 8)) * (1 << 20))
 
 
-def _max_file() -> int:
-    return int(float(settings()["max_file_gb"]) * 1e9)
+def _max_file(lx: bool = False) -> int:
+    """한 파일 한도 — 기관 분석 요청(max_file_gb) · LX 영상 등록(lx_max_file_gb · 드론 정사영상 원본 수백 GB · 10-22 대용량 올리기 시험)."""
+    s = settings()
+    return int(float(s["lx_max_file_gb"] if lx else s["max_file_gb"]) * 1e9)
 
 
 def _ext(name: str) -> str:
@@ -357,6 +360,39 @@ def _path(r) -> Path:
     return config.DATA_ROOT / r["rel_path"]
 
 
+class _xlock:
+    """프로세스 사이 잠금(받는 중인 파일 옆 .lock — 프로세스가 죽으면 저절로 풀린다)."""
+    def __init__(self, f: Path):
+        self.p = Path(str(f) + ".lock")
+        self.fh = None
+
+    def __enter__(self):
+        self.fh = open(self.p, "a+b")
+        if os.name == "nt":
+            import msvcrt
+            for _ in range(120):
+                try:
+                    self.fh.seek(0)
+                    msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
+                    return self
+                except OSError:
+                    time.sleep(0.5)
+            raise ApiError("conflict", "같은 파일을 다른 곳에서 올리는 중입니다", None, 409)
+        import fcntl
+        fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *a):
+        try:
+            if os.name == "nt":
+                import msvcrt
+                self.fh.seek(0)
+                msvcrt.locking(self.fh.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        self.fh.close()
+
+
 def _part(r) -> Path:
     return config.DATA_ROOT / (r["rel_path"] + ".part")
 
@@ -371,9 +407,10 @@ def _received(r) -> int:
 
 def _up_view(r, have: int | None = None) -> dict:
     start, mx = _chunk()
+    lx = r["tenant_id"] == LX_OWNER
     return {"id": r["id"], "draft_id": r["draft_id"], "filename": r["filename"], "size": int(r["size"]),
             "bytes": _received(r) if have is None else have, "state": r["state"],
-            "chunk": {"size": start, "max": {"size": mx}}, "limit": {"size": _max_file()}, "as_of": now_iso()}
+            "chunk": {"size": start, "max": {"size": mx}}, "limit": {"size": _max_file(lx)}, "as_of": now_iso()}
 
 
 def _rm(*paths: Path) -> bool:
@@ -418,7 +455,7 @@ async def _sweep(tenant: str, force: bool = False):
         rows = await conn.fetch("SELECT * FROM request_uploads WHERE tenant_id=$1 AND request_id IS NULL AND state IN ('uploading','done') "
                                 "AND updated_at < now() - make_interval(secs => $2)", tenant, ttl)
         for r in rows:
-            if not _rm(_path(r), _part(r)):
+            if not _rm(_path(r), _part(r), Path(str(_part(r)) + ".lock")):
                 continue                                   # 열려 있는 파일 — 다음 정리 때
             await conn.execute("UPDATE request_uploads SET state='removed', updated_at=now() WHERE id=$1", r["id"])
             gone.append(r["id"])
@@ -495,10 +532,10 @@ async def start_upload(w: Who, body: dict) -> dict:
         size = 0
     if size <= 0:
         raise ApiError("bad_request", "빈 파일입니다")
-    if size > _max_file():
+    if size > _max_file(w.lx):
         more = "" if w.lx else " — 더 큰 영상은 LX 담당자와 협의해 주세요"
-        raise ApiError("too_large", f"한 파일은 {_gb(_max_file() / 1e9)}까지 올릴 수 있습니다{more}",
-                       {"size": size, "limit": _max_file()}, 413)
+        raise ApiError("too_large", f"한 파일은 {_gb(_max_file(w.lx) / 1e9)}까지 올릴 수 있습니다{more}",
+                       {"size": size, "limit": _max_file(w.lx)}, 413)
     quick = str(body.get("quick_fp") or "").strip().lower()[:64] or None
     if quick and not re.fullmatch(r"[0-9a-f]{64}", quick):
         quick = None
@@ -517,6 +554,8 @@ async def start_upload(w: Who, body: dict) -> dict:
                                 "AND (draft_id=$5 OR ($6::text IS NOT NULL AND quick_fp=$6)) ORDER BY created_at DESC LIMIT 1",
                                 w.owner, p.user_id, name, size, did, quick)
         if r and _part(r).exists():
+            if r["draft_id"] != did and did == str(body.get("draft_id") or ""):
+                r = await _move_to_draft(conn, r, w, did)      # 창을 다시 열고 다른 파일과 함께 고른 경우 — 받은 조각을 지금 묶음으로 옮겨 함께 등록되게
             return _up_view(r)
         dup = await _find_dup(conn, w.owner, did, size, quick, None)
         if dup:
@@ -545,6 +584,24 @@ async def start_upload(w: Who, body: dict) -> dict:
     return _up_view(r, 0)
 
 
+async def _move_to_draft(conn, r, w: Who, did: str):
+    """이어 올리기 중인 파일을 지금 묶음(did)으로 옮긴다 — 같은 디스크 안 이름 바꾸기(받은 조각 그대로)."""
+    folder = config.DATA_ROOT / w.root / "drafts" / did
+    folder.mkdir(parents=True, exist_ok=True)
+    fn, i, name = r["filename"], 1, r["filename"]
+    while (folder / fn).exists() or (folder / (fn + ".part")).exists():
+        i += 1
+        stem, dot, tail = name.partition(".")
+        fn = f"{stem}_{i}{dot}{tail}"
+    rel = f"{w.root}/drafts/{did}/{fn}"
+    try:
+        _part(r).replace(config.DATA_ROOT / (rel + ".part"))
+    except OSError:
+        return r                                           # 옮기지 못하면 원래 묶음에서 이어 간다
+    return await conn.fetchrow("UPDATE request_uploads SET draft_id=$2, rel_path=$3, filename=$4, updated_at=now() WHERE id=$1 RETURNING *",
+                               r["id"], did, rel, fn)
+
+
 def _act(w: Who, what: str) -> str:
     """감사 기록 이름 — 기관 의뢰 'request.…' · LX 영상 등록 'imagery.…'"""
     return ("imagery." if w.lx else "request.") + what
@@ -557,7 +614,7 @@ async def up_formats(request: Request):
     p = require(principal(request))
     s = settings()
     un = await run_in_threadpool(STD.unavailable, bool(p.is_lx))
-    return {"raster": s["raster_ext"], "sidecar": s["sidecar_ext"], "unavailable": un, "limit": {"size": _max_file()}, "as_of": now_iso()}
+    return {"raster": s["raster_ext"], "sidecar": s["sidecar_ext"], "unavailable": un, "limit": {"size": _max_file(bool(p.is_lx))}, "as_of": now_iso()}
 
 
 @router.get("/requests/uploads/{uid}")
@@ -594,10 +651,18 @@ async def put_chunk(w: Who, uid: str, request: Request, offset: int = 0) -> dict
         if have + len(data) > int(r["size"]):
             raise ApiError("bad_request", "올린 크기가 파일 크기보다 큽니다", {"bytes": have, "size": int(r["size"])})
 
-        def write():
-            with open(f, "ab") as fh:
-                fh.write(data)
-        await run_in_threadpool(write)
+        def write() -> int:
+            # 게이트웨이는 프로세스 여럿 — 끊긴 뒤 다시 보낸 같은 조각이 다른 프로세스에서 동시에 붙지 않게 파일 잠금 안에서 자리를 다시 보고 붙인다
+            with _xlock(f):
+                now = f.stat().st_size
+                if now != offset:
+                    return now
+                with open(f, "ab") as fh:
+                    fh.write(data)
+                return -1
+        moved = await run_in_threadpool(write)
+        if moved >= 0:
+            raise ApiError("conflict", "이어 올릴 자리가 다릅니다", {"bytes": moved, "size": int(r["size"])}, 409)
         st = _sha.get(uid)
         if st and st[0] == have:
             st[1].update(data)
@@ -621,9 +686,13 @@ async def cancel_upload(w: Who, uid: str) -> dict:
         if r["request_id"]:
             raise ApiError("conflict", "등록한 영상의 파일은 지울 수 없습니다" if w.lx else "분석 요청에 쓰인 파일은 지울 수 없습니다", None, 409)
         if r["state"] in ("uploading", "done"):
-            _rm(_part(r), _path(r))
+            _rm(_part(r), _path(r), Path(str(_part(r)) + ".lock"))
             await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE id=$1", uid)
             await audit(conn, w.p, _act(w, "upload.cancel"), uid, None, {"draft_id": r["draft_id"]})
+            try:                                           # 묶음에 남은 파일이 없으면 빈 묶음 폴더도 지운다
+                _part(r).parent.rmdir()
+            except OSError:
+                pass
     await run_in_threadpool(_drop_std, [uid])
     _sha.pop(uid, None)
     from .quota import invalidate_storage
@@ -639,6 +708,15 @@ def _quick_fp(path: Path, size: int) -> str:
             f.seek(size - QUICK)
             h.update(f.read(QUICK))
     return h.hexdigest()
+
+
+async def _sha_later(uid: str, dest: Path) -> None:
+    try:
+        sha = await run_in_threadpool(_sha_file, dest)
+        async with db(realm="lx") as conn:
+            await conn.execute("UPDATE request_uploads SET sha256=$2 WHERE id=$1 AND sha256 IS NULL", uid, sha)
+    except Exception:  # noqa: BLE001 — 파일이 지워졌거나 열려 있음: 지문 없이 둔다(같은 파일 검사는 빠른 지문)
+        pass
 
 
 def _sha_file(path: Path) -> str:
@@ -666,9 +744,22 @@ async def finish_upload(w: Who, uid: str) -> dict:
             raise ApiError("conflict", "아직 다 올라가지 않았습니다", {"bytes": have, "size": int(r["size"])}, 409)
         dest = _path(r)
         f.replace(dest)
+        _rm(Path(str(f) + ".lock"))
         st = _sha.pop(uid, None)
-        sha = st[1].hexdigest() if st and st[0] == have else await run_in_threadpool(_sha_file, dest)
         quick = await run_in_threadpool(_quick_fp, dest, have)
+        if not (st and st[0] == have) and have > float(settings().get("finish_sha_inline_gb", 4)) * 1e9:
+            # 게이트웨이가 올리는 사이 다시 떠서 이어 쓰던 지문이 없다 — 수백 GB 를 이 요청 안에서 다시 읽으면 바깥 주소 한도(100초)를 넘는다.
+            # 같은 파일 검사는 시작할 때 빠른 지문으로 이미 했다 → 끝으로 두고 전체 지문은 뒤에서 잰다.
+            async with db(realm="lx") as conn:
+                r = await conn.fetchrow("UPDATE request_uploads SET state='done', quick_fp=$2, done_at=now(), updated_at=now() WHERE id=$1 RETURNING *",
+                                        uid, quick)
+                await audit(conn, w.p, _act(w, "upload.done"), uid, None, {"draft_id": r["draft_id"], "size": have, "sha": "later"})
+            _locks.pop(uid, None)
+            asyncio.get_running_loop().create_task(_sha_later(uid, dest))
+            from .quota import invalidate_storage
+            invalidate_storage(w.owner)
+            return _up_view(r, have)
+        sha = st[1].hexdigest() if st and st[0] == have else await run_in_threadpool(_sha_file, dest)
         async with db(realm="lx") as conn:
             dup = await _find_dup(conn, w.owner, r["draft_id"], have, None, sha, uid)
             if dup:
@@ -703,7 +794,7 @@ async def delete_draft(w: Who, did: str) -> dict:
         if any(r["request_id"] for r in rows):
             raise ApiError("conflict", "이미 등록한 묶음입니다" if w.lx else "이미 요청한 묶음입니다", None, 409)
         for r in rows:
-            _rm(_part(r), _path(r))
+            _rm(_part(r), _path(r), Path(str(_part(r)) + ".lock"))
         await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE draft_id=$1 AND state IN ('uploading','done')", did)
         await audit(conn, w.p, _act(w, "draft.delete"), did, None, {"files": len(rows)})
     await run_in_threadpool(_drop_std, [r["id"] for r in rows])

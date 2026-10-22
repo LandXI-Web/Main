@@ -276,13 +276,16 @@ async def _tile(asset: str, year: int, z: int, x: int, y: int, test: bool) -> by
             parts.append(b or b"")
         if z <= 10:
             lvl = 0 if z <= 7 else 1
+            # 1px 보다 작은 도형은 낮은 확대에서 뺀다(10-22 now21 인프라-전국조각보관 ⓐ) — 화면 한 점(1px × 1px)보다 넓이가 작은 면은 그려도 보이지 않는데
+            # 조각 크기만 키운다(z6 한 장 855KB 의 대부분). 기준 넓이 = (그 확대의 1px 길이)² · 웹 메르카토르 넓이(화면과 같은 투영).
             b = await conn.fetchval(
-                f"WITH t AS (SELECT {env3857} AS e), q AS ("
-                " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(ST_Transform(f.geom, 3857), $7), t.e, 4096, 16, true) AS g, f.cls "
+                f"WITH t AS (SELECT {env3857} AS e), s AS ("
+                " SELECT ST_Transform(f.geom, 3857) AS g3, f.cls "
                 " FROM national_faces f, t WHERE f.asset=$4 AND f.year=$5 AND f.lvl=$8 AND f.geom && ST_Transform(t.e, 4326) "
                 " AND (EXISTS (SELECT 1 FROM national_cells c WHERE c.asset=f.asset AND c.year=f.year AND c.cell_cd=f.cell_cd AND c.state='done' AND NOT c.test) "
-                "      OR ($6 AND f.cell_cd LIKE 'test:%%'))) "
-                "SELECT ST_AsMVT(q, 'faces', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, asset, year, test, tol * 0.5, lvl)
+                "      OR ($6 AND f.cell_cd LIKE 'test:%%'))), q AS ("
+                " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(s.g3, $7), t.e, 4096, 16, true) AS g, s.cls FROM s, t WHERE ST_Area(s.g3) >= $9) "
+                "SELECT ST_AsMVT(q, 'faces', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, asset, year, test, tol * 0.5, lvl, (PX / (2 ** z)) ** 2)
             parts.append(b or b"")
     return b"".join(parts)
 

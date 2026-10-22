@@ -15,7 +15,7 @@ import datetime as dt
 import re
 
 from . import rules as R
-from .db import (AI_DRAFT, AS_OF, AUTO_DRAFT, FIXED_PHRASE, IMG23, IMG25, LEDGER, REPORT_SRC, RULE_IDS, STATE_SRC, STATES,
+from .db import (AI_DRAFT, AS_OF, AUTO_DRAFT, COUNT_RULE_IDS, FIXED_PHRASE, IMG23, IMG25, LEDGER, REPORT_SRC, RULE_IDS, STATE_SRC, STATES,
                  imagery_label, once_sql)
 from .explain import env
 
@@ -154,7 +154,7 @@ def collect(code: str, rule: str | None = None, top: int = 20, realm: str = "lx"
             col = "f.emd_cd"
         org = c.execute("SELECT name->>'ko' AS ko FROM tenants WHERE id=%s", ((sg or {}).get("tenant_id") or e["tenant_id"],)).fetchone()
         w = f"{col}=%s" + (" AND f.rule=%s" if rule else " AND f.rule = ANY(%s)")
-        a = (code, rule) if rule else (code, list(RULE_IDS))
+        a = (code, rule) if rule else (code, list(COUNT_RULE_IDS))   # 대장 대조 건까지(10-22 현장확인숫자 ⓐ)
         agg = c.execute(f"SELECT f.rule, f.priority, f.state, count(*) n FROM survey_findings f WHERE {w} AND {once_sql('f')} GROUP BY 1,2,3", a).fetchall()   # 같은 필지 · 같은 규칙 한 번(바퀴 16)
         # 같은 필지는 한 줄(점수가 가장 높은 행) · 해당 규칙은 그 필지의 규칙 전부
         rows = c.execute(f"SELECT * FROM (SELECT DISTINCT ON (f.pnu) f.*, p.jibun, p.ri, "
@@ -163,7 +163,7 @@ def collect(code: str, rule: str | None = None, top: int = 20, realm: str = "lx"
                          f"WHERE t.pnu = f.pnu AND ev->>'kind' = 'change') AS n_change "
                          f"FROM survey_findings f LEFT JOIN survey_parcels p USING (pnu) WHERE {w} "
                          f"ORDER BY f.pnu, f.score DESC, f.rank) x ORDER BY x.score DESC, x.rank LIMIT %s",
-                         (list(RULE_IDS),) + a + (top,)).fetchall()
+                         (list(COUNT_RULE_IDS),) + a + (top,)).fetchall()
         sp = c.execute(f"SELECT count(DISTINCT f.pnu) FROM survey_findings f WHERE {w}", a).fetchone()["count"]
         cut = c.execute("SELECT value FROM survey_meta WHERE key='priority_cut'").fetchone()
         counts = _counts(c, e["sgg_cd"]) if (level == "sgg" and not rule) else None
@@ -197,7 +197,7 @@ def place_of(d: dict) -> str:
 
 
 def _table(d: dict) -> dict:
-    rules = [d["rule"]] if d["rule"] else RULE_IDS
+    rules = [d["rule"]] if d["rule"] else [r for r in COUNT_RULE_IDS if r in RULE_IDS or any(x["rule"] == r for x in d["agg"])]
     t = {r: {"A": 0, "B": 0, "C": 0, **{s: 0 for s in STATES}, "total": 0} for r in rules}
     for x in d["agg"]:
         if x["rule"] not in t:
@@ -262,7 +262,7 @@ def citations(d: dict) -> list[dict]:
     k = 6
     for r in t:
         if t[r]["total"]:
-            c.append({"n": k, "kind": f"rule:{r}", "label": f"{place} {r} {R.definitions()[r]['name']} 건수",
+            c.append({"n": k, "kind": f"rule:{r}", "label": f"{place} {r} {rule_name(r)} 건수",
                       "value": env(t[r]["total"], "count", "inferred", src, "검수 전")})
             k += 1
     c.append({"n": k, "kind": "list", "label": f"{place} 의심 상위 {len(d['rows'])}건 표(③ · 필지별 근거면적 · 신뢰도)",
@@ -403,7 +403,7 @@ def as_json(d: dict, narrative=None) -> dict:
                      "rules": [{"id": r, "name": R.definitions()[r]["name"], "condition": R.condition_text(r, th)} for r in ([d["rule"]] if d["rule"] else RULE_IDS)],
                      "thresholds_note": "판단 기준값은 모두 [추정 초기값]입니다 — 법령 기준이 아니며 "
                                         + ("결과 확인으로 보정합니다" if _lx(d) else "현장조사 결과로 보정합니다")},
-        "table": [{"rule": r, "name": R.definitions()[r]["name"],
+        "table": [{"rule": r, "name": rule_name(r),
                    **{k: env(v[k], "count", "inferred", REPORT_SRC, "검수 전") for k in ("A", "B", "C", "total")},
                    "by_state": {s: env(v[s], "count", "recorded", STATE_SRC) for s in STATES}} for r, v in t.items()],
         "top_items": [{"order": i + 1, "id": x["id"], "pnu": x["pnu"], "addr": x["addr"], "jibun": x.get("jibun"), "jimok": x["jimok"],

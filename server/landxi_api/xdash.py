@@ -31,11 +31,13 @@ router = APIRouter()
 TASK_OF = {"경작·휴경": "경작지", "경작": "경작지", "건축물": "건물"}          # board.js TASK_OF 와 같은 묶음(새 이름 0)
 NCLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물",)}                   # 전국 분석 — 자산마다 보이는 분류(XI맵 national.js NCLS 와 같음)
 NAT_NAME = {"farm": "농지 전수", "river": "하천 · 계곡"}
+SVC_UNIT = {"경작·휴경": "필지"}                                                 # 결과 하나 = 필지 하나인 서비스(결과 설명서 셈 단위와 같은 말)
 UNIT = {"경작지": "곳", "비닐하우스": "동", "건물": "동", "주차장": "곳", "곤포사일리지": "개", "토지피복": "개", "국토 변화": "곳", "해양쓰레기": "개"}
 JIMOK = {"답": "답", "전": "전", "과": "과수원", "임": "임야", "구": "구거", "도": "도로", "천": "하천", "대": "대지", "유": "유지", "제": "제방", "잡": "잡종지",
          "창": "창고용지", "장": "공장용지", "학": "학교용지", "목": "목장용지", "광": "광천지", "염": "염전", "주": "주유소용지", "차": "주차장", "철": "철도용지",
          "수": "수도용지", "공": "공원", "체": "체육용지", "원": "유원지", "종": "종교용지", "사": "사적지", "묘": "묘지", "양": "양어장"}
 RULES = ("R1", "R2", "R3", "R4", "R5", "R6")
+COUNT_RULES = RULES + ("L1", "L2", "L3")      # 지역 숫자 = AI 규칙 + 대장 대조(10-22 현장확인숫자 ⓐ · survey.db COUNT_RULE_IDS 와 같은 값)
 
 
 def once_sql(a: str = "survey_findings") -> str:
@@ -180,7 +182,7 @@ async def agg_task(sgg: str | None = None) -> dict:
         for x in (br or {}).get("items", []):
             n = int((x.get("n") or {}).get("value") or 0)
             if n > 0:
-                rows.append({"k": task_of(x["name"]), "name": x["name"], "n": n, "unit": UNIT.get(task_of(x["name"]), "개"), "src": "service", "year": x.get("year")})
+                rows.append({"k": task_of(x["name"]), "name": x["name"], "n": n, "unit": SVC_UNIT.get(x["name"]) or UNIT.get(task_of(x["name"]), "개"), "src": "service", "year": x.get("year")})
     else:
         for s in bd.get("services", []):
             n = int((s.get("n") or {}).get("value") or 0)
@@ -278,7 +280,7 @@ async def agg_emd(sgg: str) -> dict:
         sc = list(codes)
         try:
             for s in await conn.fetch(
-                    "SELECT emd_cd, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + once_sql() + " GROUP BY 1", sc, list(RULES)):
+                    "SELECT emd_cd, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + once_sql() + " GROUP BY 1", sc, list(COUNT_RULES)):
                 row(s["emd_cd"])["suspects"] = int(s["n"])
             for s in await conn.fetch("SELECT emd_cd, name, parcels FROM survey_emd WHERE sgg_cd = ANY($1::text[])", sc):
                 r = row(s["emd_cd"], s["name"])
@@ -397,18 +399,25 @@ async def agg_rule(sgg: str) -> dict:
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
             "SELECT emd_cd, max(emd) AS emd, rule, count(*)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND " + once_sql() + " GROUP BY 1, 3",
-            codes, list(RULES))
+            codes, list(COUNT_RULES))
         fc = await conn.fetchval(
             "SELECT count(DISTINCT pnu) FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) AND priority='A' AND state IN ('open','assigned')",
-            codes, list(RULES))
+            codes, list(COUNT_RULES))
     emd: dict[str, dict] = {}
     for r in rows:
         e = emd.setdefault(r["emd_cd"], {"cd": r["emd_cd"], "name": r["emd"], "vals": {}})
         e["vals"][r["rule"]] = int(r["n"])
-    cols = [{"k": k, "name": (defs.get(k) or {}).get("name", k)} for k in RULES]
-    tot = {k: sum(e["vals"].get(k, 0) for e in emd.values()) for k in RULES}
+    try:
+        from .ledger import ledger_rules
+        ldefs = ledger_rules()
+    except Exception:  # noqa: BLE001
+        ldefs = {}
+    have = {r["rule"] for r in rows}
+    ks = list(RULES) + [k for k in COUNT_RULES if k not in RULES and k in have]      # 대장 대조 칸은 건이 있을 때만
+    cols = [{"k": k, "name": (defs.get(k) or ldefs.get(k) or {}).get("name", k)} for k in ks]
+    tot = {k: sum(e["vals"].get(k, 0) for e in emd.values()) for k in ks}
     return _put(key, {"by": "rule", "sgg": sgg, "name": region_name(sgg), "cols": [c | {"n": tot[c["k"]]} for c in cols], "rows": sorted(emd.values(), key=lambda e: e["cd"]),
-                      "total": sum(tot.values()), "field_check": int(fc or 0), "as_of": now_iso(), "source": "실태조사 의심 필지(AI × 연속지적 규칙 R1–R6)"})
+                      "total": sum(tot.values()), "field_check": int(fc or 0), "as_of": now_iso(), "source": "실태조사 의심 필지(AI × 연속지적 규칙 · 대장 대조)"})
 
 
 # ── 해마다 ─────────────────────────────────────────────────────────────────────

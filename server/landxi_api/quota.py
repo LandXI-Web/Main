@@ -302,10 +302,75 @@ async def _area_heavy(ms: dt.datetime, t: str, ttl: float = AREA_TTL) -> float:
     return v if v is not None else 0.0
 
 
+# 작업이 끝날 때 한 번(10-22 now21 제안-면적작업끝한번) — 작업기가 사용량을 적는 순간 그 작업 범위를 그 달 합집합에 더해 둔다
+# (workers.metering.add_area · 표 tenant_area_month). 화면은 적어 둔 값을 읽기만 한다. 표에 빠진 작업이 있으면(표를 만들기 전 작업 ·
+# 더하다 실패) 그 기관 그 달을 한 번만 처음부터 다시 세어 표를 채운다(_area_fill · 모든 프로세스 통틀어 한 번).
+AREA_FILL_SQL = (
+    "WITH ev AS (SELECT job_id, sum(amount) AS amt FROM usage_events WHERE at >= $1 AND dim = 'area_km2' AND tenant_id = $2 GROUP BY 1), "
+    "g AS (SELECT ev.job_id, ev.amt, CASE WHEN j.aoi IS NULL THEN NULL WHEN i.footprint IS NULL THEN ST_MakeValid(j.aoi) "
+    "ELSE ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) END AS geom "
+    "FROM ev LEFT JOIN jobs j ON j.id = ev.job_id LEFT JOIN imagery i ON i.id = j.imagery_id), "
+    "agg AS (SELECT ST_Union(geom) FILTER (WHERE geom IS NOT NULL) AS u, coalesce(sum(amt) FILTER (WHERE geom IS NULL), 0) AS extra, "
+    "array_agg(job_id) AS ids FROM g), "
+    "up AS (INSERT INTO tenant_area_month(tenant_id, month, geom, extra_km2, area_km2, jobs, updated_at) "
+    "SELECT $2, $3, u, extra, coalesce(ST_Area(u::geography) / 1e6, 0) + extra, coalesce(array_length(ids, 1), 0), now() FROM agg "
+    "ON CONFLICT (tenant_id, month) DO UPDATE SET geom = EXCLUDED.geom, extra_km2 = EXCLUDED.extra_km2, area_km2 = EXCLUDED.area_km2, "
+    "jobs = EXCLUDED.jobs, updated_at = now() RETURNING area_km2), "
+    "jj AS (INSERT INTO tenant_area_jobs(tenant_id, month, job_id) SELECT $2, $3, x FROM agg, unnest(agg.ids) x WHERE x IS NOT NULL "
+    "ON CONFLICT DO NOTHING) "
+    "SELECT area_km2 FROM up")
+
+
+async def _area_fill(ms: dt.datetime, t: str) -> float | None:
+    lock = f"quota:area_fill:lock:{ms.isoformat()}:{t}"
+    try:
+        r = await redis()
+        got = await r.set(lock, str(time.time()), nx=True, ex=AREA_LOCK_S)
+    except Exception:  # noqa: BLE001
+        r, got = None, True
+    if not got:
+        return None                                   # 다른 프로세스가 채우는 중 — 이번에는 지난 값(없으면 0)
+    try:
+        async with db(realm="lx") as conn:
+            v = await conn.fetchval(AREA_FILL_SQL, ms, t, ms.date(), timeout=900)
+        return float(v or 0)
+    finally:
+        if r is not None:
+            try:
+                await r.delete(lock)
+            except Exception:  # noqa: BLE001
+                pass
+
+
 async def _area_union(ms: dt.datetime) -> dict:
     async with db(realm="lx") as conn:
         n = {r["t"]: int(r["n"]) for r in await conn.fetch(
             "SELECT tenant_id AS t, count(DISTINCT job_id) AS n FROM usage_events WHERE at >= $1 AND dim = 'area_km2' GROUP BY 1", ms)}
+        try:
+            have = {r["tenant_id"]: (float(r["area_km2"]), int(r["jobs"])) for r in await conn.fetch(
+                "SELECT tenant_id, area_km2, jobs FROM tenant_area_month WHERE month = $1", ms.date())}
+        except Exception:  # noqa: BLE001 — 표가 없는 DB(이력 적용 전) → 예전 길
+            have = None
+    if have is not None:
+        out = {}
+        for t, k in n.items():
+            h = have.get(t)
+            if h and h[1] >= k:
+                out[t] = h[0]                         # 작업 끝에 적어 둔 값 — 계산 없음
+                continue
+            tk = _area_task.get(("fill", ms.isoformat(), t))
+            if tk is None or tk.done():
+                tk = _area_task[("fill", ms.isoformat(), t)] = asyncio.ensure_future(_area_fill(ms, t))
+            if h:                                     # 지난 값을 바로 주고 뒤에서 채운다
+                out[t] = h[0]
+            else:
+                v = await asyncio.shield(tk)
+                out[t] = v if v is not None else 0.0
+        return out
+    return await _area_union_old(ms, n)
+
+
+async def _area_union_old(ms: dt.datetime, n: dict) -> dict:
     # 작업이 적은 기관도 같은 길(한 기관 한 번 · 모든 프로세스 통틀어 · 60초 기억) — 예전에는 프로세스마다 10초마다 다시 세어
     # 같은 합집합 질의가 겹쳐 돌았다(10-21 impl-46 · DB CPU 474%)
     out = {}

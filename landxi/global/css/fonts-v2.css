@@ -8,15 +8,12 @@
      Inter 400/500  landxi/assets/fonts/Inter-{400,500}.woff2 (기존 · latin 만 · 읽기)
      Paperlogy · Pretendard  landxi/assets/fonts (기존 · 읽기) — 국문판과 fonts-compare.html 용
    바깥 호스트 0(폐쇄망 그대로 동작). */
+@import url('../../assets/fonts/sub/fonts.css');   /* Paperlogy · Pretendard — 쓰는 글자만 나눠 받기(10-22 · tools/fonts/subset.py) */
 
 @font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('../../assets/fonts/Inter-400.woff2') format('woff2'); }
 @font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url('../../assets/fonts/Inter-500.woff2') format('woff2'); }
 @font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('../fonts/Inter-600.woff2') format('woff2'); }
 @font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; font-display: swap; src: url('../fonts/Inter-700.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; font-display: swap; src: url('../../assets/fonts/Paperlogy-7Bold.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 800; font-style: normal; font-display: swap; src: url('../../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2'); }
-@font-face { font-family: 'Pretendard'; font-weight: 400; font-style: normal; font-display: swap; src: url('../../assets/fonts/Pretendard-Regular.woff2') format('woff2'); }
-@font-face { font-family: 'Pretendard'; font-weight: 500; font-style: normal; font-display: swap; src: url('../../assets/fonts/Pretendard-Medium.woff2') format('woff2'); }
 
 :root {
   --g-display: 'Paperlogy', 'Pretendard', system-ui, sans-serif;
