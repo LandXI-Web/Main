@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>시안 — 화면 배치 규칙(겹침 0)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+body{padding:72px 40px 40px}
+.row{display:flex;gap:28px;align-items:flex-start;margin-bottom:36px}
+.frame{position:relative;background:#DDE3DA;border-radius:12px;box-shadow:var(--elev-map);overflow:hidden;flex:none}
+.frame.map{background:linear-gradient(135deg,#8FA37E,#6B7F5B 50%,#9AA98A)}
+.frame .mast{position:absolute;left:0;right:0;top:0;height:28px;border-bottom:0;padding:0 10px;font:600 11px/28px var(--font-body);color:var(--ink-2)}
+.frame .rail{position:absolute;left:0;top:28px;bottom:0;width:32px;padding:0;border-right:0}
+.z{position:absolute;border:2px dashed var(--ink);border-radius:8px;background:rgba(255,255,255,.86);padding:6px 8px;font:600 11px/15px var(--font-body);color:var(--ink);display:flex;flex-direction:column;gap:2px}
+.z small{font-weight:400;color:var(--sub);font-size:10px;line-height:13px}
+.z.one{border-color:var(--accent);background:rgba(255,255,255,.92)}
+.z.chat{border-style:solid;border-color:var(--ai)}
+.z.gap{border:1px dotted var(--mute);background:none;color:var(--mute)}
+.cap{margin:10px 0 0;font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.cap small{display:block;color:var(--sub);font-weight:400}
+.col{display:flex;flex-direction:column}
+h2{margin:0 0 14px}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1500px}
+.rules .card{padding:18px 20px}
+.rules b{display:block;margin-bottom:4px}
+.rules p{margin:0;font-size:14px;line-height:21px;color:var(--ink-2)}
+</style></head>
+<body>
+<div class="badge">시안<small>화면 배치 규칙 — 떠 있는 요소의 자리(원칙 309) · 그림은 축소 비율</small></div>
+<h2>1. 지도 화면(XI맵 · 결과 지도 · 시점 비교) — 자리 다섯 · 오른쪽 기둥은 하나</h2>
+<div class="row">
+  <div class="col">
+    <div class="frame map" style="width:576px;height:360px">
+      <div class="mast">마스트 64</div><div class="rail"></div>
+      <div class="z" style="left:40px;top:36px;width:120px;height:150px">① 왼쪽 위 판<small>층 · 규칙 · 대조 · 보고서<br>한 번에 하나(300)</small></div>
+      <div class="z" style="right:8px;top:36px;width:38px;height:120px;padding:4px"><small>② 도구 열 96</small></div>
+      <div class="z one" style="right:52px;top:36px;width:157px;height:316px">③ 오른쪽 기둥 392<small>서랍 하나만:<br>필지 카드 · 목록 ·<br>XI ChatGEO 대화 ·<br>결과 설명 · 지도 위 통계<br><br>새것이 열리면 앞것은 닫힘</small></div>
+      <div class="z" style="left:40px;bottom:8px;width:144px;height:64px">⑤ 결과 카드 360<small>보고 있는 결과 · 접힘 가능</small></div>
+      <div class="z chat" style="left:196px;bottom:8px;width:260px;height:52px">④ XI ChatGEO 입력 + 답 띠<small>①③⑤ 사이 가장 넓은 틈 · 폭 280~680 · 틈이 280 아래면 ⑤를 접음</small></div>
+    </div>
+    <p class="cap">PC 1440 × 900<small>층 판이 열린 채 서랍 · 답 띠 · 결과 카드가 모두 있어도 겹치지 않는다</small></p>
+  </div>
+  <div class="col">
+    <div class="frame map" style="width:512px;height:288px">
+      <div class="mast">마스트 64</div><div class="rail"></div>
+      <div class="z" style="left:36px;top:32px;width:120px;height:110px">① 왼쪽 위 판</div>
+      <div class="z" style="right:6px;top:32px;width:38px;height:100px;padding:4px"><small>② 도구</small></div>
+      <div class="z one" style="right:48px;top:32px;width:157px;height:250px">③ 오른쪽 기둥 392<small>그대로 — 지도 폭이 줄어듦</small></div>
+      <div class="z gap" style="left:36px;bottom:6px;width:120px;height:46px">⑤ 결과 카드 → 접힘<small>한 줄(이름 · 날짜)</small></div>
+      <div class="z chat" style="left:164px;bottom:6px;width:136px;height:46px">④ 답 띠<small>폭 280 하한</small></div>
+    </div>
+    <p class="cap">PC 1280 × 720<small>틈이 280 아래로 내려가면 ⑤ 결과 카드가 먼저 접힌다(답 띠는 줄이지 않음)</small></p>
+  </div>
+  <div class="col">
+    <div class="frame map" style="width:156px;height:338px">
+      <div class="mast" style="height:22px;line-height:22px">마스트</div>
+      <div class="z" style="left:6px;top:28px;right:44px;height:30px;padding:4px"><small>① 판 → 한 줄 칩</small></div>
+      <div class="z" style="right:6px;top:28px;width:32px;height:80px;padding:3px"><small>② 도구</small></div>
+      <div class="z one" style="left:0;right:0;bottom:0;height:150px;border-radius:12px 12px 0 0">③ 아래 시트 하나<small>서랍 · 대화 · 통계 ·<br>층 판 모두 이 시트<br>높이 3단(접힘 · 반 · 전체)</small></div>
+      <div class="z chat" style="left:6px;right:6px;bottom:156px;height:34px;padding:4px"><small>④ 입력 한 줄(시트 위에 붙음)</small></div>
+    </div>
+    <p class="cap">휴대폰 390 × 844<small>떠 있는 것은 아래 시트 하나 · 입력 줄은 시트 머리에 붙어 올라간다</small></p>
+  </div>
+</div>
+
+<h2>2. 지도 없는 화면(필지 목록 · 대시보드 · 보고서) — 오른쪽 기둥 하나 · 대화창도 그 기둥</h2>
+<div class="row">
+  <div class="col">
+    <div class="frame" style="width:576px;height:360px">
+      <div class="mast">마스트 64</div><div class="rail"></div>
+      <div class="z" style="left:40px;top:36px;width:300px;height:316px;border-style:solid;border-color:var(--rule);background:var(--bg-1)">표 · 대시보드<small>필지 목록 · 큰 숫자 · 거르기</small></div>
+      <div class="z one" style="left:350px;top:36px;width:218px;height:316px">③ 오른쪽 기둥 440<small>필지 카드(지도 · 이력 · 메모)<br>또는 XI ChatGEO 대화<br>— 둘 중 하나. 대화를 열면<br>필지 카드는 접혀 머리 한 줄로</small></div>
+      <div class="z chat" style="left:4px;bottom:8px;width:30px;height:30px;padding:2px;border-radius:50%"><small>XI</small></div>
+    </div>
+    <p class="cap">지금(10-22): 대화창이 오른쪽 아래 고정(380 × 560)이라 필지 카드 위에 겹친다<small>규칙: 대화 단추는 레일 맨 아래로 · 대화창은 오른쪽 기둥의 서랍으로 연다(K5 한 벌)</small></p>
+  </div>
+  <div class="col">
+    <div class="frame" style="width:156px;height:338px">
+      <div class="mast" style="height:22px;line-height:22px">마스트</div>
+      <div class="z" style="left:6px;top:28px;right:6px;height:150px;border-style:solid;border-color:var(--rule);background:var(--bg-1)">표</div>
+      <div class="z one" style="left:0;right:0;bottom:0;height:150px;border-radius:12px 12px 0 0">③ 아래 시트 하나<small>필지 카드 또는 대화</small></div>
+      <div class="z chat" style="right:6px;bottom:156px;width:30px;height:30px;padding:2px;border-radius:50%"><small>XI</small></div>
+    </div>
+    <p class="cap">휴대폰<small>단추는 시트 위 오른쪽 · 시트가 열리면 단추가 시트 머리로 올라간다</small></p>
+  </div>
+</div>
+
+<h2>3. 규칙 다섯 줄(디자인 법전 §6-1 초안)</h2>
+<div class="rules">
+  <div class="card"><b>자리는 다섯 개뿐</b><p>왼쪽 위 판 · 오른쪽 도구 열 · 오른쪽 기둥 · 아래 가운데 대화 · 왼쪽 아래 결과 카드. 떠 있는 요소는 이 다섯 자리 중 하나를 선언한다. 자리 없는 떠 있는 요소는 만들지 않는다.</p></div>
+  <div class="card"><b>한 자리에는 하나</b><p>같은 자리에 둘이 열리면 앞것은 닫히거나 접힌다(서랍 ↔ 지도 위 통계 ↔ 대화 서랍). 모달만 예외(위에 덮지만 뒤는 흐리게 · 동시에 1).</p></div>
+  <div class="card"><b>대화는 틈에 선다</b><p>XI ChatGEO 입력 · 답 띠는 다른 자리 사이의 가장 넓은 빈 틈에 서고(280~680), 틈이 모자라면 결과 카드 → 왼쪽 위 판 순으로 접는다. 답 띠는 줄이지 않는다.</p></div>
+  <div class="card"><b>휴대폰은 시트 하나</b><p>640 아래에서는 오른쪽 기둥 · 왼쪽 위 판 · 대화가 모두 아래 시트 하나로 모인다(높이 3단). 지도 위에는 입력 한 줄과 도구 열만 남는다.</p></div>
+  <div class="card"><b>검사로 막는다</b><p>kit/lint/overlap.mjs 가 1280 · 1440 · 390 에서 떠 있는 요소 상자를 재어 4px 넘게 겹친 쌍이 하나라도 있으면 불합격. 굽기 전 · 배포 전 자동으로 돈다(tools/check/all.mjs 네 번째 검사).</p></div>
+</div>
+</body></html>

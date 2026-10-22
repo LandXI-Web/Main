@@ -1,0 +1,40 @@
+/* 시안 공용 — 법전 v2.2 토큰 값만(파일 import 없이 값 복사 · 시안은 그림용) */
+:root{--bg-0:#F2F4F6;--bg-1:#FFFFFF;--ink:#1C1F25;--ink-2:#333840;--sub:#727780;--sub-2:#4E535C;--rule:#E5E8EB;--mute:#B0B8C1;--accent:#006DF7;--tint:rgba(0,109,247,.12);--ai:#0FA9A0;--warn:#F04452;
+  --r-24:24px;--r-16:16px;--r-8:8px;--elev-map:0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12);
+  --font-display:'Paperlogy','Pretendard',system-ui,sans-serif;--font-body:'Pretendard',system-ui,sans-serif;--font-num:'Inter','Pretendard',sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg-0);color:var(--ink);font:400 16px/26px var(--font-body);word-break:keep-all}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.badge{position:fixed;left:16px;top:16px;z-index:99;padding:6px 12px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:700 15px/22px var(--font-body)}
+.badge small{font-weight:400;color:#C8CCD2;margin-left:8px}
+.mast{height:64px;background:var(--bg-1);border-bottom:1px solid var(--rule);display:flex;align-items:center;padding:0 24px;gap:16px}
+.mast .word{font:700 20px/28px var(--font-display);letter-spacing:-.02em}
+.mast .mark{width:28px;height:28px;border-radius:8px;background:#2E7D4F;color:#fff;font:800 13px/28px var(--font-display);text-align:center}
+.mast .sp{flex:1}
+.mast .role{padding:6px 12px;border-radius:var(--r-8);background:var(--bg-0);font:500 15px/22px var(--font-body);color:var(--ink-2)}
+.app{display:grid;grid-template-columns:72px minmax(0,1fr);height:calc(100vh - 64px)}
+.rail{background:var(--bg-1);border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px}
+.rail a{width:60px;padding:10px 0;border-radius:var(--r-8);text-align:center;font:500 13px/16px var(--font-body);color:var(--sub);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rail a i{display:block;width:20px;height:20px;border:1.5px solid currentColor;border-radius:5px}
+.rail a.on{color:var(--ink)}
+.rail a.on i{border-color:var(--ink)}
+.rail .end{margin-top:auto}
+.page{padding:24px 48px 40px;overflow:auto}
+h1{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.02em}
+h2{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em}
+h3{margin:0;font:500 18px/26px var(--font-body)}
+.sub{margin:4px 0 0;color:var(--sub);font-size:15px;line-height:22px}
+.card{background:var(--bg-1);border-radius:var(--r-16);padding:24px}
+.chip{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.chip.mute{color:var(--mute)}
+.chip.ai{color:var(--ai)}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 15px/22px var(--font-body);text-decoration:none}
+.btn.b2{background:var(--bg-1);color:var(--ink);border:1px solid var(--rule)}
+.big{font:800 48px/54px var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.lab{font:500 14px/20px var(--font-body);color:var(--sub)}
+.foot{margin-top:24px;color:var(--sub);font-size:14px;line-height:20px}
+.sig{color:var(--ai);font-weight:500}
+.warn{color:var(--warn);font-weight:500}
+.bar{height:8px;border-radius:4px;background:var(--bg-0);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink)}
+.note{margin:0;color:var(--sub);font-size:14px;line-height:20px}

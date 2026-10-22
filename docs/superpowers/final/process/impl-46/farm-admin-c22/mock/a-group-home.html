@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>시안 ⓐ — 영농관리 행정서비스 홈</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.tabs{display:flex;flex-direction:column;gap:2px;width:200px;flex:none}
+.tabs a{display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 14px;border-radius:var(--r-8);color:var(--ink-2);text-decoration:none;font:500 15px/22px var(--font-body)}
+.tabs a.on{background:var(--bg-1);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.tabs a small{color:var(--sub);font-size:14px}
+.tabs .h{margin:16px 14px 6px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.wrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.tile{background:var(--bg-1);border-radius:var(--r-16);padding:20px 22px 18px;min-height:150px;display:flex;flex-direction:column;gap:6px}
+.tile .v{font:800 32px/40px var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile .d{font-size:14px;line-height:20px;color:var(--sub)}
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.sc{background:var(--bg-1);border-radius:var(--r-16);overflow:hidden}
+.sc .img{aspect-ratio:3/2;background:linear-gradient(135deg,#7A8F66,#4E6B3F 60%,#8A9A6E);position:relative}
+.sc .img::after{content:"";position:absolute;inset:18% 22% 30% 20%;border:2px solid var(--ai);border-radius:6px;background:rgba(15,169,160,.18)}
+.sc .img.gh::after{inset:30% 15% 25% 15%;border-radius:2px;background:rgba(15,169,160,.28)}
+.sc .img.bale{background:linear-gradient(135deg,#C9B27A,#A48E5A 60%,#D4C390)}
+.sc .img.bale::after{inset:40% 45% 40% 45%;border-radius:50%}
+.sc .b{padding:16px 18px 18px}
+.sc .t{font:700 20px/28px var(--font-display);letter-spacing:-.02em}
+.sc .m{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sc .n{font:800 28px/34px var(--font-display);letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
+.sc .n small{font:500 14px/20px var(--font-body);color:var(--sub);margin-left:6px}
+.sec{display:flex;align-items:baseline;gap:12px;margin:28px 0 0}
+.sec span{color:var(--sub);font-size:15px}
+.month{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;background:var(--bg-1);border-radius:var(--r-16);padding:16px 22px;margin-bottom:16px}
+.month b{font-weight:700}
+.month .r{display:flex;gap:20px;color:var(--ink-2);font-size:15px}
+.month .r b{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.chat{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;background:var(--bg-1);box-shadow:var(--elev-map);display:flex;align-items:center;justify-content:center;font:800 14px var(--font-display);color:var(--ai)}
+@media (max-width:640px){.wrap{grid-template-columns:1fr}.tabs{flex-direction:row;overflow-x:auto;width:auto}.tabs .h{display:none}.tabs a{flex:none;height:40px}.grid,.svc{grid-template-columns:1fr 1fr}.page{padding:16px}.app{grid-template-columns:1fr}.rail{display:none}.month{grid-template-columns:1fr}.month .r{flex-wrap:wrap;gap:10px}}
+</style></head>
+<body>
+<div class="badge">시안 ⓐ<small>행정서비스 묶음 홈 · 왼쪽 탭 · 통합 대시보드 — 숫자는 자리 표시(예시)</small></div>
+<header class="mast"><span class="mark">남</span><span class="word">남원 GeoVision</span><span class="sp"></span><span class="role">기관 · 남원시</span></header>
+<div class="app">
+  <nav class="rail"><a><i></i>내 서비스</a><a class="on"><i></i>영농관리</a><a><i></i>요청하기</a><a class="end"><i></i>기관 정보</a><a><i></i>계정</a></nav>
+  <main class="page">
+    <p class="sub" style="margin:0 0 4px">내 서비스 › <b style="color:var(--ink)">영농관리 행정서비스</b></p>
+    <h1>영농관리 행정서비스</h1>
+    <p class="sub">남원시 농정 · 축산 담당이 쓰는 분석서비스 4개와 농업정책 대시보드가 한곳에 있습니다.</p>
+    <div class="wrap" style="margin-top:20px">
+      <nav class="tabs" aria-label="영농관리 메뉴">
+        <a class="on">통합 대시보드</a>
+        <a>분석서비스 <small>4</small></a>
+        <a>필지 찾기</a>
+        <a>보고서 · 통계</a>
+        <a>행정정보(대장) <small>6</small></a>
+        <a>다운로드 이력</a>
+        <div class="h">이 서비스로 요청</div>
+        <a>분석 요청</a>
+        <a>촬영 요청</a>
+      </nav>
+      <section>
+        <div class="month"><div><b>이번 달</b> <span style="color:var(--sub)">· 2026년 10월 · 기준일 10.21</span></div>
+          <div class="r"><span>새 결과 <b>1</b></span><span>올린 대장 <b>2</b></span><span>메모 쓴 필지 <b>38</b></span><span>보낸 요청 <b>1</b></span></div></div>
+        <div class="grid">
+          <div class="tile"><span class="lab">직불금 이행 점검</span><span class="v num">249<small style="font:500 14px var(--font-body);color:var(--sub)"> 필지</small></span><span class="d">신청 대장과 AI 결과가 다른 필지 · 2025 경작 · 휴경</span><div class="bar"><i style="width:12%"></i></div><span class="d">메모 있음 38 / 249</span></div>
+          <div class="tile"><span class="lab">휴경 관리</span><span class="v num">1,406<small style="font:500 14px var(--font-body);color:var(--sub)"> 필지</small></span><span class="d">올해 휴경 · 지난해 경작이었던 곳 <b class="num" style="color:var(--ink)">212</b></span><span class="d sig">✓ 2025년 드론 영상</span></div>
+          <div class="tile"><span class="lab">영농시설 현황</span><span class="v num">3,180<small style="font:500 14px var(--font-body);color:var(--sub)"> 동</small></span><span class="d">비닐하우스 · 농지가 아닌 필지 위 <b class="num" style="color:var(--ink)">61</b>동</span><span class="d sig">✓ 2025년 드론 영상</span></div>
+          <div class="tile"><span class="lab">해마다 변화</span><span class="v num">—</span><span class="d">두 번째 해 결과가 들어오면 경작 → 휴경 전이표가 여기에 보입니다</span><span class="d" style="color:var(--mute)">2025년 결과 하나</span></div>
+        </div>
+        <div class="sec"><h2>분석서비스</h2><span>4개 · 운영 3 · 첫 결과 전 1</span></div>
+        <div class="svc">
+          <div class="sc"><div class="img"></div><div class="b"><div class="t">경작 · 휴경 분석서비스</div><div class="m"><span class="chip">운영</span><span class="chip">2025년 10월 영상</span></div><div class="n num">2,098<small>필지 · 경작 · 휴경 · 비경작</small></div></div></div>
+          <div class="sc"><div class="img gh"></div><div class="b"><div class="t">영농시설(비닐하우스) 분석서비스</div><div class="m"><span class="chip">운영</span><span class="chip">2025년 10월 영상</span></div><div class="n num">3,180<small>동</small></div></div></div>
+          <div class="sc"><div class="img bale"></div><div class="b"><div class="t">곤포 사일리지 분석서비스</div><div class="m"><span class="chip mute">첫 결과 전</span><span class="chip">6월 영상 등록 뒤</span></div><div class="n num" style="color:var(--mute)">—<small>개 · 생산량</small></div></div></div>
+        </div>
+        <p class="foot">사료작물 분석서비스는 생육기 · 생산기 영상이 등록되면 이 줄에 더해집니다. 이 틀은 하천 · 산림 등 다른 행정서비스에도 같습니다.</p>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="chat">XI</div>
+</body></html>

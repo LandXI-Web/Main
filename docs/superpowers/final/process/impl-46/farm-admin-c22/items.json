@@ -1,0 +1,8679 @@
+{
+ "generatedAt": "2026-10-22 08:57:38",
+ "site": "https://namwon.land-xi.dev",
+ "login": "로그인 폼(기관 메인 로그인 카드 · lxadmin@lx.or.kr · 기관 namwon)",
+ "runs": {
+  "pc": {
+   "vp": "pc",
+   "size": {
+    "width": 1440,
+    "height": 900
+   },
+   "steps": [
+    {
+     "id": "00-landing",
+     "name": "로그인 뒤 첫 화면(어디로 가는가)",
+     "ok": true,
+     "ms": 0,
+     "note": "/landxi/v3/gov-select/",
+     "url": "/landxi/v3/gov-select/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-00-landing.png"
+    },
+    {
+     "id": "01-list",
+     "name": "내 서비스",
+     "ok": true,
+     "ms": 2711,
+     "note": "카드 4 · 생활환경 위험요소 탐지 서비스 / 경작·휴경 분석서비스 / 도로 안전관리 서비스 / 인파관리 서비스",
+     "url": "/landxi/v3/gov-select/?list=1",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 716,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-01-list.png"
+    },
+    {
+     "id": "02-dash",
+     "name": "서비스 대시보드(현황)",
+     "ok": true,
+     "ms": 3281,
+     "note": "탭 현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서",
+     "url": "/landxi/v3/gov-select/?service=card-farm",
+     "words": {
+      "내려받기": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 2,
+      "이력": 1,
+      "현황": 1,
+      "결과 지도": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "결과 지도 열기",
+      "영상과 결과 — 2025년 4 시점",
+      "이 결과는",
+      "이 결과 설명 자세히",
+      "행정정보와 비교",
+      "LX와 주고받은 검토 요청",
+      "결과 지도에서 검토 요청 보내기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 768,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".",
+       "why": "pos",
+       "x": 136,
+       "y": 288,
+       "w": 832,
+       "h": 357,
+       "z": "auto"
+      },
+      {
+       "name": ".gd-hud",
+       "why": "pos",
+       "x": 160,
+       "y": 310,
+       "w": 784,
+       "h": 92,
+       "z": "2"
+      },
+      {
+       "name": ".gd-open",
+       "why": "pos",
+       "x": 160,
+       "y": 581,
+       "w": 229,
+       "h": 44,
+       "z": "2"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".",
+       "b": ".gd-hud",
+       "w": 784,
+       "h": 92,
+       "area": 72128,
+       "ofSmall": 100
+      },
+      {
+       "a": ".",
+       "b": ".gd-open",
+       "w": 229,
+       "h": 44,
+       "area": 10076,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-02-dash.png"
+    },
+    {
+     "id": "03-stats",
+     "name": "통계·보고서 탭",
+     "ok": true,
+     "ms": 5789,
+     "note": "읍면별 · 보고서 · 자료 내려받기",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+     "words": {
+      "이용 약속": 1,
+      "내려받기": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 1,
+      "이력": 2,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "읍면별",
+      "32곳 모두 펼치기",
+      "통계 · 보고서",
+      "시점을 골라 보고서 만들기",
+      "보고서 · 자료 내려받기",
+      "만들기",
+      "받기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-03-stats.png"
+    },
+    {
+     "id": "04-history",
+     "name": "이력 탭",
+     "ok": true,
+     "ms": 7334,
+     "note": "전체 131 · 결과 공개 1 · AI 분석 1 · 검토 요청 0 · 분석 요청 0 · 촬영 요청 0 · 내려받기 129",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+     "words": {
+      "견주기": 1,
+      "내려받기": 39,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "통계·보고서": 1,
+      "이력": 3,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "엑셀로 내려받기",
+      "이날 21건 더",
+      "이날 30건 더",
+      "이날 4건 더",
+      "이날 12건 더",
+      "이날 26건 더",
+      "이력에 남는 것"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-04-history.png"
+    },
+    {
+     "id": "05-parcels",
+     "name": "필지 목록('오늘 볼 필지')",
+     "ok": true,
+     "ms": 3940,
+     "note": "큰 숫자 'AI 분석 결과 필지 2,098 필지' · 거르기 [읍면동 · 종류 · 대장과 다름만 · 메모 없음만 · 정렬] · 표 머리 [지번 · 읍면동 · 지목 · AI 분석 결과 · 넓이] · 안내 '넓은 순 500필지까지 보입니다'",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1,
+      "대장과 다름": 1,
+      "메모 없음": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "pc-05-parcels.png"
+    },
+    {
+     "id": "06-card",
+     "name": "필지 카드(표 → 카드) · 이력 펼침",
+     "ok": true,
+     "ms": 1943,
+     "note": "카드 단추 [시점 비교 · 저장 · 더 보기] · 이력 2줄",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "시점 비교": 1,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "이력": 1,
+      "내 서비스": 1,
+      "대장과 다름": 1,
+      "메모 없음": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "아영면 두락리 119-1",
+      "시점 비교",
+      "저장",
+      "조치 기록",
+      "검토 요청"
+     ],
+     "boxes": [
+      {
+       "name": "#det-x.sp-x",
+       "why": "sel",
+       "x": 1008,
+       "y": 498,
+       "w": 392,
+       "h": 343,
+       "z": "auto"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 484,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": "#det-x.sp-x",
+       "b": ".k-chat-fab",
+       "w": 40,
+       "h": 42,
+       "area": 1680,
+       "ofSmall": 54
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-06-card.png"
+    },
+    {
+     "id": "07-compare",
+     "name": "'시점 비교' → XI맵 가르기",
+     "ok": true,
+     "ms": 8300,
+     "note": "위 띠 '2023년 · 2025년 10월2023 · 2025 모두 경작지' · 고르기 2023년 영상 / 2025년 10월 영상 · 도구 [층 · 가르기 · 보고서]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "두락리 119-1",
+      "검토 요청",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 952,
+       "y": 132,
+       "w": 392,
+       "h": 752,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 104,
+       "y": 824,
+       "w": 480,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 604,
+       "y": 832,
+       "w": 313,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 740,
+       "y": 64,
+       "w": 40,
+       "h": 836,
+       "z": "8"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 352,
+       "h": 32,
+       "area": 11264,
+       "ofSmall": 42
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 13
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-07-compare.png"
+    },
+    {
+     "id": "07b-compare-layers",
+     "name": "시점 비교 화면에서 층 판 열기",
+     "ok": true,
+     "ms": 954,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "두락리 119-1",
+      "검토 요청",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 952,
+       "y": 132,
+       "w": 392,
+       "h": 752,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 104,
+       "y": 824,
+       "w": 480,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 604,
+       "y": 832,
+       "w": 313,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 740,
+       "y": 64,
+       "w": 40,
+       "h": 836,
+       "z": "8"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 836,
+       "area": 33440,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 480,
+       "h": 56,
+       "area": 26880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 352,
+       "h": 32,
+       "area": 11264,
+       "ofSmall": 42
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 13
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-07b-compare-layers.png"
+    },
+    {
+     "id": "08-ximap",
+     "name": "결과 지도(XI맵 · 기관) 처음",
+     "ok": true,
+     "ms": 9221,
+     "note": "도구 [층 · 가르기 · 보고서] · 결과 카드 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1,
+      "불러오는 중": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 420,
+       "y": 824,
+       "w": 680,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      },
+      {
+       "name": ".xc-load",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "50"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-load",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-load",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-load",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-load",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-load",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 32,
+       "area": 1152,
+       "ofSmall": 3
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08-ximap.png"
+    },
+    {
+     "id": "08b-ximap-layers",
+     "name": "층 판 + 결과 카드 + 대화창",
+     "ok": true,
+     "ms": 982,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 420,
+       "y": 824,
+       "w": 680,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 32,
+       "area": 1152,
+       "ofSmall": 3
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08b-ximap-layers.png"
+    },
+    {
+     "id": "08c-ximap-ask",
+     "name": "XI ChatGEO 질문 → 답 띠(층 판 · 결과 카드와 함께)",
+     "ok": true,
+     "ms": 4621,
+     "note": "답 '남원시에는 물으신 경작지 결과가 없습니다 — 있는 것은 비닐하우스 · 경작·휴경 · 국토 변화.' · 단추 [남원시 결과 요약 · 대화 1]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 188,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 124,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 164,
+       "area": 5904,
+       "ofSmall": 7
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 124,
+       "area": 4464,
+       "ofSmall": 6
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08c-ximap-ask.png"
+    },
+    {
+     "id": "08d-ximap-list",
+     "name": "'목록' 서랍 + 답 띠 + 층 판",
+     "ok": true,
+     "ms": 3,
+     "note": "목록 도구 없음",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 188,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 124,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 164,
+       "area": 5904,
+       "ofSmall": 7
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 124,
+       "area": 4464,
+       "ofSmall": 6
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08d-ximap-list.png"
+    },
+    {
+     "id": "08e-ximap-parcel",
+     "name": "지도 가운데 눌러 필지 카드 서랍",
+     "ok": true,
+     "ms": 32534,
+     "note": "서랍 0 · 제목 ''",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 188,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 420,
+       "y": 692,
+       "w": 680,
+       "h": 124,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 188,
+       "area": 127840,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 124,
+       "area": 84320,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 164,
+       "area": 5904,
+       "ofSmall": 7
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 36,
+       "h": 124,
+       "area": 4464,
+       "ofSmall": 6
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08e-ximap-parcel.png"
+    },
+    {
+     "id": "08f-ximap-chat-drawer",
+     "name": "'대화 n' 서랍(답 띠 → 서랍)",
+     "ok": true,
+     "ms": 1253,
+     "note": "서랍 'XI ChatGEO · 대화' · 답 띠 보임 0",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청",
+      "XI ChatGEO · 대화"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 952,
+       "y": 132,
+       "w": 392,
+       "h": 752,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 178,
+       "y": 824,
+       "w": 680,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 1044,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1356,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 634,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1360,
+       "h": 836,
+       "area": 1136960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 752,
+       "area": 294784,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 278,
+       "h": 32,
+       "area": 8896,
+       "ofSmall": 23
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-08f-ximap-chat-drawer.png"
+    },
+    {
+     "id": "09-fusion",
+     "name": "행정정보와 비교",
+     "ok": true,
+     "ms": 2888,
+     "note": "",
+     "url": "/landxi/v3/gov-fusion/?service=card-farm",
+     "words": {
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gf-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": ".gf-svcbar",
+       "why": "pos",
+       "x": 96,
+       "y": 80,
+       "w": 400,
+       "h": 282,
+       "z": "9"
+      },
+      {
+       "name": ".t-card.t-card--map.gf-sheet",
+       "why": "pos",
+       "x": 1032,
+       "y": 80,
+       "w": 392,
+       "h": 112,
+       "z": "10"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gf-stage.k-stage.is-ready",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-09-fusion.png"
+    },
+    {
+     "id": "10-request",
+     "name": "요청하기",
+     "ok": true,
+     "ms": 3995,
+     "note": "요청하기 · 분석 요청 · 촬영 요청 · 보낸 요청",
+     "url": "/landxi/v3/gov-request/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "분석 요청",
+      "촬영 요청",
+      "보낸 요청",
+      "어디를 분석하나",
+      "내가 보낸 분석 요청",
+      "모두 보기",
+      "보낸 요청분석 · 촬영 · 검토 요청 · 최근 순"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 820,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll.gq-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1360,
+       "h": 836,
+       "z": "auto"
+      },
+      {
+       "name": "#map.gq-map.k-stage.is-ready",
+       "why": "pos",
+       "x": 1016,
+       "y": 342,
+       "w": 344,
+       "h": 258,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll.gq-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc-10-request.png"
+    },
+    {
+     "id": "11-report",
+     "name": "보고서 탭(gov-report)",
+     "ok": true,
+     "ms": 3441,
+     "note": "남원시 경작·휴경 결과 · 종류별 필지 · 읍면동별 필지 · 지도자동",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+     "words": {
+      "내려받기": 2,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "넣을 결과",
+      "한글 문서 내려받기",
+      "엑셀로 내려받기",
+      "첨부 묶음 받기",
+      "남원시 경작·휴경 결과",
+      "발급 목록",
+      "다시 받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 836,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1360,
+       "y": 504,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "pc-11-report.png"
+    },
+    {
+     "id": "12-lxproject-newsite",
+     "name": "LX 직원 새 프로젝트 대상지 칸(낱말 — 영상 없이 지역만 정하기) · 기관 세션은 못 들어가면 그대로 적음",
+     "ok": true,
+     "ms": 4849,
+     "note": "/?denied=lx-console · 드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+     "url": "/?denied=lx-console",
+     "words": {
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+      "로그인되어 있습니다",
+      "내 서비스로",
+      "나가기",
+      "남원시 AI 분석 서비스",
+      "이용 방법"
+     ],
+     "hscroll": 0,
+     "shot": "pc-12-lxproject-newsite.png"
+    }
+   ],
+   "errors": [],
+   "failed": []
+  },
+  "pc1280": {
+   "vp": "pc1280",
+   "size": {
+    "width": 1280,
+    "height": 720
+   },
+   "steps": [
+    {
+     "id": "00-landing",
+     "name": "로그인 뒤 첫 화면(어디로 가는가)",
+     "ok": true,
+     "ms": 0,
+     "note": "/landxi/v3/gov-select/",
+     "url": "/landxi/v3/gov-select/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 529,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-00-landing.png"
+    },
+    {
+     "id": "01-list",
+     "name": "내 서비스",
+     "ok": true,
+     "ms": 2769,
+     "note": "카드 4 · 생활환경 위험요소 탐지 서비스 / 경작·휴경 분석서비스 / 도로 안전관리 서비스 / 인파관리 서비스",
+     "url": "/landxi/v3/gov-select/?list=1",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2,
+      "불러오는 중": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 560,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-01-list.png"
+    },
+    {
+     "id": "02-dash",
+     "name": "서비스 대시보드(현황)",
+     "ok": true,
+     "ms": 3240,
+     "note": "탭 현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서",
+     "url": "/landxi/v3/gov-select/?service=card-farm",
+     "words": {
+      "내려받기": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 2,
+      "이력": 1,
+      "현황": 1,
+      "결과 지도": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "결과 지도 열기",
+      "영상과 결과 — 2025년 4 시점",
+      "이 결과는",
+      "이 결과 설명 자세히",
+      "행정정보와 비교",
+      "LX와 주고받은 검토 요청",
+      "결과 지도에서 검토 요청 보내기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 640,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".",
+       "why": "pos",
+       "x": 128,
+       "y": 288,
+       "w": 688,
+       "h": 300,
+       "z": "auto"
+      },
+      {
+       "name": ".gd-hud",
+       "why": "pos",
+       "x": 152,
+       "y": 310,
+       "w": 640,
+       "h": 92,
+       "z": "2"
+      },
+      {
+       "name": ".gd-open",
+       "why": "pos",
+       "x": 152,
+       "y": 524,
+       "w": 229,
+       "h": 44,
+       "z": "2"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".",
+       "b": ".gd-hud",
+       "w": 640,
+       "h": 92,
+       "area": 58880,
+       "ofSmall": 100
+      },
+      {
+       "a": ".",
+       "b": ".gd-open",
+       "w": 229,
+       "h": 44,
+       "area": 10076,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-02-dash.png"
+    },
+    {
+     "id": "03-stats",
+     "name": "통계·보고서 탭",
+     "ok": true,
+     "ms": 5761,
+     "note": "읍면별 · 보고서 · 자료 내려받기",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+     "words": {
+      "이용 약속": 1,
+      "내려받기": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 1,
+      "이력": 2,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "읍면별",
+      "32곳 모두 펼치기",
+      "통계 · 보고서",
+      "시점을 골라 보고서 만들기",
+      "보고서 · 자료 내려받기",
+      "만들기",
+      "받기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 352,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-03-stats.png"
+    },
+    {
+     "id": "04-history",
+     "name": "이력 탭",
+     "ok": true,
+     "ms": 13428,
+     "note": "전체 131 · 결과 공개 1 · AI 분석 1 · 검토 요청 0 · 분석 요청 0 · 촬영 요청 0 · 내려받기 129",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+     "words": {
+      "견주기": 1,
+      "내려받기": 39,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "통계·보고서": 1,
+      "이력": 3,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "엑셀로 내려받기",
+      "이날 21건 더",
+      "이날 30건 더",
+      "이날 4건 더",
+      "이날 12건 더",
+      "이날 26건 더",
+      "이력에 남는 것"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 640,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-04-history.png"
+    },
+    {
+     "id": "05-parcels",
+     "name": "필지 목록('오늘 볼 필지')",
+     "ok": true,
+     "ms": 3445,
+     "note": "큰 숫자 'AI 분석 결과 필지 2,098 필지' · 거르기 [읍면동 · 종류 · 대장과 다름만 · 메모 없음만 · 정렬] · 표 머리 [지번 · 읍면동 · 지목 · AI 분석 결과 · 넓이] · 안내 '넓은 순 500필지까지 보입니다'",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1,
+      "대장과 다름": 1,
+      "메모 없음": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 640,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "pc1280-05-parcels.png"
+    },
+    {
+     "id": "06-card",
+     "name": "필지 카드(표 → 카드) · 이력 펼침",
+     "ok": true,
+     "ms": 1951,
+     "note": "카드 단추 [시점 비교 · 저장 · 더 보기] · 이력 2줄",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "시점 비교": 1,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "이력": 1,
+      "내 서비스": 1,
+      "대장과 다름": 1,
+      "메모 없음": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "아영면 두락리 119-1",
+      "시점 비교",
+      "저장",
+      "조치 기록",
+      "검토 요청"
+     ],
+     "boxes": [
+      {
+       "name": "#det-x.sp-x",
+       "why": "sel",
+       "x": 848,
+       "y": 465,
+       "w": 392,
+       "h": 343,
+       "z": "auto"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 452,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": "#det-x.sp-x",
+       "b": ".k-chat-fab",
+       "w": 40,
+       "h": 43,
+       "area": 1720,
+       "ofSmall": 55
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-06-card.png"
+    },
+    {
+     "id": "07-compare",
+     "name": "'시점 비교' → XI맵 가르기",
+     "ok": true,
+     "ms": 8010,
+     "note": "위 띠 '2023년 · 2025년 10월2023 · 2025 모두 경작지' · 고르기 2023년 영상 / 2025년 10월 영상 · 도구 [층 · 가르기 · 보고서]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "두락리 119-1",
+      "검토 요청",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 792,
+       "y": 132,
+       "w": 392,
+       "h": 572,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 104,
+       "y": 644,
+       "w": 400,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 524,
+       "y": 652,
+       "w": 313,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 660,
+       "y": 64,
+       "w": 40,
+       "h": 656,
+       "z": "8"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 352,
+       "h": 32,
+       "area": 11264,
+       "ofSmall": 50
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-cmp",
+       "w": 45,
+       "h": 44,
+       "area": 1980,
+       "ofSmall": 14
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 13
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-07-compare.png"
+    },
+    {
+     "id": "07b-compare-layers",
+     "name": "시점 비교 화면에서 층 판 열기",
+     "ok": true,
+     "ms": 944,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "두락리 119-1",
+      "검토 요청",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 792,
+       "y": 132,
+       "w": 392,
+       "h": 572,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 104,
+       "y": 644,
+       "w": 400,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 524,
+       "y": 652,
+       "w": 313,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 660,
+       "y": 64,
+       "w": 40,
+       "h": 656,
+       "z": "8"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 656,
+       "area": 26240,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 400,
+       "h": 56,
+       "area": 22400,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 313,
+       "h": 44,
+       "area": 13772,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 352,
+       "h": 32,
+       "area": 11264,
+       "ofSmall": 50
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-cmp",
+       "w": 45,
+       "h": 44,
+       "area": 1980,
+       "ofSmall": 14
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 13
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-07b-compare-layers.png"
+    },
+    {
+     "id": "08-ximap",
+     "name": "결과 지도(XI맵 · 기관) 처음",
+     "ok": true,
+     "ms": 8655,
+     "note": "도구 [층 · 가르기 · 보고서] · 결과 카드 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 340,
+       "y": 644,
+       "w": 680,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 116,
+       "h": 32,
+       "area": 3712,
+       "ofSmall": 10
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08-ximap.png"
+    },
+    {
+     "id": "08b-ximap-layers",
+     "name": "층 판 + 결과 카드 + 대화창",
+     "ok": true,
+     "ms": 949,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 144,
+       "y": 644,
+       "w": 680,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 56,
+       "area": 38080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 32,
+       "area": 9984,
+       "ofSmall": 26
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08b-ximap-layers.png"
+    },
+    {
+     "id": "08c-ximap-ask",
+     "name": "XI ChatGEO 질문 → 답 띠(층 판 · 결과 카드와 함께)",
+     "ok": true,
+     "ms": 5122,
+     "note": "답 '전북특별자치도 남원시의 경작지 AI 분석 결과는 2,098필지입니다. 해당 지역의 의심 필지는 20,872건이며, 결과 확인 대기 건수는 1,0' · 단추 [대화 1]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 212,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 148,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 188,
+       "area": 58656,
+       "ofSmall": 73
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 148,
+       "area": 46176,
+       "ofSmall": 58
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08c-ximap-ask.png"
+    },
+    {
+     "id": "08d-ximap-list",
+     "name": "'목록' 서랍 + 답 띠 + 층 판",
+     "ok": true,
+     "ms": 2,
+     "note": "목록 도구 없음",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 212,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 148,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 188,
+       "area": 58656,
+       "ofSmall": 73
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 148,
+       "area": 46176,
+       "ofSmall": 58
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08d-ximap-list.png"
+    },
+    {
+     "id": "08e-ximap-parcel",
+     "name": "지도 가운데 눌러 필지 카드 서랍",
+     "ok": true,
+     "ms": 32539,
+     "note": "서랍 0 · 제목 ''",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 212,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 144,
+       "y": 488,
+       "w": 680,
+       "h": 148,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 212,
+       "area": 144160,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 680,
+       "h": 148,
+       "area": 100640,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 188,
+       "area": 58656,
+       "ofSmall": 73
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".gx-card",
+       "w": 312,
+       "h": 148,
+       "area": 46176,
+       "ofSmall": 58
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08e-ximap-parcel.png"
+    },
+    {
+     "id": "08f-ximap-chat-drawer",
+     "name": "'대화 n' 서랍(답 띠 → 서랍)",
+     "ok": true,
+     "ms": 1255,
+     "note": "서랍 'XI ChatGEO · 대화' · 답 띠 보임 0",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "보고 있는 결과": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청",
+      "XI ChatGEO · 대화"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 792,
+       "y": 132,
+       "w": 392,
+       "h": 572,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 104,
+       "y": 644,
+       "w": 668,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 884,
+       "y": 138,
+       "w": 300,
+       "h": 455,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 1196,
+       "y": 132,
+       "w": 68,
+       "h": 183,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 96,
+       "y": 454,
+       "w": 360,
+       "h": 222,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 1200,
+       "h": 656,
+       "area": 787200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 392,
+       "h": 572,
+       "area": 224224,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 300,
+       "h": 455,
+       "area": 136500,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 360,
+       "h": 222,
+       "area": 79920,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 668,
+       "h": 56,
+       "area": 37408,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 668,
+       "h": 56,
+       "area": 37408,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 68,
+       "h": 183,
+       "area": 12444,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 352,
+       "h": 32,
+       "area": 11264,
+       "ofSmall": 30
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-08f-ximap-chat-drawer.png"
+    },
+    {
+     "id": "09-fusion",
+     "name": "행정정보와 비교",
+     "ok": true,
+     "ms": 2493,
+     "note": "",
+     "url": "/landxi/v3/gov-fusion/?service=card-farm",
+     "words": {
+      "내려받기": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "대장 올리기",
+      "행정정보 목록",
+      "양식 내려받기(선택)",
+      "기준일 적기",
+      "내려받기",
+      "보고서에 넣기",
+      "다른 파일"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 800,
+       "y": 640,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gf-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": ".gf-svcbar",
+       "why": "pos",
+       "x": 96,
+       "y": 80,
+       "w": 400,
+       "h": 282,
+       "z": "9"
+      },
+      {
+       "name": ".t-card.t-card--map.gf-sheet",
+       "why": "pos",
+       "x": 872,
+       "y": 80,
+       "w": 392,
+       "h": 624,
+       "z": "10"
+      },
+      {
+       "name": ".t-card.t-card--map.gf-big",
+       "why": "pos",
+       "x": 96,
+       "y": 452,
+       "w": 340,
+       "h": 252,
+       "z": "9"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gf-stage.k-stage.is-ready",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-09-fusion.png"
+    },
+    {
+     "id": "10-request",
+     "name": "요청하기",
+     "ok": true,
+     "ms": 2531,
+     "note": "요청하기 · 분석 요청 · 촬영 요청 · 보낸 요청",
+     "url": "/landxi/v3/gov-request/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "분석 요청",
+      "촬영 요청",
+      "보낸 요청",
+      "어디를 분석하나",
+      "내가 보낸 분석 요청",
+      "모두 보기",
+      "보낸 요청분석 · 촬영 · 검토 요청 · 최근 순"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 640,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll.gq-scroll",
+       "why": "pos",
+       "x": 80,
+       "y": 64,
+       "w": 1200,
+       "h": 656,
+       "z": "auto"
+      },
+      {
+       "name": "#map.gq-map.k-stage.is-ready",
+       "why": "pos",
+       "x": 864,
+       "y": 342,
+       "w": 344,
+       "h": 258,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll.gq-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-10-request.png"
+    },
+    {
+     "id": "11-report",
+     "name": "보고서 탭(gov-report)",
+     "ok": true,
+     "ms": 3379,
+     "note": "남원시 경작·휴경 결과 · 종류별 필지 · 읍면동별 필지 · 지도자동",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+     "words": {
+      "내려받기": 2,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "넣을 결과",
+      "한글 문서 내려받기",
+      "엑셀로 내려받기",
+      "첨부 묶음 받기",
+      "남원시 경작·휴경 결과",
+      "발급 목록",
+      "다시 받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 1280,
+       "h": 65,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 64,
+       "w": 81,
+       "h": 656,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 1200,
+       "y": 504,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "pc1280-11-report.png"
+    },
+    {
+     "id": "12-lxproject-newsite",
+     "name": "LX 직원 새 프로젝트 대상지 칸(낱말 — 영상 없이 지역만 정하기) · 기관 세션은 못 들어가면 그대로 적음",
+     "ok": true,
+     "ms": 4175,
+     "note": "/?denied=lx-console · 드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+     "url": "/?denied=lx-console",
+     "words": {
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+      "로그인되어 있습니다",
+      "내 서비스로",
+      "나가기",
+      "남원시 AI 분석 서비스",
+      "이용 방법"
+     ],
+     "hscroll": 0,
+     "shot": "pc1280-12-lxproject-newsite.png"
+    }
+   ],
+   "errors": [],
+   "failed": []
+  },
+  "mob": {
+   "vp": "mob",
+   "size": {
+    "width": 390,
+    "height": 844
+   },
+   "steps": [
+    {
+     "id": "00-landing",
+     "name": "로그인 뒤 첫 화면(어디로 가는가)",
+     "ok": true,
+     "ms": 0,
+     "note": "/landxi/v3/gov-select/",
+     "url": "/landxi/v3/gov-select/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-00-landing.png"
+    },
+    {
+     "id": "01-list",
+     "name": "내 서비스",
+     "ok": true,
+     "ms": 2747,
+     "note": "카드 4 · 생활환경 위험요소 탐지 서비스 / 경작·휴경 분석서비스 / 도로 안전관리 서비스 / 인파관리 서비스",
+     "url": "/landxi/v3/gov-select/?list=1",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "서비스",
+      "이 서비스 열기",
+      "보고서"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-01-list.png"
+    },
+    {
+     "id": "02-dash",
+     "name": "서비스 대시보드(현황)",
+     "ok": true,
+     "ms": 3248,
+     "note": "탭 현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서",
+     "url": "/landxi/v3/gov-select/?service=card-farm",
+     "words": {
+      "내려받기": 1,
+      "결과 설명": 1,
+      "행정정보와 비교": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 2,
+      "이력": 1,
+      "현황": 1,
+      "결과 지도": 3,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "결과 지도 열기",
+      "영상과 결과 — 2025년 4 시점",
+      "이 결과는",
+      "이 결과 설명 자세히",
+      "행정정보와 비교",
+      "LX와 주고받은 검토 요청",
+      "결과 지도에서 검토 요청 보내기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 592,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".",
+       "why": "pos",
+       "x": 20,
+       "y": 312,
+       "w": 350,
+       "h": 263,
+       "z": "auto"
+      },
+      {
+       "name": ".gd-hud",
+       "why": "pos",
+       "x": 36,
+       "y": 326,
+       "w": 318,
+       "h": 65,
+       "z": "2"
+      },
+      {
+       "name": ".gd-open",
+       "why": "pos",
+       "x": 36,
+       "y": 521,
+       "w": 205,
+       "h": 40,
+       "z": "2"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".",
+       "b": ".gd-hud",
+       "w": 318,
+       "h": 65,
+       "area": 20670,
+       "ofSmall": 100
+      },
+      {
+       "a": ".",
+       "b": ".gd-open",
+       "w": 205,
+       "h": 40,
+       "area": 8200,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-02-dash.png"
+    },
+    {
+     "id": "03-stats",
+     "name": "통계·보고서 탭",
+     "ok": true,
+     "ms": 5757,
+     "note": "읍면별 · 보고서 · 자료 내려받기",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+     "words": {
+      "이용 약속": 1,
+      "내려받기": 1,
+      "요청하기": 1,
+      "필지 목록": 2,
+      "통계·보고서": 1,
+      "이력": 2,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "읍면별",
+      "32곳 모두 펼치기",
+      "통계 · 보고서",
+      "시점을 골라 보고서 만들기",
+      "보고서 · 자료 내려받기",
+      "만들기",
+      "받기"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-03-stats.png"
+    },
+    {
+     "id": "04-history",
+     "name": "이력 탭",
+     "ok": true,
+     "ms": 3254,
+     "note": "전체 131 · 결과 공개 1 · AI 분석 1 · 검토 요청 0 · 분석 요청 0 · 촬영 요청 0 · 내려받기 129",
+     "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+     "words": {
+      "견주기": 1,
+      "내려받기": 39,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "통계·보고서": 1,
+      "이력": 3,
+      "현황": 1,
+      "결과 지도": 1,
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "경작·휴경 분석서비스",
+      "현황",
+      "결과 지도",
+      "필지 목록",
+      "이력",
+      "통계·보고서",
+      "엑셀로 내려받기",
+      "이날 21건 더",
+      "이날 30건 더",
+      "이날 4건 더",
+      "이날 12건 더",
+      "이날 26건 더",
+      "이력에 남는 것"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-04-history.png"
+    },
+    {
+     "id": "05-parcels",
+     "name": "필지 목록('오늘 볼 필지')",
+     "ok": true,
+     "ms": 3455,
+     "note": "큰 숫자 'AI 분석 결과 필지 2,098 필지' · 거르기 [읍면동 · 종류 · 대장과 다름만 · 메모 없음만 · 정렬] · 표 머리 [지번 · 읍면동 · 지목 · AI 분석 결과 · 넓이] · 안내 '넓은 순 500필지까지 보입니다'",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "거르기": 1,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "mob-05-parcels.png"
+    },
+    {
+     "id": "06-card",
+     "name": "필지 카드(표 → 카드) · 이력 펼침",
+     "ok": true,
+     "ms": 1918,
+     "note": "카드 단추 [시점 비교 · 저장 · 더 보기] · 이력 2줄",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+     "words": {
+      "시점 비교": 1,
+      "거르기": 1,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "이력": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "대장과 다름만",
+      "메모 없음만",
+      "거르기",
+      "더 보기",
+      "메모 쓰기",
+      "엑셀로 내려받기",
+      "고르기 풀기",
+      "초안 만들기",
+      "한글 문서 내려받기",
+      "아영면 두락리 119-1",
+      "시점 비교",
+      "저장",
+      "조치 기록",
+      "검토 요청"
+     ],
+     "boxes": [
+      {
+       "name": "#det-x.sp-x",
+       "why": "sel",
+       "x": 20,
+       "y": 487,
+       "w": 350,
+       "h": 343,
+       "z": "auto"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 552,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": "#side.gr-side.pn-pane.pn-pane--x",
+       "why": "pos",
+       "x": 0,
+       "y": 152,
+       "w": 390,
+       "h": 692,
+       "z": "30"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".t-rail.k-rail",
+       "b": "#side.gr-side.pn-pane.pn-pane--x",
+       "w": 390,
+       "h": 64,
+       "area": 24960,
+       "ofSmall": 98
+      },
+      {
+       "a": "#det-x.sp-x",
+       "b": ".t-rail.k-rail",
+       "w": 350,
+       "h": 50,
+       "area": 17500,
+       "ofSmall": 69
+      },
+      {
+       "a": ".k-chat-fab",
+       "b": "#side.gr-side.pn-pane.pn-pane--x",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      },
+      {
+       "a": "#det-x.sp-x",
+       "b": ".k-chat-fab",
+       "w": 52,
+       "h": 56,
+       "area": 2912,
+       "ofSmall": 93
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-06-card.png"
+    },
+    {
+     "id": "07-compare",
+     "name": "'시점 비교' → XI맵 가르기",
+     "ok": true,
+     "ms": 9472,
+     "note": "위 띠 '2023년 · 2025년 10월2023 · 2025 모두 경작지' · 고르기 2023년 영상 / 2025년 10월 영상 · 도구 [층 · 가르기 · 보고서]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 712,
+       "w": 366,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 49,
+       "y": 648,
+       "w": 293,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 175,
+       "y": 56,
+       "w": 40,
+       "h": 724,
+       "z": "8"
+      },
+      {
+       "name": ".gx-cmp-t",
+       "why": "pos",
+       "x": 105,
+       "y": 528,
+       "w": 180,
+       "h": 56,
+       "z": "9"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 32,
+       "area": 5376,
+       "ofSmall": 80
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 56,
+       "area": 2240,
+       "ofSmall": 11
+      },
+      {
+       "a": ".xc-grip",
+       "b": ".gx-cmp-t",
+       "w": 40,
+       "h": 56,
+       "area": 2240,
+       "ofSmall": 22
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 14
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-grip",
+       "w": 5,
+       "h": 40,
+       "area": 200,
+       "ofSmall": 3
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-07-compare.png"
+    },
+    {
+     "id": "07b-compare-layers",
+     "name": "시점 비교 화면에서 층 판 열기",
+     "ok": true,
+     "ms": 960,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm&pnu=5219045031101190001&compare=auto",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 712,
+       "w": 366,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".xc-cmp",
+       "why": "sel",
+       "x": 49,
+       "y": 648,
+       "w": 293,
+       "h": 44,
+       "z": "9"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-b.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "2"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      },
+      {
+       "name": ".xc-grip",
+       "why": "pos",
+       "x": 175,
+       "y": 56,
+       "w": 40,
+       "h": 724,
+       "z": "8"
+      },
+      {
+       "name": ".gx-cmp-t",
+       "why": "pos",
+       "x": 105,
+       "y": 528,
+       "w": 180,
+       "h": 56,
+       "z": "9"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 724,
+       "area": 28960,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 430,
+       "area": 17200,
+       "ofSmall": 59
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-cmp",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-fx",
+       "w": 293,
+       "h": 44,
+       "area": 12892,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-b.k-stage.is-ready",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-fx",
+       "b": ".gx-cmp-t",
+       "w": 180,
+       "h": 56,
+       "area": 10080,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-b.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 32,
+       "area": 5376,
+       "ofSmall": 80
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 56,
+       "area": 2240,
+       "ofSmall": 11
+      },
+      {
+       "a": ".xc-grip",
+       "b": ".gx-cmp-t",
+       "w": 40,
+       "h": 56,
+       "area": 2240,
+       "ofSmall": 22
+      },
+      {
+       "a": ".xc-cmp",
+       "b": ".xc-grip",
+       "w": 40,
+       "h": 44,
+       "area": 1760,
+       "ofSmall": 14
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-grip",
+       "w": 5,
+       "h": 40,
+       "area": 200,
+       "ofSmall": 3
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-07b-compare-layers.png"
+    },
+    {
+     "id": "08-ximap",
+     "name": "결과 지도(XI맵 · 기관) 처음",
+     "ok": true,
+     "ms": 15392,
+     "note": "도구 [층 · 가르기 · 보고서] · 결과 카드 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 1,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 712,
+       "w": 366,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 32,
+       "area": 5376,
+       "ofSmall": 80
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08-ximap.png"
+    },
+    {
+     "id": "08b-ximap-layers",
+     "name": "층 판 + 결과 카드 + 대화창",
+     "ok": true,
+     "ms": 943,
+     "note": "층 판 1",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 712,
+       "w": 366,
+       "h": 56,
+       "z": "30"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 32,
+       "area": 5376,
+       "ofSmall": 80
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08b-ximap-layers.png"
+    },
+    {
+     "id": "08c-ximap-ask",
+     "name": "XI ChatGEO 질문 → 답 띠(층 판 · 결과 카드와 함께)",
+     "ok": true,
+     "ms": 5117,
+     "note": "답 '남원시에는 물으신 경작지 결과가 없습니다 — 있는 것은 비닐하우스 · 경작·휴경 · 국토 변화.' · 단추 [남원시 결과 요약 · 대화 1]",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 191,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 127,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08c-ximap-ask.png"
+    },
+    {
+     "id": "08d-ximap-list",
+     "name": "'목록' 서랍 + 답 띠 + 층 판",
+     "ok": true,
+     "ms": 2,
+     "note": "목록 도구 없음",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 191,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 127,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08d-ximap-list.png"
+    },
+    {
+     "id": "08e-ximap-parcel",
+     "name": "지도 가운데 눌러 필지 카드 서랍",
+     "ok": true,
+     "ms": 32539,
+     "note": "서랍 0 · 제목 ''",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청"
+     ],
+     "boxes": [
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 191,
+       "z": "30"
+      },
+      {
+       "name": ".xk-ans",
+       "why": "sel",
+       "x": 12,
+       "y": 577,
+       "w": 366,
+       "h": 127,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 191,
+       "area": 69906,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xk-ans",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 127,
+       "area": 46482,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08e-ximap-parcel.png"
+    },
+    {
+     "id": "08f-ximap-chat-drawer",
+     "name": "'대화 n' 서랍(답 띠 → 서랍)",
+     "ok": true,
+     "ms": 1250,
+     "note": "서랍 'XI ChatGEO · 대화' · 답 띠 보임 0",
+     "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+     "words": {
+      "가르기": 1,
+      "층": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "층",
+      "가르기",
+      "보고서",
+      "이 결과 설명",
+      "행정정보와 비교",
+      "이 영상으로 분석 요청",
+      "XI ChatGEO · 대화"
+     ],
+     "boxes": [
+      {
+       "name": ".k-drawer.k-drawer--in.pn-pane",
+       "why": "sel",
+       "x": 0,
+       "y": 391,
+       "w": 390,
+       "h": 453,
+       "z": "40"
+      },
+      {
+       "name": ".k-chat-root",
+       "why": "sel",
+       "x": 12,
+       "y": 712,
+       "w": 366,
+       "h": 56,
+       "z": "45"
+      },
+      {
+       "name": ".xc-pop.t-card.t-card--map",
+       "why": "sel",
+       "x": 8,
+       "y": 342,
+       "w": 374,
+       "h": 430,
+       "z": "30"
+      },
+      {
+       "name": ".xc-tools",
+       "why": "sel",
+       "x": 226,
+       "y": 112,
+       "w": 156,
+       "h": 60,
+       "z": "12"
+      },
+      {
+       "name": ".gx-card",
+       "why": "sel",
+       "x": 12,
+       "y": 704,
+       "w": 168,
+       "h": 40,
+       "z": "6"
+      },
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".xc-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".xc-fx",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "4"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".xc-stage.k-stage.is-ready",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 724,
+       "area": 282360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".xc-fx",
+       "w": 374,
+       "h": 430,
+       "area": 160820,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 390,
+       "h": 389,
+       "area": 151710,
+       "ofSmall": 86
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-fx",
+       "w": 390,
+       "h": 389,
+       "area": 151710,
+       "ofSmall": 86
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 374,
+       "h": 381,
+       "area": 142494,
+       "ofSmall": 89
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".t-rail.k-rail",
+       "w": 390,
+       "h": 64,
+       "area": 24960,
+       "ofSmall": 98
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".k-chat-root",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-pop.t-card.t-card--map",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".xc-fx",
+       "w": 366,
+       "h": 56,
+       "area": 20496,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-tools",
+       "b": ".xc-fx",
+       "w": 156,
+       "h": 60,
+       "area": 9360,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-drawer.k-drawer--in.pn-pane",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".xc-pop.t-card.t-card--map",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-stage.k-stage.is-ready",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".gx-card",
+       "b": ".xc-fx",
+       "w": 168,
+       "h": 40,
+       "area": 6720,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-root",
+       "b": ".gx-card",
+       "w": 168,
+       "h": 32,
+       "area": 5376,
+       "ofSmall": 80
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-08f-ximap-chat-drawer.png"
+    },
+    {
+     "id": "09-fusion",
+     "name": "행정정보와 비교",
+     "ok": true,
+     "ms": 3007,
+     "note": "",
+     "url": "/landxi/v3/gov-fusion/?service=card-farm",
+     "words": {
+      "내려받기": 2,
+      "요청하기": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "대장 올리기",
+      "행정정보 목록",
+      "양식 내려받기(선택)",
+      "기준일 적기",
+      "내려받기",
+      "보고서에 넣기",
+      "다른 파일"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 588,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gf-stage.k-stage.is-ready",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      },
+      {
+       "name": ".t-card.t-card--map.gf-sheet",
+       "why": "pos",
+       "x": 0,
+       "y": 476,
+       "w": 390,
+       "h": 304,
+       "z": "10"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gf-stage.k-stage.is-ready",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      },
+      {
+       "a": ".k-chat-fab",
+       "b": ".t-card.t-card--map.gf-sheet",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-09-fusion.png"
+    },
+    {
+     "id": "10-request",
+     "name": "요청하기",
+     "ok": true,
+     "ms": 2504,
+     "note": "요청하기 · 분석 요청 · 촬영 요청 · 보낸 요청",
+     "url": "/landxi/v3/gov-request/",
+     "words": {
+      "요청하기": 3,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "분석 요청",
+      "촬영 요청",
+      "보낸 요청",
+      "어디를 분석하나",
+      "내가 보낸 분석 요청",
+      "모두 보기",
+      "보낸 요청분석 · 촬영 · 검토 요청 · 최근 순"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 624,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      },
+      {
+       "name": ".gs-scroll.gq-scroll",
+       "why": "pos",
+       "x": 0,
+       "y": 56,
+       "w": 390,
+       "h": 724,
+       "z": "auto"
+      }
+     ],
+     "overlaps": [
+      {
+       "a": ".k-chat-fab",
+       "b": ".gs-scroll.gq-scroll",
+       "w": 56,
+       "h": 56,
+       "area": 3136,
+       "ofSmall": 100
+      }
+     ],
+     "hscroll": 0,
+     "shot": "mob-10-request.png"
+    },
+    {
+     "id": "11-report",
+     "name": "보고서 탭(gov-report)",
+     "ok": true,
+     "ms": 3334,
+     "note": "남원시 경작·휴경 결과 · 종류별 필지 · 읍면동별 필지 · 지도자동",
+     "url": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+     "words": {
+      "내려받기": 2,
+      "요청하기": 1,
+      "필지 목록": 1,
+      "내 서비스": 1
+     },
+     "heads": [
+      "내 서비스",
+      "요청하기",
+      "기관 정보",
+      "계정",
+      "메뉴",
+      "필지 목록",
+      "할 일",
+      "보고서",
+      "넣을 결과",
+      "한글 문서 내려받기",
+      "엑셀로 내려받기",
+      "첨부 묶음 받기",
+      "남원시 경작·휴경 결과",
+      "발급 목록",
+      "다시 받기",
+      "조치 기록"
+     ],
+     "boxes": [
+      {
+       "name": ".t-mast.k-mast",
+       "why": "sel",
+       "x": 0,
+       "y": 0,
+       "w": 390,
+       "h": 57,
+       "z": "20"
+      },
+      {
+       "name": ".t-rail.k-rail",
+       "why": "sel",
+       "x": 0,
+       "y": 780,
+       "w": 390,
+       "h": 65,
+       "z": "15"
+      },
+      {
+       "name": ".k-chat-fab",
+       "why": "sel",
+       "x": 318,
+       "y": 708,
+       "w": 56,
+       "h": 56,
+       "z": "38"
+      }
+     ],
+     "overlaps": [],
+     "hscroll": 0,
+     "shot": "mob-11-report.png"
+    },
+    {
+     "id": "12-lxproject-newsite",
+     "name": "LX 직원 새 프로젝트 대상지 칸(낱말 — 영상 없이 지역만 정하기) · 기관 세션은 못 들어가면 그대로 적음",
+     "ok": true,
+     "ms": 4017,
+     "note": "/?denied=lx-console · 드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+     "url": "/?denied=lx-console",
+     "words": {
+      "내 서비스": 2
+     },
+     "heads": [
+      "내 서비스",
+      "드론·항공 영상을 AI로 분석해남원시 행정 업무를 돕습니다",
+      "로그인되어 있습니다",
+      "내 서비스로",
+      "나가기",
+      "남원시 AI 분석 서비스",
+      "이용 방법"
+     ],
+     "hscroll": 0,
+     "shot": "mob-12-lxproject-newsite.png"
+    }
+   ],
+   "errors": [],
+   "failed": []
+  }
+ }
+}

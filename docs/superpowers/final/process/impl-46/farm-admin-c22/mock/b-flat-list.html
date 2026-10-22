@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>시안 ⓑ — 내 서비스 평면 + 분류 띠</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.band{display:flex;gap:8px;margin:16px 0 0;flex-wrap:wrap}
+.band .chip{height:36px;padding:0 14px;font-size:15px}
+.band .chip.on{background:var(--ink);color:#fff}
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.sc{background:var(--bg-1);border-radius:var(--r-16);overflow:hidden}
+.sc .img{aspect-ratio:3/2;background:linear-gradient(135deg,#7A8F66,#4E6B3F 60%,#8A9A6E);position:relative}
+.sc .img::after{content:"";position:absolute;inset:18% 22% 30% 20%;border:2px solid var(--ai);border-radius:6px;background:rgba(15,169,160,.18)}
+.sc .img.gh::after{inset:30% 15% 25% 15%;border-radius:2px;background:rgba(15,169,160,.28)}
+.sc .img.bale{background:linear-gradient(135deg,#C9B27A,#A48E5A 60%,#D4C390)}
+.sc .img.bale::after{inset:40% 45% 40% 45%;border-radius:50%}
+.sc .img.dash{background:var(--bg-0);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px}
+.sc .img.dash::after{display:none}
+.sc .img.dash i{display:block;background:var(--bg-1);border-radius:8px}
+.sc .b{padding:16px 18px 18px}
+.sc .t{font:700 20px/28px var(--font-display);letter-spacing:-.02em}
+.sc .m{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sc .n{font:800 28px/34px var(--font-display);letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
+.sc .n small{font:500 14px/20px var(--font-body);color:var(--sub);margin-left:6px}
+.sec{display:flex;align-items:baseline;gap:12px;margin:24px 0 0}
+.sec span{color:var(--sub);font-size:15px}
+.chat{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;background:var(--bg-1);box-shadow:var(--elev-map);display:flex;align-items:center;justify-content:center;font:800 14px var(--font-display);color:var(--ai)}
+@media (max-width:640px){.svc{grid-template-columns:1fr 1fr}.page{padding:16px}.app{grid-template-columns:1fr}.rail{display:none}}
+</style></head>
+<body>
+<div class="badge">시안 ⓑ<small>지금 '내 서비스' 그대로 + 분류 띠 · 대시보드도 카드 하나 — 숫자는 자리 표시(예시)</small></div>
+<header class="mast"><span class="mark">남</span><span class="word">남원 GeoVision</span><span class="sp"></span><span class="role">기관 · 남원시</span></header>
+<div class="app">
+  <nav class="rail"><a class="on"><i></i>내 서비스</a><a><i></i>요청하기</a><a class="end"><i></i>기관 정보</a><a><i></i>계정</a></nav>
+  <main class="page">
+    <h1>내 서비스</h1>
+    <p class="sub">남원시에 열린 AI 분석 서비스 · 기준일 2026.10.21</p>
+    <div class="band"><span class="chip on">영농관리 7</span><span class="chip">하천관리 1</span><span class="chip">전체 8</span></div>
+    <div class="sec"><h2>영농관리</h2><span>대시보드 · 보고서 1 · 분석서비스 4 · 행정정보 1 · 다운로드 이력 1</span></div>
+    <div class="svc">
+      <div class="sc"><div class="img dash"><i></i><i></i><i></i><i></i></div><div class="b"><div class="t">영농관리 통합 대시보드</div><div class="m"><span class="chip">직불 · 휴경 · 시설 · 변화</span></div><div class="n num">249<small>점검 대상 필지</small></div></div></div>
+      <div class="sc"><div class="img"></div><div class="b"><div class="t">경작 · 휴경 분석서비스</div><div class="m"><span class="chip">운영</span><span class="chip">2025년 10월 영상</span></div><div class="n num">2,098<small>필지</small></div></div></div>
+      <div class="sc"><div class="img gh"></div><div class="b"><div class="t">영농시설(비닐하우스) 분석서비스</div><div class="m"><span class="chip">운영</span></div><div class="n num">3,180<small>동</small></div></div></div>
+      <div class="sc"><div class="img bale"></div><div class="b"><div class="t">곤포 사일리지 분석서비스</div><div class="m"><span class="chip mute">첫 결과 전</span></div><div class="n num" style="color:var(--mute)">—</div></div></div>
+      <div class="sc"><div class="img dash"><i></i><i></i></div><div class="b"><div class="t">보고서 · 통계</div><div class="m"><span class="chip">한글 · 엑셀 · 인쇄</span></div><div class="n num">6<small>이번 달 만든 보고서</small></div></div></div>
+      <div class="sc"><div class="img dash"><i></i></div><div class="b"><div class="t">행정정보(대장)</div><div class="m"><span class="chip">농지대장 · 직불 신청 · 사료작물</span></div><div class="n num">6<small>올린 대장</small></div></div></div>
+    </div>
+    <p class="foot">카드가 일곱 장이라 한 화면에 안 들어오고(1440에서 두 줄 반), 대시보드 · 보고서 · 대장이 분석서비스와 같은 급으로 보입니다. 메뉴 구조는 바뀌지 않아 품은 가장 적습니다.</p>
+  </main>
+</div>
+<div class="chat">XI</div>
+</body></html>
