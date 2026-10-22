@@ -449,6 +449,13 @@ async function compareYears(a, b) {
 }
 function compareOff() { CMP.sw?.close(); CMP.sw = null; CMP.on = false; drawLeft(); }
 window.__lm.compareYears = compareYears;
+/** 고르기 칸에 해를 더한다 — 그 범위에 실제로 영상이 있는 국토지리정보원 해(변화 탐지 대상지의 연도 조사 · 전국 분석 장부 밖의 옛 해 포함 · 10-22) */
+window.__lm.addYears = (ys) => {
+  const add = (ys || []).map((y) => +y).filter((y) => y > 1990);
+  if (!add.length) return;
+  CMP.years = [...new Set([...(CMP.years || []), ...add])].sort((x, y) => x - y);
+  drawLeft();
+};
 document.addEventListener('kit:agent-action', async (e) => {
   const a = e.detail;
   if (a?.op !== 'map_compare') return;

@@ -10,3 +10,9 @@
 .lxp-rng-s{margin:0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);word-break:keep-all}.lxp-rng-s[hidden]{display:none}
 .lxp-yrs{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.lxp-yrs[hidden]{display:none}
 .lxp-yrs-l{flex-basis:100%;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}
+
+/* 진행 경로(수정 지시서 v2 F4) */
+.lxp-path{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.lxp-path[hidden]{display:none}
+.lxp-path-o{display:flex;align-items:center;gap:8px;font:400 var(--fs-aux)/1.4 var(--font-body);color:var(--ink);cursor:pointer}
+.lxp-path-o input{margin:0;accent-color:var(--accent)}

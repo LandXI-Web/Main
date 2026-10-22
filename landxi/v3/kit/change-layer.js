@@ -85,6 +85,7 @@ function hideTwin() {
 async function swipe(ya, yb) {
   if (!ya || !yb) return false;
   C.years = [ya, yb];
+  try { window.__lm?.addYears?.([...(C.range?.imagery_years || []).map((y) => y.year), ya, yb]); } catch { /* 지도 서비스 밖 */ }
   let r;
   try {
     if (window.__lm?.compareYears) r = await window.__lm.compareYears(ya, yb);         // 지도 서비스 '영상 비교'(같은 부품 · 왼쪽 칸 상태도 같이)
@@ -213,6 +214,14 @@ function markBox(id, p) {
 
 function closePanel() { C.card?.classList.remove('is-under'); if (C.panel) C.panel.hidden = true; C.sel = null; C.hl.clear(); for (const m of maps()) applyFilters(m); }
 
+const MIN_Z = 12.6;
+function fitRange(bb, { duration = 1000 } = {}) {
+  if (!bb || !C.map) return;
+  C.map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 80, duration, maxZoom: 16.5 });
+  const lift = () => { if (C.map.getZoom() < MIN_Z) C.map.easeTo({ zoom: MIN_Z, duration: duration ? 600 : 0 }); };
+  if (duration) C.map.once('moveend', lift); else lift();
+}
+
 function fitIds(ids) {
   const fs = (C.fc?.features || []).filter((f) => ids.includes(f.id)); if (!fs.length) return;
   let b = null;
@@ -235,12 +244,25 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
   C.job = job;
   C.run = await api(`/change/runs/${encodeURIComponent(job)}`);
   if (!C.range || C.range.id !== C.run.range_id) await loadRange({ rid: C.run.range_id });
+  if (C.run.state !== 'done') {
+    // 아직 도는 작업(분석하기 · 프로젝트 추론에서 연 주소) — 대상지 카드에 작업 카드(진행 · 취소 · 다시 시도). 끝나면 결과를 그린다(수정 지시서 v2 F3)
+    const ya0 = ya || C.run.period?.a?.year, yb0 = yb || C.run.period?.b?.year;
+    C.years = [ya0, yb0]; C.run = { ...C.run, stats: null };
+    drawCard();
+    if (fit && C.range?.bbox) fitRange(C.range.bbox);
+    const { jobCard } = await import('./job-card.js');
+    C.card?.append(jobCard({ job_id: job, label: `${ya0}년 → ${yb0}년 변화 탐지`, show: { op: 'change_show', job_id: job, year_a: ya0, year_b: yb0, project_id: C.range?.project_id || null } }));
+    if (ya0 && yb0) await swipe(ya0, yb0);
+    return true;
+  }
   const r = await api(`/change/runs/${encodeURIComponent(job)}/features`, { raw: true });
   C.fc = await r.json();
   const a = ya || C.run.period?.a?.year, b = yb || C.run.period?.b?.year;
-  if (!C.sw || !C.years || C.years[0] !== a || C.years[1] !== b) await swipe(a, b); else redraw();
-  redraw(); drawCard(); hideTwin();
-  if (fit && C.range?.bbox) { const bb = C.range.bbox; C.map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 80, duration: 1000, maxZoom: 16.5 }); }
+  const need = !C.sw || !C.years || C.years[0] !== a || C.years[1] !== b;
+  C.years = [a, b];
+  redraw(); drawCard(); hideTwin();                 // 결과 · 카드 · 자리 먼저(가르기 영상은 이어서)
+  if (fit && C.range?.bbox) fitRange(C.range.bbox);
+  if (need) { await swipe(a, b); redraw(); }
   return true;
 }
 window.__lxChange.show = show;
@@ -260,7 +282,7 @@ window.__lxChange.open = openPanel;
       const r = await loadRange({ rid: Q.get('range'), project: Q.get('project') });
       if (r) {
         const ys = (r.years || []).map((y) => y.year).sort();
-        const bb = r.bbox; m.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 80, duration: 0, maxZoom: 16.5 });
+        fitRange(r.bbox, { duration: 0 });
         if (ys.length >= 2) await swipe(ys[0], ys[ys.length - 1]);
         drawCard();
       }

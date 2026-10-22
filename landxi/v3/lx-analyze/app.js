@@ -402,7 +402,7 @@ function changePanel(side, c) {
   go.addEventListener('click', async () => {
     go.disabled = true; go.textContent = '대기열에 넣는 중';
     try {
-      const r = await api('/change/runs', { method: 'POST', body: { range_id: sel.value, year_a: +ya.value, year_b: +yb.value } });
+      const r = await api('/change/runs', { method: 'POST', body: { range_id: sel.value, year_a: +ya.value, year_b: +yb.value, via: 'analyze' } });
       const x = items.find((i) => i.id === sel.value);
       location.href = '../lx-map/?' + new URLSearchParams({ ...(x?.project_id ? { project: x.project_id } : {}), change: r.job_id });
     } catch (e) { go.textContent = '분석 시작'; go.disabled = false; K.toast(e.message || '분석을 시작하지 못했습니다'); }

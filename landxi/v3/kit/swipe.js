@@ -72,6 +72,9 @@ export function mountSwipe({ map, left = null, right = null, at = 50 } = {}) {
     cur = { left: l, right: r };
     labL.textContent = l?.label || '지금 영상'; labR.textContent = r?.label || '지금 영상';
     await ready; if (closed) return;
+    // 왼쪽 지도에 그 해 영상을 깔면 바탕 위성(k-vw)을 뺀다 — 왼쪽 지도의 바탕 위성 타일 요청이 끝나지 않고 지도 라이브러리의 그림 요청 칸(16)을 차지해
+    // 그 해 영상 타일이 요청조차 되지 않던 것(10-22 변화 탐지 녹화 점검 · 2019년 칸이 바탕만 보임). 그 해 영상이 바탕을 덮으므로 보이는 차이 없음.
+    if (l?.spec) { try { if (B.map.getLayer('k-vw')) B.map.removeLayer('k-vw'); if (B.map.getSource('k-vw')) B.map.removeSource('k-vw'); } catch { /* 없음 */ } }
     putRaster(B.map, 'k-sw-l', l?.spec || null);
     putRaster(map, 'k-sw-r', r?.spec || null);
     host.dataset.kSw = '1';

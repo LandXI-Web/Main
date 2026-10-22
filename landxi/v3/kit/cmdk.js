@@ -1034,6 +1034,12 @@ function create(opts) {
         const rest = (b.rows || []).length - 5;
         blk.append(h('div.k-ck-blk.k-ck-blk--table.k-ck-blk--rows', { 'data-kind': 'rows' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null,
           h('div.k-ck-rows-w', {}, tb), rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest).replace('곳', '줄') }) : null));
+      } else if (b?.type === 'job' && b.job_id) {
+        // 작업 카드(국토 변화 탐지 · 수정 지시서 v2 F3) — 진행 · 취소 · 다시 시도 · 끝나면 지도에 표시(job-card.js 가 2초마다 상태를 읽는다)
+        const slot = h('div.k-ck-blk.k-ck-blk--job', { 'data-kind': 'job', 'data-job': b.job_id }, h('p.k-ck-bt', { text: String(b.label || '').split(' · ').pop() }));
+        // 답 글 바로 아래(단계 줄 위) — 대화창은 질문을 맨 위에 두므로 카드가 아래로 밀려 보이지 않던 것(F6 그림)
+        if (ans.isConnected && ans.parentElement) ans.after(slot); else blk.append(slot);
+        import('./job-card.js').then((m) => slot.replaceWith(m.jobCard(b))).catch((err) => devlog('job card', String(err?.message || err)));
       } else if (b?.type === 'report' && b.href) {
         // 보고서 보기(대시보드 모양 · 10-21 원칙 299) — 답의 첫 동작 · 내려받기 줄은 그 아래 그대로
         const btn = h('button.k-ck-rep', { type: 'button', 'data-report': b.href },

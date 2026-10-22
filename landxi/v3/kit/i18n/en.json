@@ -94,6 +94,8 @@
   "unit.필지": "parcels",
   "unit.m2": "m²",
   "unit.ha": "ha",
+  "unit.s": "s",
+  "unit.min": "min",
   "unit.km2": "km²",
   "unit.ratio": "%",
   "unit.%": "%",

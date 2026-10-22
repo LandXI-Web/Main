@@ -112,7 +112,8 @@ function renderImagery(el, im) {
   for (const r of im.labels.slice(0, 5)) {
     const cov = r.cov?.value;
     const part = cov != null && cov < 0.95 ? ` <span class="t-label">지역의 ${Math.max(1, Math.round(cov * 100))}%</span>` : '';
-    ul.append(K.h('li', { html: `<span>${K.esc(r.label)}${part}</span>${K.sig(r.cov && cov < 0.95 ? r.cov : r.env)}` }));
+    const tag = r.prj ? ' <span class="t-label">프로젝트 영상</span>' : '';
+    ul.append(K.h('li', { html: `<span>${K.esc(r.label)}${part}${tag}</span>${K.sig(r.cov && cov < 0.95 ? r.cov : r.env)}` }));
   }
   el.append(ul);
 }
@@ -151,9 +152,9 @@ async function pick(region, { fly = true } = {}) {
   if (fly) st.go(geo.bbox, { maxZoom: 12.5 });
 
   // 영상
-  D.imageryIn(region, geo).then((im) => {
+  Promise.all([D.imageryIn(region, geo), D.projectImagery(PID, region.sgg_cd)]).then(([im, prj]) => {
     if (my !== token) return;
-    renderImagery(ui.img, im);
+    renderImagery(ui.img, { ...im, labels: [...prj, ...im.labels] });
     map.getSource('lxi-fp').setData({ type: 'FeatureCollection', features: uniqBounds(im.items).map((i) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[i.bounds[0], i.bounds[1]], [i.bounds[2], i.bounds[1]], [i.bounds[2], i.bounds[3]], [i.bounds[0], i.bounds[3]], [i.bounds[0], i.bounds[1]]]] } })) });
     mountImagery(im.items);
   }).catch((e) => { K.devlog('imagery', e.message); ui.img.replaceChildren(K.h('p.t-label', { text: '—' })); });

@@ -92,10 +92,13 @@ function drawBar(el, pr, key) {
     const a = h('a.lxp-st', { href: pr ? stageHref(pr, s.key, x.target) : stageHref(PID, s.key), dataset: { st: state }, title: `${i + 1} ${s.label} · ${word}`,
       'aria-current': i === here ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.label} · ${word}` },
       h('span.n', { html: state === 'done' ? CHECK : String(i + 1) }), h('span.t', {}, s.label, state === 'skip' ? h('small', { text: word }) : null));
+    if (state === 'skip' && pr?.path?.note && /정식 모델/.test(word)) a.title = `${i + 1} ${s.label} · ${word} — ${pr.path.note}`;
     if (i === here) a.classList.add('is-here');
     steps.append(h('li', {}, a));
   });
-  const nx = pr?.next?.text && pr.state !== 'archived' ? h('p.lxp-bar-next', {}, h('span.lxp-bar-k', { text: '다음 할 일' }), h('b', { text: pr.next.text })) : null;
+  // 정식 서비스 모델 경로(학습데이터 구축 · 학습 건너뜀)면 그 이유 한 줄(수정 지시서 v2 F4)
+  const why = pr?.path?.key === 'service' && pr.path.note ? h('small.lxp-bar-why', { text: pr.path.note }) : null;
+  const nx = pr?.next?.text && pr.state !== 'archived' ? h('p.lxp-bar-next', {}, h('span.lxp-bar-k', { text: '다음 할 일' }), h('b', { text: pr.next.text }), why) : null;
   el.replaceChildren(h('div.lxp-bar', { class: key === null ? 'is-page' : '' }, key === null ? null : name, steps, nx), ...el.querySelectorAll(':scope > .lxp-carry'));
 }
 

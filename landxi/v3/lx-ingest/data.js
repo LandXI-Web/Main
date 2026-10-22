@@ -329,3 +329,14 @@ export async function parcelState(region) {
 }
 
 export const who = () => session.get();
+
+/** 프로젝트 영상(수정 지시서 v2 F1 · 한 장부) — 대상지(구역선 · 필지 목록)에 묶인 국토지리정보원 항공영상 연도. 서버 기록 그대로(지역 하드코딩 없음) */
+const PRJ = new Map();
+export async function projectImagery(pid, sgg) {
+  if (!pid) return [];
+  if (!PRJ.has(pid)) PRJ.set(pid, api('/change/ranges?' + new URLSearchParams({ project_id: pid })).then((j) => j.items || []).catch(() => { PRJ.delete(pid); return []; }));
+  const rs = await PRJ.get(pid);          // 프로젝트 자산 — 어느 지역 서랍에서 열어도 이 프로젝트 영상으로 보인다(sgg 는 표시에 쓰지 않음)
+  const ys = [...new Set(rs.flatMap((r) => (r.years || []).map((y) => y.year)))].sort((a, b) => b - a);
+  return ys.map((y) => ({ id: `ngii-${y}`, year: String(y), label: `${y} 항공 · 국토지리정보원`, prj: true,
+    env: env(1, 'count', 'recorded', `${y} 국토지리정보원 항공영상`, '프로젝트 영상 · 필요한 자리만 받아 씀') }));
+}

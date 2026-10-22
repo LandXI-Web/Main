@@ -94,6 +94,8 @@
   "unit.필지": "필지",
   "unit.m2": "㎡",
   "unit.ha": "ha",
+  "unit.s": "초",
+  "unit.min": "분",
   "unit.km2": "㎢",
   "unit.ratio": "%",
   "unit.%": "%",

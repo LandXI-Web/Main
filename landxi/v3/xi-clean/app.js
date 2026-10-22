@@ -2311,7 +2311,10 @@ function mountLayout() {
   layoutNow();
   const ro = new ResizeObserver(layout); ro.observe(mainEl);
   for (const el of mainEl.querySelectorAll('.xo, .xo-mini, .xa-card, .xc-pop, .xc-tools')) ro.observe(el);   // 판 폭이 바뀌는 동안(끌기 · 펼침)도 따라 잰다
-  new MutationObserver((ms) => { if (ms.some((m) => m.target !== mainEl || m.attributeName !== 'style')) layout(); }).observe(mainEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-fold', 'data-turns', 'data-state'] });
+  // 기관 결과 카드(.gx-card)는 늦게 서고 글이 채워지며 커진다 — 크기도 따라 재고, 바뀐 뒤 한 번 더(겹침 검사 1280 · 1440 결과 지도 · 원칙 309)
+  let lateT = 0;
+  const watchCard = () => { for (const el of mainEl.querySelectorAll('.gx-card, .gx-cmp')) if (!el.__lxRo) { el.__lxRo = 1; ro.observe(el); } };
+  new MutationObserver((ms) => { if (ms.some((m) => m.target !== mainEl || m.attributeName !== 'style')) { watchCard(); layout(); clearTimeout(lateT); lateT = setTimeout(layout, 500); } }).observe(mainEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-fold', 'data-turns', 'data-state'] });
   document.addEventListener('kit:drawer', layout);
   addEventListener('resize', () => { mainEl.querySelector('.gx-card.is-fold')?.classList.remove('is-fold'); });   // 넓어지면 결과 카드를 다시 펴 보고 틈을 잰다
   mainEl.addEventListener('transitionend', layout, true);                                // 판 폭 · 서랍 등장 움직임이 끝난 자리로
