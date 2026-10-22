@@ -318,6 +318,12 @@ async def port(body: dict, request: Request):
             did, body.get("name") or ((region_name or {}).get("ko", "") + " · 기관에 공유").strip(" ·"), tenant, card_id, cv,
             body.get("region_profile"), region_name, json.dumps(aoi), body.get("gpu_pool") or (src["gpu_pool"] if src else config.POOL), src_id,
             modules, year, sgg, ci, test, flow)
+        # 행정서비스 묶음(10-22 원칙 310 · IMPL 1-1) — 공유할 때 묶음 이름을 고르면(없으면 새로) 그 기관 묶음에 이 서비스를 넣는다 · 기관 화면은 공유된 카드만 보인다
+        if (body.get("group") or "").strip() and tenant != "lx":
+            from .groups import attach_group
+            gid = await attach_group(conn, tenant, str(body["group"]).strip(), card_id, body.get("group_domain"))
+            if gid:
+                await conn.execute("UPDATE deploys SET group_id=$2 WHERE id=$1", did, gid)
         aid = "ap_" + secrets.token_hex(6)
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
                            "VALUES ($1,'deploy',$2,$3,'pending',$4,$5,$6,now())", aid, did, p.user_id,

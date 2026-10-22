@@ -1,0 +1,294 @@
+{
+ "_": "겹침 검사 상태 목록(10-22 원칙 309 · FARM-ADMIN-DESIGN §3-3) — 새 떠 있는 요소를 만들면 그 상태를 여기에 하나 더한다. {card} = 그 기관 행정서비스 묶음(없으면 첫 서비스)의 첫 분석서비스 · {group} = 첫 묶음. optional = 그 기관에 그 기능이 없으면 건너뜀(겹침 아님).",
+ "widths": [
+  1280,
+  1440,
+  390
+ ],
+ "gov": [
+  {
+   "name": "01-list",
+   "label": "내 서비스",
+   "url": "/landxi/v3/gov-select/?list=1",
+   "wait": ".gs-grid, .t-empty"
+  },
+  {
+   "name": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "url": "/landxi/v3/gov-group/?group={group}",
+   "wait": ".gg-tabs",
+   "optional": true
+  },
+  {
+   "name": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "url": "/landxi/v3/gov-group/?group={group}&tab=services",
+   "wait": ".gg-tabs",
+   "optional": true
+  },
+  {
+   "name": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "url": "/landxi/v3/gov-group/?group={group}&tab=parcels",
+   "wait": ".gg-tabs",
+   "optional": true
+  },
+  {
+   "name": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "url": "/landxi/v3/gov-group/?group={group}&tab=stats",
+   "wait": ".gg-tabs",
+   "settle": 2500,
+   "optional": true
+  },
+  {
+   "name": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "url": "/landxi/v3/gov-group/?group={group}&tab=downloads",
+   "wait": ".gg-tabs",
+   "settle": 1800,
+   "optional": true
+  },
+  {
+   "name": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "url": "/landxi/v3/gov-select/?service={card}",
+   "wait": ".gs-tabs"
+  },
+  {
+   "name": "04-history",
+   "label": "분석서비스 · 이력",
+   "url": "/landxi/v3/gov-select/?service={card}&tab=history",
+   "wait": ".gs-tabs",
+   "settle": 1800
+  },
+  {
+   "name": "05-stats",
+   "label": "분석서비스 · 통계",
+   "url": "/landxi/v3/gov-select/?service={card}&tab=stats",
+   "wait": ".gs-tabs",
+   "settle": 2500
+  },
+  {
+   "name": "06-parcels",
+   "label": "필지 목록",
+   "url": "/landxi/v3/gov-report/?service={card}&tab=sus",
+   "wait": "#sus-table tbody tr",
+   "timeout": 40000,
+   "optional": true
+  },
+  {
+   "name": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "url": "/landxi/v3/gov-report/?service={card}&tab=sus",
+   "wait": "#sus-table tbody tr",
+   "timeout": 40000,
+   "optional": true,
+   "steps": [
+    {
+     "click": "#sus-table tbody tr >> nth=0 >> td >> nth=1"
+    },
+    {
+     "wait": "#det-x .sp-hist li, #det-x .sp-memo-b",
+     "timeout": 20000
+    }
+   ]
+  },
+  {
+   "name": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "url": "/landxi/v3/gov-report/?service={card}&tab=sus",
+   "wait": "#sus-table tbody tr",
+   "timeout": 40000,
+   "optional": true,
+   "steps": [
+    {
+     "click": "#sus-table tbody tr >> nth=0 >> td >> nth=1"
+    },
+    {
+     "wait": "#det-x .sp-hist li, #det-x .sp-memo-b",
+     "timeout": 20000
+    },
+    {
+     "eval": "document.querySelector('.k-chat-root:not([data-dock]) .k-chat-fab')?.click()"
+    },
+    {
+     "wait": ".k-chat:not([hidden])"
+    }
+   ]
+  },
+  {
+   "name": "08-map",
+   "label": "결과 지도(처음)",
+   "url": "{!map}",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 4000
+  },
+  {
+   "name": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "url": "{!map}",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xc-tool[data-tool=\"layers\"]"
+    },
+    {
+     "wait": ".xc-pop:not([hidden])"
+    }
+   ]
+  },
+  {
+   "name": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "url": "{!map}",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "optional": true,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "fill": ".k-chat-root[data-dock] .k-chat-in input, .k-chat-root[data-dock] .k-chat-in textarea",
+     "text": "이 지역 결과는 몇 건인가요"
+    },
+    {
+     "press": "Enter"
+    },
+    {
+     "wait": ".xk-ans:not([hidden]):not(.is-busy)",
+     "timeout": 90000
+    }
+   ]
+  },
+  {
+   "name": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "url": "/landxi/v3/gov-report/?service={card}&tab=sus",
+   "wait": "#sus-table tbody tr",
+   "timeout": 40000,
+   "optional": true,
+   "steps": [
+    {
+     "click": "#sus-table tbody tr >> nth=0 >> td >> nth=1"
+    },
+    {
+     "wait": "#det-x .sp-cmp",
+     "timeout": 20000
+    },
+    {
+     "click": "#det-x .sp-cmp"
+    },
+    {
+     "wait": ".gx-cmp-t",
+     "timeout": 40000
+    },
+    {
+     "sleep": 2500
+    },
+    {
+     "click": ".xc-tool[data-tool=\"layers\"]"
+    },
+    {
+     "sleep": 900
+    }
+   ]
+  },
+  {
+   "name": "10-fusion",
+   "label": "행정정보와 비교",
+   "url": "/landxi/v3/gov-fusion/?service={card}",
+   "wait": ".gf-steps, .t-empty, .gf-sheet",
+   "timeout": 40000,
+   "settle": 2000
+  },
+  {
+   "name": "11-request",
+   "label": "요청하기",
+   "url": "/landxi/v3/gov-request/",
+   "wait": "h1"
+  }
+ ],
+ "app": [
+  {
+   "name": "a1-console",
+   "label": "LX 직원 첫 화면",
+   "url": "/landxi/v3/lx-console/",
+   "wait": ".k-main",
+   "settle": 2500
+  },
+  {
+   "name": "a2-projects",
+   "label": "프로젝트 목록",
+   "url": "/landxi/v3/lx-project/",
+   "wait": ".k-main",
+   "settle": 2500
+  },
+  {
+   "name": "a3-analyze",
+   "label": "분석하기",
+   "url": "/landxi/v3/lx-analyze/",
+   "wait": ".k-main",
+   "settle": 2500
+  },
+  {
+   "name": "a4-ximap",
+   "label": "XI맵",
+   "url": "/landxi/v3/xi-clean/",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 4000
+  },
+  {
+   "name": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "url": "/landxi/v3/xi-clean/",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xc-tool[data-tool=\"layers\"]"
+    },
+    {
+     "wait": ".xc-pop:not([hidden])"
+    }
+   ]
+  },
+  {
+   "name": "a6-map",
+   "label": "지도 서비스",
+   "url": "/landxi/v3/lx-map/",
+   "wait": ".k-main",
+   "settle": 3000,
+   "optional": true
+  }
+ ],
+ "guest": [
+  {
+   "name": "g1-main",
+   "label": "메인(로그인 전)",
+   "url": "/landxi/v3/main/",
+   "wait": "body",
+   "settle": 2500
+  },
+  {
+   "name": "g2-login",
+   "label": "로그인",
+   "url": "/landxi/v3/login/",
+   "wait": "form, input",
+   "settle": 1500
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+  gov(namwon) 1280 01-list 겹침 0 · 3.2초
+  gov(namwon) 1280 03-dash 겹침 0 · 3.2초
+  gov(namwon) 1280 05-stats 겹침 0 · 4.5초
+  gov(namwon) 1280 07-card 겹침 2: .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56 | .k-chat-fab × #det-x.sp-x 40×43 · 3.9초
+  gov(namwon) 1280 07b-card-chat 겹침 5: #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560 | #k-chat.k-ck.k-chat × #det-x.sp-x 364×175 | #k-chat.k-ck.k-chat × .k-chat-fab 56×56 · 4.7초
+  gov(namwon) 1280 08-map 겹침 1: .k-ck-f.k-chat-in × .gx-card 116×32 · 5.0초
+  gov(namwon) 1280 08b-map-layers 겹침 1: .k-ck-f.k-chat-in × .gx-card 116×32 · 6.4초
+  gov(namwon) 1280 08c-map-list-layers 상태 못 만듦 · 겹침 1: .k-ck-f.k-chat-in × .gx-card 116×32 · 24.1초
+  gov(namwon) 1280 08d-map-ask 겹침 2: .xk-ans × .gx-card 116×156 | .k-ck-f.k-chat-in × .gx-card 116×32 · 7.5초
+  gov(namwon) 1280 09-compare 상태 못 만듦 · 겹침 5: #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560 | #k-chat.k-ck.k-chat × #det-x.sp-x 364×233 | #k-chat.k-ck.k-chat × .k-chat-fab 56×56 · 32.8초
+  gov(namwon) 1280 10-fusion 겹침 0 · 3.1초
+  gov(namwon) 1440 01-list 겹침 0 · 3.3초
+  gov(namwon) 1440 03-dash 겹침 0 · 3.2초
+  gov(namwon) 1440 05-stats 겹침 0 · 4.5초
+  gov(namwon) 1440 07-card 겹침 3: #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×468 | .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56 | .k-chat-fab × #det-x.sp-x 40×45 · 3.9초
+  gov(namwon) 1440 07b-card-chat 상태 못 만듦 · 겹침 2: .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56 | .k-chat-fab × #det-x.sp-x 40×43 · 33.1초
+  gov(namwon) 1440 08-map 겹침 2: .xk-ans × .gx-card 36×156 | .k-ck-f.k-chat-in × .gx-card 36×32 · 5.1초
+  gov(namwon) 1440 08b-map-layers 겹침 2: .xk-ans × .gx-card 36×156 | .k-ck-f.k-chat-in × .gx-card 36×32 · 6.4초
+  gov(namwon) 1440 08c-map-list-layers 상태 못 만듦 · 겹침 2: .xk-ans × .gx-card 36×156 | .k-ck-f.k-chat-in × .gx-card 36×32 · 24.9초
+  gov(namwon) 1440 08d-map-ask 겹침 2: .xk-ans × .gx-card 36×156 | .k-ck-f.k-chat-in × .gx-card 36×32 · 7.4초
+  gov(namwon) 1440 09-compare 겹침 3: .k-drawer.k-drawer--in.pn-pane × .xc-pop.t-card.t-card--map 300×440 | .xk-ans × .gx-card 352×182 | .k-ck-f.k-chat-in × .gx-card 352×32 · 12.8초
+  gov(namwon) 1440 10-fusion 겹침 0 · 3.1초
+  gov(namwon) 390 01-list 겹침 1: .k-chat-fab × a.t-card.gs-gcard "행정서비스영농관리 행정서비스경작 · 휴경 · 영농시설 " 52×45 · 3.2초
+  gov(namwon) 390 03-dash 겹침 1: .k-chat-fab × span.gd-small "4·6·8·10월" 28×23 · 3.7초
+  gov(namwon) 390 05-stats 겹침 0 · 4.5초
+  gov(namwon) 390 07-card 겹침 2: .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56 | .k-chat-fab × #det-x.sp-x 52×56 · 3.9초
+  gov(namwon) 390 07b-card-chat 겹침 2: #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 390×608 | #k-chat.k-ck.k-chat × #det-x.sp-x 350×233 · 4.6초
+  gov(namwon) 390 08-map 겹침 1: .k-ck-f.k-chat-in × .gx-card 168×32 · 4.8초
+  gov(namwon) 390 08b-map-layers 겹침 4: .xk-ans × .xc-pop.t-card.t-card--map 366×195 | .k-ck-f.k-chat-in × .xc-pop.t-card.t-card--map 366×56 | .xc-pop.t-card.t-card--map × .gx-card 168×40 · 6.5초
+  gov(namwon) 390 08c-map-list-layers 상태 못 만듦 · 겹침 1: .k-ck-f.k-chat-in × .gx-card 168×32 · 24.4초
+  gov(namwon) 390 08d-map-ask 겹침 1: .k-ck-f.k-chat-in × .gx-card 168×32 · 7.4초
+  gov(namwon) 390 09-compare 상태 못 만듦 · 겹침 0 · 32.1초
+  gov(namwon) 390 10-fusion 겹침 1: #k-chat.k-ck.k-chat × .t-card.t-card--map.gf-sheet 390×116 · 18.9초
+
+겹침 검사 — 상태 33개(역할 × 폭 × 화면) · 겹친 상태 23 · 만들지 못한 상태 0(필수) + 6(그 기관에 없는 기능)
+✗ gov(namwon) 1280 07-card 필지 목록 + 필지 카드 — 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 40×43(55%)
+✗ gov(namwon) 1280 07b-card-chat 필지 카드 + 대화창 — 겹침 #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560(100%) | 겹침 #k-chat.k-ck.k-chat × #det-x.sp-x 364×175(70%) | 겹침 #k-chat.k-ck.k-chat × .k-chat-fab 56×56(100%) | 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 40×43(55%)
+✗ gov(namwon) 1280 08-map 결과 지도(처음) — 겹침 .k-ck-f.k-chat-in × .gx-card 116×32(10%)
+✗ gov(namwon) 1280 08b-map-layers 결과 지도 + 층 판 — 겹침 .k-ck-f.k-chat-in × .gx-card 116×32(10%)
+✗ gov(namwon) 1280 08c-map-list-layers 결과 지도 + 목록 서랍 + 층 판 — 겹침 .k-ck-f.k-chat-in × .gx-card 116×32(10%)
+✗ gov(namwon) 1280 08d-map-ask 결과 지도 + 질문 답 띠 — 겹침 .xk-ans × .gx-card 116×156(23%) | 겹침 .k-ck-f.k-chat-in × .gx-card 116×32(10%)
+✗ gov(namwon) 1280 09-compare 영상 비교 + 층 판 — 겹침 #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560(100%) | 겹침 #k-chat.k-ck.k-chat × #det-x.sp-x 364×233(93%) | 겹침 #k-chat.k-ck.k-chat × .k-chat-fab 56×56(100%) | 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 40×56(71%)
+✗ gov(namwon) 1440 07-card 필지 목록 + 필지 카드 — 겹침 #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×468(100%) | 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 40×45(57%)
+✗ gov(namwon) 1440 07b-card-chat 필지 카드 + 대화창 — 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 40×43(55%)
+✗ gov(namwon) 1440 08-map 결과 지도(처음) — 겹침 .xk-ans × .gx-card 36×156(7%) | 겹침 .k-ck-f.k-chat-in × .gx-card 36×32(3%)
+✗ gov(namwon) 1440 08b-map-layers 결과 지도 + 층 판 — 겹침 .xk-ans × .gx-card 36×156(7%) | 겹침 .k-ck-f.k-chat-in × .gx-card 36×32(3%)
+✗ gov(namwon) 1440 08c-map-list-layers 결과 지도 + 목록 서랍 + 층 판 — 겹침 .xk-ans × .gx-card 36×156(7%) | 겹침 .k-ck-f.k-chat-in × .gx-card 36×32(3%)
+✗ gov(namwon) 1440 08d-map-ask 결과 지도 + 질문 답 띠 — 겹침 .xk-ans × .gx-card 36×156(7%) | 겹침 .k-ck-f.k-chat-in × .gx-card 36×32(3%)
+✗ gov(namwon) 1440 09-compare 영상 비교 + 층 판 — 겹침 .k-drawer.k-drawer--in.pn-pane × .xc-pop.t-card.t-card--map 300×440(100%) | 겹침 .xk-ans × .gx-card 352×182(80%) | 겹침 .k-ck-f.k-chat-in × .gx-card 352×32(42%)
+✗ gov(namwon) 390 01-list 내 서비스 — 덮음 .k-chat-fab × a.t-card.gs-gcard "행정서비스영농관리 행정서비스경작 · 휴경 · 영농시설 " 52×45(75%)
+✗ gov(namwon) 390 03-dash 분석서비스 대시보드(현황) — 덮음 .k-chat-fab × span.gd-small "4·6·8·10월" 28×23(21%)
+✗ gov(namwon) 390 07-card 필지 목록 + 필지 카드 — 겹침 .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56(100%) | 겹침 .k-chat-fab × #det-x.sp-x 52×56(93%)
+✗ gov(namwon) 390 07b-card-chat 필지 카드 + 대화창 — 겹침 #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 390×608(100%) | 겹침 #k-chat.k-ck.k-chat × #det-x.sp-x 350×233(100%)
+✗ gov(namwon) 390 08-map 결과 지도(처음) — 겹침 .k-ck-f.k-chat-in × .gx-card 168×32(80%)
+✗ gov(namwon) 390 08b-map-layers 결과 지도 + 층 판 — 겹침 .xk-ans × .xc-pop.t-card.t-card--map 366×195(100%) | 겹침 .k-ck-f.k-chat-in × .xc-pop.t-card.t-card--map 366×56(100%) | 겹침 .xc-pop.t-card.t-card--map × .gx-card 168×40(100%) | 겹침 .k-ck-f.k-chat-in × .gx-card 168×32(80%)
+✗ gov(namwon) 390 08c-map-list-layers 결과 지도 + 목록 서랍 + 층 판 — 겹침 .k-ck-f.k-chat-in × .gx-card 168×32(80%)
+✗ gov(namwon) 390 08d-map-ask 결과 지도 + 질문 답 띠 — 겹침 .k-ck-f.k-chat-in × .gx-card 168×32(80%)
+✗ gov(namwon) 390 10-fusion 행정정보와 비교 — 겹침 #k-chat.k-ck.k-chat × .t-card.t-card--map.gf-sheet 390×116(100%)

@@ -110,8 +110,9 @@ def test_compare_facts(tok, pledged):
     x = httpx.get(B + "/spaces/me/ledger/compare.xlsx", params={"card": CARD, "ok": 1}, headers=H(t), timeout=180)
     assert x.status_code == 200 and x.content[:2] == b"PK"
     from openpyxl import load_workbook
-    ws = load_workbook(io.BytesIO(x.content), read_only=True)["필지"]
-    assert sum(1 for _ in ws.iter_rows(min_row=2)) == n
+    ws = load_workbook(io.BytesIO(x.content), read_only=True)["대장 대조"]   # 엑셀 한 벌(10-22) — 4행 머리 · 5행부터 자료 · 마지막 합계
+    rows = [r for r in ws.iter_rows(min_row=5, values_only=True)]
+    assert rows[-1][0] == "합계" and len(rows) - 1 == n
     # 다른 기관 계정은 이 대장을 못 본다
     assert httpx.get(B + "/spaces/me/ledger/compare", params={"card": "card-marine", "import_id": c["ledger"]["import_id"]},
                      headers=H(tok["gj"]), timeout=60).status_code == 404

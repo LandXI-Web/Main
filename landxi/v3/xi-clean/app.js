@@ -183,8 +183,8 @@ async function boot() {
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
   // 입체는 뺐다(원칙 196 · GPT3-8 '입체가 의미있나??' → 입체 빼기) — 단추 · 지형 타일 로딩 · 기울기 모두 없음(위에서 내려다보는 지도만)
-  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '가르기'], ['sweep', '대조'], ['report', '보고서']]
-    : [['layers', '층'], ['swipe', '가르기'], ['report', '보고서']];
+  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '영상 비교'], ['sweep', '대조'], ['report', '보고서']]
+    : [['layers', '층'], ['swipe', '영상 비교'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
   S.tools = tools;
   S.board = S.lx;                                    // 열자마자 전국 결과(LX 계정 · 바퀴 5)
@@ -211,7 +211,7 @@ async function boot() {
   hudSus = h('p.xc-sus', { hidden: true });   // 의심 필지(숫자 한 출처 · GET /summary metrics.suspect) — 큰 숫자 아래 한 줄
   const hud = h('section.xc-hud', { 'aria-live': 'polite' }, hudBig, hudSus, bars);
   pop = h('section.xc-pop.t-card.t-card--map', { hidden: true });
-  const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '가르기', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'));
+  const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '비교 선', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'));
   const loadEl = h('div.xc-load');
   // 오른쪽 위 한 줄 = [영상 전환(작은 단추)] [사업 나라] · 그 아래 오른쪽 = 도구 줄(층 · 가르기 · 보고서 · 분석)
   const top = h('div.xc-top');
@@ -2171,6 +2171,7 @@ function hasAnswer() {
 /* ═══ 서랍: 목록 · 필지 ═══ */
 function closeDrawer() { if (S.drawer) { const d = S.drawer; S.drawer = null; d.close(true); } stage.geo('sel', null, 'focus'); stage.pad({}); }
 function drawerOpen(title, onClose) {
+  if (pop && !pop.hidden) closePop();                                                            // 오른쪽 자리는 하나(10-22 원칙 309 · G3 · G6) — 서랍이 열리면 층 · 규칙 · 보고서 판을 닫는다(판이 열리면 서랍을 닫는 것과 짝)
   if (STEP) leaveStats(false);                                                            // 오른쪽 자리는 하나(원칙 279) — 서랍이 열리면 지도 위 통계는 걷는다(통계가 열릴 때 서랍을 닫는 것과 짝) · 카메라는 그대로
   const d = K.drawer({ title, host: mainEl, slot: 'right', onClose: () => { if (S.drawer === d) S.drawer = null; stage.geo('sel', null, 'focus'); stage.pad({}); onClose?.(); patchRail(); } });
   S.drawer = d; stage.pad(MOBILE() ? { bottom: Math.round(innerHeight * 0.5) } : { right: 496 });   // 서랍 392 + 도구 열 왼쪽(96) + 틈 8
@@ -2199,19 +2200,33 @@ function layoutNow() {
   setVar('--xc-xr', Math.round(xr) + 'px');
   const root = mainEl.querySelector('.k-chat-root[data-dock]');
   if (!root) return;
-  if (W <= 900) { setVar('--xc-cl', '50%'); setVar('--xc-cw', 'calc(100% - 24px)'); return; }
+  if (W <= 900) { setVar('--xc-cl', '50%'); setVar('--xc-cw', 'calc(100% - 24px)'); setVar('--xc-cb', ''); return; }
   const open = root.hasAttribute('data-turns') && !root.hasAttribute('data-fold');
-  const band = H - (open ? 260 : 140);   // 답 띠(입력 한 줄 + 띠 ≈ 212)가 서 있는 높이까지만 비켜 선다
-  const iv = [];
-  for (const el of mainEl.querySelectorAll('.k-drawer.is-open, .xc-pop:not([hidden]), .xa-card:not([hidden]), .xo:not([hidden]):not(.pn-collapsed), .xo-mini:not([hidden]), .xc-tools, .xv-sw:not([hidden]), .xo-sw:not([hidden]), .xe-card:not([hidden]), .xn-hud:not([hidden]), .xc-cmp:not([hidden])')) {
+  const ck = root.querySelector('.k-ck') || root;
+  const band = Math.min(H - (open ? 260 : 140), rect(ck).y0 - 12 + (parseFloat(LV['--xc-cb']) || 20) - 20);   // 답 띠(입력 한 줄 + 띠 ≈ 212)가 서 있는 높이까지만 비켜 선다 — 답 띠가 더 높이 서 있으면 그 위까지(10-22 · 판 × 답 띠)
+  const obs = [];
+  for (const el of mainEl.querySelectorAll('.k-drawer.is-open, .xc-pop:not([hidden]), .xa-card:not([hidden]), .xo:not([hidden]):not(.pn-collapsed), .xo-mini:not([hidden]), .xc-tools, .xv-sw:not([hidden]), .xo-sw:not([hidden]), .xe-card:not([hidden]), .xn-hud:not([hidden]), .xc-cmp:not([hidden]), .gx-card:not([hidden]), .gx-cmp:not([hidden])')) {   // .gx-* = 기관 '보고 있는 결과' 카드(10-22 G2 · G4)
     if (!vis(el)) continue; const r = rect(el); if (r.w < 2 || r.h < 2 || r.y1 < band) continue;
-    iv.push([r.x0 - 12, r.x1 + 12]);
+    obs.push(r);
   }
-  iv.sort((a, b) => a[0] - b[0]);
-  const gaps = []; let x = 16;
-  for (const [a, b] of iv) { if (a > x) gaps.push([x, a]); x = Math.max(x, b); }
-  if (W - 16 > x) gaps.push([x, W - 16]);
-  const g = gaps.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0] || [16, W - 16];
+  const gapOf = (list) => {
+    const iv = list.map((r) => [r.x0 - 12, r.x1 + 12]).sort((a, b) => a[0] - b[0]);
+    const gaps = []; let x = 16;
+    for (const [a, b] of iv) { if (a > x) gaps.push([x, a]); x = Math.max(x, b); }
+    if (W - 16 > x) gaps.push([x, W - 16]);
+    return gaps.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0] || [16, W - 16];
+  };
+  let g = gapOf(obs), lift = 20;
+  /* 틈이 280 아래면(10-22 원칙 309 · FARM-ADMIN §3-1 규칙 3) ① 결과 카드를 한 줄로 접고 ② 그래도 모자라면 아래 줄의 낮은 것(접힌 결과 카드 · 영상 고르기 — 높이 64 아래)
+     위로 대화를 올려 세운다. 답 띠 폭 · 글은 줄이지 않는다. 창 크기가 바뀌면 결과 카드를 다시 편다 */
+  if (g[1] - g[0] - 16 < 280) {
+    const gc = mainEl.querySelector('.gx-card:not([hidden]):not(.is-fold)');
+    if (gc && vis(gc) && rect(gc).y1 >= band) { gc.classList.add('is-fold'); layout(); return; }
+    const low = obs.filter((r) => r.h <= 64 && r.y0 >= H - 96);
+    if (low.length) { const g2 = gapOf(obs.filter((r) => !low.includes(r))); if (g2[1] - g2[0] - 16 >= 280) { g = g2; lift = Math.round(H - Math.min(...low.map((r) => r.y0)) + 8); } }
+  }
+  setVar('--xc-cb', lift + 'px');
+  const iv = obs;
   const cw = Math.max(280, Math.min(680, g[1] - g[0] - 16));
   const cl = Math.min(Math.max((g[0] + g[1]) / 2, 16 + cw / 2), W - 16 - cw / 2);
   setVar('--xc-cl', Math.round(cl) + 'px'); setVar('--xc-cw', Math.round(cw) + 'px');
@@ -2225,6 +2240,7 @@ function mountLayout() {
   for (const el of mainEl.querySelectorAll('.xo, .xo-mini, .xa-card, .xc-pop, .xc-tools')) ro.observe(el);   // 판 폭이 바뀌는 동안(끌기 · 펼침)도 따라 잰다
   new MutationObserver((ms) => { if (ms.some((m) => m.target !== mainEl || m.attributeName !== 'style')) layout(); }).observe(mainEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-fold', 'data-turns', 'data-state'] });
   document.addEventListener('kit:drawer', layout);
+  addEventListener('resize', () => { mainEl.querySelector('.gx-card.is-fold')?.classList.remove('is-fold'); });   // 넓어지면 결과 카드를 다시 펴 보고 틈을 잰다
   mainEl.addEventListener('transitionend', layout, true);                                // 판 폭 · 서랍 등장 움직임이 끝난 자리로
   mainEl.addEventListener('panes:resize', layout);                                      // 손잡이로 폭을 끌 때
   addEventListener('resize', layout);
@@ -2374,6 +2390,7 @@ function tool(id) {
 }
 function closePop() { if (S.tool && S.tool !== 'analyze') S.tool = null; pop.hidden = true; patchRail(); }
 function showPop(title, ...kids) {
+  if (S.drawer) closeDrawer();                             // 한 자리 하나(10-22 원칙 309) — 판과 서랍은 같은 자리(PC 오른쪽 · 휴대폰 아래 시트)를 쓴다
   pop.innerHTML = '';
   pop.append(h('header.xc-pop-h', {}, h('h2', { text: title }), h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: closePop })), ...kids);
   pop.hidden = false;
@@ -2635,7 +2652,7 @@ async function compareOn(leftId, rightId) {
 }
 function cmpBar() {
   let el = S.els.cmp;
-  if (!el) { el = S.els.cmp = h('div.xc-cmp', { role: 'group', 'aria-label': '가르기 시점' }); mainEl.append(el); }
+  if (!el) { el = S.els.cmp = h('div.xc-cmp', { role: 'group', 'aria-label': '비교할 영상' }); mainEl.append(el); }
   const eps = regionEpochs();
   el.hidden = !S.swipe;
   if (!S.swipe) return;

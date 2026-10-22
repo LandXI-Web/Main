@@ -40,4 +40,13 @@
   padding:8px 14px;border-radius:var(--r-8,8px);background:rgba(255,255,255,.97);box-shadow:0 8px 24px rgba(17,24,39,.12);white-space:nowrap}
 .gx-cmp-t b{font:700 var(--fs-body)/23px var(--font-body);color:var(--ink)}
 .gx-cmp-y{font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.gx-cmp-h{font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub-2);white-space:nowrap}
 @media (max-width:640px){.gx-cmp-t{top:auto;bottom:196px;flex-direction:column;align-items:center;gap:0;padding:6px 12px}}
+/* 10-22 원칙 309 · FARM-ADMIN §3-1 규칙 3 — 대화가 설 틈이 280 아래면 결과 카드는 한 줄(제목 줄만) · 휴대폰은 지도 왼쪽 위 한 줄(아래는 대화 입력 자리) */
+.gx-card.is-fold{padding:8px 14px;gap:0}
+.gx-card.is-fold > :not(.gx-t){display:none}
+.gx-card.is-fold .gx-t b{font-size:var(--fs-body);line-height:23px}
+@media (max-width:640px){
+  .gx-card{bottom:auto;top:12px;max-width:calc(100% - 24px)}
+  .k-main:has(.xc-cmp:not([hidden])) .gx-card{display:none}
+}

@@ -41,7 +41,7 @@ from .envelope import KST, env, now_iso
 router = APIRouter()
 IMP_RE = re.compile(r"^imp_[0-9A-Z]{10,40}$")
 CARD_RE = re.compile(r"^card-[a-z0-9-]{2,40}$")
-PERSONAL_RULE = ("올린 대장의 필지별 내용(지번 · 대장 값)이 든 파일은 개인정보가 든 파일로 봅니다 — 처음 한 번 이용 약속(사용 목적 · 활용 기간)을 적고, "
+PERSONAL_RULE = ("올린 대장의 필지별 내용(지번 · 대장 값)이 든 파일은 개인정보가 든 파일로 봅니다 — 처음 한 번 개인정보 이용 확인(사용 목적 · 활용 기간)을 적고, "
                  "받을 때마다 한 번 더 확인합니다. 그 밖의 파일은 바로 받습니다.")
 BALE_MAX = 3000.0
 SLOTS = [("growth", "생육기", ("생육",)), ("harvest", "생산기", ("생산", "수확")), ("bale", "곤포사일리지", ("곤포",))]
@@ -141,7 +141,7 @@ async def need_personal(p: Principal, ok) -> dict:
     """개인정보가 든 파일 — 유효한 이용 약속이 있고 이번 받기를 확인(ok=1)했을 때만. 없으면 409(화면이 약속 창 · 확인 창을 띄운다)."""
     pl = await active_pledge(p)
     if not pl:
-        raise ApiError("conflict", "개인정보가 든 파일입니다 — 이용 약속을 먼저 적어 주세요", {"need": "pledge", "rule": PERSONAL_RULE}, 409)
+        raise ApiError("conflict", "개인정보가 든 파일입니다 — 사용 목적 · 활용 기간을 먼저 적어 주세요", {"need": "pledge", "rule": PERSONAL_RULE}, 409)
     if str(ok or "") not in ("1", "true"):
         raise ApiError("conflict", "개인정보가 든 파일입니다 — 받기 전에 확인해 주세요", {"need": "confirm", "pledge": pl}, 409)
     return pl
@@ -174,7 +174,7 @@ async def pledge_post(request: Request, body: dict | None = None):
         await c.execute("INSERT INTO download_pledges(id, tenant_id, user_id, purpose, until_date) VALUES ($1,$2,$3,$4,$5)",
                         pid, p.tenant_id, p.user_id, purpose, until)
         await c.execute("INSERT INTO space_log(tenant_id, kind, line, actor, realm, detail) VALUES ($1,'consent',$2,$3,'tenant',$4)",
-                        p.tenant_id, f"{p.name or '담당자'} — 개인정보가 든 파일 이용 약속({until.isoformat()}까지)", p.user_id,
+                        p.tenant_id, f"{p.name or '담당자'} — 개인정보 이용 확인({until.isoformat()}까지)", p.user_id,
                         {"pledge": pid, "purpose": purpose, "until": until.isoformat()})
     return {"ok": True, "active": await active_pledge(p), "as_of": now_iso()}
 
@@ -444,9 +444,6 @@ async def feedcrop_get(request: Request, import_id: str | None = None, growth: s
 @router.get("/spaces/me/ledger/feedcrop.xlsx")
 async def feedcrop_xlsx(request: Request, import_id: str | None = None, growth: str | None = None, harvest: str | None = None,
                         bale: str | None = None, ok: str | None = None):
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill
-    from openpyxl.utils import get_column_letter
     p = _me(request)
     pl = await need_personal(p, ok)
     c = await feedcrop(p, import_id, _picks_of(growth, harvest, bale))
@@ -455,21 +452,27 @@ async def feedcrop_xlsx(request: Request, import_id: str | None = None, growth: 
     slots = [s for s in c["slots"] if s["card"]]
     kg = (c.get("bale_kg") or {}).get("value")
 
+    from .farm_more import AREA, COUNT, _book, _org_short, _save, _sheet, cap_line
+    org = await _org_short(p.tenant_id)
+
     def build() -> bytes:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "필지"
-        head = ["필지 번호", "지번", "읍면동", "신청 작물", "신청 면적(㎡)", "필지 면적(㎡)"]
+        wb = _book()
+        L = c["ledger"]
+        cap = cap_line(org, "사료작물 대장 대조", L["name"], str(L.get("base_date") or now_iso()[:10])[:10],
+                       "사료작물 재배 신청 대장 × 세 시점 AI 분석 결과(필지 번호로 맞춤)")
+        head = ["필지 번호", "지번", "읍면동", "신청 작물", "신청 넓이(㎡)", "필지 넓이(㎡)"]
+        num = {4: AREA, 5: AREA}
         for s in slots:
             if s["key"] == "bale":
                 head += ["곤포사일리지 AI 결과", "곤포사일리지 개수"] + (["생산량(kg)"] if kg else [])
+                num[len(head) - (2 if kg else 1)] = COUNT
+                if kg:
+                    num[len(head) - 1] = COUNT
             else:
-                head += [f"{s['label']} AI 결과", f"{s['label']} AI 면적(㎡)"]
-        head += ["견준 결과", "AI 결과가 없는 시점"]
-        ws.append(head)
-        for cell in ws[1]:
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill("solid", fgColor="F2F4F6")
+                head += [f"{s['label']} AI 결과", f"{s['label']} AI 넓이(㎡)"]
+                num[len(head) - 1] = AREA
+        head += ["대조 결과", "AI 결과가 없는 시점"]
+        data = []
         for x in c["_all"]:
             row = [x["pnu"], x["where"], x["emd"], x["crop"], x["apply_m2"], x["parcel_m2"]]
             for s in slots:
@@ -479,48 +482,32 @@ async def feedcrop_xlsx(request: Request, import_id: str | None = None, growth: 
                 else:
                     row += [v.get("ai") or "없음", v.get("m2")]
             row += [{"ok": "맞음", "diff": "다름", "none": ""}[x["k"]], " · ".join(x["miss"])]
-            ws.append(row)
-        for r in ws.iter_rows(min_row=2, min_col=1, max_col=1):
-            for cell in r:
-                cell.number_format = "@"
-        for i in range(len(head)):
-            ws.column_dimensions[get_column_letter(i + 1)].width = 22 if i in (0, 1) else 16
-        # 읍면동별 묶음(제안-견주기읍면동묶음) — 다른 필지 많은 곳부터 · 숫자는 숫자
-        we = wb.create_sheet("읍면동별")
+            data.append(row)
+        _sheet(wb, "필지", head, data, num=num, text_cols=(0,), widths=[22, 22] + [16] * (len(head) - 2), cap=cap)
+        # 읍면동별 묶음(제안-견주기읍면동묶음) — 다른 필지 많은 곳부터 · 숫자는 숫자 · 합계 = 화면과 같은 서버 값
         lbs = [s["label"] for s in slots]
-        we.append(["읍면동", "신청 필지", "맞음", "다름"] + [f"{lb} AI 결과 없음" for lb in lbs])
-        for cell in we[1]:
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill("solid", fgColor="F2F4F6")
-        for e in c["by_emd"]:
-            we.append([e["emd"], e["n"]["value"], e["ok"]["value"], e["diff"]["value"]] + [(e["miss"].get(lb) or {}).get("value", 0) for lb in lbs])
-        we.append(["합계", len(c["_all"]), c["ok"]["value"], c["diff"]["value"]] + [sum((e["miss"].get(lb) or {}).get("value", 0) for e in c["by_emd"]) for lb in lbs])
-        for cell in we[we.max_row]:
-            cell.font = Font(bold=True)
-        we.freeze_panes = "A2"
-        for i in range(4 + len(lbs)):
-            we.column_dimensions[get_column_letter(i + 1)].width = 16 if i else 18
+        er = [[e["emd"], e["n"]["value"], e["ok"]["value"], e["diff"]["value"]] + [(e["miss"].get(lb) or {}).get("value", 0) for lb in lbs] for e in c["by_emd"]]
+        er.append(["합계", len(c["_all"]), c["ok"]["value"], c["diff"]["value"]] + [sum((e["miss"].get(lb) or {}).get("value", 0) for e in c["by_emd"]) for lb in lbs])
+        _sheet(wb, "읍면동별", ["읍면동", "신청 필지", "맞음", "다름"] + [f"{lb} AI 결과 없음" for lb in lbs], er,
+               num={i: COUNT for i in range(1, 4 + len(lbs))}, total_last=True, widths=[18] + [16] * (3 + len(lbs)), cap=cap)
         info = wb.create_sheet("안내")
-        L = c["ledger"]
         rows = [("올린 대장", L["name"]), ("기준일", L.get("base_date") or "—"), ("대장 필지", L["parcels"]["value"]),
                 *[(f"{s['label']} 서비스", " · ".join(x for x in (s["name"], s.get("shot")) if x)) for s in slots],
                 ("맞음(고른 시점 모두 AI 결과 있음)", c["ok"]["value"]), ("다름(AI 결과가 없는 시점이 있음)", c["diff"]["value"])]
         if kg:
             rows.append(("곤포사일리지 1개당 무게(kg · 기관이 넣은 값)", kg))
-        rows += [("이용 약속", f"{pl['purpose']} · {pl['until']}까지"), ("만든 때", now_iso()),
-                 ("안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다. 개인정보가 든 파일이니 약속한 목적 · 기간 안에서만 씁니다.")]
+        rows += [("개인정보 이용 확인", f"{pl['purpose']} · {pl['until']}까지"), ("만든 때", now_iso()),
+                 ("안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다. 개인정보가 든 파일이니 적은 목적 · 기간 안에서만 씁니다.")]
         for k, v in rows:
             info.append([k, v])
         info.column_dimensions["A"].width = 34
         info.column_dimensions["B"].width = 64
-        buf = io.BytesIO()
-        wb.save(buf)
-        return buf.getvalue()
+        return _save(wb)
     blob = await run_in_threadpool(build)
-    name = f"사료작물_재배신청_AI결과_견주기_{dt.datetime.now(KST).strftime('%Y%m%d')}.xlsx"
+    name = f"{org}_사료작물_대장대조_{dt.datetime.now(KST).strftime('%Y%m%d')}.xlsx"
     async with db(p) as cn:
         await cn.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
-                         p.tenant_id, slots[0]["card"] if slots else None, f"{p.name or '담당자'} — 사료작물 재배 신청 대장과 AI 결과 내려받기(개인정보 · 이용 약속 확인)",
+                         p.tenant_id, slots[0]["card"] if slots else None, f"{p.name or '담당자'} — 사료작물 재배 신청 대장과 AI 결과 내려받기(개인정보 이용 확인)",
                          p.user_id, {"fmt": "feedcrop", "rows": len(c["_all"]), "import_id": c["ledger"]["import_id"], "pledge": pl["id"], "personal": True})
     return Response(blob, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"content-disposition": f"attachment; filename=\"feedcrop.xlsx\"; filename*=UTF-8''{quote(name)}", "cache-control": "no-store"})

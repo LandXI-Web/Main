@@ -1,0 +1,135 @@
+  gov(namwon) 1280 01-list 겹침 0 · 3.1초
+  gov(namwon) 1280 02-group 겹침 0 · 3.0초
+  gov(namwon) 1280 02b-group-svcs 겹침 0 · 2.7초
+  gov(namwon) 1280 02c-group-parcels 겹침 0 · 2.7초
+  gov(namwon) 1280 02d-group-stats 겹침 0 · 4.0초
+  gov(namwon) 1280 02e-group-downloads 겹침 0 · 3.3초
+  gov(namwon) 1280 03-dash 겹침 0 · 5.0초
+  gov(namwon) 1280 04-history 겹침 0 · 4.3초
+  gov(namwon) 1280 05-stats 겹침 0 · 5.0초
+  gov(namwon) 1280 06-parcels 겹침 0 · 3.6초
+  gov(namwon) 1280 07-card 겹침 0 · 3.9초
+  gov(namwon) 1280 07b-card-chat 겹침 0 · 4.5초
+  gov(namwon) 1280 08-map 겹침 0 · 5.1초
+  gov(namwon) 1280 08b-map-layers 겹침 0 · 6.2초
+  gov(namwon) 1280 08d-map-ask 겹침 0 · 7.3초
+  gov(namwon) 1280 09-compare 겹침 0 · 11.7초
+  gov(namwon) 1280 10-fusion 겹침 0 · 3.1초
+  gov(namwon) 1280 11-request 겹침 0 · 2.6초
+  gov(namwon) 1440 01-list 겹침 0 · 3.2초
+  gov(namwon) 1440 02-group 겹침 0 · 2.7초
+  gov(namwon) 1440 02b-group-svcs 겹침 0 · 2.7초
+  gov(namwon) 1440 02c-group-parcels 겹침 0 · 2.7초
+  gov(namwon) 1440 02d-group-stats 겹침 0 · 4.0초
+  gov(namwon) 1440 02e-group-downloads 겹침 0 · 3.2초
+  gov(namwon) 1440 03-dash 겹침 0 · 3.2초
+  gov(namwon) 1440 04-history 겹침 0 · 3.8초
+  gov(namwon) 1440 05-stats 겹침 0 · 4.5초
+  gov(namwon) 1440 06-parcels 겹침 0 · 2.7초
+  gov(namwon) 1440 07-card 겹침 0 · 3.4초
+  gov(namwon) 1440 07b-card-chat 겹침 0 · 11.7초
+  gov(namwon) 1440 08-map 겹침 0 · 4.9초
+  gov(namwon) 1440 08b-map-layers 겹침 0 · 6.5초
+  gov(namwon) 1440 08d-map-ask 겹침 0 · 9.9초
+  gov(namwon) 1440 09-compare 겹침 0 · 12.2초
+  gov(namwon) 1440 10-fusion 겹침 0 · 3.1초
+  gov(namwon) 1440 11-request 겹침 0 · 2.3초
+  gov(namwon) 390 01-list 겹침 0 · 3.2초
+  gov(namwon) 390 02-group 겹침 0 · 2.7초
+  gov(namwon) 390 02b-group-svcs 겹침 0 · 2.7초
+  gov(namwon) 390 02c-group-parcels 겹침 0 · 2.7초
+  gov(namwon) 390 02d-group-stats 겹침 0 · 3.9초
+  gov(namwon) 390 02e-group-downloads 겹침 0 · 3.3초
+  gov(namwon) 390 03-dash 겹침 0 · 3.2초
+  gov(namwon) 390 04-history 겹침 0 · 3.8초
+  gov(namwon) 390 05-stats 겹침 0 · 5.0초
+  gov(namwon) 390 06-parcels 겹침 0 · 3.3초
+  gov(namwon) 390 07-card 겹침 0 · 3.4초
+  gov(namwon) 390 07b-card-chat 겹침 0 · 4.5초
+  gov(namwon) 390 08-map 겹침 0 · 4.9초
+  gov(namwon) 390 08b-map-layers 겹침 0 · 7.1초
+  gov(namwon) 390 08d-map-ask 겹침 0 · 7.4초
+  gov(namwon) 390 09-compare 겹침 0 · 13.1초
+  gov(namwon) 390 10-fusion 겹침 0 · 3.2초
+  gov(namwon) 390 11-request 겹침 0 · 2.3초
+  gov2(gwangju-jeonnam) 1280 01-list 겹침 0 · 3.2초
+  gov2(gwangju-jeonnam) 1280 02-group 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 1280 02b-group-svcs 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 1280 02c-group-parcels 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 1280 02d-group-stats 겹침 0 · 4.0초
+  gov2(gwangju-jeonnam) 1280 02e-group-downloads 겹침 0 · 3.4초
+  gov2(gwangju-jeonnam) 1280 03-dash 겹침 0 · 3.2초
+  gov2(gwangju-jeonnam) 1280 04-history 겹침 0 · 3.8초
+  gov2(gwangju-jeonnam) 1280 05-stats 겹침 0 · 4.5초
+  gov2(gwangju-jeonnam) 1280 06-parcels 상태 못 만듦 · 겹침 0 · 41.0초
+  gov2(gwangju-jeonnam) 1280 07-card 상태 못 만듦 · 겹침 0 · 40.9초
+  gov2(gwangju-jeonnam) 1280 07b-card-chat 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 1280 08-map 겹침 0 · 5.0초
+  gov2(gwangju-jeonnam) 1280 08b-map-layers 겹침 0 · 6.2초
+  gov2(gwangju-jeonnam) 1280 08d-map-ask 겹침 0 · 7.8초
+  gov2(gwangju-jeonnam) 1280 09-compare 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 1280 10-fusion 겹침 0 · 3.3초
+  gov2(gwangju-jeonnam) 1280 11-request 겹침 0 · 2.5초
+  gov2(gwangju-jeonnam) 1440 01-list 겹침 0 · 3.2초
+  gov2(gwangju-jeonnam) 1440 02-group 겹침 0 · 21.5초
+  gov2(gwangju-jeonnam) 1440 02b-group-svcs 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 1440 02c-group-parcels 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 1440 02d-group-stats 겹침 0 · 4.0초
+  gov2(gwangju-jeonnam) 1440 02e-group-downloads 겹침 0 · 3.3초
+  gov2(gwangju-jeonnam) 1440 03-dash 겹침 0 · 3.7초
+  gov2(gwangju-jeonnam) 1440 04-history 겹침 0 · 3.8초
+  gov2(gwangju-jeonnam) 1440 05-stats 겹침 0 · 4.5초
+  gov2(gwangju-jeonnam) 1440 06-parcels 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 1440 07-card 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 1440 07b-card-chat 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 1440 08-map 겹침 0 · 5.1초
+  gov2(gwangju-jeonnam) 1440 08b-map-layers 겹침 0 · 6.6초
+  gov2(gwangju-jeonnam) 1440 08d-map-ask 겹침 0 · 7.7초
+  gov2(gwangju-jeonnam) 1440 09-compare 상태 못 만듦 · 겹침 0 · 40.8초
+  gov2(gwangju-jeonnam) 1440 10-fusion 겹침 0 · 3.3초
+  gov2(gwangju-jeonnam) 1440 11-request 겹침 0 · 2.6초
+  gov2(gwangju-jeonnam) 390 01-list 겹침 0 · 3.5초
+  gov2(gwangju-jeonnam) 390 02-group 겹침 0 · 2.9초
+  gov2(gwangju-jeonnam) 390 02b-group-svcs 겹침 0 · 2.8초
+  gov2(gwangju-jeonnam) 390 02c-group-parcels 겹침 0 · 2.7초
+  gov2(gwangju-jeonnam) 390 02d-group-stats 겹침 0 · 4.0초
+  gov2(gwangju-jeonnam) 390 02e-group-downloads 겹침 0 · 3.3초
+  gov2(gwangju-jeonnam) 390 03-dash 겹침 0 · 3.9초
+  gov2(gwangju-jeonnam) 390 04-history 겹침 0 · 4.5초
+  gov2(gwangju-jeonnam) 390 05-stats 겹침 0 · 7.1초
+  gov2(gwangju-jeonnam) 390 06-parcels 상태 못 만듦 · 겹침 0 · 40.9초
+  gov2(gwangju-jeonnam) 390 07-card 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 390 07b-card-chat 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 390 08-map 겹침 0 · 4.8초
+  gov2(gwangju-jeonnam) 390 08b-map-layers 겹침 0 · 6.4초
+  gov2(gwangju-jeonnam) 390 08d-map-ask 겹침 0 · 7.3초
+  gov2(gwangju-jeonnam) 390 09-compare 상태 못 만듦 · 겹침 0 · 40.7초
+  gov2(gwangju-jeonnam) 390 10-fusion 겹침 0 · 3.1초
+  gov2(gwangju-jeonnam) 390 11-request 겹침 0 · 2.3초
+  app 1280 a1-console 겹침 0 · 3.5초
+  app 1280 a2-projects 겹침 0 · 3.6초
+  app 1280 a3-analyze 겹침 0 · 3.8초
+  app 1280 a4-ximap 겹침 0 · 5.2초
+  app 1280 a5-ximap-layers 겹침 0 · 6.3초
+  app 1280 a6-map 겹침 0 · 4.0초
+  app 1440 a1-console 겹침 0 · 3.5초
+  app 1440 a2-projects 겹침 0 · 3.5초
+  app 1440 a3-analyze 겹침 0 · 3.5초
+  app 1440 a4-ximap 겹침 0 · 4.8초
+  app 1440 a5-ximap-layers 겹침 0 · 6.3초
+  app 1440 a6-map 겹침 0 · 4.0초
+  app 390 a1-console 겹침 0 · 3.5초
+  app 390 a2-projects 겹침 0 · 3.5초
+  app 390 a3-analyze 겹침 0 · 4.0초
+  app 390 a4-ximap 겹침 0 · 4.8초
+  app 390 a5-ximap-layers 겹침 0 · 6.4초
+  app 390 a6-map 겹침 0 · 4.5초
+  guest 1280 g1-main 겹침 0 · 4.2초
+  guest 1280 g2-login 겹침 0 · 2.3초
+  guest 1440 g1-main 겹침 0 · 3.2초
+  guest 1440 g2-login 겹침 0 · 2.2초
+  guest 390 g1-main 겹침 0 · 3.2초
+  guest 390 g2-login 겹침 0 · 2.2초
+
+겹침 검사 — 상태 132개(역할 × 폭 × 화면) · 겹친 상태 0 · 만들지 못한 상태 0(필수) + 12(그 기관에 없는 기능)
+✓ 겹침 0

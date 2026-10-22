@@ -86,13 +86,13 @@ function paint(c, ctx) {
     const all = c.geojson;
     ctx.paintMap(all ? { geojson: e ? { ...all, features: all.features.filter((f) => f.properties.emd === e) } : all } : null);
   };
-  const bDl = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기', title: '올린 대장이 든 파일 — 이용 약속 뒤 받을 때마다 확인합니다' });
+  const bDl = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기', title: '올린 대장이 든 파일 — 받을 때마다 사용 목적 · 기간을 확인합니다' });
   const bNew = h('button.t-btn.t-btn--2', { type: 'button', text: '다른 파일' });
   bDl.addEventListener('click', async () => {
     bDl.disabled = true;
     const q = { import_id: L.import_id };
     for (const s of c.slots) q[s.key] = s.card || '-';
-    try { await personalFile('/spaces/me/ledger/feedcrop.xlsx?' + new URLSearchParams(q), { name: '사료작물_재배신청_AI결과_견주기.xlsx', label: '사료작물 견주기 엑셀' }); }
+    try { await personalFile('/spaces/me/ledger/feedcrop.xlsx?' + new URLSearchParams(q), { name: '사료작물_대장대조.xlsx', label: '사료작물 대장 대조 엑셀' }); }
     catch (e) { K.devlog('feed xlsx', e.message); K.toast('내려받지 못했습니다'); }
     finally { bDl.disabled = false; }
   });

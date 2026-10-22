@@ -26,7 +26,7 @@ KIND_KO = {"publish": "결과 공개", "analysis": "AI 분석", "check": "확인
 ORDER = list(KIND_KO)
 RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
 FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",   # farm_more.FMT_KO 와 같은 이름표
-          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 견주기 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
+          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
 
 
 def _iso(v):
@@ -422,6 +422,44 @@ def _year(shot: str | None, analyzed: str | None) -> str | None:
     return m.group(0) if m else None
 
 
+TRACE_LOW, TRACE_HIGH = 0.05, 0.30          # 필지 대비 비율 — 5% 아래 = '흔적 없음' · 30% 이상 = 그 종류(10-22 FARM-ADMIN §1-4 · 한 필지 두 문장 어긋남)
+
+
+def _trace_noun(cls: str) -> str:
+    """'경작지' → '경작'(흔적 없음 앞에 붙는 말) · 그 밖은 그대로."""
+    return cls[:-1] if cls.endswith("지") and len(cls) > 2 else cls
+
+
+def change_line(results: list, parcel_m2: float) -> dict | None:
+    """필지 '바뀜' 한 줄 — 필지 카드 · XI맵 위 띠 · 이력이 모두 이 한 함수의 글(숫자 한 출처).
+    가장 최근 두 결과의 주된 종류만 보지 않고 필지 넓이 대비 비율로 본다: 이전 해 < 5% 이고 올해 ≥ 30% 면 '2023 경작 흔적 없음 → 2025 경작지'
+    (96㎡ 조각 하나로 '두 해 모두 경작지'라 하던 것). 필지 넓이를 모르면 종류 이름만으로(예전 규칙)."""
+    if len(results) < 2:
+        return None
+    a, z = results[-2], results[-1]
+    ya, yz = a["year"] or a["shot"], z["year"] or z["shot"]
+
+    def share(r, cls):
+        if not parcel_m2:
+            return None
+        v = sum(float(x["area"]["value"] or 0) for x in r["classes"] if x["name"] == cls)
+        return v / parcel_m2
+
+    sa, sz = share(a, z["cls"]), share(z, z["cls"])
+    ra, rz = share(a, a["cls"]), share(z, a["cls"])
+    one = a["cls"] == z["cls"]                     # 주된 종류 이름이 같을 때만 비율로 가른다('모두 경작지'가 96㎡ 조각 하나에서 나오던 것)
+    if one and sa is not None and sa < TRACE_LOW and sz >= TRACE_HIGH:
+        line, same = f"{ya} {_trace_noun(z['cls'])} 흔적 없음 → {yz} {z['cls']}", False
+    elif one and ra is not None and ra >= TRACE_HIGH and rz < TRACE_LOW:
+        line, same = f"{ya} {a['cls']} → {yz} {_trace_noun(a['cls'])} 흔적 없음", False
+    elif one:
+        line, same = f"{ya} · {yz} 모두 {z['cls']}", True
+    else:
+        line, same = f"{ya} {a['cls']} → {yz} {z['cls']}", False
+    return {"from": {"year": a["year"], "cls": a["cls"]}, "to": {"year": z["year"], "cls": z["cls"]}, "same": same, "line": line,
+            **({"share": {"from": round(sa * 100, 1), "to": round(sz * 100, 1)}} if sa is not None else {})}
+
+
 @router.get("/spaces/me/parcels/{pnu}/history")
 async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, limit: int = 10):
     """필지 이력(영농-3) — 그 서비스의 결과(판마다 · 영상 시점마다)가 이 필지에서 본 것 · 올린 대장의 값 · 메모 · 다음 확인 날짜 · 검토 요청을 한 줄기로(새것 먼저).
@@ -465,11 +503,13 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
     found: dict[str, dict] = {}
     shapes: dict[str, list] = {}
     addr = None
+    parcel_m2 = 0.0
     if sets:
         async with db(realm="lx") as c:
             await c.execute("SET LOCAL jit = off")
-            pa = await c.fetchrow("SELECT addr FROM survey_parcels WHERE pnu=$1", pnu)
+            pa = await c.fetchrow("SELECT addr, area_m2 FROM survey_parcels WHERE pnu=$1", pnu)
             addr = pa["addr"] if pa else None
+            parcel_m2 = float(pa["area_m2"] or 0) if pa else 0.0
             spa = await c.fetch("SELECT job_id, cls_ko, sum(hit1_m2) m2 FROM survey_parcel_ai WHERE pnu=$1 AND job_id = ANY($2::text[]) AND n1 > 0 GROUP BY 1, 2",
                                 pnu, sets)
         # 결과 면 × 필지 공간 결합 = 시스템 읽기 경로(pool_sys) — RLS 보안 장벽이 공간 인덱스(&&)를 막아 결과 세트 전체(13만 줄)를 훑던 것(0.38초 → 수 ms · impl-46 속도).
@@ -516,12 +556,7 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
                         "cls": top, "classes": [{"name": k, "area": env(round(v, 1), "m2", "measured", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
                         "_set": r["set"]})
     results.sort(key=lambda x: (x["year"] or "", x["analyzed"] or "", x["_ed"]))
-    change = None
-    if len(results) >= 2:
-        a, z = results[-2], results[-1]
-        change = {"from": {"year": a["year"], "cls": a["cls"]}, "to": {"year": z["year"], "cls": z["cls"]}, "same": a["cls"] == z["cls"],
-                  "line": (f"{a['year'] or a['shot']} · {z['year'] or z['shot']} 모두 {z['cls']}" if a["cls"] == z["cls"]
-                           else f"{a['year'] or a['shot']} {a['cls']} → {z['year'] or z['shot']} {z['cls']}")}
+    change = change_line(results, parcel_m2)
     items = []
     for r in results:
         items.append({"kind": "result", "at": r["analyzed"], "_k": r["analyzed"] or r["year"] or "", "year": r["year"],

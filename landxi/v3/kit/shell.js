@@ -20,6 +20,7 @@ import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
 import { mountBell, hasBell } from './notify.js';   // 알림 칸(검토 요청 · 메시지 — 구현 2차)
 import { mountCmdk } from './cmdk.js';               // XI ChatGEO 채팅창(오른쪽 아래 · 로그인한 모든 화면)
+import { mountChatDock } from './chat-dock.js';      // 휴대폰 — 대화 단추를 아래 메뉴 줄 칸으로(10-22 원칙 309 임시 고침 · now 22 Q4 전)
 import { staffMenu, STAFF_OF } from './lx-menu.js'; // LX 직원 메뉴 한 곳(10차 메뉴-1 ⓐ)
 
 const HOME = {
@@ -118,7 +119,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   }
   /* XI ChatGEO — 로그인 전(게스트)에는 그리지 않는다(cmdk.js) · 부모 상자 안(갤러리 · 미리보기)과 다른 화면 속 화면(도움말 iframe)에는 붙이지 않는다 */
   let framed = false; try { framed = window.self !== window.top; } catch { framed = true; }
-  if (!contained && !framed) mountCmdk({ who, home, guest: !who });
+  if (!contained && !framed) { mountCmdk({ who, home, guest: !who }); if (who) mountChatDock(rail ? railEl : null); }
 
   let cur = rail?.current ?? 0, done = rail?.done;
   const badges = {};                                     // 칸 숫자(요청함) — id → n

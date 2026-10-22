@@ -1,0 +1,67 @@
+{
+ "gov": {
+  "tenant": "namwon",
+  "landing": "/landxi/v3/gov-select/",
+  "clicks": [
+   "묶음 카드",
+   "결과 지도"
+  ],
+  "group_home": "/landxi/v3/gov-group/?group=farm",
+  "firstview_chars": 157,
+  "tabs": [
+   "통합 대시보드",
+   "분석서비스",
+   "필지 찾기",
+   "보고서·통계",
+   "행정정보(대장)",
+   "다운로드 이력",
+   "분석 요청 · 촬영 요청"
+  ],
+  "map": "/landxi/v3/xi-clean/",
+  "layer_names": [
+   "영상",
+   "AI 분석",
+   "토지피복 · 2023년",
+   "농경지 · 2025년",
+   "비닐하우스 · 2025년",
+   "변화 탐지",
+   "비닐하우스 · 2023년",
+   "지적",
+   "읍면동 경계"
+  ],
+  "ms_to_map": 16222,
+  "parcel": {
+   "card": "아영면 두락리 119-1",
+   "change_card": "2023 경작 흔적 없음 → 2025 경작지",
+   "change_band": "2023 경작 흔적 없음 → 2025 경작지",
+   "band_head": "시계열 영상 비교",
+   "same": true
+  }
+ },
+ "gov2": {
+  "tenant": "gwangju-jeonnam",
+  "landing": "/landxi/v3/gov-group/?group=river",
+  "clicks": [
+   "결과 지도"
+  ],
+  "group_home": "/landxi/v3/gov-group/?group=river",
+  "firstview_chars": 162,
+  "tabs": [
+   "통합 대시보드",
+   "분석서비스",
+   "필지 찾기",
+   "보고서·통계",
+   "행정정보(대장)",
+   "다운로드 이력",
+   "분석 요청 · 촬영 요청"
+  ],
+  "map": "/landxi/v3/xi-clean/",
+  "layer_names": [
+   "영상",
+   "AI 분석",
+   "지적",
+   "읍면동 경계"
+  ],
+  "ms_to_map": 14030
+ }
+}

@@ -331,3 +331,16 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 .fd-dlb:hover{background:var(--bg-0)}
 .fd-dlb:disabled{opacity:.6;cursor:progress}
 @media (max-width:640px){.gs-dash-act{margin-left:0;width:100%}.fd-dlb{flex:1}}
+/* 10-22 FARM-ADMIN §6-1 — 칸마다 글 단추 엑셀 */
+.gs-dash .gs-pxl{align-self:flex-start;margin-top:12px}
+/* 행정서비스 묶음 카드(10-22 원칙 310 · FARM-ADMIN §2-1) — 내 서비스 맨 위 · 누르면 묶음 홈(gov-group) */
+.gs-gcard{display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:var(--r-16);background:var(--bg-1);color:var(--ink);transition:transform var(--d-180) var(--e-ui)}
+.gs-gcard:hover{transform:translateY(-4px)}
+.gs-gcard:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.gs-gcard-k{font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.gs-gcard-t{margin:0;font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.01em;text-wrap:balance}
+.gs-gcard-d{margin:0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub-2);text-wrap:pretty}
+.gs-gcard-l{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.gs-gcard-f{margin:auto 0 0;padding-top:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.gs-gcard-go{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
+.gs-gcard-go::after{content:" →"}

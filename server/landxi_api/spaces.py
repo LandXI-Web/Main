@@ -783,7 +783,7 @@ async def space_consent(request: Request, body: dict | None = None):
         await c.execute("INSERT INTO space_consents(tenant_id, user_id, realm, ver, at) VALUES ($1,$2,'tenant',$3,now()) "
                         "ON CONFLICT (tenant_id, user_id) DO UPDATE SET ver=EXCLUDED.ver, at=now()", p.tenant_id, p.user_id, CONSENT_VER)
         await c.execute("INSERT INTO space_log(tenant_id, kind, line, actor, realm) VALUES ($1,'consent',$2,$3,'tenant')",
-                        p.tenant_id, f"{p.name or '담당자'} — 내려받기 이용 약속에 동의", p.user_id)
+                        p.tenant_id, f"{p.name or '담당자'} — 내려받기 이용 확인에 동의", p.user_id)
         await audit(c, p, "space.consent", p.tenant_id, None, {"ver": CONSENT_VER})
     return {"ok": True, "consent": {"done": True}}
 
@@ -798,8 +798,12 @@ async def space_read(request: Request):
 
 
 # ── 내려받기(지도 파일 · 필지 엑셀 · 요약) ────────────────────────────────────
-def _fname(org: str, svc: str, edition: int, ext: str) -> str:
-    base = re.sub(r"[\\/:*?\"<>|\s]+", "_", f"{_short_org(org)}_{svc}_결과설명서{edition}판").strip("_")
+def _fname(org: str, svc: str, edition: int, ext: str, what: str = "") -> str:
+    """{기관}_{서비스}_{내용}_{기준일}.{ext}(10-22 엑셀 한 벌 · FARM-ADMIN §6-1 — '결과설명서n판' 같은 내부 말 없이)."""
+    from .gov_report import _short_svc
+    w = what or {"geojson": "공간정보", "xlsx": "필지목록", "json": "요약"}.get(ext, "자료")
+    raw = f"{_short_org(org)}_{_short_svc(svc).replace('·', '')}_{w}_{dt.datetime.now(KST).strftime('%Y%m%d')}"
+    base = re.sub(r'[\\/:*?"<>|\s·]+', "_", raw).strip("_")
     return f"{base}.{ext}"
 
 
@@ -898,59 +902,65 @@ async def _parcel_rows(t: str, sets: list[str], src: str | None, only: list[str]
     return out, how
 
 
-def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str, info: list[tuple] | None = None) -> bytes:
-    """info = '안내' 시트 줄(없으면 기관 결과 설명서 줄) — LX 지도 서비스 레이어 내려받기(staff_home)가 같은 함수를 쓴다(원칙 59 · Q6 ⓑ)."""
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
+def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str, info: list[tuple] | None = None, memos: dict | None = None,
+          scope: str = "") -> bytes:
+    """필지 엑셀 — 엑셀 한 벌(farm_more._sheet · 10-22 FARM-ADMIN §6-1): 1 ~ 2행 제목 · 기준일 · 출처 · 4행 머리 · 필터 · 숫자 서식 · 합계.
+    info = '안내' 시트 줄(없으면 기관 결과 설명서 줄) — LX 지도 서비스 레이어 내려받기(staff_home)가 같은 함수를 쓴다(원칙 59 · Q6 ⓑ).
+    memos = {pnu: {note, at}} 이면(기관 세션) '메모(최근)' · '메모 날짜' 열을 더한다. 서비스 버전은 안내 시트로만."""
+    from .farm_more import AREA, COUNT, DATE, RATIO, _book, _save, _sheet, cap_line
     body = g["body"]
     ver = ", ".join(body.get("version", {}).get("service") or [])
     rl = _round_label(body)
     hit_col = "필지와 겹친 넓이(㎡)" if how == "stored" else "AI 결과 넓이(㎡)"
-    cols = ["필지 번호", "주소", "읍면동", "지목", "필지 넓이(㎡)", "AI가 본 것", "결과 수", hit_col, "필지 대비 비율(%)", "믿을 만한 정도", "회차", "서비스 버전"]
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "필지"
-    ws.append(cols)
-    head_fill = PatternFill("solid", fgColor="F2F4F6")
-    for cell in ws[1]:
-        cell.font = Font(bold=True)
-        cell.fill = head_fill
-        cell.alignment = Alignment(vertical="center")
+    cols = ["필지 번호", "주소", "읍면동", "지목", "필지 넓이(㎡)", "AI 분석 결과", "결과 수", hit_col, "필지 대비 비율", "신뢰도(높음 · 보통 · 낮음)", "분석 영상 · 날짜"]
+    if memos is not None:
+        cols += ["메모(최근)", "메모 날짜"]
+    data = []
     for r in rows:
         pm = float(r["parcel_m2"]) if r.get("parcel_m2") is not None else None
         hit = float(r["hit"]) if r.get("hit") is not None else None
         ratio = round(hit / pm * 100, 1) if pm and hit is not None else None
         conf = float(r["conf"]) if r.get("conf") is not None else None
-        ws.append([str(r["pnu"]), r.get("addr") or "", r.get("emd") or "", r.get("jimok") or "", round(pm, 1) if pm is not None else None,
-                   " · ".join(sorted({class_ko(x) for x in (r.get("classes") or []) if x})), int(r["n"] or 0),
-                   round(hit, 1) if hit is not None else None, ratio, trust_of(conf)["level"] if conf is not None else "", rl, ver])
-    for row in ws.iter_rows(min_row=2, min_col=1, max_col=1):
-        for cell in row:
-            cell.number_format = "@"                      # 19자리 필지 번호 = 글자(엑셀이 1.23E+18 로 바꾸지 않게)
-    widths = [22, 34, 12, 10, 14, 22, 10, 18, 16, 14, 34, 12]
-    for i, w in enumerate(widths):
-        ws.column_dimensions[chr(65 + i)].width = w
-    ws.freeze_panes = "A2"
+        row = [str(r["pnu"]), r.get("addr") or "", r.get("emd") or "", r.get("jimok") or "", round(pm, 1) if pm is not None else None,
+               " · ".join(sorted({class_ko(x) for x in (r.get("classes") or []) if x})), int(r["n"] or 0),
+               round(hit, 1) if hit is not None else None, ratio, trust_of(conf)["level"] if conf is not None else "", rl]
+        if memos is not None:
+            m = memos.get(str(r["pnu"])) or {}
+            md = None
+            try:
+                md = dt.date.fromisoformat(str(m.get("at") or "")[:10]) if m.get("at") else None
+            except ValueError:
+                md = None
+            row += [m.get("note") or "", md]
+        data.append(row)
+    wb = _book()
+    base = ""
+    for rd in body.get("when", {}).get("rounds") or []:
+        base = max(base, str(rd.get("analyzed") or "")[:10])
+    cap = cap_line(_short_org(org), svc["name"], scope or "필지 목록", base or now_iso()[:10], "AI 분석 결과 × 연속지적 필지(관할 안 · 지운 결과 제외)")
+    num = {4: AREA, 6: COUNT, 7: AREA, 8: RATIO}
+    if memos is not None:
+        num[12] = DATE
+    _sheet(wb, "필지", cols, data, num=num, text_cols=(0,), widths=[22, 44, 12, 10, 14, 22, 10, 18, 14, 16, 34, 30, 12], cap=cap)
     d = wb.create_sheet("열 설명")
     d.append(["열", "뜻"])
-    for k, v in [("필지 번호", "19자리 필지 번호 — 글자로 저장했습니다"), ("주소", "필지 주소(지번)"), ("읍면동", "필지가 있는 읍면동"),
-                 ("지목", "대장 지목"), ("필지 넓이(㎡)", "필지 전체 넓이"), ("AI가 본 것", "이 필지에 걸친 AI 결과의 종류"),
+    for k, v in ([("필지 번호", "19자리 필지 번호 — 글자로 저장했습니다"), ("주소", "필지 주소(지번)"), ("읍면동", "필지가 있는 읍면동"),
+                 ("지목", "대장 지목"), ("필지 넓이(㎡)", "필지 전체 넓이"), ("AI 분석 결과", "이 필지에 걸친 AI 결과의 종류"),
                  ("결과 수", "이 필지에 걸친 AI 결과 수"),
                  (hit_col, "AI 결과가 필지와 겹친 넓이" if how == "stored" else "이 필지 번호가 붙은 AI 결과의 넓이 합"),
-                 ("필지 대비 비율(%)", "위 넓이 ÷ 필지 넓이"), ("믿을 만한 정도", "AI 점수 평균으로 본 높음 · 보통 · 낮음(점수는 확률이 아님)"),
-                 ("회차", "촬영 · 분석한 날"), ("서비스 버전", "결과를 만든 서비스 버전")]:
+                 ("필지 대비 비율", "위 넓이 ÷ 필지 넓이(%)"), ("신뢰도(높음 · 보통 · 낮음)", "AI 점수 평균으로 본 높음 · 보통 · 낮음(점수는 확률이 아님)"),
+                 ("분석 영상 · 날짜", "촬영한 영상 · 분석한 날")]
+                + ([("메모(최근)", "이 필지에 적은 가장 최근 메모"), ("메모 날짜", "그 메모를 적은 날")] if memos is not None else [])):
         d.append([k, v])
-    d.column_dimensions["A"].width = 22
+    d.column_dimensions["A"].width = 26
     d.column_dimensions["B"].width = 70
     i = wb.create_sheet("안내")
-    for k, v in info or [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"{g['edition']}판"), ("회차", rl), ("서비스 버전", ver),
+    for k, v in info or [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"{g['edition']}판"), ("분석 영상 · 날짜", rl), ("서비스 버전", ver),
                          ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", NOTICE)]:
         i.append([k, v])
-    i.column_dimensions["A"].width = 14
+    i.column_dimensions["A"].width = 16
     i.column_dimensions["B"].width = 80
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
+    return _save(wb)
 
 
 def _summary_doc(org: str, svc: dict, g: dict, parcels: int | None) -> dict:
@@ -994,7 +1004,8 @@ async def space_download(card: str, request: Request, fmt: str = "geojson"):
         rows, how = await _parcel_rows(p.tenant_id, body.get("sets") or [], await _parcel_src(p.tenant_id, body.get("sets") or []), await _only(p, card))
         if not rows:
             raise ApiError("not_found", "이 서비스 결과는 필지와 잇지 않습니다")
-        data = await run_in_threadpool(_xlsx, org, svc, g, rows, how)
+        memos = await latest_notes(p, card, [str(r["pnu"]) for r in rows])
+        data = await run_in_threadpool(_xlsx, org, svc, g, rows, how, None, memos, "관할 전체")
         await _log_download(p, card, g, fmt, len(rows), svc["name"])
         return Response(data, media_type=mime, headers={"content-disposition": _disposition(name), "cache-control": "no-store"})
     parcels = ((files.get("parcels") or {}).get("n") or {}).get("value")
@@ -1174,9 +1185,10 @@ async def space_parcels_pick_xlsx(card: str, request: Request, body: dict | None
         raise ApiError("not_found", "고른 필지가 이 서비스 결과에 없습니다")
     async with db(p) as c:
         org = await _tenant_name(c, p.tenant_id)
-    data = await run_in_threadpool(_xlsx, org, svc, g, rows, how)
+    memos = await latest_notes(p, card, [str(r["pnu"]) for r in rows])
+    data = await run_in_threadpool(_xlsx, org, svc, g, rows, how, None, memos, f"고른 필지 {len(rows):,}")
     await _log_download(p, card, g, "parcels", len(rows), svc["name"])
-    name = _fname(org, svc["name"], g["edition"], "xlsx").replace(".xlsx", f"_고른필지{len(rows)}.xlsx")
+    name = _fname(org, svc["name"], g["edition"], "xlsx", f"고른필지{len(rows)}")
     return Response(data, media_type=FMT["parcels"][3], headers={"content-disposition": _disposition(name), "cache-control": "no-store",
                                                                  "access-control-expose-headers": "Content-Disposition"})
 
@@ -1610,7 +1622,8 @@ async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
 
 # 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·
 # 서비스 이력 · 통계 · 필지 메모(landxi_api/gov_history.py). 공간 라우터에 붙여 main.py 를 고치지 않는다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
-for _sub in ("shoots", "gov_history", "farm_more", "gov_report", "farm_admin"):   # farm_more = 영농관리 바퀴 19(고르면 바로 만들어지는 보고서 · 진짜 엑셀 · 이용 약속 기록 · 원칙 293) — /report/multi 가 /report 보다 먼저   # farm_admin = 영농관리 결정(10-18 원칙 291 — 사료작물 견주기 · 곤포 생산량 · 이용 약속 · 행정정보 목록)
+for _sub in ("shoots", "gov_history", "farm_more", "gov_report", "farm_admin", "groups"):   # groups = 행정서비스 묶음 · 다운로드 이력(10-22 원칙 310 · 308)
+    # farm_more = 영농관리 바퀴 19(고르면 바로 만들어지는 보고서 · 진짜 엑셀 · 이용 약속 기록 · 원칙 293) — /report/multi 가 /report 보다 먼저   # farm_admin = 영농관리 결정(10-18 원칙 291 — 사료작물 견주기 · 곤포 생산량 · 이용 약속 · 행정정보 목록)
     # gov_report = 기관 AI 분석 결과 보고서 · 행정정보와 비교(서비스 기준) · 공개 실적(10-11 gov-보고서 · gov-비교 · QA-Q2 · Q3)
     try:
         import importlib as _il

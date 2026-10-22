@@ -1,0 +1,2650 @@
+{
+ "at": "2026-10-22T02:32:31.808Z",
+ "widths": [
+  1280,
+  1440,
+  390
+ ],
+ "results": [
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3145,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm",
+   "ok": true,
+   "note": "",
+   "ms": 3007,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-02-group.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2656,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-02b-group-svcs.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2687,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-02c-group-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 3955,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-02d-group-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3252,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-02e-group-downloads.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4978,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 4262,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-04-history.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4958,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3559,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-06-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3934,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-07-card.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 4527,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-07b-card-chat.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 5052,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08-map.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6168,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08b-map-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7329,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 11677,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-09-compare.png",
+   "boxesN": 7
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3096,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-10-fusion.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2562,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-11-request.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3168,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm",
+   "ok": true,
+   "note": "",
+   "ms": 2711,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-02-group.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2677,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-02b-group-svcs.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2681,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-02c-group-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 3966,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-02d-group-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3230,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-02e-group-downloads.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3233,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 3793,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-04-history.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4475,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 2698,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-06-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3413,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-07-card.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 11686,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-07b-card-chat.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4899,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6535,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08b-map-layers.png",
+   "boxesN": 6
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 9855,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 12228,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-09-compare.png",
+   "boxesN": 7
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3110,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-10-fusion.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2292,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-11-request.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3219,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-01-list.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm",
+   "ok": true,
+   "note": "",
+   "ms": 2695,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-02-group.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2680,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-02b-group-svcs.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2714,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-02c-group-parcels.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 3948,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-02d-group-stats.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=farm&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3297,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-02e-group-downloads.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3195,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-03-dash.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 3761,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-04-history.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 5020,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-05-stats.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3250,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-06-parcels.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3423,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-07-card.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 4498,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-07b-card-chat.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4919,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7077,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08b-map-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7368,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 13101,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-09-compare.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3156,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-10-fusion.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2346,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-11-request.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3232,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river",
+   "ok": true,
+   "note": "",
+   "ms": 2701,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-02-group.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2691,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-02b-group-svcs.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2686,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-02c-group-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 3997,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-02d-group-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3377,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-02e-group-downloads.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3221,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 3765,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-04-history.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4498,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40993,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-06-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40919,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-07-card.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40688,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-07b-card-chat.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 5005,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-08-map.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 6202,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-08b-map-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 7849,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40709,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-09-compare.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3348,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-10-fusion.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1280,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2528,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1280-11-request.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3220,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river",
+   "ok": true,
+   "note": "",
+   "ms": 21507,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-02-group.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2685,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-02b-group-svcs.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2681,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-02c-group-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4005,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-02d-group-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3333,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-02e-group-downloads.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3749,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 3817,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-04-history.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4486,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40664,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-06-parcels.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40722,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-07-card.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40703,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-07b-card-chat.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 5075,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 6626,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-08b-map-layers.png",
+   "boxesN": 6
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 7658,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40759,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-09-compare.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3251,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-10-fusion.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 1440,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2589,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov2-1440-11-request.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3477,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-01-list.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "02-group",
+   "label": "행정서비스 묶음 홈",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river",
+   "ok": true,
+   "note": "",
+   "ms": 2946,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-02-group.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "02b-group-svcs",
+   "label": "묶음 · 분석서비스 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=services",
+   "ok": true,
+   "note": "",
+   "ms": 2771,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-02b-group-svcs.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "02c-group-parcels",
+   "label": "묶음 · 필지 찾기 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=parcels",
+   "ok": true,
+   "note": "",
+   "ms": 2689,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-02c-group-parcels.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "02d-group-stats",
+   "label": "묶음 · 보고서·통계 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4002,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-02d-group-stats.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "02e-group-downloads",
+   "label": "묶음 · 다운로드 이력 탭",
+   "optional": true,
+   "url": "/landxi/v3/gov-group/?group=river&tab=downloads",
+   "ok": true,
+   "note": "",
+   "ms": 3305,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-02e-group-downloads.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3856,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-03-dash.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "04-history",
+   "label": "분석서비스 · 이력",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=history",
+   "ok": true,
+   "note": "",
+   "ms": 4495,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-04-history.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-marine&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 7110,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-05-stats.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "06-parcels",
+   "label": "필지 목록",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40944,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-06-parcels.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40698,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-07-card.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40689,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-07b-card-chat.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 4767,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 6371,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-08b-map-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 7317,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-marine&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 40000ms exceeded.",
+   "ms": 40705,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-09-compare.png",
+   "boxesN": 1
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-marine",
+   "ok": true,
+   "note": "",
+   "ms": 3082,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-10-fusion.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov2",
+   "tenant": "gwangju-jeonnam",
+   "width": 390,
+   "state": "11-request",
+   "label": "요청하기",
+   "optional": false,
+   "url": "/landxi/v3/gov-request/",
+   "ok": true,
+   "note": "",
+   "ms": 2330,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov2-390-11-request.png",
+   "boxesN": 1
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a1-console",
+   "label": "LX 직원 첫 화면",
+   "optional": false,
+   "url": "/landxi/v3/lx-console/",
+   "ok": true,
+   "note": "",
+   "ms": 3466,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a1-console.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a2-projects",
+   "label": "프로젝트 목록",
+   "optional": false,
+   "url": "/landxi/v3/lx-project/",
+   "ok": true,
+   "note": "",
+   "ms": 3570,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a2-projects.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a3-analyze",
+   "label": "분석하기",
+   "optional": false,
+   "url": "/landxi/v3/lx-analyze/",
+   "ok": true,
+   "note": "",
+   "ms": 3830,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a3-analyze.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 5245,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6275,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 4026,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a6-map.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a1-console",
+   "label": "LX 직원 첫 화면",
+   "optional": false,
+   "url": "/landxi/v3/lx-console/",
+   "ok": true,
+   "note": "",
+   "ms": 3492,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a1-console.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a2-projects",
+   "label": "프로젝트 목록",
+   "optional": false,
+   "url": "/landxi/v3/lx-project/",
+   "ok": true,
+   "note": "",
+   "ms": 3492,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a2-projects.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a3-analyze",
+   "label": "분석하기",
+   "optional": false,
+   "url": "/landxi/v3/lx-analyze/",
+   "ok": true,
+   "note": "",
+   "ms": 3500,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a3-analyze.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4762,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6312,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 4032,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a6-map.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a1-console",
+   "label": "LX 직원 첫 화면",
+   "optional": false,
+   "url": "/landxi/v3/lx-console/",
+   "ok": true,
+   "note": "",
+   "ms": 3494,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a1-console.png",
+   "boxesN": 1
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a2-projects",
+   "label": "프로젝트 목록",
+   "optional": false,
+   "url": "/landxi/v3/lx-project/",
+   "ok": true,
+   "note": "",
+   "ms": 3499,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a2-projects.png",
+   "boxesN": 1
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a3-analyze",
+   "label": "분석하기",
+   "optional": false,
+   "url": "/landxi/v3/lx-analyze/",
+   "ok": true,
+   "note": "",
+   "ms": 4012,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a3-analyze.png",
+   "boxesN": 1
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4768,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6398,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 4530,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a6-map.png",
+   "boxesN": 2
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 1280,
+   "state": "g1-main",
+   "label": "메인(로그인 전)",
+   "optional": false,
+   "url": "/landxi/v3/main/",
+   "ok": true,
+   "note": "",
+   "ms": 4239,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "guest-1280-g1-main.png",
+   "boxesN": 3
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 1280,
+   "state": "g2-login",
+   "label": "로그인",
+   "optional": false,
+   "url": "/landxi/v3/login/",
+   "ok": true,
+   "note": "",
+   "ms": 2280,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "guest-1280-g2-login.png",
+   "boxesN": 2
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 1440,
+   "state": "g1-main",
+   "label": "메인(로그인 전)",
+   "optional": false,
+   "url": "/landxi/v3/main/",
+   "ok": true,
+   "note": "",
+   "ms": 3245,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "guest-1440-g1-main.png",
+   "boxesN": 3
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 1440,
+   "state": "g2-login",
+   "label": "로그인",
+   "optional": false,
+   "url": "/landxi/v3/login/",
+   "ok": true,
+   "note": "",
+   "ms": 2193,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "guest-1440-g2-login.png",
+   "boxesN": 2
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 390,
+   "state": "g1-main",
+   "label": "메인(로그인 전)",
+   "optional": false,
+   "url": "/landxi/v3/main/",
+   "ok": true,
+   "note": "",
+   "ms": 3185,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "guest-390-g1-main.png",
+   "boxesN": 3
+  },
+  {
+   "role": "guest",
+   "tenant": "",
+   "width": 390,
+   "state": "g2-login",
+   "label": "로그인",
+   "optional": false,
+   "url": "/landxi/v3/login/",
+   "ok": true,
+   "note": "",
+   "ms": 2183,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "guest-390-g2-login.png",
+   "boxesN": 1
+  }
+ ]
+}

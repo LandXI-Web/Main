@@ -225,10 +225,14 @@ def test_parcel_excel_and_summary(tok):
     assert r.status_code == 200
     wb = load_workbook(io.BytesIO(r.content))
     ws = wb["필지"]
-    rows = list(ws.iter_rows(min_row=2, values_only=True))
+    # 엑셀 한 벌(10-22 FARM-ADMIN §6-1) — 1 ~ 2행 제목 · 기준일 · 출처 · 4행 머리 · A5 고정 · 자동 필터 · 마지막 줄 합계(SUBTOTAL)
+    assert ws["A4"].value == "필지 번호" and ws.freeze_panes == "A5" and ws.auto_filter.ref
+    rows = list(ws.iter_rows(min_row=5, values_only=True))
+    assert rows[-1][0] == "합계" and str(rows[-1][4]).startswith("=SUBTOTAL(109")
+    rows = rows[:-1]
     assert len(rows) == files["parcels"]["n"]["value"]
     assert all(isinstance(x[0], str) and len(x[0]) == 19 and x[0].startswith("52190") for x in rows)   # 필지 번호 = 글자 · 관할 안
-    assert ws["A2"].number_format == "@"
+    assert ws["A5"].number_format == "@"
     assert {"열 설명", "안내"} <= set(wb.sheetnames)
     # 바다 결과(필지 없음) — 필지 엑셀은 이유 한 줄과 함께 막힌다
     gm = httpx.get(B + "/spaces/me/guides/card-marine", headers=H(tok["gj"]), timeout=120).json()

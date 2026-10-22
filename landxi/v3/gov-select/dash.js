@@ -42,8 +42,10 @@ export function primary(items) {
 
 /* ═════════════ 그리기 ═════════════ */
 export async function renderDash(ctx) {
-  const { page, B, s, card, sum, regP, RAIL, S, head, asOfEl } = ctx;
-  const crumb = h('a.gs-crumb', { href: './?list=1', text: '내 서비스' });
+  const { page, B, s, card, sum, regP, RAIL, S, head, asOfEl, group } = ctx;
+  /* 행정서비스 묶음 안 분석서비스(10-22 원칙 310) — 빵부스러기 '← 영농관리' · 통계·보고서는 묶음 왼쪽 탭으로 올라감 */
+  const gHref = group ? '../gov-group/?' + new URLSearchParams({ group: group.id }) : null;
+  const crumb = h('a.gs-crumb', { href: gHref || './?list=1', text: group ? group.name : '내 서비스' });
   document.title = `${s.name} · ${B.platform}`;
   document.body.dataset.view = 'svc';
   const itemsOf = (cid) => ((sum && sum.items) || []).filter((i) => i.card === cid);
@@ -57,7 +59,7 @@ export async function renderDash(ctx) {
   const survey = cur.some((i) => i.survey_state || (i.metrics?.field_check && i.metrics.field_check.value !== null));
   const p = s.open ? primary(cur) : null;
   const sggOne = reg?.sgg_cd || (!wide ? (cur.find((i) => i.sgg_cd)?.sgg_cd || regs[0]?.sgg_cd) : null);
-  const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...extra });
+  const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...(ctx.group ? { group: ctx.group.id } : {}), ...extra });
   const mapHref = XI(sggOne, { service: s.card });                // 결과 지도 — 그 서비스의 '보고 있는 결과' 카드가 붙는다(map-extras.js)
   const fusion = '../gov-fusion/' + q(), rep = (tab) => '../gov-report/' + q({ tab });
   const want = new URLSearchParams(location.search).get('tab');
@@ -84,7 +86,7 @@ export async function renderDash(ctx) {
     s.open ? h('a.gs-tab', { href: mapHref, text: '결과 지도' }) : null,
     survey ? h('a.gs-tab', { href: rep('sus'), text: '필지 목록' }) : null,
     h('a.gs-tab', { href: q({ tab: 'history' }), ...on('history'), text: '이력' }),
-    h('a.gs-tab', { href: q({ tab: 'stats' }), ...on('stats'), text: '통계·보고서' })));
+    group && TAB !== 'stats' ? null : h('a.gs-tab', { href: q({ tab: 'stats' }), ...on('stats'), text: '통계·보고서' })));
 
   const newLine = h('div.gd-new', { hidden: true });
   const main = h('div.gd-main'), side = h('div.gd-side');
@@ -92,7 +94,7 @@ export async function renderDash(ctx) {
   const grid = h('div.gd-grid', {}, main, side);
   page.append(newLine, pre, grid);
   K.panes(side, { edge: 'left', key: 'side', cssVar: '--gd-side', varHost: grid, min: 300, max: 760, otherMin: 480, below: 961 });   // 칸 크기 조절(원칙 263)
-  if (TAB === 'history') { document.body.dataset.tab = 'history'; await renderHistory(main, side, { s, B }); return; }
+  if (TAB === 'history') { document.body.dataset.tab = 'history'; await renderHistory(main, side, { s, B, group }); return; }
   if (TAB === 'stats') { document.body.dataset.tab = 'stats'; await renderStats(main, side, { s, B, rep, pre, survey }); return; }
 
   /* ── 결과 장면 위 큰 숫자 하나 ── */
@@ -137,6 +139,7 @@ export async function renderDash(ctx) {
   const talk = h('section.t-card.gd-box.gd-talk', { 'aria-label': 'LX와 주고받은 검토 요청' });
   /* '내가 확인할 필지'(현장 확인 목록)는 화면에서 쓰지 않는다(원칙 135 기관까지 · 10-10 확인 8 ⓐ) — drawTodo 는 남겨 둠 */
   side.append(...[about, talk].filter(Boolean));
+  if (gHref) side.append(h('a.t-btn.t-btn--text.gd-more', { href: gHref + '&' + new URLSearchParams({ tab: 'stats', service: s.card }), text: '이 서비스 통계 · 보고서' }));   // 통계는 묶음 왼쪽 탭(원칙 310)
   await Promise.all([
     drawAbout(about, newLine, { s, B, q, fusion }).catch((e) => { K.devlog('about', e.message); about.hidden = true; }),
     drawTalk(talk, { s, card, deps, mapHref }).catch((e) => { K.devlog('talk', e.message); }),

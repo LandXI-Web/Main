@@ -315,10 +315,18 @@ async function openPlant() {
   /* 이전 계약(S-7 전)은 이식 생성이 관리자 전용 — 직원 세션이면 거절될 요청을 보내지 않고 한 줄로 안내(죽은 버튼 0) */
   const canPlant = isAdmin || D.health === 'server';
   if (!canPlant) go.hidden = true;
+  /* 행정서비스 묶음(10-22 원칙 310 · IMPL 1-1) — 그 기관의 묶음 이름을 고르거나 새 이름(없으면 묶음 없는 서비스) · 서버 GET /lx/service-groups */
+  const grpList = h('datalist', { id: 'dp-grp-l' });
+  const grpIn = h('input.t-input', { name: 'group', type: 'text', maxlength: '40', list: 'dp-grp-l', placeholder: '예: 영농관리', autocomplete: 'off', 'aria-label': '행정서비스 묶음' });
+  const loadGroups = async (sgg) => {
+    grpList.replaceChildren();
+    try { const j = await api('/lx/service-groups?' + new URLSearchParams({ region: sgg })); grpList.append(...(j.items || []).map((g) => h('option', { value: g.name }))); } catch { /* 고르기 없이 적기만 */ }
+  };
   const form = h('form.dp-form', {},
     canPlant ? null : h('p.dp-note', { text: '관리자 승인 권한으로 기관에 공유할 수 있습니다' }),
     h('div.dp-f', {}, h('span.t-label', { text: '카드' }), cardSel),
     h('div.dp-f', {}, h('span.t-label', { text: '지역' }), regEl, fitEl),
+    h('label.dp-f', {}, h('span.t-label', { text: '행정서비스 묶음(선택)' }), grpIn, grpList),
     h('div.dp-f', {}, h('span.t-label', { text: '가져갈 것' }), bring),
     h('div.dp-f', {}, h('span.t-label', { text: '현지에서 준비할 것' }), need),
     ci, go);
@@ -374,6 +382,7 @@ async function openPlant() {
       if (r.bbox) { padFor(true); st.go(r.bbox, { maxZoom: 10.5 }); }
       draw();
       checkFit();
+      loadGroups(r.sgg_cd);
     },
   });
   draw();
@@ -387,7 +396,7 @@ async function openPlant() {
     const ciBody = Object.fromEntries(Object.entries({ name: f.name.value.trim(), short: f.short.value.trim(), mark: file(f.mark), color: hex(f.color.value), tint: hex(f.tint.value),
       unit_word: f.unit_word.value, crs: f.crs.value, contact: f.contact.value.trim(), seal: file(f.seal) }).filter(([, v]) => v));
     /* S-7 본문{from_deploy_id|card_id, region, ci}. 서버가 S-7 전이면(health 없음) 이전 계약 본문{tenant_id, region_profile, aoi}을 함께 */
-    const body = { ...(s ? { from_deploy_id: s.id } : { card_id: cardSel.value }), region: region.sgg_cd, ci: ciBody };
+    const body = { ...(s ? { from_deploy_id: s.id } : { card_id: cardSel.value }), region: region.sgg_cd, ci: ciBody, ...(grpIn.value.trim() ? { group: grpIn.value.trim() } : {}) };
     if (D.health !== 'server') {
       const there = (region.deploys || []).map((x) => deployOf(x.id)).find(Boolean);
       const tenant = there?.tenant_id || D.tenants.find((t) => t.profile_id === region.sgg_cd)?.id;

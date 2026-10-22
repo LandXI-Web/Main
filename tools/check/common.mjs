@@ -22,6 +22,7 @@ export const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ?
 export const has = (k) => process.argv.includes(k);
 export const HOST = { app: arg('--app', 'https://app.land-xi.dev'), admin: arg('--admin', 'https://admin.land-xi.dev'), gov: arg('--gov', 'https://namwon.land-xi.dev') };
 export const TENANT = arg('--tenant', 'namwon');
+export const TENANT2 = arg('--tenant2', 'gwangju-jeonnam');   // 겹침 검사 두 번째 기관(지역 고정값 0 확인 — 같은 흐름이 두 기관에서)
 export const ABROAD = arg('--abroad', 'kgz-agri');
 export const PW = process.env.LX_PW;
 /** 역할 → [바깥 주소, 아이디, 기관] */
@@ -30,6 +31,8 @@ export const LOGIN = {
   app: () => [HOST.app, 'test@lx.or.kr'],
   admin: () => [HOST.admin, 'lxadmin@lx.or.kr'],
   abroad: () => [HOST.app, 'lxadmin@lx.or.kr', ABROAD],
+  gov2: () => [HOST.gov, 'lxadmin@lx.or.kr', TENANT2],
+  guest: () => [HOST.app, null],                                  // 로그인 전(메인 · 로그인 화면) — 겹침 검사만
 };
 /** --only gov,app,admin,abroad(기본 넷 모두) */
 export const roles = (def = 'gov,abroad,app,admin') => arg('--only', def).split(',').filter((r) => LOGIN[r]);
@@ -41,6 +44,7 @@ export async function login(browser, role, { width = 1440, height = 900 } = {}) 
   const [base, id, tenant] = LOGIN[role]();
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, acceptDownloads: true });
   const page = await ctx.newPage();
+  if (!id) { page._who = { base }; return { ctx, page, role, home: new URL(base).origin, abroad: false }; }   // 로그인 전
   await frontDoor(page, base, id, tenant ? { tenant, password: PW } : { password: PW });
   await page.waitForURL((u) => !/\/login\/?$/.test(u.pathname) && !/gov-home/.test(u.pathname), { timeout: 30000 }).catch(() => {});
   const u = new URL(page.url());

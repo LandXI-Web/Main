@@ -1,0 +1,1116 @@
+{
+ "at": "2026-10-22T00:47:14.167Z",
+ "widths": [
+  1280,
+  1440,
+  390
+ ],
+ "results": [
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3233,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3224,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4548,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3916,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 40,
+     "h": 43,
+     "area": 1720,
+     "ofSmall": 55
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-07-card.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 4720,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 380,
+     "h": 560,
+     "area": 212800,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#det-x.sp-x",
+     "w": 364,
+     "h": 175,
+     "area": 63700,
+     "ofSmall": 70
+    },
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": ".k-chat-fab",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 40,
+     "h": 43,
+     "area": 1720,
+     "ofSmall": 55
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-07b-card-chat.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4970,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 116,
+     "h": 32,
+     "area": 3712,
+     "ofSmall": 10
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08-map.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6397,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 116,
+     "h": 32,
+     "area": 3712,
+     "ofSmall": 10
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08b-map-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08c-map-list-layers",
+   "label": "결과 지도 + 목록 서랍 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 20000ms exceeded.",
+   "ms": 24094,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 116,
+     "h": 32,
+     "area": 3712,
+     "ofSmall": 10
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08c-map-list-layers.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7509,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 116,
+     "h": 156,
+     "area": 18096,
+     "ofSmall": 23
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 116,
+     "h": 32,
+     "area": 3712,
+     "ofSmall": 10
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": false,
+   "note": "locator.click: Timeout 30000ms exceeded.",
+   "ms": 32793,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 380,
+     "h": 560,
+     "area": 212800,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#det-x.sp-x",
+     "w": 364,
+     "h": 233,
+     "area": 84812,
+     "ofSmall": 93
+    },
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": ".k-chat-fab",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 40,
+     "h": 56,
+     "area": 2240,
+     "ofSmall": 71
+    }
+   ],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-09-compare.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3143,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "gov-1280-10-fusion.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3254,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-01-list.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3236,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-03-dash.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4541,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-05-stats.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3949,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 380,
+     "h": 468,
+     "area": 177840,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 40,
+     "h": 45,
+     "area": 1800,
+     "ofSmall": 57
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-07-card.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 30000ms exceeded.",
+   "ms": 33126,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 40,
+     "h": 43,
+     "area": 1720,
+     "ofSmall": 55
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-07b-card-chat.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 5065,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 156,
+     "area": 5616,
+     "ofSmall": 7
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 32,
+     "area": 1152,
+     "ofSmall": 3
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6394,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 156,
+     "area": 5616,
+     "ofSmall": 7
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 32,
+     "area": 1152,
+     "ofSmall": 3
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08b-map-layers.png",
+   "boxesN": 6
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08c-map-list-layers",
+   "label": "결과 지도 + 목록 서랍 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 20000ms exceeded.",
+   "ms": 24905,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 156,
+     "area": 5616,
+     "ofSmall": 7
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 32,
+     "area": 1152,
+     "ofSmall": 3
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08c-map-list-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7377,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 156,
+     "area": 5616,
+     "ofSmall": 7
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 36,
+     "h": 32,
+     "area": 1152,
+     "ofSmall": 3
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 12836,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-drawer.k-drawer--in.pn-pane",
+     "b": ".xc-pop.t-card.t-card--map",
+     "w": 300,
+     "h": 440,
+     "area": 132000,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".gx-card",
+     "w": 352,
+     "h": 182,
+     "area": 64064,
+     "ofSmall": 80
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 352,
+     "h": 32,
+     "area": 11264,
+     "ofSmall": 42
+    }
+   ],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-09-compare.png",
+   "boxesN": 8
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3115,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "gov-1440-10-fusion.png",
+   "boxesN": 3
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "01-list",
+   "label": "내 서비스",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?list=1",
+   "ok": true,
+   "note": "",
+   "ms": 3248,
+   "overlaps": [
+    {
+     "kind": "cover",
+     "a": ".k-chat-fab",
+     "b": "a.t-card.gs-gcard \"행정서비스영농관리 행정서비스경작 · 휴경 · 영농시설 \"",
+     "w": 52,
+     "h": 45,
+     "area": 2340,
+     "ofSmall": 75
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-01-list.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "03-dash",
+   "label": "분석서비스 대시보드(현황)",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 3737,
+   "overlaps": [
+    {
+     "kind": "cover",
+     "a": ".k-chat-fab",
+     "b": "span.gd-small \"4·6·8·10월\"",
+     "w": 28,
+     "h": 23,
+     "area": 644,
+     "ofSmall": 21
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-03-dash.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "05-stats",
+   "label": "분석서비스 · 통계",
+   "optional": false,
+   "url": "/landxi/v3/gov-select/?service=card-farm&tab=stats",
+   "ok": true,
+   "note": "",
+   "ms": 4549,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-05-stats.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "07-card",
+   "label": "필지 목록 + 필지 카드",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 3868,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 56,
+     "h": 56,
+     "area": 3136,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-chat-fab",
+     "b": "#det-x.sp-x",
+     "w": 52,
+     "h": 56,
+     "area": 2912,
+     "ofSmall": 93
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-07-card.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "07b-card-chat",
+   "label": "필지 카드 + 대화창",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": true,
+   "note": "",
+   "ms": 4624,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#side.gr-side.pn-pane.pn-pane--x",
+     "w": 390,
+     "h": 608,
+     "area": 237120,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": "#det-x.sp-x",
+     "w": 350,
+     "h": 233,
+     "area": 81550,
+     "ofSmall": 100
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-07b-card-chat.png",
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4801,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 168,
+     "h": 32,
+     "area": 5376,
+     "ofSmall": 80
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08-map.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6472,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".xk-ans",
+     "b": ".xc-pop.t-card.t-card--map",
+     "w": 366,
+     "h": 195,
+     "area": 71370,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".xc-pop.t-card.t-card--map",
+     "w": 366,
+     "h": 56,
+     "area": 20496,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".xc-pop.t-card.t-card--map",
+     "b": ".gx-card",
+     "w": 168,
+     "h": 40,
+     "area": 6720,
+     "ofSmall": 100
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 168,
+     "h": 32,
+     "area": 5376,
+     "ofSmall": 80
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08b-map-layers.png",
+   "boxesN": 6
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08c-map-list-layers",
+   "label": "결과 지도 + 목록 서랍 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": false,
+   "note": "locator.waitFor: Timeout 20000ms exceeded.",
+   "ms": 24357,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 168,
+     "h": 32,
+     "area": 5376,
+     "ofSmall": 80
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08c-map-list-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08d-map-ask",
+   "label": "결과 지도 + 질문 답 띠",
+   "optional": true,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7434,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ck-f.k-chat-in",
+     "b": ".gx-card",
+     "w": 168,
+     "h": 32,
+     "area": 5376,
+     "ofSmall": 80
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-08d-map-ask.png",
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "09-compare",
+   "label": "영상 비교 + 층 판",
+   "optional": true,
+   "url": "/landxi/v3/gov-report/?service=card-farm&tab=sus",
+   "ok": false,
+   "note": "locator.click: Timeout 30000ms exceeded.",
+   "ms": 32128,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-09-compare.png",
+   "boxesN": 2
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "10-fusion",
+   "label": "행정정보와 비교",
+   "optional": false,
+   "url": "/landxi/v3/gov-fusion/?service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 18903,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": "#k-chat.k-ck.k-chat",
+     "b": ".t-card.t-card--map.gf-sheet",
+     "w": 390,
+     "h": 116,
+     "area": 45240,
+     "ofSmall": 100
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "gov-390-10-fusion.png",
+   "boxesN": 3
+  }
+ ]
+}

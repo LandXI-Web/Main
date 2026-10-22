@@ -1,0 +1,263 @@
+[
+ {
+  "file": "남원시_경작·휴경분석서비스_결과설명서2판.xlsx",
+  "title": "남원시 · 경작·휴경 분석서비스 · 관할 전체",
+  "sub": "기준일 2026-06-08 · 출처 AI 분석 결과 × 연속지적 필지(관할 안 · 지운 결과 제외)",
+  "head_row": 4,
+  "head": [
+   "필지 번호",
+   "주소",
+   "읍면동",
+   "지목",
+   "필지 넓이(㎡)",
+   "AI 분석 결과",
+   "결과 수",
+   "AI 결과 넓이(㎡)",
+   "필지 대비 비율",
+   "신뢰도(높음 · 보통 · 낮음)",
+   "분석 영상 · 날짜",
+   "메모(최근)",
+   "메모 날짜"
+  ],
+  "freeze": "A5",
+  "filter": "A4:M2081",
+  "num_formats": {
+   "필지 넓이(㎡)": "#,##0.0",
+   "결과 수": "#,##0",
+   "AI 결과 넓이(㎡)": "#,##0.0",
+   "필지 대비 비율": "0.0\"%\""
+  },
+  "total_row": [
+   "합계",
+   null,
+   null,
+   null,
+   "=SUBTOTAL(109,E5:E2081)",
+   null
+  ],
+  "old_cols": [],
+  "sheets": [
+   {
+    "name": "필지",
+    "freeze": "A5",
+    "filter": "A4:M2081",
+    "rows": 2082,
+    "subtotal": true
+   },
+   {
+    "name": "열 설명",
+    "freeze": null,
+    "filter": null,
+    "rows": 14,
+    "subtotal": false
+   },
+   {
+    "name": "안내",
+    "freeze": null,
+    "filter": null,
+    "rows": 8,
+    "subtotal": false
+   }
+  ]
+ },
+ {
+  "file": "남원시_경작휴경_고른필지5_20261022.xlsx",
+  "title": "남원시 · 경작·휴경 분석서비스 · 고른 필지 5",
+  "sub": "기준일 2026-06-08 · 출처 AI 분석 결과 × 연속지적 필지(관할 안 · 지운 결과 제외)",
+  "head_row": 4,
+  "head": [
+   "필지 번호",
+   "주소",
+   "읍면동",
+   "지목",
+   "필지 넓이(㎡)",
+   "AI 분석 결과",
+   "결과 수",
+   "AI 결과 넓이(㎡)",
+   "필지 대비 비율",
+   "신뢰도(높음 · 보통 · 낮음)",
+   "분석 영상 · 날짜",
+   "메모(최근)",
+   "메모 날짜"
+  ],
+  "freeze": "A5",
+  "filter": "A4:M9",
+  "num_formats": {
+   "필지 넓이(㎡)": "#,##0.0",
+   "결과 수": "#,##0",
+   "AI 결과 넓이(㎡)": "#,##0.0",
+   "필지 대비 비율": "0.0\"%\""
+  },
+  "total_row": [
+   "합계",
+   null,
+   null,
+   null,
+   "=SUBTOTAL(109,E5:E9)",
+   null
+  ],
+  "old_cols": [],
+  "sheets": [
+   {
+    "name": "필지",
+    "freeze": "A5",
+    "filter": "A4:M9",
+    "rows": 10,
+    "subtotal": true
+   },
+   {
+    "name": "열 설명",
+    "freeze": null,
+    "filter": null,
+    "rows": 14,
+    "subtotal": false
+   },
+   {
+    "name": "안내",
+    "freeze": null,
+    "filter": null,
+    "rows": 8,
+    "subtotal": false
+   }
+  ]
+ },
+ {
+  "file": "남원시_경작휴경_이력_20261022.xlsx",
+  "title": "남원시 · 경작·휴경 분석서비스 · 이력",
+  "sub": "기준일 2026-10-22 · 출처 결과 공개 · 대장 · 메모 · 요청 기록",
+  "head_row": 4,
+  "head": [
+   "날짜 · 시각",
+   "종류",
+   "내용",
+   "덧붙임",
+   "누가"
+  ],
+  "freeze": "A5",
+  "filter": "A4:E143",
+  "num_formats": {
+   "날짜 · 시각": "yyyy-mm-dd hh:mm"
+  },
+  "total_row": [
+   "2026-06-08 00:00:00",
+   "AI 분석",
+   "2025년 드론영상 분석 끝",
+   "2,098필지",
+   "LX"
+  ],
+  "old_cols": [],
+  "sheets": [
+   {
+    "name": "이력",
+    "freeze": "A5",
+    "filter": "A4:E143",
+    "rows": 143,
+    "subtotal": false
+   },
+   {
+    "name": "안내",
+    "freeze": null,
+    "filter": null,
+    "rows": 5,
+    "subtotal": false
+   }
+  ]
+ },
+ {
+  "file": "남원시_경작휴경_통계_20261022.xlsx",
+  "title": "남원시 · 경작·휴경 분석서비스 · 관할 전체",
+  "sub": "기준일 2026-10-22 · 출처 이 서비스 AI 분석 결과(관할 안 · 지운 결과 제외)",
+  "head_row": 4,
+  "head": [
+   "종류",
+   "넓이(㎡)",
+   "비율",
+   "필지 수"
+  ],
+  "freeze": "A5",
+  "filter": "A4:D6",
+  "num_formats": {
+   "넓이(㎡)": "#,##0.0",
+   "비율": "0.0\"%\"",
+   "필지 수": "#,##0"
+  },
+  "total_row": [
+   "합계",
+   "=SUBTOTAL(109,B5:B6)",
+   100,
+   "=SUBTOTAL(109,D5:D6)"
+  ],
+  "old_cols": [],
+  "sheets": [
+   {
+    "name": "종류별",
+    "freeze": "A5",
+    "filter": "A4:D6",
+    "rows": 7,
+    "subtotal": true
+   },
+   {
+    "name": "읍면동별",
+    "freeze": "A5",
+    "filter": "A4:G36",
+    "rows": 37,
+    "subtotal": true
+   },
+   {
+    "name": "안내",
+    "freeze": null,
+    "filter": null,
+    "rows": 5,
+    "subtotal": false
+   }
+  ]
+ },
+ {
+  "file": "남원시_다운로드이력_20261022.xlsx",
+  "title": "남원시 · 다운로드 이력 · 2026-08-01 ~ 2026-10-22",
+  "sub": "기준일 2026-10-22 · 출처 기관 화면에서 받은 파일 기록",
+  "head_row": 4,
+  "head": [
+   "마지막으로 받은 때",
+   "누가",
+   "무엇",
+   "서비스",
+   "범위",
+   "개인정보",
+   "사용 목적",
+   "활용 기간(끝나는 날)",
+   "횟수"
+  ],
+  "freeze": "A5",
+  "filter": "A4:I20",
+  "num_formats": {
+   "마지막으로 받은 때": "yyyy-mm-dd hh:mm",
+   "횟수": "#,##0"
+  },
+  "total_row": [
+   "합계",
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "old_cols": [],
+  "sheets": [
+   {
+    "name": "다운로드 이력",
+    "freeze": "A5",
+    "filter": "A4:I20",
+    "rows": 21,
+    "subtotal": true
+   },
+   {
+    "name": "안내",
+    "freeze": null,
+    "filter": null,
+    "rows": 6,
+    "subtotal": false
+   }
+  ]
+ }
+]

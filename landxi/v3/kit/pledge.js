@@ -27,7 +27,7 @@ function style() {
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const dot = (s) => String(s || '').slice(0, 10).replace(/-/g, '.');
 
-/** 이용 약속 창 → 적으면 약속(서버 값) · 닫으면 null */
+/** 개인정보 이용 확인 창(처음 · 기간 끝난 뒤) → 적으면 서버 값 · 닫으면 null */
 function pledgeForm() {
   style();
   return new Promise((resolve) => {
@@ -36,22 +36,22 @@ function pledgeForm() {
     const max = new Date(now.getTime() + 365 * 864e5), def = new Date(now.getTime() + 90 * 864e5);
     const purpose = h('input.t-input', { type: 'text', maxlength: '200', placeholder: '예: 조사료 재배 지원 이행 점검', 'aria-label': '사용 목적', autocomplete: 'off' });
     const until = h('input.t-input', { type: 'date', min: ymd(now), max: ymd(max), value: ymd(def), 'aria-label': '활용 기간 끝나는 날' });
-    const ck = h('input', { type: 'checkbox', 'aria-label': '약속에 동의' });
+    const ck = h('input', { type: 'checkbox', 'aria-label': '사용 목적 · 활용 기간 확인' });
     const need = h('p.pl-need', { role: 'status' });
-    const go = h('button.t-btn', { type: 'button', text: '약속하고 받기' });
+    const go = h('button.t-btn', { type: 'button', text: '확인하고 받기' });
     const no = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
-    const m = modal({ title: '개인정보가 든 파일입니다', body: h('div.pl-md', {},
+    const m = modal({ title: '개인정보 이용 확인', body: h('div.pl-md', {},
       h('p', {}, '올린 대장의 필지별 내용(지번 · 대장 값)이 들어 있습니다.', h('br'), '처음 한 번 사용 목적과 활용 기간을 적어 주세요.'),
       h('label.pl-f', {}, h('span.t-label', { text: '사용 목적' }), purpose),
       h('label.pl-f', {}, h('span.t-label', { text: '활용 기간(끝나는 날)' }), until),
-      h('label.pl-ck', {}, ck, h('span', {}, '약속한 목적 · 기간 안에서만 쓰고,', h('br'), '기간이 끝나면 지웁니다.')),
-      need, h('p.pl-s', {}, '누가 언제 약속했는지 기록에 남습니다.', h('br'), '기간 안에는 받을 때마다 확인만 합니다.'),
+      h('label.pl-ck', {}, ck, h('span', {}, '적은 목적 · 기간 안에서만 쓰고,', h('br'), '기간이 끝나면 지웁니다.')),
+      need, h('p.pl-s', {}, '누가 언제 받았는지 다운로드 이력에 남습니다.', h('br'), '기간 안에는 받을 때마다 확인만 합니다.'),
       h('div.pl-a', {}, no, go)), onClose: () => resolve(got) });
     no.addEventListener('click', () => m.close());
     go.addEventListener('click', async () => {
       if (purpose.value.trim().length < 2) { need.textContent = '사용 목적을 적어 주세요'; purpose.focus(); return; }
       if (!until.value) { need.textContent = '활용 기간을 골라 주세요'; until.focus(); return; }
-      if (!ck.checked) { need.textContent = '약속에 동의해 주세요'; ck.focus(); return; }
+      if (!ck.checked) { need.textContent = '확인란에 표시해 주세요'; ck.focus(); return; }
       go.disabled = true; need.textContent = '';
       try { const j = await api('/spaces/me/pledge', { method: 'POST', body: { purpose: purpose.value.trim(), until: until.value, agree: true } }); got = j.active; m.close(); }
       catch (e) { go.disabled = false; need.textContent = e.message || '지금은 저장할 수 없습니다'; }
@@ -67,10 +67,10 @@ function confirmBox(pl, name) {
     let ok = false;
     const go = h('button.t-btn', { type: 'button', text: '받기' });
     const no = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
-    const m = modal({ title: '개인정보가 든 파일을 받습니다', body: h('div.pl-md', {},
+    const m = modal({ title: '개인정보 이용 확인', body: h('div.pl-md', {},
       h('p', { text: name ? `${name}에는 올린 대장의 필지별 내용이 들어 있습니다.` : '올린 대장의 필지별 내용이 들어 있습니다.' }),
-      h('dl.pl-dl', {}, h('dt', { text: '약속한 목적' }), h('dd', { text: pl.purpose }), h('dt', { text: '활용 기간' }), h('dd', { text: `${dot(pl.until)}까지` })),
-      h('p.pl-s', { text: '받은 기록(누가 · 언제 · 무엇을)이 남습니다.' }),
+      h('dl.pl-dl', {}, h('dt', { text: '사용 목적' }), h('dd', { text: pl.purpose }), h('dt', { text: '활용 기간' }), h('dd', { text: `${dot(pl.until)}까지` })),
+      h('p.pl-s', { text: '받은 기록(누가 · 언제 · 무엇을)이 다운로드 이력에 남습니다.' }),
       h('div.pl-a', {}, no, go)), onClose: () => resolve(ok) });
     no.addEventListener('click', () => m.close());
     go.addEventListener('click', () => { ok = true; m.close(); });

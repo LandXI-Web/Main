@@ -71,7 +71,7 @@ function specCells(c, kind) {
     const ver = c.version ? `v${c.version}` : '판 없음';
     return [['판 · 담당', `${ver} · ${c.owner || '담당 미지정'}`], ['다음 할 일', c.next?.text || '—']];
   }
-  if (kind === 'gov') return [['최근 결과', c.latest ? ymd(c.latest) : '아직 없음'], ['할 일', c.todo?.text || '—']];
+  if (kind === 'gov') return [['최근 결과', c.latest ? ymd(c.latest) : '아직 없음'], ...(c.todo?.text ? [['할 일', c.todo.text]] : [])];   // 할 일 = 서버 값 있을 때만(10-22 '결과 확인 대기' 뺌)
   if (kind === 'mine') return [];
   const second = c.time?.text ? ['걸리는 시간', c.time.text] : ['영상', c.imagery || '—'];
   return [['쓰이는 곳', c.uses?.text || '아직 없음'], second];

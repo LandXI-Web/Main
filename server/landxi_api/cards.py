@@ -562,7 +562,7 @@ async def _deck_tenant(p) -> dict:
             "year": s.get("year"), "status_label": s.get("status") or core["state_label"], "open": bool(s.get("open")),
             "state": STAGE_KEY.get(s.get("status"), core["state"]) if s.get("open") else "none", "listed": not s.get("_extra"),
             "latest": max(dates) if dates else None, "owner": (rv_owner.get(c["id"]) or {}).get("name"),
-            "todo": {"text": (f"결과 확인 대기 {int(rp['value']):,}건" if rp["value"] else "확인할 결과 없음") if rp else ("확인할 결과 없음" if s.get("open") else "—")},
+            "todo": None,                                # 10-22 원칙 135 · 308 — 기관 카드에 '결과 확인 대기 n건'(큰 내부 숫자)을 쓰지 않는다(칸을 비움)
             "report": survey,
         })
         for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):

@@ -137,6 +137,10 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-pk-pg button:disabled{color:var(--mute);cursor:default}
 .lxp-where{margin:2px 0 0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub-2)}
 .lxp-regbox{display:flex;flex-direction:column;gap:8px}
+.lxp-reg-in{display:flex;flex-direction:column;gap:8px}.lxp-reg-in[hidden]{display:none}
+.lxp-reg-tg{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:4px 0}
+.lxp-reg-tg b{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
+.lxp-reg-tg small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
 .lxp-mem{position:relative}
 .lxp-mem-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:3;margin:0;padding:4px;list-style:none;background:var(--bg-1);border:1px solid var(--rule);border-radius:var(--r-8);box-shadow:var(--elev-map);max-height:240px;overflow:auto}
 .lxp-mem-l button{display:flex;align-items:baseline;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left}

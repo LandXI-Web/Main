@@ -141,7 +141,7 @@ export function noteBox({ card, pnus, where, onSaved }) {
 export async function parcelExtras(host, { card, pnu, onSaved }) {
   host.replaceChildren();
   const xi = '/landxi/v3/xi-clean/?' + new URLSearchParams({ region: pnu.slice(0, 5), service: card, pnu, compare: 'auto' });
-  const bCmp = h('a.t-btn.t-btn--2.sp-cmp', { href: xi, text: '시점 비교' });
+  const bCmp = h('a.t-btn.t-btn--2.sp-cmp', { href: xi, text: '영상 비교', title: '시계열 영상 비교 — 두 해 영상을 나란히' });
   const chg = h('p.sp-chg', { hidden: true });
   const memo = h('input.t-input.sp-mi', { type: 'text', maxlength: '200', placeholder: '이 필지 메모 — 예: 소유자와 통화함', 'aria-label': '이 필지 메모' });
   const save = h('button.t-btn.sp-ms', { type: 'button', text: '저장' });

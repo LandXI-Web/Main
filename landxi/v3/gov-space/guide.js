@@ -126,7 +126,8 @@ export async function download(g, f, btn, me, { onDone } = {}) {
     const blob = await r.blob();
     const ext = { geojson: 'geojson', parcels: 'xlsx', summary: 'json' }[f.fmt];
     const org = (me?.org?.short || '').replace(/\s+/g, '');
-    const name = `${org}_${g.name.replace(/\s+/g, '')}_결과설명서${val(g.edition)}판.${ext}`;
+    const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');   // 서버 이름 {기관}_{서비스}_{내용}_{기준일}(10-22 엑셀 한 벌)
+    const name = m ? decodeURIComponent(m[1]) : `${org}_${g.name.replace(/\s+/g, '').replace(/분석서비스$/, '').replace(/·/g, '')}_${{ geojson: '공간정보', parcels: '필지목록', summary: '요약' }[f.fmt] || '자료'}.${ext}`;
     const a = h('a', { href: URL.createObjectURL(blob), download: name });
     document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     toast(`${f.label}을 내려받았습니다`);

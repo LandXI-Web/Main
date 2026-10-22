@@ -116,7 +116,13 @@ export function openNewProject({ onMade } = {}) {
   const pickEl = h('div.lxp-pick');
   const farBtn = h('button.t-btn.t-btn--text.lxp-far-b', { type: 'button', text: '해외 지역' });
   const far = h('div.lxp-chips.lxp-far', { hidden: true, role: 'group', 'aria-label': '해외 지역' });
-  regBox.append(regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far);
+  /* 10-22 원칙 308(REMAINING 4-4 ②) — 접어 두고 펼치기: '브이월드에서 영상 가져오기'(올리거나 고른 영상 없이 브이월드 영상으로 대상지를 정함) · 둘째 줄 '분석 범위만 정하기' */
+  const regIn = h('div.lxp-reg-in', { hidden: true });
+  const regTg = h('button.t-btn.t-btn--text.lxp-reg-tg', { type: 'button', 'aria-expanded': 'false' },
+    h('b', { text: '브이월드에서 영상 가져오기' }), h('small', { text: '분석 범위만 정하기(시군구 · 읍면동)' }));
+  regTg.addEventListener('click', () => { regIn.hidden = !regIn.hidden; regTg.setAttribute('aria-expanded', String(!regIn.hidden)); if (!regIn.hidden) regIn.querySelector('input')?.focus(); });
+  regIn.append(regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far);
+  regBox.append(regTg, regIn);
   const drawRegs = () => {
     regPicked.replaceChildren(...regions.map((r) => {
       const x = h('button.t-chip.lxp-reg', { type: 'button', 'aria-label': `${r.name} 빼기`, title: r.full || r.name }, h('span', { text: r.name }), h('i', { 'aria-hidden': 'true', text: '×' }));
@@ -124,6 +130,7 @@ export function openNewProject({ onMade } = {}) {
       return x;
     }));
     regPicked.hidden = !regions.length;
+    if (regions.length && regIn.hidden) { regIn.hidden = false; regTg.setAttribute('aria-expanded', 'true'); }
   };
   const addReg = (r) => { if (!r || regions.some((g) => g.code === r.code)) return; regions.push(r); drawRegs(); ready(); };
   regionPicker(pickEl, { onPick: (r) => { addReg({ code: r.sgg_cd, name: r.name, full: r.full }); const i = pickEl.querySelector('input'); if (i) i.value = ''; } })

@@ -220,6 +220,18 @@ async function gov(page, GOV) {
   });
   const t = new URL(GOV).hostname.split('.')[0];
   for (const x of g) put(`AI 분석 결과 · ${x.name} · ${x.region}`, `기관 내 서비스(${t})`, x.v);
+  /* 행정서비스 묶음 홈(10-22 원칙 310) — 묶음 안 분석서비스 결과 숫자 = 내 서비스 카드 · 대시보드와 같은 값(숫자 한 출처) */
+  const groups = await page.evaluate(() => window.__govSelect?.groups || []).catch(() => []);
+  for (const gr of groups) {
+    await go(page, GOV + '/landxi/v3/gov-group/?group=' + encodeURIComponent(gr.id));
+    await page.waitForFunction(() => window.__govGroup?.ready, null, { timeout: 25000 }).catch(() => {});
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.gg-svc')].map((el) => {
+      const n = el.querySelector('.gg-svc-n'); const lab = n?.querySelector('span')?.innerText.trim() || '';
+      const m = /^AI 분석 결과 · (.+)$/.exec(lab);
+      return { name: el.querySelector('h2')?.innerText.trim(), region: m ? m[1] : null, v: n ? (n.querySelector('b')?.innerText.trim() || '') + (n.querySelector('i')?.innerText.trim() || '') : null };
+    })).catch(() => []);
+    for (const x of rows) if (x.region) put(`AI 분석 결과 · ${x.name} · ${x.region}`, `기관 행정서비스 홈(${t} · ${gr.id})`, x.v);
+  }
 }
 
 /** 해외 기관 — 첫 화면 큰 숫자(작황 하락 · 건물 면적 변화) = XI ChatGEO 답(숫자 한 출처 · 10-15) */

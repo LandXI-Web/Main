@@ -252,7 +252,7 @@ function paintResult(c) {
   const bDl = h('button.t-btn.t-btn--2', { type: 'button', text: '내려받기' });
   const bRp = h('button.t-btn.t-btn--2', { type: 'button', text: '보고서에 넣기' });
   const bNew = h('button.t-btn.t-btn--2', { type: 'button', text: '다른 파일' });
-  bDl.title = '올린 대장이 든 파일 — 이용 약속 뒤 받을 때마다 확인합니다';
+  bDl.title = '올린 대장이 든 파일 — 받을 때마다 사용 목적 · 기간을 확인합니다';
   bDl.addEventListener('click', () => download(bDl));
   bRp.addEventListener('click', () => toReport(bRp));
   bNew.addEventListener('click', () => { S.importId = null; S.rec = null; bigCard.hidden = true; paintMap(null); dz.reset?.(); pane('drop'); });

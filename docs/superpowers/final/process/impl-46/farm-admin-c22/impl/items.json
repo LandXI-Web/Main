@@ -1,0 +1,456 @@
+{
+ "generatedAt": "2026-10-22T02:32:31.808Z",
+ "site": "https://app.land-xi.dev · https://namwon.land-xi.dev · https://gwangju-jeonnam.land-xi.dev(로그인 폼 · 세션 주입 0)",
+ "overlap": {
+  "states": 120,
+  "overlapped": 0,
+  "widths": [
+   1280,
+   1440,
+   390
+  ],
+  "table": "overlap-table.md",
+  "json": "final/overlap-check.json",
+  "shots": "final/shots/*.png(로컬 · .gitignore)"
+ },
+ "overlap_before": {
+  "note": "고치기 전 같은 검사기(남원 · 11 상태 × 3폭) — DESIGN §1-2 G1 ~ G8 이 그대로 잡혔다",
+  "overlapped_states": 23,
+  "examples": [
+   [
+    1280,
+    "07-card",
+    [
+     "pair .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56",
+     "pair .k-chat-fab × #det-x.sp-x 40×43"
+    ]
+   ],
+   [
+    1280,
+    "07b-card-chat",
+    [
+     "pair #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560",
+     "pair #k-chat.k-ck.k-chat × #det-x.sp-x 364×175",
+     "pair #k-chat.k-ck.k-chat × .k-chat-fab 56×56",
+     "pair .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56",
+     "pair .k-chat-fab × #det-x.sp-x 40×43"
+    ]
+   ],
+   [
+    1280,
+    "08-map",
+    [
+     "pair .k-ck-f.k-chat-in × .gx-card 116×32"
+    ]
+   ],
+   [
+    1280,
+    "08b-map-layers",
+    [
+     "pair .k-ck-f.k-chat-in × .gx-card 116×32"
+    ]
+   ],
+   [
+    1280,
+    "08c-map-list-layers",
+    [
+     "pair .k-ck-f.k-chat-in × .gx-card 116×32"
+    ]
+   ],
+   [
+    1280,
+    "08d-map-ask",
+    [
+     "pair .xk-ans × .gx-card 116×156",
+     "pair .k-ck-f.k-chat-in × .gx-card 116×32"
+    ]
+   ],
+   [
+    1280,
+    "09-compare",
+    [
+     "pair #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×560",
+     "pair #k-chat.k-ck.k-chat × #det-x.sp-x 364×233",
+     "pair #k-chat.k-ck.k-chat × .k-chat-fab 56×56",
+     "pair .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56",
+     "pair .k-chat-fab × #det-x.sp-x 40×56"
+    ]
+   ],
+   [
+    1440,
+    "07-card",
+    [
+     "pair #k-chat.k-ck.k-chat × #side.gr-side.pn-pane.pn-pane--x 380×468",
+     "pair .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56",
+     "pair .k-chat-fab × #det-x.sp-x 40×45"
+    ]
+   ],
+   [
+    1440,
+    "07b-card-chat",
+    [
+     "pair .k-chat-fab × #side.gr-side.pn-pane.pn-pane--x 56×56",
+     "pair .k-chat-fab × #det-x.sp-x 40×43"
+    ]
+   ],
+   [
+    1440,
+    "08-map",
+    [
+     "pair .xk-ans × .gx-card 36×156",
+     "pair .k-ck-f.k-chat-in × .gx-card 36×32"
+    ]
+   ],
+   [
+    1440,
+    "08b-map-layers",
+    [
+     "pair .xk-ans × .gx-card 36×156",
+     "pair .k-ck-f.k-chat-in × .gx-card 36×32"
+    ]
+   ],
+   [
+    1440,
+    "08c-map-list-layers",
+    [
+     "pair .xk-ans × .gx-card 36×156",
+     "pair .k-ck-f.k-chat-in × .gx-card 36×32"
+    ]
+   ]
+  ]
+ },
+ "xlsx": [
+  {
+   "file": "남원시_경작·휴경분석서비스_결과설명서2판.xlsx",
+   "title": "남원시 · 경작·휴경 분석서비스 · 관할 전체",
+   "sub": "기준일 2026-06-08 · 출처 AI 분석 결과 × 연속지적 필지(관할 안 · 지운 결과 제외)",
+   "head_row": 4,
+   "head": [
+    "필지 번호",
+    "주소",
+    "읍면동",
+    "지목",
+    "필지 넓이(㎡)",
+    "AI 분석 결과",
+    "결과 수",
+    "AI 결과 넓이(㎡)",
+    "필지 대비 비율",
+    "신뢰도(높음 · 보통 · 낮음)",
+    "분석 영상 · 날짜",
+    "메모(최근)",
+    "메모 날짜"
+   ],
+   "freeze": "A5",
+   "filter": "A4:M2081",
+   "num_formats": {
+    "필지 넓이(㎡)": "#,##0.0",
+    "결과 수": "#,##0",
+    "AI 결과 넓이(㎡)": "#,##0.0",
+    "필지 대비 비율": "0.0\"%\""
+   },
+   "total_row": [
+    "합계",
+    null,
+    null,
+    null,
+    "=SUBTOTAL(109,E5:E2081)",
+    null
+   ],
+   "old_cols": [],
+   "sheets": [
+    {
+     "name": "필지",
+     "freeze": "A5",
+     "filter": "A4:M2081",
+     "rows": 2082,
+     "subtotal": true
+    },
+    {
+     "name": "열 설명",
+     "freeze": null,
+     "filter": null,
+     "rows": 14,
+     "subtotal": false
+    },
+    {
+     "name": "안내",
+     "freeze": null,
+     "filter": null,
+     "rows": 8,
+     "subtotal": false
+    }
+   ]
+  },
+  {
+   "file": "남원시_경작휴경_고른필지5_20261022.xlsx",
+   "title": "남원시 · 경작·휴경 분석서비스 · 고른 필지 5",
+   "sub": "기준일 2026-06-08 · 출처 AI 분석 결과 × 연속지적 필지(관할 안 · 지운 결과 제외)",
+   "head_row": 4,
+   "head": [
+    "필지 번호",
+    "주소",
+    "읍면동",
+    "지목",
+    "필지 넓이(㎡)",
+    "AI 분석 결과",
+    "결과 수",
+    "AI 결과 넓이(㎡)",
+    "필지 대비 비율",
+    "신뢰도(높음 · 보통 · 낮음)",
+    "분석 영상 · 날짜",
+    "메모(최근)",
+    "메모 날짜"
+   ],
+   "freeze": "A5",
+   "filter": "A4:M9",
+   "num_formats": {
+    "필지 넓이(㎡)": "#,##0.0",
+    "결과 수": "#,##0",
+    "AI 결과 넓이(㎡)": "#,##0.0",
+    "필지 대비 비율": "0.0\"%\""
+   },
+   "total_row": [
+    "합계",
+    null,
+    null,
+    null,
+    "=SUBTOTAL(109,E5:E9)",
+    null
+   ],
+   "old_cols": [],
+   "sheets": [
+    {
+     "name": "필지",
+     "freeze": "A5",
+     "filter": "A4:M9",
+     "rows": 10,
+     "subtotal": true
+    },
+    {
+     "name": "열 설명",
+     "freeze": null,
+     "filter": null,
+     "rows": 14,
+     "subtotal": false
+    },
+    {
+     "name": "안내",
+     "freeze": null,
+     "filter": null,
+     "rows": 8,
+     "subtotal": false
+    }
+   ]
+  },
+  {
+   "file": "남원시_경작휴경_이력_20261022.xlsx",
+   "title": "남원시 · 경작·휴경 분석서비스 · 이력",
+   "sub": "기준일 2026-10-22 · 출처 결과 공개 · 대장 · 메모 · 요청 기록",
+   "head_row": 4,
+   "head": [
+    "날짜 · 시각",
+    "종류",
+    "내용",
+    "덧붙임",
+    "누가"
+   ],
+   "freeze": "A5",
+   "filter": "A4:E143",
+   "num_formats": {
+    "날짜 · 시각": "yyyy-mm-dd hh:mm"
+   },
+   "total_row": [
+    "2026-06-08 00:00:00",
+    "AI 분석",
+    "2025년 드론영상 분석 끝",
+    "2,098필지",
+    "LX"
+   ],
+   "old_cols": [],
+   "sheets": [
+    {
+     "name": "이력",
+     "freeze": "A5",
+     "filter": "A4:E143",
+     "rows": 143,
+     "subtotal": false
+    },
+    {
+     "name": "안내",
+     "freeze": null,
+     "filter": null,
+     "rows": 5,
+     "subtotal": false
+    }
+   ]
+  },
+  {
+   "file": "남원시_경작휴경_통계_20261022.xlsx",
+   "title": "남원시 · 경작·휴경 분석서비스 · 관할 전체",
+   "sub": "기준일 2026-10-22 · 출처 이 서비스 AI 분석 결과(관할 안 · 지운 결과 제외)",
+   "head_row": 4,
+   "head": [
+    "종류",
+    "넓이(㎡)",
+    "비율",
+    "필지 수"
+   ],
+   "freeze": "A5",
+   "filter": "A4:D6",
+   "num_formats": {
+    "넓이(㎡)": "#,##0.0",
+    "비율": "0.0\"%\"",
+    "필지 수": "#,##0"
+   },
+   "total_row": [
+    "합계",
+    "=SUBTOTAL(109,B5:B6)",
+    100,
+    "=SUBTOTAL(109,D5:D6)"
+   ],
+   "old_cols": [],
+   "sheets": [
+    {
+     "name": "종류별",
+     "freeze": "A5",
+     "filter": "A4:D6",
+     "rows": 7,
+     "subtotal": true
+    },
+    {
+     "name": "읍면동별",
+     "freeze": "A5",
+     "filter": "A4:G36",
+     "rows": 37,
+     "subtotal": true
+    },
+    {
+     "name": "안내",
+     "freeze": null,
+     "filter": null,
+     "rows": 5,
+     "subtotal": false
+    }
+   ]
+  },
+  {
+   "file": "남원시_다운로드이력_20261022.xlsx",
+   "title": "남원시 · 다운로드 이력 · 2026-08-01 ~ 2026-10-22",
+   "sub": "기준일 2026-10-22 · 출처 기관 화면에서 받은 파일 기록",
+   "head_row": 4,
+   "head": [
+    "마지막으로 받은 때",
+    "누가",
+    "무엇",
+    "서비스",
+    "범위",
+    "개인정보",
+    "사용 목적",
+    "활용 기간(끝나는 날)",
+    "횟수"
+   ],
+   "freeze": "A5",
+   "filter": "A4:I20",
+   "num_formats": {
+    "마지막으로 받은 때": "yyyy-mm-dd hh:mm",
+    "횟수": "#,##0"
+   },
+   "total_row": [
+    "합계",
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "old_cols": [],
+   "sheets": [
+    {
+     "name": "다운로드 이력",
+     "freeze": "A5",
+     "filter": "A4:I20",
+     "rows": 21,
+     "subtotal": true
+    },
+    {
+     "name": "안내",
+     "freeze": null,
+     "filter": null,
+     "rows": 6,
+     "subtotal": false
+    }
+   ]
+  }
+ ],
+ "flow": {
+  "gov": {
+   "tenant": "namwon",
+   "landing": "/landxi/v3/gov-select/",
+   "clicks": [
+    "묶음 카드",
+    "결과 지도"
+   ],
+   "group_home": "/landxi/v3/gov-group/?group=farm",
+   "firstview_chars": 157,
+   "tabs": [
+    "통합 대시보드",
+    "분석서비스",
+    "필지 찾기",
+    "보고서·통계",
+    "행정정보(대장)",
+    "다운로드 이력",
+    "분석 요청 · 촬영 요청"
+   ],
+   "map": "/landxi/v3/xi-clean/",
+   "layer_names": [
+    "영상",
+    "AI 분석",
+    "토지피복 · 2023년",
+    "농경지 · 2025년",
+    "비닐하우스 · 2025년",
+    "변화 탐지",
+    "비닐하우스 · 2023년",
+    "지적",
+    "읍면동 경계"
+   ],
+   "ms_to_map": 16222,
+   "parcel": {
+    "card": "아영면 두락리 119-1",
+    "change_card": "2023 경작 흔적 없음 → 2025 경작지",
+    "change_band": "2023 경작 흔적 없음 → 2025 경작지",
+    "band_head": "시계열 영상 비교",
+    "same": true
+   }
+  },
+  "gov2": {
+   "tenant": "gwangju-jeonnam",
+   "landing": "/landxi/v3/gov-group/?group=river",
+   "clicks": [
+    "결과 지도"
+   ],
+   "group_home": "/landxi/v3/gov-group/?group=river",
+   "firstview_chars": 162,
+   "tabs": [
+    "통합 대시보드",
+    "분석서비스",
+    "필지 찾기",
+    "보고서·통계",
+    "행정정보(대장)",
+    "다운로드 이력",
+    "분석 요청 · 촬영 요청"
+   ],
+   "map": "/landxi/v3/xi-clean/",
+   "layer_names": [
+    "영상",
+    "AI 분석",
+    "지적",
+    "읍면동 경계"
+   ],
+   "ms_to_map": 14030
+  }
+ },
+ "checks": {
+  "words": "checks/words.txt(gov · app 통과 · 화면 금칙어 0)",
+  "numbers_fonts": "checks/all.txt(통과)"
+ }
+}

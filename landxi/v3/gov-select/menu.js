@@ -5,12 +5,14 @@
    주소는 이 파일 기준 상대 주소(사본 /Main/ 아래 · 기관 주소 {기관}.land-xi.dev 에서도 같은 출처). */
 const at = (p) => new URL('../' + p, import.meta.url).href;
 
-/** 셸 메뉴(rail) — who = 관문 결과 · current = 'list' | 'requests' | 'org' | 'accounts' · service = 요청 화면에 넘길 서비스(배포본 id) */
-export function govRail({ who, current = 'list', service = null } = {}) {
+/** 셸 메뉴(rail) — who = 관문 결과 · current = 'list' | 'group' | 'requests' | 'org' | 'accounts' · service = 요청 화면에 넘길 서비스(배포본 id)
+    group = 열린 행정서비스 묶음 { id, name } — 묶음에 들어가면 '내 서비스' 아래에 그 묶음 이름 한 칸(10-22 원칙 310 · FARM-ADMIN §2-1) */
+export function govRail({ who, current = 'list', service = null, group = null } = {}) {
   const mgr = who?.me?.realm === 'tenant' && who?.me?.role === 'manager';
   if (current === 'request' || current === 'sent') current = 'requests';
   const items = [
     { id: 'list', label: '내 서비스', icon: 'grid', href: at('gov-select/?list=1') },
+    ...(group ? [{ id: 'group', label: group.name, icon: 'folder', href: at('gov-group/?' + new URLSearchParams({ group: group.id })) }] : []),
     { id: 'requests', label: '요청하기', icon: 'deploy', href: at('gov-request/' + (service ? '?' + new URLSearchParams({ service }) : '')) },
   ];
   if (mgr) items.push({ id: 'org', label: '기관 정보', icon: 'org', href: at('gov-select/?view=org'), end: true, more: true },

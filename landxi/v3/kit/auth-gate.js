@@ -43,6 +43,7 @@ export const ALLOW = {
   'xi-clean': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local'],
   'gov-fusion': ['tenant/local'],
   'gov-report': ['tenant/local'],
+  'gov-group': ['tenant/local'],    // 행정서비스 묶음 홈(10-22 원칙 310 — 영농관리 · 하천관리 … · 왼쪽 탭)
   'gov-select': ['tenant/local'],   // 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3)
   'gov-request': ['tenant/local', 'tenant/global'],    // 분석 의뢰(구현 2차 — 우리 영상 · LX 공유 영상 → LX 관리자 승인)
   'gov-accounts': ['tenant/local', 'tenant/global'],   // 기관 관리자 계정(가입 신청 승인 · 재설정 · 계정) — 기관 관리자 여부는 화면 · 서버가 본다

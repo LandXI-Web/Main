@@ -29,6 +29,8 @@ document.body.dataset.view = view;
 let brand = null;
 try { brand = await loadBrand(tid); } catch { /* 아래에서 문제 표시 */ }
 const deckP = view === 'org' ? Promise.resolve(null) : loadDeck();
+/* 행정서비스 묶음(10-22 원칙 310) — 서버 GET /spaces/me/groups(묶음 · 카드는 서버 데이터) · 없거나 실패면 묶음 없이(예전 그대로) */
+const groupsP = view === 'org' ? Promise.resolve(null) : api('/spaces/me/groups').catch(() => null);
 
 /* 볼 수 있는 서비스 — 브랜드 목록(LX 관리자가 정한 순서 · 상태 말) ∩ 서버 덱(부서 사용자 = 정해 준 서비스만). 덱이 없으면(서버 경로 전) 브랜드 목록 그대로 */
 async function visible() {
@@ -42,8 +44,11 @@ async function visible() {
 /* 볼 수 있는 서비스가 하나뿐이면 서비스 선택을 건너 그 서비스 대시보드로(체계-2 ⓑ · 모든 기관 같은 흐름) */
 if (view === 'list' && !qs.has('list') && brand) {
   const { svcs } = await visible();
+  const gs = await groupsP;
   const open = svcs.filter((s) => s.open);
-  if (open.length === 1 && svcs.length === 1) { location.replace('?service=' + encodeURIComponent(open[0].card)); await new Promise(() => {}); }
+  /* 묶음이 하나뿐이고 묶음 밖 서비스가 없으면 그 묶음 홈으로(같은 규칙 — 서비스 하나면 그 대시보드) */
+  if (gs?.items?.length === 1 && !(gs.ungrouped || []).length) { location.replace('../gov-group/?' + new URLSearchParams({ group: gs.items[0].id })); await new Promise(() => {}); }
+  if (!gs?.items?.length && open.length === 1 && svcs.length === 1) { location.replace('?service=' + encodeURIComponent(open[0].card)); await new Promise(() => {}); }
 }
 
 const B = brand || { tenant: tid, platform: who.org || '', short: who.org || '', mark: { text: [] }, color: {}, services: [], intro: {}, contact: '', name: { ko: who.org } };
@@ -55,7 +60,9 @@ if (B.color?.accent) {   // 현재 위치 표시 · 진행 막대 · 포커스 =
 
 /* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 요청하기(분석 요청 · 촬영 요청 · 보낸 요청 탭) · 기관 관리자는 기관 정보 · 계정.
    ?review=<id> 는 그 검토 요청 대화를 연다(알림 칸 부품 kit/notify.js) */
-const RAIL = govRail({ who, current: view === 'org' ? 'org' : qs.get('review') ? 'sent' : 'list' });
+const GROUPS = (await groupsP)?.items || [];
+const GROUP = view === 'svc' ? (GROUPS.find((g) => g.id === qs.get('group') && g.cards.includes(SVC)) || GROUPS.find((g) => g.cards.includes(SVC)) || null) : null;
+const RAIL = govRail({ who, current: view === 'org' ? 'org' : qs.get('review') ? 'sent' : GROUP ? 'group' : 'list', group: GROUP });
 const S = K.shell({ who, home: 'gov-select', title: B.platform, rail: RAIL });
 /* 머리 = 기관 마크 · 플랫폼 이름(Land-XI 글자 대신 — 원칙 48 · 64) */
 function paintMast() {
@@ -106,13 +113,34 @@ async function renderList() {
     return;
   }
   const by = new Map((deck?.items || []).map((c) => [c.id, c]));
-  const cnt = {};
-  for (const s of svcs) cnt[s.status] = (cnt[s.status] || 0) + 1;
-  page.append(h('div.gs-sec-h', {}, h('h2', { text: '서비스' }),
-    h('span', { text: [`${svcs.length}개`, ...Object.entries(cnt).map(([k, n]) => `${k} ${n}`)].join(' · ') })));
-  page.append(h('div.gs-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map((s) => svcEl(s, by.get(s.card)))));
+  /* 행정서비스 묶음 카드(10-22 원칙 310 — 영농관리 · 하천관리 …) 먼저, 묶음 밖 서비스는 아래 '서비스'에 */
+  const inGroup = new Set(GROUPS.flatMap((g) => g.cards));
+  if (GROUPS.length) {
+    page.append(h('div.gs-sec-h', {}, h('h2', { text: '행정서비스' }), h('span', { text: `${GROUPS.length}개` })));
+    page.append(h('div.gs-grid.gs-groups', { dataset: { n: String(GROUPS.length) } }, ...GROUPS.map((g) => groupEl(g))));
+  }
+  const rest = svcs.filter((s) => !inGroup.has(s.card));
+  if (rest.length) {
+    const cnt = {};
+    for (const s of rest) cnt[s.status] = (cnt[s.status] || 0) + 1;
+    page.append(h('div.gs-sec-h', {}, h('h2', { text: GROUPS.length ? '그 밖의 서비스' : '서비스' }),
+      h('span', { text: [`${rest.length}개`, ...Object.entries(cnt).map(([k, n]) => `${k} ${n}`)].join(' · ') })));
+    page.append(h('div.gs-grid', { dataset: { n: String(rest.length) } }, ...rest.map((s) => svcEl(s, by.get(s.card)))));
+  }
   await bandP;
 }
+/** 행정서비스 묶음 카드 — 이름 · 한 줄 · 안의 분석서비스 이름 · 결과가 있는 서비스 수(숫자는 서버 요약 한 출처) */
+function groupEl(g) {
+  const names = g.services.map((x) => svcShort2(x.name));
+  const withRes = g.cards.filter((c) => primary(itemsOf(c))).length;
+  return h('a.t-card.gs-gcard', { href: '../gov-group/?' + new URLSearchParams({ group: g.id }), dataset: { group: g.id } },
+    h('span.gs-gcard-k', { text: '행정서비스' }),
+    h('h3.gs-gcard-t', { text: g.title }),
+    g.descr ? h('p.gs-gcard-d', { text: g.descr }) : null,
+    h('ul.gs-gcard-l', {}, ...names.map((n) => h('li.t-chip', { text: n }))),
+    h('p.gs-gcard-f', {}, h('span', { text: `분석서비스 ${g.cards.length}개${withRes ? ` · 결과 있음 ${withRes}개` : ''}` }), h('span.gs-gcard-go', { text: '열기' })));
+}
+const svcShort2 = (s) => String(s || '').replace(/\s*분석\s*서비스$/, '');
 function svcEl(s, c) {
   const p = s.open ? primary(itemsOf(s.card)) : null;
   /* 덱이 없을 때(서버 경로 전) — 브랜드 목록 값으로 같은 카드(장면 없이 · 숫자는 요약에서) */
@@ -179,7 +207,7 @@ async function renderSvc() {
     return;
   }
   const card = (deck?.items || []).find((c) => c.id === s.card) || null;
-  await renderDash({ page, B, s, card, sum, regP, RAIL, S, head, asOfEl: asOf, REG });
+  await renderDash({ page, B, s, card, sum, regP, RAIL, S, head, asOfEl: asOf, REG, group: GROUP });
 }
 
 /* ═════════════ 기관 정보(기관 관리자) ═════════════ */
@@ -198,4 +226,4 @@ function renderOrg() {
 if (view === 'org') renderOrg(); else if (view === 'svc') await renderSvc(); else await renderList();
 page.append(foot());
 document.body.dataset.ready = '1';
-window.__govSelect = { ready: true, view, tenant: tid, services: (brand?.services || []).map((s) => s.card) };
+window.__govSelect = { ready: true, view, tenant: tid, services: (brand?.services || []).map((s) => s.card), groups: GROUPS.map((g) => ({ id: g.id, cards: g.cards })) };

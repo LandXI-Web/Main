@@ -41,8 +41,8 @@ SRC_LED = "올린 대장 필지 × 고른 서비스 결과(필지 번호로 맞�
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 # 내려받은 파일 종류(이력 · 이용 약속 기록 · 한 이름표)
 FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",
-          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 견주기 엑셀",
-          "ledger_compare": "대장과 AI 결과 엑셀", "pledges": "이용 약속 기록 엑셀"}
+          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀",
+          "ledger_compare": "대장과 AI 결과 엑셀", "pledges": "다운로드 이력 엑셀"}
 
 
 def _me(request: Request) -> Principal:
@@ -58,35 +58,81 @@ def _book():
     return wb
 
 
+AREA, COUNT, RATIO, DATE, DATETIME = "#,##0.0", "#,##0", '0.0"%"', "yyyy-mm-dd", "yyyy-mm-dd hh:mm"
+SUMMABLE = {"#,##0", "#,##0.0", "#,##0.00"}     # 합계(SUBTOTAL 109)를 내는 숫자 서식 — 넓이 · 개수 · 금액. 비율 · 날짜 · 점수는 더하지 않는다
+
+
+def cap_line(org: str = "", svc: str = "", scope: str = "", base: str = "", src: str = "") -> tuple[str, str]:
+    """엑셀 첫 시트 1 ~ 2행 — 제목(기관 · 서비스 · 범위) · 기준일 · 출처(10-22 엑셀 한 벌 · FARM-ADMIN §6-1)."""
+    t = " · ".join(x for x in (org, svc, scope) if x)
+    b = " · ".join(x for x in ((f"기준일 {base}" if base else ""), (f"출처 {src}" if src else "")) if x)
+    return t, b
+
+
 def _sheet(wb, title: str, head: list[str], rows: list[list], *, num: dict[int, str] | None = None, widths: list[int] | None = None,
-           total_last: bool = False, text_cols: tuple[int, ...] = ()):
-    """시트 하나 — 머리 줄 굵게 · 회색 · 고정, 숫자 칸 서식(num: 열 번호 → '#,##0' 따위), 마지막 줄 합계면 굵게."""
+           total_last: bool = False, text_cols: tuple[int, ...] = (), cap: tuple[str, str] | None = None, total: bool | None = None):
+    """엑셀 한 벌(10-22 now 21 '다시' · FARM-ADMIN §6-1) — 모든 기관 엑셀(이력 · 필지 · 통계 · 대장 대조 · 보고서 · 다운로드 이력)이 이 함수로.
+    cap = (제목 줄, 기준일 · 출처 줄) → 1 ~ 2행 · 3행 빈 줄 · 4행 머리(굵게 · 회백) · A5 고정. cap 이 없으면 1행 머리 · A2 고정.
+    num = {열 번호: 서식}(넓이 AREA · 개수 COUNT · 비율 RATIO · 날짜 DATE) · 자동 필터(머리 ~ 마지막 자료 줄).
+    합계: total_last=True 면 rows 의 마지막 줄이 합계 줄 — 더할 수 있는 열(SUMMABLE)이 자료 줄 합과 같으면 SUBTOTAL(109) 수식으로(거르면 보이는 줄만 더함),
+          다르면(예: 읍면동 밖 결과가 있어 서버 합계가 더 큼) 서버 값 그대로 둔다(숫자 한 출처). total=True(또는 None 이고 더할 열이 있음)면 '합계' 줄을 붙인다."""
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
     ws = wb.create_sheet(title[:31])
+    h0 = 1
+    if cap:
+        ws.append([cap[0]])
+        ws.append([cap[1]] if cap[1] else [])
+        ws.append([])
+        ws["A1"].font = Font(bold=True, size=13)
+        ws["A2"].font = Font(color="4E535C")
+        h0 = 4
     ws.append(head)
-    for c in ws[1]:
+    for c in ws[h0]:
         c.font = Font(bold=True)
         c.fill = PatternFill("solid", fgColor="F2F4F6")
         c.alignment = Alignment(vertical="center", wrap_text=True)
-    for r in rows:
+    data = rows[:-1] if total_last and rows else list(rows)
+    tot = rows[-1] if total_last and rows else None
+    for r in data:
         ws.append(r)
-    for i, fmt in (num or {}).items():
-        if i >= len(head) or not rows:
+    r0, r1 = h0 + 1, h0 + len(data)                 # 자료 줄 범위
+    num = dict(num or {})
+    for i, fmt in num.items():
+        if i >= len(head) or not data:
             continue
-        for (cell,) in ws.iter_rows(min_row=2, max_row=len(rows) + 1, min_col=i + 1, max_col=i + 1):
-            if isinstance(cell.value, (int, float)):
+        for (cell,) in ws.iter_rows(min_row=r0, max_row=r1, min_col=i + 1, max_col=i + 1):
+            if isinstance(cell.value, (int, float, dt.date, dt.datetime)):
                 cell.number_format = fmt
     for i in text_cols:
-        for (cell,) in ws.iter_rows(min_row=2, max_row=len(rows) + 1, min_col=i + 1, max_col=i + 1):
+        for (cell,) in ws.iter_rows(min_row=r0, max_row=r1, min_col=i + 1, max_col=i + 1):
             cell.number_format = "@"
-    if total_last and rows:
-        for c in ws[ws.max_row]:
+    sums = [i for i, f in num.items() if f in SUMMABLE and i < len(head) and i > 0]
+    if total is None:
+        total = bool(sums) and not total_last and len(data) > 1
+    if data and (tot is not None or (total and sums)):
+        row = list(tot) if tot is not None else (["합계"] + [None] * (len(head) - 1))
+        row += [None] * (len(head) - len(row))
+        for i in sums:
+            col = get_column_letter(i + 1)
+            vals = [r[i] for r in data if i < len(r) and isinstance(r[i], (int, float))]
+            server = row[i]
+            same = server is None or not isinstance(server, (int, float)) or abs(sum(vals) - float(server)) <= max(0.51, abs(float(server)) * 1e-6)
+            if vals and same:
+                row[i] = f"=SUBTOTAL(109,{col}{r0}:{col}{r1})"
+        ws.append(row)
+        for j, c in enumerate(ws[ws.max_row]):
             c.font = Font(bold=True)
-    ws.freeze_panes = "A2"
+            if j in num and num[j] in SUMMABLE | {RATIO}:
+                c.number_format = num[j]
+    if data:
+        ws.auto_filter.ref = f"A{h0}:{get_column_letter(len(head))}{r1}"
+    ws.freeze_panes = f"A{h0 + 1}"
     for i, h in enumerate(head):
         w = (widths or [])[i] if widths and i < len(widths) else max(10, min(30, len(str(h)) * 2 + 2))
         ws.column_dimensions[get_column_letter(i + 1)].width = w
+    if cap:
+        ws.column_dimensions["A"].width = max(ws.column_dimensions["A"].width or 10, 14)
     return ws
 
 
@@ -106,7 +152,7 @@ def _save(wb) -> bytes:
 
 
 def _xlsx_resp(blob: bytes, name: str) -> Response:
-    name = re.sub(r"[\\/:*?\"<>|\s—·]+", "_", name).strip("_") + ".xlsx"
+    name = re.sub(r"[\\/:*?\"<>|\s—]+", "_", name.replace("·", "")).strip("_") + ".xlsx"
     return Response(blob, media_type=XLSX, headers={"content-disposition": f"attachment; filename=\"landxi.xlsx\"; filename*=UTF-8''{quote(name)}",
                                                     "cache-control": "no-store", "access-control-expose-headers": "Content-Disposition"})
 
@@ -581,14 +627,15 @@ def _xlsx_multi(d: dict) -> bytes:
     if d.get("ledger"):
         ov.append(["대장", f"{d['ledger']['name']} · {d['ledger']['parcels']['value']:,}필지"])
     ov.append(["안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다."])
-    _sheet(wb, "개요", ["항목", "내용"], ov, widths=[16, 70])
+    cap = cap_line(d.get("org") or "", " · ".join(s["short"] for s in P), d["region"], d["made"].replace(".", "-"), "AI 분석 결과(관할 안 · 지운 결과 제외)")
+    _sheet(wb, "개요", ["항목", "내용"], ov, widths=[16, 70], cap=cap)
     head = ["결과", "영상", "분석한 날", "AI 분석 결과", "단위", "넓이(ha)"] + (["곤포사일리지(개)", "생산량(kg)"] if d["bale"] else [])
     rows = []
     for s in P:
         b = next((c for c in s["classes"] if c["bale"]), None)
         rows.append([s["name"], s["shot"] or "", s["analyzed"] or "", s["total"]["value"], s["unit"], s["area_ha"]["value"]]
                     + ([b["n"]["value"] if b else None, ((b or {}).get("yield") or {}).get("value")] if d["bale"] else []))
-    _sheet(wb, "시점 비교" if not one else "결과", head, rows, num={3: "#,##0", 5: "#,##0.0", 6: "#,##0", 7: "#,##0"}, widths=[26, 18, 12, 14, 8, 12, 16, 14])
+    _sheet(wb, "시점 비교" if not one else "결과", head, rows, num={3: COUNT, 5: AREA, 6: COUNT, 7: COUNT}, widths=[26, 18, 12, 14, 8, 12, 16, 14], cap=cap, total=False)
     names = []
     for s in P:
         for c in s["classes"]:
@@ -598,7 +645,7 @@ def _xlsx_multi(d: dict) -> bytes:
     head = ["종류"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(ha)")]
     rows = [[n] + [v for s in P for v in ((cm[s["card"]].get(n) or {}).get("n", {}).get("value"), (cm[s["card"]].get(n) or {}).get("ha", {}).get("value"))] for n in names]
     rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_ha"]["value"])])
-    _sheet(wb, "종류별", head, rows, num={i: ("#,##0" if i % 2 else "#,##0.0") for i in range(1, len(head))}, total_last=True)
+    _sheet(wb, "종류별", head, rows, num={i: (COUNT if i % 2 else AREA) for i in range(1, len(head))}, total_last=True, cap=cap)
     emds = []
     for s in P:
         for e in s["emd_rows"]:
@@ -608,17 +655,17 @@ def _xlsx_multi(d: dict) -> bytes:
     head = ["읍면동"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(ha)")]
     rows = [[x] + [v for s in P for v in ((em[s["card"]].get(x) or {}).get("n"), ((em[s["card"]].get(x) or {}).get("ha") or {}).get("value"))] for x in emds]
     rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_ha"]["value"])])
-    _sheet(wb, "읍면동별", head, rows, num={i: ("#,##0" if i % 2 else "#,##0.0") for i in range(1, len(head))}, total_last=True)
+    _sheet(wb, "읍면동별", head, rows, num={i: (COUNT if i % 2 else AREA) for i in range(1, len(head))}, total_last=True, cap=cap)
     tr = d.get("transitions")
     if tr:
         rows = [[x["from"], x["to"], x["n"]["value"], x["ha"]["value"]] for x in tr["rows"]]
         rows.append(["합계", "", tr["parcels"]["value"], round(sum(x["ha"]["value"] for x in tr["rows"]), 2)])
-        _sheet(wb, "필지 전이", [tr["from"]["short"], tr["to"]["short"], "필지", "넓이(ha)"], rows, num={2: "#,##0", 3: "#,##0.00"}, widths=[20, 20, 12, 12],
-               total_last=True)
+        _sheet(wb, "필지 전이", [tr["from"]["short"], tr["to"]["short"], "필지", "넓이(ha)"], rows, num={2: COUNT, 3: "#,##0.00"}, widths=[20, 20, 12, 12],
+               total_last=True, cap=cap)
         if tr["top"]:
             _sheet(wb, "바뀐 필지", ["필지 번호", "소재지", "읍면동", "이전", "이후", "넓이(㎡)"],
-                   [[x["pnu"], x["where"], x["emd"], x["from"], x["to"], x["area"]["value"]] for x in tr["top"]], num={5: "#,##0"}, text_cols=(0,),
-                   widths=[22, 30, 12, 14, 14, 12])
+                   [[x["pnu"], x["where"], x["emd"], x["from"], x["to"], x["area"]["value"]] for x in tr["top"]], num={5: AREA}, text_cols=(0,),
+                   widths=[22, 30, 12, 14, 14, 12], cap=cap)
     ld = d.get("ledger")
     if ld:
         rows = [["올린 대장 필지", ld["parcels"]["value"]]]
@@ -628,7 +675,7 @@ def _xlsx_multi(d: dict) -> bytes:
         else:
             rows += [[ld["labels"]["all"], ld["all"]["value"]], [ld["labels"]["some"], ld["some"]["value"]]]
             rows += [[f"{x['short']} AI 결과 없음", x["missing"]["value"]] for x in ld["per"]]
-        _sheet(wb, "대장과 견준 결과", ["항목", "필지"], rows, num={1: "#,##0"}, widths=[40, 14])
+        _sheet(wb, "대장 대조", ["항목", "필지"], rows, num={1: COUNT}, widths=[40, 14], cap=cap, total=False)
     return _save(wb)
 
 
@@ -638,7 +685,8 @@ async def report_multi_xlsx(request: Request, cards: str | None = None, emd: str
     d = await multi_data(p, cards, emd, import_id, with_avail=False)
     blob = await run_in_threadpool(_xlsx_multi, d)
     await _issue(p, d, (import_id or "").strip() or None, "xlsx")
-    return _xlsx_resp(blob, f"{d['region']}_{'_'.join(s['short'] for s in d['picked'])}_AI분석결과보고서_{_today()}")
+    org = await _org_short(p.tenant_id) if p.tenant_id else ""
+    return _xlsx_resp(blob, f"{org}_{'_'.join(s['short'] for s in d['picked'])}_보고서{('_' + d['emd']) if d.get('emd') else ''}_{_today()}")
 
 
 # ── 통계 · 이력 엑셀 ─────────────────────────────────────────────────────────
@@ -660,11 +708,12 @@ async def class_stats_xlsx(card: str, request: Request):
     def build() -> bytes:
         wb = _book()
         tv = float((j.get("total") or {}).get("area", {}).get("value") or 0) or 1.0
-        head = ["종류", "넓이(㎡)", "비율(%)"] + ([nw] if cnt else []) + (["생산량(kg)"] if yk else [])
+        head = ["종류", "넓이(㎡)", "비율"] + ([nw] if cnt else []) + (["생산량(kg)"] if yk else [])
         rows = [[c["name"], v(c.get("area")), round(float((c.get("area") or {}).get("value") or 0) / tv * 100, 1)] + ([v(c.get("n"))] if cnt else [])
                 + ([v(c.get("yield"))] if yk else []) for c in classes]
         rows.append(["합계", v((j.get("total") or {}).get("area")), 100.0] + ([v((j.get("total") or {}).get("n"))] if cnt else []) + ([None] if yk else []))
-        _sheet(wb, "종류별", head, rows, num={1: "#,##0.0", 2: "0.0", 3: "#,##0", 4: "#,##0"}, widths=[22, 16, 10, 12, 14], total_last=True)
+        cap = cap_line(org, j["service"]["name"], "관할 전체", str(j.get("as_of") or "")[:10], "이 서비스 AI 분석 결과(관할 안 · 지운 결과 제외)")
+        _sheet(wb, "종류별", head, rows, num={1: AREA, 2: RATIO, 3: COUNT, 4: COUNT}, widths=[22, 16, 10, 12, 14], total_last=True, cap=cap)
         names = [c["name"] for c in classes]
         head = ["읍면동", "합계 넓이(㎡)"] + ([f"합계 {nw}"] if cnt else [])
         for n in names:
@@ -679,8 +728,8 @@ async def class_stats_xlsx(card: str, request: Request):
             rows.append(r)
         fm = {}
         for i, hd in enumerate(head[1:], start=1):
-            fm[i] = "#,##0.0" if "㎡" in hd else "#,##0"
-        _sheet(wb, "읍면동별", head, rows, num=fm, total_last=True)
+            fm[i] = AREA if "㎡" in hd else COUNT
+        _sheet(wb, "읍면동별", head, rows, num=fm, total_last=True, cap=cap)
         _info(wb, [("기관", org), ("서비스", j["service"]["name"]), ("기준", str(j.get("as_of") or "")[:16].replace("T", " ")),
                    ("출처", "이 서비스 AI 분석 결과(관할 안 · 지운 결과 제외) — 화면 '종류별 · 읍면동별'과 같은 값"),
                    ("안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")]
@@ -688,7 +737,7 @@ async def class_stats_xlsx(card: str, request: Request):
         return _save(wb)
     blob = await run_in_threadpool(build)
     await _log(p, card, f"{p.name or '담당자'} — {j['service']['name']} 종류별 · 읍면동별 통계 엑셀 내려받기", {"fmt": "stats", "rows": len(emds)})
-    return _xlsx_resp(blob, f"{org}_{_short_svc(j['service']['name'])}_종류별_읍면동별_{_today()}")
+    return _xlsx_resp(blob, f"{org}_{_short_svc(j['service']['name'])}_통계_{_today()}")
 
 
 @router.get("/history.xlsx")
@@ -716,9 +765,9 @@ async def history_xlsx(request: Request, card: str, kind: str | None = None):
             except (TypeError, ValueError):
                 pass
             rows.append([at, x.get("kind_ko") or "", x.get("title") or "", x.get("sub") or "", x.get("who") or ""])
-        ws = _sheet(wb, "이력", ["날짜 · 시각", "종류", "내용", "덧붙임", "누가"], rows, widths=[18, 12, 50, 30, 18])
-        for (cell,) in ws.iter_rows(min_row=2, min_col=1, max_col=1):
-            cell.number_format = "yyyy-mm-dd hh:mm"
+        cap = cap_line(org, name, "이력" + ("" if not kind or kind == "all" else f" · {items[0]['kind_ko'] if items else kind}"), dt.datetime.now(KST).strftime("%Y-%m-%d"),
+                       "결과 공개 · 대장 · 메모 · 요청 기록")
+        _sheet(wb, "이력", ["날짜 · 시각", "종류", "내용", "덧붙임", "누가"], rows, widths=[18, 12, 50, 30, 18], num={0: DATETIME}, cap=cap)
         _info(wb, [("기관", org), ("서비스", name), ("고른 종류", "전체" if not kind or kind == "all" else (items[0]["kind_ko"] if items else kind)),
                    ("줄 수", len(items)), ("만든 때", now_iso()[:16].replace("T", " "))])
         return _save(wb)
@@ -776,7 +825,7 @@ async def _pledges(realm_p: Principal | None, tenant: str | None, d0: dt.date | 
 
 def _pledge_xlsx(rows: list[dict], lx: bool, d0, d1) -> bytes:
     wb = _book()
-    head = (["기관"] if lx else []) + ["누가", "약속한 때", "사용 목적", "활용 기간(끝나는 날)", "지금", "받은 파일 종류", "받은 횟수", "마지막으로 받은 때"]
+    head = (["기관"] if lx else []) + ["누가", "확인한 때", "사용 목적", "활용 기간(끝나는 날)", "지금", "받은 파일 종류", "받은 횟수", "마지막으로 받은 때"]
     data = []
     for r in rows:
         at = dt.datetime.fromisoformat(r["at"]).replace(tzinfo=None)
@@ -784,12 +833,12 @@ def _pledge_xlsx(rows: list[dict], lx: bool, d0, d1) -> bytes:
         data.append(([r["org"]] if lx else []) + [r["who"], at, r["purpose"], dt.date.fromisoformat(r["until"]), "기간 안" if r["live"] else "기간 끝",
                                                   " · ".join(r["kinds"]) or "—", r["n"]["value"], last])
     o = 1 if lx else 0
-    ws = _sheet(wb, "이용 약속 기록", head, data, num={o + 6: "#,##0"}, widths=([16] if lx else []) + [24, 18, 40, 16, 10, 30, 10, 18])
-    for col, fmt in ((o + 1, "yyyy-mm-dd hh:mm"), (o + 3, "yyyy-mm-dd"), (o + 7, "yyyy-mm-dd hh:mm")):
-        for (cell,) in ws.iter_rows(min_row=2, min_col=col + 1, max_col=col + 1):
-            cell.number_format = fmt
-    _info(wb, [("기간", f"{d0.isoformat() if d0 else '처음'} ~ {d1.isoformat() if d1 else '오늘'}(약속한 날 기준)"), ("줄 수", len(rows)),
-               ("규칙", "올린 대장의 필지별 내용(지번 · 대장 값)이 든 파일만 이용 약속(사용 목적 · 활용 기간) 뒤 받을 때마다 확인합니다."),
+    rng = f"{d0.isoformat() if d0 else '처음'} ~ {d1.isoformat() if d1 else '오늘'}"
+    cap = cap_line("모든 기관" if lx else (rows[0]["org"] if rows else ""), "개인정보 이용 확인", rng, dt.datetime.now(KST).strftime("%Y-%m-%d"), "개인정보가 든 파일 받기 기록")
+    _sheet(wb, "개인정보 이용 확인", head, data, num={o + 1: DATETIME, o + 3: DATE, o + 6: COUNT, o + 7: DATETIME},
+           widths=([16] if lx else []) + [24, 18, 40, 16, 10, 30, 10, 18], cap=cap)
+    _info(wb, [("기간", f"{rng}(확인한 날 기준)"), ("줄 수", len(rows)),
+               ("규칙", "올린 대장의 필지별 내용(지번 · 대장 값)이 든 파일만 받을 때마다 사용 목적 · 활용 기간을 확인합니다."),
                ("만든 때", now_iso()[:16].replace("T", " "))])
     return _save(wb)
 
@@ -817,7 +866,7 @@ async def my_pledges_xlsx(request: Request):
     rows = await _pledges(p, p.tenant_id, d0, d1)
     blob = await run_in_threadpool(_pledge_xlsx, rows, False, d0, d1)
     org = await _org_short(p.tenant_id)
-    return _xlsx_resp(blob, f"{org}_이용약속기록_{_today()}")
+    return _xlsx_resp(blob, f"{org}_다운로드이력_{_today()}")
 
 
 @router.get("/admin/pledges")
@@ -845,4 +894,4 @@ async def all_pledges_xlsx(request: Request):
     t = (q.get("tenant") or "").strip() or None
     rows = await _pledges(None, t, d0, d1)
     blob = await run_in_threadpool(_pledge_xlsx, rows, True, d0, d1)
-    return _xlsx_resp(blob, f"이용약속기록_모든기관_{_today()}")
+    return _xlsx_resp(blob, f"다운로드이력_모든기관_{_today()}")

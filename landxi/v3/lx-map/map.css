@@ -190,3 +190,8 @@ body.lm-boot .k-app{visibility:hidden}
 .lm-pick-r span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lm-pick-r b{font:500 var(--fs-tag)/20px var(--font-num);color:var(--sub);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.lm-pick{transition:none}}
+/* 휴대폰(≤ 640 · 10-22 원칙 309 겹침 0) — 왼쪽 목록 · 오른쪽 지도 두 칸이 390 에서 지도 45px 로 눌려 범례가 목록 위에 겹치던 것 → 위 목록 · 아래 지도 */
+@media (max-width:640px){
+  .lm-page,.lm-page[style*="--lm-left"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 44%}
+  .lm-page.is-folded{grid-template-columns:minmax(0,1fr);grid-template-rows:0 minmax(0,1fr)}
+}

@@ -124,11 +124,11 @@ export async function parcelCompare({ host, pnu, card, hist = null, epochs, comp
   const R = (zy && eps.filter((e) => yr(e) === zy).pop()) || eps[eps.length - 1] || null;
   const ay = a?.year || null;
   const L = (ay && eps.find((e) => yr(e) === ay && e !== R)) || [...eps].reverse().find((e) => R && yr(e) < yr(R)) || null;
-  if (!R || !L) { toast('이 필지는 견줄 다른 시점 영상이 없습니다'); return false; }
+  if (!R || !L) { toast('이 필지는 비교할 다른 시점 영상이 없습니다'); return false; }
   /* 위 띠는 두 시점이 정해지는 즉시(가르기가 서는 동안 · 영상이 차오르기 전에 무엇을 견주는지 먼저 — impl-46 속도) */
   const line = j?.change?.line || (z ? `${zy || z.shot} ${z.cls}` : '');
   host.querySelector('.gx-cmp-t')?.remove();
-  if (line) host.append(h('p.gx-cmp-t', { role: 'status' }, h('span.gx-cmp-y', { text: `${L.label} · ${R.label}` }), h('b', { text: line })));
+  if (line) host.append(h('p.gx-cmp-t', { role: 'status' }, h('span.gx-cmp-h', { text: '시계열 영상 비교' }), h('span.gx-cmp-y', { text: `${L.label} · ${R.label}` }), h('b', { text: line })));
   await compare(L.it.id, R.it.id);
   aiOn?.();
   const sh = j?.shapes || [];

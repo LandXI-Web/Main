@@ -25,14 +25,14 @@ export async function mountPledges(card, { mine = () => true, lx = false } = {})
   const xl = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기' });
   const sum = h('p.acc-help.acc-pl-sum', { role: 'status' });
   const tw = h('div.acc-tbl');
-  card.append(h('div.acc-pl-bar', {}, h('label.acc-pl-f', {}, h('span.t-label', { text: '약속한 날' }), h('span.acc-pl-r', {}, from, h('i', { text: '~' }), to)),
+  card.append(h('div.acc-pl-bar', {}, h('label.acc-pl-f', {}, h('span.t-label', { text: '확인한 날' }), h('span.acc-pl-r', {}, from, h('i', { text: '~' }), to)),
     org ? h('label.acc-pl-f', {}, h('span.t-label', { text: '기관' }), org) : null, xl),
-  h('p.acc-help', {}, '개인정보가 든 파일(올린 대장의 필지별 내용)을 받기 전에 적은 약속입니다.', h('br'), '보기만 합니다 · 받은 횟수는 그 약속으로 받은 파일 수입니다.'), sum, tw);
+  h('p.acc-help', {}, '개인정보가 든 파일(올린 대장의 필지별 내용)을 받을 때 적은 사용 목적 · 기간입니다.', h('br'), '보기만 합니다 · 받은 횟수는 그 확인으로 받은 파일 수입니다.'), sum, tw);
   const qs = () => new URLSearchParams({ ...(F.from ? { from: F.from } : {}), ...(F.to ? { to: F.to } : {}), ...(F.org ? { tenant: F.org } : {}) });
   const cols = [
     ...(lx ? [{ key: 'org', label: '기관' }] : []),
     { key: 'who', label: '누가', fmt: (v) => `<b class="acc-b">${esc(v)}</b>` },
-    { key: 'at', label: '약속한 때', fmt: (v) => `<span class="num">${esc(when(v))}</span>` },
+    { key: 'at', label: '확인한 때', fmt: (v) => `<span class="num">${esc(when(v))}</span>` },
     { key: 'purpose', label: '사용 목적', fmt: (v) => esc(v) },
     { key: 'until', label: '활용 기간', fmt: (v, r) => `<span class="num">${esc(dot(v))}까지</span> <span class="t-chip"${r.live ? '' : ' data-lv="gap"'}>${r.live ? '기간 안' : '기간 끝'}</span>` },
     { key: 'kinds_t', label: '받은 파일', fmt: (v) => esc(v || '—') },
@@ -51,9 +51,9 @@ export async function mountPledges(card, { mine = () => true, lx = false } = {})
     const rows = (j.items || []).map((r) => ({ ...r, kinds_t: (r.kinds || []).join(' · '), n_v: ev(r.n) || 0 }));
     if (org && !orgsDone) { orgsDone = true; org.append(...(j.orgs || []).map((o) => h('option', { value: o.id, text: o.name }))); }
     const n = rows.reduce((a, r) => a + r.n_v, 0);
-    sum.textContent = rows.length ? `약속 ${rows.length.toLocaleString('ko-KR')}건 · 받은 파일 ${n.toLocaleString('ko-KR')}회` : '';
+    sum.textContent = rows.length ? `확인 ${rows.length.toLocaleString('ko-KR')}건 · 받은 파일 ${n.toLocaleString('ko-KR')}회` : '';
     tw.innerHTML = '';
-    if (!rows.length) { const e = h('div'); tw.append(e); empty(e, { kind: 'first', title: '이 기간에 적은 이용 약속이 없습니다' }); T = null; return; }
+    if (!rows.length) { const e = h('div'); tw.append(e); empty(e, { kind: 'first', title: '이 기간에 개인정보 파일을 받은 기록이 없습니다' }); T = null; return; }
     T = table(tw, { cols, rows, sort: 'at', dir: 'desc', limit: 30 });
   }
   const set = () => { F.from = from.value; F.to = to.value; F.org = org ? org.value : ''; load(); };
@@ -64,7 +64,7 @@ export async function mountPledges(card, { mine = () => true, lx = false } = {})
       const r = await api(base + '.xlsx?' + qs(), { raw: true });
       if (!r.ok) throw new Error('http ' + r.status);
       const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
-      const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : '이용약속기록.xlsx' });
+      const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : '다운로드이력.xlsx' });
       document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
       toast('내려받았습니다');
     } catch { toast('내려받지 못했습니다'); }

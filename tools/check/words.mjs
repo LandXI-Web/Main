@@ -34,6 +34,10 @@ export const WORDS = [
   ['광주전남특별시(→ 전남광주특별시)', /광주\s?전남\s?특별시/],
   // 10-21 첫인상-3(원칙 161 · 212 · 251) — 기다림은 가운데 하나(kit/loader.js .k-ld). 칸 안에 남은 '불러오는 중' 글 = 칸 로딩 글자(가운데 표시는 세지 않는다)
   ['칸 불러오는 중', /불러오는\s?중/],
+  // 10-22 원칙 308 — 보통 사람이 쓰는 말 · 브이월드 · 공공 GIS 낱말(FARM-ADMIN-DESIGN §5) · LX 작업 이름이 기관 화면에(규칙 2)
+  ['가르기(→ 영상 비교)', /가르기/], ['견주기(→ 대조)', /견주기/], ['이용 약속(→ 다운로드 이력 · 개인정보 이용 확인)', /이용\s?약속/],
+  ['오늘 볼 필지(→ 필지 목록)', /오늘\s?볼\s?필지/], ['재추론', /재추론/], ['n클래스(작업 이름)', /\d클래스/], ['n시점(작업 이름)', /\([가-힣]+\s?\d시점\)/],
+  ['지역만 정하기(→ 브이월드에서 영상 가져오기)', /지역만\s?정하기/],
 ];
 const hitWords = (s) => WORDS.filter(([, re]) => re.test(s)).map(([k]) => k);
 /** 서버 응답에서 사람이 읽는 칸 */
@@ -118,8 +122,19 @@ export async function run(role, s0) {
     if (role === 'gov') {
       const G = s.home + '/landxi/v3/';
       await screen(s, '기관 · 내 서비스', G + 'gov-select/?list=1', { wait: '.gs-page' });
-      const cards = await s.page.evaluate(() => [...new Set([...document.querySelectorAll('a[href*="service="]')].map((a) => new URL(a.href).searchParams.get('service')).filter(Boolean))]);
+      /* 행정서비스 묶음(10-22 원칙 310) — 묶음 홈 탭 · 묶음 안 분석서비스도 본다 */
+      const groups = await s.page.evaluate(() => window.__govSelect?.groups || []).catch(() => []);
+      const inGroup = groups.flatMap((g) => g.cards || []);
+      const listed = await s.page.evaluate(() => [...new Set([...document.querySelectorAll('a[href*="service="]')].map((a) => new URL(a.href).searchParams.get('service')).filter(Boolean))]);
+      for (const g of groups) {
+        for (const [t, nm] of [['', '통합 대시보드'], ['services', '분석서비스'], ['parcels', '필지 찾기'], ['stats', '보고서·통계'], ['downloads', '다운로드 이력']]) {
+          await screen(s, `기관 · ${g.id} 묶음 · ${nm}`, G + 'gov-group/?' + new URLSearchParams({ group: g.id, ...(t ? { tab: t } : {}) }), { wait: '.gg-tabs', ms: 3000 });
+        }
+      }
+      const cards = [...new Set([...inGroup, ...listed])];
       for (const c of cards.slice(0, 6)) {
+        await screen(s, `기관 · 결과 지도(${c})`, G + `xi-clean/?service=${encodeURIComponent(c)}`, { wait: '.xc-tools', ms: 4500,
+          act: async (p) => { const t = p.locator('.xc-tool[data-tool="layers"]'); if (await t.count()) { await t.click(); await p.waitForTimeout(800); } } });   // 층 판 이름(10-22 — LX 작업 이름 0)
         await screen(s, `기관 · 서비스 대시보드(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}`, { wait: '.gs-page' });
         await screen(s, `기관 · 통계·보고서(${c})`, G + `gov-select/?service=${encodeURIComponent(c)}&tab=stats`, { wait: '.gs-page' });
         await screen(s, `기관 · 보고서(${c})`, G + `gov-report/?service=${encodeURIComponent(c)}&tab=report`, { wait: '.rp-grid, #rp-form', ms: 3500 });   // 10-14 원칙 250 — 한글 문서 단추

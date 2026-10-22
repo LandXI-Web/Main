@@ -33,7 +33,10 @@ const who = await gate('gov-request');
 if (who.me?.realm !== 'tenant') { location.replace(who.landing || FRONT); await new Promise(() => {}); }
 const org = (who.org || who.name || '').replace(/\s*담당자$/, '').split(/\s+/).pop() || '기관';
 /* 기관 메뉴(내 서비스 · 분석 요청 · 보낸 요청 · 우리 공간 · 기관 관리자는 기관 정보 · 계정) — 국내 기관 화면과 같은 메뉴(gov-select/menu.js) */
-const rail = who.key === 'tenant/local' ? govRail({ who, current: 'request', service: new URLSearchParams(location.search).get('service') }) : null;
+/* 행정서비스 묶음에서 온 요청(?group= · 10-22 원칙 310) — 메뉴에 묶음 이름 · 분석 카드는 그 묶음 서비스만 */
+const GQ = new URLSearchParams(location.search).get('group');
+const GROUP = GQ ? ((await api('/spaces/me/groups').catch(() => null))?.items || []).find((g) => g.id === GQ) || null : null;
+const rail = who.key === 'tenant/local' ? govRail({ who, current: 'request', service: new URLSearchParams(location.search).get('service'), group: GROUP }) : null;
 const app = shell({ who: { ...who, org }, home: 'gov-request', title: org, rail });
 app.main.append($('#tpl').content.cloneNode(true));
 document.body.classList.remove('gq-boot');
@@ -162,6 +165,7 @@ async function fitServices(gsd) {
   try {
     const j = await api('/requests/services' + (gsd ? `?gsd=${encodeURIComponent(gsd)}` : ''));
     S.svcs = j.items || []; S.fitGsd = gsd || null; S.area = j.area?.bbox || S.area;
+    if (GROUP) { const only = S.svcs.filter((x) => GROUP.cards.includes(x.card)); if (only.length) S.svcs = only; }   // 묶음 서비스만(없으면 전체 그대로)
   } catch (e) { devlog('services', e.code || e.message); }
   drawCards();
 }

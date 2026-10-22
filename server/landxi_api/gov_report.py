@@ -555,8 +555,6 @@ async def gov_compare(request: Request, card: str, import_id: str | None = None,
 
 @router.get("/spaces/me/ledger/compare.xlsx")
 async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = None, ok: str | None = None):
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill
     from .farm_admin import need_personal
     p = _me(request)
     pl = await need_personal(p, ok)                  # 대장 필지마다 지번 · 대장 값이 든 파일 = 개인정보가 든 파일(10-18 영농-q3 — 이용 약속 · 받을 때마다 확인)
@@ -566,43 +564,37 @@ async def gov_compare_xlsx(request: Request, card: str, import_id: str | None = 
     why = {x["key"]: x["label"] for x in c["lines"]}
     rows = sorted(c["_all"], key=lambda x: ({"diff": 0, "ai": 1, "none": 2}[x["k"]], -(x["ai_m2"] or 0), x["where"]))
 
+    from .farm_more import AREA, _book, _org_short, _save, _sheet, cap_line
+    org = await _org_short(p.tenant_id)
+
     def build() -> bytes:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "필지"
+        wb = _book()
         # 종류별 AI 결과 면적 칸(10-18 원칙 286 — 운영 중인 영농관리 화면의 'AI 분석 면적' 종류별 칸) · 넓은 종류부터 · 대장 행마다 같은 필지의 AI 결과
         tot: dict[str, float] = {}
         for x in rows:
             for k, m in (x.get("_by") or {}).items():
                 tot[k] = tot.get(k, 0.0) + m
         kinds = [k for k, _ in sorted(tot.items(), key=lambda kv: -kv[1])]
-        ws.append(["필지 번호", "지번", "읍면동", "대장", "AI 분석", "AI 결과 면적(㎡)", "필지 면적(㎡)", "견준 결과", "AI 결과 유무"]
-                  + [f"AI {k} 면적(㎡)" for k in kinds])
-        for cell in ws[1]:
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill("solid", fgColor="F2F4F6")
-        for x in rows:
-            ws.append([x["pnu"], x["where"], x["emd"], x["ledger"], x["ai"] or "", x["ai_m2"], x["parcel_m2"],
-                       why.get(x["why"], "") if x["k"] == "diff" else ("AI 결과 있음" if x["k"] == "ai" else c["no_ai_label"]),
-                       "유" if x["k"] != "none" else "무"] + [(x.get("_by") or {}).get(k, 0) if x["k"] != "none" else None for k in kinds])
-        for row in ws.iter_rows(min_row=2, min_col=1, max_col=1):
-            for cell in row:
-                cell.number_format = "@"
-        from openpyxl.utils import get_column_letter
-        for i, w in enumerate([22, 20, 12, 10, 26, 16, 14, 34, 12] + [18] * len(kinds)):
-            ws.column_dimensions[get_column_letter(i + 1)].width = w
+        head = ["필지 번호", "지번", "읍면동", "대장", "AI 분석 결과", "AI 결과 넓이(㎡)", "필지 넓이(㎡)", "대조 결과", "AI 결과 유무"] + [f"AI {k} 넓이(㎡)" for k in kinds]
+        data = [[x["pnu"], x["where"], x["emd"], x["ledger"], x["ai"] or "", x["ai_m2"], x["parcel_m2"],
+                 why.get(x["why"], "") if x["k"] == "diff" else ("AI 결과 있음" if x["k"] == "ai" else c["no_ai_label"]),
+                 "유" if x["k"] != "none" else "무"] + [(x.get("_by") or {}).get(k, 0) if x["k"] != "none" else None for k in kinds] for x in rows]
+        L = c["ledger"]
+        cap = cap_line(org, c["service"]["name"], f"대장 대조 · {L['name']}", str(L.get("base_date") or now_iso()[:10])[:10],
+                       "올린 대장 필지 × AI 분석 결과(필지 번호로 맞춤)")
+        num = {5: AREA, 6: AREA, **{9 + i: AREA for i in range(len(kinds))}}
+        _sheet(wb, "대장 대조", head, data, num=num, text_cols=(0,), widths=[22, 20, 12, 10, 26, 16, 14, 34, 12] + [18] * len(kinds), cap=cap)
         i = wb.create_sheet("안내")
-        for k, v in [("서비스", c["service"]["name"]), ("올린 대장", c["ledger"]["name"]), ("대장 필지", c["ledger"]["parcels"]["value"]),
+        for k, v in [("서비스", c["service"]["name"]), ("올린 대장", L["name"]), ("대장 필지", L["parcels"]["value"]),
                      ("대장과 AI 결과가 다른 필지", c["diff"]["value"]), ("AI 결과가 있는 필지", c["with_ai"]["value"]),
-                     (c["no_ai_label"], c["no_ai"]["value"]), ("만든 때", now_iso()), ("안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")]:
+                     (c["no_ai_label"], c["no_ai"]["value"]), ("개인정보 이용 확인", f"{pl['purpose']} · {pl['until']}까지"), ("만든 때", now_iso()),
+                     ("안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")]:
             i.append([k, v])
         i.column_dimensions["A"].width = 24
         i.column_dimensions["B"].width = 60
-        buf = io.BytesIO()
-        wb.save(buf)
-        return buf.getvalue()
+        return _save(wb)
     blob = await run_in_threadpool(build)
-    name = re.sub(r"[\\/:*?\"<>|\s—·]+", "_", f"{_short_svc(c['service']['name'])}_대장과_AI결과_{dt.datetime.now(KST).strftime('%Y%m%d')}").strip("_") + ".xlsx"
+    name = re.sub(r"[\\/:*?\"<>|\s—·]+", "_", f"{org}_{_short_svc(c['service']['name'])}_대장대조_{dt.datetime.now(KST).strftime('%Y%m%d')}").strip("_") + ".xlsx"
     async with db(p) as cn:
         await cn.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
                          p.tenant_id, card, f"{p.name or '담당자'} — {c['service']['name']} 대장과 AI 결과 내려받기", p.user_id,

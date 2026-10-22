@@ -1142,4 +1142,55 @@ async def _region_results(sgg_cd: str, p) -> dict:
                     o["name"] = {k: f"{v}({d.month}월 {d.day}일 분석)" for k, v in o["name"].items()}
                 except Exception:  # noqa: BLE001
                     pass
+    if p.realm == "tenant":                               # 10-22 원칙 308 · 규칙 2 — 기관 층 판 = 서비스 이름 + 영상 연도(LX 작업 이름은 개발자 서랍 · dev_name)
+        await _tenant_names(out, r["name"])
     return {"sgg_cd": r["sgg_cd"], "name": r["name"], "items": out, "as_of": now_iso()}
+
+
+_YR = re.compile(r"(19|20)\d{2}")
+
+
+async def _tenant_names(out: list, region: str) -> None:
+    """기관 화면 층 이름 — 서비스 결과(카드)면 '서비스 이름 · 2025년', 카탈로그 결과면 이름에서 지역 이름 · 괄호 속 작업 설명 · 'n클래스'를 걷고 연도를 뒤로.
+    지역 고정값 0(지역 이름은 그 지역 응답 값 · 짧은 이름은 끝의 시 · 군 · 구만 뗀다). 원래 이름은 dev_name 으로(개발자 서랍)."""
+    from .ximap import svc_name
+    cards = {o["card_id"] for o in out if o.get("card_id")}
+    names: dict = {}
+    if cards:
+        async with db(realm="lx") as conn:
+            for row in await conn.fetch("SELECT id, name FROM cards WHERE id = ANY($1::text[])", list(cards)):
+                n = row["name"]
+                if isinstance(n, str):
+                    try:
+                        n = json.loads(n)
+                    except ValueError:
+                        n = {"ko": n}
+                names[row["id"]] = svc_name(n)
+    short = re.sub(r"(특별자치시|특별자치도|광역시|특별시|시|군|구)$", "", region or "")
+    for o in out:
+        ko = (o.get("name") or {}).get("ko") or ""
+        m = _YR.search(ko)
+        yr = m.group(0) if m else None
+        base = names.get(o.get("card_id") or "")
+        if not base:
+            t = re.sub(r"\([^)]*\)", " ", ko)
+            for w in sorted({region, short}, key=len, reverse=True):
+                if w:
+                    t = t.replace(w, " ")
+            t = re.sub(r"\d+\s?클래스|AI\s?분석|(19|20)\d{2}(-\d{2})?", " ", t)
+            base = re.sub(r"\s+", " ", t).strip(" ·") or "AI 분석 결과"
+        o["dev_name"] = o.get("name")
+        nm = f"{base} · {yr}년" if yr else base
+        o["name"] = {"ko": nm, "en": (o.get("name") or {}).get("en") or nm}
+    # 같은 이름이 둘 이상이면(같은 서비스 · 같은 해의 분석 여럿) 분석한 날을 붙인다 — 위 '(n월 n일 분석)'과 같은 규칙
+    seen: dict = {}
+    for o in out:
+        seen.setdefault(o["name"]["ko"], []).append(o)
+    for same in seen.values():
+        if len(same) > 1:
+            for o in same:
+                try:
+                    d = dt.datetime.fromisoformat(o["finished_at"])
+                    o["name"] = {**o["name"], "ko": f"{o['name']['ko']}({d.month}월 {d.day}일 분석)"}
+                except Exception:  # noqa: BLE001
+                    pass

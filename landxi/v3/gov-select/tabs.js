@@ -14,27 +14,30 @@ import { baleBox } from '../kit/bale.js';   // 곤포사일리지 생산량(10-1
 
 const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
 const md = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
-const USE = { geojson: '지도 프로그램용', parcels: '필지 목록 · 확인 결과 · 메모', summary: '숫자만 한 장' };
+const USE = { geojson: '공간정보 받기(GeoJSON)', parcels: '필지 목록 · 확인 결과 · 메모', summary: '숫자만 한 장' };
 
 /* ═════════ 이력 ═════════ */
-export async function renderHistory(main, side, { s, B }) {
+export async function renderHistory(main, side, { s, B, group = null }) {
+  /* 묶음 안 서비스는 '내려받기' 줄을 묶음의 다운로드 이력 탭으로 옮긴다(10-22 FARM-ADMIN §6-3 — 이력이 내려받기로 덮이던 것) */
+  const dlHref = group ? '../gov-group/?' + new URLSearchParams({ group: group.id, tab: 'downloads' }) : null;
   const box = h('section.t-card.gd-box.gy-hist', { 'aria-label': '이력' });
   main.append(box);
   side.append(h('section.t-card.gd-box.gy-legend', { 'aria-label': '이력에 남는 것' }, h('div.gd-box-h', {}, h('h2', { text: '이력에 남는 것' })),
     h('dl.gy-leg', {}, ...[['결과 공개', 'LX가 새 판 · 회차를 열 때'], ['검토 요청', '보낸 메모와 LX 답'],
-      ['분석 요청', '보냄 → LX 확인 → 분석 끝'], ['촬영 요청', '보냄 → LX 답(시기 · 금액)'], ['내려받기', '누가 무엇을 받았나']]
+      ['분석 요청', '보냄 → LX 확인 → 분석 끝'], ['촬영 요청', '보냄 → LX 답(시기 · 금액)'], ...(dlHref ? [] : [['내려받기', '누가 무엇을 받았나']])]
       .map(([k, d]) => h('div', {}, h('dt', {}, h('span.t-chip', { text: k })), h('dd', { text: d })))),
-    h('p.gd-note', { text: '모두 서버에 이미 쌓이는 기록을 한 줄기로 보이는 것입니다.' })));
+    h('p.gd-note', { text: '모두 서버에 이미 쌓이는 기록을 한 줄기로 보이는 것입니다.' }),
+    dlHref ? h('a.t-btn.t-btn--text.gd-more', { href: dlHref, text: '누가 무엇을 받았는지 — 다운로드 이력' }) : null));
   let j;
   try { j = await api('/history?' + new URLSearchParams({ card: s.card })); }
   catch { const x = h('div'); box.append(x); K.empty(x, { kind: 'error', title: '이력을 불러오지 못했습니다' }); return; }
-  const items = (j.items || []).filter((x) => x.kind !== 'check');   // 확인 기록(현장 확인 이력)은 화면에서 쓰지 않는다(원칙 135)
+  const items = (j.items || []).filter((x) => x.kind !== 'check' && !(dlHref && x.kind === 'download'));   // 확인 기록(현장 확인 이력)은 화면에서 쓰지 않는다(원칙 135) · 내려받기는 다운로드 이력 탭
   let on = 'all';
   const chips = h('div.gy-chips', { role: 'tablist', 'aria-label': '거르기' });
   const list = h('div.gy-days');
   const csv = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '엑셀로 내려받기', title: '고른 종류의 이력을 엑셀(.xlsx)로 받습니다' });
   box.append(h('div.gd-box-h', {}, h('h2', { text: '이력' }), h('span.gd-small', { text: '이 서비스에서 일어난 일 · 시간순' })), chips, csv, list);
-  const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).filter(([k]) => k !== 'check').map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
+  const kinds = [['all', '전체', items.length], ...Object.entries(j.counts || {}).filter(([k]) => k !== 'check' && !(dlHref && k === 'download')).map(([k, e]) => [k, (items.find((x) => x.kind === k) || {}).kind_ko || KO[k], val(e)])];
   const draw = () => {
     chips.replaceChildren(...kinds.map(([k, t, n]) => h('button.gy-chip', { type: 'button', role: 'tab', 'aria-selected': String(on === k), onclick: () => { on = k; draw(); } },
       t, h('b.num', { text: ` ${nf(n)}` }))));
@@ -160,7 +163,7 @@ export async function renderStats(main, side, { s, B, rep, pre }) {
     btn.addEventListener('click', () => fetchFile(g, f, btn, me));
     files.append(h('div.gs-file', { class: f.ok ? '' : 'is-off' }, h('span.gs-file-t', {}, h('b', { text: f.label }), h('small', { text: f.ok ? (USE[f.fmt] || f.kind || '') : (f.why || '받을 수 없습니다') })), btn));
   }
-  files.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만 바로 받습니다. 누가 무엇을 받았는지 이력에 남습니다. 올린 대장이 든 파일은 이용 약속 뒤 받을 때마다 확인합니다.` }));
+  files.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만 바로 받습니다. 누가 무엇을 받았는지 다운로드 이력에 남습니다. 올린 대장이 든 파일은 받을 때마다 사용 목적 · 기간을 확인합니다.` }));
 }
 
 /* ═════════ 종류별 · 읍면동별(10-18 원칙 286 영농관리 고도화) ═════════
@@ -236,7 +239,7 @@ async function renderStatsDash(box, { s, B, rep, getNums }) {
   const nm = `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}`;
   const bx = h('button.fd-dlb.fd-dlb--x', { type: 'button', text: '엑셀' });
   const bh = h('button.fd-dlb', { type: 'button', text: '한글 문서' });
-  bx.addEventListener('click', () => xlsx(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats.xlsx`, `${nm}_종류별_읍면동별.xlsx`, bx));
+  bx.addEventListener('click', () => xlsx(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats.xlsx`, `${nm}_통계.xlsx`, bx));
   bh.addEventListener('click', async () => {
     bh.disabled = true;
     try {
@@ -246,7 +249,7 @@ async function renderStatsDash(box, { s, B, rep, getNums }) {
       const a = h('a', { href: URL.createObjectURL(await r.blob()), download: m ? decodeURIComponent(m[1]) : `${nm}_보고서.hwpx` });
       document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
       K.toast('내려받았습니다');
-    } catch {                                           // 대장이 든 문서 = 이용 약속 뒤 받음(받을 때마다 확인)
+    } catch {                                           // 대장이 든 문서 = 개인정보 이용 확인 뒤 받음(받을 때마다 확인)
       try { await personalFile('/spaces/me/report.hwpx?' + new URLSearchParams({ card: s.card }), { name: `${nm}_보고서.hwpx`, label: 'AI 분석 결과 보고서' }); }
       catch (e) { K.devlog('hwpx', String(e?.message || e)); K.toast('내려받지 못했습니다'); }
     }
@@ -257,6 +260,12 @@ async function renderStatsDash(box, { s, B, rep, getNums }) {
     emds: emds.map((e) => ({ label: e.emd, v: pickV(e), k: e.emd })), emdTitle: '읍면동별', emdUnit: unit,
     yields: classes.filter((c) => val(c.yield)).map((c) => ({ label: `${c.name} 생산량`, value: val(c.yield), unit: 'kg', sub: useN && c.n ? `${nf(val(c.n))}개` : '' })),
   });
+  /* 표(칸)마다 글 단추 '엑셀'(10-22 FARM-ADMIN §6-1 — 종류별 · 읍면동별 칸 옆 · 같은 파일 · 시트 둘) */
+  for (const card of el.querySelectorAll?.('.fd-donut, .fd-bar') || []) {
+    const b = h('button.t-btn.t-btn--text.gs-pxl', { type: 'button', text: '엑셀', title: '종류별 · 읍면동별 두 시트(.xlsx)' });
+    b.addEventListener('click', () => xlsx(`/spaces/me/guides/${encodeURIComponent(s.card)}/class-stats.xlsx`, `${nm}_통계.xlsx`, b));
+    card.append(b);
+  }
   box.className = 'gs-dash';
   box.replaceChildren(h('div.gs-dash-h', {}, h('h2', { text: '통계 · 보고서' }), h('span.gd-small', { text: 'AI 분석 결과 · 지금 상태' }), h('div.gs-dash-act', {}, bx, bh)), el,
     h('a.t-btn.t-btn--text.gd-more', { href: rep('report'), text: '시점을 골라 보고서 만들기' }));

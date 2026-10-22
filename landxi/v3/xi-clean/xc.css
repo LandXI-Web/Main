@@ -487,7 +487,7 @@ button.xb-k--line:focus-visible{outline:2px solid #fff;outline-offset:4px;border
   .xc-img-b{padding:0 8px}
   .xc-tools{flex-direction:row;top:56px;right:8px;padding:4px}
   .xc-tool{width:48px;padding:6px 0 5px}
-  .xb-hud{top:112px;left:12px;max-width:calc(100% - 24px)}
+  .xb-hud{top:124px;left:12px;max-width:calc(100% - 24px)}   /* 도구 한 줄(56 + 60) 아래 — 겹침 0(원칙 309 · 10-22 자동 검사) */
   .xb-big{font-size:40px;line-height:48px}
   .xb-big small{font-size:20px}
   .xe-card{width:calc(100% - 24px)}
@@ -612,3 +612,14 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 .xc-sggs--svc{padding:0 8px}
 .xc-sggs--svc .xc-sgc[aria-current="true"]{background:var(--ink);color:#fff}
 .xc-sggs--svc .xc-sgc[aria-current="true"] .num,.xc-sggs--svc .xc-sgc[aria-current="true"] .xc-sgd{color:rgba(255,255,255,.75)}
+/* 10-22 원칙 309(G5) — 휴대폰: 층 · 규칙 · 보고서 판(아래 시트)이 열리면 대화는 입력 한 줄만(답 띠 · 추천 · 대화 칸은 판을 닫으면 다시) · 판은 입력 줄 위에 선다 */
+@media (max-width:640px){
+  .k-main:has(.xc-pop:not([hidden])) .k-chat-root[data-dock] :is(.xk-ans,.k-chat-sugg,.k-chat-dlog){display:none!important}
+  .k-main:has(.xc-pop:not([hidden])) .xc-pop{bottom:84px;max-height:calc(100% - 160px)}
+  .k-main:has(.k-drawer.is-open) .k-chat-root[data-dock]{display:none}
+}
+@media (max-width:640px){
+  .k-main:has(.xc-pop:not([hidden])) :is(.gx-cmp-t,.xc-cmp){display:none!important}   /* 휴대폰 영상 비교 중 층 판을 열면 위 띠 · 영상 고르기는 판을 닫을 때까지 접는다(한 자리 하나) */
+}
+/* 10-22 원칙 309 — 틈이 모자라면 대화를 아래 줄의 낮은 것(접힌 결과 카드 · 영상 고르기) 위로 올려 세운다(app.js layoutNow → --xc-cb) */
+@media (min-width:641px){ .k-main > .k-chat-root[data-dock]{bottom:var(--xc-cb,20px)} }
