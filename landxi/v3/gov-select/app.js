@@ -209,9 +209,8 @@ async function renderSvc() {
     return;
   }
   const card = (deck?.items || []).find((c) => c.id === s.card) || null;
-  if (s.card === 'card-change') {         // 국토 변화 분석서비스 — 대상지별 변화 · 판정 현황(10-22 CHANGE-DEMO §7 8단계 · kit/change-dash.js)
-    const { renderChangeDash } = await import('../kit/change-dash.js');
-    await renderChangeDash({ page, head, title: s.name || '국토 변화 분석서비스', crumb: h('a.gs-crumb', { href: './?list=1', text: '내 서비스' }) });
+  if (s.card === 'card-change') {         // 국토 변화 분석서비스 — 기관 쪽 대시보드 카드는 뺐다(10-23 사용자 '기관만 두고 대시보드 카드는 빼기') · 제목만
+    page.append(head({ title: s.name || '국토 변화 분석서비스', crumb: h('a.gs-crumb', { href: './?list=1', text: '내 서비스' }) }));
     return;
   }
   await renderDash({ page, B, s, card, sum, regP, RAIL, S, head, asOfEl: asOf, REG, group: GROUP });

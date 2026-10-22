@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import math
@@ -603,7 +604,19 @@ async def cog_tile(iid: str, z: int, x: int, y: int, request: Request, exp: str 
         # 국토지리정보원 연도 영상(영상 비교 · 10-22 now21 시계열-연도고르기 ⓐ) — 영상 API 를 그때그때 불러 그린다. 디스크에 남기지 않는다(영상은 저장하지 않음)
         if z < 12:
             return Response(status_code=204)
-        buf = await run_in_threadpool(_render, src, z, x, y, 256, True)
+        # 영상 API 가 가끔 칸을 못 내줌(GDALWMS 'Unable to download block' — 10-22 변화 탐지 녹화 · 지도 서비스 흰 칸 · 빈 칸)
+        # → 잠깐 쉬고 두 번 더 · 그래도 안 되면 500 대신 204(저장하지 않음 · 화면 오류 없이 바탕이 보임)
+        buf, err = None, None
+        for k in range(3):
+            try:
+                buf = await run_in_threadpool(_render, src, z, x, y, 256, True)
+                err = None
+                break
+            except Exception as e:  # noqa: BLE001
+                err = e
+                await asyncio.sleep(0.4 * (k + 1))
+        if err is not None:
+            return Response(status_code=204, headers={"Cache-Control": "no-store", "X-LX-Render": "api-retry-failed"})
         if buf is None:
             return Response(status_code=204, headers={"Cache-Control": "private, max-age=600"})
         return Response(content=buf, media_type="image/webp", headers={"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(api)"})

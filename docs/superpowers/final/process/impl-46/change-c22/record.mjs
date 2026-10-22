@@ -12,7 +12,8 @@ const [BASE = 'https://app.land-xi.dev', OUT = 'E:/도로공사/geoai_roadland/o
 const ADMIN = BASE.replace('://app.', '://admin.');
 const LINE = 'E:/Land-XI 플랫폼/02. 데이터/change/inputs/담양IC_구역선.geojson';
 const NAME = '고속국도 담양IC 변화 모니터링';
-const TMP = path.join(OUT, '_rec');
+const SFX = process.env.SFX || '';             // 최종판 이름 꼬리(예: _final) — 앞 초안 파일은 그대로 둔다
+const TMP = path.join(OUT, '_rec' + (process.env.SFX || ''));
 fs.rmSync(TMP, { recursive: true, force: true }); fs.mkdirSync(TMP, { recursive: true });
 const log = [];
 const T0 = Date.now();
@@ -93,14 +94,14 @@ await wait(1500);
 let ms = await ask(p1, '2019년과 2024년 항공영상 비교해서 구역선 안에 새로 생긴 것 찾아줘', { pause: 6000 });
 await p1.waitForFunction(() => (window.__lxChange?.fc?.features || []).length > 0, null, { timeout: 60000 });
 const job = await p1.evaluate(() => window.__lxChange.job);
-await p1.screenshot({ path: path.join(OUT, '장면1_비교_변화폴리곤.png') });
+await p1.screenshot({ path: path.join(OUT, '장면1_비교_변화폴리곤' + SFX + '.png') });
 mark('2 비교', { ms });
 const pick = await p1.evaluate(() => { const f = window.__lxChange.fc.features.find((x) => x.properties.inside_row === '내' && x.properties.type === '신축'); return f.id; });
 await p1.evaluate((id) => document.dispatchEvent(new CustomEvent('kit:change-pick', { detail: { id } })), pick);
 await p1.locator('.chg-panel .chg-ab img').first().waitFor({ timeout: 30000 });
 await wait(4000);
 ms = await ask(p1, '이거 뭐야?', { pause: 6000 });
-await p1.screenshot({ path: path.join(OUT, '장면2_두해썸네일_설명.png') });
+await p1.screenshot({ path: path.join(OUT, '장면2_두해썸네일_설명' + SFX + '.png') });
 mark('3 폴리곤 · 이거 뭐야', { ms });
 ms = await ask(p1, '지목이 도로인데 건물 생긴 필지만 소유구분이랑 같이 표로', { pause: 6000 });
 mark('4 표', { ms });
@@ -161,7 +162,7 @@ await wait(3000);
 for (let i = 0; i < 6; i++) { await p2.mouse.wheel(0, 450); await wait(1100); }
 await p2.mouse.wheel(0, -5000); await wait(1200);
 const [dl] = await Promise.all([p2.waitForEvent('download', { timeout: 120000 }), p2.locator('.cr-bar .t-btn', { hasText: 'PDF' }).click()]);
-await dl.saveAs(path.join(OUT, '고속국도_담양IC_변화탐지보고.pdf'));
+await dl.saveAs(path.join(OUT, '고속국도_담양IC_변화탐지보고' + SFX + '.pdf'));
 await wait(2500);
 mark('7 미리보기 · PDF');
 await p2.goto(`${ADMIN}/landxi/v3/ops-infra/#/deploys/share`, { waitUntil: 'domcontentloaded' });
@@ -173,7 +174,7 @@ mark('8 기관 공유');
 await p2.goto('https://kec.land-xi.dev/landxi/v3/gov-select/', { waitUntil: 'domcontentloaded' });
 await p2.locator('.cd-card').first().waitFor({ timeout: 60000 });
 await wait(7000);
-await p2.screenshot({ path: path.join(OUT, '장면3_한국도로공사_대시보드.png') });
+await p2.screenshot({ path: path.join(OUT, '장면3_한국도로공사_대시보드' + SFX + '.png') });
 mark('8 도로공사 대시보드');
 await p2.close();
 await ctxP.close();
@@ -193,9 +194,9 @@ for (const [i, v] of vids.entries()) {
 }
 const list = path.join(TMP, 'list.txt');
 fs.writeFileSync(list, parts.map((p) => `file '${p.replace(/\\/g, '/')}'`).join('\n'));
-const mp4 = path.join(OUT, 'Land-XI_국토변화탐지_고속국도_담양IC.mp4');
+const mp4 = path.join(OUT, 'Land-XI_국토변화탐지_고속국도_담양IC' + SFX + '.mp4');
 execFileSync(FF, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', '-movflags', '+faststart', mp4]);
 const dur = execFileSync(process.env.FFPROBE || 'ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp4]).toString().trim();
 mark('MP4', { mp4, seconds: Math.round(+dur) });
-fs.writeFileSync(path.join(OUT, 'recording-log.json'), JSON.stringify({ log, project, job, mp4, seconds: Math.round(+dur) }, null, 1));
+fs.writeFileSync(path.join(OUT, 'recording-log' + SFX + '.json'), JSON.stringify({ log, project, job, mp4, seconds: Math.round(+dur) }, null, 1));
 fs.rmSync(TMP, { recursive: true, force: true });
