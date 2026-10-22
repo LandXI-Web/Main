@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
-from national.common import ASSETS, COUNT_CLS, DEF, FACE_CLS, KST, OUT, env_file, pg, settings  # noqa: E402
+from national.common import ASSETS, COUNT_CLS, DEF, FACE_CLS, KST, OUT, env_file, pg, run_year, settings, train_share  # noqa: E402
 
 API = "http://127.0.0.1:8700/api/v1"
 MODEL = DEF["model"]                    # 경작지 새 판(항공 · API 영상 · 4분류 그대로) — 설정 'national.run'.model 이 이긴다(model_of)
@@ -236,8 +236,10 @@ def ensure_imagery(c, year: int, conn_max: int) -> str:
 # ── 칸 고르기 · 비키기 ──────────────────────────────────────────────────────
 def other_gpu(c) -> list[str]:
     """학습 장비를 쓰는 다른 작업(전국 작업기 것 빼고 · 시험 포함) — 있으면 비킨다."""
+    share = train_share()                 # 학습이 한 장만 쓰고 전국은 다른 장으로(pools.yaml power.national.train_share · 10-22 P6)
     rows = c.execute("SELECT j.kind, count(*) FROM jobs j WHERE j.state IN ('queued','running') AND j.pool <> 'cpu' "
-                     "AND NOT EXISTS (SELECT 1 FROM national_jobs n WHERE n.job_id=j.id) GROUP BY j.kind").fetchall()
+                     "AND NOT EXISTS (SELECT 1 FROM national_jobs n WHERE n.job_id=j.id) AND NOT (%s AND j.kind = 'train') GROUP BY j.kind",
+                     (share,)).fetchall()
     return [f"{k} {n}" for k, n in rows]
 
 
@@ -300,8 +302,10 @@ def run_cell(c, g: Gate, asset: str, year: int, cd: str, iid: str, *, test: bool
         body = {"kind": "infer", "model_id": model, "imagery_id": iid, "aoi": mapping(p), "priority": PRIORITY, "test": test,
                 "label": f"{'test/' if test else ''}national/{asset}/{year}/{cd}/{k}", "options": {"max_km2": 150, "national": {"asset": asset, "year": year, "cell": cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
-                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
-                         (asset, year, key, k, model)).fetchone()   # 같은 판 작업만 이어 쓴다(옛 판 조각을 새 판 결과로 쓰지 않음)
+                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s "
+                         "AND (NOT %s OR n.at > coalesce((SELECT done_at FROM national_cells WHERE asset=%s AND year=%s AND cell_cd=%s), '-infinity')) "
+                         "ORDER BY n.at DESC LIMIT 1",
+                         (asset, year, key, k, model, redo, asset, year, cd)).fetchone()   # 같은 판 작업만 이어 쓴다 · 다시 하는 칸은 끝난 뒤 넣은 작업만
         if prev:                                 # 끊겼다 다시 이어 하기 — 같은 조각의 작업이 아직 살아 있거나 끝났으면 그것을 쓴다
             jid = prev[0]
         else:
@@ -392,7 +396,41 @@ def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bo
         c.execute("UPDATE national_cells SET state='done', done_at=now(), counts=%s, err=NULL, model_id=%s, tries=0, next_try_at=NULL, "
                   "started_at=coalesce(to_timestamp(%s), started_at) WHERE asset=%s AND year=%s AND cell_cd=%s",
                   (json.dumps(counts, ensure_ascii=False), model, t0, asset, year, cd))
-    return {"counts": counts, "jobs": len(jobs), "rows_moved_out": deleted, "freed_mb": round(freed / 1e6, 1), "memory": mem}
+    fill = 0
+    if not test:
+        try:
+            fill = mark_fill(c, year, cd)
+        except Exception as e:  # noqa: BLE001 — 칸 마무리는 막지 않는다
+            log(f"  앞 해 영상 채움 적기 건너뜀: {e!r}")
+    return {"counts": counts, "jobs": len(jobs), "rows_moved_out": deleted, "freed_mb": round(freed / 1e6, 1), "memory": mem, "fill_tiles": fill}
+
+
+TILE_M = 17112760.32 / 2 ** 18               # 영상 API 18단계 타일 한 장(약 65.3m · EPSG:5179)
+
+
+def mark_fill(c, year: int, cd: str) -> int:
+    """이 칸을 분석하며 앞 해 영상으로 채운 타일(워커가 Redis imgfill:{해} 에 적은 자리) → national_imgcover 'fill' 줄의 applied_at.
+    (10-22 now21 시계열-빈조각2024 ⓐ — 실제로 채워 분석한 칸만 화면에 '2024년 영상'을 쓴다.) 채운 타일 수를 돌려준다."""
+    from workers.bus import r as _r
+    mem = _r().smembers(f"imgfill:{year}") or set()
+    if not mem:
+        return 0
+    pts, fy = [], None
+    for m in mem:
+        x, y, f = (m.decode() if isinstance(m, bytes) else m).split("/")
+        pts.append((-200000 + (int(x) + 0.5) * TILE_M, 4000000 - (int(y) + 0.5) * TILE_M))
+        fy = int(f)
+    wkt = "MULTIPOINT(" + ",".join(f"({a:.2f} {b:.2f})" for a, b in pts) + ")"
+    n = c.execute("SELECT count(*) FROM (SELECT (ST_Dump(ST_Transform(ST_GeomFromText(%s, 5179), 4326))).geom g) q, "
+                  "(SELECT ST_Union(geom_s) gs FROM national_cells WHERE year=%s AND cell_cd=%s AND NOT test) c WHERE ST_Intersects(c.gs, q.g)",
+                  (wkt, year, cd)).fetchone()[0]
+    if not n:
+        return 0
+    km2 = round(n * TILE_M * TILE_M / 1e6, 4)
+    c.execute("INSERT INTO national_imgcover(year, cell_cd, kind, fill_year, km2, ratio, probes, applied_at, applied_tiles) "
+              "VALUES (%s,%s,'fill',%s,%s,0,0,now(),%s) ON CONFLICT (year, cell_cd, kind) DO UPDATE SET applied_at=now(), applied_tiles=EXCLUDED.applied_tiles, "
+              "fill_year=EXCLUDED.fill_year", (year, cd, fy, km2, int(n)))
+    return int(n)
 
 
 def fail_cell(c, asset: str, year: int, cd: str, err: str, redo: bool = False):
@@ -514,8 +552,12 @@ class CellRun:
                 "label": f"national/{self.asset}/{self.year}/{self.cd}/{k}",
                 "options": {"max_km2": 150, "national": {"asset": self.asset, "year": self.year, "cell": self.cd}}}
         prev = c.execute("SELECT n.job_id FROM national_jobs n JOIN jobs j ON j.id=n.job_id WHERE n.asset=%s AND n.year=%s AND n.cell_cd=%s AND n.part=%s "
-                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s ORDER BY n.at DESC LIMIT 1",
-                         (self.asset, self.year, self.cd, k, self.model)).fetchone()   # 끊겼다 다시 — 같은 판의 같은 조각 작업이 있으면 그것(예전과 같음)
+                         "AND j.state IN ('queued','running','done') AND coalesce(j.shards_failed, 0) = 0 AND j.model_id = %s "
+                         "AND (NOT %s OR n.at > coalesce((SELECT done_at FROM national_cells WHERE asset=%s AND year=%s AND cell_cd=%s), '-infinity')) "
+                         "ORDER BY n.at DESC LIMIT 1",
+                         (self.asset, self.year, self.cd, k, self.model, self.redo, self.asset, self.year, self.cd)).fetchone()
+        # 끊겼다 다시 — 같은 판의 같은 조각 작업이 있으면 그것(예전과 같음). 다시 하는 칸(redo)은 그 칸이 끝난 뒤에 넣은 작업만 —
+        # 같은 판으로 다시 하는 칸(10-22 빈 조각 채움)이 끝난 옛 작업을 그대로 집어 숫자가 비던 것(의성 사곡면 · 10-22 12:45)
         if prev:
             jid = prev[0]
         else:
@@ -537,6 +579,12 @@ class CellRun:
         return self.all_in() and len(self.done) == len(self.parts)
 
 
+def redo_years(st: dict, year: int) -> list[int]:
+    """작업기가 도는 해(run_year) 말고 다시 할 칸을 먼저 볼 해 — 설정 'national.run'.redo_years(예: [2025] · 2025 빈 조각을 2024 영상으로 채워 다시).
+    그 해의 다시 할 칸 = 모델 판이 설정과 다른 끝난 칸(redo) · 아직인 칸. 없으면 그냥 지나간다."""
+    return [int(y) for y in (st.get("redo_years") or []) if int(y) != int(year)]
+
+
 def loop_pipeline(depth: int):
     """흐름 방식 — 조각을 depth 개까지 동시에 넣어 둔다(칸 경계를 넘어 다음 칸 조각도). 칸 하나가 다 끝나면 예전과 같은 finish_cell.
     학습 장비 작업 대기열 규칙은 그대로(우선순위 3 · 다른 작업이 있으면 새 조각을 넣지 않음 · 워커가 칩 묶음 사이에서 비킴)."""
@@ -553,7 +601,7 @@ def loop_pipeline(depth: int):
                 st = settings(c)
                 if not st.get("enabled", True):
                     raise Pause("멈춤")
-                year, model = int(st["year"]), model_of(st)
+                year, model = run_year(st), model_of(st)
                 iid = ensure_imagery(c, year, int(st.get("fetch_max", 4)))
                 # 1) 돌던 조각 확인(2초마다)
                 for jid, (cell, k) in list(inflight.items()):
@@ -576,12 +624,12 @@ def loop_pipeline(depth: int):
                     elif int(v.get("shards_failed") or 0) > 0:
                         err = f"작업 칩 {v.get('shards_failed')}개 실패 — 칸을 다시"
                     if err:
-                        _drop_cell(c, cell, active, inflight, year, err)
+                        _drop_cell(c, cell, active, inflight, cell.year, err)
                         continue
                     cell.done.add(k)
                 # 2) 다 끝난 칸 마무리(넣은 순서대로)
                 for cell in [x for x in active if x.finished()]:
-                    res = finish_cell(c, cell.asset, year, cell.cd, [cell.jobs[k] for k in sorted(cell.jobs)], model=cell.model, t0=cell.t0)
+                    res = finish_cell(c, cell.asset, cell.year, cell.cd, [cell.jobs[k] for k in sorted(cell.jobs)], model=cell.model, t0=cell.t0)
                     res["sec"] = round(time.time() - cell.t0)
                     active.remove(cell)
                     log(f"칸 {cell.asset} {cell.cd} 끝 {res}")
@@ -595,15 +643,21 @@ def loop_pipeline(depth: int):
                             wait_api(year)
                             api_seen = time.time()
                         ex = [f"{x.asset}:{x.cd}" for x in active]
-                        nxt = next_cell(c, year, st["assets"], model, exclude=ex)
+                        cy, nxt = year, None
+                        for ry in redo_years(st, year):          # 다른 해의 다시 할 칸(빈 조각 채움 등 · 작음)을 먼저(10-22 P6)
+                            nxt = next_cell(c, ry, st["assets"], model, exclude=ex)
+                            if nxt:
+                                cy = ry
+                                break
+                        nxt = nxt or next_cell(c, year, st["assets"], model, exclude=ex)
                         if not nxt:
                             break
                         asset, cd, sgg_name, name, tries, redo = nxt
                         log(f"칸 {asset} {cd} {sgg_name} {name} 시작" + (f" · 새 판으로 다시({model})" if redo else "") + f" · 흐름 {depth}")
                         try:
-                            cell = CellRun(c, asset, year, cd, iid, model, bool(redo))
+                            cell = CellRun(c, asset, cy, cd, iid if cy == year else ensure_imagery(c, cy, int(st.get("fetch_max", 4))), model, bool(redo))
                         except Exception as e:  # noqa: BLE001
-                            fail_cell(c, asset, year, cd, repr(e), redo=bool(redo))
+                            fail_cell(c, asset, cy, cd, repr(e), redo=bool(redo))
                             continue
                         active.append(cell)
                         if not cell.parts:
@@ -612,7 +666,7 @@ def loop_pipeline(depth: int):
                         k, jid = cell.submit(c, g)
                         inflight[jid] = (cell, k)
                     except Exception as e:  # noqa: BLE001
-                        _drop_cell(c, cell, active, inflight, year, repr(e))
+                        _drop_cell(c, cell, active, inflight, cell.year, repr(e))
                 if not active and not inflight:
                     nxt = next_cell(c, year, st["assets"], model)
                     if not nxt:
@@ -627,7 +681,7 @@ def loop_pipeline(depth: int):
             except Pause as e:
                 for cell in active:
                     c.execute("UPDATE national_cells SET state=%s WHERE asset=%s AND year=%s AND cell_cd=%s",
-                              ("done" if cell.redo else "todo", cell.asset, year, cell.cd))
+                              ("done" if cell.redo else "todo", cell.asset, cell.year, cell.cd))
                     log(f"칸 {cell.asset} {cell.cd} 멈춤({e}) — 다시 켜면 이어서")
                 active.clear()
                 inflight.clear()
@@ -681,7 +735,7 @@ def loop(force_window: bool = False):
                     status(state="paused")
                     log("멈춤 설정 — 끝")
                     return
-                year = int(st["year"])
+                year = run_year(st)
                 try:
                     wait_turn(c, g)
                 except Pause:
@@ -729,7 +783,7 @@ def run_test(cd: str, asset: str):
     try:
         with pg() as c:
             st = settings(c)
-            year = int(st["year"])
+            year = run_year(st)
             busy = other_gpu(c)
             if busy:
                 print("다른 학습 장비 작업이 있어 시험을 미룸:", busy)

@@ -532,7 +532,7 @@ def _read_rgb(ds, win, ow: int, oh: int):
     return src, np.where(m, 255, 0).astype(np.uint8)   # rasterio 1.4 boundless 마스크는 bool — reproject 는 bool 을 못 받는다
 
 
-def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | None:
+def _render(src_path: str, z: int, x: int, y: int, size: int = 256, black_empty: bool = False) -> bytes | None:
     import cv2
     import rasterio
     from rasterio.enums import Resampling
@@ -564,6 +564,8 @@ def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | N
         mask = np.zeros((size, size), np.uint8)
         reproject(src, data, src_transform=src_tr, src_crs=ds.crs, dst_transform=dst_tr, dst_crs="EPSG:3857", resampling=Resampling.bilinear)
         reproject(smask, mask, src_transform=src_tr, src_crs=ds.crs, dst_transform=dst_tr, dst_crs="EPSG:3857", resampling=Resampling.nearest)
+    if black_empty:                 # 영상 API(국토지리정보원 연도 층) — 그 단계에 영상이 없는 타일은 검정으로 온다 → 투명(바탕이 보이게)
+        mask = np.where(data.max(axis=0) > 0, mask, 0).astype(np.uint8)
     if mask.max() == 0:
         return None
     # GPT3-7 — 영상 가장자리 어두운 띠: 화소 값은 bilinear 로 바깥(채움 0 = 검정)과 섞이고 마스크는 nearest 라
@@ -597,6 +599,14 @@ async def cog_tile(iid: str, z: int, x: int, y: int, request: Request, exp: str 
     src = meta["cog"] if meta["cog"] and os.path.exists(meta["cog"]) else meta["raw"]
     if not src or not os.path.exists(src):
         raise ApiError("cog_unavailable", "원본/COG 파일 없음")
+    if iid.startswith("nat-ngii-air-"):
+        # 국토지리정보원 연도 영상(영상 비교 · 10-22 now21 시계열-연도고르기 ⓐ) — 영상 API 를 그때그때 불러 그린다. 디스크에 남기지 않는다(영상은 저장하지 않음)
+        if z < 12:
+            return Response(status_code=204)
+        buf = await run_in_threadpool(_render, src, z, x, y, 256, True)
+        if buf is None:
+            return Response(status_code=204, headers={"Cache-Control": "private, max-age=600"})
+        return Response(content=buf, media_type="image/webp", headers={"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(api)"})
     # 캐시 판 'e2' — 가장자리 고침(GPT3-7) 전 타일은 쓰지 않는다(옛 캐시 폴더는 지우지 않고 그대로 둔다)
     cp = config.DATA_ROOT / "cache" / "tiles" / "cog" / iid / (("cog" if src == meta["cog"] else "raw") + "-e2") / str(z) / str(x) / f"{y}.webp"
     hdr = {"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(COG)" if src == meta["cog"] else "rasterio(source window+reproject)"}  # 머리 값은 ASCII 만(한글이면 500)

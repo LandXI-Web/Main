@@ -88,9 +88,11 @@ async def versions(conn, year: int) -> dict:
     eds = {r["asset"]: int(r["k"]) for r in await conn.fetch(
         "SELECT n.asset, count(*) + count(e.undone_at) AS k FROM result_edits e JOIN national_jobs n ON n.job_id = e.set_id "
         "WHERE n.year=$1 AND NOT e.test GROUP BY n.asset", year)}
+    ic = await conn.fetchrow("SELECT count(*) AS n, count(applied_at) AS a FROM national_imgcover WHERE year=$1", year)   # 영상 빈 자리(10-22 P6) — 바뀌면 조각도 새로
+    ics = f".i{ic['n']}-{ic['a']}" if ic and ic["n"] else ""
     out = {a: "0" for a in ASSETS}
     for r in rows:
-        out[r["asset"]] = f"{r['n']}.{int(r['last'].timestamp()) if r['last'] else 0}" + (f".{eds[r['asset']]}" if eds.get(r["asset"]) else "")
+        out[r["asset"]] = f"{r['n']}.{int(r['last'].timestamp()) if r['last'] else 0}" + (f".{eds[r['asset']]}" if eds.get(r["asset"]) else "") + ics
     _VER[k] = (time.time(), out)
     return out
 
@@ -108,12 +110,55 @@ async def _net(cnt: dict, asset: str, pre) -> None:
         pass
 
 
+NOIMG_RATIO = 0.5          # 칸 범위의 절반 넘게 영상이 없으면(접경 · 공개 제한) 그 칸을 '영상 없음'으로 — 끝난 칸 수에서 뺀다(10-22 시계열-접경영상없음 ⓐ)
+
+
+async def _imgcover(conn, year: int) -> dict:
+    """그 해 영상 빈 자리 — 자산마다 영상 없음 넓이 · 칸, 앞 해로 채운 넓이(실제로 채워 분석한 칸만). 숫자 한 출처 = national_imgcover."""
+    rows = await conn.fetch(
+        "SELECT i.kind, i.cell_cd, i.ratio, i.fill_year, i.applied_at IS NOT NULL AS applied, coalesce(i.by_asset, '{}'::jsonb) AS by_asset, i.km2 "
+        "FROM national_imgcover i WHERE i.year=$1", year)
+    out = {"none": {a: {"km2": 0.0, "cells": 0, "whole": []} for a in ASSETS}, "fill": {a: {"km2": 0.0, "cells": 0} for a in ASSETS}, "fill_year": None}
+    for r in rows:
+        ba = _jv(r["by_asset"])
+        for a in ASSETS:
+            k = float(ba.get(a) or 0)
+            if r["kind"] == "none" and k > 0:
+                out["none"][a]["km2"] += k
+                out["none"][a]["cells"] += 1
+                if float(r["ratio"]) > NOIMG_RATIO:
+                    out["none"][a]["whole"].append(r["cell_cd"])
+            elif r["kind"] == "fill" and r["applied"] and (k > 0 or not ba):
+                out["fill"][a]["km2"] += k if k > 0 else float(r["km2"] or 0)
+                out["fill"][a]["cells"] += 1
+                out["fill_year"] = r["fill_year"]
+    return out
+
+
+async def years_list(conn) -> list[dict]:
+    """전국 분석이 있는 해(끝난 칸이 하나라도) — XI맵 연도 고르기. 해마다 따로 센다(연도가 다른 숫자를 더하지 않음)."""
+    rows = await conn.fetch(
+        "SELECT year, count(*) FILTER (WHERE state<>'skip') AS cells, count(*) FILTER (WHERE state='done') AS done, "
+        "coalesce(sum(target_km2) FILTER (WHERE state<>'skip'),0) AS km2, coalesce(sum(target_km2) FILTER (WHERE state='done'),0) AS done_km2 "
+        "FROM national_cells WHERE NOT test GROUP BY 1 ORDER BY 1 DESC")
+    out = []
+    for r in rows:
+        if not r["done"]:
+            continue
+        km2, dk = float(r["km2"]), float(r["done_km2"])
+        out.append({"year": int(r["year"]), "pct": env(round(100.0 * dk / km2, 1) if km2 else 0.0, "%", "measured", "그 해 끝난 칸 범위 ÷ 전체 범위"),
+                    "complete": int(r["done"]) >= int(r["cells"]) - 10})      # 실패 몇 칸(관리자가 다시)은 '끝'으로 본다
+    return out
+
+
 @router.get("/national/progress")
-async def progress(request: Request):
+async def progress(request: Request, year: int | None = None):
     require(principal(request), lx=True)
     async with db(realm="lx") as conn:
         st, q = await _settings(conn)
-        year = int(st["year"])
+        show_year = int(st["year"])                        # 화면 기본 해(끝난 해) — XI맵이 연도를 고르면 그 해
+        run_year = int(st.get("run_year") or show_year)    # 작업기가 지금 돌리는 해(10-22 P6 · 2024 한 해 더)
+        year = int(year) if year and 2011 <= int(year) <= 2100 else show_year
         rows = await conn.fetch(
             "SELECT asset, count(*) FILTER (WHERE state<>'skip') AS cells, count(*) FILTER (WHERE state='done') AS done, "
             "count(*) FILTER (WHERE state='failed') AS failed, coalesce(sum(target_km2) FILTER (WHERE state<>'skip'),0) AS km2, "
@@ -144,16 +189,40 @@ async def progress(request: Request):
             "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
             "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '6 hours'", year)
         ver = await versions(conn, year)
+        ic = await _imgcover(conn, year)
+        yl = await years_list(conn)
+        run_rows, redo_run = rows, redo
+        if run_year != year:            # 일정(남은 날)은 작업기가 지금 돌리는 해의 칸 · 속도로
+            run_rows = await conn.fetch(
+                "SELECT asset, count(*) FILTER (WHERE state<>'skip') AS cells, count(*) FILTER (WHERE state='done') AS done, "
+                "count(*) FILTER (WHERE state='failed') AS failed, coalesce(sum(target_km2) FILTER (WHERE state<>'skip'),0) AS km2, "
+                "coalesce(sum(target_km2) FILTER (WHERE state='done'),0) AS done_km2, max(done_at) AS last "
+                "FROM national_cells WHERE year=$1 AND NOT test GROUP BY asset", run_year)
+            rate = await conn.fetchrow(
+                "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
+                "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL", run_year)
+            recent = await conn.fetchrow(
+                "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
+                "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '6 hours'", run_year)
+            redo_run = await conn.fetch(
+                "SELECT asset, coalesce(sum(target_km2) FILTER (WHERE model_id IS DISTINCT FROM $2),0) AS old_km2 FROM national_cells "
+                "WHERE year=$1 AND NOT test AND state='done' GROUP BY asset", run_year, model)
+        sig_years = sorted({year, show_year, run_year} | {y["year"] for y in yl})
+        ngii = [int(r["year"]) for r in await conn.fetch(          # 영상 비교에 내는 국토지리정보원 연도 영상(25cm 층 · 2020~ · 10-22 시계열-연도고르기 ⓐ)
+            "SELECT year FROM imagery WHERE id LIKE 'nat-ngii-air-%' AND year >= 2020 ORDER BY year")]
     now = dt.datetime.now(KST)
     mname = (_jv(mrow["name"]).get("ko") if mrow and mrow["name"] else None)
-    out = {"year": year, "enabled": bool(st.get("enabled", True)), "assets": {}, "v": ver,
+    out = {"year": year, "base": {"year": show_year}, "running_year": {"year": run_year}, "years": yl,
+           "ngii": [{"id": f"nat-ngii-air-{y}", "year": y} for y in ngii], "enabled": bool(st.get("enabled", True)), "assets": {}, "v": ver,
            "model": {"id": model, "name": mname},                  # 전국 분석 모델(관리자 확인용 · 화면에 모델 id 를 쓰지 않는다)
            "imagery": f"국토지리정보원 항공 정사영상 {year} · 25cm · 영상은 저장하지 않음"}
     for a, name in ASSETS.items():
         r = next((x for x in rows if x["asset"] == a), None)
-        tot = float(r["km2"]) if r else 0.0
-        dk = float(r["done_km2"]) if r else 0.0
-        pct = round(100.0 * dk / tot, 1) if tot else 0.0
+        no = ic["none"][a]
+        tot = max(0.0, (float(r["km2"]) if r else 0.0) - no["km2"])          # 영상 없음(공개 제한) 넓이는 숫자에서 뺀다(10-22 시계열-접경영상없음 ⓐ)
+        dk = max(0.0, (float(r["done_km2"]) if r else 0.0) - no["km2"]) if (r and r["done"]) else 0.0
+        pct = min(100.0, round(100.0 * dk / tot, 1)) if tot else 0.0
+        whole = len(no["whole"])
         cnt = {s["cls"]: {"n": env(int(s["n"] or 0), "count", "measured", "끝난 칸 AI 분석 결과(객체 중심이 칸 안)"),
                           "km2": env(round(float(s["km2"] or 0), 2), "km2", "measured", "끝난 칸 AI 분석 결과 넓이")} for s in sums if s["asset"] == a}
         await _net(cnt, a, None)
@@ -164,8 +233,12 @@ async def progress(request: Request):
             "on": a in st["assets"],                    # 켠 자산만 작업기가 돈다(10-12 하천은 사용자 하천 자료로 범위를 다시 만든 뒤 처음부터)
             "pct": env(pct, "%", "measured", "끝난 칸 분석 범위 ㎢ ÷ 전체 분석 범위 ㎢(진행 장부)"),
             "done_km2": env(round(dk, 1), "km2", "measured", "끝난 칸 분석 범위"), "total_km2": env(round(tot, 1), "km2", "measured", "전체 분석 범위(칸 합)"),
-            "cells": env(int(r["cells"]) if r else 0, "count", "measured", "분석할 범위가 있는 읍면동"),
-            "done": env(int(r["done"]) if r else 0, "count", "measured", "끝난 읍면동"),
+            "cells": env(max(0, (int(r["cells"]) if r else 0) - whole), "count", "measured", "분석할 범위가 있는 읍면동(영상 없음 칸 뺌)"),
+            "done": env(max(0, (int(r["done"]) if r else 0) - whole), "count", "measured", "끝난 읍면동(영상 없음 칸 뺌)"),
+            "noimg": {"km2": env(round(no["km2"], 1), "km2", "measured", "영상 없음(공개 제한 지역) — 국토지리정보원 항공 영상이 없는 넓이"),
+                      "cells": env(whole, "count", "measured", "범위 절반 넘게 영상이 없는 읍면동")},
+            "fill": ({"year": ic["fill_year"], "km2": env(round(ic["fill"][a]["km2"], 2), "km2", "measured", f"{year}년 영상이 빈 자리를 앞 해 영상으로 채워 분석한 넓이"),
+                      "cells": env(ic["fill"][a]["cells"], "count", "measured", "앞 해 영상으로 채운 읍면동")} if ic["fill"][a]["cells"] else None),
             "failed": env(int(r["failed"]) if r else 0, "count", "measured", "3번 넘게 실패한 읍면동(관리자가 다시)"),
             "sgg_done": env(int(r["sgg_done"]) if r else 0, "count", "measured", "끝난 칸이 있는 시군구"),
             "sgg": env(int(r["sgg"]) if r else 0, "count", "measured", "분석할 범위가 있는 시군구"),
@@ -181,7 +254,8 @@ async def progress(request: Request):
     if fresh:
         rate = recent
     kph = float(rate["km2"]) / (float(rate["s"]) / 3600.0) if measured else KM2_PER_HOUR
-    left = sum(float(r["km2"]) - float(r["done_km2"]) for r in rows if r["asset"] in st["assets"]) +         sum(float(r["old_km2"]) for r in redo if r["asset"] in st["assets"])          # 새 판으로 다시 할 끝난 칸도 남은 일
+    left = sum(float(r["km2"]) - float(r["done_km2"]) for r in run_rows if r["asset"] in st["assets"]) + \
+        sum(float(r["old_km2"]) for r in redo_run if r["asset"] in st["assets"])     # 새 판으로 다시 할 끝난 칸도 남은 일 · 작업기가 도는 해(run_year) 기준
     run = _runner()
     out["runner"] = {"state": run.get("state") or "idle", "why": run.get("why"), "at": run.get("at"), "cell": run.get("name") if not run.get("test") else None,
                      "asset": run.get("asset") if not run.get("test") else None,   # 지금 도는 칸의 자산(농지 · 하천 번갈아 — 다른 자산 칸에 '지금 분석 중'을 쓰지 않게)
@@ -192,10 +266,18 @@ async def progress(request: Request):
              "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
              "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)")}
     out["schedule"] = sched
+    if run_year != year:                # 지금 도는 해(관리자 진행 · XI맵 연도 고르기의 '분석 중' 표시) — 화면 해 숫자와 섞지 않는다
+        rk = sum(float(r["km2"]) for r in run_rows)
+        rd = sum(float(r["done_km2"]) for r in run_rows)
+        out["run"] = {"year": run_year, "pct": env(round(100.0 * rd / rk, 1) if rk else 0.0, "%", "measured", f"{run_year}년 영상 끝난 칸 범위 ÷ 전체 범위"),
+                      "done": env(sum(int(r["done"]) for r in run_rows), "count", "measured", f"{run_year}년 영상 끝난 읍면동"),
+                      "cells": env(sum(int(r["cells"]) for r in run_rows), "count", "measured", "분석할 범위가 있는 읍면동"),
+                      "days_left": sched["days_left"]}
     # 전국 결과 지도 조각 서명(10-22 옆문 닫기 — 로그인 없이 받아지던 /tiles/national 을 LX 세션 뒤로). 6시간 칸이라 30초 다시 읽기에도 주소가 같다
     from .tiles import sign, sign_exp
     exp = sign_exp()
     out["tile_sig"] = {"exp": exp, "sig": sign(f"national/{year}", exp)}
+    out["tile_sigs"] = {str(y): sign(f"national/{y}", exp) for y in sig_years}     # 연도 고르기(10-22 P6) — 해마다 서명
     out["tonight"] = {**sched, "quiet": {**q, "now": _quiet(q, now)}, "est_km2": sched["est_km2_day"]}   # 예전 이름(호환) — 같은 값
     return out
 
@@ -270,7 +352,9 @@ async def _tile(asset: str, year: int, z: int, x: int, y: int, test: bool) -> by
                 " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(ST_Transform(c.geom_s, 3857), $6), t.e, 4096, 16, true) AS g, c.cell_cd AS cd, "
                 " (c.state='done')::int AS done, c.sido, c.sgg_name AS sgg, c.name, "
                 " CASE WHEN c.state='done' THEN (c.counts->'경작지'->>'n')::int END AS n1, CASE WHEN c.state='done' THEN (c.counts->'경작지'->>'km2')::float END AS a1, "
-                " CASE WHEN c.state='done' THEN (c.counts->'비닐하우스'->>'n')::int END AS n2, CASE WHEN c.state='done' THEN (c.counts->'건물'->>'n')::int END AS n3 "
+                " CASE WHEN c.state='done' THEN (c.counts->'비닐하우스'->>'n')::int END AS n2, CASE WHEN c.state='done' THEN (c.counts->'건물'->>'n')::int END AS n3, "
+                " (SELECT i.ratio::float FROM national_imgcover i WHERE i.year=c.year AND i.cell_cd=c.cell_cd AND i.kind='none') AS noimg, "
+                " (SELECT i.fill_year FROM national_imgcover i WHERE i.year=c.year AND i.cell_cd=c.cell_cd AND i.kind='fill' AND i.applied_at IS NOT NULL) AS fill "
                 " FROM national_cells c, t WHERE c.asset=$4 AND c.year=$5 AND NOT c.test AND c.state<>'skip' AND c.geom_s && ST_Transform(t.e, 4326)) "
                 "SELECT ST_AsMVT(q, 'cells', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, asset, year, tol)
             parts.append(b or b"")
@@ -286,6 +370,14 @@ async def _tile(asset: str, year: int, z: int, x: int, y: int, test: bool) -> by
                 "      OR ($6 AND f.cell_cd LIKE 'test:%%'))), q AS ("
                 " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(s.g3, $7), t.e, 4096, 16, true) AS g, s.cls FROM s, t WHERE ST_Area(s.g3) >= $9) "
                 "SELECT ST_AsMVT(q, 'faces', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, asset, year, test, tol * 0.5, lvl, (PX / (2 ** z)) ** 2)
+            parts.append(b or b"")
+            # 영상 빈 자리(10-22 P6) — kind none = '영상 없음(공개 제한 지역)' 회색 · fill = 앞 해 영상으로 채워 분석한 자리('2024년 영상')
+            b = await conn.fetchval(
+                f"WITH t AS (SELECT {env3857} AS e), q AS ("
+                " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(ST_Transform(i.geom, 3857), $6), t.e, 4096, 16, true) AS g, i.kind, i.fill_year AS fy "
+                " FROM national_imgcover i, t WHERE i.year=$5 AND i.geom && ST_Transform(t.e, 4326) AND (i.kind='none' OR i.applied_at IS NOT NULL) "
+                " AND EXISTS (SELECT 1 FROM national_cells c WHERE c.asset=$4 AND c.year=i.year AND c.cell_cd=i.cell_cd AND NOT c.test AND c.state<>'skip')) "
+                "SELECT ST_AsMVT(q, 'nodata', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, asset, year, tol)
             parts.append(b or b"")
     return b"".join(parts)
 

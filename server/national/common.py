@@ -50,6 +50,22 @@ def settings(c) -> dict:
     return {**DEF, **(_jv(row[0]) if row else {})}
 
 
+def run_year(st: dict) -> int:
+    """작업기가 지금 돌리는 해(10-22 바퀴 22 P6 시계열 — 2024 한 해 더). 화면 기본 해('year' · 끝난 해)와 따로 둔다:
+    2024 를 돌리는 동안에도 XI맵 · 관리자 숫자는 끝난 2025 그대로(연도가 다른 숫자를 섞지 않음). 없으면 'year'."""
+    return int(st.get("run_year") or st["year"])
+
+
+def train_share() -> bool:
+    """학습이 한 장을 쓰는 동안 전국 작업이 다른 한 장으로 이어 가나(pools.yaml power.national.train_share · 파일만 바꾸면 바로 · 기본 꺼짐).
+    켜면 작업기(runner.other_gpu)와 워커(gpu_worker.other_job_waiting)가 학습 작업을 '비킬 작업'으로 세지 않는다 —
+    학습은 train.gpu 장에서만 돌고(그 워커는 학습 중 칩을 받지 않음), 전국 칩은 두 장 모드의 다른 장이 받는다."""
+    try:
+        return bool(((config.load_yaml("pools").get("power") or {}).get("national") or {}).get("train_share", False))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def quiet_settings(c) -> dict:
     row = c.execute("SELECT value FROM lx_settings WHERE key='core.retrain'").fetchone()
     v = _jv(row[0]) if row else {}

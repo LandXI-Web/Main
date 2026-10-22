@@ -460,6 +460,73 @@ def change_line(results: list, parcel_m2: float) -> dict | None:
             **({"share": {"from": round(sa * 100, 1), "to": round(sz * 100, 1)}} if sa is not None else {})}
 
 
+NAT_CLS = ("경작지", "비닐하우스")          # 전국 분석 농지 칸이 세는 분류(national.common.COUNT_CLS['farm'] · XI맵과 같은 규칙)
+
+
+def _nat_read(by_year: dict[int, list[str]], bbox: tuple, parcel_wkb: bytes) -> dict[int, dict[str, float]]:
+    """전국 분석 결과 파일(작업마다 .fgb · 옛 .geojson)에서 이 필지와 겹친 넓이(㎡) — 해 → {분류: ㎡}. 결과 객체는 DB 에 없고 파일에만 있다.
+    같은 해 · 같은 분류의 면은 먼저 합쳐(조각 · 칩 경계에서 겹친 면을 두 번 세지 않게) 필지와 겹친 넓이를 잰다 — 필지 넓이를 넘지 않는다."""
+    from pyproj import Geod
+    from shapely import wkb
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+    from .result_store import base, read_features, vector_of_base
+    geod = Geod(ellps="WGS84")
+    pg = wkb.loads(parcel_wkb)
+    out: dict[int, dict[str, float]] = {}
+    for y, jids in by_year.items():
+        parts: dict[str, list] = {}
+        for jid in jids:
+            for f in read_features(vector_of_base(base("lx", jid)), bbox):
+                pr = f.get("properties") or {}
+                k = str(pr.get("cls") or pr.get("cls_ko") or "")
+                if k not in NAT_CLS or not f.get("geometry") or str(pr.get("edit_state") or "") == "deleted":
+                    continue
+                try:
+                    g = shape(f["geometry"]).buffer(0).intersection(pg)
+                except Exception:  # noqa: BLE001
+                    continue
+                if not g.is_empty:
+                    parts.setdefault(k, []).append(g)
+        for k, gs in parts.items():
+            m2 = abs(geod.geometry_area_perimeter(unary_union(gs))[0])
+            if m2 >= 1:
+                out.setdefault(y, {})[k] = m2
+    return out
+
+
+async def national_years(pnu: str) -> list[dict]:
+    """필지 하나의 전국 분석 결과 해마다(10-22 now21 시계열-기관해마다 ⓐ) — 국토지리정보원 항공 영상 해마다 같은 모델로 분석한 전국 결과가
+    이 필지에서 본 것. 해마다 따로(연도가 다른 숫자를 더하지 않음) · 결과 없는 해는 줄을 만들지 않는다. 숫자 = 결과 면 × 연속지적 필지 겹친 넓이."""
+    from starlette.concurrency import run_in_threadpool
+    async with (await pool_sys()).acquire() as c:
+        pa = await c.fetchrow("SELECT ST_AsBinary(geom) AS g, ST_XMin(geom) x0, ST_YMin(geom) y0, ST_XMax(geom) x1, ST_YMax(geom) y1, area_m2 "
+                              "FROM survey_parcels WHERE pnu=$1", pnu)
+        if not pa or pa["g"] is None:
+            return []
+        rows = await c.fetch(
+            "SELECT n.year, n.job_id FROM national_jobs n JOIN national_cells c ON c.asset=n.asset AND c.year=n.year AND c.cell_cd=n.cell_cd "
+            "AND c.state='done' AND NOT c.test AND n.model_id IS NOT DISTINCT FROM c.model_id "
+            "WHERE n.asset='farm' AND NOT n.test AND n.state='done' AND n.bbox IS NOT NULL "
+            "AND n.bbox[1] <= $3 AND n.bbox[3] >= $1 AND n.bbox[2] <= $4 AND n.bbox[4] >= $2 "
+            "AND ST_Intersects(c.target, ST_GeomFromWKB($5, 4326))", pa["x0"], pa["y0"], pa["x1"], pa["y1"], bytes(pa["g"]))   # 농지 범위가 이 필지를 덮은 칸만(덮지 않았으면 '흔적 없음'이라 하지 않는다)
+        noimg = {int(r["year"]) for r in await c.fetch(
+            "SELECT i.year FROM national_imgcover i WHERE i.kind='none' AND ST_Intersects(i.geom, ST_GeomFromWKB($1, 4326))", bytes(pa["g"]))}
+        fill = {int(r["year"]): int(r["fill_year"]) for r in await c.fetch(
+            "SELECT i.year, i.fill_year FROM national_imgcover i WHERE i.kind='fill' AND i.applied_at IS NOT NULL AND ST_Intersects(i.geom, ST_GeomFromWKB($1, 4326))",
+            bytes(pa["g"]))}
+    if not rows:
+        return []
+    by_year: dict[int, list[str]] = {}
+    for r in rows:
+        by_year.setdefault(int(r["year"]), []).append(r["job_id"])
+    got = await run_in_threadpool(_nat_read, by_year, (pa["x0"], pa["y0"], pa["x1"], pa["y1"]), bytes(pa["g"]))
+    out = []
+    for y in sorted(by_year):
+        out.append({"year": str(y), "by": got.get(y) or {}, "noimg": y in noimg, "fill": fill.get(y)})
+    return out
+
+
 @router.get("/spaces/me/parcels/{pnu}/history")
 async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, limit: int = 10):
     """필지 이력(영농-3) — 그 서비스의 결과(판마다 · 영상 시점마다)가 이 필지에서 본 것 · 올린 대장의 값 · 메모 · 다음 확인 날짜 · 검토 요청을 한 줄기로(새것 먼저).
@@ -558,6 +625,34 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
     results.sort(key=lambda x: (x["year"] or "", x["analyzed"] or "", x["_ed"]))
     change = change_line(results, parcel_m2)
     items = []
+    # 전국 분석 해마다 줄(10-22 now21 시계열-기관해마다 ⓐ) — 기관이 맡긴 결과가 한 해뿐이어도 '작년 · 올해'를 본다(해마다 따로 · 더하지 않음)
+    nat = []
+    try:
+        nyrs = await national_years(pnu)
+    except Exception as e:  # noqa: BLE001 — 이력의 다른 줄은 막지 않는다
+        import logging
+        logging.getLogger("landxi").warning("필지 이력 전국 분석 줄 건너뜀: %r", e)
+        nyrs = []
+    if nyrs and not parcel_m2:
+        async with db(realm="lx") as c:
+            parcel_m2 = float(await c.fetchval("SELECT area_m2 FROM survey_parcels WHERE pnu=$1", pnu) or 0)
+    nsrc = "전국 분석(국토지리정보원 항공 영상 · 같은 모델) × 연속지적 필지"
+    for y in nyrs:
+        by = {k: v for k, v in y["by"].items() if v >= 1}
+        top = max(by.items(), key=lambda kv: kv[1])[0] if by else None
+        img = f"{y['year']}년 영상" + (f"(일부 {y['fill']}년 영상)" if y.get("fill") else "")
+        if y.get("noimg") and not by:
+            title, sub = "전국 분석 · 영상 없음(공개 제한 지역)", img
+        elif top:
+            title, sub = f"전국 분석 · {top}", f"{img} · {by[top]:,.0f}㎡"
+        else:
+            title, sub = "전국 분석 · 경작 흔적 없음", img
+        nat.append({"year": y["year"], "shot": f"{y['year']}년 영상", "cls": top or "경작 흔적 없음", "noimg": bool(y.get("noimg")), "fill_year": str(y["fill"]) if y.get("fill") else None,
+                    "classes": [{"name": k, "area": env(round(v, 1), "m2", "measured", nsrc)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])]})
+        items.append({"kind": "national", "at": None, "_k": y["year"], "year": y["year"], "title": title, "sub": sub,
+                      **({"area": env(round(by[top], 1), "m2", "measured", nsrc)} if top else {})})
+    nat_ok = [r for r in nat if not r["noimg"] and r["classes"]]
+    nat_change = change_line(nat_ok, parcel_m2) if len(nat_ok) >= 2 else None
     for r in results:
         items.append({"kind": "result", "at": r["analyzed"], "_k": r["analyzed"] or r["year"] or "", "year": r["year"],
                       "title": f"AI 분석 · {r['cls']}", "sub": " · ".join(x for x in (r["shot"], f"{r['classes'][0]['area']['value']:,.0f}㎡") if x),
@@ -580,12 +675,13 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
         items.append({"kind": "review", "at": _iso(f["at"]), "title": "검토 요청" + (f" '{f['first']}'" if f["first"] else ""),
                       "sub": {"answered": "LX 답 도착", "seen": "LX 확인 중"}.get(f["status"] or "", "보냄"), "who": _person(users.get(f["sender_id"]))})
     items.sort(key=lambda x: str(x.get("_k") or x["at"] or ""), reverse=True)    # 분석한 날을 모르는 결과는 그 해(영상 해)로 줄 세움 — 날짜를 지어내지 않는다
-    KO = {"result": "AI 분석", "ledger": "대장", "note": "메모", "review": "검토 요청"}
+    KO = {"result": "AI 분석", "ledger": "대장", "note": "메모", "review": "검토 요청", "national": "전국 분석"}
     for x in items:
         x.pop("_k", None)
         x["kind_ko"] = KO[x["kind"]]
     out = {"pnu": pnu, "addr": _short(addr) if addr else None, "card": card, "service": svc["name"], "change": change,
            "results": [{k: v for k, v in r.items() if not k.startswith("_")} for r in results],
+           "national": nat, "national_change": nat_change,
            "items": items[:limit], "more": env(max(0, len(items) - limit), "줄", "recorded", "필지 이력"), "total": len(items),
            "memo": ({"note": pnotes[0]["note"], "at": _iso(pnotes[0]["at"]), "who": _person(users.get(pnotes[0]["by_user"]))} if pnotes else None),
            "can_write": True, "as_of": now_iso()}

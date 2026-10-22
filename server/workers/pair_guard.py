@@ -134,7 +134,7 @@ def _f(v):
         return None
 
 
-REASON_KO = {"sum_w": "두 장 합 전력이 높음", "temp": "온도가 높음", "driver": "장비 응답 오류"}
+REASON_KO = {"sum_w": "두 장 합 전력이 높음", "temp": "온도가 높음", "driver": "장비 응답 오류", "card": "한 장의 30초 평균이 상한(70% · 140 W)을 넘음"}
 
 
 def guard_loop(who: str, log=print):

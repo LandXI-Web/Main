@@ -303,7 +303,8 @@ async def _derived_build() -> dict:
         # 시군구 칸(sgg_cd = 필지번호 앞 5자리, 437만 줄 모두 같음 · DB-FIX 10-22)으로 세면 색인만 읽는다(3.27초 → 0.25초)
         par = await conn.fetch("SELECT sgg_cd sgg, count(*) n FROM survey_parcels WHERE sgg_cd IS NOT NULL GROUP BY 1")
         # 전국 분석이 끝난 시군구(CHATGEO-DEV-ORDER WP-8) — XI맵 통계 판이 숫자를 내는 곳은 '결과 없음'으로 미리 거절하지 않는다(LX 계정)
-        nat = await conn.fetch("SELECT sgg_cd, count(*) n FROM national_cells WHERE state='done' AND NOT test GROUP BY 1")
+        nat = await conn.fetch("SELECT sgg_cd, count(*) n FROM national_cells WHERE state='done' AND NOT test "
+                               "AND year = coalesce((SELECT (value->>'year')::int FROM lx_settings WHERE key='national.run'), 2025) GROUP BY 1")   # 화면 기본 해만(연도를 섞어 세지 않음 · 10-22 P6)
 
     def work():
         img_by: dict[str, list] = {}

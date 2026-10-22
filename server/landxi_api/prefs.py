@@ -332,11 +332,11 @@ async def my_agenda(request: Request):
 
         async def national(_):
             from .national import ASSETS
-            rows = await conn.fetch("SELECT (done_at AT TIME ZONE 'Asia/Seoul')::date AS d, asset, count(*) AS n FROM national_cells "
-                                    "WHERE NOT test AND state='done' AND done_at >= $1 AND done_at < $2 GROUP BY 1, 2 ORDER BY 1", ta, tb)
-            for r in rows:
-                items.append({"id": f"national:{r['asset']}:{r['d'].isoformat()}", "kind": "national", "day": r["d"].isoformat(), "time": None,
-                              "title": f"전국 분석 · {ASSETS.get(r['asset'], r['asset'])} {int(r['n']):,}개 읍면동", "href": V3 + "xi-clean/"})
+            rows = await conn.fetch("SELECT (done_at AT TIME ZONE 'Asia/Seoul')::date AS d, asset, year, count(*) AS n FROM national_cells "
+                                    "WHERE NOT test AND state='done' AND done_at >= $1 AND done_at < $2 GROUP BY 1, 2, 3 ORDER BY 1", ta, tb)
+            for r in rows:                     # 해마다 따로 한 줄(연도가 다른 숫자를 더하지 않음 · 10-22 P6)
+                items.append({"id": f"national:{r['asset']}:{r['year']}:{r['d'].isoformat()}", "kind": "national", "day": r["d"].isoformat(), "time": None,
+                              "title": f"전국 분석 {r['year']}년 영상 · {ASSETS.get(r['asset'], r['asset'])} {int(r['n']):,}개 읍면동", "href": V3 + "xi-clean/"})
 
         for fn in (notices, approvals, requests, projects, trains, national):
             await _try(conn, items, fn)

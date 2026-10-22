@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-22 13:10",
+  "cycle": "바퀴 22 · P6 시계열",
+  "items": [
+    {"id": "시계열-몇해", "answer": "ⓐ 2024 한 해(올해 ↔ 작년)", "state": "진행 중", "note": "10-22 12:30 시작 · 같은 모델 · 농지 먼저 · 진행 progress.md", "shots": ["02-year-2024.png"]},
+    {"id": "시계열-빈조각2024", "answer": "ⓐ 채우고 '2024년 영상' 표기", "state": "구현 확인 대기", "note": "2025 빈 조각 5.2㎢ · 9곳 · 2024 영상으로 채워 다시 분석 · 말풍선 '일부 2024년 영상'", "shots": ["05-fill-2024.png"]},
+    {"id": "시계열-접경영상없음", "answer": "ⓐ '영상 없음(공개 제한 지역)' 회색 · 숫자에서 뺌", "state": "구현 확인 대기", "note": "395㎢ · 39곳(절반 넘게 빈 칸 23곳) · 진행 범위 · 끝난 칸에서 뺌", "shots": ["01-layers-years.png", "03-border-grey.png", "04-border-tip.png"]},
+    {"id": "시계열-연도고르기", "answer": "ⓐ 전국 층 연도 고르기 + 영상 비교에 국토지리정보원 연도 영상", "state": "구현 확인 대기", "note": "층 판 '전국 분석 연도' · 영상 비교 고르기에 국토지리정보원 2020~2025년", "shots": ["01-layers-years.png", "02-year-2024.png", "06-compare-ngii.png"]},
+    {"id": "시계열-기관해마다", "answer": "ⓐ 필지 이력에 전국 결과 해마다 줄", "state": "구현 확인 대기", "note": "남원 필지 이력 '2025년 · 전국 분석 · 경작지' — 남원 2024 칸이 끝나면 2024년 줄이 저절로", "shots": ["07-namwon-history.png"]},
+    {"id": "시계열-두번째해", "answer": "검토 필요 — '경작지 모델을 다시 학습한다는게 무슨 의미지?'", "state": "설명 문서", "doc": "docs/superpowers/recon-1022/EXPLAIN-RETRAIN.md"},
+    {"id": "시계열-변화층", "answer": "검토 필요", "state": "질문 후보", "question": "변화 층은 무엇부터 보일까요? ⓐ 경작 → 경작 흔적 없음(휴경 후보 · 추천) ⓑ 하천구역 안 새 건물 · 비닐하우스", "doc": "RESULT.md 4절"}
+  ],
+  "gpu": {"watch": "server/ops/gpu_minute_watch.py · 02. 데이터/_logs/gpu-minute-YYYYMMDD.csv", "max_12_21_13_05": {"gpu0_w": 100.5, "gpu0_util": 27.4, "gpu0_temp": 74, "gpu1_w": 89.9, "gpu1_util": 22.1, "gpu1_temp": 79, "sum_w": 174.5, "trips": 0}},
+  "restarts": [
+    {"at": "12:42", "what": "게이트웨이", "by": "start-landxi.ps1 -Restart gateway", "ok": true},
+    {"at": "12:44", "what": "워커", "by": "start-landxi.ps1 -Restart workers", "ok": true},
+    {"at": "12:48", "what": "게이트웨이(진행 응답 봉투 고침)", "ok": true},
+    {"at": "12:55", "what": "게이트웨이(필지 이력 넓이 겹침 고침)", "ok": true}
+  ]
+}

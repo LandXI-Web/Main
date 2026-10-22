@@ -802,6 +802,14 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     state["job_id"] = None
 
 
+def _train_share() -> bool:
+    try:
+        from national.common import train_share
+        return train_share()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def other_job_waiting(job_id: str) -> bool:
     """스트림에 이 전국 작업이 아닌 칸(사용자 AI 분석 등)이 기다리나."""
     try:
@@ -813,6 +821,8 @@ def other_job_waiting(job_id: str) -> bool:
             h = bus.job(jid) or {}
             o = h.get("options") or ""
             seen[jid] = h.get("state") in ("queued", "running") and '"national"' not in o and '"overseas"' not in o   # 끝난 작업의 남은 칸 · 전국 · 해외 작업은 세지 않음
+            if seen[jid] and h.get("kind") == "train" and _train_share():   # 학습은 학습 장에서만 — 다른 장의 전국 칩은 비키지 않는다(10-22 P6 · pools.yaml train_share)
+                seen[jid] = False
             if seen[jid]:
                 return True
         return False

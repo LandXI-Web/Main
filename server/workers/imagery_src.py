@@ -520,6 +520,10 @@ class ApiDataset:
                     if k == 0:
                         last = f"HTTP {r.status_code} 안내 페이지(이 자리만)"
                         continue
+                    filled = self._fill(x, y, hdr)
+                    if filled is not None:            # 그 해 빈 조각을 앞 해 영상으로(10-22 now21 시계열-빈조각2024 ⓐ · imagery.yaml api_fill)
+                        self.gov.record(True, sec, len(filled), retry=True)
+                        return filled
                     self.gov.record(True, sec, len(r.content), empty=True, retry=True)
                     self.holes += 1
                     if self.holes in (1, 10) or self.holes % 100 == 0:
@@ -548,6 +552,49 @@ class ApiDataset:
             finally:
                 self.gov.release()
         raise ImageryUnavailable(f"영상 API 읽기 실패(다시 {len(API_RETRY_S)}번): {last}")
+
+    def _fill_year(self) -> int | None:
+        """이 층(그 해)의 빈 조각을 채울 앞 해 — config/imagery.yaml api_fill {"그 해": 앞 해}. 파일이 바뀌면 다시 읽는다."""
+        import re
+        m = re.search(r"air_(\d{4})", self.conf.get("url") or "")
+        if not m:
+            return None
+        try:
+            v = (config.load_yaml("imagery").get("api_fill") or {}).get(str(m.group(1)))
+            return int(v) if v else None
+        except Exception:  # noqa: BLE001
+            return None
+
+    def _fill(self, x: int, y: int, hdr: dict):
+        """빈 조각 한 장을 앞 해 층에서 — 그림이면 바이트(그 자리를 Redis imgfill:{그 해} 에 적음 · 칸 마무리가 '2024년 영상' 넓이를 센다) · 아니면 None."""
+        fy = self._fill_year()
+        if not fy:
+            return None
+        import re
+        c = self.conf
+        u = re.sub(r"air_\d{4}", f"air_{fy}", c["url"]).replace("${z}", str(c["z"])).replace("${x}", str(x)).replace("${y}", str(y))
+        try:
+            r = self._http.get(u, headers=hdr, timeout=(10, c["timeout"]))
+            if r.status_code != 200 or not (r.headers.get("content-type") or "").startswith("image/"):
+                return None
+            from PIL import Image
+            import io
+            im = Image.open(io.BytesIO(r.content))
+            if im.size != (c["bx"], c["by"]):
+                return None
+            im.load()
+        except Exception:  # noqa: BLE001
+            return None
+        try:
+            from workers.bus import r as _r
+            m = re.search(r"air_(\d{4})", c["url"])
+            key = f"imgfill:{m.group(1)}"
+            _r().sadd(key, f"{x}/{y}/{fy}")
+            _r().expire(key, 60 * 86400)
+        except Exception:  # noqa: BLE001
+            pass
+        self.filled = getattr(self, "filled", 0) + 1
+        return r.content
 
     def _tile(self, x: int, y: int):
         """캐시 · 같은 타일 동시 요청은 하나로 → future."""
