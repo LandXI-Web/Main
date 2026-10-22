@@ -281,6 +281,42 @@ async def cached_run(p, range_id: str, year_a: int, year_b: int) -> dict | None:
     return dict(r) if r else None
 
 
+async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | None:
+    """같은 대상지(범위 면이 같은 다른 대상지 — 같은 구역선 · 같은 버퍼를 다시 올린 새 프로젝트)의 끝난 결과가 있으면, 계산을 다시 하지 않고
+    이 대상지 몫 결과로 이어 붙인다(결과 파일은 하드 링크 · 판정은 새로 · 결과 번호는 새로). 없으면 None."""
+    async with db(realm="lx") as conn:
+        src = await conn.fetchrow(
+            "SELECT r.job_id, r.zoom, r.stats FROM change_runs r JOIN change_ranges g ON g.id=r.range_id JOIN change_ranges me ON me.id=$1 "
+            "WHERE r.state='done' AND r.year_a=$2 AND r.year_b=$3 AND r.version=$4 AND g.id<>me.id AND g.buffer_m=me.buffer_m "
+            "AND ST_Equals(ST_SnapToGrid(g.geom, 0.01), ST_SnapToGrid(me.geom, 0.01)) ORDER BY r.done_at DESC LIMIT 1",
+            range_id, year_a, year_b, _ver())
+    if not src:
+        return None
+    import os
+    import shutil
+
+    from .jobs import ulid
+    new = "job_" + ulid()
+    sd, nd = _Run.run_dir(src["job_id"]), _Run.run_dir(new)
+
+    def _link():
+        for f in sd.rglob("*"):
+            if f.is_dir() or "photos" in f.relative_to(sd).parts:
+                continue
+            t = nd / f.relative_to(sd)
+            t.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.link(f, t)
+            except OSError:
+                shutil.copy2(f, t)
+    await run_in_threadpool(_link)
+    async with db(p) as conn:
+        await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, stats, created_by, done_at) "
+                           "VALUES ($1,$2,'lx',$3,$4,$5,$6,'done',$7,$8,now())", new, range_id, year_a, year_b, src["zoom"], _ver(), src["stats"], p.user_id)
+        await audit(conn, p, "change.run.same_range", new, None, {"from": src["job_id"], "range_id": range_id})
+    return new
+
+
 async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False) -> dict:
     """캐시(끝났거나 도는 중)가 있으면 그것 · 없으면 작업 제출. → {job_id, cached, state, zoom}"""
     I, _, R, RUN = _mods()
@@ -292,6 +328,9 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
         c = await cached_run(p, range_id, year_a, year_b)
         if c:
             return {"job_id": c["job_id"], "cached": c["state"] == "done", "state": c["state"], "range": range_out(d)}
+        al = await same_range_run(p, range_id, year_a, year_b)
+        if al:
+            return {"job_id": al, "cached": True, "state": "done", "range": range_out(d)}
     _lx(p)
     av = await years_for_bounds(d["bounds"])
     await ensure_year_layers(av)

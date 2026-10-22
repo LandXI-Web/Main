@@ -147,3 +147,22 @@ def test_tenant_share_dashboard():
     sh = httpx.get(B + "/change/shared", headers=H(tt), timeout=60).json()
     assert not sh["items"]
     assert httpx.get(B + f"/change/runs/{job}", headers=H(tt), timeout=60).status_code == 404
+
+
+def test_same_range_reuses_result():
+    """같은 구역선 · 같은 버퍼를 새 프로젝트로 다시 올리면 계산을 다시 하지 않고 끝난 결과를 이어 붙인다(새 결과 번호 · 판정은 새로)."""
+    import pytest
+    import psycopg
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        r = c.execute("SELECT g.source_name, g.buffer_m FROM change_runs x JOIN change_ranges g ON g.id=x.range_id "
+                      "WHERE x.state='done' AND x.year_a=2019 AND x.year_b=2024 AND g.kind='line' ORDER BY x.done_at DESC LIMIT 1").fetchone()
+    if not r or not r[0] or not (DATA / r[0]).exists():
+        pytest.skip("구역선 파일로 만든 끝난 결과 없음")
+    t = _tok()
+    f = DATA / r[0]
+    rg = httpx.post(B + "/change/ranges", headers=H(t), files={"file": (f.name, f.read_bytes(), "application/geo+json")},
+                    data={"buffer_m": str(int(float(r[1]))), "name": "시험 같은 대상지"}, timeout=120).json()
+    j = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "year_a": 2019, "year_b": 2024}, timeout=120).json()
+    assert j["cached"] is True and j["state"] == "done", j
+    fc = httpx.get(B + f"/change/runs/{j['job_id']}/features", headers=H(t), timeout=60).json()
+    assert fc["features"]
