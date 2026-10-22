@@ -1,0 +1,2 @@
+겹침 검사 — 상태 24개(역할 × 폭 × 화면) · 겹친 상태 1 · 만들지 못한 상태 0(필수) + 0(그 기관에 없는 기능)
+✗ app 390 a7-ximap-measure XI맵 + 재기 판 — 겹침 .k-ms.t-card.t-card--map[zone=measure] × .xc-tools 302×60(99%) | 겹침 .k-ms.t-card.t-card--map[zone=measure] × .xc-top 360×36(89%)

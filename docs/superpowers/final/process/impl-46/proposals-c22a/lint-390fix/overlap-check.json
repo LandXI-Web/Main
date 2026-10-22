@@ -1,0 +1,28 @@
+{
+ "at": "2026-10-22T07:14:59.252Z",
+ "widths": [
+  390
+ ],
+ "results": [
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a7-ximap-measure",
+   "label": "XI맵 + 재기 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 8723,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a7-ximap-measure.png",
+   "boxesN": 5
+  }
+ ]
+}

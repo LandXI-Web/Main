@@ -72,7 +72,9 @@ def test_postprocess_regression_base_region():
     with psycopg.connect(config.PG_ADMIN_DSN) as c:
         row = c.execute("SELECT j.id FROM jobs j WHERE j.kind='infer' AND j.state='done' AND j.imagery_id IN "
                         "(SELECT id FROM imagery WHERE sgg_cd=%s AND path_internal IS NOT NULL) "
-                        "AND (SELECT count(DISTINCT emd_cd) FROM detections d WHERE d.job_id=j.id) >= 20 ORDER BY j.shards_total DESC LIMIT 1",
+                        "AND (SELECT count(DISTINCT emd_cd) FROM detections d WHERE d.job_id=j.id) >= 20 "
+                        # 칸 수가 같은 작업이 여럿이면 결과가 가장 많은 작업(10-07 항공 25cm 작업 703건이 칸 수 같음으로 뽑혀 표본이 128건뿐이던 것 · 10-22)
+                        "ORDER BY j.shards_total DESC, (SELECT count(*) FROM detections d WHERE d.job_id=j.id) DESC LIMIT 1",
                         (BASE_SGG,)).fetchone()
     if not row:
         pytest.skip("기준 지역 전역 작업 기록 없음")

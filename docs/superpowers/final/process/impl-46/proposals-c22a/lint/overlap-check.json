@@ -1,0 +1,509 @@
+{
+ "at": "2026-10-22T07:14:35.220Z",
+ "widths": [
+  1280,
+  1440,
+  390
+ ],
+ "results": [
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 5634,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6732,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 4325,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a6-map.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a7-ximap-measure",
+   "label": "XI맵 + 재기 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 9559,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a7-ximap-measure.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a8-ximap-imagery",
+   "label": "XI맵 + 영상 목록",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 9464,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a8-ximap-imagery.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a9-ximap-compare",
+   "label": "XI맵 + 영상 비교",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 8798,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a9-ximap-compare.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a10-ximap-layers-fold",
+   "label": "XI맵 + 층 판 접기(휴대폰)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 7958,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a10-ximap-layers-fold.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a11-map-compare",
+   "label": "지도 서비스 + 영상 비교",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 8877,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "shot": "app-1280-a11-map-compare.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4737,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6249,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 3719,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a6-map.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a7-ximap-measure",
+   "label": "XI맵 + 재기 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 10445,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a7-ximap-measure.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a8-ximap-imagery",
+   "label": "XI맵 + 영상 목록",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 13592,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a8-ximap-imagery.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a9-ximap-compare",
+   "label": "XI맵 + 영상 비교",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 12646,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a9-ximap-compare.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a10-ximap-layers-fold",
+   "label": "XI맵 + 층 판 접기(휴대폰)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 11821,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a10-ximap-layers-fold.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a11-map-compare",
+   "label": "지도 서비스 + 영상 비교",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 8834,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "shot": "app-1440-a11-map-compare.png",
+   "boxesN": 3
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4882,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a4-ximap.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6314,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a5-ximap-layers.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a6-map",
+   "label": "지도 서비스",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 3750,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a6-map.png",
+   "boxesN": 2
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a7-ximap-measure",
+   "label": "XI맵 + 재기 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 6572,
+   "overlaps": [
+    {
+     "kind": "pair",
+     "a": ".k-ms.t-card.t-card--map[zone=measure]",
+     "b": ".xc-tools",
+     "w": 302,
+     "h": 60,
+     "area": 18120,
+     "ofSmall": 99
+    },
+    {
+     "kind": "pair",
+     "a": ".k-ms.t-card.t-card--map[zone=measure]",
+     "b": ".xc-top",
+     "w": 360,
+     "h": 36,
+     "area": 12960,
+     "ofSmall": 89
+    }
+   ],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a7-ximap-measure.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a8-ximap-imagery",
+   "label": "XI맵 + 영상 목록",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 9226,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a8-ximap-imagery.png",
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a9-ximap-compare",
+   "label": "XI맵 + 영상 비교",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 8712,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a9-ximap-compare.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a10-ximap-layers-fold",
+   "label": "XI맵 + 층 판 접기(휴대폰)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "ok": true,
+   "note": "",
+   "ms": 7403,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a10-ximap-layers-fold.png",
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a11-map-compare",
+   "label": "지도 서비스 + 영상 비교",
+   "optional": true,
+   "url": "/landxi/v3/lx-map/",
+   "ok": true,
+   "note": "",
+   "ms": 8738,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "shot": "app-390-a11-map-compare.png",
+   "boxesN": 2
+  }
+ ]
+}

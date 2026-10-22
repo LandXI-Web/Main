@@ -273,6 +273,120 @@
    "wait": ".k-main",
    "settle": 3000,
    "optional": true
+  },
+  {
+   "name": "a7-ximap-measure",
+   "label": "XI맵 + 재기 판",
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xc-tool[data-tool=\"measure\"]"
+    },
+    {
+     "wait": ".k-ms"
+    }
+   ]
+  },
+  {
+   "name": "a8-ximap-imagery",
+   "label": "XI맵 + 영상 목록",
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xb-k--line"
+    },
+    {
+     "wait": ".k-drawer.is-open"
+    },
+    {
+     "click": ".xc-board-flip:has-text(\"영상\")"
+    },
+    {
+     "wait": ".xc-imgs-c"
+    },
+    {
+     "sleep": 1500
+    }
+   ]
+  },
+  {
+   "name": "a9-ximap-compare",
+   "label": "XI맵 + 영상 비교",
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xc-tool[data-tool=\"swipe\"]"
+    },
+    {
+     "wait": ".xc-grip:not([hidden])"
+    },
+    {
+     "sleep": 2000
+    }
+   ]
+  },
+  {
+   "name": "a10-ximap-layers-fold",
+   "label": "XI맵 + 층 판 접기(휴대폰)",
+   "url": "/landxi/v3/xi-clean/?region=52190",
+   "wait": ".xc-tools",
+   "timeout": 40000,
+   "settle": 1500,
+   "steps": [
+    {
+     "sleep": 3000
+    },
+    {
+     "click": ".xc-tool[data-tool=\"layers\"]"
+    },
+    {
+     "wait": ".xc-pop:not([hidden])"
+    },
+    {
+     "eval": "document.querySelector('.xc-pop-fold')?.offsetParent && document.querySelector('.xc-pop-fold').click()"
+    },
+    {
+     "sleep": 500
+    }
+   ]
+  },
+  {
+   "name": "a11-map-compare",
+   "label": "지도 서비스 + 영상 비교",
+   "url": "/landxi/v3/lx-map/",
+   "wait": ".lm-cmp-b",
+   "timeout": 40000,
+   "settle": 2500,
+   "optional": true,
+   "steps": [
+    {
+     "click": ".lm-cmp-b"
+    },
+    {
+     "wait": ".k-sw-grip"
+    },
+    {
+     "sleep": 2500
+    }
+   ]
   }
  ],
  "guest": [
