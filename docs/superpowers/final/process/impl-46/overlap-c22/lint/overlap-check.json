@@ -1,0 +1,238 @@
+{
+ "at": "2026-10-22T03:09:19.295Z",
+ "widths": [
+  1280,
+  1440,
+  390
+ ],
+ "results": [
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4722,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1280,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6329,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4773,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 1440,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 6268,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a4-ximap",
+   "label": "XI맵",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 4866,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "app",
+   "tenant": "",
+   "width": 390,
+   "state": "a5-ximap-layers",
+   "label": "XI맵 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/",
+   "ok": true,
+   "note": "",
+   "ms": 7342,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 5230,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1280,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 7040,
+   "overlaps": [],
+   "vp": [
+    1280,
+    720
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 4765,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 1440,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6217,
+   "overlaps": [],
+   "vp": [
+    1440,
+    900
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08-map",
+   "label": "결과 지도(처음)",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 5494,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "boxesN": 4
+  },
+  {
+   "role": "gov",
+   "tenant": "namwon",
+   "width": 390,
+   "state": "08b-map-layers",
+   "label": "결과 지도 + 층 판",
+   "optional": false,
+   "url": "/landxi/v3/xi-clean/?region=52190&service=card-farm",
+   "ok": true,
+   "note": "",
+   "ms": 6404,
+   "overlaps": [],
+   "vp": [
+    390,
+    844
+   ],
+   "hscroll": 0,
+   "boxesN": 5
+  }
+ ]
+}

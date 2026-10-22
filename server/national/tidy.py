@@ -73,11 +73,26 @@ def _valid(g):
     if g is None or g.is_empty:
         return g
     if not g.is_valid:
-        g = shapely.make_valid(g)
+        try:
+            g = shapely.make_valid(g)
+        except shapely.errors.GEOSException:                              # 고칠 수 없는 도형(차원이 섞인 묶음 등) — 면 조각만 따로 고침
+            ps = [x for x in shapely.get_parts(g) if x.geom_type in ("Polygon", "MultiPolygon")]
+            try:
+                g = shapely.union_all([x.buffer(0) for x in ps]) if ps else shapely.Polygon()
+            except shapely.errors.GEOSException:
+                return shapely.Polygon()
     if g.geom_type in ("Polygon", "MultiPolygon"):
         return g
-    ps = [x for x in getattr(g, "geoms", []) if x.geom_type in ("Polygon", "MultiPolygon")]
-    return shapely.union_all(ps) if ps else shapely.Polygon()
+    parts = shapely.get_parts(g)
+    while any(x.geom_type == "GeometryCollection" for x in parts):        # 묶음 안 묶음까지 풀기
+        parts = np.concatenate([shapely.get_parts(x) if x.geom_type == "GeometryCollection" else np.array([x], dtype=object) for x in parts])
+    ps = [x for x in shapely.get_parts(np.asarray([x for x in parts if x.geom_type in ("Polygon", "MultiPolygon")], dtype=object)) if not x.is_empty] if len(parts) else []
+    if not ps:
+        return shapely.Polygon()
+    try:
+        return shapely.union_all(ps)
+    except shapely.errors.GEOSException:
+        return shapely.MultiPolygon(ps).buffer(0)
 
 
 def _multi(gs: list) -> list:

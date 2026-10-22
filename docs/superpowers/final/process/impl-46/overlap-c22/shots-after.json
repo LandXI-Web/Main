@@ -1,0 +1,23 @@
+{
+ "log": [
+  {
+   "tag": "after",
+   "spot": "namwon-dup",
+   "at": "2026. 10. 22. 오후 12:58:41",
+   "ms": 12287,
+   "parcel_line": null,
+   "overlaps": 0,
+   "file": "after-namwon-dup.png"
+  },
+  {
+   "tag": "after",
+   "spot": "namwon-card",
+   "at": "2026. 10. 22. 오후 12:58:54",
+   "ms": 12971,
+   "parcel_line": null,
+   "overlaps": 0,
+   "file": "after-namwon-card.png"
+  }
+ ],
+ "console_errors": []
+}

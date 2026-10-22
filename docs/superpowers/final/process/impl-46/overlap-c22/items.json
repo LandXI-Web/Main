@@ -1,0 +1,18 @@
+[
+ {"id": "P5-1", "title": "분석 단위를 넘는 중복 빼기(전국 2025 농지 · 하천)", "decision": "겹침-1단착수 ⓐ", "state": "구현 확인 대기",
+  "evidence": ["compare-namwon-dup.png", "before-namwon-dup.png", "after-namwon-dup.png", "stats-c22-52190.json", "tally-c22.json"],
+  "note": "남원 반 넘게 겹친 쌍 10,982 → 0 · 두 번 그려진 넓이 11.4% → 0.3%"},
+ {"id": "P5-2", "title": "칸 경계에서 잘린 것 붙이기 · 같은 칩 붙은 것은 '합칠까요?' 후보 목록만", "decision": "겹침-붙은경계 ⓐ", "state": "구현 확인 대기",
+  "evidence": ["stats-c22-52190.json"], "note": "남원 2025 칸 경계 쌍 1,050 → 92 · 2023 LX 분석(시험) 1,071 → 46 · 새 분석은 작업기 재시작 뒤부터"},
+ {"id": "P5-3", "title": "AI 원래 결과 보관 · 화면은 정리된 결과", "decision": "겹침-원본보관 ⓐ", "state": "구현 확인 대기",
+  "evidence": ["RESULT.md"], "note": "옛 결과 .geojson 손대지 않음 · 새 분석 .raw.fgb · 결과마다 -tidy.json 정리 기록"},
+ {"id": "P5-4", "title": "농지 · 하천 한 층(하천 결과의 경작지 · 비닐하우스 중 농지 결과와 같은 것 뺌)", "decision": "제안-농지하천한층(넣음)", "state": "구현 확인 대기",
+  "evidence": ["tally-c22.json"]},
+ {"id": "P5-5", "title": "필지 카드 '경작지 2곳 · 2,676㎡ · 필지의 84%'", "decision": "겹침-필지묶음 ⓐ · 1단 ⓒ", "state": "구현 확인 대기",
+  "evidence": ["after-namwon-card.png", "shots-after.json"]},
+ {"id": "P5-6", "title": "칸 숫자를 정리 결과로(숫자 한 출처) · 세 화면 대조", "decision": "겹침-숫자세기 ⓐ", "state": "구현 확인 대기",
+  "evidence": ["numbers-c22.json", "numbers-lx.png", "numbers-namwon.png", "numbers-gwangju-jeonnam.png"], "note": "기관 · LX 8개 숫자 어긋남 0 · 진행 장부 합계 = 정리 후 표 · 남원 전국 경작지 75,509곳 · 106.17㎢"},
+ {"id": "P5-7", "title": "시점 — 같은 서비스 × 같은 곳 최신 하나(유지)", "decision": "겹침-시점 ⓐ", "state": "유지 확인 · 서비스 이전 해 ↔ 전국 최신 해는 now 22 질문 후보"},
+ {"id": "P5-8", "title": "가장 나은 경계 학습(장기 · 문서)", "decision": "원칙 315", "state": "문서", "evidence": ["../../../../recon-1022/BEST-POLYGON.md"]},
+ {"id": "P5-9", "title": "화면 겹침 검사", "state": "통과", "evidence": ["lint/overlap-check.txt"], "note": "12상태 겹침 0 · 필지 카드 자리 0"}
+]
