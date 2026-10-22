@@ -41,7 +41,7 @@ SRC_LED = "올린 대장 필지 × 고른 서비스 결과(필지 번호로 맞�
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 # 내려받은 파일 종류(이력 · 이용 약속 기록 · 한 이름표)
 FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",
-          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀",
+          "report_pdf": "보고서 PDF", "report_one": "보고서 요약 한 장", "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀",
           "ledger_compare": "대장과 AI 결과 엑셀", "pledges": "다운로드 이력 엑셀"}
 
 
@@ -255,6 +255,7 @@ async def _ledger_cmp(p: Principal, import_id: str, emd: str | None, picks: list
         if not imp:
             raise ApiError("not_found", "올린 대장이 없습니다")
         feed = imp["kind"] == "feedcrop"     # 사료작물 재배 신청 대장 = 사료작물 견주기와 같은 판정(비경작지 · 휴경은 재배 흔적이 아님) · 그 밖 = 행정정보와 비교와 같은 판정
+        neg = feed or imp["kind"] == "direct_pay"   # 공익직불 신청 대장도 비경작지 · 휴경은 경작 흔적으로 세지 않는다(10-22 제안-공익직불대장)
         pn = [r["pnu"] for r in await c.fetch("SELECT DISTINCT pnu FROM registry_snapshots WHERE import_id=$1 AND tenant_id=$2 AND pnu IS NOT NULL", imp["id"], p.tenant_id)]
         if emd and pn:
             pn = [r["pnu"] for r in await c.fetch("SELECT pnu FROM survey_parcels WHERE pnu = ANY($1::text[]) AND emd = $2", pn, emd)]
@@ -267,7 +268,7 @@ async def _ledger_cmp(p: Principal, import_id: str, emd: str | None, picks: list
             sc = " AND left(d.pnu, 5) = ANY($3::text[])" if codes is not None else ""
             rows = await c.fetch("SELECT DISTINCT d.pnu, d.cls, d.cls_en FROM detections d WHERE d.job_id = ANY($1::text[]) AND d.edit_state <> 'deleted' "
                                  f"AND d.pnu = ANY($2::text[]){sc}", *([s["_sets"], pn, codes] if codes is not None else [s["_sets"], pn]))
-            found[s["card"]] = {r["pnu"] for r in rows if not feed or class_ko(r["cls"], r["cls_en"]) not in NEG}
+            found[s["card"]] = {r["pnu"] for r in rows if not neg or class_ko(r["cls"], r["cls_en"]) not in NEG}
     n = len(pn)
     allf = sum(1 for k in pn if all(k in found[s["card"]] for s in picks))
     nm = re.sub(r"\.(xlsx|xls)\.csv$", r".\1", imp["name"] or imp["filename"] or "") or (KINDS.get(imp["kind"]) or "대장")
@@ -473,8 +474,8 @@ async def _issue(p: Principal, d: dict, import_id: str | None, fmt: str):
             "ON CONFLICT (tenant_id, user_id, pick_key) DO UPDATE SET downloads = report_issues.downloads + 1, last_at = now(), fmt = EXCLUDED.fmt, title = EXCLUDED.title",
             "ri_" + secrets.token_hex(8), p.tenant_id, p.user_id or "", key, cards, d.get("emd"), import_id or None, _title(d), fmt)
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,'tenant',$5)",
-                        p.tenant_id, cards[0], f"{p.name or '담당자'} — AI 분석 결과 보고서 내려받기({_title(d)})", p.user_id,
-                        {"fmt": "report_multi" if fmt == "hwpx" else "report_xlsx", "cards": cards, "emd": d.get("emd"), "import_id": import_id or None})
+                        p.tenant_id, cards[0], f"{p.name or '담당자'} — AI 분석 결과 {'보고서 요약 한 장' if fmt == 'one' else '보고서'} 내려받기({_title(d)})", p.user_id,
+                        {"fmt": {"hwpx": "report_multi", "pdf": "report_pdf", "one": "report_one"}.get(fmt, "report_xlsx"), "cards": cards, "emd": d.get("emd"), "import_id": import_id or None})
 
 
 async def _issues(p: Principal) -> list[dict]:

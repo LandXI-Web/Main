@@ -16,6 +16,7 @@ from fontTools.ttLib import TTFont
 REPO = Path(__file__).resolve().parents[2]
 SRC = REPO / "landxi" / "assets" / "fonts"
 OUT = SRC / "sub"
+SHARED = REPO / "landxi" / "v3" / "shared" / "fonts-sub.css"
 FONTS = [("Pretendard", 400, "Pretendard-Regular.woff2"), ("Pretendard", 500, "Pretendard-Medium.woff2"),
          ("Paperlogy", 700, "Paperlogy-7Bold.woff2"), ("Paperlogy", 800, "Paperlogy-8ExtraBold.woff2")]
 CHUNK = 400
@@ -102,6 +103,10 @@ def main():
         return "\n".join(f"@font-face{{font-family:'{fam}';font-weight:{w};font-display:swap;src:url('{prefix}{name}') format('woff2');unicode-range:{ur}}}"
                          for fam, w, name, ur, k in css)
     (OUT / "fonts.css").write_text("/* 생성 파일 — tools/fonts/subset.py (글꼴 나눠 받기 · 10-22). 손으로 고치지 말 것 */\n" + block("./") + "\n", encoding="utf-8")
+    # 화면 토큰(landxi/v3/shared/tokens-v2.2.css)이 부르는 사본 — 화면 코드 폴더 안이라 바깥 주소가 판 번호(?v=)를 붙여 1년 보관한다.
+    # 폴더 밖(assets/fonts)은 번호가 붙지 않아 화면을 열 때마다 확인(바깥 길 약 0.3초)했고, 그동안 화면 코드가 기다렸다(10-22 P8b 첫 그림 실측).
+    SHARED.write_text("/* 생성 파일 — tools/fonts/subset.py (글꼴 나눠 받기 · 화면 토큰이 부르는 사본 · 10-22). 손으로 고치지 말 것 */\n"
+                      + block("../../assets/fonts/sub/") + "\n", encoding="utf-8")
     for k, v in total.items():
         print(f"{k}: 자주 쓰는 글자 {v[0]}자 · 첫 조각 {v[1] / 1024:.0f}KB · 조각 {v[2]}개 · 합 {v[3] / 1024:.0f}KB")
 

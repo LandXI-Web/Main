@@ -1,0 +1,98 @@
+[
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-select/?list=1",
+  "w": 1440,
+  "first_frame_ms": 373,
+  "mast_ms": 747,
+  "ready_ms": 799,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 374,
+  "frames": 420
+ },
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-group/",
+  "w": 1440,
+  "first_frame_ms": 519,
+  "mast_ms": 878,
+  "ready_ms": 878,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 359,
+  "frames": 412
+ },
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-select/?service=card-farm",
+  "w": 1440,
+  "first_frame_ms": 391,
+  "mast_ms": 738,
+  "ready_ms": 1129,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 347,
+  "frames": 420
+ },
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "w": 1440,
+  "first_frame_ms": 529,
+  "mast_ms": 888,
+  "ready_ms": 888,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 359,
+  "frames": 404
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/gov-select/?list=1",
+  "w": 1440,
+  "first_frame_ms": 386,
+  "mast_ms": 693,
+  "ready_ms": 776,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 307,
+  "frames": 420
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/gov-group/",
+  "w": 1440,
+  "first_frame_ms": 377,
+  "mast_ms": 741,
+  "ready_ms": 741,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 364,
+  "frames": 420
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/gov-select/?service=card-farm",
+  "w": 1440,
+  "first_frame_ms": 368,
+  "mast_ms": 675,
+  "ready_ms": 1127,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 307,
+  "frames": 420
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+  "w": 1440,
+  "first_frame_ms": 462,
+  "mast_ms": 804,
+  "ready_ms": 804,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 342,
+  "frames": 414
+ }
+]

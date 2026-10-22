@@ -255,7 +255,10 @@ async def compare(p: Principal, card: str, import_id: str | None = None, emd: st
                 "SELECT pnu, ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.000004), 6) g FROM survey_parcels WHERE pnu = ANY($1::text[])", pn)}
         up = await _uploader(c, imp)
     lines = []
-    if mode == "farm":
+    pay = imp["kind"] == "direct_pay"      # 공익직불 신청 대장(10-22 제안-공익직불대장) — 신청한 필지는 경작해야 한다: AI 가 비경작지 · 휴경으로 본 신청 필지가 점검 대상
+    if mode == "farm" and pay:
+        lines = [{"key": "pay_off", "label": "직불 신청 필지인데 AI는 비경작지", "short": "신청했는데 비경작지"}]
+    elif mode == "farm":
         lines = [{"key": "farm_off", "label": "대장은 농지(전·답)인데 AI는 비경작지", "short": "농지인데 비경작지"},
                  {"key": "off_farm", "label": "대장은 농지가 아닌데 AI는 경작지", "short": "농지 아닌데 경작지"}]
     elif mode == "use":
@@ -272,7 +275,10 @@ async def compare(p: Principal, card: str, import_id: str | None = None, emd: st
         top = max(e["by"].items(), key=lambda kv: kv[1])[0] if e and e["by"] else None
         why = None
         if e:
-            if mode == "farm":
+            if mode == "farm" and pay:
+                if top in ("비경작지", "휴경", "휴경지"):
+                    why = "pay_off"
+            elif mode == "farm":
                 if jm in FARM and top == "비경작지":
                     why = "farm_off"
                 elif jm and jm not in FARM and top == "경작지":
@@ -767,6 +773,8 @@ _TPL = {
     "farm_ledger": ("농지대장", _TPL_BASE + [("지목", "전 · 답 · 과수원 등 대장의 지목", False), ("기준일자", "대장 기준일(예: 2025-06-30)", False)]),
     "feedcrop": ("사료작물 재배 신청 대장", _TPL_BASE + [("신청 작물", "신청한 작물 이름(예: 옥수수 · 수단그라스)", True), ("신청 면적(㎡)", "신청 면적 숫자만", False),
                                                        ("신청일자", "신청한 날(예: 2025-04-15)", False)]),
+    "direct_pay": ("공익직불 신청 대장", _TPL_BASE + [("신청 면적(㎡)", "직불금을 신청한 면적 숫자만", False), ("품목", "신청 품목(예: 벼 · 밭작물)", False),
+                                                  ("신청일자", "신청한 날(예: 2025-05-31)", False)]),
     "greenhouse": ("시설 신고 대장", _TPL_BASE + [("시설 구분", "시설 종류(예: 비닐하우스 · 유리온실)", False), ("신고일자", "신고한 날", False)]),
     "dev_permit": ("개발행위허가 대장", _TPL_BASE + [("허가 종류", "허가 종류", False), ("허가일자", "허가한 날", False)]),
     "public_asset": ("공유재산 대장", _TPL_BASE + [("용도", "재산 용도", False), ("기준일자", "대장 기준일", False)]),

@@ -1,0 +1,26 @@
+[
+ {
+  "rep": 0,
+  "path": "/landxi/v3/lx-console/",
+  "w": 390,
+  "first_frame_ms": 389,
+  "mast_ms": 694,
+  "ready_ms": 694,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 305,
+  "frames": 420
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/lx-console/",
+  "w": 390,
+  "first_frame_ms": 370,
+  "mast_ms": 675,
+  "ready_ms": 675,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 305,
+  "frames": 419
+ }
+]

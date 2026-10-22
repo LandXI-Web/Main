@@ -803,6 +803,48 @@ def _backup_status() -> dict | None:
     return {"failed": 0 if st.get("ok") or st.get("running") else 1, "age_h": round(age, 1)}
 
 
+def _ngii_has(year: int) -> bool:
+    """국토지리정보원 항공 정사영상 그 해 층이 열렸나 — 타일 하나(national/runner.api_ok 와 같은 자리 · 25cm 층). 안내 페이지 · 오류 · 끊김 = 아님."""
+    import urllib.request
+    res = 17112760.32 / (256 * 2 ** 18)
+    x, y = int((965000 + 200000) / res / 256), int((4000000 - 1745000) / res / 256)
+    url = (f"https://map.ngii.go.kr/airmapprime/map/wmts?service=WMTS&request=GetTile&version=1.0.0&layer=mapprime:air_{year}&style=&format=image/jpeg"
+           f"&tilematrixset=NGIS_AIR&tilematrix=18&tilerow={y}&tilecol={x}")
+    try:
+        rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (LandXI)", "Referer": "https://map.ngii.go.kr/"})
+        with urllib.request.urlopen(rq, timeout=20) as r:
+            return r.status == 200 and (r.headers.get("content-type") or "").startswith("image/") and len(r.read(4096)) > 500
+    except Exception:  # noqa: BLE001
+        return False
+
+
+NGII_EVERY_S = 6 * 3600
+
+
+async def _ngii_new_year() -> int | None:
+    """새 해 영상 — 우리가 가진 가장 늦은 해(영상 표 nat-ngii-air-연도) 다음 해 층이 열렸으면 그 해, 아니면 0. 6시간에 한 번만 묻는다(값은 Redis)."""
+    r = await redis()
+    raw = await r.get("ops:ngii:new_year")
+    if raw:
+        try:
+            j = json.loads(raw)
+            if time.time() - float(j.get("t", 0)) < NGII_EVERY_S:
+                return int(j.get("year") or 0)
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        async with db(realm="lx") as conn:
+            last = await conn.fetchval("SELECT max(year) FROM imagery WHERE id LIKE 'nat-ngii-air-%'")
+    except Exception:  # noqa: BLE001
+        return None
+    if not last:
+        return None
+    nxt = int(last) + 1
+    ok = await run_in_threadpool(_ngii_has, nxt)
+    await r.set("ops:ngii:new_year", json.dumps({"t": time.time(), "year": nxt if ok else 0, "checked": nxt}))
+    return nxt if ok else 0
+
+
 async def evaluate_alerts_once():
     rules = config.load_yaml("alerts")["rules"]
     r = await redis()
@@ -841,6 +883,9 @@ async def evaluate_alerts_once():
     fd, _ = await run_in_threadpool(_statfs, "D:")       # D: (전국 영상 원본 등 · 10-22 96%) — 50GB 아래 알림(now21 제안-디스크알림)
     if fd is not None:
         metrics.setdefault("storage.D.free_gb", []).append((config.NODE_ID, None, fd))
+    ny = await _ngii_new_year()                           # 새 해 영상 공개(10-22 now21 제안-새해영상알림) — 6시간마다 타일 하나
+    if ny is not None:
+        metrics.setdefault("imagery.ngii.new_year", []).append((config.NODE_ID, None, ny))
     bk = _backup_status()                                 # 매일 DB 백업(server/ops/db_backup.py · 6-2) — 실패 · 30시간 넘게 성공 없음
     if bk is not None:
         metrics.setdefault("backup.db.failed", []).append((config.NODE_ID, None, bk["failed"]))

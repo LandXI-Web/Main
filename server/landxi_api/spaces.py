@@ -1046,7 +1046,7 @@ async def latest_notes(p: Principal, card: str, pnus: list[str]) -> dict[str, di
         if not await c.fetchval("SELECT to_regclass('public.parcel_notes') IS NOT NULL"):
             return {}
         rows = await c.fetch("SELECT DISTINCT ON (pnu) pnu, note, at FROM parcel_notes WHERE tenant_id=$1 AND card_id=$2 AND pnu = ANY($3::text[]) "
-                             "ORDER BY pnu, at DESC", p.tenant_id, card, pnus)
+                             "AND undone_at IS NULL ORDER BY pnu, at DESC", p.tenant_id, card, pnus)   # 되돌린 메모 묶음은 빼고(10-22 제안-메모되돌리기)
     return {r["pnu"]: {"note": r["note"], "at": r["at"].astimezone(KST).isoformat(timespec="seconds")} for r in rows}
 
 
@@ -1622,7 +1622,7 @@ async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
 
 # 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·
 # 서비스 이력 · 통계 · 필지 메모(landxi_api/gov_history.py). 공간 라우터에 붙여 main.py 를 고치지 않는다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
-for _sub in ("shoots", "gov_history", "farm_more", "gov_report", "farm_admin", "groups"):   # groups = 행정서비스 묶음 · 다운로드 이력(10-22 원칙 310 · 308)
+for _sub in ("shoots", "gov_history", "farm_extra", "farm_more", "gov_report", "farm_admin", "groups"):   # farm_extra = 바퀴 22 P8b 넣음 제안(보고서 틀 · PDF · 요약 한 장 · 메모 되돌리기 · 기관 공지)   # groups = 행정서비스 묶음 · 다운로드 이력(10-22 원칙 310 · 308)
     # farm_more = 영농관리 바퀴 19(고르면 바로 만들어지는 보고서 · 진짜 엑셀 · 이용 약속 기록 · 원칙 293) — /report/multi 가 /report 보다 먼저   # farm_admin = 영농관리 결정(10-18 원칙 291 — 사료작물 견주기 · 곤포 생산량 · 이용 약속 · 행정정보 목록)
     # gov_report = 기관 AI 분석 결과 보고서 · 행정정보와 비교(서비스 기준) · 공개 실적(10-11 gov-보고서 · gov-비교 · QA-Q2 · Q3)
     try:

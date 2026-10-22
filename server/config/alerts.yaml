@@ -14,3 +14,5 @@ rules:
   - {id: db_backup_older_30h, level: caution, metric: backup.db.age_h, op: ">", threshold: 30, for_s: 0, unit: "h"}
   - {id: vworld_calls_80pct, level: caution, metric: vworld.calls_day_pct, op: ">", threshold: 80, for_s: 0, unit: "%"}
   - {id: job_fail_rate_gt_5pct_1h, level: caution, metric: jobs.fail_rate_1h_pct, op: ">", threshold: 5, for_s: 0, unit: "%"}
+  # 10-22 now21 '제안-새해영상알림' 넣음 — 국토지리정보원에 가진 해 다음 해 항공 영상 층이 열리면 LX 관리자 할 일에 한 줄(값 = 그 해 · 6시간마다 확인)
+  - {id: ngii_new_year, level: caution, metric: imagery.ngii.new_year, op: ">", threshold: 0, for_s: 0, unit: ""}

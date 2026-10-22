@@ -335,6 +335,56 @@ async def retry(request: Request, body: dict | None = None):
     return {"requeued": int(n)}
 
 
+# ── 해마다 같은 판으로 묶기(10-22 now21 제안-같은판묶기) ─────────────────────────────
+# 모델 새 판이 나오면 해마다 비교(2024 ↔ 2025 …)가 섞인 판으로 이뤄져, 바뀐 것이 땅인지 모델인지 알 수 없다.
+# 판이 섞인 해를 보이고, 관리자가 '비교 중인 해 전부 다시' 한 단추로 그 해들의 옛 판 칸을 지금 판으로 다시 분석할 차례에 넣는다
+# (작업기의 redo_years — 학습 장비가 놀 때만 · 옛 결과는 새 결과가 나올 때까지 그대로 보인다 · 전력 규칙 그대로).
+async def _same_model(conn) -> dict:
+    st, _ = await _settings(conn)
+    model = str(st.get("model") or DEF["model"])
+    rows = await conn.fetch(
+        "SELECT year, count(*) FILTER (WHERE state='done') AS done, count(*) FILTER (WHERE state='done' AND model_id IS NOT DISTINCT FROM $1) AS cur, "
+        "count(*) FILTER (WHERE state='done' AND model_id IS DISTINCT FROM $1) AS old FROM national_cells WHERE NOT test GROUP BY year ORDER BY year", model)
+    mrow = await conn.fetchrow("SELECT name FROM models WHERE id=$1", model)
+    yrs = [{"year": int(r["year"]), "done": env(int(r["done"]), "count", "measured", "끝난 읍면동(진행 장부)"),
+            "cur": env(int(r["cur"]), "count", "measured", "지금 전국 분석 모델로 만든 끝난 읍면동"),
+            "old": env(int(r["old"]), "count", "measured", "옛 판 모델로 만든 끝난 읍면동")} for r in rows if int(r["done"])]
+    mixed = [y["year"] for y in yrs if y["old"]["value"]]
+    run_year = int(st.get("run_year") or st["year"])
+    queued = sorted({int(y) for y in (st.get("redo_years") or [])} | ({run_year} if run_year in mixed else set()))
+    return {"model": {"name": (_jv(mrow["name"]).get("ko") if mrow and mrow["name"] else None)}, "years": yrs,
+            "mixed": [str(y) for y in mixed], "queued": [str(y) for y in queued if y in mixed],      # 해(글자) — 숫자 봉투 규칙 밖의 이름표
+            "compare": len(yrs) >= 2, "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
+
+
+@router.get("/national/same-model")
+async def same_model(request: Request):
+    require(principal(request), lx=True, admin=True)
+    async with db(realm="lx") as conn:
+        return await _same_model(conn)
+
+
+@router.post("/national/same-model")
+async def same_model_redo(request: Request, body: dict | None = None):
+    """'비교 중인 해 전부 다시' — 판이 섞인 해를 모두 다시 분석할 차례에(redo_years). 확인 한 번(confirm:true)."""
+    p = require(principal(request), lx=True, admin=True)
+    if not (body or {}).get("confirm"):
+        raise ApiError("bad_request", "확인을 눌러 주세요", {"field": "confirm"})
+    async with db(realm="lx") as conn:
+        cur = await _same_model(conn)
+        if not cur["mixed"]:
+            return {**cur, "changed": False}
+        st, _ = await _settings(conn)
+        old = dict(st)
+        run_year = int(st.get("run_year") or st["year"])
+        st["redo_years"] = sorted({int(y) for y in (st.get("redo_years") or [])} | {int(y) for y in cur["mixed"] if int(y) != run_year})
+        await conn.execute("INSERT INTO lx_settings(key, value, updated_by, updated_at) VALUES ('national.run', $1, $2, now()) "
+                           "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()", st, p.user_id)
+        await audit(conn, p, "national.same_model", "national.run", {"redo_years": old.get("redo_years")}, {"redo_years": st["redo_years"], "mixed": cur["mixed"]})
+        out = await _same_model(conn)
+    return {**out, "changed": True}
+
+
 # ── 지도 조각 ───────────────────────────────────────────────────────────────
 _TC: "OrderedDict[tuple, bytes]" = OrderedDict()
 TC_MAX = 4000

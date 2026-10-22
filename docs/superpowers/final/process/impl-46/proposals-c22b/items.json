@@ -1,0 +1,210 @@
+{
+ "at": "2026-10-22",
+ "cycle": 22,
+ "part": "P8b 넣음 제안 + 첫 그림",
+ "items": [
+  {
+   "id": "제안-보고서틀이름",
+   "title": "보고서에 이름 붙인 틀",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm&tab=report",
+     "남원 기관 관리자",
+     "보고서 탭 왼쪽 '내 보고서 틀'"
+    ]
+   ],
+   "evidence": [
+    "shots/02-template-save-1440.png",
+    "shots/03-template-chip-1440.png"
+   ]
+  },
+  {
+   "id": "제안-메모되돌리기",
+   "title": "같은 메모 한꺼번에 쓴 것을 한 단추로 되돌리기",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://namwon.land-xi.dev/landxi/v3/gov-report/?service=card-farm",
+     "남원 기관 관리자",
+     "필지 여럿 고름 → 메모 쓰기 → 알림 줄 '되돌리기' · 필지 이력 '이 묶음 되돌리기'"
+    ]
+   ],
+   "evidence": [
+    "shots/04-memo-undo-toast-1440.png",
+    "shots/06-history-undo-1440.png",
+    "shots/07-history-undone-1440.png"
+   ]
+  },
+  {
+   "id": "제안-공익직불대장",
+   "title": "대장 종류에 '공익직불 신청 대장'",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://namwon.land-xi.dev/landxi/v3/gov-fusion/?service=card-farm",
+     "남원 기관 관리자",
+     "행정정보 올리기 — 대장 종류"
+    ]
+   ],
+   "evidence": [
+    "files/direct-pay-template.xlsx"
+   ]
+  },
+  {
+   "id": "제안-남원부서계정시험",
+   "title": "남원 부서 계정으로 메모 쓰기 · 관할 밖 막힘",
+   "state": "완료(확인 대기)",
+   "evidence": [
+    "dept-test.json",
+    "shots/40-dept-signup-1440.png",
+    "shots/42-manager-accounts-1440.png",
+    "shots/44-dept-memo-1440.png"
+   ]
+  },
+  {
+   "id": "제안-기관공지쓰기",
+   "title": "기관 관리자가 직접 쓰는 공지",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://namwon.land-xi.dev/landxi/v3/gov-select/?list=1",
+     "남원 기관 관리자",
+     "맨 위 '공지 쓰기'"
+    ]
+   ],
+   "evidence": [
+    "shots/09-notice-write-1440.png",
+    "shots/10-notice-line-1440.png"
+   ]
+  },
+  {
+   "id": "제안-영농첫방문안내",
+   "title": "영농 첫 방문 세 걸음 안내",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://namwon.land-xi.dev/landxi/v3/gov-group/",
+     "남원 계정(처음 여는 브라우저)",
+     "통합 대시보드 맨 위"
+    ]
+   ],
+   "evidence": [
+    "shots/11-group-first-visit-1440.png",
+    "shots/14-group-390.png"
+   ]
+  },
+  {
+   "id": "제안-새해영상알림",
+   "title": "새 해 영상 공개 알림",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://admin.land-xi.dev/landxi/v3/ops-core/",
+     "LX 관리자",
+     "할 일 표(2026년 층이 열리면 한 줄)"
+    ]
+   ],
+   "evidence": [
+    "shots/20-admin-todo-1440.png"
+   ],
+   "note": "그림의 줄은 시험 DB 에 값을 넣어 보인 것(시안 아님 · 시험 값)"
+  },
+  {
+   "id": "제안-같은판묶기",
+   "title": "해마다 같은 판으로 묶기",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://admin.land-xi.dev/landxi/v3/ops-core/",
+     "LX 관리자",
+     "할 일 '같은 판' → '비교 중인 해 전부 다시'(판이 섞였을 때만)"
+    ]
+   ],
+   "evidence": [
+    "shots/21-admin-same-model-1440.png",
+    "shots/22-admin-same-model-queued-1440.png"
+   ]
+  },
+  {
+   "id": "제안-직원처음모양공지",
+   "title": "직원 대시보드 처음 모양 공지",
+   "state": "완료(확인 대기)",
+   "where": [
+    [
+     "https://app.land-xi.dev/landxi/v3/lx-console/",
+     "LX 직원",
+     "공지사항 칸"
+    ]
+   ],
+   "evidence": [
+    "shots/51-staff-dashboard-notice-1440.png"
+   ]
+  },
+  {
+   "id": "제안-보고서인쇄PDF",
+   "title": "보고서 인쇄 · PDF",
+   "state": "구현 확인 대기",
+   "evidence": [
+    "files/report.pdf",
+    "files/print-preview.pdf",
+    "shots/30-pdf-page1.png",
+    "shots/31-print-page1.png"
+   ]
+  },
+  {
+   "id": "제안-hwpx한장요약",
+   "title": "기관 한글(.hwpx) 요약 한 장",
+   "state": "구현 확인 대기",
+   "evidence": [
+    "files/one-page.hwpx"
+   ]
+  },
+  {
+   "id": "제안-라벨미리보기격자",
+   "title": "라벨 미리 보기 격자",
+   "state": "구현 확인 대기",
+   "where": [
+    [
+     "https://app.land-xi.dev/landxi/v3/lx-train/?stage=label&view=chip",
+     "LX 직원(프로젝트 안)",
+     "'격자로 보기'"
+    ]
+   ],
+   "evidence": [
+    "shots/60-label-grid-1440.png",
+    "shots/61-label-grid-open-1440.png"
+   ],
+   "note": "시험 DB 시험 그림 · 시험 뒤 지움"
+  },
+  {
+   "id": "첫인상-직원기관첫그림",
+   "title": "직원 대시보드 · 기관 화면 첫 흰 화면 0 · '불러오는 중' 줄임",
+   "state": "구현 확인 대기",
+   "evidence": [
+    "first-paint/before",
+    "first-paint/after"
+   ],
+   "measure": {
+    "lx_console_1440_mast_s": [
+     1.14,
+     0.7
+    ],
+    "gov_select_1440_mast_s": [
+     1.26,
+     0.77
+    ],
+    "gov_group_1440_mast_s": [
+     1.29,
+     0.8
+    ],
+    "blank_s_before_max": 0.68,
+    "blank_s_after": 0,
+    "lx_console_loading_s": [
+     0.47,
+     0
+    ]
+   }
+  }
+ ]
+}

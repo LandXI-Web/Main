@@ -1,0 +1,116 @@
+{
+ "part": "gov",
+ "w": 1440,
+ "at": "2026-10-22T07:33:22.301Z",
+ "steps": [
+  {
+   "k": "login",
+   "url": "http://127.0.0.1:4199/landxi/v3/gov-select/"
+  },
+  {
+   "k": "tpl-api",
+   "r": {
+    "items": [
+     {
+      "id": "rt_7179bc4f153da599",
+      "name": "매달 농정과 보고",
+      "cards": [
+       "card-farm"
+      ],
+      "emd": null,
+      "import_id": null,
+      "created_at": "2026-10-22T16:30+09:00",
+      "used_at": "2026-10-22T16:32+09:00"
+     }
+    ],
+    "max": {
+     "value": 20,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-10-22T16:33:27+09:00",
+     "source": "한 사람 보고서 틀 상한"
+    },
+    "as_of": "2026-10-22T16:33:27+09:00"
+   }
+  },
+  {
+   "k": "template-saved",
+   "s": 200,
+   "items": [
+    "매달 농정과 보고"
+   ]
+  },
+  {
+   "k": "download-pdf",
+   "name": "남원시_경작_휴경_AI분석결과보고서_20261022.pdf",
+   "bytes": 362484
+  },
+  {
+   "k": "download-one",
+   "name": "남원시_경작_휴경_요약한장_20261022.hwpx",
+   "bytes": 267232
+  },
+  {
+   "k": "issues",
+   "top": [
+    [
+     "one",
+     "경작·휴경",
+     13
+    ],
+    [
+     "xlsx",
+     "경작·휴경 · 갈치동",
+     3
+    ],
+    [
+     "hwpx",
+     "경작·휴경 · 운봉읍",
+     1
+    ]
+   ]
+  },
+  {
+   "k": "print-sheet",
+   "has": "report"
+  },
+  {
+   "k": "print-pdf",
+   "bytes": 274858
+  },
+  {
+   "k": "memo-batch",
+   "batch": "pb_d469eba34f1c2b32",
+   "n": 3
+  },
+  {
+   "k": "memo-after-undo",
+   "batch": "pb_2808e362a6f6ab4a"
+  },
+  {
+   "k": "history-undo-button",
+   "n": 2
+  },
+  {
+   "k": "memo-after-history-undo",
+   "batch": "pb_2808e362a6f6ab4a"
+  },
+  {
+   "k": "notices",
+   "j": [
+    "10월 실태조사 결과 확인 부탁드립니다",
+    "10월 실태조사 결과 확인 부탁드립니다"
+   ]
+  },
+  {
+   "k": "direct-pay-template",
+   "s": 200,
+   "cd": "공익직불 신청 대장_올리기양식.xlsx",
+   "bytes": 6582
+  },
+  {
+   "k": "errors",
+   "errs": []
+  }
+ ]
+}

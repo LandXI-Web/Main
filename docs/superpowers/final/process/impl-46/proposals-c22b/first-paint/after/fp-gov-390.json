@@ -1,0 +1,26 @@
+[
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-select/?list=1",
+  "w": 390,
+  "first_frame_ms": 370,
+  "mast_ms": 739,
+  "ready_ms": 793,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 369,
+  "frames": 420
+ },
+ {
+  "rep": 0,
+  "path": "/landxi/v3/gov-group/",
+  "w": 390,
+  "first_frame_ms": 534,
+  "mast_ms": 959,
+  "ready_ms": 959,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 425,
+  "frames": 413
+ }
+]

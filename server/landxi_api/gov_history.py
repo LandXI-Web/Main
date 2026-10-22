@@ -27,7 +27,7 @@ ORDER = list(KIND_KO)
 from survey.db import COUNT_RULE_IDS  # noqa: E402
 RULES = list(COUNT_RULE_IDS)          # R1–R6 + 대장 대조 L-* — 지역 숫자 · 대표 수치 요약과 같은 범위(10-22 현장확인숫자 ⓐ)
 FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",   # farm_more.FMT_KO 와 같은 이름표
-          "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
+          "report_pdf": "보고서 PDF", "report_one": "보고서 요약 한 장", "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
 
 
 def _iso(v):
@@ -546,7 +546,7 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
     async with db(p) as c:
         eds = await c.fetch("SELECT edition, body, published_at, created_at FROM space_guides WHERE tenant_id=$1 AND card_id=$2 ORDER BY edition", p.tenant_id, card)
         users = await _users(c, p.tenant_id)
-        pnotes = await c.fetch("SELECT note, by_user, at, batch_id FROM parcel_notes WHERE tenant_id=$1 AND card_id=$2 AND pnu=$3 ORDER BY at DESC LIMIT 50",
+        pnotes = await c.fetch("SELECT note, by_user, at, batch_id FROM parcel_notes WHERE tenant_id=$1 AND card_id=$2 AND pnu=$3 AND undone_at IS NULL ORDER BY at DESC LIMIT 50",
                                p.tenant_id, card, pnu)
         fnotes = await c.fetch("SELECT e.at, e.note, e.planned_for, e.by, e.assignee FROM survey_finding_events e JOIN survey_findings f ON f.id = e.finding_id "
                                "WHERE f.pnu=$1 AND e.tenant_id=$2 AND NOT coalesce(e.demo,false) AND (e.note IS NOT NULL OR e.planned_for IS NOT NULL) "
@@ -667,7 +667,9 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
                       "sub": ("기준일 " if L["base_date"] else "올린 날 ") + (d0.strftime("%Y.%m.%d") if d0 else "")})
     for n in pnotes:
         items.append({"kind": "note", "at": _iso(n["at"]), "title": f"메모 '{n['note']}'", "sub": "여러 필지 함께" if n["batch_id"] else "",
-                      "who": _person(users.get(n["by_user"]))})
+                      "who": _person(users.get(n["by_user"])),
+                      # 같은 메모 한꺼번에 쓴 묶음 — 쓴 사람 · 기관 관리자는 이력 줄에서 묶음째 되돌린다(10-22 제안-메모되돌리기)
+                      **({"batch": n["batch_id"], "undo": n["by_user"] == (p.user_id or "") or p.role == "manager"} if n["batch_id"] else {})})
     for n in fnotes:
         items.append({"kind": "note", "at": _iso(n["at"]), "title": f"메모 '{n['note']}'" if n["note"] else "다음 확인 날짜",
                       "sub": f"다음 확인 {n['planned_for'].month}.{n['planned_for'].day:02d}" if n["planned_for"] else "",

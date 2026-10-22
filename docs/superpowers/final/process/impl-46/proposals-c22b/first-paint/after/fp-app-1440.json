@@ -1,0 +1,50 @@
+[
+ {
+  "rep": 0,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 384,
+  "mast_ms": 681,
+  "ready_ms": 681,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 297,
+  "frames": 420
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 373,
+  "mast_ms": 676,
+  "ready_ms": 676,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 303,
+  "frames": 419
+ },
+ {
+  "rep": 2,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 374,
+  "mast_ms": 675,
+  "ready_ms": 675,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 301,
+  "frames": 420
+ },
+ {
+  "rep": 3,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 366,
+  "mast_ms": 947,
+  "ready_ms": 947,
+  "loading_ms": 0,
+  "blank_ms": 0,
+  "pre_ms": 581,
+  "frames": 420
+ }
+]

@@ -40,7 +40,8 @@ from .envelope import KST, env, now_iso
 
 router = APIRouter()
 KINDS = {"farm_ledger": "농지대장", "dev_permit": "개발행위 허가", "public_asset": "공유재산", "river_permit": "하천 점용 허가",
-         "greenhouse": "시설원예 등록", "feedcrop": "사료작물 재배 신청"}   # feedcrop = 10-18 영농-q1(신청 작물 · 신청 면적 × 세 시점 결과 · 0110)
+         "greenhouse": "시설원예 등록", "feedcrop": "사료작물 재배 신청",   # feedcrop = 10-18 영농-q1(신청 작물 · 신청 면적 × 세 시점 결과 · 0110)
+         "direct_pay": "공익직불 신청"}   # direct_pay = 10-22 now21 제안-공익직불대장(농정과 직불 이행 점검 — 신청 필지 × 경작 · 비경작 · 0125)
 MAX_BYTES = 20 * 1024 * 1024
 EXTS = {"xlsx", "csv", "shp", "zip", "gpkg", "geojson", "json"}
 RULES_DIR = config.SERVER_ROOT / "survey" / "rules"

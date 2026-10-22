@@ -1,0 +1,38 @@
+[
+ {
+  "rep": 0,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 841,
+  "mast_ms": 1141,
+  "ready_ms": 1141,
+  "loading_ms": 484,
+  "blank_ms": 300,
+  "pre_ms": 0,
+  "frames": 403
+ },
+ {
+  "rep": 1,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 896,
+  "mast_ms": 1196,
+  "ready_ms": 1196,
+  "loading_ms": 467,
+  "blank_ms": 300,
+  "pre_ms": 0,
+  "frames": 404
+ },
+ {
+  "rep": 2,
+  "path": "/landxi/v3/lx-console/",
+  "w": 1440,
+  "first_frame_ms": 665,
+  "mast_ms": 978,
+  "ready_ms": 978,
+  "loading_ms": 467,
+  "blank_ms": 313,
+  "pre_ms": 0,
+  "frames": 404
+ }
+]
