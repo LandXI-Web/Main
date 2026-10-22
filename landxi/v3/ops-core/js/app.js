@@ -128,6 +128,7 @@ function drawOverview() {
     if (ms?.at) { const d = new Date(ms.at); if (!Number.isNaN(+d)) rows.push({ k: '장비', t: `측정 멈춤 · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 값`, lv: 'warn', go: '인프라 보기', href: INFRA }); }
   }
   if (sameLine) rows.push(sameLine);                 // 해마다 같은 판(10-22 now21 제안-같은판묶기) — 판이 섞인 해가 있을 때만
+  if (loopLine) rows.push(loopLine);
   if (dbLine) rows.push(dbLine);                     // DB 상태 한 줄(now21 저장보안-제안-DB상태) — GET /ops/db-status 한 출처
   rows.push({ k: '공지', t: annN === null ? '—' : `${annN}건`, go: '쓰기', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   if (useLine) rows.push(useLine);
@@ -137,7 +138,7 @@ function drawOverview() {
 }
 
 /* DB 상태 — 백업 시각 · 되살리기 시험 · 느린 질의(있을 때만). 백업이 30시간 넘었거나 실패 · 시험 실패면 주의 */
-let dbLine = null;
+let dbLine = null, loopLine = null;
 let sameLine = null, same = null;   // 해마다 같은 판(아래 drawSame)
 async function drawDb() {
   let j;
@@ -148,6 +149,11 @@ async function drawDb() {
   const slow = Number(j.slow_queries?.value) || 0;
   const pair = Number(j.pair_check?.mismatch?.value) || 0;     // 파일과 DB 짝 맞추기(매주) — 안 맞는 것이 있을 때만
   dbLine = { k: 'DB', t: [when, rt, slow ? `느린 질의 ${slow}` : '', pair ? `파일 짝 안 맞음 ${pair}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', go: j.ok ? '' : '인프라 보기', href: INFRA };
+  const lp = j.chatgeo_loop;                                   // ChatGEO 밤 개선 바퀴 마지막 실행 — 실패를 조용히 두지 않는다(10-22)
+  if (lp?.at) {
+    const d = new Date(lp.at), st = { ok: '돌았음', skip: '건너뜀', failed: '실패' }[lp.state] || '';
+    loopLine = { k: 'ChatGEO 개선', t: `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${st} · ${lp.why}${Number(lp.fails?.value) > 1 ? ` · 연속 ${Number(lp.fails.value)}번` : ''}`, lv: lp.state === 'failed' ? 'warn' : '', go: lp.state === 'failed' ? '인프라 보기' : '', href: INFRA };
+  }
   drawOverview();
 }
 drawDb();
