@@ -114,12 +114,15 @@ async def my_jobs(request: Request, recent: int = 4):
 MY_ANALYSES_SQL = (
     "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, j.snapshot_ready, "
     "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
-    "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname "
+    "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname, "
+    "cg.name AS chg_name, cg.sgg AS chg_sgg "
     "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
     "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
+    "LEFT JOIN change_ranges cg ON cg.id = j.options->'change'->>'range_id' "
     "WHERE (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
     # 찾은 것이 0건인 분석도 결과다(결과 타일은 만들지 않음) — '결과 없음'으로 쌓는다(QA-결과없음 · 10-11 종단 시험)
-    "AND (j.snapshot_ready OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
+    # 국토 변화(10-23 원칙 329)는 결과 타일 대신 변화 층으로 그린다 — 결과 타일이 없어도 끝난 결과면 목록에(예전 프로젝트 변화 결과 포함)
+    "AND (j.snapshot_ready OR j.options ? 'change' OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
     "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
     "  OR (j.options->>'project_infer'='true' AND (j.submitted_by=$1 OR pr.lead_id=$1 "
     "      OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pr.id AND m.user_id=$1))) "
@@ -160,6 +163,8 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
     from .spaces import CLASS_KO
     o = _jload(r["options"])
     cnt = _jload(r["counts"])
+    if o.get("change"):
+        return _change_item(r, p, o, cnt)
     proj = bool(o.get("project_infer"))
     key = f"project:{r['pid']}" if proj else f"card:{r['card_id']}"
     gname = f"프로젝트 추론 — {r['pname']}" if proj else (r["cname"] or "분석 서비스")
@@ -191,6 +196,32 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
         "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id,
         "empty": not r["snapshot_ready"]}                                    # 찾은 것 0건 — 지도에 그릴 결과 층이 없다(범위만)
     return key, gname, proj, item
+
+
+CHANGE_KO = {"new_building": "신축", "lost_building": "소실", "to_farmland": "경작 전환", "to_paved": "포장 확대"}   # 식생 증감(참고 · 숨김)은 세지 않는다
+
+
+def _change_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, dict]:
+    """국토 변화 결과 한 줄 — 분석 서비스 '국토 변화' 묶음(예전 프로젝트에서 돌린 것도 같은 묶음 · 10-23 원칙 329).
+    지도에는 결과 타일 대신 변화 층(kit/change-layer.js)으로 그린다(change: True). 수 = 변화 폴리곤(식생 증감 빼고 · 지도 카드와 같은 셈)."""
+    from .regions import region_of
+    c = o.get("change") or {}
+    sgg = o.get("sgg_cd") or ((r["chg_sgg"] or [None])[0] if "chg_sgg" in r.keys() else None)
+    rg = region_of(sgg) if sgg else None
+    name = (r["chg_name"] if "chg_name" in r.keys() else None) or o.get("range_name") or ""   # 대상지 이름(대상지 표 한 출처 · 예전 작업은 기록에 이름이 없음)
+    region = name or (rg or {}).get("name") or ""            # 대상지 이름이 먼저(구역선은 시군구 경계에 걸쳐 첫 시군구가 다른 곳일 수 있다)
+    by = [{"cls": CHANGE_KO[k], "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0)) if k in CHANGE_KO]
+    total = sum(x["n"] for x in by)
+    fin = _iso(r["finished_at"])
+    ya, yb = c.get("year_a"), c.get("year_b")
+    b = c.get("bbox4326")
+    item = {"job": r["id"], "set": r["result_set"], "region": region or "—", "sgg_cd": (rg or {}).get("sgg_cd") or sgg,
+            "scope": f"{ya}년 → {yb}년 비교" if ya and yb else "", "change": True,
+            "imagery": {"id": None, "name": "", "year": None, "word": ""},
+            "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
+            "by_class": by, "bounds": [round(float(v), 6) for v in b] if b and len(b) == 4 else None, "finished_at": fin,
+            "mine": r["submitted_by"] == p.user_id, "empty": False}
+    return "card:card-change", r["cname"] or "국토 변화 분석서비스", False, item
 
 
 async def my_job(p: Principal, job: str) -> dict | None:

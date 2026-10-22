@@ -950,8 +950,7 @@ async def my_imagery(cid: str, body: dict, request: Request):
     from .regions import regions_base
     w = RQ.lx_who(request)
     p = w.p
-    if cid == "card-change":
-        raise ApiError("bad_request", "국토 변화 분석서비스는 대상지와 두 해로 분석합니다 — 영상을 올리지 않습니다")
+    # 국토 변화 분석서비스도 내 영상을 받는다(10-23 원칙 329 — 시점마다 국토지리정보원 해 · 공유 데이터 · 내 영상 가운데 하나)
     did = str(body.get("draft_id") or "")
     if not re.fullmatch(r"dr_[0-9a-f]{12}", did):
         raise ApiError("not_found", "올린 파일이 없습니다")
@@ -1025,7 +1024,7 @@ async def my_imagery(cid: str, body: dict, request: Request):
     _, cands, best = await _img_candidates(rg["sgg_cd"], p.user_id)
     hit = next((c for c in cands if c["id"] == iid), None)
     item = None
-    if hit:
+    if hit and cid != "card-change":          # 국토 변화는 시군구 판정 없이 대상지 · 시점 고르기에서 씀(GET /change/ranges/{id}/imagery)
         _, geoms, _ = regions_base()
         async with db(realm="lx") as conn:
             cv = await _cv(conn, cid)

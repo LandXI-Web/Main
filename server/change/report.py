@@ -22,6 +22,21 @@ def _n(v) -> str:
     return f"{v:,}"
 
 
+def _src_line(run: dict, ya: int, yb: int) -> str:
+    """두 시점 영상 한 줄 — 국토지리정보원 두 해 · 또는 등록 영상(공유 데이터 · 내 영상 · 10-23 원칙 329)."""
+    import json
+    sr = run.get("sources") or {}
+    if isinstance(sr, str):
+        sr = json.loads(sr)
+    if not any((sr.get(k) or {}).get("kind") == "imagery" for k in ("a", "b")):
+        return f"국토지리정보원 항공정사영상 {ya}년 → {yb}년"
+    def w(s, y):
+        if (s or {}).get("kind") != "imagery":
+            return f"{y}년 국토지리정보원 항공영상"
+        return f"{y}년 {'내 영상' if s.get('own') else '공유 데이터'} · {s.get('name') or '영상'}"
+    return f"{w(sr.get('a'), ya)} → {w(sr.get('b'), yb)}"
+
+
 def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
     """보고서 한 장의 내용(화면 미리보기 · PDF 가 같은 것을 그린다)."""
     ya, yb = run["year_a"], run["year_b"]
@@ -35,7 +50,7 @@ def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
     made = dt.datetime.now(KST).strftime("%Y. %m. %d.")
     overview = [
         f"대상지: {rng['name']} — {rng.get('kind_label') or '구역선'} · 버퍼 {rng.get('buffer') or '-'} · 분석 범위 {stats.get('range_km2', 0):,.2f}㎢",
-        f"비교 영상: 국토지리정보원 항공정사영상 {ya}년 → {yb}년(두 해 같은 격자 · {gsd})",
+        f"비교 영상: {_src_line(run, ya, yb)}(두 시점 같은 격자 · {gsd})",
         "방법: 토지피복 AI(U-Net · 12분류) 두 해 결과의 바뀐 자리 → 50㎡ 이상 변화 폴리곤 → 구역선 · 연속지적도 필지와 겹쳐 봄",
         "성격: AI 탐지 결과(결과 확인 전) — 판정은 현장 확인으로",
     ]

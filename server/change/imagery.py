@@ -162,3 +162,70 @@ def ngii_layer_xml(year: int, zoom: int) -> "Path":
     if not p.exists():
         p.write_text(body, encoding="utf-8")
     return p
+
+
+# ── 시점마다 영상 출처(10-23 원칙 329 · 분석 서비스 카드) ─────────────────────────
+# src = {"kind": "ngii", "year": 2024}                       국토지리정보원 그 해 타일(위 fetch_imagery 그대로)
+#     | {"kind": "imagery", "id": "…", "year": 2024, "path": "…"}  등록 영상 파일(공유 데이터 · 내 영상) — 같은 격자(국토지리정보원 줌 격자)로 다시 뽑아 읽음
+def grid_of(bbox_5179, zoom: int):
+    c0, r0, c1, r1 = tiles_for(bbox_5179, zoom)
+    span = NG.tile_span_m(zoom)
+    return c0, r0, c1, r1, NG.ORIGIN_X + c0 * span, NG.ORIGIN_Y - r0 * span, NG.RES[zoom]
+
+
+def _to_u8(a: np.ndarray) -> np.ndarray:
+    if a.dtype == np.uint8:
+        return a
+    a = a.astype(np.float32)
+    v = a[a > 0]
+    hi = float(np.percentile(v, 99.5)) if v.size else 1.0
+    return np.clip(a / max(hi, 1e-6) * 255.0, 0, 255).astype(np.uint8)
+
+
+def read_raster(path: str, bbox_5179, zoom: int, need=None):
+    """등록 영상 파일 → 국토지리정보원 줌 격자와 같은 칸(원점 · 해상도)으로 다시 뽑기. 영상 밖 = 0.
+    돌려줌: fetch_imagery 와 같음 — rgb, (ox, oy, res), got(영상이 닿은 256 칸 수), total."""
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.transform import Affine
+    from rasterio.vrt import WarpedVRT
+    c0, r0, c1, r1, ox, oy, res = grid_of(bbox_5179, zoom)
+    H, W = (r1 - r0 + 1) * 256, (c1 - c0 + 1) * 256
+    with rasterio.open(path) as ds:
+        kw = {"crs": "EPSG:5179", "transform": Affine(res, 0, ox, 0, -res, oy), "width": W, "height": H, "resampling": Resampling.bilinear}
+        if ds.crs is None:
+            raise ValueError("좌표계가 없는 영상입니다")
+        with WarpedVRT(ds, **kw) as v:
+            n = min(3, v.count)
+            arr = v.read(list(range(1, n + 1)))
+            try:
+                m = v.dataset_mask() > 0
+            except Exception:  # noqa: BLE001
+                m = np.ones((H, W), bool)
+    if n < 3:
+        arr = np.repeat(arr[:1], 3, axis=0)
+    rgb = _to_u8(np.moveaxis(arr, 0, -1))
+    rgb[~m] = 0
+    got = tot = 0
+    for r in range(r0, r1 + 1):
+        for c in range(c0, c1 + 1):
+            if need is not None and not need(c, r, zoom):
+                continue
+            tot += 1
+            if m[(r - r0) * 256:(r - r0 + 1) * 256, (c - c0) * 256:(c - c0 + 1) * 256].any():
+                got += 1
+    return rgb, (ox, oy, res), got, tot
+
+
+def fetch_source(src: dict, bbox_5179, zoom: int, need=None, progress=None, workers: int = 12):
+    if (src or {}).get("kind") == "imagery":
+        return read_raster(src["path"], bbox_5179, zoom, need=need)
+    return fetch_imagery(bbox_5179, int(src["year"]), zoom, workers=workers, need=need, progress=progress)
+
+
+def src_key(a: dict | None, b: dict | None) -> str | None:
+    """캐시 열쇠 — 두 시점 모두 국토지리정보원이면 None(예전 결과와 같은 열쇠)."""
+    if all((s or {}).get("kind", "ngii") == "ngii" for s in (a, b)):
+        return None
+    k = lambda s: f"imagery:{s['id']}" if s.get("kind") == "imagery" else f"ngii:{int(s['year'])}"  # noqa: E731
+    return f"a={k(a)}|b={k(b)}"

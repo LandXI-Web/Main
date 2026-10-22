@@ -140,13 +140,18 @@ async def retry(job_id: str, request: Request):
     p = require(principal(request))
     from .change import start_run
     async with db(realm="lx") as conn:
-        cr = await conn.fetchrow("SELECT range_id, year_a, year_b FROM change_runs WHERE job_id=$1", job_id)
+        cr = await conn.fetchrow("SELECT range_id, year_a, year_b, src_key, sources FROM change_runs WHERE job_id=$1", job_id)
     if not cr:
         raise ApiError("not_found", "작업을 찾을 수 없습니다")
     s0 = await job_status(job_id)
     if s0["state"] in ("queued", "running", "done"):
         return {"job_id": job_id, "state": s0["state"], "same": True}
-    res = await start_run(request, p, cr["range_id"], cr["year_a"], cr["year_b"], fresh=True)
+    sr = cr["sources"] if cr["src_key"] else None              # 등록 영상으로 비교한 것은 같은 두 영상으로 다시(10-23 원칙 329)
+    if isinstance(sr, str):
+        import json as _j
+        sr = _j.loads(sr)
+    res = await start_run(request, p, cr["range_id"], cr["year_a"], cr["year_b"], fresh=True,
+                          src_a=(sr or {}).get("a"), src_b=(sr or {}).get("b"))
     async with db(p) as conn:
         await audit(conn, p, "change.run.retry", res["job_id"], {"from": job_id}, None)
     return res

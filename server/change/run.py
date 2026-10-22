@@ -53,10 +53,31 @@ def _raster(geoms, grid: D.Grid):
     return rasterize(((g, 1) for g in gs), out_shape=(grid.H, grid.W), transform=grid.affine(), fill=0, dtype="uint8").astype(bool)
 
 
+def _sources(run_id: str, year_a: int, year_b: int, src_a=None, src_b=None):
+    """시점마다 영상 출처(10-23 원칙 329) — 주지 않으면 작업 기록(jobs.options.change.src_a · src_b)에서 읽는다(워커 어댑터는 그대로 · 이 모듈만 다시 읽힘).
+    등록 영상은 파일 경로를 여기서 푼다(작업 기록에는 영상 id 만)."""
+    if src_a is None and src_b is None:
+        try:
+            from . import db_sync
+            src_a, src_b = db_sync.sources_of(run_id)
+        except Exception:  # noqa: BLE001
+            src_a = src_b = None
+    out = []
+    for s, y in ((src_a, year_a), (src_b, year_b)):
+        s = dict(s or {"kind": "ngii", "year": y})
+        if s.get("kind") == "imagery" and not s.get("path"):
+            from workers import imagery_src
+            s["path"] = imagery_src.imagery_path(s["id"])
+        out.append(s)
+    return out[0], out[1]
+
+
 def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: int, net, parcels, device="cuda",
-            pause=None, progress=None, log=print, thumb_zoom: dict | None = None) -> dict:
+            pause=None, progress=None, log=print, thumb_zoom: dict | None = None, src_a=None, src_b=None) -> dict:
     """한 범위 전체. parcels = parcels.for_range 결과(5179). 돌려줌 = stats(dict)."""
     t0 = time.perf_counter()
+    SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
+    raster = SA.get("kind") == "imagery" or SB.get("kind") == "imagery"
     out = run_dir(run_id)
     (out / "thumbs").mkdir(parents=True, exist_ok=True)
     up = zoom == 17
@@ -78,8 +99,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         if progress:
             progress("imagery", bi, len(blocks))
         hb = (lambda d, t, _bi=bi: progress("imagery", _bi, len(blocks))) if progress else None   # 영상 받는 동안에도 숨(50타일마다)
-        A, (ox, oy, res), ga_n, tot = I.fetch_imagery(b, year_a, zoom, need=need, progress=hb)
-        B, _, gb_n, _ = I.fetch_imagery(b, year_b, zoom, need=need, progress=hb)
+        A, (ox, oy, res), ga_n, tot = I.fetch_source(SA, b, zoom, need=need, progress=hb)
+        B, _, gb_n, _ = I.fetch_source(SB, b, zoom, need=need, progress=hb)
         tiles_got["a"] += ga_n
         tiles_got["b"] += gb_n
         tiles_got["total"] += tot
@@ -87,6 +108,10 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
             continue
         grid = D.Grid(ox, oy, res, A.shape[0], A.shape[1])
         aoi = _raster([rng5179.intersection(box(*b))], grid)
+        if raster:                                    # 등록 영상은 범위 일부만 덮을 수 있다 — 두 시점 모두 영상이 있는 곳만 비교
+            aoi &= (A.max(axis=-1) > 0) & (B.max(axis=-1) > 0)
+            if not aoi.any():
+                continue
         if progress:
             progress("infer", bi, len(blocks))
         ga = D.infer_groups(net, A, up, device=device, pause=pause)
@@ -159,11 +184,11 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         mnx, mny, mxx, mxy = p.bounds
         side = max(40.0, 2.2 * max(mxx - mnx, mxy - mny))
         cx, cy = (mnx + mxx) / 2, (mny + mxy) / 2
-        for tag, yr in (("a", year_a), ("b", year_b)):
-            tz = int((thumb_zoom or {}).get(yr) or zoom)          # 썸네일은 그 해 가장 고운 영상(추론 격자와 따로)
+        for tag, yr, sv in (("a", year_a, SA), ("b", year_b, SB)):
+            tz = int((thumb_zoom or {}).get(yr) or zoom) if sv.get("kind") != "imagery" else 18   # 썸네일은 그 해 가장 고운 영상(추론 격자와 따로) · 등록 영상은 25cm 격자
             pad = I.NG.tile_span_m(tz)
             bb = (cx - side / 2 - pad, cy - side / 2 - pad, cx + side / 2 + pad, cy + side / 2 + pad)
-            img, (ox, oy, res), _, _ = I.fetch_imagery(bb, yr, tz, workers=3)
+            img, (ox, oy, res), _, _ = I.fetch_source(sv, bb, tz, workers=3)
             g = D.Grid(ox, oy, res, img.shape[0], img.shape[1])
             D.thumb(img, g, p).save(out / "thumbs" / f"{row['id']}_{tag}.png", optimize=True)
     with ThreadPoolExecutor(max_workers=4) as ex:
@@ -182,7 +207,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         fc["features"].append({"type": "Feature", "id": row["id"], "geometry": mapping(g4), "properties": props})
     (out / "changes.geojson").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     stats = summarize(rows)
-    stats.update({"version": VERSION, "year_a": year_a, "year_b": year_b, "zoom": zoom, "gsd_m": 0.255 if zoom == 18 else 0.51,
+    stats.update({"version": VERSION, "year_a": year_a, "year_b": year_b, "zoom": zoom,
+                  "sources": {k: {x: v[x] for x in ("kind", "year", "id") if x in v} for k, v in (("a", SA), ("b", SB))}, "gsd_m": 0.255 if zoom == 18 else 0.51,
                   "range_km2": round(rng5179.area / 1e6, 3), "blocks": len(blocks), "tiles": tiles_got,
                   "seconds": round(time.perf_counter() - t0, 1)})
     (out / "stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1), encoding="utf-8")

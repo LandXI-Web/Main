@@ -7,7 +7,9 @@ GET  /change/years?range_id=|bbox=          쓸 수 있는 국토지리정보원
 POST /change/ranges                         구역선 파일(+버퍼 m) · PNU 목록 · 행정구역 → 범위
 GET  /change/ranges?project_id=             범위 목록 · GET /change/ranges/{id} 범위(4326) + 구역선 + 연도
 POST /change/ranges/{id}/project            프로젝트 연결 · 고른 연도
-POST /change/runs                           {range_id, year_a, year_b} → 캐시 또는 작업 제출
+GET  /change/ranges/{id}/imagery             그 대상지를 덮는 공유 데이터 영상 · 내 영상(시점 고르기 · 10-23 원칙 329)
+POST /change/runs                           {range_id, year_a, year_b} 또는 {range_id, src_a, src_b} → 캐시 또는 작업 제출(분석 서비스 작업 · card-change)
+                                            src = {kind:'ngii', year} 국토지리정보원 그 해 · {kind:'imagery', id, year?} 등록 영상(공유 데이터 · 내 영상)
 GET  /change/runs/{job}                     상태 · 요약(봉투)
 GET  /change/runs/{job}/features            변화 폴리곤(GeoJSON · 판정 상태 포함)
 GET  /change/runs/{job}/thumbs/{fid}_{a|b}.png
@@ -144,7 +146,7 @@ def range_out(d: dict, av: dict | None = None) -> dict:
 
 
 async def _save_range(p, *, name: str, kind: str, buffer_m: float, line5179, rng5179, source_name: str | None,
-                      project_id: str | None, years: list[int]) -> str:
+                      project_id: str | None, years: list[int], origin: str | None = None) -> str:
     _, P, R, _ = _mods()
     from shapely import to_wkb
     from shapely.geometry import MultiPolygon
@@ -153,11 +155,11 @@ async def _save_range(p, *, name: str, kind: str, buffer_m: float, line5179, rng
     rid = "rng_" + secrets.token_hex(6)
     async with db(p) as conn:
         await conn.execute(
-            "INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by) "
-            "VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_GeomFromWKB($7),5179), ST_SetSRID(ST_GeomFromWKB($8),5179), $9,$10,$11,$12)",
+            "INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by, origin) "
+            "VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_GeomFromWKB($7),5179), ST_SetSRID(ST_GeomFromWKB($8),5179), $9,$10,$11,$12,$13)",
             rid, "lx" if p.is_lx else p.tenant_id, project_id, name[:120], kind, buffer_m, to_wkb(line5179), to_wkb(mp), sgg, years,
-            source_name, p.user_id)
-        await audit(conn, p, "change.range.create", rid, None, {"name": name, "kind": kind, "buffer_m": buffer_m, "project_id": project_id})
+            source_name, p.user_id, origin)
+        await audit(conn, p, "change.range.create", rid, None, {"name": name, "kind": kind, "buffer_m": buffer_m, "project_id": project_id, "origin": origin})
     return rid
 
 
@@ -179,6 +181,7 @@ async def create_range(request: Request):
         name = str(form.get("name") or f.filename or "구역선")
         buffer_m = float(form.get("buffer_m") or 0)
         project_id = form.get("project_id") or None
+        origin = "card" if form.get("origin") == "card" else None
         years = [int(y) for y in re.findall(r"\d{4}", str(form.get("years") or ""))]
         kind = "line"
         src = f.filename
@@ -200,6 +203,7 @@ async def create_range(request: Request):
         name = str(body.get("name") or "대상지")
         buffer_m = float(body.get("buffer_m") or 0)
         project_id = body.get("project_id")
+        origin = "card" if body.get("origin") == "card" else None
         years = [int(y) for y in body.get("years") or []]
         src = body.get("source_name")
         if body.get("geojson"):
@@ -233,7 +237,7 @@ async def create_range(request: Request):
     except R.RangeError as e:
         raise ApiError("bad_request", str(e)) from None
     rid = await _save_range(p, name=name, kind=kind, buffer_m=buffer_m, line5179=line, rng5179=rng, source_name=src,
-                            project_id=project_id, years=years)
+                            project_id=project_id, years=years, origin=origin)
     d = await get_range_row(p, rid)
     av = await years_for_bounds(d["bounds"])
     await ensure_year_layers(av)
@@ -242,10 +246,10 @@ async def create_range(request: Request):
 
 @router.get("/change/ranges")
 async def list_ranges(request: Request, project_id: str | None = None, all: int = 0):
-    """기본 = 프로젝트에 묶인 대상지만(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부."""
+    """기본 = 프로젝트에 묶인 대상지 · 분석 서비스 카드에서 올린 대상지(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부."""
     p = require(principal(request))
     async with db(p) as conn:
-        rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL) "
+        rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
                                 "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
     out = []
     for r in rows:
@@ -302,42 +306,100 @@ async def link_project(rid: str, body: dict, request: Request):
         await conn.execute("UPDATE change_ranges SET project_id=coalesce($2, project_id), years=CASE WHEN cardinality($3::int[])>0 THEN $3 ELSE years END, "
                            "name=coalesce(nullif($4,''), name) WHERE id=$1", rid, body.get("project_id"), ys, str(body.get("name") or "")[:120])
         await audit(conn, p, "change.range.project", rid, None, {"project_id": body.get("project_id"), "years": ys})
-        if body.get("project_id") and body.get("path") in PATHS:
-            await set_path(conn, p, body["project_id"], body["path"])
     return range_out(await get_range_row(p, rid))
+# (10-23 원칙 329) 프로젝트 '진행 경로'(정식 서비스 모델로 바로 분석 · 학습 건너뜀)는 뺐다 — 학습된 모델로 하는 분석은 분석 서비스 카드에서.
+#  예전에 적힌 project_links(kind='path') 줄은 지우지 않고 읽지도 않는다.
 
 
-# 진행 경로(수정 지시서 v2 F4) — 'service' 정식 서비스 모델로 바로 분석(학습데이터 구축 · 학습 건너뜀) · 'train' 이 프로젝트 데이터로 학습(6단계 전부).
-# 변화 탐지 대상지가 묶인 프로젝트의 기본값은 'service'. 기록은 project_links(kind='path') 한 줄.
-PATHS = ("service", "train")
+# ── 시점 영상(분석 서비스 카드 — 공유 데이터 · 내 영상) ─────────────────────────
+def _year_of(year, epoch) -> int | None:
+    if year:
+        return int(year)
+    e = str(epoch or "")[:4]
+    return int(e) if e.isdigit() else None
 
 
-async def set_path(conn, p, pid: str, path: str):
-    await conn.execute("DELETE FROM project_links WHERE project_id=$1 AND kind='path' AND ref<>$2", pid, path)
-    await conn.execute("INSERT INTO project_links(project_id, kind, ref, round, by) VALUES ($1,'path',$2,1,$3) ON CONFLICT DO NOTHING", pid, path, p.user_id)
-    await audit(conn, p, "project.path", pid, None, {"path": path})
-
-
-@router.put("/change/projects/{pid}/path")
-async def put_path(pid: str, body: dict, request: Request):
+@router.get("/change/ranges/{rid}/imagery")
+async def range_imagery(rid: str, request: Request):
+    """그 대상지를 덮는 등록 영상 — 공유 데이터(직원에게 보이는 것) + 내가 올린 영상. 덮는 비율 · 해상도 · 촬영 해 · 이름."""
     p = _lx(principal(request))
-    path = str(body.get("path") or "")
-    if path not in PATHS:
-        raise ApiError("bad_request", "경로는 정식 서비스 모델 · 이 프로젝트 데이터로 학습 중 하나입니다")
-    async with db(p) as conn:
-        if not await conn.fetchval("SELECT 1 FROM projects WHERE id=$1", pid):
-            raise ApiError("not_found", "프로젝트가 없습니다")
-        await set_path(conn, p, pid, path)
-    return {"project_id": pid, "path": path}
+    d = await get_range_row(p, rid)
+    from shapely.geometry import shape
+    from workers import imagery_src as isrc
+    from .cards import OWN_ROWS
+    from .deploys import gsd_word
+    g4 = shape(d["g"])
+    async with db(realm="lx") as conn:
+        recs = await conn.fetch(isrc.SQL_ROWS)
+        mine = await conn.fetch(OWN_ROWS, p.user_id)
+        hidden = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE NOT staff_visible AND coalesce(layer->>'role','imagery')='imagery'")}
+    rows = await run_in_threadpool(isrc.rows_from, recs)
+    own = [{**r, "own": True} for r in await run_in_threadpool(isrc.rows_from, mine)] if mine else []
+    ta = max(g4.area, 1e-12)
+    items = []
+    for r in own + rows:
+        if r["id"] in hidden or not r.get("readable") or r.get("fp") is None or str(r["id"]).startswith("nat-"):
+            continue
+        try:
+            inter = r["fp"].intersection(g4)
+        except Exception:  # noqa: BLE001
+            continue
+        if inter.is_empty:
+            continue
+        cov = min(1.0, inter.area / ta)
+        if cov < 0.01:
+            continue
+        nm = r.get("name")
+        nm = (nm.get("ko") if isinstance(nm, dict) else nm) or "영상"
+        items.append({"id": r["id"], "name": nm, "own": bool(r.get("own")), "year": _year_of(r.get("year"), r.get("epoch")),
+                      "gsd_word": gsd_word(r.get("gsd_m")),
+                      "cover": env(round(cov * 100), "%", "measured", "대상지 면적 가운데 영상이 덮는 비율")})
+    items.sort(key=lambda x: (0 if x["own"] else 1, -(x["cover"]["value"] or 0), -(x["year"] or 0)))
+    return {"range_id": rid, "items": items[:40], "as_of": now_iso()}
+
+
+async def _src_in(p, s, d: dict) -> dict:
+    """시점 하나의 영상 출처 → {kind, year, id?, name, own?}. 등록 영상은 볼 수 있는 것(공유 데이터 · 내 영상)만."""
+    s = dict(s or {})
+    if s.get("kind") == "imagery":
+        iid = str(s.get("id") or "")
+        async with db(realm="lx") as conn:
+            r = await conn.fetchrow("SELECT id, name->>'ko' AS name, year, epoch, layer, staff_visible, "
+                                    "ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON($2),4326)) AS hit FROM imagery WHERE id=$1",
+                                    iid, json.dumps(d["g"]))
+        lay = (r["layer"] or {}) if r else {}
+        if isinstance(lay, str):
+            lay = json.loads(lay)
+        role = lay.get("role") or "imagery"
+        if not r or (role == "own" and lay.get("owner") != p.user_id) or (role == "imagery" and not r["staff_visible"]) or role not in ("own", "imagery"):
+            raise ApiError("not_found", "고른 영상을 찾을 수 없습니다")
+        if not r["hit"]:
+            raise ApiError("bad_request", "고른 영상이 대상지와 겹치지 않습니다")
+        yr = int(s["year"]) if str(s.get("year") or "").isdigit() else _year_of(r["year"], r["epoch"])
+        if not yr:
+            raise ApiError("bad_request", "촬영 해를 알 수 없는 영상입니다 — 촬영 해를 골라 주세요", {"field": "year"})
+        return {"kind": "imagery", "id": iid, "year": int(yr), "name": r["name"] or "영상", "own": role == "own"}
+    y = int(s.get("year") or 0)
+    if not y:
+        raise ApiError("bad_request", "시점마다 영상을 골라 주세요")
+    return {"kind": "ngii", "year": y}
+
+
+def src_word(src: dict | None, year: int) -> str:
+    """시점 한 줄(화면 · 보고서 · 채팅 같은 말)."""
+    if not src or src.get("kind", "ngii") == "ngii":
+        return f"{year}년 국토지리정보원 항공영상"
+    return f"{year}년 {'내 영상' if src.get('own') else '공유 데이터'} · {src.get('name') or '영상'}"
 
 
 # ── 실행 ───────────────────────────────────────────────────────────────────
-async def cached_run(p, range_id: str, year_a: int, year_b: int) -> dict | None:
+async def cached_run(p, range_id: str, year_a: int, year_b: int, key: str | None = None) -> dict | None:
     _, _, _, RUN = _mods()
     async with db(p) as conn:
         r = await conn.fetchrow("SELECT job_id, state FROM change_runs WHERE range_id=$1 AND year_a=$2 AND year_b=$3 AND version=$4 "
+                                "AND src_key IS NOT DISTINCT FROM $5 "
                                 "AND state IN ('done','queued','running') ORDER BY (state='done') DESC, created_at DESC LIMIT 1",
-                                range_id, year_a, year_b, _ver())
+                                range_id, year_a, year_b, _ver(), key)
     return dict(r) if r else None
 
 
@@ -347,7 +409,7 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
     async with db(realm="lx") as conn:
         src = await conn.fetchrow(
             "SELECT r.job_id, r.zoom, r.stats FROM change_runs r JOIN change_ranges g ON g.id=r.range_id JOIN change_ranges me ON me.id=$1 "
-            "WHERE r.state='done' AND r.year_a=$2 AND r.year_b=$3 AND r.version=$4 AND g.id<>me.id AND g.buffer_m=me.buffer_m "
+            "WHERE r.state='done' AND r.year_a=$2 AND r.year_b=$3 AND r.version=$4 AND r.src_key IS NULL AND g.id<>me.id AND g.buffer_m=me.buffer_m "
             "AND ST_Equals(ST_SnapToGrid(g.geom, 0.01), ST_SnapToGrid(me.geom, 0.01)) ORDER BY r.done_at DESC LIMIT 1",
             range_id, year_a, year_b, _ver())
     if not src:
@@ -380,47 +442,58 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
 INTERACTIVE_KM2 = 2.0
 
 
-async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False, via: str = "화면") -> dict:
-    """캐시(끝났거나 도는 중)가 있으면 그것 · 없으면 작업 제출. → {job_id, cached, state, zoom}"""
+async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False, via: str = "화면",
+                    src_a: dict | None = None, src_b: dict | None = None) -> dict:
+    """캐시(끝났거나 도는 중)가 있으면 그것 · 없으면 작업 제출. → {job_id, cached, state, zoom}
+    시점마다 영상 출처(src_a · src_b · 10-23 원칙 329) — 없으면 국토지리정보원 year_a · year_b(예전과 같음)."""
     I, _, R, RUN = _mods()
     d = await get_range_row(p, range_id)
-    if year_a == year_b:
+    sa = await _src_in(p, src_a or {"kind": "ngii", "year": year_a}, d)
+    sb = await _src_in(p, src_b or {"kind": "ngii", "year": year_b}, d)
+    if sa["kind"] == sb["kind"] == "ngii" and sa["year"] == sb["year"]:
         raise ApiError("bad_request", "서로 다른 두 해를 골라 주세요")
-    year_a, year_b = sorted([year_a, year_b])
+    if sa["kind"] == sb["kind"] == "imagery" and sa["id"] == sb["id"]:
+        raise ApiError("bad_request", "두 시점에 서로 다른 영상을 골라 주세요")
+    if sa["year"] > sb["year"]:                       # 앞 시점 = 앞 해
+        sa, sb = sb, sa
+    year_a, year_b = sa["year"], sb["year"]
+    key = I.src_key(sa, sb)
     if not fresh:
-        c = await cached_run(p, range_id, year_a, year_b)
+        c = await cached_run(p, range_id, year_a, year_b, key)
         if c:
             return {"job_id": c["job_id"], "cached": c["state"] == "done", "state": c["state"], "range": range_out(d),
                     "attached": c["state"] in ("queued", "running")}       # 같은 요청 — 진행 중 작업에 붙인다(새로 만들지 않음 · F5)
-        al = await same_range_run(p, range_id, year_a, year_b)
+        al = await same_range_run(p, range_id, year_a, year_b) if key is None else None
         if al:
             return {"job_id": al, "cached": True, "state": "done", "range": range_out(d)}
     _lx(p)
-    av = await years_for_bounds(d["bounds"])
-    await ensure_year_layers(av)
-    z = I.common_zoom(av, year_a, year_b)
-    if not z:
-        miss = [y for y in (year_a, year_b) if y not in av]
-        raise ApiError("no_imagery", f"{', '.join(f'{y}년' for y in miss)} 영상이 이 범위에 없습니다",
+    ng = [s0["year"] for s0 in (sa, sb) if s0["kind"] == "ngii"]
+    av = await years_for_bounds(d["bounds"]) if ng else {}
+    if ng:
+        await ensure_year_layers(av)
+    miss = [y for y in ng if y not in av]
+    if miss:
+        raise ApiError("no_imagery", f"{', '.join(f'{y}년' for y in miss)} 국토지리정보원 영상이 이 범위에 없습니다",
                        {"years": sorted(av)}, status=409)
+    z = min([av[y] for y in ng] + ([18] if len(ng) < 2 else []))   # 두 시점 같은 격자 — 국토지리정보원 해가 17(51cm)뿐이면 17 · 등록 영상은 18(25cm)
     from . import jobs as J
     km2 = float(d["m2"]) / 1e6
     interactive = km2 <= INTERACTIVE_KM2
-    opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": _ver(), "bbox4326": range_out(d)["bbox"]},
+    opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": _ver(), "bbox4326": range_out(d)["bbox"],
+                       **({"src_a": {k: sa.get(k) for k in ("kind", "id", "year")}, "src_b": {k: sb.get(k) for k in ("kind", "id", "year")}} if key else {})},
             "range_name": d["name"], "interactive": interactive, "requested_via": via}
-    if d.get("project_id"):                       # 프로젝트 4단계 추론 작업으로(분석하기 · XI ChatGEO 같은 기록 — 수정 지시서 v2 F2)
-        opts.update({"project_id": d["project_id"], "project_infer": True})
+    # 분석 서비스 작업(card-change) — 프로젝트 4단계 추론으로 적지 않는다(10-23 원칙 329 · 다른 분석 서비스와 같은 작업 장부 · 지도 서비스 '분석 서비스' 묶음)
     if d.get("sgg"):
         opts["sgg_cd"] = d["sgg"][0]
     # 대화형(작은 범위 2㎢ 이하)은 전국 분석(3) · 다른 분석(0)보다 먼저(−1) — 전국 작업은 칸 묶음 사이에서 비킨다(F3)
-    body = {"kind": "index", "model_id": "change-ap25", "card_id": "card-change", "label": f"추론 · {d['name']} · 변화 탐지 {year_a}↔{year_b}"[:60],
+    body = {"kind": "index", "model_id": "change-ap25", "card_id": "card-change", "label": f"분석 서비스 · 국토 변화 · {d['name']} {year_a}↔{year_b}"[:60],
             "priority": -1 if interactive else 0, "options": opts}
     res = await J.submit(body, request)
     jid = res["job"]["id"]
     async with db(p) as conn:
-        await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, created_by) "
-                           "VALUES ($1,$2,'lx',$3,$4,$5,$6,'queued',$7) ON CONFLICT (job_id) DO NOTHING",
-                           jid, range_id, year_a, year_b, z, _ver(), p.user_id)
+        await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, created_by, src_key, sources) "
+                           "VALUES ($1,$2,'lx',$3,$4,$5,$6,'queued',$7,$8,$9) ON CONFLICT (job_id) DO NOTHING",
+                           jid, range_id, year_a, year_b, z, _ver(), p.user_id, key, {"a": sa, "b": sb})
     return {"job_id": jid, "cached": False, "state": "queued", "zoom": z, "range": range_out(d), "events_url": res.get("events_url")}
 
 
@@ -428,7 +501,9 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
 async def create_run(body: dict, request: Request):
     p = require(principal(request))
     out = await start_run(request, p, str(body.get("range_id") or ""), int(body.get("year_a") or 0), int(body.get("year_b") or 0),
-                          bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석 서비스" if body.get("via") == "analyze" else "화면")
+                          bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석 서비스" if body.get("via") == "analyze" else "화면",
+                          src_a=body.get("src_a") if isinstance(body.get("src_a"), dict) else None,
+                          src_b=body.get("src_b") if isinstance(body.get("src_b"), dict) else None)
     if body.get("later") and out.get("state") in ("queued", "running"):     # 배치로 — 끝나면 요청함 알림(F3 · F5)
         from .deps import redis
         await (await redis()).hset(f"job:{out['job_id']}", "chg_notify", p.user_id or "")
@@ -448,6 +523,18 @@ async def run_row(p, job_id: str) -> dict:
         d["state"] = "failed" if j["state"] in ("failed", "cancelled") else d["state"] if j["state"] != "running" else "running"
         d["error"] = j["error"]
     return d
+
+
+def period_of(d: dict) -> dict:
+    """두 시점(해 · 영상 출처 한 줄) — 예전 결과(sources 없음)는 국토지리정보원 두 해."""
+    sr = d.get("sources") or {}
+    if isinstance(sr, str):
+        sr = json.loads(sr)
+    out = {}
+    for k, y in (("a", d["year_a"]), ("b", d["year_b"])):
+        s0 = sr.get(k) or {"kind": "ngii", "year": y}
+        out[k] = {"year": y, "kind": s0.get("kind", "ngii"), "word": src_word(s0, y)}
+    return out
 
 
 def stats_env(st: dict | None) -> dict | None:
@@ -487,7 +574,7 @@ async def get_run(job_id: str, request: Request):
     if isinstance(st, str):
         st = json.loads(st)
     out = {"job_id": job_id, "state": d["state"], "range_id": d["range_id"], "range_name": d["range_name"], "project_id": d.get("project_id"),
-           "period": {"a": {"year": d["year_a"]}, "b": {"year": d["year_b"]}}, "zoom": d["zoom"], "stats": stats_env(st),
+           "period": period_of(d), "zoom": d["zoom"], "stats": stats_env(st),
            "done_at": d["done_at"].isoformat(timespec="seconds") if d.get("done_at") else None, "error": d.get("error")}
     if d["state"] == "done":
         fc = await run_in_threadpool(_features, job_id)

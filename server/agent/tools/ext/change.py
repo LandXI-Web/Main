@@ -123,8 +123,8 @@ STEP_I = (91, 92, 93)
 
 
 async def _steps(ctx, ya, yb, done: int, have: bool = False):
-    # have = 두 해가 이미 프로젝트 영상(대상지에 묶인 연도) — 다시 받지 않고 그대로 쓴다(수정 지시서 v2 F1)
-    first = f"영상 확보됨 — 프로젝트에 이미 있음 · {ya}년 · {yb}년" if have else f"국토지리정보원 항공영상 확보 · {ya}년 · {yb}년"
+    # have = 두 해가 이미 이 대상지에 받아 둔 영상(대상지 연도) — 다시 받지 않고 그대로 쓴다(수정 지시서 v2 F1)
+    first = f"영상 확보됨 — 이 대상지에 이미 있음 · {ya}년 · {yb}년" if have else f"국토지리정보원 항공영상 확보 · {ya}년 · {yb}년"
     steps = [{"i": STEP_I[0], "tool": "change_imagery", "say": first},
              {"i": STEP_I[1], "tool": "change_infer", "say": "토지피복 AI 분석 · 두 해"},
              {"i": STEP_I[2], "tool": "change_join", "say": "변화 폴리곤 · 구역선 · 필지 겹쳐 보기"}]
@@ -141,7 +141,7 @@ async def _resolve_range(ctx, args, mem) -> dict:
         items = (await _get(ctx, "/change/ranges"))["items"]
         hit = [x for x in items if q in (x.get("name") or "") or q in (x.get("source_name") or "")]
         if not hit:
-            raise ToolError("not_found", f"'{q}' 대상지를 찾지 못했습니다 — 프로젝트에서 대상지를 먼저 정해 주세요", 404)
+            raise ToolError("not_found", f"'{q}' 대상지를 찾지 못했습니다 — 분석 서비스 › 국토 변화에서 대상지를 먼저 올려 주세요", 404)
         return await _get(ctx, f"/change/ranges/{hit[0]['id']}")       # 목록 줄에는 영상 연도가 없다 — 한 건으로 다시
     if not rid:
         rid = mem.get("range_id")
@@ -153,7 +153,7 @@ async def _resolve_range(ctx, args, mem) -> dict:
         if len(items) == 1:
             rid = items[0]["id"]
     if not rid:
-        raise ToolError("no_range", "어느 대상지를 비교할지 정하지 못했습니다 — 프로젝트(구역선)를 연 지도에서 물어봐 주세요", 400)
+        raise ToolError("no_range", "어느 대상지를 비교할지 정하지 못했습니다 — 분석 서비스 › 국토 변화에서 대상지를 올리거나, 대상지 이름을 함께 말해 주세요", 400)
     return await _get(ctx, f"/change/ranges/{rid}")
 
 
@@ -199,12 +199,12 @@ async def run_change_detection(args: dict, ctx) -> Out:
     except ToolError:
         est = None
     if add and not args.get("confirm"):
-        # 프로젝트에 없는 해 — 더 받을지 먼저 묻는다(영상 받기 어림 · F5). 승인하면 대상지 연도에 더하고 실행
-        out = Out(source="프로젝트 영상(대상지 연도) · 국토지리정보원 영상 목록")
+        # 대상지에 받아 두지 않은 해 — 더 받을지 먼저 묻는다(영상 받기 어림 · F5). 승인하면 대상지 연도에 더하고 실행
+        out = Out(source="대상지 영상(받아 둔 해) · 국토지리정보원 영상 목록")
         out.whitelist |= {str(y) for y in proj + [ya, yb]}
         sec = _v((est or {}).get("fetch_s"))
         k = out.env("fetch_s", "영상 받기 어림(한 해 · 초)", est["fetch_s"]) if sec else None
-        out.answer = (f"프로젝트 영상은 {' · '.join(f'{y}년' for y in proj)}뿐입니다. {' · '.join(f'{y}년' for y in add)} 영상을 더 받아 비교할까요?"
+        out.answer = (f"이 대상지에 받아 둔 영상은 {' · '.join(f'{y}년' for y in proj)}뿐입니다. {' · '.join(f'{y}년' for y in add)} 영상을 더 받아 비교할까요?"
                       + (f" 받는 데 한 해 약 {{{{{k}}}}} 걸립니다." if k else ""))
         talk.set_next(ctx, [talk.btn(f"{' · '.join(f'{y}년' for y in add)} 영상 받고 비교", q=f"{ya}년 {yb}년 영상 확보하고 비교해 줘"),
                             talk.btn(f"{proj[0]}년 → {proj[-1]}년 비교", q=f"{proj[0]}년 {proj[-1]}년 비교해서 변화 찾아 줘")] if len(proj) >= 2 else
@@ -225,7 +225,7 @@ async def run_change_detection(args: dict, ctx) -> Out:
         await _mem_set(ctx, range_id=rg["id"], project_id=rg.get("project_id"), year_a=ya, year_b=yb)
         return out
     if add:
-        # 승인된 추가 연도 — 대상지(프로젝트 영상) 연도에 더한다(한 장부 · F1)
+        # 승인된 추가 연도 — 대상지 연도에 더한다(한 장부 · F1)
         await ctx.http.post(f"/change/ranges/{rg['id']}/project", json={"years": sorted(set(proj) | {ya, yb})})
     have = {ya, yb} <= {int(y["year"]) for y in rg.get("years") or []}
     await _steps(ctx, ya, yb, 0, have)
@@ -243,7 +243,7 @@ async def run_change_detection(args: dict, ctx) -> Out:
             await _steps(ctx, ya, yb, k, have)
     else:
         # 기다리지 않는다(수정 지시서 v2 F3) — 작업을 대기열에 넣고 5초 안에 답한다.
-        # 진행 · 취소 · 다시 시도는 대화 안 작업 카드(job 블록)가 2초마다 상태를 읽어 보여 준다. 같은 작업은 프로젝트 4단계 추론 목록에도 있다.
+        # 진행 · 취소 · 다시 시도는 대화 안 작업 카드(job 블록)가 2초마다 상태를 읽어 보여 준다. 같은 작업은 분석 서비스 작업(국토 변화)으로 지도 서비스 목록에 쌓인다(원칙 329).
         await _mem_set(ctx, job_id=job, range_id=rg["id"], project_id=rg.get("project_id"), year_a=ya, year_b=yb, sel=None)
         out = Out(source=SRC)
         out.whitelist |= {str(ya), str(yb)}
@@ -252,9 +252,9 @@ async def run_change_detection(args: dict, ctx) -> Out:
         if run.get("attached"):
             out.answer = f"{name} {ya}년 → {yb}년 변화 탐지는 이미 진행 중입니다. 같은 작업의 진행 상황을 아래 카드로 이어 보여 드립니다."
         else:
-            out.answer = (f"{name} {ya}년 → {yb}년 변화 탐지를 추론 작업으로 시작했습니다. 진행 상황은 아래 작업 카드와 프로젝트 추론 단계에서 볼 수 있고, "
-                          f"끝나면 지도에 변화가 바로 표시됩니다.")
-        href = (f"../lx-release/?project={rg['project_id']}&stage=infer") if rg.get("project_id") else None
+            out.answer = (f"{name} {ya}년 → {yb}년 변화 탐지를 분석 서비스(국토 변화)로 시작했습니다. 진행 상황은 아래 작업 카드에서 볼 수 있고, "
+                          f"끝나면 지도에 변화가 바로 표시되며 지도 서비스 분석 목록에도 남습니다.")
+        href = f"../lx-map/?change={job}"
         out.blocks.append({"type": "job", "job_id": job, "label": f"{name} · {ya}년 → {yb}년 변화 탐지", "href": href,
                            "show": {"op": "change_show", "job_id": job, "range_id": rg["id"], "project_id": rg.get("project_id"),
                                     "year_a": ya, "year_b": yb, "bbox": rg.get("bbox"), "name": name}})
@@ -406,7 +406,7 @@ async def describe_change(args: dict, ctx) -> Out:
     out.answer = head + text + " (AI 의견 · 근거 아님)"
     for t, y in (("a", ya), ("b", yb)):
         out.blocks.append({"type": "image", "src": f"/api/v1/change/runs/{job}/thumbs/{pid}_{t}.png", "caption": f"{y}년 · {pid}",
-                           "tag": "국토지리정보원 항공영상"})
+                           "tag": "국토지리정보원 항공영상" if st["period"][t].get("kind", "ngii") == "ngii" else ("내 영상" if "내 영상" in (st["period"][t].get("word") or "") else "공유 데이터")})
     out.ui_actions.append({"op": "change_hl", "job_id": job, "ids": [pid], "focus": True})
     await _mem_set(ctx, job_id=job, sel=pid)
     return out
@@ -430,8 +430,11 @@ async def change_report(args: dict, ctx) -> Out:
             parts.append(f"{name} {{{{{key}}}}}")
     pa, pb = st["period"]["a"]["year"], st["period"]["b"]["year"]
     out.whitelist |= {str(pa), str(pb)}
+    for k0 in ("a", "b"):                      # 등록 영상 이름에 든 숫자(예: 촬영 해)는 지어낸 숫자가 아니다
+        out.whitelist |= set(re.findall(r"\d[\d,.]*", str(st["period"][k0].get("word") or "")))
     lines = [f"{r['title']}을 만들었습니다(개조식 · 근거 썸네일 포함).",
-             f"□ 구간 개요 — {st['range_name']} · 국토지리정보원 영상 {pa}년 → {pb}년",
+             f"□ 구간 개요 — {st['range_name']} · " + (f"국토지리정보원 영상 {pa}년 → {pb}년" if st["period"]["a"].get("kind", "ngii") == "ngii" == st["period"]["b"].get("kind", "ngii")
+                                                       else f"{st['period']['a'].get('word')} → {st['period']['b'].get('word')}"),
              f"□ 변화 요약 — 구역선 안 {{{{{k1}}}}} · 밖(버퍼) {{{{{k2}}}}}" + (f" · 판정 {' · '.join(parts)}" if parts else ""),
              f"□ 필지별 목록 · □ 권고 조치 {len(r.get('recommend') or [])}항목 — 미리보기에서 봅니다."]
     out.answer = "\n\n".join(lines)          # 개조식 한 줄씩 문단

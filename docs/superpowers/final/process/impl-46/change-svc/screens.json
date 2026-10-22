@@ -1,0 +1,30 @@
+{
+ "at": "2026-10-22T23:22:42.102Z",
+ "rows": [
+  {
+   "w": 1920,
+   "overlaps": [],
+   "words": [],
+   "hscroll": false
+  },
+  {
+   "w": 1440,
+   "overlaps": [],
+   "words": [],
+   "hscroll": false
+  },
+  {
+   "w": 1280,
+   "overlaps": [],
+   "words": [],
+   "hscroll": false
+  },
+  {
+   "w": 390,
+   "overlaps": [],
+   "words": [],
+   "hscroll": false
+  }
+ ],
+ "errs": []
+}

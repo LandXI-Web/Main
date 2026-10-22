@@ -1,0 +1,121 @@
+{
+ "at": "2026-10-22T23:27:15.017Z",
+ "base": "https://app.land-xi.dev",
+ "login": "test@lx.or.kr",
+ "steps": [
+  {
+   "k": "0 로그인",
+   "t": 4.5,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "k": "1 분석 서비스 › 국토 변화 카드",
+   "t": 9.5,
+   "url": "/landxi/v3/lx-analyze/?card=card-change#analyze"
+  },
+  {
+   "k": "2 대상지 만들기",
+   "t": 13,
+   "ms": 3059,
+   "range": "구역선 · 버퍼 30m · 범위 0.12㎢"
+  },
+  {
+   "k": "3 내 영상 올림 · 뒤 시점에 고른 채로",
+   "t": 20.5,
+   "ms": 5765,
+   "b": "안성_시험_2024 · 2024년 · 25.5cm 항공 · 대상지의 100%"
+  },
+  {
+   "k": "4 분석 시작 → 지도 서비스",
+   "t": 23.6,
+   "ms": 1616,
+   "job_tail": "9JQH3C"
+  },
+  {
+   "k": "5 분석 끝",
+   "t": 117,
+   "state": "done",
+   "reason": null,
+   "ms": 94990,
+   "ledger": [
+    "card:국토 변화 분석서비스"
+   ]
+  },
+  {
+   "k": "6 지도 서비스 결과",
+   "t": 123.8,
+   "n": 26,
+   "n_in": 5,
+   "a": "2020년 국토지리정보원 항공영상",
+   "b": "2024년 내 영상 · 안성_시험_2024",
+   "card": "국토 변화 탐지 · 2020년 → 2024년\n\n안성 시험 구간 08:27\n\n구역선 안 변화 5건 · 밖(버퍼) 21건\n\n2020년 국토지리정보원 항공영상 → 2024년 내 영상 · 안성_시험_2024\n\n신축\n0건\n밖 6\n소실\n0건\n밖 3\n경작 전환\n3건\n밖 6\n포장 확대\n2건\n밖 6\n\n두 해 항공영상에서 바뀐 곳 — 구역선 안 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.\n\n판정\n아직 없음\n현장점검\n보고서\n\n구역선 밖(버퍼)도 보기"
+  },
+  {
+   "k": "7 판정 저장",
+   "t": 128.8,
+   "status": "현장확인",
+   "history": 1
+  },
+  {
+   "k": "8 보고서",
+   "t": 136.8,
+   "pdf": {
+    "status": 200,
+    "size": 908542,
+    "head": "%PDF"
+   },
+   "overview": [
+    "대상지: 안성 시험 구간 08:27 — 구역선 · 버퍼 30m · 분석 범위 0.12㎢",
+    "비교 영상: 2020년 국토지리정보원 항공영상 → 2024년 내 영상 · 안성_시험_2024(두 시점 같은 격자 · 25cm)"
+   ]
+  },
+  {
+   "k": "9 XI ChatGEO 변화 탐지",
+   "t": 146.4,
+   "ms": 2086,
+   "ans": "안성시 · 국토 변화 · 2021년 → 2024년 항공영상\n\n안성 시험 구간 08:27 2021년 → 2024년 비교 결과, 구역선 안 변화 1건입니다. 신축 0건 · 소실 0건 · 경작 전환 1건 · 포장 확대 0건. 면적이 큰 곳은 487-1(경작 전환 · 490.1㎡)입니다. 구역선 밖(버퍼) 11건은 옅게 표시했습니다.",
+   "ledger": null
+  },
+  {
+   "k": "10 지도 서비스 목록 · 국토 변화",
+   "t": 153.9,
+   "group": "국토 변화 분석서비스",
+   "n": 9,
+   "row": "안성시 안성 시험 구간 08:27 · 2026.10.23\n26건",
+   "card": "국토 변화 탐지 · 2020년 → 2024년 /  / 안성 시험 구간 08:27",
+   "off_hides": true
+  }
+ ],
+ "ov": {
+  "01-card.png": [],
+  "02-range-form.png": [],
+  "03-own-upload.png": [],
+  "04-two-times.png": [],
+  "05-map-running.png": [
+   ".chg-card[zone=chg-card] × #k-up.k-up[zone=uploads] (pair 38x119)"
+  ],
+  "06-map-result.png": [
+   ".chg-card[zone=chg-card] × #k-up.k-up[zone=uploads] (pair 39x23)"
+  ],
+  "07-judgment.png": [],
+  "08-report.png": [],
+  "09-chatgeo.png": [],
+  "10-list-change.png": [
+   ".chg-card[zone=chg-card] × #k-up.k-up[zone=uploads] (pair 39x115)"
+  ]
+ },
+ "words": {
+  "01-card.png": [],
+  "02-range-form.png": [],
+  "03-own-upload.png": [],
+  "04-two-times.png": [],
+  "05-map-running.png": [],
+  "06-map-result.png": [],
+  "07-judgment.png": [],
+  "08-report.png": [],
+  "09-chatgeo.png": [],
+  "10-list-change.png": []
+ },
+ "errs": [],
+ "range_id_tail": "e78cef"
+}

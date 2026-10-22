@@ -169,36 +169,31 @@ def test_same_range_reuses_result():
 
 
 def test_job_status_cancel_retry_path():
-    """수정 지시서 v2 — 작업 상태(작업 대기) · 같은 요청은 진행 중 작업에 붙음 · 취소 → 취소됨 · 다시 시도 = 새 작업 ·
-    프로젝트 4단계 목록에 같은 작업 · 정식 서비스 모델 경로면 학습데이터 구축 · 학습 '건너뜀(정식 모델 사용)' · 어림."""
+    """작업 상태(작업 대기) · 같은 요청은 진행 중 작업에 붙음 · 취소 → 취소됨 · 다시 시도 = 새 작업 · 어림.
+    10-23 원칙 329: 국토 변화는 분석 서비스 작업 — 프로젝트 4단계 추론으로 적지 않고 '건너뜀(정식 모델 사용)' 단계도 없다."""
     from change import parcels as P
     t = _tok()
     lm = P.land_master()
     pn = list(lm.index[100:104])
-    rg = httpx.post(B + "/change/ranges", headers=H(t), json={"name": "시험 작업 상태", "buffer_m": 20, "pnus": pn}, timeout=180).json()
-    pr = httpx.post(B + "/projects", headers=H(t), json={"name": "시험 변화 경로", "regions": rg["sgg"]}, timeout=60)
-    assert pr.status_code in (200, 201), pr.text
-    pid = pr.json()["id"]
+    rg = httpx.post(B + "/change/ranges", headers=H(t), json={"name": "시험 작업 상태", "buffer_m": 20, "pnus": pn, "origin": "card"}, timeout=180).json()
+    assert any(x["id"] == rg["id"] for x in httpx.get(B + "/change/ranges", headers=H(t), timeout=60).json()["items"]), "카드에서 올린 대상지가 목록에"
     ys = sorted(y["year"] for y in rg["imagery_years"])
     a, b = ys[0], ys[-1]
-    r = httpx.post(B + f"/change/ranges/{rg['id']}/project", headers=H(t), json={"project_id": pid, "years": [a, b], "path": "service"}, timeout=60)
-    assert r.status_code == 200, r.text
-    v = httpx.get(B + f"/projects/{pid}", headers=H(t), timeout=60).json()
-    st = {s["key"]: s for s in v["stages"]}
-    assert st["ingest"]["state"] == "done", st["ingest"]
-    assert st["label"]["state"] == "skip" and "정식 모델" in st["label"]["word"], st["label"]
-    assert st["train"]["state"] == "skip" and "학습 불필요" in (v["path"] or {}).get("note", ""), v["path"]
     es = httpx.get(B + f"/change/ranges/{rg['id']}/estimate", headers=H(t), params={"years": f"{a},{b}"}, timeout=60).json()
     assert es["fetch_s"]["basis"] == "estimate" and es["fetch_s"]["value"] >= 1 and es["big"] is False
-    j = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "year_a": a, "year_b": b, "via": "chatgeo"}, timeout=120).json()
+    j = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "src_a": {"kind": "ngii", "year": a}, "src_b": {"kind": "ngii", "year": b},
+                                                            "via": "analyze"}, timeout=120).json()
     job = j["job_id"]
     s = httpx.get(B + f"/change/runs/{job}/status", headers=H(t), timeout=30).json()
     assert s["state"] == "queued" and s["word"] == "작업 대기" and s["can_cancel"], s
-    j2 = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "year_a": a, "year_b": b}, timeout=60).json()
-    assert j2["job_id"] == job and j2.get("attached") is True, j2
-    inf = httpx.get(B + f"/release/projects/{pid}/infer", headers=H(t), timeout=60).json()
-    row = next(x for x in inf["jobs"] if x["job"] == job)
-    assert row["change"]["via"] == "XI ChatGEO" and row["state_label"].startswith("작업 대기"), row
+    j2 = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "year_a": a, "year_b": b, "via": "chatgeo"}, timeout=60).json()
+    assert j2["job_id"] == job and j2.get("attached") is True, j2       # XI ChatGEO 도 같은 길 · 같은 작업
+    import psycopg
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        o = c.execute("SELECT card_id, options FROM jobs WHERE id=%s", (job,)).fetchone()
+    assert o[0] == "card-change" and not o[1].get("project_infer") and not o[1].get("project_id"), o
+    me = httpx.get(B + "/me/analyses", headers=H(t), timeout=60).json()
+    assert any(x["job"] == job and "프로젝트" not in x["name"] for x in me["running"]), me["running"]
     c = httpx.post(B + f"/change/runs/{job}/cancel", headers=H(t), timeout=30).json()
     assert c["state"] == "cancelled" and c["word"] == "취소됨" and c["can_retry"], c
     rr = httpx.post(B + f"/change/runs/{job}/retry", headers=H(t), timeout=60)
@@ -208,4 +203,40 @@ def test_job_status_cancel_retry_path():
     s = httpx.get(B + f"/change/runs/{nj}/status", headers=H(t), timeout=30).json()
     assert s["state"] == "queued", s
     httpx.post(B + f"/change/runs/{nj}/cancel", headers=H(t), timeout=30)
-    httpx.delete(B + f"/projects/{pid}", headers=H(t), timeout=30)
+
+
+def test_imagery_source_run():
+    """시점 하나를 등록 영상(공유 데이터)으로 — 대상지를 덮는 영상 목록 · 작업 기록에 출처 · 캐시 열쇠가 국토지리정보원 두 해와 다름."""
+    import pytest
+    t = _tok()
+    items = httpx.get(B + "/change/ranges", headers=H(t), params={"all": 1}, timeout=60).json()["items"]
+    hit = None
+    for rg in items[:20]:
+        im = httpx.get(B + f"/change/ranges/{rg['id']}/imagery", headers=H(t), timeout=120)
+        assert im.status_code == 200, im.text
+        it = next((x for x in im.json()["items"] if x.get("year")), None)
+        if it:
+            hit = (rg, it)
+            break
+    if not hit:
+        pytest.skip("대상지를 덮는 등록 영상 없음")
+    rg, it = hit
+    full = httpx.get(B + f"/change/ranges/{rg['id']}", headers=H(t), timeout=120).json()
+    ys = sorted(y["year"] for y in full.get("imagery_years") or [] if y["year"] != it["year"])
+    if not ys:
+        pytest.skip("다른 해 국토지리정보원 영상 없음")
+    j = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "src_a": {"kind": "ngii", "year": ys[0]},
+                                                            "src_b": {"kind": "imagery", "id": it["id"]}, "via": "analyze"}, timeout=120)
+    assert j.status_code == 202, j.text
+    job = j.json()["job_id"]
+    import psycopg
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        k, srcs, o = c.execute("SELECT r.src_key, r.sources, j.options FROM change_runs r JOIN jobs j ON j.id=r.job_id WHERE r.job_id=%s", (job,)).fetchone()
+    assert k and "imagery:" in k and srcs, (k, srcs)
+    assert {"src_a", "src_b"} <= set(o["change"]), o
+    run = httpx.get(B + f"/change/runs/{job}", headers=H(t), timeout=60).json()
+    kinds = {run["period"]["a"]["kind"], run["period"]["b"]["kind"]}
+    assert kinds == {"ngii", "imagery"}, run["period"]
+    bad = httpx.post(B + "/change/runs", headers=H(t), json={"range_id": rg["id"], "src_a": {"kind": "imagery", "id": "nope"}, "src_b": {"kind": "ngii", "year": ys[0]}}, timeout=60)
+    assert bad.status_code == 404, bad.text
+    httpx.post(B + f"/change/runs/{job}/cancel", headers=H(t), timeout=30)

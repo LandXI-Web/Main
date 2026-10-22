@@ -27,3 +27,12 @@ def run_done(job_id: str, stats: dict):
         c.execute("UPDATE change_runs SET state='done', stats=%s::jsonb, done_at=now(), version=coalesce(%s, version) WHERE job_id=%s",
                   (json.dumps(stats, ensure_ascii=False), stats.get("version"), job_id))     # 실제로 계산한 방식(워커가 다시 읽은 판)
         c.commit()
+
+
+def sources_of(job_id: str):
+    """작업 기록의 시점별 영상 출처(없으면 None · None = 국토지리정보원 두 해)."""
+    with _conn() as c:
+        row = c.execute("SELECT options->'change'->'src_a', options->'change'->'src_b' FROM jobs WHERE id=%s", (job_id,)).fetchone()
+    if not row:
+        return None, None
+    return row[0], row[1]
