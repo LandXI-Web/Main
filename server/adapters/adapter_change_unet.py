@@ -81,44 +81,34 @@ class Adapter:
     def run_shard(self, shard, read, opts):
         import importlib
 
-        from change import db_sync, detect as _D, imagery as _I, run as R
+        from change import db_sync, detect as _D, imagery as _I, run as R, worker_hooks as _H
         importlib.reload(_I)
         db_sync = importlib.reload(db_sync)
         importlib.reload(_D)                              # 계산 방식(change/detect · run)을 고치면 워커를 다시 켜지 않아도 다음 작업부터 반영
         R = importlib.reload(R)
+        H = importlib.reload(_H)                          # 진행 · 멈춤 · 숨(worker_hooks)도 작업마다 다시 읽는다
         p = shard.params or {}
         job_id = shard.job_id
         t0 = time.perf_counter()
-        emit = _main_attr("emit")
-        llm_wanted = _main_attr("llm_wanted")
-        last = {"t": 0.0}
-
-        def pause():
-            self._touch(job_id, shard.id)
-            while llm_wanted and llm_wanted():            # XI ChatGEO 그림 · 말 요청이 이 장을 원하면 비킨다
-                time.sleep(0.5)
-                self._touch(job_id, shard.id)
-            if self.thr is not None:
-                self.thr(lambda: self._touch(job_id, shard.id), "변화 탐지")
-
-        def progress(stage, i, n):
-            self._touch(job_id, shard.id)
-            now = time.time()
-            if emit and (now - last["t"] > 1.0 or i == n):
-                last["t"] = now
-                try:
-                    emit(job_id, "change.progress", {"job_id": job_id, "stage": stage, "i": i, "n": n})
-                except Exception:  # noqa: BLE001
-                    pass
-
-        rng, line, sgg = db_sync.range_geoms(p["range_id"])
-        from change import parcels as P
-        par = P.for_range(rng, sgg)
-        from change import imagery as I
-        av = I.available_years(rng.bounds)
-        stats = R.compute(run_id=job_id, rng5179=rng, line5179=line, year_a=int(p["year_a"]), year_b=int(p["year_b"]),
-                          zoom=int(p["zoom"]), net=self.net, parcels=par, device=self.device, pause=pause, progress=progress,
-                          thumb_zoom=av)
+        ctl = H.Control(job_id, shard.id, thr=self.thr, touch=lambda: self._touch(job_id, shard.id),
+                        emit=_main_attr("emit"), llm_wanted=_main_attr("llm_wanted"))
+        try:
+            rng, line, sgg = db_sync.range_geoms(p["range_id"])
+            from change import parcels as P
+            par = P.for_range(rng, sgg)
+            ctl.check()
+            from change import imagery as I
+            av = I.available_years(rng.bounds)
+            stats = R.compute(run_id=job_id, rng5179=rng, line5179=line, year_a=int(p["year_a"]), year_b=int(p["year_b"]),
+                              zoom=int(p["zoom"]), net=self.net, parcels=par, device=self.device, pause=ctl.pause, progress=ctl.progress,
+                              thumb_zoom=av)
+        except H.JobStopped:
+            # 취소됨 · 시간초과 — 결과 없이 칸을 끝낸다(워커가 다시 넣지 않게 · GPU 를 바로 놓음)
+            return ShardResult(features=[], metrics={"change": {"stopped": True}, "basis": "inferred", "source": "change/unet"}, n=0,
+                               ms=int((time.perf_counter() - t0) * 1000))
+        except Exception as e:  # noqa: BLE001
+            ctl.failed(e)
+            raise
         feats = []
         fc = json.loads((R.run_dir(job_id) / "changes.geojson").read_text(encoding="utf-8"))
         from shapely.geometry import shape
@@ -127,6 +117,7 @@ class Adapter:
             feats.append(Detection(geom4326=shape(f["geometry"]), cls=t, cls_en=EN.get(t, "change"), cid=CID.get(t, 0), conf=1.0,
                                    attrs={"change_id": f["id"]}))
         ms = int((time.perf_counter() - t0) * 1000)
+        ctl.set(chg_stage="done", chg_frac=1.0)
         db_sync.run_done(job_id, stats)
         return ShardResult(features=feats, metrics={"change": stats, "basis": "inferred", "source": "change/unet"}, n=len(feats), ms=ms)
 

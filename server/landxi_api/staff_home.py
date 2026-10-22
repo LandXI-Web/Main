@@ -117,7 +117,7 @@ MY_ANALYSES_SQL = (
     "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname "
     "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
     "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
-    "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
+    "WHERE (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
     # 찾은 것이 0건인 분석도 결과다(결과 타일은 만들지 않음) — '결과 없음'으로 쌓는다(QA-결과없음 · 10-11 종단 시험)
     "AND (j.snapshot_ready OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
     "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
@@ -131,7 +131,7 @@ MY_ANALYSES_SQL = (
 MY_RUNNING_SQL = (
     "SELECT j.id, j.state, j.card_id, j.options, c.name->>'ko' AS cname, pr.name AS pname FROM jobs j "
     "LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
-    "WHERE j.kind='infer' AND j.state IN ('queued','running') AND NOT j.demo AND NOT coalesce(j.test,false) AND j.submitted_by=$1 "
+    "WHERE (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) AND j.state IN ('queued','running') AND NOT j.demo AND NOT coalesce(j.test,false) AND j.submitted_by=$1 "
     "AND (j.card_id IS NOT NULL OR j.options->>'project_infer'='true') ORDER BY j.created_at DESC LIMIT 20")
 
 

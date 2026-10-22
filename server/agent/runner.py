@@ -362,6 +362,13 @@ def register(ctx: Ctx, i: int, out: Out) -> dict:
                 continue
             b = {"type": "rows", "title": str(b.get("title") or ""), "cols": cols, "rows": rows, "ids": [str(x) for x in (b.get("ids") or [])][:50],
                  "more": int(b.get("more") or 0), **({"csv": b["csv"]} if str(b.get("csv") or "").startswith("/api/v1/change/") else {})}
+        elif b.get("type") == "job":                     # 작업 카드(국토 변화 탐지 · 수정 지시서 v2 F3) — 작업 번호 · 이름 · 프로젝트 주소 · 끝나면 지도 동작 하나
+            if not re.fullmatch(r"(job_)?[0-9A-Z]{26}", str(b.get("job_id") or "")):
+                continue
+            sh = b.get("show") if isinstance(b.get("show"), dict) and (b.get("show") or {}).get("op") == "change_show" else None
+            href = str(b.get("href") or "")
+            b = {"type": "job", "job_id": b["job_id"], "label": str(b.get("label") or "")[:80],
+                 **({"href": href} if href.startswith("../lx-release/?project=") else {}), **({"show": sh} if sh else {})}
         elif b.get("type") not in ("file", "image"):
             continue
         b["step"] = i

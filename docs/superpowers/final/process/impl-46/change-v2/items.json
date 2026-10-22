@@ -1,0 +1,67 @@
+{
+ "at": "2026-10-22 20:40",
+ "cycle": "바퀴 22 · 국토 변화 탐지 수정 지시서 v2",
+ "items": [
+  {
+   "id": "변화v2-F3",
+   "answer": "작업 카드 · 상태 여섯 · 취소 · 다시 시도 · 10분 고르기 · 알림 · 감시 · 대화형 우선",
+   "state": "구현 확인 대기",
+   "note": "취소 2.3초 · 워커 중단 31.4초 시간초과 · 전국 분석 중 6.9초 시작",
+   "shots": [
+    "9-5-chat-progress.png",
+    "11-2-cancelled.png",
+    "r2-13-1-worker-down-timeout.png",
+    "r2-13-2-retry-done.png"
+   ]
+  },
+  {
+   "id": "변화v2-F2",
+   "answer": "대화 · 분석하기 실행 = 프로젝트 4단계 추론 작업(같은 기록)",
+   "state": "구현 확인 대기",
+   "note": "요청한 곳 · 상태 · 진행률 · 사유",
+   "shots": [
+    "9-6-project-step4-running.png",
+    "9-9-project-step4-done.png",
+    "14-2-project-step4-list.png"
+   ]
+  },
+  {
+   "id": "변화v2-F1",
+   "answer": "프로젝트 영상 한 장부 · '영상 확보됨 — 프로젝트에 이미 있음'",
+   "state": "구현 확인 대기",
+   "note": "",
+   "shots": [
+    "9-3-chat-job-card.png"
+   ]
+  },
+  {
+   "id": "변화v2-F4",
+   "answer": "진행 경로(정식 서비스 모델 기본) · 2 · 3단계 건너뜀(정식 모델 사용) · 이유 한 줄",
+   "state": "구현 확인 대기",
+   "note": "",
+   "shots": [
+    "9-1-new-project-path.png",
+    "9-9-project-step4-done.png"
+   ]
+  },
+  {
+   "id": "변화v2-F5",
+   "answer": "없는 해 더 받기 선택지 · 큰 범위 어림 · 권한 밖 요청함 · 같은 요청 붙기",
+   "state": "구현 확인 대기",
+   "note": "",
+   "shots": [
+    "12-1-missing-year-choice.png"
+   ]
+  },
+  {
+   "id": "변화v2-F6",
+   "answer": "새 계정 · 새 범위(335필지) · 미리 계산 없음 — 시나리오 9~14",
+   "state": "구현 확인 대기",
+   "note": "대화 답 3.1초 · 끝까지 65초",
+   "shots": [
+    "9-8-map-result.png",
+    "14-1-analyze-run-map-card.png"
+   ]
+  }
+ ]
+}

@@ -77,8 +77,9 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     for bi, b in enumerate(blocks):
         if progress:
             progress("imagery", bi, len(blocks))
-        A, (ox, oy, res), ga_n, tot = I.fetch_imagery(b, year_a, zoom, need=need)
-        B, _, gb_n, _ = I.fetch_imagery(b, year_b, zoom, need=need)
+        hb = (lambda d, t, _bi=bi: progress("imagery", _bi, len(blocks))) if progress else None   # 영상 받는 동안에도 숨(50타일마다)
+        A, (ox, oy, res), ga_n, tot = I.fetch_imagery(b, year_a, zoom, need=need, progress=hb)
+        B, _, gb_n, _ = I.fetch_imagery(b, year_b, zoom, need=need, progress=hb)
         tiles_got["a"] += ga_n
         tiles_got["b"] += gb_n
         tiles_got["total"] += tot
@@ -137,6 +138,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                      "sgg_cd": None if prow is None else prow.get("sgg_cd"), "pnus": pnus,
                      "hidden": t in D.TYPE_HIDDEN, "geom": p})
     # 소유구분 — 브이월드 토지소유정보(분류만 · 캐시 · 10-22 사용자 허락). 못 받으면 앞 값(대장 · 토지마스터 판정) 그대로
+    if progress:
+        progress("owner", 0, 1)
     try:
         import importlib
 
@@ -165,8 +168,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
             D.thumb(img, g, p).save(out / "thumbs" / f"{row['id']}_{tag}.png", optimize=True)
     with ThreadPoolExecutor(max_workers=4) as ex:
         for k, _ in enumerate(ex.map(one, rows)):
-            if progress and k % 20 == 0:
-                progress("thumbs", k, len(rows))
+            if progress and (k % 10 == 0 or k == len(rows) - 1):
+                progress("thumbs", k + 1, len(rows))
     # 파일
     fc = {"type": "FeatureCollection", "features": []}
     for row in rows:

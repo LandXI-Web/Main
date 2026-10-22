@@ -63,6 +63,19 @@ OOS = [
 ]
 
 
+def _beyond(ctx, t: str) -> tuple[str, list[dict]] | None:
+    """권한 밖 요청 → 맡길 곳 단추(수정 지시서 v2 F5) — 거절로 끝내지 않는다."""
+    lx = talk.realm(ctx) == "lx"
+    rl = talk.role(ctx)
+    if lx and rl != "admin" and re.search(r"(?:배포|모델\s*등록|기관\s*공유)[^.?!]{0,6}승인(?:해|하|을\s*해|\s*처리)", t):
+        return "승인은 LX 관리자가 합니다 — 프로젝트 마지막 단계에서 배포 신청을 보내면 관리자 요청함에 올라갑니다.", [
+            {"label": "프로젝트 열기", "href": "/landxi/v3/lx-project/"}, {"label": "요청함 열기", "href": "/landxi/v3/lx-inbox/"}]
+    if not lx and re.search(r"(?:변화\s*탐지|두\s*해\s*비교)[^.?!]{0,10}(?:돌려|실행|해\s*줘|해줘|찾아)", t):
+        return "변화 탐지 실행은 LX 직원이 합니다 — '분석 요청'으로 범위와 연도를 보내면 LX 가 맡아 결과를 공유합니다.", [
+            {"label": "분석 요청 열기", "href": "/landxi/v3/gov-request/"}]
+    return None
+
+
 def _usage(ctx, t: str) -> tuple[str, list[dict]] | None:
     """사용법 — 화면 이름 표에서만(지어낸 절차 0). → (문장, 단추)."""
     lx = talk.realm(ctx) == "lx"
@@ -165,6 +178,9 @@ def early(ctx, msg: str) -> dict | None:
         return _trust()
     if re.search(r"다른\s*기관[^.?!]{0,6}사용(?:량|현황)", t) and not (talk.realm(ctx) == "lx" and talk.role(ctx) == "admin"):
         return {"kind": "scope", "text": refuse("scope", "다른 기관 사용량 보기"), "next": _home_btns(ctx)}
+    bz = _beyond(ctx, t)
+    if bz:
+        return {"kind": "screen", "text": bz[0], "next": bz[1]}
     if USAGE_ASK.search(t) and not DATA_WORDS.search(re.sub(r"분석\s*요청|촬영\s*요청|배포\s*신청|데이터\s*올리기", "", t)):
         u = _usage(ctx, t)
         if u:

@@ -35,7 +35,8 @@ SPECS = {
                        "'철도용지도 같은 방식으로'. 같은 범위 · 같은 두 해 결과가 있으면 그것을 쓴다.",
         "properties": {"range_id": {"type": "string", "description": "대상지 id(없으면 지금 화면 · 직전 답의 대상지)"},
                        "range_query": {"type": "string", "description": "대상지 이름 일부(예: '철도')"},
-                       "year_a": {"type": "integer", "description": "앞 해"}, "year_b": {"type": "integer", "description": "뒤 해"}}},
+                       "year_a": {"type": "integer", "description": "앞 해"}, "year_b": {"type": "integer", "description": "뒤 해"},
+                       "confirm": {"type": "boolean", "description": "사용자가 '영상 더 받고 비교' · '배치로 보내기'를 고른 답이면 true"}}},
     "intersect_parcels": {
         "description": "변화 탐지 결과 × 필지 — 조건(변화 유형 · 지목 · 소유구분 · 구역선 안/밖)에 맞는 필지 표(지번 · 지목 · 소유구분 · 유형 · 면적) + 지도 강조 + CSV. "
                        "'지목이 도로인데 건물 생긴 필지만 표로'.",
@@ -121,8 +122,10 @@ async def _emit(ctx, event, data):
 STEP_I = (91, 92, 93)
 
 
-async def _steps(ctx, ya, yb, done: int):
-    steps = [{"i": STEP_I[0], "tool": "change_imagery", "say": f"국토지리정보원 항공영상 확보 · {ya}년 · {yb}년"},
+async def _steps(ctx, ya, yb, done: int, have: bool = False):
+    # have = 두 해가 이미 프로젝트 영상(대상지에 묶인 연도) — 다시 받지 않고 그대로 쓴다(수정 지시서 v2 F1)
+    first = f"영상 확보됨 — 프로젝트에 이미 있음 · {ya}년 · {yb}년" if have else f"국토지리정보원 항공영상 확보 · {ya}년 · {yb}년"
+    steps = [{"i": STEP_I[0], "tool": "change_imagery", "say": first},
              {"i": STEP_I[1], "tool": "change_infer", "say": "토지피복 AI 분석 · 두 해"},
              {"i": STEP_I[2], "tool": "change_join", "say": "변화 폴리곤 · 구역선 · 필지 겹쳐 보기"}]
     if done == 0:
@@ -174,14 +177,62 @@ async def run_change_detection(args: dict, ctx) -> Out:
         raise ToolError("no_imagery", "이 대상지에는 비교할 두 해 영상이 없습니다", 409)
     ya, yb = sorted(want[:2])
     missing = [y for y in (ya, yb) if y not in ys]
+    from agent import talk
     if missing:
+        # 국토지리정보원에도 없는 해 — 끝내지 않고 가까운 있는 해로 비교하는 선택지(수정 지시서 v2 F5)
         out = Out(source="국토지리정보원 영상 목록")
         out.whitelist |= {str(y) for y in ys + [ya, yb]}
-        out.answer = (f"{' · '.join(f'{y}년' for y in missing)} 국토지리정보원 영상이 이 대상지에 없습니다. "
-                      f"있는 해: {' · '.join(f'{y}년' for y in ys)}.")
+        near = lambda y: min(ys, key=lambda v: abs(v - y)) if ys else y  # noqa: E731
+        na, nb = sorted({near(ya), near(yb)}) if len({near(ya), near(yb)}) == 2 else (ys[0], ys[-1]) if len(ys) >= 2 else (ya, yb)
+        out.whitelist |= {str(na), str(nb)}
+        out.answer = (f"{' · '.join(f'{y}년' for y in missing)} 국토지리정보원 항공영상은 이 대상지에 없습니다. "
+                      f"받을 수 있는 해는 {' · '.join(f'{y}년' for y in ys)}입니다. {na}년 → {nb}년으로 비교할까요?")
+        if len(ys) >= 2:
+            talk.set_next(ctx, [talk.btn(f"{na}년 → {nb}년 비교", q=f"{na}년 {nb}년 영상 확보하고 비교해 줘")], front=True)
+        await _mem_set(ctx, range_id=rg["id"], project_id=rg.get("project_id"))
         return out
-    await _steps(ctx, ya, yb, 0)
-    r = await ctx.http.post("/change/runs", json={"range_id": rg["id"], "year_a": ya, "year_b": yb})
+    proj = sorted({int(y["year"]) for y in rg.get("years") or []})
+    add = [y for y in (ya, yb) if proj and y not in proj]
+    est = None
+    try:
+        est = await _get(ctx, f"/change/ranges/{rg['id']}/estimate", years=f"{ya},{yb}")
+    except ToolError:
+        est = None
+    if add and not args.get("confirm"):
+        # 프로젝트에 없는 해 — 더 받을지 먼저 묻는다(영상 받기 어림 · F5). 승인하면 대상지 연도에 더하고 실행
+        out = Out(source="프로젝트 영상(대상지 연도) · 국토지리정보원 영상 목록")
+        out.whitelist |= {str(y) for y in proj + [ya, yb]}
+        sec = _v((est or {}).get("fetch_s"))
+        k = out.env("fetch_s", "영상 받기 어림(한 해 · 초)", est["fetch_s"]) if sec else None
+        out.answer = (f"프로젝트 영상은 {' · '.join(f'{y}년' for y in proj)}뿐입니다. {' · '.join(f'{y}년' for y in add)} 영상을 더 받아 비교할까요?"
+                      + (f" 받는 데 한 해 약 {{{{{k}}}}} 걸립니다." if k else ""))
+        talk.set_next(ctx, [talk.btn(f"{' · '.join(f'{y}년' for y in add)} 영상 받고 비교", q=f"{ya}년 {yb}년 영상 확보하고 비교해 줘"),
+                            talk.btn(f"{proj[0]}년 → {proj[-1]}년 비교", q=f"{proj[0]}년 {proj[-1]}년 비교해서 변화 찾아 줘")] if len(proj) >= 2 else
+                      [talk.btn(f"{' · '.join(f'{y}년' for y in add)} 영상 받고 비교", q=f"{ya}년 {yb}년 영상 확보하고 비교해 줘")], front=True)
+        await _mem_set(ctx, range_id=rg["id"], project_id=rg.get("project_id"))
+        return out
+    if est and est.get("big") and not args.get("confirm"):
+        # 범위가 큰 요청(예: 시군구 전체) — 바로 돌리지 않고 어림을 보이고 묻는다(F5)
+        out = Out(source="대상지 면적 · 최근 변화 탐지 처리 속도(어림)")
+        out.whitelist |= {str(ya), str(yb)}
+        from landxi_api.envelope import env as _env
+        ka = out.env("area", "대상지 면적(㎢)", est["area"])
+        rs = _v(est.get("run_s"))
+        km = out.env("run_min", "분석 어림(분)", _env(max(1, round(rs / 60)), "min", "estimate", "최근 변화 탐지 처리 속도로 어림")) if rs else None
+        out.answer = (f"대상지가 {{{{{ka}}}}}로 넓습니다." + (f" 분석에 약 {{{{{km}}}}} 걸립니다." if km else "")
+                      + " 배치로 보내 두고 끝나면 알림으로 받을까요?")
+        talk.set_next(ctx, [talk.btn("배치로 보내기", q=f"{ya}년 {yb}년 변화 탐지 배치로 보내 줘")], front=True)
+        await _mem_set(ctx, range_id=rg["id"], project_id=rg.get("project_id"), year_a=ya, year_b=yb)
+        return out
+    if add:
+        # 승인된 추가 연도 — 대상지(프로젝트 영상) 연도에 더한다(한 장부 · F1)
+        await ctx.http.post(f"/change/ranges/{rg['id']}/project", json={"years": sorted(set(proj) | {ya, yb})})
+    have = {ya, yb} <= {int(y["year"]) for y in rg.get("years") or []}
+    await _steps(ctx, ya, yb, 0, have)
+    if have:
+        await _steps(ctx, ya, yb, 1, have)
+    r = await ctx.http.post("/change/runs", json={"range_id": rg["id"], "year_a": ya, "year_b": yb, "via": "chatgeo",
+                                                  **({"later": True} if est and est.get("big") else {})})
     if r.status_code >= 400:
         raise ToolError("change_error", ((r.json() or {}).get("error") or {}).get("message") or "변화 탐지를 시작하지 못했습니다", r.status_code)
     run = r.json()
@@ -189,30 +240,27 @@ async def run_change_detection(args: dict, ctx) -> Out:
     if run.get("cached"):
         for k in (1, 2, 3):
             await asyncio.sleep(0.35)
-            await _steps(ctx, ya, yb, k)
+            await _steps(ctx, ya, yb, k, have)
     else:
-        last = -1
-        deadline = time.time() + 15 * 60
-        while time.time() < deadline:
-            st = await _get(ctx, f"/change/runs/{job}")
-            stage = 0
-            if st["state"] == "running":
-                stage = 1
-            if st["state"] == "done":
-                stage = 3
-            if st["state"] == "failed":
-                raise ToolError("change_failed", "변화 탐지가 끝나지 못했습니다 — 잠시 뒤 다시 해 주세요", 500)
-            if stage != last:
-                await _steps(ctx, ya, yb, stage)
-                last = stage
-            await _emit(ctx, "agent.tool.progress", {"i": 1, "ui_actions": []})
-            if stage == 3:
-                break
-            await asyncio.sleep(3)
+        # 기다리지 않는다(수정 지시서 v2 F3) — 작업을 대기열에 넣고 5초 안에 답한다.
+        # 진행 · 취소 · 다시 시도는 대화 안 작업 카드(job 블록)가 2초마다 상태를 읽어 보여 준다. 같은 작업은 프로젝트 4단계 추론 목록에도 있다.
+        await _mem_set(ctx, job_id=job, range_id=rg["id"], project_id=rg.get("project_id"), year_a=ya, year_b=yb, sel=None)
+        out = Out(source=SRC)
+        out.whitelist |= {str(ya), str(yb)}
+        name = rg.get("name") or "대상지"
+        out.whitelist.add(str(name))
+        if run.get("attached"):
+            out.answer = f"{name} {ya}년 → {yb}년 변화 탐지는 이미 진행 중입니다. 같은 작업의 진행 상황을 아래 카드로 이어 보여 드립니다."
         else:
-            out = Out(source=SRC)
-            out.answer = "변화 탐지를 대기열에 넣었습니다. 끝나면 이 대상지 지도에서 결과를 볼 수 있습니다."
-            return out
+            out.answer = (f"{name} {ya}년 → {yb}년 변화 탐지를 추론 작업으로 시작했습니다. 진행 상황은 아래 작업 카드와 프로젝트 추론 단계에서 볼 수 있고, "
+                          f"끝나면 지도에 변화가 바로 표시됩니다.")
+        href = (f"../lx-release/?project={rg['project_id']}&stage=infer") if rg.get("project_id") else None
+        out.blocks.append({"type": "job", "job_id": job, "label": f"{name} · {ya}년 → {yb}년 변화 탐지", "href": href,
+                           "show": {"op": "change_show", "job_id": job, "range_id": rg["id"], "project_id": rg.get("project_id"),
+                                    "year_a": ya, "year_b": yb, "bbox": rg.get("bbox"), "name": name}})
+        out.data = {"대상지": name, "앞 해": f"{ya}년", "뒤 해": f"{yb}년", "상태": "분석 중"}
+        ctx.state["change_ms"] = round((time.perf_counter() - t0) * 1000)
+        return out
     st = await _get(ctx, f"/change/runs/{job}")
     s = st["stats"] or {}
     bt = s.get("by_type") or {}
@@ -440,6 +488,9 @@ def ROUTE(msg: str, ctx):
     if lx and RAIL_RX.search(t):
         return {"tool": "run_change_detection", "args": {"range_query": "철도"}}
     ys = _years(t)
+    # 선택지 답(수정 지시서 v2 F5) — '○년 ○년 영상 확보하고 비교' · '변화 탐지 배치로 보내' = 승인하고 실행
+    if lx and len(ys) == 2 and ((re.search(r"영상\s*(?:확보|받)", t) and CMP_RX.search(t)) or (re.search(r"배치로", t) and RUN_RX.search(t))):
+        return {"tool": "run_change_detection", "args": {"year_a": min(ys), "year_b": max(ys), "confirm": True}}
     if lx and RUN_RX.search(t) and ((len(ys) == 2 and (CMP_RX.search(t) or RANGE_RX.search(t))) or (RANGE_RX.search(t) and _has_change_ctx(ctx))):
         a = {}
         if len(ys) == 2:

@@ -278,7 +278,7 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
     rows = await conn.fetch("SELECT j.id, j.state, j.model_id, j.imagery_id, j.options, j.counts, j.shards_total, j.shards_done, j.submitted_by, "
                             "j.created_at, j.finished_at, j.error, ST_Area(j.aoi::geography)/1e6 AS km2, m.name AS mname, m.metrics AS mmetrics, i.name AS iname, i.sgg_cd "
                             "FROM jobs j LEFT JOIN models m ON m.id = j.model_id LEFT JOIN imagery i ON i.id = j.imagery_id "
-                            "WHERE j.kind='infer' AND j.options->>'project_id' = $1 AND NOT coalesce(j.test,false) "
+                            "WHERE (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) AND j.options->>'project_id' = $1 AND NOT coalesce(j.test,false) "
                             "ORDER BY j.created_at DESC LIMIT $2", pid, limit)
     from .deps import redis
     rd = await redis()
@@ -290,6 +290,15 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
         total = int(live.get("shards_total") or x["shards_total"] or 0)
         cnt = x["counts"] or {}
         o = x["options"] or {}
+        chg = o.get("change") or None
+        if chg:                                           # 국토 변화 탐지(XI ChatGEO · 분석하기 · 같은 기록 — 수정 지시서 v2 F2)
+            try:
+                from .change_jobs import job_status
+                cs = await job_status(x["id"])
+            except Exception:  # noqa: BLE001
+                cs = None
+            if cs:
+                state = {"timeout": "failed"}.get(cs["state"], cs["state"])
         out.append({"job": x["id"], "state": state, "state_label": {"queued": "대기 중", "running": "분석 중", "done": "끝", "failed": "멈춤",
                                                                      "cancelled": "취소"}.get(state, state),
                     "progress": {"shards_done": done, "shards_total": total} if state in ("queued", "running") else None,
@@ -301,7 +310,16 @@ async def _infer_jobs(conn, pid: str, people: dict, limit: int = 30) -> list[dic
                     "found": env(sum(int(v or 0) for v in cnt.values()) if state == "done" else None, "count", "inferred", "AI 분석 결과(검수 전)"),
                     "by": people.get(x["submitted_by"]) if x["submitted_by"] else None,
                     "at": _iso(x["created_at"]), "finished_at": _iso(x["finished_at"]),
-                    "href": f"{MAPSVC}?job={x['id']}" if state == "done" else None})
+                    "href": f"{MAPSVC}?job={x['id']}" if state == "done" else None,
+                    **({"change": {"years": f"{chg.get('year_a')}년 → {chg.get('year_b')}년", "via": o.get("requested_via") or "화면",
+                                   "status": cs, "imagery_word": f"국토지리정보원 항공영상 {chg.get('year_a')}년 · {chg.get('year_b')}년"},
+                        "imagery": {"id": None, "name": f"국토지리정보원 항공영상 {chg.get('year_a')}년 · {chg.get('year_b')}년"},
+                        "href": f"{MAPSVC}?" + "&".join(([f"project={pid}"]) + [f"change={x['id']}"]) if state == "done" else None} if chg else {})})
+        if chg and cs:                                    # 변화 탐지 — 상태 말 · 진행률은 작업 카드와 같은 값(한 출처)
+            pg = (cs.get("progress") or {}).get("value")
+            out[-1].update({"state_label": cs["word"] + (f" · {cs['stage']}" if cs.get("stage") else ""),
+                            "progress": {"shards_done": int(pg or 0), "shards_total": 100} if state in ("queued", "running") and pg is not None else None,
+                            "reason": cs.get("reason")})
     return out
 
 

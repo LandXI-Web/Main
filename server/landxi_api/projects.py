@@ -332,13 +332,18 @@ async def _facts(conn, r) -> dict:
     # (행 보안 아래서는 options->>'project_id' 가 색인을 못 타 3.5만 줄을 훑는다 → 시스템 읽기 경로 · 프로젝트 id 로만 거른다 · migrations/0115)
     from .deps import pool_sys
     async with (await pool_sys()).acquire() as sc:
-        infers = await sc.fetch("SELECT id, state, created_at FROM jobs WHERE kind='infer' AND options->>'project_id' = $1 AND created_at >= $2 "
+        infers = await sc.fetch("SELECT id, state, created_at FROM jobs WHERE (kind='infer' OR (kind='index' AND options ? 'change')) AND options->>'project_id' = $1 AND created_at >= $2 "
                                 "AND NOT coalesce(test,false) ORDER BY created_at DESC", pid, since)
     last = [r["updated_at"], *(s["created_at"] for s in samples[:1]), *(j["created_at"] for j in jobs[:1]), *(j["created_at"] for j in infers[:1])]
     ap_last = await conn.fetchval("SELECT max(coalesce(a.decided_at, a.at)) FROM approvals a JOIN project_links l ON l.ref=a.subject_id "
                                   "AND l.kind='card_version' AND a.subject_type='card' WHERE l.project_id=$1", pid)
     last_at = max([x for x in [*last, ap_last] if x], default=None)
-    return {"have": have, "samples": samples, "jobs": jobs, "model": model, "last_at": last_at, "reg": reg, "model_ap": model_ap, "card": card, "cv_now": cv_now,
+    # 국토 변화 탐지 대상지(구역선 · 필지 목록)가 묶인 프로젝트 — 영상은 국토지리정보원 항공영상(연도별), 경로는 기본 '정식 서비스 모델'(수정 지시서 v2 F1 · F4)
+    chg = await conn.fetchrow("SELECT g.id, g.years, (SELECT ref FROM project_links WHERE project_id=$1 AND kind='path' LIMIT 1) AS path, "
+                              "(SELECT version FROM models WHERE id='change-ap25') AS mver FROM change_ranges g WHERE g.project_id=$1 "
+                              "ORDER BY g.created_at DESC LIMIT 1", pid)
+    change = {"range_id": chg["id"], "years": sorted(chg["years"] or []), "path": chg["path"] or "service", "model": f"토지피복 U-Net {chg['mver']}" if chg["mver"] else "토지피복 U-Net"} if chg else None
+    return {"change": change, "have": have, "samples": samples, "jobs": jobs, "model": model, "last_at": last_at, "reg": reg, "model_ap": model_ap, "card": card, "cv_now": cv_now,
             "cv_ap": cv_ap, "published": published, "deploys": deploys, "port_wait": int(port_wait or 0), "judged": int(judged), "infers": infers}
 
 
@@ -422,6 +427,21 @@ def _judge(r, f) -> dict:
         holds["publish"] = "reject"
     else:
         pb["next"] = "배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
+    # 국토 변화 탐지 — 영상(국토지리정보원 항공 · 연도별)은 프로젝트 자산 · '정식 서비스 모델' 경로면 학습데이터 구축 · 학습을 건너뜀(수정 지시서 v2 F1 · F4)
+    chg = f.get("change")
+    if chg:
+        if chg["years"]:
+            st["ingest"]["done"] = True
+            st["ingest"]["next"] = None
+            st["ingest"]["note"] = " · ".join(f"{y}년 국토지리정보원 항공영상" for y in chg["years"])
+        if chg["path"] == "service":
+            for k in ("label", "train"):
+                if not st[k]["done"]:
+                    st[k].update({"skip": True, "skip_word": "건너뜀(정식 모델 사용)", "next": None})
+            st["train"]["reason"] = f"{chg['model']} 사용 · 학습 불필요"
+            if not f["infers"] or not any(j["state"] in ("queued", "running", "done") for j in f["infers"]):
+                inf["next"] = "변화 탐지 실행(두 해 비교)"
+            inf["target"] = {"change_range": chg["range_id"]}
     # 지금 단계 — 이번 회차 판이 승인됐으면 배포 신청(끝) · 아니면 앞에서부터 끝나지 않은 첫 단계(건너뛸 단계는 넘어감)
     order = [k for k, _ in STAGES]
     last_i = len(order) - 1
@@ -439,7 +459,7 @@ def _judge(r, f) -> dict:
         if s["done"]:
             state = "done"
         elif s.get("skip") and i != cur:
-            state, s["skip_word"] = "skip", "해당 없음"
+            state, s["skip_word"] = "skip", s.get("skip_word") or "해당 없음"
         elif i == cur:
             state = "now"
         elif i < cur:
@@ -454,7 +474,8 @@ def _judge(r, f) -> dict:
     steps = [s["state"] for s in stages]
     return {"stages": stages, "stage": {"index": cur, "key": now["key"], "label": now["label"]}, "next": nxt, "published": f["published"],
             "steps": steps, "progress": {"n": sum(1 for x in steps if x in ("done", "skip")), "total": len(steps)},   # 끝남 + 건너뜀(목록 n/6 · 대시보드 같은 값)
-            "blocked": _blocked(stages, cur, holds)}
+            "blocked": _blocked(stages, cur, holds),
+            "path": ({"key": chg["path"], "note": st["train"].get("reason")} if chg else None)}
 
 
 _KIND_ORDER = {"reject": 0, "before": 1, "wait": 3}   # 'after'(공개 뒤 결과 확인 남음)는 원칙 203 으로 뺐다
@@ -685,7 +706,7 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
            "lead": _who(people, r["lead_id"]), "mine": _is_member(p, r, members),
            "round": env(r["round"], "count", "recorded", "프로젝트 회차"), "state": r["state"],
            "stage": j["stage"], "next": j["next"], "published": j["published"],
-           "steps": j["steps"], "progress": j["progress"], "blocked": j["blocked"],
+           "steps": j["steps"], "progress": j["progress"], "blocked": j["blocked"], "path": j["path"],
            "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"]), "last_at": _iso(f["last_at"]),
            "lead_is_me": p.user_id == r["lead_id"],
            "description": r.get("description"),

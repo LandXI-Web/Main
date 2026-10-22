@@ -18,7 +18,7 @@ from . import config
 BASIS = {"measured", "estimate", "demo", "history", "inferred", "recorded"}
 UNITS = {"polygons", "필지", "동", "ha", "km2", "m2", "%", "s", "gpu_s", "MiB", "GB", "chips_per_s", "ms", "count", "ratio",
          "ndvi", "°C", "W", "krw_m2", "krw", "calls", "tiles", "bytes", "features",
-         "chips_per_gpu_s", "chips_per_wall_s", "power_w", "tokens"}          # v1.1-1
+         "chips_per_gpu_s", "chips_per_wall_s", "power_w", "tokens", "min"}          # v1.1-1
 KST = dt.timezone(dt.timedelta(hours=9))
 
 # 봉투가 아니어도 되는 구조 필드(키 이름) — 계약 §2 "구조 필드"

@@ -260,6 +260,40 @@ async def get_range(rid: str, request: Request, years: int = 1):
     return range_out(d, await years_for_bounds(d["bounds"]) if years else None)
 
 
+# 어림(수정 지시서 v2 F5) — 영상 받기 = 칸 수 × 칸당 시간(10-22 측정: 1㎢ 상자 272칸 · 4.5초 · 동시 12) ·
+# 분석 = 최근 끝난 변화 탐지의 상자 1㎢당 시간(중앙값 · 작업 시작 → 끝, 기록) × 이 범위 상자 면적. 기록이 없으면 분석 어림은 비운다.
+FETCH_S_PER_TILE = 0.017
+BIG_KM2 = 20.0
+
+
+async def estimate(d: dict, years: list[int] | None = None, zoom: int = 18) -> dict:
+    I, *_ = _mods()
+    b = d["bounds"]
+    c0, r0, c1, r1 = I.tiles_for(b, zoom)
+    tiles = (c1 - c0 + 1) * (r1 - r0 + 1)
+    box_km2 = (b[2] - b[0]) * (b[3] - b[1]) / 1e6
+    async with db(realm="lx") as conn:
+        rates = await conn.fetch(
+            "SELECT extract(epoch FROM (j.finished_at - j.started_at)) / greatest((ST_XMax(g.geom)-ST_XMin(g.geom))*(ST_YMax(g.geom)-ST_YMin(g.geom))/1e6, 0.05) AS r "
+            "FROM change_runs c JOIN change_ranges g ON g.id=c.range_id JOIN jobs j ON j.id=c.job_id "
+            "WHERE c.state='done' AND j.started_at IS NOT NULL AND j.finished_at IS NOT NULL ORDER BY c.done_at DESC NULLS LAST LIMIT 9")
+    rs = sorted(float(x["r"]) for x in rates if x["r"])
+    run_s = round(rs[len(rs) // 2] * box_km2) if rs else None
+    n_years = len(years or []) or 2
+    return {"fetch_s": env(max(1, round(tiles * FETCH_S_PER_TILE)), "s", "estimate", "국토지리정보원 영상 한 해 받기 어림(칸 수 × 측정 칸당 시간)"),
+            "run_s": env(run_s, "s", "estimate", "최근 변화 탐지 처리 속도로 어림(상자 면적 기준 · 중앙값)"),
+            "tiles": env(tiles * n_years, "tiles", "measured", "받을 영상 칸 수(두 해)"),
+            "area": env(round(float(d["m2"]) / 1e6, 3), "km2", "measured", "범위 면적(EPSG:5179)"), "big": float(d["m2"]) / 1e6 > BIG_KM2}
+
+
+@router.get("/change/ranges/{rid}/estimate")
+async def get_estimate(rid: str, request: Request, years: str | None = None):
+    p = require(principal(request))
+    d = await get_range_row(p, rid)
+    ys = [int(y) for y in (years or "").split(",") if y.strip().isdigit()]
+    return {"range_id": rid, **(await estimate(d, ys)), "as_of": now_iso()}
+
+
 @router.post("/change/ranges/{rid}/project")
 async def link_project(rid: str, body: dict, request: Request):
     p = _lx(principal(request))
@@ -268,7 +302,33 @@ async def link_project(rid: str, body: dict, request: Request):
         await conn.execute("UPDATE change_ranges SET project_id=coalesce($2, project_id), years=CASE WHEN cardinality($3::int[])>0 THEN $3 ELSE years END, "
                            "name=coalesce(nullif($4,''), name) WHERE id=$1", rid, body.get("project_id"), ys, str(body.get("name") or "")[:120])
         await audit(conn, p, "change.range.project", rid, None, {"project_id": body.get("project_id"), "years": ys})
+        if body.get("project_id") and body.get("path") in PATHS:
+            await set_path(conn, p, body["project_id"], body["path"])
     return range_out(await get_range_row(p, rid))
+
+
+# 진행 경로(수정 지시서 v2 F4) — 'service' 정식 서비스 모델로 바로 분석(학습데이터 구축 · 학습 건너뜀) · 'train' 이 프로젝트 데이터로 학습(6단계 전부).
+# 변화 탐지 대상지가 묶인 프로젝트의 기본값은 'service'. 기록은 project_links(kind='path') 한 줄.
+PATHS = ("service", "train")
+
+
+async def set_path(conn, p, pid: str, path: str):
+    await conn.execute("DELETE FROM project_links WHERE project_id=$1 AND kind='path' AND ref<>$2", pid, path)
+    await conn.execute("INSERT INTO project_links(project_id, kind, ref, round, by) VALUES ($1,'path',$2,1,$3) ON CONFLICT DO NOTHING", pid, path, p.user_id)
+    await audit(conn, p, "project.path", pid, None, {"path": path})
+
+
+@router.put("/change/projects/{pid}/path")
+async def put_path(pid: str, body: dict, request: Request):
+    p = _lx(principal(request))
+    path = str(body.get("path") or "")
+    if path not in PATHS:
+        raise ApiError("bad_request", "경로는 정식 서비스 모델 · 이 프로젝트 데이터로 학습 중 하나입니다")
+    async with db(p) as conn:
+        if not await conn.fetchval("SELECT 1 FROM projects WHERE id=$1", pid):
+            raise ApiError("not_found", "프로젝트가 없습니다")
+        await set_path(conn, p, pid, path)
+    return {"project_id": pid, "path": path}
 
 
 # ── 실행 ───────────────────────────────────────────────────────────────────
@@ -317,7 +377,10 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
     return new
 
 
-async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False) -> dict:
+INTERACTIVE_KM2 = 2.0
+
+
+async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False, via: str = "화면") -> dict:
     """캐시(끝났거나 도는 중)가 있으면 그것 · 없으면 작업 제출. → {job_id, cached, state, zoom}"""
     I, _, R, RUN = _mods()
     d = await get_range_row(p, range_id)
@@ -327,7 +390,8 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     if not fresh:
         c = await cached_run(p, range_id, year_a, year_b)
         if c:
-            return {"job_id": c["job_id"], "cached": c["state"] == "done", "state": c["state"], "range": range_out(d)}
+            return {"job_id": c["job_id"], "cached": c["state"] == "done", "state": c["state"], "range": range_out(d),
+                    "attached": c["state"] in ("queued", "running")}       # 같은 요청 — 진행 중 작업에 붙인다(새로 만들지 않음 · F5)
         al = await same_range_run(p, range_id, year_a, year_b)
         if al:
             return {"job_id": al, "cached": True, "state": "done", "range": range_out(d)}
@@ -340,9 +404,17 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
         raise ApiError("no_imagery", f"{', '.join(f'{y}년' for y in miss)} 영상이 이 범위에 없습니다",
                        {"years": sorted(av)}, status=409)
     from . import jobs as J
-    body = {"kind": "index", "model_id": "change-ap25", "card_id": "card-change", "label": f"변화 탐지 · {d['name']} · {year_a}↔{year_b}",
-            "options": {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": _ver(),
-                                   "bbox4326": range_out(d)["bbox"]}}}
+    km2 = float(d["m2"]) / 1e6
+    interactive = km2 <= INTERACTIVE_KM2
+    opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": _ver(), "bbox4326": range_out(d)["bbox"]},
+            "range_name": d["name"], "interactive": interactive, "requested_via": via}
+    if d.get("project_id"):                       # 프로젝트 4단계 추론 작업으로(분석하기 · XI ChatGEO 같은 기록 — 수정 지시서 v2 F2)
+        opts.update({"project_id": d["project_id"], "project_infer": True})
+    if d.get("sgg"):
+        opts["sgg_cd"] = d["sgg"][0]
+    # 대화형(작은 범위 2㎢ 이하)은 전국 분석(3) · 다른 분석(0)보다 먼저(−1) — 전국 작업은 칸 묶음 사이에서 비킨다(F3)
+    body = {"kind": "index", "model_id": "change-ap25", "card_id": "card-change", "label": f"추론 · {d['name']} · 변화 탐지 {year_a}↔{year_b}"[:60],
+            "priority": -1 if interactive else 0, "options": opts}
     res = await J.submit(body, request)
     jid = res["job"]["id"]
     async with db(p) as conn:
@@ -355,8 +427,12 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
 @router.post("/change/runs", status_code=202)
 async def create_run(body: dict, request: Request):
     p = require(principal(request))
-    return await start_run(request, p, str(body.get("range_id") or ""), int(body.get("year_a") or 0), int(body.get("year_b") or 0),
-                           bool(body.get("fresh")))
+    out = await start_run(request, p, str(body.get("range_id") or ""), int(body.get("year_a") or 0), int(body.get("year_b") or 0),
+                          bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석하기" if body.get("via") == "analyze" else "화면")
+    if body.get("later") and out.get("state") in ("queued", "running"):     # 배치로 — 끝나면 요청함 알림(F3 · F5)
+        from .deps import redis
+        await (await redis()).hset(f"job:{out['job_id']}", "chg_notify", p.user_id or "")
+    return out
 
 
 async def run_row(p, job_id: str) -> dict:
@@ -417,6 +493,10 @@ async def get_run(job_id: str, request: Request):
         fc = await run_in_threadpool(_features, job_id)
         fids = [f["id"] for f in fc["features"] if not f["properties"].get("hidden")]
         out["marks"] = mark_counts(await marks_of(p, job_id), fids)
+    else:
+        from .change_jobs import job_status
+        out["status"] = await job_status(job_id)
+        out["state"] = out["status"]["state"]
     return out
 
 
@@ -779,3 +859,7 @@ async def report_pdf(job_id: str, request: Request):
     async with db(p) as conn:
         await audit(conn, p, "change.report", job_id, None, {"pdf": True})
     return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+
+
+from . import change_jobs as _cj  # noqa: E402 — 작업 상태 · 취소 · 다시 · 알림 · 감시(같은 라우터로)
+router.include_router(_cj.router)

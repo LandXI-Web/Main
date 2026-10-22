@@ -1,0 +1,30 @@
+{
+ "at": "2026-10-22T11:22:43.161Z",
+ "login": "f6.change1022@lx.or.kr",
+ "steps": [
+  {
+   "k": "14 분석하기 · 대화 같은 목록",
+   "t": 29.9,
+   "job14": "job_01M5HNKB01CVRDM4K2C3WD23KJ",
+   "both": true,
+   "same_keys": true,
+   "via": [
+    "분석하기",
+    "XI ChatGEO"
+   ],
+   "labels": [
+    "분석 중 · 영상 받기",
+    "완료"
+   ]
+  }
+ ],
+ "ov": {
+  "14-1-analyze-run-map-card.png": [],
+  "14-2-project-step4-list.png": []
+ },
+ "errs": [],
+ "project": "prj_388a21f533",
+ "job": "job_01M5HNB1188RGEYJF727407XFK",
+ "job12": null,
+ "job14": "job_01M5HNKB01CVRDM4K2C3WD23KJ"
+}
