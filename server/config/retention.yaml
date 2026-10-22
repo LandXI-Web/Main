@@ -6,7 +6,8 @@ failed_cancelled_days: 30
 
 # 지난 학습 묶음의 그림 · 라벨(images/ · labels/)만 — 마지막으로 바뀐 지 이 날 수가 지나면(설명 · 기록 · 가중치는 남김 · 사람이 올린 학습 표본은 대상 아님)
 training_bundle_days: 30
-training_roots: [training/retrain, training/retrain-auto, training/farm-v2, training/xi-tiles]
+training_roots: [training/retrain, training/retrain-auto, training/xi-tiles]
+# training/farm-v2 는 정리에서 뺌(10-22 P9 시험 학습에 쓴 묶음 · 다음 학습의 비교 기준) — 다시 정리하려면 위 목록에 더한다
 
 # 로그인 실패 기록(접속 주소 포함) — 이 날 수가 지난 줄은 지운다(개인정보 보관 기한)
 login_ip_days: 90
