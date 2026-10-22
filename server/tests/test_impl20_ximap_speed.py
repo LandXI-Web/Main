@@ -56,17 +56,25 @@ def first_tile(L, z, sig=""):
     return None, None
 
 
-def test_board_layers_have_version_and_immutable_tiles(board):
-    ls = [L for L in layers(board) if not L.get("signed") and L.get("bounds")]
+def test_board_layers_have_version_and_immutable_tiles(board, tok):
+    # 10-22 옆문 닫기 2차: 공개 규칙 없는 결과 세트는 모두 서명 세트 — 서명 없이는 403 · LX 서명으로 연다
+    ls = [L for L in layers(board) if L.get("bounds")]
     assert ls and all(L.get("v") and len(L["v"]) == 10 for L in layers(board))
-    L = max(ls, key=lambda L: (L["bounds"][2] - L["bounds"][0]))
-    u, r = first_tile(L, 14)
-    assert r is not None, L["set"]
-    assert r.headers["cache-control"] == "public, max-age=31536000, immutable"
+    u = r = None
+    for L in sorted(ls, key=lambda L: L["bounds"][2] - L["bounds"][0], reverse=True)[:8]:      # 가운데 둘레에 조각이 있는 층 하나
+        q = ""
+        if L.get("signed"):
+            q = "&" + httpx.get(f"{ROOT}/tiles/sign", params={"set": L["set"]}, headers=H(tok["staff"]), timeout=60).json()["url"].split("?", 1)[1]
+        u, r = first_tile(L, 14, q)
+        if r is not None:
+            break
+    assert r is not None, "조각이 있는 층 없음"
+    # 서명 세트는 공유 보관 금지(private) · 공개 세트는 public — 둘 다 1년 보관(immutable)
+    assert r.headers["cache-control"] == ("private" if L.get("signed") else "public") + ", max-age=31536000, immutable"
     assert r.headers["x-lx-ver"] == L["v"] and r.headers.get("content-encoding") == "gzip"
     old = httpx.get(u.replace("v=" + L["v"], "v=0000000000"), timeout=60)
     assert old.status_code == 200 and old.headers["cache-control"] == "no-cache"   # 옛 판 주소 = 보관 안 함
-    assert httpx.get(f"{ROOT}/tiles/mvt/{L['set']}/3/0/0.pbf?v={L['v']}", timeout=30).status_code == 204   # 줌 밖 = 빈 조각
+    assert httpx.get(f"{ROOT}/tiles/mvt/{L['set']}/3/0/0.pbf?v={L['v']}{q}", timeout=30).status_code == 204   # 줌 밖 = 빈 조각
 
 
 def test_slim_low_zoom_keeps_id_cls_and_geometry(board):
@@ -74,7 +82,7 @@ def test_slim_low_zoom_keeps_id_cls_and_geometry(board):
     import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from landxi_api import config, tiles
-    L = next(L for L in layers(board) if not L.get("signed") and L.get("bounds"))
+    L = next(L for L in layers(board) if L.get("bounds"))          # 서명 세트도 파일을 직접 읽으므로 서명과 무관
     path = config.DATA_ROOT / tiles.resolve_set_path(L["set"])
     ver = tiles.tile_ver(path)
     assert ver == L["v"]
