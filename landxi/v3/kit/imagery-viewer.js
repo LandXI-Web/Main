@@ -121,7 +121,7 @@ function viewerBody(root, { onInfo }) {
     map.easeTo({ zoom: Math.min(21, Math.max(map.getZoom(), z)), duration: 500 });
   }
   const fit = () => { if (map && cur?.bounds) map.fitBounds(cur.bounds, { padding: 56, duration: 400 }); };
-  return { show, actual, fit, destroy: () => { seq++; try { map?.remove(); } catch { /* 이미 닫힘 */ } }, ready };
+  return { show, actual, fit, destroy: () => { seq++; try { map?.remove(); } catch { /* 이미 닫힘 */ } }, ready, get map() { return map; }, get cur() { return cur; } };
 }
 
 const infoLine = (item, d) => {
@@ -147,9 +147,13 @@ export function openImageryViewer({ items = [], index = 0, onPick, picked } = {}
   const win = h('a.k-iv-b', { target: '_blank', rel: 'noopener', text: '새 창으로 열기' });
   const pick = h('button.k-iv-go', { type: 'button', text: '이 영상 고르기' });
   const closeB = h('button.k-iv-b', { type: 'button', text: '닫기' });
+  /* 두 시점 겹쳐 보기(10-22 now21 제안-두시점겹쳐비교 '넣음') — 같은 지역의 다른 시점 영상을 왼쪽에 덮고 가운데 선을 끌어 견준다(kit/swipe.js) */
+  const ovSel = h('select.k-iv-ov', { 'aria-label': '겹쳐 볼 다른 시점' });
+  const ovWrap = h('label.k-iv-ovw', { hidden: true }, h('span', { text: '겹쳐 보기' }), ovSel);
+  let SW = null;
   const panel = h('div.k-iv-p', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '영상 크게 보기' },
     h('div.k-iv-h', {}, h('div.k-iv-hh', {}, title, info), xBtn), body,
-    h('div.k-iv-f', {}, h('div.k-iv-fn', {}, prev, cnt, next), h('div.k-iv-fb', {}, actual, fit, win, closeB, pick)));
+    h('div.k-iv-f', {}, h('div.k-iv-fn', {}, prev, cnt, next, ovWrap), h('div.k-iv-fb', {}, actual, fit, win, closeB, pick)));
   const root = h('div.k-iv', {}, panel);
   document.body.append(root);
   const V = viewerBody(body, { onInfo: (d) => { info.replaceChildren(...dots(infoLine(items[i], d))); } });
@@ -164,10 +168,32 @@ export function openImageryViewer({ items = [], index = 0, onPick, picked } = {}
     win.href = PAGE + '?id=' + encodeURIComponent(it.id);
     const on = !!picked?.(it);
     pick.textContent = on ? '고른 영상입니다 · 닫기' : '이 영상 고르기';
-    V.show(it);
+    V.show(it).then(() => overlayFor(it));
     for (const j of [i + 1, i - 1]) if (items[j]) warmImageryViewer([items[j].id]);   // 앞 · 다음 영상 정보 미리 받기
   };
+  /** 같은 지역(이름 같은 지역 · 다른 해)의 영상 — 이 목록 안에서만 */
+  const yearOf = (x) => String(x.year || '').slice(0, 4);
+  const others = (it) => items.filter((x) => x !== it && x.id !== it.id && it.region && x.region === it.region && yearOf(x) && yearOf(x) !== yearOf(it));
+  function overlayFor(it) {
+    SW?.close(); SW = null;
+    const os = others(it);
+    ovWrap.hidden = !os.length;
+    ovSel.replaceChildren(h('option', { value: '', text: '고르지 않음' }), ...os.map((x) => h('option', { value: x.id, text: `${yearOf(x)}년 · ${x.name}` })));
+    ovSel.value = '';
+  }
+  ovSel.addEventListener('change', async () => {
+    const it = items[i], o = items.find((x) => x.id === ovSel.value);
+    SW?.close(); SW = null;
+    if (!o || !V.map) return;
+    try {
+      const [d, m] = await Promise.all([getDetail(o.id), import('./swipe.js')]);
+      if (items[i] !== it || ovSel.value !== o.id) return;
+      const spec = await sourceSpec(d);
+      SW = m.mountSwipe({ map: V.map, left: { label: `${yearOf(o)}년`, spec: { ...spec, tileSize: 256, bounds: d.bounds, minzoom: Math.max(0, (d.minzoom ?? 0) - 3), maxzoom: d.maxzoom ?? 19 } }, right: { label: `${yearOf(it) || '이 영상'}${yearOf(it) ? '년' : ''}` } });
+    } catch { ovSel.value = ''; }
+  });
   const close = () => {
+    SW?.close(); SW = null;
     removeEventListener('keydown', key, true);
     V.destroy(); root.remove();
     try { if (back && document.contains(back)) back.focus({ preventScroll: true }); } catch { /* 없어짐 */ }

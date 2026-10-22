@@ -14,7 +14,8 @@ export function mountChatAnswer({ host, cmdk, hl = null, emph = null }) {
   const log = root.querySelector('.k-chat-b'), sugg = box.querySelector('.k-chat-sugg'); if (!log) return null;
   const txt = h('p.xk-ans-t'), acts = h('div.xk-ans-a'), more = h('button.xk-more', { type: 'button', text: '대화', onclick: () => openDrawer() });
   const scopeEl = h('p.xk-ans-s', { hidden: true });   // 범위 줄(무엇을 셌는지 · 시안 ⓒ-1) · 숫자 출처 — 답 글 바로 위 작은 회색 한 줄
-  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, scopeEl, txt, acts), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; hl?.clear(); } }));   // 답 띠를 닫으면 지도 강조도 걷는다(원칙 292)
+  const attrEl = h('p.xk-ans-at', { hidden: true });
+  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, scopeEl, txt, acts, attrEl), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; hl?.clear(); } }));   // 답 띠를 닫으면 지도 강조도 걷는다(원칙 292)
   (sugg || box.querySelector('.k-chat-in')).before(card);
   let drawer = null, home = null;   // 서랍이 열려 있는 동안 답 띠는 숨긴다(10-18 제안-서랍열면답띠숨김 '넣음' — 같은 답이 두 곳에 보이지 않게)
   const turns = () => log.querySelectorAll('.k-chat-msg.me').length;
@@ -38,10 +39,11 @@ export function mountChatAnswer({ host, cmdk, hl = null, emph = null }) {
     card.classList.remove('is-busy');
     const a = last.querySelector('.k-chat-a, .k-ck-a') || last.querySelector('.k-chat-bub p') || last.querySelector('.k-chat-bub');
     txt.innerHTML = a ? a.innerHTML : '';
-    const sc = txt.querySelector('.k-ck-scope'), src = txt.querySelector('.k-ck-src');
+    const sc = txt.querySelector('.k-ck-scope'), src = txt.querySelector('.k-ck-src'), at = txt.querySelector('.k-ck-attr');
     const line = [sc?.textContent.trim(), src?.textContent.trim()].filter(Boolean).join('  —  ');
     scopeEl.textContent = line; scopeEl.title = line; scopeEl.hidden = !line;
     sc?.remove(); src?.remove();
+    if (at) { at.remove(); attrEl.textContent = at.textContent; attrEl.hidden = false; } else attrEl.hidden = true;   // 행정동 이름 출처(CC BY 4.0) — 답 띠 맨 아래 작은 한 줄
     for (const el of txt.querySelectorAll('br')) el.replaceWith(' ');
     /* 보고서를 만든 답이면 답 띠에서 바로 '보고서 보기'(재검수 제안 1 · 첫인상-8 — 대화 서랍을 열지 않고 한 번에 대시보드 모양 보고서로).
        같은 data-report → 공용 kit(cmdk)의 보고서 보기 처리 그대로 */

@@ -178,10 +178,13 @@ function fill(md, envs = {}, lang = 'ko') {
 }
 /** 채팅 답 — 문단은 <p>, 법령 원문 인용(「법령」 제n조 … 줄 + “원문”)은 인용 블록. 줄바꿈 한 번은 줄을 바꾼다. */
 /** 범위 줄(무엇을 셌는지 — 지역 · 종류 · 조건 · 기준 시점 · 시안 ⓒ-1) + 숫자 출처 한 줄(10-22 채택) — 서버 agent.done.scope.line · source_line 그대로(지어내기 0) */
+const HJD_ATTR = '행정동 이름: 통계청 SGIS 행정동 경계(공공누리 제1유형) · admdongkor 가공(CC BY 4.0)';
 function frameHtml(sh, inner) {
   const sc = sh?.scope ? `<p class="k-ck-scope">${esc(sh.scope)}</p>` : '';
   const src = sh?.src ? `<p class="k-ck-src">출처: ${esc(sh.src)}</p>` : '';
-  return sc + inner + src;
+  // 답에 행정동 이름을 붙였으면(서버 agent/hjd.py) 그 경계의 출처 · 이용 조건 한 줄(통계청 SGIS 공공누리 제1유형 · 가공본 CC BY 4.0 — 저작자 표시 의무)
+  const hj = /\(행정동 [^)]+\)/.test(inner) ? `<p class="k-ck-attr">${HJD_ATTR}</p>` : '';
+  return sc + inner + src + hj;
 }
 function answerHtml(md, envs = {}, lang = 'ko') {
   return String(md || '').split(/\n{2,}/).map((para) => {
@@ -261,7 +264,8 @@ function create(opts) {
     box.dataset.guest = cfg.guest ? '1' : '';
     intro.querySelector('p').textContent = cfg.guest ? t('cmdk.guest') : S.intro;
   };
-  const ctxNow = () => { try { return cfg.context() || {}; } catch { return {}; } };
+  // 화면 부품이 더하는 문맥(예: 국토 변화 탐지 층의 고른 폴리곤 · 결과 — window.__lxChatCtx) — 화면 문맥 위에 얹는다(10-22 변화 탐지 꼬리 질문)
+  const ctxNow = () => { let c = {}; try { c = cfg.context() || {}; } catch { c = {}; } try { const x = window.__lxChatCtx?.(); if (x) c = { ...c, ...x }; } catch { /* 부품 오류는 무시 */ } return c; };
   function suggestions() {
     if (cfg.guest) return [];
     if (typeof cfg.sugg === 'function') { try { const x = cfg.sugg(); if (Array.isArray(x)) return x; } catch { /* 화면 추천이 실패하면 기본 */ } }
@@ -469,6 +473,12 @@ function create(opts) {
 
   // 동작 끝 기록(plan 3.1·3.2) — 화면·키트가 낸 kit:agent-action-done {op, ok, reason, same?, hint?} 을 이 run 의 동작에 짝지어 센다
   // same = 바꿀 것이 없었다(이미 켜져 있음 · 이미 입체) — 됨으로 세되 문장은 '이미 ~'로(확인 16차 규칙 ①)
+  // 화면 부품이 대신 묻기(예: 변화 폴리곤 칸의 'AI 설명' 단추) — 입력 칸에 넣고 보낸다(바쁠 때 · 손님이면 안 함)
+  document.addEventListener('kit:ask', (e) => {
+    const q = String(e.detail?.q || '').trim();
+    if (!q || cfg.guest || box.dataset.state === 'busy') return;
+    open(q); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  });
   document.addEventListener('kit:agent-action-done', (e) => {
     const d = e.detail || {};
     acts.done += 1; if (d.ok) acts.ok += 1;
@@ -1014,6 +1024,16 @@ function create(opts) {
         const rest = rows.length - 5;
         blk.append(h('div.k-ck-blk.k-ck-blk--table', { 'data-kind': 'table' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null, tb,
           rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest).replace('곳', '줄') }) : null));
+      } else if (b?.type === 'rows' && (b.cols || []).length) {
+        // 여러 칸 표(국토 변화 탐지 필지 표 · 10-22) — 다섯 줄 + '더 보기' · 줄을 누르면 지도가 그 자리로(받는 화면이 kit:change-pick 을 듣는다)
+        const tb = h('table.k-chat-tbl.k-ck-tbl.k-ck-rows', {},
+          h('thead', {}, h('tr', {}, ...b.cols.map((c) => h('th', { scope: 'col', text: c })))),
+          h('tbody', {}, ...(b.rows || []).map((r, k) => h('tr', { 'data-id': (b.ids || [])[k] || '', tabindex: (b.ids || [])[k] ? '0' : null,
+            onclick: () => { const id = (b.ids || [])[k]; if (id) document.dispatchEvent(new CustomEvent('kit:change-pick', { detail: { id } })); } },
+            ...r.map((v) => h('td', { text: v }))))));
+        const rest = (b.rows || []).length - 5;
+        blk.append(h('div.k-ck-blk.k-ck-blk--table.k-ck-blk--rows', { 'data-kind': 'rows' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null,
+          h('div.k-ck-rows-w', {}, tb), rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest).replace('곳', '줄') }) : null));
       } else if (b?.type === 'report' && b.href) {
         // 보고서 보기(대시보드 모양 · 10-21 원칙 299) — 답의 첫 동작 · 내려받기 줄은 그 아래 그대로
         const btn = h('button.k-ck-rep', { type: 'button', 'data-report': b.href },

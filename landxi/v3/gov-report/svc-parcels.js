@@ -27,8 +27,8 @@ export function filterBar({ host, state, onChange }) {
   const cDiff = chip('대장과 다름만', 'diff'), cNote = chip('메모 없음만', 'nonote');
   const row = h('div.sp-bar', { role: 'group', 'aria-label': '거르기' }, emd, ri, cls, cDiff, cNote, sort);
   const fBtn = h('button.t-btn.t-btn--2.sp-fbtn', { type: 'button', text: '거르기' });
-  /* 지번 찾기(REMAINING 5-2) — '동천리 123-4' · '123-4' · 서버가 관할 안 같은 행에서 찾는다 · Enter 에 한 필지면 그 필지 카드 */
-  const find = h('input.t-input.sp-find', { type: 'search', enterkeyhint: 'search', maxlength: '60', placeholder: '지번 찾기 — 예: 동천리 123-4', 'aria-label': '지번 찾기', autocomplete: 'off' });
+  /* 지번 찾기(REMAINING 5-2 · 10-22 다른 기관도 같은 칸 — 예시에 지역 이름 없음) — '○○리 123-4' · '123-4' · 서버가 관할 안 같은 행에서 찾는다 · Enter 에 한 필지면 그 필지 카드 */
+  const find = h('input.t-input.sp-find', { type: 'search', enterkeyhint: 'search', maxlength: '60', placeholder: '지번 찾기 — 예: ○○리 123-4', 'aria-label': '지번 찾기', autocomplete: 'off' });
   let ft = 0;
   const go = (open) => { clearTimeout(ft); const v = find.value.trim(); if (v === (state.q || '') && !open) return; state.q = v; state.open = !!open && !!v; onChange(); };
   find.addEventListener('input', () => { clearTimeout(ft); ft = setTimeout(() => go(false), 350); });
@@ -130,11 +130,21 @@ export function noteBox({ card, pnus, where, onSaved }) {
     try {
       const r = await api(`/spaces/me/guides/${encodeURIComponent(card)}/parcels/notes`, { method: 'POST', body: { pnus, note: memo.value.trim() } });
       m.close(true);
-      toast(`${nf(val(r.saved))}필지에 메모를 남겼습니다`);
+      /* 여러 필지에 한꺼번에 — 잘못 적었으면 한 단추로 되돌리기(10-22 제안-메모되돌리기 · 필지 이력 줄에서도) */
+      toast(`${nf(val(r.saved))}필지에 메모를 남겼습니다`, r.batch ? { ms: 10000, action: { label: '되돌리기', onClick: () => undoBatch(card, r.batch).then(() => onSaved?.(r)) } } : {});
       onSaved?.(r);
     } catch (err) { devlog('note', err.message); toast(err.message || '저장하지 못했습니다'); save.disabled = false; }
   });
   return m;
+}
+
+/* 같은 메모 묶음 되돌리기 — 줄은 지우지 않고 되돌린 표시만(서버 · 지금 메모 · 이력 · 엑셀에서 빠짐). 쓴 사람 · 기관 관리자 */
+export async function undoBatch(card, batch) {
+  try {
+    const r = await api(`/spaces/me/guides/${encodeURIComponent(card)}/parcels/notes/undo`, { method: 'POST', body: { batch } });
+    toast(`${nf(val(r.undone))}필지 메모를 되돌렸습니다`);
+    return r;
+  } catch (e) { devlog('note undo', e.message); toast(e.message || '되돌리지 못했습니다'); throw e; }
 }
 
 /* ═════════ 필지 카드 아래 — 시점 비교 · 메모 칸 하나 · 이력 ═════════ */
@@ -181,7 +191,9 @@ export async function parcelExtras(host, { card, pnu, onSaved }) {
     det.querySelector('.sp-hn').textContent = j.total ? `${nf(j.total)}줄` : '없음';
     list.replaceChildren(...(j.items || []).map((x) => h('li', { dataset: { k: x.kind } },
       h('span.sp-h-d.num', { text: (x.kind === 'result' || x.kind === 'national') && !x.at ? (x.year ? `${x.year}년` : '') : dot(x.at) }),
-      h('span.sp-h-t', {}, h('b', { text: x.title }), x.sub || x.who ? h('small', { text: [x.sub, x.who].filter(Boolean).join(' · ') }) : null))));
+      h('span.sp-h-t', {}, h('b', { text: x.title }), x.sub || x.who ? h('small', { text: [x.sub, x.who].filter(Boolean).join(' · ') }) : null,
+        x.batch && x.undo ? h('button.sp-h-undo', { type: 'button', text: '이 묶음 되돌리기', title: '같은 메모를 함께 남긴 필지 모두에서 되돌립니다',
+          onclick: (e) => { const b = e.currentTarget; b.disabled = true; undoBatch(card, x.batch).then(() => { load(lim); onSaved?.(); }, () => { b.disabled = false; }); } }) : null))));
     if (!(j.items || []).length) list.replaceChildren(h('li.sp-h-e', { text: '이 필지에 남은 기록이 없습니다' }));
     more.hidden = !val(j.more);
     requestAnimationFrame(() => dispatchEvent(new Event('resize')));   // XI ChatGEO 단추가 새로 생긴 메모 칸 · 이력을 비켜 자리를 다시 잡게

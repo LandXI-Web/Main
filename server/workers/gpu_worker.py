@@ -729,7 +729,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             emit(job_id, "shard.started", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "worker": WID, "at": now_iso(ms=True)})
     t0 = time.perf_counter()
     # 해외 작업(options.overseas)은 어댑터가 합성 파일(42 띠)을 스스로 열고 닫는다 — 여기서 열어 두면(스레드 캐시) 칸이 끝난 뒤 중간 파일을 지울 수 없다
-    ovs = bool(opts.get("overseas"))
+    ovs = bool(opts.get("overseas")) or bool(opts.get("change"))     # 변화 탐지(options.change)도 어댑터가 영상을 스스로 받는다(창 읽기 없음)
     futs = {} if ovs else {s.id: (ahead["futs"].pop((job_id, s.id), None) or pool_io.submit(read_window, path, s.window)) for s in shards}
     cache = {}
 

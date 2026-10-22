@@ -1,0 +1,12 @@
+/* map-tools.css — 재기 판(map-tools.js) */
+.k-ms{position:absolute;z-index:9;left:16px;bottom:96px;width:232px;padding:10px 12px 12px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px}
+.k-ms-tabs{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.k-ms-t{height:30px;padding:0 12px;border:0;border-radius:6px;background:var(--bg-0,#f2f4f6);font:500 var(--fs-tag,14px)/30px var(--font-body);color:var(--sub,#4e5968);cursor:pointer}
+.k-ms-t[aria-selected="true"]{background:var(--ink,#191f28);color:#fff}
+.k-ms-x{margin-left:auto;width:30px;height:30px;padding:0;border:0;border-radius:6px;background:none;font:400 22px/30px var(--font-body);color:var(--sub,#4e5968);cursor:pointer}
+.k-ms-v{font:700 22px/30px var(--font-num,var(--font-body));color:var(--ink,#191f28);word-break:keep-all}
+.k-ms-h{font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#4e5968)}
+.k-ms-a{display:flex;gap:6px;margin-top:6px}
+.k-ms-b{flex:1;height:32px;border:1px solid var(--rule,#e5e8eb);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);font:500 var(--fs-tag,14px)/30px var(--font-body);color:var(--ink,#191f28);cursor:pointer}
+.k-ms :is(button):focus-visible{outline:2px solid var(--accent,#0fa9a0);outline-offset:2px}
+@media (max-width:640px){.k-ms{left:8px;right:8px;width:auto;top:auto;bottom:88px}}

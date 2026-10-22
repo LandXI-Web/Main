@@ -355,6 +355,13 @@ def register(ctx: Ctx, i: int, out: Out) -> dict:
             if not str(b.get("href") or "").startswith("/api/v1/agent/runs/"):
                 continue
             b = {"type": "report", "label": str(b.get("label") or ""), "href": b["href"]}
+        elif b.get("type") == "rows":                    # 여러 칸 표(국토 변화 탐지 필지 표 · 10-22) — 칸 이름 · 글자 칸만(값은 결과 속성 글자) · 50줄까지
+            cols = [str(c) for c in (b.get("cols") or [])][:8]
+            rows = [[("" if v is None else str(v)) for v in (r or [])][:len(cols)] for r in (b.get("rows") or [])[:50]]
+            if not cols or not rows:
+                continue
+            b = {"type": "rows", "title": str(b.get("title") or ""), "cols": cols, "rows": rows, "ids": [str(x) for x in (b.get("ids") or [])][:50],
+                 "more": int(b.get("more") or 0), **({"csv": b["csv"]} if str(b.get("csv") or "").startswith("/api/v1/change/") else {})}
         elif b.get("type") not in ("file", "image"):
             continue
         b["step"] = i

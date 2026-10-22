@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-22 17:55",
+  "cycle": "바퀴 22 · 국토 변화 모니터링·탐지(CHANGE-DEMO-ORDER) P0",
+  "items": [
+    {"id": "변화-P0-1", "answer": "국토 변화 분석서비스 정식 등록 · 두 해 비교 · 유형 넷 · 구역선 안/밖 · 필지 · 썸네일", "state": "구현 확인 대기", "note": "담양IC 2분 34초 · 철도 9분 25초 · 사전 계산 결과", "shots": ["03-chat-run.png", "04-popup-ab.png", "10-analyze-cards.png", "11-analyze-change.png"]},
+    {"id": "변화-P0-2", "answer": "국토지리정보원 연도별 영상 자동 확보 · 연도 칩 · '한 시점뿐' 없앰", "state": "구현 확인 대기", "note": "2019년은 이 지역 51cm 만 있어 두 해 같은 51cm 격자로 비교", "shots": ["01-new-project.png", "02-project-map-2019-2024.png"]},
+    {"id": "변화-P0-3", "answer": "대상지 — 행정구역 · 구역선 파일 + 버퍼 · 필지(PNU) 목록 · 데이터 올리기 벡터 등록", "state": "구현 확인 대기", "note": "범위 EPSG:5179 저장 · 좌표계 없는 shp 벨트 탐지", "shots": ["01-new-project.png", "12-ingest.png"]},
+    {"id": "변화-P0-4", "answer": "XI ChatGEO 도구 셋 · 단계 표시 · 꼬리 질문", "state": "구현 확인 대기", "note": "비교 2.3초 · 설명 2.2초 · 표 1.6초 · 철도 전환 3.1초(바깥 주소)", "shots": ["03-chat-run.png", "05-describe.png", "06-table.png", "07-rail.png", "08-rail-map.png"]}
+  ]
+}

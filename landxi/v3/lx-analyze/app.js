@@ -177,7 +177,8 @@ async function detail(cid) {
     h('h1.la-title', { text: c.name }),
     c.line ? h('p.la-line', { text: c.line }) : null);
 
-  const picker = c.can_analyze ? imageryCard(c) : null;   // 영상 고르기(질문 3 ⓐ) — 오른쪽에서 지역을 고르면 그 지역을 덮는 영상 카드 두 열 + 범위 지도
+  const picker = c.can_analyze && c.id !== 'card-change' ? imageryCard(c) : null;   // 국토 변화 분석서비스는 영상을 고르지 않는다(대상지 + 두 해 · 국토지리정보원 영상 API)
+    // 영상 고르기(질문 3 ⓐ) — 오른쪽에서 지역을 고르면 그 지역을 덮는 영상 카드 두 열 + 범위 지도
   const body = h('div.la-dt-body', {}, picker?.el, resultCard(c), compareCard(c), usesCard(c), condCard(c));
   const side = h('aside.la-side', { id: 'analyze', 'aria-label': '이 카드로 분석' });
   const dt = h('div.la-dt', {}, h('div.la-dt-top', {}, crumb, hero, head), side, body);
@@ -373,7 +374,43 @@ function imageryCard(c) {
 }
 
 /* ═════════════ 이 카드로 분석(오른쪽 고정) ═════════════ */
+/* 국토 변화 분석서비스(10-22 CHANGE-DEMO P0-1) — 입력 = 대상지(프로젝트의 구역선 · 필지 범위) + 연도 A · B(국토지리정보원 영상) → 작업 대기열 → 지도 서비스.
+   같은 대상지 · 같은 두 해의 끝난 결과가 있으면 다시 돌리지 않고 그 결과를 연다. */
+function changePanel(side, c) {
+  side.classList.add('t-card');
+  side.append(h('h2.la-side-h', { text: '이 카드로 분석' }));
+  const step = (n, title, small) => h('div.la-step', {}, h('i', { text: String(n) }), h('b', { text: title }), small ? h('small', { text: small }) : null);
+  const sel = h('select.t-input', { 'aria-label': '대상지' });
+  const ya = h('select.t-input', { 'aria-label': '앞 해' }), yb = h('select.t-input', { 'aria-label': '뒤 해' });
+  const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
+  const note = h('p.la-note', { text: '대상지는 새 프로젝트에서 구역선 파일 · 필지 목록으로 정합니다.' });
+  side.append(step(1, '대상지', '구역선 · 필지 범위'), sel, step(2, '두 해', '국토지리정보원 항공영상'), h('div.la-yrs', {}, ya, yb), go, note);
+  let items = [];
+  const fillYears = (r) => {
+    const ys = (r?.imagery_years || []).map((y) => y.year);
+    const pick = (r?.years || []).map((y) => y.year);
+    for (const [s, def] of [[ya, pick[0] ?? ys[0]], [yb, pick[pick.length - 1] ?? ys[ys.length - 1]]]) s.replaceChildren(...ys.map((y) => h('option', { value: String(y), text: `${y}년`, selected: y === def || undefined })));
+    go.disabled = ys.length < 2;
+  };
+  sel.addEventListener('change', async () => { const r = await api(`/change/ranges/${encodeURIComponent(sel.value)}`).catch(() => null); fillYears(r); });
+  api('/change/ranges').then(async (j) => {
+    items = j.items || [];
+    if (!items.length) { sel.replaceChildren(h('option', { text: '정한 대상지가 없습니다' })); sel.disabled = true; return; }
+    sel.replaceChildren(...items.map((x) => h('option', { value: x.id, text: `${x.name} · ${x.kind_label}` })));
+    fillYears(await api(`/change/ranges/${encodeURIComponent(items[0].id)}`).catch(() => null));
+  }, () => { sel.replaceChildren(h('option', { text: '대상지를 불러오지 못했습니다' })); sel.disabled = true; });
+  go.addEventListener('click', async () => {
+    go.disabled = true; go.textContent = '대기열에 넣는 중';
+    try {
+      const r = await api('/change/runs', { method: 'POST', body: { range_id: sel.value, year_a: +ya.value, year_b: +yb.value } });
+      const x = items.find((i) => i.id === sel.value);
+      location.href = '../lx-map/?' + new URLSearchParams({ ...(x?.project_id ? { project: x.project_id } : {}), change: r.job_id });
+    } catch (e) { go.textContent = '분석 시작'; go.disabled = false; K.toast(e.message || '분석을 시작하지 못했습니다'); }
+  });
+}
+
 function analyzePanel(side, c, picker) {
+  if (c.id === 'card-change' && c.can_analyze) { changePanel(side, c); return; }
   side.classList.add('t-card');
   side.append(h('h2.la-side-h', { text: '이 카드로 분석' }));
   /* '서비스 카드에서 관리하기' 링크는 뺀다 — 직원 메뉴에 서비스 카드 없음 · 공개된 서비스 관리는 LX 관리자 화면(원칙 151) */

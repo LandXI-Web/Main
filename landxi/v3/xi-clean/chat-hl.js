@@ -19,7 +19,7 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  * @param {(ref:object, item:object)=>boolean|void} o.focus                          누름 — 그 곳으로 + 조건(화면이 처리하면 true)
  * @param {()=>({on:boolean, sgg:string|null})} o.om                                  지도 위 통계(색칠)가 같은 시군구를 보이고 있나
  */
-export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: false, sgg: null }) }) {
+export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: false, sgg: null }), canPop = () => true }) {
   const HL = { cur: null, feats: new Map(), on: [], pulse: null, seq: 0 };
   function ensure() {
     if (map.getSource('xk-hl')) { for (const id of ['xk-hl-dim', 'xk-hl-fill', 'xk-hl-glow', 'xk-hl-case', 'xk-hl-line']) if (map.getLayer(id)) map.moveLayer(id); return; }   // 늘 맨 위(통계 색칠보다 위)
@@ -58,7 +58,10 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
     })(t0);
   }
   function clear() {
+    const had = !!HL.cur;
+    closePop();
     HL.seq++; stopPulse(); HL.cur = null; HL.feats.clear(); HL.on = [];
+    if (had) document.dispatchEvent(new CustomEvent('xk:hl-cleared'));
     map.getSource('xk-hl')?.setData(EMPTY); map.getSource('xk-hl-o')?.setData(EMPTY);
     if (window.__xc) window.__xc.hl = null;
   }
@@ -158,10 +161,35 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
     document.querySelectorAll('.xk-ref.is-hv, .xk-ref-n.is-hv').forEach((x) => { if (x.dataset.hl !== k) x.classList.remove('is-hv'); });
     if (k) document.querySelectorAll(`[data-hl="${CSS.escape(k)}"]`).forEach((x) => x.classList.add('is-hv'));
   });
+  /* 지도에서 답으로(10-22 now21 제안-지도에서답으로 '넣음') — 강조된 곳을 누르면 그 자리에 숫자 한 줄('운봉읍 · AI 분석 결과 9,879곳').
+     숫자 = 답이 보낸 map_refs 의 값 그대로(지어낸 숫자 0) · 값이 없는 곳은 이름만 · 결과 객체를 누른 것이면 화면(객체 카드)이 먼저(canPop) */
+  let popM = null;
+  function closePop() { popM?.remove(); popM = null; }
+  const nf = (v) => Number(v).toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+  function popLine(it) {
+    const R = HL.cur || {}, v = it?.v == null ? null : Number(it.v);
+    if (v == null || Number.isNaN(v)) return it.name;
+    const unit = R.unit || (Number.isInteger(v) ? '곳' : '');
+    return `${it.name} · ${R.what ? R.what + ' ' : ''}${nf(v)}${unit}`;
+  }
+  map.on('click', (e) => {
+    if (!HL.cur || !vis || !map.getLayer('xk-hl-fill')) { closePop(); return; }
+    const f = map.queryRenderedFeatures(e.point, { layers: ['xk-hl-fill'] })[0], k = f?.properties?.k;
+    const it = k && HL.cur.items.find((x) => x.k === k);
+    if (!it || !canPop(e.point)) { closePop(); return; }
+    closePop();
+    const el = document.createElement('div');
+    el.className = 'xk-hl-pop'; el.setAttribute('role', 'status');
+    el.textContent = popLine(it);
+    popM = new window.maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -10] }).setLngLat(e.lngLat).addTo(map);
+    pulse(k); setTimeout(() => { if (HL.pulse?.k === k) stopPulse(); }, 1400);
+    if (window.__xc) window.__xc.hlPop = el.textContent;
+  });
+  map.on('movestart', (e) => { if (e.originalEvent) closePop(); });
   /** 지도 강조 켜고 끄기(대화 서랍 · 10-22) — 강조 층만 숨김/보임(답 · 이름 잇기는 그대로) */
   let vis = true;
   function setVisible(on) {
-    vis = on !== false;
+    vis = on !== false; if (!vis) closePop();
     for (const id of ['xk-hl-dim', 'xk-hl-fill', 'xk-hl-glow', 'xk-hl-case', 'xk-hl-line']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis ? 'visible' : 'none');
     if (window.__xc) window.__xc.hlVisible = vis;
   }

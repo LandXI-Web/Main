@@ -9,6 +9,7 @@
 import * as K from '../kit/index.js';
 import { uploadQueue, fileProblem } from '../kit/dropzone.js';
 import * as D from './data.js';
+import { API, session } from '../kit/util.js';
 
 const field = (label, input) => K.h('label.lxi-f', {}, K.h('span.t-label', { text: label }), input);
 const fail = (retry, why) => K.toast(why || '등록하지 못했습니다', { action: { label: '다시 시도', onClick: retry } });
@@ -156,5 +157,40 @@ export function ledgerSheet({ host, under, onDone }) {
     }
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); submit(); });
+  return d;
+}
+
+
+/* ── 벡터 등록(10-22 CHANGE-DEMO P0-3 · G7) — 구역선 · 필지 목록을 이 프로젝트의 대상지(분석 범위)로 ─────────────────────
+   구역선(선 · 면 — geojson · shp 압축 · gpkg) + 버퍼 m → 서버가 범위(EPSG:5179)로 저장 · 좌표계 없는 연속지적도는 벨트를 스스로 찾는다.
+   필지 목록(txt · csv의 PNU 19자리) → 그 필지 면을 합친 범위. 등록하면 국토 변화 분석서비스 · XI ChatGEO 가 이 범위를 쓴다. */
+export function vectorSheet({ host, under, project, onDone }) {
+  const kind = K.h('select.t-input', { name: 'kind', 'aria-label': '종류' }, K.h('option', { value: 'line', text: '구역선(도로구역 · 철도용지 등)' }), K.h('option', { value: 'pnu', text: '필지 목록(PNU)' }));
+  const buf = K.h('input.t-input', { type: 'number', min: '0', max: '1000', step: '10', value: '50', name: 'buffer_m', 'aria-label': '버퍼(m)' });
+  const file = K.h('input', { type: 'file', name: 'file', accept: '.geojson,.json,.zip,.gpkg,.txt,.csv', 'aria-label': '파일' });
+  const out = K.h('p.lxi-vec-s', { 'aria-live': 'polite' });
+  const go = K.h('button.t-btn.lxi-go', { type: 'submit', text: '등록' });
+  const form = K.h('form.lxi-form', { novalidate: true }, field('종류', kind), field('파일', file), field('버퍼(m)', buf), out, go);
+  const restore = stack(under);
+  const d = K.drawer({ title: '벡터 등록', body: form, host, slot: 'sheet', onClose: restore });
+  d.el.classList.add('lxi-sheet');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = file.files?.[0];
+    if (!f) { out.textContent = '파일을 골라 주세요'; return; }
+    go.disabled = true; out.textContent = '범위를 만드는 중';
+    try {
+      const fd = new FormData();
+      fd.append('file', f); fd.append('buffer_m', String(Math.max(0, +buf.value || 0))); fd.append('name', f.name.replace(/\.[^.]+$/, '')); if (project) fd.append('project_id', project);
+      const s = session.get();
+      const r = await fetch(API.prefix + '/change/ranges', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error?.message || '등록하지 못했습니다');
+      out.textContent = `${j.kind_label} · 버퍼 ${j.buffer} · 범위 ${Number(j.area?.value ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}㎢ · 영상 ${(j.imagery_years || []).map((y) => y.label).join(' · ')}`;
+      K.toast('대상지를 등록했습니다', { action: { label: '지도에서 보기', href: new URL('../lx-map/?' + new URLSearchParams({ ...(project ? { project } : {}), range: j.id }), import.meta.url).href } });
+      onDone?.(j);
+    } catch (err) { out.textContent = err.message || '등록하지 못했습니다'; }
+    finally { go.disabled = false; }
+  });
   return d;
 }

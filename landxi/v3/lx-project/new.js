@@ -17,6 +17,8 @@ import { panes } from '../kit/panes.js';
 import { stageHref, ensureCss } from './context.js';
 
 let open = null;
+let rcssOn = false;
+const ensureRangeCss = () => { if (rcssOn) return; rcssOn = true; document.head.append(h('link', { rel: 'stylesheet', href: new URL('./range.css', import.meta.url).href })); };
 const UPLOADS = '/catalog/imagery/uploads';
 const FALLBACK = { raster: ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'j2k', 'ecw', 'img'], sidecar: ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'eww', 'prj', 'aux.xml', 'ovr'] };
 const PICK_PER = 6;
@@ -121,7 +123,68 @@ export function openNewProject({ onMade } = {}) {
   const regTg = h('button.t-btn.t-btn--text.lxp-reg-tg', { type: 'button', 'aria-expanded': 'false' },
     h('b', { text: '브이월드에서 영상 가져오기' }), h('small', { text: '분석 범위만 정하기(시군구 · 읍면동)' }));
   regTg.addEventListener('click', () => { regIn.hidden = !regIn.hidden; regTg.setAttribute('aria-expanded', String(!regIn.hidden)); if (!regIn.hidden) regIn.querySelector('input')?.focus(); });
-  regIn.append(regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far);
+  /* 대상지 정하는 방식 셋(10-22 CHANGE-DEMO P0-3 · G3 · G7) — 행정구역 · 구역선 파일(+버퍼 m) · 필지(PNU) 목록. 구역선 · 필지는 서버가 범위(EPSG:5179)로 저장하고
+     그 범위의 국토지리정보원 영상 연도를 알려 준다(연도 고르기 · 여럿). 범위 · 연도는 '만들기' 때 이 프로젝트에 묶인다(POST /change/ranges/{id}/project). */
+  ensureRangeCss();
+  const RG = { mode: 'region', rng: null, yrs: new Set(), seq: 0 };
+  const rmTab = (k, label) => h('button.lxp-vt', { type: 'button', role: 'tab', 'aria-selected': String(k === 'region'), text: label, dataset: { k } });
+  const rmTabs = h('div.lxp-vtabs.lxp-rm', { role: 'tablist', 'aria-label': '대상지 정하는 방식' }, rmTab('region', '행정구역'), rmTab('line', '구역선 파일'), rmTab('pnu', '필지(PNU) 목록'));
+  const bufIn = h('input.t-input.lxp-buf', { type: 'number', min: '0', max: '1000', step: '10', value: '50', 'aria-label': '버퍼(m)' });
+  const lineIn = h('input.lxp-file', { type: 'file', accept: '.geojson,.json,.zip,.gpkg', 'aria-label': '구역선 파일' });
+  const pnuTa = h('textarea.t-input.lxp-pnu', { rows: '3', placeholder: 'PNU 19자리를 줄마다 붙여 넣기', 'aria-label': '필지(PNU) 목록' });
+  const pnuGo = h('button.t-btn.t-btn--2.lxp-pnu-go', { type: 'button', text: '필지 찾기' });
+  const rngLine = h('p.lxp-rng-s', { 'aria-live': 'polite', hidden: true });
+  const yrBox = h('div.lxp-chips.lxp-yrs', { role: 'group', 'aria-label': '영상 연도', hidden: true });
+  const lineBox = h('div.lxp-rng', { hidden: true }, h('label.lxp-file-l', {}, h('span', { text: '구역선 파일(geojson · shp 압축 · gpkg)' }), lineIn));
+  const pnuBox = h('div.lxp-rng', { hidden: true }, pnuTa, h('div.lxp-pnu-r', {}, h('label.lxp-file-l', {}, h('span', { text: '또는 목록 파일(txt · csv)' }), h('input.lxp-file', { type: 'file', accept: '.txt,.csv', 'aria-label': '필지 목록 파일', onchange: async (e) => { const f = e.target.files?.[0]; if (f) { pnuTa.value = await f.text(); makeRange(); } } })), pnuGo));
+  const bufRow = h('label.lxp-buf-r', { hidden: true }, h('span', { text: '버퍼' }), bufIn, h('span', { text: 'm' }));
+  const drawYears = () => {
+    const ys = RG.rng?.imagery_years || [];
+    yrBox.hidden = !ys.length;
+    yrBox.replaceChildren(h('span.lxp-yrs-l', { text: '국토지리정보원 영상 연도' }), ...ys.map((y) => {
+      const b = h('button.t-chip.lxp-chip', { type: 'button', 'aria-pressed': String(RG.yrs.has(y.year)), text: `${y.year}년` });
+      b.addEventListener('click', () => { if (RG.yrs.has(y.year)) RG.yrs.delete(y.year); else RG.yrs.add(y.year); b.setAttribute('aria-pressed', String(RG.yrs.has(y.year))); ready(); });
+      return b;
+    }));
+  };
+  async function makeRange() {
+    const my = ++RG.seq;
+    RG.rng = null; drawYears(); ready();
+    const buf = Math.max(0, Math.min(1000, +bufIn.value || 0));
+    rngLine.hidden = false; rngLine.textContent = '범위를 만드는 중';
+    try {
+      let r;
+      if (RG.mode === 'line') {
+        const f = lineIn.files?.[0]; if (!f) { rngLine.hidden = true; return; }
+        const fd = new FormData(); fd.append('file', f); fd.append('buffer_m', String(buf)); fd.append('name', f.name.replace(/\.[^.]+$/, ''));
+        const s = session.get();
+        const res = await fetch(API.prefix + '/change/ranges', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+        r = await res.json(); if (!res.ok) throw new Error(r?.error?.message || '범위를 만들지 못했습니다');
+      } else {
+        if (!pnuTa.value.trim()) { rngLine.hidden = true; return; }
+        r = await api('/change/ranges', { method: 'POST', body: { name: '필지 목록', buffer_m: buf, pnus: pnuTa.value } });
+      }
+      if (my !== RG.seq) return;
+      RG.rng = r;
+      const ys = (r.imagery_years || []).map((y) => y.year);
+      RG.yrs = new Set(ys.length >= 2 ? [ys[0], ys[ys.length - 1]] : ys);
+      rngLine.textContent = `${r.kind_label} · 버퍼 ${r.buffer} · 범위 ${Number(r.area?.value ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}㎢`;
+      drawYears(); ready();
+    } catch (e) { if (my === RG.seq) { rngLine.textContent = e.message || '범위를 만들지 못했습니다'; } }
+  }
+  lineIn.addEventListener('change', makeRange);
+  pnuGo.addEventListener('click', makeRange);
+  bufIn.addEventListener('change', () => { if (RG.mode !== 'region') makeRange(); });
+  rmTabs.addEventListener('click', (e) => {
+    const k = e.target.closest('.lxp-vt')?.dataset.k; if (!k || k === RG.mode) return;
+    RG.mode = k; RG.rng = null; RG.seq++;
+    rmTabs.querySelectorAll('.lxp-vt').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.k === k)));
+    const reg = k === 'region';
+    for (const el of [regPicked, pickEl, far]) el.hidden = !reg || (el === far && far.hidden) || (el === regPicked && !regions.length);
+    regIn.querySelector('.lxp-far-row').hidden = !reg;
+    lineBox.hidden = k !== 'line'; pnuBox.hidden = k !== 'pnu'; bufRow.hidden = reg; rngLine.hidden = true; drawYears(); ready();
+  });
+  regIn.append(rmTabs, regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far, lineBox, pnuBox, bufRow, rngLine, yrBox);
   regBox.append(regTg, regIn);
   const drawRegs = () => {
     regPicked.replaceChildren(...regions.map((r) => {
@@ -208,7 +271,7 @@ export function openNewProject({ onMade } = {}) {
   drawWhere();
 
   function ready() {
-    const where = picked.size || upFiles().length || regions.length;
+    const where = picked.size || upFiles().length || (RG.mode === 'region' ? regions.length : (RG.rng && RG.yrs.size));
     go.disabled = !(nameIn.value.trim() && where);
     err.hidden = true;
   }
@@ -220,7 +283,8 @@ export function openNewProject({ onMade } = {}) {
     const busy = q?.busy() || files.some((i) => i.state !== 'done');
     const body = { name: nameIn.value.trim(), description: descIn.value.trim() || undefined,
       imagery: [...picked.keys()], members: [...mem.keys()],
-      regions: picked.size || files.length ? [] : regions.map((r) => r.code) };
+      regions: picked.size || files.length ? [] : RG.mode !== 'region' && RG.rng ? RG.rng.sgg : regions.map((r) => r.code) };
+    const rng = !picked.size && !files.length && RG.mode !== 'region' ? RG.rng : null;
     try {
       if (files.length && !busy && draft) {               // 다 올라갔으면 지금 등록 → 그 영상 자리로 대상지
         go.textContent = '영상 등록하는 중';
@@ -233,6 +297,13 @@ export function openNewProject({ onMade } = {}) {
         const { stash } = await import('./carry.js');
         await stash(pr.id, draft, files.map((i) => ({ file: i.file, done: i.state === 'done' })));
         q.clear();
+      }
+      if (rng) {                                          // 구역선 · 필지 범위 — 이 프로젝트에 묶고 두 해 영상이 보이는 지도 서비스로
+        await api(`/change/ranges/${encodeURIComponent(rng.id)}/project`, { method: 'POST', body: { project_id: pr.id, years: [...RG.yrs].sort(), name: body.name } });
+        toast('프로젝트를 만들었습니다');
+        close();
+        location.href = new URL('../lx-map/?' + new URLSearchParams({ project: pr.id }), import.meta.url).href.replace(/\/lx-project\/\.\.\//, '/');
+        return;
       }
       toast('프로젝트를 만들었습니다');
       close();

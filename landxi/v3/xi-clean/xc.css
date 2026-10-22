@@ -264,6 +264,10 @@
 .xc-grip i{position:relative;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:var(--elev-map)}
 .xc-grip i::before{content:"";position:absolute;inset:0;margin:auto;width:14px;height:10px;background:linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 12px,var(--ink) 12px)}
 .xc-grip:focus-visible i{outline:2px solid var(--accent);outline-offset:2px}
+.xc-grip-l{position:absolute;top:84px;padding:3px 10px;border-radius:999px;background:rgba(25,31,40,.78);color:#fff;font:600 var(--fs-tag,14px)/20px var(--font-body);white-space:nowrap;pointer-events:none}   /* 두 쪽 시점 이름표(CHANGE-DEMO P1-8) — 왼쪽 위 결과 줄 아래 */
+.xc-grip-l:empty{display:none}
+.xc-grip-l.is-l{right:28px}
+.xc-grip-l.is-r{left:28px}
 
 /* 로딩 판 — K9 진행 막대 하나 */
 .xc-load{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg-0);transition:opacity var(--d-500) var(--e-ui)}
@@ -638,3 +642,31 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 .xb-tc-note{color:var(--sub)}
 /* 390 — 층 판이 길어져도(전국 분석 연도 · 범례) 도구 한 줄 아래까지만(판 아래 84 + 위 180 · 도구 열 아래 끝 약 172) · 넘치면 판 안에서 내림(겹침 0 · 원칙 309) */
 @media (max-width:640px){ .k-main:has(.xc-pop:not([hidden])) .xc-pop{max-height:calc(100% - 264px);overflow-y:auto} }
+/* XI맵 영상 목록(10-22 now21 제안-XI맵영상목록크게보기) — 새 프로젝트 '공유 데이터에서 고르기'와 같은 카드 · 누르면 크게 보기 */
+.xc-board-flip + .xc-board-flip{margin:0 auto 0 -4px}
+.xc-board-acts:has(.xc-board-flip + .xc-board-flip) .xc-board-flip:first-child{margin:0}
+.xc-imgs{display:flex;flex-direction:column;gap:10px}
+.xc-imgs-t{display:flex;align-items:baseline;gap:8px;margin:0;font:600 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink)}
+.xc-imgs-t .num{font-weight:500;color:var(--sub)}
+.xc-imgs-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.xc-imgs-c{display:flex;flex-direction:column;gap:2px;padding:6px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);text-align:left;cursor:zoom-in;min-width:0}
+.xc-imgs-c:hover{border-color:var(--ink-2)}
+.xc-imgs-c:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.xc-imgs-im{display:block;aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:var(--bg-0);margin-bottom:4px}
+.xc-imgs-im img{width:100%;height:100%;object-fit:cover;display:block}
+.xc-imgs-c b{font:500 var(--fs-aux,15px)/21px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc-imgs-c small{font:400 var(--fs-tag,14px)/19px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc-imgs-w{margin:0;color:var(--sub)}
+/* 지도 이름표 끄기(10-22 now21 제안-지도이름표) — 지도 위 글자만 숨긴다(판 · 서랍 · 숫자 줄은 그대로) */
+.k-main.xc-nolab :is(.xs-c-bub,.xo-mk,.xb-pin,.xk-hl-pop){display:none!important}
+/* 휴대폰 층 판 접기(10-22 now21 제안-휴대폰층판) — 제목 한 줄만 남기고 지도를 비운다 */
+.xc-pop-fold{display:none;height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag,14px)/30px var(--font-body);color:var(--ink);cursor:pointer}
+@media (max-width:640px){
+  .xc-pop-fold{display:inline-block}
+  .xc-pop[data-fold] > :not(.xc-pop-h){display:none}
+  .xc-pop[data-fold] .xc-pop-h{margin:0}
+  .xc-pop[data-fold]{padding:10px 14px}
+  .k-main:has(.xc-pop:not([hidden])) .xc-pop{bottom:88px}   /* 대화 입력 줄과 빠듯하던 2px → 4px 넘게 띄움 */
+}
+.k-main.xc-measuring :is(.xs-c-bub,.xo-mk,.xb-pin,.xb-tipcard,.xc-ovl,.xk-hl-pop){display:none!important}
+@media (max-width:640px){ .k-main.xc-measuring .k-chat-root[data-dock] :is(.xk-ans,.k-chat-sugg,.k-chat-dlog){display:none!important} }   /* 휴대폰 재기 판 = 입력 줄 위 한 자리(답 띠는 재기를 닫으면 다시) */

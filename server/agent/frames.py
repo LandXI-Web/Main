@@ -187,7 +187,8 @@ def timeseries(ctx, msg: str, xr: dict | None) -> dict | None:
     t = re.sub(r"\s+", " ", msg or "").strip()
     if not TS_RX.search(t) or TS_NOT.search(t):
         return None
-    if xr and xr.get("tool") in ("map_compare", "law_search", "report_draft", "ai_report"):
+    if xr and xr.get("tool") in ("map_compare", "law_search", "report_draft", "ai_report",
+                                "run_change_detection", "intersect_parcels", "describe_change", "change_report"):   # 국토 변화 탐지(10-22 CHANGE-DEMO-ORDER P0-4)
         return None
     now_q = re.sub(TS_RX, " ", t)
     now_q = re.sub(r"\s*(?:사이|변화|비교해서|비교|지도에|몇\s*곳이야|어디야|돼\?*|\?)\s*", " ", now_q).strip()

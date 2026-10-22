@@ -1,0 +1,12 @@
+/* range.css — 새 프로젝트 창 '대상지 정하는 방식'(행정구역 · 구역선 파일 · 필지 목록) · 버퍼 · 영상 연도(10-22 CHANGE-DEMO P0-2 · P0-3) */
+.lxp-rm{margin-bottom:4px}
+.lxp-rng{display:flex;flex-direction:column;gap:8px}.lxp-rng[hidden]{display:none}
+.lxp-file-l{display:flex;flex-direction:column;gap:4px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}
+.lxp-file{font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink);max-width:100%}
+.lxp-pnu{min-height:72px;resize:vertical;font-family:var(--font-mono,monospace)}
+.lxp-pnu-r{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lxp-buf-r{display:flex;align-items:center;gap:8px;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink)}.lxp-buf-r[hidden]{display:none}
+.lxp-buf{width:96px}
+.lxp-rng-s{margin:0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);word-break:keep-all}.lxp-rng-s[hidden]{display:none}
+.lxp-yrs{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.lxp-yrs[hidden]{display:none}
+.lxp-yrs-l{flex-basis:100%;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub)}

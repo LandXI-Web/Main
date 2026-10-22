@@ -1,0 +1,29 @@
+"""워커 쪽(동기 psycopg) DB 읽기 · 쓰기 — 범위 도형 · 실행 끝 기록."""
+from __future__ import annotations
+
+import json
+
+
+def _conn():
+    from workers import bus
+    c = bus.pg()
+    bus.lx_tx(c)
+    return c
+
+
+def range_geoms(range_id: str):
+    from shapely import wkb
+    with _conn() as c:
+        row = c.execute("SELECT ST_AsBinary(geom), ST_AsBinary(line), sgg FROM change_ranges WHERE id=%s", (range_id,)).fetchone()
+    if not row:
+        raise KeyError(f"range {range_id} 없음")
+    rng = wkb.loads(bytes(row[0]))
+    line = wkb.loads(bytes(row[1])) if row[1] else None
+    return rng, line, list(row[2] or [])
+
+
+def run_done(job_id: str, stats: dict):
+    with _conn() as c:
+        c.execute("UPDATE change_runs SET state='done', stats=%s::jsonb, done_at=now(), version=coalesce(%s, version) WHERE job_id=%s",
+                  (json.dumps(stats, ensure_ascii=False), stats.get("version"), job_id))     # 실제로 계산한 방식(워커가 다시 읽은 판)
+        c.commit()

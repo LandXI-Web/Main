@@ -575,12 +575,32 @@ async def imagery_epochs(ctx, r: dict) -> list[dict]:
             continue
         rows.append({"id": it["id"], "year": int(m.group(1)), "month": int(m.group(2)) if m.group(2) else None, "cov": round(cov, 4),
                      "gsd": it.get("gsd_m"), "name": (it.get("name") or {}).get("ko") or it["id"]})
+    rows += await ngii_epochs(bb)                         # 국토지리정보원 연도별 항공영상(전국 · 영상 API) — 등록 영상이 한 시점뿐이어도 두 해를 고를 수 있게(10-22 변화 탐지 P0-2)
     wide = [x for x in rows if x["cov"] >= 0.05]
     pool = wide if len({x["year"] for x in wide}) >= 2 else rows
     best: dict = {}
     for x in sorted(pool, key=lambda x: (-x["cov"], -(x["month"] or 0), x["gsd"] or 9)):
         best.setdefault(x["year"], x)
     return sorted(best.values(), key=lambda x: (x["year"], x["month"] or 0))
+
+
+async def ngii_epochs(bb) -> list[dict]:
+    """그 범위에 실제로 영상이 있는 국토지리정보원 해(영상 표에 층이 있는 해만 · 가르기가 그릴 수 있는 것) — 등록 영상과 같은 해면 등록 영상이 먼저."""
+    try:
+        from fastapi.concurrency import run_in_threadpool
+        from landxi_api.deps import db
+        from change import imagery as CI
+        from change.ranges import to5179
+        from shapely.geometry import box
+        async with db(realm="lx") as conn:
+            have = {int(r["year"]): r["id"] for r in await conn.fetch("SELECT id, year FROM imagery WHERE id LIKE 'nat-ngii-air-%' AND year IS NOT NULL")}
+        if not have:
+            return []
+        av = await run_in_threadpool(CI.available_years, to5179(box(*bb)).bounds, sorted(have))
+        return [{"id": have[y], "year": y, "month": None, "cov": 0.999, "gsd": 0.255 if z == 18 else 0.51,
+                 "name": f"국토지리정보원 {y}년"} for y, z in sorted(av.items()) if y in have]
+    except Exception:                                      # noqa: BLE001
+        return []
 
 
 def pick_pair(epochs: list[dict], want: list[int]) -> tuple[dict, dict, list[int]]:

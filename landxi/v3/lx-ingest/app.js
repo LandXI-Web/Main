@@ -6,7 +6,7 @@
    지역은 변수(URL ?region= · 최근 · 배포 기록이 가장 많은 지역) — 지역 문자열 하드코딩 0. */
 import * as K from '../kit/index.js';
 import * as D from './data.js';
-import { imagerySheet, ledgerSheet } from './sheets.js';
+import { imagerySheet, ledgerSheet, vectorSheet } from './sheets.js';
 import { PID, projectRail, attachProject, stageHref } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
 
@@ -95,7 +95,8 @@ function openDrawer(region) {
   else dr = K.drawer({ title: region.name, body, host: stageEl, slot: 'right', label: region.full || region.name, onClose: () => { dr = null; } });
   // 행동 줄은 서랍 바닥에 고정(스크롤 밖 · 첫 뷰에 늘 보임)
   dr.el.querySelector(':scope > .lxi-acts')?.remove();
-  dr.el.append(K.h('div.lxi-acts', {}, bImg, bSample));
+  const bVec = K.h('button.t-btn.t-btn--2', { type: 'button', text: '벡터 등록', onclick: () => vectorSheet({ host: stageEl, under: dr, project: PID }) });   // 구역선 · 필지 목록 → 대상지(10-22 CHANGE-DEMO P0-3)
+  dr.el.append(K.h('div.lxi-acts', {}, bImg, bVec, bSample));
   UI = { img: img.querySelector('.lxi-img'), led: led.querySelector('.lxi-led'), parcel: parcel.querySelector('.lxi-pr') };
   return UI;
 }

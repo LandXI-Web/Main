@@ -1,0 +1,40 @@
+/* change-layer.css — 국토 변화 탐지 층 카드(왼쪽 아래) · 오른쪽 칸(두 해 썸네일). 밝은 톤 · 지도 위 카드는 한 자리(겹침 0). */
+.chg-card{position:absolute;left:16px;bottom:64px;z-index:6;width:300px;max-width:calc(100% - 32px);box-sizing:border-box;padding:14px 16px;border-radius:var(--r-16,16px);
+  background:rgba(255,255,255,.97);box-shadow:0 2px 12px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:6px;word-break:keep-all}
+.chg-k{margin:0;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.chg-t{margin:0;font:700 var(--fs-t3,18px)/26px var(--font-display);color:var(--ink,#191F28)}
+.chg-s,.chg-w{margin:0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.chg-big{margin:2px 0 0;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink,#191F28)}
+.chg-big b{font:700 22px/28px var(--font-display);color:var(--ink,#191F28)}
+.chg-big small{color:var(--sub,#6B7684);font-size:var(--fs-tag,14px)}
+.chg-lg{list-style:none;margin:2px 0;padding:0;display:grid;gap:4px}
+.chg-lg li{display:grid;grid-template-columns:12px 1fr auto auto;align-items:center;gap:8px;font:400 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink,#191F28)}
+.chg-lg b{font-weight:600}
+.chg-lg small{color:var(--sub,#6B7684);font-size:13px;min-width:40px;text-align:right}
+.chg-sw{display:inline-block;width:12px;height:12px;border-radius:3px;flex:none}
+.chg-out{display:flex;align-items:center;gap:6px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink-2,#4E5968);cursor:pointer}
+.chg-panel{gap:10px}
+.chg-ph{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.chg-ph h3{margin:0;display:flex;align-items:center;gap:8px;font:700 var(--fs-t2,20px)/27px var(--font-display);color:var(--ink,#191F28)}
+.chg-ph h3 small{font:400 var(--fs-tag,14px)/19px var(--font-body);color:var(--sub,#6B7684)}
+.chg-x{border:0;background:none;padding:4px 6px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684);cursor:pointer}
+.chg-ab{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chg-ab figure{margin:0;display:flex;flex-direction:column;gap:4px}
+.chg-ab img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#F2F4F6}
+.chg-ab figcaption{font:600 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28);text-align:center}
+.chg-noimg{margin:0;aspect-ratio:1;display:grid;place-items:center;background:#F2F4F6;border-radius:8px;font-size:13px;color:var(--sub,#6B7684)}
+.chg-dl{margin:0;display:grid;gap:4px}
+.chg-kv{display:grid;grid-template-columns:72px 1fr;gap:8px;font:400 var(--fs-aux,15px)/22px var(--font-body)}
+.chg-kv dt{color:var(--sub,#6B7684)} .chg-kv dd{margin:0;color:var(--ink,#191F28)}
+.chg-acts{display:flex;flex-wrap:wrap;gap:8px}
+.chg-note{margin:0;font:400 13px/19px var(--font-body);color:var(--sub,#6B7684)}
+.chg-card.is-under{display:none}
+.is-chg > .lm-cap{display:none}   /* 변화 탐지 장면에서는 다른 결과 층 이름 줄을 내린다 */
+.chg-more{display:none;align-self:flex-start;border:0;background:none;padding:0;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--accent,#3182F6);cursor:pointer}
+@media (max-width:960px){
+  .chg-card{left:12px;right:12px;bottom:12px;width:auto;padding:10px 12px;gap:4px}
+  .chg-card .chg-w,.chg-card:not(.is-open) .chg-lg,.chg-card:not(.is-open) .chg-out,.chg-card .chg-k{display:none}
+  .chg-card .chg-t{font-size:16px;line-height:22px}
+  .chg-more{display:block}
+  .chg-panel{left:12px;right:12px;top:auto;bottom:12px;width:auto;max-height:70%}
+}

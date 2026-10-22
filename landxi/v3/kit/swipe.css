@@ -1,0 +1,12 @@
+/* swipe.css — 두 시점 좌우 가르기(swipe.js). 왼쪽 판 = 위에 덮은 두 번째 지도(선 왼쪽만) · 선 · 손잡이 · 시점 이름표 둘 */
+.k-sw-pane{position:absolute;inset:0;z-index:1;pointer-events:none;clip-path:inset(0 calc(100% - var(--k-sw,50%)) 0 0)}
+.k-sw-pane.k-stage{position:absolute;background:transparent}
+.k-sw-grip{position:absolute;top:0;bottom:0;left:var(--k-sw,50%);z-index:2;width:28px;margin-left:-14px;cursor:ew-resize;touch-action:none;display:flex;align-items:center;justify-content:center}
+.k-sw-grip::before{content:"";position:absolute;top:0;bottom:0;left:13px;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(25,31,40,.25)}
+.k-sw-knob{position:relative;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.3)}
+.k-sw-knob::before{content:"‹ ›";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--font-body,sans-serif);color:#191f28;letter-spacing:1px}
+.k-sw-lab{position:absolute;top:12px;padding:3px 10px;border-radius:999px;background:rgba(25,31,40,.78);color:#fff;font:600 13px/20px var(--font-body,sans-serif);white-space:nowrap;pointer-events:none}
+.k-sw-lab:empty{display:none}
+.k-sw-lab--l{right:22px}
+.k-sw-lab--r{left:22px}
+.k-sw-grip:focus-visible .k-sw-knob{outline:2px solid var(--accent,#0fa9a0);outline-offset:2px}

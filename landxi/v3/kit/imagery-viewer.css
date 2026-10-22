@@ -27,8 +27,12 @@
 .k-iv :is(button,a):focus-visible{outline:2px solid var(--accent,#0fa9a0);outline-offset:2px}
 .k-iv--page{position:fixed;padding:0;background:var(--bg-1,#fff);opacity:1}
 .k-iv--page .k-iv-p{max-width:none;border-radius:0;box-shadow:none}
+.k-iv-ovw{display:inline-flex;align-items:center;gap:8px;margin-left:8px;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--sub,#4e5968);white-space:nowrap}
+.k-iv-ovw[hidden]{display:none}
+.k-iv-ov{min-height:40px;max-width:260px;padding:0 10px;border:1px solid var(--rule,#e5e8eb);border-radius:var(--r-8,8px);background:var(--bg-1,#fff);font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink,#191f28)}
 @media (max-width:640px){
   .k-iv{padding:0}
+  .k-iv-ovw{margin-left:0;flex:1 1 100%}.k-iv-ov{flex:1;max-width:none}
   .k-iv-p{border-radius:0}
   .k-iv-f{padding:10px 12px calc(12px + env(safe-area-inset-bottom));gap:8px}
   .k-iv-fn{width:100%;justify-content:space-between}

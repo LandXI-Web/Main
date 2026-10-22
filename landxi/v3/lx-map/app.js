@@ -252,7 +252,8 @@ function drawLeft() {
     ...[clsBlock(on)].filter(Boolean),   // 켜진 층이 없으면 클래스 칸 없음(replaceChildren 은 null 을 글자 'null'로 넣는다)
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
       SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
-        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null));   // 설명 글 지움(10-17 원칙 281)
+        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null,   // 설명 글 지움(10-17 원칙 281)
+      cmpRow()));
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
 }
@@ -423,6 +424,40 @@ async function dropChip(k) {
   try { r = await api('/me/analyses/filter', { method: 'POST', body: { jobs, cond: c } }); } catch (e) { K.devlog('filter', String(e?.message || e)); }
   setFilter({ op: 'map_filter', ...(r?.params || c), label: r?.label || '', chips: r?.chips || [], n: r?.n ?? null });
 }
+/* 영상 비교(10-22 now21 두 시점 겹쳐 비교 · CHANGE-DEMO P1-8) — 국토지리정보원 해마다 항공 정사영상 두 해를 좌우로 갈라 본다(kit/swipe.js · XI맵과 같은 부품).
+   해 목록 = 서버 전국 분석 장부(GET /national/progress ngii) · 그 해 층이 없으면 고를 수 없다(지어낸 영상 0) */
+var CMP = { on: false, years: null, a: null, b: null, sw: null };   // var — 왼쪽 칸(drawLeft)이 이 줄보다 먼저 그려질 수 있다
+var SWP = import('../kit/swipe.js');
+api('/national/progress').then((j) => { CMP.years = (j?.ngii || []).map((x) => +x.year).filter(Boolean).sort(); if (CMP.years.length >= 2) { CMP.a ??= CMP.years[0]; CMP.b ??= CMP.years[CMP.years.length - 1]; } drawLeft(); }, () => { CMP.years = []; });
+function cmpRow() {
+  const ys = CMP?.years || [];
+  if (ys.length < 2) return null;
+  const sel = (k, label) => h('select.t-input.lm-cmp-s', { 'aria-label': label, onchange: (e) => { CMP[k] = +e.target.value; if (CMP.on) compareYears(CMP.a, CMP.b); } },
+    ...ys.map((y) => h('option', { value: String(y), text: `${y}년`, selected: CMP[k] === y || undefined })));
+  return h('div.lm-shl-row.lm-cmp', {}, h('span.lm-bl', { text: '영상 비교' }),
+    h('button.lm-cmp-b', { type: 'button', 'aria-pressed': String(CMP.on), text: CMP.on ? '끄기' : '켜기', onclick: () => (CMP.on ? compareOff() : compareYears(CMP.a, CMP.b)) }),
+    sel('a', '왼쪽 해'), sel('b', '오른쪽 해'));
+}
+/** 두 해 견주기 — 화면 · XI ChatGEO(map_compare year_a · year_b)가 부른다 → { ok, missing? } */
+async function compareYears(a, b) {
+  const m = await SWP;
+  const r = await m.compareYears({ map, yearA: a, yearB: b, swipe: CMP.sw });
+  if (r.ok) { CMP.sw = r.swipe; CMP.on = true; CMP.a = +a; CMP.b = +b; if (map.getZoom() < 12.5) map.easeTo({ zoom: 13, duration: 800 }); }   // 해마다 영상은 가까이(12단계부터) 그려진다
+  else K.toast(`${(r.missing || []).join(' · ')}년 영상이 없습니다`);
+  drawLeft();
+  return r;
+}
+function compareOff() { CMP.sw?.close(); CMP.sw = null; CMP.on = false; drawLeft(); }
+window.__lm.compareYears = compareYears;
+document.addEventListener('kit:agent-action', async (e) => {
+  const a = e.detail;
+  if (a?.op !== 'map_compare') return;
+  const ya = a.year_a ?? a.left?.year, yb = a.year_b ?? a.right?.year;
+  if (!ya || !yb) return;                                // 해가 없으면 키트 기본('XI맵에서 두 시점 보기')
+  e.preventDefault();
+  const r = await compareYears(ya, yb).catch(() => ({ ok: false }));
+  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_compare', ok: !!r.ok, by: 'lx-map', ...(r.ok ? {} : { reason: r.missing ? `${r.missing.join(' · ')}년 영상이 없습니다` : '두 시점 영상을 불러오지 못했습니다' }) } }));
+});
 document.addEventListener('kit:agent-action', (e) => {
   const a = e.detail;
   if (a?.op !== 'map_filter') return;

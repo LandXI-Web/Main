@@ -195,3 +195,10 @@ body.lm-boot .k-app{visibility:hidden}
   .lm-page,.lm-page[style*="--lm-left"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 44%}
   .lm-page.is-folded{grid-template-columns:minmax(0,1fr);grid-template-rows:0 minmax(0,1fr)}
 }
+
+/* 영상 비교 한 줄(kit/swipe.js) — 켜기 · 두 해 */
+.lm-cmp{flex-wrap:wrap}
+.lm-cmp-b{height:30px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-tag)/28px var(--font-body);color:var(--ink);cursor:pointer}
+.lm-cmp-b[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.lm-cmp .lm-cmp-s{flex:1 1 0;width:auto;min-width:0;height:30px;padding:0 8px;font:500 var(--fs-tag)/1 var(--font-body)}
+.lm-cmp{flex-wrap:nowrap}

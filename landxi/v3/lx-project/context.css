@@ -141,6 +141,9 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-reg-tg{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:4px 0}
 .lxp-reg-tg b{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
 .lxp-reg-tg small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.lxp-reg-tg::before,.lxp-reg-tg::after{content:none}   /* 글자 단추 화살표 · 밑줄 대신 펼침 표시(세로 묶음에서 화살표가 따로 한 줄로 떨어지던 것 · 10-22) */
+.lxp-reg-tg b::after{content:"";display:inline-block;width:7px;height:7px;margin:0 0 3px 8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}
+.lxp-reg-tg[aria-expanded="true"] b::after{transform:rotate(-135deg);margin-bottom:-1px}
 .lxp-mem{position:relative}
 .lxp-mem-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:3;margin:0;padding:4px;list-style:none;background:var(--bg-1);border:1px solid var(--rule);border-radius:var(--r-8);box-shadow:var(--elev-map);max-height:240px;overflow:auto}
 .lxp-mem-l button{display:flex;align-items:baseline;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:none;cursor:pointer;text-align:left}

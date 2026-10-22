@@ -47,3 +47,8 @@
 .k-toast{top:80px;bottom:auto;width:max-content;transform:translate(-50%,-16px)}
 @media (max-width:960px){.k-toast{top:72px;bottom:auto}}
 @media (max-width:640px){.k-toast{top:128px}}   /* 휴대폰 — 도구 한 줄(56 ~ 116) 아래(겹침 0 · 원칙 309 · 10-22 자동 검사) */
+/* 지도에서 답으로(10-22 now21) — 강조된 곳을 누르면 그 자리 숫자 한 줄 */
+.xk-hl-pop{padding:6px 12px;border-radius:var(--r-8,8px);background:var(--bg-1,#fff);box-shadow:var(--elev-map,0 2px 12px rgba(0,0,0,.18));font:600 var(--fs-aux,15px)/22px var(--font-body);color:var(--ink,#191f28);white-space:nowrap;pointer-events:none}
+.xk-hl-pop::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;margin-left:-5px;background:inherit;transform:rotate(45deg);box-shadow:2px 2px 4px rgba(0,0,0,.06)}
+.xk-ans-at{margin:4px 0 0;font:400 12px/18px var(--font-body);color:var(--sub,#4e5968);word-break:keep-all}
+.xk-ans-at[hidden]{display:none}

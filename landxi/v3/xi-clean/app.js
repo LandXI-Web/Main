@@ -11,7 +11,7 @@ import { api, session } from '../kit/util.js';
 import { sse, API, tileUrl } from '../../shared/api-v1.js';
 import { sourceSpec, EXT_OK, warmPm } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis, TEAL, TEAL_DEEP, INK, SLATE } from '../../xi/fx/arrive.js';
-import { excludeClasses, hideResults, onlyFilter } from '../../xi/fx/result-filter.js';   // 클래스 켜기/끄기 · 고친 자리가 대신 그리는 원래 객체 숨김(10-15)
+import { excludeClasses, hideResults, onlyFilter, resultFilter, filterResults } from '../../xi/fx/result-filter.js';   // 클래스 켜기/끄기 · 고친 자리가 대신 그리는 원래 객체 숨김(10-15)
 import { analyzer } from './analyze.js';
 import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
 import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
@@ -152,6 +152,8 @@ const ICO = {
   sweep: '<path d="M3.5 10a6.5 6.5 0 0 1 11.3-4.4M16.5 10a6.5 6.5 0 0 1-11.3 4.4"/><path d="M15 2.5V6h-3.5M5 17.5V14h3.5"/>',
   report: '<path d="M5 2.5h7l3 3v12H5z M8 9h5 M8 12h5 M8 15h3"/>',
   analyze: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  measure: '<path d="M3.5 13.5 13.5 3.5l3 3-10 10z"/><path d="M6 11l1.5 1.5M8.5 8.5 10 10M11 6l1.5 1.5"/>',
+  save: '<path d="M10 3v9m0 0-3.5-3.5M10 12l3.5-3.5M4 15.5h12"/>',
 };
 
 const S = {
@@ -186,6 +188,7 @@ async function boot() {
   const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '영상 비교'], ['sweep', '대조'], ['report', '보고서']]
     : [['layers', '층'], ['swipe', '영상 비교'], ['report', '보고서']];
   if (S.canAnalyze) tools.push(['analyze', '분석']);
+  tools.push(['measure', '재기'], ['save', '저장']);   // 지도 재기 · 지도 그림 저장(10-22 now21 제안-지도재기저장 — 브이월드 · 공공 GIS 지도와 같은 말)
   S.tools = tools;
   S.board = S.lx;                                    // 열자마자 전국 결과(LX 계정 · 바퀴 5)
   // 왼쪽 = 역할 메뉴 그대로(LX 직원 · 관리자 = 직원 메뉴의 XI맵 칸 · 기관 = 기관 메뉴) — XI맵 도구는 지도 오른쪽 위 한 줄(아이콘 + 글자 · 원칙 199)
@@ -193,6 +196,7 @@ async function boot() {
   SH = K.shell({ who, home: 'xi-clean', rail });
   dedupeRole();
   mainEl = SH.main;
+  if (LABOFF) mainEl.classList.add('xc-nolab');
   toolsEl = h('nav.xc-tools', { 'aria-label': 'XI맵 도구' }, ...tools.map(([id, label]) => h('button.xc-tool', { type: 'button', dataset: { tool: id }, 'aria-pressed': 'false', onclick: () => { tool(id); patchRail(); } },
     h('span', { 'aria-hidden': 'true', html: `<svg viewBox="0 0 20 20">${ICO[id] || ''}</svg>` }), h('span.xc-tool-l', { text: label }))));
   patchRail();
@@ -211,7 +215,7 @@ async function boot() {
   hudSus = h('p.xc-sus', { hidden: true });   // 의심 필지(숫자 한 출처 · GET /summary metrics.suspect) — 큰 숫자 아래 한 줄
   const hud = h('section.xc-hud', { 'aria-live': 'polite' }, hudBig, hudSus, bars);
   pop = h('section.xc-pop.t-card.t-card--map', { hidden: true });
-  const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '비교 선', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'));
+  const grip = h('div.xc-grip', { hidden: true, role: 'slider', tabindex: '0', 'aria-label': '비교 선', 'aria-valuemin': '5', 'aria-valuemax': '95', 'aria-valuenow': '50' }, h('i'), h('span.xc-grip-l.is-l'), h('span.xc-grip-l.is-r'));   // 선 위 두 쪽 시점 이름표(CHANGE-DEMO P1-8 '연도 라벨')
   const loadEl = h('div.xc-load');
   // 오른쪽 위 한 줄 = [영상 전환(작은 단추)] [사업 나라] · 그 아래 오른쪽 = 도구 줄(층 · 가르기 · 보고서 · 분석)
   const top = h('div.xc-top');
@@ -248,7 +252,10 @@ async function boot() {
   // 지역: URL → 기관 관할 → 없으면 전국 — 정해지는 즉시 HUD 조회를 미리 부른다(층 쌓기와 동시에)
   if (S.tenant) S.home = await homeRegion();
   const want = Q.get('region');
-  const r0 = (want && (findRegion(want) || await regionByCode(want))) || S.home || null;
+  // 필지로 열었으면(?pnu=) 그 필지의 시군구가 첫 지역 — 지역이 비면 전국으로 날아가 카메라가 필지에 머물지 않고 왼쪽 위에 화면 가운데의 다른 시군구가 뜨던 것(10-22 · P8a)
+  const pc = PNU && !want ? PNU.slice(0, 5) : null;
+  const pReg = pc ? (findRegion(pc) || await regionByCode(pc)) : null;
+  const r0 = (want && (findRegion(want) || await regionByCode(want))) || (pReg && (!S.tenant || inScope(pReg)) ? pReg : null) || S.home || null;
   if (S.fc && Q.get('rule') && (ALL_RULES.includes(Q.get('rule')) || S.ruleDefs[Q.get('rule')])) S.cond.rule = Q.get('rule');
   if (S.fc) { const q = hudQuery(r0, { emd: null, rule: S.cond.rule }); if (q.p && !(S.tenant && r0 && !inScope(r0))) prefetchFindings(q.p.toString()); }
   // 첫 지역이 정해지면 그 지역 자료(읍면동 경계 · 결과 목록)를 층 쌓기와 함께 미리 부르고, 카메라도 바로 그 자리에 둔다
@@ -320,7 +327,10 @@ async function boot() {
       sgg: (k) => { const r = byCode(k); return r?.geometry ? { geometry: r.geometry, name: r.name } : null; },
       go: (b, o = {}) => goKeep(b, { ms: RM() ? 0 : 1200, maxZoom: o.maxZoom ?? 12.5 }),
       focus: hlFocus,
-      om: () => ({ on: !!OM?.on, sgg: OM?.spec?.map?.level === 'emd' ? String(OM.spec.map.sgg || '') : null }) });
+      om: () => ({ on: !!OM?.on, sgg: OM?.spec?.map?.level === 'emd' ? String(OM.spec.map.sgg || '') : null }),
+      canPop: (pt) => !S.swipe && !AN?.active && !(map.getZoom() >= (BD?.NEAR_Z ?? 99) && objectsAt(pt).length) });   // 결과 객체를 누른 것이면 객체 카드가 먼저
+    document.addEventListener('xk:hl-shown', renderChips); document.addEventListener('xk:hl-cleared', renderChips);
+    document.addEventListener('kit:agent-action-done', (e) => { if (e.detail?.op === 'map_filter') requestAnimationFrame(renderChips); });   // 조건 줄에 '지도 강조'도(조건 풀기 한 단추)
     document.addEventListener('kit:agent-done', (e) => { const d = e.detail; if (d?.replay) return; if (d?.refs) HL.show({ ...d.refs, run: d.run }); else if (HL.cur && (d?.rejected || HL.cur.src !== 'dash')) HL.clear(); });   // 새 답이 가리키는 곳이 없으면(관할 밖 · 일반 답) 앞 답의 강조를 걷는다 — 남은 강조가 이 답처럼 보이지 않게
   }
   mountChatAnswer({ host: mainEl, cmdk, hl: HL, emph: {                                  // 지도 강조(색칠 · 답이 가리킨 곳) — 대화 서랍이 열려 있어도 끄고 켠다(10-22)
@@ -382,7 +392,7 @@ function patchRail() {
   if (!toolsEl) return;
   toolsEl.querySelectorAll('.xc-tool').forEach((b) => {
     const id = b.dataset.tool; if (!id) return;
-    const on = S.tool === id || (id === 'swipe' && S.swipe) || (id === 'tilt' && S.tilt) || (id === 'list' && S.list) || (id === 'analyze' && AN?.active);
+    const on = S.tool === id || (id === 'measure' && !!MS?.active) || (id === 'swipe' && S.swipe) || (id === 'tilt' && S.tilt) || (id === 'list' && S.list) || (id === 'analyze' && AN?.active);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     const off = S.outside && ['rules', 'list', 'sweep', 'report'].includes(id) || (id === 'sweep' && !regionEmds().length) || (id === 'report' && !regionEmds().length);
     if (off) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
@@ -1183,7 +1193,9 @@ function renderBoardList(d, B) {
   boardTitle(d, sidos.length > 1 ? [`${nf(B.regions)} 시군구`, `${nf(B.services)} 서비스 제공중`] : [BL.sido, `${nf(inSido.length)} 시군구 · ${nf(svcN(inSido))} 서비스`]);
   const box = h('div.xc-list.xc-board.xc-board--2');
   const flip = () => { BMODE = BMODE === 'svc' ? 'region' : 'svc'; bmodeSave(); BSVC = null; renderBoardList(d, B); };
-  box.append(h('div.xc-board-acts', {}, h('button.xc-board-flip', { type: 'button', text: '서비스로 보기', 'aria-pressed': BMODE === 'svc' ? 'true' : 'false', onclick: flip }), h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
+  const imgB = S.lx ? h('button.xc-board-flip', { type: 'button', text: '영상', 'aria-pressed': BIMG ? 'true' : 'false', onclick: () => { BIMG = !BIMG; renderBoardList(d, B); } }) : null;   // XI맵 영상 목록(10-22 now21 제안-XI맵영상목록크게보기)
+  box.append(h('div.xc-board-acts', {}, h('button.xc-board-flip', { type: 'button', text: '서비스로 보기', 'aria-pressed': BMODE === 'svc' && !BIMG ? 'true' : 'false', onclick: () => { BIMG = false; flip(); } }), imgB, h('button.t-btn.t-btn--2.xc-board-rep', { type: 'button', text: '보고서로', onclick: (e) => downloadHwpx(boardListSpec(), e.currentTarget) })));
+  if (BIMG) { box.append(imgList()); d.set(box); X.boardList = { mode: 'img' }; return; }
   if (BMODE === 'svc') { box.append(svcFirst(d, B)); d.set(box); X.boardList = { mode: 'svc', regions: B.regs.length, services: B.services, rows: box.querySelectorAll('.xc-svr, .xc-sgc').length, open: BSVC }; return; }
   const go = (st) => { BL = st; renderBoardList(d, B); };
   // 길잡이 줄 — 전국(기본 시도로 · 접기) › 시도(펼친 시군구 접기) › 시군구(지금)
@@ -1217,6 +1229,37 @@ function renderBoardList(d, B) {
   box.append(grid);
   d.set(box);
   X.boardList = { regions: B.regs.length, services: B.services, level: reg3 ? 3 : 2, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-sgc, .xc-board-svc').length, open: [BL.sido], chips: sidos.length > 1 ? sidos.length : 0, grid: inSido.length };
+}
+/* ── 영상 목록(10-22 now21 제안-XI맵영상목록크게보기 '넣음') — 새 프로젝트 '공유 데이터에서 고르기'와 같은 카드(그림 · 이름 · 지역 · 연도 · 종류) ·
+   지금 시군구가 있으면 그 시군구 영상 · 카드를 누르면 크게 보기(앞 · 다음 · 같은 지역 다른 해 겹쳐 보기 — kit/imagery-viewer.js). 목록 = 서버 GET /projects/imagery 그대로 */
+let BIMG = false, IMGS = null;
+const THUMB = new Map();
+function thumbOf(path) {
+  if (!path) return Promise.resolve(null);
+  if (!THUMB.has(path)) THUMB.set(path, (async () => {
+    const s = session.get(); const r = await fetch(API.prefix + path, { headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+    if (!r.ok || r.status === 204) return null; const b = await r.blob(); return b.size ? URL.createObjectURL(b) : null;
+  })().catch(() => null));
+  return THUMB.get(path);
+}
+function imgList() {
+  const wrap = h('div.xc-imgs');
+  const draw = () => {
+    const all = IMGS || [], here = S.region ? all.filter((x) => norm(x.region) === norm(S.region.name)) : all;
+    const rows = here.length ? here : all;
+    const title = h('p.xc-imgs-t', {}, h('b', { text: S.region && here.length ? `${S.region.name} 영상` : '공유 데이터 영상' }), h('span.num', { text: `${nf(rows.length)}장` }));
+    const big = (i) => import('../kit/imagery-viewer.js').then((m) => m.openImageryViewer({ items: rows, index: i })).catch(() => K.toast('크게 보기를 열지 못했습니다'));
+    const grid = h('div.xc-imgs-g', {}, ...rows.slice(0, 60).map((x, i) => {
+      const im = h('span.xc-imgs-im');
+      thumbOf(x.thumb).then((u) => { if (u) im.append(h('img', { src: u, alt: '', decoding: 'async' })); else im.classList.add('is-blank'); });
+      return h('button.xc-imgs-c', { type: 'button', title: `${x.name} 크게 보기`, onclick: () => big(i) }, im, h('b', { text: x.name }), h('small', { text: [x.region, x.year, x.kind].filter(Boolean).join(' · ') }));
+    }));
+    wrap.replaceChildren(title, rows.length ? grid : h('p.xc-imgs-w', { text: '영상이 없습니다' }));
+    if (rows.length) import('../kit/imagery-viewer.js').then((m) => m.warmImageryViewer(rows.slice(0, 2).map((x) => x.id))).catch(() => null);
+  };
+  if (IMGS) draw();
+  else { K.empty(wrap, { kind: 'loading', compact: true }); api('/projects/imagery').then((j) => { IMGS = j.items || []; draw(); }, () => { wrap.replaceChildren(h('p.xc-imgs-w', { text: '영상 목록을 불러오지 못했습니다' })); }); }
+  return wrap;
 }
 /** 서비스 먼저(10-18 '서비스로 보기') — 서비스 줄(색 점 · 이름 · 시군구 수) → 누르면 그 서비스가 있는 시군구 칩(마지막 분석 날짜) → 칩을 누르면 그곳으로 날아가 그 결과만 */
 function svcFirst(d, B) {
@@ -1755,15 +1798,27 @@ function setCond({ emd, rule } = {}) {
   if (S.tool === 'rules') renderRules();
   refresh();
 }
+/* 조건 풀기 한 단추(10-22 now21 제안-조건풀기한단추 '넣음') — 읍면동 · 규칙 조건 + XI ChatGEO 답이 건 지도 강조 · 말로 건 거르기를 한 번에 풀고 그 지역 처음 모습으로 */
 function renderChips() {
+  if (!chips) return;
   chips.innerHTML = '';
   const { emd, rule } = S.cond;
-  if (!emd && !rule) { chips.hidden = true; return; }
+  const hl = HL?.cur?.items?.length ? HL.cur : null, flt = map ? resultFilter(map) : null;
+  if (!emd && !rule && !hl && !flt) { chips.hidden = true; return; }
   if (emd) chips.append(h('span.t-chip.xc-chip', { text: emd.nm }));
   if (rule && ruleName(rule)) chips.append(h('span.t-chip.xc-chip', { text: ruleName(rule) }));
-  chips.append(h('button.xc-clear', { type: 'button', text: '조건 지우기', onclick: () => { const e = S.cond.emd; setCond({ emd: null, rule: null }); if (e && S.region) stage.go(S.region.bbox, { ms: 1600, maxZoom: 12.5 }); } }));
+  if (flt?.label) chips.append(h('span.t-chip.xc-chip', { text: flt.label }));
+  if (hl && !emd) chips.append(h('span.t-chip.xc-chip', { text: `지도 강조 ${nf((window.__xc?.hl?.n) || hl.items.length)}곳` }));
+  chips.append(h('button.xc-clear', { type: 'button', text: '조건 풀기', onclick: clearAll }));
   chips.hidden = false;
   alignChips();
+}
+function clearAll() {
+  HL?.clear();
+  if (map && resultFilter(map)) filterResults(map, { clear: true });
+  setCond({ emd: null, rule: null });
+  if (S.region) goKeep(S.region.bbox, { ms: RM() ? 0 : 1400, maxZoom: 12.5 });
+  X.cleared = (X.cleared || 0) + 1;
 }
 /** 역할 칩 — 이름이 역할과 같으면(예: 'LX 직원 · LX 직원') 역할 하나만 */
 function dedupeRole() {
@@ -2102,6 +2157,8 @@ async function agentOp(a) {
   if (a.op === 'map_compare') {                        // 두 시점 나란히(확인 16차 대화-2 ⓑ · expand 4) — 가르기 왼쪽 · 오른쪽에 서로 다른 시점 영상
     const r = a.sgg_cd ? await regionFromAgent(a) : null;
     if (r && S.region?.code !== r.code) await setRegion(r);
+    const ya = a.year_a ?? a.left?.year, yb = a.year_b ?? a.right?.year;   // 해로 부르기(변화 탐지 · CHANGE-DEMO P1-8) — 국토지리정보원 그 해 층
+    if ((!a.left?.id || !a.right?.id) && ya && yb) { const r2 = await compareYears(ya, yb); return r2.ok ? true : { ok: false, reason: r2.missing ? `${r2.missing.join(' · ')}년 영상이 없습니다` : '두 시점 영상을 불러오지 못했습니다' }; }
     if (!a.left?.id || !a.right?.id) return { ok: false, reason: '나란히 볼 두 시점이 없습니다' };
     return (await compareOn(a.left.id, a.right.id)) ? true : { ok: false, reason: '두 시점 영상을 불러오지 못했습니다' };
   }
@@ -2416,6 +2473,8 @@ function tool(id) {
   ED?.close();
   if (id === 'list') { if (S.list) { closeDrawer(); S.list = null; } else { closePop(); openList(); } return; }
   if (id === 'swipe') return toggleSwipe();
+  if (id === 'measure') return toggleMeasure();
+  if (id === 'save') return saveMap(b);
   if (id === 'analyze') {
     if (AN.active) { if (!AN.running) AN.stop(); S.tool = null; patchRail(); return; }
     closePop(); closeDrawer(); S.tool = 'analyze'; patchRail();
@@ -2432,11 +2491,43 @@ function tool(id) {
   S.tool = id; patchRail();
   ({ layers: renderLayers, rules: renderRules, sweep: renderSweep, report: renderReport })[id]?.();
 }
+/* 재기 · 저장(kit/map-tools.js) — 재는 동안 지도 누르기는 재기가 먼저 받는다 */
+let MS = null;
+async function toggleMeasure() {
+  if (MS?.active) { MS.close(); return; }
+  closePop(); closeDrawer();
+  const m = await import('../kit/map-tools.js');
+  MS = m.measureTool({ map, host: mainEl, onClose: () => { MS = null; mainEl.classList.remove('xc-measuring'); patchRail(); } });
+  mainEl.classList.add('xc-measuring');   // 재는 동안 지도 위 말풍선 · 올림 카드 · 겹침 표시는 쉰다(잰 선이 가려지지 않게)
+  patchRail();
+}
+async function saveMap(btn) {
+  if (btn?.getAttribute('aria-busy') === 'true') return;
+  btn?.setAttribute('aria-busy', 'true');
+  try {
+    const m = await import('../kit/map-tools.js');
+    const legend = (aiOn() ? visibleClasses() : []).filter((c) => !S.clsOff.has(c)).map((c) => ({ color: userCol(c) || baseCol(c), label: clsName(c) }));
+    const where = S.cond.emd ? `${S.region?.name || ''} ${S.cond.emd.nm}`.trim() : S.region ? S.region.full || S.region.name : '전국';
+    await m.saveMapPicture(map, { title: `${where} · XI맵`, legend, source: S.cmp?.left || S.cmp?.right ? '국토지리정보원 항공 정사영상' : '바탕 영상 브이월드' });
+    K.toast('지도 그림을 저장했습니다');
+  } catch (e) { K.toast('지도 그림을 만들지 못했습니다'); K.devlog('save', String(e?.message || e)); }
+  finally { btn?.removeAttribute('aria-busy'); }
+}
+let LABOFF = (() => { try { return localStorage.getItem('lx_xc_lab') === 'off'; } catch { return false; } })();
+function setLabels(on) {
+  LABOFF = !on;
+  mainEl?.classList.toggle('xc-nolab', LABOFF);
+  try { localStorage.setItem('lx_xc_lab', LABOFF ? 'off' : 'on'); } catch { /* 저장 불가 창 */ }
+  X.labels = !LABOFF;
+}
 function closePop() { if (S.tool && S.tool !== 'analyze') S.tool = null; pop.hidden = true; patchRail(); }
 function showPop(title, ...kids) {
   if (S.drawer) closeDrawer();                             // 한 자리 하나(10-22 원칙 309) — 판과 서랍은 같은 자리(PC 오른쪽 · 휴대폰 아래 시트)를 쓴다
   pop.innerHTML = '';
-  pop.append(h('header.xc-pop-h', {}, h('h2', { text: title }), h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: closePop })), ...kids);
+  delete pop.dataset.fold;
+  // 휴대폰 층 판 접기(10-22 now21 제안-휴대폰층판 '넣음') — 판이 지도를 가리면 제목 한 줄로 접는다(다시 누르면 펼침 · PC 는 단추 없음)
+  const fold = h('button.xc-pop-fold', { type: 'button', 'aria-expanded': 'true', text: '접기', onclick: () => { const f = !pop.dataset.fold; if (f) pop.dataset.fold = '1'; else delete pop.dataset.fold; fold.setAttribute('aria-expanded', String(!f)); fold.textContent = f ? '펼치기' : '접기'; } });
+  pop.append(h('header.xc-pop-h', {}, h('h2', { text: title }), fold, h('button.xa-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: closePop })), ...kids);
   pop.hidden = false;
   // 누른 도구 높이에 맞추되 HUD 아래로
   // 누른 도구 높이 · 도구 줄 왼쪽에 연다(오른쪽 도구 줄 · 바퀴 5)
@@ -2465,6 +2556,8 @@ function renderLayers() {
   const tintRow = tintRowNeeded() ? h('button.xc-row', { type: 'button', 'data-tint-row': '1', 'aria-pressed': String(TINT.on), onclick: () => setTint({ on: !TINT.on }) }, h('i.xc-sw'), h('span', { text: '분석 결과 색칠' })) : null;
   rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []), ...(cad ? [cad] : []), ...(tintRow ? [tintRow] : []));
   rows.push(...natYearRows());
+  // 지도 이름표(10-22 now21 제안-지도이름표 '넣음') — 지도 위 글자(추천 질문 말풍선 · 숫자 꼬리표 · 지역 말풍선)를 끄고 켠다 · 이 브라우저에 기억
+  rows.push(h('button.xc-row.xc-row--lab', { type: 'button', 'aria-pressed': String(!LABOFF), onclick: (e) => { setLabels(LABOFF); e.currentTarget.setAttribute('aria-pressed', String(!LABOFF)); } }, h('i.xc-sw'), h('span', { text: '이름표' })));
   showPop('층', h('div.xc-rows-p', {}, ...rows));
   paintCadRow();
 }
@@ -2732,15 +2825,32 @@ function cmpBar() {
   const opt = (v, t, sel) => h('option', { value: v, text: t, selected: sel || undefined });
   const left = h('select.xc-cmp-s', { 'aria-label': '왼쪽 시점' }, opt('', '지금 영상', !S.cmp?.left), ...eps.map((x) => opt(x.it.id, x.ngii ? x.label : `${x.label} 영상`, S.cmp?.left === x.it.id)));
   const right = h('select.xc-cmp-s', { 'aria-label': '오른쪽 시점' }, opt('', 'AI 분석 결과', !S.cmp?.right), ...eps.map((x) => opt(x.it.id, x.ngii ? x.label : `${x.label} 영상`, S.cmp?.right === x.it.id)));
-  left.onchange = async () => { S.cmp = { ...(S.cmp || {}), left: left.value || null }; await cmpLayer(B.map, 'l', left.value || null); };
+  left.onchange = async () => { S.cmp = { ...(S.cmp || {}), left: left.value || null }; gripLabels(); await cmpLayer(B.map, 'l', left.value || null); };
   right.onchange = async () => {
     S.cmp = { ...(S.cmp || {}), right: right.value || null };
+    gripLabels();
     await cmpLayer(map, 'r', right.value || null);
     if (!right.value && !S.layers.ai) { S.layers.ai = true; S.aiAuto = true; applyLayers(); }
     else if (right.value && S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); }
   };
   el.replaceChildren(left, h('i.xc-cmp-d', { 'aria-hidden': 'true' }), right);
+  gripLabels();
 }
+/** 가르기 선 위 두 쪽 이름표 — 고른 시점(예: '2020년' · '2024년') · 안 고른 쪽 = 지금 영상 · AI 분석 결과 */
+function gripLabels() {
+  const g = S.els.grip; if (!g) return;
+  const lb = (id, none) => { if (!id) return none; const x = [...regionEpochs(), ...ngiiEpochs()].find((e) => e.it.id === id); return x ? (x.ngii ? `${x.it.epoch}년` : x.label) : none; };
+  g.querySelector('.is-l').textContent = lb(S.cmp?.left, '지금 영상');
+  g.querySelector('.is-r').textContent = lb(S.cmp?.right, 'AI 분석 결과');
+}
+/** 두 해 견주기(XI ChatGEO 변화 탐지 · 화면이 부른다) — 국토지리정보원 그 해 층을 왼쪽 · 오른쪽에. 그 해 층이 없으면 { ok:false, missing } */
+async function compareYears(yearA, yearB) {
+  const id = (y) => (ngiiEpochs().find((e) => +e.it.epoch === +y) || regionEpochs().find((e) => String(e.it.epoch).slice(0, 4) === String(y)))?.it.id || null;
+  const a = id(yearA), b = id(yearB), missing = [[yearA, a], [yearB, b]].filter(([, v]) => !v).map(([y]) => +y);
+  if (missing.length) return { ok: false, missing };
+  return { ok: await compareOn(a, b) };
+}
+X.compareYears = compareYears;
 
 /* 입체는 뺐다(원칙 196) — 지형 타일을 싣지 않고 기울기도 0. 시점 함수는 '위에서 보기'만(말로 하는 map_view 의 평면 복귀) */
 async function setView(pitch, bearing) {
