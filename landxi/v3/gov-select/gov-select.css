@@ -344,3 +344,28 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 .gs-gcard-f{margin:auto 0 0;padding-top:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
 .gs-gcard-go{font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
 .gs-gcard-go::after{content:" →"}
+
+/* 기관 공지 한 줄(10-22 제안-기관공지쓰기 · gov-select/notice.js) — 본문 흐름 안 · 흰 띠 한 줄 */
+.gn-h:empty{display:none}
+.gn-line{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:12px 16px;border-radius:var(--r-12,12px);background:var(--bg-1);min-width:0}
+.gn-k{flex:none;padding:2px 8px;border-radius:999px;background:var(--tint,#EAF3FF);color:var(--accent);font:600 var(--fs-tag)/18px var(--font-body)}
+.gn-t{appearance:none;border:0;background:none;padding:0;display:inline-flex;align-items:baseline;gap:10px;min-width:0;flex:0 1 auto;cursor:pointer;text-align:left}
+.gn-tt{font:600 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.gn-t:hover .gn-tt{text-decoration:underline;text-underline-offset:3px}
+.gn-d{flex:none;font:400 var(--fs-tag)/18px var(--font-num);color:var(--sub)}
+.gn-none{font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
+.gn-sp{flex:1}
+.gn-a{flex:none;height:auto;padding:2px 0}
+.gn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;min-width:min(520px,80vw)}
+.gn-list li{display:flex;flex-direction:column;gap:4px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.gn-list li:last-child{border-bottom:0;padding-bottom:0}
+.gn-lh{display:flex;align-items:center;gap:8px}
+.gn-list b{font:600 var(--fs-body)/1.5 var(--font-body);color:var(--ink);word-break:keep-all}
+.gn-list small{font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+.gn-list p{margin:4px 0 0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
+.gn-off{align-self:flex-start;height:auto;padding:2px 0}
+.gn-form{display:flex;flex-direction:column;gap:12px;min-width:min(460px,80vw)}
+.gn-f{display:flex;flex-direction:column;gap:6px}
+.gn-pin{display:flex;align-items:center;gap:8px;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body)}
+.gn-say{margin:0;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+@media (max-width:640px){.gn-line{padding:10px 12px}.gn-tt{white-space:normal}}

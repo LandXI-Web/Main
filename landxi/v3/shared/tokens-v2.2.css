@@ -3,7 +3,7 @@
    무대 하나: 회백 바탕 + 흰 면 · 짙은 잉크 · 색은 지도·사진·AI 결과 위에서만. 라운드 24/16/8 · 유리 0 · 바탕 위 그림자 0. */
 
 /* 한글 글꼴은 쓰는 글자만 나눠 받는다(10-22 now21 인프라-글꼴 ⓐ · tools/fonts/subset.py 가 만든 조각 · 화면에 나온 글자가 든 조각만 받음) */
-@import url('../../assets/fonts/sub/fonts.css');
+@import url('./fonts-sub.css');
 @font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('../../assets/fonts/Inter-400.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url('../../assets/fonts/Inter-500.woff2') format('woff2')}
 

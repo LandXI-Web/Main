@@ -26,7 +26,7 @@ import { LEDGER } from '../../lx-ingest/data.js';
 const PER = 12;
 const UPLOADS = '/catalog/imagery/uploads';
 const FALLBACK = { raster: ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'j2k', 'ecw', 'img'], sidecar: ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'eww', 'prj', 'aux.xml', 'ovr'] };
-const KINDS0 = { farm_ledger: '농지대장', dev_permit: '개발행위 허가', public_asset: '공유재산', river_permit: '하천 점용 허가', greenhouse: '시설원예 등록' };
+const KINDS0 = { farm_ledger: '농지대장', dev_permit: '개발행위 허가', public_asset: '공유재산', river_permit: '하천 점용 허가', greenhouse: '시설원예 등록', feedcrop: '사료작물 재배 신청', direct_pay: '공익직불 신청' };
 const thumbs = new Map();
 function authPic(path) {                     // LX 계정만 받는 그림 — 세션을 실어 받는다(새 프로젝트 창과 같은 길)
   if (!thumbs.has(path)) {

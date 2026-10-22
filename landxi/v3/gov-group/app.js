@@ -16,14 +16,14 @@ import { primary } from '../gov-select/dash.js';
 import { renderStats } from '../gov-select/tabs.js';
 import { parcelExtras } from '../gov-report/svc-parcels.js';
 import { mountDownloads } from './downloads.js';
+import { noticeLine } from '../gov-select/notice.js';
 
 const who = await K.gate('gov-group');
 const tid = who.me.tenant_id;
 const qs = new URLSearchParams(location.search);
 
-let brand = null;
-try { brand = await loadBrand(tid); } catch { /* 아래 */ }
-const gj = await api('/spaces/me/groups').catch(() => null);
+/* 기관 색 · 묶음을 함께 묻는다(10-22 P8b 첫인상 — 차례로 묻던 왕복 한 번을 줄임) */
+const [brand, gj] = await Promise.all([Promise.resolve().then(() => loadBrand(tid)).catch(() => null), api('/spaces/me/groups').catch(() => null)]);
 const groups = gj?.items || [];
 const G = groups.find((g) => g.id === qs.get('group')) || groups[0] || null;
 if (!G) { location.replace('../gov-select/?list=1'); await new Promise(() => {}); }
@@ -79,6 +79,8 @@ const nf = (v) => Number(v || 0).toLocaleString('ko-KR');
 
 /* ═════════ 통합 대시보드 ═════════ */
 function renderHome() {
+  { const nh = h('div.gn-h'); body.append(nh); noticeLine(nh).catch(() => {}); }   // 기관 공지 한 줄(10-22 제안-기관공지쓰기)
+  firstVisit();                                                                   // 처음 쓰는 담당자 세 걸음(10-22 제안-영농첫방문안내)
   const grid = h('div.gg-svcs');
   for (const card of G.cards) {
     const s = svcOf(card), d = deckOf(card), p = primary(itemsOf(card));
@@ -90,6 +92,33 @@ function renderHome() {
       h('div.gg-svc-a', {}, h('a.t-btn.t-btn--2', { href: dashHref(card, { group: G.id }), text: '대시보드' }), s.open !== false ? h('a.t-btn.t-btn--text', { href: mapHref(card), text: '결과 지도' }) : null)));
   }
   body.append(h('div.gg-sec-h', {}, h('h2', { text: '분석서비스 결과' }), h('span', { text: `${G.cards.length}개 · AI 분석 결과` })), grid);
+}
+
+/* ═════════ 처음 쓰는 담당자 세 걸음(10-22 now21 제안-영농첫방문안내 — "결과 보기 → 필지 확인 → 보고서 받기") ═════════
+   묶음 홈 맨 위 본문 흐름 안 카드(떠 있지 않음 · 겹침 0). 걸음을 누르면 그 걸음은 '봤음' — 셋 다 보거나 '닫기'면 다시 띄우지 않는다.
+   기억은 이 브라우저 · 이 사람 · 이 묶음 열쇠(저장이 막힌 창이면 매번 보이되 화면은 그대로 동작). 지역 · 서비스 고정값 0(묶음의 첫 분석서비스). */
+const TOUR_KEY = `lx_gg_tour:${tid}|${who.me.user?.id || ''}|${G.id}`;
+const tourGet = () => { try { return JSON.parse(localStorage.getItem(TOUR_KEY) || 'null') || { seen: [] }; } catch { return { seen: [] }; } };
+const tourSet = (v) => { try { localStorage.setItem(TOUR_KEY, JSON.stringify(v)); } catch { /* 저장 불가 */ } };
+const tourSeen = (k) => { const v = tourGet(); if (!v.seen.includes(k)) { v.seen.push(k); tourSet(v); } };
+if (TAB === 'parcels') tourSeen('parcel');
+function firstVisit() {
+  const v = tourGet();
+  if (v.closed || v.seen.length >= 3) return;
+  const open = G.cards.find((c) => svcOf(c).open !== false) || first;
+  const steps = [
+    ['map', '결과 보기', '분석서비스 결과를 지도에서 봅니다', mapHref(open)],
+    ['parcel', '필지 확인', '지번으로 필지를 찾고 메모를 남깁니다', self('parcels')],
+    ['report', '보고서 받기', '고른 결과를 한글 문서 · PDF로 받습니다', '../gov-report/?' + new URLSearchParams({ service: open, tab: 'report' })],
+  ];
+  const close = h('button.t-btn.t-btn--text.gg-tour-x', { type: 'button', text: '닫기' });
+  const card = h('section.gg-tour', { 'aria-label': '처음 쓰는 분께' },
+    h('div.gg-tour-h', {}, h('h2', { text: '처음이면 세 걸음만' }), close),
+    h('ol.gg-tour-l', {}, ...steps.map(([k, t, d, href], i) => h('li', { dataset: { done: String(v.seen.includes(k)) } },
+      h('a.gg-tour-a', { href, onclick: () => tourSeen(k) }, h('span.gg-tour-n.num', { text: String(i + 1) }),
+        h('span.gg-tour-t', {}, h('b', { text: t }), h('small', { text: d })), h('span.gg-tour-ok', { text: v.seen.includes(k) ? '봤음' : '' }))))));
+  close.addEventListener('click', () => { tourSet({ ...tourGet(), closed: true }); card.remove(); });
+  body.append(card);
 }
 
 /* ═════════ 분석서비스(서비스 카드 한 벌 · K7) ═════════ */

@@ -87,6 +87,35 @@ export function startEarly() {
   if (s.realm === 'tenant' && s.tenant_id) { keep('/auth/tenants'); keep('/brand/' + encodeURIComponent(s.tenant_id)); }
   /* LX 직원 대시보드 요청함 숫자(kit/lx-menu requestCounts) — 화면 모듈 · 문 확인을 기다리지 않고 함께 출발(10-22 바퀴 22 '요청함 불러오는 중' 줄이기) */
   if (s.realm === 'lx' && /\/lx-console\/?$/.test(location.pathname)) { keep('/reviews/notify'); keep('/approvals?state=pending'); }
+  bootScreen(s);
+}
+/* 화면 첫 자료도 함께 출발(10-22 P8b · 첫인상 — 직원 대시보드 · 기관 화면 '불러오는 중' 줄이기). 화면 코드는 문 확인(/me) → 머리줄 → 칸 자료 순서로
+   묻느라 바깥 주소 왕복(약 0.3초)을 두세 번 기다렸다. 그 화면이 처음에 꼭 묻는 읽기 경로를 문 확인과 같은 순간에 받기 시작하고,
+   화면이 같은 경로를 물으면(shared/api-v1 bootHit — XI맵 첫 화면 묶음과 같은 길) 그 응답을 한 번 쓴다. 오지 않거나 실패한 것 · 20초 지난 것은 화면이 예전처럼 따로 묻는다.
+   응답은 그 사람 세션으로 같은 API 를 부른 것 그대로(숫자 한 출처) · XI맵은 자기 묶음이 있어 건드리지 않는다. */
+const BOOT_SCREENS = [
+  [/\/lx-console\/?$/, 'lx', () => ['/projects/notices', '/me/prefs/dash.lx-console', '/me/memos?limit=50', '/projects?scope=mine', '/me/storage', '/announcements?limit=12',
+    '/cards/deck', '/holidays?year=' + new Date().getFullYear()]],
+  [/\/gov-(select|group)\/?$/, 'tenant', (s) => ['/spaces/me/groups', '/cards/deck', '/summary', '/regions']],
+  // 내 서비스 오늘 띠(새 알림 · 보낸 요청) — 목록 화면에서만
+  [/\/gov-select\/?$/, 'tenant', () => (/[?&]service=|[?&]view=/.test(location.search) ? [] : ['/reviews/notify', '/reviews?box=all&limit=50', '/requests', '/shoots'])],
+];
+function bootScreen(s) {
+  if (window.__lxBoot) return;
+  const hits = BOOT_SCREENS.filter(([re, realm]) => re.test(location.pathname) && s.realm === realm);
+  if (!hits.length) return;
+  const t0 = performance.now(), M = new Map();
+  for (const k of hits.flatMap((x) => x[2](s))) {
+    M.set(k, fetch(API.prefix + k, { headers: { accept: 'application/json', authorization: 'Bearer ' + s.token } })
+      .then(async (r) => ({ s: r.status, b: r.ok ? await r.json() : undefined })).catch(() => ({ s: 0 })));
+  }
+  window.__lxBoot = { tok: s.token, get(k) {
+    const pr = M.get(k);
+    if (!pr || performance.now() - t0 > 20e3) return undefined;
+    M.delete(k);
+    // 4초 안에 오지 않으면 화면이 따로 묻는다(먼저 받기가 화면을 붙잡지 않게)
+    return Promise.race([pr.then((e) => (e.s === 200 ? e.b : undefined)), new Promise((ok) => setTimeout(() => ok(undefined), 4000))]);
+  } };
 }
 /** 화면이 열릴 때 먼저 받기 시작한 요청(같은 세션 · 한 번) — 없으면 null */
 export function early(path) {

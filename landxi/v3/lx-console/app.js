@@ -103,7 +103,7 @@ const WIDGETS = {
       if (ctx.view === 'one' || ctx.size === 's') {
         const a = items[0];
         const lines = Math.max(0, Math.floor((bodyH(ctx) - 52) / 24));
-        put(body, h('button.ld-ntc-one', { type: 'button', class: ctx.size === 's' ? 'is-s' : '', onclick: () => open(a) },
+        put(body, h('button.ld-ntc-one', { type: 'button', class: ctx.size === 's' || bodyH(ctx) < 60 ? 'is-s' : '', onclick: () => open(a) },   // 낮은 칸이면 제목 한 줄 크기로(제목이 반쯤 잘리던 것 · 10-22 P8b)
           h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body && lines >= 1 ? h('p', { text: a.body, style: `-webkit-line-clamp:${Math.min(6, lines)}` }) : null),
         items.length > 1 && ctx.size === 's' ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - 1}건` }) : null);
         return;

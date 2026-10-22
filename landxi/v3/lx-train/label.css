@@ -168,3 +168,23 @@
   .lb-foot-act .t-btn{flex:1}
   .lb-hint{display:none}
 }
+
+/* 라벨 미리 보기 격자(10-22 제안-라벨미리보기격자) — 카드 안 본문 흐름(떠 있지 않음) · 그림 위에 라벨 모양(클래스 색) */
+.lb-grid{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.lb-grid[hidden]{display:none}
+.lb-ghead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lb-glegend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub-2)}
+.lb-glegend li{display:inline-flex;align-items:center;gap:6px}
+.lb-glegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.lb-gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.lb-gt{appearance:none;border:1px solid var(--rule);border-radius:var(--r-12,12px);background:var(--bg-1);padding:0;overflow:hidden;cursor:pointer;text-align:left;display:flex;flex-direction:column;min-width:0}
+.lb-gt:hover{border-color:var(--accent)}
+.lb-gt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lb-gt[data-st="check"]{border-color:var(--warn,#F04452)}
+.lb-gt-im{position:relative;display:block;aspect-ratio:1/1;background:var(--bg-0)}
+.lb-gt-im img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+.lb-gt-sv,.lb-gt-sv svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lb-gt-t{display:flex;flex-direction:column;gap:1px;padding:8px 10px}
+.lb-gt-t b{font:600 var(--fs-aux)/20px var(--font-body);color:var(--ink)}
+.lb-gt-t small{font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
+@media (max-width:640px){.lb-gl{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}

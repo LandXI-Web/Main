@@ -8,6 +8,7 @@ import { D, loadAll, loadFast, pending, openAlerts, power, decide, hasS9, canon 
 import { mountMap } from './map.js';
 import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(직원-4 ⓐ — LX 직원 대시보드 '공지' 칸에 보인다)
 import { mountRequests } from './requests.js';                   // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 · 급함 · 담당 · 보류)
+import { modal } from '../../kit/modal.js';
 import { mountApiApply } from './apiapply.js';                   // 요청 관리 · API 키 신청 탭(외부 연동 API 3차 — 원칙 184)
 
 const who = await gate('ops-core');
@@ -116,11 +117,17 @@ function drawOverview() {
       const dv = a.rule.split('_')[1].toUpperCase(), gb = Math.max(0, Math.floor(Number(a.value?.value ?? a.value) || 0));
       rows.push({ k: '저장 공간', t: `저장 공간 부족 · ${dv}: 남은 ${gb}GB`, lv: 'warn', go: '인프라 보기', href: INFRA });
     }
+    /* 새 해 영상 공개(10-22 now21 제안-새해영상알림) — 경보 규칙 ngii_new_year 한 출처 · 값 = 열린 해 */
+    for (const a of al.filter((x) => x.rule === 'ngii_new_year')) {
+      const y = Math.floor(Number(a.value?.value ?? a.value) || 0);
+      if (y) rows.push({ k: '새 해 영상', t: `국토지리정보원 ${y}년 항공 영상이 열렸습니다 · 전국 분석 차례를 정해 주세요`, lv: 'warn', go: '진행 보기', href: '/landxi/v3/xi-clean/' });
+    }
     const p = power(), pr = p.pair || {};
     if (pr.configured === 'two' && pr.reason && pr.mode !== 'two') rows.push({ ...equipRow(p), k: '장비', go: '인프라 보기' });   // 두 장 사용 시험이 한 장으로 돌아간 때만(까닭 · 시각)
     const ms = D.gpus?.measure_stale;               // 장비 측정(GPU · 저장 폴러)이 멈췄거나 값이 오래됨 — 정상이면 줄 없음(바퀴 17 결정 · GET /ops/gpus 한 출처)
     if (ms?.at) { const d = new Date(ms.at); if (!Number.isNaN(+d)) rows.push({ k: '장비', t: `측정 멈춤 · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 값`, lv: 'warn', go: '인프라 보기', href: INFRA }); }
   }
+  if (sameLine) rows.push(sameLine);                 // 해마다 같은 판(10-22 now21 제안-같은판묶기) — 판이 섞인 해가 있을 때만
   if (dbLine) rows.push(dbLine);                     // DB 상태 한 줄(now21 저장보안-제안-DB상태) — GET /ops/db-status 한 출처
   rows.push({ k: '공지', t: annN === null ? '—' : `${annN}건`, go: '쓰기', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   if (useLine) rows.push(useLine);
@@ -131,6 +138,7 @@ function drawOverview() {
 
 /* DB 상태 — 백업 시각 · 되살리기 시험 · 느린 질의(있을 때만). 백업이 30시간 넘었거나 실패 · 시험 실패면 주의 */
 let dbLine = null;
+let sameLine = null, same = null;   // 해마다 같은 판(아래 drawSame)
 async function drawDb() {
   let j;
   try { j = await api('/ops/db-status'); } catch { return; }
@@ -188,6 +196,34 @@ async function drawNational() {
 }
 drawNational();
 setInterval(drawNational, 120000);
+
+/* 해마다 같은 판으로 묶기(10-22 now21 제안-같은판묶기) — 모델 새 판 뒤 해마다 비교가 섞인 판이면 바뀐 것이 땅인지 모델인지 알 수 없다.
+   GET /national/same-model 한 출처 · 판이 섞인 해가 있을 때만 한 줄 · 누르면 확인 창 → '비교 중인 해 전부 다시'(학습 장비가 놀 때만 돈다) */
+async function drawSame() {
+  try { same = await api('/national/same-model'); } catch { return; }
+  const mixed = same.mixed || [];
+  sameLine = mixed.length ? { k: '같은 판', t: same.queued?.length === mixed.length ? `${mixed.join(' · ')}년 결과를 지금 판으로 다시 분석하는 중` : `${mixed.join(' · ')}년 결과에 옛 판이 섞여 있습니다`,
+    lv: same.queued?.length === mixed.length ? '' : 'warn', go: same.queued?.length === mixed.length ? '' : '전부 다시', href: '#/same-model' } : null;
+  drawOverview();
+}
+drawSame();
+setInterval(drawSame, 300000);
+todoEl.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href="#/same-model"]'); if (!a) return;
+  e.preventDefault();
+  if (!same?.mixed?.length || same.queued?.length === same.mixed.length) return;
+  const v = (x) => (x && typeof x === 'object' ? x.value : x);
+  const list = h('ul.oc-same', {}, ...(same.years || []).map((y) => h('li', {}, h('b', { text: `${y.year}년` }), ` 끝난 읍면동 ${v(y.done).toLocaleString('ko-KR')} · 옛 판 ${v(y.old).toLocaleString('ko-KR')}`)));
+  const go = h('button.t-btn', { type: 'button', text: '비교 중인 해 전부 다시' });
+  const box = h('div.oc-ntc', {}, h('p', { text: `해마다 비교가 같은 판${same.model?.name ? `(${same.model.name})` : ''}으로 이뤄지도록, 옛 판으로 만든 읍면동을 지금 판으로 다시 분석합니다.` }), list,
+    h('p.oc-ntc-say', { text: '학습 장비가 놀 때만 돌고, 새 결과가 나올 때까지 옛 결과가 그대로 보입니다.' }), h('div.oc-ntc-act', {}, go));
+  const m = modal({ title: '해마다 같은 판으로', body: box });
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    try { await api('/national/same-model', { method: 'POST', body: { confirm: true } }); toast('다시 분석할 차례에 넣었습니다'); m.close(); drawSame(); }
+    catch (err) { go.disabled = false; toast(err.message || '넣지 못했습니다'); }
+  });
+});
 
 /* 공지 — 할 일 목록의 '공지 · 쓰기' 줄(주소는 바꾸지 않고 창만) · 올린 수는 서버 GET /announcements 한 출처 */
 let annN = null;

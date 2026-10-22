@@ -96,6 +96,7 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-ntc small{font-size:var(--fs-tag);color:var(--sub)}
 .ld-ntc-one{display:flex;flex-direction:column;gap:4px;min-height:0;padding:4px 6px;margin:0 -6px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;color:var(--ink);overflow:hidden}
 .ld-ntc-one:hover{background:var(--bg-0)}
+.ld-ntc-one > b,.ld-ntc-one > small{flex:none}   /* 낮은 칸에서 제목 · 날짜가 줄어 잘리지 않게 — 본문만 줄인다(10-22 P8b) */
 .ld-ntc-one b{font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.01em;word-break:keep-all}
 .ld-ntc-one small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
 .ld-ntc-one p{margin:0;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6}

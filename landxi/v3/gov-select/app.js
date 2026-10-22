@@ -17,6 +17,7 @@ import { brandForm } from './brand-form.js';
 import { govRail } from './menu.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';   // 서비스 카드 한 벌 ③ 기관 서비스 선택(확인 대장 14차 카드-1 ⓐ)
 import { renderDash, primary } from './dash.js';
+import { noticeLine } from './notice.js';   // 기관 공지 한 줄(10-22 제안-기관공지쓰기)
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -102,6 +103,7 @@ async function renderList() {
   document.title = `내 서비스 · ${B.platform}`;
   page.append(head({ title: '내 서비스', sub: `${B.short}에 열린 AI 분석 서비스${isMgr ? '' : ' · 내가 맡은 서비스만 보입니다'}`, right: asOf() }));
   if (!brand) return brandDown();
+  { const nh = h('div.gn-h'); page.append(nh); noticeLine(nh).catch(() => {}); }   // 기관 공지 한 줄(10-22 제안-기관공지쓰기)
   const band = h('div.gs-band', { 'aria-label': '오늘' });
   page.append(band);
   const { svcs, deck } = await visible();

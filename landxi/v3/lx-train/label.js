@@ -37,7 +37,9 @@ export async function labelWork({ host, project, toggle }) {
   const prog = h('div.lb-prog');
   const addBtn = h('button.t-btn.t-btn--2.lb-add', { type: 'button', text: '그림 더하기' });
   const toTrain = h('a.t-btn.t-btn--2.lb-totrain', { href: stageHref(P, 'train'), text: '학습으로' });
-  const top = h('div.lb-top', {}, prog, h('div.lb-top-act', {}, toggle || '', toTrain, addBtn));
+  /* 라벨 미리 보기 격자(10-22 now21 제안-라벨미리보기격자 — "그림 여러 장의 라벨을 격자로 한꺼번에") — 누르면 그 그림을 한 장씩 보기로 */
+  const gridBtn = h('button.t-btn.t-btn--2.lb-gridb', { type: 'button', text: '격자로 보기', 'aria-pressed': 'false' });
+  const top = h('div.lb-top', {}, prog, h('div.lb-top-act', {}, toggle || '', gridBtn, toTrain, addBtn));
   const tabs = h('div.lb-tabs', { role: 'tablist', 'aria-label': '그림 거르기' });
   const list = h('ol.lb-list', { 'aria-label': '라벨링할 그림' });
   const left = h('aside.lb-left', {}, tabs, list);
@@ -493,6 +495,41 @@ export async function labelWork({ host, project, toggle }) {
     top.append(pop);
   });
 
+  /* ── 라벨 미리 보기 격자 ── */
+  const grid = h('section.lb-grid', { 'aria-label': '라벨 미리 보기 격자', hidden: true });
+  card.append(grid);
+  const gio = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { gio.unobserve(e.target); thumb(e.target); } }), { rootMargin: '300px' }) : null;
+  function drawGrid() {
+    const rows = shown();
+    const gtabs = h('div.lb-tabs.lb-gtabs', { role: 'tablist', 'aria-label': '그림 거르기' }, ...FILTERS.map(([k, w]) => h('button.lb-tab', { type: 'button', role: 'tab', 'aria-selected': String(L.filter === k),
+      text: k === 'all' ? w : `${w} ${counts()[k]}`, onclick: () => { L.filter = k; drawTabs(); drawList(); drawGrid(); } })));
+    const legend = h('ul.lb-glegend', { 'aria-label': '클래스' }, ...classes().map((c) => h('li', {}, h('i', { style: { background: c.color } }), c.name)));
+    const tiles = rows.map(([x, i]) => {
+      const im = h('img', { alt: '', dataset: { src: `${x.src}?size=256` } });
+      /* 모양 꼭짓점은 그림 크기에 대한 비율(0~1 · 그리는 판과 같은 값) — 그림 위에 같은 비율로 겹친다 */
+      const svg = `<svg viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${(x.shapes || []).map((sh) => {
+        const col = colorOf(sh.c);
+        return `<polygon points="${sh.p.map(([a, b]) => `${a},${b}`).join(' ')}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+      }).join('')}</svg>`;
+      const b = h('button.lb-gt', { type: 'button', dataset: { st: x.state }, 'aria-label': `${x.seq}번 그림 열기`, onclick: () => showGrid(false, i) },
+        h('span.lb-gt-im', {}, im, h('span.lb-gt-sv', { html: svg })),
+        h('span.lb-gt-t', {}, h('b', { text: `${x.seq}번` }), h('small', { text: [x.shapes?.length ? `${x.shapes.length}개` : '라벨 없음', x.area ? '라벨 완료 · 지도' : WORD[x.state]].join(' · ') })));
+      if (gio) gio.observe(im); else thumb(im);
+      return b;
+    });
+    grid.replaceChildren(h('div.lb-ghead', {}, gtabs, legend),
+      tiles.length ? h('div.lb-gl', {}, ...tiles) : h('p.lb-none', { text: L.images.length ? '이 상태의 그림이 없습니다' : '아직 그림이 없습니다' }));
+  }
+  async function showGrid(on, at) {
+    if (on) await flush();
+    gridBtn.setAttribute('aria-pressed', String(on));
+    gridBtn.textContent = on ? '한 장씩 보기' : '격자로 보기';
+    body.hidden = on; grid.hidden = !on;
+    if (on) drawGrid();
+    else { size(); if (at !== undefined && at !== L.i) go(at); else paint(); }
+  }
+  gridBtn.addEventListener('click', () => showGrid(grid.hidden));
+
   /* ── 시작 ── */
   function start(keepId) {
     drawProg(); drawTabs(); drawTools(); drawCls();
@@ -500,11 +537,11 @@ export async function labelWork({ host, project, toggle }) {
       list.replaceChildren(h('li.lb-none', { text: '아직 그림이 없습니다' }));
       stageEl.replaceChildren(h('div.lb-first', {}, h('h3', { text: '라벨링할 그림을 먼저 더합니다' }),
         L.can ? addForm(true) : h('p.lb-note', { text: '프로젝트장 · 구성원이 그림을 더하면 여기서 볼 수 있습니다' })));
-      foot.hidden = true; addBtn.hidden = true; toolbar.hidden = true; hint.hidden = true; tabs.hidden = true;
+      foot.hidden = true; addBtn.hidden = true; toolbar.hidden = true; hint.hidden = true; tabs.hidden = true; gridBtn.hidden = true;
       return;
     }
     if (!stageEl.contains(cv)) stageEl.replaceChildren(cv);
-    toolbar.hidden = false; hint.hidden = false; tabs.hidden = false;
+    toolbar.hidden = false; hint.hidden = false; tabs.hidden = false; gridBtn.hidden = false;
     foot.hidden = !L.can;
     size();
     const at = keepId ? L.images.findIndex((x) => x.id === keepId) : -1;

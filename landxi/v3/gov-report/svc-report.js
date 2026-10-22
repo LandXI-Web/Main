@@ -8,6 +8,7 @@
 import { api, h } from '../kit/util.js';
 import { toast, devlog, during } from '../kit/index.js';
 import { farmDash } from '../kit/farm-dash.js';
+import { modal } from '../kit/modal.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const nf = (v, d = 0) => (v === null || v === undefined ? '—' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -26,14 +27,22 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   const emdSel = h('select.t-input.rp-sel', { 'aria-label': '범위' });
   const bH = h('button.t-btn', { type: 'button', text: '한글 문서 내려받기' });
   const bX = h('button.t-btn.t-btn--2', { type: 'button', text: '엑셀로 내려받기' });
-  const bZ = h('button.t-btn.t-btn--2.rp-zip', { type: 'button', text: '첨부 묶음 받기', title: '한글 문서 · 엑셀 · 지도 그림을 한 번에(.zip)' });
+  const bZ = h('button.rp-tlink.rp-zip', { type: 'button', text: '첨부 묶음', title: '한글 문서 · 엑셀 · 지도 그림을 한 번에(.zip)' });
+  /* 10-22 now21 넣음 — 요약 한 장(팀장 · 과장 보고 · 한글 문서) · PDF · 인쇄(윗선 보고 출력) */
+  const bO = h('button.t-btn.t-btn--2', { type: 'button', text: '요약 한 장(한글)', title: '팀장 · 과장 보고용 A4 한 쪽' });
+  const bP = h('button.rp-tlink', { type: 'button', text: 'PDF' });
+  const bR = h('button.rp-tlink', { type: 'button', text: '인쇄' });
+  /* 내 보고서 틀(10-22 제안-보고서틀이름) — 자주 쓰는 결과 · 대장 · 범위를 이름 붙여 두고 한 번에 */
+  const tplRow = h('div.rp-tpls', { role: 'group', 'aria-label': '내 보고서 틀' });
+  const bSave = h('button.rp-tlink.rp-tsave', { type: 'button', text: '지금 고른 것을 틀로 저장' });
   const doc = h('article.rp-doc', { 'aria-label': '보고서 미리 보기', 'aria-live': 'polite' });
   const list = h('div.rp-list-b');
   const pick = h('section.rp-pick', { 'aria-label': '넣을 결과 고르기' },
+    h('p.rp-grp.rp-grp0', { text: '내 보고서 틀' }), tplRow, bSave,
     h('h2.rp-h', { text: '넣을 결과' }), h('p.rp-help', { text: '하나만 골라도, 여러 시점을 골라도 됩니다.' }), picks,
     h('p.rp-grp', { text: '대장(넣지 않아도 됩니다)' }), ledSel,
     h('p.rp-grp', { text: '범위' }), emdSel,
-    h('div.rp-btns', {}, bH, bX, bZ), h('p.rp-help', {}, '첨부 묶음은 한글 · 엑셀 ·', h('br'), '지도 그림을 한 번에 받습니다.'));
+    h('div.rp-btns', {}, bH, bO, bX, h('div.rp-more', {}, bP, bR, bZ)), h('p.rp-help', {}, '첨부 묶음은 한글 · 엑셀 ·', h('br'), '지도 그림을 한 번에 받습니다.'));
   const root = h('div.rp', {},
     h('div.rp-grid', {}, pick, doc),
     h('section.rp-list', { 'aria-label': '발급 목록' }, h('h2.rp-h', { text: '발급 목록' }),
@@ -41,7 +50,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   pane.replaceChildren(root);
 
   const wait = (t) => doc.replaceChildren(h('p.gr-wait', { role: 'status', text: t }));
-  const lockDl = (on) => { bH.disabled = on; bX.disabled = on; bZ.disabled = on; };
+  const lockDl = (on) => { for (const b of [bH, bX, bZ, bO, bP, bR, bSave]) b.disabled = on; };
 
   /* 처음 — 고를 것(결과 · 대장 · 발급 목록)을 한 번에 */
   async function boot() {
@@ -56,8 +65,56 @@ export function svcReport({ svc, onAuth, fusionHref }) {
     ledSel.replaceChildren(h('option', { value: '', text: '넣지 않음' }),
       ...(j.ledgers || []).filter((g) => g.items.length).map((g) => h('optgroup', { label: g.label }, ...g.items.slice(0, 20).map((x) => h('option', { value: x.import_id, text: `${x.name} · ${dot(x.date)}` })))));
     paintIssues(j.issues || []);
+    loadTpls();
     load();
   }
+
+  /* ── 내 보고서 틀 ── */
+  async function loadTpls() {
+    let j; try { j = await api('/spaces/me/report/templates'); } catch (e) { devlog('report tpl', e.message); tplRow.replaceChildren(); return; }
+    paintTpls(j.items || []);
+  }
+  function paintTpls(items) {
+    if (!items.length) { tplRow.replaceChildren(h('p.rp-help', { text: '매달 같은 보고서를 받으면 이름 붙여 두세요.' })); return; }
+    tplRow.replaceChildren(...items.map((t) => {
+      const b = h('button.rp-tpl', { type: 'button', title: [t.cards.length + '개 결과', t.emd || '관할 전체', t.import_id ? '대장 넣음' : ''].filter(Boolean).join(' · '), text: t.name });
+      b.addEventListener('click', () => useTpl(t));
+      const x = h('button.rp-tpl-x', { type: 'button', 'aria-label': `${t.name} 틀 지우기`, text: '×' });
+      x.addEventListener('click', async () => {
+        try { await api(`/spaces/me/report/templates/${encodeURIComponent(t.id)}/remove`, { method: 'POST', body: {} }); toast('틀을 지웠습니다'); loadTpls(); }
+        catch (e) { toast(e.message || '지우지 못했습니다'); }
+      });
+      return h('span.rp-tpl-w', {}, b, x);
+    }));
+  }
+  async function useTpl(t) {
+    const known = t.cards.filter((c) => S.avail.some((s) => s.card === c));
+    if (!known.length) { toast('이 틀의 결과는 지금 받을 수 없습니다'); return; }
+    S.picks = new Set(known); S.emd = t.emd || ''; S.led = t.import_id || '';
+    ledSel.value = S.led; if (ledSel.value !== S.led) { S.led = ''; ledSel.value = ''; }
+    paintPicks(); await load();
+    tplRow.querySelectorAll('.rp-tpl').forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === t.name)));
+    api(`/spaces/me/report/templates/${encodeURIComponent(t.id)}/use`, { method: 'POST', body: {} }).catch(() => {});
+    toast(`'${t.name}' 틀로 골랐습니다`);
+  }
+  bSave.addEventListener('click', () => {
+    if (!S.picks.size) { toast('넣을 결과를 먼저 골라 주세요'); return; }
+    const nm = h('input.t-input', { type: 'text', maxlength: '40', placeholder: '예: 매달 축산과 보고', 'aria-label': '틀 이름', autocomplete: 'off' });
+    const what = [S.avail.filter((s) => S.picks.has(s.card)).map((s) => s.name).join(' · '), S.emd || '관할 전체', S.led ? ledSel.selectedOptions[0]?.textContent : ''].filter(Boolean).join(' · ');
+    const ok = h('button.t-btn', { type: 'submit', text: '저장' });
+    const f = h('form.rp-tform', {}, h('p.rp-help', { text: what }), h('label.rp-tlab', {}, h('span.t-label', { text: '틀 이름' }), nm),
+      h('p.rp-help', { text: '같은 이름이면 지금 고른 것으로 바뀝니다.' }), ok);
+    const m = modal({ title: '보고서 틀로 저장', body: f });
+    setTimeout(() => nm.focus(), 0);
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      ok.disabled = true;
+      try {
+        const r = await api('/spaces/me/report/templates', { method: 'POST', body: { name: nm.value.trim(), cards: [...S.picks], emd: S.emd || null, import_id: S.led || null } });
+        m.close(true); toast(r.replaced ? '틀을 바꿔 저장했습니다' : '틀로 저장했습니다'); loadTpls();
+      } catch (err) { ok.disabled = false; toast(err.message || '저장하지 못했습니다'); }
+    });
+  });
 
   function paintPicks() {
     picks.replaceChildren(...S.avail.map((s) => {
@@ -190,10 +247,10 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   async function download(fmt, qs = q()) {
     lockDl(true);
     try {
-      const r = await api(fmt === 'zip' ? '/spaces/me/report/bundle.zip?' + qs : `/spaces/me/report/multi.${fmt}?` + qs, { raw: true });
+      const r = await api(fmt === 'zip' ? '/spaces/me/report/bundle.zip?' + qs : fmt === 'one' ? '/spaces/me/report/one.hwpx?' + qs : `/spaces/me/report/multi.${fmt}?` + qs, { raw: true });
       if (!r.ok) throw Object.assign(new Error('http ' + r.status), { status: r.status });
       const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
-      const name = m ? decodeURIComponent(m[1]) : `AI분석결과보고서.${fmt}`;
+      const name = m ? decodeURIComponent(m[1]) : `AI분석결과보고서.${fmt === 'one' ? 'hwpx' : fmt}`;
       const u = URL.createObjectURL(await r.blob());
       const a = document.createElement('a'); a.href = u; a.download = name; document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(u), 4000);
@@ -212,7 +269,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
         if (!known.length) { toast('이 결과는 지금 받을 수 없습니다'); return; }
         S.picks = new Set(known); S.emd = x.emd || ''; S.led = x.import_id || '';
         ledSel.value = S.led; paintPicks(); await load();
-        await download(x.fmt === 'xlsx' ? 'xlsx' : x.fmt === 'zip' ? 'zip' : 'hwpx');
+        await download(['xlsx', 'zip', 'pdf', 'one'].includes(x.fmt) ? x.fmt : 'hwpx');
       });
       return h('tr', {}, h('td.num', { text: `${dot(x.at)} ${hm(x.at)}` }), h('td', { text: x.title || '—' }), h('td', { text: x.who }),
         h('td.n', { text: `${nf(val(x.downloads))}회` }), h('td.rp-act', {}, again));
@@ -226,6 +283,19 @@ export function svcReport({ svc, onAuth, fusionHref }) {
   bH.addEventListener('click', () => download('hwpx'));
   bX.addEventListener('click', () => download('xlsx'));
   bZ.addEventListener('click', () => download('zip'));
+  bO.addEventListener('click', () => download('one'));
+  bP.addEventListener('click', () => download('pdf'));
+  /* 인쇄 — 보고서 칸만 A4 로(svc-report.css @media print). 지도 그림이 다 오면 바로 */
+  bR.addEventListener('click', () => {
+    if (doc.querySelector('.gr-map-img[data-state="loading"]')) { toast('지도 그림을 기다린 뒤 인쇄합니다'); setTimeout(() => bR.click(), 800); return; }
+    const sheet = h('div.rp-print', {}, doc.cloneNode(true));   // 셸(고정 판) 밖에 보고서만 한 벌 — 인쇄 모양은 이것만 A4 로
+    document.body.append(sheet);
+    document.body.dataset.print = 'report';
+    const off = () => { delete document.body.dataset.print; sheet.remove(); removeEventListener('afterprint', off); };
+    addEventListener('afterprint', off);
+    print();
+    setTimeout(off, 60000);
+  });
   boot();
   return { reload: load };
 }

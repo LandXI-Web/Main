@@ -119,6 +119,21 @@ button.t-step{cursor:pointer}
    셸 · 화면이 무엇이든 몸통에 붙이는 순간 사라진다(그 뒤 기다림은 loader.js 가 맡는다) */
 body.t:not(:has(> :not(script)))::after{content:'불러오는 중';position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:46px 30px 18px;border-radius:var(--r-16,16px);background:var(--bg-1) radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px) 50% 22px/19px 12px no-repeat;background-image:radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px),radial-gradient(circle,var(--ai,#0FA9A0) 4.5px,transparent 5.5px);background-position:calc(50% - 19px) 22px,50% 22px,calc(50% + 19px) 22px;background-size:12px 12px;background-repeat:no-repeat;box-shadow:0 1px 2px rgba(28,31,37,.06),0 8px 28px rgba(28,31,37,.08);font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);opacity:0;animation:k-boot-in .2s .4s forwards,k-boot-p 1.2s .6s ease-in-out infinite}
 @keyframes k-boot-in{to{opacity:1}}
+/* 첫 그림(10-22 P8b · now21 첫인상 — XI맵 첫 흰 화면 0 과 같은 방법): 셸 화면(<body data-pre="rail|mast">)은 화면 코드가 머리줄을 세우기 전에도
+   머리줄(64 · 휴대폰 56) · 왼쪽 메뉴(80 · 휴대폰은 아래 64) 자리를 첫 그림부터 같은 색으로 칠한다 — 빈 바탕이 깜박이지 않고, 셸이 서면 같은 자리에 그대로 겹친다.
+   셸이 서기 전(또는 화면이 '준비 중' 가림을 걸어 둔 동안 · gq-boot · acc-boot) 첫 3초는 가운데 '불러오는 중'도 두지 않는다(그 뒤에는 그대로). */
+body.t[data-pre]:is(:not(:has(> .k-app)),.gq-boot,.acc-boot)::before{content:'';position:fixed;inset:0;z-index:2147483000;pointer-events:none;
+  background:linear-gradient(var(--rule),var(--rule)) 0 calc(var(--mast) - 1px)/100% 1px no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 0/100% var(--mast) no-repeat}
+body.t[data-pre="rail"]:is(:not(:has(> .k-app)),.gq-boot,.acc-boot)::before{
+  background:linear-gradient(var(--rule),var(--rule)) 0 calc(var(--mast) - 1px)/100% 1px no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 0/100% var(--mast) no-repeat,
+    linear-gradient(var(--rule),var(--rule)) calc(var(--rail) - 1px) var(--mast)/1px 100% no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 var(--mast)/var(--rail) 100% no-repeat}
+body.t[data-pre]:not(:has(> :not(script)))::after{animation-delay:3s,3.2s}
+@media (max-width:960px){
+  body.t[data-pre]:is(:not(:has(> .k-app)),.gq-boot,.acc-boot)::before{background:linear-gradient(var(--rule),var(--rule)) 0 55px/100% 1px no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 0/100% 56px no-repeat}
+  body.t[data-pre="rail"]:is(:not(:has(> .k-app)),.gq-boot,.acc-boot)::before{
+    background:linear-gradient(var(--rule),var(--rule)) 0 55px/100% 1px no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 0/100% 56px no-repeat,
+      linear-gradient(var(--rule),var(--rule)) 0 calc(100% - 64px)/100% 1px no-repeat,linear-gradient(var(--bg-1),var(--bg-1)) 0 100%/100% 64px no-repeat}
+}
 /* 작은 칸(지도 위 카드 등) 안 기다림 — 글 없이 점 셋만(가운데 loader 와 같은 움직임 · 첫인상-3 '칸마다 불러오는 중 0') */
 .k-dots{display:inline-flex;gap:7px;height:12px;align-items:center;vertical-align:middle}
 .k-dots i{display:block;width:8px;height:8px;border-radius:50%;background:var(--ai,#0FA9A0);animation:k-ld 1.2s cubic-bezier(.45,0,.55,1) infinite both}
