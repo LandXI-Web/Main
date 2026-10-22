@@ -46,7 +46,7 @@ async def _init_conn(conn):
 
 
 # 게이트웨이 프로세스마다 연결 묶음 — 여러 프로세스(--workers N)면 PostgreSQL max_connections(100)를 넘지 않게 줄인다(impl-46 ops)
-_POOL_MAX = int(os.environ.get("LX_PG_POOL_MAX") or (16 if int(os.environ.get("LX_GATEWAY_WORKERS") or 1) <= 1 else 14))
+_POOL_MAX = int(os.environ.get("LX_PG_POOL_MAX") or (16 if int(os.environ.get("LX_GATEWAY_WORKERS") or 1) <= 1 else 8))   # 4 프로세스 × 8 = 32 · DB 연결 한도 100 안(10-23 96/100 로 작업 실패)
 
 
 async def pool() -> asyncpg.Pool:
