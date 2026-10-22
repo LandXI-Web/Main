@@ -338,7 +338,7 @@ async def run_row(p, job_id: str) -> dict:
 def stats_env(st: dict | None) -> dict | None:
     if not st:
         return None
-    src = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 검수 전)"
+    src = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 결과 확인 전)"
     bt = {}
     for t, v in (st.get("by_type") or {}).items():
         bt[t] = {"n": env(v["n"], "count", "inferred", src), "area": env(round(v["m2"], 1), "m2", "inferred", src),
@@ -485,3 +485,258 @@ async def latest(request: Request, project_id: str | None = None, range_id: str 
     if not r:
         return {"job_id": None}
     return await get_run(r["job_id"], request)
+
+
+# ═══ P1 — 판정 저장 · 사진 · 기관 공유 · 보고서(10-22 CHANGE-DEMO P1-5 · 6 · 7 · §7 6~8) ═══════════════════════════════
+def _can_mark(p):
+    if p.is_lx and p.role in ("staff", "admin"):
+        return p
+    if p.realm == "tenant":
+        return p
+    raise ApiError("forbidden", "판정은 LX 직원 · 공유받은 기관만 저장합니다")
+
+
+@router.patch("/change/runs/{job_id}/marks/{fid}")
+async def set_mark(job_id: str, fid: str, body: dict, request: Request):
+    """판정 — status ∈ 미확인 · 불법 · 적법 · 현장확인 · 철거완료 · memo(선택). 판정자 · 일시는 서버가 적고 줄마다 이력(change_mark_log)."""
+    p = _can_mark(require(principal(request)))
+    await run_row(p, job_id)
+    if not re.fullmatch(r"c\d{4}", fid or ""):
+        raise ApiError("not_found", "변화 폴리곤을 찾을 수 없습니다")
+    st = body.get("status")
+    if st is not None and st not in STATUSES:
+        raise ApiError("bad_request", "판정은 " + " · ".join(STATUSES) + " 가운데 하나입니다")
+    memo = body.get("memo")
+    memo = str(memo)[:500] if memo is not None else None
+    who = p.user_id
+    tenant = "lx" if p.is_lx else p.tenant_id
+    async with db(p) as conn:
+        prev = await conn.fetchrow("SELECT status, memo, photos FROM change_marks WHERE job_id=$1 AND fid=$2", job_id, fid)
+        new_st = st or (prev["status"] if prev else "미확인")
+        new_memo = memo if memo is not None else (prev["memo"] if prev else None)
+        await conn.execute(
+            "INSERT INTO change_marks(job_id, fid, tenant_id, status, memo, by_user, at) VALUES ($1,$2,$3,$4,$5,$6,now()) "
+            "ON CONFLICT (job_id, fid) DO UPDATE SET status=EXCLUDED.status, memo=EXCLUDED.memo, by_user=EXCLUDED.by_user, at=now()",
+            job_id, fid, tenant, new_st, new_memo, who)
+        await conn.execute("INSERT INTO change_mark_log(job_id, fid, tenant_id, status, memo, photos, by_user) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+                           job_id, fid, tenant, new_st, new_memo, (prev["photos"] if prev else []) or [], who)
+        await audit(conn, p, "change.mark", f"{job_id}/{fid}", {"status": prev["status"] if prev else None}, {"status": new_st})
+    m = (await marks_of(p, job_id)).get(fid) or {}
+    return {"job_id": job_id, "fid": fid, "status": m.get("status"), "memo": m.get("memo"), "at": m.get("at"),
+            "photos": env(len(m.get("photos") or []), "count", "recorded", "현장 사진")}
+
+
+async def _user_names(ids) -> dict:
+    ids = [i for i in dict.fromkeys(ids) if i]
+    if not ids:
+        return {}
+    out = {}
+    async with db(realm="lx") as conn:
+        for t in ("lx_users", "tenant_users"):
+            try:
+                for r in await conn.fetch(f"SELECT id, name FROM {t} WHERE id = ANY($1::text[])", ids):
+                    out[r["id"]] = r["name"] or ""
+            except Exception:  # noqa: BLE001
+                pass
+    return out
+
+
+@router.get("/change/runs/{job_id}/marks/{fid}")
+async def get_mark(job_id: str, fid: str, request: Request):
+    p = require(principal(request))
+    await run_row(p, job_id)
+    async with db(p) as conn:
+        hist = await conn.fetch("SELECT status, memo, by_user, at FROM change_mark_log WHERE job_id=$1 AND fid=$2 ORDER BY at DESC LIMIT 20", job_id, fid)
+    m = (await marks_of(p, job_id)).get(fid) or {"status": "미확인", "photos": []}
+    names = await _user_names([x["by_user"] for x in hist] + [m.get("by")])
+    return {"job_id": job_id, "fid": fid, "status": m.get("status") or "미확인", "memo": m.get("memo"), "by": names.get(m.get("by")) or None,
+            "at": m.get("at"), "photos": [{"name": x.get("name"), "at": x.get("at")} for x in m.get("photos") or []],
+            "history": [{"status": x["status"], "memo": x["memo"], "by": names.get(x["by_user"]) or "", "at": x["at"].isoformat(timespec="seconds")} for x in hist]}
+
+
+PHOTO_MAX = 12 * 1024 * 1024
+
+
+@router.post("/change/runs/{job_id}/marks/{fid}/photos")
+async def add_photo(job_id: str, fid: str, request: Request):
+    """현장 사진 — 다시 저장해 위치 · 기기 정보(EXIF)를 지운다 · 긴 변 1600px · JPG."""
+    p = _can_mark(require(principal(request)))
+    await run_row(p, job_id)
+    if not re.fullmatch(r"c\d{4}", fid or ""):
+        raise ApiError("not_found", "변화 폴리곤을 찾을 수 없습니다")
+    form = await request.form()
+    f = form.get("file")
+    if f is None:
+        raise ApiError("bad_request", "사진이 없습니다")
+    data = await f.read()
+    if len(data) > PHOTO_MAX:
+        raise ApiError("too_large", "12MB 아래 사진으로 올려 주세요")
+
+    def _save() -> str:
+        import datetime as _dt
+
+        from PIL import Image, ImageOps
+        im = Image.open(io.BytesIO(data))
+        im = ImageOps.exif_transpose(im).convert("RGB")
+        im.thumbnail((1600, 1600))
+        d = _Run.run_dir(job_id) / "photos" / fid
+        d.mkdir(parents=True, exist_ok=True)
+        name = _dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3) + ".jpg"
+        im.save(d / name, "JPEG", quality=85)
+        return name
+    try:
+        name = await run_in_threadpool(_save)
+    except Exception:  # noqa: BLE001
+        raise ApiError("bad_request", "그림 파일이 아닙니다") from None
+    tenant = "lx" if p.is_lx else p.tenant_id
+    item = {"name": name, "at": now_iso(), "by": p.user_id}
+    async with db(p) as conn:
+        prev = await conn.fetchrow("SELECT status, memo, photos FROM change_marks WHERE job_id=$1 AND fid=$2", job_id, fid)
+        photos = list((prev["photos"] if prev else []) or []) + [item]
+        await conn.execute(
+            "INSERT INTO change_marks(job_id, fid, tenant_id, status, memo, photos, by_user, at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) "
+            "ON CONFLICT (job_id, fid) DO UPDATE SET photos=EXCLUDED.photos, by_user=EXCLUDED.by_user, at=now()",
+            job_id, fid, tenant, prev["status"] if prev else "미확인", prev["memo"] if prev else None, photos, p.user_id)
+        await conn.execute("INSERT INTO change_mark_log(job_id, fid, tenant_id, status, memo, photos, by_user) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+                           job_id, fid, tenant, prev["status"] if prev else "미확인", prev["memo"] if prev else None, photos, p.user_id)
+        await audit(conn, p, "change.photo", f"{job_id}/{fid}", None, {"name": name})
+    return {"name": name, "photos": env(len(photos), "count", "recorded", "현장 사진")}
+
+
+@router.get("/change/runs/{job_id}/photos/{fid}/{name}")
+async def get_photo(job_id: str, fid: str, name: str, request: Request):
+    p = require(principal(request))
+    await run_row(p, job_id)
+    if not re.fullmatch(r"c\d{4}", fid or "") or not re.fullmatch(r"\d{8}-\d{6}-[0-9a-f]{6}\.jpg", name or ""):
+        raise ApiError("not_found", "사진 없음")
+    f = _Run.run_dir(job_id) / "photos" / fid / name
+    if not f.exists():
+        raise ApiError("not_found", "사진 없음")
+    return FileResponse(f, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=3600"})
+
+
+async def _sync_shares(tenant: str):
+    """기관 공유(배포 → 기관 공유 체크 · PUT /release/shares)에서 국토 변화 분석서비스가 그 기관에 켜져 있으면, 프로젝트에 묶이고 끝난 결과가 있는 대상지를
+    그 기관에 보이게 · 꺼져 있으면 거둔다(표 change_shares · 읽을 때 맞춤 — 공유 화면은 그대로 쓴다)."""
+    from .release import latest_shares
+    async with db(realm="lx") as conn:
+        sh = (await latest_shares(conn, tenant=tenant)).get("card-change")
+        if sh and sh["shared"]:
+            await conn.execute("INSERT INTO change_shares(range_id, tenant_id, shared_by) SELECT DISTINCT g.id, $1, $2 FROM change_ranges g "
+                               "JOIN change_runs r ON r.range_id = g.id AND r.state='done' WHERE g.project_id IS NOT NULL ON CONFLICT DO NOTHING",
+                               tenant, sh.get("by"))
+        else:
+            await conn.execute("DELETE FROM change_shares WHERE tenant_id=$1", tenant)
+
+
+@router.get("/change/shared")
+async def shared(request: Request):
+    """대시보드 · 현장점검 — 볼 수 있는 대상지마다 최근 결과(구역선 안 변화 · 유형별 · 판정 현황). LX = 프로젝트에 묶인 대상지 전부 · 기관 = 공유받은 것."""
+    p = require(principal(request))
+    if p.realm == "tenant":
+        await _sync_shares(p.tenant_id)
+    async with db(p) as conn:
+        rows = await conn.fetch(
+            "SELECT DISTINCT ON (g.id) g.id AS range_id, g.name, g.project_id, r.job_id FROM change_ranges g JOIN change_runs r ON r.range_id=g.id "
+            "WHERE r.state='done' AND g.project_id IS NOT NULL AND r.version=$1 ORDER BY g.id, r.done_at DESC", _ver())
+    items = []
+    for x in rows:
+        try:
+            run = await get_run(x["job_id"], request)
+        except ApiError:
+            continue
+        items.append({"range_id": x["range_id"], "name": x["name"], "project_id": x["project_id"], "job_id": x["job_id"], "period": run["period"],
+                      "stats": run["stats"], "marks": run.get("marks"), "done_at": run.get("done_at")})
+    items.sort(key=lambda i: i["name"])
+    return {"items": items, "as_of": now_iso()}
+
+
+@router.post("/change/ranges/{rid}/share")
+async def share_range(rid: str, body: dict, request: Request):
+    """대상지 하나를 기관에 공유 · 거두기(LX 관리자) — 기관 공유 체크(서비스 단위)보다 좁게 고를 때."""
+    p = require(principal(request), admin=True)
+    tid = str(body.get("tenant_id") or "")
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "없는 기관입니다")
+        if body.get("shared") is False:
+            await conn.execute("DELETE FROM change_shares WHERE range_id=$1 AND tenant_id=$2", rid, tid)
+        else:
+            await conn.execute("INSERT INTO change_shares(range_id, tenant_id, shared_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", rid, tid, p.user_id)
+        await audit(conn, p, "change.share", rid, None, {"tenant_id": tid, "shared": body.get("shared") is not False})
+    return {"range_id": rid, "tenant_id": tid, "shared": body.get("shared") is not False}
+
+
+async def _report_data(p, job_id: str) -> tuple[dict, dict]:
+    from change import report as RP
+    d = await run_row(p, job_id)
+    st = d.get("stats")
+    if isinstance(st, str):
+        st = json.loads(st)
+    if not st:
+        raise ApiError("not_found", "결과가 아직 없습니다")
+    rg = await get_range_row(p, d["range_id"])
+    fc = await run_in_threadpool(_features, job_id)
+    mk = await marks_of(p, job_id)
+    r = RP.build(rng=range_out(rg), run=d, stats=st, fc=fc, marks=mk)
+    return r, d
+
+
+@router.get("/change/runs/{job_id}/report.json")
+async def report_json(job_id: str, request: Request):
+    """보고서 미리보기(개조식) — 화면이 그대로 그린다. 숫자는 결과 · 판정 기록 한 출처."""
+    p = require(principal(request))
+    r, d = await _report_data(p, job_id)
+    out = {**r, "status": {k: env(v, "count", "recorded", "판정 기록") for k, v in r["status"].items()},
+           "more": env(r["more"], "count", "inferred", "구역선 안 변화 가운데 표 밖"), "job_id": job_id,
+           "period_y": {"a": {"year": d["year_a"]}, "b": {"year": d["year_b"]}}}
+    return out
+
+
+@router.get("/change/runs/{job_id}/report.pdf")
+async def report_pdf(job_id: str, request: Request):
+    p = require(principal(request))
+    r, d = await _report_data(p, job_id)
+    from change import report as RP
+
+    from .farm_extra import PDF_CSS, _fonts
+
+    def _make() -> bytes:
+        import fitz
+        f = _fonts()
+        if not f:
+            raise ApiError("worker_unavailable", "PDF 글꼴이 서버에 없습니다 — 화면의 인쇄로 받아 주세요")
+        arch = fitz.Archive()
+        arch.add(f[0], "kr.ttf")
+        arch.add(f[1], "krb.ttf")
+        for fid in r["thumbs"]:
+            for t in ("a", "b"):
+                fp = _Run.run_dir(job_id) / "thumbs" / f"{fid}_{t}.png"
+                if fp.exists():
+                    arch.add(fp.read_bytes(), f"{t}_{fid}.png")
+        css = PDF_CSS + " ul{margin:0 0 4pt 12pt;padding:0} li{margin:0 0 2pt} td img{width:100%}"
+        story = fitz.Story(html=f"<body>{RP.html_body(r, (d['year_a'], d['year_b']))}</body>", user_css=css, archive=arch)
+        buf = io.BytesIO()
+        w = fitz.DocumentWriter(buf)
+        mb = fitz.paper_rect("a4")
+        where = mb + (56, 50, -56, -50)
+        more, n = 1, 0
+        while more and n < 40:
+            dev = w.begin_page(mb)
+            more, _ = story.place(where)
+            story.draw(dev)
+            w.end_page()
+            n += 1
+        w.close()
+        doc = fitz.open(stream=buf.getvalue(), filetype="pdf")
+        doc.set_metadata({"title": r["title"], "author": "Land-XI", "creator": "Land-XI", "producer": "Land-XI"})
+        for i, pg in enumerate(doc):
+            pg.insert_text(fitz.Point(mb.width / 2 - 10, mb.height - 24), f"{i + 1} / {doc.page_count}", fontsize=8, color=(0.42, 0.46, 0.52))
+        doc.subset_fonts()
+        return doc.tobytes(garbage=3, deflate=True)
+    pdf = await run_in_threadpool(_make)
+    from urllib.parse import quote
+    name = re.sub(r"[\\/:*?\"<>|\s]+", "_", f"{d['range_name']}_변화탐지보고_{d['year_a']}-{d['year_b']}") + ".pdf"
+    async with db(p) as conn:
+        await audit(conn, p, "change.report", job_id, None, {"pdf": True})
+    return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})

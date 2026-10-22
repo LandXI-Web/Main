@@ -13,5 +13,6 @@ tenants:
   kgz-land: {global: true, profile: kgz-sokuluk}
   lx: {sgg: []}                                 # LX 는 관할이 아니라 전국 권한(realm lx)
   lx-demo: {sgg: []}
+  kec: {sgg: ["12710", "46710", "12330", "29200"]}   # 한국도로공사 — 지금 공유받은 대상지(담양군 · 광산구 · 지금/옛 코드)만 관할로(전국 결과가 새지 않게 · 대상지가 늘면 더한다)
 # 영상이 있는 시군구 — imagery.sgg_cd(등록 · S-5) 가 정본. 등록 전 기존 영상은 footprint ∩ 시군구 bbox 로 계산한다(regions.py).
 # 실태조사(대장 × AI) 정본이 있는 시군구 — survey_parcels.pnu 앞 5자리에서 계산(고정값 없음)

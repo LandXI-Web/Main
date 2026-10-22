@@ -268,6 +268,8 @@ def ROUTE(msg: str, ctx):
         return None
     p = getattr(ctx, "principal", None)
     c = getattr(ctx, "context", None) or {}
+    if ((c.get("change") or {}).get("job_id")) and re.search(r"보고서|보고용|보고\s*자료", t):
+        return None                                      # 국토 변화 탐지 결과를 연 화면의 보고서 = 변화 탐지 보고서(change.py change_report · 10-22)
     if getattr(p, "realm", None) == "lx" and len(t) <= 120 and (REPORT_ASK.search(t) or DOC_ASK.search(t)) and (REPORT_DO.search(t) or DOC_DO.search(t)) \
             and not re.search(r"법령|조문|근거\s*조", t) and not re.search(r"실태\s*조사|의심", t):
         return {"tool": "ai_report", "args": {"request": t}, "intent": "report"}

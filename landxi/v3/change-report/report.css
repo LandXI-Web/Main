@@ -1,0 +1,23 @@
+/* change-report — 보고서 한 장(A4 느낌 · 밝은 톤 · 인쇄하면 단추 줄은 빠진다) */
+.cr-page{padding:16px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px;overflow:auto;height:100%}
+.cr-bar{width:100%;max-width:860px;display:flex;gap:8px;flex-wrap:wrap}
+.cr-paper{width:100%;max-width:860px;box-sizing:border-box;background:#fff;border-radius:var(--r-16,16px);box-shadow:0 1px 4px rgba(0,0,0,.08);padding:36px 44px;color:var(--ink,#191F28)}
+.cr-paper h1{margin:2px 0;font:700 26px/34px var(--font-display);word-break:keep-all}
+.cr-paper h2{margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule,#E5E8EB);font:700 18px/26px var(--font-display)}
+.cr-k,.cr-sub,.cr-cap,.cr-src{margin:0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.cr-sub{margin-bottom:6px}
+.cr-paper ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font:400 var(--fs-aux,15px)/24px var(--font-body);word-break:keep-all}
+.cr-tw{overflow-x:auto}
+.cr-t{border-collapse:collapse;width:100%;font:400 var(--fs-tag,14px)/20px var(--font-body)}
+.cr-t th,.cr-t td{border:1px solid var(--rule,#E5E8EB);padding:5px 8px;text-align:left;white-space:nowrap}
+.cr-t th{background:var(--bg-2,#F2F4F6);font-weight:600}
+.cr-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.cr-pair{margin:0;display:flex;flex-direction:column;gap:4px}
+.cr-pair figcaption{font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28)}
+.cr-pair > div{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cr-pair span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.cr-pair img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#F2F4F6}
+.cr-pair small{font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.cr-src{margin-top:20px}
+@media (max-width:960px){.cr-paper{padding:20px 16px}.cr-paper h1{font-size:22px;line-height:30px}.cr-thumbs{grid-template-columns:1fr}}
+@media print{.k-mast,.k-rail,.cr-bar,.k-chat-root{display:none!important}.cr-page{padding:0;overflow:visible;height:auto}.cr-paper{box-shadow:none;max-width:none;padding:0}}

@@ -136,6 +136,18 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                      "use": None if prow is None else (prow.get("use") if isinstance(prow.get("use"), str) else None),
                      "sgg_cd": None if prow is None else prow.get("sgg_cd"), "pnus": pnus,
                      "hidden": t in D.TYPE_HIDDEN, "geom": p})
+    # 소유구분 — 브이월드 토지소유정보(분류만 · 캐시 · 10-22 사용자 허락). 못 받으면 앞 값(대장 · 토지마스터 판정) 그대로
+    try:
+        import importlib
+
+        from . import owner as OW
+        OW = importlib.reload(OW)
+        got = OW.fill([r["pnu"] for r in rows if r.get("pnu")])
+        for r in rows:
+            if r.get("pnu") in got:
+                r["owner"] = got[r["pnu"]]
+    except Exception as e:  # noqa: BLE001
+        log("소유구분 조회 건너뜀", type(e).__name__)
     # 썸네일(A · B 같은 자리) — 타일은 디스크 캐시 · 폴리곤 여럿을 함께(받기 대기가 길어 한 줄로 돌면 철도처럼 넓은 범위가 느림)
     from concurrent.futures import ThreadPoolExecutor
 

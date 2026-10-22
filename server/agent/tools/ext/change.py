@@ -16,7 +16,7 @@ import time
 
 from agent.tools import Out, ToolError
 
-SRC = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 검수 전)"
+SRC = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 결과 확인 전)"
 TYPES = ["신축", "소실", "경작 전환", "포장 확대"]
 JIMOK = {"도로": "도", "철도": "철", "철도용지": "철", "대지": "대", "임야": "임", "하천": "천", "구거": "구", "잡종지": "잡", "공장": "장",
          "공장용지": "장", "주차장": "차", "주유소": "주", "창고": "창", "학교": "학", "목장": "목", "과수원": "과", "유지": "유", "제방": "제",
@@ -49,13 +49,17 @@ SPECS = {
         "properties": {"polygon_id": {"type": "string", "description": "변화 폴리곤 번호(c0001 …) · 없으면 지금 고른 것"},
                        "layer_id": {"type": "string", "description": "변화 탐지 결과 id(없으면 직전 결과)"}}},
 }
+SPECS["change_report"] = {
+    "description": "국토 변화 탐지 결과 보고서(개조식 — 구간 개요 · 변화 요약 · 필지별 목록과 두 해 썸네일 · 권고 조치) 미리보기 + PDF. "
+                   "'도로공사 보고용 보고서 만들어줘' · '변화 탐지 보고서'.",
+    "properties": {"layer_id": {"type": "string", "description": "변화 탐지 결과 id(없으면 직전 결과)"}}}
 HANDLERS: dict = {}
 WRITE: set = set()
 CONFIRM: set = set()
 CLIENT: set = set()
-WHY = {"run_change_detection": "두 해 항공영상 → 토지피복 AI → 변화 폴리곤 → 구역선 · 필지 교차",
+WHY = {"change_report": "변화 탐지 결과 · 판정 → 개조식 보고서 · PDF", "run_change_detection": "두 해 항공영상 → 토지피복 AI → 변화 폴리곤 → 구역선 · 필지 교차",
        "intersect_parcels": "변화 폴리곤 × 필지(지목 · 소유구분) 표", "describe_change": "두 해 썸네일 → AI 비전 의견"}
-SAY = {"run_change_detection": "변화 탐지", "intersect_parcels": "필지 교차 표", "describe_change": "변화 설명"}
+SAY = {"change_report": "변화 탐지 보고서", "run_change_detection": "변화 탐지", "intersect_parcels": "필지 교차 표", "describe_change": "변화 설명"}
 HINT = ("두 해 영상을 비교해 새로 생긴 것 · 없어진 것 · 변화를 찾아 달라는 요청은 run_change_detection 을 부른다(연도를 말하면 year_a · year_b). "
         "변화 결과에서 지목 · 소유구분 · 유형 조건의 필지 표는 intersect_parcels, 고른 변화 하나의 설명은 describe_change.")
 
@@ -63,7 +67,7 @@ HINT = ("두 해 영상을 비교해 새로 생긴 것 · 없어진 것 · 변�
 def allowed(name: str, p) -> bool:
     if getattr(p, "realm", None) == "lx":
         return getattr(p, "role", None) in ("staff", "admin")
-    return name in ("intersect_parcels", "describe_change") and getattr(p, "realm", None) == "tenant"
+    return name in ("intersect_parcels", "describe_change", "change_report") and getattr(p, "realm", None) == "tenant"
 
 
 # ── 기억(꼬리 질문) ─────────────────────────────────────────────────────────
@@ -360,7 +364,44 @@ async def describe_change(args: dict, ctx) -> Out:
     return out
 
 
-HANDLERS = {"run_change_detection": run_change_detection, "intersect_parcels": intersect_parcels, "describe_change": describe_change}
+async def change_report(args: dict, ctx) -> Out:
+    mem = await _mem_get(ctx)
+    job = await _layer(ctx, args, mem)
+    r = await _get(ctx, f"/change/runs/{job}/report.json")
+    st = await _get(ctx, f"/change/runs/{job}")
+    out = Out(source="국토 변화 분석서비스 결과 · 판정 기록", scope={"kind": "change", "sgg": await _range_sgg(ctx, st), "cls": ["국토 변화"]})
+    s = st.get("stats") or {}
+    k1 = out.env("n_in", "구역선 안 변화 건수", s["n_in"])
+    k2 = out.env("n_out", "구역선 밖(버퍼) 변화 건수", s["n_out"])
+    stt = r.get("status") or {}
+    parts = []
+    for i, name in enumerate(["현장확인", "불법", "적법", "철거완료"]):
+        if (stt.get(name) or {}).get("value"):
+            key = f"st{i}"
+            out.env(key, f"판정 {name} 건수", stt[name])
+            parts.append(f"{name} {{{{{key}}}}}")
+    pa, pb = st["period"]["a"]["year"], st["period"]["b"]["year"]
+    out.whitelist |= {str(pa), str(pb)}
+    lines = [f"{r['title']}을 만들었습니다(개조식 · 근거 썸네일 포함).",
+             f"□ 구간 개요 — {st['range_name']} · 국토지리정보원 영상 {pa}년 → {pb}년",
+             f"□ 변화 요약 — 구역선 안 {{{{{k1}}}}} · 밖(버퍼) {{{{{k2}}}}}" + (f" · 판정 {' · '.join(parts)}" if parts else ""),
+             f"□ 필지별 목록 · □ 권고 조치 {len(r.get('recommend') or [])}항목 — 미리보기에서 봅니다."]
+    out.answer = "\n\n".join(lines)          # 개조식 한 줄씩 문단
+    name = f"{st['range_name']}_변화탐지보고_{pa}-{pb}.pdf"
+    out.blocks.append({"type": "file", "label": name, "href": f"/api/v1/change/runs/{job}/report.pdf"})
+    fid = (r.get("thumbs") or [None])[0]
+    if fid:
+        for t, y in (("a", pa), ("b", pb)):
+            out.blocks.append({"type": "image", "src": f"/api/v1/change/runs/{job}/thumbs/{fid}_{t}.png", "caption": f"{y}년 · {fid}", "tag": "보고서 근거 영상"})
+    from agent import talk
+    talk.set_next(ctx, [talk.btn("보고서 미리보기", href="/landxi/v3/change-report/?" + __import__("urllib.parse").parse.urlencode({"job": job})),
+                        talk.btn("현장점검 목록", href="/landxi/v3/change-field/?" + __import__("urllib.parse").parse.urlencode({"job": job}))], front=True)
+    await _mem_set(ctx, job_id=job)
+    return out
+
+
+HANDLERS = {"run_change_detection": run_change_detection, "intersect_parcels": intersect_parcels, "describe_change": describe_change,
+            "change_report": change_report}
 
 
 # ── 모델 앞 직행(결정적) ─────────────────────────────────────────────────────
@@ -370,6 +411,7 @@ CMP_RX = re.compile(r"비교|견줘|대조|사이")
 RANGE_RX = re.compile(r"구역선|도로구역|고속국도|철도|대상지|범위\s*안")
 RAIL_RX = re.compile(r"(철도|철도용지|철길)[^.?!]{0,12}(같은\s*방식|똑같이|마찬가지|도\s*해|도\s*찾아|도\s*비교|도\b)")
 DESC_RX = re.compile(r"^(이거|이게|이건|저거|요거|이\s*변화|이\s*폴리곤|선택한\s*거|고른\s*거)\s*(뭐|무엇|뭔|설명|어떤)|^뭐야\??$|무엇이\s*바뀌|뭐가\s*바뀌|뭐가\s*생긴")
+REPORT_RX = re.compile(r"보고서|보고용|보고\s*자료")
 TABLE_RX = re.compile(r"표로|목록|리스트|소유구분|필지만")
 JIMOK_RX = re.compile(r"지목(?:이|은|가)?\s*(" + "|".join(sorted(JIMOK, key=len, reverse=True)) + r")")
 
@@ -404,6 +446,8 @@ def ROUTE(msg: str, ctx):
             a = {"year_a": min(ys), "year_b": max(ys)}
         return {"tool": "run_change_detection", "args": a}
     c = (ctx.context or {}).get("change") or {}
+    if REPORT_RX.search(t) and c.get("job_id"):
+        return {"tool": "change_report", "args": {}}
     if DESC_RX.search(t) and (c.get("sel") or c.get("job_id")):
         return {"tool": "describe_change", "args": {}}
     if TABLE_RX.search(t) and (c.get("job_id") or (ctx.context or {}).get("prev_run")) and (JIMOK_RX.search(t) or "변화" in t or "건물" in t or "소유" in t):

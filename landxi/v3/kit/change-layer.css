@@ -38,3 +38,16 @@
   .chg-more{display:block}
   .chg-panel{left:12px;right:12px;top:auto;bottom:12px;width:auto;max-height:70%}
 }
+/* 판정(P1-5) — 다섯 단추 · 메모 · 저장 / 카드의 판정 현황 한 줄 */
+.chg-mark{display:flex;flex-direction:column;gap:6px;padding-top:4px;border-top:1px solid var(--rule,#E5E8EB)}
+.chg-mk{margin:0;font:600 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28)}
+.chg-sts{display:flex;flex-wrap:wrap;gap:4px}
+.chg-stb{height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--rule,#E5E8EB);background:#fff;cursor:pointer;font:500 var(--fs-tag,14px)/1 var(--font-body);color:var(--ink,#191F28)}
+.chg-stb[aria-pressed="true"]{border-color:#191F28;box-shadow:inset 0 0 0 1px #191F28;background:#F2F4F6}
+.chg-mrow{display:flex;gap:6px}
+.chg-memo{flex:1;min-width:0}
+.chg-mline{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.chg-mt{color:var(--ink,#191F28);font-weight:500}
+.chg-mt[data-st="불법"]{color:#D22030} .chg-mt[data-st="현장확인"]{color:#1B64DA}
+.chg-link{color:var(--accent,#3182F6);font-weight:500;text-decoration:none}
+.chg-link:hover{text-decoration:underline}

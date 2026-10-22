@@ -36,6 +36,8 @@ export const ALLOW = {
   'lx-inbox': ['lx/staff', 'lx/admin'],     // 기관에서 온 요청(구현 2차 검토 요청)
   'lx-analyze': ['lx/staff', 'lx/admin'],   // 분석하기 — 로그인이 끝난 뒤 다시 로그인하면 이 화면으로(?next · QA-세션 10-11)
   'lx-map': ['lx/staff', 'lx/admin'],       // 지도 서비스 — 내가 돌린 분석 결과 층(원칙 149 · 154 · 163)
+  'change-field': ['lx/staff', 'lx/admin', 'tenant/local'],    // 국토 변화 현장점검(휴대폰 · 목록 → 상세 → 사진 → 판정 · 10-22 CHANGE-DEMO P1-7) — 기관은 공유받은 대상지만(서버)
+  'change-report': ['lx/staff', 'lx/admin', 'tenant/local'],   // 국토 변화 탐지 보고서 미리보기 · PDF(P1-6)
   'ops-core': ['lx/admin'],
   'ops-infra': ['lx/admin'],
   'ops-accounts': ['lx/admin'],             // 계정 관리(구현 2차 T5 — 가입 신청 · 재설정 · 계정 · 로그인 실패 · 처리 기록)

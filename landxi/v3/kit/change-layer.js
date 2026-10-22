@@ -118,9 +118,18 @@ function drawCard() {
     h('p.chg-big', {}, h('span', { text: '구역선 안 변화 ' }), h('b', { text: `${nf(val(s.n_in))}건` }), h('small', { text: ` · 밖(버퍼) ${nf(val(s.n_out))}건` })),
     h('ul.chg-lg', {}, ...rows),
     h('p.chg-w', { text: '두 해 항공영상에서 바뀐 곳 — 구역선 안 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.' }),
+    marksLine(),
     h('label.chg-out', {}, h('input', { type: 'checkbox', checked: C.outOn || undefined, onchange: (e) => { C.outOn = e.target.checked; for (const m of maps()) applyFilters(m); } }), h('span', { text: '구역선 밖(버퍼)도 보기' })),
     h('button.chg-more', { type: 'button', 'aria-expanded': String(C.card.classList.contains('is-open')), text: C.card.classList.contains('is-open') ? '접기' : '유형별 보기',
       onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } }));
+}
+
+function marksLine() {
+  const mk = C.run?.marks; if (!mk) return null;
+  const done = ['현장확인', '불법', '적법', '철거완료'].filter((k) => val(mk[k]));
+  return h('p.chg-mline', {}, h('span', { text: '판정 ' }), ...(done.length ? done.map((k) => h('span.chg-mt', { dataset: { st: k }, text: `${k} ${nf(val(mk[k]))}` })) : [h('span', { text: '아직 없음' })]),
+    h('a.chg-link', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job }), text: '현장점검' }),
+    h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job }), text: '보고서' }));
 }
 
 /* ── 오른쪽 칸 — 두 해 썸네일 + 속성 ── */
@@ -141,8 +150,10 @@ async function openPanel(id) {
       h('button.chg-x', { type: 'button', 'aria-label': '닫기', text: '닫기', onclick: closePanel })),
     h('div.chg-ab', {}, h('figure', {}, imgA, h('figcaption', { text: `${ya}년` })), h('figure', {}, imgB, h('figcaption', { text: `${yb}년` }))),
     h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv('구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
-    h('div.chg-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'AI 설명 듣기', onclick: () => document.dispatchEvent(new CustomEvent('kit:ask', { detail: { q: '이거 뭐야?' } })) })),
-    h('p.chg-note', { text: 'AI가 찾은 변화(검수 전)입니다. 판단은 현장 확인으로 합니다.' }));
+    markBox(id, p),
+    h('div.chg-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'AI 설명 듣기', onclick: () => document.dispatchEvent(new CustomEvent('kit:ask', { detail: { q: '이거 뭐야?' } })) }),
+      h('a.t-btn.t-btn--text', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job, id }), text: '현장점검(사진)' })),
+    h('p.chg-note', { text: 'AI가 찾은 변화(결과 확인 전)입니다. 판단은 현장 확인으로 합니다.' }));
   for (const [img, t] of [[imgA, 'a'], [imgB, 'b']]) blobUrl(`/change/runs/${encodeURIComponent(C.job)}/thumbs/${p.thumb_a ? (t === 'a' ? p.thumb_a : p.thumb_b).split('/').pop() : `${id}_${t}.png`}`)
     .then((u) => { img.src = u; }, () => { img.replaceWith(h('p.chg-noimg', { text: '영상을 불러오지 못했습니다' })); });
   placePanel();
@@ -174,6 +185,31 @@ function placePanel() {
 }
 addEventListener('resize', placePanel);
 new MutationObserver(placePanel).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden', 'data-open', 'data-fold'] });
+
+/* 판정(P1-5) — 다섯 가지 중 하나 + 메모 · 저장하면 지도 점 색 · 카드 판정 현황이 바로 바뀐다(서버 PATCH /change/runs/{결과}/marks/{번호}) */
+const ST_LIST = ['미확인', '현장확인', '불법', '적법', '철거완료'];
+function markBox(id, p) {
+  let pick = p.status || '미확인';
+  const box = h('div.chg-mark');
+  const memo = h('input.t-input.chg-memo', { type: 'text', maxlength: '500', placeholder: '메모(선택)', 'aria-label': '판정 메모', value: p.memo || '' });
+  const save = h('button.t-btn.chg-save', { type: 'button', text: '판정 저장' });
+  const btns = h('div.chg-sts', { role: 'group', 'aria-label': '판정' });
+  const draw = () => btns.replaceChildren(...ST_LIST.map((s) => h('button.chg-stb', { type: 'button', 'aria-pressed': String(pick === s), dataset: { st: s }, text: s, onclick: () => { pick = s; draw(); } })));
+  draw();
+  save.addEventListener('click', async () => {
+    save.disabled = true;
+    try {
+      const r = await api(`/change/runs/${encodeURIComponent(C.job)}/marks/${id}`, { method: 'PATCH', body: { status: pick, memo: memo.value } });
+      const f = C.fc.features.find((x) => x.id === id); if (f) { f.properties.status = r.status; f.properties.memo = r.memo; }
+      C.run = await api(`/change/runs/${encodeURIComponent(C.job)}`).catch(() => C.run);
+      redraw(); drawCard();
+      import('./toast.js').then((m) => m.toast(`판정을 '${r.status}'(으)로 저장했습니다`)).catch(() => {});
+    } catch (e) { import('./toast.js').then((m) => m.toast(e.message || '판정을 저장하지 못했습니다')).catch(() => {}); }
+    finally { save.disabled = false; }
+  });
+  box.append(h('p.chg-mk', { text: '판정' }), btns, h('div.chg-mrow', {}, memo, save));
+  return box;
+}
 
 function closePanel() { C.card?.classList.remove('is-under'); if (C.panel) C.panel.hidden = true; C.sel = null; C.hl.clear(); for (const m of maps()) applyFilters(m); }
 

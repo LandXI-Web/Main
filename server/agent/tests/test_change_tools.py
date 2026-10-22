@@ -54,3 +54,8 @@ def test_registered():
     from agent.tools import registry
     for n in ("run_change_detection", "intersect_parcels", "describe_change"):
         assert n in registry.SPECS
+
+
+def test_report_route():
+    assert CH.ROUTE("도로공사 보고용 보고서 만들어줘", ctx(change={"job_id": "job_X"}))["tool"] == "change_report"
+    assert CH.ROUTE("도로공사 보고용 보고서 만들어줘", ctx()) is None          # 변화 결과가 없는 화면은 기존 보고서 초안

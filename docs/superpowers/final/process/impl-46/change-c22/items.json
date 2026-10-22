@@ -1,10 +1,102 @@
 {
-  "at": "2026-10-22 17:55",
-  "cycle": "바퀴 22 · 국토 변화 모니터링·탐지(CHANGE-DEMO-ORDER) P0",
-  "items": [
-    {"id": "변화-P0-1", "answer": "국토 변화 분석서비스 정식 등록 · 두 해 비교 · 유형 넷 · 구역선 안/밖 · 필지 · 썸네일", "state": "구현 확인 대기", "note": "담양IC 2분 34초 · 철도 9분 25초 · 사전 계산 결과", "shots": ["03-chat-run.png", "04-popup-ab.png", "10-analyze-cards.png", "11-analyze-change.png"]},
-    {"id": "변화-P0-2", "answer": "국토지리정보원 연도별 영상 자동 확보 · 연도 칩 · '한 시점뿐' 없앰", "state": "구현 확인 대기", "note": "2019년은 이 지역 51cm 만 있어 두 해 같은 51cm 격자로 비교", "shots": ["01-new-project.png", "02-project-map-2019-2024.png"]},
-    {"id": "변화-P0-3", "answer": "대상지 — 행정구역 · 구역선 파일 + 버퍼 · 필지(PNU) 목록 · 데이터 올리기 벡터 등록", "state": "구현 확인 대기", "note": "범위 EPSG:5179 저장 · 좌표계 없는 shp 벨트 탐지", "shots": ["01-new-project.png", "12-ingest.png"]},
-    {"id": "변화-P0-4", "answer": "XI ChatGEO 도구 셋 · 단계 표시 · 꼬리 질문", "state": "구현 확인 대기", "note": "비교 2.3초 · 설명 2.2초 · 표 1.6초 · 철도 전환 3.1초(바깥 주소)", "shots": ["03-chat-run.png", "05-describe.png", "06-table.png", "07-rail.png", "08-rail-map.png"]}
-  ]
+ "at": "2026-10-22 18:40",
+ "cycle": "바퀴 22 · 국토 변화 모니터링·탐지(CHANGE-DEMO-ORDER) P0 · P1",
+ "items": [
+  {
+   "id": "변화-P0-1",
+   "answer": "국토 변화 분석서비스 정식 등록 · 두 해 비교 · 유형 넷 · 구역선 안/밖 · 필지 · 썸네일",
+   "state": "구현 확인 대기",
+   "note": "담양IC 2분 34초 · 철도 9분 25초 · 사전 계산 결과",
+   "shots": [
+    "03-chat-run.png",
+    "04-popup-ab.png",
+    "10-analyze-cards.png",
+    "11-analyze-change.png"
+   ]
+  },
+  {
+   "id": "변화-P0-2",
+   "answer": "국토지리정보원 연도별 영상 자동 확보 · 연도 칩 · '한 시점뿐' 없앰",
+   "state": "구현 확인 대기",
+   "note": "2019년은 이 지역 51cm 만 있어 두 해 같은 51cm 격자로 비교",
+   "shots": [
+    "01-new-project.png",
+    "02-project-map-2019-2024.png"
+   ]
+  },
+  {
+   "id": "변화-P0-3",
+   "answer": "대상지 — 행정구역 · 구역선 파일 + 버퍼 · 필지(PNU) 목록 · 데이터 올리기 벡터 등록",
+   "state": "구현 확인 대기",
+   "note": "범위 EPSG:5179 저장 · 좌표계 없는 shp 벨트 탐지",
+   "shots": [
+    "01-new-project.png",
+    "12-ingest.png"
+   ]
+  },
+  {
+   "id": "변화-P0-4",
+   "answer": "XI ChatGEO 도구 셋 · 단계 표시 · 꼬리 질문",
+   "state": "구현 확인 대기",
+   "note": "비교 2.3초 · 설명 2.2초 · 표 1.6초 · 철도 전환 3.1초(바깥 주소)",
+   "shots": [
+    "03-chat-run.png",
+    "05-describe.png",
+    "06-table.png",
+    "07-rail.png",
+    "08-rail-map.png"
+   ]
+  },
+  {
+   "id": "변화-P1-5",
+   "answer": "판정 저장(5가지 · 판정자 · 일시 · 메모 · 사진 · 이력) · 지도 점 색 · 판정 현황",
+   "state": "구현 확인 대기",
+   "note": "지도 서비스 폴리곤 칸 · 현장점검 · 대시보드 같은 값",
+   "shots": [
+    "20-marked-map.png",
+    "23-m-field-saved.png"
+   ]
+  },
+  {
+   "id": "변화-P1-6",
+   "answer": "보고서 — 개조식 미리보기(근거 썸네일) + PDF · ChatGEO 보고서",
+   "state": "구현 확인 대기",
+   "note": "권고 조치는 정해진 규칙으로만",
+   "shots": [
+    "24-chat-report.png",
+    "25-report-preview.png"
+   ]
+  },
+  {
+   "id": "변화-P1-7",
+   "answer": "휴대폰 현장점검 — 목록 → 상세 → 사진 → 판정",
+   "state": "구현 확인 대기",
+   "note": "반응형 웹 · 앱 없음 · 사진 위치 정보 지움",
+   "shots": [
+    "21-m-field-list.png",
+    "22-m-field-detail.png",
+    "23-m-field-saved.png"
+   ]
+  },
+  {
+   "id": "변화-P1-8",
+   "answer": "영상 비교 좌우 가르기 · 연도 이름표",
+   "state": "구현 확인 대기",
+   "note": "P8a 부품(kit/swipe.js) 그대로 씀",
+   "shots": [
+    "02-project-map-2019-2024.png",
+    "03-chat-run.png"
+   ]
+  },
+  {
+   "id": "변화-§7-8",
+   "answer": "한국도로공사 기관 · 기관 공유 → 대시보드 변화 건수 · 판정 현황",
+   "state": "구현 확인 대기",
+   "note": "kec.land-xi.dev · 관할 = 지금 대상지 시군구",
+   "shots": [
+    "27-admin-share.png",
+    "28-kec-dashboard.png"
+   ]
+  }
+ ]
 }

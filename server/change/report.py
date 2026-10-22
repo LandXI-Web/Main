@@ -1,0 +1,107 @@
+"""국토 변화 탐지 보고서(개조식) — 구간 개요 → 변화 요약(유형 · 안/밖 · 판정) → 필지별 목록(근거 썸네일 A/B) → 권고 조치.
+
+값은 모두 그 결과 파일(changes.geojson · stats.json)과 판정 기록(change_marks) 한 출처 — 지도 · 표 · CSV 와 같은 값.
+문장은 명사형 종결 · 불릿 · 숫자(지어낸 수 0). 권고 조치는 유형 · 지목 · 판정에서 정해진 규칙으로만(모델 문장 0).
+"""
+from __future__ import annotations
+
+import datetime as dt
+import html
+
+KST = dt.timezone(dt.timedelta(hours=9))
+TYPES = ["신축", "소실", "경작 전환", "포장 확대"]
+STATUSES = ["미확인", "현장확인", "불법", "적법", "철거완료"]
+JNAME = {"도": "도로", "철": "철도용지", "대": "대지", "임": "임야", "천": "하천", "구": "구거", "잡": "잡종지", "장": "공장용지", "차": "주차장",
+         "창": "창고용지", "학": "학교용지", "과": "과수원", "목": "목장용지", "유": "유지", "제": "제방", "주": "주유소용지", "전": "전", "답": "답"}
+ORDER = {"신축": 0, "포장 확대": 1, "소실": 2, "경작 전환": 3}
+MAX_ROWS = 30
+MAX_THUMBS = 8
+
+
+def _n(v) -> str:
+    return f"{v:,}"
+
+
+def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
+    """보고서 한 장의 내용(화면 미리보기 · PDF 가 같은 것을 그린다)."""
+    ya, yb = run["year_a"], run["year_b"]
+    feats = [f for f in fc.get("features") or [] if not f["properties"].get("hidden")]
+    inside = [f for f in feats if f["properties"].get("inside_row") == "내"]
+    bt = stats.get("by_type") or {}
+    st_count = {s: 0 for s in STATUSES}
+    for f in feats:
+        st_count[(marks.get(f["id"]) or {}).get("status") or "미확인"] += 1
+    gsd = "25cm" if stats.get("zoom") == 18 else "51cm"
+    made = dt.datetime.now(KST).strftime("%Y. %m. %d.")
+    overview = [
+        f"대상지: {rng['name']} — {rng.get('kind_label') or '구역선'} · 버퍼 {rng.get('buffer') or '-'} · 분석 범위 {stats.get('range_km2', 0):,.2f}㎢",
+        f"비교 영상: 국토지리정보원 항공정사영상 {ya}년 → {yb}년(두 해 같은 격자 · {gsd})",
+        "방법: 토지피복 AI(U-Net · 12분류) 두 해 결과의 바뀐 자리 → 50㎡ 이상 변화 폴리곤 → 구역선 · 연속지적도 필지와 겹쳐 봄",
+        "성격: AI 탐지 결과(결과 확인 전) — 판정은 현장 확인으로",
+    ]
+    summary = [f"구역선 안 변화 {_n(stats['n_in'])}건 · 구역선 밖(버퍼) {_n(stats['n_out'])}건 · 면적 합 {_n(round(stats['m2']))}㎡"]
+    for t in TYPES:
+        b = bt.get(t)
+        if b:
+            summary.append(f"{t}: 구역선 안 {_n(b['in'])}건 · 밖 {_n(b['out'])}건 · {_n(round(b['m2']))}㎡")
+    judged = sum(v for k, v in st_count.items() if k != "미확인")
+    summary.append("판정 현황: " + " · ".join(f"{k} {_n(v)}" for k, v in st_count.items()) + f"(판정 {_n(judged)}건)")
+    rows = sorted(inside, key=lambda f: (ORDER.get(f["properties"]["type"], 9), -f["properties"]["area_m2"]))
+    table = []
+    for f in rows[:MAX_ROWS]:
+        p = f["properties"]
+        table.append({"id": f["id"], "jibun": p.get("jibun") or "-", "jimok": JNAME.get(p.get("jimok") or "", p.get("jimok") or "-"),
+                      "owner": p.get("owner") or "-", "use": p.get("use") or "-", "type": p["type"], "area": f"{round(p['area_m2']):,}㎡",
+                      "status": (marks.get(f["id"]) or {}).get("status") or "미확인", "memo": (marks.get(f["id"]) or {}).get("memo") or ""})
+    thumbs = [r for r in table if r["type"] != "경작 전환"][:MAX_THUMBS] or table[:MAX_THUMBS]
+    # 권고 조치(규칙) — 유형 · 지목 · 판정
+    rec = []
+    road_new = [r for r in table if r["type"] == "신축" and r["jimok"] in ("도로", "철도용지")]
+    if road_new:
+        rec.append(f"지목 {'·'.join(sorted({r['jimok'] for r in road_new}))} 필지 위 신축 {_n(len(road_new))}건 — 현장 확인 후 무단 점용 여부 확인 · 점용 허가 대장 대조")
+    pave = [r for r in table if r["type"] == "포장 확대"]
+    if pave:
+        rec.append(f"구역선 안 포장 확대 {_n(len(pave))}건 — 도로구역 안 무단 포장 · 진출입로 설치 여부 확인")
+    lost = [r for r in table if r["type"] == "소실"]
+    if lost:
+        rec.append(f"건물 소실 {_n(len(lost))}건 — 철거 완료 여부 확인 · 대장 정리")
+    farm = [r for r in table if r["type"] == "경작 전환"]
+    if farm:
+        rec.append(f"경작 전환 {_n(len(farm))}건 — 두 해 촬영 계절 차이 가능성 · 영상 대조 뒤 경작 점용 여부 확인")
+    if st_count.get("불법"):
+        rec.append(f"불법 판정 {_n(st_count['불법'])}건 — 원상회복 요구 · 조치 계획 수립")
+    if st_count.get("현장확인"):
+        rec.append(f"현장확인 대상 {_n(st_count['현장확인'])}건 — 현장 점검 일정 수립 · 사진 · 판정 기록")
+    rec.append("다음 해 국토지리정보원 영상 공개 시 같은 대상지로 다시 비교 · 판정 이력 이어 관리")
+    return {"title": f"{rng['name']} 국토 변화 탐지 보고(초안)", "made": made, "period": f"{ya}년 → {yb}년", "overview": overview, "summary": summary,
+            "status": st_count, "table": table, "more": max(0, len(rows) - MAX_ROWS), "thumbs": [r["id"] for r in thumbs],
+            "recommend": rec, "source": f"출처 Land-XI 국토 변화 분석서비스 결과 · 판정 기록 — 지도 · 필지 표 · CSV 와 같은 값 · {made}"}
+
+
+def _e(s) -> str:
+    return html.escape(str(s if s is not None else ""))
+
+
+def html_body(r: dict, yr: tuple[int, int]) -> str:
+    """PDF 용 HTML(썸네일은 a_{id}.png · b_{id}.png 이름으로 묶음에 넣는다)."""
+    li = lambda xs: "<ul>" + "".join(f"<li>{_e(x)}</li>" for x in xs) + "</ul>"  # noqa: E731
+    out = [f"<p class='k'>국토 변화 모니터링 · {_e(r['period'])}</p><h1>{_e(r['title'])}</h1><p class='sub'>만든 날 {_e(r['made'])}</p>",
+           "<h2>□ 구간 개요</h2>", li(r["overview"]), "<h2>□ 변화 요약</h2>", li(r["summary"]), "<h2>□ 필지별 목록(구역선 안)</h2>"]
+    head = ["번호", "지번", "지목", "소유구분", "변화 유형", "면적", "판정"]
+    rows = "".join("<tr>" + "".join(f"<td>{_e(x)}</td>" for x in (t["id"], t["jibun"], t["jimok"], t["owner"], t["type"], t["area"], t["status"])) + "</tr>"
+                   for t in r["table"])
+    out.append("<table><tr>" + "".join(f"<th>{h}</th>" for h in head) + "</tr>" + rows + "</table>")
+    if r["more"]:
+        out.append(f"<p class='cap'>그 밖 {r['more']:,}건은 필지 표(CSV)에서 봅니다.</p>")
+    if r["thumbs"]:
+        out.append(f"<h2>□ 근거 영상({yr[0]}년 · {yr[1]}년)</h2><table>")
+        by = {t["id"]: t for t in r["table"]}
+        for fid in r["thumbs"]:
+            t = by.get(fid) or {}
+            out.append(f"<tr><td style='width:22%'>{_e(fid)}<br/>{_e(t.get('jibun'))}<br/>{_e(t.get('type'))} · {_e(t.get('area'))}</td>"
+                       f"<td><img src='a_{fid}.png'/></td><td><img src='b_{fid}.png'/></td></tr>")
+        out.append("</table>")
+    out.append("<h2>□ 권고 조치</h2>")
+    out.append(li(r["recommend"]))
+    out.append(f"<p class='src'>{_e(r['source'])}</p>")
+    return "".join(out)

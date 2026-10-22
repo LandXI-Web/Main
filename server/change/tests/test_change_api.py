@@ -86,3 +86,64 @@ def test_pnu_range():
     r = httpx.post(B + "/change/ranges", headers=H(t), json={"name": "시험 PNU", "buffer_m": 20, "pnus": pn}, timeout=180)
     assert r.status_code == 200, r.text
     assert r.json()["kind"] == "pnu"
+
+
+def _done_run():
+    """시험 DB 의 끝난 결과 하나(시험 게이트웨이에는 작업기가 없다 — 미리 넣어 둔 결과 · 없으면 건너뜀)."""
+    import psycopg
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        r = c.execute("SELECT job_id FROM change_runs WHERE state='done' ORDER BY done_at DESC LIMIT 1").fetchone()
+    return r[0] if r else None
+
+
+def test_marks_photo_report():
+    import pytest
+    job = _done_run()
+    if not job:
+        pytest.skip("끝난 결과 없음")
+    t = _tok()
+    fc = httpx.get(B + f"/change/runs/{job}/features", headers=H(t), timeout=60).json()
+    fid = fc["features"][0]["id"]
+    r = httpx.patch(B + f"/change/runs/{job}/marks/{fid}", headers=H(t), json={"status": "현장확인", "memo": "시험"}, timeout=30)
+    assert r.status_code == 200 and r.json()["status"] == "현장확인", r.text
+    assert httpx.patch(B + f"/change/runs/{job}/marks/{fid}", headers=H(t), json={"status": "모름"}, timeout=30).status_code == 400
+    import io
+    from PIL import Image
+    b = io.BytesIO(); Image.new("RGB", (64, 48), (200, 10, 10)).save(b, "JPEG")
+    r = httpx.post(B + f"/change/runs/{job}/marks/{fid}/photos", headers=H(t), files={"file": ("a.jpg", b.getvalue(), "image/jpeg")}, timeout=30)
+    assert r.status_code == 200, r.text
+    m = httpx.get(B + f"/change/runs/{job}/marks/{fid}", headers=H(t), timeout=30).json()
+    assert m["photos"] and m["history"]
+    ph = httpx.get(B + f"/change/runs/{job}/photos/{fid}/{m['photos'][0]['name']}", headers=H(t), timeout=30)
+    assert ph.status_code == 200 and ph.headers["content-type"] == "image/jpeg"
+    rj = httpx.get(B + f"/change/runs/{job}/report.json", headers=H(t), timeout=60)
+    assert rj.status_code == 200, rj.text
+    assert rj.json()["status"]["현장확인"]["value"] >= 1 and rj.json()["recommend"]
+    pdf = httpx.get(B + f"/change/runs/{job}/report.pdf", headers=H(t), timeout=120)
+    assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF", pdf.text[:300]
+    httpx.patch(B + f"/change/runs/{job}/marks/{fid}", headers=H(t), json={"status": "미확인", "memo": ""}, timeout=30)
+
+
+def test_tenant_share_dashboard():
+    """기관 공유(서비스 단위 체크) → 그 기관이 대상지 · 결과 · 판정을 본다 · 거두면 0."""
+    import pytest
+    import psycopg
+    job = _done_run()
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        has = c.execute("SELECT 1 FROM tenants WHERE id='kec'").fetchone()
+        if not job or not has:
+            pytest.skip("끝난 결과 · 시험 기관 없음")
+        rid = c.execute("SELECT range_id FROM change_runs WHERE job_id=%s", (job,)).fetchone()[0]
+        c.execute("UPDATE change_ranges SET project_id=coalesce(project_id, 'prj_test_change') WHERE id=%s", (rid,))
+        c.commit()
+    adm = _tok(login="lxadmin@lx.or.kr")
+    r = httpx.put(B + "/release/shares", headers=H(adm), json={"card_id": "card-change", "tenant_id": "kec", "shared": True, "test": True}, timeout=60)
+    assert r.status_code == 200, r.text
+    tt = _tok(realm="tenant", login="lxadmin@lx.or.kr", tenant_id="kec", site="gov")
+    sh = httpx.get(B + "/change/shared", headers=H(tt), timeout=60).json()
+    assert any(x["job_id"] == job for x in sh["items"]), sh
+    assert httpx.get(B + f"/change/runs/{job}/report.json", headers=H(tt), timeout=60).status_code == 200
+    r = httpx.put(B + "/release/shares", headers=H(adm), json={"card_id": "card-change", "tenant_id": "kec", "shared": False, "test": True}, timeout=60)
+    sh = httpx.get(B + "/change/shared", headers=H(tt), timeout=60).json()
+    assert not sh["items"]
+    assert httpx.get(B + f"/change/runs/{job}", headers=H(tt), timeout=60).status_code == 404
