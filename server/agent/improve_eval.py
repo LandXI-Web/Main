@@ -141,18 +141,48 @@ def gpu_busy() -> bool:
     return False
 
 
+def events_of(resp) -> tuple[list, str | None]:
+    """답 사건 조회 응답 → (사건 목록, 오류 까닭). 'items' 가 없거나 목록이 아니면(오류 봉투 · 형태 바뀜) 빈 목록 + 까닭."""
+    code = getattr(resp, "status_code", "?")
+    try:
+        j = resp.json()
+    except Exception:  # noqa: BLE001
+        return [], f"{code} 응답을 읽지 못함"
+    if isinstance(j, dict) and "items" not in j and isinstance(j.get("data"), dict):
+        j = j["data"]                                   # 봉투로 한 겹 싸인 형태도 받는다
+    items = j.get("items") if isinstance(j, dict) else None
+    if not isinstance(items, list):
+        msg = j.get("message") if isinstance(j, dict) else None
+        if not msg and isinstance(j, dict) and isinstance(j.get("error"), dict):
+            msg = j["error"].get("message")
+        return [], f"{code} {str(msg or '사건 목록 없음')[:60]}"
+    return [x for x in items if isinstance(x, dict) and "event" in x], None
+
+
 def ask(tok: str, q: str, context: dict, wait_s: int = 150) -> dict:
     r = _retry(httpx.post, B + "/agent/runs", headers=H(tok), json={"message": q, "mode": "map", "context": context}, timeout=60)
     if r.status_code >= 400:
         return {"event": "agent.failed", "data": {"message": r.json().get("message") if r.headers.get("content-type", "").startswith("application/json") else r.text[:120]},
                 "confirm": False, "ms": 0}
-    rid = r.json()["run"]["id"]
-    t0, after, confirm, tool = time.time(), None, False, []
+    try:
+        rid = r.json()["run"]["id"]
+    except Exception:  # noqa: BLE001
+        return {"event": "agent.failed", "data": {"message": f"답 시작 응답 형태 이상({r.status_code})"}, "confirm": False, "ms": 0}
+    t0, after, confirm, tool, bad = time.time(), None, False, [], 0
     while time.time() - t0 < wait_s:
-        j = _retry(httpx.get, B + f"/agent/runs/{rid}/events", headers=H(tok), params={"after": after} if after else None, timeout=30).json()
-        for x in j["items"]:
+        r2 = _retry(httpx.get, B + f"/agent/runs/{rid}/events", headers=H(tok), params={"after": after} if after else None, timeout=30)
+        items, err = events_of(r2)
+        if err:                                         # 오류 응답(봉투에 items 없음) — 몇 번은 다시 묻고, 계속이면 이 질문만 실패로 적는다
+            bad += 1
+            if bad >= 5:
+                return {"event": "agent.failed", "data": {"message": f"답 사건을 못 받음({err})"}, "confirm": confirm,
+                        "tools": [t for t in tool if t], "ms": int((time.time() - t0) * 1000)}
+            time.sleep(2)
+            continue
+        bad = 0
+        for x in items:
             after = x["id"]
-            ev, d = x["event"], x["data"]
+            ev, d = x["event"], x.get("data") or {}
             if ev == "agent.tool.call":
                 tool.append(d.get("tool") or d.get("name"))
             if ev == "agent.confirm" and not confirm:

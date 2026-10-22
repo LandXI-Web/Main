@@ -746,6 +746,35 @@ async def unload(mid: str, body: dict, request: Request):
 BACKUP_STATUS = config.DATA_ROOT / "_backup" / "db" / "status.json"
 
 
+LOOP_STATE = config.DATA_ROOT / "improve" / "weekly" / "state.json"
+
+
+def _loop_status() -> dict | None:
+    """XI ChatGEO 밤 개선 바퀴 마지막 실행 — {at, state: ok|skip|failed, why, fails: 연속 실패 수}. 기록이 없으면 None. 시험 실행은 건너뛴다."""
+    try:
+        runs = [r for r in (json.loads(LOOP_STATE.read_text(encoding="utf-8")).get("runs") or []) if not r.get("test")]
+    except Exception:  # noqa: BLE001
+        return None
+    if not runs:
+        return None
+    last = runs[-1]
+    fails = 0
+    for r in reversed(runs):
+        if not r.get("error"):
+            break
+        fails += 1
+    if last.get("error"):
+        why = "답 확인 중 멈춤 · 새 판 만들지 못함"
+        if "KeyError" in str(last["error"]) or "items" in str(last["error"]):
+            why = "답 사건을 읽지 못해 멈춤"
+        state = "failed"
+    elif last.get("mode") == "none":
+        state, why = "skip", str(last.get("why") or "해당 없음")[:60]
+    else:
+        state, why = "ok", str(last.get("why") or "")[:60]
+    return {"at": last.get("at"), "state": state, "why": why, "fails": env(fails, "count", "measured", "ChatGEO 밤 바퀴 기록(연속 실패)")}
+
+
 @router.get("/ops/db-status")
 async def db_status(request: Request):
     """LX 관리자 대시보드 'DB 상태' 한 줄(10-22 now21 저장보안-제안-DB상태 채택) — 백업 시각 · 되살리기 시험 · 느린 질의 · 디스크로 넘친 계산.
@@ -778,7 +807,7 @@ async def db_status(request: Request):
             pc = {"at": h["at"], "mismatch": env(int(h.get("mismatch") or 0), "count", "measured", "pair_check(장부 ↔ 파일 · 매주)")}
     except Exception:  # noqa: BLE001
         pc = None
-    return {"ok": ok and rt.get("ok") is not False, "pair_check": pc,
+    return {"ok": ok and rt.get("ok") is not False, "pair_check": pc, "chatgeo_loop": _loop_status(),
             "backup": {"ok": bool(st.get("ok")), "at": st.get("last_ok_at"), "age_h": env(bk["age_h"] if bk else None, "h", "measured", "DB 백업 상태 파일(마지막 성공 뒤)"),
                        "size": env(st.get("size_mb"), "MB", "measured", "DB 백업 상태 파일")},
             "restore_test": {"ok": rt.get("ok"), "at": rt.get("at")},
