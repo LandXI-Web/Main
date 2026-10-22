@@ -55,7 +55,7 @@ async def my_storage(request: Request):
     from .projects import _PROJECT_BYTES, lead_storage
     async with db(realm="lx") as conn:
         st = _storage_out(await lead_storage(conn, p.user_id))
-        rows = await conn.fetch("SELECT p.name, p.state, " + _PROJECT_BYTES.format(p="p.id") + " AS b FROM projects p WHERE p.lead_id=$1 "
+        rows = await conn.fetch("SELECT p.name, p.state, " + _PROJECT_BYTES.format(p="p.id") + " AS b FROM projects p WHERE p.lead_id=$1 AND p.state<>'deleted' "
                                 "ORDER BY 3 DESC, p.name", p.user_id)
         reqs = await conn.fetch("SELECT from_gb, want_gb, why, state, reason, created_at, decided_at FROM storage_requests WHERE user_id=$1 "
                                 "ORDER BY created_at DESC LIMIT 20", p.user_id)

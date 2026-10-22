@@ -1,0 +1,50 @@
+{
+  "base": "http://localhost:4173",
+  "at": "2026-10-22T23:06:53.618Z",
+  "log": [
+    "만듦 prj_1aa29c7492 · 삭제 시험 test pc 08:06",
+    "pc 한 장 열림 → 삭제 단추 보임 296ms",
+    "pc 삭제 창 수 나옴 245ms · 영상 1 학습 자료 0 모델 0 결과 0",
+    "pc 이름 적기 전 삭제 단추 꺼짐 = true",
+    "pc 이름 적은 뒤 삭제 단추 켜짐 = true",
+    "pc 삭제 → 목록 1829ms",
+    "pc 목록에 그 프로젝트 없음 = true",
+    "pc 한 장 다시 열기 → 404 삭제한 프로젝트입니다",
+    "만듦 prj_005ff53a02 · 삭제 시험 test mobile 08:06",
+    "mobile 한 장 열림 → 삭제 단추 보임 397ms",
+    "mobile 삭제 창 수 나옴 248ms · 영상 1 학습 자료 0 모델 0 결과 0",
+    "mobile 이름 적기 전 삭제 단추 꺼짐 = true",
+    "mobile 이름 적은 뒤 삭제 단추 켜짐 = true",
+    "mobile 삭제 → 목록 1814ms",
+    "mobile 목록에 그 프로젝트 없음 = true",
+    "mobile 한 장 다시 열기 → 404 삭제한 프로젝트입니다"
+  ],
+  "overlaps": [
+    {
+      "state": "pc-dialog",
+      "n": 0,
+      "hscroll": 0
+    },
+    {
+      "state": "pc-list",
+      "n": 1,
+      "what": [
+        [
+          ".k-chat-fab",
+          "article.k-sc.la-ac \"테스트\"",
+          "cover"
+        ]
+      ]
+    },
+    {
+      "state": "mobile-dialog",
+      "n": 0,
+      "hscroll": 0
+    },
+    {
+      "state": "mobile-list",
+      "n": 0,
+      "what": []
+    }
+  ]
+}

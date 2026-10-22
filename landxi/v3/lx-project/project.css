@@ -67,6 +67,17 @@
 .lxp-foot{display:flex;justify-content:flex-end;padding:0 4px}
 .lxp-arch{color:var(--sub)}
 .lxp-arch::after{content:none}
+/* 프로젝트 삭제(10-23 · delete.js) — 보관 옆 글 단추 · 창 안 네 칸 수 · 막힘 줄 */
+.lxp-foot{gap:20px;flex-wrap:wrap}
+.lxp-del{color:var(--warn)}
+.lxp-del::after{content:none}
+.lxp-del-n{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:0;list-style:none}
+.lxp-del-n li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;background:var(--bg-0)}
+.lxp-del-n span{font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
+.lxp-del-n b{font:600 var(--fs-body)/24px var(--font-num);color:var(--ink)}
+.lxp-del-b b{color:var(--warn)}
+.lxp-del-go{background:var(--warn);border-color:var(--warn)}
+@media (max-width:480px){.lxp-del-n{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ── 구현 5차(확인 17차 · 시안 design-r8/project-page) — 배치는 그대로, 칸 안만 ── */
 .lxp-kh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}

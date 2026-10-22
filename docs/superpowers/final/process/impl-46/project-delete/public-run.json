@@ -1,0 +1,44 @@
+{
+  "base": "https://app.land-xi.dev",
+  "at": "2026-10-22T23:17:04.445Z",
+  "log": [
+    "만듦 prj_9b0b022f74 · 삭제 시험 public pc 08:16",
+    "pc 한 장 열림 → 삭제 단추 보임 1796ms",
+    "pc 삭제 창 수 나옴 864ms · 영상 1 학습 자료 0 모델 0 결과 0",
+    "pc 이름 적기 전 삭제 단추 꺼짐 = true",
+    "pc 이름 적은 뒤 삭제 단추 켜짐 = true",
+    "pc 삭제 → 목록 2690ms",
+    "pc 목록에 그 프로젝트 없음 = true",
+    "pc 한 장 다시 열기 → 404 삭제한 프로젝트입니다",
+    "만듦 prj_1e4ca73867 · 삭제 시험 public mobile 08:16",
+    "mobile 한 장 열림 → 삭제 단추 보임 1288ms",
+    "mobile 삭제 창 수 나옴 858ms · 영상 1 학습 자료 0 모델 0 결과 0",
+    "mobile 이름 적기 전 삭제 단추 꺼짐 = true",
+    "mobile 이름 적은 뒤 삭제 단추 켜짐 = true",
+    "mobile 삭제 → 목록 2740ms",
+    "mobile 목록에 그 프로젝트 없음 = true",
+    "mobile 한 장 다시 열기 → 404 삭제한 프로젝트입니다"
+  ],
+  "overlaps": [
+    {
+      "state": "pc-dialog",
+      "n": 0,
+      "hscroll": 0
+    },
+    {
+      "state": "pc-list",
+      "n": 0,
+      "what": []
+    },
+    {
+      "state": "mobile-dialog",
+      "n": 0,
+      "hscroll": 0
+    },
+    {
+      "state": "mobile-list",
+      "n": 0,
+      "what": []
+    }
+  ]
+}

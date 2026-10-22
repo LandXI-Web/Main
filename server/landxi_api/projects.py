@@ -22,6 +22,10 @@ POST   /projects/{pid}/members           {user_id} 프로젝트장 · 관리자
 DELETE /projects/{pid}/members/{uid}     프로젝트장 · 관리자
 POST   /projects/{pid}/samples           {sample_id} 보관된 학습 표본을 이 프로젝트 학습데이터로 더한다(프로젝트장 · 구성원)
 POST   /projects/{pid}/archive           {archived: true|false} 끝난 프로젝트 보관 · 다시 열기(프로젝트장 · 관리자) — 기록은 지우지 않는다
+GET    /projects/{pid}/delete            삭제 창 — 함께 정리되는 것(영상 연결 · 학습 자료 · 모델 · 결과 · 파일 · 돌던 작업 수) · 남는 것 · 막힌 까닭(blocked)
+DELETE /projects/{pid}                   {name} 프로젝트 삭제(10-23) — 프로젝트장 · LX 관리자 · 이름을 똑같이 적어야 · 배포 신청 중 · 기관에 공유됨이면 409.
+                                         목록에서 바로 빠지고 돌던 작업은 '프로젝트 삭제'로 멈춘다 · 폴더는 02. 데이터/_trash/projects 로 옮기고
+                                         30일 뒤 보관 기한 정리(retention.py)가 지운다 · 감사 기록 project.delete 한 줄
 POST   /projects/{pid}/rounds            {reason} 재학습 — 같은 프로젝트의 다음 회차(학습 단계로 돌아감). 공개된 서비스만 · 프로젝트장만.
                                          reason(왜 다시 학습하나 한 줄)은 회차 기록 · 감사 기록에 남고 LX 관리자 결재함(그 회차의 모델 등록 · 새 판 공개)에 같은 말로 보인다
 POST   /projects/{pid}/handover          {to, note?} 프로젝트장 넘기기 — 프로젝트장 본인 · LX 관리자(확인 17차 P-5 ⓐ · 원칙 105).
@@ -165,6 +169,8 @@ async def _row(conn, pid: str):
     r = await conn.fetchrow("SELECT * FROM projects WHERE id=$1", pid)
     if not r:
         raise ApiError("not_found", "프로젝트가 없습니다")
+    if r["state"] == "deleted":                       # 삭제한 프로젝트(30일 뒤 지워짐) — 한 장 · 단계 화면 · 모든 일이 여기서 멈춘다
+        raise ApiError("not_found", "삭제한 프로젝트입니다")
     return r
 
 
@@ -245,7 +251,7 @@ def storage_state(used: int, own, default) -> dict:
 async def lead_storage(conn, uid: str) -> dict:
     """내 저장 용량 — 내가 프로젝트장인 프로젝트(진행 중 · 보관)의 저장 공간 합 · 할당(lx_users.storage_quota_gb → 없으면 기본 할당 → 없으면 None).
     → {bytes, projects, quota_gb, quota_own, default_gb, pct, warn}. 할당 값이 없으면 지어내지 않는다(할당 없음)."""
-    r = await conn.fetchrow("SELECT count(*) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b FROM projects p WHERE p.lead_id=$1", uid)
+    r = await conn.fetchrow("SELECT count(*) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b FROM projects p WHERE p.lead_id=$1 AND p.state<>'deleted'", uid)
     q = await conn.fetchval("SELECT storage_quota_gb FROM lx_users WHERE id=$1", uid)
     used = int(r["b"] or 0)
     return {"bytes": used, "projects": int(r["n"] or 0), **storage_state(used, q, await storage_default(conn))}
@@ -255,7 +261,7 @@ async def storage_all(conn) -> dict:
     """LX 계정마다 저장 용량(계정 관리 목록) — lead_storage 와 같은 식을 한 번에. → {uid: {bytes, projects, quota_gb, …}}"""
     d = await storage_default(conn)
     rows = await conn.fetch("SELECT u.id, u.storage_quota_gb AS q, count(p.id) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b "
-                            "FROM lx_users u LEFT JOIN projects p ON p.lead_id = u.id GROUP BY u.id, u.storage_quota_gb")
+                            "FROM lx_users u LEFT JOIN projects p ON p.lead_id = u.id AND p.state<>'deleted' GROUP BY u.id, u.storage_quota_gb")
     return {r["id"]: {"bytes": int(r["b"] or 0), "projects": int(r["n"] or 0), **storage_state(int(r["b"] or 0), r["q"], d)} for r in rows}
 
 
@@ -504,6 +510,7 @@ def _can(p: Principal, r, members: list[str], published: bool) -> dict:
     # 프로젝트장 넘기기 = 프로젝트장 본인 · LX 관리자(확인 17차 P-5 ⓐ) · 기록 · 메모 · 파일 = 구성원 · 프로젝트장 · LX 관리자(P-4 ⓐ — 기관은 안 봄)
     return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": lead or p.is_admin, "work": mem, "publish": lead, "infer": mem,
             "train": lead if published else mem, "retrain": lead and published, "archive": lead or p.is_admin,
+            "delete": lead or p.is_admin,                 # 프로젝트 삭제(10-23) — 프로젝트장 · LX 관리자
             "log": mem or p.is_admin}
 
 
@@ -813,7 +820,8 @@ async def notices(request: Request):
     async with db(realm="lx") as conn:
         people = await _people(conn)
         rows = await conn.fetch("SELECT n.id, n.kind, n.project_id, n.text, n.note, n.by, n.at, p.name AS pname FROM lx_notices n "
-                                "LEFT JOIN projects p ON p.id = n.project_id WHERE n.user_id=$1 AND n.seen_at IS NULL ORDER BY n.at DESC LIMIT 20", p.user_id)
+                                "LEFT JOIN projects p ON p.id = n.project_id WHERE n.user_id=$1 AND n.seen_at IS NULL "
+                                "AND p.state IS DISTINCT FROM 'deleted' ORDER BY n.at DESC LIMIT 20", p.user_id)
     words = {"project.lead": ("넘긴 사람", "메모"), "account.storage": ("처리한 사람", "사유")}
     items = [{"id": x["id"], "kind": x["kind"], "project": {"id": x["project_id"], "name": x["pname"]} if x["project_id"] else None,
               "text": x["text"], "note": x["note"], "by": _name(people, x["by"]), "at": _iso(x["at"]),
@@ -1005,6 +1013,225 @@ async def archive(pid: str, body: dict, request: Request):
     return {**out, "as_of": now_iso()}
 
 
+# ── 프로젝트 삭제(10-23 사용자 "프로젝트 삭제하는 기능도 필요하다") ────────────────────────────────────────
+# 누가: 프로젝트장 · LX 관리자(_can delete). 막는 것: 이 프로젝트의 서비스 · 모델이 배포 신청 중(승인 요청 대기) · 기관에 공유됨.
+# 지우면: 상태 'deleted' — 모든 목록에서 바로 빠진다(목록은 active · archived 만 본다) · 한 장 · 단계 화면은 '삭제한 프로젝트입니다'.
+#   돌던 작업은 '프로젝트 삭제' 사유로 멈춘다 · 이 프로젝트에만 쓰인 학습 자료 = removed · 모델 = retired(내림) ·
+#   그 폴더(프로젝트 파일 · 학습 자료 · 모델 가중치)는 02. 데이터/_trash/projects/{프로젝트}/ 로 옮긴다(지우지 않음).
+#   30일(keep_days · config/retention.yaml) 뒤 보관 기한 정리(retention.purge_projects)가 옮긴 폴더 · 결과 파일 · 프로젝트 줄을 지운다.
+#   다른 프로젝트와 함께 쓰는 학습 자료 · 직원 공유 학습 자료 · 서비스(카드 판)에 쓰인 모델 · 공유 데이터의 영상은 남는다.
+# 기록: 감사 기록 'project.delete' 한 줄(기록 화면 말 '프로젝트를 삭제').
+def keep_days() -> int:
+    """삭제한 프로젝트를 남겨 두는 날 수 — config/retention.yaml deleted_project_days 한 곳(보관 기한 정리와 같은 값)."""
+    from .retention import settings
+    try:
+        return int(settings().get("deleted_project_days") or 30)
+    except (TypeError, ValueError):
+        return 30
+
+
+TRASH_REL = "_trash/projects"
+RUN_STATES = ("queued", "running")
+
+
+def _under_data(p) -> str | None:
+    """DATA_ROOT 안의 경로면 그 상대 경로(앞뒤 / 없음), 아니면 None — 바깥 폴더 · 휴지 자리는 옮기지 않는다."""
+    from pathlib import Path
+    if not p:
+        return None
+    try:
+        rel = Path(p).resolve().relative_to(config.DATA_ROOT.resolve())
+    except (ValueError, OSError, TypeError):
+        return None
+    s = rel.as_posix().strip("/")
+    return s if s and s != "." and not s.startswith("_trash") else None
+
+
+def _model_dir(weights_uri: str | None, train_job: str | None) -> str | None:
+    """모델 가중치의 작업 폴더(models/…/{학습 작업}) — 못 찾으면 None(그 모델은 내림만 · 파일은 그대로)."""
+    from pathlib import Path
+    if not weights_uri or not train_job:
+        return None
+    for a in Path(weights_uri).parents:
+        if a.name == train_job:
+            rel = _under_data(a)
+            return rel if rel and rel.startswith("models/") else None
+    return None
+
+
+async def _delete_scope(conn, r) -> dict:
+    """삭제 창 · 삭제가 같이 쓰는 판정 — 무엇이 함께 정리되나 · 무엇이 남나 · 무엇이 막나. 숫자는 모두 서버 기록."""
+    pid = r["id"]
+    from .deps import pool_sys
+    links = await conn.fetch("SELECT kind, ref FROM project_links WHERE project_id=$1", pid)
+    by = lambda k: [x["ref"] for x in links if x["kind"] == k]   # noqa: E731
+    srows = await conn.fetch(
+        "SELECT s.id, s.dir, s.status, coalesce(s.staff_shared,false) AS shared, "
+        "EXISTS (SELECT 1 FROM project_links o JOIN projects q ON q.id=o.project_id WHERE o.kind='sample' AND o.ref=s.id "
+        "        AND o.project_id<>$1 AND q.state<>'deleted') AS other "
+        "FROM train_samples s WHERE s.id = ANY($2::text[]) AND s.status <> 'removed'", pid, by("sample") or ["-"])
+    own_s = [s for s in srows if not s["shared"] and not s["other"]]
+    own_ids = [s["id"] for s in own_s] or ["-"]
+    async with (await pool_sys()).acquire() as sc:            # 작업 표는 행 보안 아래서 project_id 로 색인을 못 탄다(0115) — 시스템 읽기 경로
+        jobs = await sc.fetch(
+            "SELECT id, kind, state FROM jobs WHERE options->>'project_id' = $1 "
+            "OR (kind='train' AND (options->'samples') ?| $2::text[])", pid, own_ids)
+        tj = [j["id"] for j in jobs if j["kind"] == "train"] or ["-"]
+        mrows = await sc.fetch(
+            "SELECT m.id, m.status, m.weights_uri, m.train_job, "
+            "EXISTS (SELECT 1 FROM card_versions v WHERE m.id = ANY(v.model_ids)) AS in_service "
+            "FROM models m WHERE m.train_job = ANY($1::text[]) OR m.sample_id = ANY($2::text[])", tj, own_ids)
+        res = await sc.fetch(
+            "SELECT j.id FROM jobs j WHERE j.id = ANY($1::text[]) AND j.kind <> 'train' AND j.state='done' AND j.result_set IS NOT NULL "
+            "AND NOT EXISTS (SELECT 1 FROM service_results s WHERE s.set_id = j.id) "
+            "AND NOT EXISTS (SELECT 1 FROM published_sets p WHERE p.job_id = j.id) "
+            "AND NOT EXISTS (SELECT 1 FROM deploys d WHERE d.snapshot_current = j.id OR d.snapshot_prev = j.id)", [j["id"] for j in jobs] or ["-"])
+    own_m = [m for m in mrows if not m["in_service"]]
+    mids = [m["id"] for m in mrows] or ["-"]
+    # 막는 것 ① 배포 신청 중 — 이 프로젝트 서비스 판 · 모델의 승인 요청이 결정을 기다림(요청한 사람이 거두는 길은 없다 → LX 관리자 승인 · 거절)
+    cvs, cards = by("card_version"), by("card")
+    pend = await conn.fetchval(
+        "SELECT count(*) FROM approvals WHERE state='pending' AND ((subject_type='card' AND subject_id = ANY($1::text[])) "
+        "OR (subject_type='model' AND subject_id = ANY($2::text[])))", cvs or ["-"], mids)
+    # 막는 것 ② 기관에 공유됨 — 이 프로젝트 서비스(카드) · 이 프로젝트 모델을 쓰는 서비스가 기관에 켜져 있음.
+    #   판정 = 기관 화면(brand._services)과 같은 두 기록: 기관 공유 마지막 줄이 켜짐 · 또는 끈 공유 기록 없이 시험 아닌 적용 기록(초안 · 시범 · 운영)
+    svc = list(dict.fromkeys([*cards, *[x["card_id"] for x in await conn.fetch(
+        "SELECT DISTINCT card_id FROM card_versions WHERE model_ids && $1::text[]", mids)]]))
+    shared = []
+    if svc:
+        shared = [x["card_id"] for x in await conn.fetch(
+            "WITH last AS (SELECT DISTINCT ON (card_id, tenant_id) card_id, tenant_id, shared FROM card_shares WHERE card_id = ANY($1::text[]) "
+            "              ORDER BY card_id, tenant_id, at DESC) "
+            "SELECT DISTINCT card_id FROM last WHERE shared "
+            "UNION SELECT DISTINCT d.card_id FROM deploys d WHERE d.card_id = ANY($1::text[]) AND NOT coalesce(d.test,false) "
+            "AND d.stage IN ('draft','ga','canary') AND NOT EXISTS (SELECT 1 FROM last l WHERE l.card_id=d.card_id AND l.tenant_id=d.tenant_id AND NOT l.shared)",
+            svc)]
+    blocked = []
+    if pend:
+        blocked.append({"kind": "pending", "text": f"배포 신청 {pend}건이 승인을 기다리고 있습니다",
+                        "todo": "LX 관리자가 그 신청을 승인하거나 거절한 뒤 삭제할 수 있습니다"})
+    if shared:
+        blocked.append({"kind": "shared", "text": f"기관에 공유된 서비스가 {len(shared)}개 있습니다",
+                        "todo": "LX 관리자가 '배포' 메뉴의 기관 공유에서 공유를 거둔 뒤 삭제할 수 있습니다"})
+    files = await conn.fetchval("SELECT count(*) FROM project_notes WHERE project_id=$1 AND removed_at IS NULL AND file_rel IS NOT NULL", pid)
+    return {"pid": pid, "imagery": len(by("imagery")), "samples": own_s, "models": own_m, "results": [x["id"] for x in res],
+            "files": int(files or 0), "running": [j["id"] for j in jobs if j["state"] in RUN_STATES],
+            "kept": {"samples": len(srows) - len(own_s), "models": len(mrows) - len(own_m)}, "blocked": blocked}
+
+
+def _scope_out(r, s: dict) -> dict:
+    c = lambda n, what: env(n, "count", "recorded", what)   # noqa: E731
+    return {"id": r["id"], "name": r["name"], "keep_days": c(keep_days(), "삭제 뒤 남겨 두는 날 수(보관 기한 정리 · config/retention.yaml)"),
+            "counts": {"imagery": c(s["imagery"], "이은 영상(공유 데이터의 영상 파일은 남음)"),
+                       "samples": c(len(s["samples"]), "이 프로젝트에만 쓰인 학습 자료"),
+                       "models": c(len(s["models"]), "이 프로젝트 모델(서비스에 쓰인 모델 뺌)"),
+                       "results": c(len(s["results"]), "이 프로젝트 분석 결과(서비스 · 배포가 가리키는 것 뺌)"),
+                       "files": c(s["files"], "기록에 올린 파일"),
+                       "running": c(len(s["running"]), "돌고 있는 작업(삭제하면 멈춤)")},
+            "kept": {"samples": c(s["kept"]["samples"], "다른 프로젝트 · 직원 공유 학습 자료(남음)"),
+                     "models": c(s["kept"]["models"], "서비스에 쓰인 모델(남음)")},
+            "blocked": s["blocked"], "can_delete": not s["blocked"]}
+
+
+def _delete_can(p: Principal, r) -> None:
+    if not (p.user_id == r["lead_id"] or p.is_admin):
+        raise ApiError("forbidden", "프로젝트 삭제는 프로젝트장과 LX 관리자가 합니다")
+
+
+def _move_all(pid: str, rels: list[str]) -> list[dict]:
+    """폴더를 휴지 자리(02. 데이터/_trash/projects/{프로젝트}/{원래 상대 경로})로 옮긴다 — 지우지 않는다. → 옮긴 것 [{from, to}]."""
+    import shutil
+    out = []
+    for rel in dict.fromkeys(x for x in rels if x):
+        src = config.DATA_ROOT / rel
+        if not src.exists():
+            continue
+        dst = config.DATA_ROOT / TRASH_REL / pid / rel
+        try:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dst))
+            out.append({"from": rel, "to": f"{TRASH_REL}/{pid}/{rel}"})
+        except OSError:
+            continue                                     # 못 옮긴 폴더는 그 자리에 둔다(30일 뒤 정리도 건드리지 않는다)
+    return out
+
+
+async def _stop_jobs(p: Principal, ids: list[str]) -> list[str]:
+    """돌던 작업을 '프로젝트 삭제' 사유로 멈춘다 — 작업 취소(POST /jobs/{id}/cancel)와 같은 길(Redis 상태 · DB · 알림) + 사유 한 줄."""
+    if not ids:
+        return []
+    from .deps import redis
+    from .jobs import ops_event, publish
+    rd = await redis()
+    now = now_iso()
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("UPDATE jobs SET state='cancelled', error='프로젝트 삭제', finished_at=now() "
+                                "WHERE id = ANY($1::text[]) AND state IN ('queued','running') RETURNING id, tenant_id, pool", ids)
+        for x in rows:
+            await audit(conn, p, "job.cancel", x["id"], None, {"reason": "프로젝트 삭제"})
+    for x in rows:
+        await rd.hset(f"job:{x['id']}", mapping={"state": "cancelled", "finished_at": now, "error": "프로젝트 삭제"})
+        await publish(x["id"], "job.cancelled", {"job_id": x["id"], "reason": "프로젝트 삭제", "at": now})
+        await ops_event("job.state", {"job_id": x["id"], "tenant_id": x["tenant_id"], "state": "cancelled", "pool": x["pool"],
+                                      "reason": "프로젝트 삭제", "at": now})
+    return [x["id"] for x in rows]
+
+
+@router.get("/projects/{pid}/delete")
+async def delete_check(pid: str, request: Request):
+    """삭제 창 — 함께 정리되는 것(영상 연결 · 학습 자료 · 모델 · 결과 · 파일 · 돌던 작업) · 남는 것 · 막힌 까닭과 먼저 할 일."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r = await _row(conn, pid)
+        _delete_can(p, r)
+        s = await _delete_scope(conn, r)
+    return {**_scope_out(r, s), "as_of": now_iso()}
+
+
+@router.delete("/projects/{pid}")
+async def delete_project(pid: str, request: Request, body: dict | None = None):
+    """프로젝트 삭제 — {name: 프로젝트 이름 그대로}. 프로젝트장 · LX 관리자. 막히면 409(까닭 · 먼저 할 일).
+    목록에서 바로 빠지고 30일 뒤 보관 기한 정리가 파일 · 줄을 지운다(그때까지 휴지 자리에 옮겨 둔다)."""
+    p = _lx(request)
+    typed = " ".join(str((body or {}).get("name") or "").split())
+    from starlette.concurrency import run_in_threadpool
+    async with db(realm="lx") as conn:
+        r = await _row(conn, pid)
+        _delete_can(p, r)
+        if typed != " ".join(str(r["name"] or "").split()):
+            raise ApiError("bad_request", "프로젝트 이름을 똑같이 적어 주세요", {"field": "name"})
+        s = await _delete_scope(conn, r)
+        if s["blocked"]:
+            raise ApiError("conflict", s["blocked"][0]["text"], {"blocked": s["blocked"]}, status=409)
+        # 1) 목록에서 먼저 뺀다(뒤의 일이 늦어도 다시 보이지 않게) — 같은 때 두 번 눌러도 한 번만
+        n = await conn.execute("UPDATE projects SET state='deleted', deleted_at=now(), deleted_by=$2, updated_at=now() "
+                               "WHERE id=$1 AND state<>'deleted'", pid, p.user_id)
+        if not n.endswith("1"):
+            raise ApiError("not_found", "삭제한 프로젝트입니다")
+    # 2) 돌던 작업 멈춤 — 사유 '프로젝트 삭제'
+    stopped = await _stop_jobs(p, s["running"])
+    # 3) 학습 자료 removed · 모델 retired(앞 상태는 deleted_info 에) · 폴더를 휴지 자리로(지우지 않음)
+    rels = [f"projects/{pid}"] + [_under_data(x["dir"]) for x in s["samples"]] + [_model_dir(m["weights_uri"], m["train_job"]) for m in s["models"]]
+    moved = await run_in_threadpool(_move_all, pid, [x for x in rels if x])
+    info = {"prev_state": r["state"], "keep_days": keep_days(), "moved": moved,
+            "samples": {x["id"]: x["status"] for x in s["samples"]}, "models": {m["id"]: m["status"] for m in s["models"]},
+            "results": s["results"], "stopped": stopped}
+    async with db(realm="lx") as conn:
+        if s["samples"]:
+            await conn.execute("UPDATE train_samples SET status='removed', updated_at=now() WHERE id = ANY($1::text[])", [x["id"] for x in s["samples"]])
+        mids = [m["id"] for m in s["models"] if m["status"] != "retired"]
+        if mids:
+            await conn.execute("UPDATE models SET status='retired' WHERE id = ANY($1::text[])", mids)
+        await conn.execute("UPDATE projects SET deleted_info=$2 WHERE id=$1", pid, info)
+        await audit(conn, p, "project.delete", pid, {"name": r["name"], "state": r["state"]},
+                    {"state": "deleted", "keep_days": keep_days(), "samples": len(s["samples"]), "models": len(s["models"]),
+                     "results": len(s["results"]), "stopped": len(stopped), "moved": len(moved)})
+    from .jobs import ops_event
+    await ops_event("project.changed", {"project_id": pid, "action": "delete", "by": p.user_id, "at": now_iso()})
+    return {"id": pid, "state": "deleted", "keep_days": env(keep_days(), "count", "recorded", "삭제 뒤 남겨 두는 날 수"), "stopped": env(len(stopped), "count", "recorded", "멈춘 작업"),
+            "as_of": now_iso()}
+
+
 @router.post("/projects/{pid}/rounds", status_code=201)
 async def next_round(pid: str, request: Request, body: dict | None = None):
     """재학습 — 같은 프로젝트가 다음 회차로 학습 단계에 돌아간다(새 프로젝트를 만들지 않는다 · 이력이 한 줄로 이어진다).
@@ -1090,7 +1317,7 @@ FILE_TYPES = {"pdf": "application/pdf", "hwp": "application/x-hwp", "hwpx": "app
 LOG_KINDS = ("all", "auto", "memo", "file")
 _AUDIT_WORD = {"project.create": "프로젝트 만듦", "project.edit": "프로젝트 고침", "project.member.add": "구성원 더함", "project.member.remove": "구성원 뺌",
                "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작", "project.review_seen": "결과를 지도에서 봤음",
-               "project.note.remove": "메모를 삭제"}
+               "project.note.remove": "메모를 삭제", "project.delete": "프로젝트를 삭제"}
 _REMOVED_WORD = {"memo": "메모를 삭제", "file": "파일을 삭제"}
 
 

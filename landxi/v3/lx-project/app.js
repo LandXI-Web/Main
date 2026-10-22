@@ -16,6 +16,7 @@ import { GROUPS, groupOf, kick, sortBy } from './board.js';
 import { openNewProject } from './new.js';
 import { projCard } from './card.js';                    // 카드 한 부품(대시보드 '최근 진행한 프로젝트'와 같은 것)
 import { retrainCard, logCard, openHandover } from './sheets.js';
+import { deleteButton } from './delete.js';           // 프로젝트 삭제(10-23) — 프로젝트장 · LX 관리자만
 
 const who = await K.gate('lx-console');                  // 들어오는 사람 = LX 직원 대시보드와 같다(LX 직원 · 관리자)
 const Q = new URLSearchParams(location.search);
@@ -237,11 +238,17 @@ function draw(pr) {
   /* 기록 · 메모 · 파일 — 최근 3줄 + 모두 보기 서랍(P-4 ⓐ) · 구성원 · 프로젝트장 · LX 관리자만(서버 판정) */
   if (pr.can?.log) right.append(logCard(pr));
 
-  /* 보관 · 다시 열기 */
-  if (pr.can?.archive) {
-    const b = h('button.t-btn.t-btn--text.lxp-arch', { type: 'button', text: archived ? '다시 열기' : '끝난 프로젝트로 보관' });
-    b.addEventListener('click', () => act(() => api(`/projects/${pr.id}/archive`, { method: 'POST', body: { archived: !archived } }), archived ? '다시 열었습니다' : '보관했습니다'));
-    right.append(h('div.lxp-foot', {}, b));
+  /* 보관 · 다시 열기 · 프로젝트 삭제(10-23 — 이름을 똑같이 적는 창 · delete.js) */
+  const del = deleteButton(pr);
+  if (pr.can?.archive || del) {
+    const foot = h('div.lxp-foot');
+    if (pr.can?.archive) {
+      const b = h('button.t-btn.t-btn--text.lxp-arch', { type: 'button', text: archived ? '다시 열기' : '끝난 프로젝트로 보관' });
+      b.addEventListener('click', () => act(() => api(`/projects/${pr.id}/archive`, { method: 'POST', body: { archived: !archived } }), archived ? '다시 열었습니다' : '보관했습니다'));
+      foot.append(b);
+    }
+    if (del) foot.append(del);
+    right.append(foot);
   }
 }
 

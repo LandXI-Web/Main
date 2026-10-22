@@ -12,5 +12,9 @@ training_roots: [training/retrain, training/retrain-auto, training/xi-tiles]
 # 로그인 실패 기록(접속 주소 포함) — 이 날 수가 지난 줄은 지운다(개인정보 보관 기한)
 login_ip_days: 90
 
+# 삭제한 프로젝트(10-23) — 삭제한 지 이 날 수가 지나면 휴지 자리(02. 데이터/_trash/projects)의 폴더 · 그 프로젝트 결과 · 프로젝트 줄을 지운다
+# (작업 기록 · 감사 기록 · 내린 모델 줄은 남김 · 서비스 결과 · 공개 판 · 배포본이 가리키는 결과는 건드리지 않음)
+deleted_project_days: 30
+
 # true = 대상만 세고 지우지 않는다
 dry_run: false

@@ -313,7 +313,7 @@ async def my_agenda(request: Request):
                     put("request", r["decided_at"], f"분석 요청 처리 · {who}", V3 + "lx-inbox/#requests", r["id"] + ".d")
 
         async def projects(_):
-            rows = await conn.fetch("SELECT p.id, p.name, p.created_at FROM projects p WHERE (p.lead_id=$1 OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)) "
+            rows = await conn.fetch("SELECT p.id, p.name, p.created_at FROM projects p WHERE p.state<>'deleted' AND (p.lead_id=$1 OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)) "
                                     "AND p.created_at >= $2 AND p.created_at < $3 ORDER BY p.created_at", me, ta, tb)
             for r in rows:
                 put("project", r["created_at"], f"프로젝트 시작 · {r['name']}", V3 + "lx-project/?project=" + r["id"], r["id"])
@@ -321,7 +321,7 @@ async def my_agenda(request: Request):
         async def trains(_):
             rows = await conn.fetch(
                 "SELECT j.id, j.state, j.created_at, j.finished_at, p.id AS pid, p.name FROM jobs j JOIN projects p ON p.id = j.options->>'project_id' "
-                "WHERE j.kind='train' AND NOT coalesce(j.test,false) AND coalesce(j.options->>'eval','') NOT IN ('true','1') "
+                "WHERE j.kind='train' AND NOT coalesce(j.test,false) AND coalesce(j.options->>'eval','') NOT IN ('true','1') AND p.state<>'deleted' "
                 "AND (p.lead_id=$1 OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)) "
                 "AND ((j.created_at >= $2 AND j.created_at < $3) OR (j.finished_at >= $2 AND j.finished_at < $3)) ORDER BY j.created_at", me, ta, tb)
             for r in rows:

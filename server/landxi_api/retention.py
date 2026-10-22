@@ -6,6 +6,9 @@
    설명 파일(bundle.json · dataset.yaml) · 기록 · 진행 · 가중치는 남긴다(같은 묶음은 만드는 스크립트로 다시 만들 수 있다).
    학습 중인 묶음(진행 파일이 30일 안에 바뀜)은 건드리지 않는다. 사람이 올린 학습 표본(samples)은 대상이 아니다.
 3. 로그인 실패 기록의 접속 주소(90일 지남): 그 줄을 지운다(개인정보 보관 기한).
+4. 삭제한 프로젝트(10-23 · 삭제한 지 30일 지남): 휴지 자리(02. 데이터/_trash/projects/{프로젝트})로 옮겨 둔 폴더 · 그 프로젝트 분석 결과의
+   파일 · DB 결과 줄을 지우고 프로젝트 줄(구성원 · 이은 것 · 메모)을 지운다. 작업 기록(jobs) · 감사 기록 · 내린 모델 · 지운 학습 자료 줄은 남긴다.
+   서비스 결과 · 공개 판 · 배포본이 가리키는 결과는 건드리지 않는다.
 
 값은 config/retention.yaml 한 곳. dry_run: true 면 대상만 세고 지우지 않는다. 지운 수는 감사 기록(audit_log 'retention.purge') 한 줄.
 """
@@ -19,7 +22,7 @@ from pathlib import Path
 
 from . import config
 
-DEFAULTS = {"failed_cancelled_days": 30, "training_bundle_days": 30, "login_ip_days": 90, "dry_run": False,
+DEFAULTS = {"failed_cancelled_days": 30, "training_bundle_days": 30, "login_ip_days": 90, "deleted_project_days": 30, "dry_run": False,
             "training_roots": ["training/retrain", "training/retrain-auto", "training/farm-v2", "training/xi-tiles"]}
 RESULT_EXT = (".geojson", ".geojson.gz", ".pmtiles", ".fgb", "-summary.json", ".raw.fgb", ".raw.pmtiles", "-tidy.json")   # 원래 결과 · 정리 기록도 결과와 같이
 BUNDLE_DATA = ("images", "labels")
@@ -77,6 +80,49 @@ def purge_jobs(conn, days: int, dry: bool) -> dict:
     return {"jobs": len(ids), "files_gb": round(files / 1e9, 3), "rows": int(rows_n)}
 
 
+def _purge_results(conn, ids: list[str], dry: bool) -> tuple[int, int]:
+    """작업 결과(파일 · DB 결과 줄) — 서비스 결과 · 공개 판 · 배포본이 가리키는 것은 뺀다. → (바이트, 줄)."""
+    if not ids:
+        return 0, 0
+    rows = conn.execute(
+        "SELECT j.id, j.result_set FROM jobs j WHERE j.id = ANY(%s) "
+        "AND NOT EXISTS (SELECT 1 FROM service_results s WHERE s.set_id = j.id) "
+        "AND NOT EXISTS (SELECT 1 FROM published_sets p WHERE p.job_id = j.id) "
+        "AND NOT EXISTS (SELECT 1 FROM deploys d WHERE d.snapshot_current = j.id OR d.snapshot_prev = j.id)", (ids,)).fetchall()
+    from .result_store import base_of_set, files_of_base
+    size = 0
+    keep = [r[0] for r in rows]
+    for _jid, rs in rows:
+        if rs and ".." not in rs:
+            for f in files_of_base(base_of_set(rs)):
+                size += _rm(f, dry)
+    if not keep:
+        return size, 0
+    if dry:
+        n = conn.execute("SELECT count(*) FROM detections WHERE job_id = ANY(%s)", (keep,)).fetchone()[0]
+    else:
+        n = conn.execute("DELETE FROM detections WHERE job_id = ANY(%s)", (keep,)).rowcount
+        conn.execute("UPDATE jobs SET result_set = NULL WHERE id = ANY(%s)", (keep,))
+    return size, int(n)
+
+
+def purge_projects(conn, days: int, dry: bool) -> dict:
+    """삭제한 프로젝트(삭제한 지 days 일) — 휴지 폴더 · 결과 · 프로젝트 줄(projects.py '프로젝트 삭제')."""
+    rows = conn.execute("SELECT id, deleted_info FROM projects WHERE state='deleted' AND deleted_at < now() - make_interval(days => %s)",
+                        (days,)).fetchall()
+    size = n_rows = 0
+    for pid, info in rows:
+        info = info or {}
+        b, n = _purge_results(conn, [str(x) for x in (info.get("results") or [])], dry)
+        size += b
+        n_rows += n
+        if pid and ".." not in pid and "/" not in pid:
+            size += _rm(config.DATA_ROOT / "_trash" / "projects" / pid, dry)
+        if not dry:
+            conn.execute("DELETE FROM projects WHERE id=%s AND state='deleted'", (pid,))   # 구성원 · 이은 것 · 메모는 함께(ON DELETE CASCADE)
+    return {"projects": len(rows), "files_gb": round(size / 1e9, 3), "rows": n_rows}
+
+
 def purge_bundles(days: int, roots: list[str], dry: bool) -> dict:
     """지난 학습 묶음의 그림 · 라벨(묶음 = images/ 와 labels/ 를 가진 폴더 · 그 폴더의 가장 최근 변경이 days 일 넘음)."""
     cut = time.time() - days * 86400
@@ -119,6 +165,7 @@ def purge(log=print) -> dict:
         conn.execute("SELECT set_config('app.realm','lx',true), set_config('app.tenant_id','',true)")
         out["jobs"] = purge_jobs(conn, int(s["failed_cancelled_days"]), dry)
         out["login"] = purge_login_ips(conn, int(s["login_ip_days"]), dry)
+        out["projects"] = purge_projects(conn, int(s["deleted_project_days"]), dry)
         conn.commit()
     out["bundles"] = purge_bundles(int(s["training_bundle_days"]), list(s.get("training_roots") or []), dry)
     with bus.pg() as conn:
@@ -126,5 +173,5 @@ def purge(log=print) -> dict:
         conn.execute("INSERT INTO audit_log(actor, realm, action, subject, before, after) VALUES ('system','system','retention.purge',%s,NULL,%s)",
                      (out["at"][:10], json.dumps(out, ensure_ascii=False)))
         conn.commit()
-    log(f"보관 기한 정리 — 작업 {out['jobs']} · 학습 묶음 {out['bundles']} · 로그인 실패 {out['login']} · 보기만 {dry}")
+    log(f"보관 기한 정리 — 작업 {out['jobs']} · 학습 묶음 {out['bundles']} · 로그인 실패 {out['login']} · 삭제한 프로젝트 {out['projects']} · 보기만 {dry}")
     return out
