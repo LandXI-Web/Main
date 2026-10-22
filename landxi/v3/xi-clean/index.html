@@ -41,9 +41,26 @@
   }).catch(() => {}).finally(() => { end = performance.now(); tick(); });
 } catch { /* 저장 불가 창 — 화면이 따로 부른다 */ } })();
 </script>
+<style>
+/* 첫 그림(10-22 now21 첫인상-XI맵 — "이런 것 조차도 없었으면 하는데"): 화면 파일 · 지도 엔진을 받는 동안에도 빈 순간 · 가운데 점 0.
+   바탕을 HTML 첫 줄에서 칠하고, 머리줄 · 왼쪽 메뉴 자리와 지도 그림(이 사람이 지난번 본 첫 지도 · 없으면 전국 바탕 그림)을 첫 그림부터 둔다.
+   화면 코드가 머리줄 · 지도 판을 세우면 지도 그림은 지도 판(.xc-load) 바탕으로 넘어가고, 지도가 다 그려지는 순간 함께 걷힌다(가운데 '불러오는 중' 없음). */
+html{background:#F2F4F6}
+#xc-pre{position:fixed;inset:0;z-index:2147483000;pointer-events:none}
+#xc-pre i{position:absolute;display:block;background:#fff}
+#xc-pre .pm{left:0;top:0;right:0;height:64px;box-shadow:inset 0 -1px 0 #E5E8EB}
+#xc-pre .pr{left:0;top:64px;bottom:0;width:80px;box-shadow:inset -1px 0 0 #E5E8EB}
+:root{--xc-pre-tiny:url("data:image/webp;base64,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")}   /* 전국 바탕 아주 작은 그림(2KB) — 첫 그림 파일이 오기 전 한 장면도 비지 않게 */
+#xc-pre .pv{left:80px;top:64px;right:0;bottom:0;background:var(--xc-pre-img,none) center/cover no-repeat,var(--xc-pre-tiny) center/cover no-repeat,#F2F4F6}
+@media (max-width:960px){#xc-pre .pm{height:56px}#xc-pre .pr{top:auto;bottom:0;right:0;width:auto;height:64px;box-shadow:inset 0 1px 0 #E5E8EB}#xc-pre .pv{left:0;top:56px;bottom:64px}}
+html.xc-pre .xc-load{background:var(--xc-pre-img,none) center/cover no-repeat,var(--xc-pre-tiny) center/cover no-repeat,#F2F4F6}
+html.xc-pre:not([data-xc="error"]) .xc-load-c{visibility:hidden}
+html.xc-pre-boot .k-ld-c{display:none}   /* 첫 도착 동안은 가운데 '불러오는 중' 카드도 두지 않는다(6초 넘으면 '서버 응답이 늦습니다' 한 줄은 그대로) */
+</style>
 <title>XI맵 · Land-XI</title>
 <meta name="description" content="AI 분석 결과를 지도 위에서 바로.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="preload" as="image" href="pre-kr.webp" fetchpriority="high"><!-- 첫 그림(처음 여는 사람 · 지난 그림 없음) — 전국 바탕 -->
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../kit/kit.css">
 <link rel="stylesheet" href="xc.css">
@@ -82,6 +99,49 @@
 </head>
 <body class="t">
 <noscript><p>XI맵은 자바스크립트가 필요합니다.</p></noscript>
+<div id="xc-pre" aria-hidden="true"><i class="pm"></i><i class="pr"></i><i class="pv"></i></div>
+<script>
+/* 첫 그림 고르기 · 넘기기 · 다시 찍기(위 style 설명). 그림 열쇠 = 사람(로그인한 사람) + 주소 — 다른 사람의 그림은 쓰지 않고 지운다. 14일 지난 그림은 버린다. */
+(() => { try {
+  const D = document.documentElement, pre = document.getElementById('xc-pre');
+  const L = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const s = JSON.parse(L('lx_api_session') || 'null');
+  if (!s || !s.token || !(new Date(s.expires_at) > new Date())) { pre.remove(); return; }   // 로그인 전 — 화면이 곧 로그인으로 보낸다
+  const who = [s.realm, s.tenant_id || '', s.user && s.user.id || ''].join('|'), key = 'lx_xc_pre:' + who + '|' + location.search;
+  try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('lx_xc_pre:') && !k.startsWith('lx_xc_pre:' + who + '|')) localStorage.removeItem(k); } } catch { /* */ }
+  let c = null; try { c = JSON.parse(L(key) || 'null'); } catch { /* */ }
+  const url = c && c.url && Date.now() - c.t < 14 * 864e5 ? c.url : new URL('pre-kr.webp', location.href).href;
+  D.style.setProperty('--xc-pre-img', 'url("' + url + '")');
+  D.classList.add('xc-pre', 'xc-pre-boot');
+  // 머리줄 · 지도 판이 서면 첫 그림 판을 걷는다(지도 그림은 지도 판 바탕으로 이어진다)
+  const mo = new MutationObserver(() => { if (document.querySelector('.k-app .k-mast') && document.querySelector('.xc-load')) { mo.disconnect(); pre.remove(); } });
+  mo.observe(document.body, { childList: true, subtree: true });
+  setTimeout(() => { mo.disconnect(); pre.remove(); }, 15000);
+  // 지도가 처음 다 그려지면(사람이 아직 움직이지 않았을 때) 그 첫 지도를 작은 그림으로 남긴다 — 다음에 열 때 첫 그림
+  const t0 = Date.now();
+  const wait = setInterval(() => {
+    const X = window.__xc, m = X && X.map;
+    if (Date.now() - t0 > 30000) { clearInterval(wait); D.classList.remove('xc-pre-boot'); return; }
+    if (!m || !X.boot || !X.boot.shown) return;
+    clearInterval(wait);
+    setTimeout(() => D.classList.remove('xc-pre-boot'), 700);   // 지도 판이 걷힌 뒤부터는 여느 기다림 표시
+    let moved = false; m.on('movestart', (e) => { if (e.originalEvent) moved = true; });
+    const t1 = Date.now();
+    const snap = () => {
+      if (moved || Date.now() - t1 > 12000) return;
+      if (m.isMoving() || !m.areTilesLoaded()) { setTimeout(snap, 400); return; }
+      m.once('render', () => { try {
+        const cv = m.getCanvas(), w = Math.min(1200, Math.round(cv.clientWidth)), h = Math.round(w * cv.height / cv.width);
+        const o = document.createElement('canvas'); o.width = w; o.height = h; o.getContext('2d').drawImage(cv, 0, 0, w, h);
+        const u = o.toDataURL('image/webp', 0.72);
+        if (u.length > 40 && u.length < 900000) localStorage.setItem(key, JSON.stringify({ t: Date.now(), url: u }));
+      } catch { /* 저장 불가 · 그리기 판 읽기 불가 — 다음에는 전국 바탕 그림 */ } });
+      m.triggerRepaint();
+    };
+    setTimeout(snap, 1200);
+  }, 300);
+} catch { const p = document.getElementById('xc-pre'); if (p) p.remove(); } })();
+</script>
 <!-- async = 지도 엔진(maplibre · 큰 파일)을 다 받기 전에 로그인 확인 · 자료 요청을 먼저 시작한다. 지도는 엔진이 온 뒤 만든다(app.js boot) -->
 <script type="module" async src="app.js"></script>
 </body>

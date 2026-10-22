@@ -85,6 +85,8 @@ export function startEarly() {
   const keep = (k) => { const pr = api(k); pr.catch(() => {}); EARLY.set(k, { tok: s.token, pr }); };
   keep('/me');
   if (s.realm === 'tenant' && s.tenant_id) { keep('/auth/tenants'); keep('/brand/' + encodeURIComponent(s.tenant_id)); }
+  /* LX 직원 대시보드 요청함 숫자(kit/lx-menu requestCounts) — 화면 모듈 · 문 확인을 기다리지 않고 함께 출발(10-22 바퀴 22 '요청함 불러오는 중' 줄이기) */
+  if (s.realm === 'lx' && /\/lx-console\/?$/.test(location.pathname)) { keep('/reviews/notify'); keep('/approvals?state=pending'); }
 }
 /** 화면이 열릴 때 먼저 받기 시작한 요청(같은 세션 · 한 번) — 없으면 null */
 export function early(path) {

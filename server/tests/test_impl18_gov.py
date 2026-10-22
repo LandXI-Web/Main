@@ -167,7 +167,9 @@ def test_public_record():
     j = r.json()
     with pg() as c:
         done = {x[0] for x in c.execute("SELECT sgg_cd FROM survey_sgg WHERE state='done'").fetchall()}
-        svc = c.execute("SELECT count(DISTINCT card_id) FROM service_results WHERE replaced_at IS NULL AND origin IN ('deploy', 'job')").fetchone()[0]   # XI맵 전국 결과와 같은 줄(GPT5-1)
+        # XI맵 전국 결과와 같은 줄(GPT5-1) · 서비스 × 시군구 보이기 규칙(원칙 293 · 316 — 보령 곤포처럼 뺀 결과는 세지 않는다 · 10-22 바퀴 22)
+        from landxi_api.svc_rules import SQL_NOT_EXCLUDED
+        svc = c.execute("SELECT count(DISTINCT s.card_id) FROM service_results s WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')" + SQL_NOT_EXCLUDED).fetchone()[0]
     assert v(j["sgg"]) == len(j["places"]) == len(done)                        # 실태조사 집계가 끝난 시군구와 같은 수
     assert {p["sgg_cd"] for p in j["places"]} == done
     assert v(j["services"]["n"]) == len(j["services"]["names"]) == svc

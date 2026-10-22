@@ -77,7 +77,8 @@ test.describe('구현 9차 · 분석 서비스 배포', () => {
     await expect(page.locator('.rv-tbl--usage th')).toHaveText(['기관', '서비스', 'LX가 돌린 분석', '기관이 요청한 분석', 'API 호출', '마지막 사용'], { timeout: 20000 });
     await check(page);
     await page.goto('v3/ops-core/');
-    await expect(page.locator('.oc-use b')).toHaveText('서비스 사용 현황', { timeout: 30000 });
+    await expect(page.locator('.oc-use .oc-cell-k')).toHaveText('기관 사용', { timeout: 30000 });   // 10-22 현황 요약 네 칸(첫인상-관리자현황 ⓐ) — 서비스 사용 현황 = '기관 사용' 칸
+    await expect(page.locator('.oc-use .oc-cell-s')).toContainText('이번 달 분석', { timeout: 30000 });
     expect(errs).toEqual([]);
   });
 });

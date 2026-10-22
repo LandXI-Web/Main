@@ -11,11 +11,12 @@ const PW = fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(ENV, '
 const up = async (request) => { try { return (await request.get('http://127.0.0.1:8700/api/v1/health', { timeout: 3000 })).ok(); } catch { return false; } };
 const NCLS = { farm: ['경작지', '비닐하우스'], river: ['건물'] };
 const TASK_OF = { '경작·휴경': '경작지', 경작: '경작지', 건축물: '건물' };
-/** 서버 값으로 센 합계(화면과 같은 규칙 — 서비스 결과 장부 + 자산마다 한 분류씩) */
+/** 서버 값으로 센 합계(화면과 같은 규칙 — 서비스 결과 장부 + 자산마다 한 분류씩 · 전국 분석은 같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수(서버 net · 겹친 읍면동은 한 번만 · 10-22 바퀴 22) · net 이 없으면 찾은 수) */
+const natN = (c) => (c?.net ?? c?.n)?.value ?? (typeof (c?.net ?? c?.n) === 'number' ? (c?.net ?? c?.n) : 0);
 const total = (bd, pj, task = null) => {
   let n = 0;
   for (const s of bd.services) if (!task || (TASK_OF[s.name] || s.name) === task) n += s.n.value;
-  for (const [a, A] of Object.entries(pj.assets)) if (A.on !== false) for (const c of NCLS[a] || []) if (!task || c === task) n += A.counts?.[c]?.n?.value || 0;
+  for (const [a, A] of Object.entries(pj.assets)) if (A.on !== false) for (const c of NCLS[a] || []) if (!task || c === task) n += natN(A.counts?.[c]);
   return n;
 };
 

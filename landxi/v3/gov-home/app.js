@@ -41,6 +41,7 @@ const KO = {
   menu: '메뉴', svcNav: '서비스', how: '이용 방법', contact: '문의', login: '로그인', mine: '내 서비스',
   who: (s) => `${s} 직원 계정`, id: '아이디', idPh: '메일 주소', pw: '비밀번호', see: '보기', hide: '숨기기',
   need: '아이디와 비밀번호를 입력하세요', fail: '아이디 또는 비밀번호가 맞지 않습니다', down: '서버에 연결할 수 없습니다 — 잠시 뒤 다시 시도하세요',
+  busy: '서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 시도해 주세요',
   ask: (c) => `계정 문의 ${c}`, help: '가입 신청 · 아이디 · 비밀번호 찾기', inT: '로그인되어 있습니다', go: '내 서비스로', out: '나가기',
   svc: (s) => `${s} AI 분석 서비스`, since: (y) => `${y}년부터`,
   status: (s) => s, steps: [
@@ -59,6 +60,7 @@ const EN = {
   ...KO, menu: 'Menu', svcNav: 'Services', how: 'How to use', contact: 'Contact', login: 'Sign in', mine: 'My services',
   who: (s) => `${s} staff account`, id: 'User ID', idPh: 'Email address', pw: 'Password', see: 'Show', hide: 'Hide',
   need: 'Enter your ID and password', fail: 'The ID or password is incorrect', down: 'Cannot reach the server — please try again shortly',
+  busy: 'The server is not responding right now. Please try again shortly',
   ask: (c) => `Account help ${c}`, help: 'Sign up · find ID · reset password', inT: 'Signed in', go: 'Go to my services', out: 'Sign out',
   svc: (s) => `${s} AI analysis services`, since: (y) => `Since ${y}`,
   status: (s) => ({ 운영: 'In service', 시범: 'Pilot', '첫 결과 전': 'Before first result', 내년: 'Next year' }[s] || s),
@@ -246,6 +248,8 @@ function paintLogin(card, b) {
         m.openPasswordChange({ changeToken: j.change_token, name: j.user?.name, onDone: (s2) => finish(s2), onClose: () => pwIn.focus() });
         return;
       }
+      /* 서버가 잠시 응답하지 않음(게이트웨이 다시 시작 · 502 · 503 · 504 · Cloudflare 52x) — 비밀번호 틀림으로 보이지 않게(10-22 바퀴 22) */
+      if (r.status >= 500 || (!r.ok && !j?.error && r.status !== 401)) { say(L.busy); return; }
       if (!r.ok || !j?.token) { say(j?.error?.message || L.fail, r.status === 401 ? ['pw'] : []); pwIn.value = ''; pwIn.focus(); return; }
       finish(j);
     } finally { busy = false; go.removeAttribute('aria-busy'); go.disabled = false; }

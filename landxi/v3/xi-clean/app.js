@@ -323,7 +323,9 @@ async function boot() {
       om: () => ({ on: !!OM?.on, sgg: OM?.spec?.map?.level === 'emd' ? String(OM.spec.map.sgg || '') : null }) });
     document.addEventListener('kit:agent-done', (e) => { const d = e.detail; if (d?.replay) return; if (d?.refs) HL.show({ ...d.refs, run: d.run }); else if (HL.cur && (d?.rejected || HL.cur.src !== 'dash')) HL.clear(); });   // 새 답이 가리키는 곳이 없으면(관할 밖 · 일반 답) 앞 답의 강조를 걷는다 — 남은 강조가 이 답처럼 보이지 않게
   }
-  mountChatAnswer({ host: mainEl, cmdk, hl: HL });                                      // XI ChatGEO 자리(원칙 290 · 10-18 '1안') — 입력 한 줄 + 답 띠 · 대화 전체는 오른쪽 서랍
+  mountChatAnswer({ host: mainEl, cmdk, hl: HL, emph: {                                  // 지도 강조(색칠 · 답이 가리킨 곳) — 대화 서랍이 열려 있어도 끄고 켠다(10-22)
+    get: () => ({ on: TINT.on && (HL ? HL.visible !== false : true) }),
+    set: (on) => { setTint({ on }); HL?.setVisible?.(on); document.dispatchEvent(new CustomEvent('xk:emph')); } } });                                      // XI ChatGEO 자리(원칙 290 · 10-18 '1안') — 입력 한 줄 + 답 띠 · 대화 전체는 오른쪽 서랍
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
   const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw', 'map_task', 'ximap_dash']);
   document.addEventListener('kit:agent-action', (e) => { if (e.detail?.op === 'map_filter') return; if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });   // map_filter = 키트가 결과 층에 바로 건다(원칙 193)
@@ -1015,8 +1017,10 @@ async function refreshBoard(my) {
 }
 /** 전국 분석이 끝낸 읍면동의 이 시군구 합 — 'wait'(받는 중) · 값 · null(받지 못함). 1분 보관 · 받으면 지도 안 글자 · 말풍선을 다시 그린다 */
 const NATR = new Map();
+/** 지금 고른 전국 분석 해가 기본 해가 아니면 그 해(10-22 now21 시계열-연도고르기 ⓐ) — 숫자는 그 해 장부만 · 서비스 결과와 더하지 않는다 */
+const natPast = () => (BD?.nat?.year && BD.nat.baseYear && +BD.nat.year !== +BD.nat.baseYear ? +BD.nat.year : null);
 function natRegion(r) {
-  const key = codesOf(r).join(',');
+  const key = codesOf(r).join(',') + (natPast() ? '@' + natPast() : '');
   if (!key) return null;
   const c = NATR.get(key);
   if (!c || (!c.busy && Date.now() - c.t >= 60000)) loadNatRegion(key);
@@ -1024,15 +1028,16 @@ function natRegion(r) {
 }
 function loadNatRegion(key) {
   const prev = NATR.get(key); NATR.set(key, { ...(prev && 'j' in prev ? { j: prev.j } : {}), busy: true, t: prev?.t || 0 });
-  api('/national/region?' + new URLSearchParams({ codes: key })).then((j) => NATR.set(key, { j: j?.assets ? j : null, t: Date.now() }))
+  const [codes, yr] = key.split('@');
+  api('/national/region?' + new URLSearchParams({ codes, ...(yr ? { year: yr } : {}) })).then((j) => NATR.set(key, { j: j?.assets ? j : null, t: Date.now() }))
     .catch(() => NATR.set(key, { j: prev && 'j' in prev ? prev.j : null, t: Date.now() }))
-    .finally(() => { BD?.rehover?.(); if (S.region && codesOf(S.region).join(',') === key) paintBoardHud(); if (PIN?.code && findRegion(PIN.code) && codesOf(findRegion(PIN.code)).join(',') === key) PIN.redraw?.(); });
+    .finally(() => { BD?.rehover?.(); if (S.region && codesOf(S.region).join(',') === codes) paintBoardHud(); if (PIN?.code && findRegion(PIN.code) && codesOf(findRegion(PIN.code)).join(',') === codes) PIN.redraw?.(); });
 }
 /** 한 시군구의 여러 업무 숫자 — 서비스 결과 장부(GET /ximap/board) + 전국 분석 진행 장부(GET /national/region). 지어낸 숫자 0.
     → { rows: [{ k(업무 · 거르기 열쇠), name(화면 이름), n, unit }], wait } */
 function regionRows(r) {
   if (!r) return { rows: [], wait: false };
-  const br = boardRegion(r), nr = natRegion(r), rows = [];
+  const br = natPast() ? null : boardRegion(r), nr = natRegion(r), rows = [];   // 지난 해를 고르면 그 해 전국 분석만(서비스 결과는 해가 달라 더하지 않음)
   for (const x of br?.items || []) { const n = ev(x.n); if (n > 0) rows.push({ k: taskOf(x.name), name: x.name, n, unit: BD.UNIT[taskOf(x.name)] || '개' }); }
   if (nr && nr !== 'wait') for (const [a, A] of Object.entries(nr.assets || {})) {
     if (!(ev(A.done) > 0)) continue;
@@ -1394,14 +1399,15 @@ function setStep(n, { fresh = false } = {}) {
 function hudTaskRows() {
   const m = new Map();
   const add = (k, n, unit) => { if (!(n > 0)) return; const x = m.get(k) || { k, n: 0, unit }; x.n += n; m.set(k, x); };
+  const yr = natPast(), yt = yr ? ` · ${yr}년 영상` : '';           // 지난 해 = 그 해 전국 분석만(10-22 시계열-연도고르기 ⓐ · 연도가 다른 숫자를 더하지 않음)
   if (!S.region || map.getZoom() < 8.2) {
-    for (const s of BD?.data?.services || []) add(taskOf(s.name), ev(s.n), BD.UNIT[taskOf(s.name)] || '개');
+    if (!yr) for (const s of BD?.data?.services || []) add(taskOf(s.name), ev(s.n), BD.UNIT[taskOf(s.name)] || '개');
     for (const [a, A] of Object.entries(BD?.nat?.data?.assets || {})) { if (A.on === false) continue; for (const cls of NCLS[a] || []) add(cls, natN(A.counts?.[cls]), BD.UNIT[cls] || '개'); }
-    return { title: '전국', rows: visRows([...m.values()].sort((p, q) => q.n - p.n)), wait: false };
+    return { title: '전국' + yt, rows: visRows([...m.values()].sort((p, q) => q.n - p.n)), wait: false };
   }
   const { rows, wait } = regionRows(S.region);
   for (const x of rows) add(x.k, x.n, x.unit);
-  return { title: S.region.name, rows: visRows([...m.values()].sort((p, q) => q.n - p.n)), wait };
+  return { title: S.region.name + yt, rows: visRows([...m.values()].sort((p, q) => q.n - p.n)), wait };
 }
 function paintHudVariant() {
   if (!XV) return false;
@@ -2043,6 +2049,16 @@ async function agentOp(a) {
     const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length + (map.getLayer('xc-lxmap') ? 1 : 0) }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
     if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
     const want = a.on !== false;
+    if (k === 'ai' && want && Array.isArray(a.sets) && a.sets.length) {
+      // 물은 종류의 층을 저절로 켜기(시안 ⓑ-1 · 10-22) — 그 결과 세트만 더 켠다(켜 둔 다른 층은 그대로 · add)
+      const want2 = new Set(a.sets.map(String)), hit = (S.res || []).filter((it) => want2.has(String(it.set)));
+      if (!hit.length) return { ok: false, reason: '이 지역에는 그 결과 층이 없습니다' };
+      const before = JSON.stringify([S.layers.ai, (S.res || []).map((it) => !!S.resOn[it.id])]);
+      if (!a.add) for (const it of S.res || []) S.resOn[it.id] = false;
+      for (const it of hit) S.resOn[it.id] = true;
+      S.layers.ai = true; S.aiUser = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
+      return { ok: true, same: before === JSON.stringify([true, (S.res || []).map((it) => !!S.resOn[it.id])]) };
+    }
     if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
       // '비닐하우스 결과만' — 그 서비스 결과 세트만 켠다(이름 = 카탈로그 · 없으면 못 함)
       const w = norm(a.only), hit = (S.res || []).filter((it) => norm(it.name?.ko || it.id).includes(w));
@@ -2315,6 +2331,34 @@ async function openParcel(pnu, { fly = false, pre = null } = {}) {
       h('div', {}, h('dt', { text: '연속지적 대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
       h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: latest ? `<b>${esc(latest.name)}</b> ${m2(latest.m2)}${latest.year ? `<small class="xc-old">${esc(latest.year)} 영상에서는 ${esc(seen)}</small>` : ''}` : f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
   );
+  /* 한 필지 안 여러 경계 = 필지 하나로 묶어 한 줄(10-22 now21 겹침-필지묶음 ⓐ) — '경작지 2곳 · 2,676㎡ · 필지의 84%'.
+     LX = 전국 분석 정리 결과(GET /parcels/{필지}/parts) · 기관 = 이 서비스 필지 목록의 같은 행(숫자 한 출처). 경계 수는 이 카드 안에서만 쓴다. */
+  const partsEl = h('p.xc-parts', { hidden: true });
+  body.append(partsEl);
+  (async () => {
+    let rows = [];
+    try {
+      if (S.lx) rows = ((await api(`/parcels/${encodeURIComponent(d.pnu || pnu)}/parts`)).parts || []).map((x) => ({ name: x.cls, n: ev(x.n), unit: x.unit, m2: ev(x.m2), pct: ev(x.pct) }));
+      else if (card && S.tenant) {
+        const q = String(d.addr || '').trim().split(/\s+/).slice(-2).join(' ');
+        const r = await api(`/spaces/me/guides/${encodeURIComponent(card)}/parcels?` + new URLSearchParams({ q, limit: '50' }));
+        const row = (r.items || []).find((x) => String(x.pnu) === String(d.pnu || pnu));
+        const hm = ev(row?.hit_m2), pm = ev(row?.parcel_m2);
+        if (row && hm > 0) rows = [{ name: (row.classes || []).join(' · ') || 'AI 분석 결과', n: row.n, unit: '곳', m2: hm, pct: pm > 0 ? (hm / pm) * 100 : null }];
+      }
+    } catch { rows = []; }
+    if (S.sel !== pnu || !rows.length) return;
+    const line = (x) => `${x.name} ${nf(x.n)}${x.unit} · ${nf(Math.round(x.m2))}㎡${x.pct != null ? ` · 필지의 ${Math.round(Math.min(100, x.pct))}%` : ''}`;
+    const aiDd = body.querySelector('.xc-pair .ai dd');
+    if (aiDd && !latest && !f) {                       // AI 분석 칸이 비어 있으면(실태조사 판정 없음) 그 칸에 — 가장 넓은 분류를 굵게
+      const x = rows[0];
+      aiDd.innerHTML = `<b>${esc(x.name)}</b> ${nf(Math.round(x.m2))}㎡ · ${nf(x.n)}${esc(x.unit)}${x.pct != null ? `<small class="xc-old">필지의 ${Math.round(Math.min(100, x.pct))}%</small>` : ''}`;
+      rows.shift();
+      if (!rows.length) return;
+    }
+    partsEl.textContent = rows.slice(0, 3).map(line).join('\n');
+    partsEl.hidden = false;
+  })();
   const act = h('div.xc-act');
   if (f && S.lx && S.key !== 'lx/sales' && ['open', 'assigned'].includes(f.state)) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '오탐', onclick: (e) => setState(f, 'dismissed', e.currentTarget) }));
   // 영상 설명(AI 의견) — 명령 바에 '{읍면동 리 지번} 영상 설명해 줘'를 보낸다(설명 도구는 에이전트 · 근거 아님 꼬리표)
@@ -2420,8 +2464,31 @@ function renderLayers() {
     onclick: () => setLxmap(!S.layers.lxmap) }, h('i.xc-cb'), h('span', { text: '지적' })) : null;
   const tintRow = tintRowNeeded() ? h('button.xc-row', { type: 'button', 'data-tint-row': '1', 'aria-pressed': String(TINT.on), onclick: () => setTint({ on: !TINT.on }) }, h('i.xc-sw'), h('span', { text: '분석 결과 색칠' })) : null;
   rows.splice(ai + 1, 0, ...sub, ...(clsRows.length ? [h('p.xc-pop-l.t-label', { text: '클래스' }), ...clsRows] : []), ...(cad ? [cad] : []), ...(tintRow ? [tintRow] : []));
+  rows.push(...natYearRows());
   showPop('층', h('div.xc-rows-p', {}, ...rows));
   paintCadRow();
+}
+/** 층 판 '전국 분석 연도'(10-22 now21 시계열-연도고르기 ⓐ) — 해마다 따로 보기(숫자도 그 해 장부 하나) · 아직 도는 해는 '분석 중 n%'.
+    그 아래 영상 빈 자리 범례(시계열-접경영상없음 ⓐ · 빈조각2024 ⓐ) — 진행 장부에 그 넓이가 있을 때만 */
+function natYearRows() {
+  if (!S.board || !BD?.nat) return [];
+  const out = [], yrs = BD.nat.years(), cur = +BD.nat.year;
+  if (yrs.length > 1) {
+    out.push(h('p.xc-pop-l.t-label', { text: '전국 분석 연도' }), h('div.xc-yr', { role: 'radiogroup', 'aria-label': '전국 분석 연도' },
+      ...yrs.map((y) => h('button.xc-yr-b', { type: 'button', role: 'radio', 'aria-checked': String(+y.year === cur), dataset: { year: String(y.year) },
+        onclick: async (e) => {
+          if (+y.year === +BD.nat.year) return;
+          e.currentTarget.setAttribute('aria-busy', 'true');
+          try { await BD.nat.setYear(y.year); } catch (err) { K.toast('그 해 결과를 불러오지 못했습니다'); K.devlog('nat-year', String(err?.message || err)); }
+          X.natYear = BD.nat.year; NATR.clear(); paintBoardHud(); PIN?.redraw?.(); renderLayers();
+        } },
+      h('span', { text: `${y.year}년` }), y.complete ? null : h('small', { text: `분석 중 ${Math.floor(y.pct?.value ?? 0)}%` })))));
+  }
+  const A = Object.values(BD.nat.data?.assets || {});
+  const noimg = A.some((x) => (x?.noimg?.km2?.value || 0) > 0), fy = A.find((x) => x?.fill)?.fill?.year;
+  if (noimg || fy) out.push(h('div.xc-nd', {}, noimg ? h('p', {}, h('i.xc-nd-sw', { 'aria-hidden': 'true' }), h('span', { text: '영상 없음(공개 제한 지역)' })) : null,
+    fy ? h('p', {}, h('i.xc-nd-sw.is-fill', { 'aria-hidden': 'true' }), h('span', { text: `${fy}년 영상(빈 조각 채움)` })) : null));
+  return out;
 }
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */
@@ -2607,6 +2674,12 @@ function regionEpochs(r = S.region) {
   for (const x of rows.sort((p, q) => q.cov - p.cov || String(q.it.epoch).localeCompare(String(p.it.epoch)))) if (!best.has(x.label.slice(0, 4))) best.set(x.label.slice(0, 4), x);
   return [...best.values()].sort((p, q) => String(p.it.epoch).localeCompare(String(q.it.epoch)));
 }
+/** 영상 비교에 내는 국토지리정보원 연도 영상(10-22 now21 시계열-연도고르기 ⓐ) — 전국 · 2020년부터 · LX 화면만(진행 장부가 준 목록 그대로) */
+const NGII_B = [124.5, 33.0, 131.9, 38.7];
+function ngiiEpochs() {
+  return (BD?.nat?.ngii || []).map((x) => ({ it: { id: x.id, tier: 'raw', source: 'cog', role: 'imagery', bounds: NGII_B, epoch: String(x.year), attribution: '국토지리정보원 항공 정사영상' },
+    label: `국토지리정보원 ${x.year}년`, ngii: true })).sort((p, q) => q.it.epoch.localeCompare(p.it.epoch));
+}
 const ESP = new Map();                                 // 시점 영상 주소 — 부팅 때 미리 받은 것을 1분 동안 그대로(서명 왕복 한 번 줄이기)
 function epochSpec(id) {
   const c = ESP.get(id);
@@ -2616,7 +2689,7 @@ function epochSpec(id) {
   return p;
 }
 async function epochSpec0(id) {
-  const it = (S.cat?.items || []).find((x) => x.id === id); if (!it) return null;
+  const it = (S.cat?.items || []).find((x) => x.id === id) || ngiiEpochs().find((x) => x.it.id === id)?.it; if (!it) return null;
   if (it.tier === 'raw' && it.source === 'cog') {
     const j = await api('/tiles/sign?' + new URLSearchParams({ set: 'cog/' + it.id }));
     return { it, spec: { type: 'raster', tiles: [onApiHost(j.url)], tileSize: 256, bounds: it.bounds, minzoom: COG_MIN_Z, maxzoom: 19, attribution: it.attribution || '' } };
@@ -2653,12 +2726,12 @@ async function compareOn(leftId, rightId) {
 function cmpBar() {
   let el = S.els.cmp;
   if (!el) { el = S.els.cmp = h('div.xc-cmp', { role: 'group', 'aria-label': '비교할 영상' }); mainEl.append(el); }
-  const eps = regionEpochs();
+  const eps = [...regionEpochs(), ...ngiiEpochs()];   // 등록 영상 시점 + 국토지리정보원 연도 영상
   el.hidden = !S.swipe;
   if (!S.swipe) return;
   const opt = (v, t, sel) => h('option', { value: v, text: t, selected: sel || undefined });
-  const left = h('select.xc-cmp-s', { 'aria-label': '왼쪽 시점' }, opt('', '지금 영상', !S.cmp?.left), ...eps.map((x) => opt(x.it.id, `${x.label} 영상`, S.cmp?.left === x.it.id)));
-  const right = h('select.xc-cmp-s', { 'aria-label': '오른쪽 시점' }, opt('', 'AI 분석 결과', !S.cmp?.right), ...eps.map((x) => opt(x.it.id, `${x.label} 영상`, S.cmp?.right === x.it.id)));
+  const left = h('select.xc-cmp-s', { 'aria-label': '왼쪽 시점' }, opt('', '지금 영상', !S.cmp?.left), ...eps.map((x) => opt(x.it.id, x.ngii ? x.label : `${x.label} 영상`, S.cmp?.left === x.it.id)));
+  const right = h('select.xc-cmp-s', { 'aria-label': '오른쪽 시점' }, opt('', 'AI 분석 결과', !S.cmp?.right), ...eps.map((x) => opt(x.it.id, x.ngii ? x.label : `${x.label} 영상`, S.cmp?.right === x.it.id)));
   left.onchange = async () => { S.cmp = { ...(S.cmp || {}), left: left.value || null }; await cmpLayer(B.map, 'l', left.value || null); };
   right.onchange = async () => {
     S.cmp = { ...(S.cmp || {}), right: right.value || null };

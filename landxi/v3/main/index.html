@@ -32,7 +32,8 @@
 <div class="m-labels" id="labels" aria-hidden="true"></div>
 
 <main>
-  <!-- 트랙 A: ch0 히어로 → ch1 전역 → ch2 필지 → ch3 융합(반전) · 판 하나(sticky) 안에서 장면이 이어진다 -->
+  <!-- 장면 5(10-22 now21 첫인상-메인 ⓐ): 첫 화면(히어로)은 그대로 → ① 전국 결과 지도 → ② XI ChatGEO → ③ 서비스 → ④ 실적(시군구) → ⑤ 마감.
+       트랙 A: ch0 히어로 → ch1 전국 결과 지도 → ch3 XI ChatGEO(반전) · 판 하나(sticky) 안에서 장면이 이어진다 -->
   <section class="m-track" id="trackA" data-track="A">
     <div class="m-frame" id="frameA">
       <div class="m-win" id="winA"><img class="m-poster is-off" id="poster" alt="" decoding="async" fetchpriority="high"></div>
@@ -50,23 +51,12 @@
         <div class="t-card t-card--map m-card">
           <p class="m-bridge">전국 단위로</p>
           <h2 class="t-h2 m-h"><span>전국 분석 결과를</span><span>한 화면에서 확인</span></h2>
-          <p class="t-body m-p" id="ch1-p">하천구역 안 건물 점유를 전국에서 같은 기준으로 찾았습니다.</p>
-          <div class="m-big" id="ch1-big"></div>
+          <p class="t-body m-p" id="ch1-p"><span>지자체 실태조사에서</span> <span>현장 확인할 곳을 미리 고릅니다.</span></p>
+          <ul class="m-nks" id="ch1-ks" aria-label="전국 분석 결과 종류"></ul>
+          <p class="m-src" id="ch1-src"></p>
         </div>
         <p class="m-cap" id="ch1-cap"></p>
       </div>
-
-      <div class="m-ch m-side" id="ch2" data-ch="2">
-        <p class="m-bridge">필지 단위로</p>
-        <h2 class="t-h2 m-h"><span>고정밀 영상을 AI가 읽고</span><span>행정 정보와 맞춰 바로 판단</span></h2>
-        <p class="t-body m-p"><span>AI가 찾은 건물과 면적을 지적 · 대장 정보와 겹쳐 필지마다 결론이 나옵니다.</span> <span>실태조사가 빨라지고 담당자 부담이 줄어듭니다.</span></p>
-        <ol class="m-items" id="ch2-items">
-          <li data-i="0">AI 영상 분석</li>
-          <li data-i="1">행정 정보와 맞추기</li>
-          <li data-i="2">바로 판단</li>
-        </ol>
-      </div>
-      <div class="m-ch m-onwin" id="ch2-card" data-ch="2"></div>
 
       <div class="m-ch m-side m-inv" id="ch3" data-ch="3">
         <p class="m-bridge">말 한마디로</p>
@@ -92,7 +82,7 @@
     </div>
   </section>
 
-  <!-- 트랙 B: ch5 배포 → ch6 글로벌 → 마감 -->
+  <!-- 트랙 B: ch5 실적(시군구) → 마감 -->
   <section class="m-track" id="trackB" data-track="B">
     <div class="m-frame" id="frameB">
       <div class="m-win" id="winB"></div>
@@ -102,17 +92,8 @@
           <p class="m-bridge">지금까지</p>
           <h2 class="t-h2 m-h" id="ch5-h"><span>여러 시군구에</span><span>분석 결과 제공</span></h2>
           <p class="t-body m-p" id="ch5-p"></p>
+          <p class="t-body m-p m-why"><span>기관은 로그인하면</span> <span>우리 지역 결과를 지도 · 표 · 보고서로 봅니다.</span></p>
           <p class="m-tag" id="ch5-tag"></p>
-        </div>
-      </div>
-
-      <div class="m-ch m-over" id="ch6" data-ch="6">
-        <div class="t-card t-card--map m-card">
-          <p class="m-bridge">해외에서 한 일</p>
-          <h2 class="t-h2 m-h" id="ch6-h"><span>키르기스스탄</span><span>경작지 면적 분석</span></h2>
-          <p class="t-body m-p" id="ch6-p"><span>위성 영상에서 AI가 경작지를 판정하고</span> <span>군마다 면적을 셌습니다.</span></p>
-          <div class="m-big" id="ch6-big"></div>
-          <p class="m-tag m-tag--s" id="ch6-tag"></p>
         </div>
       </div>
 
@@ -128,6 +109,9 @@
     </div>
   </section>
 </main>
+
+<!-- 장면 표시(10-22 첫인상-메인 ⓐ 시안 '1 / 5') — 첫 화면에서는 숨고, 장면 다섯 동안 오른쪽 가운데 -->
+<div class="m-dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b class="num" id="dots-n"></b></div>
 
 <!-- 스크롤 안내 — 첫 화면 가운데 아래 · 2초 뒤 · 처음 스크롤에 사라짐(main.js) -->
 <div class="m-hint" id="hint" aria-hidden="true">

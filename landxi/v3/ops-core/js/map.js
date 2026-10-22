@@ -6,10 +6,11 @@ import { points } from './data.js';
 
 const INFRA = '/landxi/v3/ops-infra/';
 
-export function mountMap(host) {
+export function mountMap(host, { inset = false } = {}) {
+  /* inset = 현황 '기관 위치' 작은 칸 안 지도(10-22 첫인상-관리자현황 ⓐ) — 지도 위에 덮는 카드가 없어 여백을 두지 않는다 */
   const st = createStage(host, { mode: 'ops' });
   const wide = () => host.clientWidth >= 960;
-  st.pad(wide() ? { right: 420 } : { bottom: 220, top: 72 });
+  st.pad(inset ? { top: 24, bottom: 24, left: 24, right: 24 } : wide() ? { right: 420 } : { bottom: 220, top: 72 });
   st.ready.then(() => st.home({ ms: 0 }));
   const map = st.map;
   const markers = new Map();
@@ -83,8 +84,8 @@ export function mountMap(host) {
       try { map.setProjection({ type: 'globe' }); } catch { /* 구형 엔진 = 평면 */ }
       const far = [...markers.values()].filter((m) => m.p.abroad).map((m) => m.p.lnglat);
       const c = far.length ? [far.reduce((a, x) => a + x[0], 0) / far.length, far.reduce((a, x) => a + x[1], 0) / far.length] : [100, 35];
-      const to = { center: [(c[0] + 127) / 2, (c[1] + 36) / 2], zoom: host.clientWidth < 640 ? 1.2 : 2.1, pitch: 0, bearing: 0 };
-      const padding = host.clientWidth < 960 ? { top: 0, bottom: 200, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 420 };
+      const to = { center: [(c[0] + 127) / 2, (c[1] + 36) / 2], zoom: host.clientWidth < 640 ? (inset ? 0.6 : 1.2) : 2.1, pitch: 0, bearing: 0 };
+      const padding = inset ? { top: 0, bottom: 0, left: 0, right: 0 } : host.clientWidth < 960 ? { top: 0, bottom: 200, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 420 };
       RM() ? map.jumpTo({ ...to, padding }) : map.flyTo({ ...to, padding, duration: 1800, essential: true });
     } else {
       try { map.setProjection({ type: 'mercator' }); } catch { /* */ }

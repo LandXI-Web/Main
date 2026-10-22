@@ -177,7 +177,8 @@ form.addEventListener('submit', async (e) => {
     try { s = await signIn(body); clearTimeout(slow); if (msg.textContent === SLOW_TXT) clearErr(); }
     catch (err) {
       clearTimeout(slow);
-      if (!err.status) { say('서버에 연결할 수 없습니다'); return; }         // 두 번 모두 네트워크 오류일 때만
+      if (!err.status) { say('서버에 연결할 수 없습니다. 잠시 뒤 다시 시도해 주세요'); return; }         // 두 번 모두 네트워크 오류일 때만
+      if (err.status >= 500) { say('서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 시도해 주세요'); return; }   // 게이트웨이 다시 시작 · 502 · 503 · 504 — 비밀번호 틀림으로 보이지 않게(10-22)
       if (err.status === 423 || err.status === 429) { say(err.message || '잠시 후 다시 시도하세요', ['pw']); pwIn.value = ''; return; }   // 5번 틀려 10분 잠김 · 시도 너무 많음
       if (err.status === 401 || err.code === 'unauthorized') {
         // 서버 401 문구 그대로(명세 §2.2 — 무엇이 틀렸는지 서버는 말하지 않는다)
@@ -186,7 +187,7 @@ form.addEventListener('submit', async (e) => {
       } else if (err.status === 403) {
         say(err.message || '관리자 계정이 아닙니다', ['id']);           // 관리자 입구에 관리자 아닌 계정 — 서버가 토큰을 내주지 않았다
         pwIn.value = '';
-      } else say('잠시 후 다시 시도하세요');
+      } else say('잠시 뒤 다시 시도해 주세요');
       return;
     }
     if (s.must_change) {                               // 관리자가 준 임시 비밀번호 — 새 비밀번호를 정해야 들어간다(세션은 그 뒤에)

@@ -195,6 +195,7 @@
 .xc-pair .xc-old{display:block;margin-top:6px;font:400 var(--fs-aux)/1.4 var(--font-body);color:var(--sub)}
 .xc-pair dd{margin:0;font:400 var(--fs-body)/1.45 var(--font-body);color:var(--ink-2)}
 .xc-pair dd b{display:block;font:700 var(--fs-t1)/1.2 var(--font-display);color:var(--ink);margin-bottom:2px}
+.xc-parts{margin:-8px 0 20px;padding:0 2px;white-space:pre-line;font:500 var(--fs-body)/1.5 var(--font-body);color:var(--ink-2)}
 .xc-key[data-k="lxmap"]{background:var(--bg-0);border:2px solid #1F4FB5}
 /* 필지 정보(연속지적 속성) · 이 자리 LX맵 겹쳐 보기 — 기관 필지 카드(나중 8 ⓐ) */
 .xc-pi{margin:0 0 20px;padding:16px 16px 6px;border-radius:var(--r-8);background:var(--bg-0)}
@@ -623,3 +624,17 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 }
 /* 10-22 원칙 309 — 틈이 모자라면 대화를 아래 줄의 낮은 것(접힌 결과 카드 · 영상 고르기) 위로 올려 세운다(app.js layoutNow → --xc-cb) */
 @media (min-width:641px){ .k-main > .k-chat-root[data-dock]{bottom:var(--xc-cb,20px)} }
+/* 전국 분석 연도 고르기 · 영상 빈 자리 범례(10-22 now21 시계열-연도고르기 · 접경영상없음 · 빈조각2024 ⓐ) — 층 판 안 한 줄 */
+.xc-yr{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 10px;padding:3px;background:var(--bg-0);border-radius:var(--r-8)}
+.xc-yr-b{flex:1 1 0;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 8px;border:0;border-radius:6px;background:none;font:500 var(--fs-aux)/1.2 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.xc-yr-b small{font:400 12px/1.2 var(--font-body);color:var(--sub)}
+.xc-yr-b:hover{color:var(--ink)}
+.xc-yr-b[aria-checked="true"]{background:var(--bg-1);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.xc-yr-b[aria-busy="true"]{opacity:.6}
+.xc-nd{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px;padding:0 8px}
+.xc-nd p{display:flex;align-items:center;gap:8px;margin:0;font:400 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--sub);word-break:keep-all}
+.xc-nd-sw{flex:none;width:14px;height:14px;border-radius:3px;background:#9AA1AB;opacity:.85;border:1px dashed #6B7280}
+.xc-nd-sw.is-fill{background:none;border:1.5px dashed #2E9E5B}
+.xb-tc-note{color:var(--sub)}
+/* 390 — 층 판이 길어져도(전국 분석 연도 · 범례) 도구 한 줄 아래까지만(판 아래 84 + 위 180 · 도구 열 아래 끝 약 172) · 넘치면 판 안에서 내림(겹침 0 · 원칙 309) */
+@media (max-width:640px){ .k-main:has(.xc-pop:not([hidden])) .xc-pop{max-height:calc(100% - 264px);overflow-y:auto} }

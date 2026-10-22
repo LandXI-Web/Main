@@ -1,4 +1,7 @@
 #!/bin/sh
 # 커밋 전 비밀값 검사(10-22 now21 저장보안-제안-비밀값검사) — tools/check/secrets.mjs 가 올리려는 줄에서 비밀번호 · 열쇠를 찾으면 커밋을 멈춘다.
 # 이 고리를 쓰려면 한 번: git config core.hooksPath .githooks
-exec node "$(git rev-parse --show-toplevel)/tools/check/secrets.mjs" --staged
+node "$(git rev-parse --show-toplevel)/tools/check/secrets.mjs" --staged || exit 1
+# 커밋 전 검사 문(10-22 바퀴 22 · 원칙 309) — 화면 파일(landxi/ 의 js · mjs · css · html)을 올리면, 그 판이 검사기 넷(겹침 · 낱말 · 숫자 · 글꼴) 0 으로 통과한 판이어야 한다.
+# 통과 기록은 `node tools/check/gate.mjs` 가 남긴다. 화면 파일이 없는 커밋은 그냥 지나간다.
+exec node "$(git rev-parse --show-toplevel)/tools/check/gate.mjs" --staged

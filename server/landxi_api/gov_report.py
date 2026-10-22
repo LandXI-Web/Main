@@ -682,6 +682,42 @@ async def public_record(request: Request):
     return await record()
 
 
+_NATP: dict = {"t": 0.0, "v": None}
+
+
+@router.get("/public/national")
+async def public_national(request: Request):
+    """게스트 메인 ① 전국 결과 지도의 숫자(10-22 원칙 317 '무엇 · 얼마 · 왜') — 로그인 없이 보이는 전국 합계만.
+    값 = LX 직원 XI맵과 같은 장부(national_cells · 화면 기본 해 · 끝난 칸)와 같은 셈(같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수 net · 없으면 찾은 수).
+    종류마다 수 · 넓이(㎢) 합계와 기준 영상 · 끝난 비율만 낸다 — 칸 · 읍면동 · 좌표 · 모델 · 작업 정보 없음. 1분 보관."""
+    principal(request)
+    if _NATP["v"] and time.time() - _NATP["t"] < 60:
+        return _NATP["v"]
+    from . import national as N
+    async with db(realm="lx") as c:
+        st, _ = await N._settings(c)
+        year = int(st["year"])
+        sums = await c.fetch(
+            "SELECT asset, k AS cls, sum((v->>'n')::bigint) AS n, sum((v->>'km2')::numeric) AS km2 FROM national_cells, jsonb_each(counts) AS e(k, v) "
+            "WHERE year=$1 AND NOT test AND state='done' GROUP BY asset, k", year)
+        prog = await c.fetch("SELECT asset, coalesce(sum(target_km2) FILTER (WHERE state<>'skip'),0) AS km2, "
+                             "coalesce(sum(target_km2) FILTER (WHERE state='done'),0) AS done_km2 FROM national_cells WHERE year=$1 AND NOT test GROUP BY asset", year)
+    src = f"Land-XI 전국 AI 분석(국토지리정보원 항공 정사영상 {year})"
+    out = {"year": year, "imagery": f"국토지리정보원 항공 정사영상 {year}", "assets": {}, "as_of": now_iso()}
+    for a in N.ASSETS:
+        cnt = {r["cls"]: {"n": env(int(r["n"] or 0), "count", "measured", src), "km2": env(round(float(r["km2"] or 0), 2), "km2", "measured", src)}
+               for r in sums if r["asset"] == a and r["cls"] in _NAT_CLS[a]}
+        await N._net(cnt, a, None)
+        pr = next((x for x in prog if x["asset"] == a), None)
+        pct = round(100.0 * float(pr["done_km2"]) / float(pr["km2"]), 1) if pr and float(pr["km2"]) else 0.0
+        out["assets"][a] = {"pct": env(min(100.0, pct), "%", "measured", "끝난 분석 범위 ÷ 전체 분석 범위"), "counts": cnt}
+    _NATP.update(t=time.time(), v=out)
+    return out
+
+
+_NAT_CLS = {"farm": ("경작지", "비닐하우스"), "river": ("건물",)}   # XI맵과 같은 규칙 — 자산마다 한 분류씩(겹쳐 세지 않게 · xi-clean/national.js NCLS)
+
+
 _SAFE = re.compile(r"[\\/:*?\"<>|\s]+")
 
 

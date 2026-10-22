@@ -1,0 +1,25 @@
+{
+ "at": "2026-10-22",
+ "cycle": 22,
+ "part": "P7 첫인상 + 작은 고침",
+ "items": [
+  {"id": "첫인상-메인", "title": "메인: 첫 화면 그대로 · 스크롤 첫 장면 전국 결과 지도 · 장면 5개", "state": "구현 확인 대기",
+   "where": [["https://app.land-xi.dev/landxi/v3/main/", "로그인 없이", "휠을 내려 첫 장면"]],
+   "evidence": ["shots/guest-main-hero-1440-1216.png", "shots/guest-main-national-1440-1216.png", "shots/guest-main-national-1280-1216.png", "shots/guest-main-national-390-1216.png", "shots/guest-main-chatgeo-1440-1216.png"]},
+  {"id": "첫인상-로그인", "title": "로그인: 지금 모양 + 설명 카드 줄이기", "state": "구현 확인 대기",
+   "where": [["https://app.land-xi.dev/landxi/v3/login/", "로그인 없이", "오른쪽 지도 카드 아래 한 줄"]],
+   "evidence": ["shots/guest-login-1440-1216.png", "shots/guest-login-1280-1216.png", "shots/guest-login-390-1216.png"]},
+  {"id": "첫인상-관리자현황", "title": "LX 관리자 대시보드 현황: 지도 빼고 요약 네 칸 + 할 일 표", "state": "구현 확인 대기",
+   "where": [["https://admin.land-xi.dev/landxi/v3/ops-core/", "LX 관리자", "현황"]],
+   "evidence": ["shots/admin-ops-1440-1216.png", "shots/admin-ops-1280-1216.png", "shots/admin-ops-390-1216.png", "shots/admin-ops-bigmap-1440-1216.png"]},
+  {"id": "첫인상-XI맵가운데점", "title": "XI맵 첫 흰 화면 · 가운데 점 없음(바탕 미리 칠하기 · 지도 그림 미리 띄우기)", "state": "구현 확인 대기",
+   "where": [["https://app.land-xi.dev/landxi/v3/xi-clean/", "LX 직원", "XI맵 열기"]],
+   "evidence": ["ximap/before-lx-1440.webm", "ximap/after-lx-1440.webm", "ximap/after-namwon-1440.webm", "ximap/after-lx-390.webm", "ximap/before-lx-frames.txt", "ximap/after-lx-first-visit-frames.txt", "ximap/after-lx-second-visit-frames.txt", "ximap/after-first-visit-frames.png", "ximap/after-namwon-frames.png"],
+   "measure": {"flat_frames_before": 50, "flat_frames_after": 0, "fps": 25}},
+  {"id": "작은-502문구", "title": "서버가 잠시 응답하지 않을 때 로그인 문구", "state": "완료", "evidence": ["landxi/v3/gov-home/app.js", "landxi/v3/login/auth.js"]},
+  {"id": "작은-요청함", "title": "직원 대시보드 요청함 기다림", "state": "완료", "measure": {"panel_wait_before_s": [0.32, 0.59], "panel_wait_after_s": [0.04, 0.1]}},
+  {"id": "작은-시험", "title": "시험 기대값 셋(test_guards · test_public_record · impl22-national)", "state": "완료",
+   "note": "19 대 20: 19 가 맞음 — 보령 곤포 보이기 규칙을 다시 넣음(원칙 316)"},
+  {"id": "검사문", "title": "now 굽기 전 · 커밋 전 all.mjs 0 (tools/check/gate.mjs)", "state": "완료", "evidence": ["check-before/run.log", "check-after/run.log"]}
+ ]
+}

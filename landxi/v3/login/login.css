@@ -104,24 +104,25 @@ body.t { overflow: hidden; }
 .hero__sweep.run.fill { animation-duration: 1800ms; animation-timing-function: linear; box-shadow: 0 0 12px 1px rgba(15,169,160,.55); }
 @keyframes sweep { 0% { opacity: .9; left: 0; } 92% { opacity: .9; } 100% { opacity: 0; left: 100%; } }
 
-/* 모토 3축 — 색인(3줄 이름 · 현재 = 흰 + 진행 막대) · 대제목 48 · 한글 한 줄 (스펙시먼 C) */
-.axis { position: absolute; left: 40px; bottom: 40px; right: 360px; color: var(--hud-ink);
+/* 모토 3축 — 지도 카드 아래 한 줄(10-22 now21 첫인상-로그인 ⓐ '지금 모양 + 설명 카드 줄이기'):
+   대제목 · 세로 선 · 한글 한 줄을 한 줄로, 그 아래 장면 점 셋(지금 장면 = 긴 막대 · 진행). 흰 결과 카드(.res)는 두지 않는다. */
+.axis { position: absolute; left: 40px; bottom: 32px; right: 40px; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; color: var(--hud-ink);
   --axis-shadow: 0 1px 2px rgba(0,0,0,.45), 0 0 12px rgba(0,0,0,.35); }
-.axis__ix { display: flex; gap: 24px; margin: 0 0 20px; padding: 0; list-style: none; }
-.axis__ix li { position: relative; padding-bottom: 10px; font: 500 var(--fs-aux)/var(--lh-aux) var(--font-num); color: rgba(255,255,255,.72); text-shadow: var(--axis-shadow);
-  transition: color var(--d-380) var(--e-ui); white-space: nowrap; }
-.axis__ix li::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.28); }
-.axis__ix li i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--hud-ink); }
-.axis__ix li.on { color: var(--hud-ink); }
+.axis__ix { order: 3; flex: 0 0 100%; display: flex; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 0; }
+.axis__ix li { position: relative; width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.5); overflow: hidden; color: transparent;
+  box-shadow: 0 0 6px rgba(0,0,0,.25); transition: width var(--d-380) var(--e-ui), background var(--d-380) var(--e-ui); }
+.axis__ix li i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--hud-ink); }
+.axis__ix li.on { width: 20px; background: rgba(255,255,255,.4); }
 .axis__ix li.on i { animation: fill var(--hold, 8900ms) linear both; }
 @keyframes fill { from { width: 0; } to { width: 100%; } }
-.axis__t { margin: 0 0 8px; font: 700 var(--fs-h3)/var(--lh-h3) var(--font-display); letter-spacing: .01em; text-shadow: var(--axis-shadow); white-space: nowrap; }
-.axis__l { margin: 0; font: 500 var(--fs-t2)/var(--lh-t2) var(--font-body); color: rgba(255,255,255,.94); text-shadow: var(--axis-shadow); }
+.axis__t { order: 1; margin: 0; font: 700 var(--fs-t1)/var(--lh-t1) var(--font-display); letter-spacing: .01em; text-shadow: var(--axis-shadow); white-space: nowrap; }
+.axis__l { order: 2; margin: 0; padding-left: 16px; border-left: 1px solid rgba(255,255,255,.6); font: 500 var(--fs-body)/var(--lh-body) var(--font-body); color: rgba(255,255,255,.94); text-shadow: var(--axis-shadow); white-space: nowrap; }
 .axis .t-in { animation: rise var(--d-750) var(--e-cam) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(var(--enter-y)); } to { opacity: 1; transform: none; } }
 .axis.away .axis__t, .axis.away .axis__l { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
 
-/* 결과 카드 — 지도 위 흰 카드 1장(§6) · 지역 캡션 14 한 줄 · 숫자 · 신뢰 기호 */
+/* 결과 카드 — 10-22 첫인상-로그인 ⓐ 로 두지 않는다(설명 카드 줄이기 · 숫자는 로그인 뒤 화면에서). 장면 코드(plate.js)는 그대로 값을 채우되 보이지 않는다 */
+.res { display: none !important; }
 .res { position: absolute; right: 24px; bottom: 24px; width: 312px; margin: 0; transition: opacity var(--d-380) var(--e-ui), transform var(--d-380) var(--e-ui); }
 .res.away { opacity: 0; transform: translateY(8px); }
 .res__where { margin: 0 0 8px; font: 500 var(--fs-aux)/var(--lh-aux) var(--font-body); color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -153,13 +154,12 @@ body.t { overflow: hidden; }
 /* ══ 중간 폭 ═════════════════════════════════════════════════════ */
 /* ≤1300 — 축 제목이 두 줄로 접혀 색인에 붙지 않게 한 단 내린다 */
 @media (max-width: 1300px) {
-  .axis__t { font-size: var(--fs-h3); line-height: var(--lh-h3); letter-spacing: var(--ls-h3); }
+  .axis__l { white-space: normal; }
 }
 @media (max-width: 1200px) {
   :root { --door: 400px; }
   .door { padding: 32px; }
-  .axis { right: 24px; bottom: 168px; left: 32px; }
-  .axis__t { font-size: var(--fs-h3); line-height: var(--lh-h3); }
+  .axis { right: 24px; bottom: 28px; left: 32px; }
 }
 /* 낮은 화면(≤ 800) — 문 카드 넘침 0: 바깥 여백 32 · 카드 안 32 · 간격을 한 단씩 줄인다. 가운데 정렬은 'safe'(넘치면 위부터) */
 @media (max-height: 800px) and (min-width: 961px) {
@@ -188,18 +188,15 @@ body.t { overflow: hidden; }
   .door__body { padding: 16px 0 12px; }
   .door__h { font-size: var(--fs-h3); line-height: var(--lh-h3); }
   .door__lead { margin-bottom: 20px; font-size: var(--fs-aux); line-height: var(--lh-aux); }
-  .axis { left: 20px; right: 20px; top: 20px; bottom: auto; }
-  .axis__ix { gap: 14px; margin-bottom: 10px; }
-  .axis__ix li { padding-bottom: 8px; }
-  .axis__ix li { font-size: var(--fs-aux); }
-  .axis__t { font-size:var(--fs-t1); line-height:38px; }
-  .axis__l { font-size: var(--fs-aux); line-height: var(--lh-aux); }
-  .hero__shade { top: 0; bottom: auto; height: 30%; background: linear-gradient(to bottom, rgba(17,19,23,.28), rgba(17,19,23,0)); }
+  .axis { left: 20px; right: 20px; top: auto; bottom: 18px; column-gap: 12px; }
+  .axis__ix { margin-top: 10px; }
+  .axis__t { font-size: var(--fs-t2); line-height: var(--lh-t2); }
+  .axis__l { flex: 0 0 100%; padding-left: 0; border-left: 0; font-size: var(--fs-aux); line-height: var(--lh-aux); white-space: nowrap; }   /* 좁은 폭은 제목 아래 한 줄 */
+  .hero__shade { top: auto; bottom: 0; height: 45%; background: linear-gradient(to top, rgba(17,19,23,.42), rgba(17,19,23,0)); }
   .res { left: 12px; right: 12px; bottom: 12px; width: auto; padding: 12px 16px; }
   .res__where { margin: 0 0 2px; }
   .res__v { font-size: var(--fs-t1); line-height: var(--lh-t1); }
-  /* 크레딧은 결과 카드 안 한 줄로 합친다(카드 위 글 덩어리 1개 줄임) */
-  .hero__credit { display: none; }
+  .hero__credit { right: 16px; top: 14px; }
   .res { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
   .res__where { grid-column: 1 / -1; }
   .res__cr { display: block; margin: 0; font: 400 var(--fs-aux)/var(--lh-aux) var(--font-body); color: var(--sub); white-space: nowrap; }

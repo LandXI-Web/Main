@@ -45,7 +45,22 @@ export async function riverStats() {
   return base;
 }
 
-/** ch2 · 익명 필지 카드 1 */
+/** ① 전국 결과 지도(10-22 첫인상-메인 ⓐ) — 공개 그림 한 장의 설명서(범위 · 기준 해 · 종류 색). 결과 조각(/tiles/national)은 로그인 뒤라 부르지 않는다(옆문 규칙) */
+export async function nationalStill() {
+  const base = await local('national-result.json');
+  /* 숫자는 공개 API(GET /public/national — XI맵과 같은 장부 · 같은 셈)가 있으면 그 값, 없으면 사본(만든 날 값) */
+  const s = await server('/public/national');
+  const K = { farm: ['farm', '경작지'], greenhouse: ['farm', '비닐하우스'], river: ['river', '건물'] };
+  if (s?.assets) {
+    const v = (e) => (e && typeof e === 'object' ? e.value : e);
+    base.classes = base.classes.map((c) => { const x = s.assets[K[c.key][0]]?.counts?.[K[c.key][1]]; return x ? { ...c, n: v(x.net ?? x.n), km2: v(x.km2) } : c; });
+    if (s.imagery) base.imagery = s.imagery;
+    SRC.national = 'server';
+  } else SRC.national = 'public-copy';
+  return base;
+}
+
+/** (지난 필지 장면 · 지금 메인은 쓰지 않음) 익명 필지 카드 1 */
 export async function sampleParcel() {
   const s = await server('/public/sample-parcel');
   if (s && s.parcel && s.ledger) { SRC.parcel = 'server'; return s; }

@@ -1,10 +1,10 @@
-/* ops-core — 관리자 집: 현황(밝은 배포 지도 + 결재 대기 큰 숫자 + 할 일) + 결재함.
+/* ops-core — 관리자 집: 현황(요약 네 칸 + 할 일 표 + 기관 위치 작은 지도 · 10-22 now21 첫인상-관리자현황 ⓐ '지도를 빼고 요약 네 칸 + 표') + 결재함.
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
-import { gate, shell, bignum, table, drawer, panes, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
+import { gate, shell, table, drawer, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
 import { h, esc, ymd, api } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
-import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, hasS9, canon } from './data.js';
+import { D, loadAll, loadFast, pending, openAlerts, power, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
 import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(직원-4 ⓐ — LX 직원 대시보드 '공지' 칸에 보인다)
 import { mountRequests } from './requests.js';                   // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 · 급함 · 담당 · 보류)
@@ -38,62 +38,94 @@ const over = h('section.oc-over', { 'aria-label': '현황' });
 const inbox = h('section.oc-inbox', { 'aria-label': '요청 관리' });
 S.main.append(over, inbox);
 
-// 현황: 지도 + 토글 + 범례 + 카드
+/* 현황(10-22 now21 첫인상-관리자현황 ⓐ): 관리자가 매일 처음 보는 일 — 승인 대기 · 돌고 있는 분석 · 장비 · 기관 사용 — 네 칸 + 할 일 표.
+   기관 위치는 오른쪽 작은 칸(국내 · 해외 · '지도 크게 보기'). 숫자는 모두 서버 한 출처(결재 · 전국 진행 장부 · 장비 · 사용 현황) — 지어낸 값 0.
+   값이 오기 전 칸은 옅은 — (기다림 표시는 화면 가운데 하나 · 원칙 161). */
+const ARROW = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>';
+function cellEl(label, extra = {}) {
+  const el = h(extra.href ? 'a.t-card.oc-cell' : 'section.t-card.oc-cell', { ...(extra.href ? { href: extra.href } : {}), 'aria-label': label });
+  if (extra.cls) el.classList.add(extra.cls);
+  el.append(h('b.oc-cell-k', { text: label }), h('div.oc-cell-v', {}, h('b.oc-txt', { text: '—' })), h('p.oc-cell-s'));
+  el.dataset.wait = '1';
+  return el;
+}
+function setCell(el, v, sub, { lv = '' } = {}) {
+  delete el.dataset.wait;
+  el.querySelector('.oc-cell-v').replaceChildren(...(Array.isArray(v) ? v : [v]));
+  el.querySelector('.oc-cell-s').innerHTML = sub || '';
+  el.dataset.lv = lv;
+}
+const numV = (n, unit) => [h('b.oc-num', { text: Number(n).toLocaleString('ko-KR') }), h('small', { text: unit })];
+const cApr = cellEl('승인 대기');
+const cRun = cellEl('돌고 있는 분석', { href: '/landxi/v3/xi-clean/' });
+const cEq = cellEl('장비', { href: INFRA });
+const useEl = cellEl('기관 사용', { href: INFRA + '#/deploys/usage', cls: 'oc-use' });   // 서비스 사용 현황(10-09 배포-5) — GET /release/usage 한 출처 · 전체는 배포 메뉴 '사용 현황' 탭
+const sum = h('div.oc-sum', {}, cApr, cRun, cEq, useEl);
+const todoEl = h('div.oc-todo', { role: 'table', 'aria-label': '할 일' });
+const todoCard = h('section.t-card.oc-todo-c', {}, h('h2.oc-h', { text: '할 일' }), todoEl);
+// 기관 위치 — 작은 지도(국내 · 해외) · 크게 보기
 const stageEl = h('div.oc-map');
 const seg = h('div.oc-seg', { role: 'tablist', 'aria-label': '지도 범위' },
   h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', dataset: { s: 'kr' }, text: '국내' }),
   h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { s: 'abroad' }, text: '해외' }));
 const legend = h('div.oc-legend', { 'aria-hidden': 'true', html: '<span data-stage="ga"><i></i>운영</span><span data-stage="pilot"><i></i>시범</span><span data-stage="verify"><i></i>검증</span><span data-stage="port"><i></i>기관에 공유</span>' });
-const big = h('div.oc-big');
-const openBtn = h('a.t-btn.oc-open', { href: '#/approvals', text: '승인 요청함 열기' });
-const todoEl = h('ul.oc-todo');
-/* 서비스 사용 현황 요약(10-09 배포-5 — 대시보드는 요약 · 전체는 배포 메뉴 '사용 현황' 탭) — GET /release/usage 한 출처 */
-const useEl = h('a.oc-use', { href: INFRA + '#/deploys/usage', 'aria-label': '서비스 사용 현황 — 배포 메뉴에서 전체 보기' });
-const card = h('section.t-card.t-card--map.oc-card', { 'aria-label': '승인 대기' }, big, openBtn, todoEl, useEl);
-over.append(stageEl, seg, legend, card);
-panes(card, { edge: 'left', key: 'card', host: over, container: over, min: 320, max: 640, otherMin: 360, below: 961 });   // 오른쪽 칸 폭 끌어서 · 접기(원칙 263)
+const bigBtn = h('button.t-btn--text.oc-bigmap', { type: 'button', text: '지도 크게 보기' });
+const locCard = h('section.t-card.oc-loc', { 'aria-label': '기관 위치' }, h('header.oc-loc-h', {}, h('h2.oc-h', { text: '기관 위치' }), seg), stageEl, h('footer.oc-loc-f', {}, legend, bigBtn));
+const ov = h('div.oc-ov', {}, sum, h('div.oc-row', {}, todoCard, locCard));
+over.append(ov);
 
-const M = mountMap(stageEl);
-const B = bignum(big, null, { label: '승인 대기', unit: '건' });
-/* 로딩 중에는 '불러오는 중'(K9 기본 문구) — 응답이 오기 전 빈 상태('아직 결과가 없습니다')가 비치지 않게.
-   결재 대기는 응답이 실제로 오면 0 이어도 숫자로 보인다(빈 상태 문구는 결재함 표 쪽 '결재할 것이 없습니다'). */
-/* 도착 전 = 값 자리 옅은 — · 표시는 화면 가운데 하나(kit loader · 원칙 161) */
-card.dataset.loading = '1';
+const M = mountMap(stageEl, { inset: true });
 seg.addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
   over.dataset.scope = b.dataset.s;
   M.setScope(b.dataset.s);
 });
+/* 지도 크게 보기 — 기관 위치 칸이 현황 판 전체로(다시 누르면 작게) */
+bigBtn.addEventListener('click', () => {
+  const on = !over.classList.contains('is-big');
+  over.classList.toggle('is-big', on);
+  bigBtn.textContent = on ? '작게 보기' : '지도 크게 보기';
+  requestAnimationFrame(() => { M.map.resize(); M.setScope(M.scope); });
+});
 
 function drawOverview() {
   const list = pending();
-  if (!D.ok) { B.set(null); return; }            // 아직 응답 없음(또는 실패 뒤 재시도 대기) = 불러오는 중 그대로
-  delete card.dataset.loading;
-  B.set(pendingEnv(list));
-  card.dataset.zero = list.length ? '' : '1';
+  if (!D.ok) return;                               // 아직 응답 없음(또는 실패 뒤 재시도 대기) = 칸은 옅은 — 그대로
+  // ① 승인 대기
+  setCell(cApr, numV(list.length, '건'), '<a href="#/approvals">승인 요청함 열기 →</a>', { lv: list.length ? 'on' : 'zero' });
+  // ② 돌고 있는 분석 — 전국 결과 진행 + 기관 분석 진행
+  const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
+  if (nat) setCell(cRun, h('b.oc-txt', {}, h('span.oc-nw', { text: nat.big[0] }), ' · ', h('span.oc-nw', { text: nat.big[1] })), [nat.tail, flowing.length ? `기관 분석 진행 ${flowing.length}` : ''].filter(Boolean).map((x) => `<span class="oc-nw">${esc(x)}</span>`).join(' · '));   // 뜻 덩어리(날짜 · 시각)는 줄 중간에서 끊지 않는다(규칙 9) · 실패한 칸 표시는 할 일 표 줄(경고 글자)에서
+  // ③ 장비 — 학습 장비 · 경보(뒤에서 오는 값 — 오기 전에는 옅은 —)
+  if (D.restAt) {
+    const p = power(), al = openAlerts(), pr = p.pair || {};
+    const t1 = pr.mode === 'two' ? '학습 장비 두 장 사용' : pr.configured === 'two' && pr.reason ? '학습 장비 한 장으로 돌아감' : '학습 장비 한 장 사용';
+    setCell(cEq, h('b.oc-txt', { text: t1 }), `<span class="oc-nw">${esc(`고부하 ${p.hot}/${p.max}장`)}</span> · <span class="oc-nw">${al.length ? `경보 ${al.length}` : '경보 없음'}</span>`, { lv: p.ok && !al.length ? '' : 'warn' });
+  }
+  // ④ 기관 사용 — drawUse 가 채운다
   const rows = [];
-  if (D.restAt) {                                  // 경보 · GPU 는 뒤에서 오는 값 — 오기 전에는 줄을 만들지 않는다(값을 지어내지 않게)
+  rows.push({ k: '승인 요청', t: list.length ? `${list.length}건 기다립니다` : '기다리는 요청이 없습니다', go: '승인 요청함 열기', href: '#/approvals' });
+  if (natLine) rows.push(natLine);                  // 전국 결과 자산 진행 한 줄(원칙 218) — GET /national/progress 한 출처 · 누르면 XI맵
+  if (flowing.length) rows.push({ k: '기관 분석', t: `AI 분석 진행 ${flowing.length}`, go: '배포 보기', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
+  if (D.restAt) {                                  // 경보 · 장비는 뒤에서 오는 값 — 오기 전에는 줄을 만들지 않는다(값을 지어내지 않게)
     const al = openAlerts();
-    rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
+    rows.push({ k: '경보', t: al.length ? `경보 ${al.length}` : '없음', lv: al.length ? 'warn' : '', go: al.length ? '인프라 보기' : '', href: INFRA });
     /* 남은 디스크 50GB 아래(10-22 now21 제안-디스크알림) — 디스크마다 한 줄 · 경보 규칙 disk_*_free_lt_50gb 한 출처 */
     for (const a of al.filter((x) => /^disk_[a-z]_free_lt_50gb$/.test(x.rule))) {
       const dv = a.rule.split('_')[1].toUpperCase(), gb = Math.max(0, Math.floor(Number(a.value?.value ?? a.value) || 0));
-      rows.push({ t: `저장 공간 부족 · ${dv}: 남은 ${gb}GB`, lv: 'warn', dot: 'lock', href: INFRA });
+      rows.push({ k: '저장 공간', t: `저장 공간 부족 · ${dv}: 남은 ${gb}GB`, lv: 'warn', go: '인프라 보기', href: INFRA });
     }
-    if (dbLine) rows.push(dbLine);                 // DB 상태 한 줄(now21 저장보안-제안-DB상태) — GET /ops/db-status 한 출처
-    const p = power();
-    rows.push(equipRow(p));                        // 학습 장비 줄(원칙 270 · 두 장 사용 시험 — 안전 감시가 한 장으로 돌리면 까닭 · 시각)
+    const p = power(), pr = p.pair || {};
+    if (pr.configured === 'two' && pr.reason && pr.mode !== 'two') rows.push({ ...equipRow(p), k: '장비', go: '인프라 보기' });   // 두 장 사용 시험이 한 장으로 돌아간 때만(까닭 · 시각)
     const ms = D.gpus?.measure_stale;               // 장비 측정(GPU · 저장 폴러)이 멈췄거나 값이 오래됨 — 정상이면 줄 없음(바퀴 17 결정 · GET /ops/gpus 한 출처)
-    if (ms?.at) { const d = new Date(ms.at); if (!Number.isNaN(+d)) rows.push({ t: `측정 멈춤 · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 값`, lv: 'warn', dot: 'lock', href: INFRA }); }
+    if (ms?.at) { const d = new Date(ms.at); if (!Number.isNaN(+d)) rows.push({ k: '장비', t: `측정 멈춤 · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 값`, lv: 'warn', go: '인프라 보기', href: INFRA }); }
   }
-  /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
-  const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
-  if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
-  /* 기관 '한도 임박' 줄은 없앴다 — 기관에는 막는 한도가 없다(원칙 83 · 11차 "GPU 는 무상 정책"). 사용량은 '기관' 화면에서 */
-  if (natLine) rows.push(natLine);                  // 전국 결과 자산 진행 한 줄(원칙 218) — GET /national/progress 한 출처 · 누르면 XI맵
-  rows.push({ t: annN === null ? '공지 쓰기' : `공지 ${annN}건 · 쓰기`, lv: '', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
-  todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
+  if (dbLine) rows.push(dbLine);                     // DB 상태 한 줄(now21 저장보안-제안-DB상태) — GET /ops/db-status 한 출처
+  rows.push({ k: '공지', t: annN === null ? '—' : `${annN}건`, go: '쓰기', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
+  if (useLine) rows.push(useLine);
+  todoEl.innerHTML = '<div class="oc-tr oc-th" role="row"><span role="columnheader">무엇</span><span role="columnheader">지금</span><span></span></div>'
+    + rows.map((r) => `<a class="oc-tr" role="row" href="${esc(r.href)}" data-lv="${r.lv || ''}"><span class="oc-tk" role="cell">${esc(r.k)}</span><span class="oc-tt" role="cell">${esc(r.t)}</span><span class="oc-tg" role="cell">${r.go ? `${esc(r.go)} ${ARROW}` : ''}</span></a>`).join('');
   M.sync();
 }
 
@@ -107,7 +139,7 @@ async function drawDb() {
   const rt = j.restore_test?.ok === true ? '되살리기 시험 통과' : j.restore_test?.ok === false ? '되살리기 시험 실패' : '';
   const slow = Number(j.slow_queries?.value) || 0;
   const pair = Number(j.pair_check?.mismatch?.value) || 0;     // 파일과 DB 짝 맞추기(매주) — 안 맞는 것이 있을 때만
-  dbLine = { t: ['DB', when, rt, slow ? `느린 질의 ${slow}` : '', pair ? `파일 짝 안 맞음 ${pair}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', href: INFRA };
+  dbLine = { k: 'DB', t: [when, rt, slow ? `느린 질의 ${slow}` : '', pair ? `파일 짝 안 맞음 ${pair}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', go: j.ok ? '' : '인프라 보기', href: INFRA };
   drawOverview();
 }
 drawDb();
@@ -125,21 +157,21 @@ function equipRow(p) {
 
 async function drawUse() {
   let u;
-  try { u = await api('/release/usage'); } catch { useEl.hidden = true; return; }
+  try { u = await api('/release/usage'); } catch { setCell(useEl, h('b.oc-txt', { text: '—' }), '사용 현황을 불러오지 못했습니다'); return; }
   const v = (e) => (e && typeof e === 'object' ? e.value : e);
   const sm = u.summary || {};
   const md = (x) => { const d = new Date(x || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
   const top = (u.items || []).filter((r) => r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)))[0];
-  useEl.hidden = false;
-  useEl.replaceChildren(h('b', { text: '서비스 사용 현황' }),
-    h('span.oc-use-n', {}, h('span', { text: `기관 ${v(sm.orgs) ?? '—'}곳 · 공유 ${v(sm.shared) ?? '—'}건` }), ' · ', h('span', { text: `이번 달 분석 ${v(sm.month) ?? '—'}회` })),
-    h('small', { text: top ? `마지막 사용 ${md(top.last)} · ${top.org.name} ${top.service.name}` : '아직 기관 사용 기록이 없습니다' }));
+  setCell(useEl, v(sm.orgs) == null ? h('b.oc-txt', { text: '—' }) : numV(v(sm.orgs), '곳'), `<span class="oc-nw">${esc(`공유 ${v(sm.shared) ?? '—'}건`)}</span> · <span class="oc-nw">${esc(`이번 달 분석 ${v(sm.month) ?? '—'}회`)}</span>`);
+  useLine = { k: '기관 사용 기록', t: top ? `마지막 사용 ${md(top.last)} · ${top.org.name} ${top.service.name}` : '아직 기관 사용 기록이 없습니다', go: '사용 현황', href: INFRA + '#/deploys/usage' };
+  drawOverview();
 }
+let useLine = null;
 drawUse();
 setInterval(drawUse, 60000);
 
 /* 전국 결과 자산 — '전국 농지 n% · 하천 n% · 마지막 칸 시각' 한 줄(학습 장비가 놀 때 도는 작업기 · 원칙 218 · 221) */
-let natLine = null;
+let natLine = null, nat = null;
 async function drawNational() {
   let j;
   try { j = await api('/national/progress'); } catch { return; }
@@ -149,7 +181,9 @@ async function drawNational() {
   const md = (x) => { const d = new Date(x); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const tail = !j.enabled ? '멈춤' : last ? `마지막 칸 ${md(last)}` : '학습 장비가 놀 때 분석';
   const part = (a, nm) => (j.assets?.[a]?.on === false ? `${nm} 멈춤` : `${nm} ${pc(a)}%`);
-  natLine = { t: `전국 ${part('farm', '농지')} · ${part('river', '하천')} · ${tail}`, lv: v(j.assets?.farm?.failed) + v(j.assets?.river?.failed) ? 'warn' : '', href: '/landxi/v3/xi-clean/' };
+  const lv = v(j.assets?.farm?.failed) + v(j.assets?.river?.failed) ? 'warn' : '';
+  natLine = { k: '전국 결과', t: `전국 ${part('farm', '농지')} · ${part('river', '하천')} · ${tail}`, lv, go: '진행 보기', href: '/landxi/v3/xi-clean/' };
+  nat = { big: [`전국 ${part('farm', '농지')}`, part('river', '하천')], tail, lv };
   drawOverview();
 }
 drawNational();

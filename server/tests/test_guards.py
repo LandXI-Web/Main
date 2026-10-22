@@ -102,8 +102,14 @@ def test_unruled_sets_closed_by_default(live, tok):
     for sid in ("results/lx/marine-debris", "results/lx/yeosu-marine-2026-drone", "reference/namwon-buildings", "reference/parcels-namwon"):
         assert httpx.get(BASE + f"/tiles/pmtiles/{sid}.pmtiles", headers=rng, timeout=30).status_code == 403, sid
         assert httpx.get(BASE + f"/tiles/mvt/{sid}/12/3500/1600.pbf", timeout=30).status_code == 403, sid
-    for sid in ("results/lx/namwon-landcover-2023", "results/lx/namwon-farmland-2025", "reference/sigungu", "public/login-ledger"):
+    for sid in ("results/lx/namwon-landcover-2023", "reference/sigungu", "public/login-ledger"):
         assert httpx.get(BASE + f"/tiles/pmtiles/{sid}.pmtiles", headers=rng, timeout=30).status_code == 206, sid
+    # 남원 농지 2025 = 남원만(10-22 now21 ⓐ · sets.yaml export_policy tenant) — 서명 없이 403 · 남원 서명으로 206 · 광주전남은 서명을 받지 못한다
+    farm = "results/lx/namwon-farmland-2025"
+    assert httpx.get(BASE + f"/tiles/pmtiles/{farm}.pmtiles", headers=rng, timeout=30).status_code == 403
+    s = _sign(tok["namwon"], farm)
+    assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206
+    assert _sign(tok["gj"], farm).status_code == 403
     # 규칙 없는 결과도 LX 는 서명을 받아 열고, 기관(배포받지 않음)은 서명을 받지 못한다
     s = _sign(tok["staff"], "results/lx/marine-debris")
     assert s.status_code == 200 and httpx.get(s.json()["url"], headers=rng, timeout=30).status_code == 206

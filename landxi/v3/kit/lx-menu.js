@@ -6,7 +6,7 @@
    휴대폰(≤ 960) 아래 탭 = 대시보드 · 프로젝트 · 분석하기 · 요청함 · 메뉴(펼치면 지도 서비스 · XI맵 · 도움말 · 나가기 — 셸이 그린다).
    요청함 숫자 = 검토 요청(답할 것) + 분석 의뢰(확인 대기 · 내 담당) + 내 결재(대기) — 대시보드 '요청함' 칸과 같은 한 곳(requestCounts).
    const S = shell({ who, home, rail: staffMenu('home') });   // 'home' | 'projects' | 'analyze' | 'mapsvc' | 'ximap' | 'inbox' */
-import { api } from './util.js';
+import { api, early } from './util.js';
 
 const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 상대 주소(GitHub Pages /Main/ 아래에서도)
 export const STAFF_HREF = {
@@ -42,7 +42,8 @@ let C = null, T = 0;
 export function requestCounts({ force = false } = {}) {
   if (!force && C && Date.now() - T < 30000) return C;
   T = Date.now();
-  C = Promise.allSettled([api('/reviews/notify'), api('/approvals?state=pending')]).then(([n, a]) => {
+  /* 화면이 열릴 때 먼저 출발한 요청이 있으면 그것(kit/util startEarly) */
+  C = Promise.allSettled([early('/reviews/notify') || api('/reviews/notify'), early('/approvals?state=pending') || api('/approvals?state=pending')]).then(([n, a]) => {
     const nv = n.status === 'fulfilled' ? n.value : null, av = a.status === 'fulfilled' ? a.value : null;
     const review = nv ? +(nv.counts?.todo ?? 0) : null;
     const reqX = nv ? (nv.extra || []).find((x) => x.kind === 'request') : null;

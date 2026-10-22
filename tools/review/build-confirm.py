@@ -28,6 +28,14 @@ GUEST = '로그인 없이'
 
 YES3 = ['확인', '보류', '반려']
 
+# now 굽기 전 검사 문(10-22 바퀴 22 · 원칙 309) — 지금 화면 파일이 검사기 넷(겹침 · 낱말 · 숫자 · 글꼴) 0 으로 통과한 판이어야 굽는다.
+# 통과 기록은 `node tools/check/gate.mjs` 가 남긴다(server/logs/check-gate.json).
+if __name__ == '__main__':
+    import subprocess as _sp
+    import sys as _sys
+    if _sp.run(['node', os.path.join(ROOT, 'tools', 'check', 'gate.mjs'), '--verify'], cwd=ROOT).returncode != 0:
+        _sys.exit(1)
+
 # 섹션 → 항목. id 는 확인 대장(docs/CONFIRM.md) 번호와 같다.
 SECTIONS = [
   ('먼저 결정해 주실 것', '이 네 가지가 정해져야 나머지 작업 방식이 정해집니다.', [
