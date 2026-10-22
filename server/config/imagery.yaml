@@ -15,6 +15,10 @@ standard:
   overview_resampling: average   # 축소판은 평균으로 줄임
   color: {compress: JPEG, quality: 90}   # 8비트 색 영상(3밴드 · 넷째 밴드가 투명 칸인 4밴드) — 확인 대장 15차 영상-2 ⓐ
   value: {compress: ZSTD, level: 9}       # 값이 중요한 영상(16비트 · 실수 · 다중분광 · 1밴드 · 색표 영상) — 무손실
+  # 8비트 4밴드인데 넷째 밴드가 투명 칸이 아니라 실제 값인 영상(드론 등 · 10-22 now21 저장보안-파일-드론4밴드 ⓐ):
+  # 색 3밴드 = 위 color(JPEG 90) 표준본 한 장, 넷째 밴드 = 곁 파일 {표준본 이름}.b4.tif(위 value 규칙 · 무손실 · 같은 격자).
+  # 예전에는 4밴드 통째 무손실(원본 ECW 의 약 7배). split: false 면 예전처럼 통째 무손실.
+  four_band: {split: true, suffix: ".b4"}
   threads: 4                     # 변환 한 건에 CPU 4개(64개 중) — GPU 는 쓰지 않는다
 
 # 원본 — 표준본을 확인한 날부터 이 날 수가 지나면 정해진 작업(CPU 작업기 하루 한 번)이 지우고 감사 기록을 남긴다

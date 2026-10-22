@@ -22,7 +22,7 @@ from conftest import B, H, STAFF_ID
 from landxi_api import config
 from landxi_api import imagery_std as S
 
-NAMWON_VRT = config.DATA_ROOT / "_work" / "namwon_ap25_2023.vrt"
+NAMWON_VRT = config.DATA_ROOT / "imagery" / "mosaics" / "namwon_ap25_2023.vrt"
 UP = "/catalog/imagery/uploads"
 SERVICE = "dp-52190-5e85a9-26"             # 남원시 비닐하우스 서비스
 

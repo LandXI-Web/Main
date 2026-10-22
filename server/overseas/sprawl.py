@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 from landxi_api import config  # noqa: E402
+from landxi_api.result_store import read_features  # noqa: E402
 from national.common import pg  # noqa: E402
 from overseas.runner import settings  # noqa: E402
 
@@ -39,8 +40,9 @@ def year_files(c, country: str, year: int, model: str, bbox) -> tuple[list[Path]
     cds = [r[0] for r in rows]
     jobs = c.execute("SELECT job_id FROM overseas_jobs WHERE country=%s AND year=%s AND model_id=%s AND state='done' AND cell_cd = ANY(%s)",
                      (country, year, model, cds)).fetchall() if cds else []
-    files = [config.DATA_ROOT / "results" / "lx" / f"{j}.geojson" for (j,) in jobs]
-    return [f for f in files if f.exists()], (unary_union([wkt.loads(r[1]) for r in rows]) if rows else None)
+    from landxi_api.result_store import vector_path
+    files = [vector_path("lx", j) for (j,) in jobs]            # 새 결과 .fgb · 옛 결과 .geojson 둘 다
+    return [f for f in files if f is not None], (unary_union([wkt.loads(r[1]) for r in rows]) if rows else None)
 
 
 def burn(files: list[Path], bbox, W: int, H: int) -> np.ndarray:
@@ -50,7 +52,7 @@ def burn(files: list[Path], bbox, W: int, H: int) -> np.ndarray:
     bb = box(*bbox)
     geoms = []
     for f in files:
-        for ft in json.loads(f.read_text(encoding="utf-8"))["features"]:
+        for ft in read_features(f):
             if (ft.get("properties") or {}).get("cls") != CLS:
                 continue
             g = shape(ft["geometry"])

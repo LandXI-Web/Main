@@ -287,22 +287,26 @@ def lx_tx(conn):
     conn.execute("SELECT set_config('app.realm','lx',true), set_config('app.tenant_id','',true)")
 
 
+# 결과 자리는 landxi_api.result_store 한 곳(새 결과 = results/{주인}/{연-월}/ · 옛 결과는 옛 자리 그대로 · 바퀴 22 P4)
 def shard_dir(tenant: str, job_id: str, demo: bool) -> Path:
     if demo:
         return config.DATA_ROOT / "cache" / "demo" / job_id / "shards"
-    return config.DATA_ROOT / "results" / tenant / job_id / "shards"
+    from landxi_api import result_store
+    return result_store.shard_dir(tenant, job_id)
 
 
 def job_dir(tenant: str, job_id: str, demo: bool) -> Path:
     if demo:
         return config.DATA_ROOT / "cache" / "demo" / job_id
-    return config.DATA_ROOT / "results" / tenant / job_id
+    from landxi_api import result_store
+    return result_store.job_dir(tenant, job_id)
 
 
 def snapshot_path(tenant: str, job_id: str, demo: bool) -> Path:
     if demo:
         return config.DATA_ROOT / "cache" / "demo" / f"{job_id}.pmtiles"
-    return config.DATA_ROOT / "results" / tenant / f"{job_id}.pmtiles"
+    from landxi_api import result_store
+    return result_store.snapshot_path(tenant, job_id)
 
 
 def lane(worker: str, block: dict):

@@ -59,7 +59,7 @@ def _feats_from_shards(sdir: Path) -> list[dict]:
 
 def finalize(job_id: str):
     from shapely import set_srid, to_wkb
-    from shapely.geometry import MultiPolygon, mapping
+    from shapely.geometry import MultiPolygon
     t0 = time.time()
     jh = bus.job(job_id)
     if not jh:
@@ -89,12 +89,11 @@ def finalize(job_id: str):
         counts[f["props"]["cls_en"]] = counts.get(f["props"]["cls_en"], 0) + 1
     jdir = bus.job_dir(tenant, job_id, demo)
     jdir.mkdir(parents=True, exist_ok=True)
-    fc = {"type": "FeatureCollection", "name": job_id,
-          "features": [{"type": "Feature", "id": f["props"]["id"], "geometry": mapping(f["geom"]),
-                        "properties": {k: f["props"].get(k) for k in ("id", "cls", "cls_en", "cid", "conf", "area_m2", "emd", "emd_cd",
-                                                                          "edit_state", "job_id", "shard_id", "chip_edge")}} for f in feats]}
-    gj = jdir.parent / f"{job_id}.geojson"
-    gj.write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # 결과 원본 = FlatGeobuf · 좌표 소수 7자리(10-22 now21 저장보안-파일-결과형식 ⓐ) — GeoJSON 은 내려받을 때 만든다(result_store)
+    from landxi_api import result_store
+    keys = ("id", "cls", "cls_en", "cid", "conf", "area_m2", "emd", "emd_cd", "edit_state", "job_id", "shard_id", "chip_edge")
+    gj = jdir.parent / f"{job_id}.fgb"
+    result_store.write_fgb(gj, [f["geom"] for f in feats], [{k: f["props"].get(k) for k in keys} for f in feats], keys)
     # 전역 NMS 결과로 detections 교체(demo 는 0행 유지)
     if not demo:
         with bus.pg() as conn:
@@ -197,11 +196,12 @@ def finalize(job_id: str):
     r().hset(f"job:{job_id}", "snapshot_ready", "1" if info else "0")
     with bus.pg() as conn:
         bus.lx_tx(conn)
+        rb = None if demo else result_store.size_of_base(jdir)     # 결과 파일 크기(저장 현황 가볍게 · 0122)
         conn.execute("UPDATE jobs SET state='done', finished_at=now(), counts=%s, gpu_s=%s, shards_done=%s, shards_failed=%s, snapshot_ready=%s, "
-                     "workers=%s, started_at=COALESCE(started_at, %s::timestamptz), perf=%s WHERE id=%s",
+                     "workers=%s, started_at=COALESCE(started_at, %s::timestamptz), perf=%s, result_bytes=%s, result_bytes_at=now() WHERE id=%s",
                      (json.dumps(counts, ensure_ascii=False), gpu_s, int(jh.get("shards_done") or 0), int(jh.get("shards_failed") or 0), bool(info),
                       json.loads(r().hget(f"job:{job_id}", "workers") or "[]"), jh.get("started_at") or None,
-                      json.dumps({**perf, "elapsed_s": elapsed}, ensure_ascii=False), job_id))
+                      json.dumps({**perf, "elapsed_s": elapsed}, ensure_ascii=False), rb, job_id))
         conn.commit()
     emit(job_id, "snapshot.ready", {"job_id": job_id, "set": set_id, "url": url, "features": n, "bytes": info["bytes"] if info else None,
                                     "ms": info["ms"] if info else None, "at": now_iso(ms=True)})
@@ -215,7 +215,7 @@ def finalize(job_id: str):
     if pub and info and not demo:
         dst = config.DATA_ROOT / "results" / "lx" / f"{pub}.pmtiles"
         shutil.copyfile(snap, dst)
-        shutil.copyfile(gj, dst.with_suffix(".geojson"))
+        shutil.copyfile(gj, dst.with_suffix(gj.suffix))
         try:
             from pipelines._common import manifest_add
             b = None

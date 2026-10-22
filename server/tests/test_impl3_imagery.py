@@ -22,7 +22,7 @@ from landxi_api import config
 from landxi_api import imagery_std as S
 
 TEST = config.DATA_ROOT / "tenants" / "_imagery_std_test"
-NAMWON_VRT = config.DATA_ROOT / "_work" / "namwon_ap25_2023.vrt"
+NAMWON_VRT = config.DATA_ROOT / "imagery" / "mosaics" / "namwon_ap25_2023.vrt"
 
 
 def pg():

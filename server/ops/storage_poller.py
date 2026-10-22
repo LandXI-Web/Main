@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """LX/OPS 스토리지 폴러 (F1-C) — F1-CONTRACT §4.9 `/ops/storage` · §5.3 `ops:storage`.
 
-60s 마다
+60s 마다 (폴더 훑기는 30분에 한 번 — LX_STORAGE_HEAVY_S · 10-22 저장 현황 가볍게)
   volumes   : shutil.disk_usage(E: D: C:)  → free_gb · total_gb (measured · statfs)
   by_tier   : raw  = null (원본은 LX_DATA_ROOT 밖 · 목록만)
               tile = du(LX_DATA_ROOT/tiles)
@@ -101,6 +101,47 @@ def gb(b: int) -> float:
     return round(b / GB, 2)
 
 
+# 무거운 부분(폴더 훑기)은 30분에 한 번만(10-22 바퀴 22 P4 · 저장보안-제안-저장현황가볍게 채택).
+#   예전: 1분마다 results/ 전체(45만 파일)를 두 번(전체 · 기관마다) 훑었다 — 'lx' 몫에 다른 기관 폴더가 겹쳐 세지는 길도 있었다.
+#   이제: results/ 를 한 번 훑어 첫 단(기관 폴더)별로 나눈다 · results/ 바로 아래 파일과 vector/ 는 LX 몫 · 디스크 남은 공간은 1분마다.
+#   작업 하나하나의 크기는 작업이 끝날 때 jobs.result_bytes 에 적는다(기관별 사용량 표 · /ops/storage-tenants 가 그것을 더한다).
+HEAVY_S = float(os.environ.get("LX_STORAGE_HEAVY_S") or 1800)
+_heavy: dict = {"at": 0.0, "v": None}
+
+
+def walk_results(root: str) -> dict:
+    """results/ 한 번 훑기 → {기관: (바이트, 파일 수)} + 바로 아래 파일(LX 몫)."""
+    base = os.path.join(root, "results")
+    out: dict[str, list[int]] = {}
+    flat_b = flat_n = 0
+    try:
+        with os.scandir(base) as it:
+            for e in it:
+                try:
+                    if e.is_dir(follow_symlinks=False):
+                        b, n = du(e.path)
+                        out[e.name] = [b, n]
+                    elif e.is_file(follow_symlinks=False):
+                        flat_b += e.stat(follow_symlinks=False).st_size
+                        flat_n += 1
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    return {"tenants": out, "flat": (flat_b, flat_n)}
+
+
+def heavy(root: str) -> dict:
+    now = time.time()
+    if _heavy["v"] is None or now - _heavy["at"] >= HEAVY_S:
+        t0 = time.time()
+        j = lambda *p: os.path.join(root, *p)  # noqa: E731
+        _heavy["v"] = {"results": walk_results(root), "tiles": du(j("tiles")), "vector": du(j("vector")),
+                       "tenants_dir": {t: du(j("tenants", t)) for t in tenants()}, "at": now_iso(), "took_s": round(time.time() - t0, 1)}
+        _heavy["at"] = now
+    return _heavy["v"]
+
+
 def sample(root: str, mounts: list[str]) -> dict:
     at = now_iso()
     vols = []
@@ -114,33 +155,37 @@ def sample(root: str, mounts: list[str]) -> dict:
         except OSError as e:
             vols.append({"mount": m, "free_gb": env(None, "GB", "shutil.disk_usage", at, f"읽기 실패 {e.__class__.__name__}"),
                          "total_gb": env(None, "GB", "shutil.disk_usage", at)})
+    H = heavy(root)
+    hat = H["at"]
     j = lambda *p: os.path.join(root, *p)  # noqa: E731
-    tile_b, tile_n = du(j("tiles"))
-    res_b, res_n = du(j("results"))
-    vec_b, vec_n = du(j("vector"))
+    tile_b, tile_n = H["tiles"]
+    vec_b, vec_n = H["vector"]
+    rt = H["results"]["tenants"]
+    flat_b, flat_n = H["results"]["flat"]
+    res_b = sum(v[0] for v in rt.values()) + flat_b
+    res_n = sum(v[1] for v in rt.values()) + flat_n
     by_tenant = {}
-    for t in tenants():
-        b1, n1 = du(j("results", t))
-        b2, n2 = du(j("tenants", t))
+    for t in sorted(set(H["tenants_dir"]) | {"lx"}):
+        b1, n1 = rt.get(t, [0, 0])
+        b2, n2 = H["tenants_dir"].get(t, (0, 0))
         b, n, note = b1 + b2, n1 + n2, None
         if t == "lx":
-            # 평면 산출물(results/*.pmtiles|geojson · vector/**)은 LX 가 만든 결과다 — lx 로 계상
-            flat_b = sum(os.path.getsize(j("results", f)) for f in os.listdir(j("results"))
-                         if os.path.isfile(j("results", f))) if os.path.isdir(j("results")) else 0
-            b, n = b + flat_b + vec_b, n + vec_n
-            note = "results/lx + 평면 산출물(results/*.* · vector/**) 합"
+            # 바로 아래 산출물(results/*.pmtiles|geojson) · vector/** 는 LX 가 만든 결과 — lx 로 센다(다른 기관 폴더는 넣지 않는다)
+            b, n = b + flat_b + vec_b, n + flat_n + vec_n
+            note = "results/lx + 바로 아래 산출물(results/*.*) + vector/** · 다른 기관 폴더는 뺌"
         elif n == 0:
             note = "tenants/{0}/ · results/{0}/ 없음 — 0".format(t)
-        by_tenant[t] = env(gb(b), "GB", f"du {j('results', t)}", at, note)
+        by_tenant[t] = env(gb(b), "GB", f"du {j('results', t)} (한 번 훑기 · {int(HEAVY_S // 60)}분마다)", hat, note)
     return {
         "volumes": vols,
         "by_tier": {
             "raw": env(None, "GB", "LX_DATA_ROOT 밖", at, "원본은 LX_DATA_ROOT 밖 · 목록만"),
-            "tile": env(gb(tile_b), "GB", f"du {j('tiles')}", at, f"{tile_n:,} 파일"),
-            "result": env(gb(res_b + vec_b), "GB", f"du {j('results')} + {j('vector')}", at, f"{res_n + vec_n:,} 파일"),
+            "tile": env(gb(tile_b), "GB", f"du {j('tiles')}", hat, f"{tile_n:,} 파일"),
+            "result": env(gb(res_b + vec_b), "GB", f"du {j('results')} + {j('vector')}", hat, f"{res_n + vec_n:,} 파일"),
         },
         "by_tenant": by_tenant,
         "data_root": root,
+        "walk": {"at": hat, "took_s": H["took_s"], "every_s": HEAVY_S},
         "as_of": at,
     }
 

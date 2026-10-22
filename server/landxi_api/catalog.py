@@ -70,8 +70,9 @@ def resolve_set_path(set_id: str) -> str | None:
     parts = set_id.split("/")
     if len(parts) == 3 and parts[0] == "results" and parts[2] == "parcel-survey":   # 그 기관 관할 필지 조사 층(서명 · 10-22 옆문 닫기)
         return f"survey/{parts[1]}-parcel-survey.pmtiles"
-    if len(parts) == 3 and parts[0] == "results":
-        return f"results/{parts[1]}/{parts[2]}.pmtiles"
+    if len(parts) == 3 and parts[0] == "results":           # 작업 결과 — 새 결과는 results/{주인}/{연-월}/ 에(이름은 그대로 · 바퀴 22 P4)
+        from .result_store import rel, snapshot_path
+        return rel(snapshot_path(parts[1], parts[2]))
     if len(parts) == 2 and parts[0] == "public":            # 공개 타일 폴더(S-4 · 서명 면제)
         return f"tiles/public/{parts[1]}.pmtiles"
     if len(parts) == 2 and parts[0] == "demo":
@@ -584,6 +585,7 @@ async def _register_draft(request: Request, did: str, near_cd: str | None) -> di
         year = int(it["date"][:4]) if it.get("date") else None
         kind = it["kind"]
         path = str(config.DATA_ROOT / RQ.LX_ROOT / "drafts" / did / it["name"])
+        rel_path = f"{RQ.LX_ROOT}/drafts/{did}/{it['name']}"           # 영상 표에는 02. 데이터 기준 상대 경로(10-22 절대 경로 정리)
         async with db(realm="lx") as conn:
             base = f"img-{it['sgg_cd']}-{year or 'nd'}-{kind}"
             iid, n = base, 1
@@ -595,9 +597,9 @@ async def _register_draft(request: Request, did: str, near_cd: str | None) -> di
                 "INSERT INTO imagery(id, name, tier, gsd_m, epoch, crs, footprint, path_internal, license, attribution, export_policy, security_review, "
                 "rights_holder, ladder, kind, layer, sgg_cd, year, registered_by, registered_at) VALUES ($1,$2,'raw',$3,$4,$5,"
                 "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($6),4326)),$7,$8,'LX','never','pending','LX',$9,'ortho',$10,$11,$12,$13,now())",
-                iid, {"ko": nm, "en": nm}, it["gsd_m"], it.get("date") or None, f"EPSG:{it['epsg']}", json.dumps(it["footprint"]), path,
+                iid, {"ko": nm, "en": nm}, it["gsd_m"], it.get("date") or None, f"EPSG:{it['epsg']}", json.dumps(it["footprint"]), rel_path,
                 "LX 등록 영상(이용 범위 협의)", {"stage": "domestic", "from": 12, "to": 22, "order": 60},
-                {"role": "imagery", "cog_path": path, "source_kind": kind, "upload_draft": did, "date_src": it.get("date_src")},
+                {"role": "imagery", "cog_path": rel_path, "source_kind": kind, "upload_draft": did, "date_src": it.get("date_src")},
                 it["sgg_cd"], year, p.user_id)
             await audit(conn, p, "imagery.register", iid, None, {"sgg_cd": it["sgg_cd"], "year": year, "kind": kind, "gsd": it["gsd_m"],
                                                                   "from": "upload", "draft_id": did, "crs_guessed": it["crs_guessed"]})
@@ -826,7 +828,7 @@ async def imagery_detail(iid: str, request: Request):
         if not size:                                   # 표준본 기록이 없는 영상(예전 등록) — 원본 · 지도 조각 묶음 파일 크기(경로는 내지 않는다)
             from pathlib import Path
             pr = await conn.fetchrow("SELECT path_internal, pmtiles_set FROM imagery WHERE id=$1", iid)
-            cands = [Path(str(pr["path_internal"]))] if pr["path_internal"] else []
+            cands = [config.DATA_ROOT / str(pr["path_internal"])] if pr["path_internal"] else []     # 상대 경로는 02. 데이터 기준(절대 경로는 그대로)
             if pr["pmtiles_set"]:
                 stem = str(pr["pmtiles_set"]).split("/")[-1]
                 cands += [config.DATA_ROOT / "tiles" / "pmtiles" / f"{stem}.pmtiles", config.DATA_ROOT / f"{pr['pmtiles_set']}.pmtiles"]

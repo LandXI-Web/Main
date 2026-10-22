@@ -33,6 +33,8 @@ from . import config
 from .envelope import KST
 
 PX = 512
+IMG_NEW = ".jpg"          # 새 학습 그림 형식(10-22 now21 저장보안-파일-학습그림 ⓐ · 옛 묶음의 PNG 는 그대로)
+JPEG_Q = 95
 QUIET_MIN = 30
 ROOT = config.DATA_ROOT / "training" / "xi-tiles"
 
@@ -215,7 +217,9 @@ async def make_tile(conn, tid: str) -> str:
     lines = yolo_lines(polys, x0, y1, size)
     sub = (t["card_id"] or "none") + ("-test" if t["test"] else "")
     d_img, d_lbl = ROOT / sub / "images", ROOT / sub / "labels"
-    img_p, lbl_p = d_img / f"{tid}.png", d_lbl / f"{tid}.txt"
+    # 새로 만드는 칸 = JPEG 95(10-22 now21 저장보안-파일-학습그림 ⓐ). 예전에 PNG 로 만든 칸을 다시 만들면 PNG 그대로(옛 묶음은 건드리지 않음)
+    old_p = d_img / f"{tid}.png"
+    img_p, lbl_p = (old_p if old_p.exists() else d_img / f"{tid}{IMG_NEW}"), d_lbl / f"{tid}.txt"
     try:
         ok = await asyncio.to_thread(_crop_save, t["imagery_id"], epsg, x0, y1, size, px, img_p)
     except Exception as e:  # noqa: BLE001
@@ -260,7 +264,7 @@ def _file_dets(job_id: str, tenant: str, have: set, epsg: int, x0: float, y0: fl
 
 
 def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: float, px: int, out: Path) -> bool:
-    """영상 원천에서 칸(UTM · px×px)을 다시 잘라 PNG 로 — 메모리에서만 읽는다(지리원 API 는 그 칸 타일만)."""
+    """영상 원천에서 칸(UTM · px×px)을 다시 잘라 그림으로(out 확장자 .jpg = JPEG 95 · .png = PNG) — 메모리에서만 읽는다(지리원 API 는 그 칸 타일만)."""
     if not imagery_id:
         return False
     import numpy as np
@@ -289,8 +293,16 @@ def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: fl
         return False
     from PIL import Image
     out.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(dst.transpose(1, 2, 0)).save(out)
+    save_img(Image.fromarray(dst.transpose(1, 2, 0)), out)
     return True
+
+
+def save_img(im, out: Path) -> None:
+    """학습 그림 저장 — .jpg/.jpeg 는 JPEG 품질 95(장당 약 1/4 · 원천 영상이 이미 JPEG 90 표준본), 그 밖은 확장자대로."""
+    if out.suffix.lower() in (".jpg", ".jpeg"):
+        im.convert("RGB").save(out, "JPEG", quality=JPEG_Q)
+    else:
+        im.save(out)
 
 
 async def count_tiles(conn, *, card_id: str | None = None, since=None, test: bool = False, project_id: str | None = None) -> int:

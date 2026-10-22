@@ -151,7 +151,8 @@ async def features(set_path: str, request: Request, bbox: str | None = None, cls
 def _shard_dir(tenant: str, job_id: str, demo: bool) -> Path:
     if demo:
         return config.DATA_ROOT / "cache" / "demo" / job_id / "shards"
-    return config.DATA_ROOT / "results" / tenant / job_id / "shards"
+    from .result_store import shard_dir
+    return shard_dir(tenant, job_id)                     # 새 결과 = results/{주인}/{연-월}/ · 옛 결과는 옛 자리(바퀴 22 P4)
 
 
 @router.get("/results/{job_id}/shards/{shard_file}")
@@ -252,7 +253,8 @@ async def qa(job_id: str, request: Request):
     """확장(계약 변경 요청 §B-1): J1 정답 대비 P/R 봉투 — results/lx/{job}/qa.json."""
     p = require(principal(request))
     rs = await resolve(p, job_id)
-    f = config.DATA_ROOT / "results" / rs["tenant"] / rs["job_id"] / "qa.json"
+    from .result_store import job_dir
+    f = job_dir(rs["tenant"], rs["job_id"]) / "qa.json"
     if rs["demo"]:
         f = config.DATA_ROOT / "cache" / "demo" / rs["job_id"] / "qa.json"
     if not f.exists():
@@ -319,7 +321,7 @@ async def result_parcels(set_path: str, request: Request, cls: str | None = None
     limit = max(1, min(limit, 2000))
     from .deps import pool_sys
     # 관문: resolve() 가 세트·작업 접근을 이미 확인했다. RLS 는 공간 조인의 GIST 사용을 막으므로(보안 장벽 · 비 leakproof ST_Intersects)
-    # 시스템 역할로 읽되 기관 격리는 SQL 에 직접(p.tenant_id = 세션 기관) 넣는다.
+    # 시스템 역할로 읽되 기관 격리는 SQL 에 직접(볼 수 있는 시군구) 넣는다.
     sp = await pool_sys()
     t0 = _t.perf_counter()
     async with sp.acquire() as conn, conn.transaction():
@@ -327,7 +329,7 @@ async def result_parcels(set_path: str, request: Request, cls: str | None = None
             raise ApiError("parcels_unavailable", "survey_parcels 표 없음(F2-S 0002_survey 적재 전)")
         stored = min_conf is None and abs(float(min_hit_m2) - 1.0) < 1e-9 and await conn.fetchval(
             "SELECT to_regclass('public.survey_parcel_ai') IS NOT NULL AND EXISTS(SELECT 1 FROM survey_parcel_ai WHERE job_id=$1)", rs["job_id"])
-        ck = (rs["job_id"], cls, jimok, emd_cd, min_conf, limit, float(min_hit_m2), p.tenant_id if p.realm == "tenant" else None)
+        ck = (rs["job_id"], cls, jimok, emd_cd, min_conf, limit, float(min_hit_m2), (p.tenant_id, tuple(p.sgg or ())) if p.realm == "tenant" else None)
         hit = None if stored else _rp_cache.get(ck)
         if hit and _t.time() - hit[0] < RP_CACHE_S:
             total, by_emd, rows, geoms, how = hit[1]
@@ -335,8 +337,13 @@ async def result_parcels(set_path: str, request: Request, cls: str | None = None
             args: list = [rs["job_id"]]
             pw = []
             if p.realm == "tenant":
-                args.append(p.tenant_id)
-                pw.append(f"p.tenant_id = ${len(args)}")      # 탐지 쪽은 resolve() 가 허용한 세트(job_id)로 이미 한정
+                # 필지는 전국 공통 한 벌 — 기관은 볼 수 있는 시군구만(10-22 now21 저장보안-DB-필지 ⓐ · regions.scope_of 와 같은 판정).
+                # 탐지 쪽은 resolve() 가 허용한 세트(job_id)로 이미 한정
+                from .regions import scope_of
+                sc = scope_of(p)
+                if sc is not None:
+                    args.append([c + "%" for c in sc] or ["-"])
+                    pw.append(f"p.sgg_cd LIKE ANY(${len(args)}::text[])")
             if jimok:
                 args.append(jimok.split(","))
                 pw.append(f"(p.jimok = ANY(${len(args)}) OR p.jimok_nm = ANY(${len(args)}))")

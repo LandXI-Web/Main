@@ -6,7 +6,7 @@
   python -m overseas.runner --summary         끝난 칸 숫자(경작지 · 시가지 · 물) 합계
 
 칸 하나:
-  ① 달별 합성(CPU · 네트워크 — AWS 공개 Sentinel-2 · 키 없음) — 다음 칸을 미리 굽는다(학습 장비와 상관없음). 파일 = 02. 데이터/overseas/{나라}/{연도}/work
+  ① 달별 합성(CPU · 네트워크 — AWS 공개 Sentinel-2 · 키 없음) — 다음 칸을 미리 굽는다(학습 장비와 상관없음). 파일 = 02. 데이터/imagery/overseas/{나라}/{연도}
   ② 게이트웨이 작업 대기열로만(kind infer · 우선순위 3 · options.overseas) — 조각(≤ 1,500㎢)을 하나씩 넣고 끝날 때까지 기다린다.
      GPU 워커는 전국 작업과 같은 규칙(정한 한 장 · 작은 묶음 + 쉼 · 사용률 70 % · 140 W · 다른 작업이 오면 비킴)으로 돌린다.
   ③ 칸 마무리 — 숫자(객체 중심이 칸 안) · 낮은 줌 면 · 장부 done(한 거래) → 결과 객체 줄은 지움(E: 결과 묶음 파일 = 지도 조각 · GeoJSON 에 남음)
@@ -153,8 +153,14 @@ def seed(c, country: str, year: int) -> int:
 
 
 # ── 달별 합성(미리 굽기) ─────────────────────────────────────────────────────
+def stack_dir(country: str, year: int) -> Path:
+    """달별 합성 영상 자리 — 이름 있는 영상 자리(02. 데이터/imagery/overseas/{나라}/{연도} · 10-22 now21 저장보안-정리-임시운영영상 ⓐ).
+    예전 자리 overseas/{나라}/{연도}/work(임시 이름)에는 운영 영상을 두지 않는다. 영상 표에는 상대 경로로 적는다."""
+    return config.DATA_ROOT / "imagery" / "overseas" / country / str(year)
+
+
 def stack_path(country: str, year: int, cd: str) -> Path:
-    return root(country, year) / "work" / f"{cd}.tif"
+    return stack_dir(country, year) / f"{cd}.tif"
 
 
 def imagery_id(country: str, year: int, cd: str) -> str:
@@ -210,7 +216,7 @@ def prepare(country: str, year: int, cd: str) -> dict:
             "'s2-monthly',%s,%s,'overseas',now()) ON CONFLICT (id) DO UPDATE SET path_internal=EXCLUDED.path_internal, layer=EXCLUDED.layer, crs=EXCLUDED.crs",
             (imagery_id(country, year, cd),
              json.dumps({"ko": f"Sentinel-2 달별 합성 {year} · {row[1]}", "en": f"Sentinel-2 monthly composite {year} · {row[1]}"}, ensure_ascii=False),
-             str(year), f"EPSG:{grid.epsg}", str(p), "Copernicus Sentinel-2 공개 자료 — 합성은 분석 뒤 지움 · 결과만 저장",
+             str(year), f"EPSG:{grid.epsg}", p.relative_to(config.DATA_ROOT).as_posix(), "Copernicus Sentinel-2 공개 자료 — 합성은 분석 뒤 지움 · 결과만 저장",
              json.dumps({"role": "overseas", "source": "sentinel-2-l2a(aws earth search)", "country": country, "cell": cd, "months": list(s2.MONTHS)}),
              year))
         c.execute("UPDATE overseas_cells SET imagery=%s WHERE country=%s AND year=%s AND cell_cd=%s",
@@ -471,11 +477,13 @@ def finish_cell(c, country: str, year: int, cd: str, jobs: list[str], model: str
     deleted = c.execute("DELETE FROM detections WHERE job_id = ANY(%s) AND id NOT IN (SELECT det_id FROM result_edits WHERE set_id = ANY(%s) "
                         "AND det_id IS NOT NULL)", (jobs, jobs)).rowcount
     freed = 0
+    from landxi_api.result_store import drop_empty, shard_dir
     for jid in jobs:
-        d = config.DATA_ROOT / "results" / "lx" / jid / "shards"
+        d = shard_dir("lx", jid)
         if d.exists():
             freed += sum(f.stat().st_size for f in d.glob("*") if f.is_file())
             shutil.rmtree(d, ignore_errors=True)
+        drop_empty(d.parent)                   # 합친 뒤 빈 작업 폴더도 지운다(국내 전국 작업기와 같은 규칙)
     c.execute("UPDATE overseas_cells SET state='done', done_at=now(), counts=%s, err=NULL, model_id=%s, tries=0, next_try_at=NULL, "
               "started_at=coalesce(to_timestamp(%s), started_at) WHERE country=%s AND year=%s AND cell_cd=%s",
               (json.dumps(counts, ensure_ascii=False), model, t0, country, year, cd))

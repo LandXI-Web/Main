@@ -162,3 +162,19 @@ async def sample_parcel():
            "export_policy": "public", "as_of": as_of}
     _cache["sample"] = (time.time(), out)
     return out
+
+
+# ── 공개 발췌(로그인 화면 장면 · 10-22 바퀴 22 P4) ─────────────────────────────────────
+# 로그인 없이 읽는 작은 판만(점 · 점수 · 좌표 소수 5자리) — 결과 면 · 속성 · 경로는 담지 않는다. 만드는 곳 = pipelines/public_excerpt.py
+EXCERPTS = config.DATA_ROOT / "tiles" / "public" / "excerpts"
+
+
+@router.get("/public/excerpt/{name}")
+async def public_excerpt(name: str):
+    import re
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", name or ""):
+        raise ApiError("not_found", "공개 발췌가 없습니다")
+    f = EXCERPTS / f"{name}.json"
+    if not f.is_file():
+        raise ApiError("not_found", "공개 발췌가 없습니다")
+    return Response(content=f.read_bytes(), media_type="application/json", headers={"Cache-Control": "public, max-age=3600"})

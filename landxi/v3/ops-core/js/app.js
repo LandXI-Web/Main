@@ -106,7 +106,8 @@ async function drawDb() {
   const when = Number.isNaN(+at) ? '백업 기록 없음' : `백업 ${at.getMonth() + 1}.${at.getDate()} ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
   const rt = j.restore_test?.ok === true ? '되살리기 시험 통과' : j.restore_test?.ok === false ? '되살리기 시험 실패' : '';
   const slow = Number(j.slow_queries?.value) || 0;
-  dbLine = { t: ['DB', when, rt, slow ? `느린 질의 ${slow}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', href: INFRA };
+  const pair = Number(j.pair_check?.mismatch?.value) || 0;     // 파일과 DB 짝 맞추기(매주) — 안 맞는 것이 있을 때만
+  dbLine = { t: ['DB', when, rt, slow ? `느린 질의 ${slow}` : '', pair ? `파일 짝 안 맞음 ${pair}` : ''].filter(Boolean).join(' · '), lv: j.ok ? '' : 'warn', href: INFRA };
   drawOverview();
 }
 drawDb();

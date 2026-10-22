@@ -590,7 +590,10 @@ async def cog_tile(iid: str, z: int, x: int, y: int, request: Request, exp: str 
         if not r:
             raise ApiError("not_found", f"cog 영상 {iid} 없음")
         cog = (r["layer"] or {}).get("cog_path")
-        meta = _cog_meta[iid] = {"raw": r["path_internal"], "cog": str(config.DATA_ROOT / cog) if cog else None}
+        raw = r["path_internal"]
+        if raw and not (":" in raw[:3] or os.path.isabs(raw)):          # 영상 표의 상대 경로(02. 데이터 기준 · 10-22 절대 경로 정리)
+            raw = str(config.DATA_ROOT / raw)
+        meta = _cog_meta[iid] = {"raw": raw, "cog": str(config.DATA_ROOT / cog) if cog else None}
     src = meta["cog"] if meta["cog"] and os.path.exists(meta["cog"]) else meta["raw"]
     if not src or not os.path.exists(src):
         raise ApiError("cog_unavailable", "원본/COG 파일 없음")

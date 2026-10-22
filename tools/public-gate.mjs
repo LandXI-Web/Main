@@ -101,7 +101,9 @@ const hasLogin = (req) => !!req.headers.authorization || /[?&]access_token=/.tes
    기관 결과 · 영상 조각 · 필지 조사 · 해외 원천 · 파일 목록(manifest)은 정적으로 내주지 않는다 — 게이트웨이 서명 길(/tiles/pmtiles · /tiles/mvt · /tiles/sign)로만 */
 const ALLOW = /^\/landxi\/(v3|shared|assets|agent|xi|global|ops|proto)\/|^\/landxi\/data\/tiles\/(world-bm|overseas-s2)\/|^\/landxi\/data\/vector\/pmtiles\/(sido|sigungu|korea-outline|namwon-emd)\.pmtiles$/;
 /* 화면 코드 폴더 안의 결과 사본 중 공개가 아닌 것(기관 서비스 결과와 같은 내용 — 옛 화면 자료) */
-const DENY_COPY = /^\/landxi\/assets\/data\/geo\/(results\/yeosu-marine-2025-aerial|namwon-change)[\w.-]*\.geojson$/;
+/* 화면 폴더 안 결과 사본(10-22 옆문 닫기 → 바퀴 22 P4: 공개 저장소 추적도 끊음) — 결과 면 GeoJSON 은 정적 길로 내주지 않는다.
+   로그인 장면은 게이트웨이 공개 발췌(/api/v1/public/excerpt/…)를 읽는다. 행정경계 · 국토 윤곽 · 해외 공개 원천(EMS)은 그대로 */
+const DENY_COPY = /^\/landxi\/assets\/data\/geo\/(results\/[\w.-]+|namwon-change[\w.-]*|marine-debris[\w.-]*|jeju-illegal|detections-sample)\.geojson$|^\/landxi\/proto\/review\/main-ch1\/data\/(change|farm|greenhouse|marine|river-buildings|river-zone)\.geojson$/;
 const DENY = /(^|\/)\.|(^|\/)(node_modules|server|tools|docs|tests|shots|_[a-z]+)(\/|$)|\.(py|ps1|md|env|log|pid|yml|yaml|sqlite|db)$/i;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json', '.geojson': 'application/geo+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',

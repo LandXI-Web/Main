@@ -84,17 +84,16 @@ _FILES: "OrderedDict[str, dict]" = OrderedDict()
 
 
 def result_file_features(job_id: str, tenant: str = "lx") -> dict:
-    """결과 묶음 GeoJSON(E: · 작업기 마무리가 쓴 그대로) → {fid: feature}. 최근 6묶음 보관."""
-    from . import config
+    """결과 묶음 파일(E: · 작업기 마무리가 쓴 그대로 — 새 결과 FlatGeobuf · 옛 결과 GeoJSON 둘 다) → {fid: feature}. 최근 6묶음 보관."""
+    from .result_store import read_features, vector_path
     hit = _FILES.get(job_id)
     if hit is not None:
         _FILES.move_to_end(job_id)
         return hit
-    p = config.DATA_ROOT / "results" / (tenant or "lx") / f"{job_id}.geojson"
+    p = vector_path(tenant or "lx", job_id)
     out: dict = {}
-    if p.exists():
-        d = json.loads(p.read_text(encoding="utf-8"))
-        for f in d.get("features") or []:
+    if p is not None:
+        for f in read_features(p):
             fid = str((f.get("properties") or {}).get("id") or f.get("id") or "")
             if fid:
                 out[fid] = f

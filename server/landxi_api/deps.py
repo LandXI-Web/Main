@@ -5,6 +5,7 @@ import contextlib
 import os
 import json
 import secrets
+import time
 from dataclasses import dataclass, field
 
 import asyncpg
@@ -56,6 +57,30 @@ async def pool() -> asyncpg.Pool:
     return _pool
 
 
+_pool_tenant: asyncpg.Pool | None = None
+_tenant_fail_at = 0.0
+_POOL_TENANT_MAX = int(os.environ.get("LX_PG_TENANT_POOL_MAX") or 4)    # 게이트웨이 프로세스마다(4개면 최대 16 · DB 연결 한도 100)
+
+
+async def pool_tenant() -> asyncpg.Pool:
+    """기관 권한 계정(landxi_tenant · 0121 · 10-22 now21 저장보안-DB-칸막이 ⓐ 1단계) — 기관 세션(realm tenant)의 DB 접속.
+    이 계정에는 되돌릴 수 없는 칸막이(RESTRICTIVE 정책)가 붙어, app.realm 을 lx 로 바꿔도 그 기관 행 · 볼 수 있는 시군구만 보인다.
+    PG_TENANT_DSN 이 없으면(옛 설치) 앱 계정 묶음을 그대로 쓴다."""
+    global _pool_tenant, _tenant_fail_at
+    if not config.PG_TENANT_DSN or (_tenant_fail_at and time.time() - _tenant_fail_at < 60):
+        return await pool()
+    if _pool_tenant is None:
+        try:
+            _pool_tenant = await asyncpg.create_pool(config.PG_TENANT_DSN, min_size=1, max_size=_POOL_TENANT_MAX, init=_init_conn, command_timeout=60,
+                                                     server_settings={"jit": "off"})
+        except Exception as e:  # noqa: BLE001 — 기관 권한 계정에 붙지 못하면(계정 준비 전 · 비밀번호 다름) 예전 길(앱 계정)로
+            import logging
+            logging.getLogger("landxi").warning("tenant pool unavailable, using app pool: %s", type(e).__name__)
+            _tenant_fail_at = time.time()                 # 1분 동안은 다시 붙어 보지 않는다
+            return await pool()
+    return _pool_tenant
+
+
 _pool_sys: asyncpg.Pool | None = None
 
 
@@ -78,10 +103,13 @@ async def redis() -> aioredis.Redis:
 
 
 async def close():
-    global _pool, _redis, _pool_sys
+    global _pool, _redis, _pool_sys, _pool_tenant
     if _pool:
         await _pool.close()
         _pool = None
+    if _pool_tenant:
+        await _pool_tenant.close()
+        _pool_tenant = None
     if _pool_sys:
         await _pool_sys.close()
         _pool_sys = None
@@ -152,10 +180,12 @@ def require(p: Principal, *, realm: str | None = None, roles: tuple[str, ...] | 
 async def db(p: Principal | None = None, *, realm: str | None = None, tenant: str | None = None):
     """트랜잭션 + SET LOCAL app.realm / app.tenant_id (RLS). 시스템 작업은 realm='lx'."""
     r, t = (realm, tenant) if realm else (p.rls() if p else ("public", ""))
-    pl = await pool()
+    pl = await (pool_tenant() if r == "tenant" else pool())          # 기관 세션 = 기관 권한 계정(1단계) · LX · 시스템 · 게스트 = 앱 계정
+    u = (p.user_id or "") if p else ""
     async with pl.acquire() as conn:
         async with conn.transaction():
-            await conn.execute("SELECT set_config('app.realm', $1, true), set_config('app.tenant_id', $2, true)", r, t or "")
+            await conn.execute("SELECT set_config('app.realm', $1, true), set_config('app.tenant_id', $2, true), set_config('app.user_id', $3, true)",
+                               r, t or "", u)
             yield conn
 
 

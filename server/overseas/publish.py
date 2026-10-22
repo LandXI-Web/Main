@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 from landxi_api import config  # noqa: E402
+from landxi_api.result_store import read_features  # noqa: E402
 from national.common import pg  # noqa: E402
 from overseas.runner import root, settings  # noqa: E402
 
@@ -46,10 +47,11 @@ def job_files(c, model: str, cells: list[str] | None = None) -> list[Path]:
     if cells:
         q += " AND o.cell_cd = ANY(%s)"
         args.append(cells)
+    from landxi_api.result_store import vector_path
     out = []
     for (jid,) in c.execute(q, args).fetchall():
-        f = config.DATA_ROOT / "results" / "lx" / f"{jid}.geojson"
-        if f.exists():
+        f = vector_path("lx", jid)              # 새 결과 .fgb · 옛 결과 .geojson 둘 다
+        if f is not None:
             out.append(f)
     return out
 
@@ -64,7 +66,7 @@ def burn(files: list[Path], bounds, shape_hw, cls: str = "경작지") -> np.ndar
     bb = box(*bounds)
     geoms = []
     for f in files:
-        for ft in json.loads(f.read_text(encoding="utf-8"))["features"]:
+        for ft in read_features(f):
             if (ft.get("properties") or {}).get("cls") != cls:
                 continue
             g = shape(ft["geometry"])
@@ -90,7 +92,7 @@ def union_ha(c, model: str, cd: str, cls: str = "경작지") -> int | None:
     cell = prep(wkt.loads(row[0]))
     gs = []
     for f in files:
-        for ft in json.loads(f.read_text(encoding="utf-8"))["features"]:
+        for ft in read_features(f):
             if (ft.get("properties") or {}).get("cls") != cls:
                 continue
             g = shape(ft["geometry"])

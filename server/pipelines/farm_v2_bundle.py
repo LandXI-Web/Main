@@ -152,9 +152,20 @@ def put_file(name: str, split_src: str, dest: Path, tag: str = "") -> bool:
     return True
 
 
+_API_EXT: dict = {}
+
+
+def _api_ext(dest: Path) -> str:
+    """새로 굽는 영상 API 조각의 형식 — 새 묶음은 JPEG 95(10-22 now21 저장보안-파일-학습그림 ⓐ), PNG 로 만든 옛 묶음은 PNG 그대로.
+    원천(AI 허브) 그림은 지금처럼 하드링크(자리를 더 쓰지 않음 — 다시 굽지 않는다)."""
+    if dest not in _API_EXT:
+        _API_EXT[dest] = ".png" if next((dest / "images").glob("api_*.png"), None) else ".jpg"
+    return _API_EXT[dest]
+
+
 def put_api(name: str, split_src: str, dest: Path, meta: dict) -> str:
     from PIL import Image
-    out_i, out_l = dest / "images" / f"api_{name}.png", dest / "labels" / f"api_{name}.txt"
+    out_i, out_l = dest / "images" / f"api_{name}{_api_ext(dest)}", dest / "labels" / f"api_{name}.txt"
     if out_i.exists() and out_l.exists():
         return "have"
     x, y, t = meta[name]
@@ -164,7 +175,8 @@ def put_api(name: str, split_src: str, dest: Path, meta: dict) -> str:
         return "empty"
     out_i.parent.mkdir(parents=True, exist_ok=True)
     out_l.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(arr.transpose(1, 2, 0)).save(out_i)
+    im = Image.fromarray(arr.transpose(1, 2, 0))
+    im.save(out_i, "JPEG", quality=95) if out_i.suffix == ".jpg" else im.save(out_i)
     lbl = SRC / "labels" / split_src / f"{name}.txt"
     shutil.copyfile(lbl, out_l) if lbl.exists() else out_l.write_text("", encoding="utf-8")
     return "made"
@@ -281,9 +293,9 @@ def main():
         (EVAL / sub / "dataset.yaml").write_text(
             f"path: {(EVAL / sub).as_posix()}\ntrain: images\nval: images\nnames:\n" + "".join(f"  {i}: \"{v}\"\n" for i, v in enumerate(NAMES)),
             encoding="utf-8")
-    n_cmp_api = len(list((EVAL / "api" / "images").glob("*.png")))
-    ntr = len(list((OUT / "images" / "train").glob("*.png")))
-    nva = len(list((OUT / "images" / "val").glob("*.png")))
+    n_cmp_api = sum(1 for q in (EVAL / "api" / "images").glob("*") if q.suffix in (".png", ".jpg"))
+    ntr = sum(1 for q in (OUT / "images" / "train").glob("*") if q.suffix in (".png", ".jpg"))
+    nva = sum(1 for q in (OUT / "images" / "val").glob("*") if q.suffix in (".png", ".jpg"))
     nobj = {}
     for f in (OUT / "labels" / "train").glob("*.txt"):
         for ln in f.read_text(encoding="utf-8").splitlines():

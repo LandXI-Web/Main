@@ -438,6 +438,8 @@ def _drop_std(upload_ids: list[str]) -> None:
             continue
         if rec.get("std_path") and rec["std_path"] != rec["orig_path"]:
             _rm(STD.absolute(rec["std_path"]))
+            for f in STD.side_files(STD.absolute(rec["std_path"])):     # 넷째 밴드 곁 파일(드론 4밴드)
+                _rm(f)
         STD.update(rec["id"], state="removed")
 
 

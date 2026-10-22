@@ -1,0 +1,16 @@
+{"cycle": 22, "part": "P4", "at": "2026-10-22", "items": [
+ {"id": "P4-1", "title": "학습 그림 JPEG 95(새 묶음부터)", "state": "구현 확인 대기", "evidence": ["server/landxi_api/train_tiles.py", "server/landxi_api/labeling.py", "pytest test_p4_storage"]},
+ {"id": "P4-2", "title": "결과 원본 FlatGeobuf · 좌표 소수 7자리(두 형식 읽기)", "state": "구현 확인 대기", "evidence": ["server/landxi_api/result_store.py", "pytest test_p4_storage"]},
+ {"id": "P4-3", "title": "드론 4밴드 — 색 JPEG 90 + 넷째 밴드 무손실 곁 파일", "state": "구현 확인 대기", "evidence": ["server/config/imagery.yaml four_band", "남원 산내면 드론 3,659MB → 667MB", "02. 데이터/_backup/p4-20261022/drone-restd.json"]},
+ {"id": "P4-4", "title": "결과 폴더 results/{주인}/{연-월}/(옛 경로 그대로)", "state": "구현 확인 대기", "evidence": ["server/landxi_api/result_store.py"]},
+ {"id": "P4-5a", "title": "빈 작업 폴더 34,289개 지움 + 작업기 한 줄", "state": "완료", "evidence": ["02. 데이터/_backup/p4-20261022/empty-job-dirs.txt.gz", "results/lx 103,678 → 69,403"]},
+ {"id": "P4-5b", "title": "임시 폴더 운영 영상 → 이름 있는 영상 자리 · 절대 경로 48 → 1", "state": "완료", "evidence": ["02. 데이터/_backup/p4-20261022/imagery-moves.json"]},
+ {"id": "P4-5c", "title": "남원 항공 낱장 88,404개 정리(pmtiles 한 벌)", "state": "완료", "evidence": ["02. 데이터/_backup/p4-20261022/namwon_ap25_2023-tiles.txt.gz"]},
+ {"id": "P4-6", "title": "공개 저장소 shots 1,293 · 결과 사본 19 추적 끊기 · 로그인 장면 공개 발췌", "state": "완료", "evidence": [".gitignore", "landxi/v3/login/scenes.json", "GET /api/v1/public/excerpt/login-marine"]},
+ {"id": "P4-7a", "title": "빈 기관 칸 4개 정리", "state": "완료", "evidence": ["migrations/0118", "02. 데이터/_backup/p4-20261022/spaces.json"]},
+ {"id": "P4-7b", "title": "필지 전국 공통 한 벌 · 볼 수 있는 시군구", "state": "구현 확인 대기", "evidence": ["migrations/0119 · 0120", "남원 332,084 · 광주전남 748,041 그대로"]},
+ {"id": "P4-7c", "title": "기관 칸막이 DB 권한 1단계(기관 권한 계정)", "state": "구현 확인 대기", "evidence": ["migrations/0121", "realm lx 로 바꿔도 자기 범위만 · 파티션 막힘"]},
+ {"id": "P4-7d", "title": "AI 결과 도형 약 30cm 덜어 내기 — 전후 그림 3쌍 · 크기 비교", "state": "질문(now 22)", "evidence": ["shots/p4-1022/simplify/1-before.jpg(로컬)", "shots/p4-1022/simplify/compare.json(로컬)"], "numbers": {"vertices_cut_pct": 48.5, "bytes_cut_pct": 48.1, "area_change_pct": -0.007, "table_gb_now": 3.2, "table_gb_after_est": 1.66}},
+ {"id": "P4-8", "title": "채택 제안 9가지(연도 · 분류 줄 · 기관 위아래 · 공유 이력 · 결과-작업 연결 · 기관 사용량 표 · 파일-DB 짝 매주 · 해외 폴더 이름 · 저장 현황 가볍게 · 번호 이어서)", "state": "구현 확인 대기", "evidence": ["migrations/0122", "GET /ops/storage-tenants · 계정 화면 저장 용량 탭", "예약 작업 LandXI-Pair-Check"]},
+ {"id": "P4-V", "title": "바깥 주소 확인(LX 직원 · 남원 · 광주전남)", "state": "완료", "evidence": ["shots/p4-1022/verify.json(로컬)", "open_files 56곳 통과"]}
+]}

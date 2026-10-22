@@ -34,7 +34,7 @@ from rasterio.windows import Window  # noqa: E402
 
 OUT = config.DATA_ROOT / "cache" / "bench" / "throughput.json"
 HWANGDEUNG = r"E:/Auto_Label_project/data/images/익산_황등3,4지구.tif"
-AP25 = str(config.DATA_ROOT / "_work" / "namwon_ap25_2023.vrt")
+AP25 = str(config.DATA_ROOT / "imagery" / "mosaics" / "namwon_ap25_2023.vrt")
 
 
 def log(*a):

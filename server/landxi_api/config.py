@@ -41,6 +41,7 @@ REDIS_URL = get("REDIS_URL", "redis://127.0.0.1:6380/0")
 PG_DSN = get("PG_DSN", "postgresql://landxi_app@127.0.0.1:5433/landxi")
 PG_WORKER_DSN = get("PG_WORKER_DSN", "postgresql://landxi_worker@127.0.0.1:5433/landxi")
 PG_ADMIN_DSN = get("PG_ADMIN_DSN", "postgresql://postgres@127.0.0.1:5433/landxi")
+PG_TENANT_DSN = get("PG_TENANT_DSN")   # 기관 권한 계정(landxi_tenant · 0121) — 없으면 앱 계정(PG_DSN)으로 붙는다. 비밀번호는 server/.env 에만
 DEV_PASSWORD = get("DEV_PASSWORD", "landxi-dev-2026")
 SESSION_SECRET = (get("SESSION_SECRET", "change-me") or "").encode()
 VWORLD_KEY = get("VWORLD_KEY", "")

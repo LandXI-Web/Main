@@ -27,7 +27,7 @@
       "where": "여수시 · 해양쓰레기", "unit": "건 드론 탐지", "credit": "© V-World",
       "ask": "여수시 해양쓰레기 지도에 보여줘",
       "cam": { "center": [127.6842, 34.5738], "zoom": 17.4, "pitch": 38, "bearing": 24 },
-      "data": "geo:yeosu-marine-2026-drone.geojson",
+      "data": "api:/api/v1/public/excerpt/login-marine",
       "basis": "inferred", "as_of": "2026-08-25", "source": "drone 드론 영상"
     },
     {

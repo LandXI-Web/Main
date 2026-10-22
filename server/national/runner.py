@@ -228,7 +228,7 @@ def ensure_imagery(c, year: int, conn_max: int) -> str:
         "registered_by, registered_at) VALUES (%s,%s,'raw',%s,%s,'EPSG:5179',%s,%s,'국토지리정보원','never','국토지리정보원','ortho',%s,%s,'national',now()) "
         "ON CONFLICT (id) DO UPDATE SET path_internal=EXCLUDED.path_internal, layer=EXCLUDED.layer",
         (iid, json.dumps({"ko": f"국토지리정보원 항공 정사영상 {year} · 영상 API", "en": f"NGII aerial ortho {year} · tile API"}, ensure_ascii=False),
-         0.255 if year >= 2020 else 0.51, str(year), str(p), "공개 영상 API — 영상은 저장하지 않고 분석 결과만 저장",
+         0.255 if year >= 2020 else 0.51, str(year), p.relative_to(config.DATA_ROOT).as_posix(), "공개 영상 API — 영상은 저장하지 않고 분석 결과만 저장",
          json.dumps({"role": "national", "source": "ngii-air-wmts", "year": year}), year))
     return iid
 
@@ -375,11 +375,19 @@ def _finish_cell(c, asset: str, year: int, cd: str, jobs: list[str], *, test: bo
                         "AND det_id IS NOT NULL)", (jobs, jobs)).rowcount
     # 4) 중간 칩 파일은 바로 지움(결과는 결과 묶음 파일에 남음)
     freed = 0
+    from landxi_api.result_store import drop_empty, shard_dir
     for jid in jobs:
-        d = config.DATA_ROOT / "results" / "lx" / jid / "shards"
+        d = shard_dir("lx", jid)
         if d.exists():
             freed += sum(f.stat().st_size for f in d.glob("*") if f.is_file())
             shutil.rmtree(d, ignore_errors=True)
+        drop_empty(d.parent)                   # 합친 뒤 빈 작업 폴더도 지운다(10-22 now21 저장보안-정리-빈작업폴더 ⓐ — 34,302개가 남던 자리)
+    try:                                       # 조각을 지운 뒤 결과 파일 크기(저장 현황이 폴더를 훑지 않게 · 0122)
+        from landxi_api.result_store import base, size_of_base
+        for jid in jobs:
+            c.execute("UPDATE jobs SET result_bytes=%s, result_bytes_at=now() WHERE id=%s", (size_of_base(base("lx", jid)), jid))
+    except Exception as e:  # noqa: BLE001 — 칸 마무리는 막지 않는다
+        log(f"  결과 크기 적기 건너뜀: {e!r}")
     if not test:                               # 이 칸의 지금 결과 = 이 판(model_id) · 다시 시도 0 · 시작 시각 = 이번 차례 시작(속도 계산)
         c.execute("UPDATE national_cells SET state='done', done_at=now(), counts=%s, err=NULL, model_id=%s, tries=0, next_try_at=NULL, "
                   "started_at=coalesce(to_timestamp(%s), started_at) WHERE asset=%s AND year=%s AND cell_cd=%s",
@@ -741,12 +749,12 @@ def cleanup_test():
         jobs = [r[0] for r in c.execute("SELECT job_id FROM national_jobs WHERE test").fetchall()]
         n = c.execute("DELETE FROM detections WHERE job_id = ANY(%s)", (jobs,)).rowcount if jobs else 0
         c.execute("DELETE FROM national_faces WHERE cell_cd LIKE 'test:%%'")
+        from landxi_api.result_store import base, files_of_base
         for jid in jobs:
-            d = config.DATA_ROOT / "results" / "lx" / jid
-            shutil.rmtree(d, ignore_errors=True)
-            for ext in (".geojson", ".pmtiles"):
-                f = d.with_name(jid + ext)
-                if f.exists():
+            for f in files_of_base(base("lx", jid)):           # 폴더 + .fgb · .geojson · .pmtiles(옛 자리 · 새 자리 어느 쪽이든)
+                if f.is_dir():
+                    shutil.rmtree(f, ignore_errors=True)
+                elif f.exists():
                     f.unlink()
         c.execute("DELETE FROM national_jobs WHERE test")
         print(json.dumps({"jobs": len(jobs), "detections": n}))

@@ -62,13 +62,12 @@ def purge_jobs(conn, days: int, dry: bool) -> dict:
         "AND (j.result_set IS NOT NULL OR EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id))", (days,)).fetchall()
     files = rows_n = 0
     ids = []
+    from .result_store import base_of_set, files_of_base
     for jid, rs in rows:
         ids.append(jid)
         if rs and ".." not in rs:
-            base = config.DATA_ROOT / rs
-            files += _rm(base, dry)
-            for ext in RESULT_EXT:
-                files += _rm(Path(str(base) + ext), dry)
+            for f in files_of_base(base_of_set(rs)):        # 폴더 + 곁 파일(새 결과 results/{주인}/{연-월}/ · 옛 자리 둘 다)
+                files += _rm(f, dry)
     if ids:
         if dry:
             rows_n = conn.execute("SELECT count(*) FROM detections WHERE job_id = ANY(%s)", (ids,)).fetchone()[0]

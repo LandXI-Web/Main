@@ -45,7 +45,7 @@ const AX = {
 };
 const AXES = Object.keys(AX);
 const UNIT = { findings: 'parcels', points: 'count', grid: 'km2' };
-/* 'data:…' → /landxi/data/…(공용 기준 지도만 열림) · 'geo:…' → 결과 GeoJSON 폴더 · 'api:…' → 게이트웨이(공개 판 · 10-22 옆문 닫기) */
+/* 'data:…' → /landxi/data/…(공용 기준 지도만 열림) · 'geo:…' → 결과 GeoJSON 폴더(쓰지 않음 — 공개 저장소 결과 사본 추적 끊음 10-22) · 'api:…' → 게이트웨이(공개 판 · 공개 발췌 · 10-22 옆문 닫기) */
 const href = (ref) => {
   const m = /^(data|geo|global|api):(.+)$/.exec(ref || '');
   if (!m) return null;
@@ -154,6 +154,7 @@ const quantiles = (vs) => { const a = [...vs].sort((x, y) => x - y); return [0.2
 const state = { region: null, axis: null, arrived: 0, ready: false, error: null, visits: [], covered: true, kr: { n: 0, on: 0 } };
 
 function centroid(geom) {
+  if (geom.type === 'Point') return geom.coordinates;     /* 공개 발췌는 점(10-22 · 결과 면 사본을 정적 길로 읽지 않는다) */
   let c = geom.coordinates; while (Array.isArray(c[0][0])) c = c[0];
   let x = 0, y = 0; for (const p of c) { x += p[0]; y += p[1]; } return [x / c.length, y / c.length];
 }

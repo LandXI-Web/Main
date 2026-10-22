@@ -72,6 +72,7 @@ def settings() -> dict:
     st["color"] = {"compress": "JPEG", "quality": 90, **(st.get("color") or {})}
     st["value"] = {"compress": "ZSTD", "level": 9, **(st.get("value") or {})}
     st.setdefault("threads", 4)
+    st["four_band"] = {"split": True, "suffix": ".b4", **(st.get("four_band") or {})}
     og = {"keep_days": 90, "delete": True, "owned_roots": ["tenants", "cog/uploads"], **(s.get("original") or {})}
     ck = {"psnr_min_db": 38, "ssim_min": 0.96, "samples": 4, **(s.get("check") or {})}
     cv = {"inline_max_mb": 64, "big_gb": 2, "auto_max_gb": 50, "wait_minutes": 240, **(s.get("convert") or {})}
@@ -450,6 +451,12 @@ def plan(info: dict, s: dict | None = None) -> dict:
     jpeg = color and (n == 3 or (n == 4 and info.get("alpha_band") == 4))
     comp = str(info.get("compression") or "").upper() or None
     cog = str(info.get("layout") or "").upper() == "COG"
+    fb = s["standard"].get("four_band") or {}
+    if color and n == 4 and info.get("alpha_band") != 4 and fb.get("split", True):
+        # 8비트 4밴드인데 넷째 밴드가 투명 칸이 아니라 실제 값(드론 등) — 색 3밴드는 JPEG 90, 넷째 밴드는 곁 파일로 무손실
+        # (10-22 now21 저장보안-파일-드론4밴드 ⓐ · 예전: 4밴드 통째 무손실 = 원본 ECW 의 7배)
+        mask = "nodata" if info.get("nodata") is not None else "keep" if info.get("mask") == "per_dataset" else "collar"
+        return {"rule": "jpeg", "bands": [1, 2, 3], "mask": mask, "extra_band": 4}
     if jpeg:
         if cog and comp and "JPEG" in comp:
             return {"rule": "as_is", "why": "이미 COG · JPEG — 다시 압축하지 않음"}
@@ -475,6 +482,18 @@ def _cog_args(rule: dict, s: dict) -> list:
         if not rule.get("palette"):
             a += ["-co", "PREDICTOR=YES"]
     return a
+
+
+def band4_path(std_path) -> Path:
+    """표준본의 넷째 밴드 곁 파일(드론 4밴드 · 무손실 COG) — {표준본 이름}.b4.tif. 없으면 그 영상은 넷째 밴드가 없거나(3밴드 · 투명 칸) 옛 표준본(4밴드 통째)."""
+    p = Path(std_path)
+    sfx = (settings()["standard"].get("four_band") or {}).get("suffix") or ".b4"
+    return p.with_name(p.stem + sfx + ".tif")
+
+
+def side_files(std_path) -> list[Path]:
+    """표준본과 함께 지우는 곁 파일(넷째 밴드)."""
+    return [band4_path(std_path)] if std_path else []
 
 
 def _write_mask_tif(path: Path, arr) -> None:
@@ -577,13 +596,24 @@ def convert(info: dict, dst: Path, rule: dict, *, epsg: int | None = None, s: di
             if out_epsg:
                 extra += ["-a_srs", f"EPSG:{out_epsg}"]
             run(t, "gdal_translate", [*args, *extra, src, str(part)])
+        if rule.get("extra_band"):
+            # 넷째 밴드 곁 파일 — 값 영상 규칙(ZSTD · 예측) 그대로 · 같은 격자 · 같은 좌표 번호
+            b4 = band4_path(dst)
+            b4_part = b4.with_name(b4.name + ".part.tif")
+            ex = ["-b", int(rule["extra_band"])] + (["-a_srs", f"EPSG:{out_epsg}"] if out_epsg else [])
+            run(t, "gdal_translate", [*_cog_args({"rule": "lossless", "palette": False}, s), *ex, src, str(b4_part)])
+            tmp_b4 = b4_part
+        else:
+            tmp_b4 = None
     except Exception:
         part.unlink(missing_ok=True)
+        if rule.get("extra_band"):
+            band4_path(dst).with_name(band4_path(dst).name + ".part.tif").unlink(missing_ok=True)
         raise
     finally:
         for f in tmp:
             f.unlink(missing_ok=True)
-    return {"part": part, "tool": tool_word(t), "epsg": out_epsg, "collar": mask_frac}
+    return {"part": part, "tool": tool_word(t), "epsg": out_epsg, "collar": mask_frac, "band4_part": tmp_b4}
 
 
 # ═══ 확인 — 크기 · 범위 · 좌표 · 화질 표본 ═══════════════════════════════════════════
@@ -696,12 +726,29 @@ def standardize(src, dst, *, epsg: int | None = None, info: dict | None = None) 
     ck = verify(info, cv["part"], rule, cv["epsg"], s)
     if cv.get("collar") is not None:
         ck["collar"] = round(cv["collar"], 4)
+    b4p = cv.get("band4_part")
+    if b4p is not None:                                   # 넷째 밴드 곁 파일도 같은 격자인지
+        import rasterio
+        with rasterio.open(str(b4p)) as d:
+            ok4 = d.width == info["w"] and d.height == info["h"] and d.count == 1
+        ck["band4"] = {"same_grid": bool(ok4)}
+        ck["pass"] = bool(ck["pass"] and ok4)
     if not ck["pass"]:
         cv["part"].unlink(missing_ok=True)
+        if b4p is not None:
+            Path(b4p).unlink(missing_ok=True)
         raise QualityFail(ck)
     dst.unlink(missing_ok=True)
     os.replace(cv["part"], dst)
-    return {"rule": rule["rule"], "mask": rule.get("mask"), "std_path": str(dst), "std_size": _size(dst), "orig_size": info.get("size"),
+    Path(str(cv["part"]) + ".aux.xml").unlink(missing_ok=True)     # 확인하며 생긴 곁 기록(.part.tif.aux.xml)은 남기지 않는다
+    size = _size(dst)
+    if b4p is not None:
+        b4 = band4_path(dst)
+        b4.unlink(missing_ok=True)
+        os.replace(b4p, b4)
+        ck["band4"].update({"file": b4.name, "size": _size(b4), "compress": "ZSTD"})
+        size = (size or 0) + (_size(b4) or 0)               # 표준본 크기 = 색 3밴드 + 넷째 밴드(저장 사용량이 둘 다 센다)
+    return {"rule": rule["rule"], "mask": rule.get("mask"), "std_path": str(dst), "std_size": size, "orig_size": info.get("size"),
             "seconds": round(time.time() - t0, 1), "checks": ck, "tool": cv["tool"], "epsg": cv["epsg"]}
 
 
@@ -816,6 +863,8 @@ def run_record(rec_id: str, *, job_id: str | None = None, epsg: int | None = Non
         if cur.get("state") == "removed":                  # 바꾸는 사이 올린 파일을 지웠다 — 표준본도 남기지 않는다
             if Path(out["std_path"]).resolve() != src.resolve():
                 Path(out["std_path"]).unlink(missing_ok=True)
+                for f in side_files(out["std_path"]):
+                    f.unlink(missing_ok=True)
             return cur
         now = dt.datetime.now(KST)
         keep = int(s["original"]["keep_days"])

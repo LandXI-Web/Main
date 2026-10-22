@@ -40,7 +40,7 @@ def client():
 
 def sheet_aoi() -> dict:
     import geopandas as gpd
-    g = gpd.read_file(DATA / "_work" / "c01_namwon_sheets.gpkg")
+    g = gpd.read_file(DATA / "imagery" / "mosaics" / "c01_namwon_sheets.gpkg")
     g = g[g.sheet.astype(str) == SHEET].to_crs(4326)
     from shapely.geometry import mapping
     return mapping(g.geometry.iloc[0].simplify(0.00001))
@@ -66,7 +66,7 @@ def render(job_geojson: Path, out: Path, title: str, aoi: dict):
     fc = json.loads(job_geojson.read_text(encoding="utf-8")) if job_geojson.exists() else {"features": []}
     to = Transformer.from_crs(4326, 5186, always_xy=True).transform
     geoms = [(T(to, shape(f["geometry"])), f["properties"]) for f in fc["features"]]
-    ds = rasterio.open(DATA / "_work" / "namwon_ap25_2023.vrt")
+    ds = rasterio.open(DATA / "imagery" / "mosaics" / "namwon_ap25_2023.vrt")
     sb = T(to, shape(aoi)).bounds
     W = 1400
     win = from_bounds(*sb, transform=ds.transform)

@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
 from pipelines._common import log  # noqa: E402
 
-WORK = config.DATA_ROOT / "_work"
+WORK = config.DATA_ROOT / "imagery" / "mosaics"      # 영상 표가 가리키는 연결 파일 자리(10-22 — 예전 _work 임시 폴더에서 옮김)
 INDEX = WORK / "c01_index.gpkg"
 
 

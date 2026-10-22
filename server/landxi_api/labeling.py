@@ -42,6 +42,30 @@ from .training import ROOT, _meta_of, write_lists
 
 router = APIRouter()
 PX = 512
+
+
+def _img_ext(root: Path) -> str:
+    """묶음의 그림 형식 — 새 묶음은 JPEG 95(.jpg · 10-22 now21 저장보안-파일-학습그림 ⓐ), PNG 로 시작한 옛 묶음은 PNG 그대로(옛 묶음은 건드리지 않음)."""
+    try:
+        for f in (root / "pool").iterdir():
+            if f.suffix == ".png":
+                return ".png"
+    except OSError:
+        pass
+    return ".jpg"
+
+
+def _pool_file(root: Path, name: str) -> Path:
+    """그림 한 장(새 .jpg · 옛 .png 어느 쪽이든)."""
+    j = root / "pool" / f"{name}.jpg"
+    return j if j.exists() else root / "pool" / f"{name}.png"
+
+
+def _drop_train_copies(root: Path, name: str) -> None:
+    for sp in ("train", "val"):
+        for ext in (".png", ".jpg"):
+            (root / "data" / "images" / sp / f"{name}{ext}").unlink(missing_ok=True)
+        (root / "data" / "labels" / sp / f"{name}.txt").unlink(missing_ok=True)
 MAX_IMAGES = 200            # 한 묶음 그림 수 한도(올린 묶음과 같은 200장)
 ADD_MAX = 20                # 한 번에 더하는 그림
 MAX_SHAPES = 400
@@ -212,6 +236,7 @@ def _cut(imagery_id: str, gsd: float, n: int, used: set, seed: str, pool: Path, 
     minx, miny, maxx, maxy = g.bounds
     rng = random.Random(seed)
     out, tried = [], 0
+    ext = _img_ext(pool.parent)
     while len(out) < n and tried < n * 12:
         tried += 1
         gx = math.floor(rng.uniform(minx, maxx) / size)
@@ -225,7 +250,7 @@ def _cut(imagery_id: str, gsd: float, n: int, used: set, seed: str, pool: Path, 
             continue
         seq = first_seq + len(out)
         name = f"{sid}_{seq:04d}"
-        path = pool / f"{name}.png"
+        path = pool / f"{name}{ext}"
         try:
             ok = _crop_save(imagery_id, epsg, x0, y0 + size, size, PX, path)
         except Exception:  # noqa: BLE001 — 그 자리 영상을 읽지 못함 → 다른 자리
@@ -296,7 +321,7 @@ async def image(lid: str, request: Request, size: int = 0):
     _lx(request)
     async with db(realm="lx") as conn:
         x = await _img(conn, lid)
-    f = Path(x["dir"]) / "pool" / f"{x['name']}.png"
+    f = _pool_file(Path(x["dir"]), x["name"])
     if not f.exists():
         raise ApiError("not_found", "그림 파일이 없습니다")
     if size and size < PX:
@@ -309,7 +334,7 @@ async def image(lid: str, request: Request, size: int = 0):
                 im.save(b, "JPEG", quality=78)
                 return b.getvalue()
         return Response(await run_in_threadpool(small), media_type="image/jpeg", headers={"cache-control": "private, max-age=3600"})
-    return FileResponse(f, media_type="image/png", headers={"cache-control": "private, max-age=3600"})
+    return FileResponse(f, media_type="image/jpeg" if f.suffix == ".jpg" else "image/png", headers={"cache-control": "private, max-age=3600"})
 
 
 def _clean_shapes(raw, n_cls: int) -> list[dict]:
@@ -344,10 +369,8 @@ def _clean_shapes(raw, n_cls: int) -> list[dict]:
 def _sync_files(root: Path, name: str, split: str, state: str, shapes: list[dict], names: list[str]) -> dict:
     """라벨 완료면 학습 폴더에 그림(하드링크) + 테두리 줄(YOLO 다각형 · 사각형도 네 점), 아니면 학습 폴더에서 뺀다 → 다시 센다 · 학습 목록."""
     import os
-    src = root / "pool" / f"{name}.png"
-    for sp in ("train", "val"):
-        (root / "data" / "images" / sp / f"{name}.png").unlink(missing_ok=True)
-        (root / "data" / "labels" / sp / f"{name}.txt").unlink(missing_ok=True)
+    src = _pool_file(root, name)
+    _drop_train_copies(root, name)
     if state == "done" and src.exists():
         di = root / "data" / "images" / split
         dl = root / "data" / "labels" / split
@@ -582,10 +605,8 @@ def _chip_shapes(geo: list[dict], epsg: int, x0: float, y1: float, size: float) 
 def _write_chip(root: Path, name: str, split: str, shapes: list[dict], done: bool):
     """한 그림의 학습 폴더 파일(그림 하드링크 + 라벨 줄) — 다시 세기는 부른 쪽이 한 번(_recount_set)"""
     import os
-    src = root / "pool" / f"{name}.png"
-    for sp in ("train", "val"):
-        (root / "data" / "images" / sp / f"{name}.png").unlink(missing_ok=True)
-        (root / "data" / "labels" / sp / f"{name}.txt").unlink(missing_ok=True)
+    src = _pool_file(root, name)
+    _drop_train_copies(root, name)
     if not done or not src.exists():
         return
     di, dl = root / "data" / "images" / split, root / "data" / "labels" / split
@@ -837,10 +858,11 @@ async def map_area(pid: str, iid: str, body: dict, request: Request):
             from PIL import Image
             from .train_tiles import _crop_save
             made = []
+            ext = _img_ext(root)
             for k, (gx, gy) in enumerate(cells):
                 seq = first + k
                 name = f"{s['id']}_{seq:04d}"
-                path = root / "pool" / f"{name}.png"
+                path = root / "pool" / f"{name}{ext}"
                 x0, y1 = gx * size, (gy + 1) * size
                 try:
                     ok = _crop_save(iid, epsg, x0, y1, size, PX, path)

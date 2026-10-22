@@ -176,6 +176,11 @@ def load(D, geoms):
     with psycopg.connect(config.PG_ADMIN_DSN, autocommit=False) as conn:
         cur = conn.cursor()
         # 1) 필지
+        # 필지는 전국 공통 한 벌(10-22) — 이 파일에 없는 시군구 필지가 있으면 통째로 비우지 않는다(이 옛 적재기는 한 시군구 정본 파일만 다룬다)
+        mine = sorted({str(x)[:5] for x in D["pnu"] if x})
+        other = cur.execute("SELECT count(*) FROM survey_parcels WHERE NOT (sgg_cd = ANY(%s))", (mine,)).fetchone()[0]
+        if other:
+            raise SystemExit(f"survey_parcels 에 다른 시군구 필지 {other:,}개 — 전국 공통 필지를 비우지 않습니다(survey/nation.py 로 적재)")
         cur.execute("TRUNCATE survey_parcels")
         t1 = time.time()
         with cur.copy(f"COPY survey_parcels ({', '.join(PCOLS)}, tenant_id, geom) FROM STDIN") as cp:
@@ -191,7 +196,7 @@ def load(D, geoms):
                     if isinstance(v, str) and v == "" and c in ("chg", "flags", "sus_rule", "sus_priority"):
                         v = None if c != "chg" else ""
                     vals.append(v)
-                cp.write_row(vals + [S.TENANT, to_wkb(set_srid(g, 4326), hex=True, include_srid=True) if g is not None else None])
+                cp.write_row(vals + ["lx", to_wkb(set_srid(g, 4326), hex=True, include_srid=True) if g is not None else None])
         log(f"survey_parcels {len(D):,}행 COPY {time.time() - t1:.1f}s")
         # 2) 의심(suspects) — 상태·배정 열 보존 upsert
         susp["id"] = [S.finding_id(r, p) for r, p in zip(susp["rule"], susp["pnu"])]

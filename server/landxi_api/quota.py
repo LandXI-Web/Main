@@ -117,9 +117,10 @@ async def storage_of(tenant: str) -> dict:
             " + (SELECT coalesce(sum(pg_column_size(d.*)),0) FROM detections d WHERE d.job_id = ANY($2::text[]))"
             " + (SELECT coalesce(sum(pg_column_size(x.*)),0) FROM index_results x WHERE x.job_id = ANY($2::text[]))",
             tenant, [j["id"] for j in jobs])
+    from .result_store import base_of_set, files_of_base, rel
     for j in jobs:
         base = (j["result_set"] or f"results/{j['tenant_id']}/{j['id']}").rstrip("/")
-        rels |= {base, base + ".geojson", base + ".pmtiles"}
+        rels |= {rel(f) for f in files_of_base(base_of_set(base))}     # 새 결과 results/{주인}/{연-월}/ · .fgb 포함(바퀴 22 P4)
     for r in pub:
         if r["path"]:
             rels.add(r["path"])

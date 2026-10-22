@@ -71,7 +71,8 @@ async def tenant_sggs(ctx) -> list[str]:
             rows = await conn.fetch("SELECT DISTINCT substr(pnu,1,5) s FROM survey_findings WHERE pnu IS NOT NULL")
             got = [r["s"] for r in rows if r["s"]]
             if not got:
-                rows = await conn.fetch("SELECT DISTINCT substr(pnu,1,5) s FROM survey_parcels WHERE tenant_id=$1 LIMIT 50", p.tenant_id)
+                # 필지는 전국 공통 한 벌 — 기관 세션의 RLS 가 볼 수 있는 시군구만 남긴다(10-22 now21 저장보안-DB-필지 ⓐ)
+                rows = await conn.fetch("SELECT DISTINCT sgg_cd s FROM survey_parcels WHERE sgg_cd IS NOT NULL LIMIT 50")
                 got = [r["s"] for r in rows if r["s"]]
     except Exception:
         return []

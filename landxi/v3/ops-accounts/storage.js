@@ -142,6 +142,28 @@ export async function mountStorage(card, { mine = () => true, onChange } = {}) {
         .map(([t, c]) => h('th', { class: c || '', text: t })))), tbody)),
     h('p.acs-note', {}, h('span', { text: '빈 칸이면 기본 할당, 값을 적으면 그 사람만 개별 할당입니다.' }), ' ', h('span', { text: '할당을 넘어도 막지 않고 알립니다.' })));
 
+  /* ⑤ 기관별 저장 사용량 · 다음에 지울 것(10-22 채택 제안 · 저장 현황 가볍게 — DB 에 적힌 크기만 · 폴더를 훑지 않음) */
+  const ten = h('div.acs-tbl', { hidden: true });
+  const ymd = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? `${m[1]}.${+m[2]}.${+m[3]}` : ''; };
+  api('/ops/storage-tenants').then((T) => {
+    const items = T.items || [];
+    if (!items.length || !mine()) return;
+    const cellB = (e) => h('td.num.nw', { text: e ? size(Number(ev(e)) || 0) : '—' });
+    const body = h('tbody', {}, ...items.map((r) => h('tr', {},
+      h('td.nw', {}, h('b.acc-b', { text: r.tenant === 'lx' ? 'LX' : (r.name || r.tenant) })),
+      cellB(r.originals), cellB(r.standard), cellB(r.results), cellB(r.space), h('td.num.nw', {}, h('b', { text: size(Number(ev(r.total)) || 0) })),
+      h('td', {}, (r.next_delete || []).length
+        ? h('span.acs-m', { text: r.next_delete.map((x) => `${ymd(x.on)} ${x.what} ${x.n}건`).join(' · ') })
+        : h('span.acs-m', { text: '없음' })))));
+    ten.replaceChildren(
+      h('div.acs-h', {}, h('h2', {}, '기관별 저장 사용량', h('small', { text: `기관 ${items.length} · ${when(T.as_of)}` }))),
+      h('div.k-table-w', {}, h('table.k-table', {},
+        h('thead', {}, h('tr', {}, ...[['기관'], ['올린 영상 원본', 'num'], ['표준본', 'num'], ['분석 결과', 'num'], ['기관 공간', 'num'], ['합계', 'num'], ['다음에 지울 것']]
+          .map(([t, c]) => h('th', { class: c || '', text: t })))), body)),
+      h('p.acs-note', {}, h('span', { text: '원본은 표준본을 확인한 뒤 정해진 날에 지우고, 표준본은 남깁니다.' })));
+    ten.hidden = false;
+  }).catch(() => { /* 표 하나만 빠진다 — 탭은 그대로 */ });
+
   /* ④ 서랍 — 증량 신청 한 건(승인 · 거절) */
   const dr = h('aside.acs-dr', { 'aria-label': '증량 신청' });
   function pick(r) {
@@ -201,7 +223,7 @@ export async function mountStorage(card, { mine = () => true, onChange } = {}) {
 
   card.innerHTML = '';
   card.dataset.tab = 'storage';
-  card.append(h('div.acs', {}, h('div.acs-l', {}, ov, set, tbl), dr));
+  card.append(h('div.acs', {}, h('div.acs-l', {}, ov, set, tbl, ten), dr));
   panes(dr, { edge: 'left', key: 'storage', cssVar: '--acs-dr', min: 320, max: 640, otherMin: 560, below: 1201 });   // 칸 크기 조절(원칙 263)
   pick(picked && reqs.find((x) => x.id === picked.id) || reqs[0] || null);
 }

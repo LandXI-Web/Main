@@ -267,6 +267,9 @@ def vworld_parcels(rg: dict) -> tuple[list[dict], dict]:
 LOAD_COLS = ("pnu", "pnu_src", "jimok", "jiga", "wkt")
 
 
+PARCEL_OWNER = "lx"      # 필지는 전국 공통 한 벌(10-22 now21 저장보안-DB-필지 ⓐ) — 기관은 '볼 수 있는 시군구'(tenant_regions · RLS)로 본다
+
+
 def load_parcels(conn, rg: dict, tenant: str, progress=None) -> dict:
     """그 시군구 필지 → survey_parcels(정본 'canon' 행은 그대로). 반환 실측."""
     t0 = time.time()
@@ -351,7 +354,7 @@ def load_parcels(conn, rg: dict, tenant: str, progress=None) -> dict:
                ri = EXCLUDED.ri, jibun = EXCLUDED.jibun, jimok = EXCLUDED.jimok, jimok_nm = EXCLUDED.jimok_nm, area_m2 = EXCLUDED.area_m2,
                jiga = coalesce(EXCLUDED.jiga, sp.jiga), geom = EXCLUDED.geom
         WHERE sp.src IS DISTINCT FROM 'canon'""",
-        {"t": tenant, "sgg": cur, "src": src, "asof": as_of, "full": sido_sgg})
+        {"t": PARCEL_OWNER, "sgg": cur, "src": src, "asof": as_of, "full": sido_sgg})
     m["inserted"] = res.rowcount
     m["insert_s"] = round(time.time() - t1, 1)
     m["src"] = src

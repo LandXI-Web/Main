@@ -549,7 +549,7 @@ async def storage(request: Request):
     async with db(realm="lx") as conn:
         ts = [x["id"] for x in await conn.fetch("SELECT id FROM tenants ORDER BY id")]
     for t in ts:
-        by_tenant[t] = env(await du_gb("results" if t == "lx" else f"results/{t}"), "GB", "measured", f"du results/{t if t != 'lx' else ''}")
+        by_tenant[t] = env(await du_gb(f"results/{t}"), "GB", "measured", f"du results/{t}")     # lx 몫에 다른 기관 폴더를 넣지 않는다(10-22)
     return {"volumes": vols, "by_tier": {"raw": env(None, "GB", "measured", "-", "원본은 LX_DATA_ROOT 밖 · 목록만"),
                                          "tile": env(tile, "GB", "measured", "du tiles/ (60s 캐시)"),
                                          "result": env(round(res, 3), "GB", "measured", "du results/ + vector/ (60s 캐시)")},
@@ -771,7 +771,14 @@ async def db_status(request: Request):
         except Exception:  # noqa: BLE001 — 질의 기록 장치가 아직 없는 DB
             slow = None
     ok = bool(bk) and not bk["failed"] and bk["age_h"] <= 30
-    return {"ok": ok and rt.get("ok") is not False,
+    pc = None                                          # 파일과 DB 짝 맞추기(매주 · server/ops/pair_check.py · 10-22 채택)
+    try:
+        h = await (await redis()).hgetall("ops:paircheck")
+        if h.get("at"):
+            pc = {"at": h["at"], "mismatch": env(int(h.get("mismatch") or 0), "count", "measured", "pair_check(장부 ↔ 파일 · 매주)")}
+    except Exception:  # noqa: BLE001
+        pc = None
+    return {"ok": ok and rt.get("ok") is not False, "pair_check": pc,
             "backup": {"ok": bool(st.get("ok")), "at": st.get("last_ok_at"), "age_h": env(bk["age_h"] if bk else None, "h", "measured", "DB 백업 상태 파일(마지막 성공 뒤)"),
                        "size": env(st.get("size_mb"), "MB", "measured", "DB 백업 상태 파일")},
             "restore_test": {"ok": rt.get("ok"), "at": rt.get("at")},

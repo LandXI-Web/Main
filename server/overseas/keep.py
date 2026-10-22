@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 from overseas import s2  # noqa: E402
-from overseas.runner import root, stack_path  # noqa: E402
+from overseas.runner import root, stack_dir, stack_path  # noqa: E402
 
 COUNTRY, YEAR = "kgz", 2025
 PER_OBLAST = 2
@@ -103,7 +103,7 @@ def extract(cd: str) -> bool:
 def watch():
     """작업기와 함께 — 30초마다 다 된 합성을 찾아 참색 판을 뜬다. 작업기가 끝(all_done · paused)이면 끝."""
     while True:
-        w = root(COUNTRY, YEAR) / "work"
+        w = stack_dir(COUNTRY, YEAR)                     # 달별 합성 자리(이름 있는 영상 자리 · 10-22)
         for mp in sorted(w.glob("*.json")) if w.exists() else []:
             cd = mp.stem
             try:
@@ -245,7 +245,7 @@ def finish():
     for d in (kdir() / "cells").glob("*"):
         freed += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
         shutil.rmtree(d, ignore_errors=True)
-    w = root(COUNTRY, YEAR) / "work"
+    w = stack_dir(COUNTRY, YEAR)
     for f in w.glob("*.tif") if w.exists() else []:
         try:
             freed += f.stat().st_size
@@ -303,7 +303,7 @@ def patch(cds: list[str]):
         if d.exists():
             freed += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
             shutil.rmtree(d, ignore_errors=True)
-    for f in (root(COUNTRY, YEAR) / "work").glob("*.tif"):
+    for f in stack_dir(COUNTRY, YEAR).glob("*.tif"):
         try:
             freed += f.stat().st_size
             f.unlink()

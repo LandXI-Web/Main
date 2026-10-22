@@ -34,3 +34,28 @@ server/logs/
 server/runs/
 server/p.out
 dbg2/
+
+# 바퀴 22 P4 (2026-10-22 now21 저장보안-공개저장소사본 ⓐ · 정리-shots추적끊기 ⓐ) — 추적만 끊었다(내 컴퓨터 파일은 그대로).
+# 화면 폴더 안 결과 사본(기관 서비스 결과 · 변화 · 해양 · 미얀마 피해 등)은 공개 저장소에 올리지 않는다 — 화면은 게이트웨이(서명 · 공개 발췌)로 읽는다
+landxi/assets/data/geo/results/
+landxi/assets/data/geo/namwon-change*.geojson
+landxi/assets/data/geo/marine-debris*.geojson
+landxi/assets/data/geo/jeju-illegal.geojson
+landxi/assets/data/geo/detections-sample.geojson
+landxi/global/data/mm-meiktila-damage.geojson
+landxi/proto/review/main-ch1/data/change.geojson
+landxi/proto/review/main-ch1/data/farm.geojson
+landxi/proto/review/main-ch1/data/greenhouse.geojson
+landxi/proto/review/main-ch1/data/marine.geojson
+landxi/proto/review/main-ch1/data/river-buildings.geojson
+landxi/proto/review/main-ch1/data/river-zone.geojson
+# 지도 · 영상 · 결과 원본 형식(데이터는 02. 데이터 에만)
+*.pmtiles
+*.fgb
+*.gpkg
+*.ecw
+*.jp2
+*.vrt
+*.tif
+*.tiff
+!server/fixtures/**/*.tif

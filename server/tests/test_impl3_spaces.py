@@ -159,11 +159,12 @@ def test_new_round_makes_new_edition_and_notice(live):
 
 
 def test_light_space_cells_exist(live):
-    """가벼운 칸 — 기관마다 공간 줄 · 자료 칸(스키마) · 저장 폴더."""
+    """가벼운 칸 — 기관마다 공간 줄 · 저장 폴더. 비어 있던 자료 칸(스키마)은 정리했다(10-22 now21 저장보안-DB-빈칸 ⓐ · 0118)."""
     for t in ("namwon", "gwangju-jeonnam"):
         sp = _sql("SELECT mode, db_schema, folder FROM spaces WHERE tenant_id=%s", (t,))
         assert sp and sp[0] == "light"
-        assert _sql("SELECT 1 FROM information_schema.schemata WHERE schema_name=%s", (sp[1],))
+        assert sp[1] is None
+        assert not _sql("SELECT 1 FROM information_schema.schemata WHERE schema_name=%s", ("space_" + t.replace("-", "_"),))
         assert (config.DATA_ROOT / sp[2]).is_dir()
 
 
