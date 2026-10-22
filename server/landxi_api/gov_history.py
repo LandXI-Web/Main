@@ -24,7 +24,8 @@ CARD_RE = re.compile(r"^card-[a-z0-9-]{2,40}$")
 KIND_KO = {"publish": "결과 공개", "analysis": "AI 분석", "check": "확인 기록", "review": "검토 요청", "request": "분석 요청",
            "shoot": "촬영 요청", "download": "내려받기"}
 ORDER = list(KIND_KO)
-RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
+from survey.db import COUNT_RULE_IDS  # noqa: E402
+RULES = list(COUNT_RULE_IDS)          # R1–R6 + 대장 대조 L-* — 지역 숫자 · 대표 수치 요약과 같은 범위(10-22 현장확인숫자 ⓐ)
 FMT_KO = {"geojson": "지도 파일", "parcels": "필지 엑셀", "summary": "요약", "report": "보고서 한글 문서", "report_multi": "보고서 한글 문서",   # farm_more.FMT_KO 와 같은 이름표
           "report_xlsx": "보고서 엑셀", "stats": "통계 엑셀", "history": "이력 엑셀", "feedcrop": "사료작물 대장 대조 엑셀", "ledger_compare": "대장과 AI 결과 엑셀"}
 
@@ -281,7 +282,7 @@ async def stats(request: Request, card: str, period: str = "all"):
         return {"card": card, "survey": False, "as_of": now_iso()}
     now = dt.datetime.now(KST)
     since = {"year": dt.datetime(now.year, 1, 1, tzinfo=KST), "month": dt.datetime(now.year, now.month, 1, tzinfo=KST)}.get(period)
-    src = "실태조사(AI × 연속지적 규칙 R1–R6) · 상태 기록"
+    src = "실태조사(AI × 연속지적 규칙 · 대장 대조) · 상태 기록"
     sw, sa = await card_scope(card, sggs, 2)                    # 이 서비스의 필지 대조 행만(카드마다 따로) — $2..$4
     sw3 = sw.replace("$4", "$5").replace("$3", "$4").replace("$2", "$3")         # 같은 조건 · $3..$5
     async with db(p) as c:                                       # 기관 세션 연결 — 관할 밖 0(RLS)

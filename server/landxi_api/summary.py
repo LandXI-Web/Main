@@ -11,8 +11,10 @@
   detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases · 작업 결과 세트 results/{기관}/{작업} → 작업)의 detections 행 수
   suspect        의심 필지     = 그 항목 카드 판의 survey_counts(sgg, card).suspect(AI × 연속지적 규칙 R1–R6 · 적재 때 확정 · 대장 규칙 제외)
                  — 카드마다 따로(모델-표기 ⓐ). 카드 판이 없고 규칙을 고르지 않은(전 규칙) 카드면 시군구 실태조사.
-  field_check    현장 확인 필요 = survey_counts(sgg).field_check — R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지 수
-  review_pending 결과 확인 대기 = survey_counts(sgg).review_pending — R1–R6 의심 중 우선순위 A · 상태 open 인 건수(아직 배정·판정 전)
+  field_check    현장 확인 필요 = survey_counts(sgg).field_check — 의심 중(R1–R6 + 대장 대조 L-* · 겹침 한 번) 우선순위 A · 상태 open|assigned 인 서로 다른 필지 수
+  review_pending 결과 확인 대기 = survey_counts(sgg).review_pending — 같은 범위 · 우선순위 A · 상태 open 인 건수(아직 배정·판정 전)
+  한 지역(기관 × 시군구)에 실태조사 항목이 여럿이면 카드 판 항목은 제 판 값, 나머지(시군구 실태조사 · 대장 대조 · 겹침 차이)는 바탕 항목 하나에 —
+  항목을 더하면 지역 숫자와 같다(_region_share · 10-22 현장확인숫자 ⓐ).
   실태조사 세 값은 /survey/stats · 에이전트(survey_stats · summary_lookup) · 보고서와 같은 함수(landxi_api.survey.survey_counts)에서 온다.
   적재 중(building)이면 값 None + note '집계 중' + survey_state 'building'.
   reports        기관 신고     = 열린(open) 기관 신고(feedback · 종류 무관) 건수
@@ -241,11 +243,11 @@ async def _items(conn, tenant: str | None) -> list[dict]:
             m = cvm.get(d["card_version_id"]) if d["card_version_id"] else None
             return isinstance(m, dict) and (_has_parcel(m) or bool(m.get("rules")))
         parcel = any(_has_parcel(x["d"]["modules"]) or _cv_parcel(x["d"]) for x in rs if x["d"]["stage"] != "draft")
-        sv_here = None
+        sv_here, sv_kind = None, None
         if parcel and sgg:
-            sv_here = scp["card"].get((sgg, cid)) or scp["card"].get((rs[0]["d"]["sgg_cd"], cid))
+            sv_here, sv_kind = scp["card"].get((sgg, cid)) or scp["card"].get((rs[0]["d"]["sgg_cd"], cid)), "card"
             if sv_here is None and not last_rules.get(cid):
-                sv_here = scp["base"].get(sgg) or scp["base"].get(rs[0]["d"]["sgg_cd"])
+                sv_here, sv_kind = scp["base"].get(sgg) or scp["base"].get(rs[0]["d"]["sgg_cd"]), "base"
             if sv_here is not None and (sv_here.get("tenant_id") != t or sv_here["state"] not in ("done", "building")):
                 sv_here = None
         busy = bool(sv_here) and sv_here["state"] == "building"
@@ -280,10 +282,12 @@ async def _items(conn, tenant: str | None) -> list[dict]:
                       **({"survey_state": sv_here["state"]} if sv_here else {}),
                       "imagery": _imagery_of(facts["img"], sgg), "metrics": m,
                       "deploy_ids": [x["d"]["id"] for x in rs],
-                      "_sets": set(res_sets), "_survey": bool(sv_here), "_rank": min(STAGE_RANK.get(s, 5) for s in live) if live else 9,
+                      "_sets": set(res_sets), "_survey": bool(sv_here), "_sv_kind": sv_kind if sv_here else None, "_rank": min(STAGE_RANK.get(s, 5) for s in live) if live else 9,
                       "_public": any(not x["d"]["test"] and x["d"]["stage"] in ("ga", "canary") and (x["d"]["snapshot_current"] or x["d"]["scale"])
                                      for x in rs),
                       "_prev": (reg or {}).get("prev_cd")})
+
+    _region_share(items, survey)
 
     # 4) 기관 신고 — 한 신고 = 한 항목
     rep: dict[int, int] = {}
@@ -303,6 +307,36 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         it["metrics"]["reports"] = _metric("reports", rep.get(i, 0), as_of=now)
     items.sort(key=lambda it: (it["tenant"] or "", it["_rank"], it["card"] or "", it["sgg_cd"] or ""))
     return items
+
+
+SURVEY_KEYS = ("suspect", "field_check", "review_pending")
+
+
+def _region_share(items: list[dict], region: dict) -> None:
+    """한 지역(기관 × 시군구)의 실태조사 항목들을 더하면 그 지역 숫자(survey_counts 시군구 — 대장 대조 포함 · 겹침 한 번)가 되게 나눈다
+    (10-22 현장확인숫자 ⓐ · 원칙 3 숫자 한 출처). 카드 판 항목은 제 판 값 그대로(서비스 몫), 나머지 — 시군구 실태조사 · 대장 대조 ·
+    겹침 한 번 뺀 차이 — 는 그 지역 '바탕' 항목 하나에만 붙는다: 시군구 실태조사로 잇는 항목(규칙을 고르지 않은 카드) → 없으면 그 지역 첫 항목.
+    지역 하드코딩 없음 — 모든 기관 · 시군구에 같은 식."""
+    groups: dict[tuple, list[dict]] = {}
+    for it in items:
+        if it.get("_sv_kind") and it.get("sgg_cd"):
+            groups.setdefault((it["tenant"], it["sgg_cd"]), []).append(it)
+    for key, its in groups.items():
+        reg = region.get(key)
+        if not reg or reg.get("tenant_id") != key[0] or any(i.get("survey_state") == "building" for i in its) or reg["state"] == "building":
+            continue
+        its.sort(key=lambda i: (i["_sv_kind"] != "base", i["_rank"], i["card"] or ""))
+        lead = its[0]
+        for k in SURVEY_KEYS:
+            if reg.get(k) is None:
+                continue
+            card_sum = sum(int(i["metrics"][k]["value"] or 0) for i in its if i["_sv_kind"] == "card")
+            rest = max(int(reg[k]) - card_sum, 0)            # 음수 = 카드 판끼리 겹침(같은 필지가 두 서비스) — 0 으로 둔다
+            for i in its:
+                if i["_sv_kind"] == "base":
+                    i["metrics"][k] = {**i["metrics"][k], "value": rest if i is lead else 0}
+            if lead["_sv_kind"] == "card":
+                lead["metrics"][k] = {**lead["metrics"][k], "value": int(lead["metrics"][k]["value"] or 0) + rest}
 
 
 def _filter(items: list[dict], tenant: str | None, region: str | None, card: str | None) -> list[dict]:

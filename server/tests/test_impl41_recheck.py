@@ -26,7 +26,7 @@ def test_heavy_area_single_flight_and_stale(monkeypatch):
     async def fake_redis():
         return r
 
-    async def slow_compute(ms, t):
+    async def slow_compute(ms, t, ttl=None):     # quota._area_compute(ms, t, ttl) — 10-21 b8770d6f
         calls.append(t)
         await asyncio.sleep(0.2)
         v = 100.0 + len(calls)
@@ -62,7 +62,7 @@ def test_heavy_area_reads_redis_after_restart(monkeypatch):
     async def fake_redis():
         return r
 
-    async def never(ms, t):
+    async def never(ms, t, ttl=None):
         raise AssertionError("기억이 새것이면 다시 세지 않는다")
 
     monkeypatch.setattr(Q, "redis", fake_redis)

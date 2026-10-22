@@ -113,7 +113,7 @@ def test_retrain_basis_and_reason_reach_admin(live, tok, made):
     assert b and 1 <= len(b["points"]) <= 4 and all(x["at"] for x in b["points"])
     assert [x["at"] for x in b["points"]] == sorted(x["at"] for x in b["points"])
     assert {"reviews", "imagery", "before", "thin", "trained_at", "now"} <= set(b)
-    assert b["before"] == "결과 확인 남음"                                   # 앞 단계 남음 = 막힌 곳과 같은 말
+    assert b["before"] is None and p["blocked"] == []                       # AI 분석 · 결과 확인은 해 보면 좋은 단계(projects.OPTIONAL · 10-09 원칙 203) — 건너뛰어도 '앞 단계 남음' 칩 없음(막힌 곳과 같은 판정)
     r = httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(tok["staff"]), json={"reason": "성능 보완"}, timeout=60)
     assert r.status_code == 201, r.text
     p2 = r.json()
@@ -146,8 +146,12 @@ def test_profile_self_edit_and_storage(live, tok):
         assert me["login"] == "test@lx.or.kr" and me["role_ko"] == "LX 직원"
         st = me["storage"]
         dflt = httpx.get(B + "/accounts/storage-default", headers=H(tok["admin"]), timeout=30).json()["quota_gb"]["value"]
-        assert st["quota_gb"]["value"] == dflt and st["quota_own"] is False      # 따로 정하지 않았으면 기본 할당(처음 값 50 GB · 용량-1)
         c = pg()
+        own = c.execute("SELECT storage_quota_gb FROM lx_users WHERE id=%s", (STAFF_ID,)).fetchone()[0]
+        if own is None:
+            assert st["quota_gb"]["value"] == dflt and st["quota_own"] is False      # 따로 정하지 않았으면 기본 할당(처음 값 50 GB · 용량-1)
+        else:                                                                       # LX 관리자가 이 계정에 따로 정한 할당(운영 값 — 10-22 test@ 100 GB)
+            assert st["quota_gb"]["value"] == float(own) and st["quota_own"] is True
         want = c.execute("SELECT coalesce(sum((SELECT coalesce(sum(bytes),0) FROM project_links l WHERE l.project_id=p.id) + "
                          "(SELECT coalesce(sum(bytes),0) FROM project_notes n WHERE n.project_id=p.id AND n.removed_at IS NULL)),0), count(*) "
                          "FROM projects p WHERE p.lead_id=%s", (STAFF_ID,)).fetchone()

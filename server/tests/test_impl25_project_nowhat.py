@@ -52,7 +52,7 @@ def test_create_without_task(tok, made):
 
 def test_finds_from_uploaded_classes(tok, made):
     c = pg()
-    s = c.execute("SELECT id, names FROM train_samples WHERE jsonb_typeof(names) = 'array' AND jsonb_array_length(names) > 0 "
+    s = c.execute("SELECT id, names FROM train_samples WHERE jsonb_typeof(names) = 'array' AND jsonb_array_length(names) > 0 AND coalesce(n_images, 0) > 0 "
                   "ORDER BY created_at DESC LIMIT 1").fetchone()
     if not s:
         c.close()

@@ -117,7 +117,7 @@ def test_new_class_flow(tok):
     assert c["status"] == "approved" and c["parent"]["id"] == gh["id"] and c["test"] and r.json()["existing"] is False
     assert sql("SELECT state, how FROM card_classes WHERE card_id='card-5e85a9' AND class_id=%s", c["id"]) == [("learning", "split")]
     rt = next(r for r in get(a_, "/retrain")["services"] if r["card_id"] == "card-5e85a9")
-    assert [d["name"] for d in rt["split"]] == ["연동 비닐하우스"] and "pending" not in rt
+    assert "연동 비닐하우스" in [d["name"] for d in rt["split"]] and "pending" not in rt   # 실제로 나누는 중인 세부(예: 묘지)가 함께 있을 수 있다
     # 같은 이름(다른 이름 · 이름표 포함)을 쓰면 그 클래스(새로 만들지 않음)
     again = call(s_, "POST", "/classes", {"name": "연동 비닐하우스", "kind": "object", "test": True}).json()
     assert again["existing"] is True and again["class"]["id"] == c["id"]

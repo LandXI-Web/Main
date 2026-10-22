@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import contextlib
 import importlib
 import json
@@ -97,6 +98,8 @@ async def lifespan(app: FastAPI):
     def _singletons():                     # 대표 프로세스에서만(지금 · 또는 대표가 죽어 이어받을 때) — 경보 · 배포 흐름 · 재학습 · 기관 공간 · 읍면동 빈칸
         singles.append(asyncio.create_task(ops.alert_loop()))
         try:                               # XI 재학습 스케줄러(원칙 213 · 쉬는 시간 · 기준 닿은 서비스만 · 학습 장비 한 장 대기열로)
+            if os.environ.get("LX_TEST_GATEWAY") == "1":
+                raise RuntimeError("시험 게이트웨이(시험 DB) — 재학습을 걸지 않는다")
             from . import core as _core
             singles.append(asyncio.create_task(_core.loop()))
         except Exception as e:  # noqa: BLE001

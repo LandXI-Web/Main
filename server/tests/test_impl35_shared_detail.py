@@ -34,10 +34,14 @@ def test_imagery_detail(live):
 def test_train_detail(live):
     a, s = login_lx(ADMIN_LOGIN), login_lx()
     td = httpx.get(B + "/shared/train-data", headers=H(a), timeout=60).json()["items"]
-    smp = next((x for x in td if x["source"] == "sample"), None)
+    d = smp = None
+    for x in (x for x in td if x["source"] == "sample"):     # 그림이 있는 학습 표본(손으로 만드는 중인 빈 표본 — 그림 0 — 은 건너뜀 · 10-19 라벨 작업)
+        y = httpx.get(B + f"/shared/train-data/{x['id']}", headers=H(a), timeout=60).json()
+        if int((y.get("images") or {}).get("value") or 0) > 0:
+            smp, d = x, y
+            break
     if not smp:
         return
-    d = httpx.get(B + f"/shared/train-data/{smp['id']}", headers=H(a), timeout=60).json()
     assert d["source"] == "sample" and d["classes"] and all(c["images"]["unit"] == "count" for c in d["classes"])
     assert 1 <= len(d["previews"]) <= 4 and "n" in d["used"]
     r = httpx.get(B + d["previews"][0], headers=H(a), timeout=60)

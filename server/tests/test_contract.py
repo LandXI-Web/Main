@@ -104,7 +104,8 @@ V12_OPTIONAL = {
     "registry_cards": ["n", "public"],                          # S-6 ?public=1
     "deploys_list": [],
     "deploy": ["sgg_cd", "test", "ci", "flow"],                 # S-7 다른 지역에 적용(시군구 · CI 9키 · 시험 표시) · core-flow 한 흐름
-    "ops_gpus": ["power_budget"],                               # S-9 전력 예산
+    "ops_gpus": ["power_budget", "measure_stale"],              # S-9 전력 예산 · 측정 멈춤(ops.measure_stale · 10-17 869c183b)
+    "ops_storage": ["measure_stale"],                           # 저장 측정 멈춤(같은 키)
     "catalog_imagery": ["sgg_cd", "tile_ready"],                # 영상 소유 시군구 · 타일 준비
 }
 V12_NESTED = {

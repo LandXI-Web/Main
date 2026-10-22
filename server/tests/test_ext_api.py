@@ -256,7 +256,10 @@ def test_formats_three(keys):
     px = httpx.get(X + "/services/farm/exports/parcels", headers=K(key), timeout=600)
     assert px.status_code == 200
     from openpyxl import load_workbook
-    rows = [r[0] for r in load_workbook(io.BytesIO(px.content))["필지"].iter_rows(min_row=2, values_only=True)]
+    rows = [r[0] for r in load_workbook(io.BytesIO(px.content))["필지"].iter_rows(values_only=True)]
+    rows = rows[rows.index("필지 번호") + 1:]          # 엑셀 첫머리 안내 줄(제목 · 기준일 · 출처 · 빈 줄) 뒤 머리줄 다음부터(원칙 308 엑셀 한 벌)
+    if rows and rows[-1] == "합계":                     # 끝 줄 = 합계(원칙 308)
+        rows = rows[:-1]
     assert rows and all(isinstance(x, str) and len(x) == 19 and x.startswith("52190") for x in rows)
     sm = httpx.get(X + "/services/farm/summary", headers=K(key), timeout=T)
     assert sm.status_code == 200 and sm.json()["total"] == lx["total"]

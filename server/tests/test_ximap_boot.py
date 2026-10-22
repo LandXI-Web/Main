@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from conftest import B, BASE, H  # noqa: E402
 
 BASE_SGG = "52190"
-TIME_KEYS = {"as_of", "at", "expires_at", "generated_at", "now", "server_time"}
+TIME_KEYS = {"as_of", "at", "expires_at", "generated_at", "now", "server_time", "computed_at"}   # computed_at = 미리 센 때(뒤에서 다시 세면 바뀜 · 값은 같음)
 
 
 def _boot(t, q=""):

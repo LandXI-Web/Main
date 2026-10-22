@@ -10,6 +10,7 @@ import psycopg
 from conftest import B, H
 from landxi_api import config
 from landxi_api.envelope import is_env, scan
+from survey.db import COUNT_RULE_IDS, once_sql
 
 KEYS = {"detected": "AI 탐지", "suspect": "의심 필지", "field_check": "현장 확인 필요", "review_pending": "결과 확인 대기", "reports": "기관 신고"}
 STAGES = {"운영", "시범", "첫 결과 전"}
@@ -94,9 +95,12 @@ def test_values_match_source_tables(live, tok):
         # core-flow: 배포 적용 흐름의 스냅샷 = 작업 결과 세트(results/{기관}/{작업}) → 그 작업의 detections 행 수
         det.update(dict(c.execute("SELECT d.job_id, count(*) FROM detections d JOIN deploys p ON p.snapshot_current = 'results/' || p.tenant_id "
                                   "|| '/' || d.job_id OR p.snapshot_current = 'results/lx/' || d.job_id GROUP BY 1").fetchall()))
-        fc = dict(c.execute("SELECT tenant_id, count(DISTINCT pnu) FROM survey_findings WHERE priority='A' "
-                            "AND rule LIKE 'R%%' AND state IN ('open','assigned') GROUP BY 1").fetchall())   # 대장 규칙(L*) 제외 — summary.py 정본
-        rp = dict(c.execute("SELECT tenant_id, count(*) FROM survey_findings WHERE priority='A' AND rule LIKE 'R%%' AND state='open' GROUP BY 1").fetchall())
+        # 지역 숫자 정본(10-22 현장확인숫자 ⓐ) — R1–R6 + 대장 대조 L-* · 같은 필지 · 같은 규칙은 한 번(once_sql) · 시군구 단위로 센 뒤 기관 합
+        fc = dict(c.execute("SELECT tenant_id, sum(n)::int FROM (SELECT tenant_id, sgg_cd, count(DISTINCT pnu) n FROM survey_findings "
+                            "WHERE priority='A' AND rule = ANY(%s) AND state IN ('open','assigned') AND " + once_sql() + " GROUP BY 1,2) q GROUP BY 1",
+                            (list(COUNT_RULE_IDS),)).fetchall())
+        rp = dict(c.execute("SELECT tenant_id, count(*) FROM survey_findings WHERE priority='A' AND rule = ANY(%s) AND state='open' AND " + once_sql() +
+                            " GROUP BY 1", (list(COUNT_RULE_IDS),)).fetchall())
         rep = dict(c.execute("SELECT tenant_id, count(*) FROM feedback WHERE state='open' GROUP BY 1").fetchall())
     # 기관 신고 — 한 신고는 한 항목에만 → 기관 합 = 표의 열린 신고 수
     by_t = {}
@@ -116,6 +120,24 @@ def test_values_match_source_tables(live, tok):
         v = i["metrics"]["detected"]["value"]
         if v is not None:
             assert v in det.values(), (key(i), v)
+
+
+def test_region_items_sum_to_region_number(live, tok):
+    """한 지역(기관 × 시군구)의 실태조사 항목을 더하면 지역 숫자(대장 대조 포함 · 겹침 한 번) — 모든 기관 · 모든 시군구 같은 식(10-22 ⓐ)."""
+    items = get(tok["staff"])["items"]
+    with adm() as c:
+        reg = {(t, g): (int(n), int(fc)) for t, g, n, fc in c.execute(
+            "SELECT tenant_id, sgg_cd, count(*), count(DISTINCT pnu) FILTER (WHERE priority='A' AND state IN ('open','assigned')) "
+            "FROM survey_findings WHERE rule = ANY(%s) AND " + once_sql() + " GROUP BY 1,2", (list(COUNT_RULE_IDS),)).fetchall()}
+    got: dict = {}
+    for i in items:
+        if i["sgg_cd"] and i.get("survey_state") == "done":
+            a = got.setdefault((i["tenant"], i["sgg_cd"]), [0, 0])
+            a[0] += i["metrics"]["suspect"]["value"] or 0
+            a[1] += i["metrics"]["field_check"]["value"] or 0
+    assert got
+    for k, v in got.items():
+        assert tuple(v) == reg.get(k, (0, 0)), (k, v, reg.get(k))
 
 
 def test_gwangju_marine_single_state(live, tok):

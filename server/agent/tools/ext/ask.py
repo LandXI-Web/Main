@@ -102,14 +102,20 @@ async def _card_share(ctx, r: dict | None, card: str) -> dict | None:
     nm = next((n for cid, n, _w in await card_names() if cid == card), None)
     if not nm:
         return None
+    from landxi_api import summary as SM
+    p = ctx.principal
     try:
-        async with db(ctx.principal) as conn:
-            c = await S.survey_counts(conn, r["sgg_cd"] if r else None, card)
+        async with db(p) as conn:
+            # 서비스 몫 = 대표 수치 요약의 그 서비스 항목 값(화면 카드 숫자와 같은 한 출처 · 한 지역 항목 합 = 지역 숫자 · 10-22 ⓐ)
+            tenant = SM.LX_ALL if getattr(p, "realm", None) == "lx" else getattr(p, "tenant_id", None)
+            res = await SM.build(conn, tenant, region=r["sgg_cd"] if r else None, card=card)
     except Exception:  # noqa: BLE001
         return None
-    if c.get("suspect") is None:
+    ms = [it["metrics"]["suspect"] for it in res.get("items") or [] if (it.get("metrics") or {}).get("suspect", {}).get("value") is not None]
+    if not ms:
         return None
-    return {"name": nm, "env": S.counts_env(c, "suspect")}
+    e0 = {x: ms[0][x] for x in ("unit", "basis", "source", "note") if x in ms[0]}
+    return {"name": nm, "env": {**e0, "value": sum(int(m["value"]) for m in ms), "as_of": max(str(m.get("as_of") or "") for m in ms)}}
 
 
 async def survey_count(args: dict, ctx) -> Out:

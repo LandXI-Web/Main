@@ -119,7 +119,9 @@ def test_new_region_built(pg):
     assert tenant == "gwangju-jeonnam" and parcels > 100000 and joined > 0 and nf > 0
     n = pg.execute("SELECT count(*), count(*) FILTER (WHERE priority='A'), count(*) FILTER (WHERE NOT addr LIKE '%%여수시%%'), "
                    "count(*) FILTER (WHERE tenant_id <> %s) FROM survey_findings WHERE sgg_cd=%s AND rule LIKE 'R%%'", (tenant, NEW)).fetchone()
-    assert n[0] == nf and n[2] == 0 and n[3] == 0
+    assert n[2] == 0 and n[3] == 0
+    # 시군구 요약 의심 수 = 지역 숫자(R1–R6 + 대장 대조 L-* · 같은 필지 · 같은 규칙 한 번 — 10-22 현장확인숫자 ⓐ)
+    assert pg.execute("SELECT count(*) FROM survey_findings WHERE sgg_cd=%s AND rule = ANY(%s) AND " + S.once_sql(), (NEW, list(S.COUNT_RULE_IDS))).fetchone()[0] == nf
     assert 0.03 <= n[1] / n[0] <= 0.08            # 등급 A = 그 시군구 안 상위 5%
     assert cut and cut.get("scope") == "sgg"
     # PNU 는 지금 코드 · 읍면동 이름 채움
