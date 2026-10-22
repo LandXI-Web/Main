@@ -19,11 +19,15 @@ const OBJ_Z = 11;
 const POLL_MS = 30000;
 const TEST = (() => { try { return new URLSearchParams(location.search).get('natTest') === '1'; } catch { return false; } })();
 
+/* 연도 고르기(10-22 now21 시계열-연도고르기 ⓐ) — 전국 층을 해마다 따로 본다. 숫자도 그 해 장부 하나(연도가 다른 숫자를 더하지 않음).
+   영상 빈 자리(시계열-접경영상없음 ⓐ · 빈조각2024 ⓐ) — 조각의 'nodata' 층: none = '영상 없음(공개 제한 지역)' 회색 · fill = 앞 해 영상으로 채운 자리(점선). */
+export const NODATA = { none: '#9AA1AB', fill: '#2E9E5B' };
 /** 진행(판 번호 포함) — 첫 화면과 함께 출발 */
 export const nationalPromise = (on) => (on ? api('/national/progress').catch((e) => ({ error: e })) : null);
 
 export function createNational({ map, before = 'slot-result' }) {
-  const N = { assets: [], data: null, v: {}, year: null, task: null, hidden: false, onData: null, off: new Set(), hide: new Map() };   // off = 끈 클래스 · hide = 묶음 → 고친 자리가 대신 그리는 객체 id
+  const N = { assets: [], data: null, v: {}, year: null, pick: null, task: null, hidden: false, onData: null, off: new Set(), hide: new Map() };   // pick = 고른 해(없으면 기본 해)
+  const PATH = () => '/national/progress' + (N.pick ? `?year=${N.pick}` : '');   // off = 끈 클래스 · hide = 묶음 → 고친 자리가 대신 그리는 객체 id
   const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
   const FID = ['case', ['has', 'id'], ['to-string', ['get', 'id']], ['to-string', ['id']]];
   // 서명(진행 장부가 준 exp · sig — 6시간 칸이라 다시 읽어도 같은 주소 · 10-22 옆문 닫기: 로그인 없이 받아지던 조각을 LX 세션 뒤로)
@@ -48,8 +52,17 @@ export function createNational({ map, before = 'slot-result' }) {
       // 올리면 요약 — 칸 전체(보이지 않는 면 · 끝난 곳 · 분석 예정 모두)
       map.addLayer({ id: src(a) + '-hit', type: 'fill', source: src(a), 'source-layer': 'cells', maxzoom: 12.5, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, B);
     }
+    // 영상 빈 자리 — 첫 자산 조각 하나에서만(두 자산 조각에 같은 면이 실려 온다 · 두 번 칠하지 않게)
+    const a0 = N.assets[0];
+    if (a0 && !map.getLayer('xn-nodata')) {
+      map.addLayer({ id: 'xn-nodata', type: 'fill', source: src(a0), 'source-layer': 'nodata', filter: ['==', ['get', 'kind'], 'none'],
+        paint: { 'fill-color': NODATA.none, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.75, 12, 0.5] } }, B);
+      map.addLayer({ id: 'xn-nodata-l', type: 'line', source: src(a0), 'source-layer': 'nodata',
+        paint: { 'line-color': ['match', ['get', 'kind'], 'none', '#6B7280', NODATA.fill], 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.8, 12, 1.6],
+          'line-dasharray': [2, 1.5], 'line-opacity': 0.9 } }, B);
+    }
   }
-  const layers = () => N.assets.flatMap((a) => [src(a) + '-face', src(a) + '-hit']);
+  const layers = () => [...N.assets.flatMap((a) => [src(a) + '-face', src(a) + '-hit']), 'xn-nodata', 'xn-nodata-l'];
   const hitLayers = () => N.assets.map((a) => src(a) + '-hit').filter((id) => map.getLayer(id));
   function show(on) {
     N.hidden = !on;
@@ -104,12 +117,13 @@ export function createNational({ map, before = 'slot-result' }) {
 
   /* ── 진행 장부 다시 읽기 — 판이 바뀐 자산만 새 주소 ── */
   function take(j) {
-    N.data = j; N.v = j.v || {}; N.year = j.year; N.sigOld = N.sig; N.sig = j.tile_sig || null;
+    N.data = j; N.v = j.v || {}; N.year = j.year; N.sigOld = N.sig; N.sig = j.tile_sig || null; N.sigYear = j.year;
     N.assets = Object.entries(j.assets || {}).filter(([, a]) => a && a.on !== false).map(([k]) => k);
   }
   async function refresh() {
-    const j = await api('/national/progress').catch(() => null);
-    if (!j?.assets) return;
+    const want = N.pick;
+    const j = await api(PATH()).catch(() => null);
+    if (!j?.assets || want !== N.pick) return;          // 그사이 해를 바꿨으면 버린다
     const old = N.v;
     take(j);
     const resign = N.sig?.exp !== N.sigOld?.exp;      // 서명 칸이 넘어가면(6시간) 모든 자산 새 주소
@@ -140,8 +154,27 @@ export function createNational({ map, before = 'slot-result' }) {
     return j;
   }
 
-  /** 지금 분석 중인 칸 — 작업기가 실제로 돌 때만(진행 장부 runner) */
+  /** 해 고르기 — 그 해 진행 장부를 다시 읽고 면 · 칸 · 빈 자리 조각과 객체 묶음을 그 해 것으로 바꾼다(다른 해 숫자 · 객체를 섞지 않음) */
+  async function setYear(y) {
+    const base = N.data?.base?.year ?? N.data?.year;
+    N.pick = y && +y !== +base ? +y : null;
+    const j = await api(PATH());
+    if (!j?.assets) return null;
+    take(j);
+    for (const a of N.assets) if (map.getSource(src(a))) map.getSource(src(a)).setTiles([tpl(a, N.v[a])]);
+    for (const [sid, o] of OBJ) { for (const id of o.ids) if (map.getLayer(id)) map.removeLayer(id); if (map.getSource(sid)) map.removeSource(sid); }
+    OBJ.clear(); WARM.clear();
+    objects();
+    N.onData?.(j);
+    return j.year;
+  }
+  /** 고를 수 있는 해(끝난 칸이 있는 해 · 새 해가 먼저) — [{year, pct, complete}] */
+  const years = () => (N.data?.years || []).slice().sort((p, q) => q.year - p.year);
+
+  /** 지금 분석 중인 칸 — 작업기가 실제로 돌 때만(진행 장부 runner · 고른 해가 작업기가 도는 해일 때만) */
   function running() {
+    const ry = N.data?.running_year?.year;
+    if (ry && N.year && +ry !== +N.year) return null;
     const r = N.data?.runner;
     if (!r || r.state !== 'running' || !r.cd || !r.asset) return null;
     const f = map.getSource(src(r.asset)) ? map.querySourceFeatures(src(r.asset), { sourceLayer: 'cells', filter: ['==', ['get', 'cd'], r.cd] })[0] : null;
@@ -199,7 +232,8 @@ export function createNational({ map, before = 'slot-result' }) {
       }
     }
   }
-  return { load, refresh, show, at, rows, cellRows, cellGeom, warm, setTask, setOff, hide, running, nf,
+  return { load, refresh, show, at, rows, cellRows, cellGeom, warm, setTask, setOff, hide, running, nf, setYear, years,
+    get year() { return N.year; }, get baseYear() { return N.data?.base?.year ?? N.data?.year; }, get ngii() { return N.data?.ngii || []; },
     /** 지금 켜진 자산의 분류(체크박스 목록) · 묶음 → 그 묶음의 층 */
     classes: () => [...new Set(N.assets.flatMap((a) => NCLS[a] || []))], setLayers: (set) => [...OBJ.values()].find((o) => o.set === set)?.ids || null,
     get data() { return N.data; }, get assets() { return N.assets; }, get task() { return N.task; },

@@ -172,14 +172,15 @@ export async function parcelExtras(host, { card, pnu, onSaved }) {
     try { j = await api(`/spaces/me/parcels/${encodeURIComponent(pnu)}/history?` + new URLSearchParams({ card, limit: String(n) })); }
     catch (e) { devlog('history', e.message); list.replaceChildren(h('li.sp-h-e', { text: '이력을 불러오지 못했습니다' })); return; }
     if (!host.isConnected) return;
-    chg.hidden = !j.change;
-    if (j.change) chg.replaceChildren(h('span', { text: j.change.same ? '바뀜 없음' : '바뀜' }), h('b', { text: j.change.line }));
+    const ch = j.change || j.national_change;            // 맡긴 결과가 한 해뿐이면 전국 분석 해마다 줄의 '바뀜'(10-22 now21 시계열-기관해마다 ⓐ)
+    chg.hidden = !ch;
+    if (ch) chg.replaceChildren(h('span', { text: ch.same ? '바뀜 없음' : '바뀜' }), h('b', { text: (j.change ? '' : '전국 분석 · ') + ch.line }));
     cur = j.memo?.note || '';
     if (document.activeElement !== memo) memo.value = cur;
     mWho.textContent = j.memo ? [dot(j.memo.at), j.memo.who].filter(Boolean).join(' · ') : '';
     det.querySelector('.sp-hn').textContent = j.total ? `${nf(j.total)}줄` : '없음';
     list.replaceChildren(...(j.items || []).map((x) => h('li', { dataset: { k: x.kind } },
-      h('span.sp-h-d.num', { text: x.kind === 'result' && !x.at ? (x.year ? `${x.year}년` : '') : dot(x.at) }),
+      h('span.sp-h-d.num', { text: (x.kind === 'result' || x.kind === 'national') && !x.at ? (x.year ? `${x.year}년` : '') : dot(x.at) }),
       h('span.sp-h-t', {}, h('b', { text: x.title }), x.sub || x.who ? h('small', { text: [x.sub, x.who].filter(Boolean).join(' · ') }) : null))));
     if (!(j.items || []).length) list.replaceChildren(h('li.sp-h-e', { text: '이 필지에 남은 기록이 없습니다' }));
     more.hidden = !val(j.more);

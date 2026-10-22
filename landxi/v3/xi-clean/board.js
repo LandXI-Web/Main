@@ -208,8 +208,12 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   }
   function tipCell(pt, p) {
     const rows = NAT.cellRows(p).map((r) => ({ k: r.c, n: r.n, unit: r.unit }));
+    // 영상 빈 자리(10-22 now21 시계열 ⓐ) — 절반 넘게 영상이 없으면 결과 대신 '영상 없음' · 일부면 한 줄 · 앞 해 영상으로 채운 칸도 한 줄
+    const no = Number(p.noimg) || 0, whole = no > 0.5;
+    const note = whole ? null : no > 0 ? '일부 영상 없음(공개 제한 지역)' : p.fill ? `일부 ${p.fill}년 영상` : null;
     tip.replaceChildren(...[h('p.xb-tc-k', {}, h('b', { text: p.name || '' }), h('small', { text: p.sgg || '' })),
-      rows.length ? rowEls(rows) : h('p.xb-tc-p', { text: '분석 예정' })]);
+      whole ? h('p.xb-tc-p', { text: '영상 없음(공개 제한 지역)' }) : rows.length ? rowEls(rows) : h('p.xb-tc-p', { text: '분석 예정' }),
+      note ? h('p.xb-tc-p.xb-tc-note', { text: note }) : null].filter(Boolean));
     tip.dataset.done = p.done ? '1' : '0';
     tip.hidden = false; placeTip(pt);
   }
