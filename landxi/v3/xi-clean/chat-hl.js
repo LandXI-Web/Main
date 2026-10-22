@@ -30,6 +30,7 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
     map.addLayer({ id: 'xk-hl-glow', type: 'line', source: 'xk-hl', paint: { 'line-color': AI, 'line-width': 16, 'line-blur': 10, 'line-opacity': ['coalesce', ['feature-state', 'p'], 0] } });
     map.addLayer({ id: 'xk-hl-case', type: 'line', source: 'xk-hl', paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.92 } });
     map.addLayer({ id: 'xk-hl-line', type: 'line', source: 'xk-hl', paint: { 'line-color': AI, 'line-width': ['case', ['boolean', ['feature-state', 'hv'], false], 4, 2.6] } });
+    if (window.__xc?.hlVisible === false) for (const id of ['xk-hl-dim', 'xk-hl-fill', 'xk-hl-glow', 'xk-hl-case', 'xk-hl-line']) map.setLayoutProperty(id, 'visibility', 'none');
   }
   function paintOn() { map.getSource('xk-hl')?.setData({ type: 'FeatureCollection', features: HL.on.map((k) => HL.feats.get(k)).filter(Boolean).map((f) => ({ type: 'Feature', id: f.k, properties: { k: f.k, name: f.name }, geometry: f.geometry })) }); }
   const fs = (k, s) => { try { map.setFeatureState({ source: 'xk-hl', id: k }, s); } catch { /* 층 없음 */ } };
@@ -157,5 +158,12 @@ export function createChatHL({ map, emds, sgg, go, focus, om = () => ({ on: fals
     document.querySelectorAll('.xk-ref.is-hv, .xk-ref-n.is-hv').forEach((x) => { if (x.dataset.hl !== k) x.classList.remove('is-hv'); });
     if (k) document.querySelectorAll(`[data-hl="${CSS.escape(k)}"]`).forEach((x) => x.classList.add('is-hv'));
   });
-  return { show, clear, link, pulse, focus: focusK, get cur() { return HL.cur; } };
+  /** 지도 강조 켜고 끄기(대화 서랍 · 10-22) — 강조 층만 숨김/보임(답 · 이름 잇기는 그대로) */
+  let vis = true;
+  function setVisible(on) {
+    vis = on !== false;
+    for (const id of ['xk-hl-dim', 'xk-hl-fill', 'xk-hl-glow', 'xk-hl-case', 'xk-hl-line']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis ? 'visible' : 'none');
+    if (window.__xc) window.__xc.hlVisible = vis;
+  }
+  return { show, clear, link, pulse, focus: focusK, setVisible, get visible() { return vis; }, get cur() { return HL.cur; } };
 }

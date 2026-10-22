@@ -58,6 +58,8 @@ def parse(t: str, ctx_region: str | None = None) -> dict | None:
     t = re.sub(r"\s+", " ", t or "").strip()
     if not t or len(t) > 120 or NOT_RX.search(t) or not DASH_RX.search(t):
         return None
+    if re.search(r"현장\s*확인", t):
+        return None                                      # '현장 확인 필요 필지 순위' = 실태조사 의심 필지 읍면동 순위(ask.survey_rank · TRIAGE 8 개발 ③)
     if re.search(r"(?:[가-힣]+(?:리|동|가)|산)\s?\d+(?:-\d+)?", t):
         return None                                      # 지번 질문은 필지 길(통계 판 숫자를 붙이지 않는다 · WP-8 ⑤)
     try:
@@ -349,6 +351,12 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     trows = [r for r in t["rows"] if r["k"] == task]
     if not trows:
         return await _overview(XD, sgg) | {"note": f"{name}에는 {task} 결과가 없습니다.", "missing": True}
+    nat_skip = []
+    if any(r.get("src") == "service" for r in trows) and any(r.get("src") == "national" for r in trows):
+        # 물은 범위대로(원칙 312 · 10-22 숫자-경작지84950 ⓐ) — 그 시군구에 서비스 결과가 있으면 서비스 결과만 센다.
+        # 세는 단위가 다른 전국 분석(칸 단위)을 같은 이름으로 더하지 않는다(84,950 = 2,098필지 + 82,852곳 같은 합 0).
+        nat_skip = [r for r in trows if r.get("src") == "national"]
+        trows = [r for r in trows if r.get("src") == "service"]
     cols = [r["name"] for r in trows]
     unit = trows[0]["unit"]
     tot = sum(r["n"] for r in trows)
@@ -358,7 +366,8 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
         if not emd:
             return await _overview(XD, sgg) | {"note": f"{name} {' · '.join(only)}에는 {task} 결과가 없습니다.", "missing": True}
         return _task_only(name, sgg, task, unit, emd)
-    kp = [{"label": f"{task}", "value": tot, "unit": unit, "sub": " · ".join(f"{r['name']} {_nf(r['n'])}" for r in trows) if len(trows) > 1 else None},
+    kp = [{"label": (trows[0]["name"] if nat_skip and len(trows) == 1 else f"{task}"), "value": tot, "unit": unit,
+           "sub": " · ".join(f"{r['name']} {_nf(r['n'])}" for r in trows) if len(trows) > 1 else ("서비스 결과" if nat_skip else None)},
           {"label": "결과가 있는 읍면동", "value": len(emd), "unit": "곳"}]
     dens = [r["d"] for r in emd if r["d"] is not None]
     if dens:
@@ -397,8 +406,10 @@ async def _task(XD, sgg, task, only: list[str] | None = None) -> dict:
     return {"kind": "task", "rule": [panels[0]["type"] == "donut" and "B1d" or "B1b", "P1" if any(p["type"] == "scatter" for p in panels) else "-", "A1" if ar["n"] >= 20 else "-",
                                      "M3" + mp["scale"]["kind"]],
             "title": f"{name} · {task}", "means": [["지역", name], ["업무", task], ["비교", "읍면동 · 면적"]], "fuse": ["AI 분석 결과", "읍면동 넓이"],
-            "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg, "main": {"label": task, "value": tot, "unit": unit},
-            "emd_rows": _rows_all(emd)}
+            "kpis": kp, "panels": panels, "map": mp, "say": say, "sgg": sgg,
+            "main": {"label": (f"{trows[0]['name']} 분석서비스 결과" if nat_skip and len(trows) == 1 else task), "value": tot, "unit": unit},
+            "emd_rows": _rows_all(emd), **({"src": "service"} if nat_skip else {}),
+            **({"year": trows[0]["year"]} if len({r.get("year") for r in trows}) == 1 and trows[0].get("year") else {})}
 
 
 def _rows_all(emd: list[dict]) -> list[dict]:
@@ -699,6 +710,8 @@ async def ximap_dash(args: dict, ctx) -> Out:
     if off:
         spec["off"] = off                         # 끈 클래스를 뺀 숫자(화면 왼쪽 위 '보이는 것 기준'과 같은 기준)
     m = spec.get("main") or {}
+    if spec.get("year"):
+        ctx.state["scope_year"] = spec["year"]           # 범위 줄(시안 ⓒ-1) — 기준 시점
     out.ui_actions.append({"op": "ximap_dash", "spec": spec})
     sgg0 = spec.get("sgg")
     out.scope = {"sgg": [sgg0] if sgg0 else ("nation" if spec.get("kind") in ("national", "time") else None),

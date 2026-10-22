@@ -220,7 +220,7 @@ def test_finish_keeps_real_action():
 def test_ops_route_has_no_fixed_legacy_answer():
     src = Path(runner.__file__).read_text(encoding="utf-8")
     assert "AG-6" not in src.split("def execute", 1)[1].split("async def finish", 1)[0]
-    assert runner.say("ko", "admin_only") == "LX 관리자 화면에서 확인할 수 있습니다."
+    assert runner.say("ko", "admin_only") == "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다."
 
 
 def test_blocks_env_keys_become_envelope_ids_and_auto_chart():

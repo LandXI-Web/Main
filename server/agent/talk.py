@@ -269,24 +269,37 @@ def here(ctx) -> dict | None:
         return None
 
 
-async def home(ctx) -> dict | None:
-    """기관 계정의 '우리 시' — 관할 시군구가 하나면 그곳 · 여럿이면 지금 화면 지역(관할 안) · 그다음 실태조사가 있는 관할 첫 곳."""
-    if realm(ctx) != "tenant":
-        return None
+def _mine(ctx) -> list[dict]:
     try:
         from landxi_api.regions import in_scope, regions_base, tenant_scope
         sc = tenant_scope(ctx.principal.tenant_id)
         regs, _, _ = regions_base()
-        mine = [r for r in regs if in_scope(r["sgg_cd"], sc)] if sc else []
+        return [r for r in regs if in_scope(r["sgg_cd"], sc)] if sc else []
     except Exception:  # noqa: BLE001
+        return []
+
+
+async def home(ctx) -> dict | None:
+    """기관 계정의 '우리 시'(10-22 채택 '우리 시' 규칙 · chatgeo-c22/OUR-CITY.md):
+    ① 관할 시군구가 하나 → 그곳 ② 여럿이고 지금 지도가 관할 안 시군구 → 그곳(사람이 고른 곳)
+    ③ 여럿이고 지도가 관할 시군구를 보고 있지 않음 → None = '관할 전체'(home_all · 숫자는 관할 합 · 한 곳만 아무렇게나 고르지 않는다)."""
+    if realm(ctx) != "tenant":
         return None
+    mine = _mine(ctx)
     if len(mine) == 1:
         return mine[0]
     cur = here(ctx)
     if cur and any(m["sgg_cd"] == cur["sgg_cd"] for m in mine):
         return cur
-    withd = [m for m in mine if _has_data_sync(m["sgg_cd"])]
-    return (withd or mine or [None])[0]
+    return None
+
+
+def home_all(ctx) -> list[dict]:
+    """여러 시군을 맡은 기관의 '관할 전체'(규칙 ③) — 맡은 시군구 모두(결과 있는 곳이 앞)."""
+    if realm(ctx) != "tenant":
+        return []
+    mine = _mine(ctx)
+    return sorted(mine, key=lambda m: not _has_data_sync(m["sgg_cd"]))
 
 
 async def prev_region(ctx) -> dict | None:
@@ -324,6 +337,12 @@ async def resolve(ctx, text: str, *, allow_prev: bool = True) -> tuple[dict | No
         h = await home(ctx)
         if h:
             return h, "home", []
+        allm = home_all(ctx)
+        if len(allm) > 1:                                # '우리 시' 규칙 ③ — 한 곳을 아무렇게나 고르지 않는다: 결과가 있는 시군을 단추로(관할 전체로 답할 수 있는 도구는 그대로)
+            q0 = re.sub(r"\s+", " ", text or "").strip()
+            set_next(ctx, [btn(m["name"], q=_HOME_RX.sub(m["name"], q0, count=1)) for m in allm[:3] if _has_data_sync(m["sgg_cd"])])
+            if not here(ctx):
+                return None, "home_all", []              # 직전 답의 지역으로 좁히지 않는다 — '우리 시' = 관할 전체(규칙 ③)
     cur = here(ctx)
     if cur:
         return cur, "screen", []
@@ -413,7 +432,7 @@ async def guard_next(ctx, category: str, region_name: str | None = None) -> list
     lx = realm(ctx) == "lx"
     if category in ("cross_tenant", "cross_tenant_region"):
         h = await home(ctx)
-        nm = short(h)
+        nm = short(h) or ("관할 전체" if len(home_all(ctx)) > 1 else "")
         return [btn(f"{nm} 결과 요약 보기", q=f"{nm} 결과 요약해 줘"),
                 ai_btn(nm) if lx_ai(ctx) else btn(f"{nm} 현장 확인 필요 필지 몇 건", q="우리 시 현장 확인 필요 필지 몇 건이야?")] if nm else []
     if category == "raw_imagery":

@@ -339,6 +339,7 @@ _VSTEM = ("내어주", "내주", "살펴보", "알아보", "적용되", "적용�
 
 # 풀어 쓴 말 → 조문 말(로컬 표 · 긴 꼴부터). 공무원이 흔히 풀어 묻는 꼴만 — 뜻이 하나로 정해지는 것만 넣는다.
 PLAIN = [
+    (re.compile(r"(?:할\s*수\s*없는|금지(?:되는|된|하는)?|못\s*하는|하면\s*안\s*되는)\s*(?:행위|것|일)"), "행위 제한"),   # 같은 뜻 두 말투 → 같은 조문(10-22) — '할 수 없는 행위' = '행위 제한'
     (re.compile(r"(?:다른|딴)\s*(?:용도|목적)\s*(?:으로|로)\s*(?:쓰|사용하|이용하|바꾸|바꿔|전환하)[가-힣]*"), "전용"),   # 농지를 다른 용도로 쓰려고 → 농지 전용
     (re.compile(r"용도\s*(?:를|을)?\s*(?:바꾸|바꿔|바뀌|변경하)[가-힣]*"), "용도변경"),
     (re.compile(r"농사\s*(?:를|도)?\s*(?:짓|지으|지을|지은|안\s*짓|않)[가-힣]*"), "경작"),                     # '짓 → 건축'보다 먼저
@@ -795,6 +796,8 @@ def search(query: str, acts: list[str] | None = None, k: int = 3) -> dict:
         side = SIDE.search(title)
         if side and side.group(0) not in q and not head:  # 본 조문(허가·제한)을 특례·취소·벌칙 조문보다 먼저(제목 주제가 질문 말이면 곁가지 아님)
             rank *= 0.6
+        if side and side.group(0) == "특례" and not re.search(r"특례|걸치|걸친|예외|한\s*필지", q):
+            rank *= 0.45                                  # 같은 뜻 두 말투 → 같은 조문(10-22 채택): '…행위 제한이 뭐야'가 본 조문(제32조) 대신 특례(제53조)로 가지 않게
         tf = max(title_fit(c, qn), 1.0 if head else 0.0)  # 제목이 질문 말로 다 채워지는 조문 = 본 조문('개발행위의 허가' ↔ '개발행위허가 대상')
         rank *= (1 + 4 * tf * tf) * LEVEL_W[level(c["act"])]   # 같은 점수면 법 > 시행령 > 시행규칙 > 지침·요령
         if head:                                          # '처분명령과 매수 청구'(주제 = 처분명령)를 '처분명령의 유예'(주제 = 유예)보다 먼저
@@ -805,13 +808,21 @@ def search(query: str, acts: list[str] | None = None, k: int = 3) -> dict:
             break
     hits = [h for h in hits if h["cover"] >= MIN_COVER]
     if objs:                                              # 질문의 대상 말이 조문(다른 법 인용 뺀 글)에 모두 있고, 하나 이상은 조문 제목(주제)에 있어야 관련 조문
-        hits = [h for h in hits if all(_has(o, own_text(h)) for o in objs) and any(_has(o, norm_ko(_title(h))) for o in objs)]
+        hits = [h for h in hits if all(_has(o, own_text(h)) for o in objs) and any(_has(o, norm_ko(_title(h)) + _title_alias(h)) for o in objs)]
     hits.sort(key=lambda h: (h["rank"], -level(h["act"])), reverse=True)
     if not hits:
         return {"found": False, "hits": [], "reason": "off_topic" if objs else "low_match"}
     hits = _parent_first(hits, core, explicit)
     hits = _first_para(hits)
     return {"found": True, "hits": hits[:k], "reason": "bm25"}
+
+
+TITLE_ALIAS = [(re.compile(r"용도\s*구역"), " 농업진흥구역 농업보호구역")]     # 제목의 위 말(용도구역)이 질문의 아래 말(농업진흥구역)을 품는다 — 본 조문(제32조)이 걸러지지 않게(10-22)
+
+
+def _title_alias(h: dict) -> str:
+    t = _title(h)
+    return "".join(add for rx, add in TITLE_ALIAS if rx.search(t))
 
 
 def _first_para(hits: list[dict]) -> list[dict]:

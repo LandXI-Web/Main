@@ -7,12 +7,14 @@ import * as K from '../kit/index.js';
 const { h } = K;
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 
-export function mountChatAnswer({ host, cmdk, hl = null }) {
+/** emph = 지도 강조(색칠 · 답 강조) 켜고 끄기 — { get: () => ({ on, can }), set: (on) => void } (app.js 가 넘긴다 · 서랍이 열려 있어도 끄고 켤 수 있게 10-22) */
+export function mountChatAnswer({ host, cmdk, hl = null, emph = null }) {
   const box = cmdk?.el; if (!host || !box) return null;
   const root = host.querySelector('.k-chat-root[data-dock]'); if (!root) return null;
   const log = root.querySelector('.k-chat-b'), sugg = box.querySelector('.k-chat-sugg'); if (!log) return null;
   const txt = h('p.xk-ans-t'), acts = h('div.xk-ans-a'), more = h('button.xk-more', { type: 'button', text: '대화', onclick: () => openDrawer() });
-  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, txt, acts), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; hl?.clear(); } }));   // 답 띠를 닫으면 지도 강조도 걷는다(원칙 292)
+  const scopeEl = h('p.xk-ans-s', { hidden: true });   // 범위 줄(무엇을 셌는지 · 시안 ⓒ-1) · 숫자 출처 — 답 글 바로 위 작은 회색 한 줄
+  const card = h('div.xk-ans', { hidden: true }, h('span.xk-ans-i', { 'aria-hidden': 'true', text: 'XI' }), h('div.xk-ans-m', {}, scopeEl, txt, acts), h('button.xk-ans-x', { type: 'button', 'aria-label': '답 띠 닫기', text: '×', onclick: () => { card.hidden = true; hl?.clear(); } }));   // 답 띠를 닫으면 지도 강조도 걷는다(원칙 292)
   (sugg || box.querySelector('.k-chat-in')).before(card);
   let drawer = null, home = null;   // 서랍이 열려 있는 동안 답 띠는 숨긴다(10-18 제안-서랍열면답띠숨김 '넣음' — 같은 답이 두 곳에 보이지 않게)
   const turns = () => log.querySelectorAll('.k-chat-msg.me').length;
@@ -36,6 +38,10 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
     card.classList.remove('is-busy');
     const a = last.querySelector('.k-chat-a, .k-ck-a') || last.querySelector('.k-chat-bub p') || last.querySelector('.k-chat-bub');
     txt.innerHTML = a ? a.innerHTML : '';
+    const sc = txt.querySelector('.k-ck-scope'), src = txt.querySelector('.k-ck-src');
+    const line = [sc?.textContent.trim(), src?.textContent.trim()].filter(Boolean).join('  —  ');
+    scopeEl.textContent = line; scopeEl.title = line; scopeEl.hidden = !line;
+    sc?.remove(); src?.remove();
     for (const el of txt.querySelectorAll('br')) el.replaceWith(' ');
     /* 보고서를 만든 답이면 답 띠에서 바로 '보고서 보기'(재검수 제안 1 · 첫인상-8 — 대화 서랍을 열지 않고 한 번에 대시보드 모양 보고서로).
        같은 data-report → 공용 kit(cmdk)의 보고서 보기 처리 그대로 */
@@ -64,10 +70,22 @@ export function mountChatAnswer({ host, cmdk, hl = null }) {
     const mine = drawer;
     const watch = () => { if (drawer !== mine) { document.removeEventListener('kit:drawer', watch); return; } if (mine.el.classList.contains('is-closing') || !mine.el.isConnected) { document.removeEventListener('kit:drawer', watch); closed(); } };
     document.addEventListener('kit:drawer', watch);
-    drawer.body.classList.add('xk-dlog'); drawer.body.append(log);
+    drawer.body.classList.add('xk-dlog');
+    const bar = emphBar(); if (bar) drawer.body.append(bar);
+    drawer.body.append(log);
     card.hidden = true; linkDrawer();                                                   // 서랍이 열리면 답 띠는 숨김 · 닫으면 paint 가 되돌린다
     requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
     setTimeout(() => window.__xc?.relayout?.(), 420);   // 서랍이 선 자리를 피해 입력 줄 · 답 띠가 비켜 선다
+  }
+  /** 서랍 맨 위 한 줄 — 지도 강조(색칠 · 답이 가리킨 곳) 켜고 끄기. 서랍이 지도 오른쪽 통계 판을 가려도 여기서 끄고 켠다(10-22 '히트 온오프가 사라지면 안 된다') */
+  function emphBar() {
+    if (!emph) return null;
+    const st = emph.get?.() || {};
+    const sw = h('button.xo-tint.xk-emph', { type: 'button', role: 'switch', 'aria-checked': String(st.on !== false), 'aria-label': '지도 강조 켜고 끄기', title: '지도 색칠 · 강조 켜고 끄기',
+      onclick: () => { const on = sw.getAttribute('aria-checked') !== 'true'; sw.setAttribute('aria-checked', String(on)); emph.set?.(on); } }, h('i'), h('span', { text: '지도 강조' }));
+    const sync = () => { const s2 = emph.get?.() || {}; sw.setAttribute('aria-checked', String(s2.on !== false)); };
+    document.addEventListener('xk:emph', sync);
+    return h('div.xk-dtool', {}, sw);
   }
   document.addEventListener('xk:hl-shown', () => { cancelAnimationFrame(q); q = requestAnimationFrame(paint); });
   let q = 0;

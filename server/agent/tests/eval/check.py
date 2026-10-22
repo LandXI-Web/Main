@@ -208,6 +208,21 @@ def judge(row: dict, rec: dict) -> dict:
         hay = txt + " " + " ".join(f"{b.get('label') or ''} {b.get('href') or ''}" for b in (rec.get("next") or []) + (rec.get("blocks") or []))
         if not any(re.search(rx, hay) for rx in ex["need_any"]):
             why.append("필요 문구 없음")
+    if ex.get("need_all"):                                 # 바퀴 22 — 모두 있어야 하는 말(답 글 + 단추)
+        hay = txt + " " + " ".join(f"{b.get('label') or ''} {b.get('href') or ''}" for b in (rec.get("next") or []) + (rec.get("blocks") or []))
+        for rx in ex["need_all"]:
+            if not re.search(rx, hay):
+                why.append("필요 문구 없음 /" + rx[:20] + "/")
+    if ex.get("scope_line"):                               # 시안 ⓒ-1 — 답 띠 범위 줄(무엇을 셌는지)
+        line = str(((rec.get("scope") or {}).get("line")) or "")
+        if not line or (isinstance(ex["scope_line"], str) and not re.search(ex["scope_line"], line)):
+            why.append("범위 줄 없음" if not line else f"범위 줄 다름({line[:30]})")
+    if ex.get("source_line") and not rec.get("source_line"):
+        why.append("숫자 출처 줄 없음")
+    if ex.get("ui_op") and ex["ui_op"] not in (rec.get("ui_ops") or []):
+        why.append(f"지도 동작 없음({ex['ui_op']})")
+    if ex.get("next_href") and not any(re.search(ex["next_href"], str(b.get("href") or "")) for b in rec.get("next") or []):
+        why.append("단추 없음(" + ex["next_href"][:24] + ")")
     if ex.get("buttons_min") and len(rec.get("next") or []) < ex["buttons_min"]:
         why.append("단추 없음")
     if ex.get("no_counts") and COUNT_RX.search(txt):

@@ -308,15 +308,15 @@ def ROUTE(msg: str, ctx):
         a = parse_filter(t)
         if a:
             return {"tool": "map_filter", "args": a, "intent": "map"}
-        if c.get("sets") and len(t) <= 80 and STATS_RX.search(t) and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고", t):
+        if c.get("sets") and len(t) <= 80 and STATS_RX.search(t) and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|현장\s*확인", t):
             return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
         # '주천면 논 중에 제일 큰 거 어디야' · '면적 최대 필지' — 켜진 층 통계(같은 행)로 정해진 답(모델이 '데이터 없음'으로 바꿔 쓰지 않게 · 10-22 C12 334)
         if getattr(p, "realm", None) == "tenant" and c.get("sets") and len(t) <= 80 and EXTREME_RX.search(t) and any(re.search(rx, t) for rx, _ in CLS_WORDS) \
-                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|요청|늘어|줄어|작년|증감|추이", t):
+                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|현장\s*확인|요청|늘어|줄어|작년|증감|추이", t):
             return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
         # 기관 지도: '남원시 비닐하우스 현황 보여 줘' = 통계 답(직원 XI맵 '현황'이 통계 판인 것과 같게 · 10-18) — 분류 낱말이 있을 때만(서비스 운영 요약은 그대로)
         if getattr(p, "realm", None) == "tenant" and c.get("sets") and len(t) <= 80 and STATUS_RX.search(t) and any(re.search(rx, t) for rx, _ in CLS_WORDS) \
-                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|요청|진행|처리", t):
+                and not REPORT_ASK.search(t) and not re.search(r"법령|조문|실태\s*조사|의심|신고|현장\s*확인|요청|진행|처리", t):
             return {"tool": "map_stats", "args": {"request": t}, "intent": "map"}
     return None
 
@@ -533,6 +533,7 @@ async def map_filter(args: dict, ctx) -> Out:
         if not cond["emd"]:
             cond.pop("emd")
     n, m2 = await _count(jobs, cond)
+    _scope_hint(ctx, jobs, cond)
     chips = RSC.chips(cond)
     label = RSC.label(cond)
     out.scope = {"sgg": [str(x.get("sgg") or "") for x in names if x.get("sgg")], "emd": list(cond.get("emd") or []) or None,
@@ -552,6 +553,18 @@ async def map_filter(args: dict, ctx) -> Out:
     out.answer = (RSC.scope_line(names, cond) + (" — {{n}}건" if n else " — 0건") + "\n" + new_note
                   + (" 맞는 결과가 없어 지도에는 아무것도 남지 않습니다." if not n else "") + tail)
     return out
+
+
+def _scope_hint(ctx, jobs: list[str], cond: dict) -> None:
+    """범위 줄(시안 ⓒ-1)이 읽는 것 — 센 결과 층(기준 시점) · 면적 조건."""
+    try:
+        from landxi_api import result_scope as RSC
+        ctx.state["scope_sets"] = list(jobs)[:12]
+        area = [c["label"] for c in RSC.chips(cond or {}) if c["k"] == "area"]
+        if area:
+            ctx.state["scope_cond"] = area[0]
+    except Exception:  # noqa: BLE001
+        pass
 
 
 async def _named_regions(ctx, t: str) -> dict | None:
@@ -588,6 +601,7 @@ async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], d
             have = await _jobs_with(jobs, w)
             jobs = [j for j in jobs if j in have] or jobs
         elif why == "켜진 층":
+            ctx.state["subject_cls"] = CLS_PARENT.get(cw, cw)
             ctx.state["subject_miss"] = _m or f"{cw} 결과가 없습니다"     # 물은 분류가 켜진 층에 없다 — 다른 층(비닐하우스) 숫자로 대신 답하지 않는다(10-21 재검수 B)
     em = [x for x in EMD_RX.findall(t) if x not in EMD_SKIP and x != "읍면동"]
     if em:
@@ -595,6 +609,20 @@ async def _subject(ctx, t: str, jobs: list[str], why: str) -> tuple[list[str], d
         if w:
             cond = {**cond, "emd": w}
     return jobs, cond
+
+
+async def _other_layer(ctx, t: str) -> Out | None:
+    """켜진 층에 물은 종류가 없을 때(시안 ⓑ-1 · 원칙 312) — 기관이 볼 수 있는 서비스 결과에서 찾아 층을 켜고 답한다. 없거나 LX 계정이면 None."""
+    cw = ctx.state.pop("subject_cls", None)
+    if not cw or getattr(ctx.principal, "realm", None) != "tenant":
+        return None
+    try:
+        from ... import svcpick
+        named = await _named_regions(ctx, t)
+        return await svcpick.answer(ctx, cw, t, named["name"] if named else None)
+    except Exception as e:  # noqa: BLE001 — 찾지 못하면 지금 답(켜진 층에 없음) 그대로
+        ctx.state.setdefault("route_errors", []).append(f"svcpick {type(e).__name__}: {str(e)[:80]}")
+        return None
 
 
 async def _jobs_with(jobs: list[str], cls: list[str]) -> set[str]:
@@ -624,6 +652,13 @@ async def map_stats(args: dict, ctx) -> Out:
             out.answer = "그 지역은 아직 AI 분석 결과가 없습니다."
             return out
         raise
+    if not jobs or why != "켜진 층":
+        cw = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
+        if cw and getattr(ctx.principal, "realm", None) == "tenant":                                             # 켜진 층이 없어도 물은 종류의 서비스 결과로(시안 ⓑ-1 · 원칙 312 유연함)
+            ctx.state["subject_cls"] = CLS_PARENT.get(cw, cw)
+            o = await _other_layer(ctx, t)
+            if o is not None:
+                return o
     if not jobs:
         ctx.state["cannot"] = {"kind": "screen"}
         out.data = {"status": "none"}
@@ -632,6 +667,9 @@ async def map_stats(args: dict, ctx) -> Out:
     jobs, cond = await _subject(ctx, t, jobs, why)
     names = await RSC.layer_names(jobs)
     if (miss := ctx.state.pop("subject_miss", None)):
+        o = await _other_layer(ctx, t)                     # 시안 ⓑ-1 — 볼 수 있는 서비스 결과에 그 종류가 있으면 층을 켜고 그 결과로 답
+        if o is not None:
+            return o
         ctx.state["cannot"] = {"kind": "nodata"}
         out.answer = RSC.scope_line(names, {}, why) + f"\n켜진 층에는 {miss}. 물으신 분류의 결과 층을 켠 뒤 다시 말씀해 주세요."
         out.data = {"status": "not_found", "text": out.answer, "missing": [miss]}     # 모델 경로에서도 이 문장 그대로(가드 · 10-22 흔들림 0)
@@ -649,6 +687,7 @@ async def map_stats(args: dict, ctx) -> Out:
         e[1] += float(r["m2"])
         per[r["job_id"]] = per.get(r["job_id"], 0) + int(r["n"])
     tot = sum(v[0] for v in by.values())
+    _scope_hint(ctx, jobs, cond)
     cls_av, _e = await _avail(jobs)
     out.scope = {"sgg": [str(x.get("sgg") or "") for x in names if x.get("sgg")] or None, "emd": list(cond.get("emd") or []) or None,
                  "cls": [_ko(c) for c in (cond.get("cls") or cls_av)] or None, "kind": "det"}
@@ -926,8 +965,18 @@ async def ai_report(args: dict, ctx) -> Out:
         out.answer = NEED
         return out
     from landxi_api import result_scope as RSC
+    if why != "켜진 층" and getattr(ctx.principal, "realm", None) == "tenant":
+        cw = next((k for rx, k in CLS_WORDS if re.search(rx, t)), None)
+        if cw:                                                # 켜진 층 없이 물은 종류 — 기관 서비스 결과 · 보고서 단추(시안 ⓑ-1)
+            ctx.state["subject_cls"] = CLS_PARENT.get(cw, cw)
+            o = await _other_layer(ctx, t)
+            if o is not None:
+                return o
     jobs, cond = await _subject(ctx, t, jobs, why)            # 통계 답(map_stats)과 같은 대상 · 같은 조건 — 질문의 분류 · 읍면동까지
     if (miss := ctx.state.pop("subject_miss", None)):
+        o = await _other_layer(ctx, t)                     # 시안 ⓑ-1 · 경작지 보고서 단추 — 기관은 그 서비스 결과로 답하고 보고서를 여는 단추
+        if o is not None:
+            return o
         ctx.state["cannot"] = {"kind": "nodata"}
         out.data = {"status": "missing", "missing": [miss]}
         out.answer = RSC.scope_line(await RSC.layer_names(jobs), {}, why) + f"\n켜진 층에는 {miss} — 다른 분류 숫자로 보고서를 만들지 않았습니다. 물으신 분류의 결과 층을 켠 뒤 다시 말씀해 주세요."

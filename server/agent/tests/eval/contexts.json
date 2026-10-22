@@ -49,5 +49,16 @@
    35.59706837420387
   ],
   "zoom": 10.539887419113102
+ },
+ "gj": {
+  "region": null,
+  "region_name": null,
+  "emd_cd": null,
+  "rule": null,
+  "sets": [],
+  "cls_off": [],
+  "has_map": true,
+  "page": "xi-clean",
+  "test": true
  }
 }

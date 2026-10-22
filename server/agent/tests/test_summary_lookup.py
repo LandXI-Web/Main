@@ -24,6 +24,8 @@ def _fresh():
     """앞선 asyncio.run 이 남긴(닫힌 루프의) 연결 풀을 버린다 — 테스트마다 새 루프 · 새 풀."""
     from landxi_api import deps
     deps._pool = deps._pool_sys = deps._redis = None
+    if hasattr(deps, "_pool_tenant"):
+        deps._pool_tenant = None                                # 기관 권한 계정 묶음(10-22 · 0121)도 같은 까닭으로
 
 
 def test_card_words():

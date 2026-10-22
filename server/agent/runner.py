@@ -119,10 +119,10 @@ def lang_of(text: str) -> str:
 
 
 MSG = {
-    "ko": {"cannot": "지금은 답할 수 없습니다", "admin_only": "LX 관리자 화면에서 확인할 수 있습니다.", "no_data": "해당 지역 데이터가 없습니다",
+    "ko": {"cannot": "지금은 답할 수 없습니다", "admin_only": "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다.", "no_data": "해당 지역 데이터가 없습니다",
            "not_tenant": "이 기관의 데이터가 아닙니다", "ledger_total": "대장과 AI 분석이 어긋난 필지는 {ph}입니다.", "chart": "{scope}별 건수",
            "scope": {"emd": "읍면동", "rule": "규칙", "pri": "등급"}},
-    "en": {"cannot": "Can't answer right now", "admin_only": "You can check this on the LX admin dashboard.", "no_data": "No data for this area yet",
+    "en": {"cannot": "Can't answer right now", "admin_only": "This account can't see that — it is on the LX admin dashboard.", "no_data": "No data for this area yet",
            "not_tenant": "This is not your agency's data", "ledger_total": "Parcels where the register and AI analysis disagree: {ph}.",
            "chart": "Count by {scope}", "scope": {"emd": "town", "rule": "rule", "pri": "grade"}},
 }
@@ -917,6 +917,37 @@ async def ext_route(ctx: Ctx, msg: str) -> dict | None:
     return await tenant_run_route(ctx, msg)
 
 
+# 화면마다 쓰는 도구만(10-22 채택 ChatGEO-제안도구줄이기) — 지시문 + 도구 설명이 문맥의 절반을 쓴다. 그 화면에서 일어날 수 없는 도구는 내놓지 않는다.
+MAP_ONLY = {"map_region", "map_zoom", "map_view", "map_layer", "map_compare", "map_draw", "map_snapshot", "map_flyto", "map_frame", "map_hl", "map_on",
+            "map_arrive", "map_filter", "map_stats", "map_task", "ximap_dash", "parcel_at", "parcel_card", "drawer_open", "crop_tiles"}
+LEDGER_EDIT = {"ledger_ingest", "ledger_match", "ledger_rule"}
+LEDGER_PAGES = ("gov-fusion", "lx-ledger", "gov-ledger")
+DOMESTIC_ONLY = {"survey_build", "survey_state", "survey_parcel", "survey_findings", "survey_stats", "survey_count", "survey_compare", "ledger_findings",
+                 "fusion_suspects", "map_task", "ximap_dash", "results_parcels_join", "report_draft"}
+
+
+def screen_tools(ctx: Ctx, tools: list[dict]) -> list[dict]:
+    """화면(context.page · has_map)에 맞는 도구만 — 권한 판정은 그대로(이미 걸러진 목록에서 더 빼기만). 다 빠지면 원래 목록."""
+    c = ctx.context or {}
+    page = str(c.get("page") or "")
+    glob = page.startswith("global") or c.get("mode") == "global"
+    nomap = c.get("has_map") is False
+
+    def keep(n: str) -> bool:
+        if glob:
+            return n not in DOMESTIC_ONLY and n not in LEDGER_EDIT
+        if n.startswith("global_"):
+            return False
+        if n in LEDGER_EDIT and not page.startswith(LEDGER_PAGES):
+            return False
+        if nomap and n in MAP_ONLY:
+            return False
+        return True
+    out = [t for t in tools if keep(((t.get("function") or {}).get("name") or t.get("name") or ""))]
+    ctx.state["tools_n"] = [len(tools), len(out)]
+    return out or tools
+
+
 def is_test(ctx: Ctx) -> bool:
     """시험 · 점검 질문(답 번호 run_test…) — 개선 고리가 모으지 않고, 승인 전 판의 규칙 · 도구를 쓴다(개선 바퀴 '잰다')."""
     return str(getattr(ctx, "run_id", "") or "").startswith("run_test")
@@ -998,6 +1029,14 @@ async def execute(ctx: Ctx, message: str):
     if fr:
         await frames.answer(ctx, fr, started, scr)
         return
+    from . import longreq
+    if ctx.lang == "ko" and longreq.match(msg):       # 긴 실태조사 요청 — 칸마다 정해진 답(10-22 채택 · 늘 같은 모양)
+        sg = await scope_guard(ctx, msg, data_check=False)
+        if sg:
+            await reject(ctx, sg["category"], sg["message"], scr, region=sg.get("region"))
+            return
+        await longreq.answer(ctx, msg, started, scr)
+        return
     xr = await ext_route(ctx, msg)                    # 확장 직행이 잡은 질문은 '자료 없음' 가드를 건너뛴다(도구가 지역을 판정 · 관할 밖 가드는 그대로)
     t_ = stage(ctx, "ext_route", t_)
     sg = await scope_guard(ctx, msg, data_check=not xr)
@@ -1046,6 +1085,7 @@ async def execute(ctx: Ctx, message: str):
     tools = registry.tools_for(p) if not small else None
     if tools:                                         # 정기 개선 바퀴 판(원칙 249) — 승인 전 새 도구는 시험 질문에만 · 거절 · 되돌린 판의 도구는 내놓지 않는다
         tools = [t for t in tools if _tool_open(ctx, ((t.get("function") or {}).get("name") or t.get("name") or ""))]
+        tools = screen_tools(ctx, tools)              # 화면마다 그 화면에서 쓰는 도구만(10-22 채택 · 문맥을 줄여 더 빠르게)
     ex_line = await example_line(ctx, msg) if not small else ""
     messages = [{"role": "system", "content": sys_prompt(ctx) + ex_line},
                 {"role": "user", "content": context_line(ctx.context, route["intent"]) + "\n\n" + msg}]
@@ -1900,6 +1940,32 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
             extra = {**(extra or {}), "scope_flags": scope_d["dropped"]}
     except Exception as e:  # noqa: BLE001
         ctx.state.setdefault("route_errors", []).append(f"scope: {type(e).__name__}: {str(e)[:80]}")
+    if res is not None and ctx.lang == "ko" and scope_d and scope_d.get("region") and " · " not in str(scope_d["region"]):
+        nm = str(scope_d["region"])                    # 모델이 쓴 답에 물은 지역 이름이 없으면 첫머리에(돌릴 때마다 같은 모양 · 무엇을 셌는지)
+        stem = nm[:-1] if len(nm) >= 3 and nm[-1] in "시군구" else nm
+        if stem and stem not in (md or "") and not talk.regions_in(md or "") and nm != "관할 전체":
+            md = f"{nm} — {md}"
+    try:                                               # 시안 ⓒ-1 범위 줄 · 숫자 출처 한 줄 · 행정동 이름 · 기관 서비스 보고서 단추(10-22 확인)
+        from . import scopecheck as _sc2
+        line = await _sc2.scope_line(ctx, scope_d, md)
+        if line:
+            scope_d = {**(scope_d or {"region": None, "emd": None, "cls": None, "dropped": []}), "line": line}
+        src = _sc2.source_line(ctx, md)
+        if src:
+            extra = {**(extra or {}), "source_line": src}
+        if ctx.lang == "ko" and re.search(r"[가-힣]{1,4}동|읍면동", md or ""):
+            from . import hjd as _hjd
+            sgg = await _sc2.answer_sgg(ctx)
+            if sgg:
+                md = await asyncio.wait_for(asyncio.to_thread(_hjd.annotate, ctx, md, sgg), 8)
+        if getattr(ctx.principal, "realm", None) == "tenant" and (scope_d or {}).get("cls"):
+            from . import svcpick as _sp
+            rb = await asyncio.wait_for(_sp.report_btn(ctx, set(scope_d["cls"])), 4)
+            nx = list(ctx.state.get("next") or [])
+            if rb and not any(b.get("href") == rb.get("href") for b in nx):
+                ctx.state["next"] = (nx[:2] + [rb])
+    except Exception as e:  # noqa: BLE001
+        ctx.state.setdefault("route_errors", []).append(f"scope2: {type(e).__name__}: {str(e)[:80]}")
     md = lint.scrub_terms(lint.render_unverified(md, ctx.lang), ctx.lang)
     if ctx.lang == "ko":
         md = fix_josa(md, ctx.envs)                    # R3: 숫자·단위 뒤 조사를 받침에 맞춘다('10필지를' · '3건을')
@@ -1926,7 +1992,9 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
     perf_out = {k: v for k, v in perf_out.items() if v is not None}
     if ctx.state.get("stage_ms"):
         perf_out["stages"] = ctx.state["stage_ms"]         # 단계별 ms(WP-11 시간 재기)
-    used = set(lr.placeholders)
+    if ctx.state.get("tools_n"):
+        perf_out["tools_n"] = ctx.state["tools_n"]         # 내놓은 도구 수(화면마다 쓰는 도구만 · 전 → 후)
+    used = set(re.findall(r"\{\{env:(e\d+)\}\}", lr.answer_md or ""))   # 답에 남은 자리표(범위 검사기가 뺀 숫자는 쓴 것이 아니다)
     data = {"answer_md": lr.answer_md, "envelopes": ctx.envs, "env_meta": ctx.env_meta, "used": sorted(used),
             "unverified_numbers": lr.unverified_numbers, "unverified": lr.unverified, "promoted": lr.promoted,
             "citations": ctx.citations, "model": model, "tokens": tokens, "perf": perf_out, "steps": ctx.steps,

@@ -119,7 +119,7 @@ def _usage(ctx, t: str) -> tuple[str, list[dict]] | None:
     if re.search(r"알림[^.?!]{0,6}(?:설정|끄|켜|받)", t):
         return "ChatGEO 로는 알림을 설정하지 않습니다 — 화면 위 '도움말'에서 사용법을 볼 수 있습니다.", [HELP_BTN]
     if re.search(r"(?:사용|이용)\s*(?:현황|한도|량)[^.?!]{0,6}(?:어디|얼마|보여|알려)?", t) and not (lx and rl == "admin"):
-        return ("기관별 사용 현황은 LX 관리자 대시보드에서 LX 관리자가 봅니다." if lx else
+        return ("이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다." if lx else
                 "ChatGEO 로는 사용 현황을 보이지 않습니다 — 화면 위 '도움말'의 문의로 LX에 물어 주세요."), [HELP_BTN]
     if re.search(r"(?:거절|반려)[^.?!]{0,8}(?:이유|사유)", t):
         return "승인 요청의 결과와 사유는 그 요청을 보낸 화면(직원: '프로젝트' · 기관: '분석 요청')에서 봅니다.", [HELP_BTN]
@@ -264,7 +264,23 @@ async def route(ctx, msg: str) -> dict | None:
         if md:
             return {"kind": "talk", "text": "앞 답입니다 — " + md.strip(), "next": []}
         return {"kind": "talk", "text": "이 창에서 앞에 드린 답이 없습니다 — 지역이나 결과를 말씀해 주세요.", "next": _home_btns(ctx)}
+    if getattr(ctx, "lang", "ko") == "ko" and ORD_RX.match(t):    # '1위 동네를 지도에서' — 앞 답에 순위가 없으면 지어 고르지 않는다(10-22 · 전국 요약으로 새지 않게)
+        prev = str((getattr(ctx, "context", None) or {}).get("prev_run") or "").strip()
+        md = ""
+        if prev:
+            try:
+                from landxi_api.deps import db
+                async with db(ctx.principal) as conn:
+                    md = str(await conn.fetchval("SELECT answer_md FROM agent_runs WHERE id=$1", prev) or "")
+            except Exception:  # noqa: BLE001
+                md = "?"
+        if md != "?" and not RANKED_RX.search(md):
+            return {"kind": "talk", "text": "앞 답에 순위가 없어 고를 곳이 없습니다 — '읍면동별 비닐하우스 순위'처럼 먼저 물어 주세요.", "next": _home_btns(ctx)}
     return early(ctx, msg)
+
+
+ORD_RX = re.compile(r"^(?:그\s*중\s*)?\d{1,2}\s*위\s*(?:동네|곳|읍면동|지역|필지)?\s*(?:를|을|는|은)?\s*(?:지도에서|지도로|지도에)?\s*(?:보여|가|이동|옮겨|띄워|표시)")
+RANKED_RX = re.compile(r"\d\s*위|순으로|많은\s*곳|상위|순위|적은\s*곳")
 
 
 def _fmt(v, unit) -> str:

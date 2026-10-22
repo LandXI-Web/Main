@@ -1,0 +1,221 @@
+{
+ "at": "2026-10-22 11:14:32",
+ "runs": [
+  {
+   "who": "namwon",
+   "vp": "pc1440",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "#ui 농경지 끄기",
+     "ui": {
+      "row": "true"
+     }
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2441,
+     "band": {
+      "scope": "남원시 · 경작지 · 2025년 영상  —  출처: 경작·휴경 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 205ha · 비경작지 110.9ha (모두 315.9ha).",
+      "btns": [
+       "경작·휴경 보고서 열기",
+       "경작지 읍면동별로 보기",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-b-1114.png",
+     "at": "1114"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5675,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-a-1114.png",
+     "at": "1114"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-drawer-on-1114.png"
+    }
+   ]
+  },
+  {
+   "who": "namwon",
+   "vp": "pc1280",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "#ui 농경지 끄기",
+     "ui": {
+      "row": "true"
+     }
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2463,
+     "band": {
+      "scope": "남원시 · 경작지 · 2025년 영상  —  출처: 경작·휴경 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 205ha · 비경작지 110.9ha (모두 315.9ha).",
+      "btns": [
+       "경작·휴경 보고서 열기",
+       "경작지 읍면동별로 보기",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-b-1115.png",
+     "at": "1115"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 6085,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-a-1115.png",
+     "at": "1115"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-drawer-on-1115.png"
+    }
+   ]
+  },
+  {
+   "who": "namwon",
+   "vp": "m390",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "#ui 농경지 끄기",
+     "ui": {
+      "row": "true"
+     }
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2544,
+     "band": {
+      "scope": "남원시 · 경작지 · 2025년 영상  —  출처: 경작·휴경 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 205ha · 비경작지 110.9ha (모두 315.9ha).",
+      "btns": [
+       "경작·휴경 보고서 열기",
+       "경작지 읍면동별로 보기",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-m390-b-1115.png",
+     "at": "1115"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5799,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-m390-a-1115.png",
+     "at": "1115"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-m390-drawer-on-1115.png"
+    }
+   ]
+  }
+ ]
+}

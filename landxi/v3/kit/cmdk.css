@@ -66,6 +66,12 @@ kbd.k-ck-k,.k-ck-btn,.k-mast kbd,.k-mast .gl-ask,.k-mast .lc-ask,.k-mast [aria-k
 .k-chat :is(.k-ck-a,.k-chat-a){font:400 var(--fs-body)/23px var(--font-body);color:var(--ink-2)}
 .k-chat :is(.k-ck-a,.k-chat-a) > * + *{margin-top:8px}
 .k-chat :is(.k-ck-a,.k-chat-a) b{font-weight:500;color:var(--ink)}
+/* 범위 줄(무엇을 셌는지 · 시안 ⓒ-1) · 숫자 출처 한 줄(10-22) — 작은 회색 한 줄씩 */
+.k-chat :is(.k-ck-a,.k-chat-a) .k-ck-scope{margin:0;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);word-break:keep-all}
+.k-chat :is(.k-ck-a,.k-chat-a) .k-ck-src{margin:0;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);word-break:keep-all}
+.k-chat :is(.k-ck-a,.k-chat-a) > .k-ck-scope + *{margin-top:2px}
+/* 답 글은 끌어서 골라 복사할 수 있게(10-22 '답변을 드래그해서 복사') */
+.k-chat :is(.k-ck-a,.k-chat-a),.xk-ans-t,.xk-ans-s{-webkit-user-select:text;user-select:text;cursor:text}
 .k-chat .k-ck-a:has(> .k-ck-dots:only-child){display:none}       /* 화면이 넣은 기다림 점 — 생각 중 한 줄이 대신한다 */
 .k-chat[data-state=rejected] .k-ck-a{font-weight:500;color:var(--ink)}
 .k-chat-err{font-weight:500;color:var(--warn)}

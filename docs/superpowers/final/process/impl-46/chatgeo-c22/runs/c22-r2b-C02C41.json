@@ -1,0 +1,2308 @@
+{
+"at": "2026-10-22 10:59:03",
+"total": 51,
+"gpu": [
+{
+"at_q": 0,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 18,
+"watt_max": 17.7
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 28,
+"watt_max": 27.67
+}
+]
+},
+{
+"at_q": 20,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 18,
+"watt_max": 17.8
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 48,
+"watt_max": 115.55
+}
+]
+},
+{
+"at_q": 40,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 18,
+"watt_max": 17.62
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 49,
+"watt_max": 126.02
+}
+]
+},
+{
+"at_q": 51,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 17,
+"watt_max": 17.75
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 42,
+"watt_max": 89.11
+}
+]
+}
+],
+"results": [
+{
+"n": 1,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "홍성군 축사 다 합치면 얼마나 넓어?",
+"run_id": "run_test26102210545474b18b",
+"event": "agent.done",
+"ms": 1302,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "홍성군에는 축사 결과가 없습니다 — 있는 것은 경작지 · 비닐하우스 · 건물.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "홍성군 결과 보기",
+"href": null,
+"q": "홍성군 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "홍성군",
+"emd": null,
+"cls": [
+"축사"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 22,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "김제시 과수원 표만 엑셀 표로 줘",
+"run_id": "run_test2610221054589c6ad2",
+"event": "agent.done",
+"ms": 2862,
+"tools": [
+"ai_report"
+],
+"answer_md": "김제시 · 경작지 통계 보고서를 만들었습니다 — 경작지 {{env:e1}} · 읍면동 {{env:e2}}(많은 곳: 진봉면 · 용지면 · 죽산면). 과수원은 따로 나누지 않습니다 — 이 숫자는 경작지 전체입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 106972,
+"unit": "곳",
+"meaning": "김제시 · 경작지 경작지",
+"scope": null
+},
+"e2": {
+"value": 45,
+"unit": "곳",
+"meaning": "보고서에 실린 읍면동 수",
+"scope": null
+}
+},
+"next": [],
+"blocks": [
+{
+"type": "report",
+"label": "김제시 · 경작지",
+"href": "/api/v1/agent/runs/run_test2610221054589c6ad2/files/report.json"
+},
+{
+"type": "file",
+"label": "김제시_경작지_보고서_20261022.hwpx",
+"href": "/api/v1/agent/runs/run_test2610221054589c6ad2/files/%EA%B9%80%EC%A0%9C%EC%8B%9C_%EA%B2%BD%EC%9E%91%EC%A7%80_%EB%B3%B4%EA%B3%A0%EC%84%9C_20261022.hwpx"
+}
+],
+"ui_ops": [],
+"scope": {
+"region": "김제시",
+"emd": null,
+"cls": [
+"과수원"
+],
+"dropped": [],
+"line": "김제시 · 과수원"
+},
+"source_line": "지도 위 결과 층",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 24,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "목포시에서 농지가 논로 바뀐 곳",
+"run_id": "run_test2610221055038afe1a",
+"event": "agent.done",
+"ms": 3568,
+"tools": [
+"survey_findings",
+"map_arrive"
+],
+"answer_md": "조건에 맞는 의심 필지 {{env:e1}} 중 점수 상위 {{env:e2}}를 지도에 표시했습니다. 1위는 목포시 달동 773-8로 AI 건물 근거 면적 {{env:e6}}입니다 [1]. 현장조사 대상 후보이며 건축물대장 대조 전입니다. 논은 따로 나누지 않습니다 — 이 숫자는 경작지 전체입니다. 논 분류 결과가 아니라 실태조사 의심 필지입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 113,
+"unit": "필지",
+"meaning": "조건(목포시 · R1 농지 위 건물) 일치 의심 건",
+"scope": null
+},
+"e2": {
+"value": 5,
+"unit": "필지",
+"meaning": "점수 상위로 반환한 필지 수",
+"scope": null
+},
+"e6": {
+"value": 891.1,
+"unit": "m2",
+"meaning": "[1] AI 근거 면적",
+"scope": null
+}
+},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_on",
+"map_arrive"
+],
+"scope": {
+"region": "목포시",
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": [],
+"line": "목포시 · 논"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 30,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "해남군 건물 총 면적을 ㏊로 산출해 주세요",
+"run_id": "run_test26102210550838d770",
+"event": "agent.done",
+"ms": 1822,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "해남군 · 건물 — 건물 {{env:e1}}. 건물은 해남읍 4,631동 · 삼산면 2,492 · 옥천면 2,458 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 26003,
+"unit": "동",
+"meaning": "건물",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "해남군",
+"emd": null,
+"cls": [
+"건물"
+],
+"dropped": [],
+"line": "해남군 · 건물 · 2025년 영상"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 32,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "홍성군 비닐하우스 한 장 요약 보고서",
+"run_id": "run_test261022105511eccacf",
+"event": "agent.done",
+"ms": 2200,
+"tools": [
+"ai_report"
+],
+"answer_md": "홍성군 · 비닐하우스 통계 보고서를 만들었습니다 — 비닐하우스 {{env:e1}} · 읍면동 {{env:e2}}(많은 곳: 홍북읍 · 은하면 · 금마면).",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 21787,
+"unit": "동",
+"meaning": "홍성군 · 비닐하우스 비닐하우스",
+"scope": null
+},
+"e2": {
+"value": 11,
+"unit": "곳",
+"meaning": "보고서에 실린 읍면동 수",
+"scope": null
+}
+},
+"next": [],
+"blocks": [
+{
+"type": "report",
+"label": "홍성군 · 비닐하우스",
+"href": "/api/v1/agent/runs/run_test261022105511eccacf/files/report.json"
+},
+{
+"type": "file",
+"label": "홍성군_비닐하우스_보고서_20261022.hwpx",
+"href": "/api/v1/agent/runs/run_test261022105511eccacf/files/%ED%99%8D%EC%84%B1%EA%B5%B0_%EB%B9%84%EB%8B%90%ED%95%98%EC%9A%B0%EC%8A%A4_%EB%B3%B4%EA%B3%A0%EC%84%9C_20261022.hwpx"
+}
+],
+"ui_ops": [],
+"scope": {
+"region": "홍성군",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "홍성군 · 비닐하우스"
+},
+"source_line": "지도 위 결과 층",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 34,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "제주시 하천구역 안 의심 시설 가장 많이 늘어난 동네",
+"run_id": "run_test2610221055154d8aef",
+"event": "agent.done",
+"ms": 625,
+"tools": [],
+"answer_md": "제주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "제주시 하천구역 안 의심 시설 가장 많이 동네 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "제주시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 44,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "임실군 교동 33 사진으로 지금 어떻게 쓰이는지",
+"run_id": "run_test2610221055173d67e7",
+"event": "agent.done",
+"ms": 13222,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "임실군에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 임실군 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "임실군 전역 분석 실행",
+"href": null,
+"q": "임실군 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "임실군",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 49,
+"persona": "staff",
+"cluster": "C43",
+"sev": "mid",
+"q": "읍면동별 휴경지 건수",
+"run_id": "run_test26102210553264d392",
+"event": "agent.done",
+"ms": 745,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "남원시에는 물으신 휴경지 결과가 없습니다 — 있는 것은 토지피복 · 경작지 · 건물 · 비닐하우스 · 국토 변화.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"휴경지"
+],
+"dropped": [
+{
+"env": "e1",
+"why": "cls"
+}
+]
+},
+"source_line": null,
+"scope_flags": [
+{
+"env": "e1",
+"why": "cls"
+}
+],
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 50,
+"persona": "staff",
+"cluster": "C41",
+"sev": "high",
+"q": "1위 동네를 지도에서 보여 줘",
+"run_id": "run_test26102210553469f91a",
+"event": "agent.done",
+"ms": 134,
+"tools": [],
+"answer_md": "앞 답에 순위가 없어 고를 곳이 없습니다 — '읍면동별 비닐하우스 순위'처럼 먼저 물어 주세요.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "남원시 결과 요약 보기",
+"href": null,
+"q": "남원시 결과 요약해 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 64,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "완주군 논 눈에 띄게 색칠",
+"run_id": "run_test261022105535b27650",
+"event": "agent.done",
+"ms": 669,
+"tools": [
+"map_region",
+"map_layer"
+],
+"answer_md": "완주군으로 옮기고 논 AI 분석 결과만 켰습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_region",
+"map_layer"
+],
+"scope": {
+"region": "완주군",
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 71,
+"persona": "staff",
+"cluster": "C41",
+"sev": "high",
+"q": "읍면동별 논 면적 순위",
+"run_id": "run_test2610221055383498c9",
+"event": "agent.done",
+"ms": 645,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "논만 따로 나누지 않아 경작지로 셌습니다. 남원시 · 경작지 — 경작·휴경 분석서비스 결과 {{env:e1}}. 경작지는 운봉읍 237필지 · 송동면 149 · 대강면 142 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2098,
+"unit": "필지",
+"meaning": "경작·휴경 분석서비스 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": [],
+"line": "남원시 · 논 · 2025년 영상"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 93,
+"persona": "staff",
+"cluster": "C41",
+"sev": "high",
+"q": "읍면동별 밭 면적 순위",
+"run_id": "run_test261022105540e62fc2",
+"event": "agent.done",
+"ms": 642,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "밭만 따로 나누지 않아 경작지로 셌습니다. 남원시 · 경작지 — 경작·휴경 분석서비스 결과 {{env:e1}}. 경작지는 운봉읍 237필지 · 송동면 149 · 대강면 142 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2098,
+"unit": "필지",
+"meaning": "경작·휴경 분석서비스 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"밭"
+],
+"dropped": [],
+"line": "남원시 · 밭 · 2025년 영상"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 94,
+"persona": "staff",
+"cluster": "C41",
+"sev": "high",
+"q": "그 옆 동네는 어때?",
+"run_id": "run_test261022105542d9339a",
+"event": "agent.done",
+"ms": 1182,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "남원시 · AI 분석 결과 — AI 분석 결과 {{env:e1}}. 남원시에서 가장 많은 결과는 토지피복 132,424개입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 267496,
+"unit": "개",
+"meaning": "AI 분석 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "남원시"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 96,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "임실군 경작지 중 면적 최대 필지 확인",
+"run_id": "run_test261022105545a89167",
+"event": "agent.done",
+"ms": 3890,
+"tools": [
+"map_region",
+"results_features",
+"map_arrive"
+],
+"answer_md": "임실군 경작지 데이터가 현재 지도 범위 내에 없 확인할 수 없습니다.\n임실군의 경작지 분석 결과가 없습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_region"
+],
+"scope": {
+"region": "임실군",
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 104,
+"persona": "staff",
+"cluster": "C41",
+"sev": "high",
+"q": "읍면동별 축사 건수",
+"run_id": "run_test261022105550c0fa29",
+"event": "agent.done",
+"ms": 711,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "남원시에는 축사 결과가 없습니다 — 있는 것은 토지피복 · 경작지 · 건물 · 비닐하우스.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "남원시 결과 보기",
+"href": null,
+"q": "남원시 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"축사"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 129,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "강릉시과 진주시의 농막와 창고를 읍면동별로 비교하고 상위 5곳은 지도에 빨간색으로 칠한 다음 한글 보고서로 만들어 줘",
+"run_id": "run_test261022105552ea9c8f",
+"event": "agent.done",
+"ms": 653,
+"tools": [
+"ai_report"
+],
+"answer_md": "진주시에는 창고 결과가 없습니다 — 있는 것은 경작지 · 건물 · 비닐하우스. 보고서를 만들지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "진주시 · 강릉시",
+"emd": null,
+"cls": [
+"농막",
+"창고"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 134,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "제주시 휴경지 면적 증감 ㏊",
+"run_id": "run_test261022105554122207",
+"event": "agent.done",
+"ms": 622,
+"tools": [],
+"answer_md": "제주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "제주시 휴경지 면적 ㏊ 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "제주시",
+"emd": null,
+"cls": [
+"휴경지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 151,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "진주시에서 하천구역과 겹치는 시설만 골라서",
+"run_id": "run_test261022105557d6a3d8",
+"event": "agent.done",
+"ms": 2774,
+"tools": [
+"map_region",
+"map_filter"
+],
+"answer_md": "진주시에는 켜진 결과 층이 없어 거르지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_region"
+],
+"scope": {
+"region": "진주시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 154,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "나주시 논 2021년에서 2025년 사이 변화",
+"run_id": "run_test26102210560168803f",
+"event": "agent.done",
+"ms": 621,
+"tools": [],
+"answer_md": "나주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "나주시 논 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "나주시",
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 158,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "제주에 하우스 얼마나 이서",
+"run_id": "run_test261022105603b4ab52",
+"event": "agent.done",
+"ms": 4389,
+"tools": [
+"summary_lookup"
+],
+"answer_md": "제주시 · 비닐하우스 — 비닐하우스 {{env:e1}}. 비닐하우스는 한경면 9,756동 · 애월읍 8,569 · 한림읍 6,087 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 34278,
+"unit": "동",
+"meaning": "비닐하우스",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "제주시",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "제주시 · 비닐하우스 · 2025년 영상"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 160,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "정읍시 휴경지 총 면적을 ㏊로 산출해 주세요",
+"run_id": "run_test261022105635d79900",
+"event": "agent.done",
+"ms": 2328,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "정읍시에는 실태조사 의심 필지가 없습니다 — 있는 것은 경작지 · 건물 · 비닐하우스. 걸지 못한 조건: 분류(휴경지).",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "정읍시 결과 보기",
+"href": null,
+"q": "정읍시 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "정읍시",
+"emd": null,
+"cls": [
+"휴경지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 163,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "김제시 용산리 56-7 주변 필지 같이 보여 줘",
+"run_id": "run_test261022105638294ef8",
+"event": "agent.done",
+"ms": 6633,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "김제시에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 김제시 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "김제시 전역 분석 실행",
+"href": null,
+"q": "김제시 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "김제시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 173,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "평택시 용산리 56-7 최근 이용 변경됐어?",
+"run_id": "run_test261022105647fb59a1",
+"event": "agent.done",
+"ms": 2256,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "평택시에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 평택시 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "평택시 전역 분석 실행",
+"href": null,
+"q": "평택시 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "평택시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 183,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "안동시 신기리 78-9 필지 이력 보여 줘",
+"run_id": "run_test261022105650ba6a00",
+"event": "agent.done",
+"ms": 1836,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "안동시에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 안동시 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "안동시 전역 분석 실행",
+"href": null,
+"q": "안동시 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "안동시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 204,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서산시 창고 작년보다 늘었어?",
+"run_id": "run_test2610221056547d26ae",
+"event": "agent.done",
+"ms": 611,
+"tools": [],
+"answer_md": "서산시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "서산시 창고 어 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "서산시",
+"emd": null,
+"cls": [
+"창고"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 224,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "홍성군에서 농지가 비닐하우스로 바뀐 곳",
+"run_id": "run_test261022105656ab19f0",
+"event": "agent.done",
+"ms": 1169,
+"tools": [
+"survey_findings"
+],
+"answer_md": "홍성군에서 농지가 비닐하우스로 바뀐 의심 필지는 {{env:e1}}입니다. 홍성군에 조건에 맞는 데이터가 없습니다. 비닐하우스 분류 결과가 아니라 실태조사 의심 필지입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 0,
+"unit": "필지",
+"meaning": "조건(홍성군 · R3 용도 불일치(비농지 위 비닐하우스)) 일치 의심 건",
+"scope": null
+}
+},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "홍성군",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "홍성군 · 비닐하우스"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 252,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "김제시 창고 현황을 hwpx 파일로 내려받고 싶어",
+"run_id": "run_test261022105658fea7c8",
+"event": "agent.done",
+"ms": 613,
+"tools": [
+"ai_report"
+],
+"answer_md": "김제시에는 창고 결과가 없습니다 — 있는 것은 경작지 · 비닐하우스 · 건물. 보고서를 만들지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "김제시",
+"emd": null,
+"cls": [
+"창고"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 253,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서울 강남구 원천리 12 주변 필지 같이 보여 줘",
+"run_id": "run_test26102210570129f58c",
+"event": "agent.done",
+"ms": 2254,
+"tools": [
+"map_region"
+],
+"answer_md": "강남구에서 '원천리'을 찾지 못했습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "강남구",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 254,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "정읍시 축사 가장 많이 늘어난 동네",
+"run_id": "run_test261022105704d6f357",
+"event": "agent.done",
+"ms": 627,
+"tools": [],
+"answer_md": "정읍시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "정읍시 축사 가장 많이 동네 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "정읍시",
+"emd": null,
+"cls": [
+"축사"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 262,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "제주시 휴경지 변화 추이 보고서 hwpx 파일로",
+"run_id": "run_test261022105706e8b641",
+"event": "agent.done",
+"ms": 129,
+"tools": [],
+"answer_md": "제주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "제주시 휴경지 보고서 hwpx 파일로 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "제주시",
+"emd": null,
+"cls": [
+"휴경지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 264,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서울 강남구 새로 생긴 논 어디야",
+"run_id": "run_test26102210570893ff21",
+"event": "agent.done",
+"ms": 667,
+"tools": [],
+"answer_md": "강남구에는 물으신 논 결과가 없습니다 — 있는 것은 건물 · 비닐하우스 · 경작지.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "강남구 결과 요약",
+"href": null,
+"q": "강남구 결과 요약해 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "강남구",
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 278,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "확인 필요한 곳",
+"run_id": "run_test261022105710ef7346",
+"event": "agent.done",
+"ms": 2800,
+"tools": [
+"region_brief"
+],
+"answer_md": "아직 지역을 고르지 않아 전국 요약입니다 — 결과가 있는 시군구 {{env:e1}}, 서비스 {{env:e2}}입니다. 의심 필지가 많은 곳부터 아래 막대에 두었습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 10,
+"unit": "곳",
+"meaning": "결과가 있는 시군구 수",
+"scope": null
+},
+"e2": {
+"value": 6,
+"unit": "개",
+"meaning": "결과가 있는 서비스 수",
+"scope": null
+}
+},
+"next": [
+{
+"label": "남원시",
+"href": null,
+"q": "남원시 결과 요약해 줘"
+},
+{
+"label": "강진군",
+"href": null,
+"q": "강진군 결과 요약해 줘"
+},
+{
+"label": "구례군",
+"href": null,
+"q": "구례군 결과 요약해 줘"
+}
+],
+"blocks": [
+{
+"type": "chart",
+"label": "의심 필지가 많은 시군구",
+"href": null
+}
+],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "남원시"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 283,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "안동시에서 농지가 휴경지로 바뀐 곳",
+"run_id": "run_test2610221057159b497e",
+"event": "agent.done",
+"ms": 1186,
+"tools": [
+"survey_findings"
+],
+"answer_md": "안동시에서 농지가 휴경지로 바뀐 의심 필지는 {{env:e1}}입니다.\n안동시 데이터가 없습니다. 휴경지 분류 결과가 아니라 실태조사 의심 필지입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 0,
+"unit": "필지",
+"meaning": "조건(안동시 · R2 휴경·전용 의심) 일치 의심 건",
+"scope": null
+}
+},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "안동시",
+"emd": null,
+"cls": [
+"휴경지"
+],
+"dropped": [],
+"line": "안동시 · 휴경지"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 289,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "목포시 땅 중에서 하천구역 안 의심 시설가 차지하는 비중은?",
+"run_id": "run_test2610221057179700c3",
+"event": "agent.done",
+"ms": 3437,
+"tools": [
+"summary_lookup",
+"summary_lookup"
+],
+"answer_md": "목포시 하천구역 의심 필지는 {{env:e2}}이며, 휴경·전용 의심 필지는 {{env:e1}}입니다.\n해당 데이터는 시범 서비스 결과이며, 상세 비중은 분석 결과에 따라 달라질 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 613,
+"unit": "필지",
+"meaning": "휴경·전용 의심",
+"scope": null
+},
+"e2": {
+"value": 819,
+"unit": "count",
+"meaning": "전남광주특별시 목포시 경작·휴경 분석서비스 · 의심 필지",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash",
+"map_flyto"
+],
+"scope": {
+"region": "목포시",
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "목포시 · 휴경지"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 298,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "해남군 하천구역 안 의심 시설 동네별로 얼마나 돼?",
+"run_id": "run_test261022105722764a76",
+"event": "agent.done",
+"ms": 635,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "해남군에는 실태조사 의심 필지가 없습니다 — 있는 것은 경작지 · 건물 · 비닐하우스.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "해남군 결과 보기",
+"href": null,
+"q": "해남군 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "해남군",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 308,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "안동시 나대지 한 장 요약 보고서",
+"run_id": "run_test261022105724d6691c",
+"event": "agent.done",
+"ms": 629,
+"tools": [
+"ai_report"
+],
+"answer_md": "안동시에는 나대지 결과가 없습니다 — 있는 것은 경작지 · 건물 · 비닐하우스. 보고서를 만들지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "안동시",
+"emd": null,
+"cls": [
+"나대지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 309,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서울 강남구 용산리 56-7 사진으로 지금 어떻게 쓰이는지",
+"run_id": "run_test261022105726943742",
+"event": "agent.done",
+"ms": 1309,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "강남구에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 강남구 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "강남구 전역 분석 실행",
+"href": null,
+"q": "강남구 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "강남구",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 316,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서산시 하천구역 안 의심 시설 최소 면적 필지",
+"run_id": "run_test26102210572934c453",
+"event": "agent.done",
+"ms": 3330,
+"tools": [
+"fusion_chart"
+],
+"answer_md": "서산시에는 물으신 범위의 결과가 없습니다 — 있는 것은 경작지 · 비닐하우스 · 건물.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "서산시 전역 분석 실행",
+"href": null,
+"q": "서산시 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "서산시",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 325,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "홍성군 나대지 총 면적을 ㏊로 산출해 주세요",
+"run_id": "run_test261022105734f87568",
+"event": "agent.done",
+"ms": 645,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "홍성군에는 나대지 결과가 없습니다 — 있는 것은 경작지 · 비닐하우스 · 건물.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "홍성군 결과 보기",
+"href": null,
+"q": "홍성군 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "홍성군",
+"emd": null,
+"cls": [
+"나대지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 327,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "부산 해운대구 노암동 90-1 필지 고유번호 알려 줘",
+"run_id": "run_test2610221057360d093d",
+"event": "agent.done",
+"ms": 1174,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "해운대구에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 해운대구 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "해운대구 전역 분석 실행",
+"href": null,
+"q": "해운대구 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "해운대구",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 335,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "서산시 창고 보고서에 들어가는 항목이 뭐야",
+"run_id": "run_test26102210580467d5f8",
+"event": "agent.done",
+"ms": 2838,
+"tools": [
+"summary_lookup"
+],
+"answer_md": "서산시 · AI 분석 결과 — AI 분석 결과 {{env:e1}}. 서산시에서 가장 많은 결과는 경작지(농지 전수) 121,862곳입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 165839,
+"unit": "개",
+"meaning": "AI 분석 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "서산시",
+"emd": null,
+"cls": [
+"창고"
+],
+"dropped": [],
+"line": "서산시 · 창고"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 336,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "부산 해운대구 월산리 801 최근 이용 변경됐어?",
+"run_id": "run_test2610221058094808cd",
+"event": "agent.done",
+"ms": 754,
+"tools": [
+"parcel_lookup"
+],
+"answer_md": "해운대구에는 연속지적 필지가 없어 지번으로 찾을 수 없습니다 — 해운대구 AI 분석 결과는 볼 수 있습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "해운대구 전역 분석 실행",
+"href": null,
+"q": "해운대구 전역 분석 실행해 줘"
+},
+{
+"label": "영상 등록하기",
+"href": "/landxi/v3/lx-ingest/",
+"q": null
+},
+{
+"label": "결과 있는 지역 보기",
+"href": null,
+"q": "어느 지역에 어떤 결과가 있어?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "해운대구",
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 353,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "나주시 창고 2022년에서 2024년 사이 변화",
+"run_id": "run_test261022105811f8fcd1",
+"event": "agent.done",
+"ms": 654,
+"tools": [],
+"answer_md": "나주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "나주시 창고 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "나주시",
+"emd": null,
+"cls": [
+"창고"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 367,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "영주시 창고 중 면적 최대 필지 확인",
+"run_id": "run_test261022105813d1be34",
+"event": "agent.done",
+"ms": 2278,
+"tools": [
+"map_region",
+"results_features",
+"map_arrive"
+],
+"answer_md": "영주시의 창고 데이터가 현재 지도 범위 내에 확인되지 않습니다.\n영주시의 상세 데이터를 확인하기 위해 분석 범위를 먼저 설정해 주시기 바랍니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_region"
+],
+"scope": {
+"region": "영주시",
+"emd": null,
+"cls": [
+"창고"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 373,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "안동시 농막 중 면적 최대 필지 확인",
+"run_id": "run_test261022105817e6758a",
+"event": "agent.done",
+"ms": 2758,
+"tools": [
+"map_region",
+"map_layer",
+"map_filter"
+],
+"answer_md": "안동시에는 켜진 결과 층이 없어 거르지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [
+"map_region",
+"map_layer"
+],
+"scope": {
+"region": "안동시",
+"emd": null,
+"cls": [
+"농막"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 377,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "영주시 새로 생긴 논 어디야",
+"run_id": "run_test26102210582172f2fd",
+"event": "agent.done",
+"ms": 2354,
+"tools": [
+"summary_lookup"
+],
+"answer_md": "논만 따로 나누지 않아 경작지로 셌습니다. 영주시 · 경작지 — 경작지 {{env:e1}}. 경작지는 안정면 6,364곳 · 이산면 6,355 · 문수면 5,990 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 53261,
+"unit": "곳",
+"meaning": "경작지",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "영주시",
+"emd": null,
+"cls": [
+"논"
+],
+"dropped": [],
+"line": "영주시 · 논 · 2025년 영상"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 381,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "진주시과 홍성군의 태양광 시설와 태양광 시설를 읍면동별로 비교하고 상위 5곳은 지도에 빨간색으로 칠한 다음 한글 보고서로 만들어 줘",
+"run_id": "run_test26102210582593eee2",
+"event": "agent.done",
+"ms": 631,
+"tools": [
+"ai_report"
+],
+"answer_md": "홍성군에는 태양광 결과가 없습니다 — 있는 것은 경작지 · 비닐하우스 · 건물. 보고서를 만들지 않았습니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "홍성군 · 진주시",
+"emd": null,
+"cls": [
+"태양광"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 389,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "평택시 나대지 면적 증감 ㏊",
+"run_id": "run_test261022105827e2e026",
+"event": "agent.done",
+"ms": 633,
+"tools": [],
+"answer_md": "평택시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "평택시 나대지 면적 ㏊ 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "평택시",
+"emd": null,
+"cls": [
+"나대지"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 392,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "영주시 주차장 면적 증감 ㏊",
+"run_id": "run_test261022105829a3e266",
+"event": "agent.done",
+"ms": 626,
+"tools": [],
+"answer_md": "영주시의 시점 비교 숫자(늘어난 · 줄어든 수)는 ChatGEO 가 내지 않습니다 — 지금 시점 숫자를 보일까요?",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "지금 시점 숫자 보기",
+"href": null,
+"q": "영주시 주차장 면적 ㏊ 현황 알려 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "영주시",
+"emd": null,
+"cls": [
+"주차장"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 397,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "목포시 땅 중에서 비닐하우스가 차지하는 비중은?",
+"run_id": "run_test26102210583269c045",
+"event": "agent.done",
+"ms": 2340,
+"tools": [
+"summary_lookup"
+],
+"answer_md": "목포시 · 비닐하우스 — 비닐하우스 {{env:e1}}. 비닐하우스는 달동(행정동 유달동) 122동 · 대양동(행정동 삼향동) 115 · 석현동 54 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 452,
+"unit": "동",
+"meaning": "비닐하우스",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "목포시",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "목포시 · 비닐하우스 · 2025년 영상"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 400,
+"persona": "staff",
+"cluster": "C02",
+"sev": "high",
+"q": "부산 해운대구 축사 다 합치면 얼마나 넓어?",
+"run_id": "run_test261022105835482e9c",
+"event": "agent.done",
+"ms": 731,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "해운대구에는 축사 결과가 없습니다 — 있는 것은 건물 · 경작지 · 비닐하우스.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "해운대구 결과 보기",
+"href": null,
+"q": "해운대구 현황 보여 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "해운대구",
+"emd": null,
+"cls": [
+"축사"
+],
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+}
+],
+"summary": {
+"clusters": {
+"C02": {
+"sev": "high",
+"rank": 8,
+"n": 45,
+"pass": 45,
+"fail": [],
+"p50": 1302,
+"max": 13222
+},
+"C43": {
+"sev": "mid",
+"rank": 28,
+"n": 1,
+"pass": 1,
+"fail": [],
+"p50": 745,
+"max": 745
+},
+"C41": {
+"sev": "high",
+"rank": 17,
+"n": 5,
+"pass": 5,
+"fail": [],
+"p50": 645,
+"max": 1182
+}
+},
+"tiers": {
+"high": {
+"n": 50,
+"pass": 50
+},
+"mid": {
+"n": 1,
+"pass": 1
+}
+},
+"leaks": 0,
+"over10s": 1,
+"total": 51,
+"pass": 51
+}
+}

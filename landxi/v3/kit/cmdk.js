@@ -177,6 +177,12 @@ function fill(md, envs = {}, lang = 'ko') {
     .replace(/\s*\[\d+(?:\s*,\s*\d+)*\]/g, '').replace(/\*\*(.+?)\*\*/g, '$1');
 }
 /** 채팅 답 — 문단은 <p>, 법령 원문 인용(「법령」 제n조 … 줄 + “원문”)은 인용 블록. 줄바꿈 한 번은 줄을 바꾼다. */
+/** 범위 줄(무엇을 셌는지 — 지역 · 종류 · 조건 · 기준 시점 · 시안 ⓒ-1) + 숫자 출처 한 줄(10-22 채택) — 서버 agent.done.scope.line · source_line 그대로(지어내기 0) */
+function frameHtml(sh, inner) {
+  const sc = sh?.scope ? `<p class="k-ck-scope">${esc(sh.scope)}</p>` : '';
+  const src = sh?.src ? `<p class="k-ck-src">출처: ${esc(sh.src)}</p>` : '';
+  return sc + inner + src;
+}
 function answerHtml(md, envs = {}, lang = 'ko') {
   return String(md || '').split(/\n{2,}/).map((para) => {
     const p = para.trim(); if (!p) return '';
@@ -570,7 +576,7 @@ function create(opts) {
       // 개선 고리 — 화면이 지도 동작을 못 그린 것도 모은다(주소가 아직 없으면 조용히)
       feedback('map_failed', { summary: [...new Set(tr.filter((x) => x.state !== 'ok').map((x) => OP_KO[x.op] || x.op))].join(' · ') });
     }
-    ans.hidden = !md; ans.innerHTML = answerHtml(md, shown.envs, shown.lang);
+    ans.hidden = !md; ans.innerHTML = frameHtml(shown, answerHtml(md, shown.envs, shown.lang));
     const hints = tr.map((x) => x.hint).filter((h0) => h0 && h0.label);
     if (r.v !== 'ok') {
       const fb = xiFallback(shown.lang);
@@ -784,10 +790,11 @@ function create(opts) {
         if (!md && !(d?.blocks || []).length) { fail('빈 답'); return; }
         const lg = d?.lang || lang;
         shown = { run, md, envs: d?.envelopes || {}, lang: lg, claims: d?.act_claims || [], v: null, expired: false,
-          next: Array.isArray(d?.next) ? d.next.slice(0, 3) : [], alt: d?.alt || null, hint: d?.hint || null };
+          next: Array.isArray(d?.next) ? d.next.slice(0, 3) : [], alt: d?.alt || null, hint: d?.hint || null,
+          scope: (lg === 'ko' && d?.scope?.line) || null, src: (lg === 'ko' && d?.source_line) || null };
         // 끝 신호를 기다리는 지도 동작이 있으면 동작 문장은 진행형으로 두고, 신호가 오면 확정한다(확인 16차 규칙 ①)
         const pending = acts.items.some((x) => TRACK.has(x.op) && x.state === 'sent');
-        settle('done'); ans.hidden = !md; ans.innerHTML = answerHtml(pending ? wip(md, shown.claims, lg) : md, d?.envelopes, lg);
+        settle('done'); ans.hidden = !md; ans.innerHTML = frameHtml(shown, answerHtml(pending ? wip(md, shown.claims, lg) : md, d?.envelopes, lg));
         renderBlocks(d?.blocks || [], d?.envelopes || {}, lg);
         // 답이 가리키는 곳(서버 map_refs · 도구 결과에서) — 지도 화면이 강조 · 답 글과 잇는다(XI맵 chat-hl.js · 원칙 292). 받는 화면이 없으면 아무 일 없음
         document.dispatchEvent(new CustomEvent('kit:agent-done', { detail: { run, refs: d?.map_refs || null, replay } }));

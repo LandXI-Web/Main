@@ -4,7 +4,7 @@
   - 읽기만 한다. 수치는 게이트웨이 `/ops/*` 응답(사용자 토큰 그대로 · 관리자 권한) 을 봉투로 옮긴다 — 화면(인프라 · 기관)과 같은 한 출처.
   - GPU 는 순번('GPU 0' · 'GPU 1' — 인프라 표와 같은 이름)으로만 부른다. 제품명 · 포트 · 주소 · 경로는 데이터에 싣지 않는다.
   - 조치(재큐 · 우선순위 · 모델 켜기 등)는 '제안' 문장까지만 낸다. 실행은 화면 버튼으로. 언어 모델(vLLM · Ollama)을 내리자는 제안은 만들지 않는다.
-  - 기관 계정 · LX 직원 · 영업에게는 도구가 없다(allowed) — 그 계정의 운영 질문은 runner 가 'LX 관리자 화면에서 확인할 수 있습니다.' 한 줄로 닫는다.
+  - 기관 계정 · LX 직원 · 영업에게는 도구가 없다(allowed) — 그 계정의 운영 질문은 runner 가 '이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다.' 한 줄로 닫는다.
 """
 from __future__ import annotations
 
@@ -13,7 +13,8 @@ import re
 
 from .. import Out, ToolError
 
-ADMIN_LINE = "LX 관리자 화면에서 확인할 수 있습니다."
+ADMIN_LINE = "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다."   # 관리자 전용 질문(서버 · GPU · 사용량) 거절 문장 하나(10-22 채택 · 직원 · 기관 같은 말)
+ADMIN_LINE_EN = "This account can't see that — it is on the LX admin dashboard."
 KST = dt.timezone(dt.timedelta(hours=9))
 
 USAGE_DIMS = {  # dim → (사용자 말, 봉투 단위(칩 표기), 환산). 이름은 XI ChatGEO(원칙 96) · 사용 현황은 '요청 건수'(원칙 91 · 11차 자원-1)
@@ -706,7 +707,7 @@ async def ops_admin_only(args: dict, ctx) -> Out:
     out = Out(source="안내")
     out.data = {"안내": ADMIN_LINE}
     # 해외 기관 화면은 영어 화면 — 한국어로 물어도 영어 한 줄(한국어 문장은 그 화면에서 오류 문구로 바뀐다)
-    out.answer = "You can check this on the LX admin dashboard." if (_en(ctx) or _global_viewer(ctx)) else ADMIN_LINE
+    out.answer = ADMIN_LINE_EN if (_en(ctx) or _global_viewer(ctx)) else ADMIN_LINE
     return out
 
 

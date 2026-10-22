@@ -1,0 +1,437 @@
+{
+ "at": "2026-10-22 11:10:05",
+ "runs": [
+  {
+   "who": "namwon",
+   "vp": "pc1440",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "AI 분석 결과 층 꺼 줘",
+     "ms": 3205,
+     "band": {
+      "scope": null,
+      "text": "AI 분석 결과 층을 껐습니다.",
+      "btns": [
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": null,
+     "at": "1110"
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2442,
+     "band": {
+      "scope": "남원시 · 경작지  —  출처: 서비스 요약",
+      "text": "전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,111건 · 기관 신고 123건 · 의심 필지 21,368건입니다.",
+      "btns": [
+       "남원시 AI 분석 결과 몇 건",
+       "남원시 보고서 초안",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-b-1110.png",
+     "at": "1110"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5717,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 3"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-a-1110.png",
+     "at": "1110"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-pc1440-drawer-on-1110.png"
+    }
+   ]
+  },
+  {
+   "who": "namwon",
+   "vp": "pc1280",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "AI 분석 결과 층 꺼 줘",
+     "ms": 3178,
+     "band": {
+      "scope": null,
+      "text": "AI 분석 결과 층을 껐습니다.",
+      "btns": [
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": null,
+     "at": "1110"
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2446,
+     "band": {
+      "scope": "남원시 · 경작지  —  출처: 서비스 요약",
+      "text": "전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,111건 · 기관 신고 123건 · 의심 필지 21,368건입니다.",
+      "btns": [
+       "남원시 AI 분석 결과 몇 건",
+       "남원시 보고서 초안",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-b-1110.png",
+     "at": "1110"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5822,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 3"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-a-1110.png",
+     "at": "1110"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-pc1280-drawer-on-1110.png"
+    }
+   ]
+  },
+  {
+   "who": "namwon",
+   "vp": "m390",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "pre",
+     "q": "AI 분석 결과 층 꺼 줘",
+     "ms": 2454,
+     "band": {
+      "scope": null,
+      "text": "AI 분석 결과 층을 껐습니다.",
+      "btns": [
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": null,
+     "at": "1111"
+    },
+    {
+     "id": "b",
+     "q": "남원 경작지 면적이 얼마나 돼",
+     "ms": 2445,
+     "band": {
+      "scope": "남원시 · 경작지  —  출처: 서비스 요약",
+      "text": "전북특별자치도 남원시 경작·휴경 분석서비스는 운영 중입니다. AI 분석 결과 2,098필지 · 결과 확인 대기 1,111건 · 기관 신고 123건 · 의심 필지 21,368건입니다.",
+      "btns": [
+       "남원시 AI 분석 결과 몇 건",
+       "남원시 보고서 초안",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-m390-b-1111.png",
+     "at": "1111"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5701,
+     "band": {
+      "scope": "남원시  —  출처: 실태조사 결과",
+      "text": "남원시 실태조사 의심 필지는 21,619건입니다.",
+      "btns": [
+       "AI 분석 결과만 보여 줘",
+       "읍면동별 차트",
+       "대화 3"
+      ]
+     },
+     "overlap": [],
+     "shot": "namwon-m390-a-1111.png",
+     "at": "1111"
+    },
+    {
+     "id": "select",
+     "selected": "남원시 실태조사 의심 필지는 21,619건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "namwon-m390-drawer-on-1111.png"
+    }
+   ]
+  },
+  {
+   "who": "gj",
+   "vp": "pc1440",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "c",
+     "q": "우리 시 해양쓰레기 몇 개야",
+     "ms": 4484,
+     "band": {
+      "scope": "관할 전체 · 해양쓰레기 · 2025년 영상  —  출처: 해양쓰레기 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "관할 전체 해양쓰레기는 1,857건입니다 — 여수시 1,857건에만 있습니다.",
+      "btns": [
+       "여수시 결과 요약",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-pc1440-c-1111.png",
+     "at": "1111"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5830,
+     "band": {
+      "scope": "관할 전체  —  출처: 실태조사 결과",
+      "text": "관할 전체 실태조사 의심 필지는 35,933건입니다.",
+      "btns": [
+       "목포시",
+       "여수시",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-pc1440-a-1111.png",
+     "at": "1111"
+    },
+    {
+     "id": "select",
+     "selected": "관할 전체 실태조사 의심 필지는 35,933건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "gj-pc1440-drawer-on-1111.png"
+    }
+   ]
+  },
+  {
+   "who": "gj",
+   "vp": "pc1280",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "c",
+     "q": "우리 시 해양쓰레기 몇 개야",
+     "ms": 4394,
+     "band": {
+      "scope": "관할 전체 · 해양쓰레기 · 2025년 영상  —  출처: 해양쓰레기 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "관할 전체 해양쓰레기는 1,857건입니다 — 여수시 1,857건에만 있습니다.",
+      "btns": [
+       "여수시 결과 요약",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-pc1280-c-1112.png",
+     "at": "1112"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5846,
+     "band": {
+      "scope": "관할 전체  —  출처: 실태조사 결과",
+      "text": "관할 전체 실태조사 의심 필지는 35,933건입니다.",
+      "btns": [
+       "목포시",
+       "여수시",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-pc1280-a-1112.png",
+     "at": "1112"
+    },
+    {
+     "id": "select",
+     "selected": "관할 전체 실태조사 의심 필지는 35,933건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "gj-pc1280-drawer-on-1112.png"
+    }
+   ]
+  },
+  {
+   "who": "gj",
+   "vp": "m390",
+   "errors": [],
+   "steps": [
+    {
+     "id": "open",
+     "overlap": []
+    },
+    {
+     "id": "c",
+     "q": "우리 시 해양쓰레기 몇 개야",
+     "ms": 3576,
+     "band": {
+      "scope": "관할 전체 · 해양쓰레기 · 2025년 영상  —  출처: 해양쓰레기 분석서비스 결과(기관 통계 화면과 같은 값)",
+      "text": "관할 전체 해양쓰레기는 1,857건입니다 — 여수시 1,857건에만 있습니다.",
+      "btns": [
+       "여수시 결과 요약",
+       "대화 1"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-m390-c-1112.png",
+     "at": "1112"
+    },
+    {
+     "id": "a",
+     "q": "우리 시 의심 필지 몇 건이야",
+     "ms": 5982,
+     "band": {
+      "scope": "관할 전체  —  출처: 실태조사 결과",
+      "text": "관할 전체 실태조사 의심 필지는 35,933건입니다.",
+      "btns": [
+       "목포시",
+       "여수시",
+       "대화 2"
+      ]
+     },
+     "overlap": [],
+     "shot": "gj-m390-a-1112.png",
+     "at": "1112"
+    },
+    {
+     "id": "select",
+     "selected": "관할 전체 실태조사 의심 필지는 35,933건입니다."
+    },
+    {
+     "id": "drawer",
+     "switch": true,
+     "before": "true",
+     "after": "false",
+     "state": {
+      "tint": {
+       "on": false,
+       "k": 1,
+       "saved": true
+      },
+      "hl": false
+     },
+     "overlap": [],
+     "shot": "gj-m390-drawer-on-1112.png"
+    }
+   ]
+  }
+ ]
+}

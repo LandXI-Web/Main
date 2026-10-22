@@ -101,6 +101,13 @@ async def asked_scope(ctx, msg: str) -> dict:
             out["sgg"] |= _region_codes(h)
             out["names"].append(h.get("name") or "")
             out["home"] = True
+        else:                                         # 여러 시군을 맡은 기관 · 지도가 관할 시군구를 보고 있지 않음 → 관할 전체('우리 시' 규칙 ③)
+            mine = talk.home_all(ctx)
+            if len(mine) > 1:
+                for m in mine:
+                    out["sgg"] |= _region_codes(m)
+                out["names"].append("관할 전체")
+                out["home"] = True
     base = None
     if out["sgg"]:
         base = sorted(out["sgg"])[0]
@@ -415,3 +422,130 @@ def _region_has(ctx, asked: dict) -> bool:
     from . import talk
     cds = set(asked["sgg"]) or {(talk.here(ctx) or {}).get("sgg_cd")}
     return any(c and talk._has_data_sync(c) for c in cds)
+
+
+# ── 범위 줄 · 숫자 출처 한 줄(시안 ⓒ-1 · 10-22 채택 '답마다 숫자가 어디서 왔는지 한 줄') ─────────────────────────────
+#   범위 줄 = 무엇을 셌는지(지역 · 종류 · 조건 · 기준 시점) — 답 띠 숫자 바로 위 작은 회색 한 줄(화면 cmdk · chat-answer)
+#   출처 줄 = 숫자가 나온 곳(사람 말 · 화면 이름) — 도구 이름 · 표 이름 · 경로 0(규칙 2)
+SOURCE_KO = {
+    "ximap_dash": "XI맵 통계 판", "map_task": "XI맵 결과 장부", "ai_count": "XI맵 큰 숫자와 같은 셈",
+    "map_stats": "지도 위 결과 층", "map_filter": "지도 위 결과 층", "ai_report": "지도 위 결과 층", "results_stats": "AI 분석 결과",
+    "survey_count": "실태조사 결과", "survey_stats": "실태조사 결과", "survey_findings": "실태조사 결과", "survey_compare": "실태조사 결과",
+    "summary_lookup": "서비스 요약", "region_brief": "서비스 요약", "ledger_findings": "대장 × AI 대조", "fusion_ledger": "대장 × AI 대조",
+    "law_search": "국가법령정보센터 원문(색인)", "parcel_lookup": "연속지적", "survey_rank": "실태조사 결과", "class_count": "XI맵 통계 판과 같은 셈",
+}
+_KIND_IMG = (("드론", "드론"), ("항공", "항공"), ("위성", "위성"))
+
+
+async def basis_label(ctx) -> str | None:
+    """기준 시점 — 이 답이 센 결과의 영상 연도(작업 → 영상 · 서비스 결과 장부). 모르면 None(지어내지 않는다)."""
+    sets = [str(x) for x in (ctx.state.get("scope_sets") or []) if x]
+    yr = ctx.state.get("scope_year")
+    kind = ctx.state.get("scope_img")
+    if not yr and sets:
+        try:
+            from landxi_api.deps import db
+            jobs = [s.rsplit("/", 1)[-1] for s in sets]
+            async with db(realm="lx") as c:
+                rows = await c.fetch("SELECT i.year, i.epoch, i.name->>'ko' AS nm FROM jobs j JOIN imagery i ON i.id = j.imagery_id WHERE j.id = ANY($1::text[])", jobs)
+                ys = set()
+                for r in rows:
+                    y = r["year"] or (str(r["epoch"] or "")[:4] if str(r["epoch"] or "")[:4].isdigit() else None)
+                    if y:
+                        ys.add(int(y))
+                    for w, k in _KIND_IMG:
+                        if w in str(r["nm"] or ""):
+                            kind = kind or k
+                if not ys:
+                    for r in await c.fetch("SELECT DISTINCT year FROM service_results WHERE set_id = ANY($1::text[]) AND year IS NOT NULL", sets):
+                        ys.add(int(r["year"]))
+            if len(ys) == 1:
+                yr = next(iter(ys))
+        except Exception:  # noqa: BLE001
+            yr = None
+    if not yr:
+        return None
+    return f"{yr}년 {kind + ' ' if kind else ''}영상"
+
+
+async def scope_line(ctx, scope: dict | None, md: str) -> str | None:
+    """'남원시 아영면 · 비닐하우스 · 500㎡ 이상 · 2025년 항공 영상' — 숫자가 있는 답에만."""
+    if not ENV_RX.search(md or "") or getattr(ctx, "lang", "ko") != "ko":
+        return None
+    sc = scope or {}
+    used = list(dict.fromkeys(ENV_RX.findall(md or "")))
+    region = sc.get("region")
+    emd = list(sc.get("emd") or [])
+    cls = list(sc.get("cls") or [])
+    for eid in used:
+        es = env_scope(ctx, eid)
+        if not region and isinstance(es.get("sgg"), set) and len(es["sgg"]) <= 3:
+            try:
+                from landxi_api.regions import region_of
+                nm = [(region_of(c) or {}).get("name") for c in sorted(es["sgg"])]
+                nm = [n for n in dict.fromkeys(n for n in nm if n)]
+                if len(nm) == 1:
+                    region = nm[0]
+            except Exception:  # noqa: BLE001
+                pass
+        if not emd and es.get("emd") and len(used) == 1:
+            emd = list(es["emd"])[:2]
+        if not cls and es.get("cls") and len(es["cls"]) <= 3:
+            cls = sorted(es["cls"])
+    if not region:
+        from . import talk
+        r = talk.here(ctx)
+        region = (r or {}).get("name") or ("관할 전체" if getattr(ctx.principal, "realm", None) == "tenant" else None)
+    parts = [" ".join(x for x in (region or "", " · ".join(emd[:2])) if x)]
+    if cls:
+        parts.append(" · ".join(cls[:3]))
+    cond = ctx.state.get("scope_cond")
+    if cond:
+        parts.append(str(cond))
+    b = await basis_label(ctx)
+    if b:
+        parts.append(b)
+    parts = [p for p in parts if p]
+    return " · ".join(parts) if len(parts) >= 2 else (parts[0] if parts else None)
+
+
+def source_line(ctx, md: str) -> str | None:
+    """숫자가 어디서 왔는지 — 이 답의 숫자를 낸 도구(사람 말)."""
+    if getattr(ctx, "lang", "ko") != "ko":
+        return None
+    used = set(ENV_RX.findall(md or ""))
+    if not used and not any(s.get("tool") == "law_search" and s.get("ok") for s in ctx.steps):
+        return None
+    if (ctx.state.get("svc_src") or {}).get("name"):
+        return f"{ctx.state['svc_src']['name']} 결과(기관 통계 화면과 같은 값)"
+    steps = {}
+    for (i, _k), eid in (ctx.keymap or {}).items():
+        if eid in used:
+            st = next((s for s in ctx.steps if s.get("i") == i), None)
+            if st:
+                steps[st["tool"]] = True
+    if not steps:
+        steps = {s["tool"]: True for s in ctx.steps if s.get("ok") and s["tool"] == "law_search"}
+    names = [SOURCE_KO[t] for t in steps if t in SOURCE_KO]
+    names = list(dict.fromkeys(names))
+    if not names:
+        return None
+    return " · ".join(names[:2])
+
+
+async def answer_sgg(ctx) -> str | None:
+    """이 답의 시군구 하나(물은 지역 → 화면 지역) — 행정동 이름 붙이기(hjd)가 쓴다."""
+    try:
+        a = await asked_scope(ctx, ctx.state.get("msg") or "")
+        if a["sgg"]:
+            from . import talk
+            g = talk.regions_in(ctx.state.get("msg") or "")
+            if g:
+                r, _ = talk.pick(ctx, g[0])
+                if r:
+                    return r["sgg_cd"]
+            return sorted(a["sgg"])[0]
+        from . import talk
+        return (talk.here(ctx) or {}).get("sgg_cd")
+    except Exception:  # noqa: BLE001
+        return None

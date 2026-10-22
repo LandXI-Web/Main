@@ -1,0 +1,1493 @@
+{
+"at": "2026-10-22 10:11:55",
+"total": 25,
+"gpu": [
+{
+"at_q": 0,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 17,
+"watt_max": 17.66
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 28,
+"watt_max": 28.28
+}
+]
+},
+{
+"at_q": 20,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 18,
+"watt_max": 17.85
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 28,
+"watt_max": 28.44
+}
+]
+},
+{
+"at_q": 25,
+"cards": [
+{
+"gpu": 0,
+"util_avg": 0,
+"watt_avg": 18,
+"watt_max": 17.8
+},
+{
+"gpu": 1,
+"util_avg": 0,
+"watt_avg": 28,
+"watt_max": 28.61
+}
+]
+}
+],
+"results": [
+{
+"n": 1,
+"persona": "namwon",
+"cluster": "C22a",
+"sev": "top",
+"q": "남원 경작지 면적이 얼마나 돼",
+"run_id": "run_test2610221009521d7ce3",
+"event": "agent.done",
+"ms": 1766,
+"tools": [
+"map_stats"
+],
+"answer_md": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 {{env:e1}} · 비경작지 {{env:e2}} (모두 {{env:e3}}).",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 205.0,
+"unit": "ha",
+"meaning": "남원시 경작·휴경 분석서비스 경작지 넓이",
+"scope": null
+},
+"e2": {
+"value": 110.9,
+"unit": "ha",
+"meaning": "남원시 경작·휴경 분석서비스 비경작지 넓이",
+"scope": null
+},
+"e3": {
+"value": 315.9,
+"unit": "ha",
+"meaning": "남원시 경작·휴경 분석서비스 결과 넓이 모두",
+"scope": null
+}
+},
+"next": [
+{
+"label": "경작·휴경 보고서 열기",
+"href": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+"q": null
+},
+{
+"label": "경작지 읍면동별로 보기",
+"href": null,
+"q": "경작지 읍면동별로 세어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"map_layer"
+],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "경작·휴경 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 2,
+"persona": "namwon",
+"cluster": "C22a",
+"sev": "top",
+"q": "남원시 경작지 통계 보고서 만들어 줘",
+"run_id": "run_test261022100957932e3f",
+"event": "agent.done",
+"ms": 627,
+"tools": [
+"ai_report"
+],
+"answer_md": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 {{env:e1}} · 비경작지 {{env:e2}} (모두 {{env:e3}}).",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 1291,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 경작지 수",
+"scope": null
+},
+"e2": {
+"value": 807,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 비경작지 수",
+"scope": null
+},
+"e3": {
+"value": 2098,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 결과 수 모두",
+"scope": null
+}
+},
+"next": [
+{
+"label": "경작·휴경 보고서 열기",
+"href": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+"q": null
+},
+{
+"label": "경작지 읍면동별로 보기",
+"href": null,
+"q": "경작지 읍면동별로 세어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"map_layer"
+],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "경작·휴경 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 3,
+"persona": "namwon",
+"cluster": "C22a",
+"sev": "high",
+"q": "경작지 몇 곳이야",
+"run_id": "run_test26102210095953257b",
+"event": "agent.done",
+"ms": 658,
+"tools": [
+"map_stats"
+],
+"answer_md": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 — 경작지 {{env:e1}} · 비경작지 {{env:e2}} (모두 {{env:e3}}).",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 1291,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 경작지 수",
+"scope": null
+},
+"e2": {
+"value": 807,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 비경작지 수",
+"scope": null
+},
+"e3": {
+"value": 2098,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 결과 수 모두",
+"scope": null
+}
+},
+"next": [
+{
+"label": "경작·휴경 보고서 열기",
+"href": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+"q": null
+},
+{
+"label": "경작지 읍면동별로 보기",
+"href": null,
+"q": "경작지 읍면동별로 세어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"map_layer"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "경작·휴경 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 4,
+"persona": "namwon",
+"cluster": "C22a",
+"sev": "high",
+"q": "경작지 읍면동별로 세어 줘",
+"run_id": "run_test261022101002e48fc5",
+"event": "agent.done",
+"ms": 645,
+"tools": [
+"map_stats"
+],
+"answer_md": "경작지 층을 켜고 셌습니다. 남원시 경작·휴경 서비스 결과 읍면동별(많은 곳부터) — 운봉읍 {{env:e1}} · 송동면 {{env:e2}} · 대강면 {{env:e3}} · 보절면 {{env:e4}} · 대산면 {{env:e5}}.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 237.0,
+"unit": "필지",
+"meaning": "운봉읍 경작지 · 비경작지 수",
+"scope": null
+},
+"e2": {
+"value": 149.0,
+"unit": "필지",
+"meaning": "송동면 경작지 · 비경작지 수",
+"scope": null
+},
+"e3": {
+"value": 142.0,
+"unit": "필지",
+"meaning": "대강면 경작지 · 비경작지 수",
+"scope": null
+},
+"e4": {
+"value": 138.0,
+"unit": "필지",
+"meaning": "보절면 경작지 · 비경작지 수",
+"scope": null
+},
+"e5": {
+"value": 136.0,
+"unit": "필지",
+"meaning": "대산면 경작지 · 비경작지 수",
+"scope": null
+}
+},
+"next": [
+{
+"label": "경작·휴경 보고서 열기",
+"href": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+"q": null
+},
+{
+"label": "경작지 읍면동별로 보기",
+"href": null,
+"q": "경작지 읍면동별로 세어 줘"
+}
+],
+"blocks": [
+{
+"type": "chart",
+"label": "읍면동별 경작지 · 비경작지",
+"href": null
+}
+],
+"ui_ops": [
+"map_layer"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "경작·휴경 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 5,
+"persona": "namwon",
+"cluster": "C22b",
+"sev": "high",
+"q": "남원시 경작지 몇 곳이야",
+"run_id": "run_test261022101004d75b0c",
+"event": "agent.done",
+"ms": 670,
+"tools": [
+"class_count"
+],
+"answer_md": "남원시 경작지는 {{env:e1}}입니다(경작·휴경 서비스 결과).",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 1291,
+"unit": "필지",
+"meaning": "남원시 경작·휴경 분석서비스 경작지",
+"scope": null
+}
+},
+"next": [
+{
+"label": "경작·휴경 보고서 열기",
+"href": "/landxi/v3/gov-report/?service=card-farm&tab=report",
+"q": null
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "경작·휴경 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 6,
+"persona": "namwon",
+"cluster": "C22c",
+"sev": "high",
+"q": "읍면동별 현장 확인 필요 필지 순위",
+"run_id": "run_test2610221010062af115",
+"event": "agent.done",
+"ms": 1865,
+"tools": [
+"survey_rank"
+],
+"answer_md": "남원시 실태조사 의심 필지 읍면동 순위(많은 곳부터)는 운봉읍 {{env:e1}} · 아영면 {{env:e2}} · 대강면 {{env:e3}}입니다 — 모두 {{env:e11}} 가운데입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2345,
+"unit": "count",
+"meaning": "운봉읍 실태조사 의심 필지",
+"scope": null
+},
+"e2": {
+"value": 2105,
+"unit": "count",
+"meaning": "아영면 실태조사 의심 필지",
+"scope": null
+},
+"e3": {
+"value": 1684,
+"unit": "count",
+"meaning": "대강면 실태조사 의심 필지",
+"scope": null
+},
+"e11": {
+"value": 21619,
+"unit": "count",
+"meaning": "남원시 전체 의심 필지(전체 규칙)",
+"scope": null
+}
+},
+"next": [
+{
+"label": "의심 필지 10곳 지도에",
+"href": null,
+"q": "남원시 의심 필지 10곳 보여 줘"
+},
+{
+"label": "보고서 초안",
+"href": null,
+"q": "남원시 보고서 초안 만들어 줘"
+}
+],
+"blocks": [
+{
+"type": "chart",
+"label": "읍면동별 실태조사 의심 필지",
+"href": null
+}
+],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "남원시"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 7,
+"persona": "namwon",
+"cluster": "C22d",
+"sev": "high",
+"q": "서버 사용량 알려 줘",
+"run_id": "run_test2610221010106d5042",
+"event": "agent.done",
+"ms": 647,
+"tools": [],
+"answer_md": "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 8,
+"persona": "namwon",
+"cluster": "C22e",
+"sev": "top",
+"q": "우리 시 의심 필지 몇 건이야",
+"run_id": "run_test261022101012b5751d",
+"event": "agent.done",
+"ms": 1738,
+"tools": [
+"survey_count"
+],
+"answer_md": "남원시 실태조사 의심 필지는 {{env:e1}}입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 21619,
+"unit": "count",
+"meaning": "남원시 전체 의심 필지(전체 규칙)",
+"scope": null
+}
+},
+"next": [
+{
+"label": "AI 분석 결과만 보여 줘",
+"href": null,
+"q": "AI 분석 결과 층만 켜 줘"
+},
+{
+"label": "읍면동별 차트",
+"href": null,
+"q": "남원시 의심 필지 읍면동별 차트로 보여 줘"
+},
+{
+"label": "보고서 초안",
+"href": null,
+"q": "남원시 보고서 초안 만들어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "남원시"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 9,
+"persona": "staff",
+"cluster": "C22b",
+"sev": "top",
+"q": "남원시 경작지 현황 보여 줘",
+"run_id": "run_test261022101015dda2f7",
+"event": "agent.done",
+"ms": 747,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "남원시 · 경작지 — 경작·휴경 분석서비스 결과 {{env:e1}}. 경작지는 운봉읍 237필지 · 송동면 149 · 대강면 142 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2098,
+"unit": "필지",
+"meaning": "경작·휴경 분석서비스 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 10,
+"persona": "staff",
+"cluster": "C22e",
+"sev": "top",
+"q": "남원 의심 필지 몇 건이야",
+"run_id": "run_test2610221010175fe44b",
+"event": "agent.done",
+"ms": 2233,
+"tools": [
+"survey_count"
+],
+"answer_md": "남원시 실태조사 의심 필지는 {{env:e1}}입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 21619,
+"unit": "count",
+"meaning": "남원시 전체 의심 필지(전체 규칙)",
+"scope": null
+}
+},
+"next": [
+{
+"label": "AI 분석 결과만 보여 줘",
+"href": null,
+"q": "AI 분석 결과 층만 켜 줘"
+},
+{
+"label": "읍면동별 차트",
+"href": null,
+"q": "남원시 의심 필지 읍면동별 차트로 보여 줘"
+},
+{
+"label": "보고서 초안",
+"href": null,
+"q": "남원시 보고서 초안 만들어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "남원시"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 11,
+"persona": "staff",
+"cluster": "C22e",
+"sev": "high",
+"q": "남원 비닐하우스 의심 필지 몇 건이야",
+"run_id": "run_test261022101021e1d85f",
+"event": "agent.done",
+"ms": 2252,
+"tools": [
+"survey_count"
+],
+"answer_md": "남원시 비닐하우스 의심 필지는 {{env:e2}}입니다 — 실태조사 의심 필지 전체 {{env:e1}} 가운데 이 서비스 몫입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 21619,
+"unit": "count",
+"meaning": "남원시 전체 의심 필지(전체 규칙)",
+"scope": null
+},
+"e2": {
+"value": 264,
+"unit": "count",
+"meaning": "남원시 비닐하우스 의심 필지",
+"scope": null
+}
+},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "남원시 · 비닐하우스"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 12,
+"persona": "staff",
+"cluster": "C22d",
+"sev": "high",
+"q": "서버 GPU 상태 알려 줘",
+"run_id": "run_test261022101025859fdd",
+"event": "agent.done",
+"ms": 645,
+"tools": [
+"ops_admin_only"
+],
+"answer_md": "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 13,
+"persona": "staff",
+"cluster": "C22f",
+"sev": "top",
+"q": "농업진흥구역에서 할 수 없는 행위는?",
+"run_id": "run_test261022101027ccd26a",
+"event": "agent.done",
+"ms": 1455,
+"tools": [
+"law_search"
+],
+"answer_md": "관련 조문 원문입니다.\n\n「농지법」 제32조(용도구역에서의 행위 제한) 제1항 · 시행 2026-09-18\n“①농업진흥구역에서는 농업 생산 또는 농지 개량과 직접적으로 관련된 행위로서 대통령령으로 정하는 행위 외의 토지이용행위를 할 수 없다. 다만, 다음 각 호의 토지이용행위는 그러하지 아니하다. <개정 2009.5.27, 2012.1.17, 2018.12.24, 2020.2.11, 2023.5.16, 2023.8.8>\n1. 대통령령으로 정하는 농수산물(농산물ㆍ임산물ㆍ축산물ㆍ수산물을 말한다. 이하 같다)의 가공ㆍ처리 시설의 설치 및 농수산업(농업ㆍ임업ㆍ축산업ㆍ수산업을 말한다. 이하 같다) 관련 시험ㆍ연구 시설의 설치\n2. 어린이놀이터, 마을회관, 그 밖에 대통령령으로 정하는 농업인의 공동생활에 필요한 편의 시설 및 이용 시설의 설치\n3. 대통령령으로 정하는 농업인 주택, 어업인 주택, 농업용 시설, 축산업용 시설 또는 어업용 시설의 설치\n4. 국방ㆍ군사 시설의 설치\n5. 하천, 제방, 그 밖에 이에 준하는 국토 보존 시설의 설치\n6. 「국가유산기본법」 제3조에 따른 국가유산의 보수ㆍ복원ㆍ이전, 매장유산의 발굴, 비석이나 기념탑, 그 밖에 이와 비슷한 공작물의 설치\n7. 도로, 철도, 그 밖에 대통령령으로 정하는 공공시설의 설치\n8. 지하자원 개발을 위한 탐사 또는 지하광물 채광(採鑛)과 광석의 선별 및 적치(積置)를 위한 장소로 사용하는 행위\n9. 농어촌 소득원 개발 등 농어촌 발전에 필요한 시설로서 대통령령으로 정하는 시설의 설치”\n\n함께 볼 조문: 「농지법 시행령」 제29조(농업진흥구역에서 할 수 있는 행위) 제1항 · 시행 2026-09-18 · 「농지법 시행령」 제29조(농업진흥구역에서 할 수 있는 행위) 제6항 · 시행 2026-09-18\n\n조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "농지법 시행령 제29조 원문",
+"href": null,
+"q": "농지법 시행령 제29조 조문 알려 줘"
+},
+{
+"label": "국가법령정보센터에서 찾기",
+"href": "https://www.law.go.kr/lsSc.do?menuId=1&query=%EB%86%8D%EC%A7%80%EB%B2%95",
+"q": null
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": "국가법령정보센터 원문(색인)",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 14,
+"persona": "staff",
+"cluster": "C22f",
+"sev": "top",
+"q": "농업진흥구역에서 행위 제한이 뭐야",
+"run_id": "run_test261022101030652e7d",
+"event": "agent.done",
+"ms": 798,
+"tools": [
+"law_search"
+],
+"answer_md": "관련 조문 원문입니다.\n\n「농지법」 제32조(용도구역에서의 행위 제한) 제1항 · 시행 2026-09-18\n“①농업진흥구역에서는 농업 생산 또는 농지 개량과 직접적으로 관련된 행위로서 대통령령으로 정하는 행위 외의 토지이용행위를 할 수 없다. 다만, 다음 각 호의 토지이용행위는 그러하지 아니하다. <개정 2009.5.27, 2012.1.17, 2018.12.24, 2020.2.11, 2023.5.16, 2023.8.8>\n1. 대통령령으로 정하는 농수산물(농산물ㆍ임산물ㆍ축산물ㆍ수산물을 말한다. 이하 같다)의 가공ㆍ처리 시설의 설치 및 농수산업(농업ㆍ임업ㆍ축산업ㆍ수산업을 말한다. 이하 같다) 관련 시험ㆍ연구 시설의 설치\n2. 어린이놀이터, 마을회관, 그 밖에 대통령령으로 정하는 농업인의 공동생활에 필요한 편의 시설 및 이용 시설의 설치\n3. 대통령령으로 정하는 농업인 주택, 어업인 주택, 농업용 시설, 축산업용 시설 또는 어업용 시설의 설치\n4. 국방ㆍ군사 시설의 설치\n5. 하천, 제방, 그 밖에 이에 준하는 국토 보존 시설의 설치\n6. 「국가유산기본법」 제3조에 따른 국가유산의 보수ㆍ복원ㆍ이전, 매장유산의 발굴, 비석이나 기념탑, 그 밖에 이와 비슷한 공작물의 설치\n7. 도로, 철도, 그 밖에 대통령령으로 정하는 공공시설의 설치\n8. 지하자원 개발을 위한 탐사 또는 지하광물 채광(採鑛)과 광석의 선별 및 적치(積置)를 위한 장소로 사용하는 행위\n9. 농어촌 소득원 개발 등 농어촌 발전에 필요한 시설로서 대통령령으로 정하는 시설의 설치”\n\n함께 볼 조문: 「농지법 시행령」 제29조(농업진흥구역에서 할 수 있는 행위) 제1항 · 시행 2026-09-18 · 「농지법 시행령」 제29조(농업진흥구역에서 할 수 있는 행위) 제6항 · 시행 2026-09-18\n\n조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "농지법 시행령 제29조 원문",
+"href": null,
+"q": "농지법 시행령 제29조 조문 알려 줘"
+},
+{
+"label": "국가법령정보센터에서 찾기",
+"href": "https://www.law.go.kr/lsSc.do?menuId=1&query=%EB%86%8D%EC%A7%80%EB%B2%95",
+"q": null
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": "국가법령정보센터 원문(색인)",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 15,
+"persona": "staff",
+"cluster": "C22f",
+"sev": "high",
+"q": "농업진흥구역에서 금지되는 행위 알려 줘",
+"run_id": "run_test261022101032c97660",
+"event": "agent.done",
+"ms": 2412,
+"tools": [],
+"answer_md": "「농지법」 제32조 제1항에 따라 농업진흥구역 내에서는 농업·축산업·임업·어업·그 밖의 농림어업과 관련되지 않은 건축물의 신축·증축·개축·용도변경·용도폐지 및 그 밖의 건축행위를 할 수 없습니다. 요약 · 원문 아님.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 16,
+"persona": "staff",
+"cluster": "C22g",
+"sev": "high",
+"q": "상위 3곳 경작지",
+"run_id": "run_test261022101036c2678b",
+"event": "agent.done",
+"ms": 642,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "남원시 · 경작지 — 경작·휴경 분석서비스 결과 {{env:e1}}. 경작지는 운봉읍 237필지 · 송동면 149 · 대강면 142 순으로 많습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2098,
+"unit": "필지",
+"meaning": "경작·휴경 분석서비스 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": null,
+"emd": null,
+"cls": [
+"경작지"
+],
+"dropped": [],
+"line": "남원시 · 경작지 · 2025년 영상"
+},
+"source_line": "XI맵 통계 판",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 17,
+"persona": "staff",
+"cluster": "C22b",
+"sev": "high",
+"q": "남원시 비닐하우스 몇 곳이야",
+"run_id": "run_test261022101038f2f95f",
+"event": "agent.done",
+"ms": 794,
+"tools": [
+"class_count"
+],
+"answer_md": "남원시 비닐하우스는 {{env:e1}}입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 14792,
+"unit": "동",
+"meaning": "남원시 비닐하우스",
+"scope": null
+}
+},
+"next": [
+{
+"label": "XI맵에서 보기",
+"href": "/landxi/v3/xi-clean/?region=52190",
+"q": null
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"비닐하우스"
+],
+"dropped": [],
+"line": "남원시 · 비닐하우스 · 2023년 영상"
+},
+"source_line": "XI맵 통계 판과 같은 셈",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 18,
+"persona": "staff",
+"cluster": "C22h",
+"sev": "high",
+"q": "남원시 하정동 비닐하우스 몇 곳",
+"run_id": "run_test2610221010418135f3",
+"event": "agent.done",
+"ms": 670,
+"tools": [
+"ximap_dash"
+],
+"answer_md": "이 답의 숫자는 시 전체 숫자라 뺐습니다 — 하정동(행정동 죽항동)만 세려면 아래 단추를 눌러 주세요.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [
+{
+"label": "하정동 비닐하우스 몇 곳",
+"href": null,
+"q": "하정동 비닐하우스 몇 곳이야?"
+},
+{
+"label": "통계 보기",
+"href": null,
+"q": "통계 보기"
+},
+{
+"label": "크게 보기",
+"href": null,
+"q": "크게 보기"
+}
+],
+"blocks": [],
+"ui_ops": [
+"ximap_dash"
+],
+"scope": {
+"region": "남원시",
+"emd": [
+"하정동"
+],
+"cls": [
+"비닐하우스"
+],
+"dropped": [
+{
+"env": "e1",
+"why": "emd"
+}
+]
+},
+"source_line": null,
+"scope_flags": [
+{
+"env": "e1",
+"why": "emd"
+}
+],
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 19,
+"persona": "staff",
+"cluster": "C22i",
+"sev": "high",
+"q": "저희 과에서 올해 남원시 일대 비닐하우스와 건물에 대해 실태조사를 나가야 하는데 현장 인력이 부족해서 영상으로 먼저 걸러 보려고 합니다. 읍면동별로 나눠서 표로도 정리하고 확인이 급한 순서로 추려 주세요. 근거가 되는 법령 조항도 같이 알려 주시면 보고서에 넣겠습니다.",
+"run_id": "run_test261022101043907919",
+"event": "agent.done",
+"ms": 2837,
+"tools": [
+"survey_stats",
+"survey_findings",
+"map_arrive"
+],
+"answer_md": "① 대상: 남원시 비닐하우스 · 건물 — 영상 AI 분석 결과를 필지와 맞춘 실태조사 의심 필지로 걸렀습니다(현장조사 대상 후보 · 위법 판정 아님).\n② 급한 순: 점수 상위 {{env:e34}}를 지도에 표시했습니다 — 1위 남원시 운봉읍 준향리 824-9 [3] · 2위 남원시 운봉읍 신기리 525-1 [4] · 3위 남원시 운봉읍 권포리 1213-4 [5] · 4위 남원시 운봉읍 장교리 653-1 [6] · 5위 남원시 주생면 낙동리 992-1 [7] (실태조사 의심 필지 {{env:e1}} 가운데).\n③ 근거 조문: 「농지법」 제54조(농지의 소유 등에 관한 조사) 제1항 · 시행 2026-09-18 “①농림축산식품부장관, 시장ㆍ군수 또는 자치구구청장은 농지의 소유ㆍ거래ㆍ이용 또는 전용 등에 관한 사실을 확인하기 위하여 소속 공무원에게 그 실태를 정기적으로 조사하게 하여야 한다.”\n④ 표 · 보고서: 읍면동별 표를 아래에 두었습니다 — 보고서는 '보고서 초안' 단추로 만듭니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 21619,
+"unit": "count",
+"meaning": "남원시 전체 의심 필지(전체 규칙)",
+"scope": null
+},
+"e34": {
+"value": 5,
+"unit": "필지",
+"meaning": "점수 상위로 반환한 필지 수",
+"scope": null
+}
+},
+"next": [
+{
+"label": "보고서 초안",
+"href": null,
+"q": "남원시 보고서 초안 만들어 줘"
+},
+{
+"label": "읍면동별 차트",
+"href": null,
+"q": "남원시 의심 필지 읍면동별 차트로 보여 줘"
+},
+{
+"label": "국가법령정보센터에서 찾기",
+"href": "https://www.law.go.kr/lsSc.do?menuId=1&query=%EB%86%8D%EC%A7%80%EB%B2%95%20%EC%8B%A4%ED%83%9C%EC%A1%B0%EC%82%AC",
+"q": null
+}
+],
+"blocks": [
+{
+"type": "chart",
+"label": "남원시 읍면동별 의심 필지",
+"href": null
+},
+{
+"type": "table",
+"label": "읍면동별 실태조사 의심 필지",
+"href": null
+}
+],
+"ui_ops": [
+"map_on",
+"map_arrive"
+],
+"scope": {
+"region": "남원시",
+"emd": null,
+"cls": [
+"건물",
+"비닐하우스"
+],
+"dropped": [],
+"line": "남원시 · 건물 · 비닐하우스"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 20,
+"persona": "namwon",
+"cluster": "C22i",
+"sev": "high",
+"q": "저희 과에서 올해 운봉읍 일대 비닐하우스와 건물에 대해 실태조사를 나가야 하는데 현장 인력이 부족해서 영상으로 먼저 걸러 보려고 합니다. 읍면동별로 나눠서 표로도 정리하고 확인이 급한 순서로 추려 주세요. 근거가 되는 법령 조항도 같이 알려 주시면 보고서에 넣겠습니다.",
+"run_id": "run_test2610221010475cb219",
+"event": "agent.done",
+"ms": 679,
+"tools": [
+"survey_stats",
+"survey_findings",
+"map_arrive"
+],
+"answer_md": "① 대상: 남원시 운봉읍 비닐하우스 · 건물 — 영상 AI 분석 결과를 필지와 맞춘 실태조사 의심 필지로 걸렀습니다(현장조사 대상 후보 · 위법 판정 아님).\n② 급한 순: 점수 상위 {{env:e14}}를 지도에 표시했습니다 — 1위 남원시 운봉읍 준향리 824-9 [3] · 2위 남원시 운봉읍 신기리 525-1 [4] · 3위 남원시 운봉읍 권포리 1213-4 [5] · 4위 남원시 운봉읍 장교리 653-1 [6] · 5위 남원시 운봉읍 동천리 642-11 [7] (실태조사 의심 필지 {{env:e1}} 가운데).\n③ 근거 조문: 「농지법」 제54조(농지의 소유 등에 관한 조사) 제1항 · 시행 2026-09-18 “①농림축산식품부장관, 시장ㆍ군수 또는 자치구구청장은 농지의 소유ㆍ거래ㆍ이용 또는 전용 등에 관한 사실을 확인하기 위하여 소속 공무원에게 그 실태를 정기적으로 조사하게 하여야 한다.”\n④ 표 · 보고서: '보고서 초안' 단추로 만듭니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 2345,
+"unit": "count",
+"meaning": "운봉읍 의심 필지(전체 규칙)",
+"scope": null
+},
+"e14": {
+"value": 5,
+"unit": "필지",
+"meaning": "점수 상위로 반환한 필지 수",
+"scope": null
+}
+},
+"next": [
+{
+"label": "보고서 초안",
+"href": null,
+"q": "남원시 보고서 초안 만들어 줘"
+},
+{
+"label": "읍면동별 차트",
+"href": null,
+"q": "남원시 의심 필지 읍면동별 차트로 보여 줘"
+},
+{
+"label": "국가법령정보센터에서 찾기",
+"href": "https://www.law.go.kr/lsSc.do?menuId=1&query=%EB%86%8D%EC%A7%80%EB%B2%95%20%EC%8B%A4%ED%83%9C%EC%A1%B0%EC%82%AC",
+"q": null
+}
+],
+"blocks": [],
+"ui_ops": [
+"map_on",
+"map_arrive"
+],
+"scope": {
+"region": null,
+"emd": [
+"운봉읍"
+],
+"cls": [
+"건물",
+"비닐하우스"
+],
+"dropped": [],
+"line": "남원시 운봉읍 · 건물 · 비닐하우스"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 21,
+"persona": "gj",
+"cluster": "C22j",
+"sev": "top",
+"q": "우리 시 해양쓰레기 몇 개야",
+"run_id": "run_test261022101115d31a53",
+"event": "agent.done",
+"ms": 3445,
+"tools": [
+"class_count"
+],
+"answer_md": "관할 전체 해양쓰레기는 {{env:e1}}입니다 — 여수시 {{env:e2}}에만 있습니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 1857,
+"unit": "건",
+"meaning": "관할 전체 해양쓰레기 분석서비스 결과",
+"scope": null
+},
+"e2": {
+"value": 1857,
+"unit": "건",
+"meaning": "여수시 해양쓰레기 분석서비스 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "목포시",
+"href": null,
+"q": "목포시 해양쓰레기 몇 개야"
+},
+{
+"label": "여수시",
+"href": null,
+"q": "여수시 해양쓰레기 몇 개야"
+},
+{
+"label": "순천시",
+"href": null,
+"q": "순천시 해양쓰레기 몇 개야"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "관할 전체",
+"emd": null,
+"cls": [
+"해양쓰레기"
+],
+"dropped": [],
+"line": "관할 전체 · 해양쓰레기 · 2025년 영상"
+},
+"source_line": "해양쓰레기 분석서비스 결과 — 기관 통계 화면과 같은 값",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 22,
+"persona": "gj",
+"cluster": "C22j",
+"sev": "high",
+"q": "우리 시 결과 요약해 줘",
+"run_id": "run_test2610221011201f1d6a",
+"event": "agent.done",
+"ms": 639,
+"tools": [
+"summary_lookup"
+],
+"answer_md": "여수시에서 결과가 있는 서비스는 해양쓰레기 분석서비스(운영 중 · AI 분석 결과 {{env:e1}}), 경작·휴경 분석서비스(시범 운영 중)입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 1857,
+"unit": "건",
+"meaning": "전남광주특별시 여수시 해양쓰레기 분석서비스 · AI 분석 결과",
+"scope": null
+}
+},
+"next": [
+{
+"label": "여수시 AI 분석 결과 몇 건",
+"href": null,
+"q": "여수시 AI 분석 결과 몇 건이야?"
+},
+{
+"label": "여수시 보고서 초안",
+"href": null,
+"q": "여수시 보고서 초안 만들어 줘"
+}
+],
+"blocks": [],
+"ui_ops": [
+"map_flyto"
+],
+"scope": {
+"region": "여수시",
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "여수시 · 해양쓰레기"
+},
+"source_line": "서비스 요약",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 23,
+"persona": "gj",
+"cluster": "C22j",
+"sev": "high",
+"q": "우리 시 의심 필지 몇 건이야",
+"run_id": "run_test26102210112218fd25",
+"event": "agent.done",
+"ms": 2256,
+"tools": [
+"survey_count"
+],
+"answer_md": "관할 전체 실태조사 의심 필지는 {{env:e1}}입니다.",
+"category": null,
+"error": null,
+"envs": {
+"e1": {
+"value": 35933,
+"unit": "count",
+"meaning": "관할 전체 의심 필지(전체 규칙)",
+"scope": null
+}
+},
+"next": [
+{
+"label": "목포시",
+"href": null,
+"q": "목포시 의심 필지 몇 건이야"
+},
+{
+"label": "여수시",
+"href": null,
+"q": "여수시 의심 필지 몇 건이야"
+},
+{
+"label": "순천시",
+"href": null,
+"q": "순천시 의심 필지 몇 건이야"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": "관할 전체",
+"emd": null,
+"cls": null,
+"dropped": [],
+"line": "관할 전체"
+},
+"source_line": "실태조사 결과",
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 24,
+"persona": "gj",
+"cluster": "C22k",
+"sev": "normal",
+"q": "남원시 경작지 현황 보여 줘",
+"run_id": "run_test2610221011266e3e04",
+"event": "agent.rejected",
+"ms": 107,
+"tools": [],
+"answer_md": "남원시는 이 기관 계정에서 볼 수 없습니다.",
+"category": "cross_tenant",
+"error": "tool_forbidden",
+"envs": {},
+"next": [
+{
+"label": "관할 전체 결과 요약 보기",
+"href": null,
+"q": "관할 전체 결과 요약해 줘"
+},
+{
+"label": "관할 전체 AI 분석 결과 몇 건",
+"href": null,
+"q": "관할 전체 AI 분석 결과 몇 건이야?"
+}
+],
+"blocks": [],
+"ui_ops": [],
+"scope": null,
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+},
+{
+"n": 25,
+"persona": "gj",
+"cluster": "C22d",
+"sev": "normal",
+"q": "서버 GPU 상태 알려 줘",
+"run_id": "run_test261022101127be7065",
+"event": "agent.done",
+"ms": 628,
+"tools": [
+"ops_admin_only"
+],
+"answer_md": "이 계정에서는 볼 수 없습니다 — LX 관리자 화면에서 봅니다.",
+"category": null,
+"error": null,
+"envs": {},
+"next": [],
+"blocks": [],
+"ui_ops": [],
+"scope": {
+"region": null,
+"emd": null,
+"cls": null,
+"dropped": []
+},
+"source_line": null,
+"scope_flags": null,
+"unapplied": null,
+"unverified_n": 0
+}
+],
+"summary": {
+"clusters": {
+"C22a": {
+"sev": "top",
+"rank": 1,
+"n": 4,
+"pass": 4,
+"fail": [],
+"p50": 658,
+"max": 1766
+},
+"C22b": {
+"sev": "high",
+"rank": 5,
+"n": 3,
+"pass": 3,
+"fail": [],
+"p50": 747,
+"max": 794
+},
+"C22c": {
+"sev": "high",
+"rank": 6,
+"n": 1,
+"pass": 1,
+"fail": [],
+"p50": 1865,
+"max": 1865
+},
+"C22d": {
+"sev": "high",
+"rank": 7,
+"n": 3,
+"pass": 3,
+"fail": [],
+"p50": 645,
+"max": 647
+},
+"C22e": {
+"sev": "top",
+"rank": 8,
+"n": 3,
+"pass": 3,
+"fail": [],
+"p50": 2233,
+"max": 2252
+},
+"C22f": {
+"sev": "top",
+"rank": 13,
+"n": 3,
+"pass": 3,
+"fail": [],
+"p50": 1455,
+"max": 2412
+},
+"C22g": {
+"sev": "high",
+"rank": 16,
+"n": 1,
+"pass": 1,
+"fail": [],
+"p50": 642,
+"max": 642
+},
+"C22h": {
+"sev": "high",
+"rank": 18,
+"n": 1,
+"pass": 1,
+"fail": [],
+"p50": 670,
+"max": 670
+},
+"C22i": {
+"sev": "high",
+"rank": 19,
+"n": 2,
+"pass": 2,
+"fail": [],
+"p50": 2837,
+"max": 2837
+},
+"C22j": {
+"sev": "top",
+"rank": 21,
+"n": 3,
+"pass": 3,
+"fail": [],
+"p50": 2256,
+"max": 3445
+},
+"C22k": {
+"sev": "normal",
+"rank": 24,
+"n": 1,
+"pass": 1,
+"fail": [],
+"p50": 107,
+"max": 107
+}
+},
+"tiers": {
+"top": {
+"n": 13,
+"pass": 13
+},
+"high": {
+"n": 11,
+"pass": 11
+},
+"normal": {
+"n": 1,
+"pass": 1
+}
+},
+"leaks": 0,
+"over10s": 0,
+"total": 25,
+"pass": 25
+}
+}

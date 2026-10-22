@@ -131,7 +131,7 @@ async def report_draft(args: dict, ctx) -> Out:
     else:
         # 확인 16차 규칙 ⑤ · ⑥ — 숫자 이름은 다른 화면과 같게('의심 필지') · 두 문장 안
         out.answer = ((LETTER_KO if letter else "") + f"{j['place']} 실태조사 보고서 초안을 만들었습니다"
-                      + (f"(의심 필지 {{{{suspects}}}} · 법령 조문 {len(laws)}개 인용)" if c2 else "")
+                      + (f"(실태조사 의심 필지 {{{{suspects}}}} · 법령 조문 {len(laws)}개 인용)" if c2 else "")   # 시안 ⓐ-1 — 이름표 하나
                       + " — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.")
     return out
 

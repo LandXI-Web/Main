@@ -30,7 +30,8 @@ import check  # noqa: E402
 B = f"http://127.0.0.1:{config.API_PORT}/api/v1"
 GAP_S = float(__import__("os").environ.get("LX_EVAL_GAP", "1.5"))
 LOGIN = {"staff": {"realm": "lx", "login": "test@lx.or.kr"},
-         "namwon": {"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "site": "gov"}}
+         "namwon": {"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "site": "gov"},
+         "gj": {"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "lxadmin@lx.or.kr", "site": "gov"}}   # 여러 시군을 맡은 기관('우리 시' 규칙 · 10-22)
 
 
 def _retry(fn, *a, **kw):
@@ -44,9 +45,11 @@ def _retry(fn, *a, **kw):
             time.sleep(5)
 
 
-def login() -> dict:
+def login(need=None) -> dict:
     out = {}
     for k, body in LOGIN.items():
+        if need is not None and k not in need:
+            continue
         r = _retry(httpx.post, B + "/auth/login", json={**body, "password": config.DEV_PASSWORD}, timeout=30)
         r.raise_for_status()
         out[k] = r.json()["token"]
@@ -112,12 +115,15 @@ def slim(res: dict) -> dict:
             "category": d.get("category"), "error": d.get("error"), "envs": envs,
             "next": [{"label": b.get("label"), "href": b.get("href"), "q": b.get("q")} for b in (d.get("next") or [])],
             "blocks": [{"type": b.get("type"), "label": b.get("label") or b.get("title"), "href": b.get("href")} for b in (d.get("blocks") or [])],
-            "ui_ops": d.get("ui_ops") or [], "scope": d.get("scope"), "scope_flags": d.get("scope_flags"), "unapplied": d.get("unapplied"),
+            "ui_ops": d.get("ui_ops") or [], "scope": d.get("scope"), "source_line": d.get("source_line"), "scope_flags": d.get("scope_flags"), "unapplied": d.get("unapplied"),
             "unverified_n": len(d.get("unverified") or [])}
 
 
+QFILE = EVAL / (__import__("os").environ.get("LX_EVAL_FILE") or "chatgeo-400.jsonl")   # 바퀴마다 더한 시험(chatgeo-c22.jsonl 등)은 LX_EVAL_FILE 로
+
+
 def load(only=None, ns=None, persona=None, sev=None) -> list[dict]:
-    rows = [json.loads(x) for x in (EVAL / "chatgeo-400.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+    rows = [json.loads(x) for x in QFILE.read_text(encoding="utf-8").splitlines() if x.strip()]
     keep = [r for r in rows if (not only or r["cluster"] in only) and (not ns or r["n"] in ns) and (not persona or r["persona"] == persona)
             and (not sev or r["sev"] in sev)]
     want = {r["n"] for r in keep}
@@ -131,7 +137,7 @@ def load(only=None, ns=None, persona=None, sev=None) -> list[dict]:
 
 
 def run(out_path: str, rows: list[dict], base: str | None = None) -> dict:
-    tok = login()
+    tok = login({r["persona"] for r in rows})
     last = {}
     by_n = {}
     results = []
@@ -172,7 +178,7 @@ def run(out_path: str, rows: list[dict], base: str | None = None) -> dict:
 
 def report(out_path: str, base: str | None = None) -> dict:
     doc = json.loads(Path(out_path).read_text(encoding="utf-8"))
-    rows = {r["n"]: r for r in (json.loads(x) for x in (EVAL / "chatgeo-400.jsonl").read_text(encoding="utf-8").splitlines() if x.strip())}
+    rows = {r["n"]: r for r in (json.loads(x) for x in QFILE.read_text(encoding="utf-8").splitlines() if x.strip())}
     summ = check.summarize(rows, doc["results"])
     bsum = None
     if base and Path(base).exists():

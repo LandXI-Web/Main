@@ -10,6 +10,10 @@
 .xk-ans-m{min-width:0;display:grid;gap:8px}
 .xk-ans-t{margin:0;font:400 var(--fs-body,16px)/24px var(--font-body);color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:pretty;word-break:keep-all}
 .xk-ans-t b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.xk-ans-s{margin:0 0 -4px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 범위 줄 · 출처(한 줄 · 넘치면 말줄임 · 전체는 title) */
+.xk-ans-s[hidden]{display:none}
+/* 대화 서랍 맨 위 — 지도 강조 켜고 끄기(서랍이 지도 오른쪽 판을 가려도 · 10-22) */
+.k-drawer .k-dr-b.xk-dlog .xk-dtool{flex:none;display:flex;justify-content:flex-end;align-items:center;padding:8px 16px;border-bottom:1px solid var(--rule);background:var(--bg-1)}
 .xk-ans.is-busy .xk-ans-t{color:var(--sub)}
 .xk-ans-bar{height:3px;width:120px;border-radius:2px;background:var(--rule);overflow:hidden;position:relative}
 .xk-ans-bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--accent);border-radius:2px;animation:xk-bar 1.2s ease-in-out infinite}
@@ -42,3 +46,4 @@
 /* XI맵 알림 한 줄(조건을 걸었습니다 등)은 위쪽에 — 아래 가운데는 질문 칸 자리(알림이 질문 칸을 덮어 누를 수 없던 것 · 10-18 점검) */
 .k-toast{top:80px;bottom:auto;width:max-content;transform:translate(-50%,-16px)}
 @media (max-width:960px){.k-toast{top:72px;bottom:auto}}
+@media (max-width:640px){.k-toast{top:128px}}   /* 휴대폰 — 도구 한 줄(56 ~ 116) 아래(겹침 0 · 원칙 309 · 10-22 자동 검사) */
