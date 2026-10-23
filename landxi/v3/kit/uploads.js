@@ -80,7 +80,7 @@ const cast = () => {                         // 올리기 창 → 모든 화면(
 const changed = () => { paint(); cast(); for (const fn of listeners) { try { fn(); } catch { /* */ } } };
 const hostless = () => !HOST && Date.now() - hostSeen > 5000;
 
-const purposeWord = (p) => (p.kind === 'own' ? `내 영상${p.cardName ? ` · ${p.cardName}` : ''}` : '공유 데이터');
+const purposeWord = (p) => p.label || (p.kind === 'own' ? `내 영상${p.cardName ? ` · ${p.cardName}` : ''}` : p.kind === 'project' ? `프로젝트 · ${p.name || ''}` : '공유 데이터');
 const busy = () => [...F.values()].some((f) => ['wait', 'up'].includes(f.state));
 
 /** 셸 · 화면이 부른다(한 번만) — 올리기 창이면 보관함에서 이어 올리기를 맡고, 보통 화면이면 올리기 창의 소식을 받아 상태 창을 그린다 */
@@ -294,12 +294,22 @@ async function register(b) {
     const p = b.purpose;
     const r = p.kind === 'own'
       ? await api(`/cards/${encodeURIComponent(p.card)}/my-imagery`, { method: 'POST', body: { draft_id: b.draft } })
-      : await api('/catalog/imagery', { method: 'POST', body: { draft_id: b.draft } });
+      : await api('/catalog/imagery', { method: 'POST', body: { draft_id: b.draft, near: p.near || undefined } });
+    if (p.kind === 'project' && p.pid) {                       // 새 프로젝트 — 등록한 영상을 그 프로젝트에(대상지 = 영상 자리)
+      const ids = (r.items || []).map((x) => x.id);
+      if (ids.length) r.project = await api(`/projects/${encodeURIComponent(p.pid)}/imagery`, { method: 'POST', body: { imagery: ids } });
+    }
     b.state = 'done';
-    b.result = p.kind === 'own'
+    b.ids = p.kind === 'own' ? [r.id] : (r.items || []).map((x) => x.id);   // 등록한 영상(기록 · 정리용 — 화면 글에는 없음)
+    const where = [...new Set((r.items || []).map((x) => x.region).filter(Boolean))].join(' · ');
+    b.result = p.kind === 'project'
+      ? { line: `영상 ${(r.items || []).length}장을 등록했습니다${(r.project?.regions || []).length ? ` · 대상지 ${r.project.regions.map((g) => g.name).join(' · ')}` : ''}`, href: p.href, go: '프로젝트 보기' }
+      : p.kind === 'own'
       ? { line: `${r.region?.name || ''} ${r.imagery?.gsd_word || ''} 영상을 올렸습니다`.replace(/\s+/g, ' ').trim(), fit: r.imagery?.fit_text || '', id: r.id, region: r.region?.sgg_cd,
         href: `/landxi/v3/lx-analyze/?${new URLSearchParams({ card: p.card, region: r.region?.sgg_cd || '', imagery: r.id })}`, go: '이 영상으로 분석하기' }
-      : { line: `영상 ${(r.items || []).length}장을 공유 데이터에 등록했습니다`, href: '/landxi/v3/ops-infra/#/shared', go: '공유 데이터 보기', n: (r.items || []).length };
+      : p.from === 'ingest'
+        ? { line: `${where ? where + ' ' : ''}영상 ${(r.items || []).length}장을 등록했습니다`, href: p.href || '/landxi/v3/lx-ingest/', go: '데이터 올리기에서 보기', n: (r.items || []).length }
+        : { line: `영상 ${(r.items || []).length}장을 공유 데이터에 등록했습니다`, href: '/landxi/v3/ops-infra/#/shared', go: '공유 데이터 보기', n: (r.items || []).length };
     for (const f of [...F.values()]) if (f.batch === b.id) F.delete(f.key);
     b.files = undefined;
     dispatchEvent(new CustomEvent('lx:upload-done', { detail: { purpose: p, result: r } }));
@@ -349,6 +359,8 @@ export function startUploads(picks, purpose) {
     dispatchEvent(new CustomEvent('lx:uploads-start', { detail: { purpose } }));
   });
 }
+/** 올리기 창이 살아 있나(보통 화면) */
+export const hostAlive = () => HOST || !hostless();
 /** 올리기 창 열기 — 누름 안에서(팝업 막힘이면 알림) */
 export function openHost() {
   const w = window.open(HOST_URL, 'lx-upload', 'popup=yes,width=560,height=720');
@@ -562,7 +574,9 @@ const est = (s) => (s >= 3 * 3600 ? Math.round(s / 3600) * 3600 : s);    // 어�
 const timeLine = () => [1e9, 10e9, 100e9].map((n) => `${GB(n)} 약 ${durWord(est(n / SPEED))}`).join(' · ');
 
 /** 고르기 칸 — el 안에 '올릴 수 있는 영상' 안내 + 끌어 놓는 칸. one = 영상 한 장만(내 영상 분석). purpose = 등록 쓰임. onAdded(batchId) */
-export async function uploadPicker(el, { purpose, one = false, onAdded } = {}) {
+export async function uploadPicker(el, { purpose, one = false, onAdded, hold = false, onPicks } = {}) {
+  if (!started) mountUploads();                                 // 올리기 창 소식 받기 시작(이미 열려 있으면 바로 맡긴다)
+  let held = [];
   style();
   const f = await formats();
   const un = f.unavailable || {};
@@ -595,7 +609,12 @@ export async function uploadPicker(el, { purpose, one = false, onAdded } = {}) {
     if (!nr && ok.length) { fileProblem({ files: ok.map((p) => ({ name: p.file.name, why: '영상 파일이 없습니다 — 위치 파일은 영상 파일과 함께 넣어 주세요' })), onPick: () => pick() }); return; }
     if (bad.length) fileProblem({ files: bad, ok: ok.length, onPick: () => pick() });
     if (!ok.length) return;
-    if (HOST) { onAdded?.(await addUploads(ok, purpose)); return; }
+    const pur = typeof purpose === 'function' ? purpose() : purpose;
+    if (HOST) { onAdded?.(await addUploads(ok, pur)); return; }
+    if (hold) {                                                 // 화면이 나중에(예: 새 프로젝트 '만들기') 맡긴다 — 고른 파일만 보인다
+      held = one ? ok : [...held, ...ok.filter((p) => !held.some((q) => q.file.name === p.file.name && q.file.size === p.file.size))];
+      drawHeld(); onPicks?.(held.slice()); return;
+    }
     /* 고른 파일 + '올리기 시작' — 누르는 순간 올리기 창을 연다(팝업은 누름 안에서만 열린다) */
     const tot = ok.reduce((a, p) => a + p.file.size, 0);
     const go = h('button.t-btn', { type: 'button', text: '올리기 시작' });
@@ -605,7 +624,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded } = {}) {
     zone.after(box);
     go.addEventListener('click', async () => {
       go.disabled = true; go.textContent = '올리기 창에 맡기는 중';
-      const done = await startUploads(ok, purpose);
+      const done = await startUploads(ok, pur);
       if (done) onAdded?.(true); else { go.disabled = false; go.textContent = '올리기 시작'; }
     });
   }
@@ -631,7 +650,15 @@ export async function uploadPicker(el, { purpose, one = false, onAdded } = {}) {
     const files = items.map((i) => i.getAsFile());
     Promise.all(hs.map((p) => (p ? p.catch(() => null) : null))).then((handles) => take(files.map((file, i) => ({ file, handle: handles[i]?.kind === 'file' ? handles[i] : null })).filter((x) => x.file)));
   });
-  return { pick };
+  function drawHeld() {
+    el.querySelector('.k-upq-w')?.remove();
+    if (!held.length) return;
+    const tot = held.reduce((a, p) => a + p.file.size, 0);
+    const list = h('ul.k-upq', {}, ...held.map((p) => h('li', {}, h('b', { text: p.file.name, 'data-lint-skip': '' }), h('span', {}, MBf(p.file.size) + ' ',
+      h('button.k-upq-x', { type: 'button', 'aria-label': `${p.file.name} 빼기`, text: '×', onclick: () => { held = held.filter((q) => q !== p); drawHeld(); onPicks?.(held.slice()); } })))));
+    zone.after(h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${held.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 만들면 따로 열리는 올리기 창이 올립니다` })));
+  }
+  return { pick, picks: () => held.slice(), clear: () => { held = []; drawHeld(); } };
 }
 let pcss = false;
 function pstyle() {
@@ -650,5 +677,6 @@ function pstyle() {
 .k-upq b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-upq-n{margin:0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);word-break:keep-all}
 .k-upq-w .t-btn{align-self:flex-end}
+.k-upq-x{margin-left:6px;padding:0 4px;border:0;background:none;color:var(--sub);cursor:pointer;font:500 var(--fs-aux)/1 var(--font-body)}
 @media (max-width:640px){.k-upg{grid-template-columns:minmax(0,1fr);gap:2px}.k-upg dd{margin-bottom:6px}}` }));
 }

@@ -1,0 +1,128 @@
+{
+ "base": "https://app.land-xi.dev",
+ "part": "e",
+ "at": "2026-10-23T01:44:28.098Z",
+ "steps": [
+  {
+   "k": "login",
+   "t": 6.4,
+   "at": "10시 44분 34초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  },
+  {
+   "k": "e-made",
+   "t": 16.7,
+   "at": "10시 44분 44초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_159f8c5dd8&stage=label&flow=1"
+  },
+  {
+   "k": "e-small-done",
+   "t": 24.5,
+   "at": "10시 44분 52초",
+   "done": "영상 1장을 등록했습니다 · 대상지 남원시\n프로젝트 보기",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-train/?project=prj_159f8c5dd8&stage=label&flow=1"
+  },
+  {
+   "k": "e-screen",
+   "t": 64.2,
+   "at": "10시 45분 32초",
+   "screen": "/landxi/v3/lx-console/",
+   "chip": "올리는 중 14% · 약 9분",
+   "host": "292MB / 1.9GB 올림 · 남은 시간 약 9분"
+  },
+  {
+   "k": "e-screen",
+   "t": 93.2,
+   "at": "10시 46분 1초",
+   "screen": "/landxi/v3/lx-map/",
+   "chip": "올리는 중 21% · 약 8분",
+   "host": "420MB / 1.9GB 올림 · 남은 시간 약 8분"
+  },
+  {
+   "k": "e-screen",
+   "t": 121.8,
+   "at": "10시 46분 29초",
+   "screen": "/landxi/v3/lx-analyze/",
+   "chip": "올리는 중 28% · 약 6분",
+   "host": "548MB / 1.9GB 올림 · 남은 시간 약 6분"
+  },
+  {
+   "k": "e-screen",
+   "t": 151.3,
+   "at": "10시 46분 59초",
+   "screen": "/landxi/v3/xi-clean/?region=52190",
+   "chip": "올리는 중 34% · 약 5분",
+   "host": "676MB / 1.9GB 올림 · 남은 시간 약 5분"
+  },
+  {
+   "k": "e-screen",
+   "t": 179.9,
+   "at": "10시 47분 28초",
+   "screen": "/landxi/v3/lx-inbox/",
+   "chip": "올리는 중 44% · 약 4분",
+   "host": "868MB / 1.9GB 올림 · 남은 시간 약 4분"
+  },
+  {
+   "k": "e-screen",
+   "t": 208.4,
+   "at": "10시 47분 56초",
+   "screen": "/landxi/v3/lx-project/",
+   "chip": "올리는 중 51% · 약 3분",
+   "host": "996MB / 1.9GB 올림 · 남은 시간 약 3분"
+  },
+  {
+   "k": "e-canceled",
+   "t": 242.3,
+   "at": "10시 48분 30초",
+   "rows": 1
+  }
+ ],
+ "ov": {
+  "e-small-form.png": [],
+  "e2-project-registered.png": [],
+  "e-big-form.png": [],
+  "e-tour.png": []
+ },
+ "errs": [],
+ "dialogs": [],
+ "trail_e": [
+  {
+   "at": "10시 45분 32초",
+   "screen": "/landxi/v3/lx-console/",
+   "chip": "올리는 중 14% · 약 9분",
+   "host": "292MB / 1.9GB 올림 · 남은 시간 약 9분"
+  },
+  {
+   "at": "10시 46분 1초",
+   "screen": "/landxi/v3/lx-map/",
+   "chip": "올리는 중 21% · 약 8분",
+   "host": "420MB / 1.9GB 올림 · 남은 시간 약 8분"
+  },
+  {
+   "at": "10시 46분 29초",
+   "screen": "/landxi/v3/lx-analyze/",
+   "chip": "올리는 중 28% · 약 6분",
+   "host": "548MB / 1.9GB 올림 · 남은 시간 약 6분"
+  },
+  {
+   "at": "10시 46분 59초",
+   "screen": "/landxi/v3/xi-clean/?region=52190",
+   "chip": "올리는 중 34% · 약 5분",
+   "host": "676MB / 1.9GB 올림 · 남은 시간 약 5분"
+  },
+  {
+   "at": "10시 47분 28초",
+   "screen": "/landxi/v3/lx-inbox/",
+   "chip": "올리는 중 44% · 약 4분",
+   "host": "868MB / 1.9GB 올림 · 남은 시간 약 4분"
+  },
+  {
+   "at": "10시 47분 56초",
+   "screen": "/landxi/v3/lx-project/",
+   "chip": "올리는 중 51% · 약 3분",
+   "host": "996MB / 1.9GB 올림 · 남은 시간 약 3분"
+  }
+ ],
+ "dialogs_on_screens": 0,
+ "ms": 242261
+}

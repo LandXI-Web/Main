@@ -25,7 +25,7 @@ async function shot(page, n) {
 }
 // 큰 파일 시험(b)은 저장 한도가 넉넉한 보통 브라우저 프로필로(새 시크릿 창은 브라우저 보관함 한도가 작다)
 const PROFILE = process.env.UP_PROFILE || path.join(process.env.TEMP || '.', 'lx-up-profile');
-const ctx = PART === 'b' || PART === 'c' ? await chromium.launchPersistentContext(PROFILE, { viewport: { width: 1920, height: 1080 } }) : await (await chromium.launch()).newContext({ viewport: { width: 1920, height: 1080 } });
+const ctx = ['b', 'c', 'd', 'e'].includes(PART) ? await chromium.launchPersistentContext(PROFILE, { viewport: { width: 1920, height: 1080 } }) : await (await chromium.launch()).newContext({ viewport: { width: 1920, height: 1080 } });
 const browser = { close: () => ctx.close() };
 const page = await ctx.newPage();
 page.on('pageerror', (e) => out.errs.push(String(e)));
@@ -216,6 +216,93 @@ if (PART === 'c') {
     await host2.waitForTimeout(2000);
     step('c-canceled', { rows: await host2.evaluate(() => document.querySelectorAll('.k-up-r').length) });
   }
+}
+
+/* d = 데이터 올리기 → 영상 등록 · e = 새 프로젝트 — 작은 영상으로 등록까지 + 큰 영상으로 화면을 옮겨 다니며 계속 오르는지(시험 끝에 취소) */
+async function tourScreens(tag, host) {
+  const tour = ['/landxi/v3/lx-console/', '/landxi/v3/lx-map/', '/landxi/v3/lx-analyze/', '/landxi/v3/xi-clean/?region=52190', '/landxi/v3/lx-inbox/', '/landxi/v3/lx-project/'];
+  const trail = [];
+  for (const [i, u] of tour.entries()) {
+    await page.goto(BASE + u, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(4000); await page.mouse.wheel(0, 300).catch(() => null); await page.waitForTimeout(24000);
+    trail.push({ at: new Date().toLocaleTimeString('ko-KR', { hour12: false }), screen: u, chip: await page.locator('.k-upchip .t').innerText().catch(() => ''),
+      host: await host.evaluate(() => [...document.querySelectorAll('.k-up-r')].map((r) => r.querySelector('.k-up-s')?.textContent).join(' | ')).catch(() => 'host?') });
+    step(tag + '-screen', trail[trail.length - 1]);
+    if (i === 2) await shot(page, `${tag}-tour.png`);
+  }
+  return trail;
+}
+async function hostOf(click) {
+  const pages = ctx.pages().filter((p) => /\/landxi\/v3\/upload\//.test(p.url()));
+  if (pages.length) { await click(); return pages[0]; }
+  const [w] = await Promise.all([ctx.waitForEvent('page'), click()]);
+  await w.waitForLoadState('domcontentloaded');
+  return w;
+}
+const lastDone = () => page.evaluate(() => [...document.querySelectorAll('.k-up-done')].map((x) => x.innerText).join(' | '));
+if (PART === 'd') {
+  const [SMALL, BIG] = FILES;
+  const pj = await page.evaluate(async () => { const s = JSON.parse(localStorage.getItem('lx_api_session') || 'null'); const r = await fetch('/api/v1/projects', { headers: { authorization: 'Bearer ' + s.token } }); const j = await r.json(); return (j.items || j.projects || [])[0]?.id; });
+  step('d-project', { pj });
+  const ING = BASE + '/landxi/v3/lx-ingest/?' + new URLSearchParams({ project: pj, region: '52190' });
+  await page.goto(ING, { waitUntil: 'domcontentloaded' });
+  const openSheet = async () => { await page.locator('button.t-btn', { hasText: '영상 등록' }).first().click(); await page.locator('.lxi-up .k-upg').waitFor({ timeout: 20000 }); };
+  await page.locator('button.t-btn', { hasText: '영상 등록' }).first().waitFor({ timeout: 30000 });
+  await openSheet();
+  await shot(page, 'd1-guide.png');
+  await page.locator('.lxi-up input[type=file]').setInputFiles(SMALL);
+  await page.locator('.k-upq-w .t-btn').waitFor({ timeout: 15000 });
+  const host = await hostOf(() => page.locator('.k-upq-w .t-btn').click());
+  await page.bringToFront();
+  await page.waitForFunction(() => /장을 등록했습니다/.test(document.querySelector('.k-up')?.innerText || ''), null, { timeout: 300000 });
+  step('d-small-done', { done: await lastDone() });
+  await page.waitForTimeout(2500);
+  await shot(page, 'd2-registered.png');
+  await page.goto(ING, { waitUntil: 'domcontentloaded' });
+  await page.locator('button.t-btn', { hasText: '영상 등록' }).first().waitFor({ timeout: 30000 });
+  await openSheet();
+  await page.locator('.lxi-up input[type=file]').setInputFiles(BIG);
+  await page.locator('.k-upq-w .t-btn').waitFor({ timeout: 15000 });
+  await page.locator('.k-upq-w .t-btn').click();
+  await page.waitForTimeout(5000);
+  out.trail_d = await tourScreens('d', host);
+  out.dialogs_on_screens = out.dialogs.length;
+  await page.locator('.k-upchip').click().catch(() => null);
+  await page.waitForTimeout(800);
+  for (const b of await page.locator('.k-up-r button.x').all()) await b.click().catch(() => null);
+  await page.waitForTimeout(3000);
+  step('d-canceled', { rows: await page.locator('.k-up-r').count() });
+}
+if (PART === 'e') {
+  const [SMALL, BIG] = FILES;
+  const make = async (name, file) => {
+    await page.goto(BASE + '/landxi/v3/lx-project/?new=1', { waitUntil: 'domcontentloaded' });
+    await page.locator('.lxp-new input[name=name]').waitFor({ timeout: 30000 });
+    await page.locator('.lxp-new input[name=name]').fill(name);
+    await page.locator('.lxp-up input[type=file]').waitFor({ state: 'attached', timeout: 20000 });
+    await page.locator('.lxp-up input[type=file]').setInputFiles(file);
+    await page.locator('.lxp-up .k-upq-w').waitFor({ timeout: 15000 });
+    await shot(page, `e-${name.includes('큰') ? 'big' : 'small'}-form.png`);
+    const go = page.locator('.lxp-new button.t-btn', { hasText: '만들기' });
+    return hostOf(() => go.click());
+  };
+  const host = await make(`올리기 창 시험 작은 ${new Date().toTimeString().slice(0, 5)}`, SMALL);
+  await page.waitForURL((u) => !/new=1/.test(u.search), { timeout: 60000 }).catch(() => null);
+  step('e-made', { url: page.url() });
+  await page.waitForFunction(() => /장을 등록했습니다/.test(document.querySelector('.k-up')?.innerText || ''), null, { timeout: 300000 });
+  await page.waitForTimeout(2000);
+  step('e-small-done', { done: await lastDone(), url: page.url() });
+  await shot(page, 'e2-project-registered.png');
+  await make(`올리기 창 시험 큰 ${new Date().toTimeString().slice(0, 5)}`, BIG);
+  await page.waitForURL((u) => !/new=1/.test(u.search), { timeout: 60000 }).catch(() => null);
+  await page.waitForTimeout(5000);
+  out.trail_e = await tourScreens('e', host);
+  out.dialogs_on_screens = out.dialogs.length;
+  await page.locator('.k-upchip').click().catch(() => null);
+  await page.waitForTimeout(800);
+  for (const b of await page.locator('.k-up-r button.x').all()) await b.click().catch(() => null);
+  await page.waitForTimeout(3000);
+  step('e-canceled', { rows: await page.locator('.k-up-r').count() });
 }
 
 if (PART === 'ov' || PART === 'ov-admin') {
