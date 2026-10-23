@@ -2273,13 +2273,19 @@ function layoutNow() {
   setVar('--xc-xr', Math.round(xr) + 'px');
   const root = mainEl.querySelector('.k-chat-root[data-dock]');
   if (!root) return;
-  if (W <= 900) { setVar('--xc-cl', '50%'); setVar('--xc-cw', 'calc(100% - 24px)'); setVar('--xc-cb', ''); return; }
+  if (W <= 900) {
+    mainEl.querySelector('.gx-card.is-fold')?.classList.remove('is-fold');   // 한 줄 접기는 넓은 화면 규칙 — 휴대폰은 결과 카드가 지도 위 '요청' 단추 하나(접힌 제목 줄이 도구 열과 겹치지 않게 · 10-23 390 흔들림)
+    setVar('--xc-cl', '50%'); setVar('--xc-cw', 'calc(100% - 24px)'); setVar('--xc-cb', ''); return;
+  }
   const open = root.hasAttribute('data-turns') && !root.hasAttribute('data-fold');
   const ck = root.querySelector('.k-ck') || root;
   const band = Math.min(H - (open ? 260 : 140), rect(ck).y0 - 12 + (parseFloat(LV['--xc-cb']) || 20) - 20);   // 답 띠(입력 한 줄 + 띠 ≈ 212)가 서 있는 높이까지만 비켜 선다 — 답 띠가 더 높이 서 있으면 그 위까지(10-22 · 판 × 답 띠)
   const obs = [];
   for (const el of mainEl.querySelectorAll('.k-drawer.is-open, .xc-pop:not([hidden]), .xa-card:not([hidden]), .xo:not([hidden]):not(.pn-collapsed), .xo-mini:not([hidden]), .xc-tools, .xv-sw:not([hidden]), .xo-sw:not([hidden]), .xe-card:not([hidden]), .xn-hud:not([hidden]), .xc-cmp:not([hidden]), .gx-card:not([hidden]), .gx-cmp:not([hidden])')) {   // .gx-* = 기관 '보고 있는 결과' 카드(10-22 G2 · G4)
-    if (!vis(el)) continue; const r = rect(el); if (r.w < 2 || r.h < 2 || r.y1 < band) continue;
+    if (!vis(el)) continue; const r = rect(el); if (r.w < 2 || r.h < 2) continue;
+    /* 기관 결과 카드는 늦게 서고 커진다 — 대화 창 자리를 잰 순간(움직이는 중)의 띠에 기대지 않고, 펼친 답 띠 높이(260) 안에 걸치면 늘 피한다(10-23 · 1280 결과 지도 겹침 흔들림) */
+    const gx = el.classList.contains('gx-card') || el.classList.contains('gx-cmp');
+    if (r.y1 < (gx ? Math.min(band, H - 260) : band)) continue;
     obs.push(r);
   }
   const gapOf = (list) => {
@@ -2316,6 +2322,7 @@ function mountLayout() {
   const watchCard = () => { for (const el of mainEl.querySelectorAll('.gx-card, .gx-cmp')) if (!el.__lxRo) { el.__lxRo = 1; ro.observe(el); } };
   new MutationObserver((ms) => { if (ms.some((m) => m.target !== mainEl || m.attributeName !== 'style')) { watchCard(); layout(); clearTimeout(lateT); lateT = setTimeout(layout, 500); } }).observe(mainEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-fold', 'data-turns', 'data-state'] });
   document.addEventListener('kit:drawer', layout);
+  document.fonts?.ready?.then(() => layout());                                          // 글꼴이 다 온 뒤 카드 · 대화 줄 크기가 바뀐 자리로 한 번 더
   addEventListener('resize', () => { mainEl.querySelector('.gx-card.is-fold')?.classList.remove('is-fold'); });   // 넓어지면 결과 카드를 다시 펴 보고 틈을 잰다
   mainEl.addEventListener('transitionend', layout, true);                                // 판 폭 · 서랍 등장 움직임이 끝난 자리로
   mainEl.addEventListener('panes:resize', layout);                                      // 손잡이로 폭을 끌 때
@@ -2511,7 +2518,7 @@ async function saveMap(btn) {
     const m = await import('../kit/map-tools.js');
     const legend = (aiOn() ? visibleClasses() : []).filter((c) => !S.clsOff.has(c)).map((c) => ({ color: userCol(c) || baseCol(c), label: clsName(c) }));
     const where = S.cond.emd ? `${S.region?.name || ''} ${S.cond.emd.nm}`.trim() : S.region ? S.region.full || S.region.name : '전국';
-    await m.saveMapPicture(map, { title: `${where} · XI맵`, legend, source: S.cmp?.left || S.cmp?.right ? '국토지리정보원 항공 정사영상' : '바탕 영상 브이월드' });
+    await m.saveMapPicture(map, { title: `${where} · ${S.tenant ? "지도 서비스" : "XI맵"}`, legend, source: S.cmp?.left || S.cmp?.right ? '국토지리정보원 항공 정사영상' : '바탕 영상 브이월드' });
     K.toast('지도 그림을 저장했습니다');
   } catch (e) { K.toast('지도 그림을 만들지 못했습니다'); K.devlog('save', String(e?.message || e)); }
   finally { btn?.removeAttribute('aria-busy'); }

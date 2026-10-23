@@ -19,6 +19,7 @@ import { t } from './i18n.js';
 import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
 import { mountBell, hasBell } from './notify.js';   // 알림 칸(검토 요청 · 메시지 — 구현 2차)
+import { agencyWords } from './agency-words.js';   // 기관 세션은 'XI맵' 대신 '지도 서비스'(원칙 328)
 import { mountCmdk } from './cmdk.js';               // XI ChatGEO 채팅창(오른쪽 아래 · 로그인한 모든 화면)
 import { mountChatDock } from './chat-dock.js';      // 휴대폰 — 대화 단추를 아래 메뉴 줄 칸으로(10-22 원칙 309 임시 고침 · now 22 Q4 전)
 import { staffMenu, STAFF_OF } from './lx-menu.js'; // LX 직원 메뉴 한 곳(10차 메뉴-1 ⓐ)
@@ -74,7 +75,9 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   const staff = rail?.menu === 'staff';
   document.body.classList.add('t');
   if (!contained) document.body.classList.add('k-shelled');
-  const name = title || (home && home.startsWith('gov') || home === 'global' ? (who?.org || '') : HOME[home] || '');
+  const agency = String(who?.key || '').startsWith('tenant/');   // 기관 = 'XI맵' 없음 · 지도 서비스(원칙 328)
+  if (agency) agencyWords(who);
+  const name = title || (home && home.startsWith('gov') || home === 'global' ? (who?.org || '') : (agency && home === 'xi-clean' ? '지도 서비스' : HOME[home]) || '');
   const role = roleText(who);
   let [rk, rn] = role ? role.split(' · ') : [];
   if (rn && rn.trim() === rk) rn = '';   // 계정 이름이 역할 표기와 같으면(개발 계정) 'LX 직원 · LX 직원' 반복 대신 한 번만 — 이름을 지어내지 않는다
@@ -86,7 +89,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   /* XI맵 — 들어갈 수 있는 모든 화면의 마스트에 한 칸(원스톱 · 주소 입력 없이 C1 에 닿는다). 이 화면의 시군구(?region 또는 화면이 준 xiRegion)를 이어 준다 */
   /* LX 직원 메뉴에 XI맵 칸이 있으면 위 머리 단추는 뺀다(지도-1 ⓐ — 같은 길을 두 번 두지 않는다) */
   const railXi = !!rail?.items?.some((it) => it.id === 'ximap');
-  const xi = who && !railXi && home !== 'xi-clean' && allowed('xi-clean', who.key) ? h('a.k-mast-b.k-xi', { href: '/landxi/v3/xi-clean/', text: 'XI맵' }) : null;
+  const xi = who && !agency && !railXi && home !== 'xi-clean' && allowed('xi-clean', who.key) ? h('a.k-mast-b.k-xi', { href: '/landxi/v3/xi-clean/', text: 'XI맵' }) : null;
   const xiHref = () => {
     let r = null; try { r = (xiRegion && xiRegion()) || new URLSearchParams(location.search).get('region'); } catch { /* */ }
     return '/landxi/v3/xi-clean/' + (r ? '?' + new URLSearchParams({ region: String(r) }) : '');
@@ -120,6 +123,8 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   /* XI ChatGEO — 로그인 전(게스트)에는 그리지 않는다(cmdk.js) · 부모 상자 안(갤러리 · 미리보기)과 다른 화면 속 화면(도움말 iframe)에는 붙이지 않는다 */
   let framed = false; try { framed = window.self !== window.top; } catch { framed = true; }
   if (!contained && !framed) { mountCmdk({ who, home, guest: !who }); if (who) mountChatDock(rail ? railEl : null); }
+  /* 올리기 상태 창(원칙 326 · kit/uploads.js) — 이어 올릴 영상이 남아 있으면 어느 LX 화면에서든 창을 그리고 받은 자리부터 이어 간다 */
+  if (!contained && !framed && String(who?.key || '').startsWith('lx/')) { let on = false; try { on = !!localStorage.getItem('lx-up'); } catch { /* */ } if (on) import('./uploads.js').then((m) => m.mountUploads()).catch(() => null); }
 
   let cur = rail?.current ?? 0, done = rail?.done;
   const badges = {};                                     // 칸 숫자(요청함) — id → n
