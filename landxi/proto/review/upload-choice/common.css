@@ -1,0 +1,31 @@
+/* upload-choice 시안 공통 — 머리줄 '시안' 표시 · 업로드 칩 · 펼친 창 (kit/uploads.js 칩 모양을 따라 그림) */
+.uc-mast{display:inline-flex;align-items:center;gap:12px;min-width:0}
+.uc-tag{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--bg-0);color:var(--ink);font:500 var(--fs-tag)/1 var(--font-body);text-decoration:none;white-space:nowrap}
+.uc-tag b{padding:3px 8px;border-radius:999px;background:var(--ink);color:#fff;font-weight:600}
+.uc-tag-t{color:var(--sub)}
+.uc-tag-t:empty{display:none}
+.uc-chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--rule);border-radius:999px;background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer;white-space:nowrap}
+.uc-chip:hover{border-color:var(--ink)}
+.uc-chip i{display:block;width:56px;height:4px;border-radius:2px;background:var(--bg-0);overflow:hidden}
+.uc-chip i b{display:block;height:100%;width:0;background:var(--accent);transition:width .2s linear}
+.uc-chip[data-st="none"] i{display:none}
+.uc-chip .uc-chip-t{font-variant-numeric:tabular-nums}
+.uc-pop{position:fixed;z-index:60;width:360px;max-width:calc(100vw - 32px);box-sizing:border-box;padding:16px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:0 12px 40px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:12px}
+.uc-pop[hidden]{display:none}
+.uc-pop-h{font:700 var(--fs-t2)/28px 'Paperlogy',var(--font-body)}
+.uc-pop-r{display:grid;gap:6px}
+.uc-pop-n{font:500 var(--fs-aux)/22px var(--font-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uc-pop-p{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);font-variant-numeric:tabular-nums}
+.uc-pop-bar{display:block;height:6px;border-radius:3px;background:var(--bg-0);overflow:hidden}
+.uc-pop-bar b{display:block;height:100%;background:var(--accent)}
+.uc-pop-w{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--warn)}
+.uc-pop-s{margin:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);text-wrap:pretty}
+.uc-pop-a{display:flex;flex-wrap:wrap;gap:8px}
+.uc-pop-a .t-btn{height:40px;padding:0 16px}
+@media (max-width:960px){
+  .k-mast .k-xi,.k-mast .k-exit,.k-mast .k-bell-slot{display:none!important}   /* 휴대폰 머리줄 — 업로드 칩 자리(나가기 · XI맵은 운영 화면처럼 '메뉴' 쪽) */
+  .uc-tag-w,.uc-tag-t{display:none}
+  .uc-chip{height:32px;padding:0 10px}
+  .uc-chip i{display:none}
+  .uc-mast{gap:8px}
+}

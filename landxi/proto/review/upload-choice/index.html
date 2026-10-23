@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>업로드 방식 고르기 · 시안 · Land-XI</title>
+<link rel="icon" href="../../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../../v3/kit/kit.css">
+<style>
+.uc{box-sizing:border-box;max-width:960px;margin:0 auto;padding:48px 24px 96px}
+.uc-top{display:flex;align-items:center;gap:10px;margin-bottom:16px;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.uc-top b{padding:3px 10px;border-radius:999px;background:var(--ink);color:#fff;font-weight:600}
+.uc h1{margin:0 0 8px;font:700 var(--fs-xl)/var(--lh-xl) 'Paperlogy',var(--font-body);letter-spacing:-.02em;text-wrap:balance}
+.uc-lead{margin:0 0 32px;font:400 var(--fs-body)/26px var(--font-body);color:var(--sub-2)}
+.uc-go{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:40px}
+.uc-go a{display:flex;flex-direction:column;gap:8px;padding:28px;border-radius:var(--r-16);background:var(--bg-1);color:var(--ink);text-decoration:none;border:1px solid transparent;transition:border-color var(--d-180) var(--e-ui)}
+.uc-go a:hover{border-color:var(--ink)}
+.uc-go b{font:700 var(--fs-t1)/var(--lh-t1) 'Paperlogy',var(--font-body)}
+.uc-go span{font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.uc-go em{font-style:normal;font:500 var(--fs-aux)/22px var(--font-body);color:var(--accent)}
+.uc h2{margin:0 0 16px;font:700 var(--fs-t2)/var(--lh-t2) 'Paperlogy',var(--font-body)}
+.uc ol{margin:0 0 40px;padding-left:22px;display:grid;gap:8px;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2)}
+.uc ol li{text-wrap:pretty}
+.uc-t{width:100%;border-collapse:collapse;background:var(--bg-1);border-radius:var(--r-16);overflow:hidden;font:400 var(--fs-aux)/22px var(--font-body)}
+.uc-t th,.uc-t td{padding:12px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+.uc-t thead th{font-weight:600;color:var(--ink);background:var(--bg-1)}
+.uc-t tbody th{font-weight:500;color:var(--sub);white-space:nowrap}
+.uc-t tr:last-child>*{border-bottom:0}
+.uc-t .num{font-variant-numeric:tabular-nums}
+.uc-wrap{overflow-x:auto;margin-bottom:12px}
+.uc-foot{margin:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+@media (max-width:720px){.uc{padding:28px 16px 64px}.uc-go{grid-template-columns:minmax(0,1fr)}.uc-t th,.uc-t td{padding:10px 12px}}
+</style>
+</head>
+<body class="t">
+<main class="uc" id="uc" hidden>
+  <p class="uc-top"><b>시안</b><span>업로드 방식 고르기 — 눌러 보고 고르세요</span></p>
+  <h1>업로드 창 없이,<br>메뉴를 옮겨도 계속 올라가게</h1>
+  <p class="uc-lead">두 방식을 직접 열어, 영상을 올리는 동안 왼쪽 메뉴를 바꿔 보세요.</p>
+  <div class="uc-go">
+    <a href="a/"><b>① 바깥 틀 유지</b><span>머리줄 · 메뉴 · 업로드는 그대로 두고<br>안쪽 화면만 바꿉니다. 안쪽은 실제 화면입니다.</span><em>열어 보기</em></a>
+    <a href="b/"><b>② 한 페이지</b><span>페이지를 다시 열지 않고 내용만 바꿉니다.<br>안쪽은 모양만 비슷하게 그린 화면입니다.</span><em>열어 보기</em></a>
+  </div>
+  <h2>무엇이 같고, 무엇이 다른가</h2>
+  <ol>
+    <li>둘 다 업로드 창이 따로 없고, 메뉴를 옮겨도 업로드가 계속됩니다.</li>
+    <li>둘 다 새로고침하거나 탭을 닫으면 멈추고, '이어서 업로드'로 받은 자리부터 이어 갑니다.</li>
+    <li>① 은 메뉴를 누르면 안쪽 화면을 새로 불러옵니다. 지금과 같은 빠르기(<span class="num" data-m="a"></span>)이고, 바뀌는 동안 판이 잠깐 비어 보입니다.</li>
+    <li>② 는 메뉴를 누르면 바로 바뀝니다(<span class="num" data-m="b"></span>). 대신 지금 화면 전부를 한 페이지로 다시 짜야 해서 일이 크고, 고장 날 곳도 많습니다.</li>
+    <li>① 은 지금 화면을 그대로 안에 넣으므로 일이 작고, 화면마다 머리줄 · 메뉴를 빼는 정리만 하면 됩니다.</li>
+  </ol>
+  <div class="uc-wrap">
+  <table class="uc-t">
+    <thead><tr><th></th><th>지금(업로드 창)</th><th>① 바깥 틀 유지</th><th>② 한 페이지</th></tr></thead>
+    <tbody>
+      <tr><th>메뉴 바꾸는 시간</th><td class="num" data-m="now"></td><td class="num" data-m="a"></td><td class="num" data-m="b"></td></tr>
+      <tr><th>바뀔 때 화면</th><td>전체가 다시 그려짐</td><td>안쪽만 잠깐 비었다가 그려짐</td><td>바로 바뀜</td></tr>
+      <tr><th>업로드</th><td>따로 연 창을 열어 둬야 계속</td><td>그 페이지 안에서 계속</td><td>그 페이지 안에서 계속</td></tr>
+      <tr><th>새로고침 · 탭 닫기</th><td>업로드 창만 열려 있으면 계속</td><td>멈춤 → 이어서 업로드</td><td>멈춤 → 이어서 업로드</td></tr>
+      <tr><th>만드는 일</th><td>지금 그대로</td><td>작음(틀 하나 · 화면 정리)</td><td>큼(모든 LX 화면 다시 짜기)</td></tr>
+      <tr><th>고장 위험</th><td>낮음</td><td>낮음~보통</td><td>높음</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="uc-foot" id="uc-when"></p>
+</main>
+<script type="module">
+import { gate } from '../../../v3/kit/auth-gate.js';
+await gate('lx-console');
+const fmt = (ms) => ms == null ? '—' : ms < 100 ? `${(ms / 1000).toFixed(2)}초` : `약 ${(ms / 1000).toFixed(1)}초`;
+try {
+  const m = await (await fetch('measure.json', { cache: 'no-store' })).json();
+  for (const el of document.querySelectorAll('[data-m]')) el.textContent = fmt(m[el.dataset.m]?.median);
+  document.getElementById('uc-when').innerHTML = `메뉴 바꾸는 시간 — ${m.when} 바깥 주소에서 LX 직원 계정으로 메뉴 네 개를 ${m.rounds}번씩 눌러 잰 가운데 값입니다.<br>메뉴를 누른 때부터 화면이 다 그려진 때(불러오는 중 표시가 사라진 때)까지 셉니다.<br>업로드는 두 시안 모두 시험 업로드입니다. 파일을 실제로 읽지만 서버로 보내지 않습니다.`;
+} catch { /* 숫자가 없으면 빈칸 */ }
+document.getElementById('uc').hidden = false;
+</script>
+</body>
+</html>

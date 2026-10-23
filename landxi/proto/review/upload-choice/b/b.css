@@ -1,0 +1,25 @@
+/* 시안 ② — 모양만 비슷한 화면(칸 이름 · 회색 줄) */
+.k-main:has(> .ub-page){overflow:auto}
+.ub-page{box-sizing:border-box;padding:32px 40px 96px;max-width:1280px}
+.ub-h{margin:0 0 8px;font:700 var(--fs-t1)/var(--lh-t1, 36px) 'Paperlogy',var(--font-body);color:var(--ink)}
+.ub-note{margin:0 0 24px;max-width:780px;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub);text-wrap:pretty}
+.ub-grid{display:grid;gap:16px}
+.ub-grid--dash{grid-template-columns:repeat(12,minmax(0,1fr))}
+.ub-grid--dash .w8{grid-column:span 8}.ub-grid--dash .w5{grid-column:span 5}.ub-grid--dash .w4{grid-column:span 4}.ub-grid--dash .w3{grid-column:span 3}
+.ub-grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ub-grid--cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.ub-card{display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:var(--r-16);background:var(--bg-1)}
+.ub-card-h{font:700 var(--fs-t2)/28px 'Paperlogy',var(--font-body);color:var(--ink)}
+.ub-bars{display:flex;flex-direction:column;gap:10px}
+.ub-bars i{display:block;height:12px;border-radius:6px;background:var(--bg-0)}
+.ub-pic{height:120px;border-radius:var(--r-8);background:var(--bg-0)}
+.ub-page--map{display:grid;grid-template-columns:360px minmax(0,1fr);gap:0;padding:0;max-width:none;height:100%}
+.ub-side{box-sizing:border-box;padding:24px;background:var(--bg-1);border-right:1px solid var(--rule);overflow:auto}
+.ub-map{display:flex;align-items:center;justify-content:center;background:#E4E9EE;color:var(--sub);font:500 var(--fs-aux)/1 var(--font-body)}
+@media (max-width:960px){
+  .ub-page{padding:20px 16px 96px}
+  .ub-grid--dash,.ub-grid--3{grid-template-columns:minmax(0,1fr)}
+  .ub-grid--dash>*{grid-column:auto!important}
+  .ub-page--map{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(240px,1fr)}
+  .ub-side{border-right:0;border-bottom:1px solid var(--rule)}
+}
