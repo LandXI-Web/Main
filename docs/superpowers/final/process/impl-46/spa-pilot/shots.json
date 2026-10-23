@@ -1,0 +1,166 @@
+{
+ "at": "2026-10-23T06:48:34.558Z",
+ "rows": [
+  {
+   "tag": "pc",
+   "how": "menu",
+   "id": "projects",
+   "shot": "spa-pc-projects.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "menu",
+   "id": "analyze",
+   "shot": "spa-pc-analyze.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "menu",
+   "id": "mapsvc",
+   "shot": "spa-pc-mapsvc.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "menu",
+   "id": "home",
+   "shot": "spa-pc-home.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "load",
+   "id": "home",
+   "shot": "full-pc-home.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "load",
+   "id": "projects",
+   "shot": "full-pc-projects.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "load",
+   "id": "analyze",
+   "shot": "full-pc-analyze.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "pc",
+   "how": "load",
+   "id": "mapsvc",
+   "shot": "full-pc-mapsvc.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "menu",
+   "id": "projects",
+   "shot": "spa-mo-projects.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "menu",
+   "id": "analyze",
+   "shot": "spa-mo-analyze.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "menu",
+   "id": "mapsvc",
+   "shot": "spa-mo-mapsvc.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "menu",
+   "id": "home",
+   "shot": "spa-mo-home.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "load",
+   "id": "home",
+   "shot": "full-mo-home.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "load",
+   "id": "projects",
+   "shot": "full-mo-projects.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "load",
+   "id": "analyze",
+   "shot": "full-mo-analyze.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  },
+  {
+   "tag": "mo",
+   "how": "load",
+   "id": "mapsvc",
+   "shot": "full-mo-mapsvc.png",
+   "overlap": {
+    "n": 0,
+    "list": []
+   }
+  }
+ ],
+ "errors": []
+}

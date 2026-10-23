@@ -1,0 +1,268 @@
+{
+ "at": "2026-10-23T06:58:09.545Z",
+ "n": 5,
+ "spa": [
+  {
+   "id": "projects",
+   "first": 70,
+   "ready": 2259
+  },
+  {
+   "id": "analyze",
+   "first": 67,
+   "ready": 76
+  },
+  {
+   "id": "mapsvc",
+   "first": 52,
+   "ready": 2335
+  },
+  {
+   "id": "home",
+   "first": 55,
+   "ready": 2244
+  },
+  {
+   "id": "projects",
+   "first": 51,
+   "ready": 2170
+  },
+  {
+   "id": "analyze",
+   "first": 54,
+   "ready": 64
+  },
+  {
+   "id": "mapsvc",
+   "first": 48,
+   "ready": 1843
+  },
+  {
+   "id": "home",
+   "first": 61,
+   "ready": 2219
+  },
+  {
+   "id": "projects",
+   "first": 56,
+   "ready": 2275
+  },
+  {
+   "id": "analyze",
+   "first": 60,
+   "ready": 70
+  },
+  {
+   "id": "mapsvc",
+   "first": 70,
+   "ready": 1905
+  },
+  {
+   "id": "home",
+   "first": 48,
+   "ready": 2231
+  },
+  {
+   "id": "projects",
+   "first": 54,
+   "ready": 2311
+  },
+  {
+   "id": "analyze",
+   "first": 69,
+   "ready": 79
+  },
+  {
+   "id": "mapsvc",
+   "first": 57,
+   "ready": 1907
+  },
+  {
+   "id": "home",
+   "first": 60,
+   "ready": 2083
+  },
+  {
+   "id": "projects",
+   "first": 50,
+   "ready": 2214
+  },
+  {
+   "id": "analyze",
+   "first": 69,
+   "ready": 77
+  },
+  {
+   "id": "mapsvc",
+   "first": 51,
+   "ready": 1952
+  },
+  {
+   "id": "home",
+   "first": 59,
+   "ready": 2121
+  }
+ ],
+ "full": [
+  {
+   "id": "projects",
+   "first": 710,
+   "ready": 2960
+  },
+  {
+   "id": "analyze",
+   "first": 773,
+   "ready": 1159
+  },
+  {
+   "id": "mapsvc",
+   "first": 720,
+   "ready": 2854
+  },
+  {
+   "id": "home",
+   "first": 654,
+   "ready": 2469
+  },
+  {
+   "id": "projects",
+   "first": 693,
+   "ready": 2825
+  },
+  {
+   "id": "analyze",
+   "first": 711,
+   "ready": 1126
+  },
+  {
+   "id": "mapsvc",
+   "first": 711,
+   "ready": 2794
+  },
+  {
+   "id": "home",
+   "first": 670,
+   "ready": 2591
+  },
+  {
+   "id": "projects",
+   "first": 694,
+   "ready": 2865
+  },
+  {
+   "id": "analyze",
+   "first": 725,
+   "ready": 1106
+  },
+  {
+   "id": "mapsvc",
+   "first": 706,
+   "ready": 2860
+  },
+  {
+   "id": "home",
+   "first": 661,
+   "ready": 2650
+  },
+  {
+   "id": "projects",
+   "first": 678,
+   "ready": 2873
+  },
+  {
+   "id": "analyze",
+   "first": 746,
+   "ready": 1118
+  },
+  {
+   "id": "mapsvc",
+   "first": 717,
+   "ready": 2818
+  },
+  {
+   "id": "home",
+   "first": 661,
+   "ready": 2571
+  },
+  {
+   "id": "projects",
+   "first": 683,
+   "ready": 2797
+  },
+  {
+   "id": "analyze",
+   "first": 711,
+   "ready": 1141
+  },
+  {
+   "id": "mapsvc",
+   "first": 727,
+   "ready": 3181
+  },
+  {
+   "id": "home",
+   "first": 661,
+   "ready": 2613
+  }
+ ],
+ "summary": {
+  "spa.projects": {
+   "first": 54,
+   "firstMax": 70,
+   "ready": 2259,
+   "readyMax": 2311
+  },
+  "spa.analyze": {
+   "first": 67,
+   "firstMax": 69,
+   "ready": 76,
+   "readyMax": 79
+  },
+  "spa.mapsvc": {
+   "first": 52,
+   "firstMax": 70,
+   "ready": 1907,
+   "readyMax": 2335
+  },
+  "spa.home": {
+   "first": 59,
+   "firstMax": 61,
+   "ready": 2219,
+   "readyMax": 2244
+  },
+  "full.projects": {
+   "first": 693,
+   "firstMax": 710,
+   "ready": 2865,
+   "readyMax": 2960
+  },
+  "full.analyze": {
+   "first": 725,
+   "firstMax": 773,
+   "ready": 1126,
+   "readyMax": 1159
+  },
+  "full.mapsvc": {
+   "first": 717,
+   "firstMax": 727,
+   "ready": 2854,
+   "readyMax": 3181
+  },
+  "full.home": {
+   "first": 661,
+   "firstMax": 670,
+   "ready": 2591,
+   "readyMax": 2650
+  },
+  "spa": {
+   "first": 57,
+   "ready": 2121,
+   "readyMax": 2335
+  },
+  "full": {
+   "first": 710,
+   "ready": 2794,
+   "readyMax": 3181
+  }
+ }
+}

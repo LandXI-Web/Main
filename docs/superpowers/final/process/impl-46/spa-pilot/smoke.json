@@ -1,0 +1,578 @@
+{
+ "at": "2026-10-23T06:54:11.063Z",
+ "errors": [],
+ "steps": [
+  "첫 화면 {\"cur\":\"home\",\"n\":1,\"last\":{\"from\":null,\"to\":\"home\",\"how\":\"load\",\"at\":\"2026-10-23T06:54:16.199Z\",\"paint\":null,\"done\":null},\"url\":\"/landxi/v3/lx-console/\",\"docs\":1792738455154.1}",
+  "바퀴 1 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":27}",
+  "바퀴 2 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":17}",
+  "바퀴 3 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":34}",
+  "바퀴 4 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":35}",
+  "바퀴 5 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":29}",
+  "바퀴 6 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":28}",
+  "바퀴 7 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":33}",
+  "바퀴 8 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":521,\"canvases\":0,\"heap\":27}",
+  "바퀴 9 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":37}",
+  "바퀴 10 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":22}",
+  "바퀴 11 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":465,\"canvases\":0,\"heap\":20}",
+  "바퀴 12 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":458,\"canvases\":0,\"heap\":19}",
+  "바퀴 13 {\"screen\":\"home\",\"listeners\":{\"window\":19,\"document\":5},\"intervals\":5,\"timeouts\":0,\"observers\":9,\"maps\":0,\"nodes\":463,\"canvases\":0,\"heap\":22}",
+  "같은 문서(새로 열림 없음): true",
+  "뒤로 → {\"cur\":\"mapsvc\",\"n\":54,\"last\":{\"from\":\"home\",\"to\":\"mapsvc\",\"how\":\"traverse\",\"at\":\"2026-10-23T06:55:04.719Z\",\"paint\":25,\"done\":null},\"url\":\"/landxi/v3/lx-map/\",\"docs\":1792738455154.1}",
+  "뒤로 → {\"cur\":\"analyze\",\"n\":55,\"last\":{\"from\":\"mapsvc\",\"to\":\"analyze\",\"how\":\"traverse\",\"at\":\"2026-10-23T06:55:05.532Z\",\"paint\":30,\"done\":30},\"url\":\"/landxi/v3/lx-analyze/\",\"docs\":1792738455154.1}",
+  "앞으로 → {\"cur\":\"mapsvc\",\"n\":56,\"last\":{\"from\":\"analyze\",\"to\":\"mapsvc\",\"how\":\"traverse\",\"at\":\"2026-10-23T06:55:06.360Z\",\"paint\":25,\"done\":616},\"url\":\"/landxi/v3/lx-map/\",\"docs\":1792738455154.1}",
+  "새로 고침 → {\"cur\":\"mapsvc\",\"n\":1,\"last\":{\"from\":null,\"to\":\"mapsvc\",\"how\":\"load\",\"at\":\"2026-10-23T06:55:08.077Z\",\"paint\":null,\"done\":null},\"url\":\"/landxi/v3/lx-map/\",\"docs\":1792738507187.4}",
+  "바로가기 /landxi/v3/lx-analyze/?card=card-farm → {\"cur\":\"analyze\",\"n\":1,\"last\":{\"from\":null,\"to\":\"analyze\",\"how\":\"load\",\"at\":\"2026-10-23T06:55:08.849Z\",\"paint\":null,\"done\":null},\"url\":\"/landxi/v3/lx-analyze/?card=card-farm\",\"docs\":1792738508087.3}",
+  "바로가기 /landxi/v3/lx-project/?scope=all → {\"cur\":\"projects\",\"n\":1,\"last\":{\"from\":null,\"to\":\"projects\",\"how\":\"load\",\"at\":\"2026-10-23T06:55:09.919Z\",\"paint\":null,\"done\":null},\"url\":\"/landxi/v3/lx-project/?scope=all\",\"docs\":1792738508881}",
+  "바로가기 /landxi/v3/lx-map/ → {\"cur\":\"mapsvc\",\"n\":1,\"last\":{\"from\":null,\"to\":\"mapsvc\",\"how\":\"load\",\"at\":\"2026-10-23T06:55:10.721Z\",\"paint\":null,\"done\":null},\"url\":\"/landxi/v3/lx-map/\",\"docs\":1792738509954.7}"
+ ],
+ "times": [
+  {
+   "id": "projects",
+   "wall": 829,
+   "paint": 646,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 238,
+   "paint": 181,
+   "done": 181,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 370,
+   "paint": 310,
+   "done": 1183,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 102,
+   "paint": 31,
+   "done": 31,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 65,
+   "paint": 25,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 70,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 61,
+   "paint": 25,
+   "done": 588,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 85,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 82,
+   "paint": 18,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 71,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 50,
+   "paint": 27,
+   "done": 712,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 82,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 69,
+   "paint": 21,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 71,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 43,
+   "paint": 28,
+   "done": 588,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 81,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 67,
+   "paint": 27,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 79,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 62,
+   "paint": 24,
+   "done": 622,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 84,
+   "paint": 29,
+   "done": 29,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 72,
+   "paint": 25,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 82,
+   "paint": 25,
+   "done": 25,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 69,
+   "paint": 25,
+   "done": 586,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 77,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 67,
+   "paint": 27,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 69,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 77,
+   "paint": 27,
+   "done": 621,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 81,
+   "paint": 25,
+   "done": 25,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 69,
+   "paint": 26,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 73,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 48,
+   "paint": 26,
+   "done": 573,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 73,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 65,
+   "paint": 26,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 76,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 54,
+   "paint": 25,
+   "done": 548,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 72,
+   "paint": 25,
+   "done": 25,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 59,
+   "paint": 27,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 83,
+   "paint": 27,
+   "done": 27,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 59,
+   "paint": 26,
+   "done": 687,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 71,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 67,
+   "paint": 23,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 77,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 58,
+   "paint": 27,
+   "done": 655,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 79,
+   "paint": 26,
+   "done": 26,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 72,
+   "paint": 27,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 81,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 75,
+   "paint": 27,
+   "done": 854,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 84,
+   "paint": 24,
+   "done": 24,
+   "url": "/landxi/v3/lx-console/"
+  },
+  {
+   "id": "projects",
+   "wall": 68,
+   "paint": 27,
+   "done": null,
+   "url": "/landxi/v3/lx-project/?scope=mine"
+  },
+  {
+   "id": "analyze",
+   "wall": 78,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-analyze/"
+  },
+  {
+   "id": "mapsvc",
+   "wall": 52,
+   "paint": 26,
+   "done": 821,
+   "url": "/landxi/v3/lx-map/"
+  },
+  {
+   "id": "home",
+   "wall": 94,
+   "paint": 28,
+   "done": 28,
+   "url": "/landxi/v3/lx-console/"
+  }
+ ],
+ "leak": [
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 27
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 17
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 34
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 35
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 29
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 28
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 33
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 521,
+   "canvases": 0,
+   "heap": 27
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 37
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 22
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 465,
+   "canvases": 0,
+   "heap": 20
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 458,
+   "canvases": 0,
+   "heap": 19
+  },
+  {
+   "screen": "home",
+   "listeners": {
+    "window": 19,
+    "document": 5
+   },
+   "intervals": 5,
+   "timeouts": 0,
+   "observers": 9,
+   "maps": 0,
+   "nodes": 463,
+   "canvases": 0,
+   "heap": 22
+  }
+ ]
+}
