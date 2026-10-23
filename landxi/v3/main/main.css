@@ -60,6 +60,7 @@ main{position:relative;z-index:3}
 
 /* 지도 위 흰 카드(ch1 · ch5 · ch6) */
 .m-over{left:var(--mx);top:calc(var(--mast) + 40px);width:440px}
+@media (min-width:641px){#ch1.m-over{width:540px}}   /* 10-23 제목 "전국 국토이용 현황을" 한 줄(제목 2줄 이내 · 규칙 9) */
 .m-over .m-card{padding:32px}
 .m-over .m-bridge{margin-bottom:12px;font-size:var(--fs-aux);line-height:var(--lh-aux)}
 .m-over .m-p{margin-top:16px}
@@ -141,6 +142,7 @@ main{position:relative;z-index:3}
 .m-fin{left:var(--mx);right:var(--mx);top:calc(100svh - 234px);height:218px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .m-fin .m-p{margin-top:12px;max-width:none;word-break:keep-all}
 .m-fin .m-p span{display:block}
+.m-fin .m-fin-p{font-size:calc(var(--fs-body) + 4px);line-height:calc(var(--lh-body) + 6px)}   /* 10-23 사용자 '4px 키운다' */
 .m-fin .m-cta{margin-top:20px;justify-content:center;align-items:center;gap:12px;flex-wrap:nowrap}
 .m-top{margin-left:12px;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub);white-space:nowrap}
 .m-top:hover{color:var(--ink)}
@@ -180,7 +182,14 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 /* 푸터 1줄 + 출처 띠 */
 .m-foot{position:relative;z-index:4;background:var(--bg-1);border-top:1px solid var(--rule)}
 .m-foot-in{max-width:var(--content-max);margin:0 auto;padding:24px var(--mx);display:flex;align-items:center;gap:24px;flex-wrap:wrap;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
-.m-foot-in > span:first-child{color:var(--ink)}
+.m-foot-in{justify-content:space-between}
+.m-foot-l,.m-foot-r{display:flex;align-items:center;flex-wrap:wrap;gap:8px 0}
+.m-foot-l > *,.m-foot-r > a{display:inline-flex;align-items:center;height:32px}
+.m-foot-l > * + *::before,.m-foot-r > a + a::before{content:"";width:1px;height:12px;margin:0 16px;background:var(--rule)}   /* 10-23 바닥 줄 — 같은 글자 · 가는 세로선으로 나눔 */
+.m-foot-org{color:var(--ink);font-weight:700}
+.m-foot-r a{color:var(--sub);text-decoration:none}
+.m-foot-r a::after{content:"↗";margin-left:4px;font-size:12px;color:var(--sub-2)}
+.m-foot-r a:hover{color:var(--ink)}
 .m-src{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
 .m-src b{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-0);font:700 var(--fs-aux)/1 var(--font-display);letter-spacing:0;color:var(--sub-2)}
 
@@ -274,6 +283,7 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 .m-lead span{word-break:keep-all}
 /* 첫 화면 글을 지구 쪽으로(넓은 화면에서 왼쪽 끝에 붙어 지구와 멀어지지 않게 · 10-09) */
 @media (min-width:1101px){.m-hero,.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
+@media (min-width:1101px){#ch3.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px - 48px))}}   /* 10-23 사용자 "왼쪽으로 2칸 · 지도랑 너무 가깝다" — 48px(격자 24 × 2) */
 .m-api{color:var(--sub);text-decoration:underline;text-underline-offset:3px}   /* 바닥 'API 안내'(외부 연동 API 3차) */
 /* 화면 최적화(10-14 원칙 248) — 1280 · 1366 에서 '국토정보 통합조사'가 두 줄로 꺾여 제목이 3줄이 되던 것: 글 칸만 지구 쪽으로 조금 넓힌다(글자 크기 그대로) */
 @media (min-width:1101px) and (max-width:1439px){.m-hero{width:calc(52vw - var(--mx) - 24px)}}
@@ -328,3 +338,4 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 .m-svc-why{margin:6px 0 0;font:400 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub-2);word-break:keep-all}
 .m-why{margin-top:8px}
 .m-why span{display:inline-block}
+@media (max-width:640px){.m-foot-in{flex-direction:column;align-items:flex-start;gap:8px}.m-foot-l,.m-foot-r{gap:4px 16px}.m-foot-l > * + *::before,.m-foot-r > a + a::before{content:none}}   /* 10-23 휴대폰 — 줄 첫머리에 세로선이 남지 않게 선 대신 간격 */

@@ -189,11 +189,11 @@ function cams() {
 }
 function bboxFC(fc) { let a = [180, 90, -180, -90]; const walk = (c) => { if (typeof c[0] === 'number') a = [Math.min(a[0], c[0]), Math.min(a[1], c[1]), Math.max(a[2], c[0]), Math.max(a[3], c[1])]; else c.forEach(walk); }; for (const f of fc.features) walk(f.geometry.coordinates); return a; }
 /** 지구(자전) — 서쪽에서 돌아 들어와 한반도를 정면에 두고, 아주 느리게 흔들린다 */
-function globe(win, now) {
+function globe(win, now, dy = 0) {   // dy = 지구를 아래로 옮길 px(마감 장면 10-23 사용자 '2칸 정도 내려' = 48)
   const s = (now - S.t0) / 1000;
   const spin = RM() || NARROW || LOW ? 5 * Math.sin(s * 0.26) * (RM() ? 0 : 1) : -58 * (1 - ease(s / 3.4)) + 5 * Math.sin(s * 0.26);
   const lat = 34;
-  return { c: [127.8 + spin, lat], z: globeZoom(win, lat), p: 0, b: 0, pad: { top: 0, left: 0, right: 0, bottom: 0 } };
+  return { c: [127.8 + spin, lat], z: globeZoom(win, lat), p: 0, b: 0, pad: { top: dy * 2, left: 0, right: 0, bottom: 0 } };
 }
 
 /* ── 한 프레임 ─────────────────────────────────────────── */
@@ -270,7 +270,7 @@ function frame(now) {
       S.t7 = gated(S.t7, ease(seg(s7, 0, 0.55)));
       const t = S.t7;
       win = lerpRect(LY.full, LY.fin, t);
-      const g = globe(LY.fin, now);
+      const g = globe(LY.fin, now, innerWidth > 640 ? 48 : 0);
       cam = lerpCam(C.nat2, g, t, 0);
       bg = '#fff';
     }
@@ -344,7 +344,7 @@ const WORLD_T = new URL('../../data/tiles/world-bm/', import.meta.url).href + '{
 const WORLD_Z = 8;
 function pathSteps() {
   const C = S.cams || cams(), out = [];
-  const g = globe(LY.fin, S.t0 + 60000);
+  const g = globe(LY.fin, S.t0 + 60000, innerWidth > 640 ? 48 : 0);
   for (let i = 1; i <= 4; i++) { const t = i / 4; out.push({ cam: lerpCam(C.nat2, g, t, 0), win: lerpRect(LY.full, LY.fin, t) }); }   // ⑤ 마감으로 돌아가는 지구 곡면
   out.push({ cam: C.nat2, win: LY.full });
   return out;
@@ -542,7 +542,7 @@ function fillNat(n) {
   $('#ch1-ks').replaceChildren(...(n.classes || []).map((c) => h('li', {}, h('button.m-nk', { type: 'button', dataset: { k: c.key }, 'aria-pressed': 'false',
     onclick: () => { S.natPick = S.natPick === c.key ? null : c.key; natFocus(S.natPick); S.last = ''; } },
     h('i', { style: { background: c.color }, 'aria-hidden': 'true' }),
-    h('span.m-nk-t', {}, h('b', { text: c.name }), h('small', { text: c.what }), h('small', { text: c.why })),
+    h('span.m-nk-t', {}, h('b', { text: c.name }), c.what ? h('small', { text: c.what }) : null, c.why ? h('small', { text: c.why }) : null),
     val(c) == null ? null : h('span.m-nk-v', {}, h('b.num', { text: nf(val(c)) }), h('small', { text: c.unit }))))));
   $('#ch1-src').textContent = `${n.imagery || `항공영상 ${n.year}`} 기준 · AI 분석`;
   $('#ch1-cap').textContent = '';
@@ -557,7 +557,7 @@ function fillAgent(a) {
   </div></div>`;
   const chat = host.querySelector('.m-chat');
   const block = (i, plan, res) => {
-    chat.append(h('p.m-q', { hidden: true }, '물음', h('b', { text: ASK[i].q })));
+    chat.append(h('p.m-q', { hidden: true }, h('b', { text: ASK[i].q })));
     chat.append(h('div.m-a', { hidden: true, dataset: { i: String(i) } }, h('ol.k-ck-plan', {}, ...plan.map((t) => h('li', { text: t }))), h('div.m-res', { hidden: true }, ...res)));
   };
   // ① 지도에 그리기 — 숫자는 결과 파일(원판 모델 · 동 면) 값

@@ -28,7 +28,8 @@ body.t { overflow: hidden; }
 .is-ready .hero { transform: none; }
 
 /* ══ 문 카드 ═══════════════════════════════════════════════════════ */
-.door { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 40px; overflow: auto; }
+.door { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 40px; overflow: auto; scrollbar-width: none; }
+.door::-webkit-scrollbar { display: none; }   /* 10-23 사용자: 로그인 칸 스크롤 막대 보이지 않게(넘치면 휠로는 그대로 내려감) */
 .door__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 28px; }
 .door__mark { display: block; height: 16px; width: auto; }
 .door__home { border-radius: 4px; }
