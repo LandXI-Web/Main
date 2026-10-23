@@ -584,12 +584,28 @@ def _intent_hit(msg: str, src: str) -> bool:
     return bool(ta and tb) and jaccard(ta, tb) >= 0.7
 
 
+def _places(t: str) -> set[str]:
+    """문장 속 시군구(코드) — 바꿔 묻기가 물은 지역을 버리는지 보는 데만."""
+    out: set[str] = set()
+    try:
+        from agent import talk
+        for g in talk.regions_in(t):
+            if g:
+                out.add(str(g[0].get("sgg_cd") or ""))
+    except Exception:  # noqa: BLE001
+        pass
+    return {x for x in out if x}
+
+
 async def rewrite(msg: str, test: bool = False) -> tuple[str, list[str]]:
     """질문 → (알아들을 질문, 적용한 줄 id). 질문 뜻 연결이 먼저(질문 전체를 바꿈) · 그다음 다른 이름(낱말만 바꿈)."""
     rows = [r for r in await rules_fresh() if _live(r, test)]
     out, used = str(msg or ""), []
+    places = _places(out)
     for r in rows:
         if r["mode"] == "intent" and r["dst"] and _intent_hit(out, r["src"]):
+            if places - _places(r["dst"]):
+                continue                             # 물은 범위대로(원칙 312) — 질문의 지역 · 읍면동을 버리는 바꿔 묻기는 쓰지 않는다('남원시 비닐하우스 보여 줘' ≠ '비닐하우스만 보여 줘')
             out = r["dst"]
             used.append(r["id"])
             break

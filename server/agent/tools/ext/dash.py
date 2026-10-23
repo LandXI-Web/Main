@@ -698,6 +698,28 @@ async def _compare(XD, regs, task) -> dict:
             "main": {"label": kp[0]["label"] if kp else "", "value": kp[0]["value"] if kp else 0, "unit": "개"}}
 
 
+async def _carry(args: dict, ctx) -> None:
+    """이어 묻기 — 질문에 지역 · 업무가 없으면 앞 답(같은 창 prev_run)의 통계 지역 · 업무를 이어받는다.
+    화면 지역이 앞 답과 다르면(지도를 옮김) 이어받지 않는다. 권한 판정은 그대로(지역은 통계 집계가 다시 본다)."""
+    try:
+        from .hl import _base
+        base = await _base(ctx) or {}
+    except Exception:  # noqa: BLE001
+        return
+    sgg = str(base.get("sgg") or "")
+    if base.get("src") != "dash" or not sgg:
+        return
+    cur = str(args.get("region") or "")
+    if cur and cur != sgg:
+        return
+    args["region"] = sgg
+    if base.get("task") and not args.get("task") and args.get("kind") in ("overview", "task", "jimok", "area", "year"):
+        args["task"] = base["task"]
+        if args.get("kind") == "overview":
+            args["kind"] = "task"
+    ctx.state["carried"] = {"region": sgg, "task": args.get("task") or None}
+
+
 async def ximap_dash(args: dict, ctx) -> Out:
     from landxi_api.envelope import env
     out = Out(source="XI맵 융합 집계(서비스 결과 장부 · 전국 분석 진행 장부 · 연속지적 · 실태조사)")
@@ -705,6 +727,11 @@ async def ximap_dash(args: dict, ctx) -> Out:
     if not args.get("kind"):
         c = getattr(ctx, "context", None) or {}
         args = parse(args.get("request") or "", c.get("region")) or {**args, "kind": "overview"}
+    if _carry_ok(args):
+        await _carry(args, ctx)
+    rq = args.get("request") or ""
+    if not args.get("show") and parse(rq) is None and parse_show(rq):
+        args["show"] = True                              # 통계 말('현황')이 없는 '○○시 비닐하우스 보여 줘'만 — 지도에 그 업무만 남긴다
     off = off_classes(ctx)
     spec = await build(args, off)
     if off:
@@ -712,6 +739,8 @@ async def ximap_dash(args: dict, ctx) -> Out:
     m = spec.get("main") or {}
     if spec.get("year"):
         ctx.state["scope_year"] = spec["year"]           # 범위 줄(시안 ⓒ-1) — 기준 시점
+    if args.get("show") and args.get("task") and not spec.get("missing"):
+        out.ui_actions.append({"op": "map_task", "task": args["task"]})     # '○○시 비닐하우스 보여 줘' — 지도에 그 업무만(지역 숫자는 아래 통계와 같은 값)
     out.ui_actions.append({"op": "ximap_dash", "spec": spec})
     sgg0 = spec.get("sgg")
     out.scope = {"sgg": [sgg0] if sgg0 else ("nation" if spec.get("kind") in ("national", "time") else None),
@@ -765,7 +794,52 @@ def ROUTE(msg: str, ctx):
     c = getattr(ctx, "context", None) or {}
     if c.get("page") != "xi-clean" or getattr(p, "realm", None) != "lx" or getattr(ctx, "lang", "ko") == "en":
         return None
-    a = parse(msg, c.get("region"))
+    a = parse(msg, c.get("region")) or parse_show(msg)
     if not a:
         return None
     return {"tool": "ximap_dash", "args": a, "intent": "map"}
+
+
+def _carry_ok(a: dict) -> bool:
+    """이어 묻기('읍면동별로 통계 내 줘') — 질문에 지역 · 업무 · 전국이 없으면 앞 답의 지역 · 업무를 이어받는다(원칙 312)."""
+    t = re.sub(r"\s+", " ", a.get("request") or "")
+    return bool(t) and a.get("kind") not in ("compare", "national") and not a.get("task") and not a.get("want") and not a.get("sub")         and not _named(t) and not re.search(r"전국|우리\s*나라|대한민국", t)
+
+
+SHOW_RX = re.compile(r"(?:보여|띄워|표시해|켜)\s*(?:줘|주세요|줄래|봐|줄\s*수)?")
+SHOW_NOT = re.compile(r"보고서|초안|법령|조문|근거|원래대로|조건|분석\s*(?:실행|돌려)|내려\s*받|으로\s*(?:가|이동)|이동해|면적|이상|이하|미만|초과|넘는|단동|연동|다동|\d")
+
+
+def _named(t: str) -> list:
+    try:
+        from ..summary_lookup import match_regions
+        return match_regions(t) or []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def parse_show(t: str) -> dict | None:
+    """'남원시 비닐하우스 보여 줘'(지역 + 업무 하나 + 보여 줘) = 그 지역 그 업무(통계 '현황'과 같은 셈 · 지도는 그 지역으로) — 물은 범위대로(원칙 312).
+    읍면동 · 면적 · 단동/연동 조건이 있으면 None(지도 거르기 길)."""
+    t = re.sub(r"\s+", " ", t or "").strip()
+    if not t or len(t) > 60 or not SHOW_RX.search(t) or SHOW_NOT.search(t) or not _named(t):
+        return None
+    if re.search(r"만\s*(?:보여|띄워|표시|켜)", t):
+        return None                                      # '○○만 보여 줘' = 켜진 층 거르기 길(mapsvc) 그대로
+    if len({k for rx, k in TASK_WORDS if re.search(rx, t)}) != 1:
+        return None
+    rest = SHOW_RX.sub(" ", t)
+    for rx, _ in TASK_WORDS:
+        rest = re.sub(rx, " ", rest)
+    for h in _named(t):
+        for nm in {h.get("name") or "", (h.get("full") or "").split(" ")[-1]}:
+            if nm:
+                rest = rest.replace(nm, " ")
+    if re.search(r"[가-힣]{1,5}(?:읍|면|동)(?![가-힣])", rest):
+        return None                                      # '○○시 운봉읍 비닐하우스 보여 줘' — 읍면동 거르기는 지도 거르기 길
+    a = parse(SHOW_RX.sub(" ", t) + " 현황")
+    if not a or a.get("kind") != "task" or not a.get("region") or "," in a["region"]:
+        return None
+    a["request"] = t
+    a["show"] = True
+    return a
