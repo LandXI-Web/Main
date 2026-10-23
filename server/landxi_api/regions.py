@@ -296,7 +296,8 @@ async def _derived_bg():
 async def _derived_build() -> dict:
     regions, geoms, _ = regions_base()
     async with db(realm="lx") as conn:
-        imgs = await conn.fetch("SELECT id, name, tier, gsd_m, epoch, year, kind, sgg_cd, export_policy, ST_AsGeoJSON(footprint)::json AS fp FROM imagery")
+        imgs = await conn.fetch("SELECT id, name, tier, gsd_m, epoch, year, kind, sgg_cd, export_policy, ST_AsGeoJSON(footprint)::json AS fp FROM imagery "
+                                "WHERE coalesce(layer->>'role','imagery') <> 'own'")   # 직원 내 영상은 지역 영상 수에 넣지 않는다
         dps = await conn.fetch("SELECT id, tenant_id, card_id, stage, sgg_cd, coalesce(test,false) AS test, region_name, "
                                "ST_AsGeoJSON(ST_SimplifyPreserveTopology(aoi, 0.001))::json AS aoi FROM deploys")
         led = await conn.fetch("SELECT tenant_id, kind, id, rows, stats, created_at FROM ledger_imports WHERE latest AND state='matched'")

@@ -19,13 +19,10 @@ import { session } from '../../../shared/api-v1.js';
 import { API } from '../../kit/util.js';
 import { modal } from '../../kit/modal.js';
 import { panes } from '../../kit/panes.js';
-import { uploadQueue } from '../../kit/dropzone.js';
 import { zipPeek, peekWhy, sendChunked } from '../../kit/sample-upload.js';
 import { LEDGER } from '../../lx-ingest/data.js';
 
 const PER = 12;
-const UPLOADS = '/catalog/imagery/uploads';
-const FALLBACK = { raster: ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'j2k', 'ecw', 'img'], sidecar: ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'eww', 'prj', 'aux.xml', 'ovr'] };
 const KINDS0 = { farm_ledger: '농지대장', dev_permit: '개발행위 허가', public_asset: '공유재산', river_permit: '하천 점용 허가', greenhouse: '시설원예 등록', feedcrop: '사료작물 재배 신청', direct_pay: '공익직불 신청' };
 const thumbs = new Map();
 function authPic(path) {                     // LX 계정만 받는 그림 — 세션을 실어 받는다(새 프로젝트 창과 같은 길)
@@ -529,35 +526,18 @@ export function mountShared(root) {
       catch (e) { save.disabled = false; err.textContent = e?.message || '바꾸지 못했습니다'; }
     });
   }
+  /* 영상 올리기(원칙 326) — 고르기 전 안내(형식 · 한도 · 좌표계 · 걸리는 시간) + 고르면 올리기 상태 창(kit/uploads.js)이 맡는다:
+     창을 닫거나 다른 화면으로 가도 이어 올리고, 다 올리면 저절로 공유 데이터에 등록한다(분석 서비스 '내 영상 올려서 분석'과 같은 부품) */
   function openUpload() {
     const box = h('div.sd-up');
-    const err = h('p.sd-err', { role: 'alert' });
-    const reg = h('button.t-btn', { type: 'button', text: '영상 등록', disabled: true });
-    const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
-    const m = modal({ title: UP.img, size: 'lg', body: h('div.sd-form', {}, box, err, h('div.sd-act', {}, no, reg)) });
-    let qu = null, draft = null;
-    const ready = () => { const its = qu ? qu.items().filter((i) => !['bad', 'cancel'].includes(i.state)) : []; reg.disabled = !draft || !its.length || qu.busy() || its.some((i) => i.state !== 'done'); };
-    api(UPLOADS + '/formats').catch(() => FALLBACK).then((f) => {
-      qu = uploadQueue(box, {
-        base: UPLOADS,
-        fields: () => ({ draft_id: draft || undefined }),
-        allow: [...(f.raster || FALLBACK.raster), ...(f.sidecar || FALLBACK.sidecar)],
-        max: f.limit?.size || 20e9,
-        title: '영상 파일을 끌어 놓거나 눌러 고르세요',
-        onStart: (s) => { if (s.draft_id) draft = s.draft_id; },
-        onChange: ready,
-      });
-    });
-    no.addEventListener('click', () => { qu?.clear(); m.close(); });
-    reg.addEventListener('click', async () => {
-      reg.disabled = true; reg.textContent = '영상 등록하는 중';
-      try {
-        const r = await api('/catalog/imagery', { method: 'POST', body: { draft_id: draft } });
-        m.close(true);
-        toast(`영상 ${nf((r.items || []).length)}장을 등록했습니다`);
-        reload('img');
-      } catch (e) { reg.textContent = '영상 등록'; reg.disabled = false; err.textContent = e?.message || '등록하지 못했습니다'; }
-    });
+    const no = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
+    const m = modal({ title: UP.img, size: 'lg', body: h('div.sd-form', {}, box, h('div.sd-act', {}, no)) });
+    no.addEventListener('click', () => m.close());
+    import('../../kit/uploads.js').then((U) => U.uploadPicker(box, { purpose: { kind: 'shared' }, onAdded: () => {
+      m.close(true);
+      toast("올리기를 시작했습니다 · 위쪽 '올리는 중' 표시에서 진행을 봅니다");
+    } })).catch(() => { box.textContent = '올리기 칸을 열지 못했습니다'; });
   }
+  addEventListener('lx:upload-done', (e) => { if (e.detail?.purpose?.kind === 'shared') reload('img'); });
   return { load: () => { D.img = D.train = D.admin = null; load(); } };
 }

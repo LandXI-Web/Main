@@ -662,6 +662,7 @@ async def _best_imagery_table(sgg: str | None, geom: dict | None) -> dict:
             "SELECT i.id, i.gsd_m, coalesce(i.year::text, i.epoch) AS yr, "
             "ST_Area(ST_Intersection(ST_MakeValid(i.footprint), a.g)::geography) / nullif(ST_Area(a.g::geography), 0) AS cov "
             "FROM imagery i, a WHERE i.path_internal IS NOT NULL AND coalesce(i.kind,'ortho')='ortho' AND i.footprint IS NOT NULL "
+            "AND coalesce(i.layer->>'role','imagery') <> 'own' "            # 직원 내 영상은 서버가 고르지 않는다(올린 사람이 고를 때만)
             "AND (i.sgg_cd = ANY($2::text[]) OR ST_Intersects(i.footprint, a.g))",
             json.dumps(mapping(g)), codes)
     rows = [r for r in rows if (r["cov"] or 0) >= 0.02]
@@ -773,6 +774,7 @@ async def imagery_for_model(sgg: str | None, geom: dict | None, model_gsd) -> di
             "SELECT i.id, i.gsd_m, coalesce(i.year::text, i.epoch) AS yr, "
             "ST_Area(ST_Intersection(ST_MakeValid(i.footprint), a.g)::geography) / nullif(ST_Area(a.g::geography), 0) AS cov "
             "FROM imagery i, a WHERE i.path_internal IS NOT NULL AND coalesce(i.kind,'ortho')='ortho' AND i.footprint IS NOT NULL "
+            "AND coalesce(i.layer->>'role','imagery') <> 'own' "            # 직원 내 영상은 서버가 고르지 않는다(올린 사람이 고를 때만)
             "AND (i.sgg_cd = ANY($2::text[]) OR ST_Intersects(i.footprint, a.g))",
             json.dumps(mapping(g)), codes)
     rows = [r for r in rows if (r["cov"] or 0) >= 0.001 and r["gsd_m"] is not None and gsd_fits(r["gsd_m"], model_gsd)]

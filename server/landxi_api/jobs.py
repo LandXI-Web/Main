@@ -665,7 +665,7 @@ async def _best_imagery(sgg_cd: str, codes: list[str], land_geojson: dict | None
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
             "SELECT id, gsd_m, year, epoch, kind, tier, sgg_cd, export_policy, ST_AsGeoJSON(footprint)::json AS fp FROM imagery "
-            "WHERE path_internal IS NOT NULL AND kind='ortho' AND gsd_m < 1 AND footprint IS NOT NULL "
+            "WHERE path_internal IS NOT NULL AND kind='ortho' AND gsd_m < 1 AND footprint IS NOT NULL AND coalesce(layer->>'role','imagery') <> 'own' "
             "AND (sgg_cd = ANY($1::text[]) OR ($2::text IS NOT NULL AND ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON($2),4326))))",
             codes, json.dumps(land_geojson) if land_geojson else None)
     land = shape(land_geojson) if land_geojson else None

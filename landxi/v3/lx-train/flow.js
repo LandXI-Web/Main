@@ -10,7 +10,7 @@ import { devlog } from '../kit/dev-drawer.js';
 import { regionPicker } from '../kit/region.js';
 import { nf } from '../kit/i18n.js';
 import { sig } from '../kit/sig.js';
-import { h, esc, api, API, session, isEnvelope } from '../kit/util.js';
+import { h, esc, api, API, session, isEnvelope, durWord } from '../kit/util.js';
 import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
 import { accOf } from '../kit/acc.js';
 import { zipPeek, sendChunked } from '../kit/sample-upload.js';   // 학습 데이터 묶음 올리기 한 곳(공유 데이터 · 학습 데이터 올리기와 같은 길)   // AI 모델 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
@@ -117,7 +117,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     ready();
   });
 
-  const left = (s) => (s == null ? '' : s < 60 ? ` · 남은 시간 ${Math.max(1, Math.round(s))}초` : ` · 남은 시간 약 ${Math.round(s / 60)}분`);
+  const left = (s) => (s == null ? '' : s < 60 ? ` · 남은 시간 ${durWord(s)}` : ` · 남은 시간 약 ${durWord(s)}`);   // 1시간 20분(원칙 326)
   up.addEventListener('click', async () => {
     const f = file.files[0];
     up.disabled = true; upBar.hidden = false; upBar.querySelector('i').style.width = '2%';

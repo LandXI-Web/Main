@@ -234,7 +234,7 @@ async def _imagery_items(stage: str | None) -> list[dict]:
         if stage and lad.get("stage") not in (stage, "both"):
             continue
         meta = r["layer"] or {}
-        if meta.get("role") in ("request", "national"):   # 기관이 맡긴 영상(requests.py) · 전국 결과 자산의 영상 API 원천(national) — 영상 목록 · 지도에 내지 않는다
+        if meta.get("role") in ("request", "national", "own"):   # 직원 내 영상(올린 사람만 · cards.my_imagery) · 기관이 맡긴 영상(requests.py) · 전국 결과 자산의 영상 API 원천(national) — 영상 목록 · 지도에 내지 않는다
             continue
         m = _mf(meta.get("manifest"))
         signed = False
@@ -1146,10 +1146,11 @@ async def imagery_thumb(iid: str, request: Request):
     from fastapi import Response
     from .deps import require
     global _thumb_gate
-    require(principal(request), lx=True)
+    p = require(principal(request), lx=True)
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT id, name, kind, gsd_m, year, epoch, path_internal, pmtiles_set, layer, ST_AsGeoJSON(footprint)::json AS fp "
-                                "FROM imagery WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'", iid)
+                                "FROM imagery WHERE id=$1 AND (coalesce(layer->>'role','imagery')='imagery' OR (layer->>'role'='own' AND layer->>'owner'=$2))",
+                                iid, p.user_id)            # 내 영상은 올린 사람만
     if not r:
         raise ApiError("not_found", "영상이 없습니다")
     row = dict(r)

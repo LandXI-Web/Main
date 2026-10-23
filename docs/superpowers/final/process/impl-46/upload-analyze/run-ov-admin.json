@@ -1,0 +1,48 @@
+{
+ "base": "https://app.land-xi.dev",
+ "part": "ov-admin",
+ "at": "2026-10-23T00:47:47.375Z",
+ "steps": [
+  {
+   "k": "login",
+   "t": 6,
+   "at": "9시 47분 53초",
+   "url": "https://app.land-xi.dev/landxi/v3/ops-core/"
+  },
+  {
+   "k": "admin-guide",
+   "t": 11.5,
+   "at": "9시 47분 58초",
+   "text": "파일 형식\nGeoTIFF(COG 포함) · JPEG2000 · ECW · ERDAS IMG · JPG(위치 파일과 함께)\n위치 정보\n좌표계가 든 파일 — 위치 파일(TFW · PRJ 등)이 따로 있으면 함께 넣어 주세요\n크기 · 개수\n한 파일 2,000GB까지 · 여러 장을 한 번에 넣을 수 있습니다\n걸리는 시간\n1GB 약 3분 · 10GB 약 30분 · 100GB 약 5시간\n이 서버로 잰 속도(초당 약 5.5MB) 기준 · 사무실 회선에 따라 다릅니다\n올리는 동안\n따로 열리는 올리기 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 '올리는 중' 표시로 진행을 봅니다"
+  },
+  {
+   "k": "ov-cleanup",
+   "t": 47.3,
+   "at": "9시 48분 34초",
+   "rows": []
+  }
+ ],
+ "ov": {
+  "ov-admin-guide.png": [],
+  "ov-admin-0-open.png": [],
+  "ov-admin-0-folded.png": [],
+  "ov-admin-0-chat.png": [],
+  "ov-admin-0-m-open.png": [],
+  "ov-admin-0-m-folded.png": [],
+  "ov-admin-1-open.png": [],
+  "ov-admin-1-folded.png": [],
+  "ov-admin-1-chat.png": [],
+  "ov-admin-1-m-open.png": [],
+  "ov-admin-1-m-folded.png": []
+ },
+ "errs": [],
+ "dialogs": [],
+ "host": "https://app.land-xi.dev/landxi/v3/upload/",
+ "blocked": {
+  "ov-admin-0": false,
+  "ov-admin-0-m": false,
+  "ov-admin-1": false,
+  "ov-admin-1-m": false
+ },
+ "ms": 47275
+}

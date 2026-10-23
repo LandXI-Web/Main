@@ -251,3 +251,12 @@ body.la-boot .k-app{visibility:hidden}
 .la-im-big{position:absolute;left:14px;top:14px;width:30px;height:30px;padding:0;border:0;border-radius:var(--r-8);background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(0,0,0,.25);color:var(--ink);font:500 16px/30px var(--font-body);cursor:pointer;z-index:1}
 .la-im-big:hover{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.35)}
 .la-im-big:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 내 영상 올려서 분석(10-23 · 원칙 326 올리기 상태 창과 같은 부품) */
+.la-im-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.la-own-b{flex:none}
+.la-own-st{margin:0;padding:8px 12px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink-2)}
+.la-own-st[hidden]{display:none}
+.la-own{display:inline-block;margin-right:6px;padding:0 6px;border-radius:4px;vertical-align:1px;background:var(--ink);color:var(--bg-1);font:600 var(--fs-tag)/20px var(--font-body);pointer-events:none}
+.la-own-m{display:flex;flex-direction:column;gap:12px}
+.la-own-act{display:flex;justify-content:flex-end}

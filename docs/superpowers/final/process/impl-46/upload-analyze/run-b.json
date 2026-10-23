@@ -1,0 +1,134 @@
+{
+ "base": "https://app.land-xi.dev",
+ "part": "b",
+ "at": "2026-10-22T22:58:32.498Z",
+ "steps": [
+  {
+   "k": "login",
+   "t": 4.5,
+   "at": "7시 58분 37초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  },
+  {
+   "k": "b1-start",
+   "t": 32.1,
+   "at": "7시 59분 4초",
+   "size": 3023091261,
+   "opfs_copy_s": 26.1
+  },
+  {
+   "k": "b1-before-leave",
+   "t": 49.9,
+   "at": "7시 59분 22초",
+   "chip": "올리는 중 2% · 약 9분",
+   "rows": [
+    {
+     "st": "up",
+     "name": "namwon-2023-25cm-big.tif",
+     "s": "81MB / 2.8GB 올림 · 남은 시간 약 9분"
+    }
+   ]
+  },
+  {
+   "k": "b1-after-leave",
+   "t": 55.1,
+   "at": "7시 59분 27초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-map/",
+   "chip": "올리는 중 2% · 약 9분",
+   "rows": [
+    {
+     "st": "up",
+     "name": "namwon-2023-25cm-big.tif",
+     "s": "82MB / 2.8GB 올림 · 남은 시간 약 9분"
+    }
+   ]
+  },
+  {
+   "k": "b1-continues",
+   "t": 65.1,
+   "at": "7시 59분 37초",
+   "before": "82MB / 2.8GB 올림 · 남은 시간 약 9분",
+   "after": "82MB / 2.8GB 올림 · 남은 시간 약 9분"
+  },
+  {
+   "k": "b1-done",
+   "t": 724.3,
+   "at": "8시 10분 36초",
+   "s": 658,
+   "win": "영상 올리기\n닫기\n접기\n\n내 영상 · 경작·휴경 분석서비스\n\n남원시 25cm 영상을 올렸습니다\n이 서비스 조건 · 이 서비스에 맞음\n이 영상으로 분석하기"
+  },
+  {
+   "k": "b5-before-leave",
+   "t": 739.8,
+   "at": "8시 10분 52초",
+   "rows": [
+    {
+     "st": "up",
+     "name": "namwon-2023-25cm-big2.tif",
+     "s": "48MB / 1.4GB 올림 · 남은 시간 약 4분"
+    }
+   ]
+  },
+  {
+   "k": "b5-after-leave",
+   "t": 744.2,
+   "at": "8시 10분 56초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/",
+   "rows": [
+    {
+     "st": "need",
+     "name": "namwon-2023-25cm-big2.tif",
+     "s": "이어 올리기 — 파일을 다시 골라 주세요(받은 자리부터 이어 갑니다)"
+    }
+   ],
+   "dialogs": [
+    {
+     "type": "beforeunload",
+     "at": 50
+    },
+    {
+     "type": "beforeunload",
+     "at": 740
+    }
+   ]
+  },
+  {
+   "k": "b6-repicked",
+   "t": 750.3,
+   "at": "8시 11분 2초",
+   "rows": [
+    {
+     "st": "up",
+     "name": "namwon-2023-25cm-big2.tif",
+     "s": "49MB / 1.4GB 올림 · 남은 시간 약 4분"
+    }
+   ]
+  },
+  {
+   "k": "b7-canceled",
+   "t": 752,
+   "at": "8시 11분 4초",
+   "rows": []
+  }
+ ],
+ "ov": {
+  "b1-uploading.png": [],
+  "b2-next-screen-resumed.png": [],
+  "b3-next-screen-folded.png": [],
+  "b4-done.png": [],
+  "b5-need-repick.png": [],
+  "b6-repicked.png": []
+ },
+ "errs": [],
+ "dialogs": [
+  {
+   "type": "beforeunload",
+   "at": 50
+  },
+  {
+   "type": "beforeunload",
+   "at": 740
+  }
+ ],
+ "ms": 751988
+}

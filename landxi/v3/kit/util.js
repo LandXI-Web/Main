@@ -56,6 +56,18 @@ export function enter(root = document) {
 /** 시각 HH:MM(로캘 무관 24h) */
 export const hhmm = (d = new Date()) => { const x = new Date(d); return `${String(x.getHours()).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')}`; };
 /** 날짜 2026.09.24 */
+/** 걸리는 시간 말(원칙 326 · 10-23 사용자 "1928분 → 1시간 20분") — 40초 · 25분 · 1시간 20분 · 3일 4시간. 초 단위 숫자 → 글 */
+export function durWord(sec) {
+  if (sec == null || !Number.isFinite(+sec)) return '';
+  const s = Math.max(1, Math.round(+sec));
+  if (s < 60) return `${s}초`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}분`;
+  const hr = Math.floor(m / 60), mm = m % 60;
+  if (hr < 24) return mm ? `${hr}시간 ${mm}분` : `${hr}시간`;
+  const d = Math.floor(hr / 24), hh = hr % 24;
+  return hh ? `${d}일 ${hh}시간` : `${d}일`;
+}
 export const ymd = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? `${m[1]}.${m[2]}.${m[3]}` : ''; };
 
 /** GeoJSON bbox */

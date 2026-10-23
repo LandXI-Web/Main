@@ -1,0 +1,21 @@
+{
+ "at": "2026-10-23",
+ "base": "https://app.land-xi.dev",
+ "approved": ["10-23 분석 서비스 카드: 공유 영상 고르기 + 내 영상 올려서 분석 — \"넣어라~\"", "원칙 326 올리기 창(올릴 수 있는 것 먼저 · '1시간 20분' · 화면을 옮겨도 보이는 상태 창 · 접기 · 펼치기)"],
+ "items": [
+  {"id": "own-upload", "title": "분석 서비스 카드 '내 영상 올려서 분석'", "state": "구현 확인 대기",
+   "evidence": ["shots/a1-card.png", "shots/a2-guide.png", "shots/a3-uploading.png", "shots/a4-own-picked.png", "shots/a6-started.png", "shots/a7-map-service.png", "run-a.json"],
+   "summary": "2.2MB GeoTIFF → 올리기 창 → 5초 등록(이 서비스에 맞음) → 정식 모델 aerial25/best 작업 7.1초 → 지도 서비스(경작지 92 · 건물 52)"},
+  {"id": "own-storage", "title": "내 영상 = 올린 사람만(공유 데이터에 넣지 않음)", "state": "구현 확인 대기",
+   "evidence": ["RESULT.md §2"], "summary": "imagery/own/{주인}/{연-월}/{묶음}/ · 목록 · 자동 고르기 · 지역 영상 수에서 빠짐"},
+  {"id": "upload-guide", "title": "고르기 전 안내(형식 · 한도 · 좌표계 · 걸리는 시간)", "state": "구현 확인 대기",
+   "evidence": ["shots/a2-guide.png", "shots/ov-admin-guide.png"]},
+  {"id": "upload-window", "title": "영상 올리기 상태 창(머리줄 표시 · 접기 · 펼치기 · 멈춤 · 취소)", "state": "구현 확인 대기",
+   "evidence": ["shots/c3-screen-1.png", "shots/ov-2-open.png", "shots/ov-2-folded.png", "shots/ov-5-m-open.png", "run-ov.json", "run-ov-admin.json"]},
+  {"id": "upload-carry", "title": "화면을 옮겨도 계속 올리기(올리기 창)", "state": "구현 확인 대기",
+   "evidence": ["shots/c1-picked.png", "shots/c2-host-window.png", "shots/c3-screen-1.png", "shots/c3-screen-3.png", "shots/c3-screen-6.png", "shots/c4-host-closed.png", "shots/c5-host-reopen.png", "shots/c6-host-resumed.png", "run-c.json"],
+   "summary": "올리기 창이 올림 — 2.9GB · 다른 화면 7곳 3분 11초 동안 3% → 39% · 나가시겠습니까 창 0번 · 올리기 창 닫음 → 다시 열기 → 1.1GB부터 이어 감 → 등록"},
+  {"id": "dur-word", "title": "시간 말 '1시간 20분' · '3일 4시간'", "state": "구현 확인 대기", "evidence": ["RESULT.md §4"]}
+ ],
+ "proposals": ["내 영상을 관리자 승인 뒤 공유 데이터로", "내 영상 목록 · 지우기 · 보관 기한", "데이터 올리기 · 새 프로젝트 창도 같은 올리기 한 벌로", "올리기 진행을 LX 관리자 대시보드에서"]
+}

@@ -3,7 +3,7 @@
                   onFile(file) → Promise (upload 없을 때 화면이 직접 처리), onDone(json, file), onError(err, file) })
    upload 를 주면 XHR multipart(Bearer)로 게이트웨이에 보내고 진행 막대를 채운다.
    큰 파일 · 여러 파일(멈춤 · 이어 올리기 · 취소)은 아래 uploadQueue(조각 올리기). */
-import { h, API, api, session } from './util.js';
+import { h, API, api, session, durWord } from './util.js';
 import { t } from './i18n.js';
 import { modal } from './modal.js';
 
@@ -117,7 +117,7 @@ function uqStyle() {
   document.head.append(Object.assign(document.createElement('style'), { id: 'k-uq-css', textContent: UQ_CSS }));
 }
 const MBf = (n) => { const m = n / 1048576; return m >= 1024 ? `${(m / 1024).toFixed(1)}GB` : m >= 10 ? `${Math.round(m)}MB` : `${m.toFixed(1)}MB`; };
-const leftWord = (s) => (s == null || !Number.isFinite(s) ? '' : s < 60 ? ` · 남은 시간 ${Math.max(1, Math.round(s))}초` : ` · 남은 시간 약 ${Math.round(s / 60)}분`);
+const leftWord = (s) => (s == null || !Number.isFinite(s) ? '' : s < 60 ? ` · 남은 시간 ${durWord(s)}` : ` · 남은 시간 약 ${durWord(s)}`);   // 1시간 20분 · 3일 4시간(원칙 326)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const extOf = (n) => { const s = String(n || '').toLowerCase(); return s.endsWith('.aux.xml') ? 'aux.xml' : (/\.([a-z0-9]+)$/.exec(s) || [])[1] || ''; };
 
@@ -215,6 +215,17 @@ async function looksRight(file, e) {
     return sig.some((s) => s.every((v, i) => b[i] === v));
   } catch { return true; }                                          // 읽지 못하면 서버가 판정한다
 }
+
+/** 고른 파일 한 장 미리 판정 — 형식 · 크기 · 빈 파일 · 머리 · 서버가 지금 못 받는 형식(올리기 상태 창 kit/uploads.js 도 같은 판정 · 원칙 326) → 이유 한 줄 | null */
+export async function fileWhy(file, { allow = null, max = Infinity, unavailable = {} } = {}) {
+  const e = extOf(file.name);
+  if (allow && !allow.includes(e)) return NOT_IMAGE;
+  if (file.size > max) return TOO_BIG(max);
+  if (!file.size) return EMPTY_FILE;
+  if (!(await looksRight(file, e))) return BAD_FILE;
+  return unavailable[e] || null;
+}
+export { extOf };
 
 /** 빠른 지문 — sha256(크기 + ':' + 앞 1MB + 뒤 1MB). 서버가 다 받은 뒤 같은 식으로 다시 잰다. 안전한 연결이 아니면 null(서버 전체 지문만) */
 export async function quickFingerprint(file) {
