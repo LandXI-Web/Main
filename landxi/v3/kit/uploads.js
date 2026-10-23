@@ -1,14 +1,14 @@
-/* kit/uploads.js — 영상 올리기 한 벌(원칙 326 · 10-23 사용자 "너무 불친절하다 … 상태창 · 최소화 · 펼치기" ·
+/* kit/uploads.js — 영상 업로드 한 벌(원칙 326 · 10-23 사용자 "너무 불친절하다 … 상태창 · 최소화 · 펼치기" ·
    "다른 화면으로 넘어가고 다른 작업 하면 그냥 멈춰버리네? 이러면 무용지물이지").
-   쓰는 곳 두 군데가 같은 부품: LX 관리자 '공유 데이터 → 영상 올리기'(ops-infra/js/shared.js) · 분석 서비스 카드 '내 영상 올려서 분석'(lx-analyze).
+   쓰는 곳 두 군데가 같은 부품: LX 관리자 '공유 데이터 → 영상 업로드'(ops-infra/js/shared.js) · 분석 서비스 카드 '내 영상 올려서 분석'(lx-analyze).
 
    ① 고르기 전 안내(uploadPicker) — 서버가 실제로 받는 형식(GET /catalog/imagery/uploads/formats) · 한 파일 한도 · 좌표계 · 한 장/여러 장 · 걸리는 시간.
-   ② 올리기는 '올리기 창'(따로 열리는 작은 창 · landxi/v3/upload/)이 맡는다 — 각 화면은 따로 된 페이지라 화면을 옮기면 그 화면의 일이 끝난다.
-      올리기 창이 파일을 쥐고 조각을 보내므로, 그 창을 열어 둔 채 다른 화면에서 일해도 계속 올라간다(창은 작게 줄여 두어도 된다).
-   ③ 다른 모든 LX 화면은 머리줄 '올리는 중' 표시 + 왼쪽 아래 상태 창(접기 · 펼치기)으로 진행을 본다 — 올리기 창이 BroadcastChannel 로 알리는 값을 그대로.
-      멈춤 · 이어 올리기 · 취소는 올리기 창으로 넘긴다. 보통 화면에는 '나가시겠습니까' 창이 없다(올리기 창을 닫을 때만 묻는다).
-   ④ 올리기 창을 실수로 닫으면 — 고른 파일의 손잡이(Chrome 파일 손잡이 · 복사 없음)가 이 브라우저 보관함(IndexedDB)에 있어,
-      상태 창의 '올리기 창 열기' 한 번으로 서버가 받은 자리부터 이어 간다(허락이 풀렸으면 올리기 창에서 '이어 올리기' 한 번 · 손잡이가 없으면 같은 파일을 다시 고르기).
+   ② 올리기는 '업로드 창'(따로 열리는 작은 창 · landxi/v3/upload/)이 맡는다 — 각 화면은 따로 된 페이지라 화면을 옮기면 그 화면의 일이 끝난다.
+      업로드 창이 파일을 쥐고 조각을 보내므로, 그 창을 열어 둔 채 다른 화면에서 일해도 계속 올라간다(창은 작게 줄여 두어도 된다).
+   ③ 다른 모든 LX 화면은 머리줄 '업로드 중' 표시 + 왼쪽 아래 상태 창(접기 · 펼치기)으로 진행을 본다 — 업로드 창이 BroadcastChannel 로 알리는 값을 그대로.
+      멈춤 · 이어서 업로드 · 취소는 업로드 창으로 넘긴다. 보통 화면에는 '나가시겠습니까' 창이 없다(업로드 창을 닫을 때만 묻는다).
+   ④ 업로드 창을 실수로 닫으면 — 고른 파일의 손잡이(Chrome 파일 손잡이 · 복사 없음)가 이 브라우저 보관함(IndexedDB)에 있어,
+      상태 창의 '업로드 창 열기' 한 번으로 서버가 받은 자리부터 이어 간다(허락이 풀렸으면 업로드 창에서 '이어서 업로드' 한 번 · 손잡이가 없으면 같은 파일을 다시 고르기).
    ⑤ 다 올리면 쓰임대로 등록 — 공유 데이터: POST /catalog/imagery {draft_id} · 내 영상: POST /cards/{카드}/my-imagery {draft_id}.
       끝나면 모든 화면에 'lx:upload-done' 알림 + 창에 결과 한 줄과 갈 곳.
    조각 올리기 약속은 kit/dropzone.js uploadQueue 와 같다(64MB 조각 · 끊기면 30분까지 저절로 다시 · 받은 자리부터). */
@@ -18,10 +18,10 @@ import { toast } from './toast.js';
 import { MEASURE } from './lint/overlap.mjs';   // 겹침 검사기와 같은 재는 식 — 창 자리 고르기
 
 const BASE = '/catalog/imagery/uploads';
-const HOST = /\/landxi\/v3\/upload\/?$/.test(location.pathname);   // 이 화면이 올리기 창인가
+const HOST = /\/landxi\/v3\/upload\/?$/.test(location.pathname);   // 이 화면이 업로드 창인가
 const HOST_URL = '/landxi/v3/upload/';
 const bc = 'BroadcastChannel' in self ? new BroadcastChannel('lx-uploads') : null;
-let hostSeen = 0;                           // (보통 화면) 올리기 창 소식을 마지막으로 받은 때
+let hostSeen = 0;                           // (보통 화면) 업로드 창 소식을 마지막으로 받은 때
 const FLAG = 'lx-up';                       // 셸이 다음 화면에서 이 부품을 부를지(남은 올리기가 있나)
 const FOLD = 'lx-up.fold';
 const SPEED = 5.5 * 1e6;                    // 이 서버로 잰 올리기 속도(초당 약 5.5MB · 10-22 P1 시험) — 고르기 전 '걸리는 시간' 안내에만
@@ -72,7 +72,7 @@ let ui = null, started = false;
 const listeners = new Set();
 const mine = new Set();  // 이 탭이 지금 올리는 파일
 let castT = 0;
-const cast = () => {                         // 올리기 창 → 모든 화면(0.4초에 한 번까지)
+const cast = () => {                         // 업로드 창 → 모든 화면(0.4초에 한 번까지)
   if (!HOST || !bc || castT) return;
   castT = setTimeout(() => { castT = 0; bc.postMessage({ t: 'state', at: Date.now(), batches: [...B.values()].map(({ registering, ...b }) => b),
     files: [...F.values()].map(({ file, ac, handle, ...x }) => ({ ...x, hasHandle: !!handle })) }); }, 400);
@@ -83,7 +83,7 @@ const hostless = () => !HOST && Date.now() - hostSeen > 5000;
 const purposeWord = (p) => p.label || (p.kind === 'own' ? `내 영상${p.cardName ? ` · ${p.cardName}` : ''}` : p.kind === 'project' ? `프로젝트 · ${p.name || ''}` : '공유 데이터');
 const busy = () => [...F.values()].some((f) => ['wait', 'up'].includes(f.state));
 
-/** 셸 · 화면이 부른다(한 번만) — 올리기 창이면 보관함에서 이어 올리기를 맡고, 보통 화면이면 올리기 창의 소식을 받아 상태 창을 그린다 */
+/** 셸 · 화면이 부른다(한 번만) — 업로드 창이면 보관함에서 이어서 업로드를 맡고, 보통 화면이면 업로드 창의 소식을 받아 상태 창을 그린다 */
 export async function mountUploads() {
   if (started) return;
   started = true;
@@ -97,14 +97,14 @@ async function restore() {
   for (const f of st?.files || []) if (B.has(f.batch)) F.set(f.key, { ...f, state: ['done', 'bad', 'paused'].includes(f.state) ? f.state : 'wait' });   // 사람이 멈춘 것은 멈춘 채로
 }
 async function mountHost() {
-  /* 올리기 창은 하나만 — 이미 열린 창이 있으면 그 창을 쓰라고 알리고 이 창은 아무것도 하지 않는다 */
+  /* 업로드 창은 하나만 — 이미 열린 창이 있으면 그 창을 쓰라고 알리고 이 창은 아무것도 하지 않는다 */
   const one = await new Promise((res) => {
     if (!navigator.locks?.request) { res(true); return; }
     navigator.locks.request('lx-up-host', { ifAvailable: true }, (lock) => { res(!!lock); return lock ? new Promise(() => {}) : null; });
   });
   if (!one) { hostOther = true; draw(); paint(); return; }
   await restore();
-  addEventListener('beforeunload', (e) => { if (mine.size || [...F.values()].some((f) => f.state === 'wait')) { e.preventDefault(); e.returnValue = ''; } });   // 올리기 창을 닫을 때만 묻는다
+  addEventListener('beforeunload', (e) => { if (mine.size || [...F.values()].some((f) => f.state === 'wait')) { e.preventDefault(); e.returnValue = ''; } });   // 업로드 창을 닫을 때만 묻는다
   const adds = new Set();
   bc?.addEventListener('message', (e) => {
     const m = e.data || {};
@@ -124,7 +124,7 @@ async function mountHost() {
       else if (m.op === 'focus') { try { window.focus(); } catch { /* */ } }
     }
   });
-  setInterval(cast, 2000);                                      // 살아 있다는 소식(보통 화면이 '올리기 창이 닫힘'을 알아보게)
+  setInterval(cast, 2000);                                      // 살아 있다는 소식(보통 화면이 '업로드 창이 닫힘'을 알아보게)
   draw();
   paint(); cast();
   pump();
@@ -148,12 +148,12 @@ async function mountView() {
     }
   });
   bc.postMessage({ t: 'ping' });
-  setTimeout(async () => {                                      // 올리기 창 소식이 없으면 — 보관함에 남은 것을 보이고 '올리기 창 열기'
+  setTimeout(async () => {                                      // 업로드 창 소식이 없으면 — 보관함에 남은 것을 보이고 '업로드 창 열기'
     if (got) return;
     await restore();
     if (B.size) { draw(); changed(); }
   }, 2500);
-  setInterval(() => { if (B.size) paint(); }, 3000);            // 올리기 창이 닫히면 몇 초 안에 '닫힘'으로
+  setInterval(() => { if (B.size) paint(); }, 3000);            // 업로드 창이 닫히면 몇 초 안에 '닫힘'으로
 }
 let hostOther = false;
 
@@ -187,7 +187,7 @@ async function pump() {
     }
   } finally { pumping = false; }
   for (const b of B.values()) maybeRegister(b);
-  if ([...F.values()].some((x) => x.state === 'else')) setTimeout(() => { for (const x of F.values()) if (x.state === 'else') x.state = 'wait'; pump(); }, 15000);   // 다른 탭이 올리는 중 — 그 탭이 닫히면 이어받는다
+  if ([...F.values()].some((x) => x.state === 'else')) setTimeout(() => { for (const x of F.values()) if (x.state === 'else') x.state = 'wait'; pump(); }, 15000);   // 다른 탭이 업로드 중 — 그 탭이 닫히면 이어받는다
 }
 let lastKeep = Date.now();
 function keepLogin() {
@@ -274,7 +274,7 @@ function fail(f, e, atStart = false) {
     return;
   }
   f.state = user ? 'bad' : 'paused';
-  f.why = user || '올리지 못했습니다 — 이어 올리기를 누르면 이어서 올립니다';
+  f.why = user || '올리지 못했습니다 — 이어서 업로드를 누르면 이어서 올립니다';
   save(); changed();
 }
 function dropEmpty(bid) {
@@ -342,10 +342,10 @@ export async function addUploads(picks, purpose) {
   pump();
   return id;
 }
-/** 보통 화면 → 올리기 창에 맡기기(누름 안에서 부른다 — 올리기 창이 없으면 그 순간 연다). → 맡겼으면 true */
+/** 보통 화면 → 업로드 창에 맡기기(누름 안에서 부른다 — 업로드 창이 없으면 그 순간 연다). → 맡겼으면 true */
 export function startUploads(picks, purpose) {
   if (!started) mountUploads();
-  if (!bc) { toast('이 브라우저에서는 올리기 창을 쓸 수 없습니다 — Chrome 이나 Edge 로 열어 주세요'); return Promise.resolve(false); }
+  if (!bc) { toast('이 브라우저에서는 업로드 창을 쓸 수 없습니다 — Chrome 이나 Edge 로 열어 주세요'); return Promise.resolve(false); }
   if (hostless() && !openHost()) return Promise.resolve(false);
   const id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   return new Promise((res) => {
@@ -355,16 +355,16 @@ export function startUploads(picks, purpose) {
     const end = () => { bc.removeEventListener('message', on); clearInterval(iv); };
     bc.addEventListener('message', on);
     send();
-    const iv = setInterval(() => { if (Date.now() - t0 > 20000) { end(); toast('올리기 창이 열리지 않았습니다 — 다시 눌러 주세요'); res(false); } else send(); }, 700);
+    const iv = setInterval(() => { if (Date.now() - t0 > 20000) { end(); toast('업로드 창이 열리지 않았습니다 — 다시 눌러 주세요'); res(false); } else send(); }, 700);
     dispatchEvent(new CustomEvent('lx:uploads-start', { detail: { purpose } }));
   });
 }
-/** 올리기 창이 살아 있나(보통 화면) */
+/** 업로드 창이 살아 있나(보통 화면) */
 export const hostAlive = () => HOST || !hostless();
-/** 올리기 창 열기 — 누름 안에서(팝업 막힘이면 알림) */
+/** 업로드 창 열기 — 누름 안에서(팝업 막힘이면 알림) */
 export function openHost() {
   const w = window.open(HOST_URL, 'lx-upload', 'popup=yes,width=560,height=720');
-  if (!w) { toast('팝업이 막혀 올리기 창을 열지 못했습니다 — 주소창 오른쪽의 팝업 허용을 눌러 주세요'); return null; }
+  if (!w) { toast('팝업이 막혀 업로드 창을 열지 못했습니다 — 주소창 오른쪽의 팝업 허용을 눌러 주세요'); return null; }
   hostSeen = Date.now();                                        // 열리는 동안은 닫힘으로 보지 않는다
   return w;
 }
@@ -375,7 +375,7 @@ export function uploadsOf(kind, card) {
     .map((b) => ({ ...b, files: [...F.values()].filter((f) => f.batch === b.id) }));
 }
 
-/* ───────── 올리기 상태 창 ───────── */
+/* ───────── 업로드 상태 창 ───────── */
 const CSS = `
 .k-upchip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--rule);border-radius:999px;background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/1 var(--font-body);cursor:pointer;white-space:nowrap}
 .k-upchip[hidden]{display:none}
@@ -422,13 +422,13 @@ function draw() {
   style();
   const chip = h('button.k-upchip', { type: 'button', 'aria-controls': 'k-up', 'aria-expanded': 'true', hidden: true }, h('span.t'), h('i', {}, h('b', { style: { width: '0%' } })));
   const list = h('div.k-up-l', { 'aria-live': 'polite' });
-  const fold = h('button', { type: 'button', text: '접기', 'aria-label': '올리기 창 접기' });
+  const fold = h('button', { type: 'button', text: '접기', 'aria-label': '업로드 창 접기' });
   const close = h('button', { type: 'button', text: '닫기', hidden: true });
-  const gone = h('div.k-up-gone', { hidden: true }, h('span', { text: '올리기 창이 닫혀 멈췄습니다. 열면 받은 자리부터 이어 올립니다.' }),
-    h('button.t-btn', { type: 'button', text: '올리기 창 열기', onclick: () => openHost() }));
-  const other = HOST && hostOther ? h('div.k-up-gone', {}, h('span', { text: '이미 열린 올리기 창이 있습니다 — 그 창을 쓰세요. 이 창은 닫아도 됩니다.' })) : null;
+  const gone = h('div.k-up-gone', { hidden: true }, h('span', { text: '업로드 창이 닫혀 멈췄습니다. 열면 받은 자리부터 이어 올립니다.' }),
+    h('button.t-btn', { type: 'button', text: '업로드 창 열기', onclick: () => openHost() }));
+  const other = HOST && hostOther ? h('div.k-up-gone', {}, h('span', { text: '이미 열린 업로드 창이 있습니다 — 그 창을 쓰세요. 이 창은 닫아도 됩니다.' })) : null;
   const note = HOST ? h('p.k-up-note', { text: '이 창을 열어 두면 다른 화면에서 일해도 계속 올립니다. 작게 줄여 두어도 됩니다 — 닫으면 멈추고, 다시 열면 받은 자리부터 이어 갑니다.' }) : null;
-  const win = h('section.k-up' + (HOST ? '.k-up--page' : ''), { id: 'k-up', 'data-zone': 'uploads', 'aria-label': '영상 올리기', hidden: !HOST }, h('div.k-up-h', {}, h('b', { text: '영상 올리기' }), close, HOST ? null : fold), note, other, gone, list);
+  const win = h('section.k-up' + (HOST ? '.k-up--page' : ''), { id: 'k-up', 'data-zone': 'uploads', 'aria-label': '영상 업로드', hidden: !HOST }, h('div.k-up-h', {}, h('b', { text: '영상 업로드' }), close, HOST ? null : fold), note, other, gone, list);
   chip.addEventListener('click', () => { if (hostless() && [...F.values()].some((f) => f.state !== 'done')) { openHost(); return; } const open = win.hidden; forced = open; setFold(!open); });
   fold.addEventListener('click', () => setFold(true));
   close.addEventListener('click', () => { if (HOST) clearDone(); else ask('clear'); });
@@ -446,25 +446,25 @@ function draw() {
   return ui;
 }
 function rowOf(f) {
-  const bar = h('div.t-progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': `${f.name} 올리기 진행` }, h('i', { style: { width: Math.max(f.state === 'up' ? 2 : 0, pctOf(f.bytes, f.size)) + '%' } }));
+  const bar = h('div.t-progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': `${f.name} 업로드 진행` }, h('i', { style: { width: Math.max(f.state === 'up' ? 2 : 0, pctOf(f.bytes, f.size)) + '%' } }));
   const act = h('span.k-up-a');
   const btn = (t, fn, cls = '') => h('button' + cls, { type: 'button', text: t, onclick: fn });
   if (f.state === 'up' || f.state === 'wait') act.append(btn('멈춤', () => pause(f)));
-  if (f.state === 'paused') act.append(btn('이어 올리기', () => resume(f)));
-  if (f.state === 'need') act.append(btn(f.handle || f.hasHandle ? '이어 올리기' : '파일 다시 고르기', () => repick(f)));
+  if (f.state === 'paused') act.append(btn('이어서 업로드', () => resume(f)));
+  if (f.state === 'need') act.append(btn(f.handle || f.hasHandle ? '이어서 업로드' : '파일 다시 고르기', () => repick(f)));
   if (f.state !== 'done') act.append(h('button.x', { type: 'button', 'aria-label': `${f.name} 취소`, title: '취소', text: '×', onclick: () => cancel(f) }));
   const left = f.bps > 0 && f.state === 'up' ? (f.size - f.bytes) / f.bps : null;
   const say = f.why ? `${f.why}${f.bytes ? ` · ${MBf(f.bytes)} / ${MBf(f.size)}` : ''}`
     : f.state === 'up' ? `${MBf(f.bytes)} / ${MBf(f.size)} 올림${left != null ? ` · 남은 시간 약 ${durWord(left)}` : ''}`
       : f.state === 'wait' ? (f.bytes ? `이어 올릴 차례 · ${MBf(f.bytes)} / ${MBf(f.size)}` : '기다리는 중')
         : f.state === 'paused' ? `멈춤 · ${MBf(f.bytes)} / ${MBf(f.size)} 올림`
-          : f.state === 'need' ? (f.handle || f.hasHandle ? `멈춤 · 이어 올리기를 누르면 받은 자리(${MBf(f.bytes)})부터 이어 갑니다` : '이어 올리기 — 파일을 다시 골라 주세요(받은 자리부터 이어 갑니다)')
-            : f.state === 'else' ? '다른 창에서 올리는 중' : f.state === 'done' ? `${MBf(f.size)} · 다 올렸습니다` : '';
+          : f.state === 'need' ? (f.handle || f.hasHandle ? `멈춤 · 이어서 업로드를 누르면 받은 자리(${MBf(f.bytes)})부터 이어 갑니다` : '이어서 업로드 — 파일을 다시 골라 주세요(받은 자리부터 이어 갑니다)')
+            : f.state === 'else' ? '다른 창에서 업로드 중' : f.state === 'done' ? `${MBf(f.size)} · 다 올렸습니다` : '';
   return h('div.k-up-r', { dataset: { st: f.state } }, h('span.k-up-n', { text: f.name, title: f.name, 'data-lint-skip': '' }), act, bar, h('p.k-up-s', { role: 'status', text: say }));
 }
 /* 창 자리(겹침 0 · 원칙 309) — 겹침 검사기(kit/lint/overlap.mjs)의 재는 식을 그대로 돌려, 왼쪽 아래부터 위 · 오른쪽으로 훑어
    이 창이 아무것과도 겹치지 않는 첫 자리에 둔다(지도 카드 · 범례 · 국토 변화 카드 · ChatGEO · 서랍 · 아래 대화 줄).
-   빈 자리가 없으면 창을 접고 머리줄 '올리는 중' 표시만 둔다(사람이 표시를 누르면 가장 덜 가리는 자리에 연다). 지금 자리가 깨끗하면 옮기지 않는다. */
+   빈 자리가 없으면 창을 접고 머리줄 '업로드 중' 표시만 둔다(사람이 표시를 누르면 가장 덜 가리는 자리에 연다). 지금 자리가 깨끗하면 옮기지 않는다. */
 let forced = false, blocked = false, spotAt = null, measureFn = null;
 const measure = () => { try { measureFn ??= new Function('return ' + MEASURE); return measureFn(); } catch { return null; } };   // 검사기와 같은 식(문자열) 한 출처
 const myHit = () => (measure()?.overlaps || []).filter((o) => /#k-up\b/.test(`${o.a} ${o.b}`)).reduce((a, o) => a + o.w * o.h, 0);
@@ -507,8 +507,8 @@ function paint() {
   const left = up?.bps > 0 ? fs.filter((f) => f.state !== 'done').reduce((a, f) => a + f.size - (f.bytes || 0), 0) / up.bps : null;
   ui.chip.hidden = !B.size;
   const small = innerWidth <= 640;                               // 휴대폰 머리줄은 좁다 — 짧은 말만
-  ui.chip.querySelector('.t').textContent = !B.size ? '' : need ? (small ? '올리기 멈춤' : '올리기 멈춤 · 눌러서 보기') : reg ? '등록하는 중'
-    : live.length ? (small ? `올리기 ${pctOf(got, tot)}%` : `올리는 중 ${pctOf(got, tot)}%${left != null ? ` · 약 ${durWord(left)}` : ''}`) : '올리기 끝';
+  ui.chip.querySelector('.t').textContent = !B.size ? '' : need ? (small ? '업로드 멈춤' : '업로드 멈춤 · 눌러서 보기') : reg ? '등록하는 중'
+    : live.length ? (small ? `업로드 ${pctOf(got, tot)}%` : `업로드 중 ${pctOf(got, tot)}%${left != null ? ` · 약 ${durWord(left)}` : ''}`) : '업로드 끝';
   ui.chip.querySelector('i b').style.width = pctOf(got, tot) + '%';
   if (need) ui.chip.dataset.need = '1'; else delete ui.chip.dataset.need;
   ui.win.hidden = HOST ? false : isFold() || !B.size || blocked;
@@ -516,7 +516,7 @@ function paint() {
   ui.close.hidden = !(B.size && !live.length && ![...B.values()].some((b) => b.state === 'reg' || b.state === 'up'));
   const gone = hostless() && live.length > 0;
   ui.gone.hidden = !gone;
-  if (gone) ui.chip.querySelector('.t').textContent = small ? '올리기 멈춤' : '올리기 멈춤 · 올리기 창 열기';
+  if (gone) ui.chip.querySelector('.t').textContent = small ? '업로드 멈춤' : '업로드 멈춤 · 업로드 창 열기';
   ui.list.replaceChildren(...[...B.values()].map((b) => {
     const rows = fs.filter((f) => f.batch === b.id).map(rowOf);
     const g = h('div.k-up-g', {}, h('p.k-up-gh', { text: purposeWord(b.purpose) }), ...rows);
@@ -526,7 +526,7 @@ function paint() {
     return g;
   }));
 }
-/* 보통 화면의 누름 → 올리기 창으로(닫혀 있으면 열기) */
+/* 보통 화면의 누름 → 업로드 창으로(닫혀 있으면 열기) */
 function ask(op, f, b) {
   if (hostless()) { openHost(); return; }
   bc?.postMessage({ t: 'cmd', op, key: f?.key, bid: b?.id });
@@ -540,7 +540,7 @@ function pause(f) {
 }
 function resume(f) { if (!HOST) return ask('resume', f); f.state = 'wait'; f.why = ''; changed(); pump(); }
 async function repick(f) {
-  if (!HOST) { if (hostless()) openHost(); else bc?.postMessage({ t: 'cmd', op: 'focus' }); toast('올리기 창에서 이어 올리기를 눌러 주세요'); return; }
+  if (!HOST) { if (hostless()) openHost(); else bc?.postMessage({ t: 'cmd', op: 'focus' }); toast('업로드 창에서 이어서 업로드를 눌러 주세요'); return; }
   if (f.handle) {
     try { if ((await f.handle.requestPermission({ mode: 'read' })) === 'granted') { const file = await f.handle.getFile(); if (file.size === f.size) { f.file = file; resume(f); return; } } } catch { /* 손잡이를 못 쓰면 다시 고르기 */ }
   }
@@ -575,7 +575,7 @@ const timeLine = () => [1e9, 10e9, 100e9].map((n) => `${GB(n)} 약 ${durWord(est
 
 /** 고르기 칸 — el 안에 '올릴 수 있는 영상' 안내 + 끌어 놓는 칸. one = 영상 한 장만(내 영상 분석). purpose = 등록 쓰임. onAdded(batchId) */
 export async function uploadPicker(el, { purpose, one = false, onAdded, hold = false, onPicks } = {}) {
-  if (!started) mountUploads();                                 // 올리기 창 소식 받기 시작(이미 열려 있으면 바로 맡긴다)
+  if (!started) mountUploads();                                 // 업로드 창 소식 받기 시작(이미 열려 있으면 바로 맡긴다)
   let held = [];
   style();
   const f = await formats();
@@ -588,7 +588,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
     h('dt', { text: '위치 정보' }), h('dd', { text: one ? '좌표계가 든 파일만 분석할 수 있습니다 — 좌표계가 따로 있으면 PRJ 파일을 함께 넣어 주세요' : '좌표계가 든 파일 — 위치 파일(TFW · PRJ 등)이 따로 있으면 함께 넣어 주세요' }),
     h('dt', { text: '크기 · 개수' }), h('dd', { text: one ? `영상 한 장 · 한 파일 ${GB(max)}까지` : `한 파일 ${GB(max)}까지 · 여러 장을 한 번에 넣을 수 있습니다` }),
     h('dt', { text: '걸리는 시간' }), h('dd', {}, timeLine(), h('small', { text: '이 서버로 잰 속도(초당 약 5.5MB) 기준 · 사무실 회선에 따라 다릅니다' })),
-    h('dt', { text: '올리는 동안' }), h('dd', { text: '따로 열리는 올리기 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 \'올리는 중\' 표시로 진행을 봅니다' }));
+    h('dt', { text: '올리는 동안' }), h('dd', { text: '따로 열리는 업로드 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 \'업로드 중\' 표시로 진행을 봅니다' }));
   const zone = h('div.t-empty.k-drop.k-upz', { role: 'button', tabindex: '0', 'aria-label': '영상 파일 고르기' },
     h('span.k-drop-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 32 32"><path d="M16 21V7m0 0l-6 6m6-6l6 6M6 21v4h20v-4"/></svg>' }),
     h('div.k-drop-b', {}, h('h6', { text: one ? '영상 파일 한 장을 끌어 놓거나 눌러 고르세요' : '영상 파일을 끌어 놓거나 눌러 고르세요' })));
@@ -615,17 +615,17 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
       held = one ? ok : [...held, ...ok.filter((p) => !held.some((q) => q.file.name === p.file.name && q.file.size === p.file.size))];
       drawHeld(); onPicks?.(held.slice()); return;
     }
-    /* 고른 파일 + '올리기 시작' — 누르는 순간 올리기 창을 연다(팝업은 누름 안에서만 열린다) */
+    /* 고른 파일 + '업로드 시작' — 누르는 순간 업로드 창을 연다(팝업은 누름 안에서만 열린다) */
     const tot = ok.reduce((a, p) => a + p.file.size, 0);
-    const go = h('button.t-btn', { type: 'button', text: '올리기 시작' });
+    const go = h('button.t-btn', { type: 'button', text: '업로드 시작' });
     const list = h('ul.k-upq', {}, ...ok.map((p) => h('li', {}, h('b', { text: p.file.name, 'data-lint-skip': '' }), h('span', { text: MBf(p.file.size) }))));
-    const box = h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${ok.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 따로 열리는 올리기 창이 올립니다. 그 창을 열어 두면 다른 화면에서 일해도 계속 올라갑니다.` }), go);
+    const box = h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${ok.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 따로 열리는 업로드 창이 올립니다. 그 창을 열어 두면 다른 화면에서 일해도 계속 올라갑니다.` }), go);
     el.querySelector('.k-upq-w')?.remove();
     zone.after(box);
     go.addEventListener('click', async () => {
-      go.disabled = true; go.textContent = '올리기 창에 맡기는 중';
+      go.disabled = true; go.textContent = '업로드 창에 맡기는 중';
       const done = await startUploads(ok, pur);
-      if (done) onAdded?.(true); else { go.disabled = false; go.textContent = '올리기 시작'; }
+      if (done) onAdded?.(true); else { go.disabled = false; go.textContent = '업로드 시작'; }
     });
   }
   async function pick() {
@@ -656,7 +656,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
     const tot = held.reduce((a, p) => a + p.file.size, 0);
     const list = h('ul.k-upq', {}, ...held.map((p) => h('li', {}, h('b', { text: p.file.name, 'data-lint-skip': '' }), h('span', {}, MBf(p.file.size) + ' ',
       h('button.k-upq-x', { type: 'button', 'aria-label': `${p.file.name} 빼기`, text: '×', onclick: () => { held = held.filter((q) => q !== p); drawHeld(); onPicks?.(held.slice()); } })))));
-    zone.after(h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${held.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 만들면 따로 열리는 올리기 창이 올립니다` })));
+    zone.after(h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${held.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 만들면 따로 열리는 업로드 창이 올립니다` })));
   }
   return { pick, picks: () => held.slice(), clear: () => { held = []; drawHeld(); } };
 }

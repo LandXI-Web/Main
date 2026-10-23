@@ -6,7 +6,7 @@
      대상지 — 영상 자리에서 저절로(화면이 고르지 않는다) · 영상 없이 만들 때만 시군구 · 해외 지역을 고른다 ·
      구성원 — 가입 승인된 LX 계정을 이름 · 메일 일부로 찾기(서버 GET /projects/people?q= · 나 자신 · 잠긴 · 기관 계정 없음) · 여러 명.
    10-13 다시(원칙 230 · 231): 칸 이름만(설명 · 안내 문구 없음) · 창 크기 고정(처음부터 크게 · 안쪽만 스크롤 — 고르기를 열거나 목록이 길어져도 창 · 칸 자리 그대로).
-   올린 파일은 '만들기' 때 따로 열리는 올리기 창(kit/uploads.js · 원칙 326)에 맡긴다 — 화면을 옮겨도 계속 올라가고, 다 올리면 등록해 그 영상 자리로 대상지가 정해진다. 관리자 승인 없음 · 프로젝트장 = 만든 직원(서버 POST /projects). */
+   올린 파일은 '만들기' 때 따로 열리는 업로드 창(kit/uploads.js · 원칙 326)에 맡긴다 — 화면을 옮겨도 계속 올라가고, 다 올리면 등록해 그 영상 자리로 대상지가 정해진다. 관리자 승인 없음 · 프로젝트장 = 만든 직원(서버 POST /projects). */
 import { h, api, API, session } from '../kit/util.js';
 import { regionPicker } from '../kit/region.js';
 import { toast } from '../kit/toast.js';
@@ -53,11 +53,11 @@ export function openNewProject({ onMade } = {}) {
   tabUp.addEventListener('click', () => showTab(false));
   tabPick.addEventListener('click', () => showTab(true));
 
-  /* 파일 올리기 = 올리기 한 벌(kit/uploads.js · 원칙 326) — 여기서는 고르기만, '만들기'를 누르면 따로 열리는 올리기 창이 올리고
-     다 올리면 그 프로젝트에 영상을 잇는다(대상지 = 영상 자리). 화면을 옮겨도 계속 올라간다(예전 carry.js 보관함 이어 올리기 대신). */
+  /* 파일 올리기 = 올리기 한 벌(kit/uploads.js · 원칙 326) — 여기서는 고르기만, '만들기'를 누르면 따로 열리는 업로드 창이 올리고
+     다 올리면 그 프로젝트에 영상을 잇는다(대상지 = 영상 자리). 화면을 옮겨도 계속 올라간다(예전 carry.js 보관함 이어서 업로드 대신). */
   let hp = null, U = null;
   import('../kit/uploads.js').then((m) => { U = m; return m.uploadPicker(upBox, { hold: true, onPicks: () => { drawWhere(); ready(); } }); }).then((x) => { hp = x; })
-    .catch(() => { upBox.textContent = '올리기 칸을 열지 못했습니다'; });
+    .catch(() => { upBox.textContent = '업로드 칸을 열지 못했습니다'; });
   const upFiles = () => (hp ? hp.picks() : []);
 
   /* 공유 데이터 영상 — 서버 GET /projects/imagery(이름 · 지역 · 연도 · 종류 · 썸네일) · 찾기 · 6장씩 · 여러 장 고르기 */
@@ -270,17 +270,17 @@ export function openNewProject({ onMade } = {}) {
   go.addEventListener('click', async () => {
     go.disabled = true; err.hidden = true;
     const files = upFiles();
-    if (files.length && U && !U.hostAlive()) U.openHost();     // 팝업은 누름 안에서만 열린다 — 만들기 전에 올리기 창부터
+    if (files.length && U && !U.hostAlive()) U.openHost();     // 팝업은 누름 안에서만 열린다 — 만들기 전에 업로드 창부터
     const body = { name: nameIn.value.trim(), description: descIn.value.trim() || undefined,
       imagery: [...picked.keys()], members: [...mem.keys()],
       regions: picked.size || files.length ? [] : RG.mode !== 'region' && RG.rng ? RG.rng.sgg : regions.map((r) => r.code) };
     const rng = !picked.size && !files.length && RG.mode !== 'region' ? RG.rng : null;
     try {
-      if (files.length) body.from_upload = true;          // 대상지는 영상이 다 올라가 등록되면(올리기 창이 프로젝트에 잇는다)
+      if (files.length) body.from_upload = true;          // 대상지는 영상이 다 올라가 등록되면(업로드 창이 프로젝트에 잇는다)
       go.textContent = '만드는 중';
       const pr = await api('/projects', { method: 'POST', body });
       if (files.length) {
-        go.textContent = '올리기 창에 맡기는 중';
+        go.textContent = '업로드 창에 맡기는 중';
         const ok = await U.startUploads(files, { kind: 'project', pid: pr.id, name: body.name, href: new URL(stageHref(pr, 'label'), location.href).pathname + new URL(stageHref(pr, 'label'), location.href).search });
         if (!ok) toast('영상은 맡기지 못했습니다 — 프로젝트의 데이터 올리기에서 다시 올려 주세요');
         hp?.clear();

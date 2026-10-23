@@ -1,6 +1,6 @@
 /* lx-ingest sheets.js — 영상 등록 시트 · 대장 형식 시트(K5 서랍 · K11 드롭존 · K13 토스트).
    영상 등록 = 파일 끌어 놓기(구현 4차 fixes · 확인 대장 1차 FR-1 '기존 자산 기준으로' · 원칙 41 · 49 · 사용자 규칙 2 파일 경로 노출 금지):
-     올리기 한 벌(kit/uploads.js) — 따로 열리는 올리기 창이 올려 다른 화면으로 옮겨도 계속 · 여러 파일 · 멈춤 · 이어 올리기 · 취소(원칙 326).
+     올리기 한 벌(kit/uploads.js) — 따로 열리는 업로드 창이 올려 다른 화면으로 옮겨도 계속 · 여러 파일 · 멈춤 · 이어서 업로드 · 취소(원칙 326).
      촬영 연도 · 해상도 · 위치는 서버가 파일에서 읽는다(입력 칸 없음 · 연도가 파일에 없으면 '촬영 연도 모름'). 다 올리면 저절로 등록 →
      시트가 닫히고 그 지역 서랍 '영상'에 새 줄(다른 지역 영상이면 그 지역으로). 시트를 닫아도 올리기는 이어지고, 다시 열면 같은 목록이다.
      못 읽는 파일은 고르는 순간 · 등록할 때 창 하나로 알린다(구현 확인 3차 M-2 · 원칙 109). 서버 경로 등록은 LX 관리자 도구로만.
@@ -21,8 +21,8 @@ function stack(under) {
 }
 
 /* ── 영상 등록 ─────────────────────────────────────────────────────────────
-   올리기 한 벌(kit/uploads.js · 원칙 326): 고르기 전 안내 + 고른 뒤 '올리기 시작' → 따로 열리는 올리기 창이 올린다(다른 화면으로 옮겨도 계속).
-   다 올리면 올리기 창이 등록하고(POST /catalog/imagery {draft_id, near}) 모든 화면에 알린다 — 이 화면이 열려 있으면 그 지역 서랍 '영상'을 새로. */
+   올리기 한 벌(kit/uploads.js · 원칙 326): 고르기 전 안내 + 고른 뒤 '업로드 시작' → 따로 열리는 업로드 창이 올린다(다른 화면으로 옮겨도 계속).
+   다 올리면 업로드 창이 등록하고(POST /catalog/imagery {draft_id, near}) 모든 화면에 알린다 — 이 화면이 열려 있으면 그 지역 서랍 '영상'을 새로. */
 const UP = { near: null, onDone: null };
 addEventListener('lx:upload-done', async (e) => {
   const d = e.detail || {};
@@ -33,7 +33,7 @@ addEventListener('lx:upload-done', async (e) => {
   UP.onDone?.(out);
 });
 
-/** 영상 등록 — 고르기 전 안내 + 끌어 놓기 → 올리기 창 */
+/** 영상 등록 — 고르기 전 안내 + 끌어 놓기 → 업로드 창 */
 export function imagerySheet({ host, region, under, onDone }) {
   UP.near = region; UP.onDone = onDone;
   const body = K.h('div.lxi-up');
@@ -43,8 +43,8 @@ export function imagerySheet({ host, region, under, onDone }) {
   import('../kit/uploads.js').then((U) => U.uploadPicker(body, {
     purpose: () => ({ kind: 'shared', from: 'ingest', label: '데이터 올리기 · 영상 등록', near: UP.near?.sgg_cd || undefined,
       href: '/landxi/v3/lx-ingest/' + (UP.near?.sgg_cd ? '?' + new URLSearchParams({ region: UP.near.sgg_cd }) : '') }),
-    onAdded: () => { K.toast("올리기를 시작했습니다 · 위쪽 '올리는 중' 표시에서 진행을 봅니다"); d.close?.(true); restore(); },
-  })).catch(() => { body.textContent = '올리기 칸을 열지 못했습니다'; });
+    onAdded: () => { K.toast("업로드를 시작했습니다 · 위쪽 '업로드 중' 표시에서 진행을 봅니다"); d.close?.(true); restore(); },
+  })).catch(() => { body.textContent = '업로드 칸을 열지 못했습니다'; });
   return d;
 }
 

@@ -569,7 +569,7 @@ async def _register_draft(request: Request, did: str, near_cd: str | None) -> di
     if any(r["user_id"] != p.user_id for r in rows):
         raise ApiError("forbidden", "다른 사람의 묶음입니다")
     if any(r["state"] == "uploading" for r in rows):
-        raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
+        raise ApiError("not_ready", "아직 업로드 중인 파일이 있습니다", None, 409)
     if any(r["request_id"] for r in rows):
         raise ApiError("conflict", "이미 등록한 묶음입니다 — 새로 올려 주세요", None, 409)
     folder = config.DATA_ROOT / RQ.LX_ROOT / "drafts" / did

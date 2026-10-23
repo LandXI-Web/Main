@@ -123,7 +123,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   /* XI ChatGEO — 로그인 전(게스트)에는 그리지 않는다(cmdk.js) · 부모 상자 안(갤러리 · 미리보기)과 다른 화면 속 화면(도움말 iframe)에는 붙이지 않는다 */
   let framed = false; try { framed = window.self !== window.top; } catch { framed = true; }
   if (!contained && !framed) { mountCmdk({ who, home, guest: !who }); if (who) mountChatDock(rail ? railEl : null); }
-  /* 올리기 상태 창(원칙 326 · kit/uploads.js) — 이어 올릴 영상이 남아 있으면 어느 LX 화면에서든 창을 그리고 받은 자리부터 이어 간다 */
+  /* 업로드 상태 창(원칙 326 · kit/uploads.js) — 이어 올릴 영상이 남아 있으면 어느 LX 화면에서든 창을 그리고 받은 자리부터 이어 간다 */
   if (!contained && !framed && String(who?.key || '').startsWith('lx/')) { let on = false; try { on = !!localStorage.getItem('lx-up'); } catch { /* */ } if (on) import('./uploads.js').then((m) => m.mountUploads()).catch(() => null); }
 
   let cur = rail?.current ?? 0, done = rail?.done;

@@ -16,7 +16,7 @@ const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
 const CARD = Q.get('card');
 const REGION = Q.get('region');
-const IMAGERY = Q.get('imagery');    // 올리기 창 '이 영상으로 분석하기' — 다 올린 내 영상(region 과 함께)      // 홈 '바로 분석하기'에서 직원이 고른 시군구(화면이 고른 것 아님 — 원칙 33) — 카드 상세의 '어디'에 미리 담는다
+const IMAGERY = Q.get('imagery');    // 업로드 창 '이 영상으로 분석하기' — 다 올린 내 영상(region 과 함께)      // 홈 '바로 분석하기'에서 직원이 고른 시군구(화면이 고른 것 아님 — 원칙 33) — 카드 상세의 '어디'에 미리 담는다
 const withRegion = (u) => (REGION ? u + (u.includes('?') ? '&' : '?') + new URLSearchParams({ region: REGION }) : u);
 const S = K.shell({ who, home: 'lx-analyze', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });
 K.devDrawer({ who });
@@ -300,7 +300,7 @@ function imageryCard(c) {
   let all = false;   // 처음엔 여섯 장(고른 영상 먼저) · '더 보기'로 모두
   const mapBox = h('div.la-im-map');
   const note = h('p.la-note', { text: '청록 테두리는 고른 영상이 실제로 덮는 범위입니다. 이 범위 안에서만 분석합니다. 다른 영상 카드에 마우스를 올리면 그 범위가 점선으로 보입니다.' });
-  /* 내 영상 올려서 분석(10-23 사용자 "넣어라~") — 공유 영상이 없거나 내 영상을 쓰고 싶을 때. 올리기는 올리기 상태 창(kit/uploads.js · 원칙 326)이 맡고,
+  /* 내 영상 올려서 분석(10-23 사용자 "넣어라~") — 공유 영상이 없거나 내 영상을 쓰고 싶을 때. 올리기는 업로드 상태 창(kit/uploads.js · 원칙 326)이 맡고,
      다 올리면 좌표계 · 범위 · 해상도를 읽어 공유 영상과 같은 규칙(맞음 / 거칠 수 있음 / 맞지 않음)으로 이 칸에 '내 영상'으로 보인다. 공유 데이터에는 넣지 않는다(올린 사람만). */
   const ownBtn = h('button.t-btn.t-btn--2.la-own-b', { type: 'button', text: '내 영상 올려서 분석', onclick: () => openOwn(c) });
   const ownSt = h('p.la-own-st', { role: 'status', hidden: true });
@@ -380,7 +380,7 @@ function imageryCard(c) {
   return { el, show, clear, forget: (sgg) => cache.delete(sgg) };
 }
 
-/* 내 영상 올리기 창 — 고르기 전 안내 + 영상 한 장(kit/uploads.js uploadPicker · 관리자 공유 데이터 올리기와 같은 부품) */
+/* 내 영상 업로드 창 — 고르기 전 안내 + 영상 한 장(kit/uploads.js uploadPicker · 관리자 공유 데이터 올리기와 같은 부품) */
 function openOwn(c) {
   const box = h('div');
   const no = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
@@ -389,10 +389,10 @@ function openOwn(c) {
   no.addEventListener('click', () => m.close());
   import('../kit/uploads.js').then((U) => U.uploadPicker(box, { one: true, purpose: { kind: 'own', card: c.id, cardName: c.name }, onAdded: () => {
     m.close(true);
-    K.toast("올리기를 시작했습니다 · 다 올리면 이 칸에 '내 영상'으로 보입니다");
-  } })).catch(() => { box.textContent = '올리기 칸을 열지 못했습니다'; });
+    K.toast("업로드를 시작했습니다 · 다 올리면 이 칸에 '내 영상'으로 보입니다");
+  } })).catch(() => { box.textContent = '업로드 칸을 열지 못했습니다'; });
 }
-/* 이 카드의 내 영상 올리기 진행 한 줄(올리기 상태 창과 같은 값) */
+/* 이 카드의 내 영상 업로드 진행 한 줄(업로드 상태 창과 같은 값) */
 function ownStatus(c, line) {
   const draw = (U) => {
     const bs = U.uploadsOf('own', c.id).filter((b) => b.state !== 'done');
@@ -400,9 +400,9 @@ function ownStatus(c, line) {
     if (!bs.length) { line.hidden = true; return; }
     const tot = fs.reduce((a, f) => a + f.size, 0), got = fs.reduce((a, f) => a + (f.bytes || 0), 0);
     line.hidden = false;
-    line.textContent = bs.some((b) => b.state === 'bad') ? '내 영상을 등록하지 못했습니다 · 위쪽 올리기 표시에서 이유를 봅니다'
+    line.textContent = bs.some((b) => b.state === 'bad') ? '내 영상을 등록하지 못했습니다 · 위쪽 업로드 표시에서 이유를 봅니다'
       : bs.some((b) => b.state === 'reg') ? '내 영상을 다 올렸습니다 — 좌표계 · 범위 · 해상도를 확인하는 중'
-        : `내 영상 올리는 중 ${tot ? Math.floor((got / tot) * 100) : 0}% · 다른 화면으로 옮겨도 이어 올립니다`;
+        : `내 영상 업로드 중 ${tot ? Math.floor((got / tot) * 100) : 0}% · 다른 화면으로 옮겨도 이어 올립니다`;
   };
   let on = false; try { on = !!localStorage.getItem('lx-up'); } catch { /* */ }
   const hook = () => import('../kit/uploads.js').then((U) => { U.onUploads(() => draw(U)); draw(U); });
@@ -439,7 +439,7 @@ function analyzePanel(side, c, picker) {
   K.regionPicker(where, { onPick: (r) => add(r) }).then((rp) => {
     rp.input.placeholder = '시군구 이름으로 찾기'; rp.input.value = '';
     const r = REGION && rp.items.find((x) => x.sgg_cd === REGION);   // 홈에서 직원이 고른 지역
-    if (r) add(r, IMAGERY ? { id: IMAGERY, name: '내 영상' } : null);   // 올리기 창 '이 영상으로 분석하기' — 다 올린 내 영상을 고른 채로
+    if (r) add(r, IMAGERY ? { id: IMAGERY, name: '내 영상' } : null);   // 업로드 창 '이 영상으로 분석하기' — 다 올린 내 영상을 고른 채로
   });
   /* 내 영상을 다 올렸다(이 화면이 열려 있을 때) — 그 영상의 지역 · 영상을 고른 채로(영상이 정한 지역 · 화면이 고른 것 아님) */
   addEventListener('lx:upload-done', (e) => {

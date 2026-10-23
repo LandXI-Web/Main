@@ -216,7 +216,7 @@ export function signCog(id) {
 }
 
 /* ── 영상 등록 = 파일 끌어 놓기(구현 4차 fixes · 확인 대장 1차 FR-1 '기존 자산 기준으로' · 원칙 41 · 49 · 사용자 규칙 2) ──────────
-   기관 분석 요청과 같은 조각 올리기(kit/dropzone.js uploadQueue · 여러 파일 · 진행 · 멈춤 · 이어 올리기 · 취소). 다 올리면 서버가 파일마다
+   기관 분석 요청과 같은 조각 올리기(kit/dropzone.js uploadQueue · 여러 파일 · 진행 · 멈춤 · 이어서 업로드 · 취소). 다 올리면 서버가 파일마다
    시군구 · 촬영 연도 · 해상도를 읽어 등록한다(입력 칸 없음 · 촬영 연도가 파일에 없으면 '촬영 연도 모름'). 서버 경로 등록은 LX 관리자 도구로만. */
 export const UPLOADS = '/catalog/imagery/uploads';
 let FORMATS = null;

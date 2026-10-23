@@ -1,8 +1,8 @@
 /* 국토 변화 분석서비스 — 이 카드로 분석(오른쪽 칸 · 10-23 원칙 329 · 원칙 327).
    직원이 이 카드 안에서 혼자 끝낸다: ① 대상지(이미 있는 대상지 고르기 · 구역선 파일 + 버퍼 · 필지(PNU) 목록 올리기)
-   ② 앞 시점 · ③ 뒤 시점 — 시점마다 영상 하나(국토지리정보원 해 · 공유 데이터 · 내 영상 올리기)
+   ② 앞 시점 · ③ 뒤 시점 — 시점마다 영상 하나(국토지리정보원 해 · 공유 데이터 · 내 영상 업로드)
    → 분석 시작: 두 시점을 각각 토지피복 AI 로 분석하고 바뀐 곳을 견준다(작업 대기열 · 분석 서비스 작업) → 결과는 지도 서비스.
-   올리기는 올리기 상태 창 부품(kit/uploads.js uploadPicker · 관리자 공유 데이터 올리기와 같은 부품)을 그대로 쓴다 — 새 올리기 칸을 만들지 않는다.
+   올리기는 업로드 상태 창 부품(kit/uploads.js uploadPicker · 관리자 공유 데이터 올리기와 같은 부품)을 그대로 쓴다 — 새 업로드 칸을 만들지 않는다.
    같은 대상지 · 같은 두 시점 영상의 끝난 결과가 있으면 다시 돌리지 않고 그 결과를 연다(서버 캐시). id 는 고르기 값으로만(화면 글자에 없음). */
 import * as K from '../kit/index.js';
 import { h, api, API, session } from '../kit/util.js';
@@ -55,7 +55,7 @@ export function changePanel(side, c) {
       tab('ngii', '국토지리정보원', true), tab('shared', '공유 데이터'), tab('own', '내 영상'));
     const pick = h('select.t-input', { 'aria-label': `${title} 영상 고르기` });
     const yr = h('select.t-input.la-chg-yr', { 'aria-label': `${title} 촬영 해`, hidden: true });
-    const up = h('button.t-btn.t-btn--text', { type: 'button', text: '내 영상 올리기', hidden: true });
+    const up = h('button.t-btn.t-btn--text', { type: 'button', text: '내 영상 업로드', hidden: true });
     const hint = h('p.la-chg-s', { hidden: true });
     const o = { key, title, kind: 'ngii', kinds, pick, yr, up, hint, el: h('div.la-chg-slot', {}, kinds, pick, yr, up, hint), want: null };
     kinds.addEventListener('click', (e) => {
@@ -171,16 +171,16 @@ export function changePanel(side, c) {
     finally { mk.disabled = false; }
   });
 
-  /* 내 영상 올리기 — 올리기 상태 창 부품 그대로(다른 화면으로 옮겨도 이어 올림). 다 올리면 그 시점에 고른 채로 */
+  /* 내 영상 업로드 — 업로드 상태 창 부품 그대로(다른 화면으로 옮겨도 이어 올림). 다 올리면 그 시점에 고른 채로 */
   function openUpload(o) {
     const box = h('div');
     const no = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
-    const m = modal({ title: `${o.title} — 내 영상 올리기`, size: 'lg', body: h('div.la-own-m', {},
+    const m = modal({ title: `${o.title} — 내 영상 업로드`, size: 'lg', body: h('div.la-own-m', {},
       h('p.la-note', { text: '올린 영상은 나만 보고 이 분석에 씁니다 — 공유 데이터에는 들어가지 않습니다. 대상지를 덮는 영상이어야 합니다.' }), box, h('div.la-own-act', {}, no)) });
     no.addEventListener('click', () => m.close());
     import('../kit/uploads.js').then((U) => U.uploadPicker(box, { one: true, purpose: { kind: 'own', card: CARD, cardName: c.name, slot: o.key }, onAdded: () => {
-      m.close(true);                     // 진행은 올리기 상태 창(위쪽) — 다 올리면 이 시점에 고른 채로 보인다(lx:upload-done)
-    } })).catch(() => { box.textContent = '올리기 칸을 열지 못했습니다'; });
+      m.close(true);                     // 진행은 업로드 상태 창(위쪽) — 다 올리면 이 시점에 고른 채로 보인다(lx:upload-done)
+    } })).catch(() => { box.textContent = '업로드 칸을 열지 못했습니다'; });
   }
   addEventListener('lx:upload-done', async (e) => {
     const d = e.detail; if (d?.purpose?.kind !== 'own' || d.purpose.card !== CARD) return;

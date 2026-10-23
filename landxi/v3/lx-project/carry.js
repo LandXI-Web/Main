@@ -40,11 +40,11 @@ async function take(pid) { return tx('readonly', (s) => s.get(pid)); }
 async function drop(pid) { mark(pid, false); try { await tx('readwrite', (s) => s.delete(pid)); } catch { /* */ } }
 async function save(rec) { try { await tx('readwrite', (s) => s.put(rec)); } catch { /* */ } }
 
-/** 이어 올리기 — host = 단계 화면의 마스트 아래 자리(S.sub) · pr = 프로젝트. 한 줄(글 + 진행 막대)을 그 자리에 둔다. */
+/** 이어서 업로드 — host = 단계 화면의 마스트 아래 자리(S.sub) · pr = 프로젝트. 한 줄(글 + 진행 막대)을 그 자리에 둔다. */
 export async function resumeCarry(host, pr, { onDone } = {}) {
   if (!host || !hasCarry(pr?.id) || host.querySelector('.lxp-carry')) return;
   const text = h('span.lxp-carry-t', { role: 'status' });
-  const bar = h('div.t-progress.lxp-carry-b', { role: 'progressbar', 'aria-label': '영상 올리기 진행', 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i', { style: { width: '0%' } }));
+  const bar = h('div.t-progress.lxp-carry-b', { role: 'progressbar', 'aria-label': '영상 업로드 진행', 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i', { style: { width: '0%' } }));
   const act = h('span.lxp-carry-a');
   const line = h('div.lxp-carry', {}, text, bar, act);
   host.append(line);
@@ -72,7 +72,7 @@ export async function resumeCarry(host, pr, { onDone } = {}) {
       for (const f of rec.files) {
         i++;
         if (f.done) continue;
-        say(`영상 파일 올리는 중 · ${i}/${n}`, pctOf());
+        say(`영상 파일 업로드 중 · ${i}/${n}`, pctOf());
         const st = await api(BASE, { method: 'POST', body: { draft_id: rec.draft || undefined, filename: f.name, size: f.size } });
         if (st.draft_id && st.draft_id !== rec.draft) { rec.draft = st.draft_id; await save(rec); }
         const maxC = st.chunk?.max?.size || 8 * 1048576;
@@ -99,7 +99,7 @@ export async function resumeCarry(host, pr, { onDone } = {}) {
             if (Date.now() - failSince > 30 * 60 * 1000) throw new Error('연결이 30분 넘게 끊겼습니다');
             await sleep(Math.min(30000, 1500 * 2 ** Math.min(fails - 1, 5)));
           }
-          say(`영상 파일 올리는 중 · ${i}/${n}`, pctOf());
+          say(`영상 파일 업로드 중 · ${i}/${n}`, pctOf());
         }
         await api(`${BASE}/${encodeURIComponent(st.id)}/finish`, { method: 'POST', body: {} });
         f.done = true;

@@ -46,7 +46,7 @@ function sheet() {
 
 const TABS = [['img', '영상'], ['train', '학습 데이터'], ['admin', '행정 자료']];
 const HINT = { img: '영상 이름 · 지역 · 연도', train: '이름 · 프로젝트 · 클래스', admin: '기관 · 이름' };
-const UP = { img: '영상 올리기', train: '학습 데이터 올리기', admin: '행정 자료 올리기' };
+const UP = { img: '영상 업로드', train: '학습 데이터 올리기', admin: '행정 자료 올리기' };
 const day = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}.${m[3]}` : '—'; };
 const val = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x);
 const flat = (s) => String(s ?? '').replace(/\s+/g, '');
@@ -526,7 +526,7 @@ export function mountShared(root) {
       catch (e) { save.disabled = false; err.textContent = e?.message || '바꾸지 못했습니다'; }
     });
   }
-  /* 영상 올리기(원칙 326) — 고르기 전 안내(형식 · 한도 · 좌표계 · 걸리는 시간) + 고르면 올리기 상태 창(kit/uploads.js)이 맡는다:
+  /* 영상 업로드(원칙 326) — 고르기 전 안내(형식 · 한도 · 좌표계 · 걸리는 시간) + 고르면 업로드 상태 창(kit/uploads.js)이 맡는다:
      창을 닫거나 다른 화면으로 가도 이어 올리고, 다 올리면 저절로 공유 데이터에 등록한다(분석 서비스 '내 영상 올려서 분석'과 같은 부품) */
   function openUpload() {
     const box = h('div.sd-up');
@@ -535,7 +535,7 @@ export function mountShared(root) {
     no.addEventListener('click', () => m.close());
     import('../../kit/uploads.js').then((U) => U.uploadPicker(box, { purpose: { kind: 'shared' }, onAdded: () => {
       m.close(true);
-      toast("올리기를 시작했습니다 · 위쪽 '올리는 중' 표시에서 진행을 봅니다");
+      toast("업로드를 시작했습니다 · 위쪽 '업로드 중' 표시에서 진행을 봅니다");
     } })).catch(() => { box.textContent = '올리기 칸을 열지 못했습니다'; });
   }
   addEventListener('lx:upload-done', (e) => { if (e.detail?.purpose?.kind === 'shared') reload('img'); });

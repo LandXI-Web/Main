@@ -2,7 +2,7 @@
    dropzone(el, { upload: { path: '/t/{tenant}/survey/registry/import', fields: { kind: 'farm' } } | undefined,
                   onFile(file) → Promise (upload 없을 때 화면이 직접 처리), onDone(json, file), onError(err, file) })
    upload 를 주면 XHR multipart(Bearer)로 게이트웨이에 보내고 진행 막대를 채운다.
-   큰 파일 · 여러 파일(멈춤 · 이어 올리기 · 취소)은 아래 uploadQueue(조각 올리기). */
+   큰 파일 · 여러 파일(멈춤 · 이어서 업로드 · 취소)은 아래 uploadQueue(조각 올리기). */
 import { h, API, api, session, durWord } from './util.js';
 import { t } from './i18n.js';
 import { modal } from './modal.js';
@@ -64,7 +64,7 @@ function xhr({ path, fields = {}, field = 'file' }, file, onProg) {
 }
 
 /* ── 여러 파일 조각 올리기(확인 대장 1차 FR-1 · 6차 GF-2) ────────────────────────────────────────────
-   끌어 놓기 · 여러 파일 · 파일마다 진행 막대 · 멈춤 · 이어 올리기 · 취소. 큰 파일은 조각으로(한 조각 ≈ 30초 · 바깥 주소 앞단의 요청 한 번 100초 한도 아래).
+   끌어 놓기 · 여러 파일 · 파일마다 진행 막대 · 멈춤 · 이어서 업로드 · 취소. 큰 파일은 조각으로(한 조각 ≈ 30초 · 바깥 주소 앞단의 요청 한 번 100초 한도 아래).
    끊기면 서버가 받은 자리부터 이어 간다(같은 파일을 다시 골라도). 같은 파일은 올리기 전에 빠른 지문(크기 + 앞 · 뒤 1MB)으로 알아본다.
    const q = uploadQueue(el, {
      base: '/requests/uploads',              // 조각 올리기 약속: POST base {filename, size, quick_fp, ...fields()} → {id, bytes, size, chunk:{size, max:{size}}}
@@ -124,7 +124,7 @@ const extOf = (n) => { const s = String(n || '').toLowerCase(); return s.endsWit
 /* ── 고르는 순간 알리기(확인 대장 15차 '확인 없이 고칠 고장' ① · 원칙 100) ─────────────────────────────
    ① 파일 머리(처음 몇 바이트)가 그 형식이 아니면 — 이름만 바꾼 파일 · 깨진 파일 — 올리기 전에 쉬운 말 한 줄.
    ② 서버가 지금 바꿀 수 없는 형식(예: 변환기가 없는 ECW)이면 — 서버가 알려 준 한 줄({base}/formats · 설정 한 곳 config/imagery.yaml).
-   20GB 를 다 올린 뒤에야 '읽을 수 없음'을 보지 않게 한다. 서버 쪽도 같은 판정을 한 번 더 한다(올리기 시작 · 다 받은 뒤 읽기). */
+   20GB 를 다 올린 뒤에야 '읽을 수 없음'을 보지 않게 한다. 서버 쪽도 같은 판정을 한 번 더 한다(업로드 시작 · 다 받은 뒤 읽기). */
 const MAGIC = {
   tif: [[0x49, 0x49, 0x2a, 0x00], [0x4d, 0x4d, 0x00, 0x2a], [0x49, 0x49, 0x2b, 0x00], [0x4d, 0x4d, 0x00, 0x2b]],
   jpg: [[0xff, 0xd8, 0xff]],
@@ -216,7 +216,7 @@ async function looksRight(file, e) {
   } catch { return true; }                                          // 읽지 못하면 서버가 판정한다
 }
 
-/** 고른 파일 한 장 미리 판정 — 형식 · 크기 · 빈 파일 · 머리 · 서버가 지금 못 받는 형식(올리기 상태 창 kit/uploads.js 도 같은 판정 · 원칙 326) → 이유 한 줄 | null */
+/** 고른 파일 한 장 미리 판정 — 형식 · 크기 · 빈 파일 · 머리 · 서버가 지금 못 받는 형식(업로드 상태 창 kit/uploads.js 도 같은 판정 · 원칙 326) → 이유 한 줄 | null */
 export async function fileWhy(file, { allow = null, max = Infinity, unavailable = {} } = {}) {
   const e = extOf(file.name);
   if (allow && !allow.includes(e)) return NOT_IMAGE;
@@ -252,7 +252,7 @@ function keepLogin() {
 }
 const queues = new Set();
 let unloadOn = false;
-function guardUnload() {                                 // 올리는 중에 창을 닫으려 하면 브라우저가 한 번 묻는다(닫아도 다시 고르면 받은 자리부터)
+function guardUnload() {                                 // 업로드 중에 창을 닫으려 하면 브라우저가 한 번 묻는다(닫아도 다시 고르면 받은 자리부터)
   if (unloadOn) return; unloadOn = true;
   addEventListener('beforeunload', (e) => { if ([...queues].some((q) => q.busy())) { e.preventDefault(); e.returnValue = ''; } });
 }
@@ -273,7 +273,7 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
   const changed = () => onChange?.(items.slice());
 
   function row(it) {
-    const bar = h('div.t-progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': '올리기 진행' }, h('i', { style: { width: '0%' } }));
+    const bar = h('div.t-progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': '업로드 진행' }, h('i', { style: { width: '0%' } }));
     const st = h('p.k-uq-s', { role: 'status' });
     const pause = h('button', { type: 'button', text: '멈춤' });
     const x = h('button.x', { type: 'button', 'aria-label': '취소', html: '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6"/></svg>' });
@@ -291,7 +291,7 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
     it.bar.hidden = it.state === 'bad' && !it.bytes;
     const canResume = it.state === 'paused' || (it.state === 'bad' && it.retry);
     it.pauseBtn.hidden = !(['wait', 'up'].includes(it.state) || canResume);
-    it.pauseBtn.textContent = canResume ? '이어 올리기' : '멈춤';
+    it.pauseBtn.textContent = canResume ? '이어서 업로드' : '멈춤';
     if (text != null) it.st.textContent = text;
     changed();
   }
@@ -343,7 +343,7 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
   }
   async function send(it) {
     it.state = 'up';
-    paint(it, '올리는 중');
+    paint(it, '업로드 중');
     let st;
     try {
       it.fp = it.fp ?? await quickFingerprint(it.file).catch(() => null);
@@ -380,15 +380,15 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
         return fail(it, Object.assign(new Error(j?.error?.message || 'upload'), { code: j?.error?.code, status: r.status }));
       } else {
         /* 연결이 끊김 · 서버가 잠깐 답하지 못함(다시 켜지는 중 등) — 저절로 다시 잇는다(수백 GB 는 몇 시간 걸려 그사이 끊김이 생긴다 · 10-22).
-           30분 넘게 계속 안 되면 멈추고 '이어 올리기'를 기다린다. 서버가 받은 자리부터 이어 가므로 두 번 붙지 않는다. */
+           30분 넘게 계속 안 되면 멈추고 '이어서 업로드'를 기다린다. 서버가 받은 자리부터 이어 가므로 두 번 붙지 않는다. */
         fails++; failSince ||= Date.now(); chunk = Math.max(256 * 1024, Math.round(chunk / 2));
-        if (Date.now() - failSince > 30 * 60 * 1000) { it.state = 'paused'; paint(it, `연결이 30분 넘게 끊겨 멈췄습니다 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림. 이어 올리기를 누르면 이어서 올립니다`); return; }
+        if (Date.now() - failSince > 30 * 60 * 1000) { it.state = 'paused'; paint(it, `연결이 30분 넘게 끊겨 멈췄습니다 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림. 이어서 업로드를 누르면 이어서 올립니다`); return; }
         paint(it, `연결이 끊겨 다시 잇는 중 — ${MBf(it.bytes)} / ${MBf(it.file.size)} 올림`);
         await sleep(Math.min(30000, 1500 * 2 ** Math.min(fails - 1, 5)));
         continue;
       }
       const bps = (it.bytes - b0) / Math.max(0.5, (performance.now() - t0) / 1000);
-      paint(it, `올리는 중 ${MBf(it.bytes)} / ${MBf(it.file.size)}${leftWord(bps > 0 ? (it.file.size - it.bytes) / bps : null)}`);
+      paint(it, `업로드 중 ${MBf(it.bytes)} / ${MBf(it.file.size)}${leftWord(bps > 0 ? (it.file.size - it.bytes) / bps : null)}`);
     }
     try {
       paint(it, '다 올렸습니다 — 확인하는 중');
@@ -407,9 +407,9 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       onError?.(it, e);
       return;
     }
-    it.retry = !user;                                              // 연결 문제는 이어 올리기로 · 서버가 거절한 이유(형식 · 같은 파일 · 저장 공간)는 그대로 알린다
+    it.retry = !user;                                              // 연결 문제는 이어서 업로드로 · 서버가 거절한 이유(형식 · 같은 파일 · 저장 공간)는 그대로 알린다
     it.state = 'bad';
-    paint(it, user || '올리지 못했습니다 — 이어 올리기를 누르면 이어서 올립니다');
+    paint(it, user || '올리지 못했습니다 — 이어서 업로드를 누르면 이어서 올립니다');
     onError?.(it, e);
   }
   function pauseIt(it) {

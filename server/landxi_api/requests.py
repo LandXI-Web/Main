@@ -377,7 +377,7 @@ class _xlock:
                     return self
                 except OSError:
                     time.sleep(0.5)
-            raise ApiError("conflict", "같은 파일을 다른 곳에서 올리는 중입니다", None, 409)
+            raise ApiError("conflict", "같은 파일을 다른 곳에서 업로드 중입니다", None, 409)
         import fcntl
         fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX)
         return self
@@ -1172,7 +1172,7 @@ async def draft_read(did: str, request: Request):
     if any(r["user_id"] != p.user_id for r in rows):
         raise ApiError("forbidden", "다른 사람의 묶음입니다")
     if any(r["state"] == "uploading" for r in rows):
-        raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
+        raise ApiError("not_ready", "아직 업로드 중인 파일이 있습니다", None, 409)
     folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / did
     names = [r["filename"] for r in rows]
     key = hashlib.sha1("|".join(sorted(r["id"] for r in rows)).encode()).hexdigest()
@@ -1326,7 +1326,7 @@ async def create(body: dict, request: Request):
         if not rows or any(r["user_id"] != p.user_id for r in rows):
             raise ApiError("not_found", "올린 파일이 없습니다")
         if any(r["state"] == "uploading" for r in rows):
-            raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
+            raise ApiError("not_ready", "아직 업로드 중인 파일이 있습니다", None, 409)
         if any(r["request_id"] for r in rows):
             raise ApiError("conflict", "이미 요청한 묶음입니다", None, 409)
         folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / draft
