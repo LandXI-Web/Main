@@ -1,0 +1,337 @@
+{
+ "at": "2026-10-23T02:34:10.867Z",
+ "conc": 6,
+ "rounds": 5,
+ "load": {
+  "gov/landxi/v3/xi-clean/": {
+   "ms": 6479,
+   "calls": [
+    {
+     "ep": "/api/v1/spaces/me/notices?limit",
+     "ms": 311
+    },
+    {
+     "ep": "/api/v1/reviews/notify",
+     "ms": 328
+    },
+    {
+     "ep": "/api/v1/auth/session",
+     "ms": 293
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 297
+    },
+    {
+     "ep": "/api/v1/ximap/board",
+     "ms": 292
+    }
+   ]
+  },
+  "app/landxi/v3/lx-analyze/": {
+   "ms": 7752,
+   "calls": [
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 295
+    },
+    {
+     "ep": "/api/v1/holidays?year",
+     "ms": 299
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 290
+    },
+    {
+     "ep": "/api/v1/me",
+     "ms": 423
+    },
+    {
+     "ep": "/api/v1/auth/session",
+     "ms": 314
+    },
+    {
+     "ep": "/api/v1/approvals?state",
+     "ms": 498
+    },
+    {
+     "ep": "/api/v1/reviews/notify",
+     "ms": 541
+    },
+    {
+     "ep": "/api/v1/cards/deck",
+     "ms": 796
+    }
+   ]
+  }
+ },
+ "ep": {
+  "gov /api/v1/openapi.json": {
+   "ms": [
+    297,
+    313,
+    301,
+    293,
+    295
+   ],
+   "bad": 0,
+   "p50": 297,
+   "p95": 313,
+   "max": 313,
+   "n": 5
+  },
+  "gov /api/v1/ximap/board": {
+   "ms": [
+    299,
+    317,
+    316,
+    295,
+    292
+   ],
+   "bad": 0,
+   "p50": 299,
+   "p95": 317,
+   "max": 317,
+   "n": 5
+  },
+  "gov /api/v1/spaces/me/notices?limit": {
+   "ms": [
+    304,
+    551,
+    521,
+    337,
+    634
+   ],
+   "bad": 0,
+   "p50": 521,
+   "p95": 634,
+   "max": 634,
+   "n": 5
+  },
+  "gov /api/v1/auth/session": {
+   "ms": [
+    313,
+    362,
+    297,
+    300,
+    297
+   ],
+   "bad": 0,
+   "p50": 300,
+   "p95": 362,
+   "max": 362,
+   "n": 5
+  },
+  "gov /api/v1/reviews/notify": {
+   "ms": [
+    454,
+    555,
+    321,
+    347,
+    313
+   ],
+   "bad": 0,
+   "p50": 347,
+   "p95": 555,
+   "max": 555,
+   "n": 5
+  },
+  "gov /api/v1/summary?region": {
+   "ms": [
+    343,
+    530,
+    316,
+    312,
+    340
+   ],
+   "bad": 0,
+   "p50": 340,
+   "p95": 530,
+   "max": 530,
+   "n": 5
+  },
+  "gov /api/v1/survey/stats?by": {
+   "ms": [
+    542,
+    751,
+    577,
+    712,
+    535
+   ],
+   "bad": 0,
+   "p50": 577,
+   "p95": 751,
+   "max": 751,
+   "n": 5
+  },
+  "gov /api/v1/ximap/boot": {
+   "ms": [
+    1225,
+    750,
+    629,
+    797,
+    617
+   ],
+   "bad": 0,
+   "p50": 750,
+   "p95": 1225,
+   "max": 1225,
+   "n": 5
+  },
+  "gov /api/v1/regions/52190/results": {
+   "ms": [
+    947,
+    312,
+    328,
+    657,
+    344
+   ],
+   "bad": 0,
+   "p50": 344,
+   "p95": 947,
+   "max": 947,
+   "n": 5
+  },
+  "app /api/v1/openapi.json": {
+   "ms": [
+    293,
+    313,
+    473,
+    392,
+    291
+   ],
+   "bad": 0,
+   "p50": 313,
+   "p95": 473,
+   "max": 473,
+   "n": 5
+  },
+  "app /api/v1/me": {
+   "ms": [
+    300,
+    519,
+    291,
+    480,
+    299
+   ],
+   "bad": 0,
+   "p50": 300,
+   "p95": 519,
+   "max": 519,
+   "n": 5
+  },
+  "app /api/v1/holidays?year": {
+   "ms": [
+    301,
+    310,
+    294,
+    314,
+    294
+   ],
+   "bad": 0,
+   "p50": 301,
+   "p95": 314,
+   "max": 314,
+   "n": 5
+  },
+  "app /api/v1/auth/session": {
+   "ms": [
+    303,
+    545,
+    303,
+    328,
+    300
+   ],
+   "bad": 0,
+   "p50": 303,
+   "p95": 545,
+   "max": 545,
+   "n": 5
+  },
+  "app /api/v1/approvals?state": {
+   "ms": [
+    310,
+    325,
+    303,
+    349,
+    302
+   ],
+   "bad": 0,
+   "p50": 310,
+   "p95": 349,
+   "max": 349,
+   "n": 5
+  },
+  "app /api/v1/reviews/notify": {
+   "ms": [
+    324,
+    338,
+    312,
+    342,
+    312
+   ],
+   "bad": 0,
+   "p50": 324,
+   "p95": 342,
+   "max": 342,
+   "n": 5
+  },
+  "app /api/v1/change/ranges/:id/imagery": {
+   "ms": [
+    374,
+    589,
+    403,
+    346,
+    486
+   ],
+   "bad": 0,
+   "p50": 403,
+   "p95": 589,
+   "max": 589,
+   "n": 5
+  },
+  "app /api/v1/change/ranges/:id": {
+   "ms": [
+    426,
+    578,
+    417,
+    324,
+    489
+   ],
+   "bad": 0,
+   "p50": 426,
+   "p95": 578,
+   "max": 578,
+   "n": 5
+  },
+  "app /api/v1/cards/deck": {
+   "ms": [
+    452,
+    897,
+    438,
+    356,
+    353
+   ],
+   "bad": 0,
+   "p50": 438,
+   "p95": 897,
+   "max": 897,
+   "n": 5
+  },
+  "app /api/v1/change/ranges": {
+   "ms": [
+    1340,
+    726,
+    766,
+    633,
+    730
+   ],
+   "bad": 0,
+   "p50": 730,
+   "p95": 1340,
+   "max": 1340,
+   "n": 5
+  }
+ }
+}

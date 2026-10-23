@@ -1,0 +1,529 @@
+{
+ "at": "2026-10-23T02:32:34.929Z",
+ "conc": 6,
+ "rounds": 5,
+ "load": {
+  "gov/landxi/v3/xi-clean/": {
+   "ms": 6665,
+   "calls": [
+    {
+     "ep": "/api/v1/shoots",
+     "ms": 309
+    },
+    {
+     "ep": "/api/v1/summary",
+     "ms": 318
+    },
+    {
+     "ep": "/api/v1/me",
+     "ms": 332
+    },
+    {
+     "ep": "/api/v1/auth/tenants",
+     "ms": 335
+    },
+    {
+     "ep": "/api/v1/spaces/me/groups",
+     "ms": 344
+    },
+    {
+     "ep": "/api/v1/brand/namwon",
+     "ms": 342
+    },
+    {
+     "ep": "/api/v1/regions",
+     "ms": 383
+    },
+    {
+     "ep": "/api/v1/requests",
+     "ms": 406
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 411
+    },
+    {
+     "ep": "/api/v1/reviews/notify",
+     "ms": 410
+    },
+    {
+     "ep": "/api/v1/reviews?box&limit",
+     "ms": 416
+    },
+    {
+     "ep": "/api/v1/cards/deck",
+     "ms": 420
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 315
+    },
+    {
+     "ep": "/api/v1/ximap/board",
+     "ms": 327
+    }
+   ]
+  },
+  "app/landxi/v3/lx-analyze/": {
+   "ms": 7736,
+   "calls": [
+    {
+     "ep": "/api/v1/me/prefs/dash.lx-console",
+     "ms": 319
+    },
+    {
+     "ep": "/api/v1/me/memos?limit",
+     "ms": 323
+    },
+    {
+     "ep": "/api/v1/reviews/notify",
+     "ms": 337
+    },
+    {
+     "ep": "/api/v1/me/storage",
+     "ms": 341
+    },
+    {
+     "ep": "/api/v1/cards/deck",
+     "ms": 423
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 603
+    },
+    {
+     "ep": "/api/v1/openapi.json",
+     "ms": 551
+    },
+    {
+     "ep": "/api/v1/me",
+     "ms": 550
+    },
+    {
+     "ep": "/api/v1/approvals?state",
+     "ms": 318
+    },
+    {
+     "ep": "/api/v1/reviews/notify",
+     "ms": 328
+    },
+    {
+     "ep": "/api/v1/cards/deck",
+     "ms": 360
+    },
+    {
+     "ep": "/api/v1/auth/session",
+     "ms": 376
+    }
+   ]
+  }
+ },
+ "ep": {
+  "gov /api/v1/auth/tenants": {
+   "ms": [
+    301,
+    300,
+    299,
+    301,
+    301
+   ],
+   "bad": 0,
+   "p50": 301,
+   "p95": 301,
+   "max": 301,
+   "n": 5
+  },
+  "gov /api/v1/me": {
+   "ms": [
+    304,
+    353,
+    301,
+    299,
+    300
+   ],
+   "bad": 0,
+   "p50": 301,
+   "p95": 353,
+   "max": 353,
+   "n": 5
+  },
+  "gov /api/v1/summary": {
+   "ms": [
+    306,
+    336,
+    300,
+    295,
+    305
+   ],
+   "bad": 0,
+   "p50": 305,
+   "p95": 336,
+   "max": 336,
+   "n": 5
+  },
+  "gov /api/v1/brand/namwon": {
+   "ms": [
+    318,
+    311,
+    312,
+    308,
+    307
+   ],
+   "bad": 0,
+   "p50": 311,
+   "p95": 318,
+   "max": 318,
+   "n": 5
+  },
+  "gov /api/v1/spaces/me/groups": {
+   "ms": [
+    322,
+    333,
+    473,
+    327,
+    312
+   ],
+   "bad": 0,
+   "p50": 327,
+   "p95": 473,
+   "max": 473,
+   "n": 5
+  },
+  "gov /api/v1/shoots": {
+   "ms": [
+    330,
+    511,
+    727,
+    307,
+    303
+   ],
+   "bad": 0,
+   "p50": 330,
+   "p95": 727,
+   "max": 727,
+   "n": 5
+  },
+  "gov /api/v1/openapi.json": {
+   "ms": [
+    304,
+    303,
+    305,
+    305,
+    304
+   ],
+   "bad": 0,
+   "p50": 304,
+   "p95": 305,
+   "max": 305,
+   "n": 5
+  },
+  "gov /api/v1/requests": {
+   "ms": [
+    309,
+    382,
+    304,
+    305,
+    313
+   ],
+   "bad": 0,
+   "p50": 309,
+   "p95": 382,
+   "max": 382,
+   "n": 5
+  },
+  "gov /api/v1/reviews/notify": {
+   "ms": [
+    339,
+    329,
+    330,
+    315,
+    320
+   ],
+   "bad": 0,
+   "p50": 329,
+   "p95": 339,
+   "max": 339,
+   "n": 5
+  },
+  "gov /api/v1/regions": {
+   "ms": [
+    379,
+    380,
+    377,
+    342,
+    348
+   ],
+   "bad": 0,
+   "p50": 377,
+   "p95": 380,
+   "max": 380,
+   "n": 5
+  },
+  "gov /api/v1/reviews?box&limit": {
+   "ms": [
+    377,
+    311,
+    303,
+    307,
+    301
+   ],
+   "bad": 0,
+   "p50": 307,
+   "p95": 377,
+   "max": 377,
+   "n": 5
+  },
+  "gov /api/v1/cards/deck": {
+   "ms": [
+    465,
+    452,
+    650,
+    414,
+    388
+   ],
+   "bad": 0,
+   "p50": 452,
+   "p95": 650,
+   "max": 650,
+   "n": 5
+  },
+  "gov /api/v1/ximap/board": {
+   "ms": [
+    300,
+    299,
+    299,
+    298,
+    312
+   ],
+   "bad": 0,
+   "p50": 299,
+   "p95": 312,
+   "max": 312,
+   "n": 5
+  },
+  "gov /api/v1/regions/52190/results": {
+   "ms": [
+    383,
+    295,
+    383,
+    397,
+    406
+   ],
+   "bad": 0,
+   "p50": 383,
+   "p95": 406,
+   "max": 406,
+   "n": 5
+  },
+  "gov /api/v1/summary?region": {
+   "ms": [
+    403,
+    310,
+    322,
+    300,
+    298
+   ],
+   "bad": 0,
+   "p50": 310,
+   "p95": 403,
+   "max": 403,
+   "n": 5
+  },
+  "gov /api/v1/survey/stats?by": {
+   "ms": [
+    668,
+    540,
+    556,
+    541,
+    807
+   ],
+   "bad": 0,
+   "p50": 556,
+   "p95": 807,
+   "max": 807,
+   "n": 5
+  },
+  "gov /api/v1/ximap/boot": {
+   "ms": [
+    961,
+    817,
+    724,
+    827,
+    814
+   ],
+   "bad": 0,
+   "p50": 817,
+   "p95": 961,
+   "max": 961,
+   "n": 5
+  },
+  "app /api/v1/openapi.json": {
+   "ms": [
+    304,
+    290,
+    310,
+    285,
+    288
+   ],
+   "bad": 0,
+   "p50": 290,
+   "p95": 310,
+   "max": 310,
+   "n": 5
+  },
+  "app /api/v1/me/prefs/dash.lx-console": {
+   "ms": [
+    307,
+    330,
+    305,
+    318,
+    310
+   ],
+   "bad": 0,
+   "p50": 310,
+   "p95": 330,
+   "max": 330,
+   "n": 5
+  },
+  "app /api/v1/me/memos?limit": {
+   "ms": [
+    317,
+    465,
+    594,
+    305,
+    312
+   ],
+   "bad": 0,
+   "p50": 317,
+   "p95": 594,
+   "max": 594,
+   "n": 5
+  },
+  "app /api/v1/me/storage": {
+   "ms": [
+    321,
+    324,
+    335,
+    312,
+    325
+   ],
+   "bad": 0,
+   "p50": 324,
+   "p95": 335,
+   "max": 335,
+   "n": 5
+  },
+  "app /api/v1/reviews/notify": {
+   "ms": [
+    329,
+    475,
+    340,
+    315,
+    331
+   ],
+   "bad": 0,
+   "p50": 331,
+   "p95": 475,
+   "max": 475,
+   "n": 5
+  },
+  "app /api/v1/cards/deck": {
+   "ms": [
+    361,
+    441,
+    385,
+    419,
+    360
+   ],
+   "bad": 0,
+   "p50": 385,
+   "p95": 441,
+   "max": 441,
+   "n": 5
+  },
+  "app /api/v1/approvals?state": {
+   "ms": [
+    308,
+    326,
+    346,
+    309,
+    317
+   ],
+   "bad": 0,
+   "p50": 317,
+   "p95": 346,
+   "max": 346,
+   "n": 5
+  },
+  "app /api/v1/auth/session": {
+   "ms": [
+    312,
+    307,
+    314,
+    296,
+    305
+   ],
+   "bad": 0,
+   "p50": 307,
+   "p95": 314,
+   "max": 314,
+   "n": 5
+  },
+  "app /api/v1/me": {
+   "ms": [
+    326,
+    312,
+    298,
+    298,
+    299
+   ],
+   "bad": 0,
+   "p50": 299,
+   "p95": 326,
+   "max": 326,
+   "n": 5
+  },
+  "app /api/v1/change/ranges/:id": {
+   "ms": [
+    338,
+    323,
+    320,
+    323,
+    332
+   ],
+   "bad": 0,
+   "p50": 323,
+   "p95": 338,
+   "max": 338,
+   "n": 5
+  },
+  "app /api/v1/change/ranges": {
+   "ms": [
+    782,
+    749,
+    746,
+    603,
+    764
+   ],
+   "bad": 0,
+   "p50": 749,
+   "p95": 782,
+   "max": 782,
+   "n": 5
+  },
+  "app /api/v1/change/ranges/:id/imagery": {
+   "ms": [
+    2052,
+    1017,
+    358,
+    352,
+    366
+   ],
+   "bad": 0,
+   "p50": 366,
+   "p95": 2052,
+   "max": 2052,
+   "n": 5
+  }
+ }
+}
