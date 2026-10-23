@@ -21,7 +21,7 @@ from shapely.geometry import box, shape
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .deps import ApiError, db, principal, require
+from .deps import ApiError, background, db, principal, require
 from .envelope import env, now_iso
 
 router = APIRouter()
@@ -286,7 +286,8 @@ async def derived() -> dict:
 
 async def _derived_bg():
     try:
-        await _derived_build()
+        with background():                    # 뒤 계산 전용 연결(slow-db-1023)
+            await _derived_build()
     except Exception:  # noqa: BLE001 — 뒤 계산 실패는 다음 요청이 다시
         pass
     finally:

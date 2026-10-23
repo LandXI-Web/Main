@@ -17,6 +17,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import json
 import time
@@ -388,6 +389,10 @@ async def same_model_redo(request: Request, body: dict | None = None):
 # ── 지도 조각 ───────────────────────────────────────────────────────────────
 _TC: "OrderedDict[tuple, bytes]" = OrderedDict()
 TC_MAX = 4000
+# 조각 그리기(한 장 0.7~2초 · 연결 하나)는 프로세스마다 동시에 셋까지 — 지도를 처음 열 때 조각 20여 장이 연결 묶음(8개)을
+# 모두 잡아 다른 화면 요청이 기다리던 것(10-23 slow-db-1023). 같은 조각을 동시에 부르면 한 번만 그린다.
+_TILE_SEM = asyncio.Semaphore(3)
+_TILE_INFLIGHT: dict[tuple, "asyncio.Future"] = {}
 PX = 40075016.68 / 256.0
 
 
@@ -548,7 +553,14 @@ async def national_tile(asset: str, year: int, z: int, x: int, y: int, v: str | 
     key = (asset, year, z, x, y, ver, t)
     data = _TC.get(key)
     if data is None:
-        data = await _tile(asset, year, z, x, y, t)
+        fut = _TILE_INFLIGHT.get(key)
+        if fut is None:
+            async def draw():
+                async with _TILE_SEM:
+                    return await _tile(asset, year, z, x, y, t)
+            fut = _TILE_INFLIGHT[key] = asyncio.ensure_future(draw())
+            fut.add_done_callback(lambda _f, k=key: _TILE_INFLIGHT.pop(k, None))
+        data = await asyncio.shield(fut)
         _TC[key] = data
         while len(_TC) > TC_MAX:
             _TC.popitem(last=False)

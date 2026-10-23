@@ -360,11 +360,15 @@ async def agg_jimok(sgg: str) -> dict:
             "FROM survey_parcels WHERE sgg_cd = ANY($1::text[]) GROUP BY 1", codes)
         sus = {r["jimok"]: int(r["n"]) for r in await conn.fetch(
             "SELECT jimok, count(DISTINCT pnu)::int AS n FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[]) GROUP BY 1", codes, list(RULES))}
+        # 같은 값을 정렬 없이(10-23 slow-db-1023) — count(DISTINCT pnu) 는 68만 줄을 디스크로 정렬했다(8.0초 → 1.3초 · 결과 같음 확인).
+        # 필지별 한 줄로 먼저 줄인 뒤 센다(pnu 가 빈 줄은 count(DISTINCT) 처럼 빼고).
         ai = await conn.fetch(
-            "SELECT jimok, cls_ko, count(DISTINCT pnu)::int AS n FROM survey_parcel_ai WHERE sgg_cd = ANY($1::text[]) AND job_id = ANY($2::text[]) GROUP BY 1, 2",
+            "SELECT jimok, cls_ko, count(*)::int AS n FROM (SELECT DISTINCT jimok, cls_ko, pnu FROM survey_parcel_ai "
+            "WHERE sgg_cd = ANY($1::text[]) AND job_id = ANY($2::text[]) AND pnu IS NOT NULL) q GROUP BY 1, 2",
             codes, sets) if sets else []
         anyp = {r["jimok"]: int(r["n"]) for r in await conn.fetch(
-            "SELECT jimok, count(DISTINCT pnu)::int AS n FROM survey_parcel_ai WHERE sgg_cd = ANY($1::text[]) AND job_id = ANY($2::text[]) GROUP BY 1",
+            "SELECT jimok, count(*)::int AS n FROM (SELECT DISTINCT jimok, pnu FROM survey_parcel_ai "
+            "WHERE sgg_cd = ANY($1::text[]) AND job_id = ANY($2::text[]) AND pnu IS NOT NULL) q GROUP BY 1",
             codes, sets)} if sets else {}
     rows = {}
     for p in par:

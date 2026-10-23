@@ -93,8 +93,11 @@ def test_values_match_source_tables(live, tok):
     with adm() as c:
         det = dict(c.execute("SELECT job_id, count(*) FROM detections WHERE job_id LIKE 'results/%' GROUP BY 1").fetchall())
         # core-flow: 배포 적용 흐름의 스냅샷 = 작업 결과 세트(results/{기관}/{작업}) → 그 작업의 detections 행 수
-        det.update(dict(c.execute("SELECT d.job_id, count(*) FROM detections d JOIN deploys p ON p.snapshot_current = 'results/' || p.tenant_id "
-                                  "|| '/' || d.job_id OR p.snapshot_current = 'results/lx/' || d.job_id GROUP BY 1").fetchall()))
+        # 배포본 쪽에서 작업 id 를 먼저 꺼내 detections 색인(job_id)으로 붙인다 — 'A 또는 B' 결합은 162만 줄을 배포본마다 훑었다
+        # (운영 5.6초 · 시험 DB 19초 → 0.13초 · 결과 같음 확인 · 10-23 slow-db-1023)
+        det.update(dict(c.execute("SELECT d.job_id, count(*) FROM detections d JOIN (SELECT substring(p.snapshot_current FROM '^results/[^/]+/(.+)$') AS jid "
+                                  "FROM deploys p WHERE starts_with(p.snapshot_current, 'results/' || p.tenant_id || '/') "
+                                  "OR starts_with(p.snapshot_current, 'results/lx/')) s ON d.job_id = s.jid GROUP BY 1").fetchall()))
         # 지역 숫자 정본(10-22 현장확인숫자 ⓐ) — R1–R6 + 대장 대조 L-* · 같은 필지 · 같은 규칙은 한 번(once_sql) · 시군구 단위로 센 뒤 기관 합
         fc = dict(c.execute("SELECT tenant_id, sum(n)::int FROM (SELECT tenant_id, sgg_cd, count(DISTINCT pnu) n FROM survey_findings "
                             "WHERE priority='A' AND rule = ANY(%s) AND state IN ('open','assigned') AND " + once_sql() + " GROUP BY 1,2) q GROUP BY 1",

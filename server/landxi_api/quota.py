@@ -13,7 +13,7 @@ from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .deps import ApiError, audit, db, principal, redis, require
+from .deps import ApiError, audit, background, db, principal, redis, require
 from .envelope import KST, env, now_iso
 
 router = APIRouter()
@@ -249,8 +249,9 @@ async def _area_compute(ms: dt.datetime, t: str, ttl: float = AREA_TTL) -> float
                 break
         return None
     try:
-        async with db(realm="lx") as conn:
-            uni = await conn.fetch(AREA_UNION_SQL, ms, [t], timeout=600)
+        with background():                    # 뒤 계산 전용 연결 · 서버 쪽 제한 시간(slow-db-1023)
+            async with db(realm="lx") as conn:
+                uni = await conn.fetch(AREA_UNION_SQL, ms, [t], timeout=600)
     finally:
         if r is not None:
             try:
@@ -338,13 +339,15 @@ async def _area_fill(ms: dt.datetime, t: str, full: bool) -> float | None:
     if not got:
         return None                                   # 다른 프로세스가 채우는 중 — 이번에는 지난 값(없으면 0)
     try:
-        async with db(realm="lx") as conn:
-            if full:
-                v = await conn.fetchval(AREA_FILL_SQL, ms, t, ms.date(), timeout=1800)
-            else:
-                for m in await conn.fetch(MISSING_SQL, ms, t, ms.date()):
-                    await conn.execute("SELECT tenant_area_add($1, $2, $3, $4)", t, ms.date(), m["job_id"], float(m["amt"] or 0), timeout=300)
-                v = await conn.fetchval("SELECT area_km2 FROM tenant_area_month WHERE tenant_id=$1 AND month=$2", t, ms.date())
+        # 뒤 계산 전용 연결(화면 요청 묶음 8개를 몇 분씩 잡지 않게) · DB 쪽 제한 시간 15분(시험 DB 에서 한 번 816초 · slow-db-1023)
+        with background():
+            async with db(realm="lx") as conn:
+                if full:
+                    v = await conn.fetchval(AREA_FILL_SQL, ms, t, ms.date(), timeout=1800)
+                else:
+                    for m in await conn.fetch(MISSING_SQL, ms, t, ms.date()):
+                        await conn.execute("SELECT tenant_area_add($1, $2, $3, $4)", t, ms.date(), m["job_id"], float(m["amt"] or 0), timeout=300)
+                    v = await conn.fetchval("SELECT area_km2 FROM tenant_area_month WHERE tenant_id=$1 AND month=$2", t, ms.date())
         return float(v or 0)
     finally:
         if r is not None:

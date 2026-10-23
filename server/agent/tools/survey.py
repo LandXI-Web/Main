@@ -142,7 +142,8 @@ async def _db_stats(ctx, reg, emd_cds) -> dict | None:
             if emd_cds:
                 fc_emd = int(await conn.fetchval(f"SELECT count(DISTINCT pnu) FROM survey_findings WHERE {W} AND priority = 'A' "
                                                  "AND state IN ('open','assigned')", *a) or 0)
-            pw = ["substr(pnu,1,5) = ANY($1::text[])"] + (["emd_cd = ANY($2::text[])"] if emd_cds else [])
+            # 시군구 칸(sgg_cd = 필지번호 앞 5자리 · 437만 줄 모두 같음 확인)으로 — 색인만 읽는다(3.5초 → 수십 ms · slow-db-1023)
+            pw = ["sgg_cd = ANY($1::text[])"] + (["emd_cd = ANY($2::text[])"] if emd_cds else [])
             parcels = int(await conn.fetchval(f"SELECT count(*) FROM survey_parcels WHERE {' AND '.join(pw)}", *([a[0]] + ([emd_cds] if emd_cds else []))) or 0)
     except Exception:
         return None

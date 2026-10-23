@@ -37,7 +37,7 @@ from shapely.geometry import Point, shape
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .deps import db, principal
+from .deps import background, db, principal
 from .envelope import env, now_iso, today
 
 router = APIRouter()
@@ -125,16 +125,29 @@ def _cur_code(cd: str | None) -> str | None:
 
 
 # ── 원천 읽기 ────────────────────────────────────────────────────────────────
+_CENTER: dict[str, tuple[int, float | None, float | None]] = {}   # 결과 세트 → (행 수, 중심 x, y) — 행 수가 같을 때만 다시 쓴다
+
+
 async def _sys_facts(set_ids: list[str]) -> dict:
     """시스템(LX) 경로로 읽는 비민감 사실 — 결과 세트 행 수·중심, 카드 이름, 카탈로그 영상 → 시군구. 기관 RLS 와 무관하게 같은 값."""
     from .regions import derived
     out: dict[str, Any] = {"sets": {}, "cards": {}, "img": {}, "dp_hits": {}}
     async with db(realm="lx") as c:
         if set_ids:
-            for r in await c.fetch("SELECT job_id, count(*) n, ST_X(ST_Centroid(ST_Extent(geom)::geometry)) x, "
-                                   "ST_Y(ST_Centroid(ST_Extent(geom)::geometry)) y FROM detections WHERE job_id = ANY($1::text[]) GROUP BY 1",
-                                   set_ids):
-                out["sets"][r["job_id"]] = {"n": int(r["n"]), "x": r["x"], "y": r["y"]}
+            # 행 수는 늘 지금 값(색인만 읽음 · 0.6초 → 0.05초 · 10-23 slow-db-1023). 결과 중심(시군구 판정용)은 행 수가 같으면 지난 값 —
+            # 행 수가 바뀐 세트만 다시 잰다(같은 식 · 같은 값).
+            ns = {r["job_id"]: int(r["n"]) for r in await c.fetch(
+                "SELECT job_id, count(*) n FROM detections WHERE job_id = ANY($1::text[]) GROUP BY 1", set_ids)}
+            redo = [j for j, n in ns.items() if (_CENTER.get(j) or (None,))[0] != n]
+            if redo:
+                for r in await c.fetch("SELECT job_id, count(*) n, ST_X(ST_Centroid(ST_Extent(geom)::geometry)) x, "
+                                       "ST_Y(ST_Centroid(ST_Extent(geom)::geometry)) y FROM detections WHERE job_id = ANY($1::text[]) GROUP BY 1",
+                                       redo):
+                    _CENTER[r["job_id"]] = (int(r["n"]), r["x"], r["y"])
+            for j, n in ns.items():
+                cn = _CENTER.get(j)
+                x, y = (cn[1], cn[2]) if cn and cn[0] == n else (None, None)
+                out["sets"][j] = {"n": n, "x": x, "y": y}
         out["cards"] = {r["id"]: _name(r["name"]) for r in await c.fetch("SELECT id, name FROM cards")}
     dv = await derived()
     out["img"] = dv.get("img") or {}
@@ -375,7 +388,8 @@ async def cached_all() -> tuple[list[dict], str]:
 
 async def _bg():
     try:
-        await _build_all()
+        with background():                    # 뒤 계산 전용 연결(화면 요청 묶음을 잡지 않음 · slow-db-1023)
+            await _build_all()
     except Exception:  # noqa: BLE001
         pass
     finally:
@@ -384,7 +398,8 @@ async def _bg():
 
 async def warm():
     """게이트웨이 기동 때 미리 계산(첫 화면이 계산을 기다리지 않게)."""
-    await _build_all()
+    with background():
+        await _build_all()
 
 
 async def _build_all() -> tuple[list[dict], str]:

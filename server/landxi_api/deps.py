@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import contextvars
 import os
 import json
 import secrets
@@ -94,6 +95,34 @@ async def pool_sys() -> asyncpg.Pool:
     return _pool_sys
 
 
+# 뒤에서 도는 무거운 계산(요약 다시 세기 · 지역 파생 · 이번 달 면적 채우기)은 화면 요청과 같은 연결 묶음을 쓰지 않는다(10-23 slow-db-1023).
+# 프로세스마다 8개인 묶음을 몇 초~몇 분짜리 계산이 잡고 있으면 짧은 화면 요청이 연결을 기다리다 '불러오는 중'에 머문다.
+# background() 안(그 일만 · contextvar)에서 db(realm=lx) 는 이 작은 묶음(2개)을 쓴다 — 서버 쪽 제한 시간(statement_timeout)도 건다.
+_BG: contextvars.ContextVar[bool] = contextvars.ContextVar("lx_bg_db", default=False)
+_pool_bg: asyncpg.Pool | None = None
+_POOL_BG_MAX = int(os.environ.get("LX_PG_BG_POOL_MAX") or 2)
+BG_STATEMENT_TIMEOUT_MS = int(os.environ.get("LX_PG_BG_STATEMENT_TIMEOUT_MS") or 900_000)   # 15분 — 그 이상은 DB 가 끊는다(지난 최장 816초)
+
+
+async def pool_bg() -> asyncpg.Pool:
+    global _pool_bg
+    if _pool_bg is None:
+        _pool_bg = await asyncpg.create_pool(config.PG_DSN, min_size=0, max_size=_POOL_BG_MAX, init=_init_conn, command_timeout=1800,
+                                             server_settings={"jit": "off", "statement_timeout": str(BG_STATEMENT_TIMEOUT_MS),
+                                                              "application_name": "landxi-gateway-bg"})
+    return _pool_bg
+
+
+@contextlib.contextmanager
+def background():
+    """이 블록(과 여기서 만든 일)의 db(realm=lx) = 뒤 계산 전용 묶음. 기관 권한 연결(realm tenant)은 그대로(칸막이)."""
+    tok = _BG.set(True)
+    try:
+        yield
+    finally:
+        _BG.reset(tok)
+
+
 async def redis() -> aioredis.Redis:
     global _redis
     if _redis is None:
@@ -103,7 +132,10 @@ async def redis() -> aioredis.Redis:
 
 
 async def close():
-    global _pool, _redis, _pool_sys, _pool_tenant
+    global _pool, _redis, _pool_sys, _pool_tenant, _pool_bg
+    if _pool_bg:
+        await _pool_bg.close()
+        _pool_bg = None
     if _pool:
         await _pool.close()
         _pool = None
@@ -180,7 +212,7 @@ def require(p: Principal, *, realm: str | None = None, roles: tuple[str, ...] | 
 async def db(p: Principal | None = None, *, realm: str | None = None, tenant: str | None = None):
     """트랜잭션 + SET LOCAL app.realm / app.tenant_id (RLS). 시스템 작업은 realm='lx'."""
     r, t = (realm, tenant) if realm else (p.rls() if p else ("public", ""))
-    pl = await (pool_tenant() if r == "tenant" else pool())          # 기관 세션 = 기관 권한 계정(1단계) · LX · 시스템 · 게스트 = 앱 계정
+    pl = await (pool_tenant() if r == "tenant" else pool_bg() if _BG.get() else pool())   # 기관 세션 = 기관 권한 계정(1단계) · 뒤 계산 = 뒤 묶음 · 그 밖 = 앱 계정
     u = (p.user_id or "") if p else ""
     async with pl.acquire() as conn:
         async with conn.transaction():

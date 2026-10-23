@@ -493,7 +493,11 @@ def _fprops(r) -> dict:
 
 
 async def _row(conn, job_id: str, fid: str):
-    return await conn.fetchrow(f"SELECT {FEAT} FROM detections d WHERE d.job_id=$1 AND (d.fid=$2 OR d.id::text=$2) LIMIT 1", job_id, fid)
+    # fid 로 먼저(색인 job_id, fid) · 없고 숫자면 id 로 — 'fid 또는 id' 한 줄 조건은 큰 결과(13만 줄)를 다 훑었다(최장 14.6초 · slow-db-1023)
+    r = await conn.fetchrow(f"SELECT {FEAT} FROM detections d WHERE d.job_id=$1 AND d.fid=$2 LIMIT 1", job_id, fid)
+    if r is None and fid.isdigit():
+        r = await conn.fetchrow(f"SELECT {FEAT} FROM detections d WHERE d.job_id=$1 AND d.id::text=$2 LIMIT 1", job_id, fid)
+    return r
 
 
 async def _history(conn, job_id: str, fid: str, p=None) -> list[dict]:
