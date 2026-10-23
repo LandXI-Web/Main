@@ -56,3 +56,4 @@
 - 전국 결과 조각은 전국 분석이 진행되는 동안 판 번호가 자주 바뀌어 기억이 자주 비워진다 — 끝난 칸만 판 번호를 올리게 하면 다시 그리기가 줄어든다(제안).
 - 연결이 '트랜잭션 중 대기'로 오래 멈추면 DB 가 끊게 앱 계정에 `idle_in_transaction_session_timeout`(예: 60초)을 걸자(DB 설정 변경 · 확인 뒤에만). 다시 생기면 어느 게이트웨이 프로세스인지 바로 보이게 연결 이름(application_name)에 프로세스 번호를 붙이자.
 - 운영 통계(pg_stat_statements)는 지우지 않았다 — 전 값은 `pg-stat-statements-before.json` 에 보관.
+- 10-23 11:5x 오케스트레이터: ALTER ROLE landxi_app SET idle_in_transaction_session_timeout = '60s' 적용(트랜잭션 중 3분 멈춘 연결 5개 재발 방지 · 새 연결부터)
