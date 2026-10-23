@@ -197,14 +197,21 @@ TS_RX = re.compile(r"작년보다|작년\s*대비|전년\s*대비|늘었|줄었|
 TS_NOT = re.compile(r"영상|사진|나란히|겹쳐|두\s*시점|시점\s*두")
 
 
+# '남원시 밭 2021년에서 2025년 사이 변화' — 분류(논 · 밭 · 비닐하우스 · 나대지 · 창고 …)의 시점 비교 = 시점 비교 틀(국토 변화 탐지 실행이 아님 · 10-23)
+# 국토 변화 말(새로 생긴 · 건물 · 구역선 · 대상지 · 영상 확보 · 배치)이 있으면 그대로 국토 변화 길
+FARM_TS = re.compile(r"논|밭|경작지|농경지|휴경|비닐\s*하우스|온실|과수원|곤포|나대지|창고|축사|주차장|농막|임야|산지|공장")
+CHG_ONLY = re.compile(r"새로\s*생긴|생겨난|새로\s*들어선|없어진|사라진|건물|구역선|도로구역|고속국도|철도|대상지|범위\s*안|영상\s*(?:확보|받)|배치|탐지")
+
+
 def timeseries(ctx, msg: str, xr: dict | None) -> dict | None:
     if getattr(ctx, "lang", "ko") != "ko":
         return None
     t = re.sub(r"\s+", " ", msg or "").strip()
     if not TS_RX.search(t) or TS_NOT.search(t):
         return None
+    farm_ts = bool(xr and xr.get("tool") == "run_change_detection" and FARM_TS.search(t) and not CHG_ONLY.search(t))
     if xr and xr.get("tool") in ("map_compare", "law_search", "report_draft", "ai_report",
-                                "run_change_detection", "intersect_parcels", "describe_change", "change_report"):   # 국토 변화 탐지(10-22 CHANGE-DEMO-ORDER P0-4)
+                                "run_change_detection", "intersect_parcels", "describe_change", "change_report") and not farm_ts:   # 국토 변화 탐지(10-22 CHANGE-DEMO-ORDER P0-4)
         return None
     now_q = re.sub(TS_RX, " ", t)
     now_q = re.sub(r"\s*(?:사이|변화|비교해서|비교|지도에|몇\s*곳이야|어디야|돼\?*|\?)\s*", " ", now_q).strip()

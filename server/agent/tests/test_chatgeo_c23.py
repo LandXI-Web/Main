@@ -61,3 +61,16 @@ def test_follow_up_carries_region_and_task():
     # 질문에 지역 · 업무 · 전국이 있으면 이어받지 않는다
     for q in ["구례군 읍면동별로 통계 내 줘", "건물 읍면동별로 통계 내 줘", "전국 통계 내 줘"]:
         assert not dash._carry_ok(dash.parse(q, None) or {"request": q}), q
+
+
+def test_class_change_years_is_timeseries_frame():
+    # '남원시 밭 2021년에서 2025년 사이 변화' — 국토 변화 실행(대상지 필요)이 아니라 시점 비교 틀(지금 숫자 단추) · 국토 변화 말이 있으면 그대로
+    from agent import frames
+    c = _ctx()
+    c.lang = "ko"
+    xr = {"tool": "run_change_detection"}
+    for q in ["남원시 밭 2021년에서 2025년 사이 변화", "남원시 나대지 2022년에서 2024년 사이 변화", "나주시 논 2021년에서 2025년 사이 변화"]:
+        fr = frames.timeseries(c, q, xr)
+        assert fr and fr["kind"] == "feature", q
+    for q in ["인월면 새로 생긴 밭 2021년에서 2025년 사이 변화", "고속국도 구역선 2021년 2025년 사이 변화 탐지"]:
+        assert frames.timeseries(c, q, xr) is None, q
