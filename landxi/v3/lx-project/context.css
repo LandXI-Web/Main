@@ -22,7 +22,6 @@ a.lxp-bar-name:hover b{text-decoration:underline;text-underline-offset:3px}
 .lxp-st.is-here .t{color:var(--ink)}
 .lxp-st:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .lxp-bar-next{flex:0 1 170px;min-width:0;margin:0;display:flex;flex-direction:column;gap:2px;text-align:right}
-.lxp-bar-why{font:400 var(--fs-tag)/17px var(--font-body);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lxp-bar-next b{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 프로젝트 화면 — 이름은 판 머리에 크게 있으므로 한 줄에는 단계와 다음 할 일만 */
 .lxp-bar.is-page .lxp-bar-steps{max-width:980px}

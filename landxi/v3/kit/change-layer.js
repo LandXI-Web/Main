@@ -82,6 +82,8 @@ function hideTwin() {
 }
 
 /* ── 두 해 가르기 ── */
+/* 두 시점 가운데 등록 영상(공유 데이터 · 내 영상)이 있나 — 서버 period.kind(10-23 원칙 329) */
+function ownSrc() { const p = C.run?.period; return p?.a?.kind === 'imagery' || p?.b?.kind === 'imagery'; }
 async function swipe(ya, yb) {
   if (!ya || !yb) return false;
   C.years = [ya, yb];
@@ -117,6 +119,7 @@ function drawCard() {
   C.card.replaceChildren(
     h('p.chg-k', { text: `국토 변화 탐지 · ${yrs}` }), h('h2.chg-t', { text: name }),
     h('p.chg-big', {}, h('span', { text: '구역선 안 변화 ' }), h('b', { text: `${nf(val(s.n_in))}건` }), h('small', { text: ` · 밖(버퍼) ${nf(val(s.n_out))}건` })),
+    ownSrc() ? h('p.chg-s', { text: `${C.run.period.a.word} → ${C.run.period.b.word}` }) : null,
     h('ul.chg-lg', {}, ...rows),
     h('p.chg-w', { text: '두 해 항공영상에서 바뀐 곳 — 구역선 안 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.' }),
     marksLine(),
@@ -240,8 +243,14 @@ async function loadRange({ rid, project }) {
   redraw(); drawCard(); quietOthers();
   return r;
 }
+const CHG_LAYERS = ['chg-rng-l', 'chg-row-l', 'chg-f', 'chg-l', 'chg-hl', 'chg-hl2', 'chg-st'];
+function vis(on) { for (const m of maps()) for (const id of CHG_LAYERS) if (m?.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); if (C.card) C.card.hidden = !on; }
+/* 지도 서비스 왼쪽 목록에서 국토 변화 줄을 끄면 — 변화 층 · 카드 · 칸을 내린다(다시 켜면 show) */
+function hide() { C.job = null; C.sel = null; C.hl.clear(); if (C.panel) C.panel.hidden = true; vis(false); }
 async function show(job, { fit = true, ya = null, yb = null } = {}) {
+  if (!C.map) C.map = await waitMap();
   C.job = job;
+  vis(true);
   C.run = await api(`/change/runs/${encodeURIComponent(job)}`);
   if (!C.range || C.range.id !== C.run.range_id) await loadRange({ rid: C.run.range_id });
   if (C.run.state !== 'done') {
@@ -252,7 +261,7 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
     if (fit && C.range?.bbox) fitRange(C.range.bbox);
     const { jobCard } = await import('./job-card.js');
     C.card?.append(jobCard({ job_id: job, label: `${ya0}년 → ${yb0}년 변화 탐지`, show: { op: 'change_show', job_id: job, year_a: ya0, year_b: yb0, project_id: C.range?.project_id || null } }));
-    if (ya0 && yb0) await swipe(ya0, yb0);
+    if (ya0 && yb0 && !ownSrc()) await swipe(ya0, yb0);
     return true;
   }
   const r = await api(`/change/runs/${encodeURIComponent(job)}/features`, { raw: true });
@@ -262,11 +271,12 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
   C.years = [a, b];
   redraw(); drawCard(); hideTwin();                 // 결과 · 카드 · 자리 먼저(가르기 영상은 이어서)
   if (fit && C.range?.bbox) fitRange(C.range.bbox);
-  if (need) { await swipe(a, b); redraw(); }
+  if (need && !ownSrc()) { await swipe(a, b); redraw(); }   // 등록 영상(공유 데이터 · 내 영상)으로 비교한 결과는 국토지리정보원 해 가르기를 깔지 않는다(다른 영상이라 오해) — 두 시점 그림은 폴리곤 칸에
   return true;
 }
 window.__lxChange.show = show;
 window.__lxChange.open = openPanel;
+window.__lxChange.hide = hide;
 
 /* ── 시작 ── */
 (async () => {

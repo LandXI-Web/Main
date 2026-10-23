@@ -70,8 +70,9 @@ absorb(D);
 const all = () => [...ST.items.values()];
 const shown = (x) => x.on && (!ST.solo || x.g.key === ST.solo);
 
-/* 처음 켤 것 — 주소의 결과(?job) · 없으면 가장 최근 결과 하나 */
-const first = (WANT && ST.items.get(WANT)) || ST.groups[0]?.items[0] || null;
+/* 처음 켤 것 — 주소의 결과(?job · 국토 변화 ?change) · 없으면 가장 최근 결과 하나(국토 변화 결과는 주소로 열 때만 — 변화 층이 스스로 그린다) */
+const CHG = Q.get('change');
+const first = (WANT && ST.items.get(WANT)) || (CHG && ST.items.get(CHG)) || ST.groups.flatMap((g) => g.items).find((x) => !x.change) || null;
 if (first) { first.on = true; ST.open.add(first.g.key); }
 if (ST.groups[0]) ST.open.add(ST.groups[0].key);
 
@@ -155,6 +156,7 @@ async function addImagery(id) {
 /* 결과 층 — 결과 세트 하나 = 결과 타일 하나(지역 결과 층과 같은 길) */
 async function addSet(x) {
   if (x.ids) return;
+  if (x.change) { x.ids = []; return; }   // 국토 변화 — 결과 타일 대신 변화 층(kit/change-layer.js)이 그린다(toggle)
   if (x.empty) { x.ids = []; return; }   // 찾은 것 0건 — 그릴 결과 층이 없다(범위로만 간다 · QA-결과없음)
   const item = { id: 'lm-' + x.job, kind: 'vector', set: x.set, layer: 'results', promote_id: 'id', signed: true, source: 'pmtiles' };   // 작업 결과 = 서명 주소로만(10-22 옆문 닫기 2차)
   const sid = 'lm-r-' + x.job;
@@ -229,7 +231,7 @@ function drawLeft() {
     for (const x of G.items) {
       const cls = (x.by_class || []).filter((c) => c.n).map((c) => `${c.cls} ${nf(c.n)}`).join(' · ');
       const more = [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope, (x.by_class || []).length > 1 ? cls : ''].filter(Boolean).join(' · ');
-      const canDl = !x.empty && !x.failed;
+      const canDl = !x.empty && !x.failed && !x.change;   // 국토 변화 — 색 · 목록 · 내려받기는 변화 층 카드(판정 · 보고서 · 표)에서
       ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl', ST.list === x.job && 'is-list'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
         canDl ? h('button.lm-cd', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${G.name} ${x.region} 색`, title: '색', dataset: { job: x.job }, style: dotStyle(dotColors(x)), onclick: (e) => openColors(x, e.currentTarget) }) : h('span.lm-cd.is-none', { 'aria-hidden': 'true' }),
@@ -263,7 +265,7 @@ const legend = h('aside.lm-lgd', { 'aria-label': '범례', hidden: true });
 mapEl.append(legend);
 const colorOf = (c) => CLS_COLOR[c] || CLS_COLOR[String(c).split(' ')[0]] || '#0FA9A0';
 function drawLegend() {
-  const on = all().filter(shown);
+  const on = all().filter((x) => shown(x) && !x.change);   // 국토 변화는 변화 층 카드가 범례(유형별 색)
   const cls = [...new Set(on.filter((x) => colorSt(x).mode !== 'scale').flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))].filter((c) => !ST.clsOff.has(c));
   const sc = on.find((x) => colorSt(x).mode === 'scale' && !x.empty);
   const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${shownColor(c)}` }), h('span', { text: c }))),
@@ -323,7 +325,7 @@ function visN(x) {
 }
 function clsBlock(on) {
   const m = new Map();
-  for (const x of on) if (!x.empty && !x.failed) for (const c of x.by_class || []) if (c.n) m.set(c.cls, (m.get(c.cls) || 0) + Number(c.n));
+  for (const x of on) if (!x.empty && !x.failed && !x.change) for (const c of x.by_class || []) if (c.n) m.set(c.cls, (m.get(c.cls) || 0) + Number(c.n));
   if (!m.size) return null;
   return h('div.lm-cls', { role: 'group', 'aria-label': '클래스' }, h('span.lm-bl', { text: '클래스' }),
     h('div.lm-clr', {}, ...[...m].map(([c, n]) => h('button.lm-cb', { type: 'button', role: 'checkbox', 'aria-checked': String(!ST.clsOff.has(c)), dataset: { cls: c }, title: c,
@@ -419,7 +421,7 @@ async function dropChip(k) {
   const c = condOf(ST.filter);
   if (k === 'area') COND_KEYS.filter((x) => x.startsWith('area')).forEach((x) => delete c[x]); else delete c[k];
   if (!Object.keys(c).length) { setFilter({ op: 'map_filter', clear: true }); return; }
-  const jobs = all().filter((x) => shown(x) && !x.empty && !x.failed).map((x) => x.job);
+  const jobs = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change).map((x) => x.job);
   let r = null;
   try { r = await api('/me/analyses/filter', { method: 'POST', body: { jobs, cond: c } }); } catch (e) { K.devlog('filter', String(e?.message || e)); }
   setFilter({ op: 'map_filter', ...(r?.params || c), label: r?.label || '', chips: r?.chips || [], n: r?.n ?? null });
@@ -473,7 +475,7 @@ document.addEventListener('kit:agent-action', (e) => {
   document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_filter', ok, by: 'lx-map', ...(ok ? {} : { reason: '켜진 결과 층이 없습니다' }) } }));
 });
 K.mountCmdk({ stage: ST0, context: () => {
-  const on = all().filter((x) => shown(x) && !x.empty && !x.failed);
+  const on = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change);
   return { sets: on.map((x) => x.set), region: on[0]?.sgg_cd || null };
 } });
 
@@ -536,6 +538,7 @@ function drawCap() {
     ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 층` })] : []));
 }
 async function toggle(x) {
+  if (x.change) return toggleChange(x);
   x.on = !x.on;
   if (ST.filter) ST.filter.n = null;                                  // 켜진 레이어가 바뀌면 조건은 그대로 걸고 수는 지운다(다시 물으면 새 수)
   if (x.on && ST.solo && ST.solo !== x.g.key) ST.solo = null;   // 다른 묶음 층을 켜면 '이 묶음만'을 푼다
@@ -543,6 +546,17 @@ async function toggle(x) {
   if (x.on) { fly(x.bounds); drawn(); }
   else if (ST.pick && props.dataset.job === x.job) closeProps();
   if (!x.on) closePick();
+}
+/* 국토 변화 줄(10-23 원칙 329) — 켜면 변화 층(대상지 · 변화 폴리곤 · 카드)으로 연다 · 한 번에 하나 · 끄면 변화 층을 내린다 */
+async function toggleChange(x) {
+  x.on = !x.on;
+  const L = window.__lxChange;
+  if (x.on) for (const y of all()) if (y !== x && y.change) y.on = false;
+  drawLeft(); drawCap();
+  try {
+    if (x.on) { await L?.show?.(x.job); const u = new URL(location.href); u.searchParams.set('change', x.job); history.replaceState(null, '', u); }
+    else { L?.hide?.(); const u = new URL(location.href); u.searchParams.delete('change'); history.replaceState(null, '', u); }
+  } catch (e) { K.devlog('change', String(e?.message || e)); }
 }
 async function soloOf(G) {
   if (ST.solo === G.key) { ST.solo = null; await apply(); return; }

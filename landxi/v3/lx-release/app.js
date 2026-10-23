@@ -58,7 +58,6 @@ async function drawInfer() {
   const { inferExplain } = await import('../lx-project/explain.js');     // 원칙 181 — 추론이 무엇을 하는지(자동 조각 나누기) 설명 칸
   const st = { model: null, img: null, emd: '', ranges: null };
   const models = d.models || [];
-  const SVC = await PROJ.then((pr) => (pr?.path?.key === 'service' && pr.path.note ? pr.path : null), () => null);   // 정식 서비스 모델 경로(수정 지시서 v2 F4)
   st.model = (models.find((m) => m.status === 'registered') || models[0])?.id || null;
 
   /* 왼쪽 — 모델 · 영상 · 범위 · 시작 */
@@ -177,8 +176,7 @@ async function drawInfer() {
   const left = card('추론', '배포 신청 없이 · 이 프로젝트 모델로 분석',
     h('p.rl-lede', { text: '학습한 모델로 영상을 바로 분석해 봅니다. 결과는 나와 프로젝트 참여자만 봅니다.' }),
     inferExplain(),
-    h('div.rl-step', {}, h('h3', { text: '모델' }), models.length ? mList : SVC ? h('p.rl-empty', {}, h('span', { text: `정식 서비스 모델(${SVC.note.replace(/ 사용 · 학습 불필요$/, '')})로 분석합니다 — ` }),
-      h('a', { href: `../lx-map/?project=${encodeURIComponent(PID)}`, text: '지도 서비스에서 두 해를 골라 변화 탐지' }))
+    h('div.rl-step', {}, h('h3', { text: '모델' }), models.length ? mList
       : h('p.rl-empty', { text: '아직 학습한 모델이 없습니다 — 학습 단계에서 먼저 학습해 주세요' })),
     h('div.rl-step', {}, h('h3', { text: '영상' }),
       h('p.rl-grp', { text: '프로젝트 영상' }), iProj,

@@ -138,14 +138,10 @@ export function openNewProject({ onMade } = {}) {
   const lineBox = h('div.lxp-rng', { hidden: true }, h('label.lxp-file-l', {}, h('span', { text: '구역선 파일(geojson · shp 압축 · gpkg)' }), lineIn));
   const pnuBox = h('div.lxp-rng', { hidden: true }, pnuTa, h('div.lxp-pnu-r', {}, h('label.lxp-file-l', {}, h('span', { text: '또는 목록 파일(txt · csv)' }), h('input.lxp-file', { type: 'file', accept: '.txt,.csv', 'aria-label': '필지 목록 파일', onchange: async (e) => { const f = e.target.files?.[0]; if (f) { pnuTa.value = await f.text(); makeRange(); } } })), pnuGo));
   const bufRow = h('label.lxp-buf-r', { hidden: true }, h('span', { text: '버퍼' }), bufIn, h('span', { text: 'm' }));
-  // 진행 경로(수정 지시서 v2 F4) — 변화 탐지는 정식 서비스 모델로 바로 분석이 기본(학습데이터 구축 · 학습 건너뜀)
-  const pathRad = (v, label, on) => h('label.lxp-path-o', {}, h('input', { type: 'radio', name: 'lxp-path', value: v, checked: on || undefined }), h('span', { text: label }));
-  const pathBox = h('div.lxp-path', { role: 'radiogroup', 'aria-label': '진행 경로', hidden: true },
-    h('span.lxp-yrs-l', { text: '진행 경로' }),
-    pathRad('service', '정식 서비스 모델로 바로 분석(학습 건너뜀)', true), pathRad('train', '이 프로젝트 데이터로 학습'));
+  // (10-23 원칙 329) '진행 경로 — 정식 서비스 모델로 바로 분석' 고르기는 뺐다: 학습된 모델로 하는 분석은 분석 서비스 › 국토 변화 카드에서. 프로젝트는 새 모델을 만드는 곳.
   const drawYears = () => {
     const ys = RG.rng?.imagery_years || [];
-    yrBox.hidden = !ys.length; pathBox.hidden = !RG.rng;
+    yrBox.hidden = !ys.length;
     yrBox.replaceChildren(h('span.lxp-yrs-l', { text: '국토지리정보원 영상 연도' }), ...ys.map((y) => {
       const b = h('button.t-chip.lxp-chip', { type: 'button', 'aria-pressed': String(RG.yrs.has(y.year)), text: `${y.year}년` });
       b.addEventListener('click', () => { if (RG.yrs.has(y.year)) RG.yrs.delete(y.year); else RG.yrs.add(y.year); b.setAttribute('aria-pressed', String(RG.yrs.has(y.year))); ready(); });
@@ -189,7 +185,7 @@ export function openNewProject({ onMade } = {}) {
     regIn.querySelector('.lxp-far-row').hidden = !reg;
     lineBox.hidden = k !== 'line'; pnuBox.hidden = k !== 'pnu'; bufRow.hidden = reg; rngLine.hidden = true; drawYears(); ready();
   });
-  regIn.append(rmTabs, regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far, lineBox, pnuBox, bufRow, rngLine, yrBox, pathBox);
+  regIn.append(rmTabs, regPicked, pickEl, h('div.lxp-far-row', {}, farBtn), far, lineBox, pnuBox, bufRow, rngLine, yrBox);
   regBox.append(regTg, regIn);
   const drawRegs = () => {
     regPicked.replaceChildren(...regions.map((r) => {
@@ -304,7 +300,7 @@ export function openNewProject({ onMade } = {}) {
         q.clear();
       }
       if (rng) {                                          // 구역선 · 필지 범위 — 이 프로젝트에 묶고 두 해 영상이 보이는 지도 서비스로
-        await api(`/change/ranges/${encodeURIComponent(rng.id)}/project`, { method: 'POST', body: { project_id: pr.id, years: [...RG.yrs].sort(), name: body.name, path: pathBox.querySelector('input:checked')?.value || 'service' } });
+        await api(`/change/ranges/${encodeURIComponent(rng.id)}/project`, { method: 'POST', body: { project_id: pr.id, years: [...RG.yrs].sort(), name: body.name } });
         toast('프로젝트를 만들었습니다');
         close();
         location.href = new URL('../lx-map/?' + new URLSearchParams({ project: pr.id }), import.meta.url).href.replace(/\/lx-project\/\.\.\//, '/');
