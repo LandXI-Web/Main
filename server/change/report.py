@@ -37,8 +37,18 @@ def _src_line(run: dict, ya: int, yb: int) -> str:
     return f"{w(sr.get('a'), ya)} → {w(sr.get('b'), yb)}"
 
 
-def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
+def _types(bt: dict) -> list[str]:
+    """요약에 쓰는 유형 — 국토 변화 기본(TYPES) 다음 카드마다 더한 유형(산사태 취약지구 등 · 10-25) · 식생 증감(참고)은 뺀다."""
+    return [t for t in TYPES if t in bt] + [t for t in bt if t not in TYPES and t != "식생 증감"]
+
+
+def _v(x):
+    return x.get("value") if isinstance(x, dict) else x
+
+
+def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict, card_name: str | None = None, zones: list | None = None) -> dict:
     """보고서 한 장의 내용(화면 미리보기 · PDF 가 같은 것을 그린다)."""
+    word = str(card_name or "국토 변화 분석서비스").replace(" 분석서비스", "").strip() or "국토 변화"
     ya, yb = run["year_a"], run["year_b"]
     feats = [f for f in fc.get("features") or [] if not f["properties"].get("hidden")]
     inside = [f for f in feats if f["properties"].get("inside_row") == "내"]
@@ -55,10 +65,14 @@ def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
         "성격: AI 탐지 결과(결과 확인 전) — 판정은 현장 확인으로",
     ]
     summary = [f"구역선 안 변화 {_n(stats['n_in'])}건 · 구역선 밖(버퍼) {_n(stats['n_out'])}건 · 면적 합 {_n(round(stats['m2']))}㎡"]
-    for t in TYPES:
+    for t in _types(bt):
         b = bt.get(t)
-        if b:
+        if b and b.get("n"):
             summary.append(f"{t}: 구역선 안 {_n(b['in'])}건 · 밖 {_n(b['out'])}건 · {_n(round(b['m2']))}㎡")
+    if not stats.get("n"):
+        summary.append("두 시점 사이 찾는 변화가 없었음")
+    for z in zones or []:                                        # 지구별(올린 도형 하나하나 · 10-25)
+        summary.append(f"지구 {z['name']}: 변화 {_n(_v(z['n']) or 0)}건 · {_n(round(_v(z['area']) or 0))}㎡")
     judged = sum(v for k, v in st_count.items() if k != "미확인")
     summary.append("판정 현황: " + " · ".join(f"{k} {_n(v)}" for k, v in st_count.items()) + f"(판정 {_n(judged)}건)")
     rows = sorted(inside, key=lambda f: (ORDER.get(f["properties"]["type"], 9), -f["properties"]["area_m2"]))
@@ -80,6 +94,9 @@ def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
     lost = [r for r in table if r["type"] == "소실"]
     if lost:
         rec.append(f"건물 소실 {_n(len(lost))}건 — 철거 완료 여부 확인 · 대장 정리")
+    forest = [r for r in table if str(r["type"]).startswith("산림 →")]
+    if forest:
+        rec.append(f"산림이 나지 · 도로 · 건물로 바뀐 곳 {_n(len(forest))}건 — 현장 확인 후 사면 상태 · 허가 여부 확인")
     farm = [r for r in table if r["type"] == "경작 전환"]
     if farm:
         rec.append(f"경작 전환 {_n(len(farm))}건 — 두 해 촬영 계절 차이 가능성 · 영상 대조 뒤 경작 점용 여부 확인")
@@ -88,7 +105,7 @@ def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict) -> dict:
     if st_count.get("현장확인"):
         rec.append(f"현장확인 대상 {_n(st_count['현장확인'])}건 — 현장 점검 일정 수립 · 사진 · 판정 기록")
     rec.append("다음 해 국토지리정보원 영상 공개 시 같은 대상지로 다시 비교 · 판정 이력 이어 관리")
-    return {"title": f"{rng['name']} 국토 변화 탐지 보고(초안)", "made": made, "period": f"{ya}년 → {yb}년", "overview": overview, "summary": summary,
+    return {"title": f"{rng['name']} {word} 변화 탐지 보고(초안)", "made": made, "period": f"{ya}년 → {yb}년", "overview": overview, "summary": summary,
             "status": st_count, "table": table, "more": max(0, len(rows) - MAX_ROWS), "thumbs": [r["id"] for r in thumbs],
             "recommend": rec, "source": f"출처 Land-XI 국토 변화 분석서비스 결과 · 판정 기록 — 지도 · 필지 표 · CSV 와 같은 값 · {made}"}
 

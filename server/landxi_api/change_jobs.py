@@ -140,7 +140,8 @@ async def retry(job_id: str, request: Request):
     p = require(principal(request))
     from .change import start_run
     async with db(realm="lx") as conn:
-        cr = await conn.fetchrow("SELECT range_id, year_a, year_b, src_key, sources FROM change_runs WHERE job_id=$1", job_id)
+        cr = await conn.fetchrow("SELECT r.range_id, r.year_a, r.year_b, r.src_key, r.sources, j.card_id FROM change_runs r LEFT JOIN jobs j ON j.id=r.job_id "
+                                 "WHERE r.job_id=$1", job_id)
     if not cr:
         raise ApiError("not_found", "작업을 찾을 수 없습니다")
     s0 = await job_status(job_id)
@@ -151,7 +152,7 @@ async def retry(job_id: str, request: Request):
         import json as _j
         sr = _j.loads(sr)
     res = await start_run(request, p, cr["range_id"], cr["year_a"], cr["year_b"], fresh=True,
-                          src_a=(sr or {}).get("a"), src_b=(sr or {}).get("b"))
+                          src_a=(sr or {}).get("a"), src_b=(sr or {}).get("b"), card_id=cr["card_id"])     # 같은 카드(찾는 변화 묶음)로 다시(10-25)
     async with db(p) as conn:
         await audit(conn, p, "change.run.retry", res["job_id"], {"from": job_id}, None)
     return res

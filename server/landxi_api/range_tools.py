@@ -87,8 +87,31 @@ async def _area_km2(p, rid: str) -> float:
         return float(await conn.fetchval("SELECT ST_Area(geom)/1e6 FROM change_ranges WHERE id=$1", rid) or 0)
 
 
+NAME_COLS = ("지구명", "지구", "명칭", "이름", "name", "NAME", "Name", "nm", "NM")
+MAX_PARTS = 300
+
+
+def parts_of(g) -> list[dict] | None:
+    """올린 도형 하나하나(지구) — 이름(지구명 · 명칭 · name 같은 칸이 있으면) + 도형(5179 GeoJSON · 0.1 m 반올림).
+    면이 둘 이상일 때만(하나면 구간 전체와 같음) · 300개 넘으면 두지 않는다(10-25 산사태 취약지구 '지구별' 결과)."""
+    import json as _j
+
+    from shapely import set_precision
+    from shapely.geometry import mapping
+    polys = g[[t.endswith("Polygon") for t in g.geom_type]]
+    if len(polys) < 2 or len(polys) > MAX_PARTS:
+        return None
+    col = next((c for c in NAME_COLS if c in polys.columns), None)
+    out = []
+    for i, (_, row) in enumerate(polys.iterrows()):
+        geom = set_precision(row.geometry.buffer(0), 0.1)
+        nm = str(row[col]).strip() if col and row[col] is not None and str(row[col]).strip() not in ("", "nan", "None") else f"{i + 1}번 지구"
+        out.append({"name": nm[:60], "geom": _j.loads(_j.dumps(mapping(geom)))})
+    return out
+
+
 async def _save(p, *, name: str, kind: str, buffer_m: float, line5179, rng5179, source_name: str | None,
-                project_id: str | None, years: list[int], origin: str | None, codes: list[str] | None) -> str:
+                project_id: str | None, years: list[int], origin: str | None, codes: list[str] | None, parts: list[dict] | None = None) -> str:
     P, R = _mods()
     from shapely import to_wkb
     from shapely.geometry import MultiPolygon
@@ -97,10 +120,10 @@ async def _save(p, *, name: str, kind: str, buffer_m: float, line5179, rng5179, 
     rid = "rng_" + secrets.token_hex(6)
     async with db(p) as conn:
         await conn.execute(
-            "INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by, origin, codes) "
-            "VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_GeomFromWKB($7),5179), ST_SetSRID(ST_GeomFromWKB($8),5179), $9,$10,$11,$12,$13,$14)",
+            "INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by, origin, codes, parts) "
+            "VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_GeomFromWKB($7),5179), ST_SetSRID(ST_GeomFromWKB($8),5179), $9,$10,$11,$12,$13,$14,$15::jsonb)",
             rid, "lx" if p.is_lx else p.tenant_id, project_id, name[:120], kind, buffer_m, to_wkb(line5179), to_wkb(mp), sgg, years,
-            source_name, p.user_id, origin, sorted(codes) if codes else None)
+            source_name, p.user_id, origin, sorted(codes) if codes else None, parts or None)
         await audit(conn, p, "change.range.create", rid, None, {"name": name, "kind": kind, "buffer_m": buffer_m, "project_id": project_id, "origin": origin})
     return rid
 
@@ -116,6 +139,7 @@ async def make_range(request: Request, max_km2: float | None = None) -> tuple:
     ct = request.headers.get("content-type", "")
     years: list[int] = []
     codes: list[str] | None = None
+    parts: list[dict] | None = None
     if ct.startswith("multipart/"):
         form = await request.form()
         f = form.get("file")
@@ -143,6 +167,7 @@ async def make_range(request: Request, max_km2: float | None = None) -> tuple:
             except R.RangeError as e:
                 raise ApiError("bad_request", str(e)) from None
             line = await run_in_threadpool(R.union5179, g)
+            parts = await run_in_threadpool(parts_of, g)
     else:
         body = await request.json()
         name = str(body.get("name") or "대상지")
@@ -158,6 +183,7 @@ async def make_range(request: Request, max_km2: float | None = None) -> tuple:
             except R.RangeError as e:
                 raise ApiError("bad_request", str(e)) from None
             line = await run_in_threadpool(R.union5179, g)
+            parts = await run_in_threadpool(parts_of, g)
         elif body.get("pnus"):
             kind = "pnu"
             pn = P.parse_pnus(" ".join(map(str, body["pnus"])) if isinstance(body["pnus"], list) else str(body["pnus"]))
@@ -179,13 +205,16 @@ async def make_range(request: Request, max_km2: float | None = None) -> tuple:
     if origin == "card" and not project_id:
         hit = await _same(p, kind, buffer_m, line, codes)
         if hit and (lim >= SPLIT_MAX_KM2 or await _area_km2(p, hit) <= lim):
+            if parts:                                  # 예전에 만든 같은 구간에 지구 도형이 없으면 채운다(같은 모양 · 같은 거리)
+                async with db(p) as conn:
+                    await conn.execute("UPDATE change_ranges SET parts=$2::jsonb WHERE id=$1 AND parts IS NULL", hit, parts)
             return p, hit
     try:
         rng = await run_in_threadpool(R.build, line, buffer_m, lim)
     except R.RangeError as e:
         raise ApiError("bad_request", str(e)) from None
     rid = await _save(p, name=name, kind=kind, buffer_m=buffer_m, line5179=line, rng5179=rng, source_name=src,
-                      project_id=project_id, years=years, origin=origin, codes=codes)
+                      project_id=project_id, years=years, origin=origin, codes=codes, parts=parts)
     return p, rid
 
 

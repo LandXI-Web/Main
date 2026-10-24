@@ -249,6 +249,28 @@ def _owner(m: dict, cid: str, card) -> dict:
     return {"id": oid, "name": m["owner_names"].get(oid) if oid else None, "project": None}
 
 
+CHANGE_MODEL = "change-ap25"      # 국토 변화 틀의 모델(토지피복 U-Net ap25) — 이 모델을 쓰는 카드는 같은 칸(구간 + 두 시점)
+
+
+async def is_change_frame(cid: str) -> bool:
+    async with db(realm="lx") as conn:
+        return bool(await conn.fetchval("SELECT 1 FROM card_versions WHERE card_id=$1 AND $2 = ANY(model_ids) LIMIT 1", cid, CHANGE_MODEL))
+
+
+async def change_types_of(cid: str) -> str | None:
+    """카드 판(가장 늦은 판)의 찾는 변화 묶음 — 'landslide' 등 · 없으면 None(국토 변화 기본)."""
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT modules FROM card_versions WHERE card_id=$1 AND $2 = ANY(model_ids) "
+                                "ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid, CHANGE_MODEL)
+    if not r:
+        return None
+    m = r["modules"]
+    if isinstance(m, str):
+        import json as _j
+        m = _j.loads(m)
+    return (m or {}).get("change_types") or None
+
+
 def _board_example(cid: str, items: list[dict]) -> dict | None:
     """결과 예시 — 다듬은 결과 세트의 업무 숫자가 없을 때(칸 도형 수는 큰 숫자로 못 씀 · 규칙 2) XI맵 통계와 같은 한 출처:
     XI맵 결과판(ximap.build_board)의 이 서비스 객체 수(겹침 정리 · 고친 것 반영 · 분류 제한 적용)를 이 항목들의 시군구만 더한다.
@@ -270,9 +292,21 @@ def _board_example(cid: str, items: list[dict]) -> dict | None:
         return None
     hit.sort(key=lambda t: (-t[2], t[0].get("name") or ""))
     first = hit[0][0].get("name") or ""
-    return {"value": sum(t[2] for t in hit), "unit": "개", "basis": "inferred", "as_of": max(str(t[1].get("finished_at") or "") for t in hit)[:10],
-            "source": "XI맵 통계(AI 분석 결과 객체 · 겹침 정리 후 · 검수 전)", "label": "AI 분석 결과", "word": "AI 분석 결과",
-            "region": first + (f" 외 {len(hit) - 1}곳" if len(hit) > 1 else ""), "sgg": hit[0][0].get("sgg_cd") if len(hit) == 1 else None}
+    regs = list(dict.fromkeys(t[0].get("sgg_cd") for t in hit))
+    out = {"value": sum(t[2] for t in hit), "unit": "개", "basis": "inferred", "as_of": max(str(t[1].get("finished_at") or "") for t in hit)[:10],
+           "source": "XI맵 통계(AI 분석 결과 객체 · 겹침 정리 후 · 검수 전)", "label": "AI 분석 결과", "word": "AI 분석 결과",
+           "region": first + (f" 외 {len(regs) - 1}곳" if len(regs) > 1 else ""), "sgg": hit[0][0].get("sgg_cd") if len(regs) == 1 else None}
+    # 찾는 것이 둘 이상인 카드(사람 · 차량 — 0131) — 찾는 것마다 따로 센 값('사람 9,770명 · 차량 1,075대' · XI맵 통계와 같은 출처)
+    parts: dict[str, dict] = {}
+    for _, x, v in hit:
+        pt = x.get("part")
+        if pt:
+            q = parts.setdefault(pt["key"], {"label": pt["label"], "unit": pt["unit"], "value": 0})
+            q["value"] += v
+    if len(parts) > 1:
+        order = {"명": 0, "대": 1}
+        out["parts"] = sorted(parts.values(), key=lambda q: (order.get(q["unit"], 9), q["label"]))
+    return out
 
 
 def kept_example(cid: str) -> dict | None:
@@ -476,6 +510,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "version": cur["version"] if cur else None, "owner": own["name"],
         "official": official, "model": model_card, "targets": targets, "sample": sample_src,
         # 모델 없이 미리 만든 결과만 있는 카드(해양쓰레기 · 생활환경 · 도로 — 10-24 카드 고침) = 결과 보기 전용 · 새 분석 안 됨(상태 말은 그대로)
+        "frame": "change" if CHANGE_MODEL in mids else None,      # 국토 변화 틀(구간 + 두 시점 · 같은 칸) — 국토 변화 · 산사태 취약지구(10-25)
         "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global"
                                                                       else "결과 보기 전용 · 새 분석은 모델 연결 뒤" if (example or result_sggs) else "분석 모델 등록 전"),
         "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "reports_sum": reports_sum, "publish": publish,
@@ -1061,7 +1096,7 @@ async def my_imagery(cid: str, body: dict, request: Request):
     _, cands, best = await _img_candidates(rg["sgg_cd"], p.user_id)
     hit = next((c for c in cands if c["id"] == iid), None)
     item = None
-    if hit and cid != "card-change":          # 국토 변화는 시군구 판정 없이 대상지 · 시점 고르기에서 씀(GET /change/ranges/{id}/imagery)
+    if hit and not await is_change_frame(cid):   # 국토 변화 틀은 시군구 판정 없이 구간 · 시점 고르기에서 씀(GET /change/ranges/{id}/imagery)
         _, geoms, _ = regions_base()
         async with db(realm="lx") as conn:
             cv = await _cv(conn, cid)

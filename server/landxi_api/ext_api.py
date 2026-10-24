@@ -235,12 +235,24 @@ async def ledger_sync(force: bool = False) -> int:
             "LEFT JOIN card_versions v ON v.id = d.card_version_id LEFT JOIN card_versions pv ON pv.id = d.prev_card_version_id "
             "WHERE d.stage <> 'draft' AND NOT coalesce(d.test, false) AND d.card_id IS NOT NULL AND d.sgg_cd IS NOT NULL")
         jobs = {r["id"]: dict(r) for r in await c.fetch(
-            "SELECT j.id, j.card_id, j.imagery_id, j.finished_at, i.sgg_cd AS isgg, i.year AS iyear, i.epoch, i.name AS iname FROM jobs j "
-            "LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.state = 'done' AND NOT coalesce(j.test, false) AND j.id LIKE 'job_%'")}
+            "SELECT j.id, j.card_id, j.imagery_id, j.finished_at, i.sgg_cd AS isgg, i.year AS iyear, i.epoch, i.name AS iname, md.classes AS mcls FROM jobs j "
+            "LEFT JOIN imagery i ON i.id = j.imagery_id LEFT JOIN models md ON md.id = j.model_id "
+            "WHERE j.state = 'done' AND NOT coalesce(j.test, false) AND j.id LIKE 'job_%'")}
+        # 모델을 둘 이상 쓰는 카드(관광지 안전관리: 사람 · 차량) — '지금 결과'를 찾는 것마다 따로(10-25 사용자 '1번은 A' · 0131)
+        multi = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM card_versions WHERE coalesce(array_length(model_ids, 1), 0) > 1")}
+        tg_of = {r["set_id"]: r["target"] for r in await c.fetch("SELECT set_id, target FROM service_results WHERE target <> ''")}
         latest = {r["card_id"]: r["version"] for r in await c.fetch(
             "SELECT DISTINCT ON (card_id) card_id, version FROM card_versions ORDER BY card_id, approved_at DESC NULLS LAST, id DESC")}
         rank = {"deploy": 3, "deploy_prev": 2, "job": 1, "api": 1}
         cand: dict[tuple, dict] = {}
+
+        def target_of(card, set_id, j) -> str:
+            if card not in multi:
+                return ""
+            cl = (j or {}).get("mcls")
+            if isinstance(cl, str):
+                cl = json.loads(cl)
+            return "·".join(sorted(str(x) for x in cl)) if isinstance(cl, list) and cl else tg_of.get(set_id, "")
 
         def put(card, set_id, sgg, ver, origin, as_of=None):
             if not set_id:
@@ -262,7 +274,7 @@ async def ledger_sync(force: bool = False) -> int:
                 row = {"imagery_id": None, "analyzed_at": at, "year": int(y) if y else None}
             k = (card, set_id)
             new = {**row, "card_id": card, "set_id": set_id, "sgg_cd": (reg or {}).get("sgg_cd") or sgg, "source": "lx",
-                   "service_version": ver, "origin": origin}
+                   "service_version": ver, "origin": origin, "target": target_of(card, set_id, j)}
             if k not in cand or rank[origin] > rank[cand[k]["origin"]]:
                 cand[k] = new
 
@@ -278,17 +290,18 @@ async def ledger_sync(force: bool = False) -> int:
             if not v["sgg_cd"]:
                 continue
             await c.execute(
-                "INSERT INTO service_results(card_id, set_id, sgg_cd, source, year, service_version, imagery_id, analyzed_at, origin) "
-                "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (card_id, set_id) DO UPDATE SET sgg_cd=EXCLUDED.sgg_cd, source=EXCLUDED.source, "
+                "INSERT INTO service_results(card_id, set_id, sgg_cd, source, year, service_version, imagery_id, analyzed_at, origin, target) "
+                "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (card_id, set_id) DO UPDATE SET sgg_cd=EXCLUDED.sgg_cd, source=EXCLUDED.source, "
                 "year=EXCLUDED.year, service_version=EXCLUDED.service_version, imagery_id=EXCLUDED.imagery_id, "
-                "analyzed_at=coalesce(EXCLUDED.analyzed_at, service_results.analyzed_at), origin=EXCLUDED.origin",
-                v["card_id"], v["set_id"], v["sgg_cd"], v["source"], v["year"], v["service_version"], v["imagery_id"], v["analyzed_at"], v["origin"])
+                "analyzed_at=coalesce(EXCLUDED.analyzed_at, service_results.analyzed_at), origin=EXCLUDED.origin, target=EXCLUDED.target",
+                v["card_id"], v["set_id"], v["sgg_cd"], v["source"], v["year"], v["service_version"], v["imagery_id"], v["analyzed_at"], v["origin"], v["target"])
             n += 1
-        # 같은 칸(서비스 · 시군구 · 원천 · 연도)에 '지금' 하나 — 배포본 지금 결과 > 늦게 분석한 것 > 늦게 적은 것
-        rows = await c.fetch("SELECT id, card_id, sgg_cd, source, year, origin, analyzed_at, at, replaced_at FROM service_results")
+        # 같은 칸(서비스 · 시군구 · 원천 · 연도 · 찾는 것)에 '지금' 하나 — 배포본 지금 결과 > 늦게 분석한 것 > 늦게 적은 것
+        #   찾는 것 = 모델을 둘 이상 쓰는 카드만 나뉜다(사람 · 차량) · 모델 하나인 카드는 '' 하나(예전과 같음 · 0131)
+        rows = await c.fetch("SELECT id, card_id, sgg_cd, source, year, target, origin, analyzed_at, at, replaced_at FROM service_results")
         cells: dict[tuple, list] = {}
         for r in rows:
-            cells.setdefault((r["card_id"], r["sgg_cd"], r["source"], r["year"]), []).append(r)
+            cells.setdefault((r["card_id"], r["sgg_cd"], r["source"], r["year"], r["target"]), []).append(r)
         for rs in cells.values():
             rs.sort(key=lambda r: (r["origin"] == "deploy", r["analyzed_at"] or r["at"], r["at"]), reverse=True)
             top = rs[0]

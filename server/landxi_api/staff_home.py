@@ -115,7 +115,7 @@ MY_ANALYSES_SQL = (
     "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, j.snapshot_ready, "
     "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
     "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname, "
-    "cg.name AS chg_name, cg.sgg AS chg_sgg "
+    "cg.name AS chg_name, cg.sgg AS chg_sgg, (SELECT cr.stats FROM change_runs cr WHERE cr.job_id = j.id) AS chg_stats "
     "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
     "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
     "LEFT JOIN change_ranges cg ON cg.id = j.options->'change'->>'range_id' "
@@ -216,6 +216,10 @@ def _change_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, d
     name = (r["chg_name"] if "chg_name" in r.keys() else None) or o.get("range_name") or ""   # 대상지 이름(대상지 표 한 출처 · 예전 작업은 기록에 이름이 없음)
     region = name or (rg or {}).get("name") or ""            # 대상지 이름이 먼저(구역선은 시군구 경계에 걸쳐 첫 시군구가 다른 곳일 수 있다)
     by = [{"cls": CHANGE_KO[k], "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0)) if k in CHANGE_KO]
+    st = _jload(r["chg_stats"]) if "chg_stats" in r.keys() and r["chg_stats"] else {}
+    if st.get("types"):                                       # 카드마다 찾는 변화 묶음(산사태 취약지구 · 10-25) — 결과 요약(stats) 한 출처에서 센다
+        by = [{"cls": t, "n": int(v.get("n") or 0)} for t, v in sorted((st.get("by_type") or {}).items(), key=lambda x: -int(x[1].get("n") or 0))
+              if int(v.get("n") or 0)]
     total = sum(x["n"] for x in by)
     fin = _iso(r["finished_at"])
     ya, yb = c.get("year_a"), c.get("year_b")
@@ -226,7 +230,8 @@ def _change_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, d
             "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
             "by_class": by, "bounds": [round(float(v), 6) for v in b] if b and len(b) == 4 else None, "finished_at": fin,
             "mine": r["submitted_by"] == p.user_id, "empty": False}
-    return "card:card-change", r["cname"] or "국토 변화 분석서비스", False, item
+    cid = r["card_id"] or "card-change"
+    return f"card:{cid}", r["cname"] or "국토 변화 분석서비스", False, item
 
 
 async def my_job(p: Principal, job: str) -> dict | None:

@@ -29,6 +29,13 @@ def run_done(job_id: str, stats: dict):
         c.commit()
 
 
+def types_of(job_id: str) -> str | None:
+    """작업 기록의 찾는 변화 묶음(options.change.types · 10-25 산사태 취약지구) — 없으면 None(국토 변화 기본)."""
+    with _conn() as c:
+        row = c.execute("SELECT options->'change'->>'types' FROM jobs WHERE id=%s", (job_id,)).fetchone()
+    return row[0] if row and row[0] else None
+
+
 def sources_of(job_id: str):
     """작업 기록의 시점별 영상 출처(없으면 None · None = 국토지리정보원 두 해)."""
     with _conn() as c:

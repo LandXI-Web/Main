@@ -33,18 +33,28 @@ GNAME = {1: "건물", 2: "도로", 3: "경작", 4: "산림", 5: "수역", 6: "�
 
 TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
 TYPE_HIDDEN = {"식생 증감"}
+# 카드마다 찾는 변화 묶음(카드 판 modules.change_types · 10-25) — 국토 변화 기본값(TYPES)은 그대로 두고 더한다
+TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물"]}
+
+
+def types_of(tset: str | None) -> list[str]:
+    return list(TYPE_SETS.get(tset or "", TYPES))
 MIN_AREA = 50.0      # ㎡
 MAX_ELONG = 6.0      # 세장비
-MIN_AREA_BY = {"경작 전환": 200.0, "식생 증감": 300.0}   # 계절 차이로 흔들리는 유형은 더 크게(영상 계절이 다름 · 지시서 3.4)
+MIN_AREA_BY = {"경작 전환": 200.0, "식생 증감": 300.0, "산림 → 나지": 100.0}   # 계절 차이로 흔들리는 유형은 더 크게(영상 계절이 다름 · 지시서 3.4)
 
 
 def group_map(cls: np.ndarray) -> np.ndarray:
     return LUT[np.clip(cls, 0, 15)]
 
 
-def transitions(ga: np.ndarray, gb: np.ndarray) -> dict[str, np.ndarray]:
+def transitions(ga: np.ndarray, gb: np.ndarray, tset: str | None = None) -> dict[str, np.ndarray]:
     B, R, C, F, O = G["built"], G["road"], G["crop"], G["forest"], G["other"]
     valid = (ga > 0) & (gb > 0)
+    if tset == "landslide":
+        # 산사태 취약지구(10-25) — 산림이었던 자리가 나지초지 · 도로 · 건물로(앞 시점 산림만 · 다른 전이는 보지 않음)
+        return {"산림 → 나지": valid & (ga == F) & (gb == O), "산림 → 도로": valid & (ga == F) & (gb == R),
+                "산림 → 건물": valid & (ga == F) & (gb == B)}
     m = {
         # 도로 ↔ 건물은 변화로 세지 않는다 — U-Net 이 포장면(특히 콘크리트 고속도로 · 요금소 바닥)을 해마다 건물 ↔ 도로로 흔들어 잡는다
         # (지시서 3.4 · 10-22 담양 시험: 소실 · 신축 오탐 대부분이 본선 포장면). 도로였던 자리의 진짜 건물은 '나지 → 건물'로 대개 잡힌다.
@@ -95,7 +105,7 @@ def polygons(masks: dict[str, np.ndarray], grid: Grid, aoi_mask: np.ndarray | No
     from rasterio.features import shapes
     from shapely.geometry import shape
     out = []
-    for t in TYPES:
+    for t in masks:
         m = masks[t]
         if aoi_mask is not None:
             m = m & aoi_mask

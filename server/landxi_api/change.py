@@ -165,13 +165,30 @@ MAX_KM2_M2 = 60.0 * 1e6        # change/ranges.MAX_KM2(국토 변화가 영상�
 
 
 @router.get("/change/ranges")
-async def list_ranges(request: Request, project_id: str | None = None, all: int = 0, brief: int = 0):
-    """기본 = 프로젝트에 묶인 대상지 · 분석 서비스 카드에서 올린 대상지(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부."""
+async def list_ranges(request: Request, project_id: str | None = None, all: int = 0, brief: int = 0, recent: int = 0):
+    """기본 = 프로젝트에 묶인 대상지 · 분석 서비스 카드에서 올린 대상지(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부.
+    recent=1 = 이 사람이 최근 쓴 구간(내가 올렸거나 내가 분석한 것 · 시험 구간 빼고 · 5개) — 국토 변화 틀 카드의 '최근 쓴 구간'(10-25 사용자
+    "대상지가 왜 정해져 있지? 정해지면 안되는거 아닌가?" — 미리 정한 대상지 목록은 없다)."""
     p = require(principal(request))
     async with db(p) as conn:
-        rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
-                                f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
-                                "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
+        if recent:
+            rows = await conn.fetch(
+                "SELECT g.id, g.name, g.buffer_m, round(ST_Area(g.geom)) AS m2, "
+                "greatest(g.created_at, (SELECT max(r.created_at) FROM change_runs r WHERE r.range_id=g.id AND r.created_by=$1)) AS used "
+                "FROM change_ranges g WHERE (g.created_by=$1 OR EXISTS (SELECT 1 FROM change_runs r WHERE r.range_id=g.id AND r.created_by=$1)) "
+                "AND coalesce(g.origin, '') <> 'test' AND g.name !~* '(시험|test)' "
+                f"AND ST_Area(g.geom) <= {MAX_KM2_M2} ORDER BY used DESC NULLS LAST LIMIT 20", p.user_id)
+            seen, keep = set(), []
+            for r in rows:                              # 같은 이름 · 같은 넓이 · 같은 거리(다시 올린 같은 구간)는 하나만
+                k = (r["name"], r["m2"], r["buffer_m"])
+                if k not in seen:
+                    seen.add(k)
+                    keep.append(r)
+            rows = keep[:5]
+        else:
+            rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
+                                    f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
+                                    "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
     out = []
     for r in rows:
         o = range_out(await get_range_row(p, r["id"]))
@@ -325,17 +342,17 @@ def src_word(src: dict | None, year: int) -> str:
 
 
 # ── 실행 ───────────────────────────────────────────────────────────────────
-async def cached_run(p, range_id: str, year_a: int, year_b: int, key: str | None = None) -> dict | None:
+async def cached_run(p, range_id: str, year_a: int, year_b: int, key: str | None = None, ver: str | None = None) -> dict | None:
     _, _, _, RUN = _mods()
     async with db(p) as conn:
         r = await conn.fetchrow("SELECT job_id, state FROM change_runs WHERE range_id=$1 AND year_a=$2 AND year_b=$3 AND version=$4 "
                                 "AND src_key IS NOT DISTINCT FROM $5 "
                                 "AND state IN ('done','queued','running') ORDER BY (state='done') DESC, created_at DESC LIMIT 1",
-                                range_id, year_a, year_b, _ver(), key)
+                                range_id, year_a, year_b, ver or _ver(), key)
     return dict(r) if r else None
 
 
-async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | None:
+async def same_range_run(p, range_id: str, year_a: int, year_b: int, ver: str | None = None) -> str | None:
     """같은 대상지(범위 면이 같은 다른 대상지 — 같은 구역선 · 같은 버퍼를 다시 올린 새 프로젝트)의 끝난 결과가 있으면, 계산을 다시 하지 않고
     이 대상지 몫 결과로 이어 붙인다(결과 파일은 하드 링크 · 판정은 새로 · 결과 번호는 새로). 없으면 None."""
     async with db(realm="lx") as conn:
@@ -343,7 +360,7 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
             "SELECT r.job_id, r.zoom, r.stats FROM change_runs r JOIN change_ranges g ON g.id=r.range_id JOIN change_ranges me ON me.id=$1 "
             "WHERE r.state='done' AND r.year_a=$2 AND r.year_b=$3 AND r.version=$4 AND r.src_key IS NULL AND g.id<>me.id AND g.buffer_m=me.buffer_m "
             "AND ST_Equals(ST_SnapToGrid(g.geom, 0.01), ST_SnapToGrid(me.geom, 0.01)) ORDER BY r.done_at DESC LIMIT 1",
-            range_id, year_a, year_b, _ver())
+            range_id, year_a, year_b, ver or _ver())
     if not src:
         return None
     import os
@@ -366,7 +383,7 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
     await run_in_threadpool(_link)
     async with db(p) as conn:
         await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, stats, created_by, done_at) "
-                           "VALUES ($1,$2,'lx',$3,$4,$5,$6,'done',$7,$8,now())", new, range_id, year_a, year_b, src["zoom"], _ver(), src["stats"], p.user_id)
+                           "VALUES ($1,$2,'lx',$3,$4,$5,$6,'done',$7,$8,now())", new, range_id, year_a, year_b, src["zoom"], ver or _ver(), src["stats"], p.user_id)
         await audit(conn, p, "change.run.same_range", new, None, {"from": src["job_id"], "range_id": range_id})
     return new
 
@@ -374,11 +391,26 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int) -> str | No
 INTERACTIVE_KM2 = 2.0
 
 
+CARD_WORD = {"card-change": "국토 변화", "card-landslide": "산사태 취약지구"}
+
+
+async def frame_card(card_id: str | None) -> tuple[str, str | None]:
+    """국토 변화 틀 카드 → (카드, 찾는 변화 묶음). 없거나 틀 밖이면 국토 변화(기본) — 찾는 변화는 카드 판에서만 정한다(화면 값을 믿지 않음)."""
+    from .cards import change_types_of, is_change_frame
+    cid = str(card_id or "card-change")
+    if cid != "card-change" and not await is_change_frame(cid):
+        raise ApiError("bad_request", "국토 변화 틀 카드가 아닙니다")
+    return cid, await change_types_of(cid)
+
+
 async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int, fresh: bool = False, via: str = "화면",
-                    src_a: dict | None = None, src_b: dict | None = None) -> dict:
+                    src_a: dict | None = None, src_b: dict | None = None, card_id: str | None = None) -> dict:
     """캐시(끝났거나 도는 중)가 있으면 그것 · 없으면 작업 제출. → {job_id, cached, state, zoom}
-    시점마다 영상 출처(src_a · src_b · 10-23 원칙 329) — 없으면 국토지리정보원 year_a · year_b(예전과 같음)."""
+    시점마다 영상 출처(src_a · src_b · 10-23 원칙 329) — 없으면 국토지리정보원 year_a · year_b(예전과 같음).
+    card_id = 국토 변화 틀 카드(국토 변화 · 산사태 취약지구 · 10-25) — 찾는 변화 묶음이 다르면 계산 판(캐시 열쇠)도 다르다."""
     I, _, R, RUN = _mods()
+    cid, tset = await frame_card(card_id)
+    ver = _ver() + (f"+{tset}" if tset else "")
     d = await get_range_row(p, range_id)
     sa = await _src_in(p, src_a or {"kind": "ngii", "year": year_a}, d)
     sb = await _src_in(p, src_b or {"kind": "ngii", "year": year_b}, d)
@@ -391,11 +423,11 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     year_a, year_b = sa["year"], sb["year"]
     key = I.src_key(sa, sb)
     if not fresh:
-        c = await cached_run(p, range_id, year_a, year_b, key)
+        c = await cached_run(p, range_id, year_a, year_b, key, ver)
         if c:
             return {"job_id": c["job_id"], "cached": c["state"] == "done", "state": c["state"], "range": range_out(d),
                     "attached": c["state"] in ("queued", "running")}       # 같은 요청 — 진행 중 작업에 붙인다(새로 만들지 않음 · F5)
-        al = await same_range_run(p, range_id, year_a, year_b) if key is None else None
+        al = await same_range_run(p, range_id, year_a, year_b, ver) if key is None else None
         if al:
             return {"job_id": al, "cached": True, "state": "done", "range": range_out(d)}
     _lx(p)
@@ -411,21 +443,22 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     from . import jobs as J
     km2 = float(d["m2"]) / 1e6
     interactive = km2 <= INTERACTIVE_KM2
-    opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": _ver(), "bbox4326": range_out(d)["bbox"],
+    opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": ver, "bbox4326": range_out(d)["bbox"],
+                       **({"types": tset} if tset else {}),
                        **({"src_a": {k: sa.get(k) for k in ("kind", "id", "year")}, "src_b": {k: sb.get(k) for k in ("kind", "id", "year")}} if key else {})},
             "range_name": d["name"], "interactive": interactive, "requested_via": via}
     # 분석 서비스 작업(card-change) — 프로젝트 4단계 추론으로 적지 않는다(10-23 원칙 329 · 다른 분석 서비스와 같은 작업 장부 · 지도 서비스 '분석 서비스' 묶음)
     if d.get("sgg"):
         opts["sgg_cd"] = d["sgg"][0]
     # 대화형(작은 범위 2㎢ 이하)은 전국 분석(3) · 다른 분석(0)보다 먼저(−1) — 전국 작업은 칸 묶음 사이에서 비킨다(F3)
-    body = {"kind": "index", "model_id": "change-ap25", "card_id": "card-change", "label": f"분석 서비스 · 국토 변화 · {d['name']} {year_a}↔{year_b}"[:60],
+    body = {"kind": "index", "model_id": "change-ap25", "card_id": cid, "label": f"분석 서비스 · {CARD_WORD.get(cid, '국토 변화')} · {d['name']} {year_a}↔{year_b}"[:60],
             "priority": -1 if interactive else 0, "options": opts}
     res = await J.submit(body, request)
     jid = res["job"]["id"]
     async with db(p) as conn:
         await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, created_by, src_key, sources) "
                            "VALUES ($1,$2,'lx',$3,$4,$5,$6,'queued',$7,$8,$9) ON CONFLICT (job_id) DO NOTHING",
-                           jid, range_id, year_a, year_b, z, _ver(), p.user_id, key, {"a": sa, "b": sb})
+                           jid, range_id, year_a, year_b, z, ver, p.user_id, key, {"a": sa, "b": sb})
     return {"job_id": jid, "cached": False, "state": "queued", "zoom": z, "range": range_out(d), "events_url": res.get("events_url")}
 
 
@@ -435,7 +468,8 @@ async def create_run(body: dict, request: Request):
     out = await start_run(request, p, str(body.get("range_id") or ""), int(body.get("year_a") or 0), int(body.get("year_b") or 0),
                           bool(body.get("fresh")), via="XI ChatGEO" if body.get("via") == "chatgeo" else "분석 서비스" if body.get("via") == "analyze" else "화면",
                           src_a=body.get("src_a") if isinstance(body.get("src_a"), dict) else None,
-                          src_b=body.get("src_b") if isinstance(body.get("src_b"), dict) else None)
+                          src_b=body.get("src_b") if isinstance(body.get("src_b"), dict) else None,
+                          card_id=body.get("card_id") if isinstance(body.get("card_id"), str) else None)
     if body.get("later") and out.get("state") in ("queued", "running"):     # 배치로 — 끝나면 요청함 알림(F3 · F5)
         from .deps import redis
         await (await redis()).hset(f"job:{out['job_id']}", "chg_notify", p.user_id or "")
@@ -498,6 +532,46 @@ def mark_counts(marks: dict, fids: list[str]) -> dict:
     return {k: env(v, "count", "recorded", "판정 기록(change_marks)") for k, v in c.items()}
 
 
+async def zones_of(range_id: str, fc: dict) -> list[dict] | None:
+    """올린 구간의 도형 하나하나(지구)마다 변화 수 · 넓이(산사태 취약지구 등 · 10-25). 도형이 하나뿐이거나 행정구역이면 None.
+    지구 = 올린 도형(+ 그 구간의 버퍼) — 변화 폴리곤의 대표점이 들어간 지구에 센다(한 변화는 한 지구에만 · 겹치면 앞 지구)."""
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT parts, buffer_m FROM change_ranges WHERE id=$1", range_id)
+    parts = (json.loads(r["parts"]) if isinstance(r["parts"], str) else r["parts"]) if r and r["parts"] else None
+    if not parts or len(parts) < 2:
+        return None
+
+    def _count():
+        from shapely.geometry import shape
+        from shapely.prepared import prep
+
+        from change.ranges import to5179
+        buf = float(r["buffer_m"] or 0)
+        zs = []
+        for i, z in enumerate(parts):
+            g = shape(z["geom"])
+            zs.append({"name": z.get("name") or f"{i + 1}번 지구", "g": prep(g.buffer(buf) if buf > 0 else g), "core": prep(g),
+                       "area": g.area, "n": 0, "m2": 0.0, "n_core": 0, "by": {}})
+        for f in fc.get("features") or []:
+            pr = f["properties"]
+            if pr.get("hidden"):
+                continue
+            pt = to5179(shape({"type": "Point", "coordinates": [pr["lng"], pr["lat"]]}))
+            for z in zs:
+                if z["g"].contains(pt):
+                    z["n"] += 1
+                    z["m2"] += float(pr.get("area_m2") or 0)
+                    z["n_core"] += 1 if z["core"].contains(pt) else 0
+                    z["by"][pr["type"]] = z["by"].get(pr["type"], 0) + 1
+                    break
+        return zs
+    zs = await run_in_threadpool(_count)
+    src = "변화 탐지 결과(토지피복 U-Net · 두 시점 비교 · 결과 확인 전) × 올린 지구"
+    return [{"name": z["name"], "n": env(z["n"], "count", "inferred", src), "n_inside": env(z["n_core"], "count", "inferred", src, "버퍼 빼고 지구 안"),
+             "area": env(round(z["m2"], 1), "m2", "inferred", src), "zone_area": env(round(z["area"] / 1e4, 2), "ha", "measured", "지구 넓이(EPSG:5179)"),
+             "by_type": {t: env(v, "count", "inferred", src) for t, v in z["by"].items()}} for z in zs]
+
+
 @router.get("/change/runs/{job_id}")
 async def get_run(job_id: str, request: Request):
     p = require(principal(request))
@@ -505,13 +579,20 @@ async def get_run(job_id: str, request: Request):
     st = d.get("stats")
     if isinstance(st, str):
         st = json.loads(st)
+    async with db(realm="lx") as conn:
+        cid = await conn.fetchval("SELECT card_id FROM jobs WHERE id=$1", job_id)
+        cname = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) if cid else None
     out = {"job_id": job_id, "state": d["state"], "range_id": d["range_id"], "range_name": d["range_name"], "project_id": d.get("project_id"),
+           "card": {"id": cid or "card-change", "name": cname or "국토 변화 분석서비스"},
            "period": period_of(d), "zoom": d["zoom"], "stats": stats_env(st),
            "done_at": d["done_at"].isoformat(timespec="seconds") if d.get("done_at") else None, "error": d.get("error")}
     if d["state"] == "done":
         fc = await run_in_threadpool(_features, job_id)
         fids = [f["id"] for f in fc["features"] if not f["properties"].get("hidden")]
         out["marks"] = mark_counts(await marks_of(p, job_id), fids)
+        z = await zones_of(d["range_id"], fc)
+        if z:
+            out["zones"] = z
     else:
         from .change_jobs import job_status
         out["status"] = await job_status(job_id)
@@ -816,7 +897,9 @@ async def _report_data(p, job_id: str) -> tuple[dict, dict]:
     rg = await get_range_row(p, d["range_id"])
     fc = await run_in_threadpool(_features, job_id)
     mk = await marks_of(p, job_id)
-    r = RP.build(rng=range_out(rg), run=d, stats=st, fc=fc, marks=mk)
+    async with db(realm="lx") as conn:
+        cname = await conn.fetchval("SELECT c.name->>'ko' FROM jobs j JOIN cards c ON c.id=j.card_id WHERE j.id=$1", job_id)
+    r = RP.build(rng=range_out(rg), run=d, stats=st, fc=fc, marks=mk, card_name=cname, zones=await zones_of(d["range_id"], fc))
     return r, d
 
 

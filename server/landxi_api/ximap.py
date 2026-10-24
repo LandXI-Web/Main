@@ -107,16 +107,27 @@ async def _edit_delta(conn, sets: list[str]) -> dict[str, int]:
     return {r["set_id"]: int(r["d"] or 0) for r in rows}
 
 
+# 찾는 것(모델이 찾는 분류 — 서비스 결과 장부 target · 0131) → 이름표 · 셈 단위. 모델이 하나인 카드는 '' → 없음
+TARGET_UNIT = {"People": "명", "people": "명", "person": "명", "vehicle": "대", "car": "대"}
+
+
+def target_part(tg: str | None) -> dict | None:
+    if not tg:
+        return None
+    ks = [k for k in str(tg).split("·") if k]
+    return {"key": tg, "label": " · ".join(CLASS_KO.get(k, k) for k in ks), "unit": TARGET_UNIT.get(ks[0], "개") if len(ks) == 1 else "개"}
+
+
 _HELD: set = set()
 
 
-def _fallback(sgg, svc):
+def _fallback(ck):
     """장부를 만드는 순간 결과 층 주소를 못 찾은 칸(새 결과의 조각이 아직 덜 만들어짐 · 카탈로그 한 번 비어 옴 등) —
     직전 판의 같은 칸을 쓴다(1시간까지). 서비스 수가 7→6→7 처럼 출렁이지 않게(바퀴 16 보고 · 바퀴 17 고침)."""
-    o = _PREV.get((sgg, svc))
+    o = _PREV.get(ck)
     if not o or time.time() - o["at"] > 3600:
         return None
-    _HELD.add((sgg, svc))
+    _HELD.add(ck)
     return o["c"], o["n"], o["layer"]
 
 
@@ -130,7 +141,7 @@ async def build_board(p) -> dict:
         pass
     async with db(realm="lx") as conn:
         led = await conn.fetch(
-            "SELECT s.card_id, s.set_id, s.sgg_cd, s.year, s.service_version, s.imagery_id, s.analyzed_at, s.origin, c.name AS cname "
+            "SELECT s.card_id, s.set_id, s.sgg_cd, s.year, s.service_version, s.imagery_id, s.analyzed_at, s.origin, s.target, c.name AS cname "
             "FROM service_results s LEFT JOIN cards c ON c.id = s.card_id WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')" + SQL_NOT_EXCLUDED)   # 보이기 규칙(원칙 293)
         bare = await conn.fetch(
             "SELECT j.id, j.options->>'sgg_cd' AS sgg_cd, j.imagery_id, j.model_id, j.options->'classes' AS ocls, j.finished_at, m.classes, i.year FROM jobs j "
@@ -142,9 +153,10 @@ async def build_board(p) -> dict:
             reg = R.region_of(r["sgg_cd"])
             if not reg:
                 continue
-            k = (reg["sgg_cd"], r["card_id"])
+            tg = r["target"] or ""
+            k = (reg["sgg_cd"], r["card_id"]) if not tg else (reg["sgg_cd"], r["card_id"], tg)      # 찾는 것마다 따로(사람 · 차량 — 0131)
             cand = {"svc": r["card_id"], "name": svc_name(r["cname"]) or "AI 분석", "set_id": r["set_id"], "year": r["year"],
-                    "version": r["service_version"], "imagery_id": r["imagery_id"], "at": r["analyzed_at"]}
+                    "version": r["service_version"], "imagery_id": r["imagery_id"], "at": r["analyzed_at"], "target": tg}
             o = cells.get(k)
             rank = lambda c: (c["year"] or 0, c["at"].timestamp() if c["at"] else 0)   # noqa: E731 — 늦은 연도 → 늦게 분석한 것
             if o is None or rank(cand) > rank(o):
@@ -190,13 +202,14 @@ async def build_board(p) -> dict:
     regs: dict[str, dict] = {}
     svcs: dict[str, dict] = {}
     from shapely.geometry import shape
-    for (sgg, svc), c in cells.items():
+    for ck, c in cells.items():
+        sgg, svc = ck[0], ck[1]
         s = c["set_id"]
         layer = None
         if s.startswith("job_"):
             j = jobs.get(s)
             if not j or not j["snapshot_ready"]:
-                layer = _fallback(sgg, svc)
+                layer = _fallback(ck)
                 if layer is None:
                     continue
         if layer is not None:                                    # 직전 판의 같은 칸(층 · 수 · 결과 묶음)을 그대로 — 새 결과가 다 만들어지면 다음 판에서 바뀐다
@@ -217,7 +230,7 @@ async def build_board(p) -> dict:
         else:
             it = cat_items.get(s)
             if not it or not it.get("url") and not it.get("path"):
-                fb = _fallback(sgg, svc)
+                fb = _fallback(ck)
                 if fb is None:
                     continue
                 c, n, layer = fb
@@ -225,9 +238,9 @@ async def build_board(p) -> dict:
             else:
                 n = sn.get(s, 0)
                 layer = {k: it.get(k) for k in ("id", "set", "path", "layer", "source", "kind", "role", "promote_id", "minzoom", "maxzoom", "bounds", "signed", "attribution", "url")}
-        if layer is not None and (sgg, svc) not in _HELD:
-            _PREV[(sgg, svc)] = {"c": dict(c), "n": n, "layer": layer, "at": time.time()}
-        _HELD.discard((sgg, svc))
+        if layer is not None and ck not in _HELD:
+            _PREV[ck] = {"c": dict(c), "n": n, "layer": layer, "at": time.time()}
+        _HELD.discard(ck)
         n = max(0, n + delta.get(s, 0))
         _SID[layer["set"]] = s                                   # 결과 층 → 결과 묶음(밀도 격자가 같은 묶음을 센다 · 바깥에 내지 않음)
         reg = R.region_of(sgg)
@@ -239,7 +252,8 @@ async def build_board(p) -> dict:
                              "items": []}
         im = imgs.get(c["imagery_id"])
         at = _iso(c["at"])
-        r["items"].append({"svc": svc, "name": c["name"], "n": env(n, "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=_iso(c["at"])), "unit": "개", "finished_at": at, "year": c["year"] or (im or {}).get("year"),
+        part = target_part(c.get("target"))
+        r["items"].append({"svc": svc, "name": c["name"] + (f" · {part['label']}" if part else ""), **({"part": part} if part else {}), "n": env(n, "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=_iso(c["at"])), "unit": "개", "finished_at": at, "year": c["year"] or (im or {}).get("year"),
                            "imagery": _img_label(im) or (f"{c['year']}년 영상" if c["year"] else None), "version": c["version"],
                            "style": "landcover" if svc == "landcover" else "result", "layer": layer})
         sv = svcs.setdefault(svc, {"id": svc, "name": c["name"], "n_regions": 0, "n": 0})

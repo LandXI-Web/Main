@@ -72,10 +72,23 @@ def _sources(run_id: str, year_a: int, year_b: int, src_a=None, src_b=None):
     return out[0], out[1]
 
 
+def _tset(run_id: str, tset):
+    """찾는 변화 묶음 — 주지 않으면 작업 기록(options.change.types)에서(워커 어댑터는 그대로 · 이 모듈만 다시 읽힘 · 10-25)."""
+    if tset is not None:
+        return tset or None
+    try:
+        from . import db_sync
+        return db_sync.types_of(run_id)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: int, net, parcels, device="cuda",
-            pause=None, progress=None, log=print, thumb_zoom: dict | None = None, src_a=None, src_b=None) -> dict:
+            pause=None, progress=None, log=print, thumb_zoom: dict | None = None, src_a=None, src_b=None, tset=None) -> dict:
     """한 범위 전체. parcels = parcels.for_range 결과(5179). 돌려줌 = stats(dict)."""
     t0 = time.perf_counter()
+    tset = _tset(run_id, tset)
+    types = D.types_of(tset)
     SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
     raster = SA.get("kind") == "imagery" or SB.get("kind") == "imagery"
     out = run_dir(run_id)
@@ -86,7 +99,7 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     if parcels is not None and len(parcels) and "use" in parcels:
         road_geoms = list(parcels[parcels["use"].fillna("").str.contains("도로\\(본선\\)|본선", regex=True)].geometry)
     blocks = _blocks(rng5179, zoom)
-    raw: dict[str, list] = {t: [] for t in D.TYPES}
+    raw: dict[str, list] = {t: [] for t in types}
     tiles_got = {"a": 0, "b": 0, "total": 0}
     span = I.NG.tile_span_m(zoom)
 
@@ -119,14 +132,14 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         if road_geoms:
             rm = _raster([g for g in road_geoms if g.intersects(box(*b))], grid)
             ga, gb = D.burn_road(ga, rm), D.burn_road(gb, rm)
-        masks = D.transitions(ga, gb)
+        masks = D.transitions(ga, gb, tset)
         for t, p in D.polygons(masks, grid, aoi, min_area=10.0, elong=False):
             raw[t].append(p)
     if progress:
         progress("polygons", len(blocks), len(blocks))
     # 블록 경계에서 나뉜 조각 잇기 → 거름
     feats = []
-    for t in D.TYPES:
+    for t in types:
         if not raw[t]:
             continue
         u = unary_union(raw[t]).buffer(0)
@@ -206,8 +219,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         props["lng"], props["lat"] = round(c.x, 6), round(c.y, 6)
         fc["features"].append({"type": "Feature", "id": row["id"], "geometry": mapping(g4), "properties": props})
     (out / "changes.geojson").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    stats = summarize(rows)
-    stats.update({"version": VERSION, "year_a": year_a, "year_b": year_b, "zoom": zoom,
+    stats = summarize(rows, types)
+    stats.update({"version": VERSION + (f"+{tset}" if tset else ""), "types": tset, "year_a": year_a, "year_b": year_b, "zoom": zoom,
                   "sources": {k: {x: v[x] for x in ("kind", "year", "id") if x in v} for k, v in (("a", SA), ("b", SB))}, "gsd_m": 0.255 if zoom == 18 else 0.51,
                   "range_km2": round(rng5179.area / 1e6, 3), "blocks": len(blocks), "tiles": tiles_got,
                   "seconds": round(time.perf_counter() - t0, 1)})
@@ -215,9 +228,9 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     return stats
 
 
-def summarize(rows: list[dict]) -> dict:
+def summarize(rows: list[dict], types: list[str] | None = None) -> dict:
     vis = [r for r in rows if not r.get("hidden")]
-    by_type = {t: {"n": 0, "m2": 0.0, "in": 0, "out": 0} for t in D.TYPES}
+    by_type = {t: {"n": 0, "m2": 0.0, "in": 0, "out": 0} for t in (types or D.TYPES)}
     for r in rows:
         b = by_type[r["type"]]
         b["n"] += 1
