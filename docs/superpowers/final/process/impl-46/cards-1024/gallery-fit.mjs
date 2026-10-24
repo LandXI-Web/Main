@@ -6,7 +6,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const C = await import(pathToFileURL(path.resolve(HERE, '../../../../../../tools/check/common.mjs')).href);
 const OUT = path.join(HERE, 'shots', 'fit');
 fs.mkdirSync(OUT, { recursive: true });
-const SIZES = [[1920, 1080], [1440, 900], [1280, 800], [390, 844]];
+const SIZES = [[1920, 1080], [1440, 900], [1280, 800], [1280, 720], [390, 844]];
 const browser = await C.launch();
 const s = await C.login(browser, 'app');
 const { page, home } = s;

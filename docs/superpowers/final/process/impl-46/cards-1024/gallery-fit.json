@@ -1,5 +1,5 @@
 {
- "at": "2026-10-24T03:07:45.440Z",
+ "at": "2026-10-24T03:45:39.201Z",
  "rows": [
   {
    "size": "1920x1080",
@@ -135,6 +135,54 @@
   },
   {
    "size": "1280x800",
+   "n": 8,
+   "scroll": 0,
+   "cards": 8,
+   "inView": 8,
+   "fit": "0",
+   "cols": "repeat(4, minmax(0px, 1fr))",
+   "overlap": 0,
+   "clip": [],
+   "minFont": 14
+  },
+  {
+   "size": "1280x720",
+   "n": 2,
+   "scroll": 0,
+   "cards": 2,
+   "inView": 2,
+   "fit": "1",
+   "cols": "repeat(2, minmax(0px, 1fr))",
+   "overlap": 0,
+   "clip": [],
+   "minFont": 14
+  },
+  {
+   "size": "1280x720",
+   "n": 4,
+   "scroll": 0,
+   "cards": 4,
+   "inView": 4,
+   "fit": "1",
+   "cols": "repeat(4, minmax(0px, 1fr))",
+   "overlap": 0,
+   "clip": [],
+   "minFont": 14
+  },
+  {
+   "size": "1280x720",
+   "n": 6,
+   "scroll": 0,
+   "cards": 6,
+   "inView": 6,
+   "fit": "0",
+   "cols": "repeat(3, minmax(0px, 1fr))",
+   "overlap": 0,
+   "clip": [],
+   "minFont": 14
+  },
+  {
+   "size": "1280x720",
    "n": 8,
    "scroll": 0,
    "cards": 8,
