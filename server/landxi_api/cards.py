@@ -458,6 +458,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
                                               else "AI 분석 결과 있음" if result_sggs else "업무 결과 집계 전"),      # 기관 덱도 같은 말(10-10 확인 8 ⓐ)
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
+        "parcel_on": bool(parcel),                                             # 고급 기능 '필지 단위 집계' 처음 켬 = 이 카드가 필지 대조를 하는가(10-24)
         "version": cur["version"] if cur else None, "owner": own["name"],
         "official": official, "model": model_card, "targets": targets, "sample": sample_src,
         # 모델 없이 미리 만든 결과만 있는 카드(해양쓰레기 · 생활환경 · 도로 — 10-24 카드 고침) = 결과 보기 전용 · 새 분석 안 됨(상태 말은 그대로)
@@ -574,7 +575,7 @@ async def _deck_tenant(p) -> dict:
             "todo": None,                                # 10-22 원칙 135 · 308 — 기관 카드에 '결과 확인 대기 n건'(큰 내부 숫자)을 쓰지 않는다(칸을 비움)
             "report": survey,
         })
-        for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):
+        for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version", "parcel_on"):
             core.pop(k, None)
         out.append(core)
     return {"items": out, "total": len(out), "groups": _groups(m), "short": short, "as_of": now_iso(), "computed_at": at, "scope": "assigned" if dept_only else "all"}
@@ -1105,8 +1106,22 @@ async def analyze(cid: str, body: dict, request: Request):
     im, rg = body.get("imagery"), body.get("region")
     if isinstance(im, (list, tuple, dict)) or isinstance(rg, (list, tuple, dict)) or any(k in body for k in ("imageries", "imagery_ids", "regions"))             or "," in str(im or "") or "," in str(rg or ""):
         raise ApiError("bad_request", "분석은 한 번에 영상 하나만 합니다", {"field": "imagery"})
+    # 고급 기능(10-24 '분석 구간 설정하기') — 구간(구간 업로드 · 행정구역 · 장부 change_ranges 한 곳) · 필지 단위 집계. 분석은 그대로 고른 영상 전체,
+    # 결과를 구간 안/밖 · 필지로 나눠 본다(range_tools.split). 지역을 안 주면 구간이 걸친 첫 시군구.
+    rid = body.get("range")
+    rid = (rid or {}).get("id") if isinstance(rid, dict) else rid
+    if rid and not rg:
+        from .range_tools import get_row
+        sg = list((await get_row(p, str(rid))).get("sgg") or [])
+        rg = sg[0] if sg else None
     region = str(rg or "")
     pl = await _plan(p, cid, region, str(im or "") or None)
+    adv = {}
+    if rid:
+        from .range_tools import for_job
+        adv["range"] = await for_job(p, str(rid), pl["sgg"])
+    if body.get("parcels") is not None:
+        adv["parcels"] = bool(body.get("parcels"))
     if not pl["fits"]:
         raise ApiError("conflict", pl["note"] or "이 카드로 이 지역을 분석할 수 없습니다", {"region": pl["sgg"]}, 409)
     async with db(realm="lx") as conn:
@@ -1118,12 +1133,16 @@ async def analyze(cid: str, body: dict, request: Request):
     if busy:
         return {"started": False, "running": True, "region": pl["sgg"], "name": pl["name"], "xi": xi, "map": mapsvc, "as_of": now_iso()}
     from .jobs import submit
-    res = await submit(_job_body(cid, name, pl), request)                       # 같은 길(POST /jobs) — 대기열 · 전력 규칙 · 작업 기록 그대로
+    jb = _job_body(cid, name, pl)
+    jb["options"].update(adv)
+    if adv.get("range"):
+        jb["label"] = f"{jb['label']} · {adv['range']['word']}"[:90]          # 작업 목록 어디서나 '구간: 이름 · 100m'
+    res = await submit(jb, request)                       # 같은 길(POST /jobs) — 대기열 · 전력 규칙 · 작업 기록 그대로
     pos = None
     try:
         pos = res["job"]["state"]
     except Exception:  # noqa: BLE001
         pos = None
     jid = (res.get("job") or {}).get("id") if isinstance(res, dict) else None
-    return {"started": True, "running": False, "region": pl["sgg"], "name": pl["name"], "xi": xi, "state": pos,
+    return {"started": True, "running": False, "region": pl["sgg"], "name": pl["name"], "xi": xi, "state": pos, "range": {k: adv["range"][k] for k in ("id", "word")} if adv.get("range") else None,
             "map": mapsvc + (f"?job={jid}" if jid else ""), "as_of": now_iso()}

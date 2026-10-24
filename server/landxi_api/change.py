@@ -140,120 +140,45 @@ def range_out(d: dict, av: dict | None = None) -> dict:
            "buffer": f"{int(float(d['buffer_m'] or 0))}m", "project_id": d.get("project_id"), "sgg": list(d.get("sgg") or []),
            "years": [{"year": int(y)} for y in (d.get("years") or [])], "area": env(round(float(d["m2"]) / 1e6, 3), "km2", "measured", "범위 면적(EPSG:5179)"),
            "bbox": [round(v, 6) for v in e], "geometry": d["g"], "line": d["l"], "source_name": d.get("source_name")}
+    from .range_tools import range_word
+    out["word"] = range_word(d["name"], d["buffer_m"])                                  # '구간: 이름 · 100m'(모든 카드 같은 말)
     if av is not None:
         out["imagery_years"] = years_out(av)
     return out
 
 
-async def _save_range(p, *, name: str, kind: str, buffer_m: float, line5179, rng5179, source_name: str | None,
-                      project_id: str | None, years: list[int], origin: str | None = None) -> str:
-    _, P, R, _ = _mods()
-    from shapely import to_wkb
-    from shapely.geometry import MultiPolygon
-    sgg = await run_in_threadpool(P.sgg_codes_for, R.to4326(rng5179))
-    mp = rng5179 if rng5179.geom_type == "MultiPolygon" else MultiPolygon([rng5179])
-    rid = "rng_" + secrets.token_hex(6)
-    async with db(p) as conn:
-        await conn.execute(
-            "INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by, origin) "
-            "VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_GeomFromWKB($7),5179), ST_SetSRID(ST_GeomFromWKB($8),5179), $9,$10,$11,$12,$13)",
-            rid, "lx" if p.is_lx else p.tenant_id, project_id, name[:120], kind, buffer_m, to_wkb(line5179), to_wkb(mp), sgg, years,
-            source_name, p.user_id, origin)
-        await audit(conn, p, "change.range.create", rid, None, {"name": name, "kind": kind, "buffer_m": buffer_m, "project_id": project_id, "origin": origin})
-    return rid
-
-
 @router.post("/change/ranges")
 async def create_range(request: Request):
-    """multipart(file · buffer_m · name · project_id · years) 또는 JSON {name, buffer_m, geojson | pnus | regions, project_id, years}."""
-    p = _lx(principal(request))
-    _, P, R, _ = _mods()
-    ct = request.headers.get("content-type", "")
-    years: list[int] = []
-    if ct.startswith("multipart/"):
-        form = await request.form()
-        f = form.get("file")
-        if f is None:
-            raise ApiError("bad_request", "파일이 없습니다")
-        data = await f.read()
-        if len(data) > 30 * 1024 * 1024:
-            raise ApiError("too_large", "30MB 아래 파일로 올려 주세요")
-        name = str(form.get("name") or f.filename or "구역선")
-        buffer_m = float(form.get("buffer_m") or 0)
-        project_id = form.get("project_id") or None
-        origin = "card" if form.get("origin") == "card" else None
-        years = [int(y) for y in re.findall(r"\d{4}", str(form.get("years") or ""))]
-        kind = "line"
-        src = f.filename
-        if str(f.filename or "").lower().endswith((".txt", ".csv")):
-            kind = "pnu"
-            pn = P.parse_pnus(data.decode("utf-8", "ignore"))
-            g = await run_in_threadpool(P.by_pnus, pn)
-            if not len(g):
-                raise ApiError("bad_request", "필지(PNU)를 찾지 못했습니다")
-            line = await run_in_threadpool(R.union5179, g)
-        else:
-            try:
-                g = await run_in_threadpool(R.read_vector, f.filename or "x.geojson", data)
-            except R.RangeError as e:
-                raise ApiError("bad_request", str(e)) from None
-            line = await run_in_threadpool(R.union5179, g)
-    else:
-        body = await request.json()
-        name = str(body.get("name") or "대상지")
-        buffer_m = float(body.get("buffer_m") or 0)
-        project_id = body.get("project_id")
-        origin = "card" if body.get("origin") == "card" else None
-        years = [int(y) for y in body.get("years") or []]
-        src = body.get("source_name")
-        if body.get("geojson"):
-            kind = "line"
-            try:
-                g = await run_in_threadpool(R.from_geojson, body["geojson"])
-            except R.RangeError as e:
-                raise ApiError("bad_request", str(e)) from None
-            line = await run_in_threadpool(R.union5179, g)
-        elif body.get("pnus"):
-            kind = "pnu"
-            pn = P.parse_pnus(" ".join(map(str, body["pnus"])) if isinstance(body["pnus"], list) else str(body["pnus"]))
-            g = await run_in_threadpool(P.by_pnus, pn)
-            if not len(g):
-                raise ApiError("bad_request", "필지(PNU)를 찾지 못했습니다")
-            line = await run_in_threadpool(R.union5179, g)
-        elif body.get("regions"):
-            kind = "region"
-            from shapely.ops import unary_union
+    """multipart(file · buffer_m · name · project_id · years) 또는 JSON {name, buffer_m, geojson | pnus | regions, project_id, years}.
+    만드는 길은 분석 구간 공통 도구 하나(range_tools.make_range · 10-24 모든 카드의 '분석 구간 설정하기'와 같은 함수 · 같은 표)."""
+    from change.ranges import MAX_KM2
 
-            from .regions import regions_base
-            _, geoms, _ = regions_base()
-            gs = [geoms[c] for c in body["regions"] if c in geoms]
-            if not gs:
-                raise ApiError("bad_request", "행정구역을 찾지 못했습니다")
-            line = R.to5179(unary_union(gs))
-        else:
-            raise ApiError("bad_request", "구역선 파일 · PNU 목록 · 행정구역 가운데 하나")
-    try:
-        rng = await run_in_threadpool(R.build, line, buffer_m)
-    except R.RangeError as e:
-        raise ApiError("bad_request", str(e)) from None
-    rid = await _save_range(p, name=name, kind=kind, buffer_m=buffer_m, line5179=line, rng5179=rng, source_name=src,
-                            project_id=project_id, years=years, origin=origin)
+    from .range_tools import make_range
+    p, rid = await make_range(request, MAX_KM2)
     d = await get_range_row(p, rid)
     av = await years_for_bounds(d["bounds"])
     await ensure_year_layers(av)
     return range_out(d, av)
 
 
+MAX_KM2_M2 = 60.0 * 1e6        # change/ranges.MAX_KM2(국토 변화가 영상을 받을 수 있는 넓이)
+
+
 @router.get("/change/ranges")
-async def list_ranges(request: Request, project_id: str | None = None, all: int = 0):
+async def list_ranges(request: Request, project_id: str | None = None, all: int = 0, brief: int = 0):
     """기본 = 프로젝트에 묶인 대상지 · 분석 서비스 카드에서 올린 대상지(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부."""
     p = require(principal(request))
     async with db(p) as conn:
         rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
+                                f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
                                 "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
     out = []
     for r in rows:
-        out.append(range_out(await get_range_row(p, r["id"])))
+        o = range_out(await get_range_row(p, r["id"]))
+        if brief:                                   # 고르기 목록(분석 서비스 국토 변화 칸) — 모양은 빼고(4건 470KB → 수 KB · 10-24 '불러오는 중' 오래)
+            o.pop("geometry", None)
+            o.pop("line", None)
+        out.append(o)
     return {"items": out}
 
 
@@ -319,6 +244,9 @@ def _year_of(year, epoch) -> int | None:
     return int(e) if e.isdigit() else None
 
 
+_IMG_ROWS: dict = {"k": None, "t": 0.0, "rows": []}
+
+
 @router.get("/change/ranges/{rid}/imagery")
 async def range_imagery(rid: str, request: Request):
     """그 대상지를 덮는 등록 영상 — 공유 데이터(직원에게 보이는 것) + 내가 올린 영상. 덮는 비율 · 해상도 · 촬영 해 · 이름."""
@@ -329,11 +257,15 @@ async def range_imagery(rid: str, request: Request):
     from .cards import OWN_ROWS
     from .deploys import gsd_word
     g4 = shape(d["g"])
+    import time as _t
     async with db(realm="lx") as conn:
-        recs = await conn.fetch(isrc.SQL_ROWS)
         mine = await conn.fetch(OWN_ROWS, p.user_id)
         hidden = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE NOT staff_visible AND coalesce(layer->>'role','imagery')='imagery'")}
-    rows = await run_in_threadpool(isrc.rows_from, recs)
+        n_img = await conn.fetchval("SELECT count(*)::text || '/' || coalesce(max(registered_at)::text, '') FROM imagery")
+        if _IMG_ROWS["k"] != n_img or _t.time() - _IMG_ROWS["t"] > 60:      # 공유 영상 모양 읽기(1.8초)는 영상 표가 바뀔 때만(10-24 국토 변화 칸 '불러오는 중' 오래)
+            recs = await conn.fetch(isrc.SQL_ROWS)
+            _IMG_ROWS.update(k=n_img, t=_t.time(), rows=await run_in_threadpool(isrc.rows_from, recs))
+    rows = _IMG_ROWS["rows"]
     own = [{**r, "own": True} for r in await run_in_threadpool(isrc.rows_from, mine)] if mine else []
     ta = max(g4.area, 1e-12)
     items = []

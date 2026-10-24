@@ -7,6 +7,7 @@
 import * as K from '../kit/index.js';
 import { h, api, API, session } from '../kit/util.js';
 import { modal } from '../kit/modal.js';
+import { rangeOption } from '../kit/range-option.js';
 
 const CARD = 'card-change';
 
@@ -22,32 +23,26 @@ export function changePanel(side, c) {
   const step = (n, title, small) => h('div.la-step', {}, h('i', { text: String(n) }), h('b', { text: title }), small ? h('small', { text: small }) : null);
   const S = { ranges: [], rng: null, imgs: [], seq: 0 };
 
-  /* ① 대상지 */
+  /* ① 대상지 — 기본: 만들어 둔 대상지 고르기 · 고급 기능: 분석 구간 설정하기(모든 카드와 같은 부품 kit/range-option · 같은 장부 · 10-24) */
+  const tab = (k, label, on) => h('button.la-chip', { type: 'button', 'aria-pressed': String(!!on), dataset: { k }, text: label });
+  const tabs = h('div.rg-tabs', { role: 'tablist', 'aria-label': '분석 방식' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', dataset: { k: 'basic' }, text: '기본' }),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { k: 'adv' }, text: '고급 기능' }));
   const sel = h('select.t-input', { 'aria-label': '대상지' });
   const rngLine = h('p.la-chg-s', { 'aria-live': 'polite' });
-  const newBtn = h('button.t-btn.t-btn--text.la-chg-new', { type: 'button', 'aria-expanded': 'false', text: '새 대상지 올리기' });
-  const tab = (k, label, on) => h('button.la-chip', { type: 'button', 'aria-pressed': String(!!on), dataset: { k }, text: label });
-  const tabs = h('div.la-chg-tabs', { role: 'group', 'aria-label': '대상지 올리는 방식' }, tab('line', '구역선 파일', true), tab('pnu', '필지(PNU) 목록'));
-  const nameIn = h('input.t-input', { type: 'text', maxlength: '60', placeholder: '대상지 이름(예: 고속국도 ○○IC 구간)', 'aria-label': '대상지 이름' });
-  const fileIn = h('input.la-chg-file', { type: 'file', accept: '.geojson,.json,.zip,.gpkg', 'aria-label': '구역선 파일' });
-  const pnuTa = h('textarea.t-input.la-chg-pnu', { rows: '3', placeholder: 'PNU 19자리를 줄마다 붙여 넣기', 'aria-label': '필지(PNU) 목록' });
-  const pnuFile = h('input.la-chg-file', { type: 'file', accept: '.txt,.csv', 'aria-label': '필지 목록 파일' });
-  const bufIn = h('input.t-input.la-chg-buf', { type: 'number', min: '0', max: '1000', step: '10', value: '50', 'aria-label': '버퍼(m)' });
-  const mk = h('button.t-btn.t-btn--2', { type: 'button', text: '대상지 만들기' });
-  const mkLine = h('p.la-chg-s', { 'aria-live': 'polite', hidden: true });
-  const lineBox = h('label.la-chg-fl', {}, h('span', { text: '구역선 파일 — geojson · shp 압축(zip) · gpkg' }), fileIn);
-  const pnuBox = h('div.la-chg-pb', { hidden: true }, pnuTa, h('label.la-chg-fl', {}, h('span', { text: '또는 목록 파일(txt · csv)' }), pnuFile));
-  const form = h('div.la-chg-form', { hidden: true }, tabs, nameIn, lineBox, pnuBox,
-    h('label.la-chg-br', {}, h('span', { text: '버퍼' }), bufIn, h('span', { text: 'm' })), mk, mkLine);
-  let mode = 'line';
+  const basic = h('div.la-chg-basic', {}, sel, rngLine);
+  const adv = h('div.la-chg-adv', { hidden: true });
+  let mode = 'basic';
+  const ro = rangeOption(adv, { endpoint: '/change/ranges', buffer: 50, parcelsRow: false, on: true, pnu: true,
+    onRange: (r) => { if (mode === 'adv') { if (r) loadRange(r.id, r); else clearRange(); } } });
   tabs.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-k]'); if (!b) return;
     mode = b.dataset.k;
-    for (const x of tabs.children) x.setAttribute('aria-pressed', String(x === b));
-    lineBox.hidden = mode !== 'line'; pnuBox.hidden = mode !== 'pnu';
+    for (const x of tabs.children) x.setAttribute('aria-selected', String(x === b));
+    basic.hidden = mode !== 'basic'; adv.hidden = mode !== 'adv';
+    if (mode === 'basic') { if (sel.value && !sel.disabled) loadRange(sel.value); else clearRange(); }
+    else { const r = ro.range(); if (r) loadRange(r.id, r); else clearRange(); }
   });
-  pnuFile.addEventListener('change', async () => { const f = pnuFile.files?.[0]; if (f) pnuTa.value = await f.text(); });
-  newBtn.addEventListener('click', () => { form.hidden = !form.hidden; newBtn.setAttribute('aria-expanded', String(!form.hidden)); });
 
   /* ② · ③ 시점 — 영상 출처 셋 */
   const slot = (key, title) => {
@@ -72,7 +67,7 @@ export function changePanel(side, c) {
   const A = slot('a', '앞 시점'), B = slot('b', '뒤 시점');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
   const note = h('p.la-note', {}, '두 시점 영상을 각각 토지피복 AI로 분석하고 바뀐 곳(신축 · 소실 · 경작 전환 · 포장 확대)을 견줍니다.', h('br'), '작업 대기열에 들어가고, 결과는 지도 서비스에 쌓입니다.');
-  side.append(step(1, '대상지', '구역선 · 필지 범위'), sel, rngLine, newBtn, form,
+  side.append(tabs, step(1, '대상지'), basic, adv,
     step(2, '앞 시점', '영상 하나'), A.el, step(3, '뒤 시점', '영상 하나'), B.el, go, note);
 
   const thisYear = new Date().getFullYear();
@@ -86,7 +81,7 @@ export function changePanel(side, c) {
     const r = S.rng;
     o.up.hidden = o.kind !== 'own';
     o.hint.hidden = true;
-    if (!r) { o.pick.replaceChildren(h('option', { text: '대상지를 먼저 고르세요' })); o.pick.disabled = true; yearBox(o); ready(); return; }
+    if (!r) { o.pick.replaceChildren(h('option', { text: S.seqBusy ? '—' : '대상지를 먼저 고르세요' })); o.pick.disabled = true; yearBox(o); ready(); return; }
     let opts = [];
     if (o.kind === 'ngii') {
       const ys = (r.imagery_years || []).map((y) => y.year);
@@ -117,59 +112,38 @@ export function changePanel(side, c) {
     go.title = same ? '두 시점에 서로 다른 영상을 고르세요' : '';
   }
 
-  async function loadRange(id) {
+  const rangeText = (r) => `${r.kind_label} · 버퍼 ${r.buffer} · 범위 ${Number(r.area?.value ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}㎢`;
+  function clearRange() { ++S.seq; S.rng = null; S.imgs = []; fill(A); fill(B); }
+  async function loadRange(id, given = null) {
     const my = ++S.seq;
     S.rng = null; S.imgs = [];
-    rngLine.textContent = '대상지를 불러오는 중'; fill(A); fill(B);
-    const [r, im] = await Promise.all([api(`/change/ranges/${encodeURIComponent(id)}`).catch(() => null),
+    S.seqBusy = true;
+    const li = !given && S.ranges.find((x) => x.id === id);
+    if (!given) rngLine.textContent = li ? rangeText(li) : '';      // 목록에 있는 값으로 바로(영상 목록만 기다린다 · 10-24 '불러오는 중' 오래)
+    fill(A); fill(B);
+    const [r, im] = await Promise.all([given?.imagery_years ? given : api(`/change/ranges/${encodeURIComponent(id)}`).catch(() => null),
       api(`/change/ranges/${encodeURIComponent(id)}/imagery`).catch(() => ({ items: [] }))]);
     if (my !== S.seq) return;
-    if (!r) { rngLine.textContent = '대상지를 불러오지 못했습니다'; return; }
+    S.seqBusy = false;
+    if (!r) { rngLine.textContent = '대상지를 불러오지 못했습니다'; fill(A); fill(B); return; }
     S.rng = r; S.imgs = im.items || [];
-    rngLine.textContent = `${r.kind_label} · 버퍼 ${r.buffer} · 범위 ${Number(r.area?.value ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}㎢`;
+    if (!given) rngLine.textContent = rangeText(r);
     fill(A); fill(B);
   }
   async function loadList(pickId) {
     let j;
-    try { j = await api('/change/ranges'); } catch { sel.replaceChildren(h('option', { text: '대상지를 불러오지 못했습니다' })); sel.disabled = true; return; }
+    try { j = await api('/change/ranges?brief=1'); } catch { sel.replaceChildren(h('option', { text: '대상지를 불러오지 못했습니다' })); sel.disabled = true; return; }
     S.ranges = j.items || [];
     if (!S.ranges.length) {
-      sel.replaceChildren(h('option', { text: '아직 대상지가 없습니다 — 아래에서 올립니다' })); sel.disabled = true;
-      rngLine.textContent = ''; form.hidden = false; newBtn.setAttribute('aria-expanded', 'true'); fill(A); fill(B); return;
+      sel.replaceChildren(h('option', { text: '아직 대상지가 없습니다' })); sel.disabled = true;
+      rngLine.textContent = ''; tabs.querySelector('[data-k="adv"]').click(); return;   // 대상지가 없으면 고급 기능(분석 구간 설정하기)으로
     }
     sel.disabled = false;
     const cur = pickId || sel.value || S.ranges[0].id;
     sel.replaceChildren(...S.ranges.map((x) => h('option', { value: x.id, text: `${x.name} · ${x.kind_label}`, selected: x.id === cur || undefined })));
     await loadRange(sel.value);
   }
-  sel.addEventListener('change', () => loadRange(sel.value));
-
-  mk.addEventListener('click', async () => {
-    const buf = Math.max(0, Math.min(1000, +bufIn.value || 0));
-    const name = nameIn.value.trim();
-    mk.disabled = true; mkLine.hidden = false; mkLine.textContent = '대상지를 만드는 중';
-    try {
-      let r;
-      if (mode === 'line') {
-        const f = fileIn.files?.[0];
-        if (!f) throw new Error('구역선 파일을 고르세요');
-        const fd = new FormData();
-        fd.append('file', f); fd.append('buffer_m', String(buf)); fd.append('name', name || f.name.replace(/\.[^.]+$/, '')); fd.append('origin', 'card');
-        const s = session.get();
-        const res = await fetch(API.prefix + '/change/ranges', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
-        r = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(r?.error?.message || '대상지를 만들지 못했습니다');
-      } else {
-        if (!pnuTa.value.trim()) throw new Error('필지(PNU) 목록을 붙여 넣으세요');
-        r = await api('/change/ranges', { method: 'POST', body: { name: name || '필지 목록', buffer_m: buf, pnus: pnuTa.value, origin: 'card' } });
-      }
-      mkLine.textContent = '대상지를 만들었습니다';
-      form.hidden = true; newBtn.setAttribute('aria-expanded', 'false');
-      fileIn.value = ''; pnuTa.value = ''; nameIn.value = '';
-      await loadList(r.id);
-    } catch (e) { mkLine.textContent = e.message || '대상지를 만들지 못했습니다'; }
-    finally { mk.disabled = false; }
-  });
+  sel.addEventListener('change', () => { if (mode === 'basic') loadRange(sel.value); });
 
   /* 내 영상 업로드 — 업로드 상태 창 부품 그대로(다른 화면으로 옮겨도 이어 올림). 다 올리면 그 시점에 고른 채로 */
   function openUpload(o) {

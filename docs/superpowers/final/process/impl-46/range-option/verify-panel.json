@@ -1,0 +1,48 @@
+{
+  "at": "2026-10-24T05:46:53.665Z",
+  "cards": {
+    "farm": {
+      "basic": {
+        "bad": []
+      },
+      "parcels_on": "true",
+      "adv": {
+        "bad": []
+      },
+      "started": {
+        "text": "분석을 시작했습니다\n\n남원시 · 구간: 남원시 주생면\n지도 서비스에서 보기",
+        "href": "../lx-map/?job=job_01M5P75NP1GPXBBWANFTWW3GH1"
+      }
+    },
+    "building": {
+      "basic": {
+        "bad": []
+      },
+      "parcels_on": "true",
+      "adv": {
+        "bad": []
+      },
+      "started": {
+        "text": "분석을 시작했습니다\n\n남원시 · 구간: 남원_시험구간 · 100m\n지도 서비스에서 보기",
+        "href": "../lx-map/?job=job_01M5P75WQRXHY44ZJSGSYKKG2Y"
+      }
+    },
+    "change": {
+      "ready_ms": 5006,
+      "loading_text": false,
+      "basic": {
+        "bad": []
+      },
+      "adv": {
+        "bad": []
+      },
+      "status": "남원_시험구간 · 100m · 0.12㎢"
+    }
+  },
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()"
+  ]
+}

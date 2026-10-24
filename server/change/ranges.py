@@ -92,16 +92,16 @@ def from_geojson(obj: dict) -> gpd.GeoDataFrame:
     return g.to_crs(5179)
 
 
-def build(line5179, buffer_m: float):
-    """구역선(선 · 면) + 버퍼 → 범위 면(5179)."""
+def build(line5179, buffer_m: float, max_km2: float = MAX_KM2):
+    """구역선(선 · 면) + 버퍼 → 범위 면(5179). max_km2 = 국토 변화(영상 받기)는 60㎢ · 결과를 나눠 보기만 하는 카드 구간은 더 넓게(시군구 하나)."""
     buffer_m = max(0.0, min(float(buffer_m or 0), 1000.0))
     rng = line5179.buffer(buffer_m) if buffer_m > 0 else (line5179 if line5179.geom_type.endswith("Polygon") else line5179.buffer(5))
     rng = rng.buffer(0)
     km2 = rng.area / 1e6
     if km2 <= 0:
         raise RangeError("범위 면적이 0 입니다")
-    if km2 > MAX_KM2:
-        raise RangeError(f"범위가 너무 넓습니다 — {MAX_KM2:.0f}㎢ 아래로 나눠 주세요")
+    if km2 > max_km2:
+        raise RangeError(f"범위가 너무 넓습니다 — {max_km2:,.0f}㎢ 아래로 나눠 주세요")
     return rng
 
 

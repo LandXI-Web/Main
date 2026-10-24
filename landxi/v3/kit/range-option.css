@@ -1,0 +1,42 @@
+/* 분석 구간 설정하기(kit/range-option.js) · 지도 서비스 줄 아래 '구간: 이름 · 100m'(.lm-rg) — 10-24 */
+.rg-opt{display:flex;flex-direction:column;gap:12px;min-width:0}
+.rg-check{display:flex;align-items:center;gap:8px;min-height:24px;cursor:pointer;font:500 var(--fs-body)/23px var(--font-body);color:var(--ink)}
+.rg-check input{width:18px;height:18px;margin:0;flex:none;accent-color:var(--ink);cursor:pointer}
+.rg-check:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.rg-detail{display:flex;flex-direction:column;gap:10px;min-width:0;padding-left:26px}
+.rg-detail[hidden],.rg-pane[hidden],.rg-buf[hidden],.rg-s[hidden]{display:none}
+.rg-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--r-8);background:var(--bg-0)}
+.rg-seg button{height:36px;border:0;border-radius:6px;background:transparent;font:500 var(--fs-aux)/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.rg-seg button[aria-selected="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.rg-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rg-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rg-file{position:relative;display:flex;align-items:center;min-height:46px;padding:0 12px;border:1px dashed var(--rule);border-radius:var(--r-8);background:var(--bg-1);cursor:pointer;min-width:0}
+.rg-file:hover,.rg-file.is-set{border-color:var(--ink)}
+.rg-file:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.rg-file-in{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.rg-file-t{min-width:0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);overflow-wrap:anywhere}
+.rg-file.is-set .rg-file-t{color:var(--ink);font-weight:500}
+.rg-buf{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rg-m{display:flex;align-items:center;gap:6px;font:400 var(--fs-aux)/1 var(--font-body);color:var(--sub)}
+.rg-num{width:96px;text-align:right;font-family:var(--font-num)}
+.rg-l{font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink)}
+.rg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:28px}
+.rg-row .rg-l{font-size:var(--fs-body);line-height:23px}
+.rg-sw{position:relative;flex:none;width:44px;height:26px;border:0;border-radius:13px;background:var(--rule);cursor:pointer;padding:0;transition:background .15s}
+.rg-sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+.rg-sw[aria-checked="true"]{background:var(--ink)}
+.rg-sw[aria-checked="true"] i{transform:translateX(18px)}
+.rg-sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rg-where{min-width:0}
+.rg-s{margin:0;font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub);overflow-wrap:anywhere}
+.rg-s.warn{color:var(--warn)}
+/* 기본 | 고급 기능 탭(카드 상세 오른쪽 칸 · 국토 변화 칸) */
+.rg-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:4px 0 8px;border-radius:var(--r-8);background:var(--bg-0)}
+.rg-tabs button{height:40px;border:0;border-radius:6px;background:transparent;font:500 var(--fs-body)/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.rg-tabs button[aria-selected="true"]{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.rg-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* 지도 서비스 — 작업 줄 아래 구간 한 줄 */
+.lm-ly li.lm-rg{height:auto;min-height:20px;padding:0 6px 4px 50px;flex-direction:column;align-items:flex-start;gap:0}
+.lm-ly li.lm-rg:hover{background:transparent}
+.lm-ly li.lm-rg span{display:block;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub);overflow-wrap:anywhere}
+.lm-ly li.lm-rg.is-on span{color:var(--ink-2)}

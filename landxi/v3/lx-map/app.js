@@ -13,6 +13,7 @@ import { sourceSpec } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis, filterResults, matchCond } from '../../xi/fx/arrive.js';
 import { excludeClasses } from '../../xi/fx/result-filter.js';
 import { colors, colorState, paintLayers, dotStyle, rampColors } from '../kit/colors.js';
+if (!document.querySelector('link[data-rg-opt]')) document.head.append(h('link', { rel: 'stylesheet', href: new URL('../kit/range-option.css', import.meta.url).href, dataset: { rgOpt: '1' } }));   // 구간 한 줄(10-24)
 
 const who = await K.gate('lx-map');
 const Q = new URLSearchParams(location.search);
@@ -163,7 +164,32 @@ async function addSet(x) {
   try { map.addSource(sid, await sourceSpec(item)); } catch (e) { K.devlog('result', `${e?.message || e}`); x.ids = []; return; }
   x.ids = addResultLayers(map, sid, sid, { kind: 'landcover', sourceLayer: 'results', visible: false });
   paintSet(x);                                                        // 저장해 둔 색(원칙 264) — 바꾼 것이 없으면 원래 모양 그대로
+  if (x.range?.id) await addRange(x, sid);
 }
+/* 분석 구간(고급 기능 '분석 구간 설정하기' · 10-24) — 구간 테두리(거리를 둔 구간은 점선 + 원래 모양) · 구간 밖 결과는 옅게 · 안/밖 수(장부 한 곳 /ranges) */
+async function addRange(x, src) {
+  const R = x.range, q = new URLSearchParams({ job: x.job });
+  try {
+    const [g, ins, sp] = await Promise.all([api(`/ranges/${encodeURIComponent(R.id)}`), api(`/ranges/${encodeURIComponent(R.id)}/inside?${q}`),
+      api(`/ranges/${encodeURIComponent(R.id)}/split?${q}${x.parcels ? '&parcels=1' : ''}`).catch(() => null)]);
+    const rid = 'lm-rg-' + x.job;
+    const feats = [{ type: 'Feature', geometry: g.geometry, properties: { k: 'area' } }];
+    if (g.kind === 'line' && g.line && g.buffer !== '0m') feats.push({ type: 'Feature', geometry: g.line, properties: { k: 'line' } });
+    map.addSource(rid, { type: 'geojson', data: { type: 'FeatureCollection', features: feats } });
+    map.addLayer({ id: rid + '-veil', type: 'fill', source: src, 'source-layer': 'results', layout: { visibility: 'none' },
+      filter: ['!', ['in', ['to-string', ['get', 'id']], ['literal', ins.ids || []]]], paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.62 } }, 'slot-result');
+    map.addLayer({ id: rid + '-area', type: 'line', source: rid, filter: ['==', ['get', 'k'], 'area'], layout: { visibility: 'none', 'line-join': 'round' },
+      paint: { 'line-color': '#191F28', 'line-width': 2, ...(feats.length > 1 ? { 'line-dasharray': [3, 2] } : {}) } }, 'slot-result');
+    map.addLayer({ id: rid + '-line', type: 'line', source: rid, filter: ['==', ['get', 'k'], 'line'], layout: { visibility: 'none', 'line-join': 'round' },
+      paint: { 'line-color': '#191F28', 'line-width': 1.2 } }, 'slot-result');
+    x.ids.push(rid + '-veil', rid + '-area', rid + '-line');
+    if (Array.isArray(g.bbox) && g.bbox.length === 4) x.bounds = g.bbox;
+    x.split = sp;
+    window.__lm.ranges = { ...(window.__lm.ranges || {}), [x.job]: { inside: sp?.inside?.n?.value ?? ins.n, outside: sp?.outside?.n?.value ?? null, parcels: sp?.parcels?.n?.value ?? null } };
+  } catch (e) { K.devlog('range', String(e?.message || e)); }
+}
+const rangeLine = (x) => [h('span', { text: x.range.word }), x.split ? h('span', { text: [`안 ${nf(x.split.inside.n.value)}`, `밖 ${nf(x.split.outside.n.value)}`,
+  x.split.parcels ? `필지 ${nf(x.split.parcels.n.value)}` : ''].filter(Boolean).join(' · ') }) : null];   // 두 줄(구간 · 수) — 한 낱말만 남는 줄 없이
 async function apply() {
   for (const x of all()) {
     if (shown(x)) { await addSet(x); await addImagery(x.imagery?.id); }
@@ -239,6 +265,7 @@ function drawLeft() {
         h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}건` }),
         canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
+      if (x.range?.word) ul.append(h('li.lm-rg', { class: x.on ? 'is-on' : '' }, ...rangeLine(x)));   // 작업 줄 아래 '구간: 이름 · 100m'
       if (ST.dl === x.job) ul.append(dlPanel(x));
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);

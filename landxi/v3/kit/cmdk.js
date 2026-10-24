@@ -1256,6 +1256,15 @@ function create(opts) {
       } catch (err) { devlog('chat place', String(err?.message || err)); R = R0; B = B0; }
       root.style.pointerEvents = '';
     }
+    /* 왼쪽 메뉴(레일)는 어떤 때에도 덮지 않는다 — 화면이 늦게 서서 본문 상자를 못 잰 순간(본문 0 · 서랍만 보임)에도
+       단추(+ 꼬리표)의 왼쪽 끝이 레일 오른쪽 끝 + 8 보다 왼쪽으로 가지 않게(10-24 검사 문: 기관 1280 '기관 정보' 덮음) */
+    const rail = document.querySelector('.k-rail');
+    const rr = rail?.getBoundingClientRect();
+    if (rr && rr.width && rr.left < W / 2 && rr.height > H / 2) {          // 세로 레일(PC) — 휴대폰 아래 막대는 제외
+      const minLeft = Math.max(rr.right, mr.left || 0) + 8;
+      const need = 56 + (withTag ? (tag.offsetWidth || 80) + 12 : 0);
+      if (W - R - need < minLeft) { R = Math.max(gap, W - minLeft - need); if (W - R - need < minLeft) { withTag = false; R = Math.max(gap, W - minLeft - 56); } }
+    }
     root.toggleAttribute('data-notag', !withTag);
     root.style.setProperty('--k-chat-r', R + 'px');
     root.style.setProperty('--k-chat-b', B + 'px');

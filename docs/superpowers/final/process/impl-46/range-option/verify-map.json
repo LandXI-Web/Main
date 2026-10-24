@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-24T05:48:24.593Z",
+  "jobs": {
+    "job_01M5P75NP1GPXBBWANFTWW3GH1": {
+      "counts": {
+        "inside": 247,
+        "outside": 0,
+        "parcels": 339
+      },
+      "row": [
+        "구간: 남원_시험구간 · 100m",
+        "구간: 남원시 주생면 · 안 247 · 밖 0 · 필지 339"
+      ],
+      "layers": [
+        "visible",
+        "visible",
+        "visible"
+      ]
+    },
+    "job_01M5P75WQRXHY44ZJSGSYKKG2Y": {
+      "counts": {
+        "inside": 29,
+        "outside": 76,
+        "parcels": 31
+      },
+      "row": [
+        "구간: 남원_시험구간 · 100m · 안 29 · 밖 76 · 필지 31",
+        "구간: 남원시 주생면"
+      ],
+      "layers": [
+        "visible",
+        "visible",
+        "visible"
+      ]
+    }
+  },
+  "http_errors": []
+}

@@ -195,6 +195,11 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
         "by_class": [{"cls": CLASS_KO.get(k, k), "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0))],
         "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id,
         "empty": not r["snapshot_ready"]}                                    # 찾은 것 0건 — 지도에 그릴 결과 층이 없다(범위만)
+    rg_ = o.get("range") if isinstance(o.get("range"), dict) else None         # 고급 기능 '분석 구간 설정하기'(10-24) — 목록 한 줄 '구간: 이름 · 100m'
+    if rg_ and rg_.get("id"):
+        item["range"] = {"id": rg_["id"], "word": rg_.get("word") or "구간", "kind": rg_.get("kind")}
+    if o.get("parcels"):
+        item["parcels"] = True
     return key, gname, proj, item
 
 
@@ -253,7 +258,8 @@ async def my_analyses(request: Request, job: str | None = None):
         o = _jload(r["options"])
         rg = region_of(o.get("sgg_cd")) if o.get("sgg_cd") else None
         running.append({"job": r["id"], "state": r["state"], "name": f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else (r["cname"] or "분석 서비스"),
-                        "region": " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "") if x) or "—"})
+                        "region": " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "") if x) or "—",
+                        **({"range": (o.get("range") or {}).get("word")} if isinstance(o.get("range"), dict) else {})})
     out = list(groups.values())
     for g in out:
         g["n"] = len(g["items"])

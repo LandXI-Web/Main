@@ -231,7 +231,7 @@ for _name in ("survey", "agent"):
     print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
 
 # C2 확장 라우터(c2-report-law 법령 원문·색인 등) — 있으면 붙이고, 없거나 불러오기에 실패하면 건너뛴다(게이트웨이는 뜬다 · 로그 1줄).
-for _name in ("law", "training", "global_data", "staff_home", "release", "inquiries", "ximap", "project_train", "core", "national", "xdash", "xreport", "prefs", "labeling", "storage_admin", "change", "feedcompare"):   # feedcompare = 사료작물 생육기·생산기 비교 분석(10-24) · change = 국토 변화 분석서비스(변화 탐지 · 10-22 CHANGE-DEMO-ORDER)
+for _name in ("law", "training", "global_data", "staff_home", "release", "inquiries", "ximap", "project_train", "core", "national", "xdash", "xreport", "prefs", "labeling", "storage_admin", "change", "feedcompare", "range_tools"):   # range_tools = 분석 구간(모든 카드 고급 기능 · 10-24) · feedcompare = 사료작물 생육기·생산기 비교 분석(10-24) · change = 국토 변화 분석서비스(변화 탐지 · 10-22 CHANGE-DEMO-ORDER)
       # prefs = 사용자 설정(화면 · 열쇠별 JSON) · 내 일정 · 플랫폼 날짜 일(10-17 원칙 280 · 283 개인별 맞춤 대시보드)   # xdash = XI맵 융합 대시보드 집계(10-14 11:02) · xreport = 대시보드 보고서로(한글 문서 HWPX · 10-14 원칙 247)   # staff_home = LX 직원 대시보드 칸(저장 용량 · 내가 돌린 작업 · 공지 — 직원-4 ⓐ · 직원-5 ⓐ) · release = 분석 서비스 배포(추론 · 배포 신청 · 기관 공유 · 사용 현황 — 배포-1~5) · inquiries = 문의하기 창으로 들어온 문의(10-11 메인 지시 3) · ximap = XI맵 전국 결과 · 그 자리 고치기(바퀴 5) · project_train = 프로젝트 학습 화면 기록(학습-작업흐름-v3)
     try:
         _m = importlib.import_module(f"landxi_api.{_name}")

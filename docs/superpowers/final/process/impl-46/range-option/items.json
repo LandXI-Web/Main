@@ -1,0 +1,17 @@
+{
+  "title": "분석 구간 설정하기 — 모든 분석 서비스 카드 '기본 | 고급 기능'",
+  "user": "좋다. 다만, 레이어 구간 보다는 조금 더 이해할 수 있게. 분석 구간 설정하기 옵션 이걸 누르거나? 체크하면 ? 구간을 업로드 하거나 행정 구역을 설정하는 형태로 개발하자. 분석 서비스 카드 모두 해당되는 거겠지? · 버퍼 설정도 체크박스 일 것 같다 내가 볼떈 · 그럼 세부 설정하는거고.",
+  "state": "구현 확인 대기",
+  "evidence": [
+    {"file": "01-farm-basic.png", "what": "경작·휴경 · 기본(그대로)"},
+    {"file": "02-farm-advanced-region.png", "what": "경작·휴경 · 고급 기능 · 분석 구간 설정하기 → 행정구역(남원시 주생면) · 필지 단위 집계 켬"},
+    {"file": "03-building-basic.png", "what": "건축물 · 기본(그대로)"},
+    {"file": "04-building-advanced-upload-100m.png", "what": "건축물 · 고급 기능 · 구간 업로드 + 버퍼 설정 100m"},
+    {"file": "05-change-basic.png", "what": "국토 변화 · 기본(만들어 둔 대상지 고르기)"},
+    {"file": "06-change-advanced-upload-100m.png", "what": "국토 변화 · 고급 기능 · 같은 부품(구간 업로드 + 100m)"},
+    {"file": "07-map-farm-region.png", "what": "지도 서비스 · 행정구역 구간 결과(안 247 · 밖 0 · 필지 339)"},
+    {"file": "08-map-building-upload-100m.png", "what": "지도 서비스 · 구간 테두리(점선 = 100m · 실선 = 올린 선) · 밖 옅게 · 안 29 · 밖 76(파이썬 독립 계산과 같음)"}
+  ],
+  "measured": "verify-panel.json · verify-map.json · gate/(검사 문 기록)",
+  "where_it_lives": "구간 장부 = change_ranges 한 표(국토 변화 대상지와 같은 표) · 안/밖 · 필지 집계 = range_counts(한 번 세고 다시 씀)"
+}

@@ -17,7 +17,7 @@ function style() {
 .k-rail .k-rail-chat{display:none!important}
 .k-chat-root[data-lift]:not([data-dock]){--k-chat-b:var(--k-lift-b)!important;--k-chat-r:var(--k-lift-r)!important}
 .k-chat-root[data-lift]:not([data-dock]) .k-ck.k-chat{right:var(--k-col-r)!important;bottom:24px!important;max-height:calc(100vh - 128px)!important}
-.k-chat-root[data-railfab]:not([data-dock]) .k-chat-fab{right:auto!important;left:var(--k-rf-l)!important;bottom:var(--k-rf-b)!important}
+.k-chat-root[data-railfab]:not([data-dock]) .k-chat-fab{right:auto!important;left:var(--k-rf-l)!important;bottom:var(--k-rf-b)!important;transition:none!important}
 .k-chat-root[data-railfab]:not([data-dock]) .k-chat-tag{display:none!important}
 .k-chat-root[data-railfab]:not([data-dock]) .k-ck.k-chat{right:auto!important;left:calc(var(--k-rf-l) + 72px)!important;bottom:16px!important;max-height:calc(100vh - 112px)!important}
 @media (max-width:640px){
@@ -66,18 +66,25 @@ function covers(root) {
   } finally { root.style.pointerEvents = pe; }
   return hit;
 }
-/** 레일의 빈 아래쪽(위 칸들 아래 · 아래쪽 칸(기관 정보 · 계정) 위) — 단추 56 이 들어가면 그 자리 */
+/** 레일의 빈 자리 — 보이는 레일 칸(위 묶음 · 아래 묶음 · 더보기 · 기관 정보 · 계정 무엇이든)들 사이의 가장 큰 빈 틈에만, 단추 56 이 칸과 8 띄워 들어가면 그 자리.
+    칸 이름(클래스)에 기대지 않고 실제 자리로 잰다 — 늦게 그려진 칸(더보기 · 기관 정보)도 덮지 않게(10-24 검사 문: 기관 1280 '기관 정보' 덮음) */
 function railSpot(rail) {
   if (!rail) return null;
   const rr = rail.getBoundingClientRect(); if (rr.width < 60 || rr.height < 300) return null;
-  let top = rr.top + 8, bottom = rr.bottom - 8;
-  for (const it of rail.querySelectorAll('.k-rail-i, .k-rail-sep')) {
+  const qs = [];
+  for (const it of rail.children) {
     const c = getComputedStyle(it); if (c.display === 'none' || c.visibility === 'hidden') continue;
-    const q = it.getBoundingClientRect(); if (!q.height) continue;
-    if (it.classList.contains('k-rail-i--end')) bottom = Math.min(bottom, q.top - 8); else top = Math.max(top, q.bottom + 8);
+    const q = it.getBoundingClientRect(); if (q.height && q.width) qs.push(q);
   }
-  if (bottom - top < 56 + 16) return null;
-  return { l: Math.round(rr.left + (rr.width - 56) / 2), b: Math.round(innerHeight - bottom + 8) };
+  qs.push({ top: rr.bottom, bottom: rr.bottom });                 // 마지막 칸 아래 ~ 레일 끝도 빈 자리(예전과 같이)
+  qs.sort((x, y) => x.top - y.top);
+  let best = null;
+  for (let i = 0; i + 1 < qs.length; i++) {
+    const top = qs[i].bottom + 8, bottom = qs[i + 1].top - 8;
+    if (bottom - top >= 56 && (!best || bottom - top > best.bottom - best.top)) best = { top, bottom };
+  }
+  if (!best) return null;
+  return { l: Math.round(rr.left + (rr.width - 56) / 2), b: Math.round(innerHeight - best.bottom) };
 }
 /** railEl = 셸 레일(아래 메뉴 줄 · 없으면 null) — 셸이 다시 그려도(drawRail) 칸을 다시 붙인다 */
 export function mountChatDock(railEl) {
@@ -114,11 +121,12 @@ export function mountChatDock(railEl) {
         if (PHONE() || root.hasAttribute('data-lift')) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
         const spot = covers(root) ? railSpot(railEl) : null;
         if (!spot) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
-        if (!root.hasAttribute('data-railfab')) root.setAttribute('data-railfab', '');
         for (const [k, v] of [['--k-rf-l', spot.l + 'px'], ['--k-rf-b', spot.b + 'px']]) if (root.style.getPropertyValue(k) !== v) root.style.setProperty(k, v);
+        if (!root.hasAttribute('data-railfab')) root.setAttribute('data-railfab', '');   // 자리 값을 먼저 · 옮김은 미끄러짐 없이 바로(레일 위를 지나가며 칸을 덮지 않게)
       }, 120);
     };
     new MutationObserver(railFab).observe(root, { attributes: true, attributeFilter: ['style', 'data-lift'] });
+    if (railEl) new MutationObserver(railFab).observe(railEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'style'] });   // 레일 칸이 늦게 서도 다시 잰다
     addEventListener('resize', railFab); addEventListener('scroll', railFab, true);
     railFab();
     /* ① 오른쪽 칸 카드 위로(칸은 화면이 나중에 그린다 — 몸 전체 변화를 보되 칸 안 변화일 때만 잰다) */
