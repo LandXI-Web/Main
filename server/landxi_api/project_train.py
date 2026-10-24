@@ -26,7 +26,7 @@ from .projects import _iso, _lx, _row, _sample_ids
 
 router = APIRouter()
 
-ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50")   # kit/acc.js ACC_KEYS 와 같은 순서
+ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50", "mean_iou")   # kit/acc.js ACC_KEYS 와 같은 순서
 DEFAULTS = {"epochs": 3, "imgsz": 640, "batch": 4}                                          # adapters/adapter_train_yolo.py DEFAULTS
 _IMG = (".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp")
 _N_CACHE: dict[str, tuple[float, int]] = {}

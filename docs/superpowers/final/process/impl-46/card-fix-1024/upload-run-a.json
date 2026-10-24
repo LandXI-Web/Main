@@ -1,0 +1,89 @@
+{
+ "base": "https://app.land-xi.dev",
+ "part": "a",
+ "at": "2026-10-24T02:40:37.611Z",
+ "steps": [
+  {
+   "k": "login",
+   "t": 6,
+   "at": "11시 40분 43초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  },
+  {
+   "k": "guide",
+   "t": 13.3,
+   "at": "11시 40분 50초",
+   "text": "파일 형식\nGeoTIFF(COG 포함) · JPEG2000 · ECW · ERDAS IMG · JPG(위치 파일과 함께)\n위치 정보\n좌표계가 든 파일만 분석할 수 있습니다 — 좌표계가 따로 있으면 PRJ 파일을 함께 넣어 주세요\n크기 · 개수\n영상 한 장 · 한 파일 2,000GB까지\n걸리는 시간\n1GB 약 3분 · 10GB 약 30분 · 100GB 약 5시간\n이 서버로 잰 속도(초당 약 5.5MB) 기준 · 사무실 회선에 따라 다릅니다\n올리는 동안\n따로 열리는 업로드 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 '업로드 중' 표시로 진행을 봅니다"
+  },
+  {
+   "k": "picked",
+   "t": 13.4,
+   "at": "11시 40분 51초",
+   "file": "namwon-farm-1024.tif"
+  },
+  {
+   "k": "host",
+   "t": 13.9,
+   "at": "11시 40분 51초",
+   "url": "https://app.land-xi.dev/landxi/v3/upload/"
+  },
+  {
+   "k": "registered",
+   "t": 45.4,
+   "at": "11시 41분 22초",
+   "s": 28.1,
+   "win": "영상 업로드\n닫기\n접기\n\n내 영상 · 경작·휴경 분석서비스\n\n임실군 25cm 영상을 올렸습니다\n이 서비스 조건 · 이 서비스에 맞음\n이 영상으로 분석하기"
+  },
+  {
+   "k": "picked-own",
+   "t": 47.5,
+   "at": "11시 41분 25초",
+   "side": "임실군\n×\n25cm 항공 · 카드 조건에 맞음 ✓\n영상이 있는 곳만 분석합니다\n읍면동 1곳, 시군구 면적의 1% 미만\n영상 · namwon-farm-1024 · 다른 영상 고르기",
+   "card": "⤢\n\n내 영상namwon-farm-1024\n\n해상도\n25cm\n촬영 시기\n—\n범위\n일부 · 약 0.36㎢\n이 서비스에 맞음"
+  },
+  {
+   "k": "analyze",
+   "t": 49.1,
+   "at": "11시 41분 26초",
+   "done": "분석을 시작했습니다\n\n임실군\n지도 서비스에서 보기"
+  },
+  {
+   "k": "job",
+   "t": 49.3,
+   "at": "11시 41분 26초",
+   "job": "job_01M5NWHN4J3RP6YD51DNP2629Z",
+   "href": "../lx-map/?job=job_01M5NWHN4J3RP6YD51DNP2629Z"
+  },
+  {
+   "k": "job-end",
+   "t": 66.5,
+   "at": "11시 41분 44초",
+   "state": "done",
+   "s": 17.2,
+   "model": "aerial25/best",
+   "imagery": "own-19dbc83e22f2",
+   "counts": {
+    "farmland": 125,
+    "building": 68
+   }
+  },
+  {
+   "k": "map",
+   "t": 76.5,
+   "at": "11시 41분 54초",
+   "url": "https://app.land-xi.dev/landxi/v3/lx-map/?job=job_01M5NWHN4J3RP6YD51DNP2629Z"
+  }
+ ],
+ "ov": {
+  "a1-card.png": [],
+  "a2-guide.png": [],
+  "a3-uploading.png": [],
+  "a4-own-picked.png": [],
+  "a5-folded.png": [],
+  "a6-started.png": [],
+  "a7-map-service.png": []
+ },
+ "errs": [],
+ "dialogs": [],
+ "ms": 76463
+}

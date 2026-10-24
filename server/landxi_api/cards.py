@@ -39,6 +39,8 @@ SCENE_MIN_PX, SCENE_OUT_PX = 320, 1600
 STAGE_KEY = {summary.STAGE_RUN: "ga", summary.STAGE_PILOT: "pilot", summary.STAGE_FIRST: "none"}
 STAGE_WORD = {"ga": "운영", "pilot": "시범", "none": "첫 결과 전"}
 RANK = {"ga": 0, "pilot": 1, "none": 2}
+# AI 모델 정확도 열 순서 — kit/acc.js · release.ACC_KEYS · project_train.ACC_KEYS 와 같은 순서(마지막 mean_iou = 들여온 토지피복 U-Net · 10-24)
+ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50", "mean_iou")
 INPUT_WORD = {"ortho": "정사영상", "satellite": "위성 영상", "video": "드론 동영상", "camera": "차량 카메라", "parcels": "필지"}
 
 
@@ -417,13 +419,18 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     model_card = None
     for md in cur_learned:
         mt = _obj(md["metrics"]) or {}
-        e = next((mt[k] for k in ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50") if isinstance(mt.get(k), dict) and _vnum(mt[k].get("value")) is not None), None)
+        e = next((mt[k] for k in ACC_KEYS if isinstance(mt.get(k), dict) and _vnum(mt[k].get("value")) is not None), None)
         if e:
             ad = str(e.get("as_of") or "")
-            nv = val_images(md, m.get("n_val") or {})
-            model_card = {"id": md["id"], "acc": {**env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded", "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값", as_of=ad or None),
-                                                  **({"basis_line": f"학습에 쓰지 않은 영상 {nv:,}장으로 잼", "val_images": nv} if nv else {})},
-                          "updated": ad.replace("-", ".")[:10] or None}
+            # 들여온 정식 모델(국토 변화 토지피복 U-Net — 10-24 카드 고침): 정확도 = 모델 기록의 MeanIU · 출처 말 그대로(우리 학습 · 검증 영상 수 없음)
+            miou = e is mt.get("mean_iou")
+            nv = None if miou else val_images(md, m.get("n_val") or {})
+            tip = f"MeanIU {_vnum(e['value']):.2f} · {e.get('note') or e.get('source') or '모델 기록'}" if miou else None
+            model_card = {"id": md["id"], "acc": {**env(round(_vnum(e["value"]) * 100), "%", e.get("basis") if e.get("basis") in ("recorded", "measured") else "recorded",
+                                                         tip or "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값", as_of=ad or None),
+                                                  **({"basis_line": f"학습에 쓰지 않은 영상 {nv:,}장으로 잼", "val_images": nv} if nv else {}),
+                                                  **({"basis_line": tip, "tip": tip} if tip else {})},
+                          "updated": ad.replace("-", ".")[:7] or None}   # 10-24 사용자: 카드 '모델 갱신' 칸 넘침 — 다른 카드와 같은 YYYY.MM
             break
     registered = any((md["status"] or "") == "registered" for md in cur_learned)
     official = can_analyze and registered and any(d["card_id"] == cid for d in m["live"])
@@ -453,7 +460,9 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "version": cur["version"] if cur else None, "owner": own["name"],
         "official": official, "model": model_card, "targets": targets, "sample": sample_src,
-        "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global" else "분석 모델 등록 전"),
+        # 모델 없이 미리 만든 결과만 있는 카드(해양쓰레기 · 생활환경 · 도로 — 10-24 카드 고침) = 결과 보기 전용 · 새 분석 안 됨(상태 말은 그대로)
+        "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global"
+                                                                      else "결과 보기 전용 · 새 분석은 모델 연결 뒤" if (example or result_sggs) else "분석 모델 등록 전"),
         "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "reports_sum": reports_sum, "publish": publish,
     }
     if p.realm == "lx":
@@ -626,7 +635,20 @@ async def one(cid: str, request: Request):
         from .release import acc_env, model_label
         learn = {"acc": core["model"].get("acc"), "updated": core["model"].get("updated"), "sample": smp,
                  "base": ({"name": model_label(base["name"], base["metrics"]), "acc": acc_env(base["metrics"])} if base else None)}
-    return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"),
+    # 두 시기 비교 카드(10-24 사료작물 생육기·생산기 비교) — 판의 modules.compare(시기별 원천 카드) · 화면은 이 칸이 있으면 비교 칸을 연다(카드 id 를 화면에 적지 않음)
+    cur_v = max(vers, key=lambda v: (v["approved_at"] is not None, _ver_key(v["version"])), default=None)
+    cmods = _obj(cur_v["modules"]) if cur_v else None
+    compare = (cmods or {}).get("compare") if isinstance(cmods, dict) else None
+    if compare:
+        compare = {k: compare.get(k) for k in ("growth", "production", "silage") if compare.get(k)}
+        accs = {}
+        for k in ("growth", "production"):           # 시기별 모델 정확도(원천 카드의 정확도 칸과 같은 값 · 모델 기록 한 출처)
+            src = next((c for c in m["cards"] if c["id"] == compare.get(k)), None)
+            if src:
+                sc = _card_core(m, src, [], p)
+                accs[k] = {"card": src["id"], "name": sc["name"], "acc": (sc.get("model") or {}).get("acc")}
+        compare["sources"] = accs
+    return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"), "pair": compare,
             "scene_pick": inf.get("scene") or None, "result_sgg": inf.get("result_sgg"), "result_word": inf.get("result_word"),
             "info": {k: inf.get(k) for k in ("line", "grp", "imagery", "timepoints", "finds", "compare")},
             "all_groups": _groups(m),                 # 고를 수 있는 분야(분야 표 순서) — groups 는 이 카드의 분야(여러 개)

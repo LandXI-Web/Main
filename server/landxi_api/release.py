@@ -36,7 +36,7 @@ from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
 
 router = APIRouter()
-ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50")
+ACC_KEYS = ("mask_mAP50", "metrics/mAP50(M)", "box_mAP50", "metrics/mAP50(B)", "mAP50", "mean_iou")
 XI = "/landxi/v3/xi-clean/"   # XI맵(전국 · 해외 실시간 분석) — 추론 결과 보기는 지도 서비스로 옮겼다(MAPSVC)
 MAPSVC = "/landxi/v3/lx-map/"   # 지도 서비스(원칙 149 · 163) — 추론 '결과 보기'는 XI맵이 아니라 여기로
 MEMO_MAX = 300
