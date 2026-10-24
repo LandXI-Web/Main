@@ -185,7 +185,7 @@ def sample(root: str, mounts: list[str]) -> dict:
         },
         "by_tenant": by_tenant,
         "data_root": root,
-        "walk": {"at": hat, "took_s": H["took_s"], "every_s": HEAVY_S},
+        "walk": {"at": hat, "took_s": env(H["took_s"], "s", "storage_poller 자기 계측", hat), "every_s": env(HEAVY_S, "s", "storage_poller 설정", hat)},   # 10-24 맨 숫자 → 봉투(관리자 배포 · 인프라 화면 500)
         "as_of": at,
     }
 
