@@ -348,7 +348,7 @@ def finalize_clean(feats: list[dict], *, task: str, label: str | None = None, ao
         epsg = metric_epsg(c0.x, c0.y)
     gm = [_valid(g) for g in to_metric([f["geom"] for f in feats], epsg)]
     props = [dict(f["props"]) for f in feats]
-    mg, mp, sst, cands = seam_merge(gm, props, obb=(task == "obb"))
+    mg, mp, sst, cands = seam_merge(gm, props, obb=(task in ("obb", "det")))   # 상자 결과(차량 · 사람)는 칸 경계에서 붙이지 않는다(붙은 두 사람이 하나가 되지 않게)
     rec["seam"], rec["candidates"] = sst, cands
     keep = np.ones(len(mg), dtype=bool)
     if national and national.get("cell") and aoi and len(mg):

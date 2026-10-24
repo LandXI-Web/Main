@@ -275,6 +275,18 @@ def _board_example(cid: str, items: list[dict]) -> dict | None:
             "region": first + (f" 외 {len(hit) - 1}곳" if len(hit) > 1 else ""), "sgg": hit[0][0].get("sgg_cd") if len(hit) == 1 else None}
 
 
+def kept_example(cid: str) -> dict | None:
+    """비교 카드의 결과 예시(cards/{카드}/example.json · 사료작물 생육기↔생산기 비교 한 번의 실제 값) — 없으면 None(지어내지 않는다)."""
+    import json as _json
+    f = config.DATA_ROOT / "cards" / cid / "example.json"
+    try:
+        d = _json.loads(f.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    ex = d.get("example") if isinstance(d, dict) else None
+    return ex if isinstance(ex, dict) and ex.get("value") is not None else None
+
+
 def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None) -> dict:
     """카드 한 장의 여덟 칸 — items = 이 카드의 요약 항목(기관 세션이면 그 기관 것만)."""
     cid = card["id"]
@@ -308,6 +320,8 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
                    "region": _short(it.get("region_name"), it.get("sgg_cd")), "sgg": it.get("sgg_cd")}
     if example is None:
         example = _board_example(cid, items)
+    if example is None:
+        example = kept_example(cid)          # 두 시기 비교 카드 — 직원이 실제로 견준 한 번을 결과 예시로 남긴 것(feedcompare keep_example)
 
     # 업무 결과 숫자가 없을 때의 '어디' — 결과가 있는 지역(운영 먼저 · 대시보드 '우리 서비스'와 같은 'n 외 n곳' 말)
     rnames = []

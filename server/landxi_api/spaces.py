@@ -65,7 +65,7 @@ TRUST = ((0.6, "높음", "AI가 대체로 확신한 결과입니다"),
 # 결과 종류의 한글 이름(결과 파일에 영문 코드만 있을 때) — 나머지는 원래 이름(한글이면 그대로)
 CLASS_KO = {"styrofoam": "스티로폼", "farmland": "경작지", "cropland": "경작지", "building": "건물", "greenhouse": "비닐하우스", "parking": "주차장",
             "vehicle": "차량", "veg_gain": "식생 늘어남", "veg_loss": "식생 줄어듦", "built_new": "새 건물", "built_gain": "건물 늘어남",
-            "built_loss": "건물 줄어듦", "other": "기타 변화"}
+            "built_loss": "건물 줄어듦", "other": "기타 변화", "People": "사람", "people": "사람", "person": "사람", "grid": "10 m 격자"}
 CHECK_WORD = {"raw": "확인 전", "edited": "고침", "deleted": "삭제"}
 NO_EMD = {"관할 밖", ""}        # 읍면동 칸에 남은 자리 표시(바다 등 읍면동 밖) — 이름으로 쓰지 않는다
 FMT = {"geojson": ("지도 파일", "GeoJSON", "geojson", "application/geo+json"),

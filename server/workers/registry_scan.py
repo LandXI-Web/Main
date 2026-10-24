@@ -166,6 +166,16 @@ def scan_models() -> list[dict]:
     for m in idx:
         names = [m["names"][k] for k in sorted(m.get("names", {}), key=lambda x: int(x))]
         mid = m["id"]
+        if m.get("model_task") == "det":                 # 들여온 탐지 모델(가로세로 상자 · 사람 등) — 카드 · 지표 · 해상도를 항목에서 그대로
+            ta = m.get("train_args") or {}
+            met = {k: _env(v.get("value"), "ratio", "recorded", v.get("as_of"), v.get("source"), v.get("note"))
+                   for k, v in (m.get("metrics_env") or {}).items()}
+            rows.append({"id": mid, "family": str(ta.get("model", "")).split("/")[-1].replace(".pt", "") or None, "version": m.get("run"),
+                         "weights_uri": m.get("weights"), "task": "det", "classes": names, "input": ["ortho"],
+                         "gsd_trained_m": m.get("gsd_m"), "metrics": met, "status": m.get("status") or "registered", "image": None,
+                         "tile_size": int(ta.get("imgsz", 640)), "infer_shape": [int(ta.get("imgsz", 640))] * 2,
+                         "card_url": f"/files/models/{m.get('folder') or mid}/card.json", "adapter": m.get("adapter") or "yolo_det"})
+            continue
         is_aerial = mid.startswith("aerial25")
         best = m.get("best_by_mask_mAP50") or {}
         metrics = {}

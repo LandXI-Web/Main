@@ -916,7 +916,8 @@ async def shared_ids(tenant_id: str | None, every: bool = False) -> set[str]:
         async with db(realm="lx") as conn:
             await _seed_shares(conn)
             rows = await conn.fetch("SELECT s.imagery_id, coalesce(i.staff_visible, true) AS vis FROM imagery_shares s "
-                                    "LEFT JOIN imagery i ON i.id = s.imagery_id WHERE s.tenant_id=$1", tenant_id)
+                                    "LEFT JOIN imagery i ON i.id = s.imagery_id WHERE s.tenant_id=$1 "
+                                    "AND coalesce(i.layer->>'share_scope','') <> 'lx'", tenant_id)    # LX 안에서만 쓰는 영상은 공유 줄이 있어도 기관에 0
         c = (_time.time(), {r["imagery_id"] for r in rows}, {r["imagery_id"] for r in rows if r["vis"]})
         _share_cache[tenant_id] = c
     return set(c[1] if every else c[2])
@@ -961,7 +962,8 @@ async def tenant_shares(tid: str, request: Request):
         rows = await conn.fetch("SELECT i.id, i.name, i.tier, i.gsd_m, i.year, i.epoch, i.kind, i.sgg_cd, i.pmtiles_set, i.path_internal, i.layer, "
                                 "ST_AsGeoJSON(i.footprint)::json AS fp FROM imagery i WHERE coalesce(i.layer->>'role','imagery') = 'imagery' "
                                 "AND coalesce(i.kind,'ortho') <> 'terrain' AND (i.sgg_cd IS NOT NULL OR i.footprint IS NOT NULL) "
-                                "AND i.staff_visible")             # 관리자 '공유 데이터'에서 비공개로 둔 영상은 기관 공유 목록에도 없다(10-14 비공개-기관공유)
+                                "AND i.staff_visible "             # 관리자 '공유 데이터'에서 비공개로 둔 영상은 기관 공유 목록에도 없다(10-14 비공개-기관공유)
+                                "AND coalesce(i.layer->>'share_scope','') <> 'lx'")   # LX 안에서만 쓰는 영상(사람이 보이는 축제 드론 등 · 원칙 331) — 기관 공유 후보 0
         sh = {r["imagery_id"]: r for r in await conn.fetch("SELECT imagery_id, shared_at FROM imagery_shares WHERE tenant_id=$1", tid)}
     cands = await run_in_threadpool(_share_candidates, tid, rows)
     # 영상 표준(원칙 94 · 확인 대장 15차 영상-3 ⓑ) — 원본 지울 날짜 한 칸(숫자 한 출처 imagery_std · 경로는 내지 않는다)
@@ -1185,10 +1187,12 @@ async def set_tenant_share(tid: str, iid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
             raise ApiError("not_found", "해당 기관이 없습니다")
-        r = await conn.fetchrow("SELECT id, sgg_cd, ST_AsGeoJSON(footprint)::json AS fp FROM imagery WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'",
-                                iid)
+        r = await conn.fetchrow("SELECT id, sgg_cd, ST_AsGeoJSON(footprint)::json AS fp, coalesce(layer->>'share_scope','') AS share_scope FROM imagery "
+                                "WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'", iid)
     if not r:
         raise ApiError("not_found", "영상이 없습니다")
+    if on and r["share_scope"] == "lx":          # 사람이 보이는 영상 등 LX 안에서만 보고 분석하는 영상(원칙 331)
+        raise ApiError("forbidden", "LX 안에서만 쓰는 영상이라 기관에 공유할 수 없습니다", None, 403)
     if on and not await run_in_threadpool(_share_candidates, tid, [r]):
         raise ApiError("out_of_scope", "이 기관 관할 밖 영상은 공유할 수 없습니다", None, 403)
     async with db(realm="lx") as conn:

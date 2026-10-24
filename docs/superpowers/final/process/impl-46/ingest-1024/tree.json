@@ -1,0 +1,18 @@
+{
+ "data_root": "02. 데이터",
+ "imagery/namwon/2025-06": "nw_2506_cog.tif (505.4GB · COG JPEG90 · 1.69cm · 남원 전체)",
+ "imagery/namwon/2025-08": "nw_2508_cog.tif (105.3GB · COG JPEG90 · 1.54cm · 남원 전체)",
+ "imagery/namwon/2025-04-geumji": "geumji-1·2·3 · geumji-unprocessed-3·4 (.tif/.tfw/.prj · 금지면 일부 · 4월)",
+ "imagery/namwon/chunhyang-2025-05-04": "lx-1~4 · wv-1~2 /result.* · pix4d/transparent_mosaic_group1.* (사람이 보이는 영상 · LX 안에서만)",
+ "imagery/namwon/chunhyang-2026": "flight-1~4.* + flight-1_outline.shp (사람이 보이는 영상 · LX 안에서만)",
+ "imagery/namwon/CHECKSUMS.txt": "이 폴더 59개 파일 SHA-256(상대 경로)",
+ "models/people/yolo11l-2025-08-25": "best.pt · card.json · results_from_checkpoint.csv · train_args_from_checkpoint.json",
+ "models/people/yolo11x-2025-06-01": "best.pt · 기록 2개(이력 · 장부에 올리지 않음)",
+ "training/peoplecount": "yolo-master-2025-08-24(라벨 6,163 · data.yaml) · aidata-2025-05-30(lx-1·3 · wv-1·2 이미지+라벨) · filter-labelset-2026-06 · labels/{yolo-master,aidata} · code · bundle-20261024(SUMMARY · INVENTORY · CHECKSUMS · raster_check · copy_log · MOVES.csv · CHECKSUMS-new-paths.txt)",
+ "results/peoplecount": "2025/{people-th0.01, yolo-master, heatmap-stats, misc, threshold-sweep-2025-06-09} · 2026/{threshold-sweep-1~4, filter-1~4}",
+ "removed_landing": [
+  "raw/peoplecount-20261024",
+  "cog/namwon-2025"
+ ],
+ "naming": "기존 갈래(imagery/overseas/kgz/{연도} · models/{지역}/{업무}/{판})를 따라 영문 소문자 · 붙임표. 폴더마다 README 를 두는 관례가 없어 두지 않음"
+}

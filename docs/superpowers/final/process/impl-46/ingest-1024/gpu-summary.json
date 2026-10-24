@@ -1,0 +1,82 @@
+{
+ "gpu_people.csv": {
+  "gpu0": {
+   "samples": 100,
+   "from": "21:11:31",
+   "to": "21:17:21",
+   "max_30s_avg_W": 92.1,
+   "max_30s_avg_util_pct": 29.0,
+   "peak_W": 122.34,
+   "peak_temp_C": 72.0
+  },
+  "gpu1": {
+   "samples": 100,
+   "from": "21:11:31",
+   "to": "21:17:21",
+   "max_30s_avg_W": 25.4,
+   "max_30s_avg_util_pct": 0.0,
+   "peak_W": 90.82,
+   "peak_temp_C": 66.0
+  }
+ },
+ "gpu_run2.csv": {
+  "gpu0": {
+   "samples": 236,
+   "from": "21:22:53",
+   "to": "21:32:54",
+   "max_30s_avg_W": 123.9,
+   "max_30s_avg_util_pct": 39.3,
+   "peak_W": 155.2,
+   "peak_temp_C": 78.0
+  },
+  "gpu1": {
+   "samples": 236,
+   "from": "21:22:53",
+   "to": "21:32:54",
+   "max_30s_avg_W": 31.1,
+   "max_30s_avg_util_pct": 0.2,
+   "peak_W": 108.8,
+   "peak_temp_C": 72.0
+  }
+ },
+ "gpu_run3.csv": {
+  "gpu0": {
+   "samples": 101,
+   "from": "21:36:38",
+   "to": "21:43:06",
+   "max_30s_avg_W": 136.2,
+   "max_30s_avg_util_pct": 27.2,
+   "peak_W": 146.35,
+   "peak_temp_C": 77.0
+  },
+  "gpu1": {
+   "samples": 101,
+   "from": "21:36:38",
+   "to": "21:43:06",
+   "max_30s_avg_W": 30.3,
+   "max_30s_avg_util_pct": 0.0,
+   "peak_W": 106.85,
+   "peak_temp_C": 74.0
+  }
+ },
+ "gpu_run4.csv": {
+  "gpu0": {
+   "samples": 203,
+   "from": "22:37:06",
+   "to": "22:49:02",
+   "max_30s_avg_W": 153.2,
+   "max_30s_avg_util_pct": 58.2,
+   "peak_W": 166.1,
+   "peak_temp_C": 83.0
+  },
+  "gpu1": {
+   "samples": 203,
+   "from": "22:37:06",
+   "to": "22:49:02",
+   "max_30s_avg_W": 29.1,
+   "max_30s_avg_util_pct": 8.3,
+   "peak_W": 95.61,
+   "peak_temp_C": 71.0
+  }
+ }
+}

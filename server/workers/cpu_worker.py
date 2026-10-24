@@ -76,9 +76,9 @@ def finalize(job_id: str):
     raw = _feats_from_shards(sdir) if sdir.exists() else []
     region = None      # 영상 id 로 지역을 추정하지 않는다(읍면동 붙이기는 postprocess 가 결과 좌표로 판단 · core-imagery)
     try:                # 추론 설정 '최소 크기'(질문 6 ⓐ · 그 작업에만) — 없으면 지금까지의 4㎡
-        min_area = max(0.0, float(opts.get("min_area_m2", 4.0)))
+        min_area = max(0.0, float(opts.get("min_area_m2", 0.05 if task == "det" else 4.0)))   # 사람 상자(약 0.3㎡)는 4㎡ 기준에 다 지워진다
     except (TypeError, ValueError):
-        min_area = 4.0
+        min_area = 0.05 if task == "det" else 4.0
     ov = opts.get("overseas") or {}
     place = (ov.get("name") or ov.get("cell"), ov.get("cell")) if ov.get("cell") else None     # 해외 결과 자산 — 군 칸 이름(읍면동 찾기 없음)
     feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place)
@@ -208,7 +208,12 @@ def finalize(job_id: str):
     snap = bus.snapshot_path(tenant, job_id, demo)
     t1 = time.time()
     try:
-        info = build_pmtiles(gj, snap, minzoom=12 if task == "obb" else 10, maxzoom=20 if task == "obb" else 17, name=job_id)
+        if task == "det":           # 사람 탐지 — 지도에는 상자 대신 가운데 점 + 10 m 격자(㎡당 사람 수)만(원칙 331 · 사람 그림 0)
+            disp = jdir.parent / f"{job_id}.display.geojson"
+            postprocess.det_display(feats, disp, cell_m=float(opts.get("grid_m", 10) or 10))
+            info = build_pmtiles(disp, snap, minzoom=12, maxzoom=20, name=job_id)
+        else:
+            info = build_pmtiles(gj, snap, minzoom=12 if task == "obb" else 10, maxzoom=20 if task == "obb" else 17, name=job_id)
     except Exception as e:
         log(WHO, "snapshot fail", repr(e))
         info = None

@@ -1,0 +1,23 @@
+{
+ "peoplecount": {
+  "listed": 15191,
+  "ok": 15191,
+  "mismatch": 0,
+  "missing": 0,
+  "extra_files_compared_with_G": 9,
+  "extra_match": 9,
+  "files_G": 15200,
+  "files_E": 15200
+ },
+ "cog_E_sha256": {
+  "nw_2506_cog.tif": {
+   "sha256": "b7dc744cd64e3f9989c8124511210f2854d1258318119847532c8bc06e4ed293",
+   "bytes": 505363002244
+  },
+  "nw_2508_cog.tif": {
+   "sha256": "e0315df5a327230172e448efc4b9e17c9de4452c01f3546ade2acbe88cba4eb9",
+   "bytes": 105315863475
+  }
+ },
+ "cog_G_sha256": "진행 중(외장 디스크 읽기 약 43~150MB/s) — 끝나면 이 칸을 채움"
+}

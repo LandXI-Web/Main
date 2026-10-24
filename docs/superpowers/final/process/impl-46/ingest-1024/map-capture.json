@@ -1,0 +1,1079 @@
+{
+ "at": "2026-10-24T13:49:48.518Z",
+ "base": "https://app.land-xi.dev",
+ "maps": [
+  {
+   "job": "job_01M5PYK3BR4697HEYZS80HRVZ9",
+   "ready_ms": 1460,
+   "zoom_before_cap": 15,
+   "zoom": 15,
+   "layers": [
+    {
+     "job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHWDZX75Z63E15PD2A5R2",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "수단그라스",
+      "호밀"
+     ]
+    },
+    {
+     "job": "job_01M5Q21ZHFPT6F3TC22KKTWRBM",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "호밀",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHVQHGREBMFAG94ZZ1MEG",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "호밀",
+      "IRG"
+     ]
+    },
+    {
+     "job": "job_01M5PYT4PCY4RN0YGMXHKCW1AE",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5PYK3BR4697HEYZS80HRVZ9",
+     "on": true,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "사람"
+     ]
+    },
+    {
+     "job": "job_01M5P75WQRXHY44ZJSGSYKKG2Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+     "on": false,
+     "region": "원주시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M3TPFBAA9CTQSZTDDS2CGYMD",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5P75NP1GPXBBWANFTWW3GH1",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NWHN4J3RP6YD51DNP2629Z",
+     "on": false,
+     "region": "임실군",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5K2VBMMHRTSM7SQPFFAPX84",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5JY05S0MTJ04Y9MYMZJXPTW",
+     "on": false,
+     "region": "중구",
+     "empty": false,
+     "cls": [
+      "경작지"
+     ]
+    },
+    {
+     "job": "job_01M5JW6R7KAJ6C5NDVSWSKHR7M",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M5JVF95JWYVG164PQQ38KFSB",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M5JTXSAJ8D5KYQSA8STX1M3Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NW3G3SQ1K0DV4A7JVHZM8J",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "silage_bale"
+     ]
+    },
+    {
+     "job": "job_01M5NW3F8688S6XF0RX5ZG0DQH",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "greenhouse_single",
+      "greenhouse_multi"
+     ]
+    },
+    {
+     "job": "job_01M5HAPE00MPXNQ70AP6NVG7JV",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5HAG21ED9RXTEQMNGTGZK74",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9T05MHY064XBZYJTJZ9VK",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8TT12CB6SNGC67E1N5K",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8CKTFNP16Z8MTG7PQS2",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H8MV7DXYJ63HSDNTJ89G1F",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M4JX13YPQ4M50XGZCTQPFYVN",
+     "on": false,
+     "region": "여주시 하거동",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+     "on": false,
+     "region": "남원시 덕과면",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+     "on": false,
+     "region": "함양군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASF5KJMRFX3SHNQT8SWXEQ",
+     "on": false,
+     "region": "증평군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+     "on": false,
+     "region": "여주시",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4ARGYES7RGXQXVQCXG5WP9W",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    }
+   ],
+   "loading": true,
+   "shot": "map-1.png"
+  },
+  {
+   "job": "job_01M5PYT4PCY4RN0YGMXHKCW1AE",
+   "ready_ms": 1704,
+   "zoom_before_cap": 15,
+   "zoom": 15,
+   "layers": [
+    {
+     "job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHWDZX75Z63E15PD2A5R2",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "수단그라스",
+      "호밀"
+     ]
+    },
+    {
+     "job": "job_01M5Q21ZHFPT6F3TC22KKTWRBM",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "호밀",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHVQHGREBMFAG94ZZ1MEG",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "호밀",
+      "IRG"
+     ]
+    },
+    {
+     "job": "job_01M5PYT4PCY4RN0YGMXHKCW1AE",
+     "on": true,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5PYK3BR4697HEYZS80HRVZ9",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "사람"
+     ]
+    },
+    {
+     "job": "job_01M5P75WQRXHY44ZJSGSYKKG2Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+     "on": false,
+     "region": "원주시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M3TPFBAA9CTQSZTDDS2CGYMD",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5P75NP1GPXBBWANFTWW3GH1",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NWHN4J3RP6YD51DNP2629Z",
+     "on": false,
+     "region": "임실군",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5K2VBMMHRTSM7SQPFFAPX84",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5JY05S0MTJ04Y9MYMZJXPTW",
+     "on": false,
+     "region": "중구",
+     "empty": false,
+     "cls": [
+      "경작지"
+     ]
+    },
+    {
+     "job": "job_01M5JW6R7KAJ6C5NDVSWSKHR7M",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M5JVF95JWYVG164PQQ38KFSB",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M5JTXSAJ8D5KYQSA8STX1M3Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NW3G3SQ1K0DV4A7JVHZM8J",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "silage_bale"
+     ]
+    },
+    {
+     "job": "job_01M5NW3F8688S6XF0RX5ZG0DQH",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "greenhouse_single",
+      "greenhouse_multi"
+     ]
+    },
+    {
+     "job": "job_01M5HAPE00MPXNQ70AP6NVG7JV",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5HAG21ED9RXTEQMNGTGZK74",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9T05MHY064XBZYJTJZ9VK",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8TT12CB6SNGC67E1N5K",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8CKTFNP16Z8MTG7PQS2",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H8MV7DXYJ63HSDNTJ89G1F",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M4JX13YPQ4M50XGZCTQPFYVN",
+     "on": false,
+     "region": "여주시 하거동",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+     "on": false,
+     "region": "남원시 덕과면",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+     "on": false,
+     "region": "함양군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASF5KJMRFX3SHNQT8SWXEQ",
+     "on": false,
+     "region": "증평군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+     "on": false,
+     "region": "여주시",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4ARGYES7RGXQXVQCXG5WP9W",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    }
+   ],
+   "loading": true,
+   "shot": "map-2.png"
+  },
+  {
+   "job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+   "ready_ms": 10558,
+   "zoom_before_cap": 14.989683047022222,
+   "zoom": 14.989683047022222,
+   "layers": [
+    {
+     "job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+     "on": true,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHWDZX75Z63E15PD2A5R2",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "수단그라스",
+      "호밀"
+     ]
+    },
+    {
+     "job": "job_01M5Q21ZHFPT6F3TC22KKTWRBM",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "IRG",
+      "호밀",
+      "옥수수"
+     ]
+    },
+    {
+     "job": "job_01M5NWHVQHGREBMFAG94ZZ1MEG",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "호밀",
+      "IRG"
+     ]
+    },
+    {
+     "job": "job_01M5PYT4PCY4RN0YGMXHKCW1AE",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5PYK3BR4697HEYZS80HRVZ9",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "사람"
+     ]
+    },
+    {
+     "job": "job_01M5P75WQRXHY44ZJSGSYKKG2Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M4ARMQDXBZKXVQKBVBYSKV59",
+     "on": false,
+     "region": "원주시",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M3TPFBAA9CTQSZTDDS2CGYMD",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5P75NP1GPXBBWANFTWW3GH1",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NWHN4J3RP6YD51DNP2629Z",
+     "on": false,
+     "region": "임실군",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5K2VBMMHRTSM7SQPFFAPX84",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5JY05S0MTJ04Y9MYMZJXPTW",
+     "on": false,
+     "region": "중구",
+     "empty": false,
+     "cls": [
+      "경작지"
+     ]
+    },
+    {
+     "job": "job_01M5JW6R7KAJ6C5NDVSWSKHR7M",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M5JVF95JWYVG164PQQ38KFSB",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M5JTXSAJ8D5KYQSA8STX1M3Y",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물"
+     ]
+    },
+    {
+     "job": "job_01M5NW3G3SQ1K0DV4A7JVHZM8J",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "silage_bale"
+     ]
+    },
+    {
+     "job": "job_01M5NW3F8688S6XF0RX5ZG0DQH",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "차량"
+     ]
+    },
+    {
+     "job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "greenhouse_single",
+      "greenhouse_multi"
+     ]
+    },
+    {
+     "job": "job_01M5HAPE00MPXNQ70AP6NVG7JV",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5HAG21ED9RXTEQMNGTGZK74",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9T05MHY064XBZYJTJZ9VK",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8TT12CB6SNGC67E1N5K",
+     "on": false,
+     "region": "호남선 철도용지 변화 모니터링(광산구)",
+     "empty": false,
+     "cls": [
+      "신축",
+      "포장 확대",
+      "경작 전환",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H9J8CKTFNP16Z8MTG7PQS2",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M5H8MV7DXYJ63HSDNTJ89G1F",
+     "on": false,
+     "region": "고속국도 담양IC 변화 모니터링",
+     "empty": false,
+     "cls": [
+      "경작 전환",
+      "포장 확대",
+      "신축",
+      "소실"
+     ]
+    },
+    {
+     "job": "job_01M4JX13YPQ4M50XGZCTQPFYVN",
+     "on": false,
+     "region": "여주시 하거동",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4FJDMZZAFDWB4HJ00E6X7GJ",
+     "on": false,
+     "region": "남원시 덕과면",
+     "empty": false,
+     "cls": [
+      "경작지",
+      "건물",
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4AT60R3DZ1Q0VKGC1R71CPF",
+     "on": false,
+     "region": "남원시",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASGEKFA2M21AMVYFB6FPN7",
+     "on": false,
+     "region": "함양군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ASF5KJMRFX3SHNQT8SWXEQ",
+     "on": false,
+     "region": "증평군",
+     "empty": false,
+     "cls": [
+      "비닐하우스"
+     ]
+    },
+    {
+     "job": "job_01M4ARJ76ARDGB04EAF8QP591P",
+     "on": false,
+     "region": "여주시",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    },
+    {
+     "job": "job_01M4ARGYES7RGXQXVQCXG5WP9W",
+     "on": false,
+     "region": "천안시 서북구",
+     "empty": false,
+     "cls": [
+      "주차장"
+     ]
+    }
+   ],
+   "loading": false,
+   "shot": "map-3.png"
+  }
+ ],
+ "cards": [
+  {
+   "id": "card-crowd",
+   "ms": 3241,
+   "title": "관광지 안전관리 분석서비스",
+   "chip": "검토",
+   "line": "드론 영상에서 사람과 차량을 세어 인파 · 주차 혼잡을 봅니다",
+   "result": "결과 예시\n\nAI 분석 결과 · 남원시 · 2026.10.24 기준\n\n1,075\n개",
+   "cond": [
+    [
+     "입력 영상",
+     "1.8cm 드론 · 2cm 드론"
+    ],
+    [
+     "시점",
+     "행사 시간대(1시점부터)"
+    ],
+    [
+     "걸리는 시간",
+     "첫 분석 뒤 표시"
+    ],
+    [
+     "찾는 것",
+     "사람 수 · ㎡당 사람 수(10 m 격자) · 차량 수 · 주차장 면 넓이"
+    ],
+    [
+     "학습",
+     "정식 모델 · 학습 불필요\nAI 모델 정확도 87% · 2025.08 학습 · 모델 기록"
+    ],
+    [
+     "버전 · 담당",
+     "v1.0 · 담당 미지정"
+    ]
+   ],
+   "side": "이 카드로 분석\n기본\n고급 기능\n1\n어디\n한 곳 · 영상 하나\n\n영상이 없거나 내 영상으로 하려면\n내 영상 업로드해서 분석\n\n2\n결과까지\n—\n지역을 고르면 최근 분석 기록으로 보여 드립니다\n분석 시작\n\n작업 대기열에 들어갑니다.\n분석이 끝나면 지도 서비스에 층으로 쌓입니다.",
+   "shot": "card-card-crowd.png"
+  },
+  {
+   "id": "card-ba9d6d",
+   "ms": 2460,
+   "title": "사료작물 생육기·생산기 비교 분석서비스",
+   "chip": "검토",
+   "line": "같은 필지의 생육기 · 생산기 결과를 견줘 바뀐 곳을 찾습니다",
+   "result": "결과 예시\n\n비교한 필지 · 금지면 · 2025년 4월 ↔ 6월 · 2026.10.24 기준\n\n190\n필지",
+   "cond": [
+    [
+     "입력 영상",
+     "2cm 드론"
+    ],
+    [
+     "시점",
+     "생육기 · 생산기 2시점(같은 곳)"
+    ],
+    [
+     "걸리는 시간",
+     "첫 분석 뒤 표시"
+    ],
+    [
+     "찾는 것",
+     "같은 작물 · 작물 바뀜 · 수확·곤포 확인 · 생산기에 없음 · 생산기에만 있음"
+    ],
+    [
+     "학습",
+     "정식 모델 · 학습 불필요\nAI 모델 정확도 생육기 99% · 생산기 97%"
+    ],
+    [
+     "버전 · 담당",
+     "v1.0 · 담당 미지정"
+    ]
+   ],
+   "side": "이 카드로 분석\n1\n생육기 결과\n봄 · 초여름 촬영\n결과를 고르세요\n남원시 2025.04 드론 정사영상 · 금지면 1차(부분) · 2025.04 · 2026.10.24 분석\n남원시 드론 정사영상 · 2026.10.24 분석\n사료작물 생육기 분석서비스에서 영상으로 분석하기 →\n2\n생산기 결과\n여름 · 가을 촬영\n결과를 고르세요\n남원시 2025.06 드론 정사영상 · 남원 전체 · 2025.06 · 2026.10.24 분석\n남원시 드론 정사영상 · 2026.10.24 분석\n사료작물 생산기 분석서비스에서 영상으로 분석하기 →\n3\n곤포사일리지\n고르면 수확·곤포를 가립니다(선택)\n고르지 않음\n남원시 드론 정사영상 · 2026.10.24 분석\n곤포사일리지 분석서비스에서 영상으로 분석하기 →\n견주기\n\n두 결과가 모두 덮",
+   "shot": "card-card-ba9d6d.png"
+  }
+ ]
+}

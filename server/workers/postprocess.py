@@ -213,7 +213,7 @@ def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: s
     items = []
     for f in features:
         g = sh_transform(to_m, f["geom"])
-        if task != "obb":
+        if task not in ("obb", "det"):          # 상자(차량 회전 상자 · 사람 상자)는 다듬지 않는다 — 50cm 사람 상자가 30cm 다듬기에 뭉개짐
             g = g.simplify(simplify_m, preserve_topology=True)
         if not g.is_valid:
             g = g.buffer(0)
@@ -281,6 +281,49 @@ def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: s
     st["out"] = len(out)
     st["epsg"] = epsg
     return out, st
+
+
+def det_grid(feats: list[dict], cell_m: float = 10.0) -> tuple[list, int]:
+    """사람 상자 → 격자 칸(cell_m 정사각 · 미터 좌표계 · 원점 0 에 맞춤) [(경위도 칸 도형, 사람 수)] · 좌표계 번호.
+    칸마다 상자 가운데 점을 센다(한 사람 = 한 칸). 사람이 0인 칸은 내지 않는다."""
+    from shapely.geometry import box
+    if not feats:
+        return [], 0
+    c0 = feats[0]["geom"].centroid
+    epsg = metric_epsg(c0.x, c0.y)
+    to_m = Transformer.from_crs(4326, epsg, always_xy=True).transform
+    to_g = Transformer.from_crs(epsg, 4326, always_xy=True).transform
+    n: dict[tuple[int, int], int] = {}
+    for f in feats:
+        c = f["geom"].centroid
+        x, y = to_m(c.x, c.y)
+        k = (int(np.floor(x / cell_m)), int(np.floor(y / cell_m)))
+        n[k] = n.get(k, 0) + 1
+    out = []
+    for (i, j), v in sorted(n.items()):
+        g = sh_transform(to_g, box(i * cell_m, j * cell_m, (i + 1) * cell_m, (j + 1) * cell_m))
+        out.append((g, v))
+    return out, epsg
+
+
+def det_display(feats: list[dict], dst: Path, cell_m: float = 10.0) -> dict:
+    """사람 탐지 결과의 지도 그림(GeoJSON · 결과 조각 원천) — 상자 대신 가운데 점(사람) + 격자 칸(사람 수 · ㎡당 사람 수).
+    영상 조각(사람 그림)은 만들지 않는다. 점 id = 결과 id(DB 결과 줄과 같은 번호) · 칸 id = 결과 id 뒤 번호."""
+    fs = []
+    for f in feats:
+        p = f["props"]
+        c = f["geom"].centroid
+        fs.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(c.x, 7), round(c.y, 7)]},
+                   "properties": {"id": str(p.get("id") or ""), "cls": p.get("cls") or "사람", "cls_en": p.get("cls_en") or "people", "conf": p.get("conf"),
+                                  "emd": p.get("emd"), "emd_cd": p.get("emd_cd")}})       # id = DB 결과 줄과 같은 글자 번호(다른 결과와 같은 모양)
+    cells, _ = det_grid(feats, cell_m)
+    area = cell_m * cell_m
+    for k, (g, v) in enumerate(cells, start=1):
+        fs.append({"type": "Feature", "geometry": json.loads(json.dumps(g.__geo_interface__)),
+                   "properties": {"id": f"grid-{k}", "cls": f"{cell_m:g} m 격자", "cls_en": "grid", "n": v, "per_m2": round(v / area, 3)}})
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(json.dumps({"type": "FeatureCollection", "features": fs}, ensure_ascii=False), encoding="utf-8")
+    return {"points": len(feats), "cells": len(cells), "max_per_cell": max((v for _, v in cells), default=0)}
 
 
 def qa_pr(pred: list[dict], gt_fc: dict, reviewed_fc: dict, aoi4326: dict | None, iou_thr: float = 0.5,

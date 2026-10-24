@@ -1,0 +1,68 @@
+{
+ "people_card_run": {
+  "job": "job_01M5PYK3BR4697HEYZS80HRVZ9",
+  "path": "POST /cards/card-crowd/analyze {region 52190, imagery chunhyang-2025-lx4}",
+  "model": "people/yolo11l-2025-08-25",
+  "shards": 2990,
+  "failed": 0,
+  "people": 9770,
+  "grid_10m_cells": 1427,
+  "max_people_per_cell": 98,
+  "max_per_m2": 0.98,
+  "median_per_cell": 4,
+  "cells_ge_20": 107,
+  "cells_ge_50": 11,
+  "map": "지도 서비스 ?job= · 점 + 10 m 격자 · 줌 16 이하 그림"
+ },
+ "vehicle_run": {
+  "job": "job_01M5PYT4PCY4RN0YGMXHKCW1AE",
+  "path": "POST /jobs(카드 card-crowd · 시군구 52190 · 같은 영상)",
+  "model": "car_v2_obb",
+  "shards": 2378,
+  "vehicles": 1075,
+  "parking_lots_source": "job_01M3S6758VPWDE8NJMPG5A44EB(2023 25cm 항공 · aerial25/best · 주차장 분류)",
+  "lots_in_ortho": 60,
+  "lot_area_m2": 8838,
+  "vehicles_in_lots": 369,
+  "lots_with_vehicles": 35,
+  "max_in_one_lot": 57,
+  "occupancy": "넣지 않음(주차구획수 자료 안 받음 · 사용자 10-24)"
+ },
+ "trial_runs_marked_test": [
+  "job_01M5PX3VHF5VVSTNDV2X3RJ9Y7(사람 · 지도 조각 실패 — det_display 번호 고침 전)",
+  "job_01M5PXT3549G48PGC2CCVNTHY4(사람 · 시군구 미지정)",
+  "job_01M5PXSSJM3PM1305DZ648F9XY(차량 · 시군구 미지정)"
+ ],
+ "fodder_compare": {
+  "growth": {
+   "job": "job_01M5Q21ZHFPT6F3TC22KKTWRBM",
+   "card": "card-4d8d6f",
+   "imagery": "namwon-2025-04-geumji-1",
+   "found": {
+    "IRG": 213,
+    "호밀": 5,
+    "옥수수": 1
+   }
+  },
+  "production": {
+   "job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+   "card": "card-f31e5f",
+   "imagery": "namwon-2025-06",
+   "found": {
+    "IRG": 116,
+    "옥수수": 3
+   }
+  },
+  "aoi": "금지면 4월 1차 영상이 있는 곳 가운데 가장 큰 덩어리(1.12㎢ · 50 m 표본으로 찾음)",
+  "zone_ha": 112.09,
+  "parcels": 190,
+  "by_status": {
+   "같은 작물": 23,
+   "작물 바뀜": 0,
+   "수확·곤포 확인": 0,
+   "생산기에 없음": 152,
+   "생산기에만 있음": 15
+  },
+  "kept_as_example": "02. 데이터/cards/card-ba9d6d/example.json · 결과 예시 '비교한 필지 · 금지면 · 2025년 4월 ↔ 6월 · 190 필지'"
+ }
+}

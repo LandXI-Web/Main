@@ -1,0 +1,76 @@
+{
+ "at": "2026-10-24",
+ "approved": [
+  "10-24 사용자: A6000 서버로 옮겨 폴더 트리 정리",
+  "10-24 사용자: 관광지 안전관리 '인파는 기존꺼 고쳐 쓴다 · 주차는 안받는다'",
+  "10-24 사용자: 사료작물 생육기 · 생산기 · 비교 카드 3개"
+ ],
+ "backup": "02. 데이터/_backup/ingest-20261024/(models-index.json.bak · models-before.json · imagery-before.json · card-crowd-before.jsonl · test-jobs-before.jsonl) — 저장소 밖",
+ "items": [
+  {
+   "id": "verify",
+   "title": "받은 자산 해시 확인",
+   "state": "구현 확인 대기",
+   "summary": "춘향제 묶음 15,191/15,191 일치 + 기록 9개 G: 직접 비교 일치 · 남원 COG 2개는 G: 원본 해시 진행 중",
+   "evidence": [
+    "verify.json"
+   ]
+  },
+  {
+   "id": "tree",
+   "title": "폴더 트리 정리",
+   "state": "구현 확인 대기",
+   "summary": "imagery/namwon · models/people · training/peoplecount · results/peoplecount · 받은 폴더 2개 지움",
+   "evidence": [
+    "tree.json"
+   ]
+  },
+  {
+   "id": "imagery",
+   "title": "영상 장부 등록(관리자 영상 등록 경로)",
+   "state": "구현 확인 대기",
+   "summary": "남원 6월 · 8월(남원 전체) · 금지면 4월 5장(부분) · 춘향제 11장(LX 안에서만 · 기관 공유 막음 403 · 내려받기 없음). 표준본 변환은 CPU 대기열에서 진행 중"
+  },
+  {
+   "id": "model",
+   "title": "사람 모델 등록",
+   "state": "구현 확인 대기",
+   "summary": "people/yolo11l-2025-08-25 · 탐지 · 등록 · mAP50 0.870(체크포인트 학습 기록 128회차) · yolo11x 는 card.json 이력"
+  },
+  {
+   "id": "crowd-card",
+   "title": "관광지 안전관리 분석서비스(card-crowd 고쳐 씀)",
+   "state": "구현 확인 대기",
+   "summary": "사람 + 차량 모델 · 검토 · 실제 분석: 사람 9,770명 · 10 m 격자 최대 ㎡당 0.98명 · 차량 1,075대 · 주차장 60곳 8,838㎡ 안 369대(점유율 없음)",
+   "evidence": [
+    "runs.json",
+    "map-capture.json",
+    "shots/map-1.png",
+    "shots/map-2.png",
+    "shots/card-card-crowd.png"
+   ]
+  },
+  {
+   "id": "fodder-example",
+   "title": "사료작물 비교 카드 결과 예시",
+   "state": "구현 확인 대기",
+   "summary": "금지면 · 2025년 4월 ↔ 6월 · 190필지(같은 작물 23 · 생산기에 없음 152 · 생산기에만 있음 15)",
+   "evidence": [
+    "runs.json",
+    "shots/map-3.png",
+    "shots/card-card-ba9d6d.png"
+   ]
+  }
+ ],
+ "gpu": "gpu-summary.json — 사료작물 두 실행 때 GPU0 30초 평균 최대 153W(기준 140W 넘음 · 다른 작업과 겹친 시간 포함) · 나머지 실행은 140W 아래",
+ "open": [
+  "결과 장부가 카드 × 시군구마다 하나라 관광지 카드의 사람 결과가 차량 결과에 '대체됨' — 결과 예시는 차량 1,075만 셈(규칙 결정 필요)",
+  "표준본 변환 전이라 춘향제 영상 지도 조각(원본 동적 타일)이 늦음 — 지도 서비스에 '서버 응답이 늦습니다'",
+  "CPU 표준본 변환 shard 가 고아 감시(120초)에 걸려 재배정됨(lx-1 · lx-2) — 큰 원본에서 keepalive 확인 필요"
+ ],
+ "proposals": [
+  "모델 둘을 쓰는 카드의 결과 장부를 '찾는 것'마다 따로(누가: LX 직원 · 왜: 인파와 주차를 한 카드에서 함께 보여야 함)",
+  "춘향제처럼 사람이 보이는 영상은 지도 서비스에서 줌 상한(예: 17)을 두는 보기 제한(누가: 보안 담당 · 왜: 원칙 331)",
+  "사람 격자 색을 ㎡당 사람 수 단계로(누가: 행사 안전 담당 · 왜: 지금은 격자 한 색)"
+ ]
+}

@@ -166,6 +166,19 @@ async def compare(cid: str, body: dict, request: Request):
     table.sort(key=lambda x: (STATUS.index(x["status"]), -abs(x["change"]["value"])))
     total = sum(v["n"] for v in agg.values())
     zone = float(rows[0]["zone_m2"]) if rows and rows[0]["zone_m2"] is not None else None
+    label = str(body.get("label") or "").strip()[:40]
+    if body.get("keep_example") and total:      # 이 한 번을 카드의 결과 예시로 남긴다(LX 직원 · 관리자 · 범위 말은 직원이 적는다 · 숫자는 이 계산 그대로)
+        from . import config
+        f = config.DATA_ROOT / "cards" / cid / "example.json"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        day = now_iso()[:10]
+        ex = {"value": total, "unit": "필지", "basis": "inferred", "as_of": day, "source": src, "label": "비교한 필지", "word": "비교한 필지",
+              "region": label or "두 시기 공통 범위", "sgg": (mine.get("growth") or {}).get("sgg_cd"),
+              "by_status": {k: v["n"] for k, v in agg.items()}}
+        f.write_text(json.dumps({"example": ex, "inputs": {k: v["job"] for k, v in mine.items()}, "by": p.user_id, "at": now_iso()},
+                                ensure_ascii=False, indent=1), encoding="utf-8")
+        async with db(realm="lx") as conn:
+            await audit(conn, p, "card.compare.example", cid, None, {"label": label, "parcels": total, "inputs": {k: v["job"] for k, v in mine.items()}})
     return {"inputs": mine, "unit": "필지",
             "zone": env(round(zone / 10000, 2) if zone else None, "ha", "measured", "두 결과가 모두 덮는 자리"),
             "total": env(total, "필지", "inferred", src),
