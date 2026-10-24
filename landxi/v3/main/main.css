@@ -339,3 +339,8 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 .m-why{margin-top:8px}
 .m-why span{display:inline-block}
 @media (max-width:640px){.m-foot-in{flex-direction:column;align-items:flex-start;gap:8px}.m-foot-l,.m-foot-r{gap:4px 16px}.m-foot-l > * + *::before,.m-foot-r > a + a::before{content:none}}   /* 10-23 휴대폰 — 줄 첫머리에 세로선이 남지 않게 선 대신 간격 */
+/* 10-24 사용자: 머리줄 CI · 메뉴 글자 2px 줄임 (휴대폰은 그대로) */
+@media (min-width:641px){.m-mast .m-word{font-size:calc(var(--fs-t1) - 2px)}.m-nav a{font-size:calc(var(--fs-t2) - 2px)}}
+@media (max-width:1100px) and (min-width:641px){.m-nav a{font-size:calc(var(--fs-t1) - 2px)}}
+@media (max-width:640px){.m-nav.is-me a[href^="#ch"]{display:none}}   /* 10-24 휴대폰 · 로그인 상태: 머리줄에 '내 화면으로 · 로그아웃'만(장면 이동 글은 스크롤로) */
+.m-hero .t-hero{font-size:calc(var(--fs-hero) - 2px)}   /* 10-24 사용자: 첫 제목 2px 줄임 */
