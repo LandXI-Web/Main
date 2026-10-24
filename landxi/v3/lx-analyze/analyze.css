@@ -244,6 +244,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-ac-pic{position:relative}
 .la-ac-cat{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 20px)}
 .la-ac-cat span{padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);font:600 var(--fs-tag)/21px var(--font-body);color:var(--ink);white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.la-ac-cat span.is-rv{color:var(--sub)}
 .la-ac-imk{display:flex;flex-wrap:wrap;gap:4px}
 .la-ac-imk span{padding:1px 8px;border:1px solid var(--rule);border-radius:999px;font:500 var(--fs-tag)/21px var(--font-body);color:var(--ink-2)}
 
@@ -260,3 +261,56 @@ body.la-boot .k-app{visibility:hidden}
 .la-own{display:inline-block;margin-right:6px;padding:0 6px;border-radius:4px;vertical-align:1px;background:var(--ink);color:var(--bg-1);font:600 var(--fs-tag)/20px var(--font-body);pointer-events:none}
 .la-own-m{display:flex;flex-direction:column;gap:12px}
 .la-own-act{display:flex;justify-content:flex-end}
+/* 한 화면 맞춤 갤러리(10-24 사용자 "한 화면에 나오는 카드 장수를 조절") — 열 × 줄은 app.js fitGrid 가 정하고, 넘치면 data-fit 3 → 0 으로 한 단계씩 줄인다(글자 바닥 14 · 잘림 없음) */
+.la-page.la-page--fit{height:100%;min-height:0;padding-top:24px;padding-bottom:16px;gap:16px}
+.la-page--fit .la-acg{flex:1 1 0;min-height:0;gap:16px}
+.la-page--fit .la-pager{margin-top:0}
+.la-acg[data-fit] .la-ac{min-height:0;height:100%}
+.la-acg[data-fit] .la-ac .la-ac-pic{aspect-ratio:auto;flex:1 1 0;min-height:96px}
+.la-acg[data-fit] .la-ac-b{flex:none}
+.la-ac-where .v{white-space:normal;overflow:visible;text-overflow:clip;word-break:keep-all}
+.la-acg[data-fit="2"] .la-ac .la-ac-pic{min-height:72px}
+.la-acg[data-fit="1"] .la-ac .la-ac-pic{min-height:56px}
+.la-acg[data-fit="0"] .la-ac .la-ac-pic{min-height:48px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac-b{padding:12px 16px 14px;gap:6px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac .k-sc-t{font-size:var(--fs-t2);line-height:26px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac-hero{grid-template-columns:auto minmax(0,1fr);padding:8px 12px;gap:4px 16px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac-hero b:not(.d){font-size:var(--fs-t1);line-height:30px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac-hero b.d{font-size:var(--fs-t2);line-height:30px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .la-ac-hero small{font-size:var(--fs-tag);line-height:19px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .k-sc-acts{min-height:36px;padding-top:2px}
+.la-acg:is([data-fit="2"],[data-fit="1"],[data-fit="0"]) .k-sc-acts .t-btn.k-sc-go{height:36px;padding:0 16px}
+.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac .la-ac-line{min-height:0;font-size:var(--fs-label);line-height:20px}
+.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac-hero b:not(.d),.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac-hero b.d{font-size:var(--fs-t2);line-height:26px}
+.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac-where{flex-direction:row;flex-wrap:wrap;gap:0 8px}
+.la-acg[data-fit="0"] .la-ac .la-ac-line,.la-acg[data-fit="0"] .la-ac-imk{display:none}
+.la-ac-where .v2{display:none;font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.la-acg[data-fit="0"] .la-ac-where .v{display:none}
+.la-acg[data-fit="0"] .la-ac-where .v2{display:inline}
+.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac-pic .k-sc-blank{display:none}
+.la-acg[data-fit="0"] .la-ac-b{padding:10px 14px 12px;gap:4px}
+.la-acg[data-fit="0"] .la-ac-hero{padding:6px 10px;gap:2px 14px}
+.la-acg[data-fit="0"] .la-ac-hero small{line-height:18px;margin-top:0}
+.la-acg[data-fit="0"] .k-sc-acts{min-height:32px;padding-top:0}
+.la-acg[data-fit="0"] .k-sc-acts .t-btn.k-sc-go{height:32px;padding:0 14px}
+@media (max-width:699px){
+  .la-page--fit .la-view{display:none}
+  .la-page--fit .la-pg:not(.ar):not([aria-current="page"]){display:none}
+  .la-page--fit .la-pager small{margin-left:6px}
+}
+@media (min-width:700px){
+  .la-page--fit .la-head{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:4px 16px}
+  .la-page--fit .la-tools-r{flex-wrap:nowrap}
+  .la-page--fit .la-search{width:auto;flex:1 1 160px;min-width:160px;max-width:280px}
+}
+@media (min-width:700px) and (max-width:1440px){.la-page.la-page--fit{padding-left:32px;padding-right:32px}}
+.la-acg[data-fit="0"] .la-ac .k-sc-t{font-size:var(--fs-body);line-height:22px}
+.la-acg[data-tight] .la-ac-hero{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 12px;padding:4px 10px;background:none}
+.la-acg[data-tight] .la-ac-hero > div{display:flex;align-items:baseline;gap:6px}
+.la-acg[data-tight] .la-ac-hero b:not(.d),.la-acg[data-tight] .la-ac-hero b.d{font-size:var(--fs-body);line-height:20px}
+.la-acg[data-tight] .la-ac-hero b i{font-size:var(--fs-label)}
+.la-acg[data-tight] .la-ac-hero small{margin:0;line-height:20px}
+.la-acg[data-tight] .la-ac-b{padding:8px 14px 10px}
+.la-acg[data-spill]{flex:none}
+.la-acg[data-spill] .la-ac{height:auto}
+@media (min-width:700px) and (max-width:1440px){.la-page--fit .la-search{flex:0 1 170px;min-width:150px;width:170px}}

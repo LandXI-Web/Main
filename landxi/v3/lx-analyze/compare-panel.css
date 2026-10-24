@@ -1,0 +1,20 @@
+/* 두 시기 비교 분석서비스 칸(compare-panel.js) — 토큰만 조합 */
+.la-cmp select.t-input{width:100%;margin:6px 0 4px}
+.la-cmp-go{display:inline-block;margin:0 0 12px;font:500 var(--fs-tag, 13px)/1.5 var(--font-body);color:var(--accent);text-decoration:none}
+.la-cmp-go:hover{text-decoration:underline}
+.la-cmp-none{margin:6px 0 4px;color:var(--sub);font:400 14px/1.6 var(--font-body);word-break:keep-all}
+.la-cmp-st{margin:8px 0 0;color:var(--sub-2);font:500 14px/1.5 var(--font-body)}
+.la-cmp-z{margin-left:12px;color:var(--sub);font:500 14px/1.4 var(--font-body)}
+.la-cmp-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1.4fr);gap:16px;align-items:start;margin-top:12px}
+@media (max-width:900px){.la-cmp-grid{grid-template-columns:1fr}}
+.la-cmp-st-l{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.la-cmp-st-l li{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;font:500 14px/1.5 var(--font-body);color:var(--ink)}
+.la-cmp-st-l i{width:12px;height:12px;border-radius:3px}
+.la-cmp-st-l small{color:var(--sub);min-width:64px;text-align:right}
+.la-cmp-map{position:relative;height:280px;border-radius:8px;overflow:hidden;background:var(--bg-0)}
+.la-cmp-h3{margin:16px 0 8px;font:600 15px/1.4 var(--font-body);color:var(--ink)}
+.la-cmp-tw{overflow-x:auto}
+.la-cmp-t{width:100%;border-collapse:collapse;font:400 14px/1.5 var(--font-body)}
+.la-cmp-t th{text-align:left;color:var(--sub);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.la-cmp-t td{padding:6px 8px;border-bottom:1px solid var(--rule);word-break:keep-all}
+.la-cmp-t td.num{text-align:right;white-space:nowrap}

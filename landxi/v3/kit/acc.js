@@ -1,7 +1,7 @@
 /* acc.js — 모델 'AI 모델 정확도' 한 규칙(숫자 한 출처 · 규칙 3 · fix9).
    분석하기 카드(서버 cards.py model_card)와 같은 값: 모델 기록(metrics)의 학습 끝 검증 값 · 분할 모델은 마스크 mAP50 먼저 → 정수 %.
    서버 순서를 바꾸면 여기도 같이 바꾼다(server/landxi_api/cards.py '분석하기 카드' 주석 옆). 화면에는 'AI 모델 정확도 n%' 로만 쓴다. */
-export const ACC_KEYS = ['mask_mAP50', 'metrics/mAP50(M)', 'box_mAP50', 'metrics/mAP50(B)', 'mAP50'];
+export const ACC_KEYS = ['mask_mAP50', 'metrics/mAP50(M)', 'box_mAP50', 'metrics/mAP50(B)', 'mAP50', 'mean_iou'];   // mean_iou = 들여온 토지피복 U-Net(국토 변화 · 10-24)
 const num = (v) => { const n = typeof v === 'object' && v !== null ? Number(v.value) : Number(v); return Number.isFinite(n) ? n : null; };
 
 /** 모델 기록 → { value(정수 %), unit '%', basis, as_of, source, key } | null */
