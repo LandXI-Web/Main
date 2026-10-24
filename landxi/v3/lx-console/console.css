@@ -197,7 +197,7 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-ntc-rest{margin:4px 0 0;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub)}
 .ld-ntc.is-l button{grid-template-columns:minmax(0,1fr) auto auto;font-size:var(--fs-body);line-height:28px}
 .ld-ntc.is-l .ld-k{white-space:nowrap;font-size:var(--fs-aux)}
-.ld-ntc-one.is-s b{font-size:var(--fs-body);line-height:24px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.ld-ntc-one.is-s b{font-size:var(--fs-body);line-height:24px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}
 .ld-ntc-one p{-webkit-line-clamp:var(--lines,6)}
 .ld-store-b.is-s{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:10px}
 .ld-store-b.is-s .ld-bar-q{width:100%}
@@ -260,3 +260,5 @@ a.ld-cell:hover{background:var(--bg-0)}
 
 .ld-cal-hol{margin:0 0 8px;font:600 var(--fs-aux,15px)/22px var(--font-body);color:var(--cal-off,#c0392b)}
 .ld-cal-d.is-hol .ld-cal-dn{font-weight:700}
+.ld-ntc-one.is-s{gap:0;padding:0 6px}
+.ld-ntc-one.is-s small{line-height:18px}

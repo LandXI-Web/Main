@@ -1,4 +1,4 @@
-/* 검사기 넷을 한 번에 — 금칙어(words.mjs) · 같은 이름 숫자(numbers.mjs) · 글자 크기(fonts.mjs) · 화면 요소 겹침(overlap.mjs · 10-22 원칙 309 — 역할 gov2 · guest 도 이 검사만).
+/* 검사기 다섯을 한 번에 — 금칙어(words.mjs) · 같은 이름 숫자(numbers.mjs) · 글자 크기(fonts.mjs) · 화면 요소 겹침(overlap.mjs · 10-22 원칙 309 — 역할 gov2 · guest 도 이 검사만).
    역할마다 로그인 폼으로 한 번만 들어가(세션 주입 없음) 그 세션으로 세 검사기를 차례로 돌린다 — 바깥 로그인 한도(10분 20번)를 넘지 않게
    (역할 넷 = 로그인 넷: 국내 기관 · 해외 기관 · LX 직원 · LX 관리자).
    사용: node tools/check/all.mjs [--only gov,abroad,app,admin] [--skip words,numbers,fonts] [--out 폴더]
@@ -12,9 +12,10 @@ import * as words from './words.mjs';
 import * as numbers from './numbers.mjs';
 import * as fonts from './fonts.mjs';
 import * as overlap from './overlap.mjs';
+import * as clip from './clip.mjs';
 
 const skip = new Set(arg('--skip', '').split(',').filter(Boolean));
-const CHECKS = [['words', words], ['numbers', numbers], ['fonts', fonts], ['overlap', overlap]].filter(([k]) => !skip.has(k));
+const CHECKS = [['words', words], ['numbers', numbers], ['fonts', fonts], ['overlap', overlap], ['clip', clip]].filter(([k]) => !skip.has(k));
 const BASE = new Set(['gov', 'abroad', 'app', 'admin']);       // 세 검사기(words · numbers · fonts)가 도는 역할 — gov2 · guest 는 겹침 검사만(overlap.ROLES)
 const runs = (m, r) => (m.ROLES ? m.ROLES.includes(r) : BASE.has(r));
 const OUT = arg('--out');

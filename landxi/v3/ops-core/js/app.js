@@ -133,7 +133,7 @@ function drawOverview() {
   rows.push({ k: '공지', t: annN === null ? '—' : `${annN}건`, go: '쓰기', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   if (useLine) rows.push(useLine);
   todoEl.innerHTML = '<div class="oc-tr oc-th" role="row"><span role="columnheader">무엇</span><span role="columnheader">지금</span><span></span></div>'
-    + rows.map((r) => `<a class="oc-tr" role="row" href="${esc(r.href)}" data-lv="${r.lv || ''}"><span class="oc-tk" role="cell">${esc(r.k)}</span><span class="oc-tt" role="cell">${esc(r.t)}</span><span class="oc-tg" role="cell">${r.go ? `${esc(r.go)} ${ARROW}` : ''}</span></a>`).join('');
+    + rows.map((r) => `<a class="oc-tr" role="row" href="${esc(r.href)}" data-lv="${r.lv || ''}"><span class="oc-tk" role="cell">${esc(r.k)}</span><span class="oc-tt" role="cell" title="${esc(r.t)}">${esc(r.t)}</span><span class="oc-tg" role="cell">${r.go ? `${esc(r.go)} ${ARROW}` : ''}</span></a>`).join('');
   M.sync();
 }
 

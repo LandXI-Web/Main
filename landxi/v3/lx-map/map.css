@@ -194,6 +194,7 @@ body.lm-boot .k-app{visibility:hidden}
 @media (max-width:640px){
   .lm-page,.lm-page[style*="--lm-left"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 44%}
   .lm-page.is-folded{grid-template-columns:minmax(0,1fr);grid-template-rows:0 minmax(0,1fr)}
+  .lm-cap{max-width:calc(100% - 32px)}   /* 좁은 화면에서 층 이름 띠가 음수 폭이 되어 글이 지도 밖으로 나가던 것(10-24 글자 잘림 검사) */
 }
 
 /* 영상 비교 한 줄(kit/swipe.js) — 켜기 · 두 해 */

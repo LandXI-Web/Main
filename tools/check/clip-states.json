@@ -1,0 +1,93 @@
+{
+ "admin": [
+  {
+   "name": "m1-home",
+   "label": "LX 관리자 첫 화면",
+   "url": "/landxi/v3/ops-core/"
+  },
+  {
+   "name": "m2-accounts",
+   "label": "계정",
+   "url": "/landxi/v3/ops-accounts/"
+  },
+  {
+   "name": "m3-infra",
+   "label": "운영 현황",
+   "url": "/landxi/v3/ops-infra/"
+  },
+  {
+   "name": "m4-release",
+   "label": "배포",
+   "url": "/landxi/v3/lx-release/"
+  },
+  {
+   "name": "m5-review",
+   "label": "결과 확인",
+   "url": "/landxi/v3/lx-review/"
+  },
+  {
+   "name": "m6-inbox",
+   "label": "받은 요청",
+   "url": "/landxi/v3/lx-inbox/"
+  },
+  {
+   "name": "m7-cards",
+   "label": "서비스 카드",
+   "url": "/landxi/v3/lx-cards/"
+  },
+  {
+   "name": "m8-train",
+   "label": "학습",
+   "url": "/landxi/v3/lx-train/"
+  },
+  {
+   "name": "m9-sales",
+   "label": "영업",
+   "url": "/landxi/v3/sales/"
+  }
+ ],
+ "abroad": [
+  {
+   "name": "b1-global",
+   "label": "해외 첫 화면",
+   "url": "/landxi/v3/global/"
+  }
+ ],
+ "app": [
+  {
+   "name": "a12-cards",
+   "label": "lx-cards",
+   "url": "/landxi/v3/lx-cards/"
+  },
+  {
+   "name": "a13-deploy",
+   "label": "lx-deploy",
+   "url": "/landxi/v3/lx-deploy/"
+  },
+  {
+   "name": "a14-train",
+   "label": "lx-train",
+   "url": "/landxi/v3/lx-train/"
+  },
+  {
+   "name": "a15-inbox",
+   "label": "lx-inbox",
+   "url": "/landxi/v3/lx-inbox/"
+  },
+  {
+   "name": "a16-ingest",
+   "label": "lx-ingest",
+   "url": "/landxi/v3/lx-ingest/"
+  },
+  {
+   "name": "a17-review",
+   "label": "lx-review",
+   "url": "/landxi/v3/lx-review/"
+  },
+  {
+   "name": "a18-release",
+   "label": "lx-release",
+   "url": "/landxi/v3/lx-release/"
+  }
+ ]
+}

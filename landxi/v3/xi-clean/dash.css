@@ -30,7 +30,7 @@ html.pn-dragging-x [data-dash="1"] > .xc-stage{transition:none}
 .xd-card{background:var(--bg-1);border-radius:var(--r-16);padding:24px;min-width:0;display:flex;flex-direction:column}
 .xd-kpi{position:relative;padding:22px 24px;justify-content:flex-start;min-height:132px}
 .xd-l{margin:0 0 10px;font:500 var(--fs-aux,15px)/22px var(--font-body);color:var(--sub)}
-.xd-v{margin:0;display:flex;align-items:baseline;gap:4px}
+.xd-v{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 4px;min-width:0}
 .xd-v b{font:800 var(--fs-num)/1.05 var(--font-display);letter-spacing:-.03em;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .xd-kpi.is-main .xd-v b{font-size:var(--fs-h2);color:var(--ink)}
 .xd-v small{font:700 var(--fs-body,16px)/1 var(--font-display);color:var(--sub)}

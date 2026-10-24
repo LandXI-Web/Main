@@ -128,7 +128,7 @@ export const MEASURE = `(() => {
 
 /** 상태 하나 — 열고 · 누르고 · 기다린 뒤 잰다. st = { name, url, steps: [{click|fill|press|wait|sleep|eval}], wait }
     ctx = { page, base(기관 · 앱 주소), vars({card} 따위 바꿀 값), shot(파일 이름 → 경로 | null) } */
-export async function measureState(page, st, { base, vars = {}, shot = null, settle = 1200 } = {}) {
+export async function measureState(page, st, { base, vars = {}, shot = null, settle = 1200, extra = null } = {}) {
   const sub = (s) => String(s ?? '').replace(/\{(!?)(\w+)\}/g, (m, raw, k) => (k in vars ? (raw ? String(vars[k]) : encodeURIComponent(vars[k])) : m));   // {!k} = 그대로(주소)
   const out = { state: st.name, url: sub(st.url), ok: true, note: '' };
   const t0 = Date.now();
@@ -151,6 +151,7 @@ export async function measureState(page, st, { base, vars = {}, shot = null, set
   out.ms = Date.now() - t0;
   try { const m = await page.evaluate(MEASURE); out.boxes = m.boxes; out.overlaps = m.overlaps; out.vp = m.vp; }
   catch (e) { out.ok = false; out.note += ' · 재기 실패 ' + String(e.message || e).slice(0, 120); out.overlaps = []; }
+  if (extra) { try { out.extra = await page.evaluate(extra); } catch (e) { out.extra = { hard: [], warn: [], err: String(e.message || e).slice(0, 120) }; } }
   try { out.hscroll = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); } catch { /* */ }
   if (shot) { try { const f = shot(st.name); await page.screenshot({ path: f }); out.shot = f.split(/[\\/]/).pop(); } catch { /* */ } }
   return out;
