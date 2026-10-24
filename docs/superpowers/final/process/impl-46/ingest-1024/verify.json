@@ -19,5 +19,14 @@
    "bytes": 105315863475
   }
  },
- "cog_G_sha256": "진행 중(외장 디스크 읽기 약 43~150MB/s) — 끝나면 이 칸을 채움"
+ "cog_G_sha256": {
+  "nw_2506_cog.tif": "b7dc744cd64e3f9989c8124511210f2854d1258318119847532c8bc06e4ed293",
+  "nw_2508_cog.tif": "e0315df5a327230172e448efc4b9e17c9de4452c01f3546ade2acbe88cba4eb9",
+  "finished": "2026-10-25 00:31"
+ },
+ "cog_match": {
+  "nw_2506_cog.tif": true,
+  "nw_2508_cog.tif": true
+ },
+ "external_disk": "외장 디스크 비워도 됨: G:\\LANDXI-TRANSFER-peoplecount-20261024 · G:\\남원 COG (nw_2506_cog.tif · nw_2508_cog.tif) — 비우기는 사용자"
 }
