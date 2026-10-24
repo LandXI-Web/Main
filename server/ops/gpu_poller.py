@@ -607,8 +607,10 @@ def caution_reasons(vr: float | None, u_ma: float | None, p_ma: float | None, pl
                          (f"이용률(이동평균) {u_ma:.0f}% ≥ 80% [목표]" if u_ma is not None and u_ma >= UTIL_CAUTION else None),
                          (f"전력 {p_ma:.1f} W ≥ {plim * HOT_POWER_FRAC:g} W(한도 {plim:g} W × {HOT_POWER_FRAC:g}) · 고부하 [목표]"
                           if p_ma is not None and plim and p_ma >= plim * HOT_POWER_FRAC else None)) if x]
-    why_f = [x for x in ((f"VRAM {vr * 100:.1f}% ≥ 95% [목표]" if vr is not None and vr >= VRAM_FAULT else None),
-                         (f"온도 {temp}°C ≥ 85°C [목표]" if (temp or 0) >= TEMP_FAULT else None)) if x]
+    # 10-24: VRAM ≥ 95% 는 장애가 아니라 주의 — vLLM(ChatGEO)이 기동 때 VRAM 을 미리 잡아 늘 95%를 넘는다(관리자 화면 'GPU 1 장애' 오표시)
+    if vr is not None and vr >= VRAM_FAULT:
+        why_c.append(f"VRAM {vr * 100:.1f}% ≥ 95% · 언어 모델이 미리 잡은 몫 포함 [목표]")
+    why_f = [x for x in ((f"온도 {temp}°C ≥ 85°C [목표]" if (temp or 0) >= TEMP_FAULT else None),) if x]
     return why_c, why_f
 
 
