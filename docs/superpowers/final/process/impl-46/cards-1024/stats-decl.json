@@ -1,0 +1,19 @@
+{
+  "what": "10-24 새 분석 서비스 카드의 통계 선언(기록만) — recon-1022/STATS-FRAME-DESIGN.md ②-1 네 칸 틀 제안을 따름. 틀은 아직 사용자 확정 전이라 card_stats 표 · 통계 코드는 만들지 않았다(원칙 325-6).",
+  "common": {
+    "space_levels": ["전국", "시도", "시군구", "읍면동(법정동 기본)", "대상지(구역선 안/밖)"],
+    "state_axis": ["미확인", "현장확인", "확인 끝(맞음 · AI가 잘못 봄)"],
+    "default_year": "가장 최근 결과 영상 연도",
+    "buffer_m": 0
+  },
+  "cards": [
+    {"card": "비닐하우스 단동·다동 분석서비스", "class_axis": ["단동 비닐하우스", "다동 비닐하우스"], "space_default": "시군구 → 읍면동", "quantity": ["동 수", "넓이"], "unit": "동", "min_area_m2": 4, "show_default": "둘 다", "note": "설계 문서의 비닐하우스 칸은 '단동 · 연동' — 모델 분류 이름은 '단동 · 다동'. 낱말 하나로 맞출지 사용자 확인 필요"},
+    {"card": "차량 분석서비스", "class_axis": ["차량"], "space_default": "시군구 → 읍면동", "quantity": ["대 수"], "unit": "대", "min_area_m2": null, "show_default": "하나", "note": "셈 단위 '대'는 설계 문서 단위 목록(필지 · 동 · 곳 · 건)에 없음 — '건'으로 할지 확인 필요"},
+    {"card": "사료작물 생육기 분석서비스", "class_axis": ["IRG", "수단그라스", "옥수수", "호밀"], "space_default": "시군구 → 읍면동 → 필지", "quantity": ["필지 수", "넓이"], "unit": "필지", "min_area_m2": 4, "show_default": "넷 다"},
+    {"card": "사료작물 생산기 분석서비스", "class_axis": ["IRG", "수단그라스", "옥수수", "호밀"], "space_default": "시군구 → 읍면동 → 필지", "quantity": ["필지 수", "넓이"], "unit": "필지", "min_area_m2": 4, "show_default": "넷 다"},
+    {"card": "사료작물 생육기·생산기 비교 분석서비스", "class_axis": ["같은 작물", "작물 바뀜", "수확·곤포 확인", "생산기에 없음", "생산기에만 있음"], "space_default": "두 결과가 모두 덮는 곳 → 읍면동 → 필지", "quantity": ["필지 수", "넓이", "면적 변화(㎡)"], "unit": "필지",
+     "defaults_in_code": {"file": "server/landxi_api/feedcompare.py", "crop_present": "작물 넓이 50㎡ 이상 또는 필지의 10% 이상", "parcel_inside": "필지 넓이 80% 이상이 두 결과 공통 범위 안"},
+     "show_default": "다섯 다(같은 작물은 표에서 접음)", "default_year": "같은 해 두 시기"},
+    {"card": "곤포사일리지 분석서비스(있는 카드)", "class_axis": ["곤포사일리지"], "space_default": "시군구 → 읍면동", "quantity": ["개 수"], "unit": "건", "min_area_m2": 4, "show_default": "하나"}
+  ]
+}

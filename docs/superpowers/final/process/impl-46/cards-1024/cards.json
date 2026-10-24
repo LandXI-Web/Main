@@ -1,0 +1,9 @@
+[
+ {"key": "vinyl", "id": "card-6f7050", "name": "비닐하우스 단동·다동 분석서비스", "job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD"},
+ {"key": "car", "id": "card-2c5304", "name": "차량 분석서비스", "job": "job_01M5NW3F8688S6XF0RX5ZG0DQH"},
+ {"key": "silage", "id": "card-d8fc01", "name": "곤포사일리지 분석서비스", "job": "job_01M5NW3G3SQ1K0DV4A7JVHZM8J"},
+ {"key": "growth", "id": "card-4d8d6f", "name": "사료작물 생육기 분석서비스", "job": "job_01M5NWHVQHGREBMFAG94ZZ1MEG"},
+ {"key": "production", "id": "card-f31e5f", "name": "사료작물 생산기 분석서비스", "job": "job_01M5NWHWDZX75Z63E15PD2A5R2"},
+ {"key": "compare", "id": "card-ba9d6d", "name": "사료작물 생육기·생산기 비교 분석서비스", "job": null},
+ {"key": "farm", "id": "card-farm", "name": "경작·휴경 분석서비스", "job": null}
+]
