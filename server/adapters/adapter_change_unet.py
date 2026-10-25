@@ -3,7 +3,7 @@
 작업 options.change = {range_id, year_a, year_b, zoom, run_id} — 범위(EPSG:5179 면)는 DB change_ranges 에서 읽는다.
 칸 하나('change') = 범위 전체(블록 16×16 타일씩 받아 추론 · 끝에 유형별로 이어 붙임 · server/change/run.py).
 - 영상은 이 어댑터가 국토지리정보원 영상 API 에서 스스로 받는다(디스크 캐시) — gpu_worker 의 창 읽기 없음(options.change).
-- 전력: 1024 칸마다 workers.power_throttle(30초 평균 ≤ 140 W · ≤ 70 % · 목표 125 W · 62 %) · XI ChatGEO 그림 질문이 오면 비킴.
+- 전력: 1024 칸마다 workers.power_throttle(30초 평균 ≤ 설정 상한 160 W · ≤ 70 % · 목표 약 145 W · 62 % — config/pools.yaml) · XI ChatGEO 그림 질문이 오면 비킴.
 - 고아 감시 · 전력 임대: 진행할 때마다 비행 기록 · power:hot 임대를 연장(긴 칸이 재배정되지 않게).
 결과 = Detection(유형 · 4326) — 표준 마무리(fgb · pmtiles · detections)도 그대로 + 속성 · 썸네일은 DATA/change/runs/{작업}/.
 """
@@ -55,7 +55,7 @@ class Adapter:
         try:
             from workers.power_throttle import PowerThrottle, nvml_window
             phys = int((os.environ.get("CUDA_VISIBLE_DEVICES") or "0").split(",")[0] or 0)
-            self.thr = PowerThrottle(nvml_window(phys), limit_w=140.0, limit_util=70.0, target_w=125.0, target_util=62.0, duty0=0.5)
+            self.thr = PowerThrottle(nvml_window(phys), duty0=0.5)        # 상한 · 목표는 config/pools.yaml 한 곳(power_throttle.limits)
         except Exception:  # noqa: BLE001
             self.thr = None
 

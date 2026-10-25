@@ -1,0 +1,852 @@
+{
+ "title": "영상 빈 곳 빼기 · 경작·휴경 카드 그림 · 모델 점검 (10-25 원칙 340)",
+ "cleanup": [
+  {
+   "job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD",
+   "card": "card-6f7050",
+   "imagery": "img-52190-nd-drone",
+   "n": 156,
+   "drop": 6,
+   "clip": 0,
+   "before": {
+    "greenhouse_single": 126,
+    "greenhouse_multi": 30
+   },
+   "after": {
+    "greenhouse_single": 120,
+    "greenhouse_multi": 30
+   }
+  },
+  {
+   "job": "job_01M3RZ8K2YBWAA84F0GCX2HHMK",
+   "card": "card-45424f",
+   "imagery": "img-51130-2023-aerial",
+   "n": 6930,
+   "drop": 22,
+   "clip": 0,
+   "before": {
+    "building": 6930
+   },
+   "after": {
+    "building": 6908
+   }
+  },
+  {
+   "job": "job_01M3RK4ZYGHF1BZ1S759QDGR9H",
+   "card": null,
+   "imagery": "img-41550-2023-aerial",
+   "n": 12871,
+   "drop": 2,
+   "clip": 0,
+   "before": {
+    "parking": 313,
+    "building": 5614,
+    "greenhouse": 1535,
+    "farmland": 5409
+   },
+   "after": {
+    "parking": 313,
+    "building": 5612,
+    "greenhouse": 1535,
+    "farmland": 5409
+   }
+  },
+  {
+   "job": "job_01M3PM2PYDX42SHVGE4K9C263F",
+   "card": "card-farm",
+   "imagery": "img-12780-2023-aerial",
+   "n": 90511,
+   "drop": 1,
+   "clip": 0,
+   "before": {
+    "building": 33728,
+    "farmland": 54206,
+    "greenhouse": 1335,
+    "parking": 1242
+   },
+   "after": {
+    "building": 33727,
+    "farmland": 54206,
+    "greenhouse": 1335,
+    "parking": 1242
+   }
+  },
+  {
+   "job": "job_01M3RMJ4ZKKNRP69YVM6J001DK",
+   "card": null,
+   "imagery": "img-41550-2023-aerial",
+   "n": 3058,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 101,
+    "building": 1410,
+    "greenhouse": 289,
+    "farmland": 1258
+   },
+   "after": {
+    "parking": 101,
+    "building": 1410,
+    "greenhouse": 289,
+    "farmland": 1258
+   }
+  },
+  {
+   "job": "job_01M3S6758VPWDE8NJMPG5A44EB",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 14262,
+   "drop": 1,
+   "clip": 0,
+   "before": {
+    "parking": 1604,
+    "building": 9121,
+    "greenhouse": 4,
+    "farmland": 3533
+   },
+   "after": {
+    "parking": 1604,
+    "building": 9120,
+    "greenhouse": 4,
+    "farmland": 3533
+   }
+  },
+  {
+   "job": "job_01M3RCY79MNEMPEY0S1Q5NCVG9",
+   "card": "card-5e85a9",
+   "imagery": "img-48870-2023-aerial",
+   "n": 42214,
+   "drop": 8,
+   "clip": 0,
+   "before": {
+    "parking": 728,
+    "building": 20232,
+    "greenhouse": 2724,
+    "farmland": 18530
+   },
+   "after": {
+    "parking": 728,
+    "building": 20232,
+    "greenhouse": 2724,
+    "farmland": 18522
+   }
+  },
+  {
+   "job": "job_01M5RBKGEN3488YAQDMV344J40",
+   "card": "card-farm",
+   "imagery": "img-52190-nd-drone",
+   "n": 1043,
+   "drop": 768,
+   "clip": 3,
+   "before": {
+    "non_farmland": 1028,
+    "farmland": 15
+   },
+   "after": {
+    "non_farmland": 260,
+    "farmland": 15
+   }
+  },
+  {
+   "job": "job_01M3RMRZDV1J4QVZBT1HG29ZZQ",
+   "card": null,
+   "imagery": "img-48880-2023-aerial",
+   "n": 1303,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 11,
+    "building": 581,
+    "greenhouse": 23,
+    "farmland": 688
+   },
+   "after": {
+    "parking": 11,
+    "building": 581,
+    "greenhouse": 23,
+    "farmland": 688
+   }
+  },
+  {
+   "job": "job_01M3RSDD0DVJ1NZP7DC07G03RF",
+   "card": null,
+   "imagery": "img-43750-2023-aerial",
+   "n": 20909,
+   "drop": 1,
+   "clip": 0,
+   "before": {
+    "parking": 436,
+    "building": 8507,
+    "greenhouse": 1986,
+    "farmland": 9980
+   },
+   "after": {
+    "parking": 436,
+    "building": 8507,
+    "greenhouse": 1986,
+    "farmland": 9979
+   }
+  },
+  {
+   "job": "job_01M3GM0W0BC9701N1XM1DEJ9N1",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 70474,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 153,
+    "building": 18611,
+    "greenhouse": 335,
+    "farmland": 51375
+   },
+   "after": {
+    "parking": 153,
+    "building": 18611,
+    "greenhouse": 335,
+    "farmland": 51375
+   }
+  },
+  {
+   "job": "job_01M3PAY2SHJV91C0MS8YDC9P6D",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 1431,
+   "drop": 2,
+   "clip": 0,
+   "before": {
+    "parking": 209,
+    "building": 902,
+    "farmland": 320
+   },
+   "after": {
+    "parking": 209,
+    "building": 900,
+    "farmland": 320
+   }
+  },
+  {
+   "job": "job_01M3RQXV33PT3GTKJB7Q81WS1T",
+   "card": null,
+   "imagery": "img-52730-2023-aerial",
+   "n": 34205,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 903,
+    "building": 15121,
+    "greenhouse": 948,
+    "farmland": 17233
+   },
+   "after": {
+    "parking": 903,
+    "building": 15121,
+    "greenhouse": 948,
+    "farmland": 17233
+   }
+  },
+  {
+   "job": "job_01M3EW9F7T8BF276Q44QM9JMQP",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 2819,
+   "drop": 4,
+   "clip": 0,
+   "before": {
+    "greenhouse_single": 665,
+    "greenhouse_multi": 2154
+   },
+   "after": {
+    "greenhouse_single": 665,
+    "greenhouse_multi": 2150
+   }
+  },
+  {
+   "job": "job_01M3PH7J8RMQ7SBENZRK2VF8N0",
+   "card": null,
+   "imagery": "img-12130-2023-aerial",
+   "n": 17612,
+   "drop": 2,
+   "clip": 0,
+   "before": {
+    "parking": 294,
+    "building": 10820,
+    "greenhouse": 5,
+    "farmland": 6493
+   },
+   "after": {
+    "parking": 294,
+    "building": 10818,
+    "greenhouse": 5,
+    "farmland": 6493
+   }
+  },
+  {
+   "job": "job_01M3RH0BM4AWTT1X920CCRW10G",
+   "card": null,
+   "imagery": "img-41500-2023-aerial",
+   "n": 22812,
+   "drop": 1,
+   "clip": 7,
+   "before": {
+    "parking": 364,
+    "building": 8338,
+    "greenhouse": 3769,
+    "farmland": 10341
+   },
+   "after": {
+    "parking": 364,
+    "building": 8337,
+    "greenhouse": 3769,
+    "farmland": 10341
+   }
+  },
+  {
+   "job": "job_01M3RNXJFEDBXFSA2P3TEJXDGG",
+   "card": null,
+   "imagery": "img-48880-2023-aerial",
+   "n": 1303,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 11,
+    "building": 581,
+    "greenhouse": 23,
+    "farmland": 688
+   },
+   "after": {
+    "parking": 11,
+    "building": 581,
+    "greenhouse": 23,
+    "farmland": 688
+   }
+  },
+  {
+   "job": "job_01M3PHP0GQAP0NV87VFWHPP77G",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 132424,
+   "drop": 0,
+   "clip": 1,
+   "before": {
+    "parking": 2656,
+    "building": 50855,
+    "greenhouse": 703,
+    "farmland": 78210
+   },
+   "after": {
+    "parking": 2656,
+    "building": 50855,
+    "greenhouse": 703,
+    "farmland": 78210
+   }
+  },
+  {
+   "job": "job_01M3S4RBXD26XKQW41XK4Z1N5Q",
+   "card": null,
+   "imagery": "ap25-namwon-2023",
+   "n": 14262,
+   "drop": 1,
+   "clip": 0,
+   "before": {
+    "parking": 1604,
+    "building": 9121,
+    "greenhouse": 4,
+    "farmland": 3533
+   },
+   "after": {
+    "parking": 1604,
+    "building": 9120,
+    "greenhouse": 4,
+    "farmland": 3533
+   }
+  },
+  {
+   "job": "job_01M3PG8XKPP2X0S3RMKR60CQXY",
+   "card": "card-farm",
+   "imagery": "img-12130-2023-aerial",
+   "n": 17612,
+   "drop": 2,
+   "clip": 0,
+   "before": {
+    "parking": 294,
+    "building": 10820,
+    "greenhouse": 5,
+    "farmland": 6493
+   },
+   "after": {
+    "parking": 294,
+    "building": 10818,
+    "greenhouse": 5,
+    "farmland": 6493
+   }
+  }
+ ],
+ "footprint_backup": "imagery_footprint_bak (103개)",
+ "detections_backup": "detections_nodata_bak",
+ "db_dump": "_backup/db/landxi-20261025-2044.dump",
+ "farm_jobs": {
+  "2025-06": "job_01M5SEMY219D79CGZ2HEZHH61D",
+  "2025-08 E": "job_01M5SJMMKP7M14D48ZEEWQQNC2",
+  "2025-08 F": "job_01M5SJY5JEKJM3EQC0RP9AX2KM",
+  "2025-08 D": "job_01M5SK2G9GDBKNMRMK55CZGB52"
+ },
+ "model_check": {
+  "how": "필지 표본(예측 숨김 · 섞음)을 드론 영상으로 눈으로 판정 — 현장 조사 아님 · 예측 분류별 층화 표본",
+  "06": [
+   {
+    "no": 1,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 2,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 3,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 4,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 5,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 6,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 7,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 8,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 9,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 10,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 11,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 12,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 13,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 14,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 15,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 16,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 17,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 18,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 19,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 20,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 21,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 22,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 23,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 24,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 25,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 26,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 27,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 28,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 29,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 30,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 31,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 32,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 33,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 34,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 35,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 36,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 37,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 38,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 39,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 40,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 41,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 42,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 43,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 44,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 45,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 46,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 47,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 48,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 49,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 50,
+    "pred": "휴경",
+    "seen": "경작"
+   }
+  ],
+  "08": [
+   {
+    "no": 1,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 2,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 3,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 4,
+    "pred": "경작",
+    "seen": "휴경"
+   },
+   {
+    "no": 5,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 6,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 7,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 8,
+    "pred": "경작",
+    "seen": "휴경"
+   },
+   {
+    "no": 9,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 10,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 11,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 12,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 13,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 14,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 15,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 16,
+    "pred": "경작",
+    "seen": "휴경"
+   },
+   {
+    "no": 17,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 18,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 19,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 20,
+    "pred": "경작",
+    "seen": "휴경"
+   },
+   {
+    "no": 21,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 22,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 23,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 24,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 25,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 26,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 27,
+    "pred": "휴경",
+    "seen": "모름"
+   },
+   {
+    "no": 28,
+    "pred": "휴경",
+    "seen": "휴경"
+   },
+   {
+    "no": 29,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 30,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 31,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 32,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 33,
+    "pred": "경작",
+    "seen": "모름"
+   },
+   {
+    "no": 34,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 35,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 36,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 37,
+    "pred": "휴경",
+    "seen": "경작"
+   },
+   {
+    "no": 38,
+    "pred": "경작",
+    "seen": "휴경"
+   },
+   {
+    "no": 39,
+    "pred": "경작",
+    "seen": "경작"
+   },
+   {
+    "no": 40,
+    "pred": "경작",
+    "seen": "경작"
+   }
+  ]
+ },
+ "shots": "shots/ (공개 저장소에 올리지 않음)"
+}

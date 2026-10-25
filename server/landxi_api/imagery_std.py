@@ -399,15 +399,28 @@ def _is_color(info: dict) -> bool:
     return set(info["dtypes"]) == {"uint8"} and not info.get("palette")
 
 
-def _guess_alpha(info: dict) -> bool:
-    """색 이름이 없는 8비트 4밴드(ECW MULTIBAND 등) — 넷째 밴드가 거의 0 · 255 뿐이면 투명 칸."""
+ALPHA_LO, ALPHA_HI = 8, 247     # 손실 압축(ECW) 투명 밴드는 0 · 255 가 1 · 2 · 253 · 254 로 번진다 — 양 끝 근처면 투명 칸
+
+
+def band4_kind(info: dict) -> dict:
+    """넷째 밴드가 투명 칸(알파)인가, 실제 값(근적외선 등)인가 — 작게 읽어 값 분포로.
+    알파 = 값이 거의 양 끝(0 근처 · 255 근처)에만 있음(97% 이상) · 근적외선 = 가운데 값이 고르게 퍼짐. → {kind: alpha|value, ends, mid}"""
     import numpy as np
     try:
-        arr, _ = small(info, 512, [4])
+        arr, _ = small(info, 1024, [4])
     except Exception:  # noqa: BLE001
-        return False
+        return {"kind": "unknown"}
     v = arr[0]
-    return bool(v.size) and float(np.isin(v, (0, 255)).mean()) >= 0.98
+    if not v.size:
+        return {"kind": "unknown"}
+    ends = float(((v <= ALPHA_LO) | (v >= ALPHA_HI)).mean())
+    return {"kind": "alpha" if ends >= 0.97 and float((v >= ALPHA_HI).mean()) > 0.05 else "value", "ends": round(ends, 4)}
+
+
+def _guess_alpha(info: dict) -> bool:
+    """색 이름이 없는 8비트 4밴드(ECW MULTIBAND 등) — 넷째 밴드가 거의 양 끝 값뿐이면 투명 칸(10-25: 예전 '정확히 0 · 255 98%'는
+    ECW 의 번진 알파(254 · 1 …)를 근적외선으로 잘못 보아 산내면 드론의 빈 곳을 분석에 넣었다)."""
+    return band4_kind(info).get("kind") == "alpha"
 
 
 def _collar(info: dict, s: dict):
@@ -521,6 +534,92 @@ def _nodata_mask_full(info: dict, out: Path) -> None:
             d.update_tags(**{f"INTERNAL_MASK_FLAGS_{b}": "2" for b in (1, 2, 3)})   # GDAL 바깥 마스크 파일(.msk) 표시 — 데이터셋 하나의 마스크
 
 
+def _fill_small(tmp_rgb: Path, base_small, side: int = 4096):
+    """임시 색 3밴드(tmp)를 작게 읽어 채움 덩어리(흰 · 검은 · 무늬 없음 · 가장자리나 빈 곳에 이어짐) → 작은 '채움 아님' 표(bool) | None.
+    판정은 valid_area.fill_of 한 곳(분석 · 카드 그림과 같은 규칙)."""
+    import warnings
+    import numpy as np
+    import rasterio
+    from rasterio.enums import Resampling
+    from . import valid_area as VA
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with rasterio.open(str(tmp_rgb)) as d:
+            k = max(d.width, d.height) / side
+            sw, sh = (max(1, round(d.width / k)), max(1, round(d.height / k))) if k > 1 else (d.width, d.height)
+            a = d.read([1, 2, 3], out_shape=(3, sh, sw), resampling=Resampling.nearest)
+            px = abs(d.transform.a) * (d.width / sw)
+    m = base_small if base_small is not None and base_small.shape == (sh, sw) else np.ones((sh, sw), bool)
+    fill = VA.fill_of(m, np.all(a >= VA.WHITE, 0), np.all(a <= VA.BLACK, 0), (a.astype(np.uint16).sum(0) // 3).astype(np.uint8), px * px)
+    return (~fill) if fill.any() else None
+
+
+def _base_small(src_alpha: Path | None, info: dict, mk: str, shape) -> object:
+    """작은 크기의 원래 빈 곳(알파 · 빈 값 · 내부 마스크) — 채움 덩어리가 '빈 곳에 이어졌는지' 보는 데 쓴다."""
+    import warnings
+    import numpy as np
+    import rasterio
+    from rasterio.enums import Resampling
+    sh, sw = shape
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            if mk == "alpha" and src_alpha is not None:
+                with rasterio.open(str(src_alpha)) as d:
+                    return d.read(1, out_shape=(sh, sw), resampling=Resampling.nearest) >= 128
+            if mk in ("nodata", "keep") and info["reader"] == "rasterio":
+                with rasterio.open(info["path"]) as d:
+                    return d.dataset_mask(out_shape=(sh, sw)) > 0
+        except Exception:  # noqa: BLE001
+            return None
+    return None
+
+
+def _mask_full(info: dict, mk: str, tmp_rgb: Path, src_alpha: Path | None, out: Path, keep_small) -> float:
+    """원래 크기 마스크(.msk) = 원래 빈 곳(알파 128 이상만 유효 · 빈 값 · 내부 마스크) ∩ 채움 덩어리 아님. 512줄씩. → 빈 곳 비율."""
+    import warnings
+    import numpy as np
+    import rasterio
+    from rasterio.windows import Window
+    nod = info.get("nodata")
+    bad = 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with rasterio.open(str(tmp_rgb)) as t:
+            W, H = t.width, t.height
+            al = rasterio.open(str(src_alpha)) if (mk == "alpha" and src_alpha is not None) else None
+            sm = rasterio.open(info["path"]) if (mk in ("nodata", "keep") and info["reader"] == "rasterio") else None
+            try:
+                with rasterio.open(str(out), "w", driver="GTiff", width=W, height=H, count=1, dtype="uint8", compress="deflate", tiled=True,
+                                   blockxsize=512, blockysize=512, BIGTIFF="IF_SAFER") as d:
+                    if keep_small is not None:
+                        ks_h, ks_w = keep_small.shape
+                        cols = np.minimum((np.arange(W) * ks_w) // W, ks_w - 1)
+                    for y in range(0, H, 512):
+                        h = min(512, H - y)
+                        w = Window(0, y, W, h)
+                        if al is not None:
+                            ok = al.read(1, window=w) >= 128
+                        elif sm is not None:
+                            ok = sm.dataset_mask(window=w) > 0
+                        elif mk == "nodata" and nod is not None:
+                            ok = ~np.all(t.read([1, 2, 3], window=w) == nod, axis=0)
+                        else:
+                            ok = np.ones((h, W), bool)
+                        if keep_small is not None:
+                            rows = np.minimum(((np.arange(y, y + h)) * ks_h) // H, ks_h - 1)
+                            ok &= keep_small[np.ix_(rows, cols)]
+                        bad += int((~ok).sum())
+                        d.write(np.where(ok, 255, 0).astype("uint8"), 1, window=w)
+                    d.update_tags(**{f"INTERNAL_MASK_FLAGS_{b}": "2" for b in (1, 2, 3)})
+            finally:
+                if al is not None:
+                    al.close()
+                if sm is not None:
+                    sm.close()
+    return bad / max(1, W * H)
+
+
 def _assign_srs(info: dict, epsg: int | None) -> tuple[str | None, int | None]:
     """좌표계는 번호만 정리하고 다시 그리지 않는다(설계 policy.md 2절) — 기록이 없으면 받은 번호(위치로 가려낸 것), 이름만 다른 같은 좌표계는 표준 번호."""
     from pyproj import CRS
@@ -554,43 +653,37 @@ def convert(info: dict, dst: Path, rule: dict, *, epsg: int | None = None, s: di
     mask_frac = None
     try:
         if rule["rule"] == "jpeg":
+            # 10-25 원칙 340 — 색 영상은 언제나 두 걸음: 넷째 밴드(투명 칸)는 표준본에 넣지 않고 1비트 마스크로만 · 흰 · 검은 채움도 마스크로.
+            # ① 원본 색 3밴드 → 임시 GeoTIFF(타일 · 빠른 무손실 · 그 형식을 읽는 GDAL) (+ 투명 밴드만 따로 임시 파일)
+            # ② 마스크(.msk) = 원래 빈 곳(알파 128 이상만 유효 · 빈 값 · 내부 마스크) ∩ 채움 덩어리 아님(valid_area.fill_of)
+            # ③ 임시 → 표준본(색 3밴드 JPEG 90 + 내부 마스크). 빈 곳이 없으면 마스크 없이.
             mk = rule.get("mask")
-            small_mask = None
-            if mk == "collar":
-                c = _collar(info, s)
-                if c is not None:
-                    small_mask, mask_frac = c
-            if small_mask is not None or (mk == "nodata" and info["reader"] == "rasterio"):
-                # 빈 칸 마스크를 붙여야 할 때 — 두 걸음(실측: 가상 파일로 마스크를 얹으면 2~4배 느리고, 큰 ECW 는 한 코어로 수십 분):
-                # ① 원본 → 임시 GeoTIFF(타일 · 빠른 무손실 압축 · 그 형식을 읽는 GDAL) ② 임시 파일 옆에 마스크(.msk) ③ 임시 → 표준본(마스크 그대로)
-                tmp_tif = work / (dst.stem + ".tmp.tif")
-                msk = Path(str(tmp_tif) + ".msk")
-                tmp += [tmp_tif, msk]
-                pre = ["-q", "-of", "GTiff", "-b", 1, "-b", 2, "-b", 3, "-a_nodata", "none", "-co", "TILED=YES", "-co", "BLOCKXSIZE=512",
-                       "-co", "BLOCKYSIZE=512", "-co", "BIGTIFF=YES", "-co", "COMPRESS=ZSTD", "-co", "ZSTD_LEVEL=1", "-co", "NUM_THREADS=4",
-                       "--config", "GDAL_NUM_THREADS", "4"]
-                if out_epsg:
-                    pre += ["-a_srs", f"EPSG:{out_epsg}"]
-                run(t, "gdal_translate", [*pre, src, str(tmp_tif)])
-                if small_mask is not None:
-                    sm = work / (dst.stem + ".mask_small.tif")
-                    tmp.append(sm)
-                    _write_mask_tif(sm, small_mask)
-                    run(tool_for("tif"), "gdal_translate", ["-q", "-outsize", info["w"], info["h"], "-r", "nearest", "-of", "GTiff", "-co", "TILED=YES",
-                                                         "-co", "COMPRESS=DEFLATE", "-co", "BIGTIFF=IF_SAFER",
-                                                         *sum((["-mo", f"INTERNAL_MASK_FLAGS_{b}=2"] for b in (1, 2, 3)), []), str(sm), str(msk)])
-                else:
-                    _nodata_mask_full(info, msk)
-                run(tool_for("tif"), "gdal_translate", [*args, str(tmp_tif), str(part)])
-            else:
-                extra = ["-b", 1, "-b", 2, "-b", 3]
-                if mk == "alpha":
-                    extra += ["-mask", int(info.get("alpha_band") or 4)]
-                elif mk == "nodata":                                # 명령 쪽에서만 읽히는 파일 — 첫 밴드의 빈 값 표시를 마스크로
-                    extra += ["-mask", 1, "-a_nodata", "none"]
-                if out_epsg:                                         # 번호만 정리(다시 그리지 않음)
-                    extra += ["-a_srs", f"EPSG:{out_epsg}"]
-                run(t, "gdal_translate", [*args, *extra, src, str(part)])
+            tmp_tif = work / (dst.stem + ".tmp.tif")
+            msk = Path(str(tmp_tif) + ".msk")
+            tmp += [tmp_tif, msk]
+            pre = ["-q", "-of", "GTiff", "-a_nodata", "none", "-co", "TILED=YES", "-co", "BLOCKXSIZE=512",
+                   "-co", "BLOCKYSIZE=512", "-co", "BIGTIFF=YES", "-co", "COMPRESS=ZSTD", "-co", "ZSTD_LEVEL=1", "-co", "NUM_THREADS=4",
+                   "--config", "GDAL_NUM_THREADS", "4"]
+            if out_epsg:
+                pre += ["-a_srs", f"EPSG:{out_epsg}"]
+            run(t, "gdal_translate", [*pre, "-b", 1, "-b", 2, "-b", 3, "-mask", "none", src, str(tmp_tif)])
+            src_alpha = None
+            if mk == "alpha":
+                src_alpha = work / (dst.stem + ".alpha.tif")
+                tmp.append(src_alpha)
+                run(t, "gdal_translate", [*pre, "-b", int(info.get("alpha_band") or 4), "-mask", "none", src, str(src_alpha)])
+            import rasterio as _rio
+            with _rio.open(str(tmp_tif)) as _d:
+                kk = max(_d.width, _d.height) / 4096
+                shape = (max(1, round(_d.height / kk)), max(1, round(_d.width / kk))) if kk > 1 else (_d.height, _d.width)
+            base = _base_small(src_alpha, info, mk, shape)
+            keep_small = _fill_small(tmp_tif, base)
+            if mk in ("alpha", "nodata", "keep") or keep_small is not None:
+                mask_frac = _mask_full(info, mk, tmp_tif, src_alpha, msk, keep_small)
+            if mask_frac is not None and mask_frac <= 0:
+                msk.unlink(missing_ok=True)
+                mask_frac = None
+            run(tool_for("tif"), "gdal_translate", [*args, str(tmp_tif), str(part)])
         else:
             extra = []
             if out_epsg:

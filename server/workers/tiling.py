@@ -15,6 +15,9 @@ from shapely.ops import transform as sh_transform
 from shapely.prepared import prep
 
 
+MIN_VALID = 0.10            # 칸 안 '영상이 있는 곳' 최소 비율(valid_area.TILE_MIN_VALID 와 같은 값)
+
+
 @dataclass
 class Grid:
     chip: int            # 모델 입력 px
@@ -94,6 +97,15 @@ def shards(ds_meta: dict, aoi4326: dict | None, *, chip: int = 1024, overlap=Non
         cells = shapely.box(mnx, mny, mxx, mxy)
         shapely.prepare(clip)
         keep = shapely.intersects(clip, cells)
+        if fp is not None and keep.any():
+            # 10-25 원칙 340 — 영상이 있는 곳(유효 범위)이 칸의 10% 미만이면 분석하지 않는다(빈 곳 · 흰 · 검은 채움 칸)
+            k_idx = np.nonzero(keep)[0]
+            shapely.prepare(fp)
+            inside = shapely.contains(fp, cells[k_idx])
+            part = k_idx[~inside]
+            if len(part):
+                fr = shapely.area(shapely.intersection(cells[part], fp)) / np.maximum(shapely.area(cells[part]), 1e-12)
+                keep[part[fr < MIN_VALID]] = False
     else:
         keep = np.ones(len(rr), dtype=bool)
     idx = np.nonzero(keep)[0]

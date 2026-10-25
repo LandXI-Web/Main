@@ -1,6 +1,8 @@
 """장당 전력 · 사용률 30초 평균 상한 강제 — 학습(kind train) · 전국 작업 등 모든 GPU 작업 종류 공용.
 
-사용자 규칙(10-17): 장당 30초 평균 사용률 ≤ 70 % · 전력 ≤ 140 W · 하드 상한 200 W(nvidia-smi). 이상이면 한 장으로.
+사용자 규칙: 장당 30초 평균 사용률 ≤ 70 % · 전력 ≤ 상한(10-25 사용자 "기준은 160W로 올린다. 이거 기본으로 한다." — 예전 140 W) ·
+하드 상한 200 W(nvidia-smi). 상한 · 목표는 한 곳 config/pools.yaml power.national(power_max_w · util_max · target_w · target_util)만 읽는다(limits()).
+모든 GPU 작업(사용자 분석 · 전국 · 해외 · 학습 · 국토 변화)이 같은 규칙 — 10-25 부터 일반 분석도 기본으로 쉼(예전엔 전국 · 학습만).
 
 예전 방식(배치 뒤 duty 쉼만)의 문제 — 10초에 한 번만 고치고 30초 평균이 늦게 따라와서, duty 가 오르내리며 상한을 넘었다
 (10-18 해외 재학습: 30초 평균 140 W 초과 약 2분 · 최대 173 W · 79 ℃ · 사용률 72–94 %).
@@ -8,9 +10,9 @@
 이 모듈:
   1. Window  — NVML 에서 실제 30초 이동평균(전력 · 사용률 · 온도)을 잰다(0.5 s 표본, 시간 기준 창).
   2. PowerThrottle.__call__ — 훅이 불릴 때마다
-       a) 30초 평균이 목표(기본 125 W · 62 %)를 넘으면 목표 − 여유 아래로 내려갈 때까지 쉰다(막는 쪽이 이긴다),
+       a) 30초 평균이 목표(설정 target_w · 기본 약 145 W · 62 %)를 넘으면 목표 − 여유 아래로 내려갈 때까지 쉰다(막는 쪽이 이긴다),
        b) 안 넘어도 duty(일하는 몫)로 쉼을 깐다 — 10초 · 30초 평균 중 큰 쪽 기준 비례 제어(과하면 크게 줄이고 넉넉하면 천천히 늘림),
-       c) 하드 정지: 30초 평균이 상한(140 W · 70 %)을 20초 넘게 넘은 채로 있거나 온도가 temp_max 이상이면
+       c) 하드 정지: 30초 평균이 상한(설정 power_max_w · 160 W · 70 %)을 20초 넘게 넘은 채로 있거나 온도가 temp_max 이상이면
           평균이 (목표 − 여유)로 식을 때까지 작업을 멈추고 로그 · 이벤트를 남긴다.
   3. 창을 못 읽으면(표본 없음 · 오래됨) 보수적으로 duty ≤ blind_duty 로만 일한다.
 """
@@ -81,11 +83,33 @@ def nvml_window(gpu: int) -> Window:
     return _wins[gpu]
 
 
+def limits(section: str = "national") -> dict:
+    """상한 · 목표 한 곳(config/pools.yaml power.{section} — 없으면 power.national). → {limit_w, limit_util, target_w, target_util}"""
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from landxi_api import config
+        pw = config.load_yaml("pools").get("power", {}) or {}
+    except Exception:  # noqa: BLE001
+        pw = {}
+    c = {**(pw.get("national") or {}), **(pw.get(section) or {})} if section != "national" else dict(pw.get("national") or {})
+    lw = float(c.get("power_max_w", 160))
+    lu = float(c.get("util_max", 70))
+    return {"limit_w": lw, "limit_util": lu, "target_w": float(c.get("target_w", round(lw * 0.9))),
+            "target_util": float(c.get("target_util", round(lu * 0.89)))}
+
+
 class PowerThrottle:
-    def __init__(self, window: Window, *, limit_w=140.0, limit_util=70.0, target_w=125.0, target_util=62.0,
+    def __init__(self, window: Window, *, limit_w=None, limit_util=None, target_w=None, target_util=None,
                  margin_w=8.0, margin_util=6.0, hard_s=20.0, temp_max=83.0, duty0=0.35, duty_min=0.05, duty_max=0.85,
                  blind_duty=0.3, adj_every=3.0, clock=time.time, sleep=time.sleep, log=None, event=None, poll_s=0.25):
         self.win, self.clock, self.sleep, self.log, self.event = window, clock, sleep, log or (lambda *a: None), event or (lambda *a, **k: None)
+        d = limits() if None in (limit_w, limit_util, target_w, target_util) else {}
+        limit_w = d["limit_w"] if limit_w is None else limit_w
+        limit_util = d["limit_util"] if limit_util is None else limit_util
+        target_w = d["target_w"] if target_w is None else target_w
+        target_util = d["target_util"] if target_util is None else target_util
         self.limit_w, self.limit_u, self.tw, self.tu = limit_w, limit_util, target_w, target_util
         self.mw, self.mu, self.hard_s, self.temp_max = margin_w, margin_util, hard_s, temp_max
         self.duty, self.dmin, self.dmax, self.blind_duty, self.adj_every, self.poll_s = duty0, duty_min, duty_max, blind_duty, adj_every, poll_s

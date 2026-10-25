@@ -93,9 +93,16 @@ def _raster(path: str, fr):
         lo, hi = np.percentile(arr, 1), np.percentile(arr, 99)
         arr = np.clip((arr - lo) / max(hi - lo, 1) * 255, 0, 255).astype(np.uint8)
     img = np.transpose(arr, (1, 2, 0)).copy()
-    if m is not None:
-        img[m == 0] = 255
-    return Image.fromarray(img, "RGB")
+    # 10-25 원칙 340 — 영상의 빈 곳(마스크 밖 · 창 밖 · 마스크에 없는 흰 · 검은 채움 덩어리)을 재어 둔다(후보 고르기가 빈 곳 있는 틀을 버림)
+    from . import valid_area as VA
+    ok = (m > 0) if m is not None else np.ones((H, W), bool)
+    cell = (fr[2] - fr[0]) / W
+    fill = VA.fill_of(ok, np.all(img >= VA.WHITE, 2), np.all(img <= VA.BLACK, 2), img.mean(axis=2).astype(np.uint8), cell * cell)
+    bad = ~ok | fill
+    img[bad] = 255
+    out = Image.fromarray(img, "RGB")
+    out.info["invalid"] = float(bad.mean())
+    return out
 
 
 def _ngii(src: dict, fr, zoom: int):
@@ -192,6 +199,22 @@ def _poly_style(col):
     return {"fill": col, "fa": 95, "line": col, "width": 3, "halo": "#FFFFFF"}
 
 
+FIELD_CLS = {"경작지", "비경작지", "경작", "휴경", "IRG", "호밀", "옥수수", "수단그라스"}
+
+
+def _dissolve(items):
+    """그림에만 — 논밭 결과는 같은 분류끼리 붙은 조각을 한 덩어리로(분석 칸 경계에서 잘린 네모 금이 그림에 보이지 않게).
+    건물 · 비닐하우스 · 차량처럼 낱개 결과는 그대로."""
+    import shapely
+    out, by = [], {}
+    for g, c in items:
+        (by.setdefault(c, []) if c in FIELD_CLS else out).append(g if c in FIELD_CLS else (g, c))
+    for c, gs in by.items():
+        u = shapely.union_all([x.buffer(0.3, join_style=2) for x in gs]).buffer(-0.3, join_style=2)
+        out += [(p, c) for p in getattr(u, "geoms", [u]) if not p.is_empty]
+    return out
+
+
 def _people_grid(pts, fr, cell=8.0):
     """사람 점 → 8 m 칸 밀집(XI맵 밀도 칸과 같은 뜻) — 사람 하나하나를 그리지 않는다"""
     from shapely.geometry import box
@@ -221,7 +244,43 @@ def _when(ep: str | None, year) -> str:
 
 # ── 원천별 그리기 ─────────────────────────────────────────────────────────────
 DSQL = ("SELECT ST_AsBinary(ST_Transform(geom, $6::int)) g, cls, conf, area_m2 FROM detections WHERE job_id = ANY($1) AND conf >= $7 "
-        "AND geom && ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, $6::int), 4326)")
+        "AND coalesce(edit_state, 'raw') <> 'deleted' AND geom && ST_Transform(ST_MakeEnvelope($2, $3, $4, $5, $6::int), 4326)")
+# 경작 · 휴경 — 필지 단위 집계(10-25 사용자 승인 '필지 단위 집계' · 지금 2023 카드 그림과 같은 모양): 필지 하나 = 한 분류(덮인 넓이가 많은 쪽)
+FARM_CLS = {"경작지": "경작", "비경작지": "휴경"}
+PARCEL_COVER_MIN = 0.3        # 필지 넓이 중 AI 결과가 덮은 몫이 이보다 적으면 칠하지 않음(판단 근거 부족)
+PSQL = """
+WITH d AS (SELECT geom, cls FROM detections WHERE job_id = ANY($1) AND coalesce(edit_state, 'raw') <> 'deleted' AND cls = ANY($2)
+           AND ($3::float8 IS NULL OR geom && ST_Transform(ST_MakeEnvelope($3, $4, $5, $6, $7::int), 4326))),
+     e AS (SELECT ST_SetSRID(ST_Extent(geom), 4326) g FROM d),
+     p AS (SELECT sp.pnu, sp.geom FROM survey_parcels sp, e WHERE sp.jimok IN ('전', '답', '과') AND sp.geom && e.g
+           AND ($3::float8 IS NULL OR sp.geom && ST_Transform(ST_MakeEnvelope($3, $4, $5, $6, $7::int), 4326)))
+SELECT p.pnu, ST_AsBinary(ST_Transform(p.geom, $7::int)) g, d.cls, sum(ST_Area(ST_Intersection(p.geom, d.geom)::geography)) a,
+       max(ST_Area(p.geom::geography)) pa
+FROM p JOIN d ON ST_Intersects(p.geom, d.geom) GROUP BY p.pnu, p.geom, d.cls"""
+
+
+def is_farm(classes) -> bool:
+    cs = {c for c in classes if c}
+    return bool(cs) and cs <= set(FARM_CLS)
+
+
+async def parcel_view(conn, jobs, srid: int, fr=None) -> list[tuple]:
+    """AI 결과(경작지 · 비경작지) → [(필지 도형(srid), '경작'|'휴경', 몫)] — 필지마다 덮인 넓이가 많은 분류 · 덮인 몫 30% 이상만"""
+    from shapely import wkb
+    a = (fr[0], fr[1], fr[2], fr[3]) if fr else (None, None, None, None)
+    rows = await conn.fetch(PSQL, list(jobs), list(FARM_CLS), *a, int(srid))
+    per: dict = {}
+    for r in rows:
+        x = per.setdefault(r["pnu"], {"g": r["g"], "pa": float(r["pa"] or 0), "by": {}})
+        x["by"][r["cls"]] = x["by"].get(r["cls"], 0.0) + float(r["a"] or 0)
+    out = []
+    for x in per.values():
+        tot = sum(x["by"].values())
+        if x["pa"] <= 0 or tot / x["pa"] < PARCEL_COVER_MIN:
+            continue
+        cls, aa = max(x["by"].items(), key=lambda kv: kv[1])
+        out.append((wkb.loads(bytes(x["g"])), FARM_CLS[cls], round(aa / tot, 3)))
+    return out
 
 
 async def _rows(conn, jobs, fr, srid, minconf=0.0):
@@ -303,12 +362,24 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
         fr = _frame(bbox4326, crs, has_people)
         rows = [x for x in await _rows(conn, jobs, fr, srid, minconf) if not only or x[1] in only]
         path = first["path_internal"]
+        if rows and is_farm(c for _, c, _ in rows) and not opts.get("raw"):
+            pv = await parcel_view(conn, jobs, srid, fr)
+            if pv:                                               # 경작 · 휴경 = 필지 단위(필지 정보가 없는 곳이면 AI 경계 그대로)
+                def go_p():
+                    L = _raster(path, fr)
+                    its = [(g, {"fill": FARM_G, "fa": 95, "line": FARM_G, "width": 2.5, "halo": "#FFFFFF"}) for g, c, _ in pv if c == "경작"]
+                    its += [(g, {"fill": FARM_F, "fa": 120, "line": FARM_F, "width": 3, "halo": "#FFFFFF"}) for g, c, _ in pv if c == "휴경"]
+                    return _jpg(L), _jpg(_draw(L, its, fr))
+                base, res = await run_in_threadpool(go_p)
+                leg = [x for x in ([FARM_G, "경작"], [FARM_F, "휴경"]) if any(c == x[1] for _, c, _ in pv)]
+                return {"base": base, "result": res, "labels": ["원본", "AI 결과"], "legend": leg, "frame": _frame4326(fr, crs), "people": False,
+                        "n": len(pv), "parcel": True}
 
         def go():
             L = _raster(path, fr)
             ppl = [(g.centroid.x, g.centroid.y) for g, c, _ in rows if c in PEOPLE]
             its = _people_grid(ppl, fr) if ppl else []
-            its += [(g, _poly_style(col(c))) for g, c, _ in rows if c not in PEOPLE]
+            its += [(g, _poly_style(col(c))) for g, c in _dissolve([(g, c) for g, c, _ in rows if c not in PEOPLE])]
             return _jpg(L), _jpg(_draw(L, its, fr))
         base, res = await run_in_threadpool(go)
         leg = ([[HEAT[3], "사람 밀집"]] if any(c in PEOPLE for _, c, _ in rows) else []) + _legend((col(c), c) for _, c, _ in rows if c not in PEOPLE)

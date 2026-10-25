@@ -84,6 +84,20 @@ def finalize(job_id: str):
     feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")
+    # 영상의 빈 곳 빼기(10-25 원칙 340) — 결과를 영상이 있는 곳(유효 범위)으로 자르고, 절반 넘게 빈 곳 위인 결과는 뺀다
+    try:
+        from landxi_api import valid_area as VA
+        vg = VA.load(jh.get("imagery_id"))
+        if vg is not None and feats:
+            from workers.postprocess import metric_epsg
+            c0 = feats[0]["geom"].centroid
+            feats, vst = VA.clip_feats(feats, vg, st.get("epsg") or metric_epsg(c0.x, c0.y), min_area=min_area,
+                                          clip=task not in ("obb", "det"))
+            st["valid_clip"] = vst
+            if vst["dropped"] or vst["clipped"]:
+                log(WHO, f"빈 곳 빼기 {job_id}: {vst}")
+    except Exception as e:  # noqa: BLE001 — 빼기를 못 해도 결과는 막지 않는다
+        log(WHO, "valid clip error", job_id, repr(e))
     # 겹침 정리 1단(10-22 now21 겹침-붙은경계 · 원본보관 ⓐ) — 칸 경계에서 잘린 것 붙이기 · 전국 분석 조각은 조각 몫만 · 농지 · 하천 한 층.
     # AI 가 낸 원래 결과(NMS 뒤)는 {작업}.raw.fgb 로 남기고, 화면 · 숫자 · 내려받기는 정리 결과({작업}.fgb · DB 결과 줄)를 읽는다.
     raw_feats, tidy_rec = feats, None

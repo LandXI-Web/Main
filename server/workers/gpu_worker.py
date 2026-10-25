@@ -63,7 +63,7 @@ LLM_QUIET_S = float(NAT.get("llm_quiet_s", 5))              # XI ChatGEO 호출�
 LRU_MAX = 1 if SECONDARY else int(PCFG.get("lru_max", 3))
 NAT_CHUNK = max(1, int(NAT.get("chunk", 4)))                # 한 번에 돌리는 칩 수(묶음 크기)
 NAT_UTIL = float(NAT.get("util_max", 70))                   # 사용률 상한(%) — 이동평균이 넘으면 쉼을 늘린다
-NAT_W = float(NAT.get("power_max_w", 140))                  # 전력 상한(W) — 장당 상한 200 W 의 70%
+NAT_W = float(NAT.get("power_max_w", 160))                  # 전력 상한(W) — config/pools.yaml 한 곳(10-25 사용자 160 W 기본 · 장당 하드 상한 200 W)
 NAT_DUTY0 = float(NAT.get("duty", 0.5))                     # 처음 일하는 몫(추론 시간 ÷ (추론 + 쉼))
 nat = {"duty": NAT_DUTY0, "slept": 0.0}
 # 학습(kind train) — 전국 작업과 같은 상한(10-12 구현 25 · 원칙 221): 한 장만 · 풀로드 금지. 시스템 전력 상한은 바꾸지 않고
@@ -357,17 +357,23 @@ def _ds(path: str):
 
 
 def read_window(path: str, w: dict):
+    """칸 하나 읽기 — 색 3밴드만(넷째 밴드는 분석에 넣지 않음). 10-25 원칙 340: 영상의 빈 곳(알파 · 내부 마스크 · nodata ·
+    창 밖 · 빈 타일 · 영상 유효 범위 밖의 흰 · 검은 채움)은 분석하지 않는다 — 유효 칸이 10% 미만이면 칸을 건너뛰고(빈 결과),
+    걸친 칸은 빈 곳을 영상이 있는 곳의 평균 색으로 바꿔 모델이 흰 · 검은 바탕을 보지 않게 한다(결과는 마무리에서 유효 범위로 자름)."""
     from rasterio.windows import Window
+    from landxi_api import valid_area as VA
     ds = _ds(path)
     win = Window(w["col_off"], w["row_off"], w["width"], w["height"])
     arr = ds.read(indexes=[1, 2, 3], window=win, boundless=True, fill_value=0)
-    if ds.count >= 4:
-        alpha = ds.read(4, window=win, boundless=True, fill_value=0)
-        if alpha.max() == 0:
-            return None, ds.window_transform(win), ds.crs.to_epsg()
-    elif arr.max() == 0:
-        return None, ds.window_transform(win), ds.crs.to_epsg()
-    return arr.transpose(1, 2, 0), ds.window_transform(win), ds.crs.to_epsg()
+    epsg = ds.crs.to_epsg()
+    if arr.max() == 0:
+        return None, ds.window_transform(win), epsg
+    iid = path.split(":", 1)[1] if path.startswith("imagery:") else None
+    ok = VA.window_valid(ds, win, arr, VA.load(iid), epsg)
+    arr, frac = VA.mask_chip(arr, ok)
+    if frac < VA.TILE_MIN_VALID:
+        return None, ds.window_transform(win), epsg
+    return arr.transpose(1, 2, 0), ds.window_transform(win), epsg
 
 
 def imagery_path(imagery_id: str) -> str:
@@ -773,7 +779,8 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         t_read += time.perf_counter() - tp
         tg = time.perf_counter()
         results = run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
-        rested = nat_rest(time.perf_counter() - tg, job_id, [x.id for x in shards[c0:]]) if national else 0.0
+        # 모든 GPU 분석은 같은 쉼 규칙(10-25 사용자 — 장당 30초 평균 상한(pools.yaml power_max_w · 160 W) · 70 % 아래가 기본 · 예전엔 전국 작업만)
+        rested = nat_rest(time.perf_counter() - tg, job_id, [x.id for x in shards[c0:]])
         if opts.get("classes"):
             results = keep_classes(opts["classes"], results)   # 서비스가 찾는 분류만(예: 4분류 원판 → 비닐하우스 카드는 비닐하우스만)
         if opts.get("live"):
@@ -850,10 +857,10 @@ def nat_rest(t_gpu: float, job_id: str, shard_ids: list):
         for sid in shard_ids:
             bus.inflight_touch(POOL, job_id, sid)
     nat["slept"] += rest
-    try:                                                # 30초 평균이 목표(125 W · 62 %)를 넘으면 내려갈 때까지 멈춘다 · 20초 넘게 상한 초과면 하드 정지(10-18)
+    try:                                                # 30초 평균이 목표(설정 target_w · 약 145 W · 62 %)를 넘으면 내려갈 때까지 멈춘다 · 20초 넘게 상한 초과면 하드 정지(10-18)
         if "thr" not in nat:
             from workers.power_throttle import PowerThrottle, nvml_window
-            nat["thr"] = PowerThrottle(nvml_window(A.gpu), limit_w=NAT_W, limit_util=NAT_UTIL, target_w=float(NAT.get("target_w", NAT_W * 0.89)),
+            nat["thr"] = PowerThrottle(nvml_window(A.gpu), limit_w=NAT_W, limit_util=NAT_UTIL, target_w=float(NAT.get("target_w", round(NAT_W * 0.9))),
                                        target_util=float(NAT.get("target_util", NAT_UTIL * 0.89)), log=lambda m: log(WHO, f"전국 작업: {m}"))
 
         def _touch():
@@ -1076,8 +1083,8 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
             if (bus.job(job_id) or {}).get("state") == "cancelled":
                 raise RuntimeError("cancelled")
 
-    # 30초 평균을 NVML 로 직접 재서 강제(10-18): 목표 = 상한의 약 89 % / 88 %(125 W · 62 %), 상한 140 W · 70 % 를 20초 넘게 넘으면 하드 정지
-    thr = PowerThrottle(nvml_window(A.gpu), limit_w=TRN_W, limit_util=TRN_UTIL, target_w=float(TRN.get("target_w", TRN_W * 0.89)),
+    # 30초 평균을 NVML 로 직접 재서 강제(10-18): 목표 = 설정 target_w(약 145 W · 62 %), 상한 = 설정 power_max_w(160 W · 70 %)를 20초 넘게 넘으면 하드 정지
+    thr = PowerThrottle(nvml_window(A.gpu), limit_w=TRN_W, limit_util=TRN_UTIL, target_w=float(TRN.get("target_w", round(TRN_W * 0.9))),
                         target_util=float(TRN.get("target_util", TRN_UTIL * 0.89)), hard_s=float(TRN.get("hard_s", 20)),
                         temp_max=float(TRN.get("temp_max_c", 83)), duty0=min(TRN_DUTY0, 0.35), log=lambda m: log(WHO, f"train {job_id}: {m}"), event=ev)
 

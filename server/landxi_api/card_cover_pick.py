@@ -24,6 +24,7 @@ from .deps import ApiError
 CHANGE_BIG = {"신축", "소실"}
 SKIP_CLS = {"식생 증감"}
 MAX_ROWS = 40000
+BLANK_MAX = 0.001           # 틀 안 영상 빈 곳(흰 · 검은 채움 · 마스크 밖) 허용 상한 0.1 % — 넘으면 후보에서 뺌(조금이라도 보이면 버림)
 
 
 async def _objects(conn, source: dict) -> dict:
@@ -39,7 +40,7 @@ async def _objects(conn, source: dict) -> dict:
     first = next(r for r in rs if r["id"] == jobs[0])
     o = first["options"] if isinstance(first["options"], dict) else json.loads(first["options"] or "{}")
     sql = ("SELECT ST_AsBinary(ST_Transform(geom, $2::int)) g, cls, conf FROM detections WHERE job_id = ANY($1) "
-           "ORDER BY id LIMIT " + str(MAX_ROWS))
+           "AND coalesce(edit_state, 'raw') <> 'deleted' ORDER BY id LIMIT " + str(MAX_ROWS))
     if o.get("change"):
         rows = await conn.fetch(sql, [first["id"]], 5179)
         objs = [(wkb.loads(bytes(r["g"])), r["cls"], float(r["conf"]) if r["conf"] is not None else 0.7) for r in rows if r["cls"] not in SKIP_CLS]
@@ -73,12 +74,19 @@ async def _objects(conn, source: dict) -> dict:
     crs = first["crs"] or "EPSG:5186"
     rows = await conn.fetch(sql, jobs, CC._epsg(crs))
     objs = [(wkb.loads(bytes(r["g"])), r["cls"], float(r["conf"] or 0)) for r in rows]
+    if objs and CC.is_farm(o[1] for o in objs):                 # 경작 · 휴경 — 필지 단위로 고른다(그림과 같은 모양 · 10-25 승인)
+        pv = await CC.parcel_view(conn, jobs, CC._epsg(crs))
+        if pv:
+            return {"kind": "detect", "crs": crs, "objs": [(g, c, 0.5 + 0.5 * sh) for g, c, sh in pv], "people": False,
+                    "path": first["path_internal"], "opts": {}, "parcel": True}
     return {"kind": "detect", "crs": crs, "objs": objs, "people": any(x[1] in CC.PEOPLE for x in objs), "path": first["path_internal"], "opts": {}}
 
 
-def _frame_w(objs, people: bool, kind: str) -> float:
+def _frame_w(objs, people: bool, kind: str, parcel: bool = False) -> float:
     sizes = sorted(math.sqrt(max(g.area, 0.01)) for g, _, _ in objs if g.area > 0) or [5.0]
     s = sizes[len(sizes) // 2]
+    if parcel:                                            # 필지 단위 — 필지 몇 줄이 보이는 너비(필지가 크니 ×12 면 너무 넓다)
+        return min(max(s * 6, 120.0), 360.0)
     if kind == "change":
         w = min(max(s * 9, 140.0), 420.0)
     else:
@@ -153,7 +161,8 @@ def _img_stats(img) -> dict:
     import numpy as np
     a = np.asarray(img.convert("RGB").resize((240, 180))).astype(float)
     mx, mn = a.max(axis=2), a.min(axis=2)
-    blank = float(((mn >= 250) | (mx <= 3)).mean())
+    inv = img.info.get("invalid")                         # 영상 빈 곳(마스크 · 채움 — card_cover._raster 가 잰 값) · 없으면 색으로
+    blank = float(inv) if inv is not None else float(((mn >= 250) | (mx <= 3)).mean())
     sat = (mx - mn) / np.maximum(mx, 1)
     cloud = float(((mx > 225) & (sat < 0.08)).mean())
     shadow = float((mx < 40).mean())
@@ -232,17 +241,15 @@ async def candidates(conn, source: dict, n: int = 4) -> list[dict]:
     mat = await _objects(conn, source)
     if not mat["objs"]:
         return []
-    w = _frame_w(mat["objs"], mat["people"], mat["kind"])
+    w = _frame_w(mat["objs"], mat["people"], mat["kind"], bool(mat.get("parcel")))
 
     def go():
-        cs = _vector_scores(mat["objs"], w, mat["people"], mat["kind"], top=max(n * 4, 16) if mat["kind"] == "change" else max(n * 2, 6))
+        cs = _vector_scores(mat["objs"], w, mat["people"], mat["kind"], top=max(n * 4, 16) if mat["kind"] == "change" or mat.get("parcel") else max(n * 2, 6))
         out = []
         for c in cs:
             st = _img_of(mat, c["fr"])
             img_s = st["s"] if st else 0.0
-            if st and st["blank"] > 0.02:
-                img_s *= 0.3
-            if mat["kind"] == "change" and st is None:
+            if st is None or st["blank"] > BLANK_MAX:          # 10-25 원칙 340 — 영상 빈 곳이 보이는 틀은 점수를 깎지 않고 버린다
                 continue
             score = _total(c, st, img_s, mat["kind"])
             out.append({"bbox": CC._frame4326(c["fr"], mat["crs"]), "score": round(score * 100), "why": _why(c, st, mat["kind"]),
@@ -268,6 +275,8 @@ async def score_frame(conn, source: dict, bbox4326) -> int | None:
         if not c:
             return 0
         st = _img_of(mat, fr)
+        if st is not None and st["blank"] > BLANK_MAX:
+            return 0
         img_s = st["s"] if st else 0.0
         return round(_total(c, st, img_s, mat["kind"]) * 100)
     return await run_in_threadpool(go)
