@@ -1,0 +1,45 @@
+{
+ "job_id": "job_01M5SZSECR5G75C79Q78A0T754",
+ "model_id": "trained/job_01M5SRDTF2XW0K3KKCF0FJDT7D",
+ "samples": "E:/Land-XI 플랫폼/02. 데이터/training/farm-retrain-1025/dataset_origval.yaml",
+ "at": "2026-10-26T01:55:50",
+ "weights": "E:\\Land-XI 플랫폼\\02. 데이터\\models\\trained\\job_01M5SRDTF2XW0K3KKCF0FJDT7D\\weights\\best.pt",
+ "data": "E:\\Land-XI 플랫폼\\02. 데이터\\training\\farm-retrain-1025\\dataset_origval.yaml",
+ "imgsz": 1024,
+ "classes": {
+  "경작지": {
+   "mask": {
+    "map50": 0.9083,
+    "map50_95": 0.7892,
+    "precision": 0.9124,
+    "recall": 0.8159
+   },
+   "box": {
+    "map50": 0.9087,
+    "map50_95": 0.7706,
+    "precision": 0.9124,
+    "recall": 0.8159
+   }
+  },
+  "비경작지": {
+   "mask": {
+    "map50": 0.94,
+    "map50_95": 0.812,
+    "precision": 0.9134,
+    "recall": 0.9131
+   },
+   "box": {
+    "map50": 0.9555,
+    "map50_95": 0.7825,
+    "precision": 0.9212,
+    "recall": 0.9209
+   }
+  }
+ },
+ "speed_ms": {
+  "preprocess": 0.95,
+  "inference": 26.68,
+  "loss": 0.0,
+  "postprocess": 1.96
+ }
+}

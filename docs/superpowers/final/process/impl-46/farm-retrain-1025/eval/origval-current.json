@@ -1,0 +1,45 @@
+{
+ "job_id": "job_01M5SZQTSZ9H9RWBHY19ZAHV96",
+ "model_id": "namwon/cultivate_uncultivate/train",
+ "samples": "E:/Land-XI 플랫폼/02. 데이터/training/farm-retrain-1025/dataset_origval.yaml",
+ "at": "2026-10-26T01:55:02",
+ "weights": "E:\\namwon\\cultivate_uncultivate\\runs\\segment\\train\\weights\\best.pt",
+ "data": "E:\\Land-XI 플랫폼\\02. 데이터\\training\\farm-retrain-1025\\dataset_origval.yaml",
+ "imgsz": 1024,
+ "classes": {
+  "경작지": {
+   "mask": {
+    "map50": 0.9298,
+    "map50_95": 0.816,
+    "precision": 0.9122,
+    "recall": 0.871
+   },
+   "box": {
+    "map50": 0.9276,
+    "map50_95": 0.787,
+    "precision": 0.9122,
+    "recall": 0.871
+   }
+  },
+  "비경작지": {
+   "mask": {
+    "map50": 0.9564,
+    "map50_95": 0.811,
+    "precision": 0.8819,
+    "recall": 0.9646
+   },
+   "box": {
+    "map50": 0.9601,
+    "map50_95": 0.7833,
+    "precision": 0.8819,
+    "recall": 0.9646
+   }
+  }
+ },
+ "speed_ms": {
+  "preprocess": 1.09,
+  "inference": 26.76,
+  "loss": 0.0,
+  "postprocess": 1.82
+ }
+}
