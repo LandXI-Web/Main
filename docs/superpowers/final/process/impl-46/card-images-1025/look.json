@@ -1,0 +1,125 @@
+{
+ "base": "https://app.land-xi.dev",
+ "at": "2026-10-25T01:57:54.513Z",
+ "cards": [
+  {
+   "name": "경작⁠·⁠휴경 분석서비스",
+   "src": "card-farm/scene-c74016ee93b0.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "건축물 분석서비스",
+   "src": "card-45424f/scene-1998a00596ed.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "국토 변화 분석서비스",
+   "src": "card-change/scene-5202f6ee4c63.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "비닐하우스 분석서비스",
+   "src": "card-5e85a9/scene-ead169d5b474.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "주차장 분석서비스",
+   "src": "card-389c45/scene-e20966e5c22b.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "곤포사일리지 분석서비스",
+   "src": "card-d8fc01/scene-d1a4ba60be6d.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "관광지 안전관리 분석서비스",
+   "src": "card-crowd/scene-878fb0230772.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "비닐하우스 단동⁠·⁠다동 분석서비스",
+   "src": "card-6f7050/scene-2c572ba01fa1.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "사료작물 생산기 분석서비스",
+   "src": "card-f31e5f/scene-4c48a39db82a.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "사료작물 생육기 분석서비스",
+   "src": "card-4d8d6f/scene-70734c6d285a.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "사료작물 생육기⁠·⁠생산기 비교 분석서비스",
+   "src": "card-ba9d6d/scene-99e746c41d70.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "산사태 취약지구 분석서비스",
+   "src": "card-landslide/scene-27ce14946147.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  },
+  {
+   "name": "차량 분석서비스",
+   "src": "card-2c5304/scene-9c6e79f1c104.jpg",
+   "loaded": true,
+   "w": 1200,
+   "h": 900,
+   "blank": null,
+   "ex": null
+  }
+ ],
+ "errs": [],
+ "ms": 4845
+}

@@ -1,0 +1,99 @@
+{
+ "at": "2026-10-25",
+ "rule": "원칙 338 — 카드 그림 = 원본 | AI 결과(탐지) · 연도 A | 연도 B(변화) · 4월 | 6월(비교) 한 틀",
+ "items": [
+  {
+   "card": "card-farm",
+   "scene": "/api/v1/cards/files/card-farm/scene-c74016ee93b0.jpg",
+   "source": "필지 판정(AI 경작지 비율 · 휴경·전용 의심 규칙) · 남원 2023 25cm 항공 — 밝은 지붕 · 푸른 비닐이 든 필지(전용)는 휴경 칸에서 뺌",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-5e85a9",
+   "scene": "/api/v1/cards/files/card-5e85a9/scene-ead169d5b474.jpg",
+   "source": "job_01M4AT60R3DZ1Q0VKGC1R71CPF(aerial25) · 남원 2023 25cm 항공",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-6f7050",
+   "scene": "/api/v1/cards/files/card-6f7050/scene-2c572ba01fa1.jpg",
+   "source": "job_01M5NW3EH2XSQAMS5A57EQ9EPD · 남원 드론 2.4cm · 신뢰도 0.8 이상만(지붕 위 오탐 뺌)",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-2c5304",
+   "scene": "/api/v1/cards/files/card-2c5304/scene-9c6e79f1c104.jpg",
+   "source": "job_01M5NW3F8688S6XF0RX5ZG0DQH · 남원 드론 2.4cm · 신뢰도 0.5 이상",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-45424f",
+   "scene": "/api/v1/cards/files/card-45424f/scene-1998a00596ed.jpg",
+   "source": "job_01M4ARMQDXBZKXVQKBVBYSKV59(aerial25) · 원주 2023 25cm 항공",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-389c45",
+   "scene": "/api/v1/cards/files/card-389c45/scene-e20966e5c22b.jpg",
+   "source": "job_01M4ARJ76ARDGB04EAF8QP591P(aerial25) · 여주 2023 25cm 항공",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-d8fc01",
+   "scene": "/api/v1/cards/files/card-d8fc01/scene-d1a4ba60be6d.jpg",
+   "source": "job_01M5RBX85XEVANJZ0QPMNEEH1J(10-25 새로 돌림 · 대기열) · 남원 2025.06 드론 금지면 · 신뢰도 0.9 이상(곤포 줄)",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-4d8d6f",
+   "scene": "/api/v1/cards/files/card-4d8d6f/scene-70734c6d285a.jpg",
+   "source": "job_01M5Q21ZHFPT6F3TC22KKTWRBM · 남원 2025.04 드론 금지면",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-f31e5f",
+   "scene": "/api/v1/cards/files/card-f31e5f/scene-4c48a39db82a.jpg",
+   "source": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH · 남원 2025.06 드론 금지면",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-ba9d6d",
+   "scene": "/api/v1/cards/files/card-ba9d6d/scene-99e746c41d70.jpg",
+   "source": "compare/job_01M5R76BKYBANCRZ61WTC6536W(남긴 비교) · 4월 · 6월 두 영상 · 녹색 차이로 맞는 필지가 몰린 곳",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-change",
+   "scene": "/api/v1/cards/files/card-change/scene-5202f6ee4c63.jpg",
+   "source": "job_01M5HAG21ED9RXTEQMNGTGZK74 · 광산구 국토지리정보원 항공 2019 ↔ 2024 · 150㎡ 이상",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-landslide",
+   "scene": "/api/v1/cards/files/card-landslide/scene-27ce14946147.jpg",
+   "source": "job_01M5R4NDS3537AB5QHQHHZ4YJM · 남원 예시 지구 2020 ↔ 2025(벌채 · 채석 자리)",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-crowd",
+   "scene": "/api/v1/cards/files/card-crowd/scene-878fb0230772.jpg",
+   "source": "사람 job_01M5PYK3BR4697HEYZS80HRVZ9 · 차량 job_01M5PYT4PCY4RN0YGMXHKCW1AE · 춘향제 2025.05.04 드론 — 바탕 4배 줄였다 흐리게(원칙 331 사람 알아볼 수 없음) · 8m 칸 밀집",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  },
+  {
+   "card": "card-marine",
+   "scene": "/api/v1/cards/files/card-marine/scene-2fc476f98351.jpg",
+   "source": "있는 실제 결과 그림(service-detail/data/img/marine-drone/1@2x) 잘라 냄 — 같은 자리 원본 없음 → 'AI 결과'만",
+   "size": "1200x900(4:3) · 올리는 길 POST /cards/{id}/scene(서버가 JPG 로 다시 저장 · 예전 그림은 장면 목록에 남음)"
+  }
+ ],
+ "not_uploaded": {
+  "card-living · card-road · card-forest · card-global-disaster · card-global-farm": "모델 · 결과 없음 → 그림 올리지 않음(갤러리의 같은 틀 빈 칸 그대로 · 지어낸 결과 0)"
+ },
+ "new_runs": {
+  "job_01M5RBKGEN3488YAQDMV344J40": "경작·휴경(경작·비경작 모델) 남원 드론 — 겨울 영상이라 경작 15 · 비경작 1,028(빈 칸 오탐 다수) → 그림에 쓰지 않음",
+  "job_01M5RBX85XEVANJZ0QPMNEEH1J": "곤포사일리지 남원 2025.06 금지면 — 133건(곤포 줄 3건 맞음 · 맨땅 네모 오탐 다수)"
+ },
+ "gpu": "대기열로 한 번에 하나 · 돌릴 때 0번 GPU 약 120W(140W 아래)",
+ "check": "look.json — 바깥 주소 · 로그인 폼(LX 직원) · 분석 서비스 갤러리 13장 모두 새 그림 1200×900 뜸"
+}
