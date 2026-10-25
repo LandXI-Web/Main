@@ -332,7 +332,7 @@ async function openSheet(item) {
   sheet = drawer({ title: `${item.kind === 'card' ? '배포 신청' : item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
   /* 배포 신청(서비스 공개)은 배포 메뉴에서 신청서(서버 값 + 메모)를 보고 승인 · 거절한다(10-09 배포-3 ⓐ) */
   if (item.kind === 'card') {
-    body.append(h('p.oc-mine', { text: '배포 신청은 배포 메뉴에서 신청서를 보고 승인 · 거절합니다.' }), h('a.t-btn', { href: INFRA + '#/deploys', text: '배포 메뉴에서 신청서 보기' }));
+    body.append(h('p.oc-mine', { text: '배포 신청은 배포 메뉴에서 신청서를 보고 승인 · 거절합니다.' }), h('a.t-btn', { href: INFRA + '#/deploys/requests', text: '배포 메뉴에서 신청서 보기' }));
     return;
   }
   if (item.mine && !item.canDecide) {                // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재

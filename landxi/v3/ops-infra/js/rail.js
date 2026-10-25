@@ -11,4 +11,4 @@ export const RAIL = [
   { id: 'shared', label: '공유 데이터', icon: 'data', href: '#/shared' },   // 영상 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기(10-13 관리자-공유데이터 · 원칙 238)
 ];
 /* 배포 메뉴의 탭(배포된 카드 = 서비스 카드 관리 화면 · lx-cards) */
-export const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates'], ['cards', '배포된 카드', '/cards']];
+export const TABS = [['cards', '배포된 카드', '/cards'], ['req', '배포 신청', '/requests'], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates']];

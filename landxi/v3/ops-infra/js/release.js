@@ -38,8 +38,9 @@ export function mountRelease(root) {
   const keys = apiKeysPane(panes.api);
   const rt = retrainPane(panes.rt), tpl = templatePane(panes.tpl);
   let tab = null;
-  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl' })[m?.[1]] || 'req'; };
+  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl', requests: 'req', cards: 'cards' })[m?.[1]] || 'cards'; };   // 배포를 열면 '배포된 카드'가 먼저(10-25)
   function set(t, push = false) {
+    if (t === 'cards') { if (/^#\/deploys/.test(location.hash) || push) location.replace('../lx-cards/'); return; }   // 배포된 카드 = 서비스 카드 관리 화면
     tab = t;
     for (const [k] of TABS) { btn[k].setAttribute('aria-selected', String(k === t)); panes[k].hidden = k !== t; }
     if (push) history.replaceState(null, '', '#/deploys' + TABS.find((x) => x[0] === t)[2]);

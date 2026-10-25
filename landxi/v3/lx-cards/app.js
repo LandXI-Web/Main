@@ -20,7 +20,8 @@ const S = ADMIN
   ? K.shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL.map((r) => (r.href.startsWith('#') ? { ...r, href: OI + r.href } : r)), current: RAIL.findIndex((r) => r.id === 'deploys') } })
   : K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });   // 서비스 카드는 메뉴 칸이 없다 — 들어오는 길 '분석하기'(서비스카드-1 ⓐ)
 if (ADMIN) {
-  document.head.append(h('link', { rel: 'stylesheet', href: '../ops-infra/improve.css' }));
+  /* 탭 모양 CSS 가 올 때까지 틀을 숨겨 둔다(안 입힌 버튼 깜박임 방지) */
+  await new Promise((ok) => { const l = h('link', { rel: 'stylesheet', href: '../ops-infra/improve.css' }); l.onload = l.onerror = ok; setTimeout(ok, 3000); document.head.append(l); });
   const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove();
 }
