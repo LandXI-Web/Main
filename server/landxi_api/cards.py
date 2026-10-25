@@ -3,6 +3,7 @@
   GET  /api/v1/cards/deck                  덱 — LX = 모든 카드(분석하기 갤러리 · 서비스 카드 관리) · 기관 = 그 기관에 켜진 서비스(서비스 선택 · 분석 의뢰)
   GET  /api/v1/cards/{cid}                 카드 한 장 + 상세(지역별 결과 · 결과 장면 · 영상 ↔ 결과 · 조건 · 판) — LX
   PUT  /api/v1/cards/{cid}                 카드 정보 고치기 — 이름 · 무엇을 찾나 · 대표 이미지 · 결과 예시(지역 · 말) · 분류 · 영상 · 시점 · 찾는 것 · 대조
+  POST /api/v1/cards/{cid}/cover           카드 그림 한 쌍(결과 + 지도 틀 → 원본 · AI 결과 · card_cover.py) · PUT 의 swipe = 올린 두 장을 짝으로
   POST /api/v1/cards/{cid}/scene           결과 장면 올리기(PNG · JPG · WebP · 8MB 이하) → 긴 변 1600 JPG 로 다시 저장 · 고를 수 있는 장면에 더한다
   GET  /api/v1/cards/files/{cid}/{name}    올린 결과 장면(이름에 내용 해시)
   GET  /api/v1/cards/{cid}/imagery?region= 그 시군구를 덮는 공유 영상 후보(영상 고르기 — 질문 3 ⓐ · 원칙 153) — 이름 · 해상도 · 촬영 시기 · 범위 · 덮는 모양 ·
@@ -383,6 +384,9 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     if sc:
         ex = bool(sc.get("ex")) or bool(sc.get("sgg") and all_sggs and str(sc["sgg"]) not in all_sggs)
         scene = {"src": sc["src"], "caption": sc.get("caption") or "", "ex": ex}
+        sw = inf.get("swipe")
+        if isinstance(sw, dict) and sw.get("cover") and sw.get("after") == sc["src"] and sw.get("before"):      # 원본 · AI 결과 한 쌍(10-25 원칙 339)
+            scene["swipe"] = {"before": sw["before"], "labels": sw.get("labels") or ["원본", "AI 결과"], "legend": sw.get("legend") or []}
     # 시점별 결과 장면(기관 서비스 대시보드 '영상과 결과 — 시점' · 기관-4 ⓐ) — 고를 수 있는 장면 가운데 그 계정이 볼 수 있는 것(관할)만 ·
     # 시점 = 장면 이름(캡션)에 적힌 날(2025.04 · 2025) — 날이 없는 장면은 시점 칸에 넣지 않는다(지어내지 않는다)
     scenes = []
@@ -720,7 +724,7 @@ async def put(cid: str, body: dict, request: Request):
     core, m, mine = await _one(p, cid)
     _editor(p, core)
     inf = dict(m["info"].get(cid) or {})
-    before = {k: inf.get(k) for k in ("line", "grp", "result_sgg", "result_word", "imagery", "timepoints", "finds", "compare", "scene")}
+    before = {k: inf.get(k) for k in ("line", "grp", "result_sgg", "result_word", "imagery", "timepoints", "finds", "compare", "scene", "swipe")}
     upd: dict = {}
     for k in ("line", "result_word", "imagery", "timepoints", "finds", "compare"):
         if k in body:
@@ -750,6 +754,18 @@ async def put(cid: str, body: dict, request: Request):
             upd["scene"] = opt
         else:
             upd["scene"] = None
+    if "swipe" in body:                                # 카드 그림 짝(원본 · 결과) — 고를 수 있는 장면 두 장 · 없애기 = null
+        sw = body.get("swipe")
+        if sw:
+            from . import card_cover as CC
+            srcs = {s.get("src") for s in (inf.get("scenes") or []) if isinstance(s, dict)}
+            if not isinstance(sw, dict) or sw.get("before") not in srcs or sw.get("after") not in srcs or sw.get("before") == sw.get("after"):
+                raise ApiError("bad_request", "원본과 결과는 올린 장면 두 장에서 고릅니다")
+            upd["swipe"] = {"before": sw["before"], "after": sw["after"], "labels": CC.check_labels(sw.get("labels")) or ["원본", "AI 결과"],
+                            "legend": CC.check_legend(sw.get("legend")), "cover": True}
+            upd["scene"] = next(s for s in inf["scenes"] if s.get("src") == sw["after"])
+        else:
+            upd["swipe"] = None
     name = _txt(body.get("name"), "name") if "name" in body else None
     if "name" in body and not name:
         raise ApiError("bad_request", "이름을 적어 주세요")
@@ -790,15 +806,8 @@ def _normalize_scene(data: bytes) -> bytes:
     return buf.getvalue()
 
 
-@router.post("/cards/{cid}/scene")
-async def put_scene(cid: str, request: Request, file: UploadFile = File(...), region: str = Form(""), caption: str = Form(""), use: str = Form("1")):
-    p = require(principal(request), lx=True)
-    core, m, mine = await _one(p, cid)
-    _editor(p, core)
-    data = await file.read(SCENE_MAX_BYTES + 1)
-    if len(data) > SCENE_MAX_BYTES:
-        raise ApiError("bad_request", "그림은 8MB 이하만 올릴 수 있습니다")
-    jpg = await run_in_threadpool(_normalize_scene, data)
+async def _store_scene(p, cid: str, mine, jpg: bytes, region: str = "", caption: str = "", use: bool = True, extra: dict | None = None) -> dict:
+    """그림 한 장을 카드 장면으로(장면 올리기 · 카드 그림 한 쌍이 같은 길) — 고를 수 있는 장면 목록에 더하고 use 면 카드 그림으로"""
     name = f"scene-{hashlib.sha256(jpg).hexdigest()[:12]}.jpg"
     d = _scene_dir(cid)
 
@@ -814,15 +823,53 @@ async def put_scene(cid: str, request: Request, file: UploadFile = File(...), re
     tenant = next((it.get("tenant") for it in mine if reg and str(it.get("sgg_cd")) == reg["sgg_cd"]), None)
     cap = _txt(caption, "caption") or (reg["name"] if reg else "")
     sc = {"src": f"/api/v1/cards/files/{cid}/{name}", "caption": cap, "sgg": reg["sgg_cd"] if reg else None, "tenant": tenant, "up": True,
-          **({"ex": True} if not reg else {})}
+          **({"ex": True} if not reg else {}), **(extra or {})}
     async with db(realm="lx") as conn:
         await conn.execute("INSERT INTO card_info(card_id, updated_by) VALUES ($1,$2) ON CONFLICT (card_id) DO NOTHING", cid, p.user_id)
         cur = _obj(await conn.fetchval("SELECT scenes FROM card_info WHERE card_id=$1", cid)) or []
         cur = [s for s in cur if isinstance(s, dict) and s.get("src") != sc["src"]] + [sc]
         await conn.execute("UPDATE card_info SET scenes=$2, updated_at=now(), updated_by=$3 WHERE card_id=$1", cid, cur, p.user_id)
-        if use not in ("0", "false", ""):
+        if use:
             await conn.execute("UPDATE card_info SET scene=$2 WHERE card_id=$1", cid, sc)
         await audit(conn, p, "card.scene", cid, None, {"src": sc["src"], "sgg": sc["sgg"]})
+    return sc
+
+
+@router.post("/cards/{cid}/scene")
+async def put_scene(cid: str, request: Request, file: UploadFile = File(...), region: str = Form(""), caption: str = Form(""), use: str = Form("1")):
+    p = require(principal(request), lx=True)
+    core, m, mine = await _one(p, cid)
+    _editor(p, core)
+    data = await file.read(SCENE_MAX_BYTES + 1)
+    if len(data) > SCENE_MAX_BYTES:
+        raise ApiError("bad_request", "그림은 8MB 이하만 올릴 수 있습니다")
+    jpg = await run_in_threadpool(_normalize_scene, data)
+    await _store_scene(p, cid, mine, jpg, region, caption, use not in ("0", "false", ""))
+    return await one(cid, request)
+
+
+# ── 카드 그림 한 쌍(10-25 원칙 339) — 결과 하나 + 지도 틀 → 원본 · AI 결과 두 장(같은 틀) ─────────────────
+@router.post("/cards/{cid}/cover")
+async def put_cover(cid: str, body: dict, request: Request):
+    """미리보기(save 없음) = 두 장 그림(data URL) · save = 카드 장면 두 장 + 카드 그림 = 결과 + 밀어 보기 짝(swipe)"""
+    from . import card_cover as CC
+    p = require(principal(request), lx=True)
+    core, m, mine = await _one(p, cid)
+    _editor(p, core)
+    async with db(realm="lx") as conn:
+        out = await CC.render(conn, body.get("source"), body.get("bbox"), body)
+    labels = CC.check_labels(body.get("labels")) or out["labels"]
+    fr = ",".join(f"{v:.7f}" for v in out["frame"])          # 틀(경위도 · 서남동북) — 화면 숫자가 아니라 글자로(봉투 규칙)
+    if not body.get("save"):
+        return {"base": CC.data_url(out["base"]), "result": CC.data_url(out["result"]), "labels": labels, "legend": out["legend"],
+                "frame": fr, "people": out["people"]}
+    region, cap = str(body.get("region") or ""), str(body.get("caption") or "")
+    b = await _store_scene(p, cid, mine, out["base"], region, cap, False, {"pair": "base"})
+    r = await _store_scene(p, cid, mine, out["result"], region, cap, True, {"pair": "result"})
+    sw = {"before": b["src"], "after": r["src"], "labels": labels, "legend": out["legend"], "frame": fr, "cover": True}
+    async with db(realm="lx") as conn:
+        await conn.execute("UPDATE card_info SET swipe=$2, updated_at=now(), updated_by=$3 WHERE card_id=$1", cid, sw, p.user_id)
+        await audit(conn, p, "card.cover", cid, None, {"before": b["src"], "after": r["src"], "source": body.get("source"), "frame": fr})
     return await one(cid, request)
 
 

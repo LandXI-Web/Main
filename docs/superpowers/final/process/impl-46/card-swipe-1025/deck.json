@@ -1,0 +1,269 @@
+{
+ "card-farm": {
+  "scene": "/api/v1/cards/files/card-farm/scene-a5fb1924069e.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-farm/scene-efdd1d20f58a.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#2E9E5B",
+     "경작"
+    ],
+    [
+     "#E8590C",
+     "휴경"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-marine": {
+  "scene": "/api/v1/cards/files/card-marine/scene-2fc476f98351.jpg",
+  "swipe": null,
+  "detail": 200
+ },
+ "card-45424f": {
+  "scene": "/api/v1/cards/files/card-45424f/scene-b2156922d379.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-45424f/scene-5ec5e6a7669f.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#3182F6",
+     "건물"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-change": {
+  "scene": "/api/v1/cards/files/card-change/scene-d78a97f7de98.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-change/scene-343e48ef4c9d.jpg",
+   "labels": [
+    "2019",
+    "2024"
+   ],
+   "legend": [
+    [
+     "#F04452",
+     "신축"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-5e85a9": {
+  "scene": "/api/v1/cards/files/card-5e85a9/scene-262ff223c7c4.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-5e85a9/scene-206a5bc054f8.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#F59F00",
+     "비닐하우스"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-389c45": {
+  "scene": "/api/v1/cards/files/card-389c45/scene-dcd5d4f34775.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-389c45/scene-5aa16d55ba1f.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#8B5CF6",
+     "주차장"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-d8fc01": {
+  "scene": "/api/v1/cards/files/card-d8fc01/scene-c614158819f4.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-d8fc01/scene-2fd054756e9b.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#B07A3A",
+     "곤포사일리지"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-crowd": {
+  "scene": "/api/v1/cards/files/card-crowd/scene-e0970cbb15c9.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-crowd/scene-cefb25ce006f.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#F04452",
+     "사람 밀집"
+    ],
+    [
+     "#3182F6",
+     "차량"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-6f7050": {
+  "scene": "/api/v1/cards/files/card-6f7050/scene-e303007028b5.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-6f7050/scene-0a04dacee01c.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#5C7CFA",
+     "다동"
+    ],
+    [
+     "#F59F00",
+     "단동"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-f31e5f": {
+  "scene": "/api/v1/cards/files/card-f31e5f/scene-a367d1d0d062.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-f31e5f/scene-6c9b8717bcf2.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#74B816",
+     "IRG"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-4d8d6f": {
+  "scene": "/api/v1/cards/files/card-4d8d6f/scene-facec691986b.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-4d8d6f/scene-b2d562ca107e.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#74B816",
+     "IRG"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-ba9d6d": {
+  "scene": "/api/v1/cards/files/card-ba9d6d/scene-97b13f1aef6b.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-ba9d6d/scene-27e998c03b23.jpg",
+   "labels": [
+    "4월",
+    "6월"
+   ],
+   "legend": [
+    [
+     "#0FA9A0",
+     "같은 작물"
+    ],
+    [
+     "#F04452",
+     "생산기에 없음"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-landslide": {
+  "scene": "/api/v1/cards/files/card-landslide/scene-44edb8aff12b.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-landslide/scene-8a08d0b0c0a8.jpg",
+   "labels": [
+    "2020",
+    "2025"
+   ],
+   "legend": [
+    [
+     "#C2410C",
+     "산림 → 나지"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-2c5304": {
+  "scene": "/api/v1/cards/files/card-2c5304/scene-2b2799799fba.jpg",
+  "swipe": {
+   "before": "/api/v1/cards/files/card-2c5304/scene-be74944e2306.jpg",
+   "labels": [
+    "원본",
+    "AI 결과"
+   ],
+   "legend": [
+    [
+     "#3182F6",
+     "차량"
+    ]
+   ]
+  },
+  "detail": 200
+ },
+ "card-road": {
+  "scene": null,
+  "swipe": null,
+  "detail": 200
+ },
+ "card-forest": {
+  "scene": null,
+  "swipe": null,
+  "detail": 200
+ },
+ "card-living": {
+  "scene": null,
+  "swipe": null,
+  "detail": 200
+ },
+ "card-global-farm": {
+  "scene": null,
+  "swipe": null,
+  "detail": 200
+ },
+ "card-global-disaster": {
+  "scene": null,
+  "swipe": null,
+  "detail": 200
+ }
+}

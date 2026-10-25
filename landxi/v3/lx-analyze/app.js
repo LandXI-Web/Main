@@ -111,13 +111,49 @@ async function authBlob(path) {
   return URL.createObjectURL(b);
 }
 
+/* 원본 ↔ AI 결과 밀어 보기(10-25 원칙 339) — 같은 틀 두 장을 한 그림에 포갠다. 처음 보일 때 한 번: 원본에서 오른쪽으로 넘어가며 결과(1.5 s) · 결과에서 멈춤.
+   그 뒤 끌기 · 마우스를 따라 움직이고, 마우스가 나가면 결과로 돌아간다. 움직임 줄이기 설정이면 결과를 바로. 키보드 ← → (범위 입력). */
+function absSrc(u) { return String(u || '').startsWith('/api/') ? API.base + u : u; }          // 함수 선언(모듈 위쪽에서 갤러리가 먼저 불려도 쓸 수 있게)
+function swipePic(scene, onerror) {
+  const sw = scene.swipe;
+  const labels = (sw.labels && sw.labels.length === 2) ? sw.labels : ['원본', 'AI 결과'];
+  const base = h('img.la-swp-b', { src: absSrc(sw.before), alt: '', loading: 'lazy', decoding: 'async', onerror });
+  const res = h('img.la-swp-r', { src: absSrc(scene.src), alt: '', decoding: 'async', onerror });   // 지연 읽기 없음 — 처음엔 다 가려져 있어 브라우저가 영영 안 읽는다
+  const lab = h('span.la-swp-lab', {}, h('b.l', { text: labels[0] }), h('i', { 'aria-hidden': 'true' }), h('b.r', { text: labels[1] }));
+  const leg = (sw.legend || []).length ? h('span.la-swp-leg', {}, ...sw.legend.map(([c, w]) => h('span', {}, h('i', { style: { background: c } }), w))) : null;
+  const range = h('input.la-swp-in', { type: 'range', min: '0', max: '100', step: '1', value: '0', 'aria-label': `${labels[0]}과 ${labels[1]} 밀어 보기` });
+  const box = h('div.la-swp', { dataset: { side: 'l' } }, base, res, h('span.la-swp-bar', { 'aria-hidden': 'true' }), lab, leg, range);
+  let v = 0, raf = 0, played = false, auto = false, hand = false;     // auto = 처음 한 번 넘어가는 중 · hand = 사람이 움직인 뒤
+  const set = (x) => { v = Math.max(0, Math.min(100, x)); box.style.setProperty('--v', v + '%'); box.dataset.side = v >= 50 ? 'r' : 'l'; range.value = String(Math.round(v)); };
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const glide = (to, ms, done) => { cancelAnimationFrame(raf); const from = v, t0 = performance.now();
+    const step = (now) => { const t = Math.min(1, (now - t0) / ms); set(from + (to - from) * ease(t)); if (t < 1) raf = requestAnimationFrame(step); else done?.(); }; raf = requestAnimationFrame(step); };
+  const ready = () => Promise.all([base, res].map((im) => (im.complete && im.naturalWidth ? Promise.resolve() : im.decode().catch(() => {}))));
+  box.play = () => { if (played) return; played = true;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { set(100); box.dataset.done = '1'; return; }
+    ready().then(() => { if (hand) return; auto = true; glide(100, 1500, () => { auto = false; box.dataset.done = '1'; }); }); };
+  const take = () => { played = true; hand = true; auto = false; cancelAnimationFrame(raf); box.dataset.done = '1'; };
+  range.addEventListener('input', () => { take(); set(+range.value); });
+  box.addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse' || auto) return;          // 처음 한 번 넘어가는 동안은 마우스를 따르지 않는다
+    take(); const r = box.getBoundingClientRect(); set(((e.clientX - r.left) / r.width) * 100); });
+  box.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && hand) glide(100, 350); });   // 나가면 결과로
+  set(0);
+  if (!('IntersectionObserver' in window)) box.play();
+  else {
+    const io = swipePic.io || (swipePic.io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { swipePic.io.unobserve(en.target); en.target.play?.(); } }), { threshold: 0.4 }));
+    io.observe(box);
+  }
+  return box;
+}
+
 /* 카드 그림(10-11 GPT2-5 다시 · 원칙 186) — 배포 신청 때 올린 대표 그림(승인되면 카드 그림 = 서버 scene). 대체 그림 · 학습 표본으로 꾸미지 않는다:
    그림이 없거나 못 받으면 같은 틀에 '그림 없음' 그대로(원칙 140 같은 틀). */
 function acCard(c, href, more) {
   const pic = h('div.k-sc-crop.la-ac-pic');
   const blank = (p) => { const keep = [...p.querySelectorAll('.la-ac-cat')]; p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
   const src = c.scene?.src ? (String(c.scene.src).startsWith('/api/') ? API.base + c.scene.src : c.scene.src) : null;
-  if (src) pic.append(h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) }));
+  if (src && c.scene.swipe?.before) pic.append(swipePic(c.scene, () => blank(pic)));          // 원본 ↔ AI 결과 한 장(원칙 339)
+  else if (src) pic.append(h('img', { src, alt: '', loading: 'lazy', decoding: 'async', onerror: () => blank(pic) }));
   else blank(pic);
   if ((c.groups || []).length || !c.official) pic.append(h('div.la-ac-cat', {}, ...(c.official ? [] : [h('span.is-rv', { text: '검토' })]), ...(c.groups || []).map((g) => h('span', { text: g }))));   // 분야(여러 개 · 질문 5) · 공개 승인 전 = '검토'
   const md = c.model || {};
@@ -235,7 +271,7 @@ async function detail(cid) {
   const crumb = h('nav.la-crumb', { 'aria-label': '위치' }, h('a', { href: './', text: '분석 서비스' }), h('span', { 'aria-hidden': 'true', text: '›' }), h('b', { text: c.name }));
   const hero = h('figure.la-hero', { class: c.scene ? '' : 'is-blank' });
   if (c.scene) {
-    hero.append(h('img', { src: String(c.scene.src).startsWith('/api/') ? API.base + c.scene.src : c.scene.src, alt: '', decoding: 'async', fetchpriority: 'high' }));
+    hero.append(c.scene.swipe?.before ? swipePic(c.scene) : h('img', { src: absSrc(c.scene.src), alt: '', decoding: 'async', fetchpriority: 'high' }));
     if (c.scene.caption) hero.append(h('figcaption.la-cap', { text: c.scene.caption }));
     if (c.scene.ex) hero.append(h('span.la-ex', { text: '다른 지역 결과 · 예시' }));
   } else hero.append(h('span.la-blank', { text: '그림 없음' }));   // 대체 그림 없이 같은 틀(원칙 186)
@@ -292,7 +328,8 @@ function resultCard(c) {
 /* 영상 ↔ 결과(같은 자리 · 손잡이) + 결과 장면 여러 장 */
 function compareCard(c) {
   const sec = h('section.t-card.la-box', { 'aria-label': '영상과 결과' }, h('h2.la-h', {}, '영상 ↔ 결과', h('small', { text: '같은 자리' })));
-  const sw = c.swipe;
+  const top = c.scene?.swipe?.before ? c.scene : null;                       // 큰 그림이 원본 ↔ 결과 밀어 보기(원칙 339) — 같은 짝을 여기 다시 두지 않는다
+  const sw = top ? null : c.swipe;
   if (sw && sw.before && sw.after) {
     const after = h('img.after', { src: sw.after, alt: '', loading: 'lazy' });
     const bar = h('span.bar', { 'aria-hidden': 'true' }, h('i', { text: '‹ ›' }));
@@ -305,7 +342,8 @@ function compareCard(c) {
     sec.append(box);
     if (sw.caption) sec.append(h('p.la-cap2', { text: sw.caption }));
   }
-  const scenes = (c.scenes || []).filter((s) => s.src && s.src !== c.scene?.src).slice(0, 4);
+  const scenes = (c.scenes || []).filter((s) => s.src && s.src !== c.scene?.src && s.src !== top?.swipe?.before && !s.pair).slice(0, 4);
+  if (top && !scenes.length) return null;
   if (scenes.length) {
     const big = sec.querySelector('.la-sw');
     const th = h('div.la-thumbs');
