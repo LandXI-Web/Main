@@ -27,7 +27,7 @@ const km2 = (e) => (val(e) == null || val(e) < 0.01 ? '' : `${nf(val(e), val(e) 
 const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 const units = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rv-u', { text: u })); }); return el; };
 const bar = (v, dim = false) => h('span.rv-bar', { class: dim ? 'is-dim' : '' }, h('i', { style: `width:${Math.max(0, Math.min(100, val(v) || 0))}%` }));
-const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates']];
+const TABS = [['req', '배포 신청', ''], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates'], ['cards', '배포된 카드', '/cards']];
 
 export function mountRelease(root) {
   const nBadge = h('b.num.im-tab-n'), impN = h('b.num.im-tab-n'), catN = h('b.num.im-tab-n');
@@ -45,7 +45,7 @@ export function mountRelease(root) {
     if (push) history.replaceState(null, '', '#/deploys' + TABS.find((x) => x[0] === t)[2]);
     paint();
   }
-  for (const [k] of TABS) btn[k].addEventListener('click', () => set(k, true));
+  for (const [k] of TABS) btn[k].addEventListener('click', () => { if (k === 'cards') { location.href = '../lx-cards/'; return; } set(k, true); });
   addEventListener('hashchange', () => { if (/^#\/deploys/.test(location.hash) && want() !== tab) set(want()); });
 
   /* ── 배포 신청 ─────────────────────────── */

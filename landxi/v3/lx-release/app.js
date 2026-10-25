@@ -342,6 +342,8 @@ async function drawPublish() {
     card('지난 판', (d.versions || []).length ? `${nf((d.versions || []).length)}판` : null, (d.versions || []).length ? hist : h('p.rl-empty', { text: '첫 판입니다' })),
     card('공유된 기관', shared.length ? `${nf(shared.length)}곳` : null, shared.length ? h('ul.rl-hist.rl-hist--org', {}, ...shared.map((o) => h('li', {}, h('b', { text: o.name }),
       h('div', {}, h('span', { text: o.year ? `${o.year}년부터` : '공유 중' }))))) : h('p.rl-empty', { text: '아직 공유된 기관이 없습니다 — 승인 뒤 LX 관리자가 공유합니다' })));
+  const live = d.service?.id && (d.versions || []).some((v) => v.state === 'approved');
+  if (live && (d.can?.apply || who?.me?.role === 'admin')) head.append(h('a.rl-edit', { href: `../lx-cards/?card=${encodeURIComponent(d.service.id)}`, text: '이 카드 고치기' }));
   page.replaceChildren(h('div.rl-grid', {}, h('div.rl-col', {}, head), right));
 }
 
