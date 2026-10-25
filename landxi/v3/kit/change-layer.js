@@ -6,7 +6,8 @@
 import { h, api } from './util.js';
 
 const HERE = import.meta.url;
-const TYPES = [['신축', '#F04452'], ['소실', '#6B7684'], ['경작 전환', '#0FA9A0'], ['포장 확대', '#FF9F1C']];
+const TYPES = [['신축', '#F04452'], ['소실', '#6B7684'], ['경작 전환', '#0FA9A0'], ['포장 확대', '#FF9F1C'],
+  ['산림 → 나지', '#C2410C'], ['산림 → 도로', '#FF9F1C'], ['산림 → 건물', '#F04452']];    // 산사태 취약지구(국토 변화 틀 · 10-25)
 const COLOR = ['match', ['get', 'type'], ...TYPES.flat(), '#9AA4B2'];
 const STATUS = [['미확인', '#B0B8C1'], ['현장확인', '#3182F6'], ['불법', '#F04452'], ['적법', '#0FA9A0'], ['철거완료', '#4E5968']];
 const nf = (v) => Number(v).toLocaleString('ko-KR');
@@ -107,8 +108,11 @@ function drawCard() {
   const s = C.run?.stats;
   const name = C.range?.name || '대상지';
   const yrs = C.years ? `${C.years[0]}년 → ${C.years[1]}년` : '';
+  const cardWord = String(C.run?.card?.name || '국토 변화 분석서비스').replace(/\s*분석서비스$/, '');   // 같은 틀의 카드 이름(국토 변화 · 산사태 취약지구)
+  const zones = Array.isArray(C.run?.zones) ? C.run.zones : null;
+  const inW = zones ? '지구 안' : '구역선 안';
   if (!s) {
-    C.card.replaceChildren(h('p.chg-k', { text: '국토 변화 탐지 · 대상지' }), h('h2.chg-t', { text: name }),
+    C.card.replaceChildren(h('p.chg-k', { text: `${cardWord} · 분석할 곳` }), h('h2.chg-t', { text: name }),
       h('p.chg-s', { text: `구역선(진한 선) · 분석 범위(점선 · 버퍼 ${C.range?.buffer || ''})${yrs ? ` · 영상 ${yrs}` : ''}` }),
       h('p.chg-w', { text: 'XI ChatGEO 에 두 해를 말해 비교를 시키면 바뀐 곳이 지도에 그려집니다.' }));
     return;
@@ -116,16 +120,28 @@ function drawCard() {
   const bt = s.by_type || {};
   const rows = TYPES.map(([t, c]) => (bt[t] ? h('li', {}, h('i.chg-sw', { style: `background:${c}` }), h('span', { text: t }), h('b', { text: `${nf(val(bt[t].in))}건` }),
     h('small', { text: `밖 ${nf(val(bt[t].out))}` })) : null)).filter(Boolean);
-  C.card.replaceChildren(
-    h('p.chg-k', { text: `국토 변화 탐지 · ${yrs}` }), h('h2.chg-t', { text: name }),
-    h('p.chg-big', {}, h('span', { text: '구역선 안 변화 ' }), h('b', { text: `${nf(val(s.n_in))}건` }), h('small', { text: ` · 밖(버퍼) ${nf(val(s.n_out))}건` })),
+  C.card.replaceChildren(...[                       // 빈 칸(null)은 빼고 — replaceChildren 은 null 을 'null' 글자로 넣는다
+    h('p.chg-k', { text: `${cardWord} · ${yrs}` }), h('h2.chg-t', { text: name }),
+    h('p.chg-big', {}, h('span', { text: `${inW} 변화 ` }), h('b', { text: `${nf(val(s.n_in))}건` }), h('small', { text: ` · 밖(버퍼) ${nf(val(s.n_out))}건` })),
+    !val(s.n) ? h('p.chg-s', { text: '두 시점 사이 찾는 변화가 없었습니다' }) : null,
     ownSrc() ? h('p.chg-s', { text: `${C.run.period.a.word} → ${C.run.period.b.word}` }) : null,
     h('ul.chg-lg', {}, ...rows),
-    h('p.chg-w', { text: '두 해 항공영상에서 바뀐 곳 — 구역선 안 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.' }),
+    zones ? zoneList(zones) : null,
+    h('p.chg-w', { text: `두 해 영상에서 바뀐 곳 — ${inW} 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.` }),
     marksLine(),
-    h('label.chg-out', {}, h('input', { type: 'checkbox', checked: C.outOn || undefined, onchange: (e) => { C.outOn = e.target.checked; for (const m of maps()) applyFilters(m); } }), h('span', { text: '구역선 밖(버퍼)도 보기' })),
+    h('label.chg-out', {}, h('input', { type: 'checkbox', checked: C.outOn || undefined, onchange: (e) => { C.outOn = e.target.checked; for (const m of maps()) applyFilters(m); } }), h('span', { text: `${zones ? '지구' : '구역선'} 밖(버퍼)도 보기` })),
     h('button.chg-more', { type: 'button', 'aria-expanded': String(C.card.classList.contains('is-open')), text: C.card.classList.contains('is-open') ? '접기' : '유형별 보기',
-      onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } }));
+      onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } })].filter(Boolean));
+}
+
+/* 지구별(올린 도형 하나하나 · 산사태 취약지구 등 · 10-25) — 변화가 많은 지구부터 · 서버 값 그대로 */
+function zoneList(zs) {
+  const rows = [...zs].sort((a, b) => (val(b.n) || 0) - (val(a.n) || 0));
+  const top = rows.slice(0, 5);
+  return h('div.chg-zones', {}, h('p.chg-zh', { text: `지구별 · ${nf(zs.length)}곳` }),
+    h('ul.chg-zl', {}, ...top.map((z) => h('li', {}, h('span', { text: z.name }), h('b', { text: `${nf(val(z.n))}건` }),
+      h('small', { text: `${nf(Math.round(val(z.area) || 0))}㎡` })))),
+    rows.length > top.length ? h('p.chg-zm', { text: `외 ${nf(rows.length - top.length)}곳 · 보고서에서 모두 봅니다` }) : null);
 }
 
 function marksLine() {
@@ -153,7 +169,7 @@ async function openPanel(id) {
     h('div.chg-ph', {}, h('h3', {}, h('i.chg-sw', { style: `background:${(TYPES.find((t) => t[0] === p.type) || [0, '#9AA4B2'])[1]}` }), h('span', { text: p.type }), h('small', { text: `약 ${nf(Math.round(p.area_m2))}㎡` })),
       h('button.chg-x', { type: 'button', 'aria-label': '닫기', text: '닫기', onclick: closePanel })),
     h('div.chg-ab', {}, h('figure', {}, imgA, h('figcaption', { text: `${ya}년` })), h('figure', {}, imgB, h('figcaption', { text: `${yb}년` }))),
-    h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv('구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
+    h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv(Array.isArray(C.run?.zones) ? '지구' : '구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
     markBox(id, p),
     h('div.chg-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'AI 설명 듣기', onclick: () => document.dispatchEvent(new CustomEvent('kit:ask', { detail: { q: '이거 뭐야?' } })) }),
       h('a.t-btn.t-btn--text', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job, id }), text: '현장점검(사진)' })),

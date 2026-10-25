@@ -46,6 +46,10 @@
 .k-sc-res b{font:800 var(--fs-num)/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
 .k-sc-res .k-sc-sig .t-sig{margin-left:0}
 .k-sc-res > span:last-child{font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.k-sc-res.is-parts{gap:2px 12px}
+.k-sc-pt{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
+.k-sc-pt small{font:600 var(--fs-aux)/1 var(--font-body);color:var(--sub)}
+.k-sc-res.is-parts > span:last-child{flex-basis:100%}
 .k-sc-res.is-none > span{font:500 var(--fs-aux)/21px var(--font-body);color:var(--mute)}
 .k-sc-in{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;margin:0;padding-top:8px;border-top:1px solid var(--rule);font:400 var(--fs-aux)/21px var(--font-body);color:var(--ink-2)}
 .k-sc-in b{font-weight:500;color:var(--sub)}

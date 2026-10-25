@@ -1088,8 +1088,10 @@ function loadGovBoard() {
 /** 서비스 결과 장부에서 — 지도 범위와 겹치는 시군구 · 그곳들의 서비스 가짓수(전역 분석 제외) */
 function hudCounts(d, region) {
   const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
-  const svcOf = (regs) => { const m = new Map(); for (const r of regs) for (const it of r.items || []) { if (analysis.has(it.svc)) continue; const s = m.get(it.svc) || { id: it.svc, name: it.name, n: 0 }; s.n += ev(it.n); m.set(it.svc, s); } return m; };
-  if (region) { const br = boardRegion(region); const regs = br ? [br] : [], svcs = svcOf(regs); return { regions: 1, services: svcs.size, regs, svcs }; }
+  // 찾는 것이 둘인 서비스(관광지 안전관리: 사람 · 차량)는 따로 센다 — 다른 단위를 한 합으로 더하지 않는다(10-25 사용자) · 서비스 가짓수는 서비스 하나로
+  const svcOf = (regs) => { const m = new Map(); for (const r of regs) for (const it of r.items || []) { if (analysis.has(it.svc)) continue; const k = it.svc + '|' + (it.part?.key || ''); const s = m.get(k) || { k, id: it.svc, name: it.name, unit: it.unit || '개', n: 0 }; s.n += ev(it.n); m.set(k, s); } return m; };
+  const nSvc = (svcs) => new Set([...svcs.values()].map((s) => s.id)).size;
+  if (region) { const br = boardRegion(region); const regs = br ? [br] : [], svcs = svcOf(regs); return { regions: 1, services: nSvc(svcs), regs, svcs }; }
   let regs = d.regions || [];
   try {
     const b = map.getBounds(), w = b.getWest(), s = b.getSouth(), e = b.getEast(), n = b.getNorth();
@@ -1098,35 +1100,40 @@ function hudCounts(d, region) {
   } catch { /* 지도 전 */ }
   regs = regs.filter((r) => (r.items || []).some((it) => !analysis.has(it.svc)));   // '서비스 제공중'인 시군구만(전역 분석만 있는 곳은 세지 않음 — 목록(원칙 275)과 같은 수)
   const svcs = svcOf(regs);
-  return { regions: regs.length, services: svcs.size, regs, svcs };
+  return { regions: regs.length, services: nSvc(svcs), regs, svcs };
 }
 /** 왼쪽 위 한 줄을 누르면(10-17 원칙 273) — 같은 장부 값(/ximap/board)으로 지도 위 통계 1단계 사양을 만든다: 시군구 순위(지도 색) · 서비스별 수. 전국이면 시군구 면이 차오르고, 시군구 안이면 서비스별만 */
 function boardSpec() {
   const d = boardData(); if (!d) return null;
   const region = S.region && map.getZoom() >= 8.2 ? S.region : null;
   const { regions, services, regs, svcs } = hudCounts(d, region);
-  const tot = regs.reduce((t, r) => t + ev(r.n), 0);
+  // 서비스마다 찾는 것 · 단위가 다르다(필지 · 동 · 명 · 대) — 다른 것을 한 합으로 더한 '서비스 결과 n개'는 두지 않는다(10-25 사용자 · 숫자는 서비스 줄마다)
+  const nsOf = (r) => new Set((r.items || []).filter((it) => !analysis.has(it.svc)).map((it) => it.svc)).size;
+  const analysis = new Set((d.services || []).filter((x) => x.kind === 'analysis').map((x) => x.id));
   const title = region ? `${region.name} · ${nf(services)} 서비스 제공중` : `${nf(regions)} 시군구 · ${nf(services)} 서비스 제공중`;
   const svcList = [...svcs.values()].sort((a, b) => b.n - a.n);
-  const lastOf = (id) => { let t = ''; for (const r of regs) for (const it of r.items || []) if (it.svc === id && (it.finished_at || '') > t) t = it.finished_at; return t ? t.slice(0, 10) : '—'; };
-  const regsOf = (id) => regs.filter((r) => (r.items || []).some((it) => it.svc === id)).length;
+  const keyOf = (it) => it.svc + '|' + (it.part?.key || '');
+  const lastOf = (k) => { let t = ''; for (const r of regs) for (const it of r.items || []) if (keyOf(it) === k && (it.finished_at || '') > t) t = it.finished_at; return t ? t.slice(0, 10) : '—'; };
+  const regsOf = (k) => regs.filter((r) => (r.items || []).some((it) => keyOf(it) === k)).length;
+  const lbl = (s) => (s.unit && s.unit !== '개' ? `${s.name}(${s.unit})` : s.name);      // 사람(명) · 차량(대) — 단위가 다른 줄
   // 판 · 보고서(.hwpx) 표 제목은 그대로 쓰이므로 분명하게(원칙 274)
-  const panels = [{ type: 'bar', title: '서비스별 서비스 결과 수', unit: '개', rows: svcList.map((s) => ({ k: s.id, label: s.name, v: s.n })) },
+  const panels = [{ type: 'bar', title: '서비스별 서비스 결과 수(단위는 줄마다)', unit: '', rows: svcList.map((s) => ({ k: s.k, label: lbl(s), v: s.n })) },
     { type: 'table', title: region ? `${region.name} 제공 중인 서비스` : '제공 중인 서비스', cols: region ? ['서비스', '서비스 결과', '마지막 분석'] : ['서비스', '시군구', '서비스 결과', '마지막 분석'], num: region ? [1] : [1, 2],
-      rows: svcList.map((s) => (region ? [s.name, s.n, lastOf(s.id)] : [s.name, regsOf(s.id), s.n, lastOf(s.id)])) }];
-  const say = region ? [`${region.name}에 제공 중인 서비스는 ${nf(services)}가지, 서비스 결과는 ${nf(tot)}개입니다.`]
-    : [`지금 지도에 보이는 시군구 ${nf(regions)}곳에 서비스 ${nf(services)}가지를 제공 중입니다.`, ...(regs.length ? [`서비스 결과가 가장 많은 곳은 ${[...regs].sort((a, b) => ev(b.n) - ev(a.n))[0].name} ${nf(ev([...regs].sort((a, b) => ev(b.n) - ev(a.n))[0].n))}개입니다.`] : [])];
+      rows: svcList.map((s) => (region ? [lbl(s), s.n, lastOf(s.k)] : [lbl(s), regsOf(s.k), s.n, lastOf(s.k)])) }];
+  const top = [...regs].sort((a, b) => nsOf(b) - nsOf(a))[0];
+  const say = region ? [`${region.name}에 제공 중인 서비스는 ${nf(services)}가지입니다.`]
+    : [`지금 지도에 보이는 시군구 ${nf(regions)}곳에 서비스 ${nf(services)}가지를 제공 중입니다.`, ...(top ? [`서비스가 가장 많은 곳은 ${top.name} ${nf(nsOf(top))}가지입니다.`] : [])];
   // 숫자 이름: '서비스 결과'(서비스 결과 장부의 객체 수) — 왼쪽 위 옛 큰 숫자 'AI 분석 결과'(전국 분석까지 합)와 다른 셈이라 같은 이름을 쓰지 않는다(규칙 3)
-  const kpis = [{ label: '서비스 결과', value: tot, unit: '개' }, ...(region ? [] : [{ label: '시군구', value: regions, unit: '곳' }]), { label: '서비스', value: services, unit: '가지' }];
+  const kpis = [...(region ? [] : [{ label: '시군구', value: regions, unit: '곳' }]), { label: '서비스', value: services, unit: '가지' }];
   let mp = null;
   if (!region) {
     const values = {}, labels = {};
-    for (const r of regs) { values[r.sgg_cd] = ev(r.n); labels[r.sgg_cd] = r.name; }
-    mp = { level: 'sgg', values, labels, title: '서비스 결과', unit: '개', scale: { kind: 'seq', hue: 'teal', min: 0, max: Math.max(1, ...Object.values(values)) }, meaning: '시군구마다 서비스 결과 수' };
-    panels.unshift({ type: 'rank', title: '제공 중인 시군구 — 서비스 결과 수', unit: '개', rows: regs.map((r) => ({ k: r.sgg_cd, label: r.name, v: ev(r.n) })).sort((a, b) => b.v - a.v) });
+    for (const r of regs) { values[r.sgg_cd] = nsOf(r); labels[r.sgg_cd] = r.name; }
+    mp = { level: 'sgg', values, labels, title: '제공 중인 서비스', unit: '가지', scale: { kind: 'seq', hue: 'teal', min: 0, max: Math.max(1, ...Object.values(values)) }, meaning: '시군구마다 제공 중인 서비스 가짓수' };
+    panels.unshift({ type: 'rank', title: '제공 중인 시군구 — 서비스 가짓수', unit: '가지', rows: regs.map((r) => ({ k: r.sgg_cd, label: r.name, v: nsOf(r) })).sort((a, b) => b.v - a.v) });
   }
   return { kind: 'board', rule: [], title, means: [['지역', region ? region.name : '전국'], ['업무', '모든 업무'], ['비교', region ? '서비스' : '서비스 · 시군구']], fuse: ['서비스 결과 장부'],
-    kpis, panels, map: mp, say, sgg: region ? codesOf(region)[0] : null, main: { label: '서비스 결과', value: tot, unit: '개' } };
+    kpis, panels, map: mp, say, sgg: region ? codesOf(region)[0] : null, main: { label: '서비스', value: services, unit: '가지' } };
 }
 function openBoardStats() { const s = boardSpec(); if (!s || !OM) return; LASTSPEC = s; setStep(1, { fresh: true }); }
 X.boardSpec = () => boardSpec();   // 실증 기록용(화면엔 없음)
@@ -1264,7 +1271,7 @@ function imgList() {
 /** 서비스 먼저(10-18 '서비스로 보기') — 서비스 줄(색 점 · 이름 · 시군구 수) → 누르면 그 서비스가 있는 시군구 칩(마지막 분석 날짜) → 칩을 누르면 그곳으로 날아가 그 결과만 */
 function svcFirst(d, B) {
   const by = new Map();
-  for (const reg of B.regs) for (const it of B.svcRows(reg)) { if (!by.has(it.svc)) by.set(it.svc, { svc: it.svc, name: it.name, rows: [] }); by.get(it.svc).rows.push({ reg, it }); }
+  for (const reg of B.regs) for (const it of B.svcRows(reg)) { const k = it.svc + '|' + (it.part?.key || ''); if (!by.has(k)) by.set(k, { svc: k, name: it.name, rows: [] }); by.get(k).rows.push({ reg, it }); }   // 찾는 것마다 한 줄(사람 · 차량)
   const multi = new Set(B.regs.map((r) => r.sido || '—')).size > 1;
   const wrap = h('ul.xc-svrs');
   for (const g of [...by.values()].sort((a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name, 'ko'))) {
@@ -1317,12 +1324,12 @@ async function showBoardSvc(reg, it, btn) {
 /** 목록과 같은 내용의 한 장(.hwpx) — 시군구 · 서비스 · 서비스 결과 · 마지막 분석(원칙 274 (a) · 275 기준) */
 function boardListSpec() {
   const B = boardRegs(); if (!B) return null;
-  const rows = [], tot = B.regs.reduce((t, r) => t + ev(r.n), 0);
-  for (const reg of B.regs) for (const it of B.svcRows(reg)) rows.push([reg.name, it.name, ev(it.n), it.finished_at ? String(it.finished_at).slice(0, 10) : '—']);
+  const rows = [];   // 서비스 결과는 줄마다 자기 단위로(사람 명 · 차량 대 · 10-25) — 다른 것을 더한 합계 칸은 두지 않는다
+  for (const reg of B.regs) for (const it of B.svcRows(reg)) rows.push([reg.name, it.name, ev(it.n), it.unit || '개', it.finished_at ? String(it.finished_at).slice(0, 10) : '—']);
   const title = B.region ? `${B.region.name} 제공 중인 서비스` : '제공 중인 시군구 · 서비스';
   return { kind: 'board', rule: [], title, means: [['지역', B.region ? B.region.name : '지금 지도에 보이는 시군구'], ['업무', '모든 업무'], ['비교', '시군구 · 서비스']], fuse: ['서비스 결과 장부'],
-    kpis: [{ label: '시군구', value: B.regions, unit: '곳' }, { label: '서비스', value: B.services, unit: '가지' }, { label: '서비스 결과', value: tot, unit: '개' }],
-    panels: [{ type: 'table', title: '제공 중인 시군구 · 서비스', cols: ['시군구', '서비스', '서비스 결과', '마지막 분석'], num: [2], rows }], say: [], main: { label: '서비스 결과', value: tot, unit: '개' } };
+    kpis: [{ label: '시군구', value: B.regions, unit: '곳' }, { label: '서비스', value: B.services, unit: '가지' }],
+    panels: [{ type: 'table', title: '제공 중인 시군구 · 서비스', cols: ['시군구', '서비스', '서비스 결과', '단위', '마지막 분석'], num: [2], rows }], say: [], main: { label: '서비스', value: B.services, unit: '가지' } };
 }
 async function downloadHwpx(spec, b) {
   if (!spec || !b || b.disabled) return;

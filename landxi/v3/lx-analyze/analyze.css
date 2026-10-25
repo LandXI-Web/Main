@@ -57,6 +57,8 @@ body.la-boot .k-app{visibility:hidden}
 .la-big{display:flex;align-items:baseline;gap:8px}
 .la-big b{font:800 var(--fs-h2)/1 var(--font-display);letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums}
 .la-big .u{font:500 var(--fs-body)/1 var(--font-body);color:var(--sub)}
+.la-big.is-parts{flex-wrap:wrap;gap:6px 20px}
+.la-pt{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
 .la-rl{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column}
 .la-rl li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-body)/23px var(--font-body);color:var(--ink-2)}
 .la-rl li a{color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

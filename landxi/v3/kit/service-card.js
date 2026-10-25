@@ -61,6 +61,11 @@ function resultEl(c, kind) {
   }
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis || 'estimate', as_of: ex.as_of || '', source: ex.source || '' };
   const word = [ex.word, kind === 'gov' || kind === 'mine' ? ex.place : ex.region].filter(Boolean).join(' · ');
+  if (Array.isArray(ex.parts) && ex.parts.length > 1) {          // 찾는 것마다 따로(사람 · 차량 — 10-25) · 같은 출처(XI맵 통계)
+    return h('div.k-sc-res.is-parts', { dataset: { metric: ex.label || '', v: String(ex.value) } },
+      ...ex.parts.map((q) => h('span.k-sc-pt', { dataset: { v: String(q.value) } }, h('small', { text: q.label }), h('b', { text: nf(q.value) }), h('small', { text: q.unit }))),
+      isEnvelope(env) ? h('span.k-sc-sig', { html: sig(env) }) : null, h('span', { text: word }));
+  }
   return h('div.k-sc-res', { dataset: { metric: ex.label || '', v: String(ex.value) } },
     h('b', { text: nf(ex.value) }), isEnvelope(env) ? h('span.k-sc-sig', { html: sig(env) }) : null, h('span', { text: word }));
 }

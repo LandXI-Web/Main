@@ -219,7 +219,8 @@ async function detail(cid) {
     h('h1.la-title', { text: c.name }),
     c.line ? h('p.la-line', { text: c.line }) : null);
 
-  const picker = c.can_analyze && c.id !== 'card-change' && !c.pair ? imageryCard(c) : null;   // 국토 변화 분석서비스는 영상을 고르지 않는다(대상지 + 두 해 · 국토지리정보원 영상 API)
+  const chgFrame = c.frame === 'change' || c.id === 'card-change';
+  const picker = c.can_analyze && !chgFrame && !c.pair ? imageryCard(c) : null;   // 국토 변화 분석서비스는 영상을 고르지 않는다(대상지 + 두 해 · 국토지리정보원 영상 API)
     // 영상 고르기(질문 3 ⓐ) — 오른쪽에서 지역을 고르면 그 지역을 덮는 영상 카드 두 열 + 범위 지도
   const body = h('div.la-dt-body', {}, picker?.el, resultCard(c), compareCard(c), usesCard(c), condCard(c));
   const side = h('aside.la-side', { id: 'analyze', 'aria-label': '이 카드로 분석' });
@@ -242,9 +243,13 @@ function resultCard(c) {
   /* 큰 숫자 = AI 분석 결과(원칙 135) — 셈 단위는 서버가 준 그대로(필지 · 동 · 건) */
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis, as_of: ex.as_of, source: ex.source };
   const unitW = ex.unit === 'count' ? '건' : ex.unit || '';
+  const parts = Array.isArray(ex.parts) && ex.parts.length > 1 ? ex.parts : null;     // 찾는 것마다 따로(사람 · 차량 — 10-25)
   sec.append(h('p.t-label.la-ex-l', { text: [ex.word || 'AI 분석 결과', ex.region, ex.as_of ? `${ymd(ex.as_of)} 기준` : ''].filter(Boolean).join(' · ') }),
-    h('div.la-big', { dataset: { metric: ex.label || '', v: String(ex.value) } }, h('b', { text: nf(ex.value) }),
-      h('span.u', { text: unitW }), h('span', { html: sig(env) })));
+    parts ? h('div.la-big.is-parts', { dataset: { metric: ex.label || '', v: String(ex.value) } },
+      ...parts.map((q) => h('span.la-pt', { dataset: { v: String(q.value) } }, h('span.u', { text: q.label }), h('b', { text: nf(q.value) }), h('span.u', { text: q.unit }))),
+      h('span', { html: sig(env) }))
+      : h('div.la-big', { dataset: { metric: ex.label || '', v: String(ex.value) } }, h('b', { text: nf(ex.value) }),
+        h('span.u', { text: unitW }), h('span', { html: sig(env) })));
   const key = 'detected';
   const rows = (c.regions || []).filter((r) => r[key] && r[key].value !== null && r.sgg !== ex.sgg);
   if (rows.length) {
@@ -461,7 +466,7 @@ function changePanel(side, c) {
 }
 
 function analyzePanel(side, c, picker, body) {
-  if (c.id === 'card-change' && c.can_analyze) { changePanel(side, c); return; }
+  if ((c.frame === 'change' || c.id === 'card-change') && c.can_analyze) { changePanel(side, c); return; }   // 국토 변화 틀(국토 변화 · 산사태 취약지구 — 10-25)
   if (c.pair) {          // 두 시기 비교 카드(사료작물 생육기·생산기 · 10-24) — 시기마다 끝난 분석 결과를 골라 필지별로 견준다
     import('./compare-panel.js').then((m) => m.comparePanel(side, c, body), () => side.append(h('p.la-cant', { text: '분석 칸을 열지 못했습니다' })));
     return;

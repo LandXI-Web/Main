@@ -24,12 +24,13 @@ const sw = (label, on) => {
   return { b, el: h('div.rg-row', {}, h('span.rg-l', { text: label }), b), on: () => b.getAttribute('aria-checked') === 'true' };
 };
 
-/** rangeOption(host, { buffer=50, parcels=false, parcelsRow=true, endpoint='/ranges', sgg=()=>null, onRange(range|null) })
- *  → { el, range():구간|null, parcels():bool, ready():Promise, setOn(bool) } */
-export function rangeOption(host, { buffer = 50, parcels = false, parcelsRow = true, endpoint = '/ranges', sgg = () => null, onRange = () => {}, on = false, pnu = false } = {}) {
+/** rangeOption(host, { buffer=50, bufferOn=false, parcels=false, parcelsRow=true, endpoint='/ranges', sgg=()=>null, onRange(range|null), required=false })
+ *  required = 이 카드는 구간이 있어야 분석한다(국토 변화 틀 · 10-25) — '분석 구간 설정하기' 체크 없이 늘 펼침
+ *  → { el, range():구간|null, parcels():bool, ready():Promise, setOn(bool), clear() } */
+export function rangeOption(host, { buffer = 50, bufferOn = false, parcels = false, parcelsRow = true, endpoint = '/ranges', sgg = () => null, onRange = () => {}, on = false, pnu = false, required = false } = {}) {
   ensureCss();
   const S = { mode: 'file', file: null, sgg: null, emd: '', range: null, busy: null, key: '' };
-  const use = check('분석 구간 설정하기', on);
+  const use = check('분석 구간 설정하기', on || required);
   const seg = h('div.rg-seg', { role: 'tablist', 'aria-label': '분석 구간' },
     h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', dataset: { k: 'file' }, text: '구간 업로드' }),
     h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { k: 'region' }, text: '행정구역' }));
@@ -38,18 +39,18 @@ export function rangeOption(host, { buffer = 50, parcels = false, parcelsRow = t
   const fileIn = h('input.rg-file-in', { type: 'file', accept: '.zip,.geojson,.json,.gpkg' + (pnu ? ',.txt,.csv' : ''), 'aria-label': '구간 파일' });
   const fileName = h('span.rg-file-t', { text: KINDS });
   const fileBox = h('label.rg-file', {}, fileIn, fileName);
-  const buf = check('버퍼 설정', false);
+  const buf = check('버퍼 설정', bufferOn);
   const bufIn = h('input.t-input.rg-num', { type: 'number', min: '0', max: '1000', step: '10', value: String(buffer), inputmode: 'numeric', 'aria-label': '거리(m)' });
-  const bufRow = h('div.rg-buf', { hidden: true }, h('span.rg-l', { text: '거리' }), h('div.rg-m', {}, bufIn, h('span', { text: 'm' })));
+  const bufRow = h('div.rg-buf', { hidden: !bufferOn }, h('span.rg-l', { text: '거리' }), h('div.rg-m', {}, bufIn, h('span', { text: 'm' })));
   const filePane = h('div.rg-pane', {}, fileBox, buf.el, bufRow);
   /* 행정구역 */
   const where = h('div.rg-where');
   const emdSel = h('select.t-input', { 'aria-label': '읍면동', disabled: true }, h('option', { value: '', text: '전체 읍면동' }));
   const regPane = h('div.rg-pane', { hidden: true }, where, emdSel);
   const status = h('p.rg-s', { 'aria-live': 'polite', hidden: true });
-  const detail = h('div.rg-detail', { hidden: !on }, seg, filePane, regPane, status);
+  const detail = h('div.rg-detail', { hidden: !(on || required) }, seg, filePane, regPane, status);
   const pc = parcelsRow ? sw('필지 단위 집계', parcels) : null;
-  const el = h('div.rg-opt', {}, use.el, detail, pc?.el);
+  const el = h('div.rg-opt', { class: required ? 'is-req' : '' }, required ? null : use.el, detail, pc?.el);
   host.append(el);
 
   use.box.addEventListener('change', () => { detail.hidden = !use.box.checked; refresh(); });
@@ -129,6 +130,9 @@ export function rangeOption(host, { buffer = 50, parcels = false, parcelsRow = t
     parcels: () => (pc ? pc.on() : false),
     ready: async () => { await refresh(); return use.box.checked ? S.range : null; },
     setRegion: (r) => { if (!S.sgg && r) pickSgg(r); },
-    setOn: (v) => { use.box.checked = !!v; detail.hidden = !v; refresh(); },
+    setOn: (v) => { use.box.checked = !!v || required; detail.hidden = !use.box.checked; refresh(); },
+    /* 다른 길(최근 쓴 구간)로 구간을 고르면 — 올린 파일 · 고른 행정구역을 비운다(두 값이 함께 남지 않게) */
+    clear: () => { S.file = null; fileIn.value = ''; fileName.textContent = KINDS; fileBox.classList.remove('is-set'); S.sgg = null; S.emd = ''; if (rp) rp.input.value = '';
+      emdSel.replaceChildren(h('option', { value: '', text: '전체 읍면동' })); emdSel.disabled = true; S.key = ''; S.range = null; say(''); },
   };
 }

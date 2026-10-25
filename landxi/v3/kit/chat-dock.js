@@ -5,8 +5,8 @@
        ① 흐름 안에 선 오른쪽 칸(필지 목록의 지도 + 필지 카드 .gr-side)에 카드가 열려 있으면 단추를 카드 위(칸 안 지도 위)로 올리고,
           대화 창은 그 칸 왼쪽에 세운다(카드 · 창이 겹치지 않게 — G1).
        ② 대화 창을 닫은 뒤에는 자리를 다시 재게 한다(창이 열려 있는 동안 굳어 있던 자리 — 서랍 · 시트 위에 남던 것).
-       ③ cmdk 가 고른 자리가 그래도 글 · 누르는 것을 덮으면(빈 자리가 없는 꽉 찬 화면) 단추를 왼쪽 레일의 빈 아래쪽에 세운다(창은 레일 옆).
-          자리가 다시 비면 원래대로 — 레일로 아주 옮기는 구조는 now 22 Q4 뒤.
+       ③ PC 에서 왼쪽 레일에 빈 자리가 있으면 단추는 늘 그 자리(창은 레일 옆) — 본문이 늦게 그려져도 자리가 바뀌지 않게(10-25 검사 문).
+          레일 빈 자리가 없을 때만 cmdk 가 고른 자리(오른쪽 아래).
    지도 화면(아래 채팅 창 · data-dock)은 건드리지 않는다(xi-clean layoutNow). */
 const PHONE = () => matchMedia('(max-width: 640px)').matches;
 let css = false;
@@ -39,32 +39,6 @@ function liftOf() {
   const room = card.top - c.top;                                   // 카드 위 지도 높이
   if (room < 56 + 32) return null;
   return { b: Math.round(innerHeight - card.top + 12), r: Math.round(innerWidth - c.right + 16), colR: Math.round(innerWidth - c.left + 16) };
-}
-/** ③ cmdk 가 정한 자리(--k-chat-r · --k-chat-b)의 단추 상자가 글 줄 · 누르는 것을 덮는가 */
-function covers(root) {
-  const cs = getComputedStyle(root);
-  const r = parseFloat(cs.getPropertyValue('--k-chat-r')) || 24, b = parseFloat(cs.getPropertyValue('--k-chat-b')) || 24;
-  const box = { x0: innerWidth - r - 56, y0: innerHeight - b - 56, x1: innerWidth - r, y1: innerHeight - b };
-  const pe = root.style.pointerEvents; root.style.pointerEvents = 'none';
-  let hit = false;
-  try {
-    for (let gx = 1; gx <= 4 && !hit; gx++) for (let gy = 1; gy <= 4 && !hit; gy++) {
-      const x = box.x0 + (box.x1 - box.x0) * gx / 5, y = box.y0 + (box.y1 - box.y0) * gy / 5;
-      const n = document.elementsFromPoint(x, y).find((e) => !root.contains(e));
-      if (!n || n.closest('.k-rail')) continue;
-      const card = n.closest('.t-card, .k-sc, .dg-item');                 // 카드 위(그림 · 빈 자리 포함)도 덮음
-      if (card && !card.matches('.t-card--map, .k-drawer, .gf-sheet, .xc-pop')) { const q = card.getBoundingClientRect(); if (q.width * q.height < 0.5 * innerWidth * innerHeight) { hit = true; break; } }
-      if (n.closest('.maplibregl-map, canvas')) continue;
-      if (n.closest('a[href],button,input,select,textarea,[role=button]')) { hit = true; break; }
-      for (const t of n.childNodes) {
-        if (t.nodeType !== 3 || !/\S/.test(t.nodeValue)) continue;
-        const rg = document.createRange(); rg.selectNodeContents(t);
-        for (const q of rg.getClientRects()) if (Math.min(box.x1, q.right) - Math.max(box.x0, q.left) > 4 && Math.min(box.y1, q.bottom) - Math.max(box.y0, q.top) > 4) { hit = true; break; }
-        if (hit) break;
-      }
-    }
-  } finally { root.style.pointerEvents = pe; }
-  return hit;
 }
 /** 레일의 빈 자리 — 보이는 레일 칸(위 묶음 · 아래 묶음 · 더보기 · 기관 정보 · 계정 무엇이든)들 사이의 가장 큰 빈 틈에만, 단추 56 이 칸과 8 띄워 들어가면 그 자리.
     칸 이름(클래스)에 기대지 않고 실제 자리로 잰다 — 늦게 그려진 칸(더보기 · 기관 정보)도 덮지 않게(10-24 검사 문: 기관 1280 '기관 정보' 덮음) */
@@ -119,7 +93,9 @@ export function mountChatDock(railEl) {
       clearTimeout(rq);
       rq = setTimeout(() => {
         if (PHONE() || root.hasAttribute('data-lift')) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
-        const spot = covers(root) ? railSpot(railEl) : null;
+        // 자리는 늘 같은 규칙(10-25 검사 문: 1280 프로젝트 목록 — 카드가 늦게 그려지면 '덮는가'를 다시 재지 못해 단추가 카드를 덮음):
+        // 레일에 빈 자리가 있으면 늘 레일 빈 자리(덮는지 재지 않음 · 늦게 그려지는 본문과 상관없이) · 레일 빈 자리가 없을 때만 예전처럼 덮는지 보고 그대로
+        const spot = railSpot(railEl);
         if (!spot) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
         for (const [k, v] of [['--k-rf-l', spot.l + 'px'], ['--k-rf-b', spot.b + 'px']]) if (root.style.getPropertyValue(k) !== v) root.style.setProperty(k, v);
         if (!root.hasAttribute('data-railfab')) root.setAttribute('data-railfab', '');   // 자리 값을 먼저 · 옮김은 미끄러짐 없이 바로(레일 위를 지나가며 칸을 덮지 않게)

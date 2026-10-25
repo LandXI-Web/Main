@@ -1,0 +1,128 @@
+{
+ "runs": [
+  {
+   "i": 0,
+   "main_ms": 747,
+   "mainCount": 1,
+   "slow": [
+    [
+     509,
+     "/cards/deck"
+    ],
+    [
+     454,
+     "/auth/session"
+    ],
+    [
+     426,
+     "/auth/login"
+    ],
+    [
+     373,
+     "/me/storage"
+    ],
+    [
+     346,
+     "/me/agenda?from=2026-10-25&to=2026-10-31"
+    ],
+    [
+     325,
+     "/public/stats?set=river-occupy&by=sigungu"
+    ]
+   ]
+  },
+  {
+   "i": 1,
+   "main_ms": 684,
+   "mainCount": 1,
+   "slow": [
+    [
+     640,
+     "/public/stats?set=river-occupy&by=sigungu&geom=1"
+    ],
+    [
+     570,
+     "/openapi.json"
+    ],
+    [
+     411,
+     "/auth/login"
+    ],
+    [
+     355,
+     "/cards/deck"
+    ],
+    [
+     336,
+     "/me/agenda?from=2026-10-25&to=2026-10-31"
+    ],
+    [
+     329,
+     "/approvals?state=pending"
+    ]
+   ]
+  },
+  {
+   "i": 2,
+   "main_ms": 1185,
+   "mainCount": 1,
+   "slow": [
+    [
+     655,
+     "/public/stats?set=river-occupy&by=sigungu&geom=1"
+    ],
+    [
+     587,
+     "/announcements?limit=12"
+    ],
+    [
+     587,
+     "/me"
+    ],
+    [
+     434,
+     "/me/agenda?from=2026-10-25&to=2026-10-31"
+    ],
+    [
+     416,
+     "/auth/login"
+    ],
+    [
+     351,
+     "/cards/deck"
+    ]
+   ]
+  },
+  {
+   "i": 3,
+   "main_ms": 672,
+   "mainCount": 1,
+   "slow": [
+    [
+     922,
+     "/auth/login"
+    ],
+    [
+     724,
+     "/public/stats?set=river-occupy&by=sigungu&geom=1"
+    ],
+    [
+     589,
+     "/public/stats?set=river-occupy&by=sigungu"
+    ],
+    [
+     349,
+     "/me/agenda?from=2026-10-25&to=2026-10-31"
+    ],
+    [
+     346,
+     "/cards/deck"
+    ],
+    [
+     320,
+     "/me/events?from=2026-10-25&to=2026-10-31"
+    ]
+   ]
+  }
+ ]
+}

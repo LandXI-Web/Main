@@ -26,7 +26,9 @@ const nf = (v) => Number(v).toLocaleString('ko-KR');
 const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const day = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
 /* 결과 색 = 결과 층 모양(arrive.js resultPaint 'landcover')과 같은 값 — 범례가 지도와 어긋나지 않게 */
-const CLS_COLOR = { 경작지: '#0FA9A0', 비닐하우스: '#07706A', 건물: '#010102', 주차장: '#8F99A8' };
+const CLS_COLOR = { 경작지: '#0FA9A0', 비닐하우스: '#07706A', 건물: '#010102', 주차장: '#8F99A8',
+  // 두 시기 비교(사료작물 생육기 ↔ 생산기 · 10-25 원칙 337 — 카드에서 옮겨 온 결과 층) · 카드 비교 칸과 같은 색
+  '같은 작물': '#0FA9A0', '작물 바뀜': '#FFB633', '수확·곤포 확인': '#006DF7', '생산기에 없음': '#F04452', '생산기에만 있음': '#727780' };
 const LXMAP_Z = 18, CAD_Z = 15;
 
 /* ── 틀 ── */
@@ -158,6 +160,7 @@ async function addImagery(id) {
 async function addSet(x) {
   if (x.ids) return;
   if (x.change) { x.ids = []; return; }   // 국토 변화 — 결과 타일 대신 변화 층(kit/change-layer.js)이 그린다(toggle)
+  if (x.compare) { await addCompare(x); return; }   // 두 시기 비교 — 필지 비교 층(남긴 결과 GET /compare/runs/{작업})
   if (x.empty) { x.ids = []; return; }   // 찾은 것 0건 — 그릴 결과 층이 없다(범위로만 간다 · QA-결과없음)
   const item = { id: 'lm-' + x.job, kind: 'vector', set: x.set, layer: 'results', promote_id: 'id', signed: true, source: 'pmtiles' };   // 작업 결과 = 서명 주소로만(10-22 옆문 닫기 2차)
   const sid = 'lm-r-' + x.job;
@@ -165,6 +168,18 @@ async function addSet(x) {
   x.ids = addResultLayers(map, sid, sid, { kind: 'landcover', sourceLayer: 'results', visible: false });
   paintSet(x);                                                        // 저장해 둔 색(원칙 264) — 바꾼 것이 없으면 원래 모양 그대로
   if (x.range?.id) await addRange(x, sid);
+}
+/* 두 시기 비교 결과(10-25 원칙 337) — 필지마다 비교 결과 색(cls = 같은 작물 · 작물 바뀜 · …) · 색 바꾸기 · 범례 · 클래스 끄기는 다른 층과 같은 부품 */
+async function addCompare(x) {
+  let d;
+  try { d = await api(`/compare/runs/${encodeURIComponent(x.job)}`); } catch (e) { K.devlog('compare', String(e?.message || e)); x.ids = []; return; }
+  const sid = 'lm-c-' + x.job;
+  const col = ['match', ['get', 'cls'], ...Object.entries(CLS_COLOR).flat(), '#727780'];
+  map.addSource(sid, { type: 'geojson', data: d.geo || { type: 'FeatureCollection', features: [] } });
+  map.addLayer({ id: sid + '-fill', type: 'fill', source: sid, layout: { visibility: 'none' }, paint: { 'fill-color': col, 'fill-opacity': 0.45 } }, 'slot-result');
+  map.addLayer({ id: sid + '-line', type: 'line', source: sid, layout: { visibility: 'none' }, paint: { 'line-color': col, 'line-width': 1.2 } }, 'slot-result');
+  x.ids = [sid + '-fill', sid + '-line'];
+  paintSet(x);
 }
 /* 분석 구간(고급 기능 '분석 구간 설정하기' · 10-24) — 구간 테두리(거리를 둔 구간은 점선 + 원래 모양) · 구간 밖 결과는 옅게 · 안/밖 수(장부 한 곳 /ranges) */
 async function addRange(x, src) {
@@ -257,12 +272,12 @@ function drawLeft() {
     for (const x of G.items) {
       const cls = (x.by_class || []).filter((c) => c.n).map((c) => `${c.cls} ${nf(c.n)}`).join(' · ');
       const more = [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope, (x.by_class || []).length > 1 ? cls : ''].filter(Boolean).join(' · ');
-      const canDl = !x.empty && !x.failed && !x.change;   // 국토 변화 — 색 · 목록 · 내려받기는 변화 층 카드(판정 · 보고서 · 표)에서
+      const canDl = !x.empty && !x.failed && !x.change && !x.compare;   // 국토 변화 — 색 · 목록 · 내려받기는 변화 층 카드(판정 · 보고서 · 표)에서 · 두 시기 비교는 층만
       ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl', ST.list === x.job && 'is-list'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
         canDl ? h('button.lm-cd', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${G.name} ${x.region} 색`, title: '색', dataset: { job: x.job }, style: dotStyle(dotColors(x)), onclick: (e) => openColors(x, e.currentTarget) }) : h('span.lm-cd.is-none', { 'aria-hidden': 'true' }),
         h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: `${x.region} · ${day(x.finished_at)}` })),
-        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}건` }),
+        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}${x.compare ? '필지' : '건'}` }),
         canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
       if (x.range?.word) ul.append(h('li.lm-rg', { class: x.on ? 'is-on' : '' }, ...rangeLine(x)));   // 작업 줄 아래 '구간: 이름 · 100m'
@@ -448,7 +463,7 @@ async function dropChip(k) {
   const c = condOf(ST.filter);
   if (k === 'area') COND_KEYS.filter((x) => x.startsWith('area')).forEach((x) => delete c[x]); else delete c[k];
   if (!Object.keys(c).length) { setFilter({ op: 'map_filter', clear: true }); return; }
-  const jobs = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change).map((x) => x.job);
+  const jobs = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change && !x.compare).map((x) => x.job);
   let r = null;
   try { r = await api('/me/analyses/filter', { method: 'POST', body: { jobs, cond: c } }); } catch (e) { K.devlog('filter', String(e?.message || e)); }
   setFilter({ op: 'map_filter', ...(r?.params || c), label: r?.label || '', chips: r?.chips || [], n: r?.n ?? null });
@@ -502,7 +517,7 @@ document.addEventListener('kit:agent-action', (e) => {
   document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: 'map_filter', ok, by: 'lx-map', ...(ok ? {} : { reason: '켜진 결과 층이 없습니다' }) } }));
 });
 K.mountCmdk({ stage: ST0, context: () => {
-  const on = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change);
+  const on = all().filter((x) => shown(x) && !x.empty && !x.failed && !x.change && !x.compare);
   return { sets: on.map((x) => x.set), region: on[0]?.sgg_cd || null };
 } });
 
@@ -561,7 +576,7 @@ async function download(x, fmt, label, btn, agree) {
 function drawCap() {
   const on = all().filter(shown);
   cap.hidden = !on.length;
-  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(visN(x) ?? 0)}건`}` })),
+  cap.replaceChildren(...on.slice(0, 4).map((x) => h('span', { text: `${x.g.name} · ${x.region} · ${x.failed ? '결과 도형을 불러오지 못함' : x.empty ? '찾은 것 없음' : `${nf(visN(x) ?? 0)}${x.compare ? '필지' : '건'}`}` })),
     ...(on.length > 4 ? [h('small', { text: `외 ${on.length - 4}개 층` })] : []));
 }
 async function toggle(x) {

@@ -17,3 +17,5 @@
 .la-chg-slot .t-btn--text{align-self:flex-start;padding:0;height:auto}
 .la-chg-slot [hidden]{display:none}
 .la-chg select.t-input{width:100%;min-width:0;text-overflow:ellipsis}
+/* ① 분석할 곳 — 구간 부품(kit/range-option · 10-25) */
+.la-chg-place{min-width:0}
