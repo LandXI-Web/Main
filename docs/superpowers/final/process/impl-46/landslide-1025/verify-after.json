@@ -1,0 +1,107 @@
+{
+ "base": "https://app.land-xi.dev",
+ "part": "after",
+ "at": "2026-10-25T00:25:39.142Z",
+ "steps": [
+  {
+   "k": "login",
+   "t": 4.6,
+   "url": "https://app.land-xi.dev/landxi/v3/lx-console/"
+  },
+  {
+   "k": "landslide-map",
+   "t": 12.7,
+   "card": "산사태 취약지구 · 2020년 → 2025년\n\n남원_산림_예시지구\n\n지구 안 변화 64건 · 밖(버퍼) 29건\n\n산림 → 나지\n64건\n밖 29\n산림 → 도로\n0건\n밖 0\n산림 → 건물\n0건\n밖 0\n\n지구별 · 2곳\n\n예시 지구 2\n50건\n70,581㎡\n예시 지구 1\n43건\n103,572㎡\n\n두 해 영상에서 바뀐 곳 — 지구 안 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.\n\n판정\n아직 없음\n현장점검\n보고서\n\n지구 밖(버퍼)도 보기",
+   "list": "−\n산사태 취약지구 분석서비스\n1 / 1\n이 묶음만 보기\n남원_산림_예시지구 · 2026.10.25\n93건\n구간: 남원_산림_예시지구 · 50m"
+  },
+  {
+   "k": "compare-done",
+   "t": 20.7,
+   "ms": 4912,
+   "side": "견주기를 마쳤습니다 · 지도 서비스에서 보기",
+   "body_has_result": 0
+  },
+  {
+   "k": "compare-map",
+   "t": 25.6,
+   "ms": 4896,
+   "url": "https://app.land-xi.dev/landxi/v3/lx-map/?job=job_01M5R76BKYBANCRZ61WTC6536W",
+   "row": "남원시 · 2026.10.25\n190필지",
+   "legend": "범례\n접기\n생산기에 없음\n같은 작물\n생산기에만 있음"
+  },
+  {
+   "k": "ximap-spec",
+   "t": 30.6,
+   "kpis": [
+    {
+     "label": "시군구",
+     "value": 12,
+     "unit": "곳"
+    },
+    {
+     "label": "서비스",
+     "value": 12,
+     "unit": "가지"
+    }
+   ],
+   "main": {
+    "label": "서비스",
+    "value": 12,
+    "unit": "가지"
+   },
+   "say": [
+    "지금 지도에 보이는 시군구 12곳에 서비스 12가지를 제공 중입니다.",
+    "서비스가 가장 많은 곳은 남원시 10가지입니다."
+   ],
+   "crowd": [
+    {
+     "k": "card-crowd|People",
+     "label": "관광지 안전관리 · 사람(명)",
+     "v": 9770
+    },
+    {
+     "k": "card-crowd|vehicle",
+     "label": "관광지 안전관리 · 차량(대)",
+     "v": 1075
+    },
+    [
+     "관광지 안전관리 · 사람(명)",
+     1,
+     9770,
+     "2026-10-24"
+    ],
+    [
+     "관광지 안전관리 · 차량(대)",
+     1,
+     1075,
+     "2026-10-24"
+    ]
+   ]
+  }
+ ],
+ "ov": {
+  "10-landslide-map.png": [],
+  "11-compare-card.png": [],
+  "12-compare-map.png": [],
+  "13-ximap-board.png": []
+ },
+ "clip": {
+  "10-landslide-map.png": {
+   "hard": [],
+   "warn": 0
+  },
+  "11-compare-card.png": {
+   "hard": [],
+   "warn": 0
+  },
+  "12-compare-map.png": {
+   "hard": [],
+   "warn": 0
+  },
+  "13-ximap-board.png": {
+   "hard": [],
+   "warn": 0
+  }
+ },
+ "errs": []
+}

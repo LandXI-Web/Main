@@ -1,0 +1,16 @@
+{
+ "status": {
+  "/cards/deck": 200,
+  "/cards/card-landslide": 200,
+  "/cards/card-change": 200,
+  "/cards/card-crowd": 200,
+  "/ximap/board": 200,
+  "/me/analyses": 200,
+  "/me/jobs": 200,
+  "/change/ranges?brief=1": 200,
+  "/cards/card-ba9d6d/compare/results": 404,
+  "/change/ranges/rng_ae0cf55beb6f/imagery": 200,
+  "/change/ranges/rng_88571f210103/imagery": 200
+ },
+ "bad": []
+}

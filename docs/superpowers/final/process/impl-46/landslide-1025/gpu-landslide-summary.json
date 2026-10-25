@@ -1,0 +1,20 @@
+{
+ "gpu0": {
+  "from": "08:41:40",
+  "to": "08:44:20",
+  "samples": 150,
+  "max_30s_avg_W": 72.9,
+  "max_30s_avg_util": 14.5,
+  "peak_W": 163.99,
+  "peak_temp_C": 71.0
+ },
+ "gpu1": {
+  "from": "08:41:40",
+  "to": "08:44:20",
+  "samples": 150,
+  "max_30s_avg_W": 48.4,
+  "max_30s_avg_util": 6.2,
+  "peak_W": 117.52,
+  "peak_temp_C": 76.0
+ }
+}
