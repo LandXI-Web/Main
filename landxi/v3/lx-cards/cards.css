@@ -64,3 +64,5 @@
 .lc-cv-tw-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,180px) auto;gap:8px;align-items:end}
 .lc-cv-f{display:flex;flex-direction:column;gap:4px;min-width:0;font:500 var(--fs-tag)/19px var(--font-body);color:var(--ink-2)}
 @media (max-width:640px){.lc-cv-row{grid-template-columns:repeat(2,minmax(0,1fr))}.lc-cv-tw-row{grid-template-columns:minmax(0,1fr)}}
+.im-head.lc-tabs{padding:0 0 20px}
+.lc-tabs .im-tabs{overflow-x:auto;scrollbar-width:none}.lc-tabs .im-tabs::-webkit-scrollbar{display:none}

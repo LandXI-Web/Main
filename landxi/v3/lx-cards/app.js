@@ -9,14 +9,26 @@ import { h, api, API, session } from '../kit/util.js';
 import { loadDeck, svcCard, svcGrid } from '../kit/service-card.js';
 import { staffRail } from '../lx-analyze/menu.js';
 import { swipePic } from '../kit/swipe.js';
+import { RAIL, TABS } from '../ops-infra/js/rail.js';   // LX 관리자로 열면 관리자 틀 · 배포 메뉴(같은 메뉴 한 곳)
 
 const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
 const CARD = Q.get('card');
-const S = K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });   // 서비스 카드는 메뉴 칸이 없다 — 들어오는 길 '분석하기'(서비스카드-1 ⓐ)
+const ADMIN = who.key === 'lx/admin';   // 관리자 = 관리자 틀 · 배포 › 배포된 카드 탭 / 프로젝트장(직원) = 직원 틀(같은 화면 · 고칠 권한은 서버 can_edit)
+const OI = '/landxi/v3/ops-infra/';
+const S = ADMIN
+  ? K.shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL.map((r) => (r.href.startsWith('#') ? { ...r, href: OI + r.href } : r)), current: RAIL.findIndex((r) => r.id === 'deploys') } })
+  : K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });   // 서비스 카드는 메뉴 칸이 없다 — 들어오는 길 '분석하기'(서비스카드-1 ⓐ)
+if (ADMIN) {
+  document.head.append(h('link', { rel: 'stylesheet', href: '../ops-infra/improve.css' }));
+  const r = document.querySelector('.k-role'), b = r?.querySelector('b');
+  if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove();
+}
 K.devDrawer({ who });
 document.body.classList.remove('la-boot');
 const page = h('div.la-page.lc-page');
+if (ADMIN) page.append(h('div.im-head.lc-tabs', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...TABS.map(([k, t, path]) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(k === 'cards'),
+  onclick: () => { if (k !== 'cards') location.href = OI + '#/deploys' + path; else if (CARD) location.href = './'; } }, h('span', { text: t }))))));
 S.main.append(h('div.la-scroll', {}, page));
 
 const nf = (v) => Number(v).toLocaleString('ko-KR');
