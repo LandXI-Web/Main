@@ -159,7 +159,7 @@ async function openDetail(id) {
     let b = null; const walk = (c) => { if (typeof c[0] === 'number') b = b ? [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])] : [c[0], c[1], c[0], c[1]]; else c.forEach(walk); };
     walk(f.geometry.coordinates);
     m.fitBounds(b, { padding: 40, maxZoom: 18, duration: 0 });
-    import('../kit/swipe.js').then((sw) => sw.yearSpec(yb)).then((s) => { if (s?.spec && !m.getSource('cf-img')) { m.addSource('cf-img', s.spec); m.addLayer({ id: 'cf-img', type: 'raster', source: 'cf-img' }, 'cf-f'); } }).catch(() => {});
+    import('../kit/year-swipe.js').then((sw) => sw.yearSpec(yb)).then((s) => { if (s?.spec && !m.getSource('cf-img')) { m.addSource('cf-img', s.spec); m.addLayer({ id: 'cf-img', type: 'raster', source: 'cf-img' }, 'cf-f'); } }).catch(() => {});
   } catch (e) { K.devlog('field map', String(e?.message || e)); }
   if (matchMedia('(max-width: 960px)').matches) scrollTo({ top: 0 });
 }

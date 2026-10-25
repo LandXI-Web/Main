@@ -147,7 +147,7 @@ export function openImageryViewer({ items = [], index = 0, onPick, picked } = {}
   const win = h('a.k-iv-b', { target: '_blank', rel: 'noopener', text: '새 창으로 열기' });
   const pick = h('button.k-iv-go', { type: 'button', text: '이 영상 고르기' });
   const closeB = h('button.k-iv-b', { type: 'button', text: '닫기' });
-  /* 두 시점 겹쳐 보기(10-22 now21 제안-두시점겹쳐비교 '넣음') — 같은 지역의 다른 시점 영상을 왼쪽에 덮고 가운데 선을 끌어 견준다(kit/swipe.js) */
+  /* 두 시점 겹쳐 보기(10-22 now21 제안-두시점겹쳐비교 '넣음') — 같은 지역의 다른 시점 영상을 왼쪽에 덮고 가운데 선을 끌어 견준다(kit/year-swipe.js) */
   const ovSel = h('select.k-iv-ov', { 'aria-label': '겹쳐 볼 다른 시점' });
   const ovWrap = h('label.k-iv-ovw', { hidden: true }, h('span', { text: '겹쳐 보기' }), ovSel);
   let SW = null;
@@ -186,7 +186,7 @@ export function openImageryViewer({ items = [], index = 0, onPick, picked } = {}
     SW?.close(); SW = null;
     if (!o || !V.map) return;
     try {
-      const [d, m] = await Promise.all([getDetail(o.id), import('./swipe.js')]);
+      const [d, m] = await Promise.all([getDetail(o.id), import('./year-swipe.js')]);
       if (items[i] !== it || ovSel.value !== o.id) return;
       const spec = await sourceSpec(d);
       SW = m.mountSwipe({ map: V.map, left: { label: `${yearOf(o)}년`, spec: { ...spec, tileSize: 256, bounds: d.bounds, minzoom: Math.max(0, (d.minzoom ?? 0) - 3), maxzoom: d.maxzoom ?? 19 } }, right: { label: `${yearOf(it) || '이 영상'}${yearOf(it) ? '년' : ''}` } });

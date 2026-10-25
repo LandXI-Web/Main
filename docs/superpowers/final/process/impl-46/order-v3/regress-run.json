@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-25 22:34:50",
+  "login": "test@lx.or.kr",
+  "cases": {
+    "project": {
+      "found": true,
+      "before": "켜기",
+      "after": "끄기",
+      "cogRequests": 123,
+      "sample": [
+        "app.land-xi.dev/tiles/cog/namwon-2025-06/16/55941/25887.webp",
+        "app.land-xi.dev/tiles/cog/namwon-2025-06/16/55940/25887.webp"
+      ],
+      "errs": []
+    },
+    "mapservice": {
+      "found": true,
+      "before": "켜기",
+      "after": "끄기",
+      "cogRequests": 69,
+      "sample": [
+        ".land-xi.dev/tiles/cog/nat-ngii-air-2024/16/55885/25890.webp",
+        ".land-xi.dev/tiles/cog/nat-ngii-air-2024/16/55882/25891.webp"
+      ],
+      "errs": []
+    },
+    "ximap": {
+      "ok": false,
+      "cogRequests": 0,
+      "errs": []
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /* change-layer.js — 국토 변화 분석서비스 결과 층(10-22 CHANGE-DEMO-ORDER P0-1 · P0-4) · 지도 서비스(lx-map)에 붙는다.
-   ① 대상지(구역선 · 버퍼 범위) 선 ② 두 해 영상 가르기(kit/swipe.js — 지도 서비스 '영상 비교'와 같은 부품) ③ 변화 폴리곤(유형별 색 · 구역선 안 = 진하게 · 밖 = 옅게)
+   ① 대상지(구역선 · 버퍼 범위) 선 ② 두 해 영상 가르기(kit/year-swipe.js — 지도 서비스 '영상 비교'와 같은 부품) ③ 변화 폴리곤(유형별 색 · 구역선 안 = 진하게 · 밖 = 옅게)
    ④ 폴리곤을 누르면 오른쪽 칸 — 두 해 썸네일 나란히 + 유형 · 면적 · 지번 · 지목 · 소유구분 ⑤ XI ChatGEO 동작(change_show · change_hl)과 꼬리 질문 문맥(고른 폴리곤).
    주소: ?project=<프로젝트>(대상지 + 두 해 영상) · ?change=<결과>(결과 층까지). 지역 고정값 0 — 범위 · 연도는 서버 데이터.
    값 = 서버 한 출처: GET /change/ranges · /change/runs/{결과} · /features · /thumbs. 화면 글자에 작업 번호 · 좌표 · 경로를 쓰지 않는다. */
@@ -92,7 +92,7 @@ async function swipe(ya, yb) {
   let r;
   try {
     if (window.__lm?.compareYears) r = await window.__lm.compareYears(ya, yb);         // 지도 서비스 '영상 비교'(같은 부품 · 왼쪽 칸 상태도 같이)
-    else { const m = await import('./swipe.js'); r = await m.compareYears({ map: C.map, yearA: ya, yearB: yb, swipe: C.sw }); }
+    else { const m = await import('./year-swipe.js'); r = await m.compareYears({ map: C.map, yearA: ya, yearB: yb, swipe: C.sw }); }
   } catch { r = { ok: false }; }
   C.sw = window.__lxSwipe?.last || r?.swipe || null;
   if (C.sw?.ready) { await C.sw.ready; }

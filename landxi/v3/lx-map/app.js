@@ -468,10 +468,10 @@ async function dropChip(k) {
   try { r = await api('/me/analyses/filter', { method: 'POST', body: { jobs, cond: c } }); } catch (e) { K.devlog('filter', String(e?.message || e)); }
   setFilter({ op: 'map_filter', ...(r?.params || c), label: r?.label || '', chips: r?.chips || [], n: r?.n ?? null });
 }
-/* 영상 비교(10-22 now21 두 시점 겹쳐 비교 · CHANGE-DEMO P1-8) — 국토지리정보원 해마다 항공 정사영상 두 해를 좌우로 갈라 본다(kit/swipe.js · XI맵과 같은 부품).
+/* 영상 비교(10-22 now21 두 시점 겹쳐 비교 · CHANGE-DEMO P1-8) — 국토지리정보원 해마다 항공 정사영상 두 해를 좌우로 갈라 본다(kit/year-swipe.js · XI맵과 같은 부품).
    해 목록 = 서버 전국 분석 장부(GET /national/progress ngii) · 그 해 층이 없으면 고를 수 없다(지어낸 영상 0) */
 var CMP = { on: false, years: null, a: null, b: null, sw: null };   // var — 왼쪽 칸(drawLeft)이 이 줄보다 먼저 그려질 수 있다
-var SWP = import('../kit/swipe.js');
+var SWP = import('../kit/year-swipe.js');
 api('/national/progress').then((j) => { CMP.years = (j?.ngii || []).map((x) => +x.year).filter(Boolean).sort(); if (CMP.years.length >= 2) { CMP.a ??= CMP.years[0]; CMP.b ??= CMP.years[CMP.years.length - 1]; } drawLeft(); }, () => { CMP.years = []; });
 function cmpRow() {
   const ys = CMP?.years || [];
