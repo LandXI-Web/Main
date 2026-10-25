@@ -4,7 +4,7 @@
 기존 분석 서비스(경작·휴경 · 비닐하우스 · 건축물 · 주차장)와 표 · 파일 · 작업 종류를 나누지 않는다.
 
 재사용(새로 쓰지 않음): geoai_roadland/src 의 ngii.py(타일 격자 · 주소) · landcover_unet.py(+models/ap25_best.pth)
-· common.py(detect_belt_crs · parse_jimok · normalize_pnu) · characterize_idle.GROUP(12분류 → 뜻 묶음).
+· common.py(detect_belt_crs · parse_jimok · normalize_pnu) · detect.GROUP(12분류 공식 이름 → 뜻 묶음 · 10-25).
 경로는 server/.env 의 LX_ROADLAND_ROOT(없으면 기본값) — 지역 이름은 코드에 없다(범위 · 연도는 데이터).
 """
 from __future__ import annotations

@@ -19,7 +19,7 @@ from . import detect as D
 from . import imagery as I
 from .ranges import to4326
 
-VERSION = "change-3"          # 2: 도로 ↔ 건물 전이 제외(포장면 오탐) · 3: 본선 필지 위 건물도 도로로          # 계산 방식이 바뀌면 올린다(캐시 키)
+VERSION = "change-4"          # 2: 도로 ↔ 건물 전이 제외(포장면 오탐) · 3: 본선 필지 위 건물도 도로로 · 4: 12분류 공식 이름 묶음(10-25)          # 계산 방식이 바뀌면 올린다(캐시 키)
 BLOCK_TILES = 16
 
 

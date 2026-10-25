@@ -1,0 +1,50 @@
+01:08:11 train state done
+01:08:12 submit card-landslide rng_cf1ee9c1c065 job_01M5SX3KP5K0MNBJ14X4TBT633 cached=False state=queued
+01:08:12   queued None 0, 75.07 W, 0 %, 73 | 1, 77.06 W, 0 %, 61
+01:08:32   running infer 0, 116.80 W, 0 %, 71 | 1, 18.50 W, 0 %, 60
+01:08:52   running infer 0, 79.42 W, 0 %, 69 | 1, 17.88 W, 0 %, 60
+01:09:12   running infer 0, 30.09 W, 100 %, 68 | 1, 17.73 W, 0 %, 59
+01:09:32   running done 0, 17.82 W, 0 %, 65 | 1, 18.04 W, 0 %, 59
+01:09:52   end job_01M5SX3KP5K0MNBJ14X4TBT633 done  100s
+01:09:53 submit card-change rng_1aaee48c71e9 job_01M5SX6PEER778DGXZN2R284TP cached=False state=queued
+01:09:53   queued None 0, 83.50 W, 0 %, 68 | 1, 55.33 W, 0 %, 61
+01:10:13   running infer 0, 20.79 W, 0 %, 67 | 1, 18.29 W, 0 %, 59
+01:10:33   running infer 0, 19.13 W, 0 %, 65 | 1, 18.06 W, 0 %, 59
+01:10:53   end job_01M5SX6PEER778DGXZN2R284TP done  60s
+01:10:53 submit card-change rng_8c051612ef3b job_01M5SX8HJ0QKEDPD9FAKAD4JXW cached=False state=queued
+01:10:54   queued None 0, 128.24 W, 0 %, 67 | 1, 18.29 W, 0 %, 59
+01:11:14   running infer 0, 59.33 W, 0 %, 65 | 1, 18.07 W, 0 %, 59
+01:11:34   running infer 0, 61.90 W, 0 %, 65 | 1, 18.22 W, 0 %, 59
+01:11:54   running infer 0, 147.27 W, 0 %, 68 | 1, 18.31 W, 0 %, 59
+01:12:14   running infer 0, 117.76 W, 0 %, 68 | 1, 17.97 W, 0 %, 59
+01:12:34   running infer 0, 172.76 W, 59 %, 70 | 1, 18.09 W, 0 %, 58
+01:12:54   running done 0, 17.81 W, 0 %, 64 | 1, 17.97 W, 0 %, 58
+01:13:14   end job_01M5SX8HJ0QKEDPD9FAKAD4JXW done  140s
+01:13:15 submit card-change rng_88f00d5c90c0 job_01M5SXCV99D4AEB6DWDVKJ3EE2 cached=False state=queued
+01:13:15   queued None 0, 140.39 W, 55 %, 70 | 1, 18.05 W, 0 %, 58
+01:13:35   running infer 0, 103.37 W, 61 %, 72 | 1, 17.68 W, 0 %, 58
+01:13:55   running infer 0, 100.54 W, 0 %, 69 | 1, 17.77 W, 0 %, 58
+01:14:15   running infer 0, 165.44 W, 42 %, 71 | 1, 17.75 W, 0 %, 58
+01:14:35   running infer 0, 42.20 W, 75 %, 68 | 1, 17.79 W, 0 %, 58
+01:14:55   running infer 0, 18.49 W, 0 %, 66 | 1, 17.50 W, 0 %, 58
+01:15:15   running imagery 0, 29.84 W, 0 %, 67 | 1, 17.82 W, 0 %, 58
+01:15:35   running infer 0, 109.75 W, 0 %, 70 | 1, 17.93 W, 0 %, 58
+01:15:55   running infer 0, 162.60 W, 34 %, 73 | 1, 18.16 W, 0 %, 58
+01:16:15   running infer 0, 104.91 W, 0 %, 71 | 1, 18.22 W, 0 %, 58
+01:16:35   running infer 0, 72.28 W, 0 %, 68 | 1, 17.94 W, 0 %, 58
+01:16:55   running infer 0, 147.98 W, 60 %, 72 | 1, 17.81 W, 0 %, 58
+01:17:16   running infer 0, 19.11 W, 0 %, 66 | 1, 17.78 W, 0 %, 57
+01:17:36   running infer 0, 64.13 W, 0 %, 70 | 1, 17.71 W, 0 %, 57
+01:17:56   running infer 0, 44.67 W, 0 %, 68 | 1, 17.57 W, 0 %, 57
+01:18:16   running infer 0, 62.69 W, 0 %, 67 | 1, 17.74 W, 0 %, 57
+01:18:36   running infer 0, 168.42 W, 37 %, 73 | 1, 18.13 W, 0 %, 57
+01:18:56   running infer 0, 96.82 W, 0 %, 67 | 1, 17.59 W, 0 %, 57
+01:19:16   running infer 0, 72.71 W, 0 %, 65 | 1, 17.47 W, 0 %, 57
+01:19:36   running infer 0, 175.36 W, 31 %, 69 | 1, 17.63 W, 0 %, 58
+01:19:56   running infer 0, 98.67 W, 0 %, 67 | 1, 17.40 W, 0 %, 58
+01:20:16   running infer 0, 62.34 W, 0 %, 66 | 1, 17.65 W, 0 %, 57
+01:20:36   running infer 0, 104.35 W, 0 %, 67 | 1, 17.71 W, 0 %, 57
+01:20:56   running thumbs 0, 17.06 W, 0 %, 63 | 1, 17.79 W, 0 %, 57
+01:21:16   running done 0, 16.80 W, 0 %, 60 | 1, 17.99 W, 0 %, 57
+01:21:36   end job_01M5SXCV99D4AEB6DWDVKJ3EE2 done  501s
+01:21:36 ALLDONE {"card-landslide|rng_cf1ee9c1c065": "job_01M5SX3KP5K0MNBJ14X4TBT633", "card-change|rng_1aaee48c71e9": "job_01M5SX6PEER778DGXZN2R284TP", "card-change|rng_8c051612ef3b": "job_01M5SX8HJ0QKEDPD9FAKAD4JXW", "card-change|rng_88f00d5c90c0": "job_01M5SXCV99D4AEB6DWDVKJ3EE2"}
