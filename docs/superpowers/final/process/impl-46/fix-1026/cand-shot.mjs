@@ -1,0 +1,12 @@
+import path from 'node:path'; import fs from 'node:fs'; import { pathToFileURL } from 'node:url';
+const ROOT = 'E:/Land-XI 플랫폼/01. 디자인'; process.chdir(ROOT);
+process.env.LX_PW ||= fs.readFileSync(ROOT + '/server/.env', 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1];
+const { launch, login } = await import(pathToFileURL(path.join(ROOT, 'tools/check/common.mjs')).href);
+const OUT = process.argv[2]; fs.mkdirSync(OUT, { recursive: true });
+const b = await launch(); const s = await login(b, 'admin'); const page = s.page;
+await page.goto(s.home + '/landxi/v3/lx-cards/?card=card-farm', { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('.lc-cv-c', { timeout: 30000 }).catch(() => {}); await page.waitForTimeout(2500);
+console.log(JSON.stringify(await page.evaluate(() => ({ cands: [...document.querySelectorAll('.lc-cv-c')].map((e) => e.innerText.replace(/\s+/g, ' ').trim()), mainPic: document.querySelector('.lc-cv img')?.src?.slice(-30) }))));
+await (await page.$('.lc-cv-cands'))?.scrollIntoViewIfNeeded().catch(() => {});
+await page.screenshot({ path: path.join(OUT, 'farm-cands-admin.png') });
+await s.ctx.close(); await b.close();

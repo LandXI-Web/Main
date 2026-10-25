@@ -964,13 +964,14 @@ async def refresh_cands(p, cid: str, source: dict | None = None, n: int = 4, for
         r = await _store_scene(p, cid, mine, out["result"], region, "", first, {"pair": "result" if first else "cand-result"})
         cands.append({"before": b["src"], "after": r["src"], "labels": out["labels"], "legend": out["legend"],
                       "frame": ",".join(f"{v:.7f}" for v in out["frame"]), "score": c["score"], "why": c["why"], "source": source, "opts": c["opts"]})
+    keep = [c for c in (cur.get('cands') or []) if c.get('keep') and c.get('after')]   # 사람이 올려 둔 후보('keep')는 다시 찾아도 목록 맨 앞에 남는다(10-26 경작·휴경 후보 1)
     best = cands[0]
     if not has_cover:
         sw = {**best, "cover": True, "cands": cands, "checked": latest, "auto": True}
         state = "applied"
     else:
         newer = cur_score is not None and best["score"] > cur_score + 5     # 견줄 수 없으면 표시하지 않는다
-        sw = {**cur, "cands": cands, "checked": latest or cur.get("checked"), "score": cur_score, "newer": bool(newer or cur.get("newer"))}
+        sw = {**cur, "cands": keep + [c for c in cands if c["after"] not in {k["after"] for k in keep}], "checked": latest or cur.get("checked"), "score": cur_score, "newer": bool(newer or cur.get("newer"))}
         state = "newer" if newer else "same"
     async with db(realm="lx") as conn:
         await conn.execute("UPDATE card_info SET swipe=$2, updated_at=now() WHERE card_id=$1", cid, sw)

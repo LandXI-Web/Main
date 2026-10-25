@@ -1,0 +1,17 @@
+import path from 'node:path'; import fs from 'node:fs'; import { pathToFileURL } from 'node:url';
+const ROOT = 'E:/Land-XI 플랫폼/01. 디자인'; process.chdir(ROOT);
+process.env.LX_PW ||= fs.readFileSync(ROOT + '/server/.env', 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1];
+const { launch, login } = await import(pathToFileURL(path.join(ROOT, 'tools/check/common.mjs')).href);
+const OUT = process.argv[2]; fs.mkdirSync(OUT, { recursive: true });
+const b = await launch(); const s = await login(b, 'admin'); const page = s.page;
+const state = async (tag) => { await page.waitForTimeout(2500); const r = await page.evaluate(() => ({ url: location.pathname + location.hash, tabSel: [...document.querySelectorAll('[role=tab][aria-selected=true]')].map((e) => e.textContent.trim()), visiblePanes: [...document.querySelectorAll('.rv-pane')].filter((e) => e.offsetParent).map((e) => e.dataset.tab), title: document.title })); console.log(tag, JSON.stringify(r)); await page.screenshot({ path: path.join(OUT, tag + '.png') }); };
+console.log('landing', page.url());
+await page.goto(s.home + '/landxi/v3/ops-infra/', { waitUntil: 'domcontentloaded' }); await state('1-infra');
+const link = page.locator('a[href*="deploys"], [data-view=deploys], button:has-text("배포")').first();
+console.log('menu count', await link.count()); await link.click(); await state('2-click-deploys');
+await page.goto(s.home + '/landxi/v3/ops-infra/?view=deploys', { waitUntil: 'domcontentloaded' }); await state('3b-query-view-deploys');
+await page.goto(s.home + '/landxi/v3/ops-core/', { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1500); await page.locator('a[href*="view=deploys"]').first().click(); await state('3c-from-core-menu');
+await page.goto(s.home + '/landxi/v3/ops-infra/#/deploys', { waitUntil: 'domcontentloaded' }); await state('3-direct-deploys');
+await page.goto(s.home + '/landxi/v3/ops-infra/#/deploys/improve', { waitUntil: 'domcontentloaded' }); await state('4-improve-tab');
+await page.goto(s.home + '/landxi/v3/ops-infra/#/deploys/requests', { waitUntil: 'domcontentloaded' }); await state('5-requests-tab');
+await s.ctx.close(); await b.close();
