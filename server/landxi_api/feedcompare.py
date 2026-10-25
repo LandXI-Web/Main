@@ -7,7 +7,12 @@
 견주는 자리 = 두 결과가 모두 덮는 곳(분석 범위 ∩ 영상 범위)의 필지(연속지적 survey_parcels) 가운데 넓이의 80% 이상이 그 자리에 든 필지.
 필지마다 그 시기 AI 분석 결과 가운데 가장 넓은 작물 = 그 시기 작물(작물 넓이 50㎡ 이상 또는 필지의 10% 이상일 때만 '있음').
 비교 결과(같은 말 · 모든 화면): 같은 작물 · 작물 바뀜 · 수확·곤포 확인(생산기에 작물 없음 + 곤포사일리지 있음) · 생산기에 없음 · 생산기에만 있음.
-숫자는 이 계산 한 번의 값(AI 분석 결과 · 결과 확인 전) — 지어내지 않는다. 결과를 저장하지 않는다(같은 두 결과면 같은 값).
+숫자는 이 계산 한 번의 값(AI 분석 결과 · 결과 확인 전) — 지어내지 않는다.
+결과는 내 분석 결과로 남긴다(10-25 원칙 337 "분석 서비스에서 돌린 결과는 … 지도 서비스에서 보는건데") — 작업 장부 한 줄(kind 'index' ·
+options.compare · 끝남) + 필지 비교 파일(DATA/compare/{작업}.json). 같은 사람 · 같은 두(세) 결과면 같은 줄을 다시 쓴다.
+카드는 견주기를 시작하고 '지도 서비스에서 보기'만 보인다 — 비교 결과(필지 색 · 상태별 수)는 지도 서비스 '내 분석'에서.
+
+  GET  /api/v1/compare/runs/{작업}             남긴 비교 결과(지도 서비스 층 · 집계) — 만든 사람 · 관리자만
 """
 from __future__ import annotations
 
@@ -179,10 +184,66 @@ async def compare(cid: str, body: dict, request: Request):
                                 ensure_ascii=False, indent=1), encoding="utf-8")
         async with db(realm="lx") as conn:
             await audit(conn, p, "card.compare.example", cid, None, {"label": label, "parcels": total, "inputs": {k: v["job"] for k, v in mine.items()}})
-    return {"inputs": mine, "unit": "필지",
-            "zone": env(round(zone / 10000, 2) if zone else None, "ha", "measured", "두 결과가 모두 덮는 자리"),
-            "total": env(total, "필지", "inferred", src),
-            "by_status": [{"status": k, "n": env(v["n"], "필지", "inferred", src), "area_ha": env(round(v["m2"] / 10000, 2), "ha", "inferred", src)} for k, v in agg.items()],
-            "rows": table, "geo": {"type": "FeatureCollection", "features": feats},
-            "rule": _rule(),
-            "as_of": now_iso()}
+    out = {"inputs": mine, "unit": "필지",
+           "zone": env(round(zone / 10000, 2) if zone else None, "ha", "measured", "두 결과가 모두 덮는 자리"),
+           "total": env(total, "필지", "inferred", src),
+           "by_status": [{"status": k, "n": env(v["n"], "필지", "inferred", src), "area_ha": env(round(v["m2"] / 10000, 2), "ha", "inferred", src)} for k, v in agg.items()],
+           "rows": table, "geo": {"type": "FeatureCollection", "features": feats},
+           "rule": _rule(),
+           "as_of": now_iso()}
+    jid = await _keep(p, cid, a, b, s, mine, agg, out)
+    # 카드에는 결과를 그리지 않는다(원칙 337) — 작업 번호와 지도 서비스 주소만
+    return {"job_id": jid, "map": "../lx-map/?" + f"job={jid}", "total": out["total"], "as_of": out["as_of"]}
+
+
+def _dir():
+    from . import config
+    d = config.DATA_ROOT / "compare"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+async def _keep(p, cid: str, a: str, b: str, s: str, mine: dict, agg: dict, out: dict) -> str:
+    """비교 한 번을 내 분석 결과로 남긴다 — 작업 장부 한 줄(끝남) + 필지 비교 파일. 같은 사람 · 같은 입력이면 같은 줄."""
+    from .jobs import ulid
+    key = {"growth": a, "production": b, "silage": s or None}
+    counts = {k: v["n"] for k, v in agg.items() if v["n"]}
+    sgg = (mine.get("growth") or {}).get("sgg_cd")
+    async with db(realm="lx") as conn:
+        jid = await conn.fetchval("SELECT id FROM jobs WHERE kind='index' AND card_id=$1 AND submitted_by=$2 AND options->'compare' = $3::jsonb "
+                                  "ORDER BY created_at DESC LIMIT 1", cid, p.user_id, key)
+        if not jid:
+            jid = "job_" + ulid()
+            g = mine.get("growth") or {}
+            label = f"분석 서비스 · 사료작물 비교 · {g.get('region') or ''}"[:60]
+            await conn.execute(
+                "INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, card_id, aoi, options, counts, result_set, label, "
+                "created_at, started_at, finished_at, snapshot_ready) "
+                "SELECT $1, 'lx', $2, 'index', 'done', 0, $3, ST_Intersection(ja.aoi, jb.aoi), $4::jsonb, $5::jsonb, $6, $7, now(), now(), now(), false "
+                "FROM jobs ja, jobs jb WHERE ja.id=$8 AND jb.id=$9",
+                jid, p.user_id, cid, {"compare": key, "sgg_cd": sgg, "requested_via": "분석 서비스"}, counts, f"compare/{jid}", label, a, b)
+            await audit(conn, p, "card.compare.keep", jid, None, {"card": cid, **key})
+        else:
+            await conn.execute("UPDATE jobs SET counts=$2::jsonb, finished_at=now() WHERE id=$1", jid, counts)
+    keep = {"inputs": mine, "unit": "필지", "zone": out["zone"], "total": out["total"], "by_status": out["by_status"], "rows": out["rows"][:2000],
+            "geo": out["geo"], "rule": out["rule"], "as_of": out["as_of"]}
+    (_dir() / f"{jid}.json").write_text(json.dumps(keep, ensure_ascii=False), encoding="utf-8")
+    return jid
+
+
+@router.get("/compare/runs/{job_id}")
+async def kept_run(job_id: str, request: Request):
+    """남긴 비교 결과 — 지도 서비스 '내 분석'의 비교 층(필지 색 = 비교 결과) · 상태별 수. 만든 사람 · 관리자만(없다는 것도 알리지 않는다)."""
+    import re
+    p = _lx(request)
+    if not re.fullmatch(r"job_[0-9A-Z]{10,40}", job_id or ""):
+        raise ApiError("not_found", "결과를 찾을 수 없습니다")
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT submitted_by, card_id FROM jobs WHERE id=$1 AND kind='index' AND options ? 'compare'", job_id)
+    f = _dir() / f"{job_id}.json"
+    if not r or (r["submitted_by"] != p.user_id and not p.is_admin) or not f.exists():
+        raise ApiError("not_found", "결과를 찾을 수 없습니다")
+    d = json.loads(f.read_text(encoding="utf-8"))
+    for ft in (d.get("geo") or {}).get("features") or []:
+        ft["properties"]["cls"] = ft["properties"].get("status")            # 지도 서비스 분류 거르기 · 색과 같은 이름
+    return {**d, "job_id": job_id, "card": r["card_id"]}

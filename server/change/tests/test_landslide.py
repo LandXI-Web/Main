@@ -54,15 +54,13 @@ def test_type_sets():
     assert D.types_of(None) == D.TYPES and D.types_of("landslide")[0] == "산림 → 나지"
 
 
-def test_card_frame_and_recent():
+def test_card_frame():
     t = _tok()
     c = httpx.get(B + "/cards/card-landslide", headers=H(t), timeout=60).json()
     assert c.get("frame") == "change" and c.get("can_analyze"), c.get("cant")
     ch = httpx.get(B + "/cards/card-change", headers=H(t), timeout=60).json()
     assert ch.get("frame") == "change"
-    r = httpx.get(B + "/change/ranges?recent=1&brief=1", headers=H(t), timeout=60).json()
-    names = [x["name"] for x in r["items"]]
-    assert len(names) <= 5 and not any("시험" in n or "test" in n.lower() for n in names)
+
 
 
 def test_zones_upload_and_parts():

@@ -200,7 +200,7 @@ async def build_board(p) -> dict:
         cat_items = {it.get("set"): it for it in items if it.get("role") == "result" and it.get("set")}
     _, geoms, _ = R.regions_base()
     regs: dict[str, dict] = {}
-    svcs: dict[str, dict] = {}
+    svcs: dict[tuple, dict] = {}
     from shapely.geometry import shape
     for ck, c in cells.items():
         sgg, svc = ck[0], ck[1]
@@ -253,10 +253,12 @@ async def build_board(p) -> dict:
         im = imgs.get(c["imagery_id"])
         at = _iso(c["at"])
         part = target_part(c.get("target"))
-        r["items"].append({"svc": svc, "name": c["name"] + (f" · {part['label']}" if part else ""), **({"part": part} if part else {}), "n": env(n, "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=_iso(c["at"])), "unit": "개", "finished_at": at, "year": c["year"] or (im or {}).get("year"),
+        r["items"].append({"svc": svc, "name": c["name"] + (f" · {part['label']}" if part else ""), **({"part": part} if part else {}), "n": env(n, "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=_iso(c["at"])), "unit": part["unit"] if part else "개", "finished_at": at, "year": c["year"] or (im or {}).get("year"),
                            "imagery": _img_label(im) or (f"{c['year']}년 영상" if c["year"] else None), "version": c["version"],
                            "style": "landcover" if svc == "landcover" else "result", "layer": layer})
-        sv = svcs.setdefault(svc, {"id": svc, "name": c["name"], "n_regions": 0, "n": 0})
+        sk = (svc, part["key"]) if part else (svc, "")             # 찾는 것이 다르면 따로 센다(사람 · 차량을 한 합으로 더하지 않는다 · 10-25 사용자)
+        sv = svcs.setdefault(sk, {"id": svc, "name": c["name"] + (f" · {part['label']}" if part else ""), "n_regions": 0, "n": 0,
+                                  "unit": part["unit"] if part else "개", **({"part": part} if part else {})})
         sv["n_regions"] += 1
         sv["n"] += n
         r["_n"] = r.get("_n", 0) + n
@@ -278,10 +280,10 @@ async def build_board(p) -> dict:
     services = []
     for sv in sorted(svcs.values(), key=lambda s: -s["n_regions"]):
         services.append({"id": sv["id"], "name": sv["name"], "n_regions": env(sv["n_regions"], "count", "recorded", "결과가 있는 시군구"),
-                         "n": env(sv["n"], "count", "inferred", SRC_N, as_of=last),
+                         "n": env(sv["n"], "count", "inferred", SRC_N, as_of=last), "unit": sv["unit"], **({"part": sv["part"]} if sv.get("part") else {}),
                          # 서비스 = 서비스 결과 장부의 서비스(메인 '서비스 n가지'와 같은 줄) · 전역 분석 = 서비스가 붙지 않은 시군구 전역 분석(토지피복 등) — GPT5-1
                          "kind": "analysis" if sv["id"] in ("landcover", "ai") else "service"})
-    n_svc = sum(1 for x in services if x["kind"] == "service")
+    n_svc = len({x["id"] for x in services if x["kind"] == "service"})          # 서비스 가짓수(찾는 것이 둘인 서비스도 한 가지)
     return {"regions": out, "services": services,
             "n_services": env(n_svc, "가지", "recorded", "서비스 결과 장부의 서비스(전역 분석 제외 — 메인 '서비스 n가지'와 같은 출처)"),
             "n_regions": env(len(out), "count", "recorded", "결과가 있는 시군구(서비스 결과 장부 + 시군구 전역 분석)", as_of=last),
@@ -415,18 +417,19 @@ def _scoped(bd: dict | None, p) -> dict | None:
         rr = {k: v for k, v in r.items() if k != "density"}
         rr["items"] = [{**{k: v for k, v in it.items() if k != "layer"}, "layer": {k: (it.get("layer") or {}).get(k) for k in ("id", "set")}} for it in r.get("items") or []]   # 이름표만(id · set) — 화면이 자기 결과 층과 짝짓는 열쇠
         regs.append(rr)
-    svcs: dict[str, dict] = {}
+    svcs: dict[tuple, dict] = {}
     kinds = {s["id"]: s.get("kind", "service") for s in bd.get("services") or []}
     for r in regs:
         for it in r["items"]:
-            sv = svcs.setdefault(it["svc"], {"id": it["svc"], "name": it["name"], "n_regions": 0, "n": 0})
+            pk = (it.get("part") or {}).get("key") or ""             # 찾는 것이 다르면 따로(사람 · 차량 — 10-25)
+            sv = svcs.setdefault((it["svc"], pk), {"id": it["svc"], "name": it["name"], "n_regions": 0, "n": 0, "unit": it.get("unit") or "개"})
             sv["n_regions"] += 1
             sv["n"] += int((it.get("n") or {}).get("value") or 0)
     last = max((r.get("last_at") or "" for r in regs), default="") or None
     services = [{"id": s["id"], "name": s["name"], "n_regions": env(s["n_regions"], "count", "recorded", "결과가 있는 관할 시군구"),
                  "n": env(s["n"], "count", "inferred", "AI 분석 결과 객체(겹침 정리 후 · 고친 것 반영 · 검수 전)", as_of=last),
-                 "kind": kinds.get(s["id"], "service")} for s in sorted(svcs.values(), key=lambda s: -s["n_regions"])]
-    n_svc = sum(1 for x in services if x["kind"] == "service")
+                 "unit": s["unit"], "kind": kinds.get(s["id"], "service")} for s in sorted(svcs.values(), key=lambda s: -s["n_regions"])]
+    n_svc = len({x["id"] for x in services if x["kind"] == "service"})          # 서비스 가짓수(찾는 것이 둘인 서비스도 한 가지)
     return {"regions": regs, "services": services,
             "n_services": env(n_svc, "가지", "recorded", "관할 시군구에 제공 중인 서비스(전역 분석 제외)"),
             "n_regions": env(len(regs), "count", "recorded", "결과가 있는 관할 시군구", as_of=last),

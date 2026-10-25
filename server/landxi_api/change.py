@@ -165,30 +165,14 @@ MAX_KM2_M2 = 60.0 * 1e6        # change/ranges.MAX_KM2(국토 변화가 영상�
 
 
 @router.get("/change/ranges")
-async def list_ranges(request: Request, project_id: str | None = None, all: int = 0, brief: int = 0, recent: int = 0):
+async def list_ranges(request: Request, project_id: str | None = None, all: int = 0, brief: int = 0):
     """기본 = 프로젝트에 묶인 대상지 · 분석 서비스 카드에서 올린 대상지(새 프로젝트 창에서 올리다 만 범위는 빼고) · all=1 이면 전부.
-    recent=1 = 이 사람이 최근 쓴 구간(내가 올렸거나 내가 분석한 것 · 시험 구간 빼고 · 5개) — 국토 변화 틀 카드의 '최근 쓴 구간'(10-25 사용자
-    "대상지가 왜 정해져 있지? 정해지면 안되는거 아닌가?" — 미리 정한 대상지 목록은 없다)."""
+    분석 서비스 카드에는 구간 목록을 두지 않는다(10-25 사용자 — 구간은 결과에 붙어 지도 서비스 '내 분석'에 쌓인다)."""
     p = require(principal(request))
     async with db(p) as conn:
-        if recent:
-            rows = await conn.fetch(
-                "SELECT g.id, g.name, g.buffer_m, round(ST_Area(g.geom)) AS m2, "
-                "greatest(g.created_at, (SELECT max(r.created_at) FROM change_runs r WHERE r.range_id=g.id AND r.created_by=$1)) AS used "
-                "FROM change_ranges g WHERE (g.created_by=$1 OR EXISTS (SELECT 1 FROM change_runs r WHERE r.range_id=g.id AND r.created_by=$1)) "
-                "AND coalesce(g.origin, '') <> 'test' AND g.name !~* '(시험|test)' "
-                f"AND ST_Area(g.geom) <= {MAX_KM2_M2} ORDER BY used DESC NULLS LAST LIMIT 20", p.user_id)
-            seen, keep = set(), []
-            for r in rows:                              # 같은 이름 · 같은 넓이 · 같은 거리(다시 올린 같은 구간)는 하나만
-                k = (r["name"], r["m2"], r["buffer_m"])
-                if k not in seen:
-                    seen.add(k)
-                    keep.append(r)
-            rows = keep[:5]
-        else:
-            rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
-                                    f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
-                                    "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
+        rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
+                                f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
+                                "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
     out = []
     for r in rows:
         o = range_out(await get_range_row(p, r["id"]))

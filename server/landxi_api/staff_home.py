@@ -115,14 +115,15 @@ MY_ANALYSES_SQL = (
     "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, j.snapshot_ready, "
     "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
     "c.name->>'ko' AS cname, i.name AS iname, i.year, i.epoch, i.gsd_m, pr.id AS pid, pr.name AS pname, "
-    "cg.name AS chg_name, cg.sgg AS chg_sgg, (SELECT cr.stats FROM change_runs cr WHERE cr.job_id = j.id) AS chg_stats "
+    "cg.name AS chg_name, cg.sgg AS chg_sgg, cg.id AS chg_rid, cg.buffer_m AS chg_buf, cg.kind AS chg_kind, "
+    "(SELECT cr.stats FROM change_runs cr WHERE cr.job_id = j.id) AS chg_stats "
     "FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN imagery i ON i.id=j.imagery_id "
     "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' "
     "LEFT JOIN change_ranges cg ON cg.id = j.options->'change'->>'range_id' "
-    "WHERE (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
+    "WHERE (j.kind='infer' OR (j.kind='index' AND (j.options ? 'change' OR j.options ? 'compare'))) AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.result_set IS NOT NULL "
     # 찾은 것이 0건인 분석도 결과다(결과 타일은 만들지 않음) — '결과 없음'으로 쌓는다(QA-결과없음 · 10-11 종단 시험)
     # 국토 변화(10-23 원칙 329)는 결과 타일 대신 변화 층으로 그린다 — 결과 타일이 없어도 끝난 결과면 목록에(예전 프로젝트 변화 결과 포함)
-    "AND (j.snapshot_ready OR j.options ? 'change' OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
+    "AND (j.snapshot_ready OR j.options ? 'change' OR j.options ? 'compare' OR coalesce((SELECT sum((v)::numeric) FROM jsonb_each_text(coalesce(j.counts,'{}'::jsonb)) AS t(k, v)), 0) = 0) "
     "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
     "  OR (j.options->>'project_infer'='true' AND (j.submitted_by=$1 OR pr.lead_id=$1 "
     "      OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pr.id AND m.user_id=$1))) "
@@ -165,6 +166,8 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
     cnt = _jload(r["counts"])
     if o.get("change"):
         return _change_item(r, p, o, cnt)
+    if o.get("compare"):
+        return _compare_item(r, p, o, cnt)
     proj = bool(o.get("project_infer"))
     key = f"project:{r['pid']}" if proj else f"card:{r['card_id']}"
     gname = f"프로젝트 추론 — {r['pname']}" if proj else (r["cname"] or "분석 서비스")
@@ -230,8 +233,32 @@ def _change_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, d
             "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
             "by_class": by, "bounds": [round(float(v), 6) for v in b] if b and len(b) == 4 else None, "finished_at": fin,
             "mine": r["submitted_by"] == p.user_id, "empty": False}
+    if "chg_rid" in r.keys() and r["chg_rid"]:                 # 구간은 결과에 붙는다(10-25 사용자 — 개인이 지도 서비스에 결과를 누적) · 줄 아래 '구간: 이름 · 50m'
+        from .range_tools import range_word
+        item["range"] = {"id": r["chg_rid"], "word": range_word(r["chg_name"], r["chg_buf"]), "kind": r["chg_kind"]}
     cid = r["card_id"] or "card-change"
     return f"card:{cid}", r["cname"] or "국토 변화 분석서비스", False, item
+
+
+def _compare_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, dict]:
+    """두 시기 비교 결과 한 줄(사료작물 생육기 ↔ 생산기 · 10-25 원칙 337 — 카드가 아니라 지도 서비스에서 본다).
+    지도에는 결과 타일 대신 필지 비교 층(GET /compare/runs/{작업} · 필지 색 = 비교 결과). 수 = 견준 필지(카드 계산과 같은 값)."""
+    from .regions import region_of
+    sgg = o.get("sgg_cd")
+    rg = region_of(sgg) if sgg else None
+    by = [{"cls": k, "n": int(v or 0)} for k, v in sorted(cnt.items(), key=lambda x: -int(x[1] or 0)) if int(v or 0)]
+    fin = _iso(r["finished_at"])
+    env4 = r["env"] if "env" in r.keys() else None
+    try:
+        from shapely.geometry import shape
+        b = [round(v, 6) for v in shape(_jload(env4)).bounds] if env4 else None
+    except Exception:  # noqa: BLE001
+        b = None
+    item = {"job": r["id"], "set": r["result_set"], "region": (rg or {}).get("name") or "—", "sgg_cd": (rg or {}).get("sgg_cd") or sgg,
+            "scope": "생육기 ↔ 생산기 비교", "compare": True, "imagery": {"id": None, "name": "", "year": None, "word": ""},
+            "found": env(sum(x["n"] for x in by), "필지", "inferred", "AI 분석 결과 두 시기 비교(결과 확인 전)", as_of=fin),
+            "by_class": by, "bounds": b, "finished_at": fin, "mine": r["submitted_by"] == p.user_id, "empty": not by}
+    return f"card:{r['card_id']}", r["cname"] or "두 시기 비교", False, item
 
 
 async def my_job(p: Principal, job: str) -> dict | None:
