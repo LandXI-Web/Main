@@ -159,7 +159,7 @@ async function edit(cid) {
         two.append(h('div.lc-cv-tw-row', {}, h('label.lc-cv-f', {}, h('span', { text: '원본' }), fa), h('label.lc-cv-f', {}, h('span', { text: 'AI 결과' }), fb), reg, go), st);
       }
     }
-    coverSec.replaceChildren(h('h2.la-h.lc-cv-h', {}, '카드 그림', sw.newer ? h('span.lc-new', { text: '새 후보 있음' }) : null), main, row, h('div.lc-cv-foot', {}, find, two));
+    coverSec.replaceChildren(h('h2.la-h.lc-cv-h', {}, '카드 그림', sw.newer ? h('span.lc-new', { text: '새 후보 있음' }) : null), ...[main, row, h('div.lc-cv-foot', {}, find, two)].filter(Boolean));
   };
   drawCover();
 
