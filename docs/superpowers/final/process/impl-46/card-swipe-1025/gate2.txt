@@ -1,0 +1,458 @@
+· gov · words 108초
+· gov · numbers 3초
+· gov · fonts 30초
+  gov(namwon) 1280 01-list 겹침 0 · 2.4초
+  gov(namwon) 1280 02-group 겹침 0 · 1.9초
+  gov(namwon) 1280 02b-group-svcs 겹침 0 · 2.4초
+  gov(namwon) 1280 02c-group-parcels 겹침 0 · 2.4초
+  gov(namwon) 1280 02d-group-stats 겹침 0 · 3.2초
+  gov(namwon) 1280 02e-group-downloads 겹침 0 · 3.0초
+  gov(namwon) 1280 03-dash 겹침 0 · 2.4초
+  gov(namwon) 1280 04-history 겹침 0 · 3.0초
+  gov(namwon) 1280 05-stats 겹침 0 · 3.7초
+  gov(namwon) 1280 06-parcels 겹침 0 · 2.4초
+  gov(namwon) 1280 07-card 겹침 0 · 3.1초
+  gov(namwon) 1280 07b-card-chat 겹침 0 · 3.7초
+  gov(namwon) 1280 08-map 겹침 0 · 4.7초
+  gov(namwon) 1280 08b-map-layers 겹침 0 · 6.3초
+  gov(namwon) 1280 08d-map-ask 겹침 0 · 8.3초
+  gov(namwon) 1280 09-compare 겹침 0 · 11.9초
+  gov(namwon) 1280 10-fusion 겹침 0 · 2.9초
+  gov(namwon) 1280 11-request 겹침 0 · 2.0초
+  gov(namwon) 1440 01-list 겹침 0 · 2.4초
+  gov(namwon) 1440 02-group 겹침 0 · 2.4초
+  gov(namwon) 1440 02b-group-svcs 겹침 0 · 1.9초
+  gov(namwon) 1440 02c-group-parcels 겹침 0 · 2.4초
+  gov(namwon) 1440 02d-group-stats 겹침 0 · 3.7초
+  gov(namwon) 1440 02e-group-downloads 겹침 0 · 3.0초
+  gov(namwon) 1440 03-dash 겹침 0 · 2.4초
+  gov(namwon) 1440 04-history 겹침 0 · 3.0초
+  gov(namwon) 1440 05-stats 겹침 0 · 3.7초
+  gov(namwon) 1440 06-parcels 겹침 0 · 2.9초
+  gov(namwon) 1440 07-card 겹침 0 · 3.2초
+  gov(namwon) 1440 07b-card-chat 겹침 0 · 3.7초
+  gov(namwon) 1440 08-map 겹침 0 · 4.9초
+  gov(namwon) 1440 08b-map-layers 겹침 0 · 6.7초
+  gov(namwon) 1440 08d-map-ask 겹침 0 · 7.8초
+  gov(namwon) 1440 09-compare 겹침 0 · 11.9초
+  gov(namwon) 1440 10-fusion 겹침 0 · 2.8초
+  gov(namwon) 1440 11-request 겹침 0 · 2.0초
+  gov(namwon) 390 01-list 겹침 0 · 2.4초
+  gov(namwon) 390 02-group 겹침 0 · 2.4초
+  gov(namwon) 390 02b-group-svcs 겹침 0 · 1.9초
+  gov(namwon) 390 02c-group-parcels 겹침 0 · 2.4초
+  gov(namwon) 390 02d-group-stats 겹침 0 · 3.7초
+  gov(namwon) 390 02e-group-downloads 겹침 0 · 2.5초
+  gov(namwon) 390 03-dash 겹침 0 · 2.4초
+  gov(namwon) 390 04-history 겹침 0 · 3.1초
+  gov(namwon) 390 05-stats 겹침 0 · 4.3초
+  gov(namwon) 390 06-parcels 겹침 0 · 2.5초
+  gov(namwon) 390 07-card 겹침 0 · 3.7초
+  gov(namwon) 390 07b-card-chat 겹침 0 · 3.8초
+  gov(namwon) 390 08-map 겹침 0 · 5.0초
+  gov(namwon) 390 08b-map-layers 겹침 0 · 6.7초
+  gov(namwon) 390 08d-map-ask 겹침 0 · 7.3초
+  gov(namwon) 390 09-compare 겹침 0 · 11.9초
+  gov(namwon) 390 10-fusion 겹침 0 · 2.8초
+  gov(namwon) 390 11-request 겹침 0 · 2.0초
+· gov · overlap 214초
+  gov(namwon) 1440 01-list 잘림 0 · 경고 0 · 글자 45
+  gov(namwon) 1440 02-group 잘림 0 · 경고 0 · 글자 52
+  gov(namwon) 1440 02b-group-svcs 잘림 0 · 경고 0 · 글자 45
+  gov(namwon) 1440 02c-group-parcels 잘림 0 · 경고 0 · 글자 30
+  gov(namwon) 1440 02d-group-stats 잘림 0 · 경고 0 · 글자 78
+  gov(namwon) 1440 02e-group-downloads 잘림 0 · 경고 0 · 글자 80
+  gov(namwon) 1440 03-dash 잘림 0 · 경고 0 · 글자 60
+  gov(namwon) 1440 04-history 잘림 0 · 경고 0 · 글자 51
+  gov(namwon) 1440 05-stats 잘림 0 · 경고 0 · 글자 74
+  gov(namwon) 1440 06-parcels 잘림 0 · 경고 0 · 글자 69
+  gov(namwon) 1440 07-card 잘림 0 · 경고 0 · 글자 92
+  gov(namwon) 1440 07b-card-chat 잘림 0 · 경고 0 · 글자 127
+  gov(namwon) 1440 08-map 잘림 0 · 경고 1 · 글자 46
+  gov(namwon) 1440 08b-map-layers 잘림 0 · 경고 1 · 글자 64
+  gov(namwon) 1440 08d-map-ask 잘림 0 · 경고 1 · 글자 48
+  gov(namwon) 1440 09-compare 잘림 0 · 경고 1 · 글자 62
+  gov(namwon) 1440 10-fusion 잘림 0 · 경고 0 · 글자 76
+  gov(namwon) 1440 11-request 잘림 0 · 경고 0 · 글자 56
+  gov(namwon) 1280 01-list 잘림 0 · 경고 0 · 글자 38
+  gov(namwon) 1280 02-group 잘림 0 · 경고 0 · 글자 48
+  gov(namwon) 1280 02b-group-svcs 잘림 0 · 경고 0 · 글자 39
+  gov(namwon) 1280 02c-group-parcels 잘림 0 · 경고 0 · 글자 30
+  gov(namwon) 1280 02d-group-stats 잘림 0 · 경고 0 · 글자 52
+  gov(namwon) 1280 02e-group-downloads 잘림 0 · 경고 0 · 글자 57
+  gov(namwon) 1280 03-dash 잘림 0 · 경고 0 · 글자 50
+  gov(namwon) 1280 04-history 잘림 0 · 경고 0 · 글자 51
+  gov(namwon) 1280 05-stats 잘림 0 · 경고 0 · 글자 57
+  gov(namwon) 1280 06-parcels 잘림 0 · 경고 0 · 글자 51
+  gov(namwon) 1280 07-card 잘림 0 · 경고 0 · 글자 71
+  gov(namwon) 1280 07b-card-chat 잘림 0 · 경고 0 · 글자 96
+  gov(namwon) 1280 08-map 잘림 0 · 경고 1 · 글자 46
+  gov(namwon) 1280 08b-map-layers 잘림 0 · 경고 0 · 글자 59
+  gov(namwon) 1280 08d-map-ask 잘림 0 · 경고 1 · 글자 48
+  gov(namwon) 1280 09-compare 잘림 0 · 경고 1 · 글자 57
+  gov(namwon) 1280 10-fusion 잘림 0 · 경고 0 · 글자 67
+  gov(namwon) 1280 11-request 잘림 0 · 경고 0 · 글자 37
+  gov(namwon) 390 01-list 잘림 0 · 경고 0 · 글자 31
+  gov(namwon) 390 02-group 잘림 0 · 경고 0 · 글자 37
+  gov(namwon) 390 02b-group-svcs 잘림 0 · 경고 0 · 글자 35
+  gov(namwon) 390 02c-group-parcels 잘림 0 · 경고 0 · 글자 23
+  gov(namwon) 390 02d-group-stats 잘림 0 · 경고 0 · 글자 31
+  gov(namwon) 390 02e-group-downloads 잘림 0 · 경고 0 · 글자 39
+  gov(namwon) 390 03-dash 잘림 0 · 경고 0 · 글자 28
+  gov(namwon) 390 04-history 잘림 0 · 경고 0 · 글자 43
+  gov(namwon) 390 05-stats 잘림 0 · 경고 0 · 글자 32
+  gov(namwon) 390 06-parcels 잘림 0 · 경고 0 · 글자 48
+  gov(namwon) 390 07-card 잘림 0 · 경고 0 · 글자 72
+  gov(namwon) 390 07b-card-chat 잘림 0 · 경고 0 · 글자 84
+  gov(namwon) 390 08-map 잘림 0 · 경고 0 · 글자 31
+  gov(namwon) 390 08b-map-layers 잘림 0 · 경고 0 · 글자 33
+  gov(namwon) 390 08d-map-ask 잘림 0 · 경고 0 · 글자 33
+  gov(namwon) 390 09-compare 잘림 0 · 경고 0 · 글자 34
+  gov(namwon) 390 10-fusion 잘림 0 · 경고 0 · 글자 26
+  gov(namwon) 390 11-request 잘림 0 · 경고 1 · 글자 30
+· gov · clip 209초
+· abroad · words 12초
+· abroad · numbers 6초
+· abroad · fonts 15초
+  abroad(kgz-agri) 1440 b1-global 잘림 0 · 경고 0 · 글자 1
+  abroad(kgz-agri) 1280 b1-global 잘림 0 · 경고 0 · 글자 1
+  abroad(kgz-agri) 390 b1-global 잘림 0 · 경고 0 · 글자 4
+· abroad · clip 5초
+· app · words 139초
+· app · numbers 182초
+· app · fonts 87초
+  app 1280 a1-console 겹침 0 · 3.8초
+  app 1280 a2-projects 겹침 0 · 4.3초
+  app 1280 a3-analyze 겹침 0 · 4.3초
+  app 1280 a4-ximap 겹침 0 · 5.4초
+  app 1280 a5-ximap-layers 겹침 0 · 8.3초
+  app 1280 a6-map 겹침 0 · 4.3초
+  app 1280 a7-ximap-measure 겹침 0 · 9.2초
+  app 1280 a8-ximap-imagery 겹침 0 · 10.7초
+  app 1280 a9-ximap-compare 겹침 0 · 10.7초
+  app 1280 a10-ximap-layers-fold 겹침 0 · 9.4초
+  app 1280 a11-map-compare 상태 못 만듦 · 겹침 0 · 34.5초
+  app 1440 a1-console 겹침 0 · 4.1초
+  app 1440 a2-projects 겹침 0 · 3.8초
+  app 1440 a3-analyze 겹침 0 · 4.3초
+  app 1440 a4-ximap 겹침 0 · 6.1초
+  app 1440 a5-ximap-layers 겹침 0 · 9.8초
+  app 1440 a6-map 겹침 0 · 4.3초
+  app 1440 a7-ximap-measure 겹침 0 · 7.4초
+  app 1440 a8-ximap-imagery 겹침 0 · 18.5초
+  app 1440 a9-ximap-compare 겹침 0 · 9.7초
+  app 1440 a10-ximap-layers-fold 겹침 0 · 9.2초
+  app 1440 a11-map-compare 상태 못 만듦 · 겹침 0 · 33.5초
+  app 390 a1-console 겹침 0 · 4.2초
+  app 390 a2-projects 겹침 0 · 3.9초
+  app 390 a3-analyze 겹침 0 · 4.4초
+  app 390 a4-ximap 겹침 0 · 5.9초
+  app 390 a5-ximap-layers 겹침 0 · 8.7초
+  app 390 a6-map 겹침 0 · 4.8초
+  app 390 a7-ximap-measure 겹침 0 · 8.9초
+  app 390 a8-ximap-imagery 겹침 0 · 11.9초
+  app 390 a9-ximap-compare 겹침 0 · 9.4초
+  app 390 a10-ximap-layers-fold 겹침 0 · 11.4초
+  app 390 a11-map-compare 상태 못 만듦 · 겹침 0 · 33.7초
+· app · overlap 329초
+  app 1440 a1-console 잘림 0 · 경고 0 · 글자 96
+  app 1440 a2-projects 잘림 0 · 경고 0 · 글자 128
+  app 1440 a3-analyze 잘림 0 · 경고 0 · 글자 149
+  app 1440 a4-ximap 잘림 0 · 경고 0 · 글자 21
+  app 1440 a5-ximap-layers 잘림 0 · 경고 0 · 글자 47
+  app 1440 a6-map 잘림 0 · 경고 0 · 글자 90
+  app 1440 a7-ximap-measure 잘림 0 · 경고 0 · 글자 37
+  app 1440 a8-ximap-imagery 잘림 0 · 경고 0 · 글자 51
+  app 1440 a9-ximap-compare 잘림 0 · 경고 0 · 글자 31
+  app 1440 a10-ximap-layers-fold 잘림 0 · 경고 0 · 글자 49
+  app 1440 a11-map-compare 상태 못 만듦 · 잘림 0 · 경고 0 · 글자 89
+  app 1440 a12-cards 잘림 0 · 경고 0 · 글자 16
+  app 1440 a13-deploy 잘림 0 · 경고 0 · 글자 22
+  app 1440 a14-train 잘림 0 · 경고 0 · 글자 27
+  app 1440 a15-inbox 잘림 0 · 경고 0 · 글자 23
+  app 1440 a16-ingest 잘림 0 · 경고 0 · 글자 21
+  app 1440 a17-review 잘림 0 · 경고 0 · 글자 23
+  app 1440 a18-release 잘림 0 · 경고 0 · 글자 21
+  app 1280 a1-console 잘림 0 · 경고 0 · 글자 59
+  app 1280 a2-projects 잘림 0 · 경고 0 · 글자 96
+  app 1280 a3-analyze 잘림 0 · 경고 0 · 글자 133
+  app 1280 a4-ximap 잘림 0 · 경고 0 · 글자 30
+  app 1280 a5-ximap-layers 잘림 0 · 경고 0 · 글자 46
+  app 1280 a6-map 잘림 0 · 경고 0 · 글자 83
+  app 1280 a7-ximap-measure 잘림 0 · 경고 0 · 글자 37
+  app 1280 a8-ximap-imagery 잘림 0 · 경고 0 · 글자 47
+  app 1280 a9-ximap-compare 잘림 0 · 경고 0 · 글자 32
+  app 1280 a10-ximap-layers-fold 잘림 0 · 경고 0 · 글자 46
+  app 1280 a11-map-compare 상태 못 만듦 · 잘림 0 · 경고 0 · 글자 83
+  app 1280 a12-cards 잘림 0 · 경고 0 · 글자 16
+  app 1280 a13-deploy 잘림 0 · 경고 0 · 글자 20
+  app 1280 a14-train 잘림 0 · 경고 0 · 글자 0
+  app 1280 a15-inbox 잘림 0 · 경고 0 · 글자 19
+  app 1280 a16-ingest 잘림 0 · 경고 0 · 글자 21
+  app 1280 a17-review 잘림 0 · 경고 0 · 글자 23
+  app 1280 a18-release 상태 못 만듦 · 잘림 0 · 경고 0 · 글자 0
+  app 390 a1-console 잘림 0 · 경고 0 · 글자 36
+  app 390 a2-projects 잘림 0 · 경고 0 · 글자 51
+  app 390 a3-analyze 잘림 0 · 경고 0 · 글자 40
+  app 390 a4-ximap 잘림 0 · 경고 0 · 글자 17
+  app 390 a5-ximap-layers 잘림 0 · 경고 0 · 글자 42
+  app 390 a6-map 잘림 0 · 경고 0 · 글자 84
+  app 390 a7-ximap-measure 잘림 0 · 경고 0 · 글자 31
+  app 390 a8-ximap-imagery 잘림 0 · 경고 0 · 글자 40
+  app 390 a9-ximap-compare 잘림 0 · 경고 0 · 글자 26
+  app 390 a10-ximap-layers-fold 잘림 0 · 경고 0 · 글자 26
+  app 390 a11-map-compare 상태 못 만듦 · 잘림 0 · 경고 0 · 글자 84
+  app 390 a12-cards 잘림 0 · 경고 0 · 글자 0
+  app 390 a13-deploy 잘림 0 · 경고 0 · 글자 17
+  app 390 a14-train 잘림 0 · 경고 0 · 글자 19
+  app 390 a15-inbox 잘림 0 · 경고 0 · 글자 27
+  app 390 a16-ingest 상태 못 만듦 · 잘림 0 · 경고 0 · 글자 0
+  app 390 a17-review 잘림 0 · 경고 0 · 글자 13
+  app 390 a18-release 잘림 0 · 경고 0 · 글자 0
+· app · clip 346초
+· admin · words 32초
+· admin · numbers 19초
+· admin · fonts 35초
+  admin 1440 m1-home 잘림 0 · 경고 0 · 글자 62
+  admin 1440 m2-accounts 잘림 0 · 경고 0 · 글자 32
+  admin 1440 m3-infra 잘림 0 · 경고 0 · 글자 18
+  admin 1440 m4-release 잘림 0 · 경고 0 · 글자 0
+  admin 1440 m5-review 잘림 0 · 경고 0 · 글자 23
+  admin 1440 m6-inbox 잘림 0 · 경고 0 · 글자 26
+  admin 1440 m7-cards 잘림 0 · 경고 0 · 글자 127
+  admin 1440 m8-train 잘림 0 · 경고 0 · 글자 27
+  admin 1440 m9-sales 잘림 0 · 경고 0 · 글자 8
+  admin 1280 m1-home 잘림 0 · 경고 0 · 글자 68
+  admin 1280 m2-accounts 잘림 0 · 경고 0 · 글자 32
+  admin 1280 m3-infra 잘림 0 · 경고 0 · 글자 18
+  admin 1280 m4-release 잘림 0 · 경고 0 · 글자 21
+  admin 1280 m5-review 잘림 0 · 경고 0 · 글자 23
+  admin 1280 m6-inbox 잘림 0 · 경고 0 · 글자 26
+  admin 1280 m7-cards 잘림 0 · 경고 0 · 글자 78
+  admin 1280 m8-train 잘림 0 · 경고 0 · 글자 54
+  admin 1280 m9-sales 잘림 0 · 경고 0 · 글자 8
+  admin 390 m1-home 잘림 0 · 경고 0 · 글자 50
+  admin 390 m2-accounts 잘림 0 · 경고 0 · 글자 24
+  admin 390 m3-infra 잘림 0 · 경고 0 · 글자 17
+  admin 390 m4-release 잘림 0 · 경고 0 · 글자 17
+  admin 390 m5-review 잘림 0 · 경고 0 · 글자 19
+  admin 390 m6-inbox 잘림 0 · 경고 0 · 글자 24
+  admin 390 m7-cards 잘림 0 · 경고 0 · 글자 37
+  admin 390 m8-train 잘림 0 · 경고 0 · 글자 38
+  admin 390 m9-sales 잘림 0 · 경고 0 · 글자 8
+· admin · clip 45초
+
+━━ words ━━
+금칙어 검사 2026-10-25 05:12 · 화면 57개 · 금칙어 결재 · 반려 · 현장 확인 · 시연 · 데모 · 준비 중 · 검증 정확도 · 무허가 건축 의심 · 표본 n장 · 개발 요청 · 봤음 기록 · null · undefined · NaN · 데이터하우스 · 평가(→ 추론) · 추론 시험 · 검증 묶음 · 자체 검증 · 고친 곳 · 모인 학습 데이터 · 고친 것 n건 · 학습 자료로 쌓임 · 학습 자리 · .docx · Word · 광주전남특별시(→ 전남광주특별시) · 칸 불러오는 중 · 가르기(→ 영상 비교) · 견주기(→ 대조) · 이용 약속(→ 다운로드 이력 · 개인정보 이용 확인) · 오늘 볼 필지(→ 필지 목록) · 재추론 · n클래스(작업 이름) · n시점(작업 이름) · 지역만 정하기(→ 브이월드에서 영상 가져오기)
+✓ 기관 · 내 서비스 — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · farm 묶음 · 통합 대시보드 — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · farm 묶음 · 분석서비스 — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · farm 묶음 · 필지 찾기 — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · farm 묶음 · 보고서·통계 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+    응답(경고) [현장 확인] /api/v1/history/stats .note: 현장 확인 전
+✓ 기관 · farm 묶음 · 다운로드 이력 — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 결과 지도(card-farm) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 서비스 대시보드(card-farm) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 통계·보고서(card-farm) — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+    응답(경고) [현장 확인] /api/v1/history/stats .note: 현장 확인 전
+✓ 기관 · 보고서(card-farm) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 필지 목록 + 상세(card-farm) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/spaces/me/guides/card-farm/parcels .note: 부서 계정 시험 — 현장 확인 예정
+✓ 기관 · 결과 지도(card-living) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 서비스 대시보드(card-living) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 통계·보고서(card-living) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 보고서(card-living) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 필지 목록 + 상세(card-living) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 결과 지도(card-road) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 서비스 대시보드(card-road) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 통계·보고서(card-road) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/summary .label: 현장 확인 필요
+✓ 기관 · 보고서(card-road) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 필지 목록 + 상세(card-road) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 요청하기(분석 요청) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 기관 · 요청하기(촬영 요청) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Season) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(NDVI) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Sprawl) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Register) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 대시보드 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 분석 서비스 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 분석 서비스 자세히(경작⁠·⁠휴경 분석서비스) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/cards/card-farm .label: 현장 확인 필요
+✓ LX 직원 · 분석 서비스 자세히(건축물 분석서비스) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/cards/card-45424f .label: 현장 확인 필요
+✓ LX 직원 · 분석 서비스 자세히(국토 변화 분석서비스) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 분석 서비스 자세히(비닐하우스 분석서비스) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/cards/card-5e85a9 .label: 현장 확인 필요
+✓ LX 직원 · 지도 서비스 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 요청함 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 새 프로젝트 창 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · XI맵(전국) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/survey/stats .note: 현장 확인 전
+✓ LX 직원 · XI맵(시군구 · 남원) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/survey/stats .note: 현장 확인 전
+✓ LX 직원 · XI맵(시군구 · 전주 · 구가 있는 시) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/survey/stats .note: 현장 확인 전
+✓ LX 직원 · XI맵(시군구 · 종로) — 화면 금칙어 0 · 응답 문구 1 · 화면 오류 0
+    응답(경고) [현장 확인] /api/v1/survey/stats .note: 현장 확인 전
+✓ LX 직원 · 프로젝트 학습(비닐하우스 2026) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습(점검-삭제예정-0755) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습(고속국도 담양IC 변화 모니터링) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습(고속국도 담양IC 변화 모니터링) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습(호남선 철도용지 변화 모니터링(광산구)) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습(고속국도 담양IC 변화 모니터링) — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 대시보드 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [시연] /api/v1/ops/tenants .note: [추정 기반 초기값] 영업 시연
+    응답(경고) [시연] /api/v1/deploys .name: Meiktila damage (시연 한정)
+✓ LX 관리자 · 요청 관리 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 배포 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [시연] /api/v1/ops/tenants .note: [추정 기반 초기값] 영업 시연
+    응답(경고) [시연] /api/v1/deploys .name: Meiktila damage (시연 한정)
+✓ LX 관리자 · 배포 → 개선 후보 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [시연] /api/v1/ops/tenants .note: [추정 기반 초기값] 영업 시연
+    응답(경고) [시연] /api/v1/deploys .name: Meiktila damage (시연 한정)
+✓ LX 관리자 · 배포 → XI 재학습 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 배포 → 학습 서식 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [시연] /api/v1/ops/tenants .note: [추정 기반 초기값] 영업 시연
+    응답(경고) [시연] /api/v1/deploys .name: Meiktila damage (시연 한정)
+✓ LX 관리자 · 공유 데이터 → 영상 상세 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터 → 학습 데이터 — 화면 금칙어 0 · 응답 문구 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터 → 행정 자료 — 화면 금칙어 0 · 응답 문구 2 · 화면 오류 0
+    응답(경고) [시연] /api/v1/ops/tenants .note: [추정 기반 초기값] 영업 시연
+    응답(경고) [시연] /api/v1/deploys .name: Meiktila damage (시연 한정)
+통과 — 화면 금칙어 0 · 화면 오류 0
+
+━━ numbers ━━
+같은 이름 숫자 대조 · 2026. 10. 25. 오후 1:42:05 · https://app.land-xi.dev · https://admin.land-xi.dev · https://namwon.land-xi.dev · 해외 기관
+
+| 판정 | 이름 | 화면 | 값 |
+|---|---|---|---|
+| 한 화면 | 건물 면적 변화 · Ysyk-Ata | 해외 첫 화면 큰 숫자(Sprawl) | 15.3km² |
+| 한 화면 | 작황 하락 · Ysyk-Ata ·  | 해외 첫 화면 큰 숫자 | 647.6km² |
+|  |  | 해외 XI ChatGEO 답 | — (못 읽음) · 답에 km² 없음: No data for this area yet. |
+| 한 화면 | 전국 농지 분석 진행 | 관리자 대시보드 | 99% |
+| 같음 | 정확도 · 건축물 분석서비스 (지금 판) | 분석하기 카드 | 89% |
+|  |  | 분석하기 자세히 | 89% |
+|  |  | 관리자 배포 신청(최근 승인) | — (못 읽음) · 신청서 전 기록 — 값 없음 |
+| 같음 | 정확도 · 경작⁠·⁠휴경 분석서비스 (지금 판) | 분석하기 카드 | 95% |
+|  |  | 분석하기 자세히 | 95% |
+| 같음 | 정확도 · 곤포사일리지 분석서비스 (지금 판) | 분석하기 카드 | 96% |
+|  |  | 분석하기 자세히 | 96% |
+| 같음 | 정확도 · 관광지 안전관리 분석서비스 (지금 판) | 분석하기 카드 | 87% |
+|  |  | 분석하기 자세히 | 87% |
+| 같음 | 정확도 · 국토 변화 분석서비스 (지금 판) | 분석하기 카드 | 79% |
+|  |  | 분석하기 자세히 | 79% |
+| 같음 | 정확도 · 비닐하우스 단동⁠·⁠다동 분석서비스 (지금 판) | 분석하기 카드 | 95% |
+|  |  | 분석하기 자세히 | 95% |
+| 같음 | 정확도 · 비닐하우스 분석서비스 (지금 판) | 분석하기 카드 | 83% |
+|  |  | 분석하기 자세히 | 83% |
+|  |  | 관리자 배포 신청(최근 승인) | — (못 읽음) · 신청서 전 기록 — 값 없음 |
+| 같음 | 정확도 · 사료작물 생산기 분석서비스 (지금 판) | 분석하기 카드 | 97% |
+|  |  | 분석하기 자세히 | 97% |
+| 같음 | 정확도 · 사료작물 생육기 분석서비스 (지금 판) | 분석하기 카드 | 99% |
+|  |  | 분석하기 자세히 | 99% |
+| 같음 | 정확도 · 사료작물 생육기⁠·⁠생산기 비교 분석서비스 (지금 판) | 분석하기 카드 | 99% |
+|  |  | 분석하기 자세히 | 99% |
+| 같음 | 정확도 · 산사태 취약지구 분석서비스 (지금 판) | 분석하기 카드 | 79% |
+|  |  | 분석하기 자세히 | 79% |
+| 같음 | 정확도 · 주차장 분석서비스 (지금 판) | 분석하기 카드 | 89% |
+|  |  | 분석하기 자세히 | 89% |
+|  |  | 관리자 배포 신청(최근 승인) | — (못 읽음) · 신청서 전 기록 — 값 없음 |
+| 같음 | 정확도 · 차량 분석서비스 (지금 판) | 분석하기 카드 | 99% |
+|  |  | 분석하기 자세히 | 99% |
+| 한 화면 | AI 분석 결과 · 건축물 분석서비스 · 원주시 | 분석하기 자세히 | 5,011개 |
+| 한 화면 | AI 분석 결과 · 경작·휴경 분석서비스 · 남원시 | 기관 행정서비스 홈(namwon · farm) | 2,098필지 |
+| 한 화면 | AI 분석 결과 · 경작⁠·⁠휴경 분석서비스 · 남원시 | 분석하기 자세히 | 2,098필지 |
+| 같음 | AI 분석 결과 · 관광지 안전관리 분석서비스 · 남원시 | 기관 내 서비스(namwon) | 9,770 |
+|  |  | 분석하기 자세히 | 9,770사람 |
+| 한 화면 | AI 분석 결과 · 국토 변화 분석서비스 · 남원시 | 분석하기 자세히 | 456건 |
+| 한 화면 | AI 분석 결과 · 비닐하우스 분석서비스 · 남원시 외 2곳 | 분석하기 자세히 | 15,111개 |
+| 한 화면 | AI 분석 결과 · 사료작물 생육기⁠·⁠생산기 비교 분석서비스 · 금지면 | 분석하기 자세히 | 190필지 |
+| 한 화면 | AI 분석 결과 · 산사태 취약지구 분석서비스 · 남원시 예시 지구 2곳 | 분석하기 자세히 | 64건 |
+| 한 화면 | AI 분석 결과 · 주차장 분석서비스 · 천안시 서북구 외 1곳 | 분석하기 자세히 | 164개 |
+| 한 화면 | 분석한 면적 · 남원시 · 경작·휴경 분석서비스 | 관리자 사용 현황 | 2.7㎢ |
+| 한 화면 | 분석한 면적 · 남원시 · 관광지 안전관리 분석서비스 | 관리자 사용 현황 | 0.80㎢ |
+| 한 화면 | 분석한 면적 · 남원시 · 이번 달 | 관리자 기관('분석한 면적') | 0㎢ |
+| 한 화면 | 분석한 면적 · 전남광주특별시 · 이번 달 | 관리자 기관('분석한 면적') | 0㎢ |
+| 한 화면 | 분석한 면적 · 키르기스 농업부 · 이번 달 | 관리자 기관('분석한 면적') | 0㎢ |
+| 한 화면 | 분석한 면적 · 키르기스 토지자원청 · 이번 달 | 관리자 기관('분석한 면적') | 0㎢ |
+| 한 화면 | 분석한 면적 · 한국도로공사 · 이번 달 | 관리자 기관('분석한 면적') | 0㎢ |
+| 한 화면 | 서비스 수(결과를 낸 서비스) | 메인 · 분석 결과 제공 | 12가지 |
+|  |  | XI맵 전국 결과 | — (못 읽음) |
+
+이 PC 주소 호출: 0건
+
+경고(실패 아님):
+- XI맵 전국 결과 칸이 안 보임
+
+결과 확인 '봤음' 기록 말(원칙 203 · 본 화면 37): 0곳
+통과 — 같은 이름 숫자 모두 같음 · 이 PC 주소 호출 0 · 결과 확인 기록 말 0
+
+━━ fonts ━━
+글자 크기 검사 2026-10-25 05:12 · 화면 29개 · 폭 1440 · 바닥 14px · 단계 = 토큰 값(옛 이름 빼고)
+✓ 기관 · 내 서비스 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 기관 · 서비스 대시보드 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 기관 · 보고서 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 기관 · 필지 목록 + 상세 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 기관 · 요청하기(분석 요청) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 기관 · 요청하기(촬영 요청) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Season) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(NDVI) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Sprawl) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ 해외 기관 · 해외 첫 화면(Register) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 대시보드 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 분석 서비스 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 지도 서비스 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 요청함 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 프로젝트 학습 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · 배포 신청서 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · XI맵(전국) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · XI맵(시군구 · 남원) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · XI맵 결과 표시(지금 + C) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 직원 · XI맵 고치기 칸 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 대시보드 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 요청 관리 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 인프라 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 배포 신청 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 배포 → XI 재학습 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터(영상 + 상세) — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터 → 학습 데이터 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0
+✓ LX 관리자 · 공유 데이터 → 행정 자료 — 14px 미만 0 · 단계 밖 0 · 화면 오류 0 · 칸 경고(1440)
+    칸(1440) 넘침 0 · 화면 밖 0 · 제목 3줄 0 · 한 단어 줄 dd «…신청» · 글자 중간 끊김 0
+쓰인 크기(px · 글 수): 14×577 · 15×1197 · 16×212 · 20×125 · 28×35 · 32×43 · 40×4 · 48×3 · 80×2 · 124×4
+의도된 예외: 지도 라이브러리 출처 · 닫기 표시 · 개발자 서랍(?dev=1) · 검사 제외 표시
+통과 — 14px 미만 0 · 단계 밖 크기 0 · 화면 오류 0
+
+━━ overlap ━━
+겹침 검사 — 상태 87개(역할 × 폭 × 화면) · 겹친 상태 0 · 만들지 못한 상태 0(필수) + 3(그 기관에 없는 기능)
+✓ 겹침 0
+
+━━ clip ━━
+글자 잘림 검사 — 상태 138개(역할 × 폭 × 화면) · 잘린 상태 0(잘림 0곳) · 경고 8곳(실패 아님)
+△ gov(namwon) 1440 08-map ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 08b-map-layers ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 국토 변화 분석서비스(시범 운영 중 · AI 분석 결과" — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 08d-map-ask ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 09-compare ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 08-map ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 08d-map-ask ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 09-compare ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 390 11-request orphan [div#svcs.gq-cards > button.k-sc.is-compact > div.k-sc-b > h3.k-sc-t] "도로 안전관리 서비스" — 마지막 줄에 서비스 만 남음
+✓ 글자 잘림 0
+
+검사기 5개 · 로그인 4번 · 30.7분 — 모두 통과
+
+✓ 검사 문 — 모두 0 · 화면 파일 695개 통과 기록

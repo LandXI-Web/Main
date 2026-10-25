@@ -44,3 +44,23 @@
 .lc-grp{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink);cursor:pointer}
 .lc-grp:has(input:checked){border-color:var(--ink);background:var(--bg-0)}
 .k-sc-spec dd{text-wrap:balance}   /* 카드 칸 값이 두 줄이면 고르게 — 괄호 한 덩어리만 남는 줄 0(원칙 248 · 법전 §2-1)*/
+/* 카드 그림(10-25 원칙 339) — 원본 ↔ AI 결과 · 다른 후보 셋 · 새 후보 있음 · 두 장 올리기 */
+.lc-cv-h{display:flex;align-items:center;gap:8px}
+.lc-new{padding:2px 8px;border-radius:999px;background:var(--accent-weak,#E8F1FE);color:var(--accent,#006DF7);font:600 var(--fs-tag)/21px var(--font-body);white-space:nowrap}
+.lc-cv-main{position:relative;aspect-ratio:4/3;max-width:560px;border-radius:12px;overflow:hidden;background:var(--rule)}
+.lc-cv-main>img{width:100%;height:100%;object-fit:cover;display:block}
+.lc-cv-none{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub)}
+.lc-cv-cands{display:flex;flex-direction:column;gap:8px}
+.lc-cv-k{margin:0}
+.lc-cv-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lc-cv-c{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lc-cv-pic{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--rule)}
+.lc-cv-why{margin:0;font:400 var(--fs-tag)/19px var(--font-body);color:var(--sub);word-break:keep-all}
+.lc-cv-use{align-self:flex-start}
+.lc-cv-foot{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.lc-cv-two{padding:0;border:0;background:none;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.lc-cv-tw{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1 1 100%}
+.lc-cv-tw .lc-h{grid-column:auto}
+.lc-cv-tw-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,180px) auto;gap:8px;align-items:end}
+.lc-cv-f{display:flex;flex-direction:column;gap:4px;min-width:0;font:500 var(--fs-tag)/19px var(--font-body);color:var(--ink-2)}
+@media (max-width:640px){.lc-cv-row{grid-template-columns:repeat(2,minmax(0,1fr))}.lc-cv-tw-row{grid-template-columns:minmax(0,1fr)}}

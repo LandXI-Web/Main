@@ -1,0 +1,122 @@
+{
+ "at": "2026-10-25T04:40:51.413Z",
+ "card": "card-2c5304",
+ "staff": [
+  {
+   "w": 1440,
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": true,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-2b2799799fba.jpg"
+  },
+  {
+   "w": 1280,
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": true,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-2b2799799fba.jpg"
+  },
+  {
+   "w": 390,
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": true,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-2b2799799fba.jpg"
+  }
+ ],
+ "admin": {
+  "before": {
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": true,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-2b2799799fba.jpg"
+  },
+  "switched": {
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": false,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-ffde4038f93c.jpg"
+  },
+  "backIndex": 0,
+  "restored": {
+   "sec": true,
+   "main": true,
+   "cands": 3,
+   "swipesInCands": 3,
+   "why": [
+    "신뢰도 높음 · 가장자리 잘림 적음 · 영상 깨끗함",
+    "신뢰도 높음 · 영상 깨끗함"
+   ],
+   "newer": false,
+   "two": true,
+   "use": 3,
+   "clip": [],
+   "ovl": [],
+   "hscroll": 0,
+   "mainAfter": "card-2c5304/scene-2b2799799fba.jpg"
+  },
+  "approvalRow": 0,
+  "approval": {
+   "w": 280,
+   "h": 210,
+   "v": 100,
+   "name": "배포 신청"
+  }
+ },
+ "errs": []
+}

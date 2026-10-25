@@ -330,30 +330,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-ac-imk span{flex:none}
 .la-ac-hero{flex:none}
 .la-ac .k-sc-acts{flex:none}
-/* 원본 ↔ AI 결과 밀어 보기(10-25 원칙 339) — 같은 틀 두 장을 포갠 한 그림. --v = 결과가 보이는 너비(왼쪽부터) · 처음 0 → 한 번 100 */
-.la-swp{position:absolute;inset:0;overflow:hidden;container-type:size;--v:0%;touch-action:pan-y}
-.la-swp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.la-swp .la-swp-r{clip-path:inset(0 calc(100% - var(--v)) 0 0)}
-.la-swp-bar{position:absolute;top:0;bottom:0;left:var(--v);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.18);pointer-events:none}
-.la-swp[data-done="1"]:not(:hover) .la-swp-bar{opacity:0;transition:opacity var(--d-300,.3s)}
-.la-swp-lab{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:2px 9px;border-radius:999px;
-  background:rgba(28,31,37,.66);color:rgba(255,255,255,.62);font:600 var(--fs-tag)/21px var(--font-body);white-space:nowrap;pointer-events:none}
-.la-swp-lab i{width:1px;height:10px;background:rgba(255,255,255,.4)}
-.la-swp[data-side="l"] .la-swp-lab b.l,.la-swp[data-side="r"] .la-swp-lab b.r{color:#fff}
-.la-swp-leg{position:absolute;right:10px;bottom:10px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;max-width:calc(55% - 10px);pointer-events:none;
-  opacity:0;transition:opacity var(--d-300,.3s)}
-.la-swp[data-side="r"] .la-swp-leg{opacity:1}
-.la-swp-leg span{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--ink);
-  font:600 var(--fs-tag)/21px var(--font-body);white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.la-swp-leg i{width:9px;height:9px;border-radius:3px;flex:none}
-.la-swp-in{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;touch-action:pan-y}
-.la-swp-in:focus-visible{opacity:.01}
-.la-swp:has(.la-swp-in:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
 .la-ac-pic .la-ac-cat{z-index:2}
-@container (max-width:300px){.la-swp-leg{display:none}}
-@container (max-height:150px){.la-swp-leg{display:none}}
-@container (max-height:70px){.la-swp-lab{display:none}}
 /* 자세히 큰 그림 — 이름표 왼쪽 위 · 범례 오른쪽 위(아래는 장면 이름 · '다른 지역 결과' 자리) */
 .la-hero .la-swp-lab{top:16px;bottom:auto;left:16px}
 .la-hero .la-swp-leg{top:16px;bottom:auto;right:16px}
-@media (prefers-reduced-motion:reduce){.la-swp-leg,.la-swp-bar{transition:none}}

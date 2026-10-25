@@ -10,6 +10,7 @@
    숫자는 모두 서버 값(봉투). 아이콘 0. 광역 기관은 기관 단위 체크만(배포-6 광역 세부는 보류). */
 import { toast, h, api, nf, drawer, empty, during } from './kit.js';
 import { API } from '../../../shared/api-v1.js';   // 대표 그림 주소(게이트웨이 파일)
+import { swipePic } from '../../kit/swipe.js';   // 카드 그림 원본 ↔ AI 결과(10-25)
 import { improveBoard } from './improve.js';
 import { apiKeysPane } from './apikeys.js';   // 배포 → API(외부 연동 API 키 · 원칙 178)
 import { retrainPane, templatePane } from './retrain.js';   // 배포 → XI 재학습 · 학습 서식(원칙 213 · 217 · 10-12 12:45)
@@ -88,6 +89,7 @@ export function mountRelease(root) {
     if (!x.form) {                       // 신청서가 생기기 전(10-09 전)의 서비스 공개 승인 기록 — 서버 값이 없어 지어내지 않는다
       row('모델', h('b', { text: x.model_name || '—' }));
       row('신청서', h('span.rv-dim', { text: '이 신청에는 모델 기록이 남아 있지 않습니다 — 예전 방식으로 낸 신청' }));   // 사람 말로(GPT5-5)
+      if (x.cover_pair) row('대표 그림', h('div.rv-cover.rv-cover--pair', {}, swipePic({ src: x.cover_pair.src, swipe: x.cover_pair })));   // 지금 카드 그림(원본 ↔ AI 결과 · 10-25)
       if (x.memo) row('메모', h('span', { text: x.memo }));
       return finish(x, dl);
     }
@@ -102,7 +104,9 @@ export function mountRelease(root) {
     // 결과 확인 봤음 · 안 봄 줄은 원칙 203(10-12)으로 뺐다(예전 신청서에 남은 값도 보이지 않음)
     // 대표 그림(필수 · 원칙 186) — 승인하면 분석하기 카드 그림이 된다 · 없던 때 신청은 '그림 없음'
     const cvSrc = f.cover?.src ? (String(f.cover.src).startsWith('/api/') ? API.base + f.cover.src : f.cover.src) : null;
-    row('대표 그림', h('div.rv-cover', {}, cvSrc ? h('img', { src: cvSrc, alt: '대표 그림', loading: 'lazy' }) : h('span', { text: '그림 없음' })),
+    const pair = x.cover_pair && (f.cover?.keep || !cvSrc) ? x.cover_pair : null;          // 지금 카드 그림이 원본 ↔ AI 결과 한 쌍이면 그대로 밀어 보며 확인(10-25)
+    row('대표 그림', pair ? h('div.rv-cover.rv-cover--pair', {}, swipePic({ src: pair.src, swipe: pair }))
+      : h('div.rv-cover', {}, cvSrc ? h('img', { src: cvSrc, alt: '대표 그림', loading: 'lazy' }) : h('span', { text: '그림 없음' })),
       h('small', { text: f.cover?.keep ? '지금 카드 그림 그대로' : cvSrc ? '승인하면 분석 서비스 카드 그림이 됩니다' : '이 신청에는 대표 그림이 없습니다' }));
     const sc = f.scene;
     row('결과 장면', sc ? h('b', { text: join(sc.imagery, sc.range) }) : h('b', { text: '고르지 않음' }),

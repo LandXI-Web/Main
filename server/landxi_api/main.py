@@ -124,6 +124,21 @@ async def lifespan(app: FastAPI):
                 print(f"[gateway] redis expiry 실패: {e!r}", flush=True)
             await asyncio.sleep(3600)
 
+    async def _cover_loop():               # 카드 그림 후보(10-25 · 규칙 기반) — 새 실제 결과가 생긴 카드만 · 카드 그림이 없으면 1번 자동 · 있으면 '새 후보 있음'
+        await asyncio.sleep(180)
+        while True:
+            try:
+                if os.environ.get("LX_TEST_GATEWAY") != "1":
+                    from .cards import cover_sweep
+                    out = await cover_sweep()
+                    moved = {k: v for k, v in out.items() if v not in ("same", "none", "skip")}
+                    if moved:
+                        print(f"[gateway] card cover: {moved}", flush=True)
+            except Exception as e:  # noqa: BLE001
+                print(f"[gateway] card cover 실패: {e!r}", flush=True)
+            await asyncio.sleep(900)
+
+    procs.on_primary(lambda: singles.append(asyncio.create_task(_cover_loop())))
     procs.on_primary(_singletons)
     procs.on_primary(lambda: singles.append(asyncio.create_task(_redis_expiry_loop())))
     side = procs.start()

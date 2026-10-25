@@ -702,7 +702,7 @@ async def one(cid: str, request: Request):
                 sc = _card_core(m, src, [], p)
                 accs[k] = {"card": src["id"], "name": sc["name"], "acc": (sc.get("model") or {}).get("acc")}
         compare["sources"] = accs
-    return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": inf.get("swipe"), "pair": compare,
+    return {**core, "learn": learn, "regions": regions, "scenes": scenes, "swipe": swipe_out(inf.get("swipe")), "pair": compare,
             "scene_pick": inf.get("scene") or None, "result_sgg": inf.get("result_sgg"), "result_word": inf.get("result_word"),
             "info": {k: inf.get(k) for k in ("line", "grp", "imagery", "timepoints", "finds", "compare")},
             "all_groups": _groups(m),                 # 고를 수 있는 분야(분야 표 순서) — groups 는 이 카드의 분야(여러 개)
@@ -761,8 +761,14 @@ async def put(cid: str, body: dict, request: Request):
             srcs = {s.get("src") for s in (inf.get("scenes") or []) if isinstance(s, dict)}
             if not isinstance(sw, dict) or sw.get("before") not in srcs or sw.get("after") not in srcs or sw.get("before") == sw.get("after"):
                 raise ApiError("bad_request", "원본과 결과는 올린 장면 두 장에서 고릅니다")
+            old = inf.get("swipe") if isinstance(inf.get("swipe"), dict) else {}
+            hit = next((c for c in (old.get("cands") or []) if c.get("after") == sw["after"] and c.get("before") == sw["before"]), None)
+            prev = [{k: old.get(k) for k in ("before", "after", "labels", "legend", "frame", "score", "why", "source")}] if old.get("cover") and old.get("after") else []
             upd["swipe"] = {"before": sw["before"], "after": sw["after"], "labels": CC.check_labels(sw.get("labels")) or ["원본", "AI 결과"],
-                            "legend": CC.check_legend(sw.get("legend")), "cover": True}
+                            "legend": CC.check_legend(sw.get("legend")) or (hit or {}).get("legend") or [], "cover": True,
+                            "cands": prev + [c for c in (old.get("cands") or []) if c is not hit],      # 바꾸기 전 그림은 첫 후보로 남는다(되돌리기 한 번)
+                            "checked": old.get("checked"), "score": (hit or {}).get("score"), "source": (hit or {}).get("source"), "why": (hit or {}).get("why"),
+                            "frame": (hit or {}).get("frame")}
             upd["scene"] = next(s for s in inf["scenes"] if s.get("src") == sw["after"])
         else:
             upd["swipe"] = None
@@ -866,11 +872,136 @@ async def put_cover(cid: str, body: dict, request: Request):
     region, cap = str(body.get("region") or ""), str(body.get("caption") or "")
     b = await _store_scene(p, cid, mine, out["base"], region, cap, False, {"pair": "base"})
     r = await _store_scene(p, cid, mine, out["result"], region, cap, True, {"pair": "result"})
-    sw = {"before": b["src"], "after": r["src"], "labels": labels, "legend": out["legend"], "frame": fr, "cover": True}
+    src = body.get("source") if isinstance(body.get("source"), dict) else None
     async with db(realm="lx") as conn:
+        from . import card_cover_pick as PK
+        score = await PK.score_frame(conn, src, out["frame"]) if src and (src.get("job") or src.get("jobs")) else None
+        old = _obj(await conn.fetchval("SELECT swipe FROM card_info WHERE card_id=$1", cid)) or {}
+        sw = {"before": b["src"], "after": r["src"], "labels": labels, "legend": out["legend"], "frame": fr, "cover": True,
+              "source": src, "score": score, "cands": old.get("cands") or [], "checked": old.get("checked")}
         await conn.execute("UPDATE card_info SET swipe=$2, updated_at=now(), updated_by=$3 WHERE card_id=$1", cid, sw, p.user_id)
         await audit(conn, p, "card.cover", cid, None, {"before": b["src"], "after": r["src"], "source": body.get("source"), "frame": fr})
     return await one(cid, request)
+
+
+# ── 카드 그림 후보(10-25 사용자 "그래 그 방식대로 일단 적용하자" — 규칙 기반 · card_cover_pick) ─────────────────
+def swipe_out(sw) -> dict | None:
+    """화면에 내주는 카드 그림 짝 — 점수 · 틀 · 출처는 빼고(화면 숫자 아님) 그림 · 이름표 · 범례 · 다른 후보 · '새 후보 있음'"""
+    if not isinstance(sw, dict):
+        return None
+    pick = lambda x: {k: x.get(k) for k in ("before", "after", "labels", "legend") if x.get(k)}  # noqa: E731
+    out = pick(sw) if sw.get("cover") else {k: sw.get(k) for k in ("before", "after", "caption") if sw.get(k)}
+    if sw.get("cover"):
+        out["cover"] = True
+    cands = [{**pick(c), "why": c.get("why") or []} for c in (sw.get("cands") or []) if c.get("after") and c.get("after") != sw.get("after")]
+    if cands:
+        out["cands"] = cands[:3]
+    if sw.get("newer"):
+        out["newer"] = True
+    return out or None
+
+
+async def _latest_source(conn, cid: str) -> tuple[dict | None, str | None]:
+    """그 카드의 가장 최근 실제 결과(시험 · 시연 아님) — 같은 영상의 작업은 함께(사람 · 차량처럼 둘)"""
+    rows = await conn.fetch(
+        "SELECT j.id, j.imagery_id, j.options ? 'change' AS ch, j.options ? 'compare' AS cm, "
+        "EXISTS(SELECT 1 FROM detections d WHERE d.job_id = j.id) AS has FROM jobs j "
+        "WHERE j.card_id = $1 AND j.state = 'done' AND NOT coalesce(j.test, false) AND NOT coalesce(j.demo, false) "
+        "ORDER BY j.finished_at DESC NULLS LAST LIMIT 20", cid)
+    rows = [r for r in rows if r["has"] or r["cm"]]
+    if not rows:
+        return None, None
+    top = rows[0]
+    if top["ch"] or top["cm"] or not top["imagery_id"]:
+        return {"job": top["id"]}, top["id"]
+    same = [r["id"] for r in rows if r["imagery_id"] == top["imagery_id"] and not r["ch"] and not r["cm"]][:4]
+    return {"jobs": same}, top["id"]
+
+
+async def refresh_cands(p, cid: str, source: dict | None = None, n: int = 4, force: bool = False) -> dict:
+    """후보 찾기 → 그림 저장(카드 장면 · 후보 표시) · 카드 그림이 없으면 1번을 카드 그림으로(자동) ·
+    있으면 바꾸지 않고 더 나은 후보가 있을 때만 '새 후보 있음'. 돌려줌 {state: applied|newer|same|none|skip}"""
+    from . import card_cover as CC
+    from . import card_cover_pick as PK
+    async with db(realm="lx") as conn:
+        cur = _obj(await conn.fetchval("SELECT swipe FROM card_info WHERE card_id=$1", cid)) or {}
+        latest = None
+        if source is None:
+            source, latest = await _latest_source(conn, cid)
+            if not source:
+                return {"state": "none"}
+            if not force and cur.get("checked") == latest:
+                return {"state": "same"}
+        has_cover = bool(cur.get("cover") and cur.get("before") and cur.get("after"))
+        srcd = cur.get("source") if isinstance(cur.get("source"), dict) else None
+        if has_cover and srcd and not (srcd.get("job") or srcd.get("jobs")) and not force:
+            return {"state": "skip"}                       # 필지 판정 · 결과 층 파일로 만든 카드 그림 — 사람이 고른 그림 그대로
+        cs = await PK.candidates(conn, source, n)
+        rendered = []
+        for c in cs:
+            out = await CC.render(conn, source, c["bbox"], c["opts"])
+            rendered.append((c, out))
+        jid = source.get("job") or (source.get("jobs") or [None])[0]
+        sgg = await conn.fetchval("SELECT options->>'sgg_cd' FROM jobs WHERE id = $1", jid)
+        cur_score = cur.get("score")
+        if has_cover and cur_score is None and cur.get("frame"):          # 지금 그림 틀을 같은 잣대로(출처가 없으면 이번 결과로)
+            try:
+                cur_score = await PK.score_frame(conn, srcd or source, [float(v) for v in str(cur["frame"]).split(",")])
+            except Exception:  # noqa: BLE001
+                cur_score = None
+    if not rendered:
+        async with db(realm="lx") as conn:
+            await conn.execute("UPDATE card_info SET swipe = coalesce(swipe, '{}'::jsonb) || jsonb_build_object('checked', $2::text) WHERE card_id=$1",
+                               cid, latest)
+        return {"state": "none"}
+    from .regions import region_of
+    region = sgg if sgg and region_of(sgg) else ""
+    _c, _m, mine = await _one(p, cid)
+    cands = []
+    for i, (c, out) in enumerate(rendered):
+        first = i == 0 and not has_cover
+        b = await _store_scene(p, cid, mine, out["base"], region, "", False, {"pair": "base" if first else "cand-base"})
+        r = await _store_scene(p, cid, mine, out["result"], region, "", first, {"pair": "result" if first else "cand-result"})
+        cands.append({"before": b["src"], "after": r["src"], "labels": out["labels"], "legend": out["legend"],
+                      "frame": ",".join(f"{v:.7f}" for v in out["frame"]), "score": c["score"], "why": c["why"], "source": source, "opts": c["opts"]})
+    best = cands[0]
+    if not has_cover:
+        sw = {**best, "cover": True, "cands": cands, "checked": latest, "auto": True}
+        state = "applied"
+    else:
+        newer = cur_score is not None and best["score"] > cur_score + 5     # 견줄 수 없으면 표시하지 않는다
+        sw = {**cur, "cands": cands, "checked": latest or cur.get("checked"), "score": cur_score, "newer": bool(newer or cur.get("newer"))}
+        state = "newer" if newer else "same"
+    async with db(realm="lx") as conn:
+        await conn.execute("UPDATE card_info SET swipe=$2, updated_at=now() WHERE card_id=$1", cid, sw)
+        await audit(conn, p, "card.cover.cands", cid, None, {"state": state, "best": best["after"]})
+    return {"state": state}
+
+
+@router.post("/cards/{cid}/cover/cands")
+async def cover_cands(cid: str, request: Request):
+    """후보 다시 찾기(카드 관리 '후보 찾기') — 가장 최근 실제 결과에서"""
+    p = require(principal(request), lx=True)
+    core, m, mine = await _one(p, cid)
+    _editor(p, core)
+    st = await refresh_cands(p, cid, force=True)
+    out = await one(cid, request)
+    return {**out, "cands_state": st["state"]}
+
+
+async def cover_sweep() -> dict:
+    """대표 프로세스에서 주기로 — 카드마다 새 실제 결과가 있으면 후보 찾기(카드 그림이 없으면 1번 자동 · 있으면 '새 후보 있음'만)"""
+    from .deps import Principal
+    sysp = Principal(realm="lx", role="admin", user_id=None, name="system")
+    async with db(realm="lx") as conn:
+        ids = [r["id"] for r in await conn.fetch("SELECT id FROM cards ORDER BY id")]
+    done = {}
+    for cid in ids:
+        try:
+            done[cid] = (await refresh_cands(sysp, cid))["state"]
+        except Exception as e:  # noqa: BLE001
+            done[cid] = f"err:{type(e).__name__}"
+    return done
 
 
 @router.get("/cards/files/{cid}/{name}")

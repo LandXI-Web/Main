@@ -800,6 +800,8 @@ async def requests_list(request: Request):
                                 "JOIN card_versions v ON v.id = a.subject_id JOIN cards c ON c.id = v.card_id "
                                 "WHERE a.subject_type='card' ORDER BY a.at DESC LIMIT 200")
         other = await conn.fetch("SELECT subject_type, count(*) n FROM approvals WHERE state='pending' AND subject_type <> 'card' GROUP BY 1")
+        cinfo = {r["card_id"]: r for r in await conn.fetch("SELECT card_id, swipe, scene->>'src' AS src FROM card_info WHERE card_id = ANY($1)",
+                                                          list({x["card_id"] for x in rows}))}
         from .approvals import KIND_LABEL, solo_admin
         solo = await solo_admin(conn, p)
     items = []
@@ -817,6 +819,7 @@ async def requests_list(request: Request):
                       "decided_by": people.get(x["decided_by"]) if x["decided_by"] else None, "decided_at": _iso(x["decided_at"]),
                       "reason": plain(x["reason"]) if st != "pending" else None, "memo": pl.get("memo"), "form": fm,
                       "model_name": pl.get("model_name"), "again": bool(pl.get("again")), "test": bool(pl.get("test")),
+                      "cover_pair": _pair_of(cinfo.get(x["card_id"])),     # 지금 카드 그림(원본 ↔ AI 결과) — 승인 때 함께 본다(10-25)
                       "can_decide": st == "pending" and (x["requested_by"] != p.user_id or solo)})
     items.sort(key=lambda i: (i["state"] != "pending", -(dt.datetime.fromisoformat(i["at"]).timestamp() if i["at"] else 0)))
     pend = sum(1 for i in items if i["state"] == "pending")
@@ -825,6 +828,15 @@ async def requests_list(request: Request):
             "rejected": env(sum(1 for i in items if i["state"] == "rejected"), "count", "recorded", "배포 신청 거절"),
             "other": [{"kind": o["subject_type"], "label": KIND_LABEL.get(o["subject_type"], o["subject_type"]), "n": int(o["n"])} for o in other],
             "as_of": now_iso()}
+
+
+def _pair_of(r) -> dict | None:
+    if not r:
+        return None
+    sw = r["swipe"] if isinstance(r["swipe"], dict) else (json.loads(r["swipe"]) if r["swipe"] else None)
+    if not isinstance(sw, dict) or not sw.get("cover") or not sw.get("before") or sw.get("after") != r["src"]:
+        return None
+    return {"before": sw["before"], "src": sw["after"], "labels": sw.get("labels") or ["원본", "AI 결과"], "legend": sw.get("legend") or []}
 
 
 def _wide_regions(tid: str) -> list[dict]:

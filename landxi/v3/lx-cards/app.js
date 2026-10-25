@@ -1,5 +1,5 @@
 /* lx-cards — 서비스 카드 관리(구현 3차 · 확인 대장 14차 카드-1 ⓐ ② 자리 · 원칙 51 · 93).
-   LX 쪽에서 카드 정보(여덟 칸 · 대표 이미지 · 결과 예시)를 보고 고친다. 같은 카드 부품(kit/service-card.js)의 '관리' 모양.
+   LX 쪽에서 카드 정보(여덟 칸 · 카드 그림 · 결과 예시)를 보고 고친다. 같은 카드 부품(kit/service-card.js)의 '관리' 모양.
      ./            우리가 만든 카드 전부(만드는 중 포함) — 상태 · 공개 결재 중 · 기관 신고 · 다음 할 일
      ./?card=…     카드 한 장 고치기 — 왼쪽 미리 보기(분석하기 갤러리와 같은 카드) · 오른쪽 고칠 칸 · 아래 서버 값(고칠 수 없음)
    고칠 수 있는 사람 = 그 카드의 담당 프로젝트장 · LX 관리자(서버가 정한다 — can_edit). 서비스 공개 상태는 결재 기록 그대로 보인다(새 승인 규칙 없음).
@@ -8,6 +8,7 @@ import * as K from '../kit/index.js';
 import { h, api, API, session } from '../kit/util.js';
 import { loadDeck, svcCard, svcGrid } from '../kit/service-card.js';
 import { staffRail } from '../lx-analyze/menu.js';
+import { swipePic } from '../kit/swipe.js';
 
 const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
@@ -29,7 +30,7 @@ document.body.dataset.ready = '1';
 async function list() {
   document.title = '서비스 카드 · Land-XI';
   page.append(h('header.la-head', {}, h('h1.t-h3', { text: '서비스 카드' }),
-    h('p.la-sub', { text: '우리가 만든 카드의 정보 · 대표 이미지 · 결과 예시를 보고 고칩니다' })));
+    h('p.la-sub', { text: '우리가 만든 카드의 정보 · 카드 그림 · 결과 예시를 보고 고칩니다' })));
   const tools = h('div.la-tools'), grid = h('div.la-grid'), box = h('div');
   page.append(tools, box, grid);
   K.empty(box, { kind: 'loading' });
@@ -90,43 +91,65 @@ async function edit(cid) {
   const field = (label, input, hint) => h('label.lc-f', {}, h('span.lc-l', { text: label }), input, hint ? h('span.lc-h', { text: hint }) : null);
   const inp = (name, value, ph, max) => h('input.t-input', { name, value: value || '', placeholder: ph || '', maxlength: String(max), autocomplete: 'off', disabled: ro || undefined });
 
-  /* ① 대표 이미지 — 고를 수 있는 결과 장면(이미 공개된 결과 크롭 · LX 가 올린 장면) · 장면 없음 */
-  const scenes = c.scenes || [];
-  let pick = c.scene_pick?.src || '';
-  const sceneBox = h('div.lc-scenes', { role: 'radiogroup', 'aria-label': '대표 이미지' });
-  const drawScenes = () => {
-    sceneBox.replaceChildren(
-      ...scenes.map((s) => h('button.lc-sc', { type: 'button', role: 'radio', 'aria-checked': String(pick === s.src), disabled: ro || undefined, onclick: () => { pick = s.src; drawScenes(); } },
-        h('img', { src: src(s.src), alt: '', loading: 'lazy' }), h('span', { text: s.caption || '' }))),
-      h('button.lc-sc.lc-sc--none', { type: 'button', role: 'radio', 'aria-checked': String(!pick), disabled: ro || undefined, onclick: () => { pick = ''; drawScenes(); } }, h('span', { text: '장면 없음' })));
+  /* ① 카드 그림 — 원본 ↔ AI 결과 한 장(10-25 원칙 339) · 다른 후보(규칙으로 고른 틀 · 한 번 눌러 바꿈) · '새 후보 있음' · 두 장 올리기(작은 링크) */
+  const coverSec = h('section.t-card.lc-sec.lc-cover', { 'aria-label': '카드 그림' });
+  const putSwipe = async (sw, okText) => {
+    cur = await api(`/cards/${encodeURIComponent(cid)}`, { method: 'PUT', body: { swipe: sw } });
+    drawCover(); paint(); K.toast(okText);
   };
-  drawScenes();
-  const up = h('div.lc-up');
-  if (!ro) {
-    const file = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true });
-    const regSel = h('select.t-input', { 'aria-label': '어느 지역 결과인가요' }, h('option', { value: '', text: '다른 지역 결과(예시로 표시)' }),
-      ...(c.regions || []).filter((r) => r.sgg).map((r) => h('option', { value: r.sgg, text: r.name })));
-    const cap = h('input.t-input', { placeholder: '설명 한 줄(선택)', maxlength: '40', autocomplete: 'off' });
-    const btn = h('button.t-btn.t-btn--2', { type: 'button', text: '결과 장면 올리기' });
-    const st = h('p.lc-h');
-    btn.addEventListener('click', () => file.click());
-    file.addEventListener('change', async () => {
-      const f = file.files[0]; if (!f) return;
-      btn.disabled = true; st.textContent = '올리는 중'; st.dataset.lv = '';
-      const fd = new FormData(); fd.append('file', f); fd.append('region', regSel.value); fd.append('caption', cap.value.trim()); fd.append('use', '1');
-      try {
-        const r = await fetch(API.prefix + `/cards/${encodeURIComponent(cid)}/scene`, { method: 'POST', body: fd, headers: { authorization: 'Bearer ' + (session.get()?.token || '') } });
-        const j = await r.json().catch(() => null);
-        if (!r.ok) throw new Error(j?.error?.message || '올리지 못했습니다');
-        cur = j; scenes.splice(0, scenes.length, ...(j.scenes || [])); pick = j.scene_pick?.src || pick; drawScenes(); paint();
-        st.textContent = '올렸습니다 — 대표 이미지로 골랐습니다'; cap.value = '';
-        K.toast('결과 장면을 올렸습니다');
-      } catch (e) { st.textContent = e.message; st.dataset.lv = 'warn'; }
-      btn.disabled = false; file.value = '';
-    });
-    up.append(h('p.lc-h', { text: '결과가 보이는 장면만 올립니다. 밖으로 내보낼 수 없는 영상의 장면은 올리지 않습니다.' }),
-      h('div.lc-up-row', {}, regSel, cap, btn), file, st);
-  }
+  const upScene = async (f, region) => {
+    const fd = new FormData(); fd.append('file', f); fd.append('region', region); fd.append('caption', ''); fd.append('use', '0');
+    const r = await fetch(API.prefix + `/cards/${encodeURIComponent(cid)}/scene`, { method: 'POST', body: fd, headers: { authorization: 'Bearer ' + (session.get()?.token || '') } });
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw new Error(j?.error?.message || '올리지 못했습니다');
+    return (j.scenes || []).at(-1)?.src;
+  };
+  let twoOpen = false;
+  const drawCover = () => {
+    const sw = cur.swipe || {};
+    const pair = cur.scene && sw.cover && sw.before ? { src: cur.scene.src, swipe: sw } : null;
+    const main = h('div.lc-cv-main', {}, pair ? swipePic(pair) : cur.scene ? h('img', { src: src(cur.scene.src), alt: '' }) : h('span.lc-cv-none', { text: '그림 없음' }));
+    const cands = (sw.cands || []).slice(0, 3);
+    const row = cands.length ? h('div.lc-cv-cands', {}, h('p.t-label.lc-cv-k', { text: '다른 후보' }),
+      h('div.lc-cv-row', {}, ...cands.map((c) => h('div.lc-cv-c', {},
+        h('div.lc-cv-pic', {}, swipePic({ src: c.after, swipe: c })),
+        (c.why || []).length ? h('p.lc-cv-why', { text: c.why.join(' · ') }) : null,
+        ro ? null : h('button.t-btn.t-btn--2.lc-cv-use', { type: 'button', text: '이 그림으로', onclick: async (e) => {
+          e.currentTarget.disabled = true;
+          try { await putSwipe({ before: c.before, after: c.after, labels: c.labels, legend: c.legend }, '카드 그림을 바꿨습니다'); }
+          catch (err) { K.toast(err.message || '바꾸지 못했습니다'); e.currentTarget.disabled = false; }
+        } }))))) : null;
+    const find = !ro && !cands.length ? h('button.t-btn.t-btn--2.lc-cv-find', { type: 'button', text: '후보 찾기', onclick: async (e) => {
+      const b = e.currentTarget; b.disabled = true; b.textContent = '찾는 중';
+      try { const j = await api(`/cards/${encodeURIComponent(cid)}/cover/cands`, { method: 'POST' }); cur = j; drawCover(); paint(); K.toast(j.cands_state === 'none' ? '후보가 없습니다' : '후보를 찾았습니다'); }
+      catch (err) { K.toast(err.message || '찾지 못했습니다'); b.disabled = false; b.textContent = '후보 찾기'; }
+    } }) : null;
+    let two = null;
+    if (!ro) {
+      const link = h('button.lc-cv-two', { type: 'button', 'aria-expanded': String(twoOpen), text: '두 장 올리기', onclick: () => { twoOpen = !twoOpen; drawCover(); } });
+      two = h('div.lc-cv-tw', {}, link);
+      if (twoOpen) {
+        const fa = h('input.t-input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': '원본' });
+        const fb = h('input.t-input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': 'AI 결과' });
+        const reg = h('select.t-input', { 'aria-label': '지역' }, h('option', { value: '', text: '다른 지역 결과' }),
+          ...(cur.regions || c.regions || []).filter((r) => r.sgg).map((r) => h('option', { value: r.sgg, text: r.name })));
+        const st = h('p.lc-h', { role: 'status' });
+        const go = h('button.t-btn.t-btn--2', { type: 'button', text: '올리기', onclick: async () => {
+          if (!fa.files[0] || !fb.files[0]) { st.textContent = '원본과 AI 결과를 모두 고르세요'; st.dataset.lv = 'warn'; return; }
+          go.disabled = true; st.textContent = '올리는 중'; st.dataset.lv = '';
+          try {
+            const before = await upScene(fa.files[0], reg.value);
+            const after = await upScene(fb.files[0], reg.value);
+            twoOpen = false;
+            await putSwipe({ before, after, labels: ['원본', 'AI 결과'] }, '카드 그림을 올렸습니다');
+          } catch (err) { st.textContent = err.message; st.dataset.lv = 'warn'; go.disabled = false; }
+        } });
+        two.append(h('div.lc-cv-tw-row', {}, h('label.lc-cv-f', {}, h('span', { text: '원본' }), fa), h('label.lc-cv-f', {}, h('span', { text: 'AI 결과' }), fb), reg, go), st);
+      }
+    }
+    coverSec.replaceChildren(h('h2.la-h.lc-cv-h', {}, '카드 그림', sw.newer ? h('span.lc-new', { text: '새 후보 있음' }) : null), main, row, h('div.lc-cv-foot', {}, find, two));
+  };
+  drawCover();
 
   /* ② 이름 · 무엇을 찾나 · 분류 */
   const I = c.info || {};
@@ -153,7 +176,7 @@ async function edit(cid) {
   const save = h('button.t-btn.lc-save', { type: 'submit', text: '저장', disabled: ro || undefined });
   const msg = h('p.lc-msg', { role: 'status' });
   form.append(
-    h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '대표 이미지' }), sceneBox, up),
+    coverSec,
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이름 · 무엇을 찾나' }), field('이름', name), field('무엇을 찾나', line, '카드에 두 줄까지 보입니다'), grpField),
     h('section.t-card.lc-sec', {}, h('h2.la-h', {}, '결과 예시', h('small', { text: '숫자는 서버 값 그대로' })), field('보일 지역', exSel), field('말', word, '셈 단위가 필지 · 동으로 확인된 결과에만 붙습니다 — 예: 비닐하우스 동')),
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이 카드의 조건' }), field('입력 영상', imagery), field('시점', tp), field('찾는 것', finds), field('대조', compare)),
@@ -165,11 +188,11 @@ async function edit(cid) {
     save.disabled = true; msg.textContent = '저장하는 중'; msg.dataset.lv = '';
     const body = {
       name: name.value.trim(), line: line.value, groups: [...grp.querySelectorAll('input:checked')].map((x) => x.value), result_sgg: exSel.value, result_word: word.value,
-      imagery: imagery.value, timepoints: tp.value, finds: finds.value, compare: compare.value, scene: pick ? { src: pick } : null,
+      imagery: imagery.value, timepoints: tp.value, finds: finds.value, compare: compare.value,
     };
     try {
       cur = await api(`/cards/${encodeURIComponent(cid)}`, { method: 'PUT', body });
-      paint(); msg.textContent = '저장했습니다 — 분석 서비스 · 기관 화면 카드에 바로 보입니다';
+      paint(); drawCover(); msg.textContent = '저장했습니다';
       K.toast('저장했습니다', { action: { label: '분석 서비스에서 보기', href: `../lx-analyze/?card=${encodeURIComponent(cid)}` } });
     } catch (err) { msg.textContent = err.message || '저장하지 못했습니다'; msg.dataset.lv = 'warn'; }
     save.disabled = false;
