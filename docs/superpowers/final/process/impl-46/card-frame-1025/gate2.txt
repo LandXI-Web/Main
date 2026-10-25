@@ -1,0 +1,19 @@
+━━ overlap ━━
+겹침 검사 — 상태 87개(역할 × 폭 × 화면) · 겹친 상태 0 · 만들지 못한 상태 0(필수) + 0(그 기관에 없는 기능)
+✓ 겹침 0
+
+━━ clip ━━
+글자 잘림 검사 — 상태 138개(역할 × 폭 × 화면) · 잘린 상태 0(잘림 0곳) · 경고 8곳(실패 아님)
+△ gov(namwon) 1440 08-map ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 08b-map-layers ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 국토 변화 분석서비스(시범 운영 중 · AI 분석 결과" — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 08d-map-ask ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1440 09-compare ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 08-map ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 08d-map-ask ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 1280 09-compare ellipsis [div.xk-ans > div.xk-ans-m > p.xk-ans-t > p] "), 비닐하우스 분석서비스(시범 운영 중)입니다." — 줄 줄임인데 title 없음
+△ gov(namwon) 390 11-request orphan [div#svcs.gq-cards > button.k-sc.is-compact > div.k-sc-b > h3.k-sc-t] "도로 안전관리 서비스" — 마지막 줄에 서비스 만 남음
+✓ 글자 잘림 0
+
+검사기 5개 · 로그인 4번 · 25.6분 — 모두 통과
+
+✓ 검사 문 — 모두 0 · 화면 파일 695개 통과 기록

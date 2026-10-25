@@ -1,12 +1,12 @@
 /* XI ChatGEO 대화 단추 자리 — 임시 고침(10-22 원칙 309 · FARM-ADMIN IMPL 0-4 · G1 · G1' · G7 · G8). 구조(대화 단추를 레일로 · 창을 오른쪽 기둥 서랍으로)는 now 22 Q4 뒤.
    · 휴대폰(≤ 640) — 떠 있는 단추가 시트 · 카드 · 본문 글을 덮던 것 → 아래 메뉴 줄의 'ChatGEO' 칸(레일이 있는 화면만 · 누르면 같은 대화 창).
      대화 창(아래 시트)이 열리면 다른 아래 시트(필지 카드 칸 · 행정정보 시트 · 서랍)는 잠시 접힌다(한 자리 하나 · 창을 닫으면 그대로).
-   · PC — 단추 자리 재기는 cmdk.js 한 곳. 다만
-       ① 흐름 안에 선 오른쪽 칸(필지 목록의 지도 + 필지 카드 .gr-side)에 카드가 열려 있으면 단추를 카드 위(칸 안 지도 위)로 올리고,
-          대화 창은 그 칸 왼쪽에 세운다(카드 · 창이 겹치지 않게 — G1).
-       ② 대화 창을 닫은 뒤에는 자리를 다시 재게 한다(창이 열려 있는 동안 굳어 있던 자리 — 서랍 · 시트 위에 남던 것).
-       ③ PC 에서 왼쪽 레일에 빈 자리가 있으면 단추는 늘 그 자리(창은 레일 옆) — 본문이 늦게 그려져도 자리가 바뀌지 않게(10-25 검사 문).
-          레일 빈 자리가 없을 때만 cmdk 가 고른 자리(오른쪽 아래).
+   · PC — 단추 자리는 cmdk.js 한 곳 · 늘 오른쪽 아래 같은 자리(10-25 사용자 "ChatGEO 마크가 왜 갑자기 왼쪽에 있지?" · 원칙 338).
+       레일 빈 자리로 옮기기 · 오른쪽 칸 카드 위로 올리기는 뺐다 — 겹침은 단추를 옮기지 않고 자리를 비워 두어 푼다:
+       ① 단추 길(k-chat-lane) — PC 셸 화면은 본문 오른쪽에 단추 폭만큼 빈 길을 두고 단추는 그 길 아래에 선다(본문이 스크롤해도 단추 밑에 오지 않는다).
+          지도가 본문 대부분을 채우는 화면(지도 위 단추 — 지도는 덮어도 된다)은 길을 두지 않는다.
+       ② 오른쪽 칸(필지 목록의 지도 + 필지 카드 .gr-side)에 카드가 열려 있으면 대화 '창'만 그 칸 왼쪽에 세운다(단추는 그대로 · 창과 카드가 겹치지 않게 — G1).
+       대화 창을 닫은 뒤에는 자리를 다시 재게 한다(창이 열려 있는 동안 굳어 있던 자리 — 서랍 · 시트 위에 남던 것).
    지도 화면(아래 채팅 창 · data-dock)은 건드리지 않는다(xi-clean layoutNow). */
 const PHONE = () => matchMedia('(max-width: 640px)').matches;
 let css = false;
@@ -15,11 +15,8 @@ function style() {
   const s = document.createElement('style');
   s.textContent = `
 .k-rail .k-rail-chat{display:none!important}
-.k-chat-root[data-lift]:not([data-dock]){--k-chat-b:var(--k-lift-b)!important;--k-chat-r:var(--k-lift-r)!important}
-.k-chat-root[data-lift]:not([data-dock]) .k-ck.k-chat{right:var(--k-col-r)!important;bottom:24px!important;max-height:calc(100vh - 128px)!important}
-.k-chat-root[data-railfab]:not([data-dock]) .k-chat-fab{right:auto!important;left:var(--k-rf-l)!important;bottom:var(--k-rf-b)!important;transition:none!important}
-.k-chat-root[data-railfab]:not([data-dock]) .k-chat-tag{display:none!important}
-.k-chat-root[data-railfab]:not([data-dock]) .k-ck.k-chat{right:auto!important;left:calc(var(--k-rf-l) + 72px)!important;bottom:16px!important;max-height:calc(100vh - 112px)!important}
+@media (min-width:641px){body.k-chat-lane .k-app .k-main{margin-right:var(--k-chat-lane,64px)}}
+.k-chat-root[data-win]:not([data-dock]) .k-ck.k-chat{right:var(--k-col-r)!important;bottom:24px!important;max-height:calc(100vh - 128px)!important}
 @media (max-width:640px){
   body:has(.k-rail-chat) .k-chat-root:not([data-dock]) :is(.k-chat-fab,.k-chat-tag){display:none!important}
   body:not(:has(.k-chat-root[data-dock])) .k-rail .k-rail-chat{display:flex!important}
@@ -27,38 +24,26 @@ function style() {
 }`;
   document.head.append(s);
 }
-/** 흐름 안 오른쪽 칸 + 그 안의 열린 카드(지도 아래) — 단추를 올릴 자리(px · 화면 아래에서) */
-function liftOf() {
+/** 오른쪽 칸 + 그 안의 열린 카드 — 대화 창을 세울 자리(칸 왼쪽 · px 화면 오른쪽에서) */
+function colOf() {
   const col = document.querySelector('.gr-side');
   if (!col || PHONE()) return null;
   const cs = getComputedStyle(col); if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') return null;
   const c = col.getBoundingClientRect();
-  if (c.right < innerWidth - 96 || c.width < 200) return null;
-  const card = [...col.querySelectorAll('.gr-det:not([hidden]), #det-x:not([hidden])')].map((e) => e.getBoundingClientRect()).filter((r) => r.height > 40).sort((a, b) => a.top - b.top)[0];
-  if (!card) return null;
-  const room = card.top - c.top;                                   // 카드 위 지도 높이
-  if (room < 56 + 32) return null;
-  return { b: Math.round(innerHeight - card.top + 12), r: Math.round(innerWidth - c.right + 16), colR: Math.round(innerWidth - c.left + 16) };
+  if (c.right < innerWidth - 160 || c.width < 200) return null;
+  const card = [...col.querySelectorAll('.gr-det:not([hidden]), #det-x:not([hidden])')].some((e) => e.getBoundingClientRect().height > 40);
+  return card ? Math.round(innerWidth - c.left + 16) : null;
 }
-/** 레일의 빈 자리 — 보이는 레일 칸(위 묶음 · 아래 묶음 · 더보기 · 기관 정보 · 계정 무엇이든)들 사이의 가장 큰 빈 틈에만, 단추 56 이 칸과 8 띄워 들어가면 그 자리.
-    칸 이름(클래스)에 기대지 않고 실제 자리로 잰다 — 늦게 그려진 칸(더보기 · 기관 정보)도 덮지 않게(10-24 검사 문: 기관 1280 '기관 정보' 덮음) */
-function railSpot(rail) {
-  if (!rail) return null;
-  const rr = rail.getBoundingClientRect(); if (rr.width < 60 || rr.height < 300) return null;
-  const qs = [];
-  for (const it of rail.children) {
-    const c = getComputedStyle(it); if (c.display === 'none' || c.visibility === 'hidden') continue;
-    const q = it.getBoundingClientRect(); if (q.height && q.width) qs.push(q);
+/** 단추 길이 필요한 화면인가 — 셸 본문이 있고, 지도가 본문 대부분(60% 넘게)을 채우지 않는 화면 */
+function wantLane(root) {
+  if (PHONE() || !root || root.hidden || root.dataset.dock) return false;
+  const main = document.querySelector('.k-app .k-main'); if (!main) return false;
+  const m = main.getBoundingClientRect(); if (!m.width || !m.height) return false;
+  for (const el of main.querySelectorAll('.maplibregl-map, .k-stage')) {
+    const r = el.getBoundingClientRect();
+    if (r.width * r.height > 0.6 * m.width * m.height) return false;
   }
-  qs.push({ top: rr.bottom, bottom: rr.bottom });                 // 마지막 칸 아래 ~ 레일 끝도 빈 자리(예전과 같이)
-  qs.sort((x, y) => x.top - y.top);
-  let best = null;
-  for (let i = 0; i + 1 < qs.length; i++) {
-    const top = qs[i].bottom + 8, bottom = qs[i + 1].top - 8;
-    if (bottom - top >= 56 && (!best || bottom - top > best.bottom - best.top)) best = { top, bottom };
-  }
-  if (!best) return null;
-  return { l: Math.round(rr.left + (rr.width - 56) / 2), b: Math.round(innerHeight - best.bottom) };
+  return true;
 }
 /** railEl = 셸 레일(아래 메뉴 줄 · 없으면 null) — 셸이 다시 그려도(drawRail) 칸을 다시 붙인다 */
 export function mountChatDock(railEl) {
@@ -87,39 +72,23 @@ export function mountChatDock(railEl) {
       if (was && !now && !root.dataset.dock) setTimeout(() => dispatchEvent(new Event('resize')), 60);
       was = now;
     }).observe(root, { attributes: true, attributeFilter: ['data-open'] });
-    /* ③ 꽉 찬 화면 — cmdk 가 자리를 정할 때마다(root 의 style) 덮는지 보고, 덮으면 레일 빈 아래쪽으로 */
-    let rq = 0;
-    const railFab = () => {
-      clearTimeout(rq);
-      rq = setTimeout(() => {
-        if (PHONE() || root.hasAttribute('data-lift')) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
-        // 자리는 늘 같은 규칙(10-25 검사 문: 1280 프로젝트 목록 — 카드가 늦게 그려지면 '덮는가'를 다시 재지 못해 단추가 카드를 덮음):
-        // 레일에 빈 자리가 있으면 늘 레일 빈 자리(덮는지 재지 않음 · 늦게 그려지는 본문과 상관없이) · 레일 빈 자리가 없을 때만 예전처럼 덮는지 보고 그대로
-        const spot = railSpot(railEl);
-        if (!spot) { if (root.hasAttribute('data-railfab')) root.removeAttribute('data-railfab'); return; }
-        for (const [k, v] of [['--k-rf-l', spot.l + 'px'], ['--k-rf-b', spot.b + 'px']]) if (root.style.getPropertyValue(k) !== v) root.style.setProperty(k, v);
-        if (!root.hasAttribute('data-railfab')) root.setAttribute('data-railfab', '');   // 자리 값을 먼저 · 옮김은 미끄러짐 없이 바로(레일 위를 지나가며 칸을 덮지 않게)
-      }, 120);
+    /* ① 단추 길 · ② 창 자리 — 화면이 늦게 서므로 몸 변화 · 창 크기마다 다시 잰다(값이 바뀔 때만 고친다 — 되풀이 없음) */
+    let t = 0;
+    const lay = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const lane = wantLane(root);
+        if (document.body.classList.contains('k-chat-lane') !== lane) { document.body.classList.toggle('k-chat-lane', lane); dispatchEvent(new Event('resize')); }
+        const r = colOf();
+        if (r === null) { if (root.hasAttribute('data-win')) root.removeAttribute('data-win'); }
+        else { if (root.style.getPropertyValue('--k-col-r') !== r + 'px') root.style.setProperty('--k-col-r', r + 'px'); if (!root.hasAttribute('data-win')) root.setAttribute('data-win', ''); }
+      }, 80);
     };
-    new MutationObserver(railFab).observe(root, { attributes: true, attributeFilter: ['style', 'data-lift'] });
-    if (railEl) new MutationObserver(railFab).observe(railEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'style'] });   // 레일 칸이 늦게 서도 다시 잰다
-    addEventListener('resize', railFab); addEventListener('scroll', railFab, true);
-    railFab();
-    /* ① 오른쪽 칸 카드 위로(칸은 화면이 나중에 그린다 — 몸 전체 변화를 보되 칸 안 변화일 때만 잰다) */
-    let raf = 0;
-    const lift = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const l = liftOf();
-        if (!l) { root.removeAttribute('data-lift'); return; }
-        root.setAttribute('data-lift', '');
-        root.style.setProperty('--k-lift-b', l.b + 'px'); root.style.setProperty('--k-lift-r', l.r + 'px'); root.style.setProperty('--k-col-r', l.colR + 'px');
-      });
-    };
-    new MutationObserver((ms) => { if (ms.some((m) => !root.contains(m.target) && (m.target.closest?.('.gr-side') || m.target.querySelector?.('.gr-side') || m.target === document.body))) lift(); })
-      .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'data-big', 'data-sheet'] });
-    addEventListener('resize', lift);
-    lift();
+    new MutationObserver((ms) => { if (ms.some((m) => !root.contains(m.target))) lay(); })
+      .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'data-big', 'data-sheet'] });
+    new MutationObserver(lay).observe(root, { attributes: true, attributeFilter: ['hidden', 'data-dock'] });
+    addEventListener('resize', lay);
+    lay();
   };
   watch();
 }

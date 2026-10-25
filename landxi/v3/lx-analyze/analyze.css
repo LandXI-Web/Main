@@ -316,3 +316,17 @@ body.la-boot .k-app{visibility:hidden}
 .la-acg[data-spill]{flex:none}
 .la-acg[data-spill] .la-ac{height:auto}
 @media (min-width:700px) and (max-width:1440px){.la-page--fit .la-search{flex:0 1 170px;min-width:150px;width:170px}}
+/* 고정 틀(10-25 사용자 "카드가 들쭉 날쭉 하다. 고정형 틀이 필요하다" · 원칙 338) — 한 줄의 카드는 칸마다 높이가 같다:
+   그림(남는 높이 — 몸 높이가 같으니 그림도 같다) · 제목 1줄 · 설명 2줄 · 지표 · 대상 지역 1줄 · 영상 칩 1줄 · 단추.
+   글이 길면 칸은 그대로, 글자를 글자 단계(토큰)로 한 단계씩 줄이고(app.js fitText), 바닥에서도 넘치면 말줄임 · 두 줄 줄임 + title.
+   한 화면 n장 맞춤(fitGrid · data-fit · tight)은 모든 카드에 같이 걸린다(카드마다 따로 줄이지 않는다). */
+.la-ac .k-sc-t{flex:none;height:1lh;white-space:nowrap;text-wrap:nowrap;overflow:hidden;text-overflow:ellipsis}
+.la-ac .la-ac-line{flex:none;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;height:2lh;min-height:0}
+.la-ac-where{flex:none}
+.la-ac-where .k{flex:none;white-space:nowrap}
+.la-ac-where .v,.la-ac-where .v2{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.la-acg:is([data-fit="1"],[data-fit="0"]) .la-ac-where{flex-wrap:nowrap}
+.la-ac-imk{flex:none;flex-wrap:nowrap;overflow:hidden;height:23px}
+.la-ac-imk span{flex:none}
+.la-ac-hero{flex:none}
+.la-ac .k-sc-acts{flex:none}

@@ -1155,7 +1155,7 @@ function create(opts) {
     if (store.data.open) open(null, { focus: false });
   }
 
-  /* ── 자리: 오른쪽 아래 같은 자리 · 오른쪽에 붙은 서랍 · 시트는 그 왼쪽으로 · 누르는 것 · 글자가 있으면 위로 비킨다 ──
+  /* ── 자리: 오른쪽 아래 같은 자리 · 오른쪽에 붙은 서랍 · 시트는 그 왼쪽으로 · PC 는 위로 비키지 않는다(자리는 화면이 비워 둔다 — 10-25 원칙 338) ──
      (셸 화면만 — 스크롤하는 소개 화면은 늘 같은 자리. 휴대폰은 누르는 것만 비킨다. 지도 · 사진 위는 비키지 않는다) */
   const CTRL = 'a[href],button,input,select,textarea,summary,label,[role=button],[role=tab],[role=link],[contenteditable=""],[contenteditable=true]';
   const isMapish = (el) => !!el.closest('.maplibregl-canvas-container, .maplibregl-marker, .maplibregl-popup, canvas');
@@ -1219,7 +1219,8 @@ function create(opts) {
     const main = document.querySelector('.k-main');
     let mr = main?.getBoundingClientRect();
     if (!mr || !mr.width || !mr.height) mr = { left: 0, top: 0, right: W, bottom: H, width: W, height: H };
-    const R0 = Math.max(0, W - mr.right) + gap, B0 = Math.max(0, H - mr.bottom) + gap;
+    const lane = !phone && document.body.classList.contains('k-chat-lane');   // 단추 길(chat-dock) — 본문 오른쪽 빈 길 아래, 화면 오른쪽 끝에서 gap
+    const R0 = (lane ? 0 : Math.max(0, W - mr.right)) + gap, B0 = Math.max(0, H - mr.bottom) + gap;
     let R = R0, B = B0, withTag = !phone;
     if (main) {                                                     // 셸 화면만 비킨다(스크롤하는 소개 화면은 늘 같은 자리 — 스크롤 중에 움직이지 않게)
       const tagW = phone ? 0 : (tag.offsetWidth || 80) + 12;         // 휴대폰은 꼬리표 없음
@@ -1250,7 +1251,10 @@ function create(opts) {
         };
         /* 휴대폰 — 좁은 화면은 어디든 글이라 누르는 것(버튼 · 링크 · 입력)만, 같은 자리에서 180 안에서만 비킨다(스크롤 화면 한가운데로 뛰지 않게) */
         // 빈 자리가 없으면(카드가 오른쪽 아래까지 꽉 찬 화면) 꼬리표 없이 제자리 — 카드 위로 뛰어오르지 않고, 목록 끝에 버튼만큼 여백을 둔다(clear)
-        const pick = phone ? search(0, false, 180) || { b: B0, tw: 0 } : search(tagW) || search(0) || least() || { b: B0, tw: 0, clear: true };
+        // PC — 단추는 늘 오른쪽 아래 같은 자리(10-25 사용자 "ChatGEO 마크가 왜 갑자기 왼쪽에 있지?" · 원칙 338). 위로 뛰거나 레일로 옮기지 않는다.
+        //   자리는 화면이 비워 둔다(스크롤 판 끝 여백 · 페이지 아래 여백 — 각 화면 CSS). 그 자리에 글이 있으면 꼬리표만 접고, 스크롤 판이면 끝에 단추만큼 여백(clear).
+        const pick = phone ? search(0, false, 180) || { b: B0, tw: 0 } : free(B0, tagW) ? { b: B0, tw: tagW } : { b: B0, tw: 0, clear: !free(B0, 0) };
+        void least;
         B = pick.b; withTag = pick.tw > 0;
         clear(pick.clear ? W - R0 - 28 : null, H - B0 - 28);
       } catch (err) { devlog('chat place', String(err?.message || err)); R = R0; B = B0; }

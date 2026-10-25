@@ -16,3 +16,9 @@
   .fd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .fd-kpis .xd-kpi.is-main{grid-column:1 / -1}
 }
+/* 좁은 칸(묶음 보고서·통계 탭 왼쪽 칸 · 1280 — 10-25 대화 단추 길로 본문이 64 좁아짐) — 수 칸 셋이 한 줄에 안 들어가면 큰 수 한 줄 + 둘 */
+.fd{container-type:inline-size;width:100%;box-sizing:border-box}
+@container (max-width:520px){
+  .fd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .fd-kpis .xd-kpi.is-main{grid-column:1 / -1}
+}

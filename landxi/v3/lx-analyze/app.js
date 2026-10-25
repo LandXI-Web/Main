@@ -61,8 +61,10 @@ function fitGrid(grid, n) {
   }
   grid.style.gridTemplateColumns = `repeat(${best.c}, minmax(0, 1fr))`;
   grid.style.gridTemplateRows = `repeat(${best.r}, minmax(0, 1fr))`;
-  const over = () => cards.some((el) => el.scrollHeight > el.clientHeight + 1
-    || [...el.querySelectorAll('.k-sc-t, .la-ac-line, .la-ac-where .v, .la-ac-hero b, .la-ac-hero small')].some((t) => t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 1));
+  /* 고정 틀(10-25 원칙 338) — 칸 높이는 모든 카드가 같고(제목 1줄 · 설명 2줄 · 지표 · 대상 지역 1줄 · 영상 칩 · 단추), 글이 길면 그 칸 안에서 글자를 한 단계씩 줄인다.
+     그래서 '넘침'은 카드 몸이 칸을 넘는지(그림 칸이 바닥보다 작아지는지)와 숫자 칸만 본다 — 제목 · 설명 길이는 단계(data-fit)를 내리지 않는다 */
+  const over = () => { fitText(cards); return cards.some((el) => el.scrollHeight > el.clientHeight + 1
+    || [...el.querySelectorAll('.la-ac-hero b, .la-ac-hero small')].some((t) => t.scrollWidth > t.clientWidth + 1)); };
   delete grid.dataset.tight; delete grid.dataset.spill;
   for (const f of ['3', '2', '1', '0']) { grid.dataset.fit = f; if (!over()) return; }
   grid.dataset.tight = '1';                                  // 낮은 화면(1280×720 등) — 정확도 · 갱신을 한 줄로
@@ -70,6 +72,32 @@ function fitGrid(grid, n) {
   grid.dataset.spill = '1';                                  // 그래도 넘치면 자르지 않고 아래로(잘림 0이 먼저)
   grid.style.gridTemplateRows = `repeat(${best.r}, auto)`;
 }   // 함수 — 맨 위 await(gallery) 가 이 줄보다 먼저 돈다
+/* 카드 글 칸 맞춤 — 칸 크기는 그대로, 글자만 글자 단계(토큰)를 하나씩 내려 본다. 그래도 넘치면 말줄임(제목) · 두 줄 줄임(설명) + 전체 글은 title(마우스를 올리면 보임) */
+function fsTable() {                                          // 함수 — 맨 위 await(gallery) 가 이 줄보다 먼저 돈다(let · const 못 씀)
+  if (fsTable.px) return fsTable.px;
+  const cs = getComputedStyle(document.documentElement);
+  return (fsTable.px = ['--fs-num', '--fs-t1', '--fs-t2', '--fs-body', '--fs-aux', '--fs-tag'].map((k) => [k, parseFloat(cs.getPropertyValue(k)) || 0]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]));
+}
+function shrinkTo(el, min, full, overflows) {
+  el.style.removeProperty('font-size'); el.removeAttribute('title');
+  if (!overflows()) return;
+  const base = parseFloat(getComputedStyle(el).fontSize);
+  for (const [k, v] of fsTable()) {
+    if (v >= base - 0.5 || v < min) continue;
+    el.style.fontSize = `var(${k})`;
+    if (!overflows()) return;
+  }
+  el.title = full;                                           // 바닥 글자에서도 넘침 — 말줄임 · 줄 줄임(글은 title 로)
+}
+function fitText(cards) {
+  for (const c of cards) {
+    const t = c.querySelector('.k-sc-t'), l = c.querySelector('.la-ac-line');
+    if (t) shrinkTo(t, 15, t.textContent.replace(/\u2060/g, ''), () => t.scrollWidth > t.clientWidth + 1);          // 제목 바닥 = 보조(15)
+    if (l && l.offsetParent) shrinkTo(l, 14, l.textContent, () => {                                                 // 설명 바닥 = 꼬리표(14)
+      l.style.webkitLineClamp = 'unset'; const o = l.scrollHeight > l.clientHeight + 1; l.style.removeProperty('-webkit-line-clamp'); return o;
+    });
+  }
+}
 function perDef() { return matchMedia('(min-width:2200px)').matches ? 6 : 4; }   // 고르기 전 기본 = 그 해상도 한 줄(원칙 248 · 2200 이상 6열)
 function readPer() { try { const n = +localStorage.getItem('lx-analyze.per'); return perList().includes(n) ? n : perDef(); } catch { return perDef(); } }
 function savePer(n) { try { localStorage.setItem('lx-analyze.per', String(n)); } catch { /* 저장 못 해도 화면은 그대로 */ } }
@@ -105,14 +133,13 @@ function acCard(c, href, more) {
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '아직 없음', title: tg.join(' · ') }),
         h('span.v2', { text: tg.length ? (tg.length > 1 ? `${tg[0]} 외 ${tg.length - 1}곳` : tg[0]) : '아직 없음', title: tg.join(' · ') })),   // 가장 촘촘한 단계(data-fit 0)에서 한 줄
-      (c.imagery_kinds || []).length ? h('div.la-ac-imk', { 'aria-label': '쓸 수 있는 영상' }, ...c.imagery_kinds.map((k) => h('span', { text: k }))) : null,
+      h('div.la-ac-imk', (c.imagery_kinds || []).length ? { 'aria-label': '쓸 수 있는 영상' } : { 'aria-hidden': 'true' }, ...(c.imagery_kinds || []).map((k) => h('span', { text: k }))),   // 영상 칩이 없어도 같은 높이 칸(고정 틀 — 아래 칸 줄이 카드마다 맞게)
       h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: href(c), text: '분석하기' }), h('a.k-sc-more', { href: more(c), text: '자세히 →' }))));
 }
 
 async function gallery() {
   document.title = '분석하기 · Land-XI';
-  page.append(h('header.la-head', {}, h('h1.t-h3', { text: '분석 서비스' }),
-    h('p.la-sub', {}, '정식 분석 서비스를 골라 지역을 정하면 AI가 분석합니다 ', h('a.k-what', { href: '../help-my/?tab=screens', text: '이 화면은?' }))));   // 세 화면 경계(바퀴 4)
+  page.append(h('header.la-head', {}, h('h1.t-h3', { text: '분석 서비스' })));   // 머리 한 줄 설명 · '이 화면은?' 뺌(10-25 사용자 "이 부분은 삭제한다")
   const tools = h('div.la-tools');
   const grid = h('div.la-grid.la-acg');
   const box = h('div');
