@@ -2322,6 +2322,7 @@ function layoutNow() {
 function mountLayout() {
   X.relayout = layoutNow;   // 실증 기록용(화면엔 없음)
   layoutNow();
+  { let n = 0; const iv = setInterval(() => { layoutNow(); if (++n >= 12 || !mainEl?.isConnected) clearInterval(iv); }, 800); }   // 처음 10초는 0.8초마다 한 번 더 잰다(10-26 — 늦게 선 결과 카드를 놓쳐 대화 입력줄과 겹친 적이 있다 · 자리가 같으면 아무것도 바뀌지 않는다)
   const ro = new ResizeObserver(layout); ro.observe(mainEl);
   for (const el of mainEl.querySelectorAll('.xo, .xo-mini, .xa-card, .xc-pop, .xc-tools')) ro.observe(el);   // 판 폭이 바뀌는 동안(끌기 · 펼침)도 따라 잰다
   // 기관 결과 카드(.gx-card)는 늦게 서고 글이 채워지며 커진다 — 크기도 따라 재고, 바뀐 뒤 한 번 더(겹침 검사 1280 · 1440 결과 지도 · 원칙 309)

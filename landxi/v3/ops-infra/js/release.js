@@ -40,7 +40,10 @@ export function mountRelease(root) {
   let tab = null;
   const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl', requests: 'req', cards: 'cards' })[m?.[1]] || 'cards'; };   // 배포를 열면 '배포된 카드'가 먼저(10-25)
   function set(t, push = false) {
-    if (t === 'cards') { if (/^#\/deploys/.test(location.hash) || push) location.replace('../lx-cards/'); return; }   // 배포된 카드 = 서비스 카드 관리 화면
+    if (t === 'cards') {   // 배포된 카드 = 서비스 카드 관리 화면 · 다른 화면 사이드 메뉴의 '배포'(?view=deploys)로 들어와도 같다(10-26 — 예전엔 모든 탭이 한꺼번에 펼쳐졌다)
+      if (/^#\/deploys/.test(location.hash) || new URLSearchParams(location.search).get('view') === 'deploys' || push) location.replace('../lx-cards/');
+      else for (const [k] of TABS) panes[k].hidden = true;
+      return; }
     tab = t;
     for (const [k] of TABS) { btn[k].setAttribute('aria-selected', String(k === t)); panes[k].hidden = k !== t; }
     if (push) history.replaceState(null, '', '#/deploys' + TABS.find((x) => x[0] === t)[2]);
