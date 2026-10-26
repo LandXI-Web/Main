@@ -67,6 +67,25 @@
       "0.8": 0.939
      },
      "mask_map50_mix": 0.9667
+    },
+    "candidate_job_01M5TXZZZ8J56ASBZ1FXM39RSG": {
+     "how": "namwon/Silage/train 에서 12에포크 · 학습 1,608 + 배경 99칸 · 대기열 학습",
+     "bg_fp_per_100_tiles": {
+      "0.25": 1,
+      "0.5": 0,
+      "0.8": 0
+     },
+     "recall": {
+      "0.25": 0.907,
+      "0.5": 0.885,
+      "0.8": 0.785
+     },
+     "fp_on_bale_tiles": {
+      "0.25": 48,
+      "0.5": 29,
+      "0.8": 7
+     },
+     "verdict": "배경 오탐은 줄었으나 찾음 · 곤포 칸 정확도가 남원 곤포 모델보다 낮음 — 쓰지 않음(후보로만 남김)"
     }
    },
    "after": "after/cover-card-d8fc01.jpg"
@@ -100,7 +119,48 @@
     "단동다동 붙이기 규칙(겹침 10 % 또는 끝과 끝이 맞닿아 더 길어질 때)",
     "새 예시(평지 · 표본 50개 중 약 45개 맞음) 1,098 → 400"
    ],
-   "after": "after/cover-card-6f7050.jpg"
+   "after": "after/cover-card-6f7050.jpg",
+   "measured": {
+    "eye_sample_top100_saenae": {
+     "0.25": 0.34,
+     "0.5": 0.39,
+     "0.7": 0.53,
+     "0.8": 0.72,
+     "0.85": 0.82,
+     "source": "make/gh_labels.json"
+    },
+    "fixed_conf_cpu": {
+     "bg_fp_23_tiles": {
+      "0.25": 23,
+      "0.5": 8,
+      "0.8": 0
+     },
+     "recall": {
+      "0.25": 0.904,
+      "0.5": 0.872,
+      "0.8": 0.782
+     },
+     "source": "make/fixedconf-gh-current.json"
+    },
+    "queue_eval": {
+     "recorded_val_mask_map50": {
+      "단동": 0.933,
+      "다동": 0.958
+     },
+     "with_bg23": {
+      "단동": 0.929,
+      "다동": 0.955
+     },
+     "jobs": [
+      "job_01M5TXDM03GEXBFGS7KTT6NSCD",
+      "job_01M5TXY4ZHTA5EXV6BAZCMC02B"
+     ]
+    },
+    "new_example_eye_sample50": "약 45/50 비닐하우스(남원 2025.06 금지면 · 0.8)"
+   },
+   "model_fix": [
+    "배경 칸(지붕 · 도로) 라벨을 더 모아 재학습 — 이번엔 22칸뿐이라 학습하지 않음"
+   ]
   },
   {
    "card": "card-f31e5f",
@@ -115,7 +175,17 @@
    "fixed": [
     "붙이기 + 하한 0.6 · 119 → 19"
    ],
-   "after": "after/cover-card-f31e5f.jpg"
+   "after": "after/cover-card-f31e5f.jpg",
+   "measured": {
+    "queue_eval_recorded_val_mask_map50": {
+     "IRG": 0.988,
+     "수단그라스": 0.972,
+     "옥수수": 0.937,
+     "호밀": 0.995
+    },
+    "job": "job_01M5TXQQ7STB0ET2AX9ADQT9BN",
+    "note": "검증 셋 = 같은 비행 무작위 칸 · 배경 0장 — 실제 현장 정확도가 아님. 예시 결과 표본 27개 눈 판정 — 0.6 아래 대부분 오탐(evidence/production-sample-merged.jpg)"
+   }
   },
   {
    "card": "card-4d8d6f",
@@ -129,7 +199,17 @@
    "fixed": [
     "붙이기 + 하한 0.8 · 219 → 78"
    ],
-   "after": "after/cover-card-4d8d6f.jpg"
+   "after": "after/cover-card-4d8d6f.jpg",
+   "measured": {
+    "queue_eval_recorded_val_mask_map50": {
+     "IRG": 0.977,
+     "수단그라스": 0.991,
+     "옥수수": 0.98,
+     "호밀": 0.995
+    },
+    "job": "job_01M5TXFEZ5XW31WEMDCCV8VWJA",
+    "note": "예시 결과 표본 108개 눈 판정 — 0.82 이상 60개 중 약 12개 오탐 · 0.8 아래 거의 모두 빈 그루터기 밭(evidence/growth-sample-merged-*.jpg)"
+   }
   },
   {
    "card": "card-ba9d6d",
@@ -167,5 +247,54 @@
   "after": "after/(갤러리 2쪽 · 지도 · 카드 그림 전/후)",
   "samples": "evidence/"
  },
- "backup": "02. 데이터/_backup/cards8-1026/(DB 결과 줄 · 작업 수 · 카드 판 · 카드 정보 · 결과 파일 · 비교 파일)"
+ "backup": "02. 데이터/_backup/cards8-1026/(DB 결과 줄 · 작업 수 · 카드 판 · 카드 정보 · 결과 파일 · 비교 파일)",
+ "power": {
+  "rule": "장당 30초 평균 160 W(pools.yaml)",
+  "run1": {
+   "0": {
+    "max_w": 149.14,
+    "max_avg30_w": 133.7,
+    "max_util": 100,
+    "max_temp": 78
+   },
+   "1": {
+    "max_w": 123.66,
+    "max_avg30_w": 88.4,
+    "max_util": 100,
+    "max_temp": 78
+   }
+  },
+  "run2": {
+   "0": {
+    "max_w": 149.95,
+    "max_avg30_w": 138.5,
+    "max_util": 100,
+    "max_temp": 81
+   },
+   "1": {
+    "max_w": 115.66,
+    "max_avg30_w": 85.1,
+    "max_util": 100,
+    "max_temp": 69
+   }
+  },
+  "run3_training": {
+   "0": {
+    "max_w": 163.27,
+    "max_avg30_w": 151.2,
+    "max_util": 100,
+    "max_temp": 81
+   },
+   "1": {
+    "max_w": 91.21,
+    "max_avg30_w": 28.9,
+    "max_util": 100,
+    "max_temp": 61
+   }
+  }
+ },
+ "restart_needed": [
+  "게이트웨이(cards.py 신뢰도 하한 · feedcompare.py 농지만 · card_cover.py 그림 · card_cover_pick.py 후보 틀)",
+  "CPU 워커(national/tidy.py 붙이기 규칙 — 새 분석 마무리)"
+ ]
 }

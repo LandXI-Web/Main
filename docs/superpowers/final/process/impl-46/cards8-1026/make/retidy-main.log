@@ -1,0 +1,16 @@
+DSN: postgresql://postgres:***@127.0.0.1:5433/landxi
+{"job": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH", "src": "job_01M5Q2202Q8D5CCKZVYZ7GE1AH.raw.fgb", "raw": 226, "conf_min": 0.25, "after_conf": 226, "after_valid": 226, "valid": {"in": 226, "dropped": 0, "clipped": 0, "out": 226}, "seam": {"in": 226, "merged_pieces": 214, "merged_into": 15, "candidates": 0, "out": 27}, "out": 27, "by_cls": {"IRG": 25, "옥수수": 2}, "db_before": {"IRG": 116, "옥수수": 3}}
+DB 쓰기 끝 main 27
+파일 쓰기 끝 455
+DSN: postgresql://postgres:***@127.0.0.1:5433/landxi
+{"job": "job_01M5Q21ZHFPT6F3TC22KKTWRBM", "src": "job_01M5Q21ZHFPT6F3TC22KKTWRBM.raw.fgb", "raw": 1284, "conf_min": 0.25, "after_conf": 1284, "after_valid": 1284, "valid": {"in": 1284, "dropped": 0, "clipped": 0, "out": 1284}, "seam": {"in": 1284, "merged_pieces": 1252, "merged_into": 76, "candidates": 0, "out": 108}, "out": 108, "by_cls": {"IRG": 102, "호밀": 5, "옥수수": 1}, "db_before": {"호밀": 5, "IRG": 213, "옥수수": 1}}
+DB 쓰기 끝 main 108
+파일 쓰기 끝 662
+DSN: postgresql://postgres:***@127.0.0.1:5433/landxi
+{"job": "job_01M5NW3EH2XSQAMS5A57EQ9EPD", "src": "job_01M5NW3EH2XSQAMS5A57EQ9EPD.raw.fgb", "raw": 194, "conf_min": 0.8, "after_conf": 52, "after_valid": 49, "valid": {"in": 52, "dropped": 3, "clipped": 1, "out": 49}, "seam": {"in": 49, "merged_pieces": 26, "merged_into": 7, "candidates": 0, "out": 30}, "out": 30, "by_cls": {"비닐하우스_단동": 28, "비닐하우스_다동": 2}, "db_before": {"비닐하우스_다동": 30, "비닐하우스_단동": 126}}
+DB 쓰기 끝 main 30
+파일 쓰기 끝 322
+DSN: postgresql://postgres:***@127.0.0.1:5433/landxi
+{"job": "job_01M5RBX85XEVANJZ0QPMNEEH1J", "src": "job_01M5RBX85XEVANJZ0QPMNEEH1J.raw.fgb", "raw": 193, "conf_min": 0.8, "after_conf": 19, "after_valid": 19, "valid": {"in": 19, "dropped": 0, "clipped": 0, "out": 19}, "seam": {"in": 19, "merged_pieces": 2, "merged_into": 1, "candidates": 0, "out": 18}, "out": 18, "by_cls": {"곤포사일리지": 18}, "db_before": {"곤포사일리지": 133}}
+DB 쓰기 끝 main 18
+파일 쓰기 끝 317

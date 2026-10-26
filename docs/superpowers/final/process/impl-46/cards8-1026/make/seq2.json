@@ -37,13 +37,36 @@
    "yaml": "E:/namwon/production_baseline/dataset.yaml",
    "label": "생산기 · 기록 검증 셋",
    "job": "job_01M5TXQQ7STB0ET2AX9ADQT9BN",
-   "start": "10:38:25"
+   "start": "10:38:25",
+   "state": "done",
+   "error": null,
+   "end": "10:41:55"
+  },
+  {
+   "mode": "eval",
+   "model": "namwon/Vinyl_house/train",
+   "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/gh_eval_mix.yaml",
+   "label": "단동다동 · 검증 404 + 배경 23",
+   "job": "job_01M5TXY4ZHTA5EXV6BAZCMC02B",
+   "start": "10:41:56",
+   "state": "done",
+   "error": null,
+   "end": "10:42:56"
+  },
+  {
+   "mode": "train",
+   "model": "namwon/Silage/train",
+   "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/silage_cand.yaml",
+   "label": "후보 · 곤포 + 배경 칸(10-26)",
+   "epochs": 12,
+   "job": "job_01M5TXZZZ8J56ASBZ1FXM39RSG",
+   "start": "10:42:56"
   }
  ],
  "power": {
   "0": {
    "max_w": 149.95,
-   "max_avg30_w": 138.0,
+   "max_avg30_w": 138.5,
    "max_util": 100,
    "max_temp": 81
   },

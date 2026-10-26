@@ -1,0 +1,27 @@
+{
+ "jobs": [
+  {
+   "job": "job_01M5TXZZZ8J56ASBZ1FXM39RSG",
+   "mode": "train",
+   "label": "후보 · 곤포 + 배경 칸(10-26) · 12에포크",
+   "start": "10:54:30",
+   "state": "done",
+   "error": null,
+   "end": "13:05:09"
+  }
+ ],
+ "power": {
+  "0": {
+   "max_w": 163.27,
+   "max_avg30_w": 151.2,
+   "max_util": 100,
+   "max_temp": 81
+  },
+  "1": {
+   "max_w": 91.21,
+   "max_avg30_w": 28.9,
+   "max_util": 100,
+   "max_temp": 61
+  }
+ }
+}

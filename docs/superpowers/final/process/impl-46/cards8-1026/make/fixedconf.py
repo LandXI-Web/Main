@@ -1,5 +1,5 @@
 """고정 신뢰도 하한에서 곤포 모델 재기(CPU · GPU 쓰지 않음) — 배경 평가 칸 100장의 오탐 수 + 남원 검증 칸 표본의 곤포 찾음/놓침.
-  python fixedconf.py WEIGHTS TAG [N_POS]
+  python fixedconf.py WEIGHTS TAG [N_POS]     (env FC_KIND=gh → 단동다동: 배경 평가 23칸 · 기록 검증 칸 표본 · 분류 무시하고 짝)
  짝 = 상자 IoU 0.5 이상(라벨 상자 ↔ 예측 상자) · 하한 0.25 · 0.5 · 0.8"""
 import sys, glob, json, random, os
 from pathlib import Path
@@ -8,8 +8,14 @@ from ultralytics import YOLO
 import numpy as np
 W, TAG = sys.argv[1], sys.argv[2]; NP = int(sys.argv[3]) if len(sys.argv) > 3 else 120
 D = Path("E:/Land-XI 플랫폼/02. 데이터/training")
-bg = sorted(glob.glob(str(D / "cards8-1026/silage-bg/eval/images/*.jpg")))
-pos = sorted(glob.glob(str(D / "eval/silage-v1/images/val/*"))); random.seed(5); pos = sorted(random.sample(pos, min(NP, len(pos))))
+KIND = os.environ.get("FC_KIND", "silage")          # silage | gh
+if KIND == "gh":
+    bg = sorted(glob.glob(str(D / "cards8-1026/gh-bg/eval/images/*.jpg")))
+    pos = sorted(glob.glob("E:/namwon/Vinyl_house/images/val/*"))
+else:
+    bg = sorted(glob.glob(str(D / "cards8-1026/silage-bg/eval/images/*.jpg")))
+    pos = sorted(glob.glob(str(D / "eval/silage-v1/images/val/*")))
+random.seed(5); pos = sorted(random.sample(pos, min(NP, len(pos))))
 m = YOLO(W)
 TH = (0.25, 0.5, 0.8)
 def boxes_of(lbl, w, h):
