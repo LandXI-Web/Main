@@ -43,6 +43,31 @@ def test_seam_rules_keep_far_pieces_other_classes_and_edited():
     assert st["merged_into"] == 0                                    # 차량(OBB)은 붙이지 않음
 
 
+def test_crop_and_greenhouse_pieces_merge_without_edge_flag():
+    # 10-26 — 사료작물: 다른 칩 · 가장자리 표시 없음 · 맞닿음 → 하나로 / 둘 다 가장자리 · 0.8 m 틈 → 하나로 / 같은 칩 · 가장자리 아님 · 0.8 m → 따로
+    a, b = box(0, 0, 15, 15), box(15, 0, 30, 15)
+    g, _, st, _ = T.seam_merge([a, b], [_p(1, cls="IRG", shard="r0c0"), _p(2, cls="IRG", shard="r0c1")])
+    assert st["merged_into"] == 1 and len(g) == 1 and g[0].geom_type == "Polygon"
+    c, d = box(0, 0, 15, 15), box(15.8, 0, 30, 15)
+    g, _, st, _ = T.seam_merge([c, d], [_p(1, cls="IRG", shard="r0c0", edge=True), _p(2, cls="IRG", shard="r0c1", edge=True)])
+    assert st["merged_into"] == 1 and g[0].geom_type == "Polygon"
+    g, _, st, _ = T.seam_merge([c, d], [_p(1, cls="IRG", shard="r0c0"), _p(2, cls="IRG", shard="r0c1")])
+    assert st["merged_into"] == 0                                    # 가장자리 표시 없는 0.8 m 틈 = 다른 논배미일 수 있음
+    # 단동: 다른 칩 · 20 % 겹침 → 하나로 / 맞닿기만(겹침 0) → 따로(붙어 선 두 동)
+    e, f = box(0, 0, 10, 40), box(0, 32, 10, 60)
+    g, _, st, _ = T.seam_merge([e, f], [_p(1, cls="비닐하우스_단동", shard="r0c0"), _p(2, cls="비닐하우스_단동", shard="r1c0")])
+    assert st["merged_into"] == 1
+    h, k = box(0, 0, 10, 40), box(10, 0, 20, 40)                    # 옆으로 붙어 선 두 동 → 따로
+    g, _, st, _ = T.seam_merge([h, k], [_p(1, cls="비닐하우스_단동", shard="r0c0"), _p(2, cls="비닐하우스_단동", shard="r0c1")])
+    assert st["merged_into"] == 0
+    m1, m2 = box(0, 0, 8, 15), box(0, 15, 8, 30)                    # 한 동의 앞뒤 토막(끝과 끝이 맞닿음) → 하나로
+    g, _, st, _ = T.seam_merge([m1, m2], [_p(1, cls="비닐하우스_단동", shard="r0c0"), _p(2, cls="비닐하우스_단동", shard="r1c0")])
+    assert st["merged_into"] == 1 and abs(g[0].area - 240) < 1
+    # 농지 전수 '경작지'는 예전 규칙 그대로(가장자리 표시 없으면 붙이지 않음)
+    g, _, st, _ = T.seam_merge([a, b], [_p(1, shard="r0c0"), _p(2, shard="r0c1")])
+    assert st["merged_into"] == 0
+
+
 def test_own_keep_part_cell_and_neighbour():
     cell = box(0, 0, 10, 10)
     own, sib = box(0, 0, 5, 10), box(5, 0, 10, 10)

@@ -4,7 +4,7 @@
   POST /api/v1/cards/{cid}/compare           {growth, production, silage?} 두 시기 결과를 필지마다 견준다 → 필지별 비교 결과 + 집계
 
 비교 카드 = 카드 판의 modules.compare 에 시기별 원천 카드가 적힌 카드(서비스 정의 한 곳 · 카드 id 를 코드에 적지 않는다).
-견주는 자리 = 두 결과가 모두 덮는 곳(분석 범위 ∩ 영상 범위)의 필지(연속지적 survey_parcels) 가운데 넓이의 80% 이상이 그 자리에 든 필지.
+견주는 자리 = 두 결과가 모두 덮는 곳(분석 범위 ∩ 영상 범위)의 농지 필지(연속지적 survey_parcels · 전 · 답 · 과수원 · 목장용지) 가운데 넓이의 80% 이상이 그 자리에 든 필지.
 필지마다 그 시기 AI 분석 결과 가운데 가장 넓은 작물 = 그 시기 작물(작물 넓이 50㎡ 이상 또는 필지의 10% 이상일 때만 '있음').
 비교 결과(같은 말 · 모든 화면): 같은 작물 · 작물 바뀜 · 수확·곤포 확인(생산기에 작물 없음 + 곤포사일리지 있음) · 생산기에 없음 · 생산기에만 있음.
 숫자는 이 계산 한 번의 값(AI 분석 결과 · 결과 확인 전) — 지어내지 않는다.
@@ -26,6 +26,7 @@ from .envelope import env, now_iso
 router = APIRouter()
 
 MIN_M2, MIN_SHARE, INSIDE = 50.0, 0.10, 0.80       # 작물 '있음' 기준 · 필지가 견주는 자리에 든 비율(서비스 기본값 — 통계 선언 기록과 같은 값)
+FARM_JIMOK = ["전", "답", "과수원", "목장용지"]       # 견주는 필지 = 농지 지목만(10-26 — 도로 · 구거 · 제방 · 하천 필지가 '같은 작물'로 칠해지던 것 바로잡음)
 MAX_PARCELS = 6000
 STATUS = ["같은 작물", "작물 바뀜", "수확·곤포 확인", "생산기에 없음", "생산기에만 있음"]
 SEASON_WORD = {"growth": "생육기", "production": "생산기", "silage": "곤포사일리지"}
@@ -95,7 +96,7 @@ WITH ea AS (SELECT CASE WHEN i.footprint IS NOT NULL THEN ST_Intersection(j.aoi,
             FROM jobs j LEFT JOIN imagery i ON i.id=j.imagery_id WHERE j.id=$2),
      zone AS (SELECT ST_Intersection(ea.g, eb.g) g FROM ea, eb),
      pa AS (SELECT p.pnu, p.addr, p.emd, p.jimok_nm, p.geom, ST_Area(p.geom::geography) pm2 FROM survey_parcels p, zone
-            WHERE ST_Intersects(p.geom, zone.g) AND ST_Area(ST_Intersection(p.geom, zone.g)) >= $4 * ST_Area(p.geom) LIMIT $5),
+            WHERE p.jimok_nm = ANY($6::text[]) AND ST_Intersects(p.geom, zone.g) AND ST_Area(ST_Intersection(p.geom, zone.g)) >= $4 * ST_Area(p.geom) LIMIT $5),
      ca AS (SELECT p.pnu, d.cls, sum(ST_Area(ST_Intersection(ST_MakeValid(d.geom), p.geom)::geography)) m2 FROM pa p
             JOIN detections d ON d.job_id=$1 AND coalesce(d.edit_state,'') <> 'deleted' AND ST_Intersects(d.geom, p.geom) GROUP BY 1, 2),
      cb AS (SELECT p.pnu, d.cls, sum(ST_Area(ST_Intersection(ST_MakeValid(d.geom), p.geom)::geography)) m2 FROM pa p
@@ -143,7 +144,7 @@ async def compare(cid: str, body: dict, request: Request):
         overlap = await conn.fetchval("SELECT ST_Intersects(a.aoi, b.aoi) FROM jobs a, jobs b WHERE a.id=$1 AND b.id=$2", a, b)
         if not overlap:
             raise ApiError("conflict", "두 결과가 겹치는 곳이 없습니다 — 같은 곳을 찍은 두 시기 영상으로 분석한 결과를 골라 주세요", None, 409)
-        rows = await conn.fetch(CMP_SQL, a, b, s or "", INSIDE, MAX_PARCELS)
+        rows = await conn.fetch(CMP_SQL, a, b, s or "", INSIDE, MAX_PARCELS, FARM_JIMOK)
         await audit(conn, p, "card.compare", cid, None, {"growth": a, "production": b, "silage": s or None, "parcels": len(rows)})
     feats, table = [], []
     src = "AI 분석 결과 두 시기 비교(결과 확인 전)"

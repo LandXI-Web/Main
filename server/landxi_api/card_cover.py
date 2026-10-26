@@ -9,6 +9,7 @@
                         swipe = {before, after, labels, legend} (분석 서비스 갤러리 · 자세히의 밀어 보기)
 
 틀: 받은 범위의 가운데를 지키고 4:3 으로 넓힌다. 사람 결과가 든 틀은 너비 200 m 이상(사람이 2~4 픽셀 점 — 얼굴 · 사람을 알아볼 수 없게 · 원칙 331).
+사람은 작은 점으로(밀집 칸 히트맵을 그리지 않음 · 10-26 '관광지 안전관리(히트맵 X)').
 색: XI맵 결과 색과 같은 표(xi-clean/board.js NAMED · kit/change-layer.js TYPES) — 화면 색일 뿐.
 """
 from __future__ import annotations
@@ -36,7 +37,6 @@ COLOR = {"경작지": "#2E9E5B", "경작": "#2E9E5B", "휴경": "#E8590C", "비�
          "산림 → 나지": "#C2410C", "산림 → 도로": "#FF9F1C", "산림 → 건물": "#F04452"}
 SPARE = ["#E8590C", "#D6336C", "#1098AD", "#5C7CFA", "#74B816", "#AE3EC9"]
 WORD = {"비닐하우스_단동": "단동", "비닐하우스_다동": "다동", "styrofoam": "해양쓰레기", "식생 증감": None}   # 범례 말(None = 그리지 않음 · 국토 변화 참고 유형)
-HEAT = ["#FFE08A", "#FFB633", "#FF7A1A", "#F04452", "#B5179E"]
 CMP_COL = {"같은 작물": "#0FA9A0", "작물 바뀜": "#FFB633", "수확·곤포 확인": "#006DF7", "생산기에 없음": "#F04452", "생산기에만 있음": "#727780"}
 FARM_G, FARM_F = "#2E9E5B", "#E8590C"
 
@@ -146,7 +146,7 @@ def _draw(img, items, fr):
             c = g.centroid
             x, y = tp(c.x, c.y)
             r = st.get("r", 5) * S
-            d.ellipse([x - r, y - r, x + r, y + r], fill=_hex(st.get("line") or st["fill"]), outline=(255, 255, 255, 255), width=int(1.5 * S))
+            d.ellipse([x - r, y - r, x + r, y + r], fill=_hex(st.get("line") or st["fill"]), outline=(255, 255, 255, 255), width=max(1, int((0.8 if r < 3 * S else 1.5) * S)))
             continue
         for poly in rings(g):
             ext = [tp(*c[:2]) for c in poly.exterior.coords]
@@ -211,22 +211,18 @@ def _dissolve(items):
         (by.setdefault(c, []) if c in FIELD_CLS else out).append(g if c in FIELD_CLS else (g, c))
     for c, gs in by.items():
         u = shapely.union_all([x.buffer(0.3, join_style=2) for x in gs]).buffer(-0.3, join_style=2)
-        out += [(p, c) for p in getattr(u, "geoms", [u]) if not p.is_empty]
+        out += [(p, c) for p in getattr(u, "geoms", [u]) if not p.is_empty and p.area >= FIELD_MIN_M2]   # 합친 뒤 남는 자투리는 그리지 않음(점으로 찍히던 것 · 10-26)
     return out
 
 
-def _people_grid(pts, fr, cell=8.0):
-    """사람 점 → 8 m 칸 밀집(XI맵 밀도 칸과 같은 뜻) — 사람 하나하나를 그리지 않는다"""
-    from shapely.geometry import box
-    grid: dict[tuple[int, int], int] = {}
-    for x, y in pts:
-        k = (int((x - fr[0]) // cell), int((y - fr[1]) // cell))
-        grid[k] = grid.get(k, 0) + 1
-    items = []
-    for (j, i), n in grid.items():
-        k = 0 if n < 3 else 1 if n < 6 else 2 if n < 10 else 3 if n < 16 else 4
-        items.append((box(fr[0] + j * cell, fr[1] + i * cell, fr[0] + (j + 1) * cell, fr[1] + (i + 1) * cell), {"fill": HEAT[k], "fa": 120 + 22 * k}))
-    return items
+FIELD_MIN_M2 = 30.0            # 논밭 결과 그림 — 이보다 작은 자투리(칸 경계 조각)는 그리지 않음
+PEOPLE_COL = "#F04452"
+
+
+def _people_dots(pts):
+    """사람 점 → 작은 점(10-26 사용자 '관광지 안전관리(히트맵 X)') — 점은 사람 모습이 아닌 표시(틀 너비 200 m 이상 · 원칙 331) — 카드 크기에서도 보이게 반지름 4 px"""
+    from shapely.geometry import Point
+    return [(Point(x, y), {"fill": PEOPLE_COL, "r": 4.0}) for x, y in pts]
 
 
 def _epsg(crs: str | None) -> int:
@@ -378,11 +374,11 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
         def go():
             L = _raster(path, fr)
             ppl = [(g.centroid.x, g.centroid.y) for g, c, _ in rows if c in PEOPLE]
-            its = _people_grid(ppl, fr) if ppl else []
+            its = _people_dots(ppl) if ppl else []
             its += [(g, _poly_style(col(c))) for g, c in _dissolve([(g, c) for g, c, _ in rows if c not in PEOPLE])]
             return _jpg(L), _jpg(_draw(L, its, fr))
         base, res = await run_in_threadpool(go)
-        leg = ([[HEAT[3], "사람 밀집"]] if any(c in PEOPLE for _, c, _ in rows) else []) + _legend((col(c), c) for _, c, _ in rows if c not in PEOPLE)
+        leg = ([[PEOPLE_COL, "사람"]] if any(c in PEOPLE for _, c, _ in rows) else []) + _legend((col(c), c) for _, c, _ in rows if c not in PEOPLE)
         return {"base": base, "result": res, "labels": ["원본", "AI 결과"], "legend": leg, "frame": _frame4326(fr, crs), "people": has_people, "n": len(rows)}
 
     # ② 결과 층 파일(geojson) + 영상

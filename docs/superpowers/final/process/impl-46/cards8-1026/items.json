@@ -1,0 +1,171 @@
+{
+ "title": "카드 8종 점검 · 개선(10-26 확인 대장 ④)",
+ "at": "2026-10-26",
+ "questions": {
+  "사료작물 작은 격자": "칸(칩) 단위 판정 + 칸 경계 붙이기 규칙 탓. 모델은 1024 칸(약 17 m)마다 따로 판정해 밭 하나를 칸 크기 조각으로 낸다. 이웃 칸 조각은 틈 0 m · 겹침 0.3 % 로 맞닿지만 '칩 가장자리' 표시가 없어 기존 붙이기 규칙(가장자리 표시 필요)이 건너뜀 — 생산기 이웃 조각 219쌍 중 186쌍이 남음. 해상도 · 그림 만들기 탓 아님(예전 카드 그림은 합치기 전 그림 · 지도는 조각 그대로). 증거 evidence/grid-cause-production-chip-pieces.png",
+  "산사태 같은 지역인가": "같은 곳. 같은 틀(EPSG:5179)로 두 해 타일을 받음 · 태양광 단지와 송전선 자리로 맞춰 본 어긋남 약 0.8 m. 2020 영상이 그늘 짙은 다른 계절이고 카드 틀이 가로 140 m 로 좁아 기준(태양광)이 귀퉁이에 잘려 다른 곳처럼 보였음 → 틀 380 m 로 넓혀 두 장에 태양광 · 새 길이 함께 보이게. 증거 evidence/landslide-same-place-2020-2025.jpg"
+ },
+ "cards": [
+  {
+   "card": "card-change",
+   "name": "국토 변화 분석서비스",
+   "model": "change-ap25 · 토지피복 U-Net 12분류(AI 허브 · 25 cm) · 기록 mIoU 0.79(AI 허브 공개 값 — 토지피복 분할, 변화 탐지 정확도 아님)",
+   "example": "광산구 호남선 철도용지 2019↔2024 · 51 cm 영상 2배 키워 분석 · job_01M5SXCV99D4AEB6DWDVKJ3EE2 · 303건",
+   "problems": [
+    "새 아파트를 일부만 신축으로(미탐)",
+    "횡단보도를 포장 확대로(오탐)",
+    "자동 후보 '소실' 3개 모두 오탐(공장 그대로 · 밭을 앞 해 건물로)"
+   ],
+   "fixed": [
+    "카드 그림 = 같은 틀에서 신축만(포장 확대 오탐 뺌)"
+   ],
+   "model_fix": [
+    "ap25 재학습(고층 · 51 cm · 비대상지 흡수)",
+    "건물 도형(건축물 GIS)으로 소실 확인 — 사용자 결정"
+   ],
+   "measured": "정답 없음(변화 라벨 없음)",
+   "after": "after/cover-card-change.jpg"
+  },
+  {
+   "card": "card-d8fc01",
+   "name": "곤포사일리지 분석서비스",
+   "model": "trained/job_01M3RNTFXBJACWD21KPW2AWYAH · YOLO 분할 · 학습 48장 · 검증 12장 · 기록 mAP50(마스크) 0.963",
+   "example": "남원 2025.06 드론(금지면) · job_01M5RBX85XEVANJZ0QPMNEEH1J",
+   "problems": [
+    "133개 중 115개가 빈 논 · 물 댄 논을 칸 모양으로(신뢰도 0.76 이하)",
+    "진짜 곤포 18개는 모두 0.93 이상",
+    "흰 곤포 줄 일부 놓침"
+   ],
+   "fixed": [
+    "카드 신뢰도 하한 0.8(card_versions.modules.conf · 새 분석 · 게이트웨이 재시작 뒤)",
+    "예시 결과 다시 정리 133 → 18"
+   ],
+   "measured": {
+    "source": "make/fixedconf-card.json · fixedconf-namwon.json(CPU) · 대기열 검증 job_01M5TVNVTWZ8V0KR895WDYSCXJ · job_01M5TVRMFA8AMM9PXV4MA8YEJS",
+    "card_model": {
+     "bg_fp_per_100_tiles": {
+      "0.25": 31,
+      "0.5": 18,
+      "0.8": 3
+     },
+     "recall": {
+      "0.25": 0.962,
+      "0.5": 0.955,
+      "0.8": 0.939
+     },
+     "mask_map50_mix": 0.9614
+    },
+    "namwon_Silage_train": {
+     "bg_fp_per_100_tiles": {
+      "0.25": 4,
+      "0.5": 4,
+      "0.8": 1
+     },
+     "recall": {
+      "0.25": 0.959,
+      "0.5": 0.959,
+      "0.8": 0.939
+     },
+     "mask_map50_mix": 0.9667
+    }
+   },
+   "after": "after/cover-card-d8fc01.jpg"
+  },
+  {
+   "card": "card-crowd",
+   "name": "관광지 안전관리 분석서비스",
+   "model": "people/yolo11l-2025-08-25(기록 mAP50 0.870) · car_v2_obb(기록 mAP50 0.993)",
+   "example": "남원 2025.05 드론(춘향제) · 사람 9,770 · 차량 1,075",
+   "problems": [
+    "카드 그림이 8 m 칸 히트맵(사용자 '히트맵 X')",
+    "천막 지붕 위 차량 오탐 몇 개"
+   ],
+   "fixed": [
+    "카드 그림 = 사람 작은 점 + 차량 상자(히트맵 없음 · 틀 200 m 이상 유지)"
+   ],
+   "measured": "눈 판정 표본 40개씩: 사람 약 36/40 · 차량 40/40. 사람 검증 셋은 라벨만 있고 영상이 없어 다시 재지 못함",
+   "after": "after/cover-card-crowd.jpg"
+  },
+  {
+   "card": "card-6f7050",
+   "name": "비닐하우스 단동·다동 분석서비스",
+   "model": "namwon/Vinyl_house/train · 학습 1,549 · 검증 404(무작위 칸 · 배경 0장) · 기록 mAP50 0.946",
+   "example": "예전 산내면 드론(산간 마을) job_01M5NW3EH2XSQAMS5A57EQ9EPD 156 → 새 예시 남원 2025.06 드론 금지면 job_01M5TW20PHW2CZ9462CMQZAHHW",
+   "problems": [
+    "산내면: 위 100개 눈 판정 정밀도 0.34(0.25 하한) · 0.72(0.8) — 집 지붕 · 도로 · 영상 빈 곳 오탐",
+    "한 동이 칸마다 토막"
+   ],
+   "fixed": [
+    "하한 0.8",
+    "단동다동 붙이기 규칙(겹침 10 % 또는 끝과 끝이 맞닿아 더 길어질 때)",
+    "새 예시(평지 · 표본 50개 중 약 45개 맞음) 1,098 → 400"
+   ],
+   "after": "after/cover-card-6f7050.jpg"
+  },
+  {
+   "card": "card-f31e5f",
+   "name": "사료작물 생산기 분석서비스",
+   "model": "namwon/production_baseline/train · 학습 5,365 · 배경 0장 · 기록 mAP50 0.976",
+   "example": "남원 2025.06 드론 · job_01M5Q2202Q8D5CCKZVYZ7GE1AH",
+   "problems": [
+    "칸 격자(밭 하나가 15 m 칸 조각)",
+    "0.6 아래는 숲 · 하천변 · 갈아엎은 밭 오탐",
+    "하천변 풀밭 오탐 한 줄은 0.6 위로 남음"
+   ],
+   "fixed": [
+    "붙이기 + 하한 0.6 · 119 → 19"
+   ],
+   "after": "after/cover-card-f31e5f.jpg"
+  },
+  {
+   "card": "card-4d8d6f",
+   "name": "사료작물 생육기 분석서비스",
+   "model": "namwon/growth_baseline/train · 학습 7,036 · 배경 0장 · 기록 mAP50 0.989",
+   "example": "남원 2025.04 드론(금지면) · job_01M5Q21ZHFPT6F3TC22KKTWRBM",
+   "problems": [
+    "칸 격자(원래 조각 1,284)",
+    "0.8 아래 거의 모두 빈 그루터기 밭 오탐"
+   ],
+   "fixed": [
+    "붙이기 + 하한 0.8 · 219 → 78"
+   ],
+   "after": "after/cover-card-4d8d6f.jpg"
+  },
+  {
+   "card": "card-ba9d6d",
+   "name": "사료작물 생육기·생산기 비교 분석서비스",
+   "model": "생육기 · 생산기 결과를 필지(연속지적)마다 견줌",
+   "example": "금지면 2025.04 ↔ 06",
+   "problems": [
+    "190필지 중 37필지가 도로 · 구거 · 제방 · 하천 · 철도 · 임야(도로 필지가 '같은 작물'로 칠해짐)"
+   ],
+   "fixed": [
+    "농지 지목(전 · 답 · 과수원 · 목장용지)만 · 다시 정리한 두 결과로 다시 견줌 · 190 → 127(같은 작물 14 · 생산기에 없음 106 · 생산기에만 7) · job_01M5TVWEHZ8AJ0VFHYCKH9VBQC"
+   ],
+   "after": "after/cover-card-ba9d6d.jpg"
+  },
+  {
+   "card": "card-landslide",
+   "name": "산사태 취약지구 분석서비스",
+   "model": "change-ap25 · 산림 → 나지 · 도로 · 건물",
+   "example": "남원 예시 지구 2곳(직접 그린 것 · 실제 취약지구 아님) 2020↔2025 · 22건",
+   "problems": [
+    "틀이 좁아 같은 곳인지 알 수 없음",
+    "개간지 전체가 아닌 일부만 나지로"
+   ],
+   "fixed": [
+    "넓은 틀(380 m)로 새 길 · 태양광이 함께 보이게"
+   ],
+   "model_fix": [
+    "ap25 재학습 · 실제 산사태 취약지구 도형(산림청) 받기 — 사용자 결정"
+   ],
+   "after": "after/cover-card-landslide.jpg"
+  }
+ ],
+ "evidence": {
+  "before": "before/(갤러리 · 지도 9장 · 10-26 09:46 바깥 주소 · LX 직원 로그인 폼)",
+  "after": "after/(갤러리 2쪽 · 지도 · 카드 그림 전/후)",
+  "samples": "evidence/"
+ },
+ "backup": "02. 데이터/_backup/cards8-1026/(DB 결과 줄 · 작업 수 · 카드 판 · 카드 정보 · 결과 파일 · 비교 파일)"
+}

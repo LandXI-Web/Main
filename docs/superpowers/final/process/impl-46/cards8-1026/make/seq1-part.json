@@ -1,0 +1,48 @@
+{
+ "jobs": [
+  {
+   "job": "job_01M5TVNVTWZ8V0KR895WDYSCXJ",
+   "mode": "eval",
+   "model": "trained/job_01M3RNTFXBJACWD21KPW2AWYAH",
+   "label": "곤포 · 남원 검증 390 + 배경 100",
+   "start": "10:02:57",
+   "state": "done",
+   "error": null,
+   "end": "10:03:57"
+  },
+  {
+   "mode": "eval",
+   "model": "namwon/Silage/train",
+   "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/silage_eval_mix.yaml",
+   "label": "곤포 · 남원 검증 390 + 배경 100",
+   "job": "job_01M5TVRMFA8AMM9PXV4MA8YEJS",
+   "start": "10:03:58",
+   "state": "done",
+   "error": null,
+   "end": "10:05:28"
+  },
+  {
+   "mode": "train",
+   "model": "namwon/Silage/train",
+   "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/silage_cand.yaml",
+   "label": "후보 · 곤포 + 배경 칸(10-26)",
+   "epochs": 30,
+   "job": "job_01M5TVVCWNTS5XNBXRFFNTQMM2",
+   "start": "10:05:29"
+  }
+ ],
+ "power": {
+  "0": {
+   "max_w": 149.14,
+   "max_avg30_w": 133.7,
+   "max_util": 100,
+   "max_temp": 78
+  },
+  "1": {
+   "max_w": 123.66,
+   "max_avg30_w": 88.4,
+   "max_util": 100,
+   "max_temp": 78
+  }
+ }
+}

@@ -1,0 +1,57 @@
+{
+ "jobs": [
+  {
+   "job": "job_01M5TW20PHW2CZ9462CMQZAHHW",
+   "mode": "infer",
+   "label": "단동다동 새 예시 · 남원 2025.06 금지면",
+   "start": "10:19:23",
+   "state": "done",
+   "error": null,
+   "end": "10:32:54"
+  },
+  {
+   "mode": "eval",
+   "model": "namwon/Vinyl_house/train",
+   "yaml": "E:/namwon/Vinyl_house/dataset.yaml",
+   "label": "단동다동 · 기록 검증 셋",
+   "job": "job_01M5TXDM03GEXBFGS7KTT6NSCD",
+   "start": "10:32:54",
+   "state": "done",
+   "error": null,
+   "end": "10:33:54"
+  },
+  {
+   "mode": "eval",
+   "model": "namwon/growth_baseline/train",
+   "yaml": "E:/namwon/growth_baseline/dataset.yaml",
+   "label": "생육기 · 기록 검증 셋",
+   "job": "job_01M5TXFEZ5XW31WEMDCCV8VWJA",
+   "start": "10:33:55",
+   "state": "done",
+   "error": null,
+   "end": "10:38:25"
+  },
+  {
+   "mode": "eval",
+   "model": "namwon/production_baseline/train",
+   "yaml": "E:/namwon/production_baseline/dataset.yaml",
+   "label": "생산기 · 기록 검증 셋",
+   "job": "job_01M5TXQQ7STB0ET2AX9ADQT9BN",
+   "start": "10:38:25"
+  }
+ ],
+ "power": {
+  "0": {
+   "max_w": 149.95,
+   "max_avg30_w": 138.0,
+   "max_util": 100,
+   "max_temp": 81
+  },
+  "1": {
+   "max_w": 115.66,
+   "max_avg30_w": 85.1,
+   "max_util": 100,
+   "max_temp": 69
+  }
+ }
+}

@@ -1,0 +1,7 @@
+[{"job": "job_01M5TW20PHW2CZ9462CMQZAHHW", "mode": "infer", "label": "단동다동 새 예시 · 남원 2025.06 금지면"},
+ {"mode": "eval", "model": "namwon/Vinyl_house/train", "yaml": "E:/namwon/Vinyl_house/dataset.yaml", "label": "단동다동 · 기록 검증 셋"},
+ {"mode": "eval", "model": "namwon/growth_baseline/train", "yaml": "E:/namwon/growth_baseline/dataset.yaml", "label": "생육기 · 기록 검증 셋"},
+ {"mode": "eval", "model": "namwon/production_baseline/train", "yaml": "E:/namwon/production_baseline/dataset.yaml", "label": "생산기 · 기록 검증 셋"},
+ {"mode": "eval", "model": "namwon/Vinyl_house/train", "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/gh_eval_mix.yaml", "label": "단동다동 · 검증 404 + 배경 23"},
+ {"mode": "train", "model": "namwon/Silage/train", "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/silage_cand.yaml", "label": "후보 · 곤포 + 배경 칸(10-26)", "epochs": 12},
+ {"mode": "train", "model": "namwon/Vinyl_house/train", "yaml": "E:/Land-XI 플랫폼/02. 데이터/training/cards8-1026/gh_cand.yaml", "label": "후보 · 단동다동 + 배경 칸(10-26)", "epochs": 12}]

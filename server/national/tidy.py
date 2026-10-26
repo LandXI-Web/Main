@@ -45,6 +45,12 @@ SEAM_RATIO = 0.10        # 칸 경계 붙이기 — 작은 쪽 대비 겹친 비
 SEAM_GAP_M = 0.3         # 칸 경계 붙이기 — 맞닿음 거리
 CAND_GAP_M = 0.5         # 같은 칩 안 '합칠까요?' 후보 거리
 DUP_RATIO = 0.5          # 같은 것을 두 번 — 작은 쪽 대비 겹친 비율(작업기 NMS 와 같은 문턱)
+# 10-26 카드 8종 점검(사료작물 칸 격자 · 단동 비닐하우스 토막) — 드론 2 cm 모델은 칩마다 칸 크기 조각을 내고, 조각이 칩 가장자리에 닿지 않아도
+# 이웃 칩 조각과 맞닿는다(가장자리 표시 없음 · 틈 0 m · 겹침 0.3 %). 아래 분류만 가장자리 표시 없이도 붙인다(농지 전수 '경작지' · '비닐하우스'는 그대로).
+CROP_CLS = {"IRG", "수단그라스", "옥수수", "호밀"}               # 사료작물 — 다른 칩 · 맞닿음(0.3 m) 또는 둘 다 가장자리이고 1 m 안이면 하나로
+GH_CLS = {"비닐하우스_단동", "비닐하우스_다동"}                  # 단동 · 다동 — 다른 칩 · 작은 쪽의 10 % 넘게 겹치거나, 끝과 끝이 맞닿아(0.3 m) 합친 모양이 더 길어질 때 하나로
+                                                              # (옆으로 붙어 선 두 동은 합치면 덜 길쭉해지므로 따로 둔다)
+CROP_EDGE_GAP_M = 1.0
 KEYS = ("id", "cls", "cls_en", "cid", "conf", "area_m2", "emd", "emd_cd", "edit_state", "job_id", "shard_id", "chip_edge", "merged_from")
 SHARED_CLS = ("경작지", "비닐하우스")      # 농지 · 하천 한 층 — 농지 전수 층이 그리는 분류
 # '합칠까요?' 후보를 내는 면 분류(붙은 두 건물 · 비닐하우스는 원래 따로인 것이 보통 — 후보로 내지 않음)
@@ -114,7 +120,7 @@ def seam_merge(geoms: list, props: list[dict], *, keep_ids: set | None = None, o
     G = np.asarray(geoms, dtype=object)
     A = shapely.area(G)
     tree = shapely.STRtree(G)
-    i, j = tree.query(G, predicate="dwithin", distance=CAND_GAP_M)
+    i, j = tree.query(G, predicate="dwithin", distance=max(CAND_GAP_M, CROP_EDGE_GAP_M))
     m = i < j
     i, j = i[m], j[m]
     parent = list(range(n))
@@ -144,7 +150,10 @@ def seam_merge(geoms: list, props: list[dict], *, keep_ids: set | None = None, o
                 edge = pa.get("chip_edge") or pb.get("chip_edge")
                 if edge is None and pa.get("chip_edge") is None and pb.get("chip_edge") is None:
                     edge = True                     # 칩 가장자리 기록이 없는 옛 결과 — 다른 칩이면 칸 경계로 본다
-                if edge and (r >= SEAM_RATIO or d < SEAM_GAP_M):
+                c_ = pa.get("cls")
+                crop = c_ in CROP_CLS and (d < SEAM_GAP_M or (pa.get("chip_edge") and pb.get("chip_edge") and d < CROP_EDGE_GAP_M))
+                gh = c_ in GH_CLS and (r >= SEAM_RATIO or (d < SEAM_GAP_M and _end_to_end(G[a], G[b])))
+                if crop or gh or (edge and (r >= SEAM_RATIO or d < SEAM_GAP_M)):
                     ra, rb = find(a), find(b)
                     if ra != rb:
                         parent[rb] = ra
@@ -162,8 +171,9 @@ def seam_merge(geoms: list, props: list[dict], *, keep_ids: set | None = None, o
             continue
         ks.sort(key=lambda k: -A[k])
         u = shapely.union_all(G[ks])
-        if u.geom_type == "MultiPolygon":            # 0.3 m 안에 떨어진 조각 — 틈을 메워 한 면으로(닫기)
-            u = shapely.buffer(shapely.buffer(u, SEAM_GAP_M, join_style="mitre"), -SEAM_GAP_M, join_style="mitre")
+        if u.geom_type == "MultiPolygon":            # 0.3 m 안에 떨어진 조각 — 틈을 메워 한 면으로(닫기) · 사료작물은 1 m 틈까지
+            gap = CROP_EDGE_GAP_M / 2 + 0.05 if props[ks[0]].get("cls") in CROP_CLS else SEAM_GAP_M
+            u = shapely.buffer(shapely.buffer(u, gap, join_style="mitre"), -gap, join_style="mitre")
         u = _valid(u)
         w = sum(float(A[k]) for k in ks)
         p = dict(props[ks[0]])
@@ -178,6 +188,24 @@ def seam_merge(geoms: list, props: list[dict], *, keep_ids: set | None = None, o
     st["candidates"] = len(cands)
     st["out"] = len(out_g)
     return out_g, out_p, st, cands
+
+
+def _elong(g) -> float:
+    try:
+        r = g.minimum_rotated_rectangle
+        xs, ys = r.exterior.coords.xy
+        a = ((xs[0] - xs[1]) ** 2 + (ys[0] - ys[1]) ** 2) ** 0.5
+        b = ((xs[1] - xs[2]) ** 2 + (ys[1] - ys[2]) ** 2) ** 0.5
+        lo, hi = sorted([a, b])
+        return hi / lo if lo > 0 else 99.0
+    except Exception:  # noqa: BLE001
+        return 1.0
+
+
+def _end_to_end(ga, gb) -> bool:
+    """두 조각을 합친 모양이 각 조각보다 길쭉해지면 = 한 동의 앞뒤 토막(칸 경계에서 잘림) · 옆으로 붙은 두 동이면 덜 길쭉해진다."""
+    u = shapely.union_all([shapely.buffer(ga, SEAM_GAP_M, join_style="mitre"), shapely.buffer(gb, SEAM_GAP_M, join_style="mitre")])
+    return _elong(u) > max(_elong(ga), _elong(gb)) * 1.15
 
 
 # ── ⓐ 분석 단위를 넘는 중복 빼기 ─────────────────────────────────────────────────────────────────

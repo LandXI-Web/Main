@@ -1097,9 +1097,10 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
     async with db(realm="lx") as conn:
         if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
             raise ApiError("not_found", "카드가 없습니다")
-        cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
-        if not cv:
+        cvr = await conn.fetchrow("SELECT id, modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
+        if not cvr:
             raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+        cv = cvr["id"]
         pl = await plan_analysis(conn, None, cid, cv, sgg, mapping(geoms[sgg]) if sgg in geoms else None, img=want)
     if want and (pl["img"] or {}).get("imagery_id") != want["imagery_id"]:     # 고른 영상 대신 다른 영상으로 바꾸지 않는다 — 고른 영상으로는 안 된다고 말한다
         pl = {**pl, "img": want, "fits": False, "note": mismatch_text((pl.get("pick") or {}).get("own"), want) if pl.get("pick") else "이 영상에 맞는 분석 모델이 없습니다"}
@@ -1107,7 +1108,7 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
     pk = pl["pick"] or {}
     cov = img.get("coverage")
     return {"sgg": sgg, "name": rg["name"], "full": rg.get("full") or rg["name"], "fits": pl["fits"], "note": pl["note"],
-            "model_id": pk.get("model_id"), "imagery_id": img.get("imagery_id"),
+            "model_id": pk.get("model_id"), "imagery_id": img.get("imagery_id"), "conf": _conf_of(cvr["modules"]),
             "imagery": {"has": bool(img.get("imagery_id")), "word": " ".join(x for x in (f"{img['year']}년" if img.get("year") else "", gsd_word(img.get("gsd_m"))) if x),
                         "coverage": env(round(float(cov) * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}}
 
@@ -1117,9 +1118,22 @@ def _own_id(pl: dict) -> str | None:
     return iid if iid.startswith("own-") else None
 
 
+CONF_DEFAULT = 0.25
+
+
+def _conf_of(mods) -> float:
+    """카드 판의 신뢰도 하한(modules.conf · 서비스 기본값 · 10-26 카드 8종 점검 — 예시 영상 결과를 눈으로 매긴 표본 · 배경 칸 실측으로 정함) — 없으면 0.25."""
+    try:
+        m = mods if isinstance(mods, dict) else _obj(mods) or {}
+        v = float(m.get("conf"))
+        return v if 0.05 <= v <= 0.95 else CONF_DEFAULT
+    except (TypeError, ValueError, AttributeError):
+        return CONF_DEFAULT
+
+
 def _job_body(cid: str, name: str, pl: dict) -> dict:
     return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석 서비스 · {name}"[:60],
-            "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": 0.25}}
+            "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": float(pl.get("conf") or CONF_DEFAULT)}}
 
 
 @router.get("/cards/{cid}/imagery")

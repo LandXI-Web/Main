@@ -1,0 +1,133 @@
+[
+ {
+  "card": "card-f31e5f",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/prod3-0-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/prod3-0-b.jpg",
+  "labels": [
+   "원본",
+   "AI 결과"
+  ],
+  "legend": [
+   [
+    "#74B816",
+    "IRG"
+   ]
+  ],
+  "region": "52190",
+  "caption": "남원시 · 2025.06 드론 영상 · 사료작물"
+ },
+ {
+  "card": "card-4d8d6f",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/growth-0-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/growth-0-b.jpg",
+  "labels": [
+   "원본",
+   "AI 결과"
+  ],
+  "legend": [
+   [
+    "#74B816",
+    "IRG"
+   ]
+  ],
+  "region": "52190",
+  "caption": "남원시 · 2025.04 드론 영상 · 사료작물"
+ },
+ {
+  "card": "card-ba9d6d",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cmp-f-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cmp-f-b.jpg",
+  "labels": [
+   "4월",
+   "6월"
+  ],
+  "legend": [
+   [
+    "#0FA9A0",
+    "같은 작물"
+   ],
+   [
+    "#F04452",
+    "생산기에 없음"
+   ],
+   [
+    "#727780",
+    "생산기에만 있음"
+   ]
+  ],
+  "region": "52190",
+  "caption": "남원시 · 2025.04 ↔ 2025.06 · 필지 비교"
+ },
+ {
+  "card": "card-d8fc01",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/silage-0-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/silage-0-b.jpg",
+  "labels": [
+   "원본",
+   "AI 결과"
+  ],
+  "legend": [
+   [
+    "#B07A3A",
+    "곤포사일리지"
+   ]
+  ],
+  "region": "52190",
+  "caption": "남원시 · 2025.06 드론 영상 · 곤포사일리지"
+ },
+ {
+  "card": "card-crowd",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/crowd-0-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/crowd-0-b.jpg",
+  "labels": [
+   "원본",
+   "AI 결과"
+  ],
+  "legend": [
+   [
+    "#F04452",
+    "사람"
+   ],
+   [
+    "#3182F6",
+    "차량"
+   ]
+  ],
+  "region": "52190",
+  "caption": "남원시 · 2025.05 드론 영상 · 인파 · 차량"
+ },
+ {
+  "card": "card-change",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/chg-0-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/chg-0-b.jpg",
+  "labels": [
+   "2019",
+   "2024"
+  ],
+  "legend": [
+   [
+    "#F04452",
+    "신축"
+   ]
+  ],
+  "region": "",
+  "caption": ""
+ },
+ {
+  "card": "card-landslide",
+  "before": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/ls-1-a.jpg",
+  "after": "C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/c8/cands/ls-1-b.jpg",
+  "labels": [
+   "2020",
+   "2025"
+  ],
+  "legend": [
+   [
+    "#C2410C",
+    "산림 → 나지"
+   ]
+  ],
+  "region": "",
+  "caption": ""
+ }
+]

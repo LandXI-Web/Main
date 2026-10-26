@@ -85,7 +85,7 @@ async def _objects(conn, source: dict) -> dict:
 def _frame_w(objs, people: bool, kind: str, parcel: bool = False) -> float:
     sizes = sorted(math.sqrt(max(g.area, 0.01)) for g, _, _ in objs if g.area > 0) or [5.0]
     s = sizes[len(sizes) // 2]
-    if parcel:                                            # 필지 단위 — 필지 몇 줄이 보이는 너비(필지가 크니 ×12 면 너무 넓다)
+    if parcel or (objs and all(c in CC.FIELD_CLS for _, c, _ in objs)):   # 필지 단위 · 논밭 결과(사료작물 — 칸 경계를 붙여 밭 하나가 큼 · 10-26) — 필지 몇 줄이 보이는 너비(×12 면 너무 넓다)
         return min(max(s * 6, 120.0), 360.0)
     if kind == "change":
         w = min(max(s * 9, 140.0), 420.0)
