@@ -593,7 +593,7 @@ function fillDeploys(dd, sum) {
   const cards = $('#cards');
   if (!rows.length) { empty(cards, { kind: 'first' }); }
   else {
-    serviceGrid(cards, rows, { map: (r) => ({ crop: new URL(`./data/crop-${r.card.id}.webp`, import.meta.url).href, where: short(r.item?.region_name || r.deploy.region_name?.ko), href: `/landxi/v3/service-detail/?card=${encodeURIComponent(r.card.id)}` }) });
+    serviceGrid(cards, rows, { map: (r) => ({ crop: new URL(`./data/crop-${r.card.id}.webp?v=1029`, import.meta.url).href, where: short(r.item?.region_name || r.deploy.region_name?.ko), href: `/landxi/v3/service-detail/?card=${encodeURIComponent(r.card.id)}` }) });
     // 무엇에 쓰는지 한 줄(원칙 317 · 서비스 소개의 업무 이름 = 서버 카드 intro.headline 한 출처)
     cards.querySelectorAll('.k-svc').forEach((c, i) => { c.classList.add('t-enter'); c.style.transitionDelay = i * 120 + 'ms'; const why = rows[i]?.card?.intro?.headline; if (why) c.append(h('p.m-svc-why', { text: why })); c.append(h('span.m-more', { text: '자세히' })); });
     enter(cards);

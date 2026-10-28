@@ -217,5 +217,5 @@ if __name__ == '__main__':
     if 'deploys' in steps and a.token: build_deploys(a.token)
     if 'crops' in steps:
         crop('card-farm', RES / 'results/namwon-farmland-2025.geojson', 16)
-        crop('card-marine', RES / 'results/yeosu-marine-2025-aerial-grid100.geojson', 16)
+        # card-marine 은 tools/build-marine-crop.py (10-29 · 100 m 격자 대신 쓰레기 하나하나 도형)
         crop('card-change', RES / 'namwon-change.geojson', 17)
