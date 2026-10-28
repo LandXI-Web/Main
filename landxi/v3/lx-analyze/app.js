@@ -212,7 +212,7 @@ async function gallery() {
   document.fonts?.ready?.then(() => fitGrid(grid, perNow(F.per)));   // 글꼴이 다 오면 높이가 바뀐다 — 다시 맞춤
   let rz = 0, wasNarrow = narrow();
   addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (narrow() !== wasNarrow) { wasNarrow = narrow(); draw(); } else fitGrid(grid, perNow(F.per)); }, 120); });
-  const search = h('input.t-input.la-search', { type: 'search', placeholder: '서비스 이름 · 찾는 것 · 지역', 'aria-label': '분석 서비스 찾기', autocomplete: 'off' });
+  const search = h('input.t-input.la-search', { type: 'search', placeholder: '서비스 · 지역 찾기', 'aria-label': '분석 서비스 찾기', autocomplete: 'off' });
   search.addEventListener('input', () => { F.q = search.value.trim(); F.page = 1; draw(); });
   tools.append(chipsEl, h('div.la-tools-r', {}, viewEl, search));
   draw();
