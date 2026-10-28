@@ -41,12 +41,12 @@ def keys(monkeypatch):
 
 
 def test_config_limits_kept():
-    """장당 상한 200 W · 장마다 30초 평균 70% · 140 W · 안전 감시 300 W/10초 · 85℃ · 한 작업 한 장."""
+    """장당 상한 200 W · 장마다 30초 평균 70% · 160 W(10-25 사용자) · 안전 감시 300 W/10초 · 85℃ · 한 작업 한 장."""
     from landxi_api import config
     pw = config.load_yaml("pools")["power"]
     nat = pw["national"]
     assert pw["power_limit_w"] == 200
-    assert nat["util_max"] <= 70 and nat["power_max_w"] <= 140 and nat["chunk"] <= 8
+    assert nat["util_max"] <= 70 and nat["power_max_w"] <= 160 and nat["chunk"] <= 8
     assert int(pw.get("job_max_gpus", 1)) == 1                      # 학습 · 사용자 분석은 여전히 한 장
     c = pair_guard.cfg(pw)
     assert c["sum_max_w"] <= 300 and c["sum_over_s"] <= 10 and c["temp_max_c"] <= 85 and c["driver_err_s"] <= 5

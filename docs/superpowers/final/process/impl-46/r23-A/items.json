@@ -1,0 +1,16 @@
+{
+ "title": "바퀴 23 묶음 A — 서버 · 자료 정리",
+ "at": "2026-10-28",
+ "items": [
+  {"id": "결정11", "done": true, "shots": [], "evidence": ["server/tests/test_r23_user_first.py 10건", "v4 M3 job_01M615NB36EXC93T2TX0735GGC GPU0 88초 완료", "곤포 job_01M615NG8AK5KZ7X678ZNCDMV6 GPU1 로 넘어감", "두 장 합 최대 270 W · GPU0 30초 평균 최대 147 W"]},
+  {"id": "결정2", "done": true, "before": {"model": "곤포사일리지 · 남원시 학습 2026.09.30(학습 48장)", "example": 18, "acc": "96%"}, "after": {"model": "등록된 남원 곤포 모델(학습 1,608장)", "example": 18, "acc": "97%", "job": "job_01M615NG8AK5KZ7X678ZNCDMV6"}, "shots": ["before/card-card-d8fc01.png", "after/card-card-d8fc01.png"]},
+  {"id": "결정7", "done": "부분", "after": {"생산기": "600 m 다시", "생육기": "못 함(4월 드론 영상 띠 모양 · 600 m 틀 들어갈 자리 0 · 500 m 16곳)", "비교": "못 함(같은 영상)", "산사태": "1 km 다시"}, "shots": ["after/card-card-f31e5f.png", "after/card-card-landslide.png"]},
+  {"id": "결정8", "done": true, "before": {"example": 22, "rule": "앞 해 AI 산림 → 나지"}, "after": {"example": 23, "area_ha": 4.5, "rule": "임야 필지 안 벗겨진 땅", "job": "job_01M616STTJ98RK2R2NDWWWAJAK"}, "shots": ["after/card-card-landslide.png"]},
+  {"id": "결정10", "done": true, "removed": {"runs": 16, "detections": 4233, "files": 29}},
+  {"id": "늦-옛456", "done": true, "before": {"card_example": 456}, "after": {"card_example": null, "summary": null, "layer": "없음"}, "shots": ["before/card-card-change.png", "after/card-card-change.png"]},
+  {"id": "늦-변화프로젝트", "done": true, "removed": ["prj_d94f594740", "prj_8e0c795469", "prj_6facf40ea8"]},
+  {"id": "늦-부서시험계정", "done": true, "account": "잠금", "memo": "되돌림 표시", "env_password": "그대로(보고)"},
+  {"id": "늦-날수확인창", "done": true, "api": "/national/same-model redo_days"}
+ ],
+ "backup": "02. 데이터/_backup/r23-A/"
+}

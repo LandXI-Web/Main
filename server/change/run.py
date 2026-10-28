@@ -98,6 +98,9 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     road_geoms = []
     if parcels is not None and len(parcels) and "use" in parcels:
         road_geoms = list(parcels[parcels["use"].fillna("").str.contains("도로\\(본선\\)|본선", regex=True)].geometry)
+    imya_geoms = []
+    if tset == "landslide" and parcels is not None and len(parcels) and "jimok" in parcels:
+        imya_geoms = list(parcels[parcels["jimok"].fillna("") == "임"].geometry)
     blocks = _blocks(rng5179, zoom)
     raw: dict[str, list] = {t: [] for t in types}
     tiles_got = {"a": 0, "b": 0, "total": 0}
@@ -132,7 +135,11 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         if road_geoms:
             rm = _raster([g for g in road_geoms if g.intersects(box(*b))], grid)
             ga, gb = D.burn_road(ga, rm), D.burn_road(gb, rm)
-        masks = D.transitions(ga, gb, tset)
+        imya = seen_a = None
+        if tset == "landslide":                       # 후보 C(결정8) — 지적 임야 필지 안만 · 앞 시점 영상이 있는 곳
+            imya = _raster([g for g in imya_geoms if g.intersects(box(*b))], grid) if imya_geoms else np.zeros(ga.shape, bool)
+            seen_a = A.max(axis=-1) >= 8
+        masks = D.transitions(ga, gb, tset, imya=imya, seen_a=seen_a)
         for t, p in D.polygons(masks, grid, aoi, min_area=10.0, elong=False):
             raw[t].append(p)
     if progress:
@@ -220,7 +227,7 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         fc["features"].append({"type": "Feature", "id": row["id"], "geometry": mapping(g4), "properties": props})
     (out / "changes.geojson").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     stats = summarize(rows, types)
-    stats.update({"version": VERSION + (f"+{tset}" if tset else ""), "types": tset, "year_a": year_a, "year_b": year_b, "zoom": zoom,
+    stats.update({"version": VERSION + (f"+{D.TSET_VER.get(tset, tset)}" if tset else ""), "types": tset, "year_a": year_a, "year_b": year_b, "zoom": zoom,
                   "sources": {k: {x: v[x] for x in ("kind", "year", "id") if x in v} for k, v in (("a", SA), ("b", SB))}, "gsd_m": 0.255 if zoom == 18 else 0.51,
                   "range_km2": round(rng5179.area / 1e6, 3), "blocks": len(blocks), "tiles": tiles_got,
                   "seconds": round(time.perf_counter() - t0, 1)})

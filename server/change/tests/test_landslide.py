@@ -54,6 +54,23 @@ def test_type_sets():
     assert D.types_of(None) == D.TYPES and D.types_of("landslide")[0] == "산림 → 나지"
 
 
+def test_rule_c_imya_parcels():
+    """후보 C(10-28 결정8) — 임야 필지 안에서 앞 시점에 나지 · 도로 · 건물이 아니던 곳(AI 가 산을 '비대상지'로 본 곳 포함) → 나지 · 도로 · 건물.
+    임야 밖 · 앞 시점 영상 없는 곳 · 이미 나지였던 곳은 세지 않는다."""
+    from change import detect as D
+    F, O, R, Bd, C = D.G["forest"], D.G["other"], D.G["road"], D.G["built"], D.G["crop"]
+    ga = np.array([[0, F, C, O, 0, F]], np.uint8)          # 비대상지(산) · 산림 · 밭 · 나지 · 영상 없음 · 산림(임야 밖)
+    gb = np.array([[O, R, Bd, O, O, O]], np.uint8)
+    imya = np.array([[True, True, True, True, True, False]])
+    seen = np.array([[True, True, True, True, False, True]])
+    m = D.transitions(ga, gb, "landslide", imya=imya, seen_a=seen)
+    assert list(m) == ["산림 → 나지", "산림 → 도로", "산림 → 건물"]
+    assert m["산림 → 나지"].tolist() == [[True, False, False, False, False, False]]
+    assert m["산림 → 도로"].tolist() == [[False, True, False, False, False, False]]
+    assert m["산림 → 건물"].tolist() == [[False, False, True, False, False, False]]
+    assert D.TSET_VER["landslide"] == "landslide-c"
+
+
 def test_card_frame():
     t = _tok()
     c = httpx.get(B + "/cards/card-landslide", headers=H(t), timeout=60).json()

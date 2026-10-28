@@ -22,9 +22,15 @@ class JobStopped(Exception):
 
 
 class Control:
-    def __init__(self, job_id: str, shard_id: str, *, thr=None, touch=None, emit=None, llm_wanted=None):
+    def __init__(self, job_id: str, shard_id: str, *, thr=None, touch=None, emit=None, llm_wanted=None, attempt: int = 0):
         from workers import bus
         self.bus, self.job_id, self.shard_id = bus, job_id, shard_id
+        try:                                                    # 감시가 다른 장비로 다시 보낸 작업(10-28 결정11)의 옛 시도 — 시작하지 않는다(같은 작업 두 번 0)
+            cur = int(bus.r().hget(f"job:{job_id}", "chg_attempt") or 0)
+        except Exception:  # noqa: BLE001
+            cur = 0
+        if int(attempt or 0) < cur:
+            raise JobStopped("redispatched")
         self.thr, self.touch, self.emit, self.llm_wanted = thr, touch, emit, llm_wanted
         self.t_hb = 0.0
         self.t_emit = 0.0
@@ -35,7 +41,8 @@ class Control:
                 thr.debt = 0.0
             except Exception:  # noqa: BLE001
                 pass
-        self.set(chg_stage="prepare", chg_frac=0.0, chg_started=time.time(), chg_hb=time.time(), chg_error="")
+        self.wait_s, self.t_wait = 0.0, 0.0
+        self.set(chg_stage="prepare", chg_frac=0.0, chg_started=time.time(), chg_hb=time.time(), chg_error="", chg_wait_s=0)
         self._beat()
 
     def _beat(self):
@@ -81,6 +88,7 @@ class Control:
 
     def pause(self):
         self.check()
+        t0 = time.time()
         while self.llm_wanted and self.llm_wanted():          # XI ChatGEO 그림 · 말 요청이 이 장을 원하면 잠깐 비킨다
             time.sleep(0.5)
             self.check()
@@ -90,6 +98,11 @@ class Control:
             except Exception:  # noqa: BLE001
                 pass
             self.thr(self.check, "변화 탐지")
+        # 전력 쉼 · XI ChatGEO 비킴은 일한 시간이 아니다(10-28 결정11) — 감시의 20분 한도에서 뺀다
+        self.wait_s = getattr(self, "wait_s", 0.0) + (time.time() - t0)
+        if time.time() - getattr(self, "t_wait", 0.0) >= 1.0:
+            self.t_wait = time.time()
+            self.set(chg_wait_s=round(self.wait_s, 1))
 
     def progress(self, stage: str, i: int, n: int):
         self.check()

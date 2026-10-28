@@ -78,9 +78,7 @@ layers:
   - {id: namwon-greenhouse-2025, set: results/lx/namwon-greenhouse-2025, manifest: namwon-greenhouse-2025.pmtiles, kind: vector, role: result,
      layer: namwon_greenhouse_2025, promote_id: id, name: {ko: 남원 비닐하우스 2025, en: Namwon greenhouses 2025}, export_policy: public, security_review: cleared,
      license: LX 산출, attribution: A02 2025 드론 AI 판독, basis: inferred, ladder: {stage: domestic, from: 10, to: 16, order: 520}, count_unit: 동}
-  - {id: namwon-change, set: results/lx/namwon-change, manifest: namwon-change.pmtiles, kind: vector, role: result, layer: namwon_change, promote_id: id,
-     name: {ko: 남원 변화 탐지(국산리 2시점), en: Namwon change}, export_policy: tenant, security_review: pending, license: LX 산출,
-     attribution: A04 비지도 변화 지수 · 학습 결과 아님, basis: inferred, ladder: {stage: domestic, from: 12, to: 17, order: 530}, count_unit: count}
+  # namwon-change(남원 변화 탐지 국산리 · 456곳) — 10-28 now 22 늦-옛456 '내림'으로 층 목록에서 뺌(백업 02. 데이터/_backup/r23-A/old456/sets.yaml)
   - {id: namwon-lc-gt-2020, set: vector/namwon-lc-gt-2020, manifest: namwon-lc-gt-2020.pmtiles, kind: vector, role: reference, layer: lc_gt, promote_id: null,
      name: {ko: 토지피복 GT 2020(AI Hub 125 · 도엽 35710074), en: Land cover GT 2020}, export_policy: tenant, security_review: pending,
      license: AI Hub 이용약관, attribution: AI Hub 125 전라 토지피복, ladder: {stage: domestic, from: 12, to: 17, order: 940}, count_unit: count}

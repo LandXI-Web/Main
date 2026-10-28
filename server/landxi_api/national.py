@@ -353,8 +353,18 @@ async def _same_model(conn) -> dict:
     mixed = [y["year"] for y in yrs if y["old"]["value"]]
     run_year = int(st.get("run_year") or st["year"])
     queued = sorted({int(y) for y in (st.get("redo_years") or [])} | ({run_year} if run_year in mixed else set()))
+    # 예상 날수(10-28 now 22 늦-날수확인창) — 다시 할 옛 판 칸 넓이 ÷ 하루 예상(전국 분석 진행과 같은 속도 · 학습 장비가 놀 때 기준)
+    old_km2 = float(await conn.fetchval("SELECT coalesce(sum(target_km2),0) FROM national_cells WHERE NOT test AND state='done' "
+                                        "AND model_id IS DISTINCT FROM $1 AND year = ANY($2::int[])", model, mixed) or 0) if mixed else 0.0
+    rate = await conn.fetchrow("SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
+                               "WHERE NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '30 days'")
+    measured = bool(rate and rate["s"] and float(rate["s"]) > 600 and float(rate["km2"] or 0) > 0)
+    kph = float(rate["km2"]) / (float(rate["s"]) / 3600.0) if measured else KM2_PER_HOUR
+    days = round(old_km2 / (kph * 24), 1) if (kph and old_km2) else None
     return {"model": {"name": (_jv(mrow["name"]).get("ko") if mrow and mrow["name"] else None)}, "years": yrs,
             "mixed": [str(y) for y in mixed], "queued": [str(y) for y in queued if y in mixed],      # 해(글자) — 숫자 봉투 규칙 밖의 이름표
+            "redo_days": env(days, "count", "measured" if measured else "estimate",
+                             ("최근 30일 끝난 칸의 실제 속도" if measured else "10-12 시험 칸 속도 [추정]") + " — 다시 할 옛 판 칸 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)"),
             "compare": len(yrs) >= 2, "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
 
 

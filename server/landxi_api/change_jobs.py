@@ -25,7 +25,7 @@ from .envelope import env, now_iso
 router = APIRouter()
 RUN_MAX_S = 20 * 60          # 분석 20분 넘으면 시간초과
 HB_MAX_S = 30                # 워커 숨 30초 끊기면 시간초과(숨은 5초마다 · 감시는 5초마다 → 끊긴 뒤 35초 안에 표시)
-FIRST_HB_MAX_S = 120         # 칸을 받은 뒤 첫 숨이 이만큼 없으면(워커가 받고 멈춤) 시간초과
+FIRST_HB_MAX_S = 120         # 장비가 칸을 실제로 받은(비행 기록) 뒤 첫 숨이 이만큼 없으면 다른 장비로 한 번 다시 보냄 → 또 그러면 시간초과(10-28 결정11)
 QUEUE_SHOW_S = 30            # 대기 30초 넘으면 대기열 자리 · 예상
 ASK_AT_S = 10 * 60           # 분석 10분 넘으면 고르기
 STAGE_WORD = {"prepare": "준비", "imagery": "영상 받기", "infer": "토지피복 AI 분석", "polygons": "변화 폴리곤 만들기", "owner": "필지 · 소유구분 겹치기",
@@ -48,7 +48,7 @@ async def job_status(job_id: str) -> dict:
         j = await conn.fetchrow("SELECT state, error, created_at, started_at, finished_at, priority, pool, submitted_by FROM jobs WHERE id=$1", job_id)
         cr = await conn.fetchrow("SELECT state, range_id, year_a, year_b, created_by FROM change_runs WHERE job_id=$1", job_id)
         pos = tot = None
-        if j and (h.get("state") or j["state"]) == "queued":
+        if j and ((h.get("state") or j["state"]) == "queued" or ((h.get("state") or j["state"]) == "running" and not h.get("chg_started"))):
             rows = await conn.fetch("SELECT id FROM jobs WHERE pool=$1 AND state IN ('queued','running') AND NOT (options ? 'national') "
                                     "AND NOT (options ? 'overseas') ORDER BY priority, created_at", j["pool"])
             ids = [x["id"] for x in rows]
@@ -59,11 +59,13 @@ async def job_status(job_id: str) -> dict:
     err = (h.get("chg_error") or (j["error"] if j else None) or "").strip()
     if cr and cr["state"] == "done":
         raw = "done"
+    if raw == "running" and not h.get("chg_started"):
+        raw = "queued"                     # 배정만 되고 장비가 아직 시작 안 함 — 작업 대기(10-28 결정11 · 실제 시작 기준)
     st = raw
     if raw == "failed" and err.startswith("timeout"):
         st = "timeout"
     created = j["created_at"].timestamp() if j and j["created_at"] else now
-    started = _f(h.get("chg_started")) or (j["started_at"].timestamp() if j and j["started_at"] else None)
+    started = _f(h.get("chg_started")) or None             # 장비가 실제로 시작한 시각(배정 시각 아님)
     frac = _f(h.get("chg_frac"))
     elapsed = (now - started) if (started and st == "running") else None
     eta = None
@@ -203,7 +205,7 @@ async def watch_once():
     r = await redis()
     now = time.time()
     async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT r.job_id, j.state, j.created_at, j.started_at FROM change_runs r JOIN jobs j ON j.id=r.job_id "
+        rows = await conn.fetch("SELECT r.job_id, j.state, j.created_at, j.started_at, j.pool FROM change_runs r JOIN jobs j ON j.id=r.job_id "
                                 "WHERE j.state IN ('queued','running') OR (r.state NOT IN ('done','cancelled','failed') AND j.state IN ('done','failed','cancelled'))")
     for x in rows:
         jid = x["job_id"]
@@ -211,13 +213,14 @@ async def watch_once():
         st = h.get("state") or x["state"]
         if st == "running":
             hb = _f(h.get("chg_hb"))
-            started = _f(h.get("chg_started")) or (x["started_at"].timestamp() if x["started_at"] else now)
+            started = _f(h.get("chg_started"))
             if hb and now - hb > HB_MAX_S:
                 await stop(jid, "timeout", f"timeout: 분석 장비가 {int(now - hb)}초 동안 응답하지 않아 멈췄습니다", "watchdog")
-            elif not hb and x["started_at"] and now - x["started_at"].timestamp() > FIRST_HB_MAX_S:
-                await stop(jid, "timeout", "timeout: 분석 장비가 작업을 받은 뒤 시작하지 못했습니다", "watchdog")
-            elif now - started > RUN_MAX_S and not h.get("chg_keep"):
+            elif hb and started and now - started - _f(h.get("chg_wait_s")) > RUN_MAX_S and not h.get("chg_keep"):
+                # 일한 시간 = 실제 시작부터 − 전력 쉼 · XI ChatGEO 비킴(10-28 결정11 · 10-22 쉼 시간 고친 것과 같은 기준)
                 await stop(jid, "timeout", "timeout: 20분 안에 끝나지 않아 멈췄습니다", "watchdog")
+            elif not hb:
+                await _not_started(r, jid, x, h, now)
         elif st == "queued" and now - x["created_at"].timestamp() > RUN_MAX_S:
             await stop(jid, "timeout", "timeout: 20분 넘게 분석 장비 차례가 오지 않았습니다", "watchdog")
         uid = h.get("chg_notify")
@@ -234,6 +237,36 @@ async def watch_once():
         if h.get("chg_notify") and not h.get("chg_notified"):
             await r.hset(f"job:{x['job_id']}", "chg_notified", now_iso())
             await _notify(x["job_id"], h["chg_notify"], await job_status(x["job_id"]))
+
+
+async def _not_started(r, jid: str, x, h: dict, now: float):
+    """배정은 됐지만 장비가 아직 시작하지 않은 작업(10-28 결정11).
+    - 아직 어느 장비도 받지 않음(대기열) → 작업 대기. 요청부터 20분 넘으면 시간초과(예전: 배정 120초 뒤 시간초과 — 다른 장이 뜨거워 기다리던 작업이 죽었다).
+    - 장비가 받았는데(비행 기록) FIRST_HB_MAX_S 넘게 시작 신호가 없음 → 다른 장비로 한 번 다시 보냄(원래 장비는 잠깐 피함) · 두 번째도 그러면 시간초과."""
+    pool = x["pool"] or "a6000"
+    fld = f"{jid}|change"
+    v = await r.hget(f"inflight:{pool}", fld)
+    rec = None
+    if v:
+        try:
+            rec = json.loads(v)
+        except ValueError:
+            rec = None
+    if rec and rec.get("worker") and now - _f(rec.get("ts"), now) > FIRST_HB_MAX_S:
+        att = int(rec.get("attempt") or 0)
+        if att >= 1 or h.get("chg_redispatch_at"):
+            await stop(jid, "timeout", "timeout: 분석 장비가 작업을 받은 뒤 시작하지 못했습니다", "watchdog")
+            return
+        entry = dict(rec.get("entry") or {})
+        entry.update({"job_id": jid, "shard_id": "change", "attempt": att + 1})
+        await r.hset(f"job:{jid}", mapping={"chg_avoid": rec["worker"], "chg_redispatch_at": now_iso(), "chg_attempt": att + 1})
+        await r.hset(f"inflight:{pool}", fld, json.dumps({"entry": entry, "attempt": att + 1, "ts": now, "worker": None, "requeued": True},
+                                                         ensure_ascii=False))
+        await r.xadd(f"shards:{pool}", {k: (v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)) for k, v in entry.items()})
+        print(f"[change] {jid} 장비 {rec['worker']} 가 받고 {int(now - _f(rec.get('ts'), now))}초 시작 못 함 → 다른 장비로 다시 보냄", flush=True)
+        return
+    if now - x["created_at"].timestamp() > RUN_MAX_S:
+        await stop(jid, "timeout", "timeout: 20분 넘게 분석 장비 차례가 오지 않았습니다", "watchdog")
 
 
 _task = {"t": None}

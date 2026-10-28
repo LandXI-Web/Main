@@ -394,7 +394,8 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     card_id = 국토 변화 틀 카드(국토 변화 · 산사태 취약지구 · 10-25) — 찾는 변화 묶음이 다르면 계산 판(캐시 열쇠)도 다르다."""
     I, _, R, RUN = _mods()
     cid, tset = await frame_card(card_id)
-    ver = _ver() + (f"+{tset}" if tset else "")
+    from change.detect import TSET_VER
+    ver = _ver() + (f"+{TSET_VER.get(tset, tset)}" if tset else "")      # 산사태 후보 C 는 판이 다르다(옛 결과를 다시 쓰지 않게 · 결정8)
     d = await get_range_row(p, range_id)
     sa = await _src_in(p, src_a or {"kind": "ngii", "year": year_a}, d)
     sb = await _src_in(p, src_b or {"kind": "ngii", "year": year_b}, d)

@@ -74,6 +74,12 @@ TRN_UTIL = float(TRN.get("util_max", NAT_UTIL))
 TRN_W = float(TRN.get("power_max_w", NAT_W))
 TRN_DUTY0 = float(TRN.get("duty", NAT_DUTY0))
 TRAINERS = ("train/yolo", "train/s2unet")                  # 학습 어댑터(작업 options.trainer · 없으면 train/yolo)
+# 사용자 분석 먼저(10-28 now 22 결정11) — 다른 장의 열(Land-XI 밖 학습 · vLLM)을 기다리지 않고 비어 있는 장에서 돈다(합 상한은 power_throttle.pair_cap).
+USR = PWR.get("user", {}) or {}
+SPILL_S = float(USR.get("spill_s", 8))                      # 첫 장이 이만큼 못 받으면 두 번째 장이 받는다
+INLINE_S = float(USR.get("inline_s", 16))                   # 두 번째 장도 못 받으면 학습 중인 장이 학습을 잠깐 멈추고 먼저 돌린다
+AVOID_MAX_S = float(USR.get("avoid_max_s", 60))             # 감시가 다른 장비로 다시 보낸 칸 — 원래 장은 이만큼 받지 않는다
+SPILL_SKIP_S = int(USR.get("spill_skip_s", 1800))           # 두 번째 장에서 못 올린 모델 — 이만큼 그 장으로 보내지 않는다
 lease = {"slot": None, "last_work": 0.0, "waiting": False}
 
 
@@ -216,6 +222,79 @@ def next_kind() -> str | None:
         while len(_kind_cache) > 256:
             _kind_cache.popitem(last=False)
     return k
+
+
+_train_cache: "OrderedDict[str, bool]" = OrderedDict()
+
+
+def is_user_job(jid: str) -> bool:
+    """사용자 분석 칸인가 — 전국 · 해외 결과 자산 · 학습(kind train)이 아닌 작업(결정11)."""
+    if next_kind_of(jid) != "other":
+        return False
+    t = _train_cache.get(jid)
+    if t is None:
+        t = _train_cache[jid] = (r().hget(f"job:{jid}", "kind") or "") == "train"
+        while len(_train_cache) > 256:
+            _train_cache.popitem(last=False)
+    return not t
+
+
+def head_user():
+    """스트림에서 아직 아무도 안 받은 첫 칸이 사용자 분석이면 → (작업, 기다린 초, 피할 워커) · 아니면 None."""
+    try:
+        g = next((x for x in r().xinfo_groups(STREAM) if x.get("name") == GROUP), None)
+        last = (g or {}).get("last-delivered-id") or "0-0"
+        es = r().xrange(STREAM, min="(" + last, count=1)
+    except Exception:  # noqa: BLE001
+        return None
+    if not es:
+        return None
+    eid, f = es[0]
+    jid = f.get("job_id", "")
+    if not jid or not is_user_job(jid):
+        return None
+    if r().hget(f"job:{jid}", "state") not in ("queued", "running"):
+        return None
+    try:
+        age = max(0.0, time.time() - int(str(eid).split("-")[0]) / 1000)
+    except ValueError:
+        age = 0.0
+    return jid, age, r().hget(f"job:{jid}", "chg_avoid") or ""
+
+
+def own_card_busy_outside() -> bool:
+    """이 장이 Land-XI 밖 일(다른 학습 · vLLM 생성)로 뜨거운가 — 이 워커가 쉬는 동안 이 장 전력(5표본 평균 · 순간값)이 둘 다 other_gpu_hot_w 보다 높다."""
+    if time.time() - float(lease.get("last_work") or 0) < 10:
+        return False                                     # 방금까지 우리가 일했다 — 그 열은 우리 몫
+    ring = list((smi.get("pring") or {}).get(A.gpu) or [])
+    cand = [sum(ring) / len(ring)] if ring else []
+    fast = smi.get("pfast") or {}
+    if time.time() - float(smi.get("pfast_at") or 0) < 0.5 and A.gpu in fast:
+        cand.append(float(fast[A.gpu]))
+    return bool(cand) and min(cand) > OTHER_HOT_W
+
+
+def user_take(where: str) -> bool:
+    """이 워커가 지금 머리 칸(사용자 분석)을 받을까(결정11).
+    첫 장: 이 장이 밖의 일로 뜨겁지 않으면 바로(다른 장 열은 기다리지 않음 · 뜨거워도 spill_s×2 지나면 받음) ·
+           감시가 이 장을 피하라고 했으면 avoid_max_s 동안 받지 않음.
+    두 번째 장: 첫 장이 spill_s 넘게 못 받았고 · XI ChatGEO 가 이 장을 안 쓰고 · 이 장이 밖의 일로 뜨겁지 않을 때.
+    학습 중(where='train'): 두 번째 장도 inline_s 넘게 못 받았을 때."""
+    h = head_user()
+    if not h:
+        return False
+    jid, age, avoid = h
+    if avoid == WID and age < AVOID_MAX_S:
+        return False
+    if where == "train":
+        return age >= INLINE_S
+    if SECONDARY:
+        seen = bool(r().hget(f"job:{jid}", "worker_seen:" + WID))      # 이미 이 장이 받은 작업 — 다음 칸은 기다리지 않고 이어 받는다
+        if (age < SPILL_S and not seen) or llm_wanted() or own_card_busy_outside():
+            return False
+        mid = r().hget(f"job:{jid}", "model_id") or ""
+        return not r().exists(f"spill:skip:{WID}:{mid}")
+    return not own_card_busy_outside() or age >= SPILL_S * 2
 
 
 def other_gpu_hot():
@@ -703,7 +782,8 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     national = bool(opts.get("national") or opts.get("overseas"))      # 해외 결과 자산(나라 전체)도 전국 작업과 같은 규칙(한 장 · 쉼 · 비킴)
     two = bool(opts.get("national")) and pair_guard.two_on()            # 두 장 모드(원칙 270) — 국내 전국 작업만 두 장에서(해외는 첫 장 그대로)
     # 정한 장 밖이면 되돌려 놓는다 — 두 번째 장(XI ChatGEO 장)은 두 장 모드의 국내 전국 칩만 받는다
-    other_gpu_card = (national and A.gpu not in (NAT_GPUS if two else [NAT_GPU])) or (SECONDARY and not two)
+    user = not national and jh.get("kind") != "train"                  # 사용자 분석(결정11) — 두 번째 장도 받는다(첫 장이 못 받을 때만 loop_once 가 읽음)
+    other_gpu_card = (national and A.gpu not in (NAT_GPUS if two else [NAT_GPU])) or (SECONDARY and not two and not user)
     if other_gpu_card or (national and other_job_waiting(job_id)) or (two and SECONDARY and llm_wanted()):
         for _, f in entries:            # 다른 작업 칸이 기다리면 · XI ChatGEO 질문이 오면(두 번째 장) 읽기 전에 통째로 뒤로(원칙 221 · 270)
             r().xadd(STREAM, f)
@@ -713,7 +793,33 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             time.sleep(0.2 if SECONDARY else 2)
         return
     mid = jh.get("model_id")
-    ad, meta, _ = ensure_model(mid)
+    try:
+        ad, meta, _ = ensure_model(mid)
+    except Exception as e:
+        if not (SECONDARY and user):
+            raise
+        # 두 번째 장(XI ChatGEO 장 · 작은 메모리)에 이 모델이 안 올라감 — 칸을 대기열로 되돌리고 이 장으로는 한동안 보내지 않는다
+        r().set(f"spill:skip:{WID}:{mid}", repr(e)[:200], ex=SPILL_SKIP_S)
+        for _, f in entries:
+            r().xadd(STREAM, f)
+        r().xack(STREAM, GROUP, *ids)
+        r().xdel(STREAM, *ids)
+        log(WHO, f"사용자 분석 {job_id}: 이 장에 모델 {mid} 을 못 올림({type(e).__name__}) — 대기열로 되돌림 · {SPILL_SKIP_S // 60}분 이 장 제외")
+        return
+    if user:
+        cur = int(r().hget(f"job:{job_id}", "chg_attempt") or 0)
+        mine = [(e, f) for e, f in entries if int(f.get("attempt") or 0) >= cur]
+        if len(mine) < len(entries):               # 감시가 다른 장비로 다시 보낸 칸의 옛 배달 — 돌리지 않는다(같은 작업 두 번 0 · 결정11)
+            old = [e for e, f in entries if int(f.get("attempt") or 0) < cur]
+            r().xack(STREAM, GROUP, *old)
+            r().xdel(STREAM, *old)
+            log(WHO, f"사용자 분석 {job_id}: 다시 보낸 칸의 옛 배달 {len(old)}칸 버림")
+            entries = mine
+            ids = [e[0] for e in entries]
+            if not entries:
+                return
+        if opts.get("change"):
+            opts["_attempt"] = max(int(f.get("attempt") or 0) for _, f in entries)   # 어댑터(Control)가 옛 시도인지 본다
     path = imagery_path(jh.get("imagery_id"))
     state["job_id"] = state["last_job"] = job_id
     if not r().hget(f"job:{job_id}", "worker_seen:" + WID):
@@ -768,9 +874,10 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             log(WHO, f"전국 작업 {len(shards) - c0}칸 뒤로 — " + ("XI ChatGEO 질문 먼저(이 장)" if llm else "다른 작업 먼저"))
             break
         # 두 장 모드의 전국 작업은 다른 장의 열을 기다리지 않는다(장마다 쉼 조절 + 두 장 합 전력 · 온도 안전 감시 · 원칙 270)
-        held = 0.0 if two else hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
-        if two:
-            pair_guard.mark_busy(r(), A.gpu, job_id)
+        # 사용자 분석도 다른 장의 열을 기다리지 않는다(결정11 — 두 장 합은 쉼 조절의 pair_cap 이 이 장 목표를 낮춰 지킴)
+        held = 0.0 if (two or user) else hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
+        if two or (user and pair_guard.two_on()):
+            pair_guard.mark_busy(r(), A.gpu, job_id)          # 이 장의 열은 우리 몫(두 장 모드 · XI ChatGEO 가 이 장을 기다리지 않게)
         if national and READ_AHEAD and not ovs and c0 + step >= len(shards):
             read_ahead()            # 마지막 묶음 — 다음 칩들을 이 워커 몫으로 미리 받아 영상 읽기를 시작(추론하는 동안 받기 · impl-41 (a))
         tp = time.perf_counter()
@@ -792,7 +899,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         _commit_part(job_id, tenant, demo, meta, sdir, part, results, attempts, t_part, held)
         if national:
             log(WHO, f"전국 묶음 시간 · 영상 읽기 대기 {tg - tp:.2f}s · 추론+쉼 {tc - tg:.2f}s · 기록 {time.perf_counter() - tc:.2f}s")
-    if two:
+    if two or user:
         pair_guard.clear_busy(r(), A.gpu)
     r().xack(STREAM, GROUP, *ids)
     r().xdel(STREAM, *ids)
@@ -960,6 +1067,8 @@ def _commit_part(job_id: str, tenant: str, demo: bool, meta: dict, sdir, part: l
     per_ms = int(t_part * 1000 / max(1, len(part)))
     rows = []
     for s, res in zip(part, results):
+        if not bus.inflight_owned(POOL, job_id, s.id, attempts.get(s.id, 0)):
+            continue                                     # 감시가 재배정한 칸의 늦은 결과 — 새 시도의 파일을 덮어쓰지 않는다
         fc = fc_of(res.features, job_id, s.id)
         for ft, d in zip(fc["features"], res.features):
             a = round(area_m2(d.geom4326), 2)
@@ -1103,7 +1212,49 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
             w, u, tmp, n, _ = thr.win.avg()
             log(WHO, f"학습 훅 {held['n']} · duty {thr.duty:.2f} · 쉼 {thr.stats['rest_s']:.0f}s 멈춤 {thr.stats['pause_s']:.0f}s 하드정지 {thr.stats['hard_stops']}회 · 30초 평균 {w:.0f}W {u:.0f}% {tmp:.0f}℃")
 
+    def serve_users():
+        """학습보다 사용자 분석 먼저(10-28 결정11) — 두 번째 장도 못 받은 사용자 분석 칸이 있으면 학습을 잠깐 멈추고 이 장에서 먼저 돌린다."""
+        if not user_take("train"):
+            return
+        t0 = time.time()
+        res = r().xreadgroup(GROUP, WID, {STREAM: ">"}, count=BATCH)
+        es = res[0][1] if res else []
+        mine = []
+        for eid, f in es:
+            if is_user_job(f.get("job_id", "")):
+                mine.append((eid, f))
+            else:                                        # 사용자 분석이 아닌 칸은 대기열 끝으로 그대로
+                r().xadd(STREAM, f)
+                r().xack(STREAM, GROUP, eid)
+                r().xdel(STREAM, eid)
+        if not mine:
+            return
+        ev("train.hold", {"reason": "user_first", "note": "사용자 분석 먼저 — 학습 잠깐 멈춤"})
+        log(WHO, f"train {job_id}: 사용자 분석 {len(mine)}칸 먼저(학습 잠깐 멈춤)")
+        try:
+            _run_entries(mine, 0.0)
+        finally:
+            for mid in list(models.keys()):              # 학습 메모리 자리를 다시 비운다
+                try:
+                    a, _, _ = models.pop(mid)
+                    a.unload()
+                except Exception:  # noqa: BLE001
+                    pass
+            try:
+                import torch
+                torch.cuda.empty_cache()
+            except Exception:  # noqa: BLE001
+                pass
+            state["job_id"] = job_id
+            thr.reset_clock()
+            held["s"] += time.time() - t0
+            ev("train.resume", {"reason": "user_done"})
+
     def gate_batch(_tr=None):
+        try:
+            serve_users()
+        except Exception as e:  # noqa: BLE001 — 학습은 계속
+            log(WHO, f"train {job_id}: 사용자 분석 먼저 돌리기 오류 {e!r}"[:300])
         train_rest()
         if time.time() - held.get("cx", 0.0) > 5:            # 취소를 5초마다 본다(취소한 학습이 끝까지 돌지 않게)
             held["cx"] = time.time()
@@ -1325,7 +1476,12 @@ def loop_once(last_claim: float) -> float:
             time.sleep(0.5)
             return last_claim
         two = pair_guard.two_on()
-        if SECONDARY:
+        if user_take("loop"):
+            # 사용자 분석 먼저(10-28 결정11) — 다른 장의 열(Land-XI 밖 학습 · vLLM)을 기다리지 않는다.
+            # 장당 30초 평균 상한(160 W · 70 %)은 쉼 조절이, 두 장 합은 이 장 목표를 낮춰(power_throttle.pair_cap) 지킨다.
+            _gate_clear()
+            n_batch = NAT_READ if SECONDARY else BATCH        # 두 번째 장은 조금씩(첫 장이 비면 함께 받게)
+        elif SECONDARY:
             # 두 번째 장(원칙 270): 두 장 모드 · XI ChatGEO 질문 없음 · 다음 칸이 국내 전국 칩일 때만 읽는다(사용자 분석 · 해외는 첫 장)
             if not two or llm_wanted() or next_kind() != "national":
                 if lease["slot"] is not None and time.time() - lease["last_work"] > IDLE_RELEASE:
@@ -1379,6 +1535,8 @@ def _run_entries(entries, last_claim: float) -> float:
             except RuntimeError as e:
                 err = "cuda_oom" if "out of memory" in str(e).lower() else "vram_budget" if "vram_budget" in str(e) else "runtime"
                 log(WHO, "shard error", job_id, e)
+                if SECONDARY and err in ("cuda_oom", "vram_budget"):      # 다시 넣은 칸은 첫 장이 받게(결정11)
+                    r().set(f"spill:skip:{WID}:{(bus.job(job_id) or {}).get('model_id') or ''}", err, ex=SPILL_SKIP_S)
                 torch.cuda.empty_cache()
                 fail(job_id, es, err)
             except Exception as e:

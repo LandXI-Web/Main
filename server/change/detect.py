@@ -50,6 +50,7 @@ TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
 TYPE_HIDDEN = {"식생 증감"}
 # 카드마다 찾는 변화 묶음(카드 판 modules.change_types · 10-25) — 국토 변화 기본값(TYPES)은 그대로 두고 더한다
 TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물"]}
+TSET_VER = {"landslide": "landslide-c"}      # 묶음 계산 판(캐시 열쇠) — 산사태 후보 C(임야 필지 · 10-28 결정8)
 
 
 def types_of(tset: str | None) -> list[str]:
@@ -63,9 +64,16 @@ def group_map(cls: np.ndarray) -> np.ndarray:
     return LUT[np.clip(cls, 0, 15)]
 
 
-def transitions(ga: np.ndarray, gb: np.ndarray, tset: str | None = None) -> dict[str, np.ndarray]:
+def transitions(ga: np.ndarray, gb: np.ndarray, tset: str | None = None, imya: np.ndarray | None = None,
+                seen_a: np.ndarray | None = None) -> dict[str, np.ndarray]:
     B, R, C, F, O = G["built"], G["road"], G["crop"], G["forest"], G["other"]
     valid = (ga > 0) & (gb > 0)
+    if tset == "landslide" and imya is not None:
+        # 산사태 후보 C(10-28 now 22 결정8) — 산 범위는 지적 임야 필지(지목 '임'), AI 는 '벗겨진 땅'만 본다:
+        # 임야 필지 안에서 앞 시점에 나지 · 도로 · 건물이 아니던 곳(AI 가 산을 '비대상지'로 본 곳 포함 · 영상 빈 곳 제외)이 뒤 시점 나지 · 도로 · 건물로.
+        sa = (ga > 0) if seen_a is None else seen_a
+        before = imya & sa & ~np.isin(ga, [O, R, B])
+        return {"산림 → 나지": before & (gb == O), "산림 → 도로": before & (gb == R), "산림 → 건물": before & (gb == B)}
     if tset == "landslide":
         # 산사태 취약지구(10-25) — 산림이었던 자리가 나지 · 도로 · 건물로(앞 시점 산림만 · 다른 전이는 보지 않음)
         return {"산림 → 나지": valid & (ga == F) & (gb == O), "산림 → 도로": valid & (ga == F) & (gb == R),

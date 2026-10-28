@@ -75,6 +75,11 @@ class Adapter:
             rr = _main_attr("r")
             if lease and lease.get("slot") is not None and rr:
                 rr().expire(f"power:hot:{lease['slot']}", 20)
+            a = _main_attr("A")
+            if rr and a is not None:                      # 두 장 모드 — 이 장의 열은 우리 사용자 분석 몫(XI ChatGEO 가 이 장을 기다리지 않게 · 결정11)
+                from workers import pair_guard
+                if pair_guard.two_on():
+                    pair_guard.mark_busy(rr(), int(a.gpu), job_id)
         except Exception:  # noqa: BLE001
             pass
 
@@ -90,9 +95,10 @@ class Adapter:
         p = shard.params or {}
         job_id = shard.job_id
         t0 = time.perf_counter()
-        ctl = H.Control(job_id, shard.id, thr=self.thr, touch=lambda: self._touch(job_id, shard.id),
-                        emit=_main_attr("emit"), llm_wanted=_main_attr("llm_wanted"))
         try:
+            ctl = None
+            ctl = H.Control(job_id, shard.id, thr=self.thr, touch=lambda: self._touch(job_id, shard.id),
+                            emit=_main_attr("emit"), llm_wanted=_main_attr("llm_wanted"), attempt=int((opts or {}).get("_attempt") or 0))
             rng, line, sgg = db_sync.range_geoms(p["range_id"])
             from change import parcels as P
             par = P.for_range(rng, sgg)
@@ -107,7 +113,8 @@ class Adapter:
             return ShardResult(features=[], metrics={"change": {"stopped": True}, "basis": "inferred", "source": "change/unet"}, n=0,
                                ms=int((time.perf_counter() - t0) * 1000))
         except Exception as e:  # noqa: BLE001
-            ctl.failed(e)
+            if ctl is not None:
+                ctl.failed(e)
             raise
         feats = []
         fc = json.loads((R.run_dir(job_id) / "changes.geojson").read_text(encoding="utf-8"))

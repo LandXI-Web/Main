@@ -82,7 +82,16 @@ async def _objects(conn, source: dict) -> dict:
     return {"kind": "detect", "crs": crs, "objs": objs, "people": any(x[1] in CC.PEOPLE for x in objs), "path": first["path_internal"], "opts": {}}
 
 
-def _frame_w(objs, people: bool, kind: str, parcel: bool = False) -> float:
+FORAGE_W = 600.0           # 사료작물(생육기 · 생산기 · 비교) 카드 그림 틀 너비 — 10-28 now 22 결정7 "넓게 크게 보고 그 안에서"
+LANDSLIDE_W = 1000.0       # 산사태 취약지구 카드 그림 틀 너비 — 결정7
+FORAGE_CLS = {"IRG", "호밀", "옥수수", "수단그라스"}
+
+
+def _frame_w(objs, people: bool, kind: str, parcel: bool = False, change: dict | None = None) -> float:
+    if kind == "change" and (change or {}).get("types") == "landslide":
+        return LANDSLIDE_W
+    if kind == "compare" or (objs and all(c in FORAGE_CLS for _, c, _ in objs)):
+        return FORAGE_W
     sizes = sorted(math.sqrt(max(g.area, 0.01)) for g, _, _ in objs if g.area > 0) or [5.0]
     s = sizes[len(sizes) // 2]
     if parcel or (objs and all(c in CC.FIELD_CLS for _, c, _ in objs)):   # 필지 단위 · 논밭 결과(사료작물 — 칸 경계를 붙여 밭 하나가 큼 · 10-26) — 필지 몇 줄이 보이는 너비(×12 면 너무 넓다)
@@ -241,7 +250,7 @@ async def candidates(conn, source: dict, n: int = 4) -> list[dict]:
     mat = await _objects(conn, source)
     if not mat["objs"]:
         return []
-    w = _frame_w(mat["objs"], mat["people"], mat["kind"], bool(mat.get("parcel")))
+    w = _frame_w(mat["objs"], mat["people"], mat["kind"], bool(mat.get("parcel")), mat.get("change"))
 
     def go():
         cs = _vector_scores(mat["objs"], w, mat["people"], mat["kind"], top=max(n * 4, 16) if mat["kind"] == "change" or mat.get("parcel") else max(n * 2, 6))

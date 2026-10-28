@@ -31,6 +31,7 @@ class Window:
         self.s: deque = deque()          # (t, w, util, temp)
         self.lock = threading.Lock()
         self._th = None
+        self.pair_cap = None             # (목표 W) -> 두 장 합 상한 안의 목표 W — nvml_window 가 붙인다(10-28 결정11)
 
     def poll(self):
         v = (self.reader() or {}).get(self.gpu) or {}
@@ -75,11 +76,53 @@ class Window:
 _wins: dict = {}
 
 
+def pair_target(tw: float, other_w30, sum_max_w: float, margin_w: float = 10.0, floor_w: float = 60.0) -> float:
+    """두 장 합 상한 안의 이 장 목표 전력(10-28 결정11) — 다른 장이 뜨거우면(Land-XI 밖 학습 · vLLM) 이 장 목표를 낮춰
+    합이 sum_max_w 를 넘지 않게 한다. 다른 장 값을 모르면 목표 그대로. 최소 floor_w(사용자 분석이 멈추지 않게)."""
+    if other_w30 is None:
+        return tw
+    return max(min(tw, floor_w), min(tw, sum_max_w - margin_w - float(other_w30)))
+
+
+def _pair_cfg() -> dict:
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from landxi_api import config
+        pw = config.load_yaml("pools").get("power", {}) or {}
+    except Exception:  # noqa: BLE001
+        pw = {}
+    u = pw.get("user") or {}
+    return {"sum_max_w": float((pw.get("pair") or {}).get("sum_max_w", 300)), "margin_w": float(u.get("pair_margin_w", 10)),
+            "floor_w": float(u.get("pair_floor_w", 60))}
+
+
 def nvml_window(gpu: int) -> Window:
-    """실제 NVML 창(장 번호당 하나 · 0.5 s 폴링 스레드)."""
+    """실제 NVML 창(장 번호당 하나 · 0.5 s 폴링 스레드). 두 장 합 상한(pair_cap)을 붙인다 — 다른 장 30초 평균 → 이 장 목표 상한."""
     if gpu not in _wins:
         from workers import nvml_power
-        _wins[gpu] = Window(gpu, nvml_power.read_all).start()
+        w = _wins[gpu] = Window(gpu, nvml_power.read_all).start()
+
+        def cap(tw: float, _g=gpu):
+            try:
+                others = [i for i in (nvml_power.read_all() or {}) if i != _g]
+            except Exception:  # noqa: BLE001
+                others = []
+            if not others:
+                return tw
+            ws = []
+            for i in others:
+                if i not in _wins:
+                    _wins[i] = Window(i, nvml_power.read_all).start()
+                aw, _, _, n, age = _wins[i].avg()
+                if n >= 4 and age <= 3.0:
+                    ws.append(aw)
+            if not ws:
+                return tw
+            c = _pair_cfg()
+            return pair_target(tw, sum(ws), c["sum_max_w"], c["margin_w"], c["floor_w"])
+        w.pair_cap = cap
     return _wins[gpu]
 
 
@@ -125,10 +168,21 @@ class PowerThrottle:
         """작업 밖 대기(다른 GPU 고부하 대기 등)는 일한 시간이 아니다 — 쉼 빚에서 뺀다."""
         self.t_last = self.clock()
 
+    def target_w(self) -> float:
+        """지금 목표 전력 — 설정 목표(target_w)와 두 장 합 상한(창의 pair_cap · 10-28 결정11) 중 낮은 쪽."""
+        cap = getattr(self.win, "pair_cap", None)
+        if cap is None:
+            return self.tw
+        try:
+            return min(self.tw, float(cap(self.tw)))
+        except Exception:  # noqa: BLE001
+            return self.tw
+
     def _over_target(self, w, u, temp, resume=False):
+        tw = self.target_w()
         if resume:        # 쉬던 중에는 목표 − 여유 아래로 내려와야 다시 일한다(떨림 방지)
-            return w > self.tw - self.mw or u > self.tu - self.mu or temp >= self.temp_max - 3
-        return w > self.tw or u > self.tu or temp >= self.temp_max
+            return w > tw - self.mw or u > self.tu - self.mu or temp >= self.temp_max - 3
+        return w > tw or u > self.tu or temp >= self.temp_max
 
     def _over_limit(self, w, u, temp):
         return w > self.limit_w or u > self.limit_u or temp >= self.temp_max
@@ -199,9 +253,10 @@ class PowerThrottle:
             self.stats["max_u30"] = max(self.stats["max_u30"], u30)
             if self.clock() - self.adj_at >= self.adj_every:
                 self.adj_at = self.clock()
-                e = max(w30 / self.tw, u30 / self.tu)
+                tw = self.target_w()
+                e = max(w30 / tw, u30 / self.tu)
                 if n10 >= 8:                                  # 10초 평균이 더 빨리 오른다 — 큰 쪽으로 본다
-                    e = max(e, w10 / self.tw, u10 / self.tu)
+                    e = max(e, w10 / tw, u10 / self.tu)
                 if e > 1.0:
                     self.duty = max(self.dmin, self.duty * max(0.7, 1.0 / e))
                 elif e < 0.88:

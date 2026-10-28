@@ -221,8 +221,11 @@ todoEl.addEventListener('click', (e) => {
   const v = (x) => (x && typeof x === 'object' ? x.value : x);
   const list = h('ul.oc-same', {}, ...(same.years || []).map((y) => h('li', {}, h('b', { text: `${y.year}년` }), ` 끝난 읍면동 ${v(y.done).toLocaleString('ko-KR')} · 옛 판 ${v(y.old).toLocaleString('ko-KR')}`)));
   const go = h('button.t-btn', { type: 'button', text: '비교 중인 해 전부 다시' });
+  // 예상 날수(10-28 now 22 늦-날수확인창 ⓐ) — 서버 GET /national/same-model 의 redo_days 한 출처 · 값이 없으면 줄을 두지 않는다
+  const dd = v(same.redo_days);
+  const days = dd == null ? null : h('p.oc-ntc-say', { text: dd < 1 ? '예상: 하루 안(학습 장비가 놀 때 기준)' : `예상: 약 ${dd.toLocaleString('ko-KR')}일(학습 장비가 놀 때 기준)` });
   const box = h('div.oc-ntc', {}, h('p', { text: `해마다 비교가 같은 판${same.model?.name ? `(${same.model.name})` : ''}으로 이뤄지도록, 옛 판으로 만든 읍면동을 지금 판으로 다시 분석합니다.` }), list,
-    h('p.oc-ntc-say', { text: '학습 장비가 놀 때만 돌고, 새 결과가 나올 때까지 옛 결과가 그대로 보입니다.' }), h('div.oc-ntc-act', {}, go));
+    ...(days ? [days] : []), h('p.oc-ntc-say', { text: '학습 장비가 놀 때만 돌고, 새 결과가 나올 때까지 옛 결과가 그대로 보입니다.' }), h('div.oc-ntc-act', {}, go));
   const m = modal({ title: '해마다 같은 판으로', body: box });
   go.addEventListener('click', async () => {
     go.disabled = true;
