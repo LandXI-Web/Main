@@ -48,6 +48,9 @@ const USER_KEYS = new Set(['gist', 'examples', 'memo', 'q', 'question', 'prompt'
 /* 화면 안에서 — 보이는 글 · 속성의 금칙어 */
 function scanPage(words) {
   const res = words.map(([k, s, f]) => [k, new RegExp(s, f)]);
+  /* 판정상태 열거값 예외(10-29 PM 회신 — 미확인 · 현장확인 · 적법 · 불법 · 철거완료는 PM 이 정한 값) — 글 한 덩이가 그 값(과 → · 숫자 · 건 · 필지)만이면 세지 않는다.
+     '현장 확인 후 …' 같은 설명 글은 그대로 센다 */
+  const STATUS_ONLY = /^((미확인|현장확인|적법|불법|철거완료)|[\s→·,:]|[\d,]+|건|필지)+$/;
   const skip = '.k-dev,[data-lint-skip],[data-user-text]';
   const vis = (el) => { const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const out = [];
@@ -56,7 +59,7 @@ function scanPage(words) {
   while ((n = tw.nextNode())) {
     const el = n.parentElement; if (!el || el.closest(skip) || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(el.tagName) || !vis(el)) continue;
     const s = n.nodeValue.trim(); if (!s) continue;
-    for (const [k, re] of res) if (re.test(s) && !(k === '칸 불러오는 중' && el.closest('.k-ld'))) out.push({ word: k, where: 'text', text: s.slice(0, 90) });
+    for (const [k, re] of res) if (re.test(s) && !(k === '칸 불러오는 중' && el.closest('.k-ld')) && !(k === '현장 확인' && STATUS_ONLY.test(s))) out.push({ word: k, where: 'text', text: s.slice(0, 90) });
   }
   for (const el of document.querySelectorAll('[title],[aria-label],[placeholder],img[alt]')) {
     if (el.closest(skip)) continue;
