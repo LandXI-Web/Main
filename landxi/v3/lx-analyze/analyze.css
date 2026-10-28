@@ -334,3 +334,4 @@ body.la-boot .k-app{visibility:hidden}
 /* 자세히 큰 그림 — 이름표 왼쪽 위 · 범례 오른쪽 위(아래는 장면 이름 · '다른 지역 결과' 자리) */
 .la-hero .la-swp-lab{top:16px;bottom:auto;left:16px}
 .la-hero .la-swp-leg{top:16px;bottom:auto;right:16px}
+.la-rule{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font:400 var(--fs-body,16px)/24px var(--font-body);color:var(--ink,#191F28)}

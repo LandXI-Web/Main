@@ -34,9 +34,13 @@ COLOR = {"경작지": "#2E9E5B", "경작": "#2E9E5B", "휴경": "#E8590C", "비�
          "건물": "#3182F6", "건축물": "#3182F6", "주차장": "#8B5CF6", "곤포사일리지": "#B07A3A", "해양쓰레기": "#0FA9A0", "styrofoam": "#0FA9A0",
          "차량": "#3182F6", "IRG": "#74B816", "호밀": "#E8590C", "옥수수": "#F59F00", "수단그라스": "#AE3EC9",
          "신축": "#F04452", "소실": "#6B7684", "경작 전환": "#0FA9A0", "포장 확대": "#FF9F1C", "식생 증감": "#74B816",
-         "산림 → 나지": "#C2410C", "산림 → 도로": "#FF9F1C", "산림 → 건물": "#F04452"}
+         "산림 → 나지": "#C2410C", "산림 → 도로": "#FF9F1C", "산림 → 건물": "#F04452",
+         # 이지목 현황 판정 층(10-28 v5 · gpkg 색 그대로 · kit/change-layer.js 와 같음)
+         "정상_지목일치": "#a9d6a0", "미확정_나지초지": "#d0d0d0", "점유의심": "#c0392b", "지목미정리": "#2980b9", "유휴산림화": "#e67e22",
+         "수역구거": "#16a085", "기타": "#7f8c8d"}
 SPARE = ["#E8590C", "#D6336C", "#1098AD", "#5C7CFA", "#74B816", "#AE3EC9"]
-WORD = {"비닐하우스_단동": "단동", "비닐하우스_다동": "다동", "styrofoam": "해양쓰레기", "식생 증감": None}   # 범례 말(None = 그리지 않음 · 국토 변화 참고 유형)
+WORD = {"비닐하우스_단동": "단동", "비닐하우스_다동": "다동", "styrofoam": "해양쓰레기", "식생 증감": None,
+        "정상_지목일치": "정상 지목일치", "미확정_나지초지": "미확정 나지초지"}   # 범례 말(None = 그리지 않음 · 국토 변화 참고 유형)
 CMP_COL = {"같은 작물": "#0FA9A0", "작물 바뀜": "#FFB633", "수확·곤포 확인": "#006DF7", "생산기에 없음": "#F04452", "생산기에만 있음": "#727780"}
 FARM_G, FARM_F = "#2E9E5B", "#E8590C"
 
@@ -318,7 +322,7 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
                 its = [(g, {**_poly_style(col(c)), "fa": 70, "width": 3.5}) for g, c, _ in rows]
                 return _jpg(A), _jpg(_draw(B, its, fr))
             base, res = await run_in_threadpool(go)
-            return {"base": base, "result": res, "labels": [str(ya), str(yb)], "legend": _legend((col(c), c) for _, c, _ in rows),
+            return {"base": base, "result": res, "labels": [str(ya), str(yb)] if ya != yb else [f"{ya} 영상", "AI 판정"], "legend": _legend((col(c), c) for _, c, _ in rows),
                     "frame": _frame4326(fr, "EPSG:5179"), "people": False, "n": len(rows)}
         if o.get("compare"):                                       # 두 시기 비교 — 생육기 영상(원본) · 생산기 영상 + 필지 판정(AI 결과)
             cm = o["compare"]

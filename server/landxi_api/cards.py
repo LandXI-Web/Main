@@ -222,7 +222,15 @@ async def _load(conn) -> dict:
     owner_names = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM lx_users")}
     from . import categories
     cats = await categories.load(conn)          # 분야 목록(LX 관리자가 관리 · 순서) + 서비스 × 분야(여러 개)
-    return {"cards": cards, "info": info, "vers": vers, "models": models, "n_val": n_val, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
+    # 국토 변화 틀 카드의 걸리는 시간 — 그 카드로 끝낸 최근 대상지 분석 한 건(작업 생성 → 끝 · 범위 · 영상 · 날짜 · 명세 v1 §6 '실측 1건')
+    chg_time = {}
+    for r in await conn.fetch(
+            "SELECT DISTINCT ON (j.card_id) j.card_id, extract(epoch FROM (j.finished_at - j.created_at)) AS el, j.finished_at, cr.year_a, cr.year_b, cr.zoom, "
+            "g.name AS rname, ST_Area(g.geom)/1e6 AS km2, (cr.stats->>'n')::int AS n FROM jobs j JOIN change_runs cr ON cr.job_id=j.id JOIN change_ranges g ON g.id=cr.range_id "
+            "WHERE cr.state='done' AND j.finished_at IS NOT NULL AND j.created_at IS NOT NULL AND NOT coalesce(j.test,false) AND j.card_id IS NOT NULL "
+            "ORDER BY j.card_id, j.finished_at DESC"):
+        chg_time[r["card_id"]] = dict(r)
+    return {"chg_time": chg_time, "cards": cards, "info": info, "vers": vers, "models": models, "n_val": n_val, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
             "owner_names": owner_names, "learned": _learned, "gsd_word": gsd_word, "cats": cats}
 
 
@@ -242,7 +250,14 @@ def _card_groups(m: dict, cid: str, inf: dict, scope: str | None) -> list[str]:
 
 
 def _owner(m: dict, cid: str, card) -> dict:
-    """담당 = 카드를 만든 프로젝트의 프로젝트장(원칙 51 · 63) → 없으면 cards.owner_id → 없으면 미지정."""
+    """담당 = PM 지정(config/card_owner.yaml · 명세 v1 §6) → 카드를 만든 프로젝트의 프로젝트장(원칙 51 · 63) → 없으면 cards.owner_id → 없으면 미지정."""
+    try:
+        from . import config as _c
+        lab = (_c.load_yaml("card_owner") or {}).get(cid)
+    except Exception:  # noqa: BLE001
+        lab = None
+    if lab:
+        return {"id": None, "name": str(lab), "project": None}
     for r in m["lead"]:
         if r["ref"] == cid:
             return {"id": r["lead_id"], "name": r["lead"] or None, "project": {"id": r["id"], "name": r["name"]}}
@@ -432,6 +447,13 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
                 "premise": " · ".join(x for x in (f"{iw} 영상" if iw else "", f"{fin.astimezone(KST).month}.{fin.astimezone(KST).day} 분석 실제 시간" if fin else "") if x),
                 "region": _short(None, job["sgg"]),
                 "coverage": env(round(cov * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}
+    ct = (m.get("chg_time") or {}).get(cid)
+    if time is None and ct and p.realm != "tenant" and ct.get("el"):
+        fin = ct["finished_at"].astimezone(KST)
+        yw = f"{ct['year_b']}" if ct["year_a"] == ct["year_b"] else f"{ct['year_a']} · {ct['year_b']}"
+        unit = f" · {int(ct['n']):,}필지" if ct["year_a"] == ct["year_b"] and ct.get("n") else ""
+        time = {"text": f"{ct['rname']} {float(ct['km2']):.2f}㎢{unit} {_dur(float(ct['el']))}".strip(), "seconds": round(float(ct["el"])),
+                "premise": f"{yw} {'25cm' if (ct.get('zoom') or 18) == 18 else '51cm'} · {fin.month}.{fin.day} 분석 실제 시간(작업 대기 포함)", "region": None, "coverage": None}
     # 찾는 것 = 카드 판이 찾는 분류(서비스 만들기에서 고른 것 · 분석 작업이 결과로 남기는 분류와 같은 출처 · 손으로 적은 글보다 먼저) —
     # 모델이 더 많은 분류를 내도(4분류 원판) 카드 분류만(모델-표기 ⓐ). 판에 분류가 없을 때만 적은 글 · 모델 분류.
     own_cls = ((cur["modules"] or {}).get("classes") if cur and isinstance(cur["modules"], dict) else None) or []
@@ -1294,7 +1316,12 @@ async def my_imagery(cid: str, body: dict, request: Request):
         async with db(realm="lx") as conn:
             cv = await _cv(conn, cid)
             item = await _fit_item(conn, cid, cv, rg["sgg_cd"], mapping(geoms[rg["sgg_cd"]]) if rg["sgg_cd"] in geoms else None, rg, hit, best)
-    return {"imagery": item, "id": iid, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "place": it.get("place"), "as_of": now_iso()}
+    from shapely.geometry import shape as _shape
+    try:
+        bb = [round(v, 6) for v in _shape(it["footprint"]).bounds]          # 다 올린 뒤 지도에 바로(10-28 v5 §3-3) — 영상 자리
+    except Exception:  # noqa: BLE001
+        bb = None
+    return {"imagery": item, "id": iid, "name": stem, "bounds": bb, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "place": it.get("place"), "as_of": now_iso()}
 
 
 @router.get("/cards/{cid}/fit")

@@ -88,6 +88,14 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     """한 범위 전체. parcels = parcels.for_range 결과(5179). 돌려줌 = stats(dict)."""
     t0 = time.perf_counter()
     tset = _tset(run_id, tset)
+    if tset == "ijimok":                              # 이지목 현황(카드 ② · 10-28 v5) — 한 시점 · 필지마다 지목 ↔ 피복(change/ijimok · 같은 결과 모양)
+        import importlib
+
+        from . import ijimok as IJ
+        IJ = importlib.reload(IJ)
+        SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
+        return IJ.compute(run_id=run_id, rng5179=rng5179, line5179=line5179, year=year_b, zoom=zoom, net=net, parcels=parcels, src=SB,
+                          device=device, pause=pause, progress=progress, log=log, out=run_dir(run_id))
     types = D.types_of(tset)
     SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
     raster = SA.get("kind") == "imagery" or SB.get("kind") == "imagery"

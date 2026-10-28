@@ -19,3 +19,9 @@
 .la-chg select.t-input{width:100%;min-width:0;text-overflow:ellipsis}
 /* ① 분석할 곳 — 구간 부품(kit/range-option · 10-25) */
 .la-chg-place{min-width:0}
+/* 점유의심 조사(카드 ③) 실행 칸 */
+.la-occ-r{display:flex;align-items:center;gap:8px;font:500 var(--fs-body,16px)/24px var(--font-body);color:var(--ink,#191F28)}
+.la-occ-g{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.la-occ-g small,.la-occ-f small{flex-basis:100%;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.la-occ-c{display:inline-flex;align-items:center;gap:6px;font:400 var(--fs-body,16px)/24px var(--font-body)}
+.la-occ-f{display:flex;flex-direction:column;gap:4px}

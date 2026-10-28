@@ -739,7 +739,8 @@ async def list_projects(request: Request, scope: str = "mine"):
     mine = "(p.lead_id=$1 OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1))"
     where = {"mine": f"p.state='active' AND {mine}", "led": "p.state='active' AND p.lead_id=$1",
              "joined": "p.state='active' AND p.lead_id<>$1 AND EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)",
-             "archived": "p.state='archived'" + ("" if p.is_admin else f" AND {mine}"), "all": "p.state='active'"}[scope]
+             "archived": "p.state='archived'" + ("" if p.is_admin else f" AND {mine}"), "all": "p.state='active'" if p.is_admin else f"p.state='active' AND {mine}"}[scope]
+    # (10-28 v5 §1) 직원은 내 프로젝트(내가 만든 · 구성원으로 지정된 것)만 — 'LX 전체'는 관리자만. 공유 = 프로젝트 구성원 지정
     async with db(realm="lx") as conn:
         people = await _people(conn)
         rows = await conn.fetch(f"SELECT p.* FROM projects p WHERE {where} AND ($1::text IS NOT NULL) ORDER BY p.updated_at DESC LIMIT 200", p.user_id)
@@ -747,7 +748,8 @@ async def list_projects(request: Request, scope: str = "mine"):
         counts = {k: int(await conn.fetchval(f"SELECT count(*) FROM projects p WHERE {w} AND ($1::text IS NOT NULL)", p.user_id))
                   for k, w in (("mine", f"p.state='active' AND {mine}"), ("led", "p.state='active' AND p.lead_id=$1"),
                                ("joined", "p.state='active' AND p.lead_id<>$1 AND EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=$1)"),
-                               ("archived", "p.state='archived'" + ("" if p.is_admin else f" AND {mine}")), ("all", "p.state='active'"))}
+                               ("archived", "p.state='archived'" + ("" if p.is_admin else f" AND {mine}")),
+                               ("all", "p.state='active'" if p.is_admin else f"p.state='active' AND {mine}"))}
     items.sort(key=lambda x: x.get("last_at") or "", reverse=True)          # 마지막 활동이 최근인 것부터
     return {"items": items, "total": env(len(items), "count", "recorded", SCOPE_WORD[scope]), "scope": scope,
             "counts": {k: env(v, "count", "recorded", SCOPE_WORD[k]) for k, v in counts.items()}, "as_of": now_iso()}
@@ -893,7 +895,10 @@ async def add_imagery(pid: str, body: dict, request: Request):
 async def get_project(pid: str, request: Request):
     p = _lx(request)
     async with db(realm="lx") as conn:
-        out = await view(conn, p, await _row(conn, pid))
+        r = await _row(conn, pid)
+        if not p.is_admin and not _is_member(p, r, await _members(conn, pid)):     # 남의 프로젝트는 보이지 않는다(10-28 v5 §1 · 있다는 것도 알리지 않음)
+            raise ApiError("not_found", "프로젝트가 없습니다")
+        out = await view(conn, p, r)
     return {**out, "as_of": now_iso()}
 
 

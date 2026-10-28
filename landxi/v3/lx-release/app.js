@@ -189,7 +189,18 @@ async function drawInfer() {
   const jl = h('ol.rl-jobs');
   const right = card('추론 결과', join(`보는 사람 ${nf(val(d.viewers))}명`, '나 · 프로젝트 참여자'), jl,
     h('p.rl-note', { text: '결과 보기는 지도 서비스에서 그 결과를 켭니다.' }));
-  page.replaceChildren(h('div.rl-grid', {}, h('div.rl-col', {}, left), h('div.rl-col', {}, right)));
+  /* 작업 기록(H1 · 10-28 v5) — 분석 서비스 · XI ChatGEO · 프로젝트 추론이 한 목록(같은 작업 장부) · 요청자 · 서비스/모델 판 · 범위 · 시점 · 시작/끝 · 상태 · 결과 레이어 ID */
+  const jt = h('tbody');
+  const logCard = card('작업 기록', '분석 서비스 · XI ChatGEO · 프로젝트 추론', h('div.rl-jt', {}, h('table', {},
+    h('thead', {}, h('tr', {}, ...['요청자', '서비스 · 모델', '범위', '시점', '요청 경로', '시작', '끝', '상태', '결과 레이어 ID'].map((t) => h('th', { scope: 'col', text: t })))), jt)));
+  api('/me/job-log?' + new URLSearchParams({ project_id: PID })).then((r) => {
+    const t2 = (s) => (s ? String(s).replace('T', ' ').slice(5, 16) : '-');
+    jt.replaceChildren(...((r.items || []).length ? r.items.map((j) => h('tr', {}, h('td', { text: j.who || '-' }), h('td', {}, h('b', { text: j.service }), h('small', { text: [j.model, j.version].filter(Boolean).join(' · ') })),
+      h('td', { text: j.range || '-' }), h('td', { text: j.when || '-' }), h('td', { text: j.via }), h('td.num', { text: t2(j.start) }), h('td.num', { text: t2(j.end) }),
+      h('td', {}, h('span.t-chip', { dataset: { lv: j.state === 'failed' ? 'warn' : j.state === 'done' ? '' : 'wait' }, text: j.state_word })), h('td.rl-id', { text: j.layer_id || '-' })))
+      : [h('tr', {}, h('td', { colspan: '9', text: '아직 작업 기록이 없습니다' }))]));
+  }).catch(() => jt.replaceChildren(h('tr', {}, h('td', { colspan: '9', text: '작업 기록을 불러오지 못했습니다' }))));
+  page.replaceChildren(h('div.rl-grid', {}, h('div.rl-col', {}, left), h('div.rl-col', {}, right)), logCard);
   drawImgs(); loadRanges();
 
   let timer = 0;

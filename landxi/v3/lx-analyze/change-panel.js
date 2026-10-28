@@ -15,6 +15,10 @@ import { rangeOption } from '../kit/range-option.js';
 /* 틀 안 카드마다 다른 것 — 버퍼 처음 값 · 찾는 변화 한 줄(서버 카드 판과 같은 말) */
 const FRAME = {
   'card-landslide': { bufferOn: true, buffer: 50, finds: '산림이 나지 · 도로 · 건물로 바뀐 곳' },
+  // 이지목 현황(카드 ② · 10-28 v5) — 한 시점: 영상 하나를 토지피복 AI로 분석해 필지마다 지목과 실제 쓰임을 견준다
+  'card-ijimok': { bufferOn: false, buffer: 0, one: true, note: '영상을 토지피복 AI로 분석하고 필지마다 지목과 실제 쓰임이 맞는지 판정합니다.' },
+  // 점유의심 조사(카드 ③) — 같은 곳의 국토 변화(앞 → 뒤 시점) · 이지목 현황(뒤 시점) 결과를 필지로 겹친다(없으면 그 둘을 돌림)
+  'card-occupy': { bufferOn: false, buffer: 0, note: '국토 변화(두 시점)와 이지목 현황(뒤 시점) 결과를 필지로 겹쳐 점유의심 목록을 만듭니다.' },
 };
 const DEF = { bufferOn: false, buffer: 50, finds: '바뀐 곳(신축 · 소실 · 경작 전환 · 포장 확대)' };
 
@@ -23,8 +27,67 @@ function ensureCss() {
   document.head.append(h('link', { rel: 'stylesheet', href: new URL('./change-panel.css', import.meta.url).href, dataset: { laChg: '1' } }));
 }
 
+/* 점유의심 조사(카드 ③ · 명세 v1 §4 · 10-28 사용자 회신) — ① 분석할 곳 ② 근거 결과(국토 변화 · 이지목 현황 — 그 곳의 끝난 결과) ③ 조건 → 목록 · 지도 · 판정.
+   AI 를 새로 돌리지 않는다(규칙 기반 교차 · 수 초). 근거 결과가 없으면 ①② 카드로 먼저 분석하도록 바로가기. 목록 규칙 = 서버 config/occupy.yaml 한 곳 */
+function occupyPanel(side, c) {
+  side.classList.add('t-card', 'la-chg');
+  side.append(h('h2.la-side-h', { text: '이 카드로 분석' }));
+  const step = (n, title, small) => h('div.la-step', {}, h('i', { text: String(n) }), h('b', { text: title }), small ? h('small', { text: small }) : null);
+  const S = { rng: null, seq: 0, res: [] };
+  const place = h('div.la-chg-place');
+  rangeOption(place, { endpoint: '/change/ranges', buffer: 0, bufferOn: false, parcelsRow: false, required: true, pnu: true,
+    onRange: (r) => { if (r) load(r.id); else { S.rng = null; S.res = []; fill(); } } });
+  const selC = h('select.t-input', { 'aria-label': '국토 변화 결과' }), selI = h('select.t-input', { 'aria-label': '이지목 현황 결과' });
+  const chkC = h('input', { type: 'checkbox', checked: true }), chkI = h('input', { type: 'checkbox', checked: true, disabled: true });
+  const none = h('p.la-chg-s', { hidden: true });
+  const cb = (label, on = true) => { const i = h('input', { type: 'checkbox', checked: on || undefined, value: label }); return { i, el: h('label.la-occ-c', {}, i, h('span', { text: label })) }; };
+  const T = ['신축', '경작 전환', '포장 확대'].map((x) => cb(x)), J = ['점유의심', '지목미정리'].map((x) => cb(x));
+  const own = h('select.t-input', { 'aria-label': '소유구분' }, ...['전체', '국유지', '시 도유지', '군유지', '개인', '법인', '고속국도 토지', '대장 미연결'].map((x) => h('option', { value: x === '전체' ? '' : x, text: x })));
+  const min = h('input.t-input', { type: 'number', min: '0', step: '10', value: '0', 'aria-label': '최소 면적(㎡)' });
+  const und = h('input', { type: 'checkbox' });
+  const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
+  side.append(step(1, '분석할 곳', '구간 업로드 · 필지 목록 · 행정구역'), place,
+    step(2, '근거 결과', '그 곳의 끝난 결과'),
+    h('label.la-occ-r', {}, chkC, h('span', { text: '국토 변화 결과' })), selC,
+    h('label.la-occ-r', {}, chkI, h('span', { text: '이지목 현황 결과' })), selI, none,
+    step(3, '조건'), h('div.la-occ-g', {}, h('small', { text: '변화 유형' }), ...T.map((x) => x.el)), h('div.la-occ-g', {}, h('small', { text: '이지목 판정' }), ...J.map((x) => x.el)),
+    h('label.la-occ-f', {}, h('small', { text: '소유구분' }), own), h('label.la-occ-f', {}, h('small', { text: '최소 면적(㎡)' }), min),
+    h('label.la-occ-r', {}, und, h('span', { text: '미확정 포함' })),
+    go, h('p.la-note', { text: '조건에 맞는 필지를 모아 목록 · 지도 · 판정 상태를 만듭니다. 소유구분은 브이월드 토지소유정보에서 종류만 가져옵니다.' }));
+  const opt = (x) => h('option', { value: x.job_id, text: `${x.word} · ${String(x.done_at || '').slice(0, 10).replace(/-/g, '.')}` });
+  function fill() {
+    const cs = S.res.filter((x) => x.card === 'card-change'), is = S.res.filter((x) => x.card === 'card-ijimok');
+    selC.replaceChildren(...(cs.length ? cs.map(opt) : [h('option', { value: '', text: S.rng ? '이 곳의 국토 변화 결과 없음' : '분석할 곳을 먼저 정하세요' })]));
+    selI.replaceChildren(...(is.length ? is.map(opt) : [h('option', { value: '', text: S.rng ? '이 곳의 이지목 현황 결과 없음' : '분석할 곳을 먼저 정하세요' })]));
+    selC.disabled = !cs.length; selI.disabled = !is.length;
+    none.hidden = !S.rng || (!!is.length);
+    none.replaceChildren(...(S.rng && !is.length ? ['먼저 ', h('a', { href: './?card=card-ijimok#analyze', text: '이지목 현황' }), (cs.length ? '' : ' · '), cs.length ? null : h('a', { href: './?card=card-change#analyze', text: '국토 변화' }), ' 카드로 분석해 주세요'].filter(Boolean) : []));
+    go.disabled = !S.rng || !is.length;
+  }
+  async function load(id) {
+    const my = ++S.seq; S.rng = { id }; S.res = [];
+    fill();
+    const j = await api(`/change/ranges/${encodeURIComponent(id)}/results`).catch(() => ({ items_raw: [] }));
+    if (my !== S.seq) return;
+    S.res = j.items_raw || []; fill();
+  }
+  go.addEventListener('click', () => {
+    const q = new URLSearchParams({ change: selI.value });
+    if (chkC.checked && selC.value) q.set('occupy', selC.value); else q.set('occupy', '-');
+    const t = T.filter((x) => x.i.checked).map((x) => x.i.value), jj = J.filter((x) => x.i.checked).map((x) => x.i.value);
+    if (t.length < T.length) q.set('o_type', t.join(','));
+    if (jj.length < J.length) q.set('o_cls', jj.join(','));
+    if (own.value) q.set('o_owner', own.value);
+    if (+min.value > 0) q.set('o_min', String(+min.value));
+    if (und.checked) q.set('o_und', '1');
+    location.href = '../lx-map/?' + q;
+  });
+  fill();
+}
+
 export function changePanel(side, c) {
   ensureCss();
+  if (c.id === 'card-occupy') { occupyPanel(side, c); return; }
   const CARD = c.id;
   const F = FRAME[CARD] || DEF;
   side.classList.add('t-card', 'la-chg');
@@ -59,10 +122,11 @@ export function changePanel(side, c) {
     up.addEventListener('click', () => openUpload(o));
     return o;
   };
-  const A = slot('a', '앞 시점'), B = slot('b', '뒤 시점');
+  const A = slot('a', '앞 시점'), B = slot('b', F.one ? '영상' : '뒤 시점');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
-  const note = h('p.la-note', {}, `두 시점 영상을 각각 토지피복 AI로 분석하고 ${F.finds}을 찾습니다.`, h('br'), '작업 대기열에 들어가고, 결과는 지도 서비스에 쌓입니다.');
-  side.append(step(1, '분석할 곳', '구간 업로드 · 행정구역'), place, rngLine,
+  const note = h('p.la-note', {}, F.note || `두 시점 영상을 각각 토지피복 AI로 분석하고 ${F.finds}을 찾습니다.`, h('br'), '작업 대기열에 들어가고, 결과는 지도 서비스에 쌓입니다.');
+  if (F.one) side.append(step(1, '분석할 곳', '구간 업로드 · 행정구역'), place, rngLine, step(2, '영상', '영상 하나'), B.el, go, note);
+  else side.append(step(1, '분석할 곳', '구간 업로드 · 행정구역'), place, rngLine,
     step(2, '앞 시점', '영상 하나'), A.el, step(3, '뒤 시점', '영상 하나'), B.el, go, note);
 
   const thisYear = new Date().getFullYear();
@@ -101,8 +165,8 @@ export function changePanel(side, c) {
     return y ? { kind: 'imagery', id: it.id, year: y } : null;
   }
   function ready() {
-    const a = srcOf(A), b = srcOf(B);
-    const same = a && b && a.kind === b.kind && (a.kind === 'ngii' ? a.year === b.year : a.id === b.id);
+    const a = F.one ? srcOf(B) : srcOf(A), b = srcOf(B);
+    const same = !F.one && a && b && a.kind === b.kind && (a.kind === 'ngii' ? a.year === b.year : a.id === b.id);
     go.disabled = !S.rng || !a || !b || same;
     go.title = same ? '두 시점에 서로 다른 영상을 고르세요' : '';
   }
@@ -141,15 +205,21 @@ export function changePanel(side, c) {
     o.want = id; o.kind = 'own';
     for (const x of o.kinds.children) x.setAttribute('aria-pressed', String(x.dataset.k === 'own'));
     fill(o);
+    /* 다 올린 뒤(10-28 v5 §3-3) — 대상지가 프로젝트에 묶여 있으면 프로젝트 영상에 잇고, 지도에서 바로 보기 */
+    if (id && S.rng.project_id) api(`/projects/${encodeURIComponent(S.rng.project_id)}/imagery`, { method: 'POST', body: { imagery: [id] } }).catch(() => null);
+    if (id) {
+      o.hint.hidden = false;
+      o.hint.replaceChildren(`올린 영상: ${d.result?.name || '내 영상'} · `, h('a', { href: '../lx-map/?' + new URLSearchParams({ own: id, ...(d.result?.bounds ? { bb: d.result.bounds.join(',') } : {}) }), target: '_blank', rel: 'noopener', text: '지도에서 보기' }));
+    }
     if (id && !S.imgs.some((x) => x.id === id)) { o.hint.hidden = false; o.hint.textContent = '올린 영상이 분석할 곳과 겹치지 않습니다 — 그 곳을 덮는 영상을 올려 주세요'; }
   });
 
   go.addEventListener('click', async () => {
-    const a = srcOf(A), b = srcOf(B); if (!S.rng || !a || !b) return;
+    const b = srcOf(B), a = F.one ? b : srcOf(A); if (!S.rng || !a || !b) return;
     go.disabled = true; go.textContent = '대기열에 넣는 중';
     try {
       const r = await K.during(api('/change/runs', { method: 'POST', body: { range_id: S.rng.id, src_a: a, src_b: b, via: 'analyze', card_id: CARD } }));
-      location.href = '../lx-map/?' + new URLSearchParams({ change: r.job_id });
+      location.href = '../lx-map/?' + new URLSearchParams({ change: r.job_id, ...(r.occupy ? { occupy: r.occupy } : {}) });
     } catch (e) { go.textContent = '분석 시작'; ready(); K.toast(e.message || '분석을 시작하지 못했습니다'); }
   });
 

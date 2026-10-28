@@ -156,6 +156,20 @@ async function addImagery(id) {
   } catch (e) { K.devlog('imagery', `${id} ${e?.message || e}`); }
 }
 
+/* 내가 올린 영상(?own=영상&bb=서,남,동,북 · 10-28 v5 §3-3) — 다 올린 뒤 지도에 바로. 원본 동적 타일(서명 주소 · LX 세션) */
+async function addOwn(id, bb) {
+  if (!id || !/^own-[0-9a-f]{6,20}$/.test(id)) return;
+  try {
+    const j = await api('/tiles/sign?' + new URLSearchParams({ set: 'cog/' + id }));
+    const sid = 'lm-own-' + id;
+    if (map.getSource(sid)) return;
+    const b = bb && bb.length === 4 ? bb : null;
+    map.addSource(sid, { type: 'raster', tiles: [j.url], tileSize: 256, minzoom: 8, maxzoom: 19, ...(b ? { bounds: b } : {}) });
+    map.addLayer({ id: sid, type: 'raster', source: sid, minzoom: 8, paint: { 'raster-fade-duration': 300 } }, 'slot-imagery');
+    if (b) map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: pad(), duration: 900, maxZoom: 17 });
+  } catch (e) { K.devlog('own imagery', `${id} ${e?.message || e}`); }
+}
+
 /* 결과 층 — 결과 세트 하나 = 결과 타일 하나(지역 결과 층과 같은 길) */
 async function addSet(x) {
   if (x.ids) return;
@@ -276,8 +290,8 @@ function drawLeft() {
       ul.append(h('li', { class: [x.on && 'is-on', ST.pick === x.job && 'is-pick', x.on && !shown(x) && 'is-muted', ST.dl === x.job && 'is-dl', ST.list === x.job && 'is-list'].filter(Boolean).join(' '), title: more },
         h('button.lm-sw', { type: 'button', role: 'switch', 'aria-checked': String(x.on), 'aria-label': `${G.name} ${x.region} 켜기`, onclick: () => toggle(x) }, h('i')),
         canDl ? h('button.lm-cd', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${G.name} ${x.region} 색`, title: '색', dataset: { job: x.job }, style: dotStyle(dotColors(x)), onclick: (e) => openColors(x, e.currentTarget) }) : h('span.lm-cd.is-none', { 'aria-hidden': 'true' }),
-        h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: `${x.region} · ${day(x.finished_at)}` })),
-        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}${x.compare ? '필지' : '건'}` }),
+        h('button.lm-li', { type: 'button', onclick: () => (x.on ? fly(x.bounds) : toggle(x)) }, h('b', { text: x.pair ? `${x.region} · ${x.pair}` : `${x.region} · ${day(x.finished_at)}`, title: x.pair ? `${x.scope} · ${day(x.finished_at)}` : undefined })),   // 국토 변화 = 시점 쌍(M5 · 10-28 v5)
+        h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}${x.unit || (x.compare ? '필지' : '건')}` }),
         canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
       if (x.range?.word) ul.append(h('li.lm-rg', { class: x.on ? 'is-on' : '' }, ...rangeLine(x)));   // 작업 줄 아래 '구간: 이름 · 100m'
@@ -744,6 +758,7 @@ document.body.dataset.ready = '1';
 
 /* 결과 확인(원칙 203 · 10-12) — 지도 서비스 위 '이 결과 확인했음' 한 줄은 뺐다. 프로젝트에서 오면 지도에서 결과를 보는 길만(?job= 그대로). */
 map.once('idle', () => { document.documentElement.dataset.mapReady = '1'; });
+if (Q.get('own')) addOwn(Q.get('own'), (Q.get('bb') || '').split(',').map(Number).filter((v) => Number.isFinite(v)));   // 다 올린 내 영상(10-28 v5 §3-3)
 
 /* 분석 중인 것이 있으면 30초마다 목록을 다시 — 끝난 결과는 꺼진 줄로 쌓이고 알림 한 줄(켜기) */
 async function poll() {

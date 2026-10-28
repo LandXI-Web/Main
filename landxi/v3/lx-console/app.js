@@ -364,6 +364,22 @@ const WIDGETS = {
       countUp(cells, 'mapsvc');
     },
   },
+  /* 상시 모니터링(10-28 v5 §3-8) — 내가 등록한 대상지 · 시점 쌍(시점 표기) · 다음 영상 확보 시 자동 분석(등록 상태만 · 실행은 향후). 결과 카드 · 프로젝트와 같은 줄(GET /change/monitors) */
+  monitor: {
+    title: '상시 모니터링', min: [3, 2], def: [12, 3], more: { text: '지도 서비스', href: STAFF_HREF.mapsvc },
+    async render(body, ctx) {
+      wait(body);
+      let j;
+      try { j = await once('monitors', () => api('/change/monitors')); } catch { fail(body, () => { drop('monitors'); ctx.refresh(); }); return; }
+      const items = j.items || [];
+      if (!items.length) { none(body, '등록한 모니터링 대상지가 없습니다'); return; }
+      ctx.sub(`대상지 ${items.length}곳`);
+      const last = (m) => m.pairs?.[m.pairs.length - 1];
+      body.replaceChildren(h('ul.ld-rows.ld-mon', {}, ...items.map((m) => h('li', {}, h('a', { href: last(m) ? STAFF_HREF.mapsvc + '?' + new URLSearchParams({ change: last(m).job_id }) : STAFF_HREF.mapsvc },
+        h('b', { text: m.name }), h('span.ld-k', { text: `시점 쌍 ${ev(m.n_pairs)} · ${m.next_word}` }),
+        h('small', { text: (m.pairs || []).map((x) => x.word).join(' · ') || '비교 결과 전' }))))));
+    },
+  },
 };
 
 /* ═══════════════ 달력 ═══════════════ */
@@ -544,6 +560,7 @@ const DEFAULTS = [
   { id: 'notice', x: 0, y: 0, w: 5, h: 3, view: 'list' }, { id: 'memo', x: 5, y: 0, w: 3, h: 3 }, { id: 'store', x: 8, y: 0, w: 4, h: 3, view: 'numbers' },
   { id: 'board', x: 0, y: 3, w: 5, h: 3, view: 'numbers' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 3, view: 'numbers' }, { id: 'calendar', x: 8, y: 3, w: 4, h: 7, view: 'auto' },
   { id: 'recent', x: 0, y: 6, w: 8, h: 4, view: 'cards' },
+  { id: 'monitor', x: 0, y: 10, w: 12, h: 3 },
 ];
 /* 고를 수 있는 모양(10-18 원칙 285 "공지사항 · 달력 · 저장 용량을 한 줄에") — '모양 고르기'에서 */
 const PRESETS = [

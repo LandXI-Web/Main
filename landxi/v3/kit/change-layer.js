@@ -7,7 +7,10 @@ import { h, api } from './util.js';
 
 const HERE = import.meta.url;
 const TYPES = [['신축', '#F04452'], ['소실', '#6B7684'], ['경작 전환', '#0FA9A0'], ['포장 확대', '#FF9F1C'],
-  ['산림 → 나지', '#C2410C'], ['산림 → 도로', '#FF9F1C'], ['산림 → 건물', '#F04452']];    // 산사태 취약지구(국토 변화 틀 · 10-25)
+  ['산림 → 나지', '#C2410C'], ['산림 → 도로', '#FF9F1C'], ['산림 → 건물', '#F04452'],    // 산사태 취약지구(국토 변화 틀 · 10-25)
+  // 이지목 현황 판정 층 7종(10-28 v5 카드 ② · 이지목_판정별레이어.gpkg 레이어명 · 색 그대로)
+  ['정상_지목일치', '#a9d6a0'], ['미확정_나지초지', '#d0d0d0'], ['점유의심', '#c0392b'], ['지목미정리', '#2980b9'], ['유휴산림화', '#e67e22'], ['수역구거', '#16a085'], ['기타', '#7f8c8d']];
+const IJ = () => C.run?.card?.id === 'card-ijimok';   // 이지목 현황 결과 — 한 시점 · 필지 판정(변화가 아님)
 const COLOR = ['match', ['get', 'type'], ...TYPES.flat(), '#9AA4B2'];
 const STATUS = [['미확인', '#B0B8C1'], ['현장확인', '#3182F6'], ['불법', '#F04452'], ['적법', '#0FA9A0'], ['철거완료', '#4E5968']];
 const nf = (v) => Number(v).toLocaleString('ko-KR');
@@ -15,6 +18,7 @@ const JNAME = { 도: '도로', 철: '철도용지', 대: '대지', 임: '임야'
   과: '과수원', 목: '목장용지', 유: '유지', 제: '제방', 주: '주유소용지', 공: '공원', 체: '체육용지', 원: '유원지', 종: '종교용지', 사: '사적지', 묘: '묘지', 수: '수도용지', 양: '양어장' };
 const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const Q = new URLSearchParams(location.search);
+const OCC = Q.get('occupy');                            // 점유의심 조사(카드 ③) — ② 결과 위에 ① 결과를 겹친 목록(서버 config/occupy.yaml 규칙)
 
 const C = { map: null, range: null, job: null, run: null, fc: null, sel: null, hl: new Set(), outOn: true, years: null, card: null, panel: null, sw: null, urls: [] };
 window.__lxChange = C;
@@ -87,6 +91,7 @@ function hideTwin() {
 function ownSrc() { const p = C.run?.period; return p?.a?.kind === 'imagery' || p?.b?.kind === 'imagery'; }
 async function swipe(ya, yb) {
   if (!ya || !yb) return false;
+  if (ya === yb) { try { window.__lm?.addYears?.([ya]); } catch { /* */ } redraw(); return false; }   // 한 시점(이지목 현황) — 가르기 없음
   C.years = [ya, yb];
   try { window.__lm?.addYears?.([...(C.range?.imagery_years || []).map((y) => y.year), ya, yb]); } catch { /* 지도 서비스 밖 */ }
   let r;
@@ -107,6 +112,8 @@ function drawCard() {
   if (!C.card) { C.card = h('section.chg-card', { 'aria-label': '국토 변화 탐지', 'data-zone': 'chg-card' }); hst.append(C.card); }
   const s = C.run?.stats;
   const name = C.range?.name || '대상지';
+  if (s && IJ() && OCC) { drawOccCard(name); return; }
+  if (s && IJ()) { drawIjCard(s, name); return; }
   const yrs = C.years ? `${C.years[0]}년 → ${C.years[1]}년` : '';
   const cardWord = String(C.run?.card?.name || '국토 변화 분석서비스').replace(/\s*분석서비스$/, '');   // 같은 틀의 카드 이름(국토 변화 · 산사태 취약지구)
   const zones = Array.isArray(C.run?.zones) ? C.run.zones : null;
@@ -129,8 +136,73 @@ function drawCard() {
     zones ? zoneList(zones) : null,
     h('p.chg-w', { text: `두 해 영상에서 바뀐 곳 — ${inW} 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.` }),
     marksLine(),
+    monLine(),
     h('label.chg-out', {}, h('input', { type: 'checkbox', checked: C.outOn || undefined, onchange: (e) => { C.outOn = e.target.checked; for (const m of maps()) applyFilters(m); } }), h('span', { text: `${zones ? '지구' : '구역선'} 밖(버퍼)도 보기` })),
     h('button.chg-more', { type: 'button', 'aria-expanded': String(C.card.classList.contains('is-open')), text: C.card.classList.contains('is-open') ? '접기' : '유형별 보기',
+      onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } })].filter(Boolean));
+}
+
+/* 점유의심 조사 목록(카드 ③ · 10-28 사용자 회신) — 열: 지번(PNU) · 지목 · 소유구분 · 변화유형 · 이지목 판정 · 면적(㎡) · 판정상태.
+   거르기: 변화 유형 · 이지목 판정 · 소유구분 · 최소 면적 + 미확정 포함(기본 꺼짐). 행을 누르면 필지 칸(판정 저장 · 이력). 값 = 서버 한 출처 */
+const O = { und: Q.get('o_und') === '1', type: Q.get('o_type') || '', cls: Q.get('o_cls') || '', owner: Q.get('o_owner') || '', min: Q.get('o_min') || '', data: null, busy: false };   // 카드 ③ 실행 칸에서 고른 조건
+async function loadOcc() {
+  if (!C.job || !OCC) return;
+  const q = new URLSearchParams({ und: O.und ? '1' : '0' });
+  if (OCC !== '-') q.set('chg', OCC);
+  if (O.type) q.set('type', O.type); if (O.cls) q.set('cls', O.cls); if (O.owner) q.set('owner', O.owner); if (+O.min > 0) q.set('min_area', String(+O.min));
+  try { O.data = await api(`/change/runs/${encodeURIComponent(C.job)}/occupy?${q}`); } catch (e) { O.data = { err: e.message || '목록을 불러오지 못했습니다' }; }
+  occFilter(); drawCard();
+}
+function occFilter() {
+  const ids = (O.data?.items_raw || []).map((r) => r.id);
+  for (const m of maps()) for (const id of ['chg-f', 'chg-l']) if (m.getLayer(id)) m.setFilter(id, ['in', ['get', 'id'], ['literal', ids]]);
+}
+const JIMOK_W = (j) => JNAME[j] || j || '-';
+function drawOccCard(name) {
+  C.card.classList.add('is-occ');
+  const d = O.data;
+  const sel = (label, key, opts) => h('label.chg-of', {}, h('span', { text: label }), h('select.t-input', { 'aria-label': label, onchange: (e) => { O[key] = e.target.value; loadOcc(); } },
+    h('option', { value: '', text: '전체' }), ...(opts || []).map((v) => h('option', { value: v, text: v.replace(/_/g, ' '), selected: O[key] === v || undefined }))));
+  const head = [h('p.chg-k', { text: `점유의심 조사 · ${C.run?.period?.b?.year || ''}년 영상` }), h('h2.chg-t', { text: name })];
+  if (!d) { C.card.replaceChildren(...head, h('p.chg-s', { text: '목록을 불러오는 중' })); return; }
+  if (d.err) { C.card.replaceChildren(...head, h('p.chg-s', { text: d.err })); return; }
+  const f = d.filters || {};
+  const csv = h('button.t-btn.t-btn--text', { type: 'button', text: 'CSV 내려받기', onclick: async () => {
+    const q = new URLSearchParams({ und: O.und ? '1' : '0', format: 'csv' }); if (OCC !== '-') q.set('chg', OCC);
+    if (O.type) q.set('type', O.type); if (O.cls) q.set('cls', O.cls); if (O.owner) q.set('owner', O.owner); if (+O.min > 0) q.set('min_area', String(+O.min));
+    const r = await api(`/change/runs/${encodeURIComponent(C.job)}/occupy?${q}`, { raw: true });
+    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: `점유의심조사_${name}.csv` }); document.body.append(a); a.click(); a.remove(); } });
+  const rows = (d.items_raw || []).map((r) => h('tr', { tabindex: '0', dataset: { id: r.id, on: C.sel === r.id ? '1' : '0' }, onclick: () => { openPanel(r.id); fitIds([r.id]); },
+    onkeydown: (e) => { if (e.key === 'Enter') { openPanel(r.id); fitIds([r.id]); } } },
+  h('td', {}, h('b', { text: r.jibun || '-' }), h('small', { text: r.pnu || '' })), h('td', { text: JIMOK_W(r.jimok) }), h('td', { text: r.owner || '-' }),
+  h('td', { text: r.chg_n > 1 ? `${r.chg_type} 외 ${r.chg_n - 1}` : r.chg_type }), h('td', { text: String(r.ijimok || '').replace(/_/g, ' ') }),
+  h('td.num', { text: nf(Math.round(r.area_m2 || 0)) }), h('td', {}, h('span.chg-mt', { dataset: { st: r.status }, text: r.status }))));
+  C.card.replaceChildren(...head,
+    h('p.chg-big', {}, h('span', { text: '점유의심 ' }), h('b', { text: `${nf(val(d.n))}필지` }), h('small', { text: ` · ${nf(Math.round(val(d.area) || 0))}㎡` })),
+    d.chg && d.chg_state !== 'done' ? h('p.chg-s', { text: '국토 변화 분석이 끝나면 변화 유형이 채워집니다' }) : null,
+    h('div.chg-ofs', {}, sel('변화 유형', 'type', f.type), sel('이지목 판정', 'cls', f.cls), sel('소유구분', 'owner', f.owner),
+      h('label.chg-of', {}, h('span', { text: '최소 면적(㎡)' }), h('input.t-input', { type: 'number', min: '0', step: '10', value: O.min, 'aria-label': '최소 면적', onchange: (e) => { O.min = e.target.value; loadOcc(); } })),
+      h('label.chg-out', {}, h('input', { type: 'checkbox', checked: O.und || undefined, onchange: (e) => { O.und = e.target.checked; loadOcc(); } }), h('span', { text: '미확정 포함' }))),
+    h('div.chg-ot', {}, h('table', {}, h('thead', {}, h('tr', {}, ...['지번(PNU)', '지목', '소유구분', '변화유형', '이지목 판정', '면적(㎡)', '판정상태'].map((t) => h('th', { scope: 'col', text: t })))),
+      h('tbody', {}, ...rows))),
+    rows.length ? null : h('p.chg-s', { text: '조건에 맞는 필지가 없습니다' }),
+    h('div.chg-oa', {}, csv, h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }), h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job, occupy: OCC }), text: '보고서' })));
+}
+
+/* 이지목 현황 카드 — 판정별 필지 수(표 · 지도 · 통계 같은 값 = 서버 결과 요약 한 출처) */
+function drawIjCard(s, name) {
+  const bt = s.by_type || {};
+  const yr = C.run?.period?.b?.year;
+  const rows = TYPES.filter(([t]) => bt[t] && val(bt[t].n)).map(([t, c]) => h('li', {}, h('i.chg-sw', { style: `background:${c}` }), h('span', { text: t.replace(/_/g, ' ') }),
+    h('b', { text: `${nf(val(bt[t].n))}필지` }), h('small', { text: `${nf(Math.round(val(bt[t].area) || 0))}㎡` })));
+  const odd = TYPES.slice(-5).reduce((a, [t]) => a + (bt[t] ? val(bt[t].n) || 0 : 0), 0);
+  C.card.replaceChildren(...[
+    h('p.chg-k', { text: `이지목 현황 · ${yr ? `${yr}년 영상` : ''}` }), h('h2.chg-t', { text: name }),
+    h('p.chg-big', {}, h('span', { text: '판정한 필지 ' }), h('b', { text: `${nf(val(s.n))}필지` }), h('small', { text: ` · 이지목 ${nf(odd)}필지` })),
+    h('ul.chg-lg', {}, ...rows),
+    h('p.chg-w', { text: '지목과 실제 쓰임(토지피복 AI)을 필지마다 견준 판정입니다. 필지를 누르면 영상과 근거를 봅니다.' }),
+    marksLine(),
+    h('button.chg-more', { type: 'button', 'aria-expanded': String(C.card.classList.contains('is-open')), text: C.card.classList.contains('is-open') ? '접기' : '판정별 보기',
       onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } })].filter(Boolean));
 }
 
@@ -149,7 +221,35 @@ function marksLine() {
   const done = ['현장확인', '불법', '적법', '철거완료'].filter((k) => val(mk[k]));
   return h('p.chg-mline', {}, h('span', { text: '판정 ' }), ...(done.length ? done.map((k) => h('span.chg-mt', { dataset: { st: k }, text: `${k} ${nf(val(mk[k]))}` })) : [h('span', { text: '아직 없음' })]),
     h('a.chg-link', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job }), text: '현장점검' }),
-    h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job }), text: '보고서' }));
+    h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job }), text: '보고서' }),
+    h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }));
+}
+/* 상시 모니터링(10-28 v5 §3-8) — 등록 · 상태 표시까지(실제 자동 실행은 향후). 대시보드 '상시 모니터링' 칸 · 프로젝트와 같은 줄(GET /change/monitors) */
+function monLine() {
+  if (!C.range?.id) return null;
+  const m = C.mon && C.mon.range_id === C.range.id ? C.mon : null;
+  const btn = h('button.t-btn.t-btn--2.chg-mon-b', { type: 'button', text: m ? '모니터링 해제' : '모니터링 대상지로 등록', onclick: async () => {
+    btn.disabled = true;
+    try { const r = await api(`/change/ranges/${encodeURIComponent(C.range.id)}/monitor`, { method: 'POST', body: { on: !m } }); C.mon = r.on ? r.item : null; drawCard();
+      import('./toast.js').then((x) => x.toast(r.on ? '모니터링 대상지로 등록했습니다 · 대시보드에도 보입니다' : '모니터링을 해제했습니다')).catch(() => {}); }
+    catch (e) { btn.disabled = false; import('./toast.js').then((x) => x.toast(e.message || '등록하지 못했습니다')).catch(() => {}); }
+  } });
+  return h('div.chg-mon', {}, m ? h('p.chg-mon-s', {}, h('b', { text: `모니터링 중 · 시점 쌍 ${nf(val(m.n_pairs))}` }), h('span', { text: m.next_word }),
+    h('span.chg-mon-p', { text: (m.pairs || []).map((x) => x.word).join(' · ') })) : null, btn);
+}
+async function loadMon() {
+  if (!C.range?.id) return;
+  try { const j = await api('/change/monitors?' + new URLSearchParams({ range_id: C.range.id })); C.mon = (j.items || [])[0] || null; } catch { C.mon = null; }
+  drawCard();
+}
+
+/* 대장 갱신용 내보내기(U4 · 10-28 v5) — PNU · 현재지목 · 판정 · 판정일 · 담당 · 근거레이어ID(서버가 만든 CSV 그대로) */
+async function ledgerCsv() {
+  try {
+    const r = await api(`/change/runs/${encodeURIComponent(C.job)}/ledger.csv`, { raw: true });
+    if (!r.ok) throw new Error(String(r.status));
+    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: `대장갱신_${C.range?.name || '결과'}.csv` }); document.body.append(a); a.click(); a.remove();
+  } catch { import('./toast.js').then((m) => m.toast('내려받지 못했습니다')).catch(() => {}); }
 }
 
 /* ── 오른쪽 칸 — 두 해 썸네일 + 속성 ── */
@@ -165,16 +265,19 @@ async function openPanel(id) {
   const [ya, yb] = C.years || [C.run?.period?.a?.year, C.run?.period?.b?.year];
   const imgA = h('img', { alt: `${ya}년 항공영상`, decoding: 'async' }), imgB = h('img', { alt: `${yb}년 항공영상`, decoding: 'async' });
   const kv = (k, v) => h('div.chg-kv', {}, h('dt', { text: k }), h('dd', { text: v || '-' }));
+  const ij = IJ();
   C.panel.replaceChildren(
-    h('div.chg-ph', {}, h('h3', {}, h('i.chg-sw', { style: `background:${(TYPES.find((t) => t[0] === p.type) || [0, '#9AA4B2'])[1]}` }), h('span', { text: p.type }), h('small', { text: `약 ${nf(Math.round(p.area_m2))}㎡` })),
+    h('div.chg-ph', {}, h('h3', {}, h('i.chg-sw', { style: `background:${(TYPES.find((t) => t[0] === p.type) || [0, '#9AA4B2'])[1]}` }), h('span', { text: ij ? p.type.replace(/_/g, ' ') : p.type }), h('small', { text: `약 ${nf(Math.round(p.area_m2))}㎡` })),
       h('button.chg-x', { type: 'button', 'aria-label': '닫기', text: '닫기', onclick: closePanel })),
-    h('div.chg-ab', {}, h('figure', {}, imgA, h('figcaption', { text: `${ya}년` })), h('figure', {}, imgB, h('figcaption', { text: `${yb}년` }))),
-    h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv(Array.isArray(C.run?.zones) ? '지구' : '구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
+    ij ? h('div.chg-ab.is-one', {}, h('figure', {}, imgB, h('figcaption', { text: `${yb}년` })))
+      : h('div.chg-ab', {}, h('figure', {}, imgA, h('figcaption', { text: `${ya}년` })), h('figure', {}, imgB, h('figcaption', { text: `${yb}년` }))),
+    ij ? h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('실제 쓰임', p.cover === '나지초지' ? '나지 · 초지(판정 보류)' : p.cover), kv('판정 층', p.layer), kv('소유구분', p.owner), kv('용도', p.use))
+      : h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv(Array.isArray(C.run?.zones) ? '지구' : '구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
     markBox(id, p),
     h('div.chg-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'AI 설명 듣기', onclick: () => document.dispatchEvent(new CustomEvent('kit:ask', { detail: { q: '이거 뭐야?' } })) }),
       h('a.t-btn.t-btn--text', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job, id }), text: '현장점검(사진)' })),
-    h('p.chg-note', { text: 'AI가 찾은 변화(결과 확인 전)입니다. 판단은 현장 확인으로 합니다.' }));
-  for (const [img, t] of [[imgA, 'a'], [imgB, 'b']]) blobUrl(`/change/runs/${encodeURIComponent(C.job)}/thumbs/${p.thumb_a ? (t === 'a' ? p.thumb_a : p.thumb_b).split('/').pop() : `${id}_${t}.png`}`)
+    h('p.chg-note', { text: ij ? 'AI가 본 실제 쓰임과 지목을 견준 판정(결과 확인 전)입니다. 판단은 현장점검으로 합니다.' : 'AI가 찾은 변화(결과 확인 전)입니다. 판단은 현장 확인으로 합니다.' }));
+  for (const [img, t] of (ij ? [[imgB, 'b']] : [[imgA, 'a'], [imgB, 'b']])) blobUrl(`/change/runs/${encodeURIComponent(C.job)}/thumbs/${p.thumb_a ? (t === 'a' ? p.thumb_a : p.thumb_b).split('/').pop() : `${id}_${t}.png`}`)
     .then((u) => { img.src = u; }, () => { img.replaceWith(h('p.chg-noimg', { text: '영상을 불러오지 못했습니다' })); });
   placePanel();
   document.dispatchEvent(new CustomEvent('kit:change-selected', { detail: { id, job: C.job } }));
@@ -213,6 +316,7 @@ function markBox(id, p) {
   const box = h('div.chg-mark');
   const memo = h('input.t-input.chg-memo', { type: 'text', maxlength: '500', placeholder: '메모(선택)', 'aria-label': '판정 메모', value: p.memo || '' });
   const save = h('button.t-btn.chg-save', { type: 'button', text: '판정 저장' });
+  const hist = h('ol.chg-hist', { 'aria-label': '판정 이력' });
   const btns = h('div.chg-sts', { role: 'group', 'aria-label': '판정' });
   const draw = () => btns.replaceChildren(...ST_LIST.map((s) => h('button.chg-stb', { type: 'button', 'aria-pressed': String(pick === s), dataset: { st: s }, text: s, onclick: () => { pick = s; draw(); } })));
   draw();
@@ -223,12 +327,26 @@ function markBox(id, p) {
       const f = C.fc.features.find((x) => x.id === id); if (f) { f.properties.status = r.status; f.properties.memo = r.memo; }
       C.run = await api(`/change/runs/${encodeURIComponent(C.job)}`).catch(() => C.run);
       redraw(); drawCard();
+      if (OCC && IJ()) loadOcc();
+      if (hist) loadHist(hist, id);
       import('./toast.js').then((m) => m.toast(`판정을 '${r.status}'(으)로 저장했습니다`)).catch(() => {});
     } catch (e) { import('./toast.js').then((m) => m.toast(e.message || '판정을 저장하지 못했습니다')).catch(() => {}); }
     finally { save.disabled = false; }
   });
-  box.append(h('p.chg-mk', { text: '판정' }), btns, h('div.chg-mrow', {}, memo, save));
+  box.append(h('p.chg-mk', { text: '판정' }), btns, h('div.chg-mrow', {}, memo, save), h('p.chg-mk', { text: '이력' }), hist);
+  loadHist(hist, id);
   return box;
+}
+
+/* 판정 이력(H2 · 10-28 v5) — 누가 · 언제 · 이전값 → 새값 · 근거(결과 레이어 ID · 영상 연도) · 서버 판정 기록 그대로 */
+async function loadHist(el, id) {
+  let j; try { j = await api(`/change/runs/${encodeURIComponent(C.job)}/marks/${id}`); } catch { el.replaceChildren(h('li', { text: '이력을 불러오지 못했습니다' })); return; }
+  const hs = j.history || [];
+  if (!hs.length) { el.replaceChildren(h('li.chg-h0', { text: '아직 판정 기록이 없습니다' })); return; }
+  const day = (s) => String(s || '').replace('T', ' ').slice(0, 16);
+  el.replaceChildren(...hs.map((x) => h('li', {}, h('p.chg-h1', {}, h('b', { text: x.by || '-' }), h('span', { text: day(x.at) })),
+    h('p.chg-h2', { text: `${x.from || '미확인'} → ${x.status}` }),
+    x.basis ? h('p.chg-h3', { text: `근거 ${x.basis.layer} · ${x.basis.years}` }) : null)));
 }
 
 function closePanel() { C.card?.classList.remove('is-under'); if (C.panel) C.panel.hidden = true; C.sel = null; C.hl.clear(); for (const m of maps()) applyFilters(m); }
@@ -286,6 +404,8 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
   const need = !C.sw || !C.years || C.years[0] !== a || C.years[1] !== b;
   C.years = [a, b];
   redraw(); drawCard(); hideTwin();                 // 결과 · 카드 · 자리 먼저(가르기 영상은 이어서)
+  if (OCC && IJ()) loadOcc();
+  else if (!IJ()) loadMon();
   if (fit && C.range?.bbox) fitRange(C.range.bbox);
   if (need && !ownSrc()) { await swipe(a, b); redraw(); }   // 등록 영상(공유 데이터 · 내 영상)으로 비교한 결과는 국토지리정보원 해 가르기를 깔지 않는다(다른 영상이라 오해) — 두 시점 그림은 폴리곤 칸에
   return true;

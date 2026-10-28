@@ -50,3 +50,5 @@
   .gx-card{bottom:auto;top:12px;max-width:calc(100% - 24px)}
   .k-main:has(.xc-cmp:not([hidden])) .gx-card{display:none}
 }
+/* 10-28 gate(기관 390 결과 지도) — 휴대폰에서 결과 숫자(.xc-hud)가 지도 도구 한 줄(위 56 · 높이 약 60)과 겹쳤다 → 도구 줄 아래로(XI맵 .xb-hud 와 같은 자리 124 · 원칙 309) */
+@media (max-width:640px){ .xc-hud{top:124px} }

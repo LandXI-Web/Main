@@ -227,8 +227,10 @@ def _change_item(r, p: Principal, o: dict, cnt: dict) -> tuple[str, str, bool, d
     fin = _iso(r["finished_at"])
     ya, yb = c.get("year_a"), c.get("year_b")
     b = c.get("bbox4326")
+    one = st.get("mode") == "ijimok" or (ya and ya == yb)        # 이지목 현황(한 시점 · 필지 판정 · 10-28 v5)
     item = {"job": r["id"], "set": r["result_set"], "region": region or "—", "sgg_cd": (rg or {}).get("sgg_cd") or sgg,
-            "scope": f"{ya}년 → {yb}년 비교" if ya and yb else "", "change": True,
+            "scope": (f"{yb}년 영상 · 필지 판정" if one else f"{ya}년 → {yb}년 비교") if ya and yb else "", "change": True,
+            "pair": (f"{yb}년" if one else f"{ya} → {yb}") if ya and yb else None, "unit": "필지" if one else "건",   # 시점 쌍 표기(M5 · 10-28 v5)
             "imagery": {"id": None, "name": "", "year": None, "word": ""},
             "found": env(total, "count", "inferred", "AI 분석 결과(검수 전)", as_of=fin),
             "by_class": by, "bounds": [round(float(v), 6) for v in b] if b and len(b) == 4 else None, "finished_at": fin,
@@ -589,3 +591,41 @@ async def remove_memo(mid: str, request: Request):
     if not r:
         raise ApiError("not_found", "메모가 없습니다")
     return {"ok": True, "at": now_iso()}
+
+
+# ── 작업 기록(H1 · 10-28 v5) — 직원용 작업 목록: 요청자 · 서비스/모델 판 · 범위 · 시점 · 시작/끝 · 상태 · 결과 레이어 ID ──────────────
+# 분석 서비스 · XI ChatGEO · 프로젝트 추론이 같은 작업 장부(jobs) 한 줄씩 — 같은 목록(F2). 프로젝트 4단계(추론) 탭이 보인다.
+JOB_WORD = {"queued": "작업 대기", "running": "분석 중", "done": "완료", "failed": "실패", "cancelled": "취소됨"}
+
+
+@router.get("/me/job-log")
+async def my_job_log(request: Request, project_id: str | None = None, limit: int = 50):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "SELECT j.id, j.state, j.kind, j.card_id, j.model_id, j.options, j.result_set, j.created_at, j.started_at, j.finished_at, j.submitted_by, j.label, "
+            "c.name->>'ko' AS cname, m.version AS mver, cr.year_a, cr.year_b, cg.name AS rname, cg.buffer_m, pr.name AS pname, "
+            "coalesce(u.name, '') AS who FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN models m ON m.id=j.model_id "
+            "LEFT JOIN change_runs cr ON cr.job_id=j.id LEFT JOIN change_ranges cg ON cg.id=cr.range_id "
+            "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' LEFT JOIN lx_users u ON u.id=j.submitted_by "
+            "WHERE NOT j.demo AND NOT coalesce(j.test,false) AND (j.kind='infer' OR (j.kind='index' AND j.options ? 'change')) "
+            "AND (j.submitted_by=$1 OR ($2::text IS NOT NULL AND j.options->>'project_id'=$2 AND EXISTS (SELECT 1 FROM projects q WHERE q.id=$2 AND (q.lead_id=$1 "
+            "     OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id=q.id AND pm.user_id=$1))))) "
+            "ORDER BY j.created_at DESC LIMIT $3", p.user_id, project_id, max(1, min(int(limit or 50), 200)))
+    items = []
+    for r in rows:
+        o = _jload(r["options"])
+        c = o.get("change") or {}
+        if r["year_a"] and r["year_b"]:
+            when = f"{r['year_b']}년 영상" if r["year_a"] == r["year_b"] else f"{r['year_a']}년 → {r['year_b']}년"
+        else:
+            when = ""
+        via = o.get("requested_via") or ("프로젝트 추론" if o.get("project_infer") else "분석 서비스")
+        items.append({"job_id": r["id"], "state": r["state"], "state_word": JOB_WORD.get(r["state"], r["state"]), "who": r["who"] or "",
+                      "service": r["cname"] or (f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else "분석 서비스"),
+                      "model": " ".join(x for x in (r["model_id"] or "", f"v{r['mver']}" if r["mver"] else "") if x),
+                      "version": c.get("version") or None, "range": r["rname"] or o.get("range_name") or (r["pname"] or ""), "when": when,
+                      "via": via, "start": r["started_at"].isoformat(timespec="seconds") if r["started_at"] else None,
+                      "end": r["finished_at"].isoformat(timespec="seconds") if r["finished_at"] else None,
+                      "layer_id": r["result_set"], "created": r["created_at"].isoformat(timespec="seconds")})
+    return {"items": items, "as_of": now_iso()}

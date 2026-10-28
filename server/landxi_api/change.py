@@ -29,7 +29,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, Response
 
 from .deps import ApiError, audit, db, principal, require
-from .envelope import env, now_iso
+from .envelope import KST, env, now_iso
 
 router = APIRouter()
 TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
@@ -170,9 +170,12 @@ async def list_ranges(request: Request, project_id: str | None = None, all: int 
     분석 서비스 카드에는 구간 목록을 두지 않는다(10-25 사용자 — 구간은 결과에 붙어 지도 서비스 '내 분석'에 쌓인다)."""
     p = require(principal(request))
     async with db(p) as conn:
-        rows = await conn.fetch("SELECT id FROM change_ranges WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
+        rows = await conn.fetch("SELECT id FROM change_ranges g WHERE ($1::text IS NULL OR project_id=$1) AND ($2 OR project_id IS NOT NULL OR origin='card') "
                                 f"AND ST_Area(geom) <= {MAX_KM2_M2} "                     # 다른 카드의 넓은 구간(시군구 전체 등)은 국토 변화 대상지 목록에 넣지 않는다
-                                "ORDER BY created_at DESC LIMIT 50", project_id, bool(all))
+                                # (10-28 v5 §1) LX 직원 = 내가 올린 대상지 · 내 프로젝트(프로젝트장 · 구성원)의 대상지만
+                                "AND ($3::text IS NULL OR g.created_by=$3 OR EXISTS (SELECT 1 FROM projects pj WHERE pj.id=g.project_id AND (pj.lead_id=$3 "
+                                "     OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pj.id AND m.user_id=$3)))) "
+                                "ORDER BY created_at DESC LIMIT 50", project_id, bool(all), p.user_id if (p.is_lx and not p.is_admin) else None)
     out = []
     for r in rows:
         o = range_out(await get_range_row(p, r["id"]))
@@ -291,6 +294,25 @@ async def range_imagery(rid: str, request: Request):
     return {"range_id": rid, "items": items[:40], "as_of": now_iso()}
 
 
+@router.get("/change/ranges/{rid}/results")
+async def range_results(rid: str, request: Request):
+    """그 대상지의 끝난 결과(카드마다 · 최근 것부터) — 점유의심 조사(카드 ③)의 '근거 결과' 고르기(명세 v1 §4 실행 ②)."""
+    p = require(principal(request))
+    await get_range_row(p, rid)
+    async with db(p) as conn:
+        rows = await conn.fetch("SELECT r.job_id, r.year_a, r.year_b, r.done_at, r.sources, coalesce(j.card_id, 'card-change') AS card "
+                                "FROM change_runs r LEFT JOIN jobs j ON j.id=r.job_id WHERE r.range_id=$1 AND r.state='done' ORDER BY r.done_at DESC LIMIT 40", rid)
+    out = []
+    for r in rows:
+        d = dict(r)
+        pr = period_of(d)
+        one = d["year_a"] == d["year_b"]
+        out.append({"job_id": d["job_id"], "card": d["card"], "year_a": d["year_a"], "year_b": d["year_b"],
+                    "word": pr["b"]["word"] if one else f"{pr['a']['word']} → {pr['b']['word']}",
+                    "done_at": d["done_at"].isoformat(timespec="seconds") if d["done_at"] else None})
+    return {"range_id": rid, "items_raw": out, "as_of": now_iso()}
+
+
 async def _src_in(p, s, d: dict) -> dict:
     """시점 하나의 영상 출처 → {kind, year, id?, name, own?}. 등록 영상은 볼 수 있는 것(공유 데이터 · 내 영상)만."""
     s = dict(s or {})
@@ -375,7 +397,7 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int, ver: str | 
 INTERACTIVE_KM2 = 2.0
 
 
-CARD_WORD = {"card-change": "국토 변화", "card-landslide": "산사태 취약지구"}
+CARD_WORD = {"card-change": "국토 변화", "card-landslide": "산사태 취약지구", "card-ijimok": "이지목 현황", "card-occupy": "점유의심 조사"}
 
 
 async def frame_card(card_id: str | None) -> tuple[str, str | None]:
@@ -397,11 +419,20 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     from change.detect import TSET_VER
     ver = _ver() + (f"+{TSET_VER.get(tset, tset)}" if tset else "")      # 산사태 후보 C 는 판이 다르다(옛 결과를 다시 쓰지 않게 · 결정8)
     d = await get_range_row(p, range_id)
+    if tset == "occupy":                              # 점유의심 조사(카드 ③) — 계산 없이 ① · ② 결과를 겹친다(change.occupy)
+        from .occupy import start_occupy
+        return await start_occupy(request, p, d, year_a, year_b, src_a, src_b, via)
+    one = tset == "ijimok"                            # 이지목 현황(카드 ②) — 한 시점(뒤 시점 하나 · 앞 시점 = 같은 영상)
+    if one:
+        s1 = src_b or src_a or {"kind": "ngii", "year": year_b or year_a}
+        src_a = src_b = s1
     sa = await _src_in(p, src_a or {"kind": "ngii", "year": year_a}, d)
     sb = await _src_in(p, src_b or {"kind": "ngii", "year": year_b}, d)
-    if sa["kind"] == sb["kind"] == "ngii" and sa["year"] == sb["year"]:
+    if one:
+        pass
+    elif sa["kind"] == sb["kind"] == "ngii" and sa["year"] == sb["year"]:
         raise ApiError("bad_request", "서로 다른 두 해를 골라 주세요")
-    if sa["kind"] == sb["kind"] == "imagery" and sa["id"] == sb["id"]:
+    if not one and sa["kind"] == sb["kind"] == "imagery" and sa["id"] == sb["id"]:
         raise ApiError("bad_request", "두 시점에 서로 다른 영상을 골라 주세요")
     if sa["year"] > sb["year"]:                       # 앞 시점 = 앞 해
         sa, sb = sb, sa
@@ -436,7 +467,8 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     if d.get("sgg"):
         opts["sgg_cd"] = d["sgg"][0]
     # 대화형(작은 범위 2㎢ 이하)은 전국 분석(3) · 다른 분석(0)보다 먼저(−1) — 전국 작업은 칸 묶음 사이에서 비킨다(F3)
-    body = {"kind": "index", "model_id": "change-ap25", "card_id": cid, "label": f"분석 서비스 · {CARD_WORD.get(cid, '국토 변화')} · {d['name']} {year_a}↔{year_b}"[:60],
+    body = {"kind": "index", "model_id": "change-ap25", "card_id": cid,
+            "label": (f"분석 서비스 · 이지목 현황 · {d['name']} {year_b}" if one else f"분석 서비스 · {CARD_WORD.get(cid, '국토 변화')} · {d['name']} {year_a}↔{year_b}")[:60],
             "priority": -1 if interactive else 0, "options": opts}
     res = await J.submit(body, request)
     jid = res["job"]["id"]
@@ -679,13 +711,41 @@ async def parcels(job_id: str, request: Request, type: str | None = None, jimok:
             "items_raw": rows}
 
 
+@router.get("/change/runs/{job_id}/ledger.csv")
+async def ledger_csv(job_id: str, request: Request):
+    """대장 갱신용 내보내기(U4 · 10-28 v5) — 열 6개 그대로: PNU · 현재지목 · 판정 · 판정일 · 담당 · 근거레이어ID.
+    줄 = 결과의 필지(이지목 현황) · 변화 도형(국토 변화 — 도형이 가장 많이 걸친 필지). 판정 = 저장한 판정(없으면 미확인) · 판정일 · 담당 = 마지막 저장.
+    근거레이어ID = 이 결과(같은 번호로 지도 서비스 · 보고서에서 찾는다)."""
+    p = require(principal(request))
+    d = await run_row(p, job_id)
+    fc = await run_in_threadpool(_features, job_id)
+    mk = await marks_of(p, job_id)
+    names = await _user_names([m.get("by") for m in mk.values()])
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["PNU", "현재지목", "판정", "판정일", "담당", "근거레이어ID"])
+    for f in fc["features"]:
+        pr = f["properties"]
+        if pr.get("hidden") or not pr.get("pnu"):
+            continue
+        m = mk.get(f["id"]) or {}
+        w.writerow([pr.get("pnu"), pr.get("jimok") or "", m.get("status") or "미확인", (m.get("at") or "")[:10], names.get(m.get("by")) or "", job_id])
+    async with db(p) as conn:
+        await audit(conn, p, "change.ledger_csv", job_id, None, {"rows": len(fc["features"])})
+    from urllib.parse import quote
+    name = f"대장갱신_{d['range_name']}_{d['year_b']}.csv"
+    return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+
+
 @router.get("/change/latest")
-async def latest(request: Request, project_id: str | None = None, range_id: str | None = None):
+async def latest(request: Request, project_id: str | None = None, range_id: str | None = None, card: str | None = None):
+    """card = 그 카드 결과만(card-ijimok 이지목 현황 · card-change 국토 변화 등 · 10-28 v5 U5)."""
     p = require(principal(request))
     async with db(p) as conn:
-        r = await conn.fetchrow("SELECT r.job_id FROM change_runs r JOIN change_ranges g ON g.id=r.range_id "
+        r = await conn.fetchrow("SELECT r.job_id FROM change_runs r JOIN change_ranges g ON g.id=r.range_id LEFT JOIN jobs j ON j.id=r.job_id "
                                 "WHERE r.state='done' AND ($1::text IS NULL OR g.project_id=$1) AND ($2::text IS NULL OR g.id=$2) "
-                                "ORDER BY r.done_at DESC NULLS LAST LIMIT 1", project_id, range_id)
+                                "AND ($3::text IS NULL OR coalesce(j.card_id, 'card-change')=$3) "
+                                "ORDER BY r.done_at DESC NULLS LAST LIMIT 1", project_id, range_id, card)
     if not r:
         return {"job_id": None}
     return await get_run(r["job_id"], request)
@@ -748,14 +808,21 @@ async def _user_names(ids) -> dict:
 @router.get("/change/runs/{job_id}/marks/{fid}")
 async def get_mark(job_id: str, fid: str, request: Request):
     p = require(principal(request))
-    await run_row(p, job_id)
+    d = await run_row(p, job_id)
     async with db(p) as conn:
-        hist = await conn.fetch("SELECT status, memo, by_user, at FROM change_mark_log WHERE job_id=$1 AND fid=$2 ORDER BY at DESC LIMIT 20", job_id, fid)
+        hist = await conn.fetch("SELECT status, memo, by_user, at FROM change_mark_log WHERE job_id=$1 AND fid=$2 ORDER BY at ASC, id ASC", job_id, fid)
     m = (await marks_of(p, job_id)).get(fid) or {"status": "미확인", "photos": []}
     names = await _user_names([x["by_user"] for x in hist] + [m.get("by")])
+    # 이전값 → 새값 · 근거(결과 레이어 ID = 이 결과 · 영상 연도) — H2(10-28 v5). 사진만 더한 줄(판정 그대로)도 남는다
+    basis = {"layer": job_id, "years": f"{d['year_b']}년 영상" if d["year_a"] == d["year_b"] else f"{d['year_a']}년 → {d['year_b']}년 영상"}
+    out, prev = [], "미확인"
+    for x in hist:
+        out.append({"status": x["status"], "from": prev, "memo": x["memo"], "by": names.get(x["by_user"]) or "", "at": x["at"].astimezone(KST).isoformat(timespec="seconds"), "basis": basis})
+        prev = x["status"]
+    out.reverse()
     return {"job_id": job_id, "fid": fid, "status": m.get("status") or "미확인", "memo": m.get("memo"), "by": names.get(m.get("by")) or None,
-            "at": m.get("at"), "photos": [{"name": x.get("name"), "at": x.get("at")} for x in m.get("photos") or []],
-            "history": [{"status": x["status"], "memo": x["memo"], "by": names.get(x["by_user"]) or "", "at": x["at"].isoformat(timespec="seconds")} for x in hist]}
+            "at": m.get("at"), "photos": [{"name": x.get("name"), "at": x.get("at")} for x in m.get("photos") or []], "basis": basis,
+            "history": out[:20]}
 
 
 PHOTO_MAX = 12 * 1024 * 1024
@@ -842,7 +909,11 @@ async def shared(request: Request):
     async with db(p) as conn:
         rows = await conn.fetch(
             "SELECT DISTINCT ON (g.id) g.id AS range_id, g.name, g.project_id, r.job_id FROM change_ranges g JOIN change_runs r ON r.range_id=g.id "
-            "WHERE r.state='done' AND g.project_id IS NOT NULL AND r.version=$1 ORDER BY g.id, r.done_at DESC", _ver())
+            "WHERE r.state='done' AND g.project_id IS NOT NULL AND r.version=$1 "
+            # (10-28 v5 §1) LX 직원 = 내 프로젝트(프로젝트장 · 구성원)의 대상지만 · 관리자 · 기관(공유받은 것)은 그대로
+            "AND ($2::text IS NULL OR EXISTS (SELECT 1 FROM projects pj WHERE pj.id=g.project_id AND (pj.lead_id=$2 "
+            "     OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pj.id AND m.user_id=$2)))) "
+            "ORDER BY g.id, r.done_at DESC", _ver(), p.user_id if (p.is_lx and not p.is_admin) else None)
     items = []
     for x in rows:
         try:
@@ -884,7 +955,8 @@ async def _report_data(p, job_id: str) -> tuple[dict, dict]:
     mk = await marks_of(p, job_id)
     async with db(realm="lx") as conn:
         cname = await conn.fetchval("SELECT c.name->>'ko' FROM jobs j JOIN cards c ON c.id=j.card_id WHERE j.id=$1", job_id)
-    r = RP.build(rng=range_out(rg), run=d, stats=st, fc=fc, marks=mk, card_name=cname, zones=await zones_of(d["range_id"], fc))
+        lid = await conn.fetchval("SELECT result_set FROM jobs WHERE id=$1", job_id)
+    r = RP.build(rng=range_out(rg), run=d, stats=st, fc=fc, marks=mk, card_name=cname, zones=await zones_of(d["range_id"], fc), job_id=job_id, layer_id=lid)
     return r, d
 
 
@@ -950,3 +1022,7 @@ async def report_pdf(job_id: str, request: Request):
 
 from . import change_jobs as _cj  # noqa: E402 — 작업 상태 · 취소 · 다시 · 알림 · 감시(같은 라우터로)
 router.include_router(_cj.router)
+from . import occupy as _oc  # noqa: E402 — 점유의심 조사(카드 ③ · 10-28 v5) 목록 · 규칙(같은 라우터로)
+router.include_router(_oc.router)
+from . import monitors as _mo  # noqa: E402 — 상시 모니터링 등록(10-28 v5 §3-8)
+router.include_router(_mo.router)

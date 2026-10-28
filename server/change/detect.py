@@ -49,8 +49,10 @@ GNAME = {1: "건물", 2: "도로", 3: "경작", 4: "산림", 5: "수역", 6: "�
 TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
 TYPE_HIDDEN = {"식생 증감"}
 # 카드마다 찾는 변화 묶음(카드 판 modules.change_types · 10-25) — 국토 변화 기본값(TYPES)은 그대로 두고 더한다
-TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물"]}
-TSET_VER = {"landslide": "landslide-c"}      # 묶음 계산 판(캐시 열쇠) — 산사태 후보 C(임야 필지 · 10-28 결정8)
+TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물"],
+             # 이지목 현황(카드 ② · 10-28 v5) — 변화가 아니라 필지 판정 층 7종(이지목_판정별레이어.gpkg 레이어명 · change/ijimok.LAYERS 와 같은 순서)
+             "ijimok": ["정상_지목일치", "미확정_나지초지", "점유의심", "지목미정리", "유휴산림화", "수역구거", "기타"]}
+TSET_VER = {"landslide": "landslide-c", "ijimok": "ijimok-3"}      # 묶음 계산 판(캐시 열쇠) — 산사태 후보 C(임야 필지 · 10-28 결정8)
 
 
 def types_of(tset: str | None) -> list[str]:

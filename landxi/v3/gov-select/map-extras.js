@@ -10,7 +10,11 @@ import { drawer } from '../kit/panel.js';
 import { sixCells, val, nf, ymd, segs } from '../gov-space/guide.js';
 
 const at = (p) => new URL('../' + p, import.meta.url).href;
-{ const href = at('gov-select/map-extras.css'); if (![...document.querySelectorAll('link[rel=stylesheet]')].some((l) => l.href === href)) document.head.append(h('link', { rel: 'stylesheet', href })); }
+/* 이 파일의 모양(map-extras.css)이 다 온 뒤에 카드를 붙인다 — 늦게 오면 모양 없는 카드가 지도 도구 위에 잠깐 겹쳐 섰다(10-28 gate · 기관 390 결과 지도) */
+const cssReady = (() => { const href = at('gov-select/map-extras.css'); const have = [...document.querySelectorAll('link[rel=stylesheet]')].find((l) => l.href === href);
+  if (have) return have.sheet ? Promise.resolve() : new Promise((r) => { have.addEventListener('load', r, { once: true }); have.addEventListener('error', r, { once: true }); setTimeout(r, 8000); });
+  const l = h('link', { rel: 'stylesheet', href }); const p = new Promise((r) => { l.addEventListener('load', r, { once: true }); l.addEventListener('error', r, { once: true }); setTimeout(r, 8000); });
+  document.head.append(l); return p; })();
 { const href = at('gov-space/gov-space.css'); if (![...document.querySelectorAll('link[rel=stylesheet]')].some((l) => l.href === href)) document.head.append(h('link', { rel: 'stylesheet', href })); }
 
 const inBox = (b, x, y) => b && x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3];
@@ -19,6 +23,7 @@ const hit = (a, b) => a && b && a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && 
 /** '보고 있는 결과' 카드 — card = 서비스(카드 id) · region() = 지금 고른 시군구({code, bbox}) · center() = 지도 가운데 [x, y] */
 export async function mapCard({ host, card, region = () => null, center = () => null }) {
   if (!host || !card) return null;
+  await cssReady;
   const box = h('section.gx-card', { 'aria-label': '보고 있는 결과' });
   host.append(box);
   let g = null, deps = [], shared = [];

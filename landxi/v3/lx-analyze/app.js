@@ -114,6 +114,7 @@ async function authBlob(path) {
 
 /* 카드 그림(10-11 GPT2-5 다시 · 원칙 186) — 배포 신청 때 올린 대표 그림(승인되면 카드 그림 = 서버 scene). 대체 그림 · 학습 표본으로 꾸미지 않는다:
    그림이 없거나 못 받으면 같은 틀에 '그림 없음' 그대로(원칙 140 같은 틀). */
+function ruleN(id) { return id === 'card-occupy' ? 2 : 0; }   // 규칙 기반 카드 — 카드 지표 첫 칸 = 근거 서비스 수(점유의심 조사 = 국토 변화 · 이지목 현황 · 함수 = 맨 위 await 보다 먼저 쓰임)
 function acCard(c, href, more) {
   const pic = h('div.k-sc-crop.la-ac-pic');
   const blank = (p) => { const keep = [...p.querySelectorAll('.la-ac-cat')]; p.classList.add('is-blank'); p.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
@@ -131,7 +132,8 @@ function acCard(c, href, more) {
       h('h3.k-sc-t', { text: String(c.name || '').replace(/·/g, '⁠·⁠') }),   // '단동·다동'처럼 가운뎃점 앞뒤에서 줄이 끊기지 않게(줄바꿈 규칙)
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
       h('div.la-ac-hero', {},
-        h('div', { title: md.acc?.tip || null }, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('학습에 쓰지 않은 영상 n장으로 잼')은 자세히 화면에만(원칙 187 — 이름은 'AI 모델 정확도' 하나 · GPT3-5)
+        ruleN(c.id) ? h('div', { title: '국토 변화 · 이지목 현황 결과를 겹치는 규칙 기반 카드(AI 학습 없음)' }, h('b.num', { text: String(ruleN(c.id)) }), h('small', { text: '근거 서비스' }))   // 명세 v1 §4 — 정확도 대신
+          : h('div', { title: md.acc?.tip || null }, acc === null ? h('b', { text: '—' }) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('학습에 쓰지 않은 영상 n장으로 잼')은 자세히 화면에만(원칙 187 — 이름은 'AI 모델 정확도' 하나 · GPT3-5)
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
       h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '아직 없음', title: tg.join(' · ') }),
         h('span.v2', { text: tg.length ? (tg.length > 1 ? `${tg[0]} 외 ${tg.length - 1}곳` : tg[0]) : '아직 없음', title: tg.join(' · ') })),   // 가장 촘촘한 단계(data-fit 0)에서 한 줄
@@ -257,6 +259,14 @@ async function detail(cid) {
   page.append(dt);
   K.panes(side, { edge: 'left', key: 'side', cssVar: '--la-side', varHost: dt, min: 320, max: 640, otherMin: 520, below: 1100 });   // 칸 크기 조절(원칙 263)
   analyzePanel(side, c, picker, body);
+  if (c.id === 'card-ijimok') body.append(h('section.t-card.la-box.la-wide', { 'aria-label': '판정 규칙' }, h('h2.la-h', { text: '판정 규칙' }),   // 명세 v1 §3 · geoai_roadland '이지목 판정은 양방향'
+    h('ul.la-rule', {}, ...['지목이 도로가 아닌데 실제 도로 → 지목미정리', '지목이 도로인데 실제 경작 · 건물 → 점유의심', '지목이 도로이고 실제 도로 → 정상',
+      '지목이 도로인데 실제 산림 → 유휴산림화 · 수역 → 수역구거', '실제 쓰임이 나지 · 초지이거나 AI가 판단하지 않은 땅 → 미확정',
+      '고속국도 도로(본선) 필지는 토지마스터 용도로 판정', '철도용 시범 규칙 · 선로는 도로로 간주 · AI 철도 분류 없음'].map((w) => h('li', { text: w })))));
+  if (c.id === 'card-occupy') api('/change/occupy/rule').then((r) => {      // 목록 규칙(서버 설정 한 곳 · 사람 말 · 10-28 사용자 회신)
+    body.append(h('section.t-card.la-box.la-wide', { 'aria-label': '목록에 올리는 필지' }, h('h2.la-h', { text: '목록에 올리는 필지' }),
+      h('ul.la-rule', {}, ...(r.words || []).map((w) => h('li', { text: w })))));
+  }).catch(() => null);
   if (location.hash === '#analyze' && matchMedia('(max-width: 1099px)').matches) side.scrollIntoView({ block: 'start' });
   S.fresh(c.as_of);
 }

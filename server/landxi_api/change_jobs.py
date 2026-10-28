@@ -29,7 +29,7 @@ FIRST_HB_MAX_S = 120         # 장비가 칸을 실제로 받은(비행 기록) 
 QUEUE_SHOW_S = 30            # 대기 30초 넘으면 대기열 자리 · 예상
 ASK_AT_S = 10 * 60           # 분석 10분 넘으면 고르기
 STAGE_WORD = {"prepare": "준비", "imagery": "영상 받기", "infer": "토지피복 AI 분석", "polygons": "변화 폴리곤 만들기", "owner": "필지 · 소유구분 겹치기",
-              "thumbs": "두 해 썸네일 만들기", "done": "마무리", "failed": "멈춤"}
+              "thumbs": "근거 썸네일 만들기", "done": "마무리", "failed": "멈춤"}
 WORD = {"queued": "작업 대기", "running": "분석 중", "done": "완료", "failed": "실패", "cancelled": "취소됨", "timeout": "시간초과"}
 
 

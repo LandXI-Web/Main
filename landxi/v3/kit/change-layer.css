@@ -26,6 +26,7 @@
 .chg-ph h3 small{font:400 var(--fs-tag,14px)/19px var(--font-body);color:var(--sub,#6B7684)}
 .chg-x{border:0;background:none;padding:4px 6px;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684);cursor:pointer}
 .chg-ab{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chg-ab.is-one{grid-template-columns:1fr;max-width:240px;margin:0 auto}
 .chg-ab figure{margin:0;display:flex;flex-direction:column;gap:4px}
 .chg-ab img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#F2F4F6}
 .chg-ab figcaption{font:600 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28);text-align:center}
@@ -57,4 +58,32 @@
 .chg-mt{color:var(--ink,#191F28);font-weight:500}
 .chg-mt[data-st="불법"]{color:#D22030} .chg-mt[data-st="현장확인"]{color:#1B64DA}
 .chg-link{color:var(--accent,#3182F6);font-weight:500;text-decoration:none}
+button.chg-link{border:0;background:none;padding:0;font:inherit;cursor:pointer;color:var(--accent,#3182F6);font-weight:500}
 .chg-link:hover{text-decoration:underline}
+/* 판정 이력(H2) · 점유의심 조사 목록(카드 ③) — 10-28 v5 */
+.chg-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
+.chg-hist li{padding:6px 8px;border-radius:8px;background:#F7F8FA}
+.chg-hist p{margin:0}
+.chg-h1{display:flex;justify-content:space-between;gap:8px;font:600 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28)}
+.chg-h1 span{font-weight:400;color:var(--sub,#6B7684)}
+.chg-h2{font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--ink,#191F28)}
+.chg-h3,.chg-h0{font:400 13px/18px var(--font-body);color:var(--sub,#6B7684)}
+.chg-card.is-occ{width:min(760px,calc(100% - 32px));max-height:calc(100% - 96px);overflow:auto}
+.chg-ofs{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}
+.chg-of{display:flex;flex-direction:column;gap:2px;font:500 13px/18px var(--font-body);color:var(--sub,#6B7684)}
+.chg-of .t-input{min-width:120px;height:34px;padding:4px 8px}
+.chg-of input[type=number]{width:110px}
+.chg-ot{max-height:320px;overflow:auto;border:1px solid #E5E8EB;border-radius:10px}
+.chg-ot table{width:100%;border-collapse:collapse;font:400 var(--fs-tag,14px)/20px var(--font-body)}
+.chg-ot th{position:sticky;top:0;background:#F7F8FA;text-align:left;padding:6px 8px;font-weight:600;white-space:nowrap}
+.chg-ot td{padding:6px 8px;border-top:1px solid #F2F4F6;white-space:nowrap}
+.chg-ot td small{display:block;color:var(--sub,#6B7684);font-size:12px}
+.chg-ot td.num{text-align:right}
+.chg-ot tr{cursor:pointer}
+.chg-ot tr:hover,.chg-ot tr[data-on="1"]{background:#EEF4FF}
+.chg-oa{display:flex;gap:12px;align-items:center;justify-content:flex-end}
+/* 상시 모니터링(10-28 v5 §3-8) */
+.chg-mon{display:flex;flex-direction:column;gap:6px}
+.chg-mon-s{margin:0;display:flex;flex-direction:column;gap:2px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
+.chg-mon-s b{color:var(--ink,#191F28);font-weight:600}
+.chg-mon-b{align-self:flex-start}

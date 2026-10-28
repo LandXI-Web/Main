@@ -451,8 +451,82 @@ async def change_report(args: dict, ctx) -> Out:
     return out
 
 
+# ── 이지목 현황 결과 조회(U5 · 10-28 v5) — 답 범위 = 지금 프로젝트 · 대상지(내 대상지만). 결과를 새로 돌리지 않고(F1) 없으면 실행을 제안(F5) ──
+IJ_CLS = {"지목미정리": "도로로 쓰이는데 지목이 도로가 아닌 필지", "점유의심": "도로 지목인데 경작 · 건물로 쓰이는 필지",
+          "유휴산림화": "도로 지목인데 산림으로 덮인 필지", "수역구거": "도로 지목인데 수역 · 구거인 필지"}
+
+
+async def _ij_range(ctx, args, mem) -> dict | None:
+    """대상지 — 화면 문맥(대상지 · 프로젝트) 먼저 · 다음 질문에 든 내 대상지 이름 낱말(예: '안성')."""
+    if args.get("range_id") or mem.get("range_id") or mem.get("project_id"):
+        try:
+            return await _resolve_range(ctx, {"range_id": args.get("range_id")}, mem)
+        except ToolError:
+            pass
+    q = str(args.get("range_query") or "")
+    items = (await _get(ctx, "/change/ranges", brief=1))["items"]           # 내 대상지 · 내 프로젝트 대상지만(10-28 v5 §1)
+    cand = []
+    for x in items:
+        words = [w for w in re.split(r"[\s()·,_-]+", x.get("name") or "") if len(w) >= 2]
+        hit = sum(1 for w in words if w in q)
+        if hit:
+            cand.append((hit, x))
+    cand.sort(key=lambda c: -c[0])
+    for _, x in cand[:8]:                       # 이름이 맞는 내 대상지 가운데 이지목 현황 결과가 있는 것 먼저
+        if (await _get(ctx, "/change/latest", range_id=x["id"], card="card-ijimok")).get("job_id"):
+            return await _get(ctx, f"/change/ranges/{x['id']}", years=0)
+    return await _get(ctx, f"/change/ranges/{cand[0][1]['id']}", years=0) if cand else None
+
+
+async def ijimok_parcels(args: dict, ctx) -> Out:
+    mem = await _mem_get(ctx)
+    cls = [c for c in (args.get("cls") or []) if c in IJ_CLS] or ["지목미정리"]
+    rg = await _ij_range(ctx, args, mem)
+    out = Out(source="이지목 현황 분석서비스 결과(토지피복 AI × 지목 · 결과 확인 전)", scope={"kind": "det", "sgg": list((rg or {}).get("sgg") or [])})
+    from agent import talk
+    if not rg:
+        out.answer = "어느 대상지의 필지를 볼지 정하지 못했습니다 — 프로젝트 지도에서 묻거나 대상지 이름을 함께 말해 주세요."
+        return out
+    last = await _get(ctx, "/change/latest", range_id=rg["id"], card="card-ijimok")
+    if not last.get("job_id"):
+        out.answer = (f"{rg['name']}에는 아직 이지목 현황 결과가 없습니다. 새로 돌리지 않았습니다. "
+                      "이지목 현황 분석을 돌리면 필지마다 지목과 실제 쓰임을 견줘 답할 수 있습니다.")
+        talk.set_next(ctx, [talk.btn("이지목 현황 분석하기", href="/landxi/v3/lx-analyze/?card=card-ijimok#analyze")], front=True)
+        return out
+    job = last["job_id"]
+    fc = await ctx.http.get(f"/change/runs/{job}/features")
+    feats = [f for f in fc.json().get("features") or [] if f["properties"].get("type") in cls]
+    feats.sort(key=lambda f: -(f["properties"].get("area_m2") or 0))
+    n = out.env("n", f"{' · '.join(cls)} 필지 수", {"value": len(feats), "unit": "필지", "basis": "inferred", "source": out.source})
+    out.env("area", "그 필지 면적 합", {"value": round(sum(f["properties"].get("area_m2") or 0 for f in feats), 1), "unit": "m2", "basis": "inferred", "source": out.source})
+    tot = out.env("tot", "판정한 필지 수", last["stats"]["n"])
+    yr = last["period"]["b"]["year"]
+    out.whitelist |= {str(yr)} | {str(f["properties"].get("jibun") or "") for f in feats} | {str(f["properties"].get("pnu") or "") for f in feats}
+    if feats:
+        out.blocks.append({"type": "rows", "title": f"{rg['name']} · {' · '.join(cls)}", "cols": ["지번", "지목", "실제 쓰임", "판정", "면적"],
+                           "rows": [[f["properties"].get("jibun") or "-", JNAME.get(f["properties"].get("jimok") or "", f["properties"].get("jimok") or "-"),
+                                     f["properties"].get("cover") or "-", str(f["properties"]["type"]).replace("_", " "), f"{round(f['properties'].get('area_m2') or 0):,}㎡"] for f in feats[:50]],
+                           "ids": [f["id"] for f in feats[:50]], "more": max(0, len(feats) - 50)})
+    out.ui_actions.append({"op": "change_show", "job_id": job, "year_a": yr, "year_b": yr, "project_id": rg.get("project_id")})
+    out.ui_actions.append({"op": "change_hl", "job_id": job, "ids": [f["id"] for f in feats]})
+    words = " · ".join(IJ_CLS[c] for c in cls)
+    out.answer = (f"{rg['name']}({yr}년 영상 · 이지목 현황 결과 · 새로 돌리지 않음)에서 {words}는 {{{{{n}}}}}필지입니다"
+                  f"(판정한 필지 {{{{{tot}}}}} 가운데). 지도에 강조했고, 줄을 누르면 그 필지로 갑니다." if feats
+                  else f"{rg['name']}({yr}년 영상 · 이지목 현황 결과)에서 {words}는 없습니다(판정한 필지 {{{{{tot}}}}}).")
+    await _mem_set(ctx, job_id=job, range_id=rg["id"])
+    return out
+
+
+SPECS["ijimok_parcels"] = {
+    "description": "이지목 현황 결과(필지마다 지목 ↔ 실제 쓰임) 조회 — '지목이 도로가 아닌데 도로로 쓰이는 필지' · '도로 지목인데 경작하는 필지' · '지목 불일치'. "
+                   "지금 프로젝트 · 대상지 범위에서만 답하고 새로 돌리지 않는다(없으면 실행을 제안).",
+    "properties": {"cls": {"type": "array", "items": {"type": "string"}, "description": "지목미정리 · 점유의심 · 유휴산림화 · 수역구거"},
+                   "range_id": {"type": "string"}, "range_query": {"type": "string", "description": "대상지 이름 낱말(예: '안성')"}}}
+WHY["ijimok_parcels"] = "이지목 현황 결과(필지 판정) 조회 · 지금 대상지 범위"
+SAY["ijimok_parcels"] = "이지목 현황 필지"
+
 HANDLERS = {"run_change_detection": run_change_detection, "intersect_parcels": intersect_parcels, "describe_change": describe_change,
-            "change_report": change_report}
+            "change_report": change_report, "ijimok_parcels": ijimok_parcels}
 
 
 # ── 모델 앞 직행(결정적) ─────────────────────────────────────────────────────
@@ -481,6 +555,20 @@ def _has_change_ctx(ctx) -> bool:
     return bool(c.get("range_id") or c.get("job_id") or c.get("project_id")) or bool((ctx.context or {}).get("prev_run"))
 
 
+IJ_RX = re.compile(r"(지목\s*(?:이|은|가)?\s*도로가?\s*아닌|지목\s*(?:이|은)?\s*도로인데|이지목|지목\s*불일치|지목\s*미정리|점유\s*의심|지목과\s*(?:다르|안\s*맞))")
+
+
+def _ij_cls(t: str) -> list[str]:
+    out = []
+    if re.search(r"도로가?\s*아닌데?\s*도로|지목\s*미정리|도로로\s*쓰", t):
+        out.append("지목미정리")
+    if re.search(r"점유|도로인데\s*(?:경작|건물|밭|논)", t):
+        out.append("점유의심")
+    if re.search(r"산림|숲", t):
+        out.append("유휴산림화")
+    return out or ["지목미정리", "점유의심"]
+
+
 def ROUTE(msg: str, ctx):
     if getattr(ctx, "lang", "ko") != "ko":
         return None
@@ -488,6 +576,8 @@ def ROUTE(msg: str, ctx):
     if not t or len(t) > 120:
         return None
     lx = getattr(ctx.principal, "realm", None) == "lx"
+    if lx and IJ_RX.search(t) and not REPORT_RX.search(t):           # 이지목 현황 결과 조회(U5 · 10-28 v5) — 대상지 범위 · 새로 돌리지 않음
+        return {"tool": "ijimok_parcels", "args": {"cls": _ij_cls(t), "range_query": t}}
     if lx and RAIL_RX.search(t):
         return {"tool": "run_change_detection", "args": {"range_query": "철도"}}
     ys = _years(t)
