@@ -177,7 +177,7 @@ function drawOccCard(name) {
   h('td', {}, h('b', { text: r.jibun || '-' }), h('small', { text: r.pnu || '' })), h('td', { text: JIMOK_W(r.jimok) }), h('td', { text: r.owner || '-' }),
   h('td', { text: r.chg_n > 1 ? `${r.chg_type} 외 ${r.chg_n - 1}` : r.chg_type }), h('td', { text: String(r.ijimok || '').replace(/_/g, ' ') }),
   h('td.num', { text: nf(Math.round(r.area_m2 || 0)) }), h('td', {}, h('span.chg-mt', { dataset: { st: r.status }, text: r.status }))));
-  C.card.replaceChildren(...head,
+  C.card.replaceChildren(...[...head,      // 빈 칸(null)은 넣지 않는다 — replaceChildren 은 null 을 'null' 글자로 그린다(10-29 v7.1 캡처에서 발견)
     h('p.chg-big', {}, h('span', { text: '점유의심 ' }), h('b', { text: `${nf(val(d.n))}필지` }), h('small', { text: ` · ${nf(Math.round(val(d.area) || 0))}㎡` })),
     d.chg && d.chg_state !== 'done' ? h('p.chg-s', { text: '국토 변화 분석이 끝나면 변화 유형이 채워집니다' }) : null,
     h('div.chg-ofs', {}, sel('변화 유형', 'type', f.type), sel('이지목 판정', 'cls', f.cls), sel('소유구분', 'owner', f.owner),
@@ -186,7 +186,7 @@ function drawOccCard(name) {
     h('div.chg-ot', {}, h('table', {}, h('thead', {}, h('tr', {}, ...['지번(PNU)', '지목', '소유구분', '변화유형', '이지목 판정', '면적(㎡)', '판정상태'].map((t) => h('th', { scope: 'col', text: t })))),
       h('tbody', {}, ...rows))),
     rows.length ? null : h('p.chg-s', { text: '조건에 맞는 필지가 없습니다' }),
-    h('div.chg-oa', {}, csv, h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }), h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job, occupy: OCC }), text: '보고서' })));
+    h('div.chg-oa', {}, csv, h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }), h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job, occupy: OCC }), text: '보고서' }))].filter(Boolean));
 }
 
 /* 이지목 현황 카드 — 판정별 필지 수(표 · 지도 · 통계 같은 값 = 서버 결과 요약 한 출처) */

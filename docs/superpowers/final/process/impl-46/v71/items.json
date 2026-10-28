@@ -1,0 +1,15 @@
+{
+ "at": "2026-10-29",
+ "기준": "A6000 지시서 v7.1(recon-1028/ORDER-v7.1-EVIDENCE.md) §0 · E0 · E4 · E5 — E1 · E2 · E3 는 E0 보고 뒤(PM 기준 확정 대기)",
+ "§0": {
+  "_cache 삭제": ["O", "E:\\도로공사\\deck_part3\\_cache 14,362파일 삭제 · tiles\\(z13~18 7,185장) · deck_part3_20261029.zip 그대로"],
+  "운영 DB 직접 수정 3건": ["O(△ 2건)", "recon-1028/DB-DIRECT-1029.md — 영상 칩은 시험 DB 적용 1줄 · 범례 말 · 구간 출처는 시험 DB 에 대상 줄이 없어 0줄(PM 판단)"],
+  "업로드(바깥 주소 · lx.demo)": ["O", "13.1초 · 진행률 · 등록 · 지도 3장(E:\\도로공사\\deck_part3b\\upload) · 올린 것 두 번 모두 백업 뒤 정리 · 같은 파일 다시 올리면 화면이 멈춤(크래시) 발견"],
+  "걸리는 시간 두 줄 · §7 칸": ["△", "server/config/card_spec.yaml + cards.py(_apply_spec) + lx-analyze 두 줄 표시 · 명세 파일 고침 · 게이트웨이 재시작 뒤 화면에 보임"]
+ },
+ "E0": "E:\\도로공사\\deck_part3b\\E0_landmaster.json",
+ "E4": ["O", "카드 ①②③ 대표 그림 교체(장면 올리기 API · 짝 PUT) · 예전 장면은 목록에서 뺌(시험 DB → 운영) · 파일은 02. 데이터/_backup/v71/card-images 에 복사 · 캡처 10장 1920×1080"],
+ "E5": ["△", "질문 3개 실제 실행 · chatgeo_sessions.json · PDF 없음(만들어지지 않음) · 1번은 다른 결과 층(분석 서비스)으로 답 · 2번 대장 없음 · 3번 대상지 못 정함"],
+ "고친 화면 고장": "kit/change-layer.js 점유의심 목록 칸에 'null' 글자 두 줄(빈 칸을 replaceChildren 에 넘김) → 빈 칸 거름",
+ "스크립트": ["cap.mjs", "upload.mjs", "upload2.mjs", "upload3.mjs", "occlist.mjs", "cards_up.mjs", "shots4.mjs", "chatgeo.mjs", "runev.mjs", "runfiles.mjs", "repview.mjs"]
+}

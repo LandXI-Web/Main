@@ -265,6 +265,42 @@ def _owner(m: dict, cid: str, card) -> dict:
     return {"id": oid, "name": m["owner_names"].get(oid) if oid else None, "project": None}
 
 
+def _spec(cid: str) -> dict:
+    """카드 명세 §7 PM 확정값(config/card_spec.yaml · 지시서 v7.1 §0) — 없으면 빈 칸(서버가 세는 값 그대로)."""
+    try:
+        from . import config as _c
+        d = (_c.load_yaml("card_spec") or {}).get(cid)
+    except Exception:  # noqa: BLE001
+        d = None
+    return d if isinstance(d, dict) else {}
+
+
+def _apply_spec(out: dict, cid: str, p) -> dict:
+    """LX 화면 카드에 명세 확정값(상단 요약 · 걸리는 시간 줄 · 쓰이는 곳 · 대상 지역)을 덮는다. 기관 화면은 그 기관 결과 그대로."""
+    sp = _spec(cid)
+    if not sp or p.realm == "tenant":
+        return out
+    lines = [str(x) for x in (sp.get("time") or []) if str(x).strip()]
+    if lines:
+        out["time"] = {"text": " / ".join(lines), "lines": lines, "seconds": None, "premise": "", "region": None, "coverage": None, "spec": True}
+    if sp.get("targets"):
+        out["targets"] = [str(x) for x in sp["targets"]]
+    u = sp.get("uses") or {}
+    if u.get("text"):
+        out["uses"] = {**(out.get("uses") or {}), "text": str(u["text"])}
+    if sp.get("summary") and out.get("scene"):
+        out["scene"] = {**out["scene"], "caption": str(sp["summary"]), "ex": False}     # 확정 요약의 지역 결과(안성) — '다른 지역 결과' 표시 안 함
+    return out
+
+
+def _spec_regions(cid: str) -> list[dict] | None:
+    u = (_spec(cid).get("uses") or {})
+    rs = u.get("regions") or []
+    return [{"sgg": str(r.get("sgg") or "") or None, "name": str(r.get("name") or ""), "full": str(r.get("name") or ""),
+             "state": r.get("state") or "pilot", "state_label": STAGE_WORD.get(r.get("state") or "pilot", "시범"), "imagery": r.get("imagery"),
+             "field_check": None, "detected": None, "reports": env(0, "count", "recorded", "기관이 보낸 신고")} for r in rs if r.get("name")] or None
+
+
 CHANGE_MODEL = "change-ap25"      # 국토 변화 틀의 모델(토지피복 U-Net ap25) — 이 모델을 쓰는 카드는 같은 칸(구간 + 두 시점)
 
 
@@ -557,7 +593,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
             out["next"] = {"text": "첫 분석", "href": f"/landxi/v3/lx-analyze/?card={cid}#analyze"}
         else:
             out["next"] = {"text": "기관에 공유", "href": "/landxi/v3/lx-deploy/"}
-    return out
+    return _apply_spec(out, cid, p)       # 명세 §7 PM 확정값(config/card_spec.yaml · v7.1 §0)
 
 
 async def _deck_lx(p) -> dict:
@@ -693,6 +729,7 @@ async def one(cid: str, request: Request):
                         "state": k, "state_label": STAGE_WORD[k], "imagery": (it.get("imagery") or {}).get("label"),
                         "field_check": _metric(it, "field_check"), "detected": None if _raw_ai(it) else _metric(it, "detected"),
                         "reports": env(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0), "count", "recorded", "기관이 보낸 신고")})
+    regions = _spec_regions(cid) or regions          # 쓰이는 곳 — 명세 §7 PM 확정값이 있으면 그 지역(config/card_spec.yaml)
     scenes = [s for s in (inf.get("scenes") or []) if s.get("src")]
     vers = sorted([v for v in m["vers"] if v["card_id"] == cid], key=lambda v: _ver_key(v["version"]), reverse=True)
     # 학습 정보(원칙 166 — 무엇으로 배웠나는 자세히 화면에) — 카드의 AI 모델 정확도 모델(core.model)의 학습 표본 · 기반 모델. 기록 없으면 비움(지어내지 않는다)
