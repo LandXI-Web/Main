@@ -262,3 +262,4 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-cal-d.is-hol .ld-cal-dn{font-weight:700}
 .ld-ntc-one.is-s{gap:0;padding:0 6px}
 .ld-ntc-one.is-s small{line-height:18px}
+.ld-ntc-one.is-s p{display:none}   /* 작은 칸 = 제목 · 날짜만(본문이 칸 밖으로 넘치던 것 · 10-29 검사 문) */

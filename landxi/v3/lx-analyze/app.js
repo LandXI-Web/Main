@@ -325,13 +325,19 @@ function compareCard(c) {
     const th = h('div.la-thumbs');
     const caps = scenes.map((s) => (s.caption ? s.caption.split(' · ').pop() : ''));
     const one = caps.length > 1 && caps.every((x) => x && x === caps[0]);   // 장면 이름이 모두 같으면(같은 두 시점) 한 번만 — 같은 말 반복 없앰(10-24)
-    scenes.forEach((s, i) => th.append(h('figure', {}, h('img', { src: s.src, alt: '', loading: 'lazy' }), caps[i] && !one ? h('figcaption', { text: caps[i] }) : null)));
+    scenes.forEach((s, i) => th.append(h('figure', {}, h('img', { src: s.src, alt: '', loading: 'lazy' }), caps[i] && !one ? capEl(caps[i]) : null)));
     sec.append(th);
     if (one) sec.append(h('p.la-note', { text: caps[0] }));
     if (!big && !sw) sec.classList.add('la-box--thumbs');
   }
   if (!sw && !scenes.length) sec.append(h('p.la-none-t', { text: '나란히 볼 장면이 아직 없습니다' }));
   return sec;
+}
+
+/* 장면 이름표 — '유형 2019→2025' 는 유형 · 시점 두 줄(작은 장면에서 글자가 잘리지 않게 · 규칙 9 · 10-29) */
+function capEl(t) {
+  const m = /^(.+?)\s+(\d{4}\s*→\s*\d{4})$/.exec(t);
+  return m ? h('figcaption', {}, h('span', { text: m[1] }), h('span', { text: m[2] })) : h('figcaption', { text: t });
 }
 
 /* 쓰이는 곳 — 상태별로 지역을 묶어(운영 · 시범 · 첫 결과 전) + 기관 검토 요청 */
