@@ -194,7 +194,7 @@ body.t[data-pre]:not(:has(> :not(script)))::after{animation-delay:3s,3.2s}
 .k-toast{position:fixed;left:50%;bottom:32px;z-index:80;display:flex;align-items:center;gap:16px;max-width:calc(100vw - 32px);padding:14px 20px;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:500 var(--fs-body)/1.4 var(--font-body);box-shadow:var(--elev-3);opacity:0;transform:translate(-50%,20px);transition:opacity var(--d-380) var(--e-ui),transform var(--d-380) var(--e-ui)}
 .k-toast.is-in{opacity:1;transform:translate(-50%,0)}
 .k-toast-a{border:0;background:none;padding:0;font:500 var(--fs-aux)/1 var(--font-body);color:var(--accent);cursor:pointer;white-space:nowrap}
-@media (max-width:960px){.k-toast{bottom:88px}}
+@media (max-width:960px){.k-toast{bottom:auto;top:64px;left:12px;right:12px;max-width:none;justify-content:space-between;padding:12px 16px;transform:translate(0,-12px)}.k-toast.is-in{transform:translate(0,0)}}   /* 좁은 화면 = 머리줄 바로 아래(11-01 원칙 309 · toast.js 가 머리줄 높이로 맞춤) */
 
 /* ── K14 개발자 서랍 ─────────────────────── */
 .k-dev{position:fixed;left:16px;bottom:16px;z-index:95;width:min(520px,calc(100vw - 32px));max-height:50vh;overflow:auto;padding:14px 16px;border-radius:var(--r-8);background:rgba(17,19,23,.92);color:#E5E8EB;font:400 var(--fs-tag)/1.5 ui-monospace,Consolas,monospace}

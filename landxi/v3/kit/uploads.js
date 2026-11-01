@@ -18,9 +18,21 @@ import { toast } from './toast.js';
 import { MEASURE } from './lint/overlap.mjs';   // 겹침 검사기와 같은 재는 식 — 창 자리 고르기
 
 const BASE = '/catalog/imagery/uploads';
-const HOST = /\/landxi\/v3\/upload\/?$/.test(location.pathname);   // 이 화면이 업로드 창인가
+const IS_POPUP = /\/landxi\/v3\/upload\/?$/.test(location.pathname);   // 이 화면이 (따로 뜬) 업로드 창인가
+let HOST = IS_POPUP;                        // 이 탭이 올리기를 맡았나 — 업로드 창, 또는 같은 탭 이어 올리기에서 자물쇠를 잡은 LX 화면
 const HOST_URL = '/landxi/v3/upload/';
-const bc = 'BroadcastChannel' in self ? new BroadcastChannel('lx-uploads') : null;
+/* 업로드 상태는 계정마다(11-01 PM — 관리자 업로드 뒤 로그아웃하고 개인 계정으로 들어와도 업로드 창이 남음) — 보관함 열쇠 · 알림 길 모두 계정 이름을 붙인다 */
+const ownerOf = () => { try { const s = session.get(); return s ? String(s.user_id || s.user?.id || s.login || s.user?.login || '') : ''; } catch { return ''; } };
+const OWNER = ownerOf();
+const bc = 'BroadcastChannel' in self && OWNER ? new BroadcastChannel('lx-uploads:' + OWNER) : null;
+/* 같은 탭 이어 올리기(11-01 PM 'A로 간다') — 크롬 · 엣지 · 웨일(파일 손잡이 · 자물쇠가 되는 브라우저): 따로 뜨는 업로드 창 없이 지금 열린 LX 화면이 직접 올린다.
+   화면을 옮기면 새 화면이 자물쇠(계정마다 하나)를 잡고 보관함의 파일 손잡이로 서버가 받은 자리부터 저절로 이어 간다(파일 다시 고르기 없음).
+   탭이 여럿이면 자물쇠를 잡은 탭 하나만 올리고 나머지는 진행만 본다(그 탭이 닫히면 다음 탭이 이어받음). 탭을 모두 닫으면 멈췄다가 다시 열면 이어 간다
+   (브라우저가 파일 허락을 거뒀으면 '이어서 업로드' 한 번). 그 밖 브라우저는 예전처럼 업로드 창. */
+const INPAGE = !IS_POPUP && typeof window !== 'undefined' && 'showOpenFilePicker' in window && !!navigator.locks?.request && !!bc;
+const LOCK = 'lx-up-host:' + OWNER;
+let hostReadyFn = null;
+const hostReady = new Promise((r) => { hostReadyFn = r; });
 let hostSeen = 0;                           // (보통 화면) 업로드 창 소식을 마지막으로 받은 때
 const FLAG = 'lx-up';                       // 셸이 다음 화면에서 이 부품을 부를지(남은 올리기가 있나)
 const FOLD = 'lx-up.fold';
@@ -45,18 +57,18 @@ function idb() {
 async function load() {
   try {
     const d = await idb();
-    return await new Promise((res) => { const t = d.transaction(ST).objectStore(ST).get('all'); t.onsuccess = () => { d.close(); res(t.result || null); }; t.onerror = () => { d.close(); res(null); }; });
+    return await new Promise((res) => { const t = d.transaction(ST).objectStore(ST).get('all:' + OWNER); t.onsuccess = () => { d.close(); res(t.result || null); }; t.onerror = () => { d.close(); res(null); }; });
   } catch { return null; }
 }
 let saving = null, again = false;
 async function save() {
   if (!HOST) return;
   if (saving) { again = true; return saving; }
-  const snap = { batches: [...B.values()].map((b) => ({ ...b })), files: [...F.values()].map(({ file, ac, el, ...x }) => ({ ...x, state: x.state === 'up' ? 'wait' : x.state })) };
+  const snap = { tok: tokTag(), batches: [...B.values()].map((b) => ({ ...b })), files: [...F.values()].map(({ file, ac, el, ...x }) => ({ ...x, state: x.state === 'up' ? 'wait' : x.state })) };
   saving = (async () => {
     try {
       const d = await idb();
-      await new Promise((res) => { const t = d.transaction(ST, 'readwrite'); t.objectStore(ST).put(snap, 'all'); t.oncomplete = res; t.onerror = res; t.onabort = res; });
+      await new Promise((res) => { const t = d.transaction(ST, 'readwrite'); t.objectStore(ST).put(snap, 'all:' + OWNER); t.oncomplete = res; t.onerror = res; t.onabort = res; });
       d.close();
     } catch { /* 보관함을 못 쓰면 이 화면 안에서만 */ }
     try { if (B.size) localStorage.setItem(FLAG, '1'); else localStorage.removeItem(FLAG); } catch { /* */ }
@@ -78,19 +90,45 @@ const cast = () => {                         // 업로드 창 → 모든 화면(
     files: [...F.values()].map(({ file, ac, handle, ...x }) => ({ ...x, hasHandle: !!handle })) }); }, 400);
 };
 const changed = () => { paint(); cast(); for (const fn of listeners) { try { fn(); } catch { /* */ } } };
-const hostless = () => !HOST && Date.now() - hostSeen > 5000;
+const hostless = () => !HOST && !INPAGE && Date.now() - hostSeen > 5000;
 
 const purposeWord = (p) => p.label || (p.kind === 'own' ? `내 영상${p.cardName ? ` · ${p.cardName}` : ''}` : p.kind === 'project' ? `프로젝트 · ${p.name || ''}` : '공유 데이터');
 const busy = () => [...F.values()].some((f) => ['wait', 'up'].includes(f.state));
+
+/* 로그아웃 · 다른 계정으로 바뀜(다른 탭에서) — 이 탭의 업로드 상태를 비운다. 업로드 창이면 올리던 것을 멈추고 그 계정 보관함도 비운다(로그아웃 때 지움 · 11-01 PM). */
+addEventListener('storage', (e) => {
+  if (e.key !== null && e.key !== 'lx_api_session') return;
+  if (ownerOf() === OWNER) return;
+  for (const f of F.values()) { try { f.state = 'cancel'; f.ac?.abort(); } catch { /* */ } }
+  if (HOST && OWNER) {
+    idb().then((d) => { const t = d.transaction(ST, 'readwrite'); t.objectStore(ST).delete('all:' + OWNER); t.oncomplete = () => d.close(); }).catch(() => {});
+  }
+  B.clear(); F.clear(); mine.clear();
+  try { localStorage.removeItem(FLAG); } catch { /* */ }
+  if (ui) { ui.chip.hidden = true; ui.win.hidden = true; }
+  if (IS_POPUP) { try { window.close(); } catch { /* */ } }
+});
 
 /** 셸 · 화면이 부른다(한 번만) — 업로드 창이면 보관함에서 이어서 업로드를 맡고, 보통 화면이면 업로드 창의 소식을 받아 상태 창을 그린다 */
 export async function mountUploads() {
   if (started) return;
   started = true;
-  return HOST ? mountHost() : mountView();
+  if (IS_POPUP) return mountHost();
+  if (INPAGE) {                                                // 같은 탭 이어 올리기 — 진행은 바로 보고, 자물쇠가 비면(이 탭이 처음 · 맡던 탭이 닫힘) 이 화면이 맡는다
+    const v = mountView();
+    navigator.locks.request(LOCK, async () => { await hostSetup(); hostReadyFn(true); return new Promise(() => {}); });   // 맡는다는 표시(HOST)는 보관함을 다 되살린 뒤에 — 그 사이 더한 올리기가 되살리기에 지워지지 않게
+    return v;
+  }
+  return mountView();
 }
+/* 로그인 한 번(세션)의 표 — 로그아웃했다가 다시 들어오면(같은 계정이어도) 보관함의 업로드는 멈추고 지운다(11-01 PM '로그아웃 때 멈추고 지움'). 토큰 자체는 적지 않는다 */
+function tokTag() { const t = String(session.get()?.token || ''); let x = 5381; for (let i = 0; i < t.length; i++) x = ((x * 33) ^ t.charCodeAt(i)) >>> 0; return t ? x.toString(36) : ''; }
 async function restore() {
-  const st = await load();
+  let st = await load();
+  if (st?.tok && st.tok !== tokTag()) {                           // 다른 로그인(로그아웃 뒤) — 지난 업로드는 지운다
+    st = null;
+    try { const d = await idb(); const t = d.transaction(ST, 'readwrite'); t.objectStore(ST).delete('all:' + OWNER); t.oncomplete = () => d.close(); } catch { /* */ }
+  }
   const day = Date.now() - 24 * 3600 * 1000;
   B.clear(); F.clear();
   for (const b of st?.batches || []) if (!(b.state === 'done' && b.at < day)) B.set(b.id, { ...b, registering: false });   // 끝난 지 하루 지난 결과 줄은 정리
@@ -100,11 +138,17 @@ async function mountHost() {
   /* 업로드 창은 하나만 — 이미 열린 창이 있으면 그 창을 쓰라고 알리고 이 창은 아무것도 하지 않는다 */
   const one = await new Promise((res) => {
     if (!navigator.locks?.request) { res(true); return; }
-    navigator.locks.request('lx-up-host', { ifAvailable: true }, (lock) => { res(!!lock); return lock ? new Promise(() => {}) : null; });
+    navigator.locks.request(LOCK, { ifAvailable: true }, (lock) => { res(!!lock); return lock ? new Promise(() => {}) : null; });
   });
   if (!one) { hostOther = true; draw(); paint(); return; }
+  return hostSetup();
+}
+/** 올리기를 맡는다(업로드 창 · 같은 탭 이어 올리기 공통) — 보관함에서 되살리고 다른 화면의 부탁(더하기 · 멈춤 · 취소)을 받는다 */
+async function hostSetup() {
   await restore();
-  addEventListener('beforeunload', (e) => { if (mine.size || [...F.values()].some((f) => f.state === 'wait')) { e.preventDefault(); e.returnValue = ''; } });   // 업로드 창을 닫을 때만 묻는다
+  HOST = true;
+  if (IS_POPUP) addEventListener('beforeunload', (e) => { if (mine.size || [...F.values()].some((f) => f.state === 'wait')) { e.preventDefault(); e.returnValue = ''; } });   // 업로드 창을 닫을 때만 묻는다(같은 탭 이어 올리기는 화면을 옮겨도 이어 가므로 묻지 않는다)
+  else addEventListener('pagehide', () => { save(); });
   const adds = new Set();
   bc?.addEventListener('message', (e) => {
     const m = e.data || {};
@@ -145,11 +189,13 @@ async function mountView() {
     } else if (m.t === 'done') {
       dispatchEvent(new CustomEvent('lx:upload-done', { detail: { purpose: m.purpose, result: m.result } }));
       if (m.line) toast(m.line);
+    } else if (m.t === 'problem' && m.line) {
+      toast(m.line);
     }
   });
   bc.postMessage({ t: 'ping' });
   setTimeout(async () => {                                      // 업로드 창 소식이 없으면 — 보관함에 남은 것을 보이고 '업로드 창 열기'
-    if (got) return;
+    if (got || HOST || INPAGE) return;                           // 같은 탭 이어 올리기는 자물쇠를 잡은 화면이 되살린다(여기서 또 되살리면 같은 파일을 두 번 올림)
     await restore();
     if (B.size) { draw(); changed(); }
   }, 2500);
@@ -204,11 +250,20 @@ async function send(f) {
   let st;
   try {
     f.fp = f.fp ?? await quickFingerprint(f.file).catch(() => null);
-    st = await api(BASE, { method: 'POST', body: { draft_id: b.draft || undefined, filename: f.name, size: f.size, quick_fp: f.fp } });
+    st = await api(BASE, { method: 'POST', body: { draft_id: b.draft || undefined, filename: f.name, size: f.size, quick_fp: f.fp, ...(b.purpose?.kind === 'ledger' ? { purpose: 'ledger' } : {}) } });
     f.uid = st.id; f.bytes = st.bytes || 0;
     if (st.draft_id && st.draft_id !== b.draft) b.draft = st.draft_id;
     save();
-  } catch (e) { return fail(f, e, true); }
+  } catch (e) {
+    // 같은 파일을 다시 올림(분석 서비스 '내 영상') — 서버가 알려 준 그 영상을 다시 고른다. 예전엔 업로드 창에만 '이미 등록한 영상'이 뜨고
+    // 분석 화면은 그대로라 멈춘 것처럼 보였다(10-29 v7.1 재업로드 멈춤 · 10-31 개편 10)
+    if (e?.code === 'duplicate' && b.purpose?.kind === 'own' && e.detail?.imagery) {
+      b.reuse = e.detail.imagery; mine.delete(f.key);
+      for (const x of [...F.values()]) if (x.batch === b.id) F.delete(x.key);
+      return register(b);
+    }
+    return fail(f, e, true);
+  }
   const maxC = st.chunk?.max?.size || 8 * 1048576;
   let chunk = Math.min(maxC, st.chunk?.size || 1048576), fails = 0, failSince = 0, lastSave = 0;
   f.t0 = performance.now(); f.b0 = f.bytes;
@@ -230,7 +285,7 @@ async function send(f) {
     if (f.state !== 'up') { mine.delete(f.key); save(); return; }
     if (r && r.ok && j) {
       const sec = Math.max(0.2, (performance.now() - ts) / 1000);
-      chunk = Math.max(256 * 1024, Math.min(maxC, Math.round(((j.bytes - f.bytes) / sec) * 30)));   // 다음 조각 ≈ 30초 분량
+      chunk = Math.max(256 * 1024, Math.min(maxC, Math.round(((j.bytes - f.bytes) / sec) * (IS_POPUP ? 30 : 8))));   // 다음 조각 ≈ 30초 분량(같은 탭 이어 올리기는 8초 — 화면을 옮길 때 잃는 몫을 줄임)
       f.bytes = j.bytes; fails = 0; failSince = 0; f.why = '';
     } else if (r && r.status === 409 && j?.error?.detail?.bytes != null) {
       f.bytes = j.error.detail.bytes;
@@ -269,6 +324,7 @@ function fail(f, e, atStart = false) {
   if (atStart && user && e.status !== 401) {                      // 보내기 전에 서버가 거절(같은 파일 · 저장 공간 · 형식) — 창으로 알리고 줄을 뺀다
     F.delete(f.key);
     fileProblem({ files: [{ name: f.name, why: user }] });
+    bc?.postMessage({ t: 'problem', line: `${f.name} — ${user}` });   // 맡긴 화면에도 같은 이유를(업로드 창에만 뜨면 그 화면은 멈춘 것처럼 보인다)
     dropEmpty(f.batch);
     save(); changed();
     return;
@@ -293,20 +349,27 @@ async function register(b) {
   try {
     const p = b.purpose;
     const r = p.kind === 'own'
-      ? await api(`/cards/${encodeURIComponent(p.card)}/my-imagery`, { method: 'POST', body: { draft_id: b.draft } })
-      : await api('/catalog/imagery', { method: 'POST', body: { draft_id: b.draft, near: p.near || undefined } });
+      ? await api(`/cards/${encodeURIComponent(p.card)}/my-imagery`, { method: 'POST', body: b.reuse ? { imagery_id: b.reuse } : { draft_id: b.draft } })
+      : p.kind === 'ledger'                                     // 큰 행정 자료(10-31 PM · LX 관리자 '행정 자료 올리기') — 다 올리면 서버가 뒤에서 읽어 지도에 놓는다
+        ? await api('/shared/ledgers/from-upload', { method: 'POST', body: { draft_id: b.draft, kind: p.ledgerKind, name: p.name || '' } })
+        : await api('/catalog/imagery', { method: 'POST', body: { draft_id: b.draft, near: p.near || undefined } });
     if (p.kind === 'project' && p.pid) {                       // 새 프로젝트 — 등록한 영상을 그 프로젝트에(대상지 = 영상 자리)
       const ids = (r.items || []).map((x) => x.id);
       if (ids.length) r.project = await api(`/projects/${encodeURIComponent(p.pid)}/imagery`, { method: 'POST', body: { imagery: ids } });
     }
     b.state = 'done';
-    b.ids = p.kind === 'own' ? [r.id] : (r.items || []).map((x) => x.id);   // 등록한 영상(기록 · 정리용 — 화면 글에는 없음)
+    b.ids = p.kind === 'own' || p.kind === 'ledger' ? [r.id] : (r.items || []).map((x) => x.id);   // 등록한 영상(기록 · 정리용 — 화면 글에는 없음)
     const where = [...new Set((r.items || []).map((x) => x.region).filter(Boolean))].join(' · ');
-    b.result = p.kind === 'project'
+    b.result = p.kind === 'ledger'
+      ? { line: `${r.name || '행정 자료'} — 다 올렸습니다 · 서버가 읽어 지도에 놓는 중`, href: '/landxi/v3/ops-infra/#/shared', go: '행정 자료 보기' }
+      : p.kind === 'project'
       ? { line: `영상 ${(r.items || []).length}장을 등록했습니다${(r.project?.regions || []).length ? ` · 대상지 ${r.project.regions.map((g) => g.name).join(' · ')}` : ''}`, href: p.href, go: '프로젝트 보기' }
       : p.kind === 'own'
-      ? { line: `${r.region?.name || ''} ${r.imagery?.gsd_word || ''} 영상을 올렸습니다`.replace(/\s+/g, ' ').trim(), fit: r.imagery?.fit_text || '', id: r.id, region: r.region?.sgg_cd,
-        href: `/landxi/v3/lx-analyze/?${new URLSearchParams({ card: p.card, region: r.region?.sgg_cd || '', imagery: r.id })}`, go: '이 영상으로 분석하기' }
+      ? (r.analysis?.started || r.analysis?.running || r.analysis?.done   // 맞는 카드는 다 올리면 서버가 바로 분석(11-01 PM · 시군구 없이 그 영상 범위)
+        ? { line: `${r.again ? '이미 올린 영상입니다' : `${r.imagery?.gsd_word || ''} 영상을 올렸습니다`.trim()} · ${r.analysis.started ? '분석을 시작했습니다' : r.analysis.running ? '분석 중입니다' : '이 영상의 결과가 있습니다'}`,
+          id: r.id, href: `/landxi/v3/lx-map/${String(r.analysis.map || '').includes('?') ? '?' + String(r.analysis.map).split('?')[1] : ''}`, go: '지도 서비스' }
+        : { line: r.again ? '이미 올린 영상입니다 — 그 영상을 골랐습니다' : `${r.imagery?.gsd_word || ''} 영상을 올렸습니다`.trim(), fit: r.analysis?.why || r.imagery?.fit_text || '', id: r.id,
+          href: `/landxi/v3/lx-analyze/?${new URLSearchParams({ card: p.card, imagery: r.id, ...(r.region?.sgg_cd ? { region: r.region.sgg_cd } : {}) })}`, go: '이 영상으로 분석하기' })
       : p.from === 'ingest'
         ? { line: `${where ? where + ' ' : ''}영상 ${(r.items || []).length}장을 등록했습니다`, href: p.href || '/landxi/v3/lx-ingest/', go: '데이터 올리기에서 보기', n: (r.items || []).length }
         : { line: `영상 ${(r.items || []).length}장을 공유 데이터에 등록했습니다`, href: '/landxi/v3/ops-infra/#/shared', go: '공유 데이터 보기', n: (r.items || []).length };
@@ -314,7 +377,8 @@ async function register(b) {
     b.files = undefined;
     dispatchEvent(new CustomEvent('lx:upload-done', { detail: { purpose: p, result: r } }));
     bc?.postMessage({ t: 'done', purpose: p, result: r, line: b.result.line });
-    setTimeout(() => { if (![...B.values()].some((x) => ['up', 'reg', 'bad'].includes(x.state))) setFold(true); }, 8000);   // 다 끝나면 창은 접고 위쪽 표시만(결과 · 갈 곳은 펼치면 그대로)
+    // 다 끝나면 짧게 알리고(위 알림 · 창의 결과 한 줄) 8초 뒤 사라진다 — 창 · 머리줄 '업로드 끝' 표시까지(11-01 PM '다 올린 뒤에도 계속 뜬다'). 실패한 묶음은 남긴다.
+    setTimeout(() => { if (![...B.values()].some((x) => ['up', 'reg', 'bad'].includes(x.state)) && ![...F.values()].some((f) => f.state !== 'done')) clearOk(); }, 8000);
     toast(b.result.line);
   } catch (e) {
     b.state = 'bad';
@@ -343,8 +407,12 @@ export async function addUploads(picks, purpose) {
   return id;
 }
 /** 보통 화면 → 업로드 창에 맡기기(누름 안에서 부른다 — 업로드 창이 없으면 그 순간 연다). → 맡겼으면 true */
-export function startUploads(picks, purpose) {
+export async function startUploads(picks, purpose) {
   if (!started) mountUploads();
+  if (INPAGE) {                                                // 같은 탭 — 이 화면이 맡았으면 바로, 다른 탭이 맡았으면 그 탭에(아래 알림 길)
+    await Promise.race([hostReady, sleep(3000)]);
+    if (HOST) { await addUploads(picks, purpose); return true; }
+  }
   if (!bc) { toast('이 브라우저에서는 업로드 창을 쓸 수 없습니다 — Chrome 이나 Edge 로 열어 주세요'); return Promise.resolve(false); }
   if (hostless() && !openHost()) return Promise.resolve(false);
   const id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -416,7 +484,7 @@ function style() {
   document.head.append(Object.assign(document.createElement('style'), { id: 'k-up-css', textContent: CSS }));
 }
 const isFold = () => { try { return localStorage.getItem(FOLD) === '1'; } catch { return false; } };
-function setFold(v) { if (HOST) return; try { localStorage.setItem(FOLD, v ? '1' : '0'); } catch { /* */ } if (ui) { ui.win.hidden = v || !B.size; ui.chip.setAttribute('aria-expanded', String(!v)); if (v) forced = false; else blocked = false; place(); } }
+function setFold(v) { if (IS_POPUP) return; try { localStorage.setItem(FOLD, v ? '1' : '0'); } catch { /* */ } if (ui) { ui.win.hidden = v || !B.size; ui.chip.setAttribute('aria-expanded', String(!v)); if (v) forced = false; else { blocked = false; spotAt = null; } place(!v); } }
 function draw() {
   if (ui) return ui;
   style();
@@ -424,11 +492,11 @@ function draw() {
   const list = h('div.k-up-l', { 'aria-live': 'polite' });
   const fold = h('button', { type: 'button', text: '접기', 'aria-label': '업로드 창 접기' });
   const close = h('button', { type: 'button', text: '닫기', hidden: true });
-  const gone = h('div.k-up-gone', { hidden: true }, h('span', { text: '업로드 창이 닫혀 멈췄습니다. 열면 받은 자리부터 이어 올립니다.' }),
+  const gone = h('div.k-up-gone', { hidden: true, ...(INPAGE ? { style: 'display:none' } : {}) }, h('span', { text: '업로드 창이 닫혀 멈췄습니다. 열면 받은 자리부터 이어 올립니다.' }),
     h('button.t-btn', { type: 'button', text: '업로드 창 열기', onclick: () => openHost() }));
-  const other = HOST && hostOther ? h('div.k-up-gone', {}, h('span', { text: '이미 열린 업로드 창이 있습니다 — 그 창을 쓰세요. 이 창은 닫아도 됩니다.' })) : null;
-  const note = HOST ? h('p.k-up-note', { text: '이 창을 열어 두면 다른 화면에서 일해도 계속 올립니다. 작게 줄여 두어도 됩니다 — 닫으면 멈추고, 다시 열면 받은 자리부터 이어 갑니다.' }) : null;
-  const win = h('section.k-up' + (HOST ? '.k-up--page' : ''), { id: 'k-up', 'data-zone': 'uploads', 'aria-label': '영상 업로드', hidden: !HOST }, h('div.k-up-h', {}, h('b', { text: '영상 업로드' }), close, HOST ? null : fold), note, other, gone, list);
+  const other = IS_POPUP && hostOther ? h('div.k-up-gone', {}, h('span', { text: '이미 열린 업로드 창이 있습니다 — 그 창을 쓰세요. 이 창은 닫아도 됩니다.' })) : null;
+  const note = IS_POPUP ? h('p.k-up-note', { text: '이 창을 열어 두면 다른 화면에서 일해도 계속 올립니다. 작게 줄여 두어도 됩니다 — 닫으면 멈추고, 다시 열면 받은 자리부터 이어 갑니다.' }) : null;
+  const win = h('section.k-up' + (IS_POPUP ? '.k-up--page' : ''), { id: 'k-up', 'data-zone': 'uploads', 'aria-label': '영상 업로드', hidden: !IS_POPUP }, h('div.k-up-h', {}, h('b', { text: '영상 업로드' }), close, IS_POPUP ? null : fold), note, other, gone, list);
   chip.addEventListener('click', () => { if (hostless() && [...F.values()].some((f) => f.state !== 'done')) { openHost(); return; } const open = win.hidden; forced = open; setFold(!open); });
   fold.addEventListener('click', () => setFold(true));
   close.addEventListener('click', () => { if (HOST) clearDone(); else ask('clear'); });
@@ -438,10 +506,10 @@ function draw() {
     if (!chip.isConnected) mast.insertBefore(chip, mast.querySelector('.k-help') || null);
     return true;
   };
-  if (!HOST && !placeChip()) { const mo = new MutationObserver(() => { if (placeChip()) mo.disconnect(); }); mo.observe(document.body, { childList: true, subtree: true }); }
-  (HOST ? (document.querySelector('main') || document.body) : document.body).append(win);
+  if (!IS_POPUP && !placeChip()) { const mo = new MutationObserver(() => { if (placeChip()) mo.disconnect(); }); mo.observe(document.body, { childList: true, subtree: true }); }
+  (IS_POPUP ? (document.querySelector('main') || document.body) : document.body).append(win);
   ui = { chip, win, list, close, gone };
-  setInterval(place, 2000);                          // 아래 대화 줄 · 메뉴 줄이 늦게 자리를 잡는 화면(지도)
+  setInterval(() => { if (ui && B.size && Date.now() - shownAt < 8000) place(true); }, 2000);   // 처음 보인 뒤 8초만 — 아래 대화 줄 · 메뉴 줄이 늦게 자리를 잡는 화면(지도)
   paint();
   return ui;
 }
@@ -468,11 +536,16 @@ function rowOf(f) {
 let forced = false, blocked = false, spotAt = null, measureFn = null;
 const measure = () => { try { measureFn ??= new Function('return ' + MEASURE); return measureFn(); } catch { return null; } };   // 검사기와 같은 식(문자열) 한 출처
 const myHit = () => (measure()?.overlaps || []).filter((o) => /#k-up\b/.test(`${o.a} ${o.b}`)).reduce((a, o) => a + o.w * o.h, 0);
-function place() {
-  if (!ui || HOST || !B.size || isFold()) return;
+/* 자리는 '처음 보일 때 · 창 크기가 바뀔 때 · 사람이 펼칠 때'만 고른다(force). 진행률이 바뀔 때마다 다시 고르면 창이 왔다갔다 한다(11-01 PM 2.0GB 올리기 중).
+   그 사이에는 고른 자리에 그대로 두고, 대화창 · 서랍처럼 떠 있는 것이 새로 그 자리를 덮을 때만 다시 고른다. 빈 자리가 없어 접혔으면 사람이 펼칠 때까지 접힌 채. */
+let shownAt = 0;
+function place(force = false) {
+  if (!ui || IS_POPUP || !B.size || isFold()) return;
   const win = ui.win;
+  if (!force && blocked && !forced) { win.hidden = true; return; }
+  if (!force && spotAt) { win.hidden = false; return; }
   win.hidden = false;
-  const w = win.offsetWidth, hh = win.offsetHeight;
+  const w = win.offsetWidth, hh = Math.max(win.offsetHeight, 180);   // 줄이 늘어도 자리를 바꾸지 않게 넉넉한 높이로 고른다
   const mast = document.querySelector('.k-mast')?.getBoundingClientRect();
   const rail = document.querySelector('.k-rail')?.getBoundingClientRect();
   const sideRail = rail && rail.height > rail.width && rail.width > 0;
@@ -480,10 +553,46 @@ function place() {
   const L = sideRail ? rail.right + 16 : 12, R = innerWidth - 16 - w, T = (mast ? mast.bottom : 64) + 12, Bt = Math.max(T, floor - 12 - hh);
   const box = (m) => (m?.boxes || []).filter((b) => !/#k-up|k-mast/.test(b.name));
   const put = ([x, y]) => { win.style.left = Math.round(x) + 'px'; win.style.top = Math.round(y) + 'px'; win.style.bottom = 'auto'; win.style.right = 'auto'; };
-  if (spotAt && spotAt[1] + hh <= floor - 8 && spotAt[0] + w <= innerWidth - 8) { put(spotAt); if (!myHit()) { blocked = false; delete ui.chip.dataset.blocked; return; } }
-  /* 빈 자리 찾기 — 검사기가 잰 떠 있는 상자들을 피해 아래 → 위 · 왼쪽 → 오른쪽으로 훑는다(한 번 재고 셈만) · 고른 자리는 검사기 식으로 한 번 더 확인 */
-  const obs = box(measure());
+  /* 피할 것 = 검사기가 잰 떠 있는 상자 + 화면의 누르는 것(단추 · 링크 · 입력 · 고르기 · 탭) 전부(10-31 — 지도 서비스 왼쪽 '행정 자료' 층 단추를 가림 · 원칙 309).
+     떠 있지 않은 판(지도 서비스 왼쪽 판 등) 안의 단추는 검사기 상자에 없어서 덮였다 — 누르는 것 하나하나를 직접 잰다(업로드 창 · 머리줄 표시 안의 것은 뺌). */
+  const ctl = () => {
+    const out = [];
+    for (const el of document.querySelectorAll('a[href],button,input:not([type=hidden]),select,textarea,[role=button],[role=tab],[role=switch]')) {
+      if (win.contains(el) || ui.chip.contains(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.right <= 0 || r.top >= innerHeight || r.left >= innerWidth) continue;
+      if (el.closest('[hidden],[inert]') || getComputedStyle(el).visibility === 'hidden') continue;
+      out.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+    }
+    return out;
+  };
+  /* 글 · 그림도 덮지 않는다(11-01 — 분석 서비스 '내 영상 업로드' 뒤 업로드 창이 영상 카드를 덮음 · 원칙 309). 지도 바탕은 덮어도 된다 */
+  const content = () => {
+    const out = [];
+    const main = document.querySelector('.k-main') || document.body;
+    const vis = (r) => r.width > 1 && r.height > 1 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+    const rg = document.createRange();
+    const tw = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+    for (let t = tw.nextNode(); t; t = tw.nextNode()) {
+      if (!/\S/.test(t.nodeValue)) continue;
+      const p = t.parentElement;
+      if (!p || win.contains(p) || p.closest('.maplibregl-map,[hidden],.k-toast')) continue;
+      rg.selectNodeContents(t);
+      for (const r of rg.getClientRects()) if (vis(r)) out.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+    }
+    for (const el of main.querySelectorAll('img,svg,video,canvas,picture')) {
+      if (win.contains(el) || el.closest('.maplibregl-map,[hidden]')) continue;
+      const r = el.getBoundingClientRect(); if (vis(r)) out.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+    }
+    return out;
+  };
+  const obs = [...box(measure()), ...ctl(), ...content()];
   const clear = (x, y) => obs.every((b) => !(Math.min(x + w, b.x + b.w) - Math.max(x, b.x) > 4 && Math.min(y + hh, b.y + b.h) - Math.max(y, b.y) > 4));
+  if (spotAt && spotAt[0] + w <= innerWidth - 8) {   // 한 번 고른 자리는 지킨다 — 화면 안에 들고 떠 있는 것(대화창 · 서랍)이 덮지 않으면 그대로(누르는 것 검사는 고를 때만 · 11-01 왔다갔다)
+    put([spotAt[0], Math.min(spotAt[1], floor - 8 - win.offsetHeight)]);
+    if (!myHit()) { blocked = false; delete ui.chip.dataset.blocked; return; }
+  }
+  /* 빈 자리 찾기 — 위 상자 · 누르는 것들을 피해 아래 → 위 · 왼쪽 → 오른쪽으로 훑는다(한 번 재고 셈만) · 고른 자리는 검사기 식으로 한 번 더 확인 */
   const xs = innerWidth <= 960 ? [12] : [...new Set([L, ...Array.from({ length: Math.max(0, Math.floor((R - L) / 120)) }, (_, k) => L + (k + 1) * 120).filter((x) => x < R), R])];
   for (let y = Bt; y >= T; y -= 24) for (const x of xs) {
     if (!clear(x, y)) continue;
@@ -494,8 +603,28 @@ function place() {
   if (forced) { put([L, Bt]); return; }
   win.hidden = true; blocked = true; ui.chip.dataset.blocked = '1';
 }
-addEventListener('resize', () => place());
-addEventListener('click', () => setTimeout(place, 400), true);   // 대화창 · 서랍을 열고 닫으면 자리를 다시
+addEventListener('resize', () => place(true));
+let scrollT = 0;
+addEventListener('scroll', () => {                     // 본문이 움직여 글 · 단추가 창 밑으로 들어오면 창을 접고 머리줄 표시만(옮기지 않는다 · 사람이 펼치면 다시 자리를 고름)
+  if (scrollT || !ui || IS_POPUP || ui.win.hidden || forced) return;
+  scrollT = setTimeout(() => {
+    scrollT = 0;
+    const a = ui.win.getBoundingClientRect();
+    const hit = (r) => Math.min(a.right, r.right) - Math.max(a.left, r.left) > 4 && Math.min(a.bottom, r.bottom) - Math.max(a.top, r.top) > 4;
+    const main = document.querySelector('.k-main') || document.body;
+    const under = [...main.querySelectorAll('a[href],button,input,select,textarea,img,p,h1,h2,h3,h4,li,td,label,span')]
+      .some((el) => !ui.win.contains(el) && !el.closest('.maplibregl-map,[hidden]') && el.childElementCount < 4 && hit(el.getBoundingClientRect()));
+    if (under) { blocked = true; spotAt = null; ui.win.hidden = true; ui.chip.dataset.blocked = '1'; }
+  }, 250);
+}, true);
+addEventListener('click', () => setTimeout(() => { if (ui && !ui.win.hidden && spotAt && myHit()) place(true); }, 400), true);   // 대화창 · 서랍이 열려 그 자리를 덮을 때만 다시
+/* 알림 문구(k-toast)가 이 창과 겹치면 문구를 창 위로 올린다(11-01 — 알림 문구가 업로드 창을 덮음 · 원칙 309) */
+function liftToast() {
+  if (!ui || ui.win.hidden || matchMedia('(max-width: 960px)').matches) return;   // 좁은 화면 알림은 머리줄 아래(toast.js)
+  const to = document.querySelector('.k-toast'); if (!to) return;
+  const a = ui.win.getBoundingClientRect(), b = to.getBoundingClientRect();
+  if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > -8) to.style.bottom = Math.round(innerHeight - a.top + 12) + 'px';
+}
 function paint() {
   if (!ui) return;
   const fs = [...F.values()];
@@ -511,8 +640,11 @@ function paint() {
     : live.length ? (small ? `업로드 ${pctOf(got, tot)}%` : `업로드 중 ${pctOf(got, tot)}%${left != null ? ` · 약 ${durWord(left)}` : ''}`) : '업로드 끝';
   ui.chip.querySelector('i b').style.width = pctOf(got, tot) + '%';
   if (need) ui.chip.dataset.need = '1'; else delete ui.chip.dataset.need;
-  ui.win.hidden = HOST ? false : isFold() || !B.size || blocked;
+  if (!IS_POPUP && B.size && !shownAt) { shownAt = Date.now(); spotAt = null; blocked = false; ui.win.hidden = isFold(); place(true); }   // 처음 보일 때 한 번 고름
+  if (!B.size) { shownAt = 0; spotAt = null; blocked = false; }
+  ui.win.hidden = IS_POPUP ? false : isFold() || !B.size || blocked;
   place();
+  liftToast();
   ui.close.hidden = !(B.size && !live.length && ![...B.values()].some((b) => b.state === 'reg' || b.state === 'up'));
   const gone = hostless() && live.length > 0;
   ui.gone.hidden = !gone;
@@ -531,6 +663,7 @@ function ask(op, f, b) {
   if (hostless()) { openHost(); return; }
   bc?.postMessage({ t: 'cmd', op, key: f?.key, bid: b?.id });
 }
+function clearOk() { for (const b of [...B.values()]) if (b.state === 'done' && ![...F.values()].some((f) => f.batch === b.id && f.state !== 'done')) B.delete(b.id); save(); changed(); }
 function clearDone() { for (const b of [...B.values()]) if (['done', 'bad'].includes(b.state) && ![...F.values()].some((f) => f.batch === b.id && f.state !== 'done')) B.delete(b.id); save(); changed(); }
 function pause(f) {
   if (!HOST) return ask('pause', f);
@@ -588,7 +721,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
     h('dt', { text: '위치 정보' }), h('dd', { text: one ? '좌표계가 든 파일만 분석할 수 있습니다 — 좌표계가 따로 있으면 PRJ 파일을 함께 넣어 주세요' : '좌표계가 든 파일 — 위치 파일(TFW · PRJ 등)이 따로 있으면 함께 넣어 주세요' }),
     h('dt', { text: '크기 · 개수' }), h('dd', { text: one ? `영상 한 장 · 한 파일 ${GB(max)}까지` : `한 파일 ${GB(max)}까지 · 여러 장을 한 번에 넣을 수 있습니다` }),
     h('dt', { text: '걸리는 시간' }), h('dd', {}, timeLine(), h('small', { text: '이 서버로 잰 속도(초당 약 5.5MB) 기준 · 사무실 회선에 따라 다릅니다' })),
-    h('dt', { text: '올리는 동안' }), h('dd', { text: '따로 열리는 업로드 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 \'업로드 중\' 표시로 진행을 봅니다' }));
+    h('dt', { text: '올리는 동안' }), h('dd', { text: INPAGE ? '이 화면에서 바로 올립니다 — 다른 화면으로 옮겨도 받은 자리부터 저절로 이어 올리고, 어느 화면에서든 위쪽 \'업로드 중\' 표시로 진행을 봅니다' : '따로 열리는 업로드 창이 올립니다 — 그 창을 열어 두면 다른 화면에서 일해도 계속 올라가고, 어느 화면에서든 위쪽 \'업로드 중\' 표시로 진행을 봅니다' }));
   const zone = h('div.t-empty.k-drop.k-upz', { role: 'button', tabindex: '0', 'aria-label': '영상 파일 고르기' },
     h('span.k-drop-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 32 32"><path d="M16 21V7m0 0l-6 6m6-6l6 6M6 21v4h20v-4"/></svg>' }),
     h('div.k-drop-b', {}, h('h6', { text: one ? '영상 파일 한 장을 끌어 놓거나 눌러 고르세요' : '영상 파일을 끌어 놓거나 눌러 고르세요' })));
@@ -610,7 +743,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
     if (bad.length) fileProblem({ files: bad, ok: ok.length, onPick: () => pick() });
     if (!ok.length) return;
     const pur = typeof purpose === 'function' ? purpose() : purpose;
-    if (HOST) { onAdded?.(await addUploads(ok, pur)); return; }
+    if (IS_POPUP) { onAdded?.(await addUploads(ok, pur)); return; }
     if (hold) {                                                 // 화면이 나중에(예: 새 프로젝트 '만들기') 맡긴다 — 고른 파일만 보인다
       held = one ? ok : [...held, ...ok.filter((p) => !held.some((q) => q.file.name === p.file.name && q.file.size === p.file.size))];
       drawHeld(); onPicks?.(held.slice()); return;
@@ -619,7 +752,7 @@ export async function uploadPicker(el, { purpose, one = false, onAdded, hold = f
     const tot = ok.reduce((a, p) => a + p.file.size, 0);
     const go = h('button.t-btn', { type: 'button', text: '업로드 시작' });
     const list = h('ul.k-upq', {}, ...ok.map((p) => h('li', {}, h('b', { text: p.file.name, 'data-lint-skip': '' }), h('span', { text: MBf(p.file.size) }))));
-    const box = h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${ok.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — 따로 열리는 업로드 창이 올립니다. 그 창을 열어 두면 다른 화면에서 일해도 계속 올라갑니다.` }), go);
+    const box = h('div.k-upq-w', {}, list, h('p.k-upq-n', { text: `${ok.length}개 · ${GB(tot)} · 예상 약 ${durWord(est(tot / SPEED))} — ${INPAGE ? '다른 화면으로 옮겨도 이어 올립니다.' : '따로 열리는 업로드 창이 올립니다. 그 창을 열어 두면 다른 화면에서 일해도 계속 올라갑니다.'}` }), go);
     el.querySelector('.k-upq-w')?.remove();
     zone.after(box);
     go.addEventListener('click', async () => {

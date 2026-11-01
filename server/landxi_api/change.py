@@ -30,6 +30,7 @@ from fastapi.responses import FileResponse, Response
 
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
+from .own_scope import sql_others  # 남의 개인 결과 재사용 막기(10-31)
 
 router = APIRouter()
 TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
@@ -159,6 +160,71 @@ async def create_range(request: Request):
     av = await years_for_bounds(d["bounds"])
     await ensure_year_layers(av)
     return range_out(d, av)
+
+
+@router.post("/change/ranges/from-imagery")
+async def range_from_imagery(body: dict, request: Request):
+    """{imagery: [영상 id 하나 또는 둘]} → 그 영상(둘이면 겹치는 곳) 범위의 대상지 + 국토지리정보원 해 + 어림(11-01 PM — 시군구 · 구간 없이 자동 범위)."""
+    from change.ranges import MAX_KM2
+
+    from .range_tools import imagery_range
+    p = _lx(principal(request))
+    ids = list(dict.fromkeys(str(x) for x in (body.get("imagery") or []) if x))[:2]
+    if not ids:
+        raise ApiError("bad_request", "영상을 고르세요")
+    rid = await imagery_range(p, ids, MAX_KM2)
+    d = await get_range_row(p, rid)
+    av = await years_for_bounds(d["bounds"])
+    await ensure_year_layers(av)
+    return {**range_out(d, av), "estimate": await estimate(d), "as_of": now_iso()}
+
+
+NATIONAL_SRC = "publand:national"
+
+
+@router.post("/change/ranges/national")
+async def range_national(body: dict, request: Request):
+    """전국 범위(공공용지 무단점유 카드 · 11-01 PM '전국단위 분석') — 대한민국 시군구 경계를 합친 한 범위(한 번 만들고 같은 것을 쓴다).
+    분석은 이 범위 안 공공용지(고속도로 장부 · 철도 · LH 사업지구)만 본다 — 연속지적도는 걸린 곳만 읽는다(sgg 빈 칸)."""
+    p = _lx(principal(request))
+    cid, tset = await frame_card(body.get("card_id"))
+    if tset != "publand":
+        raise ApiError("bad_request", "전국 범위는 공공용지 무단점유 카드에서만 씁니다")
+    async with db(p) as conn:
+        rid = await conn.fetchval("SELECT id FROM change_ranges WHERE source_name=$1 ORDER BY created_at LIMIT 1", NATIONAL_SRC)
+    if not rid:
+        def _geom():
+            from shapely.geometry import shape
+            from shapely.ops import unary_union
+
+            from change.ranges import to5179
+            from . import config
+            fc = json.loads((config.SERVER_ROOT / "seed" / "sgg-simplified.geojson").read_text(encoding="utf-8"))
+            g = unary_union([shape(f["geometry"]).buffer(0) for f in fc["features"]])
+            g = to5179(g).buffer(500).buffer(-400).simplify(300)   # 섬 · 해안선 사이 틈을 메움(공공용지가 경계 밖으로 빠지지 않게) · 선은 성기게(화면 · 지도에 가볍게)
+            return g.wkb
+        wkb = await run_in_threadpool(_geom)
+        import secrets
+        rid = "rng_" + secrets.token_hex(6)
+        async with db(p) as conn:
+            await conn.execute("INSERT INTO change_ranges(id, tenant_id, project_id, name, kind, buffer_m, line, geom, sgg, years, source_name, created_by, origin) "
+                               "VALUES ($1,'lx',NULL,$2,'region',0,NULL, ST_Multi(ST_SetSRID(ST_GeomFromWKB($3),5179)), '{}'::text[], '{}'::int[], $4, $5, 'card')",
+                               rid, "전국 공공용지(고속도로 · 철도 · LH 택지)", wkb, NATIONAL_SRC, p.user_id)
+            await audit(conn, p, "change.range.create", rid, None, {"name": "전국 공공용지", "kind": "region", "origin": "card"})
+    d = await get_range_row(p, rid)
+    years = [2024]                                   # 전국 한 해(국토지리정보원 25cm 전국 촬영 해)
+    return {**range_out(d, {y: 18 for y in years}), "national": True, "estimate": await national_estimate(), "as_of": now_iso()}
+
+
+async def national_estimate() -> dict:
+    """전국 어림 — 끝난 전국 작업이 있으면 그 시간(기록) · 없으면 비움."""
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT extract(epoch FROM (j.finished_at - j.started_at)) AS s FROM change_runs c JOIN change_ranges g ON g.id=c.range_id "
+                                "JOIN jobs j ON j.id=c.job_id WHERE g.source_name=$1 AND c.state='done' AND j.finished_at IS NOT NULL ORDER BY c.done_at DESC LIMIT 1",
+                                NATIONAL_SRC)
+    s = round(float(r["s"])) if r and r["s"] else None
+    return {"run_s": env(s, "s", "recorded" if s else "estimate", "끝난 전국 분석 시간(작업 기록)"), "fetch_s": env(0, "s", "estimate", "영상 받기는 분석 시간에 포함"),
+            "area": None, "big": True}
 
 
 MAX_KM2_M2 = 60.0 * 1e6        # change/ranges.MAX_KM2(국토 변화가 영상을 받을 수 있는 넓이)
@@ -353,8 +419,11 @@ async def cached_run(p, range_id: str, year_a: int, year_b: int, key: str | None
     async with db(p) as conn:
         r = await conn.fetchrow("SELECT job_id, state FROM change_runs WHERE range_id=$1 AND year_a=$2 AND year_b=$3 AND version=$4 "
                                 "AND src_key IS NOT DISTINCT FROM $5 "
-                                "AND state IN ('done','queued','running') ORDER BY (state='done') DESC, created_at DESC LIMIT 1",
-                                range_id, year_a, year_b, ver or _ver(), key)
+                                "AND state IN ('done','queued','running') "
+                                "AND NOT EXISTS (SELECT 1 FROM jobs j0 WHERE j0.id = change_runs.job_id AND j0.state IN ('failed','cancelled','timeout')) "   # 멈춘 작업에 붙지 않게(11-01)
+                                "AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.id = change_runs.job_id AND " + sql_others("j", "$6") + ") "
+                                "ORDER BY (state='done') DESC, created_at DESC LIMIT 1",
+                                range_id, year_a, year_b, ver or _ver(), key, p.user_id or "")   # 남의 개인 결과는 재사용하지 않음(10-31 PM)
     return dict(r) if r else None
 
 
@@ -365,8 +434,10 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int, ver: str | 
         src = await conn.fetchrow(
             "SELECT r.job_id, r.zoom, r.stats FROM change_runs r JOIN change_ranges g ON g.id=r.range_id JOIN change_ranges me ON me.id=$1 "
             "WHERE r.state='done' AND r.year_a=$2 AND r.year_b=$3 AND r.version=$4 AND r.src_key IS NULL AND g.id<>me.id AND g.buffer_m=me.buffer_m "
-            "AND ST_Equals(ST_SnapToGrid(g.geom, 0.01), ST_SnapToGrid(me.geom, 0.01)) ORDER BY r.done_at DESC LIMIT 1",
-            range_id, year_a, year_b, ver or _ver())
+            "AND ST_Equals(ST_SnapToGrid(g.geom, 0.01), ST_SnapToGrid(me.geom, 0.01)) "
+            "AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.id = r.job_id AND " + sql_others("j", "$5") + ") "
+            "ORDER BY r.done_at DESC LIMIT 1",
+            range_id, year_a, year_b, ver or _ver(), p.user_id or "")   # 남의 개인 결과는 이어 붙이지 않음(10-31 PM)
     if not src:
         return None
     import os
@@ -397,7 +468,7 @@ async def same_range_run(p, range_id: str, year_a: int, year_b: int, ver: str | 
 INTERACTIVE_KM2 = 2.0
 
 
-CARD_WORD = {"card-change": "국토 변화", "card-landslide": "산사태 취약지구", "card-ijimok": "이지목 현황", "card-occupy": "점유의심 조사"}
+CARD_WORD = {"card-change": "국토 변화", "card-landslide": "산사태 취약지역", "card-ijimok": "이지목 현황", "card-occupy": "점유의심 조사"}
 
 
 async def frame_card(card_id: str | None) -> tuple[str, str | None]:
@@ -416,6 +487,10 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     card_id = 국토 변화 틀 카드(국토 변화 · 산사태 취약지구 · 10-25) — 찾는 변화 묶음이 다르면 계산 판(캐시 열쇠)도 다르다."""
     I, _, R, RUN = _mods()
     cid, tset = await frame_card(card_id)
+    if cid != "card-change":                            # 'card-change' = 기본 변화 계산 틀(점유의심 · XI ChatGEO 두 해 비교 · 대상지 도구가 씀) — 카드를 내려도 계산은 남는다(11-01 PM 국토 변화 카드 삭제)
+        from .card_gate import require as _gate          # 공개 승인 전 카드는 만든 사람 · LX 관리자만 분석(11-01 PM)
+        async with db(realm="lx") as _gc:
+            await _gate(_gc, p, cid)
     from change.detect import TSET_VER
     ver = _ver() + (f"+{TSET_VER.get(tset, tset)}" if tset else "")      # 산사태 후보 C 는 판이 다르다(옛 결과를 다시 쓰지 않게 · 결정8)
     d = await get_range_row(p, range_id)
@@ -423,6 +498,12 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
         from .occupy import start_occupy
         return await start_occupy(request, p, d, year_a, year_b, src_a, src_b, via)
     one = tset == "ijimok"                            # 이지목 현황(카드 ②) — 한 시점(뒤 시점 하나 · 앞 시점 = 같은 영상)
+    if tset == "publand":                             # 공공용지 무단점유(11-01) — 영상 하나면 한 시점 · 앞 시점까지 고르면 두 시점(신규 표시)
+        sa0, sb0 = src_a or None, src_b or {"kind": "ngii", "year": year_b}
+        one = not sa0 or (sa0.get("kind") == sb0.get("kind") and (sa0.get("id") == sb0.get("id") if sa0.get("kind") == "imagery"
+                                                                 else int(sa0.get("year") or 0) == int(sb0.get("year") or 0)))
+        if one:
+            src_b = sb0
     if one:
         s1 = src_b or src_a or {"kind": "ngii", "year": year_b or year_a}
         src_a = src_b = s1
@@ -448,7 +529,10 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
             return {"job_id": al, "cached": True, "state": "done", "range": range_out(d)}
     _lx(p)
     ng = [s0["year"] for s0 in (sa, sb) if s0["kind"] == "ngii"]
-    av = await years_for_bounds(d["bounds"]) if ng else {}
+    if d.get("source_name") == NATIONAL_SRC:          # 전국 범위 — 가운데 몇 점으로 해를 묻지 않는다(바다) · 공공용지 칸마다 그 해 타일을 받는다
+        av = {y: 18 for y in ng}
+    else:
+        av = await years_for_bounds(d["bounds"]) if ng else {}
     if ng:
         await ensure_year_layers(av)
     miss = [y for y in ng if y not in av]
@@ -458,26 +542,66 @@ async def start_run(request: Request, p, range_id: str, year_a: int, year_b: int
     z = min([av[y] for y in ng] + ([18] if len(ng) < 2 else []))   # 두 시점 같은 격자 — 국토지리정보원 해가 17(51cm)뿐이면 17 · 등록 영상은 18(25cm)
     from . import jobs as J
     km2 = float(d["m2"]) / 1e6
-    interactive = km2 <= INTERACTIVE_KM2
+    interactive = km2 <= INTERACTIVE_KM2 and d.get("source_name") != NATIONAL_SRC
     opts = {"change": {"range_id": range_id, "year_a": year_a, "year_b": year_b, "zoom": z, "version": ver, "bbox4326": range_out(d)["bbox"],
                        **({"types": tset} if tset else {}),
                        **({"src_a": {k: sa.get(k) for k in ("kind", "id", "year")}, "src_b": {k: sb.get(k) for k in ("kind", "id", "year")}} if key else {})},
-            "range_name": d["name"], "interactive": interactive, "requested_via": via}
+            "range_name": d["name"], "interactive": interactive, "requested_via": via,
+            **({"private": True} if via == "분석 서비스" else {})}   # 분석 서비스에서 낸 변화 분석 = 개인 결과(10-31 · own_scope)
     # 분석 서비스 작업(card-change) — 프로젝트 4단계 추론으로 적지 않는다(10-23 원칙 329 · 다른 분석 서비스와 같은 작업 장부 · 지도 서비스 '분석 서비스' 묶음)
+    if tset == "publand":                             # 공공용지 무단점유 — 큰 범위는 GPU 장마다 블록을 나눔 · 끊긴 같은 작업이 있으면 이어서(11-01 PM)
+        from change import publand as _PL
+        pc = _PL.cfg()
+        if km2 >= float(pc.get("split_min_km2") or 100) and int(pc.get("split") or 1) > 1:
+            opts["change"]["split"] = int(pc.get("split"))
+        async with db(p) as conn:
+            prev = await conn.fetch("SELECT c.job_id FROM change_runs c JOIN jobs j ON j.id=c.job_id WHERE c.range_id=$1 AND c.version=$2 "
+                                    "AND c.year_a=$3 AND c.year_b=$4 AND coalesce(c.src_key,'')=coalesce($5,'') AND j.state IN ('failed','cancelled') "
+                                    "ORDER BY c.created_at DESC LIMIT 5", range_id, ver, year_a, year_b, key)
+        _, _, _, RUN0 = _mods()
+        rf = next((x["job_id"] for x in prev if (RUN0.run_dir(x["job_id"]) / "parts").exists()), None)
+        if rf:
+            opts["change"]["resume_from"] = rf
     if d.get("sgg"):
         opts["sgg_cd"] = d["sgg"][0]
     # 대화형(작은 범위 2㎢ 이하)은 전국 분석(3) · 다른 분석(0)보다 먼저(−1) — 전국 작업은 칸 묶음 사이에서 비킨다(F3)
-    body = {"kind": "index", "model_id": "change-ap25", "card_id": cid,
-            "label": (f"분석 서비스 · 이지목 현황 · {d['name']} {year_b}" if one else f"분석 서비스 · {CARD_WORD.get(cid, '국토 변화')} · {d['name']} {year_a}↔{year_b}")[:60],
+    body = {"kind": "index", "model_id": _model_of(tset), "card_id": cid,
+            "label": (f"분석 서비스 · {await _card_word(cid)} · {d['name']} {year_b}" if one else f"분석 서비스 · {await _card_word(cid)} · {d['name']} {year_a}↔{year_b}")[:60],
             "priority": -1 if interactive else 0, "options": opts}
     res = await J.submit(body, request)
     jid = res["job"]["id"]
+    if tset == "publand" and (opts["change"].get("split") or d.get("source_name") == NATIONAL_SRC):
+        # 몇 시간 걸리는 큰 범위(전국) — 20분 시간초과(change_jobs.RUN_MAX_S)는 걸지 않는다 · 숨(heartbeat) 감시는 그대로
+        from .deps import redis as _redis
+        await (await _redis()).hset(f"job:{jid}", "chg_keep", "1")
     async with db(p) as conn:
         await conn.execute("INSERT INTO change_runs(job_id, range_id, tenant_id, year_a, year_b, zoom, version, state, created_by, src_key, sources) "
                            "VALUES ($1,$2,'lx',$3,$4,$5,$6,'queued',$7,$8,$9) ON CONFLICT (job_id) DO NOTHING",
                            jid, range_id, year_a, year_b, z, ver, p.user_id, key, {"a": sa, "b": sb})
     return {"job_id": jid, "cached": False, "state": "queued", "zoom": z, "range": range_out(d), "events_url": res.get("events_url")}
 
+
+async def _card_word(cid: str) -> str:
+    """작업 이름에 쓰는 카드 말 — 카드 이름에서('… 분석서비스' 뺌) · 없으면 국토 변화."""
+    if cid in CARD_WORD:
+        return CARD_WORD[cid]
+    async with db(realm="lx") as conn:
+        n = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid)
+    return (str(n or "국토 변화").replace("분석서비스", "").strip()) or "국토 변화"
+
+
+def _model_of(tset) -> str:
+    """작업 장부에 남길 모델 — 실제로 계산에 쓰는 모델(11-01 · 산사태는 산림 변화 모델 · config/landslide.yaml model_id · 파일이 없으면 예전 규칙 = ap25)."""
+    if tset == "publand":
+        return "change-publand"
+    if tset == "landslide":
+        try:
+            from change import forest as F
+            if F.available():
+                return str(F.cfg().get("model_id") or "change-ap25")
+        except Exception:  # noqa: BLE001
+            pass
+    return "change-ap25"
 
 @router.post("/change/runs", status_code=202)
 async def create_run(body: dict, request: Request):
@@ -523,7 +647,8 @@ def period_of(d: dict) -> dict:
 def stats_env(st: dict | None) -> dict | None:
     if not st:
         return None
-    src = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 결과 확인 전)"
+    src = ("공공용지 무단점유 분석 결과(영상-문장 AI + 토지피복 AI · 연속지적도 대조 · 결과 확인 전)" if st.get("types") == "publand"
+           else "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 결과 확인 전)")
     bt = {}
     for t, v in (st.get("by_type") or {}).items():
         bt[t] = {"n": env(v["n"], "count", "inferred", src), "area": env(round(v["m2"], 1), "m2", "inferred", src),
@@ -532,7 +657,15 @@ def stats_env(st: dict | None) -> dict | None:
             "n_out": env(st["n_out"], "count", "inferred", src), "area": env(st["m2"], "m2", "inferred", src),
             "by_type": bt, "top_in": [{"id": x["id"], "type": x["type"], "jibun": x.get("jibun"), "jimok": x.get("jimok"),
                                        "area": env(x["area_m2"], "m2", "inferred", src)} for x in st.get("top_in") or []],
-            "range_area": env(st.get("range_km2"), "km2", "measured", "범위 면적"), "gsd_m": st.get("gsd_m")}
+            "range_area": env(st.get("range_km2"), "km2", "measured", "범위 면적"), "gsd_m": st.get("gsd_m"), "types": st.get("types"),
+            **({"publand": {"two": bool(st.get("two")), "word": st.get("word"),
+                            "n_new": env(st.get("n_new"), "count", "inferred", src) if st.get("n_new") is not None else None,
+                            "by_land": {k: env(v, "count", "inferred", src) for k, v in (st.get("by_land") or {}).items()},
+                            "dropped": env(st.get("dropped") or 0, "count", "inferred", src, "개인 · 종중 소유로 대조 탈락"),
+                            "public_parcels": env(st.get("public_parcels"), "count", "measured", "공공용지 층(고속도로 장부 · 철도 · LH 사업지구 · 지목 도로)"),
+                            "public_area": env(round((st.get("public_m2") or 0) / 1e6, 2), "km2", "measured", "공공용지 넓이"),
+                            "cells": env(st.get("cells_seen"), "count", "measured", "AI 가 본 칸 수"), "seconds": st.get("seconds")}}
+               if st.get("types") == "publand" else {})}
 
 
 async def marks_of(p, job_id: str) -> dict[str, dict]:
@@ -597,10 +730,11 @@ async def get_run(job_id: str, request: Request):
     if isinstance(st, str):
         st = json.loads(st)
     async with db(realm="lx") as conn:
-        cid = await conn.fetchval("SELECT card_id FROM jobs WHERE id=$1", job_id)
+        jr = await conn.fetchrow("SELECT card_id, options->'change'->>'types' AS types FROM jobs WHERE id=$1", job_id)
+        cid = jr["card_id"] if jr else None
         cname = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) if cid else None
     out = {"job_id": job_id, "state": d["state"], "range_id": d["range_id"], "range_name": d["range_name"], "project_id": d.get("project_id"),
-           "card": {"id": cid or "card-change", "name": cname or "국토 변화 분석서비스"},
+           "card": {"id": cid or "card-change", "name": cname or "국토 변화 분석서비스"}, "types": (jr["types"] if jr else None),
            "period": period_of(d), "zoom": d["zoom"], "stats": stats_env(st),
            "done_at": d["done_at"].isoformat(timespec="seconds") if d.get("done_at") else None, "error": d.get("error")}
     if d["state"] == "done":

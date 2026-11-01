@@ -8,11 +8,11 @@ power:
   #   두 장 합 전력 · 온도 1초 감시(pair) — 이상이면 바로 한 장으로(power:single · single_cool_s 뒤 저절로 다시 두 장).
   max_hot_gpus: 2
   job_max_gpus: 1
-  start_gpus: [0, 1]         # start-landxi.ps1 · run-workers.ps1 의 워커 GPU 기본 목록
+  start_gpus: [0, 1]         # start-landxi.ps1 · run-workers.ps1 의 워커 GPU 기본 목록 — 10-31 제주 학습 끝(10-28 22:24) → 두 장 다시 사용
   pair:
-    sum_max_w: 300           # 두 장 합 전력(드라이버 평균)이 이보다 높게
-    sum_over_s: 10           #   이만큼 넘게 이어지면 한 장으로
-    temp_max_c: 85           # 어느 장이든 이 온도 이상이면 바로 한 장으로
+    sum_max_w: 250           # 두 장 합 전력 — 11-01 셧다운(합 순간 333 W · 평균 290 W 대) 뒤 300 → 250
+    sum_over_s: 5            #   이만큼 넘게 이어지면 한 장으로 — 11-01 10 → 5
+    temp_max_c: 82           # 어느 장이든 이 온도 이상이면 바로 한 장으로 — 11-01 85 → 82
     driver_err_s: 3          # 장비 응답 오류(NVML 실패 · 장이 사라짐)가 이만큼 이어지면 한 장으로
     single_cool_s: 1800      # 한 장으로 돌아간 뒤 쉬는 시간(30분) — 지나면 다시 두 장
     log_days: 7              # 1초 기록(02. 데이터/_logs/gpu-pair-YYYYMMDD.csv) 보관 날 수
@@ -25,7 +25,7 @@ power:
   gate_chunk: 8              # 읽어 간 묶음 안의 재확인 간격(칸)
   other_quiet_s: 20          # 다른 GPU 가 내려간 뒤 이만큼 조용해야 재개(히스테리시스 · 몰려 오는 LLM 호출 사이에 끼어들지 않게)
   fast_poll_s: 0.1           # NVML 순간 전력 폴링(workers/nvml_power.py · pynvml 없이 ctypes)
-  power_limit_w: 200        # nvidia-smi power.limit(장당) — 2026-09-26 전력 상한 200 W × 2 적용(LandXI-GPU-PowerLimit-200W 예약 작업)
+  power_limit_w: 170        # nvidia-smi power.limit(장당) — 11-01 셧다운 뒤 200 → 170(LandXI-GPU-PowerLimit 예약 작업 · _env/gpu/set-power-limit.ps1)
   # 전국 결과 자산 작업(options.national) — 한 장만 · 풀로드 금지(원칙 221 · 10-12). 시스템 전력 상한은 바꾸지 않고 코드 안에서 조절:
   # 작은 묶음(chunk 칩) + 묶음 사이 쉼(이 장 사용률 · 전력 이동평균을 재며 duty 조절). 다른 장(vLLM 등)은 쓰지 않음.
   national:
@@ -41,8 +41,8 @@ power:
     read_ahead: true         # 마지막 칩 묶음을 추론하는 동안 다음 칩 묶음을 이 워커 몫으로 받아 영상 읽기 시작(impl-41)
     chunk: 4
     util_max: 70             # 사용률 평균 상한(%)
-    power_max_w: 160         # 전력 상한(W) — 10-25 사용자 "기준은 160W로 올린다. 이거 기본으로 한다." (장당 상한 200 W 그대로)
-    target_w: 145            # 30초 평균 목표(넘으면 쉼) — 모든 GPU 작업 공용(power_throttle.limits) · 10-25
+    power_max_w: 135         # 전력 상한(W) — 11-01 셧다운 뒤 사용자 "기존 한도 보다 조금 낮춰서" 160 → 135
+    target_w: 120            # 30초 평균 목표(넘으면 쉼) — 11-01 145 → 120
     target_util: 62
     duty: 0.5
     train_share: false       # 학습이 한 장(train.gpu)을 쓰는 동안 전국 분석이 다른 한 장으로 이어 가기(10-22 P6) — true 면 작업기 · 워커가 학습 작업을 '비킬 작업'으로 세지 않는다(파일만 바꾸면 바로)
@@ -62,9 +62,9 @@ power:
   train:
     gpu: 0
     util_max: 70             # 사용률 평균 상한(%)
-    power_max_w: 160         # 전력 상한(W) — 10-25 사용자 "기준은 160W로 올린다. 이거 기본으로 한다." (장당 상한 200 W 그대로)
+    power_max_w: 135         # 전력 상한(W) — 11-01 셧다운 뒤 사용자 "기존 한도 보다 조금 낮춰서" 160 → 135
     duty: 0.35               # 시작 duty(제어기가 30초 평균을 보며 조절 · workers/power_throttle.py)
-    target_w: 145            # 30초 평균이 이를 넘으면 (목표 − 여유) 아래로 내려갈 때까지 멈춘다(10-25 상한 160 W 에 맞춤 · 예전 125)
+    target_w: 120            # 30초 평균 목표(넘으면 쉼) — 11-01 145 → 120
     target_util: 62
     hard_s: 20               # 30초 평균이 상한(160 W · 70 %)을 이만큼 넘게 넘으면 하드 정지(식을 때까지 멈춤 · 로그)
     temp_max_c: 83

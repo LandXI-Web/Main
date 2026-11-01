@@ -25,13 +25,15 @@ from starlette.concurrency import run_in_threadpool
 
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
+from .own_scope import sql_public  # 개인 결과 제외(10-31)
 from .spaces import CLASS_KO
-from .svc_rules import SQL_NOT_EXCLUDED
+from .svc_rules import SQL_NOT_EXCLUDED, SQL_PENDING_ONLY
 
 router = APIRouter()
 
 LANDCOVER = {"건물", "주차장", "경작지", "비닐하우스"}
 _BOARD: dict = {"at": 0.0, "v": None}
+_BOARD_PEND: dict = {"at": 0.0, "v": None}      # 공개 승인 전 카드만의 결과판(카드 자체 숫자용 · 화면 · 공식 숫자에는 안 씀 · 11-01)
 _STATIC_N: dict = {"at": 0.0, "v": {}}
 BOARD_TTL = 60.0
 _SID: dict[str, str] = {}                                   # 결과 층 주소(set) → detections.job_id
@@ -131,7 +133,7 @@ def _fallback(ck):
     return o["c"], o["n"], o["layer"]
 
 
-async def build_board(p) -> dict:
+async def build_board(p, pending_only: bool = False) -> dict:
     from . import regions as R
     from . import catalog as C
     try:
@@ -142,12 +144,15 @@ async def build_board(p) -> dict:
     async with db(realm="lx") as conn:
         led = await conn.fetch(
             "SELECT s.card_id, s.set_id, s.sgg_cd, s.year, s.service_version, s.imagery_id, s.analyzed_at, s.origin, s.target, c.name AS cname "
-            "FROM service_results s LEFT JOIN cards c ON c.id = s.card_id WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')" + SQL_NOT_EXCLUDED)   # 보이기 규칙(원칙 293)
+            "FROM service_results s LEFT JOIN cards c ON c.id = s.card_id WHERE s.replaced_at IS NULL AND s.origin IN ('deploy', 'job')"
+            + (SQL_PENDING_ONLY if pending_only else SQL_NOT_EXCLUDED))   # 보이기 규칙(원칙 293) · 공개 승인된 카드만(pending_only = 승인 전 카드만 · 카드 숫자용)
         bare = await conn.fetch(
             "SELECT j.id, j.options->>'sgg_cd' AS sgg_cd, j.imagery_id, j.model_id, j.options->'classes' AS ocls, j.finished_at, m.classes, i.year FROM jobs j "
             "LEFT JOIN models m ON m.id = j.model_id LEFT JOIN imagery i ON i.id = j.imagery_id "
             "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready "
-            "AND j.card_id IS NULL AND j.tenant_id='lx' AND j.options->>'scope'='sgg' ORDER BY j.finished_at DESC")
+            "AND j.card_id IS NULL AND j.tenant_id='lx' AND j.options->>'scope'='sgg'" + sql_public("j") + " ORDER BY j.finished_at DESC")   # 개인 결과 제외(10-31)
+        if pending_only:
+            bare = []                                  # 카드 없는 결과(토지피복 등)는 공식 결과판 몫
         cells: dict[tuple, dict] = {}
         for r in led:
             reg = R.region_of(r["sgg_cd"])
@@ -304,6 +309,10 @@ async def _rebuild(p, wait: bool = False):
     _BOARD["busy"] = True
     try:
         _BOARD.update(v=await build_board(p), at=time.time())
+        try:                                           # 공개 승인 전 카드만의 결과판(카드 자체 숫자 · 만든 직원 · LX 관리자 · 11-01) — 실패해도 공식 판에는 영향 없음
+            _BOARD_PEND.update(v=await build_board(p, pending_only=True), at=time.time())
+        except Exception as e:  # noqa: BLE001
+            print(f"[ximap] 승인 전 결과판 실패 {e!r}", flush=True)
     finally:
         _BOARD["busy"] = False
 

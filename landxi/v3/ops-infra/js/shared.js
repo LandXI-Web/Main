@@ -44,9 +44,9 @@ function sheet() {
   document.head.append(h('link', { rel: 'stylesheet', href: new URL('../shared.css', import.meta.url).href }));
 }
 
-const TABS = [['img', '영상'], ['train', '학습 데이터'], ['admin', '행정 자료']];
-const HINT = { img: '영상 이름 · 지역 · 연도', train: '이름 · 프로젝트 · 클래스', admin: '기관 · 이름' };
-const UP = { img: '영상 업로드', train: '학습 데이터 올리기', admin: '행정 자료 올리기' };
+const TABS = [['img', '영상'], ['train', '학습 데이터'], ['admin', '행정 자료'], ['model', '모델']];
+const HINT = { img: '영상 이름 · 지역 · 연도', train: '이름 · 프로젝트 · 클래스', admin: '기관 · 이름', model: '모델 이름 · 계열' };
+const UP = { img: '영상 업로드', train: '학습 데이터 올리기', admin: '행정 자료 올리기', model: '모델 파일 올리기' };
 const day = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}.${m[3]}` : '—'; };
 const val = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x);
 const flat = (s) => String(s ?? '').replace(/\s+/g, '');
@@ -133,14 +133,14 @@ async function mapShow(host, { fc = null, bbox = null, wms = null } = {}) {
 export function mountShared(root) {
   sheet();
   let all = null, page = 1, tab = 'img', KINDS = KINDS0;
-  const D = { img: null, train: null, admin: null };
+  const D = { img: null, train: null, admin: null, model: null };
   const q = h('input.t-input.sd-q', { type: 'search', placeholder: HINT.img, 'aria-label': '찾기', autocomplete: 'off' });
-  const up = h('button.t-btn.sd-up-b', { type: 'button', text: UP.img, onclick: () => (tab === 'img' ? openUpload() : tab === 'train' ? openTrainUpload() : openAdminUpload()) });
+  const up = h('button.t-btn.sd-up-b', { type: 'button', text: UP.img, onclick: () => (tab === 'img' ? openUpload() : tab === 'train' ? openTrainUpload() : tab === 'model' ? import('../../lx-train/model-file.js').then((m) => m.openModelFile({ onDone: () => reload('model') })) : openAdminUpload()) });   // 모델 파일 올리기 = 직원 학습 화면과 같은 창 · 같은 서버 길(11-01 PM)
   const count = h('small.sd-n.num');
   const body = h('div.sd-body');
   const pager = h('nav.sd-pg', { 'aria-label': '페이지' });
   const det = h('aside.sd-det', { 'aria-label': '자세히' });
-  const SEL = { img: null, train: null, admin: null };       // 탭마다 고른 줄(열쇠)
+  const SEL = { img: null, train: null, admin: null, model: null };       // 탭마다 고른 줄(열쇠)
   const ROWS = new Map();                                     // 열쇠 → { k, x } — 지금 보이는 줄
   const DET = new Map();                                      // 열쇠 → 상세 응답(약속) — 다시 불러오면 지운다
   let shown = null, seq = 0;
@@ -171,9 +171,22 @@ export function mountShared(root) {
     try {
       if (k === 'img') { D.img = (await during(api('/projects/imagery?all=1'))).items || []; all = D.img; }
       else if (k === 'train') { classList(); D.train = (await during(api('/shared/train-data'))).items || []; }
+      else if (k === 'model') { D.model = ((await during(api('/registry/models?with=train'))).items || []).filter((m) => m.spec && m.status !== 'retired'); }
       else { const j = await during(api('/shared/ledgers')); D.admin = j.items || []; if (j.kinds) KINDS = j.kinds; }
-    } catch (e) { if (tab === k) fail(k === 'img' ? '영상 목록을 불러오지 못했습니다' : k === 'train' ? '학습 데이터를 불러오지 못했습니다' : '행정 자료를 불러오지 못했습니다'); return; }
+    } catch (e) { if (tab === k) fail(k === 'img' ? '영상 목록을 불러오지 못했습니다' : k === 'train' ? '학습 데이터를 불러오지 못했습니다' : k === 'model' ? '모델 목록을 불러오지 못했습니다' : '행정 자료를 불러오지 못했습니다'); return; }
     if (tab === k) draw();
+    if (k === 'admin') poll();
+  }
+  /* 큰 행정 자료를 서버가 읽는 동안(10-31) — 4초마다 목록만 조용히 다시(깜빡임 없이) · 다 읽으면 멈춤 */
+  let pollT = 0;
+  function poll() {
+    clearTimeout(pollT);
+    if (!(D.admin || []).some((x) => x.work === 'reading')) return;
+    pollT = setTimeout(async () => {
+      if (tab !== 'admin') return;
+      try { const j = await api('/shared/ledgers'); D.admin = j.items || []; if (j.kinds) KINDS = j.kinds; if (tab === 'admin') draw(); } catch { /* 다음에 */ }
+      poll();
+    }, 4000);
   }
   const reload = (k) => { D[k] = null; for (const key of [...DET.keys()]) if (key.startsWith(k + ':')) DET.delete(key); shown = null; if (tab === k) load(); };
   function pages(rows, empty0, emptyQ, cols, mk) {
@@ -198,6 +211,11 @@ export function mountShared(root) {
       count.textContent = '';
       const rows = (D.train || []).filter((x) => hit(s, [x.name, x.project?.name, ...(x.classes || [])]));
       body.replaceChildren(pages(rows, '아직 학습 데이터가 없습니다', '맞는 학습 데이터가 없습니다', ['이름', '프로젝트', '클래스', '장수', '출처', '날짜', '공개'], trainRow));
+    } else if (tab === 'model') {
+      count.textContent = '';
+      const rows = (D.model || []).filter((x) => hit(s, [x.name, x.family, x.spec, x.id]));
+      body.replaceChildren(pages(rows, '아직 모델이 없습니다', '맞는 모델이 없습니다', ['이름', '모델', '상태', '날짜'], (x) => h('tr', {},
+        h('td', {}, h('b', { text: x.name || x.id })), h('td', { text: x.spec || '—' }), h('td', { text: x.status_label || '—' }), h('td.num', { text: day(x.created_at) }), h('td'))));   // 끝 칸은 비워 둔다(다른 탭의 공개 단추 자리 · 모바일 한 줄 카드 맞춤)
     } else {
       count.textContent = '';
       const mine = (D.admin || []).filter((x) => x.owner === 'lx' && hit(s, ['LX', x.name, x.kind_label]));
@@ -421,9 +439,11 @@ export function mountShared(root) {
     return pickRow('admin', x.id, x, { dataset: { id: x.id } },
       h('td', {}, h('b', { text: x.name || '—' })),
       h('td', { text: x.kind_label || '—' }),
-      h('td.num', { text: val(x.rows) != null ? `${nf(val(x.rows))}행` : '—' }),
+      x.work === 'reading' ? h('td.num', { text: val(x.progress) != null ? `읽는 중 ${val(x.progress)}%` : '읽는 중' })   // 큰 자료 — 서버가 읽어 지도에 놓는 중(10-31)
+        : x.work === 'failed' ? h('td.sd-err', { text: '읽지 못함', title: x.error || '' })
+          : h('td.num', { text: val(x.rows) != null ? `${nf(val(x.rows))}행` : '—' }),
       h('td.num', { text: day(x.at) }),
-      h('td', {}, visBtn(!!x.shared, x.name || '행정 자료', (e) => setLedShared(x, e.currentTarget))));
+      h('td', {}, x.work ? null : visBtn(!!x.shared, x.name || '행정 자료', (e) => setLedShared(x, e.currentTarget))));
   }
   async function setLedShared(x, b) {
     const want = !x.shared;
@@ -435,26 +455,80 @@ export function mountShared(root) {
       draw();
     } catch (e) { b.disabled = false; toast(e?.message || '바꾸지 못했습니다'); }
   }
-  const kindSel = (cur) => h('select.t-input', { 'aria-label': '종류' },
-    ...Object.entries(KINDS).map(([k, t]) => h('option', { value: k, text: t, selected: k === cur || undefined })));
+  /* 종류 고르기 + '+ 새 종류'(10-31 PM "종류도 바로 추가하는 기능도 만들자") — 고르면 그 자리에 이름 칸 하나 · '더하기'로 서버에 저장하고 바로 골라짐.
+     새 종류는 비교 규칙 없이 저장 · 지도 · 속성 보기만(규칙은 나중). 이름 20자까지 · 같은 이름 금지(서버가 판정). */
+  const NEW_K = '__new';
+  const kindSel = (cur, onErr) => {
+    let last = cur;
+    const sel = h('select.t-input', { 'aria-label': '종류' },
+      ...Object.entries(KINDS).map(([k, t]) => h('option', { value: k, text: t, selected: k === cur || undefined })),
+      h('option', { value: NEW_K, text: '+ 새 종류' }));
+    const inp = h('input.t-input', { type: 'text', maxlength: '20', placeholder: '새 종류 이름(20자까지)', 'aria-label': '새 종류 이름' });
+    const add = h('button.t-btn.t-btn--2', { type: 'button', text: '더하기' });
+    const row = h('div.sd-newkind', { hidden: true }, inp, add);
+    sel.addEventListener('change', () => { if (sel.value === NEW_K) { row.hidden = false; inp.focus(); } else { row.hidden = true; last = sel.value; } });
+    const make = async () => {
+      const label = inp.value.trim(); if (!label) { inp.focus(); return; }
+      add.disabled = true;
+      try {
+        const k = await api('/shared/ledger-kinds', { method: 'POST', body: { label } });
+        KINDS = { ...KINDS, [k.id]: k.label };
+        sel.insertBefore(h('option', { value: k.id, text: k.label }), sel.querySelector(`option[value="${NEW_K}"]`));
+        sel.value = k.id; last = k.id; row.hidden = true; inp.value = '';
+        toast(`'${k.label}' 종류를 더했습니다`);
+      } catch (e) { onErr?.(e?.message || '종류를 더하지 못했습니다'); }
+      finally { add.disabled = false; }
+    };
+    add.addEventListener('click', make);
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); make(); } });
+    const el = h('div.sd-kind', {}, sel, row);
+    el.value = () => (sel.value === NEW_K ? last : sel.value);
+    return el;
+  };
+  const SMALL = 20 * 1024 * 1024, BIGMAX = 5e9;           // 20MB 이하 = 한 번에(예전 그대로) · 넘으면 나눠 올리기(영상 업로드와 같은 부품 · 5GB까지)
   function openAdminUpload() {
     const nm = h('input.t-input', { type: 'text', maxlength: '60', 'aria-label': '이름' });
-    const kd = kindSel('farm_ledger');
-    const file = h('input.sd-file', { type: 'file', accept: '.zip,.gpkg,.geojson,.json,.csv,.xlsx', 'aria-label': '파일' });
     const err = h('p.sd-err', { role: 'alert' });
+    const kd = kindSel('farm_ledger', (t) => { err.textContent = t; });
+    const file = h('input.sd-file', { type: 'file', accept: '.zip,.gpkg,.geojson,.json,.csv,.xlsx', 'aria-label': '파일' });
+    let picked = null;
+    const cur = () => picked?.file || file.files?.[0] || null;
+    const shown = h('span.sd-file-n', { hidden: true });
     const go = h('button.t-btn', { type: 'button', text: '올리기', disabled: true });
     const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
     const m = modal({ title: UP.admin, body: h('div.sd-form', {},
-      h('label', {}, h('span', { text: '이름' }), nm), h('label', {}, h('span', { text: '종류' }), kd),
-      h('label', {}, h('span', { text: '파일(SHP zip · GPKG · GeoJSON · CSV)' }), file), err, h('div.sd-act', {}, no, go)) });
-    const ready = () => { go.disabled = !(nm.value.trim() && file.files?.length); };
+      h('label', {}, h('span', { text: '이름' }), nm), h('div.sd-lab', {}, h('span', { text: '종류' }), kd),
+      h('label', {}, h('span', { text: '파일(SHP zip · GPKG · GeoJSON · CSV · 5GB까지)' }), file, shown), err, h('div.sd-act', {}, no, go)) });
+    /* 크롬 · 엣지 · 웨일 — 파일 손잡이로 고른다(11-01 같은 탭 이어 올리기: 화면을 옮겨도 파일을 다시 고르지 않고 이어 올림). 그 밖 브라우저는 보통 파일 고르기 */
+    if (window.showOpenFilePicker) file.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const [hd] = await window.showOpenFilePicker({ types: [{ description: '행정 자료', accept: { 'application/octet-stream': ['.zip', '.gpkg', '.geojson', '.json', '.csv', '.xlsx'] } }] });
+        picked = { file: await hd.getFile(), handle: hd };
+        shown.hidden = false; shown.textContent = picked.file.name;
+        file.dispatchEvent(new Event('change'));
+      } catch { /* 고르기 취소 */ }
+    });
+    const ready = () => { go.disabled = !(nm.value.trim() && cur()); };
     nm.addEventListener('input', ready);
-    file.addEventListener('change', () => { err.textContent = ''; const f = file.files?.[0]; if (f && !nm.value.trim()) nm.value = f.name.replace(/\.[^.]+$/, '').slice(0, 60); ready(); });
+    file.addEventListener('change', () => { if (file.files?.length) { picked = null; shown.hidden = true; } err.textContent = ''; const f = cur(); if (f && !nm.value.trim()) nm.value = f.name.replace(/\.[^.]+$/, '').slice(0, 60); ready(); });
     no.addEventListener('click', () => m.close());
     go.addEventListener('click', async () => {
+      const fl = cur();
+      if (fl.size > SMALL) {                                  // 큰 파일 — 나눠 올리기(따로 열리는 업로드 창) · 다 올리면 서버가 뒤에서 읽어 지도에 놓는다
+        const ext = (fl.name.split('.').pop() || '').toLowerCase();
+        if (!['gpkg', 'zip', 'geojson', 'json'].includes(ext)) { err.textContent = '20MB가 넘는 파일은 GPKG · SHP(zip) · GeoJSON 만 올릴 수 있습니다'; return; }
+        if (fl.size > BIGMAX) { err.textContent = '한 파일 5GB까지 올릴 수 있습니다'; return; }
+        go.disabled = true; go.textContent = '올리기 시작하는 중'; err.textContent = '';
+        const U = await import('../../kit/uploads.js');
+        const ok = await U.startUploads([{ file: fl, handle: picked?.handle || null }], { kind: 'ledger', ledgerKind: kd.value(), name: nm.value.trim(), label: `행정 자료 · ${nm.value.trim()}` });
+        if (ok) { m.close(true); toast('업로드를 시작했습니다 · 다 올리면 서버가 읽어 목록에 진행률이 보입니다'); }
+        else { go.textContent = '올리기'; ready(); }
+        return;
+      }
       go.disabled = true; go.textContent = '올리는 중'; err.textContent = '';
       const fd = new FormData();
-      fd.append('file', file.files[0]); fd.append('kind', kd.value); fd.append('name', nm.value.trim());
+      fd.append('file', fl); fd.append('kind', kd.value()); fd.append('name', nm.value.trim());
       try {
         const tok = session.get()?.token;
         const r = await fetch(API.prefix + '/shared/ledgers', { method: 'POST', body: fd, headers: tok ? { authorization: 'Bearer ' + tok } : {} });
@@ -466,17 +540,17 @@ export function mountShared(root) {
   }
   function openAdminEdit(x) {
     const nm = h('input.t-input', { type: 'text', maxlength: '60', value: x.name || '', 'aria-label': '이름' });
-    const kd = kindSel(x.kind);
     const err = h('p.sd-err', { role: 'alert' });
+    const kd = kindSel(x.kind, (t) => { err.textContent = t; });
     const save = h('button.t-btn', { type: 'button', text: '저장' });
     const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
     const m = modal({ title: '정보 고치기', body: h('div.sd-form', {},
-      h('label', {}, h('span', { text: '이름' }), nm), h('label', {}, h('span', { text: '종류' }), kd), err, h('div.sd-act', {}, no, save)) });
+      h('label', {}, h('span', { text: '이름' }), nm), h('div.sd-lab', {}, h('span', { text: '종류' }), kd), err, h('div.sd-act', {}, no, save)) });
     no.addEventListener('click', () => m.close());
     save.addEventListener('click', async () => {
       const b = {};
       if (nm.value.trim() !== (x.name || '')) b.name = nm.value.trim();
-      if (kd.value !== x.kind) b.kind = kd.value;
+      if (kd.value() !== x.kind) b.kind = kd.value();
       if (!Object.keys(b).length) { m.close(); return; }
       save.disabled = true;
       try { await api(`/shared/ledgers/${encodeURIComponent(x.id)}`, { method: 'PATCH', body: b }); m.close(true); toast('바꿨습니다'); reload('admin'); }
@@ -538,6 +612,6 @@ export function mountShared(root) {
       toast("업로드를 시작했습니다 · 위쪽 '업로드 중' 표시에서 진행을 봅니다");
     } })).catch(() => { box.textContent = '올리기 칸을 열지 못했습니다'; });
   }
-  addEventListener('lx:upload-done', (e) => { if (e.detail?.purpose?.kind === 'shared') reload('img'); });
+  addEventListener('lx:upload-done', (e) => { if (e.detail?.purpose?.kind === 'shared') reload('img'); else if (e.detail?.purpose?.kind === 'ledger') reload('admin'); });
   return { load: () => { D.img = D.train = D.admin = null; load(); } };
 }

@@ -26,7 +26,7 @@ const uid = () => 'imp-' + Date.now().toString(36) + Math.random().toString(36).
 /* 대장 종류 — 서버 kind ↔ 화면 말(명세 §2.9 문구) */
 export const KIND_LABEL = { farm_ledger: '농지대장', dev_permit: '개발행위허가 대장', public_asset: '공유재산 대장', river_permit: '점용허가 대장', greenhouse: '시설 신고 대장', feedcrop: '사료작물 재배 신청 대장', direct_pay: '공익직불 신청 대장' };   // direct_pay = 10-22 제안-공익직불대장
 const KIND_CODE = Object.fromEntries(Object.entries(KIND_LABEL).map(([k, v]) => [v, k]));
-const KIND_BY_CARD = { 'card-farm': 'farm_ledger', 'card-change': 'dev_permit', 'card-road': 'river_permit', 'card-marine': 'river_permit', 'card-living': 'greenhouse', 'card-crowd': 'public_asset' };
+const KIND_BY_CARD = { 'card-farm': 'farm_ledger', 'card-road': 'river_permit', 'card-marine': 'river_permit', 'card-living': 'greenhouse', 'card-crowd': 'public_asset' };
 const KIND_ORDER = Object.keys(KIND_LABEL);
 /** 올린 파일의 대장 종류 — 파일 이름 · 열 이름에서(없으면 null → 기관 카드 종류) */
 export function kindOfFile(name, headers) {

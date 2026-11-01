@@ -2,7 +2,7 @@
 
 fetch_imagery(bbox_5179, year, zoom) → (RGB 배열, (원점 x, 원점 y, 해상도)) · 타일은 디스크 캐시
   TILE_CACHE/{year}/{z}/{col}_{row}.jpg  (없음 = .none 표시 — 같은 빈 타일을 다시 묻지 않음)
-available_years(bbox_5179) → 레이어가 실제로 영상을 주는 해(2019~올해 프로브 · 결과 캐시)
+available_years(bbox_5179) → 레이어가 실제로 영상을 주는 해(2016~올해 프로브 · 결과 캐시 · 남색 빈 칸은 없음)
 바깥 요청은 국토지리정보원 영상 타일뿐(키 · 메일 없음 · Referer 만).
 """
 from __future__ import annotations
@@ -23,7 +23,20 @@ from . import TILE_CACHE, roadland_src
 roadland_src()
 import ngii as NG  # noqa: E402 — geoai_roadland/src/ngii.py
 
-YEAR_MIN = 2019
+YEAR_MIN = 2016          # 10-30 PM "그래도 된다" — 2016 → 2019 → 2024 세 시점(옛 해는 51cm · z17)
+# 국토지리정보원은 영상이 없는 칸을 남색 한 장(정상 응답 200)으로 준다 — 영상으로 받으면 '변화'가 거짓으로 생긴다.
+# 칸 전체가 그 색이면 '없음'(.none), 일부가 그 색이면 그 화소를 0(빈 곳)으로 — 분석은 0 인 곳을 비교하지 않는다(run.py · ijimok.py).
+EMPTY_RGB = (8, 57, 89)
+
+
+def _drop_empty(arr: np.ndarray) -> np.ndarray | None:
+    m = (np.abs(arr.astype(np.int16) - np.array(EMPTY_RGB, np.int16)).max(axis=-1) <= 3)
+    if m.mean() > 0.98 or float(arr.reshape(-1, 3).std(axis=0).max()) < 2.0:
+        return None
+    if m.any():
+        arr = arr.copy()
+        arr[m] = 0
+    return arr
 _lock = threading.Lock()
 _stats = {"hit": 0, "miss": 0, "none": 0}
 
@@ -32,13 +45,41 @@ def _path(year: int, z: int, col: int, row: int) -> Path:
     return TILE_CACHE / str(year) / str(z) / f"{col}_{row}.jpg"
 
 
+def _extra_caches() -> list[Path]:
+    """같은 국토지리정보원 타일을 이미 받아 둔 다른 캐시(같은 모양 {해}/{줌}/{열}_{행}.jpg · 읽기만) — config/imagery.yaml ngii_extra_caches."""
+    try:
+        from landxi_api import config
+        return [Path(x) for x in (config.load_yaml("imagery") or {}).get("ngii_extra_caches") or []]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def tile(col: int, row: int, z: int, year: int) -> np.ndarray | None:
     p = _path(year, z, col, row)
+    if not p.exists() and not p.with_suffix(".none").exists():
+        for base in _extra_caches():                   # 다른 캐시에 있으면 이 캐시로 이어 붙인다(같은 파일 · 다시 받지 않음)
+            q = base / str(year) / str(z) / f"{col}_{row}.jpg"
+            if q.exists():
+                try:
+                    p.parent.mkdir(parents=True, exist_ok=True)
+                    import os
+                    try:
+                        os.link(q, p)
+                    except OSError:
+                        import shutil
+                        shutil.copyfile(q, p)
+                except Exception:  # noqa: BLE001
+                    pass
+                break
     if p.exists():
         with _lock:
             _stats["hit"] += 1
         try:
-            return np.asarray(Image.open(p).convert("RGB"))
+            a = _drop_empty(np.asarray(Image.open(p).convert("RGB")))
+            if a is None:                      # 예전에 받아 둔 빈 칸(남색) — 없음으로 바꾼다
+                p.unlink(missing_ok=True)
+                p.with_suffix(".none").write_bytes(b"")
+            return a
         except Exception:
             p.unlink(missing_ok=True)
     nonef = p.with_suffix(".none")
@@ -60,8 +101,10 @@ def tile(col: int, row: int, z: int, year: int) -> np.ndarray | None:
         nonef.write_bytes(b"")
         return None
     try:
-        arr = np.asarray(Image.open(BytesIO(data)).convert("RGB"))
+        arr = _drop_empty(np.asarray(Image.open(BytesIO(data)).convert("RGB")))
     except Exception:
+        arr = None
+    if arr is None:                            # 받지 못함 · 남색 빈 칸 = 그 해 영상 없음
         nonef.write_bytes(b"")
         return None
     p.write_bytes(data)

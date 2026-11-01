@@ -1,6 +1,7 @@
 /* swipe.js — 카드 그림 원본 ↔ AI 결과 밀어 보기(10-25 원칙 339 · 분석 서비스 갤러리 · 자세히 · 서비스 카드 관리 · 배포 신청 승인).
    같은 틀 두 장을 포갠 한 그림. 처음 보일 때 한 번: 원본에서 오른쪽으로 넘어가며 결과(1.5 s) · 결과에서 멈춤.
-   그 뒤 끌기 · 마우스를 따라 움직이고, 마우스가 나가면 결과로. 움직임 줄이기 설정이면 결과를 바로. 키보드 ← → (범위 입력). CSS: kit/swipe.css */
+   그 뒤(10-31 XI 웹 개편 5) 마우스를 올려도 움직이지 않는다 — 누른 자리로 경계가 옮겨지고, 누른 채 끌면 따라온다. 경계 손잡이 = 좌우 스와이프 표시.
+   움직임 줄이기 설정이면 결과를 바로. 키보드 ← → (범위 입력). CSS: kit/swipe.css */
 import { h, API } from './util.js';
 
 export function absSrc(u) { return String(u || '').startsWith('/api/') ? API.base + u : u; }
@@ -8,12 +9,14 @@ export function absSrc(u) { return String(u || '').startsWith('/api/') ? API.bas
 export function swipePic(scene, onerror) {
   const sw = scene.swipe;
   const labels = (sw.labels && sw.labels.length === 2) ? sw.labels : ['원본', 'AI 결과'];
-  const base = h('img.la-swp-b', { src: absSrc(sw.before), alt: '', loading: 'lazy', decoding: 'async', onerror });
-  const res = h('img.la-swp-r', { src: absSrc(scene.src), alt: '', decoding: 'async', onerror });   // 지연 읽기 없음 — 처음엔 다 가려져 있어 브라우저가 영영 안 읽는다
+  const base = h('img.la-swp-b', { src: absSrc(sw.before), alt: '', draggable: 'false', loading: 'lazy', decoding: 'async', onerror });
+  const res = h('img.la-swp-r', { src: absSrc(scene.src), alt: '', draggable: 'false', decoding: 'async', onerror });   // 지연 읽기 없음 — 처음엔 다 가려져 있어 브라우저가 영영 안 읽는다
   const lab = h('span.la-swp-lab', {}, h('b.l', { text: labels[0] }), h('i', { 'aria-hidden': 'true' }), h('b.r', { text: labels[1] }));
   const leg = (sw.legend || []).length ? h('span.la-swp-leg', {}, ...sw.legend.map(([c, w]) => h('span', {}, h('i', { style: { background: c } }), w))) : null;
   const range = h('input.la-swp-in', { type: 'range', min: '0', max: '100', step: '1', value: '0', 'aria-label': `${labels[0]}과 ${labels[1]} 밀어 보기` });
-  const box = h('div.la-swp', { dataset: { side: 'l' } }, base, res, h('span.la-swp-bar', { 'aria-hidden': 'true' }), lab, leg, range);
+  /* 좁은 화면(11-01 PM '범례는 접는다') — 범례는 접은 칩 '범례' 하나 · 누르면 펼침/접힘. PC 는 그대로(CSS 가 칩을 숨김) */
+  const legb = leg ? h('button.la-swp-legb', { type: 'button', text: '범례', 'aria-expanded': 'false', onclick: (e) => { e.stopPropagation(); const on = box.dataset.leg !== '1'; if (on) box.dataset.leg = '1'; else delete box.dataset.leg; legb.setAttribute('aria-expanded', String(on)); } }) : null;
+  const box = h('div.la-swp', { dataset: { side: 'l' } }, base, res, h('span.la-swp-bar', { 'aria-hidden': 'true' }), legb, h('span.la-swp-knob', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6"/></svg>' }), lab, leg, range);
   let v = 0, raf = 0, played = false, auto = false, hand = false;     // auto = 처음 한 번 넘어가는 중 · hand = 사람이 움직인 뒤
   const set = (x) => { v = Math.max(0, Math.min(100, x)); box.style.setProperty('--v', v + '%'); box.dataset.side = v >= 50 ? 'r' : 'l'; range.value = String(Math.round(v)); };
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -25,9 +28,14 @@ export function swipePic(scene, onerror) {
     ready().then(() => { if (hand) return; auto = true; glide(100, 1500, () => { auto = false; box.dataset.done = '1'; }); }); };
   const take = () => { played = true; hand = true; auto = false; cancelAnimationFrame(raf); box.dataset.done = '1'; };
   range.addEventListener('input', () => { take(); set(+range.value); });
-  box.addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse' || auto) return;          // 처음 한 번 넘어가는 동안은 마우스를 따르지 않는다
-    take(); const r = box.getBoundingClientRect(); set(((e.clientX - r.left) / r.width) * 100); });
-  box.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && hand) glide(100, 350); });   // 나가면 결과로
+  // 누르기 · 끌기로만 옮긴다(마우스를 올리기만 하면 그대로 · 10-31 개편 5). 처음 한 번 넘어가는 중에 누르면 거기서 멈추고 사람 손으로.
+  let drag = -1;
+  const at = (e) => { const r = box.getBoundingClientRect(); set(((e.clientX - r.left) / r.width) * 100); };
+  box.addEventListener('pointerdown', (e) => { if (e.button > 0 || e.target.closest?.('.la-swp-legb')) return; if (e.pointerType !== 'touch') e.preventDefault();   /* 그림 끌어 놓기가 시작되면 끌기가 끊긴다(pointercancel) */
+    take(); drag = e.pointerId; box.dataset.drag = '1'; try { box.setPointerCapture(e.pointerId); } catch { /* 잡지 못해도 누른 자리로는 옮김 */ } if (e.pointerType !== 'touch') at(e); });   // 손가락은 위아래 넘기기와 헷갈리지 않게 움직일 때부터
+  box.addEventListener('pointermove', (e) => { if (e.pointerId === drag) at(e); });
+  const end = (e) => { if (e.pointerId !== drag) return; drag = -1; delete box.dataset.drag; };
+  box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
   set(0);
   if (!('IntersectionObserver' in window)) box.play();
   else {

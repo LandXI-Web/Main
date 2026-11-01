@@ -53,6 +53,7 @@ from . import config
 from . import spaces as S
 from .deps import ApiError, Principal, audit, db, principal, redis, require
 from .svc_rules import SQL_NOT_EXCLUDED  # 서비스 × 시군구 보이기 규칙(원칙 293)
+from .own_scope import sql_private, sql_public  # 개인 결과는 장부 밖(10-31)
 from .envelope import KST, RawJSON, env, now_iso
 
 router = APIRouter()          # 화면용(/api/v1) — LX 관리자 · 기관 관리자 · 공개 신청 창
@@ -237,7 +238,7 @@ async def ledger_sync(force: bool = False) -> int:
         jobs = {r["id"]: dict(r) for r in await c.fetch(
             "SELECT j.id, j.card_id, j.imagery_id, j.finished_at, i.sgg_cd AS isgg, i.year AS iyear, i.epoch, i.name AS iname, md.classes AS mcls FROM jobs j "
             "LEFT JOIN imagery i ON i.id = j.imagery_id LEFT JOIN models md ON md.id = j.model_id "
-            "WHERE j.state = 'done' AND NOT coalesce(j.test, false) AND j.id LIKE 'job_%'")}
+            "WHERE j.state = 'done' AND NOT coalesce(j.test, false) AND j.id LIKE 'job_%'" + sql_public("j"))}   # 개인 결과는 장부에 넣지 않음(10-31 · own_scope)
         # 모델을 둘 이상 쓰는 카드(관광지 안전관리: 사람 · 차량) — '지금 결과'를 찾는 것마다 따로(10-25 사용자 '1번은 A' · 0131)
         multi = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM card_versions WHERE coalesce(array_length(model_ids, 1), 0) > 1")}
         tg_of = {r["set_id"]: r["target"] for r in await c.fetch("SELECT set_id, target FROM service_results WHERE target <> ''")}
@@ -285,6 +286,8 @@ async def ledger_sync(force: bool = False) -> int:
         for jid, j in jobs.items():
             if j["card_id"] and not j["card_id"].startswith("card-global") and (j["card_id"], jid) not in cand:
                 put(j["card_id"], jid, None, latest.get(j["card_id"]), "job")
+        # 예전에 장부에 들어간 개인 결과(배포 · 공개 판에 쓰이지 않은 것) — 장부에서 뺀다(작업 · 결과는 그대로 · 낸 사람 지도 서비스에 남음)
+        await c.execute("DELETE FROM service_results s WHERE s.origin = 'job' AND EXISTS (SELECT 1 FROM jobs j WHERE j.id = s.set_id AND " + sql_private("j") + ")")
         n = 0
         for v in cand.values():
             if not v["sgg_cd"]:
@@ -322,8 +325,11 @@ async def _services(c, only_with_results: bool = True) -> list[dict]:
     rows = await c.fetch("SELECT c.id, c.api_id, c.name, c.api_sources, c.domain, i.line FROM cards c LEFT JOIN card_info i ON i.card_id = c.id "
                          "WHERE c.api_id IS NOT NULL ORDER BY c.id")
     have = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM service_results s WHERE replaced_at IS NULL" + SQL_NOT_EXCLUDED)}
+    ok = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM card_versions WHERE approved_by IS NOT NULL AND approved_at IS NOT NULL")}
     out = []
     for r in rows:
+        if r["id"] not in ok:                          # 공개 승인된 카드만(card_gate · 11-01 PM)
+            continue
         if only_with_results and r["id"] not in have:
             continue
         out.append({"card": r["id"], "id": r["api_id"], "name": _card_name(r["name"]), "line": r["line"] or None,

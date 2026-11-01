@@ -38,7 +38,7 @@ export function mountRelease(root) {
   const keys = apiKeysPane(panes.api);
   const rt = retrainPane(panes.rt), tpl = templatePane(panes.tpl);
   let tab = null;
-  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl', requests: 'req', cards: 'cards' })[m?.[1]] || 'cards'; };   // 배포를 열면 '배포된 카드'가 먼저(10-25)
+  const want = () => { const m = /^#\/deploys\/(\w+)/.exec(location.hash); return ({ share: 'share', usage: 'usage', categories: 'cat', improve: 'imp', api: 'api', retrain: 'rt', templates: 'tpl', requests: 'req', cards: 'cards', official: 'off' })[m?.[1]] || 'cards'; };   // 배포를 열면 '배포된 카드'가 먼저(10-25)
   function set(t, push = false) {
     if (t === 'cards') {   // 배포된 카드 = 서비스 카드 관리 화면 · 다른 화면 사이드 메뉴의 '배포'(?view=deploys)로 들어와도 같다(10-26 — 예전엔 모든 탭이 한꺼번에 펼쳐졌다)
       if (/^#\/deploys/.test(location.hash) || new URLSearchParams(location.search).get('view') === 'deploys' || push) location.replace('../lx-cards/');
@@ -154,6 +154,83 @@ export function mountRelease(root) {
         x.state === 'approved' ? h('a.rv-link', { href: '#/deploys/share', text: '기관 공유로' }) : null));
     }
     return h('section.t-card.rv-card.rv-detail', {}, ...kids);
+  }
+
+  /* ── 공식 결과(10-31 PM "공식 결과로 배포는 지금 만들어") ─────────────────────────────
+     분석 결과(개인 결과 포함) → '공식 결과로 배포'(장부 · 메인 · XI맵 · 외부 API · 기관 화면 숫자) · '공식에서 내리기'(한 단계 되돌리기).
+     서버 GET /official/results · GET …/plan(무엇이 바뀌는지) · POST …/deploy {replace} · POST …/withdraw. 확인은 화면 안 칸(브라우저 확인 창 없음). */
+  let OF = null, ofPick = null, ofShow = 'all';
+  async function paintOff() {
+    if (!OF) { const x = h('div'); panes.off.replaceChildren(x); empty(x, { kind: 'loading', compact: true }); }
+    try { OF = await during(api('/official/results')); } catch (e) { panes.off.replaceChildren(h('p.rv-empty', { text: e.message || '공식 결과를 불러오지 못했습니다' })); return; }
+    drawOff();
+  }
+  function drawOff() {
+    const all = OF.items || [];
+    const items = all.filter((x) => ofShow === 'all' || (ofShow === 'personal' ? x.state === 'personal' : x.state !== 'personal'));
+    if (!ofPick || !items.some((x) => x.id === ofPick)) ofPick = items[0]?.id || null;
+    const seg = h('div.rv-seg', { role: 'tablist', 'aria-label': '보기' }, ...[['all', '전체'], ['personal', '개인'], ['official', '공식']].map(([k, t]) =>
+      h('button', { type: 'button', role: 'tab', 'aria-selected': String(ofShow === k), text: t, onclick: () => { ofShow = k; drawOff(); } })));
+    const rows = items.map((x) => h('tr', { class: x.id === ofPick ? 'is-on' : '', tabindex: '0', onclick: () => { ofPick = x.id; drawOff(); }, onkeydown: (e) => { if (e.key === 'Enter') { ofPick = x.id; drawOff(); } } },
+      h('td', {}, h('b', { text: x.service }), h('small', { text: join(x.region, x.imagery) })),
+      h('td', { text: x.who || '—' }), h('td.num', { text: md(x.at) }),
+      h('td', {}, h('span.t-chip', { dataset: { lv: x.state === 'official' ? 'now' : '' }, text: x.current ? '공식 · 지금' : x.state_label }))));
+    const n = OF.n || {};
+    const list = h('section.t-card.rv-card', {}, h('header.rv-h.rv-h--row', {}, h('div', {}, h('h2', { text: '공식 결과' }),
+      units('span.rv-sub', join(`개인 ${nf(val(n.personal))}`, `공식 ${nf(val(n.official))}`, `배포 결과 ${nf(val(n.deploy))}`))), seg),
+      items.length ? h('table.rv-tbl', {}, h('thead', {}, h('tr', {}, ...['서비스 · 지역', '낸 사람', '날짜', '상태'].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows))
+        : h('p.rv-empty', { text: '보일 결과가 없습니다' }),
+      h('p.rv-note', { text: '공식 결과는 메인 · XI맵 · 외부 API · 기관 화면 숫자에 들어갑니다. 개인 결과는 낸 사람의 지도 서비스에만 보입니다.' }));
+    const it = items.find((x) => x.id === ofPick);
+    panes.off.replaceChildren(h('div.rv-grid.rv-grid--req', {}, list, it ? offDetail(it) : h('section.t-card.rv-card', {}, h('p.rv-empty', { text: '결과를 고르면 여기서 공식 결과로 배포합니다' }))));
+  }
+  function offDetail(x) {
+    const dl = h('dl.rv-dl');
+    const row = (k, ...v) => dl.append(h('div', {}, h('dt', { text: k }), h('dd', {}, ...v)));
+    row('서비스', h('b', { text: x.service }));
+    row('지역', h('span', { text: x.region || '—' }));
+    row('영상', h('span', { text: x.imagery || '—' }));
+    row('낸 사람', h('span', { text: join(x.who, mdhm(x.at)) || '—' }));
+    row('찾은 수', h('b', { text: `${nf(val(x.found))}개` }));
+    row('상태', h('b', { text: x.current ? '공식 결과 · 지금 쓰이는 결과' : x.state === 'official' ? '공식 결과 · 지난 결과' : x.state_label }));
+    const box = h('div.rv-off');
+    if (x.state === 'deploy') box.append(h('p.rv-note', { text: '기관에 공유한 배포 결과입니다 — 기관 공유 탭에서 바꿉니다.' }));
+    else {
+      const up = x.state === 'personal';
+      const go = h('button.t-btn', { type: 'button', text: up ? '공식 결과로 배포' : '공식에서 내리기', class: up ? '' : 't-btn--2' });
+      box.append(h('div.rv-decide', {}, go));
+      go.addEventListener('click', () => confirmOff(x, box, up));
+    }
+    return h('section.t-card.rv-card.rv-detail', {}, h('header.rv-h', {}, h('h2', { text: x.service }), units('span.rv-sub', join(x.region, x.imagery))), dl, box);
+  }
+  async function confirmOff(x, box, up) {
+    let p;
+    try { p = await api(`/official/results/${encodeURIComponent(x.id)}/plan`); } catch (e) { toast(e.message || '바뀌는 것을 알아보지 못했습니다'); return; }
+    if (!p.can) { box.replaceChildren(h('p.rv-need', { text: p.why })); return; }
+    const say = [];
+    if (up) {
+      say.push(`${x.service} · ${x.region} · ${nf(val(x.found))}개가 메인 · XI맵 · 외부 API · 기관 화면 숫자에 들어갑니다.`);
+      if (p.replace) say.push(`바꿔 올림 — 지금 공식 결과(${join(p.replace.who, md(p.replace.at), val(p.replace.found) == null ? '' : `${nf(val(p.replace.found))}개`)})를 이 결과로 바꿉니다.`);
+      if (p.stays) say.push(`이 자리에 ${p.stays.deploy ? '배포 결과' : '더 늦은 공식 결과'}가 있어 지금 숫자는 그대로이고, 이 결과는 지난 결과로 남습니다.`);
+      say.push('낸 사람 말고도 LX 직원 · 관리자가 이 결과를 볼 수 있게 됩니다.');
+    } else {
+      say.push(`${x.service} · ${x.region} · ${nf(val(x.found))}개가 메인 · XI맵 · 외부 API · 기관 화면 숫자에서 빠지고, 낸 사람의 개인 결과로 돌아갑니다.`);
+      if (x.current) say.push('이 자리에 앞서 올린 공식 결과가 있으면 그 결과가 다시 보입니다.');
+    }
+    if (p.hidden) say.push('이 서비스 · 지역은 보이기 규칙으로 메인에 나타나지 않습니다.');
+    const ok = h('button.t-btn', { type: 'button', text: up ? (p.replace ? '바꿔 올리기' : '공식 결과로 배포') : '공식에서 내리기' });
+    const no = h('button.t-btn.t-btn--2', { type: 'button', text: '취소' });
+    const note = h('p.rv-need', { role: 'status' });
+    box.replaceChildren(h('div.rv-confirm', { role: 'group', 'aria-label': '확인' }, ...say.map((s) => h('p', { text: s })), h('div.rv-decide', {}, no, ok), note));
+    no.addEventListener('click', () => drawOff());
+    ok.addEventListener('click', async () => {
+      ok.disabled = no.disabled = true; note.textContent = '';
+      try {
+        await api(`/official/results/${encodeURIComponent(x.id)}/${up ? 'deploy' : 'withdraw'}`, { method: 'POST', body: up ? { replace: !!p.replace } : {} });
+        toast(up ? '공식 결과로 배포했습니다 — 메인 · XI맵 숫자에 바로 들어갑니다' : '공식에서 내렸습니다 — 낸 사람의 개인 결과로 돌아갔습니다');
+        await paintOff();
+      } catch (e) { note.textContent = e.message || '바꾸지 못했습니다'; ok.disabled = no.disabled = false; }
+    });
   }
 
   /* ── 기관 공유 ─────────────────────────── */
@@ -342,6 +419,7 @@ export function mountRelease(root) {
   function paint() {
     if (root.hidden) return;
     if (tab === 'req') paintReq();
+    else if (tab === 'off') paintOff();
     else if (tab === 'share') paintShare();
     else if (tab === 'usage') paintUsage();
     else if (tab === 'cat') paintCat();

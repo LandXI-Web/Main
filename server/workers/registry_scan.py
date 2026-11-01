@@ -232,7 +232,7 @@ def upsert_models_sql(cur, rows: list[dict]):
         cur.execute(
             "INSERT INTO models(id, family, version, weights_uri, task, classes, input, gsd_trained_m, metrics, status, image, tile_size, "
             "infer_shape, card_url, adapter) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (id) DO UPDATE SET "
-            "family=EXCLUDED.family, version=EXCLUDED.version, weights_uri=EXCLUDED.weights_uri, task=EXCLUDED.task, classes=EXCLUDED.classes, "
+            "family=CASE WHEN models.family ~ '^yolo[0-9]+[nslmx]' AND EXCLUDED.family ~ '^yolo[0-9]+-' THEN models.family ELSE EXCLUDED.family END, version=EXCLUDED.version, weights_uri=EXCLUDED.weights_uri, task=EXCLUDED.task, classes=EXCLUDED.classes, "
             "input=EXCLUDED.input, gsd_trained_m=EXCLUDED.gsd_trained_m, metrics=EXCLUDED.metrics, status=EXCLUDED.status, "
             "tile_size=EXCLUDED.tile_size, infer_shape=EXCLUDED.infer_shape, card_url=EXCLUDED.card_url, adapter=EXCLUDED.adapter",
             (m["id"], m["family"], m["version"], m["weights_uri"], m["task"], json.dumps(m["classes"], ensure_ascii=False),

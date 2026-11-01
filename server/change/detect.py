@@ -49,17 +49,22 @@ GNAME = {1: "건물", 2: "도로", 3: "경작", 4: "산림", 5: "수역", 6: "�
 TYPES = ["신축", "소실", "경작 전환", "포장 확대", "식생 증감"]
 TYPE_HIDDEN = {"식생 증감"}
 # 카드마다 찾는 변화 묶음(카드 판 modules.change_types · 10-25) — 국토 변화 기본값(TYPES)은 그대로 두고 더한다
-TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물"],
+# 산사태 취약지역(10-31 landslide-d · change/forest) — 예전 세 유형에 '산림 → 농지'(개간) · '채석장 · 개발지 확장'(이미 맨땅이던 곳 둘레 · 따로 표시)을 더함
+TYPE_SETS = {"landslide": ["산림 → 나지", "산림 → 도로", "산림 → 건물", "산림 → 농지 · 초지", "채석장 · 개발지 확장"],
              # 이지목 현황(카드 ② · 10-28 v5) — 변화가 아니라 필지 판정 층 7종(이지목_판정별레이어.gpkg 레이어명 · change/ijimok.LAYERS 와 같은 순서)
-             "ijimok": ["정상_지목일치", "미확정_나지초지", "점유의심", "지목미정리", "유휴산림화", "수역구거", "기타"]}
-TSET_VER = {"landslide": "landslide-c", "ijimok": "ijimok-3"}      # 묶음 계산 판(캐시 열쇠) — 산사태 후보 C(임야 필지 · 10-28 결정8)
+             "ijimok": ["정상_지목일치", "미확정_나지초지", "점유의심", "지목미정리", "유휴산림화", "수역구거", "기타"],
+             # 공공용지 무단점유(11-01 PM · change/publand · config/publand.yaml types 와 같은 이름)
+             "publand": ["무단적치 쓰레기", "불법 형질변경"]}
+TSET_VER = {"landslide": "landslide-d2", "ijimok": "ijimok-3", "publand": "publand-4"}      # 묶음 계산 판(캐시 열쇠) — 산사태 d: 산림 변화 모델(change/forest · 10-31) · 예전 c: 임야 필지 + ap25(10-28 결정8)
+KEEP_LONG = {"산림 → 도로"}     # 길쭉해도 버리지 않는 유형(임도 · 절개 띠 — 세장비 거름 예외 · 10-31)
 
 
 def types_of(tset: str | None) -> list[str]:
     return list(TYPE_SETS.get(tset or "", TYPES))
 MIN_AREA = 50.0      # ㎡
 MAX_ELONG = 6.0      # 세장비
-MIN_AREA_BY = {"경작 전환": 200.0, "식생 증감": 300.0, "산림 → 나지": 100.0}   # 계절 차이로 흔들리는 유형은 더 크게(영상 계절이 다름 · 지시서 3.4)
+MIN_AREA_BY = {"경작 전환": 200.0, "식생 증감": 300.0, "산림 → 나지": 100.0, "산림 → 농지 · 초지": 100.0, "산림 → 건물": 50.0, "산림 → 도로": 100.0,
+               "채석장 · 개발지 확장": 100.0}   # 계절 차이로 흔들리는 유형은 더 크게(영상 계절이 다름 · 지시서 3.4)
 
 
 def group_map(cls: np.ndarray) -> np.ndarray:
@@ -157,7 +162,7 @@ def polygons(masks: dict[str, np.ndarray], grid: Grid, aoi_mask: np.ndarray | No
             p = p.simplify(grid.res * 0.75, preserve_topology=True)
             if p.area < amin:
                 continue
-            if elong and elongation(p) > MAX_ELONG and p.area < 2000:
+            if elong and t not in KEEP_LONG and elongation(p) > MAX_ELONG and p.area < 2000:
                 continue
             out.append((t, p))
     return out

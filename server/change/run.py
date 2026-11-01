@@ -84,7 +84,7 @@ def _tset(run_id: str, tset):
 
 
 def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: int, net, parcels, device="cuda",
-            pause=None, progress=None, log=print, thumb_zoom: dict | None = None, src_a=None, src_b=None, tset=None) -> dict:
+            pause=None, progress=None, log=print, thumb_zoom: dict | None = None, src_a=None, src_b=None, tset=None, part=None, resume=None) -> dict:
     """한 범위 전체. parcels = parcels.for_range 결과(5179). 돌려줌 = stats(dict)."""
     t0 = time.perf_counter()
     tset = _tset(run_id, tset)
@@ -96,6 +96,15 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
         return IJ.compute(run_id=run_id, rng5179=rng5179, line5179=line5179, year=year_b, zoom=zoom, net=net, parcels=parcels, src=SB,
                           device=device, pause=pause, progress=progress, log=log, out=run_dir(run_id))
+    if tset == "publand":                             # 공공용지 무단점유(11-01 PM) — 공공용지 칸 AI 판정 + 피복 경계 + 필지 대조(change/publand · 같은 결과 모양)
+        import importlib
+
+        from . import publand as PL
+        PL = importlib.reload(PL)
+        SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
+        return PL.compute(run_id=run_id, rng5179=rng5179, line5179=line5179, year_a=year_a, year_b=year_b, zoom=zoom, net=net, parcels=parcels,
+                          src_a=SA, src_b=SB, device=device, pause=pause, progress=progress, log=log, out=run_dir(run_id),
+                          part=part, resume=[run_dir(j) for j in (resume or [])])   # 큰 범위 = 칸 블록을 GPU 장마다 나눔(part=[k, n]) · 끊긴 작업 이어서(resume)
     types = D.types_of(tset)
     SA, SB = _sources(run_id, year_a, year_b, src_a, src_b)
     raster = SA.get("kind") == "imagery" or SB.get("kind") == "imagery"
@@ -109,6 +118,14 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
     imya_geoms = []
     if tset == "landslide" and parcels is not None and len(parcels) and "jimok" in parcels:
         imya_geoms = list(parcels[parcels["jimok"].fillna("") == "임"].geometry)
+    # 산사태 취약지역(10-31 landslide-d) — 산림 변화 모델(change/forest · config/landslide.yaml)이 있으면 그것으로(없으면 예전 규칙 c)
+    use_forest = False
+    if tset == "landslide":
+        from . import forest as F
+        use_forest = F.available()
+        if use_forest:
+            fcfg = F.cfg()
+            fnet = F.load(device)
     blocks = _blocks(rng5179, zoom)
     raw: dict[str, list] = {t: [] for t in types}
     tiles_got = {"a": 0, "b": 0, "total": 0}
@@ -132,12 +149,24 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
             continue
         grid = D.Grid(ox, oy, res, A.shape[0], A.shape[1])
         aoi = _raster([rng5179.intersection(box(*b))], grid)
-        if raster:                                    # 등록 영상은 범위 일부만 덮을 수 있다 — 두 시점 모두 영상이 있는 곳만 비교
-            aoi &= (A.max(axis=-1) > 0) & (B.max(axis=-1) > 0)
-            if not aoi.any():
-                continue
+        # 두 시점 모두 영상이 있는 곳만 비교 — 등록 영상(범위 일부) · 국토지리정보원 빈 칸(남색 → 0 · 2016 등 옛 해 · 10-30) 모두
+        aoi &= (A.max(axis=-1) > 0) & (B.max(axis=-1) > 0)
+        if not aoi.any():
+            continue
         if progress:
             progress("infer", bi, len(blocks))
+        if use_forest:
+            imya = _raster([g for g in imya_geoms if g.intersects(box(*b))], grid) if imya_geoms else None
+            A2, B2 = (D.upsample2(A), D.upsample2(B)) if up else (A, B)
+            PA = F.probs(fnet, A2, device=device, pause=pause)
+            PB = F.probs(fnet, B2, device=device, pause=pause)
+            if up:
+                PA, PB = PA[:, ::2, ::2], PB[:, ::2, ::2]
+            masks = F.masks(PA, PB, A, B, res, imya, aoi, fcfg)
+            del PA, PB
+            for t, p in D.polygons(masks, grid, aoi, min_area=10.0, elong=False):
+                raw[t].append(p)
+            continue
         ga = D.infer_groups(net, A, up, device=device, pause=pause)
         gb = D.infer_groups(net, B, up, device=device, pause=pause)
         if road_geoms:
@@ -154,7 +183,30 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         progress("polygons", len(blocks), len(blocks))
     # 블록 경계에서 나뉜 조각 잇기 → 거름
     feats = []
-    for t in types:
+    if use_forest:
+        # 산사태(10-31) — 덩어리 하나에 유형 하나: 유형을 가리지 않고 맞닿은 조각을 한 덩어리로 붙이고(블록 경계 · 유형 경계의 세로 금 없애기)
+        # 유형은 그 덩어리 안 넓이가 가장 큰 유형으로(곤포 카드 '중간에 선이 있어 잘림'과 같은 문제)
+        pieces = [(t, g) for t in types for g in raw[t]]
+        if pieces:
+            from shapely.strtree import STRtree
+            u = unary_union([g.buffer(1.5) for _, g in pieces]).buffer(-1.5)   # 블록 가장자리 잡음 거름(열기)이 남긴 1~2 m 틈까지 잇는다
+            parts = [x for x in (list(u.geoms) if hasattr(u, "geoms") else [u]) if not x.is_empty]
+            tree = STRtree([g for _, g in pieces])
+            for p in parts:
+                area_by: dict[str, float] = {}
+                for k in tree.query(p, predicate="intersects"):
+                    tk, g0 = pieces[int(k)]
+                    area_by[tk] = area_by.get(tk, 0.0) + g0.intersection(p).area
+                t = max(area_by, key=area_by.get) if area_by else types[0]
+                if p.area < D.MIN_AREA_BY.get(t, D.MIN_AREA):
+                    continue
+                if t not in D.KEEP_LONG and D.elongation(p) > D.MAX_ELONG and p.area < 2000:
+                    continue
+                feats.append((t, p))
+        types_loop = []
+    else:
+        types_loop = types
+    for t in types_loop:
         if not raw[t]:
             continue
         u = unary_union(raw[t]).buffer(0)
@@ -162,7 +214,7 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         for p in parts:
             if p.area < D.MIN_AREA_BY.get(t, D.MIN_AREA):
                 continue
-            if D.elongation(p) > D.MAX_ELONG and p.area < 2000:
+            if t not in D.KEEP_LONG and D.elongation(p) > D.MAX_ELONG and p.area < 2000:
                 continue
             feats.append((t, p))
     feats.sort(key=lambda x: -x[1].area)
@@ -190,6 +242,15 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                      "use": None if prow is None else (prow.get("use") if isinstance(prow.get("use"), str) else None),
                      "sgg_cd": None if prow is None else prow.get("sgg_cd"), "pnus": pnus,
                      "hidden": t in D.TYPE_HIDDEN, "geom": p})
+    # 바뀐 곳 경사(공개 30 m 지형 · change/terrain · 산사태 취약지역만 · 못 받으면 빈 값)
+    if tset == "landslide" and rows:
+        try:
+            from . import terrain as TR
+            for r, sl in zip(rows, TR.slope_deg([r["geom"] for r in rows])):
+                if sl:
+                    r["slope_mean"], r["slope_max"] = sl["mean"], sl["max"]
+        except Exception as e:  # noqa: BLE001
+            log("경사 건너뜀", type(e).__name__)
     # 소유구분 — 브이월드 토지소유정보(분류만 · 캐시 · 10-22 사용자 허락). 못 받으면 앞 값(대장 · 토지마스터 판정) 그대로
     if progress:
         progress("owner", 0, 1)
@@ -235,6 +296,8 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         fc["features"].append({"type": "Feature", "id": row["id"], "geometry": mapping(g4), "properties": props})
     (out / "changes.geojson").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     stats = summarize(rows, types)
+    if use_forest:
+        stats["model"] = F.model_path(fcfg).stem
     stats.update({"version": VERSION + (f"+{D.TSET_VER.get(tset, tset)}" if tset else ""), "types": tset, "year_a": year_a, "year_b": year_b, "zoom": zoom,
                   "sources": {k: {x: v[x] for x in ("kind", "year", "id") if x in v} for k, v in (("a", SA), ("b", SB))}, "gsd_m": 0.255 if zoom == 18 else 0.51,
                   "range_km2": round(rng5179.area / 1e6, 3), "blocks": len(blocks), "tiles": tiles_got,

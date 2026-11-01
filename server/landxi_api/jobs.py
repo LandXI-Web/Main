@@ -5,6 +5,8 @@ perf 가 없으면 null + note 'bench 전'. 제출 = jobs 행 + Redis job:{id} �
 """
 from __future__ import annotations
 
+from .job_word import word as _job_word  # noqa: E402 — 상태 말 한 곳(11-01)
+
 import datetime as dt
 import json
 import os
@@ -403,6 +405,8 @@ async def build_quote(p: Principal, body: dict) -> dict:
         raise ApiError("not_found", f"model {body.get('model_id')} 없음")
     if body.get("imagery_id") and not img:
         raise ApiError("not_found", f"imagery {body.get('imagery_id')} 없음")
+    if kind == "infer" and opts.get("scope") == "imagery":
+        return await _quote_img(p, opts, demo, tenant, reasons, model, img)      # 영상 하나로 분석(11-01 PM) — 시군구 · 구간 없이 그 영상 범위
     if p.role == "sales" and not demo:
         reasons.append("demo_required")
     if p.realm == "tenant" and img and (img["tier"] == "raw"):
@@ -514,6 +518,90 @@ async def build_quote(p: Principal, body: dict) -> dict:
         **({"imagery": {"id": img["id"], "gsd_m": float(img["gsd_m"] or 0), "kind": img["kind"], "year": auto.get("year"),
                         "coverage": env(auto.get("coverage"), "ratio", "measured", "그린 범위 ∩ 영상 footprint")},
             "model_id": model["id"] if model else None} if auto and img else {}),
+    }
+
+
+_img_plans: dict[tuple, tuple[float, list]] = {}
+
+
+async def _quote_img(p: Principal, opts: dict, demo: bool, tenant: str, reasons: list[str], model, img) -> dict:
+    """영상 하나로 분석(scope imagery · 11-01 PM "그냥 영상 업로드하면 그 영상만 한해서 분석") — 범위 = 그 영상이 덮는 곳 전체.
+    시군구 · 구간을 묻지 않는다. 빈 곳(알파 · nodata · 채움)은 칸 읽기 · 마무리에서 뺀다(원칙 340 · valid_area — 다른 분석과 같은 규칙).
+    해상도는 모델이 배운 해상도에 맞추고(fit_upsample), 영상이 넓어(시군 단위 이상) 칸이 SGG_MAX_SHARDS 를 넘으면 한 단계씩 낮춘다(시군구 전역과 같은 규칙).
+    읍면동 실시간 분석의 넓이 천장(INFER_MAX_KM2)은 걸지 않는다 — 긴 작업은 대기열 우선순위 1(시군구 전역과 같음)."""
+    from workers.tiling import shards as mk_shards
+    if img is None:
+        raise ApiError("bad_request", "분석할 영상을 고르세요")
+    if model is None:
+        reasons.append("model_input_mismatch")
+    if p.role == "sales" and not demo:
+        reasons.append("demo_required")
+    if p.realm == "tenant" and img["tier"] == "raw":
+        reasons.append("imagery_forbidden")
+    path = resolve_internal(img["path_internal"])
+    if not path or not img["fp"]:
+        raise ApiError("imagery_unavailable", "이 영상은 AI 분석 입력(원본)이 없습니다", {"imagery_id": img["id"]}, status=409)
+    meta = await run_in_threadpool(raster_meta, path)
+    fp_parts = _footprint_parts(img["fp"], meta["crs"])
+    chip = int(opts.get("chip", 1024))
+    fit = fit_upsample(model, img) if model else 1.0
+    ladder = [fit] + [u for u in LIVE_LADDER if u < fit]
+    # 칸 수는 먼저 셈으로 어림하고(격자 크기 × 영상이 덮는 비율 — 수백 ㎢ 드론 영상은 칸을 실제로 나누면 몇 분 걸린다) 상한 안쪽일 때만 실제로 나눈다
+    from shapely.ops import unary_union
+    from workers.tiling import make_grid
+    try:
+        fpu = unary_union(fp_parts) if fp_parts else None
+        fill = min(1.0, fpu.area / max(fpu.envelope.area, 1e-9)) if fpu is not None else 1.0
+    except Exception:  # noqa: BLE001
+        fill = 1.0
+    sh: list = []
+    up = ladder[0]
+    est = 0
+    planned = False
+    for up in ladder:
+        g0 = make_grid(meta["width"], meta["height"], meta["transform"], None, chip, opts.get("overlap"), up)
+        est = int(g0.ncols * g0.nrows * fill)
+        if est > SGG_MAX_SHARDS * 1.3:
+            continue
+        key = (img["id"], up, chip, str(opts.get("overlap")))
+        hit = _img_plans.get(key)
+        if hit and time.time() - hit[0] < 600:
+            sh = hit[1]                                 # 견적 → 실행(10분 안) — 같은 계획을 다시 세우지 않는다
+        else:
+            _, sh = await run_in_threadpool(mk_shards, meta, None, chip=chip, overlap=opts.get("overlap"), upsample=up, footprint_src=fp_parts)
+            _img_plans[key] = (time.time(), sh)
+            while len(_img_plans) > 8:
+                _img_plans.pop(next(iter(_img_plans)))
+        if len(sh) <= SGG_MAX_SHARDS:
+            planned = True
+            break
+        sh = []
+    shards_n = len(sh) if planned else est
+    if not planned:
+        reasons.append("too_large")
+    elif not shards_n:
+        reasons.append("no_imagery")
+    area, area_src = aoi_area(img["fp"])
+    pool = pool_of(model) if model else "cpu"
+    perf = (model["perf"] if model else None) or {}
+    cps = (perf.get("chips_per_s") or {}).get("value") if isinstance(perf, dict) else None
+    if cps and shards_n:
+        gpu_s = env(round(shards_n / cps, 1), "gpu_s", "estimate", f"models.perf({model['id']}) {cps} chips/s/GPU × {shards_n} shard")
+        wk = await active_workers(pool)
+        eta = env(round(shards_n / cps / max(1, len(wk)) + 3.0, 1), "s", "estimate", "gpu_s ÷ 워커 + 3 s")
+        eta = await measured_eta(img["id"], up, shards_n) or eta
+    else:
+        gpu_s = env(None, "gpu_s", "estimate", "bench 전")
+        eta = env(None, "s", "estimate", "bench 전")
+    aoi = mapping(shape(img["fp"]).envelope)          # 작업 범위 열(POLYGON) = 영상 범위를 감싼 네모 — 칸은 영상 footprint 로 잘린다(지도 서비스 '그 범위로')
+    return {
+        "area_km2": env(round(area, 4), "km2", "measured", area_src),
+        "shards": shards_n, "shards_env": env(shards_n, "count", "measured", f"workers.tiling(chip {chip} · upsample {up:g} · 영상 전체)"),
+        "gpu_s": gpu_s, "eta_s": eta, "quota": quota_mod.quote_block(tenant),
+        "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": "infer", "demo": demo,
+        "power_budget": await power_budget() if pool != "cpu" else None, "upsample": up,
+        "_aoi": aoi, "_tenant": tenant, "_model": dict(model) if model else None, "_img": dict(img), "_adapter": None,
+        "_opts": {"scope": "imagery", "upsample": up, "area_km2": round(area, 4)},
     }
 
 
@@ -962,6 +1050,7 @@ async def job_dict(row, live: dict | None = None) -> dict:
         "shards_total": int(live.get("shards_total", row["shards_total"] or 0)),
         "shards_done": int(live.get("shards_done", row["shards_done"] or 0)),
         "shards_failed": int(live.get("shards_failed", row["shards_failed"] or 0)),
+        "state_word": _job_word(state, live.get("shards_failed", row["shards_failed"] or 0), live.get("shards_total", row["shards_total"] or 0)),
         "counts": counts,
         "counts_env": env(total_n, "count", basis_counts, row["id"], "진행 중 누적" if state == "running" else ("시연 · 결과 미기록" if row["demo"] else "검수 전")),
         "chips_per_s": env(cps, "chips_per_s", "measured", "gpu_worker 계량(창 10s)", None if cps else "첫 shard 뒤 채워짐"),
@@ -1089,7 +1178,7 @@ async def submit(body: dict, request: Request):
         raise ApiError(code, msg or f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]},
                        status=409 if code == "power_budget" else None)
     # 시군구 전역(scope sgg · 긴 작업)은 기본 우선순위 1 — 읍면동 실시간 분석 · 소범위 작업이 먼저 칸을 받는다(첫 결과 ≤ 10 s 유지)
-    long_job = body.get("kind") == "reinfer" or (body.get("options") or {}).get("scope") == "sgg"
+    long_job = body.get("kind") == "reinfer" or (body.get("options") or {}).get("scope") in ("sgg", "imagery")   # 영상 하나 전체(11-01)도 긴 작업
     prio = int(body.get("priority", 0 if body.get("demo") else (1 if long_job else 0)))
     tenant = q["_tenant"]
     # 사용량이 많다고 뒤로 미루지 않는다(예전 정책 '우선순위 낮춤' → 3 은 없앰 · 원칙 83) — 순서는 대기열 규칙(scheduler) 하나로만

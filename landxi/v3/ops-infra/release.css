@@ -132,3 +132,13 @@
 @media (min-width:1600px){.rv-grid{max-width:var(--wide-max)}}
 /* 좁은 화면 — 목록 · 상세를 옆으로 나란히 두지 않고 위아래로(10-21 재검수 A · 배포 폰 가로 넘침) */
 @media (max-width:900px){.rv-grid--req,.rv-grid--cat{grid-template-columns:minmax(0,1fr)}}
+
+/* 공식 결과(10-31) — 보기 칩 · 화면 안 확인 칸 */
+.rv-seg{display:inline-flex;gap:4px;padding:3px;border-radius:var(--r-8);background:var(--bg-0)}
+.rv-seg button{border:0;background:none;padding:5px 12px;border-radius:6px;font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.rv-seg button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.rv-off .rv-decide{justify-content:flex-end;border-top:0;padding-top:0}
+.rv-confirm{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:12px;border:1px solid var(--rule);background:var(--bg-0)}
+.rv-confirm p{margin:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink);word-break:keep-all}
+.rv-confirm .rv-decide{justify-content:flex-end;border-top:0;padding-top:4px}
+@media (max-width:640px){.rv-h--row{flex-direction:column;align-items:flex-start;gap:10px}}

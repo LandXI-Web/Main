@@ -97,3 +97,5 @@ button.k-sc.is-row.is-on::after{right:10px;top:10px;width:24px;height:24px;line-
   .k-sc-t{font-size:var(--fs-t2);line-height:27px}
 }
 @media (prefers-reduced-motion:reduce){.k-sc,.k-sc-crop img{transition:none}.k-sc:hover{transform:none}}
+/* 카드 그림 왼쪽 위에는 아무것도 두지 않는다(11-01 PM "왼쪽 위에 아무것도 표시하지마라") — 상태 배지(운영 · 시범 · 첫 결과 전)는 그림 위에서 뺀다. 카드 아래 글줄의 상태 · 판 표기는 그대로 */
+.k-sc .k-sc-badge{display:none!important}

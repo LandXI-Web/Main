@@ -218,7 +218,7 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         if not sgg:
             hits = {h for h in facts["dp_hits"].get(d["id"], set()) if h in by}
             sgg = next(iter(hits)) if len(hits) == 1 else None
-        if hit(ex, d["card_id"], sgg or d["sgg_cd"]):
+        if hit(ex, d["card_id"], sgg or d["sgg_cd"], approval=False):      # 공개 승인 전 카드는 여기서 빼지 않고 표시만(_build_all · 만든 직원 · 관리자 카드 숫자용)
             continue
         rows.append({"d": d, "set": rs, "n": (f or {}).get("n", 0), "sgg": sgg})
 
@@ -404,9 +404,19 @@ async def warm():
 
 async def _build_all() -> tuple[list[dict], str]:
     async with db(realm="lx") as c:
-        items = await _items(c, LX_ALL)
-    _cache.update(t=time.time(), items=items, at=now_iso())
+        every = await _items(c, LX_ALL)
+    from .svc_rules import approved
+    # 공개 승인 전 카드(11-01 PM)의 항목 — 공식 숫자(/summary · 메인 · XI맵 · 기관 · 대시보드)에는 넣지 않고,
+    # 그 카드를 볼 수 있는 사람(만든 직원 · LX 관리자 · card_gate)의 카드 숫자에만(cached_cards)
+    items = [it for it in every if approved(it.get("card"))]
+    _cache.update(t=time.time(), items=items, every=every, at=now_iso())
     return items, _cache["at"]
+
+
+async def cached_cards() -> tuple[list[dict], str]:
+    """카드 자체 숫자용 — 공개 승인 전 카드 항목까지(cached_all 과 같은 계산 · 같은 때). 부르는 쪽이 card_gate 로 카드를 거른 뒤에만 쓴다."""
+    items, at = await cached_all()
+    return _cache.get("every") or items, at
 
 
 def invalidate():

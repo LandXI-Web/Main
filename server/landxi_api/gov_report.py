@@ -32,6 +32,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .deps import ApiError, Principal, audit, db, principal
 from .envelope import KST, env, now_iso, split_round
+from .own_scope import sql_public  # 개인 결과 제외(10-31)
 
 router = APIRouter()
 CARD_RE = re.compile(r"^card-[a-z0-9-]{2,40}$")
@@ -634,7 +635,7 @@ async def result_sggs() -> list[str]:
     /regions/{시군구}/results ②와 같은 거르기(그 시군구 결과 레이어가 열리는 곳)."""
     async with db(realm="lx") as c:
         rows = await c.fetch("SELECT DISTINCT options->>'sgg_cd' AS cd, card_id FROM jobs WHERE kind='infer' AND state='done' AND NOT demo "
-                             "AND NOT coalesce(test,false) AND snapshot_ready AND options->>'scope'='sgg' AND options->>'sgg_cd' IS NOT NULL")
+                             "AND NOT coalesce(test,false) AND snapshot_ready AND options->>'scope'='sgg' AND options->>'sgg_cd' IS NOT NULL" + sql_public("jobs"))   # 개인 결과 제외(10-31)
     from .svc_rules import excluded, hit
     ex = await excluded()                                        # 서비스 × 시군구 보이기 규칙(원칙 293) — 시군구 결과 층과 같은 거르기
     return sorted({r["cd"] for r in rows if r["cd"] and not hit(ex, r["card_id"], r["cd"])})

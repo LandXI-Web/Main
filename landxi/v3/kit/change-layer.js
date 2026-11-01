@@ -7,10 +7,15 @@ import { h, api } from './util.js';
 
 const HERE = import.meta.url;
 const TYPES = [['신축', '#F04452'], ['소실', '#6B7684'], ['경작 전환', '#0FA9A0'], ['포장 확대', '#FF9F1C'],
-  ['산림 → 나지', '#C2410C'], ['산림 → 도로', '#FF9F1C'], ['산림 → 건물', '#F04452'],    // 산사태 취약지구(국토 변화 틀 · 10-25)
+  ['산림 → 나지', '#C2410C'], ['산림 → 도로', '#FF9F1C'], ['산림 → 건물', '#F04452'],    // 산사태 취약지역(국토 변화 틀 · 10-25)
+  ['산림 → 농지 · 초지', '#8B5CF6'], ['채석장 · 개발지 확장', '#6B7684'],                           // 개간 · 이미 맨땅이던 곳 둘레(따로 표시 · 10-31)
   // 이지목 현황 판정 층 7종(10-28 v5 카드 ② · 이지목_판정별레이어.gpkg 레이어명 · 색 그대로)
-  ['정상_지목일치', '#a9d6a0'], ['미확정_나지초지', '#d0d0d0'], ['점유의심', '#c0392b'], ['지목미정리', '#2980b9'], ['유휴산림화', '#e67e22'], ['수역구거', '#16a085'], ['기타', '#7f8c8d']];
+  ['정상_지목일치', '#a9d6a0'], ['미확정_나지초지', '#d0d0d0'], ['점유의심', '#c0392b'], ['지목미정리', '#2980b9'], ['유휴산림화', '#e67e22'], ['수역구거', '#16a085'], ['기타', '#7f8c8d'],
+  // 공공용지 무단점유(11-01 PM) — 찾는 것 두 가지
+  ['무단적치 쓰레기', '#F04452'], ['불법 형질변경', '#FF9F1C']];
 const IJ = () => C.run?.card?.id === 'card-ijimok';   // 이지목 현황 결과 — 한 시점 · 필지 판정(변화가 아님)
+const PL = () => C.run?.stats?.types === 'publand' || C.run?.types === 'publand';     // 공공용지 무단점유 결과 — 목록 화면(점유의심 목록과 같은 틀 · 11-01 PM '새 카드로 옮긴다')
+const ONE = () => IJ() || (PL() && !C.run?.stats?.publand?.two);   // 한 시점 결과(영상 한 장)
 const COLOR = ['match', ['get', 'type'], ...TYPES.flat(), '#9AA4B2'];
 const STATUS = [['미확인', '#B0B8C1'], ['현장확인', '#3182F6'], ['불법', '#F04452'], ['적법', '#0FA9A0'], ['철거완료', '#4E5968']];
 const nf = (v) => Number(v).toLocaleString('ko-KR');
@@ -57,6 +62,13 @@ function drawChanges(m) {
   const inside = ['==', ['get', 'inside_row'], '내'];
   addLayer(m, { id: 'chg-f', type: 'fill', source: 'chg', paint: { 'fill-color': COLOR, 'fill-opacity': ['case', inside, ['match', ['get', 'type'], '경작 전환', 0.24, 0.45], 0.1] } });   // 넓은 경작 전환은 옅게(작은 신축 · 소실이 묻히지 않게)
   addLayer(m, { id: 'chg-l', type: 'line', source: 'chg', paint: { 'line-color': COLOR, 'line-width': ['case', inside, 2.2, 1], 'line-opacity': ['case', inside, 1, 0.55] } });
+  if (PL()) {                                       // 공공용지 무단점유 — 넓게 볼 때(전국 · 시도)는 점으로(도형이 너무 작아 안 보임)
+    upsert(m, 'chg-pt', { type: 'FeatureCollection', features: (C.fc.features || []).filter((f) => !f.properties?.hidden && f.properties?.lng != null)
+      .map((f) => ({ type: 'Feature', id: f.id, properties: { id: f.id, type: f.properties.type }, geometry: { type: 'Point', coordinates: [f.properties.lng, f.properties.lat] } })) });
+    addLayer(m, { id: 'chg-pt', type: 'circle', source: 'chg-pt', maxzoom: 14,
+      paint: { 'circle-color': COLOR, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 2.2, 10, 4, 13, 6], 'circle-stroke-color': '#fff', 'circle-stroke-width': 0.8,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 12, 1, 14, 0] } });
+  }
   addLayer(m, { id: 'chg-hl', type: 'line', source: 'chg', filter: ['in', ['get', 'id'], ['literal', []]], paint: { 'line-color': '#FFFFFF', 'line-width': 4.5 } });
   addLayer(m, { id: 'chg-hl2', type: 'line', source: 'chg', filter: ['in', ['get', 'id'], ['literal', []]], paint: { 'line-color': '#191F28', 'line-width': 2 } });
   upsert(m, 'chg-pt', { type: 'FeatureCollection', features: (C.fc.features || []).map((f) => ({ type: 'Feature', id: f.id, properties: { id: f.id, status: f.properties.status || '미확인', inside_row: f.properties.inside_row },
@@ -113,11 +125,19 @@ function drawCard() {
   const s = C.run?.stats;
   const name = C.range?.name || '대상지';
   if (s && IJ() && OCC) { drawOccCard(name); return; }
+  if (s && PL()) { drawOccCard(name); return; }
   if (s && IJ()) { drawIjCard(s, name); return; }
   const yrs = C.years ? `${C.years[0]}년 → ${C.years[1]}년` : '';
   const cardWord = String(C.run?.card?.name || '국토 변화 분석서비스').replace(/\s*분석서비스$/, '');   // 같은 틀의 카드 이름(국토 변화 · 산사태 취약지구)
   const zones = Array.isArray(C.run?.zones) ? C.run.zones : null;
   const inW = zones ? '지구 안' : '구역선 안';
+  if (!s && PL()) {                                  // 공공용지 무단점유 — 도는 중(두 해 비교 말 없이)
+    const one = C.years && C.years[0] === C.years[1];
+    C.card.replaceChildren(h('p.chg-k', { text: `${cardWord} · 분석할 곳` }), h('h2.chg-t', { text: name }),
+      h('p.chg-s', { text: `영상 ${one ? `${C.years[1]}년` : yrs} 국토지리정보원 항공 · 공공용지(고속도로 · 철도 · LH 택지 · 도로) 안만 봅니다` }),
+      h('p.chg-w', { text: '끝나면 무단적치 쓰레기 · 불법 형질변경이 지도와 목록에 표시됩니다.' }));
+    return;
+  }
   if (!s) {
     C.card.replaceChildren(h('p.chg-k', { text: `${cardWord} · 분석할 곳` }), h('h2.chg-t', { text: name }),
       h('p.chg-s', { text: `구역선(진한 선) · 분석 범위(점선 · 버퍼 ${C.range?.buffer || ''})${yrs ? ` · 영상 ${yrs}` : ''}` }),
@@ -146,16 +166,16 @@ function drawCard() {
    거르기: 변화 유형 · 이지목 판정 · 소유구분 · 최소 면적 + 미확정 포함(기본 꺼짐). 행을 누르면 필지 칸(판정 저장 · 이력). 값 = 서버 한 출처 */
 const O = { und: Q.get('o_und') === '1', type: Q.get('o_type') || '', cls: Q.get('o_cls') || '', owner: Q.get('o_owner') || '', min: Q.get('o_min') || '', data: null, busy: false };   // 카드 ③ 실행 칸에서 고른 조건
 async function loadOcc() {
-  if (!C.job || !OCC) return;
+  if (!C.job || !(OCC || PL())) return;
   const q = new URLSearchParams({ und: O.und ? '1' : '0' });
-  if (OCC !== '-') q.set('chg', OCC);
+  if (OCC && OCC !== '-' && !PL()) q.set('chg', OCC);
   if (O.type) q.set('type', O.type); if (O.cls) q.set('cls', O.cls); if (O.owner) q.set('owner', O.owner); if (+O.min > 0) q.set('min_area', String(+O.min));
   try { O.data = await api(`/change/runs/${encodeURIComponent(C.job)}/occupy?${q}`); } catch (e) { O.data = { err: e.message || '목록을 불러오지 못했습니다' }; }
   occFilter(); drawCard();
 }
 function occFilter() {
   const ids = (O.data?.items_raw || []).map((r) => r.id);
-  for (const m of maps()) for (const id of ['chg-f', 'chg-l']) if (m.getLayer(id)) m.setFilter(id, ['in', ['get', 'id'], ['literal', ids]]);
+  for (const m of maps()) for (const id of ['chg-f', 'chg-l', 'chg-pt']) if (m.getLayer(id)) m.setFilter(id, ['in', ['get', 'id'], ['literal', ids]]);
 }
 const JIMOK_W = (j) => JNAME[j] || j || '-';
 function drawOccCard(name) {
@@ -163,30 +183,38 @@ function drawOccCard(name) {
   const d = O.data;
   const sel = (label, key, opts) => h('label.chg-of', {}, h('span', { text: label }), h('select.t-input', { 'aria-label': label, onchange: (e) => { O[key] = e.target.value; loadOcc(); } },
     h('option', { value: '', text: '전체' }), ...(opts || []).map((v) => h('option', { value: v, text: v.replace(/_/g, ' '), selected: O[key] === v || undefined }))));
-  const head = [h('p.chg-k', { text: `점유의심 조사 · ${C.run?.period?.b?.year || ''}년 영상` }), h('h2.chg-t', { text: name })];
+  const pl = PL();
+  const per = C.run?.period;
+  const head = [h('p.chg-k', { text: pl ? `${String(C.run?.card?.name || '공공용지 무단점유').replace(/\s*분석서비스$/, '')} · ${ONE() ? per?.b?.word || '' : `${per?.a?.word || ''} → ${per?.b?.word || ''}`}`
+    : `점유의심 조사 · ${C.run?.period?.b?.year || ''}년 영상` }), h('h2.chg-t', { text: name })];
   if (!d) { C.card.replaceChildren(...head, h('p.chg-s', { text: '목록을 불러오는 중' })); return; }
   if (d.err) { C.card.replaceChildren(...head, h('p.chg-s', { text: d.err })); return; }
   const f = d.filters || {};
   const csv = h('button.t-btn.t-btn--text', { type: 'button', text: 'CSV 내려받기', onclick: async () => {
-    const q = new URLSearchParams({ und: O.und ? '1' : '0', format: 'csv' }); if (OCC !== '-') q.set('chg', OCC);
+    const q = new URLSearchParams({ und: O.und ? '1' : '0', format: 'csv' }); if (OCC && OCC !== '-' && !pl) q.set('chg', OCC);
     if (O.type) q.set('type', O.type); if (O.cls) q.set('cls', O.cls); if (O.owner) q.set('owner', O.owner); if (+O.min > 0) q.set('min_area', String(+O.min));
     const r = await api(`/change/runs/${encodeURIComponent(C.job)}/occupy?${q}`, { raw: true });
-    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: `점유의심조사_${name}.csv` }); document.body.append(a); a.click(); a.remove(); } });
+    const a = h('a', { href: URL.createObjectURL(await r.blob()), download: `${pl ? '공공용지무단점유' : '점유의심조사'}_${name}.csv` }); document.body.append(a); a.click(); a.remove(); } });
   const rows = (d.items_raw || []).map((r) => h('tr', { tabindex: '0', dataset: { id: r.id, on: C.sel === r.id ? '1' : '0' }, onclick: () => { openPanel(r.id); fitIds([r.id]); },
     onkeydown: (e) => { if (e.key === 'Enter') { openPanel(r.id); fitIds([r.id]); } } },
-  h('td', {}, h('b', { text: r.jibun || '-' }), h('small', { text: r.pnu || '' })), h('td', { text: JIMOK_W(r.jimok) }), h('td', { text: r.owner || '-' }),
-  h('td', { text: r.chg_n > 1 ? `${r.chg_type} 외 ${r.chg_n - 1}` : r.chg_type }), h('td', { text: String(r.ijimok || '').replace(/_/g, ' ') }),
+  h('td', {}, h('b', { text: pl ? `${r.addr || ''} ${r.jibun || ''}`.trim() || '-' : r.jibun || '-' }), h('small', { text: pl ? '' : r.pnu || '' })), h('td', { text: JIMOK_W(r.jimok) }), h('td', { text: r.owner || '-' }),
+  h('td', { text: r.chg_n > 1 ? `${r.chg_type} 외 ${r.chg_n - 1}` : r.chg_type + (pl && r.new === '신규' ? ' · 신규' : '') }), h('td', { text: String(r.ijimok || '').replace(/_/g, ' ') }),
   h('td.num', { text: nf(Math.round(r.area_m2 || 0)) }), h('td', {}, h('span.chg-mt', { dataset: { st: r.status }, text: r.status }))));
   C.card.replaceChildren(...[...head,      // 빈 칸(null)은 넣지 않는다 — replaceChildren 은 null 을 'null' 글자로 그린다(10-29 v7.1 캡처에서 발견)
-    h('p.chg-big', {}, h('span', { text: '점유의심 ' }), h('b', { text: `${nf(val(d.n))}필지` }), h('small', { text: ` · ${nf(Math.round(val(d.area) || 0))}㎡` })),
+    pl ? h('p.chg-big', {}, h('span', { text: '무단 사용 의심 ' }), h('b', { text: `${nf(val(d.n))}곳` }), h('small', { text: ` · ${nf(Math.round(val(d.area) || 0))}㎡` }))
+      : h('p.chg-big', {}, h('span', { text: '점유의심 ' }), h('b', { text: `${nf(val(d.n))}필지` }), h('small', { text: ` · ${nf(Math.round(val(d.area) || 0))}㎡` })),
+    pl ? h('ul.chg-lg', {}, ...TYPES.slice(-2).map(([t, c]) => { const v = C.run?.stats?.by_type?.[t]; return v && val(v.n) ? h('li', {}, h('i.chg-sw', { style: `background:${c}` }), h('span', { text: t }), h('b', { text: `${nf(val(v.n))}곳` }), h('small', { text: `${nf(Math.round(val(v.area) || 0))}㎡` })) : null; }).filter(Boolean)) : null,
     d.chg && d.chg_state !== 'done' ? h('p.chg-s', { text: '국토 변화 분석이 끝나면 변화 유형이 채워집니다' }) : null,
-    h('div.chg-ofs', {}, sel('변화 유형', 'type', f.type), sel('이지목 판정', 'cls', f.cls), sel('소유구분', 'owner', f.owner),
+    pl ? h('button.chg-fold', { type: 'button', 'aria-expanded': String(!C.card.classList.contains('is-fold')), text: C.card.classList.contains('is-fold') ? '목록 펴기' : '목록 접기',
+      onclick: () => { C.card.classList.toggle('is-fold'); drawCard(); } }) : null,
+    h('div.chg-ofs', {}, sel(pl ? '유형' : '변화 유형', 'type', f.type), sel(pl ? '공공용지 대조' : '이지목 판정', 'cls', f.cls), sel('소유구분', 'owner', f.owner),
       h('label.chg-of', {}, h('span', { text: '최소 면적(㎡)' }), h('input.t-input', { type: 'number', min: '0', step: '10', value: O.min, 'aria-label': '최소 면적', onchange: (e) => { O.min = e.target.value; loadOcc(); } })),
-      h('label.chg-out', {}, h('input', { type: 'checkbox', checked: O.und || undefined, onchange: (e) => { O.und = e.target.checked; loadOcc(); } }), h('span', { text: '미확정 포함' }))),
-    h('div.chg-ot', {}, h('table', {}, h('thead', {}, h('tr', {}, ...['지번(PNU)', '지목', '소유구분', '변화유형', '이지목 판정', '면적(㎡)', '판정상태'].map((t) => h('th', { scope: 'col', text: t })))),
+      pl ? null : h('label.chg-out', {}, h('input', { type: 'checkbox', checked: O.und || undefined, onchange: (e) => { O.und = e.target.checked; loadOcc(); } }), h('span', { text: '미확정 포함' }))),
+    h('div.chg-ot', {}, h('table', {}, h('thead', {}, h('tr', {}, ...(pl ? ['주소 · 지번', '지목', '소유구분', '유형', '공공용지 대조', '면적(㎡)', '판정상태'] : ['지번(PNU)', '지목', '소유구분', '변화유형', '이지목 판정', '면적(㎡)', '판정상태']).map((t) => h('th', { scope: 'col', text: t })))),
       h('tbody', {}, ...rows))),
-    rows.length ? null : h('p.chg-s', { text: '조건에 맞는 필지가 없습니다' }),
-    h('div.chg-oa', {}, csv, h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }), h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job, occupy: OCC }), text: '보고서' }))].filter(Boolean));
+    rows.length ? null : h('p.chg-s', { text: pl ? '조건에 맞는 곳이 없습니다' : '조건에 맞는 필지가 없습니다' }),
+    pl ? h('p.chg-w', { text: '공공용지 안에서 AI가 찾은 곳입니다 — 모두 무단 사용 의심 → 현장 확인. 행을 누르면 영상과 연속지적도 대조를 봅니다.' }) : null,
+    h('div.chg-oa', {}, csv, h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }), h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job, ...(pl ? {} : { occupy: OCC }) }), text: '보고서' }))].filter(Boolean));
 }
 
 /* 이지목 현황 카드 — 판정별 필지 수(표 · 지도 · 통계 같은 값 = 서버 결과 요약 한 출처) */
@@ -257,6 +285,7 @@ async function openPanel(id) {
   ensureCss();
   const f = (C.fc?.features || []).find((x) => x.id === id); if (!f) return;
   C.sel = id; C.hl = new Set([id]); for (const m of maps()) applyFilters(m);
+  lgdUnder(true);                                        // 좁은 화면 — 범례가 변화 칸에 덮이지 않게 잠시 숨김(10-31 겹침 점검)
   const hst = host(); if (!hst) return;
   document.querySelector('.lm-props')?.setAttribute('hidden', '');
   if (!C.panel) { C.panel = h('aside.lm-props.chg-panel', { 'aria-label': '변화 속성', 'data-zone': 'chg-panel' }); hst.append(C.panel); }
@@ -265,18 +294,22 @@ async function openPanel(id) {
   const [ya, yb] = C.years || [C.run?.period?.a?.year, C.run?.period?.b?.year];
   const imgA = h('img', { alt: `${ya}년 항공영상`, decoding: 'async' }), imgB = h('img', { alt: `${yb}년 항공영상`, decoding: 'async' });
   const kv = (k, v) => h('div.chg-kv', {}, h('dt', { text: k }), h('dd', { text: v || '-' }));
-  const ij = IJ();
+  const ij = ONE();
+  const pl = PL();
   C.panel.replaceChildren(
     h('div.chg-ph', {}, h('h3', {}, h('i.chg-sw', { style: `background:${(TYPES.find((t) => t[0] === p.type) || [0, '#9AA4B2'])[1]}` }), h('span', { text: ij ? p.type.replace(/_/g, ' ') : p.type }), h('small', { text: `약 ${nf(Math.round(p.area_m2))}㎡` })),
       h('button.chg-x', { type: 'button', 'aria-label': '닫기', text: '닫기', onclick: closePanel })),
     ij ? h('div.chg-ab.is-one', {}, h('figure', {}, imgB, h('figcaption', { text: `${yb}년` })))
       : h('div.chg-ab', {}, h('figure', {}, imgA, h('figcaption', { text: `${ya}년` })), h('figure', {}, imgB, h('figcaption', { text: `${yb}년` }))),
-    ij ? h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('실제 쓰임', p.cover === '나지초지' ? '나지 · 초지(판정 보류)' : p.cover), kv('판정 층', p.layer), kv('소유구분', p.owner), kv('용도', p.use))
-      : h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), kv(Array.isArray(C.run?.zones) ? '지구' : '구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
+    pl ? h('dl.chg-dl', {}, kv('주소', p.addr), kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('공공용지 대조', p.land),
+      ...(p.new ? [kv('시점', p.new === '신규' ? `${ya}년에 없던 곳(신규)` : `${ya}년에도 있던 곳`)] : []), kv('표기', p.word || '무단 사용 의심 → 현장 확인'))
+    : IJ() ? h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('실제 쓰임', p.cover === '나지초지' ? '나지 · 초지(판정 보류)' : p.cover), kv('판정 층', p.layer), kv('소유구분', p.owner), kv('용도', p.use))
+      : h('dl.chg-dl', {}, kv('지번', p.jibun), kv('지목', JNAME[p.jimok] || p.jimok), kv('소유구분', p.owner), kv('용도', p.use), ...(p.slope_mean != null ? [kv('경사', `평균 ${p.slope_mean}° · 가장 급한 곳 ${p.slope_max}°`)] : []), kv(Array.isArray(C.run?.zones) ? '지구' : '구역선', p.inside_row === '내' ? '안' : '밖(버퍼)')),
     markBox(id, p),
     h('div.chg-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'AI 설명 듣기', onclick: () => document.dispatchEvent(new CustomEvent('kit:ask', { detail: { q: '이거 뭐야?' } })) }),
       h('a.t-btn.t-btn--text', { href: '/landxi/v3/change-field/?' + new URLSearchParams({ job: C.job, id }), text: '현장점검(사진)' })),
-    h('p.chg-note', { text: ij ? 'AI가 본 실제 쓰임과 지목을 견준 판정(결과 확인 전)입니다. 판단은 현장점검으로 합니다.' : 'AI가 찾은 변화(결과 확인 전)입니다. 판단은 현장 확인으로 합니다.' }));
+    h('p.chg-note', { text: pl ? 'AI가 공공용지 안에서 찾은 곳(결과 확인 전)입니다. 위법 여부는 현장 확인 · 대부 · 허가 확인으로 판단합니다.'
+      : IJ() ? 'AI가 본 실제 쓰임과 지목을 견준 판정(결과 확인 전)입니다. 판단은 현장점검으로 합니다.' : 'AI가 찾은 변화(결과 확인 전)입니다. 판단은 현장 확인으로 합니다.' }));
   for (const [img, t] of (ij ? [[imgB, 'b']] : [[imgA, 'a'], [imgB, 'b']])) blobUrl(`/change/runs/${encodeURIComponent(C.job)}/thumbs/${p.thumb_a ? (t === 'a' ? p.thumb_a : p.thumb_b).split('/').pop() : `${id}_${t}.png`}`)
     .then((u) => { img.src = u; }, () => { img.replaceWith(h('p.chg-noimg', { text: '영상을 불러오지 못했습니다' })); });
   placePanel();
@@ -327,7 +360,7 @@ function markBox(id, p) {
       const f = C.fc.features.find((x) => x.id === id); if (f) { f.properties.status = r.status; f.properties.memo = r.memo; }
       C.run = await api(`/change/runs/${encodeURIComponent(C.job)}`).catch(() => C.run);
       redraw(); drawCard();
-      if (OCC && IJ()) loadOcc();
+      if ((OCC && IJ()) || PL()) loadOcc();
       if (hist) loadHist(hist, id);
       import('./toast.js').then((m) => m.toast(`판정을 '${r.status}'(으)로 저장했습니다`)).catch(() => {});
     } catch (e) { import('./toast.js').then((m) => m.toast(e.message || '판정을 저장하지 못했습니다')).catch(() => {}); }
@@ -349,13 +382,15 @@ async function loadHist(el, id) {
     x.basis ? h('p.chg-h3', { text: `근거 ${x.basis.layer} · ${x.basis.years}` }) : null)));
 }
 
-function closePanel() { C.card?.classList.remove('is-under'); if (C.panel) C.panel.hidden = true; C.sel = null; C.hl.clear(); for (const m of maps()) applyFilters(m); }
+function lgdUnder(on) { const l = document.querySelector('.lm-lgd'); if (l) l.style.visibility = on && innerWidth <= 720 ? 'hidden' : ''; }
+function closePanel() { lgdUnder(false); C.card?.classList.remove('is-under'); if (C.panel) C.panel.hidden = true; C.sel = null; C.hl.clear(); for (const m of maps()) applyFilters(m); }
 
 const MIN_Z = 12.6;
 function fitRange(bb, { duration = 1000 } = {}) {
   if (!bb || !C.map) return;
   C.map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 80, duration, maxZoom: 16.5 });
-  const lift = () => { if (C.map.getZoom() < MIN_Z) C.map.easeTo({ zoom: MIN_Z, duration: duration ? 600 : 0 }); };
+  const wide = (bb[2] - bb[0]) > 1.5;                     // 전국 · 시도처럼 넓은 범위(공공용지 무단점유 전국)는 넓게 그대로 본다
+  const lift = () => { if (!wide && C.map.getZoom() < MIN_Z) C.map.easeTo({ zoom: MIN_Z, duration: duration ? 600 : 0 }); };
   if (duration) C.map.once('moveend', lift); else lift();
 }
 
@@ -377,7 +412,7 @@ async function loadRange({ rid, project }) {
   redraw(); drawCard(); quietOthers();
   return r;
 }
-const CHG_LAYERS = ['chg-rng-l', 'chg-row-l', 'chg-f', 'chg-l', 'chg-hl', 'chg-hl2', 'chg-st'];
+const CHG_LAYERS = ['chg-rng-l', 'chg-row-l', 'chg-f', 'chg-l', 'chg-hl', 'chg-hl2', 'chg-st', 'chg-pt'];
 function vis(on) { for (const m of maps()) for (const id of CHG_LAYERS) if (m?.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); if (C.card) C.card.hidden = !on; }
 /* 지도 서비스 왼쪽 목록에서 국토 변화 줄을 끄면 — 변화 층 · 카드 · 칸을 내린다(다시 켜면 show) */
 function hide() { C.job = null; C.sel = null; C.hl.clear(); if (C.panel) C.panel.hidden = true; vis(false); }
@@ -394,7 +429,7 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
     drawCard();
     if (fit && C.range?.bbox) fitRange(C.range.bbox);
     const { jobCard } = await import('./job-card.js');
-    C.card?.append(jobCard({ job_id: job, label: `${ya0}년 → ${yb0}년 변화 탐지`, show: { op: 'change_show', job_id: job, year_a: ya0, year_b: yb0, project_id: C.range?.project_id || null } }));
+    C.card?.append(jobCard({ job_id: job, label: PL() ? `${ya0 === yb0 ? `${yb0}년` : `${ya0}년 → ${yb0}년`} 공공용지 무단점유 분석` : `${ya0}년 → ${yb0}년 변화 탐지`, show: { op: 'change_show', job_id: job, year_a: ya0, year_b: yb0, project_id: C.range?.project_id || null } }));
     if (ya0 && yb0 && !ownSrc()) await swipe(ya0, yb0);
     return true;
   }
@@ -404,7 +439,7 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
   const need = !C.sw || !C.years || C.years[0] !== a || C.years[1] !== b;
   C.years = [a, b];
   redraw(); drawCard(); hideTwin();                 // 결과 · 카드 · 자리 먼저(가르기 영상은 이어서)
-  if (OCC && IJ()) loadOcc();
+  if ((OCC && IJ()) || PL()) loadOcc();
   else if (!IJ()) loadMon();
   if (fit && C.range?.bbox) fitRange(C.range.bbox);
   if (need && !ownSrc()) { await swipe(a, b); redraw(); }   // 등록 영상(공유 데이터 · 내 영상)으로 비교한 결과는 국토지리정보원 해 가르기를 깔지 않는다(다른 영상이라 오해) — 두 시점 그림은 폴리곤 칸에
@@ -419,6 +454,7 @@ window.__lxChange.hide = hide;
   const m = await waitMap(); if (!m) return;
   C.map = m; ensureCss();
   m.on('click', 'chg-f', (e) => { const f = e.features?.[0]; if (f) { e.originalEvent?.stopPropagation?.(); openPanel(f.properties?.id ?? f.id); } });
+  m.on('click', 'chg-pt', (e) => { const f = e.features?.[0]; if (f) { e.originalEvent?.stopPropagation?.(); openPanel(f.properties?.id ?? f.id); fitIds([f.properties?.id ?? f.id]); } });   // 넓게 볼 때 점(공공용지 무단점유)
   m.on('mouseenter', 'chg-f', () => { m.getCanvas().style.cursor = 'pointer'; });
   m.on('mouseleave', 'chg-f', () => { m.getCanvas().style.cursor = ''; });
   m.on('idle', hideTwin);

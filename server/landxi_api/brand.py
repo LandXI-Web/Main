@@ -133,6 +133,9 @@ async def _services(tenant: str, order: list[str] | None, items_intro: dict, en:
             sh = await latest_shares(c, tenant=tenant)
         except Exception:  # noqa: BLE001 — 공유 기록 표가 없으면(되돌린 뒤) 배포 기록만
             sh = {}
+        ok = {r["card_id"] for r in await c.fetch("SELECT DISTINCT card_id FROM card_versions WHERE approved_by IS NOT NULL AND approved_at IS NOT NULL")}
+        dps = [d for d in dps if d["card_id"] in ok]           # 공개 승인된 카드만(card_gate · 11-01 PM "메인 기관 화면 기준도 맞춘다")
+        sh = {k: v for k, v in sh.items() if k in ok}
         ids = sorted({d["card_id"] for d in dps if d["card_id"]} | set(sh))
         cards = {r["id"]: r for r in await c.fetch("SELECT id, name, intro FROM cards WHERE id = ANY($1::text[])", ids)} if ids else {}
     by: dict[str, dict] = {}

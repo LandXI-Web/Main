@@ -10,11 +10,17 @@ import time
 
 from .deps import db
 
-_C: dict = {"t": 0.0, "v": frozenset()}
+_C: dict = {"t": 0.0, "v": frozenset(), "ok": None}
 TTL = 60.0
 
 # service_results(별칭 s) 를 읽는 SQL 에 붙이는 거르기 — 표가 없으면(되돌린 뒤) 아무것도 거르지 않는다
-SQL_NOT_EXCLUDED = (" AND NOT EXISTS (SELECT 1 FROM service_region_rules x WHERE x.card_id = s.card_id AND x.sgg_cd = s.sgg_cd AND x.rule = 'exclude')")
+# + 공개 승인된 카드만(11-01 PM "승인된 카드만 보인다" · "메인 기관 화면 기준도 맞춘다") — 기준은 landxi_api.card_gate 와 같은 한 곳
+#   (card_versions.approved_by · approved_at). 승인 전 카드의 결과는 메인 · XI맵 · 외부 API · 기관 숫자에 넣지 않는다(결과 자체는 그대로).
+SQL_APPROVED = (" AND EXISTS (SELECT 1 FROM card_versions av WHERE av.card_id = s.card_id AND av.approved_by IS NOT NULL AND av.approved_at IS NOT NULL)")
+SQL_REGION_RULE = " AND NOT EXISTS (SELECT 1 FROM service_region_rules x WHERE x.card_id = s.card_id AND x.sgg_cd = s.sgg_cd AND x.rule = 'exclude')"
+SQL_NOT_EXCLUDED = SQL_REGION_RULE + SQL_APPROVED
+# 공개 승인 전 카드만(지역 규칙은 그대로) — 그 카드를 볼 수 있는 사람(만든 직원 · LX 관리자)의 카드 숫자용(공식 숫자에는 쓰지 않음)
+SQL_PENDING_ONLY = SQL_REGION_RULE + " AND NOT" + SQL_APPROVED[4:]
 
 
 async def excluded(conn=None) -> frozenset:
@@ -28,8 +34,11 @@ async def excluded(conn=None) -> frozenset:
         else:
             rows = await _read(conn)
         _C.update(t=time.time(), v=frozenset((r["card_id"], r["sgg_cd"]) for r in rows))
+        async with db(realm="lx") as c:                 # 공개 승인된 카드(card_gate 와 같은 기준)
+            _C["ok"] = frozenset(r["card_id"] for r in await c.fetch(
+                "SELECT DISTINCT card_id FROM card_versions WHERE approved_by IS NOT NULL AND approved_at IS NOT NULL"))
     except Exception:  # noqa: BLE001 — 규칙을 못 읽으면 거르지 않는다(결과가 사라지는 쪽보다 낫다)
-        _C.update(t=time.time(), v=frozenset())
+        _C.update(t=time.time(), v=frozenset(), ok=None)
     return _C["v"]
 
 
@@ -39,8 +48,15 @@ async def _read(c):
     return await c.fetch("SELECT card_id, sgg_cd FROM service_region_rules WHERE rule = 'exclude'")
 
 
-def hit(ex: frozenset, card: str | None, sgg: str | None) -> bool:
-    """이 (서비스, 시군구) 를 뺄까 — 지역 코드는 원래 값과 지금 코드(행정구역 바뀜) 둘 다 본다."""
+def approved(card: str | None) -> bool:
+    """공개 승인된 카드인가(card_gate 와 같은 기준 · excluded() 를 한 번 부른 뒤 1분 기억) — 모르면 참."""
+    return not (card and _C.get("ok") is not None and card not in _C["ok"])
+
+
+def hit(ex: frozenset, card: str | None, sgg: str | None, approval: bool = True) -> bool:
+    """이 (서비스, 시군구) 를 뺄까 — 공개 승인 전 카드는 늘 뺀다(11-01 · approval=False 면 지역 규칙만) · 지역 코드는 원래 값과 지금 코드 둘 다 본다."""
+    if approval and not approved(card):
+        return True
     if not ex or not card or not sgg:
         return False
     if (card, sgg) in ex:

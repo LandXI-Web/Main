@@ -26,6 +26,7 @@ from fastapi import APIRouter, Request
 from . import config
 from .deps import ApiError, Principal, audit, db, principal, require
 from .envelope import KST, env, now_iso
+from .own_scope import sql_public  # 개인 결과 제외(10-31)
 from .jobs import ops_event
 
 router = APIRouter()
@@ -194,7 +195,8 @@ async def list_deploys(request: Request, tenant_id: str | None = None, card_id: 
     if (public and p.realm != "tenant") or p.guest:      # 기관 계정은 공개 목록(전국 배포본)으로 돌아가지 못한다(원칙 39) — 자기 기관 것만
         async with db(realm="lx") as conn:
             rows = await conn.fetch(f"SELECT {COLS} FROM deploys WHERE ($1::text IS NULL OR card_id=$1) ORDER BY year NULLS LAST, id", card_id)
-        items = [_public_view(r) for r in rows if public_deploy(r)]
+            ok = {r["card_id"] for r in await conn.fetch("SELECT DISTINCT card_id FROM card_versions WHERE approved_by IS NOT NULL AND approved_at IS NOT NULL")}
+        items = [_public_view(r) for r in rows if public_deploy(r) and r["card_id"] in ok]     # 공개 승인된 카드만(card_gate · 11-01 PM)
         return {"items": items, "total": env(len(items), "count", "recorded", "운영·시범 배포본(실결과)"), "public": True, "as_of": now_iso()}
     require(p)
     async with db(p) as conn:
@@ -1243,8 +1245,8 @@ async def parcel_tick() -> str | None:
             "AND j.options->>'scope'='sgg' AND coalesce(j.options->>'sgg_cd','') <> '' "
             "AND j.finished_at > now() - make_interval(hours => $1) "
             "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id) "
-            "AND NOT EXISTS (SELECT 1 FROM jobs s WHERE s.kind='survey' AND s.options->>'ai_job_id' = j.id) "
-            "ORDER BY j.finished_at ASC LIMIT 20", PARCEL_WINDOW_H)
+            "AND NOT EXISTS (SELECT 1 FROM jobs s WHERE s.kind='survey' AND s.options->>'ai_job_id' = j.id) " + sql_public("j") +   # 개인 결과는 필지 대조로 잇지 않음(10-31)
+            " ORDER BY j.finished_at ASC LIMIT 20", PARCEL_WINDOW_H)
         pick = None
         for r in rows:
             on, rules = await _card_parcel(conn, r["card_id"])

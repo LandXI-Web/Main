@@ -17,7 +17,7 @@ const COLS = [
 
 /* ── 한 흐름(서버 GET /deploys/{id}/flow) — 같은 작업의 배포 단계 · AI 분석(GPU) · 실태조사 · 기관 사용량. 작업 번호·GPU 이름은 그리지 않는다 ── */
 const FLOW_STEPS = [['approval', '승인 요청'], ['decided', '승인'], ['analyzing', 'AI 분석'], ['surveying', '실태조사'], ['done', '기관 결과']];
-const JOB_KO = { queued: '대기', running: '진행 중', done: '끝', failed: '멈춤', cancelled: '취소' };
+const JOB_KO = { queued: '대기', running: '진행 중', done: '끝', failed: '실패', cancelled: '취소' };   // 실패는 '실패'(11-01 PM) · 일부 실패는 서버 state_word
 const mins = (s) => (s == null ? '—' : s < 60 ? `${Math.max(1, Math.round(s))}초` : s < 3600 ? `${Math.round(s / 60)}분` : `${(s / 3600).toFixed(1)}시간`);
 function flowAt(f) {
   const st = f.flow?.state;
@@ -41,7 +41,7 @@ async function drawFlow(el, d) {
   }).filter(([, v]) => v);
   const rows = [
     ['진행', f.flow.label],
-    a ? ['AI 분석', `${poolName(a.pool)} · ${JOB_KO[a.state] || a.state}${a.elapsed_s?.value != null ? ' · ' + mins(a.elapsed_s.value) : ''}`] : null,
+    a ? ['AI 분석', `${poolName(a.pool)} · ${(a.state === 'done' && a.shards_failed > 0 && a.state_word) || JOB_KO[a.state] || a.state}${a.elapsed_s?.value != null ? ' · ' + mins(a.elapsed_s.value) : ''}`] : null,
     a && a.gpu_s?.value ? ['GPU 사용', mins(a.gpu_s.value)] : null,
     sv ? ['실태조사', `${poolName(sv.pool)} · ${JOB_KO[sv.state] || sv.state}`] : null,
     ...use.map(([t, v]) => ['사용량', `${t} · ${v}`]),

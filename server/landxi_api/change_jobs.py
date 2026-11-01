@@ -45,7 +45,7 @@ async def job_status(job_id: str) -> dict:
     r = await redis()
     h = await r.hgetall(f"job:{job_id}") or {}
     async with db(realm="lx") as conn:
-        j = await conn.fetchrow("SELECT state, error, created_at, started_at, finished_at, priority, pool, submitted_by FROM jobs WHERE id=$1", job_id)
+        j = await conn.fetchrow("SELECT state, error, created_at, started_at, finished_at, priority, pool, submitted_by, shards_failed, shards_total FROM jobs WHERE id=$1", job_id)
         cr = await conn.fetchrow("SELECT state, range_id, year_a, year_b, created_by FROM change_runs WHERE job_id=$1", job_id)
         pos = tot = None
         if j and ((h.get("state") or j["state"]) == "queued" or ((h.get("state") or j["state"]) == "running" and not h.get("chg_started"))):
@@ -72,7 +72,10 @@ async def job_status(job_id: str) -> dict:
     if st == "running" and elapsed and frac >= 0.05:
         eta = max(5.0, elapsed * (1 - frac) / frac)
     waited = now - created
-    out = {"job_id": job_id, "state": st, "word": WORD.get(st, st),
+    from .job_word import partial as _part, word as _jw
+    sf = h.get("shards_failed") if h.get("shards_failed") is not None else (j["shards_failed"] if j else 0)
+    stt = h.get("shards_total") if h.get("shards_total") is not None else (j["shards_total"] if j else None)
+    out = {"job_id": job_id, "state": st, "word": WORD.get(st, st) if not _part(st, sf) else _jw(st, sf, stt), "partial": _part(st, sf),
            "stage": STAGE_WORD.get(h.get("chg_stage") or "", "") if st == "running" else "",
            "progress": env(round(frac * 100) if st == "running" else (100 if st == "done" else None), "%", "measured", "분석 장비가 적은 진행(영상 칸 · 단계)"),
            "tiles": {"n": int(_f(h.get("chg_k"))), "total": int(_f(h.get("chg_K")))} if h.get("chg_K") else None,   # 영상 칸 블록 k/K

@@ -248,6 +248,15 @@ def finalize(job: dict, result: dict | None = None) -> dict:
                 yml_names = [str(v) for _, v in sorted(nm.items())] if isinstance(nm, dict) else [str(v) for v in (nm or [])]
             except Exception:
                 yml_names = None
+        # 학습 결과 파일(best.pt)에서 계열 · 크기 · 결과 형태를 자동으로 읽어 장부에 채운다(11-01 PM — 사람이 적지 않는다 · 못 읽으면 기반 모델 값)
+        fam, tsk = (base[0] if base else None), (base[1] if base else "seg")
+        try:
+            from landxi_api.model_probe import probe as _probe
+            pr = _probe(result["weights"])
+            if pr.get("ok") and pr.get("size"):
+                fam, tsk = pr["family"], pr["task"]
+        except Exception:                                   # noqa: BLE001
+            pass
         classes = list(smp[2]) if smp and smp[2] else (yml_names or (base[2] if base else None))
         name = model_name(smp[0] if smp else o.get("task_name"), smp[1] if smp else None, time.strftime("%Y.%m.%d"))
         # 같은 날 같은 업무로 다시 학습하면 이름이 겹친다(결재함·모델 목록에서 구별 불가) → 두 번째부터 '· n회'
@@ -258,8 +267,8 @@ def finalize(job: dict, result: dict | None = None) -> dict:
         conn.execute("INSERT INTO models(id, family, version, weights_uri, task, classes, input, gsd_trained_m, metrics, status, image, tile_size, "
                      "infer_shape, adapter, name, sample_id, train_job, train_log, created_at) "
                      "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'candidate',%s,%s,%s,%s,%s,%s,%s,%s,now()) ON CONFLICT (id) DO UPDATE SET "
-                     "weights_uri=EXCLUDED.weights_uri, metrics=EXCLUDED.metrics, train_log=EXCLUDED.train_log, name=EXCLUDED.name",
-                     (mid, base[0] if base else None, time.strftime("%Y%m%d"), result["weights"], base[1] if base else "seg",
+                     "family=EXCLUDED.family, task=EXCLUDED.task, weights_uri=EXCLUDED.weights_uri, metrics=EXCLUDED.metrics, train_log=EXCLUDED.train_log, name=EXCLUDED.name",
+                     (mid, fam, time.strftime("%Y%m%d"), result["weights"], tsk,
                       json.dumps(classes, ensure_ascii=False) if classes is not None else None,
                       json.dumps(base[3]) if base and base[3] is not None else None,
                       base[4] if base else None, json.dumps(mets), base[5] if base else None, base[6] if base else None,

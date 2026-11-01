@@ -5,7 +5,7 @@
   background:var(--bg-1);border-radius:var(--r-16);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui),opacity var(--d-380) var(--e-cam),transform var(--d-380) var(--e-cam)}
 .dg-item.is-new{opacity:0;transform:translateY(8px)}
 .dg-item.is-drag,.dg-item.is-resize{transition:none;z-index:6;box-shadow:var(--elev-map)}
-.dg-item.is-drag{cursor:grabbing}
+.dg-item.is-drag,.dg.is-edit .dg-item.t-card.is-drag{cursor:grabbing}
 .dg-ph{position:absolute;box-sizing:border-box;border-radius:var(--r-16);background:var(--bg-0);border:1px dashed var(--mute);transition:left var(--d-180) var(--e-ui),top var(--d-180) var(--e-ui),width var(--d-180) var(--e-ui),height var(--d-180) var(--e-ui)}
 /* 크기 한계 — 다른 칸에 막혀 더 못 늘릴 때(다른 칸은 고정 · 원칙 285): 점선이 잉크색으로 · 아래에 한 줄 */
 .dg-ph.is-limit{border-color:var(--ink);border-style:solid}
@@ -34,7 +34,7 @@
 .dg-body.is-empty{justify-content:center;align-items:center;text-align:center}
 /* 수정 모드 */
 .dg.is-edit .dg-item.t-card{outline:1px dashed var(--mute);outline-offset:-1px}
-.dg.is-edit .dg-hd{cursor:grab}
+.dg.is-edit .dg-item.t-card,.dg.is-edit .dg-hd{cursor:grab}   /* 칸 어디를 잡아도 옮긴다(10-31 개편 9) */
 .dg.is-edit .dg-grip{display:inline-flex;flex:none;width:20px;height:28px;align-items:center;color:var(--mute)}
 .dg-grip svg{width:20px;height:20px;fill:currentColor}
 .dg.is-edit .dg-rm{display:inline-flex;flex:none;align-items:center;justify-content:center;width:28px;height:28px;border:0;border-radius:var(--r-8);background:var(--bg-0);color:var(--sub-2);cursor:pointer}

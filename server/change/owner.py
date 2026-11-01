@@ -97,3 +97,39 @@ def fill(pnus: list[str], workers: int = 4) -> dict[str, str]:
             if lb:
                 out[p] = lb
     return out
+
+
+# ── 법정동 이름(공공용지 무단점유 · 11-01) — 같은 응답의 ldCodeNm(시도 시군구 읍면동 · 사람 값 아님)만 법정동 코드(PNU 앞 10자리)마다 한 번 묻는다 ──
+PLACE = DATA / "_cache" / "vworld-place"
+
+
+def place(pnu: str) -> str | None:
+    """PNU → '경기도 시흥시 조남동' (캐시 · 못 받으면 None)."""
+    import requests
+
+    from landxi_api import config
+    if not pnu or len(str(pnu)) != 19:
+        return None
+    f = PLACE / f"{str(pnu)[:10]}.txt"
+    if f.exists():
+        return f.read_text(encoding="utf-8") or None
+    key, dom = config.VWORLD_KEY, config.VWORLD_DOMAIN
+    if not key:
+        return None
+    with _lock:
+        wait = 0.15 - (time.time() - _last[0])
+        if wait > 0:
+            time.sleep(wait)
+        _last[0] = time.time()
+    try:
+        r = requests.get(URL, params={"key": key, "domain": dom, "pnu": pnu, "format": "json", "numOfRows": 1, "pageNo": 1}, timeout=15)
+        rows = ((r.json().get("possessions") or {}).get("field")) or []
+        if isinstance(rows, dict):
+            rows = [rows]
+        nm = str((rows[0] if rows else {}).get("ldCodeNm") or "").strip()
+    except Exception:  # noqa: BLE001
+        return None
+    if nm:
+        PLACE.mkdir(parents=True, exist_ok=True)
+        f.write_text(nm, encoding="utf-8")
+    return nm or None

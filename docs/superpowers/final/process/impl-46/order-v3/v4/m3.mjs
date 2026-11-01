@@ -23,9 +23,9 @@ let st = '';
 for (let i = 0; i < 100; i++) {
   await page.waitForTimeout(6000);
   const lines = (await text(page, 'body')).split(String.fromCharCode(10));
-  const hit = lines.filter((l) => /분석 중|대기|완료|실패|지난 시간|취소/.test(l)).slice(0, 5).join(' / ');
+  const hit = lines.filter((l) => /분석 중|대기|완료|실패|지난 시간/.test(l)).slice(0, 5).join(' / ');
   if (hit !== st) { console.log(Math.round((Date.now() - t0) / 1000) + 's', hit); st = hit; }
-  if (/실패|취소/.test(hit) || (/완료/.test(hit) && !/분석 중/.test(hit))) break;
+  if (/실패/.test(hit) || (/완료/.test(hit) && !/분석 중/.test(hit))) break;
 }
 console.log('elapsed s', Math.round((Date.now() - t0) / 1000));
 await shot(page, 'M3-done');

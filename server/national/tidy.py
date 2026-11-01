@@ -50,6 +50,9 @@ DUP_RATIO = 0.5          # 같은 것을 두 번 — 작은 쪽 대비 겹친 �
 CROP_CLS = {"IRG", "수단그라스", "옥수수", "호밀"}               # 사료작물 — 다른 칩 · 맞닿음(0.3 m) 또는 둘 다 가장자리이고 1 m 안이면 하나로
 GH_CLS = {"비닐하우스_단동", "비닐하우스_다동"}                  # 단동 · 다동 — 다른 칩 · 작은 쪽의 10 % 넘게 겹치거나, 끝과 끝이 맞닿아(0.3 m) 합친 모양이 더 길어질 때 하나로
                                                               # (옆으로 붙어 선 두 동은 합치면 덜 길쭉해지므로 따로 둔다)
+# 10-31 XI 웹 개편 7 — 곤포 뭉치(드론 2 cm · 칩 한 장 17 m)는 칩보다 길어 이웃 칩이 한 뭉치를 둘로 나눠 낸다(가장자리 표시 없음 · 겹침 30 %).
+# 모델은 붙어 쌓인 곤포를 한 덩어리로 내므로, 다른 칩 조각이 작은 쪽의 10 % 넘게 겹치거나 맞닿으면(0.3 m) 한 뭉치로 붙인다.
+BALE_CLS = {"곤포사일리지"}
 CROP_EDGE_GAP_M = 1.0
 KEYS = ("id", "cls", "cls_en", "cid", "conf", "area_m2", "emd", "emd_cd", "edit_state", "job_id", "shard_id", "chip_edge", "merged_from")
 SHARED_CLS = ("경작지", "비닐하우스")      # 농지 · 하천 한 층 — 농지 전수 층이 그리는 분류
@@ -153,7 +156,8 @@ def seam_merge(geoms: list, props: list[dict], *, keep_ids: set | None = None, o
                 c_ = pa.get("cls")
                 crop = c_ in CROP_CLS and (d < SEAM_GAP_M or (pa.get("chip_edge") and pb.get("chip_edge") and d < CROP_EDGE_GAP_M))
                 gh = c_ in GH_CLS and (r >= SEAM_RATIO or (d < SEAM_GAP_M and _end_to_end(G[a], G[b])))
-                if crop or gh or (edge and (r >= SEAM_RATIO or d < SEAM_GAP_M)):
+                bale = c_ in BALE_CLS and (r >= SEAM_RATIO or d < SEAM_GAP_M)
+                if crop or gh or bale or (edge and (r >= SEAM_RATIO or d < SEAM_GAP_M)):
                     ra, rb = find(a), find(b)
                     if ra != rb:
                         parent[rb] = ra

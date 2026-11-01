@@ -88,3 +88,27 @@
 .sd-d-act{display:flex;gap:8px;padding-top:4px}
 .sd-det .sd-wait{height:100%;min-height:240px}
 @media (max-width:960px){.sd-split{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 560px}.sd-det{padding:16px 0 0;border-left:0;border-top:1px solid var(--rule)}}
+/* 종류 고르기 + '+ 새 종류'(10-31 PM) — 고르면 아래에 이름 칸 · '더하기' 한 줄 */
+.sd-form .sd-lab{display:flex;flex-direction:column;gap:6px;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--sub)}
+.sd-kind{display:flex;flex-direction:column;gap:8px}
+.sd-newkind{display:flex;gap:8px}
+.sd-newkind[hidden]{display:none}
+.sd-newkind .t-input{flex:1;min-width:0}
+.sd-newkind .t-btn{flex:none;white-space:nowrap}
+@media (max-width:960px){.sd-card{height:auto}.sd-split{flex:none;grid-template-rows:auto auto}.sd-list{min-height:0}.sd-body{flex:none;overflow:visible}}   /* 좁은 화면에서는 틀 높이를 풀어 목록 · 자세히가 위아래로 이어진다(목록 칸이 0 높이로 접히던 것 · 11-01 PM) */
+
+/* 휴대폰(≤ 640) — 표를 옆으로 밀지 않고 줄마다 카드 한 장: 주 이름 한 줄 + 나머지(모델 · 종류 · 상태 · 날짜)는 가운뎃점으로 이어 한 줄 · 공개 단추는 오른쪽(11-01 PM · 영상 · 학습 데이터 · 행정 자료 · 모델 공통). PC 는 그대로 */
+@media (max-width:640px){
+  .sd-tbl-w{overflow-x:visible}
+  .sd-tbl,.sd-tbl tbody{display:block;width:100%}
+  .sd-tbl thead{display:none}
+  .sd-tbl tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;height:auto;min-height:0;padding:12px 4px;border-bottom:1px solid var(--rule)}
+  .sd-tbl td{display:block;padding:0;border:0;white-space:normal;min-width:0;font:400 var(--fs-tag)/var(--lh-tag) var(--font-body);color:var(--sub);word-break:keep-all}
+  .sd-tbl td.sd-c-im{display:none}
+  .sd-tbl td:has(b){flex:1 1 100%;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+  .sd-tbl td.sd-cls,.sd-tbl td:empty{display:none}
+  /* 항목마다 줄바꿈 안 되는 묶음 · 가운뎃점은 다음 항목 앞에 붙는다 → 줄바꿈은 항목 사이에서만(CLAUDE.md 규칙 9) */
+  .sd-tbl td:not(:has(b)):not(:has(button)){white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .sd-tbl td:not(:has(b)):not(:has(button))::before{content:"·";margin:0 6px}
+  .sd-tbl td:has(b)+td::before{content:none}
+}

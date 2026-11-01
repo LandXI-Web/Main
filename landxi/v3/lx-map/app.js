@@ -104,12 +104,21 @@ window.maplibregl.addProtocol('lmwms', async (params, ac) => {
   try {
     const r = await fetch(API.prefix + '/proxy/vworld/wms?' + q, { headers: tok ? { authorization: 'Bearer ' + tok } : {}, signal: ac.signal });
     if (!r.ok || !/^image\//.test(r.headers.get('content-type') || '')) return { data: await blank() };
-    return { data: await createImageBitmap(await r.blob()) };
+    const bmp = await createImageBitmap(await r.blob());
+    if (lay === 'lp_pa_cbnd_bubun' && !sty) {        // 연속지적도(경계 · 지번 · 지목 글자) — V-World 기본 그림의 옅은 바탕 칠을 걷어 영상이 그대로 보이게
+      const cv = new OffscreenCanvas(bmp.width, bmp.height), cx = cv.getContext('2d');
+      cx.drawImage(bmp, 0, 0);
+      const d = cx.getImageData(0, 0, cv.width, cv.height), a = d.data;
+      for (let i = 0; i < a.length; i += 4) if (a[i + 3] < 160 && a[i] > 235 && a[i + 1] > 225 && a[i + 2] > 180) a[i + 3] = 0;
+      cx.putImageData(d, 0, 0);
+      return { data: cv.transferToImageBitmap() };
+    }
+    return { data: bmp };
   } catch { return { data: await blank() }; }
 });
 map.addSource('lm-lxmap', { type: 'raster', tiles: ['lmwms://lt_c_landinfobasemap//{z}/{x}/{y}'], tileSize: 512, minzoom: LXMAP_Z - 1, maxzoom: 19 });
 map.addLayer({ id: 'lm-lxmap', type: 'raster', source: 'lm-lxmap', minzoom: LXMAP_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-result');
-map.addSource('lm-cad', { type: 'raster', tiles: ['lmwms://lp_pa_cbnd_bubun/lp_pa_cbnd_bubun_line/{z}/{x}/{y}'], tileSize: 512, minzoom: CAD_Z - 1, maxzoom: 19 });
+map.addSource('lm-cad', { type: 'raster', tiles: ['lmwms://lp_pa_cbnd_bubun//{z}/{x}/{y}'], tileSize: 512, minzoom: CAD_Z - 1, maxzoom: 19 });   // 연속지적도 — 경계 + 지번 · 지목 글자(11-01 PM 용어 · 바탕 칠은 걷음)
 map.addLayer({ id: 'lm-cad', type: 'raster', source: 'lm-cad', minzoom: CAD_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-result');
 
 /* LX 행정 자료(공유 데이터에서 관리자가 공개한 것 · 10-14 원칙 246) — 바탕(브이월드 층) 아래 줄에서 켜고 끈다. 도형 = GET /shared/layers/{id}(GeoJSON) */
@@ -122,13 +131,19 @@ async function toggleShared(L) {
   if (!map.getSource(sid)) {
     const done = K.hold();
     try {
-      const tok = session.get()?.token;
-      const r = await fetch(API.prefix + '/shared/layers/' + encodeURIComponent(L.id), { headers: tok ? { authorization: 'Bearer ' + tok } : {} });
-      if (!r.ok) throw new Error(String(r.status));
-      map.addSource(sid, { type: 'geojson', data: await r.json() });
-      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]], paint: { 'fill-color': '#3182F6', 'fill-opacity': 0.12 } }, 'slot-result');
-      map.addLayer({ id: sid + '-l', type: 'line', source: sid, filter: ['!', ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]]], paint: { 'line-color': '#1B64DA', 'line-width': 1.4 } }, 'slot-result');
-      map.addLayer({ id: sid + '-p', type: 'circle', source: sid, filter: ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]], paint: { 'circle-radius': 4, 'circle-color': '#1B64DA', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } }, 'slot-result');
+      const sl = {};
+      if (L.tiles) {                                   // 큰 행정 자료(10-31 · 수백 MB) — 서버 조각(서명 주소 · 층 'f')
+        map.addSource(sid, { type: 'vector', tiles: [API.base + L.tiles], minzoom: 0, maxzoom: 16, ...(L.bbox ? { bounds: L.bbox } : {}) });
+        sl['source-layer'] = 'f';
+      } else {
+        const tok = session.get()?.token;
+        const r = await fetch(API.prefix + '/shared/layers/' + encodeURIComponent(L.id), { headers: tok ? { authorization: 'Bearer ' + tok } : {} });
+        if (!r.ok) throw new Error(String(r.status));
+        map.addSource(sid, { type: 'geojson', data: await r.json() });
+      }
+      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, ...sl, filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]], paint: { 'fill-color': '#3182F6', 'fill-opacity': 0.12 } }, 'slot-result');
+      map.addLayer({ id: sid + '-l', type: 'line', source: sid, ...sl, filter: ['!', ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]]], paint: { 'line-color': '#1B64DA', 'line-width': 1.4 } }, 'slot-result');
+      map.addLayer({ id: sid + '-p', type: 'circle', source: sid, ...sl, filter: ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]], paint: { 'circle-radius': 4, 'circle-color': '#1B64DA', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } }, 'slot-result');
     } catch (e) {
       shlOn.delete(L.id); drawLeft();
       K.devlog('shared-layer', `${L.id} ${e?.message || e}`);
@@ -299,7 +314,7 @@ function drawLeft() {
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);
   });
-  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', 'LX맵', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적', `필지 경계 · ${CAD_Z}단계 이상`]];
+  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', 'LX맵', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적도', `필지 경계 · 지번 · 지목 · ${CAD_Z}단계 이상`]];
   const baseEl = h('div.lm-base', { role: 'radiogroup', 'aria-label': '바탕' }, ...bases.map(([k, t, s]) =>
     h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
@@ -326,7 +341,7 @@ function drawLegend() {
   const sc = on.find((x) => colorSt(x).mode === 'scale' && !x.empty);
   const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${shownColor(c)}` }), h('span', { text: c }))),
     ...(sc ? [h('li.lm-lg-ramp', {}, h('i', { style: `background:linear-gradient(90deg,${rampColors(colorSt(sc).ramp).join(',')})` }), h('span', { text: '신뢰도' }))] : []),
-    ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '필지 경계' }))] : []),
+    ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '연속지적도(필지 경계 · 지번 · 지목)' }))] : []),
     ...SHL.filter((L) => shlOn.has(L.id)).map((L) => h('li', {}, h('i.shl'), h('span', { text: L.name })))];
   legend.hidden = !items.length;
   legend.classList.toggle('is-shut', !ST.lg);
@@ -627,7 +642,7 @@ const union = (bs) => bs.filter(Boolean).reduce((a, b) => (a ? [Math.min(a[0], b
 function setBase(k) {
   ST.base = k; apply();
   const z = k === 'lx' ? LXMAP_Z : k === 'cad' ? CAD_Z : 0;
-  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? 'LX맵' : '연속지적'}은 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
+  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? 'LX맵' : '연속지적도'}는 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
 }
 
 /* ── 오른쪽 속성 칸 — 결과 값(결과 타일 속성 그대로) + 필지 정보(연속지적 GET /parcels) ── */

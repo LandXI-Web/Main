@@ -1,0 +1,4 @@
+# 전국 고속국도 이지목 집계 파일 자리(XI ChatGEO nation_lookup · v7.1 회신 §3-3) — 읽기만 · 재계산 없음.
+# dir 이 상대 경로면 LX_DATA_ROOT 아래. 파일: nation_summary.json · rank.json · idle.json (E:\도로공사\deck_part3 A1 · A3 · A5 사본 · 10-28 재집계)
+dir: national/roadland_ijimok_2026-06
+label: 2024 항공 판정(2026-06) 재집계 · 10-28

@@ -128,6 +128,55 @@ async def _save(p, *, name: str, kind: str, buffer_m: float, line5179, rng5179, 
     return rid
 
 
+async def imagery_range(p, ids: list[str], max_km2: float) -> str:
+    """고른 영상(하나 또는 둘)이 실제로 덮는 곳(둘이면 겹치는 곳) → 구간 id(11-01 PM — 두 시점 카드도 시군구 · 구간 없이 두 영상이 겹치는 범위로).
+    영상 범위 = 등록 범위 ∩ 유효 범위(빈 곳 빼기 · valid_area 가 있으면). 같은 모양의 카드 구간이 있으면 그것을 다시 쓴다.
+    볼 수 있는 영상만(공유 데이터 — 직원에게 보이는 것 · 내 영상)."""
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+    P, R = _mods()
+    async with db(realm="lx") as conn:
+        rows = {r["id"]: r for r in await conn.fetch(
+            "SELECT id, name->>'ko' AS name, layer, staff_visible, ST_AsGeoJSON(footprint) AS fp FROM imagery WHERE id = ANY($1::text[]) AND footprint IS NOT NULL", ids)}
+    gs, names = [], []
+    for iid in ids:
+        r = rows.get(iid)
+        lay = (r["layer"] or {}) if r else {}
+        if isinstance(lay, str):
+            lay = json.loads(lay)
+        role = lay.get("role") or "imagery"
+        if not r or role not in ("own", "imagery") or (role == "own" and lay.get("owner") != p.user_id) or (role == "imagery" and not r["staff_visible"]):
+            raise ApiError("not_found", "고른 영상을 찾을 수 없습니다", {"imagery": iid})
+        g = shape(json.loads(r["fp"]) if isinstance(r["fp"], str) else r["fp"]).buffer(0)
+        try:
+            from .valid_area import load as _valid
+            v = await run_in_threadpool(_valid, iid)
+            if v is not None and not v.is_empty:
+                g = g.intersection(v.buffer(0))
+        except Exception:  # noqa: BLE001 — 유효 범위가 없으면 등록 범위 그대로(빈 곳은 분석 단계에서 뺀다)
+            pass
+        gs.append(g)
+        names.append(r["name"] or "영상")
+    inter = gs[0]
+    for g in gs[1:]:
+        inter = inter.intersection(g)
+    polys = [x for x in getattr(inter, "geoms", [inter]) if x.geom_type in ("Polygon", "MultiPolygon") and not x.is_empty]
+    g5 = R.to5179(unary_union(polys)).buffer(0) if polys else None
+    if g5 is None or g5.is_empty or g5.area < 1e4:                       # 1 ha 미만
+        raise ApiError("conflict", "두 영상이 겹치는 곳이 없습니다" if len(ids) > 1 else "영상에서 분석할 곳을 찾지 못했습니다", None, 409)
+    g5 = g5.simplify(0.5, preserve_topology=True).buffer(0)
+    km2 = g5.area / 1e6
+    if km2 > max_km2:
+        raise ApiError("too_large", f"{'겹치는 곳' if len(ids) > 1 else '영상 범위'}이 너무 넓습니다(약 {km2:,.0f}㎢ · 한 번에 {max_km2:g}㎢까지) — 고급 기능에서 분석할 곳을 정해 주세요",
+                       {"km2": round(km2, 1)}, 409)
+    hit = await _same(p, "line", 0.0, g5, None)
+    if hit:
+        return hit
+    nm = f"{names[0]} ↔ {names[1]}" if len(names) > 1 else names[0]
+    return await _save(p, name=f"영상 겹침 · {nm}" if len(names) > 1 else f"영상 범위 · {nm}", kind="line", buffer_m=0.0, line5179=g5, rng5179=g5,
+                       source_name="영상 범위", project_id=None, years=[], origin="card", codes=None)
+
+
 SPLIT_MAX_KM2 = 3000.0      # 결과를 나눠 보기만 하는 카드 구간 — 가장 넓은 시군구(약 1,800㎢)도 들어간다
 
 

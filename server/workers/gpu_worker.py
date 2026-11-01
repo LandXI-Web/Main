@@ -274,6 +274,15 @@ def own_card_busy_outside() -> bool:
     return bool(cand) and min(cand) > OTHER_HOT_W
 
 
+def _split_head() -> bool:
+    """머리 칸이 장마다 나눠 도는 작업(options.change.split)의 칸인가."""
+    try:
+        h = head_user()
+        return bool(h) and '"split"' in (r().hget(f"job:{h[0]}", "options") or "")
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def user_take(where: str) -> bool:
     """이 워커가 지금 머리 칸(사용자 분석)을 받을까(결정11).
     첫 장: 이 장이 밖의 일로 뜨겁지 않으면 바로(다른 장 열은 기다리지 않음 · 뜨거워도 spill_s×2 지나면 받음) ·
@@ -1481,6 +1490,8 @@ def loop_once(last_claim: float) -> float:
             # 장당 30초 평균 상한(160 W · 70 %)은 쉼 조절이, 두 장 합은 이 장 목표를 낮춰(power_throttle.pair_cap) 지킨다.
             _gate_clear()
             n_batch = NAT_READ if SECONDARY else BATCH        # 두 번째 장은 조금씩(첫 장이 비면 함께 받게)
+            if _split_head():
+                n_batch = 1                                   # 장마다 나눠 도는 큰 작업(공공용지 무단점유 전국 · 11-01) — 한 장이 칸을 다 가져가지 않게 하나씩
         elif SECONDARY:
             # 두 번째 장(원칙 270): 두 장 모드 · XI ChatGEO 질문 없음 · 다음 칸이 국내 전국 칩일 때만 읽는다(사용자 분석 · 해외는 첫 장)
             if not two or llm_wanted() or next_kind() != "national":

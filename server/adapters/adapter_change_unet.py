@@ -16,7 +16,7 @@ import time
 
 from adapters.base import Detection, ShardResult
 
-ADAPTER = {"id": "change/unet", "kinds": ["index"], "device": "gpu", "input": "params", "output": "polygons", "models": ["change-ap25"]}
+ADAPTER = {"id": "change/unet", "kinds": ["index"], "device": "gpu", "input": "params", "output": "polygons", "models": ["change-ap25", "change-forest6", "change-publand"]}
 CID = {"신축": 1, "소실": 2, "경작 전환": 3, "포장 확대": 4, "식생 증감": 5}
 EN = {"신축": "new_building", "소실": "lost_building", "경작 전환": "to_farmland", "포장 확대": "to_paved", "식생 증감": "vegetation"}
 
@@ -30,6 +30,9 @@ def plan(job: dict) -> list[dict]:
     if aoi and not o.get("bbox4326"):
         from shapely.geometry import shape
         bbox = list(shape(aoi).bounds)
+    n = int(o.get("split") or 1)
+    if n > 1:                                         # 큰 범위(공공용지 무단점유 전국 · 11-01 PM "GPU 두장으로 나눠 돌려라") — 블록을 장마다 나눔(블록 번호 % n)
+        return [{"shard_id": f"change-{k}", "bbox": bbox, "window": None, "params": {**o, "part": [k, n]}} for k in range(n)]
     return [{"shard_id": "change", "bbox": bbox, "window": None, "params": dict(o)}]
 
 
@@ -49,9 +52,14 @@ class Adapter:
             sys.path.insert(0, server)
         from change import roadland_src
         roadland_src()
-        import landcover_unet as LC
         self.device = device or "cuda:0"
-        self.net = LC.load_model(model["weights_uri"], device=self.device)
+        if str(model.get("id") or "").startswith("change-forest"):
+            # 산림 변화 모델(산사태 취약지역 · 11-01) — 계산은 change/forest 가 설정(config/landslide.yaml)의 모델을 올려 쓴다. 여기서는 같은 것을 미리 올린다.
+            from change import forest as F
+            self.net = F.load(self.device)
+        else:
+            import landcover_unet as LC
+            self.net = LC.load_model(model["weights_uri"], device=self.device)
         try:
             from workers.power_throttle import PowerThrottle, nvml_window
             phys = int((os.environ.get("CUDA_VISIBLE_DEVICES") or "0").split(",")[0] or 0)
@@ -105,9 +113,12 @@ class Adapter:
             ctl.check()
             from change import imagery as I
             av = I.available_years(rng.bounds)
+            kw = {}
+            if p.get("part") or p.get("resume_from"):           # 나눠 돌기 · 이어서(공공용지 무단점유)
+                kw = {"part": p.get("part"), "resume": [p["resume_from"]] if p.get("resume_from") else None}
             stats = R.compute(run_id=job_id, rng5179=rng, line5179=line, year_a=int(p["year_a"]), year_b=int(p["year_b"]),
                               zoom=int(p["zoom"]), net=self.net, parcels=par, device=self.device, pause=ctl.pause, progress=ctl.progress,
-                              thumb_zoom=av)
+                              thumb_zoom=av, **kw)
         except H.JobStopped:
             # 취소됨 · 시간초과 — 결과 없이 칸을 끝낸다(워커가 다시 넣지 않게 · GPU 를 바로 놓음)
             return ShardResult(features=[], metrics={"change": {"stopped": True}, "basis": "inferred", "source": "change/unet"}, n=0,
@@ -116,6 +127,10 @@ class Adapter:
             if ctl is not None:
                 ctl.failed(e)
             raise
+        if stats.get("_final") is False:                 # 나눠 돈 칸 가운데 먼저 끝난 칸 — 결과 합치기는 마지막 칸이(빈 결과로 끝)
+            return ShardResult(features=[], metrics={"change": stats, "basis": "inferred", "source": "change/unet"}, n=0,
+                               ms=int((time.perf_counter() - t0) * 1000))
+        stats.pop("_final", None)
         feats = []
         fc = json.loads((R.run_dir(job_id) / "changes.geojson").read_text(encoding="utf-8"))
         from shapely.geometry import shape

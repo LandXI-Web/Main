@@ -13,7 +13,7 @@ export const WINDOW_DAYS = 30;      // 지난 30일
 export const SAMPLE_GOAL = 100;     // 표본 ≥ 100 = 확인됨(✓), 아래면 추정(~)
 
 /* ── 결과 층 · 규칙 → 업무(카드) ───────────────────────── */
-const SET_CARD = [[/farm|greenhouse|landcover|cultiv|crop/i, 'card-farm'], [/change/i, 'card-change'], [/living|waste|burn|pile|bld|build/i, 'card-living'],
+const SET_CARD = [[/farm|greenhouse|landcover|cultiv|crop/i, 'card-farm'], [/living|waste|burn|pile|bld|build/i, 'card-living'],
   [/marine|debris|shore/i, 'card-marine'], [/road|vehicle/i, 'card-road'], [/crowd/i, 'card-crowd'], [/forest|carbon/i, 'card-forest']];
 /** 규칙이 보는 AI 클래스 → 업무: 농경(경작지·비닐하우스·주차장 전용)은 영농, 건물 단독은 생활환경 */
 export function cardOfRule(rule) {

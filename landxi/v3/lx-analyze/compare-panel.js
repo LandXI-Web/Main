@@ -19,7 +19,7 @@ function ensureCss() {
 export async function comparePanel(side, c, body) {
   ensureCss();
   side.classList.add('t-card', 'la-cmp');
-  side.append(h('h2.la-side-h', { text: '이 카드로 분석' }));
+  side.append(h('h2.la-side-h', { text: '분석 서비스 카드로 분석' }));
   const step = (n, title, small) => h('div.la-step', {}, h('i', { text: String(n) }), h('b', { text: title }), small ? h('small', { text: small }) : null);
   const box = h('div');
   side.append(box);

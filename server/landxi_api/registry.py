@@ -27,6 +27,7 @@ def model_dict(r, train: bool = True, base_of: dict | None = None) -> dict:
         return d
     return {**d,
             "name": name_ko(r), "sample_id": r["sample_id"],
+            "spec": __import__("landxi_api.cards", fromlist=["model_spec_word"]).model_spec_word(r),   # 모델 한 줄(계열 · 모델 크기 · 결과 형태 · 모델 장부 한 출처)
             "train_job": r["train_job"], "train_log": _log(r["train_log"]),
             "base_model": (base_of or {}).get(r["train_job"]) if r["train_job"] else None,
             "created_at": r["created_at"].isoformat(timespec="seconds") if r["created_at"] else None,
@@ -261,6 +262,7 @@ async def cards(request: Request, public: int | None = None):
         vs = await conn.fetch("SELECT id, card_id, version, model_ids, modules FROM card_versions ORDER BY id")
         ds = await conn.fetch("SELECT id, card_id, stage, snapshot_current, scale, coalesce(test,false) AS test, tenant_id FROM deploys")
         owners = {} if pub else await _card_owners(conn)
+        approved = {r["card_id"] for r in await conn.fetch("SELECT DISTINCT card_id FROM card_versions WHERE approved_by IS NOT NULL AND approved_at IS NOT NULL")}
     from .catalog import base_of, rebase                  # 크롭 주소 = 이 요청의 기준 주소(바깥 주소에서 이 PC 주소 0 · fix9)
     base = base_of(request)
     items = []
@@ -271,7 +273,7 @@ async def cards(request: Request, public: int | None = None):
         name = (c["name"] or {}).get("ko") if isinstance(c["name"], dict) else c["name"]
         if pub:
             live = [d for d in dps if not d["test"] and d["stage"] in ("ga", "canary") and (d["snapshot_current"] or d["scale"])]
-            if not live:
+            if not live or c["id"] not in approved:          # 공개 승인된 카드만(card_gate · 11-01 PM)
                 continue
             if p.realm == "tenant":                       # 기관 계정: 다른 기관 배포본 id 는 내주지 않는다(원칙 39)
                 live = [d for d in live if d["tenant_id"] == p.tenant_id]
@@ -373,7 +375,7 @@ async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
             if prj["lead_id"] != p.user_id:
                 raise ApiError("forbidden", "서비스 카드 배포 신청은 프로젝트장이 합니다")
         await sync_model_approvals(conn)
-        m = await conn.fetchrow("SELECT id, status, name, task, classes FROM models WHERE id=$1", mid) if mid else None
+        m = await conn.fetchrow("SELECT id, status, name, task, classes, input FROM models WHERE id=$1", mid) if mid else None
         if not m:
             raise ApiError("not_found", "모델이 없습니다")
         if m["status"] != "registered":
@@ -397,6 +399,11 @@ async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
             off = [x for x in rules if not fit.get(x)]
             if off:        # 모델이 찾지 않는 대상의 규칙(예: 곤포사일리지 모델 + 휴경·전용) — 모든 필지가 '부재'로 걸리는 뜻 없는 의심을 막는다
                 raise ApiError("bad_request", "이 모델이 찾지 않는 대상의 규칙입니다: " + ", ".join(ok[x] for x in off), {"rules": off})
+        # 국토 변화 틀 모델(찾는 변화 묶음이 모델에 적힌 것 · 공공용지 무단점유 11-01) — 판에 그 묶음과 두 시점 칸을 적는다(분석 서비스가 변화 틀 칸을 연다)
+        mi = m["input"] if isinstance(m["input"], dict) else (json.loads(m["input"]) if isinstance(m["input"], str) else {})
+        mi = mi if isinstance(mi, dict) else {}
+        ctypes = (mi or {}).get("change_types")
+        chg_mods = {"core": CORE_MODULES, "ext": {"mod-change-pair-epoch": True, "mod-change-change-class": True}, "change_types": ctypes} if ctypes else None
         if body.get("ledger_schema"):
             schema = clean_schema(body["ledger_schema"])
         else:
@@ -422,7 +429,7 @@ async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
             note = str(body.get("changelog") or "").strip()[:120] or note      # 바뀐 점 한 줄(예: 모델을 원판으로 되돌림)
             await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
                                "VALUES ($1,$2,$3,$4,$5,$6,NULL,NULL)", cv, cid, ver, [mid],
-                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, note)
+                               chg_mods or {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, note)
         else:
             cid = "card-" + secrets.token_hex(3)
             while await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
@@ -435,7 +442,7 @@ async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
             # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 만든 직원을 승인자로 적지 않는다. 승인자는 결재함에서 승인한 관리자(approvals.decide)
             await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
                                "VALUES ($1,$2,'1.0',$3,$4,$5,NULL,NULL)", cv, cid, [mid],
-                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, "서비스 만들기")
+                               chg_mods or {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, "서비스 만들기")
         if prj:                                     # 발행 요청이 어느 프로젝트에서 왔나 · 카드의 담당 = 그 프로젝트장
             from .projects import link
             await link(conn, pid, "card", cid, p.user_id)

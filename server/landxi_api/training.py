@@ -41,6 +41,7 @@ from .envelope import env, now_iso
 router = APIRouter()
 MAX_IMAGES = 200
 MAX_ZIP_MB = 400
+MAX_MODEL_MB = 800                # 모델 파일(.pt) 한 개
 IMG_EXT = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
 ROOT = config.DATA_ROOT / "training" / "samples"
 UP_ROOT = config.DATA_ROOT / "training" / "uploads"
@@ -360,17 +361,24 @@ async def up_start(body: dict, request: Request):
     p = _staff(request)
     task = str(body.get("task_name") or "").strip()[:40]
     name = str(body.get("filename") or "")
+    is_model = body.get("kind") == "model"                    # 모델 파일(.pt) 올리기(11-01 PM) — 같은 나눠 올리기 · 끝나면 서버가 파일에서 계열 · 크기 · 형태 · 클래스를 읽는다
     try:
         size = int(body.get("size") or 0)
     except (TypeError, ValueError):
         size = 0
-    if not task:
+    if is_model:
+        if not name.lower().endswith(".pt"):
+            raise ApiError("bad_request", "모델 파일(.pt)을 올려 주세요")
+        task = "model"
+    elif not task:
         raise ApiError("bad_request", "업무 이름을 적어 주세요")
-    if not name.lower().endswith(".zip"):
+    elif not name.lower().endswith(".zip"):
         raise ApiError("bad_request", "학습 데이터 묶음(zip)을 올려 주세요")
     if size <= 0:
         raise ApiError("bad_request", "빈 파일입니다")
-    if size > MAX_ZIP_MB << 20:
+    if is_model and size > MAX_MODEL_MB << 20:
+        raise ApiError("too_large", f"모델 파일이 {MAX_MODEL_MB} MB 를 넘습니다", {"size": size, "limit": MAX_MODEL_MB << 20}, 413)
+    if not is_model and size > MAX_ZIP_MB << 20:
         raise ApiError("too_large", f"묶음이 {MAX_ZIP_MB} MB 를 넘습니다 — {MAX_ZIP_MB} MB 이하로 나눠 묶어 주세요",
                        {"size": size, "limit": MAX_ZIP_MB << 20}, 413)
     await _project_ok(p, body.get("project_id"))
@@ -385,7 +393,7 @@ async def up_start(body: dict, request: Request):
             return _up_view(uid, d, m)                       # 이어 올리기 — 받은 자리부터
         shutil.rmtree(d, ignore_errors=True)
     d.mkdir(parents=True, exist_ok=True)
-    m = {"user": p.user_id, "filename": name[:120], "size": size, "task": task, "region": body.get("region") or None,
+    m = {"user": p.user_id, "kind": "model" if is_model else "zip", "filename": name[:120], "size": size, "task": task, "region": body.get("region") or None,
          "org": (str(body.get("org") or "").strip()[:60] or None), "project": (str(body.get("project_id") or "") or None), "at": now_iso()}
     meta_f.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
     (d / "part").write_bytes(b"")
@@ -428,6 +436,8 @@ async def up_finish(uid: str, request: Request):
     have = _received(d)
     if have != int(m["size"]):
         raise ApiError("conflict", "아직 다 올라가지 않았습니다", {"bytes": have, "size": int(m["size"])}, 409)
+    if m.get("kind") == "model":
+        return await _finish_model(p, d, m)
     sid = "smp_" + secrets.token_hex(5)
     root = ROOT / sid
     (root / "data").mkdir(parents=True, exist_ok=True)
@@ -435,6 +445,37 @@ async def up_finish(uid: str, request: Request):
     shutil.move(str(d / "part"), str(zp))
     shutil.rmtree(d, ignore_errors=True)
     return await _ingest(p, sid, root, zp, m["task"], m.get("region"), m.get("org"), m.get("project"))
+
+
+async def _finish_model(p, d: Path, m: dict) -> dict:
+    """올린 모델 파일(.pt) → 서버가 파일에서 계열 · 크기 · 결과 형태 · 클래스를 읽어 모델 장부에 '결과 확인 전(candidate)'으로 넣는다. 사람이 적지 않는다.
+    읽지 못하면 장부에 넣지 않고 이유를 돌려준다. 승인 요청은 기존 모델 승인 길(/registry/model-register)."""
+    from .model_probe import probe_subprocess
+    from .registry import MODEL_COLS, model_dict
+    mid = "uploaded/" + secrets.token_hex(6)
+    dest = config.DATA_ROOT / "models" / "uploaded" / mid.split("/")[1]
+    dest.mkdir(parents=True, exist_ok=True)
+    w = dest / "best.pt"
+    shutil.move(str(d / "part"), str(w))
+    shutil.rmtree(d, ignore_errors=True)
+    pr = await run_in_threadpool(probe_subprocess, w)
+    if not pr.get("ok"):
+        shutil.rmtree(dest, ignore_errors=True)
+        raise ApiError("bad_request", pr.get("why") or "모델 파일을 읽지 못했습니다", {"err": pr.get("err")})
+    stem = re.sub(r"\.pt$", "", str(m.get("filename") or "모델"), flags=re.I)[:40]
+    name = f"{stem} · 올린 모델 {now_iso()[:10].replace('-', '.')}"
+    t = pr["task"]
+    adapter = {"seg": "yolo_seg", "obb": "yolo_obb", "det": "yolo_det"}[t]
+    imgsz = pr.get("imgsz") or 1024
+    async with db(realm="lx") as conn:
+        await conn.execute("INSERT INTO models(id, family, version, weights_uri, task, classes, input, metrics, status, tile_size, infer_shape, adapter, name, created_at) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'candidate',$9,$10,$11,$12,now())",
+                           mid, pr["family"], now_iso()[:10].replace("-", ""), str(w), t, pr["classes"], ["ortho"], {}, imgsz, [imgsz, imgsz], adapter, {"ko": name})
+        await audit(conn, p, "model.file.upload", mid, None, {"family": pr["family"], "task": t, "classes": pr["classes"], "basis": pr.get("basis")})
+        r = await conn.fetchrow(f"SELECT {MODEL_COLS} FROM models WHERE id=$1", mid)
+    from .cards import model_spec_word
+    return {"model": model_dict(r), "read": {**{k: pr.get(k) for k in ("family", "size", "task", "shape_word", "classes", "imgsz", "basis")},
+                                             "word": model_spec_word({"family": pr["family"], "task": t})}, "as_of": now_iso()}
 
 
 @router.get("/training/samples")

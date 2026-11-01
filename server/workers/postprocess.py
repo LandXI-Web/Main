@@ -199,8 +199,26 @@ def blank_counts(dsn: str | None = None) -> dict:
     return {"blank": int(b), "outside": int(o), "total": int(n)}
 
 
+# 11-01 경작·휴경 시기별 판정(workers/farm_season) — 촬영 월 = 영상 장부 epoch('2025-06') → 영상 이름('2025.06' · '6월') → 모르면 None.
+def shot_month(epoch: str | None, name: str | None = None) -> int | None:
+    import re
+    for s in (epoch, name):
+        if not s:
+            continue
+        m = re.search(r"(?:19|20)\d{2}[-./_ ]?(0[1-9]|1[0-2])(?!\d)", str(s)) or re.search(r"(?<!\d)(1[0-2]|[1-9])\s*월", str(s))
+        if m:
+            return int(m.group(1))
+    return None
+
+
+# 10-31 XI 웹 개편 7 — 낱개가 4㎡ 보다 작은 분류의 최소 크기(작업에 '최소 크기'를 따로 주지 않았을 때만 · cpu_worker 가 넘김).
+# 랩 씌운 곤포 한 개는 지름 1.2~1.5 m(약 1.1~1.8㎡)라 기본 4㎡ 에 모두 지워졌다(남원 6월 · 철도 옆 흰 곤포 줄 10개 — 칩 결과에는 있음 · 신뢰도 0.96~0.98).
+SMALL_CLS_MIN_AREA = {"곤포사일리지": 0.8}
+
+
 def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: str | None = None, overlap_thr: float = 0.5,
-        min_area: float = 4.0, simplify_m: float = 0.3, place: tuple | None = None) -> tuple[list[dict], dict]:
+        min_area: float = 4.0, simplify_m: float = 0.3, place: tuple | None = None,
+        cls_min_area: dict | None = None) -> tuple[list[dict], dict]:
     """features: [{geom(shapely 4326), props{cls,cls_en,cid,conf,chip_edge,shard_id,fid}}] → (남은 것, 통계).
     place = (이름, 코드) — 해외 결과 자산(군 칸)처럼 읍면동이 없는 결과는 그 칸 이름을 그대로 붙이고 시군구 · 읍면동 찾기를 건너뛴다."""
     if not features:
@@ -214,10 +232,10 @@ def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: s
     for f in features:
         g = sh_transform(to_m, f["geom"])
         if task not in ("obb", "det"):          # 상자(차량 회전 상자 · 사람 상자)는 다듬지 않는다 — 50cm 사람 상자가 30cm 다듬기에 뭉개짐
-            g = g.simplify(simplify_m, preserve_topology=True)
+            g = g.simplify(min(simplify_m, 0.1) if cls_min_area and f["props"].get("cls") in cls_min_area else simplify_m, preserve_topology=True)   # 작은 낱개(곤포 한 개 1.4 m)는 0.3 m 다듬기에 오각형이 됨
         if not g.is_valid:
             g = g.buffer(0)
-        if g.is_empty or g.area < min_area:
+        if g.is_empty or g.area < (min(min_area, cls_min_area[f["props"].get("cls")]) if cls_min_area and f["props"].get("cls") in cls_min_area else min_area):
             continue
         items.append((g, f))
     st["after_area"] = len(items)
@@ -240,6 +258,12 @@ def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: s
             inter = gi.intersection(gj).area
             if inter / max(min(gi.area, gj.area), 1e-9) > overlap_thr:
                 drop.add(j)       # i 가 conf 가 더 높다(정렬 순서)
+                # 10-31 XI 웹 개편 7 — 곤포 줄처럼 칩보다 긴 뭉치: 이웃 칩이 낸 조각 중 신뢰도 높은 쪽이 더 작은 토막이면(칩 가장자리에서 잘림)
+                # 낮은 쪽을 버리면 뭉치 일부가 사라진다(남원 6월 흰 곤포 3개). 다른 칩 조각이면 버리지 않고 합친다 — 작은 낱개 분류만.
+                if (cls_min_area and fi["props"].get("cls") in cls_min_area and gj.area > gi.area
+                        and fi["props"].get("shard_id") != fj["props"].get("shard_id")):
+                    gi = gi.union(gj)
+                    items[i] = (gi, fi)
     st["nms_dropped"] = len(drop)
     kept = [(g, f) for k, (g, f) in enumerate(items) if k not in drop]
     out = []

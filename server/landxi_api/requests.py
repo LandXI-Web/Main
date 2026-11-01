@@ -196,7 +196,9 @@ async def _services(conn, tid: str) -> list:
     return await conn.fetch("SELECT d.id, d.card_id, d.card_version_id, d.model_override, d.year, d.stage, d.sgg_cd, d.snapshot_current, d.flow, "
                             "c.name AS cname, CASE WHEN d.aoi IS NULL THEN NULL ELSE ARRAY[ST_XMin(d.aoi), ST_YMin(d.aoi), ST_XMax(d.aoi), "
                             "ST_YMax(d.aoi)] END AS bb FROM deploys d LEFT JOIN cards c ON c.id=d.card_id "
-                            "WHERE d.tenant_id=$1 AND d.stage = ANY($2::text[]) AND NOT coalesce(d.test,false) ORDER BY d.year DESC, d.id",
+                            "WHERE d.tenant_id=$1 AND d.stage = ANY($2::text[]) AND NOT coalesce(d.test,false) "
+                            "AND EXISTS (SELECT 1 FROM card_versions av WHERE av.card_id = d.card_id AND av.approved_by IS NOT NULL AND av.approved_at IS NOT NULL) "   # 공개 승인된 카드만(card_gate · 11-01)
+                            "ORDER BY d.year DESC, d.id",
                             tid, list(ON_STAGES))
 
 
@@ -496,15 +498,20 @@ def _dup_line(row, same_draft: bool, lx: bool = False) -> str:
     return f"이미 올린 영상입니다 — {day} 분석 요청에 쓰인 파일과 같습니다" if day else "이미 올린 영상입니다"
 
 
-async def _find_dup(conn, tenant: str, draft: str, size: int, quick: str | None, sha: str | None, not_id: str | None = None):
-    """같은 기관에서 이미 다 받은 같은 파일 — 의뢰에 쓰였거나 같은 묶음(의뢰하지 않고 둔 묶음은 정리 대상이라 막지 않는다)."""
+async def _find_dup(conn, tenant: str, draft: str, size: int, quick: str | None, sha: str | None, not_id: str | None = None,
+                    user: str | None = None):
+    """같은 기관에서 이미 다 받은 같은 파일 — 의뢰에 쓰였거나 같은 묶음(의뢰하지 않고 둔 묶음은 정리 대상이라 막지 않는다).
+    내 영상(own-…, 분석 서비스 '내 영상 업로드해서 분석')은 올린 사람만의 것 — 다른 사람의 내 영상 · 지워진 내 영상은 같은 파일로 막지 않는다(10-31 개편 10)."""
     if not quick and not sha:
         return None
     return await conn.fetchrow(
         "SELECT * FROM request_uploads WHERE tenant_id=$1 AND state='done' AND size=$2 AND id IS DISTINCT FROM $5 "
         "AND (($3::text IS NOT NULL AND quick_fp=$3) OR ($4::text IS NOT NULL AND sha256=$4)) "
-        "AND (request_id IS NOT NULL OR draft_id=$6) ORDER BY (draft_id=$6) DESC, done_at DESC LIMIT 1",
-        tenant, size, quick, sha, not_id, draft)
+        "AND (request_id IS NOT NULL OR draft_id=$6) "
+        "AND NOT (coalesce(request_id, '') LIKE 'own-%' AND (user_id IS DISTINCT FROM $7 "
+        "OR NOT EXISTS (SELECT 1 FROM imagery i WHERE i.id = request_uploads.request_id))) "
+        "ORDER BY (draft_id=$6) DESC, done_at DESC LIMIT 1",
+        tenant, size, quick, sha, not_id, draft, user)
 
 
 @router.post("/requests/uploads", status_code=201)
@@ -521,7 +528,17 @@ async def start_upload(w: Who, body: dict) -> dict:
     s = settings()
     name = _safe_name(body.get("filename"))
     ext = _ext(name)
-    if ext not in s["raster_ext"] and ext not in s["sidecar_ext"]:
+    if body.get("purpose") == "ledger" and w.lx:              # LX 관리자 큰 행정 자료(10-31 PM · GPKG 수백 MB) — 같은 나눠 올리기 · 형식 · 한도만 다르다
+        from .ledger import BIG_EXTS, BIG_MAX
+        if ext not in BIG_EXTS:
+            raise ApiError("bad_ext", "큰 행정 자료는 GPKG · SHP(zip) · GeoJSON 만 올릴 수 있습니다", {"allowed": sorted(BIG_EXTS)}, 400)
+        try:
+            size = int(body.get("size") or 0)
+        except (TypeError, ValueError):
+            size = 0
+        if size > BIG_MAX:
+            raise ApiError("too_large", "행정 자료는 한 파일 5GB까지 올릴 수 있습니다", {"size": size, "limit": BIG_MAX}, 413)
+    elif ext not in s["raster_ext"] and ext not in s["sidecar_ext"]:
         raise ApiError("bad_ext", "영상 파일만 올릴 수 있습니다 — 다른 파일은 받지 않습니다",
                        {"allowed": list(s["raster_ext"]) + list(s["sidecar_ext"])}, 400)
     if ext in s["raster_ext"]:                             # 이 서버가 지금 바꿀 수 없는 형식(예: ECW 변환기가 없음) — 한 바이트도 받기 전에
@@ -559,9 +576,11 @@ async def start_upload(w: Who, body: dict) -> dict:
             if r["draft_id"] != did and did == str(body.get("draft_id") or ""):
                 r = await _move_to_draft(conn, r, w, did)      # 창을 다시 열고 다른 파일과 함께 고른 경우 — 받은 조각을 지금 묶음으로 옮겨 함께 등록되게
             return _up_view(r)
-        dup = await _find_dup(conn, w.owner, did, size, quick, None)
+        dup = await _find_dup(conn, w.owner, did, size, quick, None, user=p.user_id)
         if dup:
-            raise ApiError("duplicate", _dup_line(dup, dup["draft_id"] == did, w.lx), {"filename": dup["filename"]}, 409)
+            # LX 영상 등록이면 그 파일로 이미 등록된 영상 id 를 함께 — 분석 서비스 '내 영상'은 다시 올리지 않고 그 영상을 바로 고른다(10-31 개편 10 · 재업로드 멈춤)
+            raise ApiError("duplicate", _dup_line(dup, dup["draft_id"] == did, w.lx),
+                           {"filename": dup["filename"], **({"imagery": dup["request_id"]} if w.lx and dup["request_id"] else {})}, 409)
         reserved = await conn.fetchval("SELECT coalesce(sum(size),0) FROM request_uploads WHERE state='uploading'")
     # 서버 전체 저장 여유(하드웨어 · 원칙 66) — 모든 기관이 받는 중인 파일의 크기까지 더해서 본다(기관 한도로는 막지 않는다)
     room = await Q.storage_room(w.owner, size + max(0, int(reserved or 0)))
@@ -763,7 +782,7 @@ async def finish_upload(w: Who, uid: str) -> dict:
             return _up_view(r, have)
         sha = st[1].hexdigest() if st and st[0] == have else await run_in_threadpool(_sha_file, dest)
         async with db(realm="lx") as conn:
-            dup = await _find_dup(conn, w.owner, r["draft_id"], have, None, sha, uid)
+            dup = await _find_dup(conn, w.owner, r["draft_id"], have, None, sha, uid, user=w.p.user_id)
             if dup:
                 _rm(dest)
                 await conn.execute("UPDATE request_uploads SET state='removed', sha256=$2, quick_fp=$3, updated_at=now() WHERE id=$1", uid, sha, quick)

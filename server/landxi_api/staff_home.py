@@ -111,6 +111,8 @@ async def my_jobs(request: Request, recent: int = 4):
 # 내가 돌린 분석 = ① 분석하기(서비스 카드)로 내가 돌린 것 ② 프로젝트 추론(배포 전 모델) — 내가 돌렸거나 내가 참여한 프로젝트의 것(보는 사람 = 나 · 프로젝트 참여자).
 # XI맵 실시간 · 말로 분석(XI ChatGEO)은 여기 넣지 않는다(XI맵 = 전국 · 해외 실시간 분석 — 원칙 147).
 # 결과 도형 · 속성은 지금 있는 결과 타일(/tiles/pmtiles/{set}.pmtiles)과 필지 API(/parcels)를 그대로 쓴다 — 이 목록은 묶음 · 이름 · 범위 · 수만 준다.
+from .own_scope import sql_private as _sql_private  # noqa: E402
+
 MY_ANALYSES_SQL = (
     "SELECT j.id, j.card_id, j.options, j.imagery_id, j.result_set, j.counts, j.finished_at, j.submitted_by, j.model_id, j.snapshot_ready, "
     "ST_AsGeoJSON(ST_Envelope(CASE WHEN i.footprint IS NOT NULL AND ST_Intersects(j.aoi, i.footprint) THEN ST_Intersection(j.aoi, i.footprint) ELSE j.aoi END))::json AS env, "
@@ -127,7 +129,7 @@ MY_ANALYSES_SQL = (
     "AND ((j.card_id IS NOT NULL AND j.submitted_by=$1) "
     "  OR (j.options->>'project_infer'='true' AND (j.submitted_by=$1 OR pr.lead_id=$1 "
     "      OR EXISTS (SELECT 1 FROM project_members m WHERE m.project_id=pr.id AND m.user_id=$1))) "
-    "  OR ($3 AND j.id=$2)) "
+    "  OR ($3 AND j.id=$2 AND NOT (" + _sql_private("j") + "))) "   # 관리자가 여는 남의 결과 한 건(배포 신청 검토) — 남의 개인 결과는 아님(10-31 PM)
     "ORDER BY j.finished_at DESC LIMIT 200")
 
 
@@ -173,9 +175,11 @@ def _item(r, p: Principal) -> tuple[str, str, bool, dict]:
     gname = f"프로젝트 추론 — {r['pname']}" if proj else (r["cname"] or "분석 서비스")
     sgg = o.get("sgg_cd")
     rg = region_of(sgg) if sgg else None
-    region = " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "" if proj else "") if x)
+    region = " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "" if proj else "") if x) or o.get("place") or o.get("img_name") or ""
     if proj:
         scope = "배포 전 모델"
+    elif o.get("scope") == "imagery":                                         # 영상 하나로 분석(11-01) — 그 영상 범위 전체
+        scope = "영상 범위 전체"
     elif o.get("scope_full"):
         scope = f"전역 · 읍면동 {o.get('emd_total')}곳" if o.get("emd_total") else "전역"
     elif o.get("coverage") is not None:
@@ -292,7 +296,7 @@ async def my_analyses(request: Request, job: str | None = None):
         o = _jload(r["options"])
         rg = region_of(o.get("sgg_cd")) if o.get("sgg_cd") else None
         running.append({"job": r["id"], "state": r["state"], "name": f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else (r["cname"] or "분석 서비스"),
-                        "region": " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "") if x) or "—",
+                        "region": " ".join(x for x in ((rg or {}).get("name") or "", o.get("range_name") or "") if x) or o.get("place") or o.get("img_name") or "—",
                         **({"range": (o.get("range") or {}).get("word")} if isinstance(o.get("range"), dict) else {})})
     out = list(groups.values())
     for g in out:
@@ -604,7 +608,7 @@ async def my_job_log(request: Request, project_id: str | None = None, limit: int
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
             "SELECT j.id, j.state, j.kind, j.card_id, j.model_id, j.options, j.result_set, j.created_at, j.started_at, j.finished_at, j.submitted_by, j.label, "
-            "c.name->>'ko' AS cname, m.version AS mver, cr.year_a, cr.year_b, cg.name AS rname, cg.buffer_m, pr.name AS pname, "
+            "j.shards_failed, j.shards_total, j.error, c.name->>'ko' AS cname, m.version AS mver, cr.year_a, cr.year_b, cg.name AS rname, cg.buffer_m, pr.name AS pname, "
             "coalesce(u.name, '') AS who FROM jobs j LEFT JOIN cards c ON c.id=j.card_id LEFT JOIN models m ON m.id=j.model_id "
             "LEFT JOIN change_runs cr ON cr.job_id=j.id LEFT JOIN change_ranges cg ON cg.id=cr.range_id "
             "LEFT JOIN projects pr ON pr.id = j.options->>'project_id' LEFT JOIN lx_users u ON u.id=j.submitted_by "
@@ -621,7 +625,9 @@ async def my_job_log(request: Request, project_id: str | None = None, limit: int
         else:
             when = ""
         via = o.get("requested_via") or ("프로젝트 추론" if o.get("project_infer") else "분석 서비스")
-        items.append({"job_id": r["id"], "state": r["state"], "state_word": JOB_WORD.get(r["state"], r["state"]), "who": r["who"] or "",
+        from .job_word import partial as _part, word as _jw
+        items.append({"job_id": r["id"], "state": r["state"], "state_word": _jw(r["state"], r["shards_failed"], r["shards_total"]),
+                      "partial": _part(r["state"], r["shards_failed"]), "shards_failed": int(r["shards_failed"] or 0), "who": r["who"] or "",
                       "service": r["cname"] or (f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else "분석 서비스"),
                       "model": " ".join(x for x in (r["model_id"] or "", f"v{r['mver']}" if r["mver"] else "") if x),
                       "version": c.get("version") or None, "range": r["rname"] or o.get("range_name") or (r["pname"] or ""), "when": when,

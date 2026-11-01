@@ -33,7 +33,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-crumb{display:flex;align-items:center;gap:8px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);min-width:0}
 .la-crumb a:hover{color:var(--ink)}
 .la-crumb b{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.la-hero{position:relative;margin:0;border-radius:var(--r-16);overflow:hidden;aspect-ratio:21/9;background:var(--rule)}
+.la-hero{position:relative;margin:0;border-radius:var(--r-16);overflow:hidden;aspect-ratio:3/1;max-height:300px;background:var(--rule)}   /* 11-01 PM 카드가 너무 큼 — 한 화면에 '이 카드로 분석' 칸과 함께 */
 .la-hero img{width:100%;height:100%;object-fit:cover;display:block}
 .la-hero.is-blank{display:flex;align-items:center;justify-content:center;background:var(--rule);aspect-ratio:auto;min-height:120px}
 .la-blank{font:500 var(--fs-body)/23px var(--font-body);color:var(--sub);padding:0 24px;text-align:center}
@@ -143,7 +143,7 @@ body.la-boot .k-app{visibility:hidden}
   .la-page{padding:20px 20px 40px;gap:16px}
   .la-search{width:100%}
   .la-dt-body{grid-template-columns:minmax(0,1fr)}
-  .la-hero{aspect-ratio:16/10}
+  .la-hero{aspect-ratio:16/9;max-height:220px}
   .la-title{font-size:var(--fs-t1);line-height:37px}
 }
 @media (max-width:640px){
@@ -190,6 +190,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-ac-hero b{display:block;font:800 var(--fs-num)/40px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
 .la-ac-hero b i{font:700 var(--fs-t2)/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
 .la-ac-hero b.d{font-size:var(--fs-t2);font-weight:700;letter-spacing:-.01em}
+.la-ac-hero b.la-ac-word{font-size:var(--fs-t2);font-weight:700;letter-spacing:-.01em;color:var(--ink-2)}   /* 성능 미측정(학습 없이 묶은 AI · 11-01) — 숫자 자리에 말 */
 .la-ac-hero small{display:block;margin-top:2px;font:500 var(--fs-tag)/19px var(--font-body);color:var(--sub);white-space:nowrap}
 .la-acg[data-n="2"] .la-ac-hero,.la-acg[data-n="6"] .la-ac-hero{grid-template-columns:1fr 1fr;padding:14px 16px 12px}
 .la-acg[data-n="2"] .la-ac-hero b,.la-acg[data-n="6"] .la-ac-hero b{font-size:var(--fs-num);line-height:40px}
@@ -336,3 +337,40 @@ body.la-boot .k-app{visibility:hidden}
 .la-hero .la-swp-lab{top:16px;bottom:auto;left:16px}
 .la-hero .la-swp-leg{top:16px;bottom:auto;right:16px}
 .la-rule{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font:400 var(--fs-body,16px)/24px var(--font-body);color:var(--ink,#191F28)}
+/* 내 영상 지우기(10-31 PM) — 영상 카드 안 글자 단추 하나 · 확인은 가운데 창 한 번 */
+.la-own-del{align-self:flex-start;margin-top:4px;padding:0;border:0;background:none;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.la-own-del:hover{color:var(--warn)}
+.la-del{display:flex;flex-direction:column;gap:10px}
+.la-del-t{margin:0;font:600 var(--fs-body)/24px var(--font-body);color:var(--ink);word-break:keep-all}
+.la-del-why{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--warn);word-break:keep-all}
+.la-del .la-own-act{gap:8px}
+.la-del-go{background:var(--warn);border-color:var(--warn)}
+
+/* 영상 하나로 분석(11-01) — 오른쪽 '영상' 단계의 두 길 · 왼쪽 찾기 칸 · 넓은 영상의 예상 시간 */
+.la-pick-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.la-pick-acts .t-btn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.la-pick-acts[hidden]{display:none}
+.la-im-find{max-width:360px}
+.la-eta.is-big b{color:var(--warn)}
+.la-im .la-im-map.k-stage{height:240px}   /* 지도 부품(.k-stage height:100%)이 높이를 덮어 0이 되던 것 */
+.la-del-res{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.la-del-res b{color:var(--warn);font-weight:600}
+.la-del-res ul{margin:0;padding-left:18px}
+.la-del-res small{color:var(--sub);font-size:var(--fs-tag)}
+/* 분석 서비스 카드 그림 왼쪽 위 표시(검토 · 분야 칩) 없음(11-01 PM "왼쪽 위에 아무것도 표시하지마라") */
+.la-ac-pic .la-ac-cat{display:none!important}
+
+/* 카드 자세히 — 분석 모델 한 줄(모델 장부 한 출처 · 11-01 PM) */
+.la-model{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink-2)}
+.la-model b{font-weight:500;color:var(--sub)}
+.la-model span{word-break:keep-all}
+/* 공유 데이터에서 고르기 창 — 목록은 창 안에서만(11-01 PM) */
+.la-im-md .la-im{padding:0;border:0;box-shadow:none;background:none}
+.la-im-md .la-im-hd .la-h{display:none}
+.la-im-md .la-im-hd{justify-content:flex-end}
+.la-im-md .la-im .la-im-map.k-stage,.la-im-md .la-im-map{height:200px}
+.la-im-md .la-im-find{max-width:none;width:100%}
+.la-im-pick{display:flex;flex-direction:column;gap:8px}
+.la-im-pick .la-im-cur{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.la-im-md .la-im-grid{grid-template-columns:minmax(0,1fr)}
+.la-im-md .la-im-r{display:none}   /* 창 안에서는 범위 지도 없이 목록만 — 고른 영상은 칸에 한 줄로 보인다 */

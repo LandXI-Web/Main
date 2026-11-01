@@ -37,6 +37,10 @@ async def _objects(conn, source: dict) -> dict:
     rs = await conn.fetch("SELECT j.id, j.options, i.path_internal, i.crs FROM jobs j LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id = ANY($1)", jobs)
     if len(rs) != len(jobs):
         raise ApiError("not_found", "없는 결과입니다")
+    from .own_scope import is_private
+    for j in jobs:                                    # 개인 결과는 카드 그림 후보로 쓰지 않는다(10-31 PM)
+        if await is_private(conn, j):
+            raise ApiError("conflict", "개인 분석 결과로는 카드 그림 후보를 만들 수 없습니다", {"job": j}, 409)
     first = next(r for r in rs if r["id"] == jobs[0])
     o = first["options"] if isinstance(first["options"], dict) else json.loads(first["options"] or "{}")
     sql = ("SELECT ST_AsBinary(ST_Transform(geom, $2::int)) g, cls, conf FROM detections WHERE job_id = ANY($1) "
@@ -83,7 +87,7 @@ async def _objects(conn, source: dict) -> dict:
 
 
 FORAGE_W = 600.0           # 사료작물(생육기 · 생산기 · 비교) 카드 그림 틀 너비 — 10-28 now 22 결정7 "넓게 크게 보고 그 안에서"
-LANDSLIDE_W = 1000.0       # 산사태 취약지구 카드 그림 틀 너비 — 결정7
+LANDSLIDE_W = 1000.0       # 산사태 취약지역 카드 그림 틀 너비 — 결정7
 FORAGE_CLS = {"IRG", "호밀", "옥수수", "수단그라스"}
 
 

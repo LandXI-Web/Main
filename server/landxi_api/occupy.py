@@ -94,6 +94,10 @@ async def occupy_rows(job_id: str, request: Request, chg: str | None = None, und
     from .change import _features, marks_of, run_row
     p = require(principal(request))
     d = await run_row(p, job_id)
+    st0 = d.get("stats")
+    st0 = json.loads(st0) if isinstance(st0, str) else (st0 or {})
+    if st0.get("types") == "publand":                 # 공공용지 무단점유(11-01 PM "새 카드로 옮긴다") — 같은 목록 화면 · 같은 거르기 · 같은 판정 · CSV
+        return await publand_rows(p, d, job_id, type, cls, owner, min_area, format)
     if d["state"] != "done":
         raise ApiError("not_ready", "이지목 현황 분석이 아직 끝나지 않았습니다", status=409)
     chfc, chg_state = None, None
@@ -142,3 +146,48 @@ async def occupy_rows(job_id: str, request: Request, chg: str | None = None, und
             "by_status": {k: env(v, "필지", "recorded", "판정 기록") for k, v in by_st.items()},
             "filters": {"type": sorted({r["chg_type"] for r in allrows}), "cls": sorted({r["ijimok"] for r in allrows}), "owner": sorted({r["owner"] or "대장 미연결" for r in allrows})},
             "rule": R["words"], "items_raw": rows, "as_of": now_iso()}
+
+
+PUBLAND_WORDS = ["공공용지(고속도로 도로공사 장부 · 철도용지 · LH 사업지구 · 지목 도로) 안에서 AI 가 찾은 무단적치 쓰레기 · 불법 형질변경",
+                 "필지마다 연속지적도 지번 · 지목 · 소유 구분과 공공용지 대조 결과",
+                 "개인 · 종중 소유로 대조 탈락한 곳은 빠집니다",
+                 "모두 무단 사용 의심 → 현장 확인(자동 판정 · 결과 확인 전)"]
+
+
+async def publand_rows(p, d: dict, job_id: str, type, cls, owner, min_area, format):
+    """공공용지 무단점유 결과 → 점유의심 목록과 같은 모양(열: 주소 · 지번 · 지목 · 소유구분 · 유형 · 공공용지 대조 · 면적 · 판정상태)."""
+    from .change import _features, marks_of
+    if d["state"] != "done":
+        raise ApiError("not_ready", "공공용지 무단점유 분석이 아직 끝나지 않았습니다", status=409)
+    fc = await run_in_threadpool(_features, job_id)
+    marks = await marks_of(p, job_id)
+    allrows = []
+    for f in fc.get("features") or []:
+        q = f["properties"]
+        if q.get("hidden"):
+            continue
+        allrows.append({"id": f["id"], "jibun": q.get("jibun"), "pnu": q.get("pnu"), "jimok": q.get("jimok"), "owner": q.get("owner"),
+                        "addr": q.get("addr"), "chg_type": q.get("type"), "chg_n": 1, "ijimok": q.get("land_kind") or "공공용지", "land": q.get("land"),
+                        "new": q.get("new"), "area_m2": q.get("area_m2"), "score": q.get("score"), "word": q.get("word"),
+                        "status": (marks.get(f["id"]) or {}).get("status") or "미확인", "lng": q.get("lng"), "lat": q.get("lat")})
+    ft, fc_, fo = _split(type), _split(cls), _split(owner)
+    rows = [r for r in allrows if (not ft or r["chg_type"] in ft) and (not fc_ or r["ijimok"] in fc_) and (not fo or any(o in (r["owner"] or "") for o in fo))
+            and (r["area_m2"] or 0) >= (min_area or 0)]
+    if format == "csv":
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["주소", "지번", "PNU", "지목", "소유구분", "유형", "시점", "공공용지 대조", "면적(㎡)", "판정상태", "표기"])
+        for r in rows:
+            w.writerow([r["addr"], r["jibun"], r["pnu"], r["jimok"], r["owner"], r["chg_type"], r["new"] or "", r["land"], r["area_m2"], r["status"], r["word"]])
+        from urllib.parse import quote
+        name = f"공공용지무단점유_{d['range_name']}_{d['year_b']}.csv"
+        return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+    src = "공공용지 무단점유 분석 결과(영상-문장 AI + 토지피복 AI · 연속지적도 대조 · 결과 확인 전)"
+    by_st: dict = {}
+    for r in rows:
+        by_st[r["status"]] = by_st.get(r["status"], 0) + 1
+    return {"job_id": job_id, "chg": None, "chg_state": None, "publand": True, "n": env(len(rows), "곳", "inferred", src), "n_all": env(len(allrows), "곳", "inferred", src),
+            "area": env(round(sum(r["area_m2"] or 0 for r in rows), 1), "m2", "inferred", src),
+            "by_status": {k: env(v, "곳", "recorded", "판정 기록") for k, v in by_st.items()},
+            "filters": {"type": sorted({r["chg_type"] for r in allrows}), "cls": sorted({r["ijimok"] for r in allrows}), "owner": sorted({r["owner"] or "대장 미연결" for r in allrows})},
+            "rule": PUBLAND_WORDS, "items_raw": rows, "as_of": now_iso()}

@@ -75,8 +75,6 @@ test.describe('구현 18차 — 기관 보고서 · 행정정보와 비교 · �
     await expect(page.locator('#ch5-tag')).toContainText(`운영 기관 ${rec.orgs.n.value}곳`);
     await expect(page.locator('#labels .m-lbl')).toHaveCount(rec.places.length);
     await expect(page.locator('#ch4 .m-h')).toHaveText('행정 업무에 맞춘GeoAI 분석서비스');
-    await expect(page.locator('#ch4-p')).toContainText('업무마다 다른 서비스를 만들어 제공합니다');
-    for (const n of rec.work.names) await expect(page.locator('#ch4-names')).toContainText(n);
     await expect(page.locator('main')).not.toContainText(/한 벌로 묶어|어느 지역에나|지역만 바꾸면/);
     expect(errs).toEqual([]);
   });

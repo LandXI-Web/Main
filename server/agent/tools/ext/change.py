@@ -491,7 +491,12 @@ async def ijimok_parcels(args: dict, ctx) -> Out:
     if not last.get("job_id"):
         out.answer = (f"{rg['name']}에는 아직 이지목 현황 결과가 없습니다. 새로 돌리지 않았습니다. "
                       "이지목 현황 분석을 돌리면 필지마다 지목과 실제 쓰임을 견줘 답할 수 있습니다.")
-        talk.set_next(ctx, [talk.btn("이지목 현황 분석하기", href="/landxi/v3/lx-analyze/?card=card-ijimok#analyze")], front=True)
+        try:                                       # 공개 승인 전 카드는 만든 사람 · LX 관리자에게만 단추(서버 카드 기준 한 곳 · 11-01 PM)
+            ok = (await ctx.http.get("/cards/card-ijimok")).status_code == 200
+        except Exception:  # noqa: BLE001
+            ok = False
+        if ok:
+            talk.set_next(ctx, [talk.btn("이지목 현황 분석하기", href="/landxi/v3/lx-analyze/?card=card-ijimok#analyze")], front=True)
         return out
     job = last["job_id"]
     fc = await ctx.http.get(f"/change/runs/{job}/features")

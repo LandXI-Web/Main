@@ -49,7 +49,7 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
   .k-app .k-main{grid-row:2;grid-column:1}
   .k-rail--steps::before{left:32px;right:32px;top:23px;bottom:auto;width:auto;height:2px;margin:0}
   .k-rail--steps{padding-top:0;gap:0}
-  .k-rail-i{width:auto;min-width:0;flex:1 1 0;padding:8px 1px 6px;gap:3px}   /* 항목 8개(LX 관리자)도 390 폭 안에 — 긴 이름은 띄어쓰기에서 두 줄 */
+  .k-rail-i{width:auto;min-width:min-content;flex:1 1 0;padding:8px 1px 6px;gap:3px}   /* 항목 8개(LX 관리자)도 390 폭 안에 — 긴 이름은 띄어쓰기에서 두 줄 · 칸은 가장 긴 낱말(ChatGEO)보다 좁아지지 않는다(10-31 원칙 309 — 'ChatGEO'가 '공유 데이터'를 덮던 것) */
   .k-rail-i[aria-current="true"]{box-shadow:inset 0 2px 0 var(--accent)}
   .k-rail--steps .k-rail-i[aria-current="true"]{box-shadow:none}
 }

@@ -23,6 +23,7 @@ import json
 import re
 
 from .. import Out, ToolError
+from landxi_api.own_scope import sql_visible  # 남의 개인 결과 제외(10-31)
 
 SPECS = {
     "map_filter": {
@@ -368,7 +369,8 @@ async def _jobs_on(ctx) -> list[str]:
     from landxi_api.deps import db
     p = ctx.principal
     async with db(realm="lx") as c:
-        rows = await c.fetch("SELECT id, tenant_id FROM jobs WHERE id = ANY($1::text[]) AND kind IN ('infer','reinfer') AND state='done'", ids)
+        rows = await c.fetch("SELECT j.id, j.tenant_id FROM jobs j WHERE j.id = ANY($1::text[]) AND j.kind IN ('infer','reinfer') AND j.state='done'"
+                             + sql_visible("j", "$2"), ids, getattr(p, "user_id", None) or "")   # 남의 개인 결과는 읽지 않음(10-31 PM)
     ok = {r["id"] for r in rows if getattr(p, "realm", None) == "lx" or r["tenant_id"] in (getattr(p, "tenant_id", None), "lx")}
     from landxi_api import result_scope as RSC
     return (await RSC.latest_only([x for x in ids if x in ok]))[:12]      # 같은 서비스 × 지역은 최신 분석 하나(옛 분석은 시점 비교용 — 더하지 않는다)

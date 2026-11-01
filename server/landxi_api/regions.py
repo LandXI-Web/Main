@@ -23,6 +23,7 @@ from starlette.concurrency import run_in_threadpool
 from . import config
 from .deps import ApiError, background, db, principal, require
 from .envelope import env, now_iso
+from .own_scope import sql_public  # 개인 결과 제외(10-31)
 
 router = APIRouter()
 SEED = config.SERVER_ROOT / "seed" / "regions-sgg.json"
@@ -1077,7 +1078,7 @@ async def _region_results(sgg_cd: str, p) -> dict:
             "ST_AsGeoJSON(ST_Envelope(j.aoi))::json AS env, m.classes, i.year, i.epoch "
             "FROM jobs j LEFT JOIN models m ON m.id=j.model_id LEFT JOIN imagery i ON i.id=j.imagery_id "
             "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready "
-            "AND j.options->>'scope'='sgg' AND j.options->>'sgg_cd' = ANY($1::text[]) ORDER BY j.finished_at DESC LIMIT 20", codes)
+            "AND j.options->>'scope'='sgg' AND j.options->>'sgg_cd' = ANY($1::text[])" + sql_public("j") + " ORDER BY j.finished_at DESC LIMIT 20", codes)   # 개인 결과 제외(10-31)
     seen = set()
     from .svc_rules import excluded, hit
     ex = await excluded()                                 # 서비스 × 시군구 보이기 규칙(원칙 293 — 예: 곤포사일리지는 남원만)

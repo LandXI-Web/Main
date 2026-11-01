@@ -10,7 +10,7 @@
      · 떠 있는 요소 둘이 폭 · 높이 모두 4px 넘게 겹치면 '겹침'(조상-자손 쌍 · 같은 묶음 안 요소는 세지 않는다).
      · 화면에 고정된 작은 단추(대화 단추 · 꼬리표)가 그 아래 누르는 것(단추 · 링크 · 입력)이나 글 줄을 4px 넘게 덮으면 '덮음'
        (G8 — "단추가 본문 글 · 단추 위를 떠다닌다"). 지도 · 사진 위는 세지 않는다.
-   결과: { vp, boxes[], overlaps[{a,b,w,h,ofSmall,kind}] } — kind = 'pair'(떠 있는 요소끼리) | 'cover'(단추가 글 · 누르는 것을 덮음). */
+   결과: { vp, boxes[], overlaps[{a,b,w,h,ofSmall,kind}] } — kind = 'pair'(떠 있는 요소끼리) | 'cover'(단추가 글 · 누르는 것을 덮음) | 'toast'(알림이 머리줄 밖 누르는 것을 덮음 · 11-01). */
 
 export const SEL = [
   '[data-zone]', '.k-drawer.is-open', '.k-chat-root:not([data-dock]) .k-chat:not([hidden])', '.k-chat-fab', '.k-chat-tag', '.xk-ans:not([hidden])',
@@ -122,6 +122,16 @@ export const MEASURE = `(() => {
     }
     c.style.pointerEvents = pe;
     for (const [el, v] of hits) pairs.push({ kind: 'cover', a: it.name, b: (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '')) + (v.t ? ' "' + v.t + '"' : ''), w: v.w, h: v.h, area: v.w * v.h, ofSmall: Math.round(100 * v.w * v.h / (it.w * it.h)) });
+  }
+  /* 알림 상자(.k-toast)가 떠 있는 동안(11-01 원칙 309) — 머리줄 밖의 단추 · 링크 · 입력 · 고르기를 덮으면 'toast'. 알림은 떠 있는 상자 검사(SKIP)에서는 빠지므로 여기서 따로 잰다 */
+  for (const to of document.querySelectorAll('.k-toast')) {
+    const a = to.getBoundingClientRect(); if (a.width < 2 || +getComputedStyle(to).opacity === 0) continue;
+    for (const el of document.querySelectorAll('a[href],button,input:not([type=hidden]),select,textarea,[role=button],[role=tab]')) {
+      if (to.contains(el) || el.closest('.k-mast,[hidden]')) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
+      const ix = Math.min(a.right, r.right) - Math.max(a.left, r.left), iy = Math.min(a.bottom, r.bottom) - Math.max(a.top, r.top);
+      if (ix > 4 && iy > 4) pairs.push({ kind: 'toast', a: '.k-toast', b: el.tagName.toLowerCase() + ' \"' + (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 16) + '\"', w: Math.round(ix), h: Math.round(iy), area: Math.round(ix * iy), ofSmall: 100 });
+    }
   }
   return { vp: [innerWidth, innerHeight], boxes: items.map(({ el, ...r }) => r), overlaps: pairs.sort((p, q) => q.area - p.area) };
 })()`;

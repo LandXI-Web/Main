@@ -37,6 +37,7 @@ from starlette.concurrency import run_in_threadpool
 from . import config
 from .deps import ApiError, Principal, audit, db, principal, redis, require
 from .envelope import KST, env, now_iso
+from .own_scope import sql_public  # 개인 결과 제외(10-31)
 
 router = APIRouter()
 KINDS = {"farm_ledger": "농지대장", "dev_permit": "개발행위 허가", "public_asset": "공유재산", "river_permit": "하천 점용 허가",
@@ -426,7 +427,7 @@ async def import_ledger(tenant: str, request: Request, file: UploadFile = File(.
         raise ApiError("bad_request", "XLSX · CSV · SHP · GPKG 만 올릴 수 있습니다", {"allowed": sorted(EXTS)})
     raw = await file.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
-        raise ApiError("bad_request", "20MB까지 올릴 수 있습니다", status=413)
+        raise ApiError("bad_request", "20MB가 넘는 파일은 나눠 올리기로 올립니다 — 화면을 새로 고친 뒤 다시 골라 주세요", status=413)
     if ext == "json":
         ext = "geojson"
     try:
@@ -555,6 +556,83 @@ def _layer_path(iid: str) -> Path:
     return LAYER_DIR / f"{iid}.geojson"
 
 
+# ── 행정 자료 종류(10-31 PM "가 기능을 추가하자." · "기타도 추가. 종류도 바로 추가하는 기능도 만들자") ─────────────────
+# 한 출처 = ledger_kinds 표(0137). 기본 7개(AI 결과 비교 규칙 있음) + 산사태 취약지역 · 기타(비교 없이 저장 · 지도 · 속성 보기) = 지울 수 없음.
+# 관리자가 올리는 자리에서 '+ 새 종류'로 더한 것도 같은 표(비교 규칙 없음 · 추가한 사람 · 시각). 기관 대장 올리기는 예전처럼 KINDS(비교 규칙 있는 7개)만.
+SHARED_EXTRA = {"landslide_area": "산사태 취약지역", "other": "기타"}
+_KL: dict = {"t": 0.0, "items": []}
+
+
+async def kind_items(conn, fresh: bool = False) -> list[dict]:
+    """→ [{id, label, compare, builtin}] 정렬 순. 표가 없으면(0137 전) 코드 값."""
+    if fresh or time.time() - _KL["t"] > 30 or not _KL["items"]:
+        try:
+            rows = await conn.fetch("SELECT id, label, compare, builtin FROM ledger_kinds ORDER BY sort, created_at, id")
+            _KL["items"] = [dict(r) for r in rows]
+        except Exception:  # noqa: BLE001 — 0137 전
+            _KL["items"] = [{"id": k, "label": v, "compare": True, "builtin": True} for k, v in KINDS.items()] + \
+                           [{"id": k, "label": v, "compare": False, "builtin": True} for k, v in SHARED_EXTRA.items()]
+        _KL["t"] = time.time()
+    return _KL["items"]
+
+
+def kind_label(k: str | None) -> str | None:
+    for it in _KL["items"]:
+        if it["id"] == k:
+            return it["label"]
+    return KINDS.get(k) or SHARED_EXTRA.get(k)
+
+
+@router.get("/shared/ledger-kinds")
+async def shared_kinds(request: Request):
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        items = await kind_items(conn, fresh=True)
+    return {"items": items, "as_of": now_iso()}
+
+
+@router.post("/shared/ledger-kinds", status_code=201)
+async def shared_kind_add(body: dict, request: Request):
+    """'+ 새 종류' — 이름만(20자까지 · 같은 이름 금지 · 띄어쓰기 · 대소문자 무시). 비교 규칙 없음(저장 · 지도 · 속성 보기만 · 규칙은 나중)."""
+    p = require(principal(request), admin=True)
+    label = " ".join(str(body.get("label") or "").split())
+    if not label:
+        raise ApiError("bad_request", "종류 이름을 적어 주세요")
+    if len(label) > 20:
+        raise ApiError("bad_request", "종류 이름은 20자까지 적을 수 있습니다")
+    key = re.sub(r"\s", "", label).lower()
+    async with db(realm="lx") as conn:
+        if await conn.fetchval("SELECT 1 FROM ledger_kinds WHERE lower(regexp_replace(label, '\\s', '', 'g')) = $1", key):
+            raise ApiError("conflict", "같은 이름의 종류가 있습니다", None, 409)
+        kid = "k_" + secrets.token_hex(5)
+        await conn.execute("INSERT INTO ledger_kinds(id, label, compare, builtin, sort, created_by) VALUES ($1,$2,false,false,500,$3)", kid, label, p.user_id)
+        await audit(conn, p, "ledger.kind.add", kid, None, {"label": label})
+        await kind_items(conn, fresh=True)
+    return {"id": kid, "label": label, "compare": False, "builtin": False, "as_of": now_iso()}
+
+
+@router.delete("/shared/ledger-kinds/{kid}")
+async def shared_kind_delete(kid: str, request: Request):
+    """더한 종류 지우기 — 기본 종류(7개 + 산사태 취약지역 + 기타)는 지울 수 없고, 그 종류로 올린 행정 자료가 있으면 지울 수 없다."""
+    p = require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT id, label, builtin FROM ledger_kinds WHERE id=$1", kid)
+        if not r:
+            raise ApiError("not_found", "종류가 없습니다")
+        if r["builtin"]:
+            raise ApiError("forbidden", "기본 종류는 지울 수 없습니다")
+        if await conn.fetchval("SELECT 1 FROM ledger_imports WHERE kind=$1 LIMIT 1", kid):
+            raise ApiError("conflict", "이 종류로 올린 행정 자료가 있어 지울 수 없습니다", None, 409)
+        await conn.execute("DELETE FROM ledger_kinds WHERE id=$1", kid)
+        await audit(conn, p, "ledger.kind.delete", kid, {"label": r["label"]}, None)
+        await kind_items(conn, fresh=True)
+    return {"ok": True, "id": kid, "as_of": now_iso()}
+
+
+async def _kind_ok(conn, k: str) -> bool:
+    return any(it["id"] == k for it in await kind_items(conn, fresh=True))
+
+
 def _layer_fc(raw: bytes, ext: str) -> tuple[int, dict, list[str], dict | None]:
     """→ (행 수, 도형 FeatureCollection, 버린 열, 주소 찾기 할 일 | None). 도형 파일은 도형 그대로 · 표(CSV · XLSX)는 경도 · 위도 열의 점.
     표에 좌표 열이 없고 주소(지번) 열만 있으면 빈 FC + {'jibun': 열, 'rows': 행} — 위치는 V-World 주소 찾기로(상한 VW_CAP)."""
@@ -613,12 +691,25 @@ def _shared_row(r, tn: dict | None = None) -> dict:
     st = r["stats"] or {}
     at = r["confirmed_at"] or r["created_at"]
     out = {"id": r["id"], "owner": "lx" if lx else "tenant", "tenant": None if lx else (_nm((tn or {}).get(r["tenant_id"])) or None),
-           "name": (r["name"] or KINDS.get(r["kind"])) if lx else KINDS.get(r["kind"]), "kind": r["kind"], "kind_label": KINDS.get(r["kind"]),
+           "name": (r["name"] or kind_label(r["kind"])) if lx else kind_label(r["kind"]), "kind": r["kind"], "kind_label": kind_label(r["kind"]),
            "rows": env(r["rows"], "count", "recorded", "대장 파일 행"),
            "at": at.astimezone(KST).isoformat(timespec="seconds") if at else None}
     if lx:
         out["shared"] = bool(r["staff_shared"])
         out["located"] = env(int(st.get("located") or 0), "count", "recorded", "지도에 놓인 행")
+        stt = r.get("state") if hasattr(r, "get") else None
+        if stt == "matching" and st.get("big") and not _alive(st.get("pid")):   # 읽던 프로세스가 없다(서버를 다시 켬 등)
+            out["work"] = "failed"
+            out["error"] = "읽다가 멈췄습니다 — 지우고 다시 올려 주세요"
+        elif stt in ("uploaded", "matching"):            # 큰 자료 — 서버가 읽는 중(10-31 큰 파일)
+            tot, done = st.get("total"), st.get("done") or 0
+            out["work"] = "reading"
+            out["progress"] = env(round(done / tot * 100) if tot else None, "%", "measured", "읽어 지도에 놓은 도형 / 파일 안 도형")
+        elif stt == "failed":
+            out["work"] = "failed"
+            out["error"] = r.get("error") or "파일을 읽지 못했습니다"
+        if st.get("big"):
+            out["tiles"] = True
     return out
 
 
@@ -628,10 +719,12 @@ async def shared_ledgers(request: Request):
     require(principal(request), admin=True)
     async with db(realm="lx") as conn:
         tn = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM tenants")}
-        rows = await conn.fetch("SELECT id, tenant_id, kind, name, rows, stats, staff_shared, created_at, confirmed_at FROM ledger_imports "
-                                "WHERE state <> 'failed' ORDER BY coalesce(confirmed_at, created_at) DESC LIMIT 500")
+        kl = await kind_items(conn, fresh=True)
+        rows = await conn.fetch("SELECT id, tenant_id, kind, name, rows, stats, staff_shared, created_at, confirmed_at, state, error FROM ledger_imports "
+                                "WHERE state <> 'failed' OR (tenant_id = $1 AND created_at > now() - interval '1 day') "
+                                "ORDER BY coalesce(confirmed_at, created_at) DESC LIMIT 500", LX_OWNER)
     items = [_shared_row(r, tn) for r in rows]
-    return {"items": items, "total": len(items), "kinds": KINDS, "as_of": now_iso()}
+    return {"items": items, "total": len(items), "kinds": {k["id"]: k["label"] for k in kl}, "kind_list": kl, "as_of": now_iso()}
 
 
 @router.get("/shared/ledgers/{iid}")
@@ -646,7 +739,17 @@ async def shared_ledger_detail(iid: str, request: Request):
         tn = {x["id"]: x["name"] for x in await conn.fetch("SELECT id, name FROM tenants WHERE id=$1", r["tenant_id"])}
         st = r["stats"] or {}
         st = json.loads(st) if isinstance(st, str) else st
-        if r["tenant_id"] == LX_OWNER:
+        if r["tenant_id"] == LX_OWNER and st.get("big"):  # 큰 자료 — 속성 앞 5줄 · 미리보기 도형 앞 3,000개(덜어 냄) · 범위
+            fr = await conn.fetch("SELECT props FROM shared_layer_feats WHERE iid=$1 ORDER BY fid LIMIT 50", iid)
+            pr = [x["props"] if isinstance(x["props"], dict) else json.loads(x["props"] or "{}") for x in fr]
+            cols = list(dict.fromkeys(k for d in pr for k in d))[:8]
+            head = [{c: d.get(c) for c in cols} for d in pr[:5]]
+            gtypes = [x["t"] for x in await conn.fetch("SELECT DISTINCT ST_GeometryType(geom) AS t FROM (SELECT geom FROM shared_layer_feats WHERE iid=$1 LIMIT 2000) q", iid)]
+            gtypes = [str(t).replace("ST_", "") for t in gtypes]
+            g = await conn.fetch("SELECT ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.0001), 6) AS g FROM shared_layer_feats WHERE iid=$1 ORDER BY fid LIMIT 3000", iid)
+            shape = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {}, "geometry": json.loads(x["g"])} for x in g if x["g"]]}
+            bbox = st.get("bbox")
+        elif r["tenant_id"] == LX_OWNER:
             f = _layer_path(iid)
             fc = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {"type": "FeatureCollection", "features": []}
             feats = fc.get("features") or []
@@ -683,15 +786,16 @@ async def shared_ledger_detail(iid: str, request: Request):
 async def shared_ledger_upload(request: Request, file: UploadFile = File(...), kind: str = Form(...), name: str = Form("")):
     """LX 관리자 — 행정 자료 올리기. SHP(zip) · GPKG · GeoJSON · CSV(주소 · 좌표 열) · XLSX. 성명 · 연락처 열은 저장하지 않는다(기관 대장과 같은 규칙)."""
     p = require(principal(request), admin=True)
-    if kind not in KINDS:
-        raise ApiError("bad_request", "종류를 고르세요", {"allowed": list(KINDS)})
+    async with db(realm="lx") as conn:
+        if not await _kind_ok(conn, kind):
+            raise ApiError("bad_request", "종류를 고르세요")
     fname = file.filename or "upload"
     ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
     if ext not in LAYER_EXTS:
         raise ApiError("bad_request", "SHP(zip) · GPKG · GeoJSON · CSV 만 올릴 수 있습니다", {"allowed": sorted(LAYER_EXTS)})
     raw = await file.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
-        raise ApiError("bad_request", "20MB까지 올릴 수 있습니다", status=413)
+        raise ApiError("bad_request", "20MB가 넘는 파일은 나눠 올리기로 올립니다 — 화면을 새로 고친 뒤 다시 골라 주세요", status=413)
     if ext == "json":
         ext = "geojson"
     try:
@@ -757,8 +861,8 @@ async def shared_ledger_edit(iid: str, body: dict, request: Request):
             args.append(nm); sets.append(f"name=${len(args)}"); before["name"], after["name"] = r["name"], nm
         if "kind" in body:
             k = str(body.get("kind") or "")
-            if k not in KINDS:
-                raise ApiError("bad_request", "종류를 고르세요", {"allowed": list(KINDS)})
+            if not await _kind_ok(conn, k):
+                raise ApiError("bad_request", "종류를 고르세요")
             args.append(k); sets.append(f"kind=${len(args)}"); before["kind"], after["kind"] = r["kind"], k
         if "shared" in body:
             args.append(bool(body.get("shared"))); sets.append(f"staff_shared=${len(args)}")
@@ -776,10 +880,411 @@ async def shared_ledger_delete(iid: str, request: Request):
     p = require(principal(request), admin=True)
     async with db(realm="lx") as conn:
         r = await _lx_row(conn, iid)
+        st0 = r["stats"] or {}
+        if r["state"] in ("uploaded", "matching") and st0.get("big") and _alive(st0.get("pid")):
+            raise ApiError("conflict", "아직 읽는 중입니다 — 다 읽은 뒤 지울 수 있습니다", None, 409)
+        await conn.execute("DELETE FROM shared_layer_feats WHERE iid=$1", iid)
         await conn.execute("DELETE FROM ledger_imports WHERE id=$1", iid)
         await audit(conn, p, "ledger.shared.delete", iid, {"name": r["name"], "kind": r["kind"], "rows": r["rows"]}, None)
+    if (st0.get("pid") and _alive(st0.get("pid"))):     # 다 읽고 조각을 미리 그리는 중이면 그 프로세스를 멈춘다(지운 뒤 조각 파일이 다시 생기지 않게)
+        try:
+            import psutil
+            pr = psutil.Process(int(st0["pid"])); pr.terminate(); pr.wait(timeout=10)
+        except Exception:  # noqa: BLE001
+            pass
     _layer_path(iid).unlink(missing_ok=True)
+    for k in [k for k in _STC if k[0] == iid]:          # 조각 보관
+        _STC.pop(k, None)
+    try:
+        (LAYER_DIR / f"{iid}.read.log").unlink(missing_ok=True)   # 읽기 기록(읽던 프로세스가 아직 쥐고 있으면 남김 — 지우기는 계속)
+    except OSError:
+        pass
+    import shutil as _sh
+    _sh.rmtree(LAYER_DIR / f"{iid}.tiles", ignore_errors=True)    # 조각 보관
+    for f in LAYER_DIR.glob(f"{iid}.src.*"):             # 큰 자료 원본
+        f.unlink(missing_ok=True)
     return {"ok": True, "id": iid, "as_of": now_iso()}
+
+
+# ── 큰 행정 자료(10-31 PM — 산사태 취약지역 GPKG 400MB 가 한 번에 올리기 20MB 한도에 막힘) ─────────────────────────
+# 올리기 = 영상 업로드와 같은 나눠 올리기(kit/uploads.js · /catalog/imagery/uploads · purpose 'ledger' · 바깥 주소 한 요청 크기 한도를 넘지 않게) →
+# POST /shared/ledgers/from-upload {draft_id, kind, name} → 파일을 행정 자료 칸(shared/ledger/{id}.src.{ext})으로 옮기고 뒤에서 읽는다
+# (층마다 · 2만 개씩 · EPSG:4326 · 성명 · 연락처 열 빼고) → shared_layer_feats(PostGIS). 지도 = 조각(MVT · 서명 주소) · 속성 = 앞 줄.
+# 읽는 동안 목록에 진행률(stats.done / total) · 실패면 이유 한 줄.
+BIG_EXTS = {"gpkg", "zip", "geojson", "json"}
+BIG_MAX = 5_000_000_000            # 5GB(10-31 PM "산사태 위험지구 파일이 2.1기가 … 전국이다보니" · 처음 1GB에서 올림)
+BIG_BATCH = 10000                 # 한 번에 읽는 도형 수(537MB · 6.5만 개 시험: 2만이면 메모리 최고 1GB)
+
+
+def _src_path(iid: str, ext: str) -> Path:
+    _layer_path(iid)                                     # id 모양 검사
+    return LAYER_DIR / f"{iid}.src.{ext}"
+
+
+TILE_LO = ("WITH t AS (SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS e), s AS ("
+           " SELECT ST_SnapToGrid(ST_Transform(ST_PointOnSurface(ST_Envelope(f.geom)), 3857), %(tol)s) AS p "
+           " FROM shared_layer_feats f, t WHERE f.iid = %(i)s AND f.geom && ST_Transform(t.e, 4326)), q AS ("
+           " SELECT ST_AsMVTGeom(s.p, t.e, 4096, 16, true) AS g, count(*)::int AS n FROM s, t GROUP BY s.p, t.e) "
+           "SELECT ST_AsMVT(q, 'f', 4096, 'g') FROM q WHERE g IS NOT NULL")
+
+
+def _warm_tiles(conn, iid: str, bbox: list, zs=(5, 6, 7, 8)) -> int:
+    """낮은 확대 조각을 디스크에 미리(게이트웨이 조각 주소가 먼저 디스크를 본다)."""
+    import math
+    n = 0
+    for z in zs:
+        def tx(lon): return int((lon + 180) / 360 * 2 ** z)
+        def ty(lat): return int((1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * 2 ** z)
+        px = 40075016.68 / 256.0 / (2 ** z)
+        for x in range(tx(bbox[0]), tx(bbox[2]) + 1):
+            for y in range(ty(bbox[3]), ty(bbox[1]) + 1):
+                b = conn.execute(TILE_LO, {"z": z, "x": x, "y": y, "i": iid, "tol": px * 2}).fetchone()[0]
+                p = LAYER_DIR / f"{iid}.tiles" / str(z) / str(x) / f"{y}.pbf"
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(bytes(b or b""))
+                n += 1
+    return n
+
+
+def _ingest_big(iid: str, src: Path, ext: str, dsn: str | None = None) -> dict:
+    """큰 도형 파일 → shared_layer_feats (따로 뜬 프로세스 · 작업 계정 연결).
+    11-01 빠르게(PM "읽는 중 속도가 느린 거 같은데 최고 속도인지") — 시험 120만 개 · 340MB 에서 1.8만 → 3.2만 개/초 이상:
+      · 읽기 = 화살표 묶음(pyogrio.open_arrow · 건너뛰기 없이 앞에서부터 이어 읽음)
+      · 도형 = 좌표 변환 벡터 · WKB 는 바이트로 만든 뒤 16진(shapely 16진 출력이 5배 느림 — 실측 2.4초 → 0.45초/10만 개)
+      · 속성 = 표 한 번에 JSON 줄(행마다 json.dumps 하지 않음)
+      · DB 넣기 = 묶음마다 COPY 글 한 덩어리 · 넣기는 따로 된 스레드 · 연결(다음 묶음을 만드는 동안 앞 묶음을 넣음)
+      · 묶음 크기 = 파일 크기 / 도형 수로(작은 면은 크게 · 큰 면은 작게 — 메모리 한 묶음 약 40MB)
+      · 단계별 시간을 stats.steps 에 남긴다(열기 · 읽기 · 좌표 변환 · WKB · 속성 · DB 넣기 · 조각 미리 그리기).
+      · 낮은 확대 조각 미리 그리기는 '다 읽음' 뒤에(사람이 기다리지 않게 · 그동안 조각은 그때그때 그림)."""
+    import os
+    import queue
+    import shutil
+    import tempfile
+    import threading
+    import zipfile
+
+    import numpy as np
+    import pyarrow as pa
+    import pyogrio
+    import shapely
+    from pyproj import CRS, Transformer
+
+    from survey.db import lx_tx, pg
+    t0 = time.time()
+    steps = {k: 0.0 for k in ("open", "read", "transform", "wkb", "props", "db", "warm")}
+    tmp = None
+    path = src
+    if ext == "zip":
+        tmp = Path(tempfile.mkdtemp(prefix="lxbig_", dir=str(LAYER_DIR)))
+        with zipfile.ZipFile(src) as z:
+            z.extractall(tmp)
+        path = next(iter(sorted(tmp.rglob("*.gpkg"))), None) or next(iter(sorted(tmp.rglob("*.shp"))), None)
+        if not path:
+            raise ApiError("bad_request", "ZIP 안에 SHP · GPKG 가 없습니다")
+
+    def esc(s: str) -> str:                               # COPY 글 형식(탭 · 줄바꿈 · 역슬래시)
+        return s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+    try:
+        t = time.time()
+        lays = [str(x[0]) for x in pyogrio.list_layers(path) if x[1]]      # 도형이 있는 층만
+        if not lays:
+            raise ApiError("bad_request", "도형이 있는 층이 없습니다")
+        infos = {l: pyogrio.read_info(path, layer=l) for l in lays}
+        total = sum(int(i.get("features") or 0) for i in infos.values())
+        size = path.stat().st_size if path.exists() else 0
+        batch = int(min(100000, max(5000, 4e7 / max(1.0, size / max(1, total)))))
+        steps["open"] += time.time() - t
+        crs_words, dropped_all = [], set()
+        with pg(dsn) as conn:
+            lx_tx(conn)
+            conn.execute("DELETE FROM shared_layer_feats WHERE iid=%s", (iid,))
+            conn.execute("UPDATE ledger_imports SET state='matching', stats = coalesce(stats,'{}'::jsonb) || %s::jsonb WHERE id=%s",
+                         (json.dumps({"total": total, "done": 0, "layers": len(lays), "batch": batch}), iid))
+            conn.commit()
+        # 넣는 쪽(스레드 · 연결 하나) — 묶음 글을 받아 COPY · 진행률 · 커밋
+        NW = int(os.environ.get("LX_LEDGER_WRITERS") or 1)    # 넣는 연결 수 — 둘로 해도 빨라지지 않음(11-01 실측 98초 vs 108초 · 25.5초 vs 24.4초) · 하나
+        qu: "queue.Queue" = queue.Queue(maxsize=NW + 1)
+        plock = threading.Lock()
+        err: list = []
+        prog = {"done": 0}
+
+        def writer():
+            try:
+                with pg(dsn) as wc:
+                    while True:
+                        item = qu.get()
+                        if item is None:
+                            break
+                        text, n_rows = item
+                        tw = time.time()
+                        lx_tx(wc)
+                        with wc.cursor() as cur, cur.copy("COPY shared_layer_feats(iid, lyr, fid, props, geom) FROM STDIN") as cp:
+                            cp.write(text)
+                        with plock:
+                            prog["done"] += n_rows
+                            dn = prog["done"]
+                        wc.execute("UPDATE ledger_imports SET stats = coalesce(stats, '{}'::jsonb) || %s::jsonb WHERE id=%s",
+                                   (json.dumps({"done": dn}), iid))
+                        wc.commit()
+                        with plock:
+                            steps["db"] += time.time() - tw
+            except Exception as e:  # noqa: BLE001
+                err.append(e)
+                while True:                               # 읽는 쪽이 막히지 않게 남은 것을 비운다
+                    try:
+                        if qu.get_nowait() is None:
+                            break
+                    except queue.Empty:
+                        break
+        ths = [threading.Thread(target=writer, daemon=True) for _ in range(NW)]
+        for th in ths:
+            th.start()
+        fid = 0
+        try:
+            for l in lays:
+                info = infos[l]
+                crs = info.get("crs")
+                crs_words.append(str(crs or "좌표계 없음"))
+                tr = None
+                if crs:
+                    c = CRS.from_user_input(crs)
+                    if c.to_epsg() != 4326:
+                        tr = Transformer.from_crs(c, 4326, always_xy=True)
+                enc = "cp949" if path.suffix.lower() == ".shp" and not path.with_suffix(".cpg").exists() else None
+                t = time.time()
+                with pyogrio.open_arrow(path, layer=l, batch_size=batch, encoding=enc, use_pyarrow=True) as (meta, reader):
+                    steps["open"] += time.time() - t
+                    gcol = meta.get("geometry_name") or "wkb_geometry"
+                    for tb in reader:
+                        if err:
+                            raise err[0]
+                        t = time.time()
+                        tbl = pa.Table.from_batches([tb])
+                        steps["read"] += time.time() - t
+                        t = time.time()
+                        arr = shapely.from_wkb(tbl.column(gcol).to_numpy(zero_copy_only=False))
+                        if tr is not None:
+                            arr = shapely.transform(arr, lambda xy: np.column_stack(tr.transform(xy[:, 0], xy[:, 1])))
+                        steps["transform"] += time.time() - t
+                        t = time.time()
+                        wkb = shapely.to_wkb(shapely.set_srid(arr, 4326), include_srid=True)
+                        steps["wkb"] += time.time() - t
+                        t = time.time()
+                        cols = [c for c in tbl.column_names if c != gcol]
+                        drop = [c for c in cols if is_pii(str(c))]
+                        dropped_all.update(map(str, drop))
+                        keep = [c for c in cols if c not in drop]
+                        if keep:
+                            df = tbl.select(keep).to_pandas()
+                            lines = df.astype(str).replace({"None": "", "nan": "", "NaT": "", "<NA>": ""}).to_json(orient="records", lines=True, force_ascii=False).splitlines()
+                        else:
+                            lines = ["{}"] * len(wkb)
+                        steps["props"] += time.time() - t
+                        t = time.time()
+                        out = []
+                        for i, b in enumerate(wkb):
+                            if b is None:
+                                continue
+                            out.append(f"{iid}\t{esc(l)}\t{fid}\t{esc(lines[i])}\t{b.hex()}\n")
+                            fid += 1
+                        steps["wkb"] += time.time() - t
+                        qu.put(("".join(out), len(wkb)))
+                        del tbl, arr, wkb, lines, out
+        finally:
+            for _ in ths:
+                qu.put(None)
+            for th in ths:
+                th.join()
+        if err:
+            raise err[0]
+        with pg(dsn) as conn:
+            lx_tx(conn)
+            bb = conn.execute("SELECT ST_XMin(e), ST_YMin(e), ST_XMax(e), ST_YMax(e) FROM (SELECT ST_Extent(geom) e FROM shared_layer_feats WHERE iid=%s) q",
+                              (iid,)).fetchone()
+            bbox = [round(float(v), 6) for v in bb] if bb and bb[0] is not None else None
+            st = {"located": fid, "bbox": bbox, "big": True, "total": total, "done": prog["done"], "layers": len(lays), "layer_names": lays[:20],
+                  "crs": list(dict.fromkeys(crs_words))[:5], "read_s": round(time.time() - t0, 1), "batch": batch,
+                  "steps": {k: round(v, 1) for k, v in steps.items()}}
+            conn.execute("UPDATE ledger_imports SET state='matched', rows=%s, dropped=%s, stats=%s, confirmed_at=now(), error=NULL WHERE id=%s",
+                         (prog["done"], json.dumps(sorted(dropped_all), ensure_ascii=False), json.dumps(st, ensure_ascii=False), iid))
+            conn.commit()
+            if bbox:                                       # 다 읽은 뒤 — 낮은 확대 조각 미리 그림(z5~8). 그동안 지도는 조각을 그때그때 그린다
+                t1 = time.time()
+                lx_tx(conn)
+                try:
+                    n = _warm_tiles(conn, iid, bbox)
+                    steps["warm"] = time.time() - t1
+                    conn.execute("UPDATE ledger_imports SET stats = stats || %s::jsonb WHERE id=%s",
+                                 (json.dumps({"warm": n, "warm_s": round(steps["warm"], 1), "steps": {k: round(v, 1) for k, v in steps.items()}}), iid))
+                    conn.commit()
+                    st.update(warm=n, warm_s=round(steps["warm"], 1), steps={k: round(v, 1) for k, v in steps.items()})
+                except Exception as e:  # noqa: BLE001 — 미리 그리기 실패는 읽기 실패가 아니다
+                    conn.rollback()
+                    print(f"[ledger-big] {iid} 조각 미리 그리기 실패 {e!r}", flush=True)
+        return st
+    finally:
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+def ingest_cli(argv: list[str]) -> int:
+    """따로 뜬 프로세스에서 읽기(python -c ... ingest_cli) — 게이트웨이 안에서 GPKG 를 읽으면 영상 읽기(rasterio)와 GDAL 이 겹쳐
+    게이트웨이 작업 프로세스가 죽는 것을 실측(10-31 시험 · 537MB). 실패하면 이 프로세스가 직접 '읽지 못함'으로 적는다."""
+    iid, src, ext = argv[0], Path(argv[1]), argv[2]
+    try:
+        st = _ingest_big(iid, src, ext)
+        print(json.dumps({"ok": True, **st}, ensure_ascii=False), flush=True)
+        return 0
+    except Exception as e:  # noqa: BLE001
+        why = e.message if isinstance(e, ApiError) else f"파일을 읽지 못했습니다 — {type(e).__name__}"
+        print(f"[ledger-big] {iid} 실패 {e!r}", flush=True)
+        try:
+            from survey.db import lx_tx, pg
+            with pg() as c:
+                lx_tx(c)
+                c.execute("DELETE FROM shared_layer_feats WHERE iid=%s", (iid,))
+                c.execute("UPDATE ledger_imports SET state='failed', error=%s WHERE id=%s", (why[:300], iid))
+                c.commit()
+        except Exception:  # noqa: BLE001
+            pass
+        return 1
+
+
+def _alive(pid) -> bool:
+    try:
+        import psutil
+        return bool(pid) and psutil.pid_exists(int(pid))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+async def _ingest_task(iid: str, src: Path, ext: str, p) -> None:
+    import subprocess
+    import sys
+    logf = LAYER_DIR / f"{iid}.read.log"
+    try:                                                  # Windows 게이트웨이 이벤트 루프는 asyncio 하위 프로세스를 못 띄운다 — Popen + 스레드에서 기다림
+        with open(logf, "ab") as lf:
+            pr = subprocess.Popen([sys.executable, "-c", "import sys; from landxi_api.ledger import ingest_cli; sys.exit(ingest_cli(sys.argv[1:]))",
+                                   iid, str(src), ext], cwd=str(config.SERVER_ROOT), stdout=lf, stderr=lf,
+                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        async with db(realm="lx") as conn:
+            await conn.execute("UPDATE ledger_imports SET stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object('pid', $2::int) WHERE id=$1", iid, pr.pid)
+        rc = await run_in_threadpool(pr.wait)
+    except Exception as e:  # noqa: BLE001
+        print(f"[ledger-big] {iid} 읽기 프로세스를 띄우지 못함 {e!r}", flush=True)
+        rc = -1
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT state, stats FROM ledger_imports WHERE id=$1", iid)
+        if r and r["state"] == "matched":
+            st = r["stats"] or {}
+            await audit(conn, p, "ledger.shared.ready", iid, None, {"located": st.get("located"), "read_s": st.get("read_s"), "layers": st.get("layers")})
+        elif r and r["state"] != "failed":                # 프로세스가 적지 못하고 끝남(강제 종료 등)
+            await conn.execute("DELETE FROM shared_layer_feats WHERE iid=$1", iid)
+            await conn.execute("UPDATE ledger_imports SET state='failed', error=$2 WHERE id=$1", iid, f"파일을 읽다가 멈췄습니다(끝 코드 {rc})")
+
+
+@router.post("/shared/ledgers/from-upload", status_code=202)
+async def shared_ledger_from_upload(body: dict, request: Request):
+    """나눠 올리기로 다 올린 큰 행정 자료(파일 하나) → 행정 자료 한 줄(읽는 중) · 뒤에서 읽어 지도에 놓는다."""
+    import os
+    p = require(principal(request), admin=True)
+    did = str(body.get("draft_id") or "")
+    kind = str(body.get("kind") or "")
+    if not re.fullmatch(r"dr_[0-9a-f]{12}", did):
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    async with db(realm="lx") as conn:
+        if not await _kind_ok(conn, kind):
+            raise ApiError("bad_request", "종류를 고르세요")
+        rows = await conn.fetch("SELECT * FROM request_uploads WHERE draft_id=$1 AND tenant_id=$2 AND state IN ('uploading','done') ORDER BY created_at", did, LX_OWNER)
+    if not rows:
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    if any(r["user_id"] != p.user_id for r in rows):
+        raise ApiError("forbidden", "다른 사람의 묶음입니다")
+    if any(r["state"] == "uploading" for r in rows):
+        raise ApiError("not_ready", "아직 업로드 중입니다", None, 409)
+    mains = [r for r in rows if (r["filename"].rsplit(".", 1)[-1].lower() if "." in r["filename"] else "") in BIG_EXTS]
+    if len(mains) != 1:
+        raise ApiError("bad_request", "GPKG · SHP(zip) · GeoJSON 파일 하나만 올려 주세요")
+    m = mains[0]
+    ext = m["filename"].rsplit(".", 1)[-1].lower()
+    ext = "geojson" if ext == "json" else ext
+    iid = "imp_" + _ulid()
+    nm = " ".join(str(body.get("name") or "").split())[:60] or Path(m["filename"]).stem[:60]
+    src = _src_path(iid, ext)
+    LAYER_DIR.mkdir(parents=True, exist_ok=True)
+    f0 = config.DATA_ROOT / m["rel_path"]
+
+    def _move():
+        os.replace(f0, src)                               # 같은 디스크 안 이름 바꾸기(복사 없음)
+        for r in rows:                                    # 묶음의 나머지(곁 파일) · 빈 묶음 폴더
+            if r["id"] != m["id"]:
+                (config.DATA_ROOT / r["rel_path"]).unlink(missing_ok=True)
+        try:
+            f0.parent.rmdir()
+        except OSError:
+            pass
+    await run_in_threadpool(_move)
+    async with db(realm="lx") as conn:
+        await conn.execute("INSERT INTO ledger_imports(id, tenant_id, kind, name, filename, fmt, bytes, rows, dropped, state, stats, created_by) "
+                           "VALUES ($1,$2,$3,$4,$5,$6,$7,0,'[]','uploaded',$8,$9)",
+                           iid, LX_OWNER, kind, nm, m["filename"][:200], ext, int(m["size"] or 0), {"big": True, "done": 0, "total": None}, p.user_id)
+        await conn.execute("DELETE FROM request_uploads WHERE draft_id=$1", did)   # 올리기 기록은 끝(파일은 행정 자료 칸으로 옮김)
+        await audit(conn, p, "ledger.shared.upload", iid, None, {"kind": kind, "fmt": ext, "bytes": int(m["size"] or 0), "big": True})
+        r = await conn.fetchrow("SELECT * FROM ledger_imports WHERE id=$1", iid)
+    import asyncio as _aio
+    _aio.get_running_loop().create_task(_ingest_task(iid, src, ext, p))
+    return {**_shared_row(r), "as_of": now_iso()}
+
+
+_STC: dict = {}                    # 조각 보관(같은 조각을 다시 그리지 않게 · 지우면 비움)
+
+
+@router.get("/shared/layers/{iid}/tiles/{z}/{x}/{y}.pbf")
+async def shared_layer_tile(iid: str, z: int, x: int, y: int, exp: str | None = None, sig: str | None = None):
+    """큰 행정 자료 지도 조각(MVT) — 서명 주소(GET /shared/layers 가 LX 세션에 준 것)만."""
+    from fastapi.responses import Response as _R
+
+    from .tiles import verify
+    _layer_path(iid)
+    if not (0 <= z <= 20) or not verify(f"shared/{iid}", exp, sig):
+        raise ApiError("forbidden", "서명 없는 조각")
+    px = 40075016.68 / 256.0 / (2 ** z)
+    key = (iid, z, x, y)
+    b = _STC.get(key)
+    disk = LAYER_DIR / f"{iid}.tiles" / str(z) / str(x) / f"{y}.pbf"     # 디스크 보관(작업 프로세스 넷이 함께 · 낮은 확대는 읽을 때 미리 그림)
+    if b is None and disk.exists():
+        b = await run_in_threadpool(disk.read_bytes)
+        _STC[key] = b
+    if b is None:
+        async with db(realm="lx") as conn:
+            if z <= 10:
+                # 넓게 볼 때(전국 · 도) — 면 수십만 개는 화면 한 점보다 작다: 대표점으로, 화면 두 점 칸마다 하나(2.1GB 시험 z9 1.5MB · 17초 → 점)
+                b = await conn.fetchval(
+                    "WITH t AS (SELECT ST_TileEnvelope($1, $2, $3) AS e), s AS ("
+                    " SELECT ST_SnapToGrid(ST_Transform(ST_PointOnSurface(ST_Envelope(f.geom)), 3857), $5) AS p "
+                    " FROM shared_layer_feats f, t WHERE f.iid = $4 AND f.geom && ST_Transform(t.e, 4326)), q AS ("
+                    " SELECT ST_AsMVTGeom(s.p, t.e, 4096, 16, true) AS g, count(*)::int AS n FROM s, t GROUP BY s.p, t.e) "
+                    "SELECT ST_AsMVT(q, 'f', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, iid, px * 2)
+            else:
+                b = await conn.fetchval(
+                    "WITH t AS (SELECT ST_TileEnvelope($1, $2, $3) AS e), q AS ("
+                    " SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(ST_Transform(f.geom, 3857), $5), t.e, 4096, 16, true) AS g, f.fid, f.lyr "
+                    " FROM shared_layer_feats f, t WHERE f.iid = $4 AND f.geom && ST_Transform(t.e, 4326) "
+                    " AND ($1 >= 13 OR ST_Area(ST_Transform(ST_Envelope(f.geom), 3857)) >= $6) LIMIT 50000) "
+                    "SELECT ST_AsMVT(q, 'f', 4096, 'g') FROM q WHERE g IS NOT NULL", z, x, y, iid, px * 0.6, px * px)
+        b = bytes(b or b"")
+        _STC[key] = b
+        try:
+            disk.parent.mkdir(parents=True, exist_ok=True)
+            disk.write_bytes(b)
+        except OSError:
+            pass
+        while len(_STC) > 3000:
+            _STC.pop(next(iter(_STC)))
+    hdr = {"Cache-Control": "private, max-age=3600"}
+    if not b:
+        return _R(status_code=204, headers=hdr)
+    return _R(content=b, media_type="application/x-protobuf", headers=hdr)
 
 
 @router.get("/shared/layers")
@@ -789,7 +1294,19 @@ async def shared_layers(request: Request):
     async with db(realm="lx") as conn:
         rows = await conn.fetch("SELECT * FROM ledger_imports WHERE tenant_id=$1 AND staff_shared AND state <> 'failed' "
                                 "ORDER BY coalesce(name, kind)", LX_OWNER)
-    items = [{**_shared_row(r), "bbox": (r["stats"] or {}).get("bbox")} for r in rows if _layer_path(r["id"]).exists()]
+    from .tiles import sign, sign_exp
+    exp = sign_exp()
+    items = []
+    for r in rows:
+        st = r["stats"] or {}
+        if st.get("big"):                                 # 큰 자료 — 조각(서명 주소)
+            if r["state"] != "matched":
+                continue
+            rid = r["id"]
+            q = f"exp={exp}&sig={sign('shared/' + rid, exp)}"
+            items.append({**_shared_row(r), "bbox": st.get("bbox"), "tiles": f"/api/v1/shared/layers/{rid}/tiles/{{z}}/{{x}}/{{y}}.pbf?{q}"})
+        elif _layer_path(r["id"]).exists():
+            items.append({**_shared_row(r), "bbox": st.get("bbox")})
     return {"items": items, "total": len(items), "as_of": now_iso()}
 
 
@@ -1251,7 +1768,7 @@ async def _ensure_parcels(targets: list[str], token: str | None) -> dict:
                 continue
             out[t] = h["state"]
             if h["state"] == "no_ai":                     # 적재 뒤 AI 전역 분석이 끝났으면 그 작업으로 다시 결합
-                j = await conn.fetchval("SELECT id FROM jobs WHERE kind='infer' AND state='done' AND NOT demo AND NOT coalesce(test,false) "
+                j = await conn.fetchval("SELECT id FROM jobs WHERE kind='infer' AND state='done' AND NOT demo AND NOT coalesce(test,false)" + sql_public("jobs") + " "   # 개인 결과 제외(10-31)
                                         "AND options->>'sgg_cd' = ANY($1::text[]) ORDER BY finished_at DESC LIMIT 1", _codes(t))
                 if j:
                     need[t] = j

@@ -59,6 +59,8 @@ async def resolve(p: Principal, set_or_job: str) -> dict:
             raise ApiError("not_found", f"job {job_id} 없음")
         if not p.is_lx and p.tenant_id != j["tenant_id"]:
             raise ApiError("forbidden", "다른 기관의 결과")
+        from .own_scope import guard
+        await guard(p, job_id)                     # 남의 개인 결과(분석 서비스 · 내 영상)는 낸 사람만(10-31 PM) — 객체 보기 · 통계 · 목록 · 필지 · 고치기
         return {"job_id": job_id, "tenant": j["tenant_id"], "demo": j["demo"], "kind": "job", "set": j["result_set"]}
     # 정적 세트(또는 이름 붙은 게시 세트)
     pub = await published_job(s) if s.startswith("results/") else None

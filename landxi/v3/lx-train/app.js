@@ -80,7 +80,8 @@ const IS_LABEL = !!PRJ && STAGE === 'label';
 const newBtn = h(IS_LABEL ? 'button.t-btn.t-btn--2.tr-new' : 'button.t-btn.tr-new', { type: 'button', text: !PRJ ? '새 모델 만들기' : IS_LABEL ? '학습데이터 올리기' : '학습 실행' });
 const samplesBox = h('div.tr-grid.tr-samples', { role: 'list', hidden: !IS_LABEL });
 /* 학습데이터 구축(10-18 · 원칙 55 · 74 · 확인 L-1 · 라벨-1) = 플랫폼 안 수동 라벨링 칸(지도 | 그림 · 위에서 먼저 연 labPane) + 만든 라벨 묶음 올리기(zip) 아래 */
-const pane = IS_LABEL ? labPane : h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : '학습' }), newBtn), grid);
+const fileBtn = !PRJ ? h('button.t-btn.t-btn--2', { type: 'button', text: '모델 파일 올리기', onclick: () => import('./model-file.js').then((m) => m.openModelFile({ onDone: () => location.reload() })) }) : null;   // 모델 파일(.pt) 올리기 — 서버가 파일에서 계열 · 크기 · 형태를 읽는다(11-01 PM)
+const pane = IS_LABEL ? labPane : h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: !PRJ ? '학습 · 업무별 모델' : '학습' }), h('div.tr-hb', {}, ...(fileBtn ? [fileBtn] : []), newBtn)), grid);
 if (IS_LABEL) {
   pane.append(h('div.tr-subh', {}, h('h2', { text: '올린 학습데이터' }), newBtn), samplesBox);
   drawSamples();

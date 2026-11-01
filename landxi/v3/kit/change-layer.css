@@ -87,3 +87,7 @@ button.chg-link{border:0;background:none;padding:0;font:inherit;cursor:pointer;c
 .chg-mon-s{margin:0;display:flex;flex-direction:column;gap:2px;font:400 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
 .chg-mon-s b{color:var(--ink,#191F28);font-weight:600}
 .chg-mon-b{align-self:flex-start}
+
+/* 공공용지 무단점유 목록 접기(11-01) — 지도를 넓게 볼 때 거르기 · 표 · 아래 줄을 숨긴다 */
+.chg-card.is-occ.is-fold .chg-ofs, .chg-card.is-occ.is-fold .chg-ot, .chg-card.is-occ.is-fold .chg-oa, .chg-card.is-occ.is-fold .chg-w{display:none}
+.chg-fold{align-self:flex-start;border:0;background:none;padding:0;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--accent,#3182F6);cursor:pointer}

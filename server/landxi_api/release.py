@@ -218,9 +218,11 @@ async def _deployed_models(conn, pid: str) -> dict:
 async def project_models(conn, pid: str) -> list[dict]:
     """이 프로젝트 표본으로 학습한 모델(학습 작업이 있는 것) — 오래된 것부터 n번째 학습. 새 것이 위."""
     sids = await PJ._sample_ids(conn, pid)
+    # + 이 프로젝트에 붙인 조립 모델(학습 없이 기존 AI 를 묶은 것 · project_links kind='model' · 공공용지 무단점유 11-01)
     rows = await conn.fetch("SELECT id, name, status, metrics, classes, gsd_trained_m, input, created_at, sample_id, train_job FROM models "
-                            "WHERE sample_id = ANY($1::text[]) AND train_job IS NOT NULL AND coalesce(status,'') <> 'retired' "
-                            "ORDER BY created_at NULLS FIRST", sids or ["-"])
+                            "WHERE ((sample_id = ANY($1::text[]) AND train_job IS NOT NULL) "
+                            "    OR id IN (SELECT ref FROM project_links WHERE project_id=$2 AND kind='model')) AND coalesce(status,'') <> 'retired' "
+                            "ORDER BY created_at NULLS FIRST", sids or ["-"], pid)
     dep = await _deployed_models(conn, pid)
     from .registry import STATUS_MODEL
     # 기반 모델(학습 작업 options.base_model = models.id) — 배포 신청서의 '기반보다 낮음' 경고(질문 9 ⓑ)
@@ -231,9 +233,12 @@ async def project_models(conn, pid: str) -> list[dict]:
     out = []
     for i, r in enumerate(rows):
         b = bases.get(bmap.get(r["train_job"]) or "")
+        mi = r["input"] if isinstance(r["input"], dict) else (json.loads(r["input"]) if isinstance(r["input"], str) else {})
+        mi = mi if isinstance(mi, dict) else {}
         out.append({"id": r["id"], "name": model_label(r["name"], r["metrics"]), "n": i + 1, "status": r["status"],
                     "status_label": STATUS_MODEL.get(r["status"] or "", r["status"]),
-                    "acc": acc_env(r["metrics"]),
+                    "acc": acc_env(r["metrics"]) if not (mi or {}).get("composed") else env(None, "%", "measured", "성능 미측정(학습 없이 묶은 AI · 정답 표본으로 잰 값 없음)"),
+                    "composed": bool((mi or {}).get("composed")), "acc_word": "성능 미측정" if (mi or {}).get("composed") else None,
                     "classes": [str(c) for c in (r["classes"] or [])], "gsd_m": float(r["gsd_trained_m"]) if r["gsd_trained_m"] is not None else None,
                     "gsd_word": _gsd(r["gsd_trained_m"]), "at": _iso(r["created_at"]), "sample_id": r["sample_id"],
                     "base": {"id": b["id"], "name": model_label(b["name"], b["metrics"]), "acc": acc_env(b["metrics"])} if b else None,
@@ -659,6 +664,36 @@ async def on_cover_approved(conn, cv_id: str, pl: dict, by: str | None) -> dict 
     cur = [x for x in cur if isinstance(x, dict) and x.get("src") != sc["src"]] + [sc]
     await conn.execute("UPDATE card_info SET scene=$2, scenes=$3, updated_at=now(), updated_by=$4 WHERE card_id=$1", cid, sc, cur, by)
     return {"cover": sc["src"]}
+
+
+@router.post("/release/projects/{pid}/models", status_code=201)
+async def attach_model(pid: str, body: dict, request: Request):
+    """조립 모델 붙이기(11-01 공공용지 무단점유) — 학습 없이 기존 AI 를 묶은 모델(models.input.composed)을 이 프로젝트 모델로(프로젝트장).
+    붙인 뒤는 다른 모델과 같은 길: 모델 등록 요청(관리자 승인) → 배포 신청 → 공개 승인."""
+    p = _lx(request)
+    mid = str(body.get("model_id") or "")
+    async with db(realm="lx") as conn:
+        r, _m = await _member_project(conn, p, pid)
+        if p.user_id != r["lead_id"]:
+            raise ApiError("forbidden", "모델은 프로젝트장이 붙입니다")
+        mi = await conn.fetchval("SELECT input FROM models WHERE id=$1", mid)
+        mi = json.loads(mi) if isinstance(mi, str) else mi
+        if not isinstance(mi, dict) or not mi.get("composed"):
+            raise ApiError("bad_request", "학습 없이 묶은 모델만 붙입니다(학습한 모델은 학습 탭에서)")
+        if not await conn.fetchval("SELECT 1 FROM project_links WHERE project_id=$1 AND kind='model' AND ref=$2", pid, mid):
+            from .projects import link
+            await link(conn, pid, "model", mid, p.user_id)
+            await audit(conn, p, "project.model.attach", pid, None, {"model_id": mid})
+    return {"project_id": pid, "model_id": mid, "as_of": now_iso()}
+
+
+@router.get("/release/composed-models")
+async def composed_models(request: Request):
+    """붙일 수 있는 조립 모델 목록(LX 직원)."""
+    _lx(request)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT id, name->>'ko' AS name, status, classes FROM models WHERE input->>'composed' = 'true' AND coalesce(status,'') <> 'retired' ORDER BY id")
+    return {"items": [{"id": x["id"], "name": x["name"], "status": x["status"], "classes": list(x["classes"] or [])} for x in rows], "as_of": now_iso()}
 
 
 @router.post("/release/projects/{pid}/apply", status_code=201)

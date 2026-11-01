@@ -1,10 +1,10 @@
-/* 게스트 메인 — 첫 화면(히어로 · 그대로) + 장면 5(10-22 now21 첫인상-메인 ⓐ). 지도는 하나(K3)만 만들고, 챕터마다 '창'의 자리와 카메라만 스크롤에 묶는다.
+/* 게스트 메인 — 첫 화면(히어로 · 그대로) + 장면 6(10-22 now21 첫인상-메인 ⓐ). 지도는 하나(K3)만 만들고, 챕터마다 '창'의 자리와 카메라만 스크롤에 묶는다.
    트랙 A(sticky 판 하나): ch0 히어로(지구) → ① ch1 전국 결과 지도(경작지 · 하천 — 공개 그림 한 장) → ② ch3 XI ChatGEO 세 물음(지도 → 읍면동 통계 → 보고서 초안 · 반전)
    ③ ch4 서비스 카드(흐름 구간 · 지도 없음)
-   트랙 B(sticky 판 하나): ④ ch5 실적(결과를 낸 시군구 점) → ⑤ 마감(지구 귀환)
+   트랙 B(sticky 판 하나): ④ ch5 실적(결과를 낸 시군구 점) → ⑤ ch6 해외(키르기스스탄 경작지 면적 분석) → ⑥ 마감(지구 귀환)
    로그인 없이 보는 화면 — 공개 자료만(옆문 규칙 10-22): 전국 결과는 약 1km 칸 공개 그림(data/national-result.json) · 시군구 경계 · 실적 숫자(/public/record).
    규칙: 한 화면에 움직이는 것 1개 · 헤드라인 750 --e-cam 스태거 120 · 숫자는 봉투만 · 지역 이름은 데이터에서(하드코딩 0). */
-import { createStage, serviceGrid, joinCards, empty, mountCmdk, enter, bars } from '../kit/index.js';
+import { createStage, bignum, serviceGrid, joinCards, empty, mountCmdk, enter, bars } from '../kit/index.js';
 import { E_CAM, RM, h, esc } from '../kit/util.js';
 import { devlog } from '../kit/dev-drawer.js';
 import { WORLD_V } from '../kit/stage.js';
@@ -24,7 +24,7 @@ const KOREA = [124.6, 33.1, 130.95, 38.62];
 /* ── 트랙(화면 단위 길이) ─────────────────────────────── */
 const T = {
   A: { el: $('#trackA'), frame: $('#frameA'), segs: [2.5, 4, 4.5], x: 0, tx: 0 },   // 히어로 → ① 전국 결과 지도 → ② XI ChatGEO
-  B: { el: $('#trackB'), frame: $('#frameB'), segs: [3, 2.5], x: 0, tx: 0 },        // ④ 실적 → ⑤ 마감
+  B: { el: $('#trackB'), frame: $('#frameB'), segs: [3, 5, 2.5], x: 0, tx: 0 },     // ④ 실적 → ⑤ 해외(나라 → 군 하나로 확대 · 메인-5 · 원칙 190) → ⑥ 마감
 };
 for (const k in T) { const t = T[k]; let acc = 0; t.at = t.segs.map((s) => { const a = acc; acc += s; return a; }); t.sum = acc; }
 function sizeTracks() { for (const k in T) T[k].el.style.height = (T[k].sum + 1) * innerHeight + 'px'; }
@@ -153,12 +153,33 @@ async function addLayers() {
     st.map.setPaintProperty('k-ghp-l', 'line-color', '#FFFFFF');
     st.map.setPaintProperty('k-ghp-l', 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.5, 16, 1.2]);
   }
+  if (d.kgz && !st.map.getSource('k-kgz')) {
+    await st.geo('kgz', d.kgz, 'focus');
+    st.map.setPaintProperty('k-kgz-l', 'line-width', 1.6);
+  }
+  // 해외 장면 분석 결과(10-11 메인 지시 5) — 군별 농경지 비율(짙을수록 많다) · 군 경계는 가는 흰 선
+  if (d.kgzc && !st.map.getSource('k-kgzc')) {
+    await st.geo('kgzc', d.kgzc.geojson, 'ai');
+    st.map.setPaintProperty('k-kgzc-l', 'line-color', '#FFFFFF');
+    st.map.setPaintProperty('k-kgzc-l', 'line-width', 0.7);
+  }
+  // 확대 장면(메인-5 · 원칙 190) — 경작지가 가장 많은 군 하나의 실제 판정 칸(원천 화소 · 투명 바탕 그림)을 위성 영상 위에
+  const fo = d.kgzc?.focus;
+  if (fo && !st.map.getSource('k-kgzf')) {
+    const [w, so, e, n] = fo.bbox;
+    st.map.addSource('k-kgzf', { type: 'image', url: new URL('./data/' + fo.png, import.meta.url).href, coordinates: [[w, n], [e, n], [e, so], [w, so]] });
+    st.map.addLayer({ id: 'k-kgzf-r', type: 'raster', source: 'k-kgzf', paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 } }, 'slot-overlay');
+    const ft = d.kgzc.geojson.features.find((f) => f.properties.name === fo.name);
+    if (ft) { await st.geo('kgzd', { type: 'FeatureCollection', features: [ft] }, 'focus'); st.map.setPaintProperty('k-kgzd-l', 'line-width', 2); }
+  }
   S.paint = {}; S.last = '';
 }
 /* 장면이 이번 프레임에 원하는 값만 켠다 — 나머지 층은 0(다른 장면 층이 새지 않게) */
 const LAYERS = [['k-river-f', 'fill-opacity'], ['k-river-l', 'line-opacity'], ['k-river-h', 'line-opacity'], ['k-sweep-l', 'line-opacity'], ['k-sweep-f', 'fill-opacity'],
   ['k-sgg-l', 'line-opacity'], ['k-sgg-f', 'fill-opacity'], ['k-nat-farm', 'raster-opacity'], ['k-nat-greenhouse', 'raster-opacity'], ['k-nat-river', 'raster-opacity'],
-  ['k-emd-f', 'fill-opacity'], ['k-emd-l', 'line-opacity'], ['k-emd-h', 'line-opacity'], ['k-ghp-f', 'fill-opacity'], ['k-ghp-l', 'line-opacity'], ['k-ghp-h', 'line-opacity']];
+  ['k-emd-f', 'fill-opacity'], ['k-emd-l', 'line-opacity'], ['k-emd-h', 'line-opacity'], ['k-ghp-f', 'fill-opacity'], ['k-ghp-l', 'line-opacity'], ['k-ghp-h', 'line-opacity'],
+  ['k-kgz-l', 'line-opacity'], ['k-kgz-f', 'fill-opacity'], ['k-kgzc-f', 'fill-opacity'], ['k-kgzc-l', 'line-opacity'], ['k-kgzc-h', 'line-opacity'],
+  ['k-kgzf-r', 'raster-opacity'], ['k-kgzd-l', 'line-opacity'], ['k-kgzd-f', 'fill-opacity']];
 const want = (id, prop, v) => { S.want[id + '|' + prop] = v; };
 function flushLayers() { for (const [id, prop] of LAYERS) op(id, prop, S.want[id + '|' + prop] ?? 0); }
 /* 불투명도 — 같은 값이면 건드리지 않는다 */
@@ -184,6 +205,13 @@ function cams() {
   // 비닐하우스가 가장 모인 곳(약 1.5 × 1 km) — 면이 면으로 보이는 크기
   const gb = d.agent?.dense || rb;
   C.gh = { c: bcenter(gb), z: fitZoom(gb, ly.right, rpad, 17), pad: rpad };
+  const kb = d.kgz ? bboxFC(d.kgz) : [69.2, 39.2, 80.3, 43.3];
+  // 도착 줌은 타일 줌 경계(.5) 바로 아래로 — 도착 순간 타일 한 단계를 통째로 새로 받지 않게(0.2 줌 이내 차이)
+  const kz = fitZoom(kb, ly.full, ly.card, 7);
+  C.kgz = { c: bcenter(kb), z: kz % 1 >= 0.5 ? Math.floor(kz) + 0.47 : kz, pad: ly.card };
+  // 확대할 군(데이터가 고른 경작지 최다 군) — 카드를 비켜 군 전체가 창에
+  const fo = d.kgzc?.focus, ft = fo && d.kgzc.geojson.features.find((f) => f.properties.name === fo.name);
+  C.kd = ft ? { c: bcenter(bboxFC({ features: [ft] })), z: fitZoom(bboxFC({ features: [ft] }), ly.full, ly.card, 11.5), pad: ly.card } : C.kgz;
   S.cams = C;
   return C;
 }
@@ -256,33 +284,43 @@ function frame(now) {
   }
   /* 트랙 B */
   if (T.B.vis && (!T.A.vis || T.A.rect.bottom <= H * 0.5)) {
-    const x = T.B.x, [b0, b1] = T.B.at;
-    const s5 = seg(x, b0, b1), s7 = seg(x, b1, T.B.sum);
+    const x = T.B.x, [b0, b1, b2] = T.B.at;
+    const s5 = seg(x, b0, b1), s6 = seg(x, b1, b2), s7 = seg(x, b2, T.B.sum);
     chState($('#ch5'), band(s5, 0.02, 0.9));
-    scene = x < b1 + 0.5 ? 4 : 5;
+    chState($('#ch6'), x < b1 ? 'pre' : band(s6, 0.3, 0.97));
+    scene = x < b1 ? 4 : x < b2 + 0.5 ? 5 : 6;
     let lab = 0;
     S.gap = baseGap();
     if (x < b1) {
-      S.t7 = 0;
+      S.t6 = 0; S.t6d = 0; S.t7 = 0;
       win = LY.full; cam = C.nat2; bg = 'var(--bg-0)'; lab = seg(s5, 0.06, 0.2) * (1 - seg(s5, 0.92, 1));
       nationOutline(seg(s5, 0, 0.1) * (1 - seg(s5, 0.9, 1)));
+    } else if (x < b2) {
+      S.t6 = gated(S.t6, ease(seg(s6, 0, 0.34))); S.t7 = 0;
+      // ① 나라 → 군별 경작지 색칠 ② 경작지 최다 군으로 다가가 실제 판정 칸(메인-5)
+      S.t6d = gated(S.t6d || 0, ease(seg(s6, 0.56, 0.78)));
+      win = LY.full; cam = S.t6 < 1 || !S.t6d ? lerpCam(C.nat2, C.kgz, S.t6, dipB(C)) : zoomCam(C.kgz, C.kd, S.t6d); bg = '#fff';
+      nationOutline(0);
+      kgzScene(seg(s6, 0.28, 0.42), seg(s6, 0.62, 0.76));
+      kgzPhase(s6 >= 0.6 ? 2 : 1);
     } else {
-      S.t7 = gated(S.t7, ease(seg(s7, 0, 0.55)));
+      S.t6 = 1; S.t6d = 1; S.t7 = gated(S.t7, ease(seg(s7, 0, 0.55)));
       const t = S.t7;
       win = lerpRect(LY.full, LY.fin, t);
       const g = globe(LY.fin, now, innerWidth > 640 ? 48 : 0);
-      cam = lerpCam(C.nat2, g, t, 0);
+      cam = lerpCam(C.kd, g, t, 0);
       bg = '#fff';
+      kgzScene(1 - seg(s7, 0, 0.3), 1 - seg(s7, 0, 0.2));
     }
     // 마감 글(모토·문장·로그인)은 스크롤이 아니라 '창 축소'에 묶는다 — 창이 거의 다 줄고(S.t7 ≥ 0.85) 창 아래 끝이 글 윗선보다 위일 때만 켠다.
     // 지도 카드가 큰 동안 글이 카드 위에 겹쳐 보이지 않게(1440 · 390 공통 · 한 번 켜지면 S.t7 < 0.8 까지 유지해 떨림 0)
-    chState($('#fin'), finState(x >= b1, win));
+    chState($('#fin'), finState(x >= b2, win));
     // 판이 아래서 올라오는 동안(위 28% 전)은 무대를 숨겨 두고 그 사이 이동 경로를 데운다 → 그 뒤 서서히 드러낸다
     S.bHide = T.B.top > H * 0.72;
     S.bFade = clamp((H * 0.72 - T.B.top) / (H * 0.3));
     labels(lab * S.bFade);
     fade(0);
-    veil(x >= b1 && s7 < 0.6);
+    veil((x >= b1 && x < b2 && s6 < 0.56) || (x >= b2 && s7 < 0.6));
     win = { ...win, y: win.y + T.B.top };
     S.active = 'B';
     poster(false);
@@ -344,11 +382,16 @@ const WORLD_T = new URL('../../data/tiles/world-bm/', import.meta.url).href + '{
 const WORLD_Z = 8;
 function pathSteps() {
   const C = S.cams || cams(), out = [];
+  if (!S.data.kgz) return out;
+  for (let i = 0; i <= 10; i++) out.push({ cam: lerpCam(C.nat2, C.kgz, i / 10, dipB(C)), win: LY.full });
+  if (C.kd !== C.kgz) for (let i = 1; i <= 6; i++) out.push({ cam: zoomCam(C.kgz, C.kd, i / 6), win: LY.full });   // 군으로 다가가는 길
   const g = globe(LY.fin, S.t0 + 60000, innerWidth > 640 ? 48 : 0);
-  for (let i = 1; i <= 4; i++) { const t = i / 4; out.push({ cam: lerpCam(C.nat2, g, t, 0), win: lerpRect(LY.full, LY.fin, t) }); }   // ⑤ 마감으로 돌아가는 지구 곡면
+  for (let i = 1; i <= 3; i++) { const t = i / 3; out.push({ cam: lerpCam(C.kd, g, t, 0), win: lerpRect(LY.full, LY.fin, t) }); }   // ⑥ 마감으로 돌아가는 지구 곡면
   out.push({ cam: C.nat2, win: LY.full });
   return out;
 }
+/** ⑤ 해외 곡면 이동의 깊이 — 가장 낮은 줌이 4.4 근처(타일 줌 단계를 적게 건너게) */
+const dipB = (C) => Math.max(0.8, (C.nat2.z + C.kgz.z) / 2 - 4.4);
 const VW_T = 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
 /** 카메라 한 장면이 부를 위성 타일(래스터 256 → 줌+1) · 여백(padding)만큼 옮긴 실제 화면 중심 기준 */
 function tilesAt(cam, win, zmin, zmax, parent) {
@@ -366,7 +409,7 @@ function tilesAt(cam, win, zmin, zmax, parent) {
   return out;
 }
 /* 경로 타일 미리 받기 — 첫 화면(히어로 지구)에는 필요 없다. 두 구간으로 나눠 그 구간이 다가올 때만 받는다(첫 화면 네트워크 정지 ≤ 8s).
-   'A' = ① 전국 → ② 장면 지역으로 파고드는 길(첫 스크롤 때) · 'B' = ④ 실적 → ⑤ 마감(서비스 카드 구간이 보일 때) */
+   'A' = ① 전국 → ② 장면 지역으로 파고드는 길(첫 스크롤 때) · 'B' = ④ 실적 → ⑤ 해외 → ⑥ 마감(서비스 카드 구간이 보일 때) */
 function prefetchTiles(part) {
   S.pre ||= {};
   if (S.pre[part] || !S.data.agent) return; S.pre[part] = 1;
@@ -381,7 +424,7 @@ function prefetchTiles(part) {
       tilesAt(cam, win, 1, WORLD_Z, false).forEach(world); if (cam.z > 6.2) tilesAt(cam, win, 7, 19, false).forEach(vw);
     }
   } else {
-    // ② ④ 실적 → ⑤ 마감(지구 곡면)
+    // ④ 실적 → ⑤ 해외 → ⑥ 마감(지구 곡면)
     for (const { cam, win } of pathSteps()) tilesAt(cam, win, 1, WORLD_Z, cam.z < 4.5).forEach(world);
   }
   S.preSet = new Set([...(S.preSet || []), ...urls.filter((u) => u.includes('/world-bm/')).map((u) => { const [z, x, y] = u.split('/world-bm/')[1].replace(/\.webp.*$/, '').split('/'); return `${z}/${y}/${x}`; })]);
@@ -469,6 +512,43 @@ function sweep(s1) {
     want('k-sweep-l', 'line-opacity', sw ? 0.9 : 0);
   }
 }
+function kgzScene(o, zf = 0) {
+  // zf: 군 하나로 다가간 정도(0 → 1) — 군별 색칠은 걷히고 그 군의 실제 판정 칸 · 군 경계가 영상 위에 남는다
+  want('k-kgz-l', 'line-opacity', 0.95 * o * (1 - zf)); want('k-kgz-f', 'fill-opacity', S.data.kgzc ? 0 : 0.12 * o);
+  want('k-kgzf-r', 'raster-opacity', zf); want('k-kgzd-l', 'line-opacity', 0.95 * zf);
+  // 군별 농경지 비율(0 ~ 44%) → 옅은 청록 ~ 짙은 청록. 분석 결과는 군 경계보다 조금 늦게 차오른다
+  // 바퀴 17(원칙 281 '메인에도 잘 안 보여'): 경작지가 적은 군도 면이 보이게 바닥 진하기를 올리고 조금 일찍 차오른다
+  const c = seg(o, 0.2, 0.7) * (1 - zf);
+  if (zf > 0 && !S.kgzfPool) { S.kgzfPool = 1; poolFocus(S.data.kgzc?.focus); }
+  want('k-kgzc-f', 'fill-opacity', c <= 0 ? 0 : ['*', c, ['interpolate', ['linear'], ['get', 'share'], 0, 0.18, 0.03, 0.38, 0.1, 0.62, 0.3, 0.9]]);
+  want('k-kgzc-l', 'line-opacity', 0.45 * c);
+}
+
+/* 확대 장면 판정 칸 그림 — 도착 줌에서는 화면 1 화소에 칸(약 40 m) 여럿이 겹쳐 옅게 흩어졌다(바퀴 17 원칙 281).
+   도착 줌에 맞게 칸을 묶어(하나라도 있으면 칠 · 진하기는 묶음 안 비율) 한 번 다시 싣는다 — 값 · 범위는 그대로, 그림만 */
+async function poolFocus(fo) {
+  try {
+    const z = S.cams?.kd?.z, src = S.map?.getSource('k-kgzf');
+    if (!z || !fo?.cell_m || !src) return;
+    const lat = (fo.bbox[1] + fo.bbox[3]) / 2, mpp = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** z / (window.devicePixelRatio || 1);
+    const k = Math.max(1, Math.min(8, Math.floor(mpp / fo.cell_m)));
+    const bm = await createImageBitmap(await (await fetch(new URL('./data/' + fo.png, import.meta.url))).blob());
+    const W = bm.width, H = bm.height, c0 = new OffscreenCanvas(W, H), g0 = c0.getContext('2d'); g0.drawImage(bm, 0, 0);
+    const d = g0.getImageData(0, 0, W, H).data, w = Math.ceil(W / k), hh = Math.ceil(H / k);
+    const c = new OffscreenCanvas(w, hh), g = c.getContext('2d'), img = g.createImageData(w, hh), o = img.data;
+    for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+      let n = 0, t = 0;
+      for (let j = 0; j < k && y * k + j < H; j++) for (let i = 0; i < k && x * k + i < W; i++) { t++; if (d[((y * k + j) * W + x * k + i) * 4 + 3] > 20) n++; }
+      if (!n) continue;
+      const q = (y * w + x) * 4; o[q] = 15; o[q + 1] = 169; o[q + 2] = 160; o[q + 3] = Math.round(165 + 75 * (n / t));
+    }
+    g.putImageData(img, 0, 0);
+    const url = URL.createObjectURL(await c.convertToBlob({ type: 'image/png' }));
+    const [wx, so, e, n] = fo.bbox;
+    src.updateImage({ url, coordinates: [[wx, n], [e, n], [e, so], [wx, so]] });
+  } catch { /* 원래 그림 그대로 */ }
+}
+
 function nationOutline(o) { want('k-sgg-l', 'line-opacity', 0.42 * o); }
 /** ch3 — XI ChatGEO 세 물음: ① 지도에 그리기(비닐하우스 동 면) → ② 읍면동 통계(막대 · 읍면동 색칠) → ③ 보고서 초안.
     물음마다 타자 → 계획 줄 → 답. 스크롤로 되감으면 그대로 거꾸로(움직임 줄이기는 타자 없이 바로). */
@@ -601,13 +681,11 @@ function fillDeploys(dd, sum) {
 }
 /* ch4 · ch5 — 지금까지의 실적(QA-Q2 ⓐ · QA-Q3 ⓐ · 숫자 · 이름은 GET /public/record 가 그 자리에서 센 값 · 지어낸 숫자 0).
    ch5 = 시군구 n곳에 분석 결과 제공 · 서비스 n가지 이름 · 운영 기관 n곳 이름 + 지도에 결과 있는 시군구 점(운영 기관은 채운 점 + 이름).
-   ch4 = 행정 업무에 맞춘 GeoAI 분석서비스 · 서비스 이름들. 못 읽으면 숫자 없이 제목만(빈 숫자를 0으로 쓰지 않는다). */
+   못 읽으면 숫자 없이 제목만(빈 숫자를 0으로 쓰지 않는다). */
 function fillRecord(r) {
   const nf = (x) => Number(x).toLocaleString('ko-KR');
   const v = (e) => (e && typeof e === 'object' ? e.value : e);
-  const names = r?.work?.names || [];
   const nw = (arr) => arr.flatMap((x, i) => [...(i ? [' · '] : []), h('span.m-nw', { text: x })]);   // 이름 중간에서 줄이 끊기지 않게(규칙 9)
-  $('#ch4-names').replaceChildren(...(names.length ? [...nw(names), ' —'] : []));
   if (!r) { $('#ch5-p').textContent = ''; $('#ch5-tag').textContent = ''; return; }
   const n = v(r.sgg);
   if (n) $('#ch5-h').innerHTML = `<span>시군구 ${nf(n)}곳에</span><span>분석 결과 제공</span>`;   // 제목 두 줄(규칙 9)
@@ -624,15 +702,39 @@ function fillRecord(r) {
     const el = h('div.m-lbl', {}, h('i.m-dot', { dataset: { st: 'ga' } }), h('span', { text: o.name })); labelsEl.append(el); S.labels.push({ el, at: o.center });
   }
 }
+/* ch6 — 해외 분석 결과(이미 있는 실제 결과 · 지어낸 숫자 0): 군별 농경지 합계 큰 숫자 + 무엇을 어떻게 분석했는지 한 줄 */
+function fillKgz(k) {
+  // 실제로 한 일 — 무엇을 · 어느 영상 · 어느 해 · 결과(원칙 190 · 숫자는 산출 파일 한 출처)
+  $('#ch6-h').innerHTML = '<span>키르기스스탄</span><span>경작지 면적 분석</span>';   // 제목 두 줄(규칙 9)
+  $('#ch6-p').innerHTML = `<span>${k.year}년 Sentinel-2 위성 영상(10 m)에서</span> <span>AI가 경작지를 판정하고 ${k.n}개 군마다 면적을 셌습니다.</span>`;
+  const f = k.focus;
+  S.kgzTag = {
+    1: `색이 짙을수록 경작지가 많은 군`,
+    2: f ? [`${f.name} 군 확대`, `군 면적의 ${Math.round(f.share * 100)}%(${Math.round(f.crop_ha / 100).toLocaleString('ko-KR')}㎢)가 경작지`, '청록 칸 = AI가 경작지로 판정한 곳(약 40 m 칸)'] : '',
+  };
+  S.kph = 0; kgzPhase(1);
+  const ch6 = $('#ch6');
+  const env = { value: Math.round(k.total_ha / 100), unit: 'km2',   // ha → ㎢(같은 값 · 큰 숫자가 카드 한 줄에)
+    basis: k.basis || 'estimate', as_of: k.as_of, source: k.model ? `${k.year} Sentinel-2 달별 합성(10 m) · Land-XI 해외 AI 모델 · 경작지${k.public_used?.length ? ` · ${k.public_used.length}개 군은 공개 판정(Esri 2025)` : ''}` : `${k.year} Sentinel-2 10 m AI 토지피복(Esri · Impact Observatory · CC BY 4.0) · 경작지` };   // 10-17 원칙 269 — 우리 해외 모델 결과
+  const mk = () => { if (!S.bn6) S.bn6 = bignum($('#ch6-big'), env, { label: `경작지 · ${k.n}개 군 합계` }); };
+  if (ch6.classList.contains('is-in')) mk(); else ch6.addEventListener('ch:in', mk, { once: true });
+}
+function kgzPhase(n) {
+  if (!S.kgzTag || S.kph === n || !S.kgzTag[n]) return;
+  S.kph = n; const t = S.kgzTag[n];
+  $('#ch6-tag').replaceChildren(...(Array.isArray(t) ? t : [t]).map((x) => h('span', { text: x })));   // 뜻 단위로 한 줄씩(규칙 9)
+}
 const short = (s = '') => { const p = String(s).trim().split(/\s+/); return p.length > 1 ? p[p.length - 1] : p[0]; };
 
 /* ── 부팅 ─────────────────────────────────────────────── */
 async function load() {
-  const [stats, nat, agent, dd, sum, rec] = await Promise.allSettled([D.riverStats(), D.nationalStill(), D.agentScene(), D.deploys(), loadSummary(), D.record()]);
+  const [stats, nat, agent, dd, sum, rec, kgz, kgzc] = await Promise.allSettled([D.riverStats(), D.nationalStill(), D.agentScene(), D.deploys(), loadSummary(), D.record(), D.kgz(), D.kgzCrop()]);
   if (stats.status === 'fulfilled') S.data.stats = stats.value;          // 시군구 경계(④ 실적 장면 윤곽)
   if (nat.status === 'fulfilled') { S.data.nat = nat.value; fillNat(nat.value); }
   if (agent.status === 'fulfilled') { S.data.agent = agent.value; S.data.agent.dense = denseWin(agent.value.gh); fillAgent(agent.value); }
   if (dd.status === 'fulfilled') fillDeploys(dd.value, sum.status === 'fulfilled' ? sum.value : null); else empty($('#cards'), { kind: 'first' });
+  if (kgz.status === 'fulfilled') { S.data.kgz = kgz.value; $('#ch6-tag').textContent = '키르기스스탄 · ' + kgz.value.features.length + '개 지역'; }
+  if (kgzc.status === 'fulfilled') { S.data.kgzc = kgzc.value; fillKgz(kgzc.value); }
   fillRecord(rec.status === 'fulfilled' ? rec.value : null);
   cams(); addLayers();
   deferPrefetch();
@@ -677,16 +779,16 @@ else {
 }
 
 
-/* ── 장면 표시(10-22 첫인상-메인 ⓐ) — 장면 다섯 중 지금(점 · 'n / 5') · 첫 화면 · 바닥에서는 숨김 ── */
+/* ── 장면 표시(10-22 첫인상-메인 ⓐ) — 장면 여섯 중 지금(점 · 'n / 6') · 첫 화면 · 바닥에서는 숨김 ── */
 let DOTN = -1;
 function dots(n) {
   const el = $('#dots'); if (!el) return;
-  const v = n >= 1 && n <= 5 ? n : 0;
+  const v = n >= 1 && n <= 6 ? n : 0;
   if (v === DOTN) return; DOTN = v;
   el.classList.toggle('is-on', v > 0);
   if (!v) return;
   el.querySelectorAll('i').forEach((d, i) => d.classList.toggle('is-cur', i === v - 1));
-  $('#dots-n').textContent = `${v} / 5`;
+  $('#dots-n').textContent = `${v} / 6`;
 }
 
 /* ── 스크롤 안내(메인-2): 맨 위에 머물면 가운데 아래에 보이고, 내려가면 숨고, 다시 맨 위로 오면 또 보인다 ── */

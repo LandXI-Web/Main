@@ -34,10 +34,12 @@ COLOR = {"경작지": "#2E9E5B", "경작": "#2E9E5B", "휴경": "#E8590C", "비�
          "건물": "#3182F6", "건축물": "#3182F6", "주차장": "#8B5CF6", "곤포사일리지": "#B07A3A", "해양쓰레기": "#0FA9A0", "styrofoam": "#0FA9A0",
          "차량": "#3182F6", "IRG": "#74B816", "호밀": "#E8590C", "옥수수": "#F59F00", "수단그라스": "#AE3EC9",
          "신축": "#F04452", "소실": "#6B7684", "경작 전환": "#0FA9A0", "포장 확대": "#FF9F1C", "식생 증감": "#74B816",
-         "산림 → 나지": "#C2410C", "산림 → 도로": "#FF9F1C", "산림 → 건물": "#F04452",
+         "산림 → 나지": "#C2410C", "산림 → 도로": "#FF9F1C", "산림 → 건물": "#F04452", "산림 → 농지 · 초지": "#8B5CF6", "채석장 · 개발지 확장": "#6B7684",
          # 이지목 현황 판정 층(10-28 v5 · gpkg 색 그대로 · kit/change-layer.js 와 같음)
          "정상_지목일치": "#a9d6a0", "미확정_나지초지": "#d0d0d0", "점유의심": "#c0392b", "지목미정리": "#2980b9", "유휴산림화": "#e67e22",
-         "수역구거": "#16a085", "기타": "#7f8c8d"}
+         "수역구거": "#16a085", "기타": "#7f8c8d",
+         # 공공용지 무단점유(11-01 · kit/change-layer.js 와 같음)
+         "무단적치 쓰레기": "#F04452", "불법 형질변경": "#FF9F1C"}
 SPARE = ["#E8590C", "#D6336C", "#1098AD", "#5C7CFA", "#74B816", "#AE3EC9"]
 WORD = {"비닐하우스_단동": "단동", "비닐하우스_다동": "다동", "styrofoam": "해양쓰레기", "식생 증감": None,
         "정상_지목일치": "정상 지목일치", "미확정_나지초지": "미확정 나지초지"}   # 범례 말(None = 그리지 않음 · 국토 변화 참고 유형)
@@ -122,6 +124,22 @@ def _ngii(src: dict, fr, zoom: int):
 
 
 # ── 그리기 ───────────────────────────────────────────────────────────────────
+def _publand_parcels(job: str, fr) -> list:
+    """공공용지 무단점유 결과가 걸린 필지(결과 파일의 PNU)의 연속지적 경계 — 틀(5179) 안 것만 · 노랑 선."""
+    try:
+        from shapely.geometry import box
+
+        from change import parcels as CP
+        from change.run import run_dir
+        fc = json.loads((run_dir(job) / "changes.geojson").read_text(encoding="utf-8"))
+        pn = sorted({f["properties"].get("pnu") for f in fc.get("features") or [] if f["properties"].get("pnu") and not f["properties"].get("hidden")})
+        g = CP.by_pnus(pn)
+        fb = box(*fr)
+        return [(x, {"line": "#FFE14D", "width": 2.5}) for x in g.geometry if x is not None and x.intersects(fb)]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _hex(c, a=255):
     c = c.lstrip("#")
     return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4)) + (a,)
@@ -283,6 +301,66 @@ async def parcel_view(conn, jobs, srid: int, fr=None) -> list[tuple]:
     return out
 
 
+# 11-01 PM "8번에 왼쪽만 휴경이고 오른쪽은 경작이다" · 시기별 기준(8월 맨흙 = 휴경 · 6월 물 댄 · 갈아 둔 논 = 경작) —
+# 필지 안 넓은 맨흙(분석 작업기와 같은 규칙 workers/farm_season)은 그 경계대로 촬영 시기 분류로, 나머지는 AI 결과의 큰 쪽 한 색.
+# AI 결과의 작은 조각(분석 칸 경계의 네모 · 가장자리 띠)은 나머지의 큰 쪽으로 — 필지 하나가 고르면 지금과 같은 한 색.
+PSPLIT = """
+WITH d AS (SELECT geom, cls FROM detections WHERE job_id = ANY($1) AND coalesce(edit_state, 'raw') <> 'deleted' AND cls = ANY($2)
+           AND geom && ST_Transform(ST_MakeEnvelope($3, $4, $5, $6, $7::int), 4326)),
+     p AS (SELECT sp.pnu, sp.geom FROM survey_parcels sp WHERE sp.jimok IN ('전', '답', '과') AND sp.geom && ST_Transform(ST_MakeEnvelope($3, $4, $5, $6, $7::int), 4326))
+SELECT p.pnu, ST_AsBinary(ST_Transform(p.geom, $7::int)) g, d.cls, ST_AsBinary(ST_Transform(ST_Union(ST_Intersection(ST_MakeValid(p.geom), ST_MakeValid(d.geom))), $7::int)) x
+FROM p JOIN d ON ST_Intersects(p.geom, d.geom) GROUP BY p.pnu, p.geom, d.cls"""
+
+
+async def parcel_split_view(conn, jobs, srid: int, fr, raster=None, month: int | None = None) -> list[tuple]:
+    """→ [(도형(srid), '경작'|'휴경')] — 덮인 몫 30% 미만 필지는 칠하지 않음. raster(영상 경로 · 드론처럼 고운 영상)가 있으면 맨흙을 촬영 시기로 나눔."""
+    from shapely import wkb
+    rows = await conn.fetch(PSPLIT, list(jobs), list(FARM_CLS), fr[0], fr[1], fr[2], fr[3], int(srid))
+    per: dict = {}
+    for r in rows:
+        x = per.setdefault(r["pnu"], {"g": wkb.loads(bytes(r["g"])), "by": {}})
+        try:
+            x["by"][r["cls"]] = wkb.loads(bytes(r["x"])).buffer(0)
+        except Exception:  # noqa: BLE001
+            continue
+
+    def go():
+        import rasterio
+        from workers import farm_season as FS
+        ds = None
+        try:
+            if raster is not None:
+                ds = rasterio.open(raster)
+                if abs(ds.transform.a) > FS.GSD_MAX:
+                    ds.close()
+                    ds = None
+        except Exception:  # noqa: BLE001
+            ds = None
+        bare_cls = "경작" if FS.plant_season(month) else "휴경"
+        out = []
+        try:
+            for x in per.values():
+                g = x["g"] if x["g"].is_valid else x["g"].buffer(0)
+                by = {c: v for c, v in x["by"].items() if not v.is_empty}
+                if g.area <= 0 or not by or sum(v.area for v in by.values()) / g.area < PARCEL_COVER_MIN:
+                    continue
+                bare = FS.bare_part(ds, g) if ds is not None else None
+                rest = g.difference(bare).buffer(0) if bare is not None else g
+                if bare is not None:
+                    out.append((bare, bare_cls))
+                if rest.is_empty or rest.area < 1.0:
+                    continue
+                top = max(by, key=lambda c: by[c].intersection(rest).area)
+                if by[top].intersection(rest).area <= 0:
+                    top = max(by, key=lambda c: by[c].area)
+                out.append((rest, FARM_CLS[top]))
+        finally:
+            if ds is not None:
+                ds.close()
+        return out
+    return await run_in_threadpool(go)
+
+
 async def _rows(conn, jobs, fr, srid, minconf=0.0):
     from shapely import wkb
     rows = await conn.fetch(DSQL, jobs, *fr, srid, float(minconf or 0))
@@ -306,6 +384,10 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
                               "LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id = ANY($1)", jobs)
         if len(rs) != len(jobs):
             raise ApiError("not_found", "없는 결과입니다")
+        from .own_scope import is_private
+        for j in jobs:                                            # 카드 그림은 모두가 본다 — 개인 결과(분석 서비스 · 내 영상)로는 그리지 않는다(10-31 PM)
+            if await is_private(conn, j):
+                raise ApiError("conflict", "개인 분석 결과로는 카드 그림을 만들 수 없습니다 — 공식 결과를 골라 주세요", {"job": j}, 409)
         by = {r["id"]: r for r in rs}
         first = by[jobs[0]]
         o = first["options"] if isinstance(first["options"], dict) else json.loads(first["options"] or "{}")
@@ -317,9 +399,13 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
             sa, sb = ch.get("src_a") or {"kind": "ngii", "year": ya}, ch.get("src_b") or {"kind": "ngii", "year": yb}
             zoom = int(ch.get("zoom") or 18)
 
+            pl = ch.get("types") == "publand"
+
             def go():
                 A, B = _ngii(sa, fr, zoom), _ngii(sb, fr, zoom)
                 its = [(g, {**_poly_style(col(c)), "fa": 70, "width": 3.5}) for g, c, _ in rows]
+                if pl:                                             # 공공용지 무단점유 — 걸린 필지만 연속지적 경계(노랑 · 11-01 PM 사례 그림과 같은 표기)
+                    its = _publand_parcels(first["id"], fr) + its
                 return _jpg(A), _jpg(_draw(B, its, fr))
             base, res = await run_in_threadpool(go)
             return {"base": base, "result": res, "labels": [str(ya), str(yb)] if ya != yb else [f"{ya} 영상", "AI 판정"], "legend": _legend((col(c), c) for _, c, _ in rows),
@@ -362,16 +448,31 @@ async def render(conn, source: dict, bbox4326, opts: dict | None = None) -> dict
         fr = _frame(bbox4326, crs, has_people)
         rows = [x for x in await _rows(conn, jobs, fr, srid, minconf) if not only or x[1] in only]
         path = first["path_internal"]
+        if rows and is_farm(c for _, c, _ in rows) and opts.get("raw"):
+            # AI 경계 그대로(관리자 미리 보기 'raw') — 경작 · 휴경 색 · 말은 카드 그림과 같게
+            def go_a():
+                L = _raster(path, fr)
+                d = _dissolve([(g, c) for g, c, _ in rows])
+                its = [(g, {"fill": FARM_G, "fa": 95, "line": FARM_G, "width": 2.5, "halo": "#FFFFFF"}) for g, c in d if FARM_CLS.get(c) == "경작"]
+                its += [(g, {"fill": FARM_F, "fa": 120, "line": FARM_F, "width": 3, "halo": "#FFFFFF"}) for g, c in d if FARM_CLS.get(c) == "휴경"]
+                return _jpg(L), _jpg(_draw(L, its, fr))
+            base, res = await run_in_threadpool(go_a)
+            leg = [x for x in ([FARM_G, "경작"], [FARM_F, "휴경"]) if any(FARM_CLS.get(c) == x[1] for _, c, _ in rows)]
+            return {"base": base, "result": res, "labels": ["원본", "AI 결과"], "legend": leg, "frame": _frame4326(fr, crs), "people": False, "n": len(rows)}
         if rows and is_farm(c for _, c, _ in rows) and not opts.get("raw"):
-            pv = await parcel_view(conn, jobs, srid, fr)
-            if pv:                                               # 경작 · 휴경 = 필지 단위(필지 정보가 없는 곳이면 AI 경계 그대로)
+            from workers.postprocess import shot_month
+            im = await conn.fetchrow("SELECT epoch, name FROM imagery WHERE id = $1", first["imagery_id"]) if first["imagery_id"] else None
+            nm = (im["name"].get("ko") if isinstance(im["name"], dict) else im["name"]) if im and im["name"] else None
+            rp = Path(path) if Path(path).is_absolute() else config.DATA_ROOT / path
+            pv = await parcel_split_view(conn, jobs, srid, fr, rp, shot_month(im["epoch"] if im else None, nm or first["imagery_id"]))
+            if pv:                                               # 경작 · 휴경 = 필지 단위 · 크게 갈린 필지는 나눠서(11-01) · 필지 정보가 없는 곳이면 AI 경계 그대로
                 def go_p():
                     L = _raster(path, fr)
-                    its = [(g, {"fill": FARM_G, "fa": 95, "line": FARM_G, "width": 2.5, "halo": "#FFFFFF"}) for g, c, _ in pv if c == "경작"]
-                    its += [(g, {"fill": FARM_F, "fa": 120, "line": FARM_F, "width": 3, "halo": "#FFFFFF"}) for g, c, _ in pv if c == "휴경"]
+                    its = [(g, {"fill": FARM_G, "fa": 95, "line": FARM_G, "width": 2.5, "halo": "#FFFFFF"}) for g, c in pv if c == "경작"]
+                    its += [(g, {"fill": FARM_F, "fa": 120, "line": FARM_F, "width": 3, "halo": "#FFFFFF"}) for g, c in pv if c == "휴경"]
                     return _jpg(L), _jpg(_draw(L, its, fr))
                 base, res = await run_in_threadpool(go_p)
-                leg = [x for x in ([FARM_G, "경작"], [FARM_F, "휴경"]) if any(c == x[1] for _, c, _ in pv)]
+                leg = [x for x in ([FARM_G, "경작"], [FARM_F, "휴경"]) if any(c == x[1] for _, c in pv)]
                 return {"base": base, "result": res, "labels": ["원본", "AI 결과"], "legend": leg, "frame": _frame4326(fr, crs), "people": False,
                         "n": len(pv), "parcel": True}
 

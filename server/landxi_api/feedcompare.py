@@ -76,6 +76,8 @@ def _item(r) -> dict:
 async def results(cid: str, request: Request):
     p = _lx(request)
     async with db(realm="lx") as conn:
+        from .card_gate import require as _gate          # 공개 승인 전 카드는 만든 사람 · LX 관리자만(11-01 PM)
+        await _gate(conn, p, cid)
         cm = await _setup(conn, cid)
         out = {}
         for k in ("growth", "production", "silage"):
@@ -132,6 +134,8 @@ async def compare(cid: str, body: dict, request: Request):
     if not a or not b:
         raise ApiError("bad_request", "생육기 결과와 생산기 결과를 하나씩 골라 주세요")
     async with db(realm="lx") as conn:
+        from .card_gate import require as _gate          # 공개 승인 전 카드는 만든 사람 · LX 관리자만(11-01 PM)
+        await _gate(conn, p, cid)
         cm = await _setup(conn, cid)
         mine = {}
         for k, jid in (("growth", a), ("production", b), ("silage", s)):

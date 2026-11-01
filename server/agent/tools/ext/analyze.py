@@ -20,6 +20,7 @@ import re
 from .. import Out, ToolError
 from ..jobs import eta_value, eta_words
 from .map import _regions_in, guard_region, region_action, resolve_region
+from landxi_api.own_scope import sql_public  # 개인 결과 제외(10-31)
 
 SERVICES = {"비닐하우스": "비닐하우스", "greenhouse": "비닐하우스", "건물": "건물", "building": "건물", "경작지": "경작지", "farmland": "경작지",
             "주차장": "주차장", "parking": "주차장"}
@@ -274,7 +275,7 @@ async def region_jobs(codes: list[str], checks=None) -> dict:
         rows = await conn.fetch(
             "SELECT j.id, j.state, j.finished_at, (SELECT count(*) FROM detections d WHERE d.job_id = j.id) AS n FROM jobs j "
             "WHERE j.kind IN ('infer','reinfer') AND NOT j.demo AND NOT coalesce(j.test, false) AND j.options->>'scope' = 'sgg' "
-            "AND j.options->>'sgg_cd' = ANY($1::text[]) ORDER BY j.created_at DESC LIMIT 20", codes)
+            "AND j.options->>'sgg_cd' = ANY($1::text[])" + sql_public("j") + " ORDER BY j.created_at DESC LIMIT 20", codes)   # 개인 결과 제외(10-31)
     rows = [dict(x) for x in rows]
     pick = lambda st: next(({"id": x["id"], "state": x["state"], "n": int(x["n"] or 0)} for x in rows if x["state"] in st and (x["n"] or st == ("queued", "running"))), None)
     return {"running": pick(("queued", "running")), "done": pick(("done",)), "partial": pick(("cancelled", "failed"))}
@@ -398,7 +399,7 @@ async def emd_counts(codes: list[str]) -> tuple[list[tuple[str, int]], dict | No
         job = await conn.fetchrow(
             "SELECT j.id, j.state FROM jobs j WHERE j.kind IN ('infer','reinfer') AND NOT j.demo AND NOT coalesce(j.test, false) "
             "AND j.options->>'scope' = 'sgg' AND j.options->>'sgg_cd' = ANY($1::text[]) "
-            "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id) ORDER BY j.created_at DESC LIMIT 1", codes)
+            "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id)" + sql_public("j") + " ORDER BY j.created_at DESC LIMIT 1", codes)   # 개인 결과 제외(10-31)
         if not job:
             return [], None
         rows = await conn.fetch("SELECT emd, count(*) AS n FROM detections WHERE job_id = $1 AND emd IS NOT NULL AND emd <> '' "
@@ -435,7 +436,7 @@ async def chain_candidates() -> list[dict]:
             "SELECT j.id, j.options->>'sgg_cd' AS sgg, j.submitted_by, j.finished_at FROM jobs j "
             "WHERE j.kind = 'infer' AND j.state = 'done' AND j.options->>'scope' = 'sgg' AND NOT j.demo AND NOT coalesce(j.test, false) "
             "AND j.deploy_id IS NULL AND j.finished_at > greatest(now() - make_interval(hours => $1), to_timestamp($2)) "
-            "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id) ORDER BY j.finished_at", CHAIN_LOOKBACK_H, since)
+            "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id)" + sql_public("j") + " ORDER BY j.finished_at", CHAIN_LOOKBACK_H, since)   # 개인 결과는 실태조사로 잇지 않음(10-31)
         rows = [dict(x) for x in rows]
         for x in rows:
             s = await conn.fetchrow("SELECT state, job_id, finished_at FROM survey_sgg WHERE sgg_cd = ANY($1::text[]) LIMIT 1", sgg_codes(x["sgg"]))

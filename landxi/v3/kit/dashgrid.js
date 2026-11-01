@@ -16,7 +16,7 @@
    render(body, ctx) — 칸 몸통을 그린다. ctx = { id, w, h, view, size('s'|'m'|'l' — 실제 px 로 정함), px: {w, h}, sub(node|text), refresh() }
      · 칸 크기(w · h · 크기 등급) 또는 보기 방식(view)이 바뀌면 다시 부른다(끌어 옮기기만 한 경우는 부르지 않는다).
      · 돌려주는 함수가 있으면 다음 그리기 전에 부른다(정리).
-   수정 모드(edit) — 머리를 끌어 자리 바꾸기(빈자리면 놓고 · 한 칸과 겹치면 서로 바꾸고 · 그 밖엔 겹친 칸만 아래로) · 네 변 · 네 모서리 어디서든 끌어 크기(10-18 원칙 294 · 반대쪽 변은 고정 · 다른 칸은 고정 · 막히면 거기까지) · × 로 빼기 · 머리의 보기 방식 칩.
+   수정 모드(edit) — 칸 어디든 끌어 자리 바꾸기(빈자리면 놓고 · 겹친 칸은 떠나온 쪽으로 비켜 주고 · 안 되면 한 칸과 서로 바꾸고 · 그 밖엔 겹친 칸만 아래로 · 10-31 개편 9) · 네 변 · 네 모서리 어디서든 끌어 크기(10-18 원칙 294 · 반대쪽 변은 고정 · 다른 칸은 고정 · 막히면 거기까지) · × 로 빼기 · 머리의 보기 방식 칩.
      빈 공간은 점선 자리로 보이고 '기능 추가하기'(그 크기에 맞는 칸만) · '옆 칸 늘리기'(붙은 칸을 그만큼 늘림). 평소에는 손잡이 · 빈 자리가 보이지 않는다.
    좁은 화면(760 미만)은 한 줄로 쌓고 수정 모드 없음(PC 에서 고른 순서 그대로).
    10-18 원칙 287 "똑같은 기능이여도 테마나 디자인을 조금 여러개 해서 선택할 수 있도록":
@@ -360,7 +360,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
     if (!editing || stack || e.button !== 0) return;
     const node = e.target.closest('.dg-item'); if (!node) return;
     const rs = e.target.closest('.dg-rs'), dir = rs?.dataset.dir || '', hd = e.target.closest('.dg-hd');
-    if (!rs && (!hd || e.target.closest('a,button,input,select,textarea'))) return;
+    if (!rs && e.target.closest('a,button,input,select,textarea,.dg-menu')) return;   // 칸 어디를 잡아도 옮긴다(10-31 개편 9 — 머리만 잡던 것을 넓힘 · 수정 중 몸통은 눌러도 동작 없음)
     const it = layout.find((x) => x.id === node.dataset.id); if (!it) return;
     e.preventDefault();
     closeMenus();
@@ -408,9 +408,30 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
           for (const [o, b] of base) { o.x = b.x; o.y = b.y; }
           it.x = nx; it.y = ny;
           const hits = others.filter((o) => collides(o, it));
-          if (hits.length === 1) {                                   // 한 칸과 겹치면 서로 자리 바꾸기(그 칸이 내 자리에 들어가면)
-            const o = hits[0], there = { x: Math.min(cols - o.w, start.it.x), y: start.it.y, w: o.w, h: o.h };
-            if (!others.some((q) => q !== o && collides(q, there)) && !collides(there, it)) { o.x = there.x; o.y = there.y; }
+          /* 비켜 주기(10-31 개편 9 "메모를 끌어 왼쪽으로 넘기고 싶은데 자유도가 부족") — 겹친 칸을 내가 떠나온 쪽으로 밀어 자리를 내준다.
+             ① 끈 방향의 반대(떠나온 쪽)로 한 칸씩 밀기(줄줄이 · 열 밖으로 나가면 실패) ② 한 칸과만 겹치면 서로 자리 바꾸기 ③ 그래도 겹치는 칸만 아래로(겹침 0) */
+          if (hits.length) {
+            const reset = () => { for (const [o, b] of base) { o.x = b.x; o.y = b.y; } };
+            const push = (sx, sy) => {                               // 겹친 칸을 (sx, sy) 쪽으로 한 칸씩 — 밀린 칸이 또 겹치면 그 칸도
+              if (!sx && !sy) return false;
+              const movers = [it];
+              for (let k = 0; k < 600; k++) {
+                const o = others.find((q) => movers.some((m) => m !== q && collides(m, q)));
+                if (!o) return true;
+                o.x += sx; o.y += sy;
+                if (o.x < 0 || o.x + o.w > cols || o.y < 0) return false;
+                if (!movers.includes(o)) movers.push(o);
+              }
+              return false;
+            };
+            const cdx = nx - start.it.x, cdy = ny - start.it.y;
+            const tries = Math.abs(cdx) >= Math.abs(cdy) ? [[-Math.sign(cdx), 0], [0, -Math.sign(cdy)]] : [[0, -Math.sign(cdy)], [-Math.sign(cdx), 0]];
+            let ok = false;
+            for (const [sx, sy] of tries) { if (push(sx, sy)) { ok = true; break; } reset(); }
+            if (!ok && hits.length === 1) {                          // 한 칸과 겹치면 서로 자리 바꾸기(그 칸이 내 자리에 들어가면)
+              const o = hits[0], there = { x: Math.min(cols - o.w, start.it.x), y: start.it.y, w: o.w, h: o.h };
+              if (!others.some((q) => q !== o && collides(q, there)) && !collides(there, it)) { o.x = there.x; o.y = there.y; }
+            }
           }
           settle(it);                                                // 그래도 겹치는 칸만 아래로 — 나머지는 고정
           place(); putPh();

@@ -149,3 +149,10 @@
 /* 원칙 181 — 학습 탭 설명 칸(lx-project/explain.css) 자리 */
 .tr-ex{max-width:var(--wide-max);margin:-8px auto 24px}
 .tr-ex .lxp-ex{background:var(--bg-1)}
+
+.tr-hb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tr-mf{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.tr-mf-out{display:flex;flex-direction:column;gap:12px;width:100%}
+.tr-mf-out .la-dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:0}
+.tr-mf-out dt{color:var(--sub)}
+.tr-mf-out dd{margin:0;color:var(--ink)}

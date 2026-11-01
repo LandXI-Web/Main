@@ -682,13 +682,17 @@ def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
 
 
 # ─────────────────────────── AI 작업 고르기 ───────────────────────────
+from landxi_api.own_scope import sql_public as _sql_public  # noqa: E402 — 개인 결과 기준 한 곳(psycopg 는 % 를 %% 로)
+_PUBLIC_J = _sql_public("j").replace("%", "%%")
+
+
 def pick_job(conn, sgg: str) -> str | None:
     """그 시군구에 탐지가 있는 가장 최근 완료 AI 작업(탐지 emd_cd 앞 5자리 = 시군구 코드 · 지금/옛)."""
     cs = codes(sgg)
     row = conn.execute(
         "SELECT j.id FROM jobs j WHERE j.state = 'done' AND j.kind IN ('infer','reinfer') AND NOT j.demo AND NOT coalesce(j.test, false) "
-        "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id AND left(d.emd_cd, 5) = ANY(%s)) "
-        "ORDER BY (SELECT count(*) FROM detections d WHERE d.job_id = j.id) DESC, j.finished_at DESC NULLS LAST LIMIT 1", (cs,)).fetchone()
+        "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id AND left(d.emd_cd, 5) = ANY(%s)) " + _PUBLIC_J +   # 개인 결과 제외(10-31)
+        " ORDER BY (SELECT count(*) FROM detections d WHERE d.job_id = j.id) DESC, j.finished_at DESC NULLS LAST LIMIT 1", (cs,)).fetchone()
     if row:
         return row[0]
     row = conn.execute("SELECT job_id FROM survey_sgg WHERE sgg_cd = %s", (sgg,)).fetchone()

@@ -148,7 +148,7 @@ a.gs-tile:hover{box-shadow:var(--elev-map)}
 .gd-hud p{margin:0}
 .gd-hud-l{font:500 var(--fs-body)/23px var(--font-body)}
 .gd-hud-n{margin-top:4px!important}
-.gd-hud-n .k-num{font:800 64px/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#fff}
+.gd-hud-n .k-num{font:800 var(--fs-h2)/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#fff}
 .gd-hud-n .k-num small{font:500 var(--fs-t2)/1 var(--font-body);margin-left:6px;letter-spacing:0;color:#fff;opacity:.92}
 .gd-hud-n .k-sig{filter:brightness(2.2)}
 .gd-hud--none{color:var(--ink);text-shadow:none}
@@ -219,7 +219,7 @@ a.gd-row:hover b{text-decoration:underline;text-underline-offset:3px}
 @media (max-width:1100px){ .gs-band{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:960px){
   .gd-grid{grid-template-columns:minmax(0,1fr)}
-  .gd-hud-n .k-num{font-size:52px}
+  .gd-hud-n .k-num{font-size:var(--fs-h2)}
 }
 @media (max-width:640px){
   .gs-tile{padding:14px 16px;gap:12px}

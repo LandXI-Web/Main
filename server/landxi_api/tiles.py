@@ -464,6 +464,8 @@ async def tiles_sign(set: str, request: Request):
     if set_id.startswith("demo/") and not p.is_lx:
         raise ApiError("forbidden")
     named = set_id in (config.load_yaml("sets").get("sets") or {}) or restricted_set(set_id)
+    from .own_scope import guard
+    await guard(p, _job_of(set_id))                # 남의 개인 결과 타일은 서명하지 않는다(10-31 PM · LX 관리자도)
     if not p.is_lx and not set_id.startswith("cog/") and needs_signature(set_id):
         if not named and set_id.startswith("results/") and (_job_of(set_id) or t in (None, "lx")) and set_id.rsplit("/", 1)[-1] != "parcel-survey":
             # 작업 결과 — 작업 주인 · 같은 기관 · LX(+ LX 지역 분석은 그 관할 기관)만(10-22 옆문 닫기 2차)

@@ -148,7 +148,7 @@ export function imageryIn(d) {
     return !D.deploys.some((o) => regionKey(o) !== regionKey(d) && o.aoi && JSON.stringify(o.aoi.coordinates).length >= 400 && hit(aoiBox(o), [c[0], c[1], c[0], c[1]]));
   }).sort((a, b) => a.gsd_m - b.gsd_m);
 }
-const CARD_CLS = { 'card-farm': ['경작지', '비닐하우스', '비닐하우스_단동', '비닐하우스_다동', '비경작지'], 'card-living': ['건물', '주차장'], 'card-road': ['vehicle', '주차장'], 'card-change': ['built_gain', 'veg_loss'] };
+const CARD_CLS = { 'card-farm': ['경작지', '비닐하우스', '비닐하우스_단동', '비닐하우스_다동', '비경작지'], 'card-living': ['건물', '주차장'], 'card-road': ['vehicle', '주차장'] };
 /** 배포본에 연결된 모델(계보 → 고정 모델) */
 export function linkedModel(d, lineage) {
   const ids = (lineage?.chain || []).filter((c) => c.kind === 'model').map((c) => c.id);

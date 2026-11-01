@@ -25,3 +25,21 @@
 .la-occ-g small,.la-occ-f small{flex-basis:100%;font:500 var(--fs-tag,14px)/20px var(--font-body);color:var(--sub,#6B7684)}
 .la-occ-c{display:inline-flex;align-items:center;gap:6px;font:400 var(--fs-body,16px)/24px var(--font-body)}
 .la-occ-f{display:flex;flex-direction:column;gap:4px}
+.la-chg .la-eta .warn{color:var(--warn)}
+.la-chg .la-eta.is-big b{color:var(--warn)}
+.la-chg .rg-tabs:has(> :nth-child(3)){grid-template-columns:repeat(3,1fr)}   /* 기본 · 전국 · 고급 기능(공공용지 무단점유 · 11-01) — 한 줄에 셋 */
+
+/* 공유 데이터에서 고르기 — 단추 + 고른 영상 한 줄 · 창 안 목록(11-01 PM) */
+.la-chg-sh{align-self:flex-start}
+.la-chg-sh[hidden],.la-chg-cur[hidden]{display:none}
+.la-chg-cur{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink);word-break:keep-all}
+.la-chg-pk{display:flex;flex-direction:column;gap:12px}
+.la-chg-pl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.la-chg-pi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.la-chg-pi:hover:not(:disabled){border-color:var(--ink-2)}
+.la-chg-pi[aria-pressed="true"]{border:2px solid var(--ink);padding:11px 13px}
+.la-chg-pi:disabled{opacity:.6;cursor:not-allowed}
+.la-chg-pi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.la-chg-pi b{font:600 var(--fs-aux)/22px var(--font-body)}
+.la-chg-pi span,.la-chg-pi small{font:400 var(--fs-tag)/21px var(--font-body);color:var(--sub-2)}
+.la-chg-pn{padding:18px 16px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-aux)/21px var(--font-body);color:var(--sub)}

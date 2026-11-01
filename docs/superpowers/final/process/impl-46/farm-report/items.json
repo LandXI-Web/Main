@@ -1,5 +1,5 @@
 {
- "at": "2026-10-21 19:37:24",
+ "at": "2026-10-21 19:46:20",
  "runs": [
   {
    "vp": "pc",
@@ -10,7 +10,7 @@
     "409 https://namwon.land-xi.dev/api/v1/spaces/me/report.hwpx"
    ],
    "steps": {
-    "statsMs": 3754,
+    "statsMs": 3767,
     "stats": {
      "cards": 5,
      "donut": true,
@@ -25,7 +25,7 @@
     },
     "dl_stats.xlsx": "남원시_경작_휴경_종류별_읍면동별_20261021.xlsx",
     "dl_stats.hwpx": "none",
-    "reportMs": 2504,
+    "reportMs": 2489,
     "report": {
      "cards": 5,
      "bars": 10,
@@ -35,7 +35,7 @@
     },
     "zip": "남원시_경작·휴경_AI분석결과_20261021_첨부묶음.zip",
     "issueRows": 3,
-    "issueTop": "2026.10.18 16:09경작·휴경담당자 주무관5회다시 받기",
+    "issueTop": "2026.10.18 16:09경작·휴경담당자 주무관6회다시 받기",
     "sent": {
      "rows": 0,
      "prog": []
@@ -56,7 +56,7 @@
    "errors": [],
    "bad": [],
    "steps": {
-    "statsMs": 4834,
+    "statsMs": 4406,
     "stats": {
      "cards": 5,
      "donut": true,
@@ -69,7 +69,7 @@
      "hscroll": false,
      "loadingText": false
     },
-    "reportMs": 4344,
+    "reportMs": 3017,
     "report": {
      "cards": 5,
      "bars": 10,
@@ -81,7 +81,7 @@
      "rows": 0,
      "prog": []
     },
-    "tpl": false
+    "tpl": true
    }
   }
  ]

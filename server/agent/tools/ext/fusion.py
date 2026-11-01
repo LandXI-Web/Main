@@ -318,6 +318,11 @@ async def fusion_chart(args: dict, ctx) -> Out:
     region, _emd = await pick_region(ctx, args, imp)
     if kind == "mismatch":
         out = Out(source="GET /api/v1/survey/findings?ledger=")
+        if not imp:                                       # v7.1 회신 §3-2 — 이지목 현황 결과가 있으면 '대장 없음'이라 하지 않는다
+            from .site import ijimok_fallback
+            alt = await ijimok_fallback(ctx, (getattr(ctx, "state", None) or {}).get("msg") or "")
+            if alt is not None:
+                return alt
         if not imp or imp.get("state") != "matched":
             out.data = {"안내": "올린 대장이 없습니다 → 대장 올리기" if not imp else "대장을 필지에 이어 붙이는 중입니다"}
             out.answer = "올린 대장이 없어 대조 전입니다. 대장을 올리면 AI 결과와 대조합니다." if not imp else "대장을 필지에 이어 붙이는 중입니다. 끝나면 다시 물어 주세요."
@@ -430,6 +435,11 @@ async def fusion_mismatch(args: dict, ctx) -> Out:
     out = Out(source="GET /api/v1/survey/findings?ledger=")
     imp = await _ledger_ready(ctx, args, out)
     if imp is None:
+        if not await ledger_of(ctx, args):                # 대장이 없을 때 — 대상지 이지목 현황 결과가 있으면 그것이 대조 결과(v7.1 회신 §3-2 · '대장 없음' 금지)
+            from .site import ijimok_fallback
+            alt = await ijimok_fallback(ctx, (getattr(ctx, "state", None) or {}).get("msg") or "")
+            if alt is not None:
+                return alt
         return out
     msg = (getattr(ctx, "state", None) or {}).get("msg") or ""
     rules = await rules_for(ctx, imp["import_id"])

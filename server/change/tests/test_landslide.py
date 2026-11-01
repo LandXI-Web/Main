@@ -45,7 +45,8 @@ def test_type_sets():
     ga = np.array([[F, F, F, F, C]], np.uint8)
     gb = np.array([[O, R, Bd, F, Bd]], np.uint8)
     m = D.transitions(ga, gb, "landslide")
-    assert list(m) == ["산림 → 나지", "산림 → 도로", "산림 → 건물"]
+    assert list(m) == ["산림 → 나지", "산림 → 도로", "산림 → 건물"]       # 예전 규칙(모델 없을 때)의 세 유형
+    assert D.types_of("landslide")[:3] == ["산림 → 나지", "산림 → 도로", "산림 → 건물"]
     assert m["산림 → 나지"].tolist() == [[True, False, False, False, False]]
     assert m["산림 → 도로"].tolist() == [[False, True, False, False, False]]
     assert m["산림 → 건물"].tolist() == [[False, False, True, False, False]]       # 경작 → 건물은 산사태 묶음에 없음
@@ -68,7 +69,7 @@ def test_rule_c_imya_parcels():
     assert m["산림 → 나지"].tolist() == [[True, False, False, False, False, False]]
     assert m["산림 → 도로"].tolist() == [[False, True, False, False, False, False]]
     assert m["산림 → 건물"].tolist() == [[False, False, True, False, False, False]]
-    assert D.TSET_VER["landslide"] == "landslide-c"
+    assert D.TSET_VER["landslide"] == "landslide-d2"          # 10-31 산림 변화 모델(change/forest) — 모델이 없을 때만 위 규칙 c
 
 
 def test_card_frame():
@@ -108,3 +109,21 @@ def test_ledger_target_column():
         assert cn.execute("SELECT 1 FROM information_schema.columns WHERE table_name='service_results' AND column_name='target'").fetchone()
         cv = cn.execute("SELECT modules->>'change_types', model_ids FROM card_versions WHERE id='card-landslide@1.0'").fetchone()
     assert cv[0] == "landslide" and cv[1] == ["change-ap25"]
+
+
+def test_forest_masks():
+    """10-31 산림 변화 규칙(change/forest.masks) — 앞 산림 → 뒤 나지 덩어리 하나 · 그림자(어두움) · 임야 밖 · 결 없는 흐림은 버림."""
+    from change import forest as F
+    H, W = 200, 200
+    PA = np.zeros((6, H, W), np.float16); PA[F.FOREST] = 1.0
+    PB = PA.copy()
+    PB[:, 60:120, 60:120] = 0; PB[F.BARE, 60:120, 60:120] = 1.0           # 15 m × 15 m 벗겨짐(25 cm)
+    rng = np.random.default_rng(0)
+    A = np.full((H, W, 3), 70, np.uint8)
+    B = A.copy(); B[60:120, 60:120] = rng.integers(90, 160, (60, 60, 3))   # 결 있는 맨땅
+    imya = np.ones((H, W), bool)
+    c = {**F.DEFAULT, "ring_m": 0}
+    m = F.masks(PA, PB, A, B, 0.25, imya, None, c)
+    assert m[F.T_BARE][90, 90] and not m[F.T_BARE][10, 10]
+    B2 = B.copy(); B2[60:120, 60:120] = 110                                  # 결 없는 흐림 → 버림
+    assert not F.masks(PA, PB, A, B2, 0.25, imya, None, c)[F.T_BARE].any()

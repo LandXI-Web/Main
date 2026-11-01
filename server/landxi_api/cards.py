@@ -28,6 +28,7 @@ from starlette.concurrency import run_in_threadpool
 from . import config, summary
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
+from .own_scope import is_private, sql_public
 
 router = APIRouter()
 
@@ -158,6 +159,40 @@ def val_images(md, n_val: dict) -> int | None:
     return out
 
 
+
+_SHAPE_WORD = {"seg": "영역(SEG)", "obb": "회전 상자(OBB)", "det": "상자(BOX)", "detect": "상자(BOX)"}
+_SIZE_WORD = {"n": "가장 작은 모델", "s": "작은 모델", "m": "중간 모델", "l": "큰 모델", "x": "가장 큰 모델"}
+
+
+def model_spec_word(md) -> str | None:
+    """모델 한 줄 — 'YOLO11 · X(가장 큰 모델) · 영역(SEG)'. 모델 장부(models.family · task)에서만 읽고, 장부에 없는 값은 빼며 지어내지 않는다.
+    YOLO 계열이 아닌 모델은 계열 이름만 쉬운 말로(토지피복 U-Net · CLIP 등)."""
+    if not md or not md["family"] or md["family"] in ("index", "change-index", "survey-rules"):
+        return None
+    fam = str(md["family"]).lower()
+    task = str(md["task"] or "").lower()
+    y = re.fullmatch(r"yolo(\d+)([nslmx])?(?:-(seg|obb|det|detect))?", fam)
+    parts = []
+    shape = None
+    if y:
+        parts.append(f"YOLO{y.group(1)}")
+        if y.group(2):
+            parts.append(f"{y.group(2).upper()}({_SIZE_WORD[y.group(2)]})")
+        shape = y.group(3) or task
+    else:
+        names = []
+        if "clip" in fam:
+            names.append("CLIP ViT-L/14" if "vitl14" in fam else "CLIP")
+        if "landcover-unet" in fam:
+            names.append("토지피복 U-Net")
+        elif "unet" in fam:
+            names.append("U-Net(ResNet50)" if "r50" in fam else "U-Net")
+        parts.append(" + ".join(names) if names else str(md["family"]))
+        shape = task
+    if shape in _SHAPE_WORD:
+        parts.append(_SHAPE_WORD[shape])
+    return " · ".join(parts)
+
 def _vnum(v) -> float | None:
     try:
         return float(v)
@@ -207,7 +242,7 @@ async def _load(conn) -> dict:
             d[k] = _obj(d.get(k))
         info[r["card_id"]] = d
     vers = await conn.fetch("SELECT id, card_id, version, model_ids, modules, approved_at FROM card_versions ORDER BY card_id, id")
-    models = {r["id"]: r for r in await conn.fetch("SELECT id, task, classes, gsd_trained_m, weights_uri, status, input, metrics, sample_id FROM models")}
+    models = {r["id"]: r for r in await conn.fetch("SELECT id, family, task, classes, gsd_trained_m, weights_uri, status, input, metrics, sample_id, version FROM models")}
     n_val = {r["id"]: r["n_val"] for r in await conn.fetch("SELECT id, n_val FROM train_samples WHERE n_val IS NOT NULL")}
     appr = await conn.fetch("SELECT payload->>'card_id' AS cid, state, at FROM approvals WHERE subject_type='card' ORDER BY at")
     jobs = await conn.fetch(
@@ -302,25 +337,30 @@ def _spec_regions(cid: str) -> list[dict] | None:
 
 
 CHANGE_MODEL = "change-ap25"      # 국토 변화 틀의 모델(토지피복 U-Net ap25) — 이 모델을 쓰는 카드는 같은 칸(구간 + 두 시점)
+# 같은 틀(작업기 change/unet)로 도는 모델 — 산림 변화(산사태 취약지역) · 공공용지 무단점유(11-01 · 영상-문장 AI + ap25)
+CHANGE_MODELS = (CHANGE_MODEL, "change-forest6", "change-publand")
 
 
 async def is_change_frame(cid: str) -> bool:
     async with db(realm="lx") as conn:
-        return bool(await conn.fetchval("SELECT 1 FROM card_versions WHERE card_id=$1 AND $2 = ANY(model_ids) LIMIT 1", cid, CHANGE_MODEL))
+        return bool(await conn.fetchval("SELECT 1 FROM card_versions WHERE card_id=$1 AND model_ids && $2::text[] LIMIT 1", cid, list(CHANGE_MODELS)))
 
 
 async def change_types_of(cid: str) -> str | None:
-    """카드 판(가장 늦은 판)의 찾는 변화 묶음 — 'landslide' 등 · 없으면 None(국토 변화 기본)."""
+    """카드 판(가장 늦은 판)의 찾는 변화 묶음 — 'landslide' 등 · 판에 없으면 그 판 모델의 묶음(models.input.change_types) · 없으면 None(국토 변화 기본)."""
+    import json as _j
     async with db(realm="lx") as conn:
-        r = await conn.fetchrow("SELECT modules FROM card_versions WHERE card_id=$1 AND $2 = ANY(model_ids) "
-                                "ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid, CHANGE_MODEL)
-    if not r:
-        return None
-    m = r["modules"]
-    if isinstance(m, str):
-        import json as _j
-        m = _j.loads(m)
-    return (m or {}).get("change_types") or None
+        r = await conn.fetchrow("SELECT modules, model_ids FROM card_versions WHERE card_id=$1 AND model_ids && $2::text[] "
+                                "ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid, list(CHANGE_MODELS))
+        if not r:
+            return None
+        m = r["modules"]
+        if isinstance(m, str):
+            m = _j.loads(m)
+        if (m or {}).get("change_types"):
+            return m["change_types"]
+        t = await conn.fetchval("SELECT input->>'change_types' FROM models WHERE id = ANY($1::text[]) AND input ? 'change_types' LIMIT 1", list(r["model_ids"] or []))
+    return t or None
 
 
 def _board_example(cid: str, items: list[dict]) -> dict | None:
@@ -329,11 +369,12 @@ def _board_example(cid: str, items: list[dict]) -> dict | None:
     여러 곳이면 '남원시 외 2곳' · 합은 XI맵 전국 통계와 같은 값(예: 비닐하우스 14,792 + 235 + 84)."""
     from . import ximap
     bd = ximap._BOARD.get("v")
-    if not bd:
+    pend = ximap._BOARD_PEND.get("v") or {}             # 공개 승인 전 카드의 결과판(카드 자체 숫자 · 카드는 card_gate 로 거른 뒤만 보임 · 11-01)
+    if not bd and not pend:
         return None
     want = [str(it.get("sgg_cd")) for it in items if it.get("sgg_cd")]
     hit = []
-    for r in bd.get("regions") or []:
+    for r in list((bd or {}).get("regions") or []) + list(pend.get("regions") or []):
         if str(r.get("sgg_cd")) not in want and str(r.get("prev_cd")) not in want:
             continue
         for x in r.get("items") or []:
@@ -542,6 +583,20 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
                                                   **({"basis_line": tip, "tip": tip} if tip else {})},
                           "updated": ad.replace("-", ".")[:7] or None}   # 10-24 사용자: 카드 '모델 갱신' 칸 넘침 — 다른 카드와 같은 YYYY.MM
             break
+    if model_card is None:                          # 학습 없이 묶은 AI(공공용지 무단점유 · 11-01) — 잰 값이 없으면 '성능 미측정'(센 값만)
+        for x in ((cur["model_ids"] or []) if cur else []):
+            md = m["models"].get(x)
+            mi = _obj(md["input"]) if md else None
+            if isinstance(mi, dict) and mi.get("composed"):
+                v = str(md["version"] or "")
+                model_card = {"id": x, "acc": env(None, "%", "measured", "성능 미측정 — 학습 없이 묶은 AI(정답 표본으로 잰 값 없음)"),
+                              "acc_word": "성능 미측정", "updated": f"{v[:4]}.{v[4:6]}" if len(v) >= 6 and v[:6].isdigit() else None}
+                break
+    model_spec = []                                  # 모델 구체 정보(11-01 PM) — 모델 장부 family · task 한 출처 · 장부에 없는 값은 비움
+    for x in ((cur["model_ids"] or []) if cur else []):
+        w = model_spec_word(m["models"].get(x))
+        if w and w not in model_spec:
+            model_spec.append(w)
     registered = any((md["status"] or "") == "registered" for md in cur_learned)
     official = can_analyze and registered and any(d["card_id"] == cid for d in m["live"])
     targets = []
@@ -570,9 +625,10 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "parcel_on": bool(parcel),                                             # 고급 기능 '필지 단위 집계' 처음 켬 = 이 카드가 필지 대조를 하는가(10-24)
         "version": cur["version"] if cur else None, "owner": own["name"],
-        "official": official, "model": model_card, "targets": targets, "sample": sample_src,
+        "official": official, "model": model_card, "model_spec": model_spec, "targets": targets, "sample": sample_src,
         # 모델 없이 미리 만든 결과만 있는 카드(해양쓰레기 · 생활환경 · 도로 — 10-24 카드 고침) = 결과 보기 전용 · 새 분석 안 됨(상태 말은 그대로)
-        "frame": "change" if CHANGE_MODEL in mids else None,      # 국토 변화 틀(구간 + 두 시점 · 같은 칸) — 국토 변화 · 산사태 취약지구(10-25)
+        "frame": "change" if any(x in mids for x in CHANGE_MODELS) else None,
+        "change_types": ((cur or {}).get("modules") or {}).get("change_types") if isinstance((cur or {}).get("modules"), dict) else None,      # 국토 변화 틀(구간 + 두 시점 · 같은 칸) — 국토 변화 · 산사태 취약지구(10-25)
         "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global"
                                                                       else "결과 보기 전용 · 새 분석은 모델 연결 뒤" if (example or result_sggs) else "분석 모델 등록 전"),
         "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "reports_sum": reports_sum, "publish": publish,
@@ -597,11 +653,15 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
 
 
 async def _deck_lx(p) -> dict:
-    items, at = await summary.cached_all()
+    items, at = await summary.cached_cards()            # 카드 숫자 = 그 카드 결과(승인 전 카드도 · 카드는 아래 card_gate 로 거름 · 11-01)
     async with db(realm="lx") as conn:
         m = await _load(conn)
+        from .card_gate import visible_ids                  # 공개 승인된 카드만(승인 전은 만든 사람 · LX 관리자만 · 11-01 PM)
+        see = await visible_ids(conn, p, [c["id"] for c in m["cards"]])
     out = []
     for c in m["cards"]:
+        if c["id"] not in see:
+            continue
         mine = [it for it in items if it["card"] == c["id"]]
         out.append(_card_core(m, c, mine, p))
     out.sort(key=lambda x: (RANK[x["state"]], 0 if x["scene"] else 1, x["scope"] == "global", x["name"]))
@@ -645,10 +705,13 @@ async def _deck_tenant(p) -> dict:
     from .messages import _owner as _rv_owner
     async with db(realm="lx") as conn:
         rv_owner = {s["card"]: await _rv_owner(conn, s["card"]) for s in svcs + extra}
+    from .card_gate import visible_ids                       # 공개 승인된 카드만(11-01 PM — 메인 · 기관 화면도 같은 기준)
+    async with db(realm="lx") as conn:
+        see = await visible_ids(conn, p, [s["card"] for s in svcs + extra])
     out = []
     for s in svcs + extra:
         c = cards.get(s["card"])
-        if not c:
+        if not c or s["card"] not in see:
             continue
         mine = [it for it in own_items if it["card"] == c["id"]]
         core = _card_core(m, c, mine, p, tenant=p.tenant_id)
@@ -706,12 +769,16 @@ async def deck(request: Request, fresh: int | None = None):
 async def _one(p, cid: str) -> tuple[dict, dict, list[dict]]:
     if not CID_RE.match(cid or ""):
         raise ApiError("not_found", "카드가 없습니다")
-    items, _ = await summary.cached_all()
+    items, _ = await (summary.cached_cards() if p.realm == "lx" else summary.cached_all())   # LX 는 카드 자체 숫자(승인 전 포함 · 아래 card_gate)
     async with db(realm="lx") as conn:
         m = await _load(conn)
     card = next((c for c in m["cards"] if c["id"] == cid), None)
     if not card:
         raise ApiError("not_found", "카드가 없습니다")
+    if p.realm == "lx":
+        from .card_gate import require as _gate
+        async with db(realm="lx") as conn:
+            await _gate(conn, p, cid)
     mine = [it for it in items if it["card"] == cid]
     return _card_core(m, card, mine, p), m, mine
 
@@ -965,8 +1032,8 @@ async def _latest_source(conn, cid: str) -> tuple[dict | None, str | None]:
     rows = await conn.fetch(
         "SELECT j.id, j.imagery_id, j.options ? 'change' AS ch, j.options ? 'compare' AS cm, "
         "EXISTS(SELECT 1 FROM detections d WHERE d.job_id = j.id) AS has FROM jobs j "
-        "WHERE j.card_id = $1 AND j.state = 'done' AND NOT coalesce(j.test, false) AND NOT coalesce(j.demo, false) "
-        "ORDER BY j.finished_at DESC NULLS LAST LIMIT 20", cid)
+        "WHERE j.card_id = $1 AND j.state = 'done' AND NOT coalesce(j.test, false) AND NOT coalesce(j.demo, false) " + sql_public("j") +   # 개인 결과는 후보로 쓰지 않음(10-31)
+        " ORDER BY j.finished_at DESC NULLS LAST LIMIT 20", cid)
     rows = [r for r in rows if r["has"] or r["cm"]]
     if not rows:
         return None, None
@@ -1192,17 +1259,36 @@ def _conf_of(mods) -> float:
 
 def _job_body(cid: str, name: str, pl: dict) -> dict:
     return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석 서비스 · {name}"[:60],
-            "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": float(pl.get("conf") or CONF_DEFAULT)}}
+            "options": {"scope": "sgg", "sgg_cd": pl["sgg"], "chip": 1024, "overlap": 0.125, "conf": float(pl.get("conf") or CONF_DEFAULT),
+                        "private": True}}   # 개인 결과 — 낸 사람 지도 서비스에만(10-31 PM · own_scope)
 
 
 @router.get("/cards/{cid}/imagery")
-async def imagery_options(cid: str, region: str, request: Request):
-    """영상 고르기 — 그 시군구를 덮는 공유 영상 후보 + 내 영상(올린 사람만 · own) + 이 서비스에 맞나(분석 판정과 한 출처) + 서버가 고를 영상(pick)."""
+async def imagery_options(cid: str, request: Request, region: str | None = None):
+    """영상 고르기 — 그 시군구를 덮는 공유 영상 후보 + 내 영상(올린 사람만 · own) + 이 서비스에 맞나(분석 판정과 한 출처) + 서버가 고를 영상(pick).
+    region 이 없으면(11-01 PM — 시군구를 묻지 않는다) 고를 수 있는 영상 전부: 내 영상(최근 먼저) → 이 서비스에 맞는 영상 → 촬영 해 최근."""
     from shapely.geometry import mapping
     from .regions import regions_base
     p = require(principal(request), lx=True)
+    from .card_gate import require as _gate
+    async with db(realm="lx") as _gc:
+        await _gate(_gc, p, cid)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만")
+    if not region:
+        rows = await _img_rows(p)
+        picks: dict = {}
+        chg = await is_change_frame(cid)
+        if chg:
+            rows = [r for r in rows if not str(r["id"]).startswith("nat-")]   # 국토지리정보원 해는 시점 칸의 '국토지리정보원' 탭에서
+        async with db(realm="lx") as conn:
+            cv = await _cv(conn, cid)
+            items = [await _fit_img(conn, cid, cv, r, picks, chg) for r in rows]
+        rank = {"ok": 0, "rough": 1, "no": 2}
+        items.sort(key=lambda x: (0 if x["own"] else 1, rank[x["fit"]], -(int(x["year"] or 0)), x["name"]))
+        bb = [x["bounds"] for x in items if x["fit"] != "no"] or [x["bounds"] for x in items]
+        rb = [min(b[0] for b in bb), min(b[1] for b in bb), max(b[2] for b in bb), max(b[3] for b in bb)] if bb else None
+        return {"region": None, "name": "", "bounds": rb, "items": [_pub(x) for x in items], "as_of": now_iso()}
     regs, geoms, _ = regions_base()
     rg = next((x for x in regs if x["sgg_cd"] == region or x.get("prev_cd") == region), None)
     if not rg:
@@ -1274,7 +1360,12 @@ async def my_imagery(cid: str, body: dict, request: Request):
     from .regions import regions_base
     w = RQ.lx_who(request)
     p = w.p
+    from .card_gate import require as _gate              # 공개 승인 전 카드는 만든 사람 · LX 관리자만(11-01 PM)
+    async with db(realm="lx") as _gc:
+        await _gate(_gc, p, cid)
     # 국토 변화 분석서비스도 내 영상을 받는다(10-23 원칙 329 — 시점마다 국토지리정보원 해 · 공유 데이터 · 내 영상 가운데 하나)
+    if body.get("imagery_id"):          # 같은 파일을 다시 올림 — 이미 등록된 그 영상을 다시 고른다(10-31 개편 10 · 재업로드 멈춤)
+        return await _my_imagery_again(cid, str(body["imagery_id"]), p, request)
     did = str(body.get("draft_id") or "")
     if not re.fullmatch(r"dr_[0-9a-f]{12}", did):
         raise ApiError("not_found", "올린 파일이 없습니다")
@@ -1328,7 +1419,7 @@ async def my_imagery(cid: str, body: dict, request: Request):
     await run_in_threadpool(_move)
     rel_path = f"{rel_dir}/{it['name']}"
     regs = {x["sgg_cd"]: x for x in regions_base()[0]}
-    rg = regs.get(it["sgg_cd"]) or {"sgg_cd": it["sgg_cd"], "name": it["place"].split(" ")[0]}
+    rg = regs.get(it["sgg_cd"]) or {"sgg_cd": it["sgg_cd"], "name": (it.get("place") or "").split(" ")[0]}
     year = int(it["date"][:4]) if it.get("date") else None
     stem = it["name"].rsplit(".", 1)[0]
     iid = f"own-{did[3:]}"
@@ -1344,28 +1435,463 @@ async def my_imagery(cid: str, body: dict, request: Request):
         for r in rows:
             await conn.execute("UPDATE request_uploads SET request_id=$2, rel_path=$3, updated_at=now() WHERE id=$1", r["id"], iid, f"{rel_dir}/{r['filename']}")
         await audit(conn, p, "imagery.own_register", iid, None, {"card": cid, "sgg_cd": it["sgg_cd"], "year": year, "gsd": it["gsd_m"], "draft_id": did})
-    # 이 카드에 맞나 — 공유 영상과 같은 판정
-    _, cands, best = await _img_candidates(rg["sgg_cd"], p.user_id)
-    hit = next((c for c in cands if c["id"] == iid), None)
-    item = None
-    if hit and not await is_change_frame(cid):   # 국토 변화 틀은 시군구 판정 없이 구간 · 시점 고르기에서 씀(GET /change/ranges/{id}/imagery)
-        _, geoms, _ = regions_base()
-        async with db(realm="lx") as conn:
-            cv = await _cv(conn, cid)
-            item = await _fit_item(conn, cid, cv, rg["sgg_cd"], mapping(geoms[rg["sgg_cd"]]) if rg["sgg_cd"] in geoms else None, rg, hit, best)
+    # 이 카드에 맞나(시군구 없이 영상 하나 — 11-01 PM) → 맞으면 바로 분석 시작(그 영상 범위 · 개인 결과). 국토 변화 틀은 구간 · 시점 고르기에서 씀
+    item, analysis = await _own_item_start(p, cid, iid, request)
     from shapely.geometry import shape as _shape
     try:
         bb = [round(v, 6) for v in _shape(it["footprint"]).bounds]          # 다 올린 뒤 지도에 바로(10-28 v5 §3-3) — 영상 자리
     except Exception:  # noqa: BLE001
         bb = None
-    return {"imagery": item, "id": iid, "name": stem, "bounds": bb, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "place": it.get("place"), "as_of": now_iso()}
+    return {"imagery": item, "analysis": analysis, "id": iid, "name": stem, "bounds": bb, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "place": it.get("place"), "as_of": now_iso()}
+
+
+async def _own_item_start(p, cid: str, iid: str, request: Request, again_ok: bool = True) -> tuple[dict | None, dict | None]:
+    if await is_change_frame(cid):
+        return None, None
+    try:
+        item = _pub((await _plan_img(p, cid, iid))["item"])
+    except ApiError:
+        return None, None
+    if item["fit"] == "no":
+        return item, {"started": False, "running": False, "why": item.get("note") or item["fit_text"]}
+    return item, await _auto_start(p, cid, iid, request, again_ok)
+
+
+async def _my_imagery_again(cid: str, iid: str, p, request: Request) -> dict:
+    """다시 올린 같은 파일 — 내가 올린 내 영상이거나 직원에게 보이는 공유 영상이면, 다시 올리지 않고 그 영상을 이 카드에 맞나 판정해 돌려준다(my_imagery 와 같은 모양)."""
+    import json
+    from shapely.geometry import mapping, shape as _shape
+    from .regions import regions_base
+    if not re.fullmatch(r"[\w.\-]{1,80}", iid):
+        raise ApiError("not_found", "영상이 없습니다")
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+            raise ApiError("not_found", "카드가 없습니다")
+        r = await conn.fetchrow("SELECT id, name, sgg_cd, staff_visible, registered_by, layer, ST_AsGeoJSON(footprint) AS fp FROM imagery WHERE id=$1", iid)
+    if not r:
+        raise ApiError("not_found", "예전에 올린 영상이 지워졌습니다 — 다시 올려 주세요")
+    lad = r["layer"] if isinstance(r["layer"], dict) else {}
+    mine = lad.get("role") == "own" and (lad.get("owner") or r["registered_by"]) == p.user_id
+    if not mine and not r["staff_visible"]:
+        raise ApiError("forbidden", "다른 사람이 올린 영상입니다")
+    regs = {x["sgg_cd"]: x for x in regions_base()[0]}
+    rg = regs.get(r["sgg_cd"]) or {"sgg_cd": r["sgg_cd"], "name": r["sgg_cd"]}
+    nm = r["name"] if isinstance(r["name"], dict) else {}
+    stem = nm.get("ko") or str(r["name"] or iid)
+    item, analysis = await _own_item_start(p, cid, iid, request, again_ok=False)   # 같은 파일을 다시 골랐다 — 끝난 내 결과가 있으면 다시 돌리지 않고 그 결과
+    try:
+        bb = [round(v, 6) for v in _shape(json.loads(r["fp"])).bounds]
+    except Exception:  # noqa: BLE001
+        bb = None
+    return {"imagery": item, "analysis": analysis, "id": iid, "name": stem, "bounds": bb, "region": {"sgg_cd": rg["sgg_cd"], "name": rg["name"]}, "again": True, "as_of": now_iso()}
+
+
+# ── 내 영상 지우기(10-31 PM "직원이 자기가 올린 영상과 그 결과를 직접 지우는 기능을 만든다") ─────────────────────────────
+#   GET    /me/imagery/{영상}  — 지우면 함께 지워지는 것(분석 결과 수 · 결과 도형 수) · 지울 수 없으면 그 이유(화면 확인 칸에 그대로)
+#   DELETE /me/imagery/{영상}  — 내가 올린 '내 영상' + 그 영상으로 낸 내 분석(작업 · 결과 도형 · 결과 파일 · 지도 서비스 층 · 서비스 결과 장부 줄 ·
+#                                필지 대조 결과 · 카드 그림 후보) + 올린 파일. 감사 기록은 지우지 않고 '지움' 한 줄을 남긴다. 사용량 기록(usage_events ·
+#                                tenant_area_*)은 '그만큼 썼다'는 기록이라 남긴다.
+#   지우지 못하게 막는 것: 다른 사람 영상 · 공유 데이터 · 다른 사람이 이 영상으로 낸 결과 · 분석 중 · 배포 · 공개 판 · 배포 신청 · 승인 · 기관 공유에 쓰인 결과 ·
+#                         서비스 카드 그림(지금 그림)에 쓰인 결과 · 현장 확인 기록이 붙은 필지 대조 결과.
+async def _own_plan(conn, iid: str, p) -> dict:
+    import json
+    if not re.fullmatch(r"own-[0-9a-f]{12}", iid or ""):
+        raise ApiError("forbidden", "내가 올린 영상만 여기서 지울 수 있습니다")
+    r = await conn.fetchrow("SELECT id, name, sgg_cd, layer, registered_by, path_internal FROM imagery WHERE id=$1", iid)
+    if not r:
+        raise ApiError("not_found", "영상이 없습니다 — 이미 지웠습니다")
+    lay = r["layer"] if isinstance(r["layer"], dict) else {}
+    if lay.get("role") != "own":
+        raise ApiError("forbidden", "공유 데이터 영상은 여기서 지울 수 없습니다")
+    if (lay.get("owner") or r["registered_by"]) != p.user_id:
+        raise ApiError("forbidden", "다른 사람이 올린 영상입니다")
+    js = [dict(x) for x in await conn.fetch(
+        "SELECT id, kind, state, submitted_by, card_id, deploy_id, result_set, tenant_id, finished_at, (imagery_id IS NOT DISTINCT FROM $1) AS direct, "
+        "(options->'change') IS NOT NULL AS chg FROM jobs "
+        "WHERE imagery_id=$1 OR options::text LIKE $2", iid, f'%"{iid}"%')]
+    ids = [j["id"] for j in js]
+    follow = [dict(x) for x in await conn.fetch(
+        "SELECT id, kind, state, result_set, tenant_id FROM jobs WHERE kind IN ('survey','join') AND options->>'ai_job_id' = ANY($1::text[])", ids)] if ids else []
+    why = None
+    for j in js:
+        if j["submitted_by"] != p.user_id:
+            why = "다른 사람이 이 영상으로 낸 분석 결과가 있어 지울 수 없습니다"
+        elif j["state"] in ("queued", "running"):
+            why = "이 영상으로 분석 중입니다 — 분석이 끝난 뒤 지울 수 있습니다"
+        elif not await is_private(conn, j["id"]):        # 공식 결과로 배포 · 배포본 · 공개 판 · 기관에 공유한 대상지의 결과(own_scope 한 곳 · 11-01 PM)
+            why = "공식 결과 · 배포 · 기관 공유에 쓰인 결과가 있어 지울 수 없습니다 — 먼저 공식에서 내리거나 공유를 거둬 주세요"
+        elif j["deploy_id"]:
+            why = "배포된 결과에 쓴 영상이라 지울 수 없습니다"
+        if why:
+            break
+    if not why and any(f["state"] in ("queued", "running") for f in follow):
+        why = "이 영상의 필지 대조를 만드는 중입니다 — 끝난 뒤 지울 수 있습니다"
+    if not why and ids:
+        if await conn.fetchval("SELECT 1 FROM deploys WHERE snapshot_current = ANY($1::text[]) OR snapshot_prev = ANY($1::text[]) LIMIT 1", ids) \
+                or await conn.fetchval("SELECT 1 FROM published_sets WHERE job_id = ANY($1::text[]) LIMIT 1", ids) \
+                or await conn.fetchval("SELECT 1 FROM service_results WHERE set_id = ANY($1::text[]) AND origin <> 'job' LIMIT 1", ids):
+            why = "배포된 결과에 쓰여 지울 수 없습니다"
+    keys = ids + [iid]
+    if not why:
+        for t, w in (("approvals", "배포 신청 · 승인에 쓰인 결과라 지울 수 없습니다"), ("improve_releases", "배포 신청 · 승인에 쓰인 결과라 지울 수 없습니다"),
+                     ("card_versions", "승인된 서비스 판에 쓰인 결과라 지울 수 없습니다"), ("card_shares", "기관에 공유한 결과라 지울 수 없습니다"),
+                     ("change_shares", "기관에 공유한 결과라 지울 수 없습니다")):
+            try:
+                if await conn.fetchval(f"SELECT 1 FROM {t} x WHERE " + " OR ".join(f"x::text LIKE ${i + 1}" for i in range(len(keys))) + " LIMIT 1",
+                                       *[f"%{k}%" for k in keys]):
+                    why = w
+                    break
+            except Exception:  # noqa: BLE001 — 표가 없는 판(되돌린 뒤)
+                pass
+    cards_hit = []                                       # 카드 그림 — 지금 그림에 쓰였으면 막고, '다른 후보'에만 있으면 후보에서 뺀다
+    if not why and ids:
+        for ci in await conn.fetch("SELECT card_id, scene, scenes, swipe FROM card_info WHERE " +
+                                   " OR ".join(f"(coalesce(scene::text,'') || coalesce(scenes::text,'') || coalesce(swipe::text,'')) LIKE ${i + 1}" for i in range(len(ids))),
+                                   *[f"%{k}%" for k in ids]):
+            sw = ci["swipe"] if isinstance(ci["swipe"], dict) else {}
+            rest = {k: v for k, v in sw.items() if k not in ("cands", "checked")}   # checked = 카드 그림 후보를 만들며 이미 살펴본 작업 표시(쓰임 아님)
+            if any(k in (str(ci["scene"] or "") + str(ci["scenes"] or "") + json.dumps(rest, ensure_ascii=False)) for k in ids):
+                why = "서비스 카드 그림에 쓰인 결과라 지울 수 없습니다"
+                break
+            cards_hit.append(ci["card_id"])
+    if not why and ids:
+        if await conn.fetchval("SELECT 1 FROM survey_findings f WHERE f.ai_job_id = ANY($1::text[]) AND (f.state <> 'open' OR "
+                               "EXISTS (SELECT 1 FROM survey_finding_events e WHERE e.finding_id = f.id) OR "
+                               "EXISTS (SELECT 1 FROM survey_actions a WHERE a.finding_id = f.id)) LIMIT 1", ids):
+            why = "현장 확인 기록이 붙은 결과가 있어 지울 수 없습니다"
+    direct = [j["id"] for j in js]
+    # 함께 지워지는 결과(11-01 PM "지울때 결과가 있으면 다시 한번 안내") — 서비스 · 날짜 · 한 시점/두 시점 · 사람이 남긴 판정 수
+    names = {x["id"]: (x["name"] or {}).get("ko") if isinstance(x["name"], dict) else str(x["name"] or "") for x in await conn.fetch(
+        "SELECT id, name FROM cards WHERE id = ANY($1::text[])", list({j["card_id"] for j in js if j["card_id"]}))} if js else {}
+    items = [{"service": names.get(j["card_id"]) or "분석", "date": j["finished_at"].astimezone(KST).strftime("%Y.%m.%d") if j["finished_at"] else None,
+              "kind": "두 시점" if j["chg"] else "한 시점"} for j in js]
+    marks = int(await conn.fetchval("SELECT count(*) FROM change_marks WHERE job_id = ANY($1::text[]) AND status <> '미확인'", direct) or 0) if direct else 0
+    dets = int(await conn.fetchval("SELECT count(*) FROM detections WHERE job_id = ANY($1::text[])", direct) or 0) if direct else 0
+    nm = r["name"] if isinstance(r["name"], dict) else {}
+    return {"row": dict(r), "name": nm.get("ko") or iid, "jobs": js, "follow": follow, "ids": direct, "results": len(direct), "shapes": dets, "items": items, "marks": marks,
+            "cards": cards_hit, "why": why}
+
+
+@router.get("/me/imagery/{iid}")
+async def own_imagery_plan(iid: str, request: Request):
+    p = require(principal(request), lx=True)
+    async with db(realm="lx") as conn:
+        pl = await _own_plan(conn, iid, p)
+    return {"id": iid, "name": pl["name"], "results": env(pl["results"], "건", "measured", "이 영상으로 낸 내 분석 작업"),
+            "shapes": env(pl["shapes"], "개", "measured", "그 작업의 결과 도형"),
+            "marks": env(pl["marks"], "건", "measured", "국토 변화 결과에 남긴 판정"), "items": pl["items"], "can": not pl["why"], "why": pl["why"], "as_of": now_iso()}
+
+
+@router.delete("/me/imagery/{iid}")
+async def own_imagery_delete(iid: str, request: Request):
+    import json
+    import shutil
+    from .result_store import base_of_set, files_of_base
+    p = require(principal(request), lx=True)
+    async with db(realm="lx") as conn:
+        pl = await _own_plan(conn, iid, p)
+        if pl["why"]:
+            raise ApiError("conflict", pl["why"], None, 409)
+        ids, fids = pl["ids"], [f["id"] for f in pl["follow"]]
+        alls = ids + fids
+        sggs = [x["sgg_cd"] for x in await conn.fetch(
+            "SELECT DISTINCT sgg_cd FROM (SELECT sgg_cd FROM survey_card WHERE job_id = ANY($1::text[]) UNION SELECT sgg_cd FROM survey_sgg WHERE job_id = ANY($1::text[]) "
+            "UNION SELECT sgg_cd FROM survey_findings WHERE ai_job_id = ANY($1::text[])) q WHERE sgg_cd IS NOT NULL", ids)] if ids else []
+        ups = [dict(x) for x in await conn.fetch("SELECT id, rel_path FROM request_uploads WHERE request_id=$1", iid)]
+        n = {}
+        async with conn.transaction():
+            if ids:
+                n["shapes"] = int((await conn.execute("DELETE FROM detections WHERE job_id = ANY($1::text[])", ids)).split()[-1])
+                await conn.execute("DELETE FROM service_results WHERE set_id = ANY($1::text[])", ids)
+                n["findings"] = int((await conn.execute("DELETE FROM survey_findings WHERE ai_job_id = ANY($1::text[])", ids)).split()[-1])
+                await conn.execute("DELETE FROM survey_parcel_ai WHERE job_id = ANY($1::text[])", ids)
+                await conn.execute("DELETE FROM survey_card WHERE job_id = ANY($1::text[])", ids)
+                for sgg in sggs:                               # 시군구 실태조사 줄 — 남은 카드 판의 AI 작업으로 돌리거나(없으면) 'AI 결과 없음'으로
+                    if not await conn.fetchval("SELECT 1 FROM survey_sgg WHERE sgg_cd=$1 AND job_id = ANY($2::text[])", sgg, ids):
+                        continue
+                    other = await conn.fetchrow("SELECT job_id, imagery, joined_parcels FROM survey_card WHERE sgg_cd=$1 AND job_id IS NOT NULL ORDER BY at DESC LIMIT 1", sgg)
+                    if other:
+                        await conn.execute("UPDATE survey_sgg SET job_id=$2, imagery=$3, joined_parcels=$4 WHERE sgg_cd=$1", sgg, other["job_id"], other["imagery"], other["joined_parcels"])
+                    else:
+                        await conn.execute("UPDATE survey_sgg SET job_id=NULL, imagery=NULL, joined_parcels=0, coverage=NULL, covered_parcels=NULL, priority_cut=NULL, "
+                                           "state = CASE WHEN parcels_src ? 'canon' THEN state ELSE 'no_ai' END WHERE sgg_cd=$1", sgg)
+                await conn.execute("DELETE FROM edit_memory_runs WHERE job_id = ANY($1::text[])", ids)
+                await conn.execute("DELETE FROM change_mark_log WHERE job_id = ANY($1::text[])", ids)   # 국토 변화 판정 기록
+                await conn.execute("DELETE FROM change_runs WHERE job_id = ANY($1::text[])", ids)      # 변화 실행 기록(판정 change_marks 는 함께 지워짐)
+                for cid in pl["cards"]:                        # 카드 그림 '다른 후보'에서 이 결과로 만든 것만 뺀다(지금 그림은 위에서 막음)
+                    sw = await conn.fetchval("SELECT swipe FROM card_info WHERE card_id=$1", cid)
+                    if isinstance(sw, dict) and isinstance(sw.get("cands"), list):
+                        keep = [x for x in sw["cands"] if not any(k in json.dumps(x, ensure_ascii=False) for k in ids)]
+                        await conn.execute("UPDATE card_info SET swipe=$2 WHERE card_id=$1", cid, {**sw, "cands": keep})
+            if alls:
+                await conn.execute("DELETE FROM index_results WHERE job_id = ANY($1::text[])", alls)
+                await conn.execute("DELETE FROM jobs WHERE id = ANY($1::text[])", alls)
+            await conn.execute("DELETE FROM imagery_shares WHERE imagery_id=$1", iid)
+            await conn.execute("DELETE FROM project_links WHERE kind='imagery' AND ref=$1", iid)
+            await conn.execute("DELETE FROM imagery_std WHERE source_kind='imagery' AND source_id=$1", iid)
+            await conn.execute("DELETE FROM request_uploads WHERE request_id=$1", iid)
+            await conn.execute("DELETE FROM imagery WHERE id=$1", iid)
+            await audit(conn, p, "imagery.own_delete", iid, {"name": pl["name"], "sgg_cd": pl["row"]["sgg_cd"], "jobs": alls},
+                        {"deleted": True, "results": len(ids), "shapes": n.get("shapes", 0), "findings": n.get("findings", 0)})
+    # 필지 대조 요약(시군구 · 읍면동) 다시 세기 — 실태조사 계산과 같은 함수(psycopg · 스레드)
+    if sggs:
+        def _recount():
+            from survey import nation as NT
+            from survey.db import lx_tx, pg
+            with pg() as c:
+                for sgg in sggs:
+                    lx_tx(c)
+                    row = c.execute("SELECT tenant_id, job_id FROM survey_sgg WHERE sgg_cd=%s", (sgg,)).fetchone()
+                    if row:
+                        NT.refresh_sgg(c, sgg)
+                        NT.emd_summary(c, sgg, row[0], row[1] or ids[0], NT.union_items(c, sgg))   # 작업이 없으면 지운 작업 = AI 넓이 0
+                    c.commit()
+        try:
+            await run_in_threadpool(_recount)
+        except Exception as e:  # noqa: BLE001 — 요약표는 다음 적재 때 다시 센다
+            print(f"[own-delete] {iid} 필지 대조 요약 다시 세기 실패 {e!r}", flush=True)
+    # 파일 — 결과 폴더 · 곁 파일 · 올린 영상 폴더 · 썸네일
+
+    def _files():
+        gone = 0
+        for j in pl["jobs"] + pl["follow"]:
+            rs = j.get("result_set")
+            if rs and ".." not in rs:
+                for f in files_of_base(base_of_set(rs)):
+                    try:
+                        if f.is_dir():
+                            shutil.rmtree(f, ignore_errors=True); gone += 1
+                        elif f.is_file():
+                            f.unlink(missing_ok=True); gone += 1
+                    except OSError:
+                        pass
+        own_root = (config.DATA_ROOT / "imagery" / "own").resolve()
+        dirs = {(config.DATA_ROOT / u["rel_path"]).parent for u in ups if u.get("rel_path") and ".." not in u["rel_path"]}
+        pi = pl["row"].get("path_internal")
+        if pi and ".." not in pi:
+            dirs.add((config.DATA_ROOT / pi).parent)
+        left = []
+        for d in dirs:
+            try:
+                d = d.resolve()
+                if own_root in d.parents and d.is_dir():   # 올린 사람 칸(imagery/own/…) 밖은 건드리지 않는다
+                    shutil.rmtree(d, ignore_errors=True); gone += 1
+                    if d.exists():
+                        left.append(d)                     # 영상 읽기가 파일을 쥐고 있으면(Windows) 못 지운다 — 뒤에서 다시
+            except OSError:
+                pass
+        for t in (config.DATA_ROOT / "cache" / "thumbs").glob(f"{iid}-*"):
+            t.unlink(missing_ok=True)
+        return left
+    left = await run_in_threadpool(_files)
+    if left:
+        import asyncio
+
+        async def _later(ds):                            # 30초마다 · 최대 30분 — 파일을 놓으면 지운다(장부에서는 이미 지움)
+            for _ in range(60):
+                await asyncio.sleep(30)
+                await run_in_threadpool(lambda: [shutil.rmtree(d, ignore_errors=True) for d in ds])
+                ds = [d for d in ds if d.exists()]
+                if not ds:
+                    return
+            print(f"[own-delete] {iid} 파일을 지우지 못함(쥐고 있음) {ds}", flush=True)
+        asyncio.get_running_loop().create_task(_later(left))
+    try:                                                 # 작업 진행 기록(대기열 쪽) — 남아 있으면 작업 목록에 빈 줄로 보인다
+        from .deps import redis
+        rr = await redis()
+        for jid in alls:                                 # 정한 이름만(전체 열쇠 훑기는 느리다)
+            await rr.delete(f"job:{jid}", *[f"job:{jid}:{x}" for x in ("counts", "cursor", "done", "failed", "final_progress", "finalize", "progress_lock", "ts", "shards", "events")])
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from .quota import invalidate_storage
+        invalidate_storage(pl["row"].get("tenant_id") or "lx")
+        invalidate_storage("lx")
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "id": iid, "name": pl["name"], "results": env(len(ids), "건", "measured", "지운 분석 작업"),
+            "shapes": env(n.get("shapes", 0), "개", "measured", "지운 결과 도형"), "as_of": now_iso()}
+
+
+# ── 영상 하나로 분석(11-01 PM "그냥 영상 업로드하면 그 영상만 한해서 분석 … 아니면 공유 데이터에서 영상 찾아서 분석하는 그게 전부") ──────────
+#   시군구를 묻지 않는다. 범위 = 고른 영상(내 영상 · 공유 데이터)이 덮는 곳 전체 — 빈 곳(알파 · nodata · 채움)은 칸 읽기 · 마무리에서 뺀다(원칙 340).
+#   작업 = scope 'imagery'(jobs._quote_img) · 결과는 낸 사람의 지도 서비스 '내 분석'(개인 결과 · own_scope).
+#   GET  /cards/{카드}/imagery            (region 없이) 고를 수 있는 영상 전부 — 내 영상 먼저 · 이 서비스에 맞나
+#   GET  /cards/{카드}/fit?imagery=       (region 없이) 그 영상으로 분석할 수 있나 · 결과까지 걸릴 시간 · 범위 넓이
+#   POST /cards/{카드}/analyze {imagery}  (region 없이) 그 영상 범위로 분석 시작
+#   POST /cards/{카드}/my-imagery        내 영상을 다 올리면 맞는 카드는 바로 분석 시작(analysis 한 칸)
+async def _img_rows(p, iid: str | None = None) -> list[dict]:
+    """이 사람이 고를 수 있는 영상 — 내 영상(올린 사람만 · 최근 먼저) + 공유 데이터(직원에게 보이는 것). 원본을 읽을 수 있는 것만."""
+    from workers import imagery_src as isrc
+    one = " AND id=$1" if iid else ""
+    async with db(realm="lx") as conn:
+        recs = await conn.fetch(isrc.SQL_ROWS + " AND staff_visible" + one, *([iid] if iid else []))
+        mine = await conn.fetch(OWN_ROWS + (" AND id=$2" if iid else "") + " ORDER BY registered_at DESC NULLS LAST", p.user_id, *([iid] if iid else []))
+    rows = await run_in_threadpool(isrc.rows_from, recs)
+    own = [{**r, "own": True} for r in await run_in_threadpool(isrc.rows_from, mine)]
+    return [r for r in own + rows if r.get("readable") and r.get("fp") is not None]
+
+
+def _place(r: dict) -> str:
+    from .regions import region_of
+    rg = region_of(r.get("sgg_cd")) if r.get("sgg_cd") else None
+    return (rg or {}).get("name") or ""
+
+
+def _area_word(km2: float) -> str:
+    return f"약 {km2 * 100:,.1f}ha" if km2 < 1 else f"약 {km2:,.1f}㎢" if km2 < 100 else f"약 {km2:,.0f}㎢"
+
+
+async def _fit_img(conn, cid: str, cv: str, r: dict, picks: dict, chg: bool = False) -> dict:
+    """영상 한 장 → 카드 한 장(맞음 / 거칠 수 있음 / 맞지 않음) — 시군구 없이 영상 해상도 ↔ 서비스 모델(choose_model · 분석 판정과 같은 함수)."""
+    import math
+    from shapely.geometry import mapping
+    from .deploys import choose_model, gsd_word
+    g = float(r["gsd_m"]) if r.get("gsd_m") is not None else None
+    if chg:                                                # 국토 변화 틀(두 시점) — 토지피복 AI 가 영상 해상도를 맞춰 읽는다(모델 판정 없음)
+        picks.setdefault(g, {"model_id": "change", "own": None})
+    elif g not in picks:
+        picks[g] = await choose_model(conn, None, cid, cv, g)
+    pk = picks[g]
+    own = pk.get("own") or {}
+    ok = bool(pk.get("model_id"))
+    mg = own.get("gsd_m")
+    ratio = abs(math.log(g / float(mg))) if ok and mg and g else 0.0
+    fit = "ok" if ok and ratio <= math.log(1.5) else "rough" if ok else "no"
+    km2 = _km2(r["fp"])
+    small = fit != "no" and km2 < 0.01                    # 1 ha 미만 — 분석할 칸이 없다
+    if small:
+        fit = "no"
+    place = _place(r)
+    try:
+        fp = mapping(r["fp"].simplify(0.0005 if not r.get("own") else 0.00002, preserve_topology=True))
+    except Exception:  # noqa: BLE001
+        fp = None
+    note = None if fit != "no" else ("영상이 너무 작아 분석할 곳이 없습니다" if small
+                                     else f"서비스 모델({gsd_word(mg)})과 이 영상({gsd_word(g)})의 해상도가 맞지 않습니다" if pk.get("reason") == "model_mismatch" and mg and g
+                                     else "이 영상에 맞는 분석 모델이 없습니다")
+    return {"id": r["id"], "name": r.get("name") or "", "own": bool(r.get("own")),
+            "gsd": env(g, "m", "recorded", "영상 해상도"),
+            "gsd_word": (f"{g * 100:g}cm" if g < 1 else f"{g:g}m") if g is not None else "",
+            "when": _when(r), "range": _area_word(km2) + (f" · {place}" if place else ""), "km2": round(km2, 3), "place": place,
+            "coverage": env(100, "%", "measured", "영상 전체"),
+            "bounds": [round(v, 6) for v in r["fp"].bounds], "footprint": fp,
+            "fit": fit, "fit_text": {"ok": "이 서비스에 맞음", "rough": "해상도 차이가 커 결과가 거칠 수 있음"}.get(fit)
+            or ("영상이 너무 작음" if small else "이 서비스 모델과 해상도가 맞지 않음"),
+            "note": note, "model_id": pk.get("model_id"), "year": r.get("year") or (str(r.get("epoch") or "")[:4] or None), "sgg": r.get("sgg_cd"), "pick": False}
+
+
+def _pub(it: dict) -> dict:
+    """화면에 내는 영상 카드 — 숫자는 봉투로(숫자 한 출처 규칙) · 순서에만 쓴 촬영 해는 뺀다."""
+    y = it.get("year")
+    return {**it, "year": int(y) if str(y or "").isdigit() else None, "km2": env(it["km2"], "km2", "measured", "영상 범위 넓이")}
+
+
+async def _plan_img(p, cid: str, iid: str) -> dict:
+    """영상 하나로 분석할 수 있나(시군구 없이) — 고를 수 있는 영상인지 · 서비스 모델 · 넓이."""
+    from .deploys import gsd_word
+    rows = await _img_rows(p, iid)
+    if not rows:
+        raise ApiError("not_found", "고를 수 있는 영상이 아닙니다 — 지웠거나 다른 사람의 영상입니다", {"imagery": iid})
+    r = rows[0]
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+            raise ApiError("not_found", "카드가 없습니다")
+        cvr = await conn.fetchrow("SELECT id, modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
+        if not cvr:
+            raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+        it = await _fit_img(conn, cid, cvr["id"], r, {})
+    yr = str(r.get("year") or _when(r)[:4] or "")
+    return {"imagery_id": iid, "model_id": it["model_id"], "conf": _conf_of(cvr["modules"]), "fits": it["fit"] != "no", "note": it["note"],
+            "name": it["name"] or "내 영상", "place": it["place"], "km2": it["km2"], "item": it, "own": it["own"],
+            "imagery": {"has": True, "word": " ".join(x for x in (f"{yr}년" if yr else "", gsd_word(r.get("gsd_m"))) if x)}}
+
+
+def _job_body_img(cid: str, name: str, pl: dict) -> dict:
+    return {"kind": "infer", "model_id": pl["model_id"], "imagery_id": pl["imagery_id"], "card_id": cid, "label": f"분석 서비스 · {name}"[:60],
+            "options": {"scope": "imagery", "chip": 1024, "overlap": 0.125, "conf": float(pl.get("conf") or CONF_DEFAULT),
+                        "place": pl.get("place") or "", "img_name": pl.get("name") or "",
+                        "private": True}}   # 개인 결과 — 낸 사람 지도 서비스에만(10-31 PM · own_scope)
+
+
+IMG_RUNNING = ("SELECT id FROM jobs WHERE card_id=$1 AND imagery_id=$2 AND state IN ('queued','running') AND options->>'scope'='imagery' "
+               "AND submitted_by=$3 ORDER BY created_at DESC LIMIT 1")
+MAPSVC = "/landxi/v3/lx-map/"
+
+
+async def _img_fit_out(p, cid: str, iid: str) -> dict:
+    pl = await _plan_img(p, cid, iid)
+    out = {"region": None, "imagery_id": iid, "name": pl["name"], "place": pl["place"], "fits": pl["fits"], "note": pl["note"],
+           "imagery": pl["imagery"], "area": env(pl["km2"], "km2", "measured", "영상 범위"), "eta": None, "running": False, "big": False,
+           "scope_text": f"영상 범위 전체 · {_area_word(pl['km2'])}", "as_of": now_iso()}
+    if not pl["fits"]:
+        return out
+    from .jobs import build_quote
+    async with db(realm="lx") as conn:
+        name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
+        out["running"] = bool(await conn.fetchval(IMG_RUNNING, cid, iid, p.user_id))
+    try:
+        q = await build_quote(p, _job_body_img(cid, name, pl))
+    except ApiError as e:
+        out.update(fits=False, note=e.message or "지금은 분석 범위를 계산할 수 없습니다")
+        return out
+    if not q.get("allowed"):
+        why = (q.get("reasons") or [""])[0]
+        out.update(fits=False, note={"no_imagery": "영상에서 분석할 곳을 찾지 못했습니다", "too_large": "영상이 너무 넓어 한 번에 분석할 수 없습니다",
+                                     "model_input_mismatch": "이 영상에 맞는 분석 모델이 없습니다", "power_budget": "지금은 GPU 가 바쁩니다 — 잠시 뒤 다시"}.get(why, "지금은 분석할 수 없습니다"))
+        return out
+    e = q.get("eta_s") or {}
+    sec = _vnum(e.get("value"))
+    rec = e.get("source") == "분석 작업 기록"
+    out["big"] = bool(sec and sec >= 1800) or pl["km2"] >= 50          # 시군 단위 이상 — 화면이 예상 시간을 크게 보인다
+    out["eta"] = {"seconds": round(sec), "text": _dur(sec), "basis": "최근 분석 기록" if rec else "모델 속도",
+                  "premise": " · ".join(x for x in (pl["imagery"]["word"] and f"{pl['imagery']['word']} 영상", f"영상 범위 {_area_word(pl['km2'])}",
+                                                    e.get("note") if rec else "모델 속도로 셈") if x)} if sec else None
+    return out
+
+
+async def _start_img(p, cid: str, iid: str, request: Request, again_ok: bool = True) -> dict:
+    """영상 하나로 분석 시작 — 같은 영상 · 같은 카드로 내가 돌리는 중이면 그 분석을 알린다. again_ok=False 면 끝난 내 결과가 있을 때 다시 돌리지 않는다."""
+    pl = await _plan_img(p, cid, iid)
+    if not pl["fits"]:
+        raise ApiError("conflict", pl["note"] or "이 영상으로는 이 카드를 분석할 수 없습니다", {"imagery": iid}, 409)
+    async with db(realm="lx") as conn:
+        name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
+        busy = await conn.fetchval(IMG_RUNNING, cid, iid, p.user_id)
+        done = None if again_ok else await conn.fetchval(
+            "SELECT id FROM jobs WHERE card_id=$1 AND imagery_id=$2 AND state='done' AND submitted_by=$3 AND kind='infer' ORDER BY finished_at DESC LIMIT 1",
+            cid, iid, p.user_id)
+    base = {"region": None, "imagery": iid, "name": pl["name"], "place": pl["place"], "as_of": now_iso()}
+    if busy:
+        return {**base, "started": False, "running": True, "map": f"{MAPSVC}?job={busy}"}
+    if done:
+        return {**base, "started": False, "running": False, "done": True, "map": f"{MAPSVC}?job={done}"}
+    from .jobs import submit
+    res = await submit(_job_body_img(cid, name, pl), request)
+    job = (res.get("job") or {}) if isinstance(res, dict) else {}
+    return {**base, "started": True, "running": False, "state": job.get("state"), "map": MAPSVC + (f"?job={job['id']}" if job.get("id") else "")}
+
+
+async def _auto_start(p, cid: str, iid: str, request: Request, again_ok: bool = True) -> dict | None:
+    """내 영상을 다 올렸다 — 맞는 카드면 바로 분석(11-01 PM '영상 업로드하면 자동 분석'). 못 하면 그 이유 한 줄(올린 영상은 그대로)."""
+    try:
+        return await _start_img(p, cid, iid, request, again_ok)
+    except ApiError as e:
+        return {"started": False, "running": False, "why": e.message or "분석을 시작하지 못했습니다"}
 
 
 @router.get("/cards/{cid}/fit")
-async def fit(cid: str, region: str, request: Request, imagery: str | None = None):
+async def fit(cid: str, request: Request, region: str | None = None, imagery: str | None = None):
     p = require(principal(request), lx=True)
+    from .card_gate import require as _gate
+    async with db(realm="lx") as _gc:
+        await _gate(_gc, p, cid)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만")
+    if not region:                                         # 영상 하나로 분석(11-01) — 시군구 없이
+        if not imagery:
+            raise ApiError("bad_request", "분석할 영상을 고르세요")
+        return await _img_fit_out(p, cid, imagery)
     pl = await _plan(p, cid, region, imagery)
     note = "이 지역에 등록된 영상이 없습니다" if pl["fits"] is None else pl["note"]
     out = {"region": pl["sgg"], "name": pl["name"], "full": pl["full"], "fits": pl["fits"], "note": note, "imagery": pl["imagery"],
@@ -1376,7 +1902,7 @@ async def fit(cid: str, region: str, request: Request, imagery: str | None = Non
             name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
             out["running"] = bool(await conn.fetchval(
                 "SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' AND options->>'sgg_cd'=$2 "
-                "AND ($3::text IS NULL OR imagery_id=$3) LIMIT 1", cid, pl["sgg"], _own_id(pl)))   # 내 영상은 그 영상 작업만(다른 사람의 같은 지역 분석과 따로)
+                "AND ($3::text IS NULL OR imagery_id=$3) AND submitted_by=$4 LIMIT 1", cid, pl["sgg"], _own_id(pl), p.user_id))   # 분석은 낸 사람 것 — 남이 돌리는 분석에 붙지 않음(10-31 PM)   # 내 영상은 그 영상 작업만(다른 사람의 같은 지역 분석과 따로)
         try:
             q = await build_quote(p, _job_body(cid, name, pl))
         except ApiError as e:
@@ -1406,6 +1932,9 @@ async def fit(cid: str, region: str, request: Request, imagery: str | None = Non
 @router.post("/cards/{cid}/analyze", status_code=202)
 async def analyze(cid: str, body: dict, request: Request):
     p = require(principal(request), lx=True)
+    from .card_gate import require as _gate
+    async with db(realm="lx") as _gc:
+        await _gate(_gc, p, cid)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원 · 관리자만 분석을 시작합니다")
     # 분석하기는 영상 하나만(10-11 QA-고침-2 · 원칙 185) — 영상 · 지역은 한 개씩만 받는다(목록 · 쉼표 묶음 · 여러 개 칸은 거절)
@@ -1416,6 +1945,9 @@ async def analyze(cid: str, body: dict, request: Request):
     # 결과를 구간 안/밖 · 필지로 나눠 본다(range_tools.split). 지역을 안 주면 구간이 걸친 첫 시군구.
     rid = body.get("range")
     rid = (rid or {}).get("id") if isinstance(rid, dict) else rid
+    if im and not rg and not rid:                         # 영상 하나로 분석(11-01 PM) — 시군구 · 구간 없이 그 영상 범위
+        out = await _start_img(p, cid, str(im), request)
+        return {**out, "xi": None}
     if rid and not rg:
         from .range_tools import get_row
         sg = list((await get_row(p, str(rid))).get("sgg") or [])
@@ -1433,7 +1965,7 @@ async def analyze(cid: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         name = await conn.fetchval("SELECT name->>'ko' FROM cards WHERE id=$1", cid) or cid
         busy = await conn.fetchval("SELECT 1 FROM jobs WHERE card_id=$1 AND state IN ('queued','running') AND options->>'scope'='sgg' "
-                                   "AND options->>'sgg_cd'=$2 AND ($3::text IS NULL OR imagery_id=$3) LIMIT 1", cid, pl["sgg"], _own_id(pl))
+                                   "AND options->>'sgg_cd'=$2 AND ($3::text IS NULL OR imagery_id=$3) AND submitted_by=$4 LIMIT 1", cid, pl["sgg"], _own_id(pl), p.user_id)   # 내 분석만(10-31 PM)
     xi = f"/landxi/v3/xi-clean/?region={pl['sgg']}"
     mapsvc = "/landxi/v3/lx-map/"                                                 # 결과는 지도 서비스(원칙 149 · 163) — XI맵은 전국 · 해외 실시간 분석
     if busy:

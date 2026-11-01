@@ -57,6 +57,39 @@ def _feats_from_shards(sdir: Path) -> list[dict]:
     return out
 
 
+# ── 칸이 모두 실패한 작업은 '실패'로(11-01 PM "실패하면 당연히 실패로 표시한다") — 모든 분석 공통 ─────────────────
+def all_failed(jh: dict) -> bool:
+    """칸이 하나도 끝나지 않고 실패만 있으면 참(일부만 실패면 거짓 — 나온 결과는 쓰고 '일부 실패'로 보인다 · landxi_api/job_word)."""
+    try:
+        return int(jh.get("shards_total") or 0) > 0 and int(jh.get("shards_done") or 0) == 0 and int(jh.get("shards_failed") or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def job_failed(job_id: str, jh: dict | None, err: str):
+    """작업을 '실패'로 — 진행 기록(redis) · 작업 장부(jobs) · 변화 실행 기록(change_runs) · 사건(job.failed) 모두 같은 값."""
+    jh = jh or bus.job(job_id) or {}
+    now = now_iso()
+    r().hset(f"job:{job_id}", mapping={"state": "failed", "error": err[:300], "finished_at": now})
+    try:
+        with bus.pg() as conn:
+            bus.lx_tx(conn)
+            conn.execute("UPDATE jobs SET state='failed', finished_at=now(), error=%s, shards_done=%s, shards_failed=%s WHERE id=%s AND state <> 'cancelled'",
+                         (err[:300], int(jh.get("shards_done") or 0), int(jh.get("shards_failed") or 0), job_id))
+            conn.execute("UPDATE change_runs SET state='failed' WHERE job_id=%s AND state <> 'done'", (job_id,))
+            conn.commit()
+    except Exception as e:  # noqa: BLE001
+        log(WHO, "job_failed db", job_id, repr(e))
+    emit(job_id, "job.failed", {"job_id": job_id, "error": err[:300], "shards_failed": int(jh.get("shards_failed") or 0),
+                                "shards_total": int(jh.get("shards_total") or 0), "at": now_iso(ms=True)})
+    ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": "failed", "pool": jh.get("pool"), "at": now})
+    log(WHO, f"job.failed {job_id} · {err}")
+
+
+def _fail_msg(jh: dict) -> str:
+    return f"칸 계산 실패 {int(jh.get('shards_failed') or 0)}/{int(jh.get('shards_total') or 0)} — 결과 없음"
+
+
 def finalize(job_id: str):
     from shapely import set_srid, to_wkb
     from shapely.geometry import MultiPolygon
@@ -65,6 +98,9 @@ def finalize(job_id: str):
     if not jh:
         return
     if jh.get("state") in ("cancelled", "failed"):
+        return
+    if all_failed(jh):
+        job_failed(job_id, jh, _fail_msg(jh))
         return
     demo = jh.get("demo") == "1"
     tenant = jh.get("tenant_id")
@@ -81,7 +117,8 @@ def finalize(job_id: str):
         min_area = 0.05 if task == "det" else 4.0
     ov = opts.get("overseas") or {}
     place = (ov.get("name") or ov.get("cell"), ov.get("cell")) if ov.get("cell") else None     # 해외 결과 자산 — 군 칸 이름(읍면동 찾기 없음)
-    feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place)
+    cls_min = None if "min_area_m2" in opts else postprocess.SMALL_CLS_MIN_AREA      # 작은 낱개 분류(곤포 한 개) — '최소 크기'를 따로 준 작업은 그 값 그대로
+    feats, st = postprocess.run(raw, task=task, region=region, min_area=min_area, place=place, cls_min_area=cls_min)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")
     # 영상의 빈 곳 빼기(10-25 원칙 340) — 결과를 영상이 있는 곳(유효 범위)으로 자르고, 절반 넘게 빈 곳 위인 결과는 뺀다
@@ -98,6 +135,23 @@ def finalize(job_id: str):
                 log(WHO, f"빈 곳 빼기 {job_id}: {vst}")
     except Exception as e:  # noqa: BLE001 — 빼기를 못 해도 결과는 막지 않는다
         log(WHO, "valid clip error", job_id, repr(e))
+    # 경작·휴경 시기별 판정(11-01 PM 확정) — 드론 영상 결과의 넓은 맨흙을 촬영 월로: 다 자란 시기 = 휴경 · 모내기 철 = 경작(workers/farm_season)
+    if task == "seg" and any(f["props"].get("cls") in ("경작지", "비경작지") for f in feats) and jh.get("imagery_id"):
+        try:
+            with bus.pg() as conn:
+                bus.lx_tx(conn)
+                im = conn.execute("SELECT epoch, name, path_internal FROM imagery WHERE id=%s", (jh.get("imagery_id"),)).fetchone()
+            if im and im[2]:
+                from pathlib import Path as _P
+                from workers import farm_season
+                nm = im[1].get("ko") if isinstance(im[1], dict) else im[1]
+                mon = postprocess.shot_month(im[0], nm or jh.get("imagery_id"))
+                rp = _P(im[2]) if _P(im[2]).is_absolute() else config.DATA_ROOT / im[2]
+                feats, sst = farm_season.split_bare(feats, rp, mon)
+                st["season"] = sst
+                log(WHO, f"시기별 판정 {job_id}: {sst}")
+        except Exception as e:  # noqa: BLE001 — 규칙을 못 써도 결과는 그대로 낸다
+            log(WHO, "season rule error", job_id, repr(e))
     # 겹침 정리 1단(10-22 now21 겹침-붙은경계 · 원본보관 ⓐ) — 칸 경계에서 잘린 것 붙이기 · 전국 분석 조각은 조각 몫만 · 농지 · 하천 한 층.
     # AI 가 낸 원래 결과(NMS 뒤)는 {작업}.raw.fgb 로 남기고, 화면 · 숫자 · 내려받기는 정리 결과({작업}.fgb · DB 결과 줄)를 읽는다.
     raw_feats, tidy_rec = feats, None
@@ -444,6 +498,11 @@ def run_cpu_shards(entries):
 def finalize_cpu(job_id: str):
     """cpu 작업 마감(index · survey · join) — 어댑터 finalize(job) 훅이 있으면 부르고, job.done(두 줄 실측 · counts)."""
     jh = bus.job(job_id)
+    if jh.get("state") in ("cancelled", "failed"):
+        return
+    if all_failed(jh):
+        job_failed(job_id, jh, _fail_msg(jh))
+        return
     now = now_iso()
     n = int(jh.get("shards_done") or 0)
     total = int(jh.get("shards_total") or 0)
@@ -477,8 +536,8 @@ def finalize_cpu(job_id: str):
                                        "perf": json.dumps(perf, ensure_ascii=False), "elapsed_s": elapsed})
     with bus.pg() as conn:
         bus.lx_tx(conn)
-        conn.execute("UPDATE jobs SET state='done', finished_at=now(), shards_done=%s, counts=%s, perf=%s WHERE id=%s",
-                     (n, json.dumps(counts, ensure_ascii=False), json.dumps({**perf, "elapsed_s": elapsed}, ensure_ascii=False), job_id))
+        conn.execute("UPDATE jobs SET state='done', finished_at=now(), shards_done=%s, shards_failed=%s, counts=%s, perf=%s WHERE id=%s",
+                     (n, int(jh.get("shards_failed") or 0), json.dumps(counts, ensure_ascii=False), json.dumps({**perf, "elapsed_s": elapsed}, ensure_ascii=False), job_id))
         conn.commit()
     ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": "done", "aoi_centroid": json.loads(jh.get("centroid") or "null"),
                             "pool": "cpu", "at": now})
@@ -599,8 +658,11 @@ def fin_once(stream: str = FIN, idx: int = 0):
                 import traceback
                 log(WHO, "finalize error", f.get("job_id"), repr(e), traceback.format_exc()[-800:])
                 jid = f.get("job_id")
-                r().hset(f"job:{jid}", mapping={"state": "failed", "error": f"finalize: {e}"})
-                emit(jid, "job.failed", {"job_id": jid, "error": f"finalize: {type(e).__name__}", "at": now_iso()})
+                try:                                       # 마감 단계 오류도 작업 장부까지 '실패'로(예전엔 진행 기록만 바꿔 장부는 '진행 중' · 11-01)
+                    job_failed(jid, None, f"finalize: {type(e).__name__}: {e}")
+                except Exception:  # noqa: BLE001
+                    r().hset(f"job:{jid}", mapping={"state": "failed", "error": f"finalize: {e}"})
+                    emit(jid, "job.failed", {"job_id": jid, "error": f"finalize: {type(e).__name__}", "at": now_iso()})
             r().xack(stream, "g:cpu", eid)
 
 

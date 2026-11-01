@@ -1,0 +1,104 @@
+# 공공용지 무단점유 분석서비스(11-01 PM) — 찾는 것 · 공공용지 범위 · AI 문장 · 기준을 한 곳에.
+# 계산(change/publand.py)이 작업마다 다시 읽는다(워커 재시작 없음). 지역 이름 없음 — 범위는 사용자가 고른 영상 · 분석할 곳.
+
+types: [무단적치 쓰레기, 불법 형질변경]
+
+# 공공용지 = 전국 층 셋(고속도로 · 철도 · LH 택지) + 시군구 범위면 연속지적도 지목 도로 필지
+public:
+  jimok: [도]                        # 시군구 범위에서 더하는 지목(전국 범위는 연속지적도를 읽지 않는다)
+  layers:
+    highway: {path: "E:/도로공사/geoai_roadland/outputs/shp/전국_고속국도필지.gpkg", exclude_sigungu: [동해, 삼척]}   # 도로공사 장부(토지마스터) 필지
+    rail: {path: "E:/Land-XI 플랫폼/02. 데이터/publand/rail_parcels.gpkg"}                # 지목 철도용지 필지(전국 연속지적도에서 뽑은 것)
+    lh: {path: "E:/Land-XI 플랫폼/02. 데이터/publand/lh_zones.gpkg"}              # LH 사업지구 1,234곳
+  drop_owner: [개인, 종중]            # 소유 구분이 이것이면 대조 탈락(도로공사 장부 필지는 그대로)
+
+# 칸(AI가 한 번에 보는 네모)
+cell_m: 48                           # 칸 간격
+frame_m: 64                          # AI가 보는 네모 한 변(칸보다 조금 넓게)
+min_public_ratio: 0.3                # 칸 중 공공용지 비율
+
+# AI(CLIP ViT-L/14 · 영상-문장 맞추기) — 전국 분석(r3)과 같은 문장
+clip_model: ViT-L/14
+clip_root: null                      # 없으면 CLIP 기본 자리(사용자 .cache/clip)
+batch: 32
+prompts:
+  junk: [an aerial photo of piles of garbage and illegally dumped waste, an aerial photo of scattered trash and debris on vacant land]
+  scrapcar: [an aerial photo of a junkyard full of scrapped cars, an aerial photo of many old abandoned vehicles and buses parked on vacant land]
+  soilwork: [an aerial photo of dumped soil mounds on bare land, an aerial photo of land filled with gravel and earth by trucks]
+  container: [an aerial photo of shipping containers placed on the ground, an aerial photo of stacked construction materials, pallets and steel pipes in a storage yard]
+  crop: [an aerial photo of small vegetable garden plots with crop rows, an aerial photo of a cultivated field with black plastic mulch, an aerial photo of plastic greenhouses on farmland]
+  n_road: [an aerial photo of a highway, an aerial photo of a road with cars, an aerial photo of railway tracks]
+  n_green: [an aerial photo of forest, an aerial photo of a grassy slope, an aerial photo of shrubs and weeds]
+  n_build: [an aerial photo of buildings and houses, an aerial photo of a factory roof]
+  n_cons: [an aerial photo of a large construction site with cranes and excavators, an aerial photo of an apartment construction site]
+  n_solar: [an aerial photo of solar panels]
+  n_park: [an aerial photo of an orderly parking lot, an aerial photo of a city park with paths]
+  n_paddy: [an aerial photo of a large rice paddy, an aerial photo of a large farm field]
+  n_water: [an aerial photo of a river or pond]
+  n_grave: [an aerial photo of a cemetery with round grave mounds, an aerial photo of tombs on a hillside]
+  n_depot: [an aerial photo of a bus garage with parked buses in rows, an aerial photo of a truck parking lot]
+  n_rest: [an aerial photo of a highway rest area or toll gate]
+  n_yard: [an aerial photo of a factory yard next to a factory building]
+# 찾는 것 ← 문장 묶음
+groups:
+  무단적치 쓰레기: [junk, scrapcar]
+  불법 형질변경: [soilwork]
+# 기준(전국 분석 재판정 · 확인 판정 기준을 한 번에 — 문장이 늘어 확률이 나뉘므로 값은 시험으로 맞춘 것)
+min_prob: 0.45                       # 그 유형 확률
+over_negative: true                  # 반대 문장(도로 · 숲 · 건물 · 공사장 …) 가장 높은 것보다 높아야
+block: {n_cons: 0.25, n_solar: 0.15} # 이 값을 넘으면 뺀다
+block_type: {불법 형질변경: {n_grave: 0.02}}
+new_max_prob: 0.15                   # 두 시점일 때 앞 시점 확률이 이 값 아래면 '신규'
+
+# 경계 — ① 걸린 칸 안 작은 네모(겹침)를 같은 문장으로 다시 봐 그 유형이 걸린 네모만
+sub_m: 24
+sub_step: 10
+sub_min: 0.30
+# ② 토지피복 AI(ap25 · 12분류 번호: 0 비대상지 · 1 건물 · 2 주차장 · 3 도로 · 4 가로수 · 5 논 · 6 비닐하우스 · 7 밭 · 8 활엽수림 · 9 침엽수림 · 10 나지 · 11 수역)로 그 유형일 수 있는 피복만 남김
+keep_classes:
+  무단적치 쓰레기: [0, 1, 2, 6, 10]
+  불법 형질변경: [0, 7, 10]
+bare_classes: [10]
+# ③ 화소 거름(토지피복 AI 가 맨흙 · 풀 · 적치를 함께 '비대상지'로 보는 계절 영상) — 풀 · 나무 빼고 쓰레기 = 어수선함 · 진한 색, 형질변경 = 맨흙빛
+pix: {veg_exg: 0.08, tex_m: 3.0, junk_tex: 0.07, tarp_sat: 0.28, soil_lum: 0.32, soil_tex: 0.09, close_m: 2.0}                    # ③ 형질변경 + 앞 시점: 앞 시점에 이미 맨흙(나지)이던 곳은 뺀다
+min_area_m2: 50
+# 두 시점 형질변경 — 토지피복 AI 로 앞 시점 비대상(풀) · 논 · 밭 · 숲(0 · 5 · 7 · 8 · 9)이 뒤 시점 나지(10)로 바뀐 공공용지(칸마다 이 넓이 이상)
+change:
+  on: true
+  from: [0, 5, 7, 8, 9]
+  to: [10]
+  min_m2: 100
+  evidence: [soilwork, junk, scrapcar, container]   # 이 문장 묶음 확률 합이
+  min_evidence: 0.2                               # 이 값 이상인 칸만(계절 · 풀베기 차이를 거름)
+
+# 큰 범위 나눠 돌기(11-01 PM "GPU 두장으로 나눠 돌려라") — 이 넓이(㎢) 이상이면 블록을 split 장에 나눔(블록 번호 % split) · 진행률은 하나로 합침
+# 전력은 장마다 PowerThrottle(30초 평균 160 W · 70% 아래) · 두 장 전력 · 온도는 결과 폴더 power.log 에 1분마다 기록
+split: 2
+split_min_km2: 100
+
+# 형질변경 터(11-01 PM "형질변경 영역이 두 갈래로 나뉘어 … 하나로 크게") — 걸린 칸 안을 작은 네모로 다시 보고 흙 · 적치 · 버린 것이 걸린 네모를 이어 한 덩어리로
+fp:
+  on: true
+  win_m: 16            # 작은 네모 한 변
+  step_m: 8            # 네모 간격
+  groups: [soilwork, junk, scrapcar, container]
+  min_prob: 0.35       # 이 문장 묶음 확률 합 · 반대 문장보다 높아야
+  join_m: 6            # 이 거리 두 배(12 m) 안 조각은 잇는다
+  hole_m2: 150         # 이보다 작은 구멍은 메운다
+  green_exg: 0.16      # 짙은 초록(나무 · 풀)은 뺀다(0.12 는 봄 영상 마른 풀 · 잔해 가장자리까지 뺌 · 11-01)
+  drop_classes: [3, 11]  # 토지피복 AI 도로 · 수역은 뺀다
+  min_m2: 300          # 터 판정만으로 생긴 덩어리는 이 넓이 이상만
+  grow_m: 20           # 걸린 네모에서 비슷한 맨흙 · 잔해로 넓히는 거리(풀밭 전체로 번지지 않게 묶음)
+  dark_min: 0.12       # 넓힐 때 이보다 어두운 곳(나무 그림자)만 뺀다 — 어두운 지붕 · 회색 잔해는 잇는다
+  grow_lum_hi: 0.10    # 넓힐 때 밝기 위쪽 여유(밝은 맨흙 길 · 다져진 땅)
+  close_m: 4           # 넓힌 뒤 틈 메우기
+  road_pave: 0.3      # 그 네모 안 토지피복 AI 포장(도로 · 주차장) 비율이 이 이상일 때만(흙길은 남김)
+  road_prob: 0.35      # 작은 네모를 같은 AI 가 도로 · 선로로 본 확률이 이 이상이면 터에서 뺀다(갓길 · 포장면)
+  max_total_m2: 4000   # 합친 뒤 터 하나 상한 — 넘으면 좁은 띠를 끊고 AI 확률 높은 칸 둘레만 남긴다(버리지 않음 · 11-01 PM)
+  strip_m: 6           # 이 두 배(12 m)보다 좁은 띠는 끊는다
+  keep_m: 32           # 남길 때 칸 중심에서 이 거리까지
+  shrub_lum: 0.30      # 이보다 어둡고
+  shrub_exg: 0.08      # 초록 지수가 이보다 높으면 덤불 · 나무 그늘로 보고 뺀다
+  max_cell_m2: 2500    # 칸 하나에서 넓힌 터 상한(넘기 직전에서 멈춤 · 11-01 PM ⓑ)
+  grow_max_x: 3.5      # 넓힌 터가 씨앗의 이 배를 넘으면(풀밭 · 포장면으로 번짐) 넓히지 않는다
+  frame_extra_m: 16    # 터는 칸 그림(64 m)보다 둘레 16 m 씩 더 본다(96 m)

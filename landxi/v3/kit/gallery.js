@@ -85,7 +85,7 @@ K.stepper($('steps'), [{ t: '데이터 올리기' }, { t: '배포' }, { t: '결�
 const sv = K.stepper($('stepsV'), RAIL.map((r) => ({ t: r.label })), { current: 3, vertical: true, onPick: (i) => sv.go(i) });
 
 /* ── 서비스 카드(크롭은 결과 크롭 폴더 — 예시 데이터 파일) ─────── */
-const CROP = { 'card-farm': 'namwon-farmland-2025/1.jpg', 'card-marine': 'yeosu-marine-2026-drone/1.jpg', 'card-change': 'kuksan-change/1.jpg', 'card-living': 'jeju-illegal/1.jpg' };
+const CROP = { 'card-farm': 'namwon-farmland-2025/1.jpg', 'card-marine': 'yeosu-marine-2026-drone/1.jpg', 'card-living': 'jeju-illegal/1.jpg' };
 K.serviceGrid($('cards'), joined.slice(0, 6), { map: (r) => ({ crop: CROP[r.card.id] ? `../../assets/proto/crops/${CROP[r.card.id]}` : null, where: r.deploy?.region_name?.ko?.split(' ').pop() || '' }) });
 
 /* ── 기다림 · 빈 화면 · 문제(그림 없음) ────────────────────────────────────────────── */
