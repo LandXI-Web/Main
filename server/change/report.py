@@ -62,13 +62,11 @@ def build(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict, card_name
     gsd = "25cm" if stats.get("zoom") == 18 else "51cm"
     made = dt.datetime.now(KST).strftime("%Y. %m. %d.")
     overview = [
-        f"대상지: {rng['name']} — {rng.get('kind_label') or '구역선'} · 버퍼 {rng.get('buffer') or '-'} · 분석 범위 {stats.get('range_km2', 0):,.2f}㎢",
+        f"대상지: {rng['name']} — {rng.get('kind_label') or '구역선'} · 분석 범위 {stats.get('range_km2', 0):,.2f}㎢",
         f"비교 영상: {_src_line(run, ya, yb)}(두 시점 같은 격자 · {gsd})",
-        "방법: 토지피복 AI(U-Net · 12분류) 두 해 결과의 바뀐 자리 → 50㎡ 이상 변화 폴리곤 → 구역선 · 연속지적도 필지와 겹쳐 봄",
+        "방법: 토지피복 AI 두 해 결과의 바뀐 자리 → 50㎡ 이상 변화 폴리곤 → 구역선 · 연속지적도 필지와 겹쳐 봄",
         "성격: AI 탐지 결과(결과 확인 전) — 판정은 현장 확인으로",
     ]
-    if job_id:                                                   # H3(10-28 v5) — 근거 레이어 · 작업 ID 가 보고서에 따라간다
-        overview.append(f"근거 레이어 ID: {layer_id or job_id} · 작업 ID: {job_id}")
     summary = [f"구역선 안 변화 {_n(stats['n_in'])}건 · 구역선 밖(버퍼) {_n(stats['n_out'])}건 · 면적 합 {_n(round(stats['m2']))}㎡"]
     for t in _types(bt):
         b = bt.get(t)
@@ -130,10 +128,8 @@ def build_ijimok(*, rng: dict, run: dict, stats: dict, fc: dict, marks: dict, jo
     made = dt.datetime.now(KST).strftime("%Y. %m. %d.")
     overview = [f"대상지: {rng['name']} — {rng.get('kind_label') or '구역선'} · 분석 범위 {stats.get('range_km2', 0):,.2f}㎢ · 필지 {_n(stats['n'])}개",
                 f"영상: {_src_line(run, yr, yr).split(' → ')[-1]}({'25cm' if stats.get('zoom') == 18 else '51cm'})",
-                "방법: 토지피복 AI(U-Net · 12분류) → 필지마다 실제 쓰임 → 지목과 견줌(판정 층 7종)",
+                "방법: 토지피복 AI → 필지마다 실제 쓰임 → 지목과 견줌(판정 층 7종)",
                 "성격: AI 판정(결과 확인 전) — 판단은 현장점검으로"]
-    if job_id:
-        overview.append(f"근거 레이어 ID: {layer_id or job_id} · 작업 ID: {job_id}")
     summary = [f"{t.replace('_', ' ')}: {_n(bt[t]['n'])}필지 · {_n(round(bt[t]['m2']))}㎡" for t in IJ_ORDER if (bt.get(t) or {}).get("n")]
     summary.append("판정 현황: " + " · ".join(f"{k} {_n(v)}" for k, v in st_count.items()))
     rows = sorted([f for f in feats if f["properties"]["type"] not in ("정상_지목일치", "미확정_나지초지")],
@@ -167,23 +163,23 @@ def html_body(r: dict, yr: tuple[int, int]) -> str:
     li = lambda xs: "<ul>" + "".join(f"<li>{_e(x)}</li>" for x in xs) + "</ul>"  # noqa: E731
     one = r.get("one")
     out = [f"<p class='k'>{'이지목 현황' if one else '국토 변화 모니터링'} · {_e(r['period'])}</p><h1>{_e(r['title'])}</h1><p class='sub'>만든 날 {_e(r['made'])}</p>",
-           "<h2>□ 구간 개요</h2>", li(r["overview"]), f"<h2>□ {'판정 요약' if one else '변화 요약'}</h2>", li(r["summary"]),
-           f"<h2>□ {'이지목 필지 목록' if one else '필지별 목록(구역선 안)'}</h2>"]
-    head = ["번호", "지번", "지목", "소유구분", "이지목 판정" if one else "변화 유형", "면적", "판정", "판정일"]
-    rows = "".join("<tr>" + "".join(f"<td>{_e(x)}</td>" for x in (t["id"], t["jibun"], t["jimok"], t["owner"], t["type"], t["area"], t["status"], t.get("at", "-"))) + "</tr>"
+           "<h2>구간 개요</h2>", li(r["overview"]), f"<h2>{'판정 요약' if one else '변화 요약'}</h2>", li(r["summary"]),
+           f"<h2>{'이지목 필지 목록' if one else '필지별 목록(구역선 안)'}</h2>"]
+    head = ["지번", "지목", "소유구분", "이지목 판정" if one else "변화 유형", "면적", "판정", "판정일"]
+    rows = "".join("<tr>" + "".join(f"<td>{_e(x)}</td>" for x in (t["jibun"], t["jimok"], t["owner"], t["type"], t["area"], t["status"], t.get("at", "-"))) + "</tr>"
                    for t in r["table"])
     out.append("<table><tr>" + "".join(f"<th>{h}</th>" for h in head) + "</tr>" + rows + "</table>")
     if r["more"]:
         out.append(f"<p class='cap'>그 밖 {r['more']:,}건은 필지 표(CSV)에서 봅니다.</p>")
     if r["thumbs"]:
-        out.append(f"<h2>□ 근거 영상({yr[1]}년)</h2><table>" if one else f"<h2>□ 근거 영상({yr[0]}년 · {yr[1]}년)</h2><table>")
+        out.append(f"<h2>근거 영상({yr[1]}년)</h2><table>" if one else f"<h2>근거 영상({yr[0]}년 · {yr[1]}년)</h2><table>")
         by = {t["id"]: t for t in r["table"]}
         for fid in r["thumbs"]:
             t = by.get(fid) or {}
-            out.append(f"<tr><td style='width:22%'>{_e(fid)}<br/>{_e(t.get('jibun'))}<br/>{_e(t.get('type'))} · {_e(t.get('area'))}</td>"
+            out.append(f"<tr><td style='width:22%'>{_e(t.get('jibun'))}<br/>{_e(t.get('type'))} · {_e(t.get('area'))}</td>"
                        + (f"<td><img src='b_{fid}.png'/></td><td></td></tr>" if one else f"<td><img src='a_{fid}.png'/></td><td><img src='b_{fid}.png'/></td></tr>"))
         out.append("</table>")
-    out.append("<h2>□ 권고 조치</h2>")
+    out.append("<h2>권고 조치</h2>")
     out.append(li(r["recommend"]))
     out.append(f"<p class='src'>{_e(r['source'])}</p>")
     return "".join(out)

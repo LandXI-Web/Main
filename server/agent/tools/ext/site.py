@@ -303,7 +303,7 @@ async def site_report(args: dict, ctx) -> Out:
             b = sum(1 for f in zin if f["properties"]["type"] == t)
             m2 = round(sum(f["properties"].get("area_m2") or 0 for f in feats if f["properties"]["type"] == t))
             rows_c.append([t, f"{a:,}", f"{b:,}", f"{m2:,}"])
-        lines.append(f"□ 국토 변화({ya}년 → {yb}년 국토지리정보원 항공) — 대상지 {{{{ch_n}}}} · 구역선 안 {{{{ch_zone}}}}")
+        lines.append(f"국토 변화({ya}년 → {yb}년 국토지리정보원 항공) — 대상지 {{{{ch_n}}}} · 구역선 안 {{{{ch_zone}}}}")
         out.blocks.append({"type": "rows", "title": f"변화 유형별 · {ya} → {yb}", "cols": ["유형", "대상지", "구역선 안", "면적(㎡)"], "rows": rows_c})
         top = sorted(zin, key=lambda f: -(f["properties"].get("area_m2") or 0)) + sorted([f for f in feats if f not in zin], key=lambda f: -(f["properties"].get("area_m2") or 0))
         cuts = []
@@ -327,7 +327,7 @@ async def site_report(args: dict, ctx) -> Out:
         out.env("z_unreg", "구역선 안 지목미정리 필지", {**ib, "value": zone_cls.get("지목미정리", 0)})
         out.env("z_und", "구역선 안 미확정 필지", {**ib, "value": zone_cls.get("미확정", 0)})
         rows_t = [[k, f"{v:,}"] for k, v in sorted(zone_cls.items(), key=lambda kv: -kv[1])]
-        lines.append(f"□ 지목 불일치(이지목 현황 · {int(zj['year_b'])}년 영상) — 구역선 안 {{{{z_n}}}} 가운데 지목미정리 {{{{z_unreg}}}} · 미확정 {{{{z_und}}}}")
+        lines.append(f"지목 불일치(이지목 현황 · {int(zj['year_b'])}년 영상) — 구역선 안 {{{{z_n}}}} 가운데 지목미정리 {{{{z_unreg}}}} · 미확정 {{{{z_und}}}}")
         out.whitelist.add(str(int(zj["year_b"])))
         out.blocks.append({"type": "rows", "title": "구역선 안 판정별 필지", "cols": ["판정", "필지"], "rows": rows_t})
     occ_n = None
@@ -336,13 +336,13 @@ async def site_report(args: dict, ctx) -> Out:
             oc = await _get(ctx, f"/change/runs/{ij['job_id']}/occupy", chg=ch["job_id"], format="json")
             occ_n = (oc.get("n") or {}).get("value")
             out.env("occ", "점유의심 조사 목록 필지", {"value": occ_n, "unit": "필지", "basis": "inferred", "as_of": oc.get("as_of") or "", "source": "이지목 현황 × 국토 변화(필지 교차)"})
-            lines.append("□ 점유의심 조사 목록(이지목 현황 × 국토 변화 · 필지 교차) — {{occ}}")
+            lines.append("점유의심 조사 목록(이지목 현황 × 국토 변화 · 필지 교차) — {{occ}}")
         except ToolError:
             pass
     if not lines:
         out.answer = f"{name}에는 아직 끝난 결과가 없습니다. 새로 돌리지 않았습니다."
         return out
-    out.answer = f"{name} 결과 보고서를 만들었습니다(새로 돌리지 않음).\n\n" + "\n\n".join(lines) + "\n\n□ 필지별 두 시점 컷 · 판정일 · 근거 레이어 · 작업 ID는 PDF에 담았습니다."
+    out.answer = f"{name} 결과 보고서를 만들었습니다(새로 돌리지 않음).\n\n" + "\n\n".join(lines) + "\n\n필지별 두 시점 컷 · 판정일 · 근거 레이어 · 작업 ID는 PDF에 담았습니다."
     # PDF — 요약 수치 → 유형별 · 판정별 표 → 필지별 두 시점 컷(상위 10) → 판정일 · 근거 레이어 · 작업 ID
     made = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime("%Y.%m.%d %H:%M")
     title = f"{name} — 변화 · 지목 불일치 보고서"
@@ -373,7 +373,7 @@ async def site_report(args: dict, ctx) -> Out:
         src.append(["이지목 현황(구역선)", zj["job_id"], _kst(zj["done_at"]), f"대상지 '{zone['name']}'"])
     if ij and ij is not zj:
         src.append(["이지목 현황(대상지)", ij["job_id"], _kst(ij["done_at"]), f"대상지 '{main['name']}'"])
-    body.append("<h2>판정일 · 근거 레이어 · 작업 ID</h2>" + _table(["근거 레이어", "작업 ID", "판정일", "범위"], src)
+    body.append("<h2>판정일 · 근거 레이어</h2>" + _table(["근거 레이어", "판정일", "범위"], [[x[0], x[2], x[3]] for x in src])
                 + "<p class=src>출처 Land-XI 결과(결과 확인 전) · 숫자는 결과 파일 그대로 · 새로 돌리지 않음</p>")
     pdf = _pdf(title, "".join(body), imgs)
     fn = re.sub(r"[\\/:*?\"<>|\s]+", "_", f"{name}_변화_지목불일치_보고서") + ".pdf"
@@ -446,7 +446,7 @@ async def site_parcels(args: dict, ctx) -> Out:
             "<h2>요약 수치</h2>" + _table(["항목", "값"], [["판정한 필지" + (" (구역선 안)" if inside else ""), f"{tot:,}필지"], [words, f"{len(feats):,}필지"]]),
             "<h2>용도별 · 판정별</h2>" + _table(ucols, urows, set(range(1, len(ucols)))),
             "<h2>필지 목록</h2>" + _table(["지번", "지목", "용도", "판정", "실제 쓰임", "피복 도로 비율", "면적(㎡)"], prow, {5, 6}),
-            "<h2>판정일 · 근거 레이어 · 작업 ID</h2>" + _table(["근거 레이어", "작업 ID", "판정일", "범위"], [["이지목 현황", j["job_id"], _kst(j["done_at"]), rg["name"]]])
+            "<h2>판정일 · 근거 레이어</h2>" + _table(["근거 레이어", "판정일", "범위"], [["이지목 현황", _kst(j["done_at"]), rg["name"]]])
             + "<p class=src>용도 = 토지마스터 용도(법면 값 없음 · 10-29 E0) · 피복 도로 비율 = 필지 안 토지피복 AI 도로 몫 · 결과 확인 전</p>"]
     pdf = _pdf(title, "".join(body), {})
     fn = re.sub(r"[\\/:*?\"<>|\s]+", "_", f"{rg['name']}_{words.replace(' · ', '_')}_용도별") + ".pdf"

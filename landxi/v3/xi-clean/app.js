@@ -489,7 +489,7 @@ function lxmapLayer() {
   map.addSource('xc-lxmap', { type: 'raster', tiles: ['lxmap://{z}/{x}/{y}'], tileSize: 512, minzoom: LXMAP_Z - 1, maxzoom: 19 });
   map.addLayer({ id: 'xc-lxmap', type: 'raster', source: 'xc-lxmap', minzoom: LXMAP_Z, layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } }, 'slot-overlay');
 }
-/** 지적(LX맵) 켜고 끄기(층 판 '지적' · 기관 필지 카드 '이 자리 LX맵 겹쳐 보기' 같은 값) — 멀리 있으면 층 판 '지적' 줄이 흐려질 뿐(새 문구 없음 · 10-15) */
+/** 지적(LX맵) 켜고 끄기(층 판 '지적' · 기관 필지 카드 '이 자리 편집지적도 겹쳐 보기' 같은 값) — 멀리 있으면 층 판 '지적' 줄이 흐려질 뿐(새 문구 없음 · 10-15) */
 function setLxmap(on, { near = null } = {}) {
   S.layers.lxmap = S.layers.parcel = !!on; applyLayers(); paintCadRow();   // '지적선' · '지적' 한 줄(10-17 지적선-합치기 · 원칙 272) — 필지 경계 선(14~) + 편집지적도(17~) 함께
   if (!on) { PC?.close(); return; }
@@ -2462,7 +2462,7 @@ function parcelInfo(d, L) {
     row('용도지역', L.yongdo, L.yongdo && L.yongdo_year ? `${L.yongdo_year}년 고시` : ''),
     row('읍면 · 리', [d.emd, d.ri].filter(Boolean).join(' · ')),
     h('div.xc-pi-no', {}, h('dt', { text: '필지 번호' }), h('dd', { text: d.pnu || '—' })));
-  const sw = h('button.xc-pi-sw', { type: 'button', role: 'switch', 'aria-checked': String(!!S.layers.lxmap), 'aria-label': '이 자리 LX맵 겹쳐 보기' }, h('i'));
+  const sw = h('button.xc-pi-sw', { type: 'button', role: 'switch', 'aria-checked': String(!!S.layers.lxmap), 'aria-label': '이 자리 편집지적도 겹쳐 보기' }, h('i'));
   sw.addEventListener('click', () => {
     const on = !S.layers.lxmap;
     let near = null;
@@ -2472,7 +2472,7 @@ function parcelInfo(d, L) {
   });
   return h('section.xc-pi', { 'aria-label': '필지 정보' },
     h('header.xc-pi-h', {}, h('h3', { text: '필지 정보' }), h('small', { text: gosi ? `연속지적도 · 공시 ${gosi[0]}.${gosi[1].padStart(2, '0')}` : '연속지적도' })),
-    dl, h('label.xc-pi-t', {}, h('span', { text: '이 자리 LX맵 겹쳐 보기' }), sw));
+    dl, h('label.xc-pi-t', {}, h('span', { text: '이 자리 편집지적도 겹쳐 보기' }), sw));
 }
 async function setState(f, to, btn) {
   btn.disabled = true;

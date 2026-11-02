@@ -23,7 +23,7 @@ export function deleteOwn(id, name = '') {
         /* 이 영상으로 낸 결과가 있으면 한 번 더 — 어떤 서비스 · 날짜(11-01 PM "지울때 결과가 있으면 다시 한번 안내를 하고") */
         nRes ? h('div.la-del-res', {}, h('b', { text: `이 영상으로 낸 결과 ${nf(nRes)}건도 함께 지워집니다` }),
           h('ul', {}, ...(pl.items || []).map((x) => h('li', { text: [x.service, x.date, x.kind].filter(Boolean).join(' · ') }))),
-          (pl.marks?.value ?? 0) ? h('small', { text: `그 결과에 남긴 판정 ${nf(pl.marks.value)}건도 함께 지워집니다` }) : null) : null,
+          (pl.marks?.value ?? 0) ? h('small', { text: `그 결과에 남긴 판정 ${nf(pl.marks.value)}건도 함께 지워집니다` }) : null) : '',   // replaceChildren 은 null 을 글자 'null' 로 넣는다 → 빈 줄이면 빈 글자
         h('p.la-note', { text: '지운 뒤에는 되돌릴 수 없습니다.' }),
         h('div.la-own-act', {}, close, go));
       go.addEventListener('click', async () => {

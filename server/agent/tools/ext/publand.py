@@ -274,14 +274,14 @@ async def publand(args: dict, ctx) -> Out:
         out.whitelist.add(s)
     for s, _v in top_sgg:
         out.whitelist |= set(s.split())
-    lines = [f"□ {name} 공공용지 무단점유 — {period}",
-             f"□ 찾은 곳 {{{{{kn}}}}}(면적 합 {{{{{km}}}}}) — 무단적치 쓰레기 {{{{{kt[0]}}}}} · 불법 형질변경 {{{{{kt[1]}}}}}" + (f" · 신규 {{{{{kw}}}}}" if kw else ""),
-             "□ 공공용지 대조 — " + " · ".join(f"{LAND_WORD[k]} {{{{{v}}}}}" for k, v in kl.items()) + (f" (분석한 공공용지 필지 {{{{{kp}}}}})" if kp else "")]
+    lines = [f"{name} 공공용지 무단점유 — {period}",
+             f"찾은 곳 {{{{{kn}}}}}(면적 합 {{{{{km}}}}}) — 무단적치 쓰레기 {{{{{kt[0]}}}}} · 불법 형질변경 {{{{{kt[1]}}}}}" + (f" · 신규 {{{{{kw}}}}}" if kw else ""),
+             "공공용지 대조 — " + " · ".join(f"{LAND_WORD[k]} {{{{{v}}}}}" for k, v in kl.items()) + (f" (분석한 공공용지 필지 {{{{{kp}}}}})" if kp else "")]
     if len(by_sido) > 1:
-        lines.append("□ 많은 시도 — " + " · ".join(f"{s} {a + b:,}곳" for s, a, b in by_sido[:5]))
+        lines.append("많은 시도 — " + " · ".join(f"{s} {a + b:,}곳" for s, a, b in by_sido[:5]))
         for s, a, b in by_sido[:5]:
             out.whitelist.add(f"{a + b:,}")
-    lines.append(f"□ 모두 {WORD}(자동 판정 · 결과 확인 전). 지도에 결과 층을 띄우고 보고서(한글 · 엑셀)를 만들었습니다.")
+    lines.append(f"모두 {WORD}(자동 판정 · 결과 확인 전). 지도에 결과 층을 띄우고 보고서(한글 · 엑셀)를 만들었습니다.")
     out.answer = "\n\n".join(lines)
     out.blocks.append({"type": "rows", "title": f"{name} · 큰 것부터 10곳", "cols": ["주소 · 지번", "지목", "소유 구분", "유형", "공공용지 대조", "면적(㎡)"],
                        "rows": [[f"{f.get('addr') or ''} {f.get('jibun') or ''}".strip() or "-", JNAME.get(f.get("jimok") or "", f.get("jimok") or "-"),

@@ -1,7 +1,7 @@
 /* lx-map — 지도 서비스(원칙 149 · 154 · 163 · 확인 대장 10-10 질문 1 ⓑ · 시안 design-r15/map-service-3).
    화면 가득 실제 지도(kit 지도 부품) · 왼쪽 = 내가 돌린 분석 결과가 분석서비스(카드) · 프로젝트 묶음별로 쌓인다(여러 묶음 동시에 · 묶음마다 '이 묶음만 보기').
    층을 켜면 지도에 그려지고 그 범위로 간다 · 도형을 누르면 오른쪽에 속성(분류 · AI가 그린 면적 · 신뢰도 · 영상 시점 · 묶음 · 필지 정보) 칸이 펼쳐진다.
-   바탕 = 분석에 쓴 영상 + (LX맵 — 지도 18단계 이상에서 그려짐 · 연속지적 필지 경계 — 15단계 이상).
+   바탕 = 분석에 쓴 영상 + (LX맵 — 지도 18단계 이상에서 그려짐 · 연속지적 필지 경계 — 17단계 이상).
    값 = 서버 한 출처: 목록 GET /me/analyses(묶음 · 지역 · 영상 · 범위 · 결과 수) · 결과 도형 = 결과 타일(/tiles/pmtiles/{세트}) 속성 그대로 · 필지 = GET /parcels?lng&lat(연속지적).
    XI맵(전국 · 해외 실시간 분석) 요소는 두지 않는다(원칙 147). 작업 id 는 주소(?job=)에만 — 화면 글자에 없다.
    ?job=<작업>  추론 '결과 보기' · 분석하기 '분석 시작' 뒤 안내가 그 결과를 켜고 그 범위로 연다. */
@@ -30,7 +30,7 @@ const day = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' :
 const CLS_COLOR = { 경작지: '#0FA9A0', 비닐하우스: '#07706A', 건물: '#010102', 주차장: '#8F99A8',
   // 두 시기 비교(사료작물 생육기 ↔ 생산기 · 10-25 원칙 337 — 카드에서 옮겨 온 결과 층) · 카드 비교 칸과 같은 색
   '같은 작물': '#0FA9A0', '작물 바뀜': '#FFB633', '수확·곤포 확인': '#006DF7', '생산기에 없음': '#F04452', '생산기에만 있음': '#727780' };
-const LXMAP_Z = 18, CAD_Z = 15;
+const LXMAP_Z = 18, CAD_Z = 17;
 
 /* ── 틀 ── */
 const left = h('aside.lm-left', { 'aria-label': '내 분석 결과' });
@@ -92,7 +92,7 @@ const pad = () => ({ top: 72, bottom: 48, left: 48, right: props.hidden ? 48 : 4
 const CAT = await catP;
 
 /* V-World WMS 를 게이트웨이 중계(/proxy/vworld/wms · 키는 서버)로 — LX맵(편집지적도 lt_c_landinfobasemap)과 연속지적(lp_pa_cbnd_bubun 선) 두 층.
-   V-World 는 LX맵을 약 0.6m/화소보다 가까울 때만 그린다 → 512 화소 타일 · 지도 18단계부터(XI맵 필지 카드와 같은 값). 지역 고정값 없음(전국). */
+   V-World 는 편집지적도를 약 0.6m/화소보다 가까울 때만 그린다 → 512 화소 타일 · 지도 18단계부터(XI맵 필지 카드와 같은 값). 지역 고정값 없음(전국). */
 const R3857 = 20037508.342789244;
 const blank = () => createImageBitmap(new OffscreenCanvas(1, 1));
 window.maplibregl.addProtocol('lmwms', async (params, ac) => {
@@ -327,7 +327,7 @@ function drawLeft() {
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);
   });
-  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', 'LX맵', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적도', `필지 경계 · 지번 · 지목 · ${CAD_Z}단계 이상`]];
+  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', '편집지적도', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적도', `필지 경계 · 지번 · 지목 · ${CAD_Z}단계 이상`]];
   const baseEl = h('div.lm-base', { role: 'radiogroup', 'aria-label': '바탕' }, ...bases.map(([k, t, s]) =>
     h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
@@ -349,10 +349,13 @@ const legend = h('aside.lm-lgd', { 'aria-label': '범례', hidden: true });
 mapEl.append(legend);
 const colorOf = (c) => CLS_COLOR[c] || CLS_COLOR[String(c).split(' ')[0]] || '#0FA9A0';
 function drawLegend() {
-  const on = all().filter((x) => shown(x) && !x.change);   // 국토 변화는 변화 층 카드가 범례(유형별 색)
+  const on = all().filter((x) => shown(x) && !x.change);   // 국토 변화는 변화 층 카드가 범례(유형별 색) — 켜진 변화 결과의 종류는 아래에 더한다
+  const chgOn = all().filter((x) => shown(x) && x.change && !x.empty && !x.failed);
+  const chgCls = [...new Set(chgOn.flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))].filter((c) => !ST.clsOff.has(c));
   const cls = [...new Set(on.filter((x) => colorSt(x).mode !== 'scale').flatMap((x) => (x.by_class || []).filter((c) => c.n).map((c) => c.cls)))].filter((c) => !ST.clsOff.has(c));
   const sc = on.find((x) => colorSt(x).mode === 'scale' && !x.empty);
   const items = [...cls.map((c) => h('li', {}, h('i', { style: `--c:${shownColor(c)}` }), h('span', { text: c }))),
+    ...chgCls.filter((c) => !cls.includes(c)).map((c) => h('li', {}, h('i', { style: `--c:${window.__lxChange?.colorOf?.(c) || colorOf(c)}` }), h('span', { text: c }))),
     ...(sc ? [h('li.lm-lg-ramp', {}, h('i', { style: `background:linear-gradient(90deg,${rampColors(colorSt(sc).ramp).join(',')})` }), h('span', { text: '신뢰도' }))] : []),
     ...(ST.base === 'cad' ? [h('li', {}, h('i.cad'), h('span', { text: '연속지적도(필지 경계 · 지번 · 지목)' }))] : []),
     ...SHL.filter((L) => shlOn.has(L.id)).map((L) => h('li', {}, h('i.shl'), h('span', { text: L.name })))];
@@ -632,11 +635,21 @@ async function toggle(x) {
   if (!x.on) closePick();
 }
 /* 국토 변화 줄(10-23 원칙 329) — 켜면 변화 층(대상지 · 변화 폴리곤 · 카드)으로 연다 · 한 번에 하나 · 끄면 변화 층을 내린다 */
+/* XI ChatGEO 등 화면 밖에서 변화 층을 열고 닫아도 왼쪽 '켜진 결과' · 범례가 실제와 같게(11-02 재검수) */
+document.addEventListener('lx:change-layer', (e) => {
+  const { job, on } = e.detail || {};
+  const x = job ? ST.items.get(job) : null;
+  if (on) { if (!x?.change) return; for (const y of all()) if (y.change) y.on = y === x; }
+  else if (x?.change) x.on = false;
+  else if (!job) for (const y of all()) if (y.change) y.on = false;
+  else return;
+  drawLeft(); drawCap(); drawLegend();
+});
 async function toggleChange(x) {
   x.on = !x.on;
   const L = window.__lxChange;
   if (x.on) for (const y of all()) if (y !== x && y.change) y.on = false;
-  drawLeft(); drawCap();
+  drawLeft(); drawCap(); drawLegend();
   try {
     if (x.on) { await L?.show?.(x.job); const u = new URL(location.href); u.searchParams.set('change', x.job); history.replaceState(null, '', u); }
     else { L?.hide?.(); const u = new URL(location.href); u.searchParams.delete('change'); history.replaceState(null, '', u); }
@@ -655,7 +668,7 @@ const union = (bs) => bs.filter(Boolean).reduce((a, b) => (a ? [Math.min(a[0], b
 function setBase(k) {
   ST.base = k; apply();
   const z = k === 'lx' ? LXMAP_Z : k === 'cad' ? CAD_Z : 0;
-  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? 'LX맵' : '연속지적도'}는 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
+  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? '편집지적도' : '연속지적도'}는 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
 }
 
 /* ── 오른쪽 속성 칸 — 결과 값(결과 타일 속성 그대로) + 필지 정보(연속지적 GET /parcels) ── */
@@ -695,7 +708,7 @@ async function openProps(f, x, lngLat) {
       row('읍면동', h('span', { text: p.emd || '—' }))),
     h('h3', {}, '필지 정보', h('small', { text: '연속지적' })),
     parcel,
-    h('div.lm-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'LX맵으로 이 자리 보기',
+    h('div.lm-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '편집지적도로 이 자리 보기',
       onclick: () => { ST.base = 'lx'; apply(); map.easeTo({ center: near, zoom: Math.max(map.getZoom(), LXMAP_Z + 0.5), duration: 900 }); } })),
     h('p.lm-src', { text: '결과는 AI 분석 값(결과 확인 전) · 필지는 연속지적도' }));
   drawLeft();

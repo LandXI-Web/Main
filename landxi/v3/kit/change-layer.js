@@ -415,10 +415,11 @@ async function loadRange({ rid, project }) {
 const CHG_LAYERS = ['chg-rng-l', 'chg-row-l', 'chg-f', 'chg-l', 'chg-hl', 'chg-hl2', 'chg-st', 'chg-pt'];
 function vis(on) { for (const m of maps()) for (const id of CHG_LAYERS) if (m?.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); if (C.card) C.card.hidden = !on; }
 /* 지도 서비스 왼쪽 목록에서 국토 변화 줄을 끄면 — 변화 층 · 카드 · 칸을 내린다(다시 켜면 show) */
-function hide() { C.job = null; C.sel = null; C.hl.clear(); if (C.panel) C.panel.hidden = true; vis(false); }
+function hide() { const was = C.job; C.job = null; document.dispatchEvent(new CustomEvent('lx:change-layer', { detail: { job: was, on: false } })); C.sel = null; C.hl.clear(); if (C.panel) C.panel.hidden = true; vis(false); }
 async function show(job, { fit = true, ya = null, yb = null } = {}) {
   if (!C.map) C.map = await waitMap();
   C.job = job;
+  document.dispatchEvent(new CustomEvent('lx:change-layer', { detail: { job, on: true } }));   // 지도 서비스 왼쪽 '켜진 결과' · 범례가 같은 값으로(XI ChatGEO 가 열어도)
   vis(true);
   C.run = await api(`/change/runs/${encodeURIComponent(job)}`);
   if (!C.range || C.range.id !== C.run.range_id) await loadRange({ rid: C.run.range_id });
@@ -448,6 +449,7 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
 window.__lxChange.show = show;
 window.__lxChange.open = openPanel;
 window.__lxChange.hide = hide;
+window.__lxChange.colorOf = (t) => (TYPES.find((x) => x[0] === t) || [])[1] || null;
 
 /* ── 시작 ── */
 (async () => {

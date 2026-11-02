@@ -47,20 +47,20 @@ if (!R) {
   for (const fid of R.thumbs || []) {
     const t = by[fid] || {};
     const a = h('img', { alt: `${ya}년 ${fid}`, decoding: 'async' }), b = h('img', { alt: `${yb}년 ${fid}`, decoding: 'async' });
-    thumbs.append(h('figure.cr-pair', {}, h('figcaption', { text: `${fid} · ${t.jibun || ''} · ${t.type || ''} · ${t.area || ''}` }), h('div', {}, h('span', {}, a, h('small', { text: `${ya}년` })), h('span', {}, b, h('small', { text: `${yb}년` })))));
+    thumbs.append(h('figure.cr-pair', {}, h('figcaption', { text: `${t.jibun || ''} · ${t.type || ''} · ${t.area || ''}` }), h('div', {}, h('span', {}, a, h('small', { text: `${ya}년` })), h('span', {}, b, h('small', { text: `${yb}년` })))));
     for (const [img, k] of [[a, 'a'], [b, 'b']]) api(`/change/runs/${encodeURIComponent(job)}/thumbs/${fid}_${k}.png`, { raw: true }).then(async (r) => { if (r.ok) img.src = URL.createObjectURL(await r.blob()); });
   }
-  const head = ['번호', '지번', '지목', '소유구분', '변화 유형', '면적', '판정'];
+  const head = ['지번', '지목', '소유구분', '변화 유형', '면적', '판정'];
   paper.append(
     h('p.cr-k', { text: `국토 변화 모니터링 · ${R.period}` }), h('h1', { text: R.title }), h('p.cr-sub', { text: `만든 날 ${R.made}` }),
-    h('h2', { text: '□ 구간 개요' }), li(R.overview || []),
-    h('h2', { text: '□ 변화 요약' }), li(R.summary || []),
-    h('h2', { text: '□ 필지별 목록(구역선 안)' }),
+    h('h2', { text: '구간 개요' }), li(R.overview || []),
+    h('h2', { text: '변화 요약' }), li(R.summary || []),
+    h('h2', { text: '필지별 목록(구역선 안)' }),
     h('div.cr-tw', {}, h('table.cr-t', {}, h('thead', {}, h('tr', {}, ...head.map((x) => h('th', { text: x })))),
-      h('tbody', {}, ...(R.table || []).map((t) => h('tr', {}, ...[t.id, t.jibun, t.jimok, t.owner, t.type, t.area, t.status].map((x) => h('td', { text: x }))))))),
+      h('tbody', {}, ...(R.table || []).map((t) => h('tr', {}, ...[t.jibun, t.jimok, t.owner, t.type, t.area, t.status].map((x) => h('td', { text: x }))))))),
     (R.more?.value ? h('p.cr-cap', { text: `그 밖 ${Number(R.more.value).toLocaleString('ko-KR')}건은 필지 표(CSV)에서 봅니다.` }) : ''),
-    h('h2', { text: `□ 근거 영상(${ya}년 · ${yb}년)` }), thumbs,
-    h('h2', { text: '□ 권고 조치' }), li(R.recommend || []),
+    h('h2', { text: `근거 영상(${ya}년 · ${yb}년)` }), thumbs,
+    h('h2', { text: '권고 조치' }), li(R.recommend || []),
     h('p.cr-src', { text: R.source }));
 }
 document.body.dataset.ready = '1';

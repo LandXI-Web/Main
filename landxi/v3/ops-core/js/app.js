@@ -97,7 +97,10 @@ function drawOverview() {
   setCell(cApr, numV(list.length, '건'), '<a href="#/approvals">승인 요청함 열기 →</a>', { lv: list.length ? 'on' : 'zero' });
   // ② 돌고 있는 분석 — 전국 결과 진행 + 기관 분석 진행
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
-  if (nat) setCell(cRun, h('b.oc-txt', {}, h('span.oc-nw', { text: nat.big[0] }), ' · ', h('span.oc-nw', { text: nat.big[1] })), [nat.tail, flowing.length ? `기관 분석 진행 ${flowing.length}` : ''].filter(Boolean).map((x) => `<span class="oc-nw">${esc(x)}</span>`).join(' · '));   // 뜻 덩어리(날짜 · 시각)는 줄 중간에서 끊지 않는다(규칙 9) · 실패한 칸 표시는 할 일 표 줄(경고 글자)에서
+  if (runJobs.length) {                            // 지금 실제로 도는 분석(작업 대기열 한 출처 · GET /jobs?status=running) — 있으면 이것이 먼저
+    const nm = (x) => String(x.options?.range_name || x.options?.service_name || '분석').replace(/\s*\(.*\)$/, '');   // 칸 폭 — 괄호 설명은 아래 할 일 표에만
+    setCell(cRun, h('b.oc-txt', {}, h('span.oc-nw', { text: nm(runJobs[0]) })), `<span class="oc-nw">${esc(runJobs.length > 1 ? `분석 중 ${runJobs.length}건` : '분석 중')}</span>` + (flowing.length ? ` · <span class="oc-nw">${esc(`기관 분석 진행 ${flowing.length}`)}</span>` : ''), { lv: '' });
+  } else if (nat) setCell(cRun, h('b.oc-txt', {}, h('span.oc-nw', { text: nat.big[0] }), ' · ', h('span.oc-nw', { text: nat.big[1] })), [nat.tail, flowing.length ? `기관 분석 진행 ${flowing.length}` : ''].filter(Boolean).map((x) => `<span class="oc-nw">${esc(x)}</span>`).join(' · '));   // 뜻 덩어리(날짜 · 시각)는 줄 중간에서 끊지 않는다(규칙 9) · 실패한 칸 표시는 할 일 표 줄(경고 글자)에서
   // ③ 장비 — 학습 장비 · 경보(뒤에서 오는 값 — 오기 전에는 옅은 —)
   if (D.restAt) {
     const p = power(), al = openAlerts(), pr = p.pair || {};
@@ -107,6 +110,7 @@ function drawOverview() {
   // ④ 기관 사용 — drawUse 가 채운다
   const rows = [];
   rows.push({ k: '승인 요청', t: list.length ? `${list.length}건 기다립니다` : '기다리는 요청이 없습니다', go: '승인 요청함 열기', href: '#/approvals' });
+  if (runJobs.length) rows.push({ k: '돌고 있는 분석', t: runJobs.slice(0, 3).map((x) => String(x.options?.range_name || x.options?.service_name || '분석')).join(' · ') + (runJobs.length > 3 ? ` 외 ${runJobs.length - 3}건` : '') + ' 분석 중', go: '', href: '' });
   if (natLine) rows.push(natLine);                  // 전국 결과 자산 진행 한 줄(원칙 218) — GET /national/progress 한 출처 · 누르면 XI맵
   if (flowing.length) rows.push({ k: '기관 분석', t: `AI 분석 진행 ${flowing.length}`, go: '배포 보기', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
   if (D.restAt) {                                  // 경보 · 장비는 뒤에서 오는 값 — 오기 전에는 줄을 만들지 않는다(값을 지어내지 않게)
@@ -183,6 +187,15 @@ async function drawUse() {
 let useLine = null;
 drawUse();
 setInterval(drawUse, 60000);
+
+/* 돌고 있는 분석 — 작업 대기열에서 지금 running 인 것(전국 분석 포함 · 11-02 재검수: 옛 전국 결과 값에 멈춰 있던 칸) */
+let runJobs = [];
+async function drawRunning() {
+  try { const j = await api('/jobs?status=running&limit=20&geom=0'); runJobs = (j.items || j || []).filter((x) => x.state === 'running' && !x.options?.interactive); } catch { return; }
+  drawOverview();
+}
+drawRunning();
+setInterval(drawRunning, 30000);
 
 /* 전국 결과 자산 — '전국 농지 n% · 하천 n% · 마지막 칸 시각' 한 줄(학습 장비가 놀 때 도는 작업기 · 원칙 218 · 221) */
 let natLine = null, nat = null;

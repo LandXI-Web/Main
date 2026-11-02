@@ -133,9 +133,9 @@ function acCard(c, href, more) {
       h('p.k-sc-line.la-ac-line', { text: c.line || '' }),
       h('div.la-ac-hero', {},
         ruleN(c.id) ? h('div', { title: '국토 변화 · 이지목 현황 결과를 겹치는 규칙 기반 카드(AI 학습 없음)' }, h('b.num', { text: String(ruleN(c.id)) }), h('small', { text: '근거 서비스' }))   // 명세 v1 §4 — 정확도 대신
-          : h('div', { title: md.acc?.tip || null }, acc === null ? (md.acc_word ? h('b.la-ac-word', { text: md.acc_word }) : h('b', { text: '—' })) : h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' })),   // 기준 한 줄('학습에 쓰지 않은 영상 n장으로 잼')은 자세히 화면에만(원칙 187 — 이름은 'AI 모델 정확도' 하나 · GPT3-5)
+          : (acc === null ? null : h('div', { title: md.acc?.tip || null }, h('b.num', {}, String(acc), h('i', { text: '%' })), h('small', { text: 'AI 모델 정확도' }))),   // 측정 값이 없으면 그 칸을 숨긴다(11-02 · '성능 미측정' 같은 말을 큰 자리에 두지 않는다)
         h('div', {}, h('b.num.d', { text: md.updated || '—' }), h('small', { text: '모델 갱신' }))),
-      h('div.la-ac-where', {}, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '아직 없음', title: tg.join(' · ') }),
+      h('div.la-ac-where', tg.length ? {} : { style: { visibility: 'hidden' }, 'aria-hidden': 'true' }, h('span.k', { text: `대상 지역 ${tg.length}곳` }), h('span.v', { text: tgText || '아직 없음', title: tg.join(' · ') }),
         h('span.v2', { text: tg.length ? (tg.length > 1 ? `${tg[0]} 외 ${tg.length - 1}곳` : tg[0]) : '아직 없음', title: tg.join(' · ') })),   // 가장 촘촘한 단계(data-fit 0)에서 한 줄
       h('div.la-ac-imk', (c.imagery_kinds || []).length ? { 'aria-label': '쓸 수 있는 영상' } : { 'aria-hidden': 'true' }, ...(c.imagery_kinds || []).map((k) => h('span', { text: k }))),   // 영상 칩이 없어도 같은 높이 칸(고정 틀 — 아래 칸 줄이 카드마다 맞게)
       h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: href(c), text: '분석하기' }), h('a.k-sc-more', { href: more(c), text: '자세히 →' }))));

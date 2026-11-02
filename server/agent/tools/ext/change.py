@@ -16,7 +16,7 @@ import time
 
 from agent.tools import Out, ToolError
 
-SRC = "변화 탐지 결과(토지피복 U-Net · 두 해 비교 · 결과 확인 전)"
+SRC = "변화 탐지 결과(토지피복 AI · 두 해 비교 · 결과 확인 전)"
 TYPES = ["신축", "소실", "경작 전환", "포장 확대"]
 JIMOK = {"도로": "도", "철도": "철", "철도용지": "철", "대지": "대", "임야": "임", "하천": "천", "구거": "구", "잡종지": "잡", "공장": "장",
          "공장용지": "장", "주차장": "차", "주유소": "주", "창고": "창", "학교": "학", "목장": "목", "과수원": "과", "유지": "유", "제방": "제",
@@ -433,10 +433,10 @@ async def change_report(args: dict, ctx) -> Out:
     for k0 in ("a", "b"):                      # 등록 영상 이름에 든 숫자(예: 촬영 해)는 지어낸 숫자가 아니다
         out.whitelist |= set(re.findall(r"\d[\d,.]*", str(st["period"][k0].get("word") or "")))
     lines = [f"{r['title']}을 만들었습니다(개조식 · 근거 썸네일 포함).",
-             f"□ 구간 개요 — {st['range_name']} · " + (f"국토지리정보원 영상 {pa}년 → {pb}년" if st["period"]["a"].get("kind", "ngii") == "ngii" == st["period"]["b"].get("kind", "ngii")
+             f"구간 개요 — {st['range_name']} · " + (f"국토지리정보원 영상 {pa}년 → {pb}년" if st["period"]["a"].get("kind", "ngii") == "ngii" == st["period"]["b"].get("kind", "ngii")
                                                        else f"{st['period']['a'].get('word')} → {st['period']['b'].get('word')}"),
-             f"□ 변화 요약 — 구역선 안 {{{{{k1}}}}} · 밖(버퍼) {{{{{k2}}}}}" + (f" · 판정 {' · '.join(parts)}" if parts else ""),
-             f"□ 필지별 목록 · □ 권고 조치 {len(r.get('recommend') or [])}항목 — 미리보기에서 봅니다."]
+             f"변화 요약 — 구역선 안 {{{{{k1}}}}} · 밖(버퍼) {{{{{k2}}}}}" + (f" · 판정 {' · '.join(parts)}" if parts else ""),
+             f"필지별 목록 · 권고 조치 {len(r.get('recommend') or [])}항목 — 미리보기에서 봅니다."]
     out.answer = "\n\n".join(lines)          # 개조식 한 줄씩 문단
     name = f"{st['range_name']}_변화탐지보고_{pa}-{pb}.pdf"
     out.blocks.append({"type": "file", "label": name, "href": f"/api/v1/change/runs/{job}/report.pdf"})
