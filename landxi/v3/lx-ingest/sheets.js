@@ -41,7 +41,7 @@ export function imagerySheet({ host, region, under, onDone }) {
   const d = K.drawer({ title: '영상 등록', body, host, slot: 'sheet', onClose: restore });
   d.el.classList.add('lxi-sheet');
   import('../kit/uploads.js').then((U) => U.uploadPicker(body, {
-    purpose: () => ({ kind: 'shared', from: 'ingest', label: '데이터 올리기 · 영상 등록', near: UP.near?.sgg_cd || undefined,
+    purpose: () => ({ kind: 'shared', from: 'ingest', href: '/landxi/v3/lx-ingest/' + location.search, label: '영상 추가 · 영상 등록', near: UP.near?.sgg_cd || undefined,
       href: '/landxi/v3/lx-ingest/' + (UP.near?.sgg_cd ? '?' + new URLSearchParams({ region: UP.near.sgg_cd }) : '') }),
     onAdded: () => { K.toast("업로드를 시작했습니다 · 위쪽 '업로드 중' 표시에서 진행을 봅니다"); d.close?.(true); restore(); },
   })).catch(() => { body.textContent = '업로드 칸을 열지 못했습니다'; });

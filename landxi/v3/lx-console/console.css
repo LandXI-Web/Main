@@ -14,7 +14,7 @@
 /* 진행 현황 — 숫자(3×2 · 넓으면 한 줄 6) · 막대 */
 .ld-pf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;align-content:space-evenly;flex:1 1 auto}
 .ld-pf.is-big b{font-size:var(--fs-h2);line-height:60px}
-.ld-pf.is-row{grid-template-columns:repeat(6,minmax(0,1fr))}
+.ld-pf.is-row{grid-template-columns:repeat(5,minmax(0,1fr))}
 .ld-pf li{position:relative;min-width:0}
 .ld-pf a{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:2px 6px;margin:0 -6px;border-radius:var(--r-8);text-decoration:none;color:var(--ink);transition:background var(--d-180) var(--e-ui)}
 .ld-pf a:hover{background:var(--bg-0)}

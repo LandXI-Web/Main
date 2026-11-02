@@ -662,8 +662,17 @@ async def on_cover_approved(conn, cv_id: str, pl: dict, by: str | None) -> dict 
     cur = await conn.fetchval("SELECT scenes FROM card_info WHERE card_id=$1", cid)
     cur = json.loads(cur) if isinstance(cur, str) else (cur or [])
     cur = [x for x in cur if isinstance(x, dict) and x.get("src") != sc["src"]] + [sc]
-    await conn.execute("UPDATE card_info SET scene=$2, scenes=$3, updated_at=now(), updated_by=$4 WHERE card_id=$1", cid, sc, cur, by)
-    return {"cover": sc["src"]}
+    # 원본도 함께 바꾼다(11-02 PM "새 대표 그림 승인 때는 원본도 함께 바뀌도록") — 신청서에 원본이 있으면 그 둘이 새 짝 · 없으면 옛 원본이 새 그림과 어긋나므로 짝을 지운다(한 장 그림)
+    bf = cover_path(pid, str(cv.get("before") or "")) if cv.get("before") else None
+    swipe = None
+    if bf:
+        bname = "scene-" + str(cv["before"])[len("cover-"):]
+        await run_in_threadpool(lambda: shutil.copyfile(bf, d / bname))
+        bsc = {"src": f"/api/v1/cards/files/{cid}/{bname}", "caption": "", "sgg": None, "cover": True, "up": True}
+        cur = [x for x in cur if isinstance(x, dict) and x.get("src") != bsc["src"]] + [bsc]
+        swipe = {"before": bsc["src"], "after": sc["src"], "labels": ["원본", "AI 결과"], "legend": [], "cover": True}
+    await conn.execute("UPDATE card_info SET scene=$2, scenes=$3, swipe=$5, updated_at=now(), updated_by=$4 WHERE card_id=$1", cid, sc, cur, by, swipe)
+    return {"cover": sc["src"], "pair": bool(swipe)}
 
 
 @router.post("/release/projects/{pid}/models", status_code=201)
@@ -743,12 +752,17 @@ async def apply(pid: str, body: dict, request: Request):
         elif cv_in and cover_path(pid, cv_in.rsplit("/", 1)[-1]):
             nm = cv_in.rsplit("/", 1)[-1]
             cover = {"name": nm, "src": f"/api/v1/release/files/{pid}/{nm}", "project": pid}
+            cb = str(body.get("cover_before") or "").strip().rsplit("/", 1)[-1]          # 새 대표 그림의 원본(선택 · 11-02 PM) — 승인되면 원본 ↔ AI 결과 짝으로
+            if cb and cb != nm and cover_path(pid, cb):
+                cover["before"] = cb
         else:
             raise ApiError("bad_request", "대표 그림을 올려 주세요 — 승인되면 분석 서비스 카드 그림이 됩니다", {"field": "cover"})
         prev = next((v for v in versions if v["state"] == "approved"), None)
         pend = next((v for v in versions if v["state"] == "pending"), None)
         if pend:
             raise ApiError("conflict", "검토 중인 배포 신청이 있습니다", {"version": pend["version"]}, 409)
+        if not test and not any(x["state"] == "done" for x in await _infer_jobs(conn, pid, people)):      # 앞 단계가 끝나기 전에는 막는다(11-02 PM) — 모델 등록 승인(위) + 추론 결과 한 건 이상
+            raise ApiError("conflict", "추론 결과가 필요합니다 — 추론 단계에서 이 프로젝트 모델로 영상을 분석한 뒤 신청해 주세요", {"todo": ["추론 결과 한 건 이상"], "stage": "infer"}, 409)
         rej = next((v for v in versions if v["state"] == "rejected"), None)
         if rej and prev and float(rej["version"]) < float(prev["version"]):
             rej = None

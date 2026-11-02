@@ -7,7 +7,7 @@
 GET    /projects?scope=mine|led|joined|archived|all
                                          mine = 내가 만든(프로젝트장) + 참여한(구성원) 진행 중 · led · joined 는 그 한쪽 · archived = 내 보관(끝난) 프로젝트
                                          (관리자는 전체 보관) · all = LX 전체 진행 중. 줄마다 지금 단계 · 다음 할 일 하나 · 마지막 활동
-                                         · steps(단계 6 — 데이터 올리기 · 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
+                                         · steps(단계 5 — 학습데이터 구축 · 학습 · 추론 · 결과 확인 · 배포 신청 — 의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
 POST   /projects                         {name, task?, task_id?, regions:[code..], description?, members?:[uid..], imagery?:[iid..], from_upload?}
                                          → 바로 만들어진다 · 프로젝트장 = 만든 직원. 새 프로젝트 한 창(원칙 220 · 10-12): 설명(선택) · 구성원 · 영상을 한 번에.
                                          imagery(공유 데이터에서 고른 영상)가 있으면 대상 지역 = 그 영상 자리(화면이 고르지 않는다) ·
@@ -71,8 +71,8 @@ router = APIRouter()
 
 # 단계 6(10-09 배포-1 · 원칙 151 · 158): 학습 다음 '추론'(프로젝트 모델로 배포 신청 없이 분석) · 마지막 '배포 신청'.
 # 예전 6단계 '서비스 관리'는 직원 쪽에서 뺐다 — 공개된 서비스의 관리(기관 공유 · 사용 현황)는 LX 관리자 '배포' 메뉴(release.py).
-STAGES = [("ingest", "데이터 올리기"), ("label", "학습데이터 구축"), ("train", "학습"), ("infer", "추론"), ("review", "결과 확인"),
-          ("publish", "배포 신청")]
+# 11-02 PM(사용자 "1 단계 화면은 추천대로"): 1단계 '데이터 올리기'는 단계에서 뺐다(영상은 프로젝트를 만들 때 이미 들어옴) → 5단계. 영상을 더하는 일은 '영상 추가' 보조 단추.
+STAGES = [("label", "학습데이터 구축"), ("train", "학습"), ("infer", "추론"), ("review", "결과 확인"), ("publish", "배포 신청")]
 OPTIONAL = {"infer", "review"}    # 해 보면 좋은 단계 — 끝나지 않아도 '앞 단계 남음'(막힌 곳)으로 올리지 않는다
 GUIDE = {"review"}                # 길만 있는 단계(원칙 203) — 지금 단계 · 다음 할 일이 되지 않는다(결과 확인 = 지도에서 결과 보기)
 SCOPES = ("mine", "led", "joined", "archived", "all")
@@ -357,15 +357,13 @@ def _judge(r, f) -> dict:
     st = {k: {"key": k, "label": lb, "done": False, "next": None, "target": {}} for k, lb in STAGES}
     holds: dict[str, str] = {}              # 단계 → 'wait'(결재 대기) · 'reject'(반려) — 목록의 '막힌 곳'이 쓴다(아래 blocked)
     # ① 데이터 올리기
-    miss = [g for g in regions if not f["have"].get(g["code"])]
-    st["ingest"]["done"] = bool(regions) and not miss
-    if miss:
-        st["ingest"]["next"] = f"{miss[0]['name']} 영상 등록" + (f" 외 {len(miss) - 1}곳" if len(miss) > 1 else "")
-        st["ingest"]["target"] = {"region": miss[0]["code"]}
+    miss = [g for g in regions if not f["have"].get(g["code"])]     # 영상이 없는 대상지 — 영상 추가가 먼저 필요(학습데이터 구축 '다음 할 일'로 알린다)
     # ② 학습데이터 구축
     smp = f["samples"]
     st["label"]["done"] = bool(smp)
-    st["label"]["next"] = None if smp else "라벨 묶음 올리기"
+    st["label"]["next"] = None if smp else (f"{miss[0]['name']} 영상 추가" + (f" 외 {len(miss) - 1}곳" if len(miss) > 1 else "") if miss else "라벨 묶음 올리기")
+    if miss and not smp:
+        st["label"]["target"] = {"region": miss[0]["code"]}
     if smp:
         st["label"]["target"] = {"sample": smp[0]["id"]}
     # ③ 학습 — 이번 회차 표본으로 학습한 모델이 '쓸 수 있음'까지
@@ -433,11 +431,10 @@ def _judge(r, f) -> dict:
         pb["next"] = "배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
     # 국토 변화 탐지 — 영상(국토지리정보원 항공 · 연도별)은 프로젝트 자산 · '정식 서비스 모델' 경로면 학습데이터 구축 · 학습을 건너뜀(수정 지시서 v2 F1 · F4)
     chg = f.get("change")
-    if chg:
-        if chg["years"]:
-            st["ingest"]["done"] = True
-            st["ingest"]["next"] = None
-            st["ingest"]["note"] = " · ".join(f"{y}년 국토지리정보원 항공영상" for y in chg["years"])
+    if chg and chg["years"]:
+        st["label"]["note"] = " · ".join(f"{y}년 국토지리정보원 항공영상" for y in chg["years"])      # 영상은 국토지리정보원 항공영상(연도별)
+        if st["label"]["next"] and miss:
+            st["label"]["next"] = "라벨 묶음 올리기"
         # (10-23 원칙 329) '정식 서비스 모델 · 학습 건너뜀' 경로는 뺐다 — 국토 변화 분석은 분석 서비스 카드에서(프로젝트 단계를 건너뛰거나 4단계 추론으로 돌리지 않음)
     # 지금 단계 — 이번 회차 판이 승인됐으면 배포 신청(끝) · 아니면 앞에서부터 끝나지 않은 첫 단계(건너뛸 단계는 넘어감)
     order = [k for k, _ in STAGES]
@@ -446,8 +443,8 @@ def _judge(r, f) -> dict:
         cur = last_i
     else:
         cur = next((i for i, k in enumerate(order) if not st[k]["done"] and not st[k].get("skip") and k not in GUIDE), last_i)
-        if r["round"] > 1 and cur < 2:        # 보완 회차는 학습 단계로 돌아간다(데이터 · 라벨은 앞 회차 것을 이어 쓴다)
-            cur = 2 if not st["train"]["done"] else cur
+        if r["round"] > 1 and cur < 1:        # 보완 회차는 학습 단계로 돌아간다(데이터 · 라벨은 앞 회차 것을 이어 쓴다)
+            cur = 1 if not st["train"]["done"] else cur
     # 칸 상태 한 출처(GPT2-3 — 목록 진행 · 상세 단계 · 대시보드 요약이 이 값만 쓴다): 끝남 done · 지금 now · 남음 wait ·
     # 건너뜀 skip(지금 단계보다 앞인데 끝나지 않은 칸 — 예: 추론 없이 배포 신청 · 추론은 필수 아님 10-10) · 해당 없음 skip(해외 지역의 결과 확인)
     stages = []

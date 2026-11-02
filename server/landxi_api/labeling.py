@@ -928,3 +928,192 @@ async def map_area_undo(pid: str, aid: str, request: Request):
             await _store_counts(conn, s["id"], m)
             await audit(conn, p, "label.map.area.undo", aid, {"images": len(rows)}, None)
         return await _map_out(conn, s)
+
+
+# ── 벡터 라벨 올리기(11-02 PM "라벨 올리기가 zip 그림 200장 말고 벡터 라벨 gpkg · shp(zip) · geojson 도 받게 · 영상 위 도형 → 학습 칸으로 자르기까지") ──
+#   나눠 올리기(/training/uploads kind 'vector') 끝에 vector_stage 가 파일을 읽어 클래스 값 후보를 보여 주고(아직 라벨로 넣지 않음),
+#   apply 가 ① 클래스 더하기 ② 프로젝트 영상마다 그 영상 안 도형을 지도 모양(label_maps)으로 ③ 도형이 몰린 곳을 그림(512 화소)으로 잘라 '라벨 완료'(map_area 같은 길).
+VEC_ROOT = ROOT.parent / "labelvec"
+VEC_CLASS_KEYS = ("class", "cls", "label", "name", "클래스", "분류", "종류", "type", "category", "lu", "code", "지목")
+VEC_MAX = 50000
+VEC_CUTS = 12               # 영상마다 도형 자리 그림 자르기 최대 횟수
+
+
+def _vec_dir(vid: str) -> Path:
+    if not re.fullmatch(r"vec_[0-9a-f]{12}", vid or ""):
+        raise ApiError("not_found", "올린 라벨 파일이 없습니다 — 다시 올려 주세요")
+    return VEC_ROOT / vid
+
+
+async def vector_stage(p, d: Path, m: dict) -> dict:
+    """올린 벡터 파일(.gpkg · .geojson · .json · .zip(shp)) 읽기 → 도형 · 클래스 값 후보. 아직 라벨로 넣지 않는다."""
+    import json
+    pid = str(m.get("project") or "")
+    async with db(realm="lx") as conn:
+        r = await _need_member(conn, p, pid)
+        imgs = await _imagery_of(conn, r)
+        fps = {x["id"]: await conn.fetchval("SELECT ST_AsBinary(footprint) FROM imagery WHERE id=$1", x["id"]) for x in imgs}
+    ext = Path(str(m.get("filename") or "")).suffix.lower().lstrip(".")
+    vid = "vec_" + secrets.token_hex(6)
+    dest = VEC_ROOT / vid
+    dest.mkdir(parents=True, exist_ok=True)
+    raw = d / "part"
+
+    def parse():
+        from shapely import wkb
+        from shapely.geometry import Polygon as _P
+        from .ledger import read_gdf
+        gdf = read_gdf(raw.read_bytes(), ext)
+        gdf = gdf[gdf.geometry.notna() & ~gdf.geometry.is_empty]
+        gdf = gdf[gdf.geom_type.isin(["Polygon", "MultiPolygon"])]
+        if not len(gdf):
+            raise ApiError("bad_request", "면(다각형) 도형이 없습니다 — 점 · 선 파일은 라벨로 쓸 수 없습니다")
+        if len(gdf) > VEC_MAX:
+            raise ApiError("bad_request", f"도형이 {len(gdf):,}개입니다 — 한 번에 {VEC_MAX:,}개까지입니다. 영상 범위로 줄여 올려 주세요")
+        gdf = gdf.reset_index(drop=True)
+        cols = {}
+        for c in gdf.columns:
+            if c == "geometry":
+                continue
+            vals = gdf[c].dropna()
+            if not len(vals) or vals.map(lambda v: isinstance(v, (str, int))).mean() < 0.95:
+                continue
+            u = gdf[c].map(lambda v: "" if v is None or v != v else str(v).strip())
+            if 1 <= u[u != ""].nunique() <= MAX_CLASSES:
+                cols[str(c)] = u
+        default = next((k for kk in VEC_CLASS_KEYS for k in cols if k.lower() == kk), None) or next(iter(cols), None)
+        feats = []
+        for i, geom in enumerate(gdf.geometry):
+            for part in (geom.geoms if geom.geom_type == "MultiPolygon" else [geom]):
+                ring = part.simplify(2e-7).exterior
+                if len(ring.coords) - 1 > MAX_PTS:
+                    ring = part.simplify(2e-6).exterior
+                pts = [[round(x, 7), round(y, 7)] for x, y in ring.coords][:-1]
+                if len(pts) < 3 or len(pts) > MAX_PTS:
+                    continue
+                feats.append({"v": {k: cols[k][i] for k in cols}, "g": pts})
+        if not feats:
+            raise ApiError("bad_request", "라벨로 쓸 수 있는 도형이 없습니다")
+        fields = []
+        for k, u in cols.items():
+            cnt = u[u != ""].value_counts()
+            fields.append({"name": k, "classes": [{"name": a, "count": int(b)} for a, b in cnt.items()]})
+        per = []
+        polys = [_P(f["g"]) for f in feats]
+        pts = [q.representative_point() for q in polys]
+        for x in imgs:
+            if not fps.get(x["id"]):
+                continue
+            fp = wkb.loads(bytes(fps[x["id"]]))
+            n = sum(1 for q in pts if q.within(fp))
+            if n:
+                per.append({"id": x["id"], "name": x["name"], "n": n})
+        return {"default": default, "fields": fields, "feats": feats, "bbox": [float(v) for v in gdf.total_bounds], "imagery": per, "n": len(feats)}
+
+    try:
+        st = await run_in_threadpool(parse)
+    except ApiError:
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.rmtree(d, ignore_errors=True)
+        raise
+    except Exception as e:                                # noqa: BLE001
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.rmtree(d, ignore_errors=True)
+        raise ApiError("bad_request", "라벨 파일을 읽지 못했습니다 — gpkg · shp(zip) · geojson 인지 확인해 주세요", {"err": repr(e)[:120]})
+    (dest / "stage.json").write_text(json.dumps({"user": p.user_id, "project": pid, "filename": m.get("filename"),
+                                                 **{k: st[k] for k in ("default", "fields", "feats", "bbox")}}, ensure_ascii=False), encoding="utf-8")
+    shutil.rmtree(d, ignore_errors=True)
+    return {"id": vid, "n": st["n"], "field": st["default"], "fields": st["fields"], "imagery": st["imagery"], "bbox": st["bbox"], "filename": m.get("filename")}
+
+
+@router.post("/projects/{pid}/labeling/vector/{vid}/apply")
+async def vector_apply(pid: str, vid: str, body: dict, request: Request):
+    """올린 도형을 이 프로젝트 라벨로 — field = 클래스를 가르는 칸(없으면 하나의 클래스) · cut = 도형 자리를 그림으로 잘라 라벨 완료까지(기본 켬)"""
+    import json
+    import math as _m
+    from shapely import wkb
+    from shapely.geometry import Polygon
+    p = _lx(request)
+    f = _vec_dir(vid) / "stage.json"
+    if not f.exists():
+        raise ApiError("not_found", "올린 라벨 파일이 없습니다 — 다시 올려 주세요")
+    st = json.loads(f.read_text(encoding="utf-8"))
+    if st.get("user") != p.user_id or st.get("project") != pid:
+        raise ApiError("forbidden", "다른 사람이 올린 파일입니다")
+    field = body.get("field") or None
+    if field and field not in [x["name"] for x in st["fields"]]:
+        raise ApiError("bad_request", "클래스 칸이 맞지 않습니다")
+    fallback = Path(str(st.get("filename") or "도형")).stem[:30] or "도형"
+    cls_of = (lambda q: q["v"].get(field) or fallback) if field else (lambda q: fallback)
+    names_new = list(dict.fromkeys(cls_of(q) for q in st["feats"]))
+    async with db(realm="lx") as conn:
+        r = await _need_member(conn, p, pid)
+        s = await _ensure_set(conn, p, r)
+    old = _names(s["names"])
+    final = old + [n for n in names_new if n not in old]
+    if len(final) > MAX_CLASSES:
+        raise ApiError("bad_request", f"클래스가 {len(final)}개가 됩니다 — {MAX_CLASSES}개까지입니다. 클래스 칸을 바꾸거나 파일을 줄여 주세요")
+    if final != old:
+        await classes(pid, {"names": final}, request)
+    idx = {n: i for i, n in enumerate(final)}
+    n_shapes = skipped = 0
+    put = {}
+    async with db(realm="lx") as conn:
+        r = await _need_member(conn, p, pid)
+        s = await _ensure_set(conn, p, r)
+        imgs = {x["id"]: x for x in await _imagery_of(conn, r)}
+        pts = [Polygon(q["g"]).representative_point() for q in st["feats"]]
+        for iid in imgs:
+            fpw = await conn.fetchval("SELECT ST_AsBinary(footprint) FROM imagery WHERE id=$1", iid)
+            if not fpw:
+                continue
+            fp = wkb.loads(bytes(fpw))
+            mine = [{"id": "v" + secrets.token_hex(4), "c": idx[cls_of(q)], "k": "poly", "g": q["g"]} for q, pt in zip(st["feats"], pts) if pt.within(fp)]
+            if mine:
+                put[iid] = mine
+        for iid, mine in put.items():
+            old_m = await conn.fetchrow("SELECT shapes FROM label_maps WHERE sample_id=$1 AND imagery_id=$2", s["id"], iid)
+            have = _shapes_json(old_m["shapes"]) if old_m else []
+            room = max(0, MAP_SHAPES - len(have))
+            skipped += max(0, len(mine) - room)
+            mine = mine[:room]
+            geo = _clean_geo(have + mine, len(final))
+            async with conn.transaction():
+                await conn.execute("INSERT INTO label_maps(sample_id, imagery_id, shapes, n_objects, updated_by, updated_at) VALUES ($1,$2,$3,$4,$5,now()) "
+                                   "ON CONFLICT (sample_id, imagery_id) DO UPDATE SET shapes=EXCLUDED.shapes, n_objects=EXCLUDED.n_objects, "
+                                   "updated_by=EXCLUDED.updated_by, updated_at=now()", s["id"], iid, geo, len(geo), p.user_id)
+                await conn.execute("UPDATE train_samples SET updated_at=now() WHERE id=$1", s["id"])
+            put[iid] = mine
+            n_shapes += len(mine)
+        await audit(conn, p, "label.vector.apply", s["id"], None, {"file": st.get("filename"), "shapes": n_shapes, "classes": names_new})
+    made = 0
+    cut_note = None
+    if body.get("cut", True) and n_shapes:
+        for iid, mine in put.items():
+            gsd = max(GSD_MIN, imgs[iid]["gsd_m"] or 0.25)
+            dlat = 3 * PX * gsd / 111320.0                      # 그림 3칸 폭
+            done_boxes = []
+            boxes = sorted((Polygon(q["g"]).bounds for q in mine), key=lambda b: -((b[2] - b[0]) * (b[3] - b[1])))
+            tries = 0
+            for w, so, e, n in boxes:
+                if any(b[0] <= w and b[1] <= so and b[2] >= e and b[3] >= n for b in done_boxes):
+                    continue
+                if tries >= VEC_CUTS or made >= MAX_IMAGES:
+                    break
+                tries += 1
+                cx, cy = (w + e) / 2, (so + n) / 2
+                dlon = dlat / max(0.2, _m.cos(_m.radians(cy)))
+                win = [min(w - dlon * 0.3, cx - dlon / 2), min(so - dlat * 0.3, cy - dlat / 2), max(e + dlon * 0.3, cx + dlon / 2), max(n + dlat * 0.3, cy + dlat / 2)]
+                try:
+                    out = await map_area(pid, iid, {"bbox": win}, request)
+                    made += int(((out.get("added") or {}).get("value")) or 0)
+                    done_boxes.append(win)
+                except ApiError as ex:
+                    cut_note = ex.message
+    async with db(realm="lx") as conn:
+        r = await _need_member(conn, p, pid)
+        s = await _ensure_set(conn, p, r)
+        counts = await _counts(conn, s["id"])
+    shutil.rmtree(_vec_dir(vid), ignore_errors=True)
+    return {"set_id": s["id"], "classes": final, "counts": {"shapes": n_shapes, "skipped": skipped, "images": made, "imagery": len(put)}, "cut_note": cut_note,
+            "set": _pub_set(s, counts), "as_of": now_iso()}

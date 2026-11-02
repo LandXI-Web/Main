@@ -18,3 +18,6 @@
   .k-dr-h{padding:10px 12px 8px 20px}
   .k-dr-b{padding:4px 20px 24px}
 }
+
+/* ChatGEO 단추는 오른쪽 끝(11-02 PM) — 서랍 안 마지막 줄이 단추 밑에 깔리지 않게 아래를 비워 둔다(PC) */
+@media (min-width:641px){.k-drawer{padding-bottom:72px}}

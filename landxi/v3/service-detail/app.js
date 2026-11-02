@@ -34,10 +34,9 @@ const exOf = (set, deps = cur ? [cur] : []) => {
   return !(r && deps.some((d) => d?.region_profile === r));
 };
 /* '예시' 신뢰 기호(K6 기호와 같은 모양) — 호버 한 줄 = 어느 지역 결과인지 */
-const exSig = (name) => `<span class="t-sig k-sig" data-sig="ex" tabindex="0" role="note" aria-label="${esc(t('sig.ex'))}" data-why="${esc(['다른 지역 결과', name].filter(Boolean).join(' · '))}"></span>`;
 /* 기관 세션 = 자기 관할 밖 결과는 싣지 않는다(지역 이름 0 · 예시 표기도 없이 뺀다). LX·게스트는 그 카드 실결과 지역을 그대로 보인다 */
 const dropSet = (set, deps) => isTenant() && exOf(set, deps);
-const markEx = (el, name) => { el.insertAdjacentHTML('beforeend', exSig(name)); el.dataset.ex = '1'; return el; };
+const markEx = (el) => el;   // 11-02 PM '다른 지역 결과 · 예시' 표시는 없앴다(관할 밖 결과를 싣지 않는 규칙 dropSet 은 그대로)
 /* 큰 숫자 = AI 분석 결과(원칙 135 · XI맵과 같은 출처 = 요약) — 배포본 id → 봉투(없으면 null) */
 const NEED = new Map();
 const NEED_L = AI_LABEL;

@@ -140,6 +140,9 @@ async def lifespan(app: FastAPI):
 
     procs.on_primary(lambda: singles.append(asyncio.create_task(_cover_loop())))
     procs.on_primary(_singletons)
+    if os.environ.get("LX_TEST_GATEWAY") != "1":     # 재부팅으로 끊긴 전국 공공용지 작업을 이어서(부팅 뒤 한 번 · 하루 3번까지 · 11-02 PM)
+        from . import publand_resume as _plr
+        procs.on_primary(lambda: singles.append(asyncio.create_task(_plr.run_once())))
     procs.on_primary(lambda: singles.append(asyncio.create_task(_redis_expiry_loop())))
     side = procs.start()
     yield

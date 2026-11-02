@@ -229,6 +229,16 @@ async function drawPublish() {
   try { d = await loading(api(base + '/apply')); } catch (e) { page.replaceChildren(h('p.rl-empty', { text: e.message || '배포 신청 화면을 열 수 없습니다' })); return; }
   const st = { model: d.pick, scene: d.scenes?.[0]?.job || '', cover: d.cover?.current ? 'current' : '' };
   const s = d.status || { state: 'none' };
+  /* 배포 신청은 앞 단계가 끝난 뒤(11-02 PM) — 모델 등록 승인 · 추론 결과가 없으면 폼을 막고 남은 일을 알린다(검토 중인 신청이 있으면 그대로 보여 준다) */
+  const need = [];
+  if (!(d.models || []).some((x) => x.can_apply)) need.push({ text: '학습한 모델의 등록 승인', go: '학습 단계로', href: stageHref(PID, 'train') });
+  if (!(d.scenes || []).length) need.push({ text: '추론 결과 한 건 이상', go: '추론 단계로', href: stageHref(PID, 'infer') });
+  if (need.length && s.state !== 'pending') {
+    page.replaceChildren(card('배포 신청', '앞 단계가 끝나면 신청할 수 있습니다',
+      h('p.rl-lede', { text: '배포 신청에는 승인된 모델과 추론 결과가 필요합니다. 남은 일을 먼저 마쳐 주세요.' }),
+      h('ul.rl-jobs', {}, ...need.map((x) => h('li', {}, h('div.rl-j-l', {}, h('b', { text: x.text }), h('small', { text: '아직 끝나지 않았습니다' })), h('div.rl-j-r', {}, h('a.t-btn.t-btn--2', { href: x.href, text: x.go })))))));
+    return;
+  }
   const prev = d.prev;
   const ver = d.next_version;
   const canApply = d.can?.apply && s.state !== 'pending';
@@ -299,7 +309,22 @@ async function drawPublish() {
     } catch (e) { coverMsg.textContent = e.message; coverMsg.dataset.lv = 'warn'; }
     coverBtn.disabled = false; coverFile.value = '';
   });
-  row('대표 그림', h('div.rl-cover', {}, coverPic, h('div.rl-cover-r', {}, coverBtn, coverFile, coverMsg)),
+  /* 원본 그림(선택) — 새 대표 그림과 한 쌍(원본 ↔ AI 결과). 올리지 않으면 승인 때 옛 원본은 빠지고 한 장 그림이 된다(11-02 PM) */
+  const beforeFile = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true, 'aria-label': '원본 그림 파일' });
+  const beforeBtn = h('button.t-btn.t-btn--text', { type: 'button', text: '원본 그림도 올리기(선택)' });
+  beforeBtn.addEventListener('click', () => beforeFile.click());
+  beforeFile.addEventListener('change', async () => {
+    const f = beforeFile.files[0]; if (!f) return;
+    beforeBtn.disabled = true; const fd = new FormData(); fd.append('file', f);
+    try {
+      const r = await fetch(API.prefix + base + '/cover', { method: 'POST', body: fd, headers: { authorization: 'Bearer ' + (session.get()?.token || '') } });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(j?.error?.message || '올리지 못했습니다');
+      st.before = j.name; beforeBtn.textContent = '원본 그림을 올렸습니다 · 다시 올리기';
+    } catch (e) { coverMsg.textContent = e.message; coverMsg.dataset.lv = 'warn'; }
+    beforeBtn.disabled = false; beforeFile.value = '';
+  });
+  row('대표 그림', h('div.rl-cover', {}, coverPic, h('div.rl-cover-r', {}, coverBtn, coverFile, beforeBtn, beforeFile, coverMsg)),
     h('small', { text: d.cover?.current ? '지금 카드 그림이 그대로 쓰입니다 · 바꾸려면 새로 올립니다' : '꼭 올려야 신청할 수 있습니다 · 승인되면 분석 서비스 카드 그림이 됩니다(PNG · JPG · WebP)' }));
   row('쓸 수 있는 영상', kindBox, h('small', { text: '모델이 학습한 영상 종류 · 분석 서비스의 영상별 거르기에 쓰입니다' }));
   row('모델', mSel);
@@ -317,7 +342,7 @@ async function drawPublish() {
     if (!st.cover) { msg.textContent = '대표 그림을 올려 주세요 — 승인되면 분석 서비스 카드 그림이 됩니다'; coverBtn.focus(); return; }
     go.disabled = true;
     try {
-      const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined, cover: st.cover,
+      const r = await api(base + '/apply', { method: 'POST', body: { model_id: st.model, memo: memo.value.trim(), scene_job: st.scene || undefined, cover: st.cover, cover_before: st.before || undefined,
         groups: [...grpBox.querySelectorAll('input:checked')].map((x) => x.value), desc: desc.value.trim(), new_group: newGrp.value.trim() || undefined,
         imagery_kinds: [...kindBox.querySelectorAll('input:checked')].map((x) => x.value),
         ...(d.first ? { name: svcName.value.trim(), ledger_kind: ledger.value || undefined } : {}) } });

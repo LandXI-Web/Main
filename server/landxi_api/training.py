@@ -361,12 +361,19 @@ async def up_start(body: dict, request: Request):
     p = _staff(request)
     task = str(body.get("task_name") or "").strip()[:40]
     name = str(body.get("filename") or "")
+    is_vec = body.get("kind") == "vector"                     # 벡터 라벨(gpkg · shp(zip) · geojson · 11-02 PM) — 프로젝트 학습데이터 구축에서
     is_model = body.get("kind") == "model"                    # 모델 파일(.pt) 올리기(11-01 PM) — 같은 나눠 올리기 · 끝나면 서버가 파일에서 계열 · 크기 · 형태 · 클래스를 읽는다
     try:
         size = int(body.get("size") or 0)
     except (TypeError, ValueError):
         size = 0
-    if is_model:
+    if is_vec:
+        if not str(body.get("project_id") or ""):
+            raise ApiError("bad_request", "프로젝트 안에서 올려 주세요")
+        if not name.lower().endswith((".gpkg", ".geojson", ".json", ".zip")):
+            raise ApiError("bad_request", "gpkg · shp(zip) · geojson 파일을 올려 주세요")
+        task = "vector"
+    elif is_model:
         if not name.lower().endswith(".pt"):
             raise ApiError("bad_request", "모델 파일(.pt)을 올려 주세요")
         task = "model"
@@ -393,7 +400,7 @@ async def up_start(body: dict, request: Request):
             return _up_view(uid, d, m)                       # 이어 올리기 — 받은 자리부터
         shutil.rmtree(d, ignore_errors=True)
     d.mkdir(parents=True, exist_ok=True)
-    m = {"user": p.user_id, "kind": "model" if is_model else "zip", "filename": name[:120], "size": size, "task": task, "region": body.get("region") or None,
+    m = {"user": p.user_id, "kind": "vector" if is_vec else "model" if is_model else "zip", "filename": name[:120], "size": size, "task": task, "region": body.get("region") or None,
          "org": (str(body.get("org") or "").strip()[:60] or None), "project": (str(body.get("project_id") or "") or None), "at": now_iso()}
     meta_f.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
     (d / "part").write_bytes(b"")
@@ -438,6 +445,9 @@ async def up_finish(uid: str, request: Request):
         raise ApiError("conflict", "아직 다 올라가지 않았습니다", {"bytes": have, "size": int(m["size"])}, 409)
     if m.get("kind") == "model":
         return await _finish_model(p, d, m)
+    if m.get("kind") == "vector":
+        from .labeling import vector_stage
+        return await vector_stage(p, d, m)
     sid = "smp_" + secrets.token_hex(5)
     root = ROOT / sid
     (root / "data").mkdir(parents=True, exist_ok=True)

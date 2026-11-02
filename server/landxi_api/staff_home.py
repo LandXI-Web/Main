@@ -279,13 +279,16 @@ async def my_job(p: Principal, job: str) -> dict | None:
 
 
 @router.get("/me/analyses")
-async def my_analyses(request: Request, job: str | None = None):
+async def my_analyses(request: Request, job: str | None = None, project: str | None = None):
     """job = 이 결과를 열어 달라(추론 '결과 보기' · 배포 신청 결과 장면) — LX 관리자는 남의 결과도 그 한 건을 연다(배포 신청 검토)."""
     p = _lx(request)
     from .regions import region_of
     async with db(realm="lx") as conn:
         rows = await conn.fetch(MY_ANALYSES_SQL, p.user_id, job or "", bool(job and p.is_admin))
         run = await conn.fetch(MY_RUNNING_SQL, p.user_id)
+    if project:                                       # 프로젝트 '결과 확인'(11-02 PM) — 그 프로젝트에서 낸 결과만(다른 사람 · 다른 프로젝트 결과가 섞이지 않게)
+        rows = [r for r in rows if _jload(r["options"]).get("project_id") == project]
+        run = [r for r in run if _jload(r["options"]).get("project_id") == project]
     groups: dict[str, dict] = {}
     for r in rows:
         key, gname, proj, item = _item(r, p)

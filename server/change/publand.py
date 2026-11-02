@@ -589,19 +589,52 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
         log("이어서 - 끝난 블록", len(skip))
     t_pw = [0.0]
 
-    def _power():
-        """두 장 전력 · 온도 기록(장마다 30초 평균 판정은 PowerThrottle · 여기는 1분마다 기록 · 첫 칸만)."""
-        if pk != 0 or time.time() - t_pw[0] < 60:
-            return
-        t_pw[0] = time.time()
+    # 숨(heartbeat) — 공용 숨 실은 작업 시작 뒤 30분만 돈다. 몇 시간 도는 큰 작업 · 합치기(소유 조회 · 썸네일)가 30초 숨 감시에 걸리지 않게 끝까지 따로 뛴다
+    stop_hb = [False]
+
+    def _hb_loop():
+        sid = f"change-{pk}" if pn > 1 else "change"
+        while not stop_hb[0]:
+            try:
+                st_ = _r.hget(nkey, "state")
+                st_ = st_.decode() if isinstance(st_, bytes) else st_
+                if st_ not in ("queued", "running"):
+                    return
+                _r.hset(nkey, "chg_hb", time.time())
+                _bus.inflight_touch("a6000", run_id, sid)
+            except Exception:  # noqa: BLE001
+                pass
+            time.sleep(5)
+    if _r is not None:
+        import threading as _th
+        _th.Thread(target=_hb_loop, name=f"pl-hb-{run_id}-{pk}", daemon=True).start()
+    stop_pw = [False]
+
+    def _pw_loop():
+        """1분마다 두 장 전력 · 사용률 · 온도 + CPU 사용률 · 메모리 기록(블록이 길어도 빠지지 않게 따로 돈다 · 전원 끊김 원인 확인용 · 줄마다 디스크에)."""
+        import subprocess
         try:
-            import subprocess
-            o = subprocess.run(["nvidia-smi", "--query-gpu=index,power.draw,utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"],
-                               capture_output=True, text=True, timeout=10).stdout.strip().replace("\n", " | ")
-            with open(out / "power.log", "a", encoding="utf-8") as fp:
-                fp.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {o}\n")
+            import psutil
         except Exception:  # noqa: BLE001
-            pass
+            psutil = None
+        while not stop_pw[0]:
+            try:
+                o = subprocess.run(["nvidia-smi", "--query-gpu=index,power.draw,utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"],
+                                   capture_output=True, text=True, timeout=10).stdout.strip().replace("\n", " | ")
+                cp = f" | cpu {psutil.cpu_percent(interval=1):.0f}% mem {psutil.virtual_memory().percent:.0f}%" if psutil else ""
+                with open(out / "power.log", "a", encoding="utf-8") as fp:
+                    fp.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {o}{cp}\n")
+                    fp.flush()
+                    os.fsync(fp.fileno())
+            except Exception:  # noqa: BLE001
+                pass
+            for _ in range(58):
+                if stop_pw[0]:
+                    return
+                time.sleep(1)
+    if pk == 0:
+        import threading
+        threading.Thread(target=_pw_loop, name=f"pl-power-{run_id}", daemon=True).start()
 
     def _ser(x):
         return {"type": x["type"], "p": x["p"], "pa": x["pa"], "cell": x["cell"], "sq": list(x["sq"].bounds),
@@ -627,7 +660,6 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                     continue                                 # 다른 장비가 이 블록을 맡음
             except Exception:  # noqa: BLE001
                 pass
-        _power()
         n_before = len(pieces)
         ids = by_blk[k]
         xs, ys = [cs[i][0] for i in ids], [cs[i][1] for i in ids]
@@ -738,11 +770,13 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                     pas = (type_prob(probs_a[i], "불법 형질변경", c) + type_prob(probs_a[i], "무단적치 쓰레기", c)) if i in probs_a else None
                     pieces.append({"type": "불법 형질변경", "p": round(pt, 3), "pa": pas, "cell": i, "sq": fpg.envelope.union(sq), "cov": fpg, "fp": True})
         _blk_done(k, n_before)
+    stop_pw[0] = True
     ck.close()
     (pdir / f"p{pk}.done").write_text(str(len(pieces)), encoding="utf-8")
     # 나눠 돈 칸 — 모두 끝났는지 보고, 마지막으로 끝난 칸 하나만 합친다(나머지는 빈 결과로 끝)
     if pn > 1:
         if not all((pdir / f"p{j}.done").exists() for j in range(pn)):
+            stop_hb[0] = True
             return {"_final": False, "part": [pk, pn], "pieces": len(pieces), "seconds": round(time.perf_counter() - t0, 1)}
         t_w = time.time()
         while time.time() - t_w < 1800:
@@ -758,6 +792,7 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
             fd = os.open(str(pdir / "merge.lock"), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.close(fd)
         except FileExistsError:
+            stop_hb[0] = True
             return {"_final": False, "part": [pk, pn], "pieces": len(pieces), "seconds": round(time.perf_counter() - t0, 1)}
     # 합치기 — 모든 칸 · 이어 받은 블록의 조각(체크포인트가 한 출처)
     from shapely import wkb as _wkb
@@ -938,4 +973,5 @@ def compute(*, run_id: str, rng5179, line5179, year_a: int, year_b: int, zoom: i
                   "gsd_m": 0.255 if zoom == 18 else 0.51, "range_km2": round(rng5179.area / 1e6, 3), "tiles": tiles, "word": WORD,
                   "seconds": round(time.perf_counter() - t0, 1)})
     (out / "stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1), encoding="utf-8")
+    stop_hb[0] = True
     return stats

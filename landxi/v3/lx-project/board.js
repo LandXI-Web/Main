@@ -1,19 +1,18 @@
 /* board.js — 프로젝트 진행 현황 흐름도 한 부품(직원-6 4차 · 직원-7 · 10-09 "한 번에 정리").
-   데이터 올리기 → 학습데이터 구축 → 학습 → 추론 → 결과 확인 → 배포 신청 — 여섯 단계(서버 단계 6 그대로 · 프로젝트 안 단계 막대와 같은 이름 · 10-10 질문 10 확인).
+   학습데이터 구축 → 학습 → 추론 → 결과 확인 → 배포 신청 — 다섯 단계(서버 단계 5 그대로 · 프로젝트 안 단계 막대와 같은 이름 · 10-10 질문 10 확인).
    대시보드 맨 위 칸(칩 둘 + '외 n개')과 메뉴 '프로젝트' 목록(?stage= 단계 고르기)이 같은 부품을 쓴다(원칙 99 — 메뉴와 한 줄기).
    값은 모두 서버(GET /projects — stage · steps · blocked · last_at · next). 단계에 들어온 날짜는 서버에 없어 '마지막 활동'으로 보인다(지어내지 않는다). */
 import { h } from '../kit/util.js';
 import { HOME, ensureCss } from './context.js';
 
 export const GROUPS = [
-  { key: 'ingest', label: '데이터 올리기', keys: ['ingest'] },
   { key: 'label', label: '학습데이터 구축', keys: ['label'] },
   { key: 'train', label: '학습', keys: ['train'] },
   { key: 'infer', label: '추론', keys: ['infer'] },
   { key: 'review', label: '결과 확인', keys: ['review'] },
   { key: 'deploy', label: '배포 신청', keys: ['publish'] },
 ];
-const KEYS = ['ingest', 'label', 'train', 'infer', 'review', 'publish'];
+const KEYS = ['label', 'train', 'infer', 'review', 'publish'];
 export const N = GROUPS.length;
 
 let cssOn = false;
@@ -25,23 +24,23 @@ function sheet() {
 }
 sheet();
 
-/** 프로젝트의 단계(여섯 단계 가운데 몇 번째) — 서버 stage.key 로 */
+/** 프로젝트의 단계(다섯 단계 가운데 몇 번째) — 서버 stage.key 로 */
 export const groupOf = (p) => Math.max(0, GROUPS.findIndex((g) => g.keys.includes(p?.stage?.key)));
-/** 여섯 칸 진행(done · now · wait · skip) — 서버 steps(6칸) 그대로(한 출처 · GPT2-3). 셈 = 서버 progress(끝남 + 건너뜀) */
+/** 다섯 칸 진행(done · now · wait · skip) — 서버 steps(5칸) 그대로(한 출처 · GPT2-3). 셈 = 서버 progress(끝남 + 건너뜀) */
 const SEG_WORD = { done: '완료', now: '지금 단계', wait: '대기', skip: '건너뜀' };
 export function seg4(p) {
   return KEYS.map((k, i) => (SEG_WORD[p?.steps?.[i]] ? p.steps[i] : 'wait'));
 }
 export const doneN = (p) => (p?.progress?.n ?? seg4(p).filter((x) => x === 'done' || x === 'skip').length);
-/** 진행 n/6 옆 작은 말 — 건너뜀 n(서버 steps 그대로 · GPT5-8). '공개 뒤 남은 일'은 원칙 203 으로 뺐다. 없으면 '' */
+/** 진행 n/5 옆 작은 말 — 건너뜀 n(서버 steps 그대로 · GPT5-8). '공개 뒤 남은 일'은 원칙 203 으로 뺐다. 없으면 '' */
 export function progNote(p) {
   const skip = seg4(p).filter((x) => x === 'skip').length;
   return skip ? `건너뜀 ${skip}` : '';
 }
-/** 여섯 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양 */
+/** 다섯 칸 막대(요소) — 프로젝트 목록과 같은 .lxp-seg 모양 */
 export function seg4El(p) {
   const s = seg4(p);
-  return h('span.lxp-seg.sb-seg4', { role: 'img', 'aria-label': `여섯 단계 가운데 ${doneN(p)}단계 끝남` },
+  return h('span.lxp-seg.sb-seg4', { role: 'img', 'aria-label': `다섯 단계 가운데 ${doneN(p)}단계 끝남` },
     ...s.map((x, i) => h('i', { dataset: { st: x }, title: `${GROUPS[i].label} · ${SEG_WORD[x]}` })));
 }
 /** 남은 일 — 서버 blocked 첫 줄. kind: warn(내가 손댈 것) · wait(승인 대기) · null */

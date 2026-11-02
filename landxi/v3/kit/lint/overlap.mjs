@@ -75,6 +75,8 @@ export const MEASURE = `(() => {
     if (ga && ga === gb && !ga.dataset.dock) continue;             // 같은 대화 묶음(단추 · 꼬리표 · 창 — 창이 열리면 단추 자리를 덮는 한 부품)
     const ix = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), iy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
     if (!(ix > 4 && iy > 4)) continue;
+    { const fa = a.el.matches('.k-chat-fab,.k-chat-tag') ? a : b.el.matches('.k-chat-fab,.k-chat-tag') ? b : null, dr = fa === a ? b : a;   // ChatGEO 단추가 서랍 아래 빈자리(서랍이 단추 몫으로 비워 둔 곳)에 앉으면 겹침이 아니다(11-02 PM) — 서랍의 글 · 누르는 것을 가릴 때만
+      if (fa && dr.el.matches('.k-drawer') && !hides(fa, dr.el)) continue; }
     { const sa = surface(a.el), sb = surface(b.el);   // 면 없는 틀은 아무것도 가리지 않는다 — 면 있는 쪽이 다른 쪽의 글 · 누르는 것을 가릴 때만 겹침
       if (!(sa && sb) && !(sa && hides(a, b.el)) && !(sb && hides(b, a.el))) continue; }
     pairs.push({ kind: 'pair', a: a.name, b: b.name, w: ix, h: iy, area: ix * iy, ofSmall: Math.round(100 * ix * iy / Math.min(a.w * a.h, b.w * b.h)) });

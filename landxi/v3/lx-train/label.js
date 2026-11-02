@@ -464,8 +464,8 @@ export async function labelWork({ host, project, toggle }) {
   /* ── 그림 더하기 ── */
   function addForm(inline = false) {
     if (!L.imagery.length) {
-      return h('div.lb-addf', {}, h('p.lb-note', { text: '이 프로젝트 대상 지역에 영상이 없습니다 · 데이터 올리기에서 영상을 등록합니다' }),
-        h('a.t-btn.t-btn--2', { href: stageHref(P, 'ingest'), text: '데이터 올리기' }));
+      return h('div.lb-addf', {}, h('p.lb-note', { text: '이 프로젝트 대상 지역에 영상이 없습니다 · 영상 추가에서 영상을 올립니다' }),
+        h('a.t-btn.t-btn--2', { href: stageHref(P, 'ingest'), text: '영상 추가' }));
     }
     /* 처음 고른 영상 = 항공 해상도(0.05–0.5 m) 중 가장 최근 — 2 m 위성 · 1 cm 드론보다 라벨에 알맞다(목록 순서는 서버 그대로) */
     const fit = L.imagery.find((x) => x.gsd_m >= 0.05 && x.gsd_m <= 0.5) || L.imagery[0];

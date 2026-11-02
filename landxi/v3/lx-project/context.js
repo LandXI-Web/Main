@@ -13,7 +13,7 @@ import { TASKS } from '../lx-console/matrix.js';   // 업무 → 대조 규칙(�
 
 export const PID = new URLSearchParams(location.search).get('project') || null;
 export const STAGES = [
-  { key: 'ingest', label: '데이터 올리기' }, { key: 'label', label: '학습데이터 구축' }, { key: 'train', label: '학습' },
+  { key: 'label', label: '학습데이터 구축' }, { key: 'train', label: '학습' },
   { key: 'infer', label: '추론' }, { key: 'review', label: '결과 확인' }, { key: 'publish', label: '배포 신청' },
 ];
 const at = (p) => new URL(p, import.meta.url).pathname;   // 이 파일 기준 상대 주소(GitHub Pages /Main/ 아래에서도)
@@ -31,7 +31,7 @@ export function stageHref(pr, key, target = {}) {
   const dom = regions.find((g) => !g.abroad)?.code || null;
   const t = target || {};
   switch (key) {
-    case 'ingest': return at('../lx-ingest/') + qs({ project: id, region: t.region || dom });
+    case 'ingest': return at('../lx-ingest/') + qs({ project: id, region: t.region || dom, add: 1 });   // 영상 추가(11-02 PM — 단계에서 빠진 보조 단추 · 영상 올리기 · 벡터 등록 화면 그대로)
     case 'label': return at('../lx-train/') + qs({ project: id, stage: 'label', flow: 1 });
     case 'train': return at('../lx-train/') + qs({ project: id, stage: 'train', flow: 1, sample: t.sample, model: t.model });
     // 결과 확인(원칙 198) = 지도에서 결과 보기 — 지도 서비스가 이번 회차 추론 결과(job)를 연다(그 자리 고치기도 거기서). 표본 검증 화면(lx-review)은 1차에서 쓰지 않음

@@ -235,7 +235,33 @@ if (-not (Test-Path $junction)) { New-Item -ItemType Junction $junction -Target 
 # 재부팅 직후 로그온 작업(LandXI-Server)은 Docker Desktop 보다 먼저 돌 수 있다 — Docker 엔진이 답할 때까지 최대 5분 기다린다(6-3).
 # 컨테이너는 restart: unless-stopped 라 엔진이 뜨면 저절로 올라온다(compose up 은 빠진 것만).
 if (-not ((Listening 6380) -and (Listening 5433))) {
-  for ($i = 0; $i -lt 60; $i++) { docker info --format "{{.ServerVersion}}" 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { break }; if ($i -eq 0) { Step "[docker] 엔진 기다림(최대 5분)" }; Start-Sleep -Seconds 5 }
+  # 11-02 셧다운 뒤 자동 복구: ① 데이터 위치가 E:\DockerData 인지(기본값으로 돌아가면 빈 Docker 로 켜진다) ② 켜기 ③ 시스템 디스크 접근 거부면 그 디스크만 이름 바꿔 다시 켜기(데이터 디스크 disk\docker_data.vhdx 는 건드리지 않음)
+  $dset = Join-Path $env:APPDATA "Docker\settings-store.json"
+  if (Test-Path $dset) {
+    $dtxt = [IO.File]::ReadAllText($dset)
+    if (-not $dtxt.Contains('DockerData')) {
+      docker desktop stop 2>$null | Out-Null
+      [IO.File]::WriteAllText($dset, ($dtxt -replace '"CustomWslDistroDir":\s*"[^"]*"', ('"CustomWslDistroDir": "E:' + [char]92 + [char]92 + 'DockerData"')))
+      Step "[docker] 데이터 위치를 E:\DockerData 로 되돌림"
+    }
+  }
+  docker desktop start 2>$null | Out-Null   # 재부팅 뒤 Docker Desktop 이 저절로 안 뜰 때가 있다 — 켜기 명령을 먼저 보낸다
+  for ($i = 0; $i -lt 60; $i++) {
+    docker info --format "{{.ServerVersion}}" 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { break }
+    if ($i -eq 0) { Step "[docker] 엔진 기다림(최대 5분)" }
+    if ($i -eq 12) {
+      $dlog = Join-Path $env:LOCALAPPDATA "Docker\log\host\com.docker.backend.exe.log"
+      if ((Test-Path $dlog) -and (Get-Content $dlog -Tail 300 -ErrorAction SilentlyContinue | Select-String -SimpleMatch 'E_ACCESSDENIED' -Quiet)) {
+        Step "[docker] 시스템 디스크 접근 거부 — 이름 바꿔 다시 켬"
+        docker desktop stop 2>$null | Out-Null
+        wsl --shutdown 2>$null
+        Start-Sleep -Seconds 4
+        if (Test-Path "E:\DockerData\main") { Rename-Item "E:\DockerData\main" ("main.bad-" + (Get-Date -Format "MMdd-HHmm")) }
+        docker desktop start 2>$null | Out-Null
+      }
+    }
+    Start-Sleep -Seconds 5
+  }
 }
 if (-not ((Listening 6380) -and (Listening 5433))) {
   docker compose -p landxi -f (Join-Path $here "docker-compose.phase0.yml") up -d redis postgis 2>&1 | Out-Host

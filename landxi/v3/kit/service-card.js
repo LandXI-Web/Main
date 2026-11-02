@@ -20,6 +20,7 @@
 import { h, esc, isEnvelope, api, hasRoute, API } from './util.js';
 import { numHtml } from './bignum.js';
 import { sig } from './sig.js';
+import { swipePic } from './swipe.js';
 import { t, df } from './i18n.js';
 
 /* 부품 스타일 — 이 모듈을 쓰는 화면에 한 번만(화면이 <link> 로 먼저 붙였으면 건너뛴다) */
@@ -117,12 +118,13 @@ function actions(c, kind, o) {
 }
 /* gov '보고서' 주소는 화면이 more(c) 로 준다(그 기관의 보고서 화면) — c.report = 필지 대조가 있는 서비스 */
 
-/** ① 결과 장면 · ② 상태 배지 · (manage) 관리 신호 · 다른 지역 결과 표기 */
+/** ① 결과 장면 · ② 상태 배지 · (manage) 관리 신호 */
 function cropEl(c, kind, o = {}) {
   const sc = c.scene && c.scene.src ? c.scene : null;
   const fig = h('div.k-sc-crop', { class: sc ? '' : 'is-blank' });
-  if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async',   // 올린 장면 = 게이트웨이 파일
-    onerror: (e) => { e.target.remove(); fig.classList.add('is-blank'); fig.prepend(h('span.k-sc-blank', { text: '결과 장면 없음' })); } }));   // 못 받으면 회색 빈 그림 대신 같은 틀의 '없음'(GPT2-5)
+  const gone = (e) => { e.target.remove(); fig.classList.add('is-blank'); fig.prepend(h('span.k-sc-blank', { text: '결과 장면 없음' })); };   // 못 받으면 회색 빈 그림 대신 같은 틀의 '없음'(GPT2-5)
+  if (sc && sc.swipe?.before) fig.append(swipePic(sc, gone));   // 카드 대표 그림 한 출처(11-02 PM): 원본 ↔ AI 결과 짝이 있으면 분석 서비스 갤러리 · 자세히와 같은 그림으로(관리자 · 기관 카드 모두)
+  else if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async', onerror: gone }));   // 올린 장면 = 게이트웨이 파일
   else if (kind === 'gov' && !o.row) {   // 기관 카드 — 시작 시기만(시안 기관-3 ⓐ · 그림 0): 열린 서비스 = 첫 결과 전 · 사업 전 = 'YYYY년 시작'
     const off = c.open === false;
     fig.append(h('span.k-sc-blank', {}, h('b', { text: off ? (c.year ? `${c.year}년 시작` : '사업 시작 전') : '첫 결과 전' }),
@@ -136,7 +138,6 @@ function cropEl(c, kind, o = {}) {
     const sigs = [c.publish?.pending ? '공개 승인 요청 중' : '', rp ? `기관 검토 요청 ${nf(rp)}${c.reports_sum ? `(${c.reports_sum})` : ''}` : ''].filter(Boolean);   // 대시보드와 같은 이름 · 같은 값(여러 곳이면 'n곳 합')
     if (sigs.length) fig.append(h('span.k-sc-flag', { text: sigs.join(' · ') }));
   }
-  if (sc && sc.ex) fig.append(h('span.k-sc-ex', { text: '다른 지역 결과 · 예시' }));
   return fig;
 }
 

@@ -84,7 +84,7 @@ def alert(found: list[dict]) -> None:
                 c.execute("INSERT INTO ops_alerts(id, rule, level, node, gpu, value, opened_at) VALUES (%s,'open_files_found','fault','gate',NULL,%s,now()) "
                           "ON CONFLICT (id) DO UPDATE SET opened_at = CASE WHEN ops_alerts.closed_at IS NULL THEN ops_alerts.opened_at ELSE now() END, "
                           "closed_at = NULL, value = EXCLUDED.value",
-                          (aid, json.dumps({"value": len(found), "unit": "count", "basis": "measured", "source": "tools/check/open_files.py"})))
+                          (aid, json.dumps({"value": len(found), "unit": "count", "basis": "measured", "as_of": dt.datetime.now().astimezone().isoformat(timespec="seconds"), "source": "tools/check/open_files.py"})))
             else:
                 c.execute("UPDATE ops_alerts SET closed_at = now() WHERE id = %s AND closed_at IS NULL", (aid,))
             c.commit()
@@ -112,7 +112,7 @@ def main() -> int:
     for p in STATIC_OPEN:
         code = get(base, p)
         rows.append({"path": p, "want": "열림", "code": code, "ok": code in (200, 206)})
-    found = [r for r in rows if not r["ok"] and r["want"] == "닫힘"]
+    found = [r for r in rows if not r["ok"] and r["want"] == "닫힘" and r["code"] not in (0, 502, 503, 504)]   # 게이트웨이가 아직 안 뜬 응답은 '받아짐'이 아니다(11-02 재부팅 직후 502 25곳 헛경보)
     shut = [r for r in rows if not r["ok"] and r["want"] == "열림"]
     out = {"at": dt.datetime.now().astimezone().isoformat(timespec="seconds"), "base": base, "checked": len(rows),
            "open_but_should_close": found, "closed_but_should_open": shut, "rows": rows}

@@ -1,4 +1,4 @@
-/* lx-ingest — 프로젝트 '데이터 올리기' 단계. "이 지역에 영상과 행정 자료가 갖춰졌는가?" (프로젝트 안에서만 — 10-13 데이터하우스 없앰)
+/* lx-ingest — 프로젝트 '영상 추가'(예전 1단계 '데이터 올리기' · 11-02 PM 단계에서 뺌). "이 지역에 영상과 행정 자료가 갖춰졌는가?" (프로젝트 안에서만 — 10-13 데이터하우스 없앰)
    명세 LANDXI-FINAL-SPEC §2.4 의 판 · 서랍 배치 그대로. 부품은 키트만 조합한다.
    확인 18차 M-3 ⓐ(10-01): 필지 결합은 서버가 분석 뒤 자동(전역 AI 분석이 끝나면 실태조사로 저절로 잇는다 · 서버 deploys.parcel_tick) —
    이 화면에서 지적 · 대장 · 결합 단계, '결합 실행' 버튼, '필지 결합률' 큰 숫자, 결합률 채색을 뺐다. 서랍에는 영상 · 행정 자료 · 필지 단위 결과(서버 실태조사 상태) 세 칸.
@@ -16,6 +16,9 @@ const qs = new URLSearchParams(location.search);
 /* ── 프로젝트 안에서만(10-13 데이터-개념 ⓐ · 원칙 232) — 데이터하우스를 없앴다. 프로젝트 밖 옛 주소(데이터하우스 · ?tab= · ?region=)로 오면 프로젝트 목록으로.
    왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js) — '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js). */
 if (!PID) { location.replace(new URL('../lx-project/', import.meta.url).pathname); await new Promise(() => {}); }
+/* 11-02 PM — '데이터 올리기'는 프로젝트 단계에서 빠졌다(5단계). 이 화면은 '영상 추가'(?add=1)로만 열고, 예전 주소로 들어오면 프로젝트 쪽으로 보낸다 */
+if (!qs.get('add')) { location.replace(new URL('../lx-project/', import.meta.url).pathname + '?project=' + encodeURIComponent(PID)); await new Promise(() => {}); }
+let autoAdd = false;
 const PR = projectRail('ingest');
 const S = K.shell({ who, home: 'lx-ingest', rail: PR || { ...staffMenu('projects'), sub: true } });
 if (PR) attachProject(S, PR, 'ingest');
@@ -97,6 +100,7 @@ function openDrawer(region) {
   dr.el.querySelector(':scope > .lxi-acts')?.remove();
   const bVec = K.h('button.t-btn.t-btn--2', { type: 'button', text: '벡터 등록', onclick: () => vectorSheet({ host: stageEl, under: dr, project: PID }) });   // 구역선 · 필지 목록 → 대상지(10-22 CHANGE-DEMO P0-3)
   dr.el.append(K.h('div.lxi-acts', {}, bImg, bVec, bSample));
+  if (qs.get('add') && !autoAdd) { autoAdd = true; setTimeout(() => bImg.click(), 500); }   // 영상 추가로 들어오면 영상 올리기 시트를 바로 연다
   UI = { img: img.querySelector('.lxi-img'), led: led.querySelector('.lxi-led'), parcel: parcel.querySelector('.lxi-pr') };
   return UI;
 }

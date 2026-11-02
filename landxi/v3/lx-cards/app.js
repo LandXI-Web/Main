@@ -144,7 +144,7 @@ async function edit(cid) {
       if (twoOpen) {
         const fa = h('input.t-input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': '원본' });
         const fb = h('input.t-input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': 'AI 결과' });
-        const reg = h('select.t-input', { 'aria-label': '지역' }, h('option', { value: '', text: '다른 지역 결과' }),
+        const reg = h('select.t-input', { 'aria-label': '지역' }, h('option', { value: '', text: '지역 고르지 않음' }),
           ...(cur.regions || c.regions || []).filter((r) => r.sgg).map((r) => h('option', { value: r.sgg, text: r.name })));
         const st = h('p.lc-h', { role: 'status' });
         const go = h('button.t-btn.t-btn--2', { type: 'button', text: '올리기', onclick: async () => {

@@ -371,7 +371,7 @@ async function register(b) {
         : { line: r.again ? '이미 올린 영상입니다 — 그 영상을 골랐습니다' : `${r.imagery?.gsd_word || ''} 영상을 올렸습니다`.trim(), fit: r.analysis?.why || r.imagery?.fit_text || '', id: r.id,
           href: `/landxi/v3/lx-analyze/?${new URLSearchParams({ card: p.card, imagery: r.id, ...(r.region?.sgg_cd ? { region: r.region.sgg_cd } : {}) })}`, go: '이 영상으로 분석하기' })
       : p.from === 'ingest'
-        ? { line: `${where ? where + ' ' : ''}영상 ${(r.items || []).length}장을 등록했습니다`, href: p.href || '/landxi/v3/lx-ingest/', go: '데이터 올리기에서 보기', n: (r.items || []).length }
+        ? { line: `${where ? where + ' ' : ''}영상 ${(r.items || []).length}장을 등록했습니다`, href: p.href || '/landxi/v3/lx-ingest/', go: '영상 추가에서 보기', n: (r.items || []).length }
         : { line: `영상 ${(r.items || []).length}장을 공유 데이터에 등록했습니다`, href: '/landxi/v3/ops-infra/#/shared', go: '공유 데이터 보기', n: (r.items || []).length };
     for (const f of [...F.values()]) if (f.batch === b.id) F.delete(f.key);
     b.files = undefined;

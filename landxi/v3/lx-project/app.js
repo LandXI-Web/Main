@@ -3,7 +3,7 @@
    ?project= 없음 = 목록·관리: 내가 만든 · 참여한 · 보관(끝난 것) · 전체 · 새 프로젝트(사용자 10-01 "기존 내가 만든 프로젝트는 어디에서 관리하는지?")
                  = 프로젝트 진행 현황 = 분석 서비스 카드와 같은 카드(원칙 219 · 10-12) · 단계 칩(?stage=) · 찾기 · 한 페이지 2 · 4 · 6 · 8장
                  새 프로젝트 = 한 창(원칙 220 · new.js) → 만들면 바로 그 프로젝트 '학습데이터 구축'
-   ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 기록 · 보관
+   ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 5(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 기록 · 보관
               구현 5차(확인 17차 — 배치는 그대로 두고 칸 안만): 사람의 '넘기기'(P-5 ⓐ) · 재학습 근거 띠 + 사유 창(P-3 ⓐ) · 기록 · 메모 · 파일 최근 3줄 + 서랍(P-4 ⓐ) — sheets.js
    맨 위 알림 한 줄(프로젝트장을 넘겨받음 — context.js projectNotices · 대시보드 '내 프로젝트'와 같은 부품)
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트 · 가운데 창 · 서랍)만 조합. */
@@ -206,9 +206,10 @@ function draw(pr) {
   left.append(nowCard);
   /* 결과 확인(원칙 203 · 10-12) — '확인했음' 기록 없이 지도에서 결과를 보는 길만. 끝난 추론이 있으면 '지금 할 일' 옆에 작은 길 하나 */
   const rvS = pr.stages?.find((s) => s.key === 'review');
+  if (!archived && pr.can?.work !== false) goRow.append(h('a.t-btn.t-btn--text.lxp-go', { href: stageHref(pr, 'ingest', {}), text: '영상 추가' }));   // 5단계에서 빠진 영상 올리기 · 벡터 등록 길(11-02 PM)
   if (!archived && rvS?.target?.job) goRow.append(h('a.t-btn.t-btn--2.lxp-go', { href: stageHref(pr, 'review', rvS.target), text: '지도에서 결과 보기' }));
 
-  /* 단계 6 — 마스트 아래 한 줄(context.js · 단계 화면들과 같은 막대 · 완료 조건은 서버 판정) */
+  /* 단계 5 — 마스트 아래 한 줄(context.js · 단계 화면들과 같은 막대 · 완료 조건은 서버 판정) */
 
   /* 사람 — 프로젝트장(넘기기 = 프로젝트장 본인 · LX 관리자 — P-5 ⓐ) · 구성원(더하기 · 빼기 = 프로젝트장) */
   const ppl = h('section.t-card.lxp-people', { 'aria-label': '사람' }, h('h2.lxp-h', { text: '사람' }));

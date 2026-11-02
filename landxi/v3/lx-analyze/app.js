@@ -241,7 +241,6 @@ async function detail(cid) {
   if (c.scene) {
     hero.append(c.scene.swipe?.before ? swipePic(c.scene) : h('img', { src: absSrc(c.scene.src), alt: '', decoding: 'async', fetchpriority: 'high' }));
     if (c.scene.caption) hero.append(h('figcaption.la-cap', { text: c.scene.caption }));
-    if (c.scene.ex) hero.append(h('span.la-ex', { text: '다른 지역 결과 · 예시' }));
   } else hero.append(h('span.la-blank', { text: '그림 없음' }));   // 대체 그림 없이 같은 틀(원칙 186)
 
   const head = h('div.la-dt-head', {},

@@ -95,6 +95,15 @@ export function openFlow({ host, who, project = null, step = null }) {
   /* 프로젝트 안에서는 업무를 묻지 않는다(원칙 225) — 묶음 이름은 프로젝트 업무(옛 프로젝트) · 없으면 프로젝트 이름, 찾는 것은 묶음의 클래스(dataset.yaml)로 저절로 */
   s1.append(...(project ? [] : [h('label.t-label', { text: '업무' }), task]), h('label.t-label', { text: '학습 데이터 지역(선택)' }), regEl,
     h('label.t-label', { text: '학습 데이터 묶음(zip · 그림 200장 이하)' }), file, h('div.tf-act', {}, up), upBar, upMsg, prev);
+  /* 학습데이터 구축(11-02 PM) — 공유 학습 데이터 불러오기 · 벡터 라벨(gpkg · shp zip · geojson) 올리기: 프로젝트장 · 구성원만 */
+  if (project) {
+    const imp = h('div.tf-act.tf-imp', {},
+      h('button.t-btn.t-btn--2', { type: 'button', text: '공유 학습 데이터 불러오기', onclick: () => import('./label-import.js').then((m) => m.openSharedSets({ project, onPicked: (j) => showSample(j) })) }),
+      h('a.t-btn.t-btn--text', { href: `${V3}lx-ingest/?project=${encodeURIComponent(project.id)}&add=1`, text: '영상 추가' }),
+      h('button.t-btn.t-btn--2', { type: 'button', text: '벡터 라벨 올리기', onclick: () => import('./label-import.js').then((m) => m.openVectorLabel({ project, onDone: () => location.reload() })) }));
+    if (project.can?.work === false) imp.hidden = true;
+    s1.prepend(imp);
+  }
   const dom = project?.regions?.find((g) => !g.abroad) || null;
   regionPicker(regEl, { onPick: (r) => { region = r; }, value: dom?.code });
   if (project) { task.value = String(project.task || project.name || '').slice(0, 40); if (dom) region = { sgg_cd: dom.code }; }

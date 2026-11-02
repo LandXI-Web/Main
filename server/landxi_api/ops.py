@@ -563,7 +563,13 @@ async def alerts(request: Request):
         rows = await conn.fetch("SELECT id, rule, level, node, gpu, value, opened_at, closed_at FROM ops_alerts ORDER BY opened_at DESC LIMIT 200")
     r = await redis()
     last = await r.get("ops:alerts:last_check")
-    items = [{**dict(x), "opened_at": x["opened_at"].astimezone(KST).isoformat(timespec="seconds") if x["opened_at"] else None,
+
+    def _val(x):                 # 예전에 시각 없이 적힌 경보(공개 파일 점검)도 여는 시각을 기준 시각으로 내보낸다 — 한 줄 때문에 목록 전체가 500 이 되지 않게
+        v = x["value"]
+        if isinstance(v, dict) and "value" in v and "as_of" not in v and x["opened_at"]:
+            return {**v, "as_of": x["opened_at"].astimezone(KST).isoformat(timespec="seconds")}
+        return v
+    items = [{**dict(x), "value": _val(x), "opened_at": x["opened_at"].astimezone(KST).isoformat(timespec="seconds") if x["opened_at"] else None,
               "closed_at": x["closed_at"].astimezone(KST).isoformat(timespec="seconds") if x["closed_at"] else None} for x in rows]
     return {"items": items, "total": len(items), "last_check": last}
 

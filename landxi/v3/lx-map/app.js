@@ -18,6 +18,7 @@ if (!document.querySelector('link[data-rg-opt]')) document.head.append(h('link',
 const who = await K.gate('lx-map');
 const Q = new URLSearchParams(location.search);
 const WANT = Q.get('job');
+const PROJ = Q.get('project');   // 프로젝트 '결과 확인'(11-02 PM) — 그 프로젝트 결과만 보인다(다른 사람 · 다른 프로젝트 결과 섞임 없음)
 const S = K.shell({ who, home: 'lx-map', rail: staffMenu('mapsvc') });
 K.devDrawer({ who });
 document.body.classList.remove('lm-boot');
@@ -45,7 +46,7 @@ const release = K.hold({ onRetry: () => location.reload() });
 const catP = api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build: 'lx', locale: 'ko' })).then((j) => j.items || [], (e) => { K.devlog('catalog', String(e?.message || e)); return []; });
 const shlP = api('/shared/layers').then((j) => j.items || [], (e) => { K.devlog('shared-layers', String(e?.message || e)); return []; });
 let D;
-try { D = await api('/me/analyses' + (WANT ? '?' + new URLSearchParams({ job: WANT }) : '')); }
+try { D = await api('/me/analyses' + (WANT || PROJ ? '?' + new URLSearchParams({ ...(WANT ? { job: WANT } : {}), ...(PROJ ? { project: PROJ } : {}) }) : '')); }
 catch (e) {
   release();
   K.devlog('analyses', `${e?.code || ''} ${e?.message || e}`);
@@ -272,7 +273,15 @@ function fold(v) {
 const unfold = h('button.lm-unfold', { type: 'button', hidden: true, text: '목록 펼치기', onclick: () => fold(false) });
 mapEl.append(unfold);
 
+function drawEmpty() {   // 결과가 하나도 없을 때(프로젝트면 추론 단계 안내 · 11-02 PM) — 다른 부분이 목록을 다시 그려도 이 안내가 남는다
+  const box = h('div');
+  left.replaceChildren(h('div.lm-top', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('p.lm-sub', { text: '내가 돌린 분석 결과가 분석서비스별로 쌓입니다.' })), box);
+  K.empty(box, PROJ
+    ? { kind: 'first', title: '이 프로젝트에서 추론한 결과가 없습니다', text: '추론 단계에서 학습한 모델로 영상을 분석하면 결과가 여기에 쌓입니다', action: { label: '추론 단계로', href: `../lx-release/?project=${encodeURIComponent(PROJ)}&stage=infer` }, compact: true }
+    : { kind: 'first', title: '아직 돌린 분석이 없습니다', text: '분석 서비스에서 서비스를 골라 분석하면 결과가 여기에 쌓입니다', action: { label: '분석 서비스', href: '../lx-analyze/' }, compact: true });
+}
 function drawLeft() {
+  if (!ST.items.size) { drawEmpty(); return; }
   const on = all().filter(shown);
   const tot = on.reduce((a, x) => a + (x.failed ? 0 : visN(x) || 0), 0);   // 못 그린 층의 수는 '켜진 결과'에 넣지 않는다 · 끈 클래스는 뺀다('보이는 것 기준')
   const sum = h('div.lm-sum', {},
@@ -309,6 +318,10 @@ function drawLeft() {
         h('span.lm-v.num', { text: x.failed ? '불러오지 못함' : x.empty ? '찾은 것 없음' : `${val(x.found) == null ? '—' : nf(visN(x))}${x.unit || (x.compare ? '필지' : '건')}` }),
         canDl ? h('button.lm-lsb', { type: 'button', 'aria-expanded': String(ST.list === x.job), 'aria-label': `${x.region} ${G.name} 결과 목록 보기`, text: '목록', onclick: () => openList(x) }) : null,
         canDl ? h('button.lm-dlb', { type: 'button', 'aria-expanded': String(ST.dl === x.job), 'aria-label': `${x.region} ${G.name} 내려받기`, text: '내려받기', onclick: () => openDl(x) }) : null));
+      if (G.kind === 'project' && x.imagery?.name) {   // 프로젝트 추론은 여러 번 — 줄마다 어떤 영상으로 언제 돌렸는지(11-02 PM)
+        const d = new Date(x.finished_at), t = Number.isNaN(+d) ? '' : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        ul.append(h('li.lm-rg', { class: x.on ? 'is-on' : '' }, h('span', { text: [x.imagery.word ? `${x.imagery.word} 영상` : '', x.imagery.name, t].filter(Boolean).join(' · ') })));
+      }
       if (x.range?.word) ul.append(h('li.lm-rg', { class: x.on ? 'is-on' : '' }, ...rangeLine(x)));   // 작업 줄 아래 '구간: 이름 · 100m'
       if (ST.dl === x.job) ul.append(dlPanel(x));
     }
@@ -320,7 +333,7 @@ function drawLeft() {
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
   left.replaceChildren(
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),   // '이 화면은?' 도움말 링크 뺌(10-18 사용자)
-      h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), sum, run, flt),
+      h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), ...(PROJ ? [h('p.lm-sub', {}, '이 프로젝트의 추론 결과만 보입니다 · ', h('a', { href: './', text: '내 분석 전체 보기' }))] : []), sum, run, flt),
     h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
     ...[clsBlock(on)].filter(Boolean),   // 켜진 층이 없으면 클래스 칸 없음(replaceChildren 은 null 을 글자 'null'로 넣는다)
     h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
@@ -750,11 +763,8 @@ function pickRow(x, it) {
 }
 
 /* ── 처음 ── */
-if (!ST.items.size) {
-  const box = h('div');
-  left.replaceChildren(h('div.lm-top', {}, h('h1.lm-h1', { text: '지도 서비스' }), h('p.lm-sub', { text: '내가 돌린 분석 결과가 분석서비스별로 쌓입니다.' })), box);
-  K.empty(box, { kind: 'first', title: '아직 돌린 분석이 없습니다', text: '분석 서비스에서 서비스를 골라 분석하면 결과가 여기에 쌓입니다', action: { label: '분석 서비스', href: '../lx-analyze/' }, compact: true });
-} else {
+if (!ST.items.size) drawEmpty();
+else {
   if (ST.fold) fold(true);
   await apply();
   if (first) { fly(first.bounds); drawn(); }

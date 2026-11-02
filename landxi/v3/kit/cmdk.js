@@ -1160,6 +1160,7 @@ function create(opts) {
   const CTRL = 'a[href],button,input,select,textarea,summary,label,[role=button],[role=tab],[role=link],[contenteditable=""],[contenteditable=true]';
   const isMapish = (el) => !!el.closest('.maplibregl-canvas-container, .maplibregl-marker, .maplibregl-popup, canvas');
   /** 오른쪽에 붙어 떠 있는 판(서랍 · 시트) */
+  let dockDrawer = false;   // 방금 찾은 오른쪽 칸이 서랍(.k-drawer)인가 — 서랍은 비키지 않고 단추를 오른쪽 끝에 둔다(11-02 PM '이 화면 라벨 완료' 단추와 겹침 · 서랍 아래는 kit/panel.css 가 단추 자리를 비워 둔다)
   function dock(el, mr) {
     for (let n = el; n && n !== document.body; n = n.parentElement) {
       if (n.matches('.k-main, .k-app, .k-stage, .k-stage-map')) return null;
@@ -1167,7 +1168,7 @@ function create(opts) {
       const p = getComputedStyle(n).position;
       if (p !== 'fixed' && p !== 'absolute' && p !== 'sticky') continue;
       const r = n.getBoundingClientRect();
-      if (r.right >= mr.right - 48 && r.width < mr.width * 0.7 && r.height > 160) return r;
+      if (r.right >= mr.right - 48 && r.width < mr.width * 0.7 && r.height > 160) { dockDrawer = n.matches('.k-drawer'); return r; }
     }
     return null;
   }
@@ -1231,7 +1232,7 @@ function create(opts) {
         for (const [x, y] of [[cx, cy], [cx - 24, cy - 24], [cx + 24, cy + 24], [cx - 24, cy + 24], [cx + 24, cy - 24]]) {
           const el = document.elementsFromPoint(x, y).find((n) => !root.contains(n));
           const d = el && !isMapish(el) && dock(el, mr);
-          if (d) { if (d.left - 16 - 56 - tagW > mr.left + 8) R = W - d.left + 16; break; }
+          if (d) { if (!dockDrawer && d.left - 16 - 56 - tagW > mr.left + 8) R = W - d.left + 16; break; }
         }
         const ob = obstacles(mr, W - R - 56 - tagW - 12);
         const box4 = (b, tw) => ({ x1: W - R + 6, y1: H - b + 6, x0: W - R - 56 - tw - 6, y0: H - b - 62 });
