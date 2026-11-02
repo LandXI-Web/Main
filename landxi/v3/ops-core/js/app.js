@@ -221,7 +221,7 @@ setInterval(drawNational, 120000);
 async function drawSame() {
   try { same = await api('/national/same-model'); } catch { return; }
   const mixed = same.mixed || [];
-  sameLine = mixed.length ? { k: '같은 판', t: same.queued?.length === mixed.length ? `${mixed.join(' · ')}년 결과를 지금 판으로 다시 분석하는 중` : `${mixed.join(' · ')}년 결과에 옛 판이 섞여 있습니다`,
+  sameLine = mixed.length ? { k: '같은 버전', t: same.queued?.length === mixed.length ? `${mixed.join(' · ')}년 결과를 지금 버전으로 다시 분석하는 중` : `${mixed.join(' · ')}년 결과에 옛 버전이 섞여 있습니다`,
     lv: same.queued?.length === mixed.length ? '' : 'warn', go: same.queued?.length === mixed.length ? '' : '전부 다시', href: '#/same-model' } : null;
   drawOverview();
 }
@@ -232,14 +232,14 @@ todoEl.addEventListener('click', (e) => {
   e.preventDefault();
   if (!same?.mixed?.length || same.queued?.length === same.mixed.length) return;
   const v = (x) => (x && typeof x === 'object' ? x.value : x);
-  const list = h('ul.oc-same', {}, ...(same.years || []).map((y) => h('li', {}, h('b', { text: `${y.year}년` }), ` 끝난 읍면동 ${v(y.done).toLocaleString('ko-KR')} · 옛 판 ${v(y.old).toLocaleString('ko-KR')}`)));
+  const list = h('ul.oc-same', {}, ...(same.years || []).map((y) => h('li', {}, h('b', { text: `${y.year}년` }), ` 끝난 읍면동 ${v(y.done).toLocaleString('ko-KR')} · 옛 버전 ${v(y.old).toLocaleString('ko-KR')}`)));
   const go = h('button.t-btn', { type: 'button', text: '비교 중인 해 전부 다시' });
   // 예상 날수(10-28 now 22 늦-날수확인창 ⓐ) — 서버 GET /national/same-model 의 redo_days 한 출처 · 값이 없으면 줄을 두지 않는다
   const dd = v(same.redo_days);
   const days = dd == null ? null : h('p.oc-ntc-say', { text: dd < 1 ? '예상: 하루 안(학습 장비가 놀 때 기준)' : `예상: 약 ${dd.toLocaleString('ko-KR')}일(학습 장비가 놀 때 기준)` });
-  const box = h('div.oc-ntc', {}, h('p', { text: `해마다 비교가 같은 판${same.model?.name ? `(${same.model.name})` : ''}으로 이뤄지도록, 옛 판으로 만든 읍면동을 지금 판으로 다시 분석합니다.` }), list,
+  const box = h('div.oc-ntc', {}, h('p', { text: `해마다 비교가 같은 버전${same.model?.name ? `(${same.model.name})` : ''}으로 이뤄지도록, 옛 버전으로 만든 읍면동을 지금 버전으로 다시 분석합니다.` }), list,
     ...(days ? [days] : []), h('p.oc-ntc-say', { text: '학습 장비가 놀 때만 돌고, 새 결과가 나올 때까지 옛 결과가 그대로 보입니다.' }), h('div.oc-ntc-act', {}, go));
-  const m = modal({ title: '해마다 같은 판으로', body: box });
+  const m = modal({ title: '해마다 같은 버전으로', body: box });
   go.addEventListener('click', async () => {
     go.disabled = true;
     try { await api('/national/same-model', { method: 'POST', body: { confirm: true } }); toast('다시 분석할 차례에 넣었습니다'); m.close(); drawSame(); }

@@ -592,7 +592,7 @@ async def _add_edition(t: str, card: str, name: str, rows: list[dict], sig: str,
         await c.execute("INSERT INTO space_guides(id, tenant_id, card_id, edition, sig, body, change, published_at, backfill) "
                         "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", gid, t, card, ed, sig, body, ch, pub_at, backfill)
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, guide_id, line, backfill, at) VALUES ($1,'guide',$2,$3,$4,$5,$6)",
-                        t, card, gid, f"{name} 결과 설명서 {ed}판 — {ch}", backfill, pub_at if backfill and pub_at else dt.datetime.now(KST))
+                        t, card, gid, f"{name} 결과 설명서 버전 {ed} — {ch}", backfill, pub_at if backfill and pub_at else dt.datetime.now(KST))
     _write_guide_file(folder, card, ed, {"tenant": t, "card": card, "edition": ed, "change": ch, "published_at": pub, "body": body})
     if not backfill:                                  # 새 결과 알림 = 머리의 종(알림 칸) + 메일 한 줄(18차 N-1 ⓐ 알림 ⓑ · 메일 설정이 없으면 종만)
         try:
@@ -695,7 +695,7 @@ async def _current(c, t: str, card: str, rows: list[dict] | None = None) -> dict
 
 
 def _ed(n) -> dict:
-    return env(int(n), "count", "recorded", "결과 설명서 판(서비스마다)")
+    return env(int(n), "count", "recorded", "결과 설명서 버전(서비스마다)")
 
 
 async def _guide_or_404(p: Principal, card: str) -> tuple[dict, dict, list[dict]]:
@@ -751,7 +751,7 @@ async def space_me(request: Request):
             "notices": [{"id": str(n["id"]), "card": n["card_id"], "name": names.get(n["card_id"], ""), "line": n["line"],
                          "edition": _ed(n["edition"]) if n["edition"] is not None else None, "change": n["change"],
                          "at": _iso(n["at"]), "past": bool(n["backfill"]), "unread": n in unread} for n in notes],
-            "unread": _cnt(len(unread), "공간 안 알림(새 판 · 읽지 않음)"),
+            "unread": _cnt(len(unread), "공간 안 알림(새 버전 · 읽지 않음)"),
             "consent": {"done": bool(cons and cons["ver"] >= CONSENT_VER), "lines": CONSENT_LINES},
             "as_of": now_iso()}
 
@@ -825,7 +825,7 @@ async def _log_download(p: Principal, card: str, g: dict, fmt: str, rows: int, s
     label = FMT[fmt][0]
     async with db(p) as c:
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, guide_id, line, actor, realm, detail) VALUES ($1,'download',$2,$3,$4,$5,'tenant',$6)",
-                        p.tenant_id, card, g["id"], f"{p.name or '담당자'} — {svc_name} {label} 내려받기({g['edition']}판)", p.user_id,
+                        p.tenant_id, card, g["id"], f"{p.name or '담당자'} — {svc_name} {label} 내려받기(버전 {g['edition']})", p.user_id,
                         {"fmt": fmt, "rows": rows, "edition": g["edition"]})
         await audit(c, p, "space.download", f"{p.tenant_id}/{card}", None, {"fmt": fmt, "rows": rows, "edition": g["edition"]})
 
@@ -849,11 +849,11 @@ async def _geojson(p: Principal, org: str, svc: dict, g: dict):
     sets = body.get("sets") or []
     ver = ", ".join(body.get("version", {}).get("service") or [])
     rl = _round_label(body)
-    meta = {"기관": org, "서비스": svc["name"], "결과 설명서": f"{g['edition']}판", "회차": rl, "서비스 버전": ver, "만든 때": now_iso(),
+    meta = {"기관": org, "서비스": svc["name"], "결과 설명서": f"버전 {g['edition']}", "회차": rl, "서비스 버전": ver, "만든 때": now_iso(),
             "안내": NOTICE, "좌표": "경위도(EPSG:4326)",
             "열 설명": {"id": "결과 번호(바뀌지 않음)", "kind": "종류", "code": "종류 코드(원래 결과 파일의 이름)", "score": "AI 점수 0–1(확률 아님)",
                      "area": "넓이 ㎡", "emd": "읍면동(바다 등 읍면동 밖이면 비어 있음)", "parcel": "필지 번호 19자리(글자)", "check": "결과 확인(확인 전 · 고침)",
-                     "round": "회차", "version": "서비스 버전", "edition": "결과 설명서 판"}}
+                     "round": "회차", "version": "서비스 버전", "edition": "결과 설명서 버전"}}
     yield b'{"type":"FeatureCollection","lx":' + json.dumps(meta, ensure_ascii=False).encode() + b',"features":['
     first = True
     async for r in _feature_rows(p.tenant_id, sets, await _only(p, svc.get("card"))):
@@ -955,7 +955,7 @@ def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str, info: list[t
     d.column_dimensions["A"].width = 26
     d.column_dimensions["B"].width = 70
     i = wb.create_sheet("안내")
-    for k, v in info or [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"{g['edition']}판"), ("분석 영상 · 날짜", rl), ("서비스 버전", ver),
+    for k, v in info or [("기관", org), ("서비스", svc["name"]), ("결과 설명서", f"버전 {g['edition']}"), ("분석 영상 · 날짜", rl), ("서비스 버전", ver),
                          ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", NOTICE)]:
         i.append([k, v])
     i.column_dimensions["A"].width = 16
@@ -966,7 +966,7 @@ def _xlsx(org: str, svc: dict, g: dict, rows: list[dict], how: str, info: list[t
 def _summary_doc(org: str, svc: dict, g: dict, parcels: int | None) -> dict:
     b = g["body"]
     tr = b.get("trust") or {}
-    return {"기관": org, "서비스": svc["name"], "결과 설명서": f"{g['edition']}판", "회차": b.get("when", {}).get("rounds") or [],
+    return {"기관": org, "서비스": svc["name"], "결과 설명서": f"버전 {g['edition']}", "회차": b.get("when", {}).get("rounds") or [],
             "서비스 버전": b.get("version", {}).get("service") or [], "만든 때": now_iso(),
             "결과": {"값": (b.get("what", {}).get("total") or {}).get("value"), "단위": (b.get("what", {}).get("total") or {}).get("unit") or "건",
                    "뜻": "이 기관 관할 안 결과(지운 결과 제외)" if b.get("what", {}).get("kind") == "biz" else (b.get("what", {}).get("note") or "첫 결과 전")},
@@ -1606,7 +1606,7 @@ async def version_notice(card_version_id: str, test: bool = False) -> list[str]:
         tns = [r["id"] for r in await c.fetch("SELECT id FROM tenants WHERE kind='user' AND coalesce(status,'active')='active' AND id <> 'lx-demo'")]
     nm = v["name"].get("ko") if isinstance(v["name"], dict) else v["name"]
     one = _first_line(memo)                          # 배포 신청 메모만(판 기록의 옛 개발 메모는 쓰지 않는다 — 사용자 규칙 2)
-    line = f"{nm or '서비스'} 새 판 {v['version']}" + (f" — {one}" if one else "")
+    line = f"{nm or '서비스'} 새 버전 {v['version']}" + (f" — {one}" if one else "")
     sent = []
     for t in tns:
         if v["card_id"] not in {s["card"] for s in await received(t)}:

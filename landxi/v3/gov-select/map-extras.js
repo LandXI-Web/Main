@@ -56,13 +56,13 @@ export async function mapCard({ host, card, region = () => null, center = () => 
   if (!g) { box.append(reqBtn); box.classList.add('is-bare'); return box; }
   const more = h('button.t-btn.t-btn--text.gx-more', { type: 'button', text: '이 결과 설명' });
   more.addEventListener('click', () => {
-    drawer({ title: `이 결과 설명 — ${val(g.edition)}판`, label: '이 결과 설명', width: 560,
+    drawer({ title: `이 결과 설명 — 버전 ${val(g.edition)}`, label: '이 결과 설명', width: 560,
       body: h('div.gd-drawer', {}, g.change ? h('p.sp-change', {}, h('b', { text: '바뀐 점' }), segs(g.change)) : null, sixCells(g),
         h('p.gx-dl', {}, h('a', { href: at('gov-select/') + svcQ({ tab: 'stats' }), text: '자료 내려받기는 통계·보고서 탭에서' }))) });
   });
   box.append(
     h('p.gx-l', { text: '보고 있는 결과' }),
-    h('p.gx-t', {}, h('b', { text: name }), h('span.gx-ed', { text: `${val(g.edition)}판` })),
+    h('p.gx-t', {}, h('b', { text: name }), h('span.gx-ed', { text: `버전 ${val(g.edition)}` })),
     r0 || totTxt ? h('p.gx-s', {}, h('i', { 'aria-hidden': 'true' }), h('span', {}, ...[r0?.shot, r0?.analyzed ? `${ymd(r0.analyzed)} 분석` : '', totTxt].filter(Boolean)
       .flatMap((t, i, a) => [h('span.gx-seg', { text: t + (i < a.length - 1 ? ' ·' : '') }), i < a.length - 1 ? ' ' : '']))) : '',   // 마디 가운데서 줄이 바뀌지 않게
     h('p.gx-links', {}, more, h('a.t-btn.t-btn--text.gx-more', { href: at('gov-fusion/') + svcQ(), text: '행정정보와 비교' })),

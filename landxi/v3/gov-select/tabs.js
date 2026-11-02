@@ -23,7 +23,7 @@ export async function renderHistory(main, side, { s, B, group = null }) {
   const box = h('section.t-card.gd-box.gy-hist', { 'aria-label': '이력' });
   main.append(box);
   side.append(h('section.t-card.gd-box.gy-legend', { 'aria-label': '이력에 남는 것' }, h('div.gd-box-h', {}, h('h2', { text: '이력에 남는 것' })),
-    h('dl.gy-leg', {}, ...[['결과 공개', 'LX가 새 판 · 회차를 열 때'], ['검토 요청', '보낸 메모와 LX 답'],
+    h('dl.gy-leg', {}, ...[['결과 공개', 'LX가 새 버전 · 회차를 열 때'], ['검토 요청', '보낸 메모와 LX 답'],
       ['분석 요청', '보냄 → LX 확인 → 분석 끝'], ['촬영 요청', '보냄 → LX 답(시기 · 금액)'], ...(dlHref ? [] : [['내려받기', '누가 무엇을 받았나']])]
       .map(([k, d]) => h('div', {}, h('dt', {}, h('span.t-chip', { text: k })), h('dd', { text: d })))),
     h('p.gd-note', { text: '모두 서버에 이미 쌓이는 기록을 한 줄기로 보이는 것입니다.' }),

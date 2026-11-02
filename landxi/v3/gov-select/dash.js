@@ -178,7 +178,7 @@ async function drawAbout(el, newLine, { s, B, q, fusion }) {
   try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); }
   catch (e) { if (e.status === 404) { el.hidden = true; return; } throw e; }
   const b = g.body || {};
-  el.querySelector('.gd-box-h').append(h('span.gd-small', { text: [`${val(g.edition)}판`, g.published_at ? `${ymd(g.published_at)} 공개` : ''].filter(Boolean).join(' · ') }));
+  el.querySelector('.gd-box-h').append(h('span.gd-small', { text: [`버전 ${val(g.edition)}`, g.published_at ? `${ymd(g.published_at)} 공개` : ''].filter(Boolean).join(' · ') }));
   const tot = b.what?.total, cls = b.what?.classes || [];
   const whatTxt = val(tot) !== null && val(tot) !== undefined
     ? (tot.unit === '필지' ? `판정한 필지 ${nf(val(tot))}` : `AI 탐지 ${nf(val(tot))}${tot.unit && tot.unit !== 'count' ? tot.unit : '건'}`) : String(b.what?.note || '결과가 나오면 붙습니다').split(' — ')[0];
@@ -199,7 +199,7 @@ async function drawAbout(el, newLine, { s, B, q, fusion }) {
     const body = h('div.gd-drawer', {},
       g.change ? h('p.sp-change', {}, h('b', { text: '바뀐 점' }), segs(g.change)) : null,
       sixCells(g), h('p.gd-note', {}, h('a.gd-a', { href: q({ tab: 'stats' }), text: '자료 내려받기는 통계·보고서 탭에서' })));
-    drawer({ title: `이 결과 설명 — ${val(g.edition)}판`, body, label: '이 결과 설명', width: 560 });
+    drawer({ title: `이 결과 설명 — 버전 ${val(g.edition)}`, body, label: '이 결과 설명', width: 560 });
     if (val(me?.unread)) api('/spaces/me/read', { method: 'POST' }).then(() => { newLine.hidden = true; }).catch(() => {});
   };
   more.addEventListener('click', open);
@@ -208,7 +208,7 @@ async function drawAbout(el, newLine, { s, B, q, fusion }) {
   const n = (me?.notices || []).find((x) => x.unread && x.card === s.card);
   if (n) {
     newLine.hidden = false;
-    newLine.replaceChildren(h('i', { 'aria-hidden': 'true' }), h('b', { text: `새 결과(${val(n.edition)}판)가 왔습니다` }), h('span', {}, segs(n.change || '')),
+    newLine.replaceChildren(h('i', { 'aria-hidden': 'true' }), h('b', { text: `새 결과(버전 ${val(n.edition)})가 왔습니다` }), h('span', {}, segs(n.change || '')),
       h('button.t-btn.t-btn--text.gd-new-go', { type: 'button', text: '이 결과 설명', onclick: open }));
   }
 }

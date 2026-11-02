@@ -428,7 +428,7 @@ def _judge(r, f) -> dict:
         pb["reason"] = f["cv_ap"]["reason"]
         holds["publish"] = "reject"
     else:
-        pb["next"] = "배포 신청" if r["round"] == 1 or not f["card"] else "새 판 배포 신청"
+        pb["next"] = "배포 신청" if r["round"] == 1 or not f["card"] else "새 버전 배포 신청"
     # 국토 변화 탐지 — 영상(국토지리정보원 항공 · 연도별)은 프로젝트 자산 · '정식 서비스 모델' 경로면 학습데이터 구축 · 학습을 건너뜀(수정 지시서 v2 F1 · F4)
     chg = f.get("change")
     if chg and chg["years"]:
@@ -1388,7 +1388,7 @@ async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[
             v = cvs.get(a["subject_id"])
             what, carded = "서비스 공개", carded | {a["subject_id"]}
             if v and v["version"]:
-                what += f" · {v['version']}판"
+                what += f" · 버전 {v['version']}"
         else:
             d = deps.get(a["subject_id"]) or {}
             place = (region_of(d["sgg_cd"]) or {}).get("name") if d.get("sgg_cd") else None
@@ -1404,7 +1404,7 @@ async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[
             add(a["at"], "auto", f"{what} 요청", _name(people, a["requested_by"]), sub="승인 대기", group="approval")
     for vid, v in cvs.items():                       # 결재 행 없이 공개된 판(이관 · 옛 기록)도 한 줄
         if vid not in carded and v["approved_by"] and v["approved_at"]:
-            add(v["approved_at"], "auto", "서비스 공개" + (f" · {v['version']}판" if v["version"] else ""), _name(people, v["approved_by"]), group="approval")
+            add(v["approved_at"], "auto", "서비스 공개" + (f" · 버전 {v['version']}" if v["version"] else ""), _name(people, v["approved_by"]), group="approval")
     # ⑤ 메모 · 파일
     for n in await conn.fetch("SELECT id, kind, body, file_name, file_ext, bytes, by, at FROM project_notes WHERE project_id=$1 AND removed_at IS NULL", pid):
         rm = can_remove_note(p, r, n["by"])

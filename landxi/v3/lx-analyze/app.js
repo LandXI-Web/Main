@@ -381,7 +381,7 @@ function condCard(c) {
     t?.lines?.length ? ['걸리는 시간', h('span.la-tl', {}, ...t.lines.flatMap((l, i) => (i ? [h('br'), l] : [l]))), '']   // 명세 §7 PM 확정 실측(줄마다 하나 · v7.1)
       : ['걸리는 시간', t ? t.text : '첫 분석 뒤 표시', t ? (t.premise || '최근 분석 기록') : ''],   // 전제(어느 영상 · 언제 기록) — 서버 한 출처(GPT2-2)
     ['찾는 것', c.finds || '—'], ...learnRows,
-    ['버전 · 담당', `${c.version ? 'v' + c.version : '판 없음'} · ${c.owner || '담당 미지정'}`],
+    ['버전 · 담당', `${c.version ? 'v' + c.version : '버전 없음'} · ${c.owner || '담당 미지정'}`],
   ];
   return h('section.t-card.la-box.la-wide', { 'aria-label': '분석 서비스 카드의 조건' }, h('h2.la-h', { text: '분석 서비스 카드의 조건' }),
     h('dl.la-dl', {}, ...rows.map(([k, v, s]) => h('div', {}, h('dt', { text: k }), h('dd', {}, v, s ? h('small', { text: s }) : null)))));

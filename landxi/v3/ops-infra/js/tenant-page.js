@@ -110,7 +110,7 @@ export function mountTenantPage(root) {
       tb.append(h('tr', {},
         h('td', {}, h('b', { text: s.name }), h('small', { text: s.year ? `${s.year}년 사업` : '' })),
         h('td', {}, h('span.t-chip', { dataset: { lv: LV[s.status] || 'wait' }, text: s.status || '첫 결과 전' }), h('small', { text: s.round || (s.status === '운영' ? '' : '영상이 들어오면 분석') })),
-        h('td.num', {}, s.edition ? `${nf(val(s.edition))}판` : '—', h('small', { text: s.edition_at ? ymd(s.edition_at) : '' })),
+        h('td.num', {}, s.edition ? `버전 ${nf(val(s.edition))}` : '—', h('small', { text: s.edition_at ? ymd(s.edition_at) : '' })),
         h('td', {}, staffSel(s.staff?.id, none, (uid) => putStaff({ card_id: s.card, user_id: uid }, `${s.name} 헬프데스크 담당`)))));
     }
     const tbl = h('table.tp-t', {}, h('thead', {}, h('tr', {}, ...['서비스', '상태 · 최근 결과', '결과 설명서', 'LX 헬프데스크 담당'].map((t) => h('th', { text: t })))), tb);

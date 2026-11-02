@@ -1326,9 +1326,9 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
         rel = str(body.get("release") or "") or None
         if rel:
             if not p.is_admin:
-                raise ApiError("forbidden", "판에 묶는 것은 LX 관리자 · 시스템만 합니다")
+                raise ApiError("forbidden", "버전에 묶는 것은 LX 관리자 · 시스템만 합니다")
             if await conn.fetchval("SELECT state FROM improve_releases WHERE id=$1", rel) != "draft":
-                raise ApiError("conflict", "만드는 중인 판에만 묶을 수 있습니다", status=409)
+                raise ApiError("conflict", "만드는 중인 버전에만 묶을 수 있습니다", status=409)
         if action == "adopt":
             if cur["state"] == "built":
                 raise ApiError("conflict", "이미 만들어진 줄입니다", status=409)
@@ -1347,7 +1347,7 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
             if mode in RULE_MODES and cur.get("test_item"):
                 body = {**body, "test": True}
             if mode == "tool" and not rel:
-                raise ApiError("bad_request", "새 도구로 고친 줄은 판에 묶어 주세요")
+                raise ApiError("bad_request", "새 도구로 고친 줄은 버전에 묶어 주세요")
 
             def one(k, n=100):
                 return re.sub(r"\s+", " ", str(body.get(k) or "")).strip()[:n] or None
@@ -1388,7 +1388,7 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
                                    "decided_at=now(), updated_at=now() WHERE id=$1", iid, how, by, HOW.get(cur["kind"]))
         elif action == "revert":
             if ((cur.get("adopt") or {}).get("release")):
-                raise ApiError("conflict", "판에 묶인 줄은 판에서 거절 · 되돌립니다", status=409)
+                raise ApiError("conflict", "버전에 묶인 줄은 버전에서 거절 · 되돌립니다", status=409)
             if cur["state"] != "adopted" or not (cur.get("adopt") or {}).get("quick"):
                 raise ApiError("conflict", "바로 반영한 줄만 되돌릴 수 있습니다", status=409)
             await conn.execute("UPDATE improve_rules SET active=false, off_by=$2, off_at=now() WHERE item_id=$1 AND active", iid, p.user_id)
@@ -1542,7 +1542,7 @@ def _rel_out(r) -> dict:
 def _admin(request: Request) -> Principal:
     p = _lx(request)
     if not p.is_admin:
-        raise ApiError("forbidden", "판은 LX 관리자가 승인합니다")
+        raise ApiError("forbidden", "버전은 LX 관리자가 승인합니다")
     return p
 
 
@@ -1582,9 +1582,9 @@ async def release_submit(rid: str, request: Request, body: dict):
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM improve_releases WHERE id=$1", rid)
         if not r:
-            raise ApiError("not_found", "그 판을 찾지 못했습니다")
+            raise ApiError("not_found", "그 버전을 찾지 못했습니다")
         if r["state"] != "draft":
-            raise ApiError("conflict", "만드는 중인 판만 승인 요청할 수 있습니다", status=409)
+            raise ApiError("conflict", "만드는 중인 버전만 승인 요청할 수 있습니다", status=409)
         await conn.execute("UPDATE improve_releases SET before=$2::jsonb, after=$3::jsonb, better=$4, worse=$5, better_items=$6 WHERE id=$1",
                            rid, json.dumps(b, ensure_ascii=False), json.dumps({**a, "works": works}, ensure_ascii=False), better, worse, items)
         ok = worse == 0 and (a["답함"] + a["안내함"]) > (b["답함"] + b["안내함"]) and a["total"] >= b["total"]
@@ -1623,12 +1623,12 @@ async def _rel_decide(request: Request, rid: str, action: str, by_system: bool =
     async with db(realm="lx") as conn:
         r = await conn.fetchrow("SELECT * FROM improve_releases WHERE id=$1", rid)
         if not r:
-            raise ApiError("not_found", "그 판을 찾지 못했습니다")
+            raise ApiError("not_found", "그 버전을 찾지 못했습니다")
         want = {"approve": "pending", "reject": "pending", "revert": "approved"}[action]
         if who == "system" and action == "reject" and r["state"] == "draft":
             want = "draft"                            # 정기 개선 바퀴가 통과 기준을 못 넘은 판(만드는 중)을 스스로 거둔다 — 묶인 후보는 새로 옴으로(10-15 ChatGEO-매주)
         if r["state"] != want:
-            raise ApiError("conflict", f"{REL_KO.get(r['state'], r['state'])} 상태의 판입니다", status=409)
+            raise ApiError("conflict", f"{REL_KO.get(r['state'], r['state'])} 상태의 버전입니다", status=409)
         new = {"approve": "approved", "reject": "rejected", "revert": "reverted"}[action]
         await conn.execute("UPDATE improve_releases SET state=$2, decided_by=$3, decided_at=now() WHERE id=$1", rid, new, who)
         if action == "approve":

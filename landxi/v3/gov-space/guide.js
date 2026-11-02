@@ -79,10 +79,10 @@ export function trust(b) {
 export function version(g, b) {
   const hist = g.history || [];
   const list = h('ol.sp-hist', {}, ...hist.slice(0, 4).map((x) => h('li', { class: x.current ? 'is-cur' : '' },
-    h('span.sp-hist-n.num', { text: `${val(x.edition)}판` }),
+    h('span.sp-hist-n.num', { text: `버전 ${val(x.edition)}` }),
     h('span.sp-hist-t', {}, segs(x.change || ''),
-      h('small', { text: [x.published_at ? `${ymd(x.published_at)} 공개` : '', x.current ? '지금 판' : ''].filter(Boolean).join(' · ') })))));
-  return h('div', {}, dl([['서비스 버전', (b.version?.service || []).join(' · ')], ['결과 설명서', `${val(g.edition)}판`]]), hist.length > 1 ? list : null);
+      h('small', { text: [x.published_at ? `${ymd(x.published_at)} 공개` : '', x.current ? '지금 버전' : ''].filter(Boolean).join(' · ') })))));
+  return h('div', {}, dl([['서비스 버전', (b.version?.service || []).join(' · ')], ['결과 설명서', `버전 ${val(g.edition)}`]]), hist.length > 1 ? list : null);
 }
 
 /** 여섯 칸 한 판 */

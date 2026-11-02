@@ -74,8 +74,8 @@ async def notify_new_result(tenant: str, card: str, name: str, edition: int, cha
         return 0
     org_name = (org.get("ko") if isinstance(org, dict) else org) or ""
     short = str(org_name).split()[-1] if org_name else ""
-    subject = f"[{short or 'Land-XI'}] {name} 새 결과({edition}판)"
-    line = f"{name}에 새 결과({edition}판)가 왔습니다." + (f" {change}" if change else "") + " 우리 기관 플랫폼에 로그인해 확인하세요."
+    subject = f"[{short or 'Land-XI'}] {name} 새 결과(버전 {edition})"
+    line = f"{name}에 새 결과(버전 {edition})가 왔습니다." + (f" {change}" if change else "") + " 우리 기관 플랫폼에 로그인해 확인하세요."
     n = await run_in_threadpool(send, [r["login"] for r in rows if r["login"]], subject, line)
     log.info("mail new result %s/%s ed%s: %s", tenant, card, edition, n)
     return n

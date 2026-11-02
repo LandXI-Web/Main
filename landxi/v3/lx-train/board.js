@@ -45,7 +45,7 @@ const dur = (sec) => {
 };
 const pct = (x) => (x == null ? '—' : `${nf(Math.round(x))}%`);
 const ORD = ['첫', '두 번째', '세 번째', '네 번째', '다섯 번째', '여섯 번째', '일곱 번째', '여덟 번째', '아홉 번째', '열 번째'];
-const ordName = (i) => `${ORD[i] || `${i + 1}번째`} 판`;
+const ordName = (i) => `${ORD[i] || `${i + 1}번째`} 버전`;
 const clsWords = (cls = []) => [...new Set(cls.map((c) => String(c).split('_')[0]))];
 const LIVE = new Set(['queued', 'running']);
 
@@ -114,7 +114,7 @@ export async function trainBoard({ host, project: P }) {
       if (s && sb && v(s.value) < v(sb.value)) return ['down', `추론 ${pct(v(s.value))} · 원판 ${pct(v(sb.value))}보다 낮아 후보로 남음`];
       return ['', r.model.status === 'pending' ? '승인 대기' : '후보'];
     }
-    return ['', '지난 판'];
+    return ['', '지난 버전'];
   }
 
   /* ── 판의 블록 — 학습 서식(업무별 기본 흐름)의 블록 자리 + 이 프로젝트 가장 최근 학습의 값 ── */
@@ -335,7 +335,7 @@ export async function trainBoard({ host, project: P }) {
       if (!r || LIVE.has(r.state)) { o.line = '추론 뒤에 켜져요'; o.cls = 'off'; }
       else if (k === 'ok') o.line = '서비스 중';
       else if (k === 'down') { o.line = '원판보다 낮아 꺼짐'; o.cls = 'off'; }
-      else o.line = t === '지난 판' ? '지난 판' : '배포 신청으로';
+      else o.line = t === '지난 버전' ? '지난 버전' : '배포 신청으로';
     }
     return o;
   }
@@ -553,13 +553,13 @@ export async function trainBoard({ host, project: P }) {
       else {
         const s = r.same, b = s.base, low = b && v(s.value) < v(b.value);
         out.push(h('span.tb-verdict', { class: low ? 'down' : b ? 'ok' : '', text: `${md(s.at)}${b ? ` · ${low ? '원판보다 낮음' : '원판보다 높거나 같음'}` : ''}` }),
-          kv([['이 판', pct(v(s.value)), true], b ? ['원판', pct(v(b.value)), true] : null]));
+          kv([['이 버전', pct(v(s.value)), true], b ? ['원판', pct(v(b.value)), true] : null]));
       }
       out.push(h('a.tb-dbtn', { href: stageHref(P, 'infer'), text: '추론 열기' }));
     } else if (n.kind === 'deploy') {
       const r = (upTrain(n) || {}).run;
       const [k] = r ? stateOf(r) : [''];
-      out.push(h('span.tb-verdict', { class: k === 'ok' ? 'ok' : k === 'down' ? 'down' : '', text: !r || LIVE.has(r.state) ? '추론이 끝나면 켜져요' : k === 'ok' ? '이 판이 서비스 중이에요' : k === 'down' ? '원판보다 낮아 꺼져 있어요' : '배포 신청할 수 있어요' }),
+      out.push(h('span.tb-verdict', { class: k === 'ok' ? 'ok' : k === 'down' ? 'down' : '', text: !r || LIVE.has(r.state) ? '추론이 끝나면 켜져요' : k === 'ok' ? '이 버전이 서비스 중이에요' : k === 'down' ? '원판보다 낮아 꺼져 있어요' : '배포 신청할 수 있어요' }),
         h('p', { style: 'margin-top:10px', text: '배포 신청은 프로젝트 마지막 단계에서 해요. LX 관리자가 비교 값을 보고 승인해요.' }), h('a.tb-dbtn', { href: stageHref(P, 'publish'), text: '배포 신청 열기' }));
     }
     out.push(...wireRows(n));
@@ -667,7 +667,7 @@ export async function trainBoard({ host, project: P }) {
       h('td.num', {}, h('b', { text: base0.acc ? pct(v(base0.acc)) : '—' })), h('td.num', { text: '—' }),
       h('td', {}, base0.id === serving ? h('span.tb-st.ok', { text: '서비스 중' }) : null, base0.id === serving ? ' ' : null, h('span.tb-st.base', { text: '기반 모델' }))));   // 공개 서비스가 원판을 쓰면 '서비스 중'(분석하기 카드와 같은 규칙)
     hist.replaceChildren(h('h2', {}, '학습 이력', h('small', { text: '최근 순' })),
-      rows.length ? h('div.tb-tbl-w', {}, h('table.tb-tbl', {}, h('thead', {}, h('tr', {}, ...[['날짜', ''], ['판', ''], ['AI 모델 정확도', 'num'], ['학습 데이터', 'num'], ['상태', '']].map(([a, c]) => h('th', { class: c, text: a })))),
+      rows.length ? h('div.tb-tbl-w', {}, h('table.tb-tbl', {}, h('thead', {}, h('tr', {}, ...[['날짜', ''], ['버전', ''], ['AI 모델 정확도', 'num'], ['학습 데이터', 'num'], ['상태', '']].map(([a, c]) => h('th', { class: c, text: a })))),
         h('tbody', {}, ...rows))) : h('p.tb-foot', { text: '아직 학습 기록이 없습니다' }));
   }
 

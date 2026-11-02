@@ -74,9 +74,9 @@ absorb(D);
 const all = () => [...ST.items.values()];
 const shown = (x) => x.on && (!ST.solo || x.g.key === ST.solo);
 
-/* 처음 켤 것 — 주소의 결과(?job · 국토 변화 ?change) · 없으면 가장 최근 결과 하나(국토 변화 결과는 주소로 열 때만 — 변화 층이 스스로 그린다) */
+/* 처음 켤 것 — 주소가 정한 결과(?job · 국토 변화 ?change)만. 주소가 없으면 켜진 결과 없이 시작한다(어떤 지역도 고정으로 켜지 않음 · 11-02 PM) */
 const CHG = Q.get('change');
-const first = (WANT && ST.items.get(WANT)) || (CHG && ST.items.get(CHG)) || ST.groups.flatMap((g) => g.items).find((x) => !x.change) || null;
+const first = (WANT && ST.items.get(WANT)) || (CHG && ST.items.get(CHG)) || null;
 if (first) { first.on = true; ST.open.add(first.g.key); }
 if (ST.groups[0]) ST.open.add(ST.groups[0].key);
 

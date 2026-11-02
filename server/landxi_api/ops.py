@@ -770,7 +770,7 @@ def _loop_status() -> dict | None:
             break
         fails += 1
     if last.get("error"):
-        why = "답 확인 중 멈춤 · 새 판 만들지 못함"
+        why = "답 확인 중 멈춤 · 새 버전 만들지 못함"
         if "KeyError" in str(last["error"]) or "items" in str(last["error"]):
             why = "답 사건을 읽지 못해 멈춤"
         state = "failed"

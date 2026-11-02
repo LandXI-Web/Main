@@ -68,13 +68,13 @@ export function retrainPane(root) {
         h('td', {}, ...(x.split.length ? x.split.map((c) => h('span.rt-cls', { text: `${c.name} · 나누기` })) : ['—'])),
         h('td', {}, modeSel),
         h('td', {}, h('span.rt-st', { dataset: { tone: x.tone || '' }, text: x.state }),
-          vd && vd.value ? h('small', { text: `최근 다시 학습 ${pct(vd.value)} · 지금 판 ${pct(vd.base)}` }) : null,
+          vd && vd.value ? h('small', { text: `최근 다시 학습 ${pct(vd.value)} · 지금 버전 ${pct(vd.base)}` }) : null,
           vd?.memory ? h('small', { text: `삭제한 자리 ${nf(val(vd.memory.places))}곳 중 다시 잡은 곳 ${nf(val(vd.memory.again))}곳` }) : null),   // 원칙 243
         h('td.rt-do', {}, x.tone === 'ok' && x.project ? h('a.t-btn', { href: `/landxi/v3/lx-release/?project=${encodeURIComponent(x.project.id)}&stage=publish`, text: '배포 신청 보기' }) : now));
     });
     const svc = h('section.t-card.rv-card', {},
       h('header.rv-h', {}, h('h2', { text: '분석서비스별' })),
-      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 판', '학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
+      rows.length ? h('div.rt-tbl-w', {}, h('table.rv-tbl.rt-tbl', {}, h('thead', {}, h('tr', {}, ...['분석서비스 · 지금 버전', '학습 데이터', '새 클래스', '방식', '상태', ''].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows)))
         : h('p.rv-empty', { text: '다시 학습할 수 있는 분석서비스가 없습니다' }));
 
     /* ── 새 물체 → 새 모델 프로젝트 후보 ── */

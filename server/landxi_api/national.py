@@ -246,7 +246,7 @@ async def progress(request: Request, year: int | None = None):
             "last_at": r["last"].astimezone(KST).isoformat(timespec="minutes") if r and r["last"] else None,
             "counts": {k: {**v, "unit": UNIT.get(k, "개")} for k, v in cnt.items()},
             "model_done": env(int(rd["cur"]) if rd else 0, "count", "measured", "끝난 읍면동 가운데 지금 전국 분석 모델로 만든 곳(진행 장부 model_id)"),
-            "redo": env(int(rd["old"]) if rd else 0, "count", "measured", "끝난 읍면동 가운데 옛 판 결과라 새 판으로 다시 분석할 곳 — 새 결과가 나올 때까지 옛 결과 그대로"),
+            "redo": env(int(rd["old"]) if rd else 0, "count", "measured", "끝난 읍면동 가운데 옛 버전 결과라 새 버전으로 다시 분석할 곳 — 새 결과가 나올 때까지 옛 결과 그대로"),
             "next": {"sido": n["sido"], "sgg": n["sgg_name"], "emd": n["name"]} if n else None}
     # 일정 — 학습 장비가 놀 때면 언제든(시간대를 기다리지 않음 · 원칙 221). 하루 예상 = 속도 × 24시간(유휴 기준 · 사용자 작업 · 재학습만큼 늦어짐).
     # 속도: 끝난 칸이 있으면 실제(㎢ ÷ 걸린 시간 · 비킨 시간 포함), 없으면 낮 시험 칸 실측 바탕 [추정]
@@ -265,7 +265,7 @@ async def progress(request: Request, year: int | None = None):
     note = ("최근 6시간에 끝난 칸의 실제 속도" if fresh else "끝난 칸의 실제 속도") if measured else "10-12 시험 칸 속도(1㎢ 약 67초) [추정]"
     sched = {"mode": "idle", "idle_now": not busy, "starts_at": now.isoformat(timespec="minutes"),
              "est_km2_day": env(round(kph * 24), "km2", basis, note + " × 24시간(학습 장비가 놀 때 기준)"),
-             "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢(새 판으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)")}
+             "days_left": env(round(left / (kph * 24), 1) if kph else None, "count", basis, "남은 범위 ㎢(새 버전으로 다시 할 칸 포함) ÷ 하루 예상(학습 장비가 놀 때 기준)")}
     out["schedule"] = sched
     if run_year != year:                # 지금 도는 해(관리자 진행 · XI맵 연도 고르기의 '분석 중' 표시) — 화면 해 숫자와 섞지 않는다
         rk = sum(float(r["km2"]) for r in run_rows)
@@ -349,7 +349,7 @@ async def _same_model(conn) -> dict:
     mrow = await conn.fetchrow("SELECT name FROM models WHERE id=$1", model)
     yrs = [{"year": int(r["year"]), "done": env(int(r["done"]), "count", "measured", "끝난 읍면동(진행 장부)"),
             "cur": env(int(r["cur"]), "count", "measured", "지금 전국 분석 모델로 만든 끝난 읍면동"),
-            "old": env(int(r["old"]), "count", "measured", "옛 판 모델로 만든 끝난 읍면동")} for r in rows if int(r["done"])]
+            "old": env(int(r["old"]), "count", "measured", "옛 버전 모델로 만든 끝난 읍면동")} for r in rows if int(r["done"])]
     mixed = [y["year"] for y in yrs if y["old"]["value"]]
     run_year = int(st.get("run_year") or st["year"])
     queued = sorted({int(y) for y in (st.get("redo_years") or [])} | ({run_year} if run_year in mixed else set()))
@@ -364,7 +364,7 @@ async def _same_model(conn) -> dict:
     return {"model": {"name": (_jv(mrow["name"]).get("ko") if mrow and mrow["name"] else None)}, "years": yrs,
             "mixed": [str(y) for y in mixed], "queued": [str(y) for y in queued if y in mixed],      # 해(글자) — 숫자 봉투 규칙 밖의 이름표
             "redo_days": env(days, "count", "measured" if measured else "estimate",
-                             ("최근 30일 끝난 칸의 실제 속도" if measured else "10-12 시험 칸 속도 [추정]") + " — 다시 할 옛 판 칸 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)"),
+                             ("최근 30일 끝난 칸의 실제 속도" if measured else "10-12 시험 칸 속도 [추정]") + " — 다시 할 옛 버전 칸 ㎢ ÷ 하루 예상(학습 장비가 놀 때 기준)"),
             "compare": len(yrs) >= 2, "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
 
 

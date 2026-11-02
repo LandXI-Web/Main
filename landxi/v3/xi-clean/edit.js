@@ -122,7 +122,7 @@ export function createEditor({ map, host, h, K, canEdit, onEdited, setImagery, c
     const lines = [
       ['서비스', m.service || E.L?.item?.name || '—'],
       ['영상', m.imagery || '—'],
-      ['모델', m.model || (m.version ? `서비스 ${m.version}판` : '—')],
+      ['모델', m.model || (m.version ? `서비스 버전 ${m.version}` : '—')],
       ['분석', m.finished_at ? md(m.finished_at) : '—'],
     ];
     /* 삭제한 자리 기억(원칙 243) — 영상 연도가 달라 저절로 적용하지 않은 자리는 '이전에 삭제한 자리'(다시 확인) */

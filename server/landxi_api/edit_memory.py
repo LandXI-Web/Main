@@ -303,7 +303,7 @@ async def memory_for_model(conn, model_id: str | None, *, test: bool = False) ->
     if not r or not int(r["n"] or 0):
         return None
     from .envelope import env
-    return {"places": env(int(r["n"]), "count", "measured", "지운 자리(그 판의 새 결과 범위 · 같은 영상 연도)"),
+    return {"places": env(int(r["n"]), "count", "measured", "지운 자리(그 버전의 새 결과 범위 · 같은 영상 연도)"),
             "again": env(int(r["m"]), "count", "measured", "그중 새 결과가 다시 잡은 곳(같은 분류 · 가운데가 지운 모양 안이거나 겹침 0.5 이상)"),
             "runs": int(r["runs"])}
 

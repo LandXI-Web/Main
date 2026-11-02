@@ -433,7 +433,7 @@ async def retrain_gate(conn, model_id: str) -> str | None:
     cur = await _cur_version(conn, rt.get("card_id") or "")
     vd = await _verdict(conn, rt.get("card_id") or "", cur)
     if not vd or vd["model"] != model_id or not vd["better"]:
-        return "같은 검증 묶음에서 지금 판보다 나아지지 않아 배포 신청 후보가 아닙니다"
+        return "같은 검증 묶음에서 지금 버전보다 나아지지 않아 배포 신청 후보가 아닙니다"
     return None
 
 
@@ -467,7 +467,7 @@ async def _rows(conn, st: dict, test: bool = False) -> list[dict]:
         elif vd and vd["better"] and vd["model"] not in cur["model_ids"]:
             state = ("ok", "나아짐 · 배포 신청 후보")
         elif vd and vd["better"] is False and vd["model"] not in cur["model_ids"]:
-            state = ("down", "지금 판보다 낮음 · 후보로 남음")
+            state = ("down", "지금 버전보다 낮음 · 후보로 남음")
         elif n >= st["min_new"]:
             state = ("now", "기준 닿음 · 쉬는 시간에 학습" if mode == "auto" else "기준 닿음 · 수동")
         else:

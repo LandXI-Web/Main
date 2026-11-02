@@ -60,11 +60,11 @@ export function mountSpaces(root) {
   function paint() {
     if (!items.length) { hold({ kind: 'first', title: '아직 기관이 없습니다', compact: true }); return; }
     box.innerHTML = `<table class="sp-adm-t">
-      <thead><tr><th>기관</th><th class="num">받은 1차 서비스</th><th>결과 설명서 최신 판</th><th class="num">저장</th><th>방식</th><th>마지막 갱신</th></tr></thead>
+      <thead><tr><th>기관</th><th class="num">받은 1차 서비스</th><th>결과 설명서 최신 버전</th><th class="num">저장</th><th>방식</th><th>마지막 갱신</th></tr></thead>
       <tbody>${items.map((x) => `<tr data-id="${esc(x.tenant)}" tabindex="0">
         <td data-k="기관"><span class="sp-v"><b>${esc(x.short || x.name)}</b><small>${x.scope === 'global' ? '해외' : '국내'}</small></span></td>
         <td data-k="받은 1차 서비스" class="num"><span class="sp-v"><b data-metric="받은 1차 서비스" data-v="${val(x.services) ?? ''}">${val(x.services) ?? '—'}</b><small> 개</small></span></td>
-        <td data-k="결과 설명서 최신 판"><span class="sp-v">${x.latest ? `<span class="sp-adm-svc">${esc(x.latest.service || '')} <b class="num">${val(x.latest.edition)}판</b></span><small>${segs(x.latest.change)}</small>` : '<small>아직 없음</small>'}</span></td>
+        <td data-k="결과 설명서 최신 버전"><span class="sp-v">${x.latest ? `<span class="sp-adm-svc">${esc(x.latest.service || '')} <b class="num">버전 ${val(x.latest.edition)}</b></span><small>${segs(x.latest.change)}</small>` : '<small>아직 없음</small>'}</span></td>
         <td data-k="저장" class="num"><span class="sp-v"><b data-metric="저장" data-tenant="${esc(x.tenant)}" data-v="${val(x.storage) ?? ''}">${gb(x.storage)}</b></span></td>
         <td data-k="방식"><span class="sp-v"><span class="t-chip">${esc(x.mode_word || '가벼운 칸')}</span></span></td>
         <td data-k="마지막 갱신" class="num"><span class="sp-v">${md(x.updated)}</span></td></tr>`).join('')}</tbody></table>`;
@@ -80,8 +80,8 @@ export function mountSpaces(root) {
     let j;
     try { j = await api('/spaces/' + encodeURIComponent(id)); } catch (err) { d.set(h('p.sp-adm-none', { text: '지금은 열 수 없습니다' })); toast(err.message || '열지 못했습니다'); return; }
     const svc = (j.services || []).map((s) => h('section.sp-adm-s', {},
-      h('header', {}, h('b', { text: s.name }), s.edition ? h('span.t-chip', { text: `${val(s.edition)}판` }) : h('span.t-chip', { dataset: { lv: 'wait' }, text: '판 없음' })),
-      h('ol', {}, ...(s.history || []).map((x) => h('li', {}, h('span.num', { text: `${val(x.edition)}판` }),
+      h('header', {}, h('b', { text: s.name }), s.edition ? h('span.t-chip', { text: `버전 ${val(s.edition)}` }) : h('span.t-chip', { dataset: { lv: 'wait' }, text: '버전 없음' })),
+      h('ol', {}, ...(s.history || []).map((x) => h('li', {}, h('span.num', { text: `버전 ${val(x.edition)}` }),
         h('span', {}, h('span', { text: keep(x.change || '') }), h('small', { text: md(x.at) })))))));
     const log = (j.log || []).map((x) => h('li', {}, h('span', { text: keep(x.line) }), h('small.num', { text: md(x.at) })));
     d.set(h('div.sp-adm-d', {},

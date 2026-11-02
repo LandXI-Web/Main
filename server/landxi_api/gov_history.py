@@ -115,7 +115,7 @@ async def history(request: Request, card: str, limit: int = 200):
         # 결과 공개 · AI 분석 — 결과 설명서 판(LX 가 새 판 · 회차를 열 때)
         for g in await c.fetch("SELECT edition, change, published_at, created_at, backfill, body FROM space_guides WHERE tenant_id=$1 AND card_id=$2 ORDER BY edition", p.tenant_id, card):
             if g["published_at"] or not g["backfill"]:            # 공개한 날을 모르는 지난 판(처음 채운 것)은 날짜를 지어내지 않고 줄을 만들지 않는다
-                items.append({"kind": "publish", "at": _iso(g["published_at"] or g["created_at"]), "title": f"{g['edition']}판",
+                items.append({"kind": "publish", "at": _iso(g["published_at"] or g["created_at"]), "title": f"버전 {g['edition']}",
                               "sub": g["change"] or "", "who": "LX"})
             body = g["body"] or {}
             for rd in ((body.get("when") or {}).get("rounds") or []):
@@ -620,7 +620,7 @@ async def parcel_history(pnu: str, request: Request, card: str, geom: int = 0, l
         if not by:
             continue                                                # 결과 없는 해는 줄을 만들지 않는다
         top = max(by.items(), key=lambda kv: kv[1])[0]
-        results.append({"edition": f"{r['edition']}판", "_ed": r["edition"], "shot": r["shot"], "year": r["year"], "analyzed": str(r["analyzed"])[:10] if r["analyzed"] else None,
+        results.append({"edition": f"버전 {r['edition']}", "_ed": r["edition"], "shot": r["shot"], "year": r["year"], "analyzed": str(r["analyzed"])[:10] if r["analyzed"] else None,
                         "cls": top, "classes": [{"name": k, "area": env(round(v, 1), "m2", "measured", src)} for k, v in sorted(by.items(), key=lambda kv: -kv[1])],
                         "_set": r["set"]})
     results.sort(key=lambda x: (x["year"] or "", x["analyzed"] or "", x["_ed"]))

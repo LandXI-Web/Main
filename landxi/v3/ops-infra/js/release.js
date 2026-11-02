@@ -70,7 +70,7 @@ export function mountRelease(root) {
       h('td', {}, h('span.t-chip', { dataset: { lv: x.state === 'pending' ? 'now' : x.state === 'rejected' ? 'warn' : '' }, text: x.state_label }), x.test ? h('span.rv-test', { text: '시험' }) : null)));
     const other = (R.other || []).filter((o) => o.n);
     const list = h('section.t-card.rv-card', {}, h('header.rv-h', {}, h('h2', { text: '배포 신청' }), units('span.rv-sub', join(`검토 중 ${nf(val(R.pending))}`, `처리함 ${nf(val(R.decided))}`))),
-      items.length ? h('table.rv-tbl', {}, h('thead', {}, h('tr', {}, ...['서비스', '판', '신청한 사람', '신청일', '상태'].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows))
+      items.length ? h('table.rv-tbl', {}, h('thead', {}, h('tr', {}, ...['서비스', '버전', '신청한 사람', '신청일', '상태'].map((t) => h('th', { text: t })))), h('tbody', {}, ...rows))
         : h('p.rv-empty', { text: '아직 배포 신청이 없습니다' }),
       h('p.rv-note', { text: `처리함에는 승인 · 거절한 신청이 사유와 함께 남습니다. 지금까지 거절 ${nf(val(R.rejected))}건.` }),
       other.length ? h('div.rv-other', {}, h('p.t-label', { text: '다른 승인 요청 — 승인 요청 메뉴에서' }),
@@ -99,11 +99,11 @@ export function mountRelease(root) {
     }
     row('모델', h('b', { text: f.model?.name || x.model_name || '—' }), f.model ? units('small', join(`${f.model.n}번째 학습`, (f.model.classes || []).join(' · '), f.model.gsd_word)) : null);
     row('AI 모델 정확도', h('div.rv-cmp', {},
-      h('span', {}, h('em', { text: '이번 판' }), h('b', { text: pct(f.acc) }), bar(f.acc)),
-      h('span', {}, h('em', { text: f.prev ? `지난 판 ${f.prev.version}` : '지난 판' }), h('b', { text: f.prev ? pct(f.prev.acc) : '—' }), bar(f.prev?.acc, true))),
+      h('span', {}, h('em', { text: '이번 버전' }), h('b', { text: pct(f.acc) }), bar(f.acc)),
+      h('span', {}, h('em', { text: f.prev ? `지난 버전 ${f.prev.version}` : '지난 버전' }), h('b', { text: f.prev ? pct(f.prev.acc) : '—' }), bar(f.prev?.acc, true))),
     f.low ? h('p.rv-low', { role: 'note', text: `${f.low} — 막지 않습니다 · 보고 판단해 주세요` }) : null,   // 질문 9 ⓑ(직원 신청서와 같은 줄)
     f.memory ? h('p.rv-mem', { text: `삭제한 자리 ${nf(val(f.memory.places))}곳 중 다시 잡은 곳 ${nf(val(f.memory.again))}곳` }) : null,   // 원칙 243 — 신청한 때 잰 값
-    h('small', { text: f.prev ? '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' : '첫 판입니다 — 비교할 지난 판이 없습니다' }));
+    h('small', { text: f.prev ? '모델 기록 · 학습에 쓰지 않은 영상으로 잰 값' : '첫 버전입니다 — 비교할 지난 버전이 없습니다' }));
     row('학습 데이터', f.sample ? units('b', join(`${nf(val(f.sample.images))}장`, `${md(f.sample.at)} 올림`)) : h('b.rv-warn', { text: f.model ? '프로젝트 학습 데이터와 연결 기록 없음' : '—' }));
     // 결과 확인 봤음 · 안 봄 줄은 원칙 203(10-12)으로 뺐다(예전 신청서에 남은 값도 보이지 않음)
     // 대표 그림(필수 · 원칙 186) — 승인하면 분석하기 카드 그림이 된다 · 없던 때 신청은 '그림 없음'
@@ -127,7 +127,7 @@ export function mountRelease(root) {
     return finish(x, dl);
   }
   function finish(x, dl) {
-    const head = h('header.rv-h', {}, h('h2', { text: x.service?.name || '' }), units('span.rv-sub', join(`${x.version}판 신청`, x.again ? '고쳐서 다시 신청' : '', x.test ? '시험' : '')));
+    const head = h('header.rv-h', {}, h('h2', { text: x.service?.name || '' }), units('span.rv-sub', join(`버전 ${x.version} 신청`, x.again ? '고쳐서 다시 신청' : '', x.test ? '시험' : '')));
     const meta = units('p.rv-meta', join(x.by ? `신청 ${x.by}` : '', x.project?.name ? `프로젝트 ${x.project.name}` : '', mdhm(x.at)));
     const kids = [head, meta, dl];
     if (x.state === 'pending' && x.can_decide) {
@@ -244,10 +244,10 @@ export function mountRelease(root) {
       const sep = g !== lastG ? [h('tr.rv-gh', {}, h('th', { colspan: String(orgs.length + 2), scope: 'colgroup', text: g }))] : []; lastG = g;
       return [...sep, shareRow(s)]; });
     function shareRow(s) { return h('tr', {},
-      h('td', {}, h('b', { text: s.name }), h('small', { text: join(s.version ? `${s.version}판` : '', s.state_label, (s.groups || []).length > 1 ? `분야 ${s.groups.join(' · ')}` : '') })),
+      h('td', {}, h('b', { text: s.name }), h('small', { text: join(s.version ? `버전 ${s.version}` : '', s.state_label, (s.groups || []).length > 1 ? `분야 ${s.groups.join(' · ')}` : '') })),
       ...orgs.map((o) => {
         const c = s.cells?.[o.id] || {};
-        const inp = h('input', { type: 'checkbox', checked: !!c.shared, disabled: !s.version && !c.shared, title: !s.version && !c.shared ? '승인된 판이 없는 서비스는 공유할 수 없습니다' : null,
+        const inp = h('input', { type: 'checkbox', checked: !!c.shared, disabled: !s.version && !c.shared, title: !s.version && !c.shared ? '승인된 버전이 없는 서비스는 공유할 수 없습니다' : null,
           'aria-label': `${s.name} · ${o.name} 공유` });
         const lab = h('small', { text: c.shared ? (c.at ? `${md(c.at)} 공유` : c.year ? `${c.year}년부터` : '공유 중') : '' });
         /* 광역 기관 — 소속 시군구까지 고르기 · 거두기(나중 13 ⓐ). 고르지 않은 시군구 결과는 LX 보관 */

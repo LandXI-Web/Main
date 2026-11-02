@@ -106,7 +106,7 @@ def low_acc(acc: dict | None, base: dict | None, prev: dict | None) -> list[dict
     out = []
     if v is None:
         return out
-    for who, e in (("기반 모델", (base or {}).get("acc")), ("지난 판", prev)):
+    for who, e in (("기반 모델", (base or {}).get("acc")), ("지난 버전", prev)):
         w = (e or {}).get("value") if isinstance(e, dict) else None
         if w is not None and v < w:
             out.append({"who": who, "acc": e})
@@ -117,7 +117,7 @@ def low_line(low: list[dict]) -> str | None:
     if not low:
         return None
     parts = " · ".join(f"{x['who']} {x['acc']['value']}%" for x in low)
-    return f"이번 판 AI 모델 정확도가 {parts}보다 낮습니다"
+    return f"이번 버전 AI 모델 정확도가 {parts}보다 낮습니다"
 
 
 async def _union_km2(job_ids: list[str]) -> float:
@@ -504,7 +504,7 @@ async def _versions(conn, pid: str, card: str | None, people: dict) -> list[dict
                     "requested_at": _iso(last["at"]) if last else None, "decided_at": _iso(last["decided_at"]) if last else None,
                     "reason": plain(last["reason"] if last and last["decision"] == "reject" else (last["reason"] if last and v["approved_by"] else None)),
                     "memo": pl.get("memo"), "changelog": plain(v["changelog"]), "test": bool(pl.get("test")),
-                    "tries": env(len(mine), "count", "recorded", "이 판의 배포 신청 횟수"), "approval_id": last["id"] if last else None})
+                    "tries": env(len(mine), "count", "recorded", "이 버전의 배포 신청 횟수"), "approval_id": last["id"] if last else None})
     return out
 
 
@@ -972,7 +972,7 @@ async def shares(request: Request):
         o["regions"] = _wide_regions(o["id"]) if o.get("wide") else None
     return {"orgs": [{k: o[k] for k in ("id", "name", "full", "word", "wide", "n", "regions")} for o in orgs], "items": rows,
             "groups": [g["name"] for g in cats["list"]],
-            "services": env(len(rows), "count", "recorded", "승인된 판 · 배포 기록이 있는 서비스"), "as_of": now_iso()}
+            "services": env(len(rows), "count", "recorded", "승인된 버전 · 배포 기록이 있는 서비스"), "as_of": now_iso()}
 
 
 @router.put("/release/shares")
@@ -988,7 +988,7 @@ async def share_set(body: dict, request: Request):
         if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
             raise ApiError("not_found", "없는 서비스입니다")
         if on and not await conn.fetchval("SELECT 1 FROM card_versions WHERE card_id=$1 AND approved_by IS NOT NULL", cid):
-            raise ApiError("conflict", "승인된 판이 없는 서비스는 공유할 수 없습니다", None, 409)
+            raise ApiError("conflict", "승인된 버전이 없는 서비스는 공유할 수 없습니다", None, 409)
         sgg = None                                       # 광역 기관 — 소속 시군구까지(나중 13 ⓐ) · 없거나 전부면 관할 전체
         if on and body.get("sgg") is not None:
             codes = {x["code"] for x in _wide_regions(tid)}

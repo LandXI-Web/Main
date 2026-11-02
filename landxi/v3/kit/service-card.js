@@ -74,8 +74,8 @@ function resultEl(c, kind) {
 /** ⑦ 조건 두 칸 — 자리마다 다른 내용 */
 function specCells(c, kind) {
   if (kind === 'manage') {
-    const ver = c.version ? `v${c.version}` : '판 없음';
-    return [['판 · 담당', `${ver} · ${c.owner || '담당 미지정'}`], ['다음 할 일', c.next?.text || '—']];
+    const ver = c.version ? `v${c.version}` : '버전 없음';
+    return [['버전 · 담당', `${ver} · ${c.owner || '담당 미지정'}`], ['다음 할 일', c.next?.text || '—']];
   }
   if (kind === 'gov') return [['최근 결과', c.latest ? ymd(c.latest) : '아직 없음'], ...(c.todo?.text ? [['할 일', c.todo.text]] : [])];   // 할 일 = 서버 값 있을 때만(10-22 '결과 확인 대기' 뺌)
   if (kind === 'mine') return [];

@@ -88,7 +88,7 @@ def decide(items: list[dict], st: dict, at: dt.datetime, test: bool) -> tuple[st
     if len(fresh) >= NEW_MIN:
         return "full", new, f"지난 바퀴 뒤 새 후보 {len(fresh)}건(앞당김)"
     if many:
-        return "small", many, f"같은 질문을 {ASKERS_MIN}명 이상이 물은 후보 {len(many)}건(작은 판)"
+        return "small", many, f"같은 질문을 {ASKERS_MIN}명 이상이 물은 후보 {len(many)}건(작은 버전)"
     return "none", [], f"해당 없음(새 후보 {len(fresh)}건 · {ASKERS_MIN}명 이상 물은 후보 0)"
 
 
@@ -180,7 +180,7 @@ def main(argv: list[str]) -> int:
     out.mkdir(parents=True, exist_ok=True)
     (out / "plan.json").write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")
     if not [f for f in plan["fixes"] if f["how"] != "collect"]:
-        row["why"] += " · 바로 고칠 것 없음(새 판을 열지 않음)"
+        row["why"] += " · 바로 고칠 것 없음(새 버전을 열지 않음)"
         if mode == "full":                             # 모아 두기만 — 판 없이(다음 바퀴 평가 질문)
             for f in plan["fixes"]:
                 E._retry(httpx.post, E.B + f"/improve/items/{f['item']}/adopt", headers=E.H(tok["admin"]), json={**f["body"], "by": "system"}, timeout=60)

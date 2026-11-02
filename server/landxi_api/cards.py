@@ -1225,7 +1225,7 @@ async def _plan(p, cid: str, region: str, imagery: str | None = None) -> dict:
             raise ApiError("not_found", "카드가 없습니다")
         cvr = await conn.fetchrow("SELECT id, modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
         if not cvr:
-            raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+            raise ApiError("conflict", "아직 버전이 없는 카드입니다", None, 409)
         cv = cvr["id"]
         pl = await plan_analysis(conn, None, cid, cv, sgg, mapping(geoms[sgg]) if sgg in geoms else None, img=want)
     if want and (pl["img"] or {}).get("imagery_id") != want["imagery_id"]:     # 고른 영상 대신 다른 영상으로 바꾸지 않는다 — 고른 영상으로는 안 된다고 말한다
@@ -1309,7 +1309,7 @@ async def imagery_options(cid: str, request: Request, region: str | None = None)
 async def _cv(conn, cid: str) -> str:
     cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
     if not cv:
-        raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+        raise ApiError("conflict", "아직 버전이 없는 카드입니다", None, 409)
     return cv
 
 
@@ -1534,7 +1534,7 @@ async def _own_plan(conn, iid: str, p) -> dict:
     keys = ids + [iid]
     if not why:
         for t, w in (("approvals", "배포 신청 · 승인에 쓰인 결과라 지울 수 없습니다"), ("improve_releases", "배포 신청 · 승인에 쓰인 결과라 지울 수 없습니다"),
-                     ("card_versions", "승인된 서비스 판에 쓰인 결과라 지울 수 없습니다"), ("card_shares", "기관에 공유한 결과라 지울 수 없습니다"),
+                     ("card_versions", "승인된 서비스 버전에 쓰인 결과라 지울 수 없습니다"), ("card_shares", "기관에 공유한 결과라 지울 수 없습니다"),
                      ("change_shares", "기관에 공유한 결과라 지울 수 없습니다")):
             try:
                 if await conn.fetchval(f"SELECT 1 FROM {t} x WHERE " + " OR ".join(f"x::text LIKE ${i + 1}" for i in range(len(keys))) + " LIMIT 1",
@@ -1799,7 +1799,7 @@ async def _plan_img(p, cid: str, iid: str) -> dict:
             raise ApiError("not_found", "카드가 없습니다")
         cvr = await conn.fetchrow("SELECT id, modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", cid)
         if not cvr:
-            raise ApiError("conflict", "아직 판이 없는 카드입니다", None, 409)
+            raise ApiError("conflict", "아직 버전이 없는 카드입니다", None, 409)
         it = await _fit_img(conn, cid, cvr["id"], r, {})
     yr = str(r.get("year") or _when(r)[:4] or "")
     return {"imagery_id": iid, "model_id": it["model_id"], "conf": _conf_of(cvr["modules"]), "fits": it["fit"] != "no", "note": it["note"],

@@ -1462,7 +1462,7 @@ async def x_export(service: str, fmt: str, request: Request, region: str | None 
         if not rows:
             raise ApiError("not_found", "이 조건에는 필지와 이은 결과가 없습니다")
         info = [("서비스", ctx.svc["name"]), ("범위", " · ".join(pk.area["key_scope"])), ("영상", " · ".join(i["attribution"] for i in img)),
-                ("서비스 판", ver), ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", S.NOTICE)]
+                ("서비스 버전", ver), ("만든 때", now_iso()), ("필지 수", len(rows)), ("안내", S.NOTICE)]
         g = {"body": {"version": {"service": [ver] if ver else []}, "when": {"rounds": [{"place": c2["region"], "shot": next((i["attribution"] for i in img if i["source"] == c2["source"] and i["year"] == c2["year"]), ""),
                                                                                           "analyzed": (_iso(c2["analyzed_at"]) or "")[:10]} for c2 in pk.cells]}}, "edition": None}
         data = await run_in_threadpool(S._xlsx, "LX", {"name": ctx.svc["name"]}, g, rows, how, info)
@@ -1513,7 +1513,7 @@ def _shp_zip(rows: list, name: str, rl: str, ver: str, edition: int | None) -> t
         z.writestr(name + ".cpg", "UTF-8")
         z.writestr("읽어 주세요.txt", "\n".join([
             "열 설명 — id 결과 번호(바뀌지 않음) · kind 종류 · code 종류 코드 · score AI 점수 0–1(확률 아님) · area 넓이 ㎡ · emd 읍면동 ·",
-            "parcel 필지 번호 19자리(글자) · check 결과 확인(확인 전 · 고침) · round 지역 · 영상 · version 서비스 판",
+            "parcel 필지 번호 19자리(글자) · check 결과 확인(확인 전 · 고침) · round 지역 · 영상 · version 서비스 버전",
             "좌표 — 경위도(EPSG:4326) · 글자 — UTF-8(.cpg)", S.NOTICE, ""]))
     return out.getvalue(), n
 

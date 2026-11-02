@@ -418,7 +418,7 @@ async def create_card_as(p, body: dict, extra: dict | None = None) -> dict:
             wait_cv = await conn.fetchval("SELECT a.subject_id FROM approvals a JOIN project_links l ON l.kind='card_version' AND l.ref=a.subject_id "
                                           "AND l.project_id=$1 WHERE a.subject_type='card' AND a.state='pending' LIMIT 1", pid)
             if wait_cv:
-                raise ApiError("conflict", "공개 승인을 기다리는 판이 있습니다", {"card_version_id": wait_cv}, 409)
+                raise ApiError("conflict", "공개 승인을 기다리는 버전이 있습니다", {"card_version_id": wait_cv}, 409)
             cid = prev_card
             nums = [float(v) for v in [x["version"] for x in await conn.fetch("SELECT version FROM card_versions WHERE card_id=$1", cid)]
                     if re.fullmatch(r"\d+(\.\d+)?", str(v or ""))]

@@ -50,7 +50,7 @@ function decided(x, admin) {
   if (st === 'adopted' && x.adopt?.release) {
     // 정기 개선 바퀴 판에 묶인 줄(원칙 249) — 판이 승인되면 다음 질문부터 · 물었던 사람에게 '이제 됩니다'
     const rl = x.adopt.release;
-    line = `${chip(`새 판 ${rl.seq} · ${x.adopt.mode_label}`, rl.state === 'pending' ? 'wait' : '')}<small>${rl.state === 'approved' ? '<b>반영됨 — 다시 물어보세요</b>' : esc(rl.state_label)}</small>`;
+    line = `${chip(`새 버전 ${rl.seq} · ${x.adopt.mode_label}`, rl.state === 'pending' ? 'wait' : '')}<small>${rl.state === 'approved' ? '<b>반영됨 — 다시 물어보세요</b>' : esc(rl.state_label)}</small>`;
   } else if (st === 'adopted' && x.adopt?.quick) {
     // 바로 반영(원칙 197) — 표 한 줄로 다음 질문부터 · 되돌리기
     const r = x.adopt.rule || {};
@@ -115,7 +115,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
   root.append(h('div.im-top', {}, sumEl, filt), box, foot);
 
   const hold = (o) => { const x = h('div'); box.replaceChildren(x); empty(x, o); };
-  const relEl = h('section.t-card.im-rel', { hidden: true, 'aria-label': '새 판' });
+  const relEl = h('section.t-card.im-rel', { hidden: true, 'aria-label': '새 버전' });
   if (admin) sumEl.parentElement.after(relEl);
   async function load({ quiet = false } = {}) {
     if (!st.data && !quiet) hold({ kind: 'loading', compact: true });
@@ -136,7 +136,7 @@ export function improveBoard(root, { admin = true, compact = false, onCount } = 
     const ok = (x) => (x['답함'] || 0) + (x['안내함'] || 0);
     const pend = r.state === 'pending';
     relEl.dataset.state = r.state;
-    relEl.innerHTML = `<p class="im-rel-t"><b>새 판 ${esc(r.seq)}</b><span>질문 <b class="num" data-metric="개선된 질문" data-v="${val(r.better) ?? ''}">${cnt(r.better)}</b>개 개선</span>
+    relEl.innerHTML = `<p class="im-rel-t"><b>새 버전 ${esc(r.seq)}</b><span>질문 <b class="num" data-metric="개선된 질문" data-v="${val(r.better) ?? ''}">${cnt(r.better)}</b>개 개선</span>
         <span class="t-chip im-st"${pend ? ' data-lv="wait"' : ''}>${esc(pend ? '승인 요청' : '승인')}</span></p>
       <p class="im-rel-s">답한 질문 ${nf(ok(b))} → ${nf(ok(a))} / ${nf(a.total || 0)} · 나빠진 질문 ${cnt(r.worse)}${r.md ? ` · ${esc(r.md)}` : ''}</p>
       <div class="im-acts">${pend ? '<button class="t-btn im-b" type="button" data-r="approve">승인</button><button class="t-btn t-btn--2 im-b" type="button" data-r="reject">거절</button>'

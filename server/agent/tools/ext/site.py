@@ -535,7 +535,7 @@ async def nation_lookup(args: dict, ctx) -> Out:
             "<h2>이지목 상위 시도 5곳</h2>" + _table(["시도", "이지목 필지", "면적(㎡)"], [[r["시도"], f"{r['parcels']:,}", f"{round(r['area_m2']):,}"] for r in sd[:5]], {1, 2})]
     if idl:
         body.append("<h2>유휴지</h2>" + _table(["항목", "값"], [["유휴지 필지", f"{idl.get('idle_parcels'):,}"], ["기준", (idl.get("definition") or {}).get("idle_standard") or "-"]]))
-    body.append("<h2>근거</h2>" + _table(["집계 파일", "만든 때", "판"], [["nation_summary · rank · idle", str(ns.get("created") or ""), str(ns.get("version") or "")]])
+    body.append("<h2>근거</h2>" + _table(["집계 파일", "만든 때", "버전"], [["nation_summary · rank · idle", str(ns.get("created") or ""), str(ns.get("version") or "")]])
                 + "<p class=src>시군구별 점유의심 면적은 집계 파일에 없음 · 노선별 표 없음(원천에 노선명 없음) · 재계산 없음</p>")
     pdf = _pdf(title, "".join(body), {})
     fn = "전국_고속국도_이지목_점유의심_요약.pdf"

@@ -117,7 +117,7 @@ async def share_history(request: Request, tenant: str | None = None, limit: int 
             "i.name AS imagery_name FROM share_history h LEFT JOIN cards c ON c.id = h.card_id "
             "LEFT JOIN imagery i ON h.kind = 'imagery' AND i.id = h.ref_id "
             "WHERE ($1::text IS NULL OR h.tenant_id = $1) ORDER BY h.at DESC, h.id DESC LIMIT " + str(limit), tenant)
-    word = {"share": "공유", "update": "판 바꿈", "unshare": "거둠", "backfill": "공유(이력 전부터)"}
+    word = {"share": "공유", "update": "버전 바꿈", "unshare": "거둠", "backfill": "공유(이력 전부터)"}
     items = []
     for r in rows:
         nm = r["card_name"] if r["kind"] == "service" else r["imagery_name"]

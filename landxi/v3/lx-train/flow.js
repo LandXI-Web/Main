@@ -425,7 +425,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     const ledger = h('select.t-input', { 'aria-label': '대장 형식' });
     /* 프로젝트 안: 이름이 '서비스 카드 발행 요청'(흐름-1 7단계) · 다음 회차(이미 카드가 있으면) = 같은 카드의 새 판 · 발행 요청은 프로젝트장 */
     const pub = project?.stages?.find((x) => x.key === 'publish') || null;
-    const mk = h('button.t-btn', { type: 'button', text: project ? (project.card ? '새 판 배포 신청' : '서비스 카드 배포 신청') : '서비스 만들기' });
+    const mk = h('button.t-btn', { type: 'button', text: project ? (project.card ? '새 버전 배포 신청' : '서비스 카드 배포 신청') : '서비스 만들기' });
     const out = h('div.tf-out');
     s5.append(h('label.t-label', { text: '서비스 이름' }), name, h('p.t-label', { text: '모델' }), h('p.tf-m', { text: model?.name || '' }),
       h('p.t-label', { text: '규칙' }), rulesEl, h('label.t-label', { text: '대장 형식' }), ledger, h('div.tf-act', {}, mk), out);

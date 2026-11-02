@@ -68,7 +68,7 @@ async function drawInfer() {
       h('label', {},
         h('input', { type: 'radio', name: 'model', value: m.id, checked: on, onchange: () => { st.model = m.id; drawModels(); drawImgs(); } }),
         h('span.rl-m-l', {}, h('b', { text: `${m.n}번째 학습` }), unitsEl('span', join(m.name, (m.classes || []).join(' · '), m.gsd_word)),
-          unitsEl('small', join(`${mdhm(m.at)} 학습`, m.status_label, m.deployed ? `${m.deployed}판에 쓰임` : '배포 전'))),
+          unitsEl('small', join(`${mdhm(m.at)} 학습`, m.status_label, m.deployed ? `버전 ${m.deployed}에 쓰임` : '배포 전'))),
         h('span.rl-acc', {}, h('em', { text: '이 프로젝트 학습 모델' }), h('b', { text: pct(m.acc) }), bar(m.acc, !on))));
     return li;
   }));
@@ -258,8 +258,8 @@ async function drawPublish() {
     /* 두 값은 서로 다른 모델일 수 있다 — 이번 판 = 이 프로젝트가 학습한 모델 · 지난 판 = 지금 공개 중인 서비스 모델. 이름표로 가른다(같은 모델이면 판 이름만) */
     const other = !!(prev && x && prev.model?.id && prev.model.id !== x.id);
     accEl.replaceChildren(
-      h('span', {}, h('em', { text: other ? '이 프로젝트 학습 모델 · 이번 판' : '이번 판' }), h('b', { text: pct(x?.acc) }), bar(x?.acc)),
-      h('span', {}, h('em', { text: prev ? `${other ? '공개 서비스 모델 · ' : ''}지난 판 ${prev.version}` : '지난 판' }), h('b', { text: prev ? pct(prev.model?.acc) : '—' }), bar(prev?.model?.acc, true)));
+      h('span', {}, h('em', { text: other ? '이 프로젝트 학습 모델 · 이번 버전' : '이번 버전' }), h('b', { text: pct(x?.acc) }), bar(x?.acc)),
+      h('span', {}, h('em', { text: prev ? `${other ? '공개 서비스 모델 · ' : ''}지난 버전 ${prev.version}` : '지난 버전' }), h('b', { text: prev ? pct(prev.model?.acc) : '—' }), bar(prev?.model?.acc, true)));
     /* 기반 · 지난 판보다 낮으면 빨간 경고 한 줄(질문 9 ⓑ) — 막지 않는다 · 관리자 신청서에도 같은 줄 */
     lowEl.textContent = x?.low ? `${x.low} — 신청은 할 수 있고, 관리자가 보고 판단합니다` : '';
     lowEl.hidden = !x?.low;
@@ -277,7 +277,7 @@ async function drawPublish() {
     j.href ? h('a.rl-link', { href: j.href, text: '결과 보기' }) : null))
     : [h('p.rl-empty', {}, h('span', { text: '이 프로젝트에서 추론한 결과가 없습니다 — ' }), h('a', { href: stageHref(PID, 'infer'), text: '추론에서 먼저 분석해 보세요' }))]));
 
-  if (d.first) row('서비스', svcName, h('small', { text: '첫 판입니다 — 승인되면 새 분석 서비스가 됩니다' }));
+  if (d.first) row('서비스', svcName, h('small', { text: '첫 버전입니다 — 승인되면 새 분석 서비스가 됩니다' }));
   else row('서비스', h('b', { text: d.service?.name || '' }), d.service?.line ? h('small', { text: d.service.line }) : null);
   /* 분야(여러 개) · 서비스 설명 · 쓸 수 있는 영상(질문 5 · 원칙 165) — 승인되면 서비스 카드 · 분석하기 거르기에 반영. 새 분야는 요청만(만드는 것은 LX 관리자) */
   const CT = d.category || { groups: [], picked: [], kinds: [], picked_kinds: [] };
@@ -354,28 +354,28 @@ async function drawPublish() {
   const lead = d.can?.lead;
   const foot = h('footer.rl-foot', {}, h('p', {}, unitsEl('span', '신청서의 값은 모두 서버 기록입니다 · 직원이 적는 것은 분야 · 설명 · 메모입니다')),
     canApply ? go : h('p.rl-note', { text: s.state === 'pending' ? 'LX 관리자가 검토 중입니다' : `배포 신청은 프로젝트장${lead ? `(${lead})` : ''}이 합니다` }));
-  const head = card('배포 신청', join(d.service?.name || svcName.value, `${ver}판`), h('p.rl-ver', { text: prev ? `지난 판 ${prev.version} · ${md(prev.approved_at)} 승인` : '첫 판입니다' }),
+  const head = card('배포 신청', join(d.service?.name || svcName.value, `버전 ${ver}`), h('p.rl-ver', { text: prev ? `지난 버전 ${prev.version} · ${md(prev.approved_at)} 승인` : '첫 버전입니다' }),
     dl, h('div.rl-step', {}, h('h3', { text: '메모' }), memo), foot, msg);
   if (!canApply) { [mSel, memo, svcName, ledger, newGrp, desc, coverBtn].forEach((x) => { x.disabled = true; }); [sceneEl, grpBox, kindBox].forEach((b) => b.querySelectorAll('input').forEach((x) => { x.disabled = true; })); }
 
   /* 오른쪽 — 신청 상태 · 지난 판 · 공유된 기관 */
   const steps = [
-    { k: 'none', t: '신청 전', s: `${ver}판 · 아직 보내지 않음` },
-    { k: 'pending', t: '검토 중', s: s.state === 'pending' ? join(`${s.version}판`, `${mdhm(s.at)} 신청`, val(s.tries) > 1 ? `${nf(val(s.tries))}번째 신청` : '') : 'LX 관리자가 신청서를 보고 판단합니다' },
-    { k: 'approved', t: '승인', s: s.state === 'approved' ? join(`${s.version}판`, `${md(s.at)} 승인`, s.by) : '분석 서비스가 되고, 관리자가 기관에 공유합니다' },
+    { k: 'none', t: '신청 전', s: `버전 ${ver} · 아직 보내지 않음` },
+    { k: 'pending', t: '검토 중', s: s.state === 'pending' ? join(`버전 ${s.version}`, `${mdhm(s.at)} 신청`, val(s.tries) > 1 ? `${nf(val(s.tries))}번째 신청` : '') : 'LX 관리자가 신청서를 보고 판단합니다' },
+    { k: 'approved', t: '승인', s: s.state === 'approved' ? join(`버전 ${s.version}`, `${md(s.at)} 승인`, s.by) : '분석 서비스가 되고, 관리자가 기관에 공유합니다' },
     { k: 'rejected', t: '거절', s: '사유를 보고 고쳐서 다시 신청합니다' },
   ];
   const flow = h('ol.rl-flow', {}, ...steps.map((x) => h('li', { dataset: { st: x.k === s.state ? 'now' : '' }, class: x.k === 'rejected' ? 'is-alt' : '' },
     h('b', { text: x.t }), unitsEl('small', x.s))));
   const rej = s.state === 'rejected' ? h('div.rl-reject', {}, h('p', {}, h('b', { text: '거절 사유 ' }), h('span', { text: s.reason || '—' })),
-    unitsEl('small', join(`${s.version}판`, s.decided_at ? `${mdhm(s.decided_at)} 거절` : ''))) : null;
+    unitsEl('small', join(`버전 ${s.version}`, s.decided_at ? `${mdhm(s.decided_at)} 거절` : ''))) : null;
   const hist = h('ul.rl-hist', {}, ...(d.versions || []).filter((v) => v.state !== 'none' || v.approved_at).map((v) => h('li', {},
     h('b', { text: v.version }), h('div', {}, unitsEl('span', join(v.state_label, md(v.state === 'approved' ? v.approved_at : v.requested_at), v.approved_by)),
       unitsEl('small', join(v.model?.name, pct(v.model?.acc), v.state === 'rejected' && v.reason ? `사유 ${v.reason}` : (v.memo || v.changelog || '')))))));
   const shared = d.shared || [];
   const right = h('div.rl-col', {},
     card('신청 상태', null, flow, rej),
-    card('지난 판', (d.versions || []).length ? `${nf((d.versions || []).length)}판` : null, (d.versions || []).length ? hist : h('p.rl-empty', { text: '첫 판입니다' })),
+    card('지난 버전', (d.versions || []).length ? `버전 ${nf((d.versions || []).length)}` : null, (d.versions || []).length ? hist : h('p.rl-empty', { text: '첫 버전입니다' })),
     card('공유된 기관', shared.length ? `${nf(shared.length)}곳` : null, shared.length ? h('ul.rl-hist.rl-hist--org', {}, ...shared.map((o) => h('li', {}, h('b', { text: o.name }),
       h('div', {}, h('span', { text: o.year ? `${o.year}년부터` : '공유 중' }))))) : h('p.rl-empty', { text: '아직 공유된 기관이 없습니다 — 승인 뒤 LX 관리자가 공유합니다' })));
   const live = d.service?.id && (d.versions || []).some((v) => v.state === 'approved');
