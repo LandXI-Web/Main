@@ -8,10 +8,11 @@ import { api } from '../kit/util.js';
 import { API } from '../../shared/api-v1.js';
 import { tilesFor } from '../../xi/engine/sources.js';
 import { farPaint } from '../../xi/fx/arrive.js';
+import { NCOLOR as NC, clsColorExpr } from '../../xi/fx/result-colors.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-export const NCOLOR = { 경작지: '#2E9E5B', 비닐하우스: '#F59F00', 건물: '#3182F6' };
+export const NCOLOR = NC;                              // 색은 xi/fx/result-colors.js 한 표(11-02 §1-A)
 /* 자산마다 보이는 분류 — 겹쳐 세지 않게 자산마다 한 분류씩(농지 = 경작지 · 비닐하우스, 하천 · 계곡 = 건물) · 합계 · 말풍선 · 말로 거르기 같은 규칙 */
 export const NCLS = { farm: ['경작지', '비닐하우스'], river: ['건물'] };
 const UNIT = { 경작지: '곳', 비닐하우스: '동', 건물: '동' };
@@ -34,13 +35,16 @@ export function createNational({ map, before = 'slot-result' }) {
   const sigQ = () => (N.sig ? `&exp=${N.sig.exp}&sig=${N.sig.sig}` : '');
   const tpl = (a, v) => `${API.base}/tiles/national/${a}/${N.year}/{z}/{x}/{y}.pbf?v=${encodeURIComponent(v || '0')}${sigQ()}${TEST ? '&test=1' : ''}`;
   const src = (a) => 'xn-' + a;
-  const clsColor = ['match', ['get', 'cls'], '경작지', NCOLOR.경작지, '비닐하우스', NCOLOR.비닐하우스, '건물', NCOLOR.건물, '#5C7CFA'];
+  const clsColor = clsColorExpr('#5C7CFA');
   /** 업무 거르기 — 자산의 분류 중 그 업무만(없으면 그 자산은 비움) */
   const want = (a) => (N.task ? NCLS[a].filter((c) => c === N.task) : NCLS[a]).filter((c) => !N.off.has(c));
   const clsFilter = (a) => ['in', ['get', 'cls'], ['literal', want(a)]];
   /** 객체 층 거르기 = 분류 + 숨긴 객체(클래스 바꿈 · 수정 — 고친 자리 층이 새 색으로 대신 그린다) */
   const objFilter = (o) => { const hid = N.hide.get(o.set); return hid?.length ? ['all', clsFilter(o.asset), ['!', ['in', FID, ['literal', hid]]]] : clsFilter(o.asset); };
 
+  /* 칸 면 진하기(11-02 §1-F): z8 0.8 → z11 0.7 → z11.8 0.55 → z12.5 0 — 필지 단계에서 1km 칸이 남지 않게. 건물 칸은 ×0.6(파란 덩어리가 물로 읽힘) */
+  const faceOpacity = () => { const k = ['case', ['==', ['get', 'cls'], '건물'], 0.6, 1]; const at = (v) => ['*', k, v];
+    return ['interpolate', ['linear'], ['zoom'], 4, at(0.8), 8, at(0.8), 11, at(0.7), 11.8, at(0.55), 12.5, 0]; };
   function addLayers() {
     const B = map.getLayer(before) ? before : undefined;
     for (const a of N.assets) {
@@ -48,7 +52,7 @@ export function createNational({ map, before = 'slot-result' }) {
       map.addSource(src(a), { type: 'vector', tiles: [tpl(a, N.v[a])], minzoom: 4, maxzoom: 10, attribution: '국토지리정보원 항공 정사영상 · AI 분석 결과' });
       // 끝난 곳 — 실제 결과 면(낮은 줌용 단순화 조각). 객체가 오는 줌에서도 아래에 남아 날아간 뒤 빈 지도가 없게
       map.addLayer({ id: src(a) + '-face', type: 'fill', source: src(a), 'source-layer': 'faces', filter: clsFilter(a),
-        paint: { 'fill-color': clsColor, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.9, 9, 0.75, 11, 0.5, 13, 0.3, 15, 0.15] } }, B);
+        paint: { 'fill-color': clsColor, 'fill-opacity': faceOpacity() } }, B);
       // 올리면 요약 — 칸 전체(보이지 않는 면 · 끝난 곳 · 분석 예정 모두)
       map.addLayer({ id: src(a) + '-hit', type: 'fill', source: src(a), 'source-layer': 'cells', maxzoom: 12.5, paint: { 'fill-color': '#000', 'fill-opacity': 0 } }, B);
     }
@@ -105,11 +109,10 @@ export function createNational({ map, before = 'slot-result' }) {
       const vis = N.hidden ? 'none' : 'visible';
       const ob = { ids: [sid + '-f', sid + '-l'], asset, set: o.set, tpl: objTpl(o), bounds: o.bounds };
       // 멀리서도 보이게(원칙 267) — 공용 그리기 규칙(arrive.js farPaint): 객체가 오는 줌(11)부터 작은 객체 2px 테두리 · 진한 채움 · 가까이(14~)는 원래 모양
-      const P = farPaint('result', { color: clsColor, fade: [OBJ_Z - 0.5, OBJ_Z + 0.5],
-        near: { fill: [14, ['case', FS_HOVER, 0.55, 0.28]], width: [15, 1.4], lineOp: [14, 0.95] } });
-      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
+      const P = farPaint('result', { color: clsColor, fade: [OBJ_Z, OBJ_Z + 1] });   // 가까이 = 분류색 면 0.50 · 흰 바깥선(§1-A) · 객체는 z11 → z12 에 켜진다(§1-F)
+      map.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': 'results', minzoom: OBJ_Z, filter: objFilter(ob), layout: { visibility: vis },
         paint: P.fill }, B);   // 올리면 떠오름(손가락 · 10-15)
-      map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z - 0.5, filter: objFilter(ob), layout: { visibility: vis },
+      map.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': 'results', minzoom: OBJ_Z, filter: objFilter(ob), layout: { visibility: vis },
         paint: P.line }, B);
       OBJ.set(sid, ob);
     }

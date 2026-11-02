@@ -9,6 +9,7 @@ import { D, EASE, textIn } from './glass.js';
 import { numHtml } from './provenance.js';
 import { env } from '../../shared/api-v1.js';
 import { registerResult } from './result-filter.js';
+import { clsColorExpr, DASH_CLS } from './result-colors.js';
 
 export const TEAL = '#0FA9A0', TEAL_DEEP = '#07706A', INK = '#010102', SLATE = '#8F99A8';
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
@@ -48,15 +49,18 @@ export function farPaint(kind, o = {}) {
   const c = o.color;
   const lc = kind === 'landcover';
   const deep = kind === 'greenhouse';
-  const fillOp = lc ? ['match', ['get', 'cls'], '건물', 0.35, '주차장', 0.3, '비닐하우스', 0.42, 0.18] : deep ? 0.42 : 0.18;
+  const res = kind === 'result';                       // 11-02 §1-A: 결과는 분류색 면(result-colors.js 한 표) · 한 색(o.color)을 주면 그 색
+  const cls = clsColorExpr('#15C39A', { suspect: !!o.suspect });
+  const fillOp = lc ? ['match', ['get', 'cls'], '건물', 0.35, '주차장', 0.3, '비닐하우스', 0.42, 0.18] : deep ? 0.42 : res ? bySize(0.65, 0.6) : 0.18;
   const nearDef = lc
     ? { fill: [14, hov(0.42, fillOp), 16, hov(0.42, ['*', 0.45, fillOp])], width: [14.5, 1.2, 17, 1.6], lineOp: [14, 1, 16, 0.5],
         haloW: [14, 4], haloOp: [14.5, 1, 15.5, 0] }
+    : res ? { fill: [14, hov(0.8, fillOp)], width: [15, bySize(1.6, 1.4), 18, bySize(2, 1.8)], lineOp: [14, 1], haloW: [14, bySize(3, 2.4), 15, bySize(3, 2.4)], haloOp: [14, 1] }
     : { fill: [14, hov(0.42, fillOp)], width: [15, 1.2, 18, 1.8], lineOp: [14, 1], haloW: [14, 3, 15, 4], haloOp: [14, 1] };
   const N = { ...nearDef, ...(o.near || {}) };
-  const fillColor = c || (lc ? ['match', ['get', 'cls'], '경작지', TEAL, '비닐하우스', TEAL_DEEP, '건물', INK, '주차장', SLATE, TEAL] : deep ? TEAL_DEEP : TEAL);
-  const lineColor = c || (lc ? ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.5)', '주차장', SLATE, '비닐하우스', TEAL, TEAL] : deep ? TEAL_DEEP : TEAL);
-  const haloNear = o.haloColor || (lc ? ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.18)', '주차장', 'rgba(143,153,168,.25)', 'rgba(15,169,160,.25)'] : 'rgba(15,169,160,.25)');
+  const fillColor = c || ((lc || res) ? cls : deep ? TEAL_DEEP : TEAL);
+  const lineColor = c || ((lc || res) ? cls : deep ? TEAL_DEEP : TEAL);
+  const haloNear = o.haloColor || (res ? 'rgba(255,255,255,.95)' : lc ? ['match', ['get', 'cls'], '건물', 'rgba(1,1,2,.18)', '주차장', 'rgba(143,153,168,.25)', 'rgba(15,169,160,.25)'] : 'rgba(15,169,160,.25)');
   const F = { fade: o.fade };
   return {
     fill: { 'fill-color': fillColor, 'fill-opacity': farZoom(FAR.fill, N.fill, { ...F, hover: 0.9 }) },
@@ -69,26 +73,37 @@ export function farPaint(kind, o = {}) {
 }
 /** 결과 층 스타일(역할색 · 청록 = AI 결과 · 앰버 없음). kind: 'landcover' | 'farmland' | 'greenhouse' | 'change' | 'shard'
     멀리서도 보이게(원칙 267) — farPaint(위) 한 규칙. 가까이(줌 14.5~)는 원래 모양(법전 값 .18 · 1.2px + 4px 헤일로) 그대로. */
-export function resultPaint(kind) {
+export function resultPaint(kind, o = {}) {
   if (kind === 'change') return { line: { 'line-color': '#FFFFFF', 'line-width': 1.2, 'line-dasharray': [2, 1.5] }, halo: { 'line-color': 'rgba(1,1,2,.28)', 'line-width': 3 } };
-  return farPaint(kind);
+  return farPaint(kind, o);
 }
 /** 결과 층 셋(fill · halo · line)을 한 지도에 올린다. 반환 층 id 목록. */
-export function addResultLayers(map, key, source, { kind, sourceLayer, before = 'slot-result', visible = true, filter } = {}) {
-  const P = resultPaint(kind), ids = [];
+export function addResultLayers(map, key, source, { kind, sourceLayer, before = 'slot-result', visible = true, filter, suspect = false, farm = false } = {}) {
+  const P = resultPaint(kind, { suspect }), ids = [];
   const base = { source, ...(sourceLayer ? { 'source-layer': sourceLayer } : {}), ...(filter ? { filter } : {}) };
   const vis = { visibility: visible ? 'visible' : 'none' };
   if (P.fill) { map.addLayer({ id: `${key}-fill`, type: 'fill', ...base, layout: vis, paint: P.fill }, before); ids.push(`${key}-fill`); }
   if (P.halo) { map.addLayer({ id: `${key}-halo`, type: 'line', ...base, layout: { ...vis, 'line-join': 'miter' }, paint: P.halo }, before); ids.push(`${key}-halo`); }
-  if (P.line && kind === 'farmland') {
+  if (P.line && (kind === 'farmland' || farm)) {
     // 비경작지 = 점선(E0-S isDashCls) — line-dasharray 는 데이터 식을 받지 않으므로 층을 나눈다
     const f = (c) => (filter ? ['all', filter, c] : c);
-    map.addLayer({ id: `${key}-line`, type: 'line', ...base, filter: f(['!=', ['get', 'cls'], '비경작지']), layout: { ...vis, 'line-join': 'miter' }, paint: P.line }, before);
-    map.addLayer({ id: `${key}-dash`, type: 'line', ...base, filter: f(['==', ['get', 'cls'], '비경작지']), layout: { ...vis, 'line-join': 'miter' }, paint: { ...P.line, 'line-dasharray': [3, 2] } }, before);
+    map.addLayer({ id: `${key}-line`, type: 'line', ...base, filter: f(['!', ['in', ['to-string', ['coalesce', ['get', 'cls'], '']], ['literal', DASH_CLS]]]), layout: { ...vis, 'line-join': 'miter' }, paint: P.line }, before);
+    map.addLayer({ id: `${key}-dash`, type: 'line', ...base, filter: f(['in', ['to-string', ['coalesce', ['get', 'cls'], '']], ['literal', DASH_CLS]]), layout: { ...vis, 'line-join': 'miter' }, paint: { ...P.line, 'line-dasharray': [3, 2] } }, before);
     ids.push(`${key}-line`, `${key}-dash`);
   } else if (P.line) { map.addLayer({ id: `${key}-line`, type: 'line', ...base, layout: { ...vis, 'line-join': 'miter' }, paint: P.line }, before); ids.push(`${key}-line`); }
   registerResult(map, ids);          // 말로 거르기(result-filter.js) — 원래 거르기를 기억하고 지금 조건이 있으면 새 층에도 건다
   return ids;
+}
+
+/** 점 결과(해양쓰레기 등 · 면 층에 그려지지 않는 것) — 분류색 원 + 아래 부드러운 빛 한 겹(11-02 §1-B). 반환 층 id [-pt-glow, -pt] */
+export function addPointLayers(map, key, source, { sourceLayer, filter, color, suspect = false, before = 'slot-result', visible = false } = {}) {
+  const f = filter ? ['all', ['==', ['geometry-type'], 'Point'], filter] : ['==', ['geometry-type'], 'Point'];
+  const base = { source, ...(sourceLayer ? { 'source-layer': sourceLayer } : {}), filter: f, layout: { visibility: visible ? 'visible' : 'none' } };
+  const col = clsColorExpr(color || '#0FA9A0', { suspect });
+  const R = (a, b, c2) => ['interpolate', ['linear'], ['zoom'], 9, a, 14, b, 17, c2];
+  map.addLayer({ id: `${key}-pt-glow`, type: 'circle', ...base, paint: { 'circle-color': col, 'circle-radius': R(6.6, 13.2, 19.8), 'circle-blur': 1, 'circle-opacity': 0.35 } }, before);
+  map.addLayer({ id: `${key}-pt`, type: 'circle', ...base, paint: { 'circle-color': col, 'circle-radius': R(3, 6, 9), 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 2 } }, before);
+  return [`${key}-pt-glow`, `${key}-pt`];
 }
 
 export { filterResults, resultFilter, matchCond, onlyFilter } from './result-filter.js';

@@ -324,7 +324,7 @@ function create(opts) {
       root.dataset.dock = 'bottom'; root.dataset.fold = '1';
       if (cfg.dockHost && root.parentElement !== cfg.dockHost) cfg.dockHost.append(root);
       box.hidden = false; tag.hidden = true;
-      input.placeholder = cfg.ph || S.title; input.setAttribute('aria-label', cfg.ph || S.title);
+      input.placeholder = cfg.ph ?? S.title; input.setAttribute('aria-label', cfg.ph || S.title);
       input.addEventListener('focus', () => { if (root.dataset.dock) delete root.dataset.fold; });
     } else {
       delete root.dataset.dock; delete root.dataset.fold;

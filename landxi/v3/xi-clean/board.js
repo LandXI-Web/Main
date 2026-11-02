@@ -6,7 +6,8 @@
 import { api } from '../kit/util.js';
 import { sourceSpec, tilesFor } from '../../xi/engine/sources.js';
 import { API, signSet } from '../../shared/api-v1.js';
-import { addResultLayers, farPaint, FAR_MIN_Z, onlyFilter } from '../../xi/fx/arrive.js';
+import { addResultLayers, addPointLayers, farPaint, FAR_MIN_Z, onlyFilter } from '../../xi/fx/arrive.js';
+import { NAMED_COLOR, clsColorExpr, isFarmSet } from '../../xi/fx/result-colors.js';
 import { createNational, nationalPromise, NCOLOR, NCLS } from './national.js';
 
 const nf = (n) => Number(n).toLocaleString('ko-KR');
@@ -17,10 +18,10 @@ export const TASK_OF = { '경작·휴경': '경작지', 경작: '경작지', 건
 export const taskOf = (n) => TASK_OF[n] || n;
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* 서비스 색 — 화면 색일 뿐(자료 아님). 이름이 표에 없으면 남는 색을 차례로 */
-const NAMED = { '경작·휴경': '#2E9E5B', 비닐하우스: '#F59F00', 건축물: '#3182F6', 주차장: '#8B5CF6', 곤포사일리지: '#B07A3A', 해양쓰레기: '#0FA9A0', 토지피복: '#5C8DA8' };
+const NAMED = NAMED_COLOR;                              // 색은 xi/fx/result-colors.js 한 표(11-02 §1-A)
 const SPARE = ['#E8590C', '#D6336C', '#1098AD', '#5C7CFA', '#74B816', '#AE3EC9'];
 /* 객체(서비스 결과 조각)는 칸 지도가 걷히는 9.5 부터 10 까지 서서히 진해진다(원칙 267 — 멀리서도 객체 · 전에는 10 ~ 11.4) */
-const FADE = { o0: 9.5, o1: 10 };
+const FADE = { o0: 11, o1: 12 };                          // 11-02 §1-F: 시군구 단계(9.6~)의 색종이를 걷고 객체는 z11 → z12 에 켜진다(칸 면은 z12.5 에 0)
 const FS_HOVER = ['boolean', ['feature-state', 'hover'], false];
 
 /* 결과 지도 조각 — 서버가 조각 하나를 한 요청으로(GET /tiles/mvt/{set}/{z}/{x}/{y}.pbf?v=판) 내준다. 판 = 결과 파일 지문(board 가 줌) —
@@ -60,25 +61,27 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
   const val = (e) => (e && typeof e === 'object' ? e.value : e) ?? 0;
 
   /* ── 객체 — 밀도와 같은 서비스 색 · 줌에 따라 서서히 진해짐 ── */
-  function objectPaint(ids, c, landcover) {
+  function objectPaint(ids, c, landcover, farm) {
     const set = (id, k, v) => { if (map.getLayer(id)) map.setPaintProperty(id, k, v); };
-    // 멀리서도 보이게(원칙 267) — 공용 그리기 규칙(arrive.js farPaint) · 색은 밀도와 같은 서비스 색 · 칸 지도(줌 9.6 까지)에서 객체로 바로 넘어온다
+    // 멀리서도 보이게(원칙 267) · 분류색 면(11-02 §1-A) — 공용 그리기 규칙(arrive.js farPaint) · cls 가 없는 결과는 서비스 색 c
     // 가까이(줌 14~)는 원래 모양: 토지피복은 분류마다 진하기만 다르게(넓은 경작지 면이 지도를 덮지 않게)
     const base = landcover ? ['match', ['get', 'cls'], '건물', 0.42, '비닐하우스', 0.42, '주차장', 0.3, 0.09] : 0.34;
     const lo = landcover ? ['match', ['get', 'cls'], '경작지', 0.22, 0.85] : 0.95;
-    const P = farPaint(landcover ? 'landcover' : 'result', { color: c, haloColor: rgba(c, 0.28), fade: [FADE.o0, FADE.o1],
-      near: { fill: [15, ['case', FS_HOVER, 0.5, base], 17, ['case', FS_HOVER, 0.5, ['*', 0.6, base]]], lineOp: [14, lo, 16, ['*', 0.85, lo]], haloOp: [14, 0.9, 15, 0.6] } });
+    const col = clsColorExpr(c, { suspect: farm });
+    const P = farPaint(landcover ? 'landcover' : 'result', { color: col, fade: [FADE.o0, FADE.o1],
+      ...(landcover ? { haloColor: rgba(c, 0.28), near: { fill: [15, ['case', FS_HOVER, 0.5, base], 17, ['case', FS_HOVER, 0.5, ['*', 0.6, base]]], lineOp: [14, lo, 16, ['*', 0.85, lo]], haloOp: [14, 0.9, 15, 0.6] } } : {}) });
     for (const id of ids) {
       if (id.endsWith('-fill')) {
-        set(id, 'fill-color', c);
+        set(id, 'fill-color', col);
         set(id, 'fill-opacity', P.fill['fill-opacity']);
       } else if (id.endsWith('-halo')) {
         for (const [k, v] of Object.entries(P.halo)) set(id, k, v);
-      } else if (id.endsWith('-pt')) {
-        set(id, 'circle-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, 1]);
-        set(id, 'circle-stroke-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, 1]);
+      } else if (id.endsWith('-pt') || id.endsWith('-pt-glow')) {
+        const top = id.endsWith('-pt-glow') ? 0.35 : 1;
+        set(id, 'circle-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, top]);
+        if (id.endsWith('-pt')) set(id, 'circle-stroke-opacity', ['interpolate', ['linear'], ['zoom'], FADE.o0 - 1, 0, FADE.o1, 1]);
       } else {
-        set(id, 'line-color', c);
+        set(id, 'line-color', col);
         set(id, 'line-width', P.line['line-width']);
         set(id, 'line-opacity', P.line['line-opacity']);
       }
@@ -110,11 +113,10 @@ export function createBoard({ map, host, h, regionOf, onSets, onLoad, onFly, sgg
       map.addSource(id, spec);
       const c = B.color[it.svc] || '#0FA9A0', lc = it.style === 'landcover';
       const only = onlyFilter(L.only_cls);                // 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
-      const ids = addResultLayers(map, id, id, { kind: lc ? 'landcover' : 'result', sourceLayer: L.layer, visible: false, filter: only });
-      map.addLayer({ id: id + '-pt', type: 'circle', source: id, 'source-layer': L.layer, filter: only ? ['all', ['==', ['geometry-type'], 'Point'], only] : ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
-        paint: { 'circle-color': c, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1 } }, 'slot-result');
-      ids.push(id + '-pt');
-      objectPaint(ids, c, lc);
+      const farm = isFarmSet({ name: it.name, style: it.style });
+      const ids = addResultLayers(map, id, id, { kind: lc ? 'landcover' : 'result', sourceLayer: L.layer, visible: false, filter: only, suspect: farm, farm });
+      ids.push(...addPointLayers(map, id, id, { sourceLayer: L.layer, filter: only, color: c, suspect: farm }));
+      objectPaint(ids, c, lc, farm);
       B.loaded.set(id, { id, sid: id, ids, set: L.set, svc: it.svc, sgg: r.sgg_cd, region: r.name, name: { ko: `${r.name} ${it.name}` }, item: it, tpl: spec.tiles?.[0] || null, bounds: L.bounds });
       added = true;
     }

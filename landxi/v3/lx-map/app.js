@@ -11,6 +11,7 @@ import { staffMenu } from '../kit/lx-menu.js';
 import { createStage } from '../kit/stage.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis, filterResults, matchCond } from '../../xi/fx/arrive.js';
+import { CLS_COLOR as RESULT_COLOR } from '../../xi/fx/result-colors.js';
 import { excludeClasses } from '../../xi/fx/result-filter.js';
 import { colors, colorState, paintLayers, dotStyle, rampColors } from '../kit/colors.js';
 if (!document.querySelector('link[data-rg-opt]')) document.head.append(h('link', { rel: 'stylesheet', href: new URL('../kit/range-option.css', import.meta.url).href, dataset: { rgOpt: '1' } }));   // 구간 한 줄(10-24)
@@ -27,7 +28,7 @@ const nf = (v) => Number(v).toLocaleString('ko-KR');
 const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const day = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
 /* 결과 색 = 결과 층 모양(arrive.js resultPaint 'landcover')과 같은 값 — 범례가 지도와 어긋나지 않게 */
-const CLS_COLOR = { 경작지: '#0FA9A0', 비닐하우스: '#07706A', 건물: '#010102', 주차장: '#8F99A8',
+const CLS_COLOR = { ...RESULT_COLOR,   // 분류색 = xi/fx/result-colors.js 한 표(11-02) — 지도 층(arrive.js)과 같은 값
   // 두 시기 비교(사료작물 생육기 ↔ 생산기 · 10-25 원칙 337 — 카드에서 옮겨 온 결과 층) · 카드 비교 칸과 같은 색
   '같은 작물': '#0FA9A0', '작물 바뀜': '#FFB633', '수확·곤포 확인': '#006DF7', '생산기에 없음': '#F04452', '생산기에만 있음': '#727780' };
 const LXMAP_Z = 18, CAD_Z = 17;

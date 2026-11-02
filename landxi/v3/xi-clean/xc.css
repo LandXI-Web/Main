@@ -670,3 +670,11 @@ button.xe-pcl:hover,button.xe-pcl:focus-visible{color:var(--accent,#3182F6)}
 }
 .k-main.xc-measuring :is(.xs-c-bub,.xo-mk,.xb-pin,.xb-tipcard,.xc-ovl,.xk-hl-pop){display:none!important}
 @media (max-width:640px){ .k-main.xc-measuring .k-chat-root[data-dock] :is(.xk-ans,.k-chat-sugg,.k-chat-dlog){display:none!important} }   /* 휴대폰 재기 판 = 입력 줄 위 한 자리(답 띠는 재기를 닫으면 다시) */
+
+/* 지도 왼쪽 아래 범례 한 줄(11-02 §1-F) — 카드 아님: 흰 90% · 라운드 8 · 높이 36 */
+.xc-legend{position:absolute;left:16px;bottom:84px;max-width:calc(100% - 140px);overflow:hidden;z-index:3;display:flex;gap:14px;align-items:center;height:36px;padding:0 14px;border-radius:8px;background:rgba(255,255,255,.9);font-size:14px;color:var(--ink);pointer-events:none;white-space:nowrap}
+.xc-legend[hidden]{display:none}
+.xc-legend span{display:inline-flex;align-items:center;gap:6px}
+.xc-legend i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(1,1,2,.15)}
+.xc-legend em{font-style:normal;color:var(--sub)}
+.xc-row--cls em.num{margin-left:auto;font-style:normal;color:var(--sub);font-size:14px}

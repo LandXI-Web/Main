@@ -10,7 +10,7 @@ import * as K from '../kit/index.js';
 import { api, session } from '../kit/util.js';
 import { sse, API, tileUrl } from '../../shared/api-v1.js';
 import { sourceSpec, EXT_OK, warmPm } from '../../xi/engine/sources.js';
-import { addResultLayers, setVis, TEAL, TEAL_DEEP, INK, SLATE } from '../../xi/fx/arrive.js';
+import { addResultLayers, addPointLayers, setVis, TEAL, TEAL_DEEP, INK, SLATE } from '../../xi/fx/arrive.js';
 import { excludeClasses, hideResults, onlyFilter, resultFilter, filterResults } from '../../xi/fx/result-filter.js';   // 클래스 켜기/끄기 · 고친 자리가 대신 그리는 원래 객체 숨김(10-15)
 import { analyzer } from './analyze.js';
 import { mountNation } from './nation.js';   // 사업 나라 고르기 · 해외 장면(바퀴 4 · XI맵-해외)
@@ -20,6 +20,7 @@ import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX
 import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
 import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';   // 열자마자 서버에 있는 모든 결과(10-14 XI맵 3차 구조 · 원칙 229 · 237)
 import { NCLS, NCOLOR } from './national.js';                    // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게) · 분류 색
+import { isFarmSet, CLS_COLOR } from '../../xi/fx/result-colors.js';
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 import { createDash, setUserColors } from './dash.js';
 import { colors as colorPanel, colorState, paintLayers, RAMPS } from '../kit/colors.js';   // 색 바꾸기(원칙 264 · 지도 서비스와 같은 공용 칸)                           // 융합 대시보드(10-14 11:02 · 원칙 241 · 245 — XI ChatGEO 대시보드 도구가 준 사양을 그린다)
@@ -302,7 +303,7 @@ async function boot() {
     sets: (S.res || []).filter((it) => it.set && aiOn() && S.resOn[it.id]).map((it) => it.set), cls_off: [...S.clsOff],
       ...(NAT && NAT.id !== 'kr' ? { country: NAT.id === 'kg' ? 'Kyrgyzstan' : NAT.id, district: NAT.sel || null } : {}) }),   // 해외(나라 바꿈)면 나라 · 고른 군 — XI ChatGEO 가 해외 결과 도구로 답한다(원칙 260 · 국내 서비스 요약으로 새던 것 · 바퀴 16 재검수)   // cls_off = 끈 클래스 → XI ChatGEO 통계도 빼고 셈(10-15)
     // XI ChatGEO 채팅 창 = 지도 아래 가운데(10-14 원칙 244 — 3차 시안 자리 그대로 · 오른쪽 칸 없음). 추천 질문 = 지금 지역에 맞춘 셋
-    dock: 'bottom', dockHost: mainEl, sugg: xiSugg, pre: placeQuery, ph: '시군구 · 지번 또는 질문' });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193) · pre = 시군구 · 지번이면 바로 이동(원칙 276)
+    dock: 'bottom', dockHost: mainEl, sugg: xiSugg, pre: placeQuery, ph: '' });   // sets = 켜진 결과 레이어(말로 거르기 · 보고서 — 원칙 193) · pre = 시군구 · 지번이면 바로 이동(원칙 276)
   if (CMP) ensureB().catch(() => {});                  // 시점 비교 — 왼쪽 지도를 결과 층 · 지역 도착과 함께 세운다(도착 뒤 차례로 세우면 그만큼 늦다)
   if (S.board) DS = createDash({ map, stage, host: mainEl, h,
     sggFC: () => ({ type: 'FeatureCollection', features: S.regions.filter((r) => r.geometry).map((r) => ({ type: 'Feature', geometry: r.geometry, properties: { code: r.code, codes: codesOf(r).join(','), name: r.name } })) }),
@@ -688,11 +689,10 @@ async function addResultList(items, my) {
     if (my !== rdSeq) return;
     map.addSource(sid, spec);
     const only = onlyFilter(it.only_cls);                 // 서비스 분류만 보이는 결과(옛 판으로 되돌린 결과 등)
-    const ids = addResultLayers(map, sid, sid, { kind: it.style === 'landcover' ? 'landcover' : 'result', sourceLayer: it.layer, visible: false, filter: only });
-    // 점 결과(해양쓰레기 등 · 면 층에 그려지지 않는 것)
-    map.addLayer({ id: sid + '-pt', type: 'circle', source: sid, 'source-layer': it.layer, filter: only ? ['all', ['==', ['geometry-type'], 'Point'], only] : ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none' },
-      paint: { 'circle-color': '#0FA9A0', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1 } }, 'slot-result');
-    ids.push(sid + '-pt');
+    const farm = isFarmSet(it);                              // 경작·휴경 세트: 분류색 + 건물 · 주차장 = 전용 의심 · 휴경 점선(11-02 §1-A)
+    const ids = addResultLayers(map, sid, sid, { kind: it.style === 'landcover' ? 'landcover' : 'result', sourceLayer: it.layer, visible: false, filter: only, suspect: farm, farm });
+    // 점 결과(해양쓰레기 등 · 면 층에 그려지지 않는 것) — 분류색 원 + 빛 한 겹(§1-B)
+    ids.push(...addPointLayers(map, sid, sid, { sourceLayer: it.layer, filter: only, suspect: farm }));
     out.push({ ...it, sid, ids });
     if (!(it.id in S.resOn)) S.resOn[it.id] = true;
   }
@@ -724,7 +724,8 @@ async function setRegion(r, { first = false, to = null, soft = false, keepDrawer
   const g = r?.geometry || all;                      // 기관 '전체' = 관할 시군구 전부의 경계
   const polys = g ? (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) : [];
   const cw = (ring) => { let a = 0; for (let i = 0; i < ring.length - 1; i++) a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return a < 0 ? ring : [...ring].reverse(); };
-  map.getSource('xc-rmask')?.setData(g && !soft && !S.board ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
+  if (map.getLayer('xc-rmask')) map.setPaintProperty('xc-rmask', 'fill-opacity', S.board ? 0.3 : 0.4);   // 전국 판: 고른 시군구 밖 옅은 베일 0.3(11-02 §1-F)
+  map.getSource('xc-rmask')?.setData(g && !soft ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
   map.getSource('xc-rline')?.setData(g ? { type: 'Feature', properties: {}, geometry: g } : { type: 'FeatureCollection', features: [] });
   S.els.hud.hidden = S.outside || !!GB?.data;
   patchRail();
@@ -995,6 +996,7 @@ function mountBoard() {
     pickObject(hs, e.lngLat);
   });
   // 전국 결과의 고친 자리(줌 11+) — 화면 범위로(묶음이 많아 범위로 묻는다)
+  map.on('moveend', paintLegend);                  // 범례 한 줄 — 보이는 분류가 바뀌면 새로(11-02)
   map.on('moveend', () => {
     if (!S.board) return;
     const on = map.getZoom() >= BD.nat.OBJ_Z - 0.5 && BD.nat.assets.length;
@@ -1072,6 +1074,27 @@ function boardTotal(task = null) {
 }
 /** 전국 분석 수 — 같은 업무의 서비스 결과가 덮은 읍면동을 뺀 수(서버 net · 겹친 곳 한 번) · 없으면 찾은 수 그대로 */
 function natN(c) { return c?.net ? ev(c.net) : ev(c?.n); }
+/** 분류별 건수(11-02 §1-C) — 지금 받은 응답에 있을 때만: 전국 분석 진행 장부 counts · 서비스 결과 항목의 counts. 없으면 null(건수 없이 색 · 이름만) */
+function clsCount(c) {
+  let n = 0, got = false;
+  for (const [a, A] of Object.entries(BD?.nat?.data?.assets || {})) { if (A.on === false || !(NCLS[a] || []).includes(c)) continue; const v = natN(A.counts?.[c]); if (v > 0) { n += v; got = true; } }
+  for (const it of S.res || []) { const v = it.counts?.[c]; const x = v && typeof v === 'object' ? ev(v) : v; if (x > 0 && S.resOn[it.id]) { n += +x; got = true; } }
+  return got ? n : null;
+}
+/** 지도 왼쪽 아래 범례 한 줄(11-02 §1-F) — 색 점 + 이름(+건수) · 켜진 분류만 · 'AI 분석' 끄면 없음 */
+let LEG = null, LEGT = 0, LEGKEY = '';
+function paintLegend() {
+  clearTimeout(LEGT);
+  LEGT = setTimeout(() => {
+    if (!mainEl) return;
+    const cls = S.board && aiOn() ? visibleClasses().filter((c) => !S.clsOff.has(c)) : [];
+    const key = cls.map((c) => `${c}:${clsCount(c)}:${userCol(c) || baseCol(c)}`).join('|');
+    if (!LEG) { LEG = h('div.xc-legend', { 'aria-label': '범례', hidden: true }); mainEl.append(LEG); }
+    if (key === LEGKEY) return;
+    LEGKEY = key; LEG.hidden = !cls.length;
+    LEG.replaceChildren(...cls.slice(0, 6).map((c) => { const n = clsCount(c); return h('span', {}, h('i', { style: { background: userCol(c) || baseCol(c) } }), clsName(c), ...(n ? [h('em.num', { text: nf(n) })] : [])); }));
+  }, 250);
+}
 /* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237 → 10-17 원칙 271) — 흰 글씨 한 줄 'OO 시군구 · OO 서비스 제공중'.
    시군구 = 지금 지도에 보이는, 결과가 있는 시군구 수(서비스 결과 장부 /ximap/board 의 regions · 지도 범위와 겹치는 것 · 아무것도 안 보이면 전국 전체) ·
    서비스 = 그 시군구들에 제공 중인 서비스 가짓수(장부의 서비스 · 전역 분석은 세지 않음 — 메인 '서비스 n가지'와 같은 셈). 시군구로 들어가면 그 이름 · 그곳 서비스 수.
@@ -1536,7 +1559,7 @@ function pinCell(p, at) {
 /* ═══ 객체 위 마우스 · 겹침 · 클래스 색 · 클래스 켜기/끄기(10-15 사용자 "객체랑 객체 아닌거랑 마우스 모습도 달라야겠다 … 겹친것들은 … 색상은 그대로네 … 체크박스 클래스 온오프도 없네") ═══
    누를 수 있는 객체 위 = 손가락 · 빈 지도 = 지도 기본(끌기). 올리면 맨 위 하나만 떠오르고(feature-state hover) 둘 이상이면 '겹침 n' 작은 표시.
    누르면 하나 = 바로 그 자리 고치기 · 둘 이상 = 작은 고르기 목록. 서비스 결과 · 전국 결과 · 고친 자리 층 모두 같은 길. */
-const LC_COL = { 경작지: TEAL, 비닐하우스: TEAL_DEEP, 건물: INK, 주차장: SLATE };   // 토지피복 결과 층의 분류 색(arrive.js resultPaint 와 같은 값)
+const LC_COL = CLS_COLOR;   // 토지피복 결과 층의 분류 색 — 지도 색과 한 표(xi/fx/result-colors.js · 11-02)
 /** 그 묶음 결과 층의 색 규칙으로 클래스 색 — 전국 결과 = 분류 색 · 토지피복 = 토지피복 팔레트 · 그 밖 = 업무 색(바꾼 것이 눈에 보이게) */
 /** 고친 자리 층의 묶음 이름(서버는 작업 id 로 줄 수 있다 · 'results/lx/job_…' 와 'job_…' 는 같은 묶음) → 화면의 서비스 결과 세트 · 전국 결과 묶음 */
 const sameSet = (a, b) => !!a && !!b && (a === b || a.endsWith('/' + b) || b.endsWith('/' + a));
@@ -1631,7 +1654,7 @@ function userCol(c) {
   return null;
 }
 /** 클래스 원래 색(체크박스 줄 점 · 색 칸 '기본') — 전국 결과 분류 색 · 그 밖 업무 색 */
-const baseCol = (c) => NCOLOR[c] || BD?.baseColorOf?.(clsName(c)) || BD?.baseColorOf?.(c) || '#0FA9A0';
+const baseCol = (c) => NCOLOR[c] || CLS_COLOR[c] || BD?.baseColorOf?.(clsName(c)) || BD?.baseColorOf?.(c) || '#0FA9A0';
 /** 색을 입힐 결과 층 — 서비스 결과(면 · 테두리 · 점) · 전국 결과 면 · 전국 결과 객체 */
 function colorLayerIds() {
   const ids = [];
@@ -1854,7 +1877,7 @@ addEventListener('resize', () => alignChips());
 /* ═══ 검색 하나: 시군구 · 읍면동 · 지번 · 문장 ═══ */
 let searchInput, sugg, sel = -1, opts = [];
 function buildSearch() {
-  searchInput = h('input.xc-q-i', { type: 'search', placeholder: '시군구 · 지번 · 또는 XI ChatGEO 에 질문', 'aria-label': '시군구 · 지번 · 또는 XI ChatGEO 에 질문', autocomplete: 'off', spellcheck: 'false', role: 'combobox', 'aria-expanded': 'false', 'aria-autocomplete': 'list' });
+  searchInput = h('input.xc-q-i', { type: 'search', placeholder: '', 'aria-label': '시군구 · 지번 · 또는 XI ChatGEO 에 질문', autocomplete: 'off', spellcheck: 'false', role: 'combobox', 'aria-expanded': 'false', 'aria-autocomplete': 'list' });
   sugg = h('ul.xc-sugg', { role: 'listbox', hidden: true });
   const box = h('div.xc-q', { role: 'search' }, h('span.xc-q-ico', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>' }), searchInput, h('kbd.xc-q-k', { text: 'Ctrl K', 'aria-hidden': 'true' }), sugg);
   let t = 0;
@@ -2313,8 +2336,11 @@ function layoutNow() {
   }
   setVar('--xc-cb', lift + 'px');
   const iv = obs;
-  const cw = Math.max(280, Math.min(680, g[1] - g[0] - 16));
-  const cl = Math.min(Math.max((g[0] + g[1]) / 2, 16 + cw / 2), W - 16 - cw / 2);
+  /* 11-02 PM "오른쪽으로 살짝 기울어져" — 창 가운데에 맞춘다. 양쪽 빈 자리가 420 아래면 예전처럼 가장 넓은 틈 가운데 */
+  const mid = innerWidth / 2 - mainEl.getBoundingClientRect().left, room = 2 * (Math.min(mid - g[0], g[1] - mid) - 8);
+  const centered = room >= 420;
+  const cw = centered ? Math.min(680, room) : Math.max(280, Math.min(680, g[1] - g[0] - 16));
+  const cl = centered ? mid : Math.min(Math.max((g[0] + g[1]) / 2, 16 + cw / 2), W - 16 - cw / 2);
   setVar('--xc-cl', Math.round(cl) + 'px'); setVar('--xc-cw', Math.round(cw) + 'px');
   X.layout = { tb: Math.round(tb), xr: Math.round(xr), cl: Math.round(cl), cw: Math.round(cw), open, obstacles: iv.length };
   if (LVC) { LVC = false; mainEl.dispatchEvent(new CustomEvent('xc:layout', { detail: X.layout })); }   // 자리가 실제로 바뀐 때만 — 지도 위 꼬리표가 새 배치를 피해 다시 자리 잡게(onmap.js)
@@ -2565,7 +2591,7 @@ function renderLayers() {
   const cls = S.board && aiOn() ? visibleClasses() : [];
   const clsRows = cls.map((c) => h('div.xc-clsr', {}, h('button.xc-row.xc-row--cls', { type: 'button', role: 'checkbox', 'aria-checked': String(!S.clsOff.has(c)), 'data-cls': c,
     onclick: () => { if (S.clsOff.has(c)) S.clsOff.delete(c); else S.clsOff.add(c); applyClsOff(); renderLayers(); } },
-  h('i.xc-cb'), h('i.xc-dot', { 'aria-hidden': 'true' }), h('span', { text: clsName(c) })),
+  h('i.xc-cb'), h('i.xc-dot', { 'aria-hidden': 'true' }), h('span', { text: clsName(c) }), ...(clsCount(c) ? [h('em.num', { text: nf(clsCount(c)) })] : [])),
   h('button.xc-cdot', { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-label': `${clsName(c)} 색`, title: '색', dataset: { cls: c }, onclick: (e) => openClsColors(e.currentTarget, c) },
     h('i', { style: { background: userCol(c) || baseCol(c) } }))));
   // 지적(LX맵 편집지적도 · 10-15 원칙 266) — 클래스 체크박스 옆 한 줄 · 기본 꺼짐 · 보이지 않는 축척이면 체크박스만 흐리게
@@ -2604,7 +2630,13 @@ function natYearRows() {
 /** AI 분석 층이 지도에 그려지는가 — 글(요약 GET /summary)과 같은 출처(고침-XI맵글): 요약에 결과가 없는 지역은 사용자가 직접 켜기 전엔 그리지 않는다.
     (층 목록은 카탈로그 · 전역 분석 작업까지 보지만 요약은 배포본 결과만 센다 — 글은 '결과 없음'인데 지도엔 층이 그려지던 어긋남의 원인) */
 const aiOn = () => !!S.layers.ai && (S.board || S.aiUser || S.aiHas === true || S.aiHas === null);   // 전국 결과(바퀴 5) = 결과 층은 전국 결과 장부 그대로   // undefined = 요약 조회 중(그리지 않고 기다림) · null = 요약 조회 실패(층은 그대로)
+/** 'AI 분석' 층이 켜진 동안 바탕 영상 채도를 낮춰 결과 색이 먼저 읽히게(11-02 §1-A) — 끄면 원래 채도 */
+function dimImagery() {
+  const sat = aiOn() && ((S.res || []).some((it) => S.resOn[it.id]) || S.board) ? -0.35 : 0;
+  for (const l of map.getStyle()?.layers || []) if (l.type === 'raster' && /^(k-under|k-world|k-vw|k-s2-|img-|xc-img|xc-cog)/.test(l.id) && map.getPaintProperty(l.id, 'raster-saturation') !== sat) map.setPaintProperty(l.id, 'raster-saturation', sat);
+}
 function applyLayers() {
+  dimImagery(); paintLegend();
   setVis(map, (S.imgLayers || []).filter((l) => map.getLayer(l)), S.layers.img);
   setVis(map, susSet(), S.layers.sus);
   for (const it of S.res || []) setVis(map, it.ids, !!(aiOn() && S.resOn[it.id]));
