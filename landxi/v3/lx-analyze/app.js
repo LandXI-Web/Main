@@ -254,7 +254,8 @@ async function detail(cid) {
   const picker = c.can_analyze && !chgFrame && !c.pair ? lazyPicker(c) : null;   // 국토 변화 분석서비스는 영상을 고르지 않는다(대상지 + 두 해 · 국토지리정보원 영상 API)
     // 영상 고르기(11-01 PM) — 시군구를 묻지 않고 고를 수 있는 영상 전부(내 영상 먼저) + 범위 지도
   if (picker && REGION) K.loadRegions().then((rs) => { const r = rs.find((x) => x.sgg_cd === REGION); if (r) picker.setQuery(r.name); }).catch(() => null);   // 홈에서 고른 지역 = 찾기 칸에 넣어 둘 뿐(거르기)
-  const body = h('div.la-dt-body', {}, resultCard(c), compareCard(c), usesCard(c), condCard(c));
+  head.append(resultCard(c));   // 11-02 PM 시안 — 큰 그림 오른쪽에 제목과 결과 예시
+  const body = h('div.la-dt-body', {}, compareCard(c), usesCard(c), condCard(c));
   const side = h('aside.la-side', { id: 'analyze', 'aria-label': '분석 서비스 카드로 분석' });
   const dt = h('div.la-dt', {}, h('div.la-dt-top', {}, crumb, hero, head), side, body);
   page.append(dt);
@@ -304,7 +305,7 @@ function resultCard(c) {
 
 /* 영상 ↔ 결과(같은 자리 · 손잡이) + 결과 장면 여러 장 */
 function compareCard(c) {
-  const sec = h('section.t-card.la-box', { 'aria-label': '영상과 결과' }, h('h2.la-h', {}, '영상 ↔ 결과', h('small', { text: '같은 자리' })));
+  const sec = h('section.t-card.la-box.la-wide', { 'aria-label': '영상과 결과' }, h('h2.la-h', {}, '영상 ↔ 결과', h('small', { text: '같은 자리' })));
   const top = c.scene?.swipe?.before ? c.scene : null;                       // 큰 그림이 원본 ↔ 결과 밀어 보기(원칙 339) — 같은 짝을 여기 다시 두지 않는다
   const sw = top ? null : c.swipe;
   if (sw && sw.before && sw.after) {

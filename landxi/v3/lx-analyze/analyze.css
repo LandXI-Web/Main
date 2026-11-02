@@ -27,18 +27,21 @@ body.la-boot .k-app{visibility:hidden}
 .la-page--dt{gap:0}
 .la-dt{display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-areas:"top side" "body side";gap:20px 24px;align-items:start}
 .la-dt[style*="--la-side"]{grid-template-columns:minmax(0,1fr) var(--la-side)}   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
-.la-dt-top{grid-area:top;display:flex;flex-direction:column;gap:16px;min-width:0}
+.la-dt-top{grid-area:top;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);grid-template-areas:"crumb crumb" "hero head";gap:12px 28px;align-items:stretch;min-width:0}   /* 11-02 PM 시안 — 그림을 잘리지 않게 키우고 제목은 오른쪽 */
+.la-dt-top>.la-crumb{grid-area:crumb}.la-dt-top>.la-hero{grid-area:hero;align-self:start}.la-dt-top>.la-dt-head{grid-area:head;min-width:0}
 .la-dt-body{grid-area:body;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;min-width:0}
 .la-side{grid-area:side;position:sticky;top:24px;display:flex;flex-direction:column;gap:12px;padding:24px}
 .la-crumb{display:flex;align-items:center;gap:8px;font:500 var(--fs-aux)/21px var(--font-body);color:var(--sub);min-width:0}
 .la-crumb a:hover{color:var(--ink)}
 .la-crumb b{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.la-hero{position:relative;margin:0;border-radius:var(--r-16);overflow:hidden;aspect-ratio:3/1;max-height:300px;background:var(--rule)}   /* 11-01 PM 카드가 너무 큼 — 한 화면에 '이 카드로 분석' 칸과 함께 */
+.la-hero{position:relative;margin:0;border-radius:var(--r-16);overflow:hidden;aspect-ratio:16/10;max-height:calc(100vh - 210px);background:var(--rule)}   /* 11-01 PM 카드가 너무 큼 · 11-02 PM 가로로 너무 작음 — 왼쪽 그림 · 오른쪽 분석 칸이 한 화면에 */
 .la-hero img{width:100%;height:100%;object-fit:cover;display:block}
 .la-hero.is-blank{display:flex;align-items:center;justify-content:center;background:var(--rule);aspect-ratio:auto;min-height:120px}
 .la-blank{font:500 var(--fs-body)/23px var(--font-body);color:var(--sub);padding:0 24px;text-align:center}
 .la-cap{position:absolute;right:16px;bottom:16px;max-width:calc(100% - 32px);padding:8px 12px;border-radius:var(--r-8);background:rgba(255,255,255,.94);font:500 var(--fs-aux)/21px var(--font-body);color:var(--ink)}
 .la-dt-head{display:flex;flex-direction:column;gap:8px}
+.la-dt-head>.la-box{margin-top:auto;box-sizing:border-box;width:100%}
+.la-wide .la-thumbs figure{aspect-ratio:4/3}.la-wide .la-sw{max-height:420px}
 .la-tags{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .la-tags .t-chip{background:var(--bg-1)}
 .la-tags .t-chip:not([data-lv]){background:var(--ink);color:#fff}
@@ -133,6 +136,7 @@ body.la-boot .k-app{visibility:hidden}
 .la-done li{display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 var(--fs-aux)/21px var(--font-body)}
 .la-done .warn{color:var(--warn)}
 
+@media (max-width:1399px){.la-dt-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"crumb" "hero" "head"}.la-dt-top>.la-hero{aspect-ratio:auto;width:100%;height:320px;max-height:none}}
 @media (max-width:1199px){.la-dt{grid-template-columns:minmax(0,1fr) 340px}.la-dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1099px){
   .la-dt{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "side" "body"}

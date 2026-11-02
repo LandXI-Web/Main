@@ -1238,7 +1238,7 @@ function renderBoardList(d, B) {
   X.boardList = { regions: B.regs.length, services: B.services, level: reg3 ? 3 : 2, sido: sidos.length, at: BL.sido || null, sgg: BL.sgg || null, rows: box.querySelectorAll('.xc-sgc, .xc-board-svc').length, open: [BL.sido], chips: sidos.length > 1 ? sidos.length : 0, grid: inSido.length };
 }
 /* ── 영상 목록(10-22 now21 제안-XI맵영상목록크게보기 '넣음') — 새 프로젝트 '공유 데이터에서 고르기'와 같은 카드(그림 · 이름 · 지역 · 연도 · 종류) ·
-   지금 시군구가 있으면 그 시군구 영상 · 카드를 누르면 크게 보기(앞 · 다음 · 같은 지역 다른 해 겹쳐 보기 — kit/imagery-viewer.js). 목록 = 서버 GET /projects/imagery 그대로 */
+   지금 시군구가 있으면 그 시군구 영상 · 카드를 누르면 크게 보기(앞 · 다음 — kit/imagery-viewer.js). 목록 = 서버 GET /projects/imagery 그대로 */
 let BIMG = false, IMGS = null;
 const THUMB = new Map();
 function thumbOf(path) {
