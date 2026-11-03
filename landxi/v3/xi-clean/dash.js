@@ -82,7 +82,7 @@ function kpi(k, main, c) {
 }
 /** 표 머리 줄바꿈(법전 §2-1) — 가운뎃점(·)에서 꺾지 않고 의미 단위(낱말 사이)에서만: '경작·휴경' 한 덩어리 · '(하천 · 계곡)' → '(하천 ·' / '계곡)' */
 const nw = (t) => !String(t).includes('·') ? esc(t) : String(t).split(/(?<=·)\s+/).map((x) => `<span class="nw">${esc(x)}</span>`).join(' ');
-function head(p) { return `<h3>${esc(p.title)}${p.unit ? ` <small>${esc(p.unit)}</small>` : ''}</h3>`; }
+function head(p) { return `<h3>${esc(p.title)}${p.unit && !/^시군구/.test(p.title || '') ? ` <small>${esc(p.unit)}</small>` : ''}</h3>`; }   // 시군구 칸 제목 뒤 단위는 뺀다(11-03 PM)
 
 function bar(p) {
   const rows = p.rows || [], mx = Math.max(1, ...rows.map((r) => r.v || 0));
