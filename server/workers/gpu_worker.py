@@ -899,7 +899,9 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         rested = nat_rest(time.perf_counter() - tg, job_id, [x.id for x in shards[c0:]])
         if opts.get("classes"):
             results = keep_classes(opts["classes"], results)   # 서비스가 찾는 분류만(예: 4분류 원판 → 비닐하우스 카드는 비닐하우스만)
-        if opts.get("live"):
+        if opts.get("project_infer") and opts.get("emd_cd") and opts.get("sgg_cd"):
+            results = clip_to_emd(opts.get("sgg_cd"), opts["emd_cd"], results)   # 프로젝트 읍면동 추론 — 그 읍면동 경계 밖 결과 제외(11-07 사용자 "범위 밖 결과를 걸러내도록")
+        elif opts.get("live"):
             results = clip_to_aoi(job_id, jh, results)      # 실시간 읍면동 분석 — 범위 밖 결과 제외
         elif sgg:
             results = clip_to_sgg(opts.get("sgg_cd"), results)   # 시군구 전역 — 시군구(읍면동 합집합) 밖 결과 제외
@@ -1025,6 +1027,37 @@ def clip_to_aoi(job_id: str, jh: dict, results: list) -> list:
         _aoi_cache[job_id] = a
         while len(_aoi_cache) > 32:
             _aoi_cache.popitem(last=False)
+    if a is None:
+        return results
+    out = []
+    for res in results:
+        keep = [d for d in res.features if a.contains(d.geom4326.representative_point())]
+        if len(keep) != len(res.features):
+            res = type(res)(features=keep, metrics=res.metrics, n=len(keep), ms=res.ms)
+        out.append(res)
+    return out
+
+
+_emd_cache: "OrderedDict[str, object]" = OrderedDict()
+
+
+def clip_to_emd(sgg_cd: str | None, emd_cd: str, results: list) -> list:
+    """프로젝트 읍면동 추론 — 대표점이 고른 읍면동 경계(작업 범위의 바깥 테두리가 아니라 실제 경계) 밖인 결과는 버린다."""
+    key = f"{sgg_cd}:{emd_cd}"
+    a = _emd_cache.get(key, False)
+    if a is False:
+        a = None
+        try:
+            from shapely.prepared import prep
+            from landxi_api.regions import emd_index
+            ix = emd_index(sgg_cd) if sgg_cd else None
+            if ix is not None and emd_cd in ix.codes:
+                a = prep(ix.geoms[ix.codes.index(emd_cd)])
+        except Exception as e:
+            log(WHO, "emd clip", key, repr(e))
+        _emd_cache[key] = a
+        while len(_emd_cache) > 16:
+            _emd_cache.popitem(last=False)
     if a is None:
         return results
     out = []
