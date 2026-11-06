@@ -102,7 +102,7 @@ async def storage_tenants(request: Request):
             "total": env(ob + sb + rb + sp, "bytes", "measured", "원본 + 표준본 + 결과 + 공간"),
             "next_delete": nxt[:2],
         })
-    return {"items": rows, "keep": {"originals_days": None, "failed_cancelled_days": fc_days}, "as_of": now_iso()}
+    return {"items": rows, "options": {"originals_days": None, "failed_cancelled_days": fc_days}, "as_of": now_iso()}   # options = 구조 필드 묶음(봉투 밖 숫자 500 방지 · 11-06)
 
 
 @router.get("/ops/share-history")

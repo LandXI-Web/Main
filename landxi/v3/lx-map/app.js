@@ -65,6 +65,7 @@ function absorb(d) {
     for (const it of g.items || []) {
       if (ST.items.has(it.job)) continue;
       const x = { ...it, g: G, on: false, ids: null };
+      if (/^[A-Za-z0-9_\-. ]+$/.test(String(x.region || '').trim()) && /_/.test(String(x.region))) x.region = '사용자 지정 구간';   // 영어 내부 이름(siheung_range)은 화면에 내지 않는다(11-06)
       ST.items.set(it.job, x); G.items.push(x);
     }
     G.items.sort((a, b) => String(b.finished_at).localeCompare(String(a.finished_at)));
@@ -234,7 +235,24 @@ async function addRange(x, src) {
     window.__lm.ranges = { ...(window.__lm.ranges || {}), [x.job]: { inside: sp?.inside?.n?.value ?? ins.n, outside: sp?.outside?.n?.value ?? null, parcels: sp?.parcels?.n?.value ?? null } };
   } catch (e) { K.devlog('range', String(e?.message || e)); }
 }
-const rangeLine = (x) => [h('span', { text: x.range.word }), x.split ? h('span', { text: [`안 ${nf(x.split.inside.n.value)}`, `밖 ${nf(x.split.outside.n.value)}`,
+/* 구간 이름이 영어 내부 이름(siheung_range)이면 그 결과의 지역 이름으로 — 지역도 영어면 '사용자 지정 구간'(11-06) */
+const rangeWord = (x) => {
+  const w = String(x.range?.word || ''), m = /^(구간:\s*)(.*?)((?:\s·\s[\d,]+m)?)$/.exec(w);
+  if (!m || !/^[A-Za-z0-9_\-. ]+$/.test(m[2])) return w;
+  const rg = String(x.region || '').trim();
+  return `${m[1]}${rg && !/^[A-Za-z0-9_\-. ]+$/.test(rg) ? rg : '사용자 지정 구간'}${m[3]}`;
+};
+/* 같은 이름의 결과가 여러 번 쌓였으면 가장 최근 한 줄만 보인다(데이터는 그대로 · 켜진 것 · 주소로 연 것은 늘 보인다 · 프로젝트 묶음은 줄마다 영상이 달라 그대로) */
+const listItems = (G) => {
+  if (G.kind === 'project') return G.items;
+  const seen = new Set();
+  return G.items.filter((x) => {   // G.items 는 최근 것이 앞
+    const k = [x.region, x.pair || '', x.scope || '', x.range?.id ? rangeWord(x) : ''].join('|');
+    const keep = x.on || x.job === WANT || x.job === CHG || !seen.has(k);
+    seen.add(k); return keep;
+  });
+};
+const rangeLine = (x) => [h('span', { text: rangeWord(x) }), x.split ? h('span', { text: [`안 ${nf(x.split.inside.n.value)}`, `밖 ${nf(x.split.outside.n.value)}`,
   x.split.parcels ? `필지 ${nf(x.split.parcels.n.value)}` : ''].filter(Boolean).join(' · ') }) : null];   // 두 줄(구간 · 수) — 한 낱말만 남는 줄 없이
 async function apply() {
   for (const x of all()) {
@@ -299,16 +317,17 @@ function drawLeft() {
       ST.filter.n != null ? h('em.num', { text: `${nf(ST.filter.n)}건` }) : null),
     h('button.lm-tbtn', { type: 'button', text: chips.length > 1 ? '모두 풀기' : '조건 풀기', onclick: () => setFilter({ op: 'map_filter', clear: true }) })) : null;
   const groups = ST.groups.map((G) => {
-    const onN = G.items.filter((x) => x.on).length;
+    const LI = listItems(G);
+    const onN = LI.filter((x) => x.on).length;
     const open = ST.open.has(G.key);
     const solo = ST.solo === G.key;
     const head = h('header.lm-gh', {},
       h('button.lm-gt', { type: 'button', 'aria-expanded': String(open), title: G.name, onclick: () => { open ? ST.open.delete(G.key) : ST.open.add(G.key); drawLeft(); } },
         h('i', { 'aria-hidden': 'true', text: open ? '−' : '+' }), h('span.lm-gn', { text: G.name }),
-        h('small.num', {}, onN ? h('b', { text: String(onN) }) : null, onN ? ' / ' : '', `${G.items.length}`)));
+        h('small.num', {}, onN ? h('b', { text: String(onN) }) : null, onN ? ' / ' : '', `${LI.length}`)));
     const ul = h('ul.lm-ly', { hidden: !open });
     if (open && ST.groups.length > 1) ul.append(h('li.lm-solo-li', {}, h('button.lm-solo', { type: 'button', 'aria-pressed': String(solo), text: solo ? '모든 묶음 보기' : '이 묶음만 보기', onclick: () => soloOf(G) })));
-    for (const x of G.items) {
+    for (const x of LI) {
       const cls = (x.by_class || []).filter((c) => c.n).map((c) => `${c.cls} ${nf(c.n)}`).join(' · ');
       const more = [x.imagery?.word ? `${x.imagery.word}영상` : '', x.scope, (x.by_class || []).length > 1 ? cls : ''].filter(Boolean).join(' · ');
       const canDl = !x.empty && !x.failed && !x.change && !x.compare;   // 국토 변화 — 색 · 목록 · 내려받기는 변화 층 카드(판정 · 보고서 · 표)에서 · 두 시기 비교는 층만
@@ -782,6 +801,11 @@ else {
   if (ST.fold) fold(true);
   await apply();
   if (first) { fly(first.bounds); drawn(); }
+  /* 주소 ?job= 가 국토 변화 결과면 변화 층이 그린다(?change= 와 같은 길) — 목록에서만 켜지고 지도에 안 그려지던 것(11-06 재검수) */
+  if (first?.change && !CHG) {
+    for (let i = 0; i < 50 && !window.__lxChange?.map; i++) await new Promise((r) => setTimeout(r, 100));
+    try { await window.__lxChange?.show?.(first.job); } catch (e) { K.devlog('change', String(e?.message || e)); }
+  }
 }
 if (WANT && ST.items.get(WANT)?.empty) {
   const x = ST.items.get(WANT);

@@ -78,7 +78,7 @@ def test_source_line_names_screen_not_tool():
     c.steps = [{"i": 1, "tool": "ximap_dash", "ok": True}]
     c.keymap = {(1, "n"): "e1"}
     s = scopecheck.source_line(c, "남원시 · 경작지 — {{env:e1}}.")
-    assert s == "XI맵 통계 판" and "_" not in s
+    assert s == "XI맵 통계 화면" and "_" not in s
     assert scopecheck.source_line(c, "숫자 없는 답") is None
 
 

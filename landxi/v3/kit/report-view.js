@@ -110,7 +110,7 @@ function render(st) {
     ${say}
     <div class="rv-row">${rows.length ? barCard(s, rows, st.allBar, hue) : ''}${mapCard}</div>
     ${rows.length ? `<div class="rv-row rv-row--b">${rankCard(s, rows, st.allRank, hue)}${extra.length ? `<div class="rv-ex">${extra.map((p) => `<div class="xd-card xd-p xd-p--${p.type}" style="grid-column:span 6;${D.panelVars(p.scale?.hue || hue)}">${D.drawPanel({ ...p, _w: 5 }, hue)}</div>`).join('')}</div>` : ''}</div>` : ''}
-    <p class="rv-src">자료: ${esc((s.fuse || []).join(' · ') || 'AI 분석 결과')} · 숫자는 XI맵 통계 판 · 한글 문서 · 엑셀과 같은 값입니다 · 만든 때 ${esc(doc.made_t || doc.made || '')}</p>`;
+    <p class="rv-src">자료: ${esc((s.fuse || []).join(' · ') || 'AI 분석 결과')} · 숫자는 XI맵 통계 화면 · 한글 문서 · 엑셀과 같은 값입니다 · 만든 때 ${esc(doc.made_t || doc.made || '')}</p>`;
 }
 
 async function download(st, f, b) {

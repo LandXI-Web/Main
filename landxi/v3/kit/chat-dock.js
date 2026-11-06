@@ -74,19 +74,17 @@ export function mountChatDock(railEl) {
     }).observe(root, { attributes: true, attributeFilter: ['data-open'] });
     /* ① 단추 길 · ② 창 자리 — 화면이 늦게 서므로 몸 변화 · 창 크기마다 다시 잰다(값이 바뀔 때만 고친다 — 되풀이 없음) */
     let t = 0;
-    const lay = () => {
-      clearTimeout(t);
-      t = setTimeout(() => {
-        const lane = wantLane(root);
-        if (document.body.classList.contains('k-chat-lane') !== lane) { document.body.classList.toggle('k-chat-lane', lane); dispatchEvent(new Event('resize')); }
-        const r = colOf();
-        if (r === null) { if (root.hasAttribute('data-win')) root.removeAttribute('data-win'); }
-        else { if (root.style.getPropertyValue('--k-col-r') !== r + 'px') root.style.setProperty('--k-col-r', r + 'px'); if (!root.hasAttribute('data-win')) root.setAttribute('data-win', ''); }
-      }, 80);
+    const apply = () => {
+      const lane = wantLane(root);
+      if (document.body.classList.contains('k-chat-lane') !== lane) { document.body.classList.toggle('k-chat-lane', lane); dispatchEvent(new Event('resize')); }
+      const r = colOf();
+      if (r === null) { if (root.hasAttribute('data-win')) root.removeAttribute('data-win'); }
+      else { if (root.style.getPropertyValue('--k-col-r') !== r + 'px') root.style.setProperty('--k-col-r', r + 'px'); if (!root.hasAttribute('data-win')) root.setAttribute('data-win', ''); }
     };
+    const lay = () => { clearTimeout(t); t = setTimeout(apply, 80); };
     new MutationObserver((ms) => { if (ms.some((m) => !root.contains(m.target))) lay(); })
       .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'data-big', 'data-sheet'] });
-    new MutationObserver(lay).observe(root, { attributes: true, attributeFilter: ['hidden', 'data-dock'] });
+    new MutationObserver(() => { apply(); lay(); }).observe(root, { attributes: true, attributeFilter: ['hidden', 'data-dock', 'data-open'] });   // 창이 열리는 그 순간 자리를 잰다(80ms 늦게 재면 열린 창이 필지 카드를 잠깐 덮는다 · 11-06 검사 문)
     addEventListener('resize', lay);
     lay();
   };

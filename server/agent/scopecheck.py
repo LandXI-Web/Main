@@ -428,11 +428,11 @@ def _region_has(ctx, asked: dict) -> bool:
 #   범위 줄 = 무엇을 셌는지(지역 · 종류 · 조건 · 기준 시점) — 답 띠 숫자 바로 위 작은 회색 한 줄(화면 cmdk · chat-answer)
 #   출처 줄 = 숫자가 나온 곳(사람 말 · 화면 이름) — 도구 이름 · 표 이름 · 경로 0(규칙 2)
 SOURCE_KO = {
-    "ximap_dash": "XI맵 통계 판", "map_task": "XI맵 결과 장부", "ai_count": "XI맵 큰 숫자와 같은 셈",
+    "ximap_dash": "XI맵 통계 화면", "map_task": "XI맵 결과 장부", "ai_count": "XI맵 큰 숫자와 같은 셈",
     "map_stats": "지도 위 결과 층", "map_filter": "지도 위 결과 층", "ai_report": "지도 위 결과 층", "results_stats": "AI 분석 결과",
     "survey_count": "실태조사 결과", "survey_stats": "실태조사 결과", "survey_findings": "실태조사 결과", "survey_compare": "실태조사 결과",
     "summary_lookup": "서비스 요약", "region_brief": "서비스 요약", "ledger_findings": "대장 × AI 대조", "fusion_ledger": "대장 × AI 대조",
-    "law_search": "국가법령정보센터 원문(색인)", "parcel_lookup": "연속지적", "survey_rank": "실태조사 결과", "class_count": "XI맵 통계 판과 같은 셈",
+    "law_search": "국가법령정보센터 원문(색인)", "parcel_lookup": "연속지적", "survey_rank": "실태조사 결과", "class_count": "XI맵 통계 화면과 같은 셈",
 }
 _KIND_IMG = (("드론", "드론"), ("항공", "항공"), ("위성", "위성"))
 

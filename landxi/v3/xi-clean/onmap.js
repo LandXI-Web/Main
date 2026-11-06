@@ -181,7 +181,7 @@ export function createOnMap({ map, stage, host, h, sggFC, onEnter, onLeave, onSh
   let pn = null;
   function ensurePane() {
     if (pn) return pn;
-    pn = panes(panel, { edge: 'left', key: 'ximap.stats', min: 320, max: 720, otherMin: 560, cssVar: '--xo-w', varHost: host, host, container: host, map, label: '통계 판 크기',
+    pn = panes(panel, { edge: 'left', key: 'ximap.stats', min: 320, max: 720, otherMin: 560, cssVar: '--xo-w', varHost: host, host, container: host, map, label: '통계 화면 크기',
       onChange: (_size, c) => {
         if (O.sync || !O.on) return;
         if (c && O.step === 2) setStep(1); else if (!c && O.step === 1) setStep(2);

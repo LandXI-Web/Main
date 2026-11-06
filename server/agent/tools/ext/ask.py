@@ -182,7 +182,7 @@ async def class_count(args: dict, ctx) -> Out:
     else:
         r, _src, _alts = await talk.resolve(ctx, (ctx.state or {}).get("msg") or "")
     place = _place(ctx, r)
-    out = Out(source="XI맵 통계 판과 같은 셈")
+    out = Out(source="XI맵 통계 화면과 같은 셈")
     out.scope = {"cls": [task], "kind": "det", "emd": None, **({"sgg": [r["sgg_cd"]]} if r else {})}
     if talk.realm(ctx) == "lx" and r:
         from landxi_api import xdash as XD

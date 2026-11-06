@@ -123,7 +123,7 @@ function drawCard() {
   const hst = host(); if (!hst) return;
   if (!C.card) { C.card = h('section.chg-card', { 'aria-label': '국토 변화 탐지', 'data-zone': 'chg-card' }); hst.append(C.card); }
   const s = C.run?.stats;
-  const name = C.range?.name || '대상지';
+  const name = (/^[A-Za-z0-9_. -]+$/.test(C.range?.name || '') && /_/.test(C.range.name)) ? '사용자 지정 구간' : (C.range?.name || '대상지');   // 영어 내부 이름은 화면에 내지 않는다(11-06)
   if (s && IJ() && OCC) { drawOccCard(name); return; }
   if (s && PL()) { drawOccCard(name); return; }
   if (s && IJ()) { drawIjCard(s, name); return; }

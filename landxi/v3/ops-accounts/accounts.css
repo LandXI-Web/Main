@@ -167,7 +167,7 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 
 /* 저장 용량 탭 하나(용량-1 · 10-09 · 시안 design-r14/lx-staff-board admin) — 왼쪽: 전체 현황 · 기본 할당 · 계정별 할당 표 / 오른쪽: 증량 신청 서랍(승인 · 거절) */
 .acc-w.acc-w--wide { max-width: none; padding: 32px 40px 48px; }
-.acs { display: grid; grid-template-columns: minmax(0, 1fr) 392px; gap: 16px; align-items: start; }
+.acs { display: grid; grid-template-columns: minmax(0, 1fr) 336px; gap: 16px; align-items: start; }
 .acs[style*="--acs-dr"] { grid-template-columns: minmax(0, 1fr) var(--acs-dr); }   /* 끌어서 정한 폭(원칙 263 · kit/panes.js) */
 .acs-l { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .acs-h { margin: 0 0 4px; }
@@ -196,11 +196,17 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 .acs-tbl .k-table th:first-child, .acs-tbl .k-table td:first-child { padding-left: 0; }
 .acs-tbl .k-table th:last-child, .acs-tbl .k-table td:last-child { padding-right: 0; }
 .acs-tbl .k-table td.nw, .acs-tbl .k-table th.nw { white-space: nowrap; }
+.acs-tbl .k-table td:first-child.nw { white-space: normal; }   /* 칸이 잘려 가로로 밀리지 않게 — 이름 · 아이디는 줄을 바꾼다(11-06) */
+.acs-tbl .acc-m { display: inline-block; max-width: 160px; white-space: normal; overflow-wrap: anywhere; line-height: 18px; }
+.acs-tbl .acc-b { display: inline-block; max-width: 112px; white-space: normal !important; }
+.acs-tbl .k-table th, .acs-tbl .k-table td { padding-left: 6px; padding-right: 6px; }
+.acs-tbl .acs-m { white-space: normal; }
+.acs-tbl .k-table-w { overflow-x: visible; }
 .acs-tbl tbody tr.is-on { background: var(--bg-0); box-shadow: inset 3px 0 0 var(--accent); }
 .acs-tbl tbody tr.is-on td:first-child { padding-left: 12px; }
 .acs-tbl tbody tr.is-off td { color: var(--sub); }
 .acs-tbl tbody tr.is-off .acc-b, .acs-tbl tbody tr.is-off .acc-m { color: var(--sub); }
-.acs-q { display: flex; flex-direction: column; gap: 4px; min-width: 124px; }
+.acs-q { display: flex; flex-direction: column; gap: 4px; min-width: 92px; }
 .acs-q-t { display: flex; justify-content: space-between; gap: 8px; font:500 var(--fs-aux)/21px var(--font-num); color: var(--ink); white-space: nowrap; }
 .acs-q-t small { font:400 var(--fs-tag)/21px var(--font-num); color: var(--sub); }
 .acs-q .k-me-bar { height: 6px; border-radius: 3px; background: var(--bg-0); overflow: hidden; }

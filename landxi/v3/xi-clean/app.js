@@ -188,8 +188,8 @@ async function boot() {
   // 입체는 뺐다(원칙 196 · GPT3-8 '입체가 의미있나??' → 입체 빼기) — 단추 · 지형 타일 로딩 · 기울기 모두 없음(위에서 내려다보는 지도만)
   const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '영상 비교'], ['sweep', '대조'], ['report', '보고서']]
     : [['layers', '층'], ['swipe', '영상 비교'], ['report', '보고서']];
-  if (S.canAnalyze) tools.push(['analyze', '분석']);
-  tools.push(['measure', '재기'], ['save', '저장']);   // 지도 재기 · 지도 그림 저장(10-22 now21 제안-지도재기저장 — 브이월드 · 공공 GIS 지도와 같은 말)
+  if (S.canAnalyze && !S.sales) tools.push(['analyze', '분석']);   // 영업 계정은 분석 · 재기 · 저장 단추 없음(11-06 재검수 · 보기만)
+  if (!S.sales) tools.push(['measure', '재기'], ['save', '저장']);   // 지도 재기 · 지도 그림 저장(10-22 now21 제안-지도재기저장 — 브이월드 · 공공 GIS 지도와 같은 말)
   S.tools = tools;
   S.board = S.lx;                                    // 열자마자 전국 결과(LX 계정 · 바퀴 5)
   // 왼쪽 = 역할 메뉴 그대로(LX 직원 · 관리자 = 직원 메뉴의 XI맵 칸 · 기관 = 기관 메뉴) — XI맵 도구는 지도 오른쪽 위 한 줄(아이콘 + 글자 · 원칙 199)

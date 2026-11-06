@@ -590,7 +590,7 @@ def build_xlsx(spec: dict, now: dt.datetime | None = None) -> tuple[bytes, str]:
             ("자료", " · ".join(spec.get("fuse") or []) or "AI 분석 결과")]
     for i, s in enumerate(spec.get("say") or [], 1):
         info.append((f"요약 {i}", _say_clean(s)))
-    info.append(("안내", "숫자는 XI맵 통계 판 · 한글 보고서와 같은 값입니다."))
+    info.append(("안내", "숫자는 XI맵 통계 화면 · 한글 보고서와 같은 값입니다."))
     _info(wb, info)
     name = H.safe_name(f"{title}_통계_{now:%Y%m%d}").replace(".hwpx", "")
     name = re.sub(r"\.(hwpx|xlsx)$", "", name) + ".xlsx"
