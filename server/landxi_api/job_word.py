@@ -15,8 +15,10 @@ def partial(state: str | None, shards_failed, shards_total=None) -> bool:
         return False
 
 
-def word(state: str | None, shards_failed=0, shards_total=None) -> str:
+def word(state: str | None, shards_failed=0, shards_total=None, kind: str | None = None) -> str:
     st = state or ""
+    if kind == "train" and st == "running":     # 학습 작업은 '분석 중'이 아니라 '학습 중'(11-07 태양광 검수 6)
+        return "학습 중"
     if partial(st, shards_failed, shards_total):
         n = int(shards_failed or 0)
         try:

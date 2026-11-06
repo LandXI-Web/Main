@@ -276,7 +276,7 @@ function peoplePicker(host, pr) {
   api('/projects/people').then((j) => {
     const have = new Set([pr.lead?.id, ...(pr.members || []).map((m) => m.id)]);
     const opts = (j.items || []).filter((x) => !have.has(x.id));
-    sel.innerHTML = '<option value="">구성원 고르기</option>' + opts.map((x) => `<option value="${esc(x.id)}">${esc(whoText(x))}</option>`).join('');
+    sel.innerHTML = '<option value="">구성원 고르기</option>' + opts.map((x) => `<option value="${esc(x.id)}">${esc(whoText(x) + (x.mail ? ' · ' + x.mail : '') + (x.dept ? ' · ' + x.dept : ''))}</option>`).join('');
     sel.addEventListener('change', () => { b.disabled = !sel.value; });
   }).catch(() => { sel.disabled = true; });
   b.addEventListener('click', () => {

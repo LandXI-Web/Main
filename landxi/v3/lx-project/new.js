@@ -232,7 +232,7 @@ export function openNewProject({ onMade } = {}) {
     const rows = (j?.items || []).filter((u) => !mem.has(u.id)).slice(0, 6);
     memList.replaceChildren(...(rows.length ? rows.map((u) => h('li', { role: 'option' },
       h('button', { type: 'button', onclick: () => { mem.set(u.id, u); memIn.value = ''; drawMem(); drawMemList(); memIn.focus(); } },
-        h('b', { text: u.name }), h('small', { text: u.role_label })))) : [h('li.lxp-mem-none', { text: j ? '찾는 계정이 없습니다' : '불러오지 못했습니다' })]));
+        h('b', { text: u.name }), h('small', { text: [u.role_label, u.dept, u.mail].filter(Boolean).join(' · ') })))) : [h('li.lxp-mem-none', { text: j ? '찾는 계정이 없습니다' : '불러오지 못했습니다' })]));
     memList.hidden = false;
   }
   memIn.addEventListener('focus', drawMemList);

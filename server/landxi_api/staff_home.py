@@ -27,7 +27,7 @@ import secrets
 from fastapi import APIRouter, Request
 
 from .deps import ApiError, Principal, audit, db, principal, require
-from .envelope import env, now_iso
+from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
@@ -629,12 +629,12 @@ async def my_job_log(request: Request, project_id: str | None = None, limit: int
             when = ""
         via = o.get("requested_via") or ("프로젝트 추론" if o.get("project_infer") else "분석 서비스")
         from .job_word import partial as _part, word as _jw
-        items.append({"job_id": r["id"], "state": r["state"], "state_word": _jw(r["state"], r["shards_failed"], r["shards_total"]),
+        items.append({"job_id": r["id"], "state": r["state"], "state_word": _jw(r["state"], r["shards_failed"], r["shards_total"], r["kind"]),
                       "partial": _part(r["state"], r["shards_failed"]), "shards_failed": int(r["shards_failed"] or 0), "who": r["who"] or "",
                       "service": r["cname"] or (f"프로젝트 추론 — {r['pname']}" if o.get("project_infer") else "분석 서비스"),
                       "model": " ".join(x for x in (r["model_id"] or "", f"v{r['mver']}" if r["mver"] else "") if x),
                       "version": c.get("version") or None, "range": r["rname"] or o.get("range_name") or (r["pname"] or ""), "when": when,
-                      "via": via, "start": r["started_at"].isoformat(timespec="seconds") if r["started_at"] else None,
-                      "end": r["finished_at"].isoformat(timespec="seconds") if r["finished_at"] else None,
-                      "layer_id": r["result_set"], "created": r["created_at"].isoformat(timespec="seconds")})
+                      "via": via, "start": r["started_at"].astimezone(KST).isoformat(timespec="seconds") if r["started_at"] else None,
+                      "end": r["finished_at"].astimezone(KST).isoformat(timespec="seconds") if r["finished_at"] else None,
+                      "layer_id": r["result_set"], "created": r["created_at"].astimezone(KST).isoformat(timespec="seconds")})
     return {"items": items, "as_of": now_iso()}

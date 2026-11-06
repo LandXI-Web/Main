@@ -163,8 +163,9 @@ async function drawInfer() {
     try {
       await api(base + '/infer', { method: 'POST', body: { model_id: st.model, imagery_id: st.img, ...(st.emd ? { emd_cd: st.emd } : {}),
         conf: +confIn.value, min_area_m2: +minIn.value } });
-      toast('분석을 대기열에 넣었습니다');
+      toast('분석을 시작했습니다 — 위 추론 결과에서 진행을 봅니다');
       await drawJobs(true);
+      right.style.scrollMarginTop = '150px'; right.scrollIntoView({ behavior: 'smooth', block: 'start' });      // 결과 진행 카드는 맨 위 — 눌렀을 때 눈에 보이게
     } catch (e) {
       devlog('infer', e.code || e.message);
       msg.textContent = e.code === 'power_budget' ? '지금은 GPU 가 바쁩니다 — 잠시 뒤 다시 시작해 주세요'

@@ -270,8 +270,18 @@ def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: fl
     import numpy as np
     from rasterio.transform import from_origin
     from rasterio.warp import Resampling, reproject, transform_bounds
-    from workers.imagery_src import open_imagery
-    src = open_imagery(imagery_id)
+    from workers.imagery_src import ImageryUnavailable, open_imagery
+    try:
+        src = open_imagery(imagery_id)
+    except ImageryUnavailable:
+        # 원천 파일 없이 타일 묶음(pmtiles)만 등록된 영상(드론 AOI 등) — 그 타일 묶음에서 칸을 만든다
+        arr = _pm_chip(imagery_id, epsg, x0, y1, size, px)
+        if arr is None:
+            return False
+        from PIL import Image
+        out.parent.mkdir(parents=True, exist_ok=True)
+        save_img(Image.fromarray(arr.transpose(1, 2, 0)), out)
+        return True
     b = transform_bounds(f"EPSG:{epsg}", src.crs, x0, y1 - size, x0 + size, y1)
     pad = 4 * max(abs(src.res[0]), abs(src.res[1]))
     win = src.window(b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad).round_offsets().round_lengths()
@@ -295,6 +305,72 @@ def _crop_save(imagery_id: str | None, epsg: int, x0: float, y1: float, size: fl
     out.parent.mkdir(parents=True, exist_ok=True)
     save_img(Image.fromarray(dst.transpose(1, 2, 0)), out)
     return True
+
+
+def _pm_chip(imagery_id: str, epsg: int, x0: float, y1: float, size: float, px: int):
+    """pmtiles 로만 있는 영상에서 칸(UTM · px×px)을 만든다 → (3, px, px) uint8 | None. 가장 큰 확대 단계의 타일을 이어 붙여 다시 투영."""
+    import math
+    import numpy as np
+    from rasterio.transform import from_bounds, from_origin
+    from rasterio.warp import Resampling, reproject, transform_bounds
+    from . import config
+    from .catalog import resolve_set_path
+    import psycopg
+    from workers.imagery_src import _dsn
+    with psycopg.connect(_dsn()) as c:
+        row = c.execute("SELECT layer->>'manifest', pmtiles_set FROM imagery WHERE id=%s", (imagery_id,)).fetchone()
+    if not row:
+        return None
+    rel = None
+    for cand in (row[1], f"imagery/{imagery_id}", f"imagery/{(row[0] or '').rsplit('.', 1)[0]}"):
+        rel = cand and resolve_set_path(cand)
+        if rel:
+            break
+    if not rel and row[0]:
+        rel = f"tiles/pmtiles/{row[0]}"
+    path = config.DATA_ROOT / rel if rel else None
+    if not path or not path.exists():
+        return None
+    from agent.vlm.crop import _decode, _pm_reader, pm_max_zoom
+    z = pm_max_zoom(str(path))
+    if z is None:
+        return None
+    rd = _pm_reader(str(path))
+    w, s_, e, n = transform_bounds(f"EPSG:{epsg}", "EPSG:3857", x0, y1 - size, x0 + size, y1)
+    ORG, T = 20037508.342789244, 256
+    res = 2 * ORG / (T * 2 ** z)
+    tx0, tx1 = int((w + ORG) // (res * T)), int((e + ORG) // (res * T))
+    ty0, ty1 = int((ORG - n) // (res * T)), int((ORG - s_) // (res * T))
+    if (tx1 - tx0 + 1) * (ty1 - ty0 + 1) > 64:
+        return None
+    cv = np.zeros(((ty1 - ty0 + 1) * T, (tx1 - tx0 + 1) * T, 4), np.uint8)
+    got = 0
+    for ty in range(ty0, ty1 + 1):
+        for tx in range(tx0, tx1 + 1):
+            try:
+                im = _decode(rd.get(z, tx, ty))
+            except Exception:  # noqa: BLE001
+                im = None
+            if im is None:
+                continue
+            if im.shape[:2] != (T, T):
+                import cv2
+                im = cv2.resize(im, (T, T))
+            cv[(ty - ty0) * T:(ty - ty0 + 1) * T, (tx - tx0) * T:(tx - tx0 + 1) * T] = im[:, :, [2, 1, 0, 3]]   # BGRA → RGBA
+            got += 1
+    if not got:
+        return None
+    left, top = tx0 * res * T - ORG, ORG - ty0 * res * T
+    src_tf = from_origin(left, top, res, res)
+    dst = np.zeros((3, px, px), np.uint8)
+    msk = np.zeros((px, px), np.uint8)
+    dtf = from_origin(x0, y1, size / px, size / px)
+    for i in range(3):
+        reproject(cv[:, :, i], dst[i], src_transform=src_tf, src_crs="EPSG:3857", dst_transform=dtf, dst_crs=f"EPSG:{epsg}", resampling=Resampling.bilinear)
+    reproject((cv[:, :, 3] > 0).astype(np.uint8) * 255, msk, src_transform=src_tf, src_crs="EPSG:3857", dst_transform=dtf, dst_crs=f"EPSG:{epsg}",
+              resampling=Resampling.nearest)
+    dst[:, msk == 0] = 0
+    return dst if float(dst.mean()) >= 1 else None
 
 
 def save_img(im, out: Path) -> None:

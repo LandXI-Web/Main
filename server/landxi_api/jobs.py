@@ -1050,7 +1050,7 @@ async def job_dict(row, live: dict | None = None) -> dict:
         "shards_total": int(live.get("shards_total", row["shards_total"] or 0)),
         "shards_done": int(live.get("shards_done", row["shards_done"] or 0)),
         "shards_failed": int(live.get("shards_failed", row["shards_failed"] or 0)),
-        "state_word": _job_word(state, live.get("shards_failed", row["shards_failed"] or 0), live.get("shards_total", row["shards_total"] or 0)),
+        "state_word": _job_word(state, live.get("shards_failed", row["shards_failed"] or 0), live.get("shards_total", row["shards_total"] or 0), row["kind"]),
         "counts": counts,
         "counts_env": env(total_n, "count", basis_counts, row["id"], "진행 중 누적" if state == "running" else ("시연 · 결과 미기록" if row["demo"] else "검수 전")),
         "chips_per_s": env(cps, "chips_per_s", "measured", "gpu_worker 계량(창 10s)", None if cps else "첫 shard 뒤 채워짐"),

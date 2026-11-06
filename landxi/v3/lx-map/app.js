@@ -78,7 +78,7 @@ const shown = (x) => x.on && (!ST.solo || x.g.key === ST.solo);
 
 /* 처음 켤 것 — 주소가 정한 결과(?job · 국토 변화 ?change)만. 주소가 없으면 켜진 결과 없이 시작한다(어떤 지역도 고정으로 켜지 않음 · 11-02 PM) */
 const CHG = Q.get('change');
-const first = (WANT && ST.items.get(WANT)) || (CHG && ST.items.get(CHG)) || null;
+const first = (WANT && ST.items.get(WANT)) || (CHG && ST.items.get(CHG)) || (PROJ && !WANT && !CHG ? ST.groups.find((g) => g.kind === 'project')?.items.find((x) => !x.empty && !x.failed && !x.change) : null) || null;   // 프로젝트에서 열면 가장 최근 결과를 켜고 그 범위로(11-07 태양광 검수 3)
 if (first) { first.on = true; ST.open.add(first.g.key); }
 if (ST.groups[0]) ST.open.add(ST.groups[0].key);
 

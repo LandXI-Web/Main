@@ -153,7 +153,7 @@ export function openHandover(pr, { onDone } = {}) {
       sel.replaceWith(h('p.lxp-none', { text: '넘길 사람이 없습니다' }));
       return;
     }
-    sel.replaceChildren(h('option', { value: '', text: '고르기' }), ...opts.map((x) => h('option', { value: x.id, text: whoText(x) })));
+    sel.replaceChildren(h('option', { value: '', text: '고르기' }), ...opts.map((x) => h('option', { value: x.id, text: whoText(x) + (x.mail ? ' · ' + x.mail : '') + (x.dept ? ' · ' + x.dept : '') })));
     sel.disabled = false;
     sel.addEventListener('change', () => { go.disabled = !sel.value; });
   }).catch(() => { sel.replaceChildren(h('option', { value: '', text: '불러오지 못했습니다' })); });

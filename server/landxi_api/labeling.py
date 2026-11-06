@@ -830,7 +830,7 @@ async def map_area(pid: str, iid: str, body: dict, request: Request):
                      for h in have if abs(h["size_m"] - size) < 1e-6}
             mnx, mny, mxx, mxy = view.bounds
             if (mxx - mnx) * (mxy - mny) > (size * size) * AREA_MAX * 6:
-                return epsg, None, 0
+                return epsg, None, round((mxx - mnx) * (mxy - mny) / (size * size))     # 화면이 덮는 칸 수(대략)
             cells, skipped = [], 0
             for gx in range(math.floor(mnx / size), math.floor(mxx / size) + 1):
                 for gy in range(math.floor(mny / size), math.floor(mxy / size) + 1):
@@ -844,7 +844,8 @@ async def map_area(pid: str, iid: str, body: dict, request: Request):
             return epsg, cells, skipped
         epsg, cells, skipped = await run_in_threadpool(plan)
         if cells is None or len(cells) > AREA_MAX:
-            raise ApiError("bad_request", f"한 번에 그림 {AREA_MAX}장 넓이까지입니다 — 조금 확대해 주세요", {"cells": len(cells or [])})
+            n_cells = skipped if cells is None else len(cells)
+            raise ApiError("bad_request", f"이 화면은 그림 약 {n_cells}장 넓이입니다 — 한 번에 {AREA_MAX}장까지라 조금 확대해 주세요", {"cells": n_cells})
         if not cells:
             msg = "이 화면의 칸은 이미 그림이 있습니다" if skipped else f"화면을 조금 넓게 보여 주세요 — 라벨 완료는 그림 한 장(약 {round(size)} m) 넓이부터입니다"
             raise ApiError("bad_request", msg, {"skipped": skipped, "wider": not skipped})

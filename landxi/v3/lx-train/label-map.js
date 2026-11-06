@@ -94,8 +94,13 @@ export async function labelMap({ host, pid, data, toggle, onReload }) {
     const total = M.set?.total?.value ?? 0, done = M.set?.done?.value ?? 0;
     let nShapes = M.shapes.length;
     for (const [k, v] of Object.entries(M.maps)) if (k !== M.iid) nShapes += (v.shapes || []).length;
+    const ch = M.chips || [];
+    const empty = ch.filter((c) => !(c.n > 0)).length;                 // 모양이 없는 칸 = 대상 없는 그림(배경)
+    const inTrain = ch.reduce((a, c) => a + (c.n || 0), 0);            // 학습 그림 안에 들어간 모양
+    const out = Math.max(0, nShapes - inTrain);                        // 아직 그림이 되지 않은 모양
     prog.replaceChildren(
-      h('p.lb-prog-t', {}, h('b.num', { text: nf(done) }), h('span', { text: ` / ${nf(total)}장 라벨 완료` }), h('em', { text: ` · 지도에 그린 모양 ${nf(nShapes)}개` })),
+      h('p.lb-prog-t', {}, h('b.num', { text: nf(done) }), h('span', { text: ` / ${nf(total)}장 라벨 완료` }),
+        h('em', { text: ` · 학습 그림에 든 모양 ${nf(inTrain)}개${empty ? ` · 모양 없는 그림 ${nf(empty)}장` : ''}${out ? ` · 그림이 안 된 모양 ${nf(out)}개` : ''}` })),
       h('div.t-progress.lb-bar', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': total, 'aria-valuenow': done, 'aria-label': '라벨 완료' },
         h('i', { style: { width: total ? `${(done / total) * 100}%` : '0' } })));
     toTrain.hidden = !done;
@@ -205,6 +210,7 @@ export async function labelMap({ host, pid, data, toggle, onReload }) {
   map.doubleClickZoom.disable();
   map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.keyboard.disable();
   map.setMaxZoom(22);
+  try { map.scrollZoom.setWheelZoomRate(1 / 150); } catch { /* 기본값 */ }   // 휠 한 칸 ≈ 0.67 단계(기본 0.22 — 너무 작았음)
   new ResizeObserver(() => { try { map.resize(); } catch { /* 닫힘 */ } }).observe(mapEl);
   // 둘레는 옅게 — 프로젝트 영상이 또렷이 앞으로(영상 크게 보기와 같은 판)
   for (const id of ['k-world', 'k-vw']) if (map.getLayer(id)) { map.setPaintProperty(id, 'raster-opacity', 0.45); map.setPaintProperty(id, 'raster-saturation', -0.85); map.setPaintProperty(id, 'raster-brightness-min', 0.5); }
@@ -536,7 +542,10 @@ export async function labelMap({ host, pid, data, toggle, onReload }) {
     const open = openSpots();
     if (open.length) { M.spotI = 0; map.jumpTo({ center: open[0].slice(0, 2), zoom: Math.max(16, nativeZ(x, open[0][1]) - 1.2) }); return; }
     const b = x?.item?.bounds;
-    if (b) map.fitBounds(b, { padding: 32, duration: 0 });
+    if (b) {                                              // 모양 · 자리가 없으면 영상 한가운데 · 영상 원래 크기 근처 — 창 크기 · 계정이 달라도 같은 처음 자리
+      const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+      map.jumpTo({ center: [cx, cy], zoom: Math.max(14, nativeZ(x, cy) - 1.2) });
+    }
   }
 
   /* 처음 영상 — 모양이 가장 많은 영상 → 항공 해상도(0.05–0.5 m) 중 가장 최근 → 첫 영상 */

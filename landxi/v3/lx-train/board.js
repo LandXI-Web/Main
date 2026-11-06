@@ -74,12 +74,13 @@ export async function trainBoard({ host, project: P }) {
   const wait = h('div'); col.append(wait);
   empty(wait, { kind: 'loading' });                       // 가운데 '불러오는 중' 하나(로딩-1 · 원칙 212)
 
-  let T, deck = null, smp = null, TPL = null, XU = null, SHR = null;
+  let T, deck = null, smp = null, TPL = null, XU = null, SHR = null, REG = null;
   try {
-    [T, deck, smp, TPL, XU, SHR] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
+    [T, deck, smp, TPL, XU, SHR, REG] = await Promise.all([api(`/projects/${encodeURIComponent(P.id)}/train`),
       api('/cards/deck').catch(() => null), api('/training/samples?project=' + encodeURIComponent(P.id)).catch(() => null),
       api('/train-templates').catch(() => null), api('/train-data/xi?project=' + encodeURIComponent(P.id)).catch(() => null),
-      api('/training/samples?shared=1').catch(() => null)]);   // 관리자가 공개한 학습 데이터(공유 데이터 · 10-14 공유데이터-탭)
+      api('/training/samples?shared=1').catch(() => null),   // 관리자가 공개한 학습 데이터(공유 데이터 · 10-14 공유데이터-탭)
+      api('/registry/models?with=train').catch(() => null)]);   // 등록된 모델 — 지난 학습이 없는 새 프로젝트도 기반 모델을 고르게
   } catch (e) {
     col.replaceChildren(); const x = h('div'); col.append(x);
     empty(x, { kind: 'error', title: '학습 기록을 불러오지 못했습니다', onRetry: () => location.reload() });
@@ -95,7 +96,12 @@ export async function trainBoard({ host, project: P }) {
   const base0 = T.base || null;                                // 원판
   const svc = serviceAcc(deck?.items || [], { card: P.card || null, models: runs.map((r) => r.model?.id).filter(Boolean) });
   const serving = svc?.model || null;
+  const REGM = (REG?.items || []).filter((m) => ['seg', 'det', 'obb'].includes(m.task) && m.status === 'registered' && m.weights_uri !== null);
+  const gsdW = (g) => (g == null ? '' : g < 0.1 ? `${+(g * 100).toFixed(1)}cm 드론` : `${Math.round(g * 100)}cm 항공`);
+  const regName = (m) => m.name || [gsdW(m.gsd_trained_m), clsWords(m.classes || []).slice(0, 4).join('·')].filter(Boolean).join(' · ') || '등록된 모델';
   const baseWord = (id) => {
+    const g = REGM.find((m) => m.id === id);
+    if (g && !(base0 && id === base0.id) && !byModel.has(id)) return { short: regName(g), long: regName(g) };
     if (base0 && id === base0.id) return { short: '원판', long: `원판 · ${clsWords(base0.classes).length}종 모델` };
     const r = byModel.get(id);
     return r ? { short: nameOf.get(r.job), long: nameOf.get(r.job) } : { short: '기반 모델', long: '기반 모델' };
@@ -136,8 +142,8 @@ export async function trainBoard({ host, project: P }) {
     links.length = 0;
     const has = (k) => tpl.blocks.includes(k);
     const put = (id, kind, x, y, extra) => { nodes[id] = { id, kind, x, y, ...extra }; };
-    put('data1', 'data', C0, R[0], { data: cur ? dataOf(cur) : null });
-    put('base1', 'base', C0, R[1], { base: cur?.base?.id || null });
+    put('data1', 'data', C0, R[0], { data: cur ? dataOf(cur) : (DATA.filter((d) => d.kind === 'sample' && (d.images || 0) > 0).sort((a, b) => (b.manual - a.manual))[0] || null) });   // 학습 기록이 없으면 라벨 완료한 그림부터
+    put('base1', 'base', C0, R[1], { base: cur?.base?.id || defBase() });
     put('cfg1', 'cfg', C0, R[2], { cfg: cur ? { epochs: v(cur.epochs), imgsz: cur.imgsz, batch: cur.batch } : { ...tplCfg } });
     put('train1', 'train', C1, R[1], { run: cur || null });
     links.push({ a: 'data1', b: 'train1' }, { a: 'base1', b: 'train1' }, { a: 'cfg1', b: 'train1' });
@@ -158,6 +164,15 @@ export async function trainBoard({ host, project: P }) {
   const BASES = [];
   if (base0) BASES.push({ id: base0.id, name: baseWord(base0.id).long, sub: `${clsWords(base0.classes).join(' · ')}${base0.id === serving ? ' · 서비스 중' : ''}`, acc: v(base0.acc) });
   for (const r of runs) if (r.model && r.state === 'done') BASES.push({ id: r.model.id, name: nameOf.get(r.job), sub: `${md(r.finished_at)}${r.model.id === serving ? ' · 서비스 중' : ''}`, acc: v(r.acc) });
+
+  /* 등록된 모델(이 프로젝트 학습 기록에 없는 것) — 지난 학습이 없어도 고를 수 있게 */
+  for (const m of REGM) if (!BASES.some((b) => b.id === m.id)) BASES.push({ id: m.id, name: regName(m), sub: `${gsdW(m.gsd_trained_m)}${m.train_job ? ' · 다시 학습한 모델' : ''}`.replace(/^ · /, ''), acc: null, gsd: m.gsd_trained_m, task: m.task, orig: !m.train_job, cls: m.classes || [] });
+  const defBase = () => {                                      // 기반 모델 기본값 — 대상 이름이 든 원 모델 → 25cm 항공에 가까운 것
+    const t = String(P.task || '').trim();
+    const hit = (b) => !!t && (b.cls || []).some((c) => String(c).split('_')[0] === t);
+    const gap = (b) => Math.abs(Math.log((b.gsd || 1) / 0.25));
+    return [...BASES.filter((b) => b.orig)].sort((a, b) => (hit(b) - hit(a)) || gap(a) - gap(b) || (a.task === 'seg' ? -1 : 1))[0]?.id || null;
+  };
 
   /* 판 모양 — 프로젝트마다 이 브라우저에 남김(블록 자리 · 고른 값 · 잇기). 못 읽으면 기본 흐름 */
   const LKEY = `lx-train.board.${P.id}`;
@@ -213,7 +228,8 @@ export async function trainBoard({ host, project: P }) {
   /** 머리 한 줄 · 단추 — 지금 학습 상태와 판(다 이어진 새 학습 블록이 있으면 '학습 시작') */
   function head() {
     const fresh = Object.values(nodes).some((n) => n.kind === 'train' && !n.run && !need(n));
-    if (!cur) hint.textContent = fresh ? '다 이어졌습니다 · 학습 시작을 누르면 대기열에 들어갑니다' : '아직 학습 기록이 없습니다 · 블록을 눌러 학습 데이터와 기반 모델을 고른 뒤 학습을 시작하세요';
+    const why = Object.values(nodes).filter((n) => n.kind === 'train' && !n.run).map((n) => need(n)).find(Boolean);   // 못 누를 때 이유 한 줄
+    if (!cur) hint.textContent = fresh ? '다 이어졌습니다 · 학습 시작을 누르면 대기열에 들어갑니다' : `아직 학습 기록이 없습니다 · ${why || '블록을 눌러 학습 데이터와 기반 모델을 고른 뒤 학습을 시작하세요'}`;
     else if (live) hint.textContent = cur.state === 'queued' ? '학습이 대기열에서 차례를 기다리는 중입니다' : '학습 중입니다 · 반복마다 정확도가 아래 그래프에 차오릅니다';
     else if (fresh) hint.textContent = '새 학습 블록이 다 이어졌습니다 · 학습 시작을 누르면 대기열에 들어갑니다';
     else hint.textContent = `${md(cur.finished_at)} 에 끝난 학습 · 같은 설정으로 다시 돌리거나 블록을 바꿔 새로 돌릴 수 있어요`;
@@ -692,7 +708,7 @@ export async function trainBoard({ host, project: P }) {
   function start(only) {
     if (!canRun) { toast(NO_RUN); return; }
     const { out, bad } = plan(only);
-    if (bad.length) { picked = null; render(); say(bad[0][0], bad[0][1], true); return; }
+    if (bad.length) { picked = null; render(); say(bad[0][0], bad[0][1], true); toast(bad[0][1]); return; }
     if (!out.length) { toast('돌릴 학습 블록이 없습니다'); return; }
     const okB = h('button.t-btn', { type: 'button', text: out.length > 1 ? `학습 ${out.length}건 시작` : '학습 시작' });
     const no = h('button.t-btn.t-btn--text', { type: 'button', text: '취소' });

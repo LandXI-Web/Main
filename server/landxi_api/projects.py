@@ -408,7 +408,7 @@ def _judge(r, f) -> dict:
     #   칸 상태는 추론을 따른다(끝난 추론이 있으면 볼 결과가 있음 = 끝 · 추론을 건너뛰면 함께 건너뜀) · 지금 단계가 되지 않는다(아래 GUIDE).
     #   예전 '확인했음' 기록(project_links review_seen · f['seen'])과 표본 판정(f['judged'])은 지우지 않고 쓰지 않는다.
     rv = st["review"]
-    rv["done"] = bool(done_inf)
+    rv["done"] = False      # 11-07 태양광 검수 6: 결과를 본 기록이 없는데 완료 체크가 켜지던 것 — 보는 길(target)만 남기고 완료로 세지 않는다
     rv["progress"] = None
     rv["next"] = "지도에서 결과 보기"
     if done_inf:
@@ -460,7 +460,7 @@ def _judge(r, f) -> dict:
             state, s["skip"], s["skip_word"] = "skip", True, "건너뜀"
         else:
             state = "wait"
-        s["word"] = ("결과 보기" if k in GUIDE and state == "done" else None) or {"done": "완료", "now": "지금 단계", "wait": "대기"}.get(state) or s.get("skip_word") or "건너뜀"
+        s["word"] = ("결과 보기" if k in GUIDE and s["target"].get("job") else None) or {"done": "완료", "now": "지금 단계", "wait": "대기"}.get(state) or s.get("skip_word") or "건너뜀"
         stages.append({"index": i, **{x: y for x, y in s.items() if x != "done"}, "state": state, "done": bool(s["done"])})
     now = stages[cur]
     nxt = {"text": now["next"] or now["label"], "stage": now["key"], "target": now["target"],
@@ -765,12 +765,14 @@ async def people_list(request: Request, q: str | None = None):
     p = _lx(request)
     async with db(realm="lx") as conn:
         ppl = await _people(conn)
-        logins = {r["id"]: (r["login"] or "").lower() for r in await conn.fetch("SELECT id, login FROM lx_users")} if q is not None else {}
+        logins = {r["id"]: (r["login"] or "").lower() for r in await conn.fetch("SELECT id, login FROM lx_users")}
+        depts = {r["id"]: (r["dept"] or "").strip() for r in await conn.fetch("SELECT id, dept FROM lx_users")}
     rows = [x for x in ppl.values() if x["active"] and x["role"] in ("staff", "admin")]
     if q is not None:
         k = "".join(q.split()).lower()[:60]
         rows = [x for x in rows if x["id"] != p.user_id and (not k or k in "".join(x["name"].split()).lower() or k in logins.get(x["id"], ""))]
-    items = [{"id": x["id"], "name": x["name"], "role_label": x["role_label"]} for x in rows]
+    from .accounts import mask      # 가린 메일(te**@lx.or.kr)과 소속(부서)을 함께 — 같은 이름이 둘이어도 누구인지 알 수 있게(11-07 태양광 검수 4)
+    items = [{"id": x["id"], "name": x["name"], "role_label": x["role_label"], "mail": mask(logins.get(x["id"], "")) if logins.get(x["id"]) else "", "dept": depts.get(x["id"], "")} for x in rows]
     return {"items": sorted(items, key=lambda x: (x["role_label"], x["name"])), "as_of": now_iso()}
 
 
