@@ -53,7 +53,8 @@ const RAIL = admin
     { id: 'approvals', label: '요청 관리', icon: 'inbox', href: '/landxi/v3/ops-core/#/approvals' },
     { id: 'reviews', label: '검토 요청', icon: 'list' },
     { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },
-    { id: 'shared', label: '공유 데이터', icon: 'data', href: '/landxi/v3/ops-infra/?view=shared' }]   // 10-13 관리자-공유데이터(원칙 238)   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
+    { id: 'shared', label: '공유 데이터', icon: 'data', href: '/landxi/v3/ops-infra/?view=shared' },
+    { id: 'board', label: '게시판', icon: 'board', href: '/landxi/v3/lx-board/' }]   // 10-13 관리자-공유데이터(원칙 238)   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
   : null;
 const S = shell({ who, home: 'lx-inbox', title: admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드',
   rail: admin ? { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === 'reviews') } : staffMenu('inbox') });

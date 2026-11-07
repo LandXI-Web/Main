@@ -9,6 +9,7 @@ export const RAIL = [
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // LX 관리자 대시보드와 같은 메뉴(원칙 43)
   { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
   { id: 'shared', label: '공유 데이터', icon: 'data', href: '#/shared' },   // 영상 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기(10-13 관리자-공유데이터 · 원칙 238)
+  { id: 'board', label: '게시판', icon: 'board', href: '/landxi/v3/lx-board/' },   // 11-07 PM 게시판 = 관리자는 왼쪽 메뉴(직원은 머리줄 아이콘)
 ];
 /* 배포 메뉴의 탭(배포된 카드 = 서비스 카드 관리 화면 · lx-cards) */
 export const TABS = [['cards', '배포된 카드', '/cards'], ['req', '배포 신청', '/requests'], ['off', '공식 결과', '/official'], ['share', '기관 공유', '/share'], ['usage', '사용 현황', '/usage'], ['cat', '분야', '/categories'], ['imp', '개선 후보', '/improve'], ['api', 'API', '/api'], ['rt', 'XI 재학습', '/retrain'], ['tpl', '학습 서식', '/templates']];

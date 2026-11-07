@@ -85,10 +85,11 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
 
   /* 오른쪽 위 '마지막 갱신'(점 + 시각)은 그리지 않는다(11-07 PM "오른쪽 상단 마지막 갱신은 필요 없다") — 화면이 부르는 S.fresh() 는 그대로 두되 아무것도 하지 않는다 */
   /* LX 직원 · LX 관리자 = '?' 대신 게시판 아이콘(11-07 PM — 눌러 게시판 화면: 공지사항 · QnA · 활용 사례 · 자료집). 영업 · 기관 화면의 '?'는 그대로 */
-  const boardOk = !contained && ['lx/staff', 'lx/admin'].includes(who?.key);
+  const boardOk = !contained && who?.key === 'lx/staff';   // 관리자는 왼쪽 메뉴 '게시판'(11-07 PM)
   const help = boardOk
     ? h('a.k-mast-b.k-help.k-board', { href: '/landxi/v3/lx-board/', title: '게시판', 'aria-label': '게시판', html: icon('board') })
     : h('button.k-mast-b.k-help', { type: 'button', 'aria-label': t('shell.help'), text: '?' });
+  if (!contained && who?.key === 'lx/admin') help.style.display = 'none';   // 관리자도 머리줄 '?' 없음(11-07 PM "? 이건 지우고") — 게시판은 왼쪽 메뉴
   const exit = h('button.k-mast-b.k-exit', { type: 'button', text: t('shell.exit') });
   const slot = h('span.k-mast-slot');
   /* XI맵 — 들어갈 수 있는 모든 화면의 마스트에 한 칸(원스톱 · 주소 입력 없이 C1 에 닿는다). 이 화면의 시군구(?region 또는 화면이 준 xiRegion)를 이어 준다 */
