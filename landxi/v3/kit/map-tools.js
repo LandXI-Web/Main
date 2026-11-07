@@ -28,7 +28,7 @@ export function ringArea(pts) {
   return Math.abs((a * R * R) / 2);
 }
 export const lenText = (m) => (m >= 1000 ? `${nf(m / 1000, 2)}km` : `${nf(m, m < 10 ? 1 : 0)}m`);
-export const areaText = (a) => (a >= 1e6 ? `${nf(a / 1e6, 2)}㎢` : a >= 1e4 ? `${nf(a, 0)}㎡ (${nf(a / 1e4, 2)}ha)` : `${nf(a, 0)}㎡`);
+export const areaText = (a) => (a >= 1e6 ? `${nf(a / 1e6, 2)}㎢` : a >= 1e4 ? `${nf(a, 0)}㎡ (${nf(a / 1e6, 2)}㎢)` : `${nf(a, 0)}㎡`);
 
 /** 재기 — 거리 · 면적. 작은 판(지도 왼쪽 아래 · 다른 판과 겹치지 않게 화면이 자리를 준다)과 지도 위 선 · 면 */
 export function measureTool({ map, host, onClose } = {}) {

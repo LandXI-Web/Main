@@ -1739,7 +1739,11 @@ def _place(r: dict) -> str:
 
 
 def _area_word(km2: float) -> str:
-    return f"약 {km2 * 100:,.1f}ha" if km2 < 1 else f"약 {km2:,.1f}㎢" if km2 < 100 else f"약 {km2:,.0f}㎢"
+    if km2 >= 100:
+        return f"약 {km2:,.0f}㎢"
+    if km2 >= 1:
+        return f"약 {km2:,.1f}㎢"
+    return f"약 {km2:,.2f}㎢" if round(km2, 2) > 0 else f"약 {km2 * 1e6:,.0f}㎡"      # 넓이 단위는 ㎢로(작아서 0.00 이 되면 ㎡)
 
 
 async def _fit_img(conn, cid: str, cv: str, r: dict, picks: dict, chg: bool = False) -> dict:

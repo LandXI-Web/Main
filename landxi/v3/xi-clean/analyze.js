@@ -215,7 +215,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     card.innerHTML = '';
     const eta = S.eta?.value;
     const km2 = q.area_km2?.value ?? areaKm2(S.geom);
-    const scope = label || `그린 범위 · ${km2 < 1 ? `${nf(Math.round(km2 * 1000) / 10)}ha` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
+    const scope = label || `그린 범위 · ${km2 < 0.01 ? `${nf(Math.round(km2 * 1e6))}㎡` : km2 < 1 ? `${nf(Math.round(km2 * 100) / 100)}㎢` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
     const sc = S.sgg ? q.scope || null : null;          // 시군구 분석 — 서버가 만든 범위 문장(답 · 확인 카드와 같은 글자)
     const why = !q.allowed ? reasonText(q.reasons) : '';
     card.append(...[

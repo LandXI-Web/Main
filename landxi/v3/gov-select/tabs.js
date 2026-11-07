@@ -231,9 +231,10 @@ async function renderStatsDash(box, { s, B, rep, getNums }) {
   const pickV = (o) => (useN ? v(o?.n) : v(o?.area));
   const unit = useN ? (j.unit || '건') : '㎡';
   const ha = v(j.total?.area) != null ? v(j.total.area) / 1e4 : null;
+  const km2 = ha != null ? ha / 100 : null;
   const fp = (await getNums())?.fp;
-  const kpis = [useN ? { label: 'AI 분석 결과', value: v(j.total?.n), unit: j.unit || '건' } : { label: 'AI 분석 결과 넓이', value: ha, unit: 'ha', d: 1 },
-    ...(useN && ha != null ? [{ label: '넓이', value: ha, unit: 'ha', d: 1 }] : []),
+  const kpis = [useN ? { label: 'AI 분석 결과', value: v(j.total?.n), unit: j.unit || '건' } : { label: 'AI 분석 결과 넓이', value: km2, unit: '㎢', d: 2 },
+    ...(useN && km2 != null ? [{ label: '넓이', value: km2, unit: '㎢', d: 2 }] : []),
     ...(fp && val(fp) ? [{ label: '오탐 · AI가 잘못 봄', value: val(fp), unit: j.unit || '건' }] : [])];
   const emds = (j.emds || []).filter((e) => !e.out);
   const nm = `${(B.short || '').replace(/\s+/g, '')}_${s.name.replace(/\s+/g, '')}`;

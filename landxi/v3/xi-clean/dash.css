@@ -191,3 +191,12 @@ html.pn-dragging-x [data-dash="1"] > .xc-stage{transition:none}
 
 [data-dash="1"] .k-chat-root[data-dock] .k-chat-sugg{display:none}   /* 대시보드 동안은 입력 줄만(차트를 가리지 않게) */
 .xd-b .x:empty{min-height:17px}
+
+/* 크게 보기(시군구 AI 결과 화면) — 대화 칸은 오른쪽 아래 아이콘으로 접혀 있다가 누르면 열림 · 범례는 이 화면과 상관없어 숨김 */
+.xd-chatfab{display:none}
+[data-dash="1"] .xd-chatfab{display:grid;place-items:center;position:absolute;right:20px;bottom:20px;z-index:46;width:52px;height:52px;padding:0;border:0;border-radius:50%;background:var(--ai);color:#fff;box-shadow:var(--elev-map);cursor:pointer;font:800 var(--fs-body,16px)/1 var(--font-display)}
+[data-dash="1"] .xd-chatfab:hover{filter:brightness(1.08)}
+[data-dash="1"] .xd-chatfab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[data-dash="1"] .k-chat-root[data-dock]{display:none}
+[data-dash="1"][data-chat="open"] .k-chat-root[data-dock]{display:block;left:auto!important;right:20px;bottom:84px!important;transform:none;width:min(520px,calc(100% - 40px))!important;z-index:45}
+[data-dash="1"] .xc-legend{display:none!important}

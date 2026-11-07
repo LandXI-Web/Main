@@ -186,8 +186,8 @@ async function boot() {
   document.documentElement.dataset.role = S.key.replace('/', '-');
 
   // 입체는 뺐다(원칙 196 · GPT3-8 '입체가 의미있나??' → 입체 빼기) — 단추 · 지형 타일 로딩 · 기울기 모두 없음(위에서 내려다보는 지도만)
-  const tools = S.fc ? [['layers', '층'], ['rules', '규칙'], ['list', '목록'], ['swipe', '영상 비교'], ['sweep', '대조'], ['report', '보고서']]
-    : [['layers', '층'], ['swipe', '영상 비교'], ['report', '보고서']];
+  const tools = S.fc ? [['layers', '레이어'], ['rules', '규칙'], ['list', '목록'], ['swipe', '영상 비교'], ['sweep', '대조'], ['report', '보고서']]
+    : [['layers', '레이어'], ['swipe', '영상 비교'], ['report', '보고서']];
   if (S.canAnalyze && !S.sales) tools.push(['analyze', '분석']);   // 영업 계정은 분석 · 재기 · 저장 단추 없음(11-06 재검수 · 보기만)
   if (!S.sales) tools.push(['measure', '재기'], ['save', '저장']);   // 지도 재기 · 지도 그림 저장(10-22 now21 제안-지도재기저장 — 브이월드 · 공공 GIS 지도와 같은 말)
   S.tools = tools;
@@ -1088,11 +1088,11 @@ function paintLegend() {
   LEGT = setTimeout(() => {
     if (!mainEl) return;
     const cls = S.board && aiOn() ? visibleClasses().filter((c) => !S.clsOff.has(c)) : [];
-    const key = cls.map((c) => `${c}:${clsCount(c)}:${userCol(c) || baseCol(c)}`).join('|');
+    const key = cls.map((c) => `${c}:${userCol(c) || baseCol(c)}`).join('|');
     if (!LEG) { LEG = h('div.xc-legend', { 'aria-label': '범례', hidden: true }); mainEl.append(LEG); }
     if (key === LEGKEY) return;
     LEGKEY = key; LEG.hidden = !cls.length;
-    LEG.replaceChildren(...cls.slice(0, 6).map((c) => { const n = clsCount(c); return h('span', {}, h('i', { style: { background: userCol(c) || baseCol(c) } }), clsName(c), ...(n ? [h('em.num', { text: nf(n) })] : [])); }));
+    LEG.replaceChildren(...cls.slice(0, 6).map((c) => { return h('span', {}, h('i', { style: { background: userCol(c) || baseCol(c) } }), clsName(c)); }));
   }, 250);
 }
 /* ═══ 지도 안 왼쪽 위 글자(원칙 233 · 237 → 10-17 원칙 271) — 흰 글씨 한 줄 'OO 시군구 · OO 서비스 제공중'.
@@ -2130,14 +2130,14 @@ async function agentOp(a) {
   }
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
-    if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
+    if (!k) return { ok: false, reason: '그 레이어는 이 지도에 없습니다' };
     const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: S.fc ? (S.susLayers || []).length : 0, parcel: (S.parcelLayers || []).length + (map.getLayer('xc-lxmap') ? 1 : 0) }[k];   // LX 화면 = 실태조사 층 없음(원칙 135)
-    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
+    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 레이어가 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 레이어가 없습니다' : '이 지역에는 그 레이어가 없습니다' };
     const want = a.on !== false;
     if (k === 'ai' && want && Array.isArray(a.sets) && a.sets.length) {
       // 물은 종류의 층을 저절로 켜기(시안 ⓑ-1 · 10-22) — 그 결과 세트만 더 켠다(켜 둔 다른 층은 그대로 · add)
       const want2 = new Set(a.sets.map(String)), hit = (S.res || []).filter((it) => want2.has(String(it.set)));
-      if (!hit.length) return { ok: false, reason: '이 지역에는 그 결과 층이 없습니다' };
+      if (!hit.length) return { ok: false, reason: '이 지역에는 그 결과 레이어가 없습니다' };
       const before = JSON.stringify([S.layers.ai, (S.res || []).map((it) => !!S.resOn[it.id])]);
       if (!a.add) for (const it of S.res || []) S.resOn[it.id] = false;
       for (const it of hit) S.resOn[it.id] = true;
@@ -2602,7 +2602,7 @@ function renderLayers() {
   rows.push(...natYearRows());
   // 지도 이름표(10-22 now21 제안-지도이름표 '넣음') — 지도 위 글자(추천 질문 말풍선 · 숫자 꼬리표 · 지역 말풍선)를 끄고 켠다 · 이 브라우저에 기억
   rows.push(h('button.xc-row.xc-row--lab', { type: 'button', 'aria-pressed': String(!LABOFF), onclick: (e) => { setLabels(LABOFF); e.currentTarget.setAttribute('aria-pressed', String(!LABOFF)); } }, h('i.xc-sw'), h('span', { text: '이름표' })));
-  showPop('층', h('div.xc-rows-p', {}, ...rows));
+  showPop('레이어', h('div.xc-rows-p', {}, ...rows));
   paintCadRow();
 }
 /** 층 판 '전국 분석 연도'(10-22 now21 시계열-연도고르기 ⓐ) — 해마다 따로 보기(숫자도 그 해 장부 하나) · 아직 도는 해는 '분석 중 n%'.

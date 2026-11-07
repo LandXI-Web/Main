@@ -15,7 +15,7 @@
 /* 대화 서랍 맨 위 — 지도 강조 켜고 끄기(서랍이 지도 오른쪽 판을 가려도 · 10-22) */
 .k-drawer .k-dr-b.xk-dlog .xk-dtool{flex:none;display:flex;justify-content:flex-end;align-items:center;padding:8px 16px;border-bottom:1px solid var(--rule);background:var(--bg-1)}
 .xk-ans.is-busy .xk-ans-t{color:var(--sub)}
-.xk-ans-bar{height:3px;width:120px;border-radius:2px;background:var(--rule);overflow:hidden;position:relative}
+.xk-ans-bar{height:3px;width:100%;border-radius:2px;background:var(--rule);overflow:hidden;position:relative}
 .xk-ans-bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--accent);border-radius:2px;animation:xk-bar 1.2s ease-in-out infinite}
 @keyframes xk-bar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
 .xk-ans-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center}

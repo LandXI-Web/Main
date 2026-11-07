@@ -3,7 +3,7 @@
 .la-swp[data-drag]{cursor:ew-resize}
 .la-swp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
 .la-swp .la-swp-r{clip-path:inset(0 calc(100% - var(--v)) 0 0)}
-.la-swp-bar{position:absolute;top:0;bottom:0;left:var(--v);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.18);pointer-events:none}
+.la-swp-bar{position:absolute;top:0;bottom:0;left:clamp(2px,var(--v),calc(100% - 2px));width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.18);pointer-events:none}
 /* 경계 손잡이(10-31 개편 5) — 좌우 스와이프 표시. 끝에 닿아도 그림 안쪽에 보이게 가둔다. 처음 넘어가는 동안은 숨김 */
 .la-swp-knob{position:absolute;top:50%;left:clamp(16px,var(--v),calc(100% - 16px));width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;display:grid;place-items:center;
   background:#fff;color:var(--ink,#191f28);box-shadow:0 1px 4px rgba(0,0,0,.28);pointer-events:none;opacity:0;transition:opacity var(--d-300,.3s)}

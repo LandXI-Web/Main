@@ -74,8 +74,8 @@ export function mountNation({ map, host, onEnter, onLeave, onPick }) {
     hud.replaceChildren(
       h('p.xn-k', { text: `${n.name} · ${p.district ? p.district + ' 군' : '구획'}` }),
       h('h2.xn-h', { text: '구획 경작지 판정' }),
-      h('p.xn-p', {}, h('span', {}, '경작지 ', h('b', { text: `${nf(Math.round(p.crop_ha * 10) / 10)}ha` }), ` · 구획의 ${Math.round(p.share * 100)}%`),
-        h('span', { text: `구획 면적 ${nf(Math.round(p.area_ha * 10) / 10)}ha` }),
+      h('p.xn-p', {}, h('span', {}, '경작지 ', h('b', { text: `${nf(Math.round(p.crop_ha) / 100, 2)}㎢` }), ` · 구획의 ${Math.round(p.share * 100)}%`),
+        h('span', { text: `구획 면적 ${nf(Math.round(p.area_ha) / 100, 2)}㎢` }),
         h('span.xn-src', { text: `구획 = OpenStreetMap 농경지 면 · 판정 = ${st.blk?.year || ''}년 Sentinel-2 AI 토지피복(약 ${Math.round(st.blk?.cell_m || 15)}m 칸)` })),
       more);
     hud.hidden = false;

@@ -21,16 +21,16 @@ const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데�
   tabs: ['Season', 'NDVI', 'Sprawl', 'Register'], run: 'Run this season', dl: 'Download',
   // 구역 대장 × AI(r3-global · C4·C3 최소) — 필지가 아닌 구역 단위
   hudReg: "Districts that don't match · {district}", regLevel: 'District level — not parcels.',
-  regHint: 'Upload a CSV or XLSX with district names (or codes) and declared cropland (ha). Each district is compared with the AI cropland map.',
+  regHint: 'Upload a CSV or XLSX with district names (or codes) and declared cropland (km²). Each district is compared with the AI cropland map.',
   regUp: 'Upload register', regAgain: 'Upload another', regBusy: 'Comparing…', regFail: 'Could not read this file',
   regMatched: 'Matched {m} of {n} rows to local districts', regCols: ['District', 'Declared', 'AI', 'Diff'],
   regMis: "Don't match", regOk: 'Match', regOutside: '{n} outside your districts · not compared', regUnmatched: '{n} with no matching district name',
   regNone: 'No register yet', regNoAi: 'no AI value',
   // 공식 통계 나란히(10-18 제안-해외공식통계대조 · 원칙 293) — 키르기스스탄 국가통계위원회 2025 수확 면적 표
-  offTitle: 'Against official statistics', offCols: ['District', 'AI cropland (ha)', 'Official (ha)', 'Diff'],
+  offTitle: 'Against official statistics', offCols: ['District', 'AI cropland (km²)', 'Official (km²)', 'Diff'],
   offHead: 'Official = harvested area of all field crops and fodder, {y} (National Statistical Committee)',
   offNote: 'AI = cropland visible in 2025 imagery. Official = reported harvested area. The two measure different things.',
-  offLine: 'Official {y}: {v} ha harvested · AI {d}', offNone: 'No official district figure',
+  offLine: 'Official {y}: {v} km² harvested · AI {d}', offNone: 'No official district figure',
   computing: 'Computing · about {n}s', none: 'No imagery for this season yet', req: 'Request imagery',
   noresult: 'No result yet', checking: 'Checking…',
   guard: 'Outside your districts', maperr: 'Could not load the map', retry: 'Try again',
@@ -809,7 +809,7 @@ async function main() {
   function offLine(D0) {
     const o = offOf(D0.id), e = cropHa(D0.id);
     if (!o || !e || !(o.official_ha > 0)) return null;
-    return h('p.gl-off-line', { title: STR.offNote, text: fill(STR.offLine, { y: OFF.year, v: K.nf(o.official_ha, 0), d: diffTxt(+e.value, o.official_ha) }) });
+    return h('p.gl-off-line', { title: STR.offNote, text: fill(STR.offLine, { y: OFF.year, v: K.nf(o.official_ha / 100, 1), d: diffTxt(+e.value, o.official_ha) }) });
   }
   function offBlock() {
     const A = S.country && admCache[S.country.iso];
@@ -824,8 +824,8 @@ async function main() {
     for (const d of rows) {
       const e = cropHa(d.id), o = offOf(d.id);
       const tr = h('tr', { 'data-cur': d === S.district ? '1' : null });
-      const ai = h('td.gl-num'); ai.innerHTML = `${esc(K.nf(+e.value, 0))}${K.sig(e)}`;
-      tr.append(h('td', { text: d.name }), ai, h('td.gl-num', { text: K.nf(o.official_ha, 0) }), h('td.gl-num', { text: diffTxt(+e.value, o.official_ha) }));
+      const ai = h('td.gl-num'); ai.innerHTML = `${esc(K.nf(+e.value / 100, 1))}${K.sig(e)}`;
+      tr.append(h('td', { text: d.name }), ai, h('td.gl-num', { text: K.nf(o.official_ha / 100, 1) }), h('td.gl-num', { text: diffTxt(+e.value, o.official_ha) }));
       tr.addEventListener('click', () => { if (d !== S.district) toDistrict(d); });
       tbody.append(tr);
     }
@@ -859,10 +859,10 @@ async function main() {
       const tbody = h('tbody');
       for (const it of rows) {
         const tr = h('tr', { 'data-status': it.status, title: it.status === 'mismatch' ? STR.regMis : STR.regOk });
-        const td = (e, d, u) => { const c = h('td.gl-num'); c.innerHTML = e ? `${esc(K.nf(V(e), d))}${u}${K.sig(e)}` : '—'; return c; };
+        const td = (e, d, u) => { const c = h('td.gl-num'); c.innerHTML = e ? `${esc(K.nf(V(e) / 100, d))}${u}${K.sig(e)}` : '—'; return c; };
         const sign = it.diff && V(it.diff) > 0 ? '+' : '';
         const dcell = h('td.gl-num'); dcell.innerHTML = it.diff ? `${sign}${esc(K.nf(V(it.diff), 0))}%${K.sig(it.diff)}` : '—';
-        tr.append(h('td', {}, h('span.gl-reg-dot', { 'aria-hidden': 'true' }), h('span', { text: it.district || it.name })), td(it.declared, 0, ' ha'), td(it.ai, 0, ' ha'), dcell);
+        tr.append(h('td', {}, h('span.gl-reg-dot', { 'aria-hidden': 'true' }), h('span', { text: it.district || it.name })), td(it.declared, 1, ' km²'), td(it.ai, 1, ' km²'), dcell);
         tr.addEventListener('click', () => { const A = S.country && admCache[S.country.iso]; const D1 = A?.feats.find((d) => d.id === it.district_id); if (D1 && D1 !== S.district && (D1.mine || isLX)) toDistrict(D1); });
         tbody.append(tr);
       }

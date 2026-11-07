@@ -266,7 +266,7 @@ export function changePanel(side, c) {
     const what = isAdv() && S.manual ? '분석할 곳' : (F.one && !F.optA) || SLR().filter(picked).length < 2 ? '영상 범위' : '두 영상이 겹치는 곳';
     where.classList.toggle('is-big', !!(e.big || sec >= 1800));
     where.replaceChildren(sec ? h('b', { text: dur(sec) }) : h('span.la-dash', { text: '—' }),
-      h('span', { text: [`${what} 약 ${a >= 1 ? a.toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + '㎢' : (a * 100).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + 'ha'}`, sec ? '최근 분석 속도로 어림' : '첫 분석 뒤 표시'].join(' · ') }));
+      h('span', { text: [`${what} 약 ${a >= 0.01 ? a.toLocaleString('ko-KR', { maximumFractionDigits: a >= 1 ? 1 : 2 }) + '㎢' : Math.round(a * 1e6).toLocaleString('ko-KR') + '㎡'}`, sec ? '최근 분석 속도로 어림' : '첫 분석 뒤 표시'].join(' · ') }));
   }
   function ready() {
     if (isNation()) {

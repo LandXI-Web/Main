@@ -202,7 +202,9 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
   const cap = h('div.xd-cap', { hidden: true });
   const mean = h('div.xd-mean', { hidden: true, role: 'status' });
   if (!TIP) { TIP = h('div.xd-tip', { hidden: true, role: 'tooltip' }); document.body.append(TIP); }
-  host.append(panel, back, cap, mean);
+  const fab = h('button.xd-chatfab', { type: 'button', 'aria-label': 'XI ChatGEO 열기', 'aria-expanded': 'false', title: 'XI ChatGEO' }, h('span', { text: 'XI' }));   // 크게 보기 화면에서는 대화 칸이 이 아이콘으로 접혀 있다가 누르면 열린다(화면 가림 최소)
+  fab.onclick = () => { const on = host.dataset.chat !== 'open'; if (on) host.dataset.chat = 'open'; else delete host.dataset.chat; fab.setAttribute('aria-expanded', String(on)); if (on) setTimeout(() => host.querySelector('.k-chat-root[data-dock] .k-ck-i')?.focus(), 60); };
+  host.append(panel, back, cap, mean, fab);
   back.onclick = () => (onBack ? onBack() : leave());   // 3단계 → 2단계(지도 위 통계)로 되돌아감(app.js) · 없으면 닫기
   panel.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
   panel.addEventListener('mouseleave', () => tip(null, null));
@@ -327,7 +329,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
     if (!D.on) return;
     D.on = false; D.spec = null; D.sel = null;
     D.pn?.destroy(); D.pn = null;                                     // 손잡이는 대시보드 동안만(지도 칸 폭 변수는 기본으로)
-    delete host.dataset.dash; panel.hidden = true; back.hidden = true; cap.hidden = true; tip(null, null);
+    delete host.dataset.dash; delete host.dataset.chat; fab.setAttribute('aria-expanded', 'false'); panel.hidden = true; back.hidden = true; cap.hidden = true; tip(null, null);
     if (map.getSource('xd-f')) map.getSource('xd-f').setData({ type: 'FeatureCollection', features: [] });
     resizeFor(900);
     if (window.__xc) window.__xc.dash = null;

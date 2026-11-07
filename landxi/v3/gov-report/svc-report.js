@@ -172,7 +172,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
     const L = byDate[byDate.length - 1];
     const sameUnit = P.every((s) => s.unit === L.unit);
     const kpis = [{ label: one ? 'AI 분석 결과' : `AI 분석 결과 · ${L.short}`, value: val(L.total), unit: L.unit },
-      { label: '넓이', value: val(L.area_ha), unit: 'ha', d: 1 },
+      { label: '넓이', value: val(L.area_ha) / 100, unit: '㎢', d: 2 },
       ...(val(L.acc) != null ? [{ label: 'AI 모델 정확도', value: val(L.acc), unit: '%', d: 1 }] : []),
       ...(d.ledger ? [{ label: '올린 대장 필지', value: val(d.ledger.parcels), unit: '필지' }] : [])];
     const holder = h('div.rp-dash', { dataset: { metric: 'AI 분석 결과', v: String(val(L.total) ?? '') } });
@@ -185,7 +185,7 @@ export function svcReport({ svc, onAuth, fusionHref }) {
       onEmd: d.emd ? null : (k) => { if ((d.emds || []).includes(k)) { S.emd = k; emdSel.value = k; load(); } },
     }).then((el) => { if (holder.isConnected) holder.replaceChildren(el); }).catch((e) => devlog('farm dash', e.message));
     if (!one) {
-      art.append(sec('시점 비교'), tbl(['결과', '분석한 날', 'AI 분석 결과', '넓이(ha)'], byDate.map((s) => [s.short, s.analyzed || '—', `${nf(val(s.total))}${s.unit}`, nf(val(s.area_ha), 1)]), [0, 1], null));
+      art.append(sec('시점 비교'), tbl(['결과', '분석한 날', 'AI 분석 결과', '넓이(㎢)'], byDate.map((s) => [s.short, s.analyzed || '—', `${nf(val(s.total))}${s.unit}`, nf(val(s.area_ha) / 100, 2)]), [0, 1], null));
     }
     /* 지도 — 고른 결과마다(넷까지) */
     art.append(sec('지도'));

@@ -29,7 +29,7 @@ export function watchTransit(pane) {
     const block = h('section.sp-tr', { dataset: { metric: '필지 전이', v: String(val(t.changed) ?? '') } },
       h('h3', {}, '필지 전이', h('span.rp-auto', { text: '자동' })),
       h('p.sp-tr-k', {}, h('b', { text: `종류가 바뀐 필지 ${nf(val(t.changed))}필지` }), h('small', { text: `${A} → ${Z} · 필지 번호로 맞춤` })),
-      tb([A, Z, '필지', '넓이(ha)'], [...t.rows.map((x) => [x.from, x.to, nf(val(x.n)), nf(val(x.ha), 2)]), ['합계', '', nf(val(t.parcels)), nf(sum, 2)]], [2, 3], true),
+      tb([A, Z, '필지', '넓이(㎢)'], [...t.rows.map((x) => [x.from, x.to, nf(val(x.n)), nf(val(x.ha) / 100, 3)]), ['합계', '', nf(val(t.parcels)), nf(sum / 100, 3)]], [2, 3], true),
       t.top.length ? h('p.sp-tr-s', { text: '바뀐 필지(넓은 순 10)' }) : null,
       t.top.length ? tb(['소재지', '읍면동', '바뀜', '넓이(㎡)'], t.top.map((x) => [x.where, x.emd, `${x.from} → ${x.to}`, nf(val(x.area))]), [3]) : null);
     art.querySelector('.sp-tr')?.remove();

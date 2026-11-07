@@ -641,6 +641,46 @@ async def result_sggs() -> list[str]:
     return sorted({r["cd"] for r in rows if r["cd"] and not hit(ex, r["card_id"], r["cd"])})
 
 
+async def _office_center(tenant: str, c) -> list[float] | None:
+    """기관 청사 위치 — 기관 설정(tenant_settings)의 office_center([경도, 위도])가 있으면 그것, 없고 office_addr(청사 주소)가 있으면
+    브이월드 주소 검색으로 좌표를 구해 office_center 로 기억한다. 둘 다 없으면 None(→ 관할 시군구 중심)."""
+    if not await c.fetchval("SELECT to_regclass('tenant_settings') IS NOT NULL"):
+        return None
+    rows = await c.fetch("SELECT key, value FROM tenant_settings WHERE tenant_id=$1 AND key IN ('office_center', 'office_addr')", tenant)
+    kv = {r["key"]: (json.loads(r["value"]) if isinstance(r["value"], str) else r["value"]) for r in rows}
+    ctr = kv.get("office_center")
+    if isinstance(ctr, list) and len(ctr) == 2:
+        return [float(ctr[0]), float(ctr[1])]
+    addr = str(kv.get("office_addr") or "").strip()
+    if not addr:
+        return None
+    import httpx
+    from .ledger import _vworld_search
+    from .proxy import vworld_key
+    key, dom = vworld_key()
+    if not key:
+        return None
+    pt = None
+    try:
+        async with httpx.AsyncClient(timeout=10) as hc:
+            r = await hc.get("https://api.vworld.kr/req/search", params={
+                "service": "search", "request": "search", "version": "2.0", "type": "address", "category": "road", "query": addr,
+                "key": key, "domain": dom, "format": "json", "size": 1, "crs": "EPSG:4326"})
+            it = ((r.json().get("response") or {}).get("result") or {}).get("items") or []
+            if it:
+                pt = (float(it[0]["point"]["x"]), float(it[0]["point"]["y"]))
+            else:
+                pt = await _vworld_search(hc, key, dom, addr)
+    except Exception:
+        return None
+    if not pt:
+        return None
+    ctr = [round(pt[0], 6), round(pt[1], 6)]
+    await c.execute("INSERT INTO tenant_settings(tenant_id, key, value, updated_at) VALUES ($1,'office_center',$2::jsonb,now()) "
+                    "ON CONFLICT (tenant_id, key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()", tenant, json.dumps(ctr))
+    return ctr
+
+
 async def record() -> dict:
     if _REC["v"] and time.time() - _REC["t"] < 60:
         return _REC["v"]
@@ -669,10 +709,12 @@ async def record() -> dict:
     work.sort(key=lambda r: (-int(r["n"] or 0), 0 if r["dp"] else 1, card_name(r["name"])))
     orgs = []
     for r in og:
+        async with db(realm="lx") as c2:
+            office = await _office_center(r["tenant_id"], c2)
         nm = r["name"]
         nm = (nm.get("ko") if isinstance(nm, dict) else json.loads(nm).get("ko") if isinstance(nm, str) and nm.startswith("{") else nm) or r["tenant_id"]
         rg = region_of(r["sgg_cd"]) if r["sgg_cd"] else None
-        orgs.append({"name": _short_org(nm), "sgg_cd": (rg or {}).get("sgg_cd"), "center": (rg or {}).get("center")})
+        orgs.append({"name": _short_org(nm), "sgg_cd": (rg or {}).get("sgg_cd"), "center": office or (rg or {}).get("center")})
     src = "AI 분석 결과 장부(시군구 전역 분석 · 서비스 결과 · 공개된 결과 설명서)"
     v = {"sgg": env(len(sgg), "곳", "recorded", src), "places": places,
          "services": {"n": env(len(services), "가지", "recorded", src), "names": services},
