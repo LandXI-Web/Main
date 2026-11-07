@@ -94,6 +94,10 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-ntc button:hover{background:var(--bg-0)}
 .ld-ntc b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ld-ntc small{font-size:var(--fs-tag);color:var(--sub)}
+/* 11-07 PM — 제목만 여러 줄 · 들어가는 줄만(app.js fit) · 칸 안 스크롤 없음 */
+.ld-ntc.is-titles{overflow:hidden}
+.ld-ntc.is-titles li[hidden]{display:none}
+.ld-ntc.is-titles small{white-space:nowrap}
 .ld-ntc-one{display:flex;flex-direction:column;gap:4px;min-height:0;padding:4px 6px;margin:0 -6px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;color:var(--ink);overflow:hidden}
 .ld-ntc-one:hover{background:var(--bg-0)}
 .ld-ntc-one > b,.ld-ntc-one > small{flex:none}   /* 낮은 칸에서 제목 · 날짜가 줄어 잘리지 않게 — 본문만 줄인다(10-22 P8b) */

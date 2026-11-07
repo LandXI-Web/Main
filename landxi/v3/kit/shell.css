@@ -17,6 +17,10 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
 .k-role b{font-weight:500;color:var(--sub)}
 .k-role b::after{content:"·";margin:0 6px;color:var(--mute)}
 .k-fresh{cursor:default}
+/* 게시판 아이콘(11-07 PM — LX 직원 · LX 관리자 머리줄 '?' 자리) */
+a.k-board{justify-content:center}
+.k-board svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.k-board[aria-current="page"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 
 /* 레일 — 메뉴 */
 .k-rail{gap:4px}

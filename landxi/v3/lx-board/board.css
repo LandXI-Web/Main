@@ -1,0 +1,75 @@
+/* lx-board — 게시판(11-07 PM). 판 1장 = 뷰포트 · 스크롤은 목록 · 글 칸 안에서만(법전 §3). 흰 · 회색 · 검정 톤 · 탭은 요청함(lx-inbox .ib-tabs)과 같은 모양. 토큰만. */
+.bd{height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;padding:32px 48px 32px;max-width:1440px;margin:0 auto;overflow:hidden}
+@media (min-width:1600px){.bd{max-width:var(--wide-max)}}
+.bd-head{display:flex;align-items:baseline;gap:20px}
+.bd-t{margin:0;font:700 var(--fs-h3)/var(--lh-h3) var(--font-display);letter-spacing:var(--ls-h3);color:var(--ink)}
+.bd-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--rule)}
+.bd-write{margin-bottom:10px}
+.bd-write[hidden]{display:none}
+
+/* 탭 — lx-inbox .ib-tabs 와 같은 모양 */
+.bd-tabs{display:flex;gap:24px;padding:0 8px}
+.bd-tabs button{position:relative;display:inline-flex;align-items:baseline;gap:6px;height:52px;padding:0 2px;border:0;background:none;cursor:pointer;font:500 var(--fs-t2)/52px var(--font-body);color:var(--sub);transition:color var(--d-180) var(--e-ui)}
+.bd-tabs button::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform var(--d-380) var(--e-ui)}
+.bd-tabs button:hover{color:var(--ink)}
+.bd-tabs button[aria-selected="true"]{color:var(--ink)}
+.bd-tabs button[aria-selected="true"]::after{transform:none}
+.bd-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+.bd-box{flex:1;min-height:0;overflow:auto;padding:8px 16px 16px}
+.bd-wait{padding:24px 8px}
+.bd-none{margin:0;padding:48px 8px;text-align:center;font:400 var(--fs-body)/26px var(--font-body);color:var(--sub)}
+
+/* 목록 — 한 줄 = 제목 · (QnA 답 상태 · 자료집 파일) · 쓴 사람 · 날짜 */
+.bd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.bd-list li + li{border-top:1px solid var(--rule)}
+.bd-row{display:flex;align-items:center;gap:16px;padding:16px 12px;border-radius:var(--r-8);color:var(--ink);text-decoration:none;transition:background var(--d-180) var(--e-ui)}
+.bd-row:hover{background:var(--bg-0)}
+.bd-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.bd-row-t{flex:1;min-width:0;font:500 var(--fs-body)/24px var(--font-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd-chip{flex:none}
+.bd-row-f{flex:0 1 auto;max-width:240px;min-width:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd-row-m{flex:none;display:inline-flex;gap:12px;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+
+/* 글 보기 */
+.bd-one{max-width:880px;padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.bd-back{align-self:flex-start;height:36px;padding:0 12px;margin-left:-12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-aux)/36px var(--font-body);cursor:pointer}
+.bd-back:hover{background:var(--bg-0);color:var(--ink)}
+.bd-one-t{margin:4px 0 0;font:700 var(--fs-t1)/36px var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);word-break:keep-all;text-wrap:balance}
+.bd-one-m{margin:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.bd-one-b{margin:8px 0 0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
+.bd-file{display:flex;align-items:center;gap:12px;margin-top:8px;padding:12px 16px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.bd-file span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd-file small{flex:none;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.bd-ans{margin-top:16px;padding-top:16px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:8px}
+.bd-ans-k{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.bd-ans-wait{margin:16px 0 0;padding-top:16px;border-top:1px solid var(--rule);font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+
+/* 쓰기 창 · 답 달기 — LX 관리자 공지 쓰기 창(ops-core.css .oc-ntc)과 같은 모양 */
+.oc-ntc{display:flex;flex-direction:column;gap:14px}
+.oc-ntc-f{display:flex;flex-direction:column;gap:6px;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--ink)}
+.oc-ntc-f small{margin-left:6px;font-weight:400;color:var(--sub)}
+.oc-ntc .t-input{box-sizing:border-box;width:100%}
+.oc-ntc-ta{height:auto;min-height:120px;padding:12px 14px;resize:vertical;font:400 var(--fs-body)/24px var(--font-body)}
+.oc-ntc-say{margin:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.oc-ntc-err{margin:0;font:500 var(--fs-aux)/var(--lh-aux) var(--font-body);color:var(--warn)}
+.oc-ntc-err[hidden]{display:none}
+.oc-ntc-act{display:flex}
+.oc-ntc-act .t-btn{padding:0 28px}
+.oc-ntc-k{margin:6px 0 0;padding-top:14px;border-top:1px solid var(--rule);font:500 var(--fs-aux)/20px var(--font-body);color:var(--ink)}
+.oc-ntc-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.oc-ntc-list li{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-aux)/20px var(--font-body);color:var(--ink)}
+.oc-ntc-list li:first-child{border-top:0}
+.oc-ntc-list li > span{font-size:var(--fs-aux);color:var(--sub)}
+.oc-ntc-list b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oc-ntc-list li.oc-ntc-none{display:block;color:var(--sub)}
+.oc-ntc-off{border:0;background:none;padding:2px 0;cursor:pointer;font:500 var(--fs-aux)/23px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.oc-ntc-off:hover{color:var(--warn)}
+.bd-file-in{font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink-2)}
+
+@media (max-width:960px){
+  .bd{padding:20px 16px;gap:16px}
+  .bd-tabs{gap:16px;padding:0;overflow-x:auto}
+  .bd-row{flex-wrap:wrap;gap:4px 12px}
+  .bd-row-t{flex-basis:100%;white-space:normal}
+}

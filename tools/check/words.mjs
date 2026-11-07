@@ -155,6 +155,7 @@ export async function run(role, s0) {
       for (const c of more.slice(0, 8)) await screen(s, `LX 직원 · 분석 서비스 자세히(${c.n})`, c.h, { wait: '.la-dt-body' });
       await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
       await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
+      await screen(s, 'LX 직원 · 게시판', A + 'lx-board/', { wait: '.bd-list, .bd-none' });   // 11-07 PM 게시판(머리줄 아이콘)
       await screen(s, 'LX 직원 · 프로젝트', A + 'lx-project/', { wait: 'main' });                       // 10-13 — 메뉴에 데이터하우스 없음
       await screen(s, 'LX 직원 · 새 프로젝트 창', A + 'lx-project/?new=1', { wait: '.lxp-new--one' });
       /* XI맵 — 전국 · 결과 있는 시군구 · 결과 없는 시군구(카드 글에 값 없음 글자가 새지 않는지) */

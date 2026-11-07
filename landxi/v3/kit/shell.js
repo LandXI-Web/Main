@@ -14,7 +14,7 @@
    rail 항목 end = true → PC 레일 아래쪽에 모아 둔다(기관 메뉴의 기관 정보 · 계정 — gov-select/menu.js · 시안 design-r8/gov-design)
    XI ChatGEO(AI 도우미 · 확인 요청 9차 채팅-1 · 채팅-2 ⓐ): 셸이 모든 화면 오른쪽 아래에 도우미 버튼 · 채팅창을 붙인다(cmdk.js · 지도 없는 화면도 같은 자리).
    머리에는 '물어보기' 버튼을 두지 않는다 — 화면이 S.mast() 로 넘긴 옛 트리거(.k-ck-btn · .gl-ask)는 머리에 넣지 않는다. */
-import { h, esc, hhmm } from './util.js';
+import { h, esc } from './util.js';
 import { t } from './i18n.js';
 import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
@@ -38,6 +38,7 @@ const ICON = {
   report: '<path d="M5 2.5h7l3 3v12H5z M8 9h5 M8 12h5 M8 15h3"/>', list: '<path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/>',
   folder: '<path d="M3 5h5l2 2h7v9H3z"/>', card: '<path d="M3 4h14v12H3z M3 8h14"/>', menu: '<path d="M3 5h14 M3 10h14 M3 15h14"/>',
   scan: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  board: '<path d="M4 3h12v14H4z M7 7h6 M7 10h6 M7 13h4"/>',   // 게시판(11-07 PM — 머리줄 '?' 자리)
   help: '<circle cx="10" cy="10" r="7.5"/><path d="M7.8 8a2.2 2.2 0 1 1 3.2 2c-.7.4-1 .8-1 1.5 M10 14h.01"/>', exit: '<path d="M8 3H4v14h4 M12 6l4 4-4 4 M16 10H7"/>',
 };
 export const icon = (k) => `<svg viewBox="0 0 20 20" aria-hidden="true">${ICON[k] || ICON.grid}</svg>`;
@@ -82,8 +83,12 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   let [rk, rn] = role ? role.split(' · ') : [];
   if (rn && rn.trim() === rk) rn = '';   // 계정 이름이 역할 표기와 같으면(개발 계정) 'LX 직원 · LX 직원' 반복 대신 한 번만 — 이름을 지어내지 않는다
 
-  const fresh = h('span.t-fresh.k-fresh.k-sig', { hidden: true, tabindex: '0' }, h('i'), h('span.num'));
-  const help = h('button.k-mast-b.k-help', { type: 'button', 'aria-label': t('shell.help'), text: '?' });
+  /* 오른쪽 위 '마지막 갱신'(점 + 시각)은 그리지 않는다(11-07 PM "오른쪽 상단 마지막 갱신은 필요 없다") — 화면이 부르는 S.fresh() 는 그대로 두되 아무것도 하지 않는다 */
+  /* LX 직원 · LX 관리자 = '?' 대신 게시판 아이콘(11-07 PM — 눌러 게시판 화면: 공지사항 · QnA · 활용 사례 · 자료집). 영업 · 기관 화면의 '?'는 그대로 */
+  const boardOk = !contained && ['lx/staff', 'lx/admin'].includes(who?.key);
+  const help = boardOk
+    ? h('a.k-mast-b.k-help.k-board', { href: '/landxi/v3/lx-board/', title: '게시판', 'aria-label': '게시판', html: icon('board') })
+    : h('button.k-mast-b.k-help', { type: 'button', 'aria-label': t('shell.help'), text: '?' });
   const exit = h('button.k-mast-b.k-exit', { type: 'button', text: t('shell.exit') });
   const slot = h('span.k-mast-slot');
   /* XI맵 — 들어갈 수 있는 모든 화면의 마스트에 한 칸(원스톱 · 주소 입력 없이 C1 에 닿는다). 이 화면의 시군구(?region 또는 화면이 준 xiRegion)를 이어 준다 */
@@ -101,8 +106,8 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   const sess = who && !contained ? h('button.k-sess', { type: 'button', hidden: true }) : null;
   if (sess) import('./session-clock.js').then((m) => m.mountClock(sess)).catch(() => {});
   const mast = h('header.t-mast.k-mast', {},
-    h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
-    h('span.sp'), slot, fresh, sess,
+    h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' })),   // 화면 이름(' · LX 직원 대시보드' · ' · 기관명' 등)은 모든 화면에서 그리지 않는다(11-07 PM "이 부분 전체 다 지우란 소리다")
+    h('span.sp'), slot, sess,
     role ? h(meOk(who) ? 'button.t-role.k-role.k-me-b' : 'span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
     xi, bell, help, who ? exit : null);
   /* 내 분석 진행 칩(11-07 7-B) — LX 직원 화면 공통 머리줄 · 진행 중일 때만 보임 · 누르면 그 작업 화면 */
@@ -181,12 +186,12 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
     };
     rail.items.forEach((it, i) => { if (it.more) row(it.label, it.icon, it.id === 'ximap' ? xiHref() : it.href, it.href ? null : () => { d?.close(); cur = i; drawRail(); rail.onPick?.(i, it); }, it.glyph); });
     if (xi) row('XI맵', 'map', xiHref());
-    row(t('shell.help'), 'help', null, () => { d?.close(); help.click(); });
+    if (boardOk) row('게시판', 'board', '/landxi/v3/lx-board/'); else row(t('shell.help'), 'help', null, () => { d?.close(); help.click(); });
     if (who) row(t('shell.exit'), 'exit', null, () => logout());
     d = drawer({ title: t('shell.menu'), body: list, label: t('shell.menu') });
   }
 
-  help.addEventListener('click', () => {
+  if (!boardOk) help.addEventListener('click', () => {
     if (onHelp) return onHelp();
     const d = drawer({ title: t('shell.help'), label: t('shell.help') });
     d.set(h('iframe.k-help-f', { src: '/landxi/v3/help-my/?embed=1', title: t('shell.help'), loading: 'lazy' }));
@@ -198,14 +203,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
     badge(id, n) { badges[id] = n; drawRail(); },
     go(i) { cur = i; drawRail(); },
     steps({ done: d, current } = {}) { if (d) done = d; if (current !== undefined) cur = current; drawRail(); },
-    fresh(d) {
-      if (!d) { fresh.hidden = true; return; }
-      const at = new Date(d), live = Date.now() - at < 5 * 60 * 1000;
-      fresh.hidden = false; fresh.dataset.live = live ? '1' : '0';
-      fresh.querySelector('span').textContent = hhmm(at);
-      fresh.setAttribute('aria-label', t('shell.fresh', { time: hhmm(at) }));
-      fresh.dataset.why = t('shell.fresh', { time: hhmm(at) });
-    },
+    fresh() { /* 마지막 갱신 표시 없음(11-07 PM) — 부르는 화면이 많아 이름만 남긴다 */ },
     mast(node) {
       slot.innerHTML = '';
       if (!node) return;

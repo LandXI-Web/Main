@@ -187,6 +187,7 @@ export async function run(role, s0) {
     await screen(s, 'LX 직원 · 분석 서비스', A + 'lx-analyze/', { wait: '.la-ac' });
     await screen(s, 'LX 직원 · 지도 서비스', A + 'lx-map/', { wait: '.lm-groups', ms: 4000 });
     await screen(s, 'LX 직원 · 요청함', A + 'lx-inbox/', { wait: 'main' });
+    await screen(s, 'LX 직원 · 게시판', A + 'lx-board/', { wait: '.bd-list, .bd-none' });   // 11-07 PM 게시판(머리줄 아이콘)
     await screen(s, 'LX 직원 · 프로젝트', A + 'lx-project/', { wait: 'main' });
     const pid = await s.page.evaluate(async () => {
       const t = JSON.parse(localStorage.getItem('lx_api_session') || 'null')?.token;

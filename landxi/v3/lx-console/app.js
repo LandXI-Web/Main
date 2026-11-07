@@ -124,9 +124,11 @@ requestAnimationFrame(() => page.classList.add('is-in'));
 
 /* ═══════════════ 칸 정의 ═══════════════ */
 const WIDGETS = {
-  /* 공지사항 — LX 관리자가 쓴 실제 글(GET /announcements) · 누르면 본문 창 */
+  /* 공지사항 — LX 관리자가 쓴 실제 글(GET /announcements) · 누르면 본문 창.
+     11-07 PM: 제목만 여러 줄(본문은 칸에 보이지 않음 · 날짜는 작게 오른쪽) · 머리 오른쪽 '공지사항 →' = 게시판 공지사항 탭.
+     칸 높이에 들어가는 줄만 그리고, 칸 크기 · 글꼴이 바뀌면 실제 높이로 다시 맞춘다(잘림 · 칸 안 스크롤 0) */
   notice: {
-    title: '공지사항', min: [3, 2], def: [8, 3], views: [{ id: 'list', label: '목록' }, { id: 'one', label: '최근 하나' }],
+    title: '공지사항', min: [3, 2], def: [8, 3], more: { text: '공지사항', href: '/landxi/v3/lx-board/?tab=notice' },
     async render(body, ctx) {
       wait(body);
       const my = (body._n = (body._n || 0) + 1);                      // 늦게 끝난 지난 그리기가 새 크기를 덮지 않게
@@ -137,34 +139,22 @@ const WIDGETS = {
       ctx.sub(j.total ? `${j.total}건` : null);
       if (!items.length) { none(body, '새 공지가 없습니다'); return; }
       const open = (a) => modal({ title: a.title, body: h('div.ld-ntc-md', {}, h('p.ld-ntc-by', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body ? h('p.ld-ntc-tx', { text: a.body }) : null) });
-      /* 크기별 — 작으면 최근 하나(제목 · 날짜) · 보통은 들어가는 만큼(최소 3) 제목 · 날짜 · 크면 전체 목록에 날짜 · 쓴 사람까지 */
-      if (ctx.view === 'one' || ctx.size === 's' || items.length === 1) {
-        /* 11-07 A′: 공지가 하나뿐이거나 작은 칸 — 제목 · 쓴 사람 · 본문(들어가는 줄만큼). 아주 낮은 칸은 제목 한 줄 크기로(10-22 P8b) */
-        const a = items[0], H = bodyH(ctx), rest = items.length > 1 && ctx.size === 's' ? 22 : 0;
-        const tiny = H < 60, titleH = tiny ? 24 : 28;
-        const lines = tiny ? 0 : Math.max(0, Math.floor((H - rest - titleH - 20 - 12) / 24));
-        put(body, h('button.ld-ntc-one', { type: 'button', class: tiny ? 'is-s' : '', onclick: () => open(a) },
-          h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body && lines >= 1 ? h('p', { text: a.body, title: a.body, style: `-webkit-line-clamp:${Math.min(8, lines)}` }) : null),
-        rest ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - 1}건` }) : null);
-        /* 제목이 두 줄로 꺾이는 좁은 칸 · 글꼴이 늦게 와 줄이 바뀌는 때 — 실제 남은 높이로 본문 줄 수를 다시 맞춘다(잘림 0).
-           칸 크기 · 글꼴이 바뀔 때마다 다시(11-07 검사 문: 그린 순간 한 번만 재서 본문이 칸 밖으로 41~65px) */
-        const fit = () => {
-          const p = body.querySelector('.ld-ntc-one p'); if (!p || body._n !== my) return;
-          p.style.display = '-webkit-box'; p.style.webkitBoxOrient = 'vertical'; p.style.webkitLineClamp = '8';
-          const room = body.getBoundingClientRect().bottom - p.getBoundingClientRect().top - rest - 6;
-          const n = Math.floor(room / 24);
-          if (n < 1) p.style.display = 'none'; else p.style.webkitLineClamp = String(Math.min(8, n));
-        };
-        requestAnimationFrame(fit);
-        document.fonts?.ready.then(fit);
-        body._ntcFit = fit;
-        if (!body._ntcRO) { body._ntcRO = new ResizeObserver(() => body._ntcFit?.()); body._ntcRO.observe(body); }
-        return;
-      }
-      const show = ctx.size === 'l' ? items : items.slice(0, Math.max(3, Math.floor(bodyH(ctx) / rowPx(ctx))));
-      put(body, h('ul.ld-ntc', { class: ctx.size === 'l' ? 'is-l' : '' }, ...show.map((a) => h('li', {}, h('button', { type: 'button', title: a.title, onclick: () => open(a) },
-        h('b', { text: a.title }), ctx.size === 'l' ? h('span.ld-k', { text: a.by_name }) : null, h('small.num', { text: ctx.size === 'l' ? ymdDot(a.at) : when(a.at) }))))),
-      show.length < items.length ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - show.length}건` }) : null);
+      const wide = ctx.px.w >= 420;
+      const list = h('ul.ld-ntc.is-titles', {}, ...items.map((a) => h('li', {}, h('button', { type: 'button', title: a.title, onclick: () => open(a) },
+        h('b', { text: a.title }), h('small.num', { text: wide ? ymdDot(a.at) : when(a.at) })))));
+      put(body, list);
+      /* 들어가는 줄만 — 칸 몸통 아래를 넘는 줄은 숨긴다(첫 줄은 늘 보인다) */
+      const fit = () => {
+        if (body._n !== my || !list.isConnected) return;
+        const lis = [...list.children];
+        lis.forEach((li) => { li.hidden = false; });
+        const bottom = body.getBoundingClientRect().bottom;
+        lis.forEach((li, i) => { if (i > 0 && li.getBoundingClientRect().bottom > bottom + 0.5) li.hidden = true; });
+      };
+      requestAnimationFrame(fit);
+      document.fonts?.ready.then(fit);
+      body._ntcFit = fit;
+      if (!body._ntcRO) { body._ntcRO = new ResizeObserver(() => body._ntcFit?.()); body._ntcRO.observe(body); }
     },
   },
   /* 메모 — 나만 보는 짧은 글(GET · POST /me/memos) · 고정은 위 · 적기 한 줄(Enter) */

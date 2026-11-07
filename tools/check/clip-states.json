@@ -31,6 +31,11 @@
    "url": "/landxi/v3/lx-inbox/"
   },
   {
+   "name": "m6b-board",
+   "label": "게시판",
+   "url": "/landxi/v3/lx-board/"
+  },
+  {
    "name": "m7-cards",
    "label": "서비스 카드",
    "url": "/landxi/v3/lx-cards/"
@@ -88,6 +93,11 @@
    "name": "a18-release",
    "label": "lx-release",
    "url": "/landxi/v3/lx-release/"
+  },
+  {
+   "name": "a19-board",
+   "label": "lx-board",
+   "url": "/landxi/v3/lx-board/"
   }
  ]
 }
