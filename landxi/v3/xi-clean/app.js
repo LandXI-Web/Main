@@ -19,7 +19,7 @@ import { aiResult, AI_LABEL } from '../lx-console/summary.js';   // AI 분석 �
 import { staffMenu } from '../kit/lx-menu.js';                    // 왼쪽 = LX 직원 메뉴 그대로(바퀴 5 · 원칙 191 · 196 18:52 고침)
 import { govRail } from '../gov-select/menu.js';                  // 기관 계정 = 기관 메뉴 그대로
 import { createBoard, boardPromise, nationalPromise, taskOf } from './board.js';   // 열자마자 서버에 있는 모든 결과(10-14 XI맵 3차 구조 · 원칙 229 · 237)
-import { NCLS, NCOLOR } from './national.js';                    // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게) · 분류 색
+import { NCLS, NCOLOR, warmFirstView } from './national.js';                    // 전국 분석 자산마다 보이는 분류(겹쳐 세지 않게) · 분류 색
 import { isFarmSet, CLS_COLOR } from '../../xi/fx/result-colors.js';
 import { createEditor } from './edit.js';                         // 그 자리 고치기(바퀴 5)
 import { createDash, setUserColors } from './dash.js';
@@ -278,6 +278,7 @@ async function boot() {
   hudBig.hidden = true;   // 첫 refresh 가 '조회 중' 자리를 깔 때까지(빈 봉투 문장이 먼저 보이지 않게)
 
   { const b0 = r0?.bbox || (S.tenant && S.scopeBox) || null; if (b0) stage.go(b0, { ms: 0, maxZoom: r0 ? 12.5 : 11 }); }
+  PRE.nat?.then((j) => warmFirstView(map, j)).catch(() => {});   // 전국 결과 첫 화면 조각을 지금 곧바로(층 쌓기 · 영상 주소를 기다리지 않음 · 11-07 속도)
   // 필지로 열었으면 그 필지 자리(필지 카드 응답은 첫 화면 묶음에 함께 온다 · 0.9초까지만 기다림 — 그동안 지도 엔진 · 카탈로그는 따로 차오른다 · 늦으면 예전처럼 도착 뒤 날아간다)
   const pd = PRE.par ? await Promise.race([PRE.par, new Promise((ok) => setTimeout(ok, 900))]) : null;
   const pBox = pd?.geometry ? K.bboxOf(pd.geometry) : null;

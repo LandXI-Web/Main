@@ -387,7 +387,9 @@ function serveFile(req, res, p) {
   }
   const code = /\.(html|js|mjs|css|json)$/.test(f);
   /* 글꼴(.woff2 등)은 이름이 바뀌지 않는 파일 — 30일 보관(10-21 원칙 303: 첫 방문 전송의 약 60%(1.85MB)가 글꼴이라 하루 지나 다시 받던 것). 나머지는 하루 */
-  const cache = code ? 'private, no-cache' : /\.(woff2?|ttf)$/i.test(f) ? 'public, max-age=2592000' : 'public, max-age=86400';
+  /* 세계 바탕 조각 · 묶음(?v= 판 번호가 붙은 주소 = 내용이 안 바뀜) — 1년 보관(11-07 속도: 하루 보관이라 매일 첫 사람이 터널로 하나씩 받던 것 → 가장자리 · 브라우저 모두 오래) */
+  const worldV = /^\/landxi\/data\/tiles\/world-bm\//.test(p) && /[?&]v=\d+(&|$)/.test(req.url);
+  const cache = code ? 'private, no-cache' : worldV ? 'public, max-age=31536000, immutable' : /\.(woff2?|ttf)$/i.test(f) ? 'public, max-age=2592000' : 'public, max-age=86400';
   const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
   if (code && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
   if (!req.headers.range && st.size >= 1024 && st.size <= 8 * 1024 * 1024 && ZTYPE.test(type) && encOf(req)) {   // 글 파일(.json · .svg · .geojson …) — 줄여서

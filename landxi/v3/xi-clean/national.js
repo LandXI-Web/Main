@@ -26,6 +26,23 @@ export const NODATA = { none: '#9AA1AB', fill: '#2E9E5B' };
 /** 진행(판 번호 포함) — 첫 화면과 함께 출발 */
 export const nationalPromise = (on) => (on ? api('/national/progress').catch((e) => ({ error: e })) : null);
 
+/** 첫 화면 조각 미리 받기(11-07 속도) — 지도 층을 다 쌓기(영상 주소 · 경계 · 결과 목록)를 기다리지 않고, 진행 장부가 오면 곧바로 지금 화면 몫의 결과 조각을
+    브라우저 보관에 받아 둔다. 층이 붙으면 같은 주소를 부르니 이미 와 있다(주소 규칙은 아래 tpl 과 같다). 실패는 조용히(층이 그때 다시 부른다). */
+export function warmFirstView(map, prog) {
+  try {
+    if (!prog || prog.error || !prog.assets || !prog.tile_sig) return;
+    const z = Math.min(10, Math.max(4, Math.floor(map.getZoom()))), n = 2 ** z, g = map.getBounds();
+    const tx = (lon) => Math.floor(((lon + 180) / 360) * n), ty = (lat) => Math.floor((1 - Math.asinh(Math.tan((Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI) / 180)) / Math.PI) / 2 * n);
+    const x0 = Math.max(0, tx(g.getWest())), x1 = Math.min(n - 1, tx(g.getEast())), y0 = Math.max(0, ty(g.getNorth())), y1 = Math.min(n - 1, ty(g.getSouth()));
+    for (const [a, info] of Object.entries(prog.assets)) {
+      if (!info || info.on === false) continue;
+      const base = `${API.base}/tiles/national/${a}/${prog.year}/{z}/{x}/{y}.pbf?v=${encodeURIComponent((prog.v || {})[a] || '0')}&exp=${prog.tile_sig.exp}&sig=${prog.tile_sig.sig}`;
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++)
+        fetch(base.replace('{z}', z).replace('{x}', x).replace('{y}', y), { priority: 'high' }).then((r) => r.arrayBuffer()).catch(() => {});
+    }
+  } catch { /* 층이 그때 받는다 */ }
+}
+
 export function createNational({ map, before = 'slot-result' }) {
   const N = { assets: [], data: null, v: {}, year: null, pick: null, task: null, hidden: false, onData: null, off: new Set(), hide: new Map() };   // pick = 고른 해(없으면 기본 해)
   const PATH = () => '/national/progress' + (N.pick ? `?year=${N.pick}` : '');   // off = 끈 클래스 · hide = 묶음 → 고친 자리가 대신 그리는 객체 id

@@ -16,6 +16,36 @@ export const KOREA = [124.5, 33.0, 131.9, 38.7];
    조각 폴더의 meta.json 이 없으면(정적 배포) 국내 바탕(V-World)을 범위 없이 세계 전체로 깐다(V-World 는 z0–7 세계를 그린다 · 실측). */
 const WORLD = new URL('../../data/tiles/world-bm/', import.meta.url).href;
 export const WORLD_V = '?v=2';   // 판을 다시 구우면 올린다(바깥 주소 앞단이 지도 조각을 하루 보관 · 주소가 바뀌어야 새 조각)
+/* 세계 바탕 받는 길(11-07 속도) — ① 넓은 축척(z0–3 · 조각 85개)은 묶음 파일 한 장으로 한 번에(조각을 이어 붙인 것이라 그림은 그대로)
+   ② 더 자세한 조각(z4~)은 그 화면 몫이 다 받아진 뒤 한꺼번에 내준다(조각마다 끊겨 붙지 않게 · 늦어도 1초 뒤엔 내줌) */
+const PACK_Z = 3, HOLD_MS = 1000;
+let packP = null, wbReg = false, inflight = 0, waiters = [];
+const worldPack = () => (packP ||= fetch(WORLD + 'pack-z3.bin' + WORLD_V).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('pack')))).then((buf) => {
+  const n = new DataView(buf).getUint32(0, true);
+  return { idx: JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, n))), buf, base: 4 + n };
+}).catch(() => null));
+function registerWorld() {
+  if (!window.maplibregl?.addProtocol) return false;
+  if (wbReg) return true;
+  wbReg = true; worldPack();
+  window.maplibregl.addProtocol('lxwb', async (params, ac) => {
+    const [z, x, y] = params.url.slice('lxwb://'.length).split('/').map(Number);
+    if (z <= PACK_Z) {
+      const pk = await worldPack(), e = pk?.idx[`${z}/${x}/${y}`];
+      if (e) return { data: pk.buf.slice(pk.base + e[0], pk.base + e[0] + e[1]) };
+    }
+    inflight++;
+    let data;
+    try {
+      const r = await fetch(`${WORLD}${z}/${x}/${y}.webp${WORLD_V}`, { signal: ac.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      data = await r.arrayBuffer();
+    } finally { if (--inflight === 0) { const w = waiters; waiters = []; w.forEach((f) => f()); } }
+    if (inflight > 0 && z > PACK_Z) await Promise.race([new Promise((f) => waiters.push(f)), new Promise((f) => setTimeout(f, HOLD_MS))]);
+    return { data };
+  });
+  return true;
+}
 const VW = 'xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
 /* 해외 바탕 — Copernicus Sentinel-2 L2A 원 자료로 만든 구름 없는 모자이크(10 m · 무료 · 상업 이용 가능 · 10-14 해외바탕-교체).
    판 목록(나라 판 낮은 줌 · 구역 판 고줌 · 범위)은 조각 폴더의 meta.json 이 정한다(지역 고정값 0) · 없으면(정적 배포) 그냥 건너뛴다. */
@@ -73,6 +103,8 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
   const map = createMap({ container: wrap, mode: 'flat', center: [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], zoom: 6, maxPitch: soft ? 45 : 60, interactive });
   map.getCanvas().setAttribute('aria-label', '지도');
   tileRetry(map);
+  const wb = registerWorld();
+  const WT = (wb ? 'lxwb://' : WORLD) + '{z}/{x}/{y}' + (wb ? '' : '.webp' + WORLD_V);
   let pad = padding || defaultPad();
   map.fitBounds(bounds, { padding: pad, duration: 0 });
   if (scale) map.addControl(new window.maplibregl.ScaleControl({ maxWidth: 96, unit: 'metric' }), 'bottom-left');
@@ -81,10 +113,10 @@ export function createStage(el, { mode = 'app', bounds = KOREA, interactive = tr
     // 밑받침 — 아주 거친 한 장(z2 · 동아시아 전체를 타일 한두 장으로)이 늘 깔려, 입체로 기울이거나 돌릴 때 아직 안 온 타일 자리가 흰 바탕으로 비지 않는다(GPT2-1)
     //   under: true 인 화면만(XI맵 — 입체 보기가 있는 화면 · 지구본 · 영상 숨김 화면은 그대로)
     if (under) {
-      map.addSource('k-under', { type: 'raster', tiles: [WORLD + '{z}/{x}/{y}.webp' + WORLD_V], tileSize: 256, maxzoom: 2 });
+      map.addSource('k-under', { type: 'raster', tiles: [WT], tileSize: 256, maxzoom: 2 });
       map.addLayer({ id: 'k-under', type: 'raster', source: 'k-under', paint: { 'raster-fade-duration': 0 } }, 'slot-imagery');
     }
-    map.addSource('k-world', { type: 'raster', tiles: [WORLD + '{z}/{x}/{y}.webp' + WORLD_V], tileSize: 256, maxzoom: 8 });
+    map.addSource('k-world', { type: 'raster', tiles: [WT], tileSize: 256, maxzoom: 8 });
     map.addSource('k-vw', { type: 'raster', tiles: [url(VW)], tileSize: 256, minzoom: 6, maxzoom: 19, bounds: [124.5, 33.0, 132.0, 38.9] });
     map.addLayer({ id: 'k-world', type: 'raster', source: 'k-world', paint: { 'raster-fade-duration': 500 } }, 'slot-imagery');
     map.addLayer({ id: 'k-vw', type: 'raster', source: 'k-vw', minzoom: 6.5, paint: { 'raster-fade-duration': 500, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6.5, 0, 7.4, 1] } }, 'slot-imagery');

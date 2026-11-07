@@ -25,6 +25,7 @@ from collections import OrderedDict
 
 from fastapi import APIRouter, Request, Response
 
+from . import config
 from .deps import ApiError, audit, db, principal, require
 from .envelope import KST, env, now_iso
 
@@ -190,6 +191,7 @@ async def progress(request: Request, year: int | None = None):
             "SELECT sum(target_km2) AS km2, sum(extract(epoch FROM done_at - started_at)) AS s FROM national_cells "
             "WHERE year=$1 AND NOT test AND state='done' AND started_at IS NOT NULL AND done_at > now() - interval '6 hours'", year)
         ver = await versions(conn, year)
+        _schedule_warm(year, ver)               # 11-07 속도: 판이 바뀌었으면 처음 화면 조각을 미리 굽는다(백그라운드 · 응답은 기다리지 않음)
         ic = await _imgcover(conn, year)
         yl = await years_list(conn)
         run_rows, redo_run = rows, redo
@@ -405,6 +407,119 @@ _TILE_SEM = asyncio.Semaphore(3)
 _TILE_INFLIGHT: dict[tuple, "asyncio.Future"] = {}
 PX = 40075016.68 / 256.0
 
+# ── 미리 구운 조각(11-07 전국 결과 첫 로드 속도) ─────────────────────────────────
+# 낮은 줌(≤ DISK_Z) 조각은 디스크에도 보관한다(판 번호 폴더) — 게이트웨이를 다시 켜도 · 같은 판이면 그리지 않고 읽는다.
+# 판이 바뀌면(작업기가 칸을 마칠 때마다) 진행 장부를 읽는 첫 요청이 처음 화면 조각(WARM_Z)을 백그라운드에서 다시 굽는다 — 손으로 굽지 않는다.
+# 굽는 범위 = 그 자산 · 연도 칸들의 실제 범위(지역 고정값 0). 같은 (연도 · 자산)은 WARM_GAP 초 안에 다시 굽지 않는다(칸이 자주 끝나도 부하가 쌓이지 않게).
+DISK_Z = 8
+WARM_Z = (4, 5, 6)
+WARM_GAP = 90.0
+_WARM: dict = {}
+
+
+def _tcache(asset: str, year: int, ver: str):
+    return config.DATA_ROOT / "national" / "tilecache" / str(year) / asset / ver
+
+
+def _disk_read(path):
+    try:
+        return path.read_bytes()
+    except OSError:
+        return None
+
+
+def _disk_write(path, data: bytes) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_bytes(data)
+        tmp.replace(path)
+    except OSError:
+        pass
+
+
+def _prune(asset: str, year: int, ver: str) -> None:
+    """같은 (연도 · 자산)의 옛 판 폴더를 지운다(디스크가 판마다 쌓이지 않게)."""
+    try:
+        root = config.DATA_ROOT / "national" / "tilecache" / str(year) / asset
+        import shutil
+        for d in root.iterdir():
+            if d.is_dir() and d.name != ver:
+                shutil.rmtree(d, ignore_errors=True)
+    except OSError:
+        pass
+
+
+async def _get_tile(asset: str, year: int, z: int, x: int, y: int, ver: str, t: bool) -> bytes:
+    key = (asset, year, z, x, y, ver, t)
+    data = _TC.get(key)
+    if data is None:
+        fut = _TILE_INFLIGHT.get(key)
+        if fut is None:
+            async def draw():
+                async with _TILE_SEM:
+                    f = None if (t or z > DISK_Z) else _tcache(asset, year, ver) / str(z) / str(x) / f"{y}.pbf"
+                    if f is not None:
+                        got = await asyncio.to_thread(_disk_read, f)
+                        if got is not None:
+                            return got
+                    out = await _tile(asset, year, z, x, y, t)
+                    if f is not None:
+                        await asyncio.to_thread(_disk_write, f, out)
+                    return out
+            fut = _TILE_INFLIGHT[key] = asyncio.ensure_future(draw())
+            fut.add_done_callback(lambda _f, k=key: _TILE_INFLIGHT.pop(k, None))
+        data = await asyncio.shield(fut)
+        _TC[key] = data
+        while len(_TC) > TC_MAX:
+            _TC.popitem(last=False)
+    else:
+        _TC.move_to_end(key)
+    return data
+
+
+def _lonlat_tile(lon: float, lat: float, z: int) -> tuple[int, int]:
+    import math
+    n = 2 ** z
+    lat = max(-85.0511, min(85.0511, lat))
+    x = int((lon + 180.0) / 360.0 * n)
+    y = int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n)
+    return max(0, min(n - 1, x)), max(0, min(n - 1, y))
+
+
+async def _warm(year: int, asset: str, ver: str) -> None:
+    try:
+        async with db(realm="lx") as conn:
+            e = await conn.fetchrow(
+                "SELECT ST_XMin(g) AS w, ST_YMin(g) AS s, ST_XMax(g) AS e, ST_YMax(g) AS n FROM "
+                "(SELECT ST_Extent(geom_s)::geometry AS g FROM national_cells WHERE asset=$1 AND year=$2 AND NOT test AND state<>'skip') q", asset, year)
+        if not e or e["w"] is None:
+            return
+        for z in WARM_Z:
+            x0, y1 = _lonlat_tile(e["w"], e["s"], z)
+            x1, y0 = _lonlat_tile(e["e"], e["n"], z)
+            for x in range(x0, x1 + 1):
+                for y in range(y0, y1 + 1):
+                    await _get_tile(asset, year, z, x, y, ver, False)
+        await asyncio.to_thread(_prune, asset, year, ver)
+    except Exception:  # noqa: BLE001 — 못 구우면 첫 사람이 그때 그린다(예전 그대로)
+        pass
+
+
+def _schedule_warm(year: int, vers: dict) -> None:
+    now = time.time()
+    for asset in ASSETS:
+        ver = vers.get(asset, "0")
+        k = (year, asset)
+        last = _WARM.get(k)
+        if last and (last[1] == ver or now - last[0] < WARM_GAP):
+            continue
+        _WARM[k] = (now, ver)
+        try:
+            asyncio.get_running_loop().create_task(_warm(year, asset, ver))
+        except RuntimeError:
+            pass
+
 
 async def _tile(asset: str, year: int, z: int, x: int, y: int, test: bool) -> bytes:
     env3857 = "ST_TileEnvelope($1, $2, $3)"
@@ -560,22 +675,7 @@ async def national_tile(asset: str, year: int, z: int, x: int, y: int, v: str | 
     async with db(realm="lx") as conn:
         ver = (await versions(conn, year)).get(asset, "0")
     t = bool(test)
-    key = (asset, year, z, x, y, ver, t)
-    data = _TC.get(key)
-    if data is None:
-        fut = _TILE_INFLIGHT.get(key)
-        if fut is None:
-            async def draw():
-                async with _TILE_SEM:
-                    return await _tile(asset, year, z, x, y, t)
-            fut = _TILE_INFLIGHT[key] = asyncio.ensure_future(draw())
-            fut.add_done_callback(lambda _f, k=key: _TILE_INFLIGHT.pop(k, None))
-        data = await asyncio.shield(fut)
-        _TC[key] = data
-        while len(_TC) > TC_MAX:
-            _TC.popitem(last=False)
-    else:
-        _TC.move_to_end(key)
+    data = await _get_tile(asset, year, z, x, y, ver, t)
     cache = "public, max-age=31536000, immutable" if (v == ver and not t) else "no-cache"
     hdr = {"Cache-Control": cache, "ETag": f'"n{ver}-{z}-{x}-{y}{"t" if t else ""}"', "X-LX-Ver": ver}
     if not data:

@@ -47,10 +47,13 @@ export async function mountLadder(map, items, { order, before, dates = {}, fade 
   const imagery = items.filter((i) => i.role === 'imagery' && i.ladder && !SIBLING.test(i.id) && !NOT_BG.test(i.id) && (!only || only.includes(i.id)) && order.includes(i.id))
     .sort((a, b) => a.ladder.order - b.ladder.order || a.id.localeCompare(b.id));
   const mounted = [];
+  const paramsOf = (it) => (it.id === 'gibs-hls-s30' ? { date: dates.hls } : it.id === 'gibs-viirs-truecolor' ? { date: dates.viirs } : {});
+  // 원천 주소(서명 포함)를 한꺼번에 받는다 — 하나씩 기다리면 서명 요청 수만큼(영상 9개 ≈ 4초) 첫 화면이 늦었다(11-07 속도). 층은 아래에서 순서대로 쌓는다
+  const specP = new Map(imagery.filter((it) => !(it.id === 'gibs-hls-s30' && !dates.hls)).map((it) => { const p = sourceSpec(it, paramsOf(it)); p.catch(() => {}); return [it.id, p]; }));
   for (const it of imagery) {
     if (it.id === 'gibs-hls-s30' && !dates.hls) continue;              // 날짜를 못 고르면 층 자체를 올리지 않는다(404 0)
-    const params = it.id === 'gibs-hls-s30' ? { date: dates.hls } : it.id === 'gibs-viirs-truecolor' ? { date: dates.viirs } : {};
-    const src = await sourceSpec(it, params);
+    const params = paramsOf(it);
+    const src = await specP.get(it.id);
     const sid = 'src-' + it.id;
     if (!map.getSource(sid)) map.addSource(sid, src);
     const [, , c, d] = curveOf(it);
