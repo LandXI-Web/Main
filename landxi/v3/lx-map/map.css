@@ -203,3 +203,68 @@ body.lm-boot .k-app{visibility:hidden}
 .lm-cmp-b[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .lm-cmp .lm-cmp-s{flex:1 1 0;width:auto;min-width:0;height:30px;padding:0 8px;font:500 var(--fs-tag)/1 var(--font-body)}
 .lm-cmp{flex-wrap:nowrap}
+
+/* ═══ 11-07 PM "지도 안 오른쪽 아이콘" — XI맵 도구 칸 · 레이어 판과 같은 모양(xi-clean/xc.css .xc-tools · .xc-pop · .xc-row 와 같은 값) ═══ */
+.lm-tools{position:absolute;z-index:7;right:16px;top:16px;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--bg-1);border-radius:var(--r-8);box-shadow:var(--elev-map,0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12));transition:right var(--d-180) var(--e-ui)}
+.lm-tools:empty{display:none}
+.lm-map:has(> .lm-props:not([hidden])) .lm-tools{right:calc(var(--lm-pw,352px) + 32px)}
+.lm-tool{display:flex!important;flex-direction:column;align-items:center!important;gap:4px;width:56px;padding:8px 0 7px!important;border-radius:6px!important;color:var(--sub)!important;text-align:center!important}
+.lm-tool svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.lm-tool-l{font:500 var(--fs-tag,14px)/1.2 var(--font-body);white-space:nowrap}
+.lm-tool:hover,.lm-tool[aria-pressed="true"]{background:var(--bg-0)!important;color:var(--ink)!important}
+.lm-tool[aria-pressed="true"] .lm-tool-l{font-weight:700}
+.lm-tool:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lm-pop{position:absolute;z-index:8;right:96px;top:16px;width:300px;box-sizing:border-box;display:flex;flex-direction:column;padding:18px 18px 16px;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map,0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12));animation:lm-pop-in var(--d-380,380ms) var(--e-ui,ease)}
+.lm-pop[hidden]{display:none}
+@keyframes lm-pop-in{from{opacity:0;transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){.lm-pop{animation:none}.lm-tools{transition:none}}
+.lm-pop-h{flex:none;display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.lm-pop-h h2{flex:1;margin:0;font:700 var(--fs-t1)/var(--lh-t1,36px) var(--font-display);letter-spacing:var(--ls-h4,-.02em);color:var(--ink)}
+.lm-pop-x{flex:none;width:32px;height:32px;margin:-6px -6px -6px 0;border-radius:var(--r-8)!important;color:var(--sub)!important;display:inline-flex!important;align-items:center;justify-content:center}
+.lm-pop-x:hover{background:var(--bg-0)!important;color:var(--ink)!important}
+.lm-pop-x svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round}
+.lm-pop-b{display:grid;gap:2px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.lm-pop-l{margin:10px 0 4px;font:500 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.lm-pop-b > .lm-pop-l:first-child,.lm-pop-b > .lm-cls:first-child .lm-pop-l{margin-top:0}
+.lm-row{display:flex!important;align-items:center;gap:12px;width:100%;padding:10px 8px!important;border-radius:var(--r-8)!important;font:500 var(--fs-body)/1.2 var(--font-body)!important;color:var(--ink)!important;text-align:left!important;box-sizing:border-box}
+.lm-row:hover{background:var(--bg-0)!important}
+.lm-row:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lm-row > span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-row em{flex:none;font-style:normal;color:var(--sub);font-size:var(--fs-tag,14px)}
+/* 켜고 끄기(스위치) · 하나 고르기(동그라미) · 클래스(체크 · 색 점) — XI맵 .xc-sw · .xc-rd · .xc-cb 와 같은 값 */
+.lm-psw{flex:none;width:32px;height:18px;border-radius:9px;background:var(--rule);position:relative;transition:background var(--d-180) var(--e-ui)}
+.lm-psw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(78,89,104,.25);transition:transform var(--d-180) var(--e-ui)}
+.lm-row[aria-pressed="true"] .lm-psw{background:var(--ink)}
+.lm-row[aria-pressed="true"] .lm-psw::after{transform:translateX(14px)}
+.lm-prd{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--rule);box-sizing:border-box}
+.lm-row[aria-checked="true"] .lm-prd{border:5px solid var(--ink)}
+.lm-pop .lm-base,.lm-pop .lm-shl{display:grid;gap:2px;padding:0;background:none;border-radius:0}
+.lm-pop .lm-base .lm-row{height:auto;font:500 var(--fs-body)/1.2 var(--font-body)!important;color:var(--ink)!important;box-shadow:none}
+.lm-pop .lm-base .lm-row[aria-checked="true"]{background:none;box-shadow:none}
+.lm-pop .lm-base .lm-row[aria-checked="true"]:hover{background:var(--bg-0)!important}
+.lm-pop .lm-cls{padding:0;border:0;gap:0}
+.lm-pop .lm-clr{display:grid;grid-template-columns:1fr;gap:2px;max-height:none;overflow:visible}
+.lm-pop .lm-cb.lm-row{height:auto;padding:10px 8px!important}
+.lm-pop .lm-cbx{width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--rule)}
+.lm-pop .lm-cb[aria-checked="true"] .lm-cbx::after{left:6px;top:2.5px}
+.lm-pop .lm-cdt{width:16px;height:16px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.lm-pop .lm-cb span{font:500 var(--fs-body)/1.2 var(--font-body)}
+.lm-pop .lm-cb em{font:400 var(--fs-tag)/20px var(--font-num);color:var(--sub)}
+/* 영상 비교 판 — 두 해 · 켜기/끄기 */
+.lm-pop .lm-cmp{display:flex;flex-direction:column;gap:12px}
+.lm-cmp-ys{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lm-cmp-ys label{display:flex;flex-direction:column;gap:0;min-width:0}
+.lm-cmp-ys .lm-pop-l{margin:0 0 4px}
+.lm-pop .lm-cmp .lm-cmp-s{width:100%;height:40px;font:500 var(--fs-aux)/1 var(--font-body)}
+.lm-pop .lm-cmp-b.t-btn{height:44px;width:100%;justify-content:center;text-align:center!important}
+.lm-pop .lm-cmp-b.t-btn[aria-pressed="false"]{background:var(--ink);color:#fff!important;border:0}
+.lm-pop .lm-cmp-b.t-btn.t-btn--2{background:var(--bg-1);color:var(--ink)!important;border:1px solid var(--rule)}
+/* 범례 — 왼쪽 아래 한 줄(XI맵 .xc-legend 와 같은 자리 · 모양) · 접기 · 펴기 그대로 */
+.lm-lgd{left:16px;right:auto;top:auto;bottom:48px;min-width:0;max-width:calc(100% - 120px);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;min-height:36px;padding:6px 14px;border-radius:var(--r-8);background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.lm-lgd[hidden]{display:none}
+.lm-props:not([hidden]) ~ .lm-lgd{right:auto}
+.lm-lgd.is-shut{padding:6px 14px}
+.lm-lgd .lm-lgb{width:auto;height:24px;gap:8px;flex:none}
+.lm-lgd .lm-lg{margin:0;flex-direction:row;flex-wrap:wrap;gap:4px 14px}
+.lm-lgd .lm-lg li{white-space:nowrap}
+.lm-pop .lm-base .lm-row{text-align:left!important;justify-content:flex-start}

@@ -35,6 +35,13 @@ export const CLIP = `(() => {
     count++;
     if (cs(e).textOverflow === 'ellipsis' && /hidden|clip/.test(cs(e).overflowX) && e.scrollWidth > e.clientWidth + 1) { if (!e.title && !e.closest('[title]')) add(warn, 'ellipsis', e, t, '말줄임인데 title 없음'); continue; }   // 말줄임은 일부러 자른 것
     const se = cs(e);
+    /* 줄 줄임(line-clamp)은 일부러 자른 것 — 숨은 뒷줄까지 잡히는 글자 범위를 그 상자 안으로 줄여서 위 상자들을 잰다
+       (11-07: 줄인 본문 상자는 칸 안인데 숨은 줄 때문에 '칸 밖'으로 잡히던 것) */
+    if (se.webkitLineClamp && se.webkitLineClamp !== 'none' && /hidden|clip/.test(se.overflowY) && e.scrollHeight > e.clientHeight + 1) {
+      if (!e.title && !e.closest('[title]')) add(warn, 'ellipsis', e, t, '줄 줄임인데 title 없음');
+      const q = e.getBoundingClientRect();
+      tr.l = Math.max(tr.l, q.left); tr.r = Math.min(tr.r, q.right); tr.t = Math.max(tr.t, q.top); tr.b = Math.min(tr.b, q.bottom);
+    }
     let scroller = null;
     for (let a = e; a && a.nodeType === 1 && a !== document.documentElement; a = a.parentElement) {
       const s = cs(a);

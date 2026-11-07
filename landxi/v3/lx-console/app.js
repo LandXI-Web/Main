@@ -10,7 +10,7 @@ import { h, api, hasRoute } from '../kit/util.js';
 import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
 import { loadDeck } from '../kit/service-card.js';
 import { projectNotices, projectHref } from '../lx-project/context.js';
-import { GROUPS, groupOf, stageListHref, kick, ago } from '../lx-project/board.js';
+import { GROUPS, groupOf, stageListHref, kick, ago, seg4El } from '../lx-project/board.js';
 import { projCard } from '../lx-project/card.js';
 import { openMe, quotaTag, pctWord, size, gb } from '../kit/me.js';
 import { modal } from '../kit/modal.js';
@@ -35,12 +35,18 @@ const none = (body, text) => { body.classList.add('is-empty'); body.replaceChild
 /* 여러 조각을 넣되 없는 것(null)은 빼고 — replaceChildren(null) 은 'null' 글자를 넣는다 */
 const put = (el, ...kids) => el.replaceChildren(...kids.filter((k) => k !== null && k !== undefined && k !== false));
 /* 칸 몸통 높이(머리 · 부제 · 안쪽 여백 뺀 값) — 내용이 적으면 숫자를 키운다. 촘촘한 테마는 여백이 적어 더 많이 들어간다 */
-const bodyH = (ctx) => ctx.px.h - (ctx.theme === 'dense' ? 68 : ctx.theme === 'sharp' ? 96 : 88);
+/* 11-07: 몸통 크기 = 칸 크기(격자 값 · 움직이는 중에도 정확) − 칸 안 여백 − 머리 실제 높이(수정 중 칩 줄 · 테마까지) − 아직 없는 부제 자리 */
+const subGap = (ctx) => { const s = ctx.el?.parentElement?.querySelector('.dg-sub'); return s && s.hidden ? 20 : 0; };
+const boxOf = (ctx) => { const n = ctx.el?.parentElement; if (!n) return null; const cs = getComputedStyle(n), hd = n.querySelector('.dg-hd'); return { pt: parseFloat(cs.paddingTop) || 0, pb: parseFloat(cs.paddingBottom) || 0, pl: parseFloat(cs.paddingLeft) || 0, pr: parseFloat(cs.paddingRight) || 0, gap: parseFloat(cs.rowGap) || 0, hd: hd ? hd.offsetHeight : 28 }; };
+const bodyH = (ctx) => { const b = boxOf(ctx); return b ? ctx.px.h - b.pt - b.pb - b.hd - b.gap - subGap(ctx) : ctx.px.h - (ctx.theme === 'dense' ? 68 : ctx.theme === 'sharp' ? 96 : 88); };
 /* 줄 목록 한 줄 높이(px) — 촘촘한 테마는 21 · 그 밖 23(console.css 와 같은 값) */
 const rowPx = (ctx) => (ctx.theme === 'dense' ? 21 : 23);
 /* 숫자 칸 표시 방식(10-18 원칙 287) — 숫자만 · 숫자 + 막대(가장 큰 값을 100 으로 한 비율 · 실제 수에서만) */
-const NUM_STYLES = [{ id: 'plain', label: '숫자만' }, { id: 'bars', label: '숫자 + 막대' }];
-const cellBar = (ctx, v, max) => (ctx.style === 'bars' ? h('i.ld-cell-bar', { 'aria-hidden': 'true' }, h('b', { style: `width:${Math.max(v > 0 ? 2 : 0, Math.round((Number(v) || 0) / Math.max(1, max) * 100))}%` })) : null);
+/* 11-07 A′: 처음 표시는 '숫자 + 막대'(도표) — 예전 저장값(plain · bars)은 모두 새 처음 표시로(이름을 새로 지어 한 번 넘김) · '숫자만'은 그대로 고를 수 있다 */
+const NUM_STYLES = [{ id: 'chart', label: '숫자 + 막대' }, { id: 'num', label: '숫자만' }];
+const cellBar = (ctx, v, max) => (ctx.style !== 'num' ? h('i.ld-cell-bar', { 'aria-hidden': 'true' }, h('b', { style: `width:${Math.max(v > 0 ? 2 : 0, Math.round((Number(v) || 0) / Math.max(1, max) * 100))}%` })) : null);
+/** 숫자 칸 묶음 높이 — 낮은 칸(xs)은 숫자 · 이름 한 줄 */
+const cellsMode = (ctx) => { const H = bodyH(ctx), bars = ctx.style !== 'num'; const base = 60 + (bars ? 14 : 0); return H < base ? { cls: 'is-xs', hgt: 28, bars: false } : H >= base + 20 + 40 && ctx.px.w >= 300 ? { cls: 'is-big', hgt: base + 20, bars } : { cls: '', hgt: base, bars }; };
 const nf = (n, d = 0) => Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const isoDay = (d) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 const dayOf = (s) => { const [y, m, d] = String(s).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
@@ -70,6 +76,35 @@ function countUp(root, key) {
 }
 const num = (tag, v, d = 0, kids = []) => h(tag, { dataset: { cu: String(v), d: String(d) } }, nf(v, d), ...kids);
 
+/* ── 도표 부품(11-07 A′ — 칸 자리 그대로 · 안의 숫자를 도표로) ─────────────────────
+   색 = 잉크 농도 3단(값 있음 잉크 · 0 은 흐림) · 파랑은 진행 막대(프로젝트 다섯 칸의 지금 단계)만. 글자 14px 이상.
+   칸 크기(실제 px)에 맞춰: 낮은 칸은 핵심 숫자 · 한 줄 · 큰 칸은 줄 · 목록을 더 — 넘침 · 잘림 0. */
+const bodyW = (ctx) => { const b = boxOf(ctx); return b ? ctx.px.w - b.pl - b.pr : ctx.px.w - (ctx.theme === 'dense' ? 28 : 40); };
+const pctW = (v, max) => `${Math.max(v > 0 ? 2 : 0, Math.round((Number(v) || 0) / Math.max(1, max) * 100))}%`;
+/** 가로 막대 한 줄 — 이름 | 막대 | 값 */
+const hbar = ({ label, v, max, text, href, title, extra = null }) => {
+  const kids = [h('span.ld-hb-n', { text: label, title: title || label }), h('i.ld-hb-t', { 'aria-hidden': 'true' }, h('b', { style: `width:${pctW(v, max)}` })), extra, h('em.ld-hb-v.num', { text: text ?? nf(v) })];
+  return h('li.ld-hb', { class: v ? '' : 'is-zero' }, href ? h('a', { href, 'aria-label': `${label} ${text ?? nf(v)}` }, ...kids) : h('span.ld-hb-r', {}, ...kids));
+};
+/** 둥근 고리 — 할당 대비 쓴 비율 */
+function ring(pct, size, warn) {
+  const NS = 'http://www.w3.org/2000/svg', r = 40, c = 2 * Math.PI * r, p = Math.max(0, Math.min(100, Number(pct) || 0));
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 96 96'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('aria-hidden', 'true');
+  svg.classList.add('ld-ring'); if (warn) svg.classList.add('is-warn');
+  const mk = (cls, dash) => { const e = document.createElementNS(NS, 'circle'); e.setAttribute('cx', 48); e.setAttribute('cy', 48); e.setAttribute('r', r); e.setAttribute('class', cls); if (dash) { e.setAttribute('stroke-dasharray', dash); e.setAttribute('transform', 'rotate(-90 48 48)'); } return e; };
+  svg.append(mk('ld-ring-bg'), mk('ld-ring-fg', `${Math.max(p > 0 ? 1.5 : 0.01, p / 100 * c)} ${c}`));
+  return svg;
+}
+/** 날짜별 막대(세로) — counts: [{ day: Date, n }] 오래된 → 오늘 */
+const dayBars = (counts, { axis = true, label = '' } = {}) => {
+  const max = Math.max(1, ...counts.map((x) => x.n));
+  const f = counts[0]?.day, l = counts[counts.length - 1]?.day;
+  return h('div.ld-db', { role: 'img', 'aria-label': label },
+    h('div.ld-db-c', {}, ...counts.map((x) => h('i', { class: x.n ? '' : 'is-zero', title: `${x.day.getMonth() + 1}.${x.day.getDate()} · ${x.n}건`, style: `height:${x.n ? Math.max(8, Math.round(x.n / max * 100)) : 0}%` }))),
+    axis && f ? h('div.ld-db-a', {}, h('small.num', { text: `${f.getMonth() + 1}.${f.getDate()}` }), h('small', { text: '오늘' })) : null);
+};
+
 /* 한 자료는 한 번 — 여러 칸이 같은 약속을 나눠 쓴다(숫자 한 출처). 실패하면 지워 다음에 다시 */
 const C = new Map();
 const once = (k, fn) => { if (!C.has(k)) C.set(k, Promise.resolve().then(fn).catch((e) => { C.delete(k); throw e; })); return C.get(k); };
@@ -81,7 +116,8 @@ const deck = () => once('deck', () => loadDeck().catch(() => null));
 const notes = h('div.lxp-ntcs');
 const bar = h('div.ld-bar');
 const gridHost = h('div.ld-grid');
-const page = h('div.ld', {}, h('div.ld-in', {}, notes, bar, gridHost));
+/* 11-07 A′(PM '합친다') — 맨 위 알림 띠와 '대시보드 수정하기'를 한 줄로(알림이 없으면 단추만 오른쪽) */
+const page = h('div.ld', {}, h('div.ld-in', {}, h('div.ld-top', {}, notes, bar), gridHost));
 S.main.append(page);
 projectNotices(notes);
 requestAnimationFrame(() => page.classList.add('is-in'));
@@ -93,19 +129,36 @@ const WIDGETS = {
     title: '공지사항', min: [3, 2], def: [8, 3], views: [{ id: 'list', label: '목록' }, { id: 'one', label: '최근 하나' }],
     async render(body, ctx) {
       wait(body);
+      const my = (body._n = (body._n || 0) + 1);                      // 늦게 끝난 지난 그리기가 새 크기를 덮지 않게
       let j;
       try { j = await once('notice', () => api('/announcements?limit=12')); } catch { fail(body, () => { drop('notice'); ctx.refresh(); }); return; }
+      if (body._n !== my) return;
       const items = j.items || [];
       ctx.sub(j.total ? `${j.total}건` : null);
       if (!items.length) { none(body, '새 공지가 없습니다'); return; }
       const open = (a) => modal({ title: a.title, body: h('div.ld-ntc-md', {}, h('p.ld-ntc-by', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body ? h('p.ld-ntc-tx', { text: a.body }) : null) });
       /* 크기별 — 작으면 최근 하나(제목 · 날짜) · 보통은 들어가는 만큼(최소 3) 제목 · 날짜 · 크면 전체 목록에 날짜 · 쓴 사람까지 */
-      if (ctx.view === 'one' || ctx.size === 's') {
-        const a = items[0];
-        const lines = Math.max(0, Math.floor((bodyH(ctx) - 52) / 24));
-        put(body, h('button.ld-ntc-one', { type: 'button', class: ctx.size === 's' || bodyH(ctx) < 60 ? 'is-s' : '', onclick: () => open(a) },   // 낮은 칸이면 제목 한 줄 크기로(제목이 반쯤 잘리던 것 · 10-22 P8b)
-          h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body && lines >= 1 ? h('p', { text: a.body, style: `-webkit-line-clamp:${Math.min(6, lines)}` }) : null),
-        items.length > 1 && ctx.size === 's' ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - 1}건` }) : null);
+      if (ctx.view === 'one' || ctx.size === 's' || items.length === 1) {
+        /* 11-07 A′: 공지가 하나뿐이거나 작은 칸 — 제목 · 쓴 사람 · 본문(들어가는 줄만큼). 아주 낮은 칸은 제목 한 줄 크기로(10-22 P8b) */
+        const a = items[0], H = bodyH(ctx), rest = items.length > 1 && ctx.size === 's' ? 22 : 0;
+        const tiny = H < 60, titleH = tiny ? 24 : 28;
+        const lines = tiny ? 0 : Math.max(0, Math.floor((H - rest - titleH - 20 - 12) / 24));
+        put(body, h('button.ld-ntc-one', { type: 'button', class: tiny ? 'is-s' : '', onclick: () => open(a) },
+          h('b', { text: a.title }), h('small', { text: `${a.by_name} · ${ymdDot(a.at)}` }), a.body && lines >= 1 ? h('p', { text: a.body, title: a.body, style: `-webkit-line-clamp:${Math.min(8, lines)}` }) : null),
+        rest ? h('p.ld-ntc-rest', { text: `그 밖 ${items.length - 1}건` }) : null);
+        /* 제목이 두 줄로 꺾이는 좁은 칸 · 글꼴이 늦게 와 줄이 바뀌는 때 — 실제 남은 높이로 본문 줄 수를 다시 맞춘다(잘림 0).
+           칸 크기 · 글꼴이 바뀔 때마다 다시(11-07 검사 문: 그린 순간 한 번만 재서 본문이 칸 밖으로 41~65px) */
+        const fit = () => {
+          const p = body.querySelector('.ld-ntc-one p'); if (!p || body._n !== my) return;
+          p.style.display = '-webkit-box'; p.style.webkitBoxOrient = 'vertical'; p.style.webkitLineClamp = '8';
+          const room = body.getBoundingClientRect().bottom - p.getBoundingClientRect().top - rest - 6;
+          const n = Math.floor(room / 24);
+          if (n < 1) p.style.display = 'none'; else p.style.webkitLineClamp = String(Math.min(8, n));
+        };
+        requestAnimationFrame(fit);
+        document.fonts?.ready.then(fit);
+        body._ntcFit = fit;
+        if (!body._ntcRO) { body._ntcRO = new ResizeObserver(() => body._ntcFit?.()); body._ntcRO.observe(body); }
         return;
       }
       const show = ctx.size === 'l' ? items : items.slice(0, Math.max(3, Math.floor(bodyH(ctx) / rowPx(ctx))));
@@ -138,13 +191,15 @@ const WIDGETS = {
         inp.disabled = true;
         run(() => api('/me/memos', { method: 'POST', body: { body: text } }));
       });
+      if (bodyH(ctx) < 64) { ctx.sub(items.length ? `나만 보입니다 · ${items.length}개` : '나만 보입니다'); body.replaceChildren(h('div.ld-memo-b.is-xs', {}, inp)); return; }   // 낮은 칸 — 적기 한 줄만(개수는 머리에)
       body.replaceChildren(h('div.ld-memo-b', {}, h('div.ld-ml-w', {}, list), inp));
     },
   },
   /* 프로젝트 진행 현황 — 여섯 단계(서버 단계 그대로 · lx-project/board.js GROUPS) · 숫자 = 프로젝트 카드의 단계와 같은 값 */
   board: {
     title: '프로젝트 진행 현황', min: [3, 2], def: [5, 4], more: { text: '프로젝트 목록', href: stageListHref(null) },
-    views: [{ id: 'numbers', label: '숫자' }, { id: 'bars', label: '막대' }],
+    /* 11-07 A′: 처음 보기 = 단계별 막대(예전 저장값 numbers · bars 모두 막대로) · 예전 큰 숫자 모양은 '숫자'(cells) */
+    views: [{ id: 'chart', label: '막대' }, { id: 'cells', label: '숫자' }],
     async render(body, ctx) {
       wait(body);
       let j;
@@ -159,13 +214,30 @@ const WIDGETS = {
       }
       const by = GROUPS.map(() => []);
       for (const p of items) by[groupOf(p)].push(p);
-      if (ctx.view === 'bars') {
-        const max = Math.max(1, ...by.map((l) => l.length));
-        body.replaceChildren(h('ol.ld-pb', { 'aria-label': '프로젝트 단계' }, ...GROUPS.map((g, i) => {
-          const n = by[i].length;
-          return h('li', { dataset: { n: String(n) } }, h('a', { href: stageListHref(g.key), 'aria-label': `${g.label} ${n}개` },
-            h('span', { text: g.label }), h('i', {}, h('b', { style: `width:${Math.round(n / max * 100)}%` })), num('em.num', n)));
-        })));
+      if (ctx.view !== 'cells') {
+        /* 단계별 가로 막대 — 다섯 줄이 들어가면 모두 · 낮은 칸은 값 있는 단계부터 들어가는 만큼 + '그 밖' 한 줄 */
+        const H = bodyH(ctx), W = bodyW(ctx), max = Math.max(1, ...by.map((l) => l.length));
+        const rowsAll = GROUPS.map((g, i) => ({ g, i, n: by[i].length, warn: by[i].filter((p) => kick(p)?.kind === 'warn').length }));
+        const big = H >= 200, fit = Math.max(1, Math.floor(H / 22));
+        if (fit < rowsAll.length && W >= 600 && H >= 40) {
+          /* 넓고 낮은 칸 — 다섯 단계를 옆으로(이름 · 값 한 줄 + 막대) */
+          body.replaceChildren(h('ol.ld-hcol', { 'aria-label': '프로젝트 단계' }, ...rowsAll.map((r) => h('li', { class: r.n ? '' : 'is-zero' },
+            h('a', { href: stageListHref(r.g.key), 'aria-label': `${r.g.label} ${r.n}개` }, h('span.ld-hc-l', {}, h('span', { text: r.g.label, title: r.g.label }), h('em.num', { text: nf(r.n) })),
+              h('i.ld-hb-t', { 'aria-hidden': 'true' }, h('b', { style: `width:${pctW(r.n, max)}` })))))));
+          return;
+        }
+        let show = rowsAll, rest = null;
+        if (fit < rowsAll.length) {
+          const pri = rowsAll.filter((r) => r.n).concat(rowsAll.filter((r) => !r.n));
+          const keep = new Set(pri.slice(0, Math.max(1, fit - 1)).map((r) => r.i));
+          show = rowsAll.filter((r) => keep.has(r.i));
+          const hid = rowsAll.filter((r) => !keep.has(r.i)), hn = hid.reduce((s, r) => s + r.n, 0);
+          rest = `그 밖 ${hid.length}단계${hn ? ` · ${hn}개` : ''}`;
+        }
+        body.replaceChildren(h('ol.ld-hbs', { 'aria-label': '프로젝트 단계', class: [big ? 'is-big' : '', W < 300 ? 'is-narrow' : W >= 520 ? 'is-wide' : ''].filter(Boolean).join(' ') },
+          ...show.map((r) => hbar({ label: r.g.label, v: r.n, max, href: stageListHref(r.g.key),
+            extra: r.warn && W >= 420 ? h('span.ld-hb-w', { text: `남은 일 ${r.warn}` }) : null })),
+          rest ? h('li.ld-hb-rest', { text: rest }) : null));
         return;
       }
       /* 크기별 — 작으면 3×2 작은 숫자 · 보통은 3×2 큰 숫자 · 넓으면(620px 이상) 여섯 단계 한 줄 */
@@ -201,16 +273,17 @@ const WIDGETS = {
         body.replaceChildren(list(rows.length));
         return;
       }
-      /* 크기별 — 작으면 숫자 셋만 · 보통은 + 한 줄 · 크면 + 최근 요청 목록(들어가는 만큼) */
+      /* 크기별(11-07 A′) — 낮은 칸은 숫자 · 이름 한 줄 · 보통은 숫자 + 막대 · 남는 높이에 한 줄 · 더 남으면 최근 요청 목록(들어가는 만큼) */
       const cmax = Math.max(c.review || 0, c.request || 0, c.approval || 0);
+      const md = cellsMode(ctx), H = bodyH(ctx);
+      const short = md.cls === 'is-xs' && bodyW(ctx) / 3 < 120;          // 좁고 낮은 칸 — '요청'을 빼고 짧게(마우스를 올리면 전체)
       const cell = (v, label, hash) => h('a.ld-cell', { href: STAFF_HREF.inbox + hash, class: v ? '' : 'is-zero', 'aria-label': `${label} ${v ?? '—'}건` },
-        v === null ? h('b.num', { text: '—' }) : num('b.num', v), h('span', { text: label }), v === null ? null : cellBar(ctx, v, cmax));
-      const barsOn = ctx.style === 'bars';
-      const cells = h('div.ld-cells', { class: [ctx.size !== 's' && 84 + 36 + (barsOn ? 12 : 0) <= bodyH(ctx) ? 'is-big' : '', barsOn ? 'has-bars' : ''].filter(Boolean).join(' ') }, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
-      const fit = Math.floor((bodyH(ctx) - 150 - (barsOn ? 12 : 0)) / 29);
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
-        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: isNone ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' }),
-        ctx.size === 'l' && rows.length && fit >= 1 ? list(fit) : null));
+        v === null ? h('b.num', { text: '—' }) : num('b.num', v), h('span', { text: short ? label.replace(' 요청', '') : label, title: label }), v === null || !md.bars ? null : cellBar(ctx, v, cmax));
+      const cells = h('div.ld-cells', { class: [md.cls, md.bars ? 'has-bars' : ''].filter(Boolean).join(' ') }, cell(c.review, '검토 요청', ''), cell(c.request, '분석 요청', '#requests'), cell(c.approval, '보낸 요청', '#approvals'));
+      const sumOn = H >= md.hgt + 46, fit = Math.floor((H - md.hgt - 46 - 22) / 29);
+      body.replaceChildren(h('div.ld-inbox-b', { class: md.cls }, cells,
+        sumOn ? h('p.ld-inbox-s', { text: isNone ? '지금은 기다리는 요청이 없습니다' : '왼쪽 메뉴 요청함 숫자와 같습니다' }) : null,
+        sumOn && rows.length && fit >= 2 ? list(fit) : null));
       countUp(cells, 'inbox');
     },
   },
@@ -232,43 +305,52 @@ const WIDGETS = {
           h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) })))));
         return;
       }
-      /* 크기별 — 작으면 큰 % + 막대 · 보통은 + 프로젝트별 요약 · 증량 신청 · 크면 + 프로젝트별 막대 · 할당 변경 기록(모두 GET /me/storage 한 출처 · 지어낸 수 0) */
+      /* 11-07 A′ — 고리(할당 대비) | 프로젝트별 막대(들어가는 만큼) · 요약 한 줄 · 증량 신청 · 크면 + 할당 변경 기록. 낮은 칸은 % · 한 줄 · 막대(모두 GET /me/storage 한 출처 · 지어낸 수 0) */
       const pw = pctWord(used, q);
-      const [sv, su] = size(used).split(' ');
-      const bar = pw !== null ? h('div.k-me-bar.ld-bar-q', { class: st.warn ? 'is-warn' : '', role: 'img', 'aria-label': `할당의 ${pw}% 사용` }, h('i', { style: `width:${Math.min(100, Math.max(used > 0 ? 1 : 0, Number(pw)))}%` })) : null;
-      const big = pw !== null
-        ? h('div.ld-cell.ld-cell--ro', {}, h('b.num', {}, num('span', Number(pw)), h('small', { text: '%' })), h('span', { text: `${size(used)} 사용 · 할당 ${gb(q)}` }))
-        : h('div.ld-cell.ld-cell--ro', {}, h('b.num', {}, num('span', Number(sv), sv.includes('.') ? 1 : 0), ' ', h('small', { text: su })), h('span', { text: '사용 중 · 할당 없음' }));
-      if (ctx.size === 's') {
-        put(body, h('div.ld-store-b.is-col.is-s', {}, big, bar));
-        countUp(big, 'store'); return;
-      }
-      const right = h('div.ld-store-r');
-      if (bar) right.append(bar);
+      const H = bodyH(ctx), Wd = bodyW(ctx);
       const pend = (j.requests || []).find((r) => r.state === 'pending');
-      const nShow = ctx.px.w >= 520 ? 4 : 2;
-      if (ctx.size === 'm') right.append(h('p.ld-store-s', {}, ps.length ? h('span.ld-k', { text: '프로젝트별' }) : null,
-        ...ps.slice(0, nShow).map((p) => h('span', { title: p.name }, h('span.ld-pn', { text: p.name }), ' ', h('b.num', { text: size(p.bytes) }))),
-        ps.length > nShow ? h('span', { text: `외 ${ps.length - nShow}개` }) : null));
       const act = h('p.ld-store-a');
       if (st.warn) act.append(h('span.ld-warn', { text: `할당의 ${ev(st.pct)}%를 썼습니다` }));
       if (pend) act.append(h('span.ld-store-p', { text: `증량 신청 중 ${gb(ev(pend.want_gb))} · LX 관리자 확인 전` }));
       else if (has) act.append(h('button.k-me-ask', { type: 'button', text: '용량 증량 신청', onclick: () => openMe({ ask: true, onStorage: again, onSaved: again }) }));
-      if (act.childNodes.length) right.append(act);
-      const wrap = h('div.ld-store-b', { class: ctx.px.w < 400 ? 'is-col' : '' }, big, right);
-      if (ctx.size !== 'l') { body.replaceChildren(wrap); countUp(big, 'store'); return; }
-      /* 크게 — 아래에 프로젝트별 막대(들어가는 만큼) + 할당 변경 기록(승인 · 거절 · 대기) */
-      const max = Math.max(1, ...ps.map((p) => p.bytes || 0));
-      const fitN = Math.max(2, Math.floor((bodyH(ctx) - 120 - 60) / 30));
+      const sumTxt = has ? `${size(used)} 사용 · 할당 ${gb(q)}` : `${size(used)} 사용 · 할당 없음`;
+      const col = Wd < 380 && H >= 230;                                  // 좁고 높은 칸 — 고리 위 · 막대 아래(옆에 두면 이름이 잘린다)
+      const R = Math.round(col ? Math.min(120, Wd * 0.5, H * 0.42) : Math.min(132, H - 4, Wd * 0.34));
+      const pctEl = pw !== null ? h('b.ld-st-pct.num', {}, num('span', Number(pw)), h('small', { text: '%' })) : h('b.ld-st-pct.num', { text: size(used) });
+      if (R < 72) {
+        /* 낮은 칸 — 큰 % · 쓴 양 한 줄 · 막대 */
+        const bar = pw !== null ? h('div.k-me-bar.ld-bar-q', { class: st.warn ? 'is-warn' : '', role: 'img', 'aria-label': `할당의 ${pw}% 사용` }, h('i', { style: `width:${Math.min(100, Math.max(used > 0 ? 1 : 0, Number(pw)))}%` })) : null;
+        put(body, h('div.ld-st-xs', {}, h('div.ld-st-xs-r', {}, pctEl, h('span', { text: sumTxt, title: sumTxt })), H >= 52 ? bar : null));
+        countUp(body, 'store'); return;
+      }
+      const rg = h('div.ld-st-ring', { class: R >= 108 ? 'is-l' : '', style: `width:${R}px;height:${R}px`, role: 'img', 'aria-label': pw !== null ? `할당의 ${pw}% 사용` : sumTxt }, ring(pw ?? 0, R, st.warn), pctEl);
+      if (pw === null) rg.classList.add('is-none');
+      const right = h('div.ld-st-r');
+      const rw = col ? Wd : Wd - R - 20;
+      const histOn = ctx.size === 'l' && (j.requests || []).length;
+      const actH = act.childNodes.length ? 30 : 0;
+      let rightH = 0;
+      if (rw >= 150) {
+        const max = Math.max(1, ...ps.map((p) => p.bytes || 0));
+        const room = (col ? H - R - 16 : Math.min(R + 40, H)) - 22 - actH - 6;
+        const nb = Math.max(0, Math.min(ps.length, Math.floor(room / 26)));
+        if (nb) right.append(h('ol.ld-hbs.ld-hbs--store', { class: rw < 260 ? 'is-narrow' : '' }, ...ps.slice(0, nb).map((p) => hbar({ label: p.name, v: p.bytes || 0, max, text: size(p.bytes) }))));
+        right.append(h('p.ld-st-sum', { text: `${sumTxt}${ps.length > nb && nb ? ` · 외 ${ps.length - nb}개` : ''}`, title: sumTxt }));
+        if (actH) right.append(act);
+        rightH = nb * 26 + 22 + actH;
+      } else {
+        right.append(h('p.ld-st-sum.is-col', { text: sumTxt }));
+        if (actH && H >= 96) right.append(act);
+        rightH = 66 + actH;
+      }
+      const wrap = h('div.ld-st', { class: col ? 'is-col' : rw < 150 ? 'is-thin' : '' }, rg, right);
+      if (!histOn) { put(body, wrap); countUp(body, 'store'); return; }
+      /* 크게 — 아래에 할당 변경 기록(승인 · 거절 · 대기 · 들어가는 만큼) */
       const STATE_KO = { pending: '확인 전', approved: '승인', rejected: '거절' };
-      const hist = (j.requests || []).slice(0, 3);
-      body.replaceChildren(h('div.ld-store-l', {}, wrap,
-        ps.length ? h('div.ld-store-sec', {}, h('p.ld-store-h', { text: '프로젝트별' }), h('ol.ld-pb.ld-pb--store', {}, ...ps.slice(0, fitN).map((p) => h('li', {}, h('span', { text: p.name, title: p.name }),
-          h('i', {}, h('b', { style: `width:${Math.max(1, Math.round((p.bytes || 0) / max * 100))}%` })), h('em.num', { text: size(p.bytes) }))),
-        ps.length > fitN ? h('li.ld-pb-rest', {}, h('span', { text: `외 ${ps.length - fitN}개` })) : null)) : null,
-        hist.length ? h('div.ld-store-sec', {}, h('p.ld-store-h', { text: '할당 변경 기록' }), h('ul.ld-rows', {}, ...hist.map((r) => h('li', {}, h('span.ld-store-hr', {},
-          h('b', { text: `${gb(ev(r.from_gb))} → ${gb(ev(r.want_gb))}` }), h('span.ld-k', { text: STATE_KO[r.state] || r.state }), h('small.num', { text: ymdDot(r.decided_at || r.at) })))))) : null));
-      countUp(big, 'store');
+      const hn = Math.max(0, Math.min(3, Math.floor((H - (col ? R + 16 + rightH : Math.max(R, rightH)) - 16 - 30) / 29)));
+      put(body, h('div.ld-store-l', {}, wrap, hn ? h('div.ld-store-sec', {}, h('p.ld-store-h', { text: '할당 변경 기록' }), h('ul.ld-rows', {}, ...(j.requests || []).slice(0, hn).map((r) => h('li', {}, h('span.ld-store-hr', {},
+        h('b', { text: `${gb(ev(r.from_gb))} → ${gb(ev(r.want_gb))}` }), h('span.ld-k', { text: STATE_KO[r.state] || r.state }), h('small.num', { text: ymdDot(r.decided_at || r.at) })))))) : null));
+      countUp(body, 'store'); return;
     },
   },
   /* 달력 — 내 일정(직접 적기 · 서버 · 계정별) + 플랫폼 날짜 일(GET /me/agenda — 기록에 있는 것만) · 월 · 주 · 다음 일 · 칸 크기에 따라 모양이 바뀜 */
@@ -290,18 +372,27 @@ const WIDGETS = {
       if (!items.length) { none(body, '진행 중인 프로젝트가 없습니다'); return; }
       const t = (p) => +new Date(p.last_at || p.updated_at || 0) || 0;
       const sorted = items.slice().sort((a, b) => t(b) - t(a));
-      if (ctx.view === 'list' || ctx.size === 's') {           // 작은 칸은 카드가 들어가지 않아 목록으로
-        body.replaceChildren(h('ul.ld-rows.ld-rows--proj', {}, ...sorted.map((p) => h('li', {}, h('a', { href: projectHref(p.id) },
-          h('b', { text: p.name }), h('span.ld-k', { text: GROUPS[groupOf(p)].label }), kick(p)?.kind === 'warn' ? h('em', { text: kick(p).text }) : null, h('small', { text: ago(p.last_at || p.updated_at) }))))));
+      /* 크기별(11-07 A′) — 낮은 칸(카드가 안 들어감)은 목록(+ 넓으면 다섯 칸 막대) · 보통 높이는 작은 카드(그림 · 이름 · 한 줄 · 다섯 칸 막대) · 아주 높으면 프로젝트 목록과 같은 카드 */
+      const H = bodyH(ctx), Wd = bodyW(ctx);
+      const cols = Math.max(1, Math.min(6, Math.floor((Wd + 16) / (236 + 16))));
+      if (ctx.view === 'list' || H < 170) {
+        const segOn = Wd >= 520;
+        body.replaceChildren(h('ul.ld-rows.ld-rows--proj', { class: segOn ? 'has-seg' : '' }, ...sorted.map((p) => h('li', {}, h('a', { href: projectHref(p.id) },
+          h('b', { text: p.name, title: p.name }), h('span.ld-k', { text: GROUPS[groupOf(p)].label }), segOn ? (p.state === 'archived' ? h('span') : seg4El(p)) : null,
+          kick(p)?.kind === 'warn' && Wd >= 420 ? h('em', { text: kick(p).text }) : h('span'), h('small', { text: ago(p.last_at || p.updated_at) }))))));
         return;
       }
-      const cols = Math.max(1, Math.min(6, Math.floor((ctx.px.w + 16) / (236 + 16))));
-      const rows = bodyH(ctx) >= 2 * 300 ? 2 : 1;
+      const full = H >= 410;
+      const rows = full ? (H >= 2 * 410 + 16 ? 2 : 1) : Math.max(1, Math.floor((H + 16) / (220 + 16)));
       const top = sorted.slice(0, cols * rows);
-      ctx.sub(`마지막 활동 순 · 전체 ${items.length}`);
+      ctx.sub(`마지막 활동 순 · 전체 ${items.length} · 막대 = 다섯 단계 중 지금`);
+      const my = (body._n = (body._n || 0) + 1);
       const d = await dk;
+      if (body._n !== my) return;
       const deckBy = new Map((d?.items || []).map((c) => [c.id, c]));
-      const grid = h('div.la-acg.lxp-grid-c.ld-rgrid', { style: `grid-template-columns:repeat(${cols},minmax(0,1fr))`, dataset: { n: String(top.length) } }, ...top.map((p) => projCard(p, deckBy, { compact: true })));
+      const picH = full ? null : Math.max(56, Math.min(180, Math.floor((H - (rows - 1) * 16) / rows) - 114));
+      const grid = h('div.la-acg.lxp-grid-c.ld-rgrid', { class: full ? '' : 'is-mini', style: `grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${rows},minmax(0,1fr))${picH ? `;--ih:${picH}px` : ''}`, dataset: { n: String(top.length) } },
+        ...top.map((p) => projCard(p, deckBy, full ? { compact: true } : { mini: true })));
       body.replaceChildren(grid);
     },
   },
@@ -313,7 +404,7 @@ const WIDGETS = {
       let j;
       try { j = await once('national', async () => ((await hasRoute('/national/recent')) ? api('/national/recent?n=12') : null)); } catch { fail(body, () => { drop('national'); ctx.refresh(); }); return; }
       if (!j) { none(body, '전국 분석 기록이 없습니다'); return; }
-      ctx.sub(j.year ? `${j.year}년 영상` : null);
+      ctx.sub(j.year ? `${j.year}년 영상 · 오늘` : '오늘');
       const items = j.items || [];
       const list = (n) => h('ul.ld-rows', {}, ...items.slice(0, n).map((x) => h('li', {}, h('a', { href: STAFF_HREF.ximap },
         h('b', { text: [x.sgg, x.name].filter(Boolean).join(' ') }), h('span.ld-k', { text: x.asset_name }), h('small.num', { text: when(x.at) })))));
@@ -322,15 +413,15 @@ const WIDGETS = {
         body.replaceChildren(list(items.length));
         return;
       }
-      /* 크기별 — 작으면 숫자 둘 · 보통은 + 방금 끝난 곳 한 줄 · 크면 + 목록 */
-      const n1 = Number(ev(j.today?.cells)) || 0, n2 = Number(ev(j.today?.n)) || 0, barsOn = ctx.style === 'bars';
-      const cells = h('div.ld-cells.ld-cells--2', { class: [ctx.size !== 's' && 84 + 36 + (barsOn ? 12 : 0) <= bodyH(ctx) ? 'is-big' : '', barsOn ? 'has-bars' : ''].filter(Boolean).join(' ') },
-        h('div.ld-cell.ld-cell--ro', {}, num('b.num', n1), h('span', { text: '오늘 끝난 읍면동' }), cellBar(ctx, n1, Math.max(n1, n2))),
-        h('div.ld-cell.ld-cell--ro', {}, num('b.num', n2), h('span', { text: '오늘 AI 분석 결과' }), cellBar(ctx, n2, Math.max(n1, n2))));
-      const last = items[0], fit = Math.floor((bodyH(ctx) - 150 - (barsOn ? 12 : 0)) / 29);
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
-        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: last ? `방금 끝난 곳 · ${[last.sgg, last.name].filter(Boolean).join(' ')} · ${when(last.at)}` : '오늘 끝난 읍면동이 없습니다' }),
-        ctx.size === 'l' && items.length && fit >= 1 ? list(fit) : null));
+      /* 크기별(11-07 A′) — 낮은 칸은 숫자 · 이름 한 줄 · 보통은 숫자 + 막대 · 남는 높이에 방금 끝난 곳 · 더 남으면 목록 */
+      const n1 = Number(ev(j.today?.cells)) || 0, n2 = Number(ev(j.today?.n)) || 0, md = cellsMode(ctx), H = bodyH(ctx);
+      const cells = h('div.ld-cells.ld-cells--2', { class: [md.cls, md.bars ? 'has-bars' : ''].filter(Boolean).join(' ') },
+        h('div.ld-cell.ld-cell--ro', { class: n1 ? '' : 'is-zero' }, num('b.num', n1), h('span', { text: md.cls === 'is-xs' && bodyW(ctx) / 2 < 170 ? '읍면동' : '오늘 끝난 읍면동', title: '오늘 끝난 읍면동' }), md.bars ? cellBar(ctx, n1, Math.max(n1, n2)) : null),
+        h('div.ld-cell.ld-cell--ro', { class: n2 ? '' : 'is-zero' }, num('b.num', n2), h('span', { text: md.cls === 'is-xs' && bodyW(ctx) / 2 < 170 ? 'AI 결과' : '오늘 AI 분석 결과', title: '오늘 AI 분석 결과' }), md.bars ? cellBar(ctx, n2, Math.max(n1, n2)) : null));
+      const last = items[0], sumOn = H >= md.hgt + 46, fit = Math.floor((H - md.hgt - 46 - 22) / 29);
+      body.replaceChildren(h('div.ld-inbox-b', { class: md.cls }, cells,
+        sumOn ? h('p.ld-inbox-s', { text: last ? `방금 끝난 곳 · ${[last.sgg, last.name].filter(Boolean).join(' ')} · ${when(last.at)}` : '오늘 끝난 읍면동이 없습니다' }) : null,
+        sumOn && items.length && fit >= 2 ? list(fit) : null));
       countUp(cells, 'national');
     },
   },
@@ -351,20 +442,46 @@ const WIDGETS = {
         body.replaceChildren(list(rows.length));
         return;
       }
-      /* 크기별 — 작으면 숫자 둘 · 보통은 + 마지막 분석 한 줄 · 크면 + 목록 */
-      const t1 = Number(j.total) || 0, t2 = running.length, barsOn = ctx.style === 'bars';
-      const cells = h('div.ld-cells.ld-cells--2', { class: [ctx.size !== 's' && 84 + 36 + (barsOn ? 12 : 0) <= bodyH(ctx) ? 'is-big' : '', barsOn ? 'has-bars' : ''].filter(Boolean).join(' ') },
-        h('a.ld-cell', { href: STAFF_HREF.mapsvc, class: j.total ? '' : 'is-zero' }, num('b.num', t1), h('span', { text: '분석 결과' }), cellBar(ctx, t1, Math.max(t1, t2))),
-        h('div.ld-cell.ld-cell--ro', { class: running.length ? 'is-run' : 'is-zero' }, num('b.num', t2), h('span', { text: '분석 중' }), cellBar(ctx, t2, Math.max(t1, t2))));
+      const t1 = Number(j.total) || 0, t2 = running.length, H = bodyH(ctx), Wd = bodyW(ctx);
       const last = groups.map((g) => ({ g, x: g.items[0] })).filter((r) => r.x).sort((a, b) => String(b.x.finished_at || '').localeCompare(String(a.x.finished_at || '')))[0];
-      const fit = Math.floor((bodyH(ctx) - 150 - (barsOn ? 12 : 0)) / 29);
-      body.replaceChildren(h('div.ld-inbox-b', {}, cells,
-        ctx.size === 's' ? null : h('p.ld-inbox-s', { text: last ? `마지막 분석 · ${last.g.name} · ${when(last.x.finished_at)}` : '아직 분석 결과가 없습니다' }),
-        ctx.size === 'l' && rows.length && fit >= 1 ? list(fit) : null));
-      countUp(cells, 'mapsvc');
+      const lastTxt = last ? `마지막 분석 · ${last.g.name} · ${when(last.x.finished_at)}` : '아직 분석 결과가 없습니다';
+      if (ctx.style === 'num') {
+        /* 숫자만 — 분석 결과 · 분석 중 두 칸(예전 모양) */
+        const md = cellsMode(ctx);
+        const cells = h('div.ld-cells.ld-cells--2', { class: md.cls },
+          h('a.ld-cell', { href: STAFF_HREF.mapsvc, class: t1 ? '' : 'is-zero' }, num('b.num', t1), h('span', { text: '분석 결과' })),
+          h('div.ld-cell.ld-cell--ro', { class: t2 ? 'is-run' : 'is-zero' }, num('b.num', t2), h('span', { text: '분석 중' })));
+        const sumOn = H >= md.hgt + 46, fit = Math.floor((H - md.hgt - 46 - 22) / 29);
+        body.replaceChildren(h('div.ld-inbox-b', { class: md.cls }, cells, sumOn ? h('p.ld-inbox-s', { text: lastTxt }) : null, sumOn && rows.length && fit >= 2 ? list(fit) : null));
+        countUp(cells, 'mapsvc');
+        return;
+      }
+      /* 11-07 A′ — 분석 결과 수 + 날짜별 막대(끝난 날 · 칸 폭만큼 지난 날들 · 모두 GET /me/analyses 한 출처).
+         낮은 칸 = 숫자 | 막대 한 줄 · 보통 = 숫자 위 · 막대 · 날짜 · 높으면 + 마지막 분석 한 줄 + 목록 */
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const xs = H < 96;
+      const thin = xs && Wd < 320;                                       // 좁고 낮은 칸 — 숫자 | 막대(이름은 숨김 · 읽기 프로그램엔 그대로)
+      const chartW = xs ? Wd - (thin ? 64 : 132) : Wd;
+      const D = Math.max(7, Math.min(31, Math.floor((chartW + 4) / 14)));
+      const byDay = new Map();
+      for (const g of groups) for (const x of g.items) { const d = new Date(x.finished_at || ''); if (Number.isNaN(+d)) continue; const k = isoDay(d); byDay.set(k, (byDay.get(k) || 0) + 1); }
+      const counts = Array.from({ length: D }, (_, i) => { const d = addDays(today, i - D + 1); return { day: d, n: byDay.get(isoDay(d)) || 0 }; });
+      const inD = counts.reduce((s, x) => s + x.n, 0);
+      const head = h('a.ld-ms-h', { href: STAFF_HREF.mapsvc, 'aria-label': `분석 결과 ${t1}개` }, num('b.num', t1), h('span', {}, '분석 결과', t2 ? h('em', { text: ` · 분석 중 ${t2}` }) : null));
+      const chart = dayBars(counts, { axis: !xs, label: `지난 ${D}일 끝난 분석 ${inD}건` });
+      if (xs) { body.replaceChildren(h('div.ld-ms.is-xs', { class: thin ? 'is-thin' : '' }, head, chart)); countUp(head, 'mapsvc'); return; }
+      const sumOn = H >= 96 + 100 + 30, fit = Math.floor((H - 96 - 100 - 30 - 10) / 29);
+      const chartH = sumOn ? 100 : H - 44 - 8;
+      chart.style.setProperty('--dbh', `${Math.max(28, Math.min(160, chartH - 22))}px`);
+      body.replaceChildren(h('div.ld-ms', {}, h('div.ld-ms-top', {}, head, h('small.ld-ms-d', { text: `지난 ${D}일 · ${inD}건` })), chart,
+        sumOn ? h('p.ld-inbox-s', { text: lastTxt }) : null, sumOn && rows.length && fit >= 2 ? list(fit) : null));
+      countUp(head, 'mapsvc');
     },
   },
 };
+
+/* 수정 중 아주 낮은 칸(머리 칩 줄로 몸통이 22px 아래) — 내용을 그리지 않는다(잘린 글자 0 · 11-07) */
+for (const d of Object.values(WIDGETS)) { const r = d.render; d.render = (body, ctx) => { if (ctx.editing && bodyH(ctx) < 22) { body.replaceChildren(); return null; } return r.call(d, body, ctx); }; }
 
 /* ═══════════════ 달력 ═══════════════ */
 const CAL = { anchor: new Date(), cache: new Map() };     // 칸이 다시 그려져도 보고 있던 달 · 주는 그대로
@@ -441,7 +558,8 @@ async function calendar(body, ctx) {
   /* 크기별(실제 px) — 작으면 오늘 + 다음 일 셋 · 보통은 주 · 크면 월. 직접 고른 보기 방식도 들어가지 않으면 한 단계 작게(월→주→다음 일) */
   const bh = bodyH(ctx) - 34;                                           // 머리줄(‹ 달 › · 오늘 · 일정 적기)을 뺀 높이
   const fitsMonth = bh >= 5 * 40 + 20, fitsWeek = ctx.px.w / 7 >= 96 ? bh >= 96 : bh >= 200;   // 주 = 일곱 열(넓을 때) · 일곱 줄(좁을 때 — 줄마다 28px)
-  let mode = ctx.view === 'auto' || !ctx.view ? (ctx.size === 'l' ? 'month' : ctx.size === 'm' ? 'week' : 'list') : ctx.view;
+  /* 11-07 A′: 자동은 달이 들어가면 달(시안 그대로 — 좁은 칸은 점) · 아니면 주 · 다음 일 */
+  let mode = ctx.view === 'auto' || !ctx.view ? (fitsMonth && ctx.px.w >= 250 ? 'month' : ctx.size === 's' ? 'list' : 'week') : ctx.view;
   if (mode === 'month' && !fitsMonth) mode = 'week';
   if (mode === 'week' && !fitsWeek) mode = 'list';
   const small = ctx.size === 's';
@@ -449,12 +567,14 @@ async function calendar(body, ctx) {
   /* 머리 — ‹ 2026.10 › · 오늘 · 일정 적기 */
   const label = h('b.ld-cal-l.num');
   const nav = (n) => { const a = CAL.anchor; CAL.anchor = mode === 'month' ? new Date(a.getFullYear(), a.getMonth() + n, 1) : addDays(a, 7 * n); redraw(); };
+  /* 좁은 칸 — 오늘이 이미 보이면 '오늘' 단추를 빼서 머리줄이 넘치지 않게(11-07) */
+  const inView = () => { const A = CAL.anchor; if (mode === 'month') return A.getFullYear() === today.getFullYear() && A.getMonth() === today.getMonth(); const f = addDays(A, -A.getDay()); f.setHours(0, 0, 0, 0); return today >= f && today <= addDays(f, 6); };
   const head = h('div.ld-cal-h', {},
     mode === 'list' ? null : h('button.ld-cal-n', { type: 'button', 'aria-label': mode === 'month' ? '지난달' : '지난주', html: '&lsaquo;', onclick: () => nav(-1) }),
     label,
     mode === 'list' ? null : h('button.ld-cal-n', { type: 'button', 'aria-label': mode === 'month' ? '다음달' : '다음주', html: '&rsaquo;', onclick: () => nav(1) }),
     h('span.sp'),
-    mode === 'list' ? null : h('button.ld-cal-t', { type: 'button', text: '오늘', onclick: () => { CAL.anchor = new Date(); redraw(); } }),
+    mode === 'list' || (ctx.px.w < 330 && inView()) ? null : h('button.ld-cal-t', { type: 'button', text: '오늘', onclick: () => { CAL.anchor = new Date(); redraw(); } }),
     h('button.ld-cal-t', { type: 'button', text: '일정 적기', onclick: () => dayModal(today, redraw) }));
   const grid = h('div.ld-cal-g');
   body.replaceChildren(h('div.ld-cal', { dataset: { mode } }, head, grid));
@@ -469,7 +589,15 @@ async function calendar(body, ctx) {
     let a;
     try { a = await agenda(today, to); } catch { fail(grid, redraw); return; }
     const days = [...a.by.keys()].filter((k) => k >= isoDay(today)).sort();
-    if (!days.length) { grid.replaceChildren(h('p.ld-foot-none', { text: '앞으로 30일 안에 일이 없습니다' })); return; }
+    if (!days.length) { if (bh < 24) { label.textContent += ' · 앞으로 30일 일 없음'; label.classList.add('is-one'); grid.replaceChildren(); return; } grid.replaceChildren(h('p.ld-foot-none', { text: '앞으로 30일 안에 일이 없습니다' })); return; }
+    if (bh < 24) {                                                      // 아주 낮은 칸 — 머리줄에 다음 일 하나만
+      const k0 = days[0], it0 = (a.by.get(k0) || [])[0], d0 = dayOf(k0), nAll = days.reduce((s, k) => s + (a.by.get(k) || []).length, 0);
+      label.textContent = `${sameDay(d0, today) ? '오늘' : `${d0.getMonth() + 1}.${d0.getDate()}`} ${it0.time ? it0.time + ' ' : ''}${it0.title}`;
+      label.title = label.textContent; label.classList.add('is-one');
+      grid.replaceChildren();
+      if (nAll > 1) label.after(h('small.ld-cal-more', { text: `외 ${nAll - 1}` }));
+      return;
+    }
     if (small) {                                                        // 작은 칸 — 오늘 + 다음 일 셋(한 줄씩 · 날짜 · 제목)
       const flat = days.flatMap((k) => (a.by.get(k) || []).map((it) => ({ k, it })));
       const n = Math.max(1, Math.min(3, Math.floor((bh - 4) / 28)));
@@ -519,9 +647,21 @@ async function calendar(body, ctx) {
     cells.push(c);
   }
   grid.append(h('div.ld-cal-cells', {}, ...cells));
+  /* 오늘 한눈에(11-07 A′) — 달 보기에서 이 달이 오늘을 품고 · 칸 아래에 남는 높이가 있으면 오늘 일 몇 줄 */
+  const extra = bh - 20 - weeks * 42 - 6;
+  const todayLines = mode === 'month' && first <= today && today <= last && extra >= 76 ? Math.min(4, Math.floor((extra - 34) / 24)) : 0;
+  const tbox = todayLines ? h('div.ld-cal-today') : null;
+  if (tbox) body.querySelector('.ld-cal').append(tbox);
   let a;
   try { a = await agenda(first, last); } catch { grid.append(h('p.ld-foot-none.ld-cal-err', { text: '일정을 불러오지 못했습니다' })); return; }
   if (a.failed === 'plat') ctx.sub('플랫폼 일은 불러오지 못했습니다'); else ctx.sub(null);
+  if (tbox) {
+    const ti = a.by.get(isoDay(today)) || [];
+    const show = ti.slice(0, ti.length > todayLines ? todayLines - 1 : todayLines);
+    tbox.replaceChildren(h('button.ld-cal-tt', { type: 'button', onclick: () => dayModal(today, redraw) }, `오늘 ${today.getMonth() + 1}.${today.getDate()} (${DOW[today.getDay()]})`),
+      ti.length ? h('ul', {}, ...show.map((it) => h('li', { class: it.kind === 'mine' ? 'is-mine' : '', title: it.title }, h('span.num', { text: it.time || '' }), h('span.ld-cal-tx', { text: it.title }))),
+        ti.length > show.length ? h('li.is-rest', {}, h('span', { text: `외 ${ti.length - show.length}` })) : null) : h('p.ld-foot-none', { text: '오늘 일이 없습니다' }));
+  }
   requestAnimationFrame(() => {
     const wrap = grid.querySelector('.ld-cal-cells'), tc = cells.find((c) => c.classList.contains('is-today'));
     if (wrap && tc && wrap.scrollHeight > wrap.clientHeight + 2) wrap.scrollTop = Math.max(0, tc.offsetTop - (wrap.clientHeight - tc.offsetHeight) / 2);
@@ -531,7 +671,7 @@ async function calendar(body, ctx) {
       const items = a.by.get(c.dataset.day) || [];
       const evb = c.querySelector('.ld-cal-ev');
       if (!items.length) continue;
-      if (narrow) { evb.append(...items.slice(0, 3).map(dot)); if (items.length > 3) evb.append(h('small.ld-cal-more.num', { text: `+${items.length - 3}` })); continue; }
+      if (narrow) { const cw = c.clientWidth || 60, nd = cw < 44 ? 1 : cw < 58 ? 2 : 3; evb.append(...items.slice(0, nd).map(dot)); if (items.length > nd && cw >= 34) evb.append(h('small.ld-cal-more.num', { text: `+${items.length - nd}` })); continue; }
       const show = items.slice(0, Math.max(1, items.length > fit ? fit - 1 : fit));
       evb.append(...show.map(chip)); if (items.length > show.length) evb.append(h('small.ld-cal-more', { text: `외 ${items.length - show.length}` }));
     }
@@ -540,22 +680,24 @@ async function calendar(body, ctx) {
 
 /* ═══════════════ 격자 ═══════════════ */
 /* 처음 모양 — 1440×900 첫 뷰 한 화면 안(스크롤 0 · 첫인상-5 · 원칙 194 · 216). 열 줄(60 × 10 + 사이 12 × 9 = 708) */
+/* 11-07 A′(PM "배치한다") — '지도 서비스'(분석 결과 수 · 날짜별 막대)를 처음 모양에. 달력 7줄 → 5줄(달 보기는 그대로 들어감) · 그 아래 지도 서비스 2줄.
+   이미 저장한 직원의 배치는 그대로(처음 모양 · '처음 모양으로'에만) */
 const DEFAULTS = [
   { id: 'notice', x: 0, y: 0, w: 5, h: 3, view: 'list' }, { id: 'memo', x: 5, y: 0, w: 3, h: 3 }, { id: 'store', x: 8, y: 0, w: 4, h: 3, view: 'numbers' },
-  { id: 'board', x: 0, y: 3, w: 5, h: 3, view: 'numbers' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 3, view: 'numbers' }, { id: 'calendar', x: 8, y: 3, w: 4, h: 7, view: 'auto' },
-  { id: 'recent', x: 0, y: 6, w: 8, h: 4, view: 'cards' },
+  { id: 'board', x: 0, y: 3, w: 5, h: 3, view: 'chart' }, { id: 'inbox', x: 5, y: 3, w: 3, h: 3, view: 'numbers' }, { id: 'calendar', x: 8, y: 3, w: 4, h: 5, view: 'auto' },
+  { id: 'recent', x: 0, y: 6, w: 8, h: 4, view: 'cards' }, { id: 'mapsvc', x: 8, y: 8, w: 4, h: 2, view: 'numbers' },
 ];
 /* 고를 수 있는 모양(10-18 원칙 285 "공지사항 · 달력 · 저장 용량을 한 줄에") — '모양 고르기'에서 */
 const PRESETS = [
   { id: 'default', label: '처음 모양', items: DEFAULTS },
   { id: 'row3', label: '공지 · 달력 · 저장 용량 한 줄', items: [
     { id: 'notice', x: 0, y: 0, w: 4, h: 4, view: 'list' }, { id: 'calendar', x: 4, y: 0, w: 4, h: 4, view: 'auto' }, { id: 'store', x: 8, y: 0, w: 4, h: 4, view: 'numbers' },
-    { id: 'board', x: 0, y: 4, w: 5, h: 4, view: 'numbers' }, { id: 'inbox', x: 5, y: 4, w: 3, h: 4, view: 'numbers' }, { id: 'memo', x: 8, y: 4, w: 4, h: 4 },
+    { id: 'board', x: 0, y: 4, w: 5, h: 4, view: 'chart' }, { id: 'inbox', x: 5, y: 4, w: 3, h: 4, view: 'numbers' }, { id: 'memo', x: 8, y: 4, w: 4, h: 4 },
     { id: 'recent', x: 0, y: 8, w: 12, h: 7, view: 'cards' },
   ] },
   { id: 'wide', label: '달력 크게', items: [
     { id: 'notice', x: 0, y: 0, w: 4, h: 3, view: 'list' }, { id: 'store', x: 4, y: 0, w: 4, h: 3, view: 'numbers' }, { id: 'inbox', x: 8, y: 0, w: 4, h: 3, view: 'numbers' },
-    { id: 'calendar', x: 0, y: 3, w: 8, h: 8, view: 'auto' }, { id: 'board', x: 8, y: 3, w: 4, h: 4, view: 'numbers' }, { id: 'memo', x: 8, y: 7, w: 4, h: 4 },
+    { id: 'calendar', x: 0, y: 3, w: 8, h: 8, view: 'auto' }, { id: 'board', x: 8, y: 3, w: 4, h: 4, view: 'chart' }, { id: 'memo', x: 8, y: 7, w: 4, h: 4 },
     { id: 'recent', x: 0, y: 11, w: 12, h: 7, view: 'cards' },
   ] },
 ];

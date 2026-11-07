@@ -2489,7 +2489,7 @@ function parcelInfo(d, L) {
     row('용도지역', L.yongdo, L.yongdo && L.yongdo_year ? `${L.yongdo_year}년 고시` : ''),
     row('읍면 · 리', [d.emd, d.ri].filter(Boolean).join(' · ')),
     h('div.xc-pi-no', {}, h('dt', { text: '필지 번호' }), h('dd', { text: d.pnu || '—' })));
-  const sw = h('button.xc-pi-sw', { type: 'button', role: 'switch', 'aria-checked': String(!!S.layers.lxmap), 'aria-label': '이 자리 편집지적도 겹쳐 보기' }, h('i'));
+  const sw = h('button.xc-pi-sw', { type: 'button', role: 'switch', 'aria-checked': String(!!S.layers.lxmap), 'aria-label': '이 자리 LX맵 겹쳐 보기' }, h('i'));
   sw.addEventListener('click', () => {
     const on = !S.layers.lxmap;
     let near = null;
@@ -2499,7 +2499,7 @@ function parcelInfo(d, L) {
   });
   return h('section.xc-pi', { 'aria-label': '필지 정보' },
     h('header.xc-pi-h', {}, h('h3', { text: '필지 정보' }), h('small', { text: gosi ? `연속지적도 · 공시 ${gosi[0]}.${gosi[1].padStart(2, '0')}` : '연속지적도' })),
-    dl, h('label.xc-pi-t', {}, h('span', { text: '이 자리 편집지적도 겹쳐 보기' }), sw));
+    dl, h('label.xc-pi-t', {}, h('span', { text: '이 자리 LX맵 겹쳐 보기' }), sw));
 }
 async function setState(f, to, btn) {
   btn.disabled = true;

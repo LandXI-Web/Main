@@ -372,11 +372,14 @@
    "name": "a11-map-compare",
    "label": "지도 서비스 + 영상 비교",
    "url": "/landxi/v3/lx-map/",
-   "wait": ".lm-cmp-b",
+   "wait": ".lm-tool[data-tool=swipe]",
    "timeout": 40000,
    "settle": 2500,
    "optional": true,
    "steps": [
+    {
+     "click": ".lm-tool[data-tool=swipe]"
+    },
     {
      "click": ".lm-cmp-b"
     },

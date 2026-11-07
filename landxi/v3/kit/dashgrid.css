@@ -22,7 +22,7 @@
 .dg-gap.is-tiny .dg-gap-b{height:26px;line-height:26px;padding:0 8px;font-size:var(--fs-tag)}
 /* 머리 — 제목 · (보조 한 줄) · 더 보기 · (수정) 보기 방식 · 빼기 */
 .dg-hd{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 10px;flex:none;min-width:0;min-height:28px}
-.dg-hd-t{display:flex;flex-direction:column;gap:0;min-width:0;flex:1 1 auto}
+.dg-hd-t{display:flex;flex-direction:column;gap:0;min-width:0;flex:1 1 0}   /* 11-07: 좁은 칸에서 '더 보기'가 아랫줄로 내려가 몸통을 줄이던 것 — 제목이 줄고(…) 더 보기는 같은 줄 */
 .dg-t{margin:0;font:700 var(--fs-t2)/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dg-sub{font:500 var(--fs-aux)/20px var(--font-body);color:var(--sub);word-break:keep-all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dg-sub[hidden]{display:none}
@@ -119,3 +119,8 @@
 .dg[data-theme="dense"] .dg-more{margin-top:1px;line-height:22px}
 .dg[data-theme="dense"] .dg-grip{height:24px}
 .dg[data-theme="dense"] .dg-rm{width:24px;height:24px}
+/* 11-07: 평소(수정 아님)엔 머리를 한 줄로 — 제목이 먼저 · '더 보기'는 남는 폭만큼(모자라면 …) · 부제는 제목 폭을 늘리지 않는다 */
+.dg:not(.is-edit) .dg-hd{flex-wrap:nowrap}
+.dg:not(.is-edit) .dg-hd-t{flex:1 0 auto;max-width:100%}
+.dg-sub{width:0;min-width:100%}
+.dg:not(.is-edit) .dg-more{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}

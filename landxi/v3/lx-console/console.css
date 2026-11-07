@@ -263,3 +263,137 @@ a.ld-cell:hover{background:var(--bg-0)}
 .ld-ntc-one.is-s{gap:0;padding:0 6px}
 .ld-ntc-one.is-s small{line-height:18px}
 .ld-ntc-one.is-s p{display:none}   /* 작은 칸 = 제목 · 날짜만(본문이 칸 밖으로 넘치던 것 · 10-29 검사 문) */
+
+/* ═══ 11-07 A′ — 칸 자리 그대로 · 안을 도표로(잉크 농도 3단 · 진행 막대만 파랑 · 글자 14 이상 · 칸 크기마다 넘침 0) ═══ */
+/* 맨 위 한 줄 — 알림 띠(늘어남) + '대시보드 수정하기'(오른쪽) */
+.ld-top{display:flex;align-items:center;gap:12px;min-width:0}
+.ld-top > .lxp-ntcs{flex:1 1 auto;min-width:0;margin:0}
+.ld-top > .ld-bar{flex:none;margin-left:auto;min-height:0}
+.ld-top > .lxp-ntcs:not(:empty) ~ .ld-bar .dg-bar:not(.is-edit) .dg-b--edit{height:44px}
+.ld-top .dg-bar.is-edit{flex-wrap:wrap;justify-content:flex-end}
+
+/* 가로 막대 줄(진행 현황 · 저장 용량 프로젝트별) — 이름 | 막대 | 값 */
+.ld-hbs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:0;flex:1 1 auto;min-height:0;--lw:118px}
+.ld-hbs.is-narrow{--lw:96px}
+.ld-hbs.is-wide{--lw:140px}
+.ld-hb > a,.ld-hb > .ld-hb-r{display:grid;grid-template-columns:var(--lw) minmax(24px,1fr) auto auto;align-items:center;gap:0 12px;min-width:0;padding:0 6px;margin:0 -6px;border-radius:6px;text-decoration:none;color:var(--ink);font:500 var(--fs-aux)/22px var(--font-body)}
+.ld-hb > a:hover{background:var(--bg-0)}
+.ld-hb-n{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ld-hb-t{display:block;height:10px;border-radius:4px;background:var(--bg-0);overflow:hidden;min-width:0}
+.ld-hb-t b{display:block;height:100%;border-radius:4px;background:var(--ink);transition:width var(--d-500) var(--e-cam)}
+.ld-hb-v{grid-column:4;font:500 var(--fs-aux)/22px var(--font-num);font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink);text-align:right;min-width:2ch;white-space:nowrap}
+.ld-hb-w{grid-column:3;font:500 var(--fs-tag)/20px var(--font-body);color:var(--warn);white-space:nowrap}
+.ld-hb.is-zero .ld-hb-n{color:var(--sub)}
+.ld-hb.is-zero .ld-hb-v{color:var(--mute)}
+.ld-hbs.is-big .ld-hb > a,.ld-hbs.is-big .ld-hb > .ld-hb-r{line-height:28px}
+.ld-hbs.is-big .ld-hb-t{height:12px}
+.ld-hbs.is-big .ld-hb-v{font-size:var(--fs-body)}
+.ld-hb-rest{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-hbs--store{justify-content:flex-start;gap:4px;flex:none}
+.ld-hbs--store .ld-hb > .ld-hb-r{grid-template-columns:minmax(0,44%) minmax(24px,1fr) auto auto;gap:0 10px}
+.ld-hbs--store .ld-hb-t{height:8px}
+
+/* 숫자 칸 — 낮은 칸(xs)은 숫자 · 이름 한 줄 */
+.ld-cells.is-xs .ld-cell{flex-direction:row;align-items:baseline;gap:6px}
+.ld-cells.is-xs .ld-cell b{font:800 var(--fs-t2)/28px var(--font-display);flex:none}
+.ld-cells.is-xs .ld-cell > span{line-height:28px;min-width:0}
+.ld-inbox-b.is-xs{justify-content:center}
+.ld-cells.has-bars .ld-cell-bar{height:8px;border-radius:4px}
+.ld-cells.has-bars .ld-cell-bar b{border-radius:4px}
+.ld-cell.is-zero > span{color:var(--sub)}
+
+/* 저장 용량 — 고리 | 프로젝트별 막대 · 한 줄 */
+.ld-st{display:flex;align-items:center;gap:20px;flex:1 1 auto;min-height:0;min-width:0}
+.ld-st-ring{position:relative;flex:none;display:grid;place-items:center}
+.ld-st-ring svg{position:absolute;inset:0;width:100%;height:100%}
+.ld-ring-bg{fill:none;stroke:var(--bg-0);stroke-width:12}
+.ld-ring-fg{fill:none;stroke:var(--ink);stroke-width:12;stroke-linecap:round;transition:stroke-dasharray var(--d-500) var(--e-cam)}
+.ld-ring.is-warn .ld-ring-fg{stroke:var(--warn)}
+.ld-st-pct{position:relative;font:800 var(--fs-t2)/28px var(--font-display);letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.ld-st-pct small{font:600 var(--fs-tag)/20px var(--font-body);color:var(--sub);margin-left:1px}
+.ld-st-ring.is-none .ld-st-pct{font-size:var(--fs-aux)}
+.ld-st-r{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ld-st-sum{margin:0;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-st-sum.is-col{white-space:normal;word-break:keep-all;line-height:22px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.ld-st .ld-store-a{margin:0}
+.ld-st .ld-store-a .k-me-ask{margin-left:0}
+.ld-st-xs{display:flex;flex-direction:column;justify-content:center;gap:8px;flex:1 1 auto;min-height:0}
+.ld-st-xs-r{display:flex;align-items:baseline;gap:10px;min-width:0}
+.ld-st-xs-r .ld-st-pct{flex:none}
+.ld-st-xs-r > span{min-width:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-st-xs .ld-bar-q{flex:none}
+
+/* 최근 진행한 프로젝트 — 작은 카드(그림 · 이름 · 한 줄 · 다섯 칸 막대) · 목록에 다섯 칸 막대 */
+.ld-rgrid.is-mini{height:calc(100% - 2px);gap:16px}
+.ld-rgrid .lxp-pc.is-mini{display:flex;flex-direction:column;min-height:0;text-decoration:none;color:var(--ink);overflow:hidden}
+.ld-rgrid .lxp-pc.is-mini .la-ac-pic{aspect-ratio:auto;height:var(--ih,88px);flex:none}
+.ld-rgrid .lxp-pc.is-mini .la-ac-b{padding:10px 14px 12px;gap:2px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.ld-rgrid .lxp-pc.is-mini .k-sc-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-body);line-height:24px}
+.ld-rgrid .lxp-pc.is-mini .la-ac-line{font-size:var(--fs-tag);line-height:20px;color:var(--sub);min-height:0}
+.ld-rgrid .lxp-pc.is-mini .la-ac-line.is-warn{color:var(--warn)}
+.ld-rgrid .lxp-pc.is-mini .lxp-pc-st{display:flex;flex-direction:row;align-items:center;gap:8px;margin-top:auto;padding-top:6px}
+.ld-rgrid .lxp-pc.is-mini .lxp-seg{flex:1 1 auto;max-width:none}
+.ld-rgrid .lxp-pc.is-mini .lxp-pc-st small{flex:none;font:500 var(--fs-tag)/20px var(--font-num);color:var(--sub)}
+.ld-rgrid .lxp-pc.is-mini:hover .k-sc-t{text-decoration:underline;text-underline-offset:3px}
+.ld-rows--proj.has-seg li a{grid-template-columns:minmax(0,1fr) auto 96px auto auto;align-items:center}
+.ld-rows--proj li a .lxp-seg{width:96px}
+
+/* 지도 서비스 — 분석 결과 수 + 날짜별 막대 */
+.ld-ms{display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0}
+.ld-ms-top{display:flex;align-items:baseline;gap:12px;min-width:0}
+.ld-ms-h{display:inline-flex;align-items:baseline;gap:8px;min-width:0;text-decoration:none;color:var(--ink);border-radius:6px}
+.ld-ms-h:hover span{text-decoration:underline;text-underline-offset:3px}
+.ld-ms-h b{font:800 var(--fs-num)/40px var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex:none}
+.ld-ms-h span{font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ld-ms-h em{font-style:normal;color:var(--ai)}
+.ld-ms-d{margin-left:auto;flex:none;font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.ld-db{display:flex;flex-direction:column;gap:2px;min-width:0;flex:none}
+.ld-db-c{display:flex;align-items:flex-end;gap:4px;height:var(--dbh,48px);border-bottom:1px solid var(--rule)}
+.ld-db-c i{flex:1 1 0;min-width:2px;max-width:24px;background:var(--ink);border-radius:2px 2px 0 0}
+.ld-db-c i.is-zero{height:2px!important;background:var(--rule)}
+.ld-db-a{display:flex;justify-content:space-between}
+.ld-db-a small{font:400 var(--fs-tag)/20px var(--font-body);color:var(--sub)}
+.ld-ms.is-xs{flex-direction:row;align-items:center;gap:16px}
+.ld-ms.is-xs .ld-ms-h b{font-size:var(--fs-t2);line-height:28px}
+.ld-ms.is-xs .ld-db{flex:1 1 0}
+.ld-ms.is-xs .ld-db-c{height:36px}
+
+/* 달력 — 좁은 달 칸은 점이라 줄을 낮게 · 아래 '오늘' 몇 줄 */
+.ld-cal-g.is-narrow .ld-cal-cells{grid-template-rows:repeat(var(--weeks,5),minmax(34px,1fr))}
+.ld-cal-today{flex:none;display:flex;flex-direction:column;gap:2px;padding-top:8px;border-top:1px solid var(--rule);min-width:0}
+.ld-cal-tt{align-self:flex-start;border:0;padding:0;background:none;cursor:pointer;font:700 var(--fs-aux)/24px var(--font-body);color:var(--ink)}
+.ld-cal-tt:hover{text-decoration:underline;text-underline-offset:3px}
+.ld-cal-today ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ld-cal-today li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;font:400 var(--fs-aux)/24px var(--font-body);color:var(--ink-2);min-width:0}
+.ld-cal-today li .num{color:var(--sub)}
+.ld-cal-today li.is-mine .ld-cal-tx{font-weight:500;color:var(--ink)}
+.ld-cal-tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ld-cal-today li.is-rest span{color:var(--sub)}
+.ld-cal-today .ld-foot-none{line-height:24px}
+/* 공지 하나 — 제목 두 줄까지 */
+.ld-ntc-one b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.ld-st.is-col{flex-direction:column;align-items:stretch;justify-content:center;gap:16px}
+.ld-st.is-col .ld-st-ring{align-self:center}
+.ld-st-ring.is-l .ld-st-pct{font-size:var(--fs-num);line-height:40px}
+.ld-hbs.is-big{justify-content:center;gap:14px}
+.ld-memo-b.is-xs{justify-content:center}
+.ld-cal-l.is-one{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font:500 var(--fs-aux)/28px var(--font-body);letter-spacing:0}
+.ld-cal-h > .ld-cal-more{flex:none}
+.ld-ms-top{flex-wrap:wrap;row-gap:0}
+.ld-ms.is-thin .ld-ms-h span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ld-rows li a{grid-template-columns:minmax(0,1fr) minmax(0,max-content) auto}
+.ld-rows .ld-k{min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:min(22ch,42cqw)}
+.dg-body{container-type:inline-size}
+.dg-item.is-narrow .ld-cal-t{padding:0 6px}
+/* 진행 현황 — 넓고 낮은 칸(다섯 단계 옆으로) */
+.ld-hcol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 20px;align-content:center;flex:1 1 auto;min-height:0}
+.ld-hcol a{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0 6px;margin:0 -6px;border-radius:6px;text-decoration:none;color:var(--ink)}
+.ld-hcol a:hover{background:var(--bg-0)}
+.ld-hc-l{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0;font:500 var(--fs-aux)/22px var(--font-body)}
+.ld-hc-l span{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ld-hc-l em{font-style:normal;font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.ld-hcol li.is-zero span{color:var(--sub)}.ld-hcol li.is-zero em{color:var(--mute)}
+.ld-hcol .ld-hb-t{height:8px}
+
+/* 11-07 처음 배치가 화면 아래 끝까지 차서 오른쪽 아래 'XI ChatGEO' 이름표가 지도 서비스 칸을 덮던 것 — 대시보드에서는 둥근 단추만(단추는 단추 길 안) */
+body:has(.ld) .k-chat-tag{display:none!important}

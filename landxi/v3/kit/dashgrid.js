@@ -175,7 +175,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
   }
   function ctxOf(it, rec) {
     const p = px(it);
-    return { id: it.id, w: it.w, h: it.h, view: it.view, style: it.style, theme, size: sizeWord(it), px: { w: p.width, h: p.height },
+    return { id: it.id, w: it.w, h: it.h, view: it.view, style: it.style, theme, size: sizeWord(it), px: { w: p.width, h: p.height }, el: rec.body, editing,   // el = 몸통(실제 높이 · 폭을 잴 때 · 11-07)
       sub(x) { rec.sub.replaceChildren(...(x === null || x === undefined ? [] : [typeof x === 'string' ? document.createTextNode(x) : x])); rec.sub.hidden = !rec.sub.childNodes.length; },
       refresh: () => draw(it, true) };
   }
@@ -318,6 +318,7 @@ export function dashgrid(host, { screen, widgets, defaults = [], presets = [], t
     el.classList.toggle('is-edit', editing);
     bar.classList.toggle('is-edit', editing);
     host.classList.toggle('dg-editing', editing);
+    for (const it of layout) draw(it, true);   // 수정 중엔 좁은 칸 머리에 보기 방식 칩 줄이 생겨 몸통이 낮아진다 — 그 높이로 다시(11-07)
     if (!editing) { closeMenus(); if (saveT) { clearTimeout(saveT); saveT = 0; push().then((ok) => ok && toast(W.saved)); } }
     else bAdd.focus();
     placeGaps();

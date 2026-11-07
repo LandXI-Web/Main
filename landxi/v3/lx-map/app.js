@@ -347,24 +347,88 @@ function drawLeft() {
     }
     return h('section.lm-grp', { class: [G.kind === 'project' && 'is-proj', solo && 'is-solo'].filter(Boolean).join(' '), dataset: { g: G.key } }, head, ul);
   });
-  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', '편집지적도', `편집지적도 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적도', `필지 경계 · 지번 · 지목 · ${CAD_Z}단계 이상`]];
-  const baseEl = h('div.lm-base', { role: 'radiogroup', 'aria-label': '바탕' }, ...bases.map(([k, t, s]) =>
-    h('button', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, text: t, onclick: () => setBase(k) })));
   const keep = left.querySelector('.lm-groups')?.scrollTop || 0;
   left.replaceChildren(
     h('div.lm-top', {}, h('div.lm-hd', {}, h('h1.lm-h1', { text: '지도 서비스' }),   // '이 화면은?' 도움말 링크 뺌(10-18 사용자)
       h('button.lm-fold', { type: 'button', 'aria-expanded': 'true', 'aria-label': '결과 층 목록 접기', text: '접기', onclick: () => fold(true) })), ...(PROJ ? [h('p.lm-sub', {}, '이 프로젝트의 추론 결과만 보입니다 · ', h('a', { href: './', text: '내 분석 전체 보기' }))] : []), sum, run, flt),
-    h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups),
-    ...[clsBlock(on)].filter(Boolean),   // 켜진 층이 없으면 클래스 칸 없음(replaceChildren 은 null 을 글자 'null'로 넣는다)
-    h('div.lm-bot', {}, h('span.lm-bl', { text: '바탕' }), baseEl,
-      SHL.length ? h('div.lm-shl-row', {}, h('span.lm-bl', { text: '행정 자료' }), h('div.lm-base.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
-        h('button', { type: 'button', 'aria-pressed': String(shlOn.has(L.id)), title: L.kind_label || '', text: L.name, dataset: { id: L.id }, onclick: () => toggleShared(L) })))) : null,   // 설명 글 지움(10-17 원칙 281)
-      cmpRow()));
+    h('div.lm-groups', { 'aria-label': '분석 결과 층' }, ...groups));
   const gs = left.querySelector('.lm-groups'); if (gs) gs.scrollTop = keep;
   drawLegend();
+  drawTools();
 }
 
-/* 범례 — 지도 오른쪽 위에 작게(글자 단추로 접고 펴기 · 원칙 126 아이콘 없음) · 속성 칸이 열리면 그 왼쪽으로 비킨다 */
+/* ── 지도 안 오른쪽 도구(11-07 PM "지도 안 오른쪽 아이콘" — XI맵과 같은 모양 · 같은 말 · 같은 동작) ──
+   흰 칸 하나에 아이콘 + 글자 단추(레이어 · 영상 비교). 누르면 그 왼쪽에 판(한 번에 하나 · 다시 누르거나 × 로 닫기).
+   레이어 판 = 클래스(켜고 끄기 · 색 점) · 바탕(영상 · LX맵 · 연속지적도) · 행정 자료 — 예전 왼쪽 아래 칸의 기능 그대로.
+   속성 칸 · 목록 보기가 열리면 판은 닫히고 도구 칸은 그 왼쪽으로 비킨다(한 자리 하나 · 원칙 309). */
+var ICO = {
+  layers: '<path d="M10 3 2.5 7 10 11l7.5-4z"/><path d="M2.5 11 10 15l7.5-4"/>',
+  swipe: '<rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M10 2v16"/>',
+};
+var TOOL = null, toolsEl = null, pop = null;   // var — drawLeft 가 이 줄보다 먼저 불릴 수 있다
+function toolsMount() {
+  if (toolsEl) return;
+  toolsEl = h('nav.lm-tools', { 'aria-label': '지도 도구' });
+  pop = h('section.lm-pop', { hidden: true });
+  mapEl.append(toolsEl, pop);
+  addEventListener('resize', placePop);
+  new MutationObserver(placePop).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+}
+function drawTools() {
+  toolsMount();
+  const tl = [['layers', '레이어'], ...((CMP?.years || []).length >= 2 ? [['swipe', '영상 비교']] : [])];
+  if (TOOL && !tl.some(([id]) => id === TOOL)) TOOL = null;
+  toolsEl.replaceChildren(...tl.map(([id, label]) => h('button.lm-tool', { type: 'button', dataset: { tool: id }, 'aria-expanded': String(TOOL === id), 'aria-pressed': String(TOOL === id || (id === 'swipe' && !!CMP?.on)), onclick: () => tool(id) },
+    h('span', { 'aria-hidden': 'true', html: `<svg viewBox="0 0 20 20">${ICO[id]}</svg>` }), h('span.lm-tool-l', { text: label }))));
+  if (TOOL) drawPop(); else pop.hidden = true;
+}
+function tool(id) {
+  if (TOOL === id) { closePop(); return; }
+  TOOL = id;
+  if (!props.hidden) closeProps(); else drawTools();   // closeProps → drawLeft → drawTools
+}
+function closePop() { TOOL = null; if (pop) pop.hidden = true; drawTools(); }
+function drawPop() {
+  const keep = pop.querySelector('.lm-pop-b')?.scrollTop || 0;
+  const title = TOOL === 'swipe' ? '영상 비교' : '레이어';
+  pop.setAttribute('aria-label', title);
+  pop.replaceChildren(h('header.lm-pop-h', {}, h('h2', { text: title }),
+    h('button.lm-pop-x', { type: 'button', 'aria-label': '닫기', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: closePop })),
+    h('div.lm-pop-b', {}, ...(TOOL === 'swipe' ? swipeRows() : layerRows())));
+  pop.hidden = false;
+  placePop();
+  const b = pop.querySelector('.lm-pop-b'); if (b) b.scrollTop = keep;
+}
+/** 판 자리 — 누른 도구 높이 · 도구 칸 왼쪽 · 아래는 대화 단추 위 · 열린 대화창 위에서 멈춤(겹침 0) */
+function placePop() {
+  if (!pop || pop.hidden) return;
+  const m = mapEl.getBoundingClientRect(), t = toolsEl.getBoundingClientRect(), b = toolsEl.querySelector(`[data-tool="${TOOL}"]`)?.getBoundingClientRect();
+  const top = Math.max(16, (b?.top ?? t.top) - m.top - 6), right = m.right - t.left + 8;
+  let bottom = m.bottom - 96;
+  const chat = document.querySelector('#k-chat');
+  if (chat && !chat.hidden && chat.offsetWidth) { const r = chat.getBoundingClientRect(); if (r.left < m.right - right && r.right > m.right - right - 300 && r.top > m.top) bottom = Math.min(bottom, r.top - 12); }
+  const st = { top: top + 'px', right: right + 'px', maxHeight: Math.max(160, bottom - m.top - top) + 'px' };
+  for (const k in st) if (pop.style[k] !== st[k]) pop.style[k] = st[k];
+}
+const swR = (on, text, onclick, extra = {}) => h('button.lm-row', { type: 'button', 'aria-pressed': String(!!on), onclick, ...extra }, h('i.lm-psw'), h('span', { text }));
+function layerRows() {
+  const out = [];
+  const cb = clsBlock(all().filter(shown));
+  if (cb) out.push(cb);
+  const bases = [['img', '영상', '분석에 쓴 영상'], ['lx', 'LX맵', `LX맵 · ${LXMAP_Z}단계 이상`], ['cad', '연속지적도', `필지 경계 · 지번 · 지목 · ${CAD_Z}단계 이상`]];
+  out.push(h('p.lm-pop-l', { text: '바탕' }), h('div.lm-base', { role: 'radiogroup', 'aria-label': '바탕' }, ...bases.map(([k, t, s]) => {
+    return h('button.lm-row', { type: 'button', role: 'radio', 'aria-checked': String(ST.base === k), title: s, onclick: () => setBase(k) }, h('i.lm-prd'), h('span', { text: t }));
+  })));
+  if (SHL.length) out.push(h('p.lm-pop-l', { text: '행정 자료' }), h('div.lm-shl', { role: 'group', 'aria-label': '행정 자료' }, ...SHL.map((L) =>
+    swR(shlOn.has(L.id), L.name, () => toggleShared(L), { title: L.kind_label || '', dataset: { id: L.id } }))));   // 설명 글 지움(10-17 원칙 281)
+  return out;
+}
+function swipeRows() {
+  const r = cmpRow();
+  return r ? [r] : [h('p.lm-pop-l', { text: '견줄 해의 영상이 없습니다' })];
+}
+
+/* 범례 — 지도 왼쪽 아래 한 줄(11-07 XI맵과 같은 자리 · 오른쪽 위는 도구 칸) · 글자 단추로 접고 펴기(원칙 126 아이콘 없음) · 국토 변화 카드가 있으면 그 위로 */
 const legend = h('aside.lm-lgd', { 'aria-label': '범례', hidden: true });
 mapEl.append(legend);
 const colorOf = (c) => CLS_COLOR[c] || CLS_COLOR[String(c).split(' ')[0]] || '#0FA9A0';
@@ -383,7 +447,19 @@ function drawLegend() {
   legend.classList.toggle('is-shut', !ST.lg);
   legend.replaceChildren(h('button.lm-lgb', { type: 'button', 'aria-expanded': String(ST.lg), onclick: () => { ST.lg = !ST.lg; saveUI(); drawLegend(); } },
     h('b', { text: '범례' }), h('small', { text: ST.lg ? '접기' : '펴기' })), ST.lg ? h('ul.lm-lg', {}, ...items) : '');
+  placeLegend();
 }
+/** 범례 자리 — 기본은 축척 위 · 왼쪽 아래 국토 변화 카드가 보이면 그 위(넘치면 숨김 · 카드에 같은 범례가 있다) */
+function placeLegend() {
+  if (legend.hidden) return;
+  const card = mapEl.querySelector('.chg-card');
+  let b = 48;
+  if (card && !card.hidden && card.offsetHeight && !card.classList.contains('is-under')) { const m = mapEl.getBoundingClientRect(), r = card.getBoundingClientRect(); b = m.bottom - r.top + 8; }
+  legend.style.bottom = b + 'px';
+  legend.style.visibility = b + legend.offsetHeight > mapEl.clientHeight - 16 ? 'hidden' : '';
+}
+new ResizeObserver(() => placeLegend()).observe(mapEl);
+new MutationObserver(() => placeLegend()).observe(mapEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
 
 /* ── 색 바꾸기(원칙 264 · 공용 부품 kit/colors.js) — 층 줄의 색 점을 누르면 그 층의 색 칸: 클래스마다 색 · 색 묶음 · 투명도 · '신뢰도' 색 띠 · '기본 색으로'.
    사람 · 화면 · 층별로 브라우저에 기억 · 바꾸면 지도 · 범례 · 겹침 고르기 점에 바로. 바꾼 것이 없으면 원래 결과 모양 그대로(원칙 199). ── */
@@ -434,11 +510,11 @@ function clsBlock(on) {
   const m = new Map();
   for (const x of on) if (!x.empty && !x.failed && !x.change) for (const c of x.by_class || []) if (c.n) m.set(c.cls, (m.get(c.cls) || 0) + Number(c.n));
   if (!m.size) return null;
-  return h('div.lm-cls', { role: 'group', 'aria-label': '클래스' }, h('span.lm-bl', { text: '클래스' }),
-    h('div.lm-clr', {}, ...[...m].map(([c, n]) => h('button.lm-cb', { type: 'button', role: 'checkbox', 'aria-checked': String(!ST.clsOff.has(c)), dataset: { cls: c }, title: c,
+  return h('div.lm-cls', { role: 'group', 'aria-label': '클래스' }, h('p.lm-pop-l', { text: '클래스' }),
+    h('div.lm-clr', {}, ...[...m].map(([c, n]) => h('button.lm-cb.lm-row', { type: 'button', role: 'checkbox', 'aria-checked': String(!ST.clsOff.has(c)), dataset: { cls: c }, title: c,
       onclick: () => setClsOff(c) }, h('i.lm-cbx'), h('i.lm-cdt', { style: `background:${shownColor(c)}` }), h('span', { text: c }), h('em.num', { text: nf(n) })))));
 }
-const drawClsDots = () => { for (const b of left.querySelectorAll('.lm-cb')) b.querySelector('.lm-cdt')?.setAttribute('style', `background:${shownColor(b.dataset.cls)}`); };
+const drawClsDots = () => { for (const b of pop?.querySelectorAll('.lm-cb') || []) b.querySelector('.lm-cdt')?.setAttribute('style', `background:${shownColor(b.dataset.cls)}`); };
 function setClsOff(c) {
   if (ST.clsOff.has(c)) ST.clsOff.delete(c); else ST.clsOff.add(c);
   excludeClasses(map, [...ST.clsOff]);
@@ -543,9 +619,8 @@ function cmpRow() {
   if (ys.length < 2) return null;
   const sel = (k, label) => h('select.t-input.lm-cmp-s', { 'aria-label': label, onchange: (e) => { CMP[k] = +e.target.value; if (CMP.on) compareYears(CMP.a, CMP.b); } },
     ...ys.map((y) => h('option', { value: String(y), text: `${y}년`, selected: CMP[k] === y || undefined })));
-  return h('div.lm-shl-row.lm-cmp', {}, h('span.lm-bl', { text: '영상 비교' }),
-    h('button.lm-cmp-b', { type: 'button', 'aria-pressed': String(CMP.on), text: CMP.on ? '끄기' : '켜기', onclick: () => (CMP.on ? compareOff() : compareYears(CMP.a, CMP.b)) }),
-    sel('a', '왼쪽 해'), sel('b', '오른쪽 해'));
+  return h('div.lm-cmp', {}, h('div.lm-cmp-ys', {}, h('label', {}, h('span.lm-pop-l', { text: '왼쪽' }), sel('a', '왼쪽 해')), h('label', {}, h('span.lm-pop-l', { text: '오른쪽' }), sel('b', '오른쪽 해'))),
+    h('button.lm-cmp-b.t-btn', { type: 'button', 'aria-pressed': String(CMP.on), class: CMP.on ? 't-btn--2' : '', text: CMP.on ? '영상 비교 끄기' : '영상 비교 켜기', onclick: () => (CMP.on ? compareOff() : compareYears(CMP.a, CMP.b)) }));
 }
 /** 두 해 견주기 — 화면 · XI ChatGEO(map_compare year_a · year_b)가 부른다 → { ok, missing? } */
 async function compareYears(a, b) {
@@ -688,7 +763,7 @@ const union = (bs) => bs.filter(Boolean).reduce((a, b) => (a ? [Math.min(a[0], b
 function setBase(k) {
   ST.base = k; apply();
   const z = k === 'lx' ? LXMAP_Z : k === 'cad' ? CAD_Z : 0;
-  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? '편집지적도' : '연속지적도'}는 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
+  if (z && map.getZoom() < z) K.toast(`${k === 'lx' ? 'LX맵은' : '연속지적도는'} 지도를 더 가까이 확대하면 보입니다`, { action: { label: '이 자리 확대', onClick: () => map.easeTo({ zoom: z + 0.5, duration: 900 }) } });
 }
 
 /* ── 오른쪽 속성 칸 — 결과 값(결과 타일 속성 그대로) + 필지 정보(연속지적 GET /parcels) ── */
@@ -703,6 +778,7 @@ async function openProps(f, x, lngLat) {
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: false }); } catch { /* */ } }
   HOVER = f.id != null ? { source: f.source, sourceLayer: f.sourceLayer, id: f.id } : null;
   if (HOVER) { try { map.setFeatureState(HOVER, { hover: true }); } catch { /* */ } }
+  if (TOOL) { TOOL = null; if (pop) pop.hidden = true; }   // 한 자리 하나 — 속성 칸이 열리면 도구 판은 닫는다
   ST.pick = x.job; ST.pickP = p; props.dataset.job = x.job; props.dataset.view = 'props'; props.hidden = false;
   if (ST.list && ST.list !== x.job) ST.list = null;
   const area = p.area_m2 != null ? Number(p.area_m2) : null;
@@ -728,7 +804,7 @@ async function openProps(f, x, lngLat) {
       row('읍면동', h('span', { text: p.emd || '—' }))),
     h('h3', {}, '필지 정보', h('small', { text: '연속지적' })),
     parcel,
-    h('div.lm-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '편집지적도로 이 자리 보기',
+    h('div.lm-acts', {}, h('button.t-btn.t-btn--2', { type: 'button', text: 'LX맵으로 이 자리 보기',
       onclick: () => { ST.base = 'lx'; apply(); map.easeTo({ center: near, zoom: Math.max(map.getZoom(), LXMAP_Z + 0.5), duration: 900 }); } })),
     h('p.lm-src', { text: '결과는 AI 분석 값(결과 확인 전) · 필지는 연속지적도' }));
   drawLeft();
@@ -752,6 +828,7 @@ async function openProps(f, x, lngLat) {
 const LIST_N = 50;
 async function openList(x, keep = false, more = false) {
   if (!keep && !more && ST.list === x.job && props.dataset.view === 'list') { closeProps(); return; }
+  if (TOOL) { TOOL = null; if (pop) pop.hidden = true; }
   ST.list = x.job; props.dataset.job = x.job; props.dataset.view = 'list'; props.hidden = false;
   if (!x.on) { await toggle(x); }
   const L = more && x.rows ? x.rows : { items: [], n: null };

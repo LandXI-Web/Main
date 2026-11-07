@@ -25,7 +25,9 @@ function peopleWord(ps = []) {
   return names.length > 2 ? `${names.slice(0, 2).join(' · ')} 외 ${names.length - 2}명` : names.join(' · ');
 }
 
-export function projCard(p, deckBy, { compact = false } = {}) {
+/** mini = 대시보드의 낮은 칸(11-07 A′) — 그림 · 지금 단계 · 이름 · 대상지 · 남은 일 · 마지막 활동 · 다섯 칸 막대만(같은 서버 값) */
+export function projCard(p, deckBy, { compact = false, mini = false } = {}) {
+  if (mini) return miniCard(p, deckBy);
   const archived = p.state === 'archived';
   const go = archived ? projectHref(p.id) : stageHref(p, p.next?.stage || p.stage?.key, p.next?.target);
   const svc = p.card ? deckBy.get(p.card) : null;            // 이 프로젝트가 만든 서비스(분석하기 카드 덱) — 결과 장면 · 정확도는 그 카드와 같은 값
@@ -64,5 +66,29 @@ export function projCard(p, deckBy, { compact = false } = {}) {
       h('div.k-sc-acts', {}, h('a.t-btn.k-sc-go', { href: go, text: '열기' }), h('a.k-sc-more', { href: projectHref(p.id), text: '프로젝트 →' }))));
   el.addEventListener('click', (e) => { if (!e.target.closest('a')) location.href = go; });
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === el) location.href = go; });
+  return el;
+}
+
+function miniCard(p, deckBy) {
+  const archived = p.state === 'archived';
+  const go = archived ? projectHref(p.id) : stageHref(p, p.next?.stage || p.stage?.key, p.next?.target);
+  const svc = p.card ? deckBy.get(p.card) : null;
+  const pic = h('div.k-sc-crop.la-ac-pic');
+  const blank = () => { const keep = [...pic.querySelectorAll('.la-ac-cat')]; pic.classList.add('is-blank'); pic.replaceChildren(h('span.k-sc-blank', { text: '그림 없음' }), ...keep); };
+  const scene = svc?.scene?.src ? (String(svc.scene.src).startsWith('/api/') ? API.base + svc.scene.src : svc.scene.src) : null;
+  if (scene) pic.append(h('img', { src: scene, alt: '', loading: 'lazy', decoding: 'async', onerror: blank }));
+  else if (p.pic) authPic(p.pic).then((u) => { if (u) pic.prepend(h('img', { src: u, alt: '', decoding: 'async', onerror: blank })); else blank(); });
+  else blank();
+  const st = p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '';
+  pic.append(h('div.la-ac-cat', {}, h('span', { text: archived ? '보관' : st })));
+  const k = archived ? null : kick(p);
+  const regs = p.regions || [];
+  const line = [regs[0]?.name, k?.text, ago(p.last_at || p.updated_at)].filter(Boolean).join(' · ');
+  const el = h('a.k-sc.la-ac.lxp-pc.is-mini', { href: go, dataset: { kind: 'project', id: p.id, stage: GROUPS[groupOf(p)].key }, 'aria-label': `${p.name} · ${archived ? '보관' : st}` },
+    pic,
+    h('div.k-sc-b.la-ac-b', {},
+      h('h3.k-sc-t', { text: p.name, title: p.name }),
+      h('p.k-sc-line.la-ac-line', { text: line, title: line, class: k?.kind === 'warn' ? 'is-warn' : '' }),
+      archived ? null : h('div.lxp-pc-st', {}, seg4El(p), h('small.num', { text: `${doneN(p)}/${N}` }))));
   return el;
 }
