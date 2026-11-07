@@ -95,7 +95,7 @@ export const FAMILY = [
   /* 기관 항목은 **그 기관의 로그인 문**만 가리킨다(R-S4) — 작업공간 직접 링크 금지.
      전에는 전남광주 작업공간(portal-dp-gj-marine-25.html)을 곧장 걸어, LX 세션이 남의 작업공간으로 샜다. */
   { name: '전북특별자치도 남원시', href: 'portal-login-namwon.html', kind: '지자체 · 로그인' },
-  { name: '전남광주특별시', href: 'portal-login-gwangju-jeonnam.html', kind: '지자체 · 로그인' },
+  { name: '전남광주통합특별시', href: 'portal-login-gwangju-jeonnam.html', kind: '지자체 · 로그인' },
 ];
 /* 기관 홈 · 문 — portal.js TENANTS[].home · login 의 미러(셸은 모든 화면에 실리므로 portal.js 를 import 하지 않는다).
    shell-gate.js 의 TENANT_HOME 과 같은 표다(R-S3). 전남광주 홈은 임시 — E1-2 가 교체. */

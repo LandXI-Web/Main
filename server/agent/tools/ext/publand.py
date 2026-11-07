@@ -312,7 +312,7 @@ async def publand(args: dict, ctx) -> Out:
         from landxi_api import xreport as XR
         spec = {"kind": "publand", "title": f"{name} 공공용지 무단점유", "src": SRC,
                 "kpis": [{"label": "찾은 곳", "value": n, "unit": "곳"}, *({"label": t0, "value": by_type[t0][0], "unit": "곳"} for t0 in TYPES),
-                         {"label": "면적 합", "value": round(sum(v[1] for v in by_type.values()) / 1e4, 1), "unit": "ha", "d": 1}],
+                         {"label": "면적 합", "value": round(sum(v[1] for v in by_type.values()) / 1e6, 4), "unit": "㎢", "d": 4}],
                 "panels": [{"type": "donut", "title": "유형별", "unit": "곳", "rows": [{"k": t0, "label": t0, "v": by_type[t0][0]} for t0 in TYPES]},
                            {"type": "donut", "title": "공공용지 대조별", "unit": "곳", "rows": [{"k": k, "label": LAND_WORD[k], "v": v} for k, v in by_land.items() if v]},
                            *([{"type": "bar", "title": "시도별", "unit": "곳", "rows": [{"k": s, "label": s, "v": a + b} for s, a, b in by_sido[:17]]}] if len(by_sido) > 1 else []),

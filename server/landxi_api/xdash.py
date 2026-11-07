@@ -563,3 +563,80 @@ async def agg(request: Request, by: str = "task", sgg: str | None = None, task: 
     if by == "area" and not task:
         raise ApiError("bad_request", "업무 이름이 필요합니다")
     return await AGG[by](sgg, task)
+
+
+# ── 읍면동 크게 보기(11-07 12-A) — 읍면동 하나를 '시 › 읍면동' 기준으로 ──────────────────────────────────
+def _josa(w: str, a: str, b: str) -> str:
+    """받침에 맞춘 조사(이/가 · 은/는 · 을/를) — 모두 서버 계산 문장(LLM 호출 없음)."""
+    c = str(w or "").rstrip()[-1:]
+    if not c:
+        return b
+    if "가" <= c <= "힣":
+        return a if (ord(c) - 0xAC00) % 28 else b
+    return a if c in "013678" else b
+
+
+def _pct(a, b) -> float | None:
+    return round(a / b * 100, 1) if b else None
+
+
+@router.get("/ximap/emd-brief")
+async def emd_brief(request: Request, sgg: str, emd: str):
+    """읍면동 하나의 요약 — 지금 크게 보기가 쓰는 같은 읍면동 집계(agg_emd · agg_task · 60초 캐시)에서 계산한다(숫자 한 출처 · 새 집계 없음).
+    큰 숫자(결과 수 · 시 전체 대비 % · 순위 · ㎢당) · 업무별 카드(시 대비 %) · 업무별 비율(읍면동 ↔ 시 전체) · 순위 목록 한 창 · 해석 한 줄(문장 틀 계산)."""
+    require(principal(request), lx=True)
+    if not (sgg.isdigit() and len(sgg) == 5):
+        raise ApiError("bad_request", "시군구 코드 5자리")
+    t, e = await agg_task(sgg), await agg_emd(sgg)
+    cols = [c["name"] for c in e["cols"]]
+    tasks_city = {r["name"]: r for r in t["rows"]}
+    city_tot = sum(r["n"] for r in t["rows"])
+    rows = []
+    for r in e["rows"]:
+        v = sum(r["vals"].get(c, 0) for c in cols)
+        d = round(v / r["km2"], 1) if r.get("km2") and r["km2"] > 0.01 and v else None
+        rows.append({"k": r["cd"], "name": r["name"], "v": v, "d": d, "vals": r["vals"], "km2": r.get("km2")})
+    rows = [r for r in rows if r["v"] > 0]
+    rows.sort(key=lambda r: -r["v"])
+    me = next((r for r in rows if r["k"] == emd), None)
+    if not me:
+        raise ApiError("not_found", "이 읍면동의 분석 결과가 아직 없습니다")
+    n_all = len(rows)
+    rank = rows.index(me) + 1
+    dens = sorted((r for r in rows if r["d"] is not None), key=lambda r: -r["d"])
+    drank = dens.index(me) + 1 if me in dens else None
+    city = t.get("name") or region_name(sgg)
+    now = now_iso()
+
+    def E(v, unit, basis="inferred", src="읍면동 집계(크게 보기와 같은 값)"):
+        return {"value": v, "unit": unit, "basis": basis, "as_of": now, "source": src}
+    tasks = []
+    for c in cols:
+        n = me["vals"].get(c, 0)
+        if not n and not tasks_city.get(c):
+            continue
+        cr = tasks_city.get(c) or {}
+        cn = cr.get("n") or sum(r["vals"].get(c, 0) for r in rows)
+        by_c = sorted((r for r in rows if r["vals"].get(c, 0) > 0), key=lambda r: -r["vals"].get(c, 0))
+        rk_c = by_c.index(me) + 1 if me in by_c else None
+        tasks.append({"name": c, "unit": cr.get("unit") or "개", "rank": {"n": rk_c, "of": len(by_c)} if rk_c else None, "v": E(n, cr.get("unit") or "개"), "city": E(cn, cr.get("unit") or "개"), "share_pct": _pct(n, cn),
+                      "emd_pct": _pct(n, me["v"]), "city_pct": _pct(cn, city_tot)})
+    start = max(0, min(rank - 3, n_all - 6)) if rank > 6 else 0
+    window = [{"rank": i + 1, "k": r["k"], "name": r["name"], "v": r["v"], "d": r["d"], "me": r["k"] == emd} for i, r in enumerate(rows)][start:start + 6]
+    # 해석 한 줄 — 읍면동 순위 · 가장 큰 업무 몫 · ㎢당 순위(문장 틀에 계산한 값만 넣는다)
+    nm = me["name"]
+    s = [f"{nm}{_josa(nm, '은', '는')} {city} 읍면동 {n_all}곳 가운데 결과가 " + ("가장 많습니다." if rank == 1 else f"{rank}번째로 많습니다.")]
+    big = max(tasks, key=lambda x: x["v"]["value"]) if tasks else None
+    if big and big["emd_pct"] is not None:
+        s.append(f"{big['name']} {_nf_i(big['v']['value'])}{big['unit']}{_josa(big['unit'], '이', '가')} {big['emd_pct']}%로 가장 큰 몫입니다.")
+    if drank and me["d"] is not None:
+        s.append(f"㎢당 {me['d']:,.1f}개로 같은 {len(dens)}곳 가운데 {drank}번째입니다.")
+    say = " ".join(s)
+    return {"sgg": sgg, "sgg_name": city, "emd": emd, "name": nm,
+            "total": E(me["v"], "개"), "city_total": E(city_tot, "개", src="시 전체 집계"), "share_pct": _pct(me["v"], city_tot),
+            "rank": {"n": rank, "of": n_all}, "density": E(me["d"], "개/㎢") if me["d"] is not None else None, "density_rank": {"n": drank, "of": len(dens)} if drank else None,
+            "km2": me.get("km2"), "tasks": tasks, "neighbors": window, "say": say, "as_of": now}
+
+
+def _nf_i(v) -> str:
+    return f"{int(v):,}"

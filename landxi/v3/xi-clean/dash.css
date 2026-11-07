@@ -200,3 +200,33 @@ html.pn-dragging-x [data-dash="1"] > .xc-stage{transition:none}
 [data-dash="1"] .k-chat-root[data-dock]{display:none}
 [data-dash="1"][data-chat="open"] .k-chat-root[data-dock]{display:block;left:auto!important;right:20px;bottom:84px!important;transform:none;width:min(520px,calc(100% - 40px))!important;z-index:45}
 [data-dash="1"] .xc-legend{display:none!important}
+
+/* 12-A(11-07) — 읍면동 크게 보기(오른쪽 전체가 '시 › 읍면동' 기준) */
+.xd-h h2 em{font-style:normal;color:var(--sub)}
+.xd-hbtns{margin-left:auto;display:inline-flex;gap:8px}
+.xd-kpi .xd-s b{color:var(--ink);font-weight:600}
+.xd-cmp{display:grid;gap:4px}
+.xd-cr{display:grid;grid-template-columns:minmax(72px,24%) 1fr 84px;gap:12px;align-items:center;padding:6px 0;font:400 var(--fs-aux,15px)/1.3 var(--font-body);color:var(--ink-2)}
+.xd-cr .t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.xd-cr .t i{display:block;height:10px;border-radius:3px;background:var(--ink);min-width:2px}
+.xd-cr .t i.c{background:#B0B8C1}
+.xd-cr .v{text-align:right;font:500 var(--fs-aux,15px)/1.2 var(--font-num);color:var(--ink)}
+.xd-cr .v small{display:block;font:400 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--sub)}
+.xd-lg{display:flex;gap:16px;margin:10px 0 0;font:400 var(--fs-tag,14px)/1.3 var(--font-body);color:var(--sub)}
+.xd-lg span{display:inline-flex;align-items:center;gap:6px}
+.xd-lg i{width:10px;height:10px;border-radius:2px;background:var(--ink)}
+.xd-lg i.c{background:#B0B8C1}
+.xd-nbs{display:grid;gap:2px}
+.xd-nb{display:grid;grid-template-columns:28px minmax(64px,22%) 1fr 72px minmax(88px,auto);gap:10px;align-items:center;min-height:40px;padding:0 8px;margin:0 -8px;border:0;border-radius:8px;background:none;font:400 var(--fs-aux,15px)/1.3 var(--font-body);color:var(--ink-2);text-align:left;cursor:pointer}
+.xd-nb:hover{background:var(--bg-0)}
+.xd-nb.me{background:var(--bg-0);color:var(--ink);font-weight:600}
+.xd-nb .i{color:var(--sub);font-family:var(--font-num)}
+.xd-nb .t{display:block;height:10px}
+.xd-nb .t i{display:block;height:100%;border-radius:5px;background:#B0B8C1}
+.xd-nb.me .t i{background:var(--ink)}
+.xd-nb .v{text-align:right;font-family:var(--font-num);color:var(--ink)}
+.xd-nb .e{text-align:right;font:400 var(--fs-tag,14px)/1.2 var(--font-num);color:var(--sub)}
+/* 지도 아래 왼쪽 한 줄 — '북면만 확대 · 다른 읍면동을 누르면 바뀝니다'(오른쪽 아래 XI 아이콘과 겹치지 않는 왼쪽) */
+.xd-emdnote{position:absolute;z-index:24;left:calc(var(--xd-gap) + 16px);bottom:calc(var(--xd-gap) + 16px);max-width:calc(var(--xd-map) - 32px);padding:10px 14px;border-radius:8px;background:rgba(255,255,255,.96);font:400 var(--fs-tag,14px)/1.4 var(--font-body);color:var(--sub);box-shadow:0 1px 0 rgba(28,31,37,.04),0 8px 24px rgba(28,31,37,.12)}
+.xd-emdnote[hidden]{display:none}
+[data-dash="1"] .xd[aria-busy="true"]{opacity:.65;transition:opacity .2s}

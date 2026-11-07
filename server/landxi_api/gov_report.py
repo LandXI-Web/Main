@@ -361,12 +361,14 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         e = cls.setdefault(k, [0, 0.0])
         e[0] += r["n"]
         e[1] += r["m2"]
+    tot_km2 = round(tot_m2 / 1e6, 4)                             # 내려받기 문서는 ㎢(소수 넷째 자리 · 11-07)
     tot_ha = round(tot_m2 / 1e4, 1)                              # 합계 = 반올림 전 면적의 합을 한 번 반올림
     cls_l = sorted(cls.items(), key=lambda kv: -kv[1][0])
+    cls_km2 = split_round([v[1] / 1e6 for _, v in cls_l], 4, tot_km2)
     cls_ha = split_round([v[1] / 1e4 for _, v in cls_l], 1, tot_ha)   # 분류 칸도 합이 합계와 같게(최대 나머지 · GPT5-3)
     from .farm_admin import bale_kg, is_bale, yield_env
     kg = await bale_kg(p.tenant_id) if any(is_bale(k) for k, _ in cls_l) else None       # 곤포사일리지 생산량 = 개수 × 기관이 넣은 1개당 무게(10-18 영농-q2 ⓑ)
-    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC),
+    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC), "km2": env(cls_km2[i], "km2", "measured", SRC),
                 **({"yield": yield_env(v[0], kg)} if kg and is_bale(k) else {})}
                for i, (k, v) in enumerate(cls_l)]
     by: dict[str, dict] = {}
@@ -377,8 +379,9 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         k = class_ko(r["cls"])
         e["by"][k] = e["by"].get(k, 0) + r["n"]
     emd_l = sorted(by.values(), key=lambda x: (-x["n"], x["emd"]))
+    emd_km2 = split_round([e["m2"] / 1e6 for e in emd_l], 4, tot_km2)
     emd_ha = split_round([e["m2"] / 1e4 for e in emd_l], 1, tot_ha)   # 읍면동 칸 합 = 합계(GPT5-3)
-    emd_rows = [{"emd": e["emd"], "n": e["n"], "ha": env(emd_ha[i], "ha", "measured", SRC), "m2": env(round(e["m2"], 1), "m2", "measured", SRC),
+    emd_rows = [{"emd": e["emd"], "n": e["n"], "ha": env(emd_ha[i], "ha", "measured", SRC), "km2": env(emd_km2[i], "km2", "measured", SRC), "m2": env(round(e["m2"], 1), "m2", "measured", SRC),
                  "by": [{"cls": k, "n": v} for k, v in e["by"].items()]} for i, e in enumerate(emd_l)]
     ld = None
     try:
@@ -394,7 +397,7 @@ async def report_data(p: Principal, card: str, emd: str | None = None) -> dict:
         "service": {"card": card, "name": svc["name"]}, "region": region or "—", "sgg": sgg, "emd": emd, "emds": emds,
         "unit": unit, "made": dt.datetime.now(KST).strftime("%Y.%m.%d"),
         "imagery": shot, "analyzed": _ymd(analyzed),
-        "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(tot_ha, "ha", "measured", SRC),
+        "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(tot_ha, "ha", "measured", SRC), "area_km2": env(tot_km2, "km2", "measured", SRC),
         "classes": classes,
         "acc": env(acc, "%", "measured", "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값(분석하기 카드와 같은 출처)", as_of=acc_at or None),
         "emd_rows": emd_rows, "emd_n": env(len([e for e in emd_rows if e["emd"] != "읍면동 밖"]), "count", "inferred", SRC),
@@ -478,10 +481,10 @@ def _hwpx(d: dict, png: bytes | None) -> tuple[bytes, str]:
                   ("AI 모델 정확도", f"{d['acc']['value']}%" if d["acc"]["value"] is not None else "기록 없음"), ("만든 날짜", made_t)])
     doc.notice("AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")
     doc.heading("결과 개요")
-    rows = [["항목", "개수", "면적(ha)"], ["AI 분석 결과 합계", f"{d['total']['value']:,}{unit}", f"{d['area_ha']['value']:,.1f}"]]
+    rows = [["항목", "개수", "면적(㎢)"], ["AI 분석 결과 합계", f"{d['total']['value']:,}{unit}", f"{d['area_km2']['value']:,.4f}"]]
     for c in d["classes"]:
         y = (c.get("yield") or {}).get("value")
-        rows.append([c["name"] + (f" (생산량 {y:,.0f}kg)" if y else ""), f"{c['n']['value']:,}{unit}", f"{c['ha']['value']:,.1f}"])
+        rows.append([c["name"] + (f" (생산량 {y:,.0f}kg)" if y else ""), f"{c['n']['value']:,}{unit}", f"{c['km2']['value']:,.4f}"])
     doc.table(rows, [44, 28, 28], aligns=["l", "r", "r"])
     if png:
         doc.heading("지도")
@@ -489,12 +492,12 @@ def _hwpx(d: dict, png: bytes | None) -> tuple[bytes, str]:
     doc.heading("읍면동별 개수 · 면적")
     cls_names = [c["name"] for c in d["classes"]]
     many = len(cls_names) > 1
-    head = ["읍면동", *(cls_names if many else []), "계", "면적(ha)"]
-    body = [[e["emd"], *([f"{({b['cls']: b['n'] for b in e['by']}).get(k, 0):,}" for k in cls_names] if many else []), f"{e['n']:,}", f"{e['ha']['value']:,.1f}"]
+    head = ["읍면동", *(cls_names if many else []), "계", "면적(㎢)"]
+    body = [[e["emd"], *([f"{({b['cls']: b['n'] for b in e['by']}).get(k, 0):,}" for k in cls_names] if many else []), f"{e['n']:,}", f"{e['km2']['value']:,.4f}"]
             for e in d["emd_rows"]]
-    body.append(["합계", *([f"{c['n']['value']:,}" for c in d["classes"]] if many else []), f"{d['total']['value']:,}", f"{d['area_ha']['value']:,.1f}"])
+    body.append(["합계", *([f"{c['n']['value']:,}" for c in d["classes"]] if many else []), f"{d['total']['value']:,}", f"{d['area_km2']['value']:,.4f}"])
     doc.table([head] + body, [3] + [2] * (len(head) - 1), aligns=["l"] + ["r"] * (len(head) - 1), total_row=True, small=len(head) > 6,
-              caption=f"읍면동별 개수 · 면적 (단위: {unit} · ha)")
+              caption=f"읍면동별 개수 · 면적 (단위: {unit} · ㎢)")
     ld = d.get("ledger")
     if ld:
         doc.heading("우리 대장과 다른 필지")

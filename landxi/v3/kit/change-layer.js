@@ -156,7 +156,6 @@ function drawCard() {
     zones ? zoneList(zones) : null,
     h('p.chg-w', { text: `두 해 영상에서 바뀐 곳 — ${inW} 변화는 현장 확인 대상입니다. 폴리곤을 누르면 두 해 영상을 나란히 봅니다.` }),
     marksLine(),
-    monLine(),
     h('label.chg-out', {}, h('input', { type: 'checkbox', checked: C.outOn || undefined, onchange: (e) => { C.outOn = e.target.checked; for (const m of maps()) applyFilters(m); } }), h('span', { text: `${zones ? '지구' : '구역선'} 밖(버퍼)도 보기` })),
     h('button.chg-more', { type: 'button', 'aria-expanded': String(C.card.classList.contains('is-open')), text: C.card.classList.contains('is-open') ? '접기' : '유형별 보기',
       onclick: () => { C.card.classList.toggle('is-open'); drawCard(); } })].filter(Boolean));
@@ -252,25 +251,6 @@ function marksLine() {
     h('a.chg-link', { href: '/landxi/v3/change-report/?' + new URLSearchParams({ job: C.job }), text: '보고서' }),
     h('button.chg-link.chg-ledger', { type: 'button', text: '대장 갱신용 내보내기', onclick: ledgerCsv }));
 }
-/* 상시 모니터링(10-28 v5 §3-8) — 등록 · 상태 표시까지(실제 자동 실행은 향후). 대시보드 '상시 모니터링' 칸 · 프로젝트와 같은 줄(GET /change/monitors) */
-function monLine() {
-  if (!C.range?.id) return null;
-  const m = C.mon && C.mon.range_id === C.range.id ? C.mon : null;
-  const btn = h('button.t-btn.t-btn--2.chg-mon-b', { type: 'button', text: m ? '모니터링 해제' : '모니터링 대상지로 등록', onclick: async () => {
-    btn.disabled = true;
-    try { const r = await api(`/change/ranges/${encodeURIComponent(C.range.id)}/monitor`, { method: 'POST', body: { on: !m } }); C.mon = r.on ? r.item : null; drawCard();
-      import('./toast.js').then((x) => x.toast(r.on ? '모니터링 대상지로 등록했습니다 · 대시보드에도 보입니다' : '모니터링을 해제했습니다')).catch(() => {}); }
-    catch (e) { btn.disabled = false; import('./toast.js').then((x) => x.toast(e.message || '등록하지 못했습니다')).catch(() => {}); }
-  } });
-  return h('div.chg-mon', {}, m ? h('p.chg-mon-s', {}, h('b', { text: `모니터링 중 · 시점 쌍 ${nf(val(m.n_pairs))}` }), h('span', { text: m.next_word }),
-    h('span.chg-mon-p', { text: (m.pairs || []).map((x) => x.word).join(' · ') })) : null, btn);
-}
-async function loadMon() {
-  if (!C.range?.id) return;
-  try { const j = await api('/change/monitors?' + new URLSearchParams({ range_id: C.range.id })); C.mon = (j.items || [])[0] || null; } catch { C.mon = null; }
-  drawCard();
-}
-
 /* 대장 갱신용 내보내기(U4 · 10-28 v5) — PNU · 현재지목 · 판정 · 판정일 · 담당 · 근거레이어ID(서버가 만든 CSV 그대로) */
 async function ledgerCsv() {
   try {
@@ -441,7 +421,6 @@ async function show(job, { fit = true, ya = null, yb = null } = {}) {
   C.years = [a, b];
   redraw(); drawCard(); hideTwin();                 // 결과 · 카드 · 자리 먼저(가르기 영상은 이어서)
   if ((OCC && IJ()) || PL()) loadOcc();
-  else if (!IJ()) loadMon();
   if (fit && C.range?.bbox) fitRange(C.range.bbox);
   if (need && !ownSrc()) { await swipe(a, b); redraw(); }   // 등록 영상(공유 데이터 · 내 영상)으로 비교한 결과는 국토지리정보원 해 가르기를 깔지 않는다(다른 영상이라 오해) — 두 시점 그림은 폴리곤 칸에
   return true;

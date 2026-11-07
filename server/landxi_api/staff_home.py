@@ -107,6 +107,31 @@ async def my_jobs(request: Request, recent: int = 4):
             "recent": items, "as_of": now_iso()}
 
 
+@router.get("/me/jobs/active")
+async def my_jobs_active(request: Request, card: str | None = None, done_min: int = 15):
+    """11-07 7-A · 7-B — 내가 돌리는 분석(대기 · 도는 중)과 방금 끝난 것(done_min 분 안) 각각의 진행 상태. 분석 진행 카드 · 위 머리줄 칩이 같이 쓴다."""
+    p = _lx(request)
+    from .jobs import job_status_general
+    where = ("submitted_by=$1 AND NOT coalesce(test,false) AND NOT demo AND (kind IN ('infer','reinfer') OR (kind='index' AND (options ? 'change' OR options ? 'compare'))) "
+             "AND NOT (options ? 'national') AND NOT (options ? 'overseas') AND ($2::text IS NULL OR card_id=$2) ")
+    async with db(realm="lx") as conn:
+        act = await conn.fetch(f"SELECT id FROM jobs WHERE {where} AND state IN ('queued','running') ORDER BY created_at DESC LIMIT 10", p.user_id, card)
+        rec = await conn.fetch(f"SELECT id, state FROM jobs WHERE {where} AND state IN ('done','failed') AND finished_at > now() - make_interval(mins => $3) "
+                               f"ORDER BY finished_at DESC LIMIT 5", p.user_id, card, max(1, min(done_min, 120)))
+    items, recent = [], []
+    for x in act:
+        try:
+            items.append(await job_status_general(p, x["id"]))
+        except ApiError:
+            continue
+    for x in rec:
+        try:
+            recent.append(await job_status_general(p, x["id"]))
+        except ApiError:
+            continue
+    return {"items": items, "recent": recent, "count": env(len(items), "count", "recorded", "내가 돌리는 분석"), "as_of": now_iso()}
+
+
 # ── 내 분석 목록(지도 서비스 · 원칙 149 · 154 · 163) ─────────────────────────────
 # 내가 돌린 분석 = ① 분석하기(서비스 카드)로 내가 돌린 것 ② 프로젝트 추론(배포 전 모델) — 내가 돌렸거나 내가 참여한 프로젝트의 것(보는 사람 = 나 · 프로젝트 참여자).
 # XI맵 실시간 · 말로 분석(XI ChatGEO)은 여기 넣지 않는다(XI맵 = 전국 · 해외 실시간 분석 — 원칙 147).

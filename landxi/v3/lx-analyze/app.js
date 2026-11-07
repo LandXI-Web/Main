@@ -13,6 +13,7 @@ import { staffRail } from './menu.js';
 import { modal } from '../kit/modal.js';
 import { rangeOption } from '../kit/range-option.js';
 import { swipePic, absSrc } from '../kit/swipe.js';
+import { runCard } from './run-card.js';
 
 const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
@@ -565,7 +566,7 @@ function analyzePanel(side, c, picker, body) {
     h('button.t-btn.t-btn--2', { type: 'button', text: '공유 데이터에서 고르기', onclick: () => picker?.open() }));
   const eta = h('div.la-eta');
   const go = h('button.t-btn.la-go', { type: 'button', text: '분석 시작', disabled: true });
-  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 층으로 쌓입니다.');
+  const msg = h('p.la-note', {}, '작업 대기열에 들어갑니다.', h('br'), '분석이 끝나면 지도 서비스에 레이어로 쌓입니다.');
   const done = h('div.la-done', { hidden: true });
   /* 기본 | 고급 기능(10-24 원칙 335) — 고급 기능은 분석 시작 위에 '분석 구간 설정하기'(구간 업로드 · 행정구역) · '필지 단위 집계'(kit/range-option · 같은 장부) */
   const tabs = h('div.rg-tabs', { role: 'tablist', 'aria-label': '분석 방식' },
@@ -579,7 +580,11 @@ function analyzePanel(side, c, picker, body) {
     for (const x of tabs.children) x.setAttribute('aria-selected', String(x === b));
     advBox.hidden = b.dataset.k !== 'adv';
   });
-  side.append(tabs, step(1, '영상', '영상 하나'), list, acts, step(2, '결과까지'), eta, advBox, go, msg, done);
+  /* 분석 시작 뒤 오른쪽 칸이 진행 카드로 바뀐다(11-07 7-A) — 폼은 숨기고, 끝 · 취소 뒤 '새 분석'으로 돌아온다 */
+  const form = h('div.la-form', {}, tabs, step(1, '영상', '영상 하나'), list, acts, step(2, '결과까지'), eta, advBox, go, msg, done);
+  const runBox = h('div.la-run');
+  const rc = runCard(runBox, { card: c.id, onShow: () => { form.hidden = true; }, onHide: () => { form.hidden = false; done.hidden = true; } });
+  side.append(form, runBox);
 
   if (picker) picker.pick = (it) => choose(it);
   function choose(it) {
@@ -638,17 +643,18 @@ function analyzePanel(side, c, picker, body) {
     const label = r.range?.word ? `${name} · ${r.range.word}` : name;
     if (r.started || r.running) { cur = null; picker?.mark(null); }
     draw(); started(r, label);
-    if (r.started) K.toast('분석을 시작했습니다 · 끝나면 지도 서비스에 층으로 쌓입니다', { action: { label: '지도 서비스', href: mapHref(r.map) } });
+    if (r.started || r.running) rc.showFromStart(r);
   });
   /* 내 영상을 다 올렸다(이 화면이 열려 있을 때) — 서버가 맞으면 이미 분석을 시작했다(r.analysis) · 아니면 그 영상을 고른 채로 이유를 보인다 */
   addEventListener('lx:upload-done', (e) => {
     const d = e.detail; if (d?.purpose?.kind !== 'own' || d.purpose.card !== c.id || !d.result?.id) return;
     const r = d.result, a = r.analysis;
     picker?.reload(r.id);
-    if (a && (a.started || a.running || a.done)) { started(a, r.name || '내 영상'); cur = null; draw(); }
+    if (a && (a.started || a.running || a.done)) { started(a, r.name || '내 영상'); cur = null; draw(); if (a.started || a.running) rc.showFromStart(a); }
     else { choose({ id: r.id, name: r.name || '내 영상', sgg: r.imagery?.sgg }); if (a?.why) K.toast(`내 영상을 올렸지만 분석하지 못했습니다 — ${a.why}`); }
   });
   addEventListener('lx:own-deleted', (e) => { if (cur?.id === e.detail?.id) { cur = null; draw(); } });
+  rc.resume();                          // 다시 열어도 내가 돌리는 분석이 있으면 진행 카드가 보인다
   if (IMAGERY) { choose({ id: IMAGERY, name: '내 영상' }); picker?.mark(IMAGERY); }   // 업로드 창 '이 영상으로 분석하기' — 다 올린 내 영상을 고른 채로
   draw();
 }

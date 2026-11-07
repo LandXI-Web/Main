@@ -199,7 +199,7 @@ def test_report_sgg_level_two_sido_region_cited_no_dev_words():
                  "강원특별자치도", "경상북도", "경상남도", "제주특별자치도", "서울특별시", "부산광역시"]
         sidos = {x for x in names if x in txt}
         assert len(sidos) == 1, sidos                                                                  # 시도 이름 한 가지
-        assert j["sido"] and j["sido"] in txt and "전남광주통합특별시" not in txt
+        assert j["sido"] and j["sido"] in txt and "전남광주특별시" not in txt
 
 
 def test_report_api_hwpx(api, h_nw):

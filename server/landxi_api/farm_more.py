@@ -58,6 +58,7 @@ def _book():
     return wb
 
 
+AREA_KM2 = "#,##0.0000"                                  # ㎢ 열(소수 넷째 자리 · 11-07)
 AREA, COUNT, RATIO, DATE, DATETIME = "#,##0.0", "#,##0", '0.0"%"', "yyyy-mm-dd", "yyyy-mm-dd hh:mm"
 SUMMABLE = {"#,##0", "#,##0.0", "#,##0.00"}     # 합계(SUBTOTAL 109)를 내는 숫자 서식 — 넓이 · 개수 · 금액. 비율 · 날짜 · 점수는 더하지 않는다
 
@@ -211,6 +212,7 @@ async def _one(p: Principal, card: str, emd: str | None) -> dict:
     sgg, place = _sgg_of(body, rows)
     tot_n = sum(r["n"] for r in rs)
     tot_ha = round(sum(r["m2"] for r in rs) / 1e4, 1)
+    tot_km2 = round(sum(r["m2"] for r in rs) / 1e6, 4)           # 내려받기 문서는 ㎢(소수 넷째 자리 · 11-07)
     cls: dict[str, list] = {}
     for r in rs:
         e = cls.setdefault(class_ko(r["cls"]), [0, 0.0])
@@ -218,9 +220,10 @@ async def _one(p: Principal, card: str, emd: str | None) -> dict:
         e[1] += r["m2"]
     cls_l = sorted(cls.items(), key=lambda kv: -kv[1][1])
     cls_ha = split_round([v[1] / 1e4 for _, v in cls_l], 1, tot_ha)
+    cls_km2 = split_round([v[1] / 1e6 for _, v in cls_l], 4, tot_km2)
     from .farm_admin import bale_kg, is_bale, yield_env
     kg = await bale_kg(p.tenant_id) if any(is_bale(k) for k, _ in cls_l) else None
-    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC),
+    classes = [{"name": k, "n": env(v[0], unit, "inferred", SRC), "ha": env(cls_ha[i], "ha", "measured", SRC), "km2": env(cls_km2[i], "km2", "measured", SRC),
                 **({"yield": yield_env(v[0], kg)} if kg and is_bale(k) else {}), "bale": is_bale(k)} for i, (k, v) in enumerate(cls_l)]
     by: dict[str, dict] = {}
     for r in rs:
@@ -231,10 +234,11 @@ async def _one(p: Principal, card: str, emd: str | None) -> dict:
         e["by"][k] = e["by"].get(k, 0) + r["n"]
     emd_l = sorted(by.values(), key=lambda x: (x["emd"] == "읍면동 밖", -x["n"], x["emd"]))
     emd_ha = split_round([e["m2"] / 1e4 for e in emd_l], 1, tot_ha)
+    emd_km2 = split_round([e["m2"] / 1e6 for e in emd_l], 4, tot_km2)
     return {"card": card, "name": svc["name"], "short": _short_svc(svc["name"]), "unit": unit, "sgg": sgg, "place": place, "emds": emds,
             "shot": next((r.get("shot") for r in rnd if r.get("shot")), None), "analyzed": _ymd(next((r.get("analyzed") for r in rnd if r.get("analyzed")), None)),
-            "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(tot_ha, "ha", "measured", SRC), "classes": classes,
-            "emd_rows": [{"emd": e["emd"], "n": e["n"], "ha": env(emd_ha[i], "ha", "measured", SRC), "by": [{"cls": k, "n": v} for k, v in e["by"].items()]}
+            "total": env(tot_n, unit, "inferred", SRC), "area_ha": env(tot_ha, "ha", "measured", SRC), "area_km2": env(tot_km2, "km2", "measured", SRC), "classes": classes,
+            "emd_rows": [{"emd": e["emd"], "n": e["n"], "ha": env(emd_ha[i], "ha", "measured", SRC), "km2": env(emd_km2[i], "km2", "measured", SRC), "by": [{"cls": k, "n": v} for k, v in e["by"].items()]}
                          for i, e in enumerate(emd_l)],
             "acc": env(acc, "%", "measured", "모델 기록 · 학습에 쓰지 않은 영상으로 잰 값", as_of=acc_at or None),
             "_sets": sets, "_codes": codes}
@@ -381,7 +385,7 @@ async def _transitions(p: Principal, picks: list[dict], emd: str | None) -> dict
     src = "두 결과 × 필지 번호(한 필지 = 넓이가 큰 종류)"
     return {"from": {"card": a["card"], "short": a["short"], "shot": a["shot"], "analyzed": a["analyzed"]},
             "to": {"card": z["card"], "short": z["short"], "shot": z["shot"], "analyzed": z["analyzed"]},
-            "rows": [{"from": fa, "to": fz, "n": env(v[0], "필지", "inferred", src), "ha": env(round(v[1] / 1e4, 2), "ha", "measured", src),
+            "rows": [{"from": fa, "to": fz, "n": env(v[0], "필지", "inferred", src), "ha": env(round(v[1] / 1e4, 2), "ha", "measured", src), "km2": env(round(v[1] / 1e6, 4), "km2", "measured", src),
                       "changed": fa != fz} for (fa, fz), v in rows],
             "changed": env(ch, "필지", "inferred", src, "두 결과 모두 있는 필지 가운데 종류가 바뀐 필지"),
             "parcels": env(len(keys), "필지", "inferred", src), "top": moved[:10], "none_label": NONE_CLS}
@@ -513,22 +517,22 @@ def _hwpx_multi(d: dict, pngs: list[tuple[str, bytes | None]]) -> tuple[bytes, s
     doc.notice("AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다.")
     if not one:
         doc.heading("시점 비교")
-        head = ["결과", "영상", "분석한 날", "AI 분석 결과", "넓이(ha)"] + (["곤포사일리지"] if d["bale"] else [])
+        head = ["결과", "영상", "분석한 날", "AI 분석 결과", "넓이(㎢)"] + (["곤포사일리지"] if d["bale"] else [])
         rows = [head]
         for s in P:
             b = next((c for c in s["classes"] if c["bale"]), None)
             y = ((b or {}).get("yield") or {}).get("value")
-            rows.append([s["short"], s["shot"] or "—", s["analyzed"] or "—", f"{s['total']['value']:,}{s['unit']}", f"{s['area_ha']['value']:,.1f}"]
+            rows.append([s["short"], s["shot"] or "—", s["analyzed"] or "—", f"{s['total']['value']:,}{s['unit']}", f"{s['area_km2']['value']:,.4f}"]
                         + ([(f"{b['n']['value']:,}개" + (f" · {y:,.0f}kg" if y else "")) if b else "—"] if d["bale"] else []))
         doc.table(rows, [20, 18, 14, 18, 14] + ([16] if d["bale"] else []), aligns=["l", "l", "l", "r", "r"] + (["r"] if d["bale"] else []))
     doc.heading("종류별")
     if one:
         s = P[0]
-        rows = [["종류", "개수", "넓이(ha)"]]
+        rows = [["종류", "개수", "넓이(㎢)"]]
         for c in s["classes"]:
             y = (c.get("yield") or {}).get("value")
-            rows.append([c["name"] + (f" (생산량 {y:,.0f}kg)" if y else ""), f"{c['n']['value']:,}{s['unit']}", f"{c['ha']['value']:,.1f}"])
-        rows.append(["합계", f"{s['total']['value']:,}{s['unit']}", f"{s['area_ha']['value']:,.1f}"])
+            rows.append([c["name"] + (f" (생산량 {y:,.0f}kg)" if y else ""), f"{c['n']['value']:,}{s['unit']}", f"{c['km2']['value']:,.4f}"])
+        rows.append(["합계", f"{s['total']['value']:,}{s['unit']}", f"{s['area_km2']['value']:,.4f}"])
         doc.table(rows, [44, 28, 28], aligns=["l", "r", "r"], total_row=True)
     else:
         names = []
@@ -536,22 +540,22 @@ def _hwpx_multi(d: dict, pngs: list[tuple[str, bytes | None]]) -> tuple[bytes, s
             for c in s["classes"]:
                 if c["name"] not in names:
                     names.append(c["name"])
-        ha = {s["card"]: {c["name"]: c["ha"]["value"] for c in s["classes"]} for s in P}
+        ha = {s["card"]: {c["name"]: c["km2"]["value"] for c in s["classes"]} for s in P}
         two = len(P) == 2
-        rows = [["종류", *[f"{s['short']}(ha)" for s in P], *(["차이(ha)"] if two else [])]]
+        rows = [["종류", *[f"{s['short']}(㎢)" for s in P], *(["차이(㎢)"] if two else [])]]
         for n in names:
             vals = [ha[s["card"]].get(n) for s in P]
-            rows.append([n, *[f"{v:,.1f}" if v is not None else "—" for v in vals],
-                         *([f"{(vals[1] or 0) - (vals[0] or 0):+,.1f}"] if two else [])])
-        tv = [s["area_ha"]["value"] for s in P]
-        rows.append(["합계", *[f"{v:,.1f}" for v in tv], *([f"{tv[1] - tv[0]:+,.1f}"] if two else [])])
+            rows.append([n, *[f"{v:,.4f}" if v is not None else "—" for v in vals],
+                         *([f"{(vals[1] or 0) - (vals[0] or 0):+,.4f}"] if two else [])])
+        tv = [s["area_km2"]["value"] for s in P]
+        rows.append(["합계", *[f"{v:,.4f}" for v in tv], *([f"{tv[1] - tv[0]:+,.4f}"] if two else [])])
         doc.table(rows, [3] + [2] * (len(rows[0]) - 1), aligns=["l"] + ["r"] * (len(rows[0]) - 1), total_row=True, small=len(rows[0]) > 6)
     tr = d.get("transitions")
     if tr:
         doc.heading("필지 전이")
-        rows = [[f"{tr['from']['short']}", f"{tr['to']['short']}", "필지", "넓이(ha)"]]
-        rows += [[x["from"], x["to"], f"{x['n']['value']:,}", f"{x['ha']['value']:,.2f}"] for x in tr["rows"]]
-        rows.append(["합계", "", f"{tr['parcels']['value']:,}", f"{sum(x['ha']['value'] for x in tr['rows']):,.2f}"])
+        rows = [[f"{tr['from']['short']}", f"{tr['to']['short']}", "필지", "넓이(㎢)"]]
+        rows += [[x["from"], x["to"], f"{x['n']['value']:,}", f"{x['km2']['value']:,.4f}"] for x in tr["rows"]]
+        rows.append(["합계", "", f"{tr['parcels']['value']:,}", f"{sum(x['km2']['value'] for x in tr['rows']):,.4f}"])
         doc.table(rows, [30, 30, 20, 20], aligns=["l", "l", "r", "r"], total_row=True,
                   caption=f"필지 번호로 맞춤 · 한 필지 = 넓이가 큰 종류 · 종류가 바뀐 필지 {tr['changed']['value']:,}필지")
         if tr["top"]:
@@ -566,12 +570,12 @@ def _hwpx_multi(d: dict, pngs: list[tuple[str, bytes | None]]) -> tuple[bytes, s
         s = P[0]
         cls_names = [c["name"] for c in s["classes"]]
         many = len(cls_names) > 1
-        head = ["읍면동", *(cls_names if many else []), "계", "넓이(ha)"]
-        body = [[e["emd"], *([f"{({b['cls']: b['n'] for b in e['by']}).get(k, 0):,}" for k in cls_names] if many else []), f"{e['n']:,}", f"{e['ha']['value']:,.1f}"]
+        head = ["읍면동", *(cls_names if many else []), "계", "넓이(㎢)"]
+        body = [[e["emd"], *([f"{({b['cls']: b['n'] for b in e['by']}).get(k, 0):,}" for k in cls_names] if many else []), f"{e['n']:,}", f"{e['km2']['value']:,.4f}"]
                 for e in s["emd_rows"]]
-        body.append(["합계", *([f"{c['n']['value']:,}" for c in s["classes"]] if many else []), f"{s['total']['value']:,}", f"{s['area_ha']['value']:,.1f}"])
+        body.append(["합계", *([f"{c['n']['value']:,}" for c in s["classes"]] if many else []), f"{s['total']['value']:,}", f"{s['area_km2']['value']:,.4f}"])
         doc.table([head] + body, [3] + [2] * (len(head) - 1), aligns=["l"] + ["r"] * (len(head) - 1), total_row=True, small=len(head) > 6,
-                  caption=f"읍면동별 개수 · 넓이 (단위: {s['unit']} · ha)")
+                  caption=f"읍면동별 개수 · 넓이 (단위: {s['unit']} · ㎢)")
     else:
         emds = []
         for s in P:
@@ -630,38 +634,38 @@ def _xlsx_multi(d: dict) -> bytes:
     ov.append(["안내", "AI 분석 결과는 참고자료입니다 — 처분은 담당자가 정합니다."])
     cap = cap_line(d.get("org") or "", " · ".join(s["short"] for s in P), d["region"], d["made"].replace(".", "-"), "AI 분석 결과(관할 안 · 지운 결과 제외)")
     _sheet(wb, "개요", ["항목", "내용"], ov, widths=[16, 70], cap=cap)
-    head = ["결과", "영상", "분석한 날", "AI 분석 결과", "단위", "넓이(ha)"] + (["곤포사일리지(개)", "생산량(kg)"] if d["bale"] else [])
+    head = ["결과", "영상", "분석한 날", "AI 분석 결과", "단위", "넓이(㎢)"] + (["곤포사일리지(개)", "생산량(kg)"] if d["bale"] else [])
     rows = []
     for s in P:
         b = next((c for c in s["classes"] if c["bale"]), None)
-        rows.append([s["name"], s["shot"] or "", s["analyzed"] or "", s["total"]["value"], s["unit"], s["area_ha"]["value"]]
+        rows.append([s["name"], s["shot"] or "", s["analyzed"] or "", s["total"]["value"], s["unit"], s["area_km2"]["value"]]
                     + ([b["n"]["value"] if b else None, ((b or {}).get("yield") or {}).get("value")] if d["bale"] else []))
-    _sheet(wb, "시점 비교" if not one else "결과", head, rows, num={3: COUNT, 5: AREA, 6: COUNT, 7: COUNT}, widths=[26, 18, 12, 14, 8, 12, 16, 14], cap=cap, total=False)
+    _sheet(wb, "시점 비교" if not one else "결과", head, rows, num={3: COUNT, 5: AREA_KM2, 6: COUNT, 7: COUNT}, widths=[26, 18, 12, 14, 8, 12, 16, 14], cap=cap, total=False)
     names = []
     for s in P:
         for c in s["classes"]:
             if c["name"] not in names:
                 names.append(c["name"])
     cm = {s["card"]: {c["name"]: c for c in s["classes"]} for s in P}
-    head = ["종류"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(ha)")]
-    rows = [[n] + [v for s in P for v in ((cm[s["card"]].get(n) or {}).get("n", {}).get("value"), (cm[s["card"]].get(n) or {}).get("ha", {}).get("value"))] for n in names]
-    rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_ha"]["value"])])
-    _sheet(wb, "종류별", head, rows, num={i: (COUNT if i % 2 else AREA) for i in range(1, len(head))}, total_last=True, cap=cap)
+    head = ["종류"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(㎢)")]
+    rows = [[n] + [v for s in P for v in ((cm[s["card"]].get(n) or {}).get("n", {}).get("value"), (cm[s["card"]].get(n) or {}).get("km2", {}).get("value"))] for n in names]
+    rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_km2"]["value"])])
+    _sheet(wb, "종류별", head, rows, num={i: (COUNT if i % 2 else AREA_KM2) for i in range(1, len(head))}, total_last=True, cap=cap)
     emds = []
     for s in P:
         for e in s["emd_rows"]:
             if e["emd"] not in emds:
                 emds.append(e["emd"])
     em = {s["card"]: {e["emd"]: e for e in s["emd_rows"]} for s in P}
-    head = ["읍면동"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(ha)")]
-    rows = [[x] + [v for s in P for v in ((em[s["card"]].get(x) or {}).get("n"), ((em[s["card"]].get(x) or {}).get("ha") or {}).get("value"))] for x in emds]
-    rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_ha"]["value"])])
-    _sheet(wb, "읍면동별", head, rows, num={i: (COUNT if i % 2 else AREA) for i in range(1, len(head))}, total_last=True, cap=cap)
+    head = ["읍면동"] + [x for s in P for x in (f"{s['short']} 개수({s['unit']})", f"{s['short']} 넓이(㎢)")]
+    rows = [[x] + [v for s in P for v in ((em[s["card"]].get(x) or {}).get("n"), ((em[s["card"]].get(x) or {}).get("km2") or {}).get("value"))] for x in emds]
+    rows.append(["합계"] + [v for s in P for v in (s["total"]["value"], s["area_km2"]["value"])])
+    _sheet(wb, "읍면동별", head, rows, num={i: (COUNT if i % 2 else AREA_KM2) for i in range(1, len(head))}, total_last=True, cap=cap)
     tr = d.get("transitions")
     if tr:
-        rows = [[x["from"], x["to"], x["n"]["value"], x["ha"]["value"]] for x in tr["rows"]]
-        rows.append(["합계", "", tr["parcels"]["value"], round(sum(x["ha"]["value"] for x in tr["rows"]), 2)])
-        _sheet(wb, "필지 전이", [tr["from"]["short"], tr["to"]["short"], "필지", "넓이(ha)"], rows, num={2: COUNT, 3: "#,##0.00"}, widths=[20, 20, 12, 12],
+        rows = [[x["from"], x["to"], x["n"]["value"], x["km2"]["value"]] for x in tr["rows"]]
+        rows.append(["합계", "", tr["parcels"]["value"], round(sum(x["km2"]["value"] for x in tr["rows"]), 4)])
+        _sheet(wb, "필지 전이", [tr["from"]["short"], tr["to"]["short"], "필지", "넓이(㎢)"], rows, num={2: COUNT, 3: AREA_KM2}, widths=[20, 20, 12, 12],
                total_last=True, cap=cap)
         if tr["top"]:
             _sheet(wb, "바뀐 필지", ["필지 번호", "소재지", "읍면동", "이전", "이후", "넓이(㎡)"],

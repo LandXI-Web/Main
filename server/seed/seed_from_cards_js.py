@@ -61,7 +61,7 @@ def node_dump() -> dict:
 TENANTS = [
     ("lx", {"ko": "LX 한국국토정보공사", "en": "LX Korea Land and Geospatial InformatiX Corporation"}, "maker", "local", "EPSG:5186", "ko", None),
     ("namwon", {"ko": "전북특별자치도 남원시", "en": "Namwon-si"}, "user", "local", "EPSG:5186", "ko", "namwon"),
-    ("gwangju-jeonnam", {"ko": "전남광주특별시", "en": "Jeonnam-Gwangju"}, "user", "local", "EPSG:5186", "ko", "gwangju-jeonnam"),
+    ("gwangju-jeonnam", {"ko": "전남광주통합특별시", "en": "Jeonnam-Gwangju"}, "user", "local", "EPSG:5186", "ko", "gwangju-jeonnam"),
     ("kgz-agri", {"ko": "키르기스 농업부(으슥아타)", "en": "Kyrgyz Ministry of Agriculture (Ysyk-Ata)"}, "user", "global", "EPSG:32643", "en", "kgz-ysykata"),
     ("kgz-land", {"ko": "키르기스 토지자원청(소쿨룩·비슈케크)", "en": "Kyrgyz State Agency on Land Resources (Sokuluk · Bishkek)"}, "user", "global", "EPSG:32643", "en", "kgz-sokuluk"),
     ("lx-demo", {"ko": "LX 영업 시연(계량 전용)", "en": "LX sales demo (metering only)"}, "maker", "local", "EPSG:5186", "ko", None),

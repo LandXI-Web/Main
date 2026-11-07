@@ -174,9 +174,9 @@ def fake_regions(monkeypatch):
 def test_mokpo_usage_is_agency_value_with_inclusion_line(fake_regions):
     out = run(T.ops_usage({"tenant": "목포시", "dim": "llm_tokens_month"}, C.Ctx(ADMIN)))
     e = envs(out)
-    assert list(out.data["기관"]) == ["전남광주특별시"] and "합계" not in out.data
+    assert list(out.data["기관"]) == ["전남광주통합특별시"] and "합계" not in out.data
     assert e["gwangju_jeonnam_u"]["value"] == 97225                        # = 기관 화면 표(/ops/tenants llm_tokens_month)
-    assert out.answer.endswith("목포시는 전남광주특별시 기관 사용량에 포함됩니다.")
+    assert out.answer.endswith("목포시는 전남광주통합특별시 기관 사용량에 포함됩니다.")
     assert not out.blocks
 
 
@@ -202,7 +202,7 @@ def test_mokpo_usage_english(fake_regions):
 def test_real_regions_mokpo_and_sancheong():
     """실제 시군구 표(regions) + 관할 설정 — 서로 다른 시도 두 곳(전남광주 목포 · 경남 산청)."""
     out = run(T.ops_usage({"tenant": "목포시"}, C.Ctx(ADMIN)))
-    assert list(out.data["기관"]) == ["전남광주특별시"] and "포함됩니다" in out.answer
+    assert list(out.data["기관"]) == ["전남광주통합특별시"] and "포함됩니다" in out.answer
     out = run(T.ops_usage({"tenant": "산청군"}, C.Ctx(ADMIN)))
     assert out.answer == "산청군은 기관 계정이 없습니다."
 

@@ -1158,5 +1158,3 @@ from . import change_jobs as _cj  # noqa: E402 — 작업 상태 · 취소 · �
 router.include_router(_cj.router)
 from . import occupy as _oc  # noqa: E402 — 점유의심 조사(카드 ③ · 10-28 v5) 목록 · 규칙(같은 라우터로)
 router.include_router(_oc.router)
-from . import monitors as _mo  # noqa: E402 — 상시 모니터링 등록(10-28 v5 §3-8)
-router.include_router(_mo.router)

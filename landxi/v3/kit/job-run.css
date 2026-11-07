@@ -1,0 +1,49 @@
+/* 내 분석 진행 — 위 머리줄 칩(.k-job-chip) · 분석 진행 카드(.rc · lx-analyze/run-card.js) · 11-07 7-A · 7-B. 글자 14px 이상 · 밝은 톤 · 진행 막대만 파랑(accent) */
+.k-job-chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;margin-left:12px;border:1px solid var(--rule);border-radius:999px;background:var(--bg-1);color:var(--ink);font:500 var(--fs-aux)/1 var(--font-body);text-decoration:none;white-space:nowrap;flex:none}
+.k-job-chip[hidden]{display:none}
+.k-job-chip:hover{background:var(--bg-0)}
+.k-job-chip .jc-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:jc-p 1.2s ease-in-out infinite}
+.k-job-chip[data-mode="done"] .jc-dot{background:var(--ok,#0E9F6E);animation:none}
+.k-job-chip .jc-bar{width:72px;height:6px;border-radius:3px;background:var(--rule);overflow:hidden}
+.k-job-chip .jc-bar[hidden],.k-job-chip .jc-p[hidden]{display:none}
+.k-job-chip .jc-bar i{display:block;height:100%;width:2%;background:var(--accent);border-radius:3px;transition:width .4s ease}
+.k-job-chip .jc-p{font:700 var(--fs-aux)/1 var(--font-num);font-variant-numeric:tabular-nums}
+@keyframes jc-p{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.k-job-chip .jc-dot{animation:none}}
+@media (max-width:960px){.k-job-chip{margin-left:6px;padding:0 10px}.k-job-chip .jc-bar{width:40px}}
+
+.rc{border:1px solid var(--rule);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.rc-h{display:flex;align-items:center;gap:8px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink-2)}
+.rc-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none;animation:jc-p 1.2s ease-in-out infinite}
+.rc[data-state="done"] .rc-h{color:var(--ink)}
+.rc-nm{margin:2px 0 0;font:700 var(--fs-t2)/28px var(--font-display);color:var(--ink);overflow-wrap:anywhere}
+.rc-sub{margin:0;font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.rc-steps{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.rc-st{display:flex;flex-direction:column;align-items:center;gap:6px;font:400 var(--fs-tag)/18px var(--font-body);color:var(--sub);text-align:center;word-break:keep-all}
+.rc-st i{width:28px;height:28px;border-radius:50%;border:1px solid var(--rule);background:var(--bg-1);display:inline-flex;align-items:center;justify-content:center;font:500 var(--fs-tag)/1 var(--font-num);font-style:normal;color:var(--sub)}
+.rc-st.done i{background:var(--ink);border-color:var(--ink);color:#fff}
+.rc-st.now i{background:var(--accent);border-color:var(--accent);color:#fff}
+.rc-st.now,.rc-st.done{color:var(--ink)}
+.rc-bar{height:8px;border-radius:4px;background:var(--rule);overflow:hidden;margin-top:6px}
+.rc-bar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .5s ease}
+.rc[data-state="done"] .rc-bar i{background:var(--ok,#0E9F6E)}
+.rc-big{display:flex;align-items:baseline;gap:10px}
+.rc-big b{font:800 var(--fs-num)/40px var(--font-display);font-variant-numeric:tabular-nums;color:var(--ink)}
+.rc-big span{font:400 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.rc-kv{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font:400 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
+.rc-kv em{display:block;font-style:normal;font-size:var(--fs-tag);color:var(--sub)}
+.rc-acts{display:flex;gap:8px;margin-top:10px}
+.rc-a{flex:1;height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
+.rc-after{margin:12px 0 0;font:400 var(--fs-aux)/23px var(--font-body);color:var(--sub);text-wrap:pretty}
+.rc-recent:empty{display:none}
+.rc-recent{margin-top:18px}
+.rc-recent h4{margin:0 0 6px;font:500 var(--fs-aux)/22px var(--font-body);color:var(--sub)}
+.rc-rows{list-style:none;margin:0;padding:0}
+.rc-rows li+li{border-top:1px solid var(--rule)}
+.rc-rows a{display:flex;align-items:baseline;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;font:400 var(--fs-aux)/22px var(--font-body)}
+.rc-rows a:hover b{text-decoration:underline;text-underline-offset:3px}
+.rc-rows b{font-weight:500;flex:none}
+.rc-rows .k{flex:1;min-width:0;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-rows .d{flex:none;color:var(--sub);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.rc-dot{animation:none}.rc-bar i,.k-job-chip .jc-bar i{transition:none}}
+.k-job-slot{display:inline-flex;align-items:center;min-width:0}.k-job-slot:empty{display:none}

@@ -910,7 +910,7 @@ def _hwpx(parts: list[dict], pngs: list[bytes | None], made: str, now: dt.dateti
         acc = (f"{d['acc']}%" + (f" (학습 끝 검증 · {d['acc_at'].replace('-', '.')})" if d.get("acc_at") else "")) if d["acc"] is not None else "기록 없음"
         doc.overview([("분석 서비스", d["service"]), ("지역", d["region"] + (f" · {d['scope']}" if d["scope"] else "")),
                       *([("조건", d["cond"])] if d.get("cond") else []), ("영상 시점", img), ("분석한 날", fin), ("AI 모델 정확도", acc),
-                      ("찾은 결과", f"{tot_n:,}건 · 면적 합 {round(tot_m2):,}㎡ ({tot_m2 / 1e4:,.1f}ha)"), ("만든 날짜", made)], cols=1)
+                      ("찾은 결과", f"{tot_n:,}건 · 면적 합 {round(tot_m2):,}㎡ ({tot_m2 / 1e6:,.4f}㎢)"), ("만든 날짜", made)], cols=1)
         sv = re.sub(r"\s*분석\s*서비스$", "", d["service"])
         doc.figure(png, f"{d['region']} {sv} AI 분석 결과", max_w=int(HX.TEXT_W * 0.82), note="읍면동 경계 위에 AI가 찾은 결과를 칠했습니다")
         by_emd: dict[str, list] = {}
@@ -1099,7 +1099,7 @@ def _parts_spec(parts: list[dict], why: str = "") -> dict:
     region = head["region"] if len(parts) == 1 or len({d["region"] for d in parts}) == 1 else "결과 층 여러 곳"
     unit = "건"
     kp = [{"label": svc, "value": tot, "unit": unit}, {"label": "결과가 있는 읍면동", "value": len(named), "unit": "곳"},
-          {"label": "면적 합", "value": round(m2 / 1e4, 1), "unit": "ha", "d": 1}]
+          {"label": "면적 합", "value": round(m2 / 1e6, 4), "unit": "㎢", "d": 4}]
     panels = [{"type": "bar", "title": f"읍면동별 {svc}", "unit": unit, "rows": named[:16], "pick": "emd", "scale": D.scale_for([r["v"] for r in named[:16]], "count")}]
     if len(parts) > 1:
         panels.append({"type": "donut", "title": "결과 층별", "unit": unit,

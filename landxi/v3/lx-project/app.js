@@ -58,16 +58,8 @@ async function list() {
   const body = h('section.lxp-cards', { 'aria-label': '프로젝트' });
   const grid = h('div.la-acg.lxp-grid-c');
   const pager = h('nav.la-pager', { 'aria-label': '페이지' });
-  const mon = h('div.lxp-mon', { hidden: true });
-  page.append(head, notes, mon, tabs, tools, body);
+  page.append(head, notes, tabs, tools, body);
   projectNotices(notes);
-  /* 상시 모니터링(10-28 v5 §3-8) — 대시보드 칸과 같은 줄(GET /change/monitors) · 등록 상태만(자동 실행은 향후) */
-  api('/change/monitors').then((j) => {
-    const it = j.items || []; if (!it.length) return;
-    mon.hidden = false;
-    mon.replaceChildren(h('b', { text: `상시 모니터링 ${it.length}곳` }), ...it.map((m) => h('a.lxp-mon-i', { href: m.pairs?.length ? '../lx-map/?' + new URLSearchParams({ change: m.pairs[m.pairs.length - 1].job_id }) : '../lx-map/' },
-      h('span', { text: m.name }), h('small', { text: `시점 쌍 ${m.n_pairs?.value ?? 0} · ${(m.pairs || []).map((x) => x.word).join(' · ')} · ${m.next_word}` }))));
-  }).catch(() => null);
   let scope = TABS.some(([k]) => k === Q.get('scope')) ? Q.get('scope') : null;
   let stage = GROUPS.some((g) => g.key === Q.get('stage')) ? Q.get('stage') : null;
   const F = { q: '', per: readPer(), page: 1 };

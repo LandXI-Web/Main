@@ -105,6 +105,11 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
     h('span.sp'), slot, fresh, sess,
     role ? h(meOk(who) ? 'button.t-role.k-role.k-me-b' : 'span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
     xi, bell, help, who ? exit : null);
+  /* 내 분석 진행 칩(11-07 7-B) — LX 직원 화면 공통 머리줄 · 진행 중일 때만 보임 · 누르면 그 작업 화면 */
+  if (!contained && staff && String(who?.key || '').startsWith('lx/')) {
+    const jobSlot = h('span.k-job-slot'); mast.querySelector('.k-word').after(jobSlot);
+    import('./job-watch.js').then((m) => m.mountChip(jobSlot)).catch(() => {});
+  }
   const meBtn = mast.querySelector('button.k-me-b');
   if (meBtn) mountMe(meBtn, who);
 

@@ -1295,6 +1295,98 @@ async def get_job(job_id: str, request: Request):
     return await job_dict(row, await r.hgetall(f"job:{job_id}"))
 
 
+def _ts(v):
+    """ISO 문자열 · datetime → epoch 초(없으면 None)."""
+    if not v:
+        return None
+    try:
+        d = v if isinstance(v, dt.datetime) else dt.datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=KST)
+        return d.timestamp()
+    except (ValueError, TypeError):
+        return None
+
+
+_QUEUE_SHOW_S = 30
+
+
+async def job_status_general(p: Principal, job_id: str) -> dict:
+    """11-07 7-A — 작업 하나의 진행 상태(분석 서비스 카드 분석 · 국토 변화 · 프로젝트 추론 공통 · 새 대기열 없음).
+    말 · 단계 · % · 영상 칸 · 지난/남은 시간 · 대기 순번 · 취소 가능 = change_jobs.job_status 와 같은 꼴(숫자는 {value,unit,basis,as_of,source}).
+    남은 시간은 지금까지 진행 속도로 어림(5% 넘게 진행된 뒤만 — 근거 없으면 null)."""
+    row = await get_job_row(p, job_id)
+    r = await redis()
+    live = await r.hgetall(f"job:{job_id}") or {}
+    from .job_word import partial as _part, word as _jw
+    opts = row["options"] if isinstance(row["options"], dict) else json.loads(row["options"] or "{}")
+    is_chg = "change" in opts or "compare" in opts
+    now = time.time()
+    state = live.get("state") or row["state"]
+    shards_failed = int(live.get("shards_failed", row["shards_failed"] or 0) or 0)
+    total = int(live.get("shards_total", row["shards_total"] or 0) or 0)
+    done_n = int(live.get("shards_done", row["shards_done"] or 0) or 0)
+    started = _ts(live.get("chg_started")) if is_chg else None
+    if started is None:
+        started = _ts(live.get("started_at") or row["started_at"]) if state == "running" else None
+    if is_chg and state == "running" and not live.get("chg_started"):
+        state = "queued"
+    err = str(live.get("chg_error") or live.get("error") or row["error"] or "").strip()
+    st = "timeout" if (state == "failed" and err.startswith("timeout")) else state
+    if is_chg:
+        frac = float(live.get("chg_frac") or 0) if live.get("chg_frac") not in (None, "") else 0.0
+        tiles = {"n": int(float(live.get("chg_k") or 0)), "total": int(float(live.get("chg_K") or 0))} if live.get("chg_K") else None
+        cs = live.get("chg_stage") or ""
+        step = {"prepare": 2, "imagery": 2, "infer": 3, "polygons": 4, "owner": 4, "thumbs": 4, "done": 4}.get(cs, 2)
+    else:
+        frac = (done_n / total) if total else 0.0
+        tiles = {"n": done_n, "total": total} if total else None
+        step = 2 if done_n == 0 else (4 if (total and done_n + shards_failed >= total) else 3)
+    if st == "queued":
+        step = 1
+    elif st == "done":
+        step = 4
+    pct = round(frac * 100) if st == "running" else (100 if st == "done" else None)
+    elapsed = (now - started) if (started and st == "running") else None
+    eta = max(5.0, elapsed * (1 - frac) / frac) if (st == "running" and elapsed and frac >= 0.05) else None
+    created = _ts(row["created_at"]) or now
+    pos = tot = None
+    if st == "queued":
+        async with db(realm="lx") as conn:
+            rows = await conn.fetch("SELECT id FROM jobs WHERE pool=$1 AND state IN ('queued','running') AND NOT (options ? 'national') "
+                                    "AND NOT (options ? 'overseas') ORDER BY priority, created_at", row["pool"])
+        ids = [x["id"] for x in rows]
+        tot = len(ids)
+        pos = ids.index(job_id) + 1 if job_id in ids else None
+    iname = None
+    if row["imagery_id"]:
+        async with db(realm="lx") as conn:
+            iname = await conn.fetchval("SELECT name FROM imagery WHERE id=$1", row["imagery_id"])
+    label = str(row["label"] or "")
+    for pre in ("분석 서비스 · ",):
+        if label.startswith(pre):
+            label = label[len(pre):]
+    out = {"job_id": job_id, "state": st, "kind": row["kind"], "card_id": row["card_id"], "title": label or None, "imagery_name": iname,
+           "word": _jw(st, shards_failed, total) if st != "timeout" else "시간초과", "partial": _part(st, shards_failed),
+           "step": step, "steps": ["대기열", "영상 받기", "AI 분석", "결과 쌓기"],
+           "progress": env(pct, "%", "measured", "분석 장비가 적은 진행(영상 칸)"),
+           "tiles": tiles,
+           "elapsed": env(round(elapsed) if elapsed is not None else None, "s", "measured", "분석 시작부터"),
+           "remaining": env(round(eta) if eta is not None else None, "s", "estimate", "지금까지 진행 속도로 어림"),
+           "waited": env(round(now - created) if st == "queued" else None, "s", "measured", "요청부터"),
+           "queue": {"position": pos, "total": tot} if (st == "queued" and pos) else None,
+           "can_cancel": st in ("queued", "running"), "reason": (err.split(":", 1)[1].strip() if err.startswith("timeout") else err) if st in ("failed", "timeout") else None,
+           "cancel_path": (f"/change/runs/{job_id}/cancel" if is_chg else f"/jobs/{job_id}/cancel"),
+           "finished_at": live.get("finished_at") or _iso(row["finished_at"]), "as_of": now_iso()}
+    return out
+
+
+@router.get("/jobs/{job_id}/status")
+async def job_status_route(job_id: str, request: Request):
+    p = require(principal(request))
+    return await job_status_general(p, job_id)
+
+
 async def _owner_or_admin(p: Principal, row):
     if not (p.is_admin or row["submitted_by"] == p.user_id):
         raise ApiError("forbidden", "제출자 또는 관리자만")

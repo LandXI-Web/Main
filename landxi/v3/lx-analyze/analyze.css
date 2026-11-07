@@ -377,3 +377,8 @@ body.la-boot .k-app{visibility:hidden}
 .la-im-pick .la-im-cur{margin:0;font:500 var(--fs-aux)/22px var(--font-body);color:var(--ink)}
 .la-im-md .la-im-grid{grid-template-columns:minmax(0,1fr)}
 .la-im-md .la-im-r{display:none}   /* 창 안에서는 범위 지도 없이 목록만 — 고른 영상은 칸에 한 줄로 보인다 */
+
+/* 11-07 7-A — 분석 시작 뒤 오른쪽 칸(폼 ↔ 진행 카드) */
+.la-form{display:flex;flex-direction:column;gap:12px}
+.la-form[hidden],.la-run[hidden]{display:none}
+.la-run{display:flex;flex-direction:column}

@@ -196,7 +196,7 @@ export function bindTips(root) {
 
 /* ═══ 대시보드 ═══ */
 export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onShown, onBack }) {
-  const D = { on: false, spec: null, sel: null, fc: null, pn: null };
+  const D = { on: false, spec: null, sel: null, fc: null, pn: null, emd: null, seq: 0 };
   const panel = h('section.xd', { hidden: true, 'aria-label': '대시보드' });
   const back = h('button.xd-back', { type: 'button', text: '지도로 돌아가기', hidden: true });
   const cap = h('div.xd-cap', { hidden: true });
@@ -204,7 +204,8 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
   if (!TIP) { TIP = h('div.xd-tip', { hidden: true, role: 'tooltip' }); document.body.append(TIP); }
   const fab = h('button.xd-chatfab', { type: 'button', 'aria-label': 'XI ChatGEO 열기', 'aria-expanded': 'false', title: 'XI ChatGEO' }, h('span', { text: 'XI' }));   // 크게 보기 화면에서는 대화 칸이 이 아이콘으로 접혀 있다가 누르면 열린다(화면 가림 최소)
   fab.onclick = () => { const on = host.dataset.chat !== 'open'; if (on) host.dataset.chat = 'open'; else delete host.dataset.chat; fab.setAttribute('aria-expanded', String(on)); if (on) setTimeout(() => host.querySelector('.k-chat-root[data-dock] .k-ck-i')?.focus(), 60); };
-  host.append(panel, back, cap, mean, fab);
+  const emdNote = h('div.xd-emdnote', { hidden: true, role: 'status' });
+  host.append(panel, back, cap, mean, fab, emdNote);
   back.onclick = () => (onBack ? onBack() : leave());   // 3단계 → 2단계(지도 위 통계)로 되돌아감(app.js) · 없으면 닫기
   panel.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); tip(e, t ? t.dataset.tip : null); });
   panel.addEventListener('mouseleave', () => tip(null, null));
@@ -250,7 +251,58 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
     const f = D.sel && D.fc?.features.find((x) => x.properties.k === D.sel);
     const b = f ? bboxOf([f]) : D.bb;
     if (b) stage.go(b, { ms: RM() ? 0 : 1000, maxZoom: f ? 13 : 11, pitch: 0 });
-    if (fromMap && D.sel) panel.querySelector(`[data-k="${CSS.escape(D.sel)}"]`)?.scrollIntoView({ block: 'nearest', behavior: RM() ? 'auto' : 'smooth' });
+    if (fromMap && D.sel && !D.emd) panel.querySelector(`[data-k="${CSS.escape(D.sel)}"]`)?.scrollIntoView({ block: 'nearest', behavior: RM() ? 'auto' : 'smooth' });
+    emdView();
+  }
+  /* 12-A(11-07) — 읍면동을 누르면(지도 · 표 줄) 오른쪽 전체가 '시 › 읍면동' 기준으로 바뀐다. 값 = 서버 읍면동 요약(GET /ximap/emd-brief · 크게 보기와 같은 집계 · 문장도 서버 계산).
+     한 번 더 누르거나 '시 전체로' = 시 전체 대시보드로 되돌아간다 */
+  const canEmd = () => !!(D.spec && D.spec.sgg && D.spec.kind === 'overview' && D.spec.map?.level === 'emd');
+  function backToCity() { D.emd = null; emdNote.hidden = true; if (D.spec) render(D.spec); }
+  function toCity() {
+    if (D.sel) try { map.setFeatureState({ source: 'xd-f', id: D.sel }, { on: false }); } catch { /* */ }
+    D.sel = null; D.seq++; map.setFilter('xd-sel', ['==', ['get', 'k'], '__']);
+    backToCity();
+    if (D.bb) stage.go(D.bb, { ms: RM() ? 0 : 1000, maxZoom: 11, pitch: 0 });
+  }
+  async function emdView() {
+    if (!canEmd()) return;
+    if (!D.sel) { if (D.emd) backToCity(); return; }
+    const k = D.sel, my = ++D.seq;
+    panel.setAttribute('aria-busy', 'true');
+    let b = null;
+    try { b = await api(`/ximap/emd-brief?sgg=${encodeURIComponent(D.spec.sgg)}&emd=${encodeURIComponent(k)}`); } catch { b = null; }
+    panel.removeAttribute('aria-busy');
+    if (my !== D.seq || D.sel !== k || !D.on) return;
+    if (!b) { emdNote.hidden = false; emdNote.textContent = '이 읍면동은 분석 결과가 아직 없어 요약을 만들지 못했습니다'; if (D.emd) backToCity(); return; }
+    D.emd = k;
+    renderEmd(b);
+  }
+  const rel = (a, b2) => (a == null || b2 == null ? '' : a > b2 ? '높습니다' : a < b2 ? '낮습니다' : '같습니다');
+  function renderEmd(b) {
+    const v = (e) => (e && typeof e === 'object' ? e.value : e);
+    const tasks = b.tasks || [];
+    const main = `<div class="xd-card xd-kpi is-main"><p class="xd-l">${esc(b.name)} AI 분석 결과</p><p class="xd-v"><b class="num">${nf(v(b.total))}</b><small>개</small></p>
+      <p class="xd-s">${esc(b.sgg_name)} ${nf(v(b.city_total))}개의 <b>${nf(b.share_pct, 1)}%</b> · 읍면동 <b>${b.rank.n}위</b>${v(b.density) != null ? ` · ㎢당 ${nf(v(b.density), 1)}개` : ''}</p></div>`;
+    const cards = tasks.slice(0, 3).map((t) => `<div class="xd-card xd-kpi"><p class="xd-l">${esc(t.name)}</p><p class="xd-v"><b class="num">${nf(v(t.v))}</b><small>${esc(t.unit)}</small></p>
+      <p class="xd-s">${esc(b.sgg_name)}의 ${nf(t.share_pct, 1)}%${t.rank ? ` · 읍면동 ${t.rank.n}위` : ''}</p></div>`).join('');
+    const short = (n) => String(n).replace(/\(.*\)/, '');
+    const bars = tasks.map((t) => `<div class="xd-cr"><span class="n">${esc(short(t.name))}</span><span class="t"><i style="width:${t.emd_pct || 0}%"></i><i class="c" style="width:${t.city_pct || 0}%"></i></span><span class="v num">${nf(t.emd_pct, 1)}%<small>시 ${nf(t.city_pct, 1)}%</small></span></div>`).join('');
+    const gap = tasks.filter((t) => t.emd_pct != null && t.city_pct != null).sort((x, y) => Math.abs(y.emd_pct - y.city_pct) - Math.abs(x.emd_pct - x.city_pct))[0];
+    const gnote = gap && Math.abs(gap.emd_pct - gap.city_pct) >= 0.1 ? `<p class="xd-note">${esc(short(gap.name))} 비율이 ${esc(b.sgg_name)} 전체보다 ${nf(Math.abs(gap.emd_pct - gap.city_pct), 1)}%p ${rel(gap.emd_pct, gap.city_pct)}</p>` : '';
+    const mx = Math.max(1, ...(b.neighbors || []).map((r) => r.v));
+    const nb = (b.neighbors || []).map((r) => `<button type="button" class="xd-nb pk${r.me ? ' on me' : ''}" data-k="${esc(r.k)}"><span class="i num">${r.rank}</span><span class="n">${esc(r.name)}</span><span class="t"><i style="width:${(100 * r.v) / mx}%"></i></span><span class="v num">${nf(r.v)}</span><span class="e num">${r.d != null ? `㎢당 ${nf(r.d, 1)}` : ''}</span></button>`).join('');
+    panel.innerHTML = `<header class="xd-h"><h2><em>${esc(b.sgg_name)} ›</em> ${esc(b.name)} · AI 분석 결과</h2><div class="xd-means"><span><em>지역</em>${esc(b.name)}</span><span><em>업무</em>모든 업무</span><span><em>비교</em>${esc(b.sgg_name)} 전체</span></div>
+      <span class="xd-hbtns"><button type="button" class="xd-dl xd-city">${esc(b.sgg_name)} 전체로</button><button type="button" class="xd-dl xd-rep">보고서 보기</button></span></header>
+      <div class="xd-kpis" style="grid-template-columns:${tasks.length ? `minmax(0,1.5fr) repeat(${Math.min(3, tasks.length)},minmax(0,1fr))` : 'minmax(0,1fr)'}">${main}${cards}</div>
+      <div class="xd-grid"><div class="xd-card xd-say" style="grid-column:span 12"><p class="xd-sayh"><span class="xd-logo">XI</span>XI ChatGEO</p><div class="xd-say-l"><p>${esc(b.say)}</p></div></div>
+        <div class="xd-card xd-p" style="grid-column:span 5"><h3>업무별 비율 <small>${esc(b.name)} ↔ ${esc(b.sgg_name)} 전체</small></h3><div class="xd-cmp">${bars}</div>
+          <p class="xd-lg"><span><i></i>${esc(b.name)}</span><span><i class="c"></i>${esc(b.sgg_name)} 전체</span></p>${gnote}</div>
+        <div class="xd-card xd-p" style="grid-column:span 7"><h3>이웃 읍면동과 견주기 <small>결과 수 · ㎢당</small></h3><div class="xd-nbs">${nb}</div><p class="xd-note">줄을 누르면 그 읍면동으로 · 짙은 줄 = 지금 보는 곳</p></div></div>`;
+    panel.querySelector('.xd-city')?.addEventListener('click', toCity);
+    panel.querySelector('.xd-rep')?.addEventListener('click', (e) => import('../kit/report-view.js').then((m) => m.openReport({ spec: D.spec, from: e.currentTarget })));
+    panel.querySelectorAll('.xd-nb').forEach((x) => x.addEventListener('click', () => { if (x.dataset.k !== D.sel) pick(x.dataset.k, true); }));
+    emdNote.hidden = false; emdNote.textContent = `${b.name}만 확대 · 다른 읍면동을 누르면 바뀝니다`;
+    panel.scrollTop = 0;
   }
   function csv(name, cols, rows) {
     const body = [cols.join(','), ...rows.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
@@ -309,7 +361,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
   async function show(s) {
     if (!s) return false;
     await confirmMeaning(s);
-    D.spec = s; D.sel = null;
+    D.spec = s; D.sel = null; D.emd = null; emdNote.hidden = true;
     render(s);
     if (!D.on) { D.on = true; onEnter?.(); }
     host.dataset.dash = '1'; panel.hidden = false; back.hidden = false; cap.hidden = false;
@@ -327,7 +379,7 @@ export function createDash({ map, stage, host, h, sggFC, onEnter, onLeave, onSho
   /** 닫기 — quiet = 2단계(지도 위 통계)로 돌아갈 때(카메라 · 전국 결과 되돌림 없이) */
   function leave({ quiet = false } = {}) {
     if (!D.on) return;
-    D.on = false; D.spec = null; D.sel = null;
+    D.on = false; D.spec = null; D.sel = null; D.emd = null; D.seq++; emdNote.hidden = true;
     D.pn?.destroy(); D.pn = null;                                     // 손잡이는 대시보드 동안만(지도 칸 폭 변수는 기본으로)
     delete host.dataset.dash; delete host.dataset.chat; fab.setAttribute('aria-expanded', 'false'); panel.hidden = true; back.hidden = true; cap.hidden = true; tip(null, null);
     if (map.getSource('xd-f')) map.getSource('xd-f').setData({ type: 'FeatureCollection', features: [] });

@@ -42,13 +42,14 @@ def test_counts_sql_both_styles():
 
 def test_sido_label_one_name():
     from landxi_api import regions as RG
-    assert RG.sido_label("전남광주통합특별시") == RG.sido_label("12130") == RG.sido_label("12") == "전남광주특별시"
+    assert RG.sido_label("전남광주특별시") == RG.sido_label("전남광주통합특별시") == RG.sido_label("12130") == RG.sido_label("12") == "전남광주통합특별시"
     assert RG.sido_label("52190") == "전북특별자치도"
-    assert RG.full_label("전남광주통합특별시 여수시 돌산읍") == "전남광주특별시 여수시 돌산읍"
+    assert RG.full_label("전남광주특별시 여수시 돌산읍") == RG.full_label("전남광주통합특별시 여수시 돌산읍") == "전남광주통합특별시 여수시 돌산읍"
+    assert [r["sgg_cd"] for r in RG.find("전남광주특별시 여수시")] == ["12130"]
     assert [r["sgg_cd"] for r in RG.find("전남광주통합특별시 여수시")] == ["12130"]
     r = RG.region_of("12130")
-    assert r["sido"] == r["sido_short"] == "전남광주특별시" and r["full"].startswith("전남광주특별시 ")
-    assert not [x for x in RG.regions_base()[0] if "전남광주통합특별시" in (x.get("full") or "") + (x.get("sido") or "")]
+    assert r["sido"] == r["sido_short"] == "전남광주통합특별시" and r["full"].startswith("전남광주통합특별시 ")
+    assert not [x for x in RG.regions_base()[0] if "전남광주특별시" in (x.get("full") or "") + (x.get("sido") or "")]
 
 
 def test_label_points_rule():

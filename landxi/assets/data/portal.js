@@ -31,7 +31,7 @@ export const TENANTS = [
      전남광주 home 은 임시다 — E1-2 가 portal-gwangju-jeonnam.html 로 바꾼다. */
   { id: 'namwon', name: '전북특별자치도 남원시', kind: 'user', home: 'portal.html', profile: 'namwon',
     desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal'], login: 'portal-login-namwon.html' },
-  { id: 'gwangju-jeonnam', name: '전남광주특별시', kind: 'user', home: 'portal-dp-gj-marine-25.html', profile: 'gwangju-jeonnam',
+  { id: 'gwangju-jeonnam', name: '전남광주통합특별시', kind: 'user', home: 'portal-dp-gj-marine-25.html', profile: 'gwangju-jeonnam',
     desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal'], login: 'portal-login-gwangju-jeonnam.html' },
 ];
 export const tenantById = (id) => TENANTS.find((t) => t.id === id) || TENANTS[0];
