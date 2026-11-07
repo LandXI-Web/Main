@@ -9,14 +9,14 @@ import { h, api, session, API } from '../kit/util.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { modal } from '../kit/modal.js';
 import { size } from '../kit/me.js';
-import { RAIL as OPS_RAIL } from '../ops-infra/js/rail.js';
+import { adminMenu } from '../kit/admin-menu.js';
 import { openNoticeWriter } from '../ops-core/js/notice.js';
 
 const who = await K.gate('lx-board');
 const admin = who.key === 'lx/admin';
-/* 왼쪽 메뉴 — 직원 = LX 직원 메뉴 · 관리자 = LX 관리자 메뉴(ops-infra 의 '#/…' 주소는 그 화면 주소로) · 게시판은 메뉴 칸이 아니므로 켜진 칸 없음 */
+/* 왼쪽 메뉴 — 직원 = LX 직원 메뉴 · 관리자 = LX 관리자 메뉴 한 곳(kit/admin-menu.js · 숫자 포함) */
 const rail = admin
-  ? { kind: 'menu', items: OPS_RAIL.map((r) => ({ ...r, href: r.href.startsWith('#') ? '/landxi/v3/ops-infra/' + r.href : r.href })), current: OPS_RAIL.findIndex((r) => r.id === 'board') }
+  ? adminMenu('board')
   : staffMenu('board');
 const S = K.shell({ who, home: 'lx-board', title: admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드', rail });
 K.devDrawer({ who });

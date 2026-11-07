@@ -1151,3 +1151,84 @@ async def ops_gateway_restart(request: Request):
     await run_in_threadpool(G.spawn, d["cmd"])
     from fastapi.responses import JSONResponse
     return JSONResponse({"accepted": True, "message": d["message"], "boot_at": boot}, status_code=202)
+
+
+# ── 관리자 왼쪽 메뉴 숫자 한 곳(11-07 확인 · PM '1. 맞춘다.') ─────────────────────────────────────
+# 메뉴 숫자와 그 화면 탭 숫자가 같은 값이 되게, 각 화면이 쓰는 목록과 같은 규칙으로 센다(지어내지 않음 · 못 센 칸은 value None).
+#   요청 관리 = 분석 요청(GET /requests/manage 의 can_decide = 대기 · 보류) + 승인 요청(GET /approvals 대기 중 분석 요청 아닌 것 — 화면 approveList 와 같은 거르기)
+#              + API 키 신청(GET /api-applications 의 pending — 시험 제외)
+#   배포     = 배포 신청 검토 중(GET /release/requests 의 pending)
+#   검토 요청 = 답할 것(GET /reviews/notify counts.todo — LX 관리자 = 모든 기관)
+#   계정 관리 = 가입 신청 + 비밀번호 재설정 + 저장 용량 요청 대기(GET /accounts/summary) + 새 문의(GET /inquiries counts.new)
+_APPROVE_KINDS = ("deploy", "deploy_ga", "rule", "quota", "model", "card")
+
+
+@router.get("/ops/menu-counts")
+async def ops_menu_counts(request: Request):
+    p = require(principal(request), admin=True)
+    import re
+    from .accounts import summary as _acc_summary
+    from .approvals import list_approvals
+    from .messages import _counts as _review_counts
+
+    async def analyze():
+        async with db(realm="lx") as conn:
+            return int(await conn.fetchval("SELECT count(*) FROM analysis_requests q JOIN deploys d ON d.id = q.deploy_id "
+                                           "WHERE q.state IN ('pending','held')") or 0)
+
+    async def approve():
+        j = await list_approvals(request, "pending")
+        items = [i for i in j.get("items") or [] if i.get("state") == "pending" and i.get("kind") in _APPROVE_KINDS]
+        ids = [i["subject"]["id"] for i in items if i.get("kind") in ("deploy", "deploy_ga") and (i.get("subject") or {}).get("id")]
+        drop = set()
+        if ids:                                         # 화면과 같은 거르기 — 영업 계량 기관 · 시험 잔여(-test-n) 배포본의 승인 요청은 세지 않는다
+            async with db(realm="lx") as conn:
+                for d in await conn.fetch("SELECT id, tenant_id FROM deploys WHERE id = ANY($1::text[]) AND NOT coalesce(test,false)", ids):
+                    if d["tenant_id"] == "lx-demo" or re.search(r"-test(-\d+)?$", d["id"]):
+                        drop.add(d["id"])
+        return sum(1 for i in items if not (i.get("kind") in ("deploy", "deploy_ga") and (i.get("subject") or {}).get("id") in drop))
+
+    async def apikeys():
+        async with db(realm="lx") as conn:
+            return int(await conn.fetchval("SELECT count(*) FROM api_applicants WHERE via = 'form' AND state = 'pending' AND NOT test") or 0)
+
+    async def deploys():
+        async with db(realm="lx") as conn:
+            return int(await conn.fetchval(
+                "SELECT count(*) FROM approvals a JOIN card_versions v ON v.id = a.subject_id JOIN cards c ON c.id = v.card_id "
+                "WHERE a.subject_type='card' AND coalesce(a.state, CASE WHEN a.decision IS NULL THEN 'pending' ELSE 'decided' END) = 'pending'") or 0)
+
+    async def reviews():
+        async with db(p) as conn:
+            return int((await _review_counts(conn, p))["todo"])
+
+    async def accounts():
+        c = (await _acc_summary(request)).get("counts") or {}
+        async with db(realm="lx") as conn:      # 문의 = 읽지 않은 것 · 시험 제외(GET /inquiries counts.new 와 같은 셈 · 11-07 PM "더한다")
+            inq = int(await conn.fetchval("SELECT count(*) FROM inquiries WHERE read_at IS NULL AND NOT test") or 0)
+        return {"signup": int(c.get("signup") or 0), "reset": int(c.get("reset") or 0), "storage": int(c.get("storage") or 0), "inquiries": inq}
+
+    async def safe(f):
+        try:
+            return await f()
+        except Exception:  # noqa: BLE001 — 못 센 칸은 비운다(지어내지 않음)
+            return None
+
+    a, b, k, dp, rv, ac = await asyncio.gather(*(safe(f) for f in (analyze, approve, apikeys, deploys, reviews, accounts)))
+    at = now_iso()
+    E = lambda v, src: env(v, "count", "recorded", src, as_of=at)  # noqa: E731
+    parts = [a, b, k]
+    req_total = None if all(x is None for x in parts) else sum(x or 0 for x in parts)
+    acc_total = None if ac is None else sum(ac.values())
+    return {
+        "approvals": E(req_total, "요청 관리 — 분석 요청 + 승인 요청 + API 키 신청 대기"),
+        "approvals_parts": {"analyze": E(a, "분석 요청 대기 · 보류(요청 관리 · 분석 요청 탭)"),
+                            "approve": E(b, "승인 요청 대기(요청 관리 · 승인 요청 탭)"),
+                            "apikeys": E(k, "API 키 신청 대기 · 시험 제외(요청 관리 · API 키 신청 탭)")},
+        "deploys": E(dp, "배포 신청 검토 중(배포 · 배포 신청 탭)"),
+        "reviews": E(rv, "검토 요청 답할 것 · 모든 기관"),
+        "accounts": E(acc_total, "계정 관리 — 가입 신청 + 비밀번호 재설정 + 저장 용량 요청 대기 + 새 문의"),
+        "accounts_parts": {k2: E(ac.get(k2) if ac else None, f"계정 관리 · {w}")
+                           for k2, w in (("signup", "가입 신청"), ("reset", "비밀번호 재설정"), ("storage", "저장 용량"), ("inquiries", "새 문의"))},
+        "as_of": at,
+    }

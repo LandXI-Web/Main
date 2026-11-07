@@ -6,22 +6,11 @@
 import { gate, FRONT } from '../kit/auth-gate.js';
 import { shell } from '../kit/shell.js';
 import { mountAccounts } from './view.js';
+import { adminMenu } from '../kit/admin-menu.js';
 
 const who = await gate('ops-accounts');
 if (who.key !== 'lx/admin') { location.replace(FRONT + '?denied=ops-accounts'); await new Promise(() => {}); }
-const OPS = '/landxi/v3/ops-core/', INFRA = '/landxi/v3/ops-infra/';
-const RAIL = [
-  { id: 'overview', label: '현황', icon: 'map', href: OPS },
-  { id: 'infra', label: '인프라', icon: 'gear', href: INFRA },
-  { id: 'tenants', label: '기관', icon: 'org', href: INFRA + '?view=tenants' },
-  { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
-  { id: 'approvals', label: '요청 관리', icon: 'inbox', href: OPS + '#/approvals' },
-  { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },
-  { id: 'accounts', label: '계정 관리', icon: 'check' },
-  { id: 'shared', label: '공유 데이터', icon: 'data', href: INFRA + '?view=shared' },   // 영상 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기(10-13 관리자-공유데이터 · 원칙 238)
-  { id: 'board', label: '게시판', icon: 'board', href: '/landxi/v3/lx-board/' },   // 11-07 PM 관리자 게시판 = 왼쪽 메뉴
-];
-const S = shell({ who, home: 'ops-accounts', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === 'accounts') } });
+const S = shell({ who, home: 'ops-accounts', title: 'LX 관리자 대시보드', rail: adminMenu('accounts') });   // 관리자 메뉴 · 숫자 한 곳(kit/admin-menu.js · 11-07)
 // 역할 칩 — 이름이 역할 문구와 같으면 한 번만('LX 관리자')
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }

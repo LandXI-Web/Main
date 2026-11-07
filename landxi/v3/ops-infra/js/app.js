@@ -9,17 +9,14 @@ import { mountSpaces } from './spaces.js';   // 기관 → '기관 공간' 탭(�
 import { mountTenantPage } from './tenant-page.js';   // 기관 → '기관 한 곳' 새 화면(now 질문 17 ⓑ — 탭 넷)
 import { mountShared } from './shared.js';   // 공유 데이터(10-13 관리자-공유데이터 · 원칙 238)
 import { mountRelease } from './release.js'; // 배포 → 세 탭(배포 신청 · 기관 공유 · 사용 현황 — 10-09 배포-3 ⓐ · 배포-5) + 개선 후보(16차 개선-1)
-// 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
-import { loadPending as loadApprovals, pending } from '../../ops-core/js/data.js';     // 배지만 — 사용량 집계를 다시 부르지 않는다
-
-import { RAIL } from './rail.js';
+import { adminMenu, adminIndex } from '../../kit/admin-menu.js';   // 관리자 메뉴 · 숫자 한 곳(11-07 — 셸이 그린다)
 const VIEWS = ['infra', 'tenants', 'deploys', 'shared'];
 const who = await gate('ops-infra');
 const qs = new URLSearchParams(location.search);
 const deepDeploy = qs.get('deploy');
 const want = () => { const v = (location.hash.match(/^#\/(\w+)/) || [])[1] || qs.get('view'); return VIEWS.includes(v) ? v : deepDeploy ? 'deploys' : 'infra'; };
 
-const Sh = shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === want()) } });
+const Sh = shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: adminMenu(want()) });
 // 역할 칩 중복 방지(ops-core 와 같은 처리): 이름이 역할 문구와 같으면 한 번만 → 'LX 관리자'
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
@@ -28,14 +25,6 @@ const VIEW_KO = { infra: '인프라', tenants: '기관', deploys: '배포', shar
 const ck = who.key !== 'lx/admin' ? null : mountCmdk({ context: () => ({ screen: 'ops', screen_name: `LX 관리자 대시보드 · ${VIEW_KO[document.body.dataset.view] || '인프라'}` }) });
 if (ck) { const b = ck.button(); b.querySelector('span').textContent = '물어보기'; Sh.mast(b);
   const i = ck.el.querySelector('.k-ck-i'); if (i) i.placeholder = 'GPU 상태 · 대기열 요약 · 경보 있어?'; }
-/* 레일 '결재' 배지 — ops-core 와 같은 대기 건수 */
-let pendN = 0;
-const putBadge = () => { const el = Sh.rail?.querySelector('[data-i="4"]'); if (el) el.dataset.n = pendN ? String(pendN) : ''; };
-async function badge() {
-  try { await loadApprovals(); } catch { return; }
-  pendN = pending().length; putBadge();
-}
-badge(); setInterval(badge, 30000);
 devDrawer({ who });
 const main = Sh.main;
 main.classList.add('oi');
@@ -60,7 +49,7 @@ function show() {
   closeAll();
   cur = v;
   for (const k of VIEWS) panes[k].hidden = k !== v;
-  Sh.go(RAIL.findIndex((r) => r.id === v)); putBadge();
+  Sh.go(adminIndex(v));
   document.body.dataset.view = v;
   document.title = { infra: 'Land-XI · LX 관리자 화면 · 인프라', tenants: 'Land-XI · LX 관리자 화면 · 기관', deploys: 'Land-XI · LX 관리자 화면 · 배포', shared: 'Land-XI · LX 관리자 화면 · 공유 데이터' }[v];
   paint(v);

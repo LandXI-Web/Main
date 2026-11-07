@@ -61,13 +61,19 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     bar.append(b); btn[t.id] = b;
   }
 
-  let cur = null, T = null, sheet = null, openKey = null, orgSel = null, data = [], solo = false;
+  let cur = null, T = null, sheet = null, openKey = null, orgSel = null, data = [], solo = false, lastTot = null, lastInq = null;
   const counts = async () => {
     try {
       const j = await api('/accounts/summary');
-      for (const k of ['signup', 'reset', ...(LX ? ['storage'] : [])]) { const n = j.counts?.[k] || 0; const el = btn[k].querySelector('.acc-n'); el.textContent = String(n); el.hidden = !n; }
+      let tot = 0;
+      for (const k of ['signup', 'reset', ...(LX ? ['storage'] : [])]) { const n = j.counts?.[k] || 0; tot += +n; const el = btn[k].querySelector('.acc-n'); el.textContent = String(n); el.hidden = !n; }
+      /* 탭 숫자 합이 바뀌면 왼쪽 메뉴 '계정 관리' 숫자도 바로 다시(같은 출처 GET /accounts/summary · kit/admin-menu.js · 11-07) */
+      if (LX && lastTot !== null && lastTot !== tot) document.dispatchEvent(new Event('lx:reviews'));
+      lastTot = tot;
     } catch { /* 숫자만 빠진다 */ }
-    if (LX) api('/inquiries').then((q) => { const n = q.counts?.new || 0; const el = btn.inquiries?.querySelector('.acc-n'); if (el) { el.textContent = String(n); el.hidden = !n; } }).catch(() => {});
+    if (LX) api('/inquiries').then((q) => { const n = q.counts?.new || 0; const el = btn.inquiries?.querySelector('.acc-n'); if (el) { el.textContent = String(n); el.hidden = !n; }
+      if (lastInq !== null && lastInq !== n) document.dispatchEvent(new Event('lx:reviews'));   // 새 문의도 메뉴 숫자에 들어간다(11-07 PM "더한다")
+      lastInq = n; }).catch(() => {});
   };
 
   /* 소속 고르기(LX 관리자 · 계정 탭) — 전체 · LX · 기관들 */

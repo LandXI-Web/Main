@@ -9,7 +9,8 @@ import { h, api, API, session } from '../kit/util.js';
 import { loadDeck, svcCard, svcGrid } from '../kit/service-card.js';
 import { staffRail } from '../lx-analyze/menu.js';
 import { swipePic } from '../kit/swipe.js';
-import { RAIL, TABS } from '../ops-infra/js/rail.js';   // LX 관리자로 열면 관리자 틀 · 배포 메뉴(같은 메뉴 한 곳)
+import { TABS } from '../ops-infra/js/rail.js';   // LX 관리자로 열면 관리자 틀 · 배포 메뉴 탭 줄
+import { adminMenu, adminCounts } from '../kit/admin-menu.js';   // 관리자 메뉴 · 숫자 한 곳(11-07)
 
 const who = await K.gate('lx-console');
 const Q = new URLSearchParams(location.search);
@@ -17,7 +18,7 @@ const CARD = Q.get('card');
 const ADMIN = who.key === 'lx/admin';   // 관리자 = 관리자 틀 · 배포 › 배포된 카드 탭 / 프로젝트장(직원) = 직원 틀(같은 화면 · 고칠 권한은 서버 can_edit)
 const OI = '/landxi/v3/ops-infra/';
 const S = ADMIN
-  ? K.shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL.map((r) => (r.href.startsWith('#') ? { ...r, href: OI + r.href } : r)), current: RAIL.findIndex((r) => r.id === 'deploys') } })
+  ? K.shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: adminMenu('deploys') })
   : K.shell({ who, home: 'lx-cards', title: 'LX 직원 대시보드', rail: await staffRail('analyze') });   // 서비스 카드는 메뉴 칸이 없다 — 들어오는 길 '분석하기'(서비스카드-1 ⓐ)
 if (ADMIN) {
   /* 탭 모양 CSS 가 올 때까지 틀을 숨겨 둔다(안 입힌 버튼 깜박임 방지) */
@@ -28,8 +29,13 @@ if (ADMIN) {
 K.devDrawer({ who });
 document.body.classList.remove('la-boot');
 const page = h('div.la-page.lc-page');
-if (ADMIN) page.append(h('div.im-head.lc-tabs', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...TABS.map(([k, t, path]) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(k === 'cards'),
-  onclick: () => { if (k !== 'cards') location.href = OI + '#/deploys' + path; else if (CARD) location.href = './'; } }, h('span', { text: t }))))));
+if (ADMIN) {
+  /* '배포 신청 4' — 배포 화면 탭 줄 · 왼쪽 메뉴 '배포' 숫자와 한 출처(kit/admin-menu.js adminCounts · 11-07) */
+  const reqN = h('b.num.im-tab-n');
+  adminCounts().then((c) => { reqN.textContent = c.deploys ? Number(c.deploys).toLocaleString('ko-KR') : ''; }).catch(() => {});
+  page.append(h('div.im-head.lc-tabs', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...TABS.map(([k, t, path]) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(k === 'cards'),
+    onclick: () => { if (k !== 'cards') location.href = OI + '#/deploys' + path; else if (CARD) location.href = './'; } }, h('span', { text: t }), k === 'req' ? reqN : null)))));
+}
 S.main.append(h('div.la-scroll', {}, page));
 
 const nf = (v) => Number(v).toLocaleString('ko-KR');

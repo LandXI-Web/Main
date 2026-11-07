@@ -28,12 +28,14 @@ const join = (...xs) => xs.filter((x) => x !== null && x !== undefined && x !== 
 const units = (tag, text) => { const el = h(tag); String(text || '').split(' · ').forEach((u, i) => { if (i) el.append(' · '); el.append(h('span.rv-u', { text: u })); }); return el; };
 const bar = (v, dim = false) => h('span.rv-bar', { class: dim ? 'is-dim' : '' }, h('i', { style: `width:${Math.max(0, Math.min(100, val(v) || 0))}%` }));
 import { TABS } from './rail.js';
+import { adminCounts, refreshAdminCounts } from '../../kit/admin-menu.js';   // 배포 신청 탭 숫자 = 왼쪽 메뉴 '배포' 숫자와 한 출처(11-07)
 
 export function mountRelease(root) {
   const nBadge = h('b.num.im-tab-n'), impN = h('b.num.im-tab-n'), catN = h('b.num.im-tab-n');
   const btn = Object.fromEntries(TABS.map(([k, t]) => [k, h('button', { type: 'button', role: 'tab', dataset: { tab: k } }, h('span', { text: t }), k === 'req' ? nBadge : k === 'imp' ? impN : k === 'cat' ? catN : null)]));
   const panes = Object.fromEntries(TABS.map(([k]) => [k, h('div.rv-pane', { dataset: { tab: k } })]));
   root.append(h('div.im-head', {}, h('nav.im-tabs', { role: 'tablist', 'aria-label': '배포' }, ...Object.values(btn))), ...Object.values(panes));
+  adminCounts().then((c) => { if (!R && c.deploys != null) nBadge.textContent = c.deploys ? nf(c.deploys) : ''; }).catch(() => {});   // 다른 탭에서도 '배포 신청 4'
   const board = improveBoard(panes.imp, { admin: true, onCount: (n) => { impN.textContent = n ? nf(n) : ''; } });
   const keys = apiKeysPane(panes.api);
   const rt = retrainPane(panes.rt), tpl = templatePane(panes.tpl);
@@ -141,6 +143,7 @@ export function mountRelease(root) {
         try {
           await api(`/approvals/${encodeURIComponent(x.id)}/decide`, { method: 'POST', body: { decision: dec, reason: reason.value.trim() || undefined } });
           toast(dec === 'approve' ? '승인했습니다 — 기관 공유 탭에서 기관에 공유할 수 있습니다' : '거절했습니다 — 신청한 직원에게 사유가 보입니다');
+          refreshAdminCounts();
           await paintReq();
         } catch (e) { note.textContent = e.message || '처리하지 못했습니다'; ok.disabled = no.disabled = false; }
       };

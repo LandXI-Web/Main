@@ -10,21 +10,11 @@ import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(
 import { mountRequests } from './requests.js';                   // 요청 관리 · 분석 요청 탭(now 질문 16 ⓐ — 순번 · 급함 · 담당 · 보류)
 import { modal } from '../../kit/modal.js';
 import { mountApiApply } from './apiapply.js';                   // 요청 관리 · API 키 신청 탭(외부 연동 API 3차 — 원칙 184)
+import { adminMenu, adminIndex, refreshAdminCounts } from '../../kit/admin-menu.js';
 
 const who = await gate('ops-core');
 const INFRA = '/landxi/v3/ops-infra/';
-const RAIL = [
-  { id: 'overview', label: '현황', icon: 'map' },
-  { id: 'infra', label: '인프라', icon: 'gear', href: INFRA },
-  { id: 'tenants', label: '기관', icon: 'org', href: INFRA + '?view=tenants' },
-  { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
-  { id: 'approvals', label: '요청 관리', icon: 'inbox' },   // 분석 요청(관리) · 승인 요청(승인 · 거절) 두 탭(now 질문 16 ⓐ · 원칙 122)
-  { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // 기관에서 온 모든 요청 · 대화(알림-1 — 관리자도 함께 본다)
-  { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
-  { id: 'shared', label: '공유 데이터', icon: 'data', href: INFRA + '?view=shared' },   // 영상 목록 · 올리기 · 정보 고치기 · 공개/비공개 · 지우기(10-13 관리자-공유데이터 · 원칙 238)
-  { id: 'board', label: '게시판', icon: 'board', href: '/landxi/v3/lx-board/' },   // 11-07 PM 관리자 게시판 = 왼쪽 메뉴
-];
-const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: 0, onPick: (i, it) => { if (!it.href) location.hash = it.id === 'approvals' ? '#/approvals' : '#/'; } } });
+const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rail: adminMenu('overview') });   // 관리자 메뉴 · 숫자 한 곳(kit/admin-menu.js · 11-07)
 // 역할 칩 중복 방지(키트 요청 대기 중 로컬 폴백): 이름이 역할 문구와 같으면 역할 문구 한 번만 → 'LX 관리자'
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
@@ -274,8 +264,8 @@ const none = h('div.oc-none');
 paneB.append(tbl, none);
 inboxWrap.append(head, paneA, paneB, paneC);
 inbox.append(inboxWrap);
-const RQ = mountRequests(paneA, { host: S.main, onChanged: () => refresh(true).then(tabCounts) });
-const AK = mountApiApply(paneC, { host: S.main, onChanged: () => tabCounts() });
+const RQ = mountRequests(paneA, { host: S.main, onChanged: () => { refreshAdminCounts(); return refresh(true).then(tabCounts); } });
+const AK = mountApiApply(paneC, { host: S.main, onChanged: () => { refreshAdminCounts(); tabCounts(); } });
 tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) location.hash = b.dataset.t === 'approve' ? '#/approvals/approve' : b.dataset.t === 'apikeys' ? '#/approvals/apikeys' : '#/approvals'; });
 const approveList = () => pending().filter((x) => x.kind !== 'request');
 function tabCounts() {
@@ -371,6 +361,7 @@ async function openSheet(item) {
     ok.disabled = no.disabled = true;
     try {
       await decide(item, dec, reason.value.trim());
+      refreshAdminCounts();
       toast(dec === 'approve' ? '승인했습니다' : '거절했습니다');
       sheet.close(true); openKey = null;
       await refresh();
@@ -393,7 +384,7 @@ function route() {
   document.body.dataset.view = v;
   document.body.dataset.tab = tab;
   document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 요청 관리' : 'Land-XI · LX 관리자 대시보드';
-  S.go(v === 'approvals' ? 4 : 0); badge();
+  S.go(adminIndex(v === 'approvals' ? 'approvals' : 'overview'));
   if (v === 'approvals') {
     if (was && was !== tab) { closeAll(); openKey = null; RQ.close(); AK.close(); }
     tabA.setAttribute('aria-selected', String(tab === 'analyze')); tabB.setAttribute('aria-selected', String(tab === 'approve')); tabC.setAttribute('aria-selected', String(tab === 'apikeys'));
@@ -406,17 +397,12 @@ function route() {
 }
 addEventListener('hashchange', route);
 
-function badge() {
-  const n = pending().length, b = S.rail.querySelector('[data-i="4"]');
-  if (b) b.dataset.n = n ? String(n) : '';
-}
 
 /* ── 데이터 · 실시간 ───────────────────────── */
 async function refresh(fast = false) {
   // 결재 대기(큰 숫자 · 결재함)는 결재 표가 오자마자 — 기관 사용량 · GPU · 경보는 뒤에 와서 할 일 칸만 다시 그린다(impl-1 · FR-3)
   if (fast) await loadFast(); else await loadAll(() => { if (document.body.dataset.view !== 'approvals') drawOverview(); });
   S.fresh(D.at);
-  badge();
   if (document.body.dataset.view === 'approvals') drawInbox(); else drawOverview();
   if (!fast && document.body.dataset.view === 'approvals' && document.body.dataset.tab !== 'approve') RQ.load().then(tabCounts);   // 분석 요청 목록은 30초 · 알림 때만
 }

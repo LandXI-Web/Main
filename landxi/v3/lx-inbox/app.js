@@ -9,6 +9,7 @@ import { gate, shell, createStage, panes, empty, toast, devDrawer, devlog, numHt
 import { h, api, bboxOf } from '../kit/util.js';
 import { msg, when } from '../kit/notify.js';
 import { staffMenu, requestCounts } from '../kit/lx-menu.js';
+import { adminMenu } from '../kit/admin-menu.js';
 
 /* 보낸 사람(구현 5차 · 확인 대장 '기관 화면 확인' 기관-8 ⓐ · 원칙 102) — 기관 요청(검토 요청 · 분석 요청)의 이름 · 부서 · 기관 + 연락처(선택).
    연락처는 그 사람이 스스로 적은 경우만 있고, 그 요청을 받은 LX 담당 직원과 LX 관리자에게만 온다(서버 GET /accounts/senders 가 자른다). */
@@ -45,19 +46,8 @@ const MOBILE = () => matchMedia('(max-width: 960px)').matches;
 
 const who = await gate('lx-console');                 // LX 직원 · LX 관리자만(영업 · 기관은 로그인으로 돌려보낸다)
 const admin = who.key === 'lx/admin';
-const RAIL = admin
-  ? [{ id: 'overview', label: '현황', icon: 'map', href: '/landxi/v3/ops-core/' },          // LX 관리자 대시보드와 같은 메뉴(원칙 43) + 검토 요청
-    { id: 'infra', label: '인프라', icon: 'gear', href: '/landxi/v3/ops-infra/' },
-    { id: 'tenants', label: '기관', icon: 'org', href: '/landxi/v3/ops-infra/?view=tenants' },
-    { id: 'deploys', label: '배포', icon: 'deploy', href: '/landxi/v3/ops-infra/?view=deploys' },
-    { id: 'approvals', label: '요청 관리', icon: 'inbox', href: '/landxi/v3/ops-core/#/approvals' },
-    { id: 'reviews', label: '검토 요청', icon: 'list' },
-    { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },
-    { id: 'shared', label: '공유 데이터', icon: 'data', href: '/landxi/v3/ops-infra/?view=shared' },
-    { id: 'board', label: '게시판', icon: 'board', href: '/landxi/v3/lx-board/' }]   // 10-13 관리자-공유데이터(원칙 238)   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
-  : null;
 const S = shell({ who, home: 'lx-inbox', title: admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드',
-  rail: admin ? { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === 'reviews') } : staffMenu('inbox') });
+  rail: admin ? adminMenu('reviews') : staffMenu('inbox') });   // 관리자 = 관리자 메뉴 한 곳(kit/admin-menu.js · 11-07)
 devDrawer({ who });
 
 const st = { box: 'todo', items: [], counts: null, sel: new URLSearchParams(location.search).get('id'), cur: null, stage: null, verdict: null };

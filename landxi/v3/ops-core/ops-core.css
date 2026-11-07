@@ -90,7 +90,7 @@ a.oc-tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 
 /* 레일 배지(결재 수) */
 .k-rail-i[data-i="4"]{position:relative}
-.k-rail-i[data-i="4"][data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;top:2px;right:4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--ink);color:#fff;font:600 var(--fs-tag)/20px var(--font-num);text-align:center;box-sizing:border-box}
+/* 관리자 메뉴 숫자 = 셸 .k-rail-b(직원 메뉴와 같은 모양 · kit/admin-menu.js · 11-07) */
 
 /* ── 결재함 ─────────────────────────────── */
 .oc-inbox{background:var(--bg-0);overflow:auto}
